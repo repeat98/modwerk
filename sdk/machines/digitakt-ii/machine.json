@@ -4,15 +4,20 @@
   "order": 40,
   "name": "Digitakt II",
   "status": "research",
-  "summary": "Its OS file is sealed with an HMAC trailer. Emulator research exists.",
+  "summary": "OS 1.17 support and Perform Direct are in review. Verify your original OS file locally; builds will follow after qualification.",
   "steps": {
-    "format": "started",
-    "rebuild": "open",
-    "boot": "started",
-    "core": "open",
+    "format": "done",
+    "rebuild": "done",
+    "boot": "done",
+    "core": "done",
     "mods": "open"
   },
   "research": [
+    {
+      "label": "elekloader \u2014 Digitakt II support by toonst",
+      "url": "https://github.com/irpina/elekloader/pull/38",
+      "note": "OS 1.17 sealed writer, exact stock rebuild and core hooks; emulator checks and a Perform Direct hardware build reported upstream. These are author reports, not Modwerk qualification."
+    },
     {
       "label": "digikit",
       "url": "https://github.com/m-dwyer/digikit",
@@ -23,5 +28,45 @@
     "body": "compact",
     "encoders": 8,
     "trigs": 16
+  },
+  "firmware": {
+    "releases": [
+      {
+        "version": "1.17",
+        "files": [
+          {
+            "name": "Digitakt_II_OS1.17.syx",
+            "sha256": "26c22f6652625ac2cfd47f7ee970d388ed8b6427dae3563c0a6a2f2d334350d5"
+          }
+        ]
+      }
+    ],
+    "flash": "The author reports an in-OS upgrade with Elektron Transfer over USB. Modwerk builds remain pending qualification.",
+    "recovery": "Hold FUNC while powering on, press TRIG 4 for OS UPGRADE, and send the original .syx over MIDI ports, not USB."
+  },
+  "sdk": {
+    "platform": "elemod",
+    "modules": "sdk/digitakt-ii/modules",
+    "catalog": null,
+    "guide": "sdk/machines/digitakt-ii/README.md",
+    "core": {
+      "version": "1.0",
+      "path": "sdk/drafts/digitakt-ii-core"
+    },
+    "toolchain": "m68k-elf GCC and binutils for ColdFire, with the pinned elekloader builder in a local sandbox. Pending source is excluded from CI.",
+    "budgets": [
+      {
+        "name": "Shared mod memory",
+        "unit": "bytes",
+        "value": 262144,
+        "note": "Upstream DDR 0x47F00000\u20130x47F40000, shared by core and mods; qualification remains pending."
+      },
+      {
+        "name": "Fast SRAM for code",
+        "unit": "bytes",
+        "value": 3840,
+        "note": "Upstream SRAM tail 0x8000F100\u20130x80010000; copied by core on the first ev_tick. Key/encoder handlers must remain in DDR."
+      }
+    ]
   }
 }

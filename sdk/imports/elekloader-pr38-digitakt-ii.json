@@ -1,0 +1,91 @@
+{
+  "schemaVersion": 1,
+  "repository": "https://github.com/irpina/elekloader",
+  "pullRequest": "https://github.com/irpina/elekloader/pull/38",
+  "headRepository": "https://github.com/toonst/elekloader",
+  "revision": "71a5156781838fb5ef1c3e963b3949b781043a0d",
+  "author": "toonst",
+  "copyright": "irpina and contributors",
+  "license": "GPL-2.0-or-later",
+  "status": "source-draft",
+  "adaptations": [
+    "Sources use module-local src/ paths.",
+    "Core patch preimages are represented only by addresses, lengths and SHA-256 guards; the local build reconstructs them from the selected verified OS.",
+    "No firmware, extracted tables, upgrade images or stock-containing binaries imported.",
+    "The three exact upstream Python changes are draft-only overlays on the byte-identical approved vendored baseline. The public Digitakt/Digitone engine and release pins remain unchanged."
+  ],
+  "files": [
+    {
+      "upstreamPath": "mods/core-dt2/mod.json",
+      "upstreamSha256": "85f9c0a66450b08e481a9f86a520b04920c4cae4c9141b43dee7ee6220837af6",
+      "path": "sdk/drafts/digitakt-ii-core/recipe.json",
+      "sha256": "8633cf949f5e5ef115fdc92a9c529dadcf98bd272ff6adb60657dab9a7b86000"
+    },
+    {
+      "upstreamPath": "examples/perform-direct/mod.json",
+      "upstreamSha256": "97b630f55dce3b89878f0e0dae6170901c0bde157b7695a7c704c52940bde87d",
+      "path": "sdk/drafts/perform-direct/recipe.json",
+      "sha256": "414e5e6ef707b66f1773f9445e81539d9303f55437e86559158502dba5c2986a"
+    },
+    {
+      "upstreamPath": "examples/perform-direct/perform.c",
+      "upstreamSha256": "bfccd655145eeb742a8bcd6378c21e052de637021bc834435f357c383a0087ec",
+      "path": "sdk/drafts/perform-direct/src/perform.c",
+      "sha256": "bfccd655145eeb742a8bcd6378c21e052de637021bc834435f357c383a0087ec"
+    },
+    {
+      "upstreamPath": "mods/core/core.s",
+      "upstreamSha256": "768cd000e66860da8a654592e8cd7ed44f39fe5a2a53089b878878082ab66e75",
+      "path": "sdk/drafts/digitakt-ii-core/src/core.s",
+      "sha256": "768cd000e66860da8a654592e8cd7ed44f39fe5a2a53089b878878082ab66e75"
+    },
+    {
+      "upstreamPath": "mods/core/settings.s",
+      "upstreamSha256": "629ef344d3ef2e29edf721431147d42f718f00e127111cdf71e431f811df4f76",
+      "path": "sdk/drafts/digitakt-ii-core/src/settings.s",
+      "sha256": "629ef344d3ef2e29edf721431147d42f718f00e127111cdf71e431f811df4f76"
+    },
+    {
+      "upstreamPath": "mods/core/fast.s",
+      "upstreamSha256": "96fc437340b63289ad269bf03d66540cd500987be2d0611b37748accb0621f18",
+      "path": "sdk/drafts/digitakt-ii-core/src/fast.s",
+      "sha256": "96fc437340b63289ad269bf03d66540cd500987be2d0611b37748accb0621f18"
+    },
+    {
+      "upstreamPath": "mods/core-dt2/personalize.s",
+      "upstreamSha256": "583f0925914ac8d0689b705ebf825c820231a61e319829001f93b3c6758ab797",
+      "path": "sdk/drafts/digitakt-ii-core/src/personalize.s",
+      "sha256": "583f0925914ac8d0689b705ebf825c820231a61e319829001f93b3c6758ab797"
+    },
+    {
+      "upstreamPath": "elekloader/devices/__init__.py",
+      "upstreamSha256": "d78433b32d5d4f3afee4bc37edf7072097f05b88c56dfb770c46fbf282305e21",
+      "path": "sdk/drafts/digitakt-ii-core/loader/elekloader/devices/__init__.py",
+      "sha256": "d78433b32d5d4f3afee4bc37edf7072097f05b88c56dfb770c46fbf282305e21"
+    },
+    {
+      "upstreamPath": "elekloader/devices/digitakt_mk2.py",
+      "upstreamSha256": "e074140afb03958610c9d018064ba0b840db6ec0e4974b67b87627445f3f40b5",
+      "path": "sdk/drafts/digitakt-ii-core/loader/elekloader/devices/digitakt_mk2.py",
+      "sha256": "e074140afb03958610c9d018064ba0b840db6ec0e4974b67b87627445f3f40b5"
+    },
+    {
+      "upstreamPath": "elekloader/syx.py",
+      "upstreamSha256": "af8ccc0949b82135d9c591e0f983b50966c629037105305021b316f224e51deb",
+      "path": "sdk/drafts/digitakt-ii-core/loader/elekloader/syx.py",
+      "sha256": "af8ccc0949b82135d9c591e0f983b50966c629037105305021b316f224e51deb"
+    }
+  ],
+  "qualification": {
+    "worstCaseCycles": null,
+    "memoryAccounting": {
+      "record": "sdk/drafts/perform-direct/qualification.pending.json",
+      "moduleBytes": 28,
+      "combinedDdrBytes": 576,
+      "ownerVerified": false
+    },
+    "hardwareStress": null,
+    "browserNativeParity": null,
+    "ownerApproval": null
+  }
+}

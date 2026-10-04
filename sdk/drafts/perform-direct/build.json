@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "sources": [
+    "src/perform.c"
+  ],
+  "strings": {},
+  "defsym": {},
+  "cflags": [],
+  "weak": [],
+  "subscribe": [
+    {
+      "event": "ev_key",
+      "fn": "pd_key",
+      "order": 10
+    }
+  ],
+  "contribute": [],
+  "collections": {},
+  "copied": [],
+  "regions": [],
+  "claims": [
+    "keys:PRESET/FUNC"
+  ],
+  "requires": [],
+  "releases": {
+    "1.17": {
+      "defsym": {},
+      "cflags": [],
+      "sites": []
+    }
+  },
+  "derive": null
+}

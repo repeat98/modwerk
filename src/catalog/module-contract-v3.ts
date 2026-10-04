@@ -33,7 +33,7 @@ export type ModwerkModule = {
   }
   tests: { report: string; summary: string }
   license: { spdx: string; file: string; declaration: string }
-  media: { path: string; kind: 'thumbnail' | 'screenshot' | 'audio'; caption: string; alt: string; credit: string; license: string; source: string; capture?: { release: string; moduleVersion: string; imageSha256: string; setup: string } }[]
+  media: { path: string; kind: 'thumbnail' | 'screenshot' | 'audio'; caption: string; alt: string; credit: string; license: string; source: string; capture?: { release: string; moduleVersion: string; imageSha256: string; setup: string }; otUi?: { page: string; shows: 'location' | 'controls' | 'location-and-controls'; firmware: string; moduleVersion: string; imageSha256: string; setup: string } }[]
 }
 
 function fail(path: string, message: string): never { throw new Error(path + ': ' + message) }
@@ -160,13 +160,19 @@ export function parseModwerkModule(value: unknown, machines: readonly MachinePro
   const license = { spdx: text(licenseValue.spdx, 'module.license.spdx', 120), file: modulePath(licenseValue.file, 'module.license.file'), declaration: text(licenseValue.declaration, 'module.license.declaration', 600) }
 
   const media = list(item.media, 'module.media', 1, 24).map((entry, index) => {
-    const path = 'module.media[' + index + ']', value = object(entry, path, ['path', 'kind', 'caption', 'alt', 'credit', 'license', 'source'], ['capture'])
+    const path = 'module.media[' + index + ']', value = object(entry, path, ['path', 'kind', 'caption', 'alt', 'credit', 'license', 'source'], ['capture', 'otUi'])
     const result: ModwerkModule['media'][number] = { path: modulePath(value.path, path + '.path'), kind: choice(value.kind, path + '.kind', ['thumbnail', 'screenshot', 'audio'] as const), caption: text(value.caption, path + '.caption', 200), alt: text(value.alt, path + '.alt', 300), credit: text(value.credit, path + '.credit', 200), license: text(value.license, path + '.license', 120), source: text(value.source, path + '.source', 300) }
     if (value.capture !== undefined) {
       const capture = object(value.capture, path + '.capture', ['release', 'moduleVersion', 'imageSha256', 'setup'])
       const release = text(capture.release, path + '.capture.release', 20)
       if (!supported.includes(release)) fail(path + '.capture.release', 'expected a supported OS release')
       result.capture = { release, moduleVersion: version(capture.moduleVersion, path + '.capture.moduleVersion'), imageSha256: sha256(capture.imageSha256, path + '.capture.imageSha256'), setup: text(capture.setup, path + '.capture.setup', 600) }
+    }
+    if (value.otUi !== undefined) {
+      const ui = object(value.otUi, path + '.otUi', ['page', 'shows', 'firmware', 'moduleVersion', 'imageSha256', 'setup'])
+      result.otUi = { page: text(ui.page, path + '.otUi.page', 120), shows: choice(ui.shows, path + '.otUi.shows', ['location', 'controls', 'location-and-controls'] as const), firmware: text(ui.firmware, path + '.otUi.firmware', 20), moduleVersion: version(ui.moduleVersion, path + '.otUi.moduleVersion'), imageSha256: sha256(ui.imageSha256, path + '.otUi.imageSha256'), setup: text(ui.setup, path + '.otUi.setup', 600) }
+      if (result.kind !== 'screenshot' || !result.capture) fail(path + '.otUi', 'UI evidence must be a versioned screenshot')
+      if (result.otUi.firmware !== result.capture.release || result.otUi.moduleVersion !== result.capture.moduleVersion || result.otUi.imageSha256 !== result.capture.imageSha256 || result.otUi.setup !== result.capture.setup) fail(path + '.otUi', 'UI provenance must match the screenshot capture')
     }
     if (result.kind === 'screenshot' && !result.capture) fail(path + '.capture', 'screenshots record the OS release, module version, image and setup they show')
     return result

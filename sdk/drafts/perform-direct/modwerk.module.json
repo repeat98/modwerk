@@ -1,0 +1,196 @@
+{
+  "schemaVersion": 3,
+  "id": "perform-direct",
+  "name": "Perform Direct",
+  "version": "1.0.0-experimental",
+  "machine": "digitakt-ii",
+  "category": "system",
+  "exclusive": false,
+  "author": {
+    "github": "toonst",
+    "credits": [
+      "toonst \u2014 Digitakt II port and Perform Direct",
+      "irpina and contributors \u2014 shared elekloader core and source copyright"
+    ]
+  },
+  "maintainers": [
+    "toonst"
+  ],
+  "source": {
+    "repository": "https://github.com/toonst/elekloader",
+    "revision": "71a5156781838fb5ef1c3e963b3949b781043a0d",
+    "path": "examples/perform-direct"
+  },
+  "presentation": {
+    "label": "PERFORM DIRECT",
+    "family": "Performance",
+    "summary": "PRESET toggles Perform Kit; FUNC + PRESET opens the PRESET/KIT menu.",
+    "overview": "Swap two stock key combinations for quicker Perform Kit access on Digitakt II OS 1.17. There is no enable row or on-device bypass.",
+    "highlights": [
+      "One press to toggle Perform Kit.",
+      "FUNC + PRESET preserves access to the PRESET/KIT menu.",
+      "No added DSP or audio-render code."
+    ],
+    "usage": [
+      "Press PRESET to toggle Perform Kit.",
+      "Hold FUNC and press PRESET to open the PRESET/KIT menu.",
+      "Press NO to close the menu."
+    ]
+  },
+  "access": {
+    "location": "PRESET button; active whenever included in the build",
+    "steps": [
+      "Boot the Digitakt II OS 1.17 build containing core-dt2 and Perform Direct.",
+      "Press PRESET without FUNC to toggle Perform Kit.",
+      "Hold FUNC and press PRESET to open the PRESET/KIT menu; close with NO."
+    ],
+    "screenshots": [
+      "media/perform-kit.png",
+      "media/perform-off.png",
+      "media/preset-kit.png"
+    ]
+  },
+  "controls": [
+    {
+      "name": "PRESET",
+      "default": null,
+      "doc": "Toggles Perform Kit without FUNC.",
+      "labels": null
+    },
+    {
+      "name": "FUNC + PRESET",
+      "default": null,
+      "doc": "Opens the PRESET/KIT menu.",
+      "labels": null
+    }
+  ],
+  "compatibility": {
+    "releases": [
+      "1.17"
+    ],
+    "requires": [],
+    "conflicts": [],
+    "limitations": [
+      "No on-device bypass or PERSONALIZE enable row.",
+      "Another PRESET/FUNC key handler needs combination review.",
+      "Publication and firmware downloads are pending qualification."
+    ]
+  },
+  "platform": {
+    "kind": "elemod",
+    "core": "1.0",
+    "build": "build.json",
+    "events": [
+      "ev_key"
+    ],
+    "claims": [
+      "keys:PRESET/FUNC"
+    ]
+  },
+  "resources": {
+    "memoryBytes": 28,
+    "fastBytes": 0,
+    "load": {
+      "display": "Worst-case cycles not measured",
+      "method": "unmeasured",
+      "conditions": "Maximum project load and repeated PRESET/FUNC mode changes; no measured timing claim."
+    }
+  },
+  "evidence": {
+    "tier": "none",
+    "moduleVersion": "1.0.0-experimental",
+    "sourceSha256": null,
+    "reports": [],
+    "hardware": null,
+    "verifiedBy": null
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "Actual emulator LCD captures and compiled memory accounting completed; worst-case cycles, exact-version hardware stress, owner review and browser/native parity remain pending."
+  },
+  "license": {
+    "spdx": "GPL-2.0-or-later",
+    "file": "LICENSE",
+    "declaration": "Pinned original source from toonst/elekloader PR #38, preserving irpina and contributors copyright and GPL-2.0-or-later terms. No stock firmware imported."
+  },
+  "media": [
+    {
+      "path": "presentation/thumbnail.svg",
+      "kind": "thumbnail",
+      "caption": "One-button Perform Kit access",
+      "alt": "PRESET reaches Perform Kit directly; FUNC plus PRESET opens the kit menu.",
+      "credit": "Modwerk",
+      "license": "GPL-3.0-or-later",
+      "source": "Original Modwerk vector illustration, 4 October 2026."
+    },
+    {
+      "path": "media/perform-kit.png",
+      "kind": "screenshot",
+      "caption": "Perform Kit ON after PRESET",
+      "alt": "A01 displays Perform Kit=ON on the SRC page after pressing PRESET.",
+      "credit": "Modwerk capture; underlying UI by Elektron",
+      "license": "Contributor capture declaration; underlying Elektron rights reserved; owner reuse review pending",
+      "source": "original",
+      "capture": {
+        "release": "1.17",
+        "moduleVersion": "1.0.0-experimental",
+        "imageSha256": "52f4d96d471ed90c8f0ee2cef0a2a0023769bca8e7bc5fb1057d6e0729c0264e",
+        "setup": "digiemu DT2 panel, fresh disposable formatted +Drive, A01/track 1, stopped transport; real 128x64 framebuffer at integer scale 6; GUI intro PIT3 delivery."
+      },
+      "otUi": {
+        "page": "SRC / Perform Kit ON",
+        "shows": "location-and-controls",
+        "firmware": "1.17",
+        "moduleVersion": "1.0.0-experimental",
+        "imageSha256": "52f4d96d471ed90c8f0ee2cef0a2a0023769bca8e7bc5fb1057d6e0729c0264e",
+        "setup": "digiemu DT2 panel, fresh disposable formatted +Drive, A01/track 1, stopped transport; real 128x64 framebuffer at integer scale 6; GUI intro PIT3 delivery."
+      }
+    },
+    {
+      "path": "media/perform-off.png",
+      "kind": "screenshot",
+      "caption": "Perform Kit OFF after a second PRESET",
+      "alt": "A01 displays Perform Kit=OFF after the second PRESET press.",
+      "credit": "Modwerk capture; underlying UI by Elektron",
+      "license": "Contributor capture declaration; underlying Elektron rights reserved; owner reuse review pending",
+      "source": "original",
+      "capture": {
+        "release": "1.17",
+        "moduleVersion": "1.0.0-experimental",
+        "imageSha256": "52f4d96d471ed90c8f0ee2cef0a2a0023769bca8e7bc5fb1057d6e0729c0264e",
+        "setup": "digiemu DT2 panel, fresh disposable formatted +Drive, A01/track 1, stopped transport; real 128x64 framebuffer at integer scale 6; GUI intro PIT3 delivery."
+      },
+      "otUi": {
+        "page": "SRC / Perform Kit OFF",
+        "shows": "controls",
+        "firmware": "1.17",
+        "moduleVersion": "1.0.0-experimental",
+        "imageSha256": "52f4d96d471ed90c8f0ee2cef0a2a0023769bca8e7bc5fb1057d6e0729c0264e",
+        "setup": "digiemu DT2 panel, fresh disposable formatted +Drive, A01/track 1, stopped transport; real 128x64 framebuffer at integer scale 6; GUI intro PIT3 delivery."
+      }
+    },
+    {
+      "path": "media/preset-kit.png",
+      "kind": "screenshot",
+      "caption": "PRESET/KIT menu via FUNC + PRESET",
+      "alt": "The real PRESET and KIT menu shows LOAD, SAVE, MANAGE and POOL.",
+      "credit": "Modwerk capture; underlying UI by Elektron",
+      "license": "Contributor capture declaration; underlying Elektron rights reserved; owner reuse review pending",
+      "source": "original",
+      "capture": {
+        "release": "1.17",
+        "moduleVersion": "1.0.0-experimental",
+        "imageSha256": "52f4d96d471ed90c8f0ee2cef0a2a0023769bca8e7bc5fb1057d6e0729c0264e",
+        "setup": "digiemu DT2 panel, fresh disposable formatted +Drive, A01/track 1, stopped transport; real 128x64 framebuffer at integer scale 6; GUI intro PIT3 delivery."
+      },
+      "otUi": {
+        "page": "PRESET/KIT",
+        "shows": "location-and-controls",
+        "firmware": "1.17",
+        "moduleVersion": "1.0.0-experimental",
+        "imageSha256": "52f4d96d471ed90c8f0ee2cef0a2a0023769bca8e7bc5fb1057d6e0729c0264e",
+        "setup": "digiemu DT2 panel, fresh disposable formatted +Drive, A01/track 1, stopped transport; real 128x64 framebuffer at integer scale 6; GUI intro PIT3 delivery."
+      }
+    }
+  ]
+}

@@ -1,0 +1,96 @@
+{
+  "id": "core",
+  "version": "1.0",
+  "license": "GPL-2.0-or-later",
+  "title": "core",
+  "category": "Framework",
+  "author": "irpina",
+  "description": "The boot copier and the hook bus for the Digitakt II: every other mod needs it. On its own it changes nothing the unit does.",
+  "device": "digitakt-mk2",
+  "os": "1.17",
+  "sources": [
+    "src/core.s",
+    "src/settings.s",
+    "src/fast.s",
+    "src/personalize.s"
+  ],
+  "defsym": {
+    "DRAWALL": "0x4011bc96",
+    "KEYDISP": "0x40030bd0",
+    "ENCDISP": "0x40030b64",
+    "OP_NEW": "0x4011ebd0",
+    "ITEM_CTOR": "0x40115a44",
+    "MENU_ADD": "0x4011527a",
+    "FN_MGR": "0x4019d8a8",
+    "SETTINGS_RET": "0x400a5eb2",
+    "NO_DTIM0": "1",
+    "VBR_FN": "0x400019b0"
+  },
+  "sites": [
+    {
+      "addr": "0x40000538",
+      "op": "jsr",
+      "target": "boot",
+      "len": 6,
+      "stockSha256": "f0c5fc0afd892b3ec3f8803e1d875a2a22c6bb4e2cb987adc582cf8dea48c28a"
+    },
+    {
+      "addr": "0x40032ad4",
+      "op": "jsr",
+      "target": "core_tick",
+      "len": 6,
+      "stockSha256": "d62de2d39cdfa81a43ed98c5b31f513bd9f4d05b70e171edb68bc88acf8606b6"
+    },
+    {
+      "addr": "0x40032b3a",
+      "op": "jsr",
+      "target": "core_draw",
+      "len": 6,
+      "stockSha256": "1d00d27ba0545706eb28444bb5b833e9277619dc5820403a9c1885b904ec176a"
+    },
+    {
+      "addr": "0x40033d94",
+      "op": "jsr",
+      "target": "core_key",
+      "len": 6,
+      "stockSha256": "4789a0947398bdcd29628e6e4e0ef59344153f141a5dc6ece8f9a88d8fc6f4d4"
+    },
+    {
+      "addr": "0x40033dde",
+      "op": "jsr",
+      "target": "core_enc",
+      "len": 6,
+      "stockSha256": "2227d337ce7d76bad9903a1afa0febe7754f64165c1c940b94302105aa5c831b"
+    },
+    {
+      "addr": "0x400a5eac",
+      "op": "jmp",
+      "target": "core_settings",
+      "len": 6,
+      "stockSha256": "c7589861366d298dd3e07f1f5ebce25db0435f9cad638eae321d68e7542f6c74"
+    },
+    {
+      "addr": "0x4009e2a2",
+      "op": "jmp",
+      "target": "core_personalize",
+      "len": 6,
+      "stockSha256": "10552f30e94896a18c635b43b0f16452187a5e3db5b661ba3255c1ecb054fd50"
+    }
+  ],
+  "subscribe": [
+    {
+      "event": "ev_tick",
+      "fn": "core_fastcopy",
+      "order": 0
+    }
+  ],
+  "collections": {
+    "ev_tick": 4,
+    "ev_draw": 4,
+    "ev_key": 4,
+    "ev_enc": 4,
+    "ev_settings": 4,
+    "ev_personalize": 4,
+    "core_fast": 16
+  }
+}

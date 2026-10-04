@@ -1,0 +1,136 @@
+{
+  "schemaVersion": 1,
+  "status": "actual-emulator-documentation-capture; qualification-pending",
+  "capturedOn": "2026-10-04",
+  "machine": "digitakt-ii",
+  "release": "1.17",
+  "moduleVersion": "1.0.0-experimental",
+  "nativeModuleVersion": "1.0",
+  "coreVersion": "1.0",
+  "sourceRevision": "71a5156781838fb5ef1c3e963b3949b781043a0d",
+  "sourceFiles": {
+    "sdk/drafts/digitakt-ii-core/recipe.json": "8633cf949f5e5ef115fdc92a9c529dadcf98bd272ff6adb60657dab9a7b86000",
+    "sdk/drafts/perform-direct/recipe.json": "414e5e6ef707b66f1773f9445e81539d9303f55437e86559158502dba5c2986a",
+    "sdk/drafts/perform-direct/src/perform.c": "bfccd655145eeb742a8bcd6378c21e052de637021bc834435f357c383a0087ec",
+    "sdk/drafts/digitakt-ii-core/src/core.s": "768cd000e66860da8a654592e8cd7ed44f39fe5a2a53089b878878082ab66e75",
+    "sdk/drafts/digitakt-ii-core/src/settings.s": "629ef344d3ef2e29edf721431147d42f718f00e127111cdf71e431f811df4f76",
+    "sdk/drafts/digitakt-ii-core/src/fast.s": "96fc437340b63289ad269bf03d66540cd500987be2d0611b37748accb0621f18",
+    "sdk/drafts/digitakt-ii-core/src/personalize.s": "583f0925914ac8d0689b705ebf825c820231a61e319829001f93b3c6758ab797",
+    "sdk/drafts/digitakt-ii-core/loader/elekloader/devices/__init__.py": "d78433b32d5d4f3afee4bc37edf7072097f05b88c56dfb770c46fbf282305e21",
+    "sdk/drafts/digitakt-ii-core/loader/elekloader/devices/digitakt_mk2.py": "e074140afb03958610c9d018064ba0b840db6ec0e4974b67b87627445f3f40b5",
+    "sdk/drafts/digitakt-ii-core/loader/elekloader/syx.py": "af8ccc0949b82135d9c591e0f983b50966c629037105305021b316f224e51deb"
+  },
+  "stockSha256": "26c22f6652625ac2cfd47f7ee970d388ed8b6427dae3563c0a6a2f2d334350d5",
+  "imageSha256": "52f4d96d471ed90c8f0ee2cef0a2a0023769bca8e7bc5fb1057d6e0729c0264e",
+  "syxSha256": "d9a7d90d2f9750c04942d99238aeba9134d1739ab9cbc834102c169365690db1",
+  "emulator": {
+    "repository": "https://github.com/irpina/digiemu",
+    "revision": "c1b5735835923e328f8b4950d6ba927875e5b669",
+    "guiRunnerSha256": "b561aa353ea145581715a3382817efa85a943cb45e2e8afb0122df7807ae48ea",
+    "bootstrapSha256": "f6133addd778e7bfcd1c8a32174ce6e4a1548b993c60172059e3e001e93fdc88"
+  },
+  "toolchain": "m68k-elf-gcc 16.2.0; Python 3.12; local patched Unicorn emulator",
+  "tools": {
+    "scripts/prepare-digitakt-ii-draft.py": "72a3656bb8481c139026eaa5c7fb65479e8f923463cbdab0a36ba21e0f1f4cae",
+    "scripts/capture-digitakt-ii-ui.py": "dbd7045f061391e7a0801cd743177935339d18f24fe1a8cec2045aefb6e3a031"
+  },
+  "setup": "digiemu DT2 panel, fresh disposable formatted +Drive, A01/track 1, stopped transport; real 128x64 framebuffer at integer scale 6; GUI intro PIT3 delivery.",
+  "pixelSize": [
+    128,
+    64
+  ],
+  "scale": 6,
+  "screenshotStyle": "black-and-white",
+  "build": {
+    "versionLabel": "PD10",
+    "recipes": [
+      "sdk/drafts/digitakt-ii-core/recipe.json",
+      "sdk/drafts/perform-direct/recipe.json"
+    ],
+    "memory": {
+      "method": "native linked capture-build layout and m68k-elf-objdump section sizes",
+      "imageSha256": "52f4d96d471ed90c8f0ee2cef0a2a0023769bca8e7bc5fb1057d6e0729c0264e",
+      "module": {
+        "ddr": {
+          "start": "0x47F001E0",
+          "endExclusive": "0x47F001FC",
+          "bytes": 28
+        },
+        "bssBytes": 0,
+        "fastBytes": 0
+      },
+      "combined": {
+        "ddrRuntimeAndTables": {
+          "start": "0x47F00000",
+          "endExclusive": "0x47F0022C",
+          "bytes": 556
+        },
+        "ddrBss": {
+          "start": "0x47F0022C",
+          "endExclusive": "0x47F00240",
+          "bytes": 20
+        },
+        "ddrTotalBytes": 576,
+        "fastBytes": 0,
+        "bootBytes": 50,
+        "flashBlobBytes": 620,
+        "ddrBudgetBytes": 262144,
+        "ddrRemainingBytes": 261568,
+        "fastRegion": "0x8000F100-0x80010000",
+        "fastBudgetBytes": 3840
+      },
+      "limitations": [
+        "Linked allocations only; not a measurement of stock OS usage, runtime stack high-water marks or CPU load.",
+        "Owner verification and full qualification pending."
+      ]
+    }
+  },
+  "panel": {
+    "inputs": [
+      "20M:press:7",
+      "24M:release:7",
+      "44M:press:7",
+      "48M:release:7",
+      "65M:press:17",
+      "72M:press:7",
+      "76M:release:7",
+      "80M:release:17"
+    ],
+    "captures": [
+      "40M:perform-kit.png",
+      "60M:perform-off.png",
+      "105M:preset-kit.png"
+    ]
+  },
+  "screenshots": [
+    {
+      "path": "media/perform-kit.png",
+      "sha256": "d619e7b06e253a0e4ab65f8b544e090328456210acc934ba8a5a4d26b59a9318",
+      "page": "SRC / Perform Kit ON",
+      "shows": "location-and-controls"
+    },
+    {
+      "path": "media/perform-off.png",
+      "sha256": "d80e755ca6df3329641216b5c69f525ec2768cb578ab877139b94699ebf771cc",
+      "page": "SRC / Perform Kit OFF",
+      "shows": "controls"
+    },
+    {
+      "path": "media/preset-kit.png",
+      "sha256": "5272a8a79a8a8861c898d68350f9463b2024af3c0fa04bdee03f67e5305191f4",
+      "page": "PRESET/KIT",
+      "shows": "location-and-controls"
+    }
+  ],
+  "contributorDeclaration": "Original framebuffer exports made through real panel events in a network-denied disposable local sandbox. No redrawn labels, guest RAM patching or internal menu calls. Only reviewed PNGs and sanitized metadata retained. Capture contribution may be reused by Modwerk; underlying Elektron and other parties rights remain reserved and need owner verification. Review is not legal clearance.",
+  "limitations": [
+    "Documentation captures only, stopped transport and a fresh scratch card; no DSP/audio safety or stress claim.",
+    "The stock headless intro failed to reach a live GUI with held timers. GUI PIT3 delivery reached the real LCD; the failed attempt was discarded.",
+    "Emulator captures do not replace the required real-hardware stress project, worst-case cycle counts, browser/native byte parity/rejections or owner approval."
+  ],
+  "loader": {
+    "record": "sdk/drafts/digitakt-ii-core/loader/UPSTREAM.json",
+    "revision": "71a5156781838fb5ef1c3e963b3949b781043a0d",
+    "approvedBrowserEngineUnchanged": true
+  }
+}

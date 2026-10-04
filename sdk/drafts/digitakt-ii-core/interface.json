@@ -1,0 +1,62 @@
+{
+  "schemaVersion": 1,
+  "machine": "digitakt-ii",
+  "interface": "1.0",
+  "status": "Pending source draft from elekloader PR #38; excluded from native discovery, CI and public builds.",
+  "events": [
+    {
+      "name": "ev_tick",
+      "when": "UI compose check",
+      "handler": "void f(void *ctrl)"
+    },
+    {
+      "name": "ev_draw",
+      "when": "after the OS draws the screen",
+      "handler": "void f(void *bmp, void *ctrl)"
+    },
+    {
+      "name": "ev_key",
+      "when": "before stock key dispatch",
+      "handler": "int f(void *brain, void *event)"
+    },
+    {
+      "name": "ev_enc",
+      "when": "before stock encoder dispatch",
+      "handler": "int f(void *brain, void *event)"
+    },
+    {
+      "name": "ev_settings",
+      "when": "building SETTINGS",
+      "handler": "void f(void *menu)"
+    },
+    {
+      "name": "ev_personalize",
+      "when": "building SETTINGS > PERSONALIZE after TRK SELECT",
+      "handler": "void f(void *menu)"
+    }
+  ],
+  "tables": [
+    {
+      "name": "core_fast",
+      "entry": 16,
+      "purpose": "Copies each fast section into SRAM at the first ev_tick."
+    }
+  ],
+  "exports": [
+    {
+      "name": "core_additem",
+      "prototype": "void core_additem(void *menu, void *row)",
+      "purpose": "Add a SETTINGS or PERSONALIZE row."
+    },
+    {
+      "name": "core_zero",
+      "prototype": "zero-filled data",
+      "purpose": "Weak imports resolve to zero."
+    }
+  ],
+  "claims": [],
+  "memory": {
+    "area": "0x47F00000-0x47F40000",
+    "fast": "0x8000F100-0x80010000"
+  }
+}

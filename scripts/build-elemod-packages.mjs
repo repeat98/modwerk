@@ -58,7 +58,7 @@ function fastStubs(derive) {
   return lines.join('\n') + '\n'
 }
 await mkdir(output, { recursive: true })
-for (const machine of machines.filter(item => item.sdk?.platform === 'elemod')) {
+for (const machine of machines.filter(item => item.sdk?.platform === 'elemod' && ['preview', 'available'].includes(item.status))) {
   const device = LINK_DEVICES.find(item => item.machine === machine.id)
   if (!device) throw new Error('No linker profile for ' + machine.id)
   const folderRoot = resolve(root, machine.sdk.modules)

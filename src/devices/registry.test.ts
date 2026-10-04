@@ -10,10 +10,11 @@ describe('device registry', () => {
     for (const device of DEVICES) for (const step of DEVICE_STEPS) expect(device.steps[step.id]).toMatch(/^(done|started|open)$/)
   })
 
-  it('only claims firmware details and finished steps for machines with mods', () => {
+  it('keeps first-mod publication separate from known firmware and upstream research', () => {
     for (const device of DEVICES) {
       const hasMods = device.status === 'available' || device.status === 'preview'
-      expect(!!device.firmware).toBe(hasMods)
+      if (hasMods) expect(device.firmware).toBeDefined()
+      if (device.firmware) expect(device.steps.format).toBe('done')
       if (!hasMods) expect(device.steps.mods).toBe('open')
     }
   })

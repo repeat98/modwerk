@@ -1,0 +1,64 @@
+{
+  "schemaVersion": 1,
+  "moduleVersion": "1.0.0-experimental",
+  "nativeVersion": "1.0",
+  "sourceRevision": "71a5156781838fb5ef1c3e963b3949b781043a0d",
+  "status": "pending",
+  "worstCaseCycles": null,
+  "memory": {
+    "method": "native linked capture-build layout and m68k-elf-objdump section sizes",
+    "imageSha256": "52f4d96d471ed90c8f0ee2cef0a2a0023769bca8e7bc5fb1057d6e0729c0264e",
+    "module": {
+      "ddr": {
+        "start": "0x47F001E0",
+        "endExclusive": "0x47F001FC",
+        "bytes": 28
+      },
+      "bssBytes": 0,
+      "fastBytes": 0
+    },
+    "combined": {
+      "ddrRuntimeAndTables": {
+        "start": "0x47F00000",
+        "endExclusive": "0x47F0022C",
+        "bytes": 556
+      },
+      "ddrBss": {
+        "start": "0x47F0022C",
+        "endExclusive": "0x47F00240",
+        "bytes": 20
+      },
+      "ddrTotalBytes": 576,
+      "fastBytes": 0,
+      "bootBytes": 50,
+      "flashBlobBytes": 620,
+      "ddrBudgetBytes": 262144,
+      "ddrRemainingBytes": 261568,
+      "fastRegion": "0x8000F100-0x80010000",
+      "fastBudgetBytes": 3840
+    },
+    "limitations": [
+      "Linked allocations only; not a measurement of stock OS usage, runtime stack high-water marks or CPU load.",
+      "Owner verification and full qualification pending."
+    ]
+  },
+  "hardwareStress": null,
+  "browserNativeParity": null,
+  "ownerApproval": null,
+  "documentation": {
+    "tutorial": "one-button Perform Kit",
+    "steps": [
+      "Boot a build with core-dt2 and Perform Direct; select a kit.",
+      "Press PRESET to toggle Perform Kit.",
+      "Hold FUNC and press PRESET for the PRESET/KIT menu; close with NO."
+    ],
+    "screenshotStyle": "black-and-white",
+    "screenshots": [
+      "media/perform-kit.png",
+      "media/perform-off.png",
+      "media/preset-kit.png"
+    ]
+  },
+  "moduleSourceSha256": "bfccd655145eeb742a8bcd6378c21e052de637021bc834435f357c383a0087ec",
+  "localBuildSha256": "52f4d96d471ed90c8f0ee2cef0a2a0023769bca8e7bc5fb1057d6e0729c0264e"
+}

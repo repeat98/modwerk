@@ -245,13 +245,25 @@ function Hero({ device, children }: { device: DeviceProfile; children?: ReactNod
   )
 }
 
+function PendingDigitaktIiFirmware({ device }: { device: DeviceProfile }) {
+  const firmware = useDigiFirmware('digitakt-ii')
+  return <section className="configuration-section" aria-labelledby="pending-firmware-title">
+    <div className="section-title"><h2 id="pending-firmware-title">Base firmware</h2><span className="subtle">Read locally</span></div>
+    <DigiFirmwarePanel name={device.name} releases={device.firmware?.releases ?? []} firmware={firmware} />
+    <p className="combination-footnote">Firmware builds and downloads will open after the first mod is qualified and reviewed.</p>
+  </section>
+}
+
 // Machines without mods: the library page becomes an invitation to open the first one.
 export function EmptyMachine({ device }: { device: DeviceProfile }) {
   const repository = issueRepository()
   return (
     <div className="device-page">
       <Hero device={device}><div className="device-hero-actions"><a className="button button-primary" href={repository + '/blob/main/docs/ADD_A_MACHINE.md'} target="_blank" rel="noreferrer"><Icon name="plus" size={16} />Open a device PR</a><a className="button button-quiet" href="#forum"><Icon name="message" size={16} />Discuss in the forum</a></div></Hero>
-      <section className="device-invite"><h2>Be the first to mod the {device.name}</h2><p>Nobody has published a working mod for this machine yet. Modwerk never hosts firmware: every build starts from the stock OS file each owner downloads from Elektron, so the work is in understanding that file and sharing only your own code.</p></section>
+      {device.id === 'digitakt-ii' ? <>
+        <section className="device-invite"><h2>Perform Direct is in review</h2><p>Press PRESET to toggle Perform Kit; hold FUNC and press PRESET to open the PRESET/KIT menu. The author reports it working on a Digitakt II. Modwerk’s release is being prepared.</p></section>
+        <PendingDigitaktIiFirmware device={device} />
+      </> : <section className="device-invite"><h2>Be the first to mod the {device.name}</h2><p>Nobody has published a working mod for this machine yet. Modwerk never hosts firmware: every build starts from the stock OS file each owner downloads from Elektron, so the work is in understanding that file and sharing only your own code.</p></section>}
       <section className="configuration-section" aria-labelledby="ladder-title">
         <div className="section-title"><h2 id="ladder-title">Road to the first mod</h2><span className="subtle">{stepsDone(device)} of {DEVICE_STEPS.length} done</span></div>
         <ol className="device-ladder">{DEVICE_STEPS.map((step, index) => { const state = device.steps[step.id]; return <li key={step.id} className={'is-' + state}><span className="device-ladder-marker">{state === 'done' ? <Icon name="check" size={14} /> : index + 1}</span><span><strong>{step.title}</strong><small>{step.description}</small></span><span className={'device-step-state is-' + state}>{STEP_LABELS[state]}</span></li> })}</ol>
