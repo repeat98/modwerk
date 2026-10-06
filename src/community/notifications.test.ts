@@ -159,7 +159,7 @@ describe('activity notifications', () => {
 
   it('defaults to email on and unsubscribes with the signed one-click link, without a session or Origin', async () => {
     const { call, env, member, digests } = await fixture(), author = await member('authorone'), other = await member('othertwo')
-    expect(await (await call('/notifications/preferences', 'GET', undefined, author.session)).json()).toEqual({ emailEnabled: true, frequency: 'hours', replies: true, likes: true, modules: true, bugs: true, updates: true, emailAvailable: true })
+    expect(await (await call('/notifications/preferences', 'GET', undefined, author.session)).json()).toEqual({ emailEnabled: true, frequency: 'hours', replies: true, likes: true, modules: true, bugs: true, updates: true, messages: true, emailAvailable: true })
     expect((await call('/notifications/preferences', 'PATCH', { frequency: 'weekly' }, author.session)).status).toBe(400)
     expect((await call('/notifications/preferences', 'PATCH', { likes: 'no' }, author.session)).status).toBe(400)
     const { id } = await (await call('/forum/threads', 'POST', thread, author.session)).json()

@@ -1,4 +1,4 @@
-export type IconName = 'bell' | 'grid' | 'wave' | 'sliders' | 'search' | 'plus' | 'check' | 'arrow' | 'back' | 'download' | 'file' | 'shield' | 'star' | 'close' | 'message' | 'help' | 'heart' | 'bookmark' | 'pin' | 'lock' | 'quote' | 'play' | 'pause' | 'image'
+export type IconName = 'bell' | 'grid' | 'wave' | 'sliders' | 'search' | 'plus' | 'check' | 'arrow' | 'back' | 'download' | 'file' | 'shield' | 'star' | 'close' | 'message' | 'help' | 'heart' | 'bookmark' | 'pin' | 'lock' | 'quote' | 'play' | 'pause' | 'image' | 'mail'
 const paths: Record<IconName, string> = {
   bell: 'M6 9a6 6 0 1 1 12 0c0 6 3 8 3 8H3s3-2 3-8M10.3 21a2 2 0 0 0 3.4 0',
   bookmark: 'M6 3h12v18l-6-4-6 4z',
@@ -20,6 +20,7 @@ const paths: Record<IconName, string> = {
   star: 'm12 3 2.8 5.8 6.4.9-4.6 4.5 1.1 6.4L12 17.5l-5.7 3.1 1.1-6.4L2.8 9.7l6.4-.9z',
   close: 'm6 6 12 12M6 18 18 6',
   message: 'M4 4h16v13H9l-5 4z',
+  mail: 'M3 5h18v14H3zm0 0 9 7 9-7',
   image: 'M3 5h18v14H3zm0 10 5-5 4 4 3-3 6 6M15.5 9.5h.01',
   play: 'M7 4.5v15L19.5 12z',
   pause: 'M8 5v14M16 5v14',

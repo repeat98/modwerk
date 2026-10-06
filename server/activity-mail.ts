@@ -18,7 +18,7 @@ export function activityMailLimit(env: Env) {
 }
 const ITEMS_PER_DIGEST = 40, MEMBERS_PER_RUN = 50
 
-type Candidate = { id: string; email: string; replies: number; likes: number; modules: number; bugs: number; updates: number }
+type Candidate = { id: string; email: string; replies: number; likes: number; modules: number; bugs: number; updates: number; messages: number }
 
 /** Run hourly: at most one digest per member per 6 or 24 hours, covering what they have not already seen in the bell. */
 export async function sendActivityDigests(env: Env, db: Database, now = new Date()) {
@@ -27,7 +27,7 @@ export async function sendActivityDigests(env: Env, db: Database, now = new Date
   await db.prepare('UPDATE notifications SET emailed=1 WHERE emailed=0 AND (seen=1 OR created_at<?)').bind(hoursBefore(now, 24 * 7)).run()
   // A short wait lets a burst arrive as one digest and lets members who are online read it in the bell first.
   const settled = hoursBefore(now, 1 / 6)
-  const candidates = (await db.prepare(`SELECT a.id,a.email,COALESCE(p.replies,1) AS replies,COALESCE(p.likes,1) AS likes,COALESCE(p.modules,1) AS modules,COALESCE(p.bugs,1) AS bugs,COALESCE(p.updates,1) AS updates
+  const candidates = (await db.prepare(`SELECT a.id,a.email,COALESCE(p.replies,1) AS replies,COALESCE(p.likes,1) AS likes,COALESCE(p.modules,1) AS modules,COALESCE(p.bugs,1) AS bugs,COALESCE(p.updates,1) AS updates,COALESCE(p.messages,1) AS messages
     FROM auth_users a JOIN users u ON u.id=a.id LEFT JOIN notification_preferences p ON p.user_id=a.id
     WHERE a.emailVerified=1 AND u.suspended=0 AND u.username IS NOT NULL AND COALESCE(p.email_enabled,1)=1
     AND NOT EXISTS(SELECT 1 FROM social_pending_accounts s WHERE s.user_id=a.id)

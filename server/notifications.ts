@@ -48,27 +48,31 @@ export function notifyModuleMaintainers(db: Database, moduleId: string, kind: 'm
   const { recipients, values } = moduleDevelopers(module, actorId)
   return [db.prepare(`INSERT INTO notifications(id,user_id,kind,actor_id,module_id,comment_id) SELECT ${newId},user_id,?,?,?,? FROM (${recipients}) WHERE 1 ON CONFLICT DO NOTHING`).bind(kind, actorId, module.id, commentId, ...values)]
 }
+/** One bell entry per conversation until the recipient reads it: further messages while the first is unread stay quiet. */
+export function notifyMessage(db: Database, messageId: string, conversationId: string, senderId: string, recipientId: string) {
+  return db.prepare(`INSERT INTO notifications(id,user_id,kind,actor_id,message_id) SELECT ${newId},?,'message',?,? WHERE NOT EXISTS(SELECT 1 FROM notifications n JOIN messages m ON m.id=n.message_id WHERE n.user_id=? AND n.kind='message' AND n.seen=0 AND m.conversation_id=?)`).bind(recipientId, senderId, messageId, recipientId, conversationId)
+}
 export function withdrawModuleLike(db: Database, moduleId: string, actorId: string) {
   return db.prepare("DELETE FROM notifications WHERE kind='module_like' AND module_id=? AND actor_id=? AND seen=0 AND emailed=0").bind(moduleId, actorId)
 }
 
 /** Notifications whose content was hidden or removed, or whose actor was suspended, are not shown or mailed. */
-export const VISIBLE = "(n.thread_id IS NULL OR t.hidden=0) AND (n.post_id IS NULL OR p.hidden=0) AND (n.kind<>'module_comment' OR c.id IS NOT NULL) AND (a.id IS NULL OR a.suspended=0 OR a.username IS NULL)"
+export const VISIBLE = "(n.thread_id IS NULL OR t.hidden=0) AND (n.post_id IS NULL OR p.hidden=0) AND (n.kind<>'module_comment' OR c.id IS NOT NULL) AND (a.id IS NULL OR a.suspended=0 OR a.username IS NULL) AND (n.kind<>'message' OR (dm.id IS NOT NULL AND dm.hidden=0))"
 export const ITEM_SQL = `SELECT n.id,n.kind,n.seen,n.created_at,n.thread_id,n.post_id,n.module_id,n.module_version,a.username AS actor,a.id='${SYSTEM_AUTHOR}' AS actor_official,COALESCE(t.title,i.title,m.name) AS title,
- CASE WHEN n.kind IN ('reply','mention','bug_report') THEN substr(p.body,1,200) WHEN n.kind='module_comment' THEN substr(c.body,1,200) WHEN n.kind='issue_comment' THEN substr(n.excerpt,1,200) END AS excerpt,
+ CASE WHEN n.kind IN ('reply','mention','bug_report') THEN substr(p.body,1,200) WHEN n.kind='module_comment' THEN substr(c.body,1,200) WHEN n.kind='issue_comment' THEN substr(n.excerpt,1,200) WHEN n.kind='message' THEN substr(dm.body,1,200) END AS excerpt,
  CASE WHEN n.kind='module_rating' THEN r.value END AS rating,n.issue_id,n.github_actor,COALESCE(i.github_url,m.href) AS url,
  (SELECT CAST(COUNT(*)/30 AS INTEGER) FROM forum_posts preceding WHERE preceding.thread_id=p.thread_id AND (preceding.created_at<p.created_at OR (preceding.created_at=p.created_at AND preceding.rowid<p.rowid))) AS post_page
  FROM notifications n LEFT JOIN users a ON a.id=n.actor_id LEFT JOIN forum_threads t ON t.id=n.thread_id LEFT JOIN forum_posts p ON p.id=n.post_id
  LEFT JOIN comments c ON c.id=n.comment_id LEFT JOIN ratings r ON n.kind='module_rating' AND r.module_id=n.module_id AND r.user_id=n.actor_id
- LEFT JOIN issues i ON i.id=n.issue_id LEFT JOIN module_releases m ON n.kind='module_update' AND m.module_id=n.module_id AND m.version=n.module_version`
+ LEFT JOIN issues i ON i.id=n.issue_id LEFT JOIN module_releases m ON n.kind='module_update' AND m.module_id=n.module_id AND m.version=n.module_version LEFT JOIN messages dm ON dm.id=n.message_id`
 type Row = Omit<NotificationItem, 'seen' | 'actorOfficial'> & { seen: number; actor_official: number | null }
 export const toItem = ({ actor_official, seen, ...row }: Row): NotificationItem => ({ ...row, seen: !!seen, actorOfficial: !!actor_official })
 
-export const PREFERENCE_DEFAULTS = { emailEnabled: true, frequency: 'hours', replies: true, likes: true, modules: true, bugs: true, updates: true } as const
-type PreferenceRow = { email_enabled: number; frequency: 'hours' | 'daily'; replies: number; likes: number; modules: number; bugs: number; updates: number }
+export const PREFERENCE_DEFAULTS = { emailEnabled: true, frequency: 'hours', replies: true, likes: true, modules: true, bugs: true, updates: true, messages: true } as const
+type PreferenceRow = { email_enabled: number; frequency: 'hours' | 'daily'; replies: number; likes: number; modules: number; bugs: number; updates: number; messages: number }
 export function preferencesFrom(row: PreferenceRow | null): Omit<NotificationPreferences, 'emailAvailable'> {
   if (!row) return { ...PREFERENCE_DEFAULTS }
-  return { emailEnabled: !!row.email_enabled, frequency: row.frequency, replies: !!row.replies, likes: !!row.likes, modules: !!row.modules, bugs: !!row.bugs, updates: !!row.updates }
+  return { emailEnabled: !!row.email_enabled, frequency: row.frequency, replies: !!row.replies, likes: !!row.likes, modules: !!row.modules, bugs: !!row.bugs, updates: !!row.updates, messages: !!row.messages }
 }
 
 async function unsubscribeMac(secret: string, userId: string) {
@@ -88,8 +92,8 @@ async function unsubscribeUser(secret: string, value: unknown) {
 }
 export async function savePreferences(db: Database, userId: string, values: Partial<Omit<NotificationPreferences, 'emailAvailable'>>) {
   const current = preferencesFrom(await db.prepare('SELECT * FROM notification_preferences WHERE user_id=?').bind(userId).first<PreferenceRow>()), next = { ...current, ...values }
-  await db.prepare('INSERT INTO notification_preferences(user_id,email_enabled,frequency,replies,likes,modules,bugs,updates,changed_at) VALUES(?,?,?,?,?,?,?,?,CURRENT_TIMESTAMP) ON CONFLICT(user_id) DO UPDATE SET email_enabled=excluded.email_enabled,frequency=excluded.frequency,replies=excluded.replies,likes=excluded.likes,modules=excluded.modules,bugs=excluded.bugs,updates=excluded.updates,changed_at=excluded.changed_at')
-    .bind(userId, Number(next.emailEnabled), next.frequency, Number(next.replies), Number(next.likes), Number(next.modules), Number(next.bugs), Number(next.updates)).run()
+  await db.prepare('INSERT INTO notification_preferences(user_id,email_enabled,frequency,replies,likes,modules,bugs,updates,messages,changed_at) VALUES(?,?,?,?,?,?,?,?,?,CURRENT_TIMESTAMP) ON CONFLICT(user_id) DO UPDATE SET email_enabled=excluded.email_enabled,frequency=excluded.frequency,replies=excluded.replies,likes=excluded.likes,modules=excluded.modules,bugs=excluded.bugs,updates=excluded.updates,messages=excluded.messages,changed_at=excluded.changed_at')
+    .bind(userId, Number(next.emailEnabled), next.frequency, Number(next.replies), Number(next.likes), Number(next.modules), Number(next.bugs), Number(next.updates), Number(next.messages)).run()
   return next
 }
 
@@ -136,7 +140,7 @@ export async function notificationRoutes(request: Request, env: Env, db: Databas
   if (path === '/api/notifications/preferences') {
     if (request.method === 'PATCH') {
       const body = await jsonBody(request), values: Partial<Omit<NotificationPreferences, 'emailAvailable'>> = {}
-      for (const key of ['emailEnabled', 'replies', 'likes', 'modules', 'bugs', 'updates'] as const) {
+      for (const key of ['emailEnabled', 'replies', 'likes', 'modules', 'bugs', 'updates', 'messages'] as const) {
         if (body[key] === undefined) continue
         if (typeof body[key] !== 'boolean') throw new HttpError(400, 'Choose on or off for each email setting.')
         values[key] = body[key]
