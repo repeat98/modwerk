@@ -3,15 +3,37 @@
   "id": "model-cycles",
   "order": 150,
   "name": "Model:Cycles",
-  "status": "open",
-  "summary": "Six-track FM groovebox. No public firmware research yet.",
+  "status": "research",
+  "summary": "Six-track FM groovebox. Its OS file is documented and rebuilt byte for byte, and modified builds boot on units. No shared core yet.",
   "steps": {
-    "format": "open",
-    "rebuild": "open",
-    "boot": "open",
+    "format": "done",
+    "rebuild": "done",
+    "boot": "done",
     "core": "open",
     "mods": "open"
   },
+  "research": [
+    {
+      "label": "elektron-firmware-tool",
+      "url": "https://github.com/mischa85/elektron-firmware-tool",
+      "note": "Documents the OS container, SysEx transport, packing and HMAC trailer, and reads Model:Cycles files. Its repack rebuilds the stock OS 1.13 file byte for byte."
+    },
+    {
+      "label": "Modded-Cycles",
+      "url": "https://github.com/18nelli18/Modded-Cycles",
+      "note": "Research notes, address map and emulated tests for Model:Cycles OS 1.13, modified builds flashed on units, and recovery through the startup menu with the stock file."
+    },
+    {
+      "label": "Model-TG",
+      "url": "https://github.com/TinyGregAudio/Model-TG",
+      "note": "Extensive modification of Model:Cycles OS 1.13, including a sampler machine, built and signed by its own flasher and run on units."
+    },
+    {
+      "label": "elektron-model-tweaks",
+      "url": "https://github.com/drumkilla/elektron-model-tweaks",
+      "note": "Byte-level tweaks for Model:Cycles and Model:Samples OS 1.13, each listing the original and the new bytes."
+    }
+  ],
   "art": {
     "body": "model",
     "encoders": 0,
