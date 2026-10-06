@@ -10,6 +10,8 @@ import { DIGI_MODS } from './digi-mods'
 import { AllMachinesLibrary, DigiLibrary } from './MachinePages'
 
 const noop = () => {}
+// Likes and downloads show the number beside an icon; the word is there for screen readers only.
+const count = (value: string, word: string) => value + '<span class="sr-only"> ' + word + '</span>'
 const props = {
   query: '', octatrackModules: AVAILABLE_MODULES, octatrackSelected: ['miniverb'],
   onToggleOctatrack: noop, digiSelected: { digitakt: [], digitone: [] }, onToggleDigi: noop,
@@ -38,8 +40,8 @@ describe('All machines library parity', () => {
     expect(html.slice(html.indexOf('id="machine-octatrack"'),html.indexOf('id="machine-digitakt"'))).not.toContain('Build firmware')
     expect(html).toContain('aria-label="Build firmware for Octatrack"')
     expect(html).toContain('4.5 (2)')
-    expect(html).toContain('7 likes')
-    expect(html).toContain('12 downloads')
+    expect(html).toContain(count('7', 'likes'))
+    expect(html).toContain(count('12', 'downloads'))
     expect(html).toContain('Remove Mini Verb from configuration')
     expect(html).toContain('type="checkbox" checked=""')
   })
@@ -60,9 +62,9 @@ describe('All machines library parity', () => {
 
   it('keeps unavailable counts distinct from zero and offers a build link for each machine', () => {
     const html = renderToStaticMarkup(createElement(AllMachinesLibrary, {...props, statistics: null}))
-    expect(html).toContain('— likes')
-    expect(html).toContain('— downloads')
-    expect(html).not.toContain('0 downloads')
+    expect(html).toContain(count('—', 'likes'))
+    expect(html).toContain(count('—', 'downloads'))
+    expect(html).not.toContain(count('0', 'downloads'))
     expect(html).toContain('Popularity counts are currently unavailable.')
     expect(html.match(/aria-label="Build firmware for/g)).toHaveLength(3)
     expect(html).toContain('href="#digitakt/configuration"')
@@ -95,14 +97,14 @@ describe('Digi library parity', () => {
     const digitakt = renderToStaticMarkup(createElement(DigiLibrary, {...digiProps, sort, statistics}))
     for (const html of [all, digitakt]) {
       expect(html.indexOf('View SOPHIE')).toBeLessThan(html.indexOf('View digihealth'))
-      for (const value of ['4.8 (5)', '19 likes', '42 downloads', '3.2 (2)', '8 likes', '11 downloads']) expect(html).toContain(value)
+      for (const value of ['4.8 (5)', count('19', 'likes'), count('42', 'downloads'), '3.2 (2)', count('8', 'likes'), count('11', 'downloads')]) expect(html).toContain(value)
       expect(html).not.toContain('counts are not available yet')
     }
     const digitone = renderToStaticMarkup(createElement(DigiLibrary, {...digiProps, device: {...DEVICES_BY_ID.digitone, id: 'digitone'}, statistics}))
     for (const html of [all.slice(all.indexOf('id="machine-digitone"')), digitone]) {
-      for (const value of ['2.5 (4)', '3 likes', '7 downloads']) expect(html).toContain(value)
-      expect(html).not.toContain('8 likes')
-      expect(html).not.toContain('11 downloads')
+      for (const value of ['2.5 (4)', count('3', 'likes'), count('7', 'downloads')]) expect(html).toContain(value)
+      expect(html).not.toContain(count('8', 'likes'))
+      expect(html).not.toContain(count('11', 'downloads'))
     }
   })
 
@@ -112,13 +114,13 @@ describe('Digi library parity', () => {
       const machine = {...DEVICES_BY_ID[device], id: device}
       const loaded = renderToStaticMarkup(createElement(DigiLibrary, {...digiProps, device: machine, statistics}))
       const unavailable = renderToStaticMarkup(createElement(DigiLibrary, {...digiProps, device: machine, statistics: null}))
-      expect(loaded).toContain('0 likes')
-      expect(loaded).toContain('0 downloads')
-      expect(loaded).toContain('Unrated')
-      expect(loaded).not.toContain('— downloads')
-      expect(unavailable).toContain('— likes')
-      expect(unavailable).toContain('— downloads')
-      expect(unavailable).not.toContain('0 downloads')
+      expect(loaded).toContain(count('0', 'likes'))
+      expect(loaded).toContain(count('0', 'downloads'))
+      expect(loaded).not.toContain('is-rating')
+      expect(loaded).not.toContain(count('—', 'downloads'))
+      expect(unavailable).toContain(count('—', 'likes'))
+      expect(unavailable).toContain(count('—', 'downloads'))
+      expect(unavailable).not.toContain(count('0', 'downloads'))
     }
   })
 

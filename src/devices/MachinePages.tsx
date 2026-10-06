@@ -11,11 +11,11 @@ import { LIBRARY_CATEGORY_LABELS, STANDALONE_NOTE, type FirmwareModule, type Mod
 import { DETAILS } from '../catalog/details'
 import { AVAILABLE_MODULES } from '../catalog/availability'
 import type { SelectionConflict } from '../catalog/selection-conflicts'
-import { ModuleCard } from '../components/ModuleCard'
+import type { CardEvidence } from '../catalog/module-evidence'
+import { AddButton, CardProof, CardStats, ModuleCard } from '../components/ModuleCard'
 import { SelectionWarning } from '../components/SelectionWarning'
 import { LibraryTools } from '../components/LibraryTools'
 import { compareModules, downloadCoverage, type ModuleStatistics } from '../community/module-statistics'
-import { ModulePopularity } from '../community/ModulePopularity'
 import { DeviceImage, PhotoCredit } from './DeviceImage'
 import { DEVICES, DEVICES_BY_ID, DEVICE_STEPS, STATUS_LABELS, deviceHref, deviceTitle, stepsDone, type DeviceProfile } from './registry'
 import { DIGI_CORES, DIGI_MODS, estimateCombination, type DigiMod } from './digi-mods'
@@ -29,18 +29,20 @@ const STEP_LABELS = { done: 'Done', started: 'Started', open: 'Open' } as const
 
 function kib(bytes: number) { return (bytes / 1024).toFixed(bytes < 10240 ? 1 : 0) + ' KiB' }
 
-function DigiModCard({ mod, selected, statistics: stats, compared, canCompare, onToggle, onCompare }: { mod: DigiMod; selected: boolean; statistics?: ModuleStatistics; compared: boolean; canCompare: boolean; onToggle: () => void; onCompare: () => void }) {
+function DigiModCard({ mod, selected, statistics, compared, canCompare, onToggle, onCompare }: { mod: DigiMod; selected: boolean; statistics?: ModuleStatistics; compared: boolean; canCompare: boolean; onToggle: () => void; onCompare: () => void }) {
   const href = deviceHref(mod.device, 'module/' + mod.id)
+  const evidence: CardEvidence = mod.hardware ? { level: 'reported', label: 'Author-tested on hardware' } : { level: 'emulator', label: 'Author release, not yet tested in Modwerk' }
   return <article className={'module-card ' + (selected ? 'is-selected' : '')}>
-    <a href={href} className="module-cover" aria-label={'View ' + mod.title}><DigiModPreview mod={mod} /><div className="hover-info"><span>{mod.summary}</span><strong>Explore module <Icon name="arrow" size={15} /></strong></div>{selected && <span className="selected-badge" aria-label="Selected"><Icon name="check" size={12} /></span>}</a>
+    <a href={href} className="module-cover" aria-label={'View ' + mod.title}><DigiModPreview mod={mod} />{selected && <span className="selected-badge" aria-label="Selected"><Icon name="check" size={12} /></span>}</a>
     <div className="module-card-body">
-      <div className="module-card-title"><div className="module-card-heading"><a href={href}>{mod.title}</a><div className="card-release"><span className="card-version">v{mod.version}</span></div></div><button className={'add-button ' + (selected ? 'is-added' : '')} aria-label={(selected ? 'Remove ' : 'Add ') + mod.title + (selected ? ' from configuration' : ' to configuration')} aria-pressed={selected} onClick={onToggle}><Icon name={selected ? 'check' : 'plus'} size={15} /><span>{selected ? 'Added' : 'Add'}</span></button></div>
-      <div className="card-credit"><a href={mod.repository} target="_blank" rel="noreferrer">{mod.author}</a><span>{mod.license}</span></div>
-      <div className="card-description">{mod.summary}</div>
-      <div className="card-bottom"><span>{mod.category}</span><span>{kib(mod.ramBytes)} memory</span></div>
-      <div className="card-bottom"><span className="unrated"><Icon name="star" size={11} />{stats?.count && stats.average !== null ? stats.average.toFixed(1) + ' (' + stats.count + ')' : 'Unrated'}</span></div>
-      <ModulePopularity statistics={stats} />
-      <div className="card-proof"><span>{mod.hardware ? 'Author-tested on hardware' : 'Author release, not yet tested in Modwerk'}</span><label><input type="checkbox" checked={compared} disabled={!canCompare} onChange={onCompare} />Compare<span className="sr-only"> {mod.title} for {DEVICES_BY_ID[mod.device].name}</span></label></div>
+      <div className="module-card-title">
+        <div className="module-card-heading"><a href={href}>{mod.title}</a><div className="card-release"><span className="card-version">v{mod.version}</span></div></div>
+        <AddButton name={mod.title} selected={selected} onToggle={onToggle} />
+      </div>
+      <div className="card-meta"><span><a href={mod.repository} target="_blank" rel="noreferrer">{mod.author}</a></span><span>{mod.category}</span><span>{mod.license}</span></div>
+      <p className="card-description">{mod.summary}</p>
+      <CardStats statistics={statistics}><span className="card-stat">{kib(mod.ramBytes)} memory</span></CardStats>
+      <CardProof evidence={evidence} name={mod.title + ' for ' + DEVICES_BY_ID[mod.device].name} compared={compared} canCompare={canCompare} onCompare={onCompare} />
     </div>
   </article>
 }
