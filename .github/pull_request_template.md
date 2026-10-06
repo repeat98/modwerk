@@ -1,6 +1,7 @@
 Describe the change in behavior, module version(s), compatibility and source/media attribution.
 
-- [ ] Every changed module folder has a greater semantic version and exact catalog pin.
+- [ ] New or changed module: I read the guide for its category in `docs/module-guides/` (and `sequencing.md` if it acts in time), walked its checklists, and TESTING.md lists what I did not test. `npm run module:doctor -- <id>` is green.
+- [ ] Every code change to a module has a greater semantic version and exact catalog pin (documentation and media edits need none).
 - [ ] Source and media are original or properly licensed; authors and full licence texts are preserved.
 - [ ] No Elektron firmware, extracted routines/tables, upgrade files or other infringing material is included.
 - [ ] Every new/changed module with OT UI has real screenshots of its location and relevant control pages, manifest `access` instructions, and `media[].otUi` version/build/setup provenance. Automatic USB modules without OT UI use the narrow `access.noUiReason` declaration for reviewer verification.

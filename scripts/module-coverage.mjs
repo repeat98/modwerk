@@ -2,6 +2,24 @@
 // of every combination, so the comparison grows with the number of modules rather than doubling with each one.
 // Shared by scripts/module-verify.mjs, which runs it, and the catalog test, which requires it for new modules.
 
+
+// Compared with native octabam by the earlier every-combination suites (docs/VERIFICATION.md), at exactly this code. A change to a
+// module's code needs a record from `npm run module:verify` instead.
+export const COMPARED_BEFORE_RECORDS = {
+  miniverb: 'fb8b72025be70d4e62021a6699992f9cdeb63684cef8db66949a41f6b1d887d0',
+  tapeecho: '909110e5e066943bb304e3020775cc4fcf6e6ae36492eb7e328888938ac9a257',
+  euclid: '44e44e1575e4bbf638894ffa51b06ca739e78e0f9bb1995bfd3a77190549d5ea',
+  repitch: '21cb5bd5724890ed877c04ad2f6b5e7b554ee49904d2901960ece6d11f277437',
+  tapehead: '9b005a4f1a186cc7731c5bf973d59ebef9538190ac63fddba26f0e60c96c8646',
+  'analog-bassdrum': '24d5ebdc2c7ca54ca372c442e11fef0bd85b21d3a240dce0fc4b2ffa14e2d315',
+  'usb-audio-out-tracks-main-cue': '430ff104d1488ca5117fb6f35550f4575547355bfcd17bd13a3740d20caa3b3a',
+  quantizer: 'e7203592f0b312ac4833fec7aee714004f94a53c762a5e73f2279813520851de',
+  previewvol: '86deed960c094df1d0d2a4a9d3a955a62e804175f2f22d8ac53f5eff141aeaca',
+  'cc-map': '85ac180b75837d7681c74325b29a3a78416d3b2a8890fb6394f033c27993393d',
+}
+// Modules that do not compose with others (MIDI Scenes builds on its own) have no coverage comparison.
+export const NOT_COMPOSED = ['midi-scenes']
+
 /** The modules a new module is compared beside: every offered module except MIDI Scenes, which only builds alone. */
 export function comparisonPool(availableIds) {
   return availableIds.filter(id => id !== 'midi-scenes')

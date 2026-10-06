@@ -4,7 +4,7 @@ Contribute modules, fixes, documentation, screenshots and audio as pull requests
 
 ## Modules
 
-Follow [Add or port a module](docs/ADD_A_MODULE.md). It covers porting from octabam or elekloader and writing your own, for every machine, with the commands to run.
+Follow [Add or port a module](docs/ADD_A_MODULE.md). It covers porting from octabam or elekloader and writing your own, for every machine, with the commands to run. Read [the guide for your module's category](docs/module-guides/README.md) before you write it: it says how a module must behave beside parameter locks, LFOs, scenes, saved projects and other modules, and a module that acts in time uses the instrument's own tempo, track speed and swing. `npm run module:doctor -- <id>` must be green.
 
 What review expects for a new module, or for a change to how a module runs:
 

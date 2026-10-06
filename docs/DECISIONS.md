@@ -163,6 +163,9 @@ The owner decided:
 - **Integration from the manifest.** Library visibility, the date a module was added, its thumbnail and its effect conflicts should come from the module's manifest instead of hand-kept lists.
 - **Automated hardware tests later.** Hardware testing is to be automated over USB, using a customised test firmware that runs the checks on the unit and reports the results. Until then, a person's functional hardware report is the evidence. The 60-minute, eight-track stress run has not been required since 2 October 2026.
 
+- **Guides per category.** [docs/module-guides/](module-guides/README.md) holds one guide for every library category and one for sequencing, each with checklists for behaving like the instrument and for integrating with the existing workflows. They are read automatically: the root `AGENTS.md` and `sdk/AGENTS.md` (loaded whenever an agent works under `sdk/`) point at them, the scaffolder repeats the pointer in every new module, and the pull request template asks for them. A module that acts in time follows the instrument's own tempo, track speed and swing and never keeps a clock of its own.
+- **Integration is checked, not hoped for.** `npm run module:doctor -- <id>` reports each integration point of a module and the command that fixes it; CI runs it for every module on every pull request.
+
 Separate pull requests implement these. Until each lands, the current checks apply.
 
 ## 5 October 2026 — The Digitakt/Digitone builder runs elekloader's TypeScript engine

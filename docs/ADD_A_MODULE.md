@@ -2,6 +2,10 @@
 
 This page is for contributors and for the coding agents they point at this repository. Read it, then the section for your machine. The other module documents are field references; open one only when a step links to it.
 
+## Read the guide for your category first
+
+Every module follows [the guide for its category](module-guides/README.md): effects, machines, playback, scenes, MIDI & USB, system or standalone. They say how a module must behave beside parameter locks, LFOs, scenes, saved projects and other modules, and anything that acts in time follows [sequencing.md](module-guides/sequencing.md): the instrument's own transport, tempo, track speed and swing, never a clock of your own. `npm run module:doctor -- <id>` checks the integration points a program can see.
+
 ## Choose your path
 
 | You want to | Go to | Start with |
@@ -30,6 +34,7 @@ Run this after every edit. It takes about 15 seconds, never reads firmware and n
 ```sh
 npm run modules:generate                      # regenerate the catalog from the module folders
 npm run check                                 # lint, tests, types and the production build, as in CI
+npm run module:doctor -- <id>                 # does the module fit every workflow? lists each gap and the command that fixes it
 npm run modules:check -- --base origin/main   # version and publication rules for the folders you changed
 ```
 
@@ -99,7 +104,7 @@ Firmware for these machines is built by elekloader's builder, vendored unchanged
 
 **Porting an elekloader mod:**
 
-1. Download the author's released `.elemod` for each OS release. Check each SHA-256 against elekloader's `web/catalog.json` at the pinned commit. Add the files to `vendor/elekloader/shop/`, with one entry per file in `vendor/elekloader/UPSTREAM.json` and `module` set to the Modwerk id.
+1. Take `elekloader-catalog.json` (and the kit zip when the kit changes) from an elekloader release, then run `npm run elekloader:update -- [elekloader-kit-<version>.zip --sha256 <hash>] elekloader-catalog.json [--library]`. It downloads each mod from its author's release, checks every hash, writes `vendor/elekloader/catalog/` and the lock, and prints what is left by hand. Details: [vendor/elekloader/README.md](../vendor/elekloader/README.md#updating). A module's id is its catalog id.
 2. Create `sdk/<machine>/modules/<id>/` with the same layout as [digihealth](../sdk/digitakt/modules/digihealth/):
    - `modwerk.module.json`, with `source` pinned to the author's commit;
    - the author's source under `src/`, and `build.json`;
@@ -112,12 +117,14 @@ Firmware for these machines is built by elekloader's builder, vendored unchanged
 **Writing a new mod:** `npm run module:new -- my-mod --machine digitakt --author <github-login>` creates the folder (`--machine digitone` for Digitone).
 - Write `src/`, and subscribe to core events in `build.json` ([events and budgets](../sdk/machines/digitakt/README.md)).
 - Modwerk compiles the source in its pinned toolchain ([source builds](ELEMOD_SOURCE_BUILDS.md)).
-- The browser builds only from pinned `.elemod` files, so to appear in the configurator a new mod needs an `.elemod` release, pinned as above.
+- The browser builds only from the `.elemod` files in elekloader's catalog, so to appear in the configurator a new mod needs an `.elemod` release, added with `npm run elekloader:update` as above.
+- `npm run module:doctor -- <id>` checks the module's manifest, category guide, catalog pin and module rules.
 
 ## Reference
 
 | Topic | Document |
 | --- | --- |
+| How to write a module that behaves like the instrument, per category | [module-guides/](module-guides/README.md) |
 | Octatrack manifest fields | [MODULE_REPOSITORIES.md](MODULE_REPOSITORIES.md) |
 | Qualification record: cycles, memory, hardware, exceptions | [MODULE_QUALIFICATION.md](MODULE_QUALIFICATION.md) |
 | Screenshots and the capture tool | [MODULE_UI_CAPTURES.md](MODULE_UI_CAPTURES.md) |
