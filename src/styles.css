@@ -94,6 +94,11 @@ h2 { font-size: 16px; letter-spacing: -.15px; font-weight: 600; }
 
 /* Library module cards: cover, name row with Add, one meta line, the description, a stats line, then the hardware
    evidence and Compare. The same block serves the Octatrack and Digi cards. */
+.hover-info { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: flex-end; gap: 12px; padding: 20px; background: linear-gradient(transparent, #18181deb 35%); opacity: 0; transform: translateY(4px); transition: opacity .18s, transform .18s; }
+.hover-info > span { font-size: 13px; line-height: 1.7; max-width: 230px; }
+.hover-info strong { display: flex; align-items: center; gap: 7px; font-size: 12px; font-weight: 500; color: #a8b0ff; }
+.module-cover:hover .hover-info, .module-cover:focus-visible .hover-info { opacity: 1; transform: none; }
+@media (hover: none) { .hover-info { display: none; } }
 .selected-badge { display: grid; place-items: center; position: absolute; top: 9px; right: 10px; border: 1px solid #9ba4f8; background: #626cae; border-radius: 50%; width: 18px; height: 18px; color: white; }
 .module-card-body { display: flex; flex-direction: column; flex: 1; padding: 14px 16px 12px; }
 .module-card-title { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
@@ -140,6 +145,10 @@ h2 { font-size: 16px; letter-spacing: -.15px; font-weight: 600; }
   .add-button, .card-meta a, .card-proof label { position: relative; z-index: 1; }
   .module-card:has(.module-card-heading > a:active) { border-color: #53535f; background: #29292e; }
   .module-card .preview-led, .selected-badge { display: none; }
+  /* Touch has no hover: the overlay becomes a small "Explore module" pill in the cover's corner. */
+  .module-cover .hover-info, .module-cover:hover .hover-info { display: block; inset: 10px 10px auto auto; padding: 0; background: none; opacity: 1; transform: none; }
+  .hover-info > span { display: none; }
+  .hover-info strong { gap: 5px; padding: 5px 9px; border: 1px solid #ffffff1f; border-radius: 6px; background: #18181dcc; color: #d5d5df; font-size: 12px; }
 }
 .module-preview { --signal: #b5a0ff; --signal-rgb: 181,160,255; height: 168px; display: flex; flex-direction: column; background: radial-gradient(ellipse at 60% 100%, rgba(var(--signal-rgb), .075), transparent 75%), #1c1c22; position: relative; }
 .module-preview[data-module="modulation"] { --signal: #79b5f8; --signal-rgb: 121,181,248; }

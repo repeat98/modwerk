@@ -33,7 +33,7 @@ function DigiModCard({ mod, selected, statistics, compared, canCompare, onToggle
   const href = deviceHref(mod.device, 'module/' + mod.id)
   const evidence: CardEvidence = mod.hardware ? { level: 'reported', label: 'Author-tested on hardware' } : { level: 'emulator', label: 'Author release, not yet tested in Modwerk' }
   return <article className={'module-card ' + (selected ? 'is-selected' : '')}>
-    <a href={href} className="module-cover" aria-label={'View ' + mod.title}><DigiModPreview mod={mod} />{selected && <span className="selected-badge" aria-label="Selected"><Icon name="check" size={12} /></span>}</a>
+    <a href={href} className="module-cover" aria-label={'View ' + mod.title}><DigiModPreview mod={mod} /><div className="hover-info"><span>{mod.summary}</span><strong>Explore module <Icon name="arrow" size={15} /></strong></div>{selected && <span className="selected-badge" aria-label="Selected"><Icon name="check" size={12} /></span>}</a>
     <div className="module-card-body">
       <div className="module-card-title">
         <div className="module-card-heading"><a href={href}>{mod.title}</a><div className="card-release"><span className="card-version">v{mod.version}</span></div></div>

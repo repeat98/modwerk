@@ -47,6 +47,7 @@ export function ModuleCard({ module, selected, statistics, viewedVersion, baseli
   return <article className={'module-card ' + (selected ? 'is-selected' : '')}>
     <a href={moduleHref(module.id)} className="module-cover" aria-label={'View ' + module.name}>
       <ModulePreview id={module.id} />
+      <div className="hover-info"><span>{module.description}</span><strong>Explore module <Icon name="arrow" size={15} /></strong></div>
       {selected && <span className="selected-badge" aria-label="Selected"><Icon name="check" size={12} /></span>}
     </a>
     <div className="module-card-body">
