@@ -208,3 +208,12 @@ The owner found the report form too long: members posted problems in module disc
 - **The Worker** accepts reports without steps, expected result or log. It still validates a `logMissing` reason when an older client sends one.
 - **Wording** speaks of problems that are "not working right", not only bugs, so sound and behaviour complaints are reported too.
 
+
+## 6 October 2026 — Direct messages
+
+The owner asked for private messages between members and chose:
+
+- **Who can write:** any verified member, by default. Each member can turn incoming messages off on the Messages page and block individual members from a conversation. Being blocked is not announced; it looks the same as the member turning messages off.
+- **Who can read:** only the two members. The administrator can open a conversation only after one of its members reports it, and the report form says so. The privacy notice states this.
+- **Notifications:** a new message appears in the bell, in the activity email digest (its own topic, on by default) and as device push, like a reply. Further messages in a conversation stay quiet until the first unread one is read.
+- **Deletion:** account deletion removes the member's messages, conversation memberships, blocks and reports. The conversation disappears from the other member's inbox.

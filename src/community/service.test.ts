@@ -46,6 +46,7 @@ async function fixture(){
  db.exec(readFileSync(new URL('../../migrations/0032_web_push.sql',import.meta.url),'utf8'))
  db.exec(readFileSync(new URL('../../migrations/0034_module_update_notifications.sql',import.meta.url),'utf8'))
  db.exec(readFileSync(new URL('../../migrations/0037_profile_pictures.sql',import.meta.url),'utf8'))
+ db.exec(readFileSync(new URL('../../migrations/0038_direct_messages.sql',import.meta.url),'utf8'))
  const env:Env={DB:adapter(db),APP_URL:'https://octamod.test',ADMIN_KEY_SHA256:await digest(adminKey)}
  const objects=new Map<string,ArrayBuffer>()
  env.MEDIA={async put(key,bytes){objects.set(key,bytes)},async get(key){const bytes=objects.get(key);return bytes?{body:new ReadableStream({start(controller){controller.enqueue(new Uint8Array(bytes));controller.close()}})}:null},async delete(key){objects.delete(key)}}

@@ -15,6 +15,7 @@ import { ForumDirectory } from './ForumDirectory'
 import { ForumRecentPosts } from './ForumRecentPosts'
 import { ForumShoutbox } from './ForumShoutbox'
 import { ForumShowcase } from './ForumShowcase'
+import { ForumMessages } from './ForumMessages'
 import { ForumAvatar as Avatar } from './ForumIdentity'
 import { ForumThreadList } from './ForumThreadList'
 import { RichTextEditor } from './ForumEditor'
@@ -51,7 +52,7 @@ function ForumList({query,profile}:{query:URLSearchParams;profile?:string}){
         <a aria-current={!newest&&!saved&&!following&&!moduleView?'page':undefined} href={link({sort:'',saved:'',following:'',view:''})}>Latest activity</a>
         <a aria-current={newest&&!saved&&!following&&!moduleView?'page':undefined} href={link({sort:'newest',saved:'',following:'',view:''})}>New threads</a>
         <a aria-current={moduleView?'page':undefined} href={link({view:'modules',sort:'',saved:'',following:'',category:''})}>Module discussions</a>
-        {session.user?.verified&&<><a aria-current={following?'page':undefined} href={link({following:'1',saved:'',sort:'',view:''})}><Icon name="message" size={14}/>Following</a><a aria-current={saved?'page':undefined} href={link({saved:'1',following:'',sort:'',view:''})}><Icon name="bookmark" size={14}/>Bookmarks</a></>}
+        {session.user?.verified&&<><a aria-current={following?'page':undefined} href={link({following:'1',saved:'',sort:'',view:''})}><Icon name="message" size={14}/>Following</a><a aria-current={saved?'page':undefined} href={link({saved:'1',following:'',sort:'',view:''})}><Icon name="bookmark" size={14}/>Bookmarks</a><a href="#forum/messages"><Icon name="mail" size={14}/>Messages</a></>}
       </nav>
       <form role="search" aria-label="Find discussions" className="forum-filters" onSubmit={event=>{event.preventDefault();const values=new FormData(event.currentTarget),nextMachine=String(values.get('machine')??'');window.location.assign(link({q:String(values.get('q')??'').trim(),category:String(values.get('category')??''),machine:nextMachine,...(nextMachine!==(query.get('machine')??'')?{module:''}:{})}))}}>
         <label className="forum-search-field"><span className="sr-only">Search</span><span className="forum-search"><Icon name="search" size={16}/><input name="q" type="search" aria-label="Search discussions" defaultValue={query.get('q')??''} maxLength={120} placeholder="Search discussions…"/></span></label>
@@ -131,5 +132,5 @@ function NewThread({configuration:active,configurations,query}:{configuration?:C
 }
 export function ForumPage({route,configuration,configurations,onCopy}:{route:string;configuration?:Configuration;configurations:Configuration[];onCopy:(config:SharedConfiguration)=>void}){
   const [path,search='']=route.split('?'),query=new URLSearchParams(search),segments=path.split('/')
-  return <div className={'community-page forum-page'+(segments[1]==='thread'?' forum-reading-page':'')}>{segments[1]==='shoutbox'?<><BackLink href="#forum">All discussions</BackLink><div className="page-heading"><div><h1>Shoutbox 8 archive</h1><p>A running conversation with the Modwerk community.</p></div></div><ForumShoutbox archive page={Number(query.get('page')??0)}/></>:segments[1]==='new'?<NewThread configuration={configuration} configurations={configurations} query={query}/>:segments[1]==='thread'&&segments[2]?<ForumThreadView key={segments[2]+'?'+search} id={segments[2]} query={query} onCopy={onCopy}/>:<ForumList key={search+segments[2]} query={query} profile={segments[1]==='profile'?segments[2]:undefined}/>}</div>
+  return <div className={'community-page forum-page'+(segments[1]==='thread'||segments[1]==='messages'?' forum-reading-page':'')}>{segments[1]==='shoutbox'?<><BackLink href="#forum">All discussions</BackLink><div className="page-heading"><div><h1>Shoutbox 8 archive</h1><p>A running conversation with the Modwerk community.</p></div></div><ForumShoutbox archive page={Number(query.get('page')??0)}/></>:segments[1]==='messages'?<ForumMessages username={segments[2]}/>:segments[1]==='new'?<NewThread configuration={configuration} configurations={configurations} query={query}/>:segments[1]==='thread'&&segments[2]?<ForumThreadView key={segments[2]+'?'+search} id={segments[2]} query={query} onCopy={onCopy}/>:<ForumList key={search+segments[2]} query={query} profile={segments[1]==='profile'?segments[2]:undefined}/>}</div>
 }

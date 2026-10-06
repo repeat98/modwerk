@@ -4,12 +4,13 @@ import { useEffect, useRef, useState } from 'react'
 import { api, post } from './api'
 import type { NotificationPreferences as Preferences } from './notification-contract'
 
-const TOPICS: [keyof Pick<Preferences, 'replies' | 'likes' | 'modules' | 'bugs' | 'updates'>, string][] = [
+const TOPICS: [keyof Pick<Preferences, 'replies' | 'likes' | 'modules' | 'bugs' | 'updates' | 'messages'>, string][] = [
   ['replies', 'Replies in threads you follow and @mentions'],
   ['likes', 'Likes on your posts'],
   ['modules', 'Comments, ratings and likes on modules you maintain'],
   ['bugs', 'Bug reports for modules you maintain, and replies and status changes for your own reports'],
   ['updates', 'New releases of modules you follow'],
+  ['messages', 'Direct messages from other members'],
 ]
 export function NotificationPreferences({ focus = false }: { focus?: boolean }) {
   const [value, setValue] = useState<Preferences | null>(null), [busy, setBusy] = useState(false), [message, setMessage] = useState(''), [error, setError] = useState('')

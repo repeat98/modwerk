@@ -27,6 +27,12 @@ export function notificationLines(items: BellItem[], link: (hash: string) => str
       groups.get(key)!.push(item)
       continue
     }
+    if (item.kind === 'message') {
+      const key = 'message:' + (item.actor ?? '')
+      if (!groups.has(key)) { groups.set(key, []); lines.push(groups.get(key)!) }
+      groups.get(key)!.push(item)
+      continue
+    }
     const actor = people([item]), base = { ids: [item.id], seen: item.seen, created_at: item.created_at }
     if (item.kind === 'announcement') { lines.push({ ...base, text: `Modwerk: ${item.title ?? 'News'}`, excerpt: excerpt(item.excerpt), href: item.url ?? (item.module_id ? moduleHref(item.module_id) : link('#library')) }); continue }
     if (item.kind === 'reply') lines.push({ ...base, text: `${actor} replied in ${quote(item.title)}`, excerpt: excerpt(item.excerpt), href: threadHref(item) })
@@ -45,6 +51,7 @@ export function notificationLines(items: BellItem[], link: (hash: string) => str
   return lines.map(line => {
     if (!Array.isArray(line)) return line
     const first = line[0], base = { ids: line.map(item => item.id), seen: line.every(item => item.seen), created_at: first.created_at, excerpt: null }
+    if (first.kind === 'message') return { ...base, excerpt: excerpt(first.excerpt), text: `${people(line)} sent you ${line.length === 1 ? 'a message' : line.length + ' messages'}`, href: link(first.actor ? '#forum/messages/' + first.actor : '#forum/messages') }
     return first.kind === 'post_like'
       ? { ...base, text: `${people(line)} liked your post in ${quote(first.title)}`, href: threadHref(first) }
       : { ...base, text: `${people(line)} liked ${moduleName(first.module_id)}`, href: moduleHref(first.module_id) }

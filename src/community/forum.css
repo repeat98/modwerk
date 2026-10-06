@@ -722,3 +722,48 @@ li[data-status="error"] .forum-media-status { color: #f0a6ad; }
   .account-avatar { flex-direction: column; gap: 12px; }
   .forum-profile { flex-direction: column; gap: 12px; }
 }
+
+/* Direct messages: an inbox list, then one conversation as bubbles with a plain-text composer. */
+.forum-dm-inbox { margin: 0 0 20px; padding: 0; list-style: none; border: 1px solid #3a3a43; border-radius: 12px; background: #202024; overflow: hidden; }
+.forum-dm-inbox > li + li { border-top: 1px solid #33333c; }
+.forum-dm-inbox a { display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; align-items: center; gap: 14px; padding: 14px 18px; color: inherit; transition: background .15s; }
+.forum-dm-inbox a:hover { background: #2c2c35; }
+.forum-dm-inbox .forum-avatar { width: 40px; height: 40px; }
+.forum-dm-inbox-copy { display: grid; gap: 3px; min-width: 0; }
+.forum-dm-inbox-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.forum-dm-inbox-head strong { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #ececf2; font-size: 14px; }
+.forum-dm-inbox-head time { flex-shrink: 0; color: var(--muted); font-size: 11px; }
+.forum-dm-inbox-excerpt { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); font-size: 12px; line-height: 1.5; }
+.forum-dm-inbox li[data-unread] .forum-dm-inbox-excerpt { color: #d8d7e3; }
+.forum-dm-unread { display: inline-grid; place-items: center; min-width: 22px; height: 22px; padding: 0 6px; border-radius: 11px; background: var(--accent); color: #15152a; font-size: 11px; font-weight: 700; }
+.forum-dm-setting { display: flex; align-items: flex-start; gap: 12px; padding: 16px 18px; border: 1px solid var(--line); border-radius: 10px; font-size: 13px; cursor: pointer; }
+.forum-dm-setting input { margin-top: 3px; }
+.forum-dm-setting small { display: block; margin-top: 3px; color: var(--muted); font-size: 12px; line-height: 1.6; }
+.forum-dm-heading { align-items: center; }
+.forum-dm-member { display: flex; align-items: center; gap: 14px; min-width: 0; }
+.forum-dm-member .forum-avatar { width: 48px; height: 48px; border-radius: 14px; font-size: 14px; }
+.forum-dm-member h1 { margin: 0 0 2px; font-size: 22px; }
+.forum-dm-member a { color: var(--muted); font-size: 12px; }
+.forum-dm-report { margin-bottom: 16px; }
+.forum-dm-list { display: flex; flex-direction: column; gap: 10px; margin: 0 0 18px; padding: 0; list-style: none; }
+.forum-dm-list > li { display: grid; gap: 4px; max-width: min(78%, 560px); align-self: flex-start; }
+.forum-dm-list > li[data-mine] { align-self: flex-end; justify-items: end; }
+.forum-dm-list > li time { padding-inline: 6px; color: var(--muted); font-size: 10px; }
+.forum-dm-bubble { padding: 10px 14px; border-radius: 14px 14px 14px 4px; background: #2a2a33; color: #e2e1ec; font-size: 14px; line-height: 1.6; overflow-wrap: anywhere; }
+.forum-dm-bubble p { margin: 0; }
+.forum-dm-list > li[data-mine] .forum-dm-bubble { border-radius: 14px 14px 4px 14px; background: #3a3d5c; }
+.forum-dm-list > li[data-hidden] .forum-dm-bubble { border: 1px dashed #44444e; background: transparent; color: var(--muted); }
+.forum-dm-empty { color: var(--muted); font-size: 13px; }
+.forum-dm-composer { display: grid; grid-template-columns: minmax(0, 1fr) 46px; gap: 8px 10px; align-items: end; padding: 12px; border: 1px solid #4c495f; border-radius: 12px; background: #23232b; }
+.forum-dm-composer textarea { min-height: 46px; resize: vertical; }
+.forum-dm-composer .button { width: 46px; height: 46px; padding: 0; }
+.forum-dm-composer .forum-field-hint { grid-column: 1 / -1; }
+.forum-profile-message { margin-top: 12px; }
+.moderation-conversation { display: grid; gap: 8px; margin: 10px 0 0; padding: 0; list-style: none; font-size: 13px; }
+.moderation-conversation li[data-hidden="true"] { opacity: .6; }
+@media (max-width: 600px) {
+  .forum-dm-inbox a { grid-template-columns: 36px minmax(0, 1fr) auto; gap: 10px; padding: 12px 14px; }
+  .forum-dm-list > li { max-width: 88%; }
+  .forum-dm-composer textarea { font-size: 16px; }
+  .forum-dm-composer .forum-field-hint { display: none; }
+}

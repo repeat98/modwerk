@@ -4,6 +4,7 @@ import { issueStatusStatements } from './issue-notifications'
 import { forum } from './forum'
 import { forumMedia } from './forum-media'
 import { avatarRoutes } from './avatars'
+import { messageRoutes } from './messages'
 import { notificationRoutes, notifyModuleMaintainers, unsubscribe, withdrawModuleLike } from './notifications'
 import { notifyBugDevelopers, publicBugDetails } from './bug-reports'
 import { developerAuthentication, developerUser } from './developer-auth'
@@ -71,6 +72,8 @@ export async function handleApi(request: Request, env: Env): Promise<Response> {
     if(avatar)return avatar
     const media = await forumMedia(request,env,db,user,admin)
     if(media)return media
+    const messages = await messageRoutes(request,db,user)
+    if(messages)return messages
     const discussion = await forum(request,db,user,admin,adminId)
     if(discussion)return discussion
     const notifications = await notificationRoutes(request,env,db,user)
