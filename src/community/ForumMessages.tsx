@@ -7,6 +7,7 @@ import { MemberPrompt } from './MemberPrompt'
 import { ForumAvatar } from './ForumIdentity'
 import { ForumTime } from './ForumTime'
 import { MESSAGE_MAX_LENGTH } from './forum-contract'
+import { MentionText, useTextareaMentions } from './mentions'
 
 type Conversation = { id: string; updated_at: string; username: string; displayName: string; avatar: string | null; excerpt: string | null; mine: number; unread: number }
 type Inbox = { conversations: Conversation[]; enabled: boolean }
@@ -46,6 +47,7 @@ function InboxPage() {
 function ConversationPage({ username }: { username: string }) {
   const { session } = useCommunity(), [view, setView] = useState<View | null>(null), [error, setError] = useState(''), [draft, setDraft] = useState(''), [busy, setBusy] = useState(false), [reporting, setReporting] = useState(false), [notice, setNotice] = useState('')
   const [revision, setRevision] = useState(0), list = useRef<HTMLOListElement>(null), verified = !!session.user?.verified
+  const composer = useRef<HTMLTextAreaElement>(null), mentions = useTextareaMentions(composer, draft, setDraft, 'forum-dm-mentions')
   useEffect(() => {
     if (!verified) return
     let cancelled = false
@@ -72,13 +74,14 @@ function ConversationPage({ username }: { username: string }) {
       {view.hasMore && <p className="service-note">Only the latest {view.messages.length} messages are shown.</p>}
       <ol className="forum-dm-list" ref={list} aria-label={'Messages with @' + view.member.username}>
         {view.messages.length ? view.messages.map(item => <li key={item.id} data-mine={item.mine || undefined} data-hidden={item.hidden || undefined}>
-          <div className="forum-dm-bubble">{item.hidden ? <em>This message was removed by the administrator.</em> : <p className="preserve-lines">{item.body}</p>}</div>
+          <div className="forum-dm-bubble">{item.hidden ? <em>This message was removed by the administrator.</em> : <p className="preserve-lines"><MentionText text={item.body}/></p>}</div>
           <ForumTime value={item.created_at} relative />
         </li>) : <li className="forum-dm-empty">No messages yet. Say hello.</li>}
       </ol>
       {view.canSend ? <form className="forum-dm-composer" onSubmit={event => { event.preventDefault(); send() }}>
         <label className="sr-only" htmlFor="forum-dm-draft">Your message</label>
-        <textarea id="forum-dm-draft" value={draft} maxLength={MESSAGE_MAX_LENGTH} rows={2} disabled={busy} placeholder={'Message @' + view.member.username + '…'} onChange={event => setDraft(event.target.value)} onKeyDown={event => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); send() } }} />
+        <textarea ref={composer} id="forum-dm-draft" value={draft} maxLength={MESSAGE_MAX_LENGTH} rows={2} disabled={busy} placeholder={'Message @' + view.member.username + '…'} onChange={event => setDraft(event.target.value)} onSelect={mentions.onSelect} onKeyUp={mentions.onKeyUp} onClick={mentions.onClick} {...mentions.aria} onKeyDown={event => { if (mentions.onKeyDown(event)) return; if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); send() } }} />
+        {mentions.list}
         <button className="button button-primary" disabled={busy || !draft.trim()} aria-label="Send message"><Icon name="arrow" size={16} /></button>
         <span className="forum-field-hint">Enter sends, Shift + Enter adds a line. Plain text, up to {MESSAGE_MAX_LENGTH.toLocaleString()} characters.</span>
       </form> : <p className="forum-locked-note"><Icon name="lock" size={16} />{view.blocked ? 'You blocked this member. Unblock them to write again.' : 'This member is not accepting messages.'}</p>}

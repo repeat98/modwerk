@@ -135,6 +135,12 @@ export async function forum(request: Request, db: Database, user: User|null, adm
     await db.prepare(`UPDATE notifications SET seen=1 WHERE kind IN ('reply','mention','bug_report') AND user_id IN (${RECIPIENTS})`).bind(member.id,member.id).run()
     return response({ok:true})
   }
+  if (path === '/api/forum/members' && request.method === 'GET') {
+    // Name suggestions while typing @ in a composer: members only, by prefix, eight names, never the asker.
+    const asker = needMember(user), prefix = (url.searchParams.get('q') ?? '').trim().toLowerCase()
+    if (!/^[a-z0-9_]{0,24}$/.test(prefix)) throw new HttpError(400,'Usernames use letters, numbers and underscores.')
+    return response((await db.prepare(`SELECT u.username,u.display_name AS displayName,u.avatar_id AS avatar FROM users u WHERE u.username LIKE ? ESCAPE '\\' AND u.id<>? AND u.email_verified=1 AND u.suspended=0 AND u.username IS NOT NULL AND NOT EXISTS(SELECT 1 FROM social_pending_accounts s WHERE s.user_id=u.id) ORDER BY u.username LIMIT 8`).bind(prefix.replace(/[\\%_]/g,'\\$&')+'%',asker.id).all()).results)
+  }
   if ((match=path.match(/^\/api\/forum\/profiles\/([a-z0-9_]{3,24})$/)) && request.method === 'GET') {
     const profile = await db.prepare('SELECT username,display_name AS displayName,profile_bio AS bio,avatar_id AS avatar,created_at FROM users WHERE username=? AND email_verified=1 AND suspended=0 AND NOT EXISTS(SELECT 1 FROM social_pending_accounts p WHERE p.user_id=users.id)').bind(match[1]).first()
     if (!profile) throw new HttpError(404,'Profile not found.')

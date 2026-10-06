@@ -43,6 +43,26 @@ export function sharedConfiguration(value: unknown): SharedConfiguration {
 }
 export type ForumThread = { id:string;title:string;category:ForumCategory;machine:string|null;module_id:string|null;username:string|null;avatar?:string|null;official?:number;status:'open'|'resolved';locked:number;pinned:number;hidden?:number;created_at:string;updated_at:string;replies:number;last_post_id?:string|null;last_username?:string|null;last_excerpt?:string|null;last_post_page?:number;media_kinds?:string|null }
 // Images and sound clips attached to a post. Sizes are checked again on the server after the file type is read from its bytes.
+/** An @username as the Worker notifies it: not inside a word, an email or a path, 3–24 username characters. */
+export const MENTION_SOURCE = String.raw`(?<![\w@/])@([A-Za-z0-9_]{3,24})(?![A-Za-z0-9_])`
+export type MentionPart = { type: 'text' | 'mention'; value: string }
+/** Splits text into plain runs and mentions; a mention's value is the username without the @. */
+export function splitMentions(text: string): MentionPart[] {
+  const parts: MentionPart[] = []
+  let last = 0
+  for (const match of text.matchAll(new RegExp(MENTION_SOURCE, 'g'))) {
+    if (match.index > last) parts.push({ type: 'text', value: text.slice(last, match.index) })
+    parts.push({ type: 'mention', value: match[1] })
+    last = match.index + match[0].length
+  }
+  if (last < text.length || !parts.length) parts.push({ type: 'text', value: text.slice(last) })
+  return parts
+}
+/** The @name being typed right before the caret, if any: where it starts and the letters so far. */
+export function mentionQueryAt(text: string, caret: number): { start: number; query: string } | null {
+  const match = /(?:^|[\s(>"'“[])@([A-Za-z0-9_]{0,24})$/.exec(text.slice(0, caret))
+  return match ? { start: caret - match[1].length - 1, query: match[1] } : null
+}
 /** Direct messages are plain text. */
 export const MESSAGE_MAX_LENGTH = 4000
 export const FORUM_MEDIA = { maxImageBytes: 5 * 1024 * 1024, maxAudioBytes: 10 * 1024 * 1024, perPost: 4, captionLength: 300, dailyFiles: 20, dailyBytes: 100 * 1024 * 1024 } as const

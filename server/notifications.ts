@@ -1,3 +1,4 @@
+import { MENTION_SOURCE } from '../src/community/forum-contract'
 import type { Database, Env, Statement, User } from './platform'
 import { needMember, throttle } from './auth'
 import { HttpError, jsonBody, response } from './security'
@@ -17,7 +18,7 @@ export const RECIPIENTS = "SELECT ? UNION SELECT d.id FROM users d JOIN auth_acc
 /** Members whose usernames appear as @name, capped so one post cannot page the whole forum. */
 export function mentionedUsernames(body: string) {
   const names = new Set<string>()
-  for (const match of body.matchAll(/(?<![\w@/])@([A-Za-z0-9_]{3,24})(?![A-Za-z0-9_])/g)) {
+  for (const match of body.matchAll(new RegExp(MENTION_SOURCE, 'g'))) {
     names.add(match[1].toLowerCase())
     if (names.size === 10) break
   }
