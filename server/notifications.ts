@@ -59,15 +59,15 @@ export function withdrawModuleLike(db: Database, moduleId: string, actorId: stri
 
 /** Notifications whose content was hidden or removed, or whose actor was suspended, are not shown or mailed. */
 export const VISIBLE = "(n.thread_id IS NULL OR t.hidden=0) AND (n.post_id IS NULL OR p.hidden=0) AND (n.kind<>'module_comment' OR c.id IS NOT NULL) AND (a.id IS NULL OR a.suspended=0 OR a.username IS NULL) AND (n.kind<>'message' OR (dm.id IS NOT NULL AND dm.hidden=0))"
-export const ITEM_SQL = `SELECT n.id,n.kind,n.seen,n.created_at,n.thread_id,n.post_id,n.module_id,n.module_version,a.username AS actor,a.id='${SYSTEM_AUTHOR}' AS actor_official,COALESCE(t.title,i.title,m.name) AS title,
+export const ITEM_SQL = `SELECT n.id,n.kind,n.seen,n.created_at,n.thread_id,n.post_id,n.module_id,n.module_version,a.username AS actor,a.avatar_id AS actor_avatar,a.id='${SYSTEM_AUTHOR}' AS actor_official,COALESCE(t.title,i.title,m.name) AS title,
  CASE WHEN n.kind IN ('reply','mention','bug_report') THEN substr(p.body,1,200) WHEN n.kind='module_comment' THEN substr(c.body,1,200) WHEN n.kind='issue_comment' THEN substr(n.excerpt,1,200) WHEN n.kind='message' THEN substr(dm.body,1,200) END AS excerpt,
  CASE WHEN n.kind='module_rating' THEN r.value END AS rating,n.issue_id,n.github_actor,COALESCE(i.github_url,m.href) AS url,
  (SELECT CAST(COUNT(*)/30 AS INTEGER) FROM forum_posts preceding WHERE preceding.thread_id=p.thread_id AND (preceding.created_at<p.created_at OR (preceding.created_at=p.created_at AND preceding.rowid<p.rowid))) AS post_page
  FROM notifications n LEFT JOIN users a ON a.id=n.actor_id LEFT JOIN forum_threads t ON t.id=n.thread_id LEFT JOIN forum_posts p ON p.id=n.post_id
  LEFT JOIN comments c ON c.id=n.comment_id LEFT JOIN ratings r ON n.kind='module_rating' AND r.module_id=n.module_id AND r.user_id=n.actor_id
  LEFT JOIN issues i ON i.id=n.issue_id LEFT JOIN module_releases m ON n.kind='module_update' AND m.module_id=n.module_id AND m.version=n.module_version LEFT JOIN messages dm ON dm.id=n.message_id`
-type Row = Omit<NotificationItem, 'seen' | 'actorOfficial'> & { seen: number; actor_official: number | null }
-export const toItem = ({ actor_official, seen, ...row }: Row): NotificationItem => ({ ...row, seen: !!seen, actorOfficial: !!actor_official })
+type Row = Omit<NotificationItem, 'seen' | 'actorOfficial' | 'actorAvatar'> & { seen: number; actor_official: number | null; actor_avatar?: string | null }
+export const toItem = ({ actor_official, actor_avatar, seen, ...row }: Row): NotificationItem => ({ ...row, seen: !!seen, actorOfficial: !!actor_official, actorAvatar: actor_avatar ?? null })
 
 export const PREFERENCE_DEFAULTS = { emailEnabled: true, frequency: 'hours', replies: true, likes: true, modules: true, bugs: true, updates: true, messages: true } as const
 type PreferenceRow = { email_enabled: number; frequency: 'hours' | 'daily'; replies: number; likes: number; modules: number; bugs: number; updates: number; messages: number }
