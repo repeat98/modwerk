@@ -11,6 +11,7 @@ import { BASELINE_PATH, WAIVERS_PATH, parseQualificationBaseline, parseReleaseWa
 import { parseRetainedResourceImpacts, requireModuleResourceImpact } from '../src/catalog/resource-impact.ts'
 import { parseMachineProfile } from '../src/devices/machine-contract.ts'
 import { parseElemodBuild, parseModwerkModule, requireModwerkPublication } from '../src/catalog/module-contract-v3.ts'
+import { compactChecks } from '../src/catalog/compatibility-checks.ts'
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'..'),modules=resolve(root,'sdk/octabam/modules')
 const args=process.argv.slice(2),write=args.includes('--write'),baseIndex=args.indexOf('--base'),base=baseIndex<0?null:args[baseIndex+1]
 if(baseIndex>=0&&!base)throw new Error('--base requires a Git commit/ref')
@@ -49,6 +50,10 @@ const selected=[],seen=new Set()
 for(const item of catalog.modules){const document=documents.get(item.id);if(!document||item.version!==document.version||seen.has(item.id))throw new Error('Catalog must pin each included module exactly once at its declared version: '+item.id);if(typeof item.addedAt!=='string'||!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/.test(item.addedAt)||!Number.isFinite(Date.parse(item.addedAt)))throw new Error('Catalog entry needs addedAt, the UTC time the module was first added (for example 2026-10-05T12:00:00Z): '+item.id);if(previouslyIncluded&&!previouslyIncluded.has(item.id))requireModuleUiForPublication(document);seen.add(item.id);selected.push(document)}
 const generated=JSON.stringify({schemaVersion:2,revision:catalog.sourceRevision,modules:selected},null,2)+'\n',target=resolve(root,'src/catalog/module-documents.json')
 if(write){await mkdir(dirname(target),{recursive:true});await writeFile(target,generated);const mediaRoot=resolve(root,'public/module-media');await rm(mediaRoot,{recursive:true,force:true});for(const document of selected){for(const item of document.media){const destination=resolve(mediaRoot,document.id,document.version,item.path);await mkdir(dirname(destination),{recursive:true});await copyFile(await file(resolve(modules,document.id),item.path),destination)}const thumbnail=await file(resolve(modules,document.id),'presentation/thumbnail.svg').catch(error=>{if(error.code==='ENOENT')return null;throw error});if(thumbnail){const destination=resolve(mediaRoot,document.id,document.version,'presentation/thumbnail.svg');await mkdir(dirname(destination),{recursive:true});await copyFile(thumbnail,destination)}}}else if(await readFile(target,'utf8')!==generated)throw new Error('Generated catalog is stale. Run npm run modules:generate and include it in the PR.')
+// The site reads the native declaration checks in their compact form; the full record stays the exporters' file.
+const checksTarget=resolve(root,'src/catalog/compatibility-checks.json'),checksGenerated=JSON.stringify(compactChecks(await json(resolve(root,'src/catalog/native-metadata.json'))))+'\n'
+if(write)await writeFile(checksTarget,checksGenerated)
+else if((await readFile(checksTarget,'utf8').catch(()=>''))!==checksGenerated)throw new Error('src/catalog/compatibility-checks.json is stale; run npm run modules:generate')
 // Machines on module contract v3 (elemod): the same folder rules, checked against each machine profile.
 const machineProfiles=[]
 // Repositories without machine profiles (such as minimal test fixtures) have no elemod machines.

@@ -9,5 +9,5 @@ Modwerk builds custom firmware modules for Elektron instruments. This repository
 - Before writing or changing Octatrack DSP or ColdFire code, read the traps in [sdk/octabam/AGENTS.md](sdk/octabam/AGENTS.md). That is octabam's own file, kept unchanged because its code cites it. Its `make` commands describe upstream octabam, not this repository; build and check with the commands in the guide.
 - For app and backend work, see [docs/APP_DEVELOPMENT.md](docs/APP_DEVELOPMENT.md).
 - Never commit firmware, extracted stock code or tables, memory dumps or built images. Firmware stays on the developer's computer and never enters CI.
-- Do not edit generated files by hand: `src/catalog/module-documents.json`, the licence notices and the machine registry. `npm run modules:generate`, `licenses:generate` and `machines:generate` write them.
+- Do not edit generated files by hand: `src/catalog/module-documents.json`, `src/catalog/compatibility-checks.json`, the licence notices and the machine registry. `npm run modules:generate`, `licenses:generate` and `machines:generate` write them.
 - Work on a branch off current `main` and open a pull request; the owner merges. Keep unrelated changes out of the diff.
