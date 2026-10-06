@@ -11,7 +11,7 @@ import { shoutbox } from './shoutbox'
 
 type Thread = {id:string;user_id:string;locked:number;hidden:number;configuration_json:string|null;issue_json:string|null}
 function page(url: URL) { const value = Number(url.searchParams.get('page') ?? 0); if (!Number.isInteger(value) || value < 0 || value > 10000) throw new HttpError(400,'Invalid page.'); return value }
-const threadFields = `t.id,t.title,COALESCE(t.section,t.category) AS category,t.machine,t.module_id,t.status,t.locked,t.pinned,t.created_at,t.updated_at,u.username,t.user_id='${SYSTEM_AUTHOR}' AS official,(SELECT MAX(COUNT(*)-1,0) FROM forum_posts p WHERE p.thread_id=t.id AND p.hidden=0) AS replies,(SELECT GROUP_CONCAT(DISTINCT m.kind) FROM forum_media m JOIN forum_posts mp ON mp.id=m.post_id WHERE mp.thread_id=t.id AND m.removed=0 AND mp.hidden=0) AS media_kinds`
+const threadFields = `t.id,t.title,COALESCE(t.section,t.category) AS category,t.machine,t.module_id,t.status,t.locked,t.pinned,t.created_at,t.updated_at,u.username,u.avatar_id AS avatar,t.user_id='${SYSTEM_AUTHOR}' AS official,(SELECT MAX(COUNT(*)-1,0) FROM forum_posts p WHERE p.thread_id=t.id AND p.hidden=0) AS replies,(SELECT GROUP_CONCAT(DISTINCT m.kind) FROM forum_media m JOIN forum_posts mp ON mp.id=m.post_id WHERE mp.thread_id=t.id AND m.removed=0 AND mp.hidden=0) AS media_kinds`
 async function threadById(db: Database, id: string, admin: boolean) {
   const thread = await db.prepare('SELECT * FROM forum_threads WHERE id=? AND (hidden=0 OR ?=1)').bind(id, Number(admin)).first<Thread>()
   if (!thread) throw new HttpError(404,'Thread not found.')
@@ -93,7 +93,7 @@ export async function forum(request: Request, db: Database, user: User|null, adm
   if (path === '/api/forum/recent-posts' && request.method === 'GET') {
     let machine: string | null
     try { machine=forumMachine(url.searchParams.get('machine')) } catch { throw new HttpError(400,'Unknown machine.') }
-    return response((await db.prepare(`SELECT p.id,p.thread_id,p.created_at,substr(p.body,1,220) AS excerpt,u.username,p.user_id='${SYSTEM_AUTHOR}' AS official,t.title,COALESCE(t.section,t.category) AS category,t.machine,
+    return response((await db.prepare(`SELECT p.id,p.thread_id,p.created_at,substr(p.body,1,220) AS excerpt,u.username,u.avatar_id AS avatar,p.user_id='${SYSTEM_AUTHOR}' AS official,t.title,COALESCE(t.section,t.category) AS category,t.machine,
       (SELECT CAST(COUNT(*)/30 AS INTEGER) FROM forum_posts preceding WHERE preceding.thread_id=t.id AND (preceding.created_at<p.created_at OR (preceding.created_at=p.created_at AND preceding.rowid<p.rowid))) AS page
       FROM forum_posts p JOIN forum_threads t ON t.id=p.thread_id JOIN users u ON u.id=p.user_id
       WHERE p.hidden=0 AND t.hidden=0 AND t.user_id<>'${SYSTEM_AUTHOR}' AND (? IS NULL OR t.machine=?)
@@ -106,7 +106,7 @@ export async function forum(request: Request, db: Database, user: User|null, adm
     try { machine=forumMachine(url.searchParams.get('machine')) } catch { throw new HttpError(400,'Unknown machine.') }
     const category = url.searchParams.get('category')
     if (category !== null && (!Object.hasOwn(FORUM_CATEGORIES,category) || category === 'issues')) throw new HttpError(400,'Unknown category.')
-    const posts = (await db.prepare(`SELECT p.id,p.thread_id,p.created_at,u.username,p.user_id='${SYSTEM_AUTHOR}' AS official,t.title,COALESCE(t.section,t.category) AS category,t.machine,
+    const posts = (await db.prepare(`SELECT p.id,p.thread_id,p.created_at,u.username,u.avatar_id AS avatar,p.user_id='${SYSTEM_AUTHOR}' AS official,t.title,COALESCE(t.section,t.category) AS category,t.machine,
       (SELECT CAST(COUNT(*)/30 AS INTEGER) FROM forum_posts preceding WHERE preceding.thread_id=t.id AND (preceding.created_at<p.created_at OR (preceding.created_at=p.created_at AND preceding.rowid<p.rowid))) AS page
       FROM forum_posts p JOIN forum_threads t ON t.id=p.thread_id JOIN users u ON u.id=p.user_id
       WHERE p.id IN (SELECT m.post_id FROM forum_media m WHERE m.removed=0 AND m.post_id IS NOT NULL)
@@ -130,7 +130,7 @@ export async function forum(request: Request, db: Database, user: User|null, adm
     return response({ok:true})
   }
   if ((match=path.match(/^\/api\/forum\/profiles\/([a-z0-9_]{3,24})$/)) && request.method === 'GET') {
-    const profile = await db.prepare('SELECT username,display_name AS displayName,profile_bio AS bio,created_at FROM users WHERE username=? AND email_verified=1 AND suspended=0 AND NOT EXISTS(SELECT 1 FROM social_pending_accounts p WHERE p.user_id=users.id)').bind(match[1]).first()
+    const profile = await db.prepare('SELECT username,display_name AS displayName,profile_bio AS bio,avatar_id AS avatar,created_at FROM users WHERE username=? AND email_verified=1 AND suspended=0 AND NOT EXISTS(SELECT 1 FROM social_pending_accounts p WHERE p.user_id=users.id)').bind(match[1]).first()
     if (!profile) throw new HttpError(404,'Profile not found.')
     return response(profile)
   }
@@ -141,13 +141,13 @@ export async function forum(request: Request, db: Database, user: User|null, adm
         EXISTS(SELECT 1 FROM forum_follows f WHERE f.thread_id=t.id AND f.user_id=?) AS following,
         EXISTS(SELECT 1 FROM forum_bookmarks b WHERE b.thread_id=t.id AND b.user_id=?) AS bookmarked
         FROM forum_threads t JOIN users u ON u.id=t.user_id WHERE t.id=?`).bind(user?.id??null,user?.id??null,thread.id).first<Record<string,unknown>&{following:number;bookmarked:number}>(),
-      db.prepare('SELECT p.*,u.username,u.display_name AS displayName,(SELECT COUNT(*) FROM forum_reactions r WHERE r.post_id=p.id) AS likes,EXISTS(SELECT 1 FROM forum_reactions r WHERE r.post_id=p.id AND r.user_id=?) AS liked FROM forum_posts p JOIN users u ON u.id=p.user_id WHERE p.thread_id=? ORDER BY p.created_at,p.rowid LIMIT 31 OFFSET ?').bind(user?.id??'',thread.id,page(url)*30).all<{id:string;user_id:string;hidden:number;body:string;username:string;displayName:string;created_at:string;edited_at:string|null;likes:number;liked:number}>(),
+      db.prepare('SELECT p.*,u.username,u.avatar_id AS avatar,u.display_name AS displayName,(SELECT COUNT(*) FROM forum_reactions r WHERE r.post_id=p.id) AS likes,EXISTS(SELECT 1 FROM forum_reactions r WHERE r.post_id=p.id AND r.user_id=?) AS liked FROM forum_posts p JOIN users u ON u.id=p.user_id WHERE p.thread_id=? ORDER BY p.created_at,p.rowid LIMIT 31 OFFSET ?').bind(user?.id??'',thread.id,page(url)*30).all<{id:string;user_id:string;hidden:number;body:string;username:string;avatar:string|null;displayName:string;created_at:string;edited_at:string|null;likes:number;liked:number}>(),
     ])
     if(!details)throw new HttpError(404,'Thread not found.')
     const {following:followed,bookmarked:saved,...summary}=details
     const posts=pagePosts.results,following=!!followed,bookmarked=!!saved
     const attachments = await postAttachments(db,posts.slice(0,30).filter(post=>admin||!post.hidden).map(post=>post.id))
-    return response({thread:summary,posts:posts.slice(0,30).map(post=>({attachments:attachments.get(post.id)??[],canRemoveMedia:!post.hidden&&post.user_id===user?.id&&!!user?.email_verified,id:post.id,body:post.hidden&&!admin?'':post.body,username:post.hidden&&!admin?null:post.username,displayName:post.hidden&&!admin?null:post.displayName,created_at:post.created_at,edited_at:post.edited_at,hidden:post.hidden,likes:post.hidden?0:post.likes,liked:!post.hidden&&!!post.liked,canEdit:!thread.locked&&!post.hidden&&post.user_id===user?.id&&!!user?.email_verified,official:post.user_id===SYSTEM_AUTHOR,...(admin?{user_id:post.user_id}:{})})),configuration:thread.configuration_json?JSON.parse(thread.configuration_json):null,issue:thread.issue_json?JSON.parse(thread.issue_json):null,following,bookmarked,hasMore:posts.length>30})
+    return response({thread:summary,posts:posts.slice(0,30).map(post=>({attachments:attachments.get(post.id)??[],canRemoveMedia:!post.hidden&&post.user_id===user?.id&&!!user?.email_verified,id:post.id,body:post.hidden&&!admin?'':post.body,username:post.hidden&&!admin?null:post.username,avatar:post.hidden&&!admin?null:post.avatar,displayName:post.hidden&&!admin?null:post.displayName,created_at:post.created_at,edited_at:post.edited_at,hidden:post.hidden,likes:post.hidden?0:post.likes,liked:!post.hidden&&!!post.liked,canEdit:!thread.locked&&!post.hidden&&post.user_id===user?.id&&!!user?.email_verified,official:post.user_id===SYSTEM_AUTHOR,...(admin?{user_id:post.user_id}:{})})),configuration:thread.configuration_json?JSON.parse(thread.configuration_json):null,issue:thread.issue_json?JSON.parse(thread.issue_json):null,following,bookmarked,hasMore:posts.length>30})
   }
   const member = needMember(user)
   await throttle(db,'forum:'+member.id,60)

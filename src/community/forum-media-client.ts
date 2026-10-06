@@ -120,3 +120,24 @@ export function oggOpus(packets: Uint8Array[], channels: number, preSkip: number
   for (const item of pages) { file.set(item, offset); offset += item.length }
   return file
 }
+
+/** Profile pictures: the centre square, at most 512 px, as WebP (JPEG where the browser cannot encode WebP). */
+export async function compressAvatar(file: Blob): Promise<Blob> {
+  if (file.size > MAX_INPUT_BYTES) throw new Error('This image is too large to prepare.')
+  let bitmap: ImageBitmap
+  try { bitmap = await createImageBitmap(file) } catch { throw new Error('This image could not be read. Use PNG, JPEG or WebP.') }
+  const side = Math.min(bitmap.width, bitmap.height), size = Math.max(1, Math.min(512, side))
+  const canvas = document.createElement('canvas')
+  canvas.width = size; canvas.height = size
+  const context = canvas.getContext('2d')
+  if (!context) throw new Error('This browser cannot prepare images.')
+  context.drawImage(bitmap, (bitmap.width - side) / 2, (bitmap.height - side) / 2, side, side, 0, 0, size, size); bitmap.close()
+  const encode = (type: string, quality: number) => new Promise<Blob | null>(resolve => canvas.toBlob(resolve, type, quality))
+  let blob = await encode('image/webp', 0.85)
+  if (blob?.type !== 'image/webp') {
+    context.globalCompositeOperation = 'destination-over'; context.fillStyle = '#fff'; context.fillRect(0, 0, size, size)
+    blob = await encode('image/jpeg', 0.86)
+  }
+  if (!blob) throw new Error('This image could not be prepared.')
+  return blob
+}

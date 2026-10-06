@@ -1,4 +1,5 @@
 import { BackLink } from '../components/BackLink'
+import { ForumAvatar } from './ForumIdentity'
 import { NewsPreferences } from './NewsPreferences'
 import { NotificationPreferences, Unsubscribe } from './NotificationPreferences'
 import { AccountRemovalRequest } from './AccountRequests'
@@ -51,7 +52,7 @@ function AccountContent({route}:{route:string}) {
   return <div className={'community-page account-page'+(linkAction?' account-page-recovery':member?' account-page-member':' account-page-auth')}><BackLink href="#forum">Community forum</BackLink><div className="page-heading"><div><p className="page-kicker">MODWERK / ACCOUNT</p><h1>{member?'Your account':titles[mode]}</h1><p>{member?'Your profile, account access and community activity.':descriptions[mode]}</p></div></div>
     {member?<>
       <section className="configuration-section account-member" aria-labelledby="account-identity">
-        <div className="account-identity"><span className="forum-avatar" aria-hidden="true">{(session.user!.displayName||session.user!.username||'').slice(0,2).toUpperCase()}</span><div><h2 id="account-identity">{session.user!.displayName||session.user!.username}</h2><p>@{session.user!.username}<span>Community member</span></p></div></div>
+        <div className="account-identity"><ForumAvatar username={session.user!.username??session.user!.displayName} avatar={session.user!.avatar}/><div><h2 id="account-identity">{session.user!.displayName||session.user!.username}</h2><p>@{session.user!.username}<span>Community member</span></p></div></div>
         <div className="account-member-actions"><a className="text-button" href={'#forum/profile/'+session.user!.username}>Your public profile</a><a className="text-button" href="#forum?saved=1">Your bookmarks</a><button className="text-button" disabled={busy} onClick={()=>void endSessions(false)}>Sign out</button></div>
       </section>
       <nav className="account-navigation" aria-label="Account settings">{accountSections.map(item=><a key={item.id} href={item.href} aria-current={section===item.id?'page':undefined}>{item.label}</a>)}</nav>

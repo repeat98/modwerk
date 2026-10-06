@@ -11,7 +11,7 @@ export function ForumThreadList({ threads }: { threads: ForumThread[] }) {
       {threads.map(thread => <li key={thread.id}>
         <article className="forum-thread-row" data-pinned={!!thread.pinned} aria-labelledby={'thread-title-' + thread.id}>
           <div className="forum-thread-summary">
-            <ForumAvatar username={thread.username} official={thread.official} />
+            <ForumAvatar username={thread.username} official={thread.official} avatar={thread.avatar} />
             <div className="forum-thread-copy">
               <div className="forum-thread-states">
                 {!!thread.pinned && <span className="forum-state"><Icon name="pin" size={13} />Pinned</span>}

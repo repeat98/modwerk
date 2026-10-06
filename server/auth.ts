@@ -30,7 +30,7 @@ async function memberAdmin(request:Request,db:Database,env:Env):Promise<string|n
 export async function currentUser(request:Request,db:Database,env:Env):Promise<User|null>{
  const account=await accountUser(request,env,db);if(account)return account
  const value=sessionValue(request);if(!/^[a-f0-9]{64}$/.test(value))return null
- return db.prepare('SELECT u.id,u.display_name,u.username,u.email_verified,u.suspended FROM users u JOIN sessions s ON s.user_id=u.id WHERE s.token_hash=? AND s.expires>? AND u.suspended=0').bind(await digest(value),Math.floor(Date.now()/1000)).first<User>()
+ return db.prepare('SELECT u.id,u.display_name,u.username,u.avatar_id,u.email_verified,u.suspended FROM users u JOIN sessions s ON s.user_id=u.id WHERE s.token_hash=? AND s.expires>? AND u.suspended=0').bind(await digest(value),Math.floor(Date.now()/1000)).first<User>()
 }
 export async function throttle(db:Database,key:string,maximum:number,seconds=3600){
  const now=Math.floor(Date.now()/1000),bucket=Math.floor(now/seconds)
@@ -48,7 +48,7 @@ export async function authentication(request:Request,env:Env,path:string):Promis
   const user=db?await currentUser(request,db,env):null
   const emailAvailable=!!db&&emailReady(env)&&authReady(env)
   const providers=socialProviders(env)
-  return response({available:!!db,emailAvailable,ssoProviders:providers,forumMedia:!!env.MEDIA,registrationAvailable:!!db&&authReady(env)&&(emailAvailable||providers.length>0)&&env.REGISTRATION_OPEN==='true'&&env.PRIVACY_READY==='true',admin:db?await isAdmin(request,env,db):false,user:user?{id:user.id,displayName:user.display_name,username:user.username??null,verified:!!user.email_verified}:null})
+  return response({available:!!db,emailAvailable,ssoProviders:providers,forumMedia:!!env.MEDIA,registrationAvailable:!!db&&authReady(env)&&(emailAvailable||providers.length>0)&&env.REGISTRATION_OPEN==='true'&&env.PRIVACY_READY==='true',admin:db?await isAdmin(request,env,db):false,user:user?{id:user.id,displayName:user.display_name,username:user.username??null,avatar:user.avatar_id??null,verified:!!user.email_verified}:null})
  }
  if(!path.startsWith('/api/auth/'))return null
  if(/^\/api\/auth\/(github(\/callback)?|complete)$/.test(path))throw new HttpError(410,'Use your Octamod email account to sign in.')

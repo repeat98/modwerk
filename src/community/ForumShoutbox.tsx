@@ -4,6 +4,7 @@ import { useCommunity } from './context'
 import { SHOUT_MAX_LENGTH, type ForumShout, type ForumShouts } from './forum-contract'
 import { Icon } from '../components/Icon'
 import { ForumTime } from './ForumTime'
+import { ForumAvatar } from './ForumIdentity'
 
 export function ForumShoutbox({archive=false,page=0,floating=false}:{archive?:boolean;page?:number;floating?:boolean}) {
   const {session}=useCommunity()
@@ -55,7 +56,7 @@ export function ForumShoutbox({archive=false,page=0,floating=false}:{archive?:bo
     {!collapsed&&<div id="shoutbox-content">
       <div className="shoutbox-messages" ref={list} role="region" aria-label="Community messages" tabIndex={0}>
         {!data&&!error?<p role="status" className="shoutbox-empty">Loading messages…</p>:data?.messages.length?[...data.messages].reverse().map(item=><article key={item.id} id={'shout-'+item.id} className="shout-message" data-hidden={!!item.hidden}>
-          <span className="forum-avatar" aria-hidden="true">{item.username?.slice(0,2).toUpperCase()??'—'}</span>
+          <ForumAvatar username={item.username} avatar={item.avatar}/>
           <div className="shout-message-content"><div className="forum-meta">{item.username?<a href={'#forum/profile/'+item.username}>@{item.username}</a>:<span>Deleted member</span>}<ForumTime value={item.created_at} relative/>{item.edited_at&&<small>Edited</small>}{!!item.hidden&&<span className="pill">Hidden</span>}</div>
             {editing===item.id?<form className="community-form" onSubmit={event=>{event.preventDefault();void act('/forum/shouts/'+item.id,{body:editBody},'PATCH').then(ok=>{if(ok)setEditing(null)})}}><label>Edit message<textarea value={editBody} onChange={event=>setEditBody(event.target.value)} maxLength={SHOUT_MAX_LENGTH} required rows={2}/></label><div className="forum-actions"><button className="text-button" disabled={busy||!editBody.trim()}>Save</button><button type="button" className="text-button" onClick={()=>setEditing(null)}>Cancel</button></div></form>:<p>{item.body}</p>}
           </div>{(session.user?.verified||session.admin)&&messageActions(item)}

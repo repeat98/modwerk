@@ -53,7 +53,7 @@ function Card({ item }: { item: ForumShowcaseItem }) {
     <div className="forum-showcase-copy">
       <h3><a className="forum-showcase-title" href={href}>{item.title}</a></h3>
       {caption && <p className="forum-showcase-caption">{caption}</p>}
-      <div className="forum-showcase-meta"><ForumAvatar username={item.username} official={item.official} /><ForumAuthorName username={item.username} official={item.official} /><ForumTime value={item.created_at} relative /></div>
+      <div className="forum-showcase-meta"><ForumAvatar username={item.username} official={item.official} avatar={item.avatar} /><ForumAuthorName username={item.username} official={item.official} /><ForumTime value={item.created_at} relative /></div>
     </div>
   </li>
 }

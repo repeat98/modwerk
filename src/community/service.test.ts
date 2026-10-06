@@ -45,6 +45,7 @@ async function fixture(){
  db.exec(readFileSync(new URL('../../migrations/0018_account_policy.sql',import.meta.url),'utf8'))
  db.exec(readFileSync(new URL('../../migrations/0032_web_push.sql',import.meta.url),'utf8'))
  db.exec(readFileSync(new URL('../../migrations/0034_module_update_notifications.sql',import.meta.url),'utf8'))
+ db.exec(readFileSync(new URL('../../migrations/0037_profile_pictures.sql',import.meta.url),'utf8'))
  const env:Env={DB:adapter(db),APP_URL:'https://octamod.test',ADMIN_KEY_SHA256:await digest(adminKey)}
  const objects=new Map<string,ArrayBuffer>()
  env.MEDIA={async put(key,bytes){objects.set(key,bytes)},async get(key){const bytes=objects.get(key);return bytes?{body:new ReadableStream({start(controller){controller.enqueue(new Uint8Array(bytes));controller.close()}})}:null},async delete(key){objects.delete(key)}}
@@ -114,7 +115,7 @@ describe('community access and review',()=>{
   expect((await call('/modules/remix-miniverb/rating','POST',{value:4},session)).status).toBe(200)
   expect((await call('/auth/email','POST',{email:'unused@example.test'})).status).toBe(404)
   const own=await (await call('/auth/session','GET',undefined,session)).json()
-  expect(own).toEqual({available:true,emailAvailable:false,forumMedia:true,registrationAvailable:false,ssoProviders:[],admin:false,user:{id:own.user.id,displayName:'Author guest',username:'author',verified:true}})
+  expect(own).toEqual({available:true,emailAvailable:false,forumMedia:true,registrationAvailable:false,ssoProviders:[],admin:false,user:{id:own.user.id,avatar:null,displayName:'Author guest',username:'author',verified:true}})
  })
  it('keeps previously uploaded private media restricted without offering new upload routes',async()=>{
   const {call,db,env,tokens}=await fixture(),auth='octamod_session='+tokens.author,other='octamod_session='+tokens.other

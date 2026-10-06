@@ -1,5 +1,6 @@
 import { FORUM_CATEGORIES, type ForumCategory } from './forum-contract'
 import { DEVICES_BY_ID } from '../devices/registry'
+import { apiUrl } from '../hosting'
 
 export function ForumCategoryBadge({ category }: { category: ForumCategory }) {
   return <span className="forum-category-badge" data-category={category}><span aria-hidden="true" />{FORUM_CATEGORIES[category]}</span>
@@ -10,9 +11,11 @@ export function ForumMachineBadge({ machine }: { machine: string | null }) {
   return device ? <a className="forum-machine-badge" href={'#forum?machine=' + device.id}>{device.name}</a> : null
 }
 
-export function ForumAvatar({ username, official }: { username: string | null; official?: unknown }) {
+// A member's picture when they set one, otherwise their initials on a colour picked from the username.
+export function ForumAvatar({ username, official, avatar }: { username: string | null; official?: unknown; avatar?: string | null }) {
   const tone = official ? 'official' : username ? [...username].reduce((sum, character) => sum + character.charCodeAt(0), 0) % 5 : 'neutral'
-  return <span className="forum-avatar" data-tone={tone} aria-hidden="true">{official ? 'MW' : username?.slice(0, 2).toUpperCase() ?? '—'}</span>
+  const picture = !official && !!username && !!avatar
+  return <span className="forum-avatar" data-tone={tone} data-picture={picture || undefined} aria-hidden="true">{picture ? <img src={apiUrl('/forum/avatars/' + avatar)} alt="" loading="lazy" decoding="async" /> : official ? 'MW' : username?.slice(0, 2).toUpperCase() ?? '—'}</span>
 }
 
 // Official module threads have no public member profile.

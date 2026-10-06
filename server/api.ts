@@ -3,6 +3,7 @@ import { followReportedModule, moduleUpdateRoutes } from './module-updates'
 import { issueStatusStatements } from './issue-notifications'
 import { forum } from './forum'
 import { forumMedia } from './forum-media'
+import { avatarRoutes } from './avatars'
 import { notificationRoutes, notifyModuleMaintainers, unsubscribe, withdrawModuleLike } from './notifications'
 import { notifyBugDevelopers, publicBugDetails } from './bug-reports'
 import { developerAuthentication, developerUser } from './developer-auth'
@@ -66,6 +67,8 @@ export async function handleApi(request: Request, env: Env): Promise<Response> {
     if(push)return push
     const developer = await developerApi(request,db,user,admin,await developerUser(request,env,db),adminId)
     if(developer)return developer
+    const avatar = await avatarRoutes(request,env,db,user)
+    if(avatar)return avatar
     const media = await forumMedia(request,env,db,user,admin)
     if(media)return media
     const discussion = await forum(request,db,user,admin,adminId)

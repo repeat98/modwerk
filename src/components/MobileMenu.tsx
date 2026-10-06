@@ -23,7 +23,7 @@ export function MobileMenu({ route, selectedCount, configurationHref, admin, dev
   }, [open])
   const groups: MenuLink[][] = [
     [
-      { href: '#all', label: 'All machines', icon: 'grid', current: route === 'all' },
+      { href: '#all', label: 'All modules', icon: 'grid', current: route === 'all' },
       ...(configurationHref ? [{ href: configurationHref, label: 'Configuration', icon: 'sliders' as const, current: route === 'configuration' || route.endsWith('/configuration'), count: selectedCount }] : []),
     ],
     [
