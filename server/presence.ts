@@ -21,12 +21,13 @@ export async function notePresence(db: Database, userId: string, now = Date.now(
 /** At most this many names are listed; the rest stay in the count. */
 export const ONLINE_LIST = 12
 /** Public: the number of members online, and the names of those who show themselves in the online list (an account
- * setting, on by default). Members who opted out stay in the count. Suspended members drop out at once. */
+ * setting, on by default). Members who opted out stay in the count. Suspended members drop out at once; accounts that
+ * have not finished signing up (unverified, or a social sign-up still choosing its name) are never counted or named. */
 export async function membersOnline(db: Database, now = Date.now()) {
   const since = Math.floor(now / 1000) - ONLINE_SECONDS
   const [row, listed] = await Promise.all([
-    db.prepare('SELECT COUNT(*) AS online FROM member_presence p JOIN users u ON u.id=p.user_id WHERE p.seen_at>=? AND u.suspended=0').bind(since).first<{ online: number }>(),
-    db.prepare('SELECT u.username,u.avatar_id AS avatar FROM member_presence p JOIN users u ON u.id=p.user_id WHERE p.seen_at>=? AND u.suspended=0 AND u.show_online=1 AND u.username IS NOT NULL ORDER BY p.seen_at DESC,u.username LIMIT ?').bind(since, ONLINE_LIST).all<{ username: string; avatar: string | null }>(),
+    db.prepare('SELECT COUNT(*) AS online FROM member_presence p JOIN users u ON u.id=p.user_id WHERE p.seen_at>=? AND u.suspended=0 AND u.email_verified=1 AND u.username IS NOT NULL AND NOT EXISTS(SELECT 1 FROM social_pending_accounts s WHERE s.user_id=u.id)').bind(since).first<{ online: number }>(),
+    db.prepare('SELECT u.username,u.avatar_id AS avatar FROM member_presence p JOIN users u ON u.id=p.user_id WHERE p.seen_at>=? AND u.suspended=0 AND u.email_verified=1 AND u.username IS NOT NULL AND NOT EXISTS(SELECT 1 FROM social_pending_accounts s WHERE s.user_id=u.id) AND u.show_online=1 ORDER BY p.seen_at DESC,u.username LIMIT ?').bind(since, ONLINE_LIST).all<{ username: string; avatar: string | null }>(),
   ])
   const online = row?.online ?? 0
   return { online, members: listed.results, more: Math.max(0, online - listed.results.length) }

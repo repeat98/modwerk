@@ -41,6 +41,13 @@ describe('members online', () => {
     expect((await f.call('/notifications/unread')).status).toBe(401)
     f.db.prepare('UPDATE users SET suspended=1 WHERE id=?').run(b.id)
     expect(await f.online()).toEqual({ online: 1, members: [{ username: 'alpha', avatar: null }], more: 0 })
+    // An account still signing up (a social sign-up choosing its name, or an unverified email) is neither counted nor named.
+    f.db.prepare('UPDATE users SET suspended=0 WHERE id=?').run(b.id)
+    f.db.prepare("INSERT INTO social_pending_accounts(user_id,expires) VALUES(?,?)").run(b.id, Math.floor(Date.now() / 1000) + 600)
+    expect(await f.online()).toEqual({ online: 1, members: [{ username: 'alpha', avatar: null }], more: 0 })
+    f.db.prepare('DELETE FROM social_pending_accounts WHERE user_id=?').run(b.id)
+    f.db.prepare('UPDATE users SET email_verified=0 WHERE id=?').run(b.id)
+    expect(await f.online()).toEqual({ online: 1, members: [{ username: 'alpha', avatar: null }], more: 0 })
   })
 
   it('lets a member leave the online list through their profile settings while staying in the count', async () => {
