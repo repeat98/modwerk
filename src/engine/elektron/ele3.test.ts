@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { packSection } from '../aplib'
 import { CHUNK_SIZE, contentChecksum, decodeDataMessages, encode8in7, encodeSyx, framingCount, packetChecksum, splitMessages } from './sysex'
-import { classifySection, inplaceDepack, mainImage, packMain, readEle3Syx, verifyEle3Build, writeEle3Syx, type Ele3Device } from './ele3'
+import { MATCH_WINDOW, classifySection, inplaceDepack, mainImage, packMain, readEle3Syx, verifyEle3Build, writeEle3Syx, type Ele3Device } from './ele3'
 
 // A synthetic device and container: no Elektron firmware is involved.
 const device: Ele3Device = { mainSection: 3, mainLoad: 0x40000400, stage: 0x40200000, flashAt: 0x80000, flashLimit: 0x380000, sysexId: 0x0a }
@@ -89,5 +89,22 @@ describe('ELE3 container', () => {
     expect(() => verifyEle3Build(flipped, stock, main, device)).toThrow(/checksum|depack|stock/)
     expect(() => verifyEle3Build(output, stock, pattern(20000, 17), device)).toThrow('expected image')
     expect(() => writeEle3Syx(stock, packMain(main), device, 'TOO LONG')).toThrow('4 printable characters')
+  })
+
+  it('stores a packed main OS as Elektron does: zeros up to a 4-byte boundary, counted in the table', () => {
+    let padded = 0
+    for (let seed = 1; seed <= 16; seed++) {
+      const image = pattern(3000 + seed * 37, seed), stream = packSection(image, MATCH_WINDOW), stored = packMain(image)
+      expect(stored.length % 4).toBe(0)
+      expect(stored.length - stream.length).toBeLessThan(4)
+      expect(stored.subarray(0, stream.length)).toEqual(stream)
+      expect(stored.subarray(stream.length).every(byte => byte === 0)).toBe(true)
+      expect(classifySection(stored)).toBe('packed')
+      if (stored.length > stream.length) padded++
+    }
+    expect(padded).toBeGreaterThan(0)
+    const output = writeEle3Syx(stock, packMain(main), device)
+    expect(readEle3Syx(output).table.find(section => section.id === 3)!.length % 4).toBe(0)
+    expect(verifyEle3Build(output, stock, main, device).mainImage).toBe(main.length)
   })
 })

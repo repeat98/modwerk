@@ -112,9 +112,11 @@ function matchCost(offset: number, length: number, lastOffset: number) {
 
 // Preserve the native parser's chain order, strict tie handling and reuse state.
 // This is packaging only; it runs no emulator or hardware quality gates.
-export function packSection(data: Uint8Array): Uint8Array {
+// `maxOffset` bounds how far back a match may reach; the default leaves the search unbounded, as before.
+export function packSection(data: Uint8Array, maxOffset = MAX_SECTION_SIZE): Uint8Array {
   const length = data.length
   if (length > MAX_SECTION_SIZE) throw new Error('The firmware section exceeds its size limit.')
+  if (!Number.isSafeInteger(maxOffset) || maxOffset < 1) throw new Error('The match distance limit is invalid.')
   if (length === 0) return new Uint8Array(HEADER_SIZE)
   const head = new Int32Array(1 << 17).fill(-1)
   const previous = new Int32Array(length)
@@ -146,7 +148,9 @@ export function packSection(data: Uint8Array): Uint8Array {
       }
       let j = head[hash(i)], chain = 2048, longest = 1
       while (j >= 0 && chain-- > 0) {
-        const offset = i - j, count = run(j, i, cap)
+        const offset = i - j
+        if (offset > maxOffset) break // chains run newest first, so every later candidate is further back still
+        const count = run(j, i, cap)
         if (count > longest) {
           const minimum = offset > FAR_OFFSET ? 3 : 2
           for (let size = Math.max(longest + 1, minimum); size <= count; size++) relax(i + size, currentCost + matchCost(offset, size, lastOffset), offset, i, offset, size)

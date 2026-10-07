@@ -8,6 +8,11 @@ import { CHUNK_SIZE, FIRST_COUNTER, contentChecksum, decodeDataMessages, encodeS
 
 const COUNT_OFFSET = 0x1c, TABLE_OFFSET = 0x20, ENTRY_SIZE = 16, VERSION_FIELD = [0x14, 0x18] as const
 const OFFSET_BIAS = 767, FAR_OFFSET = 3328
+// Elektron's own ELE3 streams never reach further back than 1 MiB, and each packed section is stored with zeros up to a
+// 4-byte boundary that its table length counts (dn2_firmware_explore, docs/ele3-format.md and codec/limits.py; the same
+// holds for Model:Cycles 1.13). Builds without either still boot through the normal update, but images like that have
+// stalled in the startup-menu recovery flash, so packMain stays inside both.
+export const MATCH_WINDOW = 1 << 20
 
 export type Ele3Device = { mainSection: number; mainLoad: number; stage: number; flashAt: number; flashLimit: number; sysexId: number }
 
@@ -116,7 +121,12 @@ export function writeEle3Syx(stock: Ele3File, storedMain: Uint8Array, device: El
   return encodeSyx(stream, stock.deviceId, stock.framing[0], stock.framing[1])
 }
 
-export function packMain(image: Uint8Array): Uint8Array { return packSection(image) }
+/** The main OS packed as Elektron stores it: matches within MATCH_WINDOW, then zeros up to a 4-byte boundary. */
+export function packMain(image: Uint8Array): Uint8Array {
+  const packed = packSection(image, MATCH_WINDOW), stored = new Uint8Array(packed.length + (-packed.length & 3))
+  stored.set(packed)
+  return stored
+}
 
 /**
  * Depack the main OS as the bootloader does, in place: the stream staged at `stage`, the image written from `mainLoad`
