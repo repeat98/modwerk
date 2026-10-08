@@ -18,7 +18,7 @@ import ast, re, subprocess
 build_bus = types.ModuleType('assembly_audit_fixture')
 build_bus.__dict__.update(re=re, os=os, sys=sys, subprocess=subprocess,
                           _SCRATCH=pathlib.Path(tempfile.gettempdir()), DISASM='synthetic')
-tree = ast.parse((ROOT / 'tools/build/build_bus.py').read_text())
+tree = ast.parse((ROOT / 'tools/build/build_bus.py').read_text(encoding='utf-8'))
 needed = {'_LISTLINE', '_RT_NUM', '_RT_LABEL', 'MPYSU_AUDITED', '_VARIANT_FLAGS',
           '_listing', '_rt_fields', '_rt_same', '_roundtrip'}
 body = [n for n in tree.body if getattr(n, 'name', None) in needed or
@@ -92,7 +92,7 @@ class CycleExit(unittest.TestCase):
     def test_cli_over_budget_has_unsuccessful_exit(self):
         # Run the real command-line guard after replacing expensive measurement
         # with a deterministic over-budget result, without a toolchain or firmware.
-        text = (ROOT / 'tools/build/cycle_count.py').read_text()
+        text = (ROOT / 'tools/build/cycle_count.py').read_text(encoding='utf-8')
         import ast
         tree = ast.parse(text); main = next(n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == 'main')
         lines = text.splitlines(True)
@@ -107,13 +107,13 @@ class ToolSyntax(unittest.TestCase):
         import ast
         for source in (ROOT / 'tools').rglob('*.py'):
             with self.subTest(source=str(source.relative_to(ROOT))):
-                ast.parse(source.read_text(), str(source))
+                ast.parse(source.read_text(encoding='utf-8'), str(source))
 
 class SelectiveImport(unittest.TestCase):
     def test_exact_adapted_file_identities_and_scope(self):
         import hashlib, json
         sdk = ROOT.parent
-        record = json.loads((sdk / 'imports/octabam-infrastructure-7b2984c8.json').read_text())
+        record = json.loads((sdk / 'imports/octabam-infrastructure-7b2984c8.json').read_text(encoding='utf-8'))
         self.assertEqual(record['modules'], [])
         self.assertEqual(record['revision'], '7b2984c859732ae6c797ae49c7d61d250b1b6519')
         self.assertTrue(record['files'])
@@ -124,7 +124,7 @@ class SelectiveImport(unittest.TestCase):
 
     def test_native_comparison_keeps_images_and_refusals_exact(self):
         import hashlib, json
-        record = json.loads((ROOT.parent / 'infrastructure-verification/octabam-7b2984c8.json').read_text())
+        record = json.loads((ROOT.parent / 'infrastructure-verification/octabam-7b2984c8.json').read_text(encoding='utf-8'))
         self.assertEqual(len(record['selections']), 38)
         for row in record['selections']:
             self.assertEqual(row['before'], row['after'])
