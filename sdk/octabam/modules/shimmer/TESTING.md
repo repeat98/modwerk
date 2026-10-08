@@ -20,6 +20,13 @@ files. The original OS was supplied from a local 1.40C update.
 | Native dynamic/all-stock MAIN used for project stress and save/load | `5a42175f876d7d22e31284faad0b10c4b174a34afc3bcb695acd3f3e873c5433` |
 | Private `SHIMMER01` ELUP update, 466492 bytes | `9036a883a45be04be14650eb491e02ba8753c6070882c45167074e0f7fd14cd7` |
 
+The frozen runtime and integration source are committed at
+`b8fda042b6b95c5c58b764fba5ad99f6faa69e27`. A clean checkout of that commit
+reproduces all authored packages through the shared compiler; the importer
+validates the complete source inventory and exact payload equality before
+updating provenance labels. This is a local native source build, not an
+observed Docker/Windows CI run or owner approval.
+
 The source hashes at each measurement are retained in
 [software-audits.json](evidence/software-audits.json). Later additions to the
 test helpers do not relabel earlier runs. The native manifest conservatively

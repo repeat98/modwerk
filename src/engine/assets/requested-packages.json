@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "revision": "b8deefc88b2c3e5f3c6158e364eb741df1924e1d",
-  "sourceCommit": null,
+  "sourceCommit": "b8fda042b6b95c5c58b764fba5ad99f6faa69e27",
   "moduleVersions": {
     "spectrum": "0.1.1-experimental",
     "modulation": "0.1.1-experimental",

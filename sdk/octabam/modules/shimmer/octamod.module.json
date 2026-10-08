@@ -135,7 +135,7 @@
     "report": "TESTING.md",
     "summary": "Native signed dry, dirty initialization, isolation, six knob-click tests, eight-track stress and project save/fresh-process load pass. Settled unity fx:audit passes; fully pitched audit retains four alias-mask failures. Physical MKI/MKII, full persistence, stock-preserving public integration and first-release approval remain pending.",
     "hardwareStatus": "untested",
-    "evidenceRevision": "f7ba0d1f3acba70cb91a403eb27338a65fe796ff",
+    "evidenceRevision": "b8fda042b6b95c5c58b764fba5ad99f6faa69e27",
     "gates": [
       "modules/shimmer/verify.py",
       "fx:audit: aliasing, clipping, DC and extended idle tail",

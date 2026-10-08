@@ -191,7 +191,7 @@
       "sha256": "0bd2782079a4890b6506cd44cd8d9f0db917bfc96e71b03821c05c9c555b4ba2"
     }
   ],
-  "sourceCommit": null,
+  "sourceCommit": "b8fda042b6b95c5c58b764fba5ad99f6faa69e27",
   "moduleVersions": {
     "spectrum": "0.1.1-experimental",
     "modulation": "0.1.1-experimental",
