@@ -17,7 +17,7 @@ describe('module issue entry points', () => {
     const html = renderForum('forum/new?category=modules&module=miniverb')
     expect(html).not.toContain('value="issues"')
     expect(html).not.toContain('Steps to reproduce')
-    expect(html).toContain('class="button button-danger">Report an issue</button>')
+    expect(html).toContain('class="button button-quiet module-issue-action"')
     expect(html).toContain('Publish thread')
     expect(html).toContain('Keep discussions for questions, tips, ideas and feedback.')
   })
@@ -48,7 +48,7 @@ describe('module issue entry points', () => {
 
   it('shows the issue reporting action in embedded discussions while the service is loading', () => {
     const html = renderToStaticMarkup(createElement(ForumThreadView, { id: 'module-miniverb', embedded: true }))
-    expect(html).toContain('class="button button-danger">Report an issue</button>')
+    expect(html).toContain('class="button button-quiet module-issue-action"')
     expect(html).toContain('Keep discussions for questions, tips, ideas and feedback.')
   })
 

@@ -36,6 +36,12 @@ npm run dev:community
 
 In a second terminal, run `npm run dev` and open http://127.0.0.1:5173. Vite proxies /api to the local Cloudflare runtime on port 8788, with D1 emulated locally. `.dev.vars` (ignored) sets the local `APP_URL` and overrides the production values in `wrangler.worker.jsonc`. Without the API, local configuration and firmware storage still work; community actions explain their unavailable state.
 
+For the local post-download check-in prototype, open `http://127.0.0.1:5173/?preview=firmware-feedback`. It opens the modal immediately; **Simulate download · 8 s** demonstrates a delayed check-in. The proposed public delay is five minutes, once the tab is visible, but this prototype does not change the public reminder or download flow. It includes installation steps, one-click per-module working confirmations, the real issue-report form with local submissions and dismiss/snooze choices. Preview actions do not download firmware, save reports or schedule reminders. The preview is available only in Vite development mode.
+
+Open `http://127.0.0.1:5173/?preview=reporting` to compare the module-page feedback card, download follow-up, return reminder, delayed modal and Octatrack/Digi issue forms side by side. The preview reuses the real reporting components with a local fixture member; working confirmations and report submissions stay local and do not create hardware claims or notifications. `?preview=reporting-module#module/fm-synth` shows the actual module-page layout with the same local-only reporting actions. Production builds omit both preview entry points.
+
+Reporting actions share the neutral **Works for me** button (plus before submission, green check and **Reported working** after success) and amber **Report an issue** button. Download follow-ups and return reminders offer these actions directly on each module; bulk confirmation is optional and never preselects companions. Downloaded builds carry their original versions. Digi reports with a known model and OS keep those prefilled fields under **More details**, where the reporter can correct them. The release-follow checkbox stays a horizontal row in inline forms and dialogs.
+
 ## Optional site support
 
 The Ko-fi page is configured in `src/config/support.ts`. Set it to an empty string to hide the support entry.

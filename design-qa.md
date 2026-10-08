@@ -20,4 +20,10 @@ Interaction evidence: one Works press saves immediately and updates the local fi
 
 Evidence is saved in `artifacts/module-feedback/feedback-card-desktop.png`, `feedback-card-mobile.png`, `feedback-card-confirmed-mobile.png`, `feedback-card-error.png` and the comparison image. Required full app checks passed: 191 test files, 1,286 tests, lint, type checks, catalogue/licence checks and production build. No firmware source changed, so a native build was unnecessary.
 
-No unresolved visual or interaction defects remain.
+The reporting consistency follow-up also checks the real module card, download follow-up, return reminder, delayed check-in and the Octatrack/Digi forms together at `?preview=reporting`. The preview uses the actual components with local submissions, and `?preview=reporting-module#module/fm-synth` exposes the real page shell. Reporting entry points in issue lists, discussions and the forum share the same amber action.
+
+The inline module-page regression was reproduced and fixed: the general form label rule had stacked the release-follow checkbox. Its computed direction is now `row`; the bounded form stays inside the scrolling workspace and the Post report button is visible above the footer. Browser checks at 320, 375, 768 and 1280 CSS pixels found no document overflow. A per-module confirmation changes only that module to Reported working. Both the Octatrack dialog and the short Digi form reach their local success state; the latter submits with its already attached device and OS fields still collapsed. The flashing guide explains the card root with a file tree and links the official Elektron manuals. The delayed modal remains a development prototype, with an eight-second simulation and a proposed five-minute public delay.
+
+Final follow-up validation passed catalogue/licence/SDK checks, lint, types and production build. The parallel test run hit load-related timeouts; a complete two-worker rerun passed 190 files / 1,285 tests, and the remaining module-doctor file passed its two tests on an isolated retry. No assertions or timeouts were weakened. Production assets omit both development preview entry points.
+
+No unresolved visual or interaction defects remain in the checked reporting surfaces.

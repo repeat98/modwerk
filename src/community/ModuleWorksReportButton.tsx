@@ -13,7 +13,7 @@ export function ModuleWorksReportButton({ id }: { id: string }) {
 }
 
 function WorksReportAction({ id }: { id: string }) {
-  const { session, loading } = useCommunity()
+  const { session, loading, preview } = useCommunity()
   const { dialog, gate } = useLoginPrompt(modulePageHref(id).slice(1))
   const [busy, setBusy] = useState(false), [posted, setPosted] = useState(false), [error, setError] = useState('')
   const submitting = useRef(false)
@@ -23,10 +23,12 @@ function WorksReportAction({ id }: { id: string }) {
     try {
       const download = readHardwareFeedback(session.user.id).find(build => build.modules.some(module => module.id === id))
       const report = moduleWorksReport(id, download)
-      await saveWorkingReports(report.testedModuleIds, report.build)
+      if (!(import.meta.env.DEV && preview)) await saveWorkingReports(report.testedModuleIds, report.build)
       setPosted(true)
-      window.dispatchEvent(new Event(MODULE_STATISTICS_CHANGED))
-      if (download) updateHardwareFeedback(session.user.id, download, { completed: id })
+      if (!(import.meta.env.DEV && preview)) {
+        window.dispatchEvent(new Event(MODULE_STATISTICS_CHANGED))
+        if (download) updateHardwareFeedback(session.user.id, download, { completed: id })
+      }
     } catch (error) { setError(error instanceof Error ? error.message : 'Your report could not be saved. Try again.') }
     finally { submitting.current = false; setBusy(false) }
   }

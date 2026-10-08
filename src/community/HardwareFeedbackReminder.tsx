@@ -37,7 +37,7 @@ export function HardwareFeedbackReminder() {
     }
   }, [memberId])
   const record = memberId && loaded?.memberId === memberId ? loaded.record : undefined
-  const confirmation = memberId && posted?.memberId === memberId ? <p className="hardware-feedback-confirmation" role="status"><Icon name="check" size={15}/>Works report saved.<button type="button" className="icon-button" aria-label="Dismiss feedback confirmation" onClick={() => setPosted(null)}><Icon name="close" size={15}/></button></p> : null
+  const confirmation = memberId && posted?.memberId === memberId ? <p className="hardware-feedback-confirmation" role="status"><Icon name="check" size={15}/>Reported working.<button type="button" className="icon-button" aria-label="Dismiss feedback confirmation" onClick={() => setPosted(null)}><Icon name="close" size={15}/></button></p> : null
   if (!record) return confirmation
   const id = feedbackId(record), modules = pendingFeedback(record)
   return <section className="configuration-section hardware-feedback-reminder" aria-labelledby={heading}>

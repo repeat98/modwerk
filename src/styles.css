@@ -783,9 +783,9 @@ h1 { font-size: 28px; }
 .submission-form label.rights-confirm { flex-direction: row; align-items: flex-start; gap: 10px; font-size: 12px; line-height: 1.75; }
 .rights-confirm input { margin-top: 4px; width: 17px; height: 17px; flex-shrink: 0; accent-color: #929bff; }
 .guide-eyebrow { color: #a4a0c4; font-size: 11px; }
-.issue-report { scroll-margin-top: 24px; border: 1px solid var(--line); border-radius: 7px; margin: 22px 0; padding: 14px 17px; }
+.issue-report { scroll-margin-top: 24px; width: 100%; max-width: 660px; border: 1px solid var(--line); border-radius: 7px; margin: 22px 0; padding: 14px 17px; }
 .issue-report summary { cursor: pointer; color: #d1cede; font-size: 13px; }
-.issue-report > summary { color: #ffc5c5; }
+.issue-report > summary { color: #efd17c; }
 .issue-report-draft pre { max-height: 180px; overflow: auto; padding: 12px; border: 1px solid var(--line); border-radius: 6px; background: #1e1e24; font: 12px/1.7 var(--mono); }
 .module-discussion-dialog .section-title { align-items: flex-start; }
 .module-discussion-dialog .section-title h2 { margin-bottom: 0; }
@@ -793,6 +793,8 @@ h1 { font-size: 28px; }
 .module-discussion-dialog p + p { margin-top: 14px; }
 .issue-report summary span { color: #9997ad; font-size: 12px; margin-left: 12px; }
 .issue-report .community-form { max-width: 620px; gap: 14px; margin-top: 15px; }
+.issue-report .community-form .risk-accept { flex-direction: row; align-items: flex-start; gap: 9px; margin-top: 0; min-height: 44px; }
+.issue-report .community-form .risk-accept input { width: 18px; height: 18px; padding: 0; margin-top: 1px; }
 .issue-report button { align-self: flex-start; }
 .issue-report select { width: 100%; color: #e5e5ef; border: 1px solid #4a4a57; border-radius: 6px; background: #1e1e24; padding: 10px 12px; font-size: 14px; }
 .issue-report-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
@@ -1016,23 +1018,26 @@ h1 { font-size: 28px; }
 .install-guide details {margin-top:16px}
 .build-follow-up, .hardware-feedback-reminder, .hardware-feedback-confirmation {max-width:680px}
 .build-follow-up > .service-note {margin:0 0 14px}
-.build-follow-up-list {list-style:none;margin:0;padding:0;border-top:1px solid var(--line)}
-.build-follow-up-module {padding:12px 0;border-bottom:1px solid var(--line)}
-.build-follow-up-module:last-child {border-bottom:0;padding-bottom:0}
-.build-follow-up-row {display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:16px}
+.build-follow-up-list {display:grid;gap:10px;list-style:none;margin:0;padding:0}
+.build-follow-up-module {padding:16px;border-radius:8px;background:var(--surface)}
+.build-follow-up-row {display:grid;grid-template-columns:minmax(0,1fr) 205px;align-items:center;gap:16px}
 .build-follow-up-name {display:grid;gap:4px;overflow-wrap:anywhere;font-size:14px}
 .build-follow-up-name .subtle {font-size:11px}
-.build-follow-up-row .forum-actions {margin:0;gap:8px}
-.build-follow-up-selection { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; margin-bottom: 12px; }
+.reporting-actions { display: grid; gap: 8px; }
+.reporting-actions .button { min-height: 44px; font-size: 12px; }
+.build-follow-up-bulk { margin-top: 16px; color: var(--muted); font-size: 12px; }
+.build-follow-up-bulk > summary { cursor: pointer; min-height: 44px; padding-block: 12px; }
+.build-follow-up-selection { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
 .build-follow-up-selection label, .build-follow-up-select { display: flex; align-items: center; gap: 10px; }
 .build-follow-up-selection label { min-height: 44px; font-size: 13px; }
 .build-follow-up-select input { width: 18px; height: 18px; flex-shrink: 0; accent-color: var(--accent); }
+.build-follow-up-selection input { width: 18px; height: 18px; accent-color: var(--accent); }
 .build-follow-up-posted {min-height:42px;color:#bcd7c5}
 .hardware-feedback-reminder {margin-bottom:24px}
 .hardware-feedback-later {min-height:42px;margin-top:16px}
 .hardware-feedback-confirmation {display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin:16px 0;color:#bcd7c5;font-size:13px;line-height:1.6}
 .hardware-feedback-confirmation .icon-button {margin-left:auto}
-@media (max-width:650px) {.build-follow-up-row {grid-template-columns:minmax(0,1fr);gap:10px}}
+@media (max-width:650px) {.build-follow-up-row {grid-template-columns:minmax(0,1fr);gap:14px}.reporting-actions {grid-template-columns:1fr 1fr}.reporting-actions .button {font-size:11px;padding-inline:7px}}
 .build-identity {font-size:12px;line-height:1.6}
 .build-identity dd {margin:2px 0 12px;overflow-wrap:anywhere;font-family:monospace}
 .build-log {margin:10px 0 14px;padding:0;list-style:none;font:12px/1.6 var(--mono);color:#b0b0c0;white-space:pre-wrap;overflow-wrap:anywhere}
@@ -1754,9 +1759,11 @@ h1 { font-size: 28px; }
 .detail-feedback-prompt { grid-area: feedback-prompt; }
 .detail-feedback-prompt h2 { font-size: 15px; line-height: 1.4; }
 .detail-feedback-prompt p { margin-top: 4px; color: var(--muted); font-size: 12px; line-height: 1.5; }
-.detail-hero-with-resources .module-works-action { grid-area: works-action; }
+.module-feedback .module-works-action { grid-area: works-action; }
+.module-works-action { background: #303036; border-color: #44444f; color: #d2d2dd; }
+.module-works-action:hover:not(:disabled) { background: #393940; border-color: #666673; }
 .module-works-reported:disabled { border-color: #83c7ae; background: #83c7ae08; color: #a0dfc6; opacity: 1; }
-.detail-hero-with-resources .module-issue-action { grid-area: issue-action; }
+.module-feedback .module-issue-action { grid-area: issue-action; }
 .detail-hero-with-resources .detail-intro .button { min-width: 0; min-height: 44px; height: auto; font-size: 13px; padding: 10px 12px; }
 .detail-hero-with-resources .module-feedback > .button { width: auto; white-space: normal; padding-inline: 8px; }
 .detail-hero-with-resources > .module-resource-summary { grid-area: resources; display: grid; grid-template-columns: 1fr auto; gap: 12px; padding: 0; border: 0; }

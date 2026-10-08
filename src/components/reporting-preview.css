@@ -1,0 +1,35 @@
+body:has(.reporting-preview-page) { overflow: auto; height: auto; }
+.reporting-preview-page { padding: 32px; max-width: 1900px; margin: auto; }
+.reporting-preview-heading { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 24px; margin-bottom: 28px; }
+.reporting-preview-heading h1 { font-size: 29px; margin: 8px 0; }
+.reporting-preview-heading p:not(.page-kicker) { color: var(--muted); font-size: 13px; line-height: 1.7; }
+.reporting-preview-heading > div:last-child { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; }
+.reporting-preview-heading .button, .reporting-preview-heading .text-button { font-size: 12px; }
+.reporting-preview-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; align-items: start; }
+.reporting-preview-panel { min-width: 0; border: 1px solid #3c3c46; border-radius: 10px; overflow: hidden; container: reporting-panel / inline-size; }
+.reporting-preview-panel > header { display: flex; align-items: flex-start; gap: 12px; padding: 17px; background: #222227; border-bottom: 1px solid #383842; }
+.reporting-preview-panel > header > span { color: #aaaafd; font: 11px var(--mono); padding-top: 2px; }
+.reporting-preview-panel > header h2 { font-size: 14px; }
+.reporting-preview-panel > header p { color: var(--muted); font-size: 11px; line-height: 1.6; margin-top: 5px; }
+.reporting-preview-panel-body { padding: 18px; }
+.reporting-preview-panel .configuration-section { border: 0; padding: 0; margin: 0; background: none; }
+.reporting-preview-panel .module-feedback { margin: 0; }
+.reporting-preview-panel .hardware-feedback-reminder h2 { font-size: 15px; }
+.reporting-preview-panel .section-title { margin-bottom: 12px; }
+.reporting-preview-panel .module-issue-dialog { width: auto; max-height: none; overflow: visible; }
+.reporting-preview-panel .module-issue-dialog h2 { font-size: 16px; line-height: 1.5; }
+.reporting-preview-panel .module-feedback .button { min-height: 44px; padding-inline: 8px; font-size: 12px; }
+.app-dialog.firmware-feedback-inline { width: 100%; max-height: none; padding: 0; border: 0; border-radius: 0; background: none; box-shadow: none; }
+.firmware-feedback-inline .firmware-feedback-topline { margin-bottom: 12px; }
+.firmware-feedback-inline h2 { font-size: 19px; }
+.reporting-preview-form .community-form > .button { width: 100%; justify-content: center; }
+.reporting-preview-notice { margin-bottom: 20px; padding: 12px 16px; background: #91d5bd0b; color: #a0dfc6; border: 1px solid #91d5bd33; border-radius: 7px; font-size: 12px; }
+@container reporting-panel (max-width: 500px) {
+  .module-feedback { grid-template-columns: 1fr 1fr; grid-template-areas: "feedback-prompt feedback-prompt" "works works" "works-action issue-action" "works-error works-error"; }
+  .build-follow-up-row, .firmware-feedback-module { grid-template-columns: 1fr; gap: 14px; }
+  .reporting-actions, .firmware-feedback-module-actions { grid-template-columns: 1fr 1fr; }
+  .reporting-actions .button, .firmware-feedback-module-actions .button { font-size: 11px; min-height: 44px; padding-inline: 6px; }
+  .issue-report-row { grid-template-columns: 1fr; }
+}
+@media (max-width: 1050px) { .reporting-preview-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 650px) { .reporting-preview-page { padding: 18px; }.reporting-preview-grid { grid-template-columns: 1fr; }.reporting-preview-heading h1 { font-size: 24px; } }

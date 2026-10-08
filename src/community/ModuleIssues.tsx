@@ -34,7 +34,7 @@ export function ModuleIssueCard({ issue }: { issue: PublicModuleIssue }) {
 export function ModuleIssues({ id, issues, onReportIssue }: { id: string; issues: ReturnType<typeof useModuleIssues>; onReportIssue: () => void }) {
   const { data, error, loading, status, page, setStatus, setPage, retry } = issues
   return <section className="detail-section module-issues forum-page">
-    <div className="section-title"><h2>Issues {data && <IssueCount count={data.openCount}/>}</h2><button className="button button-danger" onClick={onReportIssue}><Icon name="message" size={15}/>Report an issue</button></div>
+    <div className="section-title"><h2>Issues {data && <IssueCount count={data.openCount}/>}</h2><button className="button button-quiet module-issue-action" onClick={onReportIssue}><Icon name="message" size={16}/>Report an issue</button></div>
     <p className="module-issues-intro">Bug reports for this module. Check existing reports before opening a new issue.</p>
     <div className="module-issue-filters" role="group" aria-label="Filter issues by status">
       <button type="button" aria-pressed={status === 'open'} onClick={() => setStatus('open')}><Icon name="message" size={14}/>Open{data && <IssueCount count={data.openCount}/>}</button>
