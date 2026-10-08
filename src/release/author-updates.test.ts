@@ -31,6 +31,9 @@ describe('module author release authority', () => {
     ]
     for (const changes of bad) expect(() => authorizeAuthorUpdate(registry, author, modules, changes)).toThrow()
   })
+  it('keeps module, upstream and media licence text changes on the owner review path', () => {
+    for (const file of ['LICENSE', 'upstream/LICENSE.txt', 'media/LICENSE.md', 'COPYING', 'NOTICE']) expect(() => authorizeAuthorUpdate(registry, author, modules, [...update(), change(modules[0].folder + '/' + file, 'original terms', 'changed terms')])).toThrow('Licence text changes')
+  })
   it('rejects unchanged versions, deletions, symlinks, firmware and hidden workflow paths', () => {
     for (const changes of [[change(path, document, document)], [change(path, document, null)], [...update(), change(modules[0].folder + '/source.s', null, 'link', false)], [...update(), change(modules[0].folder + '/firmware.bin', null, 'bytes')], [...update(), change(modules[0].folder + '/.github/x.yml', null, 'x')]]) expect(() => authorizeAuthorUpdate(registry, author, modules, changes)).toThrow()
   })

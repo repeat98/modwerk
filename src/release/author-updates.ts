@@ -112,7 +112,11 @@ export function authorizeAuthorUpdate(registry: AuthorRegistry, author: unknown,
   let packages = false
   for (const change of changes) {
     if (!change.regular || Array.from(change.path).some(char => char.charCodeAt(0) < 32 || char.charCodeAt(0) === 127) || change.path.split('/').some(part => ['.', '..', '.git', '.github', '.gitattributes', '.gitmodules'].includes(part)) || /\.(bin|syx|zip|exe|dll|dylib)$/i.test(change.path)) throw new Error('Unsafe author update path: ' + change.path)
-    if (touched.some(module => change.path.startsWith(module.folder + '/'))) continue
+    const own = touched.find(module => change.path.startsWith(module.folder + '/'))
+    if (own) {
+      if (change.path === own.folder + '/' + object(own.document.license).file || /^(?:licen[cs]e|copying|notice)(?:[._-]|$)/i.test(change.path.split('/').at(-1) ?? '')) throw new Error('Licence text changes require owner review.')
+      continue
+    }
     if (vendorPaths.has(change.path)) continue
     if (change.path === 'sdk/catalog.json' || ['src/catalog/module-documents.json', 'src/catalog/machine-modules.json'].includes(change.path)) {
       if (!change.before || !change.after) throw new Error('Catalog removal requires owner review.')
