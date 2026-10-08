@@ -6,7 +6,7 @@ import { SUPPORT_EMAIL } from '../src/support'
 import { forumLink } from '../src/community/forum-links'
 
 /** Bump when the layout changes; a campaign keeps the version it was written with. */
-export const NEWS_EMAIL_VERSION = 'modwerk-news-001'
+export const NEWS_EMAIL_VERSION = 'modwerk-news-002'
 
 type Node = { type: string; value?: string; url?: string; depth?: number; ordered?: boolean; start?: number | null; children?: Node[] }
 const TEXT = 'color:#c4c4ce;font-size:15px;line-height:25px;'
@@ -45,7 +45,15 @@ function inlineText(node: Node): string {
 function block(node: Node, last: boolean): string {
   const gap = last ? '0' : '18px'
   switch (node.type) {
-    case 'paragraph': return `<p style="margin:0 0 ${gap};${TEXT}">${(node.children ?? []).map(inline).join('')}</p>`
+    case 'paragraph': {
+      // A standalone Markdown link is the campaign's action; links within prose stay inline.
+      const child = node.children?.length === 1 ? node.children[0] : null
+      const href = child?.type === 'link' ? forumLink(child.url ?? '') : null
+      if (child && href && plain(child).trim()) return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:6px 0 ${last ? '0' : '24px'};"><tr><td bgcolor="#c7a16c" style="border-radius:7px;text-align:center;">
+<a href="${escape(href)}" style="display:inline-block;padding:15px 22px;border:1px solid #c7a16c;border-radius:7px;color:#171719;font-size:15px;font-weight:bold;line-height:22px;text-decoration:none;">${escape(plain(child))}</a>
+</td></tr></table>`
+      return `<p style="margin:0 0 ${gap};${TEXT}">${(node.children ?? []).map(inline).join('')}</p>`
+    }
     case 'heading': return node.depth === 1 || node.depth === 2
       ? `<h2 style="margin:26px 0 12px;color:#f4f4f8;font-size:20px;line-height:28px;font-weight:bold;letter-spacing:-0.3px;">${(node.children ?? []).map(inline).join('')}</h2>`
       : `<h3 style="margin:22px 0 10px;color:#f4f4f8;font-size:16px;line-height:24px;font-weight:bold;">${(node.children ?? []).map(inline).join('')}</h3>`

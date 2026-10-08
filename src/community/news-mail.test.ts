@@ -212,6 +212,16 @@ describe('news mail campaigns', () => {
     expect((await call('/admin/news/suggest', 'GET', undefined, author.session)).status).toBe(403)
   })
 
+  it('renders a standalone safe link as an email button while preserving inline links and the plain-text destination', () => {
+    const rendered = renderNewsEmail({ subject: 'October modules', body: '[Explore **the modules** & more](https://modwerk.app/#all)\n\nRead the [release notes](https://modwerk.app/#module/miniverb) first.\n\n[Do not run](javascript:alert(1))' }, { app: 'https://modwerk.app/', settings: 'https://modwerk.app/#account/notifications' })
+    expect(rendered.html).toContain('bgcolor="#c7a16c" style="border-radius:7px;text-align:center;"')
+    expect(rendered.html).toMatch(/<a href="https:\/\/modwerk.app\/#all" style="display:inline-block;[^>]+>Explore the modules &amp; more<\/a>/)
+    expect(rendered.html).toContain('<a href="https://modwerk.app/#module/miniverb" style="color:#c4c9ff;text-decoration:underline;">release notes</a>')
+    expect(rendered.html).not.toContain('javascript:')
+    expect(rendered.html).toContain('Do not run')
+    expect(rendered.text).toContain('Explore the modules & more (https://modwerk.app/#all)')
+  })
+
   it('renders markdown safely in both parts of the message', () => {
     const rendered = renderNewsEmail({ subject: 'Hello <everyone>', body: '# Title\n\nPlain **bold** `code` <script>alert(1)</script>\n\n[safe](https://modwerk.app/) [unsafe](javascript:alert(1))\n\n> quoted\n\n1. one\n2. two\n\n---\n\n```\nraw < text\n```' }, { app: 'https://modwerk.app/', settings: 'https://modwerk.app/#account/notifications' })
     expect(rendered.subject).toBe('Hello <everyone>')
