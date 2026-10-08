@@ -18,7 +18,7 @@ import { defaultConfigurationChoice, resolveReportConfiguration, type Configurat
 import recipes from '../catalog/module-sets.json'
 import { ReportMoreDetails } from './ReportMoreDetails'
 
-export function IssueReport({id,author,openRequest=0,embedded=false,workspaceContext,baseOs=REPORT_OS,preview=false}:{id:string;author:string;openRequest?:number;embedded?:boolean;workspaceContext?:WorkspaceReportContext;baseOs?:string;preview?:boolean}){
+export function IssueReport({id,author,openRequest=0,embedded=false,workspaceContext,baseOs=REPORT_OS,preview=false,onReported}:{id:string;author:string;openRequest?:number;embedded?:boolean;workspaceContext?:WorkspaceReportContext;baseOs?:string;preview?:boolean;onReported?:()=>void}){
  const {session,preview:contextPreview}=useCommunity(),isPreview=import.meta.env.DEV&&(preview||contextPreview)
  const report=useRef<HTMLDetailsElement>(null),title=useRef<HTMLInputElement>(null),success=useRef<HTMLDivElement>(null)
  const fileInput=useRef<HTMLInputElement>(null),readRequest=useRef(0),helpId=useId()
@@ -71,13 +71,14 @@ export function IssueReport({id,author,openRequest=0,embedded=false,workspaceCon
   if(!model||reading||busy)return
   setBusy(true);setError('')
   const fields=Object.fromEntries(new FormData(form)) as Record<string,string>
-  if(isPreview){setSent({id:'local-preview',author,github:'none',githubUrl:null,forumThreadId:null});setBusy(false);return}
+  if(isPreview){setSent({id:'local-preview',author,github:'none',githubUrl:null,forumThreadId:null});setBusy(false);onReported?.();return}
   if(fields.actual.length>2000){setError('Keep the description under 2,000 characters. Your complete discussion draft is available above for reference.');setBusy(false);return}
   if(!log&&!resolved.modules.length){setError(CONFIGURATION_REQUIRED);setBusy(false);return}
   // With a log the Worker reads the configuration from the log itself; this mirrors what the form showed.
   const context:IssueContext={model,flash,os:log?.summary.os??baseOs,modules:resolved.modules,keepStockFx2:resolved.keepStockFx2,build:resolved.build}
   try{
    const result=await post<BugReportResult>('/modules/'+id+'/issues',{title:fields.title,steps:fields.steps,expected:fields.expected,actual:fields.actual,context,visibility:'forum',notifyUpdates:fields.notifyUpdates==='on',...(log?{log:log.text}:{})})
+   onReported?.()
    refreshModuleIssues(id)
    setSent(result)
    setFollow(fields.notifyUpdates==='on')

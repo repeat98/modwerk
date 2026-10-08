@@ -7,7 +7,7 @@ import { ModuleIssueDialog } from './ModuleIssueDialog'
 import { MODULE_STATISTICS_CHANGED } from './module-statistics'
 import { saveWorkingReports } from './module-works-report'
 
-type FollowUpProps = { machine: string; os: string; modules: readonly BuiltModule[]; pendingIds?: readonly string[]; onSaved?: () => void; embedded?: boolean; preview?: boolean }
+type FollowUpProps = { machine: string; os: string; modules: readonly BuiltModule[]; pendingIds?: readonly string[]; onSaved?: () => void; onReportOpenChange?: (open: boolean) => void; embedded?: boolean; preview?: boolean }
 
 /** Individual Works buttons save in one press. Bulk confirmation is explicit. */
 export function BuildFollowUp(props: FollowUpProps) {
@@ -16,7 +16,7 @@ export function BuildFollowUp(props: FollowUpProps) {
   return <BuildFeedback key={session.user.id + ':' + feedbackId(props)} {...props} memberId={session.user.id}/>
 }
 
-function BuildFeedback({ machine, os, modules, pendingIds, onSaved, embedded = false, memberId, preview = false }: FollowUpProps & { memberId: string }) {
+function BuildFeedback({ machine, os, modules, pendingIds, onSaved, onReportOpenChange, embedded = false, memberId, preview = false }: FollowUpProps & { memberId: string }) {
   const heading = useId(), submitting = useRef(false)
   const [busy, setBusy] = useState(false), [error, setError] = useState(''), [reported, setReported] = useState<string[]>([]), [selected, setSelected] = useState<string[]>([])
   const [reporting, setReporting] = useState('')
@@ -46,7 +46,7 @@ function BuildFeedback({ machine, os, modules, pendingIds, onSaved, embedded = f
         <span className="build-follow-up-name"><strong>{module.name}</strong><span className="subtle">{module.version}</span></span>
         <div className="reporting-actions">
           <button type="button" className={'button module-works-action ' + (reported.includes(module.id) ? 'module-works-reported' : 'button-quiet')} disabled={busy || reported.includes(module.id)} aria-label={module.name + (reported.includes(module.id) ? ': reported working' : ': report works on my ' + machine)} onClick={() => void submit([module.id])}><Icon name={reported.includes(module.id) ? 'check' : 'plus'} size={16}/>{reported.includes(module.id) ? 'Reported working' : busy ? 'Saving…' : 'Works for me'}</button>
-          <button type="button" className="button button-quiet module-issue-action" aria-haspopup="dialog" aria-label={'Report an issue with ' + module.name} onClick={() => setReporting(module.id)}><Icon name="message" size={16}/>Report an issue</button>
+          <button type="button" className="button button-quiet module-issue-action" aria-haspopup="dialog" aria-label={'Report an issue with ' + module.name} onClick={() => { setReporting(module.id); onReportOpenChange?.(true) }}><Icon name="message" size={16}/>Report an issue</button>
         </div>
       </div>
     </li>)}</ul>
@@ -57,6 +57,8 @@ function BuildFeedback({ machine, os, modules, pendingIds, onSaved, embedded = f
     </div></details>}
     {reported.length > 0 && <span className="sr-only" role="status">Working confirmations saved for {reported.length} {reported.length === 1 ? 'module' : 'modules'}.</span>}
     {error && <p className="file-error" role="alert">{error}</p>}
-    {reporting && <ModuleIssueDialog id={reporting} build={{ machine, os, modules }} preview={preview} onClose={() => setReporting('')}/>}
+    {reporting && <ModuleIssueDialog id={reporting} build={{ machine, os, modules }} preview={preview} onReported={() => {
+      if (!(import.meta.env.DEV && preview)) updateHardwareFeedback(memberId, { machine, os, modules }, { completed: reporting })
+    }} onClose={() => { setReporting(''); onReportOpenChange?.(false) }}/>}
   </section>
 }

@@ -32,6 +32,7 @@
 .firmware-feedback-module-actions { display: grid; gap: 8px; }
 .firmware-feedback-module-actions .button { min-height: 44px; font-size: 12px; padding: 9px 10px; }
 .firmware-feedback-saved { display: flex; align-items: center; gap: 6px; margin-top: 14px; font-size: 11px; color: #91d5bd; }
+.firmware-feedback-issue-saved { display: flex; align-items: center; gap: 6px; margin-top: 14px; font-size: 11px; color: #efd17c; }
 .firmware-feedback-modules strong, .firmware-feedback-modules small { display: block; }
 .firmware-feedback-modules strong { font-size: 14px; font-weight: 600; }
 .firmware-feedback-modules small { font: 10px var(--mono); color: #aaaabc; margin-top: 5px; }

@@ -11,10 +11,12 @@ type Props = {
   onLater: () => void
   onClose: () => void
   inline?: boolean
+  pendingIds?: readonly string[]
+  issueReportedIds?: readonly string[]
 }
 
-/** A prototype of the post-download check-in. Callers supply the feedback actions. */
-export function FirmwareFeedbackDialog({ build, onConfirm, onReport, onLater, onClose, inline = false }: Props) {
+/** Shared post-download check-in. Callers retain the full build context and supply the feedback actions. */
+export function FirmwareFeedbackDialog({ build, onConfirm, onReport, onLater, onClose, inline = false, pendingIds, issueReportedIds = [] }: Props) {
   const dialog = useRef<HTMLDialogElement>(null), heading = useId(), description = useId(), submitting = useRef(false)
   const [reported, setReported] = useState<string[]>([]), [savingId, setSavingId] = useState(''), [error, setError] = useState('')
   const busy = !!savingId
@@ -36,10 +38,10 @@ export function FirmwareFeedbackDialog({ build, onConfirm, onReport, onLater, on
     <h2 id={heading}>Tried it on your {build.machine}?</h2>
     <p id={description} className="firmware-feedback-intro">Let others know how it went. Your downloaded versions are already attached.</p>
     <p className="firmware-feedback-build">YOUR DOWNLOAD <span>{build.machine} · OS {build.os}</span></p>
-    <ul className="firmware-feedback-modules">{build.modules.map(module => {
+    <ul className="firmware-feedback-modules">{build.modules.filter(module => !pendingIds || pendingIds.includes(module.id)).map(module => {
       const saved = reported.includes(module.id)
       return <li className="firmware-feedback-module" key={module.id}>
-        <div className="firmware-feedback-module-name"><strong>{module.name}</strong><small>{module.version}</small>{saved && <span className="firmware-feedback-saved" role="status"><Icon name="check" size={15}/>Reported working</span>}</div>
+        <div className="firmware-feedback-module-name"><strong>{module.name}</strong><small>{module.version}</small>{saved && <span className="firmware-feedback-saved" role="status"><Icon name="check" size={15}/>Reported working</span>}{issueReportedIds.includes(module.id) && <span className="firmware-feedback-issue-saved" role="status"><Icon name="message" size={15}/>Issue reported</span>}</div>
         <div className="firmware-feedback-module-actions">
           <button type="button" className={'button module-works-action ' + (saved ? 'module-works-reported' : 'button-quiet')} disabled={busy || saved} aria-label={module.name + (saved ? ': reported working' : ': works for me')} onClick={() => void confirm(module.id)}><Icon name={saved ? 'check' : 'plus'} size={16}/>{saved ? 'Reported working' : savingId === module.id ? 'Saving…' : 'Works for me'}</button>
           <button type="button" className="button button-quiet module-issue-action" disabled={busy} aria-label={'Report an issue with ' + module.name} onClick={() => onReport(module.id)}><Icon name="message" size={16}/>Report an issue</button>

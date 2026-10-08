@@ -16,7 +16,7 @@ import { ReportConfiguration } from './ReportConfiguration'
 import { defaultConfigurationChoice, resolveReportConfiguration, type ConfigurationChoice } from './report-configuration'
 import { ReportMoreDetails } from './ReportMoreDetails'
 
-export function DigiIssueReport({ id, openRequest = 0, embedded = false, workspaceContext, baseOs = '', moduleVersion, preview = false }: { id: string; openRequest?: number; embedded?: boolean; workspaceContext?: WorkspaceReportContext; baseOs?: string; moduleVersion?: string; preview?: boolean }) {
+export function DigiIssueReport({ id, openRequest = 0, embedded = false, workspaceContext, baseOs = '', moduleVersion, preview = false, onReported }: { id: string; openRequest?: number; embedded?: boolean; workspaceContext?: WorkspaceReportContext; baseOs?: string; moduleVersion?: string; preview?: boolean; onReported?: () => void }) {
   const module = communityModule(id)!, device = DEVICES_BY_ID[module.machine], savedWorkspace = useWorkspaceReportContext(module.machine), workspace = workspaceContext ?? savedWorkspace, { session, preview: contextPreview } = useCommunity(), isPreview = import.meta.env.DEV && (preview || contextPreview)
   const report = useRef<HTMLDetailsElement>(null), title = useRef<HTMLInputElement>(null), success = useRef<HTMLDivElement>(null)
   const [sent, setSent] = useState<BugReportResult | null>(null), [busy, setBusy] = useState(false), [error, setError] = useState('')
@@ -41,11 +41,12 @@ export function DigiIssueReport({ id, openRequest = 0, embedded = false, workspa
     setBusy(true); setError('')
     try {
       const fields = Object.fromEntries(new FormData(form)) as Record<string, string>
-      if (isPreview) { setSent({ id: 'local-preview', author: module.author, github: 'none', githubUrl: null, forumThreadId: null }); return }
+      if (isPreview) { setSent({ id: 'local-preview', author: module.author, github: 'none', githubUrl: null, forumThreadId: null }); onReported?.(); return }
       if (fields.actual.length > 2000) throw new Error('Keep the description under 2,000 characters. Your complete discussion draft is available above for reference.')
       if (!resolved.modules.length) throw new Error('Choose the configuration the ' + device.name + ' runs: a saved one, or tick its modules.')
       const context: DigiIssueContext = { machine: module.machine as DigiIssueContext['machine'], model: fields.model, flash: fields.flash as FlashState, os: fields.os, moduleVersion: fields.moduleVersion.trim() || module.version, modules: resolved.modules, keepStockFx2: null, build: resolved.build }
       setSent(await post<BugReportResult>('/modules/' + id + '/issues', { title: fields.title, steps: fields.steps, expected: fields.expected, actual: fields.actual, context, visibility: 'forum', notifyUpdates: fields.notifyUpdates === 'on' }))
+      onReported?.()
       refreshModuleIssues(id)
       setKept({ model: fields.model, os: fields.os, flash: fields.flash, moduleVersion: context.moduleVersion, follow: fields.notifyUpdates === 'on' })
       clearDraft()

@@ -1,6 +1,7 @@
 import { AccountPage } from './community/AccountPage'
 import { SignupWelcome } from './community/SignupWelcome'
 import { HardwareFeedbackReminder } from './community/HardwareFeedbackReminder'
+import { HardwareFeedbackCheckIn } from './community/HardwareFeedbackCheckIn'
 import { NotificationBell } from './community/NotificationBell'
 import { PublicAnnouncement } from './community/PublicAnnouncement'
 import { useMembersOnline } from './community/useMembersOnline'
@@ -308,6 +309,7 @@ export default function App() {
       {configDialog && <ConfigurationDialog mode={configDialog} initialName={configDialog === 'create' ? '' : configDialog === 'duplicate' ? (machineActive?.name ?? '') + ' copy' : machineActive?.name ?? ''} onSubmit={submitConfigurationDialog} onClose={() => { setConfigDialog(null); setCreateDevice(null) }} />}
       <PublicAnnouncement next={route} enabled={!accountRoute && !developerRoute && !configuration && machineView !== 'configuration' && !route.startsWith('submit') && !['admin', 'review', 'privacy', 'impressum', 'community-rules', 'report-content'].includes(route)} />
       {supportOpen && <SupportDialog url={SUPPORT_URL} onClose={() => setSupportOpen(false)} />}
+      <HardwareFeedbackCheckIn enabled={!accountRoute && !developerRoute && !['admin', 'review', 'privacy', 'impressum', 'community-rules', 'report-content', 'submit'].includes(route.split('/')[0]) && !firmwareFeedbackPreview}/>
       <div className="workspace">
         <header className="app-toolbar" ref={toolbarRef}>
           <a className="toolbar-brand" href={'#' + ALL_MACHINES}><img src={import.meta.env.BASE_URL + 'modwerk-mark.svg'} width="30" height="30" alt="" /><span>Modwerk</span></a>
