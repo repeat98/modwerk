@@ -524,6 +524,32 @@ def _listing(text):
     return out
 
 
+_RT_NUM = re.compile(r"(-?)(\$[0-9a-f]+|[0-9]+)")
+_RT_LABEL = re.compile(r"^[a-z][a-z0-9]*_[a-z0-9_]+$")
+
+
+def _rt_fields(ops):
+    """Operand tokens (whitespace-separated), each split into its comma
+    fields, every field lower case with no size marks and its numbers hex."""
+    def field(f):
+        f = f.lower().replace("<", "").replace(">", "")
+        return _RT_NUM.sub(
+            lambda m: m.group(1) + format(int(m.group(2)[1:], 16)
+                                          if m.group(2)[0] == "$"
+                                          else int(m.group(2)), "x"), f)
+    return [[field(x) for x in tok.split(",")] for tok in ops.split()]
+
+
+
+def _rt_same(sop, dop):
+    s, d = _rt_fields(sop), _rt_fields(dop)
+    if [len(t) for t in s] != [len(t) for t in d]:
+        return False
+    return all(sf == df or (_RT_LABEL.match(df) and re.fullmatch(r"-?[0-9a-f]+", sf))
+               for st, dt in zip(s, d) for sf, df in zip(st, dt))
+
+
+
 def _roundtrip(list_out, blob, org, label):
     src = _listing(list_out)
     if not src:
@@ -535,19 +561,27 @@ def _roundtrip(list_out, blob, org, label):
     dec = _listing(r.stdout)
     bad, mpysu = [], {}
     for a, (sm, sop) in src.items():
-        if a not in dec or dec[a][0] == sm:
+        if a not in dec:
+            if sm != "nop":
+                bad.append((a, sm, sop, "(nothing decoded here)", ""))
             continue
         dm, dop = dec[a]
-        if (sm, dm) == ("mpy", "mpysu"):
+        if sm == "lua":
+            # lua's only rN+nN mode is (rN)+nN (D = rN+nN); dsp_asm takes
+            # (rN+nN) as that encoding and the decoder prints it (rN)+nN.
+            sop = re.sub(r"\((r\d)\+(n\d)\)", r"(\1)+\2", sop)
+        if not _rt_same(sop, dop):
+            bad.append((a, sm, sop, dm, dop))
+        elif (sm, dm) == ("mpy", "mpysu"):
             mpysu.setdefault(sop, []).append(a)
-        else:
+        elif dm != sm:
             bad.append((a, sm, sop, dm, dop))
     who = f" in {label}" if label else ""
     if bad:
         detail = "\n".join(f"    P:0x{a:05x}  wrote '{sm} {sop}'  chip runs "
                            f"'{dm} {dop}'" for a, sm, sop, dm, dop in bad)
         sys.exit(f"disassemble-what-you-assemble: dsp_asm wrote bytes{who} that "
-                 f"do not decode to the mnemonic typed:\n{detail}")
+                 f"do not decode to the instruction typed:\n{detail}")
     found = {k: len(v) for k, v in mpysu.items()}
     audited = MPYSU_AUDITED.get(label, {})
     if any(os.environ.get(k) for k in _VARIANT_FLAGS):
@@ -562,6 +596,7 @@ def _roundtrip(list_out, blob, org, label):
                  f"{audited or 'none'}. Every mpy encoded as mpysu needs its "
                  f"second operand shown non-negative (AGENTS.md), then the table "
                  f"in tools/build/build_bus.py updated:\n{sites or '    (no sites)'}")
+
 
 
 def assemble_syms(src_text, org, label=""):
@@ -1003,13 +1038,13 @@ def main():
     # module's descriptor (Character's ret_fmt.s did, 20 Sep 2026; no user now).
     _exports.update({"CLONE_" + re.sub(r"\W", "_", _k): _a for _k, _a in clone_addr.items()})
 
-    def _link(src, at, cpu, work, sections=(), defsyms=(), incdir=None):
+    def _link(src, at, cpu, work, sections=(), defsyms=(), incdir=None, asdefs=()):
         """Assemble `src` and link it at `at`; return (bytes, symbols,
         globals). `sections` = objcopy -j selection (empty = every alloc
         section). `defsyms` = (name, value) pairs for symbols defined by
         units already placed. `incdir` = an `.include` search directory
         (a per-remix generated include, schema.Linked.include)."""
-        work = pathlib.Path(work)
+        work = pathlib.Path(work).resolve()
         work.mkdir(parents=True, exist_ok=True)
         o, e, b = work / "u.o", work / "u.elf", work / "u.bin"
         _ld = ["m68k-elf-ld", f"-Ttext=0x{at:x}"] + \
@@ -1018,9 +1053,13 @@ def main():
               [x for s in sections for x in ("-j", s)] + [e, b]
         from remix.compile_cache import assemble_coldfire
         try:
-            assemble_coldfire(src, cpu, o, incdir)
+            assemble_coldfire(src, cpu, o, incdir, defsyms=asdefs)
         except subprocess.CalledProcessError as error:
             sys.exit(f"{src}: m68k-elf-as failed\n{error.stderr[-2000:]}")
+        from remix.platform_build import redefined
+        own = redefined(o, asdefs) if asdefs else []
+        if own:
+            sys.exit(f"{src}: source redefines declared build constants: {own}")
         for _args in (_ld, _oc):
             _r = subprocess.run([str(a) for a in _args], capture_output=True, text=True)
             if _r.returncode:
@@ -1120,24 +1159,27 @@ def main():
         _work = pathlib.Path("out/linked") / _m.name / _u.label
         _work.mkdir(parents=True, exist_ok=True)
         _src = pathlib.Path(_u.source)
-        _defs = tuple(_exports.items())
+        _decl = dict(_u.defsyms)
+        _mine = tuple((n, _exports.get(n, v)) for n, v in _u.defsyms)
+        _rest = tuple((n, v) for n, v in _exports.items() if n not in _decl)
+        _defs = _mine + _rest
         _inc = None
         if _u.include is not None:
             _inc = _work
             (_work / "remix.inc").write_text(
                 _u.include({_k: remix_modules()[_k] for _k in REMIX.modules}))
         if _u.reference is not None:
-            _reference = _u.reference({_k: remix_modules()[_k] for _k in REMIX.modules}) if callable(_u.reference) else _u.reference
+            _reference = _u.reference_for({_k: remix_modules()[_k] for _k in REMIX.modules})
             _ra, _rsha = _reference
             (_work / "ref").mkdir(exist_ok=True)
-            _rb, _, _ = _link(_src, _ra, _u.cpu, _work / "ref", defsyms=_defs, incdir=_inc)
+            _rb, _, _ = _link(_src, _ra, _u.cpu, _work / "ref", defsyms=tuple(_u.defsyms) + _rest, incdir=_inc, asdefs=tuple(_u.defsyms))
             _got = hashlib.sha256(_rb).hexdigest()
             if _got != _rsha:
                 sys.exit(f"{_m.key} {_u.label}: linked at the author's address "
                          f"0x{_ra:08x} it is {len(_rb)} B sha256 {_got}, not the "
                          f"author's {_rsha} -- source or toolchain drift; refusing")
         _at = _u.cave_addr if _u.cave_addr is not None else (_cave_top + 0x7f) & ~0x7f
-        _b, _syms, _glob = _link(_src, _at, _u.cpu, _work, defsyms=_defs, incdir=_inc)
+        _b, _syms, _glob = _link(_src, _at, _u.cpu, _work, defsyms=_defs, incdir=_inc, asdefs=_mine)
         _exports.update(_glob)
         if _at >= SAFE_CAVE_CEIL:
             sys.exit(f"{_u.label}: linked at 0x{_at:08x}, above the safe ceiling")
@@ -1215,7 +1257,7 @@ def main():
             _lb, _lsyms, _lglob = _link(
                 _c.source, _c.cave_addr, _c.cpu,
                 pathlib.Path("out/linked/caves") / re.sub(r"\W+", "_", _c.label),
-                sections=(".text",), defsyms=_cdefs + tuple(_exports.items()))
+                sections=(".text",), defsyms=_cdefs + tuple((n, v) for n, v in _exports.items() if n not in dict(_cdefs)), asdefs=_cdefs)
             _exports.update(_lglob)
             _ref = (_c.reference(_c.cave_addr) if _c.reference is not None
                     else _c.pinned if _c.emit is None else _b)
@@ -1243,7 +1285,7 @@ def main():
                 _lb, _lsyms, _lglob = _link(
                     _c.source, _c.cave_addr, _c.cpu,
                     pathlib.Path("out/linked/caves") / re.sub(r"\W+", "_", _c.label),
-                    sections=(".text",), defsyms=_cdefs + tuple(_exports.items()))
+                    sections=(".text",), defsyms=_cdefs + tuple((n, v) for n, v in _exports.items() if n not in dict(_cdefs)), asdefs=_cdefs)
                 _exports.update(_lglob)
                 if _ref and _c.reference is not None:
                     _ref = _c.reference(_c.cave_addr)
@@ -1450,11 +1492,23 @@ def main():
                 img[_ca - BASE + _o:_ca - BASE + _o + 4] = _pbase.to_bytes(4, "big")
             print(f"  arena: {_lbl}: {_want} arena-base literal(s) -> 0x{_pbase:08x}")
 
+    _dram_defs = {}
+    _unit_defs = {}
+    for _m, _u in _dram:
+        _mine = tuple((n, _exports.get(n, v)) for n, v in _u.defsyms)
+        for _n, _v in _mine:
+            if _dram_defs.get(_n, _v) != _v:
+                sys.exit(f"{_u.label}: conflicting DRAM defsym {_n}")
+            _dram_defs[_n] = _v
+        _unit_defs[_u.label] = _mine
+    _pdefs = dict(_dram_defs)
+    _pdefs.update(_defsym_ovr)
+
     if _dram or _payloads:
         from remix import platform_build
         _pappend, _psyms, _boot, _pnames = platform_build.build(
             [(_m.key, _u) for _m, _u in _dram], _payloads, pathlib.Path("out/platform"),
-            reserve=_reserve, defsyms=_defsym_ovr,
+            reserve=_reserve, defsyms=_pdefs, unit_defs=_unit_defs,
             regions=[(r.symbol, r.size, r.align) for k in REMIX.modules for r in remix_modules()[k].dram_regions],
             includes={_u.label: _u.include({_k: remix_modules()[_k] for _k in REMIX.modules})
                       for _m, _u in _dram if _u.include is not None})
@@ -1463,11 +1517,16 @@ def main():
             if _u.reference is not None:
                 # The author's oracle for a DRAM unit: linked alone at the
                 # author's own address, for the chip (the platform's ISA).
-                _reference = _u.reference({_k: remix_modules()[_k] for _k in REMIX.modules}) if callable(_u.reference) else _u.reference
+                _reference = _u.reference_for({_k: remix_modules()[_k] for _k in REMIX.modules})
                 _ra, _rsha = _reference
                 _rw = pathlib.Path("out/platform/ref") / _u.label
                 _rw.mkdir(parents=True, exist_ok=True)
-                _rb, _, _ = _link(pathlib.Path(_u.source), _ra, "54455", _rw)
+                _rinc = None
+                if _u.include is not None:
+                    _rinc = _rw
+                    (_rw / "remix.inc").write_text(_u.include({_k: remix_modules()[_k] for _k in REMIX.modules}))
+                _rb, _, _ = _link(pathlib.Path(_u.source), _ra, "54455", _rw,
+                                  defsyms=tuple(_u.defsyms), incdir=_rinc, asdefs=tuple(_u.defsyms))
                 _got = hashlib.sha256(_rb).hexdigest()
                 if _got != _rsha:
                     sys.exit(f"{_m.key} {_u.label}: linked at the author's address "
@@ -3315,7 +3374,7 @@ hostquit:
             print(f"    poke 0x{_aa:08x}: {_aexp.hex()} -> {_aw.hex()}  {_anote}")
         _pappend, _psyms2, _boot, _pnames = platform_build.build(
             [(_m.key, _u) for _m, _u in _dram], _payloads, pathlib.Path("out/platform"),
-            reserve=_reserve, defsyms=_defsym_ovr,
+            reserve=_reserve, defsyms=_pdefs, unit_defs=_unit_defs,
             regions=[(r.symbol, r.size, r.align) for k in REMIX.modules for r in remix_modules()[k].dram_regions], preboot=_pres,
             includes={_u.label: _u.include({_k: remix_modules()[_k] for _k in REMIX.modules})
                       for _m, _u in _dram if _u.include is not None})

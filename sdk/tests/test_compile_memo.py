@@ -48,6 +48,17 @@ class CompileMemo(unittest.TestCase):
     def assemble(self, source='init:\n rts\n', org=0x1000, listing=True):
         return memo.assemble_dsp(source, org, self.tool, self.work, listing)
 
+    def test_assembler_constants_are_passed_and_invalidate_the_cache(self):
+        source = self.root / 'fixture.s'; source.write_text('.ifdef FLAG\n nop\n.endif\n')
+        output = self.work / 'fixture.o'
+        memo.assemble_coldfire(source, '54455', output, defsyms=(('FLAG', 1),))
+        memo.assemble_coldfire(source, '54455', output, defsyms=(('FLAG', 1),))
+        self.assertEqual(len(self.calls), 1)
+        self.assertIn('FLAG=0x1', self.calls[0])
+        memo.assemble_coldfire(source, '54455', output, defsyms=(('FLAG', 2),))
+        self.assertEqual(len(self.calls), 2)
+        self.assertIn('FLAG=0x2', self.calls[1])
+
     def test_identical_compiles_run_once_and_return_exact_bytes_symbols_and_listing(self):
         results = [self.assemble() for _ in range(20)]
         self.assertEqual(len(self.calls), 1)

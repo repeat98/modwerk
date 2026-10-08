@@ -46,11 +46,19 @@ def build_host():
     if HOST.exists() and HOST.stat().st_mtime > src.stat().st_mtime:
         return
     OUT.mkdir(parents=True, exist_ok=True)
-    subprocess.run(['c++', '-O3', '-DNDEBUG', '-std=gnu++17', '-DASMJIT_STATIC', '-DDSP56300_DEBUGGER=0',
-                    f'-I{V}/source', f'-I{V}/source/asmjit/src', str(src),
-                    f'{V}/build/source/dsp56kEmu/libdsp56kEmu.a', f'{V}/build/source/dsp56kBase/libdsp56kBase.a',
-                    f'{V}/build/source/asmjit/libasmjit.a', '-lpthread', '-o', str(HOST)],
-                   check=True, capture_output=True)
+    # On Linux x86 the emulator's JIT carries Intel's profiling hooks, so the
+    # build also makes libvtuneSdk.a, which needs libdl: link both when it is
+    # there, as dsp56300's own CMake does for dsp_host (macOS builds neither).
+    vtune = pathlib.Path(f'{V}/build/source/vtuneSdk/libvtuneSdk.a')
+    r = subprocess.run(['c++', '-O3', '-DNDEBUG', '-std=gnu++17', '-DASMJIT_STATIC', '-DDSP56300_DEBUGGER=0',
+                        f'-I{V}/source', f'-I{V}/source/asmjit/src', str(src),
+                        f'{V}/build/source/dsp56kEmu/libdsp56kEmu.a', f'{V}/build/source/dsp56kBase/libdsp56kBase.a',
+                        *([str(vtune), '-ldl'] if vtune.exists() else []),
+                        f'{V}/build/source/asmjit/libasmjit.a', '-lpthread', '-o', str(HOST)],
+                       capture_output=True, text=True)
+    if r.returncode:
+        sys.exit(f'bd909 host build failed:\n{r.stderr}')
+
 
 
 def build():

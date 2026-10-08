@@ -52,10 +52,205 @@ index ac3853c..5acf878 100644
  				if constexpr(add)
  				{
 diff --git a/source/dsp56kEmu/assembler.cpp b/source/dsp56kEmu/assembler.cpp
-index 1a22ced..c3202cf 100644
+index 1a22ced..dbbc307 100644
 --- a/source/dsp56kEmu/assembler.cpp
 +++ b/source/dsp56kEmu/assembler.cpp
-@@ -2289,6 +2289,36 @@ namespace dsp56k
+@@ -1140,19 +1140,21 @@ namespace dsp56k
+ 		AddressingMode yAm;
+ 		if (!parseAddressingMode(yEa, yAm)) return result;
+ 
+-		// X EA gives MM,RRR directly (5 bits)
++		// The XY form's MM/mm field takes four modes, the low two bits of their MMM:
++		// (Rn) 100->00, (Rn)+Nn 001->01, (Rn)- 010->10, (Rn)+ 011->11. The other
++		// modes have no XY encoding.
++		auto xyMode = [](TWord _mmm) { return _mmm >= 1 && _mmm <= 4; };
+ 		TWord mrX = xAm.mmmrrr;
+-		// But Movexy only supports modes 0-5,7 (not mode 6 = absolute), and the M field is 2 bits
+ 		TWord mmmX = (mrX >> 3) & 0x7;
+ 		TWord rrrX = mrX & 0x7;
+-		if (mmmX == 6) return result; // absolute address not supported in Movexy
++		if (!xyMode(mmmX) || xAm.hasExtWord) return result;
+ 
+ 		// For the Y EA: the Y register number (rr) is adjusted relative to X RRR
+ 		// Disassembler: rrY += (rrrX >= 4) ? 0 : 4
+ 		// So to reverse: actual Y rrrY - offset = rr field value
+ 		TWord mmmY = (yAm.mmmrrr >> 3) & 0x7;
+ 		TWord rrrY = yAm.mmmrrr & 0x7;
+-		if (mmmY == 6) return result; // absolute not supported
++		if (!xyMode(mmmY) || yAm.hasExtWord) return result;
+ 
+ 		TWord rrField;
+ 		if (rrrX >= 4)
+@@ -1180,6 +1182,168 @@ namespace dsp56k
+ 		return result;
+ 	}
+ 
++	// ============= Two-move encoding (XY, X:R, R:Y, class II) =============
++
++	// Upper 16 bits of a parallel word carrying two moves; the low byte is left for the ALU.
++	// Forms, in the order tried:
++	//   Movexy     X:<eax>,D1 Y:<eay>,D2 (either side may store instead of load)
++	//   Movexr_ea  X:ea,D1 S2,D2 / S1,X:ea S2,D2 / #xxxx,D1 S2,D2    (S2 = a|b, D2 = y0|y1)
++	//   Moveyr_ea  S1,D1 Y:ea,D2 / S1,D1 S2,Y:ea / S1,D1 #xxxx,D2    (S1 = a|b, D1 = x0|x1)
++	//   Movexr_A   A,X:ea X0,A (or B)
++	//   Moveyr_A   Y0,A A,Y:ea (or B)
++	bool Assembler::encodeDualMove(const std::string& _moveA, const std::string& _moveB, TWord& _word, TWord& _extWord, bool& _hasExt) const
++	{
++		_hasExt = false;
++
++		const auto xy = encodeMovexy(_moveA, _moveB);
++		if (xy.success())
++		{
++			_word = xy.word[0];
++			return true;
++		}
++
++		std::vector<std::string> a, b;
++		splitOperands(toLower(_moveA), a);
++		splitOperands(toLower(_moveB), b);
++		if (a.size() != 2 || b.size() != 2)
++			return false;
++
++		auto memEa = [](const std::string& _s, char _area, std::string& _ea)
++		{
++			if (_s.size() <= 2 || _s[0] != _area || _s[1] != ':')
++				return false;
++			_ea = _s.substr(2);
++			return true;
++		};
++
++		// Any effective address: register modes, or an absolute address in an extension word.
++		auto parseEa = [&](const std::string& _ea, TWord& _mmmrrr) -> bool
++		{
++			AddressingMode am;
++			if (parseAddressingMode(_ea, am))
++			{
++				_mmmrrr = am.mmmrrr;
++				return true;
++			}
++			TWord addr;
++			const auto num = (!_ea.empty() && _ea[0] == '>') ? _ea.substr(1) : _ea;
++			if (num.empty() || num[0] == '<' || !parseNumber(num, addr))
++				return false;
++			_mmmrrr = 0x30;		// MMM 110, RRR 000: absolute address
++			_extWord = addr;
++			_hasExt = true;
++			return true;
++		};
++
++		// One memory side: "area:ea,reg" (load, W=1), "reg,area:ea" (store, W=0) or "#xxxx,reg" (W=1).
++		auto parseMemSide = [&](const std::vector<std::string>& _ops, char _area, std::string& _reg, TWord& _w, TWord& _mmmrrr) -> bool
++		{
++			std::string ea;
++			if (memEa(_ops[0], _area, ea))
++			{
++				_w = 1; _reg = _ops[1];
++				return parseEa(ea, _mmmrrr);
++			}
++			if (memEa(_ops[1], _area, ea))
++			{
++				_w = 0; _reg = _ops[0];
++				return parseEa(ea, _mmmrrr);
++			}
++			if (!_ops[0].empty() && _ops[0][0] == '#')
++			{
++				TWord imm;
++				if (!parseImmediate(_ops[0], imm))
++					return false;
++				_w = 1; _reg = _ops[1];
++				_mmmrrr = 0x34;	// MMM 110, RRR 100: immediate in an extension word
++				_extWord = imm;
++				_hasExt = true;
++				return true;
++			}
++			return false;
++		};
++
++		auto accumulator = [](const std::string& _s, TWord& _d)
++		{
++			if (_s == "a") { _d = 0; return true; }
++			if (_s == "b") { _d = 1; return true; }
++			return false;
++		};
++
++		TWord d, w, mr, f;
++		std::string reg;
++
++		// Movexr_ea
++		if (b.size() == 2 && accumulator(b[0], d) && (b[1] == "y0" || b[1] == "y1"))
++		{
++			_hasExt = false;
++			if (parseMemSide(a, 'x', reg, w, mr) && parseRegister_ee(reg, f))
++			{
++				TWord word = g_opcodes[Movexr_ea].m_mask1;
++				setFieldValue(word, Movexr_ea, Field_ff, f);
++				setFieldValue(word, Movexr_ea, Field_d, d);
++				setFieldValue(word, Movexr_ea, Field_F, b[1] == "y1" ? 1 : 0);
++				setFieldValue(word, Movexr_ea, Field_W, w);
++				setFieldValue(word, Movexr_ea, Field_MMM, mr >> 3);
++				setFieldValue(word, Movexr_ea, Field_RRR, mr & 7);
++				_word = word & 0xFFFF00;
++				return true;
++			}
++		}
++
++		// Moveyr_ea
++		if (accumulator(a[0], d) && (a[1] == "x0" || a[1] == "x1"))
++		{
++			_hasExt = false;
++			if (parseMemSide(b, 'y', reg, w, mr) && parseRegister_ff(reg, f))
++			{
++				TWord word = g_opcodes[Moveyr_ea].m_mask1;
++				setFieldValue(word, Moveyr_ea, Field_d, d);
++				setFieldValue(word, Moveyr_ea, Field_e, a[1] == "x1" ? 1 : 0);
++				setFieldValue(word, Moveyr_ea, Field_ff, f);
++				setFieldValue(word, Moveyr_ea, Field_W, w);
++				setFieldValue(word, Moveyr_ea, Field_MMM, mr >> 3);
++				setFieldValue(word, Moveyr_ea, Field_RRR, mr & 7);
++				_word = word & 0xFFFF00;
++				return true;
++			}
++		}
++
++		// Movexr_A: "a,x:ea x0,a"
++		std::string ea;
++		if (accumulator(a[0], d) && memEa(a[1], 'x', ea) && b[0] == "x0" && b[1] == a[0])
++		{
++			_hasExt = false;
++			if (parseEa(ea, mr))
++			{
++				TWord word = g_opcodes[Movexr_A].m_mask1;
++				setFieldValue(word, Movexr_A, Field_d, d);
++				setFieldValue(word, Movexr_A, Field_MMM, mr >> 3);
++				setFieldValue(word, Movexr_A, Field_RRR, mr & 7);
++				_word = word & 0xFFFF00;
++				return true;
++			}
++		}
++
++		// Moveyr_A: "y0,a a,y:ea"
++		if (a[0] == "y0" && accumulator(a[1], d) && b[0] == a[1] && memEa(b[1], 'y', ea))
++		{
++			_hasExt = false;
++			if (parseEa(ea, mr))
++			{
++				TWord word = g_opcodes[Moveyr_A].m_mask1;
++				setFieldValue(word, Moveyr_A, Field_d, d);
++				setFieldValue(word, Moveyr_A, Field_MMM, mr >> 3);
++				setFieldValue(word, Moveyr_A, Field_RRR, mr & 7);
++				_word = word & 0xFFFF00;
++				return true;
++			}
++		}
++
++		_hasExt = false;
++		return false;
++	}
++
+ 	// ============= Non-parallel instruction encoding =============
+ 
+ 	AssembleResult Assembler::assembleNonParallel(const std::string& _mnemonic, const std::string& _operands) const
+@@ -2289,6 +2453,36 @@ namespace dsp56k
  				TWord dd;
  				if (!parseRegister_dddddd(regOp, dd)) continue;
  
@@ -92,6 +287,88 @@ index 1a22ced..c3202cf 100644
  				setFieldValue(word, inst, Field_RRR, r);
  				setFieldValue(word, inst, Field_DDDDDD, dd);
  				setFieldValue(word, inst, Field_W, write ? 1 : 0);
+@@ -2956,7 +3150,14 @@ namespace dsp56k
+ 		bool moveSuccess = false;
+ 		TWord moveWord = encodeParallelMove(_moveStr, extWord, hasExt, moveSuccess);
+ 		if (!moveSuccess)
+-			return result;
++		{
++			// Two move tokens: XY, X:R, R:Y or class II.
++			const auto moves = tokenize(_moveStr);
++			if (moves.size() != 2)
++				return result;
++			if (!encodeDualMove(moves[0], moves[1], moveWord, extWord, hasExt))
++				return result;
++		}
+ 
+ 		result.word[0] = moveWord | aluByte;
+ 		result.wordCount = 1;
+@@ -3314,10 +3515,23 @@ namespace dsp56k
+ 		if (result.success())
+ 			return result;
+ 
+-		// Try non-parallel encoding
+-		result = assembleNonParallel(baseMnem, operands);
+-		if (result.success())
+-			return result;
++		// Non-parallel encodings take no parallel move: with a move token present
++		// (one containing ':' or ',' or starting with '(') they are skipped, so a
++		// move the encoding has no room for is refused, not dropped. Other trailing
++		// tokens are ignored, as before (upstream's tests write "bclr ... - bclr_pp").
++		bool hasMoveToken = false;
++		for (size_t i = 2; i < tokens.size(); ++i)
++		{
++			const auto& t = tokens[i];
++			if (t.find(':') != std::string::npos || t.find(',') != std::string::npos || t[0] == '(')
++				hasMoveToken = true;
++		}
++		if (!hasMoveToken || baseMnem == "dmac")
++		{
++			result = assembleNonParallel(baseMnem, operands);
++			if (result.success())
++				return result;
++		}
+ 
+ 		// If mnemonic is "move", try as a parallel move with no ALU
+ 		if (baseMnem == "move")
+@@ -3325,9 +3539,22 @@ namespace dsp56k
+ 			// Try Movexy: "move xSrc,x:ea ySrc,y:ea" where operands=X move, moveStr=Y move
+ 			if (!moveStr.empty())
+ 			{
+-				auto xyResult = encodeMovexy(operands, moveStr);
+-				if (xyResult.success())
+-					return xyResult;
++				TWord word, ext;
++				bool hasExt;
++				if (tokenize(moveStr).size() == 1 && encodeDualMove(operands, moveStr, word, ext, hasExt))
++				{
++					result.word[0] = word;
++					result.wordCount = 1;
++					if (hasExt)
++					{
++						result.word[1] = ext;
++						result.wordCount = 2;
++					}
++					result.error = AssembleError::OK;
++					return result;
++				}
++				result.error = AssembleError::InvalidInstruction;
++				return result;
+ 			}
+ 
+ 			TWord extWord = 0;
+diff --git a/source/dsp56kEmu/assembler.h b/source/dsp56kEmu/assembler.h
+index 8759c66..c7fb9b1 100644
+--- a/source/dsp56kEmu/assembler.h
++++ b/source/dsp56kEmu/assembler.h
+@@ -117,6 +117,7 @@ namespace dsp56k
+ 		TWord encodeAlu(const std::string& _mnemonic, const std::string& _operands, bool& _success) const;
+ 		TWord encodeParallelMove(const std::string& _moveStr, TWord& _extWord, bool& _hasExt, bool& _success) const;
+ 		AssembleResult encodeMovexy(const std::string& _xMove, const std::string& _yMove) const;
++		bool encodeDualMove(const std::string& _moveA, const std::string& _moveB, TWord& _word, TWord& _extWord, bool& _hasExt) const;
+ 
+ 		// Build mnemonic table
+ 		void buildMnemonicTable();
 diff --git a/source/dsp56kEmu/dma.cpp b/source/dsp56kEmu/dma.cpp
 index 44fca43..2ee6696 100644
 --- a/source/dsp56kEmu/dma.cpp

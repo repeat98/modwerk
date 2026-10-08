@@ -22,7 +22,7 @@ index 89c0b80..4226246 100644
  
 +    /* Octatrack CF-card path: the OS UPGRADE menu reads an ELUP .bin whose payload is
 +     * just [4-byte BE length][this container]. Emitting the rebuilt container lets
-+     * tools/build/make_bin.py wrap it without re-deriving the SysEx transport framing. */
++     * tools/make_bin.py wrap it without re-deriving the SysEx transport framing. */
 +    { const char *elek_out=getenv("EFT_EMIT_CONTAINER");
 +      if(elek_out && !write_file(elek_out, nc, nclen))
 +          printf("  container emitted     : %s (%zu bytes)\n", elek_out, nclen); }

@@ -1,17 +1,39 @@
 #include "usb.h"
 
 #include <algorithm>
+#include <chrono>
 #include <cerrno>
 #include <cstdlib>
+#include <cstdarg>
 #include <cstdio>
 #include <cstring>
 #include <fcntl.h>
+#include <poll.h>
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <unistd.h>
 
 namespace ot
 {
+	// OT_USB_TRACE=1: every bench line, register write, completion and bus
+	// reset on stderr with wall seconds since the first event and the SOF
+	// count (emulated time), so a transfer the guest answers late can be
+	// read against what the firmware was doing.
+	static void usbTrace(const uint64_t _sofs, const char* _fmt, ...)
+	{
+		static const bool on = std::getenv("OT_USB_TRACE") != nullptr;
+		if(!on)
+			return;
+		static const auto t0 = std::chrono::steady_clock::now();
+		const double s = std::chrono::duration<double>(std::chrono::steady_clock::now() - t0).count();
+		std::fprintf(stderr, "usb-trace %9.3fs sof=%-8llu ", s, static_cast<unsigned long long>(_sofs));
+		va_list ap;
+		va_start(ap, _fmt);
+		std::vfprintf(stderr, _fmt, ap);
+		va_end(ap);
+		std::fputc('\n', stderr);
+	}
+
 	UsbDevice::~UsbDevice()
 	{
 		closeClient();
@@ -31,6 +53,8 @@ namespace ot
 			// firmware never brings the controller up (octemu measured no
 			// bring-up writes until OTGSC reported a session).
 			val |= OTGSC_BSV | m_otgscIs;
+			if(m_sessionEnded)
+				val &= ~OTGSC_BSV;			// unplug: B-session no longer valid
 		}
 		else if(word == R_PORTSC1 && connected())
 		{
@@ -69,6 +93,14 @@ namespace ot
 			// firmware's ack keeps BSVIE set, which re-latched).
 			reg = val & ~0x00ff0000u;	// the interrupt-status byte is not storage: it is the latch below
 			m_otgscIs &= ~(val & OTGSC_BSVIS);
+			if((val & OTGSC_BSVIS) && m_unplugUnacked)
+			{
+				// The stock ISR acknowledges BSVIS after its session-end
+				// code (USBCMD.RS and USBINTR cleared): `unplug` answers now.
+				m_unplugUnacked = false;
+				usbTrace(m_stats.sofs, "unplug acknowledged");
+				reply("ok\n");
+			}
 			if((val & OTGSC_BSVIE) && !(old & OTGSC_BSVIE))
 				m_otgscIs |= OTGSC_BSVIS;
 			return;
@@ -80,9 +112,22 @@ namespace ot
 			reg = val;
 			return;
 		}
+		usbTrace(m_stats.sofs, "wr %#05x <- %#010x", word, val);
 		switch(word)
 		{
 		case R_USBSTS:
+			reg = old & ~val;				// write-1-to-clear
+			if((val & USBSTS_URI) && m_resetUnacked)
+			{
+				// The guest's reset handling is done (the stock handler
+				// flushes every endpoint, then acknowledges URI): the host's
+				// `reset` is answered now, so its first SETUP cannot reach a
+				// guest that will flush the control transfer's own prime.
+				m_resetUnacked = false;
+				usbTrace(m_stats.sofs, "reset acknowledged");
+				reply("ok\n");
+			}
+			return;
 		case R_EPSETUPSR:
 		case R_EPCOMPLETE:
 			reg = old & ~val;				// write-1-to-clear
@@ -242,6 +287,7 @@ namespace ot
 				std::snprintf(h, sizeof h, "%02x", buf[i]);
 				hex += h;
 			}
+			usbTrace(m_stats.sofs, "done in %d: %zu B", _ep, moved);
 			reply(moved ? "in " + std::to_string(_ep) + " " + hex + "\n" : "in " + std::to_string(_ep) + "\n");
 		}
 		else
@@ -266,6 +312,7 @@ namespace ot
 			op.pending = false;
 			++m_stats.outs;
 			m_stats.bytesOut += moved;
+			usbTrace(m_stats.sofs, "done out %d: %zu B", _ep, moved);
 			reply("out " + std::to_string(_ep) + " " + std::to_string(moved) + "\n");
 		}
 		m_curTd[slot] = td;
@@ -278,19 +325,27 @@ namespace ot
 	}
 
 	// The pending bus reset lands once the controller runs with an endpoint
-	// list; the host's "ok" follows it.
+	// list; the host's "ok" follows the guest's URI acknowledge (write()),
+	// as a real host's first SETUP follows its >= 10 ms of reset signalling.
+	// Answered at landing (until 5 Oct 2026), a SETUP could reach a guest
+	// whose reset handler had not run: it served the request, primed EP0 OUT
+	// for the status stage, then ran the handler and flushed that prime --
+	// verify_usb's full-speed re-enumeration after alt 0, where awaitBench
+	// had held device time through the bench's 0.3 s pause with the reset
+	// unhandled, and `out 0` waited 60-115 s for a prime that was gone.
 	void UsbDevice::busReset()
 	{
 		if(!m_resetPending || !running() || !m_regs[R_EPLISTADDR / 4])
 			return;
 		m_resetPending = false;
+		m_resetUnacked = true;
 		m_regs[R_DEVICEADDR / 4] = 0;
 		m_regs[R_EPPRIME / 4] = 0;
 		m_regs[R_EPSR / 4] = 0;
 		m_regs[R_EPCOMPLETE / 4] = 0;
 		m_regs[R_EPSETUPSR / 4] = 0;
 		m_regs[R_USBSTS / 4] |= USBSTS_URI | USBSTS_PCI;
-		reply("ok\n");
+		usbTrace(m_stats.sofs, "bus reset landed");
 	}
 
 	bool UsbDevice::isIso(const int _ep, const bool _in) const
@@ -313,9 +368,49 @@ namespace ot
 		}
 	}
 
+	bool UsbDevice::isoInStarved() const
+	{
+		if(m_sessionEnded)
+			return false;				// the host is gone: no poll to hold device time for
+		for(int ep = 1; ep < g_endpoints; ++ep)
+		{
+			const uint32_t epctrl = m_regs[(R_EPCTRL0 + 4u * ep) / 4];
+			if((epctrl & (1u << 23)) && isIso(ep, true) && !m_in[ep].pending)
+				return true;
+		}
+		return false;
+	}
+
+	bool UsbDevice::benchBusy() const
+	{
+		if(m_request || m_resetPending || m_resetUnacked || m_unplugUnacked)
+			return true;
+		for(int ep = 0; ep < g_endpoints; ++ep)
+			if(m_in[ep].pending || m_out[ep].pending)
+				return true;
+		return false;
+	}
+
+	void UsbDevice::awaitBench()
+	{
+		while(m_fd >= 0 && isoInStarved() && !benchBusy())
+		{
+			const auto now = std::chrono::steady_clock::now();
+			if(now >= m_benchDeadline)
+				return;
+			const auto left = std::chrono::duration_cast<std::chrono::milliseconds>(m_benchDeadline - now).count();
+			pollfd p{m_fd, POLLIN, 0};
+			::poll(&p, 1, int(std::min<long long>(left, 100)));
+			pollIo();
+		}
+	}
+
 	bool UsbDevice::isoPoll()
 	{
 		if(!connected() || !m_regs[R_EPLISTADDR / 4])
+			return false;
+		awaitBench();
+		if(!connected())
 			return false;
 		bool missed = false;
 		for(int ep = 0; ep < g_endpoints; ++ep)
@@ -397,6 +492,7 @@ namespace ot
 		m_sink = _reply;
 		m_hostPresent = true;
 		const auto& l = _line;
+		usbTrace(m_stats.sofs, "cmd %.60s", l.c_str());
 		if(l.rfind("setup ", 0) == 0)
 		{
 			std::vector<uint8_t> pkt;
@@ -455,6 +551,15 @@ namespace ot
 			// (the "err no-eplist" it got for its first SETUP, 25 Sep 2026).
 			m_resetPending = true;
 			busReset();
+		}
+		else if(l.rfind("unplug", 0) == 0)
+		{
+			// The cable pulled: B-session valid drops and BSVIS latches (it
+			// interrupts when the guest set BSVIE), which the stock ISR
+			// takes as session end (USBCMD.RS cleared, USBINTR = 0).
+			m_sessionEnded = true;
+			m_unplugUnacked = true;
+			m_otgscIs |= OTGSC_BSVIS;
 		}
 		else if(l.rfind("speed ", 0) == 0)
 		{

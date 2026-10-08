@@ -75,13 +75,40 @@ ASM=vendor/dsp56300/build/source/dsp_host/dsp_asm
 HOST=vendor/dsp56300/build/source/dsp_host/dsp_host
 # All three: a build that got the disassembler and failed on dsp_host must
 # not read as "already built".
+# On macOS the binaries must also match the machine: an x86_64 build on an
+# arm64 host runs under Rosetta. `uname -m` reports the architecture of the
+# running shell, so an x86_64 bash (Homebrew under /usr/local) says x86_64 on
+# an Apple Silicon host; hw.optional.arm64 reports the hardware. A mismatched
+# build is discarded and reconfigured; a universal binary listing the host
+# arch is kept (arm64e counts as arm64).
+host_arch() {
+  if [ "$(uname -s)" = "Darwin" ] && [ "$(sysctl -n hw.optional.arm64 2>/dev/null)" = "1" ]; then
+    echo arm64
+  else
+    uname -m
+  fi
+}
+binary_arch_ok() {
+  [ "$(uname -s)" = "Darwin" ] || return 0
+  command -v lipo >/dev/null 2>&1 || return 0
+  local want; want="$(host_arch)"
+  for b in "$@"; do
+    lipo -archs "$b" 2>/dev/null | tr ' ' '\n' | grep -qx "${want}e\?" || {
+      echo "   [!] $b is $(lipo -archs "$b" 2>/dev/null), host is $want: rebuilding dsp56300"
+      return 1
+    }
+  done
+}
+if [ -x "$DIS" ] && [ -x "$ASM" ] && [ -x "$HOST" ] && ! binary_arch_ok "$DIS" "$ASM" "$HOST"; then
+  rm -rf vendor/dsp56300/build
+fi
 if [ ! -x "$DIS" ] || [ ! -x "$ASM" ] || [ ! -x "$HOST" ]; then
   if ! command -v cmake >/dev/null 2>&1; then
     echo "   [!] cmake not found — brew install cmake — then re-run make setup (make check needs dsp_asm and dsp_host)"
     exit 1
   else
     vendor_dsp56300
-    cmake -S vendor/dsp56300 -B vendor/dsp56300/build -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_ARCHITECTURES="$(uname -m)" \
+    cmake -S vendor/dsp56300 -B vendor/dsp56300/build -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_ARCHITECTURES="$(host_arch)" \
       && cmake --build vendor/dsp56300/build \
            --target dsp56kDisassemble dsp_asm dsp_host -j8 \
       || { echo "   [!] dsp56300 build FAILED -- make check cannot run without dsp_asm and dsp_host."; \
@@ -89,6 +116,11 @@ if [ ! -x "$DIS" ] || [ ! -x "$ASM" ] || [ ! -x "$HOST" ]; then
   fi
 else
   echo "   already built: $DIS, $ASM, $HOST"
+  # A built tree is not re-patched here: one built under an older
+  # tools/patches/dsp56300.patch keeps the older assembler and emulator.
+  git -C vendor/dsp56300 apply --check --reverse "$(pwd)/tools/patches/dsp56300.patch" 2>/dev/null \
+    || { echo "   [!] vendor/dsp56300 does not carry the current tools/patches/dsp56300.patch."; \
+         echo "       Fix: make dsp-repatch (then make emu-cf)"; exit 1; }
   # Stage the tree's dsp_host/dsp_asm sources AND rebuild them: until 27 Sep
   # 2026 this path only copied, so a binary built before a harness change
   # kept running with the old options (PR #356 was reviewed twice on a

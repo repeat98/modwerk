@@ -71,8 +71,8 @@ namespace ot
 	// 0x60..0x63). DTMR +0 (16 bits: RST, CLK, FRR, ORRI, PS), DTXMR +2, DTER
 	// +3 (write-1-to-clear), DTRR +4, DTCR +8, DTCN +0xc (any write clears the
 	// count). Counts the 132 MHz internal bus clock (CHIP.md) /1 or /16 (CLK),
-	// then /(PS+1). CLK = 3 is the DTIN pin, which has no model here: that
-	// channel holds at 0.
+	// then /(PS+1). CLK = 3 is the DTIN pin: counted at the pin rate the
+	// timer is built with (DTIM0's, below), held at 0 without one.
 	//
 	// ✅ Measured 12 Sep 2026 (KEYMAP.md "the trig-row running light", part
 	// 2): without this block every TIMED LED stayed lit. set_led(id, n) at
@@ -86,7 +86,11 @@ namespace ot
 	// 0x460d1664 (0x01) and one to sys 0x460d17ae (0x05 -> 0x40061e8e), and
 	// acknowledges by writing 2 to DTER. What the firmware programs:
 	//   DTIM0  DTMR 7     DTIN0 pin, no interrupt: the MIDI RX ISR timestamps
-	//                     0xF8 with its count (0x4001070a). Holds at 0 here.
+	//                     0xF8 with its count (0x4001070a). Counted here at
+	//                     256 fs = 11.2896 MHz: the MIDI clock handler's tempo
+	//                     (0x40005bb2: 24 * 21,168,000 * 32 / sum of 24 deltas)
+	//                     is BPM * 24 at that rate and no other (inferred; the
+	//                     pin's source on the board is not located).
 	//   DTIM1  DTMR 0x1d  DTRR 68750: 120 Hz, the LED countdown + a 60 Hz post.
 	//   DTIM2  DTMR 0x13  DTRR 132,000,000: bus/1, free-run, interrupt: 1.000 s
 	//                     to the soft-timer dispatcher 0x400409f4 (mask
@@ -102,10 +106,10 @@ namespace ot
 		enum : uint32_t { RST = 1, CLK_SHIFT = 1, CLK_MASK = 6, FRR = 8, ORRI = 16 };	// DTMR
 		enum : uint32_t { CAP = 1, REF = 2 };											// DTER
 
-		DmaTimer(const char* _name, double _busHz) : m_name(_name), m_busHz(_busHz) {}
+		DmaTimer(const char* _name, double _busHz, double _pinHz = 0.0) : m_name(_name), m_busHz(_busHz), m_pinHz(_pinHz) {}
 
 		const char* name() const { return m_name; }
-		// Counts per sample at the current DTMR; 0 when stopped or on DTIN.
+		// Counts per sample at the current DTMR; 0 when stopped, or on DTIN with no pin rate.
 		double rate() const;
 		// The count the firmware would read at `_now`.
 		uint32_t count(double _now) const;
@@ -155,6 +159,7 @@ namespace ot
 
 		const char* m_name;
 		double m_busHz;
+		double m_pinHz;					// the DTIN pin's clock (CLK = 3); 0 = unmodelled
 		double m_rate = 0.0;			// counts per sample for the current DTMR (rate(), cached: the run loop asks advance() after every instruction)
 		uint32_t m_bias = 0;
 		uint32_t m_dtmr = 0, m_dtxmr = 0, m_dter = 0, m_dtrr = 0xffffffff;
@@ -247,7 +252,7 @@ namespace ot
 	//     "1.<byte 1>.<byte 4 == 22>"). The model reports a tested panel,
 	//     byte 1 = the loader version, every other byte 0 (inferred values:
 	//     no MKII panel's report has been captured).
-	// The TX stream is framed by the opcode lengths of PANEL_LINK.md so that
+	// The TX stream is framed by the opcode lengths of docs/firmware/PANEL.md §9 so that
 	// LCD and LED bytes are never read as a command.
 	class MkiiPanel
 	{

@@ -15,6 +15,11 @@ those once for the union of the modules across the named remixes
 (`make verify-shared`, once per `make reach RUN=1`); `--remix-only` runs
 the rest for one remix (`make verify-remix`). Without either, a stage runs
 both kinds for one remix (`make check` on its own).
+A gate with `once=True` takes a remix name but checks the module's own
+code, the same in every carrier: `--shared` runs it once, on the named
+remix with the fewest modules that carries the module (the smallest image
+that proves it); `--remix-only` leaves it out. A single remix without
+either flag runs it on that remix.
 The runner exports REMIX and BUILD; a gate with `remix_arg` gets the remix
 name as argv[1]; one with `venv` runs under .venv/bin/python3 when that
 exists (the port's python), else python3 -- the Makefile's $(PY).
@@ -34,16 +39,19 @@ from remix import registry  # noqa: E402
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 
 
-def collect(modules, stage, remix_arg=None):
+def collect(modules, stage, remix_arg=None, once=None):
     """The gates of `modules` for one stage, in selection order, each script
     once. `remix_arg` True/False keeps only the gates that take / do not
-    take the remix; None keeps both."""
+    take the remix; `once` True/False keeps only the once-per-run / the
+    per-remix gates; None keeps both."""
     seen, out = set(), []
     for m in modules:
         for g in getattr(m, "gates", ()):
             if g.stage != stage or g.script in seen:
                 continue
             if remix_arg is not None and g.remix_arg != remix_arg:
+                continue
+            if once is not None and getattr(g, "once", False) != once:
                 continue
             seen.add(g.script)
             out.append((m.key, g))
@@ -59,6 +67,18 @@ def union(remixes):
                 seen.add(m.key)
                 out.append(m)
     return out
+
+
+def carrier(module_key, remixes, selected=None):
+    """The remix among `remixes` carrying `module_key` with the fewest
+    modules (the first on a tie): where a once-per-run gate runs."""
+    selected = selected or registry.selected
+    carrying = []
+    for i, r in enumerate(remixes):
+        sel = selected(r)
+        if any(m.key == module_key for m in sel):
+            carrying.append((len(sel), i, r))
+    return min(carrying)[2]
 
 
 def python_for(gate, root=ROOT):
@@ -90,21 +110,25 @@ def main(argv=None):
     if a.shared:
         names = a.remix or ([os.environ["REMIX"]] if os.environ.get("REMIX") else [])
         remixes = [registry.remix(n) for n in names] or [registry.remix(None)]
-        gates = collect(union(remixes), "isolated", remix_arg=False)
+        modules = union(remixes)
+        gates = [(k, g, remixes[0].name) for k, g in collect(modules, "isolated", remix_arg=False)]
+        gates += [(k, g, carrier(k, remixes).name) for k, g in collect(modules, "isolated", once=True)]
         label = f"shared isolated, {', '.join(r.name for r in remixes)}"
-        remix_name = remixes[0].name
     else:
         remix = registry.remix(a.remix[0] if a.remix else os.environ.get("REMIX"))
-        gates = collect(registry.selected(remix), a.stage, True if a.remix_only else None)
+        gates = [(k, g, remix.name) for k, g in
+                 collect(registry.selected(remix), a.stage, True if a.remix_only else None,
+                         False if a.remix_only else None)]
         label = a.stage + (" remix-only" if a.remix_only else "")
-        remix_name = remix.name
         env["REMIX"] = remix.name
     if not gates:
         print(f"module gates ({label}): none declared")
         return 0
     fails = []
-    for key, g in gates:
+    for key, g, remix_name in gates:
         cmd = command(g, remix_name)
+        if a.shared and g.remix_arg:
+            env["REMIX"] = remix_name
         if a.list:
             print(f"{key:16} {' '.join(pathlib.Path(c).name if i == 0 else c for i, c in enumerate(cmd))}")
             continue

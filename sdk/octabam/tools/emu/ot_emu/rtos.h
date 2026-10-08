@@ -1,7 +1,7 @@
 // The machine RUNNING: the firmware's own scheduler, its tasks, its timers.
 //
 // This is the C++ counterpart of `tools/emu/emu_rtos.py`'s `Rtos` class, and route
-// A is the oracle (`docs/firmware/COLDFIRE_PORT.md`). Everything here is a translation
+// A is the oracle (`git show 3ceba41:docs/history/COLDFIRE_PORT.md`; route A retired 26 Sep 2026, 60509404). Everything here is a translation
 // of a named piece of that file, with its measurements and its warnings
 // carried across rather than summarised.
 //
@@ -39,7 +39,7 @@
 
 namespace ot
 {
-	// The kernel, byte-exact (docs/firmware/RTOS_FORK.md §2, and route A's own header).
+	// The kernel, byte-exact (docs/history/RTOS_FORK.md §2, and route A's own header).
 	inline constexpr uint32_t g_vbr       = 0x40000000;		// [0x400b9668], set at 0x40000db6
 	inline constexpr uint32_t g_sched     = 0x40000550;		// one handler for trap #0 and PIT0
 	inline constexpr uint32_t g_schedRte  = 0x400005a6;		// the scheduler's rte: a task is (re)entered
@@ -529,6 +529,13 @@ namespace ot
 		// route A's: "R|W off size value pc". The first divergence names the
 		// defect; reasoning about it does not.
 		void setAtaTrace(bool _on) { m_ataTraceOn = _on; }
+		// --no-post: the load is the firmware's own power-up one (the current bank
+		// from CS1, the rest from the card); LOAD PROJECT is not posted.
+		void setNoPost(bool _on) { m_noPost = _on; }
+		// 4 Oct 2026: end the load at LOAD PROJECT's first handling, with the
+		// engine's queued work (the other banks' background loads) still to
+		// run -- the unit's state while the user starts working.
+		void setLoadEarly(bool _on) { m_loadEarly = _on; }
 		const std::vector<std::string>& ataTrace() const { return m_ataTrace; }
 
 		uint64_t idleSkips() const { return m_idleSkips; }
@@ -655,7 +662,7 @@ namespace ot
 		double m_sample = 0.0;
 
 		Pit m_pit0, m_pit1;
-		DmaTimer m_dtim[4] = {{"DTIM0", g_busClockHz}, {"DTIM1", g_busClockHz}, {"DTIM2", g_busClockHz}, {"DTIM3", g_busClockHz}};
+		DmaTimer m_dtim[4] = {{"DTIM0", g_busClockHz, 256.0 * g_sampleHz}, {"DTIM1", g_busClockHz}, {"DTIM2", g_busClockHz}, {"DTIM3", g_busClockHz}};
 		Edma m_edma;
 		Intc m_intc0, m_intc1;
 		Uart m_uart60{"UART@fc060000", g_uart0}, m_uart64{"UART@fc064000", g_uartA}, m_uart68{"UART@fc068000", g_uartB};
@@ -740,6 +747,8 @@ namespace ot
 		std::vector<MemWrite> m_memWrites;
 		bool m_trigLogInstalled = false;
 		bool m_partPtrWatched = false;
+		bool m_noPost = false;
+		bool m_loadEarly = false;
 		// O15e: the wake watches behind the memory conditions (card ready,
 		// the bank byte, the main gain table); armed once, at first use.
 		bool m_cardReadyWatched = false, m_curBankWatched = false, m_gainTableWatched = false;

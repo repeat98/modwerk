@@ -130,6 +130,14 @@
       "internalDependencies": [],
       "root": "octabam/modules/sidechain-compressor",
       "status": "0.1.1-experimental; built by the shared firmware builder, compared with native octabam on every selection of the visible modules that contains it; conditional software cycle bounds and exact memory verified; fresh hardware evidence explicitly owner-waived."
+    },
+    {
+      "record": "imports/octabam-infrastructure-7b2984c8.json",
+      "repository": "https://github.com/sambanks/octabam",
+      "revision": "7b2984c859732ae6c797ae49c7d61d250b1b6519",
+      "modules": [],
+      "internalDependencies": [],
+      "status": "six infrastructure backports; no module source or version imports; exact file identities and fresh native comparison recorded separately"
     }
   ]
 }

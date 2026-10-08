@@ -106,7 +106,8 @@ namespace ot
 		{
 		case 1:  hz = m_busHz; break;
 		case 2:  hz = m_busHz / 16.0; break;
-		default: return 0.0;		// 0 = stopped, 3 = the DTIN pin (unmodelled)
+		case 3:  if(m_pinHz <= 0.0) return 0.0; hz = m_pinHz; break;	// the DTIN pin
+		default: return 0.0;		// 0 = stopped
 		}
 		return hz / static_cast<double>(((m_dtmr >> 8) & 0xff) + 1) / g_sampleHz;
 	}

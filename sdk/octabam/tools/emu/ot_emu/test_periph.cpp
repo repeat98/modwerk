@@ -3,7 +3,7 @@
 //
 // The rules here are not obvious and several are counter-intuitive; each one
 // below exists because getting it wrong produced a specific, silent failure in
-// route A first (`docs/firmware/RTOS_FORK.md` §8.2, §4). Testing them is how a
+// route A first (`docs/history/RTOS_FORK.md` §8.2, §4). Testing them is how a
 // translation stays a translation rather than a rewrite.
 #include <cstdio>
 #include <cmath>
@@ -129,8 +129,8 @@ int main()
 
 		// DTIM3 (DTMR 0x0b: bus/1, restart, no ORRI, DTRR untouched) is a
 		// timestamp: it counts at 132 MHz, interrupts nothing and offers the
-		// idle skip no expiry. DTIM0 (DTMR 7) counts the DTIN pin: no model,
-		// it holds at 0.
+		// idle skip no expiry. DTIM0 (DTMR 7) counts the DTIN pin: held at 0
+		// without a pin rate, 256 fs with the one Rtos gives it.
 		ot::DmaTimer u("DTIM3", 132e6);
 		u.write(0, 2, 0x0b, 0.0);
 		{
@@ -143,6 +143,9 @@ int main()
 		ot::DmaTimer z("DTIM0", 132e6);
 		z.write(0, 2, 7, 0.0);
 		checkEq("a DTIN-clocked channel holds at 0", z.count(44100.0), 0);
+		ot::DmaTimer p("DTIM0", 132e6, 256.0 * 44100.0);
+		p.write(0, 2, 7, 0.0);
+		checkEq("a DTIN-clocked channel with a pin rate counts 256 per sample", p.count(44100.0), 11289600);
 	}
 
 	// ---- INTC ------------------------------------------------------------
@@ -403,6 +406,23 @@ int main()
 	}
 
 
+	// Injected media exhaustion must fail without changing the refused sector.
+	{
+		ot::AtaCard c(std::vector<uint8_t>(2 * ot::AtaCard::g_sector, 0x55));
+		c.failWritesAfter(1);
+		c.write(ot::AtaCard::R_COUNT, 1, 1);
+		c.write(ot::AtaCard::R_CMD, 1, 0x30);
+		for(unsigned i = 0; i < 256; ++i) c.write(ot::AtaCard::R_DATA, 2, 0xbeef);
+		checkEq("one sector succeeds before the injected write limit", c.sectorsWritten(), 1);
+		c.write(ot::AtaCard::R_LBA0, 1, 1);
+		c.write(ot::AtaCard::R_CMD, 1, 0x30);
+		check("injected card failure raises ERR and drops DRQ", (c.status() & 1) && !(c.status() & ot::AtaCard::ST_DRQ));
+		checkEq("injected card failure reports ABRT", c.read(ot::AtaCard::R_FEAT, 1), 4);
+		checkEq("a refused sector is unchanged", c.image()[ot::AtaCard::g_sector], 0x55);
+		checkEq("failed writes do not increment the sector tally", c.sectorsWritten(), 1);
+		check("the failure is distinguishable in the command census", c.log().back().what == "WRITE-FAIL");
+	}
+
 	// ---- USB device controller ------------------------------------------
 	// The rules the firmware's driver and the bench depend on (usb.h), on a
 	// fake guest memory: queue heads and transfer descriptors laid out the
@@ -543,9 +563,16 @@ int main()
 
 		// Reset: address and endpoint state cleared, URI + PCI raised.
 		u.write(U::R_DEVICEADDR, 4, 1u << 25, false);
+		const auto nReplies = replies.size();
 		u.command("reset", reply);
 		check("reset clears the address and raises URI + PCI",
 			u.read(U::R_DEVICEADDR, 4) == 0 && (u.read(U::R_USBSTS, 4) & (U::USBSTS_URI | U::USBSTS_PCI)) == (U::USBSTS_URI | U::USBSTS_PCI));
+		// The host's ok waits for the guest's URI acknowledge, so its first
+		// SETUP cannot land on a guest whose reset handler has yet to flush.
+		check("reset is not answered before the guest acknowledges URI", replies.size() == nReplies);
+		u.write(U::R_USBSTS, 4, U::USBSTS_URI, false);
+		check("the URI acknowledge answers the reset with ok",
+			replies.size() == nReplies + 1 && replies.back() == "ok\n" && !(u.read(U::R_USBSTS, 4) & U::USBSTS_URI));
 
 		// A primed queue head whose token still has ACTIVE set is counted.
 		st32(qh0in + 0x0c, 0x80u);
@@ -570,6 +597,19 @@ int main()
 		check("SOF does not interrupt under the stock USBINTR", !u.irq());
 		u.write(U::R_USBINTR, 4, 0x57 | 0x80, false);
 		check("SOF interrupts once the guest enables SRE", u.irq());
+	}
+
+	// Unplug drops the session and waits for the firmware's session-end ack.
+	{
+		using U = ot::UsbDevice;
+		U u([](uint32_t) { return uint8_t(0); }, [](uint32_t, uint8_t) {});
+		std::vector<std::string> replies;
+		u.write(U::R_OTGSC, 4, U::OTGSC_BSVIE | U::OTGSC_BSVIS, false);
+		u.command("unplug", [&](const std::string& s) { replies.push_back(s); });
+		check("unplug clears B-session valid and interrupts", !(u.read(U::R_OTGSC, 4) & U::OTGSC_BSV) && u.irq());
+		check("unplug waits for the guest acknowledgement", replies.empty());
+		u.write(U::R_OTGSC, 4, U::OTGSC_BSVIS, false);
+		check("session-end acknowledge completes unplug", replies.size() == 1 && replies.back() == "ok\n" && !u.irq());
 	}
 
 	// ---- the MKII panel's replies (periph.h MkiiPanel, docs/firmware/PANEL.md)

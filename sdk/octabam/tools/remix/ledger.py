@@ -231,11 +231,12 @@ def check(selected) -> list[str]:
         for h in (m.dsp.hooks if m.dsp is not None else ()):
             for pl in sorted(m.dsp.payloads):
                 site = h.site_on(pl)
-                if (pl, site) in dsp_hooks:
-                    clash("DSP hook site", dsp_hooks[(pl, site)], m.name,
+                if any((pl, word) in dsp_hooks for word in (site, site + 1)):
+                    clash("DSP hook site", next(dsp_hooks[(pl, word)] for word in (site, site + 1) if (pl, word) in dsp_hooks), m.name,
                           f"P:0x{site:05x} on payload {pl} -- the second jsr "
                           f"overwrites the first, so the first section never runs")
                 dsp_hooks[(pl, site)] = m.name
+                dsp_hooks[(pl, site + 1)] = m.name
 
     # ---- on-chip SRAM windows (Claims.sram) --------------------------------
     sram: list[tuple[int, int, str, str]] = []
@@ -643,6 +644,20 @@ def check(selected) -> list[str]:
                                f"words overlap, so each corrupts the other's state",
                                (domain, lo, hi, *sorted((owner2, m.name))))
                 claimed.append((domain, start, end, m.name, r.what))
+
+    # Declarations must also respect derived FX2 buffers, private Y and bus scratch.
+    from remix.dsp_ranges import owners
+    owned = owners(selected)
+    for a in (r for r in owned if r.declared):
+        for b in (r for r in owned if not r.declared):
+            if a.owner == b.owner or a.domain != b.domain or not (a.start < b.end and b.start < a.end):
+                continue
+            if b.bus_shared and a.bus_member:
+                continue
+            lo, hi = max(a.start, b.start), min(a.end, b.end) - 1
+            report("DSP data range overlap", f"{a.owner}'s {a.what}", f"{b.owner}'s {b.what}",
+                   f"{a.domain} 0x{lo:05x}..0x{hi:05x}",
+                   (a.domain, lo, hi, *sorted((a.owner, b.owner))))
 
     # ---- one module's data literals inside another's declared range ---------
     # Derived, so a module that reads or writes a word another claims is caught

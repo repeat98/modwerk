@@ -108,19 +108,19 @@ def assemble_dsp(source, org, assembler, work, listing=True):
     return result
 
 
-def assemble_coldfire(source, cpu, output, incdir=None, cwd=None):
+def assemble_coldfire(source, cpu, output, incdir=None, cwd=None, defsyms=()):
     """Memoise only assembly; every link, symbol resolution and placement reruns."""
     source, output = pathlib.Path(source), pathlib.Path(output)
     base = pathlib.Path(cwd or pathlib.Path.cwd())
     actual_source = source if source.is_absolute() else base / source
     actual_output = output if output.is_absolute() else base / output
     content = actual_source.read_text()
-    key = _key('cf-assembly', content, [str(source), str(cpu), str(incdir) if incdir else None], 'm68k-elf-as')
+    key = _key('cf-assembly', content, [str(source), str(cpu), str(incdir) if incdir else None, list(defsyms)], 'm68k-elf-as')
     result = _read('cf-assembly', key)
     actual_output.parent.mkdir(parents=True, exist_ok=True)
     if result is None:
         actual_output.unlink(missing_ok=True)
-        command = ['m68k-elf-as', f'-mcpu={cpu}'] + (['-I', str(incdir)] if incdir else []) + ['-o', str(output), str(source)]
+        command = ['m68k-elf-as', f'-mcpu={cpu}'] + (['-I', str(incdir)] if incdir else []) + [x for n, v in defsyms for x in ('--defsym', f'{n}=0x{v:x}')] + ['-o', str(output), str(source)]
         completed = subprocess.run(command, cwd=cwd, check=True, capture_output=True, text=True)
         result = actual_output.read_bytes(), '', completed.stdout
         _write('cf-assembly', key, result)

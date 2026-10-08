@@ -46,7 +46,26 @@ def _nm(elf, cwd):
     return {f[2]: int(f[0], 16) for f in rows if len(f) == 3 and not f[2].startswith(".L")}
 
 
-def link_runtime(units, work: pathlib.Path, defsyms: dict, base: int, includes=None, region_symbols=()) -> tuple[bytes, dict]:
+def as_defsyms(defs) -> list[str]:
+    """`m68k-elf-as` arguments defining each (name, value)."""
+    return [x for n, v in defs for x in ("--defsym", f"{n}=0x{v:x}")]
+
+
+
+def redefined(obj, defs) -> list[str]:
+    """Names in `defs` that the object's own source defines: the assembler
+    lets a label or `.equ` silently override `--defsym`, so a declared
+    name that comes back as a section symbol, or as an absolute with
+    another value, is the source's own."""
+    obj = pathlib.Path(obj).resolve()
+    want = dict(defs)
+    rows = [l.split() for l in _run(["m68k-elf-nm", obj], ROOT).splitlines()]
+    return sorted(f[2] for f in rows if len(f) == 3 and f[2] in want
+                  and (f[1] not in ("a", "A") or int(f[0], 16) != want[f[2]] & 0xFFFFFFFF))
+
+
+
+def link_runtime(units, work: pathlib.Path, defsyms: dict, base: int, includes=None, region_symbols=(), unit_defs=None) -> tuple[bytes, dict]:
     """Assemble every (module key, Linked) unit and link them together at
     `base`. Returns (raw image, symbols). `includes` = {unit label: text}
     for units with `Linked.include`: the text is written as `remix.inc`
@@ -68,10 +87,14 @@ def link_runtime(units, work: pathlib.Path, defsyms: dict, base: int, includes=N
         # bytes (refhash: every runtime bit-identical, 25 Sep 2026).
         # `Linked.cpu` still governs the ROM-cave form.
         from remix.compile_cache import assemble_coldfire
+        mine = tuple((unit_defs or {}).get(u.label, ()))
         try:
-            assemble_coldfire(ROOT / u.source, '54455', obj, incdir=inc[1] if inc else None, cwd=work)
+            assemble_coldfire(ROOT / u.source, '54455', obj, incdir=inc[1] if inc else None, cwd=work, defsyms=mine)
         except subprocess.CalledProcessError as error:
             sys.exit(f"platform build: m68k-elf-as failed\n{error.stderr[-3000:]}")
+        own = redefined(obj, mine) if mine else []
+        if own:
+            sys.exit(f"platform build: {u.source} defines {own}, also declared by Linked.defsyms")
         if u.stock_copies:
             from remix.stock_copies import fill_object
             fill_object(obj, u.stock_copies)
@@ -118,7 +141,7 @@ def preboot_layout(layout, entries):
     return result
 
 
-def build(units, payloads, work: pathlib.Path, reserve=None, defsyms=None, preboot=(), includes=None, regions=()):
+def build(units, payloads, work: pathlib.Path, reserve=None, defsyms=None, preboot=(), includes=None, regions=(), unit_defs=None):
     """units: [(module key, Linked)] with dram=True, in link order.
     payloads: [dict(name, blob, stage, dst, rawlen, rhash, backup)] for
     payloads built elsewhere (Octakit): `blob` = signature + GKA3 stream.
@@ -159,7 +182,7 @@ def build(units, payloads, work: pathlib.Path, reserve=None, defsyms=None, prebo
                 sys.exit(f"platform build: DRAM region {name} exceeds the arena reserve")
             placed[name] = (top, length)
         defs.update({name: address for name, (address, _) in placed.items()})
-        raw, symbols = link_runtime(units, work / "runtime", defs, base, includes, tuple(placed))
+        raw, symbols = link_runtime(units, work / "runtime", defs, base, includes, tuple(placed), unit_defs)
         packed = runtime_build.PACKED_MAGIC + len(raw).to_bytes(4, "big") + \
             runtime_build.pack(raw, MAX_CANDIDATES)
         stage = (base + len(raw) + STAGE_ALIGN - 1) & ~(STAGE_ALIGN - 1)

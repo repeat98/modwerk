@@ -395,6 +395,7 @@ class DspSection:
     # carried as a package and uploaded when a Part selects it
     # (build_bus.LOADABLE); True keeps its code built into the image.
     resident: bool = False
+    max_per_core: int | None = None
     # Entries into this section from STOCK code (schema.DspHook). A section
     # with hooks and no MenuEntry is placed on `payloads` only and takes no
     # dispatch entry; one with a menu may carry hooks as well.
@@ -402,6 +403,8 @@ class DspSection:
     subst: Mapping[str, Mapping[str, str]] = field(default_factory=dict)
 
     def __post_init__(self):
+        if self.max_per_core is not None and not 1 <= self.max_per_core <= 4:
+            raise ValueError("max_per_core must be in 1..4")
         object.__setattr__(self, "subst", MappingProxyType(
             {pl: MappingProxyType(dict(kv)) for pl, kv in self.subst.items()}))
         for h in self.hooks:
@@ -689,6 +692,22 @@ class Harness:
     bus_client: bool = False
 
 
+    render_r7: int | None = None
+
+
+R7_ALLOC = {1: 0, 2: 1, 4: 2, 5: 3, 7: 4, 8: 5, 10: 6, 11: 7}
+
+
+def render_slot(mod) -> tuple[int, int]:
+    """(dsp_host -r7 index, -alloc entry) a local render of `mod` uses."""
+    h = getattr(mod, "harness", None)
+    if h is not None and h.render_r7 is not None:
+        return h.render_r7, R7_ALLOC[h.render_r7]
+    c = getattr(mod, "claims", None)
+    return (1, 0) if (c is not None and c.fx1_only) else (2, 1)
+
+
+
 @dataclass(frozen=True)
 class Gate:
     """One check `make check` runs because this module is in the remix.
@@ -705,18 +724,30 @@ class Gate:
     `make bus REMIX=<name>` and the shared set gates (a gate that needs
     verify_set's staged card is an image gate). The runner exports REMIX
     and BUILD to every gate.
+
+    `once` is for a gate whose subject is the module's own code, the same
+    in every carrier (a ColdFire module's panel scenarios under the port):
+    it takes a remix name but runs once per run, in the shared half, on
+    the named remix with the fewest modules that carries the module,
+    instead of once per carrying remix (KITS: 29 port scenarios, 371 s
+    emulated, on bottleservice AND ok-ms, 6 Oct 2026).
     """
 
     script: str                      # repo-relative
     remix_arg: bool = True           # pass the remix name as argv[1]
     venv: bool = False               # prefer .venv/bin/python3 (the port's python) when present
     stage: str = "isolated"          # "isolated" | "image"
+    once: bool = False               # once per run, on one carrying remix of the selection (the shared half)
 
     def __post_init__(self):
         if self.stage not in ("isolated", "image"):
             raise ValueError(f"Gate({self.script!r}): stage must be 'isolated' or 'image', not {self.stage!r}")
+        if self.once and (not self.remix_arg or self.stage != "isolated"):
+            raise ValueError(f"Gate({self.script!r}): once=True needs remix_arg=True and the isolated stage "
+                             "(it runs in the shared half, which has no image)")
         if not self.script.startswith("tools/") and not self.script.startswith("modules/"):
             raise ValueError(f"Gate({self.script!r}): a repo-relative path under tools/ or modules/")
+
 
 
 @dataclass(frozen=True)
@@ -798,14 +829,18 @@ class Linked:
     linked it: the build links a second copy at that address every time
     and compares, so a source or toolchain drift from the bytes the author
     ratified fails loudly, even though the unit the image carries is
-    linked somewhere else.
+    linked somewhere else. The oracle links with the declared `defsyms`
+    and this remix's `remix.inc`. A unit whose bytes depend on the remix
+    (its `include`) gives a callable instead: reference(modules) ->
+    (address, sha256), given the same modules `include` gets, naming the
+    variant the author ratified for that selection.
     """
 
     label: str
     source: str                          # .s, repo-relative
     cave_addr: int | None = None         # None = floating
     cpu: str = "5407"                    # m68k-elf-as -mcpu= for the ROM-cave form; a DRAM unit is assembled for the chip (54455)
-    reference: tuple[int, str] | None = None
+    reference: object | None = None      # (address, sha256), or a callable (see above)
     # DRAM: the unit is linked into octabam's PLATFORM RUNTIME -- one image
     # of every such unit in the remix, linked together (cross-unit symbols
     # resolve in the one link), packed, appended after the OS with the
@@ -822,7 +857,41 @@ class Linked:
     # on which modules are in the image (mode-defaults' view table) is
     # otherwise unlinkable: the source cannot know the remix.
     include: object | None = None
-    stock_copies: tuple[StockCopy, ...] = ()
+    # (name, value) pairs passed to both `m68k-elf-as --defsym` (so
+    # `.ifdef NAME` sees them) and `m68k-elf-ld --defsym`, as
+    # CavePatch.defsyms. Each value resolves to a global of a unit or cave
+    # linked before this one, else the declared value; the `reference`
+    # oracle uses the declared values. A name the source itself defines is
+    # refused. DRAM units share one link, so two declaring one name must
+    # resolve it to one value.
+    stock_copies: tuple = ()
+    defsyms: tuple[tuple[str, int], ...] = ()
+
+    def __post_init__(self):
+        names = [n for n, _v in self.defsyms]
+        if len(names) != len(set(names)):
+            raise ValueError(f"Linked({self.label!r}): a defsym name declared twice")
+        if self.reference is not None and not callable(self.reference):
+            reference_shape(self.label, self.reference)
+
+    def reference_for(self, modules) -> tuple[int, str] | None:
+        """(address, sha256) of the author's build for this selection."""
+        if self.reference is None:
+            return None
+        ref = self.reference(modules) if callable(self.reference) else self.reference
+        return reference_shape(self.label, ref)
+
+
+
+def reference_shape(label: str, ref) -> tuple[int, str]:
+    """`ref` as (address, sha256), or ValueError naming the unit."""
+    if not (isinstance(ref, tuple) and len(ref) == 2 and isinstance(ref[0], int)
+            and isinstance(ref[1], str) and len(ref[1]) == 64
+            and all(c in "0123456789abcdef" for c in ref[1])):
+        raise ValueError(f"Linked({label!r}): reference must be (address, sha256 hex), "
+                         f"got {ref!r}")
+    return ref
+
 
 
 @dataclass(frozen=True)

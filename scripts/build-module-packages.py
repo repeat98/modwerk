@@ -125,7 +125,10 @@ def compile_requested(root, known, documents, versions, revision, provenance, na
             if u.include:
                 (work / 'remix.inc').write_text(u.include(selection)); extra = ['-I', work]
             obj = work / 'unit.o'; cpu = '54455' if u.dram else u.cpu
-            run(['m68k-elf-as', '-mcpu=' + cpu, *extra, '-o', obj, root / u.source], root)
+            from remix.platform_build import as_defsyms, redefined
+            run(['m68k-elf-as', '-mcpu=' + cpu, *extra, *as_defsyms(u.defsyms), '-o', obj, root / u.source], root)
+            if redefined(obj, u.defsyms):
+                raise ValueError(f'{u.label}: source redefines declared build constants')
             data = bytearray(obj.read_bytes()); copies = []
             if u.stock_copies:
                 from remix.stock_copies import object_copies

@@ -1,0 +1,209 @@
+{
+  "schemaVersion": 1,
+  "repository": "https://github.com/sambanks/octabam",
+  "revision": "7b2984c859732ae6c797ae49c7d61d250b1b6519",
+  "kind": "infrastructure-backport",
+  "modules": [],
+  "files": [
+    {
+      "path": "Makefile",
+      "sourcePath": "Makefile",
+      "sourceSha256": "eec807c291f72003c94a96e6bac67ea5611bc68454495398fdff6dd256391230",
+      "vendoredSha256": "914f0a1ad4b86d18794c7c1e34886a28ab83ac29241101123e6113fa0e121f47"
+    },
+    {
+      "path": "scripts/setup.sh",
+      "sourcePath": "scripts/setup.sh",
+      "sourceSha256": "8e4134d549cfc641841c1311a15c202d579fad08147f2d9c034e21ff39d42089",
+      "vendoredSha256": "8e4134d549cfc641841c1311a15c202d579fad08147f2d9c034e21ff39d42089"
+    },
+    {
+      "path": "tools/build/build_bus.py",
+      "sourcePath": "tools/build/build_bus.py",
+      "sourceSha256": "654f6d27f73e9680c9d6da57cd1a9e19fb5fed37fe2e5bf638bdfc54d3c60cf0",
+      "vendoredSha256": "38d80300f9e7fee2d59bd1c81d7bf421ada6d9e35ee40350c53a2583322dfa31"
+    },
+    {
+      "path": "tools/build/cycle_count.py",
+      "sourcePath": "tools/build/cycle_count.py",
+      "sourceSha256": "dcfa25758a2df68e318d67acf71c48c5261d6a58b504101b4b1392de03a6decf",
+      "vendoredSha256": "e17affe5d31752f544c5c32990615e46f6f7b84bb478a6763b11ce81a282ee91"
+    },
+    {
+      "path": "tools/emu/ot_emu/card.cpp",
+      "sourcePath": "tools/emu/ot_emu/card.cpp",
+      "sourceSha256": "cdf0fa10c6e0acfb0d4641c5105c114028fb85e48f8ada96e6bcc03f57276bed",
+      "vendoredSha256": "cdf0fa10c6e0acfb0d4641c5105c114028fb85e48f8ada96e6bcc03f57276bed"
+    },
+    {
+      "path": "tools/emu/ot_emu/card.h",
+      "sourcePath": "tools/emu/ot_emu/card.h",
+      "sourceSha256": "7d1b0dc65a5f6c1e0a37e976945074c4e8bbbc0be0e719f627a9ad7f4e0b3806",
+      "vendoredSha256": "7d1b0dc65a5f6c1e0a37e976945074c4e8bbbc0be0e719f627a9ad7f4e0b3806"
+    },
+    {
+      "path": "tools/emu/ot_emu/dsp.cpp",
+      "sourcePath": "tools/emu/ot_emu/dsp.cpp",
+      "sourceSha256": "ab2943752313e1b9b1517068126335099fcf9779a1bb4d77dfc690202dff0edc",
+      "vendoredSha256": "ab2943752313e1b9b1517068126335099fcf9779a1bb4d77dfc690202dff0edc"
+    },
+    {
+      "path": "tools/emu/ot_emu/dsp.h",
+      "sourcePath": "tools/emu/ot_emu/dsp.h",
+      "sourceSha256": "47a4abf1b64bfbeef10b4422850488a0eabfc075ba5d859380a87fc3c0785793",
+      "vendoredSha256": "47a4abf1b64bfbeef10b4422850488a0eabfc075ba5d859380a87fc3c0785793"
+    },
+    {
+      "path": "tools/emu/ot_emu/main.cpp",
+      "sourcePath": "tools/emu/ot_emu/main.cpp",
+      "sourceSha256": "584a6453be30ba3b00bece2e5b64961293fad0da7d6788e8d3b8686ae5912741",
+      "vendoredSha256": "7c2a245dc295d9994dffb8314e791b96217b8f75107ec3715cd7f7b717d6ff99"
+    },
+    {
+      "path": "tools/emu/ot_emu/periph.cpp",
+      "sourcePath": "tools/emu/ot_emu/periph.cpp",
+      "sourceSha256": "312289a4d78d0d4fafbb7765078e21081b6bd67c48fba67c07a39d3019c80157",
+      "vendoredSha256": "312289a4d78d0d4fafbb7765078e21081b6bd67c48fba67c07a39d3019c80157"
+    },
+    {
+      "path": "tools/emu/ot_emu/periph.h",
+      "sourcePath": "tools/emu/ot_emu/periph.h",
+      "sourceSha256": "167a4806e30dd05810c20b4c7f2c45a351fffd1342e5e0310e8c680977390222",
+      "vendoredSha256": "167a4806e30dd05810c20b4c7f2c45a351fffd1342e5e0310e8c680977390222"
+    },
+    {
+      "path": "tools/emu/ot_emu/rtos.cpp",
+      "sourcePath": "tools/emu/ot_emu/rtos.cpp",
+      "sourceSha256": "212c697106bf14a7beb79dbcd0a843ea528a3a20705c0acab49ace0cd8965546",
+      "vendoredSha256": "212c697106bf14a7beb79dbcd0a843ea528a3a20705c0acab49ace0cd8965546"
+    },
+    {
+      "path": "tools/emu/ot_emu/rtos.h",
+      "sourcePath": "tools/emu/ot_emu/rtos.h",
+      "sourceSha256": "6ba69ad263800da378f4ccfd9d917dc85dc46904a4880cde01450ab0e126e4a4",
+      "vendoredSha256": "6ba69ad263800da378f4ccfd9d917dc85dc46904a4880cde01450ab0e126e4a4"
+    },
+    {
+      "path": "tools/emu/ot_emu/test_periph.cpp",
+      "sourcePath": "tools/emu/ot_emu/test_periph.cpp",
+      "sourceSha256": "973c0fc442b978103069a7f8ae481dd012ea68a2900027d2a8024918fd860314",
+      "vendoredSha256": "133e824c87e4dcdbfe46bdec428cc114fefe28b9bcf058f43394b48df8748ea7"
+    },
+    {
+      "path": "tools/emu/ot_emu/usb.cpp",
+      "sourcePath": "tools/emu/ot_emu/usb.cpp",
+      "sourceSha256": "bfe2cc4ed5b92f9578290b919fab5e15e3d62402c40ff434c855744aaa796240",
+      "vendoredSha256": "bfe2cc4ed5b92f9578290b919fab5e15e3d62402c40ff434c855744aaa796240"
+    },
+    {
+      "path": "tools/emu/ot_emu/usb.h",
+      "sourcePath": "tools/emu/ot_emu/usb.h",
+      "sourceSha256": "c5bb3163bf7fcdf006e5c7343fa67113b71d6e2607e1649ec3b7544947430691",
+      "vendoredSha256": "c5bb3163bf7fcdf006e5c7343fa67113b71d6e2607e1649ec3b7544947430691"
+    },
+    {
+      "path": "tools/harness/bd909.py",
+      "sourcePath": "tools/harness/bd909.py",
+      "sourceSha256": "2b5088f655aec9877eea1a3b3725184b55c1f330f13d1a8c998e749dd6b618df",
+      "vendoredSha256": "a317bf0aab93a1465cb8e9900b6672ed72e6d91a5b4eee1778e481d8b863d534"
+    },
+    {
+      "path": "tools/patches/dsp56300.patch",
+      "sourcePath": "tools/patches/dsp56300.patch",
+      "sourceSha256": "96b892f389642e20246f8f53d9af64c05ba0c4c395ca946ce8f3e690b475b950",
+      "vendoredSha256": "96b892f389642e20246f8f53d9af64c05ba0c4c395ca946ce8f3e690b475b950"
+    },
+    {
+      "path": "tools/patches/elektron-firmware-tool.patch",
+      "sourcePath": "tools/patches/elektron-firmware-tool.patch",
+      "sourceSha256": "f2a68c3d42ecba152afc37eb62456c5b19ab94673d22d5feb88bb4418bcf7fa9",
+      "vendoredSha256": "f2a68c3d42ecba152afc37eb62456c5b19ab94673d22d5feb88bb4418bcf7fa9"
+    },
+    {
+      "path": "tools/remix/dsp_ranges.py",
+      "sourcePath": "tools/remix/dsp_ranges.py",
+      "sourceSha256": "54b19a4dcf0ae9c35ef49f4c8cbef087752e6cc71167b68c981c017715360686",
+      "vendoredSha256": "085aca1208a672c91e8db2ea620a5a17eaa2b577f16f074ecb89fdf2bc23c300"
+    },
+    {
+      "path": "tools/remix/ledger.py",
+      "sourcePath": "tools/remix/ledger.py",
+      "sourceSha256": "8383ea5a4604c0c7fb46a701bff930e144b77bbf7cf0972cf45bc64e785fedc1",
+      "vendoredSha256": "6dedda5e1d9ecc9b812b64ec1265507aa94bfc853f0c8ccc78386b92d7149f68"
+    },
+    {
+      "path": "tools/remix/platform_build.py",
+      "sourcePath": "tools/remix/platform_build.py",
+      "sourceSha256": "2c3bf2f771a2b3928d9964ba09a0c4966ecf827226428fc79720f5090d8a3613",
+      "vendoredSha256": "26f56a3daafc642fe394f11e86a3d560ebe799c9b2bc249c185536d58057483f"
+    },
+    {
+      "path": "tools/remix/schema.py",
+      "sourcePath": "tools/remix/schema.py",
+      "sourceSha256": "8c4496a5f32b1a258d96b8e00ace03cd396872d517400489f1fc869d7e8fa436",
+      "vendoredSha256": "4b66877893b41ea266518bc7fbfb577411735fdf103ff0a2e384173c22a5aaf9"
+    },
+    {
+      "path": "tools/verify/module_gates.py",
+      "sourcePath": "tools/verify/module_gates.py",
+      "sourceSha256": "306cdb061ce116558a57dfafcf5bd50d88a8be4906d64aef46fab9bc07794c02",
+      "vendoredSha256": "306cdb061ce116558a57dfafcf5bd50d88a8be4906d64aef46fab9bc07794c02"
+    },
+    {
+      "path": "tools/verify/reach.py",
+      "sourcePath": "tools/verify/reach.py",
+      "sourceSha256": "e4576baefe382ab801953fb2a89cb78f23901b57980b5352fb565469e95af708",
+      "vendoredSha256": "acbd7247ff2fabdd4c6ba3cc884f0de5352ca6579d9f5b90530968353c610325"
+    },
+    {
+      "path": "tools/verify/tests/test_cycle_ceiling.py",
+      "sourcePath": "tools/verify/tests/test_cycle_ceiling.py",
+      "sourceSha256": "e6387cbd239e9fd5780d659d4491f8d02b3e48258a28bdae60bba0c8c139aad9",
+      "vendoredSha256": "6f3cc409bcc949955cb8478af5487befea9532f72c2736b6176a290299a0bbce"
+    },
+    {
+      "path": "tools/verify/tests/test_dsp_ranges.py",
+      "sourcePath": "tools/verify/tests/test_dsp_ranges.py",
+      "sourceSha256": "6f74f7e45a57f63071920dbec6de6667dc27508256a35fa0738281265bfe7f47",
+      "vendoredSha256": "f3dcc7a36d4727955c96f433e33b5f3f3f6a5bfa50de6779f7bfff058151ffc2"
+    },
+    {
+      "path": "tools/verify/tests/test_linked_defsyms.py",
+      "sourcePath": "tools/verify/tests/test_linked_defsyms.py",
+      "sourceSha256": "b8fd342821737b346d0c201ed9929f3df4e186315cf79cfea59c0fe163720a5f",
+      "vendoredSha256": "149a53dbab93bce281c3edcb9b1beafe14cee36bd2f58f63ac02ee854bb8d319"
+    },
+    {
+      "path": "tools/verify/tests/test_module_gates.py",
+      "sourcePath": "tools/verify/tests/test_module_gates.py",
+      "sourceSha256": "47c5a9912a881bc684aa15406650d07202b23df5957a23fd188ca143118309c2",
+      "vendoredSha256": "47c5a9912a881bc684aa15406650d07202b23df5957a23fd188ca143118309c2"
+    },
+    {
+      "path": "tools/verify/verify_dirtystate.py",
+      "sourcePath": "tools/verify/verify_dirtystate.py",
+      "sourceSha256": "328ad959c085085f386b69bfd89586f372750920044863a650ed9839ace1b660",
+      "vendoredSha256": "414419c666ff15667f381fca49cedc5413c2746c384628095d3868a531b2e2a6"
+    },
+    {
+      "path": "tools/verify/verify_set.py",
+      "sourcePath": "tools/verify/verify_set.py",
+      "sourceSha256": "6d463667c34f8840480fa0618e4f19fc246ab916cd7d4435b03fa2b08100218c",
+      "vendoredSha256": "cf775b9e6bb386698bb8414b09ce760d92e83199673d2dc14bf4f09d5fd59c1c"
+    }
+  ],
+  "localAdaptations": [
+    "Preserve Modwerk stock guards, dynamic-loader infrastructure, compilation memo and DRAM/BSS boundary checks.",
+    "Keep the approved stock mailbox at 0x38000; exclude upstream mailbox relocation and raw stock patch operands.",
+    "Keep independent scenario block-dump streams and audio-capture flags.",
+    "Support NONE fallback and exclude hook-only stock-DSP dispatch from the direct dirty-state render.",
+    "Pass assembler constants through the compilation memo; retain stock-copy recipes and declared-value author oracles.",
+    "Price remaining FX2 slots after a capped insert and compare server-free configurations to prevent cycle undercounts.",
+    "Integrate upstream regression suites in the repository SDK check; adapt mailbox and native fixture paths."
+  ],
+  "verificationRecord": "infrastructure-verification/octabam-7b2984c8.json",
+  "limitations": [
+    "Model accuracy and firmware-free regressions do not establish physical reboot, sound quality, hardware stress or chip timing.",
+    "The shared-memory census sees non-zero writes in 256-word regions; a permitted overlap accepts the region, so it cannot identify every stray word."
+  ]
+}
