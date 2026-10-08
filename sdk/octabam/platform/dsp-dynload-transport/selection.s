@@ -110,10 +110,13 @@ dl_selection_capture:
 	jeq .L47
 	tst.l %d0
 	jeq .L31
-	move.l #1074618512,%a1
+	move.l #1074078870,%a1
 .L25:
-	move.l 28(%sp),%a2
-	move.l (%a1,%a2.l*4),%a3
+	move.l 28(%sp),%d1
+	lsl.l #2,%d1
+	add.l (%a1),%d1
+	move.l %d1,%a1
+	move.l (%a1),%a3
 	tst.l %a3
 	jeq .L1
 	move.l (%a3),%a1
@@ -233,7 +236,7 @@ dl_selection_capture:
 	mov3q.l #1,%a3
 	jra .L50
 .L31:
-	move.l #1074618464,%a1
+	move.l #1074079494,%a1
 	jra .L25
 	.size	dl_selection_capture, .-dl_selection_capture
 	.align	2

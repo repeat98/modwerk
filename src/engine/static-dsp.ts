@@ -13,7 +13,7 @@ import type { StockDspCore } from './stock-dsp.ts'
 import { parseDspMemory, readDspWords, writeDspWords, type DspMemory } from './dsp-memory.ts'
 import { OS_LOAD_ADDRESS, type OsWrite } from './os-patches.ts'
 import type { ChooserProfile } from './choosers.ts'
-import { analogBdReservations } from './analog-bd-layout.ts'
+import { analogBdReservations, assertAnalogBdDspCompanions } from './analog-bd-layout.ts'
 
 // The shared X dispatch table holds init[32], then process[32].
 const INIT_TABLE = 0x215, PROC_TABLE = 0x235
@@ -69,7 +69,27 @@ export function planStaticPlacement(tag: string, effects: readonly Effect[], lis
 
 /** Native stable priority order, independent of the visitor's selection order. */
 export function staticModulePlan(ids: readonly string[]) {
-  const selected = new Set(resolveSelection(ids).map(module => module.id))
+  const selection = resolveSelection(ids).filter(module => module.fxId !== undefined)
+  if (facts.schema !== 1 || facts.revision !== CATALOG_SOURCE.revision) throw new Error('Static DSP facts do not match the pinned catalog.')
+  for (const module of selection) {
+    const entries = facts.modules.filter(entry => entry.id === module.id)
+    if (entries.length !== 1 || entries[0].key !== module.key || entries[0].fxId !== module.fxId || !Number.isSafeInteger(entries[0].priority)) throw new Error('The ' + module.key + ' static DSP declarations do not match its catalog entry.')
+    const packages = module.id === 'character' ? [resident.character] : dspPackages.packages.filter(pkg => pkg.id === module.id)
+    if (module.id === 'character') {
+      if (resident.schema !== 1 || resident.revision !== CATALOG_SOURCE.revision || resident.character.mode !== 'resident' || resident.character.ptableMemory !== 'P') throw new Error('The resident Character package does not support static DSP placement.')
+    } else {
+      if (dspPackages.schema !== 1 || dspPackages.revision !== CATALOG_SOURCE.revision) throw new Error('Module packages do not match the catalog revision.')
+      const stock = packages.some(pkg => 'stockDsp' in pkg && pkg.stockDsp)
+      if (stock ? packages.length !== 2 || ['A', 'B'].some(tag => packages.filter(pkg => 'stockDsp' in pkg && pkg.stockDsp && 'tag' in pkg && pkg.tag === tag).length !== 1) : packages.length !== 1 || 'tag' in packages[0]) throw new Error('The ' + module.key + ' needs a DSP package for both stock cores.')
+    }
+    for (const pkg of packages) {
+      if (pkg.id !== module.id || pkg.key !== module.key || pkg.fxId !== module.fxId || pkg.author !== module.author) throw new Error('The ' + module.key + ' DSP package does not match its catalog entry.')
+      // Donor planning uses package lengths before the asynchronous checksum
+      // gate. Reject malformed code, entries and relocations at this stage too.
+      relocateDspPackage(pkg, 0)
+    }
+  }
+  const selected = new Set(selection.map(module => module.id))
   return facts.modules.filter(module => selected.has(module.id)).sort((a, b) => a.priority - b.priority)
 }
 
@@ -144,6 +164,7 @@ export function applyStaticDispatch(memory: DspMemory, placed: readonly Dispatch
 }
 
 export async function composeStaticDsp(cores: readonly StockDspCore[], ids: readonly string[], profile: ChooserProfile) {
+  assertAnalogBdDspCompanions(ids)
   if (facts.schema !== 1 || facts.revision !== CATALOG_SOURCE.revision || facts.sourceSha256 !== stockMetadata.sourceSha256) throw new Error('Static DSP facts do not match the pinned catalog.')
   if (cores.length !== 2 || new Set(cores.map(core => core.core)).size !== 2) throw new Error('DSP composition requires both stock cores.')
   const plan = staticModulePlan(ids)

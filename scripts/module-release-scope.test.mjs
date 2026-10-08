@@ -9,6 +9,7 @@ function metadataCheck(body) {
 r = runpy.run_path('scripts/build-module-packages.py')
 ORDER, REQUESTED = r['ORDER'], r['REQUESTED']
 scope, retain = r['requested_release_scope'], r['retain_pending_requested']
+catalog_scope = r['catalog_insert_scope']
 `
   return execFileSync(python, ['-B', '-c', setup + body], { cwd: root, encoding: 'utf8' }).trim()
 }
@@ -16,7 +17,7 @@ describe('source compilation with standalone MIDISC2.0', () => {
   it('excludes the local-stock recipe from compilation while retaining the reviewed requested modules', () => {
     const actual = metadataCheck(`catalog = json.load(open('sdk/catalog.json'))
 ids = [m['id'] for m in catalog['modules'] if json.load(open('sdk/octabam/modules/' + m['id'] + '/octamod.module.json')).get('build', {}).get('status') != 'pending']
-print(json.dumps(scope(ids)))
+print(json.dumps(catalog_scope(ids)[2]))
 `)
     expect(JSON.parse(actual)).toEqual(['analog-bassdrum', 'usb-audio-out-tracks-main-cue', 'quantizer', 'synth', 'vector', 'playmodes', 'mute-modes', 'recorder-loop-fix'])
   })

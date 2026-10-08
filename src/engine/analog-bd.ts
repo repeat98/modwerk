@@ -6,9 +6,8 @@ import { dspWordsHash } from './stock-dsp.ts'
 import { OS_LOAD_ADDRESS, applyGuardedOsWrites, type OsWrite } from './os-patches.ts'
 import { rollingHash, runtimeStageLayout, BOOTSTRAP_ADDRESS } from './bootstrap.ts'
 import { packGka3, unpackGka3 } from './runtime-pack.ts'
-import { DSP_EFFECT_IDS } from '../catalog/modules.ts'
 import { parseColdFireObject, relocateColdFireObject } from './coldfire-elf.ts'
-import { ANALOG_BD_DONOR, ANALOG_BD_DSP_COMPANIONS } from './analog-bd-layout.ts'
+import { ANALOG_BD_DONOR, assertAnalogBdDspCompanions } from './analog-bd-layout.ts'
 import { staticModulePlan, type StaticDspLayout } from './static-dsp.ts'
 export { ANALOG_BD_DONOR } from './analog-bd-layout.ts'
 const UNCACHED = 0x08000000
@@ -21,8 +20,8 @@ function payload(raw: Uint8Array, destination: number, stage: number) {
   return { raw, blob, destination, stage, rawHash: rollingHash(raw), packedHash: rollingHash(packed) }
 }
 export async function composeAnalogBd(original: Uint8Array, patched: Uint8Array, ids: readonly string[], profile: { fx1: readonly string[]; fx2: readonly string[] }, layouts: readonly StaticDspLayout[] = []) {
+  assertAnalogBdDspCompanions(ids)
   const plan = staticModulePlan(ids)
-  if (ids.some(id => DSP_EFFECT_IDS.includes(id) && !ANALOG_BD_DSP_COMPANIONS.includes(id))) throw new Error('Analog BD cannot share DSP memory with these effects.')
   if (plan.length && (layouts.length !== 2 || !facts.analog.variants.every(variant => layouts.some(layout => layout.tag === variant.tag)))) throw new Error('Analog BD needs both DSP placement ledgers.')
   if ([...profile.fx1, ...profile.fx2].includes(ANALOG_BD_DONOR)) throw new Error('Analog BD needs the space used by ' + ANALOG_BD_DONOR + '.')
   const uploads = [], writes: OsWrite[] = [], recipe = facts.analog

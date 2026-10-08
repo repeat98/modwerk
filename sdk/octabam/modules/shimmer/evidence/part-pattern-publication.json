@@ -1,0 +1,170 @@
+{
+  "schemaVersion": 1,
+  "kind": "native Part and stopped-pattern publication",
+  "status": "passed",
+  "hardware": "not tested",
+  "imageSha256": "5a42175f876d7d22e31284faad0b10c4b174a34afc3bcb695acd3f3e873c5433",
+  "runtimeElfSha256": "59bb33b7aa27651301b5f79bf36250535a58e6be0585f4858b2b67febaadb6a9",
+  "emulatorSha256": "4e6f5fb5b5372b902a8279af65ba016cc7b762cbe8b9fe4927b768629576d120",
+  "fixtureSha256": "454d90138201caf33a62379c24160bb68b8d83989e8b406855cedc7606d4e776",
+  "recipeSha256": "c4d972cd81a516f1b7cf8ec9e0a7063fb550ace77b0bd3e92c9a50fa89b08d66",
+  "setup": "Forks from one genuinely loaded dirty dual-DSP 8-track project; requests while stopped, then runs each target 2200 sequencer frames. This is not a while-playing queued-pattern or audible-switching qualification.",
+  "cases": [
+    {
+      "case": "part2",
+      "activeBankPartPattern": [
+        0,
+        1,
+        0
+      ],
+      "liveFxIds": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        30,
+        30,
+        22,
+        22,
+        30,
+        30,
+        22,
+        22
+      ],
+      "frames": 2200,
+      "counters": {
+        "dl_selection_completed": 1,
+        "dl_residency_failures": 0,
+        "dl_errors": 0,
+        "dl_selection_requested": 1,
+        "dl_selection_refused": 0,
+        "dl_publication_prepared": 0,
+        "dl_publication_refused": 0,
+        "phase": 0
+      },
+      "passed": true
+    },
+    {
+      "case": "A02",
+      "activeBankPartPattern": [
+        0,
+        1,
+        1
+      ],
+      "liveFxIds": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        30,
+        30,
+        22,
+        22,
+        30,
+        30,
+        22,
+        22
+      ],
+      "frames": 2200,
+      "counters": {
+        "dl_selection_completed": 0,
+        "dl_residency_failures": 0,
+        "dl_errors": 0,
+        "dl_selection_requested": 0,
+        "dl_selection_refused": 0,
+        "dl_publication_prepared": 0,
+        "dl_publication_refused": 0,
+        "phase": 0
+      },
+      "passed": true
+    },
+    {
+      "case": "A03",
+      "activeBankPartPattern": [
+        0,
+        2,
+        2
+      ],
+      "liveFxIds": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        30,
+        30,
+        22,
+        22,
+        30,
+        30,
+        22,
+        22
+      ],
+      "frames": 2200,
+      "counters": {
+        "dl_selection_completed": 0,
+        "dl_residency_failures": 0,
+        "dl_errors": 0,
+        "dl_selection_requested": 0,
+        "dl_selection_refused": 0,
+        "dl_publication_prepared": 0,
+        "dl_publication_refused": 0,
+        "phase": 0
+      },
+      "passed": true
+    },
+    {
+      "case": "A04",
+      "activeBankPartPattern": [
+        0,
+        3,
+        3
+      ],
+      "liveFxIds": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        30,
+        30,
+        22,
+        22,
+        30,
+        30,
+        22,
+        22
+      ],
+      "frames": 2200,
+      "counters": {
+        "dl_selection_completed": 0,
+        "dl_residency_failures": 0,
+        "dl_errors": 0,
+        "dl_selection_requested": 0,
+        "dl_selection_refused": 0,
+        "dl_publication_prepared": 0,
+        "dl_publication_refused": 0,
+        "phase": 0
+      },
+      "passed": true
+    }
+  ],
+  "moduleId": "shimmer",
+  "moduleVersion": "0.1.0-experimental",
+  "moduleNativeSourceSha256": "a67450a491158ffcb3269cdd493e2a990b7ae7f41fc1a1bdef598a66e45f40a9",
+  "engineSha256": "a7663b9bdc50e9c995643af62618e45e3f9e93643833edd1652debc6fc592608"
+}

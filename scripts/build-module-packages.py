@@ -92,6 +92,39 @@ def requested_release_scope(buildable):
     return [id for id in REQUESTED if id in buildable and id != 'midi-scenes']
 
 
+def catalog_insert_scope(buildable):
+    """Keep reviewed special recipes, discover ordinary inserts from catalog pins."""
+    special = set(ORDER + HOOKED + REQUESTED + UTILITIES)
+    additional = [id for id in buildable if id not in special]
+    requested = requested_release_scope([id for id in buildable if id not in additional])
+    return ORDER + additional, additional, requested
+
+
+def descriptor_templates(recipes, additional, byid, native):
+    """Reuse verified donor fingerprints; unknown stock geometry needs review."""
+    result = list(recipes)
+    donors = {recipe['donorAddress']: recipe for recipe in recipes}
+    claimed = {recipe['fxId'] for recipe in recipes}
+    for id in additional:
+        existing = [recipe for recipe in recipes if recipe['id'] == id]
+        if len(existing) > 1:
+            raise ValueError(id + ': duplicate descriptor recipe')
+        if existing:
+            continue  # Already imported; the normal compiler below rechecks geometry.
+        module = byid[id]
+        address = module.menu.donor_desc + 0x38
+        if address not in donors:
+            raise ValueError(id + ': descriptor donor needs locally verified guard metadata')
+        if module.menu.fx2_id in claimed:
+            raise ValueError(id + ': descriptor effect ID is already claimed')
+        claimed.add(module.menu.fx2_id)
+        result.append(dict(id=id, key=module.key, author=module.author,
+            donorAddress=address, donorSha256=donors[address]['donorSha256'],
+            fxId=module.menu.fx2_id, fx2Slot=native.FX2_IDS + module.menu.fx2_id * 4,
+            slotSha256=HASH(native.FX1_NONE.to_bytes(4, 'big'))))
+    return result
+
+
 def retain_pending_requested(compiled, baseline, ids, standalone=False):
     """Keep inactive, previously verified objects unchanged; never compile their pending source."""
     if standalone:
@@ -229,7 +262,7 @@ def main():
         if catalog_documents[module['id']]['version'] != module['version']: parser.error('Stale catalog module version: ' + module['id'])
     buildable = [module for module in catalog['modules'] if catalog_documents[module['id']].get('build', {}).get('status') != 'pending']
     try:
-        approved_requested = requested_release_scope([module['id'] for module in buildable])
+        regular_ids, additional_ids, approved_requested = catalog_insert_scope([module['id'] for module in buildable])
     except ValueError as error:
         parser.error(str(error))
     standalone = 'midi-scenes' in [module['id'] for module in buildable]
@@ -240,14 +273,14 @@ def main():
     hooked_ids = [id for id in HOOKED if id in versions]
     revision = catalog['sourceRevision']
     utility_ids = [id for id in UTILITIES if id in versions]
-    documents = {id: json_file(sdk / 'modules' / id / 'octamod.module.json') for id in ORDER + REQUESTED + utility_ids + hooked_ids}
+    documents = {id: json_file(sdk / 'modules' / id / 'octamod.module.json') for id in regular_ids + REQUESTED + utility_ids + hooked_ids}
     provenance = {'sourceCommit': args.source_commit, 'moduleVersions': versions}
     products = {}
     with tempfile.TemporaryDirectory(prefix='octamod-source-build.') as temporary:
         root = Path(temporary)
         # Pending imports stay in the source fingerprint, but are never evaluated or compiled.
         (root / 'modules').mkdir()
-        for id in ORDER + requested_ids + utility_ids + hooked_ids:
+        for id in regular_ids + requested_ids + utility_ids + hooked_ids:
             shutil.copytree(sdk / 'modules' / id, root / 'modules' / id, ignore=shutil.ignore_patterns('__pycache__', '*.pyc', '.DS_Store'))
         for group in ['platform', 'tools', 'dsp']:
             shutil.copytree(sdk / group, root / group, ignore=shutil.ignore_patterns('__pycache__', '*.pyc', '.DS_Store'))
@@ -265,12 +298,20 @@ def main():
         known = registry.modules()
         byid = {module.name: module for module in known.values()}
         public = sorted(module.name for module in known.values() if not module.is_stock and module.name not in registry.PLATFORM_NAMES)
-        if public != sorted(ORDER + requested_ids + utility_ids + hooked_ids): raise ValueError('Unexpected module scope')
-        for id in ORDER + hooked_ids:
+        if public != sorted(regular_ids + requested_ids + utility_ids + hooked_ids): raise ValueError('Unexpected module scope')
+        from remix.schema import BusRole, Kind, YBase
+        for id in additional_ids:
+            module = byid[id]
+            if (module.kind != Kind.DSP_EFFECT or not module.menu or module.menu.stock_dsp or module.menu.replaces or not module.dsp
+                or module.dsp.bus_role != BusRole.NONE or module.dsp.ybase != YBase.NEVER
+                or module.dsp.hooks or module.cf_patches or module.linked or module.detours
+                or module.tables or module.pokes or module.keeps or module.dram_regions):
+                raise ValueError(id + ': new native shape needs a reviewed shared compiler recipe')
+        for id in regular_ids + hooked_ids:
             module, doc = byid[id], documents[id]
             if doc['version'] != versions[id] or doc['key'] != module.key or doc['author']['github'] != module.author or doc['compatibility']['effectId'] != (module.menu.fx2_id if module.menu else None):
                 raise ValueError(id + ': website metadata differs from its native declaration')
-        profile = registry.with_platform(Remix(name='source-build', doc='Compile authored packages without firmware.', modules=tuple(byid[id].key for id in ORDER + hooked_ids), fallback='NONE'), known)
+        profile = registry.with_platform(Remix(name='source-build', doc='Compile authored packages without firmware.', modules=tuple(byid[id].key for id in regular_ids + hooked_ids), fallback='NONE'), known)
         registry.remix = lambda _: profile
         import build_bus as native
         import label_fmt, mode_names, wide_dial
@@ -292,7 +333,7 @@ def main():
                     'init': init, 'proc': proc, 'proofs': proofs}
 
         packages = []
-        for id in sorted(ORDER):
+        for id in sorted(regular_ids):
             module = byid[id]
             if not module.dsp or id == 'character': continue
             text = native._loadable_text(module)
@@ -412,7 +453,7 @@ def main():
         print('Compiled eleven ColdFire runtime objects, four ROM units and the authored bootstrap.', flush=True)
 
         recipes = []
-        for id in ORDER:
+        for id in regular_ids:
             module = byid[id]
             for slot, param in enumerate(module.params):
                 if not param.prints_labels: continue
@@ -439,7 +480,7 @@ def main():
         products['menu-recipes.json'] = dict(baseline['menu-recipes.json'], **provenance, recipes=recipes, repitchPatches=patches)
 
         descriptors = []
-        for old in baseline['descriptor-recipes.json']['recipes']:
+        for old in descriptor_templates(baseline['descriptor-recipes.json']['recipes'], additional_ids, byid, native):
             module = byid[old['id']]
             if module.menu.donor_desc + 0x38 != old['donorAddress'] or module.menu.fx2_id != old['fxId']:
                 raise ValueError(module.name + ': changed stock descriptor/ID needs locally verified guard metadata')

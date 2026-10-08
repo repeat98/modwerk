@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 192" width="320" height="192" role="img" aria-label="Shimmer reverb: octave reflections rise from a stereo waveform">
+<rect width="320" height="192" rx="12" fill="#11151c"/>
+<g fill="none" stroke="#a9d4eb" stroke-width="2"><path d="M20 145 Q45 108 70 145 T120 145 T170 145 T220 145 T270 145 T320 145"/><path d="M30 112 Q43 82 56 112 T82 112 T108 112 T134 112 T160 112 T186 112 T212 112 T238 112 T264 112 T290 112" opacity=".65"/><path d="M64 77 Q72 55 80 77 T96 77 T112 77 T128 77 T144 77 T160 77 T176 77 T192 77 T208 77 T224 77 T240 77 T256 77" opacity=".35"/></g>
+<text x="20" y="33" fill="#edf4fb" font-family="sans-serif" font-size="18" letter-spacing="3">SHIMMER</text><text x="20" y="176" fill="#9eaab8" font-family="sans-serif" font-size="11" letter-spacing="1">STEREO · PITCHED FEEDBACK · FX2</text>
+</svg>

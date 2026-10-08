@@ -1,0 +1,1090 @@
+{
+  "schemaVersion": 1,
+  "kind": "native ColdFire project stress and parameter publication",
+  "status": "passed",
+  "hardware": "not tested",
+  "firmware": "1.40C",
+  "stockMainSha256": "164f31224bf61181e3f50e7dec40df9afcae5b16dbf6e4c0d0cc5e986af0a84e",
+  "imageSha256": "5a42175f876d7d22e31284faad0b10c4b174a34afc3bcb695acd3f3e873c5433",
+  "runtimeElfSha256": "59bb33b7aa27651301b5f79bf36250535a58e6be0585f4858b2b67febaadb6a9",
+  "emulatorSha256": "4e6f5fb5b5372b902a8279af65ba016cc7b762cbe8b9fe4927b768629576d120",
+  "engineSha256": "a7663b9bdc50e9c995643af62618e45e3f9e93643833edd1652debc6fc592608",
+  "fixtureRecipeSha256": "c180792035dff016a1747ce1cefc909558fd291f0214b95ebdffac5190ad0bdc",
+  "fixtureSha256": "454d90138201caf33a62379c24160bb68b8d83989e8b406855cedc7606d4e776",
+  "verifySetSha256": "e800760a8dddd4d9a38597dd129bdf5eb4cea4eed3547f6cc2367e92dd9d6939",
+  "runRecipeSha256": "0366361416c34b43efcae51dd6e8c374390411fe0e6816182f59ee2a010527ac",
+  "privateRunLogSha256": "95c94c6d6bae7489a0935f2168e59d5196412dea5778937e45d75bec998b9d41",
+  "verifySetLogSha256": "b6732c6f6219217c304a7037d97a42e4d99ddf199aac24b35f652c379d945f73",
+  "snapshotInventorySha256": "c9b9b1f9aaaa5965bf3fcd3a2daea1530234a85ac73b0b6ad280f9ab6c09a937",
+  "frames": 82688,
+  "samplesPerFrame": 16,
+  "sampleRate": 44100,
+  "durationSeconds": 30.00018140589569,
+  "snapshotFrames": [
+    0,
+    512,
+    1024,
+    1536,
+    2048,
+    2560,
+    3072,
+    3584,
+    4096,
+    4608,
+    5120,
+    5632,
+    6144,
+    6656,
+    7168,
+    7680,
+    8192,
+    8704,
+    9216,
+    9728,
+    10240,
+    10752,
+    11264,
+    11776,
+    12288,
+    12800,
+    13312,
+    13824,
+    14336,
+    14848,
+    15360,
+    15872,
+    16384,
+    16896,
+    17408,
+    17920,
+    18432,
+    18944,
+    19456,
+    19968,
+    20480,
+    20992,
+    21504,
+    22016,
+    22528,
+    23040,
+    23552,
+    24064,
+    24576,
+    25088,
+    25600,
+    26112,
+    26624,
+    27136,
+    27648,
+    28160,
+    28672,
+    29184,
+    29696,
+    30208,
+    30720,
+    31232,
+    31744,
+    32256,
+    32768,
+    33280,
+    33792,
+    34304,
+    34816,
+    35328,
+    35840,
+    36352,
+    36864,
+    37376,
+    37888,
+    38400,
+    38912,
+    39424,
+    39936,
+    40448,
+    40960,
+    41472,
+    41984,
+    42496,
+    43008,
+    43520,
+    44032,
+    44544,
+    45056,
+    45568,
+    46080,
+    46592,
+    47104,
+    47616,
+    48128,
+    48640,
+    49152,
+    49664,
+    50176,
+    50688,
+    51200,
+    51712,
+    52224,
+    52736,
+    53248,
+    53760,
+    54272,
+    54784,
+    55296,
+    55808,
+    56320,
+    56832,
+    57344,
+    57856,
+    58368,
+    58880,
+    59392,
+    59904,
+    60416,
+    60928,
+    61440,
+    61952,
+    62464,
+    62976,
+    63488,
+    64000,
+    64512,
+    65024,
+    65536,
+    66048,
+    66560,
+    67072,
+    67584,
+    68096,
+    68608,
+    69120,
+    69632,
+    70144,
+    70656,
+    71168,
+    71680,
+    72192,
+    72704,
+    73216,
+    73728,
+    74240,
+    74752,
+    75264,
+    75776,
+    76288,
+    76800,
+    77312,
+    77824,
+    78336,
+    78848,
+    79360,
+    79872,
+    80384,
+    80896,
+    81408,
+    81920,
+    82432
+  ],
+  "tracks": 8,
+  "shimmerInstancesPerCore": 2,
+  "lfosPerTrack": 3,
+  "lockSlotsPerStep": {
+    "minimum": 14,
+    "maximum": 15
+  },
+  "testedPattern": "A01; generated A02-A04 are not asserted to have run in this test",
+  "dirtyDspMemory": true,
+  "guardedDirectDspStress": "separate audit; this report is the actual ColdFire/dual-DSP project run",
+  "liveFx1Ids": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  "liveFx2Ids": [
+    30,
+    30,
+    22,
+    22,
+    30,
+    30,
+    22,
+    22
+  ],
+  "loaderCounters": {
+    "dl_selection_requested": 0,
+    "dl_selection_completed": 0,
+    "dl_selection_refused": 0,
+    "dl_residency_failures": 0,
+    "dl_errors": 0,
+    "phase": 0
+  },
+  "sharedVerifySetFailures": 0,
+  "audio": "all eight FLEX tracks have post-FX chain output; main TX0 was nonzero",
+  "midiProbe": {
+    "track": 2,
+    "cc": 40,
+    "value": 100,
+    "recordHalfword": 12,
+    "observed": 100,
+    "unlockedControl": "TIME"
+  },
+  "projectPersistence": "load rewrote no project file; save/reload not asserted here",
+  "cardErrors": "one inherited unstaged STATIC sample FILE NOT FOUND; no parse or other errors",
+  "publication": [
+    {
+      "track": 1,
+      "effect": "SHIMMER",
+      "lockDelivery": {
+        "0": {
+          "distinctValues": 3,
+          "minimum": 52,
+          "maximum": 76
+        },
+        "3": {
+          "distinctValues": 3,
+          "minimum": 96,
+          "maximum": 127
+        },
+        "6": {
+          "distinctValues": 16,
+          "minimum": 7,
+          "maximum": 127
+        },
+        "7": {
+          "distinctValues": 16,
+          "minimum": 6,
+          "maximum": 125
+        },
+        "9": {
+          "distinctValues": 16,
+          "minimum": 3,
+          "maximum": 122
+        },
+        "10": {
+          "distinctValues": 16,
+          "minimum": 1,
+          "maximum": 121
+        },
+        "15": {
+          "distinctValues": 16,
+          "minimum": 50,
+          "maximum": 78
+        },
+        "16": {
+          "distinctValues": 16,
+          "minimum": 49,
+          "maximum": 76
+        },
+        "18": {
+          "distinctValues": 16,
+          "minimum": 6,
+          "maximum": 126
+        },
+        "24": {
+          "distinctValues": 2,
+          "minimum": 0,
+          "maximum": 127
+        },
+        "25": {
+          "distinctValues": 2,
+          "minimum": 0,
+          "maximum": 127
+        },
+        "26": {
+          "distinctValues": 2,
+          "minimum": 0,
+          "maximum": 127
+        },
+        "27": {
+          "distinctValues": 2,
+          "minimum": 0,
+          "maximum": 127
+        },
+        "28": {
+          "distinctValues": 2,
+          "minimum": 0,
+          "maximum": 127
+        },
+        "29": {
+          "distinctValues": 2,
+          "minimum": 0,
+          "maximum": 127
+        }
+      },
+      "lfos": [
+        {
+          "destination": 24,
+          "recordHalfword": 12,
+          "distinctHighByteValues": 55,
+          "distinctFractionalValues": 83,
+          "minimumHighByte": 0,
+          "maximumHighByte": 127
+        },
+        {
+          "destination": 25,
+          "recordHalfword": 13,
+          "distinctHighByteValues": 55,
+          "distinctFractionalValues": 85,
+          "minimumHighByte": 0,
+          "maximumHighByte": 127
+        },
+        {
+          "destination": 28,
+          "recordHalfword": 16,
+          "distinctHighByteValues": 37,
+          "distinctFractionalValues": 85,
+          "minimumHighByte": 0,
+          "maximumHighByte": 127
+        }
+      ]
+    },
+    {
+      "track": 2,
+      "effect": "SHIMMER",
+      "lockDelivery": {
+        "0": {
+          "distinctValues": 3,
+          "minimum": 52,
+          "maximum": 76
+        },
+        "3": {
+          "distinctValues": 3,
+          "minimum": 96,
+          "maximum": 127
+        },
+        "6": {
+          "distinctValues": 16,
+          "minimum": 1,
+          "maximum": 121
+        },
+        "7": {
+          "distinctValues": 16,
+          "minimum": 0,
+          "maximum": 119
+        },
+        "9": {
+          "distinctValues": 16,
+          "minimum": 5,
+          "maximum": 125
+        },
+        "10": {
+          "distinctValues": 16,
+          "minimum": 4,
+          "maximum": 123
+        },
+        "15": {
+          "distinctValues": 16,
+          "minimum": 53,
+          "maximum": 80
+        },
+        "16": {
+          "distinctValues": 16,
+          "minimum": 51,
+          "maximum": 79
+        },
+        "18": {
+          "distinctValues": 16,
+          "minimum": 0,
+          "maximum": 119
+        },
+        "25": {
+          "distinctValues": 2,
+          "minimum": 0,
+          "maximum": 127
+        },
+        "26": {
+          "distinctValues": 2,
+          "minimum": 0,
+          "maximum": 127
+        },
+        "27": {
+          "distinctValues": 2,
+          "minimum": 0,
+          "maximum": 127
+        },
+        "28": {
+          "distinctValues": 2,
+          "minimum": 0,
+          "maximum": 127
+        },
+        "29": {
+          "distinctValues": 2,
+          "minimum": 0,
+          "maximum": 127
+        }
+      },
+      "lfos": [
+        {
+          "destination": 25,
+          "recordHalfword": 13,
+          "distinctHighByteValues": 61,
+          "distinctFractionalValues": 83,
+          "minimumHighByte": 0,
+          "maximumHighByte": 127
+        },
+        {
+          "destination": 26,
+          "recordHalfword": 14,
+          "distinctHighByteValues": 60,
+          "distinctFractionalValues": 81,
+          "minimumHighByte": 0,
+          "maximumHighByte": 127
+        },
+        {
+          "destination": 28,
+          "recordHalfword": 16,
+          "distinctHighByteValues": 37,
+          "distinctFractionalValues": 85,
+          "minimumHighByte": 0,
+          "maximumHighByte": 127
+        }
+      ]
+    },
+    {
+      "track": 3,
+      "effect": "DARK REV",
+      "lockDelivery": {
+        "0": {
+          "distinctValues": 3,
+          "minimum": 52,
+          "maximum": 76
+        },
+        "3": {
+          "distinctValues": 3,
+          "minimum": 96,
+          "maximum": 127
+        },
+        "6": {
+          "distinctValues": 16,
+          "minimum": 4,
+          "maximum": 123
+        },
+        "7": {
+          "distinctValues": 16,
+          "minimum": 2,
+          "maximum": 122
+        },
+        "9": {
+          "distinctValues": 16,
+          "minimum": 8,
+          "maximum": 127
+        },
+        "10": {
+          "distinctValues": 16,
+          "minimum": 6,
+          "maximum": 126
+        },
+        "15": {
+          "distinctValues": 16,
+          "minimum": 48,
+          "maximum": 76
+        },
+        "16": {
+          "distinctValues": 16,
+          "minimum": 48,
+          "maximum": 80
+        },
+        "18": {
+          "distinctValues": 16,
+          "minimum": 2,
+          "maximum": 122
+        },
+        "24": {
+          "distinctValues": 9,
+          "minimum": 22,
+          "maximum": 65
+        },
+        "25": {
+          "distinctValues": 16,
+          "minimum": 0,
+          "maximum": 120
+        },
+        "26": {
+          "distinctValues": 16,
+          "minimum": 7,
+          "maximum": 127
+        },
+        "27": {
+          "distinctValues": 16,
+          "minimum": 6,
+          "maximum": 125
+        },
+        "28": {
+          "distinctValues": 16,
+          "minimum": 4,
+          "maximum": 124
+        },
+        "29": {
+          "distinctValues": 16,
+          "minimum": 3,
+          "maximum": 122
+        }
+      },
+      "lfos": [
+        {
+          "destination": 24,
+          "recordHalfword": 12,
+          "distinctHighByteValues": 80,
+          "distinctFractionalValues": 134,
+          "minimumHighByte": 0,
+          "maximumHighByte": 127
+        },
+        {
+          "destination": 25,
+          "recordHalfword": 13,
+          "distinctHighByteValues": 76,
+          "distinctFractionalValues": 118,
+          "minimumHighByte": 0,
+          "maximumHighByte": 127
+        },
+        {
+          "destination": 28,
+          "recordHalfword": 16,
+          "distinctHighByteValues": 97,
+          "distinctFractionalValues": 154,
+          "minimumHighByte": 0,
+          "maximumHighByte": 127
+        }
+      ]
+    },
+    {
+      "track": 4,
+      "effect": "DARK REV",
+      "lockDelivery": {
+        "0": {
+          "distinctValues": 3,
+          "minimum": 52,
+          "maximum": 76
+        },
+        "3": {
+          "distinctValues": 3,
+          "minimum": 96,
+          "maximum": 127
+        },
+        "6": {
+          "distinctValues": 16,
+          "minimum": 6,
+          "maximum": 126
+        },
+        "7": {
+          "distinctValues": 16,
+          "minimum": 5,
+          "maximum": 124
+        },
+        "9": {
+          "distinctValues": 16,
+          "minimum": 2,
+          "maximum": 121
+        },
+        "10": {
+          "distinctValues": 16,
+          "minimum": 0,
+          "maximum": 120
+        },
+        "15": {
+          "distinctValues": 16,
+          "minimum": 49,
+          "maximum": 77
+        },
+        "16": {
+          "distinctValues": 16,
+          "minimum": 49,
+          "maximum": 76
+        },
+        "18": {
+          "distinctValues": 16,
+          "minimum": 5,
+          "maximum": 124
+        },
+        "24": {
+          "distinctValues": 9,
+          "minimum": 24,
+          "maximum": 67
+        },
+        "25": {
+          "distinctValues": 16,
+          "minimum": 3,
+          "maximum": 122
+        },
+        "26": {
+          "distinctValues": 16,
+          "minimum": 1,
+          "maximum": 121
+        },
+        "27": {
+          "distinctValues": 16,
+          "minimum": 0,
+          "maximum": 119
+        },
+        "28": {
+          "distinctValues": 16,
+          "minimum": 7,
+          "maximum": 126
+        },
+        "29": {
+          "distinctValues": 16,
+          "minimum": 5,
+          "maximum": 125
+        }
+      },
+      "lfos": [
+        {
+          "destination": 24,
+          "recordHalfword": 12,
+          "distinctHighByteValues": 77,
+          "distinctFractionalValues": 138,
+          "minimumHighByte": 0,
+          "maximumHighByte": 127
+        },
+        {
+          "destination": 25,
+          "recordHalfword": 13,
+          "distinctHighByteValues": 69,
+          "distinctFractionalValues": 110,
+          "minimumHighByte": 0,
+          "maximumHighByte": 127
+        },
+        {
+          "destination": 28,
+          "recordHalfword": 16,
+          "distinctHighByteValues": 96,
+          "distinctFractionalValues": 152,
+          "minimumHighByte": 0,
+          "maximumHighByte": 127
+        }
+      ]
+    },
+    {
+      "track": 5,
+      "effect": "SHIMMER",
+      "lockDelivery": {
+        "0": {
+          "distinctValues": 3,
+          "minimum": 52,
+          "maximum": 76
+        },
+        "3": {
+          "distinctValues": 3,
+          "minimum": 96,
+          "maximum": 127
+        },
+        "6": {
+          "distinctValues": 16,
+          "minimum": 0,
+          "maximum": 120
+        },
+        "7": {
+          "distinctValues": 16,
+          "minimum": 7,
+          "maximum": 127
+        },
+        "9": {
+          "distinctValues": 16,
+          "minimum": 4,
+          "maximum": 124
+        },
+        "10": {
+          "distinctValues": 16,
+          "minimum": 3,
+          "maximum": 122
+        },
+        "15": {
+          "distinctValues": 16,
+          "minimum": 51,
+          "maximum": 79
+        },
+        "16": {
+          "distinctValues": 16,
+          "minimum": 50,
+          "maximum": 78
+        },
+        "18": {
+          "distinctValues": 16,
+          "minimum": 7,
+          "maximum": 127
+        },
+        "24": {
+          "distinctValues": 2,
+          "minimum": 0,
+          "maximum": 127
+        },
+        "25": {
+          "distinctValues": 2,
+          "minimum": 0,
+          "maximum": 127
+        },
+        "26": {
+          "distinctValues": 2,
+          "minimum": 0,
+          "maximum": 127
+        },
+        "27": {
+          "distinctValues": 2,
+          "minimum": 0,
+          "maximum": 127
+        },
+        "28": {
+          "distinctValues": 2,
+          "minimum": 0,
+          "maximum": 127
+        },
+        "29": {
+          "distinctValues": 2,
+          "minimum": 0,
+          "maximum": 127
+        }
+      },
+      "lfos": [
+        {
+          "destination": 24,
+          "recordHalfword": 12,
+          "distinctHighByteValues": 64,
+          "distinctFractionalValues": 82,
+          "minimumHighByte": 0,
+          "maximumHighByte": 127
+        },
+        {
+          "destination": 25,
+          "recordHalfword": 13,
+          "distinctHighByteValues": 58,
+          "distinctFractionalValues": 83,
+          "minimumHighByte": 0,
+          "maximumHighByte": 127
+        },
+        {
+          "destination": 28,
+          "recordHalfword": 16,
+          "distinctHighByteValues": 37,
+          "distinctFractionalValues": 85,
+          "minimumHighByte": 0,
+          "maximumHighByte": 127
+        }
+      ]
+    },
+    {
+      "track": 6,
+      "effect": "SHIMMER",
+      "lockDelivery": {
+        "0": {
+          "distinctValues": 3,
+          "minimum": 52,
+          "maximum": 76
+        },
+        "3": {
+          "distinctValues": 3,
+          "minimum": 96,
+          "maximum": 127
+        },
+        "6": {
+          "distinctValues": 16,
+          "minimum": 3,
+          "maximum": 122
+        },
+        "7": {
+          "distinctValues": 16,
+          "minimum": 1,
+          "maximum": 121
+        },
+        "9": {
+          "distinctValues": 16,
+          "minimum": 7,
+          "maximum": 126
+        },
+        "10": {
+          "distinctValues": 16,
+          "minimum": 5,
+          "maximum": 125
+        },
+        "15": {
+          "distinctValues": 16,
+          "minimum": 48,
+          "maximum": 80
+        },
+        "16": {
+          "distinctValues": 16,
+          "minimum": 52,
+          "maximum": 80
+        },
+        "18": {
+          "distinctValues": 16,
+          "minimum": 1,
+          "maximum": 121
+        },
+        "24": {
+          "distinctValues": 2,
+          "minimum": 0,
+          "maximum": 127
+        },
+        "25": {
+          "distinctValues": 2,
+          "minimum": 0,
+          "maximum": 127
+        },
+        "26": {
+          "distinctValues": 2,
+          "minimum": 0,
+          "maximum": 127
+        },
+        "27": {
+          "distinctValues": 2,
+          "minimum": 0,
+          "maximum": 127
+        },
+        "28": {
+          "distinctValues": 2,
+          "minimum": 0,
+          "maximum": 127
+        },
+        "29": {
+          "distinctValues": 2,
+          "minimum": 0,
+          "maximum": 127
+        }
+      },
+      "lfos": [
+        {
+          "destination": 24,
+          "recordHalfword": 12,
+          "distinctHighByteValues": 59,
+          "distinctFractionalValues": 81,
+          "minimumHighByte": 0,
+          "maximumHighByte": 127
+        },
+        {
+          "destination": 25,
+          "recordHalfword": 13,
+          "distinctHighByteValues": 63,
+          "distinctFractionalValues": 85,
+          "minimumHighByte": 0,
+          "maximumHighByte": 127
+        },
+        {
+          "destination": 28,
+          "recordHalfword": 16,
+          "distinctHighByteValues": 37,
+          "distinctFractionalValues": 85,
+          "minimumHighByte": 0,
+          "maximumHighByte": 127
+        }
+      ]
+    },
+    {
+      "track": 7,
+      "effect": "DARK REV",
+      "lockDelivery": {
+        "0": {
+          "distinctValues": 3,
+          "minimum": 52,
+          "maximum": 76
+        },
+        "3": {
+          "distinctValues": 3,
+          "minimum": 96,
+          "maximum": 127
+        },
+        "6": {
+          "distinctValues": 16,
+          "minimum": 5,
+          "maximum": 125
+        },
+        "7": {
+          "distinctValues": 16,
+          "minimum": 4,
+          "maximum": 123
+        },
+        "9": {
+          "distinctValues": 16,
+          "minimum": 0,
+          "maximum": 120
+        },
+        "10": {
+          "distinctValues": 16,
+          "minimum": 7,
+          "maximum": 127
+        },
+        "15": {
+          "distinctValues": 16,
+          "minimum": 48,
+          "maximum": 76
+        },
+        "16": {
+          "distinctValues": 16,
+          "minimum": 49,
+          "maximum": 80
+        },
+        "18": {
+          "distinctValues": 16,
+          "minimum": 4,
+          "maximum": 123
+        },
+        "24": {
+          "distinctValues": 8,
+          "minimum": 23,
+          "maximum": 66
+        },
+        "25": {
+          "distinctValues": 16,
+          "minimum": 2,
+          "maximum": 121
+        },
+        "26": {
+          "distinctValues": 16,
+          "minimum": 0,
+          "maximum": 120
+        },
+        "27": {
+          "distinctValues": 16,
+          "minimum": 7,
+          "maximum": 127
+        },
+        "28": {
+          "distinctValues": 16,
+          "minimum": 5,
+          "maximum": 125
+        },
+        "29": {
+          "distinctValues": 16,
+          "minimum": 4,
+          "maximum": 123
+        }
+      },
+      "lfos": [
+        {
+          "destination": 24,
+          "recordHalfword": 12,
+          "distinctHighByteValues": 71,
+          "distinctFractionalValues": 128,
+          "minimumHighByte": 0,
+          "maximumHighByte": 127
+        },
+        {
+          "destination": 25,
+          "recordHalfword": 13,
+          "distinctHighByteValues": 71,
+          "distinctFractionalValues": 121,
+          "minimumHighByte": 0,
+          "maximumHighByte": 127
+        },
+        {
+          "destination": 28,
+          "recordHalfword": 16,
+          "distinctHighByteValues": 99,
+          "distinctFractionalValues": 150,
+          "minimumHighByte": 0,
+          "maximumHighByte": 127
+        }
+      ]
+    },
+    {
+      "track": 8,
+      "effect": "DARK REV",
+      "lockDelivery": {
+        "0": {
+          "distinctValues": 3,
+          "minimum": 52,
+          "maximum": 76
+        },
+        "3": {
+          "distinctValues": 3,
+          "minimum": 96,
+          "maximum": 127
+        },
+        "6": {
+          "distinctValues": 16,
+          "minimum": 8,
+          "maximum": 127
+        },
+        "7": {
+          "distinctValues": 16,
+          "minimum": 6,
+          "maximum": 126
+        },
+        "9": {
+          "distinctValues": 16,
+          "minimum": 3,
+          "maximum": 122
+        },
+        "10": {
+          "distinctValues": 16,
+          "minimum": 1,
+          "maximum": 121
+        },
+        "15": {
+          "distinctValues": 16,
+          "minimum": 50,
+          "maximum": 78
+        },
+        "16": {
+          "distinctValues": 16,
+          "minimum": 49,
+          "maximum": 77
+        },
+        "18": {
+          "distinctValues": 16,
+          "minimum": 6,
+          "maximum": 126
+        },
+        "24": {
+          "distinctValues": 7,
+          "minimum": 26,
+          "maximum": 68
+        },
+        "25": {
+          "distinctValues": 16,
+          "minimum": 4,
+          "maximum": 124
+        },
+        "26": {
+          "distinctValues": 16,
+          "minimum": 2,
+          "maximum": 122
+        },
+        "27": {
+          "distinctValues": 16,
+          "minimum": 1,
+          "maximum": 120
+        },
+        "28": {
+          "distinctValues": 16,
+          "minimum": 8,
+          "maximum": 127
+        },
+        "29": {
+          "distinctValues": 16,
+          "minimum": 6,
+          "maximum": 126
+        }
+      },
+      "lfos": [
+        {
+          "destination": 24,
+          "recordHalfword": 12,
+          "distinctHighByteValues": 72,
+          "distinctFractionalValues": 139,
+          "minimumHighByte": 0,
+          "maximumHighByte": 127
+        },
+        {
+          "destination": 25,
+          "recordHalfword": 13,
+          "distinctHighByteValues": 76,
+          "distinctFractionalValues": 120,
+          "minimumHighByte": 0,
+          "maximumHighByte": 127
+        },
+        {
+          "destination": 28,
+          "recordHalfword": 16,
+          "distinctHighByteValues": 97,
+          "distinctFractionalValues": 151,
+          "minimumHighByte": 0,
+          "maximumHighByte": 127
+        }
+      ]
+    }
+  ]
+}

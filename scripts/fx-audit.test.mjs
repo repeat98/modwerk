@@ -16,7 +16,7 @@ function render(planDir, outDir, effect) {
   for (const name of readdirSync(planDir).filter(file => file.endsWith('.raw'))) {
     const bytes = readFileSync(join(planDir, name)), input = new Int32Array(bytes.buffer, bytes.byteOffset, bytes.byteLength >> 2)
     const out = new Int32Array(input.length * 2)
-    input.forEach((word, n) => { out[2 * n] = out[2 * n + 1] = Math.round(Math.max(-1, Math.min(1, effect(word / FULL_SCALE))) * FULL_SCALE) })
+    input.forEach((word, n) => { out[2 * n] = out[2 * n + 1] = Math.round(Math.max(-1, Math.min(1, effect(word / FULL_SCALE, n))) * FULL_SCALE) })
     writeFileSync(join(outDir, name), Buffer.from(out.buffer))
   }
 }
@@ -70,6 +70,24 @@ describe('fx audit', () => {
     const [wav] = readAudio(join(plan, 'tone-5301hz-1db.wav'), { channels: 1 })
     words.forEach((word, n) => expect(wav[n]).toBeCloseTo(word / 8388608, 7))
     expect(wavFile(Int32Array.of(8388607, -8388608)).length).toBe(44 + 6)
+  })
+
+  it('uses the recorded longer settling interval without changing alias limits or FFT geometry', () => {
+    const planDir = join(scratch, 'long-warmup-plan'), outDir = join(scratch, 'long-warmup-out')
+    expect(audit('plan', planDir, '--warmup', '2').status).toBe(0)
+    const plan = JSON.parse(readFileSync(join(planDir, 'plan.json'), 'utf8'))
+    expect(plan.warmup).toBe(2 * SAMPLE_RATE)
+    expect(plan.fftSize).toBe(FFT_SIZE)
+    spawnSync('mkdir', ['-p', outDir])
+    render(planDir, outDir, (x, n) => n < WARMUP + FFT_SIZE ? Math.tanh(6 * x) : 0.5 * x)
+    const tone = plan.tones.find(tone => tone.file === 'tone-5301hz-1db')
+    const [audio] = readAudio(join(outDir, tone.file + '.raw'))
+    expect(analyzeTone(audio, tone).aliasDbc).toBeGreaterThan(LIMITS.alias)
+    expect(analyzeTone(audio, tone, plan.warmup).aliasDbc).toBeLessThan(-100)
+    const checked = audit('check', planDir, outDir)
+    expect(checked.status).toBe(0)
+    expect(checked.stdout).not.toContain('FAIL')
+    expect(audit('plan', join(scratch, 'negative-warmup'), '--warmup', '-1').status).toBe(2)
   })
 
   it('refuses a check with renders missing, and says which', () => {

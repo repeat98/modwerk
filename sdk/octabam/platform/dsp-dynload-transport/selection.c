@@ -48,7 +48,11 @@ static unsigned dl_selection_capture(unsigned slot,unsigned row,uintptr_t source
             s->target[i]=*(volatile uint8_t *)(i<8 ? 0x400d47adu : 0x400d4ad1u);
         for(unsigned i=0;i<8;++i) s->target_source[i]=0;
     } else if(slot<2) {
-        descriptor=((volatile uint32_t *)(slot ? 0x400d6090u : 0x400d6060u))[s->row];
+        /* The builder relocates both chooser lists. Read the same list
+         * operand as the stock setter, not its original table address.
+         * 1.40C identities: verify_relocated_chooser.py guards both sites. */
+        uint32_t list=*(volatile uint32_t *)(slot ? 0x40052496u : 0x40052706u);
+        descriptor=((volatile uint32_t *)(uintptr_t)list)[s->row];
         if(!descriptor) return 0;
         uint32_t id=*(volatile uint32_t *)(uintptr_t)descriptor;
         if(id>31) return 0;

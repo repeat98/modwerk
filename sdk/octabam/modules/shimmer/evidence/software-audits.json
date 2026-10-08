@@ -1,0 +1,2177 @@
+{
+  "schemaVersion": 1,
+  "module": "shimmer",
+  "version": "0.1.0-experimental",
+  "generatedAtUtc": "2026-10-08T16:59:04.315260+00:00",
+  "engineSha256": "a7663b9bdc50e9c995643af62618e45e3f9e93643833edd1652debc6fc592608",
+  "programSha256": "efd2365c117dcb6dfe3b5ba1943583c8723bad8f810855c41dae25814ed8b664",
+  "programWordsIncludingPitchTable": 1073,
+  "stockMainSha256": "164f31224bf61181e3f50e7dec40df9afcae5b16dbf6e4c0d0cc5e986af0a84e",
+  "hardware": "not tested; user results pending",
+  "overallSoundQualification": "pending: retained pitched generic-mask failures require review; supplementary antialias tests do not qualify the complete sound",
+  "behavior": {
+    "complete": true,
+    "checks": [
+      {
+        "name": "shared assembler round-trip and both dispatch entries",
+        "passed": true,
+        "words": 1073,
+        "init": 8225,
+        "proc": 8267
+      },
+      {
+        "name": "approved MAIN parameter layout",
+        "passed": true
+      },
+      {
+        "name": "all six drawn parameters are continuous and defaults are valid",
+        "passed": true
+      },
+      {
+        "name": "original pitch table pins octave down, unity and octave up",
+        "passed": true
+      },
+      {
+        "name": "static cycle markers preserve assembled bytes",
+        "passed": true
+      },
+      {
+        "name": "MIX 0 exact signed stereo, core 0, split 0",
+        "passed": true
+      },
+      {
+        "name": "MIX 0 exact signed stereo, core 0, split 1",
+        "passed": true
+      },
+      {
+        "name": "MIX 0 exact signed stereo, core 0, split 7",
+        "passed": true
+      },
+      {
+        "name": "MIX 0 exact signed stereo, core 0, split 15",
+        "passed": true
+      },
+      {
+        "name": "MIX 0 exact signed stereo, core 1, split 0",
+        "passed": true
+      },
+      {
+        "name": "MIX 0 exact signed stereo, core 1, split 1",
+        "passed": true
+      },
+      {
+        "name": "MIX 0 exact signed stereo, core 1, split 7",
+        "passed": true
+      },
+      {
+        "name": "MIX 0 exact signed stereo, core 1, split 15",
+        "passed": true
+      },
+      {
+        "name": "original FX1 allocator bases match the guarded small-buffer pattern",
+        "passed": true,
+        "bases": [
+          [
+            4096,
+            7168,
+            10240,
+            13312
+          ],
+          [
+            4096,
+            7168,
+            10240,
+            13312
+          ]
+        ]
+      },
+      {
+        "name": "FX1 allocator guard: all eight small buffers stay exactly dry, split 0",
+        "passed": true,
+        "bufferWordsPermittedToChange": 0,
+        "dirtyY": true,
+        "movingControls": 6
+      },
+      {
+        "name": "FX1 allocator guard: all eight small buffers stay exactly dry, split 1",
+        "passed": true,
+        "bufferWordsPermittedToChange": 0,
+        "dirtyY": true,
+        "movingControls": 6
+      },
+      {
+        "name": "FX1 allocator guard: all eight small buffers stay exactly dry, split 7",
+        "passed": true,
+        "bufferWordsPermittedToChange": 0,
+        "dirtyY": true,
+        "movingControls": 6
+      },
+      {
+        "name": "FX1 allocator guard: all eight small buffers stay exactly dry, split 15",
+        "passed": true,
+        "bufferWordsPermittedToChange": 0,
+        "dirtyY": true,
+        "movingControls": 6
+      },
+      {
+        "name": "loaded wet effect, core 0: clearing-to-active fade has no dry drop",
+        "passed": true,
+        "maxSampleJumpDbfs": -60.20599809735744,
+        "maximumAllowedJumpDbfs": -53.979400086720375,
+        "clearingSamples": 2048
+      },
+      {
+        "name": "loaded wet effect, core 1: clearing-to-active fade has no dry drop",
+        "passed": true,
+        "maxSampleJumpDbfs": -60.20599809735744,
+        "maximumAllowedJumpDbfs": -53.979400086720375,
+        "clearingSamples": 2048
+      },
+      {
+        "name": "dirty scalar and Y silence at 7fffff: eight instances stay silent",
+        "passed": true
+      },
+      {
+        "name": "dirty scalar and Y silence at 5a5a5a: eight instances stay silent",
+        "passed": true
+      },
+      {
+        "name": "dirty gain and filter histories at 7fffff: active onset equals clean init",
+        "passed": true
+      },
+      {
+        "name": "dirty gain and filter histories at 5a5a5a: active onset equals clean init",
+        "passed": true
+      },
+      {
+        "name": "eight moving instances respect private, shared and program bounds",
+        "passed": true
+      },
+      {
+        "name": "instance 0: simultaneous output equals isolated output",
+        "passed": true
+      },
+      {
+        "name": "instance 1: simultaneous output equals isolated output",
+        "passed": true
+      },
+      {
+        "name": "instance 2: simultaneous output equals isolated output",
+        "passed": true
+      },
+      {
+        "name": "instance 3: simultaneous output equals isolated output",
+        "passed": true
+      },
+      {
+        "name": "instance 4: simultaneous output equals isolated output",
+        "passed": true
+      },
+      {
+        "name": "instance 5: simultaneous output equals isolated output",
+        "passed": true
+      },
+      {
+        "name": "instance 6: simultaneous output equals isolated output",
+        "passed": true
+      },
+      {
+        "name": "instance 7: simultaneous output equals isolated output",
+        "passed": true
+      },
+      {
+        "name": "core interleaving preserves all eight outputs",
+        "passed": true
+      },
+      {
+        "name": "instance 0: only the excited instance produces audio",
+        "passed": true
+      },
+      {
+        "name": "instance 3: only the excited instance produces audio",
+        "passed": true
+      },
+      {
+        "name": "instance 4: only the excited instance produces audio",
+        "passed": true
+      },
+      {
+        "name": "instance 7: only the excited instance produces audio",
+        "passed": true
+      },
+      {
+        "name": "PTCH 0: settled target, current and exact grain read speed",
+        "passed": true,
+        "phaseStepPerBlock": 32768
+      },
+      {
+        "name": "PTCH 0: strongest shifted component matches grain-window bounds",
+        "passed": true,
+        "nominalHz": 219.375,
+        "strongestHz": 223.406982421875,
+        "halfWidthHz": 21.533203125,
+        "fftBinHz": 1.3458251953125
+      },
+      {
+        "name": "PTCH 0: actual wet octave energy",
+        "passed": true,
+        "expectedRatio": 0.5,
+        "bandGainOverPlainDb": 47.91807639636859,
+        "bandDb": -37.441079099182545,
+        "strongestComponentHz": 223.406982421875,
+        "halfWidthHz": 21.533203125,
+        "centsFromNominal": 31.53018178469656
+      },
+      {
+        "name": "PTCH 64: settled target, current and exact grain read speed",
+        "passed": true,
+        "phaseStepPerBlock": 0
+      },
+      {
+        "name": "PTCH 64: strongest shifted component matches grain-window bounds",
+        "passed": true,
+        "nominalHz": 438.75,
+        "strongestHz": 438.739013671875,
+        "halfWidthHz": 21.533203125,
+        "fftBinHz": 1.3458251953125
+      },
+      {
+        "name": "PTCH 64: actual wet unity energy",
+        "passed": true,
+        "expectedRatio": 1,
+        "bandGainOverPlainDb": 3.047391132043855,
+        "bandDb": -37.04846080402226,
+        "strongestComponentHz": 438.739013671875,
+        "halfWidthHz": 21.533203125,
+        "centsFromNominal": -0.04335075432021763
+      },
+      {
+        "name": "PTCH 127: settled target, current and exact grain read speed",
+        "passed": true,
+        "phaseStepPerBlock": 8323072
+      },
+      {
+        "name": "PTCH 127: strongest shifted component matches grain-window bounds",
+        "passed": true,
+        "nominalHz": 877.5,
+        "strongestHz": 869.403076171875,
+        "halfWidthHz": 21.533203125,
+        "fftBinHz": 1.3458251953125
+      },
+      {
+        "name": "PTCH 127: actual wet octave energy",
+        "passed": true,
+        "expectedRatio": 2,
+        "bandGainOverPlainDb": 58.5892200184022,
+        "bandDb": -46.94329600512308,
+        "strongestComponentHz": 869.403076171875,
+        "halfWidthHz": 21.533203125,
+        "centsFromNominal": -16.04871019890337
+      }
+    ],
+    "sourceHashesAtRun": {
+      "engine.asm": "a7663b9bdc50e9c995643af62618e45e3f9e93643833edd1652debc6fc592608",
+      "manifest.py": "6cc3c3a074c62c2abcdb80a330489640b1c4f509037982043791c8af3938ca0e",
+      "verify.py": "fbe89d4a35b8a7084b91c311102580dbde7113cdeeed6d41b196579ffe9663a0",
+      "measure.py": "928696d54e29258c73732472de4744c185330273053f8fb048e8e8ab0b293cfd"
+    }
+  },
+  "staticCycleModel": {
+    "words": 836,
+    "cycles": 924,
+    "total_words": 1040,
+    "loop_end": "sv_end",
+    "units": "modeled DSP cycles/sample; not measured hardware utilization"
+  },
+  "nativeDspStress": {
+    "passed": true,
+    "seconds": 30.00018140589569,
+    "instancesPerCore": 2,
+    "guard": true,
+    "dirty": true,
+    "clobbers": 0,
+    "hangs": 0,
+    "method": "benchmark_reverbs.run: private FX2 instances on both cores, all six knobs move every block, split positions 1/3/7/15, dsp_host -guard -dirty; separate dearest fixed endpoint renders cover every split position",
+    "projectLfos": "not tested by this DSP render",
+    "projectParameterLocks": "not tested by this DSP render",
+    "peakInstructionsPerInstanceSample": 815.1875
+  },
+  "knobClicks": [
+    {
+      "knob": "TIME",
+      "passed": true,
+      "windows": {
+        "up": [
+          -140.0,
+          -140.0
+        ],
+        "down": [
+          -140.0,
+          -140.0
+        ],
+        "turn": [
+          -140.0,
+          -140.0
+        ]
+      }
+    },
+    {
+      "knob": "SIZE",
+      "passed": true,
+      "windows": {
+        "up": [
+          -140.0,
+          -140.0
+        ],
+        "down": [
+          -87.43683522045575,
+          -140.0
+        ],
+        "turn": [
+          -140.0,
+          -140.0
+        ]
+      }
+    },
+    {
+      "knob": "PTCH",
+      "passed": true,
+      "windows": {
+        "up": [
+          -140.0,
+          -140.0
+        ],
+        "down": [
+          -140.0,
+          -140.0
+        ],
+        "turn": [
+          -140.0,
+          -140.0
+        ]
+      }
+    },
+    {
+      "knob": "SHMR",
+      "passed": true,
+      "windows": {
+        "up": [
+          -140.0,
+          -140.0
+        ],
+        "down": [
+          -140.0,
+          -126.72048630852535
+        ],
+        "turn": [
+          -140.0,
+          -140.0
+        ]
+      }
+    },
+    {
+      "knob": "TONE",
+      "passed": true,
+      "windows": {
+        "up": [
+          -140.0,
+          -140.0
+        ],
+        "down": [
+          -140.0,
+          -140.0
+        ],
+        "turn": [
+          -140.0,
+          -140.0
+        ]
+      }
+    },
+    {
+      "knob": "MIX",
+      "passed": true,
+      "windows": {
+        "up": [
+          -99.84738017261641,
+          -140.0
+        ],
+        "down": [
+          -98.99355480102052,
+          -125.50850875468755
+        ],
+        "turn": [
+          -140.0,
+          -140.0
+        ]
+      }
+    }
+  ],
+  "stockComparator": {
+    "comparator": "DARK REV",
+    "comparatorWorst": 193.25,
+    "dearestWorst": 293.375,
+    "candidateFixed": 805.1875,
+    "candidateMovingWorst": 806.625,
+    "candidateWorst": 806.625,
+    "ratioToDarkRev": 4.1739974126778785,
+    "matchedNullStubInstructionsPerBlock": 67,
+    "stockSha256": "164f31224bf61181e3f50e7dec40df9afcae5b16dbf6e4c0d0cc5e986af0a84e",
+    "baseline": "private out/stock_dsp_bench/results.json",
+    "blocks": 4096,
+    "method": "benchmark_stock_dsp.py conventions for both: real X:0 audio, one instance on each core, 4096 blocks, unsplit, defaults with MIX127 followed by all controls moving each block, measured null-stub overhead subtracted; stock uses pristine original OS"
+  },
+  "fxAudits": [
+    {
+      "label": "default-pitched",
+      "directory": "shimmer_sound_v3",
+      "command": [
+        "npm",
+        "run",
+        "fx:audit",
+        "--",
+        "check",
+        "<private-plan>",
+        "<private-renders>"
+      ],
+      "exitCode": 1,
+      "planWarmupSamples": 16384,
+      "limits": {
+        "alias": -60,
+        "dc": -60,
+        "idle": -90
+      },
+      "tones": [
+        {
+          "file": "tone-1100hz-12db",
+          "m": 817,
+          "hz": 1099.5391845703125,
+          "levelDbfs": -12,
+          "channels": [
+            {
+              "levelDbfs": -36.98118994030102,
+              "harmonicsDbc": -97.56890490774153,
+              "aliasDbc": -32.85451305780213,
+              "residualDbc": -2.7247904002640655,
+              "dcDbfs": -137.37053603457514,
+              "peakDbfs": -30.387284915605832,
+              "rails": 0
+            },
+            {
+              "levelDbfs": -34.060409386449614,
+              "harmonicsDbc": -76.60709983553707,
+              "aliasDbc": -53.157769042235174,
+              "residualDbc": -4.521492252219847,
+              "dcDbfs": -133.36870030487123,
+              "peakDbfs": -28.85366333047164,
+              "rails": 0
+            }
+          ],
+          "verdict": [
+            {
+              "name": "aliasing",
+              "state": "fail",
+              "detail": "-32.9 dBc (limit -60)"
+            },
+            {
+              "name": "DC",
+              "state": "ok",
+              "detail": "-133.4 dBFS (limit -60)"
+            }
+          ]
+        },
+        {
+          "file": "tone-1100hz-1db",
+          "m": 817,
+          "hz": 1099.5391845703125,
+          "levelDbfs": -1,
+          "channels": [
+            {
+              "levelDbfs": -25.98113571495004,
+              "harmonicsDbc": -98.42480442987241,
+              "aliasDbc": -32.85452838664281,
+              "residualDbc": -2.7247859339610643,
+              "dcDbfs": -151.54016808292914,
+              "peakDbfs": -19.38733521564162,
+              "rails": 0
+            },
+            {
+              "levelDbfs": -23.060368343824813,
+              "harmonicsDbc": -76.65338945408499,
+              "aliasDbc": -53.157902010057335,
+              "residualDbc": -4.521482684900787,
+              "dcDbfs": -130.33108886121937,
+              "peakDbfs": -17.853735605017263,
+              "rails": 0
+            }
+          ],
+          "verdict": [
+            {
+              "name": "aliasing",
+              "state": "fail",
+              "detail": "-32.9 dBc (limit -60)"
+            },
+            {
+              "name": "DC",
+              "state": "ok",
+              "detail": "-130.3 dBFS (limit -60)"
+            }
+          ]
+        },
+        {
+          "file": "tone-2701hz-12db",
+          "m": 2007,
+          "hz": 2701.0711669921875,
+          "levelDbfs": -12,
+          "channels": [
+            {
+              "levelDbfs": -25.75003212232611,
+              "harmonicsDbc": -70.43725351074927,
+              "aliasDbc": -35.96041382857293,
+              "residualDbc": -11.173207059411459,
+              "dcDbfs": -134.27452812218763,
+              "peakDbfs": -22.83880433244157,
+              "rails": 0
+            },
+            {
+              "levelDbfs": -27.867424905310457,
+              "harmonicsDbc": -47.179423178341196,
+              "aliasDbc": -39.48785165234763,
+              "residualDbc": -7.901057015760537,
+              "dcDbfs": -134.83698799160965,
+              "peakDbfs": -24.306925907307935,
+              "rails": 0
+            }
+          ],
+          "verdict": [
+            {
+              "name": "aliasing",
+              "state": "fail",
+              "detail": "-36.0 dBc (limit -60)"
+            },
+            {
+              "name": "DC",
+              "state": "ok",
+              "detail": "-134.3 dBFS (limit -60)"
+            }
+          ]
+        },
+        {
+          "file": "tone-2701hz-1db",
+          "m": 2007,
+          "hz": 2701.0711669921875,
+          "levelDbfs": -1,
+          "channels": [
+            {
+              "levelDbfs": -14.750031414517029,
+              "harmonicsDbc": -70.43694309381289,
+              "aliasDbc": -35.960476401330666,
+              "residualDbc": -11.173198748930524,
+              "dcDbfs": -132.76694245049896,
+              "peakDbfs": -11.838689496620905,
+              "rails": 0
+            },
+            {
+              "levelDbfs": -16.86741635733632,
+              "harmonicsDbc": -47.17944740849368,
+              "aliasDbc": -39.48777712482561,
+              "residualDbc": -7.901057043840423,
+              "dcDbfs": -134.54176138145584,
+              "peakDbfs": -13.306938071952937,
+              "rails": 0
+            }
+          ],
+          "verdict": [
+            {
+              "name": "aliasing",
+              "state": "fail",
+              "detail": "-36.0 dBc (limit -60)"
+            },
+            {
+              "name": "DC",
+              "state": "ok",
+              "detail": "-132.8 dBFS (limit -60)"
+            }
+          ]
+        },
+        {
+          "file": "tone-5301hz-12db",
+          "m": 3939,
+          "hz": 5301.2054443359375,
+          "levelDbfs": -12,
+          "channels": [
+            {
+              "levelDbfs": -31.390965310764642,
+              "harmonicsDbc": -18.3192802735063,
+              "aliasDbc": -105.41127942091418,
+              "residualDbc": -35.30251723059277,
+              "dcDbfs": -135.301747700145,
+              "peakDbfs": -30.381500882101122,
+              "rails": 0
+            },
+            {
+              "levelDbfs": -26.454807330671272,
+              "harmonicsDbc": -16.58440882663329,
+              "aliasDbc": -110.2549581325618,
+              "residualDbc": -33.45611316221189,
+              "dcDbfs": -135.0945068160082,
+              "peakDbfs": -25.208430977222925,
+              "rails": 0
+            }
+          ],
+          "verdict": [
+            {
+              "name": "aliasing",
+              "state": "ok",
+              "detail": "-105.4 dBc (limit -60)"
+            },
+            {
+              "name": "DC",
+              "state": "ok",
+              "detail": "-135.1 dBFS (limit -60)"
+            }
+          ]
+        },
+        {
+          "file": "tone-5301hz-1db",
+          "m": 3939,
+          "hz": 5301.2054443359375,
+          "levelDbfs": -1,
+          "channels": [
+            {
+              "levelDbfs": -20.39096547059309,
+              "harmonicsDbc": -18.319241086252113,
+              "aliasDbc": -112.19816667671117,
+              "residualDbc": -35.302412737107176,
+              "dcDbfs": -136.10192032842306,
+              "peakDbfs": -19.381489769020046,
+              "rails": 0
+            },
+            {
+              "levelDbfs": -15.454792709326476,
+              "harmonicsDbc": -16.58440199906723,
+              "aliasDbc": -114.1882954260389,
+              "residualDbc": -33.45617464832858,
+              "dcDbfs": -135.2859401302622,
+              "peakDbfs": -14.20852735302904,
+              "rails": 0
+            }
+          ],
+          "verdict": [
+            {
+              "name": "aliasing",
+              "state": "ok",
+              "detail": "-112.2 dBc (limit -60)"
+            },
+            {
+              "name": "DC",
+              "state": "ok",
+              "detail": "-135.3 dBFS (limit -60)"
+            }
+          ]
+        },
+        {
+          "file": "tone-9102hz-12db",
+          "m": 6763,
+          "hz": 9101.815795898438,
+          "levelDbfs": -12,
+          "channels": [
+            {
+              "levelDbfs": -31.92782658573163,
+              "harmonicsDbc": -137.29250530113043,
+              "aliasDbc": -104.81865560638215,
+              "residualDbc": -74.18949534267666,
+              "dcDbfs": -134.73625325547476,
+              "peakDbfs": -31.92465651463312,
+              "rails": 0
+            },
+            {
+              "levelDbfs": -32.39090993731347,
+              "harmonicsDbc": -137.16624694367897,
+              "aliasDbc": -102.82063212965423,
+              "residualDbc": -70.10883678713653,
+              "dcDbfs": -134.9662975011891,
+              "peakDbfs": -32.37640680307686,
+              "rails": 0
+            }
+          ],
+          "verdict": [
+            {
+              "name": "aliasing",
+              "state": "ok",
+              "detail": "-102.8 dBc (limit -60)"
+            },
+            {
+              "name": "DC",
+              "state": "ok",
+              "detail": "-134.7 dBFS (limit -60)"
+            }
+          ]
+        },
+        {
+          "file": "tone-9102hz-1db",
+          "m": 6763,
+          "hz": 9101.815795898438,
+          "levelDbfs": -1,
+          "channels": [
+            {
+              "levelDbfs": -20.92782086848242,
+              "harmonicsDbc": -146.36698135967248,
+              "aliasDbc": -113.12196044819872,
+              "residualDbc": -74.2240729134144,
+              "dcDbfs": -134.17829720122026,
+              "peakDbfs": -20.92467681476172,
+              "rails": 0
+            },
+            {
+              "levelDbfs": -21.390897251508818,
+              "harmonicsDbc": -149.95678087486607,
+              "aliasDbc": -107.93975596966449,
+              "residualDbc": -70.1241295279363,
+              "dcDbfs": -134.81121640303738,
+              "peakDbfs": -21.376567731162837,
+              "rails": 0
+            }
+          ],
+          "verdict": [
+            {
+              "name": "aliasing",
+              "state": "ok",
+              "detail": "-107.9 dBc (limit -60)"
+            },
+            {
+              "name": "DC",
+              "state": "ok",
+              "detail": "-134.2 dBFS (limit -60)"
+            }
+          ]
+        }
+      ],
+      "idle": {
+        "metrics": {
+          "peakDbfs": -132.45319705671292,
+          "dcDbfs": -207.28016910623083,
+          "distinctValues": 1,
+          "silent": false
+        },
+        "verdict": {
+          "state": "note",
+          "detail": "idle activity of 1 LSB value(s), peak -132.5 dBFS: a limit cycle or truncation bias in a feedback loop"
+        }
+      }
+    },
+    {
+      "label": "default-unity",
+      "directory": "shimmer_unity_final",
+      "command": [
+        "npm",
+        "run",
+        "fx:audit",
+        "--",
+        "check",
+        "<private-plan>",
+        "<private-renders>"
+      ],
+      "exitCode": 1,
+      "planWarmupSamples": 16384,
+      "limits": {
+        "alias": -60,
+        "dc": -60,
+        "idle": -90
+      },
+      "tones": [
+        {
+          "file": "tone-1100hz-12db",
+          "m": 817,
+          "hz": 1099.5391845703125,
+          "levelDbfs": -12,
+          "channels": [
+            {
+              "levelDbfs": -34.98009747360349,
+              "harmonicsDbc": -69.53084808220618,
+              "aliasDbc": -35.6487789024795,
+              "residualDbc": -6.898039564032357,
+              "dcDbfs": -149.64886437128297,
+              "peakDbfs": -30.449199138599575,
+              "rails": 0
+            },
+            {
+              "levelDbfs": -34.243114256348434,
+              "harmonicsDbc": -76.96901775710913,
+              "aliasDbc": -38.862935375232766,
+              "residualDbc": -30.19143638119481,
+              "dcDbfs": -132.97864106443706,
+              "peakDbfs": -33.284451951497445,
+              "rails": 0
+            }
+          ],
+          "verdict": [
+            {
+              "name": "aliasing",
+              "state": "fail",
+              "detail": "-35.6 dBc (limit -60)"
+            },
+            {
+              "name": "DC",
+              "state": "ok",
+              "detail": "-133.0 dBFS (limit -60)"
+            }
+          ]
+        },
+        {
+          "file": "tone-1100hz-1db",
+          "m": 817,
+          "hz": 1099.5391845703125,
+          "levelDbfs": -1,
+          "channels": [
+            {
+              "levelDbfs": -23.98003983700977,
+              "harmonicsDbc": -69.62052989807368,
+              "aliasDbc": -35.65005216494762,
+              "residualDbc": -6.8980236474296195,
+              "dcDbfs": -124.83194697804839,
+              "peakDbfs": -19.449291224692093,
+              "rails": 0
+            },
+            {
+              "levelDbfs": -23.24306526025041,
+              "harmonicsDbc": -77.0502094428277,
+              "aliasDbc": -38.860852369145476,
+              "residualDbc": -30.191062757132038,
+              "dcDbfs": -129.32393550707022,
+              "peakDbfs": -22.284488191302838,
+              "rails": 0
+            }
+          ],
+          "verdict": [
+            {
+              "name": "aliasing",
+              "state": "fail",
+              "detail": "-35.7 dBc (limit -60)"
+            },
+            {
+              "name": "DC",
+              "state": "ok",
+              "detail": "-124.8 dBFS (limit -60)"
+            }
+          ]
+        },
+        {
+          "file": "tone-2701hz-12db",
+          "m": 2007,
+          "hz": 2701.0711669921875,
+          "levelDbfs": -12,
+          "channels": [
+            {
+              "levelDbfs": -30.857632921884864,
+              "harmonicsDbc": -115.12653318516635,
+              "aliasDbc": -35.99762584957496,
+              "residualDbc": -11.368298414296376,
+              "dcDbfs": -121.99551612282693,
+              "peakDbfs": -27.033405044566248,
+              "rails": 0
+            },
+            {
+              "levelDbfs": -25.346696519674236,
+              "harmonicsDbc": -119.36343523497894,
+              "aliasDbc": -53.54825344578593,
+              "residualDbc": -40.541733307285895,
+              "dcDbfs": -145.2286035475307,
+              "peakDbfs": -24.849804660126065,
+              "rails": 0
+            }
+          ],
+          "verdict": [
+            {
+              "name": "aliasing",
+              "state": "fail",
+              "detail": "-36.0 dBc (limit -60)"
+            },
+            {
+              "name": "DC",
+              "state": "ok",
+              "detail": "-122.0 dBFS (limit -60)"
+            }
+          ]
+        },
+        {
+          "file": "tone-2701hz-1db",
+          "m": 2007,
+          "hz": 2701.0711669921875,
+          "levelDbfs": -1,
+          "channels": [
+            {
+              "levelDbfs": -19.85763130673432,
+              "harmonicsDbc": -126.33799955658652,
+              "aliasDbc": -35.996502602560355,
+              "residualDbc": -11.368289253762345,
+              "dcDbfs": -112.5367642104132,
+              "peakDbfs": -16.033282362217744,
+              "rails": 0
+            },
+            {
+              "levelDbfs": -14.346677273724088,
+              "harmonicsDbc": -130.7684606538047,
+              "aliasDbc": -53.55628967740078,
+              "residualDbc": -40.5404761352782,
+              "dcDbfs": -131.78544356269424,
+              "peakDbfs": -13.849794735341279,
+              "rails": 0
+            }
+          ],
+          "verdict": [
+            {
+              "name": "aliasing",
+              "state": "fail",
+              "detail": "-36.0 dBc (limit -60)"
+            },
+            {
+              "name": "DC",
+              "state": "ok",
+              "detail": "-112.5 dBFS (limit -60)"
+            }
+          ]
+        },
+        {
+          "file": "tone-5301hz-12db",
+          "m": 3939,
+          "hz": 5301.2054443359375,
+          "levelDbfs": -12,
+          "channels": [
+            {
+              "levelDbfs": -30.994386750639364,
+              "harmonicsDbc": -113.89878552920736,
+              "aliasDbc": -49.20132184484992,
+              "residualDbc": -42.82058513631081,
+              "dcDbfs": -135.4982323755914,
+              "peakDbfs": -30.802120966539913,
+              "rails": 0
+            },
+            {
+              "levelDbfs": -27.696418503450012,
+              "harmonicsDbc": -119.54693876434658,
+              "aliasDbc": -66.78596043100771,
+              "residualDbc": -51.795919372168925,
+              "dcDbfs": -135.68771700412367,
+              "peakDbfs": -27.62331340043078,
+              "rails": 0
+            }
+          ],
+          "verdict": [
+            {
+              "name": "aliasing",
+              "state": "fail",
+              "detail": "-49.2 dBc (limit -60)"
+            },
+            {
+              "name": "DC",
+              "state": "ok",
+              "detail": "-135.5 dBFS (limit -60)"
+            }
+          ]
+        },
+        {
+          "file": "tone-5301hz-1db",
+          "m": 3939,
+          "hz": 5301.2054443359375,
+          "levelDbfs": -1,
+          "channels": [
+            {
+              "levelDbfs": -19.994383368749162,
+              "harmonicsDbc": -124.98054187969275,
+              "aliasDbc": -49.21353614731249,
+              "residualDbc": -42.82170605710505,
+              "dcDbfs": -137.11836663039304,
+              "peakDbfs": -19.802229189523725,
+              "rails": 0
+            },
+            {
+              "levelDbfs": -16.69640688603843,
+              "harmonicsDbc": -130.56201758546396,
+              "aliasDbc": -66.79787947386713,
+              "residualDbc": -51.79772417239741,
+              "dcDbfs": -137.94447435088108,
+              "peakDbfs": -16.623363096959412,
+              "rails": 0
+            }
+          ],
+          "verdict": [
+            {
+              "name": "aliasing",
+              "state": "fail",
+              "detail": "-49.2 dBc (limit -60)"
+            },
+            {
+              "name": "DC",
+              "state": "ok",
+              "detail": "-137.1 dBFS (limit -60)"
+            }
+          ]
+        },
+        {
+          "file": "tone-9102hz-12db",
+          "m": 6763,
+          "hz": 9101.815795898438,
+          "levelDbfs": -12,
+          "channels": [
+            {
+              "levelDbfs": -31.93100249628733,
+              "harmonicsDbc": -137.1968898647015,
+              "aliasDbc": -58.100142186022445,
+              "residualDbc": -45.89138326371283,
+              "dcDbfs": -134.5741859483188,
+              "peakDbfs": -31.817113079368777,
+              "rails": 0
+            },
+            {
+              "levelDbfs": -32.39150765145482,
+              "harmonicsDbc": -136.74881704719255,
+              "aliasDbc": -67.38522287159003,
+              "residualDbc": -52.01148550258223,
+              "dcDbfs": -134.71352883152048,
+              "peakDbfs": -32.32357670345641,
+              "rails": 0
+            }
+          ],
+          "verdict": [
+            {
+              "name": "aliasing",
+              "state": "fail",
+              "detail": "-58.1 dBc (limit -60)"
+            },
+            {
+              "name": "DC",
+              "state": "ok",
+              "detail": "-134.6 dBFS (limit -60)"
+            }
+          ]
+        },
+        {
+          "file": "tone-9102hz-1db",
+          "m": 6763,
+          "hz": 9101.815795898438,
+          "levelDbfs": -1,
+          "channels": [
+            {
+              "levelDbfs": -20.93099493508832,
+              "harmonicsDbc": -147.04066408313776,
+              "aliasDbc": -58.10087611476259,
+              "residualDbc": -45.88950481875099,
+              "dcDbfs": -133.82399991321648,
+              "peakDbfs": -20.816603700591678,
+              "rails": 0
+            },
+            {
+              "levelDbfs": -21.391500104329605,
+              "harmonicsDbc": -145.93924998975257,
+              "aliasDbc": -67.35153149450605,
+              "residualDbc": -52.02763983079572,
+              "dcDbfs": -134.1042523645783,
+              "peakDbfs": -21.323721615979995,
+              "rails": 0
+            }
+          ],
+          "verdict": [
+            {
+              "name": "aliasing",
+              "state": "fail",
+              "detail": "-58.1 dBc (limit -60)"
+            },
+            {
+              "name": "DC",
+              "state": "ok",
+              "detail": "-133.8 dBFS (limit -60)"
+            }
+          ]
+        }
+      ],
+      "idle": {
+        "metrics": {
+          "peakDbfs": -104.49439688327217,
+          "dcDbfs": -135.2612554382205,
+          "distinctValues": 94,
+          "silent": false
+        },
+        "verdict": {
+          "state": "note",
+          "detail": "low-level tail -104.5 dBFS, still decaying or noisy"
+        }
+      }
+    },
+    {
+      "label": "settled-unity",
+      "directory": "shimmer_unity_settled_final",
+      "command": [
+        "npm",
+        "run",
+        "fx:audit",
+        "--",
+        "check",
+        "<private-plan>",
+        "<private-renders>"
+      ],
+      "exitCode": 0,
+      "planWarmupSamples": 2646000,
+      "limits": {
+        "alias": -60,
+        "dc": -60,
+        "idle": -90
+      },
+      "tones": [
+        {
+          "file": "tone-1100hz-12db",
+          "m": 817,
+          "hz": 1099.5391845703125,
+          "levelDbfs": -12,
+          "channels": [
+            {
+              "levelDbfs": -34.98004425898449,
+              "harmonicsDbc": -102.60835775512749,
+              "aliasDbc": -98.93759204029793,
+              "residualDbc": -84.7692756498748,
+              "dcDbfs": -134.9652355266633,
+              "peakDbfs": -34.97911412865202,
+              "rails": 0
+            },
+            {
+              "levelDbfs": -34.2430969684562,
+              "harmonicsDbc": -106.45792472416974,
+              "aliasDbc": -102.79472627597121,
+              "residualDbc": -90.00817896684212,
+              "dcDbfs": -134.94455293325564,
+              "peakDbfs": -34.242683249115395,
+              "rails": 0
+            }
+          ],
+          "verdict": [
+            {
+              "name": "aliasing",
+              "state": "ok",
+              "detail": "-98.9 dBc (limit -60)"
+            },
+            {
+              "name": "DC",
+              "state": "ok",
+              "detail": "-134.9 dBFS (limit -60)"
+            }
+          ]
+        },
+        {
+          "file": "tone-1100hz-1db",
+          "m": 817,
+          "hz": 1099.5391845703125,
+          "levelDbfs": -1,
+          "channels": [
+            {
+              "levelDbfs": -23.97998352788679,
+              "harmonicsDbc": -112.91846089531356,
+              "aliasDbc": -107.66562895090588,
+              "residualDbc": -95.82730713497638,
+              "dcDbfs": -134.9763927403242,
+              "peakDbfs": -23.979729006169258,
+              "rails": 0
+            },
+            {
+              "levelDbfs": -23.243051209754547,
+              "harmonicsDbc": -116.6145490403409,
+              "aliasDbc": -114.76730183828892,
+              "residualDbc": -101.34807398997873,
+              "dcDbfs": -134.9449060684999,
+              "peakDbfs": -23.24292264580152,
+              "rails": 0
+            }
+          ],
+          "verdict": [
+            {
+              "name": "aliasing",
+              "state": "ok",
+              "detail": "-107.7 dBc (limit -60)"
+            },
+            {
+              "name": "DC",
+              "state": "ok",
+              "detail": "-134.9 dBFS (limit -60)"
+            }
+          ]
+        },
+        {
+          "file": "tone-2701hz-12db",
+          "m": 2007,
+          "hz": 2701.0711669921875,
+          "levelDbfs": -12,
+          "channels": [
+            {
+              "levelDbfs": -31.075088341520953,
+              "harmonicsDbc": -112.61462082226618,
+              "aliasDbc": -99.87170106723717,
+              "residualDbc": -88.10483125980129,
+              "dcDbfs": -134.9482615689965,
+              "peakDbfs": -31.07449660096352,
+              "rails": 0
+            },
+            {
+              "levelDbfs": -25.343287938281186,
+              "harmonicsDbc": -119.38218889015968,
+              "aliasDbc": -114.41529823966891,
+              "residualDbc": -99.24970247216541,
+              "dcDbfs": -134.9703696068107,
+              "peakDbfs": -25.343151380149543,
+              "rails": 0
+            }
+          ],
+          "verdict": [
+            {
+              "name": "aliasing",
+              "state": "ok",
+              "detail": "-99.9 dBc (limit -60)"
+            },
+            {
+              "name": "DC",
+              "state": "ok",
+              "detail": "-134.9 dBFS (limit -60)"
+            }
+          ]
+        },
+        {
+          "file": "tone-2701hz-1db",
+          "m": 2007,
+          "hz": 2701.0711669921875,
+          "levelDbfs": -1,
+          "channels": [
+            {
+              "levelDbfs": -20.07508790923638,
+              "harmonicsDbc": -123.78888877349583,
+              "aliasDbc": -113.71302748858588,
+              "residualDbc": -99.55168117633448,
+              "dcDbfs": -134.97284921478925,
+              "peakDbfs": -20.074943356307763,
+              "rails": 0
+            },
+            {
+              "levelDbfs": -14.343268592881923,
+              "harmonicsDbc": -131.10224888410931,
+              "aliasDbc": -122.60372899484554,
+              "residualDbc": -110.46454612357658,
+              "dcDbfs": -134.98117879407235,
+              "peakDbfs": -14.343215936337945,
+              "rails": 0
+            }
+          ],
+          "verdict": [
+            {
+              "name": "aliasing",
+              "state": "ok",
+              "detail": "-113.7 dBc (limit -60)"
+            },
+            {
+              "name": "DC",
+              "state": "ok",
+              "detail": "-135.0 dBFS (limit -60)"
+            }
+          ]
+        },
+        {
+          "file": "tone-5301hz-12db",
+          "m": 3939,
+          "hz": 5301.2054443359375,
+          "levelDbfs": -12,
+          "channels": [
+            {
+              "levelDbfs": -30.994383798662074,
+              "harmonicsDbc": -114.40676398928575,
+              "aliasDbc": -96.46939494256266,
+              "residualDbc": -89.45018331516417,
+              "dcDbfs": -134.94208138887194,
+              "peakDbfs": -30.993722434647317,
+              "rails": 0
+            },
+            {
+              "levelDbfs": -27.696416633516044,
+              "harmonicsDbc": -119.99162058313192,
+              "aliasDbc": -109.05279099369709,
+              "residualDbc": -97.24029498793614,
+              "dcDbfs": -134.88963891920912,
+              "peakDbfs": -27.696217173783516,
+              "rails": 0
+            }
+          ],
+          "verdict": [
+            {
+              "name": "aliasing",
+              "state": "ok",
+              "detail": "-96.5 dBc (limit -60)"
+            },
+            {
+              "name": "DC",
+              "state": "ok",
+              "detail": "-134.9 dBFS (limit -60)"
+            }
+          ]
+        },
+        {
+          "file": "tone-5301hz-1db",
+          "m": 3939,
+          "hz": 5301.2054443359375,
+          "levelDbfs": -1,
+          "channels": [
+            {
+              "levelDbfs": -19.99438261080944,
+              "harmonicsDbc": -124.69670478915454,
+              "aliasDbc": -109.07305448029426,
+              "residualDbc": -100.25646936585439,
+              "dcDbfs": -135.01048434160109,
+              "peakDbfs": -19.99424176275163,
+              "rails": 0
+            },
+            {
+              "levelDbfs": -16.69640726710787,
+              "harmonicsDbc": -130.29126611816613,
+              "aliasDbc": -122.71565981439582,
+              "residualDbc": -107.19930422551943,
+              "dcDbfs": -134.96381976257197,
+              "peakDbfs": -16.696353573758525,
+              "rails": 0
+            }
+          ],
+          "verdict": [
+            {
+              "name": "aliasing",
+              "state": "ok",
+              "detail": "-109.1 dBc (limit -60)"
+            },
+            {
+              "name": "DC",
+              "state": "ok",
+              "detail": "-135.0 dBFS (limit -60)"
+            }
+          ]
+        },
+        {
+          "file": "tone-9102hz-12db",
+          "m": 6763,
+          "hz": 9101.815795898438,
+          "levelDbfs": -12,
+          "channels": [
+            {
+              "levelDbfs": -31.931002214881616,
+              "harmonicsDbc": -139.3247777034254,
+              "aliasDbc": -100.23301073195114,
+              "residualDbc": -87.78390142724034,
+              "dcDbfs": -134.95479968720704,
+              "peakDbfs": -31.930256899242643,
+              "rails": 0
+            },
+            {
+              "levelDbfs": -32.39150669579901,
+              "harmonicsDbc": -127.16194509651157,
+              "aliasDbc": -102.88681800242486,
+              "residualDbc": -92.00920078319668,
+              "dcDbfs": -134.93961054754942,
+              "peakDbfs": -32.39105519239507,
+              "rails": 0
+            }
+          ],
+          "verdict": [
+            {
+              "name": "aliasing",
+              "state": "ok",
+              "detail": "-100.2 dBc (limit -60)"
+            },
+            {
+              "name": "DC",
+              "state": "ok",
+              "detail": "-134.9 dBFS (limit -60)"
+            }
+          ]
+        },
+        {
+          "file": "tone-9102hz-1db",
+          "m": 6763,
+          "hz": 9101.815795898438,
+          "levelDbfs": -1,
+          "channels": [
+            {
+              "levelDbfs": -20.930995000234812,
+              "harmonicsDbc": -148.37506852215236,
+              "aliasDbc": -111.2178600083042,
+              "residualDbc": -98.22136572652258,
+              "dcDbfs": -134.91300533712638,
+              "peakDbfs": -20.930863916440387,
+              "rails": 0
+            },
+            {
+              "levelDbfs": -21.39149976792641,
+              "harmonicsDbc": -141.44774388029344,
+              "aliasDbc": -113.57709618503893,
+              "residualDbc": -103.29271495553762,
+              "dcDbfs": -134.92356718870784,
+              "peakDbfs": -21.39136994089181,
+              "rails": 0
+            }
+          ],
+          "verdict": [
+            {
+              "name": "aliasing",
+              "state": "ok",
+              "detail": "-111.2 dBc (limit -60)"
+            },
+            {
+              "name": "DC",
+              "state": "ok",
+              "detail": "-134.9 dBFS (limit -60)"
+            }
+          ]
+        }
+      ],
+      "idle": {
+        "metrics": {
+          "peakDbfs": -104.49439688327217,
+          "dcDbfs": -135.2612554382205,
+          "distinctValues": 94,
+          "silent": false
+        },
+        "verdict": {
+          "state": "note",
+          "detail": "low-level tail -104.5 dBFS, still decaying or noisy"
+        }
+      }
+    },
+    {
+      "label": "settled-pitched",
+      "directory": "shimmer_pitched_settled_final",
+      "command": [
+        "npm",
+        "run",
+        "fx:audit",
+        "--",
+        "check",
+        "<private-plan>",
+        "<private-renders>"
+      ],
+      "exitCode": 1,
+      "planWarmupSamples": 2646000,
+      "limits": {
+        "alias": -60,
+        "dc": -60,
+        "idle": -90
+      },
+      "tones": [
+        {
+          "file": "tone-1100hz-12db",
+          "m": 817,
+          "hz": 1099.5391845703125,
+          "levelDbfs": -12,
+          "channels": [
+            {
+              "levelDbfs": -36.981190732049626,
+              "harmonicsDbc": -108.04178611116737,
+              "aliasDbc": -32.854832729935204,
+              "residualDbc": -2.724773981928234,
+              "dcDbfs": -134.95975072577414,
+              "peakDbfs": -30.388825692428405,
+              "rails": 0
+            },
+            {
+              "levelDbfs": -34.06039983250902,
+              "harmonicsDbc": -102.29354177957639,
+              "aliasDbc": -53.165666353399956,
+              "residualDbc": -4.521510268809966,
+              "dcDbfs": -134.96311196705517,
+              "peakDbfs": -28.854552923884548,
+              "rails": 0
+            }
+          ],
+          "verdict": [
+            {
+              "name": "aliasing",
+              "state": "fail",
+              "detail": "-32.9 dBc (limit -60)"
+            },
+            {
+              "name": "DC",
+              "state": "ok",
+              "detail": "-135.0 dBFS (limit -60)"
+            }
+          ]
+        },
+        {
+          "file": "tone-1100hz-1db",
+          "m": 817,
+          "hz": 1099.5391845703125,
+          "levelDbfs": -1,
+          "channels": [
+            {
+              "levelDbfs": -25.981134598269495,
+              "harmonicsDbc": -111.85696116969191,
+              "aliasDbc": -32.854705536297914,
+              "residualDbc": -2.7247786151911173,
+              "dcDbfs": -134.93414189890188,
+              "peakDbfs": -19.388773065150453,
+              "rails": 0
+            },
+            {
+              "levelDbfs": -23.06036176724081,
+              "harmonicsDbc": -102.92751763678751,
+              "aliasDbc": -53.166442202330884,
+              "residualDbc": -4.52150641401433,
+              "dcDbfs": -134.9675366355983,
+              "peakDbfs": -17.854520122427047,
+              "rails": 0
+            }
+          ],
+          "verdict": [
+            {
+              "name": "aliasing",
+              "state": "fail",
+              "detail": "-32.9 dBc (limit -60)"
+            },
+            {
+              "name": "DC",
+              "state": "ok",
+              "detail": "-134.9 dBFS (limit -60)"
+            }
+          ]
+        },
+        {
+          "file": "tone-2701hz-12db",
+          "m": 2007,
+          "hz": 2701.0711669921875,
+          "levelDbfs": -12,
+          "channels": [
+            {
+              "levelDbfs": -25.750031117253265,
+              "harmonicsDbc": -70.4367488476149,
+              "aliasDbc": -35.96045675624958,
+              "residualDbc": -11.173208181125265,
+              "dcDbfs": -134.96417368196342,
+              "peakDbfs": -22.83880433244157,
+              "rails": 0
+            },
+            {
+              "levelDbfs": -27.867431168403655,
+              "harmonicsDbc": -47.179376160486115,
+              "aliasDbc": -39.48866938823573,
+              "residualDbc": -7.9010775678353955,
+              "dcDbfs": -134.9682447917807,
+              "peakDbfs": -24.306823902779115,
+              "rails": 0
+            }
+          ],
+          "verdict": [
+            {
+              "name": "aliasing",
+              "state": "fail",
+              "detail": "-36.0 dBc (limit -60)"
+            },
+            {
+              "name": "DC",
+              "state": "ok",
+              "detail": "-135.0 dBFS (limit -60)"
+            }
+          ]
+        },
+        {
+          "file": "tone-2701hz-1db",
+          "m": 2007,
+          "hz": 2701.0711669921875,
+          "levelDbfs": -1,
+          "channels": [
+            {
+              "levelDbfs": -14.750030731321818,
+              "harmonicsDbc": -70.43706137682976,
+              "aliasDbc": -35.96048613248279,
+              "residualDbc": -11.173197424584352,
+              "dcDbfs": -134.9595738543639,
+              "peakDbfs": -11.838770423157086,
+              "rails": 0
+            },
+            {
+              "levelDbfs": -16.867421264028973,
+              "harmonicsDbc": -47.17947449497912,
+              "aliasDbc": -39.488545999775056,
+              "residualDbc": -7.901070297965794,
+              "dcDbfs": -134.9797604291047,
+              "peakDbfs": -13.306837451065972,
+              "rails": 0
+            }
+          ],
+          "verdict": [
+            {
+              "name": "aliasing",
+              "state": "fail",
+              "detail": "-36.0 dBc (limit -60)"
+            },
+            {
+              "name": "DC",
+              "state": "ok",
+              "detail": "-135.0 dBFS (limit -60)"
+            }
+          ]
+        },
+        {
+          "file": "tone-5301hz-12db",
+          "m": 3939,
+          "hz": 5301.2054443359375,
+          "levelDbfs": -12,
+          "channels": [
+            {
+              "levelDbfs": -31.390965866988996,
+              "harmonicsDbc": -18.31925014077302,
+              "aliasDbc": -105.36413098353324,
+              "residualDbc": -35.30237571696257,
+              "dcDbfs": -134.92550492204214,
+              "peakDbfs": -30.381227177154177,
+              "rails": 0
+            },
+            {
+              "levelDbfs": -26.45480728557351,
+              "harmonicsDbc": -16.58441616294632,
+              "aliasDbc": -112.17159365900753,
+              "residualDbc": -33.45617771972964,
+              "dcDbfs": -134.97692439385833,
+              "peakDbfs": -25.208487557969885,
+              "rails": 0
+            }
+          ],
+          "verdict": [
+            {
+              "name": "aliasing",
+              "state": "ok",
+              "detail": "-105.4 dBc (limit -60)"
+            },
+            {
+              "name": "DC",
+              "state": "ok",
+              "detail": "-134.9 dBFS (limit -60)"
+            }
+          ]
+        },
+        {
+          "file": "tone-5301hz-1db",
+          "m": 3939,
+          "hz": 5301.2054443359375,
+          "levelDbfs": -1,
+          "channels": [
+            {
+              "levelDbfs": -20.390965270530444,
+              "harmonicsDbc": -18.319241750564746,
+              "aliasDbc": -113.07920459191692,
+              "residualDbc": -35.302430279874805,
+              "dcDbfs": -134.94684856866152,
+              "peakDbfs": -19.38134512962724,
+              "rails": 0
+            },
+            {
+              "levelDbfs": -15.454792646799882,
+              "harmonicsDbc": -16.58440562110595,
+              "aliasDbc": -120.56331058510368,
+              "residualDbc": -33.456171466741125,
+              "dcDbfs": -134.93625838673802,
+              "peakDbfs": -14.208532668612717,
+              "rails": 0
+            }
+          ],
+          "verdict": [
+            {
+              "name": "aliasing",
+              "state": "ok",
+              "detail": "-113.1 dBc (limit -60)"
+            },
+            {
+              "name": "DC",
+              "state": "ok",
+              "detail": "-134.9 dBFS (limit -60)"
+            }
+          ]
+        },
+        {
+          "file": "tone-9102hz-12db",
+          "m": 6763,
+          "hz": 9101.815795898438,
+          "levelDbfs": -12,
+          "channels": [
+            {
+              "levelDbfs": -31.927827356397156,
+              "harmonicsDbc": -135.84889666208144,
+              "aliasDbc": -104.56286712782223,
+              "residualDbc": -74.20831586389814,
+              "dcDbfs": -134.97798779856475,
+              "peakDbfs": -31.92580082523856,
+              "rails": 0
+            },
+            {
+              "levelDbfs": -32.39091179398305,
+              "harmonicsDbc": -133.81561442470849,
+              "aliasDbc": -103.686612625132,
+              "residualDbc": -70.14770508872778,
+              "dcDbfs": -134.91194985798938,
+              "peakDbfs": -32.387735598549334,
+              "rails": 0
+            }
+          ],
+          "verdict": [
+            {
+              "name": "aliasing",
+              "state": "ok",
+              "detail": "-103.7 dBc (limit -60)"
+            },
+            {
+              "name": "DC",
+              "state": "ok",
+              "detail": "-134.9 dBFS (limit -60)"
+            }
+          ]
+        },
+        {
+          "file": "tone-9102hz-1db",
+          "m": 6763,
+          "hz": 9101.815795898438,
+          "levelDbfs": -1,
+          "channels": [
+            {
+              "levelDbfs": -20.927820557769408,
+              "harmonicsDbc": -150.44781954602297,
+              "aliasDbc": -117.94675625083919,
+              "residualDbc": -74.24334573319237,
+              "dcDbfs": -134.93802252063188,
+              "peakDbfs": -20.925851679426742,
+              "rails": 0
+            },
+            {
+              "levelDbfs": -21.39089775399295,
+              "harmonicsDbc": -145.9663264323743,
+              "aliasDbc": -113.45055635648806,
+              "residualDbc": -70.16091080129937,
+              "dcDbfs": -134.93908117298542,
+              "peakDbfs": -21.387894802476552,
+              "rails": 0
+            }
+          ],
+          "verdict": [
+            {
+              "name": "aliasing",
+              "state": "ok",
+              "detail": "-113.5 dBc (limit -60)"
+            },
+            {
+              "name": "DC",
+              "state": "ok",
+              "detail": "-134.9 dBFS (limit -60)"
+            }
+          ]
+        }
+      ],
+      "idle": {
+        "metrics": {
+          "peakDbfs": -132.45319705671292,
+          "dcDbfs": -207.28016910623083,
+          "distinctValues": 1,
+          "silent": false
+        },
+        "verdict": {
+          "state": "note",
+          "detail": "idle activity of 1 LSB value(s), peak -132.5 dBFS: a limit cycle or truncation bias in a feedback loop"
+        }
+      }
+    }
+  ],
+  "shiftAntialias": {
+    "checks": [
+      {
+        "name": "shared assembler round-trip and both dispatch entries",
+        "passed": true,
+        "words": 1073,
+        "init": 8225,
+        "proc": 8267
+      },
+      {
+        "name": "14000 Hz: unfiltered rate-2 positive control exposes Nyquist fold",
+        "passed": true,
+        "inputHz": 14000.619506835938,
+        "foldedHz": 16098.760986328125,
+        "foldRelativeToInputDb": 4.083605005578823e-08
+      },
+      {
+        "name": "14000 Hz actual +12 read: fold and broad residual stay below -60",
+        "passed": true,
+        "foldRelativeToInputDb": -139.89502222750033,
+        "residualDbfs": -129.95009294245529,
+        "inputHz": 14000.619506835938,
+        "foldedHz": 16098.760986328125,
+        "unityComparison": {
+          "foldRelativeToInputDb": -146.3636943513626,
+          "residualDbfs": -99.10626193115847,
+          "inputHz": 14000.619506835938,
+          "foldedHz": 16098.760986328125
+        }
+      },
+      {
+        "name": "18000 Hz: unfiltered rate-2 positive control exposes Nyquist fold",
+        "passed": true,
+        "inputHz": 18000.411987304688,
+        "foldedHz": 8099.176025390625,
+        "foldRelativeToInputDb": 2.845023010283292e-08
+      },
+      {
+        "name": "18000 Hz actual +12 read: fold and broad residual stay below -60",
+        "passed": true,
+        "foldRelativeToInputDb": -125.48713763062821,
+        "residualDbfs": -128.65036781331008,
+        "inputHz": 18000.411987304688,
+        "foldedHz": 8099.176025390625,
+        "unityComparison": {
+          "foldRelativeToInputDb": -126.07360729852742,
+          "residualDbfs": -115.45639258953501,
+          "inputHz": 18000.411987304688,
+          "foldedHz": 8099.176025390625
+        }
+      }
+    ],
+    "observations": [
+      {
+        "nominal": 14000,
+        "positiveControlDb": 4.083605005578823e-08,
+        "unity": {
+          "foldRelativeToInputDb": -146.3636943513626,
+          "residualDbfs": -99.10626193115847,
+          "inputHz": 14000.619506835938,
+          "foldedHz": 16098.760986328125
+        },
+        "up": {
+          "foldRelativeToInputDb": -139.89502222750033,
+          "residualDbfs": -129.95009294245529,
+          "inputHz": 14000.619506835938,
+          "foldedHz": 16098.760986328125
+        }
+      },
+      {
+        "nominal": 18000,
+        "positiveControlDb": 2.845023010283292e-08,
+        "unity": {
+          "foldRelativeToInputDb": -126.07360729852742,
+          "residualDbfs": -115.45639258953501,
+          "inputHz": 18000.411987304688,
+          "foldedHz": 8099.176025390625
+        },
+        "up": {
+          "foldRelativeToInputDb": -125.48713763062821,
+          "residualDbfs": -128.65036781331008,
+          "inputHz": 18000.411987304688,
+          "foldedHz": 8099.176025390625
+        }
+      }
+    ],
+    "method": "Actual octave-up engine reads at14kHz and18kHz, folded-band and broad residual meters, with unfiltered rate2 positive controls and unity comparisons; -60 limits unchanged"
+  },
+  "unitySettlingProbe": {
+    "tone": {
+      "file": "tone-1100hz-1db",
+      "m": 817,
+      "hz": 1099.5391845703125,
+      "levelDbfs": -1
+    },
+    "knobs": {
+      "TIME": 127,
+      "SIZE": 127,
+      "PTCH": 64,
+      "SHMR": 127,
+      "TONE": 127,
+      "MIX": 127
+    },
+    "sampleRate": 44100,
+    "totalRenderedSeconds": 60.743038548752835,
+    "windows": [
+      {
+        "seconds": 0,
+        "analysisFrameStartSample": 16384,
+        "cropStartSample": 0,
+        "analysisSamples": 32768,
+        "prependedSamples": 0,
+        "sourcePhaseUnchanged": true,
+        "channels": [
+          {
+            "levelDbfs": -23.98003983700977,
+            "harmonicsDbc": -69.62052989807368,
+            "aliasDbc": -35.65005216494762,
+            "residualDbc": -6.8980236474296195,
+            "dcDbfs": -124.83194697804839,
+            "peakDbfs": -19.449291224692093,
+            "rails": 0
+          },
+          {
+            "levelDbfs": -23.24306526025041,
+            "harmonicsDbc": -77.0502094428277,
+            "aliasDbc": -38.860852369145476,
+            "residualDbc": -30.191062757132038,
+            "dcDbfs": -129.32393550707022,
+            "peakDbfs": -22.284488191302838,
+            "rails": 0
+          }
+        ],
+        "verdict": [
+          [
+            {
+              "name": "aliasing",
+              "state": "fail",
+              "detail": "-35.7 dBc (limit -60)"
+            },
+            {
+              "name": "DC",
+              "state": "ok",
+              "detail": "-124.8 dBFS (limit -60)"
+            }
+          ],
+          [
+            {
+              "name": "aliasing",
+              "state": "fail",
+              "detail": "-38.9 dBc (limit -60)"
+            },
+            {
+              "name": "DC",
+              "state": "ok",
+              "detail": "-129.3 dBFS (limit -60)"
+            }
+          ]
+        ]
+      },
+      {
+        "seconds": 30,
+        "analysisFrameStartSample": 1323000,
+        "cropStartSample": 1306616,
+        "analysisSamples": 32768,
+        "prependedSamples": 0,
+        "sourcePhaseUnchanged": true,
+        "channels": [
+          {
+            "levelDbfs": -23.979982657963124,
+            "harmonicsDbc": -114.23875409375438,
+            "aliasDbc": -107.75087581655775,
+            "residualDbc": -79.97788951336113,
+            "dcDbfs": -134.9581590127333,
+            "peakDbfs": -23.978828573824075,
+            "rails": 0
+          },
+          {
+            "levelDbfs": -23.243050251716916,
+            "harmonicsDbc": -118.5145346482684,
+            "aliasDbc": -115.482028378335,
+            "residualDbc": -101.09465809600495,
+            "dcDbfs": -134.95939698663167,
+            "peakDbfs": -23.24292264580152,
+            "rails": 0
+          }
+        ],
+        "verdict": [
+          [
+            {
+              "name": "aliasing",
+              "state": "ok",
+              "detail": "-107.8 dBc (limit -60)"
+            },
+            {
+              "name": "DC",
+              "state": "ok",
+              "detail": "-135.0 dBFS (limit -60)"
+            }
+          ],
+          [
+            {
+              "name": "aliasing",
+              "state": "ok",
+              "detail": "-115.5 dBc (limit -60)"
+            },
+            {
+              "name": "DC",
+              "state": "ok",
+              "detail": "-135.0 dBFS (limit -60)"
+            }
+          ]
+        ]
+      },
+      {
+        "seconds": 60,
+        "analysisFrameStartSample": 2646000,
+        "cropStartSample": 2629616,
+        "analysisSamples": 32768,
+        "prependedSamples": 0,
+        "sourcePhaseUnchanged": true,
+        "channels": [
+          {
+            "levelDbfs": -23.97998352788679,
+            "harmonicsDbc": -112.91846089531356,
+            "aliasDbc": -107.66562895090588,
+            "residualDbc": -95.82730713497638,
+            "dcDbfs": -134.9763927403242,
+            "peakDbfs": -23.979729006169258,
+            "rails": 0
+          },
+          {
+            "levelDbfs": -23.243051209754547,
+            "harmonicsDbc": -116.6145490403409,
+            "aliasDbc": -114.76730183828892,
+            "residualDbc": -101.34807398997873,
+            "dcDbfs": -134.9449060684999,
+            "peakDbfs": -23.24292264580152,
+            "rails": 0
+          }
+        ],
+        "verdict": [
+          [
+            {
+              "name": "aliasing",
+              "state": "ok",
+              "detail": "-107.7 dBc (limit -60)"
+            },
+            {
+              "name": "DC",
+              "state": "ok",
+              "detail": "-135.0 dBFS (limit -60)"
+            }
+          ],
+          [
+            {
+              "name": "aliasing",
+              "state": "ok",
+              "detail": "-114.8 dBc (limit -60)"
+            },
+            {
+              "name": "DC",
+              "state": "ok",
+              "detail": "-134.9 dBFS (limit -60)"
+            }
+          ]
+        ]
+      }
+    ],
+    "sourceSha256": "f052fb878e412aa688da65deecd5bb7acebe8ef200a8677d3632ef34d0092b6d",
+    "engineSha256": "a7663b9bdc50e9c995643af62618e45e3f9e93643833edd1652debc6fc592608",
+    "internalTraceSlots": [
+      "0",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9",
+      "a",
+      "b",
+      "c",
+      "d",
+      "e",
+      "f",
+      "10",
+      "11",
+      "12",
+      "13",
+      "16",
+      "17",
+      "18",
+      "19",
+      "1a",
+      "1b",
+      "1c",
+      "30",
+      "31",
+      "32",
+      "33",
+      "34",
+      "35",
+      "36",
+      "37",
+      "38",
+      "39",
+      "3a",
+      "3b"
+    ],
+    "hardware": "not tested",
+    "limits": {
+      "alias": -60,
+      "dc": -60,
+      "idle": -90
+    },
+    "method": "Shared fx-audit analyzeTone and judgeTone with unchanged limits. Continuous coherent sine; exact cropped source samples place the FFT at the stated elapsed time, preserving input phase. No substituted audio or synthetic effect.",
+    "internalStateCensus": {
+      "method": "Readonly census of all167423 per-block snapshots of39 audio scalar states and the final16384-word Y ring; not an instrumented every-store proof",
+      "sampledScalarPeakFs": 0.1698914,
+      "sampledScalarPeakSlot": "10",
+      "sampledScalarExactRailObservations": 0,
+      "finalRingPeakFs": 0.2169311,
+      "finalRingExactRailObservations": 0,
+      "blocks": 167423
+    }
+  },
+  "privateProjectFixture": {
+    "method": "shared stress_project.py writer and validator with explicit 2-per-core layout, active FX2 LFO destinations and six Shimmer lock lanes",
+    "hardware": "not tested",
+    "nativePlayback": "not tested by fixture generation",
+    "tracks": 8,
+    "lfosPerTrack": 3,
+    "locksPerStep": {
+      "minimum": 14,
+      "maximum": 15
+    },
+    "fx1": [
+      "NONE",
+      "NONE",
+      "NONE",
+      "NONE",
+      "NONE",
+      "NONE",
+      "NONE",
+      "NONE"
+    ],
+    "fx2": [
+      "SHIMMER",
+      "SHIMMER",
+      "DARK REV",
+      "DARK REV",
+      "SHIMMER",
+      "SHIMMER",
+      "DARK REV",
+      "DARK REV"
+    ],
+    "tempoBpm": 120,
+    "patterns": [
+      "A01: 16 dense steps",
+      "A02: 32 dense steps",
+      "A03: 64 dense steps",
+      "A04: 64 steps with trigless locks"
+    ],
+    "probeException": "T2 TIME stays unlocked and has no LFO so verify_set can read CC40 back",
+    "bankATrigs": 1024,
+    "bankALockBytes": 20944,
+    "sourceProjectSha256": "17119c1590822ee7cf6cb5104a4a81e07322e2aea035089884341922021d3629",
+    "sourceBankSha256": "cc5520c2fbc9e7bcb3b1d8ef834040c7b47ec48b324df5f25e1140862bdad552",
+    "generatedSampleSha256": "3f221c5eb3fe1b7f049ef72ebfbf1f22de33f1c9935acc991795977d4ed47d4b",
+    "generatorSha256": "c180792035dff016a1747ce1cefc909558fd291f0214b95ebdffac5190ad0bdc",
+    "bankChecksumsAndTags": "passed on all 16 work/stored bank pairs"
+  },
+  "nativeProjectPlayback": "reported separately by the native runtime proof; fixture generation alone proves no playback/LFO/lock delivery",
+  "measurementSourcesAtRun": {
+    "controlsAndStress": {
+      "engine.asm": "a7663b9bdc50e9c995643af62618e45e3f9e93643833edd1652debc6fc592608",
+      "manifest.py": "6cc3c3a074c62c2abcdb80a330489640b1c4f509037982043791c8af3938ca0e",
+      "verify.py": "fbe89d4a35b8a7084b91c311102580dbde7113cdeeed6d41b196579ffe9663a0",
+      "measure.py": "928696d54e29258c73732472de4744c185330273053f8fb048e8e8ab0b293cfd"
+    },
+    "stockComparator": {
+      "engine.asm": "a7663b9bdc50e9c995643af62618e45e3f9e93643833edd1652debc6fc592608",
+      "manifest.py": "6cc3c3a074c62c2abcdb80a330489640b1c4f509037982043791c8af3938ca0e",
+      "verify.py": "fbe89d4a35b8a7084b91c311102580dbde7113cdeeed6d41b196579ffe9663a0",
+      "measure.py": "916f8e863037625ed81afe7095725780827ef4c3cdd6edbe471afd346b0b6a54"
+    },
+    "shiftAntialias": {
+      "engine.asm": "a7663b9bdc50e9c995643af62618e45e3f9e93643833edd1652debc6fc592608",
+      "manifest.py": "6cc3c3a074c62c2abcdb80a330489640b1c4f509037982043791c8af3938ca0e",
+      "verify.py": "b9f6749768b330e0d46354394a0ec9f90861314bc28c7a0e213a294d88bacdd8",
+      "measure.py": "928696d54e29258c73732472de4744c185330273053f8fb048e8e8ab0b293cfd"
+    }
+  },
+  "sharedAuditSourceHashes": {
+    "fx-audit.mjs": "868f423e0b1a4b81cce30ea4ecc9da6f719b8146722f5917076dbc7c79eda68a",
+    "fx-audit-analysis.mjs": "789e9d4522f8f8c0eebbeeda401f36408550b5ab7e52a20dcef1072357615f93"
+  }
+}

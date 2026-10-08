@@ -1,0 +1,48 @@
+{
+  "schema": 1,
+  "module": "shimmer",
+  "version": "0.1.0-experimental",
+  "kind": "dsp",
+  "cycles": {
+    "unit": "instructions/sample",
+    "static": 924,
+    "measured": 815.1875,
+    "instancesPerCore": 2,
+    "staticModelUnit": "modeled DSP cycles/sample",
+    "measuredUnit": "executed DSP instructions/sample",
+    "method": "Shared cycle_count.py static no-contention model: 924; this is not hardware utilization. Shared benchmark_reverbs.run guarded split stress: worst 26086 executed instructions/core/16-sample block for two instances (815.1875 each including harness dispatch). Fixed dearest endpoints cover all 16 splits. Separate matched unsplit, null-subtracted comparator is 806.625 instructions/sample. Audit legacy unit field is retained; static model and executed counters are explicitly separate quantities."
+  },
+  "stock": {
+    "comparator": "DARK REV",
+    "comparatorWorst": 193.25,
+    "dearestWorst": 293.375,
+    "baseline": "private out/stock_dsp_bench/results.json",
+    "stockSha256": "164f31224bf61181e3f50e7dec40df9afcae5b16dbf6e4c0d0cc5e986af0a84e",
+    "matchedModuleWorst": 806.625,
+    "matchedRatio": 4.1739974126778785,
+    "justification": "The insert combines a stereo diffused FDN, interpolated dual-head octave shifting, eight-pole antialias filters, DC fractional carries and all-six-control smoothing. DARK REV supplies reverb without pitch feedback. Matched executed cost is 4.174 times DARK REV; tested support is two Shimmers/core with four DARK REVs on the remaining tracks and no FX1. The conservative split-stress figure also includes harness dispatch. Cost acceptance and first release remain subject to owner review.",
+    "ownerAcceptance": "pending first-release review"
+  },
+  "stress": {
+    "instancesPerCore": 2,
+    "tracks": 8,
+    "lfosPerTrack": 3,
+    "lockedSlots": 14,
+    "seconds": 30.00018140589569,
+    "guard": true,
+    "dirty": true,
+    "clobbers": 0,
+    "hangs": 0,
+    "method": "Combined actual evidence: direct DSP-host -dirty/-guard/-guard-shared stress at two/core plus native ColdFire/dual-DSP A01 project playback for 82688 frames. Shimmer T1/T2/T5/T6, DARK REV T3/T4/T7/T8, FX1 NONE. All 24 LFO destinations and 14-15 lock lanes/track varied in 162 live snapshots; shared verify_set returned zero failures. Only A01 ran. T2 TIME reserved unlocked for actual CC40=100 probe. No hardware, save/reload, physical reboot or arbitrary FX1/other-module load is claimed.",
+    "evidence": [
+      "evidence/software-audits.json",
+      "evidence/native-project-stress.json"
+    ]
+  },
+  "source": {
+    "engineSha256": "a7663b9bdc50e9c995643af62618e45e3f9e93643833edd1652debc6fc592608",
+    "programSha256": "efd2365c117dcb6dfe3b5ba1943583c8723bad8f810855c41dae25814ed8b664",
+    "privateImageSha256": "5a42175f876d7d22e31284faad0b10c4b174a34afc3bcb695acd3f3e873c5433"
+  },
+  "hardware": "not tested"
+}

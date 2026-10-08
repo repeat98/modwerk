@@ -28,7 +28,10 @@ describe('loader-free DSP placement (native static stock)', () => {
       applyStaticDispatch(memory, [selected], [{ fxId: 16 }], stub)
       expect(Array.from(readDspWords(memory, 1, 0x215 + selected.fxId, 1))).toEqual([selected.init])
       expect(Array.from(readDspWords(memory, 1, 0x235 + selected.fxId, 1))).toEqual([selected.proc])
-      for (const fxId of [0, 6, 7, 9, 10, 11, 14, 15, 16, 26, 29]) {
+      // The reviewed native registry defines omitted IDs; it may differ from
+      // older upstream inventories containing unpublished effects.
+      const omitted = new Set([facts.noneId, ...facts.customIds.filter(id => id !== selected.fxId), 16])
+      for (const fxId of omitted) {
         expect(readDspWords(memory, 1, 0x215 + fxId, 1)[0]).toBe(stub.nullInit)
         expect(readDspWords(memory, 1, 0x235 + fxId, 1)[0]).toBe(stub.nullProc)
       }

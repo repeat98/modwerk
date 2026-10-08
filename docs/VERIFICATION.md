@@ -945,3 +945,60 @@ Mix moves to F. Owner accepted the sound and stability in Octemu and explicitly
 waived physical hardware evidence for this exact version/source; hardware and
 physical reboot persistence remain untested. See the module TESTING.md and
 `sdk/miniverb-build-approval.json`.
+
+## Shimmer development module — 8 October 2026
+
+Shimmer 0.1.0-experimental is an original stereo FX2 insert with TIME, SIZE,
+PTCH, SHMR, TONE and MIX. No shared audio bus or new sequencer clock is used.
+Both native DSP cores pass signed dry, dirty initialization, pitch-rate/presence,
+split-call, isolation and loaded-wet fade checks. All six controls pass the
+existing −70 dBFS knob-click criterion. The static no-contention cost is 924
+modeled cycles/sample; the matched executed benchmark is 806.625 instructions
+against DARK REV's 193.25 (4.174 times). The supported tested layout is two
+Shimmers among T1–T4 and two among T5–T8. A real ColdFire/dual-DSP project runs
+eight FLEX tracks, four Shimmers/four DARK REVs, three LFOs per track and dense
+locks for 30.000181 seconds with zero loader/guard failures. Actual project
+SAVE and fresh-process LOAD preserve ID30 and all six edited values; physical
+reboot and complete Part reload/isolation coverage remain untested.
+
+The full-stock native dynamic profile and explicit browser dynamic profile
+show genuine MKI/MKII chooser/control LCDs with every stock effect retained.
+The global public loader flag stays disabled. Static comparison profiles need
+PLATE REV and SPRING REV as donors and are not the proposed unit build.
+Catalog-driven source compilation, guarded metadata discovery and explicit
+loader-profile propagation replace missing generic integration paths; a shared
+controller fix reads relocated chooser pointers through guarded stock setter
+operands. No stock code or table bytes are included. All 114 static coverage
+profiles match: 46 builds (16 outright, 30 outside existing platform writes),
+68 matching refusals and zero mismatches; modified base firmware is refused.
+The shared ledger records 28672 clean and 36864 refused combinations.
+
+The sound audit keeps its original limits. After 60-second settling, unity
+passes all eight tones; octave-up retains four alias-mask failures at low tones.
+Those coincide with pitch-grain sidebands, but are not relabeled as passes.
+Separate positive-control high-frequency fold checks pass. Neither an audible
+quality verdict nor physical hardware qualification is claimed. The private
+SHIMMER01 update round-trips exact MAIN, original tail/boot sections, seed and
+header prefix and stays outside Git. Module source, numeric evidence, the full
+sound tables, genuine UI captures and the exact hardware test procedure are in
+[Shimmer TESTING](../sdk/octabam/modules/shimmer/TESTING.md).
+
+The shared compiler and focused regressions, 49 SDK checks, TypeScript, lint
+and retained-catalog bundle pass. Publication generation and `check` remain
+blocked by missing real-hardware qualification. The public module catalog is
+not regenerated around that gate. First release also needs a stock-preserving
+public integration, pitched sound review and owner approval.
+
+Actual GNU assembly/link exports refresh all five ColdFire runtime oracles;
+the eleven authored objects match the shared compiler byte-for-byte, and
+15 linker/exporter tests pass. The current-source Analog BD matrix is rebuilt
+and independently verified: 130 native OS/GNU bootstrap matches, six matching
+refusals and five full firmware round trips across 136 profiles. Only hashes
+and placement facts are retained; this grants no physical qualification.
+
+The final full application suite passes 1306 of 1318 tests (196 files).
+Twelve assertions remain failed because the unqualified Shimmer SDK/packages
+cannot yet appear in the generated public catalog or satisfy its version
+inventory guards. Those assertions are retained; the application suite is not
+reported as passing. `module:doctor`, catalog generation and `check` remain
+red at the qualification/publication gate.

@@ -1,0 +1,72 @@
+{
+  "schemaVersion": 1,
+  "kind": "private explicit dynamic browser composition and actual LCD control proof",
+  "status": "passed",
+  "hardware": "not tested",
+  "moduleId": "shimmer",
+  "moduleVersion": "0.1.0-experimental",
+  "imageSha256": "1e6075c0b743ea5c1d72b5b689f1ac92294fc2bb589e207c0cbc2f8d4fc221c0",
+  "imageBytes": 1143595,
+  "engineSha256": "a7663b9bdc50e9c995643af62618e45e3f9e93643833edd1652debc6fc592608",
+  "sourcePackageRecordSha256": "abb666ba8b09bd3dea02fdeea6915911b7f3b9fb7156aef011fcd9df8a648169",
+  "profile": "composeOs with explicit loader:true and defaultChoosers([shimmer],true,true); global loader flag remains disabled; private unqualified development fixture",
+  "stockFx1": [
+    "FILTER",
+    "EQUALIZER",
+    "DJ EQ",
+    "PHASER",
+    "FLANGER",
+    "CHORUS",
+    "SPATIALIZER",
+    "COMB FILTER",
+    "COMPRESSOR",
+    "LO-FI"
+  ],
+  "stockFx2": [
+    "FILTER",
+    "EQUALIZER",
+    "DJ EQ",
+    "PHASER",
+    "FLANGER",
+    "CHORUS",
+    "SPATIALIZER",
+    "COMB FILTER",
+    "COMPRESSOR",
+    "LO-FI",
+    "DELAY",
+    "PLATE REV",
+    "SPRING REV",
+    "DARK REV",
+    "SHIMMER"
+  ],
+  "captures": [
+    {
+      "panel": "MKI",
+      "imageSha256": "1e6075c0b743ea5c1d72b5b689f1ac92294fc2bb589e207c0cbc2f8d4fc221c0",
+      "emulatorSha256": "4e6f5fb5b5372b902a8279af65ba016cc7b762cbe8b9fe4927b768629576d120",
+      "captureRecordSha256": "cbabd296d7f8bfa2d116f053048668700957925338ee099f0874bf3fd9bbe601",
+      "screenshots": {
+        "ot-location.png": "3874a3e8da935e41bbbdc0bcb87c10ce59313df7aaa8812b8a0b9678efe6f9d5",
+        "ot-controls.png": "8e9d38974cc92b03c7b49352cdac13824487b9d8d4cbe8dccc85494f2be401fe",
+        "ot-mix.png": "d863d9a00b6736c7b0e000f1e69944d6ad07109873b5376d7badeed0257b67a3"
+      },
+      "review": "All three actual LCD images inspected: full stock chooser plus Shimmer; six expected labels; encoderF showsMIX32; no error modal."
+    },
+    {
+      "panel": "MKII",
+      "imageSha256": "1e6075c0b743ea5c1d72b5b689f1ac92294fc2bb589e207c0cbc2f8d4fc221c0",
+      "emulatorSha256": "4e6f5fb5b5372b902a8279af65ba016cc7b762cbe8b9fe4927b768629576d120",
+      "captureRecordSha256": "19c35c8c0dfe3229dda248669a91cf2d4ffa5fb7047e34e8e89c9bfb4af340f2",
+      "screenshots": {
+        "ot-location.png": "cac5cfb2cd6caa6dda79f1f5a23ac930e5c36f6945fced75952a5a183b836338",
+        "ot-controls.png": "8e9d38974cc92b03c7b49352cdac13824487b9d8d4cbe8dccc85494f2be401fe",
+        "ot-mix.png": "d863d9a00b6736c7b0e000f1e69944d6ad07109873b5376d7badeed0257b67a3"
+      },
+      "review": "All three actual LCD images inspected: full stock chooser plus Shimmer; six expected labels; encoderF showsMIX32; no error modal."
+    }
+  ],
+  "limitations": [
+    "Actual emulator panels, not physical hardware.",
+    "Native shared-builder30-second stress and static coverage parity are separate reports."
+  ]
+}

@@ -51,19 +51,22 @@
       "key": "SIDECHAIN_COMPRESSOR",
       "fxId": 24,
       "priority": 30
+    },
+    {
+      "id": "shimmer",
+      "key": "SHIMMER",
+      "fxId": 30,
+      "priority": 18
     }
   ],
   "customIds": [
-    6,
-    7,
-    9,
     10,
     11,
-    14,
     15,
     23,
     26,
     29,
+    30,
     31
   ],
   "payloads": [

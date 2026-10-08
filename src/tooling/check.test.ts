@@ -82,8 +82,10 @@ function documentationCheck(missingNotes = false) {
   writeFileSync(npm, `import { appendFileSync } from 'node:fs'; appendFileSync(process.env.CHECK_TEST_LOG, process.argv[3] + '\\n')`)
   mkdirSync(join(folder, 'src/catalog'), { recursive: true })
   mkdirSync(join(folder, 'src/community'), { recursive: true })
+  mkdirSync(join(folder, 'sdk'), { recursive: true })
   writeFileSync(join(folder, 'src/catalog/module-documents.json'), JSON.stringify({ modules: [{ id: 'euclid', version: '1.0.0' }] }))
   writeFileSync(join(folder, 'src/catalog/machine-modules.json'), JSON.stringify({ modules: [] }))
+  writeFileSync(join(folder, 'sdk/catalog.json'), JSON.stringify({ modules: [{ id: 'euclid', version: '1.0.0' }] }))
   writeFileSync(join(folder, 'src/community/module-changelogs.json'), JSON.stringify({ schemaVersion: 1, modules: missingNotes ? {} : { euclid: [{ version: '1.0.0', date: '2026-10-07', changes: ['Correct the clock reset during playback.'] }] } }))
   const git = (...args: string[]) => execFileSync('git', args, { cwd: folder, stdio: 'pipe' })
   try {

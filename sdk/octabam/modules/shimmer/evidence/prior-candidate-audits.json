@@ -1,0 +1,136 @@
+{
+  "label": "optimized candidate before startup fade correction; superseded, not release qualification",
+  "moduleVersion": "0.1.0-experimental",
+  "hardware": "not tested",
+  "stockMainSha256": "164f31224bf61181e3f50e7dec40df9afcae5b16dbf6e4c0d0cc5e986af0a84e",
+  "sources": {
+    "engine.asm": "dbb98f8c946c0d462e60cdf600f0899d59fe8d8c0734b80925fd4a7a331e91cb",
+    "manifest.py": "6cc3c3a074c62c2abcdb80a330489640b1c4f509037982043791c8af3938ca0e",
+    "verify.py": "43315153e4a8cfe774d5626158a871c70eeacf54678e1a84557533f16078e5a8",
+    "measure.py": "d460d538e1938d9565a2a961963feb7270206c291e2ffa65c4105a20a5b06249"
+  },
+  "fxAudit": {
+    "passed": false,
+    "tailSeconds": 30.0,
+    "knobs": {
+      "TIME": 127,
+      "SIZE": 127,
+      "PTCH": 127,
+      "SHMR": 127,
+      "TONE": 127,
+      "MIX": 127
+    },
+    "method": "scripts/fx-audit.mjs, default limits; shared DSP host at dearest settings, no external modulation",
+    "log": "fx-audit.log"
+  },
+  "knobClicks": [
+    {
+      "knob": "TIME",
+      "passed": true,
+      "windows": {
+        "up": [
+          -140.0,
+          -129.02308089979098
+        ],
+        "down": [
+          -140.0,
+          -126.30699342246794
+        ],
+        "turn": [
+          -140.0,
+          -140.0
+        ]
+      }
+    },
+    {
+      "knob": "SIZE",
+      "passed": true,
+      "windows": {
+        "up": [
+          -107.87575405915811,
+          -140.0
+        ],
+        "down": [
+          -90.46043623873399,
+          -140.0
+        ],
+        "turn": [
+          -140.0,
+          -140.0
+        ]
+      }
+    },
+    {
+      "knob": "PTCH",
+      "passed": true,
+      "windows": {
+        "up": [
+          -140.0,
+          -140.0
+        ],
+        "down": [
+          -140.0,
+          -140.0
+        ],
+        "turn": [
+          -140.0,
+          -140.0
+        ]
+      }
+    },
+    {
+      "knob": "SHMR",
+      "passed": true,
+      "windows": {
+        "up": [
+          -112.07403947849969,
+          -113.9163715245666
+        ],
+        "down": [
+          -140.0,
+          -140.0
+        ],
+        "turn": [
+          -140.0,
+          -140.0
+        ]
+      }
+    },
+    {
+      "knob": "TONE",
+      "passed": true,
+      "windows": {
+        "up": [
+          -140.0,
+          -140.0
+        ],
+        "down": [
+          -140.0,
+          -140.0
+        ],
+        "turn": [
+          -140.0,
+          -140.0
+        ]
+      }
+    },
+    {
+      "knob": "MIX",
+      "passed": true,
+      "windows": {
+        "up": [
+          -100.12111344458381,
+          -140.0
+        ],
+        "down": [
+          -97.8501887287443,
+          -117.68596513678901
+        ],
+        "turn": [
+          -121.10769314002124,
+          -140.0
+        ]
+      }
+    }
+  ]
+}

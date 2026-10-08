@@ -77,9 +77,9 @@ const lobe = bin => Array.from({ length: 2 * LOBE + 1 }, (_, i) => bin - LOBE + 
 
 /** The tone's samples as the harness wants them: a continuous sine of `m` cycles per frame, WARMUP + FFT_SIZE long and padded
  *  with more of the same sine to a whole number of blocks. */
-export function toneSamples(m, levelDbfs) {
+export function toneSamples(m, levelDbfs, warmup = WARMUP) {
   const amplitude = 10 ** (levelDbfs / 20) * FULL_SCALE
-  return Int32Array.from({ length: wholeBlocks(WARMUP + FFT_SIZE) }, (_, n) => Math.round(amplitude * Math.sin(2 * Math.PI * m * n / FFT_SIZE)))
+  return Int32Array.from({ length: wholeBlocks(warmup + FFT_SIZE) }, (_, n) => Math.round(amplitude * Math.sin(2 * Math.PI * m * n / FFT_SIZE)))
 }
 
 export const IDLE_BURST_HZ = 440, IDLE_BURST_DBFS = -6, IDLE_BURST_SECONDS = 0.25, IDLE_WINDOW_SECONDS = 0.5
@@ -92,21 +92,24 @@ export function idleSamples(tailSeconds) {
 }
 
 /** The signals `plan` writes, and what `check` needs to read each render back. */
-export function buildPlan(tailSeconds = 3) {
+export function buildPlan(tailSeconds = 3, warmupSeconds = WARMUP / SAMPLE_RATE) {
+  if (!Number.isFinite(warmupSeconds) || warmupSeconds < 0) throw new Error('Tone warmup must be a nonnegative number of seconds')
+  const warmup = Math.round(warmupSeconds * SAMPLE_RATE)
   const tones = []
   for (const hz of TONES_HZ) {
     const m = toneBin(hz)
     for (const level of LEVELS_DBFS) tones.push({ file: 'tone-' + Math.round(toneHz(m)) + 'hz' + level + 'db', m, hz: toneHz(m), levelDbfs: level })
   }
   const idle = { file: 'idle', tailSeconds, samples: idleSamples(tailSeconds).length }
-  return { sampleRate: SAMPLE_RATE, fftSize: FFT_SIZE, warmup: WARMUP, tones, idle }
+  return { sampleRate: SAMPLE_RATE, fftSize: FFT_SIZE, warmup, tones, idle }
 }
 
 /** One channel of a tone render, normalised to +-1: the spectrum split into the fundamental, true harmonics, folded harmonics
  *  (aliasing) and everything else, plus DC and the samples on the store's limit. All levels are dBc to the fundamental unless noted. */
-export function analyzeTone(channel, tone) {
-  if (channel.length < WARMUP + FFT_SIZE) throw new Error('A tone render needs ' + (WARMUP + FFT_SIZE) + ' samples, got ' + channel.length)
-  const frame = channel.subarray(WARMUP, WARMUP + FFT_SIZE)
+export function analyzeTone(channel, tone, warmup = WARMUP) {
+  if (!Number.isSafeInteger(warmup) || warmup < 0) throw new Error('Tone warmup must be a nonnegative sample count')
+  if (channel.length < warmup + FFT_SIZE) throw new Error('A tone render needs ' + (warmup + FFT_SIZE) + ' samples, got ' + channel.length)
+  const frame = channel.subarray(warmup, warmup + FFT_SIZE)
   const re = new Float64Array(FFT_SIZE), im = new Float64Array(FFT_SIZE)
   let sum = 0, rails = 0, peak = 0
   for (let n = 0; n < FFT_SIZE; n++) {

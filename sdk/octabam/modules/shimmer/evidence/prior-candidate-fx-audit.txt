@@ -1,0 +1,21 @@
+Superseded candidate before startup fade correction. This audit failed; it is retained as diagnosis evidence. No hardware test.
+
+signal                  out dBFS  harmonics  aliasing  residual   DC dBFS   rails  verdict
+tone-1100hz-12db           -37.0      -75.0     -36.7      -4.6     -84.5       0  FAIL
+tone-1100hz-1db            -26.0      -75.0     -36.7      -4.6     -84.5       0  FAIL
+tone-2701hz-12db           -25.8      -75.0     -36.6     -12.8     -84.5       0  FAIL
+tone-2701hz-1db            -14.8      -75.0     -36.6     -12.8     -84.5       0  FAIL
+tone-5301hz-12db           -31.4      -18.4    -100.8     -35.4     -84.5       0  ok
+tone-5301hz-1db            -20.4      -18.4    -102.9     -35.4     -84.5       0  ok
+tone-9102hz-12db           -32.4     -135.4     -97.6     -70.8     -84.5       0  ok
+tone-9102hz-1db            -21.4      <-140    -105.4     -70.9     -84.5       0  ok
+idle                    after the input stops: still -84.2 dBFS after the tail (limit -90): not settled, a runaway or a limit cycle; render a longer tail if the effect legitimately rings  FAIL
+  tone-1100hz-12db aliasing: -36.7 dBc (limit -60)
+  tone-1100hz-1db aliasing: -36.7 dBc (limit -60)
+  tone-2701hz-12db aliasing: -36.6 dBc (limit -60)
+  tone-2701hz-1db aliasing: -36.6 dBc (limit -60)
+
+levels: harmonics, aliasing and residual are dBc to the fundamental. Aliasing is the energy where harmonics above Nyquist fold back; the residual is
+everything else (noise, modulation sidebands, folds beyond the 128th harmonic). A time-varying effect leaves sidebands in the residual: turn its modulation off.
+
+5 check(s) failed. The limits are audit defaults (aliasing -60 dBc, DC -60 dBFS, idle -90 dBFS); say in TESTING.md what you changed and why.

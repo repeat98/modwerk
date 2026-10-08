@@ -2,6 +2,7 @@ import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
 import data from './module-changelogs.json'
+import sdk from '../../sdk/catalog.json'
 import { COMMUNITY_MODULES } from './modules'
 import { ModuleChangelog } from './ModuleChangelog'
 import { mergeModuleReleases, moduleChangelogs, parseModuleChangelogs } from './module-changelogs'
@@ -10,9 +11,10 @@ const entry = { version: '1.0.0-experimental', date: '2026-10-07', changes: ['Co
 const fixture = (entries = [entry]) => ({ schemaVersion: 1, modules: { euclid: entries } })
 
 describe('module release notes', () => {
-  it('covers every current catalog release across all three instruments', () => {
-    const notes = parseModuleChangelogs(data, COMMUNITY_MODULES)
-    expect(Object.keys(notes).length).toBe(COMMUNITY_MODULES.length)
+  it('covers every public release and new SDK draft without publishing the draft', () => {
+    const catalog = [...COMMUNITY_MODULES, ...sdk.modules.filter(module => !COMMUNITY_MODULES.some(entry => entry.id === module.id))]
+    const notes = parseModuleChangelogs(data, catalog)
+    expect(Object.keys(notes).length).toBe(catalog.length)
     expect(new Set(COMMUNITY_MODULES.map(module => module.machine))).toEqual(new Set(['octatrack', 'digitakt', 'digitone']))
   })
 

@@ -19,13 +19,16 @@ describe('release package scope and reviewed source inventory', () => {
   })
   it('binds approved standalone MIDI Scenes without compiling its archived 8.2 port', async () => {
     const versions = await compiledModuleVersions(root, catalog), paths = await moduleSourcePaths(root)
-    expect(Object.keys(versions)).toEqual(['spectrum', 'modulation', 'character', 'miniverb', 'tapeecho', 'euclid', 'repitch', 'tapehead', ...requested.filter(id => id !== 'vector'),'previewvol','cc-map','sidechain-compressor','vector','playmodes','mute-modes','recorder-loop-fix'])
+    expect(Object.keys(versions)).toEqual(['spectrum', 'modulation', 'character', 'miniverb', 'tapeecho', 'euclid', 'repitch', 'tapehead', ...requested.filter(id => id !== 'vector'),'previewvol','cc-map','sidechain-compressor','vector','playmodes','mute-modes','recorder-loop-fix','shimmer'])
     for (const id of ['playmodes', 'mute-modes', 'recorder-loop-fix']) {
       expect(versions[id]).toBe('0.1.0-experimental')
       expect(paths).toContain('modules/' + id + '/manifest.py')
     }
     expect(versions['midi-scenes']).toBe('0.2.4-experimental')
     expect(versions.miniverb).toBe('0.2.0-experimental')
+    expect(versions.shimmer).toBe('0.1.0-experimental')
+    expect(paths).toContain('modules/shimmer/engine.asm')
+    expect(paths).toContain('modules/shimmer/manifest.py')
     for (const id of verifiedRequested) {
       expect(versions[id]).toBe(id === 'vector' ? '0.2.3-experimental' : id === 'synth' ? '0.1.2-experimental' : id === 'usb-audio-out-tracks-main-cue' ? '0.2.0-experimental' : '0.1.2-experimental')
       expect(paths).toContain('modules/' + id + '/manifest.py')
@@ -44,6 +47,38 @@ describe('release package scope and reviewed source inventory', () => {
       await expect(compiledModuleVersions(temporary, { modules: [{ ...entry, version: '0.1.0-experimental' }] })).rejects.toThrow('Stale catalog module version')
       await expect(compiledModuleVersions(temporary, { modules: [entry, entry] })).rejects.toThrow('Invalid catalog module id')
     } finally { await rm(temporary, { recursive: true, force: true }) }
+  })
+  it('compiles new catalog inserts without adding a module-specific recipe or accepting unknown donor bytes', () => {
+    const result = JSON.parse(execFileSync('python3', ['-B', '-c', `
+import importlib.util, json, sys
+from types import SimpleNamespace as N
+spec=importlib.util.spec_from_file_location('compiler',sys.argv[1]); c=importlib.util.module_from_spec(spec); spec.loader.exec_module(c)
+regular, additional, requested=c.catalog_insert_scope(c.ORDER+c.REQUESTED+c.UTILITIES+c.HOOKED+['new-insert'])
+assert regular==c.ORDER+['new-insert'] and additional==['new-insert']
+assert requested==[id for id in c.REQUESTED if id!='midi-scenes']
+template=dict(id='existing',key='EXISTING',author='someone',fxId=23,donorAddress=0x4038,donorSha256='a'*64,fx2Slot=0x505c,slotSha256='b'*64,inheritedEnable=[1,2],rawPointers=[{'unit':'foreign','symbol':'foreign'}],replaces='FOREIGN')
+module=N(key='NEW_INSERT',author='someone',menu=N(donor_desc=0x4000,fx2_id=30))
+native=N(FX2_IDS=0x5000,FX1_NONE=0x6000)
+recipes=c.descriptor_templates([template],additional,{'new-insert':module},native)
+assert recipes[0]==template and recipes[1]['id']=='new-insert'
+assert recipes[1]['donorSha256']=='a'*64 and recipes[1]['fx2Slot']==0x5078
+assert recipes[1]['slotSha256']==c.HASH((0x6000).to_bytes(4,'big'))
+assert not {'inheritedEnable','rawPointers','replaces'} & recipes[1].keys()
+assert c.descriptor_templates(recipes,additional,{'new-insert':module},native)==recipes
+try: c.descriptor_templates(recipes+[recipes[1]],additional,{'new-insert':module},native)
+except ValueError as error: assert 'duplicate descriptor recipe' in str(error)
+else: raise AssertionError('duplicate recipe accepted')
+module.menu.donor_desc=0x7000
+try: c.descriptor_templates([template],additional,{'new-insert':module},native)
+except ValueError as error: assert 'verified guard metadata' in str(error)
+else: raise AssertionError('unverified donor accepted')
+module.menu.donor_desc=0x4000; module.menu.fx2_id=23
+try: c.descriptor_templates([template],additional,{'new-insert':module},native)
+except ValueError as error: assert 'already claimed' in str(error)
+else: raise AssertionError('duplicate effect ID accepted')
+print(json.dumps({'scope':'catalog inserts','guards':'known donor and unique ID'}))
+`, resolve(root, 'scripts/build-module-packages.py')], { encoding: 'utf8' }))
+    expect(result).toEqual({ scope: 'catalog inserts', guards: 'known donor and unique ID' })
   })
 })
 

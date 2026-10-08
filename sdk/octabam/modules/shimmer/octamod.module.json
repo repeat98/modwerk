@@ -1,0 +1,292 @@
+{
+  "schemaVersion": 2,
+  "id": "shimmer",
+  "key": "SHIMMER",
+  "name": "Shimmer",
+  "version": "0.1.0-experimental",
+  "category": "effects",
+  "author": {
+    "github": "juliussylvest-lab",
+    "credits": [
+      "Julius Sylvest (juliussylvest-lab): original Shimmer effect",
+      "Jannik Aßfalg: Mini Verb FDN and insert reference",
+      "Sam Banks: octabam SDK; Maxolydian: octamax tooling"
+    ]
+  },
+  "nativeManifest": "manifest.py",
+  "presentation": {
+    "label": "SHIMMER REVERB",
+    "family": "Reverb",
+    "summary": "A stereo diffuse reverb with continuously pitch-shifted feedback.",
+    "overview": "Create upward octave clouds, lower octave ambience or ordinary reverb. The six MAIN controls use existing Octatrack locks and modulation. Native software checks and an eight-track stress run are recorded; physical hardware and complete sound qualification are pending.",
+    "highlights": [
+      "Independent FX2 insert state on each track",
+      "Continuous -12 to +12 semitone feedback pitch",
+      "Six main-page controls designed for locks, LFOs and scenes"
+    ],
+    "usage": [
+      "Select Shimmer in an audio track’s FX2 SETUP chooser. Press FX2 once for TIME, SIZE, PTCH, SHMR, TONE and MIX.",
+      "Start at TIME 96, SIZE 96, PTCH 127, SHMR 48, TONE 64 and MIX 32. Raise SHMR for an octave-up cloud.",
+      "Set SHMR to 0 for ordinary reverb; set MIX to 0 for dry output."
+    ]
+  },
+  "controls": [
+    {
+      "name": "TIME",
+      "default": 96,
+      "count": 128,
+      "doc": "Tail length through bounded, smoothed feedback; 0 short, 127 long.",
+      "labels": null
+    },
+    {
+      "name": "SIZE",
+      "default": 96,
+      "count": 128,
+      "doc": "Smoothed fractional delay spread; 0 compact, 127 spacious.",
+      "labels": null
+    },
+    {
+      "name": "PTCH",
+      "default": 127,
+      "count": 128,
+      "doc": "Feedback pitch: 0 = -12 semitones, 64 = unity, 127 = +12 semitones.",
+      "labels": null
+    },
+    {
+      "name": "SHMR",
+      "default": 48,
+      "count": 128,
+      "doc": "Shifted share of normalized feedback; 0 ordinary reverb, 127 maximum shimmer.",
+      "labels": null
+    },
+    {
+      "name": "TONE",
+      "default": 64,
+      "count": 128,
+      "doc": "Feedback and wet-path brightness; 0 dark, 127 bright, with antialias filtering.",
+      "labels": null
+    },
+    {
+      "name": "MIX",
+      "default": 0,
+      "count": 128,
+      "doc": "Smoothed dry/wet mix; 0 exact dry, 127 wet only.",
+      "labels": null
+    }
+  ],
+  "compatibility": {
+    "firmware": "1.40C",
+    "location": "FX2",
+    "conflicts": [],
+    "limitations": [
+      "Development build: physical MKI and MKII operation is not yet tested.",
+      "The proposed all-stock build uses the explicit dynamic-loader development profile. The public configurator's legacy static profile would reclaim PLATE REV and SPRING REV; that profile is not approved for this module's unit build.",
+      "FX2 only: the reverb and pitch buffers require the 16,384-word allocator slot; FX1 provides 3,072 words.",
+      "No freeze mode, tempo synchronization or additional setup-page controls.",
+      "Tested workload: two Shimmers among tracks 1-4 and two among tracks 5-8, four total. Other effects share the remaining DSP budget; hardware qualification is pending.",
+      "Finite pitch grains add sidebands; dominant sustained-note peaks can differ from nominal octave frequencies. The pitched generic harmonic-fold audit retains four failures requiring review.",
+      "On initialization the ring clears during 2048 dry samples (46.44 ms), then fades to the loaded MIX. MIX 0 still runs the tank."
+    ],
+    "effectId": 30
+  },
+  "resources": {
+    "recorded": "8 October 2026; native software measurements, physical hardware untested",
+    "storage": {
+      "label": "Existing FX2 ring and instance block",
+      "display": "49,152 B ring + 768 B block / instance",
+      "value": 49920,
+      "unit": "bytes",
+      "method": "static",
+      "conditions": "Existing 16384-word Y ring and 256-word X instance block at 24 bits/word. 13709 ring words are occupied; 65 scalar slots referenced, 126 cleared, stock flags 0x14/15 preserved. Shared program and original pitch table total 1073 words (3219 B) per DSP core. Logical storage, not host int32 backing.",
+      "source": "TESTING.md"
+    },
+    "processing": {
+      "label": "Worst static DSP loop model",
+      "display": "924 modeled cycles/sample per instance",
+      "value": 924,
+      "unit": "cycles/sample",
+      "method": "static",
+      "conditions": "SDK no-contention static cycle model. Two/core consume 1848 of the modeled 3120 budget, leaving 1272 for stock effects/other work. Executed worst split-stress counter 815.1875 instructions/sample is a separate quantity; matched stock comparison 806.625 versus DARK REV 193.25. No chip utilization is claimed.",
+      "source": "TESTING.md"
+    },
+    "impact": {
+      "conditions": "Actual native software measurements and exact source inventory; four Shimmers in the tested eight-track workload. Physical timing and arbitrary additional effects remain unqualified.",
+      "cpu": {
+        "level": "low",
+        "basis": "source-estimate",
+        "rationale": "Uses existing effect descriptor and dispatcher; no new ColdFire audio routine, sequencer hook or shared-bus callback. Actual whole-device overhead is unmeasured.",
+        "source": "TESTING.md"
+      },
+      "dsp": {
+        "level": "high",
+        "basis": "source-estimate",
+        "rationale": "924 modeled cycles/sample and matched executed cost 4.174 times DARK REV. Two/core are supported by the guarded eight-track native workload; other effects use the remaining modeled budget.",
+        "source": "TESTING.md"
+      },
+      "memory": {
+        "level": "high",
+        "basis": "source-estimate",
+        "rationale": "Uses the existing 16384-word Y ring and 256-word X block per instance; 1073 authored program/table words per core. No shared-bus writable state or additional heap is allocated.",
+        "source": "TESTING.md"
+      }
+    }
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "Native signed dry, dirty initialization, isolation, six knob-click tests, eight-track stress and project save/fresh-process load pass. Settled unity fx:audit passes; fully pitched audit retains four alias-mask failures. Physical MKI/MKII, full persistence, stock-preserving public integration and first-release approval remain pending.",
+    "hardwareStatus": "untested",
+    "evidenceRevision": "f7ba0d1f3acba70cb91a403eb27338a65fe796ff",
+    "gates": [
+      "modules/shimmer/verify.py",
+      "fx:audit: aliasing, clipping, DC and extended idle tail",
+      "perf:audit: worst-case DSP cycles, DARK REV comparator and maximum-instance stress",
+      "Real MAIN-page lock, LFO and scene delivery; Part/project reload and physical reboot"
+    ],
+    "documentation": {
+      "tutorial": {
+        "title": "Quick tutorial",
+        "steps": [
+          "Select and start gently. Select Shimmer in FX2 as above, play a short sample at a conservative level, and set TIME 96, SIZE 96, PTCH 127, SHMR 48, TONE 64 and MIX 32.",
+          "Build the cloud. Raise SHMR while a sustained note or chord plays. The intended result is a growing upper-octave halo. Compare SHMR 0, then PTCH 64 and PTCH 0 to hear ordinary, unshifted and lower-octave returns.",
+          "Place and bypass it. Lower TONE for a darker tail and adjust TIME to fit the phrase. Set MIX 127 to hear the wet path alone, then MIX 0 to return to dry. Watch the level while comparing; do not assume loudness differences prove better sound.",
+          "Animate it. Lock alternating SHMR values on adjacent trigs, then try a slow LFO on TONE and scenes with different MIX values. Confirm each control returns to its base value on an unlocked step. Hardware behaviour remains untested until the results are recorded."
+        ]
+      },
+      "screenshots": [
+        "media/ot-location.png",
+        "media/ot-mix.png",
+        "media/ot-controls.png",
+        "media/ot-location-mki.png",
+        "media/ot-mix-mki.png",
+        "media/ot-controls-mki.png"
+      ],
+      "screenshotStyle": "black-and-white"
+    }
+  },
+  "license": {
+    "spdx": "MIT",
+    "file": "LICENSE",
+    "declaration": "Original Shimmer code is MIT licensed, retaining octabam and Mini Verb contributor attribution. The original mathematical pitch table is not stock firmware data. ValhallaShimmer is a sound-design reference; no Valhalla or Elektron code is included. See LICENSE for the retained notices."
+  },
+  "media": [
+    {
+      "path": "media/ot-location.png",
+      "captureType": "emulator",
+      "caption": "Hold FUNC and press FX2, select Shimmer and press YES. Shimmer appears after DARK REV, with PLATE REV and SPRING REV still available in this development build.",
+      "alt": "Shimmer appended after DARK REV in the full stock FX2 SETUP chooser.",
+      "credit": "Modwerk contributors (headless capture)",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "FX2 SETUP",
+        "shows": "location",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "5a42175f876d7d22e31284faad0b10c4b174a34afc3bcb695acd3f3e873c5433",
+        "setup": "Headless ot_emu; MKII panel; stopped transport; 128×64 LCD at integer scale 6."
+      }
+    },
+    {
+      "path": "media/ot-mix.png",
+      "captureType": "emulator",
+      "caption": "Press FX2 once to open MAIN. Turn encoder F to MIX 32 for the tutorial starting point; try TIME 96, SIZE 96, PTCH 127, SHMR 48 and TONE 64 for an upper-octave cloud.",
+      "alt": "Shimmer MAIN with the six control labels and MIX showing 32.",
+      "credit": "Modwerk contributors (headless capture)",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "FX2 main",
+        "shows": "controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "5a42175f876d7d22e31284faad0b10c4b174a34afc3bcb695acd3f3e873c5433",
+        "setup": "Headless ot_emu; MKII panel; stopped transport; 128×64 LCD at integer scale 6."
+      }
+    },
+    {
+      "path": "media/ot-controls.png",
+      "captureType": "emulator",
+      "caption": "Turn encoder F back to MIX 0 to return to dry audio after the short smoothing ramp. The pictured default is dry; the reverb tank still runs and consumes its DSP budget.",
+      "alt": "Shimmer MAIN with TIME, SIZE, PTCH, SHMR, TONE and MIX at its dry default.",
+      "credit": "Modwerk contributors (headless capture)",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "FX2 main",
+        "shows": "controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "5a42175f876d7d22e31284faad0b10c4b174a34afc3bcb695acd3f3e873c5433",
+        "setup": "Headless ot_emu; MKII panel; stopped transport; 128×64 LCD at integer scale 6."
+      }
+    },
+    {
+      "path": "media/ot-location-mki.png",
+      "captureType": "emulator",
+      "caption": "On MKI, hold FUNCTION and press EFFECT 2; select Shimmer and press ENTER/YES. Shimmer appears after DARK REV, with PLATE REV and SPRING REV still available in this development build.",
+      "alt": "Shimmer appended after DARK REV in the full stock FX2 SETUP chooser.",
+      "credit": "Modwerk contributors (headless capture)",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "FX2 SETUP",
+        "shows": "location",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "1e6075c0b743ea5c1d72b5b689f1ac92294fc2bb589e207c0cbc2f8d4fc221c0",
+        "setup": "Headless ot_emu; MKI panel; stopped transport; 128×64 LCD at integer scale 6."
+      }
+    },
+    {
+      "path": "media/ot-mix-mki.png",
+      "captureType": "emulator",
+      "caption": "Press EFFECT 2 once on MKI to open MAIN. Turn encoder F to MIX 32 for the tutorial starting point; try TIME 96, SIZE 96, PTCH 127, SHMR 48 and TONE 64 for an upper-octave cloud.",
+      "alt": "Shimmer MAIN with the six control labels and MIX showing 32.",
+      "credit": "Modwerk contributors (headless capture)",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "FX2 main",
+        "shows": "controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "1e6075c0b743ea5c1d72b5b689f1ac92294fc2bb589e207c0cbc2f8d4fc221c0",
+        "setup": "Headless ot_emu; MKI panel; stopped transport; 128×64 LCD at integer scale 6."
+      }
+    },
+    {
+      "path": "media/ot-controls-mki.png",
+      "captureType": "emulator",
+      "caption": "Turn encoder F back to MIX 0 to return to dry audio after the short smoothing ramp. The pictured default is dry; the reverb tank still runs and consumes its DSP budget.",
+      "alt": "Shimmer MAIN with TIME, SIZE, PTCH, SHMR, TONE and MIX at its dry default.",
+      "credit": "Modwerk contributors (headless capture)",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "FX2 main",
+        "shows": "controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "1e6075c0b743ea5c1d72b5b689f1ac92294fc2bb589e207c0cbc2f8d4fc221c0",
+        "setup": "Headless ot_emu; MKI panel; stopped transport; 128×64 LCD at integer scale 6."
+      }
+    }
+  ],
+  "access": {
+    "location": "Audio track FX2 SETUP → Shimmer; the six controls are on FX2 MAIN.",
+    "steps": [
+      "Leave MIDI editing if active and select the desired audio track with its TRACK key.",
+      "MKII: hold FUNC and press FX2. MKI: hold FUNCTION and press EFFECT 2.",
+      "Use the arrow keys to select Shimmer, then press YES (MKII) or ENTER/YES (MKI).",
+      "Close with NO (MKII) or EXIT/NO (MKI), then press FX2 or EFFECT 2 once to show the six MAIN controls."
+    ],
+    "screenshots": [
+      "media/ot-location.png",
+      "media/ot-mix.png",
+      "media/ot-controls.png",
+      "media/ot-location-mki.png",
+      "media/ot-mix-mki.png",
+      "media/ot-controls-mki.png"
+    ]
+  }
+}

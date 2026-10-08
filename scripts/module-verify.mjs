@@ -26,6 +26,7 @@ import { CATALOG_SOURCE } from '../src/catalog/modules.ts'
 import { comparisonPool, coverageSelections, selectionKey } from './module-coverage.mjs'
 import { moduleSourceFingerprint } from './module-source.mjs'
 import { moduleNativeSourceSha256 } from './module-qualification.mjs'
+import { refreshStaticDspMetadata } from './module-verify-metadata.mjs'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const args = process.argv.slice(2)
@@ -53,7 +54,7 @@ async function compareRecord(id, selections) {
   const counts = { identical: 0, masked: 0, refused: 0 }, failures = []
   for (const row of selections) {
     const label = selectionKey(row.moduleIds, row.keepStockFx2)
-    const menus = defaultChoosers(row.moduleIds, row.keepStockFx2)
+    const menus = defaultChoosers(row.moduleIds, row.keepStockFx2, false)
     if (JSON.stringify({ fx1: menus.fx1, fx2: menus.fx2 }) !== JSON.stringify(row.menu)) { failures.push(label + ': the site would build different menus than native was given'); continue }
     const proof = row.native.refused !== undefined ? { moduleIds: row.moduleIds, error: row.native.refused } : { moduleIds: row.moduleIds, ...row.native }
     const result = await compareSelection(original, proof, menus)
@@ -123,7 +124,12 @@ if (check) {
   const exporter = ['python3', '-B', '/app/scripts/export-composition-proofs.py', '/native/octabam']
   const common = ['--app', '/app', '--vendored-sdk', '--static-stock', '--modules', pool.join(',')]
 
-  // 1. Chooser metadata: add or refresh this module's entry. Everything else must already match native.
+  // 1. Static DSP placement metadata: refresh before choosers.ts imports and
+  // caches it. Missing entries could otherwise silently omit selected DSP code.
+  console.log('Reading native static DSP metadata …')
+  const staticFacts = await refreshStaticDspMetadata({ id, root, run, containerRun: '/native/runs/' + process.pid, container })
+
+  // Chooser metadata: add or refresh this module's entry. Everything else must already match native.
   console.log('Reading native chooser metadata …')
   await container('metadata', [...exporter, '/native/runs/' + process.pid + '/metadata', ...common, '--metadata-only'])
   const metadataPath = join(root, 'src/engine/assets/chooser-metadata.json'), committed = json(metadataPath), native = json(join(run, 'metadata/chooser-metadata.json'))
@@ -137,8 +143,8 @@ if (check) {
 
   // 2. Native builds of the coverage set, from the cache where nothing they depend on changed.
   const { defaultChoosers } = await import('../src/engine/choosers.ts')
-  const menus = Object.fromEntries(selections.map(({ ids, keepStockFx2 }) => { const menu = defaultChoosers(ids, keepStockFx2); return [selectionKey(ids, keepStockFx2), { fx1: menu.fx1, fx2: menu.fx2 }] }))
-  const inputs = sha(JSON.stringify({ sdk: await moduleSourceFingerprint(root), exporter: sha(readFileSync(join(root, 'scripts/export-composition-proofs.py'))), imageId, originalSha, pool }))
+  const menus = Object.fromEntries(selections.map(({ ids, keepStockFx2 }) => { const menu = defaultChoosers(ids, keepStockFx2, false); return [selectionKey(ids, keepStockFx2), { fx1: menu.fx1, fx2: menu.fx2 }] }))
+  const inputs = sha(JSON.stringify({ sdk: await moduleSourceFingerprint(root), exporter: sha(readFileSync(join(root, 'scripts/export-composition-proofs.py'))), staticExporter: sha(readFileSync(join(root, 'scripts/export-static-dsp.py'))), staticFacts: sha(JSON.stringify(staticFacts)), loader: false, imageId, originalSha, pool }))
   const cacheFile = key => join(home, 'cache', sha(inputs + key + JSON.stringify(menus[key])) + '.json')
   const missing = selections.filter(({ ids, keepStockFx2 }) => !existsSync(cacheFile(selectionKey(ids, keepStockFx2))))
   console.log(`${selections.length} selections in the coverage set for ${id}; ${selections.length - missing.length} cached, ${missing.length} to build natively with ${jobs} jobs …`)

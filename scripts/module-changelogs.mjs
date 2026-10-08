@@ -8,10 +8,18 @@ export function checkModuleChangelogs(root) {
   const read = path => JSON.parse(readFileSync(join(root, path), 'utf8'))
   const octatrack = read('src/catalog/module-documents.json').modules
   const machines = read('src/catalog/machine-modules.json').modules
+  const sdk = read('sdk/catalog.json').modules
   const catalog = [
     ...octatrack.map(module => ({ id: module.id, version: module.version })),
     ...machines.map(module => ({ id: module.machine + '-' + module.id, version: module.version })),
   ]
+  // Draft SDK entries need valid notes before qualification can generate the public catalog.
+  // Published IDs remain authoritative; source entries cannot override their release versions.
+  for (const module of sdk) {
+    if (!catalog.some(entry => entry.id === module.id)) {
+      catalog.push({ id: module.id, version: module.version })
+    }
+  }
   const notes = parseModuleChangelogs(read('src/community/module-changelogs.json'), catalog)
   return { modules: catalog.length, releases: Object.values(notes).reduce((count, entries) => count + entries.length, 0) }
 }

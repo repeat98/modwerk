@@ -1,9 +1,17 @@
 import facts from './assets/requested-packages.json' with { type: 'json' }
+import { DSP_EFFECT_IDS, resolveSelection } from '../catalog/modules.ts'
 
 export const ANALOG_BD_DONOR = 'SPRING REV'
 // Reviewed inserts use instance-owned X state, allocator-owned Y buffers, or
 // (Sidechain Compressor) separate Y ranges. None uses Analog BD's private X.
 export const ANALOG_BD_DSP_COMPANIONS = ['miniverb', 'tapeecho', 'euclid', 'tapehead', 'sidechain-compressor']
+
+/** Apply the native companion contract before planning any DSP placement. */
+export function assertAnalogBdDspCompanions(ids: readonly string[]) {
+  if (!ids.includes('analog-bassdrum')) return
+  const unsupported = resolveSelection(ids).filter(module => DSP_EFFECT_IDS.includes(module.id) && !ANALOG_BD_DSP_COMPANIONS.includes(module.id))
+  if (unsupported.length) throw new Error('ANALOG BD cannot share DSP memory with ' + unsupported.map(module => module.key).join(', ') + '.')
+}
 
 export function analogBdVariant(tag: string) {
   const variant = facts.analog.variants.find(variant => variant.tag === tag)

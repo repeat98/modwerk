@@ -686,6 +686,18 @@
           "Presentation: show repeating recorder segments and tempo boundaries using the library's shared signal artwork, grid, palette and typography."
         ]
       }
+    ],
+    "shimmer": [
+      {
+        "version": "0.1.0-experimental",
+        "date": "2026-10-08",
+        "changes": [
+          "Add an original FX2 shimmer reverb with TIME, SIZE, PTCH, SHMR, TONE and MIX on the existing MAIN page.",
+          "Use independent allocator-owned stereo state, continuous parameter smoothing and octave-shifted feedback. MIX defaults to dry.",
+          "Experimental first version: physical Octatrack MKI/MKII, project/reboot persistence and first-release owner approval remain pending. No hardware result is claimed.",
+          "Tested software capacity is two Shimmers per DSP core, four total. The pitched sound audit retains four alias-mask failures; stock-preserving public integration and sound review remain pending."
+        ]
+      }
     ]
   }
 }

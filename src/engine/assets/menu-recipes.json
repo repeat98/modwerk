@@ -1267,6 +1267,7 @@
     "vector": "0.2.3-experimental",
     "playmodes": "0.1.0-experimental",
     "mute-modes": "0.1.0-experimental",
-    "recorder-loop-fix": "0.1.0-experimental"
+    "recorder-loop-fix": "0.1.0-experimental",
+    "shimmer": "0.1.0-experimental"
   }
 }

@@ -28,9 +28,9 @@ export async function composeOs(original: Uint8Array, ids: readonly string[], pr
     if (ids.length !== 1) throw new Error('MIDI Scenes supports standalone firmware only. Remove the other modules.')
     return composeLoggedMidiScenes(original)
   }
-  if (!loader) return composeStaticOs(original, ids, profile, usbAudio)
+  if (!loader) return composeStaticOs(original, ids, profile ?? defaultChoosers(ids, true, loader), usbAudio)
   if (ids.some(id => ['analog-bassdrum','midi-scenes','usb-audio-out-tracks-main-cue','quantizer','synth','playmodes','mute-modes','recorder-loop-fix'].includes(id))) throw new Error('These modules require the verified loader-free engine.')
-  const menus = await composeChoosers(original, ids, profile), cores = await recoverStockDsp(original)
+  const menus = await composeChoosers(original, ids, profile ?? defaultChoosers(ids, true, loader)), cores = await recoverStockDsp(original)
   const dsp = await composeDynamicDsp(cores, ids), runtime = await createColdFireRuntime(cores, ids)
   const logging = await installCoreLogger(runtime, original, ids, menus.chooser)
   const bootstrap = await createRuntimeBootstrap(runtime.bytes, runtime.reserveBytes - LOGGER_RETAINED_BYTES, undefined, runtime)

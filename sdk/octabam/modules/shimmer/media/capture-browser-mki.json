@@ -1,0 +1,106 @@
+{
+  "firmware": "1.40C",
+  "imageSha256": "1e6075c0b743ea5c1d72b5b689f1ac92294fc2bb589e207c0cbc2f8d4fc221c0",
+  "emulatorSha256": "4e6f5fb5b5372b902a8279af65ba016cc7b762cbe8b9fe4927b768629576d120",
+  "setup": "Headless ot_emu; MKI panel; stopped transport; 128×64 LCD at integer scale 6.",
+  "palette": {
+    "on": [
+      240,
+      240,
+      240
+    ],
+    "off": [
+      24,
+      24,
+      24
+    ]
+  },
+  "keyMs": 150,
+  "plan": [
+    {
+      "wait": 3000
+    },
+    {
+      "press": [
+        "YES"
+      ]
+    },
+    {
+      "wait": 2000
+    },
+    {
+      "press": [
+        "NO"
+      ]
+    },
+    {
+      "press": [
+        "MIDI"
+      ]
+    },
+    {
+      "press": [
+        "T1"
+      ]
+    },
+    {
+      "press": [
+        "FUNC",
+        "FX2"
+      ]
+    },
+    {
+      "encoder": {
+        "name": "LEVEL",
+        "delta": 127
+      }
+    },
+    {
+      "press": [
+        "YES"
+      ]
+    },
+    {
+      "capture": "ot-location-mki.png"
+    },
+    {
+      "press": [
+        "FX2"
+      ]
+    },
+    {
+      "capture": "ot-controls-mki.png"
+    },
+    {
+      "encoder": {
+        "name": "F",
+        "delta": 32
+      }
+    },
+    {
+      "capture": "ot-mix-mki.png"
+    }
+  ],
+  "screenshots": {
+    "ot-location-mki.png": "3874a3e8da935e41bbbdc0bcb87c10ce59313df7aaa8812b8a0b9678efe6f9d5",
+    "ot-controls-mki.png": "8e9d38974cc92b03c7b49352cdac13824487b9d8d4cbe8dccc85494f2be401fe",
+    "ot-mix-mki.png": "d863d9a00b6736c7b0e000f1e69944d6ad07109873b5376d7badeed0257b67a3"
+  },
+  "cardSha256": "ecd1d738251df5aaf3b35b05bf177d4f8bf558cb8b8ba37c3566daa6201a33fe",
+  "project": {
+    "set": "SHIMTEST",
+    "name": "TEMPLATE"
+  },
+  "schemaVersion": 1,
+  "captured": "2026-10-08",
+  "moduleId": "shimmer",
+  "moduleVersion": "0.1.0-experimental",
+  "moduleNativeSourceSha256": "51b67bd7b9c52c1b60ea3b2ca78e984ce61b35a5f33568670cb69e690a67c4ca",
+  "engineSha256": "a7663b9bdc50e9c995643af62618e45e3f9e93643833edd1652debc6fc592608",
+  "captureMethod": "scripts/capture-module-ui.py; native macOS ot_emu MKI panel; actual LCD after genuine project load; inspected all three captures.",
+  "composition": "Private browser composeOs(...,{loader:true}) with explicit defaultChoosers([shimmer],true,true); global loader/public availability unchanged.",
+  "limitations": [
+    "Emulator UI and control operation only; physical MKI hardware untested.",
+    "Private explicit dynamic image, all stock FX1/FX2 rows retained; no release qualification asserted."
+  ]
+}

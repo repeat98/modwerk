@@ -1,0 +1,48 @@
+{
+  "schemaVersion": 1,
+  "kind": "native project save and reload",
+  "status": "passed",
+  "hardware": "not tested",
+  "imageSha256": "5a42175f876d7d22e31284faad0b10c4b174a34afc3bcb695acd3f3e873c5433",
+  "emulatorSha256": "4e6f5fb5b5372b902a8279af65ba016cc7b762cbe8b9fe4927b768629576d120",
+  "sourceSha256": "2868bb2dfd6eb6db96443a9f9c6b9e7c4e8c63e9bc8bad1c930e596797417ea0",
+  "cardBeforeSha256": "ecd1d738251df5aaf3b35b05bf177d4f8bf558cb8b8ba37c3566daa6201a33fe",
+  "cardAfterSha256": "d767b75d52348e19d505b46d9e7c89f83fca3bdb5935459cee904c669a36edea",
+  "edit": "actual T1 / FUNC+FX2 chooser / YES / FX2 / encoders A-F",
+  "save": "actual MENU / RIGHT / DOWN / YES / YES; saved bank01.work and bank01.strd",
+  "reload": "fresh native process; actual LOAD PROJECT of the saved disposable card",
+  "controls": [
+    "TIME",
+    "SIZE",
+    "PTCH",
+    "SHMR",
+    "TONE",
+    "MIX"
+  ],
+  "saved": {
+    "values": [
+      70,
+      83,
+      95,
+      43,
+      52,
+      37
+    ],
+    "liveId": 30
+  },
+  "reloaded": {
+    "values": [
+      70,
+      83,
+      95,
+      43,
+      52,
+      37
+    ],
+    "liveId": 30
+  },
+  "moduleId": "shimmer",
+  "moduleVersion": "0.1.0-experimental",
+  "moduleNativeSourceSha256": "a67450a491158ffcb3269cdd493e2a990b7ae7f41fc1a1bdef598a66e45f40a9",
+  "engineSha256": "a7663b9bdc50e9c995643af62618e45e3f9e93643833edd1652debc6fc592608"
+}

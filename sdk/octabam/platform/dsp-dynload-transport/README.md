@@ -68,6 +68,31 @@ checks continued frames and calls the deferred memory message.
 
 Passing these gates does not qualify seamless switching or hardware timing.
 
+## Rebuilt chooser lists
+
+The FX1/FX2 guard reads the live list operands used by the stock setters,
+at `0x40052706` and `0x40052496`. The builder relocates these lists when it
+adds an effect. Reading the original list addresses could reject an appended
+row before any DSP transfer, while existing stock rows still worked.
+
+`tools/experimental/dsp_dynload/verify_relocated_chooser.py` verifies the
+original 1.40C setter instruction fingerprints, follows the rebuilt pointers,
+and selects each requested effect on tracks 1 and 5 through the actual setters.
+Run it on a disposable loaded project whose starting effects differ from the
+requested choices; supply the matching runtime ELF and private card image.
+It records source, image and tool hashes, live effect IDs, and request,
+completion, refusal, residency and error counters. Logs and memory dumps
+belong in ignored private output. This proves native chooser selection;
+hardware timing and audible switching still need separate tests.
+
+```sh
+python3 -B tools/experimental/dsp_dynload/verify_relocated_chooser.py \
+  --image out/mainos-test.bin --runtime out/platform/runtime/runtime.elf \
+  --card out/disposable-card.img --set-name OCTABAM --project-name RIG \
+  --effect SHIMMER --effect EQUALIZER --effect 'DARK REV' \
+  --output out/chooser-regression
+```
+
 ## Existing-control guards
 
 The guard changes no menu or control. It intercepts FX1 at `0x400526e4`, FX2

@@ -1,0 +1,118 @@
+{
+  "firmware": "1.40C",
+  "imageSha256": "5a42175f876d7d22e31284faad0b10c4b174a34afc3bcb695acd3f3e873c5433",
+  "emulatorSha256": "4e6f5fb5b5372b902a8279af65ba016cc7b762cbe8b9fe4927b768629576d120",
+  "setup": "Headless ot_emu; MKII panel; stopped transport; 128×64 LCD at integer scale 6.",
+  "palette": {
+    "on": [
+      240,
+      240,
+      240
+    ],
+    "off": [
+      24,
+      24,
+      24
+    ]
+  },
+  "keyMs": 150,
+  "plan": [
+    {
+      "wait": 3000
+    },
+    {
+      "press": [
+        "YES"
+      ]
+    },
+    {
+      "wait": 2000
+    },
+    {
+      "press": [
+        "NO"
+      ]
+    },
+    {
+      "press": [
+        "MIDI"
+      ]
+    },
+    {
+      "press": [
+        "T1"
+      ]
+    },
+    {
+      "press": [
+        "FUNC",
+        "FX2"
+      ]
+    },
+    {
+      "encoder": {
+        "name": "LEVEL",
+        "delta": 127
+      }
+    },
+    {
+      "press": [
+        "YES"
+      ]
+    },
+    {
+      "capture": "ot-location.png"
+    },
+    {
+      "press": [
+        "FX2"
+      ]
+    },
+    {
+      "capture": "ot-controls.png"
+    },
+    {
+      "encoder": {
+        "name": "F",
+        "delta": 32
+      }
+    },
+    {
+      "capture": "ot-mix.png"
+    }
+  ],
+  "screenshots": {
+    "ot-location.png": "cac5cfb2cd6caa6dda79f1f5a23ac930e5c36f6945fced75952a5a183b836338",
+    "ot-controls.png": "8e9d38974cc92b03c7b49352cdac13824487b9d8d4cbe8dccc85494f2be401fe",
+    "ot-mix.png": "d863d9a00b6736c7b0e000f1e69944d6ad07109873b5376d7badeed0257b67a3"
+  },
+  "cardSha256": "ecd1d738251df5aaf3b35b05bf177d4f8bf558cb8b8ba37c3566daa6201a33fe",
+  "project": {
+    "set": "SHIMTEST",
+    "name": "TEMPLATE"
+  },
+  "schemaVersion": 1,
+  "captured": "2026-10-08",
+  "moduleId": "shimmer",
+  "moduleVersion": "0.1.0-experimental",
+  "moduleNativeSourceSha256": "a67450a491158ffcb3269cdd493e2a990b7ae7f41fc1a1bdef598a66e45f40a9",
+  "engineSha256": "a7663b9bdc50e9c995643af62618e45e3f9e93643833edd1652debc6fc592608",
+  "captureMethod": "scripts/capture-module-ui.py; native macOS ot_emu --interactive --dsp --frame --mkii; real 128x64 LCD pixels at integer scale6.",
+  "imageProfile": {
+    "modules": [
+      "shimmer"
+    ],
+    "stockFx1": "all stock rows",
+    "stockFx2": "all stock rows",
+    "platform": [
+      "dsp-dynload-stock",
+      "dsp-dynload-stock-b"
+    ],
+    "packageWords": 1073,
+    "runtimeElfSha256": "59bb33b7aa27651301b5f79bf36250535a58e6be0585f4858b2b67febaadb6a9"
+  },
+  "limitations": [
+    "Emulator UI only; actual disposable project loaded; stopped transport; physical hardware untested.",
+    "Private development image; no release qualification asserted."
+  ]
+}

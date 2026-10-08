@@ -101,6 +101,11 @@
       "id": "recorder-loop-fix",
       "version": "0.1.0-experimental",
       "addedAt": "2026-10-07T20:00:00Z"
+    },
+    {
+      "id": "shimmer",
+      "version": "0.1.0-experimental",
+      "addedAt": "2026-10-08T16:38:30Z"
     }
   ]
 }

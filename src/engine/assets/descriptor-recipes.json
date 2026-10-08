@@ -2536,6 +2536,286 @@
       ],
       "replaces": "COMPRESSOR",
       "sourceSha256": "aaa7c593ec62745a540cf82d7b4d7ac2f17f393cfedd5a9e1ff1a1453165ecd7"
+    },
+    {
+      "id": "shimmer",
+      "key": "SHIMMER",
+      "author": "juliussylvest-lab",
+      "donorAddress": 1074616560,
+      "donorSha256": "3b3f9b15f2f6addfea9fc281f5b9fdf054bf305778059b8d43db41d390f0401f",
+      "fxId": 30,
+      "fx2Slot": 1074618452,
+      "slotSha256": "79bc740214b4d029e385d06d21e224d04e8f91b53fb26ea08ffa4e5d70964b7a",
+      "sourceSha256": "6cc3c3a074c62c2abcdb80a330489640b1c4f509037982043791c8af3938ca0e",
+      "integers": [
+        {
+          "offset": 3,
+          "width": 1,
+          "value": 30
+        },
+        {
+          "offset": 94,
+          "width": 1,
+          "value": 96
+        },
+        {
+          "offset": 95,
+          "width": 1,
+          "value": 96
+        },
+        {
+          "offset": 96,
+          "width": 1,
+          "value": 127
+        },
+        {
+          "offset": 97,
+          "width": 1,
+          "value": 48
+        },
+        {
+          "offset": 98,
+          "width": 1,
+          "value": 64
+        },
+        {
+          "offset": 99,
+          "width": 1,
+          "value": 0
+        },
+        {
+          "offset": 100,
+          "width": 1,
+          "value": 0
+        },
+        {
+          "offset": 101,
+          "width": 1,
+          "value": 0
+        },
+        {
+          "offset": 102,
+          "width": 1,
+          "value": 0
+        },
+        {
+          "offset": 103,
+          "width": 1,
+          "value": 0
+        },
+        {
+          "offset": 104,
+          "width": 1,
+          "value": 0
+        },
+        {
+          "offset": 105,
+          "width": 1,
+          "value": 0
+        },
+        {
+          "offset": 154,
+          "width": 4,
+          "value": 128
+        },
+        {
+          "offset": 106,
+          "width": 4,
+          "value": 0
+        },
+        {
+          "offset": 158,
+          "width": 4,
+          "value": 128
+        },
+        {
+          "offset": 110,
+          "width": 4,
+          "value": 0
+        },
+        {
+          "offset": 162,
+          "width": 4,
+          "value": 128
+        },
+        {
+          "offset": 114,
+          "width": 4,
+          "value": 0
+        },
+        {
+          "offset": 166,
+          "width": 4,
+          "value": 128
+        },
+        {
+          "offset": 118,
+          "width": 4,
+          "value": 0
+        },
+        {
+          "offset": 170,
+          "width": 4,
+          "value": 128
+        },
+        {
+          "offset": 122,
+          "width": 4,
+          "value": 0
+        },
+        {
+          "offset": 174,
+          "width": 4,
+          "value": 128
+        },
+        {
+          "offset": 126,
+          "width": 4,
+          "value": 0
+        },
+        {
+          "offset": 178,
+          "width": 4,
+          "value": 128
+        },
+        {
+          "offset": 130,
+          "width": 4,
+          "value": 0
+        },
+        {
+          "offset": 182,
+          "width": 4,
+          "value": 128
+        },
+        {
+          "offset": 134,
+          "width": 4,
+          "value": 0
+        },
+        {
+          "offset": 186,
+          "width": 4,
+          "value": 128
+        },
+        {
+          "offset": 138,
+          "width": 4,
+          "value": 0
+        },
+        {
+          "offset": 190,
+          "width": 4,
+          "value": 128
+        },
+        {
+          "offset": 142,
+          "width": 4,
+          "value": 0
+        },
+        {
+          "offset": 194,
+          "width": 4,
+          "value": 128
+        },
+        {
+          "offset": 146,
+          "width": 4,
+          "value": 0
+        },
+        {
+          "offset": 198,
+          "width": 4,
+          "value": 128
+        },
+        {
+          "offset": 150,
+          "width": 4,
+          "value": 0
+        },
+        {
+          "offset": 398,
+          "width": 4,
+          "value": 1118481
+        },
+        {
+          "offset": 394,
+          "width": 4,
+          "value": 0
+        }
+      ],
+      "strings": [
+        {
+          "offset": 4,
+          "width": 5,
+          "value": "SHMR"
+        },
+        {
+          "offset": 9,
+          "width": 13,
+          "value": "Shimmer"
+        },
+        {
+          "offset": 22,
+          "width": 6,
+          "value": "TIME"
+        },
+        {
+          "offset": 28,
+          "width": 6,
+          "value": "SIZE"
+        },
+        {
+          "offset": 34,
+          "width": 6,
+          "value": "PTCH"
+        },
+        {
+          "offset": 40,
+          "width": 6,
+          "value": "SHMR"
+        },
+        {
+          "offset": 46,
+          "width": 6,
+          "value": "TONE"
+        },
+        {
+          "offset": 52,
+          "width": 6,
+          "value": "MIX"
+        },
+        {
+          "offset": 58,
+          "width": 6,
+          "value": ""
+        },
+        {
+          "offset": 64,
+          "width": 6,
+          "value": ""
+        },
+        {
+          "offset": 70,
+          "width": 6,
+          "value": ""
+        },
+        {
+          "offset": 76,
+          "width": 6,
+          "value": ""
+        },
+        {
+          "offset": 82,
+          "width": 6,
+          "value": ""
+        },
+        {
+          "offset": 88,
+          "width": 6,
+          "value": ""
+        }
+      ]
     }
   ],
   "sourceCommit": null,
@@ -2559,6 +2839,7 @@
     "vector": "0.2.3-experimental",
     "playmodes": "0.1.0-experimental",
     "mute-modes": "0.1.0-experimental",
-    "recorder-loop-fix": "0.1.0-experimental"
+    "recorder-loop-fix": "0.1.0-experimental",
+    "shimmer": "0.1.0-experimental"
   }
 }
