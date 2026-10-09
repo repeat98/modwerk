@@ -1,0 +1,33 @@
+{
+  "schema": 1,
+  "module": "everb",
+  "version": "0.1.0-experimental",
+  "kind": "dsp",
+  "cycles": {
+    "unit": "instructions/sample",
+    "static": 468,
+    "measured": 381.69,
+    "instancesPerCore": 4,
+    "method": "static: tools/build/cycle_count.py (--verify: the marker is a no-op), the dearer MODEFORK arm of the per-frame loop, 468 cycles/sample; the other arm is 382 and the two strictly alternate, so 468 is a conservative ceiling. measured: perf.py bench, benchmark_reverbs.run as benchmark_stock_dsp.py runs it (one instance per core at positions 0 and 4, audio at X:0, 4,096 blocks of 16 frames, its inputs, the null stub's peak subtracted) on a private native image carrying E-Verb (b776efe2...). Worst of 57 cases: the dearest settings (SIZE 0, DPTH 127, REV on) with a trig split, 381.69 executed instructions/sample (375.81 unsplit). Executed instructions in dsp_host, not chip cycles; no stalls modelled."
+  },
+  "stock": {
+    "comparator": "DARK REV",
+    "comparatorWorst": 242.38,
+    "dearestWorst": 330.94,
+    "baseline": "perf.py bench: SPRING REV, DARK REV, PLATE REV and DJ EQ run on the original image through the same cases as E-Verb (fixed, the moving pattern that reaches every TYPE and MIXF, and a trig split at every position 1-15). Its unsplit figures reproduce out/stock_dsp_bench/results.json exactly (SPRING REV 257.5, DARK REV 193.25, PLATE REV 183.94, DJ EQ 293.38).",
+    "stockSha256": "164f31224bf61181e3f50e7dec40df9afcae5b16dbf6e4c0d0cc5e986af0a84e",
+    "justification": "E-Verb is a four-line feedback delay network at 22.05 kHz with a modulated read on every line (two heads for the ergodic and shimmer grains), in-loop diffusion allpasses, absorbing low-passes, DC blocking and soft saturation, a forward or reverse pre-delay, early-reflection taps, a three-band tilt and halfband resampling both ways. That is what the hardware's feature set costs: three kinds of modulation, decay past 100 %, reverse and the envelope routings. Under the same cases, trig splits included, its worst case 381.69 is 1.57x DARK REV (242.38, the closest stock reverb in function), 1.21x SPRING REV (314.19, the cost target for new FX) and 1.15x DJ EQ (330.94, the dearest stock effect); unsplit, 375.81 against 193.25, 257.50 and 293.38. Splits cost the stock effects 34 to 57 instructions/sample and E-Verb 6. Four instances per core are 4 x 468 = 1,872 of the 3,120 usable static cycles. The loop was hand-scheduled from about 432 to 336 instructions/sample at the defaults; going further means dropping features (TESTING.md lists the candidates). Real-chip headroom with heavy FX1 effects on the same core is unmeasured: hardware untested."
+  },
+  "stress": {
+    "instancesPerCore": 4,
+    "tracks": 8,
+    "lfosPerTrack": 3,
+    "lockedSlots": 16,
+    "seconds": 32,
+    "guard": true,
+    "dirty": true,
+    "clobbers": 0,
+    "hangs": 0,
+    "method": "perf.py stress. stress_project.py needs an Octatrack template project, which is not available here (the author's unit is broken), so the same load is driven straight into dsp_host on the private native image: E-Verb on FX2 of all eight tracks (four per core) behind DJ EQ, the dearest stock effect, on every FX1; per block, three LFOs (sine, triangle, square) on E-Verb's SIZE, DPTH and MIX, and a new random value on every slot of both effects each sixteenth at 120 BPM: 16 slots changed per step, of which 11 can be locked on a unit (E-Verb's six main-page knobs and DJ EQ's five; E-Verb's five SETUP knobs change only with Parts on a unit, so this changes more than locks can); trig splits of 1, 3, 7, 8, 12 and 15 frames on six tracks; eight different 32 s stems plus a 2 s tail; dsp_host -guard 0x4000 -guard-shared -dirty 0x5a. Result: no hang; E-Verb's eight instances 0 stray writes and 0 clobbers (the stock DJ EQs write their own Y:0x40-0x6F scratch, 0 clobbers); per-core peak 2806.0 and 2793.6 executed instructions/sample with all sixteen effects. It exercises the DSP side only: the firmware's own LFO and lock delivery, Part switches and the ColdFire side are not in it."
+  }
+}

@@ -1132,3 +1132,54 @@ Actual-DSP parity covers 30 fixtures and 983,040 stereo frames. The matched maxi
 A normal beta member saved a 452,208-byte solo browser firmware update, SHA-256 814b5733cdd91b8ed88d45ebea865475047929c5483dc46c9fbd395455b315f9. Its decoded MAIN matches the current composer. The existing Analog BD browser matrix retains 130 native image matches, six matching refusals and five complete firmware round trips. The module doctor is green. Production deployment, the requested membership assignment, saved live output and notification counts are verified after the owner merge.
 
 The complete local check passes 1,592 application tests and 87 SDK checks, lint, TypeScript, catalogue/licence/capture-provenance checks and the production bundle. All public and beta compatibility subsets retain their assertions and deadlines; 32 disjoint groups preserve the previous work per case after adding the beta effect.
+
+## E-Verb 0.1.0-experimental — 9 October 2026
+
+E-Verb moves from the author's draft into the published FX2 catalogue. Its DSP,
+generator, native manifest and render/performance runners remain byte-identical
+to PR #376 at `e3047c0`: native source SHA-256
+`f96217aa81947846579dfe8b40aaef5624959ac13c10ae4e3b4a61050adeab7a`.
+All 26 native-image emulator render gates were independently rerun and pass.
+The browser's default solo module-owned image matches the tested MAIN
+`b776efe203efecd0ceda90f68d7fe109cc8fc13a1f07bed00303f81af2769195`
+byte for byte: Spring and Dark Reverb give up their code, while Plate Reverb's
+helper and all other stock effects remain. The browser adds its separate core
+logger and platform writes.
+
+The owner reports a positive MKII audition of `EVRB01T01`, two simultaneous
+instances on T1/T5 with distinct settings, Part/project save and reload, and a
+physical reboot. These are attributed reported passes, not agent-observed
+hardware results. Duration, eight-instance hardware load, full modulation/MIDI/
+USB coverage, recovery and chip timing remain unreported. See
+[the exact-image hardware report](../sdk/octabam/modules/everb/evidence/owner-hardware.md).
+
+[The release bounds](../sdk/octabam/modules/everb/evidence/release-bounds.md)
+supplement the author's loop-only cost with a conservative full-call assembled
+word model: 11,920 cycles per instance per 16-frame block, 47,680 per core with
+four instances and trigger splits, within the SDK's 49,920 module allowance.
+This models neither bus contention nor whole-chip wall-clock timing. Exact
+reserved memory, including stock X padding, totals 409,380 bytes for eight
+instances. The original matched Spring/DJ EQ instruction benchmarks and
+32-second eight-instance software stress retain their original limits.
+
+Native-generated placement facts include E-Verb's priority and free effect ID
+27. That omitted ID already resolves to OFF/null on both stock cores, so the
+extra omitted-ID writes are no-ops for other selections. All existing compiled
+payloads and recipes are unchanged outside global provenance/version metadata.
+Before main advanced, the broader browser replay of 12 retained native records
+reported the same 80 stale comparisons with identical output on untouched main
+`306e3dc`; those rows involve earlier Analog BD companion images. The release
+subsequently integrates main `f684770`, preserving Air Chorus 0.1.1 beta access
+and its freshly compiled payload. All 36 existing payload/recipe/placement asset
+files match that main after excluding E-Verb additions and global provenance.
+The broader 12-record browser replay is also byte-identical to the replay on
+untouched `f684770`, with the same 80 pre-existing Analog BD companion mismatches.
+
+The fresh E-Verb native comparison covers 122 profiles: 44 matching module-owned
+images (16 identical outright and 28 outside separately verified platform
+writes), 78 matching refusals, and zero mismatches. Changed stock firmware is
+refused. The exhaustive 131,072-selection native declaration scan finds 94,208
+clean and 36,864 refused combinations; immutable source-fact memoization matches
+uncached checks on 529 varied selections. After the main update, the production
+exporter additionally verifies all 51,712 missing allowed E-Verb/Air Chorus beta
+combinations as clean. Existing declaration records are preserved.

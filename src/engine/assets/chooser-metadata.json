@@ -156,6 +156,13 @@
       "fx1Only": false
     },
     {
+      "id": "everb",
+      "key": "EVERB",
+      "fxId": 27,
+      "fx1": false,
+      "fx1Only": false
+    },
+    {
       "id": "analog-bassdrum",
       "key": "ANALOG BD",
       "fxId": null,
@@ -230,6 +237,7 @@
     15,
     23,
     26,
+    27,
     29,
     30,
     31

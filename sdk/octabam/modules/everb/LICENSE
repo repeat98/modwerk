@@ -1,0 +1,46 @@
+MIT License
+
+Copyright (c) 2026 user1303836
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+---
+
+This licence covers the files in this folder except media/: everb.asm,
+generate.py, manifest.py, verify.py, perf.py, octamod.module.json, the
+documentation, evidence/ and presentation/thumbnail.svg. They are original
+work. No code, constants or tables were taken from another reverb. The LCD
+screenshots and media/capture.json are covered by media/LICENSE.md
+(LicenseRef-OT-UI-Documentation), not by this licence.
+
+The design follows Tom Erbe, "Building the Erbe-Verb: Extending the Feedback
+Delay Network Reverb for Modular Synthesizer Use", Proceedings of the
+International Computer Music Conference (ICMC) 2015, published under the
+Creative Commons Attribution 3.0 licence. The paper is credited, not copied.
+
+E-Verb is not affiliated with, endorsed by or supported by Make Noise or Tom
+Erbe. Erbe-Verb is a product of Make Noise; the name is used only to describe
+what this effect was modelled after.
+
+The module is built by octabam's builder (sdk/octabam, MIT, Sam Banks; see
+sdk/octabam/LICENSE and sdk/octabam/THIRD_PARTY.md), which is not part of this
+folder. Nothing here contains or extends to Elektron Music Machines firmware,
+which users supply from their own unit and which remains the property of its
+copyright holder. Octatrack and Elektron are trademarks of Elektron Music
+Machines MAV AB, used only to identify the hardware this module runs on.

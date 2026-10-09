@@ -21,7 +21,7 @@ describe('effect chooser composition', () => {
     expect(validateChoosers(ids, profile).hidden).toEqual(['SPECTRUM','MODULATION','CHARACTER'])
     const compact = defaultChoosers(ids, false)
     expect(compact.fx1).toEqual(profile.fx1)
-    expect(compact.fx2).toEqual(['MINIVERB','TAPE ECHO','EUCLID','TAPEHEAD','AIR CHORUS','SIDECHAIN_COMPRESSOR'])
+    expect(compact.fx2).toEqual(['MINIVERB','TAPE ECHO','EUCLID','TAPEHEAD','AIR CHORUS','EVERB','SIDECHAIN_COMPRESSOR'])
   })
   it('lets a module replace a stock effect in place on both menus, giving up only the reverb its code needs', () => {
     const swapped = (keys: readonly string[]) => keys.map(key => key === 'COMPRESSOR' ? 'SIDECHAIN_COMPRESSOR' : key)

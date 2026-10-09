@@ -836,6 +836,18 @@
           "Hardware deadlines, broad lifecycle combinations, note recording and public packaging remain unqualified."
         ]
       }
+    ],
+    "everb": [
+      {
+        "version": "0.1.0-experimental",
+        "date": "2026-10-09",
+        "changes": [
+          "First E-Verb release: original Erbe-Verb-inspired FX2 feedback-delay reverb with size, saturation/sustain, absorption, chorus/grains/shimmer, reverse pre-delay, tilt and envelope routings.",
+          "The six main-page controls support locks, LFOs, scenes and MIDI CC; SETUP controls are per Part. MIX 0 is exact dry passthrough.",
+          "Uses the shared native/browser builder; alone, replaces Spring Rev and Dark Rev while preserving Plate Rev and other stock effects.",
+          "Owner reports working MKII sound, two distinct simultaneous T1/T5 instances, Part/project save/reload and physical reboot on exact EVRB01T01. Full-load silicon timing and broader hardware modulation/recovery coverage remain unverified."
+        ]
+      }
     ]
   }
 }

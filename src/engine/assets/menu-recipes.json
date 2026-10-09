@@ -664,6 +664,31 @@
           "sha256": "4fdf4a515aa11f5569e1b7166f70907bcad463adce8c027e815a77819a8b50f3"
         }
       ]
+    },
+    {
+      "id": "everb",
+      "key": "EVERB",
+      "author": "user1303836",
+      "slot": 8,
+      "name": "REV",
+      "labels": [
+        "OFF",
+        "ON"
+      ],
+      "renames": {},
+      "wideMaximum": null,
+      "proofs": [
+        {
+          "namesAddress": 1074621238,
+          "bytes": 52,
+          "sha256": "ba4ba6ad69779d2df8e9a1c0cc8293c0b5698a75d0fa43798eb1dbb32f7b370a"
+        },
+        {
+          "namesAddress": 1074623350,
+          "bytes": 52,
+          "sha256": "ba4ba6ad69779d2df8e9a1c0cc8293c0b5698a75d0fa43798eb1dbb32f7b370a"
+        }
+      ]
     }
   ],
   "repitchPatches": [
@@ -1257,6 +1282,7 @@
     "repitch": "0.1.2-experimental",
     "tapehead": "0.1.2-experimental",
     "airwindows-chorus": "0.1.1-experimental",
+    "everb": "0.1.0-experimental",
     "analog-bassdrum": "0.1.5-experimental",
     "midi-scenes": "0.2.4-experimental",
     "usb-audio-out-tracks-main-cue": "0.2.0-experimental",

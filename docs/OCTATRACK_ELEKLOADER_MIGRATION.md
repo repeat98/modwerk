@@ -300,6 +300,48 @@ Flex recording/live sampling and both DSP-core behaviour under the owner's
 stress project. Use actual reported results. A successful transfer or an
 emulator boot cannot substitute for these observations.
 
+## Reusing Octabam's hardware tools
+
+The imported `sdk/octabam/tools/hw/` already contains the tools Sam described.
+Use them as developer-side test inputs to the loader work; they do not require
+keeping the Octabam firmware composer. The shared user-facing builder remains
+browser-native TypeScript.
+
+| Tool | What it supplies | Integration boundary |
+| --- | --- | --- |
+| `rec.swift` | CoreAudio HAL capture of every input channel on a named device | Listen to the OT's output-only USB Audio module; no USB Audio In module is needed for this direction. Verify the selected device and channel layout rather than relying on the script's interface-name defaults. |
+| `usb_counters.py` | Device-to-host audio ring counters through read-only vendor request `0xc0/0x55` | Pair counters with the audio capture. No interface claim or audio-driver detach is required. A stock image does not implement this request. |
+| `usb_probe.py` | Sustained host-to-OT tone or stream-open/close churn, counter polling and JSON output | Requires the OT to expose a host audio-output device, supplied by USB Audio In. This is separate from the output-only package currently ported. |
+| `ot_midi.py` | CoreMIDI CC, notes, transport and event monitoring | Reuse for project-driven test actions after selecting the exact port; it is independent of the builder and updater protocol. |
+| `ot_spec.py`, `ot_bank.py`, `ot_project.py` | Test-project preparation, stored FX/defaults and parameter-lock inspection | Work on private project copies. Preparing a project is separate from proving that an old project loads safely on the candidate. |
+| `ot_soak.py`, `ot_ladder.py`, `hw_sweep.py` | Stress, freeze/dropout and parameter-response measurements | Adapt the rig, channel selection and thresholds to the exact project. Several defaults assume Sam's external interface and MIDI rig. |
+| `midi_flash.py` | Existing MIDI recovery flashing | Recovery remains a separate operation; this script does not implement runtime module loading without a reboot. |
+
+Two host-tool faults were repaired before reuse: `usb_probe.py` no longer
+shadows `Thread._stop()`, which caused `join()` to fail before the JSON report
+could be saved on affected Python runtimes (reproduced on 3.9; 3.14 changed
+the thread implementation); `rec.swift` scales Float samples in Double so a positive
+full-scale sample cannot overflow `Int32` after Float rounding. The SDK check
+runs synthetic poller/report/counter regressions. Where Swift is installed it
+also executes the recorder's actual PCM conversion block with synthetic
+full-scale samples; this check opens no audio device. Compile the complete
+recorder separately on the developer's Mac before physical capture.
+
+Consume the structured probe verdict rather than its process exit code: the
+upstream command can return zero for a reported failure or ambiguous result.
+Its `CLEAN` verdict describes the measured USB failure signature, not module
+qualification or a successful update. In particular, missing USB Audio In
+counters cannot establish an input-path pass, and stream-close counters are
+reported separately from the sustained stream. Churn runs include multiple
+close events and need separate interpretation.
+
+These tools do not currently read a loader/base/module identity from the
+device. A supplied build note or local image hash is expected-build context,
+not proof of the installed image. The runtime transport must provide that
+identity before automation can associate a trial with the exact candidate or
+accept it. Keep captures and raw reports private; none of these tools is
+connected to automatic log uploads or automatic trial acceptance here.
+
 ## Agreed implementation sequence
 
 1. Qualify the Elekloader base and stopped upload mode, preserving logger,

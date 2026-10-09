@@ -1,0 +1,160 @@
+{
+  "firmware": "1.40C",
+  "imageSha256": "b776efe203efecd0ceda90f68d7fe109cc8fc13a1f07bed00303f81af2769195",
+  "emulatorSha256": "9af97ff3932b37b33e6f8f17b03fad57e37ed3a306e3f4e7d9446716d703071b",
+  "setup": "Headless ot_emu; MKII panel; stopped transport; 128×64 LCD at integer scale 6.",
+  "palette": {
+    "on": [
+      240,
+      240,
+      240
+    ],
+    "off": [
+      24,
+      24,
+      24
+    ]
+  },
+  "keyMs": 150,
+  "plan": [
+    {
+      "wait": 3000
+    },
+    {
+      "press": [
+        "YES"
+      ]
+    },
+    {
+      "wait": 2000
+    },
+    {
+      "press": [
+        "NO"
+      ]
+    },
+    {
+      "press": [
+        "FUNC",
+        "FX2"
+      ]
+    },
+    {
+      "encoder": {
+        "name": "LEVEL",
+        "delta": 30
+      }
+    },
+    {
+      "press": [
+        "YES"
+      ]
+    },
+    {
+      "wait": 300
+    },
+    {
+      "capture": "ot-setup.png"
+    },
+    {
+      "press": [
+        "FX2"
+      ]
+    },
+    {
+      "wait": 2500
+    },
+    {
+      "capture": "ot-main.png"
+    },
+    {
+      "encoder": {
+        "name": "F",
+        "delta": 49
+      }
+    },
+    {
+      "capture": "ot-mix.png"
+    },
+    {
+      "encoder": {
+        "name": "D",
+        "delta": 56
+      }
+    },
+    {
+      "capture": "ot-depth.png"
+    },
+    {
+      "press": [
+        "FUNC",
+        "FX2"
+      ]
+    },
+    {
+      "wait": 300
+    },
+    {
+      "encoder": {
+        "name": "C",
+        "delta": 6
+      }
+    },
+    {
+      "wait": 300
+    },
+    {
+      "capture": "ot-reverse.png"
+    }
+  ],
+  "screenshots": {
+    "ot-setup.png": "2a5c8d5520f0d28e199ba99d4201954d3162aa45f416c8c4c7e2e88076268be8",
+    "ot-main.png": "e5e580f9c48fb0a0cfb4978414174a20df23be5b23ab396e50b7e948b4e3dfa6",
+    "ot-mix.png": "27bfb9df3e5222ec789888eceaadd6841f3a92ff78f01cbbd98ff114e8757bfa",
+    "ot-depth.png": "101fbfaa54a4ec0cdfe00322622e5fe5dfe490d613745fd00a34283bbcddec43",
+    "ot-reverse.png": "dc25da46c06298d10e36aba3c97b05f98edc995558f0c9ea5df3513c72e41b2b"
+  },
+  "schemaVersion": 1,
+  "captured": "2026-10-09",
+  "moduleId": "everb",
+  "moduleVersion": "0.1.0-experimental",
+  "sourceSha256": "f96217aa81947846579dfe8b40aaef5624959ac13c10ae4e3b4a61050adeab7a",
+  "stockOs": {
+    "release": "1.40C",
+    "updateSha256": "34695b606eb00e1b4dded5fd0c4b66f3a460522a632e47d7416dbd220599e1ad",
+    "mainOsSha256": "164f31224bf61181e3f50e7dec40df9afcae5b16dbf6e4c0d0cc5e986af0a84e"
+  },
+  "captureMethod": "scripts/capture-module-ui.py on macOS (arm64), sdk/octabam/out/emu/ot_emu --interactive --dsp --frame --mkii; actual 128x64 LCD, scale 6.",
+  "imageProfile": {
+    "modules": [
+      "everb"
+    ],
+    "staticStock": true,
+    "fx2Chooser": [
+      "NONE",
+      "FILTER",
+      "EQUALIZER",
+      "DJ EQ",
+      "PHASER",
+      "FLANGER",
+      "CHORUS",
+      "SPATIALIZER",
+      "COMB FILTER",
+      "COMPRESSOR",
+      "LO-FI",
+      "DELAY",
+      "PLATE REV",
+      "EVERB"
+    ],
+    "givenUp": [
+      "SPRING REV",
+      "DARK REV"
+    ],
+    "baseCommit": "306e3dc2f22c5ebb6df791ff5ab6e7223957e2f7",
+    "builder": "native build_bus.py, in-process remix as scripts/export-composition-proofs.py builds it (OCTABAM_STATIC_STOCK=1); verify.py build_image()"
+  },
+  "limitations": [
+    "Emulator UI only: stopped transport, empty scratch card, no sample playback; no audio or hardware evidence.",
+    "Private native image built locally from the module source; not a published release."
+  ]
+}
