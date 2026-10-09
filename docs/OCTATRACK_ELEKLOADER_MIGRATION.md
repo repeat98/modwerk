@@ -214,6 +214,46 @@ survive failed admission and retired allocations are reclaimed only after both
 cores confirm retirement. Broad combinability is a qualification target, not
 a claim that every legacy fixed-address module already supports this ABI.
 
+### Prevent recurrence of the reported memory failures
+
+The owner supplied the Air Chorus investigation record on 9 October 2026 as
+an explicit prevention requirement. It describes stock shared-data collisions
+in T3/T7 FX2 buffers, limits on per-instance X state, substantial table/program
+footprint, and fragmentation refusing Chorus + Analog BD + MiniVerb after other
+combinations had been made to fit. It also records a packed-table decoder
+failing audio parity before correction. These are regression inputs for the
+new SDK/allocator; the record does not qualify our new loader on hardware.
+
+For the dynamic ABI, turn these classes of failure into mandatory admission
+and qualification gates rather than discovering them after deployment:
+
+| Failure class | Required prevention and regression |
+| --- | --- |
+| Stock/shared-data overlap | Track physical ownership across both cores and P/X/Y aliases, including stock buffers and dispatcher state. Check actual linked ranges and effective access bounds against the ownership plan before publication. Protect surrounding stock X/Y regions in native tests and verify them after stress runs; detecting a canary change is a failure, not proof that corruption was prevented. |
+| Per-instance state/buffer overflow | Derive code/table sizes from compiled packages and check declared mutable-state/buffer requirements, alignment and modulo-addressing constraints. All permitted parameter, warm-up, wrap, reset and legacy-state paths must stay inside the assigned extent. Every instance gets owned state; unknown access bounds or undeclared scratch use block admission. |
+| Baked-in layout assumptions | Relocate internal references and check ring/index arithmetic against the allocated base, length and declared alignment. Qualify different valid placements and load orders on both cores; an old absolute address or address mask cannot silently stand in for an allocation contract. |
+| Avoidable fragmentation | Place relocatable code, tables and buffers according to their actual constraints, sharing immutable dependencies and reclaiming retired allocations. Try alternate valid placements and prepare a new layout at the agreed stopped safe point while preserving rollback. Test known feasible fragmented layouts against a reference feasibility check; an avoidable layout failure is an allocator regression. |
+| Incomplete combination coverage | Retain Chorus + E-Verb, Chorus + Analog BD and Chorus + Analog BD + MiniVerb as named cases when their ports support the ABI. Add larger selections, boundary-sized requests, track/slot/instance permutations, randomized load/unload histories, fragmentation, reuse and cross-core retirement. Test intentional exhaustion and preserve failed histories as reproducible cases. |
+| Footprint optimization changes behavior | Compression, table sharing or other representation changes need exact decoded-value tests and audio/control/full-delay-range parity under the stated baseline, plus a new CPU/DSP cost measurement. An app test pass or a smaller package alone is insufficient. |
+
+The shared builder's admission plan and the device's verified resource state
+must agree for the exact package set and current generation. Validate the
+entire allocation/relocation/initialization transaction before publishing any
+dispatch changes. A failure leaves the active set and its allocations intact;
+stale messages, rollback and interrupted uploads cannot free or repurpose live
+memory. No public arbitrary memory-write interface is part of this design.
+
+Expose a bounded memory-accounting report through our device interface:
+owned/used/free space, largest usable extents, sharing and per-instance costs,
+and transient staging/rollback requirements by pool/core. Distinguish total
+capacity exhaustion, genuine contiguity/alignment constraints, transition
+headroom, incompatible ABI and allocator placement failures. Physical capacity
+can still prevent a combination; that must be a precise pre-activation refusal
+with the previous configuration usable. The acceptance target is no ownership
+violations or avoidable placement refusals in qualified workloads, enforced by
+these regressions and the automated physical-device tests. These gates remain
+planned work while this branch is frozen.
+
 | Resource | Contract needed for the module-set loader |
 | --- | --- |
 | Private P | Account for current kernel, transport, bus and stock shared-helper ownership and audit these reservations for safe relocation/reuse; allocate and relocate incoming code without moving or overwriting executing code. Share identical dependencies instead of including duplicate Quantizer/VECTOR implementations. |

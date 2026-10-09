@@ -88,6 +88,17 @@ none is a ready-to-flash no-reboot loader candidate.
   larger combinations, load-order variants, multiple instances, reclamation,
   exhaustion and rollback on both cores; report real conflicts before changing
   the active set. This remains a required implementation target.
+- Make the owner-provided Air Chorus memory investigation a set of mandatory
+  SDK/allocator regressions: stock/shared X/Y collisions (including T3/T7),
+  instance-state/buffer limits, relocation/alignment assumptions, avoidable
+  fragmentation and packed-table/audio parity. Check compiled footprints and
+  access bounds before admission; exercise named two-/three-module examples,
+  larger sets, placement/load-order variants, reuse and both-core retirement.
+  Expose exact pool/instance/transition accounting. Genuine exhaustion must
+  refuse before activation and preserve the live set; avoidable placement
+  failures and ownership violations fail qualification. The migration record
+  details these prevention gates; they are not implemented or hardware-proved
+  by this documentation update.
 - Provide safe agent access through our own versioned Modwerk device interface
   and the same TypeScript client used by the browser. Start with read-only
   identity/status, bind the session to the selected unit and permitted
