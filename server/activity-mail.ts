@@ -1,6 +1,6 @@
 import type { Database, Env } from './platform'
 import { digest, HttpError } from './security'
-import { throttle } from './auth'
+import { mailLimits, reserveMailBudget } from './mail-budget'
 import { emailReady, recordMail } from './email'
 import { SUPPORT_EMAIL } from '../src/support'
 import { renderActivityEmail } from './activity-email-template'
@@ -11,12 +11,7 @@ import { parseReleaseNotes } from '../src/community/module-release-notes'
 /** Matches SQLite CURRENT_TIMESTAMP so stored times compare as text. */
 const sqlTime = (value: Date) => value.toISOString().replace('T', ' ').slice(0, 19)
 const hoursBefore = (now: Date, hours: number) => sqlTime(new Date(now.getTime() - hours * 3600000))
-/** Activity mail shares the provider quota with verification and recovery. The free tier allows 100 a day and
- * account mail keeps 80 of them, so activity defaults to 15; raise ACTIVITY_MAIL_DAILY_LIMIT after upgrading. */
-export function activityMailLimit(env: Env) {
-  const value = Number(env.ACTIVITY_MAIL_DAILY_LIMIT ?? 15)
-  return Number.isInteger(value) && value >= 0 && value <= 100000 ? value : 15
-}
+export function activityMailLimit(env: Env) { return mailLimits(env, 'activity').daily }
 const ITEMS_PER_DIGEST = 40, MEMBERS_PER_RUN = 50
 
 type Candidate = { id: string; email: string; replies: number; likes: number; modules: number; bugs: number; updates: number; messages: number }
@@ -35,7 +30,7 @@ export async function sendActivityDigests(env: Env, db: Database, now = new Date
     AND (p.last_digest_at IS NULL OR p.last_digest_at<CASE COALESCE(p.frequency,'hours') WHEN 'daily' THEN ? ELSE ? END)
     AND EXISTS(SELECT 1 FROM notifications n WHERE n.emailed=0 AND n.created_at<=? AND n.user_id IN (SELECT a.id UNION SELECT d.id FROM users d JOIN auth_accounts g ON g.providerId='github' AND g.accountId=d.github_id WHERE g.userId=a.id AND d.github_id IS NOT NULL))
     ORDER BY p.last_digest_at IS NOT NULL,p.last_digest_at LIMIT ?`).bind(hoursBefore(now, DIGEST_HOURS.daily), hoursBefore(now, DIGEST_HOURS.hours), settled, MEMBERS_PER_RUN).all<Candidate>()).results
-  const limit = activityMailLimit(env), app = new URL(env.APP_URL)
+  const app = new URL(env.APP_URL)
   let sent = 0
   for (const member of candidates) {
     const pending = (await db.prepare(`SELECT id FROM notifications WHERE user_id IN (${RECIPIENTS}) AND emailed=0 AND created_at<=? LIMIT 500`).bind(member.id, member.id, settled).all<{ id: string }>()).results.map(row => row.id)
@@ -46,8 +41,7 @@ export async function sendActivityDigests(env: Env, db: Database, now = new Date
     // Turned-off kinds and hidden content are settled without a message.
     if (!included.length) { if (unwanted.length) await markEmailed(db, unwanted); continue }
     try {
-      await throttle(db, 'activity-mail:daily', limit, 86400)
-      await throttle(db, 'activity-mail:monthly', limit * 30, 30 * 86400)
+      await reserveMailBudget(env, db, 'activity')
     } catch (error) {
       if (error instanceof HttpError && error.status === 429) { await recordMail(db, 'activity', 'limited'); break }
       throw error

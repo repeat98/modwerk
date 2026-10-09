@@ -1,18 +1,14 @@
 import type { Database, Env } from './platform'
 import { digest, HttpError, jsonBody, response } from './security'
 import { throttle } from './auth'
+import { mailLimits, reserveMailBudget } from './mail-budget'
 import { emailReady, recordMail } from './email'
 import { SUPPORT_EMAIL } from '../src/support'
 import { NEWS_CONSENT_VERSION, saveNewsPreference } from './news-preferences'
 import { NEWS_EMAIL_VERSION, renderNewsEmail } from './news-email-template'
 import { adminText } from './announcements'
 
-/** News mail has its own daily cap beside the 80 account sends and the activity digests. The free Resend tier allows
- * 100 a day, so the default of 5 keeps the three within it; raise NEWS_MAIL_DAILY_LIMIT after upgrading. */
-export function newsMailLimit(env: Env) {
-  const value = Number(env.NEWS_MAIL_DAILY_LIMIT ?? 5)
-  return Number.isInteger(value) && value >= 0 && value <= 100000 ? value : 5
-}
+export function newsMailLimit(env: Env) { return mailLimits(env, 'news').daily }
 const MESSAGES_PER_RUN = 20, RETRY_SECONDS = 300, MAX_ATTEMPTS = 3, LISTED = 50
 const newId = 'lower(hex(randomblob(16)))'
 /** Members whose news consent is current and who can receive mail: verified, not suspended, sign-up complete. */
@@ -64,10 +60,8 @@ async function deliver(env: Env, campaign: Content, member: { id: string; email:
   return !!result?.ok
 }
 async function withinBudget(env: Env, db: Database) {
-  const limit = newsMailLimit(env)
   try {
-    await throttle(db, 'news-mail:daily', limit, 86400)
-    await throttle(db, 'news-mail:monthly', limit * 30, 30 * 86400)
+    await reserveMailBudget(env, db, 'news')
     return true
   } catch (error) {
     if (!(error instanceof HttpError) || error.status !== 429) throw error

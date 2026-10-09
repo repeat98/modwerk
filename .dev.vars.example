@@ -21,9 +21,13 @@ SSO_DISCORD_CLIENT_SECRET=
 # Resend sending-only key scoped to your verified domain; leave blank to disable registration/recovery.
 RESEND_API_KEY=
 EMAIL_FROM=
-# Daily cap for activity digests, beside the 80/day kept for verification and recovery. 15 fits Resend's free
-# 100/day tier; raise it after upgrading the Resend plan.
+# Separate daily budgets; these defaults total 100/day for the free plan.
+# Production uses the paid 50,000/month plan and explicit monthly budgets in wrangler.worker.jsonc.
+# An omitted *_MAIL_MONTHLY_LIMIT defaults to 30 times that purpose's daily limit.
+ACCOUNT_MAIL_DAILY_LIMIT=60
+WELCOME_MAIL_DAILY_LIMIT=20
 ACTIVITY_MAIL_DAILY_LIMIT=15
+NEWS_MAIL_DAILY_LIMIT=5
 # Optional: mirror issue reports to GitHub issues (fine-grained token, Issues: read and write on one repository).
 # Leave blank to keep reports in the admin inbox only.
 GITHUB_TOKEN=

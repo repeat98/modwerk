@@ -1,6 +1,6 @@
 import type { Database, Env } from './platform'
 import { emailReady, recordMail } from './email'
-import { throttle } from './auth'
+import { reserveMailBudget } from './mail-budget'
 import { digest, HttpError } from './security'
 import { SUPPORT_EMAIL } from '../src/support'
 import { welcomeEmailVersions, WELCOME_EMAIL_VERSION } from './welcome-email-template'
@@ -39,9 +39,7 @@ export async function sendMemberWelcomes(env: Env, db: Database, now = new Date(
       continue
     }
     try {
-      // Welcomes share the account-mail budget; verification/recovery retain the same provider headroom.
-      await throttle(db, 'account-mail:daily', 80, 86400)
-      await throttle(db, 'account-mail:monthly', 2400, 30 * 86400)
+      await reserveMailBudget(env, db, 'welcome')
     } catch (error) {
       if (!(error instanceof HttpError) || error.status !== 429) throw error
       await db.prepare("UPDATE member_welcome_mail SET state='pending',lease_until=0,retry_at=? WHERE user_id=?").bind(attemptTime + RETRY_SECONDS, pending.user_id).run()

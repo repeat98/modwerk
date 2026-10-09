@@ -1,6 +1,7 @@
 import { COMMUNITY_RULES_VERSION } from '../legal/policy'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { DatabaseSync } from 'node:sqlite'
+import { readFileSync } from 'node:fs'
 import { testServer } from './test-server'
 import { digest } from '../../server/security'
 import { SUPPORT_EMAIL } from '../support'
@@ -74,7 +75,21 @@ describe('account-mail failures and quotas',()=>{
   expect((await call('/auth/resend','POST',{email:'network@example.test'})).status).toBe(503)
   expect((await(await call('/auth/session')).json()).registrationAvailable).toBe(false)
  })
- it.each([['account-mail:daily',86400,80],['account-mail:monthly',30*86400,2400]] as const)('rejects exhausted %s quota before contacting the provider',async(key,seconds,limit)=>{
+ it('uses the deployed paid budgets to send verification and recovery beyond the obsolete shared cap',async()=>{
+  const {call,env,db}=await fixture(),sender=vi.fn(async()=>Response.json({id:'paid-plan-email'}))
+  const config=readFileSync(new URL('../../wrangler.worker.jsonc',import.meta.url),'utf8')
+  Object.assign(env,Object.fromEntries([...config.matchAll(/"([A-Z_]+)":\s*"([^"]*)"/g)].filter(([,key])=>key.includes('_MAIL_')).map(([,key,value])=>[key,value])))
+  const now=Math.floor(Date.now()/1000)
+  for(const [key,seconds,count] of [['account-mail:daily',86400,83],['account-mail:monthly',30*86400,342]] as const){
+   db.prepare('INSERT INTO rate_limits(key,count,expires) VALUES(?,?,?)').run(await digest(key+':'+Math.floor(now/seconds)),count,now+seconds)
+  }
+  vi.stubGlobal('fetch',sender)
+  expect((await call('/auth/register','POST',{rulesVersion:COMMUNITY_RULES_VERSION,username:'paidmember',email:'paidmember@example.test',password})).status).toBe(202)
+  expect((await call('/auth/forgot','POST',{email:'paidmember@example.test'})).status).toBe(202)
+  expect(sender).toHaveBeenCalledTimes(2)
+  expect(db.prepare('SELECT purpose,accepted,limited FROM account_mail_daily ORDER BY purpose').all()).toEqual([{purpose:'reset',accepted:1,limited:0},{purpose:'verify',accepted:1,limited:0}])
+ })
+ it.each([['account-mail:daily',86400,60],['account-mail:monthly',30*86400,1800]] as const)('rejects exhausted %s quota before contacting the provider',async(key,seconds,limit)=>{
   const {call,db}=await fixture(),sender=vi.fn(async()=>Response.json({id:'should-not-send'}))
   vi.stubGlobal('fetch',sender)
   const now=Math.floor(Date.now()/1000)

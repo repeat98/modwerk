@@ -19,10 +19,16 @@
     "PRIVACY_READY": "false",
     "SESSION_TRANSPORT": "bearer",
     "WELCOME_MAIL_ENABLED": "true",
-    // Paid Resend plan: 50,000/month. Keep room for 80 account emails/day and other provider usage.
-    // Together these daily budgets allow at most 48,980 sends in a 31-day month.
+    // Paid Resend plan: 50,000/month. Independent 30-day budgets total 48,000 attempts.
+    // Verification/recovery capacity cannot be consumed by welcomes, activity or news.
+    "ACCOUNT_MAIL_DAILY_LIMIT": "500",
+    "ACCOUNT_MAIL_MONTHLY_LIMIT": "6000",
+    "WELCOME_MAIL_DAILY_LIMIT": "500",
+    "WELCOME_MAIL_MONTHLY_LIMIT": "6000",
     "ACTIVITY_MAIL_DAILY_LIMIT": "1000",
-    "NEWS_MAIL_DAILY_LIMIT": "500"
+    "ACTIVITY_MAIL_MONTHLY_LIMIT": "24000",
+    "NEWS_MAIL_DAILY_LIMIT": "500",
+    "NEWS_MAIL_MONTHLY_LIMIT": "12000"
   },
   "d1_databases": [
     {

@@ -1,6 +1,6 @@
 import type { Env, Database } from './platform'
 import { digest, HttpError } from './security'
-import { throttle } from './auth'
+import { reserveMailBudget } from './mail-budget'
 import { SUPPORT_EMAIL } from '../src/support'
 import { renderAccountEmail } from './account-email-template'
 export class AccountMailError extends HttpError {}
@@ -14,11 +14,9 @@ export async function recordMail(db: Database, purpose: 'verify' | 'reset' | 'ac
 export function emailReady(env: Env) { return !!env.RESEND_API_KEY && !!env.EMAIL_FROM && !/[\r\n]/.test(env.EMAIL_FROM) }
 export async function sendAccountEmail(env: Env, db: Database, to: string, purpose: 'verify' | 'reset', value: string) {
   if (!emailReady(env)) throw new HttpError(503, 'Account email is not connected yet. Please try again later.')
-  // Leave headroom in the free plan for delivery retries and operational mail.
   const record=(outcome:MailOutcome)=>recordMail(db,purpose,outcome)
   try{
-    await throttle(db, 'account-mail:daily', 80, 86400)
-    await throttle(db, 'account-mail:monthly', 2400, 30 * 86400)
+    await reserveMailBudget(env, db, 'account')
   }catch(error){if(error instanceof HttpError&&error.status===429){await record('limited');throw new AccountMailError(429,'Account email is temporarily limited.')}throw error}
   const url = new URL(env.APP_URL!)
   url.hash = 'account/' + purpose + '/' + value

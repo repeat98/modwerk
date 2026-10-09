@@ -207,11 +207,24 @@ describe('new member welcome email', () => {
     const { register, run, db } = await fixture(), member = await register()
     await member.verify()
     const seconds = Math.floor(Date.now() / 1000)
-    db.prepare('INSERT INTO rate_limits(key,count,expires) VALUES(?,?,?) ON CONFLICT(key) DO UPDATE SET count=excluded.count,expires=excluded.expires').run(await digest('account-mail:daily:' + Math.floor(seconds / 86400)), 80, seconds + 86400)
+    db.prepare('INSERT INTO rate_limits(key,count,expires) VALUES(?,?,?) ON CONFLICT(key) DO UPDATE SET count=excluded.count,expires=excluded.expires').run(await digest('welcome-mail:daily:' + Math.floor(seconds / 86400)), 20, seconds + 86400)
     expect((await run()).sent).toBe(0)
     expect(messages).toHaveLength(1)
     expect(db.prepare('SELECT state,first_attempt_at,attempts FROM member_welcome_mail WHERE user_id=?').get(member.id)).toEqual({ state: 'pending', first_attempt_at: null, attempts: 0 })
     expect(db.prepare("SELECT limited FROM account_mail_daily WHERE purpose='welcome'").get()).toEqual({ limited: 1 })
+    await register('verificationstillworks')
+    expect(messages).toHaveLength(2)
+    expect(messages.at(-1)!.subject).toBe('Verify your email address · Modwerk')
+  })
+
+  it('sends pending welcomes even when the account budget is exhausted', async () => {
+    const { register, run, db } = await fixture(), member = await register()
+    await member.verify()
+    const seconds = Math.floor(Date.now() / 1000)
+    db.prepare('UPDATE rate_limits SET count=60 WHERE key=?').run(await digest('account-mail:daily:' + Math.floor(seconds / 86400)))
+    expect((await run()).sent).toBe(1)
+    expect(messages).toHaveLength(2)
+    expect(db.prepare('SELECT state FROM member_welcome_mail WHERE user_id=?').get(member.id)).toEqual({ state: 'accepted' })
   })
 
   it('can be paused and removes welcome state when an account is deleted', async () => {
