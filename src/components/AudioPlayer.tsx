@@ -36,12 +36,36 @@ function Player({ src, label, variant = 'default' }: Props) {
         const { default: WaveSurfer } = await import('wavesurfer.js')
         if (cancelled) return
         const colors = getComputedStyle(player)
+        const height = variant === 'compact' ? 40 : variant === 'card' ? 64 : 48
         const instance = WaveSurfer.create({
-          container: host, media: element, height: variant === 'compact' ? 32 : variant === 'card' ? 56 : 40,
+          container: host, media: element, height,
           waveColor: colors.getPropertyValue('--audio-wave').trim() || '#a0a0ac',
           progressColor: colors.getPropertyValue('--audio-accent').trim() || '#929bff',
           cursorWidth: 1, cursorColor: colors.getPropertyValue('--audio-accent').trim() || '#929bff',
-          barWidth: variant === 'card' ? 3 : 2, barGap: 2, barRadius: 2, barMinHeight: 2,
+          // A strong upper signal and a quiet reflection share one seek baseline.
+          renderFunction: (channels, context) => {
+            const { width, height: canvasHeight } = context.canvas
+            const ratio = canvasHeight / height, baseline = canvasHeight * .7
+            const barWidth = 2 * ratio, spacing = 4 * ratio, length = channels[0]?.length || 0
+            if (!length || !width) return
+            let maximum = 0
+            for (const channel of channels) for (const sample of channel) maximum = Math.max(maximum, Math.abs(sample))
+            for (let x = 0; x < width; x += spacing) {
+              const start = Math.floor(x / width * length), end = Math.min(length, Math.ceil((x + spacing) / width * length))
+              let peak = 0
+              for (const channel of channels) for (let index = start; index < end; index++) peak = Math.max(peak, Math.abs(channel[index] || 0))
+              const amplitude = maximum ? peak / maximum : 0
+              const top = Math.max(ratio, amplitude * (baseline - 2 * ratio))
+              const reflection = Math.max(ratio, amplitude * (canvasHeight - baseline - 2 * ratio))
+              context.globalAlpha = 1
+              context.fillRect(x, baseline - top, barWidth, top)
+              context.globalAlpha = .3
+              context.fillRect(x, baseline + ratio, barWidth, reflection)
+            }
+            context.globalAlpha = .2
+            context.fillRect(0, baseline, width, ratio)
+            context.globalAlpha = 1
+          },
           // The native range supplies pointer, touch and keyboard seeking.
           interact: false, hideScrollbar: true, sampleRate: 8000, normalize: true,
         })
@@ -115,9 +139,9 @@ function Player({ src, label, variant = 'default' }: Props) {
         aria-label={'Seek in ' + label} aria-valuetext={time(state.currentTime) + ' of ' + time(state.duration)} onChange={event => seek(Number(event.target.value))} onKeyDown={seekKey}
         onPointerMove={hoverSeek} onPointerLeave={() => setHover(null)} onBlur={() => setHover(null)}/>
       {hover && <span className="audio-player-hover" style={{ left: hover.position * 100 + '%' }} aria-hidden="true"><span>{time(hover.time)}</span></span>}
+      <span className="audio-player-time" aria-hidden="true"><span className="audio-player-elapsed">{time(state.currentTime)}</span><span className="audio-player-duration">{state.duration ? time(state.duration) : '—:—'}</span></span>
     </div>
     <button type="button" className="audio-player-play" aria-label={(state.playing ? 'Pause ' : 'Play ') + label} aria-pressed={state.playing} onClick={toggle}><Icon name={state.playing ? 'pause' : 'play'} size={18}/></button>
-    <span className="audio-player-time" aria-hidden="true"><span className="audio-player-elapsed">{time(state.currentTime)}</span><span className="audio-player-divider">/</span><span className="audio-player-duration">{state.duration ? time(state.duration) : '—:—'}</span></span>
     {error && <span className="audio-player-error" role="alert">{error}</span>}
     <audio ref={audio} src={src} preload="none" hidden
       onPlay={event => { if (playing && playing !== event.currentTarget) playing.pause(); playing = event.currentTarget; setError(''); update() }}

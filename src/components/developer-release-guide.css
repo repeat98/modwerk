@@ -3,15 +3,15 @@
 .developer-section-heading { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 6px 20px; margin-bottom: 18px; }
 .developer-section-heading .subtle { font-size: 12px; }
 .developer-task-choice { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-bottom: 18px; }
-.developer-task-choice button { position: relative; display: flex; flex-direction: column; gap: 4px; padding: 13px 16px; text-align: left; border: 1px solid #44444d; border-radius: 8px; background: #1d1d21; }
+.developer-task-choice button { position: relative; display: flex; flex-direction: column; gap: 4px; padding: 13px 16px; text-align: left; border: 1px solid var(--control-border); border-radius: 8px; background: var(--field); }
 .developer-task-choice strong { font-size: 14px; font-weight: 600; }
 .developer-task-choice span { color: var(--muted); font-size: 12px; }
-.developer-task-choice button:hover { border-color: #686877; }
-.developer-task-choice button[aria-pressed="true"] { border-color: var(--accent); background: #2b2c40; }
+.developer-task-choice button:hover { border-color: var(--line-hover); }
+.developer-task-choice button[aria-pressed="true"] { border-color: var(--accent-line); background: var(--accent-soft); }
 .developer-task-choice button[aria-pressed="true"]::after { content: ''; position: absolute; right: 14px; top: 17px; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
 .starter-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
 .starter-field-wide { grid-column: 1 / -1; }
-.starter-field select { width: 100%; padding: 10px 30px 10px 11px; border: 1px solid #44444d; border-radius: 6px; background: #1a1a1e; color: #ececf1; font: inherit; }
+.starter-field select { width: 100%; padding: 10px 42px 10px 12px; border: 1px solid var(--control-border); border-radius: 6px; background-color: var(--field); color: var(--text); font: inherit; }
 .starter-field select:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 .developer-prompt-actions { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin: 18px 0 12px; }
 .developer-prompt-actions > span { color: var(--muted); font-size: 12px; line-height: 1.5; }
@@ -37,8 +37,8 @@
 .developer-flow-note { padding-top: 14px; margin-top: 18px; border-top: 1px solid var(--line); color: #b7b7c6; font-size: 12px; line-height: 1.65; }
 .developer-ecosystem { border-top: 1px solid var(--line); padding-top: 26px; }
 .developer-ecosystem-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
-.developer-ecosystem-grid a { display: flex; flex-direction: column; gap: 5px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 8px; background: #202024; }
-.developer-ecosystem-grid a:hover { border-color: #686877; }
+.developer-ecosystem-grid a { display: flex; flex-direction: column; gap: 5px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+.developer-ecosystem-grid a:hover { border-color: var(--line-hover); }
 .developer-ecosystem-grid strong { font-size: 13px; font-weight: 600; }
 .developer-ecosystem-grid span { color: var(--muted); font-size: 12px; line-height: 1.5; }
 .developer-builder-path { display: flex; align-items: center; gap: 16px; margin-top: 14px; color: var(--muted); font-size: 12px; line-height: 1.6; }

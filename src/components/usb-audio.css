@@ -2,18 +2,18 @@
 .usb-setup-heading, .usb-setup-footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .usb-setup-heading .subtle { font: 10px var(--mono); }
 .usb-setup-fields { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 20px; margin-top: 18px; }
-.usb-setup-fields label, .usb-setup-fields legend, .usb-setup-output-grid label { font-size: 12px; font-weight: 500; color: #c7c7d2; }
+.usb-setup-fields label, .usb-setup-fields legend, .usb-setup-output-grid label { font-size: 12px; font-weight: 500; color: var(--text-secondary); }
 .usb-setup-destination { padding: 0; margin: 0; border: 0; min-width: 0; }
 .usb-setup-destination legend { padding: 0; margin-bottom: 8px; }
 .usb-setup-destination-options { display: flex; }
-.usb-setup-destination label { display: flex; align-items: center; justify-content: center; position: relative; width: 50%; min-height: 44px; border: 1px solid #494952; background: #1d1d22; cursor: pointer; }
+.usb-setup-destination label { display: flex; align-items: center; justify-content: center; position: relative; width: 50%; min-height: 44px; border: 1px solid var(--control-border); background: var(--field); cursor: pointer; }
 .usb-setup-destination label:first-of-type { border-radius: 6px 0 0 6px; }
 .usb-setup-destination label:last-of-type { border-radius: 0 6px 6px 0; margin-left: -1px; }
 .usb-setup-destination .is-active { border-color: #8088c4; color: #d4d7ff; background: #929bff18; z-index: 1; }
 .usb-setup-destination label:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
 .usb-setup-destination input { position: absolute; width: 1px; height: 1px; opacity: 0; }
 .usb-setup-feed { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
-.usb-setup select { appearance: none; font-family: inherit; font-size: 13px; color: #e2e2eb; min-width: 0; width: 100%; min-height: 44px; border: 1px solid #494952; background-color: #1d1d22; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' fill='none'%3E%3Cpath d='m3 4.5 3 3 3-3' stroke='%23c7c7d2' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; background-size: 12px 12px; border-radius: 6px; padding: 9px 34px 9px 12px; }
+.usb-setup select { font-family: inherit; font-size: 13px; color: #e2e2eb; min-width: 0; width: 100%; min-height: 44px; border: 1px solid var(--control-border); background-color: var(--field); border-radius: 6px; padding: 9px 42px 9px 12px; }
 .usb-setup select:focus-visible, .usb-setup summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 .usb-setup-description { color: #b9b9c7; font-size: 12px; line-height: 1.65; margin-top: 12px; }
 .usb-setup-cpu { margin-top: 10px; color: var(--muted); font-size: 11px; line-height: 1.65; }
@@ -36,7 +36,7 @@
 .usb-setup-routing .text-button { font-size: 11px; min-height: 32px; }
 .usb-setup-notice { padding: 9px 12px; margin-top: 14px; border-left: 2px solid #8088c4; background: #929bff08; color: #bfc3dd; font-size: 11px; line-height: 1.65; }
 .usb-setup-channels { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
-.usb-setup-channels > span { display: flex; align-items: center; gap: 8px; padding: 7px 10px; border: 1px solid #42424c; border-radius: 5px; font-size: 11px; color: #c7c7d2; }
+.usb-setup-channels > span { display: flex; align-items: center; gap: 8px; padding: 7px 10px; border: 1px solid var(--control-border); border-radius: 5px; font-size: 11px; color: var(--text-secondary); }
 .usb-setup-channels small { font: 10px var(--mono); color: var(--muted); }
 .usb-setup-footer { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--line); }
 .usb-setup-save-target { display: flex; flex-direction: column; gap: 5px; min-width: 0; }

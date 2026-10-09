@@ -32,6 +32,17 @@ Inputs, tab lists, menus, media controls and open dialogs retain their arrow-key
 
 ## Run locally
 
+The shared dark palette is defined by the semantic colour tokens at the top of
+`src/styles.css`. Use those tokens for neutral surfaces, text, control borders
+and interaction states in the library, forum, device pages and dialogs. Keep
+module illustrations and success/warning colours distinct. Secondary text must
+remain readable on hover surfaces; primary buttons use dark text on lavender.
+Keep panel edges quiet and use filled surfaces for separation; reserve bright
+outlines for focus. Native selects share the chevron token with a 14px edge inset
+and 42px right padding, including in dialogs and phone layouts.
+When changing the palette, inspect rendered pages and keyboard focus at phone,
+tablet and desktop widths, and measure text contrast against the actual surface.
+
 Use Node.js 24:
 
 ```sh
