@@ -5,6 +5,7 @@ import { needMember, throttle } from './auth'
 import { cookie, HttpError, jsonBody, response } from './security'
 import { validUsername } from './social-config'
 import { avatarKey } from './avatars'
+import { normalizeProfileLink, type ProfileLinks } from '../src/community/profile-links'
 
 export async function profileRoutes(request: Request, env: Env, db: Database, path: string): Promise<Response | null> {
   if (path !== '/api/auth/profile' && path !== '/api/auth/account') return null
@@ -14,7 +15,7 @@ export async function profileRoutes(request: Request, env: Env, db: Database, pa
   const credential = await db.prepare("SELECT password FROM auth_accounts WHERE userId=? AND providerId='credential'").bind(owner.id).first<{password: string | null}>()
   const freshLogin = Date.now() - new Date(session.session.createdAt).getTime() < 10 * 60 * 1000
   if (path === '/api/auth/profile' && request.method === 'GET') {
-    const profile = await db.prepare('SELECT display_name AS displayName,username,profile_bio AS bio,show_online AS showOnline FROM users WHERE id=?').bind(owner.id).first<{displayName: string; username: string; bio: string; showOnline: number}>()
+    const profile = await db.prepare('SELECT display_name AS displayName,username,profile_bio AS bio,show_online AS showOnline,instagram_url AS instagramUrl,soundcloud_url AS soundcloudUrl,bandcamp_url AS bandcampUrl FROM users WHERE id=?').bind(owner.id).first<{displayName: string; username: string; bio: string; showOnline: number} & ProfileLinks>()
     const methods = (await db.prepare('SELECT providerId FROM auth_accounts WHERE userId=?').bind(owner.id).all()).results
     return response({ ...profile, showOnline: !!profile?.showOnline, email: session.user.email, passwordRequired: !!credential?.password, freshLogin, methods: methods.map(method => method.providerId) })
   }
@@ -26,11 +27,15 @@ export async function profileRoutes(request: Request, env: Env, db: Database, pa
     if (typeof body.displayName !== 'string' || !body.displayName.trim() || body.displayName.trim().length > 60 || typeof body.bio !== 'string' || body.bio.length > 500) throw new HttpError(400, 'Choose a display name up to 60 characters and a bio up to 500 characters.')
     if (body.showOnline !== undefined && typeof body.showOnline !== 'boolean') throw new HttpError(400, 'Choose whether to appear in the online list.')
     const showOnline = typeof body.showOnline === 'boolean' ? Number(body.showOnline) : null
+    const links: ProfileLinks = {}
+    try {
+      for (const key of ['instagramUrl', 'soundcloudUrl', 'bandcampUrl'] as const) if (body[key] !== undefined) links[key] = normalizeProfileLink(key, body[key])
+    } catch (error) { throw new HttpError(400, error instanceof Error ? error.message : 'Choose valid profile URLs.') }
     const duplicate = await db.prepare('SELECT id FROM users WHERE username=? COLLATE NOCASE AND id<>?').bind(username, owner.id).first()
     if (duplicate) throw new HttpError(409, 'This username is already in use.')
     try {
       await db.batch([
-        db.prepare('UPDATE users SET username=?,display_name=?,profile_bio=?,show_online=COALESCE(?,show_online) WHERE id=? AND suspended=0').bind(username, body.displayName.trim(), body.bio.trim(), showOnline, owner.id),
+        db.prepare('UPDATE users SET username=?,display_name=?,profile_bio=?,show_online=COALESCE(?,show_online),instagram_url=COALESCE(?,instagram_url),soundcloud_url=COALESCE(?,soundcloud_url),bandcamp_url=COALESCE(?,bandcamp_url) WHERE id=? AND suspended=0').bind(username, body.displayName.trim(), body.bio.trim(), showOnline, links.instagramUrl ?? null, links.soundcloudUrl ?? null, links.bandcampUrl ?? null, owner.id),
         db.prepare('UPDATE auth_users SET username=?,displayUsername=?,name=?,updatedAt=? WHERE id=? AND EXISTS(SELECT 1 FROM users WHERE id=? AND suspended=0)').bind(username, username, body.displayName.trim(), Date.now(), owner.id, owner.id),
       ])
     } catch { throw new HttpError(409, 'Your profile could not be saved. Check whether the username is available and try again.') }
@@ -54,7 +59,7 @@ export async function profileRoutes(request: Request, env: Env, db: Database, pa
     db.prepare('DELETE FROM auth_users WHERE id=?').bind(owner.id),
     // Posted text stays as anonymous discussion; images and sound clips are removed (the hourly job purges the files).
     db.prepare('UPDATE forum_media SET removed=1 WHERE user_id=?').bind(owner.id),
-    db.prepare("UPDATE users SET username=NULL,display_name='Deleted member',profile_bio='',avatar_id=NULL,avatar_mime=NULL,email_verified=0,suspended=1,github_id=NULL,github_login=NULL WHERE id=?").bind(owner.id),
+    db.prepare("UPDATE users SET username=NULL,display_name='Deleted member',profile_bio='',instagram_url='',soundcloud_url='',bandcamp_url='',avatar_id=NULL,avatar_mime=NULL,email_verified=0,suspended=1,github_id=NULL,github_login=NULL WHERE id=?").bind(owner.id),
   ])
   if (picture?.avatar_id && env.MEDIA) await env.MEDIA.delete(avatarKey(picture.avatar_id))
   const out = response({ ok: true }); out.headers.set('X-Octamod-Session', '')

@@ -87,7 +87,7 @@ function workerChange({ path, before, after }) {
   if (catalogs.has(path) && before !== null && after !== null) return canonical(workerCatalog(json(before))) !== canonical(workerCatalog(json(after)))
   if (/\.test\.ts$/.test(path) || /\.tsx$/.test(path)) return false
   return /^(server\/|migrations\/|src\/legal\/|src\/catalog\/|src\/devices\/)/.test(path)
-    || ['worker.ts', 'wrangler.worker.jsonc', 'package-lock.json', 'src/community/modules.ts', 'src/community/module-release-contract.ts', 'src/community/module-release-notes.ts', 'src/community/creator-support.ts', 'src/community/usage-pages.ts', 'src/config/support.ts', '.github/workflows/worker.yml', '.github/module-authors.json'].includes(path)
+    || ['worker.ts', 'wrangler.worker.jsonc', 'package-lock.json', 'src/community/modules.ts', 'src/community/module-release-contract.ts', 'src/community/module-release-notes.ts', 'src/community/creator-support.ts', 'src/community/profile-links.ts', 'src/community/usage-pages.ts', 'src/config/support.ts', '.github/workflows/worker.yml', '.github/module-authors.json'].includes(path)
 }
 
 export function classifyChanges(changes) {

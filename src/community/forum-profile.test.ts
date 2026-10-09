@@ -34,6 +34,34 @@ async function fixture(){
   return {...server,member,admin,linkMaintainer,profile,posts}
 }
 describe('member profiles',()=>{
+  it('lets each member manage only their own public links, preserves omitted fields and clears explicit removals',async()=>{
+    const f=await fixture(),author=await f.member('musician'),other=await f.member('listener')
+    const links={instagramUrl:'https://www.instagram.com/jannik.assfalg/',soundcloudUrl:'https://soundcloud.com/jannik-asfalg',bandcampUrl:'https://artist.bandcamp.com/'}
+    const body={username:'musician',displayName:'Musician',bio:'Music and instruments',...links}
+    expect((await f.call('/auth/profile','PATCH',body)).status).toBe(401)
+    expect((await f.call('/auth/profile','PATCH',{...body,username:'listener',id:author.id},other.token)).status).toBe(200)
+    expect(await(await f.profile('musician')).json()).toMatchObject({instagramUrl:'',soundcloudUrl:'',bandcampUrl:''})
+    expect((await f.call('/auth/profile','PATCH',body,author.token)).status).toBe(200)
+    expect(await(await f.call('/auth/profile','GET',undefined,author.token)).json()).toMatchObject(links)
+    expect(await(await f.profile('musician')).json()).toMatchObject(links)
+    expect((await f.call('/auth/profile','PATCH',{username:'musician',displayName:'New name',bio:'Updated by an older client'},author.token)).status).toBe(200)
+    expect(await(await f.profile('musician')).json()).toMatchObject(links)
+    const exported=await(await f.call('/auth/data-export','POST',{password},author.token)).json()
+    expect(exported.data.profileLinks).toEqual([links])
+    expect((await f.call('/auth/profile','PATCH',{...body,instagramUrl:'',bandcampUrl:''},author.token)).status).toBe(200)
+    expect(await(await f.profile('musician')).json()).toMatchObject({instagramUrl:'',soundcloudUrl:links.soundcloudUrl,bandcampUrl:''})
+    expect(await(await f.profile('listener')).json()).toMatchObject(links)
+    expect((await f.call('/auth/account','DELETE',{confirm:'DELETE',password},author.token)).status).toBe(200)
+    expect(f.db.prepare('SELECT instagram_url,soundcloud_url,bandcamp_url FROM users WHERE id=?').get(author.id)).toEqual({instagram_url:'',soundcloud_url:'',bandcamp_url:''})
+    expect((await f.profile('musician')).status).toBe(404)
+  })
+  it('rejects malformed links before changing any profile data',async()=>{
+    const f=await fixture(),author=await f.member('musician')
+    for(const links of [{instagramUrl:'javascript:alert(1)'},{soundcloudUrl:'https://soundcloud.com.evil.test/artist'},{bandcampUrl:'https://evil.test'},{bandcampUrl:null}]){
+      expect((await f.call('/auth/profile','PATCH',{username:'musician',displayName:'Changed',bio:'Changed',...links},author.token)).status).toBe(400)
+      expect(await(await f.profile('musician')).json()).toMatchObject({displayName:'musician',bio:'',instagramUrl:'',soundcloudUrl:'',bandcampUrl:''})
+    }
+  })
   it('counts visible threads, replies and likes received, lists recent replies and says when the member joined',async()=>{
     const f=await fixture(),author=await f.member('author'),other=await f.member('other'),fan=await f.member('fanone')
     const first=await(await f.call('/forum/threads','POST',{title:'First thread',body:'Opening post',category:'general'},author.token)).json()

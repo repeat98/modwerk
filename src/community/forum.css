@@ -878,6 +878,13 @@ li[data-status="error"] .forum-media-status { color: #f0a6ad; }
 .forum-maintainer-badge { color: #9cc6b1; border-color: #456354; }
 .forum-profile h2 .forum-author-badge { margin-left: 10px; vertical-align: middle; }
 .forum-profile-since { margin: 4px 0 0; color: var(--muted); font-size: 12px; }
+.forum-profile > div { min-width: 0; }
+.forum-profile-links { display: flex; flex-wrap: wrap; gap: 4px 16px; margin-top: 12px; }
+.forum-profile-links a { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; font-size: 13px; }
+.account-profile-links { margin: 0; padding: 0; border: 0; min-width: 0; }
+.account-profile-links legend { margin-bottom: 4px; font-size: 14px; font-weight: 600; }
+.account-profile-links > p { margin: 0 0 12px; color: var(--muted); font-size: 12px; }
+.account-profile-link-fields { display: grid; gap: 12px; }
 .forum-profile-stats { display: flex; flex-wrap: wrap; gap: 8px 24px; margin: 14px 0 0; }
 .forum-profile-stats div { display: flex; flex-direction: column-reverse; gap: 1px; }
 .forum-profile-stats dt { color: var(--muted); font-size: 11px; }

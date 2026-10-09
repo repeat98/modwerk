@@ -16,6 +16,7 @@ on:
       - 'src/community/module-release-contract.ts'
       - 'src/community/module-release-notes.ts'
       - 'src/community/creator-support.ts'
+      - 'src/community/profile-links.ts'
       - 'src/community/usage-pages.ts'
       - 'src/config/support.ts'
       - 'src/catalog/**'
