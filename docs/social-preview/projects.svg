@@ -1,0 +1,37 @@
+<!-- Original Modwerk artwork for /projects/. The renderer inserts the existing brand mark. -->
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <rect width="1200" height="630" fill="#212124"/>
+  <path d="M636 0v630M0 530h1200" stroke="#39393f"/>
+  <g transform="translate(64 48)"><!-- MODWERK_MARK --></g>
+  <text x="148" y="96" fill="#ececf1" font-family="sans-serif" font-size="40" font-weight="600" letter-spacing="-1.5">Modwerk</text>
+  <text x="66" y="191" fill="#d0a46a" font-family="monospace" font-size="22" letter-spacing="2">BEYOND THE BUILDER</text>
+  <g fill="#ececf1" font-family="sans-serif" font-size="100" font-weight="600" letter-spacing="-4">
+    <text x="60" y="307">Other</text><text x="60" y="410">projects.</text>
+  </g>
+  <text x="66" y="470" fill="#aaaab3" font-family="sans-serif" font-size="26">Independent ideas for Elektron instruments.</text>
+  <text x="66" y="588" fill="#ececf1" font-family="monospace" font-size="25">modwerk.app/projects</text>
+  <path d="M1123 565h29v29m-30 0 30-29" stroke="#d0a46a" stroke-width="3" fill="none"/>
+  <g transform="translate(684 63)">
+    <rect width="206" height="197" rx="10" fill="#2b2533"/>
+    <path d="M20 81c14 0 14-35 28-35s14 70 28 70 14-70 28-70 14 70 28 70 14-70 28-70 14 35 28 35" fill="none" stroke="#b7a1d6" stroke-width="3"/>
+    <path d="M20 80h168" stroke="#b7a1d6" opacity=".15"/>
+    <text x="20" y="172" fill="#b7a1d6" font-family="sans-serif" font-size="28">Mods</text>
+  </g>
+  <g transform="translate(912 63)">
+    <rect width="224" height="197" rx="10" fill="#26322c"/>
+    <g fill="#95bca9"><rect x="20" y="37" width="54" height="12" rx="2"/><rect x="112" y="57" width="71" height="12" rx="2"/><rect x="57" y="77" width="54" height="12" rx="2"/><rect x="145" y="97" width="57" height="12" rx="2"/></g>
+    <path d="M20 29h184M20 51h184M20 73h184M20 95h184M20 117h184M46 29v88M84 29v88M122 29v88M160 29v88" stroke="#95bca9" opacity=".15"/>
+    <text x="20" y="172" fill="#95bca9" font-family="sans-serif" font-size="28">Tools</text>
+  </g>
+  <g transform="translate(684 280)">
+    <rect width="206" height="197" rx="10" fill="#25303b"/>
+    <g fill="none" stroke="#8fb4d4" stroke-width="2"><rect x="20" y="30" width="166" height="96" rx="6"/><rect x="32" y="44" width="60" height="32" rx="3"/><path d="M40 64h9l8-12 10 16 8-5h10"/><circle cx="118" cy="53" r="7"/><circle cx="146" cy="53" r="7"/><circle cx="118" cy="77" r="7"/><circle cx="146" cy="77" r="7"/></g>
+    <g fill="#8fb4d4"><rect x="32" y="99" width="17" height="12" rx="2"/><rect x="58" y="99" width="17" height="12" rx="2"/><rect x="84" y="99" width="17" height="12" rx="2"/><rect x="110" y="99" width="17" height="12" rx="2"/><rect x="136" y="99" width="17" height="12" rx="2"/><rect x="162" y="99" width="12" height="12" rx="2"/></g>
+    <text x="20" y="172" fill="#8fb4d4" font-family="sans-serif" font-size="28">Emulators</text>
+  </g>
+  <g transform="translate(912 280)">
+    <rect width="224" height="197" rx="10" fill="#342c22"/>
+    <path d="m79 37-37 38 37 38m67-76 37 38-37 38m-27-82-19 87" fill="none" stroke="#d3ac80" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="20" y="172" fill="#d3ac80" font-family="sans-serif" font-size="28">Dev tools</text>
+  </g>
+</svg>

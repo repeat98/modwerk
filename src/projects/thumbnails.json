@@ -1,0 +1,292 @@
+{
+  "https://github.com/18nelli18/Modded-Cycles": {
+    "src": "project-thumbnails/18nelli18--modded-cycles-ca3230e80906.jpg",
+    "source": "https://github.com/18nelli18/Modded-Cycles",
+    "imageUrl": "https://opengraph.githubassets.com/5f1b3836c2c671c3488fab6eb9a22567ade901ea20678a618b19aeab3376fdce/18nelli18/Modded-Cycles",
+    "width": 640,
+    "height": 320,
+    "sha256": "ca3230e80906f266471b68ee208ecec5699b1046bbf29c07f1350fc96db267eb",
+    "fetchedAt": "2026-10-09"
+  },
+  "https://github.com/alisomay/rytm-rs": {
+    "src": "project-thumbnails/alisomay--rytm-rs-3c895a883a55.jpg",
+    "source": "https://github.com/alisomay/rytm-rs",
+    "imageUrl": "https://repository-images.githubusercontent.com/727233360/9475238f-779a-4135-9bf4-c2a13dcf91ce",
+    "width": 640,
+    "height": 320,
+    "sha256": "3c895a883a55817322e1e5bdc8c4e1c1882a8d91c490691e2e619472e5c9c039",
+    "fetchedAt": "2026-10-09"
+  },
+  "https://github.com/AvroraPolnareff/plock2sound": {
+    "src": "project-thumbnails/avrorapolnareff--plock2sound-b472274ff56a.jpg",
+    "source": "https://github.com/AvroraPolnareff/plock2sound",
+    "imageUrl": "https://opengraph.githubassets.com/bd5602cc923a5036534bf870657812e2cd63df097ce86fb9ffbd6f28db9899da/AvroraPolnareff/plock2sound",
+    "width": 640,
+    "height": 320,
+    "sha256": "b472274ff56a1b346c338da90c241b2c52b770e30d8ffde72ca8ad1ab21f9f36",
+    "fetchedAt": "2026-10-09"
+  },
+  "https://github.com/bandersong/analog-rytm-chop": {
+    "src": "project-thumbnails/bandersong--analog-rytm-chop-31d4f19acd61.jpg",
+    "source": "https://github.com/bandersong/analog-rytm-chop",
+    "imageUrl": "https://opengraph.githubassets.com/bdf4661e104e56b97ebb9a06b21e5f77f8fed1ac2310c519e0cdcd447482bf2a/bandersong/analog-rytm-chop",
+    "width": 640,
+    "height": 320,
+    "sha256": "31d4f19acd619aa0bea794a2a768a9b375aaa40169fab8399b78b25d29fbf4d7",
+    "fetchedAt": "2026-10-09"
+  },
+  "https://github.com/brian3kb/digichain": {
+    "src": "project-thumbnails/brian3kb--digichain-9af5adcac943.jpg",
+    "source": "https://github.com/brian3kb/digichain",
+    "imageUrl": "https://opengraph.githubassets.com/4299e448fb64dc67466658c65a1dcae4e63fe1982c017b1d8011bb4cb4d1ea7a/brian3kb/digichain",
+    "width": 640,
+    "height": 320,
+    "sha256": "9af5adcac94334f76f3005694e06e212595b4e2e25b9a1b656f2bf7a47b68f91",
+    "fetchedAt": "2026-10-09"
+  },
+  "https://github.com/bsp2/libanalogrytm": {
+    "src": "project-thumbnails/bsp2--libanalogrytm-cb4f0bb900cd.jpg",
+    "source": "https://github.com/bsp2/libanalogrytm",
+    "imageUrl": "https://opengraph.githubassets.com/fb08e064ad8fe43b4334b7c2b718c81ccb6b96a9f3e711d31b9674b533878e2c/bsp2/libanalogrytm",
+    "width": 640,
+    "height": 320,
+    "sha256": "cb4f0bb900cd45eaf3a17566897d1a2ea9956715c5cf73bfe51fd67d41ee4d86",
+    "fetchedAt": "2026-10-09"
+  },
+  "https://github.com/byNicoHeuser/Modded-Cycles": {
+    "src": "project-thumbnails/bynicoheuser--modded-cycles-44b1a777e427.jpg",
+    "source": "https://github.com/byNicoHeuser/Modded-Cycles",
+    "imageUrl": "https://opengraph.githubassets.com/6e6fb8376f0cc535e76f59e59f4d44adaa2373218877f04c6aadafc42d05683d/byNicoHeuser/Modded-Cycles",
+    "width": 640,
+    "height": 320,
+    "sha256": "44b1a777e4272278e9e54928a0ee389dcc8cc1caa7b114b963e24bba8312a0ed",
+    "fetchedAt": "2026-10-09"
+  },
+  "https://github.com/dagargo/elektroid": {
+    "src": "project-thumbnails/dagargo--elektroid-53929b94d4fa.jpg",
+    "source": "https://github.com/dagargo/elektroid",
+    "imageUrl": "https://opengraph.githubassets.com/e936e8dcefed3e335f38deeca91e9a196842b72f4462ef0551947b108040035a/dagargo/elektroid",
+    "width": 640,
+    "height": 320,
+    "sha256": "53929b94d4fa7dd364f31eca05f157235aeaf10863c382083c3c6c172bdf5036",
+    "fetchedAt": "2026-10-09"
+  },
+  "https://github.com/dagargo/overwitch": {
+    "src": "project-thumbnails/dagargo--overwitch-4001f127f89e.jpg",
+    "source": "https://github.com/dagargo/overwitch",
+    "imageUrl": "https://opengraph.githubassets.com/1de4a0212ba8cac724009f19228d801e88719a527bf1c052c83daeb508385935/dagargo/overwitch",
+    "width": 640,
+    "height": 320,
+    "sha256": "4001f127f89e2028559fb83a1e80faf6858d7c0389267dff52afbd6c6bd87892",
+    "fetchedAt": "2026-10-09"
+  },
+  "https://github.com/davidferlay/octatrack-manager": {
+    "src": "project-thumbnails/davidferlay--octatrack-manager-c2397c1b1484.jpg",
+    "source": "https://github.com/davidferlay/octatrack-manager",
+    "imageUrl": "https://raw.githubusercontent.com/davidferlay/octatrack-manager/main/user-guide/static/img/project-discovery.png",
+    "kind": "readme-screenshot",
+    "width": 554,
+    "height": 360,
+    "sha256": "c2397c1b1484c812e576b816da4db7d8eed41693534e35ab0d49da569790aff5",
+    "fetchedAt": "2026-10-09"
+  },
+  "https://github.com/designerfuzzi/OctobusAdditions": {
+    "src": "project-thumbnails/designerfuzzi--octobusadditions-7241a723716d.jpg",
+    "source": "https://github.com/designerfuzzi/OctobusAdditions",
+    "imageUrl": "https://avatars.githubusercontent.com/designerfuzzi?size=640",
+    "kind": "creator-image",
+    "width": 360,
+    "height": 360,
+    "sha256": "7241a723716d78e873874e04fb5a207e00a990a751d4576764e4da56086aae8b",
+    "fetchedAt": "2026-10-09"
+  },
+  "https://github.com/DigiAlchemydsp/DigiFilter": {
+    "src": "project-thumbnails/digialchemydsp--digifilter-465d9f7f8866.jpg",
+    "source": "https://github.com/DigiAlchemydsp/DigiFilter",
+    "imageUrl": "https://opengraph.githubassets.com/c243bdb352fcc45304fdbf6aef2c983bd32505c824034835dd51045b0e1999b6/DigiAlchemydsp/DigiFilter",
+    "width": 640,
+    "height": 320,
+    "sha256": "465d9f7f88669dcf92d830185805b75ad03f854eb5e52842bda493c9b4b9197c",
+    "fetchedAt": "2026-10-09"
+  },
+  "https://github.com/DigiAlchemydsp/Tone-FX": {
+    "src": "project-thumbnails/digialchemydsp--tone-fx-5c76fc4a1568.jpg",
+    "source": "https://github.com/DigiAlchemydsp/Tone-FX",
+    "imageUrl": "https://opengraph.githubassets.com/5933bd78e7333e5e516f244d0f441fc3af937300606e785d134953c4a2cbe9a9/DigiAlchemydsp/Tone-FX",
+    "width": 640,
+    "height": 320,
+    "sha256": "5c76fc4a156831f2d3fbdb58ab34b8bbc6ff6bf16215ea10f1ea936148884589",
+    "fetchedAt": "2026-10-09"
+  },
+  "https://github.com/emuyia/ems-machinedrum-firmware": {
+    "src": "project-thumbnails/emuyia--ems-machinedrum-firmware-4b2fa2ae5f78.jpg",
+    "source": "https://github.com/emuyia/ems-machinedrum-firmware",
+    "imageUrl": "https://opengraph.githubassets.com/e1097d6913ed8c5ce9d5df75c7fc8898073221d3691ed4c639c052003ca27e18/emuyia/ems-machinedrum-firmware",
+    "width": 640,
+    "height": 320,
+    "sha256": "4b2fa2ae5f7886c97863ff95b8e5f79a268a21e47f94901b5cb44155e64949e5",
+    "fetchedAt": "2026-10-09"
+  },
+  "https://github.com/emuyia/ems-monomachine-firmware": {
+    "src": "project-thumbnails/emuyia--ems-monomachine-firmware-cd6649ffb8cb.jpg",
+    "source": "https://github.com/emuyia/ems-monomachine-firmware",
+    "imageUrl": "https://opengraph.githubassets.com/295d74fd99830506229e8aac68cf2fa2a851fe79947479c6b17533d289e9d089/emuyia/ems-monomachine-firmware",
+    "width": 640,
+    "height": 320,
+    "sha256": "cd6649ffb8cb027c211a5c0579e8ddd261236ac4be4d391becf4c57584361d84",
+    "fetchedAt": "2026-10-09"
+  },
+  "https://github.com/irpina/digicosm": {
+    "src": "project-thumbnails/irpina--digicosm-5b83755b5299.jpg",
+    "source": "https://github.com/irpina/digicosm",
+    "imageUrl": "https://opengraph.githubassets.com/51bc0765ca713629a48b703032fd01eadea9faa9a133be8d29de4a879288cc69/irpina/digicosm",
+    "width": 640,
+    "height": 320,
+    "sha256": "5b83755b5299228b99a4a6bc236cce42599c647b19c556cbe7735f8f3c9fdb84",
+    "fetchedAt": "2026-10-09"
+  },
+  "https://github.com/irpina/digiemu": {
+    "src": "project-thumbnails/irpina--digiemu-4034f8d9783c.jpg",
+    "source": "https://github.com/irpina/digiemu",
+    "imageUrl": "https://opengraph.githubassets.com/7f3b91f294d1d516b2745aa99aa6454576fd62e42feb748e2b543d6a95683de7/irpina/digiemu",
+    "width": 640,
+    "height": 320,
+    "sha256": "4034f8d9783c8eb37c33046730f4eea5788c6821174b7e0c854daedc88773ae9",
+    "fetchedAt": "2026-10-09"
+  },
+  "https://github.com/irpina/elekloader": {
+    "src": "project-thumbnails/irpina--elekloader-06d8c6317978.jpg",
+    "source": "https://github.com/irpina/elekloader",
+    "imageUrl": "https://opengraph.githubassets.com/8d5fe53306b6a99074727017b8e891c61cba76f3bdecfa4cc517c0d358cc25be/irpina/elekloader",
+    "width": 640,
+    "height": 320,
+    "sha256": "06d8c6317978a9ae3e6a2b92286afd49ff191893651e7762d6ce00296312e560",
+    "fetchedAt": "2026-10-09"
+  },
+  "https://github.com/jakobbak/screendump": {
+    "src": "project-thumbnails/jakobbak--screendump-386442137838.jpg",
+    "source": "https://github.com/jakobbak/screendump",
+    "imageUrl": "https://opengraph.githubassets.com/3a95445bf4751a27bfb5b0b80bfe60f95882846087bbc977f4199fcc38574775/jakobbak/screendump",
+    "width": 640,
+    "height": 320,
+    "sha256": "386442137838ab9ee92b1ff55f3eff69235553a6dec309da6dedf496dde7bec0",
+    "fetchedAt": "2026-10-09"
+  },
+  "https://github.com/jhw/octapy": {
+    "src": "project-thumbnails/jhw--octapy-9c0e7e03e4f3.jpg",
+    "source": "https://github.com/jhw/octapy",
+    "imageUrl": "https://opengraph.githubassets.com/8c3ca2b1211581d60e2c7e01e45ccd4a1db237bc5e8e2450bd963536203d6cd6/jhw/octapy",
+    "width": 640,
+    "height": 320,
+    "sha256": "9c0e7e03e4f31f9bb67ec470726b74645fa488769573c808e4563ef29bb9ab87",
+    "fetchedAt": "2026-10-09"
+  },
+  "https://github.com/jmamma/MCL": {
+    "src": "project-thumbnails/jmamma--mcl-bb01b7b75840.jpg",
+    "source": "https://github.com/jmamma/MCL",
+    "imageUrl": "https://opengraph.githubassets.com/8d58bc8ab7ed6b6fe326e01b3d591b2f16174a4adcd0c31c2ced86051d6ffbe0/jmamma/MCL",
+    "width": 640,
+    "height": 320,
+    "sha256": "bb01b7b75840d5e94840cd0ed57af1275df360332f5d3c6c137e2b8aba153506",
+    "fetchedAt": "2026-10-09"
+  },
+  "https://github.com/KaiDrange/OctaChainer2": {
+    "src": "project-thumbnails/kaidrange--octachainer2-8ac5e3839181.jpg",
+    "source": "https://github.com/KaiDrange/OctaChainer2",
+    "imageUrl": "https://opengraph.githubassets.com/ea63231988208684a69a598432bcb6b96dfe6e2584d232cb424cac12af5f9c9d/KaiDrange/OctaChainer2",
+    "width": 640,
+    "height": 320,
+    "sha256": "8ac5e38391810e424155dab435c4b3ada8bc089611ef4ca4526a5bd0085343d5",
+    "fetchedAt": "2026-10-09"
+  },
+  "https://github.com/mtalikka/DT-FM": {
+    "src": "project-thumbnails/mtalikka--dt-fm-0b00bda65ea0.jpg",
+    "source": "https://github.com/mtalikka/DT-FM",
+    "imageUrl": "https://opengraph.githubassets.com/27c322bbac6bf1f9f03e6113fb8e9545adb28b608dadbb4fbca196fbf4357012/mtalikka/DT-FM",
+    "width": 640,
+    "height": 320,
+    "sha256": "0b00bda65ea016c3bc3f9a9ebd9356f100d37ff005fa10f2d35647ee6a8ee1ed",
+    "fetchedAt": "2026-10-09"
+  },
+  "https://github.com/NoiseAndMatter/DNX": {
+    "src": "project-thumbnails/noiseandmatter--dnx-19b3008fe10d.jpg",
+    "source": "https://github.com/NoiseAndMatter/DNX",
+    "imageUrl": "https://opengraph.githubassets.com/71c25a573c923e868ff97cdced70bf69650be0584fd0c877a461ed6f376d84fd/NoiseAndMatter/DNX",
+    "width": 640,
+    "height": 320,
+    "sha256": "19b3008fe10dd33573f12b4be31cfd7ce467ef6ac23e9c4c07c42cc257f77933",
+    "fetchedAt": "2026-10-09"
+  },
+  "https://github.com/scottmetoyer/ms-multi-output": {
+    "src": "project-thumbnails/scottmetoyer--ms-multi-output-5543c28d73d3.jpg",
+    "source": "https://github.com/scottmetoyer/ms-multi-output",
+    "imageUrl": "https://opengraph.githubassets.com/99e1e3d028eeaa444a1f6de3137833d7d0c810c1602acc2e2fb4e92f2a83e120/scottmetoyer/ms-multi-output",
+    "width": 640,
+    "height": 320,
+    "sha256": "5543c28d73d3971d29ee445306fdf953bd5e7616c91e188166a0645dc662e3d4",
+    "fetchedAt": "2026-10-09"
+  },
+  "https://github.com/shnolk/monomodule": {
+    "src": "project-thumbnails/shnolk--monomodule-fbddebd16fdb.jpg",
+    "source": "https://github.com/shnolk/monomodule",
+    "imageUrl": "https://opengraph.githubassets.com/058dd272f533ec9a5f7531b90854c0ca1c825c3047c4a58b1896299748251cd9/shnolk/monomodule",
+    "width": 640,
+    "height": 320,
+    "sha256": "fbddebd16fdba9d4020f91a41ebf8884c6755fdd5095e963a70a7e8a6819abe9",
+    "fetchedAt": "2026-10-09"
+  },
+  "https://github.com/timhastie/octa-panel": {
+    "src": "project-thumbnails/timhastie--octa-panel-f1742e14b3ff.jpg",
+    "source": "https://github.com/timhastie/octa-panel",
+    "imageUrl": "https://opengraph.githubassets.com/efd7a03e5408a87a0d51d023964b2e709501e1a16e78848674c0580372b28fc0/timhastie/octa-panel",
+    "width": 640,
+    "height": 320,
+    "sha256": "f1742e14b3ff64be544b8e64c82540c8c91a8f41037d660b2f92910809e4c481",
+    "fetchedAt": "2026-10-09"
+  },
+  "https://github.com/TinyGregAudio/Model-TG": {
+    "src": "project-thumbnails/tinygregaudio--model-tg-0ad67807d4a9.jpg",
+    "source": "https://github.com/TinyGregAudio/Model-TG",
+    "imageUrl": "https://opengraph.githubassets.com/fa6222fabf6fb877cb317755df54b637e25ca91b0e2388625cef47a69f3a0f50/TinyGregAudio/Model-TG",
+    "width": 640,
+    "height": 320,
+    "sha256": "0ad67807d4a9c481fd98dd90d7c7836dd9706edc5dfc832ba06fc5e6495c61e2",
+    "fetchedAt": "2026-10-09"
+  },
+  "https://github.com/toonst/digitakt2-perform": {
+    "src": "project-thumbnails/toonst--digitakt2-perform-64c2e199499c.jpg",
+    "source": "https://github.com/toonst/digitakt2-perform",
+    "imageUrl": "https://opengraph.githubassets.com/5acfdc153024aa622e2e4cbcb881919bb7da8cd3f8aa6ec385a31f90e0b71a0a/toonst/digitakt2-perform",
+    "width": 640,
+    "height": 320,
+    "sha256": "64c2e199499cdc611691bb4088c02d78de4dba899f7219e415aa36f0e8f7958a",
+    "fetchedAt": "2026-10-09"
+  },
+  "https://github.com/xrcstrecords/syxgrid-digitone-ii": {
+    "src": "project-thumbnails/xrcstrecords--syxgrid-digitone-ii-29f0f794ca2f.jpg",
+    "source": "https://github.com/xrcstrecords/syxgrid-digitone-ii",
+    "imageUrl": "https://opengraph.githubassets.com/9f8c4103d62a673bffdc3eca3c876d8bdcbf81f5e31066c99822a2955e819c9d/xrcstrecords/syxgrid-digitone-ii",
+    "width": 640,
+    "height": 320,
+    "sha256": "29f0f794ca2fbac43c6fcd612ec0c944d154e9f2aeab67365bc942ee870b7c55",
+    "fetchedAt": "2026-10-09"
+  },
+  "https://github.com/Zac-Kyoti/octatrack-kyoti-fw": {
+    "src": "project-thumbnails/zac-kyoti--octatrack-kyoti-fw-cc8bd8592895.jpg",
+    "source": "https://github.com/Zac-Kyoti/octatrack-kyoti-fw",
+    "imageUrl": "https://opengraph.githubassets.com/876505ecfab487d892a5f434fc45aa1fe70177cfcea508f90b7e4085411c3a0d/Zac-Kyoti/octatrack-kyoti-fw",
+    "width": 640,
+    "height": 320,
+    "sha256": "cc8bd8592895d3ff802f239567108b0190e6b83967402c1bc20a1b1fd6c3777c",
+    "fetchedAt": "2026-10-09"
+  },
+  "https://github.com/zooloo303/digi-roll-studio": {
+    "src": "project-thumbnails/zooloo303--digi-roll-studio-27dd0a8b09cc.jpg",
+    "source": "https://github.com/zooloo303/digi-roll-studio",
+    "imageUrl": "https://opengraph.githubassets.com/1aec48b923e58aa228c16c9c72438730fc3a55b269eb983bd42f34501dddbab4/zooloo303/digi-roll-studio",
+    "width": 640,
+    "height": 320,
+    "sha256": "27dd0a8b09cca2fcdb90cdf091837f64041088544d300dbf540a2d3ace3c4b35",
+    "fetchedAt": "2026-10-09"
+  }
+}

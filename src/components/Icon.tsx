@@ -1,5 +1,6 @@
-export type IconName = 'share' | 'bell' | 'grid' | 'wave' | 'sliders' | 'search' | 'plus' | 'check' | 'arrow' | 'back' | 'download' | 'file' | 'shield' | 'star' | 'close' | 'message' | 'help' | 'heart' | 'bookmark' | 'pin' | 'lock' | 'quote' | 'play' | 'pause' | 'image' | 'mail' | 'sort' | 'filter'
+export type IconName = 'share' | 'bell' | 'grid' | 'wave' | 'sliders' | 'search' | 'plus' | 'check' | 'arrow' | 'back' | 'download' | 'file' | 'shield' | 'star' | 'close' | 'message' | 'help' | 'heart' | 'bookmark' | 'pin' | 'lock' | 'quote' | 'play' | 'pause' | 'image' | 'mail' | 'sort' | 'filter' | 'external'
 const paths: Record<IconName, string> = {
+  external: 'M14 3h7v7m0-7L10 14M10 3H3v18h18v-7',
   share: 'M12 3v12m-4-8 4-4 4 4M5 12v8h14v-8',
   bell: 'M6 9a6 6 0 1 1 12 0c0 6 3 8 3 8H3s3-2 3-8M10.3 21a2 2 0 0 0 3.4 0',
   bookmark: 'M6 3h12v18l-6-4-6 4z',
