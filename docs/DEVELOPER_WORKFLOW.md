@@ -53,6 +53,8 @@ Today Modwerk's Octatrack path uses Octabam-derived tooling, and Digitakt/Digito
 
 **Planned, not active:** one shared Elekloader-based builder will replace Modwerk's two current builder paths. Verified developers will also be able to publish entirely new modules without another owner approval. Neither roadmap item changes today's first-release, integration, qualification or author-update gates.
 
+The shared machine entry point and private Octatrack format-2 verification now exist. The [Octatrack migration record](OCTATRACK_ELEKLOADER_MIGRATION.md) names the source ports, actual parity results, remaining cutover requirements and proposed USB update path. Public Octatrack builds continue through the approved composer while these requirements are completed.
+
 After publication, authors can verify their developer account, claim their module and add, change or remove a Ko-fi link in Creator settings. Preserve the existing cup/dialog flow and per-module ownership checks; see [creator support](APP_DEVELOPMENT.md#module-creator-support).
 
 ## Keep the prompt and page aligned

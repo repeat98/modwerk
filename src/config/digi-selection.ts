@@ -1,5 +1,5 @@
 import type { BuilderMachine } from '../engine/elekloader/protocol'
-import { BUILDER_SOURCE } from '../engine/elekloader/digi-build'
+import { BUILDER_SOURCE } from '../engine/elekloader/machine-build'
 import { DIGI_MODS, resolveDigiSelection } from '../devices/digi-mods'
 import { cleanName, normalizeModuleVersions, type Configuration } from './workspace'
 

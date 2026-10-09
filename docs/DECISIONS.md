@@ -1,5 +1,21 @@
 # Architecture decisions
 
+## One Elekloader builder for every machine — 9 October 2026
+
+The owner chose Elekloader as the core builder, with each machine extending its
+profiles, cores, linkable modules and resource rules. Retire the Octabam-derived
+production composer once the replacement preserves the approved catalogue,
+mandatory logger/startup infrastructure and qualification. Keep Octabam source
+and independent validation tools. Wrapping the old composer in a whole-image
+`.elemod` does not implement this decision.
+
+`src/engine/elekloader/machine-build.ts` is the shared kit entry point; Digitakt
+and Digitone already use it. Private Octatrack format-2 builds now run through
+the unchanged kit. The public OT cutover remains pending. The owner also wants
+safer updates with fewer power cycles: a resident base and verified USB runtime
+updates are the implementation target, with restart requirements explicit for
+unsupported changes. See [actual evidence and outstanding work](OCTATRACK_ELEKLOADER_MIGRATION.md).
+
 ## Independent platform backend licensing — 9 October 2026
 
 The owner selected Elastic License 2.0 for the independent Modwerk API/backend

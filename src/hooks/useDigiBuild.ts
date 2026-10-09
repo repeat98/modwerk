@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { requireBuildAccount } from '../community/member-access'
 import { trackUsage } from '../community/usage'
-import { buildStep, createDigiBuilder, prepareBuild, type Builder } from '../engine/elekloader/digi-build'
+import { buildStep, createMachineBuilder, prepareBuild, type Builder } from '../engine/elekloader/machine-build'
 import type { BuilderCheck, BuilderDevice, BuilderMachine, BuilderResult } from '../engine/elekloader/protocol'
 import type { BuildProgress } from '../engine/protocol'
 
@@ -30,7 +30,7 @@ export function useDigiBuild(machine: BuilderMachine, file: File | undefined, re
     const request = ++operation.current, controller = operation
     void requireBuildAccount().then(() => {
       if(operation.current!==request)return
-      client.current ??= createDigiBuilder()
+      client.current ??= createMachineBuilder()
       return prepareBuild(client.current, { machine, release, stock: file, moduleIds })
     }).then(prepared => {
       if (operation.current !== request || !prepared) return
