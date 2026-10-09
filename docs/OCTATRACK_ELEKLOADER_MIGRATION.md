@@ -9,6 +9,12 @@ packing and output verification. A machine-specific whole-image composer
 wrapped in a format-1 `.elemod` would retain the second builder and does not
 meet this goal.
 
+The owner explicitly requires the builder to run natively in the browser.
+Use the TypeScript kit in a Web Worker for firmware construction and
+verification. Native C/DSP compilation prepares linkable packages for authors;
+the upstream Python builder is an offline independent comparison. Neither is
+a runtime dependency for browser users, and stock firmware stays local.
+
 [`machine-build.ts`](../src/engine/elekloader/machine-build.ts) is the shared
 Modwerk entry point. Digitakt and Digitone use it today, with their existing
 catalogue and download behaviour. The private Octatrack verifier uses the same
@@ -55,6 +61,26 @@ builds successfully. This exercises actual DSP source assembly, relocation,
 event-table linking and the kit's dependency checks, not just ColdFire code.
 The tone replaces input A and the bus removes SPATIALIZER; these private
 examples are validation inputs, not proposed production defaults.
+
+The private Modwerk core source recipe now compiles logger 0.2.0, startup
+artwork and the unwired upload controller directly with Elekloader's SDK.
+The shared TypeScript service and native reference produced identical saved
+core-only `.bin` and `.syx` files. This prototype's decoded MAIN hash is
+`e2fe2804a780c58ee4c40c6b5e96c961963cdfbca03413747a2be038a1e0e7ea`.
+The identity describes the core-only configuration; it is not a catalogue
+release or a flash candidate.
+
+An isolated emulator built from this branch passed its EMAC and peripheral
+gates. Its mc68k source matched all 72 tracked files at the repository's exact
+pin. A private probe of the TypeScript-built MAIN passed RTOS handoff, run
+image copying, BSS clearing from poisoned RAM, preservation of every byte in
+the 8 KiB retained/I/O region, draw-gate initialization, data/address-register
+and stack restoration, and stock task scheduling. A separate MKII-panel
+emulator run with the startup animation enabled also reached the scheduling
+gate. These are bootstrap smoke checks without a card/project or DSP
+execution. They do not establish physical reset retention, logger card I/O,
+audio, live sampling, cache behaviour or USB module loading; hardware remains
+untested. Stock-bearing outputs and the detailed probes remain private.
 
 ### Reproduce locally
 
@@ -152,7 +178,7 @@ hardware qualification for the new Elekloader base.
 
 | Area | Observed gap / next implementation |
 | --- | --- |
-| Mandatory infrastructure | Port `sdk/runtime/logging` and `sdk/runtime/startup` into the Elekloader core/recipes, including exact build identity, guarded local stock replay, retained/I/O memory and startup ordering. Neither is present in upstream core 0.3. Old source-specific exceptions do not qualify a different core. |
+| Mandatory infrastructure | The [private base source recipe](../sdk/machines/octatrack/elekloader/README.md) extends upstream core 0.3 with logger/startup and the unwired upload controller. Qualify its guarded stock replay, retained/I/O memory and bootstrap; integrate exact selected-module identity. Old source-specific exceptions do not qualify a different core. |
 | Mute Modes | Its callable `Linked.reference` reaches an upstream converter path that expects an `(address, hash)` tuple and raises `TypeError`. Fix source conversion and rerun the independent check. |
 | MIDI Scenes | Its writes inside the bootloader-copy range are refused. Port the source to a safe layout; do not weaken the protected-range rules. |
 | Poly8 | Conversion emits a package, but native linking fails on unresolved dependencies. Supply explicit source dependencies and remove duplicate shared implementations. |
