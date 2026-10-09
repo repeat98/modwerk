@@ -74,7 +74,7 @@
       "revision": "363861e31ee963c478fab2b190a0fabe1d7ce37b",
       "sourcePath": "modules/analog-bassdrum/README.md",
       "sourceSha256": "4876d9613e5e65de0aefeef7ddd60ef6d0d5642c61b1fde60b97fc0f72255f68",
-      "vendoredSha256": "f52aa4eef3dcf791d128df145ad89773019293f4db963ae7de77344b1cf126b4",
+      "vendoredSha256": "3736faf95b23136c57b83e50e708f0d5f2352a9030eef5123bc42b8cc2ca5bd3",
       "importedVendoredSha256": "57743ee073204e2a1b51ed7abad7ddf44eae95faddc90d397ca707d30a2bdfed",
       "adaptation": " Octamod 0.1.1 version and native verification evidence appended; imported fingerprint retained.",
       "localDocumentationUpdate": {
@@ -92,6 +92,12 @@
           "moduleVersion": "0.1.4-experimental",
           "previousVendoredSha256": "1656a1ffd9533605f7931cdac2488341aa69defc0f4321e77d887183f59d7d15",
           "reason": "Owner-auditioned 909 direct-out reference update and matching release documentation; fresh physical/timing/memory qualification explicitly waived for this exact source. Original upstream fingerprints retained."
+        },
+        {
+          "moduleVersion": "0.1.4-experimental",
+          "previousVendoredSha256": "f52aa4eef3dcf791d128df145ad89773019293f4db963ae7de77344b1cf126b4",
+          "documentationCommit": "335f38daf00c2041b9c36ecf2917a58232224150",
+          "reason": "Record the owner-merged Flex recovery guidance from PR #367. README-only update; original upstream fingerprints, firmware source, version and qualification evidence retained."
         }
       ]
     },
