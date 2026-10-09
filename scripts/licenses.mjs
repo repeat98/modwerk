@@ -11,7 +11,7 @@ const notices = await renderLicenseNotices(root)
 const usbCredits = await readFile(resolve(root, 'docs/USB_AUDIO_ATTRIBUTION.txt'), 'utf8')
 const audioPackage = JSON.parse(await readFile(resolve(root, 'node_modules/wavesurfer.js/package.json'), 'utf8'))
 const audioCredits = ['WaveSurfer.js ' + audioPackage.version, 'SPDX: BSD-3-Clause',
-  'Used in: website audio players', 'Notice source: https://github.com/katspaugh/wavesurfer.js/blob/v' + audioPackage.version + '/LICENSE', '',
+  'Used in: website audio players', 'Notice source: https://github.com/katspaugh/wavesurfer.js/blob/' + audioPackage.version + '/LICENSE', '',
   (await readFile(resolve(root, 'node_modules/wavesurfer.js/LICENSE'), 'utf8')).trimEnd()].join('\n') + '\n'
 const site = notices + '\n' + '='.repeat(72) + '\n\n' + await renderVendorNotices(root)
   + '\n' + '='.repeat(72) + '\n\n' + usbCredits

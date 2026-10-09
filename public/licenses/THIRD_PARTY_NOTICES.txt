@@ -3325,7 +3325,7 @@ sdk/octabam/modules/usb-audio-out-tracks-main-cue/TESTING.md.
 WaveSurfer.js 8.0.2
 SPDX: BSD-3-Clause
 Used in: website audio players
-Notice source: https://github.com/katspaugh/wavesurfer.js/blob/v8.0.2/LICENSE
+Notice source: https://github.com/katspaugh/wavesurfer.js/blob/8.0.2/LICENSE
 
 BSD 3-Clause License
 
