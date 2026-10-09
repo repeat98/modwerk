@@ -342,6 +342,96 @@ identity before automation can associate a trial with the exact candidate or
 accept it. Keep captures and raw reports private; none of these tools is
 connected to automatic log uploads or automatic trial acceptance here.
 
+## Modwerk's own interface for safe agent access
+
+The owner wants the agent to access the physical machine safely through an
+interface we own. Provide a versioned Modwerk device interface and a shared
+TypeScript client used by the browser and automated hardware tests. Reuse the
+existing upload protocol/controller where applicable. Developer transports
+may adapt host APIs, but must use the same command validation, capability
+checks and state transitions. The existing Octabam hardware tools supply
+capture and test actions; they are not the complete device-access interface.
+The device transport and execution backend remain unimplemented.
+
+Connection starts with read-only identification and status: exact machine/OS,
+installed base/ABI and active module identities, supported capabilities,
+session/generation and device health. Refuse a mismatched or unknown target
+before any state-changing request. Bind an automation session to the selected
+unit and its explicitly enabled operations; reconnecting must re-establish
+identity and ownership. A local firmware filename or USB product name is not
+installed-image verification.
+
+Expose a bounded command set: status, CPU/DSP measurements and diagnostic
+snapshots; validated test transport/parameter actions; and module staging,
+verification, activation, trial, acceptance and rollback. Define parameter
+ranges, lengths, deadlines and supported state transitions for every command.
+Keep diagnostics collection out of the audio-critical path and report missing
+or dropped observations. Raw memory access, arbitrary writes and unbounded
+command forwarding are outside this automation interface. Base installation
+and recovery need their own validated workflow.
+
+Use the agreed dedicated upload mode and stopped playback/live recording for
+initial activation. Validate package hashes, installed base compatibility,
+resource ownership and both-core quiescence before changing dispatch. Retain
+the previous usable module set through the trial. Missing acknowledgements,
+disconnects or uncertain execution must leave the client in an explicit
+unconfirmed/recovery state; never infer success or retry activation blindly.
+Only a confirmed device response establishes activation or rollback, and a
+diagnostic result does not automatically accept a trial.
+
+Before autonomous state-changing access, prove the interface on the physical
+unit with wrong-target/base and unsupported-command refusals, malformed and
+oversized requests, stale/replayed messages, lost acknowledgements,
+disconnect/reconnect, interrupted staging and failed activation/rollback.
+Verify that status/audio monitoring survives the supported fault paths and
+that stock recovery remains available. This interface is the foundation for
+the measurements below and routine module changes without rebooting.
+
+## Quantify CPU and DSP load on the device
+
+The automated hardware tests must measure the ColdFire CPU and each DSP core
+on the physical OT, alongside audio correctness. This is an agreed deliverable,
+not telemetry implemented by the current prototype. USB ring counters and
+audible dropouts remain useful symptoms, but cannot supply a CPU/DSP utilization
+percentage by themselves.
+
+Establish a validated device timing source and the actual processing window
+before reporting load. Record the timer units, resolution, clock calibration,
+wrap handling and which work is included. Distinguish elapsed processing time,
+busy time, waiting and hardware cycle counts wherever those can actually be
+observed; keep emulator modeled cycles and executed instructions separate.
+Compute utilization and remaining deadline headroom only from a measured
+quantity and a verified budget for that same processor and window. Report
+unavailable measurements explicitly rather than estimating them from silence
+or a clean USB stream.
+
+| Measurement | Required evidence |
+| --- | --- |
+| ColdFire CPU | Whole-workload busy time/utilization and peak load; task/interrupt breakdown where validated instrumentation permits it. |
+| DSP core 0 and core 1 | Separate processing-time distributions and budget/headroom for each core, with mean, p95, p99, observed maximum and deadline-miss counts. Preserve their parallel execution rather than adding their percentages together. |
+| Module cost | Matched baseline, individual-module and combined-module runs, repeated for different instance counts, tracks and FX slots. Whole-project load remains the acceptance context. |
+| Measurement cost | Matched runs with diagnostics enabled/disabled and capture/USB streaming controlled, to quantify timing-hook, logging and transport overhead. Bound collection and report dropped telemetry. |
+
+Use reproducible private projects with identical tempo, track speed, swing,
+sample rate, settings and test duration. Include idle and playback baselines,
+stock SPRING REV at its expensive types/settings and trigger splits on both
+cores, then the owner's stress project: eight-track delays, A/B scene movement,
+Flex recording and live sampling. Exercise module combinations, replacement
+and removal, and report before/after resource usage separately from processor
+load. Compare stock behavior through a reference with the same diagnostic and
+capture stack, explicitly accounting for the instrumentation's added work.
+
+Each report must bind the observed installed base/module identities, hardware
+model, project/settings identity, timing method, instrumentation version and
+raw timing statistics to the audio and USB-counter observations. Correlate
+load peaks and missed deadlines with glitches or freezes; preserve failed
+runs. Validate the measurement method and overhead on hardware before setting
+acceptance budgets or claiming performance savings. SPRING REV is the design
+reference from the module guide, not an arbitrary universal per-effect ceiling.
+Export bounded diagnostic snapshots through the planned USB interface;
+collection must not block the audio path. Existing private-evidence and
+explicit trial-acceptance rules still apply.
+
 ## Agreed implementation sequence
 
 1. Qualify the Elekloader base and stopped upload mode, preserving logger,
@@ -357,11 +447,16 @@ connected to automatic log uploads or automatic trial acceptance here.
    use. Missing modules need an explicit safe fallback with project data
    preserved. The present SPATIALIZER donor bus is not a compatible default.
 5. Integrate an autonomous local hardware runner using USB MIDI, audio,
-   counters and bounded diagnostics. Octabam already supplies
+   counters and bounded diagnostics through Modwerk's own versioned device
+   interface and shared TypeScript client, with the safe-access contract above.
+   Octabam already supplies
    `tools/hw/usb_probe.py`, `usb_counters.py`, `ot_midi.py` and test-project
    generators; its USB AUDIO IN work is separate from Modwerk's imported
    output-only stack. Reports bind exact base/module identities to observed
-   results, and uploaded logs follow the existing sanitized report contract.
+   results. Add validated on-device CPU and separate DSP-core load/headroom
+   measurements, matched SPRING REV and stress-project benchmarks, and measured
+   diagnostic overhead as described above. Uploaded logs follow the existing
+   sanitized report contract.
 6. Add the browser upload/verify/activate/diagnostic flow and retire the public
    Octabam composer only after catalogue and hardware qualification pass.
 

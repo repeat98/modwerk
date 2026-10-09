@@ -74,9 +74,29 @@ none is a ready-to-flash no-reboot loader candidate.
 - The client and C controller have synthetic-backend evidence. Real USB
   transport, runtime execution/lifecycle, both-core DSP P/X/Y allocation,
   recovery across connections and installed-identity verification remain.
+- Provide safe agent access through our own versioned Modwerk device interface
+  and the same TypeScript client used by the browser. Start with read-only
+  identity/status, bind the session to the selected unit and permitted
+  capabilities, and expose bounded diagnostic/test/module operations. Validate
+  identity, parameters, package/resource compatibility and state transitions;
+  retain stopped activation and explicit trial acceptance/rollback. Prove
+  wrong-target, malformed/replayed requests and disconnect/uncertain-result
+  behavior on hardware before autonomous state-changing access. The migration
+  record specifies the contract; the real device backend is still future work.
 - Reuse the existing hardware capture/counter/MIDI/project tools. Listening
   to the ported output-only USB Audio module needs no USB Audio In module;
   the upstream host-to-OT tone probe does require that separate input path.
+- Quantify ColdFire CPU load and each DSP core's load/headroom on the physical
+  OT through the automated tests. Establish validated device timing and budget
+  measurements, record mean/p95/p99/observed maximum and deadline misses, and
+  quantify diagnostics/USB-capture overhead. Compare matched baselines, worst
+  SPRING REV settings/trigger splits on both cores, individual modules,
+  multiple instances and combinations under the owner's stress project.
+  Bind timing and audio/counter observations to the installed identities and
+  exact project/settings. Keep modeled emulator cycles and executed
+  instructions distinct from hardware timing; USB counters and silence alone
+  do not establish utilization. The migration record has the measurement plan;
+  this telemetry is required future work, not already implemented.
 - Test legacy projects, multiple instances, Parts, both DSP cores and live
   sampling under the owner's stress project. Record only actual observations;
   neither a local image hash nor a `CLEAN` diagnostic verdict proves an
