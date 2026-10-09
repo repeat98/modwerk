@@ -194,7 +194,12 @@ Simply transferring complete OS images over USB would still need
 the OT's existing restart/activation path. Hookbus subscriptions alone also do
 not make linked modules safely replaceable while running.
 
-The next device-side prototype should proceed in this order:
+The [upload controller](../sdk/runtime/upload/README.md) now implements the
+bounded transaction and versioned frame decoder in freestanding ColdFire C.
+Its fault backend tests staging, verification, trial playback, confirmed
+retirement and rollback; all mutations require a complete device backend and
+fresh session binding. It is not connected to USB or stock firmware and does
+not execute packages. The device implementation should proceed in this order:
 
 1. Add a bounded vendor USB interface alongside the existing interfaces.
    Start with identification, base/ABI identity, capabilities and a read-only
@@ -220,7 +225,8 @@ ownership support this ABI. Legacy direct stock patches, base changes, USB
 descriptor changes and unsupported DSP layouts can still require a complete
 OS install and power cycle. Persisting a runtime selection across boot also
 needs an explicit validated loader/storage design. These mechanisms are
-**planned, not implemented or hardware verified**.
+**not connected to the device or hardware verified**. The controller is an
+implementation component, not evidence that the runtime loader works on an OT.
 
 For later hardware qualification, keep the exact candidate hash and record
 boot, project/Part persistence, eight-track delays, A/B scene movement,
@@ -256,3 +262,8 @@ over USB, an interrupted upload recovered, and playback resumed without a
 reboot. Later acceptance adds legacy projects, multiple instances, both DSP
 cores and the owner's stress project. Firmware, projects, card images and audio
 captures remain local unless separately authorized for sharing.
+
+At the owner's request, keep all these pieces on one development branch until
+stable. The foundation-only PR #374 was closed on 9 October 2026; do not open
+separate small PRs for each preparatory component. Physical qualification still
+requires concrete private builds and actual results for this source.
