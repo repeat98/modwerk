@@ -16,6 +16,7 @@ import { LegalPage } from './legal/LegalPage'
 import { PrivacyPage } from './community/PrivacyPage'
 import { INDEPENDENCE_NOTICE, FLASHING_RISKS, FIRMWARE_SHARING_NOTICE } from './firmware-notices'
 import { assetUrl } from './hosting'
+import { contributorSearchText } from './catalog/module-authors'
 import { getRoute, moduleHref } from './routing'
 import { setPageMetadata } from './page-metadata'
 import { HOME_DESCRIPTION, HOME_TITLE } from './site-metadata'
@@ -222,7 +223,7 @@ export default function App() {
   const visibleModules = AVAILABLE_MODULES.filter((module) =>
     (libraryFilter === 'all' || module.category === libraryFilter)
     && (libraryFamily==='all'||DETAILS[module.id].family===libraryFamily)
-    && (module.name + ' ' + module.description + ' ' + module.authorName + ' ' + module.author).toLowerCase().includes(query.toLowerCase().trim()),
+    && (module.name + ' ' + module.description + ' ' + module.authorName + ' ' + module.author + ' ' + contributorSearchText(module.contributors)).toLowerCase().includes(query.toLowerCase().trim()),
   ).sort((a,b)=>compareModules(a,b,sort,statistics))
   const displayedModules = detailModule ? [detailModule] : allRoute || route === 'library' || LIBRARY_CATEGORIES.includes(route as typeof LIBRARY_CATEGORIES[number]) ? visibleModules : []
   const { viewed: viewedModuleVersions, baseline: moduleBaseline } = useModuleUpdates(displayedModules, MODULES, detailModule?.id)

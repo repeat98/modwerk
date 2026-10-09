@@ -12,6 +12,8 @@ import { ShareModuleButton } from '../community/ShareModuleButton'
 import { Icon } from './Icon'
 import { catalogNeighbors, type CatalogBrowse } from '../catalog/catalog-browse'
 import { CatalogNavigation } from './CatalogNavigation'
+import { ModuleAuthors } from './ModuleAuthors'
+import type { ModuleContributor } from '../catalog/module-authors'
 
 type DetailTab = 'Overview' | 'Media' | 'Discussion' | 'Changelog' | 'Issues'
 const tabs: DetailTab[] = ['Overview', 'Media', 'Discussion', 'Changelog', 'Issues']
@@ -22,9 +24,10 @@ function linkedTab(): DetailTab {
   return tabs.find(value => value.toLowerCase() === query.get('tab')) ?? 'Overview'
 }
 
-export function ModuleDetailLayout({ id, title, family, detail, author, authorUrl, description, selected, onToggle, backHref, backLabel, preview, resources, notice, guide, issueReport, browse, onBackToResults, titleBadge, configureTarget, overviewIntro }: {
+export function ModuleDetailLayout({ id, title, family, detail, author, authorUrl, contributors, description, selected, onToggle, backHref, backLabel, preview, resources, notice, guide, issueReport, browse, onBackToResults, titleBadge, configureTarget, overviewIntro }: {
   browse?: CatalogBrowse | null; onBackToResults?: () => void
   id: string; title: string; family: string; detail: string; author: string; authorUrl: string; description: string
+  contributors?: readonly ModuleContributor[]
   titleBadge?: string
   configureTarget?: string
   selected: boolean; onToggle: () => void; backHref: string; backLabel: string
@@ -63,7 +66,7 @@ export function ModuleDetailLayout({ id, title, family, detail, author, authorUr
       <div className="detail-intro">
         <div className="detail-tags"><span className="pill">{family}</span><span className="subtle">{detail}</span></div>
         <div className="detail-title"><h1 id="module-title">{title}</h1>{titleBadge && <span className="module-compatibility-badge">{titleBadge}</span>}</div>
-        <div className="module-creator"><a className="author-link" href={authorUrl} target="_blank" rel="noreferrer">by {author} ↗</a><CreatorSupport key={id} id={id}/></div>
+        <div className="module-creator"><ModuleAuthors name={author} url={authorUrl} contributors={contributors} by arrows><CreatorSupport key={id} id={id}/></ModuleAuthors></div>
         <p className="detail-description">{description}</p>
         {notice && <div className="detail-notice">{notice}</div>}
         <button className={'button module-configure-action ' + (selected ? 'button-added' : 'button-primary')} onClick={configureTarget && !selected ? showConfiguration : onToggle} aria-pressed={selected}><Icon name={selected ? 'check' : configureTarget ? 'sliders' : 'plus'} size={16} />{selected ? 'Added to configuration' : configureTarget ? 'Configure ' + title : 'Add to configuration'}</button>

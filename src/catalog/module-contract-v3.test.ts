@@ -21,6 +21,15 @@ const published = (): Record<string, unknown> => ({
 const parse = (value: unknown) => parseModwerkModule(value, machines)
 
 describe('module contract v3', () => {
+  it('keeps contributor attribution separate from maintained module access', () => {
+    const value = template(), contributors = [{ github: 'bryantysinger', name: 'Bryan Tysinger' }, { github: 'tester-two' }]
+    value.author.contributors = contributors
+    const document = parse(value)
+    expect(document.author.contributors).toEqual(contributors)
+    expect(document.maintainers).toEqual(['example-author'])
+    value.author.contributors = [{ github: 'EXAMPLE-AUTHOR' }]
+    expect(() => parse(value)).toThrow('credit each person once')
+  })
   it('keeps a declared documentation tutorial and its captures tied to the displayed module version', () => {
     const value = published() as ReturnType<typeof template>
     const steps = ['Select PROOF.', 'Move a control.', 'Play and stop the pattern.']

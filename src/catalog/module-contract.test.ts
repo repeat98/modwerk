@@ -5,6 +5,11 @@ import example from '../../public/module-repository.example.json'
 import catalog from './module-documents.json'
 import sdkCatalog from '../../sdk/catalog.json'
 describe('module folder contract',()=>{
+ it('retains multiple credited contributors without replacing the primary author',()=>{
+  const contributors=[{github:'bryantysinger',name:'Bryan Tysinger'},{github:'tester-two'}]
+  expect(parseModuleDocument({...example,author:{...example.author,contributors}}).author).toEqual({...example.author,contributors})
+  for(const invalid of [[{github:example.author.github.toUpperCase()}],[...contributors,{github:'BRYANTYSINGER'}],[{github:'https://example.com'}],[{github:'tester',name:''}],[{github:'tester',maintainer:true}],Array(21).fill({github:'tester'})])expect(()=>parseModuleDocument({...example,author:{...example.author,contributors:invalid}})).toThrow('author.contributors')
+ })
  it('requires exact versions and retains honest evidence for every catalog module',()=>{
   expect(parseModuleDocument(example).version).toBe('0.1.0')
   expect(catalog.modules.map(module=>parseModuleDocument(module).id)).toEqual(sdkCatalog.modules.map(module=>module.id))

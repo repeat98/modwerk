@@ -23,7 +23,7 @@ it('checks real PR publication changes without executing module source', async (
   const failure=()=>{const result=run('--base','HEAD','--write');expect(result.status).not.toBe(0);return result.stderr}
   const git=(...args:string[])=>execFileSync('git',args,{cwd:root,encoding:'utf8'})
   try {
-    for(const path of ['scripts/modules.mjs','scripts/change-scope.mjs','scripts/module-source.mjs','scripts/synth-release.mjs','scripts/module-qualification.mjs','scripts/retained-evidence.mjs','scripts/builder-preservation.mjs','scripts/module-documentation.mjs','src/catalog/module-contract.ts','src/catalog/module-contract-v3.ts','src/devices/machine-contract.ts','src/catalog/versions.ts','src/catalog/module-folder.ts','src/catalog/resource-impact.ts','src/catalog/compatibility-checks.ts','sdk/module-release-waivers.json']){
+    for(const path of ['scripts/modules.mjs','scripts/change-scope.mjs','scripts/module-source.mjs','scripts/synth-release.mjs','scripts/module-qualification.mjs','scripts/retained-evidence.mjs','scripts/builder-preservation.mjs','scripts/module-documentation.mjs','src/catalog/module-contract.ts','src/catalog/module-contract-v3.ts','src/catalog/module-authors.ts','src/devices/machine-contract.ts','src/catalog/versions.ts','src/catalog/module-folder.ts','src/catalog/resource-impact.ts','src/catalog/compatibility-checks.ts','sdk/module-release-waivers.json']){
       mkdirSync(dirname(resolve(root,path)),{recursive:true})
       copyFileSync(resolve(path),resolve(root,path))
     }

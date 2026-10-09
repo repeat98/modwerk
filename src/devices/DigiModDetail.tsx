@@ -9,6 +9,7 @@ import { FLASHING_RISKS, FIRMWARE_SHARING_NOTICE } from '../firmware-notices'
 import { DIGI_CORES, DIGI_MODS, digiModuleDocument, estimateCombination, type DigiMod } from './digi-mods'
 import { DigiModPreview } from './DigiModPreview'
 import { deviceHref, type DeviceProfile } from './registry'
+import { ModuleAuthors } from '../components/ModuleAuthors'
 
 const kib = (bytes: number) => (bytes / 1024).toFixed(bytes < 10240 ? 1 : 0) + ' KiB'
 const documentUrl = (mod: DigiMod, path: string) => issueRepository() + '/blob/main/sdk/' + mod.device + '/modules/' + mod.id + '/' + path
@@ -43,7 +44,7 @@ function DigiModuleGuide({ mod, device }: { mod: DigiMod; device: DeviceProfile 
         <div className="overview-grid">
           <section className="detail-section"><h2>About this module</h2><p>{document.presentation.overview}</p><ul className="feature-list">{document.presentation.highlights.map(item => <li key={item}><Icon name="check" size={15} />{item}</li>)}</ul></section>
           <aside className="info-panel"><h2>Module information</h2><dl>
-            <div><dt>Author</dt><dd><a href={mod.repository} target="_blank" rel="noreferrer">{mod.author} ↗</a></dd></div>
+            <div><dt>{mod.contributors?.length ? 'Authors' : 'Author'}</dt><dd><ModuleAuthors name={mod.author} url={mod.repository} contributors={mod.contributors} arrows/></dd></div>
             <div><dt>Location</dt><dd>{'location' in access ? access.location : access.noUiReason}</dd></div>
             <div><dt>Base firmware</dt><dd>OS {mod.releases.join(' / ')}</dd></div>
             <div><dt>Module version</dt><dd>{document.version}</dd></div>
@@ -92,7 +93,7 @@ export function DigiModDetail({ device, mod, selected, onToggle, browse, onBackT
   const document = digiModuleDocument(mod), id = mod.device + '-' + mod.id
   return <ModuleDetailLayout browse={browse} onBackToResults={onBackToResults} id={id} title={mod.title} family={mod.category}
     detail={'location' in document.access ? document.access.location : document.access.noUiReason}
-    author={mod.author} authorUrl={mod.repository} description={mod.summary} selected={selected} onToggle={onToggle}
+    author={mod.author} authorUrl={mod.repository} contributors={mod.contributors} description={mod.summary} selected={selected} onToggle={onToggle}
     backHref={deviceHref(mod.device)} backLabel={'All ' + device.name + ' modules'}
     preview={<DigiModPreview mod={mod} />} resources={<DigiResourceIndicators mod={mod} />}
     guide={<DigiModuleGuide mod={mod} device={device} />}

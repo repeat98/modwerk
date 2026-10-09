@@ -1,4 +1,5 @@
 import { compareModuleVersions } from './versions.ts'
+import { parseModuleContributors, type ModuleContributor } from './module-authors.ts'
 import type { MachineProfile } from '../devices/machine-contract.ts'
 
 // Module contract v3 (modwerk.module.json): one shared core for every machine, plus the machine's platform section.
@@ -17,7 +18,7 @@ export type ModwerkModule = {
   id: string; name: string; version: string; machine: string; category: typeof MODULE_V3_CATEGORIES[number]
   // Standalone firmware replaces the whole OS image: it is exclusive and never combines with other modules.
   exclusive: boolean
-  author: { github: string; name?: string; credits: string[] }
+  author: { github: string; name?: string; contributors?: ModuleContributor[]; credits: string[] }
   maintainers: string[]
   source?: { repository: string; revision: string; path: string }
   presentation: { label: string; family: string; summary: string; overview: string; highlights: string[]; usage: string[] }
@@ -107,9 +108,10 @@ export function parseModwerkModule(value: unknown, machines: readonly MachinePro
   if (machine.sdk?.platform !== 'elemod') fail('module.machine', machine.name + ' modules use its own platform contract (' + (machine.sdk?.platform ?? 'no SDK yet') + ')')
   const moduleVersion = version(item.version, 'module.version')
 
-  const authorValue = object(item.author, 'module.author', ['github', 'credits'], ['name'])
+  const authorValue = object(item.author, 'module.author', ['github', 'credits'], ['name', 'contributors'])
   const author: ModwerkModule['author'] = { github: login(authorValue.github, 'module.author.github'), credits: texts(authorValue.credits, 'module.author.credits', 1, 20, 300) }
   if (authorValue.name !== undefined) author.name = text(authorValue.name, 'module.author.name', 80)
+  if ('contributors' in authorValue) author.contributors = parseModuleContributors(authorValue.contributors, author.github, 'module.author.contributors')
   const maintainers = list(item.maintainers, 'module.maintainers', 1, 10).map((entry, index) => login(entry, 'module.maintainers[' + index + ']'))
   if (!maintainers.includes(author.github)) fail('module.maintainers', 'include the author, who maintains the module until they hand it over')
   if (new Set(maintainers).size !== maintainers.length) fail('module.maintainers', 'list each maintainer once')

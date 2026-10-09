@@ -22,7 +22,7 @@ Every module follows [the guide for its category](module-guides/README.md): effe
 ## Rules that always apply
 
 - Never commit firmware, extracted stock code or tables, memory dumps, emulator cards or built images. Firmware stays on your computer. Stock code is referenced by address, length and SHA-256 and copied from each user's own OS file when they build.
-- Keep every author's credit and full licence text. Pin ported source to an exact commit.
+- Keep every author's credit and full licence text. Pin ported source to an exact commit. Both module contracts accept an optional `author.contributors` array of `{ "github": "handle", "name": "Display name" }` entries (`name` is optional). Each contributor appears on a separate line below the primary author in library cards, page headers and module information; describe their contribution in `author.credits` and the README. This attribution does not grant module ownership, report access or release authority; those continue to use the primary author and declared maintainers.
 - Code or behaviour changes inside a module folder need a higher semantic `version` in its manifest, and the same version in `sdk/catalog.json` once listed. Documentation/media/prose-only edits need a version bump only when requesting automatic author publication.
 - One module per pull request. The owner approves the first release and changes beyond the registered author's scope. Later scoped updates can use automatic author publication after evidence verification and required checks.
 

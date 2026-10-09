@@ -123,6 +123,11 @@ export const CREDIT_SECTIONS: readonly CreditSection[] = [
         description: 'The original Sidechain Compressor ColdFire/DSP source and coefficient generator, plus the Mute Modes runtime and PERSONALIZE menu from OT Kyoti FW, with octabam integration by Sam Banks.',
         links: [repo('Zac-Kyoti/octatrack-kyoti-fw')],
       },
+      {
+        name: 'Recorder Loop Fix', author: 'Sam Banks (@sambanks) and Bryan Tysinger (@bryantysinger)',
+        description: 'Sam authored the recorder patches and source oracles. Bryan identified the issue early, documented it extensively, developed test cases and tested recorder looping over more than a year.',
+        links: [repo('sambanks/octabam'), repo('bryantysinger')],
+      },
       ...USB_AUDIO_MIDI_CREDITS,
       {
         name: 'Play Modes', author: 'devilfish707',

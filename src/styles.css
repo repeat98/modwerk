@@ -1710,7 +1710,9 @@ h1 { font-size: 28px; }
 }
 
 .module-creator { position: relative; display: flex; align-items: center; gap: 6px; min-height: 28px; }
-.module-creator > .author-link { min-width: 0; overflow-wrap: anywhere; }
+.module-author-lines { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.module-author-line { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.module-author-line > a { min-width: 0; overflow-wrap: anywhere; }
 .creator-support-slot { display: flex; align-items: center; gap: 4px; width: 56px; height: 28px; flex-shrink: 0; }
 .creator-support-link { display: inline-grid; place-items: center; width: 28px; height: 28px; padding: 0; background: transparent; border: 0; color: var(--muted); border-radius: 5px; }
 .creator-support-link:hover { color: var(--text); background: #ffffff0a; }

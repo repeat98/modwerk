@@ -1,4 +1,5 @@
 import { compareModuleVersions } from './versions.ts'
+import { parseModuleContributors, type ModuleContributor } from './module-authors.ts'
 // Shared by the web catalog and stock-free PR validation. No Python is evaluated.
 export type EvidenceMethod = 'unmeasured' | 'static' | 'emulator' | 'hardware'
 export type ModuleMetric = { label: string; display: string; value: number | null; unit: string; method: EvidenceMethod; conditions: string; source: string }
@@ -30,7 +31,7 @@ export type ModuleDocument = {
   schemaVersion: 2; id: string; key: string; name: string; version: string; category: typeof MODULE_CATEGORIES[number]
   source?: { repository: string; revision: string; path: string }
   build?: { status: 'pending'; reason: string }
-  author: { github: string; name?: string; credits: string[] }; nativeManifest: string
+  author: { github: string; name?: string; contributors?: ModuleContributor[]; credits: string[] }; nativeManifest: string
   presentation: { label: string; family: string; summary: string; overview: string; highlights: string[]; usage: string[] }
   access?: { location: string; steps: string[]; screenshots: string[]; noUiReason?: string }
   controls: ModuleControl[]
@@ -174,9 +175,9 @@ export function parseModuleDocument(value: unknown): ModuleDocument {
     build={status:enumeration(b.status,'build.status',['pending']),reason:text(b.reason,'build.reason',400)}
     if(!source) fail('build','pending imports require an exact source pin')
   }
-  const a=object(d.author,'author',['github','credits'],['name']), github=text(a.github,'author.github',39)
+  const a=object(d.author,'author',['github','credits'],['name','contributors']), github=text(a.github,'author.github',39)
   if(!/^[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?$/.test(github)) fail('author.github','invalid GitHub login')
-  const authorName='name' in a ? { name:text(a.name,'author.name',100) } : {}
+  const authorName={...('name' in a ? { name:text(a.name,'author.name',100) } : {}),...('contributors' in a ? {contributors:parseModuleContributors(a.contributors,github,'author.contributors')} : {})}
   const p=object(d.presentation,'presentation',['label','family','summary','overview','highlights','usage'])
   const c=object(d.compatibility,'compatibility',['firmware','effectId','location','conflicts','limitations'])
   if(c.effectId!==null&&(typeof c.effectId!=='number'||!Number.isInteger(c.effectId)||c.effectId<4||c.effectId>31))fail('compatibility.effectId','expected a valid effect ID or null for contributions without an effect slot')

@@ -39,7 +39,11 @@ Source identity, actual native-code probes, instruction counts, conservative cor
 
 ## Authorship and licences
 
-Sam Banks: all eight recorder patches, source oracles and octabam declaration. Original MIT notices are retained in [LICENSE](LICENSE). See `../../../imports/recorder-loop-fix-6f9e5bc.json` for exact repository pins and per-file transformations. Original Modwerk probes use GPL-3.0-or-later; seven original recorder cave sources are retained; Modwerk corrects the inverse arm-phase calculation under GPL-3.0-or-later. No stock firmware, extracted tables/routines, compiled image or card is distributed here.
+Sam Banks: all eight recorder patches, source oracles and octabam declaration.
+
+Bryan Tysinger (@bryantysinger): early issue identification, extensive documentation, test case development and testing over more than a year. Historical hardware reports remain attributed in TESTING.md; this credit does not qualify the current Modwerk build.
+
+Original MIT notices are retained in [LICENSE](LICENSE). See `../../../imports/recorder-loop-fix-6f9e5bc.json` for exact repository pins and per-file transformations. Original Modwerk probes use GPL-3.0-or-later; seven original recorder cave sources are retained; Modwerk corrects the inverse arm-phase calculation under GPL-3.0-or-later. No stock firmware, extracted tables/routines, compiled image or card is distributed here.
 
 ## Screens and audio
 

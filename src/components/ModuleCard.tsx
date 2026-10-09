@@ -11,6 +11,7 @@ import { ModulePreview } from './ModulePreview'
 import { ModuleRelease } from './ModuleRelease'
 import { USB_AUDIO_MODULE } from '../config/usb-audio'
 import { ModuleWorksCount } from '../community/ModuleWorksCount'
+import { ModuleAuthors } from './ModuleAuthors'
 
 export type ModuleCardProps = {
   module: FirmwareModule
@@ -62,7 +63,7 @@ export function ModuleCard({ module, selected, statistics, viewedVersion, baseli
         <AddButton name={module.name} selected={selected} onToggle={onToggle} configure={module.id === USB_AUDIO_MODULE} />
       </div>
       {module.id === USB_AUDIO_MODULE && <span className="module-compatibility-badge module-card-compatibility"><Icon name="wave" size={12} />Outbox 8 compatible</span>}
-      <div className="card-credit"><a href={module.authorUrl} target="_blank" rel="noreferrer">{module.authorName}</a><span>{module.detail}</span></div>
+      <div className="card-credit"><ModuleAuthors name={module.authorName} url={module.authorUrl} contributors={module.contributors}/><span>{module.detail}</span></div>
       <p className="card-description">{module.description}</p>
       <div className="card-bottom"><span>{DETAILS[module.id].family}</span><CardStats statistics={statistics} /></div>
       <CardProof stability={moduleStability(statistics, { buildPending: moduleBuildPending(module.id), hardware: moduleHardwareEvidence(module.id) })} name={module.name} compared={compared} canCompare={canCompare} onCompare={onCompare} />

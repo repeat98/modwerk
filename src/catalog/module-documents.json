@@ -5540,8 +5540,16 @@
       },
       "author": {
         "github": "sambanks",
+        "name": "Sam Banks",
+        "contributors": [
+          {
+            "github": "bryantysinger",
+            "name": "Bryan Tysinger"
+          }
+        ],
         "credits": [
           "Sam Banks: all eight recorder patches, source oracles and octabam declaration.",
+          "Bryan Tysinger (@bryantysinger): early issue identification, extensive documentation, test case development and testing over more than a year.",
           "Modwerk contributors: source import, original qualification probes, documentation and SVG thumbnail.",
           "Modwerk: overflow-safe inverse arm phase correction; GPL-3.0-or-later. Original Sam Banks cave attribution and MIT terms retained."
         ]
