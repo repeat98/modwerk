@@ -6,8 +6,8 @@ body:has(.reporting-preview-page) { overflow: auto; height: auto; }
 .reporting-preview-heading > div:last-child { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; }
 .reporting-preview-heading .button, .reporting-preview-heading .text-button { font-size: 12px; }
 .reporting-preview-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; align-items: start; }
-.reporting-preview-panel { min-width: 0; border: 1px solid #3c3c46; border-radius: 10px; overflow: hidden; container: reporting-panel / inline-size; }
-.reporting-preview-panel > header { display: flex; align-items: flex-start; gap: 12px; padding: 17px; background: #222227; border-bottom: 1px solid #383842; }
+.reporting-preview-panel { min-width: 0; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; container: reporting-panel / inline-size; }
+.reporting-preview-panel > header { display: flex; align-items: flex-start; gap: 12px; padding: 17px; background: var(--surface); border-bottom: 1px solid var(--line); }
 .reporting-preview-panel > header > span { color: #aaaafd; font: 11px var(--mono); padding-top: 2px; }
 .reporting-preview-panel > header h2 { font-size: 14px; }
 .reporting-preview-panel > header p { color: var(--muted); font-size: 11px; line-height: 1.6; margin-top: 5px; }
