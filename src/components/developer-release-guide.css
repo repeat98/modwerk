@@ -7,11 +7,11 @@
 .developer-task-choice strong { font-size: 14px; font-weight: 600; }
 .developer-task-choice span { color: var(--muted); font-size: 12px; }
 .developer-task-choice button:hover { border-color: var(--line-hover); }
-.developer-task-choice button[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+.developer-task-choice button[aria-pressed="true"] { border-color: var(--accent-line); background: var(--accent-soft); }
 .developer-task-choice button[aria-pressed="true"]::after { content: ''; position: absolute; right: 14px; top: 17px; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
 .starter-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
 .starter-field-wide { grid-column: 1 / -1; }
-.starter-field select { width: 100%; padding: 10px 30px 10px 11px; border: 1px solid var(--control-border); border-radius: 6px; background: var(--field); color: var(--text); font: inherit; }
+.starter-field select { width: 100%; padding: 10px 42px 10px 12px; border: 1px solid var(--control-border); border-radius: 6px; background-color: var(--field); color: var(--text); font: inherit; }
 .starter-field select:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 .developer-prompt-actions { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin: 18px 0 12px; }
 .developer-prompt-actions > span { color: var(--muted); font-size: 12px; line-height: 1.5; }
