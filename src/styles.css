@@ -81,7 +81,6 @@ h2 { font-size: 16px; letter-spacing: -.15px; font-weight: 600; }
 .sidebar-build > svg { color: var(--muted); }
 .sidebar-build:hover strong, .sidebar-build:hover > svg { color: var(--accent); }
 .sidebar-footer { display: flex; flex-direction: column; gap: 4px; align-items: flex-start; padding: 10px 3px 12px; color: var(--faint); font-size: 12px; white-space: nowrap; }
-.sidebar-privacy { display: flex; align-items: center; gap: 6px; }
 .sidebar-account { position: relative; margin: 0 0 4px; }
 .sidebar-account-row { display: flex; align-items: center; gap: 11px; width: 100%; min-height: 58px; padding: 10px 11px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface-raised); box-shadow: 0 2px 6px #00000020; color: var(--text); font: inherit; text-align: left; transition: background .15s; }
 .sidebar-account-row:hover { background: var(--surface-hover); }
