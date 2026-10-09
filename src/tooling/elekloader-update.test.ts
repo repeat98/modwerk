@@ -139,6 +139,7 @@ function fixture() {
     copy(folder + '/' + document.license.file)
   }
   for (const name of ['react', 'react-dom', 'scheduler']) copy(`node_modules/${name}/LICENSE`)
+  for (const name of ['LICENSE', 'package.json']) copy(`node_modules/wavesurfer.js/${name}`)
   return root
 }
 

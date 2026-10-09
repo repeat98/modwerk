@@ -7,6 +7,7 @@ import { moduleMediaGuide } from '../catalog/module-media-guides'
 import type { PublicMedia } from './api'
 import { useCommunity } from './context'
 import { Icon } from '../components/Icon'
+import { AudioPlayer } from '../components/AudioPlayer'
 import { ModulePopularity } from './ModulePopularity'
 import { modulePageHref, moduleThreadId } from './modules'
 import { useLoginPrompt } from './LoginPromptDialog'
@@ -27,7 +28,7 @@ function MediaPreview({item,privatePreview}:{item:PublicMedia;privatePreview:boo
     return()=>{cancelled=true;if(url)URL.revokeObjectURL(url)}
   },[item.id,privatePreview])
   const url=privatePreview?(preview?.id===item.id?preview.url:''):apiUrl('/media/'+item.id)
-  return <figure>{error?<p className="file-error" role="alert">{error}</p>:!url?<p role="status">Loading preview…</p>:item.kind==='image'?<a href={url} target="_blank" rel="noreferrer"><img src={url} alt={item.caption} loading="lazy" /></a>:<audio controls preload="none" src={url}>Audio preview</audio>}<figcaption>{item.caption}<span>{item.capture_type==='hardware'?'Hardware capture':item.capture_type==='emulator'?'Emulator capture':'Audio preview'}</span></figcaption></figure>
+  return <figure>{error?<p className="file-error" role="alert">{error}</p>:!url?<p role="status">Loading preview…</p>:item.kind==='image'?<a href={url} target="_blank" rel="noreferrer"><img src={url} alt={item.caption} loading="lazy" /></a>:<AudioPlayer src={url} label={item.caption || 'audio preview'}/>}<figcaption>{item.caption}<span>{item.capture_type==='hardware'?'Hardware capture':item.capture_type==='emulator'?'Emulator capture':'Audio preview'}</span></figcaption></figure>
 }
 export function MediaGallery({media,privatePreview=false}:{media:PublicMedia[];privatePreview?:boolean}) {
   return <div className="media-gallery">{media.map(item=><MediaPreview key={item.id} item={item} privatePreview={privatePreview}/>)}</div>
@@ -37,7 +38,7 @@ function ModuleMediaGallery({id,version,media}:{id:string;version:string;media:r
   return <div className="media-gallery">{media.map(item=>{
     const url=assetUrl('module-media/'+id+'/'+version+'/'+item.path)
     return <figure key={item.path}>
-      {item.captureType==='audio'?<audio controls preload="none" src={url}>Audio preview</audio>:<a href={url} target="_blank" rel="noreferrer"><img className={item.lcd ? 'ot-ui-capture' : undefined} src={url} alt={item.alt} loading="lazy"/></a>}
+      {item.captureType==='audio'?<AudioPlayer src={url} label={item.caption || 'audio preview'}/>:<a href={url} target="_blank" rel="noreferrer"><img className={item.lcd ? 'ot-ui-capture' : undefined} src={url} alt={item.alt} loading="lazy"/></a>}
       <figcaption>{item.caption}<span>{item.captureType==='hardware'?'Hardware capture':item.captureType==='emulator'?'Emulator capture':item.captureType==='audio'?'Audio preview':'LCD capture'} · {item.credit} · {item.license}</span>{item.source!=='original'&&<a href={item.source} target="_blank" rel="noreferrer">Original source ↗</a>}</figcaption>
     </figure>
   })}</div>

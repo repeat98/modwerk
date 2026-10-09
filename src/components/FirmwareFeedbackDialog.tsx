@@ -5,6 +5,7 @@ import { downloadedModuleGuide, type DownloadedModuleGuide } from '../community/
 import type { DownloadedBuild } from '../community/hardware-feedback'
 import { assetUrl } from '../hosting'
 import { Icon } from './Icon'
+import { AudioPlayer } from './AudioPlayer'
 import { ModulePreview } from './ModulePreview'
 import { FirmwareScreenshotCarousel } from './FirmwareScreenshotCarousel'
 import './firmware-feedback.css'
@@ -109,7 +110,7 @@ function ModuleGuide({ module, enlarged, onEnlarged, children }: { module: Built
       {children}
       {!!guide.access.length && <details className="firmware-feedback-details"><summary>Full setup steps</summary><ol>{guide.access.map((step, i) => <li key={i}>{step}</li>)}</ol></details>}
       {guide.hasQuickTest && <details className="firmware-feedback-details"><summary>Full instructions &amp; more controls</summary><ol>{guide.usage.map((step, i) => <li key={i}>{step}</li>)}</ol></details>}
-      {!!guide.audio.length && <details className="firmware-feedback-details"><summary>Audio previews</summary>{guide.audio.map(item => <figure key={item.path}><audio controls preload="none" src={assetUrl('module-media/' + module.id + '/' + module.version + '/' + item.path)}/><figcaption>{item.caption}</figcaption></figure>)}</details>}
+      {!!guide.audio.length && <details className="firmware-feedback-details"><summary>Audio previews</summary>{guide.audio.map(item => <figure key={item.path}><AudioPlayer src={assetUrl('module-media/' + module.id + '/' + module.version + '/' + item.path)} label={item.caption || module.name + ' audio preview'}/><figcaption>{item.caption}</figcaption></figure>)}</details>}
     </>}
     </FirmwareScreenshotCarousel>
   </div>

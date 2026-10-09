@@ -62,6 +62,21 @@ Reporting actions share the neutral **Works for me** button (plus before submiss
 
 Module-page working buttons restore the signed-in member’s confirmation across navigation, reloads and devices. They become available again for a new module version; the distinct-member count across versions stays intact. A quick confirmation without a matching current download records the displayed catalog version only as button state, while the installed firmware version remains unknown. Existing quick confirmations recover that state from the deployed release history at their original save time.
 
+## Audio playback
+
+`src/components/AudioPlayer.tsx` supplies WaveSurfer waveforms and shared controls
+for community cards, forum attachments, upload previews, module galleries and the
+downloaded firmware guide. Use it for new audio surfaces. Only one clip plays at
+a time across the site; navigating away releases playback and the waveform.
+The library and audio decoding load when a player becomes visible, or when the
+visitor presses Play. Waveforms use the actual audio, decoded at 8 kHz for display;
+playback retains the file's original quality. Hovering shows the seek timestamp.
+Native range controls support touch
+and keyboard seeking (arrows skip five seconds, Shift skips ten, Home/End go to
+the start/end). Loading or decoding failures keep playback controls available.
+Private media still uses the existing authenticated blob fetch and URL cleanup.
+WaveSurfer's full BSD notice is included by `npm run licenses:generate`.
+
 ## Optional site support
 
 The Ko-fi page is configured in `src/config/support.ts`. Set it to an empty string to hide the support entry.

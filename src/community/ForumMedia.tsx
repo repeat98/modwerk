@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type Dispatch, type SetStateAction } from 
 import { apiFetch } from './api'
 import { apiUrl } from '../hosting'
 import { Icon } from '../components/Icon'
+import { AudioPlayer } from '../components/AudioPlayer'
 import { FORUM_MEDIA, type ForumAttachment } from './forum-contract'
 import { compressAudio, compressImage, type PendingMedia } from './forum-media-client'
 function size(bytes:number){return bytes<1024*1024?Math.max(1,Math.round(bytes/1024))+' KB':(bytes/1024/1024).toFixed(1)+' MB'}
@@ -31,7 +32,7 @@ export function MediaPicker({items,setItems}:{items:PendingMedia[];setItems:Disp
   const room=FORUM_MEDIA.perPost-items.filter(item=>item.status!=='error').length
   return <div className="forum-media-picker">
     {!!items.length&&<ul className="forum-media-pending">{items.map(item=><li key={item.key} data-status={item.status} data-kind={item.kind}>
-      <div className="forum-media-pending-preview">{item.preview?item.kind==='image'?<img src={item.preview} alt=""/>:<audio controls preload="metadata" src={item.preview}/>:<Icon name={item.kind==='image'?'file':'wave'} size={20}/>}</div>
+      <div className="forum-media-pending-preview">{item.preview?item.kind==='image'?<img src={item.preview} alt=""/>:<AudioPlayer src={item.preview} label={item.name} variant="compact"/>:<Icon name={item.kind==='image'?'file':'wave'} size={20}/>}</div>
       <div className="forum-media-pending-details">
         <span className="forum-media-name">{item.name}</span>
         <span className="forum-media-status" role={item.status==='error'?'alert':'status'}>{item.status==='preparing'?'Compressing…':item.status==='uploading'?'Uploading '+size(item.bytes??0)+'…':item.status==='ready'?(item.kind==='image'?'Image':'Sound clip')+' · '+size(item.bytes??0):item.error}</span>
@@ -58,7 +59,7 @@ function useMediaUrl(id:string,privateFetch:boolean){
 function Attachment({item,privateFetch,onRemove}:{item:ForumAttachment;privateFetch:boolean;onRemove?:()=>void}){
   const url=useMediaUrl(item.id,privateFetch)
   return <figure className="forum-attachment" data-kind={item.kind}>
-    {!url?<p role="status">Loading…</p>:item.kind==='image'?<a href={url} target="_blank" rel="noreferrer"><img src={url} alt={item.caption||'Attached image'} loading="lazy"/></a>:<audio controls preload="metadata" src={url}>Sound clip</audio>}
+    {!url?<p role="status">Loading…</p>:item.kind==='image'?<a href={url} target="_blank" rel="noreferrer"><img src={url} alt={item.caption||'Attached image'} loading="lazy"/></a>:<AudioPlayer src={url} label={item.caption || 'sound clip'}/>}
     {(item.caption||onRemove)&&<figcaption>{item.caption}{onRemove&&<button type="button" className="text-button" onClick={onRemove}><Icon name="close" size={13}/>Remove</button>}</figcaption>}
   </figure>
 }
