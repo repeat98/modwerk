@@ -1875,7 +1875,7 @@
       "id": "airwindows-chorus",
       "key": "AIR CHORUS",
       "name": "Air Chorus",
-      "version": "0.1.0-experimental",
+      "version": "0.1.1-experimental",
       "category": "effects",
       "source": {
         "repository": "https://github.com/airwindows/airwindows",
@@ -1953,27 +1953,27 @@
           "FX2 only; stale FX1 dispatch passes dry without writing its buffer.",
           "About 16-bit delay-buffer precision; dry bypass retains 24 bits.",
           "Extreme modulation retains pitch and aliasing artifacts.",
-          "Earlier candidate passed a reported 50-minute MKII test; fresh hardware testing of bounded initialization is owner-waived. Eight-track hardware timing, locks/scenes/LFOs and physical Part/project/reboot persistence remain unverified."
+          "Beta release with an owner waiver for current hardware testing. The reported loud rhythmic clicking with T3/T4 instances remains unconfirmed; reduced DSP work is a mitigation, not a verified hardware fix. Physical timing, Part/project/reboot persistence and hardware multi-instance audio remain untested."
         ]
       },
       "resources": {
-        "recorded": "8 October 2026: source inventory and conservative static DSP model; chip timing unmeasured.",
+        "recorded": "9 October 2026: optimized DSP inventory and benchmarks; chip timing unmeasured.",
         "storage": {
           "label": "Per-instance used DSP storage",
           "display": "16,384 Y + 56 X words",
           "value": 49320,
           "unit": "bytes at 24 bits/word",
           "method": "static",
-          "conditions": "Uses the existing 16,384-word FX2 buffer and 256-word X state reservation; 56 X words are used. Shared code/table use 1,481 P words per core. No new sample heap.",
+          "conditions": "Uses the existing 16,384-word FX2 buffer and 256-word X state reservation; 56 X words are used. Shared code/table use 1,425 P words per core. No new sample heap.",
           "source": "evidence/bounds.json"
         },
         "processing": {
-          "label": "Conservative DSP code budget",
-          "display": "725 modeled cycles/sample",
-          "value": 725,
-          "unit": "modeled cycles/sample",
+          "label": "Conservative DSP instruction budget",
+          "display": "495 modeled units/sample",
+          "value": 495,
+          "unit": "modeled instruction units/sample",
           "method": "static",
-          "conditions": "Conservative DSP word-span bound, two trig-split calls per 16 frames. Four instances plus four bounded initializations: 46,740 modeled cycles/core/block, within the SDK 49,920 module allowance. Excludes contention stalls; not measured chip timing.",
+          "conditions": "Conservative source-word/call bound including trigger splits. Four instances plus four bounded initializations: 32,044 modeled units/core/block. Excludes contention stalls; not chip cycles or physical deadline evidence.",
           "source": "evidence/bounds.json"
         },
         "impact": {
@@ -1987,22 +1987,22 @@
           "dsp": {
             "level": "high",
             "basis": "measured-comparison",
-            "rationale": "Cold path peaks at 524.5 net executed instructions/sample versus stock Chorus 253.625 and expensive split Spring 314; full stereo taps, air compensation and sample smoothing cost more than simpler inserts. Timing is unmeasured.",
+            "rationale": "Observed maximum 336.75 net executed instructions/sample versus stock Chorus 292.875 and expensive split Spring 314 under matched conditions on both cores. 35.80% below published 0.1.0. Chip timing and physical headroom remain unmeasured.",
             "source": "evidence/stock-comparison.json"
           },
           "memory": {
             "level": "high",
             "basis": "source-estimate",
-            "rationale": "Full 16,384-word stereo FX2 ring per instance, 256 reserved X words (56 used), plus 1,481 P code/table words per core. Reuses existing buffers; no added sample heap.",
+            "rationale": "Full 16,384-word stereo FX2 ring per instance, 256 reserved X words (56 used), plus 1,425 P code/table words per core. Reuses existing buffers; no added sample heap.",
             "source": "TESTING.md"
           }
         }
       },
       "tests": {
         "report": "TESTING.md",
-        "summary": "Native reference, moving-control, dirty-history, isolation, bounds and sound-quality checks pass within documented limits. Actual MKII report applies to the first image; exact initialization update is owner-waived. Current emulator UI and composition checks are recorded separately.",
-        "hardwareStatus": "historical",
-        "evidenceRevision": "26d09b85543b7c02d8179a2b942bb70533b59232",
+        "summary": "Beta 0.1.1 reduces measured DSP work with bit-identical output in 30 comparison fixtures and unchanged controls. DSP/reference, bounds, isolation and eight-instance replay evidence are recorded. T3/T4 emulator playback did not reproduce the hardware clicking. Current physical hardware testing is owner-waived; no current hardware pass is claimed.",
+        "hardwareStatus": "untested",
+        "evidenceRevision": "ed61db5cf1ad04331438fd15967b0ba8cdf4b109",
         "gates": [
           "verify.py",
           "verify_controls.py",
@@ -2045,8 +2045,8 @@
             "page": "FX2 SETUP",
             "shows": "location",
             "firmware": "1.40C",
-            "moduleVersion": "0.1.0-experimental",
-            "imageSha256": "8ecec31ef7511756e17aaba2cd569a32e4471bcebe0dd0738615327fb850a6df",
+            "moduleVersion": "0.1.1-experimental",
+            "imageSha256": "cf75abd4fca70c24def9d535aaaca454be4a97ea1d6bcb065dddada8bd038a3b",
             "setup": "Headless ot_emu; MKII panel; stopped transport; 128×64 LCD at integer scale 6."
           }
         },
@@ -2062,8 +2062,8 @@
             "page": "FX2",
             "shows": "location-and-controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.1.0-experimental",
-            "imageSha256": "8ecec31ef7511756e17aaba2cd569a32e4471bcebe0dd0738615327fb850a6df",
+            "moduleVersion": "0.1.1-experimental",
+            "imageSha256": "cf75abd4fca70c24def9d535aaaca454be4a97ea1d6bcb065dddada8bd038a3b",
             "setup": "Headless ot_emu; MKII panel; stopped transport; 128×64 LCD at integer scale 6."
           }
         },
@@ -2079,8 +2079,8 @@
             "page": "FX2",
             "shows": "controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.1.0-experimental",
-            "imageSha256": "8ecec31ef7511756e17aaba2cd569a32e4471bcebe0dd0738615327fb850a6df",
+            "moduleVersion": "0.1.1-experimental",
+            "imageSha256": "cf75abd4fca70c24def9d535aaaca454be4a97ea1d6bcb065dddada8bd038a3b",
             "setup": "Headless ot_emu; MKII panel; stopped transport; 128×64 LCD at integer scale 6."
           }
         },
@@ -2096,8 +2096,8 @@
             "page": "FX2",
             "shows": "controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.1.0-experimental",
-            "imageSha256": "8ecec31ef7511756e17aaba2cd569a32e4471bcebe0dd0738615327fb850a6df",
+            "moduleVersion": "0.1.1-experimental",
+            "imageSha256": "cf75abd4fca70c24def9d535aaaca454be4a97ea1d6bcb065dddada8bd038a3b",
             "setup": "Headless ot_emu; MKII panel; stopped transport; 128×64 LCD at integer scale 6."
           }
         }

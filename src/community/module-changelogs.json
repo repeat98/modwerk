@@ -737,6 +737,15 @@
     ],
     "airwindows-chorus": [
       {
+        "version": "0.1.1-experimental",
+        "date": "2026-10-09",
+        "changes": [
+          "Beta release for beta testers: reduces measured DSP work by 35.80% with the original full stereo delay range, smoothing and control meanings retained. Thirty recorded comparison fixtures are bit-identical to 0.1.0.",
+          "Targets the reported multi-instance clicking by reducing DSP load. The T3/T4 emulator reproduction did not reproduce the hardware symptom, so this is a mitigation pending beta hardware results, not a confirmed clicking fix.",
+          "FX2 only. Current hardware testing is owner-waived for this exact version/source; physical timing, multi-instance audio and Part/project/reboot persistence remain unverified. Existing control values and saved parameter layout are unchanged."
+        ]
+      },
+      {
         "version": "0.1.0-experimental",
         "date": "2026-10-08",
         "changes": [

@@ -29,14 +29,14 @@ export async function maintainedByMember(db: Database, userId: string) {
     .map(module => ({ id: module.id, name: module.name, machine: module.machine, href: module.href }))
 }
 
-type ProfileRow = { id: string; username: string; displayName: string; bio: string; avatar: string | null; memberSince: string; threads: number; replies: number; likesReceived: number; reports: number; role: string } & ProfileLinks
+type ProfileRow = { id: string; username: string; displayName: string; bio: string; avatar: string | null; memberSince: string; threads: number; replies: number; likesReceived: number; reports: number; role: string; betaTester: number } & ProfileLinks
 /** A public profile with its contribution counts and latest replies; null when there is no public member by that name. */
 export async function memberProfile(db: Database, username: string) {
   const row = await db.prepare(`SELECT u.id,u.username,u.display_name AS displayName,u.profile_bio AS bio,u.avatar_id AS avatar,u.created_at AS memberSince,u.instagram_url AS instagramUrl,u.soundcloud_url AS soundcloudUrl,u.bandcamp_url AS bandcampUrl,
     (SELECT COUNT(*) FROM forum_threads t WHERE t.user_id=u.id AND t.hidden=0) AS threads,
     (SELECT COUNT(*) FROM forum_posts p JOIN forum_threads t ON t.id=p.thread_id WHERE p.user_id=u.id AND p.hidden=0 AND t.hidden=0 AND ${REPLY}) AS replies,
     (SELECT COUNT(*) FROM forum_reactions r JOIN forum_posts p ON p.id=r.post_id JOIN forum_threads t ON t.id=p.thread_id WHERE p.user_id=u.id AND r.user_id<>u.id AND p.hidden=0 AND t.hidden=0) AS likesReceived,
-    (SELECT COUNT(*) FROM issues i WHERE i.reporter_id=u.id AND i.public_json IS NOT NULL) AS reports,u.role
+    (SELECT COUNT(*) FROM issues i WHERE i.reporter_id=u.id AND i.public_json IS NOT NULL) AS reports,u.role,u.beta_tester AS betaTester
     FROM users u WHERE u.username=? AND ${PUBLIC_MEMBER}`).bind(username).first<ProfileRow>()
   if (!row) return null
   const [recentReplies, maintains] = await Promise.all([
@@ -45,7 +45,7 @@ export async function memberProfile(db: Database, username: string) {
   ])
   const { username: name, displayName, bio, avatar, memberSince, threads, replies, likesReceived, reports, instagramUrl, soundcloudUrl, bandcampUrl } = row
   // Only public reports count: a private report's existence stays between the reporter and the maintainers.
-  return { username: name, displayName, bio, avatar, memberSince, instagramUrl, soundcloudUrl, bandcampUrl, role: effectiveRole(row.role, maintains.length > 0), threads, replies, likesReceived, reports, maintains, recentReplies: recentReplies.results }
+  return { username: name, displayName, bio, avatar, memberSince, instagramUrl, soundcloudUrl, bandcampUrl, role: effectiveRole(row.role, maintains.length > 0), betaTester: !!row.betaTester, threads, replies, likesReceived, reports, maintains, recentReplies: recentReplies.results }
 }
 
 /** The forum home's "This month" block: the most liked posts and reply authors of the last 30 days and the newest

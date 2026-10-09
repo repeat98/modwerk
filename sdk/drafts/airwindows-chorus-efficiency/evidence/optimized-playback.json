@@ -1,0 +1,129 @@
+{
+  "fixture": "T3/T4 FX2, SPD/RNG 64, T3 MIX 64, T4 MIX 0..127; stock FX1 NONE",
+  "sampleRate": 44100,
+  "blocks": 8192,
+  "frames": 131072,
+  "simulatedSeconds": 2.972154195011338,
+  "mainOsSha256": "cf75abd4fca70c24def9d535aaaca454be4a97ea1d6bcb065dddada8bd038a3b",
+  "emulatorSha256": "f521565f3866947788d7c45507576a4ed386d2e4ef57e9683ab65fa0acc6a166",
+  "privateCaptureSha256": "b9340804ca16d604ffc3ec709b744b1f8f3d5a8ee7a72cc78c548c411b5d0bd7",
+  "projectLoadCompleted": true,
+  "playbackCompleted": true,
+  "effectAssignmentsPassed": true,
+  "controlDelivery": [
+    {
+      "track": 3,
+      "spd": 64,
+      "rng": 64,
+      "mixMinimum": 64.0,
+      "mixMaximum": 64.0,
+      "distinctMixValues": 1
+    },
+    {
+      "track": 4,
+      "spd": 64,
+      "rng": 64,
+      "mixMinimum": 0.0,
+      "mixMaximum": 127.0,
+      "distinctMixValues": 4088
+    }
+  ],
+  "silentOtherTracksPassed": true,
+  "audio": [
+    {
+      "track": 3,
+      "channel": "L",
+      "input": {
+        "frames": 131072,
+        "peakFs": 0.18310546875,
+        "rmsFs": 0.12946502591597836,
+        "maximumAdjacentStepFs": 0.011505126953125,
+        "maximumStepAtFrame": 17,
+        "railSamples": 0
+      },
+      "output": {
+        "frames": 131072,
+        "peakFs": 0.04648721218109131,
+        "rmsFs": 0.021410706280633796,
+        "maximumAdjacentStepFs": 0.0029561519622802734,
+        "maximumStepAtFrame": 19648,
+        "railSamples": 0
+      }
+    },
+    {
+      "track": 3,
+      "channel": "R",
+      "input": {
+        "frames": 131072,
+        "peakFs": 0.15228271484375,
+        "rmsFs": 0.10788720101706534,
+        "maximumAdjacentStepFs": 0.019134521484375,
+        "maximumStepAtFrame": 17,
+        "railSamples": 0
+      },
+      "output": {
+        "frames": 131072,
+        "peakFs": 0.03868281841278076,
+        "rmsFs": 0.01787204152294617,
+        "maximumAdjacentStepFs": 0.004901409149169922,
+        "maximumStepAtFrame": 19424,
+        "railSamples": 0
+      }
+    },
+    {
+      "track": 4,
+      "channel": "L",
+      "input": {
+        "frames": 131072,
+        "peakFs": 0.18310546875,
+        "rmsFs": 0.12946502591597836,
+        "maximumAdjacentStepFs": 0.011505126953125,
+        "maximumStepAtFrame": 17,
+        "railSamples": 0
+      },
+      "output": {
+        "frames": 131072,
+        "peakFs": 0.0465087890625,
+        "rmsFs": 0.03030840152914706,
+        "maximumAdjacentStepFs": 0.003021240234375,
+        "maximumStepAtFrame": 115654,
+        "railSamples": 0
+      }
+    },
+    {
+      "track": 4,
+      "channel": "R",
+      "input": {
+        "frames": 131072,
+        "peakFs": 0.15228271484375,
+        "rmsFs": 0.10788720101706534,
+        "maximumAdjacentStepFs": 0.019134521484375,
+        "maximumStepAtFrame": 17,
+        "railSamples": 0
+      },
+      "output": {
+        "frames": 131072,
+        "peakFs": 0.03869616985321045,
+        "rmsFs": 0.025350374224844492,
+        "maximumAdjacentStepFs": 0.004974365234375,
+        "maximumStepAtFrame": 111478,
+        "railSamples": 0
+      }
+    }
+  ],
+  "hardwareStatus": "untested",
+  "clickingFixStatus": "not established",
+  "limitations": [
+    "Generated tone fixture; original reporter project/settings are unavailable.",
+    "Adjacent sample steps are diagnostic measurements, not a universal click detector.",
+    "The emulator does not establish physical DSP deadlines or memory stalls.",
+    "No physical listening, Part reload, project reload or reboot result."
+  ],
+  "comparison": {
+    "referenceMainOsSha256": "8ecec31ef7511756e17aaba2cd569a32e4471bcebe0dd0738615327fb850a6df",
+    "referenceCaptureSha256": "b9340804ca16d604ffc3ec709b744b1f8f3d5a8ee7a72cc78c548c411b5d0bd7",
+    "inputAndOutputBitIdenticalOnAllTracks": true,
+    "realControlBlocksIdentical": true,
+    "activeStereoFramesCompared": 262144
+  }
+}

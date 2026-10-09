@@ -1,3 +1,5 @@
+import { useCommunity } from '../community/context'
+import { hasBetaAccess } from '../community/beta-access'
 import { trackConfigurationStarted } from '../community/usage'
 import { useEffect, useRef, useState } from 'react'
 import { newConfiguration, cleanName, pinModuleVersions, configurationDevice, DEFAULT_DEVICE } from '../config/workspace'
@@ -12,6 +14,7 @@ import type { FirmwareInspection } from '../engine/base'
 import { parseUsbAudioConfiguration, USB_AUDIO_MODULE, type UsbAudioConfiguration } from '../config/usb-audio'
 
 export function useWorkspace() {
+  const betaAccess = hasBetaAccess(useCommunity().session)
   const [configurations, setConfigurations] = useState<Configuration[]>([])
   const [activeId, setActiveId] = useState('')
   const [ready, setReady] = useState(false)
@@ -125,7 +128,7 @@ export function useWorkspace() {
     const current = configurationFor(device)
     // USB is added atomically with the user's setup through configureUsbAudio.
     if (device === DEFAULT_DEVICE && id === USB_AUDIO_MODULE && !current.moduleIds.includes(id)) return
-    if (!current.moduleIds.includes(id) && device === DEFAULT_DEVICE && !isModuleAvailable(id)) return
+    if (!current.moduleIds.includes(id) && device === DEFAULT_DEVICE && !isModuleAvailable(id, betaAccess)) return
     const moduleIds = current.moduleIds.includes(id) ? current.moduleIds.filter(value => value !== id) : [...current.moduleIds, id]
     const moduleVersions = Object.fromEntries(moduleIds.map(selected=>[selected,current.moduleVersions[selected]??pinModuleVersions([selected],device)[selected]]))
     updateActive({ moduleIds, moduleVersions, ...(id === USB_AUDIO_MODULE && !moduleIds.includes(id) ? { usbAudio: undefined } : {}) })

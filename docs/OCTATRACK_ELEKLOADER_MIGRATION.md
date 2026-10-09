@@ -62,6 +62,26 @@ event-table linking and the kit's dependency checks, not just ColdFire code.
 The tone replaces input A and the bus removes SPATIALIZER; these private
 examples are validation inputs, not proposed production defaults.
 
+The private [`build_ports.py`](../sdk/machines/octatrack/elekloader/build_ports.py)
+recipe registers Modwerk's internal USB MIDI platform dependency explicitly
+with the pinned converter. It does not move or rewrite the imported source.
+USB MIDI, USB AUDIO OUT TRACKS MAIN CUE and hook-bus CC Map passed **3, 7 and
+3 native source checks**, respectively. The upstream converter already serves
+the 18-byte USB device descriptor from a relocated copy; its protected
+original remains stock and the sole responder reference is guarded.
+
+With these USB packages, hook-bus CC Map, the other seven ColdFire ports and
+the experimental DSP bus/tone, the TypeScript/native matrix covers **79
+selections: 65 byte-identical saved builds and 14 matching refusals**. USB
+Audio carries its USB MIDI implementation and correctly refuses a second copy;
+the existing duplicate-code and missing-DSP-bus refusals remain. The verifier
+gives Python the kit's filename order so conflicting owners and spans must
+match exactly, rather than relaxing refusal comparison. A larger explicit
+selection also builds identically: the Modwerk base, USB Audio/MIDI, hook-bus
+CC Map, Preview Vol, Repitch, FM Synth, Play Modes, Recorder Loop Fix and
+DSP bus/tone. These remain static firmware source ports, not packages that
+the runtime upload controller can execute.
+
 The private Modwerk core source recipe now compiles logger 0.2.0, startup
 artwork and the unwired upload controller directly with Elekloader's SDK.
 The shared TypeScript service and native reference produced identical saved
@@ -81,6 +101,18 @@ gate. These are bootstrap smoke checks without a card/project or DSP
 execution. They do not establish physical reset retention, logger card I/O,
 audio, live sampling, cache behaviour or USB module loading; hardware remains
 untested. Stock-bearing outputs and the detailed probes remain private.
+
+The TypeScript-built base plus USB Audio/MIDI also passed **27 emulator USB
+checks**: high/full-speed enumeration, storage INQUIRY, MIDI receive/transmit,
+20-channel synthetic source mapping, packet sizes, stream stop/restart and
+the current 64-frame cushion. The imported USB verifier initially failed
+three assertions: two still expected the earlier 512-frame cushion, and one
+read the missed-host-poll log before buffered output was flushed. A private
+guarded test adapter used the source's 64-frame target and line-buffered
+emulator output; both the original failure and adapted success are retained.
+This is source-specific emulator evidence with synthetic taps, no card/project
+or DSP execution. Real USB timing, audio, storage, cache behaviour and hardware
+remain unqualified, and this image has no module-update transport.
 
 ### Reproduce locally
 
@@ -106,6 +138,8 @@ refusals and explicit limitations. Keep it and the images private; the report
 does not confer release approval. The helper refuses format-1 wrappers,
 changed package pins, a mismatched protocol or stock identity, colliding file
 names and automatically selected files outside the supplied pins.
+`--combined` additionally compares the complete explicitly supplied selection;
+`--pairs` compares each pair. Neither admits unpinned dependencies.
 
 ## Existing upstream DSP work to extend
 
@@ -179,11 +213,11 @@ hardware qualification for the new Elekloader base.
 | Area | Observed gap / next implementation |
 | --- | --- |
 | Mandatory infrastructure | The [private base source recipe](../sdk/machines/octatrack/elekloader/README.md) extends upstream core 0.3 with logger/startup and the unwired upload controller. Qualify its guarded stock replay, retained/I/O memory and bootstrap; integrate exact selected-module identity. Old source-specific exceptions do not qualify a different core. |
-| Mute Modes | Its callable `Linked.reference` reaches an upstream converter path that expects an `(address, hash)` tuple and raises `TypeError`. Fix source conversion and rerun the independent check. |
+| Mute Modes | The pinned converter and its native check append tables, while this module inserts the PERSONALIZE row at index 2. The private recipe explicitly refuses that unsupported layout. Its callable `Linked.reference` also reaches a tuple-only path. Support and independently verify both contracts before accepting the port. |
 | MIDI Scenes | Its writes inside the bootloader-copy range are refused. Port the source to a safe layout; do not weaken the protected-range rules. |
 | Poly8 | Conversion emits a package, but native linking fails on unresolved dependencies. Supply explicit source dependencies and remove duplicate shared implementations. |
 | DSP / FX | The converter refuses custom DSP/FX-menu modules. Extend upstream's existing DSP linker/bus with stock-free source recipes, general P/X/Y resource accounting, per-track dispatch, descriptors and choosers on both cores. Do not run the old composer behind an `.elemod`. |
-| USB Audio | The internal USB MIDI dependency is a platform folder, and a descriptor write is in the protected bootloader-copy range. Make dependencies explicit and relocate descriptors using guarded references. Preserve audio/MIDI/storage compatibility. |
+| USB Audio | The private source port now registers the internal USB MIDI dependency and uses upstream's guarded descriptor clone. Static parity and the adapted emulator USB checks pass; hardware, cache, real-host audio/MIDI/storage compatibility and the module-update transport still require implementation/qualification. |
 | Publication | Add reviewed source-built catalogue packages, preserve configuration ids/versions and exact logger identity, verify all offered selections/refusals and qualify the final images before routing the public OT build to the kit. |
 
 Core 0.3 reserves only the 6 KiB pages occupied by its RAM image, rather than

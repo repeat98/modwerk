@@ -47,6 +47,13 @@ describe('paging through catalog results', () => {
     expect(catalogNeighbors({ ...browse, ids: ['deleted-module'] }, 'deleted-module')).toBeNull()
   })
 
+  it('keeps beta paging only while the session has access', () => {
+    const beta = { ...browse, route: 'library', ids: ['miniverb', 'airwindows-chorus'] }
+    expect(parseCatalogBrowse(JSON.stringify(beta))?.ids).toEqual(['miniverb'])
+    expect(parseCatalogBrowse(JSON.stringify(beta), true)?.ids).toEqual(beta.ids)
+    expect(catalogNeighbors(beta, 'miniverb', true)?.next?.id).toBe('airwindows-chorus')
+    expect(catalogNeighbors(beta, 'miniverb')?.next).toBeUndefined()
+  })
   it('ignores invalid stored context and never builds an external return link', () => {
     for (const json of [null, '{', 'null', JSON.stringify({ ...browse, route: 'https://example.com' }), JSON.stringify({ ...browse, route: 'digitakt/configuration' }), JSON.stringify({ ...browse, ids: [1] }), JSON.stringify({ ...browse, sort: 'unknown' })]) {
       expect(parseCatalogBrowse(json)).toBeNull()

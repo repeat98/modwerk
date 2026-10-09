@@ -9,7 +9,7 @@ import { existsSync, readFileSync, readdirSync } from 'node:fs'
 import { spawnSync } from 'node:child_process'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { AVAILABLE_MODULES, PAUSED_MODULE_IDS } from '../src/catalog/availability.ts'
+import { availableModules, PAUSED_MODULE_IDS, isBetaModule } from '../src/catalog/availability.ts'
 import { LIBRARY_CATEGORIES } from '../src/catalog/modules.ts'
 import { parseModuleDocument } from '../src/catalog/module-contract.ts'
 import { COMPARED_BEFORE_RECORDS, NOT_COMPOSED } from './module-coverage.mjs'
@@ -47,10 +47,10 @@ function octatrack(id) {
   else if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/.test(entry.addedAt ?? '')) fail('catalog entry', 'addedAt is missing or not a UTC time', 'add "addedAt": "2026-10-05T12:00:00Z" (the day it was first listed) to the entry')
   else ok('catalog entry', document.version + ', added ' + entry.addedAt.slice(0, 10))
 
-  const paused = PAUSED_MODULE_IDS.includes(id)
+  const paused = PAUSED_MODULE_IDS.includes(id) && !isBetaModule(id)
   if (paused) info('library', 'paused by the owner (PAUSED_MODULE_IDS in src/catalog/availability.ts): hidden, and not compared until it is reinstated')
-  else if (entry && !AVAILABLE_MODULES.some(module => module.id === id)) fail('library', 'the library does not offer it', 'run npm run modules:generate')
-  else if (entry) ok('library', 'offered in the library and the configurator')
+  else if (entry && !availableModules(true).some(module => module.id === id)) fail('library', 'the library does not offer it', 'run npm run modules:generate')
+  else if (entry) ok('library', isBetaModule(id) ? 'offered to beta testers in the library and configurator' : 'offered in the library and the configurator')
 
   if (!LIBRARY_CATEGORIES.includes(document.category)) fail('category guide', 'category ' + document.category + ' is not a library category', 'use one of ' + LIBRARY_CATEGORIES.join(', '))
   else if (!exists('docs/module-guides/' + document.category + '.md')) fail('category guide', 'docs/module-guides/' + document.category + '.md is missing', 'write the guide for this category')

@@ -1,14 +1,15 @@
 import { describe, expect, it } from 'vitest'
 import { checkSelection } from './compatibility'
 import { MODULES } from './modules'
-import { AVAILABLE_MODULES } from './availability'
+import { availableModules } from './availability'
 describe('declarative compatibility',()=>{
  it('checks every nonempty selection in the verified native profile against its pinned ledger',()=>{const supported=MODULES.filter(module=>['spectrum','modulation','character','miniverb','tapeecho','euclid','repitch'].includes(module.id));expect(supported).toHaveLength(7);for(let mask=1;mask<1<<supported.length;mask++){const ids=supported.filter((_,index)=>mask&(1<<index)).map(m=>m.id);expect(checkSelection(ids).checked).toBe(true);expect(checkSelection(ids).issues).toEqual([])}})
  // Disjoint mask groups retain every nonempty subset without a long single test.
- for (let shard = 0; shard < 16; shard++) {
-  it(`has recorded declaration checks for every visible subset (group ${shard + 1}/16)`, () => {
-   const visible = AVAILABLE_MODULES
-   for (let mask = shard + 1; mask < 1 << visible.length; mask += 16) {
+ const groups = 32
+ for (let shard = 0; shard < groups; shard++) {
+  it(`has recorded declaration checks for every public or beta subset (group ${shard + 1}/${groups})`, () => {
+   const visible = availableModules(true)
+   for (let mask = shard + 1; mask < 1 << visible.length; mask += groups) {
     const ids = visible.filter((_, index) => mask & (1 << index)).map(m => m.id)
     const result = checkSelection(ids)
     if (ids.includes('midi-scenes')) {

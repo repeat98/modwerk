@@ -5,6 +5,8 @@ import { emailReady } from './email'
 import { socialProviders } from './social-config'
 import { socialRoutes } from './social'
 import { profileRoutes } from './profile'
+import { memberBetaAccess } from './beta-testers'
+import { moduleAvailabilityError } from '../src/catalog/availability'
 /** Fixed actor row for administrator history; the administrator is not a visitor account. */
 export const ADMIN_ACTOR='administrator'
 const ADMIN_SECONDS=8*60*60
@@ -30,7 +32,7 @@ async function memberAdmin(request:Request,db:Database,env:Env):Promise<string|n
 export async function currentUser(request:Request,db:Database,env:Env):Promise<User|null>{
  const account=await accountUser(request,env,db);if(account)return account
  const value=sessionValue(request);if(!/^[a-f0-9]{64}$/.test(value))return null
- return db.prepare('SELECT u.id,u.display_name,u.username,u.avatar_id,u.email_verified,u.suspended FROM users u JOIN sessions s ON s.user_id=u.id WHERE s.token_hash=? AND s.expires>? AND u.suspended=0').bind(await digest(value),Math.floor(Date.now()/1000)).first<User>()
+ return db.prepare('SELECT u.id,u.display_name,u.username,u.avatar_id,u.email_verified,u.suspended,u.beta_tester FROM users u JOIN sessions s ON s.user_id=u.id WHERE s.token_hash=? AND s.expires>? AND u.suspended=0').bind(await digest(value),Math.floor(Date.now()/1000)).first<User>()
 }
 export async function throttle(db:Database,key:string,maximum:number,seconds=3600){
  const now=Math.floor(Date.now()/1000),bucket=Math.floor(now/seconds)
@@ -48,7 +50,7 @@ export async function authentication(request:Request,env:Env,path:string):Promis
   const user=db?await currentUser(request,db,env):null
   const emailAvailable=!!db&&emailReady(env)&&authReady(env)
   const providers=socialProviders(env)
-  return response({available:!!db,emailAvailable,ssoProviders:providers,forumMedia:!!env.MEDIA,registrationAvailable:!!db&&authReady(env)&&(emailAvailable||providers.length>0)&&env.REGISTRATION_OPEN==='true'&&env.PRIVACY_READY==='true',admin:db?await isAdmin(request,env,db):false,user:user?{id:user.id,displayName:user.display_name,username:user.username??null,avatar:user.avatar_id??null,verified:!!user.email_verified}:null})
+  return response({available:!!db,emailAvailable,ssoProviders:providers,forumMedia:!!env.MEDIA,registrationAvailable:!!db&&authReady(env)&&(emailAvailable||providers.length>0)&&env.REGISTRATION_OPEN==='true'&&env.PRIVACY_READY==='true',admin:db?await isAdmin(request,env,db):false,user:user?{id:user.id,displayName:user.display_name,username:user.username??null,avatar:user.avatar_id??null,verified:!!user.email_verified,betaTester:!!user.beta_tester}:null})
  }
  if(!path.startsWith('/api/auth/'))return null
  if(/^\/api\/auth\/(github(\/callback)?|complete)$/.test(path))throw new HttpError(410,'Use your Octamod email account to sign in.')
@@ -65,7 +67,16 @@ export async function authentication(request:Request,env:Env,path:string):Promis
   const claimed=await db.prepare('INSERT OR IGNORE INTO member_discord_invites(user_id) VALUES(?)').bind(member.id).run()
   return response({show:body.alreadyShown!==true&&claimed.meta.changes===1})
  }
- if(path==='/api/auth/build-access'&&request.method==='POST'){needMember(await accountUser(request,env,db));return response({ok:true})}
+ if(path==='/api/auth/build-access'&&request.method==='POST'){
+  const member=needMember(await accountUser(request,env,db)),body=await jsonBody(request)
+  if(body.moduleIds!==undefined){
+   if(!Array.isArray(body.moduleIds)||body.moduleIds.length>64||!body.moduleIds.every(id=>typeof id==='string'))throw new HttpError(400,'Choose valid module IDs.')
+   let error:string
+   try{error=moduleAvailabilityError(body.moduleIds,memberBetaAccess(member)||await isAdmin(request,env,db))}catch{throw new HttpError(400,'Unknown module.')}
+   if(error)throw new HttpError(403,error)
+  }
+  return response({ok:true})
+ }
  const account=await accountRoutes(request,env,db,path)
  if(account)return account
  if(path==='/api/auth/logout'&&request.method==='POST'){

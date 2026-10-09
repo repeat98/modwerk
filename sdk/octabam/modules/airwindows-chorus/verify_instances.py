@@ -51,7 +51,7 @@ def main():
             print(f"[{'PASS' if same else 'FAIL'}] instance {i}: identical to isolated render",flush=True)
         guard='nothing written' in result.stdout.lower() or 'guard: ok' in result.stdout.lower()
         print(f"[{'PASS' if guard else 'FAIL'}] multi-instance memory guard",flush=True)
-        report={'version':'0.1.0-experimental','frames':n,'instances':rows,'guardPassed':guard,
+        report={'version':'0.1.1-experimental','frames':n,'instances':rows,'guardPassed':guard,
                 'limitations':['Synthetic context; no physical DSP timing or Part/project/reboot qualification.']}
         if os.environ.get('CHORUS_INSTANCE_RESULTS'):
             pathlib.Path(os.environ['CHORUS_INSTANCE_RESULTS']).write_text(json.dumps(report,indent=2)+'\n')

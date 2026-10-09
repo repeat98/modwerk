@@ -10,7 +10,7 @@ export type BuildReport = {
 export type BuildProgress = 'composing' | 'packing' | 'verifying'
 export type EngineRequest =
   | { id: number; type: 'inspect'; buffer: ArrayBuffer; name: string }
-  | { id: number; type: 'validate' | 'build'; moduleIds: string[]; keepStockFx2: boolean; usbAudio?: UsbAudioConfiguration }
+  | { id: number; type: 'validate' | 'build'; moduleIds: string[]; keepStockFx2: boolean; usbAudio?: UsbAudioConfiguration; betaAccess?: boolean }
   | { id: number; type: 'clear' }
 export type EngineResponse =
   | { id: number; type: 'inspection'; inspection: FirmwareInspection }

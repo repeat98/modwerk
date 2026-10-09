@@ -28,7 +28,9 @@ it('emits each page and its generated card', async () => {
   expect(assets.map(asset => asset.fileName)).toEqual([expect.stringMatching(/^page-thumbnails\/submit-[0-9a-f]{12}\.jpg$/), 'submit/index.html', 'projects/index.html'])
   expect(assets[1].source).toContain(assets[0].fileName)
   expect(assets[2].source).toContain('https://modwerk.app/projects-social-preview-v1.jpg')
-})
+  // Card rendering shares native image workers with the full catalogue/build.
+  // Match the catalogue page integration's deadline; all assertions still run.
+}, 30_000)
 
 it('prerenders every external link on a canonical directory page', () => {
   const page = sitePageHtml(html, SITE_PAGES.find(page => page.path === 'projects/'), 'projects.jpg', './')

@@ -58,6 +58,29 @@ describe('member roles', () => {
     expect([f.role(alice.id), f.role(owner.id)]).toEqual(['user', 'owner'])
   })
 
+  it('grants and revokes beta access independently of roles and checks builds on the server', async () => {
+    const f = await fixture(), tester = await f.member('00schneider'), admin = await f.admin()
+    const beta = '/admin/forum/beta-testers/00schneider'
+    const access = () => f.call('/auth/build-access', 'POST', { moduleIds: ['airwindows-chorus'] }, tester.session)
+    expect((await access()).status).toBe(403)
+    expect((await f.call(beta, 'PUT', { betaTester: true, reason: 'Beta invitation' }, tester.session)).status).toBe(403)
+    f.db.prepare("UPDATE users SET role='developer' WHERE id=?").run(tester.id)
+    expect((await f.call(beta, 'PUT', { betaTester: true, reason: 'Beta invitation' }, '', admin)).status).toBe(200)
+    expect(f.role(tester.id)).toBe('developer')
+    expect(await (await f.call('/auth/session', 'GET', undefined, tester.session)).json()).toMatchObject({ admin: false, user: { betaTester: true } })
+    expect((await access()).status).toBe(200)
+    expect((await f.call('/auth/build-access', 'POST', { moduleIds: ['spectrum'] }, tester.session)).status).toBe(403)
+    expect((await f.call('/modules/airwindows-chorus/download', 'POST', {}, tester.session)).status).toBe(200)
+    expect(await (await f.call('/forum/profiles/00schneider')).json()).toMatchObject({ role: 'developer', betaTester: true })
+    const thread = await (await f.call('/forum/threads', 'POST', { title: 'Testing', body: 'Beta', category: 'general' }, tester.session)).json() as { id: string }
+    expect(await (await f.call('/forum/threads/' + thread.id)).json()).toMatchObject({ posts: [{ betaTester: true, role: 'developer' }] })
+    expect((await f.call(beta, 'PUT', { betaTester: false, reason: 'Testing complete' }, '', admin)).status).toBe(200)
+    expect((await access()).status).toBe(403)
+    expect((await f.call('/modules/airwindows-chorus/download', 'POST', {}, tester.session)).status).toBe(400)
+    expect(f.role(tester.id)).toBe('developer')
+    expect(f.db.prepare('SELECT action FROM forum_moderation WHERE target=?').all(tester.id)).toEqual([{ action: 'beta-tester:grant' }, { action: 'beta-tester:remove' }])
+  })
+
   it('shows Owner and Developer beside posts, including developers by confirmed module claim', async () => {
     const f = await fixture(), maker = await f.member('maker'), owner = await f.member('ownername'), plain = await f.member('plain')
     f.db.prepare("UPDATE users SET role='owner' WHERE id=?").run(owner.id)

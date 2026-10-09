@@ -2818,7 +2818,7 @@
       "sourceSha256": "9257a83bed59cbd5c4d8aa898639c939f7987fdb0a0e759e30758d51d876da1a"
     }
   ],
-  "sourceCommit": "0bca73e5891843e4b30b169ad5074921fec4c338",
+  "sourceCommit": null,
   "moduleVersions": {
     "spectrum": "0.1.1-experimental",
     "modulation": "0.1.1-experimental",
@@ -2828,7 +2828,7 @@
     "euclid": "0.1.4-experimental",
     "repitch": "0.1.2-experimental",
     "tapehead": "0.1.2-experimental",
-    "airwindows-chorus": "0.1.0-experimental",
+    "airwindows-chorus": "0.1.1-experimental",
     "analog-bassdrum": "0.1.5-experimental",
     "midi-scenes": "0.2.4-experimental",
     "usb-audio-out-tracks-main-cue": "0.2.0-experimental",

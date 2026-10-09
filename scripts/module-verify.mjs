@@ -19,7 +19,8 @@ import { availableParallelism, homedir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { decodeFirmware } from '../src/engine/elek.ts'
-import { AVAILABLE_MODULES } from '../src/catalog/availability.ts'
+import { availableModules } from '../src/catalog/availability.ts'
+const AVAILABLE_MODULES = availableModules(true)
 import { selectionConflicts } from '../src/catalog/selection-conflicts.ts'
 import { parseModuleDocument } from '../src/catalog/module-contract.ts'
 import { CATALOG_SOURCE } from '../src/catalog/modules.ts'
@@ -164,7 +165,8 @@ if (check) {
   const unrecorded = Array.from({ length: 2 ** others.length }, (_, mask) => [...others.filter((_, bit) => mask >> bit & 1), id].sort()).filter(ids => !selectionConflicts(ids).length).map(ids => ids.join('+')).filter(key => !(key in checks))
   if (unrecorded.length) {
     console.log(`Recording native declaration checks for ${unrecorded.length} selections …`)
-    await container('checks', ['python3', '-B', '/app/scripts/export-native-checks.py', '/native/octabam', '--app', '/app', '--include', id, '--scope', others.join(','), '--write', '--output', '/native/runs/' + process.pid + '/native-metadata.json'])
+    writeFileSync(join(run, 'declaration-selections.json'), JSON.stringify(unrecorded))
+    await container('checks', ['python3', '-B', '/app/scripts/export-native-checks.py', '/native/octabam', '--app', '/app', '--include', id, '--scope', others.join(','), '--selections', '/native/runs/' + process.pid + '/declaration-selections.json', '--write', '--output', '/native/runs/' + process.pid + '/native-metadata.json'])
     const written = join(run, 'native-metadata.json')
     if (existsSync(written)) writeFileSync(join(root, 'src/catalog/native-metadata.json'), readFileSync(written))
   }

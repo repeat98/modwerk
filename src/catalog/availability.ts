@@ -2,13 +2,18 @@
 // Copyright (c) 2026 Jannik Aßfalg (repeat98)
 import { MODULES, resolveSelection } from './modules.ts'
 
+export const BETA_MODULE_IDS: readonly string[] = ['airwindows-chorus']
+export const isBetaModule = (id: string) => BETA_MODULE_IDS.includes(id)
+export const BETA_MODULE_NOTICE = 'Beta: hardware testing of Air Chorus 0.1.1 is pending. The reported T3/T4 clicking has not been confirmed fixed. Use a disposable project and start at low monitoring volume.'
+
 // Temporary frontend suspension. Keep the full source catalog and saved pins intact.
 export const PAUSED_MODULE_IDS: readonly string[] = ['spectrum', 'modulation', 'character', 'airwindows-chorus']
 export function isModulePaused(id: string) { return PAUSED_MODULE_IDS.includes(id) }
 // Every module in sdk/catalog.json is offered unless it is paused; build support separately gates firmware.
 export const AVAILABLE_MODULES = MODULES.filter(module => !isModulePaused(module.id))
-export function isModuleAvailable(id: string) { return AVAILABLE_MODULES.some(module => module.id === id) }
-export function moduleAvailabilityError(ids: readonly string[]): string {
-  const paused = resolveSelection(ids).filter(module => isModulePaused(module.id))
+export function availableModules(betaAccess = false) { return MODULES.filter(module => !isModulePaused(module.id) || betaAccess && isBetaModule(module.id)) }
+export function isModuleAvailable(id: string, betaAccess = false) { return availableModules(betaAccess).some(module => module.id === id) }
+export function moduleAvailabilityError(ids: readonly string[], betaAccess = false): string {
+  const paused = resolveSelection(ids).filter(module => isModulePaused(module.id) && !(betaAccess && isBetaModule(module.id)))
   return paused.length ? 'Temporarily unavailable due to reported audio crackling: ' + paused.map(module => module.name).join(', ') + '. Remove these modules from this configuration to continue.' : ''
 }

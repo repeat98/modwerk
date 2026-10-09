@@ -9,7 +9,7 @@ import { IssueReport } from '../community/IssueReport'
 function authorName(login:string){return MODULES.find(module=>module.author===login)?.authorName??login}
 type Props={query:string;id?:string;onUse:(name:string,ids:string[])=>void}
 export function ModuleSets({id,onUse,query}:Props){
- const availableRecipes=recipes.filter(recipe=>recipe.moduleIds.every(isModuleAvailable))
+ const availableRecipes=recipes.filter(recipe=>recipe.moduleIds.every(id => isModuleAvailable(id)))
  const visible=availableRecipes.filter(recipe=>(recipe.id+' '+recipe.description+' '+authorName(recipe.author)+' '+recipe.author).toLowerCase().includes(query.trim().toLowerCase()))
  const recipe=availableRecipes.find(item=>item.id===id)
  if(id&&!recipe)return <div className="no-results"><BackLink href="#module-sets">Module sets</BackLink><h1>Module set not found</h1><a className="button button-quiet" href="#module-sets">Browse module sets</a></div>

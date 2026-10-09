@@ -12,6 +12,11 @@ describe('download update subscriptions',()=>{
       ['/modules/miniverb/download',{}],['/modules/digitakt-digihealth/download',{}],['/modules/digitone-digihealth/download',{}],
     ])
   })
+  it('follows a beta download only with beta access', async () => {
+    vi.mocked(post).mockResolvedValue({enabled:true})
+    expect(await followDownloadedModules(['airwindows-chorus'])).toEqual({followed:0,failed:false})
+    expect(await followDownloadedModules(['airwindows-chorus'],true)).toEqual({followed:1,failed:false})
+  })
   it('preserves an opt-out response and handles partial service failure without rejecting the download',async()=>{
     vi.mocked(post).mockResolvedValueOnce({enabled:false}).mockRejectedValueOnce(new Error('Offline'))
     expect(await followDownloadedModules(['miniverb','tapeecho'])).toEqual({followed:0,failed:true})

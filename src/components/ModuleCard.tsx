@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { isBetaModule } from '../catalog/availability'
 import { DETAILS } from '../catalog/details'
 import { moduleBuildPending } from '../catalog/build-support'
 import { moduleHardwareEvidence } from '../catalog/module-evidence'
@@ -59,7 +60,7 @@ export function ModuleCard({ module, selected, statistics, viewedVersion, baseli
     </a>
     <div className="module-card-body">
       <div className="module-card-title">
-        <div className="module-card-heading"><a href={moduleHref(module.id)} onClick={onBrowse} onAuxClick={onBrowse}>{module.name}</a><ModuleRelease module={module} viewedVersion={viewedVersion} baseline={baseline} /></div>
+        <div className="module-card-heading"><a href={moduleHref(module.id)} onClick={onBrowse} onAuxClick={onBrowse}>{module.name}</a>{isBetaModule(module.id) && <span className="module-beta-badge">Beta</span>}<ModuleRelease module={module} viewedVersion={viewedVersion} baseline={baseline} /></div>
         <AddButton name={module.name} selected={selected} onToggle={onToggle} configure={module.id === USB_AUDIO_MODULE} />
       </div>
       {module.id === USB_AUDIO_MODULE && <span className="module-compatibility-badge module-card-compatibility"><Icon name="wave" size={12} />Outbox 8 compatible</span>}

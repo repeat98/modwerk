@@ -35,6 +35,7 @@ async function fixture(){
  db.exec(readFileSync(new URL('../../migrations/0052_module_first_download.sql',import.meta.url),'utf8'))
  db.exec(readFileSync(new URL('../../migrations/0011_forum_accounts.sql',import.meta.url),'utf8'))
  db.exec(readFileSync(new URL('../../migrations/0012_better_auth.sql',import.meta.url),'utf8'))
+ db.exec(readFileSync(new URL('../../migrations/0066_beta_testers.sql',import.meta.url),'utf8'))
  db.exec(readFileSync(new URL('../../migrations/0054_discord_invitation.sql',import.meta.url),'utf8'))
  db.exec(readFileSync(new URL('../../migrations/0061_page_traffic.sql',import.meta.url),'utf8'))
  db.exec(readFileSync(new URL('../../migrations/0010_issue_reports.sql',import.meta.url),'utf8'))
@@ -125,7 +126,7 @@ describe('community access and review',()=>{
   expect((await call('/modules/remix-miniverb/rating','POST',{value:4},session)).status).toBe(200)
   expect((await call('/auth/email','POST',{email:'unused@example.test'})).status).toBe(404)
   const own=await (await call('/auth/session','GET',undefined,session)).json()
-  expect(own).toEqual({available:true,emailAvailable:false,forumMedia:true,registrationAvailable:false,ssoProviders:[],admin:false,user:{id:own.user.id,avatar:null,displayName:'Author guest',username:'author',verified:true}})
+  expect(own).toEqual({available:true,emailAvailable:false,forumMedia:true,registrationAvailable:false,ssoProviders:[],admin:false,user:{id:own.user.id,avatar:null,displayName:'Author guest',username:'author',verified:true,betaTester:false}})
  })
  it('keeps previously uploaded private media restricted without offering new upload routes',async()=>{
   const {call,db,env,tokens}=await fixture(),auth='octamod_session='+tokens.author,other='octamod_session='+tokens.other

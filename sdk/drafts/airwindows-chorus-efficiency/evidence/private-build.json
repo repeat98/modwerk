@@ -1,0 +1,18 @@
+{
+  "candidateVersion": "0.1.1-experimental",
+  "buildTag": "AIRC011T2",
+  "bytes": 447088,
+  "mainOsSha256": "cf75abd4fca70c24def9d535aaaca454be4a97ea1d6bcb065dddada8bd038a3b",
+  "updateSha256": "934db3752c56aaf5c6ee3efb3b91971e23c85d4bab847d6afcc8670cd932ba6c",
+  "assemblySourceSha256": "cd8040e05a8a6e39e0abb601b60508358bdf6e7563a42e57348a92ae67e861ae",
+  "roundTripVerified": true,
+  "hardwareStatus": "untested",
+  "reproducedFromBaseCommit": "8f8fe5d6b000ea15970070602ff8e753c1e01117",
+  "preparedRebuildMainMatched": true,
+  "latestNativeRebuild": {
+    "mainBaseCommit": "864a006128e08c8c9608a14e51f29e5675cac7d1",
+    "method": "Current merged SDK source copied to a private tree, candidate chorus.asm overlaid, existing build_private.py with the verified original 1.40C MAIN and reviewed toolchain. Compare the complete resulting MAIN bytes with the tested AIRC011T2 MAIN.",
+    "mainMatched": true,
+    "candidateDspUnchanged": true
+  }
+}

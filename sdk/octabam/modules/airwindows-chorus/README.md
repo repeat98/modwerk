@@ -111,3 +111,11 @@ fixture private. Only sanitized text evidence and actual UI exports belong here.
 See [TESTING.md](TESTING.md) for full cycle, memory, stock-comparison and sound-quality results. No shareable hardware audio recording was supplied.
 
 [Initial dry controls](media/ot-controls.png) · [Return to dry](media/ot-dry.png)
+
+## Beta 0.1.1 — 9 October 2026
+
+The owner requested publication of the staged full-range optimization for beta testers and explicitly waived current hardware evidence: “also bring the air chorus fix live with it. no hardware evidence is fine, that's exactly what the beta tester tier is for”. This exception is bound to 0.1.1 and its exact source in `sdk/airwindows-chorus-build-approval.json`. The earlier 0.1.0 measurements and hardware report above remain historical.
+
+The optimization retains the original arithmetic, delay range, smoothing and parameter layout. Recorded actual-DSP parity covers 30 fixtures and 983,040 stereo frames. The matched observed maximum is 336.75 net executed instructions/sample, down from 524.5 (35.80%); matched Spring is 314 and stock Chorus is 292.875. Both cores, fixed/moving settings and all trigger splits are covered. The conservative source-word/call model is 495 units/sample and 32,044 units for four instances plus initialization per core/block; these are not chip cycles or a deadline guarantee. Shared code/table is 1,425 P words per core; per-instance state and stereo ring are unchanged.
+
+The real ColdFire/DSP playback fixture exercised T3/T4 MIX delivery over 8,192 blocks; published and optimized per-track output was bit-identical, without output rails. It did not reproduce the reported hardware clicking. This release reduces load as a mitigation; it does not establish a confirmed fix. Current physical timing, multi-instance audio, Part/project reload and reboot are **not tested**. Keep the clicking report open pending actual beta results. Begin with a disposable project and low monitoring volume.

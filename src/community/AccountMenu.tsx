@@ -28,7 +28,7 @@ export function AccountMenu({ route }: { route: string }) {
   const current = route === 'account' || route.startsWith('account/') || route === 'developer' || route.startsWith('developer/') || route === 'admin' || route === 'review'
   const user = session.user?.verified ? session.user : null
   if (!user) return <div className="sidebar-account"><a className={'sidebar-account-row' + (current ? ' active' : '')} href="#account" aria-current={current ? 'page' : undefined}><span className="sidebar-account-icon"><Icon name="shield" size={16} /></span><span className="sidebar-account-name"><strong>Sign in / register</strong><small>Join the community</small></span></a></div>
-  const roles = [session.admin && 'Admin', developer?.user && 'Developer'].filter(Boolean).join(' · ')
+  const roles = [session.admin && 'Admin', developer?.user && 'Developer', user.betaTester && 'Beta tester'].filter(Boolean).join(' · ')
   async function signOut() {
     setBusy(true); setError('')
     try { await post('/auth/logout', {}); await refresh(); setOpen(false); window.location.assign('#account/login') }

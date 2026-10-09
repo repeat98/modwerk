@@ -51,15 +51,15 @@ export function createFirmwareClient() {
   }
   return {
     inspect,
-    async validate(moduleIds: string[], keepStockFx2: boolean, usbAudio?: UsbAudioConfiguration) {
+    async validate(moduleIds: string[], keepStockFx2: boolean, usbAudio?: UsbAudioConfiguration, betaAccess = false) {
       await recovering
-      const response = await send({ id: ++nextId, type: 'validate', moduleIds, keepStockFx2, usbAudio })
+      const response = await send({ id: ++nextId, type: 'validate', moduleIds, keepStockFx2, usbAudio, ...(betaAccess ? { betaAccess: true } : {}) })
       if (response.type !== 'validated') throw new Error('The local firmware worker returned an unexpected result.')
       return response.report
     },
-    async build(moduleIds: string[], keepStockFx2: boolean, progress: (phase: BuildProgress) => void, usbAudio?: UsbAudioConfiguration) {
+    async build(moduleIds: string[], keepStockFx2: boolean, progress: (phase: BuildProgress) => void, usbAudio?: UsbAudioConfiguration, betaAccess = false) {
       await recovering
-      const response = await send({ id: ++nextId, type: 'build', moduleIds, keepStockFx2, usbAudio }, [], progress)
+      const response = await send({ id: ++nextId, type: 'build', moduleIds, keepStockFx2, usbAudio, ...(betaAccess ? { betaAccess: true } : {}) }, [], progress)
       if (response.type !== 'built') throw new Error('The local firmware worker returned an unexpected result.')
       return response
     },

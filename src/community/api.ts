@@ -55,7 +55,7 @@ export async function api<T>(path: string, options: RequestInit = {}): Promise<T
   return body
 }
 export function post<T>(path: string, body: unknown, method = 'POST') { return api<T>(path, { method, headers: { 'Content-Type':'application/json' }, body: JSON.stringify(body) }) }
-export type CommunityUser = { id: string; displayName: string; username: string | null; avatar?: string | null; verified: boolean }
+export type CommunityUser = { id: string; displayName: string; username: string | null; avatar?: string | null; verified: boolean; betaTester?: boolean }
 export type Session = { available: boolean; emailAvailable?: boolean; registrationAvailable?: boolean; forumMedia?: boolean; ssoProviders?: ('google' | 'github' | 'discord')[]; admin: boolean; user: CommunityUser | null }
 export type DeveloperSession = { available: boolean; user: { login: string } | null }
 export type PublicMedia = { id: string; kind: 'image' | 'audio'; caption: string; capture_type: string }

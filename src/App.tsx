@@ -28,6 +28,7 @@ import { ModulePopularity } from './community/ModulePopularity'
 import { selectionConflicts, type ConflictFix } from './catalog/selection-conflicts'
 import { CompatibilityPanel } from './components/CompatibilityPanel'
 import { useCommunity } from './community/context'
+import { hasBetaAccess } from './community/beta-access'
 import { SubmissionPage } from './community/SubmissionPage'
 import { AdminPage } from './community/AdminPage'
 import { PublishedModulePage } from './community/PublishedModulePage'
@@ -35,7 +36,7 @@ import { lazy, Suspense, useEffect, useRef, useState, useSyncExternalStore } fro
 import type { ChangeEvent, DragEvent } from 'react'
 import { flushSync } from 'react-dom'
 import { LIBRARY_CATEGORIES, LIBRARY_CATEGORY_LABELS, MODULES, resolveSelection, type ModuleCategory } from './catalog/modules'
-import { AVAILABLE_MODULES, isModulePaused, moduleAvailabilityError } from './catalog/availability'
+import { AVAILABLE_MODULES, availableModules, isBetaModule, BETA_MODULE_NOTICE, isModuleAvailable, isModulePaused, moduleAvailabilityError } from './catalog/availability'
 import { DETAILS } from './catalog/details'
 import { readCatalogBrowse, saveCatalogBrowse, type CatalogBrowse } from './catalog/catalog-browse'
 import { ENGINE_AVAILABLE, DOWNLOADS_ENABLED, DSP_LOADER } from './engine/protocol'
@@ -95,11 +96,12 @@ export default function App() {
   const phoneLayout = useSyncExternalStore(subscribePhoneLayout, getPhoneLayout, () => false)
   const presence = useMembersOnline(), online = presence?.online ?? null
   useEffect(()=>trackPageView(route),[route])
-  const detailModule = moduleRoute.startsWith('module/') ? AVAILABLE_MODULES.find((module) => module.id === moduleRoute.slice(7)) : undefined
-  const pausedModule = MODULES.find(module => isModulePaused(module.id) && (moduleRoute === 'module/' + module.id || moduleRoute === 'community-module/' + module.id))
-  const configuration = route === 'configuration'
   const { session, developer, catalog } = useCommunity()
-  const communityModule = moduleRoute.startsWith('community-module/') ? catalog.find(item => item.module_id === moduleRoute.slice(17) && !isModulePaused(item.module_id)) : undefined
+  const betaAccess = hasBetaAccess(session), accessibleModules = availableModules(betaAccess)
+  const detailModule = moduleRoute.startsWith('module/') ? accessibleModules.find((module) => module.id === moduleRoute.slice(7)) : undefined
+  const pausedModule = MODULES.find(module => isModulePaused(module.id) && !isModuleAvailable(module.id, betaAccess) && (moduleRoute === 'module/' + module.id || moduleRoute === 'community-module/' + module.id))
+  const configuration = route === 'configuration'
+  const communityModule = moduleRoute.startsWith('community-module/') ? catalog.find(item => item.module_id === moduleRoute.slice(17) && isModuleAvailable(item.module_id, betaAccess)) : undefined
   const projectsRoute = moduleRoute === 'projects'
   const devicesRoute = route === 'devices'
   const machineRoute = parseDeviceRoute(moduleRoute)
@@ -126,11 +128,11 @@ export default function App() {
   // The machine overview now lives on the forum's front page.
   useEffect(() => { if (devicesRoute) window.location.replace('#forum'); else if (route === 'octatrack') window.location.replace('#library'); else if (route.startsWith('device/')) window.location.replace(DEVICES_BY_ID[route.slice(7)] ? deviceHref(route.slice(7)) : '#devices') }, [route, devicesRoute])
   // The sidebar keeps one shape on every machine: the same categories, counted for the current selection.
-  const libraryCount = (category?: ModuleCategory) => (allMachines || currentDevice.id === 'octatrack' ? AVAILABLE_MODULES.filter(module => !category || module.category === category).length : 0) + DIGI_MODS.filter(mod => (allMachines || mod.device === currentDevice.id) && (!category || mod.libraryCategory === category)).length
+  const libraryCount = (category?: ModuleCategory) => (allMachines || currentDevice.id === 'octatrack' ? accessibleModules.filter(module => !category || module.category === category).length : 0) + DIGI_MODS.filter(mod => (allMachines || mod.device === currentDevice.id) && (!category || mod.libraryCategory === category)).length
   const libraryHref = (category?: ModuleCategory) => allMachines ? '#' + ALL_MACHINES + (category ? '/' + category : '') : currentDevice.id === 'octatrack' ? '#' + (category ?? 'library') : deviceHref(currentDevice.id, category ?? '')
   const libraryCategory = allMachines ? allCategory : currentDevice.id === 'octatrack' ? (detailModule || filter === 'all' ? undefined : filter) : machineRoute?.category
   const onLibrary = allMachines ? allRoute : currentDevice.id === 'octatrack' ? route === 'library' || LIBRARY_CATEGORIES.includes(route as ModuleCategory) : machineView === 'library'
-  const machineCounts: Record<string, number> = { octatrack: AVAILABLE_MODULES.length, ...Object.fromEntries(['digitakt', 'digitone'].map(id => [id, DIGI_MODS.filter(mod => mod.device === id).length])) }
+  const machineCounts: Record<string, number> = { octatrack: accessibleModules.length, ...Object.fromEntries(['digitakt', 'digitone'].map(id => [id, DIGI_MODS.filter(mod => mod.device === id).length])) }
   const workspace = useWorkspace()
   const { active: storedActive, ready, firmware, fileState, fileError, firmwareSaved, readFile, clearFile } = workspace
   // Each machine shows its own configurations; the Octatrack code below always works on an Octatrack configuration.
@@ -164,7 +166,7 @@ export default function App() {
       setWorkspaceReportContext({ configurationName: item?.name ?? '', modules: modulesOf(item), keepStockFx2: null, build: '', activeId: item?.id ?? '', configurations: configurationsFor(device).map(value => ({ id: value.id, name: value.name, modules: modulesOf(value), keepStockFx2: null })) }, device)
     }
   }, [active, builtSha, storedActive, workspace.configurations])
-  const [browse, setBrowse] = useState<CatalogBrowse | null>(readCatalogBrowse)
+  const [browse, setBrowse] = useState<CatalogBrowse | null>(() => readCatalogBrowse(true))
   const initialBrowse = detailModule || digiMod || route === browse?.route ? browse : null
   const [query, setQuery] = useState(initialBrowse?.query ?? '')
   function rememberBrowse(value: CatalogBrowse) { setBrowse(value); saveCatalogBrowse(value) }
@@ -216,11 +218,11 @@ export default function App() {
     }
   }, [projectsRoute, route,detailModule,digiMod,forumRoute,accountRoute,developerRoute,developer?.user,allRoute,machineView,currentDevice.name])
   const selection = resolveSelection(selectedIds)
-  const availabilityError = moduleAvailabilityError(selectedIds)
+  const availabilityError = moduleAvailabilityError(selectedIds, betaAccess)
   const conflicts = selectionConflicts(selectedIds, DSP_LOADER && (active?.keepStockFx2 ?? true))
   const libraryFilter = allRoute ? allCategory ?? 'all' : filter
-  const libraryFamily = allRoute || AVAILABLE_MODULES.some(module=>DETAILS[module.id].family===family) ? family : 'all'
-  const visibleModules = AVAILABLE_MODULES.filter((module) =>
+  const libraryFamily = allRoute || accessibleModules.some(module=>DETAILS[module.id].family===family) ? family : 'all'
+  const visibleModules = accessibleModules.filter((module) =>
     (libraryFilter === 'all' || module.category === libraryFilter)
     && (libraryFamily==='all'||DETAILS[module.id].family===libraryFamily)
     && (module.name + ' ' + module.description + ' ' + module.authorName + ' ' + module.author + ' ' + contributorSearchText(module.contributors)).toLowerCase().includes(query.toLowerCase().trim()),
@@ -363,8 +365,8 @@ export default function App() {
                 <p className="firmware-help"><a href="#faq">Where do I get the .bin? Read the FAQ & flashing guide <Icon name="arrow" size={14} /></a></p>
               </section>
               <section className="configuration-section" aria-labelledby="selection-title"><div className="section-title"><h2 id="selection-title">Selected modules <span className="subtle">{selection.length}</span></h2><a className="text-button" href="#library">Browse modules <Icon name="plus" size={14} /></a></div>
-                {availabilityError && <p className="file-error" role="alert">{availabilityError}</p>}
-                {selection.length ? <ul className="selected-list">{selection.map((module) => <li key={module.id}><a className="selected-module-link" href={moduleHref(module.id)}><ModulePreview id={module.id} compact /><span><strong>{module.name}</strong><small>{module.id === USB_AUDIO_MODULE && active?.usbAudio ? usbAudioLayout(active.usbAudio.layout).name + ' · 0.2 experimental' : (isModulePaused(module.id) ? 'Temporarily unavailable' : module.detail) + ' · ' + module.authorName}</small></span></a><button className="icon-button" aria-label={'Remove ' + module.name} onClick={() => toggleModule(module.id)}><Icon name="close" size={17} /></button></li>)}</ul> : <div className="selection-empty"><Icon name="grid" size={26} /><strong>No modules selected</strong><p>Find something in the library and add it to your configuration.</p><a className="button button-quiet" href="#library">Browse modules</a></div>}
+                {availabilityError && <p className="file-error" role="alert">{availabilityError}</p>}{betaAccess && selection.some(module => isBetaModule(module.id)) && <p className="risk-note">{BETA_MODULE_NOTICE}</p>}
+                {selection.length ? <ul className="selected-list">{selection.map((module) => <li key={module.id}><a className="selected-module-link" href={moduleHref(module.id)}><ModulePreview id={module.id} compact /><span><strong>{module.name}</strong><small>{module.id === USB_AUDIO_MODULE && active?.usbAudio ? usbAudioLayout(active.usbAudio.layout).name + ' · 0.2 experimental' : (!isModuleAvailable(module.id, betaAccess) ? 'Temporarily unavailable' : module.detail) + ' · ' + module.authorName}</small></span></a><button className="icon-button" aria-label={'Remove ' + module.name} onClick={() => toggleModule(module.id)}><Icon name="close" size={17} /></button></li>)}</ul> : <div className="selection-empty"><Icon name="grid" size={26} /><strong>No modules selected</strong><p>Find something in the library and add it to your configuration.</p><a className="button button-quiet" href="#library">Browse modules</a></div>}
               </section>
               {DSP_LOADER && <section className="configuration-section chooser-options"><h2>Effect menus</h2><label><input type="checkbox" checked={active?.keepStockFx2??true} onChange={event=>setKeepStockFx2(event.target.checked)}/><span><strong>Keep stock FX2 effects</strong><small>Keep the original FX2 effects alongside your modules.</small></span></label></section>}
               <ConfigurationEffects ids={selectedIds} keepStockFx2={active?.keepStockFx2 ?? true} build={firmwareBuild} />

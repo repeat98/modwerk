@@ -30,7 +30,7 @@ export function ForumMaintainerBadge({ profile }: { profile?: boolean }) {
   return <span className="forum-author-badge forum-maintainer-badge" title="Linked maintainer, confirmed through the module catalog and a GitHub sign-in">{profile ? 'Module maintainer' : 'Maintainer'}</span>
 }
 
-// Developers and the owner carry a badge wherever their name appears; ordinary members carry none.
-export function ForumRoleBadge({ role }: { role?: MemberRole | null }) {
-  return role && role !== 'user' ? <span className="forum-role-badge" data-role={role}>{ROLE_LABELS[role]}</span> : null
+// Member roles and the independent beta tester class carry their own badges.
+export function ForumRoleBadge({ role, betaTester }: { role?: MemberRole | null; betaTester?: boolean }) {
+  return <>{role && role !== 'user' && <span className="forum-role-badge" data-role={role}>{ROLE_LABELS[role]}</span>}{betaTester && <span className="forum-role-badge" data-role="beta-tester">Beta tester</span>}</>
 }

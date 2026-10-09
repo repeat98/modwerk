@@ -29,4 +29,4 @@ export function takeSignupWelcome() {
   return pending
 }
 /** Authorize immediately before local composition; no firmware is transmitted. */
-export async function requireBuildAccount() { await post('/auth/build-access', {}) }
+export async function requireBuildAccount(moduleIds?: readonly string[]) { await post('/auth/build-access', moduleIds ? { moduleIds } : {}) }

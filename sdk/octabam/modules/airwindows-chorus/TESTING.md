@@ -264,3 +264,21 @@ byte-identical to the hardware-tested DSP. `evidence/history-parity.json`
 records these finite comparisons. They do not establish current-image hardware
 behavior. `evidence/hardware-report.md` retains both the original 50-minute
 result and the owner's explicit current-image waiver.
+
+## Beta 0.1.1 — 9 October 2026
+
+The owner requested publication of the staged full-range optimization for beta testers and explicitly waived current hardware evidence: “also bring the air chorus fix live with it. no hardware evidence is fine, that's exactly what the beta tester tier is for”. This exception is bound to 0.1.1 and its exact source in `sdk/airwindows-chorus-build-approval.json`. The earlier 0.1.0 measurements and hardware report above remain historical.
+
+The optimization retains the original arithmetic, delay range, smoothing and parameter layout. Recorded actual-DSP parity covers 30 fixtures and 983,040 stereo frames. The matched observed maximum is 336.75 net executed instructions/sample, down from 524.5 (35.80%); matched Spring is 314 and stock Chorus is 292.875. Both cores, fixed/moving settings and all trigger splits are covered. The conservative source-word/call model is 495 units/sample and 32,044 units for four instances plus initialization per core/block; these are not chip cycles or a deadline guarantee. Shared code/table is 1,425 P words per core; per-instance state and stereo ring are unchanged.
+
+The real ColdFire/DSP playback fixture exercised T3/T4 MIX delivery over 8,192 blocks; published and optimized per-track output was bit-identical, without output rails. It did not reproduce the reported hardware clicking. This release reduces load as a mitigation; it does not establish a confirmed fix. Current physical timing, multi-instance audio, Part/project reload and reboot are **not tested**. The clicking symptom remains unresolved pending actual beta results. Begin with a disposable project and low monitoring volume.
+
+The current private native MAIN rebuild is byte-identical to the staged candidate (`cf75abd4fca70c24def9d535aaaca454be4a97ea1d6bcb065dddada8bd038a3b`). Fresh native-image emulator captures show the chooser and controls for 0.1.1. A normal beta-member browser saved the one-module ELEKLOADER update: 452,208 bytes, SHA-256 `814b5733cdd91b8ed88d45ebea865475047929c5483dc46c9fbd395455b315f9`, decoded MAIN `3e35b409628eb822603c2a187a24d41b19b83bce0a797de23a97e2537caeb2e3`, matching the current composer. The browser image includes the mandatory platform logger; its complete MAIN therefore differs from the standalone private candidate. These are software and saved-file checks, not hardware observations.
+
+### Owner clarification of the original hardware failure — 9 October 2026
+
+The owner reports that the tester used the **unoptimized version**: Air Chorus was on T3, then adding a second instance on T4 produced rhythmic clicking. This is a reported failure of the original implementation, not a hardware test or passing result for optimized 0.1.1. The Octatrack model, run duration and persistence results were not supplied.
+
+The two owner-supplied v2 checkpoints have valid completion checksums and no recorded warnings, errors or faults. The Air Chorus checkpoint declares 0.1.0 and contains only 14 startup/engine-job records; the other checkpoint is from a different configuration without Air Chorus. Neither records audio, DSP timing or the clicking onset. Their source fingerprints do not match the current beta source inventory. Raw logs and private configuration details remain outside this repository. The owner's current-build hardware waiver remains in force for 0.1.1.
+
+The current 0.1.1 native/browser comparison records 118 profiles: 47 matching builds (16 identical outright, 31 outside shared platform writes), 71 matching refusals and zero mismatches. All 31,744 newly enabled allowed declaration selections pass the actual native ledger; these are declaration checks rather than complete firmware builds. The module doctor is green.

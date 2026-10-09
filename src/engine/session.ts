@@ -29,7 +29,7 @@ export function createEngineSession(reply: (response: EngineResponse, transfer?:
       const original = base, current = generation
       if (!original) throw new Error('Choose and verify your base firmware first.')
       const modules = resolveSelection(request.moduleIds)
-      const unavailable = moduleAvailabilityError(request.moduleIds)
+      const unavailable = moduleAvailabilityError(request.moduleIds,request.betaAccess === true)
       if (unavailable) throw new Error(unavailable)
       if (!modules.length) throw new Error('Add at least one module before building custom firmware.')
       if (typeof request.keepStockFx2 !== 'boolean') throw new Error('Choose whether to keep the stock FX2 effects.')

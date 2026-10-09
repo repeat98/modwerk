@@ -1,7 +1,7 @@
 import { moduleBuildError } from './build-support'
 import { checkSelection } from './compatibility'
 import { describe, expect, it } from 'vitest'
-import { AVAILABLE_MODULES, PAUSED_MODULE_IDS, isModuleAvailable, moduleAvailabilityError } from './availability'
+import { AVAILABLE_MODULES, availableModules, PAUSED_MODULE_IDS, isModuleAvailable, moduleAvailabilityError } from './availability'
 import { MODULES, resolveSelection } from './modules'
 import { newConfiguration, validateConfiguration } from '../config/workspace'
 
@@ -31,6 +31,14 @@ describe('temporary module availability', () => {
     expect(moduleAvailabilityError(restored.moduleIds)).toContain('Air Chorus')
     expect(moduleAvailabilityError(restored.moduleIds)).toContain('Remove these modules')
     expect(resolveSelection(['spectrum', 'modulation', 'character', 'airwindows-chorus'])).toHaveLength(4)
+  })
+  it('offers and builds only Air Chorus for beta access while retaining other pauses', () => {
+    expect(availableModules(true).map(module => module.id)).toEqual([...MODULES].filter(module => !PAUSED_MODULE_IDS.includes(module.id) || module.id === 'airwindows-chorus').map(module => module.id))
+    expect(isModuleAvailable('airwindows-chorus', true)).toBe(true)
+    expect(moduleAvailabilityError(['airwindows-chorus'], true)).toBe('')
+    expect(moduleAvailabilityError(['spectrum', 'airwindows-chorus'], true)).toContain('Spectrum')
+    expect(moduleBuildError(['airwindows-chorus'])).toBe('')
+    expect(checkSelection(['airwindows-chorus'], false).checked).toBe(true)
   })
   it('allows available selections and still rejects unknown catalog identities', () => {
     expect(moduleAvailabilityError(AVAILABLE_MODULES.map(module => module.id))).toBe('')

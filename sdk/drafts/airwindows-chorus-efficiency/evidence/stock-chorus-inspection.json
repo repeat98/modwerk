@@ -1,0 +1,32 @@
+{
+  "recordedOn": "2026-10-09",
+  "stockMainSha256": "164f31224bf61181e3f50e7dec40df9afcae5b16dbf6e4c0d0cc5e986af0a84e",
+  "effectId": 18,
+  "audioProcessor": "DSP",
+  "programWordsPerCore": 329,
+  "payloads": [
+    {
+      "payload": "A",
+      "initAddress": 3767,
+      "procAddress": 3799,
+      "programSha256": "b40c49059359c1cb5959a9d1601f4dbba2290baed64ae644bd8f325d3dbafcea"
+    },
+    {
+      "payload": "B",
+      "initAddress": 3191,
+      "procAddress": 3223,
+      "programSha256": "ecd68f1a0c35418828c0f801482b100157e3c40c59c26c55592b3217eff91f6b"
+    }
+  ],
+  "findings": [
+    "Stock Chorus has nontrivial DSP init and sample-processing entries; its wet audio renders in the DSP-only host without a ColdFire audio routine.",
+    "Its init reads the stock instance allocator and places the second channel 1536 words after the first, fitting the 3072-word FX1 allocation.",
+    "The sample path uses a 1532-position modulo cursor with padded channel storage, up to five tap states per channel, DSP control smoothing and parallel ALU/memory moves.",
+    "Air Chorus retains independent 8192-word stereo rings and a different algorithm. Copying stock Chorus buffer lengths or processing would not preserve its entire existing sweep.",
+    "Stock DELAY, and the existing CPU Tape Echo implementation, use the post-FX2 ColdFire/DMA path. That path does not itself provide processing between FX1 and FX2."
+  ],
+  "limits": [
+    "Static inspection plus existing DSP-only renders; no new physical hardware timing or CPU-port implementation.",
+    "Only addresses, hashes and original analysis are retained. Stock routine bytes/disassembly and memory dumps remain private."
+  ]
+}

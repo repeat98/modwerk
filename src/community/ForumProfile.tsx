@@ -21,7 +21,7 @@ export function ForumProfile({ username, onLoad }: { username: string; onLoad?: 
   useEffect(() => { let cancelled = false; void api<MemberProfile>('/forum/profiles/' + encodeURIComponent(username)).then(value => { if (!cancelled) { setProfile(value); onLoad?.(value) } }).catch(error => { if (!cancelled) setError(error.message) }); return () => { cancelled = true } }, [username, onLoad])
   if (!profile) return <section className="configuration-section forum-profile"><p role={error ? 'alert' : 'status'}>{error || 'Loading member profile…'}</p></section>
   return <><section className="configuration-section forum-profile"><ForumAvatar username={profile.username} avatar={profile.avatar} /><div>
-    <h2>{profile.displayName}<ForumRoleBadge role={profile.role} />{profile.maintains.length > 0 && <ForumMaintainerBadge profile />}</h2>
+    <h2>{profile.displayName}<ForumRoleBadge role={profile.role} betaTester={profile.betaTester} />{profile.maintains.length > 0 && <ForumMaintainerBadge profile />}</h2>
     <p className="forum-profile-since">@{profile.username} · Member since {memberSince(profile.memberSince)}</p>
     {profile.bio && <p className="profile-bio">{profile.bio}</p>}
     <ProfileLinksView key={profile.username} profile={profile} />

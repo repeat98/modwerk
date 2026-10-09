@@ -44,6 +44,37 @@ npm run octatrack:elekloader:verify -- \
   /private/NEW-core-output/package/core-0.3.1-modwerk-dev.1.elemod
 ```
 
+`build_ports.py` prepares independent source ports with the same pinned SDK
+and its native source checker. It registers the internal USB MIDI dependency
+from `platform/usb-midi` without copying it into `modules/` or changing the
+imported SDK. USB Audio carries that implementation through its existing
+override. The converter's guarded device-descriptor clone preserves the
+protected bootloader bytes. These are static source ports; the upload
+controller cannot yet execute them as runtime modules.
+
+```sh
+python3 -B sdk/machines/octatrack/elekloader/build_ports.py \
+  --stock /private/OCTATRACK_OS1.40C.bin \
+  --upstream /private/pinned-elekloader \
+  --core /private/NEW-core-output/package/core-0.3.1-modwerk-dev.1.elemod \
+  --module usb-midi --module usb-audio-out-tracks-main-cue --module cc-map \
+  --output /private/NEW-source-ports
+```
+
+The private `source-proofs.json` pins the core, stock, recipe and source
+inputs, and records each actual source comparison/refusal. A partially emitted
+package is a failed port. The helper also refuses table insertions that the
+pinned converter and its checker both handle incorrectly as appends, including
+Mute Modes' PERSONALIZE row. A matching build from two implementations must
+not conceal that unsupported contract.
+
+Pass the source-checked packages and core to the TypeScript verifier above,
+optionally with `--pairs` or `--combined` to compare combinations. It checks
+saved full-file hashes against the independent native builder. No source
+comparison or byte parity establishes boot, audio, live sampling, host or
+hardware safety. Keep all generated source, packages, images and reports
+outside Git and retain failures alongside later results.
+
 The source recipe is GPL-3.0-or-later. The pinned upstream core assembly is
 GPL-2.0-or-later; it is copied only into the private generated source, with
 its existing notices preserved. See the repository licence inventory for

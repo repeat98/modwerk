@@ -10,6 +10,8 @@ import { ModuleFeedbackPanel } from '../community/ModuleFeedbackPanel'
 import { useModuleWorksReports } from '../community/use-module-works-reports'
 import { ShareModuleButton } from '../community/ShareModuleButton'
 import { Icon } from './Icon'
+import { useCommunity } from '../community/context'
+import { hasBetaAccess } from '../community/beta-access'
 import { catalogNeighbors, type CatalogBrowse } from '../catalog/catalog-browse'
 import { CatalogNavigation } from './CatalogNavigation'
 import { ModuleAuthors } from './ModuleAuthors'
@@ -35,7 +37,7 @@ export function ModuleDetailLayout({ id, title, family, detail, author, authorUr
   issueReport: (openRequest: number) => ReactNode
   overviewIntro?: ReactNode
 }) {
-  const navigation = catalogNeighbors(browse, id)
+  const navigation = catalogNeighbors(browse, id, hasBetaAccess(useCommunity().session))
   const [tab, setTab] = useState<DetailTab>(linkedTab)
   const [issueOpenRequest, setIssueOpenRequest] = useState(0)
   const issues = useModuleIssues(id)

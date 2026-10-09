@@ -47,6 +47,19 @@ async function fixture() {
 }
 
 describe('module update subscriptions', () => {
+  it('queues beta releases only for eligible beta followers and stays quiet publicly', async () => {
+    const f = await fixture(), tester = await f.member('betafan'), ordinary = await f.member('publicfan')
+    f.db.prepare('UPDATE users SET beta_tester=1 WHERE id=?').run(tester.id)
+    await f.publish(release('miniverb', '0.9.0'))
+    for (const member of [tester, ordinary]) f.db.prepare('INSERT INTO module_update_subscriptions(user_id,module_id,after_version) VALUES(?,?,?)').run(member.id, 'airwindows-chorus', '0.1.0-experimental')
+    const beta = { ...release('airwindows-chorus', '0.1.1-experimental'), beta: true }
+    expect(parseModuleReleases(manifest([beta]))[0].beta).toBe(true)
+    await f.publish(beta); await f.publish(beta)
+    expect((await f.items(tester.session)).filter(item => item.kind === 'module_update')).toHaveLength(1)
+    expect(await f.items(ordinary.session)).toHaveLength(0)
+    expect(f.db.prepare("SELECT COUNT(*) AS count FROM announcements WHERE module_id='airwindows-chorus'").get()!.count).toBe(0)
+  })
+
   it('requires a verified member, scopes subscriptions to the account and follows all three machines independently', async () => {
     const f = await fixture(), owner = await f.member('follower'), other = await f.member('anotherfan')
     expect((await f.call('/modules/miniverb/updates')).status).toBe(401)

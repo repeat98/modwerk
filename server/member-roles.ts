@@ -3,6 +3,7 @@ import { HttpError, jsonBody, required, response } from './security'
 import { COMMUNITY_MODULES } from '../src/community/modules'
 import { effectiveRole, isMemberRole, type MemberRole } from '../src/community/member-standing'
 import { CONFIRMED } from './recognition'
+import { adminBetaTesterRoutes } from './beta-testers'
 
 const listed = (moduleId: string, login: string) => COMMUNITY_MODULES.some(module => module.id === moduleId && module.maintainers.some(handle => handle.toLowerCase() === login.toLowerCase()))
 
@@ -31,6 +32,8 @@ export async function memberRoles(db: Database, ids: string[]): Promise<Map<stri
 /** Administrators grant or remove the developer role by username. The owner role is assigned only by migration, so it
  * can neither be granted nor taken away here; each change is recorded in the moderation history with its reason. */
 export async function adminRoleRoutes(request: Request, db: Database, path: string, actorId: string): Promise<Response | null> {
+  const beta = await adminBetaTesterRoutes(request, db, path, actorId)
+  if (beta) return beta
   if (path === '/api/admin/forum/roles' && request.method === 'GET')
     return response((await db.prepare("SELECT username,display_name AS displayName,role FROM users WHERE role<>'user' AND suspended=0 AND username IS NOT NULL ORDER BY CASE role WHEN 'owner' THEN 0 ELSE 1 END,username LIMIT 200").all()).results)
   const match = path.match(/^\/api\/admin\/forum\/roles\/([a-z0-9_]{3,24})$/)

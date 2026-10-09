@@ -1,4 +1,5 @@
 import type { CatalogBrowse } from '../catalog/catalog-browse'
+import { isBetaModule, BETA_MODULE_NOTICE } from '../catalog/availability'
 import { assetUrl } from '../hosting'
 import { useState } from 'react'
 import { ModuleControls } from './ModuleControls'
@@ -24,12 +25,12 @@ export function ModuleDetail({ module, selected, onToggle, browse, onBackToResul
   const details = DETAILS[module.id]
   const moduleDocument = MODULE_DOCUMENTS_BY_ID[module.id]
   return <ModuleDetailLayout browse={browse} onBackToResults={onBackToResults} id={module.id} title={module.name} family={details.family} detail={module.detail}
-    titleBadge={module.id === USB_AUDIO_MODULE ? 'Outbox 8 compatible' : undefined}
+    titleBadge={isBetaModule(module.id) ? 'Beta' : module.id === USB_AUDIO_MODULE ? 'Outbox 8 compatible' : undefined}
     configureTarget={module.id === USB_AUDIO_MODULE && onConfigureUsbAudio ? 'usb-setup' : undefined}
     author={module.authorName} authorUrl={module.authorUrl} contributors={module.contributors} description={module.description}
     selected={selected} onToggle={onToggle} backHref="#library" backLabel="All modules"
     preview={<ModulePreview id={module.id} />} resources={<ModuleResourceIndicators id={module.id} usbLayout={module.id === USB_AUDIO_MODULE && onConfigureUsbAudio ? draft.layout : undefined} />}
-    notice={moduleDocument.build && <p className="service-note" role="status">{moduleDocument.build.reason}</p>}
+    notice={<>{isBetaModule(module.id) && <p className="risk-note">{BETA_MODULE_NOTICE}</p>}{moduleDocument.build && <p className="service-note" role="status">{moduleDocument.build.reason}</p>}</>}
     overviewIntro={module.id === USB_AUDIO_MODULE && onConfigureUsbAudio && <UsbAudioConfigurator key={previewKey} draft={draft} onDraftChange={value => setUsbDraft({ key: previewKey, value })} configuration={usbAudio} selected={selected} configurationName={configurationName} onConfigure={onConfigureUsbAudio} />}
     guide={<>
       <details className="module-disclosure">

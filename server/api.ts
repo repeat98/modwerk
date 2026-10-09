@@ -112,7 +112,7 @@ export async function handleApi(request: Request, env: Env): Promise<Response> {
     if(notifications)return notifications
     let match: RegExpMatchArray | null
     if ((match = path.match(/^\/api\/modules\/([a-z0-9-]+)\/changelog$/)) && request.method === 'GET') return await moduleChangelogRoute(db,match[1])
-    if ((match = path.match(/^\/api\/modules\/([a-z0-9-]+)\/download$/)) && request.method === 'POST') return await moduleDownloadRoute(request,db,match[1],user)
+    if ((match = path.match(/^\/api\/modules\/([a-z0-9-]+)\/download$/)) && request.method === 'POST') return await moduleDownloadRoute(request,env,db,match[1],user)
     if ((match = path.match(/^\/api\/modules\/([a-z0-9-]+)\/updates$/))) return await moduleUpdateRoutes(request,env,db,match[1],user)
     if ((match = path.match(/^\/api\/media\/([^/]+)$/)) && request.method === 'GET') {
       const item = await db.prepare('SELECT m.*,s.status,s.owner_id,p.submission_id AS published FROM media m JOIN submissions s ON s.id=m.submission_id LEFT JOIN module_publications p ON p.submission_id=s.id WHERE m.id=?').bind(match[1]).first<Media & {status:string;owner_id:string;published:string|null}>()

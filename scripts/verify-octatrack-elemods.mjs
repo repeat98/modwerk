@@ -13,9 +13,11 @@ import { createService } from '../vendor/elekloader/kit/src/kit/serve.ts'
 import { BUILDER_SOURCE, prepareLocalBuild } from '../src/engine/elekloader/machine-build.ts'
 
 const [input, directory, upstream, ...args] = process.argv.slice(2)
-const pairs = args.includes('--pairs'), paths = args.filter(arg => arg !== '--pairs').map(path => resolve(path))
-if (!input || !directory || !upstream || !paths.length || args.some(arg => arg.startsWith('--') && arg !== '--pairs'))
-  throw new Error('Usage: npm run octatrack:elekloader:verify -- stock-1.40C.bin NEW-private-directory elekloader-checkout core.elemod [module.elemod ...] [--pairs]')
+const flags = new Set(['--pairs', '--combined'])
+const pairs = args.includes('--pairs'), combined = args.includes('--combined')
+const paths = args.filter(arg => !flags.has(arg)).map(path => resolve(path))
+if (!input || !directory || !upstream || !paths.length || args.some(arg => arg.startsWith('--') && !flags.has(arg)))
+  throw new Error('Usage: npm run octatrack:elekloader:verify -- stock-1.40C.bin NEW-private-directory elekloader-checkout core.elemod [module.elemod ...] [--pairs] [--combined]')
 const root = realpathSync(fileURLToPath(new URL('../', import.meta.url)))
 const output = resolve(directory)
 if (existsSync(output)) throw new Error('Choose a new private output directory.')
@@ -40,6 +42,7 @@ assert.equal(new Set(packages.map(mod => mod.id)).size, packages.length, 'Module
 const core = cores[0], modules = packages.filter(mod => mod !== core)
 const selections = [[core], ...modules.map(mod => [core, mod])]
 if (pairs) for (let a = 0; a < modules.length; a++) for (let b = a + 1; b < modules.length; b++) selections.push([core, modules[a], modules[b]])
+if (combined && modules.length > (pairs ? 2 : 1)) selections.push([core, ...modules])
 mkdirSync(destination)
 const emptyCatalog = new TextEncoder().encode(JSON.stringify({ schema: 1, kind: 'elekloader-catalog', revision: 'private-migration', cores: [], mods: [] }))
 const nativeCheck = `import sys,json,hashlib
@@ -54,6 +57,10 @@ except PatchError as e:
 const proofs = []
 for (const selection of selections) {
   const ids = selection.map(mod => mod.id), label = ids.join('+')
+  // The kit bridge sorts local package paths for both check and build. Give
+  // Python that same order: overlap/export diagnostics name their owners in
+  // input order, even when the refusal and exact conflicting spans match.
+  const ordered = [...selection].sort((a, b) => basename(a.path) < basename(b.path) ? -1 : basename(a.path) > basename(b.path) ? 1 : 0)
   // Same service as the browser worker. The only fetch is this in-memory empty catalogue.
   const handle = createService(async url => { assert.equal(url, 'https://private.invalid/catalog.json'); return emptyCatalog })
   const call = (name, args = {}, data, progress) => handle({ call: name, args, data }, progress)
@@ -65,8 +72,8 @@ for (const selection of selections) {
     check: enabled => call('check', { enabled }),
     build: (enabled, version, name, log) => call('build', { enabled, version, name }, undefined, log),
   }
-  const prepared = await prepareLocalBuild(builder, { machine: 'octatrack', release: '1.40C', stock: new File([raw], basename(input)), mods: selection })
-  const native = JSON.parse(execFileSync('python3', ['-B', '-c', nativeCheck, nativeRoot, resolve(input), ...selection.map(mod => mod.path)], { encoding: 'utf8', maxBuffer: 1024 * 1024 }))
+  const prepared = await prepareLocalBuild(builder, { machine: 'octatrack', release: '1.40C', stock: new File([raw], basename(input)), mods: ordered })
+  const native = JSON.parse(execFileSync('python3', ['-B', '-c', nativeCheck, nativeRoot, resolve(input), ...ordered.map(mod => mod.path)], { encoding: 'utf8', maxBuffer: 1024 * 1024 }))
   if (!prepared.ok) {
     assert.equal(native.ok, false, label + ': TypeScript refuses but Python builds')
     const problems = prepared.check?.problems ?? [prepared.error]
@@ -94,6 +101,6 @@ for (const selection of selections) {
 }
 assert.equal(sha(raw), inputSha256); assert.equal(sha(readFileSync(input)), inputSha256)
 for (const mod of packages) assert.equal(sha(readFileSync(mod.path)), mod.sha256, 'source package unchanged')
-const report = { schema: 1, kind: 'modwerk-octatrack-elemod-migration', builder: BUILDER_SOURCE, sourceCommit: execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim(), inputSha256, packages: packages.map(({ id, version, sha256 }) => ({ id, version, sha256 })), counts: { built: proofs.filter(proof => proof.status === 'built').length, refused: proofs.filter(proof => proof.status === 'matching-refusal').length }, productionReady: false, limitations: ['This comparison does not qualify mandatory logger/startup behaviour or exact selected-module identity.', 'Catalogue DSP/FX and USB/standalone ports remain incomplete.', 'No emulator or hardware qualification in this comparison; no physical reboot or live sampling observed.', 'No device-side WebUSB update transport.'], proofs }
+const report = { schema: 1, kind: 'modwerk-octatrack-elemod-migration', builder: BUILDER_SOURCE, verifierSha256: sha(readFileSync(fileURLToPath(import.meta.url))), sourceCommit: execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim(), inputSha256, packages: packages.map(({ id, version, sha256 }) => ({ id, version, sha256 })), counts: { built: proofs.filter(proof => proof.status === 'built').length, refused: proofs.filter(proof => proof.status === 'matching-refusal').length }, productionReady: false, limitations: ['This comparison does not qualify mandatory logger/startup behaviour or exact selected-module identity.', 'Catalogue DSP/FX and USB/standalone ports remain incomplete.', 'No emulator or hardware qualification in this comparison; no physical reboot or live sampling observed.', 'No device-side WebUSB update transport.'], proofs }
 writeFileSync(join(destination, 'proofs.json'), JSON.stringify(report, null, 2) + '\n')
 console.log(JSON.stringify(report.counts) + '. Private report: ' + join(destination, 'proofs.json') + '. Production cutover remains pending.')

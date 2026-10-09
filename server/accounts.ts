@@ -118,7 +118,7 @@ export async function accountUser(request: Request, env: Env, db: Database): Pro
   const user=(async()=>{
     const session=await accountAuth(env,db).api.getSession({headers:request.headers})
     if(!session?.user.emailVerified)return null
-    return db.prepare('SELECT id,display_name,username,avatar_id,email_verified,suspended,is_admin FROM users WHERE id=? AND suspended=0 AND NOT EXISTS(SELECT 1 FROM social_pending_accounts p WHERE p.user_id=users.id)').bind(session.user.id).first<User>()
+    return db.prepare('SELECT id,display_name,username,avatar_id,email_verified,suspended,is_admin,beta_tester FROM users WHERE id=? AND suspended=0 AND NOT EXISTS(SELECT 1 FROM social_pending_accounts p WHERE p.user_id=users.id)').bind(session.user.id).first<User>()
   })()
   accountUsers.set(request,{db,settings,user})
   return user
