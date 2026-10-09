@@ -1,0 +1,11 @@
+{
+  "version": "0.1.6-experimental",
+  "date": "2026-10-09",
+  "changes": [
+    "A change between Analog BD and FLEX is no machine change to stock, so the playing track kept the previous machine's values until the bank was loaded again. The playing track now follows at once: stock FLEX defaults on leaving, the drum's defaults on a new assignment.",
+    "Assigning Analog BD to a track that was already FLEX seeds the playing track too, so it does not start from FLEX values such as DECAY 0.",
+    "Leaving Analog BD while the sequencer runs stops the FLEX voice that the drum's trigs had started from drum values. The track is silent until its next trig instead of briefly playing wrong sample data.",
+    "808/909 DSP code, controls and saved layout are unchanged from 0.1.5; ColdFire code grows by about 115 bytes.",
+    "Private candidate only. One MKII functional report on a locally built image; Part/project reload around the change, maximum FX load, chip timing and memory bounds are untested, and no earlier approval or waiver covers this source."
+  ]
+}

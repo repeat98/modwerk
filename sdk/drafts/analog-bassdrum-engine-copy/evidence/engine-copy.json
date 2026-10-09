@@ -1,0 +1,114 @@
+{
+  "schema": 1,
+  "date": "2026-10-09",
+  "candidateVersion": "0.1.6-experimental",
+  "by": "npp1993 (fork), on top of published 0.1.5's machine.s 90f9ddb5",
+  "stockMainOsSha256": "164f31224bf61181e3f50e7dec40df9afcae5b16dbf6e4c0d0cc5e986af0a84e",
+  "emulatorSha256": "1955bc62101451796570b4dde49da6acc90a495504cdb62fce78c8e37938d718",
+  "image": {
+    "label": "AB015FX4",
+    "machineSourceSha256": "f4bd3a0ef0935dcbc4cda2e4ab519f90583e265c1b7bbd9fb724aadb5f648699",
+    "mainOsSha256": "d8fb2a00d3c093e004d41223adc354afbde6d6cebf817968bf43f6235cb87c27",
+    "cardUpdateSha256": "04741dd28c9a32450c58bd7f06bede8f8ce125f8278b66512f9ade34b8ce8698",
+    "sysexUpdateSha256": "a06c95d2cd0f17d83c5f4e43fe3e367a42a0850238268f6a54c003a7a420cb5f",
+    "recipe": "ANALOG BD beside the stock effects except SPRING REV; static stock DSP; built with make image on macOS, not in the isolated container and not with build.py",
+    "dspPayloadsIdenticalTo014": "the last 149,555 bytes of the 0.1.4 and candidate MAIN OS match",
+    "note": "Built while this change was staged on the 0.1.5 draft; the machine.s is byte-identical to this folder's. verify.py's two version strings changed afterwards and it was rerun."
+  },
+  "runtimeAppendBytes": {
+    "0.1.4": 3879,
+    "0.1.5": 3908,
+    "this machine.s": 4023
+  },
+  "change": [
+    "Leaving ANALOG BD in the active Part also writes the stock FLEX defaults into the engine's copy of the track (0x80000810 + 72 x track, +0 and +0x20).",
+    "A new ANALOG BD assignment in the active Part also writes the drum's defaults there.",
+    "Leaving ANALOG BD in the active Part clears the track's stock voice flag (0x800049d8 + 168 x track): stock's sample fetch at 0x40007960 writes silence while it is 0, and the trig start at 0x4000f450 sets it again."
+  ],
+  "why": "ANALOG BD is FLEX to stock. A change between the two is no machine change, so stock keeps the engine's copy of the track; and every trig on an ANALOG BD track starts stock's FLEX voice from the drum's bytes read as FLEX settings, which the track then plays after the change until its next trig.",
+  "verify": {
+    "schema": 1,
+    "candidateVersion": "0.1.6-experimental",
+    "machineSourceSha256": "f4bd3a0ef0935dcbc4cda2e4ab519f90583e265c1b7bbd9fb724aadb5f648699",
+    "runtimeSha256": "7d36f1d306806d7af439f727d6bdab836d3669c1853212252a6034f5b5bebce3",
+    "chooserCases": 512,
+    "parts": 4,
+    "tracks": 8,
+    "partCopies": 2,
+    "reselectCases": 32,
+    "otherMachineRows": 5,
+    "registersAndStackPreserved": true,
+    "unrelatedPartBytesPreserved": true,
+    "engineCopyCases": 1152,
+    "engineCopyOnlyForActivePart": true,
+    "leavingStopsOnlyThatTrackVoice": true,
+    "physicalHardware": "not tested"
+  },
+  "verifyOn015Source": "the engine-copy cases fail at the first one, as expected",
+  "emulator": {
+    "method": "ot_emu, two processes: panel-driven change in run 1; run 2 boots from run 1's battery RAM (CS1) and card with the firmware's own power-up load and no project load. The engine's copy is dumped at the end of run 1.",
+    "engineCopyAfterChange": [
+      {
+        "change": "T1 Analog BD to FLEX",
+        "0.1.4": "drum values kept",
+        "0.1.5": "drum values 64,127,64,32,64,127 / 1,100,127,64,64,0",
+        "this": "64,0,0,127,0,79 / 1,0,0,0,1,64"
+      },
+      {
+        "change": "T2 plain FLEX to Analog BD",
+        "0.1.4": "FLEX values kept (DECAY 0)",
+        "0.1.5": "FLEX values kept (DECAY 0)",
+        "this": "64,80,80,64,64,0 / 0,64,127,64,64,0"
+      },
+      {
+        "change": "T1 Analog BD to FLEX and back",
+        "0.1.4": "previous patch kept while the Part holds the defaults",
+        "0.1.5": "previous patch kept while the Part holds the defaults",
+        "this": "64,80,80,64,64,0 / 0,64,127,64,64,0"
+      }
+    ],
+    "powerCycleThisImage": [
+      {
+        "change": "T1 to FLEX in SRC SETUP",
+        "result": "all four live Parts identical before and after"
+      },
+      {
+        "change": "T1 to FLEX and back",
+        "result": "identical"
+      },
+      {
+        "change": "T2 FLEX to Analog BD",
+        "result": "identical"
+      },
+      {
+        "change": "T5 to THRU in the track's machine list",
+        "result": "identical"
+      }
+    ],
+    "powerCycle014": [
+      {
+        "change": "T1 to FLEX",
+        "result": "bank rejected, all machines STATIC"
+      },
+      {
+        "change": "T1 to STATIC",
+        "result": "rejected"
+      },
+      {
+        "change": "T1 to THRU",
+        "result": "rejected"
+      },
+      {
+        "change": "T1 to PICKUP",
+        "result": "rejected"
+      }
+    ],
+    "notRun": [
+      "audio: this emulator build renders no Analog BD or FLEX output in these fixtures, so the stale voice and its stop are not shown here",
+      "NEIGHBOR as target: the scripted panel change did not commit",
+      "Part save/reload and project save/load around the change"
+    ]
+  },
+  "staleRecords": "None in this folder. No isolated-container build, saved-upgrade round trip, package build or browser/native comparison was made for this source.",
+  "physicalHardware": "see hardware-npp1993.json"
+}

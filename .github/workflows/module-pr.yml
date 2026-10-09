@@ -140,6 +140,9 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
       - name: Check upload transactions and malformed frames without firmware
         run: sh sdk/runtime/upload/tests/run_host.sh
       - name: Check private Elekloader source recipes with synthetic bytes only
@@ -174,9 +177,6 @@ jobs:
         with:
           name: octatrack-source-${{ github.sha }}
           path: ${{ runner.temp }}/octatrack-source/packages
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
-        with:
-          node-version: 24
       - run: npm ci
       - name: Require compiled packages to reproduce the committed, native-verified packages
         run: node scripts/import-module-build.mjs "$RUNNER_TEMP/octatrack-source/packages" --development --check-only --verify-existing

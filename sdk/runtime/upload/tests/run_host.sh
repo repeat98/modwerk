@@ -17,3 +17,5 @@ for n in sizes:
     assert result.stdout.decode().strip() == hashlib.sha256(data).hexdigest(), n
 print(f'SHA-256: {len(sizes)} Python-reference vectors passed, including the protocol maximum.')
 PY
+"${CC:-cc}" -std=c99 -Wall -Wextra -Werror -pedantic -I"$root" "$root/tests/wire_probe.c" "$root/upload.c" "$root/sha256.c" "$root/wire.c" -o "$out/wire-probe"
+node "$root/../../../scripts/verify-upload-wire.mjs" "$out/wire-probe"

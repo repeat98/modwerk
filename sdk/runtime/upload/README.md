@@ -87,7 +87,7 @@ successful transfer or reconnect as successful activation.
 ## Verification
 
 ```sh
-sh sdk/runtime/upload/tests/run_host.sh
+npm run upload:verify
 python3 -B sdk/runtime/upload/compile.py --output /private/NEW-source-build
 ```
 
@@ -98,6 +98,37 @@ retirement, trial audio, disconnects, exhaustion and malformed requests. They
 refuse 20,000 malformed chunks/frames and compare 115 SHA-256 vectors, including
 padding boundaries and the maximum package size, with Python's independent
 hash implementation. These are controller proofs, not hardware audio tests.
+
+The browser's [wire codec](../../../src/engine/elekloader/upload-wire.ts) and
+[session client](../../../src/engine/elekloader/upload-session.ts) use TypeScript
+and the same Elekloader SHA-256 implementation as the builder. The client binds
+the exact base, fresh session, transaction, generation and module-set digests.
+It copies and pin-checks the proposed package before entering upload mode,
+stages in bounded chunks, then leaves activation, trial playback, acceptance
+and rollback as separate actions. Positive staging refusals/cancellation
+discard the candidate and exit an upload hold that this operation entered.
+Acceptance never runs automatically.
+
+A missing, late, malformed or inconsistent acknowledgement stops the connection.
+The client preserves its **last confirmed** status, marks the connection
+untrusted and sends no further commands on it. That snapshot is not the
+current device state after an unconfirmed command. In particular, a lost
+publication acknowledgement cannot be reported as a successful update or a
+confirmed rollback. A fresh transport can identify the device read-only;
+cross-connection recovery and the real USB adapter remain to be implemented.
+Each exchange has a bounded deadline; operations cannot overlap. Cancellation
+is checked between acknowledged chunks rather than racing an in-flight command.
+
+`tests/wire_probe.c` runs the real C controller and decoder with an authored,
+synthetic backend. `scripts/verify-upload-wire.mjs` drives it with the actual
+browser client in **23 scenarios**, including the 1 MiB protocol maximum,
+trial/accept/rollback, a second transaction without process restart, rejected
+package pins, cancellation, preparation/publication/retirement/restoration
+faults, stale or malformed acknowledgements, a lost publication reply and
+deadline/concurrency limits. The codec has 19 independent header/boundary tests.
+Use Node 24, a host C compiler and Python for this developer test command;
+none is a browser-user dependency. The peer executes no module code and these
+results do not qualify device audio, memory ownership or USB operation.
 
 Native compilation uses GNU `m68k-elf` for MCF54455, strict warnings, no libc
 assumptions and no unresolved symbols. Compiler stack reports are recorded
@@ -111,6 +142,8 @@ The backend still needs a trusted runtime-bundle parser, dependency/ABI and
 legacy-state validation, resource admission for ColdFire and both DSP cores,
 independent code/state regions, cache maintenance, permanent dispatch and
 confirmed restore/retirement. No module lifecycle implementation is supplied
-by the test backend. The base also needs mandatory logger/startup integration,
+by the test backend. The private base now includes logger/startup source ports;
+they still need exact selected-module identity and broader qualification.
+The base also needs
 fresh session generation and bounded vendor USB queues/descriptors compatible
 with MIDI/audio/storage. Only then can the first no-reboot physical test run.

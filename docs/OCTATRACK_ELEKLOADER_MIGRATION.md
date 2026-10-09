@@ -225,7 +225,13 @@ bounded transaction and versioned frame decoder in freestanding ColdFire C.
 Its fault backend tests staging, verification, trial playback, confirmed
 retirement and rollback; all mutations require a complete device backend and
 fresh session binding. It is not connected to USB or stock firmware and does
-not execute packages. The device implementation should proceed in this order:
+not execute packages. The TypeScript wire codec and serial browser session
+client now pass 23 interoperability/fault scenarios against that real C
+controller with a synthetic backend. The client keeps staging, publication,
+trial playback, acceptance and rollback separate, verifies acknowledged
+identities/transitions and stops its connection after unconfirmed replies.
+This is not USB or module-execution evidence. The device implementation should
+proceed in this order:
 
 1. Add a bounded vendor USB interface alongside the existing interfaces.
    Start with identification, base/ABI identity, capabilities and a read-only

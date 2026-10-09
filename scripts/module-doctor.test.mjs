@@ -19,5 +19,5 @@ describe('module doctor', () => {
     const result = doctor('no-such-module')
     expect(result.status).toBe(2)
     expect(result.stderr).toContain('No module named no-such-module')
-  })
+  }, catalogCheckTimeout + 5000)
 })

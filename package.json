@@ -25,6 +25,7 @@
     "elekloader:check": "node scripts/elekloader-vendor.ts",
     "elekloader:update": "node scripts/elekloader-update.ts",
     "octatrack:elekloader:verify": "node scripts/verify-octatrack-elemods.mjs",
+    "upload:verify": "sh sdk/runtime/upload/tests/run_host.sh",
     "modules:generate": "node scripts/modules.mjs --write",
     "modules:check": "node scripts/modules.mjs",
     "licenses:generate": "node scripts/licenses.mjs --write",

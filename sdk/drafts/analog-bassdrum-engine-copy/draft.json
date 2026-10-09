@@ -1,0 +1,33 @@
+{
+  "schema": 1,
+  "moduleId": "analog-bassdrum",
+  "baseVersion": "0.1.5-experimental",
+  "candidateVersion": "0.1.6-experimental",
+  "baseFiles": {
+    "modules/analog-bassdrum/LICENSE": "f91a43799d9e31ccc3540f385f68c4d6ff5a096f93ae933be2ce98f6b3f7f113",
+    "modules/analog-bassdrum/ab_glue.asm": "c78dc31dfcfc7a0c6f10ae24b39744a88bed5211346bcae4f6931e2e6489223c",
+    "modules/analog-bassdrum/bd808.asm": "e7306bd284e9bca067cffc54dcbfb18ae7a0fc7b3a27253a246e58898ae9ee92",
+    "modules/analog-bassdrum/bd909.asm": "9c86c3bd06e95a998fbe4e0db5a05b9ff65e988686c81f98f6d6c9f4c3b8ee2f",
+    "modules/analog-bassdrum/control.c": "29f392c7e007aaa695076eff0c897729a941676ff582e4bb17957074d56ceac5",
+    "modules/analog-bassdrum/control.s": "644f10fbc534d8351424e55ee96c2d0ff2f39a1b691ad8a695422d1c05e37a3f",
+    "modules/analog-bassdrum/dsp808.py": "3d61ba9c258c319d90d7beb47f6cbc7dafb7336c49d8386912478d284cef603d",
+    "modules/analog-bassdrum/dsp909.py": "d31d2fd1340e9c5055389a37f20959ebccd78d45636daec824ae3e1e84f4d67d",
+    "modules/analog-bassdrum/engine.c": "9ed63ee4348aa470eb592506d7bda1e36a48e4fa56d39b4ccad2223bd2e5fda0",
+    "modules/analog-bassdrum/engine.h": "61bc45ef955db23b8f25eb5b0c6bd3dd01d9f71df7933d466845bb30e7c67a2b",
+    "modules/analog-bassdrum/engine.s": "c86a6ac24326fb52f71dd766b1ccc25e5dfd8511028b162459447c279da48425",
+    "modules/analog-bassdrum/exact-render.json": "41a17cba7c5c40ab2f32973ee4427da74d023e70cc502074f047a9b2d9900a09",
+    "modules/analog-bassdrum/fit909.json": "6917d613b5033069f226b9f6a440f6eefd935e596452546d5bc27b73c5e3dd08",
+    "modules/analog-bassdrum/generate.py": "62c5e6eca1df9179229c1b1de419114e3162813f99724dc9b40fa29c84191b88",
+    "modules/analog-bassdrum/machine.s": "90f9ddb5c2a4cee47e0334c3cd35a7e92d42b0ee37eb3bbc8062cc7821e6aeb4",
+    "modules/analog-bassdrum/manifest.py": "20fa1f744630354b3986a3ad82ac6a41744345796dc783891a4c9f0bd81c787e",
+    "modules/analog-bassdrum/octamod.module.json": "20391c18640ecaedc840f8641a7bff290c1ebbba664d577d656e3b973017d2b2",
+    "modules/analog-bassdrum/tables.inc": "baec565139910e89e12563272f9f8ef934845ddd98f90d8234be15873571e01d"
+  },
+  "candidateFiles": {
+    "machine.s": "f4bd3a0ef0935dcbc4cda2e4ab519f90583e265c1b7bbd9fb724aadb5f648699",
+    "build.py": "0ba67bac99b8d7260f34a84b84b2b50cc76d2b8fa1ba738796bfb91be2756969",
+    "verify.py": "136a35a4417b3ab76fcffb465743be55a778815801f9e807f1ddbefedf41cb27"
+  },
+  "status": "private candidate on published 0.1.5; one reported MKII functional pass on a locally built image of this machine.s; owner build, evidence and approval pending",
+  "baseCommit": "28d4356a066c1e4c370af42ece69270385755877"
+}

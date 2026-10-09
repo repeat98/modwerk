@@ -1,0 +1,54 @@
+{
+  "schema": 1,
+  "date": "2026-10-09",
+  "candidateVersion": "0.1.6-experimental",
+  "tester": {
+    "github": "npp1993"
+  },
+  "model": "MKII",
+  "kind": "functional",
+  "status": "reported",
+  "label": "AB015FX4",
+  "machineSourceSha256": "f4bd3a0ef0935dcbc4cda2e4ab519f90583e265c1b7bbd9fb724aadb5f648699",
+  "mainOsSha256": "d8fb2a00d3c093e004d41223adc354afbde6d6cebf817968bf43f6235cb87c27",
+  "cardUpdateSha256": "04741dd28c9a32450c58bd7f06bede8f8ce125f8278b66512f9ade34b8ce8698",
+  "composition": "Analog BD and stock only; SPRING REV given up; no Output Matrix",
+  "testerStatement": "all tests pass",
+  "stepsGiven": [
+    "Sequencer running, Analog BD to FLEX: no garbage; silence until the next trig, then the sample.",
+    "FLEX to Analog BD and the round trip: sounds without SRC clear.",
+    "Assign Analog BD to a track that is already plain FLEX: sounds straight away.",
+    "One switch followed by a power cycle: machines and routing intact, no freeze.",
+    "Another track playing a sample during the switch: unaffected."
+  ],
+  "earlierBuilds": [
+    {
+      "label": "AB015FX1",
+      "source": "0.1.4 plus FLEX defaults in both Part copies and the engine copy on leaving",
+      "reported": [
+        "Machine assignments stayed across power cycles; no sequencer freeze.",
+        "T5 to THRU, then a power cycle: stayed.",
+        "T5 copied to T6, T6 to NEIGHBOR, power cycle: T6 remained NEIGHBOR.",
+        "Analog BD to FLEX and back to Analog BD gave no sound until SRC clear (the missing re-seed of the engine copy)."
+      ]
+    },
+    {
+      "label": "AB015FX2",
+      "source": "the same plus the drum defaults in the engine copy on a new assignment",
+      "reported": [
+        "Sound when going between Analog BD and FLEX; no freeze.",
+        "Going into FLEX with the sequencer running played what sounded like corrupted data briefly before the correct FLEX sound (the stale voice)."
+      ]
+    }
+  ],
+  "limitations": [
+    "Duration, tracks used and project not reported",
+    "Sequencer running only; not tested stopped",
+    "Part save/reload and project save/load around the change not reported",
+    "Maximum FX load, chip timing and memory bounds unmeasured",
+    "Not tested beside other modules; the halt reported with Output Matrix in MATRIX mode is not covered",
+    "The image was built on the tester's computer from this branch's machine.s, not with build.py in the isolated container",
+    "The image was built before this change was renumbered 0.1.6; the machine.s is byte-identical"
+  ],
+  "verification": "Tester's own statements in the session that built the hash-identified images; no agent-performed physical test."
+}
