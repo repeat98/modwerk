@@ -26,6 +26,43 @@ Every visible module must support firmware generation and download in a compatib
 
 ## Browsing module results
 
+### External project directory
+
+`/projects/` is the **Other projects** directory, linked from the desktop sidebar,
+phone menu and instrument libraries. It lists independent mods, tools, emulators
+and developer tools that use their own workflows outside Modwerk. Entries have creator
+credits, repository links, instrument tags and original short summaries; they
+never enter firmware selections, module releases or module notifications.
+
+Maintain the curated list in `src/projects/projects.ts`. Check repository links
+and keep current versions, detailed installation and support requirements in the
+upstream project. Instrument tags aid discovery and do not certify every model
+or OS. Individual modules already offered by Modwerk belong in the module
+library; upstream collections may remain here with their relationship explained.
+Search combines with instrument and project-type filters. Instrument links can
+prefilter the directory with `?machine=<family-id>`. The production build emits
+the full link directory as readable HTML, with its own canonical URL, social
+card and sitemap entry. “Want me to add your project?” opens the existing support
+email address with a prefilled project-submission draft. The sidebar and mobile
+menu temporarily mark the directory as New. Selection criteria and independently
+researched additions are recorded in [the curation notes](EXTERNAL_PROJECTS.md).
+
+Card thumbnails are cached GitHub repository Open Graph images, including each
+repository's custom sharing artwork when provided. Refresh them with
+`node scripts/project-thumbnails.mjs --refresh` under Node 24; this maintenance command
+requires network access. It records source URLs, fetch dates, dimensions and
+hashes in `src/projects/thumbnails.json`. Images are resized without cropping
+and served locally, preserving the existing image policy and avoiding visitor
+requests to GitHub. Creator credits and directory-source attribution remain
+visible. Octatrack Manager uses its README screenshot; Octobus Additions uses
+its creator's GitHub image because the layout has no cover. These previews are
+upstream promotional images, not Modwerk validation
+or proof of compatibility. The directory's own Modwerk sharing card is separate;
+see [social-preview artwork](SOCIAL-PREVIEW.md#other-projects-directory).
+Omit `--refresh` to resume missing previews after a transient download failure.
+
+### Module navigation
+
 On desktop (above 1100px), module detail pages offer left and right chevrons and Left/Right arrow keys to move through the catalog results that were visible when a module was opened. The result order includes the selected machine, category, search, type and sort; All machines continues across machine groups in their displayed order. Paging stops at each end. “Back to results” restores the same filters. The last result selection stays in this tab's session storage so refreshing a module page keeps the context; unavailable storage still permits paging during the visit. Direct pages outside that result selection keep their usual library link.
 
 Inputs, tab lists, menus, media controls and open dialogs retain their arrow-key behavior. Phones and smaller layouts retain the normal module page without side chevrons or global arrow-key navigation.

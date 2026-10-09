@@ -5,6 +5,8 @@ import { useRef, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { downloadDigiSelection, parseDigiSelection } from '../config/digi-selection'
 import { Icon } from '../components/Icon'
+import { assetUrl } from '../hosting'
+import { projectMachineForDevice } from '../projects/projects'
 import { issueRepository } from '../community/report-context'
 import type { Configuration } from '../config/workspace'
 import { LIBRARY_CATEGORY_LABELS, STANDALONE_NOTE, type FirmwareModule, type ModuleCategory } from '../catalog/modules'
@@ -121,6 +123,7 @@ export function MachineLibrary({ device, query, category, octatrackModules: octa
   const resultsSummary = !hasMods ? 'No modules yet · ' + device?.name : term ? total + ' ' + (total === 1 ? 'result' : 'results') + ' for “' + query.trim() + '”' : total + ' ' + (total === 1 ? 'module' : 'modules') + ' · ' + ((device ?? onlyGroup)?.name ?? 'All machines')
   return <div className="library-page">
     <div className="page-heading"><div><p className="page-kicker">MODWERK / {device?.name.toUpperCase() ?? 'ALL MACHINES'}</p><h1>{category ? LIBRARY_CATEGORY_LABELS[category] : device ? 'Module library' : 'All mods'}</h1><p>{category === 'standalone' ? STANDALONE_NOTE : 'Explore modules for your Elektron instruments.'}</p></div><span className="library-total">{total} modules</span></div>
+    {device && projectMachineForDevice(device.id) && <p className="machine-external-projects"><a href={assetUrl('projects/') + '?machine=' + projectMachineForDevice(device.id)}>Other projects for {device.name} <Icon name="arrow" size={14} /></a></p>}
     {!!warnings.length && <SelectionWarning warnings={warnings.map(warning => ({id: warning.device.id, title: warning.device.name + ': your selection needs a change', description: warning.description, href: deviceHref(warning.device.id, 'configuration')}))} />}
     {phone ? resultsSlot && createPortal(<LibraryResultsBar summary={resultsSummary} sort={sort} onSortChange={onSortChange} family={libraryFamily} onFamilyChange={onFamilyChange} families={typeCounts} allCount={scopeFamilies.length} disabled={!hasMods} />, resultsSlot) : <LibraryTools family={libraryFamily} families={families} onFamilyChange={onFamilyChange} sort={sort} onSortChange={onSortChange} comparisonCount={comparison.length} onCompare={onOpenComparison} buildHref={hasMods ? deviceHref(device?.id ?? 'octatrack', 'configuration') : null} buildLabel={hasMods ? 'Build firmware for ' + (device?.name ?? 'Octatrack') : 'No modules to build yet'} machine={machinePicker} disabled={!hasMods} />}
     {device || !total ? <div className="library-subheading"><span>{term ? 'Results for “' + query.trim() + '”' : 'Explore the collection'}</span><span className="subtle">{device ? device.name + (device.firmware ? ' · OS ' + device.firmware.releases.join(' / ') : ' · no modules yet') : 'All machines'}</span></div> : null}

@@ -1,5 +1,25 @@
 # Social sharing preview
 
+## Other projects directory
+
+`/projects/` has its own original Modwerk sharing artwork at
+`public/projects-social-preview-v1.jpg`: a 1200 × 630 JPEG showing “Other
+projects”, “Beyond the builder” and four conceptual drawings for mods, tools,
+emulators and developer tools. It uses the existing Modwerk mark. These drawings are
+only the directory's promotional artwork; project cards use the projects' own
+GitHub repository previews and retain their authorship.
+
+The editable source is [social-preview/projects.svg](social-preview/projects.svg).
+Re-export under Node 24 with `node scripts/render-projects-preview.mjs`.
+The renderer inserts the current mark and uses the existing Sharp dependency.
+The static directory page sets both Open Graph and Twitter metadata to this
+image, with its own canonical URL and alt text. Client navigation uses the same
+image; other pages retain their existing cards. Change the versioned filename
+and `PROJECT_PREVIEW_IMAGE` when replacing published artwork to avoid stale
+sharing-service caches.
+
+## Original Octamod artwork
+
 The static page metadata in `index.html` references `public/social-preview.jpg` at
 `https://modwerk.app/social-preview.jpg`. The production build copies this image
 to `dist/social-preview.jpg`. Open Graph and Twitter cards can read the metadata

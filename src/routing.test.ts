@@ -105,6 +105,17 @@ describe.each(['https://modwerk.app/', 'https://example.github.io/octamod/'])('m
     expect(canonicalRouteUrl(new URL('submit/', appUrl), appUrl, moduleIds).href).toBe(root + 'submit/')
     expect(canonicalRouteUrl(new URL('#submit/miniverb', appUrl), appUrl, moduleIds).href).toBe(root + '#submit/miniverb')
   })
+  it('opens and shares the external directory, and leaves its filters behind on navigation', () => {
+    for (const suffix of ['', 'index.html']) {
+      const url = new URL('projects/' + suffix + '?machine=digitakt-ii', appUrl)
+      expect(routeFromUrl(url, appUrl)).toBe('projects?machine=digitakt-ii')
+      expect(canonicalRouteUrl(url, appUrl, moduleIds).href).toBe(root + 'projects/?machine=digitakt-ii')
+      expect(canonicalRouteUrl(new URL('#library', url), appUrl, moduleIds).href).toBe(root + '#library')
+      expect(canonicalRouteUrl(new URL('#submit', url), appUrl, moduleIds).href).toBe(root + 'submit/')
+    }
+    expect(canonicalRouteUrl(new URL('#projects', appUrl), appUrl, moduleIds).href).toBe(root + 'projects/')
+    expect(canonicalRouteUrl(new URL('#projects?machine=octatrack', appUrl), appUrl, moduleIds).href).toBe(root + 'projects/?machine=octatrack')
+  })
   it('builds thread and profile links as paths with the title words after a UUID', () => {
     expect(threadHref(threadId, 'Granular pad from Tapehead!')).toMatch(/forum\/thread\/0f3a1b2c-4d5e-4f60-8a9b-0c1d2e3f4a5b-granular-pad-from-tapehead\/$/)
     expect(threadHref(threadId, null, '?page=1')).toMatch(/forum\/thread\/0f3a1b2c-4d5e-4f60-8a9b-0c1d2e3f4a5b\/\?page=1$/)

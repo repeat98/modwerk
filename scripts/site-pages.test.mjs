@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { expect, it } from 'vitest'
 import { SITE_PAGES, sitePageHtml, sitePages } from './site-pages.ts'
+import { EXTERNAL_PROJECTS } from '../src/projects/projects.ts'
 
 const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8').replace('%BASE_URL%', './')
 
@@ -24,6 +25,16 @@ it('emits each page and its generated card', async () => {
   plugin.configResolved({ root: new URL('../', import.meta.url).pathname, base: './' })
   const assets = []
   await plugin.generateBundle.call({ emitFile(asset) { assets.push(asset) } }, {}, { 'index.html': { type: 'asset', source: html } })
-  expect(assets.map(asset => asset.fileName)).toEqual([expect.stringMatching(/^page-thumbnails\/submit-[0-9a-f]{12}\.jpg$/), 'submit/index.html'])
+  expect(assets.map(asset => asset.fileName)).toEqual([expect.stringMatching(/^page-thumbnails\/submit-[0-9a-f]{12}\.jpg$/), 'submit/index.html', 'projects/index.html'])
   expect(assets[1].source).toContain(assets[0].fileName)
+  expect(assets[2].source).toContain('https://modwerk.app/projects-social-preview-v1.jpg')
+})
+
+it('prerenders every external link on a canonical directory page', () => {
+  const page = sitePageHtml(html, SITE_PAGES.find(page => page.path === 'projects/'), 'projects.jpg', './')
+  expect(page).toContain('<h1>Other projects</h1>')
+  expect(page).toContain('<link rel="canonical" href="https://modwerk.app/projects/" />')
+  expect(page).toContain('These projects cannot be added to a Modwerk configuration.')
+  expect(page).not.toContain('<h1>Start developing</h1>')
+  for (const project of EXTERNAL_PROJECTS) expect(page).toContain('href="' + project.repository + '"')
 })
