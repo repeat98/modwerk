@@ -19,9 +19,9 @@ async function framePolicies() {
 }
 
 describe('production frame policy', () => {
-  it('allows the Ko-fi dialog and YouTube player in built HTML', async () => {
+  it('allows the Ko-fi dialog, YouTube player and requested SoundCloud preview in built HTML', async () => {
     const { meta } = await framePolicies()
-    expect(meta).toEqual(['https://ko-fi.com', 'https://www.youtube-nocookie.com'])
+    expect(meta).toEqual(['https://ko-fi.com', 'https://w.soundcloud.com', 'https://www.youtube-nocookie.com'])
   })
 
   it('uses the same restricted frame hosts in HTML and hosting headers', async () => {

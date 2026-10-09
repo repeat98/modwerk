@@ -873,9 +873,45 @@ li[data-status="error"] .forum-media-status { color: #f0a6ad; }
 .forum-maintainer-badge { color: #9cc6b1; border-color: #456354; }
 .forum-profile h2 .forum-author-badge { margin-left: 10px; vertical-align: middle; }
 .forum-profile-since { margin: 4px 0 0; color: var(--muted); font-size: 12px; }
-.forum-profile > div { min-width: 0; }
-.forum-profile-links { display: flex; flex-wrap: wrap; gap: 4px 16px; margin-top: 12px; }
-.forum-profile-links a { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; font-size: 13px; }
+.forum-profile > div { flex: 1; min-width: 0; width: 100%; }
+.forum-profile-social { max-width: 760px; margin-top: 18px; }
+.forum-profile-links { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr)); gap: 10px; }
+.forum-profile-links:has(> :only-child) { max-width: 250px; }
+.forum-profile-links:has(> :nth-child(2):last-child) { max-width: 510px; }
+.forum-profile-link-card { --profile-color: #efb2cc; min-width: 0; overflow: hidden; border-radius: 10px; background: var(--preview); }
+.forum-profile-link-card[data-service="soundcloudUrl"] { --profile-color: #f5b486; }
+.forum-profile-link-card[data-service="bandcampUrl"] { --profile-color: #9cd6df; }
+.forum-profile-link-main { display: block; border-radius: 10px 10px 0 0; }
+.forum-profile-link-cover { position: relative; display: flex; align-items: center; gap: 9px; height: 62px; padding: 0 14px; overflow: hidden; color: var(--profile-color); background: color-mix(in srgb, var(--profile-color) 9%, var(--preview)); }
+.forum-profile-link-cover > :not(.forum-profile-link-art) { position: relative; z-index: 1; }
+.forum-profile-link-cover > span:not(.forum-profile-link-art) { font-size: 12px; font-weight: 600; }
+.forum-profile-link-cover > svg:last-of-type { margin-left: auto; }
+.forum-profile-link-art { position: absolute; width: 112px; height: 112px; right: -15px; top: -22px; border: 16px solid color-mix(in srgb, var(--profile-color) 9%, transparent); border-radius: 32px; transform: rotate(-20deg); }
+[data-service="soundcloudUrl"] .forum-profile-link-art { width: 110px; height: 42px; right: 22px; top: 10px; border: 0; border-radius: 0; transform: none; background: repeating-linear-gradient(90deg, color-mix(in srgb, var(--profile-color) 12%, transparent) 0 3px, transparent 3px 8px); clip-path: polygon(0 40%, 12% 25%, 24% 40%, 37% 8%, 49% 30%, 61% 0, 73% 32%, 85% 20%, 100% 45%, 100% 55%, 85% 80%, 73% 68%, 61% 100%, 49% 70%, 37% 92%, 24% 60%, 12% 75%, 0 60%); }
+[data-service="bandcampUrl"] .forum-profile-link-art { border-radius: 50%; border-width: 1px; box-shadow: inset 0 0 0 10px var(--preview), inset 0 0 0 11px color-mix(in srgb, var(--profile-color) 12%, transparent), inset 0 0 0 24px var(--preview), inset 0 0 0 25px color-mix(in srgb, var(--profile-color) 12%, transparent); }
+.forum-profile-link-copy { display: block; padding: 14px 14px 10px; }
+.forum-profile-link-copy strong { color: var(--text); font-size: 14px; font-weight: 600; overflow-wrap: anywhere; }
+.forum-profile-link-action { display: flex; align-items: center; justify-content: flex-start; gap: 7px; width: 100%; min-height: 44px; padding: 8px 14px; border: 0; background: transparent; color: var(--text-secondary); font-size: 12px; text-align: left; }
+.forum-profile-link-main:hover, .forum-profile-link-action:hover { background: var(--surface-hover); }
+.forum-profile-link-action[aria-expanded="true"] { color: var(--profile-color); background: var(--surface-raised); }
+.forum-profile-link-main:focus-visible, .forum-profile-link-action:focus-visible { outline-offset: -3px; }
+.forum-profile-preview-note { margin: 9px 0 0; color: var(--faint); font-size: 11px; line-height: 1.5; }
+.forum-profile-music-preview { margin-top: 12px; padding: 12px; border-radius: 10px; background: var(--preview); }
+.forum-profile-preview-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+.forum-profile-preview-heading strong { min-width: 0; font-size: 13px; overflow-wrap: anywhere; }
+.forum-profile-preview-heading .icon-button { width: 44px; height: 44px; flex-shrink: 0; }
+.forum-profile-music-preview iframe { display: block; width: 100%; height: 300px; border: 0; border-radius: 6px; background: var(--surface); }
+.forum-profile-preview-fallback { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; margin-top: 4px; color: var(--muted); font-size: 12px; }
+@media (max-width: 600px) {
+  .forum-profile-links { grid-template-columns: 1fr; }
+  .forum-profile-links:has(> :only-child), .forum-profile-links:has(> :nth-child(2):last-child) { max-width: none; }
+  .forum-profile-link-main { display: flex; align-items: center; }
+  .forum-profile-link-cover { align-self: stretch; flex: 0 0 96px; flex-direction: column; gap: 6px; height: auto; min-height: 62px; padding: 8px; justify-content: center; }
+  .forum-profile-link-cover > .forum-profile-link-art, .forum-profile-link-cover > svg:last-of-type { display: none; }
+  .forum-profile-link-cover > span:not(.forum-profile-link-art) { font-size: 11px; }
+  .forum-profile-link-copy { min-width: 0; padding: 12px; }
+  .forum-profile-link-action { padding-left: 108px; }
+}
 .account-profile-links { margin: 0; padding: 0; border: 0; min-width: 0; }
 .account-profile-links legend { margin-bottom: 4px; font-size: 14px; font-weight: 600; }
 .account-profile-links > p { margin: 0 0 12px; color: var(--muted); font-size: 12px; }

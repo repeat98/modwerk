@@ -43,7 +43,11 @@ export function publicProfileLinks(profile: ProfileLinks) {
   return PROFILE_LINK_FIELDS.flatMap(field => {
     try {
       const href = normalizeProfileLink(field.key, profile[field.key] ?? '')
-      return href ? [{ ...field, href }] : []
+      if (!href) return []
+      const url = new URL(href)
+      const account = field.key === 'bandcampUrl' && url.hostname !== 'bandcamp.com'
+        ? url.hostname.replace('.bandcamp.com', '') : url.pathname.split('/')[1]
+      return [{ ...field, href, account: '@' + account }]
     } catch { return [] }
   })
 }

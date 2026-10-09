@@ -22,6 +22,10 @@ describe('public profile URLs', () => {
   ])('rejects an invalid %s value (%s)', (key, value) => {
     expect(() => normalizeProfileLink(key, value)).toThrow(/HTTPS .* profile URL/)
   })
+  it('shows account names from validated Instagram, SoundCloud, artist and fan profile URLs', () => {
+    expect(publicProfileLinks({ instagramUrl: 'https://instagram.com/artist.name', soundcloudUrl: 'https://soundcloud.com/artist-name', bandcampUrl: 'https://artist-name.bandcamp.com/music' }).map(link => link.account)).toEqual(['@artist.name', '@artist-name', '@artist-name'])
+    expect(publicProfileLinks({ bandcampUrl: 'https://bandcamp.com/musicfan' })[0].account).toBe('@musicfan')
+  })
   it('hides missing and malformed links instead of rendering unsafe API values', () => {
     expect(publicProfileLinks({})).toEqual([])
     expect(publicProfileLinks({ instagramUrl: 'javascript:alert(1)', soundcloudUrl: 'https://soundcloud.com/artist', bandcampUrl: '' })).toMatchObject([{ key: 'soundcloudUrl', label: 'SoundCloud', href: 'https://soundcloud.com/artist' }])
