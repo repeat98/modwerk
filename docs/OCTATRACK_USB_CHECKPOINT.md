@@ -74,6 +74,20 @@ none is a ready-to-flash no-reboot loader candidate.
 - The client and C controller have synthetic-backend evidence. Real USB
   transport, runtime execution/lifecycle, both-core DSP P/X/Y allocation,
   recovery across connections and installed-identity verification remain.
+- Maximize supported module combinations through dynamic DSP loading and
+  runtime P/X/Y allocation/relocation. Replace baked-in module allocation
+  addresses with checked relocations/symbols or ABI handles. Minimize all static
+  reservations: allocate for active owners and operations and reclaim after
+  safe retirement; avoid permanent per-module/track/FX-slot or staging banks.
+  Audit stock buffers and loader/bus/recovery workspace for safe relocation or
+  lifetime sharing. Record the reason for every unavoidable fixed reservation;
+  protect existing stock/kernel dependencies until a safe replacement is
+  verified. Share compatible immutable dependencies per core and isolate
+  per-instance state/buffers. Admit against memory,
+  fragmentation, CPU/DSP headroom and old/new transition residency. Qualify
+  larger combinations, load-order variants, multiple instances, reclamation,
+  exhaustion and rollback on both cores; report real conflicts before changing
+  the active set. This remains a required implementation target.
 - Provide safe agent access through our own versioned Modwerk device interface
   and the same TypeScript client used by the browser. Start with read-only
   identity/status, bind the session to the selected unit and permitted

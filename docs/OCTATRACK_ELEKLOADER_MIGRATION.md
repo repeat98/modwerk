@@ -178,9 +178,45 @@ and transition overhead. A larger catalogue alone must not require every
 algorithm to remain resident, and unloading unused code alone does not reduce
 the processing already spent on active algorithms.
 
+The owner's explicit priority is to support as many module combinations as
+possible through dynamic DSP loading and runtime allocation/relocation. Module
+code, data and per-instance buffers must use allocated P/X/Y locations with
+checked relocation records, symbol references or ABI handles. Remove baked-in
+module allocation addresses as source ports permit it. Resolve and share
+compatible immutable dependencies per core, while keeping each instance's
+mutable state and buffers isolated.
+
+Minimize static reservations throughout the design. Allocate for active code,
+instances and operations, then reclaim memory when its owners safely retire.
+Avoid permanent banks or quotas assigned to particular modules, tracks or FX
+slots, and permanently earmarked staging/rollback banks. Obtain transition
+storage from the runtime pools for its required lifetime, retaining rollback
+resources until the transaction is safely accepted. Keep allocation work out
+of the audio-critical path unless a bounded method has been proved.
+
+Audit every software reservation, including stock buffers, loader/bus workspace
+and recovery storage, for safe dynamic allocation, relocation or lifetime
+sharing. Use one ownership ledger across the verified pools and physical RAM
+aliases. Each remaining fixed reservation needs a recorded constraint and an
+explanation of what would permit reclaiming or moving it. Hardware register
+addresses and proven architectural constraints are genuine fixed locations;
+current stock/kernel regions must remain protected until their dependencies
+and a safe replacement have been verified. Existing fixed layouts are inputs
+to this audit, not the intended permanent allocator design.
+
+Admission must account for real capacity, alignment, fragmentation, processing
+headroom and old/new transition residency. Avoid unnecessary fixed module-count
+or combination restrictions; explain actual ABI, resource or hook conflicts
+before changing the live set. Test pairwise and larger selections, load-order
+variants, multiple instances, repeated load/replace/unload and memory reuse on
+both cores. Include exhaustion and rollback tests that prove live allocations
+survive failed admission and retired allocations are reclaimed only after both
+cores confirm retirement. Broad combinability is a qualification target, not
+a claim that every legacy fixed-address module already supports this ABI.
+
 | Resource | Contract needed for the module-set loader |
 | --- | --- |
-| Private P | Reserve the kernel, transport, bus and stock shared helpers; allocate and relocate incoming code without moving or overwriting executing code. Share identical dependencies instead of including duplicate Quantizer/VECTOR implementations. |
+| Private P | Account for current kernel, transport, bus and stock shared-helper ownership and audit these reservations for safe relocation/reuse; allocate and relocate incoming code without moving or overwriting executing code. Share identical dependencies instead of including duplicate Quantizer/VECTOR implementations. |
 | Private X/Y | Separate immutable coefficients, mutable state and per-instance buffers. Declare worst-case sizes, alignment, initialization, reset and retirement. Preserve the existing FX1/FX2 base convention until source ports remove that dependency. |
 | Shared RAM | Use one physical ownership ledger across both cores and P/X/Y views. An address range cannot be allocated independently in each view. Pin all stock, recorder, audio-frame and transport uses before treating it as free. |
 | Transitions | Account for incoming staging plus outgoing code/state/buffers until both DSP cores acknowledge that old users have retired. Insufficient transition space must leave the active set intact. Cancellation and stale acknowledgements must not release live memory. |
@@ -440,9 +476,11 @@ explicit trial-acceptance rules still apply.
 2. Load, replace and remove one runtime module; verify interrupted staging and
    rollback without a reboot. Keep the previous live set until activation has
    succeeded. A host simulation does not establish this hardware milestone.
-3. Extend the existing DSP SDK/bus with runtime P/X/Y allocation, instance
-   ownership and coordinated acknowledgement/retirement on both cores. Refuse
-   resource exhaustion before modifying live dispatch.
+3. Extend the existing DSP SDK/bus with runtime P/X/Y allocation and checked
+   relocation, shared dependencies, isolated instance ownership and coordinated
+   acknowledgement/retirement on both cores. Maximize supported combinations
+   within verified ABI, memory and processing budgets; refuse resource
+   exhaustion before modifying live dispatch.
 4. Preserve stock and legacy module identities and validate saved state before
    use. Missing modules need an explicit safe fallback with project data
    preserved. The present SPATIALIZER donor bus is not a compatible default.
