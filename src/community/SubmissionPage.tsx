@@ -37,10 +37,10 @@ export function SubmissionPage({ moduleId = '' }: { moduleId?: string }) {
         <button type="button" aria-pressed={task === 'create'} onClick={() => setTask('create')}><strong>New module or port</strong><span>First release</span></button>
         <button type="button" aria-pressed={task === 'update'} onClick={() => setTask('update')}><strong>Fix or update</strong><span>Existing module</span></button>
       </div>
-      <StarterPrompts login={login} task={task} machine={machine} onMachine={setMachine} initialModule={module?.sourcePath} />
+      <StarterPrompts login={login} repository={repository} task={task} machine={machine} onMachine={setMachine} initialModule={module?.sourcePath} />
       <details className="developer-guide-details developer-setup">
         <summary>Need to set up your fork?</summary>
-        <div className="developer-setup-content"><div><p>Fork, clone and open the folder in your coding agent. Node 24; Octatrack native builds also need Python 3.10+, Docker and your own OS 1.40C.</p>
+        <div className="developer-setup-content"><div><p>Fork, clone and open the folder in your coding agent. No GitHub account or agent yet? Paste the prompt into ChatGPT, Gemini or Claude and it walks you through setup. Node 24; Octatrack native builds also need Python 3.10+, Docker and your own OS 1.40C.</p>
           <a className="button button-quiet" href={repository + '/fork'} target="_blank" rel="noreferrer">Fork on GitHub ↗</a>
           <label className="starter-field"><span>Your GitHub login <small>optional</small></span><input value={login} onChange={event => setLogin(event.target.value)} placeholder="your-github-login" autoCapitalize="off" autoCorrect="off" spellCheck={false} /></label>
         </div><div className="start-code"><pre>{clone}</pre><CopyButton text={clone} label="Copy clone commands" /></div></div>

@@ -70,6 +70,26 @@ describe('starter prompts', () => {
     }
   })
 
+  it('opens every prompt with a setup check: coding agents skip it, chat assistants guide a newcomer', () => {
+    const prompts = [
+      starterPrompt('octatrack', startersFor('octatrack')[0], '', 'octo-dev', 'https://github.com/acme/modwerk'),
+      updatePrompt('digitakt', 'digi-eq', '', '', 'https://github.com/acme/modwerk', 'octo-dev'),
+      ...DEVICES.filter(device => !device.sdk).map(device => starterPrompt(device.id, startersFor(device.id)[0], '', 'octo-dev', 'https://github.com/acme/modwerk')),
+    ]
+    for (const prompt of prompts) {
+      expect(prompt.startsWith('Read this first: which kind of assistant are you?')).toBe(true)
+      expect(prompt).toContain('skip this block and do not walk me through setup')
+      expect(prompt).toContain('you cannot build a module. Do not propose a module')
+      expect(prompt).toContain('A chat assistant must not act on anything below')
+      expect(prompt.endsWith('starting with my operating system.')).toBe(true)
+      expect(prompt).toContain('github.com/signup')
+      expect(prompt).toContain('Fork https://github.com/acme/modwerk with the Fork button')
+      expect(prompt).toContain('git clone https://github.com/octo-dev/modwerk.git')
+      expect(prompt).not.toMatch(/Jannik|Assfalg/i)
+    }
+    expect(starterPrompt('octatrack', startersFor('octatrack')[0])).toContain('git clone https://github.com/<your-github-login>/modwerk.git')
+  })
+
   it('keeps author verification and live-download checks in the update prompt', () => {
     const prompt = updatePrompt('digitakt', 'sdk/digitakt/modules/digi-eq', 'Fix a filter click', 'https://github.com/repeat98/modwerk/issues/123')
     expect(prompt).toContain('Fix issue https://github.com/repeat98/modwerk/issues/123')

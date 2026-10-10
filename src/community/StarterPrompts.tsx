@@ -11,8 +11,8 @@ export function CopyButton({ text, label = 'Copy', primary = false }: { text: st
   return <button type="button" className={'button copy-button ' + (primary ? 'button-primary' : 'button-quiet')} onClick={copy}><Icon name={copied ? 'check' : 'file'} size={15} /><span aria-live="polite">{copied ? 'Copied' : label}</span></button>
 }
 
-export function StarterPrompts({ login, machine, onMachine, task, initialModule = '' }: {
-  login: string; machine: StarterMachine; onMachine: (machine: StarterMachine) => void
+export function StarterPrompts({ login, machine, onMachine, task, repository, initialModule = '' }: {
+  login: string; repository: string; machine: StarterMachine; onMachine: (machine: StarterMachine) => void
   task: DeveloperTask; initialModule?: string
 }) {
   const starters = startersFor(machine)
@@ -21,7 +21,7 @@ export function StarterPrompts({ login, machine, onMachine, task, initialModule 
   const [change, setChange] = useState('')
   const [module, setModule] = useState(initialModule)
   const starter = starters.find(item => item.id === starterId) ?? starters[0]
-  const prompt = task === 'create' ? starterPrompt(machine, starter, idea, login) : updatePrompt(machine, module, change)
+  const prompt = task === 'create' ? starterPrompt(machine, starter, idea, login, repository) : updatePrompt(machine, module, change, '', repository, login)
   return <div className="starter-prompts">
     <div className="starter-fields">
       <label className="starter-field"><span>Instrument</span>
