@@ -14,7 +14,7 @@ export function OctatrackStatus({ link, variant, onInstall }: { link: OctatrackL
   if (status === 'unsupported') return null
   const base = !!identity?.canSubmit, busy = ACTIVE.includes(status)
   const dot = <span className={'status-dot' + (busy ? ' is-live' : base ? ' verified' : '')} />
-  const title = busy ? 'Updating Octatrack' : status === 'idle' ? 'Connect your Octatrack' : status === 'connecting' ? 'Looking for your Octatrack…' : status === 'busy' ? 'Octatrack in use' : 'Octatrack connected'
+  const title = busy ? 'Loading onto Octatrack' : status === 'idle' ? 'Connect your Octatrack' : status === 'connecting' ? 'Looking for your Octatrack…' : status === 'busy' ? 'Octatrack in use' : 'Octatrack connected'
   const detail = busy ? activity(state) : status === 'idle' ? 'Updates, tests and reports over USB' : status === 'busy' ? 'Another tab or app has it'
     : base ? 'Modwerk base ' + identity!.base.slice(0, 8) : status === 'connecting' ? 'Over USB' : 'Original OS · install the base'
   if (variant === 'bar') return status === 'idle' || status === 'connecting' ? null : <span className="octatrack-status-bar">{dot}{title}{busy && ' · ' + activity(state)}</span>

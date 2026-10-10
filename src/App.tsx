@@ -48,6 +48,7 @@ import { OctatrackActivity, OctatrackStatus } from './components/OctatrackStatus
 import { BaseInstallDialog } from './components/BaseInstallDialog'
 import { OctatrackLink } from './engine/elekloader/octatrack-link'
 import { useBaseInstallPrompt } from './hooks/useBaseInstallPrompt'
+import { OctatrackLinkContext } from './hooks/useOctatrackLink'
 import { DIGI_DOWNLOADS_ENABLED } from './engine/elekloader/protocol'
 import { USB_AUDIO_MODULE, usbAudioLayout, type UsbAudioConfiguration } from './config/usb-audio'
 import { downloadSelection, parseSelection } from './config/selection'
@@ -328,6 +329,7 @@ export default function App() {
   const projectNotice = <aside className="project-notice" aria-label="Project independence"><p>{INDEPENDENCE_NOTICE}</p><a href={assetUrl('licenses/THIRD_PARTY_NOTICES.html')} target="_blank" rel="noreferrer">Copyright &amp; licence notices</a></aside>
 
   return (
+    <OctatrackLinkContext.Provider value={usbLink ?? null}>
     <div className={'app-shell' + (phoneLayout ? (libraryNav ? ' has-library-nav' : '') + (toolbarHidden ? ' is-toolbar-hidden' : '') + (libraryDock ? ' has-library-dock' : '') : '')}>
       <a className="skip-link" href="#main-content" onClick={(event) => { event.preventDefault(); mainRef.current?.focus() }}>Skip to content</a>
       <aside className="sidebar" aria-label="App sidebar">
@@ -433,5 +435,6 @@ export default function App() {
         </footer> : <footer className={'status-bar'+(allMachines?' is-all-machines':'')}>{legalLinks}<span><span className={'status-dot ' + (firmwareVerified ? 'verified' : '')} />{machineStatus}</span><span className="status-build" role="status">{saveStatus}</span>{usbLink && <OctatrackStatus link={usbLink} variant="bar" onInstall={() => setBaseInstall('manual')}/>}{machineHasMods ? <a href={deviceHref(currentDevice.id, 'configuration')} aria-live="polite">{machineSelected.length} {machineSelected.length === 1 ? 'module' : 'modules'} selected <Icon name="arrow" size={12} /></a> : <span />}</footer>}
       </div>
     </div>
+    </OctatrackLinkContext.Provider>
   )
 }

@@ -5,7 +5,7 @@ import { OctatrackLink } from './octatrack-link'
 
 const settle = () => new Promise(resolve => setTimeout(resolve, 0))
 async function linked(kind: 'base' | 'stock' | 'none' = 'base') {
-  const unit = fakeUnit(kind), link = new OctatrackLink(unit.usb, fakeSession(unit))
+  const unit = fakeUnit(kind), link = new OctatrackLink(unit.usb, fakeSession(unit), 300)
   link.start(); await settle(); await settle()
   return { unit, link }
 }
@@ -65,10 +65,16 @@ describe('sending a module', () => {
     unit.playing = false; await link.undo()
     expect(link.getState()).toMatchObject({ active: FAKE_BASE, notice: { text: expect.stringMatching(/^Undone/) } })
   })
+  it('goes ahead as soon as playback stops within the wait', async () => {
+    const { unit, link } = await linked()
+    unit.playing = true; setTimeout(() => { unit.playing = false }, 100) // the base pressing STOP, or the user
+    await link.update('PREVIEW VOL', data)
+    expect(link.getState().status).toBe('trial')
+  })
   it('refuses to start while playing, without asking the user to unplug', async () => {
     const { unit, link } = await linked()
     unit.playing = true; await link.update('PREVIEW VOL', data)
-    expect(link.getState()).toMatchObject({ status: 'ready', notice: { tone: 'error', text: 'Stop playback on the Octatrack to continue.' } })
+    expect(link.getState()).toMatchObject({ status: 'ready', notice: { tone: 'error', text: 'Stop playback or finish recording on the Octatrack to continue.' } })
   })
   it('stress-tests an update before it can be kept, and undoes it when the test fails', async () => {
     const { link } = await linked(), seen: string[] = []

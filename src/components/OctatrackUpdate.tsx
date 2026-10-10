@@ -50,7 +50,7 @@ export function OctatrackUpdate({ link, moduleCount, prepareUpdate, stressTest, 
     : 'Loads this configuration onto your Octatrack. Playback stops, the stress tests run, then you keep it or undo.'
   return <section className="build-section usb-update" aria-labelledby="usb-update-title" aria-busy={status === 'sending' || status === 'testing' || status === 'finishing'}>
     <div>
-      <h2 id="usb-update-title">Update your Octatrack</h2>
+      <h2 id="usb-update-title">Load onto your Octatrack</h2>
       <p className="usb-identity"><span className="status-dot verified" />{identity!.model} · base {identity!.base.slice(0, 8)}{active && (active === identity!.base ? ' · no modules' : ' · last module ' + active.slice(0, 8))}</p>
       <p role="status">{text}</p>
       {busy && <div className="build-progress" role="progressbar" aria-label="Update progress" aria-valuemin={0} aria-valuemax={STEPS.length} aria-valuenow={step}>
@@ -63,7 +63,7 @@ export function OctatrackUpdate({ link, moduleCount, prepareUpdate, stressTest, 
       {notice && <p className={notice.tone === 'success' ? 'success-note' : 'file-error'} role={notice.tone === 'success' ? 'status' : 'alert'}>{notice.text}</p>}
     </div>
     <div className="build-actions">
-      {status === 'ready' && <button className="button button-primary" disabled={!prepareUpdate || !moduleCount || preparing === 'busy'} onClick={() => void update()}><Icon name="download" size={16} />Update Octatrack</button>}
+      {status === 'ready' && <button className="button button-primary" disabled={!prepareUpdate || !moduleCount || preparing === 'busy'} onClick={() => void update()}><Icon name="download" size={16} />Load onto Octatrack</button>}
       {status === 'ready' && (!moduleCount ? <p className="export-note">Add at least one module from the library.</p> : !prepareUpdate && <p className="export-note">The browser can’t build updates yet.</p>)}
       {status === 'sending' && progress < 1 && <button className="button button-quiet" onClick={() => link.cancel()}>Cancel</button>}
       {(status === 'trial' || status === 'finishing') && <><button className="button button-primary" disabled={status === 'finishing'} onClick={() => void link.keep()}><Icon name="check" size={16} />Keep</button><button className="button button-quiet" disabled={status === 'finishing'} onClick={() => void link.undo()}>Undo</button></>}

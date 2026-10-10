@@ -11,6 +11,9 @@ import { findVendorInterface, UsbVendorTransport, type ControlDevice, type Vendo
 export const ELEKTRON_VENDOR_ID = 0x1935
 /** Well inside the base's 10 s quiet limit (sdk/runtime/upload/vendor.c mv_tick); any vendor request counts. */
 const KEEPALIVE_MS = 1000
+/** Asked while playing, the base presses STOP itself and answers `unsafe` that once; ask again until it has stopped. */
+const STOP_RETRY_MS = 200
+const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
 
 // lib.dom has no WebUSB types; only what the link calls.
 export interface LinkDevice extends ControlDevice {
@@ -47,8 +50,7 @@ export interface LinkState {
 }
 
 const REFUSED: Partial<Record<UploadResultName, string>> = {
-  // shortcut: the base refuses while playing; an update should stop playback itself once the base can.
-  unsafe: 'Stop playback on the Octatrack to continue.',
+  unsafe: 'Stop playback or finish recording on the Octatrack to continue.',
   identity: 'This module was built for a different Modwerk base.',
   limit: 'This module is too big for the Octatrack’s free memory.',
   length: 'This module is too big for the Octatrack’s free memory.',
@@ -79,6 +81,7 @@ export class OctatrackLink {
   private readonly listeners = new Set<() => void>()
   private readonly usb?: LinkUsb | null
   private readonly connectSession: Connect
+  private readonly stopWaitMs: number
   private device?: LinkDevice
   private index?: number
   private transport?: UsbVendorTransport
@@ -88,8 +91,8 @@ export class OctatrackLink {
   private users = 0
 
   /** `usb` defaults to the browser's WebUSB; null stands for a browser without it. */
-  constructor(usb: LinkUsb | null | undefined = webUsb(), connectSession: Connect = (transport, base) => UploadSession.connect(transport, base)) {
-    this.usb = usb; this.connectSession = connectSession
+  constructor(usb: LinkUsb | null | undefined = webUsb(), connectSession: Connect = (transport, base) => UploadSession.connect(transport, base), stopWaitMs = 3000) {
+    this.usb = usb; this.connectSession = connectSession; this.stopWaitMs = stopWaitMs
     this.state = { status: usb ? 'idle' : 'unsupported' }
   }
   readonly subscribe = (listener: () => void) => { this.listeners.add(listener); return () => { this.listeners.delete(listener) } }
@@ -188,8 +191,8 @@ export class OctatrackLink {
       if (data.length > session.status.capacity) throw new UploadDeviceError({ ...session.status, result: 'limit' })
       // shortcut: module files do not name their base yet (as in scripts/device.mjs), so the connected base's loader
       // validates the file; bind the package to its base once module files carry one.
-      await session.stage({ base, data, sha256: sha(data) }, { signal: abort.signal,
-        progress: (received, length) => this.set({ ...this.state, progress: received / length }) })
+      await this.whenStopped(() => session!.stage({ base, data, sha256: sha(data) }, { signal: abort.signal,
+        progress: (received, length) => this.set({ ...this.state, progress: received / length }) }))
       await session.activate()
       await session.startTrial()
       this.startKeepalive()
@@ -213,7 +216,7 @@ export class OctatrackLink {
     this.stopKeepalive()
     this.set({ ...this.state, status: 'finishing', notice: undefined })
     try {
-      await session.holdTrial()
+      await this.whenStopped(() => session.holdTrial())
       if (keep) await session.accept(); else await session.rollback()
       await session.leaveUploadMode()
       await this.release()
@@ -248,6 +251,12 @@ export class OctatrackLink {
     // An untrusted connection leaves the running set unknown.
     if (this.device) this.ready({ tone: 'error', text: explainLinkError(error) + (clean ? '' : ' ' + UNPLUG) },
       session ? (session.connectionTrusted ? session.status.active : undefined) : this.state.active)
+  }
+  /** Repeat a step the base refused only because the unit plays or records, for `stopWaitMs`. */
+  private async whenStopped<T>(step: () => Promise<T>): Promise<T> {
+    for (const start = Date.now(); ; await wait(STOP_RETRY_MS)) {
+      try { return await step() } catch (error) { if (!unsafe(error) || Date.now() - start >= this.stopWaitMs) throw error }
+    }
   }
   private startKeepalive() {
     this.stopKeepalive()
