@@ -15,6 +15,7 @@ import { ModuleResourceIndicators } from './ModuleResourceIndicators'
 import { MODULE_DOCUMENTS_BY_ID } from '../catalog/documents'
 import { ModuleDetailLayout } from './ModuleDetailLayout'
 import { ModuleAuthors } from './ModuleAuthors'
+import { ownerCredit } from '../catalog/module-authors'
 import { UsbAudioConfigurator } from './UsbAudioConfigurator'
 import { USB_AUDIO_MIDI_CREDITS } from './credits'
 import { USB_AUDIO_MODULE, usbAudioPreset, type UsbAudioConfiguration } from '../config/usb-audio'
@@ -41,7 +42,7 @@ export function ModuleDetail({ module, selected, onToggle, addBlock, onSwap, bro
             <section className="detail-section"><h2>About this module</h2><p>{details.overview}</p><ul className="feature-list">{details.highlights.map(item => <li key={item}><Icon name="check" size={15} />{item}</li>)}</ul></section>
             <aside className="info-panel"><h2>Module information</h2><dl><div><dt>{module.contributors?.length ? 'Authors' : 'Author'}</dt><dd><ModuleAuthors name={module.authorName} url={module.authorUrl} contributors={module.contributors} arrows/></dd></div><div><dt>Location</dt><dd>{module.detail}</dd></div><div><dt>Base firmware</dt><dd>OS 1.40C</dd></div><div><dt>Module version</dt><dd>{module.version}</dd></div><div><dt>Licence</dt><dd><a href={assetUrl('licenses/THIRD_PARTY_NOTICES.html')} target="_blank" rel="noreferrer">{moduleDocument.license.spdx}</a></dd></div><div><dt>Catalog</dt><dd>Experimental</dd></div></dl><a className="source-link" href={getModuleSource(module)} target="_blank" rel="noreferrer">Module source <Icon name="arrow" size={14} /></a></aside>
           </div>
-          <section className="detail-section"><h2>Credits</h2>{module.id === USB_AUDIO_MODULE ? <><p>The USB Audio 0.2 setup builds on these USB audio and MIDI contributions.</p><ul>{USB_AUDIO_MIDI_CREDITS.map(credit => <li key={credit.name}><strong>{credit.author}:</strong> {credit.description} <a href={credit.links[1].href} target="_blank" rel="noreferrer">Source &amp; credits ↗</a></li>)}</ul></> : <ul>{moduleDocument.author.credits.map(credit => <li key={credit}>{credit}</li>)}</ul>}</section>
+          <section className="detail-section"><h2>Credits</h2>{module.id === USB_AUDIO_MODULE ? <><p>The USB Audio 0.2 setup builds on these USB audio and MIDI contributions.</p><ul>{USB_AUDIO_MIDI_CREDITS.map(credit => <li key={credit.name}><strong>{credit.author}:</strong> {credit.description} <a href={credit.links[1].href} target="_blank" rel="noreferrer">Source &amp; credits ↗</a></li>)}</ul></> : <ul>{moduleDocument.author.credits.map(credit => <li key={credit}>{ownerCredit(credit)}</li>)}</ul>}</section>
         </div>
       </details>
       <ModuleControls id={module.id} />

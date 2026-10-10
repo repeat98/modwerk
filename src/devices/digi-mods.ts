@@ -6,7 +6,7 @@ import MACHINE_MODULES from '../catalog/machine-modules.json'
 import MACHINES from './machines.generated.json'
 import type { MachineProfile } from './machine-contract'
 import type { ModwerkModule } from '../catalog/module-contract-v3'
-import type { ModuleContributor } from '../catalog/module-authors'
+import { displayName, type ModuleContributor } from '../catalog/module-authors'
 import { moduleReleasedAt } from '../catalog/module-releases'
 
 export type DigiMachine = 'digitakt' | 'digitakt-ii' | 'digitone'
@@ -45,7 +45,7 @@ export const DIGI_CORES: Record<DigiMachine, { version: string; ramBytes: number
 export const DIGI_MODS: DigiMod[] = (MACHINE_MODULES.modules as (ModwerkModule & Pick<DigiMod, 'patchSites'>)[]).map(module => ({
   id: module.id, device: module.machine as DigiMod['device'], title: module.name, version: module.version.split('-')[0],
   updatedAt: moduleReleasedAt(module.machine + '-' + module.id, module.version),
-  author: module.author.name ?? module.author.github, repository: module.source?.repository ?? 'https://github.com/' + module.author.github,
+  author: displayName(module.author.github, module.author.name), repository: module.source?.repository ?? 'https://github.com/' + module.author.github,
   contributors: module.author.contributors,
   license: module.license.spdx, category: module.presentation.family, libraryCategory: module.category, summary: module.presentation.summary,
   ramBytes: module.resources.memoryBytes ?? 0, claims: module.platform.claims, exclusive: module.exclusive,
