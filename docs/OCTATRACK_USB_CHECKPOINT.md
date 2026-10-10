@@ -81,7 +81,8 @@ with a soft reset. The owner chose on 10 October to use it as a reference
 only for modules; its DSP park and cache handling inform the no-reboot loader.
 Its boot chain is ported for development bases: `usbtest7` boots another base
 from RAM over USB without writing flash (`npm run device -- boot BUILD_DIR`),
-proved in the emulator, not yet on the unit
+proved in the emulator and on the owner's MKII (sound, sequencing and card
+worked after it)
 ([record](OCTATRACK_ELEKLOADER_MIGRATION.md#ram-boot-for-base-development-10-october-2026)).
 
 ## Saved work

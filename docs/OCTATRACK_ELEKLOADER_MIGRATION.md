@@ -463,12 +463,18 @@ flash-safety check passed; REMIX SWITCH's `ot_emu` with `--preload`):
 - The vendor USB check and the module lifecycle still pass with module
   packages staged in the boot stage.
 
-Not shown: the DSP park and the next OS's DSP upload into parked cores
-(`ot_emu --dsp` dies with a bus error at start-up on this Mac, stock
-included), so that rests on REMIX SWITCH's MKII measurement until the unit
-runs it. The quiesce runs in the engine task, where stock's OS UPGRADE does
-not; a hang there costs a power cycle. The gate's status is not readable
-after the boot (the new base clears the stage).
+The emulator could not show the DSP park and the next OS's DSP upload into
+parked cores (`ot_emu --dsp` dies with a bus error at start-up on this Mac,
+stock included). The gate's status is not readable after the boot (the new
+base clears the stage).
+
+On the owner's MKII the same day, with `usbtest7` flashed (`.bin`
+`4da03d7e…`): `npm run device -- boot` sent the same proof image, and
+10 seconds after the command started the unit answered IDENTIFY as
+`f35efefd…`, its tick counter restarted, with no flash write. The owner
+then reported that everything worked (asked to check the screen, sound on
+tracks of both DSP cores, sequencing and the card): the park, the quiesce
+from the engine task and the DSP upload into parked cores held on one run. The return to the flashed base after a power cycle was not observed (the unit was left running the RAM image).
 
 ### Reference: Octabam's REMIX SWITCH
 
