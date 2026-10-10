@@ -13,7 +13,10 @@ import { UploadSession } from '../src/engine/elekloader/upload-session.ts'
 import { findVendorInterface, UsbVendorTransport } from '../src/engine/elekloader/upload-usb.ts'
 import { diagnostics, removal, runLifecycle, testModule } from '../src/dev/octatrack-usb-lifecycle.ts'
 
-const [socketPath, proofsPath] = process.argv.slice(2)
+// --hardware: a real unit through sdk/machines/octatrack/elekloader/usb_bridge.py; the host OS has
+// enumerated it, and the emulator-only bus reset case is skipped.
+const hardware = process.argv.includes('--hardware')
+const [socketPath, proofsPath] = process.argv.slice(2).filter(arg => arg !== '--hardware')
 if (!socketPath || !proofsPath) throw new Error('Usage: verify-octatrack-vendor-client.mjs SOCKET PROOFS_JSON')
 const base = JSON.parse(readFileSync(proofsPath, 'utf8')).configurationHash
 
@@ -75,13 +78,15 @@ const device = (bench, faults = {}) => ({
 
 /** Enumerate as a host does and describe the configuration as WebUSB would. */
 async function enumerate(bench) {
-  await bench.command('speed hs'); await bench.command('reset')
-  await new Promise(resolve => setTimeout(resolve, 300))
+  if (!hardware) {
+    await bench.command('speed hs'); await bench.command('reset')
+    await new Promise(resolve => setTimeout(resolve, 300))
+  }
   assert.equal((await bench.controlIn(0x80, 6, 0x0100, 0, 18))?.length, 18)
-  await bench.setup(0x00, 5, 1, 0, 0); await bench.command('in 0 64')
+  if (!hardware) { await bench.setup(0x00, 5, 1, 0, 0); await bench.command('in 0 64') }
   const header = await bench.controlIn(0x80, 6, 0x0200, 0, 9)
   const cfg = await bench.controlIn(0x80, 6, 0x0200, 0, header.readUInt16LE(2))
-  await bench.setup(0x00, 9, 1, 0, 0); await bench.command('in 0 64')
+  if (!hardware) { await bench.setup(0x00, 9, 1, 0, 0); await bench.command('in 0 64') }
   const interfaces = []
   for (let i = 0; i + 2 <= cfg.length && cfg[i] >= 2; i += cfg[i]) {
     if (cfg[i + 1] === 4) interfaces.push({ interfaceNumber: cfg[i + 2], alternates: [{
@@ -98,11 +103,17 @@ assert.equal(number, 1)
 console.log("the client finds the vendor interface in the device's own configuration: passed")
 const session = await runLifecycle(device(bench), number, line => console.log(line + ': passed'))
 assert.equal(session.status.active, removal(base).sha256)
+if (hardware) {
+  bench.socket.end()
+  console.log('Browser client against the unit: lifecycle passed.')
+  process.exit(0)
+}
 
 // Emulator only: a bus reset after the first chunk of a two-chunk package.
 const a = testModule(base, 0xa1)
-await session.stage(a); await session.activate(); await session.startTrial(); await session.holdTrial()
-await session.accept(); await session.leaveUploadMode()
+await session.stage(a); await session.activate(); await session.startTrial()
+await new Promise(resolve => setTimeout(resolve, 250)) // retirement waits for the tick to pass the swap
+await session.holdTrial(); await session.accept(); await session.leaveUploadMode()
 const faults = {}
 const staging = await UploadSession.connect(new UsbVendorTransport(device(bench, faults), number, { pollMs: 5 }), base)
 await assert.rejects(staging.stage(testModule(base, 0xc3, 5000), { progress: () => { faults.before = () => bench.command('reset') } }))

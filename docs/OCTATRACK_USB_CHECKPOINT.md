@@ -49,9 +49,12 @@ browser-client checks pass ([milestones](OCTATRACK_ELEKLOADER_MIGRATION.md#miles
 A read-only DIAG request and a Chrome page (`dev/octatrack-usb.html`, served
 by `npm run dev` only) now run the same lifecycle on a real unit
 ([hardware run](../sdk/machines/octatrack/elekloader/README.md#hardware-run)).
-Next: the owner's hardware run (cache invalidation, real USB timing, WebUSB
-claiming), then a hook ABI for real modules, ledger memory, and folding USB
-MIDI and USB Audio into the base. The target user flow (sync mode on the unit,
+The first hardware runs passed the whole runtime-module lifecycle on the
+owner's MKII, including code replacement in a reused slot
+([hardware runs](OCTATRACK_ELEKLOADER_MIGRATION.md#first-hardware-runs-owners-mkii-10-october-2026)).
+`Modwerk-octatrack-usbtest3` fixes the exact-64-byte replies that froze the
+unit once. Next: the SDK device client, a hook ABI for real modules, ledger
+memory, and folding USB MIDI and USB Audio into the base. The target user flow (sync mode on the unit,
 WebUSB, module loading, automated checks, automatic failure reports and
 issues) and its gaps are in the
 [migration record](OCTATRACK_ELEKLOADER_MIGRATION.md#end-user-workflow-owner-10-october-2026),

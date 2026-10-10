@@ -103,6 +103,7 @@ static void identity(void)
     struct mv_reply r = ask(MV_RESULT_TYPE, MV_IDENTIFY, 0, 6, MV_IDENTITY_BYTES);
     CHECK(r.action == MV_SEND && r.length == MV_IDENTITY_BYTES && r.buffer == t.identity);
     CHECK(!memcmp(r.buffer, head, 16) && !memcmp(r.buffer + 16, base, 32) && !memcmp(r.buffer + 48, model, 16));
+    for (unsigned i = 64; i < MV_IDENTITY_BYTES; ++i) CHECK(r.buffer[i] == 0);
     CHECK(ask(MV_RESULT_TYPE, MV_IDENTIFY, 1, 6, MV_IDENTITY_BYTES).action == MV_STALL);
     CHECK(ask(MV_RESULT_TYPE, MV_IDENTIFY, 0, 6, MV_IDENTITY_BYTES - 1).action == MV_STALL);
     CHECK(ask(MV_SUBMIT_TYPE, MV_IDENTIFY, 0, 6, MV_IDENTITY_BYTES).action == MV_STALL);

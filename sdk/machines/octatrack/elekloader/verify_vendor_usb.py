@@ -36,7 +36,7 @@ VENDOR_IN, VENDOR_OUT, IDENTIFY, SUBMIT, RESULT = 0xc1, 0x41, 3, 1, 2
 
 def expected_identity(base, capabilities=1):
     return (b'MWUI' + bytes([1, 1]) + struct.pack('>HHHI', capabilities, 4148, 152, 0) +
-            bytes.fromhex(base) + usb.MODEL.encode().ljust(16, b'\0'))
+            bytes.fromhex(base) + usb.MODEL.encode().ljust(16, b'\0') + bytes(8))
 
 
 def stalls(run):
@@ -103,10 +103,10 @@ def check(b, base, hs, sessions):
     results['configuration'] = cfg == usb.configuration(hs)
     results['other speed'] = answers(lambda: b.ctrl_in(0x80, 6, 0x0700, 0, 255), usb.configuration(not hs, True))
     vendor = usb.VENDOR_INTERFACE
-    results['identify'] = answers(lambda: b.ctrl_in(VENDOR_IN, IDENTIFY, 0, vendor, 64), expected_identity(base))
-    results['identify length refused'] = stalls(lambda: b.ctrl_in(VENDOR_IN, IDENTIFY, 0, vendor, 63))
-    results['identify value refused'] = stalls(lambda: b.ctrl_in(VENDOR_IN, IDENTIFY, 1, vendor, 64))
-    results['other interface refused'] = stalls(lambda: b.ctrl_in(VENDOR_IN, IDENTIFY, 0, usb.MSC_INTERFACE, 64))
+    results['identify'] = answers(lambda: b.ctrl_in(VENDOR_IN, IDENTIFY, 0, vendor, 72), expected_identity(base))
+    results['identify length refused'] = stalls(lambda: b.ctrl_in(VENDOR_IN, IDENTIFY, 0, vendor, 64))
+    results['identify value refused'] = stalls(lambda: b.ctrl_in(VENDOR_IN, IDENTIFY, 1, vendor, 72))
+    results['other interface refused'] = stalls(lambda: b.ctrl_in(VENDOR_IN, IDENTIFY, 0, usb.MSC_INTERFACE, 72))
 
     s = Submitter(b)
     hello = s.exchange(frame(0))
@@ -123,11 +123,11 @@ def check(b, base, hs, sessions):
     results['duplicate sequence refused'] = stalls(lambda: s.submit(frame(0), sequence=s.sequence))
     results['short frame refused'] = stalls(lambda: s.submit(frame(0)[:47]))
     results['hello after refusals'] = s.exchange(frame(0)) is not None
-    diag = b.ctrl_in(VENDOR_IN, 4, 0, vendor, 64)
-    words = struct.unpack('>14I', diag[8:]) if len(diag) == 64 else ()
-    results['diag counters'] = diag[:5] == b'MWUD\x02' and words[3] >= 4 and words[4] >= 2 and words[5] >= 1 and \
+    diag = b.ctrl_in(VENDOR_IN, 4, 0, vendor, 68)
+    words = struct.unpack('>15I', diag[8:]) if len(diag) == 68 else ()
+    results['diag counters'] = diag[:5] == b'MWUD\x03' and words[3] >= 4 and words[4] >= 2 and words[5] >= 1 and \
         words[6] == words[7] >= 4 and words[8] >> 16 == 11 and words[10] == 48 and words[13] == 0x4d575550
-    results['identify after refusals'] = answers(lambda: b.ctrl_in(VENDOR_IN, IDENTIFY, 0, vendor, 64),
+    results['identify after refusals'] = answers(lambda: b.ctrl_in(VENDOR_IN, IDENTIFY, 0, vendor, 72),
                                                  expected_identity(base))
     results['mass storage'] = bench.msc_test(b)
     return results

@@ -10,7 +10,7 @@ export const VENDOR_PROTOCOL = 1
 export const VENDOR_SUBMIT = 1
 export const VENDOR_RESULT = 2
 export const VENDOR_IDENTIFY = 3
-export const VENDOR_IDENTITY_BYTES = 64
+export const VENDOR_IDENTITY_BYTES = 72 // never a multiple of 64: see sdk/runtime/upload/vendor.h
 /** The device can receive SUBMIT data stages; without it only IDENTIFY answers. */
 export const VENDOR_CAN_SUBMIT = 1
 export const VENDOR_VERSION = 1
@@ -54,7 +54,8 @@ export function parseVendorIdentity(bytes: Uint8Array): VendorIdentity {
   const capabilities = view.getUint16(6)
   if (capabilities & ~VENDOR_CAN_SUBMIT) fail('capabilities')
   if (view.getUint16(8) !== UPLOAD_MAX_FRAME || view.getUint16(10) !== VENDOR_RESULT_BYTES || view.getUint32(12) !== 0) fail('limits')
-  const model = bytes.subarray(48), length = model.indexOf(0) < 0 ? model.length : model.indexOf(0)
+  if (bytes.subarray(64).some(byte => byte !== 0)) fail('reserved bytes')
+  const model = bytes.subarray(48, 64), length = model.indexOf(0) < 0 ? model.length : model.indexOf(0)
   if (!length || model.subarray(length).some(byte => byte !== 0) || model.subarray(0, length).some(byte => byte < 0x20 || byte > 0x7e)) fail('model')
   return {
     canSubmit: (capabilities & VENDOR_CAN_SUBMIT) !== 0,

@@ -9,20 +9,20 @@ import { UsbVendorTransport, type ControlDevice } from '../engine/elekloader/upl
 export interface Diagnostics {
   ticks: number; value: number; active: boolean; frames: number; refusals: number; resets: number
   primes: number; completions: number; submitState: number; submitAwaited: boolean
-  lastToken: string; lastReceived: number; primeStatus: string; queueNext: string; frameHead: string
+  lastToken: string; lastReceived: number; primeStatus: string; queueNext: string; frameHead: string; abandons: number
 }
 
-/** The base's read-only DIAG request, version 2 (sdk/machines/octatrack/elekloader/ep0.c). */
+/** The base's read-only DIAG request, version 3 (sdk/machines/octatrack/elekloader/ep0.c). */
 export async function diagnostics(device: ControlDevice, index: number): Promise<Diagnostics> {
-  const reply = await device.controlTransferIn({ requestType: 'vendor', recipient: 'interface', request: 4, value: 0, index }, 64)
+  const reply = await device.controlTransferIn({ requestType: 'vendor', recipient: 'interface', request: 4, value: 0, index }, 68)
   const view = reply.data
-  if (reply.status !== 'ok' || !view || view.byteLength !== 64 || view.getUint32(0) !== 0x4d575544 || view.getUint8(4) !== 2)
-    throw new Error('The base did not answer DIAG version 2.')
+  if (reply.status !== 'ok' || !view || view.byteLength !== 68 || view.getUint32(0) !== 0x4d575544 || view.getUint8(4) !== 3)
+    throw new Error('The base did not answer DIAG version 3.')
   const word = (i: number) => view.getUint32(8 + 4 * i), hex = (i: number) => '0x' + word(i).toString(16).padStart(8, '0')
   return {
     ticks: word(0), value: word(1), active: word(2) !== 0, frames: word(3), refusals: word(4), resets: word(5),
     primes: word(6), completions: word(7), submitState: word(8) >>> 16, submitAwaited: (word(8) & 1) !== 0,
-    lastToken: hex(9), lastReceived: word(10), primeStatus: hex(11), queueNext: hex(12), frameHead: hex(13),
+    lastToken: hex(9), lastReceived: word(10), primeStatus: hex(11), queueNext: hex(12), frameHead: hex(13), abandons: word(14),
   }
 }
 
@@ -64,5 +64,11 @@ export async function runLifecycle(device: ControlDevice, index: number, log: (l
   expect(!(await read()).active, 'removal empties the slot')
   await session.holdTrial(); await session.accept(); await session.leaveUploadMode()
   log(`module removed; DIAG ${JSON.stringify(await read())}`)
+  // C goes into the slot that ran A: stale instruction-cache lines would run A's code and report 0xA1.
+  const c = testModule(identity.base, 0xc3)
+  await session.stage(c); await session.activate(); await session.startTrial(); await settle()
+  expect((await read()).value === 0xc3, 'module C runs its own code in the slot that ran A')
+  await session.holdTrial(); await session.rollback(); await session.leaveUploadMode()
+  log('module C ran its own code in the slot that ran A (no stale instructions) and rolled back')
   return session
 }

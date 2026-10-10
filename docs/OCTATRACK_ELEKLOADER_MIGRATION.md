@@ -329,6 +329,36 @@ The emulator has no packet timing, so the race between priming and the
 stock loop is exercised only in its worst ordering; no host OS driver,
 WebUSB claim, cache behaviour or hardware result exists yet.
 
+### First hardware runs (owner's MKII, 10 October 2026)
+
+The private base booted on the owner's MKII from a card OS upgrade and ran
+for hours across several sessions. Driven from the terminal through
+[`usb_bridge.py`](../sdk/machines/octatrack/elekloader/usb_bridge.py) (libusb
+carrying the emulator bench protocol, so the same browser client and
+lifecycle run unchanged), the runtime-module lifecycle passed on the unit:
+IDENTIFY, HELLO, the 60 Hz tick, module A loaded, run in its trial and
+accepted, replacement B run and rolled back to A, removal, and module C
+running its own code from the slot that had just run A (no stale
+instructions after the cache invalidation). 56 data stages were primed and
+completed with no refusals. These are protocol and lifecycle results for a
+test module; audio, projects, live sampling and DSP were not exercised.
+
+Two stock USB behaviours the emulator does not model surfaced and are now
+handled:
+
+- **A reply of exactly 64 bytes** (one full EP0 packet, as IDENTIFY and DIAG
+  were) leaves the controller holding a zero-length packet the host never
+  reads. It answered the next IN request with 0 bytes, and stock's EP0
+  handler stayed in its IN-pending state (10). When the host then finished
+  the transfer, stock's interrupt handler looped until the next request: a
+  probe that ended on such a reply froze the unit until a power cycle.
+  Replies are now never a multiple of 64 bytes (IDENTIFY 72, DIAG 68, checked
+  at compile time).
+- **Stock's EP0 state was 10, not idle,** when SUBMIT arrived, because a new
+  SETUP can clear the previous IN completion before stock processes it. The
+  base now takes EP0 into the idle state for its own data stage, the state
+  in which stock's loop handles the completion harmlessly.
+
 ### Reference: Octabam's REMIX SWITCH
 
 Sam's open [Octabam PR #655](https://github.com/sambanks/octabam/pull/655)

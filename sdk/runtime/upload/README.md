@@ -98,12 +98,16 @@ for the glue still missing.
 | --- | --- | --- | --- | --- | --- |
 | SUBMIT | `0x41` | 1 | sequence | interface | one complete frame, 48–4,148 bytes |
 | RESULT | `0xC1` | 2 | 0 | interface | wLength 152; 8 bytes back, or 152 when ready |
-| IDENTIFY | `0xC1` | 3 | 0 | interface | wLength 64; the identity block below |
+| IDENTIFY | `0xC1` | 3 | 0 | interface | wLength 72; the identity block below |
 
 IDENTIFY is read-only and answered by the USB interrupt from a block built
 once at start-up: `MWUI`, transport and wire versions, capabilities, the
 maximum frame and result lengths, four reserved zero bytes, the base digest
-and a model name of 1–16 printable ASCII characters. Capability bit 0 means
+a model name of 1–16 printable ASCII characters and eight reserved zero
+bytes. No reply is a multiple of 64 bytes, EP0's packet size: on the OT the
+controller then queues a zero-length packet the host never reads, which
+answers the next IN request and leaves stock's EP0 handler looping until
+another request arrives (measured on hardware). Capability bit 0 means
 the glue can receive SUBMIT data stages. Without it SUBMIT and RESULT stall
 and only IDENTIFY answers, which is the first firmware milestone: it needs
 no control OUT data stage. The browser refuses an identity whose versions,

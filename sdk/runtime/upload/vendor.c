@@ -2,6 +2,7 @@
 #include "vendor.h"
 
 enum { IDLE, RECEIVING, QUEUED, READY, REFUSED };
+typedef char mv_no_full_packet_replies[(MV_IDENTITY_BYTES % 64u != 0 && MV_RESULT_BYTES % 64u != 0 && MV_RESULT_HEADER % 64u != 0) ? 1 : -1];
 /* Complete the result before READY becomes visible to the USB ISR. */
 #define PUBLISH() __asm__ __volatile__("" ::: "memory")
 

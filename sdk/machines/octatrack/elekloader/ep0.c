@@ -59,7 +59,7 @@ static uint8_t started, receiving;
 static volatile uint8_t wake_posted;
 static uint32_t expected, frames, refusals, resets;
 /* Hardware-run evidence for DIAG: what the data stage path saw last. */
-static uint32_t primes, completions, submit_state, last_token, last_received, prime_status, qh_next, frame_head;
+static uint32_t primes, completions, submit_state, last_token, last_received, prime_status, qh_next, frame_head, abandons;
 const uint8_t *modwerk_ep0_reply;
 /* The engine ignores messages whose first byte is above 45 and returns to
  * its receive, where the idle hook runs: a wake-up and nothing else. */
@@ -91,23 +91,24 @@ static void flush_receive(void)
     for (uint32_t i = 0; (ENDPTFLUSH & 1u) && i < 100000u; ++i) {}
 }
 
-/* DIAG (0xC1, bRequest 4, wValue 0, wLength 64): read-only counters for a
- * hardware run, big-endian after "MWUD", version 2 and three zero bytes:
+/* DIAG (0xC1, bRequest 4, wValue 0, wLength 68, never a multiple of 64; see
+ * vendor.h): read-only counters for a hardware run, big-endian after "MWUD",
+ * version 3 and three zero bytes:
  * runtime ticks, the test module's value, whether a module is active, frames
  * received, our refusals, bus resets, data stages primed and completed, the
  * stock EP0 state (high 16 bits) and awaited-OUT flag at the last SUBMIT,
  * the last descriptor token and received count, ENDPTPRIME (high) and
  * ENDPTSTAT (low) right after priming, the queue head's next pointer read
- * back, and the first four bytes received. */
+ * back, the first four bytes received, and data stages abandoned. */
 static int diag(const uint8_t *s, uint8_t *out)
 {
     if (s[0] != MV_RESULT_TYPE || s[1] != 4 || s[2] || s[3] || s[4] != MODWERK_VENDOR_INTERFACE || s[5] ||
-        s[6] != 64 || s[7]) return 0;
-    uint32_t words[14] = {modwerk_runtime_calls(), modwerk_runtime_value(), modwerk_runtime_active() != 0,
+        s[6] != 68 || s[7]) return 0;
+    uint32_t words[15] = {modwerk_runtime_calls(), modwerk_runtime_value(), modwerk_runtime_active() != 0,
                           frames, refusals, resets, primes, completions, submit_state, last_token,
-                          last_received, prime_status, qh_next, frame_head};
-    out[0] = 'M'; out[1] = 'W'; out[2] = 'U'; out[3] = 'D'; out[4] = 2; out[5] = out[6] = out[7] = 0;
-    for (uint32_t i = 0; i < 56; ++i) out[8 + i] = (uint8_t)(words[i / 4] >> (24 - 8 * (i % 4)));
+                          last_received, prime_status, qh_next, frame_head, abandons};
+    out[0] = 'M'; out[1] = 'W'; out[2] = 'U'; out[3] = 'D'; out[4] = 3; out[5] = out[6] = out[7] = 0;
+    for (uint32_t i = 0; i < 60; ++i) out[8 + i] = (uint8_t)(words[i / 4] >> (24 - 8 * (i % 4)));
     return 1;
 }
 
@@ -122,12 +123,13 @@ uint32_t modwerk_ep0_dispatch(void)
     struct mv_reply r = mv_setup(t, SETUP);
     if (receiving) { /* mv_setup abandoned it; take it off the queue too. */
         receiving = 0;
+        ++abandons;
         flush_receive();
     }
     if (r.action == MV_PASS) return 0;
     if (r.action == MV_STALL && diag(SETUP, out)) { /* mv_setup stalls requests it does not know */
         modwerk_ep0_reply = out;
-        return 64;
+        return 68;
     }
     if (r.action == MV_RECEIVE) {
         /* Stock's completion loop handles an EP0 OUT completion harmlessly
@@ -170,6 +172,7 @@ void modwerk_ep0_poll(void)
     struct mv_transport *t = vendor();
     if (ENDPTSETUPSTAT & 1u) { /* The host gave this data stage up. */
         receiving = 0;
+        ++abandons;
         mv_abandon(t);
         flush_receive();
         return;

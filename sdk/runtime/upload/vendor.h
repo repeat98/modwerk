@@ -16,8 +16,13 @@
 #define MV_RESULT_BYTES (MV_RESULT_HEADER + MU_WIRE_RESPONSE)
 /* IDENTIFY, big-endian: "MWUI", transport and wire versions (u8 each),
  * capabilities (u16), maximum frame and result lengths (u16 each), four
- * reserved zero bytes, base digest (32), model (16 ASCII, zero-padded). */
-#define MV_IDENTITY_BYTES 64u
+ * reserved zero bytes, base digest (32), model (16 ASCII, zero-padded),
+ * eight reserved zero bytes.
+ * No reply may be a multiple of 64 bytes (EP0's packet size): the OT's
+ * controller then queues a zero-length packet the host never reads, which
+ * answers the next IN request and leaves stock's EP0 handler waiting
+ * (measured on hardware, 10 October 2026). */
+#define MV_IDENTITY_BYTES 72u
 #define MV_MODEL_BYTES 16u
 /* SUBMIT/RESULT carry frames. Clear while the glue cannot receive a data
  * stage: both requests then stall and the host can see why. */
