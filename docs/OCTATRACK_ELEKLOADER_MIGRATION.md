@@ -385,6 +385,13 @@ The hook dispatch, relocation and bss are host-tested only: `ot_emu` takes no
 panel input while it holds the USB bench, and the emulator does not show the
 composed frame, so the key, encoder and draw hooks need the unit.
 
+On the owner's MKII the same day, `usbtest4` passed the client lifecycle,
+and the example, loaded over USB without a reboot, drew its square in the
+screen's top-right corner (seen by the owner) and counted exactly the 5 key
+presses made, and 98 encoder events while the owner turned an encoder
+freely (not compared with a known number of detents). The module was then
+removed over USB.
+
 ### Reference: Octabam's REMIX SWITCH
 
 Sam's open [Octabam PR #655](https://github.com/sambanks/octabam/pull/655)

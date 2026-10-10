@@ -58,7 +58,8 @@ with no host workaround. `npm run device` now works on the unit from the
 terminal (`status`, `try`, `remove`, `lifecycle`). The loader is now
 machine-neutral ([`sdk/runtime/loader`](../sdk/runtime/loader/README.md)):
 modules in plain C with tick, draw, key and encoder hooks, data and
-relocations; `usbtest4` carries it, emulator-checked, not yet on the unit
+relocations; on `usbtest4` the first real module drew on the owner's MKII
+screen and counted its keys and encoders
 ([record](OCTATRACK_ELEKLOADER_MIGRATION.md#hooks-for-real-modules-reusable-on-every-machine-10-october-2026)).
 Next: patches to stock code at load time (most catalogue modules), the sync
 mode on the unit, ledger memory, and folding USB MIDI and USB Audio into the
