@@ -1,5 +1,11 @@
 # Repaired Octatrack hardware tools
 
+For Sam's newest tools, run `npm run upstream:tools`. It keeps a verified
+checkout of upstream Octabam (and Elekloader) outside Git, with these repairs
+applied in place, so every tool runs in the layout it expects. `-- --update`
+moves the pin in `sdk/upstream-tools.json` to upstream `main`. The rest of this
+page covers the imported copies in this repository.
+
 Octabam's host tools in [`sdk/octabam/tools/hw/`](../../../octabam/tools/hw/)
 stay byte-identical: the release source inventory fingerprints all of
 `tools/`, so editing them would change the approved package identity.

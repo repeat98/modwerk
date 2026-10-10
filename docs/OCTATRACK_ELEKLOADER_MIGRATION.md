@@ -117,7 +117,8 @@ remain unqualified, and this image has no module-update transport.
 ### Reproduce locally
 
 Use Node 24, GNU `m68k-elf` tools and a clean Elekloader checkout at the kit's
-exact commit. Supply your own original firmware. Convert selected source with
+exact commit; `npm run upstream:tools` keeps one in
+`~/.cache/modwerk-upstream/elekloader`. Supply your own original firmware. Convert selected source with
 upstream `python3 -B -m elekloader.sdk.octabam --octabam /path/to/modwerk/sdk/octabam
 --stock /private/stock-1.40C.syx --module NAME --out /private/source-ports`.
 The converter also emits core 0.3. Read its check results: a file emitted before
@@ -511,9 +512,17 @@ Upstream has two tools Modwerk lacks:
 | `sos_capture.py` | Plays a known signal into inputs A/B over USB Audio In, records the sixteen track channels over USB Audio Out and compares them sample by sample with the emulator running the same project and signal | The device-versus-emulator method for agent testing. Needs USB Audio In on EP3 OUT, 24-bit fixture projects and upstream's emulator build. A sample-exact match is evidence for that project and signal only. |
 | `usb_offset.py` | Per-click sample offset between two channels of one capture | Channel alignment and latency checks on a capture from the prepared recorder. |
 
-Run them from a clean upstream checkout at a recorded commit, as with the
-pinned Elekloader checkout. Vendoring them into `sdk/octabam/` changes the
-release source fingerprint and needs its own reviewed import.
+`npm run upstream:tools` keeps Sam's complete current tree, where every tool
+runs in the layout it expects, in `~/.cache/modwerk-upstream/octabam`. The
+commit is pinned in `sdk/upstream-tools.json`, and the two repairs above are
+applied there and are the only edits allowed. `--update` moves the pin to
+upstream `main`, unless Sam changed a repaired tool, which needs a new review
+first. Upstream's own `make setup` and `make emu-cf` build its emulator and
+DSP assembler inside that checkout. The same command keeps Elekloader's full
+tree at the vendored kit's commit. Nothing in either checkout enters a
+Modwerk build or the release fingerprint. Vendoring the tools into
+`sdk/octabam/` would change that fingerprint and need its own reviewed
+import.
 
 Consume the structured probe verdict rather than its process exit code: the
 upstream command can return zero for a reported failure or ambiguous result.

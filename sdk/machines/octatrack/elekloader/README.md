@@ -29,7 +29,8 @@ behaviour. The current identity describes only the base; arbitrary module
 selections still need exact identity integration before public use.
 
 Use Node 24, the reviewed GNU `m68k-elf` toolchain, a clean Elekloader checkout
-at `vendor/elekloader/kit/kit.json`'s commit and your original OT OS 1.40C.
+at `vendor/elekloader/kit/kit.json`'s commit (`npm run upstream:tools` keeps one
+in `~/.cache/modwerk-upstream/elekloader`) and your original OT OS 1.40C.
 Both output directories below must be new and outside every Git checkout:
 
 ```sh

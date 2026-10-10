@@ -30,8 +30,11 @@ lint, types, generation and bundling. `npm run upload:verify`, which CI runs
 but the local check does not, also passed.
 
 Sam's upstream `tools/hw` has two tools Modwerk lacks, including the
-device-versus-emulator capture over USB Audio In, and the imported USB stack
-leaves only EP3 OUT free. Both are recorded in the migration record; together
+device-versus-emulator capture over USB Audio In. `npm run upstream:tools`
+now keeps verified checkouts of upstream Octabam (pinned in
+`sdk/upstream-tools.json`, `--update` follows `main`) and Elekloader (at the
+kit's commit) in `~/.cache/modwerk-upstream`, with the two repairs applied.
+The imported USB stack leaves only EP3 OUT free. Both are recorded in the migration record; together
 they set the next step below.
 
 ## Next: read-only vendor interface

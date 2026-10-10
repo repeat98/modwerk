@@ -26,6 +26,7 @@
     "elekloader:update": "node scripts/elekloader-update.ts",
     "octatrack:elekloader:verify": "node scripts/verify-octatrack-elemods.mjs",
     "upload:verify": "sh sdk/runtime/upload/tests/run_host.sh",
+    "upstream:tools": "python3 -B scripts/upstream-tools.py",
     "modules:generate": "node scripts/modules.mjs --write",
     "modules:check": "node scripts/modules.mjs",
     "licenses:generate": "node scripts/licenses.mjs --write",
