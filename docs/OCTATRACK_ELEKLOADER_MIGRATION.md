@@ -533,6 +533,13 @@ audio shims (which replay stock), and the audio ISR shim ends in the base's
 poll. In the emulator (`--frame`) both speeds pass the vendor and mass
 storage checks plus the audio clock (44.1 kHz), alt 1 starting a stream of
 whole frames, and alt 0 stopping it.
+On the owner's MKII (development base `2b6ee017…`, from RAM) macOS listed
+"Elektron Octatrack DPS-1" with 4 input channels at 44.1 kHz. With a
+remote PLAY, Octabam's CoreAudio recorder (`rec.swift`, the adapter's
+repaired copy) captured the main out over USB: MAIN L/R peaking near
+-12 dBFS, CUE silent (nothing routed there), no gap longer than 59 samples
+(the tail after a remote STOP). The development loop needs no one at the
+unit now: RAM boot, keys and encoders, screen and state, and audio.
 
 ### Windows without a driver (10 October 2026)
 
