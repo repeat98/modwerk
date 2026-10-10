@@ -153,6 +153,7 @@ DSP_EDITS = {
 # and the stale completion of state 5 then dispatches state 7 early. Stock's state 7 only
 # unmasks, so that is harmless to stock, but a packet started then rewrites channel 0 and
 # the host port under stock's transfer (the probe-A freeze, 10 October 2026, inferred).
+# A start not yet taken up (START) or a minor loop running (ACTIVE) counts as running too.
 # Both count those visits (dl_early). guard: such a visit only unmasks, as stock's does,
 # and the packet goes at the next visit. usbin: Octabam's USB AUDIO IN entry (no channel-1
 # acknowledge, no channel-1 NBYTES save), unguarded, for comparison on the unit.
@@ -160,13 +161,13 @@ STATE7_ENTRY = ('        moveq #1,%d0\n'
                 '        move.b %d0,0xfc04401c   | acknowledge our channel-1 completion too\n'
                 '        move.l dl_phase,%d2\n'
                 '        bne dl_next\n')
-DSP_HOOK_EDITS = {
-    'guard': ((STATE7_ENTRY,
+GUARD_ENTRY = ((STATE7_ENTRY,
                '        moveq #1,%d0\n'
                '        move.b %d0,0xfc04401c   | acknowledge our channel-1 completion too\n'
-               '        move.w 0xfc04501e,%d0   | TCD0 CSR: DONE (bit 7) clear while channel 0 runs\n'
-               '        tst.b %d0\n'
-               '        bmi dl_idle\n'
+               '        move.w 0xfc04501e,%d0   | TCD0 CSR: idle is DONE (bit 7), not ACTIVE (6), no START (0)\n'
+               '        andi.l #0xc1,%d0\n'
+               '        cmpi.l #0x80,%d0\n'
+               '        beq dl_idle\n'
                '        addq.l #1,dl_early\n'
                '        move.l dl_phase,%d2\n'
                '        bne dl_return           | our own transfer still runs: its completion comes\n'
@@ -177,17 +178,34 @@ DSP_HOOK_EDITS = {
                '        jmp DONE\n'
                'dl_idle:\n'
                '        move.l dl_phase,%d2\n'
-               '        bne dl_next\n'),),
-    'usbin': ((STATE7_ENTRY,
+               '        bne dl_next\n'),)
+# Hardware bisect of the probe-A freeze (10 October 2026), each guard plus one change:
+# pretend: the packet is built and its job runs, but nothing touches eDMA or the host port;
+# noflags: real delivery, the host flags never read; long: 96 halfwords, USB AUDIO IN AB's length.
+DSP_HOOK_EDITS = {
+    'guard': {'hooks.s': GUARD_ENTRY},
+    'pretend': {'hooks.s': GUARD_ENTRY + (('        moveq #1,%d2\n        move.l %d2,dl_phase\n        bra dl_write\n',
+                                           '        bra dl_complete           | pretend: no transfer\n'),)},
+    'noflags': {'hooks.s': GUARD_ENTRY,
+                'transfer.c': (('flags_sent[c]=modwerk_dsp_flags(c);', 'flags_sent[c]=0;'),
+                               ('            unsigned flags=modwerk_dsp_flags(c);\n', '            unsigned flags=0;\n'))},
+    'long': {'hooks.s': GUARD_ENTRY + (('        move.w #63,%d0\n        move.w %d0,0x2000001c\n',
+                                        '        move.w #95,%d0\n        move.w %d0,0x2000001c\n'),
+                                       ('        move.w #0x8002,%d0\n        move.w %d0,0xfc045014\n'
+                                        '        move.w #0x8002,%d0\n        move.w %d0,0xfc04501c\n',
+                                        '        move.w #0x8003,%d0\n        move.w %d0,0xfc045014\n'
+                                        '        move.w #0x8003,%d0\n        move.w %d0,0xfc04501c\n'))},
+    'usbin': {'hooks.s': ((STATE7_ENTRY,
                '        move.w 0xfc04501e,%d0\n'
-               '        tst.b %d0\n'
-               '        bmi 1f\n'
+               '        andi.l #0xc1,%d0\n'
+               '        cmpi.l #0x80,%d0\n'
+               '        beq 1f\n'
                '        addq.l #1,dl_early\n'
                '1:\n'
                '        move.l dl_phase,%d2\n'
                '        bne dl_next\n'),
               ('        move.l 0xfc045028,%d0\n        move.l %d0,dl_rx_nbytes\n', ''),
-              ('        move.l dl_rx_nbytes,%d0\n        move.l %d0,0xfc045028\n', '')),
+              ('        move.l dl_rx_nbytes,%d0\n        move.l %d0,0xfc045028\n', ''))},
 }
 
 
@@ -257,7 +275,7 @@ def main():
     parser.add_argument('--dev', action='store_true',
                         help='Development base: drive and watch the unit over USB (dev.c) and stream MAIN/CUE as USB audio. Never for users.')
     parser.add_argument('--dsp-hook', choices=tuple(DSP_HOOK_EDITS), default='guard',
-                        help="with --dsp-loader: the state-7 entry; guard (default) or Octabam USB AUDIO IN's, unguarded")
+                        help="with --dsp-loader: the state-7 entry, guard (default); usbin, pretend, noflags, long: hardware bisect variants")
     parser.add_argument('--dsp-probe', choices=('A', 'B'),
                         help='Hardware probe of the DSP loader (dsp_loader.PROBES): A delivery only, B answer only.')
     parser.add_argument('--dsp-loader', action='store_true',
@@ -330,7 +348,7 @@ def main():
         loader_dsp = importlib.util.module_from_spec(spec); spec.loader.exec_module(loader_dsp)
         for name in DYNLOAD_SOURCES + ('hooks.s',):
             text = (DYNLOAD / name).read_text()
-            for old, new in DSP_EDITS.get(name, ()) + (DSP_HOOK_EDITS[args.dsp_hook] if name == 'hooks.s' else ()):
+            for old, new in DSP_EDITS.get(name, ()) + DSP_HOOK_EDITS[args.dsp_hook].get(name, ()):
                 if text.count(old) != 1:
                     raise ValueError('Octabam DSP loader seam changed in %s; review the port.' % name)
                 text = text.replace(old, new)

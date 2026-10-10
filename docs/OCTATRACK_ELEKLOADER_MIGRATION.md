@@ -552,8 +552,82 @@ pending), and from that moment the loader's frame counter stood still (42857
 for four seconds and on): no sound, the sequencer stuck on its first step,
 the ColdFire, UI and USB unaffected, no error counted. A power cycle
 restored the unit. The upload handshake never completes on a real core; it
-completes in `ot_emu`. Not fixed yet: the upload needs a timeout that aborts
-and restores frame processing, so a stuck job can never freeze audio.
+completes in `ot_emu`.
+
+**First guess at the cause, from stock's code (the second run disproved it as the whole cause).** The
+pending job was the first PROBE (no table known yet). Core 0's main loop
+waits at P:$97 (`brclr #HTDE,x:M_HSR,*`) for the host to empty its host
+transmit register before every frame. The receiver answered each packet
+with status words the ColdFire pulled from core 0 with host command $89 and
+an eDMA burst. Stock's frame-transfer machine (states 0-7, read locally)
+pulls only from core 1 (state 0, X:$6600) and never from core 0. With the
+host bus on auto-acknowledge, the burst can end before core 0 has taken the
+$89 and armed its DMA channel 1. Words then stay in HTX, and P:$97 waits for
+ever. `ot_emu` makes a host read wait for the DSP's word, so the race never
+happened there. Writes are not suspects: core 0's are the same transfer USB
+Audio In makes at state 7, proven on an MKII.
+
+**First fix** (`7c33cdf2`, base `f1ef80ee…`):
+- No host reads from either DSP. The receiver (`dsp_receiver.asm`, from
+  Octabam's) answers with one HCR write per packet: HF2 toggled for
+  handled, HF3 for refused. The ColdFire reads both from the host ISR
+  without taking a word. Stock's payloads never set either flag.
+- An upload carries its own sum, and the receiver checks its P read-back
+  against it.
+- Each core's table comes from the build, so no probe is sent.
+- The transfer machine has no read phases, and it skips a core with
+  nothing to send.
+- A watchdog in the sys tick catches frames standing still for 0.5 s while
+  a transfer is in flight. It drains whatever the cores still offer the
+  host, restores channel 1 and the frame interrupt, shuts the loader off
+  until a reboot and shows `DSP STOPPED`. Restoring a core that is truly
+  stuck (park it and upload its payload again, as RAM boot does) is the
+  next step if this is not enough.
+- `modwerk_dsp_report()` (runtime.h) gives a hardware run the loader's
+  state in 34 words.
+
+**Second run** (base `f1ef80ee…`, the same day): the same freeze. The first
+packet to core 0 timed out (errors 1, accepted 0, rejected 0, the pick
+refused), the next job stayed pending, and the frame counter stood at
+266,023 for at least 30 minutes. The watchdog had no visible effect. No host
+read was involved, so either delivery of the packet, the receiver's HCR
+write, or the rest of the receiver stops core 0.
+
+**Probe bases** (`e35fa6de`, `--dsp-loader --dev`, nothing installed) split
+these up. Each sends one PROBE packet per core on the development call
+`modwerk_dsp_probe(core)`:
+- `--dsp-probe A`: the hook runs, but the receiver returns before reading
+  the packet. Only delivery is tested, and every probe should time out.
+- `--dsp-probe B`: the receiver checks the packet and answers with the HCR
+  write, but does nothing else.
+- No flag: the whole receiver.
+
+Report version 2 adds the watchdog's tick count (word 15) and the probes
+sent, answered and timed out (16-18). If the tick count stops while frames
+stand still, ev_tick stopped with the audio and the watchdog never ran.
+
+**Probe A on the unit** (`e35fa6de`, RAM boot, blank project): one probe to
+core 0, and in a fresh boot one to core 1, each stopped the frame engine
+within a second. The sequencer froze and USB audio stopped. The watchdog ran
+(its ticks kept climbing), caught the stall, took 2 words back and shut the
+loader off, but frames did not return. So delivery alone stops both cores;
+the receiver is not involved.
+
+**Not the cause: an early state-7 visit.** Stock can visit state 7 while
+its last transfer still runs, and a packet started then would collide with
+it. The state-7 entry now waits for channel 0 to be idle (TCD0 `DONE`, no
+`ACTIVE`, no `START`) and counts early visits (report version 3, word 28).
+On the unit (`2e321d7b`) the count stayed 0 and probe A still froze. The
+same freeze came with Octabam USB AUDIO IN's exact state-7 entry
+(`--dsp-hook usbin`). So our extra channel-1 steps are not the cause either.
+
+**Next split** (`--dsp-hook`, each the guarded entry plus one change, with
+probe A): `pretend` builds the packet and runs its job, but writes nothing
+to eDMA or the host port. `noflags` delivers but never reads the host
+flags. `long` sends 96 halfwords, USB AUDIO IN AB's length; the destination
+is already USB AUDIO IN's (X:$6320). A transfer without its host command,
+or a host command without its transfer, is not built: either leaves the
+host port out of step with stock's next push by construction.
 
 ### Windows without a driver (10 October 2026)
 
@@ -922,8 +996,10 @@ Template Live project on the card, driven by
 - Removal refused while T1 ran E-Verb; after FILTER was picked there the
   module was removed, the code retired and core 1 dispatched effect 27 to
   the null stub again.
-- A package declaring 1,500 cycles: T1 admitted, T2 (the same core)
-  refused with the message and left as it was.
+- A package declaring the most cycles a module may (491 with the stock
+  reserve; 1,500 before it): T1 admitted, T2 (the same core) refused with
+  the message and left as it was. A 1,500-cycle package is now refused on
+  install.
 - T1's FX2 set to E-Verb in every Part and in the live effects before it
   was installed, as a saved project would: the slot ran dry, the unit
   showed `MODULE MISSING`, `modwerk_dsp_used()` reported effect 27; once
@@ -936,15 +1012,60 @@ past the bootloader copy, where the DSP payloads' RAM holds the current
 bank once a project loads (the bank pointer reads 0x400e21e0); it now
 stops at the bootloader copy.
 
-Known limits of this cut:
+After the first hardware run (`7c33cdf2`):
+
+- **Stock first.** Every slot without a module is charged the dearest
+  stock effect: DJ EQ, 330.75 executed instructions per sample at its worst
+  trigger split (`stock_dsp_worst.py`, all 13 effects, both cores, the
+  emulator; not hardware timing). A module is charged at least that much.
+  Eight stock slots therefore always fit a core, and a stock pick never adds
+  to what was admitted, so a module is refused and a stock effect never is.
+  One instance may declare at most 2,808 − 7 × 331 = 491. E-Verb's 382 fits,
+  and four E-Verbs fit on one core. The overlap charge is gone: in the
+  switch frame the outgoing effect runs its first sub-block, then the
+  incoming one runs its init and second sub-block, so no instance runs
+  twice.
+- **Queued picks.** A pick made while the manager runs its own transaction
+  (a few ticks after any change of the live effects) now waits its turn
+  instead of being refused.
+- **Harvested reverbs are not silent.** A track with PLATE, SPRING or DARK
+  REV shows `FX NOT IN BASE` and opens the FX2 chooser on NONE. Before, it
+  opened on its old row, which is now E-Verb's or past the end; that is why
+  E-Verb was highlighted on the unit.
+
+Still open:
 
 - No publication guards for queued pattern changes, project loads or Part
-  edits yet (Octabam's `publication.c`): the manager's observer loads what
-  those routes publish and keeps the slot dry until then.
-- A pick during the manager's own transaction (a few ticks after any change
-  of the live effects) is refused rather than queued.
-- Stock effects are not charged cycles; a module's figure is its own.
+  edits (Octabam's `publication.c`). The manager's observer loads what those
+  routes publish and keeps the slot dry until then.
 - Octabam's frame-DMA hook (0x40004bc0) is the one USB Audio In uses.
+
+### Giving back PLATE, SPRING and DARK REV
+
+In the pilot base those three take the loader's code room. A track with one
+runs dry and says so, never silently, but an old project does not sound as
+it did. Two ways back:
+
+1. **Stock effects on demand** (target architecture, point 2). Harvest each
+   core's whole effect block (6,158 words) and keep the three shared routines
+   resident (414 words). Load every stock effect, the reverbs included,
+   through the same receiver, from the user's own firmware: the packages are
+   built at base build time with the relocation recipes Modwerk's builder
+   already has (`src/engine/assets/stock-dsp-metadata.json`, used by its
+   disabled `DSP_LOADER` path). The arena is about 5,395 words per core. The
+   eight largest distinct stock effects a core can run at once need about
+   4,700, so a stock-only Part always fits, with memory reserved stock-first
+   like cycles. The reverbs keep their stock Y blocks.
+2. **Another code area.** None exists without cost. Core 0's program memory
+   is full past the effect block (32 words above P:$1FDF). Core 1 has about
+   600 words above P:$1D9F that stock does not load (not audited), too few
+   for the receiver and a module. The 16K program map would add 8K words per
+   core, but it takes half of the second FX2 Y block, which breaks old
+   projects with four buffered FX2 effects on one core, and it is unmeasured
+   on hardware.
+
+The plan is 1, after the pilot passes on the unit. The stock-effect
+old-project regression must then pass with no harvested effect left.
 
 ### Decisions for the owner
 
@@ -952,8 +1073,9 @@ Known limits of this cut:
   state. A fade costs cycles in the switch frame and needs the old and new
   instances at once.
 - Interim, until the owner decides: 2,808 cycles per sample and core
-  (3,120 less 10%); modeled or executed figures admit in development bases
-  only; the 256 KiB ColdFire pool stays.
+  (3,120 less 10%), each slot without a module charged the dearest stock
+  effect (331 executed instructions, emulator); modeled or executed figures
+  admit in development bases only; the 256 KiB ColdFire pool stays.
 - Decided (target architecture above): stock effects load on demand after
   the pilot passes on the unit, and the union of a bank's Parts is preloaded.
 - Whether the selected module set persists across a power cycle (read from
