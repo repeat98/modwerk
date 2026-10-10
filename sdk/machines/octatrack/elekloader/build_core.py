@@ -156,7 +156,7 @@ def main():
     chooser = json.loads((APP/'src/engine/assets/chooser-metadata.json').read_text())
     configuration = dict(fx1=['NONE', *chooser['stockFx1']], fx2=['NONE', *chooser['stockFx2']],
                          hidden=[], logger='0.2.0', modules=[], os='1.40C', source=source_hash, stockfx2=True,
-                         usb=dict(interfaces=['msc', 'modwerk-vendor'], vendor=1, submit=False))
+                         usb=dict(interfaces=['msc', 'modwerk-vendor'], vendor=1, submit=True, backend='read-only'))
     identity = sha(json.dumps(configuration, separators=(',', ':')).encode())
     values = dict(build=identity[:16], os='1.40C', modules='', configuration=identity,
                   source=source_hash, fx1=';'.join(configuration['fx1']),
@@ -187,7 +187,7 @@ modwerk_retained_end:
 ''')
     recipe.update(version=VERSION, title='Modwerk base prototype', author='irpina; Modwerk contributors',
                   license='GPL-3.0-or-later',
-                  description='Private core-only Elekloader base with logger/startup, an unwired upload controller and a read-only USB vendor IDENTIFY; NOT a flash candidate.')
+                  description='Private core-only Elekloader base with logger/startup and a USB vendor interface whose controller backend refuses every change (IDENTIFY, HELLO status); NOT a flash candidate.')
     recipe['sources'] += [p.name for p in sorted(source.glob('*.c'))] + ['hooks.s', 'retained.s', 'usb_base.s']
     recipe['cflags'] = ['-std=c99', '-ffreestanding', '-fno-builtin', '-fno-common',
                         '-fno-zero-initialized-in-bss', '-fno-tree-loop-distribute-patterns',
@@ -196,8 +196,10 @@ modwerk_retained_end:
     for key in ('idle', 'job', 'transport', 'open', 'read', 'write', 'close'):
         guard = guards[key]; n = guard.get('patchLength', guard['length'])
         at = guard['address'] - device.main_load
+        # The USB transport is serviced on the engine before the logger's idle hook.
+        target = usb.IDLE_HOOK if key == 'idle' else 'olog_' + key + '_hook'
         recipe['sites'].append(dict(addr=hex(guard['address']), stock=image[at:at+n].hex(),
-                                    op='jmp', target='olog_' + key + '_hook'))
+                                    op='jmp', target=target))
     recipe['sites'] += usb.sites(lambda addr, n: image[addr-device.main_load:addr-device.main_load+n])
     spec = importlib.util.spec_from_file_location('modwerk_startup', artwork.parent/'build.py')
     startup = importlib.util.module_from_spec(spec); spec.loader.exec_module(startup)
@@ -233,7 +235,7 @@ modwerk_retained_end:
                   packageSha256=sha(Path(path).read_bytes()), manifest=manifest,
                   savedHashes={ext:sha(data) for ext,data in outputs.items()},
                   productionReady=False, hardware='not tested', emulator='not tested',
-                  limitations=['USB vendor interface answers IDENTIFY only; SUBMIT data stages, lifecycle executor and DSP resource manager are not connected.',
+                  limitations=['USB vendor interface carries frames to a controller whose backend refuses every change; lifecycle executor and DSP resource manager are not connected.',
                                'The base owns the USB configuration: USB MIDI/Audio cannot be combined with it yet.',
                                'Logger retention/ABI and modified bootstrap require emulator/hardware qualification.',
                                'Core-only identity; catalogue selections need exact configuration integration.'])

@@ -287,20 +287,37 @@ regenerated. These gaps and the documented unsupported publication/ABI paths
 must be resolved before reusing its runtime; old model/host evidence is not
 hardware qualification for the new Elekloader base.
 
-### First milestone: read-only IDENTIFY in the emulator
+### Milestones in the emulator
 
 On 10 October 2026 the private base gained its own USB configuration (stock
-mass storage plus the vendor interface, 41 bytes) and the EP0 glue, built
-without frame submission ([recipe](../sdk/machines/octatrack/elekloader/README.md#read-only-usb-vendor-interface)).
-The TypeScript-linked base enumerated in the emulator at high and full speed
-and passed 20 checks: both configurations and other-speed descriptors,
-IDENTIFY returning this base's exact configuration identity, refusals of
-wrong lengths, values and interfaces, SUBMIT and RESULT stalling in both
-directions, and mass storage still answering INQUIRY. Unmodified stock
-failed the same check. This needs no control OUT data stage. It is emulator
-protocol evidence only: no host OS driver, WebUSB claim, cache behaviour,
-timing or hardware result exists yet. The next step is the data stage and
-the engine-task wakeup, after disassembling the stock completion loop.
+mass storage plus the vendor interface, 41 bytes) and the EP0 glue
+([recipe](../sdk/machines/octatrack/elekloader/README.md#usb-vendor-interface)).
+Unmodified stock fails the same checks.
+
+1. **Read-only IDENTIFY.** Answered in the USB ISR with the base's exact
+   configuration identity; refusals stall; mass storage still answers.
+2. **Frames to a read-only controller.** Disassembling the stock USB ISR
+   (local only) showed how to receive SUBMIT's data stage without the
+   layouts stack's spin. Stock tracks EP0 in a state word (10 while an IN
+   stage is pending, 11 when idle) and consumes EP0 OUT completion bits in
+   its loop. In state 11 with no awaited OUT descriptor that is harmless, and
+   a descriptor with interrupt-on-complete raises the interrupt again, so the
+   base finishes the transfer from its descriptor at the start of the next
+   transfer path. Stock's own USB ISR already calls the kernel's `post`
+   (to the mass-storage and sys queues), and the engine ignores message
+   opcodes above 45, so a private `0xFF` message wakes the engine safely into
+   its idle hook. A HELLO now travels SUBMIT → data stage → engine task →
+   controller → RESULT; ENTER is refused by a backend that refuses every
+   change; a bus reset keeps the session.
+
+Octabam's bench passed 27 checks at both speeds, and the unmodified browser
+`UsbVendorTransport` and `UploadSession` passed 5 against the same build:
+interface discovery from the device's descriptors, IDENTIFY, HELLO status, a
+positive staging refusal with the session still trusted, and a second
+transport continuing the sequence. This is emulator protocol evidence only.
+The emulator has no packet timing, so the race between priming and the
+stock loop is exercised only in its worst ordering; no host OS driver,
+WebUSB claim, cache behaviour or hardware result exists yet.
 
 ### Reference: Octabam's REMIX SWITCH
 
@@ -436,7 +453,8 @@ the browser can retry safely. They are tested against the real controller on
 the host only. These gaps must be closed before the transport can run on the
 unit:
 
-- The stock EP0 path has no control OUT data stage. The vendored "layouts"
+- The stock EP0 path has no control OUT data stage (milestone 2 below
+  receives one in the emulator). The vendored "layouts"
   USB Audio stack (not the one the source port converts) takes a 4-byte data
   stage by polling up to 100,000 times (~10 ms) inside the USB ISR: returning
   first races the stock completion loop, which would take the data for the
@@ -454,12 +472,11 @@ unit:
   not snoop the copyback cache. The existing `0x55` reply is sent from a
   cached address, so its counters may be stale (inferred, not measured).
 - No queue exists from the USB ISR to the engine task that must own the
-  controller. The logger's engine idle hook runs only when the engine queue
-  receives a message; it is not periodic. Whether the kernel's `post`
-  (`0x40000c3c`) is safe from the USB ISR is unproven; calling it from the
-  frame path hard-crashed an MKI. Hand off one bounded frame slot and prove
-  the wakeup in the emulator and on both models before any write command
-  exists.
+  controller, and the logger's engine idle hook is not periodic. Stock's own
+  USB ISR calls the kernel's `post` (`0x40000c3c`), which masks interrupts
+  itself; calling it from the frame path hard-crashed an MKI. The base now
+  posts a private wake-up from the USB ISR (milestone 2 below); prove it on
+  both models before any write command exists.
 - Hashing up to 1 MiB cannot run inside a control transfer. The OUT request
   only queues the frame; the host polls for a response bound to that
   request's command and transaction. A busy slot refuses a new frame rather

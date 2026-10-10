@@ -35,7 +35,14 @@ DETOURS = (  # address, guarded bytes, their SHA-256, shim; 6 bytes are replaced
     (0x4001d858, 12, CLAMP_SHA256, 'modwerk_usb_clamp1'),
     (0x4001d896, 12, CLAMP_SHA256, 'modwerk_usb_clamp2'),
     (0x4001de64, 6, '868378f30d4ed1251a28851782180b919dbfbd18ea839b594142244f6e06fb8a', 'modwerk_ep0_shim'),
+    # The USB ISR's transfer path (`movel ENDPTSETUPSTAT,%d0`), its bus reset
+    # (`jsr usb_reset; moveq #64,%d0`) and session end (`movel USBCMD,%d0`).
+    (0x4001e606, 6, '2fc3d5168f6ee3ffb4b419a9cbbe48a7837d42e9e47db7bb5bced5cd13b62dc0', 'modwerk_ep0_poll_shim'),
+    (0x4001e91c, 6, '78eb060ff0d9ffb4236ffdf4b3b210c34887760745a3767f657917d9ec1d58f2', 'modwerk_bus_reset_shim'),
+    (0x4001e952, 6, '95d6c1eb26340f4df0419ac71e537a21277443225e26589bf5094352b48e3b29', 'modwerk_session_end_shim'),
 )
+# The engine's idle site, which the logger already hooks: ours runs first.
+IDLE_HOOK = 'modwerk_idle_hook'
 
 
 def endpoint(address, size):
@@ -84,9 +91,11 @@ modwerk_usb_clamp2:
 | modwerk_ep0_dispatch returns a length to send modwerk_ep0_reply through
 | the stock send tail (jsr usb_ep0_send(len, buf); addq #8; done), as USB
 | Audio's shim does; 0 for a request that is not ours, which takes the stock
-| STALL (IN only); or -1 to refuse one of ours. A refusal stalls EP0 both
-| ways (TXS|RXS): the stock IN-only stall would leave a SUBMIT data stage
-| NAKed until the host gives up. The next SETUP clears both bits.
+| STALL (IN only); -1 to refuse one of ours; or -2 when it primed a SUBMIT
+| data stage, which leaves through the stock done path with no status yet
+| (modwerk_ep0_poll finishes it). A refusal stalls EP0 both ways (TXS|RXS):
+| the stock IN-only stall would leave a SUBMIT data stage NAKed until the
+| host gives up. The next SETUP clears both bits.
     .global modwerk_ep0_shim
 modwerk_ep0_shim:
     lea     %sp@(-12),%sp
@@ -99,6 +108,9 @@ modwerk_ep0_shim:
     moveq   #-1,%d1
     cmpl    %d1,%d0
     beqs    3f
+    moveq   #-2,%d1
+    cmpl    %d1,%d0
+    beqs    4f
     movel   modwerk_ep0_reply,%sp@-
     movel   %d0,%sp@-
     jmp     0x4001de5c
@@ -107,7 +119,51 @@ modwerk_ep0_shim:
 3:  movel   0xfc0b01c0,%d0
     orl     #0x00010001,%d0
     movel   %d0,0xfc0b01c0
-    jmp     0x4001de74
+4:  jmp     0x4001de74
+
+| The ISR's transfer path, before stock reads a new SETUP. The displaced
+| instruction overwrites d0; d2 holds stock's 1 for the SETUP W1C after it.
+    .global modwerk_ep0_poll_shim
+modwerk_ep0_poll_shim:
+    lea     %sp@(-12),%sp
+    moveml  %d1/%a0-%a1,%sp@
+    jsr     modwerk_ep0_poll
+    moveml  %sp@,%d1/%a0-%a1
+    lea     %sp@(12),%sp
+    movel   0xfc0b01ac,%d0
+    jmp     0x4001e60c
+
+| Bus reset (then stock's own reset routine) and session end: both become
+| the controller's disconnect, handled on the engine task.
+    .global modwerk_bus_reset_shim, modwerk_session_end_shim
+modwerk_bus_reset_shim:
+    lea     %sp@(-16),%sp
+    moveml  %d0-%d1/%a0-%a1,%sp@
+    jsr     modwerk_ep0_bus_reset
+    moveml  %sp@,%d0-%d1/%a0-%a1
+    lea     %sp@(16),%sp
+    jsr     0x4001d6b8
+    moveq   #64,%d0
+    jmp     0x4001e922
+modwerk_session_end_shim:
+    lea     %sp@(-16),%sp
+    moveml  %d0-%d1/%a0-%a1,%sp@
+    jsr     modwerk_ep0_bus_reset
+    moveml  %sp@,%d0-%d1/%a0-%a1
+    lea     %sp@(16),%sp
+    movel   0xfc0b0140,%d0
+    jmp     0x4001e958
+
+| The engine's return to its receive: service the transport, then the
+| logger's idle hook exactly as the site would have entered it.
+    .global modwerk_idle_hook
+modwerk_idle_hook:
+    lea     %sp@(-60),%sp
+    moveml  %d0-%d7/%a0-%a6,%sp@
+    jsr     modwerk_engine_idle
+    moveml  %sp@,%d0-%d7/%a0-%a6
+    lea     %sp@(60),%sp
+    jmp     olog_idle_hook
 
 | One table per speed and direction. usb_ep0_send fills only the first page
 | of its transfer descriptor, so 64-byte alignment keeps each in one 4 KiB page.

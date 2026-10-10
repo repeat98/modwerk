@@ -43,14 +43,14 @@ The vendor interface has no endpoints and uses EP0 control transfers, so EP3
 OUT stays free for USB Audio In. Its transport state machine and browser peer
 are done and host-tested against the real controller
 ([upload README](../sdk/runtime/upload/README.md#ep0-vendor-transport-version-1)).
-The private base now owns the USB configuration and answers a read-only
-IDENTIFY: 20 emulator checks pass at both speeds and stock fails them
-([first milestone](OCTATRACK_ELEKLOADER_MIGRATION.md#first-milestone-read-only-identify-in-the-emulator)).
-Next: disassemble the stock EP0 completion loop, then receive SUBMIT's data
-stage without spinning in the ISR and wake the engine task. Still open from
-the [migration record](OCTATRACK_ELEKLOADER_MIGRATION.md#what-the-imported-usb-stack-leaves-for-the-vendor-interface):
-the unproven ISR-to-task wakeup, folding USB MIDI and USB Audio into the base,
-Windows driver binding, and every hardware result.
+The private base now owns the USB configuration and carries frames to a
+controller whose backend refuses every change: 27 bench checks and 5
+browser-client checks pass in the emulator, and stock fails them
+([milestones](OCTATRACK_ELEKLOADER_MIGRATION.md#milestones-in-the-emulator)).
+Next: a real backend for one runtime module (stopped upload mode, staging
+memory from the ownership ledger, activation and rollback), folding USB MIDI
+and USB Audio into the base, Windows driver binding, and the first hardware
+run of IDENTIFY and HELLO once a flash candidate is qualified.
 
 Sam's open REMIX SWITCH (Octabam PR #655) switches whole images from the card
 with a soft reset. The owner chose on 10 October to use it as a reference

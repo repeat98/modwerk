@@ -212,7 +212,7 @@ independent code/state regions, cache maintenance, permanent dispatch and
 confirmed restore/retirement. No module lifecycle implementation is supplied
 by the test backend. The private base now includes logger/startup source ports;
 they still need exact selected-module identity and broader qualification.
-The base also needs
-fresh session generation, the vendor interface descriptor and the EP0 glue
-for this transport, compatible with MIDI/audio/storage. Only then can the
-first no-reboot physical test run.
+The private base's EP0 glue (`sdk/machines/octatrack/elekloader`) already
+carries frames to a read-only controller in the emulator; it still has to be
+combined with USB MIDI and USB Audio in one base. Only then can the first
+no-reboot physical test run.

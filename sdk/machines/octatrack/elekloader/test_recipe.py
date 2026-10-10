@@ -106,7 +106,8 @@ class UsbBaseTests(unittest.TestCase):
         self.assertEqual(text.count('    .balign 64\n'), 4)
         for name in self.usb.tables():
             self.assertIn('\n%s:\n' % name, text)
-        for rejoin in ('0x4001d864', '0x4001d8a2', '0x4001de5c', '0x4001de6a', '0x4001de74'):
+        for rejoin in ('0x4001d864', '0x4001d8a2', '0x4001de5c', '0x4001de6a', '0x4001de74',
+                       '0x4001e60c', '0x4001e922', '0x4001e958', 'olog_idle_hook'):
             self.assertIn('jmp     ' + rejoin, text)
         self.assertIn('orl     #0x00010001,%d0', text)
 
@@ -131,7 +132,9 @@ class UsbBaseTests(unittest.TestCase):
         self.assertEqual([s['target'] for s in sites if s['op'] == 'ptr'],
                          ['modwerk_cfg_fs', 'modwerk_cfg_hs', 'modwerk_cfg_os_hs', 'modwerk_cfg_os_fs'])
         jumps = [s for s in sites if s['op'] == 'jmp']
-        self.assertEqual([s['target'] for s in jumps], ['modwerk_usb_clamp1', 'modwerk_usb_clamp2', 'modwerk_ep0_shim'])
+        self.assertEqual([s['target'] for s in jumps], ['modwerk_usb_clamp1', 'modwerk_usb_clamp2', 'modwerk_ep0_shim',
+                                                        'modwerk_ep0_poll_shim', 'modwerk_bus_reset_shim',
+                                                        'modwerk_session_end_shim'])
         self.assertTrue(all(len(bytes.fromhex(s['stock'])) == 6 for s in jumps))
 
     def test_any_changed_stock_byte_is_refused_including_skipped_ones(self):

@@ -8,9 +8,11 @@
 Drives Octabam's USB bench (sdk/octabam/tools/harness/usb_host.py) against a
 running ot_emu: enumeration at both speeds, the other-speed descriptor,
 IDENTIFY's exact bytes against the built base's configuration identity, its
-refusals, SUBMIT/RESULT stalling while the data stage is unconnected, and
-mass storage still answering. Exit 0 only when every check passed. This is
-emulator protocol evidence: no host OS driver, WebUSB, timing or hardware.
+refusals, a HELLO through SUBMIT's data stage, the engine task and RESULT,
+a refused ENTER, duplicate and short submissions, the session surviving a
+bus reset, and mass storage still answering. Exit 0 only when every check
+passed. This is emulator protocol evidence: no host OS driver, WebUSB,
+timing or hardware.
 """
 import argparse
 import importlib.util
@@ -18,6 +20,7 @@ import json
 from pathlib import Path
 import struct
 import sys
+import time
 
 HERE = Path(__file__).resolve().parent
 APP = HERE.parents[3]
@@ -31,7 +34,7 @@ _spec.loader.exec_module(usb)
 VENDOR_IN, VENDOR_OUT, IDENTIFY, SUBMIT, RESULT = 0xc1, 0x41, 3, 1, 2
 
 
-def expected_identity(base, capabilities=0):
+def expected_identity(base, capabilities=1):
     return (b'MWUI' + bytes([1, 1]) + struct.pack('>HHHI', capabilities, 4148, 152, 0) +
             bytes.fromhex(base) + usb.MODEL.encode().ljust(16, b'\0'))
 
@@ -52,7 +55,49 @@ def answers(run, expected):
         return False
 
 
-def check(b, base, hs):
+def frame(command, session=bytes(32), transaction=0):
+    return b'MWUP' + struct.pack('>HHII', 1, command, transaction, 0) + session
+
+
+class Submitter:
+    """SUBMIT then RESULT polls, continuing the device's sequence."""
+    def __init__(self, b):
+        self.b = b
+        self.sequence = struct.unpack('>H', self.result()[6:8])[0]
+
+    def result(self):
+        return self.b.ctrl_in(VENDOR_IN, RESULT, 0, usb.VENDOR_INTERFACE, 152)
+
+    def submit(self, data, sequence=None, length=None):
+        if sequence is None:
+            self.sequence = sequence = (self.sequence + 1) & 0xffff
+        self.b.setup(VENDOR_OUT, SUBMIT, sequence, usb.VENDOR_INTERFACE, len(data) if length is None else length)
+        self.b.ep_out(0, data)
+        self.b.ep_in(0, 64)  # status stage
+        return sequence
+
+    def exchange(self, data):
+        sequence = self.submit(data)
+        for _ in range(200):
+            reply = self.result()
+            if reply[:4] != b'MWUT' or struct.unpack('>H', reply[6:8])[0] != sequence:
+                return None
+            if reply[5] == 2 and len(reply) == 152:
+                return reply[8:]
+            if reply[5] != 1:
+                return None
+            time.sleep(0.05)
+        return None
+
+
+def status(response):
+    fields = struct.unpack('>4sHHII8I', response[:48])
+    return dict(magic=fields[0], command=fields[2], result=fields[5], phase=fields[6], known=fields[7],
+                generation=fields[8], capacity=fields[12], base=response[48:80].hex(),
+                session=response[80:112], active=response[112:144].hex())
+
+
+def check(b, base, hs, sessions):
     results = {}
     _, cfg = bench.enumerate_device(b, hs)
     results['configuration'] = cfg == usb.configuration(hs)
@@ -63,12 +108,19 @@ def check(b, base, hs):
     results['identify value refused'] = stalls(lambda: b.ctrl_in(VENDOR_IN, IDENTIFY, 1, vendor, 64))
     results['other interface refused'] = stalls(lambda: b.ctrl_in(VENDOR_IN, IDENTIFY, 0, usb.MSC_INTERFACE, 64))
 
-    def submit():
-        b.setup(VENDOR_OUT, SUBMIT, 1, vendor, 48)
-        b.ep_out(0, bytes(48))
-        b.ep_in(0, 64)
-    results['submit stalls without data stage'] = stalls(submit)
-    results['result stalls without data stage'] = stalls(lambda: b.ctrl_in(VENDOR_IN, RESULT, 0, vendor, 152))
+    s = Submitter(b)
+    hello = s.exchange(frame(0))
+    st = status(hello) if hello else {}
+    results['hello through the engine'] = bool(hello) and st['magic'] == b'MWUR' and st['result'] == 0 and \
+        st['phase'] == 0 and st['known'] == 1 and st['capacity'] == 4 and st['base'] == base and \
+        st['active'] == base and any(st['session'])
+    sessions.append(st.get('session'))
+    enter = s.exchange(frame(1, st.get('session', bytes(32)))) if hello else None
+    results['enter refused, phase normal'] = bool(enter) and status(enter)['result'] != 0 and \
+        status(enter)['phase'] == 0 and status(enter)['command'] == 1
+    results['duplicate sequence refused'] = stalls(lambda: s.submit(frame(0), sequence=s.sequence))
+    results['short frame refused'] = stalls(lambda: s.submit(frame(0)[:47]))
+    results['hello after refusals'] = s.exchange(frame(0)) is not None
     results['identify after refusals'] = answers(lambda: b.ctrl_in(VENDOR_IN, IDENTIFY, 0, vendor, 64),
                                                  expected_identity(base))
     results['mass storage'] = bench.msc_test(b)
@@ -82,11 +134,14 @@ def main():
     args = parser.parse_args()
     base = json.loads(args.proofs.read_text())['configurationHash']
     b = bench.Bench(args.socket, timeout=60.0)
-    failed = 0
+    failed, sessions = 0, []
     for hs in (True, False):
-        for name, ok in check(b, base, hs).items():
+        for name, ok in check(b, base, hs, sessions).items():
             print('%-34s %s %s' % (name, 'high' if hs else 'full', 'passed' if ok else 'FAILED'))
             failed += not ok
+    same = len(sessions) == 2 and sessions[0] is not None and sessions[0] == sessions[1]
+    print('%-34s both %s' % ('session kept across bus reset', 'passed' if same else 'FAILED'))
+    failed += not same
     print('Vendor USB in the emulator: %s; protocol evidence only, no host driver, WebUSB or hardware.'
           % ('%d check(s) FAILED' % failed if failed else 'all checks passed'))
     sys.exit(1 if failed else 0)
