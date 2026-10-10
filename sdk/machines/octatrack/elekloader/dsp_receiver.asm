@@ -32,6 +32,58 @@
 ; before any effect. Entry changes keep the stock per-instance state.
 frame:
         move    r6,x:>$207              ; the instruction the hook displaced
+; Load meter, core 0: stock's main loop (P:$4b) counts its idle iterations in b until a
+; frame is due, and this runs before stock stores that count (P:$92); b stays untouched.
+; Each window of 1024 frames is published after its serial: the least and most idle
+; counts, their sum and the frames with none (missed). Core 1 keeps no such count.
+        move    b1,x0
+        move    #>idlewin,r0
+        move    p:(r0),a
+        sub     #>1,a
+        move    a1,p:(r0)+              ; frames left
+        move    p:(r0),a
+        cmp     x0,a
+        tgt     x0,a
+        move    a1,p:(r0)+              ; least
+        move    p:(r0),a
+        cmp     x0,a
+        tlt     x0,a
+        move    a1,p:(r0)+              ; most
+        move    p:(r0),a
+        add     x0,a
+        move    a1,p:(r0)+              ; sum
+        move    x0,a
+        tst     a
+        bne     counted
+        move    p:(r0),a
+        add     #>1,a
+        move    a1,p:(r0)               ; missed
+counted:
+        move    #>idlewin,r0
+        move    p:(r0),a
+        tst     a
+        bgt     tallied
+        move    #>1024,x0
+        move    x0,p:(r0)+
+        move    #>idlepub,r1
+        move    p:(r1),a
+        add     #>1,a
+        move    a1,p:(r1)+
+        move    #>$7fffff,x1            ; the next window's least starts high
+        move    #>0,x0
+        move    p:(r0),a
+        move    a1,p:(r1)+
+        move    x1,p:(r0)+
+        move    p:(r0),a
+        move    a1,p:(r1)+
+        move    x0,p:(r0)+
+        move    p:(r0),a
+        move    a1,p:(r1)+
+        move    x0,p:(r0)+
+        move    p:(r0),a
+        move    a1,p:(r1)+
+        move    x0,p:(r0)+
+tallied:
         move    r6,a
         add     #>$320,a
         move    a,r0
@@ -409,5 +461,17 @@ missoffset:                             ; never executed: the first wrong word (
 missexpected:
         nop
 missactual:
+        nop
+idlewin:                                  ; never executed: the load meter (see frame): frames left,
+        nop                             ; least, most, sum and missed of this window
+        nop
+        nop
+        nop
+        nop
+idlepub:                            ; then the published window: serial, least, most, sum, missed
+        nop
+        nop
+        nop
+        nop
         nop
 dltable:

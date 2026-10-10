@@ -17,7 +17,8 @@
 // reported, then restored by installing it), restore (install only, for
 // sdk/machines/octatrack/elekloader/old_projects.py), probe (one PROBE packet to each core,
 // no module: answered on a full or --dsp-probe B base, timed out on --dsp-probe A), stock (no module: the project's
-// stock effects load from boot, PLATE REV and DARK REV picked on T1 and T5, each bound into its core's arena).
+// stock effects load from boot, PLATE REV and DARK REV picked on T1 and T5, each bound into its core's arena), meter
+// (the load meter's last window read back; the emulator's timing, so the plumbing only).
 // The card needs a project whose Part 1 has no module effect on T1, T2 or T5's FX2.
 // Emulator evidence only: executed instructions, no hardware timing or audio.
 import assert from 'node:assert/strict'
@@ -33,7 +34,8 @@ const [mode, ...args] = process.argv.slice(2)
 const EFFECT = 27, LIVE_FX = 0x80000ec4
 const COUNTERS = { dl_residency_words: 8, dl_pool_base: 8, dl_selection_requested: 4, dl_selection_completed: 4,
   dl_selection_refused: 4, dl_errors: 4, dl_modal_shown: 4, dl_parked: 4, dl_reinit: 4, modwerk_dsp_missing: 4,
-  modwerk_dsp_probes_ok: 4, modwerk_dsp_probes_failed: 4, dl_frames: 4 }
+  modwerk_dsp_probes_ok: 4, modwerk_dsp_probes_failed: 4, dl_frames: 4, modwerk_dsp_meter_core: 4, modwerk_dsp_meter_bits: 4,
+  modwerk_dsp_meter: 20 }
 const json = path => JSON.parse(readFileSync(path, 'utf8'))
 const build = dir => ({ proofs: json(join(dir, 'proofs.json')), symbols: json(join(dir, 'symbols.json')) })
 const row = proofs => proofs.configuration.fx2.indexOf('EVERB')
@@ -66,6 +68,11 @@ if (mode === 'dumps') {
     assert.equal(Number(queued), 1, 'the base queues the pick')
     await settle(300)
     console.log(`picked FX2 row ${chooserRow} on track ${track + 1}`)
+  }
+  if (scenario === 'meter') { // the load meter's last window, read back through PEEK
+    await settle(120)
+    assert.equal(await call(symbols.modwerk_dsp_meter_read, 0), 1, 'the base starts the read')
+    await settle(300); bench.socket.end(); process.exit(0)
   }
   if (scenario === 'probe') {
     for (const core of [0, 1]) {
@@ -166,6 +173,11 @@ if (mode === 'dumps') {
     assert.deepEqual(u32('dl_residency_words'), resident())
     const loaded = [...new Set(ids)].filter(fx => proofs.dspLoader.A.stock[fx]).map(fx => proofs.dspLoader.A.stock[fx].key)
     console.log(`stock effects on demand: ${loaded.join(', ')} each run from their core's arena (PLATE REV picked on T1, DARK REV on T5): passed`)
+  } else if (scenario === 'meter') {
+    const [serial, least, most, sum, missed] = u32('modwerk_dsp_meter')
+    assert.equal(u32('modwerk_dsp_meter_core')[0], 0); assert.equal(u32('modwerk_dsp_meter_bits')[0], 120, 'all 120 bits read')
+    assert(serial >= 1 && least <= sum / 1024 && sum / 1024 <= most, 'a whole window')
+    console.log(`load meter: window ${serial}, idle iterations least ${least}, mean ${(sum / 1024).toFixed(1)}, most ${most}, missed ${missed} (emulator timing): passed`)
   } else if (scenario === 'probe') {
     const answered = proofs.configuration.dsp.probe !== 'A'
     assert.equal(u32('modwerk_dsp_probes_ok')[0], answered ? 2 : 0); assert.equal(u32('modwerk_dsp_probes_failed')[0], answered ? 0 : 2)

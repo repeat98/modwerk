@@ -310,7 +310,9 @@ def main():
                              'W full loader, but one word per upload packet to pinpoint a rejected word; '
                              'M (emulator check) a wrong sum on the upload chunk at word 48, so the receiver keeps a record and the tick reads it.')
     parser.add_argument('--dsp-loader', action='store_true',
-                        help='Load module DSP effects on demand; takes PLATE, SPRING and DARK REV off FX2 (needs ELEKLOADER_DSP_ASM, Node 24).')
+                        help='Load every DSP effect, stock and module, on demand (needs ELEKLOADER_DSP_ASM, Node 24).')
+    parser.add_argument('--dsp-burn', type=int, default=0,
+                        help='with --dsp-loader, calibration only: the receiver spends this many more cycles (1-4095) every frame.')
     args = parser.parse_args()
     os.environ['ELEKLOADER_CROSS'] = args.cross
     upstream = args.upstream.resolve()
@@ -400,7 +402,7 @@ def main():
             if int.from_bytes(image[lea - device.main_load:lea - device.main_load + 4], 'big') != stock_list:
                 raise ValueError('An FX selector no longer reads its chooser list at %#x.' % lea)
         dsp_sites, dsp_layout = loader_dsp.recipe(image, device, dsp, lambda path: sdk.dsp_assemble(path, str(source)), str(source),
-                                                  args.dsp_probe if args.dsp_probe in ('A', 'B') else None)
+                                                  args.dsp_probe if args.dsp_probe in ('A', 'B') else None, args.dsp_burn)
         chooser_sites, rows = loader_dsp.choosers(image)
         dsp_sites += chooser_sites
     (source/'usb_base.h').write_text(usb.header())
@@ -432,7 +434,7 @@ def main():
     if args.dsp_loader:
         configuration.update(fx1=['NONE', *rows['fx1']], fx2=['NONE', *rows['fx2']],
                              dsp=dict(loader='dsp-dynload-2', stock='on-demand', rows=list(loader_dsp.MODULES),
-                                      allowance=DSP_ALLOWANCE, reserve=DSP_RESERVE, probe=args.dsp_probe, hook=args.dsp_hook, arena=[dsp_layout[t]['tableWords'] - loader_dsp.SAVED for t in 'AB']))
+                                      allowance=DSP_ALLOWANCE, reserve=DSP_RESERVE, probe=args.dsp_probe, burn=args.dsp_burn, hook=args.dsp_hook, arena=[dsp_layout[t]['tableWords'] - loader_dsp.SAVED for t in 'AB']))
     identity = sha(json.dumps(configuration, separators=(',', ':')).encode())
     values = dict(build=identity[:16], os='1.40C', modules='', configuration=identity,
                   source=source_hash, fx1=';'.join(configuration['fx1']),
@@ -480,7 +482,7 @@ modwerk_retained_end:
                         '-Wall', '-Wextra', '-Werror'] + (['-DMODWERK_DEV'] if args.dev else []) + (
         ['-DMODWERK_DSP_LOADER', '-DMODWERK_DSP_ALLOWANCE=%d' % DSP_ALLOWANCE, '-DMODWERK_DSP_RESERVE=%d' % DSP_RESERVE] +
         ['-DMODWERK_DSP_%s%d=%d' % (key, n, dsp_layout[t][field]) for n, t in enumerate('AB')
-         for key, field in (('TABLE', 'table'), ('WORDS', 'tableWords'), ('MISS', 'miss'))] if args.dsp_loader else [])
+         for key, field in (('TABLE', 'table'), ('WORDS', 'tableWords'), ('MISS', 'miss'), ('METER', 'meter'))] if args.dsp_loader else [])
     for key in ('idle', 'job', 'transport', 'open', 'read', 'write', 'close'):
         guard = guards[key]; n = guard.get('patchLength', guard['length'])
         at = guard['address'] - device.main_load

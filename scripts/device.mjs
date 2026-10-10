@@ -15,6 +15,7 @@
 //   npm run device -- loader                        # the DSP loader's counters (--dsp-loader bases)
 //   npm run device -- report                        # its full report (dsp.c modwerk_dsp_report, version 7: 53 words; miss0-2 the first refused packet (dsp_receiver.asm))
 //   npm run device -- probe 0|1                     # one no-op loader packet to a DSP core
+//   npm run device -- meter 0|1                     # the DSP load meter's last 1024-frame window (core 0's idle iterations)
 //   npm run device -- enc A+3 | LEVEL-1 | fader 128 # encoders A-F and LEVEL, the crossfader
 //
 // --emulator drives ot_emu's USB bench socket instead (it enumerates the device
@@ -40,10 +41,10 @@ const { values, positionals: [command, file] } = parseArgs({ allowPositionals: t
   png: { type: 'string' },
 } })
 const seconds = Number(values.seconds)
-if (!['status', 'try', 'remove', 'lifecycle', 'boot', 'key', 'screen', 'state', 'enc', 'fader', 'loader', 'report', 'probe'].includes(command) || (['try', 'boot', 'key', 'enc', 'fader', 'probe'].includes(command) && !file) ||
+if (!['status', 'try', 'remove', 'lifecycle', 'boot', 'key', 'screen', 'state', 'enc', 'fader', 'loader', 'report', 'probe', 'meter'].includes(command) || (['try', 'boot', 'key', 'enc', 'fader', 'probe', 'meter'].includes(command) && !file) ||
   (['status', 'lifecycle', 'screen', 'state', 'loader', 'report'].includes(command) && file) ||
   !Number.isInteger(seconds) || seconds < 1 || seconds > 3600) {
-  console.error('Usage: device.mjs status | try MODULE.mwrm [--seconds 1-3600] [--accept] | remove [MODULE.mwrm] [--accept] | lifecycle | boot BUILD_DIR | key NAME[+NAME] | screen | state | loader | report | probe 0|1 | enc A+3 | fader 0-255 [--socket PATH] [--emulator]')
+  console.error('Usage: device.mjs status | try MODULE.mwrm [--seconds 1-3600] [--accept] | remove [MODULE.mwrm] [--accept] | lifecycle | boot BUILD_DIR | key NAME[+NAME] | screen | state | loader | report | probe 0|1 | meter 0|1 | enc A+3 | fader 0-255 [--socket PATH] [--emulator]')
   process.exit(2)
 }
 
@@ -163,12 +164,24 @@ try {
       'selRequested', 'selCompleted', 'selRefused', 'selCancelled', 'resCommits', 'resFailures', 'resRollbacks',
       'words0', 'words1', 'earlyVisits', 'parked', 'reinit', 'missing', 'used', 'dry',
       'frameState', 'frameBusy', 'intcIprl', 'intcImrl', 'eportPinFlagSelect', 'edmaIntErr', 'csr0csr1', 'edmaEs',
-      'edmaErrors', 'edmaEsSeen', 'missCore', 'missBits', 'missCheck', 'miss0', 'miss1', 'miss2', 'pin7', 'straddles', 'core1Sent']
+      'edmaErrors', 'edmaEsSeen', 'missCore', 'missBits', 'missCheck', 'miss0', 'miss1', 'miss2', 'pin7', 'straddles', 'core1Sent',
+      'meterCore', 'meterBits', 'meterSerial', 'idleLeast', 'idleMost', 'idleSum', 'missed']
     const bytes = await devIn(11, 0, 4 * names.length), view = new DataView(bytes.buffer, bytes.byteOffset, 4 * names.length)
     const hex = new Set(['hostFlags', 'manager', 'used', 'dry', 'intcIprl', 'intcImrl', 'eportPinFlagSelect', 'edmaIntErr', 'csr0csr1', 'edmaEs', 'edmaEsSeen', 'missCheck', 'miss0', 'miss1', 'miss2'])
-    console.log(Object.fromEntries(names.map((name, i) => [name, ['job0', 'job1', 'missCore'].includes(name) ? view.getInt32(4 * i)
+    console.log(Object.fromEntries(names.map((name, i) => [name, ['job0', 'job1', 'missCore', 'meterCore'].includes(name) ? view.getInt32(4 * i)
       : hex.has(name) ? '0x' + view.getUint32(4 * i).toString(16) : view.getUint32(4 * i)])))
     process.exit(0)
+  }
+  if (command === 'meter') { // dsp_receiver.asm's load meter, read back a bit a frame (60 report words, version 8)
+    if (!['0', '1'].includes(file)) throw new Error('Use meter 0 or meter 1.')
+    if (!(await devIn(13, Number(file), 1))[0]) throw new Error('A meter read is already waiting.')
+    for (const until = Date.now() + 15000; Date.now() < until; await new Promise(r => setTimeout(r, 200))) {
+      const bytes = await devIn(11, 0, 4 * 60), view = new DataView(bytes.buffer, bytes.byteOffset, 4 * 60), w = i => view.getUint32(4 * i)
+      if (view.getInt32(4 * 53) !== Number(file) || w(54) !== 120) continue
+      console.log({ core: Number(file), window: w(55), idleLeast: w(56), idleMost: w(57), idleMean: +(w(58) / 1024).toFixed(1), missed: w(59) })
+      process.exit(0)
+    }
+    throw new Error('The meter was not read within 15 s (the loader busy?).')
   }
   if (command === 'probe') {
     if (!['0', '1'].includes(file)) throw new Error('Use probe 0 or probe 1.')

@@ -54,13 +54,19 @@ PROBES = {
 }
 
 
-def receiver_source(text, null, table_words, probe=None):
-    """The receiver with its table's size and stock's null stub (dry ids) filled in."""
+def receiver_source(text, null, table_words, probe=None, burn=0):
+    """The receiver with its table's size and stock's null stub (dry ids) filled in; `burn` (calibration
+    builds) spends that many more cycles every frame, so the load meter's idle count falls by a known amount."""
     if probe:
         old, new = PROBES[probe]
         if text.count(old) != 1:
             raise ValueError('The DSP receiver changed; review probe %s.' % probe)
         text = text.replace(old, new)
+    if burn:
+        old = 'tallied:\n'
+        if text.count(old) != 1 or not 0 < burn < 4096:
+            raise ValueError('The DSP receiver changed, or a burn outside 1-4095 cycles.')
+        text = text.replace(old, old + '        rep     #%d\n        nop\n' % burn)
     for old, new, count in (('@NULL_INIT@', '$%x' % null[0], 1), ('@NULL_PROC@', '$%x' % null[1], 1),
                             ('@DLWORDS@', str(table_words), 3)):
         if text.count(old) != count:
@@ -119,7 +125,7 @@ def reads_buffer(words, base, init, work):
     return 1  # no rts reached: assume it reads, the side that reserves a block
 
 
-def recipe(image, device, dsp, assemble, work, probe=None):
+def recipe(image, device, dsp, assemble, work, probe=None, burn=0):
     """-> (sites, layout) for both payloads. `assemble(path)` is Elekloader's
     sdk.build.dsp_assemble (octabam's dsp_asm at two origins)."""
     metadata = json.loads(METADATA.read_text())
@@ -177,10 +183,10 @@ def recipe(image, device, dsp, assemble, work, probe=None):
             raise ValueError('Payload %s: the frame head is not the stock instruction the receiver replays.' % tag)
         # The receiver's size does not depend on its table's: every operand it moves is a long one.
         path = Path(work) / ('receiver-%s.asm' % tag)
-        path.write_text(receiver_source(RECEIVER.read_text(), null, 0, probe))
+        path.write_text(receiver_source(RECEIVER.read_text(), null, 0, probe, burn))
         size = len(assemble(str(path))[0])
         table = hi - origin - size
-        path.write_text(receiver_source(RECEIVER.read_text(), null, table, probe))
+        path.write_text(receiver_source(RECEIVER.read_text(), null, table, probe, burn))
         code, labels, relocations = assemble(str(path))
         # The least arena that still runs every stock effect on its own: the largest, DARK REV.
         if len(code) != size or labels['dltable'] != size or table < SAVED + max(len(s['words']) for s in stock.values()):
@@ -211,7 +217,7 @@ def recipe(image, device, dsp, assemble, work, probe=None):
                 sites.append(dict(addr=hex(at(1, table_at + fx)), stock=image[first:first + 3].hex(), op='bytes',
                                   kind='data', new=value.to_bytes(3, 'little').hex()))
         layout[tag] = dict(core=payload['core'], receiver=origin, frame=frame, table=origin + size, tableWords=table,
-                           miss=origin + labels['missoffset'], null=null, free=free,
+                           miss=origin + labels['missoffset'], meter=origin + labels['idlepub'], null=null, free=free,
                            stock={fx: {k: v for k, v in s.items() if k != 'words'} for fx, s in stock.items()},
                            reads=reads, words={fx: s['words'] for fx, s in stock.items()})
     if layout['A']['free'] != layout['B']['free']:
