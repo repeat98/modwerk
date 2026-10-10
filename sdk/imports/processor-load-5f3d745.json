@@ -1,0 +1,105 @@
+{
+  "schemaVersion": 1,
+  "id": "processor-load",
+  "version": "0.1.0-experimental",
+  "status": "local-draft-unpublished",
+  "basedOn": "ca36b1fa13be9e6c3bf8be670799dcdd2bc84e12",
+  "folder": "sdk/octabam/modules/processor-load",
+  "authorPin": {
+    "repository": "https://github.com/timhastie/octatrick-modules",
+    "revision": "5f3d7456a885d37c933b2f47fce2bed29176f3e6",
+    "tag": "v2.11",
+    "path": "processor-load"
+  },
+  "conversion": {
+    "tool": "to_stock_guard.py (local, not committed): each expect -> stock_guard(site, len, sha256 of the user OS 1.40C span, MAIN OS 164f3122...); every hash equal to sha256 of the author literal",
+    "conflictsMovedTo": "octamod.module.json compatibility.conflicts (CF METER, TEMPO BUS are not in Modwerk; the registry refuses a conflict naming no module)"
+  },
+  "files": [
+    {
+      "path": "upstream/LICENSE",
+      "repository": "https://github.com/timhastie/octatrick-modules",
+      "revision": "5f3d7456a885d37c933b2f47fce2bed29176f3e6",
+      "sourcePath": "LICENSE",
+      "sourceBytes": 4876,
+      "sourceGitBlob": "d350f0f05432680ad29157ae93669dbd585da978",
+      "sourceSha256": "1f72dbab3547d1d94861cf9f129519301295395129fe3f56760ed767d07f04fe",
+      "vendoredSha256": "1f72dbab3547d1d94861cf9f129519301295395129fe3f56760ed767d07f04fe"
+    },
+    {
+      "path": "upstream/processor-load/README.md",
+      "repository": "https://github.com/timhastie/octatrick-modules",
+      "revision": "5f3d7456a885d37c933b2f47fce2bed29176f3e6",
+      "sourcePath": "processor-load/README.md",
+      "sourceBytes": 12876,
+      "sourceGitBlob": "46e2d840b494581636c75ebe3b2f1518195feabd",
+      "sourceSha256": "afb1b26393d2c42b666ce7fdc66fd2aeb6ab443c7104d64761badda62f83e94d",
+      "vendoredSha256": "afb1b26393d2c42b666ce7fdc66fd2aeb6ab443c7104d64761badda62f83e94d"
+    },
+    {
+      "path": "upstream/processor-load/loadmeter.s",
+      "repository": "https://github.com/timhastie/octatrick-modules",
+      "revision": "5f3d7456a885d37c933b2f47fce2bed29176f3e6",
+      "sourcePath": "processor-load/loadmeter.s",
+      "sourceBytes": 13807,
+      "sourceGitBlob": "19b312c24b0d21e3c0239b7ddb306581b470574a",
+      "sourceSha256": "b4753a533777a93ae422eb58cf4f46e638da721f306c16d5f800abd2a54dfc5b",
+      "vendoredSha256": "b4753a533777a93ae422eb58cf4f46e638da721f306c16d5f800abd2a54dfc5b"
+    },
+    {
+      "path": "upstream/processor-load/tempo_popup.png",
+      "repository": "https://github.com/timhastie/octatrick-modules",
+      "revision": "5f3d7456a885d37c933b2f47fce2bed29176f3e6",
+      "sourcePath": "processor-load/tempo_popup.png",
+      "sourceBytes": 6802,
+      "sourceGitBlob": "ba7cc4be6f872933e770832b6ccc3feb74012040",
+      "sourceSha256": "efd2e3ec0f26175ab52639b6582c423e500743697ccb19e897ff9e4b5a2c6806",
+      "vendoredSha256": "efd2e3ec0f26175ab52639b6582c423e500743697ccb19e897ff9e4b5a2c6806"
+    },
+    {
+      "path": "upstream/processor-load/manifest.py",
+      "repository": "https://github.com/timhastie/octatrick-modules",
+      "revision": "5f3d7456a885d37c933b2f47fce2bed29176f3e6",
+      "sourcePath": "processor-load/manifest.py",
+      "sourceBytes": 4839,
+      "sourceGitBlob": "2e42c0ef7b0ddd60377803f42559e7f1ac56950f",
+      "sourceSha256": "53cdce7cbffe34118e7a0964029d4880c7dc42feb5c3fea74e579709c48f0b20",
+      "vendoredSha256": "6cb5a47f55a3e4e398190c2f896b659f8325e6fc24be862090ecd7627a06f155",
+      "changes": [
+        "Every Detour / Poke stock `expect` H(\"..\") rewritten as stock_guard(site, length, sha256 of the local 1.40C span); each hash checked equal to the sha256 of the author's literal (5 guards, 0 mismatches). `conflicts` (CF METER, TEMPO BUS) removed: neither module is in Modwerk's catalogue, so they are declared in octamod.module.json. `from remix.stock_guard import stock_guard` added. Nothing else changed."
+      ]
+    }
+  ],
+  "stockGuards": [
+    {
+      "path": "upstream/processor-load/manifest.py",
+      "address": 1073871864,
+      "bytes": 6,
+      "sha256": "b98a3ef366f26b433178561b4c22bbaec2d64365154fc4a7a21f669d262bafa7"
+    },
+    {
+      "path": "upstream/processor-load/manifest.py",
+      "address": 1073797542,
+      "bytes": 10,
+      "sha256": "60acbd38c2859ac73a63948d6c58796591fdbddd654799e50e88b0940be9a37a"
+    },
+    {
+      "path": "upstream/processor-load/manifest.py",
+      "address": 1074097290,
+      "bytes": 6,
+      "sha256": "7e01b975b33c71e146c7e1b6a0205987c65a612933f3ad47f646e7c824a06b67"
+    },
+    {
+      "path": "upstream/processor-load/manifest.py",
+      "address": 1074050344,
+      "bytes": 8,
+      "sha256": "328e35150f163e1db395dd08ce9248289e43dc8d5c619735742dbc3385f13808"
+    },
+    {
+      "path": "upstream/processor-load/manifest.py",
+      "address": 1074050484,
+      "bytes": 4,
+      "sha256": "5a2f3089a48fd2c6b89465f9d3c00c89f5f9765aba72e50734fc6a7f204cdc83"
+    }
+  ]
+}

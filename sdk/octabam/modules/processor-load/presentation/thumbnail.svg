@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="576" viewBox="0 0 320 192" class="signal-art" fill="none" role="img" aria-labelledby="title description">
+<title id="title">Processor Load: frame-interrupt busy time as a percentage</title>
+<desc id="description">A conceptual diagram: twelve 16-sample frames as columns, each with a filled bar for the time the ColdFire spends in the audio interrupt, a dashed warning line at seventy percent, the mean of the window printed as 37% and the longest block marked W52.</desc>
+<style>.signal-art{ width: 100%; height: calc(100% - 55px); overflow: visible; stroke-width: 1.3; stroke-linecap: round; stroke-linejoin: round; }
+.signal-grid{ stroke: #ffffff; opacity: .035; stroke-width: .7; }
+.signal-ghost{ stroke: #b5a0ff; opacity: .2; stroke-width: 1.0; }
+.signal-secondary{ stroke: #b5a0ff; opacity: .65; stroke-width: 1.7; }
+.busy{ fill: rgba(181,160,255,.55); stroke: #b5a0ff; stroke-width: 1.2; }
+.signal-art text{ fill: #b5a0ff; opacity: .8; font: 10px monospace; letter-spacing: .7px; stroke: none; }
+.signal-art .big{ font-size: 26px; opacity: .95; letter-spacing: -1px; }</style>
+<rect width="320" height="192" fill="#1c1c22"/>
+<g class="signal-grid"><path d="M20 44H300"></path><path d="M20 92.0H300"></path><path d="M20 140H300"></path></g>
+<g><path class="signal-ghost" d="M24 44V140"></path><rect class="busy" x="26" y="107.4" width="18" height="32.6"></rect><path class="signal-ghost" d="M46 44V140"></path><rect class="busy" x="48" y="105.4" width="18" height="34.6"></rect><path class="signal-ghost" d="M68 44V140"></path><rect class="busy" x="70" y="108.3" width="18" height="31.7"></rect><path class="signal-ghost" d="M90 44V140"></path><rect class="busy" x="92" y="100.6" width="18" height="39.4"></rect><path class="signal-ghost" d="M112 44V140"></path><rect class="busy" x="114" y="103.5" width="18" height="36.5"></rect><path class="signal-ghost" d="M134 44V140"></path><rect class="busy" x="136" y="106.4" width="18" height="33.6"></rect><path class="signal-ghost" d="M156 44V140"></path><rect class="busy" x="158" y="90.1" width="18" height="49.9"></rect><path class="signal-ghost" d="M178 44V140"></path><rect class="busy" x="180" y="104.5" width="18" height="35.5"></rect><path class="signal-ghost" d="M200 44V140"></path><rect class="busy" x="202" y="105.4" width="18" height="34.6"></rect><path class="signal-ghost" d="M222 44V140"></path><rect class="busy" x="224" y="107.4" width="18" height="32.6"></rect><path class="signal-ghost" d="M244 44V140"></path><rect class="busy" x="246" y="102.6" width="18" height="37.4"></rect><path class="signal-ghost" d="M266 44V140"></path><rect class="busy" x="268" y="105.4" width="18" height="34.6"></rect>
+<path class="signal-secondary" d="M24 72.8H288" stroke-dasharray="3 5"></path>
+<text x="292" y="75.8">!</text>
+<text x="24" y="30">TEMPO</text><text class="big" x="190" y="34">37%</text>
+<text x="154" y="156">W52</text>
+<text x="24" y="182">16 SAMPLES / 362.8 US A BLOCK</text></g>
+</svg>

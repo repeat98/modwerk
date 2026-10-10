@@ -125,6 +125,7 @@ The supported UI keys also include `SCENE B`, `TRIG1`–`TRIG16`, MKII `AED`,
 `MIXER` opens the MIXER page.
 Kit/pattern workflows also support `CUE`, `PTN`, `BANK`, `REC` (copy),
 `PLAY` (clear) and `STOP` (paste); hold FUNC for clipboard actions.
+`TEMPO` opens the stock TEMPO popup (Processor Load draws its reading there).
 
 Example effect plan:
 

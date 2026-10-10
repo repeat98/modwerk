@@ -1,0 +1,137 @@
+{
+  "firmware": "1.40C",
+  "imageSha256": "f3ebd1c55f0c2ca9aeec1a9a934ecbd253ad6564784e860cbb2303435662a2b1",
+  "emulatorSha256": "9dc31d1249793fcf857fa6b1c1ac72ab7966646fd59f3e09e90683c8eb41e711",
+  "setup": "Headless ot_emu; MKII panel; stopped transport; 128\u00d764 LCD at integer scale 6.",
+  "palette": {
+    "on": [
+      240,
+      240,
+      240
+    ],
+    "off": [
+      24,
+      24,
+      24
+    ]
+  },
+  "keyMs": 20,
+  "plan": [
+    {
+      "press": [
+        "TEMPO"
+      ]
+    },
+    {
+      "capture": "ot-tempo-start.png"
+    },
+    {
+      "press": [
+        "TEMPO"
+      ]
+    },
+    {
+      "wait": 3000
+    },
+    {
+      "capture": "ot-date-prompt.png"
+    },
+    {
+      "press": [
+        "YES"
+      ]
+    },
+    {
+      "wait": 2000
+    },
+    {
+      "press": [
+        "NO"
+      ]
+    },
+    {
+      "wait": 300
+    },
+    {
+      "press": [
+        "TEMPO"
+      ]
+    },
+    {
+      "wait": 1000
+    },
+    {
+      "capture": "ot-tempo-stopped.png"
+    },
+    {
+      "hold": [
+        "FUNC"
+      ]
+    },
+    {
+      "wait": 500
+    },
+    {
+      "capture": "ot-tempo-func.png"
+    },
+    {
+      "release": [
+        "FUNC"
+      ]
+    },
+    {
+      "wait": 300
+    },
+    {
+      "press": [
+        "PLAY"
+      ]
+    },
+    {
+      "wait": 2000
+    },
+    {
+      "capture": "ot-tempo-playing.png"
+    },
+    {
+      "encoder": {
+        "name": "LEVEL",
+        "delta": 5
+      }
+    },
+    {
+      "wait": 300
+    },
+    {
+      "capture": "ot-tempo-bpm.png"
+    },
+    {
+      "press": [
+        "STOP"
+      ]
+    },
+    {
+      "wait": 500
+    },
+    {
+      "press": [
+        "TEMPO"
+      ]
+    },
+    {
+      "wait": 300
+    },
+    {
+      "capture": "ot-tempo-closed.png"
+    }
+  ],
+  "screenshots": {
+    "ot-tempo-start.png": "c34a4604ccfbb1fe0871499fab7abc3213b8a2aa29cbaeb18744ce8035813eb8",
+    "ot-date-prompt.png": "051eed37cefaf02a843f6d7f697bb4844ebd974b8702887f1827b30ff6524876",
+    "ot-tempo-stopped.png": "a211f0636dc3331d2ccc98f1b357d2b83ca2449b2e24c7776dce6729f9561f2f",
+    "ot-tempo-func.png": "c42d7f29b3030d8cc7e8f84667fc187414fb4c94fd0b3c512a4e88fd23b638a0",
+    "ot-tempo-playing.png": "033d091fb44af80012cda44a1eb392ebb4e0c873ce097182e816a13b8cd0e8f4",
+    "ot-tempo-bpm.png": "fdfc07313e3e59f5582575b140abc587c954bb7c7b9f2d686fc2af4b12c249f8",
+    "ot-tempo-closed.png": "61d5d865545e019bf100b95950d643b40de1f7c4e9899a71b0ce574c3dba3c8e"
+  }
+}

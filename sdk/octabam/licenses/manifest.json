@@ -228,11 +228,15 @@
         },
         {
           "path": "sdk/octabam/modules/synth/upstream/LICENSE"
+        },
+        {
+          "path": "sdk/octabam/modules/processor-load/upstream/LICENSE"
         }
       ],
       "usedIn": [
         "modules/quantizer/upstream",
-        "modules/synth/upstream"
+        "modules/synth/upstream",
+        "modules/processor-load/upstream"
       ]
     },
     {
@@ -309,6 +313,9 @@
     ],
     "airwindows-chorus": [
       "airwindows"
+    ],
+    "processor-load": [
+      "octa-panel"
     ]
   }
 }

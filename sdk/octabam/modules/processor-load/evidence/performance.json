@@ -1,0 +1,30 @@
+{
+  "schema": 1,
+  "module": "processor-load",
+  "version": "0.1.0-experimental",
+  "kind": "coldfire",
+  "cycles": {
+    "unit": "cycles/event",
+    "static": 88,
+    "measured": 78,
+    "budget": 95779,
+    "method": "The event is one 16-sample frame interrupt (362.8 us). static = the longest path through pl_isr + pl_tail by hand count (35 instructions: 16 on the arming block, 19 on a new longest); measured = the most counted on the pinned ot_emu over about 4,400 blocks (31: 12 + 19), watched PCs, empty project and the author's project, stopped and playing. Instructions converted at 2.49216 cycles (Modwerk's FM Synth convention, 9.44 ns at 264 MHz); not chip wall-clock. budget = 362.8 us at 264 MHz."
+  },
+  "load": {
+    "frameUs": 362.8,
+    "stockLongestUs": 314.4,
+    "moduleLongestUs": 314.8,
+    "stockIdlePercent": 33.3,
+    "moduleIdlePercent": 33.2,
+    "method": "Emulator, not cfmeter.py: CF METER uses the same two interrupt sites and cannot be built beside this module, and no hardware capture exists yet. The author's project playing on the stock image and on the image with the module (pinned ot_emu, watched PCs, about 1,100 blocks each): stock longest interrupt 33,309 instructions; module longest = that + the meter's static 35 (the module run itself peaked at 32,576, a different block). Idle = 100 - the mean interrupt share of the frame (stock mean 25,623.2 instructions; module mean = stock + 29), the UI task not separated. Instructions at 9.44 ns. The module's own hardware readings will come from the author's MKI report."
+  },
+  "stress": {
+    "floodMessagesPerSecond": null,
+    "clockBpm": null,
+    "seconds": null,
+    "stuckNotes": null,
+    "hangs": null,
+    "dropped": null,
+    "droppedExplanation": "Not run. The MIDI flood is the template for MIDI modules; PROCESSOR LOAD reads no MIDI and has no note path. Its stress is the interrupt path, which costs the same 12 + 17..19 instructions in every block (counted over about 4,400 blocks)."
+  }
+}

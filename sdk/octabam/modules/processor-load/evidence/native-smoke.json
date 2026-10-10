@@ -1,0 +1,58 @@
+{
+  "imageSha256": "f3ebd1c55f0c2ca9aeec1a9a934ecbd253ad6564784e860cbb2303435662a2b1",
+  "emulatorSha256": "9dc31d1249793fcf857fa6b1c1ac72ab7966646fd59f3e09e90683c8eb41e711",
+  "plStats": "0x40a95900",
+  "checks": {
+    "armed_after_startup": {
+      "passed": true
+    },
+    "counts_blocks": {
+      "passed": true,
+      "blocks_in_500ms": 1378
+    },
+    "header_two_pixels_down": {
+      "passed": true
+    },
+    "popup_open": {
+      "passed": true
+    },
+    "mean_reading_stopped": {
+      "passed": true,
+      "percent": 35,
+      "text": "35%"
+    },
+    "func_longest_block": {
+      "passed": true,
+      "worst": 35,
+      "wtext": "W35"
+    },
+    "func_released": {
+      "passed": true
+    },
+    "mean_reading_playing": {
+      "passed": true,
+      "percent": 35,
+      "text": "35%"
+    },
+    "tail_limit_located": {
+      "passed": true
+    },
+    "no_blocks_reads_dashes": {
+      "passed": true,
+      "text": "--%",
+      "wtext": "W--"
+    },
+    "reads_again_after_restore": {
+      "passed": true,
+      "percent": 35,
+      "text": "35%"
+    },
+    "popup_closed": {
+      "passed": true
+    }
+  },
+  "limitations": [
+    "Emulator panel smoke: an empty card, the stock project the OS creates, no samples. Readings are emulator percentages, not hardware ones. No hardware, cycle-budget or long-run check."
+  ],
+  "passed": true
+}

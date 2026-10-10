@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "policy": "Stock spans resolve locally from the verified user OS; no stock expectations distributed.",
+  "guards": [
+    {
+      "path": "upstream/processor-load/manifest.py",
+      "address": 1073871864,
+      "length": 6,
+      "sha256": "b98a3ef366f26b433178561b4c22bbaec2d64365154fc4a7a21f669d262bafa7"
+    },
+    {
+      "path": "upstream/processor-load/manifest.py",
+      "address": 1073797542,
+      "length": 10,
+      "sha256": "60acbd38c2859ac73a63948d6c58796591fdbddd654799e50e88b0940be9a37a"
+    },
+    {
+      "path": "upstream/processor-load/manifest.py",
+      "address": 1074097290,
+      "length": 6,
+      "sha256": "7e01b975b33c71e146c7e1b6a0205987c65a612933f3ad47f646e7c824a06b67"
+    },
+    {
+      "path": "upstream/processor-load/manifest.py",
+      "address": 1074050344,
+      "length": 8,
+      "sha256": "328e35150f163e1db395dd08ce9248289e43dc8d5c619735742dbc3385f13808"
+    },
+    {
+      "path": "upstream/processor-load/manifest.py",
+      "address": 1074050484,
+      "length": 4,
+      "sha256": "5a2f3089a48fd2c6b89465f9d3c00c89f5f9765aba72e50734fc6a7f204cdc83"
+    }
+  ]
+}

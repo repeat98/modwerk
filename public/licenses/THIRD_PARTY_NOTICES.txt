@@ -2765,9 +2765,10 @@ targets.
 
 octatrick Scale Quantizer and FM Synth
 SPDX: MIT
-Used in: modules/quantizer/upstream; modules/synth/upstream
+Used in: modules/quantizer/upstream; modules/synth/upstream; modules/processor-load/upstream
 Notice source: sdk/octabam/modules/quantizer/upstream/LICENSE
 Notice source: sdk/octabam/modules/synth/upstream/LICENSE
+Notice source: sdk/octabam/modules/processor-load/upstream/LICENSE
 
 MIT License
 

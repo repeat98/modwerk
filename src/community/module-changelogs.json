@@ -989,6 +989,17 @@
           "Author's functional MKII report (7–9 Oct 2026) covers routing, levels, everyday flows, saving and power; no timed stress run or chip timing."
         ]
       }
+    ],
+    "processor-load": [
+      {
+        "version": "0.1.0-experimental",
+        "date": "2026-10-09",
+        "changes": [
+          "New: the ColdFire's audio-interrupt load as a quarter-second mean in the top left corner of the stock TEMPO popup (47%, a ! from 70 %, --% without a fresh reading); FUNC held shows the longest single block of the window. From the author's octatrick-modules v2.11 (timed on DMA timer 3 at the two interrupt sites of Sam Banks's CF METER probe).",
+          "The TEMPO / EXT SYNC / PICKUP SYNC header in the popup draws two pixels lower than stock; no key is hooked and nothing is saved. Like every DRAM module it brings the shared platform reserve (about 10 MB of Flex sample RAM).",
+          "Emulator-qualified (instruction counts, memory, readings, smoke, captures); the author's hardware report for this exact image is pending, and no MKII has run it."
+        ]
+      }
     ]
   }
 }
