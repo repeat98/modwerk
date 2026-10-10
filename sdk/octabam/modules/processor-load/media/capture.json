@@ -34,9 +34,6 @@
       "wait": 3000
     },
     {
-      "capture": "ot-date-prompt.png"
-    },
-    {
       "press": [
         "YES"
       ]
@@ -127,7 +124,6 @@
   ],
   "screenshots": {
     "ot-tempo-start.png": "c34a4604ccfbb1fe0871499fab7abc3213b8a2aa29cbaeb18744ce8035813eb8",
-    "ot-date-prompt.png": "051eed37cefaf02a843f6d7f697bb4844ebd974b8702887f1827b30ff6524876",
     "ot-tempo-stopped.png": "a211f0636dc3331d2ccc98f1b357d2b83ca2449b2e24c7776dce6729f9561f2f",
     "ot-tempo-func.png": "c42d7f29b3030d8cc7e8f84667fc187414fb4c94fd0b3c512a4e88fd23b638a0",
     "ot-tempo-playing.png": "033d091fb44af80012cda44a1eb392ebb4e0c873ce097182e816a13b8cd0e8f4",
