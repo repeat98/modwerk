@@ -53,7 +53,8 @@ The first hardware runs passed the whole runtime-module lifecycle on the
 owner's MKII, including code replacement in a reused slot
 ([hardware runs](OCTATRACK_ELEKLOADER_MIGRATION.md#first-hardware-runs-owners-mkii-10-october-2026)).
 `Modwerk-octatrack-usbtest3` fixes the exact-64-byte replies that froze the
-unit once. Next: the SDK device client, a hook ABI for real modules, ledger
+unit once; on the owner's MKII it passed the lifecycle seven times in a row
+with no host workaround. Next: the SDK device client, a hook ABI for real modules, ledger
 memory, and folding USB MIDI and USB Audio into the base. The target user flow (sync mode on the unit,
 WebUSB, module loading, automated checks, automatic failure reports and
 issues) and its gaps are in the

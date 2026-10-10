@@ -37,12 +37,6 @@ def reply_for(dev, held, line):
         try:
             if words[0] == 'in':
                 data = dev.ctrl_transfer(*setup[:4], setup[4], timeout=2000)
-                if setup[0] == 0xc1 and len(data) == setup[4] and setup[4] % 64 == 0:
-                    # shortcut: test bases up to usbtest2 answer IDENTIFY/DIAG in exactly 64
-                    # bytes; the controller then queues a zero-length packet the host never
-                    # reads, which answers the next IN. Absorb it with a RESULT read; remove
-                    # once no unit runs those builds.
-                    dev.ctrl_transfer(0xc1, 2, 0, setup[3], 152, timeout=2000)
                 return held, 'in 0 ' + bytes(data).hex() if len(data) else 'in 0'
             sent = dev.ctrl_transfer(*setup[:4], bytes.fromhex(words[2]) if len(words) > 2 else b'', timeout=2000)
             return held, 'out 0 %d' % sent

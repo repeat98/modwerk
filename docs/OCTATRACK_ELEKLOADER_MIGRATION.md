@@ -359,6 +359,11 @@ handled:
   base now takes EP0 into the idle state for its own data stage, the state
   in which stock's loop handles the completion harmlessly.
 
+With both fixes (`usbtest3`, base `66647c8a…`) installed the same day, the
+lifecycle passed seven times in a row with no host workaround: over 250 data
+stages primed and completed, no refusals, no abandoned stages, and every reply
+at its full length (IDENTIFY 72, DIAG 68).
+
 ### Reference: Octabam's REMIX SWITCH
 
 Sam's open [Octabam PR #655](https://github.com/sambanks/octabam/pull/655)

@@ -118,7 +118,9 @@ is recovered from the Startup Menu over DIN MIDI.
    in Chrome. **Run lifecycle** claims only the vendor interface, loads a
    test module, replaces and rolls it back, removes it, and reads each
    effect back through the base's read-only DIAG request. The slot is empty
-   afterwards; **Read DIAG** shows the counters at any time.
+   afterwards; **Read DIAG** shows the counters at any time. Without the
+   page, `usb_bridge.py` runs the same lifecycle from the terminal (see its
+   header).
 4. Record the page log, then play a project briefly and confirm audio,
    sequencing and the card still behave. Reinstall your normal build.
 
