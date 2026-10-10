@@ -469,7 +469,7 @@ h2 { font-size: 16px; letter-spacing: -.15px; font-weight: 600; }
 .configuration-page { max-width: 1180px; }
 /* Header: the name is the configuration switcher; New and the actions menu sit on the right. */
 .configuration-heading > div:first-child { min-width: 0; }
-.configuration-heading-actions { display: flex; gap: 8px; flex-shrink: 0; }
+.configuration-heading-actions { display: flex; flex-wrap: wrap; gap: 8px; flex-shrink: 0; }
 .configuration-switcher { max-width: 100%; margin-left: -8px; padding: 0 40px 0 8px; border: 0; border-radius: 8px; background-color: transparent; background-position: right 12px center; background-size: 14px 14px; color: var(--text); font: inherit; letter-spacing: inherit; cursor: pointer; }
 .configuration-switcher:hover { background-color: var(--surface-hover); }
 .configuration-menu { position: relative; }
