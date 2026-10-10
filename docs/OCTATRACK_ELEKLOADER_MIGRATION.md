@@ -392,6 +392,45 @@ presses made, and 98 encoder events while the owner turned an encoder
 freely (not compared with a known number of detents). The module was then
 removed over USB.
 
+### Catalogue modules: patching stock code at load time (10 October 2026)
+
+No catalogue module runs on the hook bus alone: each patches stock code at
+sites. The loader (package ABI 3) now applies and removes those patches on a
+running unit, so modules converted by Elekloader (`build_ports.py`) load
+without a reboot. The [loader README](../sdk/runtime/loader/README.md) has
+the rules; in short, it writes RAM only (the device itself refuses any site
+outside the stock OS image's RAM copy or inside the bootloader copy the OS
+can re-flash), only over the exact stock bytes expected, with interrupts
+masked, and only when no paused task's stack or saved registers point inside
+a site. Module memory is never reused before a reboot, and a power cycle
+restores stock.
+
+`verify_static.py` links each module statically with Elekloader and requires
+the runtime package, placed at the same address, to match byte for byte.
+PREVIEW VOL (2 sites), RECORDER LOOP FIX (8 sites) and PLAYMODES (35 sites,
+75 relocations) match; the check caught a builder bug (site bytes stored
+before their relocation) on the way. In the emulator with `usbtest5` (base
+`96c40487…`, flash-safety check passed): the bench and client lifecycle
+passed, PREVIEW VOL loaded with both jumps in RAM pointing at its code 0x12
+apart as statically linked, its rollback put the stock bytes back, and
+PLAYMODES loaded, ran and was accepted. Not yet on the unit. Not supported:
+data-table sites, modules that add to the core's tables (CC MAP), DSP
+modules.
+
+### Working on the unit safely (owner requirement, 10 October 2026)
+
+Development and tests on the owner's unit must never brick it:
+
+- Flash changes only when the owner installs an OS from the card, and only
+  builds that passed `check_flash_safety.py` (bootloader copy identical,
+  every change inside a declared site). Recovery stays the Startup Menu over
+  DIN MIDI with the stock `.syx`.
+- Everything done over USB is RAM-only and enforced on the device: runtime
+  modules, their hooks and stock-code patches, all gone at power-off. The
+  vendor interface has no memory read or write command.
+- A crash or freeze from a bad module costs a power cycle, never the flash.
+  Unplugging USB rolls back anything not accepted.
+
 ### Reference: Octabam's REMIX SWITCH
 
 Sam's open [Octabam PR #655](https://github.com/sambanks/octabam/pull/655)
@@ -751,9 +790,21 @@ changes) remain a card OS install.
 | --- | --- | --- | --- |
 | 1. Sync mode on the unit | Upload mode entered by the host's ENTER while nothing plays or records | A MODWERK SYNC entry in the unit's menus (REMIX SWITCH's BRAIN rows are a reference) that shows the session, holds transport and recording, and is the only state in which state-changing commands are accepted; leaving it on the unit leaves upload mode and rolls back an unaccepted trial | Physical presence gates every write. IDENTIFY, HELLO and DIAG stay read-only and always available; stock MIDI recovery is untouched |
 | 2. Connect over WebUSB | `UsbVendorTransport`, the session client and a Chrome test page (`dev/octatrack-usb.html`) | Site UI on the configuration page, Chrome/Edge only; Windows WinUSB binding; the first hardware run | Claim only the vendor interface; a mismatched base identity is refused before any write |
-| 3. Load new modules | One runtime module with tick, draw, key and encoder hooks, its own data and relocations ([machine-neutral loader](../sdk/runtime/loader/README.md)): load, trial, accept, replace, roll back and remove without a reboot | Patches to stock code at load time (most catalogue modules need them), MIDI and audio-frame hooks, runtime DSP allocation (sequence step 3), ledger memory, catalogue modules built as runtime packages | The previous set stays live until acceptance; refusals happen before dispatch changes |
+| 3. Load new modules | One runtime module with tick, draw, key and encoder hooks, its own data and relocations, and patches to stock code ([machine-neutral loader](../sdk/runtime/loader/README.md)): load, trial, accept, replace, roll back and remove without a reboot; catalogue ColdFire modules converted by Elekloader | Data-table patches, modules that add to the core's tables, MIDI and audio-frame hooks, runtime DSP allocation (sequence step 3), several modules at once, ledger memory, a browser builder | The previous set stays live until acceptance; refusals happen before dispatch changes |
 | 4. Automated stress and bug checks | DIAG counters, emulator checks, Octabam's MIDI/audio hardware tools | A test runner driven over the vendor interface in sync mode: bounded transport and parameter actions on a generated test project, CPU/DSP load and audio-path counters, a trial verdict per module | Never write the user's projects. A failed check rolls back automatically; acceptance stays an explicit user action unless the owner changes that rule |
 | 5. Upload failures, open issues | `OCTAMOD.LOG` format, the strict browser/Worker parser, the report API and GitHub issue mirroring with author commands | Read the logger ring and test results over USB (a bounded read command) instead of from the card; a run report bound to the exact base and module identities; automatic submission after a one-time opt-in, de-duplicated by failure signature and version into existing reports for the module's author | Show the user what is sent. Never upload firmware, stock bytes, projects, samples or audio. Reuse the existing sanitized report contract and rate limits |
+
+Sync mode must survive disconnects, dropouts, faulty cables and host USB
+driver failures (owner, 10 October 2026). The unit must never wait on the
+host and must end every interruption in a known, working state.
+
+| Failure | Now | Still needed |
+| --- | --- | --- |
+| Unplug, bus reset, host closes the session | The controller's disconnect: staging discarded, an unaccepted trial rolled back, upload mode left | If something is playing, the rollback cannot hold transport and the trial stays live: retry it once stopped, and show it on the unit |
+| Dropped, short or corrupted transfer | A short data stage or a new SETUP refuses the frame; the client retries a positively refused frame under a new sequence; the whole package's SHA-256 is checked before activation; an unconfirmed command stops the connection | Resume an interrupted upload from the last confirmed chunk instead of restarting |
+| Host stops talking without a bus reset (driver or app hang, half-broken cable) | Nothing: a trial stays live until reconnect or power-off | A trial lease: the unit rolls back an unaccepted trial when no frame arrives for a few seconds |
+| Device-side stalls | Replies are never a whole number of 64-byte packets (a stale zero-length packet once froze the unit), and nothing spins on the host | Keep that rule for every future request; fault-injection runs with random unplugs |
+| Power loss | RAM only: a reboot starts stock plus the base | When accepted modules persist (planned), write the new set beside the old one and switch only once it is complete |
 
 The SDK exposes the same interface for working directly on a unit, for
 module authors and agents (owner, 10 October 2026): a command-line client

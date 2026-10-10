@@ -10,7 +10,7 @@ static unsigned failures;
 static int keys, draws, ticks;
 static int host_key(int code, int pressed) { keys += pressed; return code == 0x31; }
 static int host_enc(int encoder, int delta) { return encoder == 3 && delta == -2; }
-static void host_draw(unsigned char *frame) { draws++; CHECK(modwerk_runtime_busy == 1); frame[0] = 1; }
+static void host_draw(unsigned char *frame) { draws++; frame[0] = 1; }
 static void host_tick(struct modwerk_runtime_api *api) { api->value = (uint32_t)++ticks; }
 
 int main(void)
@@ -19,18 +19,23 @@ int main(void)
     /* Nothing loaded: every event goes on to the firmware. */
     CHECK(modwerk_runtime_key(0x31, 1) == 0 && modwerk_runtime_enc(3, -2) == 0);
     modwerk_runtime_draw(frame); modwerk_runtime_tick();
-    CHECK(frame[0] == 0 && modwerk_runtime_calls() == 1 && modwerk_runtime_busy == 0);
-    modules[0].hook[RUNTIME_TICK] = (uintptr_t)host_tick; modules[0].hook[RUNTIME_DRAW] = (uintptr_t)host_draw;
-    modules[0].hook[RUNTIME_KEY] = (uintptr_t)host_key; modules[0].hook[RUNTIME_ENC] = (uintptr_t)host_enc;
-    active = &modules[0];
+    CHECK(frame[0] == 0 && modwerk_runtime_calls() == 1);
+    static struct runtime_module module;
+    module.hook[RUNTIME_TICK] = (uintptr_t)host_tick; module.hook[RUNTIME_DRAW] = (uintptr_t)host_draw;
+    module.hook[RUNTIME_KEY] = (uintptr_t)host_key; module.hook[RUNTIME_ENC] = (uintptr_t)host_enc;
+    active = &module;
     CHECK(modwerk_runtime_key(0x31, 1) == 1 && modwerk_runtime_key(0x28, 1) == 0 && modwerk_runtime_key(0x28, 0) == 0 && keys == 2);
     CHECK(modwerk_runtime_enc(3, -2) == 1 && modwerk_runtime_enc(0, 1) == 0);
-    modwerk_runtime_draw(frame); CHECK(draws == 1 && frame[0] == 1 && modwerk_runtime_busy == 0);
+    modwerk_runtime_draw(frame); CHECK(draws == 1 && frame[0] == 1);
     modwerk_runtime_tick(); CHECK(modwerk_runtime_value() == 1 && modwerk_runtime_calls() == 2);
-    /* Activation only while nothing plays or records. */
+    /* Activation only while nothing plays or records; stock code only, never the bootloader copy. */
     modwerk_test_stopped = 0;
     CHECK(!modwerk_runtime_backend.enter(0));
+    CHECK(modwerk_machine_patchable(0x40094296u, 6) && !modwerk_machine_patchable(0x400003fcu, 6));
+    CHECK(!modwerk_machine_patchable(0x4010fdecu, 6) && !modwerk_machine_patchable(0x40a955e0u, 4) && !modwerk_machine_patchable(0x0u, 4));
+    CHECK(!modwerk_machine_patchable(0x400de1dcu, 6) && !modwerk_machine_patchable(0x400e21dcu, 6) && modwerk_machine_patchable(0x400e21e0u, 6));
+    CHECK(!modwerk_machine_patchable(0xfffffffcu, 8));
     if (failures) { fprintf(stderr, "%u trampoline checks failed\n", failures); return 1; }
-    puts("Octatrack runtime glue: tick, draw, key and encoder trampolines passed.");
+    puts("Octatrack runtime glue: trampolines and the patchable stock range passed.");
     return 0;
 }

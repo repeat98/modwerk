@@ -74,13 +74,16 @@ in the USB ISR and its controller on the engine task:
   receive, where the base's idle hook services the transport before the
   logger's.
 - The controller's backend is the machine-neutral
-  [runtime loader](../../../runtime/loader/README.md) (package ABI 2: code,
-  data, bss, relocations and tick, draw, key and encoder hooks). This
+  [runtime loader](../../../runtime/loader/README.md) (package ABI 3: code,
+  data, bss, relocations, tick, draw, key and encoder hooks, and patches to
+  stock code, with its safety rules). This
   folder's [`runtime.c`](runtime.c) is the Octatrack's glue: trampolines
   from core-ot's `ev_tick`, `ev_draw`, `ev_key` and `ev_enc`; ENTER and
   activation only while nothing plays or records (the logger's own check);
-  module code and data on the uncached alias; and instruction and branch
-  cache invalidation with the OS's own CACR value (guarded). A bus reset or
+  module code and data on the uncached alias; instruction and branch cache
+  invalidation with the OS's own CACR value (guarded); the patchable range
+  (the stock image's RAM copy minus the bootloader copy); and the paused-task
+  scan over the kernel's eleven measured tasks. A bus reset or
   session end becomes the controller's disconnect.
   [`examples/hello.c`](examples/hello.c) is Elekloader's hello-marker as a
   runtime module: a square in the screen's top-right corner, with key presses

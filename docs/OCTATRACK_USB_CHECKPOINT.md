@@ -61,9 +61,14 @@ modules in plain C with tick, draw, key and encoder hooks, data and
 relocations; on `usbtest4` the first real module drew on the owner's MKII
 screen and counted its keys and encoders
 ([record](OCTATRACK_ELEKLOADER_MIGRATION.md#hooks-for-real-modules-reusable-on-every-machine-10-october-2026)).
-Next: patches to stock code at load time (most catalogue modules), the sync
-mode on the unit, ledger memory, and folding USB MIDI and USB Audio into the
-base. The target user flow (sync mode on the unit,
+The loader now also patches stock code at load time, so catalogue ColdFire
+modules converted by Elekloader load without a reboot; each package is
+checked byte for byte against Elekloader's static link, and `usbtest5` runs
+them in the emulator, not yet on the unit
+([record](OCTATRACK_ELEKLOADER_MIGRATION.md#catalogue-modules-patching-stock-code-at-load-time-10-october-2026)).
+Next: PREVIEW VOL on the unit, the fail-safe sync requirements (a trial
+lease first), the sync mode on the unit, and folding USB MIDI and USB Audio
+into the base. The target user flow (sync mode on the unit,
 WebUSB, module loading, automated checks, automatic failure reports and
 issues) and its gaps are in the
 [migration record](OCTATRACK_ELEKLOADER_MIGRATION.md#end-user-workflow-owner-10-october-2026),

@@ -191,7 +191,7 @@ modwerk_retained_end:
 ''')
     recipe.update(version=VERSION, title='Modwerk base prototype', author='irpina; Modwerk contributors',
                   license='GPL-3.0-or-later',
-                  description='Private core-only Elekloader base with logger/startup, a USB vendor interface and one runtime module slot (tick, draw, key and encoder hooks); NOT a flash candidate.')
+                  description='Private core-only Elekloader base with logger/startup, a USB vendor interface and a runtime module loader (hooks and stock-code sites); NOT a flash candidate.')
     recipe['sources'] += [p.name for p in sorted(source.glob('*.c'))] + ['hooks.s', 'retained.s', 'usb_base.s']
     recipe['cflags'] = ['-std=c99', '-ffreestanding', '-fno-builtin', '-fno-common',
                         '-fno-zero-initialized-in-bss', '-fno-tree-loop-distribute-patterns',
@@ -242,7 +242,7 @@ modwerk_retained_end:
                   packageSha256=sha(Path(path).read_bytes()), manifest=manifest,
                   savedHashes={ext:sha(data) for ext,data in outputs.items()},
                   productionReady=False, hardware='not tested', emulator='not tested',
-                  limitations=['One ColdFire runtime module on ev_tick, ev_draw, ev_key and ev_enc with fixed staging and code buffers; no MIDI or frame hooks, stock-code sites, DSP resource manager or ledger allocation yet.',
+                  limitations=['One ColdFire runtime module at a time (hooks on ev_tick, ev_draw, ev_key and ev_enc, stock-code sites) from a pool only a reboot reclaims; no data-table sites, MIDI or frame hooks, DSP resource manager or ledger allocation yet.',
                                'The base owns the USB configuration: USB MIDI/Audio cannot be combined with it yet.',
                                'Logger retention/ABI and modified bootstrap require emulator/hardware qualification.',
                                'Core-only identity; catalogue selections need exact configuration integration.'])

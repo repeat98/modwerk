@@ -27,10 +27,10 @@ export async function diagnostics(device: ControlDevice, index: number): Promise
 }
 
 const u32 = (n: number) => [n >>> 24, (n >>> 16) & 0xff, (n >>> 8) & 0xff, n & 0xff]
-/** "MWRM", ABI 2 (sdk/runtime/loader/README.md) without bss or relocations: a tick hook at 0, or nothing for empty code. */
+/** "MWRM", ABI 3 (sdk/runtime/loader/README.md) without bss, relocations or sites: a tick hook at 0, or nothing for empty code. */
 function runtimePackage(base: string, code: number[]): UploadPackage {
   const hooks = code.length ? [0, 0xffffffff, 0xffffffff, 0xffffffff] : []
-  const data = Uint8Array.from([0x4d, 0x57, 0x52, 0x4d, 0, 2, 0, 0, ...u32(code.length), ...u32(0), ...u32(0), ...u32(hooks.length),
+  const data = Uint8Array.from([0x4d, 0x57, 0x52, 0x4d, 0, 3, 0, 0, ...u32(code.length), ...u32(0), ...u32(0), ...u32(hooks.length), ...u32(0),
     ...hooks.flatMap(u32), ...code])
   return { base, data, sha256: sha(data) }
 }
@@ -67,11 +67,10 @@ export async function runLifecycle(device: ControlDevice, index: number, log: (l
   expect(!(await read()).active, 'removal empties the slot')
   await session.holdTrial(); await session.accept(); await session.leaveUploadMode()
   log(`module removed; DIAG ${JSON.stringify(await read())}`)
-  // C goes into the slot that ran A: stale instruction-cache lines would run A's code and report 0xA1.
   const c = testModule(identity.base, 0xc3)
   await session.stage(c); await session.activate(); await session.startTrial(); await settle()
-  expect((await read()).value === 0xc3, 'module C runs its own code in the slot that ran A')
+  expect((await read()).value === 0xc3, 'module C runs its own code')
   await session.holdTrial(); await session.rollback(); await session.leaveUploadMode()
-  log('module C ran its own code in the slot that ran A (no stale instructions) and rolled back')
+  log('module C ran its own code and rolled back')
   return session
 }
