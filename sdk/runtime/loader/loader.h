@@ -24,8 +24,8 @@ struct runtime_module { uintptr_t hook[RUNTIME_EVENTS]; const struct runtime_sit
 #define RUNTIME_PACKAGE_BYTES (RUNTIME_HEADER_BYTES + 4u * RUNTIME_EVENTS + RUNTIME_IMAGE_BYTES + 4u * RUNTIME_RELOCATIONS + \
                                RUNTIME_SITES * (8u + 2u * RUNTIME_SITE_BYTES + 2u * RUNTIME_SITE_RELOCATIONS))
 
+/* The controller's staging buffer is the machine's; it must hold RUNTIME_PACKAGE_BYTES. */
 extern const struct mu_backend modwerk_runtime_backend;
-extern uint8_t modwerk_runtime_staging[RUNTIME_PACKAGE_BYTES];
 extern struct modwerk_runtime_api modwerk_runtime_api;
 /* A trampoline reads this once, then calls the hook. Module memory is never
  * reused before a reboot, so a hook still running old code stays valid. */

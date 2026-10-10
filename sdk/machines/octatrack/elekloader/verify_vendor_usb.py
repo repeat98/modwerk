@@ -112,7 +112,7 @@ def check(b, base, hs, sessions):
     hello = s.exchange(frame(0))
     st = status(hello) if hello else {}
     results['hello through the engine'] = bool(hello) and st['magic'] == b'MWUR' and st['result'] == 0 and \
-        st['phase'] == 0 and st['known'] == 1 and st['capacity'] == 46636 and st['base'] == base and \
+        st['phase'] == 0 and st['known'] == 1 and st['capacity'] == 0x140000 and st['base'] == base and \
         st['active'] == base and any(st['session'])
     sessions.append(st.get('session'))
     session = st.get('session', bytes(32))

@@ -12,10 +12,12 @@
  * the completion raises the USB interrupt again, and the poll finishes the
  * transfer from the descriptor itself. No ISR spin waits for the host.
  *
- * The controller's backend is runtime.c's single module slot. */
+ * The controller's backend is boot.c's: the runtime loader's for module
+ * packages, plus whole OS images for a RAM boot. */
 #include "vendor.h"
 #include "usb_base.h"
 #include "runtime.h"
+#include "boot.h"
 
 #define UNCACHED(p) ((void *)((uintptr_t)(p) + 0x08000000u))
 #define REG(a) (*(volatile uint32_t *)(a))
@@ -215,6 +217,7 @@ void modwerk_ep0_tick(void);
 void modwerk_ep0_tick(void)
 {
     if (started && controller_started && mv_tick(vendor(), controller.phase != MU_NORMAL, HOST_TIMEOUT_TICKS)) wake();
+    if (modwerk_boot_tick()) wake(); /* an armed RAM boot is due */
 }
 
 /* Engine task, on every return to its receive. Cheap unless woken. */
@@ -234,9 +237,10 @@ void modwerk_engine_idle(void)
         for (uint32_t i = 0; i < MU_DIGEST_BYTES; ++i) ((uint8_t *)&seed[6])[i] = modwerk_base_digest[i];
         mu_sha256((const uint8_t *)seed, sizeof seed, session);
         session[0] |= 1u;
-        if (!mu_init(&controller, modwerk_runtime_staging, sizeof modwerk_runtime_staging,
-                     modwerk_base_digest, session, modwerk_base_digest, 0, &modwerk_runtime_backend)) return;
+        if (!mu_init(&controller, modwerk_boot_staging(), BOOT_IMAGE_BYTES,
+                     modwerk_base_digest, session, modwerk_base_digest, 0, &modwerk_boot_backend)) return;
         controller_started = 1;
     }
     (void)mv_service(UNCACHED(&transport), &controller);
+    modwerk_boot_service(); /* an armed RAM boot, once due (boot.c): does not return then */
 }

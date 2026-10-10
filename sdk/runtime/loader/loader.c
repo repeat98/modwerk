@@ -11,7 +11,6 @@
 #include "loader.h"
 
 static uint8_t pool[RUNTIME_POOL_BYTES] __attribute__((aligned(16)));
-uint8_t modwerk_runtime_staging[RUNTIME_PACKAGE_BYTES];
 struct modwerk_runtime_api modwerk_runtime_api;
 volatile uint32_t modwerk_runtime_ticks;
 static uint32_t used, mark;

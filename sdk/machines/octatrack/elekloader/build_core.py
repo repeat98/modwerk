@@ -19,6 +19,19 @@ APP = HERE.parents[3]
 VERSION = '0.3.1-modwerk-dev.1'
 FIELDS = {'build': 17, 'os': 17, 'modules': 4096, 'configuration': 65,
           'source': 65, 'fx1': 1024, 'fx2': 1024, 'hidden': 1024}
+# RAM boot (boot.s): the gate replaces the OS entry's `movea.l #0x48000000,%sp`.
+BOOT_GATE = (0x40000412, '2e7c48000000')
+OS_FIRST, OS_VEROFF, BOOT_IMAGE_BYTES = 0x4fefffe4, 0xde648, 0x140000  # boot.s, boot.h
+# REMIX SWITCH's DSP park (dsp_park.asm, assembled by Octabam's dsp_asm), by
+# P address, written into both payloads over dead `jmp *` vectors.
+DSP_PARK = {
+    0x1e: (0x0bf080, 0x000020),  # jsr >$20, host command $0F's vector
+    0x20: (0x330000, 0x08d32c, 0x08d328, 0x08d324, 0x08d320, 0x04d3d5, 0x04d3d7, 0x07b495, 0x000000,
+           0x07b497, 0x000000, 0x0a8406, 0x0a8407, 0x0a8426, 0x0444bc, 0x44f400, 0x000034, 0x04c4bc,
+           0x000000, 0x000004, 0x05f439, 0x000300, 0x0cc300, 0x000000, 0x084e06, 0x0cc300, 0x000000,
+           0x085006, 0x221100, 0x218400, 0x0c0006),
+    0x06: (0x06c400, 0x00000a, 0x0cc300, 0x000000, 0x085886, 0x0abd4e, 0x0abe4e, 0x0ae180),
+}
 
 
 def sha(data):
@@ -91,7 +104,7 @@ def main():
     if git(upstream, 'rev-parse', 'HEAD') != pin or git(upstream, 'status', '--porcelain', '--untracked-files=no'):
         parser.error('Use the exact clean tracked Elekloader checkout pinned by Modwerk.')
     sys.path.insert(0, str(upstream))
-    from elekloader import formats, elemod, patch
+    from elekloader import dsp, formats, elemod, patch
     from elekloader.sdk import build as sdk
     stock, device, release = formats.load(str(args.stock))
     if device.key != 'octatrack' or release.version != '1.40C':
@@ -144,14 +157,14 @@ def main():
     # The base owns the USB configuration and the EP0 unknown-request tail.
     spec = importlib.util.spec_from_file_location('modwerk_usb_base', HERE/'usb_base.py')
     usb = importlib.util.module_from_spec(spec); spec.loader.exec_module(usb)
-    for name in ('ep0.c', 'runtime.c', 'runtime.h'):
+    for name in ('ep0.c', 'runtime.c', 'runtime.h', 'boot.c', 'boot.h', 'boot.s'):
         shutil.copyfile(HERE / name, source / name)
     (source/'usb_base.h').write_text(usb.header())
     (source/'usb_base.s').write_text(usb.assembly())
     # Identity describes this core-only private base. Later selections need
     # their complete module/version/chooser identities regenerated explicitly.
     inputs = {str(p.relative_to(APP)): sha(p.read_bytes()) for folder in (logger, upload, loader, HERE)
-              for p in sorted(folder.iterdir()) if p.is_file() and p.suffix in ('.c', '.h', '.py', '.json')}
+              for p in sorted(folder.iterdir()) if p.is_file() and p.suffix in ('.c', '.h', '.s', '.asm', '.py', '.json')}
     inputs.update({'elekloader/' + p.name: sha(p.read_bytes()) for p in original_core.iterdir() if p.is_file()})
     artwork = APP / 'sdk/runtime/startup/artwork.json'
     inputs['sdk/runtime/startup/artwork.json'] = sha(artwork.read_bytes())
@@ -160,7 +173,8 @@ def main():
     chooser = json.loads((APP/'src/engine/assets/chooser-metadata.json').read_text())
     configuration = dict(fx1=['NONE', *chooser['stockFx1']], fx2=['NONE', *chooser['stockFx2']],
                          hidden=[], logger='0.2.0', modules=[], os='1.40C', source=source_hash, stockfx2=True,
-                         usb=dict(interfaces=['msc', 'modwerk-vendor'], vendor=1, submit=True, backend='runtime-loader-2'))
+                         usb=dict(interfaces=['msc', 'modwerk-vendor'], vendor=1, submit=True, backend='runtime-loader-2'),
+                         boot='ram-1')
     identity = sha(json.dumps(configuration, separators=(',', ':')).encode())
     values = dict(build=identity[:16], os='1.40C', modules='', configuration=identity,
                   source=source_hash, fx1=';'.join(configuration['fx1']),
@@ -192,7 +206,7 @@ modwerk_retained_end:
     recipe.update(version=VERSION, title='Modwerk base prototype', author='irpina; Modwerk contributors',
                   license='GPL-3.0-or-later',
                   description='Private core-only Elekloader base with logger/startup, a USB vendor interface and a runtime module loader (hooks and stock-code sites); NOT a flash candidate.')
-    recipe['sources'] += [p.name for p in sorted(source.glob('*.c'))] + ['hooks.s', 'retained.s', 'usb_base.s']
+    recipe['sources'] += [p.name for p in sorted(source.glob('*.c'))] + ['hooks.s', 'retained.s', 'usb_base.s', 'boot.s']
     recipe['cflags'] = ['-std=c99', '-ffreestanding', '-fno-builtin', '-fno-common',
                         '-fno-zero-initialized-in-bss', '-fno-tree-loop-distribute-patterns',
                         '-fno-merge-constants', '-fno-asynchronous-unwind-tables', '-fno-unwind-tables',
@@ -205,6 +219,19 @@ modwerk_retained_end:
         recipe['sites'].append(dict(addr=hex(guard['address']), stock=image[at:at+n].hex(),
                                     op='jmp', target=target))
     recipe['sites'] += usb.sites(lambda addr, n: image[addr-device.main_load:addr-device.main_load+n])
+    # RAM boot: the gate at the OS entry, and the DSP park in both payloads.
+    at = BOOT_GATE[0] - device.main_load
+    if image[at:at+6].hex() != BOOT_GATE[1]:
+        raise ValueError('The OS entry changed; review the RAM boot gate.')
+    recipe['sites'].append(dict(addr=hex(BOOT_GATE[0]), stock=BOOT_GATE[1], op='jmp', target='modwerk_boot_gate'))
+    for tag in ('A', 'B'):
+        for lo, words in DSP_PARK.items():
+            addr = dsp.p_span(image, device, tag, lo, lo + len(words)); at = addr - device.main_load
+            if [dsp.w24(image, at + 3*k) for k in range(len(words))] != [0 if k % 2 else 0x0c0000 | (lo + k)
+                                                                        for k in range(len(words))]:
+                raise ValueError('Payload %s P:%#x is not the dead vectors the park replaces.' % (tag, lo))
+            recipe['sites'].append(dict(addr=hex(addr), stock=image[at:at+3*len(words)].hex(), op='bytes',
+                                        new=b''.join(w.to_bytes(3, 'little') for w in words).hex(), kind='data'))
     # The machine-neutral loader's events (sdk/runtime/loader/loader.h), from core-ot's bus.
     recipe.setdefault('subscribe', []).extend(dict(event='ev_' + e, fn='modwerk_runtime_' + e, order=90)
                                               for e in ('tick', 'draw', 'key', 'enc'))
@@ -239,6 +266,12 @@ modwerk_retained_end:
         if sha(target.read_bytes()) != sha(data):
             raise ValueError('Saved file hash differs.')
     (out/'symbols.json').write_text(json.dumps(mapping, indent=2)+'\n')
+    # The unpacked image a RAM boot sends (`npm run device -- boot`); private like the rest.
+    main_out = formats.main_image(formats.parse(str(out/'NOT_FLASH_CANDIDATE.bin'), device), device)
+    if (int.from_bytes(main_out[:4], 'big') != OS_FIRST or len(main_out) > BOOT_IMAGE_BYTES or
+            main_out[OS_VEROFF:OS_VEROFF+2] != image[OS_VEROFF:OS_VEROFF+2]):
+        raise ValueError('The built MAIN image cannot be booted from RAM.')
+    (out/'MAIN.raw').write_bytes(main_out)
     report = dict(schema=1, kind='modwerk-elekloader-base-prototype', coreVersion=VERSION,
                   upstream=pin, sources=inputs, configuration=configuration, configurationHash=identity,
                   packageSha256=sha(Path(path).read_bytes()), manifest=manifest,
@@ -246,6 +279,7 @@ modwerk_retained_end:
                   productionReady=False, hardware='not tested', emulator='not tested',
                   limitations=['One ColdFire runtime module at a time (hooks on ev_tick, ev_draw, ev_key and ev_enc, stock-code sites) from a pool only a reboot reclaims; no data-table sites, MIDI or frame hooks, DSP resource manager or ledger allocation yet.',
                                'The base owns the USB configuration: USB MIDI/Audio cannot be combined with it yet.',
+                               'RAM boot (boot.s): any host on the vendor interface can boot a whole OS image without a confirmation on the unit; development only. Nothing it does writes flash; the image must carry NOR\'s bootstrap version.',
                                'Logger retention/ABI and modified bootstrap require emulator/hardware qualification.',
                                'Core-only identity; catalogue selections need exact configuration integration.'])
     (out/'proofs.json').write_text(json.dumps(report, indent=2)+'\n')

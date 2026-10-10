@@ -5,7 +5,7 @@ import { spawn } from 'node:child_process'
 import { once } from 'node:events'
 import { sha } from '../vendor/elekloader/kit/src/bytes.ts'
 import { UploadSession, UploadDeviceError, UploadUnconfirmedError } from '../src/engine/elekloader/upload-session.ts'
-import { UPLOAD_MAX_BYTES, UPLOAD_RESPONSE, UploadCommand } from '../src/engine/elekloader/upload-wire.ts'
+import { UPLOAD_MAX_BYTES, UPLOAD_MAX_CHUNK, UPLOAD_RESPONSE, UploadCommand } from '../src/engine/elekloader/upload-wire.ts'
 
 const executable = process.argv[2]
 if (!executable) throw new Error('Supply the authored-only C wire probe executable.')
@@ -99,7 +99,7 @@ await scenario('protocol maximum stages in bounded chunks', async (s, t) => {
   const pkg = payload(UPLOAD_MAX_BYTES)
   await s.stage(pkg)
   assert.equal(s.status.received, UPLOAD_MAX_BYTES)
-  assert.equal(t.commands.filter(c => c === UploadCommand.chunk).length, 256)
+  assert.equal(t.commands.filter(c => c === UploadCommand.chunk).length, UPLOAD_MAX_BYTES / UPLOAD_MAX_CHUNK)
   assert(t.frames.every(frame => frame.length <= 4148))
   await s.cancel()
 })

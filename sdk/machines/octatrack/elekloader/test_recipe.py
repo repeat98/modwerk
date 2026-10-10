@@ -153,18 +153,26 @@ class UsbBaseTests(unittest.TestCase):
 
 
 class RuntimeSlotTests(unittest.TestCase):
-    def test_runtime_bookkeeping_on_the_host(self):
+    def host_test(self, *sources):
         import pathlib, shutil, subprocess, tempfile
         cc = shutil.which('cc')
         if not cc:
             self.skipTest('no host C compiler')
         here = pathlib.Path(__file__).resolve().parent
+        loader = here.parents[2] / 'runtime/loader'
         with tempfile.TemporaryDirectory() as temp:
             subprocess.run([cc, '-std=c99', '-Wall', '-Wextra', '-Werror', '-pedantic', '-DMODWERK_HOST', '-I', here,
-                            '-I', here.parents[2] / 'runtime/upload', '-I', here.parents[2] / 'runtime/loader', here / 'test_runtime.c', '-o', temp + '/t'],
+                            '-I', here.parents[2] / 'runtime/upload', '-I', loader,
+                            *[loader / s if s == 'loader.c' else here / s for s in sources], '-o', temp + '/t'],
                            check=True, capture_output=True)
             result = subprocess.run([temp + '/t'], capture_output=True, text=True)
         self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_runtime_bookkeeping_on_the_host(self):
+        self.host_test('test_runtime.c')
+
+    def test_ram_boot_backend_on_the_host(self):
+        self.host_test('test_boot.c', 'loader.c', 'runtime.c')
 
 
 

@@ -5,7 +5,7 @@
 
 #define MU_DIGEST_BYTES 32u
 #define MU_MAX_CHUNK 4096u
-#define MU_MAX_BYTES 1048576u /* Protocol bound; not a hardware reservation. */
+#define MU_MAX_BYTES 2097152u /* Protocol bound (a whole OS image fits); not a hardware reservation. */
 
 enum mu_phase { MU_NORMAL, MU_READY, MU_RECEIVING, MU_VERIFIED, MU_PENDING, MU_TRIAL, MU_RECOVERY };
 enum mu_result {

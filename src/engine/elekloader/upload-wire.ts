@@ -4,7 +4,7 @@ export const UPLOAD_VERSION = 1
 export const UPLOAD_HEADER = 48
 export const UPLOAD_RESPONSE = 144
 export const UPLOAD_MAX_CHUNK = 4096
-export const UPLOAD_MAX_BYTES = 1048576
+export const UPLOAD_MAX_BYTES = 2097152 // sdk/runtime/upload/upload.h MU_MAX_BYTES: a whole OS image fits
 export const UPLOAD_MAX_FRAME = UPLOAD_HEADER + 4 + UPLOAD_MAX_CHUNK
 export const UploadCommand = Object.freeze({
   hello: 0, enter: 1, begin: 2, chunk: 3, verify: 4, commit: 5,

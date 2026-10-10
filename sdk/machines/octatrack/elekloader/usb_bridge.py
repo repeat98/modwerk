@@ -44,37 +44,52 @@ def reply_for(dev, held, line):
         except usb.core.USBError as error:
             if error.errno == errno.EPIPE:
                 return held, words[0] + ' 0 stall'
-            return held, 'err %s' % error
+            raise
     return held, 'err unsupported on hardware: ' + line
+
+
+def open_unit():
+    """(device, vendor interface), claimed; None while no unit runs the test base."""
+    dev = usb.core.find(idVendor=0x1935)
+    if dev is None:
+        return None
+    vendor = [i.bInterfaceNumber for i in dev.get_active_configuration()
+              if (i.bInterfaceClass, i.bInterfaceSubClass, i.bInterfaceProtocol) == (0xff, 0x4d, 1)]
+    if len(vendor) != 1:
+        return None
+    usb.util.claim_interface(dev, vendor[0])
+    return dev, vendor[0]
 
 
 def main():
     path = sys.argv[1]
-    dev = usb.core.find(idVendor=0x1935)
-    if dev is None:
-        sys.exit('No Elektron device on USB.')
-    vendor = [i.bInterfaceNumber for i in dev.get_active_configuration()
-              if (i.bInterfaceClass, i.bInterfaceSubClass, i.bInterfaceProtocol) == (0xff, 0x4d, 1)]
-    if len(vendor) != 1:
-        sys.exit('No Modwerk vendor interface: the unit is not running the test base.')
-    usb.util.claim_interface(dev, vendor[0])
+    unit = open_unit()
+    if unit is None:
+        sys.exit('No unit running the test base (Modwerk vendor interface) on USB.')
     if os.path.exists(path):
         os.unlink(path)
     server = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
     server.bind(path)
     server.listen(1)
-    print('bridge ready on %s (vendor interface %d)' % (path, vendor[0]), flush=True)
+    print('bridge ready on %s (vendor interface %d)' % (path, unit[1]), flush=True)
     try:
         while True:
             conn, _ = server.accept()
             held = None
             with conn, conn.makefile('rw') as stream:
                 for line in stream:
-                    held, answer = reply_for(dev, held, line.strip())
+                    # A RAM boot or a replug takes the unit away: answer that, and
+                    # find it again on the next request.
+                    unit = unit or open_unit()
+                    try:
+                        held, answer = reply_for(unit[0], held, line.strip()) if unit else (None, 'err the unit is away')
+                    except usb.core.USBError as error:
+                        held, answer, unit = None, 'err the unit went away: %s' % error, None
                     stream.write(answer + '\n')
                     stream.flush()
     finally:
-        usb.util.release_interface(dev, vendor[0])
+        if unit:
+            usb.util.release_interface(*unit)
         os.unlink(path)
 
 
