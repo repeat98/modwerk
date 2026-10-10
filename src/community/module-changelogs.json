@@ -305,6 +305,16 @@
     ],
     "sidechain-compressor": [
       {
+        "version": "0.1.2-experimental",
+        "date": "2026-10-10",
+        "changes": [
+          "A COMPRESSOR saved before the module was installed (on stock firmware) now comes up with its side-chain off: KEY OFF, KFLT and KGN centred, MON OFF. Stock firmware leaves 127/0/0/0 in the hidden page-2 slots, which 0.1.1 read as KEY \"T127\" with the key filter shut and the key gain at minimum, so the key barely reached the detector after KEY was turned down (Modwerk report #321).",
+          "A KEY already set to OFF or T1..T8 is never changed, so projects saved with 0.1.1 load as before. The check runs once per audio frame over the sixteen FX slots and never marks the Part as edited.",
+          "The ColdFire code grows by 204 bytes. 12 selections that 0.1.1 built now run out of effect-menu space, each holding Euclid with Scale Quantizer or eight or more modules; every selection of one or two other modules still builds.",
+          "Hardware: author-reported functional test on an MKI with two instances across both DSP cores, Part/project save and reload and a power cycle. Duration was not reported and no stress or maximum-load test was made."
+        ]
+      },
+      {
         "version": "0.1.1-experimental",
         "date": "2026-10-05",
         "changes": [

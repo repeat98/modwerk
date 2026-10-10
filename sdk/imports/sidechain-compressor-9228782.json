@@ -141,22 +141,21 @@
       "sha256": "9a4b68c7876e6a4b172ba77e67b4305494b67444bae1a8e13c5f6e62ac6e7c2c"
     }
   ],
-  "status": "PENDING",
+  "status": "Pinned; built by Modwerk's shared firmware builder and compared with native octabam on the module's coverage set; native suites of 512 and 1,024 selections regenerated; author-reported MKI functional hardware test of the exact image.",
   "nativeProof": {
-    "report": "evidence/common-builder.json",
+    "report": "TESTING.md",
     "builderRevision": "b8deefc88b2c3e5f3c6158e364eb741df1924e1d",
-    "referenceRevision": "f80ecfeabc187a33403588678e707443161afc96",
-    "profile": "every selection of the visible modules that contains the module, with and without stock FX2",
-    "status": "PENDING"
+    "referenceRevision": "922878234b22221a1c298b3c7e0b3bdeffb468a9",
+    "profile": "the module's module:verify coverage set, and every selection of the original eight and of the nine visible modules that contains it, with and without stock FX2",
+    "status": "passed; refusals match native, module-owned writes reproduce native outside the platform writes, and the module's ColdFire unit equals the author's reference. Hardware: author-reported functional test, not stress qualification."
   },
-  "nativeSourceSha256": "PENDING",
+  "nativeSourceSha256": "0a0e8d770973eef0acc580724ab16732ba593e1b6b0240cc1c48e83b05248ae2",
   "releaseRequirements": [
-    "Stock descriptor clone/formatter and per-core DSP hook/substitution integration, with unchanged native output for the existing SDK modules",
+    "Guarded stock bytes at both sc_norm detour sites, with unchanged native output for the existing SDK modules",
     "Source-only package generation reproduced in the pinned container",
-    "Browser/native composition and refusal comparison on every selection containing the module",
-    "Worst-case cycle and complete memory qualification",
-    "Owner-reviewed hardware decision: fresh hardware evidence waived on 5 October 2026",
-    "Licence moduleComponents mapping for the module",
-    "Owner-reviewed PR merge and release reproduction"
+    "Browser/native composition and refusal comparison on the coverage set and the regenerated suites",
+    "Worst-case cycle (DSP and per-frame ColdFire) and complete memory qualification",
+    "Author-reported functional hardware test of the exact image (MKI, 10 October 2026)",
+    "Owner-reviewed PR merge (the shared test fixtures and proofs are outside the author scope) and release reproduction"
   ]
 }

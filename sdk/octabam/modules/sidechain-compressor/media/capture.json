@@ -1,11 +1,11 @@
 {
   "schemaVersion": 1,
   "moduleId": "sidechain-compressor",
-  "moduleVersion": "0.1.1-experimental",
-  "capturedOn": "2026-10-05",
+  "moduleVersion": "0.1.2-experimental",
+  "capturedOn": "2026-10-10",
   "firmware": "1.40C",
-  "imageSha256": "4fd5fcb49ed17cd4e707d407a6e42a64ec30b50aefaad3b1eeb1bb804493aef0",
-  "emulatorSha256": "7a1fd57c5c3fd5b99971d2e94a57d311f49406e63a4eed9bab7b6c7603c8dba5",
+  "imageSha256": "2816f0bce5aaabfadac6dba9e778dc184b8af3e4a611990d6e6b3e36095bc5eb",
+  "emulatorSha256": "b1c9aebbc76e28fbdeb8022eef116f6964c619e72cca9812d9be95e1055ac3e4",
   "setup": "Headless ot_emu; MKII panel; stopped transport; 128\u00d764 LCD at integer scale 6. Empty scratch card; no project loaded.",
   "palette": {
     "on": [
@@ -106,52 +106,8 @@
   },
   "image": {
     "what": "Native octabam image of Sidechain Compressor alone with the stock FX2 effects kept, built by the SDK Modwerk ships; SPRING REV gives up its code space.",
-    "build": "python3 scripts/export-composition-proofs.py PRIVATE_SDK DEST --app . --vendored-sdk --static-stock --suite sidechain --select sidechain-compressor:true --image-dir IMAGES",
+    "build": "python3 scripts/export-composition-proofs.py PRIVATE_SDK DEST --app . --vendored-sdk --static-stock --modules POOL --menus MENUS --select sidechain-compressor:true --image-dir IMAGES",
     "sdkRevision": "b8deefc88b2c3e5f3c6158e364eb741df1924e1d",
     "bytes": 1112560
-  },
-  "composedImage": {
-    "what": "The complete image the site composes for the same selection, with its appended runtime and the core logger. The same plan drew the same three frames.",
-    "sha256": "d40db90a2d31aa6a46b015c892fb16891717f49a3ad20b7871a01a8661d1b30a",
-    "bytes": 1117516,
-    "screenshots": {
-      "ot-compressor-selection.png": "af43839d77c6cc8b79662ee3d3b5f7ba77f4633cea2a08080065852a0596bb26",
-      "ot-compressor-main.png": "147a64589097cf12a0d7765dbe5adc266640a4e0a97c164353e3e146bcd765e5",
-      "ot-sidechain-key-selected.png": "253ba963f39fde0c310e2dadfcccd7f82748dcf13354f822f0f8f3143aac8722"
-    },
-    "pixelIdenticalToNative": true
-  },
-  "source": {
-    "repository": "https://github.com/sambanks/octabam",
-    "revision": "f80ecfeabc187a33403588678e707443161afc96",
-    "authorRevision": "d3e0801a5f666abc04bc05fc1cb37969d7fb38d0",
-    "manifestSha256": "aaa7c593ec62745a540cf82d7b4d7ac2f17f393cfedd5a9e1ff1a1453165ecd7"
-  },
-  "sourceToolHashes": {
-    "scripts/capture-module-ui.py": "8122aa8d33ef7e709f81b1f3d94f3aaff7560cf59038b5fdeeae891cf279d397",
-    "sdk/octabam/tools/emu/lcd_view.py": "c1a9a61bd8d551fd7f15b5debcb5ff9b986e6a56ed0810d9d98c2627344594c1",
-    "sdk/octabam/tools/emu/emu_card.py": "b3877cd541467665f0f0d335f4baf5fc92fc088e53de62b50220bf991a606a55"
-  },
-  "emulatorBuild": {
-    "source": "sdk/octabam/tools/emu/ot_emu at this repository revision, unchanged, built with the repository CMake files and link-time optimisation.",
-    "dspRepository": "https://github.com/dsp56300/dsp56300",
-    "dspRevision": "8ccdd843adda9c18fc232a2ca50d6caccbf3cb1e",
-    "asmjitRevision": "3577608cab0bc509f856ebf6e41b2f9d9f71acc4",
-    "mc68kRevision": "4a6d0d17a1f2b30077ab726c27fe9bb770fa0456",
-    "compiler": "Apple clang 21.0.0",
-    "cmake": "4.0.1"
-  },
-  "projectSetup": {
-    "recipe": "No project and no private template: the capture script writes an empty scratch card and the firmware starts a new project. The first-run date dialog is accepted with YES, track T1 is selected, FUNC + FX1 opens FX1 SETUP and encoder LEVEL is turned eight rows to COMPRESSOR, the module's row, before YES assigns it."
-  },
-  "review": {
-    "selectionConfirmed": "YES assigns COMPRESSOR before the SETUP page is captured: its right-hand side changes from the previous effect's controls to RMS, KEY, KFLT, KGN and MON.",
-    "observedKey": "T2 after encoder C delta 8; not evidence of T1-to-T5 tutorial audio.",
-    "pixelEdits": "None; actual LCD framebuffer at integer scale 6, only the two display colours are mapped."
-  },
-  "limitations": [
-    "UI-only MKII session: stopped transport, no loaded audio or hardware qualification.",
-    "FX1 selection, main page and SETUP with the KEY label observed. FX2 and MKI remain source-described, not captured.",
-    "No MON audio, ducking, project reload or timing qualification claimed."
-  ]
+  }
 }
