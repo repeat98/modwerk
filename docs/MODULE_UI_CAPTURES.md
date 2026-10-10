@@ -122,6 +122,7 @@ For scene editing, `hold` keeps panel keys down while turning an encoder;
 `{"capture":"ot-scene-lock.png"}`, `{"release":["SCENE A"]}`.
 The supported UI keys also include `SCENE B`, `TRIG1`–`TRIG16`, MKII `AED`,
 `PUSH A`–`PUSH F` and `PUSH LEVEL` for physical encoder presses.
+`MIXER` opens the MIXER page.
 Kit/pattern workflows also support `CUE`, `PTN`, `BANK`, `REC` (copy),
 `PLAY` (clear) and `STOP` (paste); hold FUNC for clipboard actions.
 

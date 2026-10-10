@@ -26,10 +26,10 @@ describe('Analog BD shared DSP placement', () => {
     for (const [file, fingerprint] of Object.entries(proofs.builderSources)) {
       expect(createHash('sha256').update(readFileSync(new URL('../../sdk/octabam/' + file, import.meta.url))).digest('hex')).toBe(fingerprint)
     }
-    expect(proofs.proofs).toHaveLength(136)
-    expect(proofs.proofs.filter(proof => !('error' in proof))).toHaveLength(130)
+    expect(proofs.proofs).toHaveLength(212)
+    expect(proofs.proofs.filter(proof => !('error' in proof))).toHaveLength(162)
     const keys = new Set(proofs.proofs.map(proof => [...proof.moduleIds].sort().join('+') + ':' + proof.keepStockFx2))
-    expect(keys.size).toBe(136)
+    expect(keys.size).toBe(212)
     for (let mask = 0; mask < 1 << ANALOG_BD_DSP_COMPANIONS.length; mask++) for (const keep of [true, false]) {
       const ids = ['analog-bassdrum', ...ANALOG_BD_DSP_COMPANIONS.filter((_, bit) => mask >> bit & 1)]
       expect(keys.has(ids.sort().join('+') + ':' + keep)).toBe(true)
@@ -63,16 +63,17 @@ describe('Analog BD shared DSP placement', () => {
     for (let mask = 0; mask < 1 << ANALOG_BD_DSP_COMPANIONS.length; mask++) {
       const companions = ANALOG_BD_DSP_COMPANIONS.filter((_, bit) => mask >> bit & 1)
       for (const tag of ['A', 'B']) {
-        // All four larger inserts cannot fit across Plate and Dark's separate
-        // runs; the small gap can only hold the Tape Echo stub.
-        if (companions.filter(id => id !== 'tapeecho').length === 4) {
+        const key = ['analog-bassdrum', ...companions].sort().join('+')
+        const proof = proofs.proofs.find(proof => !proof.keepStockFx2 && [...proof.moduleIds].sort().join('+') === key)!
+        if ('error' in proof) {
           expect(() => layout(tag, companions)).toThrow('does not fit any harvested run')
           continue
         }
         const result = layout(tag, companions)
         expect(result.layout.placed).toHaveLength(companions.length)
         expect(overwrittenHelper(tag, result.listed, result.layout.runs)).toBeUndefined()
-        for (const placed of result.layout.placed) for (const reserved of analogBdReservations(tag)) {
+        const spans = result.layout.placed.flatMap(placed => [placed, ...(placed.table ? [placed.table] : [])])
+        for (const placed of spans) for (const reserved of analogBdReservations(tag)) {
           expect(placed.address >= reserved.base + reserved.words || placed.address + placed.words <= reserved.base).toBe(true)
         }
       }

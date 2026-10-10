@@ -63,6 +63,12 @@
       "key": "SIDECHAIN_COMPRESSOR",
       "fxId": 24,
       "priority": 30
+    },
+    {
+      "id": "output-matrix",
+      "key": "OUTPUT MATRIX",
+      "fxId": null,
+      "priority": 21
     }
   ],
   "customIds": [

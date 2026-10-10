@@ -1,0 +1,16 @@
+{
+  "version": "0.1.2-experimental",
+  "sourceSha256": "2a39a3cf0ae9918cf4fffb84d8bb1da73ff09c39895663f815f6b5425000d8e0",
+  "assembledSha256": "03469c86e11d0aca51b98501293074cd7140339cc8664e39376507339a322daa",
+  "programWords": 539,
+  "tableWords": 256,
+  "originalValues": 1026,
+  "tableSha256": "d1f4bf6a582860ec18a16e3a28c9ceae52520297f651ece4f4795428db38a0fc",
+  "coefficientCases": 1024,
+  "endpointCases": 3088,
+  "allCoefficientsExact": true,
+  "allEndpointsExact": true,
+  "limitations": [
+    "Finite software DSP proof, not hardware timing or listening evidence."
+  ]
+}

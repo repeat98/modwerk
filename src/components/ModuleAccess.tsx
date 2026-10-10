@@ -1,6 +1,7 @@
 import { MODULE_DOCUMENTS_BY_ID } from '../catalog/documents'
 import { assetUrl } from '../hosting'
 import { downloadedModuleGuide } from '../community/downloaded-module-guide'
+import { MediaCredits } from './MediaCredits'
 
 export function ModuleAccess({ id, showScreenshots = true }: { id: string; showScreenshots?: boolean }) {
   const document = MODULE_DOCUMENTS_BY_ID[id], access = document.access
@@ -16,12 +17,12 @@ export function ModuleAccess({ id, showScreenshots = true }: { id: string; showS
     <h2>Find it on your Octatrack</h2>
     <p>{access.location}</p>
     {hasQuickTest ? <details className="module-full-instructions"><summary>Full setup steps</summary>{setup}</details> : setup}
-    {showScreenshots && <div className="media-gallery">{screenshots.map(item => {
+    {showScreenshots && <><div className="media-gallery">{screenshots.map(item => {
       const url = assetUrl('module-media/' + id + '/' + document.version + '/' + item.path)
       return <figure key={item.path}>
         <a href={url} target="_blank" rel="noreferrer"><img className={item.otUi ? 'ot-ui-capture' : undefined} src={url} alt={item.alt} loading="lazy" /></a>
-        <figcaption>{item.caption}<span>{item.captureType === 'hardware' ? 'Hardware capture' : 'Emulator capture'} · {item.credit} · {item.license}</span>{item.source !== 'original' && <a href={item.source} target="_blank" rel="noreferrer">Original source ↗</a>}</figcaption>
+        <figcaption>{item.caption}</figcaption>
       </figure>
-    })}</div>}
+    })}</div><MediaCredits media={screenshots}/></>}
   </section>
 }

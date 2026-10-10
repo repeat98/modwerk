@@ -1,0 +1,63 @@
+{
+  "moduleVersion": "0.1.2-experimental",
+  "mainOsSha256": "5e0cbe6040633dd1eda7de247baeb226f38c1308e9d02cedebdf0fdf35a1d6c6",
+  "fixture": "Existing generated T3/T4 FX2 tone project, SPD/RNG 64; T3 MIX 64 and T4 MIDI MIX ramp 0..127.",
+  "blocks": 8192,
+  "projectLoaded": true,
+  "playbackCompleted": true,
+  "lateDspReads": 0,
+  "stockMailboxLast16WriterPcs": [
+    "0x00057",
+    "0x0017a"
+  ],
+  "streamComparisons": [
+    {
+      "direction": 60,
+      "channel": 1,
+      "core": 0,
+      "bytes": 4194304,
+      "matchesPriorBeta": true
+    },
+    {
+      "direction": 60,
+      "channel": 1,
+      "core": 1,
+      "bytes": 4194304,
+      "matchesPriorBeta": true
+    },
+    {
+      "direction": 60,
+      "channel": 6,
+      "core": 0,
+      "bytes": 2097152,
+      "matchesPriorBeta": true
+    },
+    {
+      "direction": 60,
+      "channel": 7,
+      "core": 0,
+      "bytes": 2097152,
+      "matchesPriorBeta": true
+    },
+    {
+      "direction": 62,
+      "channel": 0,
+      "core": 0,
+      "bytes": 22544384,
+      "matchesPriorBeta": true
+    },
+    {
+      "direction": 62,
+      "channel": 0,
+      "core": 1,
+      "bytes": 13107200,
+      "matchesPriorBeta": true
+    }
+  ],
+  "hardwareStatus": "untested",
+  "limitations": [
+    "Generated fixture; no reproduction of the physical audible symptom claimed.",
+    "Last 16 watched writes are a finite observation, not all-access or hardware canary proof.",
+    "Physical timing, Part/project reload and reboot are untested."
+  ]
+}

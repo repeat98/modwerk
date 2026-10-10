@@ -553,7 +553,7 @@
       }
     ]
   },
-  "sourceCommit": null,
+  "sourceCommit": "9644404feaad683708534daaeac2883ef89e74ce",
   "moduleVersions": {
     "spectrum": "0.1.1-experimental",
     "modulation": "0.1.1-experimental",
@@ -563,7 +563,7 @@
     "euclid": "0.1.4-experimental",
     "repitch": "0.1.2-experimental",
     "tapehead": "0.1.2-experimental",
-    "airwindows-chorus": "0.1.1-experimental",
+    "airwindows-chorus": "0.1.2-experimental",
     "everb": "0.1.0-experimental",
     "analog-bassdrum": "0.1.5-experimental",
     "midi-scenes": "0.2.4-experimental",
@@ -577,6 +577,7 @@
     "playmodes": "0.1.1-experimental",
     "mute-modes": "0.1.0-experimental",
     "recorder-loop-fix": "0.1.0-experimental",
-    "poly8": "0.2.6-experimental"
+    "poly8": "0.2.6-experimental",
+    "output-matrix": "0.1.0-experimental"
   }
 }

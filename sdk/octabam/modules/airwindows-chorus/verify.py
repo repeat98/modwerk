@@ -18,6 +18,7 @@ import tempfile
 HERE = pathlib.Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 import reference
+from packed_sine import packed_table
 
 Q, ORG = 1 << 23, 0x2000
 TOOLS = pathlib.Path(os.environ.get("DSP_TOOLS", "/opt/toolchain/vendor/dsp56300/build/source"))
@@ -48,7 +49,7 @@ def assemble(work):
                        capture_output=True, text=True, check=True).stdout
     check("signed multiply encodings", "mpysu" not in d, "no unsigned-second-operand multiply")
     check("init preserves dispatcher r1", not re.search(r"\b(?:r1|n1|m1)\b", (HERE/"chorus.asm").read_text().split("init:")[1].split("proc:")[0]))
-    table = [round(math.sin(math.pi*i/2048)*(Q-1)) for i in range(1025)] + [Q-1]
+    table = packed_table() if (HERE/'packed_sine.py').exists() else [round(math.sin(math.pi*i/2048)*(Q-1)) for i in range(1025)] + [Q-1]
     # The native builder relocates the table; replicate that one literal fixup
     # in the synthetic image. It emits x-table reads when stock DJ EQ is absent.
     words = [0x2800 if w == 0xfab1e0 else w for w in words]

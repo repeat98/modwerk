@@ -759,6 +759,9 @@ h1 { font-size: 28px; }
 .media-gallery img.ot-ui-capture { width: min(100%, 320px); height: 160px; margin-inline: auto; filter: grayscale(1) brightness(1.15); image-rendering: pixelated; }
 .media-gallery figcaption { margin-top: 11px; font-size: 13px; line-height: 1.6; color: #ccccd9; }
 .media-gallery figcaption span { display: block; color: #9e9eb2; font-size: 12px; margin-top: 3px; }
+.media-credits { margin-top: 8px; }
+.media-credits > summary { width: fit-content; }
+.media-credits p { margin: 8px 0; line-height: 1.6; }
 .media-upload { padding: 18px; border: 1px dashed #535362; border-radius: 7px; background: #282830; }
 .upload-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 16px; }
 .upload-card { min-width: 0; display: flex; flex-direction: column; gap: 12px; padding: 15px; background: var(--surface-hover); border: 1px solid #424251; border-radius: 8px; }

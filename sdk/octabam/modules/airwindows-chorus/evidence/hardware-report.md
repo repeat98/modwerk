@@ -49,3 +49,14 @@ binds to this version/current native-source inventory and these image identities
 
 Software cycle/memory, composition, reproducible package, licence and real LCD
 checks remain required. No baseline or another module's exception is extended.
+
+### Owner follow-up on 0.1.1 — 9 October 2026
+
+The tester reports the clicking persists with the new beta, with T3 the only
+known problematic track so far. T1/T2 together, T6 and T8 also worked; at least
+four instances were running in an existing project. Whether T3 fails alone is
+unknown. No model, fresh-project or persistence result was supplied. The owner
+does not want to ask for further hardware tests now. The attached log files are
+the earlier checkpoints and do not substantiate a new passing hardware test.
+The follow-up 0.1.2 shared-word protection/Analog BD update is untested on
+hardware under the owner's continued beta release authorization and waiver.

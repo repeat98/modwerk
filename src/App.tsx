@@ -36,7 +36,7 @@ import { lazy, Suspense, useEffect, useRef, useState, useSyncExternalStore } fro
 import type { ChangeEvent, DragEvent } from 'react'
 import { flushSync } from 'react-dom'
 import { LIBRARY_CATEGORIES, LIBRARY_CATEGORY_LABELS, MODULES, resolveSelection, type ModuleCategory } from './catalog/modules'
-import { AVAILABLE_MODULES, availableModules, isBetaModule, BETA_MODULE_NOTICE, isModuleAvailable, isModulePaused, moduleAvailabilityError } from './catalog/availability'
+import { AVAILABLE_MODULES, availableModules, isModuleAvailable, isModulePaused, moduleAvailabilityError } from './catalog/availability'
 import { DETAILS } from './catalog/details'
 import { readCatalogBrowse, saveCatalogBrowse, type CatalogBrowse } from './catalog/catalog-browse'
 import { ENGINE_AVAILABLE, DOWNLOADS_ENABLED, DSP_LOADER } from './engine/protocol'
@@ -365,7 +365,7 @@ export default function App() {
                 <p className="firmware-help"><a href="#faq">Where do I get the .bin? Read the FAQ & flashing guide <Icon name="arrow" size={14} /></a></p>
               </section>
               <section className="configuration-section" aria-labelledby="selection-title"><div className="section-title"><h2 id="selection-title">Selected modules <span className="subtle">{selection.length}</span></h2><a className="text-button" href="#library">Browse modules <Icon name="plus" size={14} /></a></div>
-                {availabilityError && <p className="file-error" role="alert">{availabilityError}</p>}{betaAccess && selection.some(module => isBetaModule(module.id)) && <p className="risk-note">{BETA_MODULE_NOTICE}</p>}
+                {availabilityError && <p className="file-error" role="alert">{availabilityError}</p>}
                 {selection.length ? <ul className="selected-list">{selection.map((module) => <li key={module.id}><a className="selected-module-link" href={moduleHref(module.id)}><ModulePreview id={module.id} compact /><span><strong>{module.name}</strong><small>{module.id === USB_AUDIO_MODULE && active?.usbAudio ? usbAudioLayout(active.usbAudio.layout).name + ' · 0.2 experimental' : (!isModuleAvailable(module.id, betaAccess) ? 'Temporarily unavailable' : module.detail) + ' · ' + module.authorName}</small></span></a><button className="icon-button" aria-label={'Remove ' + module.name} onClick={() => toggleModule(module.id)}><Icon name="close" size={17} /></button></li>)}</ul> : <div className="selection-empty"><Icon name="grid" size={26} /><strong>No modules selected</strong><p>Find something in the library and add it to your configuration.</p><a className="button button-quiet" href="#library">Browse modules</a></div>}
               </section>
               {DSP_LOADER && <section className="configuration-section chooser-options"><h2>Effect menus</h2><label><input type="checkbox" checked={active?.keepStockFx2??true} onChange={event=>setKeepStockFx2(event.target.checked)}/><span><strong>Keep stock FX2 effects</strong><small>Keep the original FX2 effects alongside your modules.</small></span></label></section>}

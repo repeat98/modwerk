@@ -3,7 +3,7 @@ import facts from './assets/requested-packages.json' with { type: 'json' }
 export const ANALOG_BD_DONOR = 'SPRING REV'
 // Reviewed inserts use instance-owned X state, allocator-owned Y buffers, or
 // (Sidechain Compressor) separate Y ranges. None uses Analog BD's private X.
-export const ANALOG_BD_DSP_COMPANIONS = ['miniverb', 'tapeecho', 'euclid', 'tapehead', 'sidechain-compressor']
+export const ANALOG_BD_DSP_COMPANIONS = ['miniverb', 'tapeecho', 'euclid', 'tapehead', 'sidechain-compressor', 'airwindows-chorus']
 
 export function analogBdVariant(tag: string) {
   const variant = facts.analog.variants.find(variant => variant.tag === tag)

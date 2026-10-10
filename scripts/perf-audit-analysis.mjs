@@ -87,8 +87,20 @@ export function judgeRecord(record, options = {}) {
   }
 
   // 3. Stress: the way the module is used when it is worked hardest.
-  const problems = []
-  if (dsp) {
+  const problems = [], emulated = dsp && stress.harness === 'ot_emu'
+  if (emulated) {
+    // Code reached only through stock-code hooks (no dispatch entry, no effect id) has no instance for dsp_host to
+    // render on its own: the run is the whole built image under the ColdFire port, stress project loaded and playing.
+    if (cycles.instancesPerCore !== 1 || stress.instancesPerCore !== 1) problems.push('an ot_emu run covers hooked code: one instance per core')
+    if (!(stress.tracks >= 8)) problems.push('tracks must be 8')
+    if (!(stress.lfosPerTrack >= limits.lfos)) problems.push('lfosPerTrack must be at least ' + limits.lfos)
+    if (!(stress.lockedSlots >= limits.locks)) problems.push('lockedSlots must be at least ' + limits.locks)
+    if (!(stress.seconds >= limits.dspSeconds)) problems.push('seconds must be at least ' + limits.dspSeconds)
+    if (stress.guard !== null || stress.dirty !== null) problems.push('guard and dirty are dsp_host flags: null for an ot_emu run')
+    if (stress.lateReadbacks !== 0) problems.push('lateReadbacks must be 0 (DSP read-back words not in time)')
+    if (stress.hangs !== 0) problems.push('hangs must be 0')
+    if (!text(stress.method, 40)) problems.push('method must say which image, project, routing and patterns ran')
+  } else if (dsp) {
     if (!(stress.instancesPerCore >= cycles.instancesPerCore)) problems.push('instancesPerCore ' + stress.instancesPerCore + ' is below the ' + cycles.instancesPerCore + ' you claim')
     if (!(stress.tracks >= 8)) problems.push('tracks must be 8')
     if (!(stress.lfosPerTrack >= limits.lfos)) problems.push('lfosPerTrack must be at least ' + limits.lfos)
@@ -107,7 +119,7 @@ export function judgeRecord(record, options = {}) {
     if (!present(stress.dropped)) problems.push('dropped must be the number of messages lost')
     else if (stress.dropped > 0 && !text(stress.droppedExplanation, 20)) problems.push('dropped is ' + stress.dropped + ' and droppedExplanation does not say why')
   }
-  row('stress', problems.length ? 'fail' : 'ok', problems.length ? problems.join('; ') : (dsp ? stress.instancesPerCore + ' per core, eight tracks, ' + stress.lfosPerTrack + ' LFOs and ' + stress.lockedSlots + ' locked slots, ' + stress.seconds + ' s, no clobber, no hang' : stress.floodMessagesPerSecond + ' messages/s at ' + stress.clockBpm + ' BPM for ' + stress.seconds + ' s, no stuck note, no hang, ' + stress.dropped + ' dropped'),
+  row('stress', problems.length ? 'fail' : 'ok', problems.length ? problems.join('; ') : (emulated ? 'whole image under ot_emu: eight tracks, ' + stress.lfosPerTrack + ' LFOs and ' + stress.lockedSlots + ' locked slots, ' + stress.seconds + ' s, no late read-back, no hang' : dsp ? stress.instancesPerCore + ' per core, eight tracks, ' + stress.lfosPerTrack + ' LFOs and ' + stress.lockedSlots + ' locked slots, ' + stress.seconds + ' s, no clobber, no hang' : stress.floodMessagesPerSecond + ' messages/s at ' + stress.clockBpm + ' BPM for ' + stress.seconds + ' s, no stuck note, no hang, ' + stress.dropped + ' dropped'),
     problems.length ? (dsp ? 'python3 tools/harness/stress_project.py, then render it with dsp_host -guard -dirty (tools/harness/pressure.py render)' : 'flood the module with notes, CC and clock at the wire rate, stop mid-note and change Part, then count') : undefined)
   return rows
 }
@@ -131,6 +143,10 @@ export function selfTest() {
   const dspGood = { schema: 1, module: 'demo', version: '0.1.0', kind: 'dsp', cycles: { unit: 'instructions/sample', static: 300, measured: 280, instancesPerCore: 4, method: 'cycle_count.py and dsp_host, knobs moving' }, stock: { comparator: 'PLATE REV', comparatorWorst: 250, dearestWorst: 600, baseline: 'out/stock_dsp_bench/results.json', stockSha256: 'a'.repeat(64), justification: '' }, stress: { instancesPerCore: 4, tracks: 8, lfosPerTrack: 3, lockedSlots: 15, seconds: 60, guard: true, dirty: true, clobbers: 0, hangs: 0 } }
   const midiGood = { schema: 1, module: 'demo', version: '0.1.0', kind: 'coldfire', cycles: { unit: 'cycles/event', static: 900, measured: 700, budget: 4000, method: 'static bound and an event counter under the flood' }, load: { frameUs: 362.8, stockLongestUs: 40, moduleLongestUs: 48, stockIdlePercent: 70, moduleIdlePercent: 68, method: 'cfmeter.py, same flood' }, stress: { floodMessagesPerSecond: 1040, clockBpm: 300, seconds: 120, stuckNotes: 0, hangs: 0, dropped: 0, droppedExplanation: '' } }
   const fails = record => judgeRecord(record).filter(line => line.state === 'fail').map(line => line.name)
+  const hooked = { ...dspGood, cycles: { ...dspGood.cycles, instancesPerCore: 1 }, stress: { harness: 'ot_emu', instancesPerCore: 1, tracks: 8, lfosPerTrack: 3, lockedSlots: 15, seconds: 30, guard: null, dirty: null, lateReadbacks: 0, hangs: 0, method: 'ot_emu, the built image, stress project playing A01-A04, every track routed through the hook' } }
+  row('an ot_emu run of hooked code passes', fails(hooked).length === 0, judgeRecord(hooked).map(line => line.name + ' ' + line.state).join(', '))
+  row('an ot_emu run cannot claim dsp_host flags or more than one instance', state({ ...hooked, stress: { ...hooked.stress, guard: true } }, 'stress') === 'fail' && state({ ...hooked, cycles: { ...hooked.cycles, instancesPerCore: 4 }, stress: { ...hooked.stress, instancesPerCore: 4 } }, 'stress') === 'fail', 'guard true, 4 per core')
+  row('an ot_emu run with a late read-back fails', state({ ...hooked, stress: { ...hooked.stress, lateReadbacks: 2 } }, 'stress') === 'fail', 'lateReadbacks 2')
   row('a sound DSP record passes', fails(dspGood).length === 0, judgeRecord(dspGood).map(line => line.name + ' ' + line.state).join(', '))
   row('a sound MIDI record passes', fails(midiGood).length === 0, judgeRecord(midiGood).map(line => line.name + ' ' + line.state).join(', '))
   row('the unfilled template fails every check', ['dsp', 'coldfire'].every(kind => ['cycles', 'stock benchmark', 'stress'].every(name => state(templateRecord(kind), name) === 'fail')), 'cycles, stock benchmark and stress')

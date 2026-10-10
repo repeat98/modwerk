@@ -8,6 +8,7 @@ import type { PublicMedia } from './api'
 import { useCommunity } from './context'
 import { Icon } from '../components/Icon'
 import { AudioPlayer } from '../components/AudioPlayer'
+import { MediaCredits } from '../components/MediaCredits'
 import { ModulePopularity } from './ModulePopularity'
 import { modulePageHref, moduleThreadId } from './modules'
 import { useLoginPrompt } from './LoginPromptDialog'
@@ -39,7 +40,7 @@ function ModuleMediaGallery({id,version,media}:{id:string;version:string;media:r
     const url=assetUrl('module-media/'+id+'/'+version+'/'+item.path)
     return <figure key={item.path}>
       {item.captureType==='audio'?<AudioPlayer src={url} label={item.caption || 'audio preview'}/>:<a href={url} target="_blank" rel="noreferrer"><img className={item.lcd ? 'ot-ui-capture' : undefined} src={url} alt={item.alt} loading="lazy"/></a>}
-      <figcaption>{item.caption}<span>{item.captureType==='hardware'?'Hardware capture':item.captureType==='emulator'?'Emulator capture':item.captureType==='audio'?'Audio preview':'LCD capture'} · {item.credit} · {item.license}</span>{item.source!=='original'&&<a href={item.source} target="_blank" rel="noreferrer">Original source ↗</a>}</figcaption>
+      <figcaption>{item.caption}</figcaption>
     </figure>
   })}</div>
 }
@@ -79,6 +80,7 @@ export function ModuleCommunity({id,mode='all',onDiscuss,onReportIssue,onDiscuss
       <summary><span>More screenshots<small>{mediaGuide.additional.length} additional {mediaGuide.additional.length===1?'page':'pages'}</small></span><Icon name="plus" size={16}/></summary>
       <div className="disclosure-content"><ModuleMediaGallery id={id} version={document!.version} media={mediaGuide.additional}/></div>
     </details>}
+    <MediaCredits key={'credits-' + id} media={sourceMedia}/>
     {!!data?.media.length && <MediaGallery media={data.media}/>}
     {!sourceMedia.length && !data?.media.length && <div className="media-empty"><Icon name="file" size={24}/><div><strong>No media yet</strong><p>Share a screenshot or audio preview via PR.</p></div></div>}
   </section>

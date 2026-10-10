@@ -1,5 +1,5 @@
 import type { CatalogBrowse } from '../catalog/catalog-browse'
-import { isBetaModule, BETA_MODULE_NOTICE } from '../catalog/availability'
+import { isBetaModule } from '../catalog/availability'
 import { assetUrl } from '../hosting'
 import { useState } from 'react'
 import { ModuleControls } from './ModuleControls'
@@ -30,7 +30,7 @@ export function ModuleDetail({ module, selected, onToggle, browse, onBackToResul
     author={module.authorName} authorUrl={module.authorUrl} contributors={module.contributors} description={module.description}
     selected={selected} onToggle={onToggle} backHref="#library" backLabel="All modules"
     preview={<ModulePreview id={module.id} />} resources={<ModuleResourceIndicators id={module.id} usbLayout={module.id === USB_AUDIO_MODULE && onConfigureUsbAudio ? draft.layout : undefined} />}
-    notice={<>{isBetaModule(module.id) && <p className="risk-note">{BETA_MODULE_NOTICE}</p>}{moduleDocument.build && <p className="service-note" role="status">{moduleDocument.build.reason}</p>}</>}
+    notice={moduleDocument.build && <p className="service-note" role="status">{moduleDocument.build.reason}</p>}
     overviewIntro={module.id === USB_AUDIO_MODULE && onConfigureUsbAudio && <UsbAudioConfigurator key={previewKey} draft={draft} onDraftChange={value => setUsbDraft({ key: previewKey, value })} configuration={usbAudio} selected={selected} configurationName={configurationName} onConfigure={onConfigureUsbAudio} />}
     guide={<>
       <details className="module-disclosure">

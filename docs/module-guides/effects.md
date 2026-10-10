@@ -10,6 +10,12 @@ Read [the module guides index](README.md) first. If your effect does anything in
 
 New FX should aim for DSP cost in the same ballpark as stock SPRING REV at its worst settings. Choose the algorithm, filter order, interpolation and feedback topology with that target in mind, then measure and optimize as features are added. Benchmark Spring's expensive types/settings, moving controls and trigger splits under matched conditions on both cores. This is a design target without a fixed ratio or hard per-effect ceiling. Substantially higher cost needs optimization and review of the remaining headroom. See [Performance](README.md#performance) for the evidence and audit.
 
+## Plan compatibility before implementation
+
+Include Analog BD, stock effects and common custom companions in the design matrix on both cores. Record actual P/X/Y reservations and available contiguous openings, including live stock tenants inside allocator-owned FX2 buffers. Total free words alone do not show that a package fits. For a fixed P table, `DspSection(split_ptable=True)` permits separately placed table and code when contiguous placement fails; source compilation proves both relocation origins against fresh assembly. Keep table precision and delay range unless a documented design tradeoff requires changing them.
+
+Before release, verify accepted and refused native/browser compositions, stock helpers, dispatcher entries and both physical table/code spans. Do not treat absence from Analog BD's reviewed-companion list as an inherent incompatibility: evaluate and prove the layout first, then update the matching native/browser lists. If an incompatibility is necessary, document its actual resource or ownership conflict and obtain owner review before publishing.
+
 ## Decide the kind first
 
 Octabam names three (`sdk/octabam/docs/remixer/MODULES.md`, "Decide first"). Choose an **insert** unless you need the shared bus.

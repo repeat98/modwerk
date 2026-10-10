@@ -1,0 +1,159 @@
+{
+  "firmware": "1.40C",
+  "imageSha256": "4bba473634b4a9c9f946ae7f721240e8fcef354bff849ad501a29c8b2568176f",
+  "emulatorSha256": "23ba6f6cdc6ec4b89b8cf206915e66d3160aec8499b1abfc9b475ac849152b28",
+  "setup": "Headless ot_emu; MKII panel; stopped transport; 128\u00d764 LCD at integer scale 6.",
+  "palette": {
+    "on": [
+      240,
+      240,
+      240
+    ],
+    "off": [
+      24,
+      24,
+      24
+    ]
+  },
+  "keyMs": 150,
+  "plan": [
+    {
+      "wait": 3000
+    },
+    {
+      "press": [
+        "YES"
+      ]
+    },
+    {
+      "wait": 2000
+    },
+    {
+      "press": [
+        "NO"
+      ]
+    },
+    {
+      "press": [
+        "MENU"
+      ]
+    },
+    {
+      "press": [
+        "DOWN"
+      ]
+    },
+    {
+      "press": [
+        "DOWN"
+      ]
+    },
+    {
+      "press": [
+        "YES"
+      ]
+    },
+    {
+      "press": [
+        "YES"
+      ]
+    },
+    {
+      "press": [
+        "RIGHT"
+      ]
+    },
+    {
+      "press": [
+        "DOWN"
+      ]
+    },
+    {
+      "press": [
+        "DOWN"
+      ]
+    },
+    {
+      "press": [
+        "YES"
+      ]
+    },
+    {
+      "wait": 500
+    },
+    {
+      "capture": "ot-out-cfg-menu.png"
+    },
+    {
+      "press": [
+        "NO"
+      ]
+    },
+    {
+      "press": [
+        "NO"
+      ]
+    },
+    {
+      "wait": 500
+    },
+    {
+      "press": [
+        "T1"
+      ]
+    },
+    {
+      "hold": [
+        "CUE"
+      ]
+    },
+    {
+      "wait": 500
+    },
+    {
+      "capture": "ot-cue-held.png"
+    },
+    {
+      "encoder": {
+        "name": "LEVEL",
+        "delta": 8
+      }
+    },
+    {
+      "wait": 300
+    },
+    {
+      "capture": "ot-cue-level-phn.png"
+    },
+    {
+      "release": [
+        "CUE"
+      ]
+    },
+    {
+      "wait": 500
+    },
+    {
+      "press": [
+        "MIXER"
+      ]
+    },
+    {
+      "wait": 500
+    },
+    {
+      "capture": "ot-mixer-phn.png"
+    },
+    {
+      "press": [
+        "NO"
+      ]
+    }
+  ],
+  "screenshots": {
+    "ot-out-cfg-menu.png": "1f5de555629df5ba5b05e56dbde932e227caebf1b5e9bc191de9dfbada7e7dcb",
+    "ot-cue-held.png": "13bce36345d58af546b71684d114897016f8ad7035f8c3bd9697102005925ead",
+    "ot-cue-level-phn.png": "6f17cb6cc932d9d3777b168a059b7b45c6fae5b2f55e21b9cbf2e6c56da3c667",
+    "ot-mixer-phn.png": "6a15c35437e94e70cd8dc6e965cd395c960cde0098535b72a286e1df4aa95d57"
+  }
+}

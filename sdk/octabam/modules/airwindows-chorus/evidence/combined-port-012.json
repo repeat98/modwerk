@@ -1,0 +1,26 @@
+{
+  "moduleVersion": "0.1.2-experimental",
+  "analogBdVersion": "0.1.5-experimental",
+  "mainOsSha256": "31913b92750e38d64fbf46d977329df0cc10faa752f274cf02a39c6307133e82",
+  "fixture": "Generated project: T1 Analog 808, T5 Analog 909, each through Air Chorus FX2 SPD/RNG 64. Separate dry MIX 0 and wet MIX 64 runs.",
+  "blocksPerRun": 5000,
+  "projectLoaded": true,
+  "playbackCompleted": true,
+  "bothAnalogEnginesNonSilent": true,
+  "bothCoresWetAudioDiffersFromDry": true,
+  "trackPeaks": {
+    "dry": {
+      "1": 748501,
+      "5": 727270
+    },
+    "wet": {
+      "1": 669593,
+      "5": 710201
+    }
+  },
+  "hardwareStatus": "untested",
+  "limitations": [
+    "Finite emulator integration test; no physical timing, listening or reboot result.",
+    "No claim that this generated fixture reproduces the reported clicking."
+  ]
+}

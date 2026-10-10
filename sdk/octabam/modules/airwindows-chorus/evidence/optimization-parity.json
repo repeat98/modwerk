@@ -1,222 +1,222 @@
 {
-  "candidateVersion": "0.1.1-experimental",
-  "baselineSourceSha256": "fa200e6d4d74b5b372b390a208c05195a516afc914eec9f796e8baee480c265b",
-  "optimizedSourceSha256": "cd8040e05a8a6e39e0abb601b60508358bdf6e7563a42e57348a92ae67e861ae",
-  "baselineAssembledSha256": "b5a3c90b8089142e5fd6330714ed4eb844a169c43ad445f7d082fd8c5132fbf0",
-  "optimizedAssembledSha256": "9dce8f87de6eebaba460b4d1a47da00d14f25faaa5d44d3bae9b64dc72d3bff9",
-  "baselineProgramWords": 455,
-  "optimizedProgramWords": 399,
+  "candidateVersion": "0.1.2-experimental",
+  "baselineSourceSha256": "cd8040e05a8a6e39e0abb601b60508358bdf6e7563a42e57348a92ae67e861ae",
+  "optimizedSourceSha256": "2a39a3cf0ae9918cf4fffb84d8bb1da73ff09c39895663f815f6b5425000d8e0",
+  "baselineAssembledSha256": "9dce8f87de6eebaba460b4d1a47da00d14f25faaa5d44d3bae9b64dc72d3bff9",
+  "optimizedAssembledSha256": "03469c86e11d0aca51b98501293074cd7140339cc8664e39376507339a322daa",
+  "baselineProgramWords": 399,
+  "optimizedProgramWords": 539,
   "conditions": "Synthetic DSP memory, dirty init, independent full-scale seeded noise and 19 kHz tone, cold/warm history, four ring wraps, endpoints and moving controls. Instructions include the identical synthetic harness; not hardware cycles.",
   "results": [
     {
       "name": "static-(0, 0, 0)",
       "bitIdentical": true,
       "frames": 32768,
-      "beforeInstructionsPerSampleIncludingHarness": 524.8,
-      "afterInstructionsPerSampleIncludingHarness": 333.9
+      "beforeInstructionsPerSampleIncludingHarness": 333.9,
+      "afterInstructionsPerSampleIncludingHarness": 399.2
     },
     {
       "name": "static-(0, 0, 127)",
       "bitIdentical": true,
       "frames": 32768,
-      "beforeInstructionsPerSampleIncludingHarness": 524.8,
-      "afterInstructionsPerSampleIncludingHarness": 333.9
+      "beforeInstructionsPerSampleIncludingHarness": 333.9,
+      "afterInstructionsPerSampleIncludingHarness": 399.2
     },
     {
       "name": "static-(64, 64, 64)",
       "bitIdentical": true,
       "frames": 32768,
-      "beforeInstructionsPerSampleIncludingHarness": 524.8,
-      "afterInstructionsPerSampleIncludingHarness": 336.9
+      "beforeInstructionsPerSampleIncludingHarness": 336.9,
+      "afterInstructionsPerSampleIncludingHarness": 386.6
     },
     {
       "name": "static-(127, 127, 127)",
       "bitIdentical": true,
       "frames": 32768,
-      "beforeInstructionsPerSampleIncludingHarness": 527.1,
-      "afterInstructionsPerSampleIncludingHarness": 336.9
+      "beforeInstructionsPerSampleIncludingHarness": 336.9,
+      "afterInstructionsPerSampleIncludingHarness": 408.1
     },
     {
       "name": "static-(127, 0, 127)",
       "bitIdentical": true,
       "frames": 32768,
-      "beforeInstructionsPerSampleIncludingHarness": 527.1,
-      "afterInstructionsPerSampleIncludingHarness": 333.9
+      "beforeInstructionsPerSampleIncludingHarness": 333.9,
+      "afterInstructionsPerSampleIncludingHarness": 423.0
     },
     {
       "name": "static-(0, 127, 127)",
       "bitIdentical": true,
       "frames": 32768,
-      "beforeInstructionsPerSampleIncludingHarness": 524.8,
-      "afterInstructionsPerSampleIncludingHarness": 336.9
+      "beforeInstructionsPerSampleIncludingHarness": 336.9,
+      "afterInstructionsPerSampleIncludingHarness": 389.2
     },
     {
       "name": "moving-split-0",
       "bitIdentical": true,
       "frames": 32768,
-      "beforeInstructionsPerSampleIncludingHarness": 527.1,
-      "afterInstructionsPerSampleIncludingHarness": 336.9
+      "beforeInstructionsPerSampleIncludingHarness": 336.9,
+      "afterInstructionsPerSampleIncludingHarness": 408.9
     },
     {
       "name": "moving-split-1",
       "bitIdentical": true,
       "frames": 32768,
-      "beforeInstructionsPerSampleIncludingHarness": 531.1,
-      "afterInstructionsPerSampleIncludingHarness": 341.1
+      "beforeInstructionsPerSampleIncludingHarness": 341.1,
+      "afterInstructionsPerSampleIncludingHarness": 413.2
     },
     {
       "name": "moving-split-2",
       "bitIdentical": true,
       "frames": 32768,
-      "beforeInstructionsPerSampleIncludingHarness": 531.1,
-      "afterInstructionsPerSampleIncludingHarness": 341.1
+      "beforeInstructionsPerSampleIncludingHarness": 341.1,
+      "afterInstructionsPerSampleIncludingHarness": 413.2
     },
     {
       "name": "moving-split-3",
       "bitIdentical": true,
       "frames": 32768,
-      "beforeInstructionsPerSampleIncludingHarness": 531.1,
-      "afterInstructionsPerSampleIncludingHarness": 341.1
+      "beforeInstructionsPerSampleIncludingHarness": 341.1,
+      "afterInstructionsPerSampleIncludingHarness": 413.2
     },
     {
       "name": "moving-split-4",
       "bitIdentical": true,
       "frames": 32768,
-      "beforeInstructionsPerSampleIncludingHarness": 531.1,
-      "afterInstructionsPerSampleIncludingHarness": 341.1
+      "beforeInstructionsPerSampleIncludingHarness": 341.1,
+      "afterInstructionsPerSampleIncludingHarness": 413.2
     },
     {
       "name": "moving-split-5",
       "bitIdentical": true,
       "frames": 32768,
-      "beforeInstructionsPerSampleIncludingHarness": 531.1,
-      "afterInstructionsPerSampleIncludingHarness": 341.1
+      "beforeInstructionsPerSampleIncludingHarness": 341.1,
+      "afterInstructionsPerSampleIncludingHarness": 413.2
     },
     {
       "name": "moving-split-6",
       "bitIdentical": true,
       "frames": 32768,
-      "beforeInstructionsPerSampleIncludingHarness": 531.1,
-      "afterInstructionsPerSampleIncludingHarness": 341.1
+      "beforeInstructionsPerSampleIncludingHarness": 341.1,
+      "afterInstructionsPerSampleIncludingHarness": 413.2
     },
     {
       "name": "moving-split-7",
       "bitIdentical": true,
       "frames": 32768,
-      "beforeInstructionsPerSampleIncludingHarness": 531.1,
-      "afterInstructionsPerSampleIncludingHarness": 341.1
+      "beforeInstructionsPerSampleIncludingHarness": 341.1,
+      "afterInstructionsPerSampleIncludingHarness": 413.2
     },
     {
       "name": "moving-split-8",
       "bitIdentical": true,
       "frames": 32768,
-      "beforeInstructionsPerSampleIncludingHarness": 531.1,
-      "afterInstructionsPerSampleIncludingHarness": 341.1
+      "beforeInstructionsPerSampleIncludingHarness": 341.1,
+      "afterInstructionsPerSampleIncludingHarness": 413.2
     },
     {
       "name": "moving-split-9",
       "bitIdentical": true,
       "frames": 32768,
-      "beforeInstructionsPerSampleIncludingHarness": 531.1,
-      "afterInstructionsPerSampleIncludingHarness": 341.1
+      "beforeInstructionsPerSampleIncludingHarness": 341.1,
+      "afterInstructionsPerSampleIncludingHarness": 413.2
     },
     {
       "name": "moving-split-10",
       "bitIdentical": true,
       "frames": 32768,
-      "beforeInstructionsPerSampleIncludingHarness": 531.1,
-      "afterInstructionsPerSampleIncludingHarness": 341.1
+      "beforeInstructionsPerSampleIncludingHarness": 341.1,
+      "afterInstructionsPerSampleIncludingHarness": 413.2
     },
     {
       "name": "moving-split-11",
       "bitIdentical": true,
       "frames": 32768,
-      "beforeInstructionsPerSampleIncludingHarness": 531.1,
-      "afterInstructionsPerSampleIncludingHarness": 341.1
+      "beforeInstructionsPerSampleIncludingHarness": 341.1,
+      "afterInstructionsPerSampleIncludingHarness": 413.2
     },
     {
       "name": "moving-split-12",
       "bitIdentical": true,
       "frames": 32768,
-      "beforeInstructionsPerSampleIncludingHarness": 531.1,
-      "afterInstructionsPerSampleIncludingHarness": 341.1
+      "beforeInstructionsPerSampleIncludingHarness": 341.1,
+      "afterInstructionsPerSampleIncludingHarness": 413.2
     },
     {
       "name": "moving-split-13",
       "bitIdentical": true,
       "frames": 32768,
-      "beforeInstructionsPerSampleIncludingHarness": 531.1,
-      "afterInstructionsPerSampleIncludingHarness": 341.1
+      "beforeInstructionsPerSampleIncludingHarness": 341.1,
+      "afterInstructionsPerSampleIncludingHarness": 413.2
     },
     {
       "name": "moving-split-14",
       "bitIdentical": true,
       "frames": 32768,
-      "beforeInstructionsPerSampleIncludingHarness": 531.1,
-      "afterInstructionsPerSampleIncludingHarness": 341.1
+      "beforeInstructionsPerSampleIncludingHarness": 341.1,
+      "afterInstructionsPerSampleIncludingHarness": 413.2
     },
     {
       "name": "moving-split-15",
       "bitIdentical": true,
       "frames": 32768,
-      "beforeInstructionsPerSampleIncludingHarness": 531.1,
-      "afterInstructionsPerSampleIncludingHarness": 341.1
+      "beforeInstructionsPerSampleIncludingHarness": 341.1,
+      "afterInstructionsPerSampleIncludingHarness": 413.2
     },
     {
       "name": "random-0",
       "bitIdentical": true,
       "frames": 32768,
-      "beforeInstructionsPerSampleIncludingHarness": 527.1,
-      "afterInstructionsPerSampleIncludingHarness": 336.9
+      "beforeInstructionsPerSampleIncludingHarness": 336.9,
+      "afterInstructionsPerSampleIncludingHarness": 416.4
     },
     {
       "name": "random-1",
       "bitIdentical": true,
       "frames": 32768,
-      "beforeInstructionsPerSampleIncludingHarness": 531.1,
-      "afterInstructionsPerSampleIncludingHarness": 341.1
+      "beforeInstructionsPerSampleIncludingHarness": 341.1,
+      "afterInstructionsPerSampleIncludingHarness": 418.2
     },
     {
       "name": "random-2",
       "bitIdentical": true,
       "frames": 32768,
-      "beforeInstructionsPerSampleIncludingHarness": 531.1,
-      "afterInstructionsPerSampleIncludingHarness": 341.1
+      "beforeInstructionsPerSampleIncludingHarness": 341.1,
+      "afterInstructionsPerSampleIncludingHarness": 413.2
     },
     {
       "name": "random-3",
       "bitIdentical": true,
       "frames": 32768,
-      "beforeInstructionsPerSampleIncludingHarness": 531.1,
-      "afterInstructionsPerSampleIncludingHarness": 341.1
+      "beforeInstructionsPerSampleIncludingHarness": 341.1,
+      "afterInstructionsPerSampleIncludingHarness": 413.2
     },
     {
       "name": "random-4",
       "bitIdentical": true,
       "frames": 32768,
-      "beforeInstructionsPerSampleIncludingHarness": 531.1,
-      "afterInstructionsPerSampleIncludingHarness": 341.1
+      "beforeInstructionsPerSampleIncludingHarness": 341.1,
+      "afterInstructionsPerSampleIncludingHarness": 410.9
     },
     {
       "name": "random-5",
       "bitIdentical": true,
       "frames": 32768,
-      "beforeInstructionsPerSampleIncludingHarness": 531.1,
-      "afterInstructionsPerSampleIncludingHarness": 341.1
+      "beforeInstructionsPerSampleIncludingHarness": 341.1,
+      "afterInstructionsPerSampleIncludingHarness": 413.2
     },
     {
       "name": "random-6",
       "bitIdentical": true,
       "frames": 32768,
-      "beforeInstructionsPerSampleIncludingHarness": 531.1,
-      "afterInstructionsPerSampleIncludingHarness": 341.1
+      "beforeInstructionsPerSampleIncludingHarness": 341.1,
+      "afterInstructionsPerSampleIncludingHarness": 420.6
     },
     {
       "name": "random-7",
       "bitIdentical": true,
       "frames": 32768,
-      "beforeInstructionsPerSampleIncludingHarness": 531.1,
-      "afterInstructionsPerSampleIncludingHarness": 341.1
+      "beforeInstructionsPerSampleIncludingHarness": 341.1,
+      "afterInstructionsPerSampleIncludingHarness": 410.9
     }
   ]
 }

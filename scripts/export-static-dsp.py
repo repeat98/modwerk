@@ -30,7 +30,7 @@ def main():
     if a.vendored_sdk:order=[row['id'] for row in json.loads((app/'sdk/catalog.json').read_text())['modules']]
     byid={m.name:m for m in known.values()}
     # schema.DspSection.priority orders placement in the given-up region; ties keep catalog order.
-    modules=[{'id':id,'key':byid[id].key,'fxId':byid[id].menu.fx2_id,'priority':byid[id].dsp.priority} for id in order if byid[id].dsp is not None]
+    modules=[{'id':id,'key':byid[id].key,'fxId':byid[id].menu.fx2_id if byid[id].menu else None,'priority':byid[id].dsp.priority} for id in order if byid[id].dsp is not None]
     # build_bus `_omitted`: custom modules with a menu that a remix may leave out; their DSP ids resolve to the null stub.
     custom=sorted(m.menu.fx2_id for m in known.values() if m.menu is not None and not m.is_stock and not m.menu.replaces)
     if a.vendored_sdk:

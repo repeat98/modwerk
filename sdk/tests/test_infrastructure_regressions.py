@@ -156,7 +156,26 @@ class SelectiveImport(unittest.TestCase):
         if adaptation:
             self.assertEqual(adaptation['before'], historical)
         current = adaptation['after'] if adaptation else historical
+        # Keep the earlier import and Poly8 records historical. Each later
+        # opt-in extension proves its own exact before/after transition.
+        extension = json.loads((ROOT.parent / 'infrastructure-verification/air-chorus-split-builder.json').read_text())
+        adaptation = extension['builderAdaptations'].get(path)
+        if adaptation:
+            self.assertEqual(adaptation['before'], current)
+            current = adaptation['after']
         self.assertEqual(hashlib.sha256((ROOT / path).read_bytes()).hexdigest(), current)
+
+    def test_air_chorus_extension_preserves_existing_native_builds(self):
+        import hashlib, json
+        record = json.loads((ROOT.parent / 'infrastructure-verification/air-chorus-split-builder.json').read_text())
+        self.assertEqual(record['kind'], 'air-chorus-opt-in-builder-regression')
+        self.assertEqual(set(record['builderAdaptations']), {'tools/build/build_bus.py', 'tools/build/ab_image.py', 'tools/remix/schema.py'})
+        self.assertEqual(len(record['selections']), 38)
+        for path, change in record['builderAdaptations'].items():
+            self.assertEqual(hashlib.sha256((ROOT / path).read_bytes()).hexdigest(), change['after'])
+        for row in record['selections']:
+            self.assertNotIn('airwindows-chorus', row['moduleIds'])
+            self.assertEqual(row['before'], row['after'])
 
     def test_poly8_builder_preserves_current_main_without_poly8(self):
         import json

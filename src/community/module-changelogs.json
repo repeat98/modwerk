@@ -737,6 +737,15 @@
     ],
     "airwindows-chorus": [
       {
+        "version": "0.1.2-experimental",
+        "date": "2026-10-09",
+        "changes": [
+          "Protect stock T3 inter-core mailbox and T7 parameter staging data by keeping the first 72 virtual ring words in safe per-instance X state. Preserve stock track state, full stereo delay range, smoothing, controls and saved parameter layout.",
+          "Losslessly pack all original sine values into 256 DSP words and reduce code/table storage from 1,425 to 795 words per core. Air Chorus now combines with E-Verb and Analog BD, including more DSP companions; larger selections remain limited by available program space.",
+          "The shared-data corruption is reproduced and checked in software. The tester still reported T3 clicking in 0.1.1; whether this update fixes that audible hardware symptom remains unverified. Current hardware timing, multi-instance audio and Part/project/reboot persistence are owner-waived for this exact beta source/version."
+        ]
+      },
+      {
         "version": "0.1.1-experimental",
         "date": "2026-10-09",
         "changes": [
@@ -846,6 +855,18 @@
           "The six main-page controls support locks, LFOs, scenes and MIDI CC; SETUP controls are per Part. MIX 0 is exact dry passthrough.",
           "Uses the shared native/browser builder; alone, replaces Spring Rev and Dark Rev while preserving Plate Rev and other stock effects.",
           "Owner reports working MKII sound, two distinct simultaneous T1/T5 instances, Part/project save/reload and physical reboot on exact EVRB01T01. Full-load silicon timing and broader hardware modulation/recovery coverage remain unverified."
+        ]
+      }
+    ],
+    "output-matrix": [
+      {
+        "version": "0.1.0-experimental",
+        "date": "2026-10-09",
+        "changes": [
+          "First release: the CUE CFG box, titled OUT CFG with the module, gains MATRIX, which makes the headphone jack a third assignable output beside MAIN and CUE. CUE + LEVEL picks each track's outputs (any combination of MAIN, CUE and PHONES, or one of six mono jacks); the routing lives in the Part. MIX becomes the PHONES level, and the metronome also plays on PHONES.",
+          "Switching to or from MATRIX converts every Part's LEVEL and cue bytes by documented rules, and switching into NORMAL also sets the project's cue settings.",
+          "Builds with the stock DSP code built in: its core-0 code takes a given-up stock reverb's space (SPRING REV first), which leaves the FX2 menu. It cannot be combined with Analog BD yet.",
+          "Author's functional MKII report (7–9 Oct 2026) covers routing, levels, everyday flows, saving and power; no timed stress run or chip timing."
         ]
       }
     ]

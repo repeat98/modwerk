@@ -14,7 +14,7 @@ async function sha(bytes: Uint8Array) {
 function validateCatalog() {
   if (catalog.schema !== 1 || catalog.revision !== CATALOG_SOURCE.revision || catalog.sourceSha256 !== stockMetadata.sourceSha256) throw new Error('Resident DSP templates do not match the pinned catalog.')
 }
-export async function readResidentCharacter(): Promise<DspPackage> {
+export async function readResidentCharacter(): Promise<DspPackage & { fxId: number }> {
   validateCatalog()
   const pkg = catalog.character, module = MODULES.find(module => module.id === 'character')!
   if (pkg.id !== module.id || pkg.key !== module.key || pkg.author !== module.author || pkg.fxId !== module.fxId || pkg.mode !== 'resident' || pkg.xbusBase !== 0x36000 || pkg.ptableMemory !== 'P') throw new Error('The resident Character package has invalid attribution or placement requirements.')

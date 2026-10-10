@@ -132,7 +132,7 @@ def assemble(org, cont, lay, vbase, tag):
 
 # Reviewed companions: instance-owned X state / allocator-owned Y, or the
 # sidechain's disjoint Y ranges. Keep unreviewed DSP modules refused.
-DSP_COMPANIONS = frozenset(("MINIVERB", "TAPE ECHO", "EUCLID", "TAPEHEAD", "SIDECHAIN_COMPRESSOR"))
+DSP_COMPANIONS = frozenset(("MINIVERB", "TAPE ECHO", "EUCLID", "TAPEHEAD", "SIDECHAIN_COMPRESSOR", "AIR CHORUS"))
 
 
 def reservations(tag):

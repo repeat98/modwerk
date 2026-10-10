@@ -52,7 +52,7 @@ def main():
         build_bus.main()
         output.parent.mkdir(parents=True,exist_ok=True)
         shutil.copyfile(build_bus.OUT,output)
-        record={'version':'0.1.1-experimental','modules':profile.modules,'bytes':output.stat().st_size,
+        record={'version':json.loads((HERE/'octamod.module.json').read_text())['version'],'modules':profile.modules,'bytes':output.stat().st_size,
                 'mainOsSha256':hashlib.sha256(output.read_bytes()).hexdigest(),'hardwareStatus':'untested'}
         output.with_suffix('.json').write_text(json.dumps(record,indent=2)+'\n')
         print(json.dumps(record))

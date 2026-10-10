@@ -3,7 +3,7 @@
   "id": "airwindows-chorus",
   "key": "AIR CHORUS",
   "name": "Air Chorus",
-  "version": "0.1.1-experimental",
+  "version": "0.1.2-experimental",
   "category": "effects",
   "author": {
     "github": "repeat98",
@@ -61,27 +61,28 @@
       "FX2 only; stale FX1 dispatch passes dry without writing its buffer.",
       "About 16-bit delay-buffer precision; dry bypass retains 24 bits.",
       "Extreme modulation retains pitch and aliasing artifacts.",
-      "Beta release with an owner waiver for current hardware testing. The reported loud rhythmic clicking with T3/T4 instances remains unconfirmed; reduced DSP work is a mitigation, not a verified hardware fix. Physical timing, Part/project/reboot persistence and hardware multi-instance audio remain untested."
+      "Beta release: shared DSP mailbox/parameter data are protected. The reported T3 clicking remains unverified on hardware; physical timing, Part/project/reboot persistence and hardware multi-instance audio are owner-waived for this exact source/version.",
+      "Air Chorus combines with Analog BD and E-Verb. Available DSP code space still limits larger selections; stock reverb donors may be removed."
     ]
   },
   "resources": {
-    "recorded": "9 October 2026: optimized DSP inventory and benchmarks; chip timing unmeasured.",
+    "recorded": "9 October 2026: lossless packing and shared-word protection; chip timing unmeasured.",
     "storage": {
       "label": "Per-instance used DSP storage",
-      "display": "16,384 Y + 56 X words",
-      "value": 49320,
+      "display": "16,312 Y + 132 X words",
+      "value": 49332,
       "unit": "bytes at 24 bits/word",
       "method": "static",
-      "conditions": "Uses the existing 16,384-word FX2 buffer and 256-word X state reservation; 56 X words are used. Shared code/table use 1,425 P words per core. No new sample heap.",
+      "conditions": "Uses existing 16,384-word FX2 rings. First 72 virtual ring words use X offsets 60..131; 60 control words. Stock X offsets 132..255 remain untouched. Shared code/table use 795 P words per core (539 program + 256 lossless sine differences). No new allocation.",
       "source": "evidence/bounds.json"
     },
     "processing": {
       "label": "Conservative DSP instruction budget",
-      "display": "495 modeled units/sample",
-      "value": 495,
+      "display": "732 modeled units/sample",
+      "value": 732,
       "unit": "modeled instruction units/sample",
       "method": "static",
-      "conditions": "Conservative source-word/call bound including trigger splits. Four instances plus four bounded initializations: 32,044 modeled units/core/block. Excludes contention stalls; not chip cycles or physical deadline evidence.",
+      "conditions": "Conservative source-word/call bound including trigger splits. Four instances plus four bounded initializations: 47,256 modeled units/core/block. Excludes contention stalls; not chip cycles or physical deadline evidence.",
       "source": "evidence/bounds.json"
     },
     "impact": {
@@ -95,26 +96,28 @@
       "dsp": {
         "level": "high",
         "basis": "measured-comparison",
-        "rationale": "Observed maximum 336.75 net executed instructions/sample versus stock Chorus 292.875 and expensive split Spring 314 under matched conditions on both cores. 35.80% below published 0.1.0. Chip timing and physical headroom remain unmeasured.",
+        "rationale": "Observed maximum 394.625 net executed instructions/sample versus stock Chorus 292.875 and expensive split Spring 314 under matched conditions on both cores. Shared-word protection and lossless table decoding increase cost 17.2% from beta 0.1.1 (336.75); still 24.8% below original 0.1.0 (524.5). Chip timing and physical headroom remain unmeasured.",
         "source": "evidence/stock-comparison.json"
       },
       "memory": {
         "level": "high",
         "basis": "source-estimate",
-        "rationale": "Full 16,384-word stereo FX2 ring per instance, 256 reserved X words (56 used), plus 1,425 P code/table words per core. Reuses existing buffers; no added sample heap.",
+        "rationale": "Full 16,384-word virtual stereo ring per instance, split between 16,312 Y and 72 X words; 60 additional control X words within safe offsets 0..131. Uses existing reservations and 795 P code/table words per core. No added sample heap.",
         "source": "TESTING.md"
       }
     }
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Beta 0.1.1 reduces measured DSP work with bit-identical output in 30 comparison fixtures and unchanged controls. DSP/reference, bounds, isolation and eight-instance replay evidence are recorded. T3/T4 emulator playback did not reproduce the hardware clicking. Current physical hardware testing is owner-waived; no current hardware pass is claimed.",
+    "summary": "Beta 0.1.2 protects live stock shared data within safe instance state and losslessly packs the sine table, preserving the full delay range, sound and controls while widening module combinations. Current physical hardware remains untested under the owner beta waiver.",
     "hardwareStatus": "untested",
     "evidenceRevision": "ed61db5cf1ad04331438fd15967b0ba8cdf4b109",
     "gates": [
       "verify.py",
       "verify_controls.py",
       "verify_instances.py",
+      "verify_sine.py",
+      "verify_shared_buffer.py",
       "verify_bounds.py"
     ],
     "documentation": {
@@ -158,8 +161,8 @@
         "page": "FX2 SETUP",
         "shows": "location",
         "firmware": "1.40C",
-        "moduleVersion": "0.1.1-experimental",
-        "imageSha256": "cf75abd4fca70c24def9d535aaaca454be4a97ea1d6bcb065dddada8bd038a3b",
+        "moduleVersion": "0.1.2-experimental",
+        "imageSha256": "5e0cbe6040633dd1eda7de247baeb226f38c1308e9d02cedebdf0fdf35a1d6c6",
         "setup": "Headless ot_emu; MKII panel; stopped transport; 128×64 LCD at integer scale 6."
       }
     },
@@ -175,8 +178,8 @@
         "page": "FX2",
         "shows": "location-and-controls",
         "firmware": "1.40C",
-        "moduleVersion": "0.1.1-experimental",
-        "imageSha256": "cf75abd4fca70c24def9d535aaaca454be4a97ea1d6bcb065dddada8bd038a3b",
+        "moduleVersion": "0.1.2-experimental",
+        "imageSha256": "5e0cbe6040633dd1eda7de247baeb226f38c1308e9d02cedebdf0fdf35a1d6c6",
         "setup": "Headless ot_emu; MKII panel; stopped transport; 128×64 LCD at integer scale 6."
       }
     },
@@ -192,8 +195,8 @@
         "page": "FX2",
         "shows": "controls",
         "firmware": "1.40C",
-        "moduleVersion": "0.1.1-experimental",
-        "imageSha256": "cf75abd4fca70c24def9d535aaaca454be4a97ea1d6bcb065dddada8bd038a3b",
+        "moduleVersion": "0.1.2-experimental",
+        "imageSha256": "5e0cbe6040633dd1eda7de247baeb226f38c1308e9d02cedebdf0fdf35a1d6c6",
         "setup": "Headless ot_emu; MKII panel; stopped transport; 128×64 LCD at integer scale 6."
       }
     },
@@ -209,8 +212,8 @@
         "page": "FX2",
         "shows": "controls",
         "firmware": "1.40C",
-        "moduleVersion": "0.1.1-experimental",
-        "imageSha256": "cf75abd4fca70c24def9d535aaaca454be4a97ea1d6bcb065dddada8bd038a3b",
+        "moduleVersion": "0.1.2-experimental",
+        "imageSha256": "5e0cbe6040633dd1eda7de247baeb226f38c1308e9d02cedebdf0fdf35a1d6c6",
         "setup": "Headless ot_emu; MKII panel; stopped transport; 128×64 LCD at integer scale 6."
       }
     }

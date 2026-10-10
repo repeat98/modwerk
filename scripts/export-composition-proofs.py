@@ -51,7 +51,7 @@ def main():
     # Retain historical suites; the Analog BD suite below covers its current shared layout.
     if a.suite=='sidechain-visible':order=['miniverb','tapeecho','euclid','repitch','tapehead','usb-audio-out-tracks-main-cue','quantizer','previewvol','cc-map','sidechain-compressor']
     if a.suite=='visible':order=['miniverb','tapeecho','euclid','repitch','tapehead','usb-audio-out-tracks-main-cue','quantizer','previewvol','cc-map']
-    if a.suite in ('sidechain-analog-bd','analog-bd'):order=['analog-bassdrum','miniverb','tapeecho','euclid','repitch','tapehead','usb-audio-out-tracks-main-cue','quantizer','previewvol','cc-map','sidechain-compressor']
+    if a.suite in ('sidechain-analog-bd','analog-bd'):order=['analog-bassdrum','miniverb','tapeecho','euclid','repitch','tapehead','airwindows-chorus','usb-audio-out-tracks-main-cue','quantizer','previewvol','cc-map','sidechain-compressor']
     if a.modules:order=a.modules.split(',')
     if a.vendored_sdk:order=[row['id'] for row in json.loads((app/'sdk/catalog.json').read_text())['modules'] if row['id'] in order]
     byid={m.name:m for m in known.values()}
@@ -103,7 +103,7 @@ def main():
     if a.suite=='sidechain':cases=[(ids,keep) for ids,keep in cases if 'sidechain-compressor' in ids]
     if a.suite=='sidechain-visible':cases=[(ids,keep) for ids,keep in cases if 'sidechain-compressor' in ids]
     if a.suite=='analog-bd':
-        dsp={'miniverb','tapeecho','euclid','tapehead','sidechain-compressor'}
+        dsp={'miniverb','tapeecho','euclid','tapehead','sidechain-compressor','airwindows-chorus'}
         utilities={'repitch','usb-audio-out-tracks-main-cue','quantizer','previewvol','cc-map'}
         # Every DSP subset plus every single-DSP/single-utility pairing and
         # each DSP companion with all utilities. Both chooser profiles.

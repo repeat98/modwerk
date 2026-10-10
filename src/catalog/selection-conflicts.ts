@@ -7,8 +7,8 @@ const CHECKED_SELECTIONS = new Set(DECLARATION_CHECKS.checked)
 
 export type ConflictFix = { label: string; removeIds?: string[]; keepStockFx2?: boolean }
 export type SelectionConflict = { id: string; title: string; description: string; moduleIds: string[]; fixes: ConflictFix[] }
-// Only these custom effects have reviewed placements beside Analog BD.
-const analogBdCompanions = ['miniverb', 'tapeecho', 'euclid', 'tapehead', 'sidechain-compressor']
+// Only these custom effects have reviewed placements beside Analog BD. Output Matrix is not one yet.
+const analogBdCompanions = ['miniverb', 'tapeecho', 'euclid', 'tapehead', 'sidechain-compressor', 'airwindows-chorus']
 // These build beside the stock FX2 effects: TapeHead fits in the space they leave, and Sidechain
 // Compressor hooks stock COMPRESSOR instead of taking a slot. Every other DSP effect needs their space.
 const FITS_BESIDE_STOCK_FX2 = ['tapehead', 'sidechain-compressor']
@@ -45,7 +45,7 @@ export function selectionConflicts(ids: readonly string[], keepStockFx2 = false)
   }
   if (selected.has('analog-bassdrum') && analogBdBlockers.length) conflicts.push({
     id: 'analog-bd-custom-dsp', title: 'Choose effects that fit with Analog BD',
-    description: 'Analog BD can share effect memory with Mini Verb, Tape Echo, Euclid, TapeHead and Sidechain Compressor, subject to space. It cannot run alongside ' + analogBdBlockers.map(module => module.name).join(', ') + '.',
+    description: 'Analog BD can share effect memory with Mini Verb, Tape Echo, Euclid, TapeHead, Sidechain Compressor and Air Chorus, subject to space. It cannot run alongside ' + analogBdBlockers.map(module => module.name).join(', ') + '.',
     moduleIds: ['analog-bassdrum', ...analogBdBlockers.map(module => module.id)],
     fixes: [{ label: 'Remove Analog BD', removeIds: ['analog-bassdrum'] }, { label: 'Keep Analog BD · remove incompatible effects', removeIds: analogBdBlockers.map(module => module.id) }],
   })

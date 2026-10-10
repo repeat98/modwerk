@@ -119,3 +119,20 @@ The owner requested publication of the staged full-range optimization for beta t
 The optimization retains the original arithmetic, delay range, smoothing and parameter layout. Recorded actual-DSP parity covers 30 fixtures and 983,040 stereo frames. The matched observed maximum is 336.75 net executed instructions/sample, down from 524.5 (35.80%); matched Spring is 314 and stock Chorus is 292.875. Both cores, fixed/moving settings and all trigger splits are covered. The conservative source-word/call model is 495 units/sample and 32,044 units for four instances plus initialization per core/block; these are not chip cycles or a deadline guarantee. Shared code/table is 1,425 P words per core; per-instance state and stereo ring are unchanged.
 
 The real ColdFire/DSP playback fixture exercised T3/T4 MIX delivery over 8,192 blocks; published and optimized per-track output was bit-identical, without output rails. It did not reproduce the reported hardware clicking. This release reduces load as a mitigation; it does not establish a confirmed fix. Current physical timing, multi-instance audio, Part/project reload and reboot are **not tested**. Keep the clicking report open pending actual beta results. Begin with a disposable project and low monitoring volume.
+
+## Beta 0.1.2 — 9 October 2026
+
+Protects stock shared data in the T3/T7 FX2 buffers by keeping the first 72
+virtual delay words in safe per-instance X offsets 60..131. Stock track state
+at offset 132 and above remains untouched. The old collision is reproduced
+and the regression passes; the audible hardware symptom still needs
+confirmation. Physical tests remain owner-waived for this beta.
+
+All 1,026 original sine values are reconstructed exactly from 256 packed
+second-difference words. The full delay range, sound, controls and saved
+parameter layout stay the same. The code/table total drops from 1,425 to 795
+words per core, enabling E-Verb and more Analog BD companion combinations.
+The builder can place table and code separately, removes stock reverb donors
+as needed and still refuses combinations that exceed available memory.
+See [the current test record](TESTING.md#beta-012--shared-word-protection-and-wider-compatibility)
+for matched DSP cost, native composition evidence and remaining limits.

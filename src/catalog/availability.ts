@@ -4,7 +4,6 @@ import { MODULES, resolveSelection } from './modules.ts'
 
 export const BETA_MODULE_IDS: readonly string[] = ['airwindows-chorus']
 export const isBetaModule = (id: string) => BETA_MODULE_IDS.includes(id)
-export const BETA_MODULE_NOTICE = 'Beta: hardware testing of Air Chorus 0.1.1 is pending. The reported T3/T4 clicking has not been confirmed fixed. Use a disposable project and start at low monitoring volume.'
 
 // Temporary frontend suspension. Keep the full source catalog and saved pins intact.
 export const PAUSED_MODULE_IDS: readonly string[] = ['spectrum', 'modulation', 'character', 'airwindows-chorus']

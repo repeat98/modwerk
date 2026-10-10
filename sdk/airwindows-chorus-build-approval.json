@@ -1,12 +1,12 @@
 {
   "kind": "owner-approved-update",
   "id": "airwindows-chorus",
-  "version": "0.1.1-experimental",
+  "version": "0.1.2-experimental",
   "approvedBy": "repeat98",
   "approvedOn": "2026-10-09",
   "ownerStatement": "also bring the air chorus fix live with it. no hardware evidence is fine, that's exactly what the beta tester tier is for",
-  "reason": "Owner-authorized beta-only publication of the staged efficiency candidate. Current hardware testing is waived for this exact source/version. Clicking is an unconfirmed hardware symptom, reduced DSP work is a mitigation, and physical timing, multi-instance hardware audio and Part/project/reboot persistence remain unverified. Software, native composition and release/download checks remain required.",
-  "sourceSha256": "681796c48063e9f708c34e08d09b656a90930bec159b9df5a7047087539c373b",
+  "reason": "Owner-authorized continuation of the beta Air Chorus fix and explicitly requested wider module compatibility, including Analog BD. Current hardware testing is waived for this exact source/version. The shared-data collision is reproduced in actual DSP software execution; fixing the audible T3 symptom is still unverified. Lossless table decoding and protection cost 17.2% more executed DSP instructions than 0.1.1, still 24.8% below the original. Physical timing, multi-instance hardware audio and Part/project/reboot persistence remain unverified. Source/native/browser checks and live saved-download verification remain required.",
+  "sourceSha256": "2312319e9e009839dbfc135de2f76fa438a82957d62d67aec4e7c47238517fe1",
   "waived": [
     "current-build-hardware"
   ]

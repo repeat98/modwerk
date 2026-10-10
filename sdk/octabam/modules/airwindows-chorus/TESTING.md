@@ -282,3 +282,91 @@ The owner reports that the tester used the **unoptimized version**: Air Chorus w
 The two owner-supplied v2 checkpoints have valid completion checksums and no recorded warnings, errors or faults. The Air Chorus checkpoint declares 0.1.0 and contains only 14 startup/engine-job records; the other checkpoint is from a different configuration without Air Chorus. Neither records audio, DSP timing or the clicking onset. Their source fingerprints do not match the current beta source inventory. Raw logs and private configuration details remain outside this repository. The owner's current-build hardware waiver remains in force for 0.1.1.
 
 The current 0.1.1 native/browser comparison records 118 profiles: 47 matching builds (16 identical outright, 31 outside shared platform writes), 71 matching refusals and zero mismatches. All 31,744 newly enabled allowed declaration selections pass the actual native ledger; these are declaration checks rather than complete firmware builds. The module doctor is green.
+
+## Beta 0.1.2 — shared-word protection and wider compatibility
+
+The tester confirmed clicking still occurs in 0.1.1. The owner reports T3 as
+the only known troublesome track so far, with simultaneous T1/T2, T6 and T8
+working and at least four Chorus instances. This was an existing project.
+T3 alone, the instrument model, fresh-project behavior and physical persistence
+are unknown; the owner requested no further tester questions for now. The
+supplied logs remain the earlier 0.1.0 checkpoints, not new beta logs.
+
+A source inspection found shared-data collisions: stock uses
+0x38000..0x3800f for the T3 cross-core mailbox and 0x30000..0x30047 for T7
+parameter staging, inside the fixed FX2 allocator slots. P/X/Y alias there.
+The new ring maps its first 72 virtual words to safe per-instance X offsets
+60..131. Its 60 control words and 72 shadow words fit entirely below stock
+track state at offset 132. It preserves both 8,192-word rings with no new RAM.
+`verify_shared_buffer.py` refreshes those shared Y words during actual DSP
+execution: released 0.1.1 corrupts them and changes audio; 0.1.2 preserves them
+and matches an isolated render on T3/T7 at splits 0, 1, 8 and 15, each over
+32,768 stereo frames. A separate X canary confirms offsets 132..255 remain
+untouched through init and processing. The fixture writes Y explicitly because
+dsp_host's X/Y spaces are separate. This confirms the memory defect and
+regression; it does not establish that the reported hardware clicking is fixed.
+
+All 1,026 original Q23 sine values are losslessly represented by 256 words of
+signed second differences. The per-instance endpoint cache starts at the known
+quarter endpoint and advances/reverses by at most one index per sample across
+the entire supported speed range. `verify_sine.py` runs the assembled helpers
+against all 1,024 coefficients and 3,088 endpoint cases in both directions,
+including cached reuse. Every value is exact. Thirty dirty-history/control
+fixtures remain bit-identical to 0.1.1 over 983,040 stereo frames. Reference,
+click/control, eight-instance isolation and conservative bounds gates pass.
+
+Matched maxima on both cores at all 16 splits: Air Chorus 394.625, prior beta
+336.75, stock Chorus 292.875 and expensive Spring 314 net executed
+instructions/sample. Shared-word protection and lossless decoding increase
+measured cost 17.2% from 0.1.1 and reduce it 24.8% from original 0.1.0's 524.5.
+It is still expensive. These counts exclude dispatcher, ColdFire, DMA and
+contention and establish no physical deadline/headroom. The conservative bound
+is 732 modeled units/sample and 47,256 for four instances plus initialization
+per core/block. The right ring cannot reach the left shadow prefix or boundary;
+the bound charges each channel's reachable worst path separately. Branch and
+call surcharges remain conservative; no audit threshold was relaxed.
+
+Shared P storage drops from 1,425 words in 0.1.1 to 795 words: 256 table and
+539 program words per core. Table/code can also occupy separate donor openings
+when no contiguous run fits. Four independent origin pairs reproduce fresh
+assemblies. Stock helpers, reservations and dispatch are checked in both cores;
+stock reverb donors are removed where required and crowded selections refused.
+Air Chorus now fits with E-Verb. Beside Analog BD it can also include MiniVerb,
+Euclid, Tapehead or Sidechain Compressor, optionally with Tape Echo. These
+are finite native/browser build proofs, not hardware audio observations.
+
+The current Air Chorus native/browser comparison covers 122 selections:
+52 matching builds (18 exact, 34 outside platform writes), 70 matching refusals
+and zero mismatches. The shared-builder regression compares 38 existing
+selections without Air Chorus against main 0a3bd500: complete images and refusal
+text remain identical. `sdk/infrastructure-verification/air-chorus-split-builder.json`
+preserves that transition without changing earlier import or Poly8 records.
+
+The Analog BD matrix covers 212 selections: 162 native builds and 50 matching
+refusals, with browser placement and freshly assembled native bootstrap checks.
+Six complete saved firmware containers round-trip to their composed MAIN.
+A complete combined browser image loads and plays a generated project with
+Analog 808 on T1 and 909 on T5, each through Air Chorus. Both cores produce
+audio in separate MIX 0/64 runs of 5,000 blocks; wet output differs from dry.
+`evidence/combined-port-012.json` binds that finite integration test to MAIN
+SHA-256 `31913b92750e38d64fbf46d977329df0cc10faa752f274cf02a39c6307133e82`.
+It does not establish physical timing, listening or reboot behavior.
+
+The current 31-second replay completes with eight differently controlled
+instances, four per core, dirty state, local/shared guards and no clobbers or
+hangs. `evidence/stress.json` records the exact 0.1.2 assembly and host hashes.
+The full ColdFire/DSP T3/T4 tone project completes 8,192 blocks with no late
+DSP reads. All six captured stream groups match the prior beta; the last
+sixteen observed T3 mailbox writes come from stock code.
+`evidence/full-port-012.json` retains those finite observations. This fixture
+did not reproduce the reported physical clicking in either version.
+
+Fresh grayscale emulator captures show the unchanged chooser, SPD/RNG 64,
+MIX 0/64 and return to dry on private MAIN
+`5e0cbe6040633dd1eda7de247baeb226f38c1308e9d02cedebdf0fdf35a1d6c6`.
+`media/capture.json` records the actual emulator and panel plan; every image
+was visually reviewed. The owner's existing beta-release instruction and
+hardware waiver cover this continued fix and requested wider compatibility.
+`sdk/airwindows-chorus-build-approval.json` binds the exception to this exact
+0.1.2 source. Hardware remains **untested**; no physical audio, worst-case chip
+timing, Part/project reload or reboot pass is claimed.

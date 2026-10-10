@@ -51,8 +51,10 @@ export const MODULES: readonly FirmwareModule[] = MODULE_DOCUMENTS.map(document=
   sourcePath:'sdk/octabam/modules/'+document.id+'/manifest.py',version:document.version,addedAt:MODULE_ADDED_AT[document.id],updatedAt:moduleReleasedAt(document.id,document.version),fxId:document.compatibility.effectId??undefined,
 }))
 
-// Every module with an effect ID adds DSP code, paused ones included.
-export const DSP_EFFECT_IDS: readonly string[] = MODULES.filter(module => module.fxId !== undefined).map(module => module.id)
+// DSP code that stock code reaches through hooks, with no effect ID or chooser row.
+export const HOOKED_DSP_IDS: readonly string[] = ['output-matrix']
+// Every module with an effect ID adds DSP code, paused ones included, and so does every hooked module.
+export const DSP_EFFECT_IDS: readonly string[] = MODULES.filter(module => module.fxId !== undefined || HOOKED_DSP_IDS.includes(module.id)).map(module => module.id)
 
 export function getModuleSource(module: FirmwareModule): string {
   const source = MODULE_DOCUMENTS.find(document => document.id === module.id)?.source

@@ -9,8 +9,9 @@ import argparse, hashlib, importlib.util, json, os, re, shutil, struct, subproce
 
 APP = Path(__file__).resolve().parents[1]
 ORDER = ['spectrum', 'modulation', 'character', 'miniverb', 'tapeecho', 'euclid', 'repitch', 'tapehead', 'airwindows-chorus', 'everb']
-HOOKED = ['sidechain-compressor']
-REQUESTED = ['analog-bassdrum', 'midi-scenes', 'usb-audio-out-tracks-main-cue', 'quantizer', 'synth', 'vector', 'playmodes', 'mute-modes', 'recorder-loop-fix', 'poly8']
+# DSP code that stock code reaches through hooks. Output Matrix has no FX menu entry and is also a requested ColdFire module.
+HOOKED = ['sidechain-compressor', 'output-matrix']
+REQUESTED = ['analog-bassdrum', 'midi-scenes', 'usb-audio-out-tracks-main-cue', 'quantizer', 'synth', 'vector', 'playmodes', 'mute-modes', 'recorder-loop-fix', 'poly8', 'output-matrix']
 UTILITIES = ['previewvol', 'cc-map']
 ASSET_NAMES = ['dsp-packages.json', 'coldfire-packages.json', 'resident-dsp.json', 'rom-packages.json',
                'bootstrap-package.json', 'menu-recipes.json', 'descriptor-recipes.json', 'platform-writes.json', 'requested-packages.json', 'utility-packages.json', 'usb-audio-packages.json']
@@ -83,7 +84,8 @@ def fingerprint(reference, address):
 
 def requested_release_scope(buildable):
     """Permit the reviewed scope; MIDISC2.0 is a standalone local-stock recipe."""
-    ordinary = [id for id in buildable if id not in UTILITIES + HOOKED]
+    hooked_only = [id for id in HOOKED if id not in REQUESTED]
+    ordinary = [id for id in buildable if id not in UTILITIES + hooked_only]
     if [id for id in buildable if id in UTILITIES] not in ([], UTILITIES):
         raise ValueError('Unsupported utility module scope')
     scopes = (ORDER, ORDER + REQUESTED, ORDER + [id for id in REQUESTED if id != 'midi-scenes'])
@@ -299,7 +301,7 @@ def main():
         root = Path(temporary)
         # Pending imports stay in the source fingerprint, but are never evaluated or compiled.
         (root / 'modules').mkdir()
-        for id in ORDER + requested_ids + utility_ids + hooked_ids:
+        for id in dict.fromkeys(ORDER + requested_ids + utility_ids + hooked_ids):
             shutil.copytree(sdk / 'modules' / id, root / 'modules' / id, ignore=shutil.ignore_patterns('__pycache__', '*.pyc', '.DS_Store'))
         for group in ['platform', 'tools', 'dsp']:
             shutil.copytree(sdk / group, root / group, ignore=shutil.ignore_patterns('__pycache__', '*.pyc', '.DS_Store'))
@@ -317,7 +319,7 @@ def main():
         known = registry.modules()
         byid = {module.name: module for module in known.values()}
         public = sorted(module.name for module in known.values() if not module.is_stock and module.name not in registry.PLATFORM_NAMES)
-        if public != sorted(ORDER + requested_ids + utility_ids + hooked_ids): raise ValueError('Unexpected module scope')
+        if public != sorted(set(ORDER + requested_ids + utility_ids + hooked_ids)): raise ValueError('Unexpected module scope')
         for id in ORDER + hooked_ids:
             module, doc = byid[id], documents[id]
             if doc['version'] != versions[id] or doc['key'] != module.key or doc['author']['github'] != module.author or doc['compatibility']['effectId'] != (module.menu.fx2_id if module.menu else None):
@@ -338,10 +340,23 @@ def main():
                 fresh, _ = native.assemble_syms(text.replace(native.PTABLE_LITERAL, f'${base:x}'), base + len(module.dsp.ptable), label=module.key)
                 proofs.append({'base': base, 'sha256': HASH(code_bytes(list(module.dsp.ptable) + fresh))})
             code = code_bytes(words)
+            split = {}
+            if module.dsp.split_ptable:
+                table_words = len(module.dsp.ptable)
+                if any(offset < table_words for offset in relocations) or min(init, proc) < table_words:
+                    raise ValueError(module.name + ': table contains code references or entry points')
+                split_proofs = []
+                for table_base, program_base in ((0x1000, 0x5000), (0x2407, 0x1100), (0x1801, 0x7003), (0x1400, 0x1400 + table_words)):
+                    fresh, syms = native.assemble_syms(text.replace(native.PTABLE_LITERAL, f'${table_base:x}'), program_base, label=module.key)
+                    relocated = [word + (table_base if word < table_words else program_base - table_words) if offset in relocations else word for offset, word in enumerate(words)]
+                    if relocated != list(module.dsp.ptable) + fresh or (syms['init'], syms['proc']) != (program_base + init - table_words, program_base + proc - table_words):
+                        raise ValueError(module.name + ': separate table/code relocation differs from fresh assembly')
+                    split_proofs.append({'tableBase': table_base, 'programBase': program_base, 'sha256': HASH(code_bytes(relocated))})
+                split = {'splitTableWords': table_words, 'splitProofs': split_proofs}
             return {'id': module.name, 'version': versions[module.name], 'key': module.key, 'author': module.author,
                     'sources': hashes(module.dsp.asm, f'modules/{module.name}/manifest.py'), 'fxId': module.menu.fx2_id,
                     'words': len(words), 'code': code.hex(), 'sha256': HASH(code), 'relocations': relocations,
-                    'init': init, 'proc': proc, 'proofs': proofs}
+                    'init': init, 'proc': proc, 'proofs': proofs, **split}
 
         packages = []
         for id in sorted(ORDER):
@@ -353,7 +368,8 @@ def main():
 
         for id in hooked_ids:
             module = byid[id]
-            if not module.menu.stock_dsp or not module.dsp.hooks:
+            # A menu entry, when there is one, must preserve its stock dispatch; with none, the hooks are the only way in.
+            if module.menu is not None and not module.menu.stock_dsp or not module.dsp.hooks:
                 raise ValueError(id + ': stock DSP hook package requires a preserved dispatch and hooks')
             text = (root / module.dsp.asm).read_text()
             for tag in sorted(module.dsp.payloads):
@@ -375,8 +391,8 @@ def main():
                           'entry':symbols[h.label],'note':h.note} for h in module.dsp.hooks]
                 code = code_bytes(words)
                 packages.append({'id':id,'version':versions[id],'key':module.key,'author':module.author,
-                    'sources':hashes(module.dsp.asm,f'modules/{id}/manifest.py'),'fxId':module.menu.fx2_id,
-                    'tag':tag,'stockDsp':True,'stockKey':module.menu.replaces,
+                    'sources':hashes(module.dsp.asm,f'modules/{id}/manifest.py'),'fxId':module.menu.fx2_id if module.menu else None,
+                    'tag':tag,'stockDsp':True,**({'stockKey':module.menu.replaces} if module.menu else {}),
                     'words':len(words),'code':code.hex(),'sha256':HASH(code),'relocations':relocations,
                     'init':hooks[0]['entry'],'proc':hooks[1]['entry'],'hooks':hooks,'proofs':proofs})
 

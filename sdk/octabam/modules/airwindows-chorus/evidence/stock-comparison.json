@@ -1,5 +1,5 @@
 {
-  "version": "0.1.1-experimental",
+  "version": "0.1.2-experimental",
   "units": "executed instructions/sample; not modeled cycles or measured chip timing",
   "sampleRate": 44100,
   "framesPerBlock": 16,
@@ -7,8 +7,8 @@
   "audioBase": 0,
   "instancesPerCore": 1,
   "stockMainSha256": "164f31224bf61181e3f50e7dec40df9afcae5b16dbf6e4c0d0cc5e986af0a84e",
-  "moduleMainSha256": "cf75abd4fca70c24def9d535aaaca454be4a97ea1d6bcb065dddada8bd038a3b",
-  "baselineMainSha256": "8ecec31ef7511756e17aaba2cd569a32e4471bcebe0dd0738615327fb850a6df",
+  "moduleMainSha256": "5e0cbe6040633dd1eda7de247baeb226f38c1308e9d02cedebdf0fdf35a1d6c6",
+  "baselineMainSha256": "cf75abd4fca70c24def9d535aaaca454be4a97ea1d6bcb065dddada8bd038a3b",
   "dspHostSha256": "c83443548b0bcba884761566dd10b39575714f9823d4287ef46998f4d2f80552",
   "conditions": "Identical two-core tone/transient input, X:0 stereo audio, null stub subtracted per split/core, complete control endpoint/turn/type schedule from benchmark_reverbs.knobs; finite observed maxima only. Excludes stock dispatcher, voice engines, ColdFire, DMA and stalls. All split offsets 0..15. First-call seeding is included; separate init calls are excluded from block meters.",
   "rows": [
@@ -101,50 +101,6 @@
       "clippedSamples": 0
     },
     {
-      "effect": "AIR CHORUS 0.1.0",
-      "moving": false,
-      "split": 0,
-      "cores": [
-        {
-          "core": 0,
-          "initInstructions": 75,
-          "peakBlockInstructions": 8397,
-          "nullBlockInstructions": 67,
-          "netWorstInstructionsPerSample": 520.625
-        },
-        {
-          "core": 1,
-          "initInstructions": 75,
-          "peakBlockInstructions": 8397,
-          "nullBlockInstructions": 67,
-          "netWorstInstructionsPerSample": 520.625
-        }
-      ],
-      "clippedSamples": 0
-    },
-    {
-      "effect": "AIR CHORUS 0.1.0",
-      "moving": true,
-      "split": 0,
-      "cores": [
-        {
-          "core": 0,
-          "initInstructions": 75,
-          "peakBlockInstructions": 8397,
-          "nullBlockInstructions": 67,
-          "netWorstInstructionsPerSample": 520.625
-        },
-        {
-          "core": 1,
-          "initInstructions": 75,
-          "peakBlockInstructions": 8397,
-          "nullBlockInstructions": 67,
-          "netWorstInstructionsPerSample": 520.625
-        }
-      ],
-      "clippedSamples": 0
-    },
-    {
       "effect": "AIR CHORUS 0.1.1",
       "moving": false,
       "split": 0,
@@ -184,6 +140,50 @@
           "peakBlockInstructions": 5343,
           "nullBlockInstructions": 67,
           "netWorstInstructionsPerSample": 329.75
+        }
+      ],
+      "clippedSamples": 0
+    },
+    {
+      "effect": "AIR CHORUS 0.1.2",
+      "moving": false,
+      "split": 0,
+      "cores": [
+        {
+          "core": 0,
+          "initInstructions": 84,
+          "peakBlockInstructions": 6282,
+          "nullBlockInstructions": 67,
+          "netWorstInstructionsPerSample": 388.4375
+        },
+        {
+          "core": 1,
+          "initInstructions": 84,
+          "peakBlockInstructions": 6282,
+          "nullBlockInstructions": 67,
+          "netWorstInstructionsPerSample": 388.4375
+        }
+      ],
+      "clippedSamples": 0
+    },
+    {
+      "effect": "AIR CHORUS 0.1.2",
+      "moving": true,
+      "split": 0,
+      "cores": [
+        {
+          "core": 0,
+          "initInstructions": 84,
+          "peakBlockInstructions": 6240,
+          "nullBlockInstructions": 67,
+          "netWorstInstructionsPerSample": 385.8125
+        },
+        {
+          "core": 1,
+          "initInstructions": 84,
+          "peakBlockInstructions": 6316,
+          "nullBlockInstructions": 67,
+          "netWorstInstructionsPerSample": 390.5625
         }
       ],
       "clippedSamples": 0
@@ -277,50 +277,6 @@
       "clippedSamples": 0
     },
     {
-      "effect": "AIR CHORUS 0.1.0",
-      "moving": false,
-      "split": 1,
-      "cores": [
-        {
-          "core": 0,
-          "initInstructions": 75,
-          "peakBlockInstructions": 8462,
-          "nullBlockInstructions": 70,
-          "netWorstInstructionsPerSample": 524.5
-        },
-        {
-          "core": 1,
-          "initInstructions": 75,
-          "peakBlockInstructions": 8462,
-          "nullBlockInstructions": 70,
-          "netWorstInstructionsPerSample": 524.5
-        }
-      ],
-      "clippedSamples": 0
-    },
-    {
-      "effect": "AIR CHORUS 0.1.0",
-      "moving": true,
-      "split": 1,
-      "cores": [
-        {
-          "core": 0,
-          "initInstructions": 75,
-          "peakBlockInstructions": 8462,
-          "nullBlockInstructions": 70,
-          "netWorstInstructionsPerSample": 524.5
-        },
-        {
-          "core": 1,
-          "initInstructions": 75,
-          "peakBlockInstructions": 8462,
-          "nullBlockInstructions": 70,
-          "netWorstInstructionsPerSample": 524.5
-        }
-      ],
-      "clippedSamples": 0
-    },
-    {
       "effect": "AIR CHORUS 0.1.1",
       "moving": false,
       "split": 1,
@@ -360,6 +316,50 @@
           "peakBlockInstructions": 5410,
           "nullBlockInstructions": 70,
           "netWorstInstructionsPerSample": 333.75
+        }
+      ],
+      "clippedSamples": 0
+    },
+    {
+      "effect": "AIR CHORUS 0.1.2",
+      "moving": false,
+      "split": 1,
+      "cores": [
+        {
+          "core": 0,
+          "initInstructions": 84,
+          "peakBlockInstructions": 6350,
+          "nullBlockInstructions": 70,
+          "netWorstInstructionsPerSample": 392.5
+        },
+        {
+          "core": 1,
+          "initInstructions": 84,
+          "peakBlockInstructions": 6350,
+          "nullBlockInstructions": 70,
+          "netWorstInstructionsPerSample": 392.5
+        }
+      ],
+      "clippedSamples": 0
+    },
+    {
+      "effect": "AIR CHORUS 0.1.2",
+      "moving": true,
+      "split": 1,
+      "cores": [
+        {
+          "core": 0,
+          "initInstructions": 84,
+          "peakBlockInstructions": 6308,
+          "nullBlockInstructions": 70,
+          "netWorstInstructionsPerSample": 389.875
+        },
+        {
+          "core": 1,
+          "initInstructions": 84,
+          "peakBlockInstructions": 6384,
+          "nullBlockInstructions": 70,
+          "netWorstInstructionsPerSample": 394.625
         }
       ],
       "clippedSamples": 0
@@ -453,50 +453,6 @@
       "clippedSamples": 0
     },
     {
-      "effect": "AIR CHORUS 0.1.0",
-      "moving": false,
-      "split": 2,
-      "cores": [
-        {
-          "core": 0,
-          "initInstructions": 75,
-          "peakBlockInstructions": 8462,
-          "nullBlockInstructions": 70,
-          "netWorstInstructionsPerSample": 524.5
-        },
-        {
-          "core": 1,
-          "initInstructions": 75,
-          "peakBlockInstructions": 8462,
-          "nullBlockInstructions": 70,
-          "netWorstInstructionsPerSample": 524.5
-        }
-      ],
-      "clippedSamples": 0
-    },
-    {
-      "effect": "AIR CHORUS 0.1.0",
-      "moving": true,
-      "split": 2,
-      "cores": [
-        {
-          "core": 0,
-          "initInstructions": 75,
-          "peakBlockInstructions": 8462,
-          "nullBlockInstructions": 70,
-          "netWorstInstructionsPerSample": 524.5
-        },
-        {
-          "core": 1,
-          "initInstructions": 75,
-          "peakBlockInstructions": 8462,
-          "nullBlockInstructions": 70,
-          "netWorstInstructionsPerSample": 524.5
-        }
-      ],
-      "clippedSamples": 0
-    },
-    {
       "effect": "AIR CHORUS 0.1.1",
       "moving": false,
       "split": 2,
@@ -536,6 +492,50 @@
           "peakBlockInstructions": 5410,
           "nullBlockInstructions": 70,
           "netWorstInstructionsPerSample": 333.75
+        }
+      ],
+      "clippedSamples": 0
+    },
+    {
+      "effect": "AIR CHORUS 0.1.2",
+      "moving": false,
+      "split": 2,
+      "cores": [
+        {
+          "core": 0,
+          "initInstructions": 84,
+          "peakBlockInstructions": 6350,
+          "nullBlockInstructions": 70,
+          "netWorstInstructionsPerSample": 392.5
+        },
+        {
+          "core": 1,
+          "initInstructions": 84,
+          "peakBlockInstructions": 6350,
+          "nullBlockInstructions": 70,
+          "netWorstInstructionsPerSample": 392.5
+        }
+      ],
+      "clippedSamples": 0
+    },
+    {
+      "effect": "AIR CHORUS 0.1.2",
+      "moving": true,
+      "split": 2,
+      "cores": [
+        {
+          "core": 0,
+          "initInstructions": 84,
+          "peakBlockInstructions": 6308,
+          "nullBlockInstructions": 70,
+          "netWorstInstructionsPerSample": 389.875
+        },
+        {
+          "core": 1,
+          "initInstructions": 84,
+          "peakBlockInstructions": 6384,
+          "nullBlockInstructions": 70,
+          "netWorstInstructionsPerSample": 394.625
         }
       ],
       "clippedSamples": 0
@@ -629,50 +629,6 @@
       "clippedSamples": 0
     },
     {
-      "effect": "AIR CHORUS 0.1.0",
-      "moving": false,
-      "split": 3,
-      "cores": [
-        {
-          "core": 0,
-          "initInstructions": 75,
-          "peakBlockInstructions": 8462,
-          "nullBlockInstructions": 70,
-          "netWorstInstructionsPerSample": 524.5
-        },
-        {
-          "core": 1,
-          "initInstructions": 75,
-          "peakBlockInstructions": 8462,
-          "nullBlockInstructions": 70,
-          "netWorstInstructionsPerSample": 524.5
-        }
-      ],
-      "clippedSamples": 0
-    },
-    {
-      "effect": "AIR CHORUS 0.1.0",
-      "moving": true,
-      "split": 3,
-      "cores": [
-        {
-          "core": 0,
-          "initInstructions": 75,
-          "peakBlockInstructions": 8462,
-          "nullBlockInstructions": 70,
-          "netWorstInstructionsPerSample": 524.5
-        },
-        {
-          "core": 1,
-          "initInstructions": 75,
-          "peakBlockInstructions": 8462,
-          "nullBlockInstructions": 70,
-          "netWorstInstructionsPerSample": 524.5
-        }
-      ],
-      "clippedSamples": 0
-    },
-    {
       "effect": "AIR CHORUS 0.1.1",
       "moving": false,
       "split": 3,
@@ -717,6 +673,50 @@
       "clippedSamples": 0
     },
     {
+      "effect": "AIR CHORUS 0.1.2",
+      "moving": false,
+      "split": 3,
+      "cores": [
+        {
+          "core": 0,
+          "initInstructions": 84,
+          "peakBlockInstructions": 6350,
+          "nullBlockInstructions": 70,
+          "netWorstInstructionsPerSample": 392.5
+        },
+        {
+          "core": 1,
+          "initInstructions": 84,
+          "peakBlockInstructions": 6350,
+          "nullBlockInstructions": 70,
+          "netWorstInstructionsPerSample": 392.5
+        }
+      ],
+      "clippedSamples": 0
+    },
+    {
+      "effect": "AIR CHORUS 0.1.2",
+      "moving": true,
+      "split": 3,
+      "cores": [
+        {
+          "core": 0,
+          "initInstructions": 84,
+          "peakBlockInstructions": 6308,
+          "nullBlockInstructions": 70,
+          "netWorstInstructionsPerSample": 389.875
+        },
+        {
+          "core": 1,
+          "initInstructions": 84,
+          "peakBlockInstructions": 6384,
+          "nullBlockInstructions": 70,
+          "netWorstInstructionsPerSample": 394.625
+        }
+      ],
+      "clippedSamples": 0
+    },
+    {
       "effect": "SPRING REV",
       "moving": false,
       "split": 4,
@@ -805,50 +805,6 @@
       "clippedSamples": 0
     },
     {
-      "effect": "AIR CHORUS 0.1.0",
-      "moving": false,
-      "split": 4,
-      "cores": [
-        {
-          "core": 0,
-          "initInstructions": 75,
-          "peakBlockInstructions": 8462,
-          "nullBlockInstructions": 70,
-          "netWorstInstructionsPerSample": 524.5
-        },
-        {
-          "core": 1,
-          "initInstructions": 75,
-          "peakBlockInstructions": 8462,
-          "nullBlockInstructions": 70,
-          "netWorstInstructionsPerSample": 524.5
-        }
-      ],
-      "clippedSamples": 0
-    },
-    {
-      "effect": "AIR CHORUS 0.1.0",
-      "moving": true,
-      "split": 4,
-      "cores": [
-        {
-          "core": 0,
-          "initInstructions": 75,
-          "peakBlockInstructions": 8462,
-          "nullBlockInstructions": 70,
-          "netWorstInstructionsPerSample": 524.5
-        },
-        {
-          "core": 1,
-          "initInstructions": 75,
-          "peakBlockInstructions": 8462,
-          "nullBlockInstructions": 70,
-          "netWorstInstructionsPerSample": 524.5
-        }
-      ],
-      "clippedSamples": 0
-    },
-    {
       "effect": "AIR CHORUS 0.1.1",
       "moving": false,
       "split": 4,
@@ -888,6 +844,50 @@
           "peakBlockInstructions": 5410,
           "nullBlockInstructions": 70,
           "netWorstInstructionsPerSample": 333.75
+        }
+      ],
+      "clippedSamples": 0
+    },
+    {
+      "effect": "AIR CHORUS 0.1.2",
+      "moving": false,
+      "split": 4,
+      "cores": [
+        {
+          "core": 0,
+          "initInstructions": 84,
+          "peakBlockInstructions": 6350,
+          "nullBlockInstructions": 70,
+          "netWorstInstructionsPerSample": 392.5
+        },
+        {
+          "core": 1,
+          "initInstructions": 84,
+          "peakBlockInstructions": 6350,
+          "nullBlockInstructions": 70,
+          "netWorstInstructionsPerSample": 392.5
+        }
+      ],
+      "clippedSamples": 0
+    },
+    {
+      "effect": "AIR CHORUS 0.1.2",
+      "moving": true,
+      "split": 4,
+      "cores": [
+        {
+          "core": 0,
+          "initInstructions": 84,
+          "peakBlockInstructions": 6308,
+          "nullBlockInstructions": 70,
+          "netWorstInstructionsPerSample": 389.875
+        },
+        {
+          "core": 1,
+          "initInstructions": 84,
+          "peakBlockInstructions": 6384,
+          "nullBlockInstructions": 70,
+          "netWorstInstructionsPerSample": 394.625
         }
       ],
       "clippedSamples": 0
@@ -981,50 +981,6 @@
       "clippedSamples": 0
     },
     {
-      "effect": "AIR CHORUS 0.1.0",
-      "moving": false,
-      "split": 5,
-      "cores": [
-        {
-          "core": 0,
-          "initInstructions": 75,
-          "peakBlockInstructions": 8462,
-          "nullBlockInstructions": 70,
-          "netWorstInstructionsPerSample": 524.5
-        },
-        {
-          "core": 1,
-          "initInstructions": 75,
-          "peakBlockInstructions": 8462,
-          "nullBlockInstructions": 70,
-          "netWorstInstructionsPerSample": 524.5
-        }
-      ],
-      "clippedSamples": 0
-    },
-    {
-      "effect": "AIR CHORUS 0.1.0",
-      "moving": true,
-      "split": 5,
-      "cores": [
-        {
-          "core": 0,
-          "initInstructions": 75,
-          "peakBlockInstructions": 8462,
-          "nullBlockInstructions": 70,
-          "netWorstInstructionsPerSample": 524.5
-        },
-        {
-          "core": 1,
-          "initInstructions": 75,
-          "peakBlockInstructions": 8462,
-          "nullBlockInstructions": 70,
-          "netWorstInstructionsPerSample": 524.5
-        }
-      ],
-      "clippedSamples": 0
-    },
-    {
       "effect": "AIR CHORUS 0.1.1",
       "moving": false,
       "split": 5,
@@ -1064,6 +1020,50 @@
           "peakBlockInstructions": 5410,
           "nullBlockInstructions": 70,
           "netWorstInstructionsPerSample": 333.75
+        }
+      ],
+      "clippedSamples": 0
+    },
+    {
+      "effect": "AIR CHORUS 0.1.2",
+      "moving": false,
+      "split": 5,
+      "cores": [
+        {
+          "core": 0,
+          "initInstructions": 84,
+          "peakBlockInstructions": 6350,
+          "nullBlockInstructions": 70,
+          "netWorstInstructionsPerSample": 392.5
+        },
+        {
+          "core": 1,
+          "initInstructions": 84,
+          "peakBlockInstructions": 6350,
+          "nullBlockInstructions": 70,
+          "netWorstInstructionsPerSample": 392.5
+        }
+      ],
+      "clippedSamples": 0
+    },
+    {
+      "effect": "AIR CHORUS 0.1.2",
+      "moving": true,
+      "split": 5,
+      "cores": [
+        {
+          "core": 0,
+          "initInstructions": 84,
+          "peakBlockInstructions": 6308,
+          "nullBlockInstructions": 70,
+          "netWorstInstructionsPerSample": 389.875
+        },
+        {
+          "core": 1,
+          "initInstructions": 84,
+          "peakBlockInstructions": 6384,
+          "nullBlockInstructions": 70,
+          "netWorstInstructionsPerSample": 394.625
         }
       ],
       "clippedSamples": 0
@@ -1157,50 +1157,6 @@
       "clippedSamples": 0
     },
     {
-      "effect": "AIR CHORUS 0.1.0",
-      "moving": false,
-      "split": 6,
-      "cores": [
-        {
-          "core": 0,
-          "initInstructions": 75,
-          "peakBlockInstructions": 8462,
-          "nullBlockInstructions": 70,
-          "netWorstInstructionsPerSample": 524.5
-        },
-        {
-          "core": 1,
-          "initInstructions": 75,
-          "peakBlockInstructions": 8462,
-          "nullBlockInstructions": 70,
-          "netWorstInstructionsPerSample": 524.5
-        }
-      ],
-      "clippedSamples": 0
-    },
-    {
-      "effect": "AIR CHORUS 0.1.0",
-      "moving": true,
-      "split": 6,
-      "cores": [
-        {
-          "core": 0,
-          "initInstructions": 75,
-          "peakBlockInstructions": 8462,
-          "nullBlockInstructions": 70,
-          "netWorstInstructionsPerSample": 524.5
-        },
-        {
-          "core": 1,
-          "initInstructions": 75,
-          "peakBlockInstructions": 8462,
-          "nullBlockInstructions": 70,
-          "netWorstInstructionsPerSample": 524.5
-        }
-      ],
-      "clippedSamples": 0
-    },
-    {
       "effect": "AIR CHORUS 0.1.1",
       "moving": false,
       "split": 6,
@@ -1240,6 +1196,50 @@
           "peakBlockInstructions": 5410,
           "nullBlockInstructions": 70,
           "netWorstInstructionsPerSample": 333.75
+        }
+      ],
+      "clippedSamples": 0
+    },
+    {
+      "effect": "AIR CHORUS 0.1.2",
+      "moving": false,
+      "split": 6,
+      "cores": [
+        {
+          "core": 0,
+          "initInstructions": 84,
+          "peakBlockInstructions": 6350,
+          "nullBlockInstructions": 70,
+          "netWorstInstructionsPerSample": 392.5
+        },
+        {
+          "core": 1,
+          "initInstructions": 84,
+          "peakBlockInstructions": 6350,
+          "nullBlockInstructions": 70,
+          "netWorstInstructionsPerSample": 392.5
+        }
+      ],
+      "clippedSamples": 0
+    },
+    {
+      "effect": "AIR CHORUS 0.1.2",
+      "moving": true,
+      "split": 6,
+      "cores": [
+        {
+          "core": 0,
+          "initInstructions": 84,
+          "peakBlockInstructions": 6308,
+          "nullBlockInstructions": 70,
+          "netWorstInstructionsPerSample": 389.875
+        },
+        {
+          "core": 1,
+          "initInstructions": 84,
+          "peakBlockInstructions": 6384,
+          "nullBlockInstructions": 70,
+          "netWorstInstructionsPerSample": 394.625
         }
       ],
       "clippedSamples": 0
@@ -1333,50 +1333,6 @@
       "clippedSamples": 0
     },
     {
-      "effect": "AIR CHORUS 0.1.0",
-      "moving": false,
-      "split": 7,
-      "cores": [
-        {
-          "core": 0,
-          "initInstructions": 75,
-          "peakBlockInstructions": 8462,
-          "nullBlockInstructions": 70,
-          "netWorstInstructionsPerSample": 524.5
-        },
-        {
-          "core": 1,
-          "initInstructions": 75,
-          "peakBlockInstructions": 8462,
-          "nullBlockInstructions": 70,
-          "netWorstInstructionsPerSample": 524.5
-        }
-      ],
-      "clippedSamples": 0
-    },
-    {
-      "effect": "AIR CHORUS 0.1.0",
-      "moving": true,
-      "split": 7,
-      "cores": [
-        {
-          "core": 0,
-          "initInstructions": 75,
-          "peakBlockInstructions": 8462,
-          "nullBlockInstructions": 70,
-          "netWorstInstructionsPerSample": 524.5
-        },
-        {
-          "core": 1,
-          "initInstructions": 75,
-          "peakBlockInstructions": 8462,
-          "nullBlockInstructions": 70,
-          "netWorstInstructionsPerSample": 524.5
-        }
-      ],
-      "clippedSamples": 0
-    },
-    {
       "effect": "AIR CHORUS 0.1.1",
       "moving": false,
       "split": 7,
@@ -1416,6 +1372,50 @@
           "peakBlockInstructions": 5410,
           "nullBlockInstructions": 70,
           "netWorstInstructionsPerSample": 333.75
+        }
+      ],
+      "clippedSamples": 0
+    },
+    {
+      "effect": "AIR CHORUS 0.1.2",
+      "moving": false,
+      "split": 7,
+      "cores": [
+        {
+          "core": 0,
+          "initInstructions": 84,
+          "peakBlockInstructions": 6350,
+          "nullBlockInstructions": 70,
+          "netWorstInstructionsPerSample": 392.5
+        },
+        {
+          "core": 1,
+          "initInstructions": 84,
+          "peakBlockInstructions": 6350,
+          "nullBlockInstructions": 70,
+          "netWorstInstructionsPerSample": 392.5
+        }
+      ],
+      "clippedSamples": 0
+    },
+    {
+      "effect": "AIR CHORUS 0.1.2",
+      "moving": true,
+      "split": 7,
+      "cores": [
+        {
+          "core": 0,
+          "initInstructions": 84,
+          "peakBlockInstructions": 6308,
+          "nullBlockInstructions": 70,
+          "netWorstInstructionsPerSample": 389.875
+        },
+        {
+          "core": 1,
+          "initInstructions": 84,
+          "peakBlockInstructions": 6384,
+          "nullBlockInstructions": 70,
+          "netWorstInstructionsPerSample": 394.625
         }
       ],
       "clippedSamples": 0
@@ -1509,50 +1509,6 @@
       "clippedSamples": 0
     },
     {
-      "effect": "AIR CHORUS 0.1.0",
-      "moving": false,
-      "split": 8,
-      "cores": [
-        {
-          "core": 0,
-          "initInstructions": 75,
-          "peakBlockInstructions": 8462,
-          "nullBlockInstructions": 70,
-          "netWorstInstructionsPerSample": 524.5
-        },
-        {
-          "core": 1,
-          "initInstructions": 75,
-          "peakBlockInstructions": 8462,
-          "nullBlockInstructions": 70,
-          "netWorstInstructionsPerSample": 524.5
-        }
-      ],
-      "clippedSamples": 0
-    },
-    {
-      "effect": "AIR CHORUS 0.1.0",
-      "moving": true,
-      "split": 8,
-      "cores": [
-        {
-          "core": 0,
-          "initInstructions": 75,
-          "peakBlockInstructions": 8462,
-          "nullBlockInstructions": 70,
-          "netWorstInstructionsPerSample": 524.5
-        },
-        {
-          "core": 1,
-          "initInstructions": 75,
-          "peakBlockInstructions": 8462,
-          "nullBlockInstructions": 70,
-          "netWorstInstructionsPerSample": 524.5
-        }
-      ],
-      "clippedSamples": 0
-    },
-    {
       "effect": "AIR CHORUS 0.1.1",
       "moving": false,
       "split": 8,
@@ -1597,6 +1553,50 @@
       "clippedSamples": 0
     },
     {
+      "effect": "AIR CHORUS 0.1.2",
+      "moving": false,
+      "split": 8,
+      "cores": [
+        {
+          "core": 0,
+          "initInstructions": 84,
+          "peakBlockInstructions": 6350,
+          "nullBlockInstructions": 70,
+          "netWorstInstructionsPerSample": 392.5
+        },
+        {
+          "core": 1,
+          "initInstructions": 84,
+          "peakBlockInstructions": 6350,
+          "nullBlockInstructions": 70,
+          "netWorstInstructionsPerSample": 392.5
+        }
+      ],
+      "clippedSamples": 0
+    },
+    {
+      "effect": "AIR CHORUS 0.1.2",
+      "moving": true,
+      "split": 8,
+      "cores": [
+        {
+          "core": 0,
+          "initInstructions": 84,
+          "peakBlockInstructions": 6308,
+          "nullBlockInstructions": 70,
+          "netWorstInstructionsPerSample": 389.875
+        },
+        {
+          "core": 1,
+          "initInstructions": 84,
+          "peakBlockInstructions": 6384,
+          "nullBlockInstructions": 70,
+          "netWorstInstructionsPerSample": 394.625
+        }
+      ],
+      "clippedSamples": 0
+    },
+    {
       "effect": "SPRING REV",
       "moving": false,
       "split": 9,
@@ -1685,50 +1685,6 @@
       "clippedSamples": 0
     },
     {
-      "effect": "AIR CHORUS 0.1.0",
-      "moving": false,
-      "split": 9,
-      "cores": [
-        {
-          "core": 0,
-          "initInstructions": 75,
-          "peakBlockInstructions": 8462,
-          "nullBlockInstructions": 70,
-          "netWorstInstructionsPerSample": 524.5
-        },
-        {
-          "core": 1,
-          "initInstructions": 75,
-          "peakBlockInstructions": 8462,
-          "nullBlockInstructions": 70,
-          "netWorstInstructionsPerSample": 524.5
-        }
-      ],
-      "clippedSamples": 0
-    },
-    {
-      "effect": "AIR CHORUS 0.1.0",
-      "moving": true,
-      "split": 9,
-      "cores": [
-        {
-          "core": 0,
-          "initInstructions": 75,
-          "peakBlockInstructions": 8462,
-          "nullBlockInstructions": 70,
-          "netWorstInstructionsPerSample": 524.5
-        },
-        {
-          "core": 1,
-          "initInstructions": 75,
-          "peakBlockInstructions": 8462,
-          "nullBlockInstructions": 70,
-          "netWorstInstructionsPerSample": 524.5
-        }
-      ],
-      "clippedSamples": 0
-    },
-    {
       "effect": "AIR CHORUS 0.1.1",
       "moving": false,
       "split": 9,
@@ -1768,6 +1724,50 @@
           "peakBlockInstructions": 5410,
           "nullBlockInstructions": 70,
           "netWorstInstructionsPerSample": 333.75
+        }
+      ],
+      "clippedSamples": 0
+    },
+    {
+      "effect": "AIR CHORUS 0.1.2",
+      "moving": false,
+      "split": 9,
+      "cores": [
+        {
+          "core": 0,
+          "initInstructions": 84,
+          "peakBlockInstructions": 6350,
+          "nullBlockInstructions": 70,
+          "netWorstInstructionsPerSample": 392.5
+        },
+        {
+          "core": 1,
+          "initInstructions": 84,
+          "peakBlockInstructions": 6350,
+          "nullBlockInstructions": 70,
+          "netWorstInstructionsPerSample": 392.5
+        }
+      ],
+      "clippedSamples": 0
+    },
+    {
+      "effect": "AIR CHORUS 0.1.2",
+      "moving": true,
+      "split": 9,
+      "cores": [
+        {
+          "core": 0,
+          "initInstructions": 84,
+          "peakBlockInstructions": 6308,
+          "nullBlockInstructions": 70,
+          "netWorstInstructionsPerSample": 389.875
+        },
+        {
+          "core": 1,
+          "initInstructions": 84,
+          "peakBlockInstructions": 6384,
+          "nullBlockInstructions": 70,
+          "netWorstInstructionsPerSample": 394.625
         }
       ],
       "clippedSamples": 0
@@ -1861,50 +1861,6 @@
       "clippedSamples": 0
     },
     {
-      "effect": "AIR CHORUS 0.1.0",
-      "moving": false,
-      "split": 10,
-      "cores": [
-        {
-          "core": 0,
-          "initInstructions": 75,
-          "peakBlockInstructions": 8462,
-          "nullBlockInstructions": 70,
-          "netWorstInstructionsPerSample": 524.5
-        },
-        {
-          "core": 1,
-          "initInstructions": 75,
-          "peakBlockInstructions": 8462,
-          "nullBlockInstructions": 70,
-          "netWorstInstructionsPerSample": 524.5
-        }
-      ],
-      "clippedSamples": 0
-    },
-    {
-      "effect": "AIR CHORUS 0.1.0",
-      "moving": true,
-      "split": 10,
-      "cores": [
-        {
-          "core": 0,
-          "initInstructions": 75,
-          "peakBlockInstructions": 8462,
-          "nullBlockInstructions": 70,
-          "netWorstInstructionsPerSample": 524.5
-        },
-        {
-          "core": 1,
-          "initInstructions": 75,
-          "peakBlockInstructions": 8462,
-          "nullBlockInstructions": 70,
-          "netWorstInstructionsPerSample": 524.5
-        }
-      ],
-      "clippedSamples": 0
-    },
-    {
       "effect": "AIR CHORUS 0.1.1",
       "moving": false,
       "split": 10,
@@ -1944,6 +1900,50 @@
           "peakBlockInstructions": 5410,
           "nullBlockInstructions": 70,
           "netWorstInstructionsPerSample": 333.75
+        }
+      ],
+      "clippedSamples": 0
+    },
+    {
+      "effect": "AIR CHORUS 0.1.2",
+      "moving": false,
+      "split": 10,
+      "cores": [
+        {
+          "core": 0,
+          "initInstructions": 84,
+          "peakBlockInstructions": 6350,
+          "nullBlockInstructions": 70,
+          "netWorstInstructionsPerSample": 392.5
+        },
+        {
+          "core": 1,
+          "initInstructions": 84,
+          "peakBlockInstructions": 6350,
+          "nullBlockInstructions": 70,
+          "netWorstInstructionsPerSample": 392.5
+        }
+      ],
+      "clippedSamples": 0
+    },
+    {
+      "effect": "AIR CHORUS 0.1.2",
+      "moving": true,
+      "split": 10,
+      "cores": [
+        {
+          "core": 0,
+          "initInstructions": 84,
+          "peakBlockInstructions": 6308,
+          "nullBlockInstructions": 70,
+          "netWorstInstructionsPerSample": 389.875
+        },
+        {
+          "core": 1,
+          "initInstructions": 84,
+          "peakBlockInstructions": 6384,
+          "nullBlockInstructions": 70,
+          "netWorstInstructionsPerSample": 394.625
         }
       ],
       "clippedSamples": 0
@@ -2037,50 +2037,6 @@
       "clippedSamples": 0
     },
     {
-      "effect": "AIR CHORUS 0.1.0",
-      "moving": false,
-      "split": 11,
-      "cores": [
-        {
-          "core": 0,
-          "initInstructions": 75,
-          "peakBlockInstructions": 8462,
-          "nullBlockInstructions": 70,
-          "netWorstInstructionsPerSample": 524.5
-        },
-        {
-          "core": 1,
-          "initInstructions": 75,
-          "peakBlockInstructions": 8462,
-          "nullBlockInstructions": 70,
-          "netWorstInstructionsPerSample": 524.5
-        }
-      ],
-      "clippedSamples": 0
-    },
-    {
-      "effect": "AIR CHORUS 0.1.0",
-      "moving": true,
-      "split": 11,
-      "cores": [
-        {
-          "core": 0,
-          "initInstructions": 75,
-          "peakBlockInstructions": 8462,
-          "nullBlockInstructions": 70,
-          "netWorstInstructionsPerSample": 524.5
-        },
-        {
-          "core": 1,
-          "initInstructions": 75,
-          "peakBlockInstructions": 8462,
-          "nullBlockInstructions": 70,
-          "netWorstInstructionsPerSample": 524.5
-        }
-      ],
-      "clippedSamples": 0
-    },
-    {
       "effect": "AIR CHORUS 0.1.1",
       "moving": false,
       "split": 11,
@@ -2120,6 +2076,50 @@
           "peakBlockInstructions": 5410,
           "nullBlockInstructions": 70,
           "netWorstInstructionsPerSample": 333.75
+        }
+      ],
+      "clippedSamples": 0
+    },
+    {
+      "effect": "AIR CHORUS 0.1.2",
+      "moving": false,
+      "split": 11,
+      "cores": [
+        {
+          "core": 0,
+          "initInstructions": 84,
+          "peakBlockInstructions": 6350,
+          "nullBlockInstructions": 70,
+          "netWorstInstructionsPerSample": 392.5
+        },
+        {
+          "core": 1,
+          "initInstructions": 84,
+          "peakBlockInstructions": 6350,
+          "nullBlockInstructions": 70,
+          "netWorstInstructionsPerSample": 392.5
+        }
+      ],
+      "clippedSamples": 0
+    },
+    {
+      "effect": "AIR CHORUS 0.1.2",
+      "moving": true,
+      "split": 11,
+      "cores": [
+        {
+          "core": 0,
+          "initInstructions": 84,
+          "peakBlockInstructions": 6308,
+          "nullBlockInstructions": 70,
+          "netWorstInstructionsPerSample": 389.875
+        },
+        {
+          "core": 1,
+          "initInstructions": 84,
+          "peakBlockInstructions": 6384,
+          "nullBlockInstructions": 70,
+          "netWorstInstructionsPerSample": 394.625
         }
       ],
       "clippedSamples": 0
@@ -2213,50 +2213,6 @@
       "clippedSamples": 0
     },
     {
-      "effect": "AIR CHORUS 0.1.0",
-      "moving": false,
-      "split": 12,
-      "cores": [
-        {
-          "core": 0,
-          "initInstructions": 75,
-          "peakBlockInstructions": 8462,
-          "nullBlockInstructions": 70,
-          "netWorstInstructionsPerSample": 524.5
-        },
-        {
-          "core": 1,
-          "initInstructions": 75,
-          "peakBlockInstructions": 8462,
-          "nullBlockInstructions": 70,
-          "netWorstInstructionsPerSample": 524.5
-        }
-      ],
-      "clippedSamples": 0
-    },
-    {
-      "effect": "AIR CHORUS 0.1.0",
-      "moving": true,
-      "split": 12,
-      "cores": [
-        {
-          "core": 0,
-          "initInstructions": 75,
-          "peakBlockInstructions": 8462,
-          "nullBlockInstructions": 70,
-          "netWorstInstructionsPerSample": 524.5
-        },
-        {
-          "core": 1,
-          "initInstructions": 75,
-          "peakBlockInstructions": 8462,
-          "nullBlockInstructions": 70,
-          "netWorstInstructionsPerSample": 524.5
-        }
-      ],
-      "clippedSamples": 0
-    },
-    {
       "effect": "AIR CHORUS 0.1.1",
       "moving": false,
       "split": 12,
@@ -2301,6 +2257,50 @@
       "clippedSamples": 0
     },
     {
+      "effect": "AIR CHORUS 0.1.2",
+      "moving": false,
+      "split": 12,
+      "cores": [
+        {
+          "core": 0,
+          "initInstructions": 84,
+          "peakBlockInstructions": 6350,
+          "nullBlockInstructions": 70,
+          "netWorstInstructionsPerSample": 392.5
+        },
+        {
+          "core": 1,
+          "initInstructions": 84,
+          "peakBlockInstructions": 6350,
+          "nullBlockInstructions": 70,
+          "netWorstInstructionsPerSample": 392.5
+        }
+      ],
+      "clippedSamples": 0
+    },
+    {
+      "effect": "AIR CHORUS 0.1.2",
+      "moving": true,
+      "split": 12,
+      "cores": [
+        {
+          "core": 0,
+          "initInstructions": 84,
+          "peakBlockInstructions": 6308,
+          "nullBlockInstructions": 70,
+          "netWorstInstructionsPerSample": 389.875
+        },
+        {
+          "core": 1,
+          "initInstructions": 84,
+          "peakBlockInstructions": 6384,
+          "nullBlockInstructions": 70,
+          "netWorstInstructionsPerSample": 394.625
+        }
+      ],
+      "clippedSamples": 0
+    },
+    {
       "effect": "SPRING REV",
       "moving": false,
       "split": 13,
@@ -2389,50 +2389,6 @@
       "clippedSamples": 0
     },
     {
-      "effect": "AIR CHORUS 0.1.0",
-      "moving": false,
-      "split": 13,
-      "cores": [
-        {
-          "core": 0,
-          "initInstructions": 75,
-          "peakBlockInstructions": 8462,
-          "nullBlockInstructions": 70,
-          "netWorstInstructionsPerSample": 524.5
-        },
-        {
-          "core": 1,
-          "initInstructions": 75,
-          "peakBlockInstructions": 8462,
-          "nullBlockInstructions": 70,
-          "netWorstInstructionsPerSample": 524.5
-        }
-      ],
-      "clippedSamples": 0
-    },
-    {
-      "effect": "AIR CHORUS 0.1.0",
-      "moving": true,
-      "split": 13,
-      "cores": [
-        {
-          "core": 0,
-          "initInstructions": 75,
-          "peakBlockInstructions": 8462,
-          "nullBlockInstructions": 70,
-          "netWorstInstructionsPerSample": 524.5
-        },
-        {
-          "core": 1,
-          "initInstructions": 75,
-          "peakBlockInstructions": 8462,
-          "nullBlockInstructions": 70,
-          "netWorstInstructionsPerSample": 524.5
-        }
-      ],
-      "clippedSamples": 0
-    },
-    {
       "effect": "AIR CHORUS 0.1.1",
       "moving": false,
       "split": 13,
@@ -2472,6 +2428,50 @@
           "peakBlockInstructions": 5410,
           "nullBlockInstructions": 70,
           "netWorstInstructionsPerSample": 333.75
+        }
+      ],
+      "clippedSamples": 0
+    },
+    {
+      "effect": "AIR CHORUS 0.1.2",
+      "moving": false,
+      "split": 13,
+      "cores": [
+        {
+          "core": 0,
+          "initInstructions": 84,
+          "peakBlockInstructions": 6350,
+          "nullBlockInstructions": 70,
+          "netWorstInstructionsPerSample": 392.5
+        },
+        {
+          "core": 1,
+          "initInstructions": 84,
+          "peakBlockInstructions": 6350,
+          "nullBlockInstructions": 70,
+          "netWorstInstructionsPerSample": 392.5
+        }
+      ],
+      "clippedSamples": 0
+    },
+    {
+      "effect": "AIR CHORUS 0.1.2",
+      "moving": true,
+      "split": 13,
+      "cores": [
+        {
+          "core": 0,
+          "initInstructions": 84,
+          "peakBlockInstructions": 6308,
+          "nullBlockInstructions": 70,
+          "netWorstInstructionsPerSample": 389.875
+        },
+        {
+          "core": 1,
+          "initInstructions": 84,
+          "peakBlockInstructions": 6384,
+          "nullBlockInstructions": 70,
+          "netWorstInstructionsPerSample": 394.625
         }
       ],
       "clippedSamples": 0
@@ -2565,50 +2565,6 @@
       "clippedSamples": 0
     },
     {
-      "effect": "AIR CHORUS 0.1.0",
-      "moving": false,
-      "split": 14,
-      "cores": [
-        {
-          "core": 0,
-          "initInstructions": 75,
-          "peakBlockInstructions": 8462,
-          "nullBlockInstructions": 70,
-          "netWorstInstructionsPerSample": 524.5
-        },
-        {
-          "core": 1,
-          "initInstructions": 75,
-          "peakBlockInstructions": 8462,
-          "nullBlockInstructions": 70,
-          "netWorstInstructionsPerSample": 524.5
-        }
-      ],
-      "clippedSamples": 0
-    },
-    {
-      "effect": "AIR CHORUS 0.1.0",
-      "moving": true,
-      "split": 14,
-      "cores": [
-        {
-          "core": 0,
-          "initInstructions": 75,
-          "peakBlockInstructions": 8462,
-          "nullBlockInstructions": 70,
-          "netWorstInstructionsPerSample": 524.5
-        },
-        {
-          "core": 1,
-          "initInstructions": 75,
-          "peakBlockInstructions": 8462,
-          "nullBlockInstructions": 70,
-          "netWorstInstructionsPerSample": 524.5
-        }
-      ],
-      "clippedSamples": 0
-    },
-    {
       "effect": "AIR CHORUS 0.1.1",
       "moving": false,
       "split": 14,
@@ -2648,6 +2604,50 @@
           "peakBlockInstructions": 5410,
           "nullBlockInstructions": 70,
           "netWorstInstructionsPerSample": 333.75
+        }
+      ],
+      "clippedSamples": 0
+    },
+    {
+      "effect": "AIR CHORUS 0.1.2",
+      "moving": false,
+      "split": 14,
+      "cores": [
+        {
+          "core": 0,
+          "initInstructions": 84,
+          "peakBlockInstructions": 6350,
+          "nullBlockInstructions": 70,
+          "netWorstInstructionsPerSample": 392.5
+        },
+        {
+          "core": 1,
+          "initInstructions": 84,
+          "peakBlockInstructions": 6350,
+          "nullBlockInstructions": 70,
+          "netWorstInstructionsPerSample": 392.5
+        }
+      ],
+      "clippedSamples": 0
+    },
+    {
+      "effect": "AIR CHORUS 0.1.2",
+      "moving": true,
+      "split": 14,
+      "cores": [
+        {
+          "core": 0,
+          "initInstructions": 84,
+          "peakBlockInstructions": 6308,
+          "nullBlockInstructions": 70,
+          "netWorstInstructionsPerSample": 389.875
+        },
+        {
+          "core": 1,
+          "initInstructions": 84,
+          "peakBlockInstructions": 6384,
+          "nullBlockInstructions": 70,
+          "netWorstInstructionsPerSample": 394.625
         }
       ],
       "clippedSamples": 0
@@ -2741,50 +2741,6 @@
       "clippedSamples": 0
     },
     {
-      "effect": "AIR CHORUS 0.1.0",
-      "moving": false,
-      "split": 15,
-      "cores": [
-        {
-          "core": 0,
-          "initInstructions": 75,
-          "peakBlockInstructions": 8462,
-          "nullBlockInstructions": 70,
-          "netWorstInstructionsPerSample": 524.5
-        },
-        {
-          "core": 1,
-          "initInstructions": 75,
-          "peakBlockInstructions": 8462,
-          "nullBlockInstructions": 70,
-          "netWorstInstructionsPerSample": 524.5
-        }
-      ],
-      "clippedSamples": 0
-    },
-    {
-      "effect": "AIR CHORUS 0.1.0",
-      "moving": true,
-      "split": 15,
-      "cores": [
-        {
-          "core": 0,
-          "initInstructions": 75,
-          "peakBlockInstructions": 8462,
-          "nullBlockInstructions": 70,
-          "netWorstInstructionsPerSample": 524.5
-        },
-        {
-          "core": 1,
-          "initInstructions": 75,
-          "peakBlockInstructions": 8462,
-          "nullBlockInstructions": 70,
-          "netWorstInstructionsPerSample": 524.5
-        }
-      ],
-      "clippedSamples": 0
-    },
-    {
       "effect": "AIR CHORUS 0.1.1",
       "moving": false,
       "split": 15,
@@ -2824,6 +2780,50 @@
           "peakBlockInstructions": 5410,
           "nullBlockInstructions": 70,
           "netWorstInstructionsPerSample": 333.75
+        }
+      ],
+      "clippedSamples": 0
+    },
+    {
+      "effect": "AIR CHORUS 0.1.2",
+      "moving": false,
+      "split": 15,
+      "cores": [
+        {
+          "core": 0,
+          "initInstructions": 84,
+          "peakBlockInstructions": 6350,
+          "nullBlockInstructions": 70,
+          "netWorstInstructionsPerSample": 392.5
+        },
+        {
+          "core": 1,
+          "initInstructions": 84,
+          "peakBlockInstructions": 6350,
+          "nullBlockInstructions": 70,
+          "netWorstInstructionsPerSample": 392.5
+        }
+      ],
+      "clippedSamples": 0
+    },
+    {
+      "effect": "AIR CHORUS 0.1.2",
+      "moving": true,
+      "split": 15,
+      "cores": [
+        {
+          "core": 0,
+          "initInstructions": 84,
+          "peakBlockInstructions": 6308,
+          "nullBlockInstructions": 70,
+          "netWorstInstructionsPerSample": 389.875
+        },
+        {
+          "core": 1,
+          "initInstructions": 84,
+          "peakBlockInstructions": 6384,
+          "nullBlockInstructions": 70,
+          "netWorstInstructionsPerSample": 394.625
         }
       ],
       "clippedSamples": 0

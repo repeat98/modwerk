@@ -1,0 +1,317 @@
+{
+  "schemaVersion": 2,
+  "id": "output-matrix",
+  "key": "OUTPUT MATRIX",
+  "name": "Output Matrix",
+  "version": "0.1.0-experimental",
+  "category": "system",
+  "author": {
+    "github": "npp1993",
+    "credits": [
+      "npp1993"
+    ]
+  },
+  "nativeManifest": "manifest.py",
+  "presentation": {
+    "label": "Any track to MAIN, CUE or PHONES",
+    "family": "Output routing",
+    "summary": "Turn the headphone jack into a third assignable output pair and pick each track's outputs with CUE + LEVEL.",
+    "overview": "Adds MATRIX beside NORMAL and STUDIO in PROJECT > CONTROL > AUDIO (the box stock calls CUE CFG, titled OUT CFG with the module). In MATRIX, LEVEL sets a track's level and CUE + LEVEL chooses where it plays: MAIN, CUE or PHONES as stereo pairs in any combination, or a single mono jack of the six (track L+R summed at half each, so a centred sound keeps its level). The choice is stored in the Part, so it survives SRC page resets, Part reload and project save. The MIXER's MIX knob becomes the PHONES output level. Inputs keep their stock DIR routing to MAIN.",
+    "highlights": [
+      "Three stereo output pairs: MAIN, CUE and the headphone jack.",
+      "Per track: any combination of MAIN, CUE and PHONES, or one mono jack (MAIN L/R, CUE L/R, PHONES L/R).",
+      "Routing lives in the Part: SRC page resets and track clears leave it alone.",
+      "With MASTER TRACK on, tracks routed to MAIN feed the master and track 8's destination picks where the master plays."
+    ],
+    "usage": [
+      "PROJECT > CONTROL > AUDIO: select OUT CFG > MATRIX and press YES.",
+      "On a track, hold CUE: the LEV box shows the destination. Turn LEVEL to change it.",
+      "In the MIXER, MIX (labelled PHN) sets the PHONES output level. Choose NORMAL or STUDIO again to return to stock behaviour."
+    ]
+  },
+  "controls": [],
+  "compatibility": {
+    "firmware": "1.40C",
+    "location": "Audio tracks",
+    "conflicts": [
+      "analog-bassdrum"
+    ],
+    "limitations": [
+      "Builds with the stock DSP code built in and takes a given-up stock effect's program memory on core 0. The builder chooses it: SPRING REV first, then PLATE REV or DARK REV when other modules also need room. The given-up effect leaves the FX2 menu.",
+      "The MATRIX mixdown costs core 0 up to about 210 more instructions per sample than stock (every track on ALL, MASTER on, bus levels moving); every track on MAIN adds about 20.",
+      "Switching to or from MATRIX rewrites every Part's LEVEL and cue bytes (and, into NORMAL, the project's cue settings) by documented rules; save to keep it.",
+      "A MATRIX project opened on a stock OS loads as STUDIO with tiny cue levels; switch to NORMAL or STUDIO before flashing another OS.",
+      "Changes core 0's mixdown and headphone crossfade; other modules that hook those sites are refused by the ledger.",
+      "Not yet combinable with Analog BD, whose builder places DSP code only beside a reviewed list of effects."
+    ],
+    "effectId": null
+  },
+  "resources": {
+    "recorded": "Measured in the ColdFire port (instructions) and from the build report",
+    "storage": {
+      "label": "Memory",
+      "display": "1,610 B DRAM + 769 DSP P words + 193 DSP Y words",
+      "value": 4496,
+      "unit": "bytes",
+      "method": "static",
+      "conditions": "ColdFire unit .text 1,464 B and .data 146 B (runtime ELF); DSP P code 727 words and a 42-word table in SPRING REV's harvested span on core 0; DSP Y $c00..$cc0. No per-track copies, no audio buffers.",
+      "source": "TESTING.md"
+    },
+    "processing": {
+      "label": "DSP core 0 mixdown",
+      "display": "≤ 277 instructions/sample (stock 67)",
+      "value": 277,
+      "unit": "instructions/sample",
+      "method": "emulator",
+      "conditions": "Executed instructions of the mixdown (P:$257..$2d5) and headphone crossfade (P:$30a..$35a) per 16-sample frame, every track on ALL, MASTER on, MAIN/CUE/PHONES levels moving, including the frame that rebuilds the routing lists: 4,240 + 192 per frame (4,336 before the 12-word trim, TESTING.md). Stock: 880 + 191. Cycles and bus stalls are not modelled.",
+      "source": "TESTING.md"
+    },
+    "impact": {
+      "conditions": "Eight tracks in MATRIX at the dearest routing (every track on ALL, MASTER on, levels moving); NORMAL and STUDIO run stock code plus a 4-instruction check.",
+      "cpu": {
+        "level": "minimal",
+        "basis": "measured-comparison",
+        "rationale": "The level-page detour runs once a frame, 189 instructions typical and 229 at most (all eight tracks changing destination). The mode conversion runs once per switch in the UI task.",
+        "source": "TESTING.md"
+      },
+      "dsp": {
+        "level": "low",
+        "basis": "measured-comparison",
+        "rationale": "Up to about 210 extra instructions per sample on core 0 (about 7% of 3,120); about 20 with every track on MAIN.",
+        "source": "TESTING.md"
+      },
+      "memory": {
+        "level": "low",
+        "basis": "measured-comparison",
+        "rationale": "1,610 bytes of DRAM code and data, 769 DSP program words reused from SPRING REV and 193 DSP Y words.",
+        "source": "TESTING.md"
+      }
+    }
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "The image gate passes 117 checks under the ColdFire port: every destination, mono sums, MAIN against stock, the level law, MKII, MASTER, mute, DIR, the declick, every mode-conversion rule by the keys (including track 8 as the master and the power-cycle copies), CC 51 out and a power cycle. On an MKII the author tested routing, levels, the MIXER, everyday flows, saving and power and the conversion (functional report, 7–9 Oct 2026). No timed stress run, no chip timing.",
+    "hardwareStatus": "reported",
+    "evidenceRevision": "a118cf12c801921196854c15608654b460946c4a",
+    "gates": [
+      "modules/output-matrix/verify.py"
+    ],
+    "qualification": {
+      "moduleVersion": "0.1.0-experimental",
+      "sourceSha256": "b5a6b32d98de4a305f901a7e7d3ea89ed9dc39a5bfbebcbcfe4fd3559613e337",
+      "imageSha256": "3e883adbaff67781f526e6e2c01a7833bdcd0696be79df296b624937b969e514",
+      "cycles": [
+        {
+          "processor": "dsp",
+          "worstCase": 277,
+          "maxConfiguration": 277,
+          "maxInstances": 1,
+          "budget": 3120,
+          "unit": "cycles/sample",
+          "method": "emulator",
+          "conditions": {
+            "parameterExtremes": "Every destination code 0..13 per track, all eight tracks on ALL, mixed stereo and mono routings, MAIN/CUE/PHONES levels 0..127, MASTER on and off.",
+            "parameterModulation": "MAIN, CUE and MIX levels changed every other frame for 60 frames; LEVEL, XVOL scenes, locks and LFOs act through stock gain ramps the mixdown reads, unchanged.",
+            "modeSwitching": "All eight tracks changing destination in one frame (list rebuild and declick), and NORMAL/STUDIO/MATRIX switches.",
+            "maxLoad": "One instance per unit (a global mode). Worst measured: 4,240 + 192 executed instructions per 16-sample frame on core 0, every track on ALL with MASTER on; stock 880 + 191.",
+            "inputConditions": "Tone and four-input test audio; the code path does not depend on sample values. Counts are executed instructions, not modelled cycles."
+          },
+          "report": "TESTING.md"
+        },
+        {
+          "processor": "coldfire",
+          "worstCase": 229,
+          "maxConfiguration": 229,
+          "maxInstances": 1,
+          "budget": 9650,
+          "unit": "cycles/block",
+          "method": "emulator",
+          "conditions": {
+            "parameterExtremes": "Every destination per track, levels 0..127, MASTER on and off.",
+            "parameterModulation": "Level changes every other frame; not routed through LFOs or locks.",
+            "modeSwitching": "All eight tracks changing destination in one frame (the declick path for each).",
+            "maxLoad": "The level-page detour, once a frame: 189 executed instructions typical, 229 at most. Budget: 10% of a 362.8 us frame at 266 MHz. The mode conversion (16 banks x 8 Parts) runs once per switch in the UI task, outside the frame.",
+            "inputConditions": "Independent of audio. Executed instructions; cycles and cache effects are not modelled."
+          },
+          "report": "TESTING.md"
+        }
+      ],
+      "memory": {
+        "regions": [
+          {
+            "name": "ColdFire code and the AUDIO page tables stock code points at (DRAM unit .text)",
+            "space": "sdram",
+            "words": 1464,
+            "wordBits": 8,
+            "bytes": 1464,
+            "scope": "shared"
+          },
+          {
+            "name": "ColdFire data: routing state and names (DRAM unit .data)",
+            "space": "sdram",
+            "words": 146,
+            "wordBits": 8,
+            "bytes": 146,
+            "scope": "shared"
+          },
+          {
+            "name": "DSP core 0 program: mixdown and phones hooks, in SPRING REV's harvested span",
+            "space": "dsp-p",
+            "words": 727,
+            "wordBits": 24,
+            "bytes": 2181,
+            "scope": "shared"
+          },
+          {
+            "name": "DSP core 0 program: the 42-word destination table",
+            "space": "dsp-p",
+            "words": 42,
+            "wordBits": 24,
+            "bytes": 126,
+            "scope": "shared"
+          },
+          {
+            "name": "DSP core 0 Y: bus factors, lists, PHONES buffer ($c00..$cc0)",
+            "space": "dsp-y",
+            "words": 193,
+            "wordBits": 24,
+            "bytes": 579,
+            "scope": "shared"
+          }
+        ],
+        "perInstanceBytes": 0,
+        "sharedBytes": 4496,
+        "maxInstances": 1,
+        "totalBytes": 4496,
+        "conditions": "From the static build's runtime ELF and the DSP placement report. Detours patch stock instructions in place; the level-page words and battery-RAM copies the module uses are stock's. No heap; ColdFire stack use is the callers' frames plus at most 48 bytes (set_mode's saved registers and the conversion's call chain).",
+        "report": "TESTING.md"
+      },
+      "hardware": {
+        "kind": "functional",
+        "status": "reported",
+        "model": "MKII",
+        "testedOn": "2026-10-09",
+        "tester": "npp1993",
+        "sourceRevision": "a118cf12c801921196854c15608654b460946c4a",
+        "imageSha256": "3e883adbaff67781f526e6e2c01a7833bdcd0696be79df296b624937b969e514",
+        "summary": "On an Octatrack MKII the author flashed PHNSTAT8 and PHNSTAT9 (7-8 Oct, the module under its earlier name, stock DSP code built in, SPRING REV off the menus) and checked: tracks reach MAIN, CUE and PHONES separately, mono jacks and sides, LEVEL on every output, the MIXER's MAIN, CUE and PHN, the headphone knob, no zipper noise, a semi-busy project with tracks on PHONES without dropouts, mute and solo, page resets, Parts and Part reload, patterns, XVOL, metronome, inputs, the master track, save and power cycle with unsaved routing, project reload, the stock NORMAL and STUDIO flows, and the mode conversion to STUDIO and NORMAL and back. On 9 Oct the author flashed OUTMTX10 (the renaming only: the AUDIO page reads OUT CFG with NORMAL, STUDIO and MATRIX) then OUTMTX11, which adds the review fixes: with track 8 as the master routed to M+C, switching to NORMAL leaves it uncued with the master still on MAIN, and switching back shows MN; a track routed to PHN plays only in the headphones. Then OUTMTX12, which loads each routing list's length in one instruction (-12 DSP words): tracks on MN, CUE and PHN, several on one output, the mono jacks, M+P and ALL, the master track and destination changes during playback all played as before. Then OUTMTX13, this source, which moves the AUDIO page's tables into the unit's code section so the website builder places them where native does: OUT CFG with NORMAL, STUDIO and MATRIX, track 8 as the master (MASTER and NORMAL rows), MATRIX to NORMAL and back, routing changes, and routing kept over a power cycle.",
+        "limitations": [
+          "A functional interactive report, not a timed stress run; no audio or timing measurement on the chip.",
+          "One MKII; no MKI.",
+          "Conversions in Parts other than the current one and in other banks were checked in the emulator only.",
+          "No combination with other modules on the unit.",
+          "OUTMTX10, OUTMTX11 and OUTMTX12 were given short checks of what changed; the full checks ran on PHNSTAT8/9, whose behaviour the gate shows unchanged otherwise.",
+          "CC 51 out on a switch into NORMAL is emulator-verified only (no controller was connected)."
+        ],
+        "report": "TESTING.md"
+      },
+      "documentation": {
+        "tutorial": {
+          "title": "Quick tutorial",
+          "steps": [
+            "Press PROJ, open CONTROL > AUDIO, move right into OUT CFG, select MATRIX and press YES.",
+            "Select track 1, hold CUE and turn LEVEL until the LEV box reads PHN: track 1 now plays only in the headphones.",
+            "Open the MIXER and turn MIX (PHN) to set the headphone level; choose NORMAL again to return to stock routing."
+          ]
+        },
+        "screenshots": [
+          "media/ot-out-cfg-menu.png",
+          "media/ot-cue-held.png",
+          "media/ot-cue-level-phn.png",
+          "media/ot-mixer-phn.png"
+        ],
+        "screenshotStyle": "black-and-white"
+      }
+    }
+  },
+  "license": {
+    "spdx": "MIT",
+    "file": "LICENSE",
+    "declaration": "Original code by npp1993 under the MIT licence. Stock code is referenced by address and SHA-256 only; no Elektron firmware, routines or tables are included."
+  },
+  "media": [
+    {
+      "path": "media/ot-out-cfg-menu.png",
+      "captureType": "emulator",
+      "caption": "PROJECT > CONTROL > AUDIO: move right into the OUT CFG box, select MATRIX and press YES. NORMAL and STUDIO behave as stock.",
+      "alt": "Actual Octatrack LCD: CONTROL AUDIO page with a TRACK 8 box and a OUT CFG box listing NORMAL, STUDIO and MATRIX, MATRIX checked.",
+      "credit": "npp1993",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "PROJECT > CONTROL > AUDIO",
+        "shows": "location",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "4bba473634b4a9c9f946ae7f721240e8fcef354bff849ad501a29c8b2568176f",
+        "setup": "Headless ot_emu; MKII panel; empty disposable card (fresh project); stopped transport; actual 128×64 LCD pixels at integer scale 6."
+      }
+    },
+    {
+      "path": "media/ot-cue-held.png",
+      "captureType": "emulator",
+      "caption": "Hold CUE on any audio track: the LEV box shows where the track plays. MN means MAIN, the starting point after switching from NORMAL.",
+      "alt": "Actual Octatrack LCD: a track's SRC page with the LEV box labelled MN above its level bar.",
+      "credit": "npp1993",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "SRC page, CUE held",
+        "shows": "controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "4bba473634b4a9c9f946ae7f721240e8fcef354bff849ad501a29c8b2568176f",
+        "setup": "Headless ot_emu; MKII panel; empty disposable card (fresh project); stopped transport; actual 128×64 LCD pixels at integer scale 6."
+      }
+    },
+    {
+      "path": "media/ot-cue-level-phn.png",
+      "captureType": "emulator",
+      "caption": "Keep CUE held and turn LEVEL to step through MN, CUE, PHN, M+C, M+P, C+P, ALL, the six mono jacks and OFF. PHN puts the track in the headphones only.",
+      "alt": "Actual Octatrack LCD: the same SRC page with the LEV box labelled PHN.",
+      "credit": "npp1993",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "SRC page, CUE + LEVEL",
+        "shows": "controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "4bba473634b4a9c9f946ae7f721240e8fcef354bff849ad501a29c8b2568176f",
+        "setup": "Headless ot_emu; MKII panel; empty disposable card (fresh project); stopped transport; actual 128×64 LCD pixels at integer scale 6."
+      }
+    },
+    {
+      "path": "media/ot-mixer-phn.png",
+      "captureType": "emulator",
+      "caption": "In MATRIX the MIXER's MIX knob is labelled PHN: it sets the headphone output's level, centre 0 dB. MAIN and CUE work as stock.",
+      "alt": "Actual Octatrack LCD: the MIXER with the first box labelled PHN over a slider marked - and +, beside MAIN and CUE at +0.",
+      "credit": "npp1993",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "MIXER",
+        "shows": "controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "4bba473634b4a9c9f946ae7f721240e8fcef354bff849ad501a29c8b2568176f",
+        "setup": "Headless ot_emu; MKII panel; empty disposable card (fresh project); stopped transport; actual 128×64 LCD pixels at integer scale 6."
+      }
+    }
+  ],
+  "access": {
+    "location": "PROJECT > CONTROL > AUDIO > OUT CFG (stock CUE CFG) > MATRIX; then CUE + LEVEL on any audio track, and MIX in the MIXER.",
+    "steps": [
+      "Include Output Matrix in your build.",
+      "Press PROJ (MKII), open CONTROL > AUDIO, move right into the OUT CFG box, select MATRIX and press YES.",
+      "Select an audio track, hold CUE and turn LEVEL to pick its outputs; the LEV box shows the destination.",
+      "Open the MIXER: MIX, labelled PHN, sets the headphone output level."
+    ],
+    "screenshots": [
+      "media/ot-out-cfg-menu.png",
+      "media/ot-cue-held.png",
+      "media/ot-cue-level-phn.png",
+      "media/ot-mixer-phn.png"
+    ]
+  }
+}

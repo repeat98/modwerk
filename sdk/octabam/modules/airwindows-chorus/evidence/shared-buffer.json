@@ -1,0 +1,93 @@
+{
+  "sourceSha256": "2a39a3cf0ae9918cf4fffb84d8bb1da73ff09c39895663f815f6b5425000d8e0",
+  "results": [
+    {
+      "track": 3,
+      "split": 0,
+      "stockWords": 16,
+      "stockWordsPreserved": true,
+      "stockXOffsets132To255Preserved": true,
+      "bitIdenticalToIsolated": true,
+      "frames": 32768
+    },
+    {
+      "track": 3,
+      "split": 1,
+      "stockWords": 16,
+      "stockWordsPreserved": true,
+      "stockXOffsets132To255Preserved": true,
+      "bitIdenticalToIsolated": true,
+      "frames": 32768
+    },
+    {
+      "track": 3,
+      "split": 8,
+      "stockWords": 16,
+      "stockWordsPreserved": true,
+      "stockXOffsets132To255Preserved": true,
+      "bitIdenticalToIsolated": true,
+      "frames": 32768
+    },
+    {
+      "track": 3,
+      "split": 15,
+      "stockWords": 16,
+      "stockWordsPreserved": true,
+      "stockXOffsets132To255Preserved": true,
+      "bitIdenticalToIsolated": true,
+      "frames": 32768
+    },
+    {
+      "track": 7,
+      "split": 0,
+      "stockWords": 72,
+      "stockWordsPreserved": true,
+      "stockXOffsets132To255Preserved": true,
+      "bitIdenticalToIsolated": true,
+      "frames": 32768
+    },
+    {
+      "track": 7,
+      "split": 1,
+      "stockWords": 72,
+      "stockWordsPreserved": true,
+      "stockXOffsets132To255Preserved": true,
+      "bitIdenticalToIsolated": true,
+      "frames": 32768
+    },
+    {
+      "track": 7,
+      "split": 8,
+      "stockWords": 72,
+      "stockWordsPreserved": true,
+      "stockXOffsets132To255Preserved": true,
+      "bitIdenticalToIsolated": true,
+      "frames": 32768
+    },
+    {
+      "track": 7,
+      "split": 15,
+      "stockWords": 72,
+      "stockWordsPreserved": true,
+      "stockXOffsets132To255Preserved": true,
+      "bitIdenticalToIsolated": true,
+      "frames": 32768
+    }
+  ],
+  "releasedBaseline": [
+    {
+      "track": 3,
+      "stockWordsPreserved": false,
+      "stockWritesAlterAudio": true
+    },
+    {
+      "track": 7,
+      "stockWordsPreserved": false,
+      "stockWritesAlterAudio": true
+    }
+  ],
+  "limitations": [
+    "Synthetic writer at measured stock addresses; no physical timing or listening result.",
+    "Reported beta T3 clicking still needs confirmation on the exact new hardware build."
+  ]
+}

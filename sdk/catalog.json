@@ -44,7 +44,7 @@
     },
     {
       "id": "airwindows-chorus",
-      "version": "0.1.1-experimental",
+      "version": "0.1.2-experimental",
       "addedAt": "2026-10-08T21:00:00Z"
     },
     {
@@ -116,6 +116,11 @@
       "id": "poly8",
       "version": "0.2.6-experimental",
       "addedAt": "2026-10-08T12:00:00Z"
+    },
+    {
+      "id": "output-matrix",
+      "version": "0.1.0-experimental",
+      "addedAt": "2026-10-08T21:55:32Z"
     }
   ]
 }
