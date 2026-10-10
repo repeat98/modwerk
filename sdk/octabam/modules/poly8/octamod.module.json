@@ -3,7 +3,7 @@
   "id": "poly8",
   "key": "POLY8",
   "name": "POLY8",
-  "version": "0.2.6-experimental",
+  "version": "0.2.7-experimental",
   "category": "machines",
   "source": {
     "repository": "https://github.com/repeat98/octamad",
@@ -103,7 +103,8 @@
       "Ratios saturate below 32× rather than fold by octaves; very low pitches are limited by Q16 playback phase.",
       "The octave selector is a global live control; it is not saved per Part.",
       "Recorded chord steps use PTCH lock storage for their root. Stock PTCH lock editing/display for those steps is not qualified; native SAMPLE locks remain available.",
-      "Shared-machine composition is covered by guarded dispatch seams; native memory and DSP limits can still refuse a selection."
+      "Shared-machine composition is covered by guarded dispatch seams; native memory and DSP limits can still refuse a selection.",
+      "A sequencer trig restarts a sounding voice of the same pitch on its track rather than layering a copy; voices started by panel keys or MIDI notes still stack up to eight."
     ]
   },
   "resources": {

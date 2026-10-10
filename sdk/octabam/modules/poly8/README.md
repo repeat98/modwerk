@@ -6,6 +6,7 @@ POLY8 is a FLEX sample machine with **up to eight voices and one POLY8 assignmen
 has its own pitch, playback position and AMP envelope; filters and FX remain
 per track. This replaces the earlier 32-voice experiment after an MKII report
 of temporary unresponsiveness during rapid trig presses with HOLD/REL INF.
+A sequencer trig on a pitch already sounding on the track restarts that voice (0.2.7) instead of stacking a copy; keyed voices from the panel or MIDI still stack.
 Released tails yield before held notes. A pitch-weighted work budget admits
 fewer voices at high playback ratios, including after a tuning change.
 

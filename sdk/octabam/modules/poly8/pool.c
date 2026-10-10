@@ -61,6 +61,18 @@ static void retire(unsigned head) {
         poly_extra_voices[i][0]=0; poly_extra_note[i]=255;
     }
 }
+/* A trigger with no owning key (the sequencer) restarts a sounding voice of
+ * the same pitch on its track instead of stacking a copy. At HOLD INF no
+ * key-up ends such a voice, so a one-note pattern would otherwise add a voice
+ * every step until all eight sound, about 20k ColdFire instructions a frame.
+ * Keyed voices (panel, MIDI) and other pitches are untouched. */
+static void restart_same_pitch(unsigned track) {
+    int8_t shift=poly_pending_shift[track];
+    if(poly_pending_key[track]!=255) return;
+    if(PRIMARY[track][0] && poly_primary_note[track]==255 && poly_primary_shift[track]==shift) retire(track);
+    for(unsigned i=0;i<EXTRA_CAPACITY;++i)
+        if(poly_extra_voices[i][0] && poly_extra_track[i]==track && poly_extra_note[i]==255 && poly_extra_shift[i]==shift) retire(i+8);
+}
 /* Release tails yield before held notes; age breaks ties across all tracks.
  * This loop is bounded by the 39 physical records, independent of input rate.
  */
@@ -96,6 +108,7 @@ void pm_enforce_budget(unsigned track) {
  * for its previous primary after making room for the new head. */
 int pm_reserve(unsigned track) {
     if(track>=8) return -1;
+    restart_same_pitch(track);
     uint32_t now=++serial;
     admit(1,head_cost(track,poly_pending_shift[track]));
     int slot=-1;
