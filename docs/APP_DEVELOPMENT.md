@@ -199,6 +199,10 @@ New accounts never receive another member card. Email verification and completed
 
 In local development, `?preview=discord-member` and `?preview=welcome` show the real UI without consuming invitations or recording invitation/link preview statistics. Invitation impressions and Join Discord, Create account and dismiss actions use existing site statistics with separate member and visitor totals; the visitor totals now come from Discord cards shown to signed-out visitors. Welcome Discord clicks have their own total; Ko-fi clicks use the existing support-link total.
 
+### Octatrack base install prompt
+
+Once `USB_LINK` is released, every signed-in verified member gets the Octatrack base install dialog once, on any page except account, sign-in, admin and legal pages, after any other dialog has closed. `GET /api/auth/base-install-prompt` says whether it is due; asking does not consume it, so a reload during the countdown shows it again. For its first 10 seconds it has no close button and Escape does nothing; then Not now, Done (once the unit reports the base) or Escape closes it and `POST` records it in `member_base_install_prompts` (migration 0068), shared by every browser and device. Chrome does not let a page block Escape in a dialog that opened without a click, so Escape before any click closes it for that visit only, and it returns on the next. The marker is part of account exports and is removed with the account. The USB card on the Octatrack configuration page opens the same dialog at any time, for example after the stock OS went back on or for another unit. In local development, `?preview=base-install` shows the prompt against a pretend unit without reading or recording the marker.
+
 ### Issue reports
 
 New module bugs use the module page’s amber “Report an issue” action. Module discussions warn before posting and offer to copy the written draft into that form; the forum composer cannot create bug reports.

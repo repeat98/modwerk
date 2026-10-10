@@ -44,6 +44,9 @@ import { useFirmwareBuild } from './hooks/useFirmwareBuild'
 import { issueRepository, setWorkspaceReportContext } from './community/report-context'
 import { FirmwareBuildPanel } from './components/FirmwareBuildPanel'
 import { OctatrackLinkPanel } from './components/OctatrackLinkPanel'
+import { BaseInstallDialog } from './components/BaseInstallDialog'
+import { OctatrackLink } from './engine/elekloader/octatrack-link'
+import { useBaseInstallPrompt } from './hooks/useBaseInstallPrompt'
 import { DIGI_DOWNLOADS_ENABLED } from './engine/elekloader/protocol'
 import { USB_AUDIO_MODULE, usbAudioLayout, type UsbAudioConfiguration } from './config/usb-audio'
 import { downloadSelection, parseSelection } from './config/selection'
@@ -78,8 +81,9 @@ import { ConfigurationHeader, RiskAcceptance } from './components/ConfigurationL
 const CompatibilityPanel = lazy(() => import('./components/CompatibilityPanel').then(module => ({ default: module.CompatibilityPanel })))
 const FirmwareFeedbackPreview = import.meta.env.DEV ? lazy(() => import('./components/FirmwareFeedbackPreview')) : () => null
 const firmwareFeedbackPreview = import.meta.env.DEV && typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('preview') === 'firmware-feedback'
-const OctatrackLinkPreview = import.meta.env.DEV ? lazy(() => import('./dev/OctatrackLinkPreview')) : () => null
-const usbLinkPreview = import.meta.env.DEV && typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('preview') === 'usb-link'
+// Dev previews of the USB card and the base install prompt against a pretend unit.
+const usbPreview = import.meta.env.DEV && typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('preview') : null
+const usbLinkPreview = usbPreview === 'usb-link' || usbPreview === 'base-install'
 function subscribeRoute(callback: () => void) {
   window.addEventListener('hashchange', callback)
   return () => window.removeEventListener('hashchange', callback)
@@ -118,6 +122,12 @@ export default function App() {
   const forumRoute = route === 'forum' || route.startsWith('forum/') || route.startsWith('forum?')
   const developerRoute = route === 'developer' || route.startsWith('developer/')
   const accountRoute = route === 'account' || route.startsWith('account/')
+  // One link to the unit, shared by the configuration page's USB card and the base install dialog.
+  const [usbLink, setUsbLink] = useState(() => USB_LINK && !usbLinkPreview ? new OctatrackLink() : null)
+  useEffect(() => { if (import.meta.env.DEV && usbLinkPreview) void import('./dev/octatrack-link-fake').then(fake => setUsbLink(fake.previewLink())) }, [])
+  const [baseInstall, setBaseInstall] = useState<'manual' | 'preview' | null>(usbPreview === 'base-install' ? 'preview' : null)
+  // At release, once per member wherever they are, except on account, sign-in, admin and legal pages.
+  const baseInstallPrompt = useBaseInstallPrompt(session.user?.verified ? session.user.id : null, !!usbLink && !usbLinkPreview && !accountRoute && !developerRoute && !route.startsWith('submit') && !['admin', 'review', 'privacy', 'impressum', 'community-rules', 'report-content'].includes(route))
   useEffect(()=>{if(developerRoute&&!route.startsWith('developer/complete')&&developer&&!developer.user)window.location.replace('#account/developer')},[developerRoute,route,developer])
   const communityRoute = developerRoute || forumRoute || accountRoute || route === 'review' || route === 'admin' || route.startsWith('submit') || !!communityModule
   const allCategory = route.startsWith(ALL_MACHINES + '/') && LIBRARY_CATEGORIES.includes(route.slice(4) as ModuleCategory) ? route.slice(4) as ModuleCategory : undefined
@@ -345,6 +355,7 @@ export default function App() {
       {reportingConfiguration && <ConfigurationReportDialog machine={reportingConfiguration.machine} configurationId={reportingConfiguration.id} onClose={() => setReportingConfiguration(null)} />}
       {configDialog && <ConfigurationDialog mode={configDialog} initialName={configDialog === 'create' ? '' : configDialog === 'duplicate' ? (machineActive?.name ?? '') + ' copy' : machineActive?.name ?? ''} onSubmit={submitConfigurationDialog} onClose={() => { setConfigDialog(null); setCreateDevice(null) }} />}
       <PublicAnnouncement next={route} enabled={!accountRoute && !developerRoute && !configuration && machineView !== 'configuration' && !route.startsWith('submit') && !['admin', 'review', 'privacy', 'impressum', 'community-rules', 'report-content'].includes(route)} />
+      {usbLink && (baseInstall || baseInstallPrompt.open) && <BaseInstallDialog link={usbLink} launch={baseInstall !== 'manual'} firmwareReady={!!firmware} onChooseFirmware={file => void readFile(file)} onClose={done => { if (baseInstall) setBaseInstall(null); else if (done) baseInstallPrompt.close(); else baseInstallPrompt.later() }}/>}
       {supportOpen && <SupportDialog url={SUPPORT_URL} onClose={() => setSupportOpen(false)} />}
       <HardwareFeedbackCheckIn enabled={!accountRoute && !developerRoute && !['admin', 'review', 'privacy', 'impressum', 'community-rules', 'report-content', 'submit'].includes(route.split('/')[0]) && !firmwareFeedbackPreview}/>
       <div className="workspace">
@@ -394,7 +405,7 @@ export default function App() {
                   <div ref={setBuildResultsSlot} className="build-results" />
                 </div>
                 <div className="configuration-checkout">
-                  {USB_LINK && (usbLinkPreview ? <Suspense fallback={null}><OctatrackLinkPreview guideSlot={buildResultsSlot} firmwareReady={!!firmware}/></Suspense> : <OctatrackLinkPanel guideSlot={buildResultsSlot} firmwareReady={!!firmware}/>)}
+                  {usbLink && <OctatrackLinkPanel link={usbLink} onInstall={() => setBaseInstall('manual')}/>}
                   <Suspense fallback={null}><CompatibilityPanel ids={selectedIds} keepStockFx2={DSP_LOADER && (active?.keepStockFx2??true)} buildState={firmwareBuild.state} buildError={firmwareBuild.error} buildConflict={firmwareBuild.conflict} onFix={fixConflict}/></Suspense>
                   <div className="checkout-card">
                     <RiskAcceptance checked={riskAccepted.key===firmwareBuild.key&&riskAccepted.accepted} onChange={accepted => setRiskAccepted({key:firmwareBuild.key,accepted})}/>

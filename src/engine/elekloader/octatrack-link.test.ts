@@ -33,6 +33,15 @@ describe('finding the unit', () => {
     unit.taken = false; await link.retry()
     expect(link.getState().status).toBe('ready')
   })
+  it('stays connected while any view still uses it', async () => {
+    const unit = fakeUnit(), link = new OctatrackLink(unit.usb, fakeSession(unit))
+    const card = link.start(), dialog = link.start(); await settle(); await settle()
+    card(); card()
+    expect(link.getState().status).toBe('ready')
+    unit.unplug(); expect(link.getState().status).toBe('idle') // still listening
+    dialog(); unit.plug('base'); await settle(); await settle()
+    expect(link.getState().status).toBe('idle') // nobody listens any more
+  })
 })
 
 describe('sending a module', () => {

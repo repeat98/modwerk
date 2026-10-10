@@ -70,7 +70,7 @@ export function webUsb(): LinkUsb | undefined {
 export class OctatrackLink {
   private state: LinkState
   private readonly listeners = new Set<() => void>()
-  private readonly usb?: LinkUsb
+  private readonly usb?: LinkUsb | null
   private readonly connectSession: Connect
   private device?: LinkDevice
   private index?: number
@@ -78,8 +78,10 @@ export class OctatrackLink {
   private session?: LinkSession
   private abort?: AbortController
   private keepalive?: ReturnType<typeof setInterval>
+  private users = 0
 
-  constructor(usb = webUsb(), connectSession: Connect = (transport, base) => UploadSession.connect(transport, base)) {
+  /** `usb` defaults to the browser's WebUSB; null stands for a browser without it. */
+  constructor(usb: LinkUsb | null | undefined = webUsb(), connectSession: Connect = (transport, base) => UploadSession.connect(transport, base)) {
     this.usb = usb; this.connectSession = connectSession
     this.state = { status: usb ? 'idle' : 'unsupported' }
   }
@@ -88,14 +90,18 @@ export class OctatrackLink {
   private set(state: LinkState) { this.state = state; for (const listener of this.listeners) listener() }
   private ready(notice?: LinkState['notice'], active = this.state.active) { this.set({ status: 'ready', identity: this.state.identity, active, notice }) }
 
-  /** Listen for the unit coming and going, and reopen one this site was allowed before, without the picker. */
+  /** Listen for the unit coming and going, and reopen one this site was allowed before, without the picker.
+   * The card and the install dialog share one link: each view starts it and calls the returned release. */
   start() {
-    if (!this.usb) return
-    this.usb.addEventListener('connect', this.onConnect)
-    this.usb.addEventListener('disconnect', this.onDisconnect)
-    void this.usb.getDevices().then(([device]) => { if (device && this.state.status === 'idle') return this.open(device) }).catch(() => {})
+    if (this.users++ === 0 && this.usb) {
+      this.usb.addEventListener('connect', this.onConnect)
+      this.usb.addEventListener('disconnect', this.onDisconnect)
+      void this.usb.getDevices().then(([device]) => { if (device && this.state.status === 'idle') return this.open(device) }).catch(() => {})
+    }
+    let stopped = false
+    return () => { if (!stopped && (stopped = true) && --this.users === 0) this.stop() }
   }
-  stop() {
+  private stop() {
     this.usb?.removeEventListener('connect', this.onConnect)
     this.usb?.removeEventListener('disconnect', this.onDisconnect)
     this.stopKeepalive(); this.abort?.abort()

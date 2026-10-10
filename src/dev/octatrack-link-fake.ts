@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// A pretend Octatrack for the link's tests and the configuration page's
-// `?preview=usb-link` (dev only): enumerates like the base, answers IDENTIFY with
+// A pretend Octatrack for the link's tests and the dev previews
+// (`?preview=usb-link`, `?preview=base-install`): enumerates like the base, answers IDENTIFY with
 // real bytes, and runs the upload session's phases with no device behind them.
-import type { LinkDevice, LinkSession, LinkUsb } from '../engine/elekloader/octatrack-link.ts'
+import { OctatrackLink, type LinkDevice, type LinkSession, type LinkUsb } from '../engine/elekloader/octatrack-link.ts'
 import { UploadDeviceError } from '../engine/elekloader/upload-session.ts'
 import { VENDOR_CLASS, VENDOR_PROTOCOL, VENDOR_SUBCLASS } from '../engine/elekloader/upload-usb.ts'
 import type { UploadPhaseName, UploadResultName, UploadStatus } from '../engine/elekloader/upload-wire.ts'
@@ -95,4 +95,18 @@ export function fakeSession(unit: FakeUnit, delay = 0) {
       leaveUploadMode: () => step('normal'),
     }
   }
+}
+
+/**
+ * Dev previews (`?preview=usb-link|base-install&unit=base|stock|none|unsupported`): the link against a pretend
+ * unit, driven from the console through `modwerkUsbPreview`: plug('base' | 'stock'), unplug(),
+ * playing = true, taken = true. There is no pretend base build: a preview must never save a file
+ * that looks like firmware.
+ */
+export function previewLink() {
+  const kind = new URLSearchParams(window.location.search).get('unit')
+  if (kind === 'unsupported') return new OctatrackLink(null)
+  const unit = fakeUnit(kind === 'stock' || kind === 'none' ? kind : 'base')
+  Object.assign(window, { modwerkUsbPreview: unit })
+  return new OctatrackLink(unit.usb, fakeSession(unit, 60))
 }

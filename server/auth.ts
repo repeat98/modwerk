@@ -67,6 +67,14 @@ export async function authentication(request:Request,env:Env,path:string):Promis
   const claimed=await db.prepare('INSERT OR IGNORE INTO member_discord_invites(user_id) VALUES(?)').bind(member.id).run()
   return response({show:body.alreadyShown!==true&&claimed.meta.changes===1})
  }
+ // Asked for on each visit while due; recorded only once the member closes or completes it, so a reload cannot skip it.
+ if(path==='/api/auth/base-install-prompt'){
+  const member=needMember(await accountUser(request,env,db))
+  if(request.method==='GET')return response({show:!await db.prepare('SELECT 1 FROM member_base_install_prompts WHERE user_id=?').bind(member.id).first()})
+  if(request.method!=='POST')throw new HttpError(405,'Use GET or POST for the base install prompt.')
+  await db.prepare('INSERT OR IGNORE INTO member_base_install_prompts(user_id) VALUES(?)').bind(member.id).run()
+  return response({ok:true})
+ }
  if(path==='/api/auth/build-access'&&request.method==='POST'){
   const member=needMember(await accountUser(request,env,db)),body=await jsonBody(request)
   if(body.moduleIds!==undefined){
