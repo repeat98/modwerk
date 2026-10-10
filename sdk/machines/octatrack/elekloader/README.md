@@ -73,15 +73,18 @@ in the USB ISR and its controller on the engine task:
   byte is `0xFF`; the engine ignores opcodes above 45 and returns to its
   receive, where the base's idle hook services the transport before the
   logger's.
-- The controller's backend is [`runtime.c`](runtime.c): one runtime module
-  slot called from core-ot's `ev_tick`. ENTER and activation need nothing
-  playing or recording (the logger's own check). A package (`MWRM`, ABI 1,
-  entry offset, position-independent ColdFire code; empty removes) is copied
-  into the inactive of two 16 KiB slots, after which the instruction and
-  branch caches are invalidated with the OS's own CACR value (guarded).
-  Publish swaps the slot's pointer, rollback swaps it back, and old code is
-  retired or reused only after the tick has passed the swap. A bus reset or
+- The controller's backend is the machine-neutral
+  [runtime loader](../../../runtime/loader/README.md) (package ABI 2: code,
+  data, bss, relocations and tick, draw, key and encoder hooks). This
+  folder's [`runtime.c`](runtime.c) is the Octatrack's glue: trampolines
+  from core-ot's `ev_tick`, `ev_draw`, `ev_key` and `ev_enc`; ENTER and
+  activation only while nothing plays or records (the logger's own check);
+  module code and data on the uncached alias; and instruction and branch
+  cache invalidation with the OS's own CACR value (guarded). A bus reset or
   session end becomes the controller's disconnect.
+  [`examples/hello.c`](examples/hello.c) is Elekloader's hello-marker as a
+  runtime module: a square in the screen's top-right corner, with key presses
+  and encoder turns counted in DIAG's value.
 
 `verify_vendor_usb.py` checks a build in the emulator with Octabam's USB
 bench, at both speeds: configurations, IDENTIFY's exact bytes and refusals,

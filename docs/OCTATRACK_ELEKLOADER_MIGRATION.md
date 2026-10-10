@@ -364,6 +364,27 @@ lifecycle passed seven times in a row with no host workaround: over 250 data
 stages primed and completed, no refusals, no abandoned stages, and every reply
 at its full length (IDENTIFY 72, DIAG 68).
 
+### Hooks for real modules, reusable on every machine (10 October 2026)
+
+The loader is now machine-neutral, in
+[`sdk/runtime/loader`](../sdk/runtime/loader/README.md). Every machine
+Elekloader supports has a ColdFire CPU and a hook bus with tick, draw, key
+and encoder events. A module is plain C with any of those four handlers, its
+own data and bss, built by `build.py` into a package (ABI 2) that the loader
+relocates into a slot. A machine supplies only the glue: when activation is
+safe, its uncached alias, its cache invalidation and trampolines from its
+bus (the Octatrack's is `runtime.c`, about 60 lines). The first real module
+is Elekloader's hello-marker as a runtime module (`examples/hello.c`): 92
+bytes, 4 relocations.
+
+`usbtest4` (base `06dc5403…`) carries it and passed the flash-safety check.
+In the emulator the client lifecycle passed, and the example loaded, ran and
+was accepted through `npm run device -- --emulator`. The bench check passed
+in 7 of 8 runs; the one failure was on a cold first start and did not recur.
+The hook dispatch, relocation and bss are host-tested only: `ot_emu` takes no
+panel input while it holds the USB bench, and the emulator does not show the
+composed frame, so the key, encoder and draw hooks need the unit.
+
 ### Reference: Octabam's REMIX SWITCH
 
 Sam's open [Octabam PR #655](https://github.com/sambanks/octabam/pull/655)
@@ -723,7 +744,7 @@ changes) remain a card OS install.
 | --- | --- | --- | --- |
 | 1. Sync mode on the unit | Upload mode entered by the host's ENTER while nothing plays or records | A MODWERK SYNC entry in the unit's menus (REMIX SWITCH's BRAIN rows are a reference) that shows the session, holds transport and recording, and is the only state in which state-changing commands are accepted; leaving it on the unit leaves upload mode and rolls back an unaccepted trial | Physical presence gates every write. IDENTIFY, HELLO and DIAG stay read-only and always available; stock MIDI recovery is untouched |
 | 2. Connect over WebUSB | `UsbVendorTransport`, the session client and a Chrome test page (`dev/octatrack-usb.html`) | Site UI on the configuration page, Chrome/Edge only; Windows WinUSB binding; the first hardware run | Claim only the vendor interface; a mismatched base identity is refused before any write |
-| 3. Load new modules | One runtime slot: load, trial, accept, replace, roll back and remove without a reboot | Hook ABI for real modules, runtime DSP allocation (sequence step 3), ledger memory, catalogue modules built as runtime packages | The previous set stays live until acceptance; refusals happen before dispatch changes |
+| 3. Load new modules | One runtime module with tick, draw, key and encoder hooks, its own data and relocations ([machine-neutral loader](../sdk/runtime/loader/README.md)): load, trial, accept, replace, roll back and remove without a reboot | Patches to stock code at load time (most catalogue modules need them), MIDI and audio-frame hooks, runtime DSP allocation (sequence step 3), ledger memory, catalogue modules built as runtime packages | The previous set stays live until acceptance; refusals happen before dispatch changes |
 | 4. Automated stress and bug checks | DIAG counters, emulator checks, Octabam's MIDI/audio hardware tools | A test runner driven over the vendor interface in sync mode: bounded transport and parameter actions on a generated test project, CPU/DSP load and audio-path counters, a trial verdict per module | Never write the user's projects. A failed check rolls back automatically; acceptance stays an explicit user action unless the owner changes that rule |
 | 5. Upload failures, open issues | `OCTAMOD.LOG` format, the strict browser/Worker parser, the report API and GitHub issue mirroring with author commands | Read the logger ring and test results over USB (a bounded read command) instead of from the card; a run report bound to the exact base and module identities; automatic submission after a one-time opt-in, de-duplicated by failure signature and version into existing reports for the module's author | Show the user what is sent. Never upload firmware, stock bytes, projects, samples or audio. Reuse the existing sanitized report contract and rate limits |
 
@@ -747,12 +768,14 @@ stage, publish, run the trial while printing DIAG, then roll back unless
 `--accept` is given. Ctrl-C rolls back early, and unplugging USB rolls back
 anything not accepted. All four commands passed on the owner's MKII
 (`usbtest3`, 10 October 2026), including Ctrl-C during an `--accept` trial.
-Not yet built: `logs`, the emulator (the CLI skips the bench's enumeration),
-a module file that names its base, and the sync-mode gate.
+`--emulator` drives `ot_emu`'s bench socket instead (one command per
+emulator run). Not yet built: `logs`, a module file that names its base, and
+the sync-mode gate.
 
 Down the road the interface should cover every supported machine. The
 frames, sessions, IDENTIFY's model and capability fields, the transport's
-rules and the TypeScript client are already machine-neutral; each machine
+rules, the TypeScript client and the runtime module loader and package
+format are already machine-neutral; each machine
 needs its own base glue, runtime ABI and transport. Where a stock USB stack
 cannot carry an endpoint-free vendor interface, a machine may use another
 transport (for example SysEx over USB MIDI, which the Digitakt and Digitone

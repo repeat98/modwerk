@@ -1,15 +1,10 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 #ifndef MODWERK_RUNTIME_H
 #define MODWERK_RUNTIME_H
-#include "upload.h"
-#define RUNTIME_HEADER_BYTES 16u
-#define RUNTIME_SLOT_BYTES 16384u
-struct modwerk_runtime_api { volatile uint32_t value; };
-typedef void (*runtime_entry)(struct modwerk_runtime_api *);
-extern const struct mu_backend modwerk_runtime_backend;
-extern uint8_t modwerk_runtime_staging[RUNTIME_HEADER_BYTES + RUNTIME_SLOT_BYTES];
+#include "loader.h"
+/* core-ot hook-bus subscribers (build_core.py). */
 void modwerk_runtime_tick(void);
-uint32_t modwerk_runtime_value(void);
-uint32_t modwerk_runtime_calls(void);
-runtime_entry modwerk_runtime_active(void);
+void modwerk_runtime_draw(unsigned char *frame);
+int modwerk_runtime_key(int code, int pressed);
+int modwerk_runtime_enc(int encoder, int delta);
 #endif

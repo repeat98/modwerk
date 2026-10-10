@@ -161,7 +161,7 @@ class RuntimeSlotTests(unittest.TestCase):
         here = pathlib.Path(__file__).resolve().parent
         with tempfile.TemporaryDirectory() as temp:
             subprocess.run([cc, '-std=c99', '-Wall', '-Wextra', '-Werror', '-pedantic', '-DMODWERK_HOST', '-I', here,
-                            '-I', here.parents[2] / 'runtime/upload', here / 'test_runtime.c', '-o', temp + '/t'],
+                            '-I', here.parents[2] / 'runtime/upload', '-I', here.parents[2] / 'runtime/loader', here / 'test_runtime.c', '-o', temp + '/t'],
                            check=True, capture_output=True)
             result = subprocess.run([temp + '/t'], capture_output=True, text=True)
         self.assertEqual(result.returncode, 0, result.stderr)

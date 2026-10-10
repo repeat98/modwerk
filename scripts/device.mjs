@@ -9,6 +9,8 @@
 //   npm run device -- remove [--accept]
 //   npm run device -- lifecycle
 //
+// --emulator drives ot_emu's USB bench socket instead (it enumerates the device
+// first; ot_emu takes one connection, so one command per emulator run).
 // Each command is one whole transaction. A trial is rolled back unless --accept
 // is given; Ctrl-C rolls back early. If this process dies mid-trial, unplug USB:
 // the base rolls back any module that was not accepted.
@@ -24,18 +26,19 @@ const { values, positionals: [command, file] } = parseArgs({ allowPositionals: t
   socket: { type: 'string', default: '/tmp/modwerk-ot.sock' },
   seconds: { type: 'string', default: '5' },
   accept: { type: 'boolean', default: false },
+  emulator: { type: 'boolean', default: false },
 } })
 const seconds = Number(values.seconds)
 if (!['status', 'try', 'remove', 'lifecycle'].includes(command) || (command === 'try') !== Boolean(file) ||
   !Number.isInteger(seconds) || seconds < 1 || seconds > 3600) {
-  console.error('Usage: device.mjs status | try MODULE.mwrm [--seconds 1-3600] [--accept] | remove [--accept] | lifecycle [--socket PATH]')
+  console.error('Usage: device.mjs status | try MODULE.mwrm [--seconds 1-3600] [--accept] | remove [--accept] | lifecycle [--socket PATH] [--emulator]')
   process.exit(2)
 }
 
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms))
 const bench = new Bench(values.socket)
 await bench.ready()
-const unit = device(bench), index = findVendorInterface(await enumerate(bench, true))
+const unit = device(bench), index = findVendorInterface(await enumerate(bench, !values.emulator))
 const transport = new UsbVendorTransport(unit, index, { pollMs: 5 })
 const identity = await transport.identify()
 // DIAG is the Octatrack base's own request; other bases may not answer it.

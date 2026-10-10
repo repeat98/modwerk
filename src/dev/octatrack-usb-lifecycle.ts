@@ -26,16 +26,19 @@ export async function diagnostics(device: ControlDevice, index: number): Promise
   }
 }
 
-/** "MWRM", ABI 1, entry 0, then movea.l 4(sp),a0; move.l #value,(a0); rts, plus optional padding. */
+const u32 = (n: number) => [n >>> 24, (n >>> 16) & 0xff, (n >>> 8) & 0xff, n & 0xff]
+/** "MWRM", ABI 2 (sdk/runtime/loader/README.md) without bss or relocations: a tick hook at 0, or nothing for empty code. */
+function runtimePackage(base: string, code: number[]): UploadPackage {
+  const hooks = code.length ? [0, 0xffffffff, 0xffffffff, 0xffffffff] : []
+  const data = Uint8Array.from([0x4d, 0x57, 0x52, 0x4d, 0, 2, 0, 0, ...u32(code.length), ...u32(0), ...u32(0), ...u32(hooks.length),
+    ...hooks.flatMap(u32), ...code])
+  return { base, data, sha256: sha(data) }
+}
+/** module_tick: movea.l 4(sp),a0; move.l #value,(a0); rts, plus optional padding. */
 export function testModule(base: string, value: number, padding = 0): UploadPackage {
-  const code = [0x20, 0x6f, 0x00, 0x04, 0x20, 0xbc, 0, 0, 0, value & 0xff, 0x4e, 0x75, ...new Array<number>(padding).fill(0)]
-  const data = Uint8Array.from([0x4d, 0x57, 0x52, 0x4d, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, code.length >> 8, code.length & 0xff, ...code])
-  return { base, data, sha256: sha(data) }
+  return runtimePackage(base, [0x20, 0x6f, 0x00, 0x04, 0x20, 0xbc, 0, 0, 0, value & 0xff, 0x4e, 0x75, ...new Array<number>(padding).fill(0)])
 }
-export function removal(base: string): UploadPackage {
-  const data = Uint8Array.from([0x4d, 0x57, 0x52, 0x4d, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
-  return { base, data, sha256: sha(data) }
-}
+export const removal = (base: string) => runtimePackage(base, [])
 
 const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
 function expect(condition: boolean, what: string): asserts condition { if (!condition) throw new Error('Failed: ' + what) }

@@ -138,6 +138,9 @@ def main():
     upload = APP / 'sdk/runtime/upload'
     for name in ('upload.c', 'upload.h', 'sha256.c', 'wire.c', 'wire.h', 'vendor.c', 'vendor.h'):
         shutil.copyfile(upload / name, source / name)
+    loader = APP / 'sdk/runtime/loader'
+    for name in ('loader.c', 'loader.h', 'modwerk_module.h'):
+        shutil.copyfile(loader / name, source / name)
     # The base owns the USB configuration and the EP0 unknown-request tail.
     spec = importlib.util.spec_from_file_location('modwerk_usb_base', HERE/'usb_base.py')
     usb = importlib.util.module_from_spec(spec); spec.loader.exec_module(usb)
@@ -147,7 +150,7 @@ def main():
     (source/'usb_base.s').write_text(usb.assembly())
     # Identity describes this core-only private base. Later selections need
     # their complete module/version/chooser identities regenerated explicitly.
-    inputs = {str(p.relative_to(APP)): sha(p.read_bytes()) for folder in (logger, upload, HERE)
+    inputs = {str(p.relative_to(APP)): sha(p.read_bytes()) for folder in (logger, upload, loader, HERE)
               for p in sorted(folder.iterdir()) if p.is_file() and p.suffix in ('.c', '.h', '.py', '.json')}
     inputs.update({'elekloader/' + p.name: sha(p.read_bytes()) for p in original_core.iterdir() if p.is_file()})
     artwork = APP / 'sdk/runtime/startup/artwork.json'
@@ -157,7 +160,7 @@ def main():
     chooser = json.loads((APP/'src/engine/assets/chooser-metadata.json').read_text())
     configuration = dict(fx1=['NONE', *chooser['stockFx1']], fx2=['NONE', *chooser['stockFx2']],
                          hidden=[], logger='0.2.0', modules=[], os='1.40C', source=source_hash, stockfx2=True,
-                         usb=dict(interfaces=['msc', 'modwerk-vendor'], vendor=1, submit=True, backend='runtime-slot-1'))
+                         usb=dict(interfaces=['msc', 'modwerk-vendor'], vendor=1, submit=True, backend='runtime-loader-2'))
     identity = sha(json.dumps(configuration, separators=(',', ':')).encode())
     values = dict(build=identity[:16], os='1.40C', modules='', configuration=identity,
                   source=source_hash, fx1=';'.join(configuration['fx1']),
@@ -188,7 +191,7 @@ modwerk_retained_end:
 ''')
     recipe.update(version=VERSION, title='Modwerk base prototype', author='irpina; Modwerk contributors',
                   license='GPL-3.0-or-later',
-                  description='Private core-only Elekloader base with logger/startup, a USB vendor interface and one runtime module slot; NOT a flash candidate.')
+                  description='Private core-only Elekloader base with logger/startup, a USB vendor interface and one runtime module slot (tick, draw, key and encoder hooks); NOT a flash candidate.')
     recipe['sources'] += [p.name for p in sorted(source.glob('*.c'))] + ['hooks.s', 'retained.s', 'usb_base.s']
     recipe['cflags'] = ['-std=c99', '-ffreestanding', '-fno-builtin', '-fno-common',
                         '-fno-zero-initialized-in-bss', '-fno-tree-loop-distribute-patterns',
@@ -202,7 +205,9 @@ modwerk_retained_end:
         recipe['sites'].append(dict(addr=hex(guard['address']), stock=image[at:at+n].hex(),
                                     op='jmp', target=target))
     recipe['sites'] += usb.sites(lambda addr, n: image[addr-device.main_load:addr-device.main_load+n])
-    recipe.setdefault('subscribe', []).append(dict(event='ev_tick', fn='modwerk_runtime_tick', order=90))
+    # The machine-neutral loader's events (sdk/runtime/loader/loader.h), from core-ot's bus.
+    recipe.setdefault('subscribe', []).extend(dict(event='ev_' + e, fn='modwerk_runtime_' + e, order=90)
+                                              for e in ('tick', 'draw', 'key', 'enc'))
     spec = importlib.util.spec_from_file_location('modwerk_startup', artwork.parent/'build.py')
     startup = importlib.util.module_from_spec(spec); spec.loader.exec_module(startup)
     for guard, authored in startup.writes():
@@ -237,7 +242,7 @@ modwerk_retained_end:
                   packageSha256=sha(Path(path).read_bytes()), manifest=manifest,
                   savedHashes={ext:sha(data) for ext,data in outputs.items()},
                   productionReady=False, hardware='not tested', emulator='not tested',
-                  limitations=['One ColdFire runtime slot on ev_tick with fixed staging and code buffers; no hook ABI, DSP resource manager or ledger allocation yet.',
+                  limitations=['One ColdFire runtime module on ev_tick, ev_draw, ev_key and ev_enc with fixed staging and code buffers; no MIDI or frame hooks, stock-code sites, DSP resource manager or ledger allocation yet.',
                                'The base owns the USB configuration: USB MIDI/Audio cannot be combined with it yet.',
                                'Logger retention/ABI and modified bootstrap require emulator/hardware qualification.',
                                'Core-only identity; catalogue selections need exact configuration integration.'])
