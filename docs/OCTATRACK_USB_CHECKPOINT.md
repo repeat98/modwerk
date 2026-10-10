@@ -46,10 +46,12 @@ are done and host-tested against the real controller
 The private base now loads, replaces, rolls back and removes one runtime
 module over USB without rebooting, in the emulator: 27 bench checks and 7
 browser-client checks pass ([milestones](OCTATRACK_ELEKLOADER_MIGRATION.md#milestones-in-the-emulator)).
-Next: a hook ABI for real modules beyond the one tick slot, staging and code
-memory from the ownership ledger, folding USB MIDI and USB Audio into the
-base, and the first hardware run once a flash candidate is qualified
-(including the cache invalidation, which the emulator cannot show).
+A read-only DIAG request and a Chrome page (`dev/octatrack-usb.html`, served
+by `npm run dev` only) now run the same lifecycle on a real unit
+([hardware run](../sdk/machines/octatrack/elekloader/README.md#hardware-run)).
+Next: the owner's hardware run (cache invalidation, real USB timing, WebUSB
+claiming), then a hook ABI for real modules, ledger memory, and folding USB
+MIDI and USB Audio into the base.
 
 Sam's open REMIX SWITCH (Octabam PR #655) switches whole images from the card
 with a soft reset. The owner chose on 10 October to use it as a reference

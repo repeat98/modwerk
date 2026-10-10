@@ -56,7 +56,7 @@ static uint8_t reply[256] __attribute__((aligned(256)));
 static struct dtd data_dtd __attribute__((aligned(32)));
 static uint8_t started, receiving;
 static volatile uint8_t wake_posted;
-static uint32_t expected;
+static uint32_t expected, frames, refusals, resets;
 const uint8_t *modwerk_ep0_reply;
 /* The engine ignores messages whose first byte is above 45 and returns to
  * its receive, where the idle hook runs: a wake-up and nothing else. */
@@ -88,6 +88,21 @@ static void flush_receive(void)
     for (uint32_t i = 0; (ENDPTFLUSH & 1u) && i < 100000u; ++i) {}
 }
 
+/* DIAG (0xC1, bRequest 4, wValue 0, wLength 32): read-only counters for a
+ * hardware run, big-endian after "MWUD", version 1 and three zero bytes:
+ * runtime ticks, the test module's value, whether a module is active, frames
+ * received, our refusals and bus resets. */
+static int diag(const uint8_t *s, uint8_t *out)
+{
+    if (s[0] != MV_RESULT_TYPE || s[1] != 4 || s[2] || s[3] || s[4] != MODWERK_VENDOR_INTERFACE || s[5] ||
+        s[6] != 32 || s[7]) return 0;
+    uint32_t words[6] = {modwerk_runtime_calls(), modwerk_runtime_value(), modwerk_runtime_active() != 0,
+                         frames, refusals, resets};
+    out[0] = 'M'; out[1] = 'W'; out[2] = 'U'; out[3] = 'D'; out[4] = 1; out[5] = out[6] = out[7] = 0;
+    for (uint32_t i = 0; i < 24; ++i) out[8 + i] = (uint8_t)(words[i / 4] >> (24 - 8 * (i % 4)));
+    return 1;
+}
+
 /* Unknown-request tail. A length sends modwerk_ep0_reply; 0 leaves a request
  * that is not ours to the stock STALL; REFUSE stalls EP0 both ways; RECEIVING
  * returns with our data stage primed and no status yet. */
@@ -102,11 +117,16 @@ uint32_t modwerk_ep0_dispatch(void)
         flush_receive();
     }
     if (r.action == MV_PASS) return 0;
+    if (r.action == MV_STALL && diag(SETUP, out)) { /* mv_setup stalls requests it does not know */
+        modwerk_ep0_reply = out;
+        return 32;
+    }
     if (r.action == MV_RECEIVE) {
         /* Only from stock's idle state: in state 10 its completion loop
          * would spin on our completion bit. A refusal is retryable. */
         if (EP0_STATE != 11u || EP0_OUT_AWAITED) {
             mv_abandon(t);
+            ++refusals;
             return MODWERK_EP0_REFUSE;
         }
         struct dtd *d = UNCACHED(&data_dtd);
@@ -121,7 +141,7 @@ uint32_t modwerk_ep0_dispatch(void)
         receiving = 1;
         return MODWERK_EP0_RECEIVING;
     }
-    if (r.action != MV_SEND || r.length > sizeof reply) return MODWERK_EP0_REFUSE;
+    if (r.action != MV_SEND || r.length > sizeof reply) { ++refusals; return MODWERK_EP0_REFUSE; }
     for (uint32_t i = 0; i < r.length; ++i) out[i] = r.buffer[i];
     modwerk_ep0_reply = out;
     return r.length;
@@ -145,9 +165,11 @@ void modwerk_ep0_poll(void)
     ENDPTCOMPLETE = 1u; /* Ours, if the stock loop has not taken it. */
     uint32_t received = token & DTD_ERRORS ? 0 : expected - (token >> 16 & 0x7fffu);
     if (mv_data(t, received)) {
+        ++frames;
         STATUS_IN();
         wake();
     } else {
+        ++refusals;
         ENDPTCTRL0 = ENDPTCTRL0 | 0x00010001u; /* Refuse the status stage. */
     }
 }
@@ -157,6 +179,7 @@ void modwerk_ep0_bus_reset(void);
 void modwerk_ep0_bus_reset(void)
 {
     struct mv_transport *t = vendor();
+    ++resets;
     if (receiving) {
         receiving = 0;
         flush_receive();

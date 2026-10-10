@@ -9,16 +9,13 @@
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { createConnection } from 'node:net'
-import { dirname, join } from 'node:path'
-import { sha } from '../vendor/elekloader/kit/src/bytes.ts'
 import { UploadSession } from '../src/engine/elekloader/upload-session.ts'
 import { findVendorInterface, UsbVendorTransport } from '../src/engine/elekloader/upload-usb.ts'
+import { diagnostics, removal, runLifecycle, testModule } from '../src/dev/octatrack-usb-lifecycle.ts'
 
 const [socketPath, proofsPath] = process.argv.slice(2)
 if (!socketPath || !proofsPath) throw new Error('Usage: verify-octatrack-vendor-client.mjs SOCKET PROOFS_JSON')
 const base = JSON.parse(readFileSync(proofsPath, 'utf8')).configurationHash
-const symbols = JSON.parse(readFileSync(join(dirname(proofsPath), 'symbols.json'), 'utf8'))
-const delay = ms => new Promise(resolve => setTimeout(resolve, ms))
 
 /** The bench's line protocol: one command, one reply line, in order. */
 class Bench {
@@ -96,54 +93,26 @@ async function enumerate(bench) {
 
 const bench = new Bench(socketPath)
 await bench.ready()
-let checks = 0
-const pass = name => { checks++; console.log(name + ': passed') }
-
 const number = findVendorInterface(await enumerate(bench))
-assert.equal(number, 1); pass('the client finds the vendor interface in the device\'s own configuration')
-const transport = new UsbVendorTransport(device(bench), number, { pollMs: 5 })
-const identity = await transport.identify()
-assert.deepEqual(identity, { canSubmit: true, base, model: 'OCTATRACK 1.40C' }); pass('IDENTIFY from the firmware')
-const session = await UploadSession.connect(transport, identity.base)
-assert.equal(session.status.phase, 'normal'); assert.equal(session.status.active, base)
-assert.equal(session.status.capacity, 16400); assert.equal(session.status.activeKnown, true)
-pass('HELLO status through SUBMIT, the engine task and RESULT')
+assert.equal(number, 1)
+console.log("the client finds the vendor interface in the device's own configuration: passed")
+const session = await runLifecycle(device(bench), number, line => console.log(line + ': passed'))
+assert.equal(session.status.active, removal(base).sha256)
 
-// Runtime modules: "MWRM", ABI 1, entry 0, then movea.l 4(sp),a0; move.l #value,(a0); rts.
-const module = (value, padding = 0) => {
-  const code = [0x20, 0x6f, 0x00, 0x04, 0x20, 0xbc, 0, 0, 0, value, 0x4e, 0x75, ...new Array(padding).fill(0)]
-  const data = Uint8Array.from([0x4d, 0x57, 0x52, 0x4d, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, code.length >> 8, code.length & 0xff, ...code])
-  return { base, data, sha256: sha(data) }
-}
-const removal = (() => { const data = Uint8Array.from([0x4d, 0x57, 0x52, 0x4d, 0, 1, 0, 0, ...new Array(8).fill(0)]); return { base, data, sha256: sha(data) } })()
-const call = async name => Number((await bench.command('call 0x' + symbols[name].toString(16)))[1])
-const value = () => call('modwerk_runtime_value')
-const settle = () => delay(200)
-
-assert.equal(await value(), 0)
-const a = module(0xa1), b = module(0xb2)
-await session.stage(a); await session.activate(); await session.startTrial(); await settle()
-assert.equal(await value(), 0xa1); assert.equal(session.status.active, a.sha256)
-await session.holdTrial(); await session.accept(); await session.leaveUploadMode()
-assert.equal(session.status.generation, 1); pass('module A loads, runs in its trial and is accepted without a reboot')
-await session.stage(b); await session.activate(); await session.startTrial(); await settle()
-assert.equal(await value(), 0xb2)
-await session.holdTrial(); await session.rollback(); await session.leaveUploadMode(); await settle()
-assert.equal(session.status.active, a.sha256); assert.equal(await value(), 0xa1)
-pass('replacement B runs in its trial and rolls back to A')
-await session.stage(removal); await session.activate(); await session.startTrial(); await settle()
-assert.equal(await call('modwerk_runtime_active'), 0)
-await session.holdTrial(); await session.rollback(); await session.leaveUploadMode(); await settle()
-assert.notEqual(await call('modwerk_runtime_active'), 0); pass('removal empties the slot and rollback restores A')
-
-// Interrupted staging: a bus reset after the first chunk of a two-chunk package.
+// Emulator only: a bus reset after the first chunk of a two-chunk package.
+const a = testModule(base, 0xa1)
+await session.stage(a); await session.activate(); await session.startTrial(); await session.holdTrial()
+await session.accept(); await session.leaveUploadMode()
 const faults = {}
 const staging = await UploadSession.connect(new UsbVendorTransport(device(bench, faults), number, { pollMs: 5 }), base)
-await assert.rejects(staging.stage(module(0xc3, 5000), { progress: () => { faults.before = () => bench.command('reset') } }))
+await assert.rejects(staging.stage(testModule(base, 0xc3, 5000), { progress: () => { faults.before = () => bench.command('reset') } }))
 await enumerate(bench)
 const after = await UploadSession.connect(new UsbVendorTransport(device(bench), number, { pollMs: 5 }), base)
 assert.equal(after.status.phase, 'normal'); assert.equal(after.status.active, a.sha256)
-assert.deepEqual(after.status.session, session.status.session); await settle()
-assert.equal(await value(), 0xa1); pass('a bus reset mid-staging discards the candidate and keeps A running')
+assert.deepEqual(after.status.session, session.status.session)
+await new Promise(resolve => setTimeout(resolve, 250))
+const diag = await diagnostics(device(bench), number)
+assert.equal(diag.value, 0xa1); assert.equal(diag.active, true); assert(diag.resets >= 1)
+console.log('a bus reset mid-staging discards the candidate and keeps A running: passed')
 bench.socket.end()
-console.log(`Browser client against the emulated base: ${checks} checks passed; protocol evidence only, no host driver, WebUSB or hardware.`)
+console.log('Browser client against the emulated base: lifecycle passed; protocol evidence only, no host driver, WebUSB or hardware.')

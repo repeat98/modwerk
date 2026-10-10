@@ -10,5 +10,6 @@ extern const struct mu_backend modwerk_runtime_backend;
 extern uint8_t modwerk_runtime_staging[RUNTIME_HEADER_BYTES + RUNTIME_SLOT_BYTES];
 void modwerk_runtime_tick(void);
 uint32_t modwerk_runtime_value(void);
+uint32_t modwerk_runtime_calls(void);
 runtime_entry modwerk_runtime_active(void);
 #endif

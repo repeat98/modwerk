@@ -55,6 +55,7 @@ void modwerk_runtime_tick(void)
     calls = calls + 1;
 }
 uint32_t modwerk_runtime_value(void) { return modwerk_runtime_api.value; }
+uint32_t modwerk_runtime_calls(void) { return calls; }
 runtime_entry modwerk_runtime_active(void) { return active; }
 
 static uint32_t be32(const uint8_t *p) { return (uint32_t)p[0] << 24 | (uint32_t)p[1] << 16 | (uint32_t)p[2] << 8 | p[3]; }

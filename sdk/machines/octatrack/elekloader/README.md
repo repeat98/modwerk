@@ -104,6 +104,24 @@ Restart the emulator before `node scripts/verify-octatrack-vendor-client.mjs SOC
 This is emulator protocol evidence only: no host OS driver, WebUSB claim,
 cache behaviour, timing or hardware. Stock firmware fails the first check.
 
+### Hardware run
+
+The emulator cannot show cache behaviour, real USB timing or WebUSB claiming;
+only the unit can. Whether to flash this unqualified base is the owner's call.
+Keep your normal build and the stock `.syx` at hand; a base that does not boot
+is recovered from the Startup Menu over DIN MIDI.
+
+1. Build with `build_core.py` (above) and install `NOT_FLASH_CANDIDATE.syx`
+   or `.bin` the way you install any test OS.
+2. Leave USB disk mode, stop playback and recording, and connect USB.
+3. Run `npm run dev` and open `http://localhost:5173/dev/octatrack-usb.html`
+   in Chrome. **Run lifecycle** claims only the vendor interface, loads a
+   test module, replaces and rolls it back, removes it, and reads each
+   effect back through the base's read-only DIAG request. The slot is empty
+   afterwards; **Read DIAG** shows the counters at any time.
+4. Record the page log, then play a project briefly and confirm audio,
+   sequencing and the card still behave. Reinstall your normal build.
+
 `build_ports.py` prepares independent source ports with the same pinned SDK
 and its native source checker. It registers the internal USB MIDI dependency
 from `platform/usb-midi` without copying it into `modules/` or changing the

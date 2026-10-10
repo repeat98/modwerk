@@ -123,6 +123,9 @@ def check(b, base, hs, sessions):
     results['duplicate sequence refused'] = stalls(lambda: s.submit(frame(0), sequence=s.sequence))
     results['short frame refused'] = stalls(lambda: s.submit(frame(0)[:47]))
     results['hello after refusals'] = s.exchange(frame(0)) is not None
+    diag = b.ctrl_in(VENDOR_IN, 4, 0, vendor, 32)
+    words = struct.unpack('>6I', diag[8:]) if len(diag) == 32 else ()
+    results['diag counters'] = diag[:5] == b'MWUD\x01' and words[3] >= 4 and words[4] >= 2 and words[5] >= 1
     results['identify after refusals'] = answers(lambda: b.ctrl_in(VENDOR_IN, IDENTIFY, 0, vendor, 64),
                                                  expected_identity(base))
     results['mass storage'] = bench.msc_test(b)

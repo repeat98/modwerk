@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Octatrack USB test</title>
+  <style>
+    :root { color-scheme: light dark; font-family: system-ui, sans-serif; }
+    body { margin: 2rem auto; max-width: 48rem; padding: 0 1rem; }
+    pre { white-space: pre-wrap; border: 1px solid; padding: 1rem; min-height: 8rem; }
+  </style>
+</head>
+<body>
+  <h1>Octatrack USB test</h1>
+  <p>Developer page for the private test base (<code>sdk/machines/octatrack/elekloader</code>). Stop playback and recording, connect the unit over USB, then run. The lifecycle loads, replaces, rolls back and removes a test module without a reboot and leaves the slot empty.</p>
+  <button id="run">Run lifecycle</button> <button id="diag">Read DIAG</button>
+  <pre></pre>
+  <script type="module" src="/src/dev/octatrack-usb.ts"></script>
+</body>
+</html>
