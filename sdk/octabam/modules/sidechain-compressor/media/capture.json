@@ -109,5 +109,51 @@
     "build": "python3 scripts/export-composition-proofs.py PRIVATE_SDK DEST --app . --vendored-sdk --static-stock --modules POOL --menus MENUS --select sidechain-compressor:true --image-dir IMAGES",
     "sdkRevision": "b8deefc88b2c3e5f3c6158e364eb741df1924e1d",
     "bytes": 1112560
-  }
+  },
+  "composedImage": {
+    "what": "The complete image the site composes for the same selection, with its appended runtime and the core logger. The same plan drew the same three frames.",
+    "sha256": "28eb85b849b6420e49539f042a0ca30023c5e7f2fb5d8c48afaa1160ae0d8694",
+    "bytes": 1117512,
+    "screenshots": {
+      "ot-compressor-selection.png": "af43839d77c6cc8b79662ee3d3b5f7ba77f4633cea2a08080065852a0596bb26",
+      "ot-compressor-main.png": "147a64589097cf12a0d7765dbe5adc266640a4e0a97c164353e3e146bcd765e5",
+      "ot-sidechain-key-selected.png": "253ba963f39fde0c310e2dadfcccd7f82748dcf13354f822f0f8f3143aac8722"
+    },
+    "pixelIdenticalToNative": true
+  },
+  "source": {
+    "repository": "https://github.com/sambanks/octabam",
+    "revision": "922878234b22221a1c298b3c7e0b3bdeffb468a9",
+    "authorRevision": "329b801cf90f32cbca97c6699a908908968e4df6",
+    "manifestSha256": "3bba6ac8ba315e10d6d7f2cb6342fb5ce6564e1ba6cd6ec362787d685c5e0cd7"
+  },
+  "sourceToolHashes": {
+    "scripts/capture-module-ui.py": "ddb11af68a1c2c1ce097ffaece00e0f718e0a20c43b700a6f953db97a7df53e8",
+    "sdk/octabam/tools/emu/lcd_view.py": "c1a9a61bd8d551fd7f15b5debcb5ff9b986e6a56ed0810d9d98c2627344594c1",
+    "sdk/octabam/tools/emu/emu_card.py": "b3877cd541467665f0f0d335f4baf5fc92fc088e53de62b50220bf991a606a55"
+  },
+  "emulatorBuild": {
+    "source": "ot_emu from a local sambanks/octabam checkout (HEAD a67a11126f8a00446e6fcda5c107c137aba77b1f on 10 October 2026); the revision the binary was last built from was not recorded, and it was not rebuilt from this repository's sdk/octabam copy.",
+    "dspRepository": "https://github.com/dsp56300/dsp56300",
+    "dspRevision": null,
+    "asmjitRevision": null,
+    "mc68kRevision": null,
+    "compiler": null,
+    "cmake": null
+  },
+  "projectSetup": {
+    "recipe": "No project and no private template: the capture script writes an empty scratch card and the firmware starts a new project. The first-run date dialog is accepted with YES, track T1 is selected, FUNC + FX1 opens FX1 SETUP and encoder LEVEL is turned eight rows to COMPRESSOR, the module's row, before YES assigns it."
+  },
+  "review": {
+    "selectionConfirmed": "YES assigns COMPRESSOR before the SETUP page is captured: its right-hand side changes from the previous effect's controls to RMS, KEY, KFLT, KGN and MON.",
+    "observedKey": "T2 after encoder C delta 8; not evidence of T1-to-T5 tutorial audio.",
+    "pixelEdits": "None; actual LCD framebuffer at integer scale 6, only the two display colours are mapped.",
+    "comparedWith0.1.1": "The three PNGs are byte-identical to the 0.1.1 captures: 0.1.2 changes no page, label or control."
+  },
+  "limitations": [
+    "UI-only MKII session: stopped transport, no loaded audio or hardware qualification.",
+    "FX1 selection, main page and SETUP with the KEY label observed. FX2 and MKI remain source-described, not captured.",
+    "No MON audio, ducking, project reload or timing qualification claimed.",
+    "The emulator was built from upstream octabam, not this repository's sdk/octabam copy; its sub-revisions were not recorded."
+  ]
 }
