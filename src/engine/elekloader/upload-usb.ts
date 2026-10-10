@@ -67,7 +67,7 @@ export function parseVendorResult(bytes: Uint8Array): VendorResult {
   const status = VendorStatus[bytes[5]]
   if (bytes.length < VENDOR_RESULT_HEADER || bytes[0] !== 0x4d || bytes[1] !== 0x57 || bytes[2] !== 0x55 || bytes[3] !== 0x54 ||
       bytes[4] !== VENDOR_VERSION || !status || bytes.length !== (status === 'ready' ? VENDOR_RESULT_BYTES : VENDOR_RESULT_HEADER))
-    throw new VendorTransportError('Malformed vendor result.')
+    throw new VendorTransportError(`Malformed vendor result (${bytes.length} bytes: ${Array.from(bytes.subarray(0, 16), b => b.toString(16).padStart(2, '0')).join('')}).`)
   return { status, sequence: bytes[6] << 8 | bytes[7], response: status === 'ready' ? bytes.slice(VENDOR_RESULT_HEADER) : undefined }
 }
 

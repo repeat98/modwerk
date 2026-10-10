@@ -167,5 +167,16 @@ class RuntimeSlotTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
 
 
+
+class FlashSafetyTests(unittest.TestCase):
+    def test_changes_outside_declared_sites_are_reported(self):
+        from check_flash_safety import unexplained
+        stock = bytes(32)
+        built = bytearray(stock); built[4:6] = b'\x01\x02'; built[20] = 9
+        self.assertEqual(unexplained(stock, bytes(built), 0x1000, [(0x1004, 2)]), [(0x1014, 1)])
+        self.assertEqual(unexplained(stock, bytes(built), 0x1000, [(0x1004, 2), (0x1010, 8)]), [])
+        self.assertEqual(unexplained(stock, bytes(built), 0x1000, [(0x1005, 2), (0x1010, 8)]), [(0x1004, 2)])
+
+
 if __name__ == '__main__':
     unittest.main()

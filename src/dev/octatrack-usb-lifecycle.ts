@@ -6,16 +6,24 @@ import { sha } from '../../vendor/elekloader/kit/src/bytes.ts'
 import { UploadSession, type UploadPackage } from '../engine/elekloader/upload-session.ts'
 import { UsbVendorTransport, type ControlDevice } from '../engine/elekloader/upload-usb.ts'
 
-export interface Diagnostics { ticks: number; value: number; active: boolean; frames: number; refusals: number; resets: number }
+export interface Diagnostics {
+  ticks: number; value: number; active: boolean; frames: number; refusals: number; resets: number
+  primes: number; completions: number; submitState: number; submitAwaited: boolean
+  lastToken: string; lastReceived: number; primeStatus: string; queueNext: string; frameHead: string
+}
 
-/** The base's read-only DIAG request (sdk/machines/octatrack/elekloader/ep0.c). */
+/** The base's read-only DIAG request, version 2 (sdk/machines/octatrack/elekloader/ep0.c). */
 export async function diagnostics(device: ControlDevice, index: number): Promise<Diagnostics> {
-  const reply = await device.controlTransferIn({ requestType: 'vendor', recipient: 'interface', request: 4, value: 0, index }, 32)
+  const reply = await device.controlTransferIn({ requestType: 'vendor', recipient: 'interface', request: 4, value: 0, index }, 64)
   const view = reply.data
-  if (reply.status !== 'ok' || !view || view.byteLength !== 32 || view.getUint32(0) !== 0x4d575544 || view.getUint8(4) !== 1)
-    throw new Error('The base did not answer DIAG.')
-  const word = (i: number) => view.getUint32(8 + 4 * i)
-  return { ticks: word(0), value: word(1), active: word(2) !== 0, frames: word(3), refusals: word(4), resets: word(5) }
+  if (reply.status !== 'ok' || !view || view.byteLength !== 64 || view.getUint32(0) !== 0x4d575544 || view.getUint8(4) !== 2)
+    throw new Error('The base did not answer DIAG version 2.')
+  const word = (i: number) => view.getUint32(8 + 4 * i), hex = (i: number) => '0x' + word(i).toString(16).padStart(8, '0')
+  return {
+    ticks: word(0), value: word(1), active: word(2) !== 0, frames: word(3), refusals: word(4), resets: word(5),
+    primes: word(6), completions: word(7), submitState: word(8) >>> 16, submitAwaited: (word(8) & 1) !== 0,
+    lastToken: hex(9), lastReceived: word(10), primeStatus: hex(11), queueNext: hex(12), frameHead: hex(13),
+  }
 }
 
 /** "MWRM", ABI 1, entry 0, then movea.l 4(sp),a0; move.l #value,(a0); rts, plus optional padding. */

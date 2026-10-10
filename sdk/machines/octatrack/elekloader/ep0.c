@@ -23,6 +23,7 @@
 #define SETUP ((const uint8_t *)0x46c8ce08u)
 #define ENDPTSETUPSTAT REG(0xfc0b01acu)
 #define ENDPTPRIME REG(0xfc0b01b0u)
+#define ENDPTSTAT REG(0xfc0b01b8u)
 #define ENDPTFLUSH REG(0xfc0b01b4u)
 #define ENDPTCOMPLETE REG(0xfc0b01bcu)
 #define ENDPTCTRL0 REG(0xfc0b01c0u)
@@ -57,6 +58,8 @@ static struct dtd data_dtd __attribute__((aligned(32)));
 static uint8_t started, receiving;
 static volatile uint8_t wake_posted;
 static uint32_t expected, frames, refusals, resets;
+/* Hardware-run evidence for DIAG: what the data stage path saw last. */
+static uint32_t primes, completions, submit_state, last_token, last_received, prime_status, qh_next, frame_head;
 const uint8_t *modwerk_ep0_reply;
 /* The engine ignores messages whose first byte is above 45 and returns to
  * its receive, where the idle hook runs: a wake-up and nothing else. */
@@ -88,18 +91,23 @@ static void flush_receive(void)
     for (uint32_t i = 0; (ENDPTFLUSH & 1u) && i < 100000u; ++i) {}
 }
 
-/* DIAG (0xC1, bRequest 4, wValue 0, wLength 32): read-only counters for a
- * hardware run, big-endian after "MWUD", version 1 and three zero bytes:
+/* DIAG (0xC1, bRequest 4, wValue 0, wLength 64): read-only counters for a
+ * hardware run, big-endian after "MWUD", version 2 and three zero bytes:
  * runtime ticks, the test module's value, whether a module is active, frames
- * received, our refusals and bus resets. */
+ * received, our refusals, bus resets, data stages primed and completed, the
+ * stock EP0 state (high 16 bits) and awaited-OUT flag at the last SUBMIT,
+ * the last descriptor token and received count, ENDPTPRIME (high) and
+ * ENDPTSTAT (low) right after priming, the queue head's next pointer read
+ * back, and the first four bytes received. */
 static int diag(const uint8_t *s, uint8_t *out)
 {
     if (s[0] != MV_RESULT_TYPE || s[1] != 4 || s[2] || s[3] || s[4] != MODWERK_VENDOR_INTERFACE || s[5] ||
-        s[6] != 32 || s[7]) return 0;
-    uint32_t words[6] = {modwerk_runtime_calls(), modwerk_runtime_value(), modwerk_runtime_active() != 0,
-                         frames, refusals, resets};
-    out[0] = 'M'; out[1] = 'W'; out[2] = 'U'; out[3] = 'D'; out[4] = 1; out[5] = out[6] = out[7] = 0;
-    for (uint32_t i = 0; i < 24; ++i) out[8 + i] = (uint8_t)(words[i / 4] >> (24 - 8 * (i % 4)));
+        s[6] != 64 || s[7]) return 0;
+    uint32_t words[14] = {modwerk_runtime_calls(), modwerk_runtime_value(), modwerk_runtime_active() != 0,
+                          frames, refusals, resets, primes, completions, submit_state, last_token,
+                          last_received, prime_status, qh_next, frame_head};
+    out[0] = 'M'; out[1] = 'W'; out[2] = 'U'; out[3] = 'D'; out[4] = 2; out[5] = out[6] = out[7] = 0;
+    for (uint32_t i = 0; i < 56; ++i) out[8 + i] = (uint8_t)(words[i / 4] >> (24 - 8 * (i % 4)));
     return 1;
 }
 
@@ -119,24 +127,31 @@ uint32_t modwerk_ep0_dispatch(void)
     if (r.action == MV_PASS) return 0;
     if (r.action == MV_STALL && diag(SETUP, out)) { /* mv_setup stalls requests it does not know */
         modwerk_ep0_reply = out;
-        return 32;
+        return 64;
     }
     if (r.action == MV_RECEIVE) {
-        /* Only from stock's idle state: in state 10 its completion loop
-         * would spin on our completion bit. A refusal is retryable. */
-        if (EP0_STATE != 11u || EP0_OUT_AWAITED) {
-            mv_abandon(t);
-            ++refusals;
-            return MODWERK_EP0_REFUSE;
-        }
+        /* Stock's completion loop handles an EP0 OUT completion harmlessly
+         * only in its idle state (11) with no awaited OUT descriptor; in any
+         * other state it spins on the bit forever. This new SETUP has ended
+         * whatever transfer stock was tracking (its SETUP path also cleared
+         * the EP0 completion bits), so take EP0 into the idle state for ours.
+         * On hardware the state was not idle here: a fast host's SETUP can
+         * clear the previous IN completion before stock processes it. */
+        submit_state = EP0_STATE << 16 | (EP0_OUT_AWAITED != 0);
+        EP0_STATE = 11u;
+        EP0_OUT_AWAITED = 0;
         struct dtd *d = UNCACHED(&data_dtd);
         uint32_t at = (uint32_t)(uintptr_t)r.buffer;
         d->next = 1u;
         d->token = r.length << 16 | DTD_IOC | DTD_ACTIVE;
         d->page[0] = at;
         for (uint32_t i = 1; i < 5; ++i) d->page[i] = (at & ~0xfffu) + 0x1000u * i;
-        ((volatile uint32_t *)(uintptr_t)EP0_OUT_QH)[2] = (uint32_t)(uintptr_t)d;
+        volatile uint32_t *qh = (volatile uint32_t *)(uintptr_t)EP0_OUT_QH;
+        qh[2] = (uint32_t)(uintptr_t)d;
         ENDPTPRIME = ENDPTPRIME | 1u;
+        ++primes;
+        qh_next = qh[2];
+        prime_status = ENDPTPRIME << 16 | (ENDPTSTAT & 0xffffu);
         expected = r.length;
         receiving = 1;
         return MODWERK_EP0_RECEIVING;
@@ -164,6 +179,9 @@ void modwerk_ep0_poll(void)
     receiving = 0;
     ENDPTCOMPLETE = 1u; /* Ours, if the stock loop has not taken it. */
     uint32_t received = token & DTD_ERRORS ? 0 : expected - (token >> 16 & 0x7fffu);
+    const volatile uint8_t *head = t->frame;
+    ++completions; last_token = token; last_received = received;
+    frame_head = (uint32_t)head[0] << 24 | (uint32_t)head[1] << 16 | (uint32_t)head[2] << 8 | head[3];
     if (mv_data(t, received)) {
         ++frames;
         STATUS_IN();
