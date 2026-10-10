@@ -125,7 +125,7 @@ def main():
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--cross', default='m68k-elf-', help='Use Modwerk\'s reviewed GNU toolchain.')
     parser.add_argument('--dev', action='store_true',
-                        help='Development base: KEY and SCREEN requests (dev.c) to drive the unit over USB. Never for users.')
+                        help='Development base: drive and watch the unit over USB (dev.c) and stream MAIN/CUE as USB audio. Never for users.')
     parser.add_argument('--dsp-loader', action='store_true',
                         help='Load module DSP effects on demand; takes PLATE, SPRING and DARK REV off FX2 (needs ELEKLOADER_DSP_ASM, Node 24).')
     args = parser.parse_args()
@@ -210,11 +210,17 @@ def main():
         chooser_sites, rows = loader_dsp.choosers(image)
         dsp_sites += chooser_sites
     (source/'usb_base.h').write_text(usb.header())
-    (source/'usb_base.s').write_text(usb.assembly())
+    (source/'usb_base.s').write_text(usb.assembly(args.dev))
+    if args.dev:  # USB AUDIO OUT MAIN CUE (usb_base.py): Octabam's source with our interface numbers
+        (source/'usbaudio.s').write_text(usb.audio_assembly())
+        (source/'remix.inc').write_text(usb.AUDIO_INC)
     # Identity describes this core-only private base. Later selections need
     # their complete module/version/chooser identities regenerated explicitly.
     inputs = {str(p.relative_to(APP)): sha(p.read_bytes()) for folder in (logger, upload, loader, HERE) + ((DYNLOAD,) if args.dsp_loader else ())
               for p in sorted(folder.iterdir()) if p.is_file() and p.suffix in ('.c', '.h', '.s', '.asm', '.py', '.json')}
+    if args.dev:
+        for path in (usb.AUDIO_SOURCE, usb.AUDIO_DESCRIPTORS):
+            inputs[str(path.relative_to(APP))] = sha(path.read_bytes())
     if args.dsp_loader:
         for name in ('src/engine/assets/stock-dsp-metadata.json', 'src/engine/assets/chooser-metadata.json',
                      'src/engine/choosers.ts', 'src/engine/module-menus.ts', 'scripts/octatrack-base-choosers.mjs'):
@@ -228,7 +234,7 @@ def main():
     configuration = dict(fx1=['NONE', *chooser['stockFx1']], fx2=['NONE', *chooser['stockFx2']],
                          hidden=[], logger='0.2.0', modules=[], os='1.40C', source=source_hash, stockfx2=True,
                          usb=dict(interfaces=['msc', 'modwerk-vendor'], vendor=1, submit=True, backend='runtime-loader-3'),
-                         boot='ram-1', **({'dev': ['key', 'screen']} if args.dev else {}))
+                         boot='ram-1', **({'dev': ['key', 'panel', 'state', 'screen', 'usb-audio-main-cue']} if args.dev else {}))
     if args.dsp_loader:
         configuration.update(fx1=['NONE', *rows['fx1']], fx2=['NONE', *rows['fx2']], stockfx2=False,
                              dsp=dict(loader='dsp-dynload-1', harvest=list(loader_dsp.HARVEST), rows=list(loader_dsp.MODULES),
@@ -269,7 +275,7 @@ modwerk_retained_end:
                   license='GPL-3.0-or-later',
                   description='Private core-only Elekloader base with logger/startup, a USB vendor interface and a runtime module loader (hooks and stock-code sites); NOT a flash candidate.')
     recipe['sources'] += [p.name for p in sorted(source.glob('*.c'))] + ['hooks.s', 'retained.s', 'usb_base.s', 'boot.s'] + (
-        ['dsp_hooks.s'] if args.dsp_loader else [])
+        ['dsp_hooks.s'] if args.dsp_loader else []) + (['usbaudio.s'] if args.dev else [])
     recipe['cflags'] = ['-std=c99', '-ffreestanding', '-fno-builtin', '-fno-common',
                         '-fno-zero-initialized-in-bss', '-fno-tree-loop-distribute-patterns',
                         '-fno-merge-constants', '-fno-asynchronous-unwind-tables', '-fno-unwind-tables',
@@ -282,7 +288,7 @@ modwerk_retained_end:
         target = usb.IDLE_HOOK if key == 'idle' else 'olog_' + key + '_hook'
         recipe['sites'].append(dict(addr=hex(guard['address']), stock=image[at:at+n].hex(),
                                     op='jmp', target=target))
-    recipe['sites'] += usb.sites(lambda addr, n: image[addr-device.main_load:addr-device.main_load+n])
+    recipe['sites'] += usb.sites(lambda addr, n: image[addr-device.main_load:addr-device.main_load+n], args.dev)
     # RAM boot: the gate at the OS entry, and the DSP park in both payloads.
     at = BOOT_GATE[0] - device.main_load
     if image[at:at+6].hex() != BOOT_GATE[1]:

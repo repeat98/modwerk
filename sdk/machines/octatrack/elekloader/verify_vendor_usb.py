@@ -97,18 +97,36 @@ def status(response):
                 session=response[80:112], active=response[112:144].hex())
 
 
-def check(b, base, hs, sessions):
+def audio_checks(b, hs):
+    """Development bases: USB AUDIO OUT MAIN CUE's clock and stream (AudioControl 2, AudioStreaming 3)."""
+    ac, as_ = usb.AUDIO_INTERFACES
+    results = {'audio clock reports 44.1 kHz': answers(
+        lambda: b.ctrl_in(0xa1, 1, 0x0100, 0x10 << 8 | ac, 4), struct.pack('<I', 44100))}
+    b.iso_hz(4000 if hs else 1000)  # bInterval 2 at high speed, 1 at full speed
+    b.ctrl_nodata(0x01, 0x0b, 1, as_)
+    results['audio alt 1 reported'] = answers(lambda: b.ctrl_in(0x81, 0x0a, 0, as_, 1), b'\x01')
+    sizes = [len(b.ep_in(3, 1024)) for _ in range(400)]
+    frame = 16 if hs else 8  # MAIN + CUE at high speed, MAIN alone at full speed, 4 bytes a sample
+    results['audio stream flows'] = sum(1 for n in sizes if n) > 300 and all(n % frame == 0 for n in sizes)
+    b.ctrl_nodata(0x01, 0x0b, 0, as_)
+    after = [len(b.ep_in(3, 1024)) for _ in range(12)]
+    results['audio alt 0 stops the stream'] = all(n == 0 for n in after[2:])  # two may still be in flight
+    b.iso_hz(0)
+    return results
+
+
+def check(b, base, hs, sessions, audio=False):
     results = {}
     _, cfg = bench.enumerate_device(b, hs)
-    results['configuration'] = cfg == usb.configuration(hs)
-    results['other speed'] = answers(lambda: b.ctrl_in(0x80, 6, 0x0700, 0, 255), usb.configuration(not hs, True))
+    results['configuration'] = cfg == usb.configuration(hs, False, audio)
+    results['other speed'] = answers(lambda: b.ctrl_in(0x80, 6, 0x0700, 0, 255), usb.configuration(not hs, True, audio))
     vendor = usb.VENDOR_INTERFACE
     results['identify'] = answers(lambda: b.ctrl_in(VENDOR_IN, IDENTIFY, 0, vendor, 72), expected_identity(base))
     results['identify length refused'] = stalls(lambda: b.ctrl_in(VENDOR_IN, IDENTIFY, 0, vendor, 64))
     results['identify value refused'] = stalls(lambda: b.ctrl_in(VENDOR_IN, IDENTIFY, 1, vendor, 72))
     results['other interface refused'] = stalls(lambda: b.ctrl_in(VENDOR_IN, IDENTIFY, 0, usb.MSC_INTERFACE, 72))
     # What Windows reads before it binds WinUSB to the vendor interface.
-    results['device reports USB 2.10'] = answers(lambda: b.ctrl_in(0x80, 6, 0x0100, 0, 18), usb.device())
+    results['device reports USB 2.10'] = answers(lambda: b.ctrl_in(0x80, 6, 0x0100, 0, 18), usb.device(audio))
     results['BOS header'] = answers(lambda: b.ctrl_in(0x80, 6, 0x0f00, 0, 5), usb.bos()[:5])
     results['BOS'] = answers(lambda: b.ctrl_in(0x80, 6, 0x0f00, 0, 255), usb.bos())
     results['Microsoft OS 2.0 set'] = answers(lambda: b.ctrl_in(0xc0, usb.MS_VENDOR_CODE, 0, usb.MS_OS_20_INDEX,
@@ -136,6 +154,8 @@ def check(b, base, hs, sessions):
     results['identify after refusals'] = answers(lambda: b.ctrl_in(VENDOR_IN, IDENTIFY, 0, vendor, 72),
                                                  expected_identity(base))
     results['mass storage'] = bench.msc_test(b)
+    if audio:
+        results.update(audio_checks(b, hs))
     return results
 
 
@@ -144,11 +164,12 @@ def main():
     parser.add_argument('socket')
     parser.add_argument('--proofs', type=Path, required=True, help="build_core.py's proofs.json for this image")
     args = parser.parse_args()
-    base = json.loads(args.proofs.read_text())['configurationHash']
+    proofs = json.loads(args.proofs.read_text())
+    base, audio = proofs['configurationHash'], 'usb-audio-main-cue' in proofs['configuration'].get('dev', [])
     b = bench.Bench(args.socket, timeout=60.0)
     failed, sessions = 0, []
     for hs in (True, False):
-        for name, ok in check(b, base, hs, sessions).items():
+        for name, ok in check(b, base, hs, sessions, audio).items():
             print('%-34s %s %s' % (name, 'high' if hs else 'full', 'passed' if ok else 'FAILED'))
             failed += not ok
     same = len(sessions) == 2 and sessions[0] is not None and sessions[0] == sessions[1]

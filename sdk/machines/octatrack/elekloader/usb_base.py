@@ -11,8 +11,10 @@ the one USB MIDI's hardware-proven configurations carry (descriptors.py).
 Developer source recipe only; no stock bytes, firmware or device access.
 """
 import hashlib
+import importlib.util
 import struct
 import uuid
+from pathlib import Path
 
 VENDOR_CLASS, VENDOR_SUBCLASS, VENDOR_PROTOCOL = 0xff, 0x4d, 1
 MSC_INTERFACE, VENDOR_INTERFACE = 0, 1
@@ -39,6 +41,22 @@ STOCK_DEVICE = bytes.fromhex('120100020000004035190200010001020301')  # 0x400e20
 MS_VENDOR_CODE, MS_OS_20_INDEX = 0x20, 7
 INTERFACE_GUID = '{4DEA1B9D-6B51-400A-93C9-5CFFC5DF8CF1}'
 WINDOWS_8_1 = 0x06030000
+# Development bases only (build_core.py --dev): USB AUDIO OUT MAIN CUE streams
+# MAIN and CUE to the computer, from Octabam's source in this repo
+# (markandrus/octemu, MIT; hardware: Bryan T's MKII at high speed). Its
+# function follows the vendor interface, and its shims take over where the
+# base's tails replay stock, so no stock site has two owners.
+OCTABAM = Path(__file__).resolve().parents[3] / 'octabam'
+AUDIO_SOURCE = OCTABAM / 'modules/usb-audio-out-tracks-main-cue/usbaudio.s'
+AUDIO_DESCRIPTORS = OCTABAM / 'platform/usb-midi/descriptors.py'
+AUDIO_INTERFACES = (2, 3)  # AudioControl, AudioStreaming
+AUDIO_INC = "| remix.inc -- usbaudio.s's layout: USB AUDIO OUT MAIN CUE\n    .set USB_LAYOUT, 3\n    .set USB_IN, 0\n"
+AUDIO_DETOURS = (  # address, stock bytes, shim: usbaudio.s's own sites, none of the base's
+    (0x4001dd04, '2039fc0b01c4', 'audio_setiface_shim'),
+    (0x4001d824, '4879400e20a1', 'audio_getiface_shim'),
+    (0x4001d4b2, '23d04ec95028', 'audio_ep0page_shim'),
+    (0x4000d9a0, '42b946104d4e', 'audio_frame_shim'),
+)
 CLAMP_SHA256 = 'ec1f697431abb21cc32bb4399935d28cfa9032e400b7e9b6a30811a764055e52'
 DETOURS = (  # address, guarded bytes, their SHA-256, shim; 6 bytes are replaced
     (0x4001d858, 12, CLAMP_SHA256, 'modwerk_usb_clamp1'),
@@ -61,17 +79,44 @@ def endpoint(address, size):
     return bytes([7, 5, address, 2]) + struct.pack('<H', size) + bytes([0])
 
 
-def configuration(high_speed, other_speed=False):
+def audio_function(high_speed, other_speed=False):
+    """USB AUDIO OUT MAIN CUE's interface association, from Octabam's composer with our interface numbers."""
+    spec = importlib.util.spec_from_file_location('usbmidi_descriptors', AUDIO_DESCRIPTORS)
+    octabam = importlib.util.module_from_spec(spec); spec.loader.exec_module(octabam)
+    octabam.UAC2_AC_IFACE, octabam.UAC2_AS_IFACE = AUDIO_INTERFACES
+    full = octabam.audio_config(high_speed, other_speed, 'USB AUDIO OUT MAIN CUE')
+    iad = bytes([8, 0x0b, AUDIO_INTERFACES[0], 2, 1, 0, 0x20, 0])
+    if full.count(iad) != 1:
+        raise ValueError("Octabam's audio configuration changed; review audio_function().")
+    return full[full.index(iad):]
+
+
+def configuration(high_speed, other_speed=False, dev_audio=False):
     """One configuration descriptor; bulk endpoints are 512 bytes at high speed."""
     bulk = 512 if high_speed else 64
     body = (bytes([9, 4, MSC_INTERFACE, 0, 2, 8, 6, 0x50, 0]) + endpoint(0x81, bulk) + endpoint(0x01, bulk) +
             bytes([9, 4, VENDOR_INTERFACE, 0, 0, VENDOR_CLASS, VENDOR_SUBCLASS, VENDOR_PROTOCOL, 0]))
+    if dev_audio:
+        body += audio_function(high_speed, other_speed)
     return (bytes([9, 7 if other_speed else 2]) + struct.pack('<H', 9 + len(body)) +
-            bytes([2, 1, 0, 0xc0, 3]) + body)
+            bytes([4 if dev_audio else 2, 1, 0, 0xc0, 3]) + body)
 
 
-def device():
-    return STOCK_DEVICE[:2] + struct.pack('<H', 0x0210) + STOCK_DEVICE[4:]
+def audio_assembly():
+    """usbaudio.s with the base's interface numbers; assembled with AUDIO_INC as its remix.inc."""
+    text = AUDIO_SOURCE.read_text()
+    for name, stock, ours in zip(('UAC2_AC_IFACE', 'UAC2_AS_IFACE'), (3, 4), AUDIO_INTERFACES):
+        old = '.set %s,  %d ' % (name, stock)
+        if text.count(old) != 1:
+            raise ValueError('usbaudio.s changed; review audio_assembly().')
+        text = text.replace(old, '.set %s,  %d ' % (name, ours))
+    return text
+
+
+def device(dev_audio=False):
+    """USB 2.10; with audio, the interface-association composite class (EF/02/01), as USB AUDIO OUT's poke sets."""
+    return (STOCK_DEVICE[:2] + struct.pack('<H', 0x0210) +
+            (bytes([0xef, 2, 1]) if dev_audio else STOCK_DEVICE[4:7]) + STOCK_DEVICE[7:])
 
 
 def msos20():
@@ -90,9 +135,9 @@ def bos():
     return struct.pack('<BBHB', 5, 0x0f, 5 + len(platform), 1) + platform
 
 
-def tables():
-    return {'modwerk_cfg_fs': configuration(False), 'modwerk_cfg_hs': configuration(True),
-            'modwerk_cfg_os_fs': configuration(False, True), 'modwerk_cfg_os_hs': configuration(True, True)}
+def tables(dev_audio=False):
+    return {'modwerk_cfg_fs': configuration(False, False, dev_audio), 'modwerk_cfg_hs': configuration(True, False, dev_audio),
+            'modwerk_cfg_os_fs': configuration(False, True, dev_audio), 'modwerk_cfg_os_hs': configuration(True, True, dev_audio)}
 
 
 ASSEMBLY = '''| usb_base.s -- generated by sdk/machines/octatrack/elekloader/usb_base.py.
@@ -146,8 +191,7 @@ modwerk_ep0_shim:
     movel   modwerk_ep0_reply,%sp@-
     movel   %d0,%sp@-
     jmp     0x4001de5c
-2:  movel   0xfc0b01c0,%d0
-    jmp     0x4001de6a
+2:  {not_ours}
 3:  movel   0xfc0b01c0,%d0
     orl     #0x00010001,%d0
     movel   %d0,0xfc0b01c0
@@ -174,17 +218,14 @@ modwerk_bus_reset_shim:
     jsr     modwerk_ep0_bus_reset
     moveml  %sp@,%d0-%d1/%a0-%a1
     lea     %sp@(16),%sp
-    jsr     0x4001d6b8
-    moveq   #64,%d0
-    jmp     0x4001e922
+    {reset_tail}
 modwerk_session_end_shim:
     lea     %sp@(-16),%sp
     moveml  %d0-%d1/%a0-%a1,%sp@
     jsr     modwerk_ep0_bus_reset
     moveml  %sp@,%d0-%d1/%a0-%a1
     lea     %sp@(16),%sp
-    movel   0xfc0b0140,%d0
-    jmp     0x4001e958
+    {session_end_tail}
 
 | The engine's return to its receive: service the transport, then the
 | logger's idle hook exactly as the site would have entered it.
@@ -202,15 +243,26 @@ modwerk_idle_hook:
 '''
 
 
-def assembly():
-    blobs = tables()
+STOCK_TAILS = dict(not_ours='movel   0xfc0b01c0,%d0\n    jmp     0x4001de6a',
+                   reset_tail='jsr     0x4001d6b8\n    moveq   #64,%d0\n    jmp     0x4001e922',
+                   session_end_tail='movel   0xfc0b0140,%d0\n    jmp     0x4001e958')
+# The audio shims replay the same stock instructions themselves.
+AUDIO_TAILS = dict(not_ours='jmp     audio_ctrl_shim', reset_tail='jmp     audio_reset_shim',
+                   session_end_tail='jmp     audio_sessend_shim')
+
+
+def assembly(dev_audio=False):
+    blobs = tables(dev_audio)
     lengths = {len(blob) for blob in blobs.values()}
-    if len(lengths) != 1 or max(lengths) > 64:
-        raise ValueError('The four configurations must share one length within one 64-byte slot.')
-    text = ASSEMBLY.format(length=lengths.pop())
-    blobs.update(modwerk_device=device(), modwerk_bos=bos(), modwerk_msos20=msos20())
+    if len(lengths) != 1 or max(lengths) > 256:
+        raise ValueError('The four configurations must share one length (one clamp) within one 256-byte slot.')
+    text = ASSEMBLY.format(length=lengths.pop(), **(AUDIO_TAILS if dev_audio else STOCK_TAILS))
+    if dev_audio:  # usbaudio.s's ISR shim ends in USB MIDI's; here that is our poll
+        text += '    .global usbmidi_rx_isr_shim\n    .set usbmidi_rx_isr_shim, modwerk_ep0_poll_shim\n'
+    blobs.update(modwerk_device=device(dev_audio), modwerk_bos=bos(), modwerk_msos20=msos20())
     for name, blob in blobs.items():
-        text += '    .balign 64\n    .global %s\n%s:\n    .byte %s\n' % (name, name, ', '.join('0x%02x' % b for b in blob))
+        text += '    .balign %d\n    .global %s\n%s:\n    .byte %s\n' % (
+            64 if len(blob) <= 64 else 256, name, name, ', '.join('0x%02x' % b for b in blob))
     return text
 
 
@@ -223,7 +275,7 @@ def header():
             % (VENDOR_INTERFACE, MODEL, MS_VENDOR_CODE, MS_OS_20_INDEX, len(bos()), len(msos20())))
 
 
-def sites(image_at):
+def sites(image_at, dev_audio=False):
     """Elekloader sites after checking every stock span this base replaces, skips or relies on."""
     addr, length, digest = CACR_GUARD
     if hashlib.sha256(image_at(addr, length)).hexdigest() != digest:
@@ -239,5 +291,10 @@ def sites(image_at):
     for addr, length, digest, symbol in DETOURS:
         if hashlib.sha256(image_at(addr, length)).hexdigest() != digest:
             raise ValueError('USB site at 0x%08x is not stock.' % addr)
-        out.append(dict(addr=hex(addr), stock=image_at(addr, 6).hex(), op='jmp', target=symbol))
+        target = 'audio_isr_shim' if dev_audio and symbol == 'modwerk_ep0_poll_shim' else symbol  # it ends in our poll
+        out.append(dict(addr=hex(addr), stock=image_at(addr, 6).hex(), op='jmp', target=target))
+    for addr, stock, symbol in AUDIO_DETOURS if dev_audio else ():
+        if image_at(addr, 6).hex() != stock:
+            raise ValueError('USB audio site at 0x%08x is not stock.' % addr)
+        out.append(dict(addr=hex(addr), stock=stock, op='jmp', target=symbol))
     return out

@@ -520,6 +520,20 @@ turns and the crossfader as raw panel bytes), STATE (stopped, recording)
 and SCREEN (the last composed 128x64 frame), used by
 `npm run device -- key FUNC+PLAY | enc A+3 | fader 128 | state | screen`.
 
+Development bases also stream MAIN and CUE to the computer as USB audio
+(owner: for development only, never in the base users install). They carry
+Octabam's USB AUDIO OUT MAIN CUE (`usbaudio.s`, layout 3, hardware-proven at
+high speed on Bryan T's MKII) with AudioControl and AudioStreaming as
+interfaces 2 and 3 after the vendor interface (the source's two interface
+`.set`s rewritten at build time), the composite device class, and its own
+sites for SET/GET_INTERFACE, the EP0 page fix and the frame producer. Where
+both would own a stock site, the base's shims hand over: requests that are
+not the base's go on to `audio_ctrl_shim`, bus reset and session end to the
+audio shims (which replay stock), and the audio ISR shim ends in the base's
+poll. In the emulator (`--frame`) both speeds pass the vendor and mass
+storage checks plus the audio clock (44.1 kHz), alt 1 starting a stream of
+whole frames, and alt 0 stopping it.
+
 ### Windows without a driver (10 October 2026)
 
 The base reports USB 2.10 from its own copy of the device descriptor (one

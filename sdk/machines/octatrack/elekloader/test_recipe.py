@@ -103,7 +103,8 @@ class UsbBaseTests(unittest.TestCase):
     def test_assembly_aligns_each_table_and_keeps_the_stock_rejoins(self):
         text = self.usb.assembly()
         self.assertIn('.set modwerk_cfg_len, 41', text)
-        self.assertEqual(text.count('    .balign 64\n'), 7)  # four configurations, device, BOS, MS OS 2.0 set
+        self.assertEqual(text.count('    .balign 64\n'), 6)  # four configurations, device, BOS
+        self.assertEqual(text.count('    .balign 256\n'), 1)  # the MS OS 2.0 set, longer than 64 bytes
         for name in self.usb.tables():
             self.assertIn('\n%s:\n' % name, text)
         for rejoin in ('0x4001d864', '0x4001d8a2', '0x4001de5c', '0x4001de6a', '0x4001de74',
@@ -153,6 +154,24 @@ class UsbBaseTests(unittest.TestCase):
         _, image_at = self.image({0x400e2000: self.usb.STOCK_DEVICE[:-1] + b'\x02'})
         with self.assertRaisesRegex(ValueError, 'device descriptor'):
             self.usb.sites(image_at)
+
+    def test_dev_audio_follows_the_vendor_interface_and_chains_the_tails(self):
+        hs = self.usb.configuration(True, False, True)
+        self.assertEqual(hs[4], 4)  # MSC, vendor, AudioControl, AudioStreaming
+        self.assertEqual(hs[9:41], self.usb.configuration(True)[9:])  # MSC and vendor unchanged
+        self.assertEqual(hs[41:49], bytes([8, 0x0b, 2, 2, 1, 0, 0x20, 0]))  # the audio function's association
+        self.assertEqual({len(t) for t in self.usb.tables(True).values()}, {len(hs)})  # one clamp
+        self.assertEqual(self.usb.device(True)[4:7], bytes([0xef, 2, 1]))
+        text = self.usb.assembly(True)
+        for tail in ('jmp     audio_ctrl_shim', 'jmp     audio_reset_shim', 'jmp     audio_sessend_shim',
+                     '.set usbmidi_rx_isr_shim, modwerk_ep0_poll_shim'):
+            self.assertIn(tail, text)
+        self.assertIn('.set UAC2_AC_IFACE,  2 ', self.usb.audio_assembly())
+        stock, image_at = self.image({addr: bytes.fromhex(b) for addr, b, _ in self.usb.AUDIO_DETOURS})
+        self.setUpGuards(stock)
+        targets = {s['target'] for s in self.usb.sites(image_at, True)}
+        self.assertTrue({'audio_isr_shim', 'audio_frame_shim', 'audio_setiface_shim'} <= targets)
+        self.assertNotIn('modwerk_ep0_poll_shim', targets)
 
     def test_windows_descriptors_bind_winusb_to_the_vendor_interface(self):
         import struct, uuid
