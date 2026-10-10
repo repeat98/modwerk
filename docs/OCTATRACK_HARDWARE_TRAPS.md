@@ -122,6 +122,11 @@ then went through on the unit (`dsp2-AB3`). The fix confirms that some header
 words reach the DSP with junk in bits 16 to 23. Which bits and why was not
 measured.
 
+**The project's working state survives a RAM boot.** Picks made under one
+test base were still there after booting the next (stock keeps a working
+copy of the project on the card): a chooser opened on E-Verb, the last row,
+so a scripted DOWN did nothing. Read the screen before scripting a chooser.
+
 **A project that used a static module triggers its load at install.**
 Static E-Verb and dynamic E-Verb share effect id 27, so installing E-Verb
 started an upload at once on a project that already used it. Test the loader

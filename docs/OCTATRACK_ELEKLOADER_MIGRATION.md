@@ -1163,6 +1163,46 @@ it did. Two ways back:
 The plan is 1, after the pilot passes on the unit. The stock-effect
 old-project regression must then pass with no harvested effect left.
 
+**Built: every stock effect on demand** (`df8c7d97`, 10–11 October 2026).
+`--dsp-loader` now takes each core's whole effect block. The three shared
+routines go to the block start (414 words, where Modwerk's static builder
+puts them), then the receiver, then the arena: 5,258 words a core, 5,194 of
+them code room after the 64 saved dispatch entries. Every stock effect is a
+package recovered at build time from the user's firmware with the metadata's
+recipes. Each is checked against the recipe's source and adjusted hashes and
+against one relocation proof, and its dispatch is the null stub until bound.
+Whether an effect's init reads its Y buffer base is read from its code with
+the dsp56300 disassembler, as Octabam does, so the buffer manager reserves
+blocks for SPATIALIZER, FLANGER, CHORUS, COMB FILTER and the three reverbs.
+All stock chooser rows are back. Octabam's DSP DYNLOAD STOCK was the
+reference for the layout; the code is Modwerk's.
+
+- Emulator: the old-project regression (`old_projects.py`, stock project
+  with stock effects on every track and slot) passes. All 16 banks' Part
+  records match stock, and every running stock effect is bound in its core's
+  arena from boot: seven on core 1 (3,112 words) and six on core 0 (2,760),
+  with DELAY resident, as stock. PLATE and DARK REV were picked on T1 and T5
+  (`verify-octatrack-dsp-loader.mjs stock`), and E-Verb beside them on both
+  cores (`pick`). No transport errors.
+- On the unit (`dsp3-S2`, base `a4766038…`, flash-safety check passed,
+  RAM-booted, the blank project): FILTER loaded on both cores by itself at
+  boot (441 words, 20 packets each). PLATE REV picked on T1 and DARK REV on
+  T5 loaded (core 1 1,035 words, core 0 1,508), each with its own page on
+  screen. Then E-Verb was installed and picked on T2: core 1 held FILTER,
+  PLATE and E-Verb (2,623 words). The sequencer ran and there were no errors
+  or refusals throughout. The project still named E-Verb from the AB3 session
+  on T1 and T5 before it was installed; the unit said it was missing once.
+- Not yet: the sound of loaded stock effects against stock (a null test on the
+  main out), the time from pick to sound, and a full stock project on the unit.
+
+**Memory policy (owner decision).** The allocator admits the effects a target
+actually selects. Room goes to effects in use only: what no slot runs is
+freed. A stock pick can therefore be refused when modules hold the room. The
+largest stock-only selection a core can run (about 4,700 words) always fits
+on its own. Stock-first for memory, like cycles, would need modules to fit
+beside the worst stock set, which leaves about 500 words for modules; this
+base does not do that.
+
 ### Decisions for the owner
 
 - A short fade on a module switch, or exactly stock's hard switch with fresh
