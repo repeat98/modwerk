@@ -1401,6 +1401,15 @@
             "imageSha256": "164f31224bf61181e3f50e7dec40df9afcae5b16dbf6e4c0d0cc5e986af0a84e",
             "setup": "Reviewed headless ot_emu; MKII panel; verified unmodified stock 1.40C MAIN OS; empty scratch card; transport stopped; Grid Recording enabled on T1. Actual 128x64 LCD pixels at integer scale 6. This shared stock swing menu configures the track timing followed by Euclid; no Euclid runtime was loaded for these stock-menu captures. See docs/swing-capture.md."
           }
+        },
+        {
+          "path": "media/audio-preview.mp3",
+          "captureType": "audio",
+          "caption": "One pad, played three times at 123 BPM: dry, then Euclid as a low-pass pulse filter (FREQ 36, RES 70, DEPTH 110, DECAY 56, STEPS 16, PULSE 5), then as amplitude pulses (TYPE AMP, FREQ 127, DEPTH 0, STEPS 12, PULSE 7). Each pass is level-matched to the dry one. Swing is not applied. Rendered offline through the module's own code on a computer, not recorded on an Octatrack.",
+          "alt": "A sustained synth pad heard dry, then with a pulsing low-pass filter, then with rhythmic amplitude pulses.",
+          "credit": "Modwerk contributors (offline render). Sample: Volpe, Dub Techno Sample Pack.",
+          "license": "Render MIT; sample per its pack terms (media/LICENSE.md)",
+          "source": "original"
         }
       ]
     },
