@@ -1,27 +1,49 @@
 # Octatrack USB development checkpoint — 9 October 2026
 
-The owner requested a freeze here and will continue tomorrow. This is a WIP
-checkpoint on `codex/octatrack-elekloader-migration`, not a hardware-qualified
-release. Keep the work on this branch until the implementation is stable;
-do not reopen the closed foundation PR or create small preparatory PRs.
+The owner froze implementation here on 9 October and resumed it on
+10 October. This is a WIP checkpoint on `codex/octatrack-elekloader-migration`,
+not a hardware-qualified release. Keep the work on this branch until the
+implementation is stable; do not reopen the closed foundation PR or create
+small preparatory PRs.
 
-## Resume first
+## Resumed 10 October 2026
 
-The latest full check failed three app tests after two developer hardware-tool
-fixes changed files inside `sdk/octabam/tools/hw/`. The release source inventory
-fingerprints the entire imported `tools/` tree, including these host tools.
-The approved compiled-package fingerprint therefore no longer matches.
+The source-inventory failure is resolved. The two host-tool fixes had changed
+`sdk/octabam/tools/hw/`, which the release source inventory fingerprints, so
+three app tests rejected the approved package identity. Those files are back
+to their approved bytes. The fixes now live in the
+[hardware-tool adapter](../sdk/machines/octatrack/hw/README.md), which writes
+repaired copies outside Git only when each imported file matches its reviewed
+hash, every edit matches exactly once and the output reproduces the reviewed
+hash. The ten host regressions (seven earlier, three adapter guards) run on the
+prepared copies and pass on Python 3.9 and 3.14; the unrepaired probe still
+fails `join()` on 3.9. No guard, fingerprint or approved package was changed.
+The branch also integrates main `ca36b1f` (Air Chorus T3 isolation, compact
+media credits).
 
-- `scripts/module-source.test.mjs`: committed release source identity mismatch.
-- `scripts/utility-releases.test.mjs`: same inventory mismatch.
-- `scripts/module-doctor.test.mjs`: catalogue integration fails on that mismatch.
+No full check on this tree finished green in one uninterrupted run, because
+of the machine rather than the code. The first had only timeouts, while
+another session's check pushed the load average past 160 on eight cores. The
+second passed every step (licences, catalogues, generation, lint, types, all
+98 SDK tests, bundling) except four app test files that hit a full disk
+(`ENOSPC`). The failed files then passed in isolation, so every test has
+passed on this tree. The repository's disk filled to 144 MB free during the
+run; other sessions' scratch worktrees under `/private/tmp` hold about 20 GB.
 
-Do not weaken these guards, relabel the approved packages or replace their
-fingerprints by hand. Prefer moving the two fixes into a reproducible developer
-adapter outside `sdk/octabam/`, with exact guarded transformations and source
-hashes, leaving the approved imported tree unchanged. Update the new host
-regressions and reuse notes to exercise that adapter. Then run the full required
-check again before treating this checkpoint as validated.
+Sam's upstream `tools/hw` has two tools Modwerk lacks, including the
+device-versus-emulator capture over USB Audio In, and the imported USB stack
+leaves only EP3 OUT free. Both are recorded in the migration record; together
+they set the next step below.
+
+## Next: read-only vendor interface
+
+Build the vendor interface without endpoints, on EP0 control transfers, so
+EP3 OUT stays free for USB Audio In. Start read-only (identity and status),
+with one bounded frame slot handed from the USB ISR to the engine task. The
+[migration record](OCTATRACK_ELEKLOADER_MIGRATION.md#what-the-imported-usb-stack-leaves-for-the-vendor-interface)
+lists the gaps to close first: no control OUT data stage, the shared request
+hook at `0x4001de64`, uncached response buffers, the unproven ISR-to-task
+wakeup, Windows driver binding and the emulator's limits.
 
 ## Saved work
 
@@ -30,7 +52,8 @@ The checkpoint integrates approved main `0a3bd5008635f71c67347f23960bcdd73f5a571
 checks against its then-current main and contains the shared TypeScript builder,
 upload client/controller, private source-port recipes and verification tooling.
 
-This session inspected Sam's existing hardware tools and prepared two fixes:
+The 9 October session inspected Sam's existing hardware tools and prepared two
+fixes, now applied by the adapter rather than in the imported tree:
 
 - `usb_probe.py`: stop-event naming no longer shadows `Thread._stop()`. The
   previous code fails during shutdown/report writing on Python 3.9; Python 3.14
@@ -38,7 +61,7 @@ This session inspected Sam's existing hardware tools and prepared two fixes:
 - `rec.swift`: scale Float audio samples in Double before conversion to Int32.
   The previous code traps at positive full scale because Float rounds the
   multiplier past Int32's maximum.
-- `sdk/tests/test_usb_hardware_probe.py`: seven synthetic host regressions,
+- `sdk/tests/test_usb_hardware_probe.py`: synthetic host regressions,
   including actual report writing and execution of the recorder's conversion
   block without opening an audio device.
 - `OCTATRACK_ELEKLOADER_MIGRATION.md`: hardware-tool reuse mapping, audio
@@ -46,8 +69,9 @@ This session inspected Sam's existing hardware tools and prepared two fixes:
 
 Both Python 3.9 and 3.14 pass the seven new checks with the fixes. Three checks
 reject the previous code on Python 3.9. The complete recorder compiles on macOS.
-The last full check passed all 94 SDK tests, lint, types and production bundling;
-app tests were **1625 passed, 3 failed** for the source-inventory issue above.
+The 9 October full check passed all 94 SDK tests, lint, types and production
+bundling; app tests were **1625 passed, 3 failed** for the source-inventory
+issue resolved above.
 
 Private local evidence remains in `/tmp/`:
 

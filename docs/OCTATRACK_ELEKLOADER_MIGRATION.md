@@ -197,7 +197,9 @@ of the audio-critical path unless a bounded method has been proved.
 Audit every software reservation, including stock buffers, loader/bus workspace
 and recovery storage, for safe dynamic allocation, relocation or lifetime
 sharing. Use one ownership ledger across the verified pools and physical RAM
-aliases. Each remaining fixed reservation needs a recorded constraint and an
+aliases. Start the ColdFire side from the fixed USB and file-layer buffers
+upstream has named (see [the USB constraints](#what-the-imported-usb-stack-leaves-for-the-vendor-interface))
+and verify each entry. Each remaining fixed reservation needs a recorded constraint and an
 explanation of what would permit reclaiming or moving it. Hardware register
 addresses and proven architectural constraints are genuine fixed locations;
 current stock/kernel regions must remain protected until their dependencies
@@ -343,7 +345,8 @@ identities/transitions and stops its connection after unconfirmed replies.
 This is not USB or module-execution evidence. The device implementation should
 proceed in this order:
 
-1. Add a bounded vendor USB interface alongside the existing interfaces.
+1. Add a bounded vendor USB interface alongside the existing interfaces,
+   within the [constraints of the imported USB stack](#what-the-imported-usb-stack-leaves-for-the-vendor-interface).
    Start with identification, base/ABI identity, capabilities and a read-only
    status command. Keep stock MIDI recovery available and verify boot/USB
    behaviour on MKI and MKII.
@@ -376,6 +379,66 @@ Flex recording/live sampling and both DSP-core behaviour under the owner's
 stress project. Use actual reported results. A successful transfer or an
 emulator boot cannot substitute for these observations.
 
+### What the imported USB stack leaves for the vendor interface
+
+Source inspection on 10 October 2026; nothing here was measured on hardware.
+The imported stack drives the MCF5445x USB OTG device controller through
+endpoint queue heads (dQHs) listed at `0x4ec94800`. Every source and the
+emulator treat EP0–EP3 as the limit. EP1 carries mass storage, EP2 USB MIDI
+and EP3 IN the USB Audio stream. EP3 OUT is the only free endpoint, and
+upstream's USB Audio In uses it. That input path is what Sam's
+device-versus-emulator capture needs (see the next section), so the vendor
+interface should not take it.
+
+The planned interface therefore has no endpoints of its own: a vendor-class
+(`0xFF`) interface whose requests travel as vendor control transfers to that
+interface on EP0, with each response read back by a control IN. These gaps
+must be closed before it can carry the upload controller's frames:
+
+- The stock EP0 path has no control OUT data stage. The vendored "layouts"
+  USB Audio stack (not the one the source port converts) takes a 4-byte data
+  stage by polling up to 100,000 times (~10 ms) inside the USB ISR: returning
+  first races the stock completion loop, which would take the data for the
+  previous transfer's status OUT. A 4,148-byte frame needs a real receive
+  path that tells the data stage from that status OUT, is bounded to the
+  maximum frame, STALLs anything larger or out of sequence and never spins
+  in the ISR beside the audio interrupts.
+- USB Audio's `audio_ctrl_shim` owns the unknown-request STALL tail at
+  `0x4001de64`, where it also answers the `0xc0/0x55` counters. Vendor
+  requests need one dispatcher at that site that keeps audio's requests,
+  not a second detour on the same instruction.
+- `usb_ep0_send` fills only the first buffer page of its transfer descriptor
+  unless `audio_ep0page_shim` is linked, so a response must not straddle a
+  4 KiB page. Write responses through the uncached alias: the controller does
+  not snoop the copyback cache. The existing `0x55` reply is sent from a
+  cached address, so its counters may be stale (inferred, not measured).
+- No queue exists from the USB ISR to the engine task that must own the
+  controller. The logger's engine idle hook runs only when the engine queue
+  receives a message; it is not periodic. Whether the kernel's `post`
+  (`0x40000c3c`) is safe from the USB ISR is unproven; calling it from the
+  frame path hard-crashed an MKI. Hand off one bounded frame slot and prove
+  the wakeup in the emulator and on both models before any write command
+  exists.
+- Hashing up to 1 MiB cannot run inside a control transfer. The OUT request
+  only queues the frame; the host polls for a response bound to that
+  request's command and transaction. A busy slot refuses a new frame rather
+  than overwriting it.
+- Windows binds WinUSB to a vendor interface automatically only through
+  Microsoft OS descriptors (1.0 through string `0xEE`, or 2.0 through a BOS
+  descriptor with bcdUSB 2.01). Neither exists, and the device reports
+  bcdUSB 2.00; adding either is a base change. macOS attaches no class driver
+  to a vendor interface, so WebUSB can claim it; Linux needs a udev rule.
+- Upstream's placement table ([Octabam PR #656](https://github.com/sambanks/octabam/pull/656),
+  10 October 2026) names fixed USB and file-layer buffers in ColdFire DRAM:
+  the dQH list, EP2 queue heads, descriptors and buffers, the mass-storage
+  sector buffer and the file-layer staging buffer (`0x4ec94004`–`0x4ecd3000`,
+  sizes unmeasured). They enter the ownership ledger; staging and response
+  buffers are allocated against it, never placed beside them by assumption.
+- The emulator models EP0–EP3, transfers up to 8 KiB and no packet timing.
+  Its source here cannot build as is: the CPU cores under `sdk/octabam/vendor/`
+  and `remixes/` are absent, and the 27 USB checks used a private adapter.
+  Emulator control-transfer results are protocol evidence only.
+
 ## Reusing Octabam's hardware tools
 
 The imported `sdk/octabam/tools/hw/` already contains the tools Sam described.
@@ -406,6 +469,26 @@ regressions on those prepared copies. Where Swift is installed it also
 executes the prepared recorder's PCM conversion block with synthetic
 full-scale samples; this check opens no audio device. Compile the complete
 prepared recorder separately on the developer's Mac before physical capture.
+
+Sam Banks confirmed on 9 October 2026 that `tools/hw` holds his on-device USB
+test tools. Modwerk's copy came from `repeat98/octamad` at `b8deefc`, and it
+has diverged from `sambanks/octabam` in both directions. Against upstream
+`a67a111` (10 October 2026), 16 of the 22 vendored files are identical,
+including `rec.swift` and `usb_probe.py`: both faults above are still present
+upstream. Six differ in comments, documentation paths or constants, and
+`usb_counters.py` disagrees on the USB Audio In counter list (28 names here,
+15 upstream; the copy here also has that tuple pasted into its docstring).
+Match its `--in` mode to the exact USB Audio In source before trusting it.
+Upstream has two tools Modwerk lacks:
+
+| Tool | What it supplies | Integration boundary |
+| --- | --- | --- |
+| `sos_capture.py` | Plays a known signal into inputs A/B over USB Audio In, records the sixteen track channels over USB Audio Out and compares them sample by sample with the emulator running the same project and signal | The device-versus-emulator method for agent testing. Needs USB Audio In on EP3 OUT, 24-bit fixture projects and upstream's emulator build. A sample-exact match is evidence for that project and signal only. |
+| `usb_offset.py` | Per-click sample offset between two channels of one capture | Channel alignment and latency checks on a capture from the prepared recorder. |
+
+Run them from a clean upstream checkout at a recorded commit, as with the
+pinned Elekloader checkout. Vendoring them into `sdk/octabam/` changes the
+release source fingerprint and needs its own reviewed import.
 
 Consume the structured probe verdict rather than its process exit code: the
 upstream command can return zero for a reported failure or ambiguous result.
