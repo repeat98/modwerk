@@ -201,6 +201,15 @@
         "imageSha256": "fd42fa81ee3cf23a47381a96d2e70be3efbaab250f5c3aedb5a1e11cd4a2529e",
         "setup": "Headless ot_emu; MKII panel; stopped transport; 128\u00d764 LCD at integer scale 6."
       }
+    },
+    {
+      "path": "media/audio-preview.mp3",
+      "captureType": "audio",
+      "caption": "One clap, played three times: dry, then Mini Verb as a room (DECAY 104, DAMP 70, TONE 64, MOD 80, RATE 2, MIX 76), then a long, bright tail (DECAY 122, DAMP 40, TONE 96, MOD 110, RATE 5, MIX 90). Rendered offline through the module's own code on a computer, not recorded on an Octatrack.",
+      "alt": "A single clap heard dry, then with Mini Verb as a room, then with a longer, brighter tail.",
+      "credit": "Modwerk contributors (offline render). Sample: MGFW-01 Sample Pack V1.",
+      "license": "Render MIT; sample per its pack terms (media/LICENSE.md)",
+      "source": "original"
     }
   ],
   "access": {

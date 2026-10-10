@@ -725,6 +725,15 @@
             "imageSha256": "fd42fa81ee3cf23a47381a96d2e70be3efbaab250f5c3aedb5a1e11cd4a2529e",
             "setup": "Headless ot_emu; MKII panel; stopped transport; 128×64 LCD at integer scale 6."
           }
+        },
+        {
+          "path": "media/audio-preview.mp3",
+          "captureType": "audio",
+          "caption": "One clap, played three times: dry, then Mini Verb as a room (DECAY 104, DAMP 70, TONE 64, MOD 80, RATE 2, MIX 76), then a long, bright tail (DECAY 122, DAMP 40, TONE 96, MOD 110, RATE 5, MIX 90). Rendered offline through the module's own code on a computer, not recorded on an Octatrack.",
+          "alt": "A single clap heard dry, then with Mini Verb as a room, then with a longer, brighter tail.",
+          "credit": "Modwerk contributors (offline render). Sample: MGFW-01 Sample Pack V1.",
+          "license": "Render MIT; sample per its pack terms (media/LICENSE.md)",
+          "source": "original"
         }
       ]
     },
@@ -1392,6 +1401,15 @@
             "imageSha256": "164f31224bf61181e3f50e7dec40df9afcae5b16dbf6e4c0d0cc5e986af0a84e",
             "setup": "Reviewed headless ot_emu; MKII panel; verified unmodified stock 1.40C MAIN OS; empty scratch card; transport stopped; Grid Recording enabled on T1. Actual 128x64 LCD pixels at integer scale 6. This shared stock swing menu configures the track timing followed by Euclid; no Euclid runtime was loaded for these stock-menu captures. See docs/swing-capture.md."
           }
+        },
+        {
+          "path": "media/audio-preview.mp3",
+          "captureType": "audio",
+          "caption": "One pad, played three times at 123 BPM: dry, then Euclid as a low-pass pulse filter (FREQ 36, RES 70, DEPTH 110, DECAY 56, STEPS 16, PULSE 5), then as amplitude pulses (TYPE AMP, FREQ 127, DEPTH 0, STEPS 12, PULSE 7). Each pass is level-matched to the dry one. Swing is not applied. Rendered offline through the module's own code on a computer, not recorded on an Octatrack.",
+          "alt": "A sustained synth pad heard dry, then with a pulsing low-pass filter, then with rhythmic amplitude pulses.",
+          "credit": "Modwerk contributors (offline render). Sample: Volpe, Dub Techno Sample Pack.",
+          "license": "Render MIT; sample per its pack terms (media/LICENSE.md)",
+          "source": "original"
         }
       ]
     },
@@ -1867,6 +1885,15 @@
             "imageSha256": "774aa99723625fb698e5f0bb6fc32ea3196996931f55beb10ce1ec53eccc328b",
             "setup": "ot_emu (MKII panel) on 1.40C composed with the tapehead-spring remix: stock effects, TAPEHEAD in SPRING REV's FX2 row, stock DSP code built in; empty scratch card; transport stopped; actual 128x64 LCD pixels at integer scale 6."
           }
+        },
+        {
+          "path": "media/audio-preview.mp3",
+          "captureType": "audio",
+          "caption": "One 909 drum loop, played three times through TapeHead: DRIVE 10, then DRIVE 70, then DRIVE 115 with COLOR set to BRGT. Each pass is level-matched to the first, so only the character changes. Rendered offline through the module's own code on a computer, not recorded on an Octatrack.",
+          "alt": "A 909 drum loop heard with light tape drive, then driven, then hot and bright.",
+          "credit": "Modwerk contributors (offline render). Sample: Malin Genie Drum Sample Pack.",
+          "license": "Render MIT; sample per its pack terms (media/LICENSE.md)",
+          "source": "original"
         }
       ]
     },
@@ -2103,6 +2130,15 @@
             "imageSha256": "5e0cbe6040633dd1eda7de247baeb226f38c1308e9d02cedebdf0fdf35a1d6c6",
             "setup": "Headless ot_emu; MKII panel; stopped transport; 128×64 LCD at integer scale 6."
           }
+        },
+        {
+          "path": "media/audio-preview.mp3",
+          "captureType": "audio",
+          "caption": "One pad, played three times: dry, then the plugin defaults (SPD 64, RNG 64, MIX 64), then faster and wider (SPD 84, RNG 92, MIX 96). Each pass is level-matched to the dry one. Rendered offline through the module's own code on a computer, not recorded on an Octatrack.",
+          "alt": "A sustained synth pad heard dry, then with Air Chorus at its defaults, then with a faster, wider sweep.",
+          "credit": "Modwerk contributors (offline render). Sample: Volpe, Dub Techno Sample Pack.",
+          "license": "Render MIT; sample per its pack terms (media/LICENSE.md)",
+          "source": "original"
         }
       ]
     },
@@ -2544,6 +2580,15 @@
             "imageSha256": "b776efe203efecd0ceda90f68d7fe109cc8fc13a1f07bed00303f81af2769195",
             "setup": "Headless ot_emu; MKII panel; stopped transport; empty scratch card; 128×64 LCD at integer scale 6."
           }
+        },
+        {
+          "path": "media/audio-preview.mp3",
+          "captureType": "audio",
+          "caption": "One chord stab, played three times: dry, then the Hall starting point (SIZE 110, DCY 90, ABSB 45, MIX 70), then the Shimmer pad starting point (SIZE 100, DCY 100, ABSB 70, DPTH +56, MIX 100). Rendered offline through the module's own code on a computer, not recorded on an Octatrack.",
+          "alt": "A single synth chord stab heard dry, then in a large hall, then as a shimmering pad.",
+          "credit": "Modwerk contributors (offline render). Sample: Malin Genie Drum Sample Pack.",
+          "license": "Render MIT; sample per its pack terms (media/LICENSE.md)",
+          "source": "original"
         }
       ]
     },
@@ -2841,6 +2886,15 @@
             "imageSha256": "137580f326b6adc3b0d58f2183d530507f1b370c48911b38d5d0cf94d9e96898",
             "setup": "Headless ot_emu; MKII panel, stopped transport; actual DSP-enabled AB015FIX01 image and disposable project; 128×64 LCD at integer scale 6."
           }
+        },
+        {
+          "path": "media/audio-preview.mp3",
+          "captureType": "audio",
+          "caption": "Four single hits from the 808 and 909 engines, 2.4 s apart: 808 at the defaults, 808 low and long (PITCH 40, DECAY 110, TONE 60, SWEEP 100), 909 at the defaults, and 909 with a hard attack and drive (DECAY 20, ATK 100, TDEP 100, SAT 50). No samples are used. Rendered offline through the module's own code on a computer, not recorded on an Octatrack.",
+          "alt": "Four bass drum hits: a default 808, a low long 808, a default 909 and a hard, driven 909.",
+          "credit": "Modwerk contributors (offline render of the module's 808/909 engines; no samples).",
+          "license": "MIT",
+          "source": "original"
         }
       ]
     },

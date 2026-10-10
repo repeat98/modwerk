@@ -70,6 +70,15 @@
         "imageSha256": "137580f326b6adc3b0d58f2183d530507f1b370c48911b38d5d0cf94d9e96898",
         "setup": "Headless ot_emu; MKII panel, stopped transport; actual DSP-enabled AB015FIX01 image and disposable project; 128×64 LCD at integer scale 6."
       }
+    },
+    {
+      "path": "media/audio-preview.mp3",
+      "captureType": "audio",
+      "caption": "Four single hits from the 808 and 909 engines, 2.4 s apart: 808 at the defaults, 808 low and long (PITCH 40, DECAY 110, TONE 60, SWEEP 100), 909 at the defaults, and 909 with a hard attack and drive (DECAY 20, ATK 100, TDEP 100, SAT 50). No samples are used. Rendered offline through the module's own code on a computer, not recorded on an Octatrack.",
+      "alt": "Four bass drum hits: a default 808, a low long 808, a default 909 and a hard, driven 909.",
+      "credit": "Modwerk contributors (offline render of the module's 808/909 engines; no samples).",
+      "license": "MIT",
+      "source": "original"
     }
   ],
   "id": "analog-bassdrum",

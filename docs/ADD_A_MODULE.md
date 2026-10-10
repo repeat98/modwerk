@@ -118,6 +118,8 @@ Keep alt text about the visible screen and reserve extra pages for supplementary
 screenshots. Read the complete gallery as a first-time user and follow the
 [screenshot caption standard](MODULE_UI_CAPTURES.md#write-a-short-screenshot-walkthrough).
 
+A module that makes or changes sound can also carry one short [audio preview](MODULE_AUDIO_PREVIEWS.md): a single sample played dry, then through the module.
+
 ## Octatrack
 
 1. **Create the folder.**

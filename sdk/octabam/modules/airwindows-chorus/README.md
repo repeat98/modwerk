@@ -65,6 +65,8 @@ a successful 50-minute test with several distinct instances and full knob
 sweeps on the earlier image. The initialization update has a current-image
 hardware waiver; its software renders match the tested version.
 
+**Audio preview.** [Listen](media/audio-preview.mp3). One pad, played three times: dry, then the plugin defaults (SPD 64, RNG 64, MIX 64), then faster and wider (SPD 84, RNG 92, MIX 96). Each pass is level-matched to the dry one. It is an offline render on a computer through the module's own code, not a recording of an Octatrack. The sample, settings and method are in [audio-preview.json](media/audio-preview.json); rights are in [media rights](media/LICENSE.md).
+
 ## Compatibility and limitations
 
 - Target: original Octatrack OS 1.40C, MKI/MKII architecture;

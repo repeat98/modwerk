@@ -1,0 +1,58 @@
+{
+  "file": "media/audio-preview.mp3",
+  "sha256": "90862e387df5c80c678ba5d22b321f5bb4de5b40ae35621c56fcddda6cf5b9fc",
+  "seconds": 16.6,
+  "moduleVersion": "0.1.4-experimental",
+  "method": "Offline render on a computer: the module's DSP built into a private OS 1.40C image and run in dsp_host (Mini Verb, E-Verb, Air Chorus, TapeHead), its fixed-point C engine built natively (Tape Echo), or its 808/909 DSP engines in bd909_host (Analog BD). Not recorded on an Octatrack; no firmware or image is included.",
+  "sample": {
+    "file": "Volpe - Dub Techno Sample Pack - 39 Pad Smooth.wav",
+    "pack": "Volpe - Dub Techno Sample Pack"
+  },
+  "passes": [
+    {
+      "start": 0.0,
+      "label": "dry",
+      "sets": {
+        "FREQ": 48,
+        "RES": 48,
+        "DEPTH": 100,
+        "DECAY": 48,
+        "STEPS": 15,
+        "PULSE": 5,
+        "ROT": 0,
+        "RATE": 1,
+        "TYPE": 0,
+        "ATK": 0,
+        "OUT": 0,
+        "MIX": 0
+      }
+    },
+    {
+      "start": 5.52,
+      "label": "low-pass pulses",
+      "sets": {
+        "MIX": 127,
+        "FREQ": 36,
+        "RES": 70,
+        "DEPTH": 110,
+        "DECAY": 56,
+        "STEPS": 16,
+        "PULSE": 5
+      }
+    },
+    {
+      "start": 11.03,
+      "label": "amplitude pulses",
+      "sets": {
+        "TYPE": 3,
+        "OUT": 0,
+        "FREQ": 127,
+        "DEPTH": 0,
+        "DECAY": 48,
+        "STEPS": 12,
+        "PULSE": 7,
+        "RES": 0
+      }
+    }
+  ]
+}

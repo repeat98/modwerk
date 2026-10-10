@@ -85,3 +85,5 @@ Press SRC for 909 PITCH, DECAY, TUNE, ATK, TDEP and SAT (the shared third label 
 Choose 808 in the same browser to compare its retained engine. E is labelled SWEEP in place of TDEP. The third encoder controls 808 TONE, labelled TONE in this capture; switching retains control bytes.
 
 ![808 SRC main page with PITCH, DECAY, TONE, ATK, SWEEP and SAT labels.](media/ot-808.png)
+
+**Audio preview.** [Listen](media/audio-preview.mp3). Four single hits from the 808 and 909 engines, 2.4 s apart: 808 at the defaults, 808 low and long (PITCH 40, DECAY 110, TONE 60, SWEEP 100), 909 at the defaults, and 909 with a hard attack and drive (DECAY 20, ATK 100, TDEP 100, SAT 50). No samples are used. It is an offline render on a computer through the module's own code, not a recording of an Octatrack. The sample, settings and method are in [audio-preview.json](media/audio-preview.json); rights are in [media rights](media/LICENSE.md).

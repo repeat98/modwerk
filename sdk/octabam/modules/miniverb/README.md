@@ -115,3 +115,5 @@ The native verifier writes private dark/neutral/bright percussion WAVs for
 level-preserving listening. The owner reported that it works well and is
 stable in Octemu; this acceptance report has no reported duration or instance
 count. Physical hardware remains untested.
+
+**Audio preview.** [Listen](media/audio-preview.mp3). One clap, played three times: dry, then Mini Verb as a room (DECAY 104, DAMP 70, TONE 64, MOD 80, RATE 2, MIX 76), then a long, bright tail (DECAY 122, DAMP 40, TONE 96, MOD 110, RATE 5, MIX 90). It is an offline render on a computer through the module's own code, not a recording of an Octatrack. The sample, settings and method are in [audio-preview.json](media/audio-preview.json); rights are in [media rights](media/LICENSE.md).

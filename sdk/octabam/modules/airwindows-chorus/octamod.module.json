@@ -216,6 +216,15 @@
         "imageSha256": "5e0cbe6040633dd1eda7de247baeb226f38c1308e9d02cedebdf0fdf35a1d6c6",
         "setup": "Headless ot_emu; MKII panel; stopped transport; 128×64 LCD at integer scale 6."
       }
+    },
+    {
+      "path": "media/audio-preview.mp3",
+      "captureType": "audio",
+      "caption": "One pad, played three times: dry, then the plugin defaults (SPD 64, RNG 64, MIX 64), then faster and wider (SPD 84, RNG 92, MIX 96). Each pass is level-matched to the dry one. Rendered offline through the module's own code on a computer, not recorded on an Octatrack.",
+      "alt": "A sustained synth pad heard dry, then with Air Chorus at its defaults, then with a faster, wider sweep.",
+      "credit": "Modwerk contributors (offline render). Sample: Volpe, Dub Techno Sample Pack.",
+      "license": "Render MIT; sample per its pack terms (media/LICENSE.md)",
+      "source": "original"
     }
   ],
   "access": {

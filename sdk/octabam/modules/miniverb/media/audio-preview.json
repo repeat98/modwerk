@@ -1,0 +1,49 @@
+{
+  "file": "media/audio-preview.mp3",
+  "sha256": "a53e0fb8f3f1cac6fd189c9ec4447a860dd4fdb225fd67aee772ddb926065ef4",
+  "seconds": 11.6,
+  "moduleVersion": "0.2.0-experimental",
+  "method": "Offline render on a computer: the module's DSP built into a private OS 1.40C image and run in dsp_host (Mini Verb, E-Verb, Air Chorus, TapeHead), its fixed-point C engine built natively (Tape Echo), or its 808/909 DSP engines in bd909_host (Analog BD). Not recorded on an Octatrack; no firmware or image is included.",
+  "sample": {
+    "file": "CLAPS SNARES/MGFW-01_CL-001.wav",
+    "pack": "MGFW-01 Sample Pack V1"
+  },
+  "passes": [
+    {
+      "start": 0.0,
+      "label": "dry",
+      "sets": {
+        "DECAY": 104,
+        "DAMP": 70,
+        "TONE": 64,
+        "MOD": 80,
+        "RATE": 2,
+        "MIX": 0
+      }
+    },
+    {
+      "start": 0.76,
+      "label": "room",
+      "sets": {
+        "DECAY": 104,
+        "DAMP": 70,
+        "TONE": 64,
+        "MOD": 80,
+        "RATE": 2,
+        "MIX": 76
+      }
+    },
+    {
+      "start": 4.59,
+      "label": "long, bright",
+      "sets": {
+        "DECAY": 122,
+        "DAMP": 40,
+        "TONE": 96,
+        "MOD": 110,
+        "RATE": 5,
+        "MIX": 90
+      }
+    }
+  ]
+}

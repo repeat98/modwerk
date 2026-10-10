@@ -1,0 +1,51 @@
+{
+  "file": "media/audio-preview.mp3",
+  "sha256": "745aa2bb56c4a02f6bb05506db24270409f7d8ff254abffaf1af0ee45c628b52",
+  "seconds": 14.1,
+  "moduleVersion": "0.1.0-experimental",
+  "method": "Offline render on a computer: the module's DSP built into a private OS 1.40C image and run in dsp_host (Mini Verb, E-Verb, Air Chorus, TapeHead), its fixed-point C engine built natively (Tape Echo), or its 808/909 DSP engines in bd909_host (Analog BD). Not recorded on an Octatrack; no firmware or image is included.",
+  "sample": {
+    "file": "SYNTH (BONUS)/STAB_16.wav",
+    "pack": "Malin Genie Drum Sample Pack"
+  },
+  "passes": [
+    {
+      "start": 0.0,
+      "label": "dry",
+      "sets": {
+        "SIZE": 64,
+        "DCY": 64,
+        "ABSB": 60,
+        "DPTH": 64,
+        "SPD": 64,
+        "MIX": 0,
+        "TILT": 64,
+        "PRE": 25,
+        "REV": 0,
+        "EDCY": 64,
+        "ESIZ": 64
+      }
+    },
+    {
+      "start": 2.8,
+      "label": "hall",
+      "sets": {
+        "SIZE": 110,
+        "DCY": 90,
+        "ABSB": 45,
+        "MIX": 70
+      }
+    },
+    {
+      "start": 11.3,
+      "label": "shimmer pad",
+      "sets": {
+        "SIZE": 100,
+        "DCY": 100,
+        "ABSB": 70,
+        "DPTH": 120,
+        "MIX": 100
+      }
+    }
+  ]
+}
