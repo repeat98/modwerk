@@ -410,7 +410,7 @@ the runtime package, placed at the same address, to match byte for byte.
 PREVIEW VOL (2 sites), RECORDER LOOP FIX (8 sites) and PLAYMODES (35 sites,
 75 relocations) match; the check caught a builder bug (site bytes stored
 before their relocation) on the way. In the emulator with `usbtest5` (base
-`96c40487…`, flash-safety check passed): the bench and client lifecycle
+`5b170b8d…`, rebuilt from the commit, flash-safety check passed): the bench and client lifecycle
 passed, PREVIEW VOL loaded with both jumps in RAM pointing at its code 0x12
 apart as statically linked, its rollback put the stock bytes back, and
 PLAYMODES loaded, ran and was accepted. Not yet on the unit. Not supported:
