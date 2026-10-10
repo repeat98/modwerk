@@ -654,6 +654,21 @@ takes back the frame words, unmasks the frame interrupt, shuts the loader
 off and shows `DSP STOPPED`. Report version 5 (44 words) counts those errors
 and keeps the last `ES`.
 
+On the unit (`16ccd150`) core 0 then delivered and answered: a PROBE to core
+0 timed out with frames running and no eDMA error; the receiver answered a
+PROBE through the host flags; and an E-Verb upload to a core-0 track loaded
+four of its packets before one was rejected, the track kept its effect and
+the unit stayed healthy. Two things remained: core 1 still froze on delivery
+(no eDMA error, so the DSP never took the words and the channel waited on the
+host handshake), and the upload's fifth packet failed a receiver check.
+
+For the stall, the sys-tick recovery now cancels a transfer that eDMA never
+finished (TCD0 not `DONE`, no error) through the eDMA cancel bit, so the
+channel and host port come back and frames resume as `DSP STOPPED` rather
+than freezing. `--dsp-probe W` sends one word per upload packet, so the count
+of packets accepted before a reject is the exact index of the first word the
+DSP read back wrong.
+
 **On the unit with the fix** (aligned builds, blank project): core 0 now
 takes packets with frames running. A1x's probe to core 0 timed out as built,
 with frames counting and no eDMA error. B1x's receiver answered both probes
