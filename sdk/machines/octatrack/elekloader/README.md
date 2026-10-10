@@ -46,6 +46,27 @@ npm run octatrack:elekloader:verify -- \
   /private/NEW-core-output/package/core-0.3.1-modwerk-dev.1.elemod
 ```
 
+### DSP effects on demand
+
+`--dsp-loader` adds Octabam's DSP dynamic loading: module FX in the stock
+choosers, their DSP code loaded into a core when a track picks them and
+freed when nothing uses them, admitted against each core's arena and cycle
+allowance first ([design and evidence](../../../../docs/OCTATRACK_ELEKLOADER_MIGRATION.md#milestone-2-dsp-effects-on-demand-e-verb-as-the-pilot-10-october-2026)).
+It takes PLATE, SPRING and DARK REV off FX2 for the code's room
+([`dsp_loader.py`](dsp_loader.py)), and needs Octabam's patched `dsp_asm`
+(`ELEKLOADER_DSP_ASM`; `make setup` in `~/.cache/modwerk-upstream/octabam`,
+or `cmake --build` of its `vendor/dsp56300` with the `dsp_asm` target) and
+Node 24 for Modwerk's chooser composer ([`octatrack-base-choosers.mjs`](../../../../scripts/octatrack-base-choosers.mjs)).
+The pilot module, E-Verb, as a package:
+
+```sh
+ELEKLOADER_DSP_ASM=/path/to/dsp_asm python3 -B sdk/machines/octatrack/elekloader/build_core.py \
+  --stock /private/OCTATRACK_OS1.40C.bin --upstream /private/pinned-elekloader \
+  --output /private/NEW-dsp-base --dsp-loader
+python3 -B sdk/runtime/loader/build.py --dsp src/engine/assets/dsp-packages.json:everb \
+  --slots fx2 --cycles 382 --cycles-kind executed --state 132 --buffer 16384 -o /private/everb.mwrm
+```
+
 ## USB vendor interface
 
 The base owns the USB configuration responder, the unknown-request tail and

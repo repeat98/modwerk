@@ -1,0 +1,67 @@
+/* SPDX-License-Identifier: GPL-3.0-or-later
+ * Host check of the DSP effect glue (cc -DMODWERK_HOST -DMODWERK_DSP_ALLOWANCE=2808):
+ * admission against the arena, the instance block, cycles, free ids and
+ * effects in use, and the catalog the DSP manager reads. */
+#include "dsp.c"
+#include <stdio.h>
+
+static unsigned failures;
+#define CHECK(x) do { if (!(x)) { failures++; fprintf(stderr, "%s:%d: %s\n", __FILE__, __LINE__, #x); } } while (0)
+const uint32_t dl_stub_at_boot = 1u << 26 | 1u << 27;
+const uint16_t modwerk_dsp_arena[2] = {2320, 2300};
+static int idle = 1;
+int dl_publication_idle(void) { return idle; }
+
+int main(void)
+{
+    static const uint32_t words[3] = {1, 2, 3};
+    static const uint16_t relocations[1] = {0};
+    const struct runtime_dsp none = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    struct runtime_dsp fx = {words, relocations, 3, 1, 1, 2, 244, 0, 26, 1, RUNTIME_MODELED, 70};
+    CHECK(modwerk_machine_dsp_admit(&none, &none) == RUNTIME_OK && modwerk_machine_dsp_admit(&none, &fx) == RUNTIME_OK);
+    /* Only the module ids, never a stock effect's (the reverbs this base harvests stay theirs). */
+    fx.id = 21; CHECK(modwerk_machine_dsp_admit(&none, &fx) == RUNTIME_CONFLICT);
+    fx.id = 40; CHECK(modwerk_machine_dsp_admit(&none, &fx) == RUNTIME_CONFLICT);
+    fx.id = 26;
+    /* The smaller core's arena, the instance block, a known cycle figure within the allowance. */
+    fx.count = 2301; CHECK(modwerk_machine_dsp_admit(&none, &fx) == RUNTIME_MEMORY);
+    fx.count = 2300; CHECK(modwerk_machine_dsp_admit(&none, &fx) == RUNTIME_OK);
+    fx.count = 3; fx.state = 133; CHECK(modwerk_machine_dsp_admit(&none, &fx) == RUNTIME_MEMORY);
+    fx.state = 70; fx.buffer = 3073; CHECK(modwerk_machine_dsp_admit(&none, &fx) == RUNTIME_MEMORY); /* FX1's 3K block */
+    fx.slots = 2; CHECK(modwerk_machine_dsp_admit(&none, &fx) == RUNTIME_OK);                          /* FX2's 16K block */
+    fx.buffer = 16385; CHECK(modwerk_machine_dsp_admit(&none, &fx) == RUNTIME_MEMORY);
+    fx.slots = 1; fx.buffer = 0; fx.kind = 0; CHECK(modwerk_machine_dsp_admit(&none, &fx) == RUNTIME_CYCLES);
+    fx.kind = RUNTIME_HARDWARE; fx.cycles = 2809; CHECK(modwerk_machine_dsp_admit(&none, &fx) == RUNTIME_CYCLES);
+    fx.kind = RUNTIME_MODELED; fx.cycles = 244;
+    /* Published: the manager's catalog names the code for both cores. */
+    modwerk_machine_dsp_switch(&none, &fx);
+    CHECK(dl_catalog[26].words == 3 && !dl_catalog[26].resident && dl_catalog[26].qualified && dl_catalog[26].slots == 1 &&
+          dl_catalog[26].cycles == 244 && dl_catalog[26].alignment == 1 && !dl_catalog[26].buffer);
+    CHECK(dl_codes[0][26].words == words && dl_codes[1][26].words == words && dl_codes[1][26].count == 3 && dl_codes[1][26].init == 1 &&
+          dl_codes[1][26].proc == 2 && dl_codes[0][26].relocations == relocations && dl_codes[0][26].relocation_count == 1);
+    /* A track running it, or the manager mid-transaction, keeps it: removal and replacement wait. */
+    modwerk_test_live_fx[13] = 26;
+    CHECK(modwerk_machine_dsp_admit(&fx, &none) == RUNTIME_BUSY && modwerk_machine_dsp_admit(&fx, &fx) == RUNTIME_BUSY);
+    modwerk_test_live_fx[13] = 4; idle = 0;
+    CHECK(modwerk_machine_dsp_admit(&fx, &none) == RUNTIME_BUSY && modwerk_machine_dsp_admit(&fx, &fx) == RUNTIME_BUSY);
+    CHECK(modwerk_machine_dsp_admit(&none, &fx) == RUNTIME_OK); /* a new effect may register mid-transaction */
+    idle = 1;
+    CHECK(modwerk_machine_dsp_admit(&fx, &none) == RUNTIME_OK);
+    modwerk_machine_dsp_switch(&fx, &none);
+    CHECK(dl_catalog[26].resident && !dl_catalog[26].words && dl_catalog[26].qualified && !dl_codes[0][26].words && !dl_codes[1][26].count);
+    /* What the current bank names: the live effects and every Part, working and saved; module ids only. */
+    static uint8_t bank[0x9504a + 4 * 6322];
+    for (unsigned i = 0; i < 16; ++i) modwerk_test_live_fx[i] = i < 8 ? 4 : 8;
+    modwerk_test_live_fx[2] = 26;
+    CHECK(modwerk_dsp_used() == 1u << 26);              /* no project yet: the live effects only */
+    modwerk_test_bank = bank;
+    bank[0x8ed80 + 3 * 6322 + 9] = 27;                  /* Part 4's FX2 on T2 */
+    bank[0x9504a + 1 * 6322 + 0] = 27;                  /* Part 2's saved copy, FX1 on T1 */
+    bank[0x8ed80 + 5] = 21;                             /* SPRING REV: stock, not a module */
+    CHECK(modwerk_dsp_used() == (1u << 26 | 1u << 27));
+    modwerk_test_live_fx[2] = 4; bank[0x8ed80 + 3 * 6322 + 9] = 0;
+    CHECK(modwerk_dsp_used() == 1u << 27);
+    if (failures) { fprintf(stderr, "%u DSP glue checks failed\n", failures); return 1; }
+    puts("Octatrack DSP glue: admission (ids, arena, instance block, cycles, effects in use), the catalog and the effects a bank names passed.");
+    return 0;
+}

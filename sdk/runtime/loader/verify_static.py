@@ -19,12 +19,13 @@ import tempfile
 
 
 def unpack(data):
-    """(image, self-reference offsets, sites) of an ABI 3 or 4 package."""
+    """(image, self-reference offsets, sites) of an ABI 3, 4 or 5 package (its DSP code is not linked statically)."""
     abi = struct.unpack_from('>H', data, 4)[0] if data[:4] == b'MWRM' else 0
-    if abi not in (3, 4):
-        raise ValueError('Not an ABI 3 or 4 runtime package.')
+    if abi not in (3, 4, 5):
+        raise ValueError('Not an ABI 3, 4 or 5 runtime package.')
     image, _, count, hooks, sites = struct.unpack_from('>IIIII', data, 8)
-    at = (32 if abi == 4 else 28) + 4 * hooks
+    dsp_words, dsp_relocations = struct.unpack_from('>IH', data, 32) if abi == 5 else (0, 0)
+    at = {3: 28, 4: 32, 5: 50}[abi] + 4 * hooks
     code, at = data[at:at + image], at + image
     offsets = struct.unpack_from('>%dI' % count, data, at)
     at += 4 * count
@@ -34,7 +35,7 @@ def unpack(data):
         records.append((address, data[at + 8:at + 8 + n], data[at + 8 + n:at + 8 + 2 * n],
                         struct.unpack_from('>%dH' % r, data, at + 8 + 2 * n)))
         at += 8 + 2 * n + 2 * r
-    if at != len(data):
+    if at + 4 * dsp_words + 2 * dsp_relocations != len(data):
         raise ValueError('Trailing bytes in the package.')
     return code, offsets, records
 

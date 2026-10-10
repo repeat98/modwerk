@@ -35,12 +35,13 @@ int main(void)
     CHECK(modwerk_runtime_key(0x31, 1) == 1 && keys == 3); /* position 1 took it: position 3 never saw it */
     CHECK(modwerk_runtime_key(0x28, 1) == 0 && keys == 5);
     modwerk_runtime_draw(frame); CHECK(draws == 2);
-    /* Activation only while nothing plays or records; stock code only, never the bootloader copy. */
+    /* Activation only while nothing plays or records; stock code only, below the bootloader copy. */
     modwerk_test_stopped = 0;
     CHECK(!modwerk_runtime_backend.enter(0));
     CHECK(modwerk_machine_patchable(0x40094296u, 6) && !modwerk_machine_patchable(0x400003fcu, 6));
     CHECK(!modwerk_machine_patchable(0x4010fdecu, 6) && !modwerk_machine_patchable(0x40a955e0u, 4) && !modwerk_machine_patchable(0x0u, 4));
-    CHECK(!modwerk_machine_patchable(0x400de1dcu, 6) && !modwerk_machine_patchable(0x400e21dcu, 6) && modwerk_machine_patchable(0x400e21e0u, 6));
+    CHECK(!modwerk_machine_patchable(0x400de1dcu, 6) && !modwerk_machine_patchable(0x400e21dcu, 6) && !modwerk_machine_patchable(0x400e21e0u, 6));
+    CHECK(modwerk_machine_patchable(0x400de1d8u, 8) && !modwerk_machine_patchable(0x400f0000u, 6)); /* the bank's RAM after load */
     CHECK(!modwerk_machine_patchable(0xfffffffcu, 8));
     if (failures) { fprintf(stderr, "%u trampoline checks failed\n", failures); return 1; }
     puts("Octatrack runtime glue: trampolines for several modules and the patchable stock range passed.");

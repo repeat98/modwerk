@@ -185,6 +185,7 @@ class RuntimeSlotTests(unittest.TestCase):
         loader = here.parents[2] / 'runtime/loader'
         with tempfile.TemporaryDirectory() as temp:
             subprocess.run([cc, '-std=c99', '-Wall', '-Wextra', '-Werror', '-pedantic', '-DMODWERK_HOST', '-I', here,
+                            '-DMODWERK_DSP_ALLOWANCE=2808', '-I', here.parents[3] / 'sdk/octabam/platform/dsp-dynload-transport',
                             '-I', here.parents[2] / 'runtime/upload', '-I', loader,
                             *[loader / s if s == 'loader.c' else here / s for s in sources], '-o', temp + '/t'],
                            check=True, capture_output=True)
@@ -197,6 +198,27 @@ class RuntimeSlotTests(unittest.TestCase):
     def test_ram_boot_backend_on_the_host(self):
         self.host_test('test_boot.c', 'loader.c', 'runtime.c')
 
+    def test_dsp_effect_glue_on_the_host(self):
+        self.host_test('test_dsp.c')
+
+
+
+class DspLoaderTests(unittest.TestCase):
+    def test_receiver_keeps_its_table_after_its_code_and_dry_ids_on_the_null_stub(self):
+        import dsp_loader
+        text = dsp_loader.receiver_source(dsp_loader.RECEIVER.read_text(), (0x7c8, 0x7c9), 2384)
+        self.assertTrue(text.endswith('dltable:\n'))
+        self.assertIn('#>dltable', text); self.assertIn('#>$7c8', text); self.assertIn('#>$7c9', text)
+        self.assertNotIn('@DLWORDS@', text); self.assertNotIn('OCTAMOD_LOCAL_NULL_STUB', text)
+        self.assertEqual(text.count('#>2384'), 4)
+        with self.assertRaisesRegex(ValueError, 'receiver changed'):
+            dsp_loader.receiver_source(dsp_loader.RECEIVER.read_text().replace('#>$fab1e0', '#>$0'), (0x7c8, 0x7c9), 1)
+
+    def test_a_shared_routine_is_called_by_effects_whose_calls_move_with_it(self):
+        from dsp_loader import helper_callers
+        payload = {'packages': [{'key': 'DARK', 'adjustments': [{'delta': -3223}]}, {'key': 'SPRING', 'adjustments': []},
+                                {'key': 'FILTER', 'adjustments': [{'delta': -441}]}]}
+        self.assertEqual(helper_callers(payload, {'owner': 'SPRING', 'sourceAddress': 5510, 'destination': 2287}), {'DARK'})
 
 
 class FlashSafetyTests(unittest.TestCase):

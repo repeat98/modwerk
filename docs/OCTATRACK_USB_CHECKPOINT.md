@@ -72,7 +72,12 @@ ColdFire modules now run at once, with conflicting stock-code patches
 refused before activation and module memory reclaimed; the design for
 modules picked in the stock choosers, loaded into the DSP on demand and
 admitted against each core's memory and cycles is in the
-[migration record](OCTATRACK_ELEKLOADER_MIGRATION.md#several-modules-on-the-device-design-10-october-2026). Next: the rest of the fail-safe
+[migration record](OCTATRACK_ELEKLOADER_MIGRATION.md#several-modules-on-the-device-design-10-october-2026).
+A development base built with `--dsp-loader` now does the first cut of it in
+the emulator: E-Verb, installed over USB, loads into a core when a track
+picks it in the stock FX2 chooser and is refused before anything changes
+when its cycles do not fit
+([record](OCTATRACK_ELEKLOADER_MIGRATION.md#milestone-2-dsp-effects-on-demand-e-verb-as-the-pilot-10-october-2026)). Next: the rest of the fail-safe
 sync requirements, the site connecting by itself (no mode on the unit, owner
 10 October), and folding USB MIDI and USB Audio
 into the base. The target user flow (automatic connection,

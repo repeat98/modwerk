@@ -26,6 +26,15 @@ unsigned modwerk_machine_paused(struct runtime_span *span, unsigned max)
     return 1;
 }
 
+/* DSP glue: refuses with `dsp_why` (masked or not) and records the last switch. */
+static int dsp_why, dsp_switches;
+static struct runtime_dsp dsp_from, dsp_to;
+int modwerk_machine_dsp_admit(const struct runtime_dsp *from, const struct runtime_dsp *to) { (void)from; (void)to; return dsp_why; }
+void modwerk_machine_dsp_switch(const struct runtime_dsp *from, const struct runtime_dsp *to)
+{
+    CHECK(masked); dsp_from = *from; dsp_to = *to; ++dsp_switches;
+}
+
 static const struct mu_backend *b = &modwerk_runtime_backend;
 static uint8_t p[RUNTIME_PACKAGE_BYTES + 64];
 static uint32_t n;
@@ -52,6 +61,21 @@ static void site(uint32_t address, uint32_t length)
     uint8_t code[RUNTIME_SITE_BYTES] = {0x4e, 0xf9, 0, 0, 0, 2};
     memcpy(p + n, code, length); n += length;
     emit16(2);
+}
+/* ABI 5: the same header with a DSP descriptor, then after the sites its
+ * words (a relocation word holds 1) and relocations. */
+static void begin5(uint32_t image, uint32_t effect, uint32_t words, uint32_t relocs)
+{
+    begin(image, 0, image ? 0 : RUNTIME_NONE, 0, 0, 0, 0xe1);
+    memmove(p + 50, p + 32, n - 32); n += 18; p[5] = 5; p[48] = 0x40; p[49] = 0;
+    put32(p + 32, words); p[36] = (uint8_t)(relocs >> 8); p[37] = (uint8_t)relocs; p[38] = (uint8_t)effect; p[39] = 1;
+    p[40] = 0; p[41] = 1; p[42] = 0; p[43] = 2; p[44] = 0; p[45] = 244; p[46] = RUNTIME_MODELED; p[47] = 70;
+}
+static void dsp_words(uint32_t words, const uint16_t *reloc, uint32_t relocs)
+{
+    for (uint32_t i = 0; i < words; ++i) emit(0x0c0000u + i);
+    for (uint32_t i = 0; i < relocs; ++i) put32(p + n - 4u * words + 4u * reloc[i], 1);
+    for (uint32_t i = 0; i < relocs; ++i) emit16(reloc[i]);
 }
 static int bytes_at(uint32_t address, const uint8_t *bytes, uint32_t length) { return !memcmp(stock + (address - STOCK), bytes, length); }
 static uint32_t word(uint32_t address) { return be32(stock + (address - STOCK)); }
@@ -206,6 +230,51 @@ int main(void)
     for (unsigned i = 0; i < RUNTIME_MODULES; ++i) zero += modwerk_runtime_module(i) && modwerk_runtime_module(i)->id == 0;
     CHECK(zero == 1);
 
+    /* Every module removed: the table is empty again. */
+    for (unsigned i = 0; i < RUNTIME_MODULES; ++i) {
+        if (!modwerk_runtime_module(i)) continue;
+        id = modwerk_runtime_module(i)->id; begin(0, 0, RUNTIME_NONE, 0, 0, 0, 0);
+        if (!id) { memmove(p + 28, p + 32, n - 32); n -= 4; p[5] = 3; }
+        CHECK(b->prepare(0, p, n) && b->publish(0) == MU_APPLIED && b->retire(0));
+    }
+    CHECK(!modwerk_runtime_active() && modwerk_runtime_free(0) == RUNTIME_POOL_BYTES);
+    dsp_switches = 0; /* every switch tells the machine, with or without DSP code */
+
+    /* DSP effects (ABI 5): the code and its needs are kept in the module's extent and handed to the machine at the switch. */
+    const uint16_t reloc[2] = {1, 3}, unordered[2] = {3, 1};
+    id = 40; begin5(0, 26, 5, 2); dsp_words(5, reloc, 2);
+    CHECK(b->prepare(0, p, n) && b->publish(0) == MU_APPLIED && b->retire(0) && dsp_switches == 1);
+    const struct runtime_module *fx = modwerk_runtime_module(0);
+    CHECK(fx && fx->id == 40 && !fx->hook[RUNTIME_TICK] && dsp_to.count == 5 && dsp_to.id == 26 && dsp_to.slots == 1 && dsp_to.init == 1 &&
+          dsp_to.proc == 2 && dsp_to.cycles == 244 && dsp_to.kind == RUNTIME_MODELED && dsp_to.state == 70 && dsp_to.buffer == 0x4000 && !dsp_from.count);
+    CHECK(dsp_to.words == fx->dsp.words && dsp_to.words[0] == 0x0c0000u && dsp_to.words[1] == 1 && dsp_to.words[4] == 0x0c0004u &&
+          dsp_to.relocation_count == 2 && dsp_to.relocations[0] == 1 && dsp_to.relocations[1] == 3);
+    /* Malformed DSP sections change nothing. */
+    for (unsigned bad = 0; bad < 6; ++bad) {
+        id = 41; begin5(0, 27, 5, 2); dsp_words(5, bad == 2 ? unordered : reloc, 2);
+        if (bad == 0) put32(p + n - 4 - 4 * 5, 0x1000000u);             /* a word wider than 24 bits */
+        if (bad == 1) put32(p + n - 4 - 4 * 4, 5);                      /* a relocated word pointing past the code */
+        if (bad == 3) p[41] = 5;                                         /* init past the code */
+        if (bad == 4) p[39] = 0;                                         /* no slot */
+        if (bad == 5) emit16(0);                                         /* trailing bytes */
+        free = modwerk_runtime_free(0);
+        CHECK(!b->prepare(0, p, n) && modwerk_runtime_refusal() == RUNTIME_MALFORMED && modwerk_runtime_free(0) == free && dsp_switches == 1);
+    }
+    /* One owner per effect: another module claiming effect 26 is refused. */
+    id = 41; begin5(0, 26, 5, 2); dsp_words(5, reloc, 2);
+    CHECK(!b->prepare(0, p, n) && modwerk_runtime_refusal() == RUNTIME_CONFLICT);
+    /* What the machine refuses (the DSP's memory, cycles, an effect in use) is the refusal, before or at the switch. */
+    id = 41; begin5(0, 27, 5, 2); dsp_words(5, reloc, 2);
+    dsp_why = RUNTIME_CYCLES;
+    CHECK(!b->prepare(0, p, n) && modwerk_runtime_refusal() == RUNTIME_CYCLES && dsp_switches == 1);
+    dsp_why = 0; id = 40; begin(0, 0, RUNTIME_NONE, 0, 0, 0, 0);
+    CHECK(b->prepare(0, p, n));
+    dsp_why = RUNTIME_BUSY;
+    CHECK(b->publish(0) == MU_UNCHANGED && b->discard(0) && modwerk_runtime_module(0) == fx && dsp_switches == 1);
+    dsp_why = 0;
+    CHECK(b->prepare(0, p, n) && b->publish(0) == MU_APPLIED && b->retire(0) && !modwerk_runtime_module(0));
+    CHECK(dsp_switches == 2 && dsp_from.id == 26 && !dsp_to.count);
+
     /* Activation only while nothing plays or records. */
     stopped = 0;
     CHECK(!b->enter(0) && !b->safe(0));
@@ -213,6 +282,6 @@ int main(void)
     CHECK(b->enter(0) && b->safe(0) && b->leave(0) && !b->safe(0) && !masked);
     if (failures) { fprintf(stderr, "%u loader checks failed\n", failures); return 1; }
     puts("Loader: refusals, relocation, bss, hooks, stock-code sites (in-flight, stock and changed-code refusals, "
-         "replace, rollback, removal), reclamation, several modules (conflicts, positions) and exhaustion passed.");
+         "replace, rollback, removal), reclamation, several modules (conflicts, positions), exhaustion and DSP sections passed.");
     return 0;
 }

@@ -8,17 +8,17 @@
  * (stock sets no instruction ACR and IDCM is cacheable), so the loader
  * invalidates the instruction and branch caches after writing code.
  *
- * Patches to stock code: only the RAM copy of the stock OS image, never the
- * copy of the bootloader inside it that the OS can write to flash. With
+ * Patches to stock code: only the RAM copy of the stock OS image below the
+ * copy of the bootloader inside it that the OS can write to flash. Past that
+ * copy come the DSP payloads, whose RAM holds the current bank once the
+ * project loads (the bank pointer reads 0x400e21e0 in the emulator). With
  * interrupts masked, the loader checks every other task's live stack and
  * saved registers (the kernel's tasks, Octabam docs/firmware/KERNEL.md) for
  * an address inside a site before it writes. */
 #include "runtime.h"
 
 #define STOCK_FROM 0x40000400u      /* the OS image in RAM */
-#define STOCK_TO 0x4010fdf0u        /* the base's own code follows */
-#define BOOTLOADER_FROM 0x400de1e0u /* what the OS re-flashes the bootloader from */
-#define BOOTLOADER_TO 0x400e21e0u
+#define BOOTLOADER_FROM 0x400de1e0u /* what the OS re-flashes the bootloader from; bank data follows it */
 
 #ifdef MODWERK_HOST
 int modwerk_test_stopped = 1;
@@ -106,10 +106,15 @@ unsigned modwerk_machine_paused(struct runtime_span *span, unsigned max)
 }
 #endif
 
+#ifndef MODWERK_DSP_LOADER
+/* This base has no DSP loader (dsp.c, build_core.py --dsp-loader): no module brings DSP code. */
+int modwerk_machine_dsp_admit(const struct runtime_dsp *from, const struct runtime_dsp *to) { (void)from; return to->count ? RUNTIME_MALFORMED : RUNTIME_OK; }
+void modwerk_machine_dsp_switch(const struct runtime_dsp *from, const struct runtime_dsp *to) { (void)from; (void)to; }
+#endif
+
 int modwerk_machine_patchable(uint32_t address, uint32_t length)
 {
-    return address >= STOCK_FROM && address < STOCK_TO && length <= STOCK_TO - address &&
-           (address + length <= BOOTLOADER_FROM || address >= BOOTLOADER_TO);
+    return address >= STOCK_FROM && address < BOOTLOADER_FROM && length <= BOOTLOADER_FROM - address;
 }
 
 /* Hooks run in the sys task (core-ot's ev_tick, ev_key, ev_enc and nearly

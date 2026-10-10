@@ -33,6 +33,32 @@ DSP_PARK = {
            0x085006, 0x221100, 0x218400, 0x0c0006),
     0x06: (0x06c400, 0x00000a, 0x0cc300, 0x000000, 0x085886, 0x0abd4e, 0x0abe4e, 0x0ae180),
 }
+# --dsp-loader: Octabam's DSP dynamic loading (dsp_loader.py, dsp.c), unchanged
+# but for the seams named in DSP_EDITS, and its ColdFire hooks (address, stock
+# SHA-256 as Octabam guards them, label in its hooks.s).
+DYNLOAD = APP / 'sdk/octabam/platform/dsp-dynload-transport'
+DYNLOAD_SOURCES = ('transfer.c', 'transfer.h', 'allocator.c', 'allocator.h', 'manager.c', 'selection.c', 'selection.h',
+                   'buffers.c', 'buffers.h', 'publication.h')
+DYNLOAD_HOOKS = (
+    (0x40004bc0, 8, '560d267844d7aa23140680beb751fac814290c76527d653fc41fbbb43c830cbf', 'dl_state7'),  # frame DMA: packets to both cores
+    (0x400526e4, 8, '3e7c95b32f444fd280cb96b2a6ea90525fe223d6e6b9352086d2cf41941ae854', 'dl_fx1_guard'),
+    (0x40052474, 8, '3e7c95b32f444fd280cb96b2a6ea90525fe223d6e6b9352086d2cf41941ae854', 'dl_fx2_guard'),
+    (0x4004a8a4, 6, '20577862965e35b56da3cc4660ac5df6a325e455467496552d181b68fff15e2d', 'dl_part_guard'))
+DSP_ALLOWANCE = 2808  # per core and sample: 3,120 cycles our code may spend (hardware) less a 10% margin (owner default)
+DSP_EDITS = {
+    # The FX selectors read their chooser list through these LEA operands, which the chooser composer repoints.
+    'selection.c': (('descriptor=((volatile uint32_t *)(slot ? 0x400d6090u : 0x400d6060u))[s->row];',
+                     'descriptor=((volatile uint32_t *)*(volatile uint32_t *)(slot ? 0x40052496u : 0x40052706u))[s->row];'),),
+    # Modules register effects at run time (dsp.c), and admission charges their cycles.
+    'manager.c': (('extern const struct dl_package dl_catalog[32];', 'extern struct dl_package dl_catalog[32];'),
+                  ('extern const struct code dl_codes[2][32];', 'extern struct code dl_codes[2][32];'),
+                  ('dl_allocator_init(&allocator,dl_catalog,0,0,0,0);',
+                   'dl_allocator_init(&allocator,dl_catalog,0,0,MODWERK_DSP_ALLOWANCE,MODWERK_DSP_ALLOWANCE);'),
+                  # A module installed while tracks name its effect: observe afresh and park those slots until bound.
+                  ('int dl_publication_idle(void) { return phase==0; }',
+                   'int dl_publication_idle(void) { return phase==0; }\n'
+                   'void dl_residency_nudge(void) { observed_valid=0; for(unsigned i=0;i<16;++i) last[i]=255; }')),
+}
 
 
 def sha(data):
@@ -100,6 +126,8 @@ def main():
     parser.add_argument('--cross', default='m68k-elf-', help='Use Modwerk\'s reviewed GNU toolchain.')
     parser.add_argument('--dev', action='store_true',
                         help='Development base: KEY and SCREEN requests (dev.c) to drive the unit over USB. Never for users.')
+    parser.add_argument('--dsp-loader', action='store_true',
+                        help='Load module DSP effects on demand; takes PLATE, SPRING and DARK REV off FX2 (needs ELEKLOADER_DSP_ASM, Node 24).')
     args = parser.parse_args()
     os.environ['ELEKLOADER_CROSS'] = args.cross
     upstream = args.upstream.resolve()
@@ -162,12 +190,35 @@ def main():
     usb = importlib.util.module_from_spec(spec); spec.loader.exec_module(usb)
     for name in ('ep0.c', 'runtime.c', 'runtime.h', 'boot.c', 'boot.h', 'boot.s') + (('dev.c',) if args.dev else ()):
         shutil.copyfile(HERE / name, source / name)
+    dsp_sites, dsp_layout, rows = [], None, None
+    if args.dsp_loader:
+        spec = importlib.util.spec_from_file_location('modwerk_dsp_loader', HERE/'dsp_loader.py')
+        loader_dsp = importlib.util.module_from_spec(spec); spec.loader.exec_module(loader_dsp)
+        for name in DYNLOAD_SOURCES:
+            text = (DYNLOAD / name).read_text()
+            for old, new in DSP_EDITS.get(name, ()):
+                if text.count(old) != 1:
+                    raise ValueError('Octabam DSP loader seam changed in %s; review the port.' % name)
+                text = text.replace(old, new)
+            (source / name).write_text(text)
+        shutil.copyfile(DYNLOAD / 'hooks.s', source / 'dsp_hooks.s')
+        shutil.copyfile(HERE / 'dsp.c', source / 'dsp.c')
+        for lea, stock_list in ((0x40052496, 0x400d6090), (0x40052706, 0x400d6060)):
+            if int.from_bytes(image[lea - device.main_load:lea - device.main_load + 4], 'big') != stock_list:
+                raise ValueError('An FX selector no longer reads its chooser list at %#x.' % lea)
+        dsp_sites, dsp_layout = loader_dsp.recipe(image, device, dsp, lambda path: sdk.dsp_assemble(path, str(source)), str(source))
+        chooser_sites, rows = loader_dsp.choosers(image)
+        dsp_sites += chooser_sites
     (source/'usb_base.h').write_text(usb.header())
     (source/'usb_base.s').write_text(usb.assembly())
     # Identity describes this core-only private base. Later selections need
     # their complete module/version/chooser identities regenerated explicitly.
-    inputs = {str(p.relative_to(APP)): sha(p.read_bytes()) for folder in (logger, upload, loader, HERE)
+    inputs = {str(p.relative_to(APP)): sha(p.read_bytes()) for folder in (logger, upload, loader, HERE) + ((DYNLOAD,) if args.dsp_loader else ())
               for p in sorted(folder.iterdir()) if p.is_file() and p.suffix in ('.c', '.h', '.s', '.asm', '.py', '.json')}
+    if args.dsp_loader:
+        for name in ('src/engine/assets/stock-dsp-metadata.json', 'src/engine/assets/chooser-metadata.json',
+                     'src/engine/choosers.ts', 'src/engine/module-menus.ts', 'scripts/octatrack-base-choosers.mjs'):
+            inputs[name] = sha((APP / name).read_bytes())
     inputs.update({'elekloader/' + p.name: sha(p.read_bytes()) for p in original_core.iterdir() if p.is_file()})
     artwork = APP / 'sdk/runtime/startup/artwork.json'
     inputs['sdk/runtime/startup/artwork.json'] = sha(artwork.read_bytes())
@@ -178,6 +229,10 @@ def main():
                          hidden=[], logger='0.2.0', modules=[], os='1.40C', source=source_hash, stockfx2=True,
                          usb=dict(interfaces=['msc', 'modwerk-vendor'], vendor=1, submit=True, backend='runtime-loader-3'),
                          boot='ram-1', **({'dev': ['key', 'screen']} if args.dev else {}))
+    if args.dsp_loader:
+        configuration.update(fx1=['NONE', *rows['fx1']], fx2=['NONE', *rows['fx2']], stockfx2=False,
+                             dsp=dict(loader='dsp-dynload-1', harvest=list(loader_dsp.HARVEST), rows=list(loader_dsp.MODULES),
+                                      allowance=DSP_ALLOWANCE, arena=[dsp_layout[t]['tableWords'] - loader_dsp.SAVED for t in 'AB']))
     identity = sha(json.dumps(configuration, separators=(',', ':')).encode())
     values = dict(build=identity[:16], os='1.40C', modules='', configuration=identity,
                   source=source_hash, fx1=';'.join(configuration['fx1']),
@@ -193,6 +248,10 @@ def main():
     definitions += 'const struct octamod_log_identity octamod_log_identity = {\n' + ','.join(
         'olog_' + key for key in FIELDS) + ',1};\n'
     definitions += 'typedef char retained_fits[(sizeof(struct octamod_log_retained_state)<=6144)?1:-1];\n'
+    if args.dsp_loader:  # dsp.c and manager.c: module effect ids (stock's null stub until bound), each core's arena
+        definitions += 'const uint32_t dl_stub_at_boot = %#xu;\nconst uint32_t dl_pmap16 = 0;\n' % dsp_layout['A']['free']
+        definitions += 'const uint16_t modwerk_dsp_arena[2] = {%d, %d};\n' % tuple(
+            dsp_layout[t]['tableWords'] - loader_dsp.SAVED for t in ('A', 'B'))
     (source/'identity.c').write_text(definitions)
     # Only authored zero placeholders: stock is recovered by format-2 parts.
     spec = importlib.util.spec_from_file_location('modwerk_logger_package', logger/'package.py')
@@ -209,11 +268,13 @@ modwerk_retained_end:
     recipe.update(version=VERSION, title='Modwerk base prototype', author='irpina; Modwerk contributors',
                   license='GPL-3.0-or-later',
                   description='Private core-only Elekloader base with logger/startup, a USB vendor interface and a runtime module loader (hooks and stock-code sites); NOT a flash candidate.')
-    recipe['sources'] += [p.name for p in sorted(source.glob('*.c'))] + ['hooks.s', 'retained.s', 'usb_base.s', 'boot.s']
+    recipe['sources'] += [p.name for p in sorted(source.glob('*.c'))] + ['hooks.s', 'retained.s', 'usb_base.s', 'boot.s'] + (
+        ['dsp_hooks.s'] if args.dsp_loader else [])
     recipe['cflags'] = ['-std=c99', '-ffreestanding', '-fno-builtin', '-fno-common',
                         '-fno-zero-initialized-in-bss', '-fno-tree-loop-distribute-patterns',
                         '-fno-merge-constants', '-fno-asynchronous-unwind-tables', '-fno-unwind-tables',
-                        '-Wall', '-Wextra', '-Werror'] + (['-DMODWERK_DEV'] if args.dev else [])
+                        '-Wall', '-Wextra', '-Werror'] + (['-DMODWERK_DEV'] if args.dev else []) + (
+        ['-DMODWERK_DSP_LOADER', '-DMODWERK_DSP_ALLOWANCE=%d' % DSP_ALLOWANCE] if args.dsp_loader else [])
     for key in ('idle', 'job', 'transport', 'open', 'read', 'write', 'close'):
         guard = guards[key]; n = guard.get('patchLength', guard['length'])
         at = guard['address'] - device.main_load
@@ -242,6 +303,15 @@ modwerk_retained_end:
     recipe['subscribe'].append(dict(event='ev_tick', fn='modwerk_ep0_tick', order=91))
     if args.dev:  # the screen as composed, modules' drawing included
         recipe['subscribe'].append(dict(event='ev_draw', fn='modwerk_dev_draw', order=95))
+    if args.dsp_loader:  # the DSP manager's UI work (its own hook was the UI tick, 0x4005221e) and its ColdFire hooks
+        recipe['subscribe'].append(dict(event='ev_tick', fn='modwerk_dsp_tick', order=92))  # dsp.c's test picks
+        recipe['subscribe'].append(dict(event='ev_tick', fn='dl_ui', order=93))
+        for addr, n, guard, label in DYNLOAD_HOOKS:
+            stock = image[addr - device.main_load:addr - device.main_load + n]
+            if sha(stock) != guard:
+                raise ValueError('Stock bytes at %#x are not the ones the DSP loader hooks.' % addr)
+            recipe['sites'].append(dict(addr=hex(addr), stock=stock.hex(), op='jmp', target=label))
+        recipe['sites'] += dsp_sites
     spec = importlib.util.spec_from_file_location('modwerk_startup', artwork.parent/'build.py')
     startup = importlib.util.module_from_spec(spec); spec.loader.exec_module(startup)
     for guard, authored in startup.writes():
@@ -282,6 +352,7 @@ modwerk_retained_end:
     (out/'MAIN.raw').write_bytes(main_out)
     report = dict(schema=1, kind='modwerk-elekloader-base-prototype', coreVersion=VERSION,
                   upstream=pin, sources=inputs, configuration=configuration, configurationHash=identity,
+                  dspLoader={t: {k: (hex(v) if isinstance(v, int) else v) for k, v in dsp_layout[t].items()} for t in dsp_layout} if dsp_layout else None,
                   packageSha256=sha(Path(path).read_bytes()), manifest=manifest,
                   savedHashes={ext:sha(data) for ext,data in outputs.items()},
                   productionReady=False, hardware='not tested', emulator='not tested',

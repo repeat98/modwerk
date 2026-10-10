@@ -59,6 +59,23 @@ python3 -B sdk/runtime/loader/build.py MODULE.c -o MODULE.mwrm
 npm run device -- try MODULE.mwrm --seconds 10   # scripts/device.mjs
 ```
 
+## DSP code (ABI 5)
+
+ABI 5 is ABI 4 with an 18-byte DSP descriptor after the module id, for a
+machine whose OS runs effects on DSPs (the Octatrack): DSP word count u32,
+relocation count u16, effect id u8, slots u8 (1 FX1, 2 FX2), init u16,
+process u16, worst-case cycles per sample and instance u16, the kind of
+that figure u8 (1 executed instructions, 2 modeled cycles, 3 hardware),
+state words per instance u8, and the delay-buffer words it reads from its
+slot's base u16. After the sites come the words (u32, 24 bits each) and the
+relocations (u16, rising; each names a word holding an offset into the
+code). The loader checks the section, keeps one owner per effect id, asks
+the machine (`modwerk_machine_dsp_admit`) whether its DSPs can take it, and
+hands it over at the switch (`modwerk_machine_dsp_switch`), masked with the
+module's hooks and sites. The code itself goes into a DSP only when a track
+picks the effect (the Octatrack's `dsp.c`). `build.py --dsp` makes one from
+a DSP package Modwerk's builder proved, and checks those proofs again.
+
 ## Several modules at once
 
 - **Admission before anything changes.** A package is refused, with the
@@ -86,8 +103,9 @@ npm run device -- try MODULE.mwrm --seconds 10   # scripts/device.mjs
 
 - **RAM only.** Module memory comes from a pool in the base. Sites are
   written only where the machine's `modwerk_machine_patchable` allows: on
-  the Octatrack, the RAM copy of the stock OS image, never the copy of the
-  bootloader inside it that the OS can write to flash, never flash,
+  the Octatrack, the RAM copy of the stock OS image below the copy of the
+  bootloader inside it that the OS can write to flash (past it, the DSP
+  payloads' RAM holds the current bank once a project loads), never flash,
   peripherals or the base itself. A power cycle restores everything.
 - **Exact bytes.** A site is written only over the stock bytes the package
   expects, read through the uncached alias; the result is read back. Any
@@ -131,7 +149,7 @@ machine's own, so a module is built for one machine and OS.
 
 Patches to data tables (they need the data cache handled), modules that add
 to the core's tables (`contribute`, such as CC MAP's MIDI handler), MIDI and
-audio-frame hooks, DSP code and the DSP resource ledger
+audio-frame hooks, shared DSP routines and the Part routes for DSP code
 ([design](../../../docs/OCTATRACK_ELEKLOADER_MIGRATION.md#several-modules-on-the-device-design-10-october-2026)),
 pool memory taken from the arena on demand, a package that names the base
 it was built for, and the browser builder.

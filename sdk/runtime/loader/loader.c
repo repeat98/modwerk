@@ -154,13 +154,15 @@ static void put(const struct runtime_module *m, int patched)
         for (uint32_t j = 0; j < s->length; ++j) to[j] = (patched ? s->code : s->stock)[j];
     }
 }
-/* One position's hooks and sites change together, with nothing else
- * running. On any mismatch its module's sites are put back and nothing changes. */
+static const struct runtime_dsp no_dsp;
+static const struct runtime_dsp *dsp_of(const struct runtime_module *m) { return m ? &m->dsp : &no_dsp; }
+/* One position's hooks, sites and DSP effect change together, with nothing
+ * else running. On any mismatch its module's sites are put back and nothing changes. */
 static int switch_to(unsigned position, struct runtime_module *to)
 {
     const struct runtime_module *from = live[position];
     uint32_t mask = modwerk_machine_mask();
-    int ok = !in_flight(from, to) && holds(from, 1);
+    int ok = !in_flight(from, to) && holds(from, 1) && !modwerk_machine_dsp_admit(dsp_of(from), dsp_of(to));
     if (ok) {
         put(from, 0);
         ok = holds(to, 0);
@@ -171,7 +173,7 @@ static int switch_to(unsigned position, struct runtime_module *to)
         }
         if (!ok) put(from, 1);
         modwerk_machine_invalidate_code();
-        if (ok) live[position] = to;
+        if (ok) { live[position] = to; modwerk_machine_dsp_switch(dsp_of(from), dsp_of(to)); }
     }
     modwerk_machine_unmask(mask);
     return ok;
@@ -185,6 +187,13 @@ static unsigned position_of(uint32_t id)
         if (!live[i] && free == RUNTIME_MODULES) free = i;
     }
     return free;
+}
+/* Does another live module own DSP effect `id`? */
+static int dsp_claimed(unsigned position, uint32_t id)
+{
+    for (unsigned k = 0; k < RUNTIME_MODULES; ++k)
+        if (k != position && live[k] && live[k]->dsp.count && live[k]->dsp.id == id) return 1;
+    return 0;
 }
 /* Does a site of another live module share a byte with [address, address + n)? */
 static int claimed(unsigned position, uint32_t address, uint32_t n)
@@ -203,12 +212,18 @@ static int prepare(void *u, const uint8_t *data, uint32_t length)
 {
     (void)u;
     candidate = 0; prepared = 0; refusal = RUNTIME_OK;
-    if (length < RUNTIME_HEADER_BYTES - 4u || data[0] != 'M' || data[1] != 'W' || data[2] != 'R' || data[3] != 'M' ||
-        (be32(data + 4) != 0x00030000u && be32(data + 4) != 0x00040000u)) return refuse(RUNTIME_MALFORMED);
-    uint32_t header = data[5] == 4 ? RUNTIME_HEADER_BYTES : RUNTIME_HEADER_BYTES - 4u;
+    if (length < 28u || data[0] != 'M' || data[1] != 'W' || data[2] != 'R' || data[3] != 'M' || be16(data + 4) < 3u ||
+        be16(data + 4) > 5u || be16(data + 6)) return refuse(RUNTIME_MALFORMED);
+    uint32_t abi = be16(data + 4), header = abi == 5 ? RUNTIME_HEADER_BYTES : abi == 4 ? 32u : 28u;
     if (length < header) return refuse(RUNTIME_MALFORMED);
     uint32_t image = be32(data + 8), bss = be32(data + 12), count = be32(data + 16), hooks = be32(data + 20),
-             sites = be32(data + 24), id = data[5] == 4 ? be32(data + 28) : 0, end = image + bss, at = header + 4u * hooks;
+             sites = be32(data + 24), id = abi > 3 ? be32(data + 28) : 0, end = image + bss, at = header + 4u * hooks;
+    struct runtime_dsp dsp = no_dsp;
+    if (abi == 5) {
+        dsp.count = be32(data + 32); dsp.relocation_count = (uint16_t)be16(data + 36); dsp.id = data[38]; dsp.slots = data[39];
+        dsp.init = (uint16_t)be16(data + 40); dsp.proc = (uint16_t)be16(data + 42); dsp.cycles = (uint16_t)be16(data + 44);
+        dsp.kind = data[46]; dsp.state = data[47]; dsp.buffer = (uint16_t)be16(data + 48);
+    }
     if (image > RUNTIME_IMAGE_BYTES || bss > RUNTIME_IMAGE_BYTES - image || hooks > RUNTIME_EVENTS ||
         count > RUNTIME_RELOCATIONS || sites > RUNTIME_SITES || length < at + image + 4u * count) return refuse(RUNTIME_MALFORMED);
     const uint8_t *from = data + at, *relocation = from + image, *record = relocation + 4u * count, *p = record;
@@ -228,15 +243,30 @@ static int prepare(void *u, const uint8_t *data, uint32_t length)
             if (address[i] < address[j] + size[j] && address[j] < address[i] + n) return refuse(RUNTIME_MALFORMED);
         p += 8u + 2u * n + 2u * r; left -= 8u + 2u * n + 2u * r;
     }
-    if (left) return refuse(RUNTIME_MALFORMED);
-    /* Admission: a position, bytes no other live module patches, memory. */
+    /* DSP code: 24-bit words; each relocation names a word holding an offset into them, in rising order. */
+    const uint8_t *words = p, *dsp_relocation = p + 4u * dsp.count;
+    if (dsp.count > RUNTIME_DSP_WORDS || dsp.relocation_count > RUNTIME_DSP_RELOCATIONS ||
+        left != 4u * dsp.count + 2u * dsp.relocation_count || (!dsp.count && dsp.relocation_count) ||
+        (dsp.count && (dsp.init >= dsp.count || dsp.proc >= dsp.count || !dsp.slots || dsp.slots > 3u)))
+        return refuse(RUNTIME_MALFORMED);
+    for (uint32_t i = 0; i < dsp.count; ++i) if (be32(words + 4u * i) > 0xffffffu) return refuse(RUNTIME_MALFORMED);
+    for (uint32_t i = 0; i < dsp.relocation_count; ++i) {
+        uint32_t r = be16(dsp_relocation + 2u * i);
+        if (r >= dsp.count || be32(words + 4u * r) >= dsp.count || (i && r <= be16(dsp_relocation + 2u * i - 2u)))
+            return refuse(RUNTIME_MALFORMED);
+    }
+    /* Admission: a position, bytes and an effect no other live module owns, what the machine's DSPs take, memory. */
     slot = position_of(id);
     if (slot == RUNTIME_MODULES) return refuse(RUNTIME_FULL);
     for (uint32_t i = 0; i < sites; ++i) if (claimed(slot, address[i], size[i])) return refuse(RUNTIME_CONFLICT);
-    if (image || sites) {
+    if (dsp.count && dsp_claimed(slot, dsp.id)) return refuse(RUNTIME_CONFLICT);
+    int why = modwerk_machine_dsp_admit(dsp_of(live[slot]), &dsp);
+    if (why) return refuse((enum runtime_refusal)why);
+    if (image || sites || dsp.count) {
         reclaim();
-        uint32_t head = ((uint32_t)sizeof(struct runtime_module) + sites * (uint32_t)sizeof(struct runtime_site) + 15u) & ~15u;
-        struct runtime_module *m = take(head + ((end + 15u) & ~15u));
+        uint32_t head = ((uint32_t)sizeof(struct runtime_module) + sites * (uint32_t)sizeof(struct runtime_site) + 15u) & ~15u,
+                 code = (end + 15u) & ~15u, tail = (4u * dsp.count + 2u * dsp.relocation_count + 15u) & ~15u;
+        struct runtime_module *m = take(head + code + tail);
         if (!m) return refuse(RUNTIME_MEMORY);
         struct runtime_site *site = (struct runtime_site *)(void *)(m + 1);
         uint8_t *to = (uint8_t *)m + head;
@@ -260,7 +290,12 @@ static int prepare(void *u, const uint8_t *data, uint32_t length)
             p += 8u + 2u * n + 2u * r;
         }
         modwerk_machine_invalidate_code();
-        m->id = id; m->size = head + ((end + 15u) & ~15u);
+        uint32_t *dsp_words = (uint32_t *)(void *)((uint8_t *)m + head + code);
+        uint16_t *dsp_relocations = (uint16_t *)(void *)(dsp_words + dsp.count);
+        for (uint32_t i = 0; i < dsp.count; ++i) dsp_words[i] = be32(words + 4u * i);
+        for (uint32_t i = 0; i < dsp.relocation_count; ++i) dsp_relocations[i] = (uint16_t)be16(dsp_relocation + 2u * i);
+        dsp.words = dsp_words; dsp.relocations = dsp_relocations;
+        m->id = id; m->size = head + code + tail; m->dsp = dsp;
         for (uint32_t i = 0; i < RUNTIME_EVENTS; ++i) m->hook[i] = hook[i] == RUNTIME_NONE ? 0 : (uintptr_t)to + hook[i];
         m->site = site; m->sites = sites;
         owned[owners++] = candidate = m;

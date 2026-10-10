@@ -613,7 +613,7 @@ RAM boot stays a base-development tool: it restarts the unit.
    bank's Parts select are resident on a core. "Full" means the current
    selection does not fit, never that too many modules are installed.
 2. *Every FX is the same kind of thing, stock included.* Once the loader is
-   proven on the unit with the pilot (CHARACTER), stock effects load on
+   proven on the unit with the pilot (E-Verb), stock effects load on
    demand through the same path (about 5,395 free P words per core instead
    of SPATIALIZER's 261): one code path for all FX. Until then, modules live
    in harvested space.
@@ -717,28 +717,83 @@ A port that must sound like its static version keeps a `verify_static.py`
 style proof: its relocated DSP code at two or more origins equals the
 static assembly, and renders match sample for sample.
 
-**Pilot: CHARACTER.** It is an FX1 insert with DSP code that needs no Y
-buffer (r7 state only), so the first port exercises P, X and cycles without
-the buffer and T3/T7 questions. Its relocation is already done in Octabam's
-dynload work: 932 P words and 3 relocations, equal to independent assembly
-at four origins, sample-exact against the static build on both payloads,
-and loaded, bound and retired by the runtime in the emulator, including
-through automatic Part changes. Air Chorus follows as the first buffered
-FX, carrying the named memory regressions.
+**Pilot: E-Verb** (user1303836, 0.1.0-experimental). CHARACTER was the
+first choice, but Sam Banks' modules (Spectrum, Modulation, Character) and
+Air Chorus are paused in today's catalogue (`src/catalog/availability.ts`),
+so nobody uses them (owner, 10 October 2026). E-Verb is enabled, the
+newest catalogue FX, and has reported MKII qualification as a static
+module, so the owner can compare it on the unit with what he knows. It is
+also the harder case: 1,588 P words, the whole 132-word r7 block, and the
+16K FX2 delay buffer it reads from its base in init, so the pilot covers
+buffers and FX2 where a buffer-free insert would not. Its relocatable
+package and four-origin proofs already exist (`src/engine/assets/dsp-packages.json`).
+Its routines (halfband filters, allpass and delay lines) are the first
+candidates for the shared library; splitting them out means changing its
+generator and re-proving its audio, so the pilot ships it whole.
+
+### Projects across module changes (owner, 10 October 2026)
+
+A project stores, per Part and track, each FX slot's effect id (one byte,
+FX1 and FX2 for T1–T8 at the head of the Part) and its knob values, and each
+track's machine type. Stock keeps those bytes whatever the effect is; a
+module reads its knobs from them. Modules can disappear (an update, another
+card, another unit) and change version, and old projects must keep loading:
+
+- **Ids.** The DSP dispatch table has 32 effect ids. Stock uses 0 (NONE), 4,
+  5, 8, 12, 13, 16–22, 24 and 28, and its choosers can store nothing else,
+  so a stock project never holds another id. Module FX get only ids whose
+  stock dispatch is the null stub and that Modwerk's catalogue assigns
+  (`customIds`: 6, 7, 9, 10, 11, 14, 15, 23, 26, 27, 29, 30, 31); `dsp.c`
+  refuses any other, and each module keeps its id for good (E-Verb is 27).
+  The choosers map a row to an id through stock's own descriptor tables,
+  which Modwerk's composer extends; a stock effect's row and id never
+  change meaning. A module that replaces a stock effect in place (Sidechain
+  Compressor over COMPRESSOR, 24) does not fit this form: in the dynamic form
+  it takes its own id. Thirteen free ids is the hard limit on module FX one
+  project can name; nine are assigned.
+- **Missing modules.** A track naming a module effect that is not installed
+  runs stock's null stub, dry, never another module and never a crash; its
+  stored knob values stay untouched, and the unit shows `MODULE MISSING`
+  once. Installing the module makes the manager look again and park those
+  slots until their code is bound, so the effect starts from its init with
+  the project's values: the project comes back exactly (emulator, below).
+  On stock 1.40C, or a base without the loader, every unused id has stock's
+  NONE descriptor in both FX tables and dispatches to the null stub, so such
+  a slot shows and runs as NONE and keeps its byte until edited (read from
+  the stock tables, not yet run).
+- **What a project uses.** `modwerk_dsp_used()` reports the module effects
+  the current bank names (what runs, and all four Parts, working and saved)
+  as one bit per id, for an update to warn before it removes one. Other
+  banks are on the card; reading them belongs to the card work.
+- **Versions.** Knob values are stored raw, with no module version beside
+  them, so a newer version of a module must read an older version's stored
+  values the same way. A change that cannot takes a new effect id, and the
+  old id stays reserved. The package will declare a parameter-layout number
+  that installing over an older version checks.
+- **Old projects and stock effects.** Stock effects keep their ids, code and
+  parameters. Once they load on demand, the ledger admits the bank's stock
+  effects first and modules only in what remains, so a module is refused
+  and a stock effect never is: four tracks and two slots give at most eight
+  distinct effects per core, and the eight largest stock effects need about
+  4,700 words of the 5,395-word arena. Their cycle costs have to be measured
+  before the cycle side can make the same promise. In the pilot base,
+  PLATE, SPRING and DARK REV are harvested, so an old project's tracks with
+  them run dry there: a pilot-only limit, lifted by stock effects on demand.
+- **Regression.** A stock 1.40C project with stock effects on every track
+  and slot across its Parts, and one saved with an earlier module set,
+  must load in the emulator and on the unit with the same effects and
+  values as before (planned with milestone 3).
 
 ### Milestones
 
 1. **Several ColdFire modules at once** (built, below).
-2. **DSP code on demand in the Elekloader base, with the pilot**: port
-   dsp-dynload's receiver, transport and allocator as a base feature beside
-   the runtime loader, stock effects resident, and CHARACTER in the module
-   form, loaded when picked in the stock FX1 chooser on either core. The
-   emulator's DSP model now runs (below), so its port gates can be rerun on
-   the Elekloader base.
-3. **The ledger and the routes**: declared X/Y/cycle needs in the package,
-   per-core admission, the publication guards for every writer of the live
-   FX arrays (Octabam's audit lists the ones still open), preloading a
-   bank's Parts.
+2. **DSP code on demand in the Elekloader base, with the pilot** (built,
+   below).
+3. **The routes and old projects**: the publication guards for every writer
+   of the live FX arrays (Octabam's audit lists the ones still open),
+   preloading the union of a bank's Parts, queueing a pick that meets a busy
+   manager, the parameter-layout number, stock effects on demand with the
+   stock-first ledger, and the old-project regression.
 4. **Packages on the card, timing on the unit**: card listing, chooser rows
    from package names, read-only DSP and ColdFire timing in DIAG, and a
    development-only USB command that replays a chooser pick or a Part change
@@ -779,20 +834,101 @@ cores and runs the uploaded payloads; per-frame figures there are executed
 instructions (`--dsp-stopwatch`, `OT_DSP_FRAMETRACE=1`), not modeled cycles
 or hardware timing.
 
+### Milestone 2: DSP effects on demand, E-Verb as the pilot (10 October 2026)
+
+`build_core.py --dsp-loader` builds Octabam's DSP dynamic loading into the
+base, unchanged but for three seams (`DSP_EDITS`): its frame-head receiver
+on both cores, its transport on the frame DMA, its allocator and manager,
+and its guards on the stock FX1/FX2 selectors and the manual Part change.
+Module packages fill its catalog instead of the build (`dsp.c`):
+
+- **Where the code goes.** The receiver (340 words) and a 2,384-word table
+  (64 saved dispatch entries and a 2,320-word arena) take the program words
+  of PLATE, SPRING and DARK REV on each core, which leave the FX2 chooser
+  and dispatch to stock's null stub, as Modwerk's loader-free builds do
+  when module code needs room. `dsp_loader.py` checks that the three are
+  one run, that no remaining effect calls into it and that the frame head
+  is the instruction the receiver replays; dry slots use stock's own null
+  stub, so the receiver carries no stock words.
+- **The module form, first cut** (package ABI 5): relocatable DSP words and
+  relocations, init and process entries, the effect id, its slots, its
+  state words, the delay-buffer words it reads and its worst-case cycles
+  per sample with their kind (executed, modeled, hardware).
+  `build.py --dsp` makes one from a package Modwerk's builder already
+  proved and checks those proofs again. The chooser rows come from
+  Modwerk's own composer (`scripts/octatrack-base-choosers.mjs`).
+- **Admission.** On install: a module id the stock dispatch leaves free,
+  code that fits each core's arena, at most 132 state words, a buffer that
+  fits the slot's block (3K FX1, 16K FX2) and a known cycle figure within
+  the allowance. On a pick: the allocator places the code once per core
+  and charges each instance's cycles against 2,808 per sample and core
+  (3,120 less the 10% margin); a pick that does not fit is refused before
+  anything is written, with `DSP MEMORY FULL`, `DSP OVERLOAD` or
+  `DSP LOAD FAILED` on the screen, and the track keeps its effect. Removing
+  or replacing a module whose effect a track runs is refused.
+- **Scripted picks.** `modwerk_dsp_pick(slot, track, row)` queues an FX1 or
+  FX2 pick or a manual Part change that the sys task's tick replays through
+  the stock selectors and their guards, as the panel would. The emulator
+  check calls it through the bench; a development USB request for hardware
+  runs still has to be wired in `ep0.c`.
+
+Emulator (`ot_emu --dsp`, Docker `--shm-size=128m`), private base
+`ae541549…` (`--dsp-loader --dev`, flash-safety check passed; the same runs
+passed on `11905c0c…` before the rebase), a private copy of the owner's
+Template Live project on the card, driven by
+`scripts/verify-octatrack-dsp-loader.mjs`:
+
+- E-Verb installed over USB, then picked on FX2 of T1 and of T5 through
+  the stock FX2 selector (scripted picks): each core received its 1,588
+  words in 67 checked 24-word writes, holds them word for word as the
+  package relocated to its
+  arena, and dispatches effect 27 to them; core 1 ran its process entry
+  every frame afterwards (a PC watch). No transport errors.
+- Removal refused while T1 ran E-Verb; after FILTER was picked there the
+  module was removed, the code retired and core 1 dispatched effect 27 to
+  the null stub again.
+- A package declaring 1,500 cycles: T1 admitted, T2 (the same core)
+  refused with the message and left as it was.
+- T1's FX2 set to E-Verb in every Part and in the live effects before it
+  was installed, as a saved project would: the slot ran dry, the unit
+  showed `MODULE MISSING`, `modwerk_dsp_used()` reported effect 27; once
+  E-Verb was installed, the slot was parked, its code bound, and T1 ran
+  E-Verb again from its init.
+
+These are executed-instruction emulator runs: no audio was compared, and
+no timing. Found on the way: the runtime loader allowed stock-code patches
+past the bootloader copy, where the DSP payloads' RAM holds the current
+bank once a project loads (the bank pointer reads 0x400e21e0); it now
+stops at the bootloader copy.
+
+Known limits of this cut:
+
+- No publication guards for queued pattern changes, project loads or Part
+  edits yet (Octabam's `publication.c`): the manager's observer loads what
+  those routes publish and keeps the slot dry until then.
+- A pick during the manager's own transaction (a few ticks after any change
+  of the live effects) is refused rather than queued.
+- Stock effects are not charged cycles; a module's figure is its own.
+- Octabam's frame-DMA hook (0x40004bc0) is the one USB Audio In uses.
+
 ### Decisions for the owner
 
 - A short fade on a module switch, or exactly stock's hard switch with fresh
   state. A fade costs cycles in the switch frame and needs the old and new
   instances at once.
-- The DSP cycle budget admission uses per core (3,120 per sample is the
-  hardware figure for our code) and the margin, and whether modeled cycles
-  may admit a module until hardware timing exists for it.
-- The ColdFire pool size: 256 KiB of sample memory for good, or pages taken
-  on demand later.
+- Interim, until the owner decides: 2,808 cycles per sample and core
+  (3,120 less 10%); modeled or executed figures admit in development bases
+  only; the 256 KiB ColdFire pool stays.
 - Decided (target architecture above): stock effects load on demand after
   the pilot passes on the unit, and the union of a bank's Parts is preloaded.
 - Whether the selected module set persists across a power cycle (read from
   the card at boot).
+- Thirteen module effect ids at most per project (nine assigned). More
+  module FX than that needs a map beside the project (for example a file in
+  its folder naming the module behind each id), written when it is saved.
+- Whether a module that replaces a stock effect in place (Sidechain
+  Compressor) is ported with its own id, which changes what old projects
+  with COMPRESSOR hear back to stock.
 
 ## Work required before public cutover
 
