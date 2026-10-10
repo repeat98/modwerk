@@ -99,6 +99,20 @@ ELUP codec; decoded MAIN, seed and original tail remain identical. See the
 exact BIN hash in the regression JSON. Its initial boot-only test request is historical; the functional report above
 was subsequently received. No additional recovery experiment is requested.
 
+## 0.2.7 sequencer retrigger (report #408, 11 October 2026)
+
+Report #408 (MKII, OS 1.40C, 0.2.6): the selected track produces loud, laggy noise and the sequencer stops. The reporter's build has nine modules (POLY8, Tape Echo, TapeHead, Repitch, Sidechain Compressor, VECTOR, Mute Modes, Output Matrix, FM Synth); one track was playing, a POLY8 pattern with one note. No log or hardware reproduction exists.
+
+Finding in the emulator (0.2.6, that nine-module build, POLY8 on track 1 with a sample, trigs on steps 1, 5, 9 and 13 at 2X, AMP defaults, no other track and no MIDI): every trig keeps the sounding voice and starts another, and a sequencer note has no key-up, so the pool fills. After 9,000 frames `poly_extra_mask[0]` is `0xfe`: the primary plus seven extensions, eight voices on the one note. Steady state is about 39.5k ColdFire instructions per frame (the 6,000- and 14,000-frame runs differ by 316.0M instructions over 8,000 frames), against 19.7k for the same build idle. That is one voice-worth (about 1.8k) for each stacked copy, and the same range as the earlier Tape Echo freezes, which were silent frame overruns. Emulator instruction counts are not chip cycles; the overrun is the working hypothesis for the report, not a measured result.
+
+0.2.7 changes `pm_reserve` in `pool.c`: a trigger with no owning key restarts a sounding voice of the same pitch and track (`restart_same_pitch`). Voices owned by panel keys or MIDI notes, other pitches and other tracks are untouched, and a recorded chord still sounds every note. A one-note pattern now holds one voice.
+
+What ran: `pool-test.c` under ASan/UBSan (100 repeats of one note leave one voice; a repeated three-note chord leaves three; other pitches and tracks are independent; a keyed voice survives an unkeyed restart), plus `verify-source.py`, `verify-addressing.py`, `verify-initialization.py` and `recording-test.c`, all passing on the `registration.s` regenerated with the pinned toolchain (which first reproduced the committed 0.2.6 file byte for byte).
+
+What did not run: the 0.2.7 image has not been composed, because publication metadata is not regenerated without the owner's approval record. So there is no emulator run, instruction count, native/browser comparison or UI capture for it, and no hardware test. A step that restarts a voice cuts the old one without a release ramp, as stock FLEX does on a new trig; whether that clicks on this build is untested.
+
+Hardware test (the owner's unit): on 0.2.6 and then 0.2.7, the same project: POLY8 on one track, a one-note pattern or a four-on-the-floor of the same note, AMP HOLD and REL at their defaults, the report's other modules in the build. Run each for ten minutes. Expected: 0.2.6 degrades within a minute or two as the voices stack; 0.2.7 does not. Then a recorded three-note chord and a held panel chord on 0.2.7 to confirm they still layer. If 0.2.7 still fails, the cause is not voice stacking: bisect by removing modules and keep the log files.
+
 ## 0.2.6 shared-machine compatibility candidate
 
 The shared bridge replaces only exact, reviewed machine registration and key/audio seams. Non-POLY8 configurations retain their original declarations. It preserves FM Synth’s eight published helper/data pointers before the FLEX renderer, including the legato helper and HOLD table used by its bundled quantizer. Explicit local-symbol exports change symbol binding without changing upstream engine or Mute Modes code bytes.

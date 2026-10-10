@@ -787,6 +787,15 @@
     ],
     "poly8": [
       {
+        "version": "0.2.7-experimental",
+        "date": "2026-10-11",
+        "changes": [
+          "A sequencer trig on a pitch that is already sounding on the same track now restarts that voice instead of adding a copy. Before, a one-note pattern at the default AMP HOLD stacked a voice every step until all eight sounded together, because a sequencer note has no key-up to end it. Voices started by panel keys or MIDI notes, other pitches and other tracks are untouched; recorded chords still sound every note.",
+          "Report #408 (MKII, 0.2.6): noise and lag, then the sequencer stops, with one track playing a one-note POLY8 pattern in a nine-module build. In the emulator that pattern settles at eight voices and about 39.5k ColdFire instructions per frame against 19.7k for the idle build. The overload is the working hypothesis for the report, not a measured chip deadline, and the change is a mitigation until a unit confirms it.",
+          "Retain eight voices at most, one POLY8 per Part, LOOP OFF on new assignments, fixed 1/8 gain and the shared chooser. Physical timing, recording and reboot qualification remain open."
+        ]
+      },
+      {
         "version": "0.2.6-experimental",
         "date": "2026-10-09",
         "changes": [
