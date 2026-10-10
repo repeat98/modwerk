@@ -12,8 +12,13 @@
 
 /* manager.c's code descriptor, which it reads from dl_codes. */
 struct code { const uint32_t *words; const uint16_t *relocations; uint16_t count, init, proc, relocation_count; };
+/* Stock first: every slot without a module is charged the dearest stock effect
+ * (MODWERK_DSP_RESERVE), and a module at least that, so eight stock slots always
+ * fit a core and a stock pick never adds to what was admitted: a module is
+ * refused, never a stock effect. */
+typedef char stock_always_fits[8u * MODWERK_DSP_RESERVE <= MODWERK_DSP_ALLOWANCE ? 1 : -1];
 /* An id with no package: what stock (or the null stub) runs there, free on both slots. */
-#define STOCK {0, 1, 0, 3, 1, 1, 0}
+#define STOCK {0, 1, MODWERK_DSP_RESERVE, 3, 1, 1, 0}
 #define STOCK4 STOCK, STOCK, STOCK, STOCK
 struct dl_package dl_catalog[32] = {STOCK4, STOCK4, STOCK4, STOCK4, STOCK4, STOCK4, STOCK4, STOCK4};
 struct code dl_codes[2][32];
@@ -54,7 +59,9 @@ int modwerk_machine_dsp_admit(const struct runtime_dsp *from, const struct runti
     if (to->count > arena || to->state > SLOT_WORDS || to->buffer > (to->slots & 1u ? FX1_BUFFER : FX2_BUFFER)) return RUNTIME_MEMORY;
     /* shortcut: modeled cycles and executed instructions admit in this development base;
      * a release base admits hardware-timed figures only (owner, 10 October 2026). */
-    if (!to->kind || to->kind > RUNTIME_HARDWARE || to->cycles > MODWERK_DSP_ALLOWANCE) return RUNTIME_CYCLES;
+    /* One instance must fit beside seven stock slots on a core. */
+    if (!to->kind || to->kind > RUNTIME_HARDWARE || to->cycles > MODWERK_DSP_ALLOWANCE - 7u * MODWERK_DSP_RESERVE)
+        return RUNTIME_CYCLES;
     return RUNTIME_OK;
 }
 /* Masked, by the loader's switch: the manager sees the catalog change between two of its steps. */
@@ -66,7 +73,8 @@ void modwerk_machine_dsp_switch(const struct runtime_dsp *from, const struct run
         dl_codes[0][from->id] = dl_codes[1][from->id] = (struct code){0, 0, 0, 0, 0, 0};
     }
     if (to->count) {
-        dl_catalog[to->id] = (struct dl_package){(uint16_t)to->count, 1, to->cycles, to->slots, 0, 1, to->buffer != 0};
+        uint32_t cycles = to->cycles > MODWERK_DSP_RESERVE ? to->cycles : MODWERK_DSP_RESERVE;
+        dl_catalog[to->id] = (struct dl_package){(uint16_t)to->count, 1, cycles, to->slots, 0, 1, to->buffer != 0};
         dl_codes[0][to->id] = dl_codes[1][to->id] =
             (struct code){to->words, to->relocations, (uint16_t)to->count, to->init, to->proc, to->relocation_count};
         nudge = 1; /* tracks may already name it (a saved project): load it there now */
@@ -95,21 +103,86 @@ int modwerk_dsp_pick(unsigned slot, unsigned track, unsigned row)
     pick = 0x80000000u | slot << 16 | track << 8 | row;
     return 1;
 }
-/* A track naming a module effect that is not installed runs stock's null stub, dry, its
- * stored parameters untouched; the unit says so once per change. */
+/* A track naming a module effect that is not installed, or a stock effect this
+ * base gave its code room to (modwerk_dsp_harvested), runs stock's null stub, dry,
+ * its stored parameters untouched; the unit says so once per change. */
 static uint32_t missing_shown;
 volatile uint32_t modwerk_dsp_missing; /* times the unit said so, for diagnostics */
+extern const uint32_t modwerk_dsp_harvested; /* identity.c */
+uint32_t modwerk_dsp_dry(void)
+{
+    uint32_t dry = 0;
+    for (unsigned i = 0; i < 16; ++i) {
+        unsigned fx = LIVE_FX[i] & 31u;
+        if ((dl_stub_at_boot >> fx & 1u && dl_catalog[fx].resident) || modwerk_dsp_harvested >> fx & 1u) dry |= 1u << fx;
+    }
+    return dry;
+}
+/* The host side of each core's HI08 (sdk/octabam/tools/emu/ot_emu/dsp.h): the
+ * window at 0x20000000 shows the core the GPIO byte selects, one byte register
+ * per 4-byte stride in the low byte of a 16-bit access. */
+#define DSP_SELECT (*(volatile uint8_t *)0xfc0a400cu)
+#define HOST_ISR (*(volatile uint16_t *)0x20000008u) /* bit 0 RXDF, 3 HF2, 4 HF3 */
+#define HOST_RXL (*(volatile uint16_t *)0x2000001cu) /* a read takes the word */
+#ifndef MODWERK_HOST
+/* The receiver's answer (dsp_receiver.asm): HF2 toggles for each packet handled, HF3 says refused.
+ * Read from the frame-transfer interrupt at its end, where core 0 is selected. */
+volatile uint32_t modwerk_dsp_last_flags; /* the last read, core 0 in bits 0-1, core 1 in 8-9 */
+unsigned modwerk_dsp_flags(unsigned core)
+{
+    DSP_SELECT = (uint8_t)core;
+    unsigned isr = HOST_ISR;
+    DSP_SELECT = 0;
+    modwerk_dsp_last_flags = (modwerk_dsp_last_flags & ~(3u << 8 * core)) | (isr >> 3 & 3u) << 8 * core;
+    return isr >> 3 & 3u;
+}
+#endif
+
+/* Frames stop only when a DSP stops, so the sys task watches them, outside the
+ * frame path: frames still for half a second while the loader has a transfer
+ * in flight is a hang (counted, and the loader shut off until a reboot). */
+#define STALL_TICKS 30u
+static uint32_t seen_frames, still;
+int modwerk_dsp_stalled(uint32_t frames, int busy)
+{
+    if (frames != seen_frames || !busy) { seen_frames = frames; still = 0; return 0; }
+    return ++still == STALL_TICKS;
+}
+volatile uint32_t modwerk_dsp_stalls, modwerk_dsp_drained; /* hangs seen; words taken back from the DSPs */
+#ifndef MODWERK_HOST
+extern volatile uint32_t dl_frames, dl_phase, dl_rx_nbytes, dl_residency_enabled;
+int dl_job_status(unsigned core);
+void dl_abort(void);
+/* Best effort: take whatever a core still offers the host (a DSP waiting to hand
+ * over words waits at P:$97 for ever), put the transfer machine's channel 1 back,
+ * forget the transfer and let the next frame interrupt in, as stock state 7 does. */
+static void recover(void)
+{
+    uint32_t sr = modwerk_machine_mask();
+    for (unsigned core = 0; core < 2; ++core) {
+        DSP_SELECT = (uint8_t)core;
+        for (unsigned n = 0; n < 1024u && HOST_ISR & 1u; ++n) { (void)HOST_RXL; modwerk_dsp_drained = modwerk_dsp_drained + 1; }
+    }
+    DSP_SELECT = 0;
+    if (dl_phase) { *(volatile uint32_t *)0xfc045028u = dl_rx_nbytes; dl_phase = 0; }
+    dl_abort();
+    dl_residency_enabled = 0;
+    *(volatile uint8_t *)0xfc04801du = 1; /* INTC0 CIMR: the frame interrupt */
+    modwerk_machine_unmask(sr);
+    modwerk_dsp_stalls = modwerk_dsp_stalls + 1;
+    ((void (*)(const char *, unsigned))0x4005a2b8u)("DSP STOPPED", 0x30);
+}
+#endif
 void modwerk_dsp_tick(void)
 {
 #ifndef MODWERK_HOST
-    uint32_t missing = 0;
-    for (unsigned i = 0; i < 16; ++i)
-        if (LIVE_FX[i] < 32u && dl_stub_at_boot >> LIVE_FX[i] & 1u && dl_catalog[LIVE_FX[i]].resident) missing |= 1u << LIVE_FX[i];
-    if (missing & ~missing_shown) {
-        ((void (*)(const char *, unsigned))0x4005a2b8u)("MODULE MISSING", 0x30);
+    if (modwerk_dsp_stalled(dl_frames, dl_phase || !dl_job_status(0) || !dl_job_status(1))) recover();
+    uint32_t dry = modwerk_dsp_dry(), fresh = dry & ~missing_shown;
+    if (fresh) {
+        ((void (*)(const char *, unsigned))0x4005a2b8u)(fresh & modwerk_dsp_harvested ? "FX NOT IN BASE" : "MODULE MISSING", 0x30);
         modwerk_dsp_missing = modwerk_dsp_missing + 1;
     }
-    missing_shown = missing;
+    missing_shown = dry;
     if (nudge) { nudge = 0; dl_residency_nudge(); }
     uint32_t p = pick;
     if (!p) return;
@@ -121,6 +194,28 @@ void modwerk_dsp_tick(void)
     ((void (*)(void))(slot ? 0x40052474u : 0x400526e4u))();
 #endif
 }
+
+/* What a hardware run reads (a development LOADER request): DSP_REPORT_WORDS
+ * words, version first. Engine task; it reads counters only, never the host port. */
+#ifndef MODWERK_HOST
+extern volatile uint32_t dl_accepted[2], dl_rejected[2], dl_errors, dl_pool_base[2], dl_pool_words[2];
+extern volatile uint32_t dl_selection_requested, dl_selection_completed, dl_selection_refused, dl_selection_cancelled;
+extern volatile uint32_t dl_residency_commits, dl_residency_failures, dl_residency_rollbacks, dl_residency_words[2];
+extern volatile uint32_t dl_unguarded, dl_parked, dl_reinit;
+uint32_t dl_manager_state(void);
+unsigned modwerk_dsp_report(uint32_t *out)
+{
+    const uint32_t words[DSP_REPORT_WORDS] = {
+        1, dl_frames, dl_phase, (uint32_t)dl_job_status(0), (uint32_t)dl_job_status(1), modwerk_dsp_last_flags,
+        dl_accepted[0], dl_accepted[1], dl_rejected[0], dl_rejected[1], dl_errors, modwerk_dsp_stalls, modwerk_dsp_drained,
+        dl_residency_enabled, dl_manager_state(), dl_pool_base[0], dl_pool_words[0], dl_pool_base[1], dl_pool_words[1],
+        dl_selection_requested, dl_selection_completed, dl_selection_refused, dl_selection_cancelled,
+        dl_residency_commits, dl_residency_failures, dl_residency_rollbacks, dl_residency_words[0], dl_residency_words[1],
+        dl_unguarded, dl_parked, dl_reinit, modwerk_dsp_missing, modwerk_dsp_used(), modwerk_dsp_dry()};
+    for (unsigned i = 0; i < DSP_REPORT_WORDS; ++i) out[i] = words[i];
+    return DSP_REPORT_WORDS;
+}
+#endif
 
 /* shortcut: no publication guards yet (queued patterns, project loads, Part
  * edits); the manager's observer loads what those routes publish and parks

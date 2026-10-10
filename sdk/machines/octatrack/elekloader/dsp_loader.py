@@ -17,7 +17,7 @@ import subprocess
 
 HERE = Path(__file__).resolve().parent
 APP = HERE.parents[3]
-RECEIVER = APP / 'sdk/octabam/platform/dsp-dynload-transport/receiver_runtime.asm'
+RECEIVER = HERE / 'dsp_receiver.asm'  # Octabam's receiver, answering through the host flags
 METADATA = APP / 'src/engine/assets/stock-dsp-metadata.json'
 CHOOSERS = APP / 'src/engine/assets/chooser-metadata.json'
 CHOOSERS_SCRIPT = APP / 'scripts/octatrack-base-choosers.mjs'
@@ -42,16 +42,13 @@ def payload_words(image, device, dsp, tag):
 
 
 def receiver_source(text, null, table_words):
-    """The runtime receiver, its table after its code (`dltable`), dry ids on stock's null stub."""
-    tail = text.index('; The build fills this reserved tail')
-    edits = (('#>$fab1e0', '#>dltable', 1), ('#>dlstubinit', '#>$%x' % null[0], 1),
-             ('#>dlstubproc', '#>$%x' % null[1], 1), ('@DLWORDS@', str(table_words), 4))
-    text = text[:tail]
-    for old, new, count in edits:
+    """The receiver with its table's size and stock's null stub (dry ids) filled in."""
+    for old, new, count in (('@NULL_INIT@', '$%x' % null[0], 1), ('@NULL_PROC@', '$%x' % null[1], 1),
+                            ('@DLWORDS@', str(table_words), 3)):
         if text.count(old) != count:
             raise ValueError('The DSP receiver changed (%s); review the port.' % old)
         text = text.replace(old, new)
-    return text + 'dltable:\n'
+    return text
 
 
 def helper_callers(payload, routine):
@@ -121,7 +118,7 @@ def recipe(image, device, dsp, assemble, work):
                 sites.append(dict(addr=hex(at(1, table_at + fx)), stock=image[first:first + 3].hex(), op='bytes',
                                   kind='data', new=value.to_bytes(3, 'little').hex()))
         layout[tag] = dict(core=payload['core'], receiver=lo, frame=frame, table=lo + size, tableWords=table,
-                           null=null, free=free)
+                           null=null, free=free, harvested=sum(1 << p['fxId'] for p in taken))
     if layout['A']['free'] != layout['B']['free']:
         raise ValueError('The two payloads leave different effect ids free.')
     return sites, layout
@@ -141,4 +138,14 @@ def choosers(image, node='node'):
             raise ValueError('A chooser write does not match the stock image at %#x.' % write['address'])
         sites.append(dict(addr=hex(write['address']), stock=image[offset:offset + len(new)].hex(), op='bytes',
                           kind='data', new=new.hex()))
+    # A track with a harvested reverb opens the FX2 chooser on NONE, not on its old row (now another effect's, or past the end).
+    meta = json.loads(CHOOSERS.read_text())
+    written = {int(w['address']) for w in result['writes']}
+    for key in HARVEST:
+        fx = next(e['fxId'] for e in meta['stockEffects'] if e['key'] == key)
+        at = meta['layout']['ID2POS'] + 4 * fx
+        if at in written:
+            raise ValueError('The chooser composer now writes %s\'s cursor row; review.' % key)
+        offset = at - 0x40000400
+        sites.append(dict(addr=hex(at), stock=image[offset:offset + 4].hex(), op='bytes', kind='data', new='00000000'))
     return sites, result['chooser']

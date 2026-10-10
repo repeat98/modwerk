@@ -7,4 +7,8 @@ void modwerk_runtime_tick(void);
 void modwerk_runtime_draw(unsigned char *frame);
 int modwerk_runtime_key(int code, int pressed);
 int modwerk_runtime_enc(int encoder, int delta);
+/* DSP effects (dsp.c, --dsp-loader bases): a development pick, and the loader's report. */
+#define DSP_REPORT_WORDS 34u
+int modwerk_dsp_pick(unsigned slot, unsigned track, unsigned row);
+unsigned modwerk_dsp_report(uint32_t *out);
 #endif

@@ -45,6 +45,9 @@ DYNLOAD_HOOKS = (
     (0x40052474, 8, '3e7c95b32f444fd280cb96b2a6ea90525fe223d6e6b9352086d2cf41941ae854', 'dl_fx2_guard'),
     (0x4004a8a4, 6, '20577862965e35b56da3cc4660ac5df6a325e455467496552d181b68fff15e2d', 'dl_part_guard'))
 DSP_ALLOWANCE = 2808  # per core and sample: 3,120 cycles our code may spend (hardware) less a 10% margin (owner default)
+# The dearest stock effect per slot: DJ EQ, 330.75 executed instructions per sample at its worst split
+# (stock_dsp_worst.py, emulator; not hardware timing). Every slot without a module is charged it (dsp.c).
+DSP_RESERVE = 331
 DSP_EDITS = {
     # The FX selectors read their chooser list through these LEA operands, which the chooser composer repoints.
     'selection.c': (('descriptor=((volatile uint32_t *)(slot ? 0x400d6090u : 0x400d6060u))[s->row];',
@@ -57,7 +60,92 @@ DSP_EDITS = {
                   # A module installed while tracks name its effect: observe afresh and park those slots until bound.
                   ('int dl_publication_idle(void) { return phase==0; }',
                    'int dl_publication_idle(void) { return phase==0; }\n'
-                   'void dl_residency_nudge(void) { observed_valid=0; for(unsigned i=0;i<16;++i) last[i]=255; }')),
+                   'void dl_residency_nudge(void) { observed_valid=0; for(unsigned i=0;i<16;++i) last[i]=255; }\n'
+                   '/* Modwerk diagnostics (dsp.c\'s report): phase | cursor << 8 | waiting << 16 | result << 24 */\n'
+                   'uint32_t dl_manager_state(void) { return phase|cursor<<8|waiting<<16|(uint32_t)(result&0xff)<<24; }'),
+                  # A pick made while the manager runs its own transaction waits its turn instead of being refused.
+                  ('static void advance(void) {\n    if(!phase) return;',
+                   'static uint8_t queued_ids[16]={0};\nstatic uint32_t queued_token=0;\n'
+                   'static void advance(void) {\n'
+                   '    if(!phase && queued_token) { uint32_t t=queued_token; queued_token=0; begin(queued_ids,t,0); }\n'
+                   '    if(!phase) return;'),
+                  ('    if(phase) return DL_SELECT_UNAVAILABLE;\n'
+                   '    for(unsigned i=0;i<8;++i) if(s->target_source[i]>4) return DL_SELECT_UNAVAILABLE;\n'
+                   '    begin(s->target,token,0);',
+                   '    for(unsigned i=0;i<8;++i) if(s->target_source[i]>4) return DL_SELECT_UNAVAILABLE;\n'
+                   '    if(phase) { bytes(queued_ids,s->target,16); queued_token=token; return DL_SELECT_WAIT; }\n'
+                   '    begin(s->target,token,0);'),
+                  ('    if(token!=current) return DL_SELECT_UNAVAILABLE;\n    advance(); return result;',
+                   '    if(token!=current && token!=queued_token) return DL_SELECT_UNAVAILABLE;\n'
+                   '    advance(); return token==current ? result : DL_SELECT_WAIT;'),
+                  ('void dl_selection_cancel(uint32_t token) { if(token==current && phase && phase!=6) rollback(); }',
+                   'void dl_selection_cancel(uint32_t token) {\n'
+                   '    if(token==queued_token) queued_token=0;\n'
+                   '    else if(token==current && phase && phase!=6) rollback();\n}')),
+    # The switch frame runs the outgoing effect's first sub-block, then the incoming one's init and its
+    # second: no instance runs twice, so no overlap charge (it would refuse stock picks beside modules).
+    'allocator.c': (('    uint32_t steady[2]={0,0},overlap[2]={0,0};', '    uint32_t steady[2]={0,0};'),
+                    ('    overlap[0]=steady[0]; overlap[1]=steady[1];\n'
+                     '    for(unsigned i=0;i<16;++i) {\n'
+                     '        unsigned p=a->active[i],c=core_of(i);\n'
+                     '        if(p==DL_NONE || p==ids[i]) continue;\n'
+                     '        uint32_t cost=a->catalog[p].cycles;\n'
+                     '        if(cost>a->allowance[c]-overlap[c]) return DL_ALLOC_CYCLES;\n'
+                     '        overlap[c]+=cost;\n'
+                     '    }\n', '')),
+    # No reads from a DSP (dsp_receiver.asm says why): the receiver answers in the host flags, an upload
+    # carries its sum for the receiver to check, and each core's table is the build's (dsp_loader.py).
+    'transfer.c': (('static uint32_t requests=0, stages=0;',
+                    'static uint32_t requests=0, stages=0;\n'
+                    'unsigned modwerk_dsp_flags(unsigned core); /* dsp.c: HF2 (handled, toggles) | HF3 (refused) << 1 */\n'
+                    'static unsigned flags_sent[2]={0,0};'),
+                   ('volatile uint32_t dl_pool_base[2]={0,0}, dl_pool_words[2]={0,0};',
+                    'volatile uint32_t dl_pool_base[2]={MODWERK_DSP_TABLE0,MODWERK_DSP_TABLE1}, '
+                    'dl_pool_words[2]={MODWERK_DSP_WORDS0,MODWERK_DSP_WORDS1};'),
+                   ('                j->expected=(j->expected+value)&0xffffffu;\n            }\n',
+                    '                j->expected=(j->expected+value)&0xffffffu;\n            }\n'
+                    '            t[7]=(uint16_t)j->expected; t[56]=(uint16_t)(j->expected>>16);\n'),
+                   ('    pending[c]=sequence[c]; age[c]=0;',
+                    '    pending[c]=sequence[c]; age[c]=0; flags_sent[c]=modwerk_dsp_flags(c);'),
+                   ('        volatile uint16_t *r=UNCACHED(dl_rx[c]);\n', ''),
+                   ('            if(r[0]==DL_ACK && r[1]==pending[c]) {\n'
+                    '                unsigned valid=r[2]==0 && r[3]==c;\n'
+                    '                if(jobs[c].state==2 && jobs[c].opcode==DL_WRITE)\n'
+                    '                    valid=valid && (((uint32_t)r[5]<<16)|r[4])==jobs[c].expected;\n'
+                    '                if(valid) {\n'
+                    '                    ++dl_accepted[c];\n'
+                    '                    if(r[6] && r[7]>DL_CODE_START && r[6]+r[7]<=DL_POOL_LIMIT) {\n'
+                    '                        dl_pool_words[c]=r[7]; dl_pool_base[c]=r[6];\n'
+                    '                    }\n'
+                    '                } else',
+                    '            unsigned flags=modwerk_dsp_flags(c);\n'
+                    '            if((flags^flags_sent[c])&1u) {\n'
+                    '                unsigned valid=!(flags&2u);\n'
+                    '                if(valid) ++dl_accepted[c];\n'
+                    '                else'),
+                   ('        dl_show_message(text,0x30);\n    }\n}\n',
+                    '        dl_show_message(text,0x30);\n    }\n}\n'
+                    '/* Modwerk: the watchdog (dsp.c) gives up what is in flight, as a timeout would. */\n'
+                    'void dl_abort(void) {\n'
+                    '    for(unsigned c=0;c<2;++c) if(pending[c] || jobs[c].state==2) {\n'
+                    '        ++dl_errors; pending[c]=0; UNCACHED(dl_tx[c])[0]=0;\n'
+                    '        if(jobs[c].state==2) jobs[c].state=4;\n'
+                    '    }\n'
+                    '}\n')),
+    # Writes only: no read phases, and no write to a core with no packet waiting.
+    'hooks.s': (('        .global dl_state7, dl_tick', '        .global dl_state7, dl_tick, dl_phase, dl_rx_nbytes'),
+                ('        cmpi.l #5,%d2', '        cmpi.l #3,%d2'),
+                ('dl_write:\n        subq.l #1,%d2\n',
+                 'dl_write:\n        subq.l #1,%d2\n'
+                 '        move.l %d2,%d0\n'
+                 '        lsl.l #7,%d0\n'
+                 '        lea dl_tx,%a0\n'
+                 '        adda.l #UNCACHED,%a0\n'
+                 '        tst.w (%a0,%d0.l)\n'
+                 '        bne dl_send\n'
+                 '        move.l dl_phase,%d2\n'
+                 '        bra dl_next\n'
+                 'dl_send:\n')),
 }
 
 
@@ -194,14 +282,13 @@ def main():
     if args.dsp_loader:
         spec = importlib.util.spec_from_file_location('modwerk_dsp_loader', HERE/'dsp_loader.py')
         loader_dsp = importlib.util.module_from_spec(spec); spec.loader.exec_module(loader_dsp)
-        for name in DYNLOAD_SOURCES:
+        for name in DYNLOAD_SOURCES + ('hooks.s',):
             text = (DYNLOAD / name).read_text()
             for old, new in DSP_EDITS.get(name, ()):
                 if text.count(old) != 1:
                     raise ValueError('Octabam DSP loader seam changed in %s; review the port.' % name)
                 text = text.replace(old, new)
-            (source / name).write_text(text)
-        shutil.copyfile(DYNLOAD / 'hooks.s', source / 'dsp_hooks.s')
+            (source / ('dsp_hooks.s' if name == 'hooks.s' else name)).write_text(text)
         shutil.copyfile(HERE / 'dsp.c', source / 'dsp.c')
         for lea, stock_list in ((0x40052496, 0x400d6090), (0x40052706, 0x400d6060)):
             if int.from_bytes(image[lea - device.main_load:lea - device.main_load + 4], 'big') != stock_list:
@@ -238,7 +325,7 @@ def main():
     if args.dsp_loader:
         configuration.update(fx1=['NONE', *rows['fx1']], fx2=['NONE', *rows['fx2']], stockfx2=False,
                              dsp=dict(loader='dsp-dynload-1', harvest=list(loader_dsp.HARVEST), rows=list(loader_dsp.MODULES),
-                                      allowance=DSP_ALLOWANCE, arena=[dsp_layout[t]['tableWords'] - loader_dsp.SAVED for t in 'AB']))
+                                      allowance=DSP_ALLOWANCE, reserve=DSP_RESERVE, arena=[dsp_layout[t]['tableWords'] - loader_dsp.SAVED for t in 'AB']))
     identity = sha(json.dumps(configuration, separators=(',', ':')).encode())
     values = dict(build=identity[:16], os='1.40C', modules='', configuration=identity,
                   source=source_hash, fx1=';'.join(configuration['fx1']),
@@ -256,6 +343,7 @@ def main():
     definitions += 'typedef char retained_fits[(sizeof(struct octamod_log_retained_state)<=6144)?1:-1];\n'
     if args.dsp_loader:  # dsp.c and manager.c: module effect ids (stock's null stub until bound), each core's arena
         definitions += 'const uint32_t dl_stub_at_boot = %#xu;\nconst uint32_t dl_pmap16 = 0;\n' % dsp_layout['A']['free']
+        definitions += 'const uint32_t modwerk_dsp_harvested = %#xu;\n' % dsp_layout['A']['harvested']
         definitions += 'const uint16_t modwerk_dsp_arena[2] = {%d, %d};\n' % tuple(
             dsp_layout[t]['tableWords'] - loader_dsp.SAVED for t in ('A', 'B'))
     (source/'identity.c').write_text(definitions)
@@ -280,7 +368,9 @@ modwerk_retained_end:
                         '-fno-zero-initialized-in-bss', '-fno-tree-loop-distribute-patterns',
                         '-fno-merge-constants', '-fno-asynchronous-unwind-tables', '-fno-unwind-tables',
                         '-Wall', '-Wextra', '-Werror'] + (['-DMODWERK_DEV'] if args.dev else []) + (
-        ['-DMODWERK_DSP_LOADER', '-DMODWERK_DSP_ALLOWANCE=%d' % DSP_ALLOWANCE] if args.dsp_loader else [])
+        ['-DMODWERK_DSP_LOADER', '-DMODWERK_DSP_ALLOWANCE=%d' % DSP_ALLOWANCE, '-DMODWERK_DSP_RESERVE=%d' % DSP_RESERVE] +
+        ['-DMODWERK_DSP_%s%d=%d' % (key, n, dsp_layout[t][field]) for n, t in enumerate('AB')
+         for key, field in (('TABLE', 'table'), ('WORDS', 'tableWords'))] if args.dsp_loader else [])
     for key in ('idle', 'job', 'transport', 'open', 'read', 'write', 'close'):
         guard = guards[key]; n = guard.get('patchLength', guard['length'])
         at = guard['address'] - device.main_load

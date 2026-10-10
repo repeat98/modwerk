@@ -1,0 +1,257 @@
+; SPDX-License-Identifier: GPL-3.0-or-later
+; The DSP side of the runtime loader (dsp_loader.py places it on both cores):
+; Octabam's receiver (sdk/octabam/platform/dsp-dynload-transport/receiver_runtime.asm),
+; answering through the host flags instead of a read-back.
+;
+; Why: on the owner's MKII (10 October 2026) the first packet stopped core 0
+; for good. The old receiver answered with words the ColdFire pulled through
+; host command $89. Stock never pulls from core 0: core 0 waits at P:$97 for
+; HTDE, its host transmit register emptied by the host, before every frame.
+; With no wait states on the host bus the ColdFire's burst outruns the DSP's
+; DMA, words stay in HTX, and P:$97 waits forever. ot_emu makes a host read
+; wait for the DSP's word, so it never showed. Here the host never reads:
+; one HCR write per packet sets HF3 (refused) and toggles HF2 (handled), which
+; the host reads in its ISR without taking anything. An upload checks its P
+; read-back against the sum the packet carries.
+;
+; Packet (X:r6+$320, 64 words, each 16 bits): 0 magic $4c44, 1 sequence,
+; 2 opcode, 3 core, 4 count or id, 5 offset or init, 6 checksum, 7 proc, or a
+; WRITE's expected sum (low 16 bits; its high 8 in word 56), 8-55 the data
+; (two words per 24-bit word), 63 scratch. Opcodes: 1 PROBE, 3 WRITE, 4 BIND,
+; 5 UNBIND, 6 BYPASS (an id onto stock's null stub), 7 BASE (X:$255 entry).
+; The table (dltable, its size filled in by the build) keeps each id's original entries in its
+; first 64 words; the rest is the code arena. Both cores' frame hooks run this
+; before any effect. Entry changes keep the stock per-instance state.
+frame:
+        move    r6,x:>$207              ; the instruction the hook displaced
+        move    r6,a
+        add     #>$320,a
+        move    a,r0
+        move    x:(r0),a
+        and     #>$ffff,a
+        cmp     #>$4c44,a
+        bne     finish
+        move    r0,r1
+        move    #>0,x1
+        do      #<$40,checksumdone
+        move    x:(r1)+,a
+        and     #>$ffff,a
+        add     x1,a
+        move    a1,x1
+checksumdone:
+        and     #>$ffff,a
+        bne     badpacket
+        move    r3,x:(r0+63)
+        move    x:(r0+2),a
+        and     #>$ffff,a
+        cmp     #>1,a
+        beq     accepted
+        cmp     #>3,a
+        beq     upload
+        cmp     #>4,a
+        beq     binding
+        cmp     #>5,a
+        beq     binding
+        cmp     #>6,a
+        beq     binding
+        cmp     #>7,a
+        beq     setbase
+        bra     badsaved
+upload:
+        move    x:(r0+4),a
+        and     #>$ffff,a
+        cmp     #>1,a
+        blt     badsaved
+        cmp     #>24,a
+        bgt     badsaved
+        move    a1,x1
+        move    x:(r0+5),a
+        and     #>$ffff,a
+        cmp     #>64,a
+        blt     badsaved
+        add     x1,a
+        cmp     #>@DLWORDS@,a
+        bgt     badsaved
+        sub     x1,a
+        move    a1,x0
+        bsr     tablebase
+        add     x0,a
+        move    a,r3
+        move    r0,a
+        add     #>8,a
+        move    a,r1
+        move    x1,a
+        do      a,written
+        move    x:(r1)+,a
+        and     #>$ffff,a
+        asl     #8,a,a
+        move    a1,x0
+        move    x:(r1)+,a
+        and     #>$ff,a
+        or      x0,a
+        move    a1,x0
+        move    x0,p:(r3)
+        move    r3,a
+        add     #>1,a
+        move    a,r3
+written:
+        ; Read back the entire chunk through P and compare it with the packet's sum.
+        move    x:(r0+5),a
+        and     #>$ffff,a
+        move    a1,x0
+        bsr     tablebase
+        add     x0,a
+        move    a,r3
+        move    #>0,x1
+        move    x:(r0+4),a
+        and     #>$ffff,a
+        do      a,verified
+        move    p:(r3),x0
+        move    x1,a
+        add     x0,a
+        move    a1,x1
+        move    r3,a
+        add     #>1,a
+        move    a,r3
+verified:
+        move    x:(r0+56),a
+        and     #>$ff,a
+        asl     #16,a,a
+        move    a1,x0
+        move    x:(r0+7),a
+        and     #>$ffff,a
+        or      x0,a
+        move    a1,x0
+        move    x1,a
+        cmp     x0,a
+        bne     badsaved
+        bra     accepted
+binding:
+        move    x:(r0+4),a
+        and     #>$ffff,a
+        cmp     #>31,a
+        bgt     badsaved
+        move    a1,x1
+        asl     a
+        move    a1,x0
+        bsr     tablebase
+        add     x0,a
+        move    a,r3
+        move    x1,a
+        add     #>$215,a
+        move    a,r1
+        move    x:(r0+2),a
+        and     #>$ffff,a
+        cmp     #>5,a
+        beq     restoreentry
+        cmp     #>6,a
+        beq     stubentry
+        ; Check both offsets before touching either dispatch entry.
+        move    x:(r0+5),a
+        and     #>$ffff,a
+        cmp     #>64,a
+        blt     badsaved
+        cmp     #>@DLWORDS@,a
+        bge     badsaved
+        move    x:(r0+7),a
+        and     #>$ffff,a
+        cmp     #>64,a
+        blt     badsaved
+        cmp     #>@DLWORDS@,a
+        bge     badsaved
+        move    p:(r3),x0
+        move    x0,a
+        tst     a
+        bne     retained
+        move    x:(r1),x0
+        move    x0,p:(r3)
+        move    r3,a
+        add     #>1,a
+        move    a,r3
+        move    x:(r1+32),x0
+        move    x0,p:(r3)
+retained:
+        move    x:(r0+5),a
+        and     #>$ffff,a
+        move    a1,x0
+        bsr     tablebase
+        add     x0,a
+        move    a1,x:(r1)
+        move    x:(r0+7),a
+        and     #>$ffff,a
+        move    a1,x0
+        bsr     tablebase
+        add     x0,a
+        move    a1,x:(r1+32)
+        bra     accepted
+restoreentry:
+        move    p:(r3),x0
+        move    x0,a
+        tst     a
+        beq     accepted
+        move    x0,x:(r1)
+        move    r3,a
+        add     #>1,a
+        move    a,r3
+        move    p:(r3),x0
+        move    x0,x:(r1+32)
+        bra     accepted
+stubentry:
+        move    p:(r3),x0
+        move    x0,a
+        tst     a
+        bne     stubsaved
+        move    x:(r1),x0
+        move    x0,p:(r3)
+        move    r3,a
+        add     #>1,a
+        move    a,r3
+        move    x:(r1+32),x0
+        move    x0,p:(r3)
+stubsaved:
+        move    #>@NULL_INIT@,x0
+        move    x0,x:(r1)
+        move    #>@NULL_PROC@,x0
+        move    x0,x:(r1+32)
+        bra     accepted
+; BASE (7): the Y buffer table entry X:$255 + (r0+4), 0..7, becomes
+; (r0+7) << 16 | (r0+5). Stock reads it only in an effect's init.
+setbase:
+        move    x:(r0+4),a
+        and     #>$ffff,a
+        cmp     #>7,a
+        bgt     badsaved
+        add     #>$255,a
+        move    a1,r1
+        move    x:(r0+7),a
+        and     #>$ff,a
+        asl     #16,a,a
+        move    a1,x0
+        move    x:(r0+5),a
+        and     #>$ffff,a
+        or      x0,a
+        move    a1,x:(r1)
+        bra     accepted
+accepted:
+        move    x:(r0+63),r3
+        move    #>0,x0                  ; HF3 clear: done
+        bra     reply
+badsaved:
+        move    x:(r0+63),r3
+badpacket:
+        move    #>$10,x0                ; HF3 set: refused
+reply:
+        ; One HCR write: HF3 the result, HF2 toggled so the host sees the packet handled.
+        movep   x:<<$ffffc2,a1
+        and     #>$ffffef,a
+        or      x0,a
+        eor     #>$8,a
+        movep   a1,x:<<$ffffc2
+        move    #>0,a
+        move    a1,x:(r0)               ; consume the packet
+finish:
+        rts
+tablebase:
+        move    #>dltable,a
+        rts
+dltable:

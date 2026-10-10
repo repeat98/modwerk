@@ -204,7 +204,8 @@ class RuntimeSlotTests(unittest.TestCase):
         loader = here.parents[2] / 'runtime/loader'
         with tempfile.TemporaryDirectory() as temp:
             subprocess.run([cc, '-std=c99', '-Wall', '-Wextra', '-Werror', '-pedantic', '-DMODWERK_HOST', '-I', here,
-                            '-DMODWERK_DSP_ALLOWANCE=2808', '-I', here.parents[3] / 'sdk/octabam/platform/dsp-dynload-transport',
+                            '-DMODWERK_DSP_ALLOWANCE=2808', '-DMODWERK_DSP_RESERVE=331',
+                            '-I', here.parents[3] / 'sdk/octabam/platform/dsp-dynload-transport',
                             '-I', here.parents[2] / 'runtime/upload', '-I', loader,
                             *[loader / s if s == 'loader.c' else here / s for s in sources], '-o', temp + '/t'],
                            check=True, capture_output=True)
@@ -228,10 +229,11 @@ class DspLoaderTests(unittest.TestCase):
         text = dsp_loader.receiver_source(dsp_loader.RECEIVER.read_text(), (0x7c8, 0x7c9), 2384)
         self.assertTrue(text.endswith('dltable:\n'))
         self.assertIn('#>dltable', text); self.assertIn('#>$7c8', text); self.assertIn('#>$7c9', text)
-        self.assertNotIn('@DLWORDS@', text); self.assertNotIn('OCTAMOD_LOCAL_NULL_STUB', text)
-        self.assertEqual(text.count('#>2384'), 4)
+        self.assertNotIn('@', text)
+        self.assertNotIn(':>$2360', text)  # nothing for the host to read back
+        self.assertEqual(text.count('#>2384'), 3)
         with self.assertRaisesRegex(ValueError, 'receiver changed'):
-            dsp_loader.receiver_source(dsp_loader.RECEIVER.read_text().replace('#>$fab1e0', '#>$0'), (0x7c8, 0x7c9), 1)
+            dsp_loader.receiver_source(dsp_loader.RECEIVER.read_text().replace('@NULL_PROC@', '$0'), (0x7c8, 0x7c9), 1)
 
     def test_a_shared_routine_is_called_by_effects_whose_calls_move_with_it(self):
         from dsp_loader import helper_callers

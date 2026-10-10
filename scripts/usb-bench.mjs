@@ -6,8 +6,8 @@ import { createConnection } from 'node:net'
 
 /** One command, one reply line, in order. */
 export class Bench {
-  constructor(path) {
-    this.lines = []; this.waiters = []; this.buffer = ''
+  constructor(path, { timeoutMs = 60000 } = {}) { // an emulated unit under --dsp runs far below real time
+    this.lines = []; this.waiters = []; this.buffer = ''; this.timeoutMs = timeoutMs
     this.socket = createConnection(path)
     this.socket.setEncoding('utf8')
     this.socket.on('data', chunk => {
@@ -23,7 +23,7 @@ export class Bench {
   async command(line) {
     this.socket.write(line + '\n')
     const reply = this.lines.length ? this.lines.shift() : await new Promise((resolve, reject) => {
-      const timer = setTimeout(() => reject(new Error('No reply to ' + line)), 60000)
+      const timer = setTimeout(() => reject(new Error('No reply to ' + line)), this.timeoutMs)
       this.waiters.push(value => { clearTimeout(timer); resolve(value) })
     })
     if (reply.startsWith('err')) throw new Error('Bench: ' + reply)

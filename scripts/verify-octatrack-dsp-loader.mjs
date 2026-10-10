@@ -12,9 +12,10 @@
 //   node scripts/verify-octatrack-dsp-loader.mjs check BUILD OUT SCENARIO
 //
 // Scenarios: pick (T1 and T5, one per core), remove (refused while T1 runs it, then freed),
-// cycles (a package declaring 1,500 cycles: T1 admitted, T2 refused on the same core),
+// cycles (a package declaring the most a module may, 491: T1 admitted, T2 refused on the same core),
 // missing (T1's FX2 names E-Verb, as a saved project would, before it is installed: dry and
-// reported, then restored by installing it).
+// reported, then restored by installing it), restore (install only, for
+// sdk/machines/octatrack/elekloader/old_projects.py).
 // The card needs a project whose Part 1 has no module effect on T1, T2 or T5's FX2.
 // Emulator evidence only: executed instructions, no hardware timing or audio.
 import assert from 'node:assert/strict'
@@ -42,7 +43,7 @@ if (mode === 'dumps') {
 } else if (mode === 'drive') {
   const [socket, dir, scenario, file] = args, { proofs, symbols } = build(dir)
   const wait = ms => new Promise(resolve => setTimeout(resolve, ms))
-  const bench = new Bench(socket); await bench.ready()
+  const bench = new Bench(socket, { timeoutMs: 600000 }); await bench.ready()
   const index = findVendorInterface(await enumerate(bench, false))
   const transport = new UsbVendorTransport(device(bench), index, { pollMs: 5 })
   const base = (await transport.identify()).base
@@ -81,7 +82,8 @@ if (mode === 'dumps') {
   }
   await keep(data); console.log('module installed')
   await settle(60) // the manager handles the project's own effects in its first ticks
-  if (scenario === 'missing') { await settle(300); bench.socket.end(); process.exit(0) }
+  // missing: what the project named is restored; restore: install only (old_projects.py checks the result).
+  if (scenario === 'missing' || scenario === 'restore') { await settle(300); bench.socket.end(); process.exit(0) }
   await pick(0, row(proofs))
   if (scenario === 'pick') await pick(4, row(proofs))
   if (scenario === 'cycles') await pick(1, row(proofs))
@@ -124,7 +126,7 @@ if (mode === 'dumps') {
     assert.equal(ids[8], EFFECT); assert.notEqual(ids[9], EFFECT)
     assert.equal(u32('dl_selection_refused')[0], 1); assert.equal(u32('dl_modal_shown')[0], 1)
     assert.deepEqual(u32('dl_residency_words'), [0, pkg.words]); core(1, 'B', true)
-    console.log('declared 1,500 cycles: T1 admitted, T2 on the same core refused with a message and left as it was: passed')
+    console.log('declared the most cycles a module may: T1 admitted, T2 on the same core refused with a message and left as it was: passed')
   } else if (scenario === 'missing') {
     assert.equal(ids[8], EFFECT, 'T1 runs E-Verb again'); assert(u32('modwerk_dsp_missing')[0] >= 1, 'the unit said it was missing')
     assert(u32('dl_parked')[0] >= 1 && u32('dl_reinit')[0] >= 1, 'the slot waited for the code, then started from its init')
