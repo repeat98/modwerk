@@ -10,7 +10,7 @@
 //   npm run device -- lifecycle
 //   npm run device -- boot BUILD_DIR       # RAM boot: build_core.py's output, no flashing
 //   npm run device -- key PLAY | FUNC+PLAY | 0x27   # development bases (build_core.py --dev)
-//   npm run device -- screen                        # the display, in block characters
+//   npm run device -- screen [--png FILE]           # the display, in block characters or as a 4x PNG
 //   npm run device -- state                         # stopped / playing, recording
 //   npm run device -- enc A+3 | LEVEL-1 | fader 128 # encoders A-F and LEVEL, the crossfader
 //
@@ -19,7 +19,8 @@
 // Each command is one whole transaction. A trial is rolled back unless --accept
 // is given; Ctrl-C rolls back early. If this process dies mid-trial, unplug USB:
 // the base rolls back any module that was not accepted.
-import { readFileSync } from 'node:fs'
+import { readFileSync, writeFileSync } from 'node:fs'
+import { deflateSync, crc32 } from 'node:zlib'
 import { join } from 'node:path'
 import { parseArgs } from 'node:util'
 import { sha } from '../vendor/elekloader/kit/src/bytes.ts'
@@ -33,6 +34,7 @@ const { values, positionals: [command, file] } = parseArgs({ allowPositionals: t
   seconds: { type: 'string', default: '5' },
   accept: { type: 'boolean', default: false },
   emulator: { type: 'boolean', default: false },
+  png: { type: 'string' },
 } })
 const seconds = Number(values.seconds)
 if (!['status', 'try', 'remove', 'lifecycle', 'boot', 'key', 'screen', 'state', 'enc', 'fader'].includes(command) || (['try', 'boot', 'key', 'enc', 'fader'].includes(command) && !file) ||
@@ -73,6 +75,16 @@ async function keys(spec) {
 async function screen() {
   const frame = (await devIn(7, 0, 1028)).subarray(4)
   const on = (x, y) => (frame[x * 8 + ((63 - y) >> 3)] >> (7 - ((63 - y) & 7))) & 1
+  if (values.png) { // 512x256 greyscale, each pixel 4x4
+    const rows = Buffer.concat(Array.from({ length: 256 }, (_, y) =>
+      Buffer.from([0, ...Array.from({ length: 512 }, (_, x) => on(x >> 2, y >> 2) ? 255 : 24)])))
+    const chunk = (type, data) => { const t = Buffer.from(type), l = Buffer.alloc(4), c = Buffer.alloc(4)
+      l.writeUInt32BE(data.length); c.writeUInt32BE(crc32(Buffer.concat([t, data]))); return Buffer.concat([l, t, data, c]) }
+    const ihdr = Buffer.alloc(13); ihdr.writeUInt32BE(512, 0); ihdr.writeUInt32BE(256, 4); ihdr[8] = 8; ihdr[9] = 0
+    writeFileSync(values.png, Buffer.concat([Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]), chunk('IHDR', ihdr),
+      chunk('IDAT', deflateSync(rows)), chunk('IEND', Buffer.alloc(0))]))
+    return console.log('screen saved to ' + values.png)
+  }
   for (let y = 0; y < 64; y += 2)
     console.log(Array.from({ length: 128 }, (_, x) => ' ▄▀█'[on(x, y) * 2 + on(x, y + 1)]).join(''))
 }
