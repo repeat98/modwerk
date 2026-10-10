@@ -64,7 +64,7 @@ Unchanged. The DSP code and the 48 table words per core are the 0.1.1 bytes, so 
 
 - The Modwerk download itself (the composed image with the core logger) and any selection with other modules, on hardware.
 - Sixteen instances, maximum load, MIDI/USB activity alongside, and cross-core key latency on hardware.
-- `npm run fx:audit` (sound quality): the DSP is unchanged from 0.1.1; not run.
+- Sound quality (`npm run fx:audit`: aliasing, DC, clipping, idle behaviour): not tested. The DSP code is unchanged from 0.1.1.
 
 ## 0.1.1-experimental (history)
 
