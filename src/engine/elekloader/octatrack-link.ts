@@ -1,0 +1,227 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// The site's USB link to an Octatrack running the Modwerk base: find the unit,
+// send one runtime module, run it as a trial, then keep or undo it. The base
+// itself undoes anything not kept when USB goes quiet or away, so every
+// failure here ends in "unplug to undo" at worst.
+import { sha } from '../../../vendor/elekloader/kit/src/bytes.ts'
+import { UploadDeviceError, UploadSession, UploadUnconfirmedError } from './upload-session.ts'
+import type { UploadResultName } from './upload-wire.ts'
+import { findVendorInterface, UsbVendorTransport, type ControlDevice, type VendorIdentity } from './upload-usb.ts'
+
+export const ELEKTRON_VENDOR_ID = 0x1935
+/** Well inside the base's 10 s quiet limit (sdk/runtime/upload/vendor.c mv_tick); any vendor request counts. */
+const KEEPALIVE_MS = 1000
+
+// lib.dom has no WebUSB types; only what the link calls.
+export interface LinkDevice extends ControlDevice {
+  readonly configuration: Parameters<typeof findVendorInterface>[0]
+  readonly opened: boolean
+  open(): Promise<void>; close(): Promise<void>
+  selectConfiguration(value: number): Promise<void>
+  claimInterface(index: number): Promise<void>; releaseInterface(index: number): Promise<void>
+}
+type DeviceListener = (event: { device: LinkDevice }) => void
+export interface LinkUsb {
+  requestDevice(options: { filters: { vendorId: number }[] }): Promise<LinkDevice>
+  getDevices(): Promise<LinkDevice[]>
+  addEventListener(type: 'connect' | 'disconnect', listener: DeviceListener): void
+  removeEventListener(type: 'connect' | 'disconnect', listener: DeviceListener): void
+}
+export type LinkSession = Pick<UploadSession, 'status' | 'connectionTrusted' | 'stage' | 'activate' | 'startTrial' | 'holdTrial' |
+  'accept' | 'rollback' | 'cancel' | 'leaveUploadMode'>
+type Connect = (transport: UsbVendorTransport, base: string) => Promise<LinkSession>
+
+export type LinkStatus = 'unsupported' | 'idle' | 'connecting' | 'stock' | 'busy' | 'ready' | 'sending' | 'trial' | 'finishing'
+export interface LinkState {
+  readonly status: LinkStatus
+  /** From IDENTIFY. `ready` without `canSubmit` is a base this page cannot send to. */
+  readonly identity?: VendorIdentity
+  readonly module?: string
+  /** 0–1 while sending. */
+  readonly progress?: number
+  readonly notice?: { tone: 'success' | 'error'; text: string }
+}
+
+const REFUSED: Partial<Record<UploadResultName, string>> = {
+  unsafe: 'Stop playback and recording on the Octatrack, then try again.',
+  identity: 'This module was built for a different Modwerk base.',
+  limit: 'This module is too big for the Octatrack’s free memory.',
+  length: 'This module is too big for the Octatrack’s free memory.',
+  hash: 'The module arrived damaged. Nothing changed; send it again.',
+  rejected: 'The Octatrack can’t run this module file.',
+}
+const UNPLUG = 'Unplug the USB cable to undo anything unfinished, then plug it back in.'
+
+/** What a failed step means for the user, in their words. */
+export function explainLinkError(error: unknown): string {
+  if (error instanceof DOMException && error.name === 'AbortError') return 'Cancelled. Nothing changed on the Octatrack.'
+  if (error instanceof UploadDeviceError) return REFUSED[error.status.result] ?? 'The Octatrack refused this step.'
+  if (error instanceof UploadUnconfirmedError) return 'The Octatrack stopped answering.'
+  return 'Something went wrong talking to the Octatrack.'
+}
+const unsafe = (error: unknown) => error instanceof UploadDeviceError && error.status.result === 'unsafe'
+
+export function webUsb(): LinkUsb | undefined {
+  return typeof navigator !== 'undefined' && globalThis.isSecureContext ? (navigator as Navigator & { usb?: LinkUsb }).usb : undefined
+}
+
+export class OctatrackLink {
+  private state: LinkState
+  private readonly listeners = new Set<() => void>()
+  private readonly usb?: LinkUsb
+  private readonly connectSession: Connect
+  private device?: LinkDevice
+  private index?: number
+  private transport?: UsbVendorTransport
+  private session?: LinkSession
+  private abort?: AbortController
+  private keepalive?: ReturnType<typeof setInterval>
+
+  constructor(usb = webUsb(), connectSession: Connect = (transport, base) => UploadSession.connect(transport, base)) {
+    this.usb = usb; this.connectSession = connectSession
+    this.state = { status: usb ? 'idle' : 'unsupported' }
+  }
+  readonly subscribe = (listener: () => void) => { this.listeners.add(listener); return () => { this.listeners.delete(listener) } }
+  readonly getState = () => this.state
+  private set(state: LinkState) { this.state = state; for (const listener of this.listeners) listener() }
+  private ready(notice?: LinkState['notice']) { this.set({ status: 'ready', identity: this.state.identity, notice }) }
+
+  /** Listen for the unit coming and going, and reopen one this site was allowed before, without the picker. */
+  start() {
+    if (!this.usb) return
+    this.usb.addEventListener('connect', this.onConnect)
+    this.usb.addEventListener('disconnect', this.onDisconnect)
+    void this.usb.getDevices().then(([device]) => { if (device && this.state.status === 'idle') return this.open(device) }).catch(() => {})
+  }
+  stop() {
+    this.usb?.removeEventListener('connect', this.onConnect)
+    this.usb?.removeEventListener('disconnect', this.onDisconnect)
+    this.stopKeepalive(); this.abort?.abort()
+    void this.release(true)
+  }
+  /** Chrome's device picker; call from a click. */
+  async connect() {
+    let device: LinkDevice
+    try { device = await this.usb!.requestDevice({ filters: [{ vendorId: ELEKTRON_VENDOR_ID }] }) } catch { return } // picker closed
+    await this.open(device)
+  }
+  /** After another tab or app let go of the unit. */
+  retry() { const device = this.device; return device ? this.open(device) : this.connect() }
+  // An Octatrack restarting after its OS upgrade comes back here, so the install guide's last step completes by itself.
+  private readonly onConnect: DeviceListener = ({ device }) => {
+    if (['idle', 'stock', 'busy'].includes(this.state.status)) void this.open(device)
+  }
+  private readonly onDisconnect: DeviceListener = ({ device }) => {
+    if (device !== this.device) return
+    const { status, module } = this.state
+    this.stopKeepalive(); this.abort?.abort()
+    this.device = this.index = this.transport = this.session = undefined
+    this.set({ status: 'idle', notice: status === 'sending' ? { tone: 'error', text: 'USB disconnected. Nothing changed on the Octatrack.' }
+      : status === 'trial' || status === 'finishing' ? { tone: 'error', text: `USB disconnected. The Octatrack undoes ${module} by itself as soon as playback is stopped.` }
+      : undefined })
+  }
+
+  private async open(device: LinkDevice) {
+    await this.release(true)
+    this.set({ status: 'connecting' })
+    this.device = device
+    try {
+      if (!device.opened) await device.open()
+      if (!device.configuration) await device.selectConfiguration(1)
+      const index = findVendorInterface(device.configuration)
+      if (index === undefined) { await device.close().catch(() => {}); return this.set({ status: 'stock' }) }
+      this.index = index; this.transport = new UsbVendorTransport(device, index)
+      if (!await this.claim()) return
+      try { this.set({ status: 'ready', identity: await this.transport.identify() }) }
+      catch { this.set({ status: 'ready', identity: undefined }) } // a Modwerk base this page does not speak
+      finally { await this.release() }
+    } catch (error) {
+      console.error(error)
+      this.device = undefined
+      this.set({ status: 'idle', notice: { tone: 'error', text: 'Chrome couldn’t open the Octatrack. Unplug it, plug it back in and try again.' } })
+    }
+  }
+  /** Claimed only while talking, so other tabs and `npm run device` can use the unit in between. */
+  private async claim() {
+    try { await this.device!.claimInterface(this.index!); return true } catch {
+      this.set({ status: 'busy', identity: this.state.identity })
+      return false
+    }
+  }
+  private async release(close = false) {
+    const device = this.device, index = this.index
+    if (device?.opened && index !== undefined) await device.releaseInterface(index).catch(() => {})
+    if (close) { this.device = this.index = this.transport = this.session = undefined; if (device?.opened) await device.close().catch(() => {}) }
+  }
+
+  /** Send a runtime module and start its trial. The previous modules stay until the user keeps it. */
+  async send(module: string, data: Uint8Array) {
+    const base = this.state.identity?.base
+    if (this.state.status !== 'ready' || !this.state.identity?.canSubmit || !base || !await this.claim()) return
+    const abort = this.abort = new AbortController()
+    this.set({ status: 'sending', identity: this.state.identity, module, progress: 0 })
+    let session: LinkSession | undefined
+    try {
+      session = this.session = await this.connectSession(this.transport!, base)
+      if (data.length > session.status.capacity) throw new UploadDeviceError({ ...session.status, result: 'limit' })
+      // shortcut: module files do not name their base yet (as in scripts/device.mjs), so the connected base's loader
+      // validates the file; bind the package to its base once module files carry one.
+      await session.stage({ base, data, sha256: sha(data) }, { signal: abort.signal,
+        progress: (received, length) => this.set({ ...this.state, progress: received / length }) })
+      await session.activate()
+      await session.startTrial()
+      this.startKeepalive()
+      this.set({ status: 'trial', identity: this.state.identity, module })
+    } catch (error) {
+      await this.failed(error, session)
+    }
+  }
+  cancel() { this.abort?.abort() }
+  keep() { return this.finish(true) }
+  undo() { return this.finish(false) }
+
+  private async finish(keep: boolean) {
+    const session = this.session, module = this.state.module
+    if (this.state.status !== 'trial' || !session) return
+    this.stopKeepalive()
+    this.set({ ...this.state, status: 'finishing', notice: undefined })
+    try {
+      await session.holdTrial()
+      if (keep) await session.accept(); else await session.rollback()
+      await session.leaveUploadMode()
+      await this.release()
+      this.ready({ tone: 'success', text: keep ? `Kept. ${module} stays loaded until you switch the Octatrack off.` : 'Undone. Your Octatrack is back to how it was.' })
+    } catch (error) {
+      // Playing blocks the stop that keep and undo need; the trial carries on until the user stops.
+      if (unsafe(error) && session.connectionTrusted && session.status.phase === 'trial') {
+        this.startKeepalive()
+        return this.set({ ...this.state, status: 'trial', notice: { tone: 'error', text: explainLinkError(error) } })
+      }
+      await this.failed(error, session)
+    }
+  }
+
+  /** Undo what this session left behind if the connection is still trusted; otherwise the unplug advice. */
+  private async failed(error: unknown, session?: LinkSession) {
+    if (!(error instanceof UploadDeviceError) && !(error instanceof DOMException)) console.error(error)
+    this.stopKeepalive()
+    let clean = !session
+    if (session?.connectionTrusted) {
+      try {
+        const phase = session.status.phase
+        if (phase === 'receiving' || phase === 'verified') await session.cancel()
+        else if (phase === 'pending' || phase === 'trial' || phase === 'recovery') { await session.rollback(); await session.leaveUploadMode() }
+        else if (phase === 'ready') await session.leaveUploadMode()
+        clean = session.status.phase === 'normal'
+      } catch { clean = false }
+    }
+    this.session = undefined
+    await this.release()
+    if (this.device) this.ready({ tone: 'error', text: explainLinkError(error) + (clean ? '' : ' ' + UNPLUG) })
+  }
+  private startKeepalive() {
+    this.stopKeepalive()
+    this.keepalive = setInterval(() => { void this.transport?.identify().catch(() => {}) }, KEEPALIVE_MS)
+  }
+  private stopKeepalive() { clearInterval(this.keepalive); this.keepalive = undefined }
+}

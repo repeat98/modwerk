@@ -28,6 +28,9 @@ export const DOWNLOADS_ENABLED = true
 // The dynamic DSP loader (stock effects and modules uploaded on demand) has not been proven on hardware.
 // Off: stock DSP code stays built in and modules use the space of stock effects left off both menus.
 export const DSP_LOADER = false
+// Loading modules over USB needs the Modwerk base and runtime packages, which the browser cannot build yet:
+// the USB card and base install guide show in dev builds only.
+export const USB_LINK = import.meta.env.DEV
 // The ELEK update name appears on the resident bootloader's screen.
 // The panel boot font has uppercase letters; lowercase codes draw symbols.
 // Its fixed field is ten ASCII bytes; module versions are reported separately.

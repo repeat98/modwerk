@@ -39,10 +39,11 @@ import { LIBRARY_CATEGORIES, LIBRARY_CATEGORY_LABELS, MODULES, resolveSelection,
 import { AVAILABLE_MODULES, availableModules, isModuleAvailable, isModulePaused, moduleAvailabilityError } from './catalog/availability'
 import { DETAILS } from './catalog/details'
 import { readCatalogBrowse, saveCatalogBrowse, type CatalogBrowse } from './catalog/catalog-browse'
-import { ENGINE_AVAILABLE, DOWNLOADS_ENABLED, DSP_LOADER } from './engine/protocol'
+import { ENGINE_AVAILABLE, DOWNLOADS_ENABLED, DSP_LOADER, USB_LINK } from './engine/protocol'
 import { useFirmwareBuild } from './hooks/useFirmwareBuild'
 import { issueRepository, setWorkspaceReportContext } from './community/report-context'
 import { FirmwareBuildPanel } from './components/FirmwareBuildPanel'
+import { OctatrackLinkPanel } from './components/OctatrackLinkPanel'
 import { DIGI_DOWNLOADS_ENABLED } from './engine/elekloader/protocol'
 import { USB_AUDIO_MODULE, usbAudioLayout, type UsbAudioConfiguration } from './config/usb-audio'
 import { downloadSelection, parseSelection } from './config/selection'
@@ -77,6 +78,8 @@ import { ConfigurationHeader, RiskAcceptance } from './components/ConfigurationL
 const CompatibilityPanel = lazy(() => import('./components/CompatibilityPanel').then(module => ({ default: module.CompatibilityPanel })))
 const FirmwareFeedbackPreview = import.meta.env.DEV ? lazy(() => import('./components/FirmwareFeedbackPreview')) : () => null
 const firmwareFeedbackPreview = import.meta.env.DEV && typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('preview') === 'firmware-feedback'
+const OctatrackLinkPreview = import.meta.env.DEV ? lazy(() => import('./dev/OctatrackLinkPreview')) : () => null
+const usbLinkPreview = import.meta.env.DEV && typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('preview') === 'usb-link'
 function subscribeRoute(callback: () => void) {
   window.addEventListener('hashchange', callback)
   return () => window.removeEventListener('hashchange', callback)
@@ -391,6 +394,7 @@ export default function App() {
                   <div ref={setBuildResultsSlot} className="build-results" />
                 </div>
                 <div className="configuration-checkout">
+                  {USB_LINK && (usbLinkPreview ? <Suspense fallback={null}><OctatrackLinkPreview guideSlot={buildResultsSlot} firmwareReady={!!firmware}/></Suspense> : <OctatrackLinkPanel guideSlot={buildResultsSlot} firmwareReady={!!firmware}/>)}
                   <Suspense fallback={null}><CompatibilityPanel ids={selectedIds} keepStockFx2={DSP_LOADER && (active?.keepStockFx2??true)} buildState={firmwareBuild.state} buildError={firmwareBuild.error} buildConflict={firmwareBuild.conflict} onFix={fixConflict}/></Suspense>
                   <div className="checkout-card">
                     <RiskAcceptance checked={riskAccepted.key===firmwareBuild.key&&riskAccepted.accepted} onChange={accepted => setRiskAccepted({key:firmwareBuild.key,accepted})}/>

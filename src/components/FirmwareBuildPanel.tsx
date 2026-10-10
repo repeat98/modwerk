@@ -2,7 +2,7 @@ import { DownloadedBuildOverview } from '../community/HardwareFeedbackCheckIn'
 import { builtModules } from '../community/build-follow-up'
 import { useDownloadFollows } from '../community/useDownloadFollows'
 import { trackFirmwareDownload } from '../community/usage'
-import { firmwareFilename } from '../config/firmware-filename'
+import { saveFirmware } from '../config/firmware-filename'
 import { FLASHING_RISKS, FIRMWARE_SHARING_NOTICE } from '../firmware-notices'
 import { assetUrl } from '../hosting'
 import { useState } from 'react'
@@ -11,11 +11,6 @@ import type { useFirmwareBuild } from '../hooks/useFirmwareBuild'
 import { BuildProgressIndicator } from './BuildProgressIndicator'
 import { FirmwareDownloadDialog } from './FirmwareDownloadDialog'
 import { Icon } from './Icon'
-function saveFirmware(buffer:ArrayBuffer,name:string,sha256:string) {
-  const url=URL.createObjectURL(new Blob([buffer],{type:'application/octet-stream'})),link=document.createElement('a')
-  link.href=url;link.download=firmwareFilename(name,sha256)
-  document.body.append(link);link.click();link.remove();window.setTimeout(()=>URL.revokeObjectURL(url),1000)
-}
 // Only the FX2-only reverbs give up their space selectively; any other omission is the compact FX2 menu.
 const REVERB_NAMES:Record<string,string>={'SPRING REV':'Spring Reverb','PLATE REV':'Plate Reverb','DARK REV':'Dark Reverb'}
 function omittedLabel(keys:readonly string[]){return keys.every(key=>key in REVERB_NAMES)?keys.map(key=>REVERB_NAMES[key]).join(', '):'Original effects'}
