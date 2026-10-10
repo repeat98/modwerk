@@ -639,7 +639,8 @@ removed module is reclaimed once no paused task holds an address inside it
   unknown task state, keeps it), two modules with their own sites, a
   conflict refused with nothing changed, a module moving its own site,
   removal keeping the other, genuine memory exhaustion and a full table.
-- Emulator, private base `e91856e9…` (flash-safety check passed): the
+- Emulator, private base `8c96b9c3…` rebuilt from `68a6f9c0` (flash-safety
+  check passed; the same runs passed on `e91856e9…` before the rebase): the
   browser client's lifecycle, the bus-reset and quiet-host cases, then two
   test modules live at once, a third claiming bytes one of them holds
   refused with both still running, one removed and the bytes then claimed.
