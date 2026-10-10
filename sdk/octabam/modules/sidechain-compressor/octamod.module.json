@@ -3,11 +3,11 @@
   "id": "sidechain-compressor",
   "key": "SIDECHAIN_COMPRESSOR",
   "name": "Sidechain Compressor",
-  "version": "0.1.1-experimental",
+  "version": "0.1.2-experimental",
   "category": "effects",
   "source": {
     "repository": "https://github.com/sambanks/octabam",
-    "revision": "f80ecfeabc187a33403588678e707443161afc96",
+    "revision": "922878234b22221a1c298b3c7e0b3bdeffb468a9",
     "path": "modules/sidechain-compressor"
   },
   "author": {
