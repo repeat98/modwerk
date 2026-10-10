@@ -155,6 +155,7 @@ volatile uint32_t modwerk_dsp_stalls, modwerk_dsp_drained; /* hangs seen; words 
 volatile uint32_t modwerk_dsp_edma_errors, modwerk_dsp_edma_es; /* our transfers that eDMA refused; its last ES */
 #ifndef MODWERK_HOST
 extern volatile uint32_t dl_frames, dl_phase, dl_rx_nbytes, dl_residency_enabled;
+extern volatile uint32_t dl_c1_phase, dl_c1_sent; /* dsp_core1.s: core 1's packet after stock's state 2 */
 int dl_job_status(unsigned core);
 void dl_abort(void);
 /* Best effort: take whatever a core still offers the host (a DSP waiting to hand
@@ -163,21 +164,22 @@ void dl_abort(void);
 static void recover(void)
 {
     uint32_t sr = modwerk_machine_mask();
-    if (dl_phase && EDMA_ES >> 31) {
+    if ((dl_phase || dl_c1_phase) && EDMA_ES >> 31) {
         /* eDMA refused our transfer, so the core's DMA still waits for the words its host command
          * promised: give it what is left by hand (all of it after a configuration error, which
-         * stops the channel at its start), then clear the error. hooks.s: phase 1 writes core 0. */
+         * stops the channel at its start), then clear the error. hooks.s: phase 1 writes core 0;
+         * dsp_core1.s writes core 1. */
         uint32_t nbytes = *(volatile uint32_t *)0xfc045008u, left = (*(volatile uint16_t *)0xfc045014u & 0x1ffu) * nbytes / 2u;
         const volatile uint16_t *from = (const volatile uint16_t *)*(volatile uint32_t *)0xfc045000u;
         modwerk_dsp_edma_es = EDMA_ES;
-        DSP_SELECT = (uint8_t)(dl_phase - 1u);
+        DSP_SELECT = dl_c1_phase ? 1u : (uint8_t)(dl_phase - 1u);
         for (uint32_t i = 0, spin = 0; i < left && spin < 100000u; ++i) {
             for (spin = 0; !(HOST_ISR & 2u) && spin < 100000u; ++spin) {} /* TXDE */
             HOST_TXL = from[i];
         }
         *(volatile uint8_t *)0xfc04401du = 0; /* CERR: channel 0 */
         modwerk_dsp_edma_errors = modwerk_dsp_edma_errors + 1;
-    } else if (dl_phase && !(*(volatile uint16_t *)0xfc04501eu & 0x80u)) {
+    } else if ((dl_phase || dl_c1_phase) && !(*(volatile uint16_t *)0xfc04501eu & 0x80u)) {
         /* No error, but channel 0 never finished (TCD0 not DONE): the selected DSP never took the
          * words, so the transfer waits on the host handshake for ever. Cancel it to free the channel
          * and the host port; the job is abandoned and the loader shut off below. */
@@ -190,7 +192,8 @@ static void recover(void)
     }
     DSP_SELECT = 0;
     if (dl_phase && dl_rx_nbytes) *(volatile uint32_t *)0xfc045028u = dl_rx_nbytes; /* none saved with --dsp-hook usbin */
-    dl_phase = 0;
+    /* Abandoned at state 3, stock's chain resumes with the next frame: its interrupt restarts at state 0. */
+    dl_phase = dl_c1_phase = 0;
     dl_abort();
     dl_residency_enabled = 0;
     *(volatile uint8_t *)0xfc04801du = 1; /* INTC0 CIMR: the frame interrupt */
@@ -265,7 +268,7 @@ void modwerk_dsp_tick(void)
         dl_job_release((unsigned)probing);
         probing = -1;
     }
-    if (dl_phase && EDMA_ES >> 31 && !(EDMA_ES >> 8 & 0xfu)) recover(); /* eDMA refused our transfer: at once */
+    if ((dl_phase || dl_c1_phase) && EDMA_ES >> 31 && !(EDMA_ES >> 8 & 0xfu)) recover(); /* eDMA refused our transfer: at once */
     else if (modwerk_dsp_stalled(dl_frames, dl_phase || !dl_job_status(0) || !dl_job_status(1))) recover();
     uint32_t dry = modwerk_dsp_dry(), fresh = dry & ~missing_shown;
     if (fresh) {
@@ -291,7 +294,7 @@ void modwerk_dsp_tick(void)
 extern volatile uint32_t dl_accepted[2], dl_rejected[2], dl_errors, dl_pool_base[2], dl_pool_words[2];
 extern volatile uint32_t dl_selection_requested, dl_selection_completed, dl_selection_refused, dl_selection_cancelled;
 extern volatile uint32_t dl_residency_commits, dl_residency_failures, dl_residency_rollbacks, dl_residency_words[2];
-extern volatile uint32_t dl_early, dl_parked, dl_reinit;
+extern volatile uint32_t dl_early, dl_parked, dl_reinit, dl_pin7, dl_straddle;
 uint32_t dl_manager_state(void);
 #define R8(a) (*(volatile uint8_t *)(a))
 #define R16(a) (*(volatile uint16_t *)(a))
@@ -299,7 +302,7 @@ uint32_t dl_manager_state(void);
 unsigned modwerk_dsp_report(uint32_t *out)
 {
     const uint32_t words[DSP_REPORT_WORDS] = {
-        6, dl_frames, dl_phase, (uint32_t)dl_job_status(0), (uint32_t)dl_job_status(1), modwerk_dsp_last_flags,
+        7, dl_frames, dl_phase, (uint32_t)dl_job_status(0), (uint32_t)dl_job_status(1), modwerk_dsp_last_flags,
         dl_accepted[0], dl_accepted[1], dl_rejected[0], dl_rejected[1], dl_errors, modwerk_dsp_stalls, modwerk_dsp_drained,
         dl_residency_enabled, dl_manager_state(), modwerk_dsp_watch_ticks, modwerk_dsp_probes, modwerk_dsp_probes_ok,
         modwerk_dsp_probes_failed,
@@ -314,7 +317,7 @@ unsigned modwerk_dsp_report(uint32_t *out)
         (uint32_t)R16(0xfc044026u) << 16 | R16(0xfc04402eu), (uint32_t)R16(0xfc04501eu) << 16 | R16(0xfc04503eu),
         R32(0xfc044004u), modwerk_dsp_edma_errors, modwerk_dsp_edma_es,
         (uint32_t)modwerk_dsp_miss_core, modwerk_dsp_miss_bits, modwerk_dsp_miss[0], modwerk_dsp_miss[2], modwerk_dsp_miss[3],
-        modwerk_dsp_miss[4]};
+        modwerk_dsp_miss[4], dl_pin7, dl_straddle, dl_c1_sent};
     for (unsigned i = 0; i < DSP_REPORT_WORDS; ++i) out[i] = words[i];
     return DSP_REPORT_WORDS;
 }

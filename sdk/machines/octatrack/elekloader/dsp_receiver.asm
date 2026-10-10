@@ -20,9 +20,13 @@
 ; (two words per 24-bit word), 59-63 scratch. Opcodes: 1 PROBE, 3 WRITE, 4 BIND,
 ; 5 UNBIND, 6 BYPASS (an id onto stock's null stub), 7 BASE (X:$255 entry),
 ; 8 PEEK (one bit of a P word, answered in HF3).
-; A WRITE whose read-back sum differs keeps its first wrong word, once per boot:
-; the table offset, the word the packet wrote and the word P held (missoffset).
-; If every word matches, only the sum differed: offset = chunk end, expected = actual.
+; The first refused packet of a boot leaves a record (missoffset, then two words):
+;   $01rrrr: its halfwords sum to rrrr, not 0; the sequence that arrived; their
+;            position-weighted sum (each halfword times 64 - its index), mod 2^24.
+;   $02oooo: a WRITE outside its bounds, or an unknown opcode oooo; count; offset.
+;   $03tttt: a WRITE whose read-back sum differs: the table offset of its first wrong
+;            word, the word the packet wrote, the word P held. If every word matches,
+;            only the sum differed: the chunk's end, and the last word twice.
 ; The table (dltable, its size filled in by the build) keeps each id's original entries in its
 ; first 64 words; the rest is the code arena. Both cores' frame hooks run this
 ; before any effect. Entry changes keep the stock per-instance state.
@@ -44,7 +48,7 @@ frame:
         move    a1,x1
 checksumdone:
         and     #>$ffff,a
-        bne     badpacket
+        bne     badsum
         move    r3,x:(r0+63)
         move    x:(r0+2),a
         and     #>$ffff,a
@@ -62,22 +66,22 @@ checksumdone:
         beq     setbase
         cmp     #>8,a
         beq     peekbit
-        bra     badsaved
+        bra     refusewrite
 upload:
         move    x:(r0+4),a
         and     #>$ffff,a
         cmp     #>1,a
-        blt     badsaved
+        blt     refusewrite
         cmp     #>24,a
-        bgt     badsaved
+        bgt     refusewrite
         move    a1,x1
         move    x:(r0+5),a
         and     #>$ffff,a
         cmp     #>64,a
-        blt     badsaved
+        blt     refusewrite
         add     x1,a
         cmp     #>@DLWORDS@,a
-        bgt     badsaved
+        bgt     refusewrite
         sub     x1,a
         move    a1,x0
         bsr     tablebase
@@ -133,11 +137,6 @@ verified:
         bne     mismatch
         bra     accepted
 mismatch:
-        move    #>missoffset,r3
-        move    p:(r3),x0
-        move    x0,a
-        tst     a
-        bne     badsaved                ; the first one is kept
         move    x:(r0+5),a
         and     #>$ffff,a
         move    a1,x0
@@ -169,9 +168,9 @@ mismatch:
         tst     a
         bne     nextword
         move    r3,x:(r0+61)
-        move    x0,x:(r0+60)
         move    x1,a
         move    a1,x:(r0+59)
+        move    x0,x:(r0+60)
 nextword:
         move    r3,a
         add     #>1,a
@@ -179,24 +178,66 @@ nextword:
 scanned:
         move    x:(r0+61),a
         tst     a
-        bne     keepword
+        bne     tableoffset
         move    r3,x:(r0+61)            ; every word matches: only the sum differed
-        move    x0,x:(r0+60)
         move    x1,a
         move    a1,x:(r0+59)
-keepword:
-        move    x:(r0+60),x0
-        move    #>missactual,r3
-        move    x0,p:(r3)
-        move    x:(r0+59),x0
-        move    #>missexpected,r3
-        move    x0,p:(r3)
+        move    x0,x:(r0+60)
+tableoffset:
         bsr     tablebase
         move    a1,x0
         move    x:(r0+61),a
         sub     x0,a
-        move    a1,x0
+        add     #>$30000,a
+        move    a1,x:(r0+61)
+        bra     keeprecord
+refusewrite:
+        move    x:(r0+2),a
+        and     #>$ffff,a
+        add     #>$20000,a
+        move    a1,x:(r0+61)
+        move    x:(r0+4),a
+        and     #>$ffff,a
+        move    a1,x:(r0+59)
+        move    x:(r0+5),a
+        and     #>$ffff,a
+        move    a1,x:(r0+60)
+        bra     keeprecord
+; The checksum failed (a torn or corrupted packet): what arrived, to compare with what was sent.
+badsum:
+        move    r3,x:(r0+63)
+        add     #>$10000,a              ; a1: the residue (the and above)
+        move    a1,x:(r0+61)
+        move    x:(r0+1),a
+        and     #>$ffff,a
+        move    a1,x:(r0+59)
+        move    r0,r1
+        move    #>0,x1
+        move    #>0,x0
+        do      #<$40,weighed
+        move    x:(r1)+,a
+        and     #>$ffff,a
+        add     x1,a
+        move    a1,x1                   ; the running sum
+        move    x0,a
+        add     x1,a
+        move    a1,x0                   ; the sum of the running sums
+weighed:
+        move    x0,x:(r0+60)
+; The record: (r0+61) first, then (r0+59) and (r0+60). Only the first of a boot is kept.
+keeprecord:
         move    #>missoffset,r3
+        move    p:(r3),x0
+        move    x0,a
+        tst     a
+        bne     badsaved
+        move    x:(r0+61),x0
+        move    x0,p:(r3)
+        move    x:(r0+59),x0
+        move    #>missexpected,r3
+        move    x0,p:(r3)
+        move    x:(r0+60),x0
+        move    #>missactual,r3
         move    x0,p:(r3)
         bra     badsaved
 binding:
@@ -340,7 +381,6 @@ accepted:
         bra     reply
 badsaved:
         move    x:(r0+63),r3
-badpacket:
         move    #>$10,x0                ; HF3 set: refused
 reply:
         ; One HCR write: HF3 the result, HF2 toggled so the host sees the packet handled.

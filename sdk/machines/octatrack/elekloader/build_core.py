@@ -43,7 +43,9 @@ DYNLOAD_HOOKS = (
     (0x40004bc0, 8, '560d267844d7aa23140680beb751fac814290c76527d653fc41fbbb43c830cbf', 'dl_state7'),  # frame DMA: packets to both cores
     (0x400526e4, 8, '3e7c95b32f444fd280cb96b2a6ea90525fe223d6e6b9352086d2cf41941ae854', 'dl_fx1_guard'),
     (0x40052474, 8, '3e7c95b32f444fd280cb96b2a6ea90525fe223d6e6b9352086d2cf41941ae854', 'dl_fx2_guard'),
-    (0x4004a8a4, 6, '20577862965e35b56da3cc4660ac5df6a325e455467496552d181b68fff15e2d', 'dl_part_guard'))
+    (0x4004a8a4, 6, '20577862965e35b56da3cc4660ac5df6a325e455467496552d181b68fff15e2d', 'dl_part_guard'),
+    # Modwerk's: core 1's packet right after stock's own push to core 1 (dsp_core1.s), at frame-transfer state 3.
+    (0x400049ca, 8, '2945c558a5df272b3fb2ef6df3e3ab594b0c2c162f29c38ba624c3ec610c71f5', 'dl_state3'))
 DSP_ALLOWANCE = 2808  # per core and sample: 3,120 cycles our code may spend (hardware) less a 10% margin (owner default)
 # The dearest stock effect per slot: DJ EQ, 330.75 executed instructions per sample at its worst split
 # (stock_dsp_worst.py, emulator; not hardware timing). Every slot without a module is charged it (dsp.c).
@@ -143,10 +145,21 @@ DSP_EDITS = {
                     '        if(jobs[c].state==2) jobs[c].state=4;\n'
                     '    }\n'
                     '}\n')),
-    # Writes only: no read phases, and no write to a core with no packet waiting.
-    'hooks.s': (('        .global dl_state7, dl_tick', '        .global dl_state7, dl_tick, dl_phase, dl_rx_nbytes, dl_early'),
-                ('dl_rx_nbytes: .long 0\n', 'dl_rx_nbytes: .long 0\ndl_early: .long 0     | state-7 visits with channel 0 still running\n'),
-                ('        cmpi.l #5,%d2', '        cmpi.l #3,%d2'),
+    # Writes only: no read phases, no write to a core with no packet waiting, and at state 7 core 0's
+    # packet only: core 1's goes right after stock's own push to core 1 (dsp_core1.s, hardware 10 Oct 2026).
+    # Measured: EPORT pin 1 is core 0's host request, which its next frame's bank word raises. dl_pin7 counts
+    # frames whose state 7 saw it high; dl_straddle counts packets during which it changed (the frame began
+    # while the packet was written, so the receiver may read a torn one).
+    'hooks.s': (('        .global dl_state7, dl_tick', '        .global dl_state7, dl_tick, dl_phase, dl_rx_nbytes, dl_early, dl_pin7, dl_straddle'),
+                ('dl_rx_nbytes: .long 0\n', 'dl_rx_nbytes: .long 0\ndl_early: .long 0     | state-7 visits with channel 0 still running\n'
+                 'dl_pin7: .long 0\ndl_straddle: .long 0\ndl_pin_sent: .long 0  | 4 | pin 1 when a packet started, 0 none\n'),
+                ('        jsr dl_frame\n', '        move.b 0xfc094005,%d0\n        btst #1,%d0\n        beq 1f\n        addq.l #1,dl_pin7\n'
+                 '1:\n        jsr dl_frame\n'),
+                ('dl_complete:\n', 'dl_complete:\n        move.l dl_pin_sent,%d0\n        beq 1f\n        clr.l dl_pin_sent\n'
+                 '        move.b 0xfc094005,%d1\n        andi.l #2,%d1\n        addq.l #4,%d1\n        cmp.l %d0,%d1\n        beq 1f\n'
+                 '        addq.l #1,dl_straddle\n1:\n'),
+                ('        cmpi.l #3,%d2\n        bcs dl_write\n        cmpi.l #5,%d2\n        bcs dl_read\n',
+                 '        cmpi.l #2,%d2           | phase 1, core 0, only\n        bcs dl_write\n'),
                 ('dl_write:\n        subq.l #1,%d2\n',
                  'dl_write:\n        subq.l #1,%d2\n'
                  '        move.l %d2,%d0\n'
@@ -157,7 +170,11 @@ DSP_EDITS = {
                  '        bne dl_send\n'
                  '        move.l dl_phase,%d2\n'
                  '        bra dl_next\n'
-                 'dl_send:\n')),
+                 'dl_send:\n'
+                 '        move.b 0xfc094005,%d0\n'
+                 '        andi.l #2,%d0\n'
+                 '        addq.l #4,%d0\n'
+                 '        move.l %d0,dl_pin_sent\n')),
 }
 # The state-7 entry (build_core.py --dsp-hook). Stock can visit state 7 while its last
 # transfer still runs on eDMA channel 0: in state 5 it starts state 6's transfer inline,
@@ -206,14 +223,6 @@ DSP_HOOK_EDITS = {
                                         '        move.w #0x8002,%d0\n        move.w %d0,0xfc04501c\n',
                                         '        move.w #0x8003,%d0\n        move.w %d0,0xfc045014\n'
                                         '        move.w #0x8003,%d0\n        move.w %d0,0xfc04501c\n'))},
-    # The core-1 transfer completes but its words land in a live core-1 bank (hardware, 10 Oct 2026):
-    # a diagnostic that sends core 1's packet to the other bank's +$320 ($63a0), to see if the bank is the axis.
-    'c1bank': {'hooks.s': GUARD_ENTRY + (
-        ('        move.b %d2,0xfc0a400c\n        lsl.l #7,%d2\n',
-         '        move.b %d2,0xfc0a400c\n        move.w #0x6320,%d3\n        tst.l %d2\n        beq 1f\n'
-         '        move.w #0x63a0,%d3\n1:\n        lsl.l #7,%d2\n'),
-        ('        move.w #0x6320,%d0\n        move.w %d0,0x2000001c\n        move.w #63,%d0\n',
-         '        move.w %d3,0x2000001c\n        move.w #63,%d0\n'))},
     'usbin': {'hooks.s': ((STATE7_ENTRY,
                '        move.w 0xfc04501e,%d0\n'
                '        andi.l #0xc1,%d0\n'
@@ -386,6 +395,7 @@ def main():
                 text = text.replace(old, new)
             (source / ('dsp_hooks.s' if name == 'hooks.s' else name)).write_text(text)
         shutil.copyfile(HERE / 'dsp.c', source / 'dsp.c')
+        shutil.copyfile(HERE / 'dsp_core1.s', source / 'dsp_core1.s')
         for lea, stock_list in ((0x40052496, 0x400d6090), (0x40052706, 0x400d6060)):
             if int.from_bytes(image[lea - device.main_load:lea - device.main_load + 4], 'big') != stock_list:
                 raise ValueError('An FX selector no longer reads its chooser list at %#x.' % lea)
@@ -460,7 +470,7 @@ modwerk_retained_end:
                   license='GPL-3.0-or-later',
                   description='Private core-only Elekloader base with logger/startup, a USB vendor interface and a runtime module loader (hooks and stock-code sites); NOT a flash candidate.')
     recipe['sources'] += [p.name for p in sorted(source.glob('*.c'))] + ['hooks.s', 'retained.s', 'usb_base.s', 'boot.s'] + (
-        ['dsp_hooks.s'] if args.dsp_loader else []) + (['usbaudio.s'] if args.dev else [])
+        ['dsp_hooks.s', 'dsp_core1.s'] if args.dsp_loader else []) + (['usbaudio.s'] if args.dev else [])
     recipe['cflags'] = ['-std=c99', '-ffreestanding', '-fno-builtin', '-fno-common',
                         '-fno-zero-initialized-in-bss', '-fno-tree-loop-distribute-patterns',
                         '-fno-merge-constants', '-fno-asynchronous-unwind-tables', '-fno-unwind-tables',
