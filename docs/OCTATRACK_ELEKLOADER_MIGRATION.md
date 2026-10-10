@@ -438,6 +438,21 @@ Development and tests on the owner's unit must never brick it:
 - A crash or freeze from a bad module costs a power cycle, never the flash.
   Unplugging USB rolls back anything not accepted.
 
+### Windows without a driver (10 October 2026)
+
+The base reports USB 2.10 from its own copy of the device descriptor (one
+pointer site at `0x4001d82e`; stock's copy sits in the protected range) and
+answers BOS and the Microsoft OS 2.0 descriptor set from `ep0.c`: a WinUSB
+compatible ID and the interface GUID `{4DEA1B9D-6B51-400A-93C9-5CFFC5DF8CF1}`
+for the vendor interface. Both requests reach the base through stock's
+unknown-request tail. In the emulator both speeds answer all four new
+checks. On the owner's MKII, `usbtest8` (base `268ac050…`, built from
+`ed66143c`, flash-safety check passed) was started over RAM boot: the Mac
+read USB 2.10, the 33-byte BOS and the 178-byte descriptor set exactly as
+built, the module lifecycle passed, and USB disk mode still mounted on the
+Mac. Not shown: Windows itself binding WinUSB (no Windows PC yet). A PC that
+already saw the unit as USB 2.00 may keep that cached.
+
 ### RAM boot for base development (10 October 2026)
 
 So the owner flashes only bases worth keeping, a base can now run another
