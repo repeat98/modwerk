@@ -676,6 +676,42 @@ Export bounded diagnostic snapshots through the planned USB interface;
 collection must not block the audio path. Existing private-evidence and
 explicit trial-acceptance rules still apply.
 
+## End-user workflow (owner, 10 October 2026)
+
+The target for the browser flow: the user opens a sync mode on the unit,
+connects over WebUSB, loads new modules, the site runs automated stress and
+bug checks, and failed attempts are uploaded and filed as issues
+automatically. Base installs and base updates (including USB MIDI/Audio
+changes) remain a card OS install.
+
+| Step | Built (emulator only) | Still needed | Rules |
+| --- | --- | --- | --- |
+| 1. Sync mode on the unit | Upload mode entered by the host's ENTER while nothing plays or records | A MODWERK SYNC entry in the unit's menus (REMIX SWITCH's BRAIN rows are a reference) that shows the session, holds transport and recording, and is the only state in which state-changing commands are accepted; leaving it on the unit leaves upload mode and rolls back an unaccepted trial | Physical presence gates every write. IDENTIFY, HELLO and DIAG stay read-only and always available; stock MIDI recovery is untouched |
+| 2. Connect over WebUSB | `UsbVendorTransport`, the session client and a Chrome test page (`dev/octatrack-usb.html`) | Site UI on the configuration page, Chrome/Edge only; Windows WinUSB binding; the first hardware run | Claim only the vendor interface; a mismatched base identity is refused before any write |
+| 3. Load new modules | One runtime slot: load, trial, accept, replace, roll back and remove without a reboot | Hook ABI for real modules, runtime DSP allocation (sequence step 3), ledger memory, catalogue modules built as runtime packages | The previous set stays live until acceptance; refusals happen before dispatch changes |
+| 4. Automated stress and bug checks | DIAG counters, emulator checks, Octabam's MIDI/audio hardware tools | A test runner driven over the vendor interface in sync mode: bounded transport and parameter actions on a generated test project, CPU/DSP load and audio-path counters, a trial verdict per module | Never write the user's projects. A failed check rolls back automatically; acceptance stays an explicit user action unless the owner changes that rule |
+| 5. Upload failures, open issues | `OCTAMOD.LOG` format, the strict browser/Worker parser, the report API and GitHub issue mirroring with author commands | Read the logger ring and test results over USB (a bounded read command) instead of from the card; a run report bound to the exact base and module identities; automatic submission after a one-time opt-in, de-duplicated by failure signature and version into existing reports for the module's author | Show the user what is sent. Never upload firmware, stock bytes, projects, samples or audio. Reuse the existing sanitized report contract and rate limits |
+
+The SDK exposes the same interface for working directly on a unit, for
+module authors and agents (owner, 10 October 2026): a command-line client
+over the shared TypeScript client, with commands such as `identify`, `diag`,
+`load <package>`, `trial`, `accept`, `rollback`, `remove` and `logs`. It
+drives real hardware through a host USB backend (Node has no WebUSB; a
+Node WebUSB implementation is a new dependency to review) and the emulator
+through the bench socket that `scripts/verify-octatrack-vendor-client.mjs`
+already uses, so the same commands work on both. It follows the
+[safe-access contract](#modwerks-own-interface-for-safe-agent-access): the
+sync-mode gate, base identity binding, bounded commands and no raw memory
+access.
+
+Down the road the interface should cover every supported machine. The
+frames, sessions, IDENTIFY's model and capability fields, the transport's
+rules and the TypeScript client are already machine-neutral; each machine
+needs its own base glue, runtime ABI and transport. Where a stock USB stack
+cannot carry an endpoint-free vendor interface, a machine may use another
+transport (for example SysEx over USB MIDI, which the Digitakt and Digitone
+stock OS already accept for updates) carrying the same frames.
+
 ## Agreed implementation sequence
 
 1. Qualify the Elekloader base and stopped upload mode, preserving logger,

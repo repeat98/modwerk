@@ -51,7 +51,12 @@ by `npm run dev` only) now run the same lifecycle on a real unit
 ([hardware run](../sdk/machines/octatrack/elekloader/README.md#hardware-run)).
 Next: the owner's hardware run (cache invalidation, real USB timing, WebUSB
 claiming), then a hook ABI for real modules, ledger memory, and folding USB
-MIDI and USB Audio into the base.
+MIDI and USB Audio into the base. The target user flow (sync mode on the unit,
+WebUSB, module loading, automated checks, automatic failure reports and
+issues) and its gaps are in the
+[migration record](OCTATRACK_ELEKLOADER_MIGRATION.md#end-user-workflow-owner-10-october-2026),
+together with an SDK command-line client for working directly on a unit or
+the emulator, and the goal of covering every machine later.
 
 Sam's open REMIX SWITCH (Octabam PR #655) switches whole images from the card
 with a soft reset. The owner chose on 10 October to use it as a reference
