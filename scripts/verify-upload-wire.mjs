@@ -95,6 +95,15 @@ await scenario('trial rollback and a second transaction without restarting the C
   await s.cancel(); assert.equal(s.status.phase, 'normal'); assert.equal(s.status.active, previous)
 })
 
+await scenario('no frame is a whole number of 64-byte packets', async (s, t) => {
+  for (const n of [76, 140, 4096 + 76]) { // 128- and 192-byte frames, and a short last chunk of 128
+    await s.stage(payload(n))
+    assert.equal(s.status.received, n)
+    assert(t.frames.every(frame => frame.length % 64), String(t.frames.map(frame => frame.length)))
+    await s.cancel()
+  }
+})
+
 await scenario('protocol maximum stages in bounded chunks', async (s, t) => {
   const pkg = payload(UPLOAD_MAX_BYTES)
   await s.stage(pkg)

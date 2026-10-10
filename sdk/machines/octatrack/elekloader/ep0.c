@@ -170,6 +170,9 @@ uint32_t modwerk_ep0_dispatch(void)
         d->page[0] = at;
         for (uint32_t i = 1; i < 5; ++i) d->page[i] = (at & ~0xfffu) + 0x1000u * i;
         volatile uint32_t *qh = (volatile uint32_t *)(uintptr_t)EP0_OUT_QH;
+        /* ZLT off: with it on (stock's setting) a stage of whole 64-byte packets
+         * waits for a zero-length packet the host never sends (hardware, usbtest9). */
+        qh[0] |= 1u << 29;
         qh[2] = (uint32_t)(uintptr_t)d;
         ENDPTPRIME = ENDPTPRIME | 1u;
         ++primes;

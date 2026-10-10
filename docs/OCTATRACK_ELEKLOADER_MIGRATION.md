@@ -457,6 +457,16 @@ booting only when exactly one checks out. The build refuses a stage outside
 that range. In the emulator: the proof image boots from a mailbox at the
 base's own stage and at another address; two mailboxes, a flipped byte and
 another bootstrap version each boot the base instead. Not yet on the unit.
+
+The several-modules check then found a second EP0 trap on the unit: a
+SUBMIT whose frame is a whole number of 64-byte packets (128 and 192 bytes
+failed; 127, 191 and 255 passed, `usbtest9` from RAM) never completes. The
+EP0 OUT queue head keeps stock's zero-length termination, so the controller
+waits for a zero-length packet the host never sends; the base abandons the
+stage and recovers. The base now clears ZLT when it primes the stage, and
+the client never sends such a frame (it shortens that chunk by a byte), so
+already-flashed bases work too: with the client fix both sizes passed on the
+unit.
 `npm run device -- boot` now waits for the unit to go away and answer HELLO
 again, and re-arms once from the flashed base if a boot falls back to it.
 

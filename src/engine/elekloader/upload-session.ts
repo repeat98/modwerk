@@ -2,7 +2,7 @@
 // Unconnected browser client. A real USB adapter and runtime executor are still required.
 import { sha } from '../../../vendor/elekloader/kit/src/bytes.ts'
 import {
-  decodeUploadResponse, digestBytes, encodeUploadRequest, UPLOAD_MAX_BYTES, UPLOAD_MAX_CHUNK,
+  decodeUploadResponse, digestBytes, encodeUploadRequest, UPLOAD_HEADER, UPLOAD_MAX_BYTES, UPLOAD_MAX_CHUNK,
   type UploadRequest, type UploadStatus,
 } from './upload-wire.ts'
 
@@ -163,9 +163,13 @@ export class UploadSession {
             'A refused offer changed transaction ownership.')
         })
         if (begun.result !== 'ok') { this.offer = undefined; this.ok(begun) }
-        for (let offset = 0; offset < data.length; offset += UPLOAD_MAX_CHUNK) {
+        for (let offset = 0, size = 0; offset < data.length; offset += size) {
           cancelled()
-          const chunk = data.subarray(offset, offset + UPLOAD_MAX_CHUNK)
+          // A frame of whole 64-byte packets never completes on bases before usbtest9 (the controller
+          // waits for a zero-length packet the host does not send): shorten that chunk by a byte.
+          size = Math.min(UPLOAD_MAX_CHUNK, data.length - offset)
+          if ((UPLOAD_HEADER + 4 + size) % 64 === 0) size -= 1
+          const chunk = data.subarray(offset, offset + size)
           const status = await this.exchange({ command: 'chunk', session: this.status.session,
             transaction: offer.transaction, offset, data: chunk }, status => {
             this.oldSet(status, offer); this.sameTransaction(status, offer)
