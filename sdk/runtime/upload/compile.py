@@ -8,8 +8,8 @@ from pathlib import Path
 import subprocess
 
 HERE = Path(__file__).resolve().parent
-SOURCES = ('upload.c', 'sha256.c', 'wire.c')
-INPUTS = (*SOURCES, 'upload.h', 'wire.h', 'compile.py')
+SOURCES = ('upload.c', 'sha256.c', 'wire.c', 'vendor.c')
+INPUTS = (*SOURCES, 'upload.h', 'wire.h', 'vendor.h', 'compile.py')
 FLAGS = ('-mcpu=54455', '-Os', '-std=c99', '-ffreestanding', '-fno-builtin',
          '-fno-tree-loop-distribute-patterns', '-fno-common',
          '-fno-asynchronous-unwind-tables', '-fno-unwind-tables',

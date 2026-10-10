@@ -1,8 +1,9 @@
 # Stopped upload controller (development only)
 
 This is original, freestanding ColdFire C for the first Elekloader runtime
-loader. It manages a bounded update transaction and decodes a bounded request
-frame. It is **not connected to USB or the stock firmware**, has no shipping
+loader. It manages a bounded update transaction, decodes a bounded request
+frame and carries frames over an EP0 vendor transport. It is **not connected
+to USB or the stock firmware**, has no shipping
 catalogue entry, does not execute modules and is not a flash candidate. The
 production Octatrack builder remains unchanged. Keep the whole migration on
 `codex/octatrack-elekloader-migration` until its implementation and hardware
@@ -84,6 +85,48 @@ An unknown active identity is encoded as zero, with active-known zero. Hosts
 must check result, phase, session and active-known rather than treating a
 successful transfer or reconnect as successful activation.
 
+## EP0 vendor transport, version 1
+
+`vendor.c` carries one wire frame at a time over vendor control requests to
+a Modwerk interface with no endpoints (class `0xFF`, subclass `0x4D`,
+protocol 1). EP3 OUT, the only free endpoint, stays available for USB Audio
+In. The transport is **not connected to the USB stack**; see the
+[migration record](../../../docs/OCTATRACK_ELEKLOADER_MIGRATION.md#what-the-imported-usb-stack-leaves-for-the-vendor-interface)
+for the glue still missing.
+
+| Request | bmRequestType | bRequest | wValue | wIndex | Data |
+| --- | --- | --- | --- | --- | --- |
+| SUBMIT | `0x41` | 1 | sequence | interface | one complete frame, 48–4,148 bytes |
+| RESULT | `0xC1` | 2 | 0 | interface | wLength 152; 8 bytes back, or 152 when ready |
+
+A result starts with `MWUT`, version 1, a status (0 none, 1 pending, 2 ready,
+3 refused) and the device's latest sequence (u16, big-endian). A ready
+result appends the controller's 144-byte response. Refused means never
+executed.
+
+- The USB ISR only receives a complete data stage into the one frame slot
+  and answers RESULT. The controller's engine-task owner executes the frame
+  (`mv_service`). A queued frame is never overwritten: SUBMIT stalls while
+  one waits.
+- A sequence executes at most once. SUBMIT stalls for the current sequence,
+  for lengths outside the frame bounds and after a bus reset the owner has
+  not yet handled. A stalled SETUP receives no data.
+- A short data stage, a new SETUP during the data stage (`mv_abandon` for one
+  the stock stack handles itself) or a reset marks that sequence refused.
+- A bus reset or unplug becomes the controller's disconnect, after any frame
+  queued before it. That aborts staging, rolls back an unaccepted set and
+  leaves upload mode, as the contract above defines.
+- Reading RESULT has no side effects. The browser transport
+  ([`upload-usb.ts`](../../../src/engine/elekloader/upload-usb.ts)) continues
+  from the device's latest sequence and never reuses one. It reconciles an
+  unconfirmed SUBMIT by reading RESULT, retries only a positively refused
+  frame under a new sequence, and otherwise rejects, so the session marks the
+  connection unconfirmed.
+
+The glue must keep the structure on the uncached alias and each reply
+within one transfer-descriptor page. The ISR functions use at most 28 bytes
+of stack in the compiler's report; that is not an interrupt-stack proof.
+
 ## Verification
 
 ```sh
@@ -130,6 +173,18 @@ Use Node 24, a host C compiler and Python for this developer test command;
 none is a browser-user dependency. The peer executes no module code and these
 results do not qualify device audio, memory ownership or USB operation.
 
+The same command tests the EP0 transport. `vendor_test.c` compiles
+`vendor.c` with its controller calls renamed to counters, then checks request
+routing, bounds, busy and duplicate refusals, incomplete data stages, reset
+ordering and 400,000 random host, bus and engine events: every accepted frame
+executes exactly once and in order, and nothing else executes. Removing any
+one of seven safety rules fails it. `verify-upload-usb.mjs` then runs the
+browser transport and session client against the real C transport and
+controller through a byte-stream stand-in for EP0: a full upload with one
+execution per exchange, a lost status stage, an unhandled reset, a short data
+stage, repeated refusals, another client's submission and a frame that never
+completes. These exercise no USB controller, descriptors or timing.
+
 Native compilation uses GNU `m68k-elf` for MCF54455, strict warnings, no libc
 assumptions and no unresolved symbols. Compiler stack reports are recorded
 privately; they are not chip timing or complete call/interrupt-stack bounds.
@@ -145,5 +200,6 @@ confirmed restore/retirement. No module lifecycle implementation is supplied
 by the test backend. The private base now includes logger/startup source ports;
 they still need exact selected-module identity and broader qualification.
 The base also needs
-fresh session generation and bounded vendor USB queues/descriptors compatible
-with MIDI/audio/storage. Only then can the first no-reboot physical test run.
+fresh session generation, the vendor interface descriptor and the EP0 glue
+for this transport, compatible with MIDI/audio/storage. Only then can the
+first no-reboot physical test run.

@@ -19,3 +19,10 @@ print(f'SHA-256: {len(sizes)} Python-reference vectors passed, including the pro
 PY
 "${CC:-cc}" -std=c99 -Wall -Wextra -Werror -pedantic -I"$root" "$root/tests/wire_probe.c" "$root/upload.c" "$root/sha256.c" "$root/wire.c" -o "$out/wire-probe"
 node "$root/../../../scripts/verify-upload-wire.mjs" "$out/wire-probe"
+# EP0 vendor transport: its controller calls are renamed to counters so every
+# execution is observed, then the browser transport runs against the C peer.
+"${CC:-cc}" -std=c99 -Wall -Wextra -Werror -pedantic -I"$root" -Dmu_request=counted_request -Dmu_disconnect=counted_disconnect -c "$root/vendor.c" -o "$out/vendor-counted.o"
+"${CC:-cc}" -std=c99 -Wall -Wextra -Werror -pedantic -I"$root" "$root/tests/vendor_test.c" "$out/vendor-counted.o" "$root/upload.c" "$root/sha256.c" "$root/wire.c" -o "$out/vendor-test"
+"$out/vendor-test"
+"${CC:-cc}" -std=c99 -Wall -Wextra -Werror -pedantic -I"$root" "$root/tests/vendor_probe.c" "$root/vendor.c" "$root/upload.c" "$root/sha256.c" "$root/wire.c" -o "$out/vendor-probe"
+node "$root/../../../scripts/verify-upload-usb.mjs" "$out/vendor-probe"

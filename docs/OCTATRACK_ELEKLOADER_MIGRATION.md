@@ -286,6 +286,26 @@ regenerated. These gaps and the documented unsupported publication/ABI paths
 must be resolved before reusing its runtime; old model/host evidence is not
 hardware qualification for the new Elekloader base.
 
+### Reference: Octabam's REMIX SWITCH
+
+Sam's open [Octabam PR #655](https://github.com/sambanks/octabam/pull/655)
+(head `879cecb`, 10 October 2026; from sanderlegit's #542) switches the unit
+to a whole OS image from the card: it loads the image into a stage in SDRAM,
+parks both DSP cores and soft-resets into it, without writing the flash.
+That is a reboot, so it does not meet the no-reboot goal; the owner chose
+on 10 October 2026 to use it as a reference, not as Modwerk's mechanism. It
+is not vendored. Its README marks what was measured on an MKII on
+29 September 2026 and what was not (endurance, caches, MKI).
+
+| Technique in REMIX SWITCH | What it informs here |
+| --- | --- |
+| DSP park: host command `$0F` on stock's unused vector `P:$1E`, a handler in the run of dead vectors from `P:$20` that stops DMA 0–5 and both ESAI ports, then a boot-ROM-style loader (count, address, words, jump) | Reloading DSP code on both cores without a chip reset, for activation. Its measured traps: clear HPCR bit 7 or every host echo reads `0x010101` and the stock record sender silently abandons the upload; drain stale words from each core's host receive register first. |
+| `verify_dspvectors.py` audits on every build that those vectors are self-jumps no armed DMA, ESAI or interrupt can reach | Code in dead vectors is safe only under that audit. Any P allocation that uses them needs the same check. |
+| Stage at the top of the platform reserve, `0x49200000`–`0x49495de0` (uncached), which stock never touches and which survives a soft reset | A ledger entry and a staging candidate, not free memory: the reserve is shared with every platform runtime. |
+| Before running new ColdFire code: caches off, I-cache and branch cache invalidated, the bootstrap's exit `CACR` (`0x0008c000`) restored | Activating relocated ColdFire code needs explicit cache invalidation; the open cache-handling item above. |
+| The card scan saves and restores the stock browser's name pool and cache around its own listing | Needed if packages are ever read from the card. |
+| Soft reset (`RCR` `SOFTRST`) after parking the DSPs; the unit's own panel handshake first | Not the routine path. A possible recovery for base changes without a power cycle, if qualified separately. |
+
 ## Work required before public cutover
 
 | Area | Observed gap / next implementation |
@@ -392,8 +412,13 @@ interface should not take it.
 
 The planned interface therefore has no endpoints of its own: a vendor-class
 (`0xFF`) interface whose requests travel as vendor control transfers to that
-interface on EP0, with each response read back by a control IN. These gaps
-must be closed before it can carry the upload controller's frames:
+interface on EP0, with each response read back by a control IN. The
+[EP0 transport](../sdk/runtime/upload/README.md#ep0-vendor-transport-version-1)
+and its browser peer now implement that protocol: one frame slot owned by the
+engine task, sequence numbers that never execute twice, and positive refusals
+the browser can retry safely. They are tested against the real controller on
+the host only. These gaps must be closed before the transport can run on the
+unit:
 
 - The stock EP0 path has no control OUT data stage. The vendored "layouts"
   USB Audio stack (not the one the source port converts) takes a 4-byte data

@@ -21,14 +21,13 @@ fails `join()` on 3.9. No guard, fingerprint or approved package was changed.
 The branch also integrates main `ca36b1f` (Air Chorus T3 isolation, compact
 media credits).
 
-No full check on this tree finished green in one uninterrupted run, because
-of the machine rather than the code. The first had only timeouts, while
-another session's check pushed the load average past 160 on eight cores. The
-second passed every step (licences, catalogues, generation, lint, types, all
-98 SDK tests, bundling) except four app test files that hit a full disk
-(`ENOSPC`). The failed files then passed in isolation, so every test has
-passed on this tree. The repository's disk filled to 144 MB free during the
-run; other sessions' scratch worktrees under `/private/tmp` hold about 20 GB.
+The first two full checks after the fix were disturbed by the machine, not
+the code: one by load timeouts while another session's check ran (load
+average above 160 on eight cores), one by a full disk (`ENOSPC`, 144 MB free).
+Every affected test passed when rerun. With the EP0 transport added, the full
+check then passed in one run: 1,645 app tests in 220 files, 98 SDK tests,
+lint, types, generation and bundling. `npm run upload:verify`, which CI runs
+but the local check does not, also passed.
 
 Sam's upstream `tools/hw` has two tools Modwerk lacks, including the
 device-versus-emulator capture over USB Audio In, and the imported USB stack
@@ -37,13 +36,19 @@ they set the next step below.
 
 ## Next: read-only vendor interface
 
-Build the vendor interface without endpoints, on EP0 control transfers, so
-EP3 OUT stays free for USB Audio In. Start read-only (identity and status),
-with one bounded frame slot handed from the USB ISR to the engine task. The
+The vendor interface has no endpoints and uses EP0 control transfers, so EP3
+OUT stays free for USB Audio In. Its transport state machine and browser peer
+are done and host-tested against the real controller
+([upload README](../sdk/runtime/upload/README.md#ep0-vendor-transport-version-1)).
+Next is the ColdFire glue, read-only first (identity and status). The
 [migration record](OCTATRACK_ELEKLOADER_MIGRATION.md#what-the-imported-usb-stack-leaves-for-the-vendor-interface)
-lists the gaps to close first: no control OUT data stage, the shared request
-hook at `0x4001de64`, uncached response buffers, the unproven ISR-to-task
-wakeup, Windows driver binding and the emulator's limits.
+lists the gaps: no control OUT data stage, the shared request hook at
+`0x4001de64`, uncached response buffers, the unproven ISR-to-task wakeup, the
+interface descriptor, Windows driver binding and the emulator's limits.
+
+Sam's open REMIX SWITCH (Octabam PR #655) switches whole images from the card
+with a soft reset. The owner chose on 10 October to use it as a reference
+only; its DSP park and cache handling inform the no-reboot loader.
 
 ## Saved work
 
