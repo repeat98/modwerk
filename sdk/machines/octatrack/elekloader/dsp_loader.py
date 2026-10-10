@@ -64,9 +64,10 @@ def receiver_source(text, null, table_words, probe=None, burn=0):
         text = text.replace(old, new)
     if burn:
         old = 'tallied:\n'
-        if text.count(old) != 1 or not 0 < burn < 4096:
-            raise ValueError('The DSP receiver changed, or a burn outside 1-4095 cycles.')
-        text = text.replace(old, old + '        rep     #%d\n        nop\n' % burn)
+        if text.count(old) != 1 or not 0 < burn < 4096 or burn % 2:
+            raise ValueError('The DSP receiver changed, or a burn not even and within 2-4094 cycles.')
+        # A DO loop, not rep: rep holds off interrupts while it repeats.
+        text = text.replace(old, old + '        do      #%d,burnt\n        nop\n        nop\nburnt:\n' % (burn // 2))
     for old, new, count in (('@NULL_INIT@', '$%x' % null[0], 1), ('@NULL_PROC@', '$%x' % null[1], 1),
                             ('@DLWORDS@', str(table_words), 3)):
         if text.count(old) != count:
@@ -183,10 +184,12 @@ def recipe(image, device, dsp, assemble, work, probe=None, burn=0):
             raise ValueError('Payload %s: the frame head is not the stock instruction the receiver replays.' % tag)
         # The receiver's size does not depend on its table's: every operand it moves is a long one.
         path = Path(work) / ('receiver-%s.asm' % tag)
-        path.write_text(receiver_source(RECEIVER.read_text(), null, 0, probe, burn))
+        # Core 0 only: with 2,000 more cycles a frame on both cores the unit hung at its logo (10 October 2026).
+        burned = burn if tag == 'A' else 0
+        path.write_text(receiver_source(RECEIVER.read_text(), null, 0, probe, burned))
         size = len(assemble(str(path))[0])
         table = hi - origin - size
-        path.write_text(receiver_source(RECEIVER.read_text(), null, table, probe, burn))
+        path.write_text(receiver_source(RECEIVER.read_text(), null, table, probe, burned))
         code, labels, relocations = assemble(str(path))
         # The least arena that still runs every stock effect on its own: the largest, DARK REV.
         if len(code) != size or labels['dltable'] != size or table < SAVED + max(len(s['words']) for s in stock.values()):

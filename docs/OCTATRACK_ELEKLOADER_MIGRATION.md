@@ -1195,6 +1195,40 @@ reference for the layout; the code is Modwerk's.
 - Not yet: the sound of loaded stock effects against stock (a null test on the
   main out), the time from pick to sound, and a full stock project on the unit.
 
+**DSP load meter, core 0** (`128c1bca` and the core-0 burn after it). Stock's
+own main loop on core 0 (P:$4b–$53) polls DMA 2 for the next half buffer and
+counts its idle iterations in b; the frame code stores the count at X:$3f81
+(P:$92). The receiver runs at the frame head before that store, so it keeps
+each 1,024-frame window's least, most, summed and missed (no idle) counts in
+program memory. `npm run device -- meter 0` reads the last window back with
+PEEK. Calibrated on the unit with `--dsp-burn` (core 0 spends N more cycles a
+frame in a DO loop of `nop`s), on the same project, stopped:
+
+| Base | Burn | Idle iterations (least / mean / most) | Missed |
+| --- | --- | --- | --- |
+| `dsp3-S3` | none | 1,890 / 1,920.7 / 1,922 | 0 |
+| `dsp3-C1` | 1,000 cycles | 1,841 / 1,870.2 / 1,872 | 0 |
+| `dsp3-C2` | 2,000 cycles | 1,790 / 1,820.3 / 1,822 | 0 |
+
+So one idle iteration is 20.0 cycles on the chip (19 by the instruction
+table; the peripheral read costs one more). Frames run at about 2,759 a
+second: 16 samples at 44.1 kHz. With the board's measured clock (4,532 cycles
+a sample, 72,520 a frame), that project leaves core 0 about 38,400 cycles a
+frame idle (2,400 a sample) and keeps it busy for about 34,100 (2,130 a
+sample, 47%): stock's own work, FILTER on T5–T8 and DARK REV on T5. The idle
+count covers only the main loop's wait; the frame's own waits for the host
+(P:$97) and DMA (P:$a3) count as busy, so this is conservative. Core 1 keeps
+no idle count (it waits on a flag from core 0 at P:$57 and P:$8d); measuring
+it needs a counting wait patched in there. Not yet: playback, busy projects,
+distributions beyond least/mean/most, and core 1.
+
+A first calibration build burned with `rep` on both cores (`dsp3-B2`,
+2,000 cycles a frame): the unit hung at its Elektron logo after the RAM boot
+and needed a power cycle. The emulator ran the same build without trouble.
+Either core 1 had no room for 2,000 more cycles, or `rep`, which holds off
+interrupts while it repeats, starved the DMA interrupts; not separated. The
+burn is now core 0 only and interruptible.
+
 **Memory policy (owner decision).** The allocator admits the effects a target
 actually selects. Room goes to effects in use only: what no slot runs is
 freed. A stock pick can therefore be refused when modules hold the room. The

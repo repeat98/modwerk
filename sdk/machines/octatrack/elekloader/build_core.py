@@ -312,7 +312,7 @@ def main():
     parser.add_argument('--dsp-loader', action='store_true',
                         help='Load every DSP effect, stock and module, on demand (needs ELEKLOADER_DSP_ASM, Node 24).')
     parser.add_argument('--dsp-burn', type=int, default=0,
-                        help='with --dsp-loader, calibration only: the receiver spends this many more cycles (1-4095) every frame.')
+                        help='with --dsp-loader, calibration only: core 0\'s receiver spends this many more cycles (1-4095) every frame.')
     args = parser.parse_args()
     os.environ['ELEKLOADER_CROSS'] = args.cross
     upstream = args.upstream.resolve()

@@ -132,6 +132,12 @@ Static E-Verb and dynamic E-Verb share effect id 27, so installing E-Verb
 started an upload at once on a project that already used it. Test the loader
 on a blank project first.
 
+**Don't burn DSP time with `rep`, and not on core 1 without measuring it.**
+A calibration build spending 2,000 more cycles a frame with `rep` on both cores
+hung the unit at its logo (`dsp3-B2`); the emulator ran it. The same amount in
+an interruptible DO loop on core 0 alone was fine. `rep` holds off interrupts
+while it repeats, and core 1's headroom is not measured yet.
+
 ## The emulator and the tools
 
 What `ot_emu` does not show:
