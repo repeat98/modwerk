@@ -12,6 +12,7 @@
 //   npm run device -- key PLAY | FUNC+PLAY | 0x27   # development bases (build_core.py --dev)
 //   npm run device -- screen [--png FILE]           # the display, in block characters or as a 4x PNG
 //   npm run device -- state                         # stopped / playing, recording
+//   npm run device -- loader                        # the DSP loader's counters (--dsp-loader bases)
 //   npm run device -- enc A+3 | LEVEL-1 | fader 128 # encoders A-F and LEVEL, the crossfader
 //
 // --emulator drives ot_emu's USB bench socket instead (it enumerates the device
@@ -37,10 +38,10 @@ const { values, positionals: [command, file] } = parseArgs({ allowPositionals: t
   png: { type: 'string' },
 } })
 const seconds = Number(values.seconds)
-if (!['status', 'try', 'remove', 'lifecycle', 'boot', 'key', 'screen', 'state', 'enc', 'fader'].includes(command) || (['try', 'boot', 'key', 'enc', 'fader'].includes(command) && !file) ||
-  (['status', 'lifecycle', 'screen', 'state'].includes(command) && file) ||
+if (!['status', 'try', 'remove', 'lifecycle', 'boot', 'key', 'screen', 'state', 'enc', 'fader', 'loader'].includes(command) || (['try', 'boot', 'key', 'enc', 'fader'].includes(command) && !file) ||
+  (['status', 'lifecycle', 'screen', 'state', 'loader'].includes(command) && file) ||
   !Number.isInteger(seconds) || seconds < 1 || seconds > 3600) {
-  console.error('Usage: device.mjs status | try MODULE.mwrm [--seconds 1-3600] [--accept] | remove [MODULE.mwrm] [--accept] | lifecycle | boot BUILD_DIR | key NAME[+NAME] | screen | state | enc A+3 | fader 0-255 [--socket PATH] [--emulator]')
+  console.error('Usage: device.mjs status | try MODULE.mwrm [--seconds 1-3600] [--accept] | remove [MODULE.mwrm] [--accept] | lifecycle | boot BUILD_DIR | key NAME[+NAME] | screen | state | loader | enc A+3 | fader 0-255 [--socket PATH] [--emulator]')
   process.exit(2)
 }
 
@@ -146,6 +147,13 @@ try {
     const position = Number(file)
     if (!Number.isInteger(position) || position < 0 || position > 255) throw new Error('Use fader 0-255.')
     await devIn(8, 0x40 | position << 8, 1); process.exit(0)
+  }
+  if (command === 'loader') {
+    const bytes = await devIn(9, 0, 60), view = new DataView(bytes.buffer, bytes.byteOffset, 60)
+    const names = ['frames', 'accepted0', 'accepted1', 'rejected0', 'rejected1', 'errors', 'probe', 'stage', 'job0', 'job1',
+      'pool0', 'pool1', 'refused', 'missing', 'used']
+    console.log(Object.fromEntries(names.map((name, i) => [name, name.startsWith('job') ? view.getInt32(4 * i) : view.getUint32(4 * i)])))
+    process.exit(0)
   }
   if (command === 'state') { const [stopped, recording] = await devIn(6, 0, 2); console.log(stopped ? 'stopped' : 'playing', recording ? '(recording)' : ''); process.exit(0) }
   // A whole OS image takes the unit (and far longer the emulator) a while to hash.

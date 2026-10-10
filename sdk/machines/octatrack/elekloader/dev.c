@@ -9,6 +9,8 @@
  *   PANEL  0xC1, bRequest 8, wValue = first | second << 8, wLength 1: an
  *          encoder turn {0x30 | encoder 0..6, signed delta} or the fader
  *          {0x40, 0..255} as the panel sends it; replies 1.
+ *   LOADER 0xC1, bRequest 9, wValue 0, wLength 60 (bases built with
+ *          --dsp-loader): 15 big-endian words of the DSP loader's state.
  *   SCREEN 0xC1, bRequest 7, wValue 0, wLength 1028: "MWLC" and the last
  *          composed 128x64 frame (ev_draw: 8 bytes a column, bit 7 = row 0).
  *
@@ -16,6 +18,12 @@
 #include "boot.h"
 #include "usb_base.h"
 #include "loader.h"
+#ifdef MODWERK_DSP_LOADER
+#include "transfer.h"
+#include "selection.h"
+uint32_t modwerk_dsp_used(void);
+extern volatile uint32_t modwerk_dsp_missing;
+#endif
 
 #define UNCACHED(p) ((uint8_t *)((uintptr_t)(p) + 0x08000000u))
 
@@ -55,6 +63,18 @@ uint32_t modwerk_dev_request(const uint8_t *s, const uint8_t **reply, uint8_t *o
         *reply = out;
         return 1;
     }
+#ifdef MODWERK_DSP_LOADER
+    /* LOADER: frames, accepted/rejected per core, errors, requests, the cores' job
+     * status (0 pending, 1 complete, -1 failure, -2 idle), pools, refusals, missing. */
+    if (s[1] == 9 && want == 60 && !s[2] && !s[3]) {
+        uint32_t w[15] = {dl_frames, dl_accepted[0], dl_accepted[1], dl_rejected[0], dl_rejected[1], dl_errors,
+                          dl_request_probe, dl_request_stage, (uint32_t)dl_job_status(0), (uint32_t)dl_job_status(1),
+                          dl_pool_words[0], dl_pool_words[1], dl_selection_refused, modwerk_dsp_missing, modwerk_dsp_used()};
+        for (unsigned i = 0; i < 60; ++i) out[i] = (uint8_t)(w[i / 4] >> (24 - 8 * (i % 4)));
+        *reply = out;
+        return 60;
+    }
+#endif
     if (s[1] == 7 && want == sizeof screen && !s[2] && !s[3]) {
         uint8_t *u = UNCACHED(screen);
         u[0] = 'M'; u[1] = 'W'; u[2] = 'L'; u[3] = 'C';

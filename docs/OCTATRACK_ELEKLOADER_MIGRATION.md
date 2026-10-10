@@ -541,6 +541,20 @@ repaired copy) captured the main out over USB: MAIN L/R peaking near
 (the tail after a remote STOP). The development loop needs no one at the
 unit now: RAM boot, keys and encoders, screen and state, and audio.
 
+### DSP loader: first hardware run (10 October 2026)
+
+A base with `--dsp-loader --dev`, RAM-booted on the owner's MKII from the
+flashed `usbtest9`, played normally before any module was involved
+(recorded over USB audio). The owner's project already references effect id
+27 (E-Verb's, most likely from a static E-Verb build). Installing E-Verb
+started its upload to core 0 at once (`npm run device -- loader`: job 0
+pending), and from that moment the loader's frame counter stood still (42857
+for four seconds and on): no sound, the sequencer stuck on its first step,
+the ColdFire, UI and USB unaffected, no error counted. A power cycle
+restored the unit. The upload handshake never completes on a real core; it
+completes in `ot_emu`. Not fixed yet: the upload needs a timeout that aborts
+and restores frame processing, so a stuck job can never freeze audio.
+
 ### Windows without a driver (10 October 2026)
 
 The base reports USB 2.10 from its own copy of the device descriptor (one
