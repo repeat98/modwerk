@@ -679,6 +679,34 @@ DELAY. Still open: core 1 stops frames on its first packet, with no eDMA
 error this time (A1x's probe 1; most likely the shared host port switching
 back to core 0 mid transfer), and the P-write mismatch on core 0.
 
+Later builds corrected that reading. PEEK (`ecc78e0f`) showed the program
+words stick, so the fifth packet is refused before anything is written, not
+by the read-back. `dsp2-AB2` (`98cad787`, identity `cd198f81…`, flash-safety
+check passed, RAM-booted on a blank project):
+
+- Core 0, E-Verb picked on T5: refused at the fifth packet again, frames and
+  audio running. The receiver's record is `$020003`, count 24, offset 136: the
+  bounds-or-opcode branch, for a WRITE whose recorded opcode, count and offset
+  are all in range (offset + count 160 of the 2245-word table). The checksum
+  passed and nothing overran (`pin7` equal to frames, no straddles), so the
+  torn-packet theory is out. The receiver masks each word with `and #$ffff`
+  and then compares the whole accumulator, and `and` leaves A2 stale
+  (Octabam's trap): a word with bit 23 set would be recorded in range and fail
+  the compare. Unconfirmed.
+- Core 1 through the new path (its packet right after stock's state-2 push to
+  core 1): `probe 1` froze the unit as before (frames stopped at 38862 in
+  state 7, both TCD CSRs `DONE`, no eDMA error, one stall, two words drained,
+  the probe timed out), with `core1Sent` 0: the loader had not sent core 1 a
+  packet. Arming the job, not delivering it, stops the frames.
+- Rebinding on both cores (item D) is still unverified: the emulator runner
+  started node in the wrong directory, and its rerun lacked the package mount.
+
+Next, untested: compare a clean accumulator in the receiver and record bits
+16 to 23 of words 2, 4 and 5; for core 1, read what the state-7 path does
+while a core-1 job is pending before the send. DSP-loader work stopped in
+this session after these runs; the unit was returned to the flashed
+`usbtest9`.
+
 ### Windows without a driver (10 October 2026)
 
 The base reports USB 2.10 from its own copy of the device descriptor (one

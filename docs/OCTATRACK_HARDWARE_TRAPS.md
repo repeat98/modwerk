@@ -101,16 +101,23 @@ collision instead of relying on the watchdog.
 
 **Core 1 must not receive packets where core 0 does.** A packet to core 1
 at the loader's frame hook completed (TCD0 DONE, no eDMA error) and core 1's
-frame chain died, in either memory bank. Core 1 has to be written where
-stock itself writes to it. Open; see the migration record.
+frame chain died, in either memory bank. Moving the send to right after
+stock's own state-2 push to core 1 (`dsp2-AB2`) froze it too, and there the
+loader had sent nothing to core 1 yet (`core1Sent` 0, frames stopped in
+state 7): what arming a core-1 job changes before the send is the suspect,
+not the packet. Open.
 
 **E-Verb's upload to core 0 is refused at its fifth packet, before anything
-is written.** It was refused every time, with frames and audio running. A
-build that records the first program word read back wrong (`dsp2-A1`) found
-none, and its read-back check never failed: the fifth packet was refused
-earlier, by its own packet checksum or a bounds check. The leading theory is
-a torn packet: the loader's per-frame work stretches stock's frame chain, so
-core 0's receiver can read the mailbox while eDMA is still writing it. Open.
+is written.** It was refused every time, with frames and audio running. Its
+refusal record (`dsp2-AB2`) is `$020003`, count 24, offset 136: the
+bounds-or-opcode branch refused a WRITE whose opcode, count and offset, as
+recorded, are all in range (offset + count 160 of a 2245-word table). Its
+checksum passed and no frame overran (`pin7` = frames, no straddles), so it
+was not torn. The receiver records each word masked with `and #$ffff` but
+compares the whole accumulator, and `and` leaves A2 stale (Octabam's own
+trap): a word with bit 23 set would look right in the record and fail the
+compare. Unconfirmed; the next build should compare a clean accumulator and
+record bits 16 to 23 of words 2, 4 and 5. Open.
 
 **A project that used a static module triggers its load at install.**
 Static E-Verb and dynamic E-Verb share effect id 27, so installing E-Verb
