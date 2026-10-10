@@ -133,7 +133,8 @@ DSP_EDITS = {
                     '    }\n'
                     '}\n')),
     # Writes only: no read phases, and no write to a core with no packet waiting.
-    'hooks.s': (('        .global dl_state7, dl_tick', '        .global dl_state7, dl_tick, dl_phase, dl_rx_nbytes'),
+    'hooks.s': (('        .global dl_state7, dl_tick', '        .global dl_state7, dl_tick, dl_phase, dl_rx_nbytes, dl_early'),
+                ('dl_rx_nbytes: .long 0\n', 'dl_rx_nbytes: .long 0\ndl_early: .long 0     | state-7 visits with channel 0 still running\n'),
                 ('        cmpi.l #5,%d2', '        cmpi.l #3,%d2'),
                 ('dl_write:\n        subq.l #1,%d2\n',
                  'dl_write:\n        subq.l #1,%d2\n'
@@ -146,6 +147,47 @@ DSP_EDITS = {
                  '        move.l dl_phase,%d2\n'
                  '        bra dl_next\n'
                  'dl_send:\n')),
+}
+# The state-7 entry (build_core.py --dsp-hook). Stock can visit state 7 while its last
+# transfer still runs on eDMA channel 0: in state 5 it starts state 6's transfer inline,
+# and the stale completion of state 5 then dispatches state 7 early. Stock's state 7 only
+# unmasks, so that is harmless to stock, but a packet started then rewrites channel 0 and
+# the host port under stock's transfer (the probe-A freeze, 10 October 2026, inferred).
+# Both count those visits (dl_early). guard: such a visit only unmasks, as stock's does,
+# and the packet goes at the next visit. usbin: Octabam's USB AUDIO IN entry (no channel-1
+# acknowledge, no channel-1 NBYTES save), unguarded, for comparison on the unit.
+STATE7_ENTRY = ('        moveq #1,%d0\n'
+                '        move.b %d0,0xfc04401c   | acknowledge our channel-1 completion too\n'
+                '        move.l dl_phase,%d2\n'
+                '        bne dl_next\n')
+DSP_HOOK_EDITS = {
+    'guard': ((STATE7_ENTRY,
+               '        moveq #1,%d0\n'
+               '        move.b %d0,0xfc04401c   | acknowledge our channel-1 completion too\n'
+               '        move.w 0xfc04501e,%d0   | TCD0 CSR: DONE (bit 7) clear while channel 0 runs\n'
+               '        tst.b %d0\n'
+               '        bmi dl_idle\n'
+               '        addq.l #1,dl_early\n'
+               '        move.l dl_phase,%d2\n'
+               '        bne dl_return           | our own transfer still runs: its completion comes\n'
+               '        movem.l (%sp),%d2-%d7/%a2-%a6\n'
+               '        lea 44(%sp),%sp\n'
+               '        moveq #1,%d1\n'
+               '        move.b %d1,0xfc04801d   | what stock\'s early visit does\n'
+               '        jmp DONE\n'
+               'dl_idle:\n'
+               '        move.l dl_phase,%d2\n'
+               '        bne dl_next\n'),),
+    'usbin': ((STATE7_ENTRY,
+               '        move.w 0xfc04501e,%d0\n'
+               '        tst.b %d0\n'
+               '        bmi 1f\n'
+               '        addq.l #1,dl_early\n'
+               '1:\n'
+               '        move.l dl_phase,%d2\n'
+               '        bne dl_next\n'),
+              ('        move.l 0xfc045028,%d0\n        move.l %d0,dl_rx_nbytes\n', ''),
+              ('        move.l dl_rx_nbytes,%d0\n        move.l %d0,0xfc045028\n', '')),
 }
 
 
@@ -214,6 +256,8 @@ def main():
     parser.add_argument('--cross', default='m68k-elf-', help='Use Modwerk\'s reviewed GNU toolchain.')
     parser.add_argument('--dev', action='store_true',
                         help='Development base: drive and watch the unit over USB (dev.c) and stream MAIN/CUE as USB audio. Never for users.')
+    parser.add_argument('--dsp-hook', choices=tuple(DSP_HOOK_EDITS), default='guard',
+                        help="with --dsp-loader: the state-7 entry; guard (default) or Octabam USB AUDIO IN's, unguarded")
     parser.add_argument('--dsp-probe', choices=('A', 'B'),
                         help='Hardware probe of the DSP loader (dsp_loader.PROBES): A delivery only, B answer only.')
     parser.add_argument('--dsp-loader', action='store_true',
@@ -286,7 +330,7 @@ def main():
         loader_dsp = importlib.util.module_from_spec(spec); spec.loader.exec_module(loader_dsp)
         for name in DYNLOAD_SOURCES + ('hooks.s',):
             text = (DYNLOAD / name).read_text()
-            for old, new in DSP_EDITS.get(name, ()):
+            for old, new in DSP_EDITS.get(name, ()) + (DSP_HOOK_EDITS[args.dsp_hook] if name == 'hooks.s' else ()):
                 if text.count(old) != 1:
                     raise ValueError('Octabam DSP loader seam changed in %s; review the port.' % name)
                 text = text.replace(old, new)
@@ -328,7 +372,7 @@ def main():
     if args.dsp_loader:
         configuration.update(fx1=['NONE', *rows['fx1']], fx2=['NONE', *rows['fx2']], stockfx2=False,
                              dsp=dict(loader='dsp-dynload-1', harvest=list(loader_dsp.HARVEST), rows=list(loader_dsp.MODULES),
-                                      allowance=DSP_ALLOWANCE, reserve=DSP_RESERVE, probe=args.dsp_probe, arena=[dsp_layout[t]['tableWords'] - loader_dsp.SAVED for t in 'AB']))
+                                      allowance=DSP_ALLOWANCE, reserve=DSP_RESERVE, probe=args.dsp_probe, hook=args.dsp_hook, arena=[dsp_layout[t]['tableWords'] - loader_dsp.SAVED for t in 'AB']))
     identity = sha(json.dumps(configuration, separators=(',', ':')).encode())
     values = dict(build=identity[:16], os='1.40C', modules='', configuration=identity,
                   source=source_hash, fx1=';'.join(configuration['fx1']),

@@ -165,7 +165,8 @@ static void recover(void)
         for (unsigned n = 0; n < 1024u && HOST_ISR & 1u; ++n) { (void)HOST_RXL; modwerk_dsp_drained = modwerk_dsp_drained + 1; }
     }
     DSP_SELECT = 0;
-    if (dl_phase) { *(volatile uint32_t *)0xfc045028u = dl_rx_nbytes; dl_phase = 0; }
+    if (dl_phase && dl_rx_nbytes) *(volatile uint32_t *)0xfc045028u = dl_rx_nbytes; /* none saved with --dsp-hook usbin */
+    dl_phase = 0;
     dl_abort();
     dl_residency_enabled = 0;
     *(volatile uint8_t *)0xfc04801du = 1; /* INTC0 CIMR: the frame interrupt */
@@ -223,18 +224,18 @@ void modwerk_dsp_tick(void)
 extern volatile uint32_t dl_accepted[2], dl_rejected[2], dl_errors, dl_pool_base[2], dl_pool_words[2];
 extern volatile uint32_t dl_selection_requested, dl_selection_completed, dl_selection_refused, dl_selection_cancelled;
 extern volatile uint32_t dl_residency_commits, dl_residency_failures, dl_residency_rollbacks, dl_residency_words[2];
-extern volatile uint32_t dl_unguarded, dl_parked, dl_reinit;
+extern volatile uint32_t dl_early, dl_parked, dl_reinit;
 uint32_t dl_manager_state(void);
 unsigned modwerk_dsp_report(uint32_t *out)
 {
     const uint32_t words[DSP_REPORT_WORDS] = {
-        2, dl_frames, dl_phase, (uint32_t)dl_job_status(0), (uint32_t)dl_job_status(1), modwerk_dsp_last_flags,
+        3, dl_frames, dl_phase, (uint32_t)dl_job_status(0), (uint32_t)dl_job_status(1), modwerk_dsp_last_flags,
         dl_accepted[0], dl_accepted[1], dl_rejected[0], dl_rejected[1], dl_errors, modwerk_dsp_stalls, modwerk_dsp_drained,
         dl_residency_enabled, dl_manager_state(), modwerk_dsp_watch_ticks, modwerk_dsp_probes, modwerk_dsp_probes_ok,
         modwerk_dsp_probes_failed,
         dl_selection_requested, dl_selection_completed, dl_selection_refused, dl_selection_cancelled,
         dl_residency_commits, dl_residency_failures, dl_residency_rollbacks, dl_residency_words[0], dl_residency_words[1],
-        dl_unguarded, dl_parked, dl_reinit, modwerk_dsp_missing, modwerk_dsp_used(), modwerk_dsp_dry()};
+        dl_early, dl_parked, dl_reinit, modwerk_dsp_missing, modwerk_dsp_used(), modwerk_dsp_dry()};
     for (unsigned i = 0; i < DSP_REPORT_WORDS; ++i) out[i] = words[i];
     return DSP_REPORT_WORDS;
 }

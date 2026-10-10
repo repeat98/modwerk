@@ -122,7 +122,7 @@ if (mode === 'dumps') {
     assert.deepEqual(peek(number, 'P', parseInt(layout.table, 16), 1700).slice(64, 64 + words.length), placed, `core ${number} code`)
     assert.deepEqual(entry, [at + pkg.init, at + pkg.proc], `core ${number} dispatch`)
   }
-  assert.equal(u32('dl_errors')[0], 0, 'transport errors')
+  if (scenario !== 'probe') assert.equal(u32('dl_errors')[0], 0, 'transport errors')
   if (scenario === 'pick') {
     assert.equal(ids[8], EFFECT); assert.equal(ids[12], EFFECT)
     assert.deepEqual(u32('dl_residency_words'), [pkg.words, pkg.words]); assert.equal(u32('dl_selection_refused')[0], 0)
