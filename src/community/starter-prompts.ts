@@ -65,6 +65,29 @@ export function startersFor(machine: StarterMachine) {
   return machine === 'octatrack' ? OCTATRACK : DEVICES_BY_ID[machine]?.sdk ? DIGI : INTEGRATION
 }
 
+const REPOSITORY = 'https://github.com/repeat98/modwerk'
+
+/** Opens every prompt. A coding agent carries on; a plain chat assistant, which cannot build a module, must guide a newcomer through setup instead. */
+function setupGuidance(repository = REPOSITORY, login = '') {
+  return [
+    'Read this first: which kind of assistant are you?',
+    'A) A coding assistant that can edit files and run commands in my Modwerk checkout (Claude Code, Codex, Cursor, Copilot agent mode or any assistant in an IDE or terminal): skip this block and do not walk me through setup. Only tell me what is missing (git, Node 24, my fork), then carry on with the instructions below.',
+    'B) A chat assistant without access to my files and a terminal (ChatGPT, Gemini, Claude on the web): you cannot build a module. Do not propose a module, design its controls, ask about my idea or write code. Your only job is to get me set up. Reply now with one short sentence that we start with the setup, and ask which operating system I use. Then guide me one step at a time and wait for me to confirm each step before the next. Assume I have never used GitHub or a terminal: explain each step in plain words with exact clicks and links, and show me how to open a terminal on my system.',
+    '  1. A free GitHub account (github.com/signup). Ask for my login and use it as the module author.',
+    '  2. Fork ' + repository + ' with the Fork button, install git if I have none, then clone my fork and install its packages (Node 24 through nvm; nvm-windows on Windows):',
+    ...cloneCommands(repository, login).split('\n').map(line => '     ' + line),
+    '  3. A coding agent that works on files in that folder: Claude Code (Claude subscription) or Codex (ChatGPT plan), as a desktop app, IDE extension or terminal tool. Octatrack native builds also need Python 3.10+, Docker and my own stock OS 1.40C, which stays on my computer and is never sent to you.',
+    '  4. Open the cloned folder in that agent, then tell me to copy this whole prompt from my first message and paste it there. Then stop: the agent takes over.',
+  ]
+}
+
+const AGENT_ONLY = 'Instructions for the coding agent. A chat assistant must not act on anything below, only on the setup above.'
+const SETUP_REMINDER = 'Reminder: if you are a chat assistant, nothing above applies yet. Reply with the setup guidance only, starting with my operating system.'
+
+function withSetup(body: string[], repository: string, login: string) {
+  return [...setupGuidance(repository, login), '', AGENT_ONLY, '', ...body, '', SETUP_REMINDER].join('\n')
+}
+
 const IDEA_PLACEHOLDER = '<describe your idea: what it does, its controls, and how it should sound or behave>'
 const PORT_PLACEHOLDER = '<name the module and link its source>'
 
@@ -76,15 +99,15 @@ export function starterReading(machine: StarterMachine, starter: Starter) {
     : [...files, 'docs/ADD_A_MACHINE.md', 'sdk/machines/README.md', 'sdk/machines/' + machine + '/machine.json']
 }
 
-export function starterPrompt(machine: StarterMachine, starter: Starter, idea = '', login = '') {
-  if (!DEVICES_BY_ID[machine]?.sdk) return integrationPrompt(machine, idea, login)
+export function starterPrompt(machine: StarterMachine, starter: Starter, idea = '', login = '', repository = REPOSITORY) {
+  if (!DEVICES_BY_ID[machine]?.sdk) return integrationPrompt(machine, idea, login, '', '', repository)
   const name = STARTER_MACHINES.find(item => item.id === machine)!.name
   const author = login.trim().replace(/^@/, '') || '<your-github-login>'
   const description = idea.trim() || (starter.port ? PORT_PLACEHOLDER : IDEA_PLACEHOLDER)
   const reading = starterReading(machine, starter).map(file => '- ' + file + (file === 'sdk/octabam/AGENTS.md' ? ' (the DSP and ColdFire traps)' : file === 'docs/ADD_A_MODULE.md' ? ' (the "' + (machine === 'octatrack' ? 'Octatrack' : 'Digitakt and Digitone') + '" section)' : ''))
   const scaffold = machine === 'octatrack' ? 'npm run module:new -- <id> --kind dsp|coldfire --author ' + author : 'npm run module:new -- <id> --machine ' + machine + ' --author ' + author
   const create = starter.port ? 'Create the module folder as the guide describes for a port.' : 'Scaffold it with `' + scaffold + '`.'
-  return [
+  return withSetup([
     'I am working in my fork of Modwerk, which builds custom firmware modules for Elektron instruments. Help me make a module for the ' + name + '.',
     '',
     starter.task.replace('{idea}', description),
@@ -95,14 +118,14 @@ export function starterPrompt(machine: StarterMachine, starter: Starter, idea = 
     'Use Node 24 and npm ci. Propose a module id, its controls and the exact button steps to reach it on the unit. Wait for my OK before implementation. ' + create,
     '',
     developerWorkflowPrompt('create'),
-  ].join('\n')
+  ], repository, login)
 }
 
-export function updatePrompt(machine: StarterMachine, module = '', idea = '', issue = '') {
-  if (!DEVICES_BY_ID[machine]?.sdk) return integrationPrompt(machine, idea, '', module, issue)
+export function updatePrompt(machine: StarterMachine, module = '', idea = '', issue = '', repository = REPOSITORY, login = '') {
+  if (!DEVICES_BY_ID[machine]?.sdk) return integrationPrompt(machine, idea, login, module, issue, repository)
   const name = STARTER_MACHINES.find(item => item.id === machine)!.name
   const reading = starterReading(machine, { ...startersFor(machine)[0], guides: [] })
-  return [
+  return withSetup([
     'I am working in my Modwerk fork. Help me fix or update ' + (module.trim() || '<module id or source link>') + ' for the ' + name + '.',
     'Change: ' + (idea.trim() || '<describe the change or investigate the linked report>'),
     ...(issue.trim() ? ['Fix issue ' + issue.trim()] : []),
@@ -110,13 +133,13 @@ export function updatePrompt(machine: StarterMachine, module = '', idea = '', is
     'Before changing code, read:', ...reading.map(file => '- ' + file),
     'Read the module’s manifest, README, TESTING and its category guide before implementation. Use Node 24 and npm ci.',
     '', developerWorkflowPrompt('update'),
-  ].join('\n')
+  ], repository, login)
 }
 
-function integrationPrompt(machine: StarterMachine, idea = '', login = '', module = '', issue = '') {
+function integrationPrompt(machine: StarterMachine, idea = '', login = '', module = '', issue = '', repository = REPOSITORY) {
   const device = DEVICES_BY_ID[machine]
   const name = deviceTitle(device)
-  return [
+  return withSetup([
     'I am working in my Modwerk fork. Help me research and prepare instrument support for the ' + name + '.',
     'Goal: ' + (idea.trim() || '<describe the module or instrument support you want>'),
     ...(module.trim() ? ['Requested module/change: ' + module.trim()] : []),
@@ -134,7 +157,7 @@ function integrationPrompt(machine: StarterMachine, idea = '', login = '', modul
     'Follow docs/ADD_A_MACHINE.md for profile, platform, toolchain, compatibility and browser integration. Keep stock firmware and extracted bytes private; do not mark unsupported milestones done or invent hardware results. Regenerate the machine registry through npm run machines:generate; never edit generated files by hand.',
     'Only after the platform is integrated and qualified may we scaffold, build or publish a module. The following module workflow describes that later stage; it does not establish present support:',
     '', developerWorkflowPrompt('create'),
-  ].join('\n')
+  ], repository, login)
 }
 
 export function cloneCommands(repository: string, login = '') {
