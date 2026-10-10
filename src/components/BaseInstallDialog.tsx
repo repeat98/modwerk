@@ -3,7 +3,7 @@ import { saveFirmware } from '../config/firmware-filename'
 import type { OctatrackLink } from '../engine/elekloader/octatrack-link'
 import { useOctatrackLink } from '../hooks/useOctatrackLink'
 import { RiskAcceptance } from './ConfigurationLayout'
-import { Icon, type IconName } from './Icon'
+import { Icon } from './Icon'
 import './octatrack-link.css'
 
 export interface BaseImage { buffer: ArrayBuffer; sha256: string }
@@ -11,14 +11,30 @@ export interface BaseImage { buffer: ArrayBuffer; sha256: string }
 const LAUNCH_HOLD_SECONDS = 10
 // What the release prompt promises. Every line must be true on release day: several modules at once, the
 // stress tests and the automatic reports are still to be built (docs/OCTATRACK_ELEKLOADER_MIGRATION.md).
-const BENEFITS: [IconName, string, string][] = [
-  ['play', 'No card, no restart', 'Send modules over USB in seconds.'],
-  ['swap', 'Try, then keep', 'Every module starts as a trial. Undo any time.'],
-  ['grid', 'As many as fit', 'Load as many modules as the firmware allows.'],
-  ['shield', 'Stress-tested for you', 'Automatic checks run on your unit before you keep a module.'],
-  ['message', 'Bugs report themselves', 'Failures go to the module’s author. You see what’s sent.'],
-  ['lock', 'Your music stays yours', 'Checks never touch your projects, samples or audio.'],
+const ALSO_NEW = [
+  'You can run as many modules at once as the firmware can fit.',
+  'Modules share the DSP memory much better now, so more effects fit side by side.',
+  'Every module gets stress-tested on your Octatrack before you keep it.',
+  'If something crashes, a bug report goes straight to the module’s author. You’ll see what gets sent.',
 ]
+// What the site does, in the voice of `npm run device`. No shell prompt: there is no such command to type.
+const LOG: [string, string][] = [['usb', 'OCTATRACK MKII found · base 7c2e91d0'], ['send', 'preview-vol'], ['trial', 'running · unplug to undo'], ['keep', 'done. no card, no reboot']]
+
+/** The flow as a log typing itself out, a line a second, in the module previews' screen colours. */
+function LinkLog() {
+  const [shown, setShown] = useState(() => matchMedia('(prefers-reduced-motion: reduce)').matches ? LOG.length : 1)
+  useEffect(() => {
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    const timer = window.setInterval(() => setShown(count => count > LOG.length + 1 ? 1 : count + 1), 1000) // two beats on the full log, then again
+    return () => window.clearInterval(timer)
+  }, [])
+  return <div className="module-preview link-log" aria-hidden="true">
+    <div className="preview-label"><span>NEW</span><span className="preview-led" /></div>
+    <ol className="link-log-lines">{LOG.map(([verb, text], i) => <li key={verb} className={i < shown ? 'is-shown' : undefined}>
+      <b>{verb}</b><span>{verb === 'send' && <span className="link-log-bar"><span /></span>}{text}{i === Math.min(shown, LOG.length) - 1 && <span className="link-log-cursor" />}</span>
+    </li>)}</ol>
+  </div>
+}
 
 /**
  * The one place to install the Modwerk base. The USB card opens it at any time; at
@@ -63,16 +79,19 @@ export function BaseInstallDialog({ link, launch = false, firmwareReady, onChoos
   const step = (done: boolean, number: number) => <span className="link-step-marker" aria-hidden="true">{done ? <Icon name="check" size={14} /> : number}</span>
 
   return <dialog ref={dialog} className="base-install-dialog" aria-labelledby="base-install-title" aria-describedby="base-install-intro" onCancel={event => { event.preventDefault(); if (canClose) finish() }} onClose={() => { if (!finished.current && !dialog.current?.open) onClose(false) }}>
-    <header className="base-install-header">
-      <div>{view === 'intro' && <p className="base-install-kicker">New on Modwerk</p>}<h2 id="base-install-title" tabIndex={-1}>{view === 'intro' ? 'Load modules over USB' : 'Install the Modwerk base'}</h2></div>
-      {canClose && <button type="button" className="icon-button" aria-label="Close" onClick={finish}><Icon name="close" size={18} /></button>}
-    </header>
+    {canClose && <button type="button" className="icon-button base-install-close" aria-label="Close" onClick={finish}><Icon name="close" size={18} /></button>}
     {view === 'intro' ? <>
-      <p id="base-install-intro" className="base-install-intro">Install the Modwerk base once. After that, everything happens right here.</p>
-      <ul className="base-install-benefits">{BENEFITS.map(([icon, title, line]) => <li key={title}><span className="base-install-benefit-icon" aria-hidden="true"><Icon name={icon} size={18} /></span><strong>{title}</strong><span>{line}</span></li>)}</ul>
-      <div className="base-install-needs"><span className="subtle">You need</span>{['Octatrack MKII', 'OS 1.40C file', 'USB cable'].map(need => <span key={need} className="pill">{need}</span>)}<span className={'pill' + (state.status === 'unsupported' ? ' is-missing' : '')}>Chrome or Edge on a computer</span></div>
-      {state.status === 'unsupported' && <p className="file-error" role="alert">This browser can’t connect over USB. Open Modwerk in Chrome or Edge on a computer to send modules.</p>}
+      <LinkLog />
+      <p className="base-install-kicker">A note from Jannik</p>
+      <h2 id="base-install-title" className="link-title" tabIndex={-1}>Modules over USB are here</h2>
+      <p id="base-install-intro" className="base-install-intro">No more copying files to the card and rebooting. Install the Modwerk base once, and from then on you send modules to your Octatrack straight from this page. Each one runs as a trial first: keep it, undo it, or just pull the cable.</p>
+      <p className="link-also">Also new:</p>
+      <ul className="link-promises">{ALSO_NEW.map(line => <li key={line}><span className="preview-led" aria-hidden="true" />{line}</li>)}</ul>
+      <p className="link-signoff">Have fun with it,<br />Jannik</p>
+      <p className={'link-needs' + (state.status === 'unsupported' ? ' is-missing' : '')}>You need an Octatrack MKII, your OS 1.40C file, a USB cable and Chrome or Edge on a computer.</p>
+      {state.status === 'unsupported' && <p className="file-error" role="alert">This browser can’t talk to USB devices. Open this page in Chrome or Edge on a computer.</p>}
     </> : <>
+    <header className="base-install-header"><h2 id="base-install-title" tabIndex={-1}>Install the Modwerk base</h2></header>
     <p id="base-install-intro" className="base-install-intro">Install it once from the card, like an OS update. {launch && <button type="button" className="text-button" onClick={() => setView('intro')}>What’s new?</button>}</p>
     <ol className="link-steps">
       <li className={download === 'done' ? 'is-complete' : undefined}>{step(download === 'done', 1)}<div className="link-step-body">
@@ -105,10 +124,10 @@ export function BaseInstallDialog({ link, launch = false, firmwareReady, onChoos
     <p className="link-hint">The original OS goes back on the same way. If the Octatrack doesn’t start, follow <a className="text-button" href="#faq" target="_blank" rel="noreferrer">recovery in the FAQ</a>.</p>
     </>}
     <footer className="base-install-footer">
-      <p className="link-hint">{found ? 'All set.' : 'You’ll find this on the Octatrack configuration page any time.'}</p>
+      <p className="link-hint">{found ? 'All set.' : 'It’s on the Octatrack configuration page whenever you want it.'}</p>
       <div className="base-install-actions">
-        <button type="button" className={'button ' + (found ? 'button-primary' : 'button-quiet')} disabled={!canClose} onClick={finish}>{found ? 'Done' : !launch ? 'Close' : hold ? `Not now (${hold})` : 'Not now'}</button>
-        {view === 'intro' && !found && <button type="button" className="button button-primary" onClick={() => setView('steps')}>Set it up<Icon name="arrow" size={16} /></button>}
+        <button type="button" className={'button ' + (found ? 'button-primary' : 'button-quiet')} disabled={!canClose} onClick={finish}>{found ? 'Done' : !launch ? 'Close' : hold ? `Later (${hold})` : 'Later'}</button>
+        {view === 'intro' && !found && <button type="button" className="button button-primary" onClick={() => setView('steps')}>Show me how<Icon name="arrow" size={16} /></button>}
       </div>
     </footer>
   </dialog>

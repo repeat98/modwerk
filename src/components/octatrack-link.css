@@ -35,16 +35,30 @@
 .base-install-footer { position: sticky; bottom: -28px; display: flex; align-items: center; justify-content: space-between; gap: 16px; margin: 22px -32px -28px; padding: 16px 32px; border-top: 1px solid var(--line); background: var(--surface); }
 .base-install-footer .button { min-width: 120px; }
 .base-install-actions { display: flex; gap: 8px; }
-.base-install-benefits { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 0 0 22px; padding: 0; list-style: none; }
-.base-install-benefits li { display: flex; flex-direction: column; gap: 6px; padding: 16px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface-raised); }
-.base-install-benefits strong { font-size: 14px; }
-.base-install-benefits span:last-child { color: var(--muted); font-size: 13px; line-height: 1.55; }
-.base-install-benefit-icon { display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; margin-bottom: 4px; border-radius: 9px; background: var(--accent-soft); color: var(--accent); }
-.base-install-needs { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
-.base-install-needs .pill.is-missing { border-color: #6a4348; background: #36272a; color: #e4b0b4; }
+.base-install-close { position: absolute; top: 14px; right: 14px; z-index: 1; }
+.base-install-header { padding-right: 40px; }
+.link-log { height: auto; margin: -28px -32px 24px; border-bottom: 1px solid var(--line); border-radius: 14px 14px 0 0; }
+.link-log-lines { margin: 0; padding: 12px 24px 22px; list-style: none; color: var(--text-secondary); font: 13px/2.1 var(--mono); }
+.link-log-lines li { display: grid; grid-template-columns: 64px minmax(0, 1fr); }
+.link-log-lines li:not(.is-shown) { visibility: hidden; }
+.link-log-lines b { color: var(--signal); font-weight: 400; }
+.link-log-bar { display: inline-block; width: 128px; height: 8px; margin-right: 12px; overflow: hidden; border-radius: 2px; background: rgba(var(--signal-rgb), .16); vertical-align: 0; }
+.link-log-bar > span { display: block; height: 100%; background: var(--signal); }
+.is-shown .link-log-bar > span { animation: link-bar .9s ease-out both; }
+.link-log-cursor { display: inline-block; width: 8px; height: 15px; margin-left: 8px; background: var(--signal); vertical-align: -2px; animation: link-blink 1s steps(1) infinite; }
+.link-title { font-size: 30px; letter-spacing: -.8px; outline: none; }
+.link-also { margin-bottom: 8px; color: var(--text); font-size: 14px; font-weight: 600; }
+.link-promises { display: grid; gap: 8px; margin: 0 0 20px; padding: 0; list-style: none; color: var(--text-secondary); font-size: 14px; line-height: 1.6; }
+.link-promises li { display: flex; align-items: baseline; gap: 12px; }
+.link-promises .preview-led { --signal: var(--accent); flex: none; width: 6px; height: 6px; opacity: 1; box-shadow: 0 0 8px var(--accent); transform: translateY(-2px); }
+.link-signoff { margin-bottom: 18px; color: var(--text-secondary); font-size: 14px; line-height: 1.6; }
+.link-needs { color: var(--faint); font-size: 12px; line-height: 1.6; }
+.link-needs.is-missing { color: #e4b0b4; }
+@keyframes link-bar { from { width: 0; } }
+@keyframes link-blink { 50% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .link-log * { animation: none !important; } }
 .base-install-dialog .file-error { margin: 12px 0 0; }
-@media (max-width: 760px) { .base-install-benefits { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media (max-width: 600px) { .base-install-dialog { padding: 22px 18px; } .base-install-footer { margin: 18px -18px -22px; padding: 14px 18px; bottom: -22px; } .base-install-footer .link-hint { display: none; } .base-install-actions, .base-install-footer .button { flex: 1; } .base-install-footer .button { min-width: 0; } .base-install-benefits { grid-template-columns: minmax(0, 1fr); gap: 8px; } .base-install-benefits li { display: grid; grid-template-columns: 34px minmax(0, 1fr); column-gap: 12px; padding: 12px; } .base-install-benefit-icon { grid-row: span 2; margin: 0; } }
+@media (max-width: 600px) { .base-install-dialog { padding: 22px 18px; } .base-install-footer { margin: 18px -18px -22px; padding: 14px 18px; bottom: -22px; } .base-install-footer .link-hint { display: none; } .base-install-actions, .base-install-footer .button { flex: 1; } .base-install-footer .button { min-width: 0; } .link-log { margin: -22px -18px 18px; } .link-log-lines { padding: 8px 16px 16px; font-size: 12px; } .link-log-lines li { grid-template-columns: 52px minmax(0, 1fr); } .link-log-bar { width: 72px; } .link-title { font-size: 26px; } }
 @keyframes link-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
 @media (prefers-reduced-motion: reduce) { .link-state .status-dot.is-live { animation: none; } }
 @media (max-width: 1100px) { .link-card { margin-bottom: 22px; } }
