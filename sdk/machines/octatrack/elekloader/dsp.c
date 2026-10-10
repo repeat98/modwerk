@@ -226,16 +226,26 @@ extern volatile uint32_t dl_selection_requested, dl_selection_completed, dl_sele
 extern volatile uint32_t dl_residency_commits, dl_residency_failures, dl_residency_rollbacks, dl_residency_words[2];
 extern volatile uint32_t dl_early, dl_parked, dl_reinit;
 uint32_t dl_manager_state(void);
+#define R8(a) (*(volatile uint8_t *)(a))
+#define R16(a) (*(volatile uint16_t *)(a))
+#define R32(a) (*(volatile uint32_t *)(a))
 unsigned modwerk_dsp_report(uint32_t *out)
 {
     const uint32_t words[DSP_REPORT_WORDS] = {
-        3, dl_frames, dl_phase, (uint32_t)dl_job_status(0), (uint32_t)dl_job_status(1), modwerk_dsp_last_flags,
+        4, dl_frames, dl_phase, (uint32_t)dl_job_status(0), (uint32_t)dl_job_status(1), modwerk_dsp_last_flags,
         dl_accepted[0], dl_accepted[1], dl_rejected[0], dl_rejected[1], dl_errors, modwerk_dsp_stalls, modwerk_dsp_drained,
         dl_residency_enabled, dl_manager_state(), modwerk_dsp_watch_ticks, modwerk_dsp_probes, modwerk_dsp_probes_ok,
         modwerk_dsp_probes_failed,
         dl_selection_requested, dl_selection_completed, dl_selection_refused, dl_selection_cancelled,
         dl_residency_commits, dl_residency_failures, dl_residency_rollbacks, dl_residency_words[0], dl_residency_words[1],
-        dl_early, dl_parked, dl_reinit, modwerk_dsp_missing, modwerk_dsp_used(), modwerk_dsp_dry()};
+        dl_early, dl_parked, dl_reinit, modwerk_dsp_missing, modwerk_dsp_used(), modwerk_dsp_dry(),
+        /* Where stock's frame chain stands (reads without side effects): the transfer machine's state and the
+         * frame interrupt's busy flag (stock RAM), INTC0 IPRL and IMRL, EPORT pin levels | edge flags | the
+         * DSP select, eDMA INT | ERR, TCD0 CSR | TCD1 CSR, eDMA ES. */
+        R32(0x46104d3eu), R32(0x46104d4eu), R32(0xfc048004u), R32(0xfc04800cu),
+        (uint32_t)R8(0xfc094005u) << 16 | (uint32_t)R8(0xfc094006u) << 8 | R8(0xfc0a400cu),
+        (uint32_t)R16(0xfc044026u) << 16 | R16(0xfc04402eu), (uint32_t)R16(0xfc04501eu) << 16 | R16(0xfc04503eu),
+        R32(0xfc044004u)};
     for (unsigned i = 0; i < DSP_REPORT_WORDS; ++i) out[i] = words[i];
     return DSP_REPORT_WORDS;
 }

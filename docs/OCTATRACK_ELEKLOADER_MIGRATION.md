@@ -628,6 +628,11 @@ flags. `long` sends 96 halfwords, USB AUDIO IN AB's length; the destination
 is already USB AUDIO IN's (X:$6320). A transfer without its host command,
 or a host command without its transfer, is not built: either leaves the
 host port out of step with stock's next push by construction.
+Report version 4 (42 words) adds where stock's frame chain stands after a
+freeze: the transfer machine's state, the frame interrupt's busy flag,
+INTC0's pending and mask registers, the EPORT pin levels and edge flags with
+the DSP select, eDMA's interrupt and error bits, both channels' CSR and
+eDMA's error status. All are read without side effects.
 
 ### Windows without a driver (10 October 2026)
 

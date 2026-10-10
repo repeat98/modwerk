@@ -158,12 +158,13 @@ try {
     process.exit(0)
   }
   if (command === 'report') {
-    const bytes = await devIn(11, 0, 136), view = new DataView(bytes.buffer, bytes.byteOffset, 136)
     const names = ['version', 'frames', 'phase', 'job0', 'job1', 'hostFlags', 'accepted0', 'accepted1', 'rejected0', 'rejected1',
       'errors', 'stalls', 'drained', 'residencyEnabled', 'manager', 'watchTicks', 'probesSent', 'probesAnswered', 'probesTimedOut',
       'selRequested', 'selCompleted', 'selRefused', 'selCancelled', 'resCommits', 'resFailures', 'resRollbacks',
-      'words0', 'words1', 'earlyVisits', 'parked', 'reinit', 'missing', 'used', 'dry']
-    const hex = new Set(['hostFlags', 'manager', 'used', 'dry'])
+      'words0', 'words1', 'earlyVisits', 'parked', 'reinit', 'missing', 'used', 'dry',
+      'frameState', 'frameBusy', 'intcIprl', 'intcImrl', 'eportPinFlagSelect', 'edmaIntErr', 'csr0csr1', 'edmaEs']
+    const bytes = await devIn(11, 0, 4 * names.length), view = new DataView(bytes.buffer, bytes.byteOffset, 4 * names.length)
+    const hex = new Set(['hostFlags', 'manager', 'used', 'dry', 'intcIprl', 'intcImrl', 'eportPinFlagSelect', 'edmaIntErr', 'csr0csr1', 'edmaEs'])
     console.log(Object.fromEntries(names.map((name, i) => [name, ['job0', 'job1'].includes(name) ? view.getInt32(4 * i)
       : hex.has(name) ? '0x' + view.getUint32(4 * i).toString(16) : view.getUint32(4 * i)])))
     process.exit(0)
