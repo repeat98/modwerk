@@ -3,6 +3,7 @@ import type { BuiltModule } from '../community/build-follow-up'
 import type { DownloadedModuleGuide } from '../community/downloaded-module-guide'
 import { assetUrl } from '../hosting'
 import { Icon } from './Icon'
+import { ownerCredit } from '../catalog/module-authors'
 
 const SINGLE_SCREEN = '(max-width: 1050px)'
 function subscribeLayout(callback: () => void) {
@@ -77,6 +78,6 @@ export function FirmwareScreenshotCarousel({ module, guide, enlarged, onEnlarged
   </section>
     {children}
     {!enlarged && <details className="firmware-feedback-details"><summary>Tips for these screens</summary>{visible.map(screenshot => <p key={screenshot.path}>{screenshot.caption}</p>)}</details>}
-    <details className="firmware-feedback-details firmware-feedback-capture-details"><summary>Screenshot credits</summary>{visible.map(screenshot => <p key={screenshot.path}>{screenshot.captureType === 'hardware' ? 'Hardware capture' : screenshot.captureType === 'emulator' ? 'Emulator capture' : 'Image'} · {screenshot.credit} · {screenshot.license}</p>)}</details>
+    <details className="firmware-feedback-details firmware-feedback-capture-details"><summary>Screenshot credits</summary>{visible.map(screenshot => <p key={screenshot.path}>{screenshot.captureType === 'hardware' ? 'Hardware capture' : screenshot.captureType === 'emulator' ? 'Emulator capture' : 'Image'} · {ownerCredit(screenshot.credit)} · {screenshot.license}</p>)}</details>
   </>
 }

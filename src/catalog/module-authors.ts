@@ -3,6 +3,12 @@
 /** Public attribution only. Contributors do not acquire maintainer or release access. */
 export type ModuleContributor = { github: string; name?: string }
 
+const OWNER = { github: 'repeat98', name: 'Jannik Aßfalg' }
+/** The owner is credited by name wherever the catalogue only has their GitHub login. */
+export const displayName = (github: string, name = github) => github.toLowerCase() === OWNER.github ? OWNER.name : name
+/** Free-text credits written before the name was fixed still say the handle. */
+export const ownerCredit = (text: string) => text.replace(/Jannik A(?:ss|ß)falg \(@?repeat98\)|@?\brepeat98\b(?![\w/.-])/g, OWNER.name)
+
 export const contributorSearchText = (contributors?: readonly ModuleContributor[]) => contributors?.map(person => person.github + ' ' + (person.name ?? '')).join(' ') ?? ''
 
 export function parseModuleContributors(value: unknown, primary: string, path: string): ModuleContributor[] {
