@@ -79,6 +79,7 @@ All on the pinned ColdFire emulator with the image Modwerk's exporter builds fro
 - **Readings.** Empty project: `35%` stopped and playing, FUNC `W35`; the author's project: `36%` stopped, `40%` playing, FUNC `W47`–`W55`. Start-up: `--%` for the first windows, then a reading (`35%` about 0.6 s after the emulator starts). With the tail's timer-reset limit forced to 0 in emulator RAM no block is counted and the popup reads `--%` / `W--` within half a second; restored, one window reads low and the next reads `35%` again.
 - **Smoke.** `verify.py` (12 checks: arming, block count, the header poke, the popup, the mean stopped and playing, FUNC, `--%` and recovery, closing) passes on this image ([evidence/native-smoke.json](evidence/native-smoke.json)).
 - **Stock flows.** On the empty project the screens outside the popup are pixel-identical to the stock image's and the popup differs only in the meter's band and the header's two pixels; the BPM encoder changes the tempo as on stock.
+- **Builds beside the others.** Native octabam and Modwerk's browser builder agree on 124 of 126 selections in the coverage set; the two that differ differ the same way without Processor Load (TESTING.md). All 286,208 allowed selections with it pass the native declaration checks.
 - **Hardware.** Pending: the author's MKI report of this exact image.
 
 ## Authorship and licences

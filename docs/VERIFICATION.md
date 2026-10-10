@@ -1388,3 +1388,16 @@ E-Verb is in none of them.
 
 No hardware result exists for 0.1.1; the owner's MKII report covers 0.1.0.
 Publication needs the owner's approval of this exact source.
+## Processor Load 0.1.0-experimental — 9 October 2026
+
+New system module from timhastie/octatrick-modules v2.11 (`5f3d745`): the ColdFire frame-interrupt load in the TEMPO
+popup. The exporter's image of the module alone (MAIN OS `f3ebd1c5…`, update `9e1d72f5…`) ran on the pinned ColdFire
+emulator: 12 instructions at the interrupt's entry and 17 to 19 at its exit over 4,411 counted blocks, readings stopped
+and playing, FUNC, the `--%` paths, the native smoke (`verify.py`, 12/12) and six LCD captures; the screens outside the
+popup are pixel-identical to the stock image's. `module:verify` (host toolchain): 51 built images and 73 refusals match;
+two selections (Air Chorus, CC Map, MiniVerb, POLY8, Recorder Loop Fix, Sidechain Compressor, Tape Echo, Tapehead, with
+and without Processor Load) are refused natively and built by the browser, the same without this module, so no
+comparison record was written. The declaration scan records 286,208 clean selections. Packages rebuilt; every existing
+payload is unchanged; Analog BD's matrix re-verified (162 + 50 + 6) before its source-tree hash was rebound. Hardware
+report pending.
+
