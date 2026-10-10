@@ -33,7 +33,7 @@ export function OctatrackLinkPanel({ guideSlot, firmwareReady, buildBase, prepar
   const fileRef = useRef<HTMLInputElement>(null)
   useEffect(() => { link.start(); return () => link.stop() }, [link])
 
-  const { status, identity, module, progress = 0, notice } = state
+  const { status, identity, active, module, progress = 0, notice } = state
   const canSend = status === 'ready' && !!identity?.canSubmit
   const needsBase = status === 'stock' || status === 'ready' && !identity?.canSubmit
   // Stays open once needed, so step 4 can show the base found after the unit restarts.
@@ -62,7 +62,7 @@ export function OctatrackLinkPanel({ guideSlot, firmwareReady, buildBase, prepar
   return <>
     <section className={'link-card' + (status === 'trial' || status === 'finishing' ? ' is-trial' : '')} aria-labelledby="link-title" aria-busy={status === 'connecting' || status === 'sending' || status === 'finishing'}>
       <div className="link-heading"><h2 id="link-title">Send over USB</h2><span className="pill link-state"><span className={'status-dot' + (canSend ? ' verified' : status === 'trial' || status === 'finishing' || status === 'sending' ? ' is-live' : '')} />{needsBase && status === 'ready' ? 'Base outdated' : PILL[status]}</span></div>
-      {identity && status !== 'busy' && <p className="link-identity">{identity.model} · Modwerk base {identity.base.slice(0, 8)}</p>}
+      {identity && status !== 'busy' && <p className="link-identity">{identity.model} · Modwerk base {identity.base.slice(0, 8)}{active && (active === identity.base ? ' · no module loaded' : ' · module ' + active.slice(0, 8))}</p>}
       <p role="status">{text}</p>
       {status === 'sending' && <progress className="link-progress" max={1} value={progress} aria-label={`Sending ${module}`} />}
       {(status === 'trial' || status === 'finishing') && <p className="link-hint">When you’re done, stop playback, then keep it or undo. Unplugging or leaving this page also undoes it.</p>}
