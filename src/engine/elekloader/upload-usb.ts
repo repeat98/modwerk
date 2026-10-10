@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // EP0 vendor transport for the upload session: browser peer of sdk/runtime/upload/vendor.c.
 // The interface has no endpoints, so EP3 OUT stays free for USB Audio In.
-import { UPLOAD_HEADER, UPLOAD_MAX_FRAME, UPLOAD_RESPONSE } from './upload-wire.ts'
+import { UPLOAD_HEADER, UPLOAD_MAX_FRAME, UPLOAD_RESPONSE, UPLOAD_VERSION } from './upload-wire.ts'
 import type { UploadTransport } from './upload-session.ts'
 
 export const VENDOR_CLASS = 0xff
@@ -9,6 +9,10 @@ export const VENDOR_SUBCLASS = 0x4d // 'M'; must match the base's interface desc
 export const VENDOR_PROTOCOL = 1
 export const VENDOR_SUBMIT = 1
 export const VENDOR_RESULT = 2
+export const VENDOR_IDENTIFY = 3
+export const VENDOR_IDENTITY_BYTES = 64
+/** The device can receive SUBMIT data stages; without it only IDENTIFY answers. */
+export const VENDOR_CAN_SUBMIT = 1
 export const VENDOR_VERSION = 1
 export const VENDOR_RESULT_HEADER = 8
 export const VENDOR_RESULT_BYTES = VENDOR_RESULT_HEADER + UPLOAD_RESPONSE
@@ -38,6 +42,26 @@ export class VendorTransportError extends Error {
   constructor(message: string, notExecuted = false) { super(message); this.name = 'VendorTransportError'; this.notExecuted = notExecuted }
 }
 export interface VendorResult { status: VendorStatusName; sequence: number; response?: Uint8Array }
+
+export interface VendorIdentity { canSubmit: boolean; base: string; model: string }
+
+/** IDENTIFY's 64 bytes, refused unless every field is exactly what this client speaks. */
+export function parseVendorIdentity(bytes: Uint8Array): VendorIdentity {
+  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
+  const fail = (why: string): never => { throw new VendorTransportError('Unsupported vendor identity: ' + why + '.') }
+  if (bytes.length !== VENDOR_IDENTITY_BYTES || bytes[0] !== 0x4d || bytes[1] !== 0x57 || bytes[2] !== 0x55 || bytes[3] !== 0x49) fail('framing')
+  if (bytes[4] !== VENDOR_VERSION || bytes[5] !== UPLOAD_VERSION) fail('version')
+  const capabilities = view.getUint16(6)
+  if (capabilities & ~VENDOR_CAN_SUBMIT) fail('capabilities')
+  if (view.getUint16(8) !== UPLOAD_MAX_FRAME || view.getUint16(10) !== VENDOR_RESULT_BYTES || view.getUint32(12) !== 0) fail('limits')
+  const model = bytes.subarray(48), length = model.indexOf(0) < 0 ? model.length : model.indexOf(0)
+  if (!length || model.subarray(length).some(byte => byte !== 0) || model.subarray(0, length).some(byte => byte < 0x20 || byte > 0x7e)) fail('model')
+  return {
+    canSubmit: (capabilities & VENDOR_CAN_SUBMIT) !== 0,
+    base: Array.from(bytes.subarray(16, 48), byte => byte.toString(16).padStart(2, '0')).join(''),
+    model: String.fromCharCode(...model.subarray(0, length)),
+  }
+}
 
 export function parseVendorResult(bytes: Uint8Array): VendorResult {
   const status = VendorStatus[bytes[5]]
@@ -74,6 +98,14 @@ export class UsbVendorTransport implements UploadTransport {
   }
   private setup(request: number, value: number): ControlSetup {
     return { requestType: 'vendor', recipient: 'interface', request, value, index: this.index }
+  }
+  /** Read-only: answered by the device's USB interrupt, with no frame or engine-task work. */
+  async identify(signal?: AbortSignal): Promise<VendorIdentity> {
+    signal?.throwIfAborted()
+    const reply = await this.device.controlTransferIn(this.setup(VENDOR_IDENTIFY, 0), VENDOR_IDENTITY_BYTES)
+    signal?.throwIfAborted()
+    if (reply.status !== 'ok' || !reply.data) throw new VendorTransportError('The device did not identify itself.')
+    return parseVendorIdentity(new Uint8Array(reply.data.buffer, reply.data.byteOffset, reply.data.byteLength))
   }
   async result(signal?: AbortSignal): Promise<VendorResult> {
     signal?.throwIfAborted()

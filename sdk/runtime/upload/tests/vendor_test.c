@@ -33,7 +33,7 @@ static void reset_all(void)
     memset(base, 0x31, 32); memset(session, 0x52, 32); memset(active, 0x41, 32);
     memset(&controller, 0, sizeof controller);
     if (!mu_init(&controller, stage, sizeof stage, base, session, active, 0, &b)) abort();
-    mv_init(&t, 6);
+    if (!mv_init(&t, 6, base, "OCTATRACK TEST", MV_CAN_SUBMIT)) abort();
     executed = disconnected = 0;
 }
 static void put32(uint8_t *p, uint32_t n) { p[0]=(uint8_t)(n>>24); p[1]=(uint8_t)(n>>16); p[2]=(uint8_t)(n>>8); p[3]=(uint8_t)n; }
@@ -92,6 +92,38 @@ static void routing(void)
     CHECK(ask(MV_SUBMIT_TYPE, MV_SUBMIT, 1, 6, MU_WIRE_MAX + 1).action == MV_STALL);
     CHECK(ask(MV_SUBMIT_TYPE, MV_SUBMIT, 1, 6, MU_WIRE_MAX).action == MV_RECEIVE);
     CHECK(executed == 0 && !mv_service(&t, &controller));
+}
+
+static void identity(void)
+{
+    static const uint8_t head[16] = {'M','W','U','I', MV_VERSION, MU_WIRE_VERSION, 0, MV_CAN_SUBMIT,
+                                     MU_WIRE_MAX >> 8, MU_WIRE_MAX & 0xff, 0, MV_RESULT_BYTES, 0, 0, 0, 0};
+    uint8_t model[16] = "OCTATRACK TEST";
+    reset_all();
+    struct mv_reply r = ask(MV_RESULT_TYPE, MV_IDENTIFY, 0, 6, MV_IDENTITY_BYTES);
+    CHECK(r.action == MV_SEND && r.length == MV_IDENTITY_BYTES && r.buffer == t.identity);
+    CHECK(!memcmp(r.buffer, head, 16) && !memcmp(r.buffer + 16, base, 32) && !memcmp(r.buffer + 48, model, 16));
+    CHECK(ask(MV_RESULT_TYPE, MV_IDENTIFY, 1, 6, MV_IDENTITY_BYTES).action == MV_STALL);
+    CHECK(ask(MV_RESULT_TYPE, MV_IDENTIFY, 0, 6, MV_IDENTITY_BYTES - 1).action == MV_STALL);
+    CHECK(ask(MV_SUBMIT_TYPE, MV_IDENTIFY, 0, 6, MV_IDENTITY_BYTES).action == MV_STALL);
+    /* IDENTIFY in a data stage still abandons that frame. */
+    CHECK(ask(MV_SUBMIT_TYPE, MV_SUBMIT, 9, 6, 48).action == MV_RECEIVE);
+    CHECK(ask(MV_RESULT_TYPE, MV_IDENTIFY, 0, 6, MV_IDENTITY_BYTES).action == MV_SEND && mv_data(&t, 48) == 0);
+    CHECK(status_is(result(), MV_REFUSED, 9));
+    /* Without the data stage connected, only IDENTIFY answers. */
+    CHECK(mv_init(&t, 6, base, "X", 0));
+    CHECK(ask(MV_RESULT_TYPE, MV_IDENTIFY, 0, 6, MV_IDENTITY_BYTES).action == MV_SEND && t.identity[7] == 0);
+    CHECK(ask(MV_SUBMIT_TYPE, MV_SUBMIT, 1, 6, 48).action == MV_STALL && result().action == MV_STALL);
+    /* Refused identities leave a transport that answers nothing of its own. */
+    const char *models[] = {"", "SEVENTEEN CHARSXX", "TAB\tNAME", 0};
+    for (unsigned i = 0; i < 4; ++i) {
+        CHECK(!mv_init(&t, 6, base, models[i], MV_CAN_SUBMIT));
+        CHECK(ask(MV_RESULT_TYPE, MV_IDENTIFY, 0, 6, MV_IDENTITY_BYTES).action == MV_STALL);
+        CHECK(ask(MV_SUBMIT_TYPE, MV_SUBMIT, 1, 6, 48).action == MV_STALL);
+        CHECK(ask(0x80, 6, 0x0100, 0, 18).action == MV_PASS);
+    }
+    CHECK(!mv_init(&t, 6, base, "OK", 2) && !mv_init(&t, 6, 0, "OK", 0));
+    CHECK(mv_init(&t, 6, base, "SIXTEEN CHARS XX", 0) && !memcmp(t.identity + 48, "SIXTEEN CHARS XX", 16));
 }
 
 static void exchange(void)
@@ -240,8 +272,8 @@ static void random_events(void)
 
 int main(void)
 {
-    routing(); exchange(); incomplete(); resets(); random_events();
+    routing(); identity(); exchange(); incomplete(); resets(); random_events();
     if (failures) { fprintf(stderr, "%u vendor transport checks failed\n", failures); return 1; }
-    puts("Vendor transport: routing, exchange, incomplete frames, resets and random events passed.");
+    puts("Vendor transport: routing, identity, exchange, incomplete frames, resets and random events passed.");
     return 0;
 }

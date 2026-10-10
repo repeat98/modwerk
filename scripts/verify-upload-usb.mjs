@@ -79,6 +79,21 @@ async function scenario(name, run, fault = 'none') {
   try { await run(device); checks++; console.log(name + ': passed') } finally { await device.close() }
 }
 
+await scenario('read-only identity comes from the interrupt, before any frame', async device => {
+  const transport = new UsbVendorTransport(device, 6, { pollMs: 0 })
+  assert.deepEqual(await transport.identify(), { canSubmit: true, base, model: 'MODWERK PROBE' })
+  assert.equal(device.outs, 0); assert.equal(await device.executed(), 0)
+  const s = await UploadSession.connect(transport, (await transport.identify()).base)
+  assert.equal(s.status.phase, 'normal')
+})
+
+await scenario('a device without a connected data stage only identifies itself', async device => {
+  const transport = new UsbVendorTransport(device, 6, { pollMs: 0 })
+  assert.equal((await transport.identify()).canSubmit, false)
+  await assert.rejects(UploadSession.connect(transport, base), UploadUnconfirmedError)
+  assert.equal(await device.executed(), 0)
+}, 'no-submit')
+
 await scenario('stage, publish, trial and accept over EP0; one execution per exchange', async device => {
   const transport = counted(new UsbVendorTransport(device, 6, { pollMs: 0 }))
   const s = await UploadSession.connect(transport, base)

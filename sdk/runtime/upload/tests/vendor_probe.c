@@ -27,7 +27,7 @@ int main(int argc, char **argv)
     struct mu_backend b = {0, ok, ok, ok, prepare, ok, publish, ok, ok};
     memset(base, 0x31, 32); memset(session, 0x52, 32); memset(active, 0x41, 32);
     if (!mu_init(&c, stage, sizeof stage, base, session, active, 0, &b)) return 2;
-    mv_init(&t, 6);
+    if (!mv_init(&t, 6, base, "MODWERK PROBE", fault(name, "no-submit") ? 0 : MV_CAN_SUBMIT)) return 2;
     for (int kind; (kind = getchar()) != EOF;) {
         if (kind == 'X') {
             uint8_t n[4] = {(uint8_t)(executed >> 24), (uint8_t)(executed >> 16), (uint8_t)(executed >> 8), (uint8_t)executed};

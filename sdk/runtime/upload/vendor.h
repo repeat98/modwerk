@@ -10,9 +10,18 @@
 #define MV_RESULT_TYPE 0xc1u /* Device to host, vendor, interface. */
 #define MV_SUBMIT 1u /* wValue = sequence, data stage = one complete frame. */
 #define MV_RESULT 2u /* wValue = 0, wLength = MV_RESULT_BYTES. */
+#define MV_IDENTIFY 3u /* wValue = 0, wLength = MV_IDENTITY_BYTES; answered in the ISR. */
 #define MV_VERSION 1u
 #define MV_RESULT_HEADER 8u
 #define MV_RESULT_BYTES (MV_RESULT_HEADER + MU_WIRE_RESPONSE)
+/* IDENTIFY, big-endian: "MWUI", transport and wire versions (u8 each),
+ * capabilities (u16), maximum frame and result lengths (u16 each), four
+ * reserved zero bytes, base digest (32), model (16 ASCII, zero-padded). */
+#define MV_IDENTITY_BYTES 64u
+#define MV_MODEL_BYTES 16u
+/* SUBMIT/RESULT carry frames. Clear while the glue cannot receive a data
+ * stage: both requests then stall and the host can see why. */
+#define MV_CAN_SUBMIT 1u
 
 /* What the host learns about its latest sequence. REFUSED: never executed. */
 enum mv_status { MV_NONE, MV_PENDING, MV_READY, MV_REFUSED };
@@ -30,13 +39,18 @@ struct mv_transport {
     uint8_t frame[MU_WIRE_MAX];
     uint8_t result[MV_RESULT_BYTES]; /* Engine-written; sent only when READY. */
     uint8_t status[MV_RESULT_HEADER]; /* ISR-written short reply otherwise. */
+    uint8_t identity[MV_IDENTITY_BYTES]; /* Constant after mv_init. */
     uint32_t expected;
-    uint16_t interface, sequence;
+    uint16_t interface, sequence, capabilities;
+    uint8_t ready;
     volatile uint8_t phase;
     volatile uint8_t resets, handled; /* ISR-only and engine-only writers. */
 };
 
-void mv_init(struct mv_transport *, uint16_t interface);
+/* Zero when the model is not 1-16 printable ASCII characters or an unknown
+ * capability is set; the transport then answers nothing (every request stalls). */
+int mv_init(struct mv_transport *, uint16_t interface, const uint8_t base[MU_DIGEST_BYTES],
+            const char *model, uint16_t capabilities);
 /* SETUP for any unhandled request. RECEIVE: fill buffer with exactly length
  * bytes, then call mv_data. A SETUP during a data stage abandons that frame. */
 struct mv_reply mv_setup(struct mv_transport *, const uint8_t setup[8]);

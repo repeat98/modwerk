@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
-  findVendorInterface, parseVendorResult, UsbVendorTransport, VendorTransportError, type ControlDevice,
+  findVendorInterface, parseVendorIdentity, parseVendorResult, UsbVendorTransport, VendorTransportError, type ControlDevice,
   VENDOR_CLASS, VENDOR_PROTOCOL, VENDOR_RESULT_BYTES, VENDOR_SUBCLASS,
 } from './upload-usb'
 
@@ -18,6 +18,26 @@ describe('vendor interface selection', () => {
     for (const bad of [config([6, ours], [7, ours]), config([6, alt(VENDOR_CLASS, VENDOR_SUBCLASS, VENDOR_PROTOCOL, [1])]),
       config([6, alt(VENDOR_CLASS, VENDOR_SUBCLASS, 2)]), config([6, ours, ours]), config(), null])
       expect(findVendorInterface(bad)).toBeUndefined()
+  })
+})
+
+// Independently specified IDENTIFY: big-endian, base 0x31 * 32, model "OCTATRACK".
+const identity = (capabilities = 1) => Uint8Array.from(Buffer.from('4d575549' + '0101' +
+  capabilities.toString(16).padStart(4, '0') + '1034' + '0098' + '00000000' + '31'.repeat(32) +
+  Buffer.from('OCTATRACK').toString('hex').padEnd(32, '0'), 'hex'))
+
+describe('vendor identity', () => {
+  it('reads the base, model and whether frames can be submitted', () => {
+    expect(parseVendorIdentity(identity())).toEqual({ canSubmit: true, base: '31'.repeat(32), model: 'OCTATRACK' })
+    expect(parseVendorIdentity(identity(0)).canSubmit).toBe(false)
+  })
+  it('refuses any field this client does not speak', () => {
+    const cases: [number, number][] = [[0, 0], [4, 2], [5, 2], [7, 2], [9, 0x35], [11, 0x99], [15, 1], [48, 0], [48, 9], [63, 0x41]]
+    for (const [offset, value] of cases) {
+      const bytes = identity(); bytes[offset] = value
+      expect(() => parseVendorIdentity(bytes), String(offset)).toThrow(VendorTransportError)
+    }
+    expect(() => parseVendorIdentity(identity().subarray(0, 63))).toThrow(VendorTransportError)
   })
 })
 

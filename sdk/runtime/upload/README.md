@@ -98,12 +98,24 @@ for the glue still missing.
 | --- | --- | --- | --- | --- | --- |
 | SUBMIT | `0x41` | 1 | sequence | interface | one complete frame, 48–4,148 bytes |
 | RESULT | `0xC1` | 2 | 0 | interface | wLength 152; 8 bytes back, or 152 when ready |
+| IDENTIFY | `0xC1` | 3 | 0 | interface | wLength 64; the identity block below |
+
+IDENTIFY is read-only and answered by the USB interrupt from a block built
+once at start-up: `MWUI`, transport and wire versions, capabilities, the
+maximum frame and result lengths, four reserved zero bytes, the base digest
+and a model name of 1–16 printable ASCII characters. Capability bit 0 means
+the glue can receive SUBMIT data stages. Without it SUBMIT and RESULT stall
+and only IDENTIFY answers, which is the first firmware milestone: it needs
+no control OUT data stage. The browser refuses an identity whose versions,
+limits, reserved bytes or model it does not recognise.
 
 A result starts with `MWUT`, version 1, a status (0 none, 1 pending, 2 ready,
 3 refused) and the device's latest sequence (u16, big-endian). A ready
 result appends the controller's 144-byte response. Refused means never
 executed.
 
+- An invalid identity at start-up leaves a transport that stalls every
+  request to its interface and passes all others to the existing handlers.
 - The USB ISR only receives a complete data stage into the one frame slot
   and answers RESULT. The controller's engine-task owner executes the frame
   (`mv_service`). A queued frame is never overwritten: SUBMIT stalls while
@@ -175,13 +187,14 @@ results do not qualify device audio, memory ownership or USB operation.
 
 The same command tests the EP0 transport. `vendor_test.c` compiles
 `vendor.c` with its controller calls renamed to counters, then checks request
-routing, bounds, busy and duplicate refusals, incomplete data stages, reset
+routing, the identity block and its refusals, bounds, busy and duplicate
+refusals, incomplete data stages, reset
 ordering and 400,000 random host, bus and engine events: every accepted frame
 executes exactly once and in order, and nothing else executes. Removing any
 one of seven safety rules fails it. `verify-upload-usb.mjs` then runs the
 browser transport and session client against the real C transport and
-controller through a byte-stream stand-in for EP0: a full upload with one
-execution per exchange, a lost status stage, an unhandled reset, a short data
+controller through a byte-stream stand-in for EP0: read-only identity, a
+device without a data stage, a full upload with one execution per exchange, a lost status stage, an unhandled reset, a short data
 stage, repeated refusals, another client's submission and a frame that never
 completes. These exercise no USB controller, descriptors or timing.
 

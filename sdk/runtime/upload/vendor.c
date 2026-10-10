@@ -11,11 +11,25 @@ static void header(uint8_t *p, enum mv_status status, uint16_t sequence)
     p[0]='M'; p[1]='W'; p[2]='U'; p[3]='T'; p[4]=MV_VERSION; p[5]=(uint8_t)status;
     p[6]=(uint8_t)(sequence >> 8); p[7]=(uint8_t)sequence;
 }
-void mv_init(struct mv_transport *t, uint16_t interface)
+static void put16(uint8_t *p, uint16_t n) { p[0] = (uint8_t)(n >> 8); p[1] = (uint8_t)n; }
+int mv_init(struct mv_transport *t, uint16_t interface, const uint8_t base[MU_DIGEST_BYTES],
+            const char *model, uint16_t capabilities)
 {
-    uint8_t *p = (uint8_t *)t;
+    uint8_t *p = (uint8_t *)t, *id = t->identity;
+    uint32_t n = 0;
     for (uint32_t i = 0; i < sizeof *t; ++i) p[i] = 0;
     t->interface = interface;
+    while (model && n <= MV_MODEL_BYTES && model[n]) {
+        if (n == MV_MODEL_BYTES || model[n] < 0x20 || model[n] > 0x7e) return 0;
+        ++n;
+    }
+    if (!base || !n || capabilities & ~MV_CAN_SUBMIT) return 0;
+    id[0]='M'; id[1]='W'; id[2]='U'; id[3]='I'; id[4]=MV_VERSION; id[5]=MU_WIRE_VERSION;
+    put16(id+6, capabilities); put16(id+8, MU_WIRE_MAX); put16(id+10, MV_RESULT_BYTES);
+    for (uint32_t i = 0; i < MU_DIGEST_BYTES; ++i) id[16+i] = base[i];
+    for (uint32_t i = 0; i < n; ++i) id[48+i] = (uint8_t)model[i];
+    t->capabilities = capabilities;
+    return t->ready = 1;
 }
 void mv_abandon(struct mv_transport *t)
 {
@@ -28,6 +42,14 @@ struct mv_reply mv_setup(struct mv_transport *t, const uint8_t s[8])
     mv_abandon(t); /* A new SETUP ends any control transfer in its data stage. */
     if ((s[0] & 0x7fu) != (MV_SUBMIT_TYPE & 0x7fu) || le16(s+4) != t->interface) return r;
     r.action = MV_STALL;
+    if (!t->ready) return r;
+    if (s[0] == MV_RESULT_TYPE && s[1] == MV_IDENTIFY) {
+        if (value == 0 && length == MV_IDENTITY_BYTES) {
+            r.action = MV_SEND; r.buffer = t->identity; r.length = MV_IDENTITY_BYTES;
+        }
+        return r;
+    }
+    if (!(t->capabilities & MV_CAN_SUBMIT)) return r;
     if (s[0] == MV_SUBMIT_TYPE && s[1] == MV_SUBMIT) {
         /* Never overwrite a queued frame, re-execute a sequence or let a frame
          * overtake an unhandled reset. A refused SETUP received no data. */
