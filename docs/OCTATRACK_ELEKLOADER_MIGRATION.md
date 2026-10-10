@@ -438,6 +438,38 @@ Development and tests on the owner's unit must never brick it:
 - A crash or freeze from a bad module costs a power cycle, never the flash.
   Unplugging USB rolls back anything not accepted.
 
+### RAM boot for base development (10 October 2026)
+
+So the owner flashes only bases worth keeping, a base can now run another
+base from RAM: `npm run device -- boot BUILD_DIR`
+([README](../sdk/machines/octatrack/elekloader/README.md#ram-boot-development-bases)).
+The owner approved porting REMIX SWITCH's boot chain for this (modules keep
+loading without a reboot). Nothing writes flash; a power cycle boots the
+flashed base. The DSP park is REMIX SWITCH's source instruction for
+instruction (its `jmp $fab` bridge placeholder resolved to the tail pin
+`$06`, as its build does).
+
+In the emulator with `usbtest7` (base `805902ba…`, built from `c315c4bb`,
+flash-safety check passed; REMIX SWITCH's `ot_emu` with `--preload`):
+
+- Arm: a 1,193,284-byte image (`usbtest7` with only its identity digest
+  changed, `f35efefd…`) staged over USB read back byte for byte from the
+  stage; the mailbox held its length, hash and check word; the reset path
+  ran OS UPGRADE's quiesce and the park and reached the soft reset (`RCR`).
+- Boot: the base booted with that stage and NOR's version preloaded came up
+  as `f35efefd…` (USB, IDENTIFY and the controller working).
+- Refused, flashed base `805902ba…` running instead: one flipped byte in
+  the staged image; NOR's bootstrap version differing from the image's.
+- The vendor USB check and the module lifecycle still pass with module
+  packages staged in the boot stage.
+
+Not shown: the DSP park and the next OS's DSP upload into parked cores
+(`ot_emu --dsp` dies with a bus error at start-up on this Mac, stock
+included), so that rests on REMIX SWITCH's MKII measurement until the unit
+runs it. The quiesce runs in the engine task, where stock's OS UPGRADE does
+not; a hang there costs a power cycle. The gate's status is not readable
+after the boot (the new base clears the stage).
+
 ### Reference: Octabam's REMIX SWITCH
 
 Sam's open [Octabam PR #655](https://github.com/sambanks/octabam/pull/655)
@@ -445,8 +477,9 @@ Sam's open [Octabam PR #655](https://github.com/sambanks/octabam/pull/655)
 to a whole OS image from the card: it loads the image into a stage in SDRAM,
 parks both DSP cores and soft-resets into it, without writing the flash.
 That is a reboot, so it does not meet the no-reboot goal; the owner chose
-on 10 October 2026 to use it as a reference, not as Modwerk's mechanism. It
-is not vendored. Its README marks what was measured on an MKII on
+on 10 October 2026 to use it as a reference, not as Modwerk's mechanism for
+modules. Its boot chain is ported (not vendored) for development bases only:
+see RAM boot above. Its README marks what was measured on an MKII on
 29 September 2026 and what was not (endurance, caches, MKI).
 
 | Technique in REMIX SWITCH | What it informs here |
@@ -456,7 +489,7 @@ is not vendored. Its README marks what was measured on an MKII on
 | Stage at the top of the platform reserve, `0x49200000`–`0x49495de0` (uncached), which stock never touches and which survives a soft reset | A ledger entry and a staging candidate, not free memory: the reserve is shared with every platform runtime. |
 | Before running new ColdFire code: caches off, I-cache and branch cache invalidated, the bootstrap's exit `CACR` (`0x0008c000`) restored | Activating relocated ColdFire code needs explicit cache invalidation; the open cache-handling item above. |
 | The card scan saves and restores the stock browser's name pool and cache around its own listing | Needed if packages are ever read from the card. |
-| Soft reset (`RCR` `SOFTRST`) after parking the DSPs; the unit's own panel handshake first | Not the routine path. A possible recovery for base changes without a power cycle, if qualified separately. |
+| Soft reset (`RCR` `SOFTRST`) after parking the DSPs; the unit's own panel handshake first | Not the routine path for modules. Ported for RAM boot of development bases (above). |
 
 ## Work required before public cutover
 

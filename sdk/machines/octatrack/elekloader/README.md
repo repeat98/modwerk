@@ -132,6 +132,26 @@ is recovered from the Startup Menu over DIN MIDI.
 4. Record the page log, then play a project briefly and confirm audio,
    sequencing and the card still behave. Reinstall your normal build.
 
+### RAM boot (development bases)
+
+A base built with RAM boot (`usbtest7` on) runs another base without
+writing flash: `npm run device -- boot BUILD_DIR` sends `BUILD_DIR/MAIN.raw`
+(written by `build_core.py`), the unit restarts into it from RAM, and the
+command waits until IDENTIFY reports that build's `configurationHash`. A
+power cycle boots the flashed base again. Stop playback and recording first;
+the restart is a reboot.
+
+The base accepts only an OS image (entry word, at most 1.25 MiB) carrying
+NOR's own bootstrap version, because an image with another version would
+reprogram the bootstrap at its entry. It stages the image in its own
+reserve, arms a one-shot mailbox, and half a second later quiesces as OS
+UPGRADE does, parks both DSP cores and soft-resets. The gate at the OS entry
+(`boot.s`) spends the mailbox, rechecks size, entry word, bootstrap version
+and hash, and copies the image over `0x40000400`; anything else boots the
+flashed base. Ported from Octabam's REMIX SWITCH (PR #655 at `879cecb`,
+MIT); the DSP park is its source unchanged. Any host on the vendor interface
+can trigger it without a confirmation on the unit: development only.
+
 `build_ports.py` prepares independent source ports with the same pinned SDK
 and its native source checker. It registers the internal USB MIDI dependency
 from `platform/usb-midi` without copying it into `modules/` or changing the

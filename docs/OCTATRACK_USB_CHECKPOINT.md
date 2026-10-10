@@ -78,7 +78,11 @@ the emulator, and the goal of covering every machine later.
 
 Sam's open REMIX SWITCH (Octabam PR #655) switches whole images from the card
 with a soft reset. The owner chose on 10 October to use it as a reference
-only; its DSP park and cache handling inform the no-reboot loader.
+only for modules; its DSP park and cache handling inform the no-reboot loader.
+Its boot chain is ported for development bases: `usbtest7` boots another base
+from RAM over USB without writing flash (`npm run device -- boot BUILD_DIR`),
+proved in the emulator, not yet on the unit
+([record](OCTATRACK_ELEKLOADER_MIGRATION.md#ram-boot-for-base-development-10-october-2026)).
 
 ## Saved work
 
