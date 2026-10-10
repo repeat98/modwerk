@@ -200,6 +200,14 @@ DSP_HOOK_EDITS = {
                                         '        move.w #0x8002,%d0\n        move.w %d0,0xfc04501c\n',
                                         '        move.w #0x8003,%d0\n        move.w %d0,0xfc045014\n'
                                         '        move.w #0x8003,%d0\n        move.w %d0,0xfc04501c\n'))},
+    # The core-1 transfer completes but its words land in a live core-1 bank (hardware, 10 Oct 2026):
+    # a diagnostic that sends core 1's packet to the other bank's +$320 ($63a0), to see if the bank is the axis.
+    'c1bank': {'hooks.s': GUARD_ENTRY + (
+        ('        move.b %d2,0xfc0a400c\n        lsl.l #7,%d2\n',
+         '        move.b %d2,0xfc0a400c\n        move.w #0x6320,%d3\n        tst.l %d2\n        beq 1f\n'
+         '        move.w #0x63a0,%d3\n1:\n        lsl.l #7,%d2\n'),
+        ('        move.w #0x6320,%d0\n        move.w %d0,0x2000001c\n        move.w #63,%d0\n',
+         '        move.w %d3,0x2000001c\n        move.w #63,%d0\n'))},
     'usbin': {'hooks.s': ((STATE7_ENTRY,
                '        move.w 0xfc04501e,%d0\n'
                '        andi.l #0xc1,%d0\n'
