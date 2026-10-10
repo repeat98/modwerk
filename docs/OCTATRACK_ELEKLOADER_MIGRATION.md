@@ -498,7 +498,27 @@ queue(s) the entry names, at most once a second. The step still answers
 `unsafe` (the controller now maps the backend's "not stopped" to `unsafe`,
 other backend failures stay `backend`) and the host retries every 200 ms for
 up to 3 s. A recording is never stopped this way, and a disconnect's rollback
-(`mu_disconnecting`) never presses STOP. Host-tested; on the unit next.
+(`mu_disconnecting`) never presses STOP.
+
+On the owner's MKII the first version crashed the unit twice, minutes after
+it pressed STOP, and a remote STOP made a brief distortion without stopping
+playback. That version posted key event records to the keymap's queues
+directly. Stock's handlers also read the held-key rows the panel parser
+keeps (`0x4009220c`), and something kept the foreign records. Keys now go
+in as the panel sends them: a row report `{0x20 | row, the row's held
+keys}` through the panel's own byte ringer (`0x40092254`, UART1's receive
+callback), which forces the parser's interrupt; the parser updates the rows
+and posts its own events, as for a physical press (octemu's emulated panel
+sends the same frames). With that (development base `54f2ce5c…`, from RAM):
+a remote PLAY played and a remote STOP stopped; an update started while
+playing stopped the unit and went through on the first ENTER (15 ms), then
+the unit ran for more than three minutes without a crash.
+
+`build_core.py --dev` adds development-only requests on the vendor
+interface (`dev.c`, never in a base users install): KEY, PANEL (encoder
+turns and the crossfader as raw panel bytes), STATE (stopped, recording)
+and SCREEN (the last composed 128x64 frame), used by
+`npm run device -- key FUNC+PLAY | enc A+3 | fader 128 | state | screen`.
 
 ### Windows without a driver (10 October 2026)
 

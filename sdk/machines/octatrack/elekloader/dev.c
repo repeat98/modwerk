@@ -5,12 +5,17 @@
  *
  *   KEY    0xC1, bRequest 5, wValue = code | pressed << 8, wLength 1:
  *          the key as the panel reports it (boot.c); replies 1.
+ *   STATE  0xC1, bRequest 6, wValue 0, wLength 2: {stopped, recording}.
+ *   PANEL  0xC1, bRequest 8, wValue = first | second << 8, wLength 1: an
+ *          encoder turn {0x30 | encoder 0..6, signed delta} or the fader
+ *          {0x40, 0..255} as the panel sends it; replies 1.
  *   SCREEN 0xC1, bRequest 7, wValue 0, wLength 1028: "MWLC" and the last
  *          composed 128x64 frame (ev_draw: 8 bytes a column, bit 7 = row 0).
  *
  * Replies are never a whole number of 64-byte packets (vendor.h). */
 #include "boot.h"
 #include "usb_base.h"
+#include "loader.h"
 
 #define UNCACHED(p) ((uint8_t *)((uintptr_t)(p) + 0x08000000u))
 
@@ -34,6 +39,18 @@ uint32_t modwerk_dev_request(const uint8_t *s, const uint8_t **reply, uint8_t *o
     if (s[0] != 0xc1 || s[4] != MODWERK_VENDOR_INTERFACE || s[5]) return 0;
     if (s[1] == 5 && want == 1 && s[2] < 64u && s[3] <= 1u) {
         modwerk_post_key(s[2], s[3]);
+        out[0] = 1;
+        *reply = out;
+        return 1;
+    }
+    if (s[1] == 6 && want == 2 && !s[2] && !s[3]) {
+        out[0] = (uint8_t)modwerk_machine_stopped();
+        out[1] = (uint8_t)modwerk_boot_recording();
+        *reply = out;
+        return 2;
+    }
+    if (s[1] == 8 && want == 1 && ((s[2] >= 0x30u && s[2] <= 0x36u && s[3]) || s[2] == 0x40u)) {
+        modwerk_panel_bytes(s[2], s[3]);
         out[0] = 1;
         *reply = out;
         return 1;

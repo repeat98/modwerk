@@ -28,40 +28,41 @@ int modwerk_test_resets, modwerk_test_recording, modwerk_test_stops;
 int mu_disconnecting; /* upload.c's, which this host test does not link */
 static void *uncached(void *p) { return p; }
 static uint32_t nor_version(void) { return modwerk_test_nor_version; }
-static int recording(void) { return modwerk_test_recording; }
+int modwerk_boot_recording(void) { return modwerk_test_recording; }
 void modwerk_post_key(unsigned code, int pressed) { if (code == 0x27u && pressed) ++modwerk_test_stops; }
+void modwerk_panel_bytes(uint8_t first, uint8_t second) { (void)first; (void)second; }
 void modwerk_boot_quiesce(void) {}
 void modwerk_boot_reset(void) { ++modwerk_test_resets; }
 #else
 static void *uncached(void *p) { return (void *)((uintptr_t)p + 0x08000000u); }
 static uint32_t nor_version(void) { return *(volatile uint16_t *)0x3ffcu; }
 /* runtime.c's stopped check, recorder half: two 84-byte state rows per track. */
-static int recording(void)
+int modwerk_boot_recording(void)
 {
     for (unsigned i = 0; i < 16; ++i) if (*(volatile uint8_t *)(0x80004f1eu + i * 84u)) return 1;
     return 0;
 }
-/* A key as the panel reports it (parser 0x4009228c): a record {01, code,
- * press or release byte, 0, panel time} from the key's keymap entry, posted
- * by pointer to the queue(s) the entry names. Like the parser's own ring, a
- * record is reused only after the 31 posted since. The USB interrupt
- * (dev.c) and the engine task (auto-stop) both post, so claiming a record is
- * masked; the post itself is not (it masks itself and may switch tasks). */
-static uint8_t key_events[32][8] __attribute__((aligned(4)));
+/* A key as the panel sends it: a row report {0x20 | row, the row's keys
+ * held} through the panel's own byte ringer (0x40092254, UART1's receive
+ * callback), which forces the parser's interrupt (INTC0 source 37). The
+ * parser then updates the held-key rows stock's handlers read (0x4009220c)
+ * and posts the event from its interrupt, as for a physical press. Masked
+ * like the UART interrupt that calls the ringer. (Posting event records
+ * directly, without the held rows, made STOP misbehave on the unit.) */
+void modwerk_panel_bytes(uint8_t first, uint8_t second)
+{
+    void (*ring)(uint32_t) = (void (*)(uint32_t))0x40092254u;
+    uint32_t sr = modwerk_machine_mask();
+    ring(first);
+    ring(second);
+    modwerk_machine_unmask(sr);
+}
 void modwerk_post_key(unsigned code, int pressed)
 {
-    static unsigned next;
     if (code >= 64u) return;
-    const uint8_t *key = *(const uint8_t *const volatile *)0x46c901dcu + 12u * code;
-    uint32_t sr = modwerk_machine_mask();
-    uint8_t *e = key_events[next++ % 32u];
-    modwerk_machine_unmask(sr);
-    e[0] = key[0]; e[1] = key[1]; e[2] = key[pressed ? 2 : 3]; e[3] = 0;
-    *(uint32_t *)(void *)(e + 4) = *(volatile uint32_t *)0x46104cf4u;
-    for (unsigned q = 4; q <= 8; q += 4) {
-        void *queue = *(void *const *)(const void *)(key + q);
-        if (queue) ((void (*)(void *, const void *))0x40000c3cu)(queue, e);
-    }
+    unsigned row = code >> 3;
+    uint8_t bit = (uint8_t)(1u << (code & 7u)), held = *(volatile uint8_t *)(0x46100b18u + row);
+    modwerk_panel_bytes((uint8_t)(0x20u | row), pressed ? (uint8_t)(held | bit) : (uint8_t)(held & ~bit));
 }
 void modwerk_boot_quiesce(void);
 void modwerk_boot_reset(void);
@@ -111,7 +112,7 @@ static int enter(void *u)
 {
     static uint32_t pressed_at;
     static int pressed;
-    if (!mu_disconnecting && !modwerk_machine_stopped() && !recording() && (!pressed || modwerk_runtime_ticks - pressed_at >= 60u)) {
+    if (!mu_disconnecting && !modwerk_machine_stopped() && !modwerk_boot_recording() && (!pressed || modwerk_runtime_ticks - pressed_at >= 60u)) {
         modwerk_post_key(0x27u, 1); modwerk_post_key(0x27u, 0); /* STOP */
         pressed = 1; pressed_at = modwerk_runtime_ticks;
     }

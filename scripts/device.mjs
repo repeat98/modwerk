@@ -11,6 +11,8 @@
 //   npm run device -- boot BUILD_DIR       # RAM boot: build_core.py's output, no flashing
 //   npm run device -- key PLAY | FUNC+PLAY | 0x27   # development bases (build_core.py --dev)
 //   npm run device -- screen                        # the display, in block characters
+//   npm run device -- state                         # stopped / playing, recording
+//   npm run device -- enc A+3 | LEVEL-1 | fader 128 # encoders A-F and LEVEL, the crossfader
 //
 // --emulator drives ot_emu's USB bench socket instead (it enumerates the device
 // first; ot_emu takes one connection, so one command per emulator run).
@@ -33,10 +35,10 @@ const { values, positionals: [command, file] } = parseArgs({ allowPositionals: t
   emulator: { type: 'boolean', default: false },
 } })
 const seconds = Number(values.seconds)
-if (!['status', 'try', 'remove', 'lifecycle', 'boot', 'key', 'screen'].includes(command) || (['try', 'boot', 'key'].includes(command) && !file) ||
-  (['status', 'lifecycle', 'screen'].includes(command) && file) ||
+if (!['status', 'try', 'remove', 'lifecycle', 'boot', 'key', 'screen', 'state', 'enc', 'fader'].includes(command) || (['try', 'boot', 'key', 'enc', 'fader'].includes(command) && !file) ||
+  (['status', 'lifecycle', 'screen', 'state'].includes(command) && file) ||
   !Number.isInteger(seconds) || seconds < 1 || seconds > 3600) {
-  console.error('Usage: device.mjs status | try MODULE.mwrm [--seconds 1-3600] [--accept] | remove [MODULE.mwrm] [--accept] | lifecycle | boot BUILD_DIR | key NAME[+NAME] | screen [--socket PATH] [--emulator]')
+  console.error('Usage: device.mjs status | try MODULE.mwrm [--seconds 1-3600] [--accept] | remove [MODULE.mwrm] [--accept] | lifecycle | boot BUILD_DIR | key NAME[+NAME] | screen | state | enc A+3 | fader 0-255 [--socket PATH] [--emulator]')
   process.exit(2)
 }
 
@@ -122,6 +124,18 @@ async function rebooted() {
 try {
   if (command === 'key') { await keys(file); process.exit(0) }
   if (command === 'screen') { await screen(); process.exit(0) }
+  if (command === 'enc') {
+    const [, name, delta] = /^([A-F]|LEVEL)([+-]\d+)$/i.exec(file) ?? []
+    const encoder = 'ABCDEF'.indexOf(name?.toUpperCase()) >= 0 ? 'ABCDEF'.indexOf(name.toUpperCase()) : name?.toUpperCase() === 'LEVEL' ? 6 : -1
+    if (encoder < 0 || !Number(delta) || Math.abs(delta) > 127) throw new Error('Use enc A+3, enc F-1 or enc LEVEL+2.')
+    await devIn(8, 0x30 | encoder | (Number(delta) & 0xff) << 8, 1); process.exit(0)
+  }
+  if (command === 'fader') {
+    const position = Number(file)
+    if (!Number.isInteger(position) || position < 0 || position > 255) throw new Error('Use fader 0-255.')
+    await devIn(8, 0x40 | position << 8, 1); process.exit(0)
+  }
+  if (command === 'state') { const [stopped, recording] = await devIn(6, 0, 2); console.log(stopped ? 'stopped' : 'playing', recording ? '(recording)' : ''); process.exit(0) }
   // A whole OS image takes the unit (and far longer the emulator) a while to hash.
   const session = await UploadSession.connect(transport, identity.base, { timeoutMs: command === 'boot' ? 60000 : 10000 })
   if (command === 'status') console.log(state(session.status), '\nDIAG', await diag() ?? 'not answered')
