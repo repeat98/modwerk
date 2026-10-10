@@ -11,6 +11,8 @@
  *          {0x40, 0..255} as the panel sends it; replies 1.
  *   LOADER 0xC1, bRequest 9, wValue 0, wLength 60 (bases built with
  *          --dsp-loader): 15 big-endian words of the DSP loader's state.
+ *   REPORT 0xC1, bRequest 11, wValue 0, wLength 136 (--dsp-loader):
+ *          modwerk_dsp_report's 34 big-endian words (dsp.c).
  *   SCREEN 0xC1, bRequest 7, wValue 0, wLength 1028: "MWLC" and the last
  *          composed 128x64 frame (ev_draw: 8 bytes a column, bit 7 = row 0).
  *
@@ -21,6 +23,7 @@
 #ifdef MODWERK_DSP_LOADER
 #include "transfer.h"
 #include "selection.h"
+#include "runtime.h"
 uint32_t modwerk_dsp_used(void);
 extern volatile uint32_t modwerk_dsp_missing;
 #endif
@@ -73,6 +76,13 @@ uint32_t modwerk_dev_request(const uint8_t *s, const uint8_t **reply, uint8_t *o
         for (unsigned i = 0; i < 60; ++i) out[i] = (uint8_t)(w[i / 4] >> (24 - 8 * (i % 4)));
         *reply = out;
         return 60;
+    }
+    if (s[1] == 11 && want == 4u * DSP_REPORT_WORDS && !s[2] && !s[3]) {
+        uint32_t w[DSP_REPORT_WORDS];
+        modwerk_dsp_report(w);
+        for (unsigned i = 0; i < 4u * DSP_REPORT_WORDS; ++i) out[i] = (uint8_t)(w[i / 4] >> (24 - 8 * (i % 4)));
+        *reply = out;
+        return 4u * DSP_REPORT_WORDS;
     }
 #endif
     if (s[1] == 7 && want == sizeof screen && !s[2] && !s[3]) {
