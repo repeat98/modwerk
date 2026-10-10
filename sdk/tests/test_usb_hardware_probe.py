@@ -16,13 +16,58 @@ import types
 import unittest
 from unittest.mock import patch
 
-HW = pathlib.Path(__file__).resolve().parents[1] / "octabam/tools/hw"
-spec = importlib.util.spec_from_file_location("usb_probe_contract", HW / "usb_probe.py")
-probe = importlib.util.module_from_spec(spec)
+SDK = pathlib.Path(__file__).resolve().parents[1]
+IMPORTED = SDK / "octabam/tools/hw"
+
+
+def load(name, path):
+    spec = importlib.util.spec_from_file_location(name, path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+# The imported tools stay byte-identical (the release source inventory covers
+# them); the adapter prepares the repaired copies these regressions exercise.
+adapter = load("hw_tools_adapter", SDK / "machines/octatrack/hw/prepare_tools.py")
+PREPARED = tempfile.TemporaryDirectory()
+HW = pathlib.Path(PREPARED.name) / "tools"
+adapter.prepare(HW)
 # Playback is replaced at the host boundary. Tests need neither NumPy,
 # PortAudio, pyusb nor attached hardware, and cannot send device commands.
 with patch.dict(sys.modules, {"numpy": types.ModuleType("numpy")}):
-    spec.loader.exec_module(probe)
+    probe = load("usb_probe_contract", HW / "usb_probe.py")
+
+
+def tearDownModule():
+    PREPARED.cleanup()
+
+
+class PreparedTools(unittest.TestCase):
+    def test_imported_tools_are_unchanged_and_repairs_are_recorded(self):
+        manifest = json.loads((HW / "tools.json").read_text())
+        for name, spec in adapter.TOOLS.items():
+            imported = (IMPORTED / name).read_bytes()
+            self.assertEqual(adapter.sha(imported), spec["source"])
+            self.assertNotEqual(imported, (HW / name).read_bytes())
+            self.assertEqual(manifest["tools"][name]["outputSha256"], spec["output"])
+
+    def test_changed_source_or_ambiguous_anchor_is_refused(self):
+        source = (IMPORTED / "usb_probe.py").read_bytes()
+        for changed in (source + b"\n", source.replace(b"self._stop.set()", b"self._stop.clear()")):
+            with self.assertRaisesRegex(ValueError, "changed"):
+                adapter.repair("usb_probe.py", changed)
+        spec = dict(adapter.TOOLS["usb_probe.py"], source=adapter.sha(source + source))
+        with patch.dict(adapter.TOOLS, {"usb_probe.py": spec}), \
+             self.assertRaisesRegex(ValueError, "exactly once"):
+            adapter.repair("usb_probe.py", source + source)
+
+    def test_output_must_be_new_and_outside_git(self):
+        with self.assertRaisesRegex(ValueError, "new"):
+            adapter.prepare(HW)
+        with self.assertRaisesRegex(ValueError, "outside Git"):
+            adapter.prepare(SDK / "machines/octatrack/hw/never-created")
+        self.assertFalse((SDK / "machines/octatrack/hw/never-created").exists())
 
 
 class UsbProbeHost(unittest.TestCase):
@@ -141,7 +186,7 @@ class UsbProbeHost(unittest.TestCase):
 class RecorderPcm(unittest.TestCase):
     @unittest.skipUnless(shutil.which("swift"), "Swift compiler is a native developer check")
     def test_actual_recorder_conversion_handles_full_scale(self):
-        # Run the real IOProc's conversion block with synthetic Float input;
+        # Run the prepared IOProc's conversion block with synthetic Float input;
         # no CoreAudio device is opened. Before the Double fix, +1.0 traps.
         source = (HW / "rec.swift").read_text()
         block = re.search(r"let v = max\([^\n]+\n\s*pcm\[[^\n]+", source)

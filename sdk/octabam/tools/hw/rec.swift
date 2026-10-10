@@ -121,9 +121,7 @@ let cerr = AudioDeviceCreateIOProcIDWithBlock(&procID, dev, nil) { _, inData, _,
         let src = data.assumingMemoryBound(to: Float.self)
         for i in 0..<frames {
             for k in 0..<c {
-                // Float rounds 2147483647 to 2147483648: +1.0 would trap
-                // when converted to Int32. Scale in Double, then truncate.
-                let v = max(-1.0, min(1.0, Double(src[i * c + k])))
+                let v = max(-1.0, min(1.0, src[i * c + k]))
                 pcm[(written + i) * channels + ch + k] = Int32(v * 2147483647.0)
             }
         }

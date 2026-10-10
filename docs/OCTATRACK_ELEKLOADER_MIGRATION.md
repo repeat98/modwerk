@@ -393,15 +393,19 @@ browser-native TypeScript.
 | `ot_soak.py`, `ot_ladder.py`, `hw_sweep.py` | Stress, freeze/dropout and parameter-response measurements | Adapt the rig, channel selection and thresholds to the exact project. Several defaults assume Sam's external interface and MIDI rig. |
 | `midi_flash.py` | Existing MIDI recovery flashing | Recovery remains a separate operation; this script does not implement runtime module loading without a reboot. |
 
-Two host-tool faults were repaired before reuse: `usb_probe.py` no longer
+Two host-tool faults are repaired before reuse: `usb_probe.py` no longer
 shadows `Thread._stop()`, which caused `join()` to fail before the JSON report
 could be saved on affected Python runtimes (reproduced on 3.9; 3.14 changed
 the thread implementation); `rec.swift` scales Float samples in Double so a positive
-full-scale sample cannot overflow `Int32` after Float rounding. The SDK check
-runs synthetic poller/report/counter regressions. Where Swift is installed it
-also executes the recorder's actual PCM conversion block with synthetic
+full-scale sample cannot overflow `Int32` after Float rounding. The imported
+files stay unchanged because the release source inventory fingerprints all of
+`tools/`. The [hardware-tool adapter](../sdk/machines/octatrack/hw/README.md)
+writes repaired copies outside Git, bound to the imported source hashes and
+the reviewed output hashes. The SDK check runs synthetic poller/report/counter
+regressions on those prepared copies. Where Swift is installed it also
+executes the prepared recorder's PCM conversion block with synthetic
 full-scale samples; this check opens no audio device. Compile the complete
-recorder separately on the developer's Mac before physical capture.
+prepared recorder separately on the developer's Mac before physical capture.
 
 Consume the structured probe verdict rather than its process exit code: the
 upstream command can return zero for a reported failure or ambiguous result.

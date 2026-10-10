@@ -111,14 +111,13 @@ class Poller(threading.Thread):
         self.dev, self.interval = dev, interval
         self.samples = []   # (t, EP3 IN counters or None, EP3 OUT counters or None)
         self.errors = []
-        # Thread.join() calls Thread._stop(); do not shadow that method.
-        self._stop_event = threading.Event()
+        self._stop = threading.Event()
         self._have_in = self._have_out = True
         self.t0 = time.monotonic()
 
     def run(self):
         self.t0 = time.monotonic()
-        while not self._stop_event.is_set():
+        while not self._stop.is_set():
             t = time.monotonic() - self.t0
             ci = co = None
             if self._have_in:
@@ -134,10 +133,10 @@ class Poller(threading.Thread):
                     self.errors.append((t, "out", str(e)))
                     self._have_out = False
             self.samples.append((t, ci, co))
-            self._stop_event.wait(self.interval)
+            self._stop.wait(self.interval)
 
     def stop(self):
-        self._stop_event.set()
+        self._stop.set()
 
 
 def list_devices():
