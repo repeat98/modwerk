@@ -95,7 +95,12 @@ DSP_EDITS = {
                      '    }\n', '')),
     # No reads from a DSP (dsp_receiver.asm says why): the receiver answers in the host flags, an upload
     # carries its sum for the receiver to check, and each core's table is the build's (dsp_loader.py).
-    'transfer.c': (('static uint32_t requests=0, stages=0;',
+    # eDMA channel 0 keeps stock's ATTR, which reads its source in 16-byte bursts: an unaligned source
+    # stops the channel at its start with a source address error (the probe-A freeze, 10 October 2026).
+    'transfer.c': (('volatile uint16_t dl_tx[2][DL_WORDS]={{0}}, dl_rx[2][32]={{0}};',
+                    'volatile uint16_t dl_tx[2][DL_WORDS] __attribute__((aligned(16)))={{0}}, '
+                    'dl_rx[2][32] __attribute__((aligned(16)))={{0}};'),
+                   ('static uint32_t requests=0, stages=0;',
                     'static uint32_t requests=0, stages=0;\n'
                     'unsigned modwerk_dsp_flags(unsigned core); /* dsp.c: HF2 (handled, toggles) | HF3 (refused) << 1 */\n'
                     'static unsigned flags_sent[2]={0,0};'),
@@ -502,6 +507,8 @@ modwerk_retained_end:
         target = out / ('NOT_FLASH_CANDIDATE.' + ext); target.write_bytes(data)
         if sha(target.read_bytes()) != sha(data):
             raise ValueError('Saved file hash differs.')
+    if args.dsp_loader and any(mapping[name] % 16 for name in ('dl_tx', 'dl_rx')):
+        raise ValueError('The DSP loader packet buffers must be 16-byte aligned for eDMA channel 0.')
     (out/'symbols.json').write_text(json.dumps(mapping, indent=2)+'\n')
     stage = mapping['modwerk_boot_stage']
     if stage % 16 or not BOOT_RESERVE[0] <= stage <= BOOT_RESERVE[1] - 320 - BOOT_IMAGE_BYTES:

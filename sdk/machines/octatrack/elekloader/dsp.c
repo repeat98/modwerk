@@ -125,6 +125,8 @@ uint32_t modwerk_dsp_dry(void)
 #define DSP_SELECT (*(volatile uint8_t *)0xfc0a400cu)
 #define HOST_ISR (*(volatile uint16_t *)0x20000008u) /* bit 0 RXDF, 3 HF2, 4 HF3 */
 #define HOST_RXL (*(volatile uint16_t *)0x2000001cu) /* a read takes the word */
+#define HOST_TXL (*(volatile uint16_t *)0x2000001cu) /* a write gives the core a word */
+#define EDMA_ES (*(volatile uint32_t *)0xfc044004u) /* bit 31 VLD, 11-8 the channel in error */
 #ifndef MODWERK_HOST
 /* The receiver's answer (dsp_receiver.asm): HF2 toggles for each packet handled, HF3 says refused.
  * Read from the frame-transfer interrupt at its end, where core 0 is selected. */
@@ -150,6 +152,7 @@ int modwerk_dsp_stalled(uint32_t frames, int busy)
     return ++still == STALL_TICKS;
 }
 volatile uint32_t modwerk_dsp_stalls, modwerk_dsp_drained; /* hangs seen; words taken back from the DSPs */
+volatile uint32_t modwerk_dsp_edma_errors, modwerk_dsp_edma_es; /* our transfers that eDMA refused; its last ES */
 #ifndef MODWERK_HOST
 extern volatile uint32_t dl_frames, dl_phase, dl_rx_nbytes, dl_residency_enabled;
 int dl_job_status(unsigned core);
@@ -160,6 +163,21 @@ void dl_abort(void);
 static void recover(void)
 {
     uint32_t sr = modwerk_machine_mask();
+    if (dl_phase && EDMA_ES >> 31) {
+        /* eDMA refused our transfer, so the core's DMA still waits for the words its host command
+         * promised: give it what is left by hand (all of it after a configuration error, which
+         * stops the channel at its start), then clear the error. hooks.s: phase 1 writes core 0. */
+        uint32_t nbytes = *(volatile uint32_t *)0xfc045008u, left = (*(volatile uint16_t *)0xfc045014u & 0x1ffu) * nbytes / 2u;
+        const volatile uint16_t *from = (const volatile uint16_t *)*(volatile uint32_t *)0xfc045000u;
+        modwerk_dsp_edma_es = EDMA_ES;
+        DSP_SELECT = (uint8_t)(dl_phase - 1u);
+        for (uint32_t i = 0, spin = 0; i < left && spin < 100000u; ++i) {
+            for (spin = 0; !(HOST_ISR & 2u) && spin < 100000u; ++spin) {} /* TXDE */
+            HOST_TXL = from[i];
+        }
+        *(volatile uint8_t *)0xfc04401du = 0; /* CERR: channel 0 */
+        modwerk_dsp_edma_errors = modwerk_dsp_edma_errors + 1;
+    }
     for (unsigned core = 0; core < 2; ++core) {
         DSP_SELECT = (uint8_t)core;
         for (unsigned n = 0; n < 1024u && HOST_ISR & 1u; ++n) { (void)HOST_RXL; modwerk_dsp_drained = modwerk_dsp_drained + 1; }
@@ -199,7 +217,8 @@ void modwerk_dsp_tick(void)
         dl_job_release((unsigned)probing);
         probing = -1;
     }
-    if (modwerk_dsp_stalled(dl_frames, dl_phase || !dl_job_status(0) || !dl_job_status(1))) recover();
+    if (dl_phase && EDMA_ES >> 31 && !(EDMA_ES >> 8 & 0xfu)) recover(); /* eDMA refused our transfer: at once */
+    else if (modwerk_dsp_stalled(dl_frames, dl_phase || !dl_job_status(0) || !dl_job_status(1))) recover();
     uint32_t dry = modwerk_dsp_dry(), fresh = dry & ~missing_shown;
     if (fresh) {
         ((void (*)(const char *, unsigned))0x4005a2b8u)(fresh & modwerk_dsp_harvested ? "FX NOT IN BASE" : "MODULE MISSING", 0x30);
@@ -232,7 +251,7 @@ uint32_t dl_manager_state(void);
 unsigned modwerk_dsp_report(uint32_t *out)
 {
     const uint32_t words[DSP_REPORT_WORDS] = {
-        4, dl_frames, dl_phase, (uint32_t)dl_job_status(0), (uint32_t)dl_job_status(1), modwerk_dsp_last_flags,
+        5, dl_frames, dl_phase, (uint32_t)dl_job_status(0), (uint32_t)dl_job_status(1), modwerk_dsp_last_flags,
         dl_accepted[0], dl_accepted[1], dl_rejected[0], dl_rejected[1], dl_errors, modwerk_dsp_stalls, modwerk_dsp_drained,
         dl_residency_enabled, dl_manager_state(), modwerk_dsp_watch_ticks, modwerk_dsp_probes, modwerk_dsp_probes_ok,
         modwerk_dsp_probes_failed,
@@ -245,7 +264,7 @@ unsigned modwerk_dsp_report(uint32_t *out)
         R32(0x46104d3eu), R32(0x46104d4eu), R32(0xfc048004u), R32(0xfc04800cu),
         (uint32_t)R8(0xfc094005u) << 16 | (uint32_t)R8(0xfc094006u) << 8 | R8(0xfc0a400cu),
         (uint32_t)R16(0xfc044026u) << 16 | R16(0xfc04402eu), (uint32_t)R16(0xfc04501eu) << 16 | R16(0xfc04503eu),
-        R32(0xfc044004u)};
+        R32(0xfc044004u), modwerk_dsp_edma_errors, modwerk_dsp_edma_es};
     for (unsigned i = 0; i < DSP_REPORT_WORDS; ++i) out[i] = words[i];
     return DSP_REPORT_WORDS;
 }

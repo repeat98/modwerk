@@ -634,6 +634,26 @@ INTC0's pending and mask registers, the EPORT pin levels and edge flags with
 the DSP select, eDMA's interrupt and error bits, both channels' CSR and
 eDMA's error status. All are read without side effects.
 
+**Cause, measured on the unit.** `pretend` (no transfer) kept frames
+running. `long` froze, and report version 4 showed eDMA channel 0 in error
+with `ES = 0x80000080`: a source address error. Channel 0 keeps stock's
+ATTR, which reads the source in 16-byte bursts, and our packet buffer
+`dl_tx` sat at an address ≡ 4 (mod 16). The channel stopped at its start,
+so its completion never came, state 7 never unmasked the frame interrupt,
+and core 0 waited at P:$97 with its frame word unread (the 2 drained
+words). USB AUDIO IN's buffer is 32-byte aligned. `ot_emu` does not check
+alignment, so it never showed this.
+
+**Fix** (`--dsp-loader`): `dl_tx` and `dl_rx` are 16-byte aligned (rows of
+128 and 64 bytes stay aligned), and the build refuses a base where they are
+not. TCD0's ATTR stays stock's, as USB AUDIO IN's does: stock never rewrites
+it and relies on it for every push. If eDMA refuses one of our transfers
+anyway, the sys tick acts at its next run, not after half a second. It hands
+the core the words its host command promised, clears the channel's error,
+takes back the frame words, unmasks the frame interrupt, shuts the loader
+off and shows `DSP STOPPED`. Report version 5 (44 words) counts those errors
+and keeps the last `ES`.
+
 ### Windows without a driver (10 October 2026)
 
 The base reports USB 2.10 from its own copy of the device descriptor (one
