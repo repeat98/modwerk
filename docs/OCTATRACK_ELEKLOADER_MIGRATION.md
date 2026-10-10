@@ -467,6 +467,17 @@ stage and recovers. The base now clears ZLT when it primes the stage, and
 the client never sends such a frame (it shortens that chunk by a byte), so
 already-flashed bases work too: with the client fix both sizes passed on the
 unit.
+
+`usbtest9` (base `19d37e25…`, `.bin` `cd5ee27c…`, built from `508b0e52`,
+flash-safety check passed) ran from RAM on the owner's MKII the same day.
+`device boot` armed it from a RAM-booted base, came back on the flashed
+`usbtest7`, re-armed from there and booted it (21 s, unattended). A raw
+128-byte SUBMIT that skips the client's guard was answered with no abandoned
+stage, and the client verifier passed in full, including the several-modules
+check (Q and P kept together; R, patching P's bytes, refused before
+activation with P still running; R loaded once P was removed; all removed).
+The USB detach before the reset and the scanning gate take effect only once
+`usbtest9` is the flashed base.
 `npm run device -- boot` now waits for the unit to go away and answer HELLO
 again, and re-arms once from the flashed base if a boot falls back to it.
 
