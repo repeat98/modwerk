@@ -87,6 +87,9 @@ issues) and its gaps are in the
 together with an SDK command-line client for working directly on a unit or
 the emulator, and the goal of covering every machine later.
 
+Everything learned the hard way on the unit is collected in
+[OCTATRACK_HARDWARE_TRAPS.md](OCTATRACK_HARDWARE_TRAPS.md); read it first.
+
 Sam's open REMIX SWITCH (Octabam PR #655) switches whole images from the card
 with a soft reset. The owner chose on 10 October to use it as a reference
 only for modules; its DSP park and cache handling inform the no-reboot loader.

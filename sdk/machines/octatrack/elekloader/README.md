@@ -67,6 +67,10 @@ python3 -B sdk/runtime/loader/build.py --dsp src/engine/assets/dsp-packages.json
   --slots fx2 --cycles 382 --cycles-kind executed --state 132 --buffer 16384 -o /private/everb.mwrm
 ```
 
+
+Before changing anything here, read the [hardware traps](../../../../docs/OCTATRACK_HARDWARE_TRAPS.md)
+found on the owner's MKII (EP0 sizes, RAM boot, key injection, eDMA alignment).
+
 ## USB vendor interface
 
 The base owns the USB configuration responder, the unknown-request tail and
