@@ -66,7 +66,9 @@ modules converted by Elekloader load without a reboot; each package is
 checked byte for byte against Elekloader's static link. On the owner's MKII
 (`usbtest5`), PREVIEW VOL loaded, worked audibly and was removed over USB
 ([record](OCTATRACK_ELEKLOADER_MIGRATION.md#catalogue-modules-patching-stock-code-at-load-time-10-october-2026)).
-Next: the fail-safe sync requirements (a trial lease first), the sync mode on the unit, and folding USB MIDI and USB Audio
+A host that goes quiet for 10 s mid-upload or mid-trial is now handled as
+unplugged (`usbtest6`, emulator-checked). Next: the rest of the fail-safe
+sync requirements, the sync mode on the unit, and folding USB MIDI and USB Audio
 into the base. The target user flow (sync mode on the unit,
 WebUSB, module loading, automated checks, automatic failure reports and
 issues) and its gaps are in the

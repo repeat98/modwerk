@@ -132,6 +132,11 @@ executed.
 - A bus reset or unplug becomes the controller's disconnect, after any frame
   queued before it. That aborts staging, rolls back an unaccepted set and
   leaves upload mode, as the contract above defines.
+- A host that goes quiet without a reset (an app or driver hang, a cable
+  that still carries power) is handled the same way: the machine's tick
+  calls `mv_tick`, and after its limit without any request to the vendor
+  interface while an upload or trial is open, the engine runs the
+  disconnect. If playback prevents the rollback, the next lapse retries it.
 - Reading RESULT has no side effects. The browser transport
   ([`upload-usb.ts`](../../../src/engine/elekloader/upload-usb.ts)) continues
   from the device's latest sequence and never reuses one. It reconciles an

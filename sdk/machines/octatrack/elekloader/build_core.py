@@ -208,6 +208,8 @@ modwerk_retained_end:
     # The machine-neutral loader's events (sdk/runtime/loader/loader.h), from core-ot's bus.
     recipe.setdefault('subscribe', []).extend(dict(event='ev_' + e, fn='modwerk_runtime_' + e, order=90)
                                               for e in ('tick', 'draw', 'key', 'enc'))
+    # The host time limit counts on the same tick (ep0.c).
+    recipe['subscribe'].append(dict(event='ev_tick', fn='modwerk_ep0_tick', order=91))
     spec = importlib.util.spec_from_file_location('modwerk_startup', artwork.parent/'build.py')
     startup = importlib.util.module_from_spec(spec); spec.loader.exec_module(startup)
     for guard, authored in startup.writes():

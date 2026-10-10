@@ -208,6 +208,15 @@ void modwerk_ep0_bus_reset(void)
     if (mv_reset(t)) wake();
 }
 
+/* Sys task, core-ot's 60 Hz ev_tick: a host silent for 10 s while an upload
+ * or trial is open is handled as unplugged (mv_tick). */
+#define HOST_TIMEOUT_TICKS 600u
+void modwerk_ep0_tick(void);
+void modwerk_ep0_tick(void)
+{
+    if (started && controller_started && mv_tick(vendor(), controller.phase != MU_NORMAL, HOST_TIMEOUT_TICKS)) wake();
+}
+
 /* Engine task, on every return to its receive. Cheap unless woken. */
 void modwerk_engine_idle(void);
 void modwerk_engine_idle(void)

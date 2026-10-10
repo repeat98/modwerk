@@ -42,6 +42,7 @@ struct mv_reply mv_setup(struct mv_transport *t, const uint8_t s[8])
     uint16_t value = le16(s+2), length = le16(s+6);
     mv_abandon(t); /* A new SETUP ends any control transfer in its data stage. */
     if ((s[0] & 0x7fu) != (MV_SUBMIT_TYPE & 0x7fu) || le16(s+4) != t->interface) return r;
+    t->activity = (uint8_t)(t->activity + 1u); /* the host is there */
     r.action = MV_STALL;
     if (!t->ready) return r;
     if (s[0] == MV_RESULT_TYPE && s[1] == MV_IDENTIFY) {
@@ -86,6 +87,15 @@ int mv_reset(struct mv_transport *t)
     t->resets = (uint8_t)(t->resets + 1u);
     return 1;
 }
+int mv_tick(struct mv_transport *t, int busy, uint32_t limit)
+{
+    uint8_t activity = t->activity;
+    if (!busy || activity != t->seen) { t->seen = activity; t->quiet = 0; return 0; }
+    if (++t->quiet < limit) return 0;
+    t->quiet = 0;
+    t->lapses = (uint8_t)(t->lapses + 1u);
+    return 1;
+}
 int mv_service(struct mv_transport *t, struct mu_context *c)
 {
     int work = 0;
@@ -104,6 +114,14 @@ int mv_service(struct mv_transport *t, struct mu_context *c)
         (void)mu_disconnect(c); /* Controller-defined; failure keeps recovery pending. */
         PUBLISH();
         t->handled = resets;
+        work = 1;
+    }
+    /* A host that went quiet mid-upload or mid-trial is handled as unplugged;
+     * if playback blocks the rollback, the next lapse retries it. */
+    uint8_t lapses = t->lapses;
+    if (lapses != t->lapses_handled) {
+        if (c->phase != MU_NORMAL) (void)mu_disconnect(c);
+        t->lapses_handled = lapses;
         work = 1;
     }
     return work;

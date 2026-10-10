@@ -49,5 +49,15 @@ await new Promise(resolve => setTimeout(resolve, 250))
 const diag = await diagnostics(device(bench), number)
 assert.equal(diag.value, 0xa1); assert.equal(diag.active, true); assert(diag.resets >= 1)
 console.log('a bus reset mid-staging discards the candidate and keeps A running: passed')
+
+// Emulator only: a host that goes quiet mid-trial (an app or driver hang, no bus
+// reset). After 10 s without a request the base handles it as unplugged.
+const quiet = await UploadSession.connect(new UsbVendorTransport(device(bench), number, { pollMs: 5 }), base)
+await quiet.stage(testModule(base, 0xd4)); await quiet.activate(); await quiet.startTrial()
+await new Promise(resolve => setTimeout(resolve, 20000)) // no requests at all: well over 600 emulated ticks
+const back = await UploadSession.connect(new UsbVendorTransport(device(bench), number, { pollMs: 5 }), base)
+assert.equal(back.status.phase, 'normal'); assert.equal(back.status.active, a.sha256)
+assert.equal((await diagnostics(device(bench), number)).value, 0xa1)
+console.log('a host that goes quiet mid-trial: the base rolls the trial back by itself: passed')
 bench.socket.end()
 console.log('Browser client against the emulated base: lifecycle passed; protocol evidence only, no host driver, WebUSB or hardware.')

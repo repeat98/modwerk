@@ -201,6 +201,25 @@ static void resets(void)
     CHECK(submit(4, f, n) && mv_service(&t, &controller) && status_is(result(), MV_REFUSED, 4));
 }
 
+/* A host that goes quiet mid-upload is handled as unplugged after `limit`
+ * ticks; any request restarts the count; normal operation never lapses. */
+static void lease(void)
+{
+    uint8_t f[MU_WIRE_MAX];
+    reset_all();
+    uint32_t n = frame(f, MU_ENTER, 0, 0);
+    for (int i = 0; i < 10; ++i) CHECK(!mv_tick(&t, 0, 3));
+    CHECK(submit(1, f, n) && mv_service(&t, &controller) && controller.phase == MU_READY);
+    CHECK(!mv_tick(&t, 1, 3) && !mv_tick(&t, 1, 3) && !mv_tick(&t, 1, 3)); /* the SUBMIT counted, then 2 quiet */
+    (void)result();                                                          /* the host polls: count restarts */
+    CHECK(!mv_tick(&t, 1, 3) && !mv_tick(&t, 1, 3) && !mv_tick(&t, 1, 3) && mv_tick(&t, 1, 3));
+    CHECK(mv_service(&t, &controller) && disconnected == 1 && controller.phase == MU_NORMAL);
+    CHECK(!mv_service(&t, &controller) && disconnected == 1);                /* handled once */
+    CHECK(!mv_tick(&t, 1, 3) && !mv_tick(&t, 1, 3) && mv_tick(&t, 1, 3));    /* still away: lapses repeat */
+    CHECK(mv_service(&t, &controller) && disconnected == 1);                /* but normal needs no disconnect */
+    for (int i = 0; i < 10; ++i) CHECK(!mv_tick(&t, 0, 3));
+}
+
 /* Random host, bus and engine events. Invariants: every accepted frame
  * executes exactly once and in order, nothing else executes, queued frames
  * are never written, and every reply is a well-formed header or result. */
@@ -273,8 +292,8 @@ static void random_events(void)
 
 int main(void)
 {
-    routing(); identity(); exchange(); incomplete(); resets(); random_events();
+    routing(); identity(); exchange(); incomplete(); resets(); lease(); random_events();
     if (failures) { fprintf(stderr, "%u vendor transport checks failed\n", failures); return 1; }
-    puts("Vendor transport: routing, identity, exchange, incomplete frames, resets and random events passed.");
+    puts("Vendor transport: routing, identity, exchange, incomplete frames, resets, the host time limit and random events passed.");
     return 0;
 }

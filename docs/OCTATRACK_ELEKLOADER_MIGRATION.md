@@ -809,7 +809,7 @@ host and must end every interruption in a known, working state.
 | --- | --- | --- |
 | Unplug, bus reset, host closes the session | The controller's disconnect: staging discarded, an unaccepted trial rolled back, upload mode left | If something is playing, the rollback cannot hold transport and the trial stays live: retry it once stopped, and show it on the unit |
 | Dropped, short or corrupted transfer | A short data stage or a new SETUP refuses the frame; the client retries a positively refused frame under a new sequence; the whole package's SHA-256 is checked before activation; an unconfirmed command stops the connection | Resume an interrupted upload from the last confirmed chunk instead of restarting |
-| Host stops talking without a bus reset (driver or app hang, half-broken cable) | Nothing: a trial stays live until reconnect or power-off | A trial lease: the unit rolls back an unaccepted trial when no frame arrives for a few seconds |
+| Host stops talking without a bus reset (driver or app hang, half-broken cable) | After 10 s without any request during an upload or trial, the unit handles it as unplugged (`usbtest6`, emulator-checked: a silent host's trial is rolled back) | A client keeps a long trial alive with status reads (the CLI reads DIAG every second); the site's UI must do the same |
 | Device-side stalls | Replies are never a whole number of 64-byte packets (a stale zero-length packet once froze the unit), and nothing spins on the host | Keep that rule for every future request; fault-injection runs with random unplugs |
 | Power loss | RAM only: a reboot starts stock plus the base | When accepted modules persist (planned), write the new set beside the old one and switch only once it is complete |
 

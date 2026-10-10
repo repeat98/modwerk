@@ -83,8 +83,9 @@ in the USB ISR and its controller on the engine task:
   module code and data on the uncached alias; instruction and branch cache
   invalidation with the OS's own CACR value (guarded); the patchable range
   (the stock image's RAM copy minus the bootloader copy); and the paused-task
-  scan over the kernel's eleven measured tasks. A bus reset or
-  session end becomes the controller's disconnect.
+  scan over the kernel's eleven measured tasks. A bus reset, session end
+  or 10 s without any request from the host during an upload or trial
+  (`modwerk_ep0_tick` on `ev_tick`) becomes the controller's disconnect.
   [`examples/hello.c`](examples/hello.c) is Elekloader's hello-marker as a
   runtime module: a square in the screen's top-right corner, with key presses
   and encoder turns counted in DIAG's value.

@@ -50,6 +50,9 @@ struct mv_transport {
     uint8_t ready;
     volatile uint8_t phase;
     volatile uint8_t resets, handled; /* ISR-only and engine-only writers. */
+    volatile uint8_t activity; /* ISR: every request to this interface */
+    volatile uint8_t lapses, lapses_handled; /* tick-only and engine-only writers */
+    uint8_t seen; uint32_t quiet; /* tick only */
 };
 
 /* Zero when the model is not 1-16 printable ASCII characters or an unknown
@@ -66,6 +69,11 @@ void mv_abandon(struct mv_transport *);
 int mv_data(struct mv_transport *, uint32_t received);
 /* Bus reset or unplug. Non-zero: wake the owner. */
 int mv_reset(struct mv_transport *);
+/* The machine's periodic tick (one task). Counts ticks without a request
+ * from the host while `busy` (the controller is not in normal operation).
+ * After `limit` of them the host counts as gone, as if unplugged: non-zero,
+ * wake the owner. Repeats every `limit` ticks while the host stays away. */
+int mv_tick(struct mv_transport *, int busy, uint32_t limit);
 /* Engine task only. Non-zero when it did work. */
 int mv_service(struct mv_transport *, struct mu_context *);
 #endif
