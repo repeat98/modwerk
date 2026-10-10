@@ -11,8 +11,8 @@
  *          {0x40, 0..255} as the panel sends it; replies 1.
  *   LOADER 0xC1, bRequest 9, wValue 0, wLength 60 (bases built with
  *          --dsp-loader): 15 big-endian words of the DSP loader's state.
- *   REPORT 0xC1, bRequest 11, wValue 0, wLength 136 (--dsp-loader):
- *          modwerk_dsp_report's 34 big-endian words (dsp.c).
+ *   REPORT 0xC1, bRequest 11, wValue 0, wLength 4 x DSP_REPORT_WORDS (--dsp-loader):
+ *          modwerk_dsp_report's big-endian words (dsp.c).
  *   PROBE  0xC1, bRequest 12, wValue = core 0/1, wLength 1 (--dsp-loader):
  *          modwerk_dsp_probe(core), one no-op packet; replies its result.
  *   SCREEN 0xC1, bRequest 7, wValue 0, wLength 1028: "MWLC" and the last

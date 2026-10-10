@@ -17,8 +17,12 @@
 ; Packet (X:r6+$320, 64 words, each 16 bits): 0 magic $4c44, 1 sequence,
 ; 2 opcode, 3 core, 4 count or id, 5 offset or init, 6 checksum, 7 proc, or a
 ; WRITE's expected sum (low 16 bits; its high 8 in word 56), 8-55 the data
-; (two words per 24-bit word), 63 scratch. Opcodes: 1 PROBE, 3 WRITE, 4 BIND,
-; 5 UNBIND, 6 BYPASS (an id onto stock's null stub), 7 BASE (X:$255 entry).
+; (two words per 24-bit word), 59-63 scratch. Opcodes: 1 PROBE, 3 WRITE, 4 BIND,
+; 5 UNBIND, 6 BYPASS (an id onto stock's null stub), 7 BASE (X:$255 entry),
+; 8 PEEK (one bit of a P word, answered in HF3).
+; A WRITE whose read-back sum differs keeps its first wrong word, once per boot:
+; the table offset, the word the packet wrote and the word P held (missoffset).
+; If every word matches, only the sum differed: offset = chunk end, expected = actual.
 ; The table (dltable, its size filled in by the build) keeps each id's original entries in its
 ; first 64 words; the rest is the code arena. Both cores' frame hooks run this
 ; before any effect. Entry changes keep the stock per-instance state.
@@ -56,6 +60,8 @@ checksumdone:
         beq     binding
         cmp     #>7,a
         beq     setbase
+        cmp     #>8,a
+        beq     peekbit
         bra     badsaved
 upload:
         move    x:(r0+4),a
@@ -124,8 +130,75 @@ verified:
         move    a1,x0
         move    x1,a
         cmp     x0,a
-        bne     badsaved
+        bne     mismatch
         bra     accepted
+mismatch:
+        move    #>missoffset,r3
+        move    p:(r3),x0
+        move    x0,a
+        tst     a
+        bne     badsaved                ; the first one is kept
+        move    x:(r0+5),a
+        and     #>$ffff,a
+        move    a1,x0
+        bsr     tablebase
+        add     x0,a
+        move    a,r3                    ; P, from the chunk's first word
+        move    r0,a
+        add     #>8,a
+        move    a,r1                    ; the packet's words
+        move    #>0,x0
+        move    x0,x:(r0+61)            ; the first wrong word's P address, 0 none yet
+        move    x:(r0+4),a
+        and     #>$ffff,a
+        ; A DO loop without an early exit: dsp_asm cannot branch backwards to a label.
+        do      a,scanned
+        move    x:(r1)+,a
+        and     #>$ffff,a
+        asl     #8,a,a
+        move    a1,x0
+        move    x:(r1)+,a
+        and     #>$ff,a
+        or      x0,a
+        move    a1,x1                   ; the word the packet wrote
+        move    p:(r3),x0               ; the word P holds
+        move    x1,a
+        cmp     x0,a
+        beq     nextword
+        move    x:(r0+61),a
+        tst     a
+        bne     nextword
+        move    r3,x:(r0+61)
+        move    x0,x:(r0+60)
+        move    x1,a
+        move    a1,x:(r0+59)
+nextword:
+        move    r3,a
+        add     #>1,a
+        move    a,r3
+scanned:
+        move    x:(r0+61),a
+        tst     a
+        bne     keepword
+        move    r3,x:(r0+61)            ; every word matches: only the sum differed
+        move    x0,x:(r0+60)
+        move    x1,a
+        move    a1,x:(r0+59)
+keepword:
+        move    x:(r0+60),x0
+        move    #>missactual,r3
+        move    x0,p:(r3)
+        move    x:(r0+59),x0
+        move    #>missexpected,r3
+        move    x0,p:(r3)
+        bsr     tablebase
+        move    a1,x0
+        move    x:(r0+61),a
+        sub     x0,a
+        move    a1,x0
+        move    #>missoffset,r3
+        move    x0,p:(r3)
+        bra     badsaved
 binding:
         move    x:(r0+4),a
         and     #>$ffff,a
@@ -232,6 +305,35 @@ setbase:
         or      x0,a
         move    a1,x:(r1)
         bra     accepted
+; PEEK (8): HF3 answers (P:(r0+5) >> 8 * (r0+4)) & (r0+7), private P only:
+; one bit a packet, because the host never reads a DSP word (see above).
+peekbit:
+        move    x:(r0+5),a
+        and     #>$ffff,a
+        move    a1,x0
+        move    x0,a                    ; a2 clean, whatever the word's top byte held
+        cmp     #>$2000,a
+        bge     badsaved
+        move    a,r3
+        move    x:(r0+7),a
+        and     #>$ffff,a
+        move    a1,x1                   ; the mask
+        move    x:(r0+4),a
+        and     #>$ffff,a
+        bne     highbyte
+        move    p:(r3),x0
+        move    x0,a
+        bra     testbit
+highbyte:
+        move    p:(r3),x0
+        move    x0,a
+        lsr     #8,a
+testbit:
+        move    a1,x0
+        move    x1,a
+        and     x0,a
+        bne     badsaved
+        bra     accepted
 accepted:
         move    x:(r0+63),r3
         move    #>0,x0                  ; HF3 clear: done
@@ -254,4 +356,10 @@ finish:
 tablebase:
         move    #>dltable,a
         rts
+missoffset:                             ; never executed: the first wrong word (see above)
+        nop
+missexpected:
+        nop
+missactual:
+        nop
 dltable:

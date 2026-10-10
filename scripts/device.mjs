@@ -13,7 +13,7 @@
 //   npm run device -- screen [--png FILE]           # the display, in block characters or as a 4x PNG
 //   npm run device -- state                         # stopped / playing, recording
 //   npm run device -- loader                        # the DSP loader's counters (--dsp-loader bases)
-//   npm run device -- report                        # its full 34-word report (dsp.c modwerk_dsp_report)
+//   npm run device -- report                        # its full report (dsp.c modwerk_dsp_report, version 6: 50 words)
 //   npm run device -- probe 0|1                     # one no-op loader packet to a DSP core
 //   npm run device -- enc A+3 | LEVEL-1 | fader 128 # encoders A-F and LEVEL, the crossfader
 //
@@ -163,10 +163,10 @@ try {
       'selRequested', 'selCompleted', 'selRefused', 'selCancelled', 'resCommits', 'resFailures', 'resRollbacks',
       'words0', 'words1', 'earlyVisits', 'parked', 'reinit', 'missing', 'used', 'dry',
       'frameState', 'frameBusy', 'intcIprl', 'intcImrl', 'eportPinFlagSelect', 'edmaIntErr', 'csr0csr1', 'edmaEs',
-      'edmaErrors', 'edmaEsSeen']
+      'edmaErrors', 'edmaEsSeen', 'missCore', 'missBits', 'missCheck', 'missOffset', 'missExpected', 'missActual']
     const bytes = await devIn(11, 0, 4 * names.length), view = new DataView(bytes.buffer, bytes.byteOffset, 4 * names.length)
-    const hex = new Set(['hostFlags', 'manager', 'used', 'dry', 'intcIprl', 'intcImrl', 'eportPinFlagSelect', 'edmaIntErr', 'csr0csr1', 'edmaEs', 'edmaEsSeen'])
-    console.log(Object.fromEntries(names.map((name, i) => [name, ['job0', 'job1'].includes(name) ? view.getInt32(4 * i)
+    const hex = new Set(['hostFlags', 'manager', 'used', 'dry', 'intcIprl', 'intcImrl', 'eportPinFlagSelect', 'edmaIntErr', 'csr0csr1', 'edmaEs', 'edmaEsSeen', 'missCheck', 'missOffset', 'missExpected', 'missActual'])
+    console.log(Object.fromEntries(names.map((name, i) => [name, ['job0', 'job1', 'missCore'].includes(name) ? view.getInt32(4 * i)
       : hex.has(name) ? '0x' + view.getUint32(4 * i).toString(16) : view.getUint32(4 * i)])))
     process.exit(0)
   }

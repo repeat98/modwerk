@@ -111,6 +111,10 @@ def recipe(image, device, dsp, assemble, work, probe=None):
         code, labels, relocations = assemble(str(path))
         if len(code) != size or labels['dltable'] != size or table < SAVED + 1:
             raise ValueError('Payload %s: the receiver does not fit the harvested run.' % tag)
+        # dsp.c reads the first wrong word back from three consecutive receiver words, after
+        # tablebase's operand (the table address, a known word) and its rts.
+        if [labels[k] - labels['missoffset'] for k in ('tablebase', 'missexpected', 'missactual')] != [-3, 1, 2]:
+            raise ValueError('Payload %s: the receiver\'s mismatch record is not three consecutive words.' % tag)
         for index, offset in relocations:
             code[index] = lo + offset
         words, covered = code + [0] * table, 0  # the saved entries must start empty
@@ -133,6 +137,7 @@ def recipe(image, device, dsp, assemble, work, probe=None):
                 sites.append(dict(addr=hex(at(1, table_at + fx)), stock=image[first:first + 3].hex(), op='bytes',
                                   kind='data', new=value.to_bytes(3, 'little').hex()))
         layout[tag] = dict(core=payload['core'], receiver=lo, frame=frame, table=lo + size, tableWords=table,
+                           miss=lo + labels['missoffset'],
                            null=null, free=free, harvested=sum(1 << p['fxId'] for p in taken))
     if layout['A']['free'] != layout['B']['free']:
         raise ValueError('The two payloads leave different effect ids free.')

@@ -97,7 +97,12 @@ DSP_EDITS = {
     # carries its sum for the receiver to check, and each core's table is the build's (dsp_loader.py).
     # eDMA channel 0 keeps stock's ATTR, which reads its source in 16-byte bursts: an unaligned source
     # stops the channel at its start with a source address error (the probe-A freeze, 10 October 2026).
-    'transfer.c': (('volatile uint16_t dl_tx[2][DL_WORDS]={{0}}, dl_rx[2][32]={{0}};',
+    # PEEK (8, dsp_receiver.asm): one bit of a DSP P word per packet, its answer HF3; dsp.c reads the
+    # receiver's mismatch record with it. Its refusals are bits, so they count neither as rejects nor errors.
+    'transfer.h': (('DL_BYPASS=6, DL_BASE=7 };', 'DL_BYPASS=6, DL_BASE=7, DL_PEEK=8 };'),),
+    'transfer.c': (('op!=DL_BYPASS && op!=DL_BASE)) return 0;', 'op!=DL_BYPASS && op!=DL_BASE && op!=DL_PEEK)) return 0;'),
+                   ('opcode==DL_BYPASS || opcode==DL_BASE) {', 'opcode==DL_BYPASS || opcode==DL_BASE || opcode==DL_PEEK) {'),
+                   ('volatile uint16_t dl_tx[2][DL_WORDS]={{0}}, dl_rx[2][32]={{0}};',
                     'volatile uint16_t dl_tx[2][DL_WORDS] __attribute__((aligned(16)))={{0}}, '
                     'dl_rx[2][32] __attribute__((aligned(16)))={{0}};'),
                    ('static uint32_t requests=0, stages=0;',
@@ -126,7 +131,8 @@ DSP_EDITS = {
                     '            unsigned flags=modwerk_dsp_flags(c);\n'
                     '            if((flags^flags_sent[c])&1u) {\n'
                     '                unsigned valid=!(flags&2u);\n'
-                    '                if(valid) ++dl_accepted[c];\n'
+                    '                if(jobs[c].state==2 && jobs[c].opcode==DL_PEEK) {}\n'
+                    '                else if(valid) ++dl_accepted[c];\n'
                     '                else'),
                    ('        dl_show_message(text,0x30);\n    }\n}\n',
                     '        dl_show_message(text,0x30);\n    }\n}\n'
@@ -289,10 +295,11 @@ def main():
                         help='Development base: drive and watch the unit over USB (dev.c) and stream MAIN/CUE as USB audio. Never for users.')
     parser.add_argument('--dsp-hook', choices=tuple(DSP_HOOK_EDITS), default='guard',
                         help="with --dsp-loader: the state-7 entry, guard (default); usbin, pretend, noflags, long: hardware bisect variants")
-    parser.add_argument('--dsp-probe', choices=('A', 'B', 'S', 'W'),
+    parser.add_argument('--dsp-probe', choices=('A', 'B', 'S', 'W', 'M'),
                         help='Hardware probe of the DSP loader (dsp_loader.PROBES): A delivery only, B answer only, '
                              'S stock DSP payloads (the ColdFire transport alone; nothing answers); '
-                             'W full loader, but one word per upload packet to pinpoint a rejected word.')
+                             'W full loader, but one word per upload packet to pinpoint a rejected word; '
+                             'M (emulator check) a wrong sum on the upload chunk at word 48, so the receiver keeps a record and the tick reads it.')
     parser.add_argument('--dsp-loader', action='store_true',
                         help='Load module DSP effects on demand; takes PLATE, SPRING and DARK REV off FX2 (needs ELEKLOADER_DSP_ASM, Node 24).')
     args = parser.parse_args()
@@ -371,6 +378,8 @@ def main():
                            'unsigned n=j->upload.count-j->position;\n            if(n>1) n=1;'),
                           ('unsigned n=jobs[c].upload.count-jobs[c].position;\n                        if(n>DL_DATA) n=DL_DATA;',
                            'unsigned n=jobs[c].upload.count-jobs[c].position;\n                        if(n>1) n=1;'))
+            if name == 'transfer.c' and args.dsp_probe == 'M':
+                edits += (('            t[7]=(uint16_t)j->expected;', '            t[7]=(uint16_t)(j->expected^(j->position==48));'),)
             for old, new in edits:
                 if text.count(old) != 1:
                     raise ValueError('Octabam DSP loader seam changed in %s; review the port.' % name)
@@ -458,7 +467,7 @@ modwerk_retained_end:
                         '-Wall', '-Wextra', '-Werror'] + (['-DMODWERK_DEV'] if args.dev else []) + (
         ['-DMODWERK_DSP_LOADER', '-DMODWERK_DSP_ALLOWANCE=%d' % DSP_ALLOWANCE, '-DMODWERK_DSP_RESERVE=%d' % DSP_RESERVE] +
         ['-DMODWERK_DSP_%s%d=%d' % (key, n, dsp_layout[t][field]) for n, t in enumerate('AB')
-         for key, field in (('TABLE', 'table'), ('WORDS', 'tableWords'))] if args.dsp_loader else [])
+         for key, field in (('TABLE', 'table'), ('WORDS', 'tableWords'), ('MISS', 'miss'))] if args.dsp_loader else [])
     for key in ('idle', 'job', 'transport', 'open', 'read', 'write', 'close'):
         guard = guards[key]; n = guard.get('patchLength', guard['length'])
         at = guard['address'] - device.main_load
