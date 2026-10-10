@@ -6,7 +6,7 @@
 //   ~/.cache/modwerk-upstream/venv/bin/python -B sdk/machines/octatrack/elekloader/usb_bridge.py /tmp/modwerk-ot.sock &
 //   npm run device -- status
 //   npm run device -- try MODULE.mwrm [--seconds 5] [--accept]
-//   npm run device -- remove [--accept]
+//   npm run device -- remove [MODULE.mwrm] [--accept]   # that file's module, else module 0
 //   npm run device -- lifecycle
 //   npm run device -- boot BUILD_DIR       # RAM boot: build_core.py's output, no flashing
 //
@@ -31,9 +31,10 @@ const { values, positionals: [command, file] } = parseArgs({ allowPositionals: t
   emulator: { type: 'boolean', default: false },
 } })
 const seconds = Number(values.seconds)
-if (!['status', 'try', 'remove', 'lifecycle', 'boot'].includes(command) || ['try', 'boot'].includes(command) !== Boolean(file) ||
+if (!['status', 'try', 'remove', 'lifecycle', 'boot'].includes(command) || (['try', 'boot'].includes(command) && !file) ||
+  (['status', 'lifecycle'].includes(command) && file) ||
   !Number.isInteger(seconds) || seconds < 1 || seconds > 3600) {
-  console.error('Usage: device.mjs status | try MODULE.mwrm [--seconds 1-3600] [--accept] | remove [--accept] | lifecycle | boot BUILD_DIR [--socket PATH] [--emulator]')
+  console.error('Usage: device.mjs status | try MODULE.mwrm [--seconds 1-3600] [--accept] | remove [MODULE.mwrm] [--accept] | lifecycle | boot BUILD_DIR [--socket PATH] [--emulator]')
   process.exit(2)
 }
 
@@ -86,7 +87,12 @@ try {
   const session = await UploadSession.connect(transport, identity.base, { timeoutMs: command === 'boot' ? 60000 : 10000 })
   if (command === 'status') console.log(state(session.status), '\nDIAG', await diag() ?? 'not answered')
   if (command === 'lifecycle') await runLifecycle(unit, index, console.log)
-  if (command === 'remove') console.log(state(await trial(session, removal(identity.base))))
+  if (command === 'remove') {
+    // An ABI 4 file names its module (sdk/runtime/loader/README.md); ABI 3 modules are module 0.
+    const view = file ? new DataView(new Uint8Array(readFileSync(file)).buffer) : undefined
+    if (view && (view.byteLength < 32 || view.getUint32(0) !== 0x4d57524d)) throw new Error(file + ' is not a runtime module.')
+    console.log(state(await trial(session, removal(identity.base, view?.getUint16(4) === 4 ? view.getUint32(28) : undefined))))
+  }
   if (command === 'try') {
     const data = new Uint8Array(readFileSync(file))
     // shortcut: runtime module files do not name their base yet, so any file is offered to the connected base,

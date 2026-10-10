@@ -19,11 +19,12 @@ import tempfile
 
 
 def unpack(data):
-    """(image, self-reference offsets, sites) of an ABI 3 package."""
-    if data[:4] != b'MWRM' or struct.unpack_from('>H', data, 4)[0] != 3:
-        raise ValueError('Not an ABI 3 runtime package.')
+    """(image, self-reference offsets, sites) of an ABI 3 or 4 package."""
+    abi = struct.unpack_from('>H', data, 4)[0] if data[:4] == b'MWRM' else 0
+    if abi not in (3, 4):
+        raise ValueError('Not an ABI 3 or 4 runtime package.')
     image, _, count, hooks, sites = struct.unpack_from('>IIIII', data, 8)
-    at = 28 + 4 * hooks
+    at = (32 if abi == 4 else 28) + 4 * hooks
     code, at = data[at:at + image], at + image
     offsets = struct.unpack_from('>%dI' % count, data, at)
     at += 4 * count

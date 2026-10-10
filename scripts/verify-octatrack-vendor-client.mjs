@@ -10,7 +10,7 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { UploadSession } from '../src/engine/elekloader/upload-session.ts'
 import { findVendorInterface, UsbVendorTransport } from '../src/engine/elekloader/upload-usb.ts'
-import { diagnostics, removal, runLifecycle, testModule } from '../src/dev/octatrack-usb-lifecycle.ts'
+import { diagnostics, removal, runLifecycle, runModuleSet, testModule } from '../src/dev/octatrack-usb-lifecycle.ts'
 import { Bench, device, enumerate } from './usb-bench.mjs'
 
 // --hardware: a real unit through sdk/machines/octatrack/elekloader/usb_bridge.py; the host OS has
@@ -28,6 +28,7 @@ console.log("the client finds the vendor interface in the device's own configura
 const session = await runLifecycle(device(bench), number, line => console.log(line + ': passed'))
 assert.equal(session.status.active, removal(base).sha256)
 if (hardware) {
+  await runModuleSet(device(bench), number, line => console.log(line + ': passed'))
   bench.socket.end()
   console.log('Browser client against the unit: lifecycle passed.')
   process.exit(0)
@@ -59,5 +60,6 @@ const back = await UploadSession.connect(new UsbVendorTransport(device(bench), n
 assert.equal(back.status.phase, 'normal'); assert.equal(back.status.active, a.sha256)
 assert.equal((await diagnostics(device(bench), number)).value, 0xa1)
 console.log('a host that goes quiet mid-trial: the base rolls the trial back by itself: passed')
+await runModuleSet(device(bench), number, line => console.log(line + ': passed'))
 bench.socket.end()
 console.log('Browser client against the emulated base: lifecycle passed; protocol evidence only, no host driver, WebUSB or hardware.')

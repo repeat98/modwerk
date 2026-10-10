@@ -16,6 +16,9 @@ LOADER = ROOT / 'sdk/runtime/loader'
 spec = importlib.util.spec_from_file_location('runtime_loader_build', LOADER / 'build.py')
 build = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(build)
+spec = importlib.util.spec_from_file_location('runtime_loader_verify', LOADER / 'verify_static.py')
+verify_static = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(verify_static)
 
 
 class LoaderTests(unittest.TestCase):
@@ -41,9 +44,11 @@ class LoaderTests(unittest.TestCase):
 
     def test_package_layout(self):
         site = (0x40094296, b'\x70\x20\x11\x40\x00\x0e', b'\x4e\xf9\0\0\0\0', [2])
-        data = build.package(b'\x4e\x75\0\0', 8, [0, build.NONE, build.NONE, build.NONE], [0], [site])
-        self.assertEqual(data[:28], b'MWRM' + struct.pack('>HHIIIII', 3, 0, 4, 8, 1, 4, 1))
-        self.assertEqual(data[28 + 16 + 4 + 4:], struct.pack('>IHH', 0x40094296, 6, 1) + site[1] + site[2] + b'\0\2')
+        data = build.package(b'\x4e\x75\0\0', 8, [0, build.NONE, build.NONE, build.NONE], [0], [site], name='octabam-previewvol')
+        ident = int.from_bytes(hashlib.sha256(b'octabam-previewvol').digest()[:4], 'big')
+        self.assertEqual(data[:32], b'MWRM' + struct.pack('>HHIIIIII', 4, 0, 4, 8, 1, 4, 1, ident))
+        self.assertEqual(data[32 + 16 + 4 + 4:], struct.pack('>IHH', 0x40094296, 6, 1) + site[1] + site[2] + b'\0\2')
+        self.assertEqual(verify_static.unpack(data), (b'\x4e\x75\0\0', (0,), [(0x40094296, site[1], site[2], (2,))]))
         with self.assertRaisesRegex(ValueError, 'bounds'):
             build.package(b'', 0, [], [], [(0x40000400, b'\0' * 34, b'\0' * 34, [])])
 
@@ -77,11 +82,11 @@ class LoaderTests(unittest.TestCase):
             subprocess.run(['python3', '-B', LOADER / 'build.py', ROOT / 'sdk/machines/octatrack/elekloader/examples/hello.c',
                             '-o', out], check=True, capture_output=True)
             data = out.read_bytes()
-        abi, image, bss, count, hooks, sites = struct.unpack_from('>4xH2xIIIII', data)
-        self.assertEqual((abi, hooks, sites), (3, 4, 0))
+        abi, image, bss, count, hooks, sites, ident = struct.unpack_from('>4xH2xIIIIII', data)
+        self.assertEqual((abi, hooks, sites, ident), (4, 4, 0, build.module_id('hello')))
         self.assertGreater(count, 0)  # its counters are reached through absolute addresses
-        self.assertNotIn(build.NONE, struct.unpack_from('>4I', data, 28))
-        self.assertEqual(len(data), 28 + 16 + image + 4 * count)
+        self.assertNotIn(build.NONE, struct.unpack_from('>4I', data, 32))
+        self.assertEqual(len(data), 32 + 16 + image + 4 * count)
 
 
 if __name__ == '__main__':

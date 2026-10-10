@@ -173,7 +173,7 @@ def main():
     chooser = json.loads((APP/'src/engine/assets/chooser-metadata.json').read_text())
     configuration = dict(fx1=['NONE', *chooser['stockFx1']], fx2=['NONE', *chooser['stockFx2']],
                          hidden=[], logger='0.2.0', modules=[], os='1.40C', source=source_hash, stockfx2=True,
-                         usb=dict(interfaces=['msc', 'modwerk-vendor'], vendor=1, submit=True, backend='runtime-loader-2'),
+                         usb=dict(interfaces=['msc', 'modwerk-vendor'], vendor=1, submit=True, backend='runtime-loader-3'),
                          boot='ram-1')
     identity = sha(json.dumps(configuration, separators=(',', ':')).encode())
     values = dict(build=identity[:16], os='1.40C', modules='', configuration=identity,
@@ -277,7 +277,7 @@ modwerk_retained_end:
                   packageSha256=sha(Path(path).read_bytes()), manifest=manifest,
                   savedHashes={ext:sha(data) for ext,data in outputs.items()},
                   productionReady=False, hardware='not tested', emulator='not tested',
-                  limitations=['One ColdFire runtime module at a time (hooks on ev_tick, ev_draw, ev_key and ev_enc, stock-code sites) from a pool only a reboot reclaims; no data-table sites, MIDI or frame hooks, DSP resource manager or ledger allocation yet.',
+                  limitations=['Up to 32 ColdFire runtime modules at once (hooks on ev_tick, ev_draw, ev_key and ev_enc, stock-code sites that no two modules share) in a 256 KiB pool reclaimed once no task can reach a module; no data-table sites, MIDI or frame hooks, or DSP modules and DSP resource ledger yet.',
                                'The base owns the USB configuration: USB MIDI/Audio cannot be combined with it yet.',
                                'RAM boot (boot.s): any host on the vendor interface can boot a whole OS image without a confirmation on the unit; development only. Nothing it does writes flash; the image must carry NOR\'s bootstrap version.',
                                'Logger retention/ABI and modified bootstrap require emulator/hardware qualification.',

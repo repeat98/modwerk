@@ -20,14 +20,21 @@ int main(void)
     CHECK(modwerk_runtime_key(0x31, 1) == 0 && modwerk_runtime_enc(3, -2) == 0);
     modwerk_runtime_draw(frame); modwerk_runtime_tick();
     CHECK(frame[0] == 0 && modwerk_runtime_calls() == 1);
-    static struct runtime_module module;
+    static struct runtime_module module, other;
     module.hook[RUNTIME_TICK] = (uintptr_t)host_tick; module.hook[RUNTIME_DRAW] = (uintptr_t)host_draw;
     module.hook[RUNTIME_KEY] = (uintptr_t)host_key; module.hook[RUNTIME_ENC] = (uintptr_t)host_enc;
-    active = &module;
+    live[3] = &module;
     CHECK(modwerk_runtime_key(0x31, 1) == 1 && modwerk_runtime_key(0x28, 1) == 0 && modwerk_runtime_key(0x28, 0) == 0 && keys == 2);
     CHECK(modwerk_runtime_enc(3, -2) == 1 && modwerk_runtime_enc(0, 1) == 0);
     modwerk_runtime_draw(frame); CHECK(draws == 1 && frame[0] == 1);
     modwerk_runtime_tick(); CHECK(modwerk_runtime_value() == 1 && modwerk_runtime_calls() == 2);
+    /* Several modules: every tick and draw hook runs, in position order; the first key hook that takes a key ends it. */
+    other.hook[RUNTIME_TICK] = (uintptr_t)host_tick; other.hook[RUNTIME_KEY] = (uintptr_t)host_key;
+    live[1] = &other;
+    modwerk_runtime_tick(); CHECK(modwerk_runtime_value() == 3 && ticks == 3 && modwerk_runtime_active() == 2);
+    CHECK(modwerk_runtime_key(0x31, 1) == 1 && keys == 3); /* position 1 took it: position 3 never saw it */
+    CHECK(modwerk_runtime_key(0x28, 1) == 0 && keys == 5);
+    modwerk_runtime_draw(frame); CHECK(draws == 2);
     /* Activation only while nothing plays or records; stock code only, never the bootloader copy. */
     modwerk_test_stopped = 0;
     CHECK(!modwerk_runtime_backend.enter(0));
@@ -36,6 +43,6 @@ int main(void)
     CHECK(!modwerk_machine_patchable(0x400de1dcu, 6) && !modwerk_machine_patchable(0x400e21dcu, 6) && modwerk_machine_patchable(0x400e21e0u, 6));
     CHECK(!modwerk_machine_patchable(0xfffffffcu, 8));
     if (failures) { fprintf(stderr, "%u trampoline checks failed\n", failures); return 1; }
-    puts("Octatrack runtime glue: trampolines and the patchable stock range passed.");
+    puts("Octatrack runtime glue: trampolines for several modules and the patchable stock range passed.");
     return 0;
 }

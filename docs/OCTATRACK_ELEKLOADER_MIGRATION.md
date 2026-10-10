@@ -497,6 +497,184 @@ see RAM boot above. Its README marks what was measured on an MKII on
 | The card scan saves and restores the stock browser's name pool and cache around its own listing | Needed if packages are ever read from the card. |
 | Soft reset (`RCR` `SOFTRST`) after parking the DSPs; the unit's own panel handshake first | Not the routine path for modules. Ported for RAM boot of development bases (above). |
 
+## Several modules on the device: design (10 October 2026)
+
+**Target (owner, 10 October 2026).** Modules live on the unit. Module FX
+appear in the stock FX1/FX2 choosers and module machines in the machine
+chooser, beside the stock ones. Picking one on a track loads its code if it
+fits, and code nothing uses any more is freed. A module that does not fit is
+refused at selection, with the reason on the screen, and the track keeps
+what it had. Part changes and FX changes stay seamless during playback. The
+computer is needed only to install packages (card or USB), never to switch.
+RAM boot stays a base-development tool: it restarts the unit.
+
+### What we reuse
+
+| Piece | Where | What it gives the design |
+| --- | --- | --- |
+| Elekloader's static linker (`link.py check`) | pinned kit `3acac10` | Composition rules: one owner per byte (sites and claimed bytes), named claims, `requires`/`conflicts`, hook tables ordered by (`order`, id), RAM budget, DSP areas freed by a harvest claim. Run at install time against the base; the device re-checks the byte rule itself. No run-time loading exists upstream. |
+| `verify_static.py` | this branch | Proof that a package placed at an address equals Elekloader's static link there. Kept for every package. |
+| core-ot 0.3's reserve | Elekloader | The base's `.bss`, and so the module pool, lives in arena pages taken from sample memory at boot. |
+| dspbus-ot | Elekloader | The chooser lists rebuilt (0x400d6b20, 0x400d7bbc, six `lea`s), the id-to-row tables, the per-effect dispatch words on payload A (init X:0x215+id, process X:0x235+id; unused ids at the null stubs P:0x7c8/0x7c9). |
+| DSP dynamic loading | `sdk/octabam/platform/dsp-dynload*`, `tools/experimental/dsp_dynload` | A frame-head receiver on both cores (A P:0x8e, B P:0x76) fed by the frame DMA (64-halfword packets, at most 24 words per write, read-back sums), a first-fit P allocator that shares code per core, prepare / per-core acknowledgement / commit / retire, BIND, UNBIND and BYPASS at the frame head, publication guards on the FX choosers, manual and queued Part changes, LOAD PROJECT and PASTE/RELOAD/RESET, and every stock effect loaded on demand. Emulator evidence only; gaps below. |
+| REMIX SWITCH | Octabam PR #655 | Listing files on the card while saving and restoring the stock browser's name pool. |
+| Runtime loader | `sdk/runtime/loader` | Relocation and placement on the device, stock-code sites behind a paused-task scan, the upload transaction. |
+
+### Resources, per core where it applies
+
+| Resource | Capacity and evidence | Admission rule |
+| --- | --- | --- |
+| ColdFire pool | 256 KiB in the base's `.bss` (43 of the arena's 14,602 pages), a static reservation: growing it at run time needs the OS page allocator audited | One extent per module (record, sites, code, data, bss); first fit; reclaimed when no position, transaction or paused task reaches it. Built (milestone 1). |
+| DSP P | Stock's effect block is 6,158 words per core. With every stock effect on demand, 414 shared words stay resident and the receiver takes 349, leaving an arena of 5,395 words (build sizes, Octabam). Payload A's P is otherwise full: Elekloader frees only SPATIALIZER's 261 words. | First fit in the core's arena; one copy of a package's code and tables per core, shared by its instances. |
+| DSP X | One 256-word r7 block per instance, of which `$00`–`$83` (132 words) are usable; `$84+` hung the unit (Octabam `AGENTS.md`). X:0x20–0xff is stock scratch. | A package declares its state words; more than 132 is refused. |
+| DSP Y | Stock gives every slot its own block through X:0x255: FX1 3K words at 0x1000/0x1c00/0x2800/0x3400, FX2 16K at 0x4000 and 0x8000, then the shared half (A: T7/T8 at 0x30000/0x34000, B: T3/T4 at 0x38000/0x3c000). Stock owns 0x30000–0x30047 and 0x38000–0x3800f inside T7's and T3's blocks (the Air Chorus collision). | The declared buffer, alignment and modulo needs must fit the slot's block, minus stock's owned words on T3/T7. A dynamic Y allocator gains nothing until the 16K program map is measured (Octabam). |
+| Shared RAM | 0x030000–0x03ffff is one physical store in both cores' P/X/Y views | One ledger across both cores; Elekloader's linker does not check it. |
+| DSP cycles | 16-sample frames; the clock is 4,532 instructions per sample (199.9 MHz / 44.1 kHz, measured on a board). Of the arithmetic 4,535 cycles per sample, our code may spend 3,120 (hardware, triangulated from three sweeps; stock takes about 1,415 by subtraction). Stock SPRING REV, one instance split 4: 314.0 executed instructions per sample in the emulator, the same on both cores; no modeled-cycle or hardware figure. | Per core and per Part: the sum of the declared worst cases of the active instances, plus the switch frame (the outgoing effect's sub-block and the incoming init run in one frame), within the budget. A declaration names its kind (hardware, modeled cycles or executed instructions); executed instructions from a few renders are not worst-case bounds. |
+
+Module footprints recorded so far (P words / X / Y / cost): Air Chorus 795 /
+132 / 16,312 / 732 modeled; E-Verb 1,588 / 132 / 16,369 / 468 modeled;
+MiniVerb 532 / – / 16K / 411 modeled; TapeHead 422 / 31 / – / 295 modeled;
+Analog BD 997 + 35 helper / 3,776 / – / 268–410 executed. None has a hardware
+cost. Octabam's dynload catalogue declares 0 cycles for every entry and its
+allowance is 0, so cycle admission exists there only as an interface.
+
+### Admission and switching
+
+- **When.** At selection: a chooser pick, a Part edit, a project or bank
+  load. Admission covers the union over the bank's four Parts (memory) and
+  each Part's own cost (cycles), so a Part change only flips dispatch, at a
+  frame boundary like stock, and never loads code at the musical moment.
+  The sequencer callback never allocates, reads the card or transfers code
+  (dsp-dynload's rule); the UI and engine tasks do, in bounded chunks.
+- **Refusal.** Before anything changes, with a reason the unit shows
+  (not enough DSP memory on tracks 1–4, no cycles left on tracks 5–8, a
+  conflicting module, ...). The live set and the track's selection stay.
+- **Coexistence.** One owner per byte, enforced at install by the linker and
+  on the device by the loader. Seams many modules want (chooser rows,
+  dispatch words, Part routes) belong to the base, which modules describe
+  themselves to, as core-ot's bus and machine-pages do; modules never patch
+  them. Hooks run in position order; a key or encoder taken by one is not
+  seen by later ones.
+- **Smoothness.** New code goes into memory nothing dispatches yet, in
+  chunks (ColdFire in the engine task; DSP at most 24 words a frame). The
+  flip is one short step: ColdFire sites and hooks with interrupts masked,
+  DSP dispatch words at the frame head. Old code stays until retired:
+  ColdFire after the paused-task scan, DSP after the core acknowledges
+  UNBIND.
+- **The bar is stock's own switch.** Read from the payloads and the
+  emulator: when a slot's effect id changes, stock runs the outgoing
+  effect's first sub-block, then the new effect's init and its second
+  sub-block in the same frame, with fresh state and no crossfade. A queued
+  Part change re-applies a track's FX only when that track's source byte in
+  the new Part is 4 (port measurement; hardware not measured). Neither has
+  been listened to on hardware yet; the owner's main-out recording around
+  scripted switches is the measurement.
+
+### One module form for FX and machines
+
+The owner is open to refactoring the catalogue for this (10 October 2026),
+so the loader does not grow to cover every static patching pattern. A
+dynamic FX or machine is one package:
+
+- **Relocatable code**: ColdFire code and data (the runtime loader's
+  relocations) and DSP code and tables per payload (`.dsp.A`/`.dsp.B`,
+  `dsp24` relocations, Elekloader's format), placed by the device.
+- **Declared needs**: ColdFire bytes; per core P words, X state words
+  (at most 132), Y buffer words with alignment and modulo; worst-case
+  cycles per instance and per frame, with the evidence kind.
+- **Standard entry points** instead of stock-site patches: DSP init and
+  process (stock's dispatch contract: init preserves r1, process works on
+  the r7 block), parameter metadata and a parameter-change handler, the
+  chooser row it fills (name, FX1/FX2/machine) and the dispatch id the base
+  gives it. The base owns the chooser lists, the dispatch words and the
+  Part routes.
+- **A reason for every remaining stock site.** The device keeps the
+  one-owner-per-byte check for those; everything else is plain accounting,
+  and cross-compatibility becomes a property of the form instead of a check
+  per pair.
+
+A port that must sound like its static version keeps a `verify_static.py`
+style proof: its relocated DSP code at two or more origins equals the
+static assembly, and renders match sample for sample.
+
+**Pilot: CHARACTER.** It is an FX1 insert with DSP code that needs no Y
+buffer (r7 state only), so the first port exercises P, X and cycles without
+the buffer and T3/T7 questions. Its relocation is already done in Octabam's
+dynload work: 932 P words and 3 relocations, equal to independent assembly
+at four origins, sample-exact against the static build on both payloads,
+and loaded, bound and retired by the runtime in the emulator, including
+through automatic Part changes. Air Chorus follows as the first buffered
+FX, carrying the named memory regressions.
+
+### Milestones
+
+1. **Several ColdFire modules at once** (built, below).
+2. **DSP code on demand in the Elekloader base, with the pilot**: port
+   dsp-dynload's receiver, transport and allocator as a base feature beside
+   the runtime loader, stock effects resident, and CHARACTER in the module
+   form, loaded when picked in the stock FX1 chooser on either core. The
+   emulator's DSP model now runs (below), so its port gates can be rerun on
+   the Elekloader base.
+3. **The ledger and the routes**: declared X/Y/cycle needs in the package,
+   per-core admission, the publication guards for every writer of the live
+   FX arrays (Octabam's audit lists the ones still open), preloading a
+   bank's Parts.
+4. **Packages on the card, timing on the unit**: card listing, chooser rows
+   from package names, read-only DSP and ColdFire timing in DIAG, and a
+   development-only USB command that replays a chooser pick or a Part change
+   for scripted hardware runs.
+
+### Milestone 1: several ColdFire modules at once (10 October 2026)
+
+Package ABI 4 adds a module id (ABI 3 packages are module 0, so existing
+tools keep working). Up to 32 modules are live, each at its own dispatch
+position with its own pool extent. A package that patches a byte another
+live module patches, a 33rd module or one the pool cannot fit is refused
+before anything changes, and the reason is kept. Memory of a replaced or
+removed module is reclaimed once no paused task holds an address inside it
+([loader README](../sdk/runtime/loader/README.md#several-modules-at-once)).
+
+- Host: the loader test covers reclamation (64 replacements of a 32 KiB
+  module in a 256 KiB pool; a paused task inside a retired module, or
+  unknown task state, keeps it), two modules with their own sites, a
+  conflict refused with nothing changed, a module moving its own site,
+  removal keeping the other, genuine memory exhaustion and a full table.
+- Emulator, private base `e91856e9…` (flash-safety check passed): the
+  browser client's lifecycle, the bus-reset and quiet-host cases, then two
+  test modules live at once, a third claiming bytes one of them holds
+  refused with both still running, one removed and the bytes then claimed.
+  PREVIEW VOL, RECORDER LOOP FIX and PLAYMODES, converted by Elekloader and
+  each proved equal to its static link, were then live together; a copy of
+  PREVIEW VOL under another id was refused; removing RECORDER LOOP FIX put
+  its 8 sites back while the other two stayed patched; it was loaded again
+  and replaced by itself; removing all three restored every site. Checked
+  from RAM dumps at the end of four emulator runs. Emulator evidence only.
+
+The emulator's DSP model runs when Docker gives the container enough shared
+memory (`docker run --shm-size=128m`; each DSP core maps a 52 MiB
+`/dev/shm` file and the default 64 MiB cap ended the second core with a bus
+error), or natively on macOS (Apple clang, cmake). On stock it boots both
+cores and runs the uploaded payloads; per-frame figures there are executed
+instructions (`--dsp-stopwatch`, `OT_DSP_FRAMETRACE=1`), not modeled cycles
+or hardware timing.
+
+### Decisions for the owner
+
+- A short fade on a module switch, or exactly stock's hard switch with fresh
+  state. A fade costs cycles in the switch frame and needs the old and new
+  instances at once.
+- The DSP cycle budget admission uses per core (3,120 per sample is the
+  hardware figure for our code) and the margin, and whether modeled cycles
+  may admit a module until hardware timing exists for it.
+- The ColdFire pool size: 256 KiB of sample memory for good, or pages taken
+  on demand later.
+- Whether stock effects also load on demand (5,395 free P words per core
+  instead of SPATIALIZER's 261, but every stock FX then depends on the
+  loader), and preloading the union of a bank's Parts (more memory held,
+  fewer refusals at a Part change).
+- Whether the selected module set persists across a power cycle (read from
+  the card at boot).
+
 ## Work required before public cutover
 
 | Area | Observed gap / next implementation |
@@ -836,7 +1014,7 @@ changes) remain a card OS install.
 | --- | --- | --- | --- |
 | 1. Connect automatically | Upload mode entered by the host's ENTER while nothing plays or records; [`octatrack-link.ts`](../src/engine/elekloader/octatrack-link.ts) reopens a granted unit through `getDevices()` and the `connect` event, so the unit returning from its OS upgrade is found by itself (vitest with a pretend unit) | The site finds a unit it was granted before (`navigator.usb.getDevices()`, the `connect` event) and connects without a prompt; Chrome's device chooser appears once per site, on a click, and cannot be skipped. The unit may show that a host is linked | No mode to open on the unit (owner, 10 October 2026: the site should just connect). Writes need a stopped unit and a host the user granted the device to. IDENTIFY, HELLO and DIAG stay read-only; stock MIDI recovery is untouched |
 | 2. Connect over WebUSB | `UsbVendorTransport`, the session client, a Chrome test page (`dev/octatrack-usb.html`) and, in dev builds only (`USB_LINK`), the configuration page's USB card ([`OctatrackLinkPanel`](../src/components/OctatrackLinkPanel.tsx)) and the base install dialog ([`BaseInstallDialog`](../src/components/BaseInstallDialog.tsx)), which the card opens at any time and which opens once per member at release ([app notes](APP_DEVELOPMENT.md#octatrack-base-install-prompt)); `?preview=usb-link` and `?preview=base-install` drive them with a pretend unit | The builder's `buildBase` (base .bin from the stock OS, on the dialog) and `prepareModule` (runtime package for the selection, on the card), until then a dev-only module file picker; beta or public gating; Windows WinUSB binding; the card's first hardware run | Claim only the vendor interface; a mismatched base identity is refused before any write |
-| 3. Load new modules | One runtime module with tick, draw, key and encoder hooks, its own data and relocations, and patches to stock code ([machine-neutral loader](../sdk/runtime/loader/README.md)): load, trial, accept, replace, roll back and remove without a reboot; catalogue ColdFire modules converted by Elekloader | Data-table patches, modules that add to the core's tables, MIDI and audio-frame hooks, runtime DSP allocation (sequence step 3), several modules at once, ledger memory, a browser builder | The previous set stays live until acceptance; refusals happen before dispatch changes |
+| 3. Load new modules | Up to 32 runtime modules at once with tick, draw, key and encoder hooks, their own data and relocations, and patches to stock code no two share ([machine-neutral loader](../sdk/runtime/loader/README.md)): load, trial, accept, replace, roll back and remove without a reboot, memory reclaimed; catalogue ColdFire modules converted by Elekloader | Data-table patches, modules that add to the core's tables, MIDI and audio-frame hooks, DSP code on demand and the DSP ledger ([design](#several-modules-on-the-device-design-10-october-2026)), a browser builder | The previous set stays live until acceptance; refusals happen before dispatch changes |
 | 4. Automated stress and bug checks | DIAG counters, emulator checks, Octabam's MIDI/audio hardware tools | A test runner driven over the vendor interface: bounded transport and parameter actions on a generated test project, CPU/DSP load and audio-path counters, a trial verdict per module | Never write the user's projects. A failed check rolls back automatically; acceptance stays an explicit user action unless the owner changes that rule |
 | 5. Upload failures, open issues | `OCTAMOD.LOG` format, the strict browser/Worker parser, the report API and GitHub issue mirroring with author commands | Read the logger ring and test results over USB (a bounded read command) instead of from the card; a run report bound to the exact base and module identities; automatic submission after a one-time opt-in, de-duplicated by failure signature and version into existing reports for the module's author | Show the user what is sent. Never upload firmware, stock bytes, projects, samples or audio. Reuse the existing sanitized report contract and rate limits |
 

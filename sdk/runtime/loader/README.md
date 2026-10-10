@@ -1,8 +1,8 @@
 # Runtime module loader
 
-Loads, replaces, rolls back and removes a ColdFire module on a running
-instrument without a reboot: its own code and data, hooks on the machine's
-hook bus, and patches to stock code. It is the backend of the
+Loads, replaces, rolls back and removes ColdFire modules on a running
+instrument without a reboot, up to 32 at once: each with its own code and
+data, hooks on the machine's hook bus, and patches to stock code. It is the backend of the
 [upload controller](../upload/README.md) and does not depend on a machine:
 every instrument Elekloader supports (Octatrack, Digitakt mk1 and mk2,
 Digitone) has a ColdFire V4 CPU and a hook bus with tick, draw, key and
@@ -17,14 +17,21 @@ glue.
 | [`loader.h`](loader.h), [`loader.c`](loader.c) | The loader and the glue a machine provides |
 | [`tests/host_test.c`](tests/host_test.c) | Host test, run by `sdk/tests/test_runtime_loader.py` |
 
-## Package, ABI 3
+## Package, ABI 4
 
-Big-endian. Header (28 bytes): `MWRM`, ABI u16 = 3, flags u16 = 0, image
+Big-endian. Header (32 bytes): `MWRM`, ABI u16 = 4, flags u16 = 0, image
 length u32, bss length u32, relocation count u32, hook count u32, site count
-u32. Then one u32 offset per hook (`0xffffffff` for none), the image (code,
-read-only and initialized data), one u32 offset per relocation, and the
-sites: address u32, length u16, relocation count u16, the stock bytes, the
-new bytes, and one u16 offset per relocation in the new bytes.
+u32, module id u32. Then one u32 offset per hook (`0xffffffff` for none),
+the image (code, read-only and initialized data), one u32 offset per
+relocation, and the sites: address u32, length u16, relocation count u16,
+the stock bytes, the new bytes, and one u16 offset per relocation in the new
+bytes. An ABI 3 package is the same without the id (a 28-byte header) and
+is module 0.
+
+- The id names the module: a package with a live module's id replaces it,
+  any other loads beside the live ones, and one with no image, hooks or
+  sites removes that module. `build.py` takes the first four bytes of the
+  SHA-256 of the module's name (the elemod's id, or the output file's stem).
 
 - Hooks, in this order: `module_tick`, `module_draw`, `module_key`,
   `module_enc`. Later events append. A base refuses a package with more hooks
@@ -35,7 +42,6 @@ new bytes, and one u16 offset per relocation in the new bytes.
 - A site replaces whole stock instructions: even address and length, at most
   32 bytes, inside the stock code the machine allows, not overlapping another
   site of the package.
-- No image, hooks or sites removes the module.
 
 From C, `build.py` links the module twice, at 0 and at 0x10000: the words
 that differ by exactly 0x10000 are the relocations, and any other difference
@@ -53,6 +59,29 @@ python3 -B sdk/runtime/loader/build.py MODULE.c -o MODULE.mwrm
 npm run device -- try MODULE.mwrm --seconds 10   # scripts/device.mjs
 ```
 
+## Several modules at once
+
+- **Admission before anything changes.** A package is refused, with the
+  live set untouched, when another live module patches any byte of its
+  sites (Elekloader's own rule: one owner per byte), when 32 modules are
+  live, or when the pool has no free run large enough. The refusal reason
+  (`modwerk_runtime_refusal()`: malformed, memory, conflict, full, busy)
+  is kept for diagnostics and the unit's own message.
+- **One position each.** A module keeps its dispatch position for life;
+  replacement takes the same one, a new module the first free one. Tick
+  and draw hooks all run, in position order; the first key or encoder hook
+  that returns nonzero takes the event. Two modules wanting the same key is
+  not detected (Elekloader's `resources.names` claims are not carried yet).
+- **Memory is reclaimed.** Each module has one pool extent (its record,
+  sites, code, data and bss), written and read only through the uncached
+  alias. A module that no position or transaction holds is freed once,
+  with interrupts masked, no paused task's stack or saved registers hold an
+  address inside it; unknown task state frees nothing. `modwerk_runtime_free()`
+  reports free bytes and the largest free run.
+- **Not carried at run time:** `requires`, imports between modules and
+  `contribute` tables. A module must not leave pointers to itself anywhere
+  but its sites and hooks.
+
 ## Loading, and why it is safe
 
 - **RAM only.** Module memory comes from a pool in the base. Sites are
@@ -68,10 +97,10 @@ npm run device -- try MODULE.mwrm --seconds 10   # scripts/device.mjs
   and saved registers: an address inside a site (other than its first byte)
   means a paused task could resume in the middle of a new instruction, so
   the switch is refused and can be retried. Unknown task state also refuses.
-- **No memory reuse.** Pool memory is never reused before a reboot, so code
-  a task may still be running is never overwritten; when the pool is full,
-  loads are refused until a reboot. Data-cache lines are pushed before code
-  is written, and the instruction and branch caches invalidated after.
+- **No overwriting running code.** Pool memory is reused only once no
+  paused task can return into it (above). Data-cache lines of a site are
+  pushed before it is written, and the instruction and branch caches
+  invalidated after new code is written.
 - Activation needs nothing playing or recording. A bus reset or unplug rolls
   back anything not accepted (the controller's disconnect).
 
@@ -90,7 +119,8 @@ A machine provides, next to its base:
 - `modwerk_machine_paused()`: every other task's live stack and saved
   registers, from the kernel's task records.
 - Trampolines subscribed to its core's `ev_tick`, `ev_draw`, `ev_key` and
-  `ev_enc`. Each reads `modwerk_runtime_active()` once and calls the hook.
+  `ev_enc`. Each reads every position (`modwerk_runtime_module(i)`) once
+  and calls its hook.
 
 The Octatrack's glue is
 [`sdk/machines/octatrack/elekloader/runtime.c`](../../machines/octatrack/elekloader/runtime.c).
@@ -101,6 +131,7 @@ machine's own, so a module is built for one machine and OS.
 
 Patches to data tables (they need the data cache handled), modules that add
 to the core's tables (`contribute`, such as CC MAP's MIDI handler), MIDI and
-audio-frame hooks, DSP code, more than one module at a time, ledger memory
-instead of a pool, a package that names the base it was built for, and the
-browser builder.
+audio-frame hooks, DSP code and the DSP resource ledger
+([design](../../../docs/OCTATRACK_ELEKLOADER_MIGRATION.md#several-modules-on-the-device-design-10-october-2026)),
+pool memory taken from the arena on demand, a package that names the base
+it was built for, and the browser builder.

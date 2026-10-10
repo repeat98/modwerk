@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Build a runtime module package (MWRM, ABI 3; README.md).
+"""Build a runtime module package (MWRM, ABI 4; README.md).
 
 From C sources (handlers found by name, modwerk_module.h):
 
@@ -16,6 +16,9 @@ C modules are linked twice, at 0 and at 0x10000; the 32-bit words that differ
 by exactly 0x10000 are their references to themselves, any other difference
 is refused. Elemods list their relocations. The base adds the module's
 address to each self-reference at load. ColdFire, no C library or libgcc.
+The module's id is the first four bytes of the SHA-256 of its name (the
+elemod's id, or the output file's stem): a package with a live module's id
+replaces it, and an empty one removes it.
 """
 import argparse
 import hashlib
@@ -62,14 +65,18 @@ def relocations(low, high, end):
     return offsets
 
 
-def package(image, bss, hooks, offsets, sites=()):
+def module_id(name):
+    return int.from_bytes(hashlib.sha256(name.encode()).digest()[:4], 'big')
+
+
+def package(image, bss, hooks, offsets, sites=(), name=''):
     """sites: (address, stock bytes, new bytes, offsets of self-references in them)."""
     records = b''
     for address, stock, code, local in sites:
         if len(stock) != len(code) or not 0 < len(code) <= SITE_BYTES or len(local) > SITE_RELOCATIONS:
             raise ValueError('Site at %#x exceeds the loader\'s bounds.' % address)
         records += struct.pack('>IHH', address, len(code), len(local)) + stock + code + struct.pack('>%dH' % len(local), *local)
-    return (b'MWRM' + struct.pack('>HHIIIII', 3, 0, len(image), bss, len(offsets), len(hooks), len(sites))
+    return (b'MWRM' + struct.pack('>HHIIIIII', 4, 0, len(image), bss, len(offsets), len(hooks), len(sites), module_id(name))
             + struct.pack('>%dI' % len(hooks), *hooks) + image
             + struct.pack('>%dI' % len(offsets), *offsets) + records)
 
@@ -134,7 +141,7 @@ def link_elemod(doc, stock_at, base_symbols):
     return bytes(image), offsets, sites
 
 
-def build_c(sources, cross):
+def build_c(sources, cross, module):
     with tempfile.TemporaryDirectory() as tmp:
         tmp = Path(tmp)
         objects = [tmp / ('%d.o' % i) for i in range(len(sources))]
@@ -158,7 +165,7 @@ def build_c(sources, cross):
     hooks = [symbols.get(name, NONE) for name in HANDLERS]
     if all(h == NONE for h in hooks):
         raise ValueError('Define at least one of ' + ', '.join(HANDLERS) + '.')
-    return package(image, end - length, hooks, relocations(image, images[1], end))
+    return package(image, end - length, hooks, relocations(image, images[1], end), name=module)
 
 
 def build_elemod(args):
@@ -180,7 +187,7 @@ def build_elemod(args):
         return main[at:at + length]
 
     image, offsets, sites = link_elemod(doc, stock_at, base)
-    return package(image, 0, [], offsets, sites)
+    return package(image, 0, [], offsets, sites, name=doc['id'])
 
 
 def main():
@@ -195,11 +202,11 @@ def main():
     args = parser.parse_args()
     if bool(args.sources) == bool(args.elemod):
         parser.error('Give C sources or --elemod.')
-    data = build_elemod(args) if args.elemod else build_c(args.sources, args.cross)
+    data = build_elemod(args) if args.elemod else build_c(args.sources, args.cross, args.output.stem)
     args.output.write_bytes(data)
-    image, bss, count, hooks, sites = struct.unpack_from('>IIIII', data, 8)
-    print('%s: %d bytes of code and data, %d of bss, %d relocations, %d hooks, %d stock-code sites' % (
-        args.output, image, bss, count, sum(h != NONE for h in struct.unpack_from('>%dI' % hooks, data, 28)), sites))
+    image, bss, count, hooks, sites, ident = struct.unpack_from('>IIIIII', data, 8)
+    print('%s: module %08x, %d bytes of code and data, %d of bss, %d relocations, %d hooks, %d stock-code sites' % (
+        args.output, ident, image, bss, count, sum(h != NONE for h in struct.unpack_from('>%dI' % hooks, data, 32)), sites))
 
 
 if __name__ == '__main__':

@@ -67,7 +67,12 @@ checked byte for byte against Elekloader's static link. On the owner's MKII
 (`usbtest5`), PREVIEW VOL loaded, worked audibly and was removed over USB
 ([record](OCTATRACK_ELEKLOADER_MIGRATION.md#catalogue-modules-patching-stock-code-at-load-time-10-october-2026)).
 A host that goes quiet for 10 s mid-upload or mid-trial is now handled as
-unplugged (`usbtest6`, checked in the emulator and on the owner's MKII). Next: the rest of the fail-safe
+unplugged (`usbtest6`, checked in the emulator and on the owner's MKII). Several
+ColdFire modules now run at once, with conflicting stock-code patches
+refused before activation and module memory reclaimed; the design for
+modules picked in the stock choosers, loaded into the DSP on demand and
+admitted against each core's memory and cycles is in the
+[migration record](OCTATRACK_ELEKLOADER_MIGRATION.md#several-modules-on-the-device-design-10-october-2026). Next: the rest of the fail-safe
 sync requirements, the site connecting by itself (no mode on the unit, owner
 10 October), and folding USB MIDI and USB Audio
 into the base. The target user flow (automatic connection,

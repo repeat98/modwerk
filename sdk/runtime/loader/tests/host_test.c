@@ -9,7 +9,7 @@
 #define STOCK 0x1000u
 static unsigned failures;
 #define CHECK(x) do { if (!(x)) { failures++; fprintf(stderr, "%s:%d: %s\n", __FILE__, __LINE__, #x); } } while (0)
-static uint8_t stock[256], paused[64];
+static uint8_t stock[256], original[256], paused[64];
 static int stopped = 1, masked, flushed, unknown;
 int modwerk_machine_stopped(void) { return stopped; }
 void *modwerk_machine_uncached(void *p) { return p; }
@@ -31,23 +31,24 @@ static uint8_t p[RUNTIME_PACKAGE_BYTES + 64];
 static uint32_t n;
 static void emit(uint32_t v) { put32(p + n, v); n += 4; }
 static void emit16(uint32_t v) { p[n++] = (uint8_t)(v >> 8); p[n++] = (uint8_t)v; }
-/* Header for `image` bytes of `fill`, a tick hook at `tick` (or none) and
- * relocations at `relocation[0..count)`, each word holding 6. */
+/* ABI 4 header of module `id` for `image` bytes of `fill`, a tick hook at
+ * `tick` (or none) and relocations at `relocation[0..count)`, each word holding 6. */
+static uint32_t id = 7;
 static void begin(uint32_t image, uint32_t bss, uint32_t tick, const uint32_t *relocation, uint32_t count, uint32_t sites, uint8_t fill)
 {
-    n = 0; memcpy(p, "MWRM\0\3\0\0", 8); n = 8;
-    emit(image); emit(bss); emit(count); emit(RUNTIME_EVENTS); emit(sites);
+    n = 0; memcpy(p, "MWRM\0\4\0\0", 8); n = 8;
+    emit(image); emit(bss); emit(count); emit(RUNTIME_EVENTS); emit(sites); emit(id);
     emit(tick); emit(RUNTIME_NONE); emit(RUNTIME_NONE); emit(RUNTIME_NONE);
     memset(p + n, fill, image);
     for (uint32_t i = 0; i < count; ++i) if (relocation[i] + 4 <= image) put32(p + n + relocation[i], 6);
     n += image;
     for (uint32_t i = 0; i < count; ++i) emit(relocation[i]);
 }
-/* A site at `address` expecting stock's current bytes, becoming jmp module+2. */
+/* A site at `address` expecting stock's original bytes, becoming jmp module+2. */
 static void site(uint32_t address, uint32_t length)
 {
     emit(address); emit16(length); emit16(1);
-    memcpy(p + n, stock + (address - STOCK), length); n += length;
+    memcpy(p + n, original + (address - STOCK), length); n += length;
     uint8_t code[RUNTIME_SITE_BYTES] = {0x4e, 0xf9, 0, 0, 0, 2};
     memcpy(p + n, code, length); n += length;
     emit16(2);
@@ -59,7 +60,6 @@ int main(void)
 {
     const uint32_t four = 4, twice[2] = {4, 4};
     for (unsigned i = 0; i < sizeof stock; ++i) stock[i] = (uint8_t)(0x40 + i);
-    uint8_t original[sizeof stock];
     memcpy(original, stock, sizeof stock);
 
     /* Refusals before any memory is taken. */
@@ -79,15 +79,14 @@ int main(void)
         if (bad == 11) { begin(8, 4, 2, twice, 2, 0, 0); }              /* the same word twice */
         if (bad == 12) { begin(8, 4, 2, 0, 0, 1, 0); site(STOCK + 32, 6); emit(0); } /* trailing bytes */
         if (bad == 13) n = RUNTIME_HEADER_BYTES - 1;
-        uint32_t before = used;
-        CHECK(!b->prepare(0, p, n) && used == before);
+        CHECK(!b->prepare(0, p, n) && modwerk_runtime_free(0) == RUNTIME_POOL_BYTES && modwerk_runtime_refusal() == RUNTIME_MALFORMED);
     }
     CHECK(!masked && memcmp(stock, original, sizeof stock) == 0);
 
     /* A: hooks, a relocated word, bss and one site, published while nothing is in flight. */
     begin(8, 4, 2, &four, 1, 1, 0xa1); site(STOCK + 32, 6);
     CHECK(b->prepare(0, p, n) && b->publish(0) == MU_APPLIED);
-    const struct runtime_module *a = modwerk_runtime_active();
+    const struct runtime_module *a = modwerk_runtime_module(0);
     uint8_t *code = (uint8_t *)(uintptr_t)(a->hook[RUNTIME_TICK] - 2);
     CHECK(a && a->sites == 1 && code[0] == 0xa1 && be32(code + 4) == (uint32_t)(uintptr_t)code + 6 && be32(code + 8) == 0);
     CHECK(stock[32] == 0x4e && stock[33] == 0xf9 && word(STOCK + 34) == (uint32_t)(uintptr_t)code + 2 && flushed > 0);
@@ -100,23 +99,23 @@ int main(void)
     memcpy(p + n, original + 30, 8); n += 8; memset(p + n, 0x71, 8); n += 8; /* eight nops */
     uint32_t b_size = n;
     put32(paused + 20, STOCK + 34);                              /* inside A's site */
-    CHECK(b->prepare(0, p, b_size) && b->publish(0) == MU_UNCHANGED && b->discard(0) && modwerk_runtime_active() == a);
+    CHECK(b->prepare(0, p, b_size) && b->publish(0) == MU_UNCHANGED && b->discard(0) && modwerk_runtime_module(0) == a);
     put32(paused + 20, STOCK + 30);                              /* at B's first byte: fine */
     unknown = 1;
-    CHECK(b->prepare(0, p, b_size) && b->publish(0) == MU_UNCHANGED && b->discard(0) && modwerk_runtime_active() == a);
+    CHECK(b->prepare(0, p, b_size) && b->publish(0) == MU_UNCHANGED && b->discard(0) && modwerk_runtime_module(0) == a);
     unknown = 0;
     CHECK(stock[32] == 0x4e);
-    uint32_t before = used;
-    CHECK(b->prepare(0, p, b_size) && b->discard(0) && used == before); /* discard reclaims */
+    uint32_t before = modwerk_runtime_free(0);
+    CHECK(b->prepare(0, p, b_size) && modwerk_runtime_free(0) < before && b->discard(0) && modwerk_runtime_free(0) == before); /* discard frees */
     CHECK(b->prepare(0, p, b_size) && b->publish(0) == MU_APPLIED);
     CHECK(bytes_at(STOCK + 30, (const uint8_t *)"\x71\x71\x71\x71\x71\x71\x71\x71", 8) && bytes_at(STOCK + 38, original + 38, 2));
     /* Rollback puts A back exactly. */
-    CHECK(b->restore(0) && modwerk_runtime_active() == a && stock[32] == 0x4e && bytes_at(STOCK + 30, original + 30, 2));
+    CHECK(b->restore(0) && modwerk_runtime_module(0) == a && stock[32] == 0x4e && bytes_at(STOCK + 30, original + 30, 2));
 
     /* Code changed under a module: switching away is refused and nothing moves. */
     stock[33] ^= 1;
     begin(0, 0, RUNTIME_NONE, 0, 0, 0, 0);
-    CHECK(b->prepare(0, p, n) && b->publish(0) == MU_UNCHANGED && b->discard(0) && modwerk_runtime_active() == a);
+    CHECK(b->prepare(0, p, n) && b->publish(0) == MU_UNCHANGED && b->discard(0) && modwerk_runtime_module(0) == a);
     stock[33] ^= 1;
     /* A site whose stock bytes are not there is refused, and A stays applied. */
     begin(4, 0, 0, 0, 0, 1, 0); site(STOCK + 64, 6); stock[64] ^= 1;
@@ -124,19 +123,88 @@ int main(void)
     stock[64] ^= 1;
     /* Removal restores stock everywhere. */
     begin(0, 0, RUNTIME_NONE, 0, 0, 0, 0);
-    CHECK(b->prepare(0, p, n) && b->publish(0) == MU_APPLIED && !modwerk_runtime_active());
+    CHECK(b->prepare(0, p, n) && b->publish(0) == MU_APPLIED && !modwerk_runtime_module(0));
     CHECK(memcmp(stock, original, sizeof stock) == 0);
 
-    /* Memory is never reused before a reboot; when the pool is full, loads are refused. */
+    /* Reclaimed: a module no position reaches is freed once no paused task
+     * holds an address inside it, so loads never run out by repetition. */
+    CHECK(b->retire(0) && modwerk_runtime_free(0) == RUNTIME_POOL_BYTES);
     unsigned loads = 0;
     for (; loads < 64; ++loads) {
         begin(RUNTIME_IMAGE_BYTES - 16, 0, 0, 0, 0, 0, 0xc3);
         if (!b->prepare(0, p, n)) break;
         CHECK(b->publish(0) == MU_APPLIED && b->retire(0));
     }
-    CHECK(loads == RUNTIME_POOL_BYTES / RUNTIME_IMAGE_BYTES - 1);
+    CHECK(loads == 64 && modwerk_runtime_active() == 1);
+    const struct runtime_module *old = modwerk_runtime_module(0);
+    put32(paused + 40, (uint32_t)(uintptr_t)old + 40u);          /* a paused task inside it */
+    begin(16, 0, 0, 0, 0, 0, 0xc4);
+    CHECK(b->prepare(0, p, n) && b->publish(0) == MU_APPLIED && b->retire(0));
+    uint32_t small = modwerk_runtime_module(0)->size, free = modwerk_runtime_free(0);
+    CHECK(free == RUNTIME_POOL_BYTES - old->size - small);         /* kept */
+    unknown = 1;
+    CHECK(b->retire(0) && modwerk_runtime_free(0) == free);        /* unknown task state frees nothing */
+    unknown = 0;
+    put32(paused + 40, 0);
+    CHECK(b->retire(0) && modwerk_runtime_free(0) == RUNTIME_POOL_BYTES - small);
+
+    /* Several modules at once, each at its own position with its own memory. */
     begin(0, 0, RUNTIME_NONE, 0, 0, 0, 0);
-    CHECK(b->prepare(0, p, n) && b->publish(0) == MU_APPLIED); /* removal needs no memory */
+    CHECK(b->prepare(0, p, n) && b->publish(0) == MU_APPLIED && b->retire(0) && !modwerk_runtime_active());
+    id = 1; begin(8, 4, 2, &four, 1, 1, 0xd1); site(STOCK + 32, 6);
+    CHECK(b->prepare(0, p, n) && b->publish(0) == MU_APPLIED && b->retire(0));
+    id = 2; begin(8, 0, 2, 0, 0, 1, 0xd2); site(STOCK + 64, 6);
+    CHECK(b->prepare(0, p, n) && b->publish(0) == MU_APPLIED && b->retire(0));
+    const struct runtime_module *one = modwerk_runtime_module(0), *two = modwerk_runtime_module(1);
+    const uint32_t one_size = one->size;
+    CHECK(modwerk_runtime_active() == 2 && one->id == 1 && two->id == 2 && stock[32] == 0x4e && stock[64] == 0x4e);
+    CHECK(word(STOCK + 34) == (uint32_t)(uintptr_t)one->hook[RUNTIME_TICK] && word(STOCK + 66) == (uint32_t)(uintptr_t)two->hook[RUNTIME_TICK]);
+    /* A third patching bytes module 1 patches is refused before anything changes. */
+    id = 3; begin(8, 0, 0, 0, 0, 1, 0xd3); site(STOCK + 34, 6);
+    free = modwerk_runtime_free(0);
+    CHECK(!b->prepare(0, p, n) && modwerk_runtime_refusal() == RUNTIME_CONFLICT && modwerk_runtime_free(0) == free);
+    CHECK(modwerk_runtime_module(0) == one && modwerk_runtime_module(1) == two && !modwerk_runtime_module(2) && stock[32] == 0x4e);
+    /* Module 1 may move its own site; module 2 is untouched. */
+    id = 1; begin(8, 0, 0, 0, 0, 1, 0xd4); site(STOCK + 34, 6);
+    CHECK(b->prepare(0, p, n) && b->publish(0) == MU_APPLIED);
+    CHECK(bytes_at(STOCK + 32, original + 32, 2) && stock[34] == 0x4e && modwerk_runtime_module(1) == two && stock[64] == 0x4e);
+    CHECK(b->restore(0) && modwerk_runtime_module(0) == one && stock[32] == 0x4e && bytes_at(STOCK + 38, original + 38, 2));
+    /* Removing module 1 leaves module 2 live; a new module takes the free position. */
+    begin(0, 0, RUNTIME_NONE, 0, 0, 0, 0);
+    CHECK(b->prepare(0, p, n) && b->publish(0) == MU_APPLIED && b->retire(0));
+    CHECK(!modwerk_runtime_module(0) && modwerk_runtime_module(1) == two && bytes_at(STOCK + 30, original + 30, 10) && stock[64] == 0x4e);
+    uint32_t largest;
+    CHECK(modwerk_runtime_free(&largest) == RUNTIME_POOL_BYTES - two->size && largest == RUNTIME_POOL_BYTES - two->size - one_size); /* module 1 left a hole below 2 */
+    id = 4; begin(8, 0, 0, 0, 0, 0, 0xd5);
+    CHECK(b->prepare(0, p, n) && b->publish(0) == MU_APPLIED && b->retire(0) && modwerk_runtime_module(0)->id == 4);
+    /* Genuine exhaustion refuses before activation and keeps the live set. */
+    unsigned fitted = 0;
+    for (id = 100; id < 100 + RUNTIME_MODULES; ++id) {
+        begin(RUNTIME_IMAGE_BYTES - 16, 0, 0, 0, 0, 0, 0xd6);
+        if (!b->prepare(0, p, n)) break;
+        CHECK(b->publish(0) == MU_APPLIED && b->retire(0));
+        ++fitted;
+    }
+    CHECK(fitted > 0 && modwerk_runtime_refusal() == RUNTIME_MEMORY && modwerk_runtime_active() == 2 + fitted);
+    CHECK(modwerk_runtime_module(1) == two && stock[64] == 0x4e);
+    /* Small modules fill every position; one more is refused. */
+    for (; id < 1000 && modwerk_runtime_active() < RUNTIME_MODULES; ++id) {
+        begin(4, 0, 0, 0, 0, 0, 0xd7);
+        CHECK(b->prepare(0, p, n) && b->publish(0) == MU_APPLIED && b->retire(0));
+    }
+    begin(4, 0, 0, 0, 0, 0, 0xd8);
+    CHECK(!b->prepare(0, p, n) && modwerk_runtime_refusal() == RUNTIME_FULL && modwerk_runtime_active() == RUNTIME_MODULES);
+    /* An ABI 3 package is module 0: it replaces module 0, not another. */
+    for (id = 100; id < 100 + fitted; ++id) {
+        begin(0, 0, RUNTIME_NONE, 0, 0, 0, 0);
+        CHECK(b->prepare(0, p, n) && b->publish(0) == MU_APPLIED && b->retire(0));
+    }
+    begin(4, 0, 0, 0, 0, 0, 0xd9);
+    memmove(p + 28, p + 32, n - 32); n -= 4; p[5] = 3;
+    CHECK(b->prepare(0, p, n) && b->publish(0) == MU_APPLIED && b->retire(0) && modwerk_runtime_module(1) == two);
+    unsigned zero = 0;
+    for (unsigned i = 0; i < RUNTIME_MODULES; ++i) zero += modwerk_runtime_module(i) && modwerk_runtime_module(i)->id == 0;
+    CHECK(zero == 1);
 
     /* Activation only while nothing plays or records. */
     stopped = 0;
@@ -145,6 +213,6 @@ int main(void)
     CHECK(b->enter(0) && b->safe(0) && b->leave(0) && !b->safe(0) && !masked);
     if (failures) { fprintf(stderr, "%u loader checks failed\n", failures); return 1; }
     puts("Loader: refusals, relocation, bss, hooks, stock-code sites (in-flight, stock and changed-code refusals, "
-         "replace, rollback, removal) and pool exhaustion passed.");
+         "replace, rollback, removal), reclamation, several modules (conflicts, positions) and exhaustion passed.");
     return 0;
 }

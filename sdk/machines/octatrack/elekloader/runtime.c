@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later
  * The Octatrack's glue for the machine-neutral runtime loader
  * (sdk/runtime/loader), and trampolines from core-ot's hook bus to the
- * active module's hooks. Development only.
+ * live modules' hooks. Development only.
  *
  * Module code and data run from the uncached alias, so no stale or dirty
  * data-cache line reaches them; instruction fetches there are still cached
@@ -113,25 +113,43 @@ int modwerk_machine_patchable(uint32_t address, uint32_t length)
 }
 
 /* Hooks run in the sys task (core-ot's ev_tick, ev_key, ev_enc and nearly
- * always ev_draw). The tick also counts, for diagnostics. */
+ * always ev_draw), in position order: the first key or encoder hook that
+ * returns nonzero takes the event. The tick also counts, for diagnostics. */
+/* Reads the position once: memory a hook still runs in is not reclaimed while
+ * this task holds an address inside it. */
+static uintptr_t hook(unsigned position, enum runtime_event e)
+{
+    const struct runtime_module *m = modwerk_runtime_module(position);
+    return m ? m->hook[e] : 0;
+}
 void modwerk_runtime_tick(void)
 {
-    const struct runtime_module *m = modwerk_runtime_active();
-    if (m && m->hook[RUNTIME_TICK]) ((void (*)(struct modwerk_runtime_api *))m->hook[RUNTIME_TICK])(&modwerk_runtime_api);
+    for (unsigned i = 0; i < RUNTIME_MODULES; ++i) {
+        uintptr_t f = hook(i, RUNTIME_TICK);
+        if (f) ((void (*)(struct modwerk_runtime_api *))f)(&modwerk_runtime_api);
+    }
     modwerk_runtime_ticks = modwerk_runtime_ticks + 1;
 }
 void modwerk_runtime_draw(unsigned char *frame)
 {
-    const struct runtime_module *m = modwerk_runtime_active();
-    if (m && m->hook[RUNTIME_DRAW]) ((void (*)(unsigned char *))m->hook[RUNTIME_DRAW])(frame);
+    for (unsigned i = 0; i < RUNTIME_MODULES; ++i) {
+        uintptr_t f = hook(i, RUNTIME_DRAW);
+        if (f) ((void (*)(unsigned char *))f)(frame);
+    }
 }
 int modwerk_runtime_key(int code, int pressed)
 {
-    const struct runtime_module *m = modwerk_runtime_active();
-    return m && m->hook[RUNTIME_KEY] ? ((int (*)(int, int))m->hook[RUNTIME_KEY])(code, pressed) : 0;
+    for (unsigned i = 0; i < RUNTIME_MODULES; ++i) {
+        uintptr_t f = hook(i, RUNTIME_KEY);
+        if (f && ((int (*)(int, int))f)(code, pressed)) return 1;
+    }
+    return 0;
 }
 int modwerk_runtime_enc(int encoder, int delta)
 {
-    const struct runtime_module *m = modwerk_runtime_active();
-    return m && m->hook[RUNTIME_ENC] ? ((int (*)(int, int))m->hook[RUNTIME_ENC])(encoder, delta) : 0;
+    for (unsigned i = 0; i < RUNTIME_MODULES; ++i) {
+        uintptr_t f = hook(i, RUNTIME_ENC);
+        if (f && ((int (*)(int, int))f)(encoder, delta)) return 1;
+    }
+    return 0;
 }
