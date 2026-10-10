@@ -2,8 +2,9 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Carry the emulator bench's line protocol to a real unit over libusb.
 
-    ~/.cache/modwerk-upstream/venv/bin/python usb_bridge.py /tmp/ot-usb.sock &
-    node scripts/verify-octatrack-vendor-client.mjs /tmp/ot-usb.sock PROOFS.json --hardware
+    ~/.cache/modwerk-upstream/venv/bin/python usb_bridge.py /tmp/modwerk-ot.sock &
+    npm run device -- status      # or try/remove/lifecycle: scripts/device.mjs
+    node scripts/verify-octatrack-vendor-client.mjs /tmp/modwerk-ot.sock PROOFS.json --hardware
 
 Any bench client then drives the unit as it drives ot_emu. Control transfers
 only: a SETUP is held until its data stage ("in"/"out") performs the whole

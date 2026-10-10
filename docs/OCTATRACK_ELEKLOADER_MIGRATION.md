@@ -739,6 +739,17 @@ already uses, so the same commands work on both. It follows the
 sync-mode gate, base identity binding, bounded commands and no raw memory
 access.
 
+The first version is `npm run device` ([`scripts/device.mjs`](../scripts/device.mjs)),
+driving a unit through `usb_bridge.py`, so it adds no Node dependency:
+`status` (IDENTIFY, HELLO, DIAG), `try <file> [--seconds N] [--accept]`,
+`remove [--accept]` and `lifecycle`. Each command is one whole transaction:
+stage, publish, run the trial while printing DIAG, then roll back unless
+`--accept` is given. Ctrl-C rolls back early, and unplugging USB rolls back
+anything not accepted. All four commands passed on the owner's MKII
+(`usbtest3`, 10 October 2026), including Ctrl-C during an `--accept` trial.
+Not yet built: `logs`, the emulator (the CLI skips the bench's enumeration),
+a module file that names its base, and the sync-mode gate.
+
 Down the road the interface should cover every supported machine. The
 frames, sessions, IDENTIFY's model and capability fields, the transport's
 rules and the TypeScript client are already machine-neutral; each machine
