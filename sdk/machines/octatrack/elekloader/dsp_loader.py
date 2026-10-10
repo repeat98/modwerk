@@ -41,8 +41,23 @@ def payload_words(image, device, dsp, tag):
     return (lambda space, address: dsp.w24(image, at(space, address) - device.main_load)), at, records
 
 
-def receiver_source(text, null, table_words):
+# Hardware probes (build_core.py --dsp-probe), to find which step stops core 0: A takes packets
+# but never looks at them (delivery only); B checks a packet and answers, and does nothing else.
+PROBES = {
+    'A': ('        move    r6,x:>$207              ; the instruction the hook displaced\n',
+          '        move    r6,x:>$207              ; the instruction the hook displaced\n        rts\n'),
+    'B': ('        move    r3,x:(r0+63)\n        move    x:(r0+2),a\n',
+          '        move    #>0,x0\n        bra     reply\n        move    x:(r0+2),a\n'),
+}
+
+
+def receiver_source(text, null, table_words, probe=None):
     """The receiver with its table's size and stock's null stub (dry ids) filled in."""
+    if probe:
+        old, new = PROBES[probe]
+        if text.count(old) != 1:
+            raise ValueError('The DSP receiver changed; review probe %s.' % probe)
+        text = text.replace(old, new)
     for old, new, count in (('@NULL_INIT@', '$%x' % null[0], 1), ('@NULL_PROC@', '$%x' % null[1], 1),
                             ('@DLWORDS@', str(table_words), 3)):
         if text.count(old) != count:
@@ -58,7 +73,7 @@ def helper_callers(payload, routine):
             any(a['delta'] == shift for a in p['adjustments'])}
 
 
-def recipe(image, device, dsp, assemble, work):
+def recipe(image, device, dsp, assemble, work, probe=None):
     """-> (sites, layout) for both payloads. `assemble(path)` is Elekloader's
     sdk.build.dsp_assemble (octabam's dsp_asm at two origins)."""
     metadata = json.loads(METADATA.read_text())
@@ -89,10 +104,10 @@ def recipe(image, device, dsp, assemble, work):
             raise ValueError('Payload %s: the frame head is not the stock instruction the receiver replays.' % tag)
         # The receiver's size does not depend on its table's: every operand it moves is a long one.
         path = Path(work) / ('receiver-%s.asm' % tag)
-        path.write_text(receiver_source(RECEIVER.read_text(), null, 0))
+        path.write_text(receiver_source(RECEIVER.read_text(), null, 0, probe))
         size = len(assemble(str(path))[0])
         table = hi - lo - size
-        path.write_text(receiver_source(RECEIVER.read_text(), null, table))
+        path.write_text(receiver_source(RECEIVER.read_text(), null, table, probe))
         code, labels, relocations = assemble(str(path))
         if len(code) != size or labels['dltable'] != size or table < SAVED + 1:
             raise ValueError('Payload %s: the receiver does not fit the harvested run.' % tag)

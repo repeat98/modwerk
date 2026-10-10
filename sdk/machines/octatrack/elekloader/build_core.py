@@ -214,6 +214,8 @@ def main():
     parser.add_argument('--cross', default='m68k-elf-', help='Use Modwerk\'s reviewed GNU toolchain.')
     parser.add_argument('--dev', action='store_true',
                         help='Development base: drive and watch the unit over USB (dev.c) and stream MAIN/CUE as USB audio. Never for users.')
+    parser.add_argument('--dsp-probe', choices=('A', 'B'),
+                        help='Hardware probe of the DSP loader (dsp_loader.PROBES): A delivery only, B answer only.')
     parser.add_argument('--dsp-loader', action='store_true',
                         help='Load module DSP effects on demand; takes PLATE, SPRING and DARK REV off FX2 (needs ELEKLOADER_DSP_ASM, Node 24).')
     args = parser.parse_args()
@@ -293,7 +295,8 @@ def main():
         for lea, stock_list in ((0x40052496, 0x400d6090), (0x40052706, 0x400d6060)):
             if int.from_bytes(image[lea - device.main_load:lea - device.main_load + 4], 'big') != stock_list:
                 raise ValueError('An FX selector no longer reads its chooser list at %#x.' % lea)
-        dsp_sites, dsp_layout = loader_dsp.recipe(image, device, dsp, lambda path: sdk.dsp_assemble(path, str(source)), str(source))
+        dsp_sites, dsp_layout = loader_dsp.recipe(image, device, dsp, lambda path: sdk.dsp_assemble(path, str(source)), str(source),
+                                                  args.dsp_probe)
         chooser_sites, rows = loader_dsp.choosers(image)
         dsp_sites += chooser_sites
     (source/'usb_base.h').write_text(usb.header())
@@ -325,7 +328,7 @@ def main():
     if args.dsp_loader:
         configuration.update(fx1=['NONE', *rows['fx1']], fx2=['NONE', *rows['fx2']], stockfx2=False,
                              dsp=dict(loader='dsp-dynload-1', harvest=list(loader_dsp.HARVEST), rows=list(loader_dsp.MODULES),
-                                      allowance=DSP_ALLOWANCE, reserve=DSP_RESERVE, arena=[dsp_layout[t]['tableWords'] - loader_dsp.SAVED for t in 'AB']))
+                                      allowance=DSP_ALLOWANCE, reserve=DSP_RESERVE, probe=args.dsp_probe, arena=[dsp_layout[t]['tableWords'] - loader_dsp.SAVED for t in 'AB']))
     identity = sha(json.dumps(configuration, separators=(',', ':')).encode())
     values = dict(build=identity[:16], os='1.40C', modules='', configuration=identity,
                   source=source_hash, fx1=';'.join(configuration['fx1']),

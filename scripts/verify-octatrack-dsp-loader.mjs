@@ -15,7 +15,8 @@
 // cycles (a package declaring the most a module may, 491: T1 admitted, T2 refused on the same core),
 // missing (T1's FX2 names E-Verb, as a saved project would, before it is installed: dry and
 // reported, then restored by installing it), restore (install only, for
-// sdk/machines/octatrack/elekloader/old_projects.py).
+// sdk/machines/octatrack/elekloader/old_projects.py), probe (one PROBE packet to each core,
+// no module: answered on a full or --dsp-probe B base, timed out on --dsp-probe A).
 // The card needs a project whose Part 1 has no module effect on T1, T2 or T5's FX2.
 // Emulator evidence only: executed instructions, no hardware timing or audio.
 import assert from 'node:assert/strict'
@@ -30,7 +31,8 @@ import { Bench, device, enumerate } from './usb-bench.mjs'
 const [mode, ...args] = process.argv.slice(2)
 const EFFECT = 27, LIVE_FX = 0x80000ec4
 const COUNTERS = { dl_residency_words: 8, dl_pool_base: 8, dl_selection_requested: 4, dl_selection_completed: 4,
-  dl_selection_refused: 4, dl_errors: 4, dl_modal_shown: 4, dl_parked: 4, dl_reinit: 4, modwerk_dsp_missing: 4 }
+  dl_selection_refused: 4, dl_errors: 4, dl_modal_shown: 4, dl_parked: 4, dl_reinit: 4, modwerk_dsp_missing: 4,
+  modwerk_dsp_probes_ok: 4, modwerk_dsp_probes_failed: 4, dl_frames: 4 }
 const json = path => JSON.parse(readFileSync(path, 'utf8'))
 const build = dir => ({ proofs: json(join(dir, 'proofs.json')), symbols: json(join(dir, 'symbols.json')) })
 const row = proofs => proofs.configuration.fx2.indexOf('EVERB')
@@ -53,6 +55,7 @@ if (mode === 'dumps') {
     const start = (await diagnostics(device(bench), index)).ticks
     while ((await diagnostics(device(bench), index)).ticks - start < ticks) await wait(200)
   }
+  const call = async (address, ...values) => Number((await bench.command(`call 0x${address.toString(16)} ${values.join(' ')}`.trim()))[1])
   const keep = async data => {
     await session.stage({ base, data, sha256: sha(data) }); await session.activate(); await session.startTrial()
     await session.holdTrial(); await session.accept(); await session.leaveUploadMode()
@@ -63,8 +66,14 @@ if (mode === 'dumps') {
     await settle(300)
     console.log(`picked FX2 row ${chooserRow} on track ${track + 1}`)
   }
+  if (scenario === 'probe') {
+    for (const core of [0, 1]) {
+      assert.equal(await call(symbols.modwerk_dsp_probe, core), 1, 'the base sends the probe')
+      await settle(120); console.log('probed core', core)
+    }
+    bench.socket.end(); process.exit(0)
+  }
   const data = new Uint8Array(readFileSync(file)), id = new DataView(data.buffer).getUint32(28)
-  const call = async (address, ...values) => Number((await bench.command(`call 0x${address.toString(16)} ${values.join(' ')}`.trim()))[1])
   if (scenario === 'missing') {
     // Emulator-only reads: a three-instruction routine in the unused end of the boot stage returns a long.
     const at = symbols.modwerk_boot_stage + 0x130000, long = async address => {
@@ -132,6 +141,11 @@ if (mode === 'dumps') {
     assert(u32('dl_parked')[0] >= 1 && u32('dl_reinit')[0] >= 1, 'the slot waited for the code, then started from its init')
     assert.deepEqual(u32('dl_residency_words'), [0, pkg.words]); core(1, 'B', true)
     console.log('a project naming E-Verb before it was installed ran dry and said so; installing it restored T1 from its init: passed')
+  } else if (scenario === 'probe') {
+    const answered = proofs.configuration.dsp.probe !== 'A'
+    assert.equal(u32('modwerk_dsp_probes_ok')[0], answered ? 2 : 0); assert.equal(u32('modwerk_dsp_probes_failed')[0], answered ? 0 : 2)
+    assert(u32('dl_frames')[0] > 1000, 'frames kept running')
+    console.log(`probe ${proofs.configuration.dsp.probe ?? 'none (whole receiver)'}: each core ${answered ? 'answered' : 'took the packet and never answered, as built'}, frames kept running: passed`)
   } else throw new Error('Unknown scenario ' + scenario)
 } else {
   console.error('Usage: verify-octatrack-dsp-loader.mjs dumps BUILD OUT | drive SOCK BUILD SCENARIO PACKAGE | check BUILD OUT SCENARIO (pick, remove, cycles, missing)')

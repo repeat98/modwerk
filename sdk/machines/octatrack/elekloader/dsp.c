@@ -9,6 +9,7 @@
  * the module and unregistered when it goes. Development only. */
 #include "runtime.h"
 #include "allocator.h"
+#include "transfer.h"
 
 /* manager.c's code descriptor, which it reads from dl_codes. */
 struct code { const uint32_t *words; const uint16_t *relocations; uint16_t count, init, proc, relocation_count; };
@@ -173,9 +174,30 @@ static void recover(void)
     ((void (*)(const char *, unsigned))0x4005a2b8u)("DSP STOPPED", 0x30);
 }
 #endif
-void modwerk_dsp_tick(void)
+/* Development: one PROBE packet to a core (the dev PROBE request), for finding on
+ * the unit which step stops a core: build_core.py --dsp-probe A (delivery only),
+ * B (the receiver checks and answers) or neither (the whole receiver). */
+volatile uint32_t modwerk_dsp_watch_ticks, modwerk_dsp_probes, modwerk_dsp_probes_ok, modwerk_dsp_probes_failed;
+static int probing = -1;
+int modwerk_dsp_probe(unsigned core)
 {
 #ifndef MODWERK_HOST
+    if (core > 1 || probing >= 0 || !dl_publication_idle() || !dl_command_start(core, DL_PROBE, 0, 0, 0)) return 0;
+#endif
+    probing = (int)core;
+    modwerk_dsp_probes = modwerk_dsp_probes + 1;
+    return 1;
+}
+void modwerk_dsp_tick(void)
+{
+    modwerk_dsp_watch_ticks = modwerk_dsp_watch_ticks + 1; /* the watchdog's heartbeat */
+#ifndef MODWERK_HOST
+    if (probing >= 0 && dl_job_status((unsigned)probing) != 0) {
+        if (dl_job_status((unsigned)probing) > 0) modwerk_dsp_probes_ok = modwerk_dsp_probes_ok + 1;
+        else modwerk_dsp_probes_failed = modwerk_dsp_probes_failed + 1;
+        dl_job_release((unsigned)probing);
+        probing = -1;
+    }
     if (modwerk_dsp_stalled(dl_frames, dl_phase || !dl_job_status(0) || !dl_job_status(1))) recover();
     uint32_t dry = modwerk_dsp_dry(), fresh = dry & ~missing_shown;
     if (fresh) {
@@ -206,9 +228,10 @@ uint32_t dl_manager_state(void);
 unsigned modwerk_dsp_report(uint32_t *out)
 {
     const uint32_t words[DSP_REPORT_WORDS] = {
-        1, dl_frames, dl_phase, (uint32_t)dl_job_status(0), (uint32_t)dl_job_status(1), modwerk_dsp_last_flags,
+        2, dl_frames, dl_phase, (uint32_t)dl_job_status(0), (uint32_t)dl_job_status(1), modwerk_dsp_last_flags,
         dl_accepted[0], dl_accepted[1], dl_rejected[0], dl_rejected[1], dl_errors, modwerk_dsp_stalls, modwerk_dsp_drained,
-        dl_residency_enabled, dl_manager_state(), dl_pool_base[0], dl_pool_words[0], dl_pool_base[1], dl_pool_words[1],
+        dl_residency_enabled, dl_manager_state(), modwerk_dsp_watch_ticks, modwerk_dsp_probes, modwerk_dsp_probes_ok,
+        modwerk_dsp_probes_failed,
         dl_selection_requested, dl_selection_completed, dl_selection_refused, dl_selection_cancelled,
         dl_residency_commits, dl_residency_failures, dl_residency_rollbacks, dl_residency_words[0], dl_residency_words[1],
         dl_unguarded, dl_parked, dl_reinit, modwerk_dsp_missing, modwerk_dsp_used(), modwerk_dsp_dry()};
