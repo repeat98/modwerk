@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Modwerk's chooser composer (src/engine/choosers.ts, native-verified) for a
-// development base: the stock MAIN image on stdin, {modules, harvest} as the
-// argument; prints the guarded writes that add the modules' rows (as the site's
-// default chooser does) and take the harvested effects off FX2. Node 24
+// development base: the stock MAIN image on stdin, {modules} as the argument;
+// prints the guarded writes that add the modules' rows beside every stock row
+// (as the site's default chooser does). Node 24
 // (sdk/machines/octatrack/elekloader/dsp_loader.py runs it).
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
@@ -22,12 +22,12 @@ registerHooks({
 })
 const { composeChoosers } = await import('../src/engine/choosers.ts')
 const meta = JSON.parse(readFileSync(new URL('../src/engine/assets/chooser-metadata.json', import.meta.url), 'utf8'))
-const { modules, harvest } = JSON.parse(process.argv[2])
+const { modules } = JSON.parse(process.argv[2])
 const own = modules.map(id => meta.modules.find(module => module.id === id))
 if (own.some(module => !module?.fxId || 'replaces' in module)) throw new Error('Only module effects with their own id get a chooser row in this base.')
 const image = new Uint8Array(readFileSync(0))
 const profile = { fx1: [...meta.stockFx1, ...own.filter(m => m.fx1).map(m => m.key)],
-  fx2: [...meta.stockFx2.filter(key => !harvest.includes(key)), ...own.filter(m => !m.fx1Only).map(m => m.key)] }
+  fx2: [...meta.stockFx2, ...own.filter(m => !m.fx1Only).map(m => m.key)] }
 const result = await composeChoosers(image, modules, profile)
 const hex = bytes => Buffer.from(bytes).toString('hex')
 console.log(JSON.stringify({ chooser: result.chooser, writes: result.writes.map(w => ({ ...w, bytes: hex(w.bytes) })) }))

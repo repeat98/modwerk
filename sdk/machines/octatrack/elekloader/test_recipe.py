@@ -235,11 +235,10 @@ class DspLoaderTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'receiver changed'):
             dsp_loader.receiver_source(dsp_loader.RECEIVER.read_text().replace('@NULL_PROC@', '$0'), (0x7c8, 0x7c9), 1)
 
-    def test_a_shared_routine_is_called_by_effects_whose_calls_move_with_it(self):
-        from dsp_loader import helper_callers
-        payload = {'packages': [{'key': 'DARK', 'adjustments': [{'delta': -3223}]}, {'key': 'SPRING', 'adjustments': []},
-                                {'key': 'FILTER', 'adjustments': [{'delta': -441}]}]}
-        self.assertEqual(helper_callers(payload, {'owner': 'SPRING', 'sourceAddress': 5510, 'destination': 2287}), {'DARK'})
+    def test_a_stock_package_relocates_as_the_loader_places_it(self):
+        from dsp_loader import relocated
+        # Absolute words gain the base; PC-relative ones (bit 15) lose it, mod 2^24 (transfer.c).
+        self.assertEqual(relocated([0x10, 0x20, 5], [0, 1 | 0x8000], 0x100), [0x110, 0xffff20, 5])
 
 
 class FlashSafetyTests(unittest.TestCase):

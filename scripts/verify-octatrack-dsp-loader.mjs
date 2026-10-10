@@ -16,7 +16,8 @@
 // missing (T1's FX2 names E-Verb, as a saved project would, before it is installed: dry and
 // reported, then restored by installing it), restore (install only, for
 // sdk/machines/octatrack/elekloader/old_projects.py), probe (one PROBE packet to each core,
-// no module: answered on a full or --dsp-probe B base, timed out on --dsp-probe A).
+// no module: answered on a full or --dsp-probe B base, timed out on --dsp-probe A), stock (no module: the project's
+// stock effects load from boot, PLATE REV and DARK REV picked on T1 and T5, each bound into its core's arena).
 // The card needs a project whose Part 1 has no module effect on T1, T2 or T5's FX2.
 // Emulator evidence only: executed instructions, no hardware timing or audio.
 import assert from 'node:assert/strict'
@@ -41,7 +42,7 @@ if (mode === 'dumps') {
   const [dir, out] = args, { proofs, symbols } = build(dir), layout = proofs.dspLoader
   const dumps = [...Object.entries(COUNTERS).map(([name, n]) => `0x${symbols[name].toString(16)},${n}=${out}/${name}.bin`),
     `0x${LIVE_FX.toString(16)},16=${out}/ids.bin`]
-  console.log(`--mem-dump ${dumps.join(';')} --dsp-peek 0:X:215,64;1:X:215,64;0:P:${layout.A.table.slice(2)},1700;1:P:${layout.B.table.slice(2)},1700`)
+  console.log(`--mem-dump ${dumps.join(';')} --dsp-peek 0:X:215,64;1:X:215,64;0:P:${layout.A.table.slice(2)},${parseInt(layout.A.tableWords, 16)};1:P:${layout.B.table.slice(2)},${parseInt(layout.B.tableWords, 16)}`)
 } else if (mode === 'drive') {
   const [socket, dir, scenario, file] = args, { proofs, symbols } = build(dir)
   const wait = ms => new Promise(resolve => setTimeout(resolve, ms))
@@ -89,6 +90,11 @@ if (mode === 'dumps') {
     assert(await call(symbols.modwerk_dsp_used) & 1 << EFFECT, 'the bank reports the effect in use')
     console.log('T1 names E-Verb before it is installed; the bank reports it in use')
   }
+  if (scenario === 'stock') { // no module: the project's stock effects load at boot, then two reverbs are picked
+    await settle(60)
+    await pick(0, proofs.configuration.fx2.indexOf('PLATE REV')); await pick(4, proofs.configuration.fx2.indexOf('DARK REV'))
+    bench.socket.end(); process.exit(0)
+  }
   await keep(data); console.log('module installed')
   await settle(60) // the manager handles the project's own effects in its first ticks
   // missing: what the project named is restored; restore: install only (old_projects.py checks the result).
@@ -114,33 +120,52 @@ if (mode === 'dumps') {
     assert(m, `no ${space} memory of core ${core} in the log`)
     return m[1].trim().split(' ').map(w => parseInt(w, 16))
   }
-  // What core `core` runs for the effect: its code word for word at the arena's first code word, or the null stub.
+  // What core `core` runs for the effect: its code word for word where its dispatch points, inside the arena, or the null stub.
   const core = (number, tag, bound) => {
     const layout = proofs.dspLoader[tag], dispatch = peek(number, 'X', 0x215, 64), entry = [dispatch[EFFECT], dispatch[32 + EFFECT]]
     if (!bound) return assert.deepEqual(entry, layout.null, `core ${number} still dispatches the effect`)
-    const at = parseInt(layout.table, 16) + 64, placed = words.map((w, i) => pkg.relocations.includes(i) ? (w + at) & 0xffffff : w)
-    assert.deepEqual(peek(number, 'P', parseInt(layout.table, 16), 1700).slice(64, 64 + words.length), placed, `core ${number} code`)
-    assert.deepEqual(entry, [at + pkg.init, at + pkg.proc], `core ${number} dispatch`)
+    const table = parseInt(layout.table, 16), size = parseInt(layout.tableWords, 16), at = entry[0] - pkg.init
+    assert(at >= table + 64 && at + words.length <= table + size, `core ${number} runs the effect outside the arena`)
+    const placed = words.map((w, i) => pkg.relocations.includes(i) ? (w + at) & 0xffffff : w)
+    assert.deepEqual(peek(number, 'P', table, size).slice(at - table, at - table + words.length), placed, `core ${number} code`)
+    assert.equal(entry[1], at + pkg.proc, `core ${number} dispatch`)
   }
+  // Resident words per core: each distinct effect its four tracks run, stock packages loaded on demand too.
+  const resident = () => [[4, 5, 6, 7], [0, 1, 2, 3]].map((tracks, n) => [...new Set(tracks.flatMap(t => [ids[t], ids[8 + t]]))]
+    .reduce((sum, fx) => sum + (fx === EFFECT ? pkg.words : proofs.dspLoader['AB'[n]].stock[fx]?.count ?? 0), 0))
   if (scenario !== 'probe') assert.equal(u32('dl_errors')[0], 0, 'transport errors')
   if (scenario === 'pick') {
     assert.equal(ids[8], EFFECT); assert.equal(ids[12], EFFECT)
-    assert.deepEqual(u32('dl_residency_words'), [pkg.words, pkg.words]); assert.equal(u32('dl_selection_refused')[0], 0)
+    assert.deepEqual(u32('dl_residency_words'), resident()); assert.equal(u32('dl_selection_refused')[0], 0)
     core(0, 'A', true); core(1, 'B', true)
     console.log('E-Verb picked on FX2 of T1 and T5: each core holds its code word for word and dispatches to it: passed')
   } else if (scenario === 'remove') {
-    assert.equal(ids[8], 4); assert.deepEqual(u32('dl_residency_words'), [0, 0]); core(1, 'B', false)
+    assert.equal(ids[8], 4); assert.deepEqual(u32('dl_residency_words'), resident()); core(1, 'B', false)
     console.log('removal refused while T1 ran E-Verb; after FILTER was picked it was removed and core 1 freed its code: passed')
   } else if (scenario === 'cycles') {
     assert.equal(ids[8], EFFECT); assert.notEqual(ids[9], EFFECT)
     assert.equal(u32('dl_selection_refused')[0], 1); assert.equal(u32('dl_modal_shown')[0], 1)
-    assert.deepEqual(u32('dl_residency_words'), [0, pkg.words]); core(1, 'B', true)
+    assert.deepEqual(u32('dl_residency_words'), resident()); core(1, 'B', true)
     console.log('declared the most cycles a module may: T1 admitted, T2 on the same core refused with a message and left as it was: passed')
   } else if (scenario === 'missing') {
     assert.equal(ids[8], EFFECT, 'T1 runs E-Verb again'); assert(u32('modwerk_dsp_missing')[0] >= 1, 'the unit said it was missing')
     assert(u32('dl_parked')[0] >= 1 && u32('dl_reinit')[0] >= 1, 'the slot waited for the code, then started from its init')
-    assert.deepEqual(u32('dl_residency_words'), [0, pkg.words]); core(1, 'B', true)
+    assert.deepEqual(u32('dl_residency_words'), resident()); core(1, 'B', true)
     console.log('a project naming E-Verb before it was installed ran dry and said so; installing it restored T1 from its init: passed')
+  } else if (scenario === 'stock') {
+    assert.equal(ids[8], 20); assert.equal(ids[12], 22); assert.equal(u32('dl_selection_refused')[0], 0)
+    for (const [number, tag, tracks] of [[0, 'A', [4, 5, 6, 7]], [1, 'B', [0, 1, 2, 3]]]) {
+      const layout = proofs.dspLoader[tag], table = parseInt(layout.table, 16), end = table + parseInt(layout.tableWords, 16)
+      const dispatch = peek(number, 'X', 0x215, 64)
+      for (const fx of new Set(tracks.flatMap(t => [ids[t], ids[8 + t]]))) {
+        if (!layout.stock[fx]) continue
+        assert(dispatch[fx] >= table + 64 && dispatch[fx] < end && dispatch[32 + fx] < end, `core ${number} does not run effect ${fx} from its arena`)
+        assert.equal(dispatch[32 + fx] - dispatch[fx], layout.stock[fx].proc - layout.stock[fx].init, `core ${number} effect ${fx} entries`)
+      }
+    }
+    assert.deepEqual(u32('dl_residency_words'), resident())
+    const loaded = [...new Set(ids)].filter(fx => proofs.dspLoader.A.stock[fx]).map(fx => proofs.dspLoader.A.stock[fx].key)
+    console.log(`stock effects on demand: ${loaded.join(', ')} each run from their core's arena (PLATE REV picked on T1, DARK REV on T5): passed`)
   } else if (scenario === 'probe') {
     const answered = proofs.configuration.dsp.probe !== 'A'
     assert.equal(u32('modwerk_dsp_probes_ok')[0], answered ? 2 : 0); assert.equal(u32('modwerk_dsp_probes_failed')[0], answered ? 0 : 2)

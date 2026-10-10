@@ -7,7 +7,11 @@
 
 static unsigned failures;
 #define CHECK(x) do { if (!(x)) { failures++; fprintf(stderr, "%s:%d: %s\n", __FILE__, __LINE__, #x); } } while (0)
-const uint32_t dl_stub_at_boot = 1u << 26 | 1u << 27, modwerk_dsp_harvested = 1u << 21;
+const uint32_t dl_stub_at_boot = 1u << 21 | 1u << 26 | 1u << 27, modwerk_dsp_modules = 1u << 26 | 1u << 27;
+/* identity.c's catalog: SPRING REV (21) a stock package loaded on demand, every other id what stock runs. */
+#define STOCK4 STOCK, STOCK, STOCK, STOCK
+struct dl_package dl_catalog[32] = {STOCK4, STOCK4, STOCK4, STOCK4, STOCK4, STOCK, {1063, 1, 331, 2, 0, 1, 1}, STOCK, STOCK, STOCK4, STOCK4};
+struct code dl_codes[2][32];
 const uint16_t modwerk_dsp_arena[2] = {2320, 2300};
 static int idle = 1;
 int dl_publication_idle(void) { return idle; }
@@ -19,7 +23,7 @@ int main(void)
     const struct runtime_dsp none = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
     struct runtime_dsp fx = {words, relocations, 3, 1, 1, 2, 244, 0, 26, 1, RUNTIME_MODELED, 70};
     CHECK(modwerk_machine_dsp_admit(&none, &none) == RUNTIME_OK && modwerk_machine_dsp_admit(&none, &fx) == RUNTIME_OK);
-    /* Only the module ids, never a stock effect's (the reverbs this base harvests stay theirs). */
+    /* Only the module ids, never a stock effect's (each loads its own package). */
     fx.id = 21; CHECK(modwerk_machine_dsp_admit(&none, &fx) == RUNTIME_CONFLICT);
     fx.id = 40; CHECK(modwerk_machine_dsp_admit(&none, &fx) == RUNTIME_CONFLICT);
     fx.id = 26;
@@ -38,7 +42,7 @@ int main(void)
     modwerk_machine_dsp_switch(&none, &fx);
     CHECK(dl_catalog[26].words == 3 && !dl_catalog[26].resident && dl_catalog[26].qualified && dl_catalog[26].slots == 1 &&
           dl_catalog[26].cycles == 331 && dl_catalog[26].alignment == 1 && !dl_catalog[26].buffer); /* charged the reserve at least */
-    CHECK(dl_catalog[0].cycles == 331 && dl_catalog[21].cycles == 331 && dl_catalog[21].resident);         /* NONE and stock effects */
+    CHECK(dl_catalog[0].cycles == 331 && dl_catalog[0].resident && dl_catalog[21].cycles == 331 && !dl_catalog[21].resident); /* NONE; a stock package */
     CHECK(dl_codes[0][26].words == words && dl_codes[1][26].words == words && dl_codes[1][26].count == 3 && dl_codes[1][26].init == 1 &&
           dl_codes[1][26].proc == 2 && dl_codes[0][26].relocations == relocations && dl_codes[0][26].relocation_count == 1);
     /* A track running it, or the manager mid-transaction, keeps it: removal and replacement wait. */
@@ -64,11 +68,11 @@ int main(void)
     CHECK(modwerk_dsp_used() == (1u << 26 | 1u << 27));
     modwerk_test_live_fx[2] = 4; bank[0x8ed80 + 3 * 6322 + 9] = 0;
     CHECK(modwerk_dsp_used() == 1u << 27);
-    /* What runs dry: an uninstalled module's effect, and a stock effect this base harvested. */
+    /* What runs dry: an uninstalled module's effect only; a stock effect loads its package. */
     modwerk_test_live_fx[3] = 27; modwerk_test_live_fx[9] = 21;
-    CHECK(modwerk_dsp_dry() == (1u << 27 | 1u << 21));
+    CHECK(modwerk_dsp_dry() == 1u << 27);
     modwerk_machine_dsp_switch(&none, &fx); fx.id = 27; modwerk_machine_dsp_switch(&none, &fx);
-    CHECK(modwerk_dsp_dry() == 1u << 21);
+    CHECK(!modwerk_dsp_dry());
     /* The watchdog: frames still for 30 ticks while a transfer is in flight, reported once; frames moving or no transfer, never. */
     unsigned fired = 0;
     for (unsigned t = 0; t < 100; ++t) fired += modwerk_dsp_stalled(500u + t, 1);   /* frames advance */

@@ -18,12 +18,14 @@ struct code { const uint32_t *words; const uint16_t *relocations; uint16_t count
  * fit a core and a stock pick never adds to what was admitted: a module is
  * refused, never a stock effect. */
 typedef char stock_always_fits[8u * MODWERK_DSP_RESERVE <= MODWERK_DSP_ALLOWANCE ? 1 : -1];
-/* An id with no package: what stock (or the null stub) runs there, free on both slots. */
+/* A module id with no module: the null stub runs there, free on both slots. */
 #define STOCK {0, 1, MODWERK_DSP_RESERVE, 3, 1, 1, 0}
-#define STOCK4 STOCK, STOCK, STOCK, STOCK
-struct dl_package dl_catalog[32] = {STOCK4, STOCK4, STOCK4, STOCK4, STOCK4, STOCK4, STOCK4, STOCK4};
-struct code dl_codes[2][32];
-extern const uint32_t dl_stub_at_boot;     /* the module effect ids (identity.c): stock's null stub at boot */
+/* identity.c (dsp_loader.py catalog_c): every stock DSP effect's package per core, loaded on demand;
+ * a module registers into its own id. */
+extern struct dl_package dl_catalog[32];
+extern struct code dl_codes[2][32];
+extern const uint32_t dl_stub_at_boot;     /* stock and module effect ids (identity.c): the null stub until bound */
+extern const uint32_t modwerk_dsp_modules; /* the module effect ids alone */
 extern const uint16_t modwerk_dsp_arena[2]; /* each core's code arena past the saved entries, words (identity.c) */
 int dl_publication_idle(void);
 void dl_residency_nudge(void);
@@ -55,7 +57,7 @@ int modwerk_machine_dsp_admit(const struct runtime_dsp *from, const struct runti
      * A new one may register at any time: no transaction names an effect nobody has picked. */
     if (from->count && (!dl_publication_idle() || in_use(from->id))) return RUNTIME_BUSY;
     if (!to->count) return RUNTIME_OK;
-    if (to->id > 31 || !(dl_stub_at_boot >> to->id & 1u)) return RUNTIME_CONFLICT;
+    if (to->id > 31 || !(modwerk_dsp_modules >> to->id & 1u)) return RUNTIME_CONFLICT;
     unsigned arena = modwerk_dsp_arena[0] < modwerk_dsp_arena[1] ? modwerk_dsp_arena[0] : modwerk_dsp_arena[1];
     if (to->count > arena || to->state > SLOT_WORDS || to->buffer > (to->slots & 1u ? FX1_BUFFER : FX2_BUFFER)) return RUNTIME_MEMORY;
     /* shortcut: modeled cycles and executed instructions admit in this development base;
@@ -90,7 +92,7 @@ uint32_t modwerk_dsp_used(void)
     for (unsigned i = 0; i < 16; ++i) used |= 1u << (LIVE_FX[i] & 31u);
     for (unsigned part = 0; bank && part < 8; ++part)
         for (unsigned i = 0; i < 16; ++i) if (PART(bank, part)[i] < 32u) used |= 1u << PART(bank, part)[i];
-    return used & dl_stub_at_boot;
+    return used & modwerk_dsp_modules;
 }
 
 /* Development only: a chooser pick or Part change replayed as the panel makes
@@ -104,18 +106,16 @@ int modwerk_dsp_pick(unsigned slot, unsigned track, unsigned row)
     pick = 0x80000000u | slot << 16 | track << 8 | row;
     return 1;
 }
-/* A track naming a module effect that is not installed, or a stock effect this
- * base gave its code room to (modwerk_dsp_harvested), runs stock's null stub, dry,
+/* A track naming a module effect that is not installed runs stock's null stub, dry,
  * its stored parameters untouched; the unit says so once per change. */
 static uint32_t missing_shown;
 volatile uint32_t modwerk_dsp_missing; /* times the unit said so, for diagnostics */
-extern const uint32_t modwerk_dsp_harvested; /* identity.c */
 uint32_t modwerk_dsp_dry(void)
 {
     uint32_t dry = 0;
     for (unsigned i = 0; i < 16; ++i) {
         unsigned fx = LIVE_FX[i] & 31u;
-        if ((dl_stub_at_boot >> fx & 1u && dl_catalog[fx].resident) || modwerk_dsp_harvested >> fx & 1u) dry |= 1u << fx;
+        if (modwerk_dsp_modules >> fx & 1u && dl_catalog[fx].resident) dry |= 1u << fx;
     }
     return dry;
 }
@@ -272,7 +272,7 @@ void modwerk_dsp_tick(void)
     else if (modwerk_dsp_stalled(dl_frames, dl_phase || !dl_job_status(0) || !dl_job_status(1))) recover();
     uint32_t dry = modwerk_dsp_dry(), fresh = dry & ~missing_shown;
     if (fresh) {
-        ((void (*)(const char *, unsigned))0x4005a2b8u)(fresh & modwerk_dsp_harvested ? "FX NOT IN BASE" : "MODULE MISSING", 0x30);
+        ((void (*)(const char *, unsigned))0x4005a2b8u)("MODULE MISSING", 0x30);
         modwerk_dsp_missing = modwerk_dsp_missing + 1;
     }
     missing_shown = dry;

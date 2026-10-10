@@ -48,14 +48,21 @@ npm run octatrack:elekloader:verify -- \
 
 ### DSP effects on demand
 
-`--dsp-loader` adds Octabam's DSP dynamic loading: module FX in the stock
-choosers, their DSP code loaded into a core when a track picks them and
-freed when nothing uses them, admitted against each core's arena and cycle
-allowance first ([design and evidence](../../../../docs/OCTATRACK_ELEKLOADER_MIGRATION.md#milestone-2-dsp-effects-on-demand-e-verb-as-the-pilot-10-october-2026)).
-It takes PLATE, SPRING and DARK REV off FX2 for the code's room
-([`dsp_loader.py`](dsp_loader.py)), and needs Octabam's patched `dsp_asm`
-(`ELEKLOADER_DSP_ASM`; `make setup` in `~/.cache/modwerk-upstream/octabam`,
-or `cmake --build` of its `vendor/dsp56300` with the `dsp_asm` target) and
+`--dsp-loader` loads every DSP effect on demand, stock and module alike.
+Module FX appear in the stock choosers beside every stock row. An effect's
+code goes into a core when a track picks it and is freed when nothing uses
+it, admitted against each core's arena and cycle allowance first
+([design and evidence](../../../../docs/OCTATRACK_ELEKLOADER_MIGRATION.md#milestone-2-dsp-effects-on-demand-e-verb-as-the-pilot-10-october-2026)).
+The base takes each core's whole stock effect block
+([`dsp_loader.py`](dsp_loader.py)): the three stock routines other effects
+call stay resident at its start, then the receiver, then about 5,200 words
+of arena. Each stock effect is a package recovered at build time from your
+firmware with Modwerk's relocation recipes and checked against their
+hashes; Octabam's DSP DYNLOAD STOCK is the reference for the layout. It
+needs Octabam's patched `dsp_asm` (`ELEKLOADER_DSP_ASM`), with
+`dsp56kDisassemble` built beside it in the same tree (`make setup` in
+`~/.cache/modwerk-upstream/octabam`, or `cmake --build` of its
+`vendor/dsp56300` with the `dsp_asm` and `dsp56kDisassemble` targets), and
 Node 24 for Modwerk's chooser composer ([`octatrack-base-choosers.mjs`](../../../../scripts/octatrack-base-choosers.mjs)).
 The pilot module, E-Verb, as a package:
 

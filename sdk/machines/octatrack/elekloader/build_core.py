@@ -430,8 +430,8 @@ def main():
                          usb=dict(interfaces=['msc', 'modwerk-vendor'], vendor=1, submit=True, backend='runtime-loader-3'),
                          boot='ram-1', **({'dev': ['key', 'panel', 'state', 'screen', 'usb-audio-main-cue']} if args.dev else {}))
     if args.dsp_loader:
-        configuration.update(fx1=['NONE', *rows['fx1']], fx2=['NONE', *rows['fx2']], stockfx2=False,
-                             dsp=dict(loader='dsp-dynload-1', harvest=list(loader_dsp.HARVEST), rows=list(loader_dsp.MODULES),
+        configuration.update(fx1=['NONE', *rows['fx1']], fx2=['NONE', *rows['fx2']],
+                             dsp=dict(loader='dsp-dynload-2', stock='on-demand', rows=list(loader_dsp.MODULES),
                                       allowance=DSP_ALLOWANCE, reserve=DSP_RESERVE, probe=args.dsp_probe, hook=args.dsp_hook, arena=[dsp_layout[t]['tableWords'] - loader_dsp.SAVED for t in 'AB']))
     identity = sha(json.dumps(configuration, separators=(',', ':')).encode())
     values = dict(build=identity[:16], os='1.40C', modules='', configuration=identity,
@@ -448,9 +448,12 @@ def main():
     definitions += 'const struct octamod_log_identity octamod_log_identity = {\n' + ','.join(
         'olog_' + key for key in FIELDS) + ',1};\n'
     definitions += 'typedef char retained_fits[(sizeof(struct octamod_log_retained_state)<=6144)?1:-1];\n'
-    if args.dsp_loader:  # dsp.c and manager.c: module effect ids (stock's null stub until bound), each core's arena
-        definitions += 'const uint32_t dl_stub_at_boot = %#xu;\nconst uint32_t dl_pmap16 = 0;\n' % dsp_layout['A']['free']
-        definitions += 'const uint32_t modwerk_dsp_harvested = %#xu;\n' % dsp_layout['A']['harvested']
+    if args.dsp_loader:  # dsp.c and manager.c: stock and module effect ids (the null stub until bound), the catalog, each core's arena
+        stock = sum(1 << fx for fx in dsp_layout['A']['stock'])
+        definitions += '#include "allocator.h"\nconst uint32_t dl_stub_at_boot = %#xu;\nconst uint32_t dl_pmap16 = 0;\n' % (
+            dsp_layout['A']['free'] | stock)
+        definitions += 'const uint32_t modwerk_dsp_modules = %#xu;\n' % dsp_layout['A']['free']
+        definitions += loader_dsp.catalog_c(dsp_layout, DSP_RESERVE)
         definitions += 'const uint16_t modwerk_dsp_arena[2] = {%d, %d};\n' % tuple(
             dsp_layout[t]['tableWords'] - loader_dsp.SAVED for t in ('A', 'B'))
     (source/'identity.c').write_text(definitions)
@@ -557,7 +560,7 @@ modwerk_retained_end:
     (out/'MAIN.raw').write_bytes(main_out)
     report = dict(schema=1, kind='modwerk-elekloader-base-prototype', coreVersion=VERSION,
                   upstream=pin, sources=inputs, configuration=configuration, configurationHash=identity,
-                  dspLoader={t: {k: (hex(v) if isinstance(v, int) else v) for k, v in dsp_layout[t].items()} for t in dsp_layout} if dsp_layout else None,
+                  dspLoader={t: {k: (hex(v) if isinstance(v, int) else v) for k, v in dsp_layout[t].items() if k != 'words'} for t in dsp_layout} if dsp_layout else None,  # no stock words in proofs
                   packageSha256=sha(Path(path).read_bytes()), manifest=manifest,
                   savedHashes={ext:sha(data) for ext,data in outputs.items()},
                   productionReady=False, hardware='not tested', emulator='not tested',

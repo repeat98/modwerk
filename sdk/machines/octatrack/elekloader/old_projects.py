@@ -3,8 +3,9 @@
 """Old projects across bases: a stock 1.40C project with stock effects on every
 track and slot, and one saved with a module (E-Verb, effect 27), must load on a
 DSP-loader base as they do on stock: the same Part bytes, the same live effects,
-stock's dispatch for every stock effect that runs, and a module that is absent
-dry and reported, then restored when installed.
+every stock effect that runs loaded and bound into its core's arena (resident
+ones dispatching as on stock), and a module that is absent dry and reported,
+then restored when installed.
 
     python3 -B old_projects.py cards PRIVATE_PROJECT_DIR OUT     # OUT/stock-fx.img, OUT/module-set.img
     python3 -B old_projects.py dumps BUILD|stock OUT              # ot_emu --mem-dump/--dsp-peek arguments
@@ -87,7 +88,7 @@ def check(stock_run, base_run, build, case):
     stock_run, base_run = Path(stock_run), Path(base_run)
     proofs = json.loads((Path(build) / 'proofs.json').read_text())
     layout = proofs['dspLoader']
-    harvested = {fx for fx in range(32) if int(layout['A']['harvested'], 16) >> fx & 1}
+    loaded = {int(fx) for fx in layout['A']['stock']}  # stock effects the base loads on demand
     read = lambda run, name: (run / (name + '.bin')).read_bytes()
     u32 = lambda run, name: int.from_bytes(read(run, name), 'big')
     for bank in range(16):
@@ -109,9 +110,10 @@ def check(stock_run, base_run, build, case):
                 bound = (bi[fx], bp[fx]) != null
                 assert bound == (case == 'module-restored'), ('effect 27 on core %d' % core, hex(bi[fx]))
                 assert (si[fx], sp[fx]) == null, 'stock runs its null stub for an unknown id'
-            elif fx in harvested:
-                assert (bi[fx], bp[fx]) == null, 'a harvested effect still dispatches'
-                dry.add(fx)
+            elif fx in loaded:
+                table = int(layout[tag]['table'], 16)
+                end = table + int(layout[tag]['tableWords'], 16)
+                assert table <= bi[fx] < end and table <= bp[fx] < end, ('core %d did not load effect %d' % (core, fx), hex(bi[fx]))
             else:
                 assert (bi[fx], bp[fx]) == (si[fx], sp[fx]), ('core %d dispatches effect %d unlike stock' % (core, fx))
     assert u32(base_run, 'dl_errors') == 0
@@ -119,9 +121,9 @@ def check(stock_run, base_run, build, case):
     assert told >= (1 if dry or module else 0), 'the unit did not say a slot runs dry'
     if case == 'module-restored':
         assert u32(base_run, 'dl_reinit') >= 2, 'both E-Verb slots started from their init'
-    print('%s: Part records of all 16 banks and the live effects as on stock; every stock effect that runs dispatches '
-          'as on stock%s%s: passed' % (
-              case, '; harvested %s dry and reported' % sorted(dry) if dry else '',
+    print('%s: Part records of all 16 banks and the live effects as on stock; every stock effect that runs is loaded '
+          'and bound (resident ones as on stock)%s%s: passed' % (
+              case, '; %s dry and reported' % sorted(dry) if dry else '',
               {'module-set': '; E-Verb absent: dry, reported, its bytes kept',
                'module-restored': '; E-Verb installed afterwards: both slots bound and started from init'}.get(case, '')))
 
