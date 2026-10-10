@@ -4,13 +4,17 @@
 | state 7. On the owner's MKII a packet to core 1 at state 7 completed and core 1's frames stopped,
 | in either bank (10 October 2026); stock's states run early in the frame, state 7 near its end.
 | This hooks state 3's entry: its own transfer's completion re-enters state 3, then stock's runs.
+| Core 1's host flags are read here too, while state 2 has it selected: selecting core 1 at
+| state 7, even only to read them, stopped the frames on the owner's MKII (AB2, 10 October 2026).
         .text
-        .global dl_state3, dl_c1_phase, dl_c1_sent
+        .global dl_state3, dl_c1_phase, dl_c1_sent, dl_c1_isr
         .equ UNCACHED,0x08000000
         .equ DONE,0x40004bc8            | the eDMA interrupt's exit: restores d0-d1/a0-a1, rte
         .equ STATE3,0x400049d2          | stock's state 3 after the instruction this hook replaced
 
 dl_state3:
+        move.w 0x20000008,%d0           | core 1's host ISR (dsp.c modwerk_dsp_flags)
+        move.w %d0,dl_c1_isr
         tst.l dl_c1_phase
         bne 2f                          | our packet's completion
         lea dl_tx+128,%a0               | core 1's packet, dl_tx[1]
@@ -54,3 +58,4 @@ dl_state3:
         .balign 4
 dl_c1_phase: .long 0                    | 1 while our transfer runs
 dl_c1_sent: .long 0                     | packets sent to core 1
+dl_c1_isr: .short 0                     | core 1's host ISR at the last state 3

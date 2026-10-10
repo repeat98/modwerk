@@ -129,13 +129,13 @@ uint32_t modwerk_dsp_dry(void)
 #define EDMA_ES (*(volatile uint32_t *)0xfc044004u) /* bit 31 VLD, 11-8 the channel in error */
 #ifndef MODWERK_HOST
 /* The receiver's answer (dsp_receiver.asm): HF2 toggles for each packet handled, HF3 says refused.
- * Read from the frame-transfer interrupt at its end, where core 0 is selected. */
+ * Called from the frame-transfer interrupt at its end, where core 0 is selected. Never select core 1
+ * there (AB2 froze on that alone): its flags are the ones dsp_core1.s read at state 3. */
 volatile uint32_t modwerk_dsp_last_flags; /* the last read, core 0 in bits 0-1, core 1 in 8-9 */
+extern volatile uint16_t dl_c1_isr;
 unsigned modwerk_dsp_flags(unsigned core)
 {
-    DSP_SELECT = (uint8_t)core;
-    unsigned isr = HOST_ISR;
-    DSP_SELECT = 0;
+    unsigned isr = core ? dl_c1_isr : HOST_ISR;
     modwerk_dsp_last_flags = (modwerk_dsp_last_flags & ~(3u << 8 * core)) | (isr >> 3 & 3u) << 8 * core;
     return isr >> 3 & 3u;
 }

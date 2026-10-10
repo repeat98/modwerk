@@ -36,9 +36,17 @@ frame:
         add     #>$320,a
         move    a,r0
         move    x:(r0),a
-        and     #>$ffff,a
-        cmp     #>$4c44,a
+        eor     #>$4c44,a
+        and     #>$ffff,a               ; Z from A1 only: a junk top byte cannot hide the magic
         bne     finish
+        ; Keep the header's 16 bits only. `and` leaves A2 stale, and cmp, tst and do read all of A:
+        ; on the owner's MKII a WRITE whose masked count and offset were in range was refused (AB2).
+        move    r0,r1
+        do      #<8,cleaned
+        move    x:(r1),a
+        and     #>$ffff,a
+        move    a1,x:(r1)+
+cleaned:
         move    r0,r1
         move    #>0,x1
         do      #<$40,checksumdone
