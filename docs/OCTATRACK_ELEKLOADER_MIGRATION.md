@@ -476,8 +476,14 @@ flash-safety check passed) ran from RAM on the owner's MKII the same day.
 stage, and the client verifier passed in full, including the several-modules
 check (Q and P kept together; R, patching P's bytes, refused before
 activation with P still running; R loaded once P was removed; all removed).
-The USB detach before the reset and the scanning gate take effect only once
-`usbtest9` is the flashed base.
+The owner then flashed `usbtest9`. Twenty RAM boots in a row, alternating
+between `usbtest9` and a copy differing only in its identity digest (each
+armed by the image the previous boot started), all came back with USB and
+the new identity, 12-16 s each, none needing the fallback re-arm: the USB
+detach ran before every reset and the flashed gate found every mailbox.
+Before the detach, one boot in about six had left USB dead. Twenty is
+evidence, not a guarantee; the images shared one stage address, so the
+scan across different addresses is shown by the emulator only.
 `npm run device -- boot` now waits for the unit to go away and answer HELLO
 again, and re-arms once from the flashed base if a boot falls back to it.
 
