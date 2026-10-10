@@ -13,6 +13,8 @@
  *          --dsp-loader): 15 big-endian words of the DSP loader's state.
  *   REPORT 0xC1, bRequest 11, wValue 0, wLength 136 (--dsp-loader):
  *          modwerk_dsp_report's 34 big-endian words (dsp.c).
+ *   PROBE  0xC1, bRequest 12, wValue = core 0/1, wLength 1 (--dsp-loader):
+ *          modwerk_dsp_probe(core), one no-op packet; replies its result.
  *   SCREEN 0xC1, bRequest 7, wValue 0, wLength 1028: "MWLC" and the last
  *          composed 128x64 frame (ev_draw: 8 bytes a column, bit 7 = row 0).
  *
@@ -25,6 +27,7 @@
 #include "selection.h"
 #include "runtime.h"
 uint32_t modwerk_dsp_used(void);
+int modwerk_dsp_probe(unsigned core);
 extern volatile uint32_t modwerk_dsp_missing;
 #endif
 
@@ -76,6 +79,11 @@ uint32_t modwerk_dev_request(const uint8_t *s, const uint8_t **reply, uint8_t *o
         for (unsigned i = 0; i < 60; ++i) out[i] = (uint8_t)(w[i / 4] >> (24 - 8 * (i % 4)));
         *reply = out;
         return 60;
+    }
+    if (s[1] == 12 && want == 1 && s[2] <= 1u && !s[3]) {
+        out[0] = (uint8_t)modwerk_dsp_probe(s[2]);
+        *reply = out;
+        return 1;
     }
     if (s[1] == 11 && want == 4u * DSP_REPORT_WORDS && !s[2] && !s[3]) {
         uint32_t w[DSP_REPORT_WORDS];

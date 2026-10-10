@@ -14,6 +14,7 @@
 //   npm run device -- state                         # stopped / playing, recording
 //   npm run device -- loader                        # the DSP loader's counters (--dsp-loader bases)
 //   npm run device -- report                        # its full 34-word report (dsp.c modwerk_dsp_report)
+//   npm run device -- probe 0|1                     # one no-op loader packet to a DSP core
 //   npm run device -- enc A+3 | LEVEL-1 | fader 128 # encoders A-F and LEVEL, the crossfader
 //
 // --emulator drives ot_emu's USB bench socket instead (it enumerates the device
@@ -39,10 +40,10 @@ const { values, positionals: [command, file] } = parseArgs({ allowPositionals: t
   png: { type: 'string' },
 } })
 const seconds = Number(values.seconds)
-if (!['status', 'try', 'remove', 'lifecycle', 'boot', 'key', 'screen', 'state', 'enc', 'fader', 'loader', 'report'].includes(command) || (['try', 'boot', 'key', 'enc', 'fader'].includes(command) && !file) ||
+if (!['status', 'try', 'remove', 'lifecycle', 'boot', 'key', 'screen', 'state', 'enc', 'fader', 'loader', 'report', 'probe'].includes(command) || (['try', 'boot', 'key', 'enc', 'fader', 'probe'].includes(command) && !file) ||
   (['status', 'lifecycle', 'screen', 'state', 'loader', 'report'].includes(command) && file) ||
   !Number.isInteger(seconds) || seconds < 1 || seconds > 3600) {
-  console.error('Usage: device.mjs status | try MODULE.mwrm [--seconds 1-3600] [--accept] | remove [MODULE.mwrm] [--accept] | lifecycle | boot BUILD_DIR | key NAME[+NAME] | screen | state | loader | report | enc A+3 | fader 0-255 [--socket PATH] [--emulator]')
+  console.error('Usage: device.mjs status | try MODULE.mwrm [--seconds 1-3600] [--accept] | remove [MODULE.mwrm] [--accept] | lifecycle | boot BUILD_DIR | key NAME[+NAME] | screen | state | loader | report | probe 0|1 | enc A+3 | fader 0-255 [--socket PATH] [--emulator]')
   process.exit(2)
 }
 
@@ -159,13 +160,17 @@ try {
   if (command === 'report') {
     const bytes = await devIn(11, 0, 136), view = new DataView(bytes.buffer, bytes.byteOffset, 136)
     const names = ['version', 'frames', 'phase', 'job0', 'job1', 'hostFlags', 'accepted0', 'accepted1', 'rejected0', 'rejected1',
-      'errors', 'stalls', 'drained', 'residencyEnabled', 'manager', 'poolBase0', 'poolWords0', 'poolBase1', 'poolWords1',
+      'errors', 'stalls', 'drained', 'residencyEnabled', 'manager', 'watchTicks', 'probesSent', 'probesAnswered', 'probesTimedOut',
       'selRequested', 'selCompleted', 'selRefused', 'selCancelled', 'resCommits', 'resFailures', 'resRollbacks',
       'words0', 'words1', 'unguarded', 'parked', 'reinit', 'missing', 'used', 'dry']
     const hex = new Set(['hostFlags', 'manager', 'used', 'dry'])
     console.log(Object.fromEntries(names.map((name, i) => [name, ['job0', 'job1'].includes(name) ? view.getInt32(4 * i)
       : hex.has(name) ? '0x' + view.getUint32(4 * i).toString(16) : view.getUint32(4 * i)])))
     process.exit(0)
+  }
+  if (command === 'probe') {
+    if (!['0', '1'].includes(file)) throw new Error('Use probe 0 or probe 1.')
+    console.log('probe core', file, (await devIn(12, Number(file), 1))[0] ? 'sent' : 'not sent (busy or not idle)'); process.exit(0)
   }
   if (command === 'state') { const [stopped, recording] = await devIn(6, 0, 2); console.log(stopped ? 'stopped' : 'playing', recording ? '(recording)' : ''); process.exit(0) }
   // A whole OS image takes the unit (and far longer the emulator) a while to hash.
