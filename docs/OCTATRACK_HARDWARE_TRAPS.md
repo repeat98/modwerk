@@ -104,12 +104,13 @@ at the loader's frame hook completed (TCD0 DONE, no eDMA error) and core 1's
 frame chain died, in either memory bank. Core 1 has to be written where
 stock itself writes to it. Open; see the migration record.
 
-**E-Verb's upload to core 0 is refused at its fifth packet, but not because
-of program memory.** It was refused every time by the receiver's check, with
-frames and audio running. A build that records the first word read back
-wrong (`dsp2-A1`, the arena moved up) found none: every word stuck, and only
-the packet's checksum disagreed between the ColdFire and the receiver. Look
-at how both sides sum a packet, not at P-RAM limits. Open.
+**E-Verb's upload to core 0 is refused at its fifth packet, before anything
+is written.** It was refused every time, with frames and audio running. A
+build that records the first program word read back wrong (`dsp2-A1`) found
+none, and its read-back check never failed: the fifth packet was refused
+earlier, by its own packet checksum or a bounds check. The leading theory is
+a torn packet: the loader's per-frame work stretches stock's frame chain, so
+core 0's receiver can read the mailbox while eDMA is still writing it. Open.
 
 **A project that used a static module triggers its load at install.**
 Static E-Verb and dynamic E-Verb share effect id 27, so installing E-Verb
