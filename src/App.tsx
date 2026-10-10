@@ -43,7 +43,8 @@ import { ENGINE_AVAILABLE, DOWNLOADS_ENABLED, DSP_LOADER, USB_LINK } from './eng
 import { useFirmwareBuild } from './hooks/useFirmwareBuild'
 import { issueRepository, setWorkspaceReportContext } from './community/report-context'
 import { FirmwareBuildPanel } from './components/FirmwareBuildPanel'
-import { OctatrackLinkPanel } from './components/OctatrackLinkPanel'
+import { OctatrackUpdate, type PrepareUpdate, type StressTest } from './components/OctatrackUpdate'
+import { OctatrackActivity, OctatrackStatus } from './components/OctatrackStatus'
 import { BaseInstallDialog } from './components/BaseInstallDialog'
 import { OctatrackLink } from './engine/elekloader/octatrack-link'
 import { useBaseInstallPrompt } from './hooks/useBaseInstallPrompt'
@@ -84,6 +85,8 @@ const firmwareFeedbackPreview = import.meta.env.DEV && typeof window !== 'undefi
 // Dev previews of the USB card and the base install prompt against a pretend unit.
 const usbPreview = import.meta.env.DEV && typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('preview') : null
 const usbLinkPreview = usbPreview === 'usb-link' || usbPreview === 'base-install'
+// Phones and tablets get no USB workflow (iOS has no WebUSB, and the card install needs a computer anyway).
+const touchOnly = typeof window !== 'undefined' && window.matchMedia('(hover: none) and (pointer: coarse)').matches
 function subscribeRoute(callback: () => void) {
   window.addEventListener('hashchange', callback)
   return () => window.removeEventListener('hashchange', callback)
@@ -122,9 +125,11 @@ export default function App() {
   const forumRoute = route === 'forum' || route.startsWith('forum/') || route.startsWith('forum?')
   const developerRoute = route === 'developer' || route.startsWith('developer/')
   const accountRoute = route === 'account' || route.startsWith('account/')
-  // One link to the unit, shared by the configuration page's USB card and the base install dialog.
-  const [usbLink, setUsbLink] = useState(() => USB_LINK && !usbLinkPreview ? new OctatrackLink() : null)
-  useEffect(() => { if (import.meta.env.DEV && usbLinkPreview) void import('./dev/octatrack-link-fake').then(fake => setUsbLink(fake.previewLink())) }, [])
+  // One link to the unit for the whole site: it connects by itself whenever an allowed Octatrack is plugged in.
+  // The builder's prepareUpdate and the test runner's stressTest join it once they exist.
+  const [usbKit, setUsbKit] = useState<{ link: OctatrackLink; prepareUpdate?: PrepareUpdate; stressTest?: StressTest } | null>(() => USB_LINK && !touchOnly && !usbLinkPreview ? { link: new OctatrackLink() } : null)
+  useEffect(() => { if (import.meta.env.DEV && usbLinkPreview) void import('./dev/octatrack-link-fake').then(fake => setUsbKit(fake.previewKit())) }, [])
+  const usbLink = usbKit?.link
   const [baseInstall, setBaseInstall] = useState<'manual' | 'preview' | null>(usbPreview === 'base-install' ? 'preview' : null)
   // At release, once per member wherever they are, except on account, sign-in, admin and legal pages.
   const baseInstallPrompt = useBaseInstallPrompt(session.user?.verified ? session.user.id : null, !!usbLink && !usbLinkPreview && !accountRoute && !developerRoute && !route.startsWith('submit') && !['admin', 'review', 'privacy', 'impressum', 'community-rules', 'report-content'].includes(route))
@@ -348,6 +353,7 @@ export default function App() {
           <span className="sidebar-build-copy"><strong>{firmware ? 'Base firmware ready' : 'Choose firmware'}</strong><small id="sidebar-firmware-status">{firmware ? 'OS 1.40C · ' + (firmwareSaved ? 'saved on device' : 'this session') : 'Start with your own OS 1.40C file.'}</small></span>
           <Icon name="arrow" size={14} />
         </a> : machineHasMods ? <a className="sidebar-build" href={deviceHref(currentDevice.id, 'configuration')}><span className="status-dot preview" /><span className="sidebar-build-copy"><strong>Build in your browser</strong><small>{DIGI_DOWNLOADS_ENABLED ? <>Check, build and download {currentDevice.name} firmware locally.</> : <>Check and build {currentDevice.name} firmware. Downloads after review.</>}</small></span><Icon name="arrow" size={14} /></a> : <a className="sidebar-build" href={issueRepository() + '/blob/main/docs/ADD_A_MACHINE.md'} target="_blank" rel="noreferrer"><span className="status-dot" /><span className="sidebar-build-copy"><strong>No mods yet</strong><small>Help start the first {currentDevice.name} mod.</small></span><Icon name="arrow" size={14} /></a>}
+        {usbLink && <OctatrackStatus link={usbLink} variant="sidebar" onInstall={() => setBaseInstall('manual')}/>}
         {SUPPORT_URL && <div className="sidebar-footer"><SupportButton onClick={() => setSupportOpen(true)} /></div>}
       </aside>
       {compareOpen&&<ModuleComparison ids={comparison} selected={selectedIds} onToggle={toggleModule} digiSelected={{digitakt:activeFor('digitakt')?.moduleIds??[],digitone:activeFor('digitone')?.moduleIds??[]}} onToggleDigi={(device,id)=>workspace.toggleModule(id,device)} onClose={()=>setCompareOpen(false)}/>}
@@ -355,6 +361,7 @@ export default function App() {
       {reportingConfiguration && <ConfigurationReportDialog machine={reportingConfiguration.machine} configurationId={reportingConfiguration.id} onClose={() => setReportingConfiguration(null)} />}
       {configDialog && <ConfigurationDialog mode={configDialog} initialName={configDialog === 'create' ? '' : configDialog === 'duplicate' ? (machineActive?.name ?? '') + ' copy' : machineActive?.name ?? ''} onSubmit={submitConfigurationDialog} onClose={() => { setConfigDialog(null); setCreateDevice(null) }} />}
       <PublicAnnouncement next={route} enabled={!accountRoute && !developerRoute && !configuration && machineView !== 'configuration' && !route.startsWith('submit') && !['admin', 'review', 'privacy', 'impressum', 'community-rules', 'report-content'].includes(route)} />
+      {usbLink && !configuration && <OctatrackActivity link={usbLink}/>}
       {usbLink && (baseInstall || baseInstallPrompt.open) && <BaseInstallDialog link={usbLink} launch={baseInstall !== 'manual'} firmwareReady={!!firmware} onChooseFirmware={file => void readFile(file)} onClose={done => { if (baseInstall) setBaseInstall(null); else if (done) baseInstallPrompt.close(); else baseInstallPrompt.later() }}/>}
       {supportOpen && <SupportDialog url={SUPPORT_URL} onClose={() => setSupportOpen(false)} />}
       <HardwareFeedbackCheckIn enabled={!accountRoute && !developerRoute && !['admin', 'review', 'privacy', 'impressum', 'community-rules', 'report-content', 'submit'].includes(route.split('/')[0]) && !firmwareFeedbackPreview}/>
@@ -405,11 +412,10 @@ export default function App() {
                   <div ref={setBuildResultsSlot} className="build-results" />
                 </div>
                 <div className="configuration-checkout">
-                  {usbLink && <OctatrackLinkPanel link={usbLink} onInstall={() => setBaseInstall('manual')}/>}
                   <Suspense fallback={null}><CompatibilityPanel ids={selectedIds} keepStockFx2={DSP_LOADER && (active?.keepStockFx2??true)} buildState={firmwareBuild.state} buildError={firmwareBuild.error} buildConflict={firmwareBuild.conflict} onFix={fixConflict}/></Suspense>
                   <div className="checkout-card">
                     <RiskAcceptance checked={riskAccepted.key===firmwareBuild.key&&riskAccepted.accepted} onChange={accepted => setRiskAccepted({key:firmwareBuild.key,accepted})}/>
-                    <MemberGate action="build firmware" next={route}><FirmwareBuildPanel build={firmwareBuild} available={ENGINE_AVAILABLE} downloadsEnabled={DOWNLOADS_ENABLED} firmwareReady={!!firmware} moduleCount={selection.length} riskAccepted={riskAccepted.key===firmwareBuild.key&&riskAccepted.accepted} configurationName={active?.name??'Configuration'} onExport={saveSelection} exported={saved} results={buildResultsSlot}/></MemberGate>
+                    <MemberGate action="build firmware" next={route}>{usbKit ? <OctatrackUpdate link={usbKit.link} moduleCount={selection.length} prepareUpdate={usbKit.prepareUpdate} stressTest={usbKit.stressTest} onInstall={() => setBaseInstall('manual')}><FirmwareBuildPanel build={firmwareBuild} available={ENGINE_AVAILABLE} downloadsEnabled={DOWNLOADS_ENABLED} firmwareReady={!!firmware} moduleCount={selection.length} riskAccepted={riskAccepted.key===firmwareBuild.key&&riskAccepted.accepted} configurationName={active?.name??'Configuration'} onExport={saveSelection} exported={saved} results={buildResultsSlot}/></OctatrackUpdate> : <FirmwareBuildPanel build={firmwareBuild} available={ENGINE_AVAILABLE} downloadsEnabled={DOWNLOADS_ENABLED} firmwareReady={!!firmware} moduleCount={selection.length} riskAccepted={riskAccepted.key===firmwareBuild.key&&riskAccepted.accepted} configurationName={active?.name??'Configuration'} onExport={saveSelection} exported={saved} results={buildResultsSlot}/>}</MemberGate>
                   </div>
                 </div>
               </div>
@@ -424,7 +430,7 @@ export default function App() {
           <p className="phone-footer-status"><span className={'status-dot ' + (firmwareVerified ? 'verified' : '')} /><span>{machineStatus}</span><span role="status">{saveStatus}</span></p>
           {legalLinks}
           {projectNotice}
-        </footer> : <footer className={'status-bar'+(allMachines?' is-all-machines':'')}>{legalLinks}<span><span className={'status-dot ' + (firmwareVerified ? 'verified' : '')} />{machineStatus}</span><span className="status-build" role="status">{saveStatus}</span>{machineHasMods ? <a href={deviceHref(currentDevice.id, 'configuration')} aria-live="polite">{machineSelected.length} {machineSelected.length === 1 ? 'module' : 'modules'} selected <Icon name="arrow" size={12} /></a> : <span />}</footer>}
+        </footer> : <footer className={'status-bar'+(allMachines?' is-all-machines':'')}>{legalLinks}<span><span className={'status-dot ' + (firmwareVerified ? 'verified' : '')} />{machineStatus}</span><span className="status-build" role="status">{saveStatus}</span>{usbLink && <OctatrackStatus link={usbLink} variant="bar" onInstall={() => setBaseInstall('manual')}/>}{machineHasMods ? <a href={deviceHref(currentDevice.id, 'configuration')} aria-live="polite">{machineSelected.length} {machineSelected.length === 1 ? 'module' : 'modules'} selected <Icon name="arrow" size={12} /></a> : <span />}</footer>}
       </div>
     </div>
   )

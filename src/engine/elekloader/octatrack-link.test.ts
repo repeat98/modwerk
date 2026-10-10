@@ -50,7 +50,7 @@ describe('sending a module', () => {
     const { link } = await linked()
     const progress: number[] = []
     link.subscribe(() => { if (link.getState().status === 'sending') progress.push(link.getState().progress!) })
-    await link.send('PREVIEW VOL', data)
+    await link.update('PREVIEW VOL', data)
     expect(link.getState()).toMatchObject({ status: 'trial', module: 'PREVIEW VOL', active: sha(data) })
     expect(progress.at(-1)).toBe(1)
     await link.keep()
@@ -59,7 +59,7 @@ describe('sending a module', () => {
   })
   it('keeps the trial running when playback blocks keep, and finishes once stopped', async () => {
     const { unit, link } = await linked()
-    await link.send('PREVIEW VOL', data)
+    await link.update('PREVIEW VOL', data)
     unit.playing = true; await link.undo()
     expect(link.getState()).toMatchObject({ status: 'trial', notice: { tone: 'error', text: expect.stringMatching(/Stop playback/) } })
     unit.playing = false; await link.undo()
@@ -67,24 +67,34 @@ describe('sending a module', () => {
   })
   it('refuses to start while playing, without asking the user to unplug', async () => {
     const { unit, link } = await linked()
-    unit.playing = true; await link.send('PREVIEW VOL', data)
-    expect(link.getState()).toMatchObject({ status: 'ready', notice: { tone: 'error', text: 'Stop playback and recording on the Octatrack, then try again.' } })
+    unit.playing = true; await link.update('PREVIEW VOL', data)
+    expect(link.getState()).toMatchObject({ status: 'ready', notice: { tone: 'error', text: 'Stop playback on the Octatrack to continue.' } })
+  })
+  it('stress-tests an update before it can be kept, and undoes it when the test fails', async () => {
+    const { link } = await linked(), seen: string[] = []
+    link.subscribe(() => { seen.push(link.getState().status) })
+    await link.update('My set', data, async () => null)
+    expect(seen).toContain('testing')
+    expect(link.getState()).toMatchObject({ status: 'trial', tested: true })
+    await link.keep()
+    await link.update('My set', data, async () => 'CPU over budget on track 3')
+    expect(link.getState()).toMatchObject({ status: 'ready', notice: { tone: 'error', text: 'The stress test failed: CPU over budget on track 3. Nothing was kept.' } })
   })
   it('refuses a module bigger than the base can stage', async () => {
     const { link } = await linked()
-    await link.send('HUGE', new Uint8Array(262145))
+    await link.update('HUGE', new Uint8Array(262145))
     expect(link.getState().notice?.text).toMatch(/too big/)
   })
   it('cancels a transfer cleanly', async () => {
     const { link } = await linked()
     link.subscribe(() => { if (link.getState().progress) link.cancel() }) // the button shows once sending has started
-    await link.send('PREVIEW VOL', data)
+    await link.update('PREVIEW VOL', data)
     expect(link.getState().notice?.text).toBe('Cancelled. Nothing changed on the Octatrack.')
   })
   it('keeps the trial alive with a request every second, and explains an unplug mid-trial', async () => {
     vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] })
     const { unit, link } = await linked()
-    await link.send('PREVIEW VOL', data)
+    await link.update('PREVIEW VOL', data)
     const device = (await unit.usb.getDevices())[0], identify = vi.spyOn(device, 'controlTransferIn')
     vi.advanceTimersByTime(3000)
     expect(identify).toHaveBeenCalledTimes(3)

@@ -31,7 +31,7 @@ export type LinkSession = Pick<UploadSession, 'status' | 'connectionTrusted' | '
   'accept' | 'rollback' | 'cancel' | 'leaveUploadMode'>
 type Connect = (transport: UsbVendorTransport, base: string) => Promise<LinkSession>
 
-export type LinkStatus = 'unsupported' | 'idle' | 'connecting' | 'stock' | 'busy' | 'ready' | 'sending' | 'trial' | 'finishing'
+export type LinkStatus = 'unsupported' | 'idle' | 'connecting' | 'stock' | 'busy' | 'ready' | 'sending' | 'testing' | 'trial' | 'finishing'
 export interface LinkState {
   readonly status: LinkStatus
   /** From IDENTIFY. `ready` without `canSubmit` is a base this page cannot send to. */
@@ -41,11 +41,14 @@ export interface LinkState {
   readonly module?: string
   /** 0–1 while sending. */
   readonly progress?: number
+  /** The trial passed the stress test. */
+  readonly tested?: boolean
   readonly notice?: { tone: 'success' | 'error'; text: string }
 }
 
 const REFUSED: Partial<Record<UploadResultName, string>> = {
-  unsafe: 'Stop playback and recording on the Octatrack, then try again.',
+  // shortcut: the base refuses while playing; an update should stop playback itself once the base can.
+  unsafe: 'Stop playback on the Octatrack to continue.',
   identity: 'This module was built for a different Modwerk base.',
   limit: 'This module is too big for the Octatrack’s free memory.',
   length: 'This module is too big for the Octatrack’s free memory.',
@@ -54,8 +57,12 @@ const REFUSED: Partial<Record<UploadResultName, string>> = {
 }
 const UNPLUG = 'Unplug the USB cable to undo anything unfinished, then plug it back in.'
 
+/** A stress test found a problem; its reason is shown to the user. */
+export class StressTestFailure extends Error {}
+
 /** What a failed step means for the user, in their words. */
 export function explainLinkError(error: unknown): string {
+  if (error instanceof StressTestFailure) return `The stress test failed: ${error.message}. Nothing was kept.`
   if (error instanceof DOMException && error.name === 'AbortError') return 'Cancelled. Nothing changed on the Octatrack.'
   if (error instanceof UploadDeviceError) return REFUSED[error.status.result] ?? 'The Octatrack refused this step.'
   if (error instanceof UploadUnconfirmedError) return 'The Octatrack stopped answering.'
@@ -125,7 +132,7 @@ export class OctatrackLink {
     this.stopKeepalive(); this.abort?.abort()
     this.device = this.index = this.transport = this.session = undefined
     this.set({ status: 'idle', notice: status === 'sending' ? { tone: 'error', text: 'USB disconnected. Nothing changed on the Octatrack.' }
-      : status === 'trial' || status === 'finishing' ? { tone: 'error', text: `USB disconnected. The Octatrack undoes ${module} by itself as soon as playback is stopped.` }
+      : status === 'testing' || status === 'trial' || status === 'finishing' ? { tone: 'error', text: `USB disconnected. The Octatrack undoes ${module} by itself as soon as playback is stopped.` }
       : undefined })
   }
 
@@ -167,8 +174,10 @@ export class OctatrackLink {
     if (close) { this.device = this.index = this.transport = this.session = undefined; if (device?.opened) await device.close().catch(() => {}) }
   }
 
-  /** Send a runtime module and start its trial. The previous modules stay until the user keeps it. */
-  async send(module: string, data: Uint8Array) {
+  /** Load an update (the configuration as one runtime package) and start its trial. With `stressTest`, the
+   * unit is tested first (null means passed) and a failure undoes the update. The previous modules stay
+   * until the user keeps it. */
+  async update(module: string, data: Uint8Array, stressTest?: () => Promise<string | null>) {
     const base = this.state.identity?.base
     if (this.state.status !== 'ready' || !this.state.identity?.canSubmit || !base || !await this.claim()) return
     const abort = this.abort = new AbortController()
@@ -184,7 +193,12 @@ export class OctatrackLink {
       await session.activate()
       await session.startTrial()
       this.startKeepalive()
-      this.set({ status: 'trial', identity: this.state.identity, active: session.status.active, module })
+      if (stressTest) {
+        this.set({ status: 'testing', identity: this.state.identity, active: session.status.active, module })
+        const failure = await stressTest()
+        if (failure) throw new StressTestFailure(failure)
+      }
+      this.set({ status: 'trial', identity: this.state.identity, active: session.status.active, module, tested: !!stressTest })
     } catch (error) {
       await this.failed(error, session)
     }
@@ -217,7 +231,7 @@ export class OctatrackLink {
 
   /** Undo what this session left behind if the connection is still trusted; otherwise the unplug advice. */
   private async failed(error: unknown, session?: LinkSession) {
-    if (!(error instanceof UploadDeviceError) && !(error instanceof DOMException)) console.error(error)
+    if (!(error instanceof UploadDeviceError) && !(error instanceof DOMException) && !(error instanceof StressTestFailure)) console.error(error)
     this.stopKeepalive()
     let clean = !session
     if (session?.connectionTrusted) {

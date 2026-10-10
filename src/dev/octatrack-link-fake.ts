@@ -103,7 +103,16 @@ export function fakeSession(unit: FakeUnit, delay = 0) {
  * playing = true, taken = true. There is no pretend base build: a preview must never save a file
  * that looks like firmware.
  */
-export function previewLink() {
+export function previewKit() {
+  const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
+  return {
+    link: previewLink(),
+    // A pretend update and stress test, so the whole flow can be clicked through.
+    prepareUpdate: async () => { await wait(400); return { name: 'My first configuration', data: new Uint8Array(160 * 1024) } },
+    stressTest: async () => { await wait(2500); return null },
+  }
+}
+function previewLink() {
   const kind = new URLSearchParams(window.location.search).get('unit')
   if (kind === 'unsupported') return new OctatrackLink(null)
   const unit = fakeUnit(kind === 'stock' || kind === 'none' ? kind : 'base')
