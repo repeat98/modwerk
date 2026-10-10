@@ -38,14 +38,13 @@
 .base-install-close { position: absolute; top: 14px; right: 14px; z-index: 1; }
 .base-install-header { padding-right: 40px; }
 .module-preview.link-hero { height: auto; margin: -28px -32px 26px; border-bottom: 1px solid var(--line); border-radius: 14px 14px 0 0; }
-.link-hero .link-hero-art { display: block; width: 100%; height: auto; aspect-ratio: 600 / 196; padding: 0 24px 16px; } /* without it Chrome sizes an inline SVG 150px high; two classes beat the shared .signal-art/.module-preview heights */
+.link-hero .link-hero-art { display: block; width: 100%; height: auto; aspect-ratio: 640 / 220; padding: 0 24px 16px; } /* without it Chrome sizes an inline SVG 150px high; two classes beat the shared .signal-art/.module-preview heights */
 .link-hero-art text { font-size: 9px; }
 .link-hero-pick { fill: rgba(var(--signal-rgb), .14); }
 .link-hero-flow { stroke-dasharray: 3 13; animation: link-flow 1s linear infinite; }
 .link-hero-screen { fill: rgba(var(--signal-rgb), .1); stroke: var(--signal); stroke-width: 1.6; }
-.signal-art .link-hero-word { opacity: 0; font-size: 13px; font-weight: 600; letter-spacing: 1.5px; animation: link-word 6s infinite; }
-.signal-art .link-hero-word:nth-of-type(2) { animation-delay: -4s; }
-.signal-art .link-hero-word:nth-of-type(3) { animation-delay: -2s; }
+.signal-art .link-hero-name { opacity: .7; font-size: 5.5px; letter-spacing: .8px; }
+.signal-art .link-hero-word { opacity: 0; font-size: 10px; font-weight: 600; letter-spacing: 1.2px; animation: link-word 6s infinite; }
 .link-hero-trig { animation: link-trig 2.4s infinite; }
 .link-title { font-size: 30px; letter-spacing: -.8px; outline: none; }
 .link-promises { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 28px; margin: 0 0 22px; padding: 0; list-style: none; color: var(--muted); font-size: 16px; line-height: 1.5; }
@@ -56,8 +55,8 @@
 .link-needs.is-missing { color: #e4b0b4; }
 @keyframes link-flow { to { stroke-dashoffset: -16; } }
 @keyframes link-word { 0%, 30% { opacity: 1; } 33.4%, 100% { opacity: 0; } }
-@keyframes link-trig { 0%, 6% { fill: var(--signal); opacity: 1; } 6.5%, 100% { opacity: .4; } }
-@media (prefers-reduced-motion: reduce) { .link-hero * { animation: none !important; } .signal-art .link-hero-word:first-of-type { opacity: 1; } }
+@keyframes link-trig { 0%, 6% { fill: #f0a07a; stroke: #f0a07a; opacity: 1; } 14%, 100% { fill: #2c2837; stroke: var(--signal); opacity: .4; } } /* lit trigs glow warm, as on the unit */
+@media (prefers-reduced-motion: reduce) { .link-hero * { animation: none !important; } .signal-art .link-hero-word.is-first { opacity: 1; } }
 .base-install-dialog .file-error { margin: 12px 0 0; }
 @media (max-width: 600px) { .base-install-dialog { padding: 22px 18px; } .base-install-footer { margin: 18px -18px -22px; padding: 14px 18px; bottom: -22px; } .base-install-footer .link-hint { display: none; } .base-install-actions, .base-install-footer .button { flex: 1; } .base-install-footer .button { min-width: 0; } .module-preview.link-hero { margin: -22px -18px 18px; } .link-hero .link-hero-art { padding: 0 6px 10px; } .link-promises { grid-template-columns: minmax(0, 1fr); gap: 10px; font-size: 15px; } .link-title { font-size: 26px; } }
 @keyframes link-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
