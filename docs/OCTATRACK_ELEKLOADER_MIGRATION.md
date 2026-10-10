@@ -523,6 +523,29 @@ what it had. Part changes and FX changes stay seamless during playback. The
 computer is needed only to install packages (card or USB), never to switch.
 RAM boot stays a base-development tool: it restarts the unit.
 
+**Target architecture (owner-approved, 10 October 2026).**
+
+1. *The limit is what is selected, not what is installed.* Each DSP core's
+   P/X/Y memory is a cache. The installed library lives in ColdFire memory
+   or on the card and can be any size; only the FX and machines the current
+   bank's Parts select are resident on a core. "Full" means the current
+   selection does not fit, never that too many modules are installed.
+2. *Every FX is the same kind of thing, stock included.* Once the loader is
+   proven on the unit with the pilot (CHARACTER), stock effects load on
+   demand through the same path (about 5,395 free P words per core instead
+   of SPATIALIZER's 261): one code path for all FX. Until then, modules live
+   in harvested space.
+3. *One shared DSP library per core.* Common routines (filters, delay lines,
+   interpolation) are resident once per core and shared by every module
+   through the standard module form, so each module's own code stays small.
+   Shared code stays unchanged while anything resident uses it, and counts
+   once per core in the ledger.
+
+Also decided: one standard module form that existing modules are refactored
+to; admission at selection over the union of the bank's Parts, so a Part
+change only flips dispatch at a frame boundary; placement by track (tracks
+1-4 on core 1, 5-8 on core 0).
+
 ### What we reuse
 
 | Piece | Where | What it gives the design |
@@ -684,10 +707,8 @@ or hardware timing.
   may admit a module until hardware timing exists for it.
 - The ColdFire pool size: 256 KiB of sample memory for good, or pages taken
   on demand later.
-- Whether stock effects also load on demand (5,395 free P words per core
-  instead of SPATIALIZER's 261, but every stock FX then depends on the
-  loader), and preloading the union of a bank's Parts (more memory held,
-  fewer refusals at a Part change).
+- Decided (target architecture above): stock effects load on demand after
+  the pilot passes on the unit, and the union of a bank's Parts is preloaded.
 - Whether the selected module set persists across a power cycle (read from
   the card at boot).
 
