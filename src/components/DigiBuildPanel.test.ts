@@ -24,7 +24,7 @@ function downloadAction(machine: 'digitakt' | 'digitone') {
   }
   function Capture() {
     const tree = DigiBuildPanel({device: {id: machine, name: machine}, firmware: {state: 'empty'} as ReturnType<typeof useDigiFirmware>,
-      moduleIds: ['digislicer'], onExport: vi.fn(), exported: false, canExport: false})
+      moduleIds: ['digislicer'], onExport: vi.fn(), exported: false, canExport: false, results: null})
     inspect(tree)
     return tree
   }

@@ -27,7 +27,8 @@ export async function finishModuleRelease(env: Env, db: Database, module: Commun
   type Report = { id: string; status: string; github_number: number | null }
   const reports: Report[] = []
   for (const id of issueIds) {
-    const report = await db.prepare('SELECT id,status,github_number FROM issues WHERE id=? AND module_id=? AND maintainer_sharing=1 AND public_sharing=0').bind(id, module.id).first<Report>()
+    // A whole-configuration report is shared with every module in it, so any of them can release the fix.
+    const report = await db.prepare('SELECT id,status,github_number FROM issues WHERE id=? AND (module_id=? OR EXISTS(SELECT 1 FROM issue_modules m WHERE m.issue_id=issues.id AND m.module_id=?)) AND maintainer_sharing=1 AND public_sharing=0').bind(id, module.id, module.id).first<Report>()
     if (!report) throw new HttpError(404, 'A report is outside your shared module access.')
     reports.push(report)
   }

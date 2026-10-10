@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest'
 import { readFileSync } from 'node:fs'
 import metadata from './native-metadata.json'
 import committed from './compatibility-checks.json'
-import { compactChecks, recordedCheck, type CompactChecks, type NativeChecks } from './compatibility-checks'
+import pairs from './compatibility-pairs.json'
+import { compactChecks, passingPairs, recordedCheck, selectionKey, type CompactChecks, type NativeChecks } from './compatibility-checks'
 const native = metadata as NativeChecks
 describe('compact compatibility checks', () => {
   it('matches the committed file, so the site ships the current native record', () => {
@@ -10,6 +11,13 @@ describe('compact compatibility checks', () => {
     expect(committed).toEqual(compactChecks(native))
   })
   const compact = compactChecks(native), checked = new Set(compact.checked)
+  it('lists exactly the module pairs the full checks record as passing', () => {
+    const expected = compact.modules.flatMap((left, index) => compact.modules.slice(index + 1)
+      .filter(right => recordedCheck(compact, [left, right], checked)?.length === 0).map(right => selectionKey([left, right]))).sort()
+    expect(expected.length).toBeGreaterThan(0)
+    expect(passingPairs(compact)).toEqual(expected)
+    expect(pairs).toEqual({ revision: compact.revision, passing: expected })
+  })
   const records = Object.entries(native.checks)
   // Keep every recorded selection/order assertion within the per-test CPU limit.
   for (let shard = 0; shard < 16; shard++) {

@@ -59,6 +59,6 @@ describe('external project directory', () => {
     const invalid = renderToStaticMarkup(createElement(ProjectsPage, { route: 'projects?machine=unknown' }))
     expect(invalid).toContain('Tone+FX')
     expect(html).toContain('Want me to add your project?')
-    expect(html).toContain('mailto:jannik.assfalg@gmail.com?subject=')
+    expect(html).toContain('mailto:support@modwerk.app?subject=')
   })
 })

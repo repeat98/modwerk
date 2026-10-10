@@ -34,6 +34,7 @@ import { boundedBody, checkOrigin, HttpError, jsonBody, optional, required, resp
 import { MODULES } from '../src/catalog/modules'
 import { handleGithubWebhook, githubConfig, mirrorIssue, setGithubIssueState } from './github'
 import { publicIssueReplies } from './issue-replies'
+import { createConfigurationReport } from './configuration-reports'
 import { IssueInputError, validateIssueContext, validateLogMissing } from '../src/community/issue-context'
 import { OT_LOG_MAX_BYTES, OtLogError, parseOtLog } from '../src/community/ot-log'
 
@@ -178,10 +179,11 @@ export async function handleApi(request: Request, env: Env): Promise<Response> {
       const status=url.searchParams.get('status')??'open',page=Number(url.searchParams.get('page')??0)
       if(!['open','closed'].includes(status))throw new HttpError(400,'Choose open or closed issues.')
       if(!Number.isSafeInteger(page)||page<0||page>10000)throw new HttpError(400,'Choose a valid issue page.')
-      const publicReports="FROM issues i LEFT JOIN forum_threads t ON t.id=i.forum_thread_id WHERE i.module_id=? AND (i.github_url IS NOT NULL OR (i.public_json IS NOT NULL AND t.hidden=0))"
+      // A whole-configuration report is listed on every module it contains.
+      const publicReports="FROM issues i LEFT JOIN forum_threads t ON t.id=i.forum_thread_id WHERE (i.module_id=? OR EXISTS(SELECT 1 FROM issue_modules m WHERE m.issue_id=i.id AND m.module_id=?)) AND (i.github_url IS NOT NULL OR (i.public_json IS NOT NULL AND t.hidden=0))"
       const [counts,rows]=await Promise.all([
-        db.prepare("SELECT COALESCE(SUM(i.status='open'),0) AS openCount,COALESCE(SUM(i.status='closed'),0) AS closedCount "+publicReports).bind(match[1]).first<{openCount:number;closedCount:number}>(),
-        db.prepare("SELECT i.id,i.title,i.github_url,i.github_number AS number,i.forum_thread_id,i.created_at,i.status,i.public_json,(SELECT u.username FROM users u WHERE u.id=i.reporter_id) AS reporter "+publicReports+" AND i.status=? ORDER BY i.created_at DESC,i.rowid DESC LIMIT 11 OFFSET ?").bind(match[1],status,page*10).all<{id:string;title:string;github_url:string|null;number:number|null;forum_thread_id:string|null;created_at:string;status:'open'|'closed';public_json:string|null;reporter:string|null}>(),
+        db.prepare("SELECT COALESCE(SUM(i.status='open'),0) AS openCount,COALESCE(SUM(i.status='closed'),0) AS closedCount "+publicReports).bind(match[1],match[1]).first<{openCount:number;closedCount:number}>(),
+        db.prepare("SELECT i.id,i.title,i.github_url,i.github_number AS number,i.forum_thread_id,i.created_at,i.status,i.scope,i.public_json,(SELECT u.username FROM users u WHERE u.id=i.reporter_id) AS reporter "+publicReports+" AND i.status=? ORDER BY i.created_at DESC,i.rowid DESC LIMIT 11 OFFSET ?").bind(match[1],match[1],status,page*10).all<{id:string;title:string;github_url:string|null;number:number|null;forum_thread_id:string|null;created_at:string;status:'open'|'closed';scope:'module'|'configuration';public_json:string|null;reporter:string|null}>(),
       ])
       const issues=rows.results.slice(0,10).map(({public_json,github_url,forum_thread_id,...item})=>({...item,url:github_url??'#forum/thread/'+forum_thread_id,details:public_json?JSON.parse(public_json):null}))
       return response({tracker:config?'github':'forum',issues,openCount:counts?.openCount??0,closedCount:counts?.closedCount??0,hasMore:rows.results.length>10,allUrl:config?'https://github.com/'+config.repository+'/issues?q='+encodeURIComponent('is:issue is:'+status+' label:"module:'+match[1]+'"'):null})
@@ -234,9 +236,10 @@ export async function handleApi(request: Request, env: Env): Promise<Response> {
       const mirrored=github?await mirrorIssue(db,env,id):{state:'none' as const}
       return response({ok:true,id,author,forumThreadId:threadId,github:mirrored.state,githubUrl:'url' in mirrored?mirrored.url??null:null},201)
     }
+    if(path==='/api/configuration-reports'&&request.method==='POST')return createConfigurationReport(request,env,db,user)
     if(path==='/api/issues/mine'&&request.method==='GET'){
       if(!user)return response([])
-      return response((await db.prepare('SELECT id,module_id,author_login,title,body,status,created_at,github_url,public_sharing,maintainer_sharing,forum_thread_id FROM issues WHERE reporter_id=? ORDER BY created_at DESC LIMIT 100').bind(user.id).all()).results)
+      return response((await db.prepare('SELECT id,module_id,scope,(SELECT COUNT(*) FROM issue_modules m WHERE m.issue_id=issues.id) AS module_count,author_login,title,body,status,created_at,github_url,public_sharing,maintainer_sharing,forum_thread_id FROM issues WHERE reporter_id=? ORDER BY created_at DESC LIMIT 100').bind(user.id).all()).results)
     }
     if (path.startsWith('/api/admin/')) {
       if (!admin) throw new HttpError(403,'Administrator access is required.')
@@ -256,7 +259,7 @@ export async function handleApi(request: Request, env: Env): Promise<Response> {
       if (path === '/api/admin/issues' && request.method === 'GET') {
         const moduleId = url.searchParams.has('moduleId') ? required(url.searchParams.get('moduleId'),'Module ID',100) : '', status = url.searchParams.get('status')??'all'
         if (!['all','open','closed'].includes(status)) throw new HttpError(400,'Choose all, open or closed issues.')
-        return response((await db.prepare("SELECT i.id,i.module_id,i.author_login,i.title,i.body,i.status,i.created_at,i.context_json,i.log_missing,i.log_missing_note,i.github_state,i.github_url,i.github_error,i.public_sharing,l.summary_json AS log_summary_json,u.display_name AS reporter FROM issues i JOIN users u ON u.id=i.reporter_id LEFT JOIN issue_logs l ON l.issue_id=i.id WHERE (?='' OR i.module_id=?) AND (?='all' OR i.status=?) ORDER BY i.created_at DESC,i.rowid DESC LIMIT 200").bind(moduleId,moduleId,status,status).all<Record<string,unknown>&{context_json:string|null;log_summary_json:string|null}>()).results.map(({context_json,log_summary_json,...item})=>({...item,context:context_json?JSON.parse(context_json):null,log:log_summary_json?JSON.parse(log_summary_json):null})))
+        return response((await db.prepare("SELECT i.id,i.module_id,i.scope,(SELECT COUNT(*) FROM issue_modules m WHERE m.issue_id=i.id) AS module_count,i.author_login,i.title,i.body,i.status,i.created_at,i.context_json,i.log_missing,i.log_missing_note,i.github_state,i.github_url,i.github_error,i.public_sharing,l.summary_json AS log_summary_json,u.display_name AS reporter FROM issues i JOIN users u ON u.id=i.reporter_id LEFT JOIN issue_logs l ON l.issue_id=i.id WHERE (?='' OR i.module_id=?) AND (?='all' OR i.status=?) ORDER BY i.created_at DESC,i.rowid DESC LIMIT 200").bind(moduleId,moduleId,status,status).all<Record<string,unknown>&{context_json:string|null;log_summary_json:string|null}>()).results.map(({context_json,log_summary_json,...item})=>({...item,context:context_json?JSON.parse(context_json):null,log:log_summary_json?JSON.parse(log_summary_json):null})))
       }
       if ((match=path.match(/^\/api\/admin\/issues\/([^/]+)\/log$/)) && request.method === 'GET') {
         const log=await db.prepare('SELECT text FROM issue_logs WHERE issue_id=?').bind(match[1]).first<{text:string}>()

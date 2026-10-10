@@ -1,7 +1,7 @@
 {
   "firmware": "1.40C",
-  "imageSha256": "debb24090cada4be00bc70880136f14e813b0d3a9018b516f922d33671bd9b87",
-  "emulatorSha256": "93484e4b71c70f48f795825103146a36ef95ef9ac06ee627e28608ae3e3bb3eb",
+  "imageSha256": "ed7ccf4f9a383caaf3210f526b69fded2384a272670da0a17d0ff87441b622b3",
+  "emulatorSha256": "1a2c7e57fd7e6eb7e60e593a7fb55a64146b1111a61b2163fc09faf3640b46d0",
   "setup": "Headless ot_emu; MKII panel; stopped transport; 128\u00d764 LCD at integer scale 6.",
   "palette": {
     "on": [
@@ -178,8 +178,8 @@
     "ot-control2.png": "a7b43f851089ec888ecea40c98ea458c2d394f461a33cae804bc27b23c356f1d"
   },
   "moduleId": "midi-scenes",
-  "moduleVersion": "0.2.4-experimental",
-  "captured": "2026-10-03",
+  "moduleVersion": "0.2.5-experimental",
+  "captured": "2026-10-09",
   "sourceRevision": "4f9a89453fdcdd39a3cd57f010ffa489cac721cd",
   "upstreamRecipeSha256": "a2dbe20d82de8bd3a4f010c1e94c4b2ebf080ca3f7203521053f747b52dc24a1",
   "scope": "Actual standalone author MIDISC2.0; static UI states only; no hardware/MIDI-output/timing qualification."

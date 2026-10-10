@@ -10,5 +10,6 @@ describe('development Discord on the submit page', () => {
     expect(html).toContain('href="' + DEVELOPMENT_DISCORD_URL + '" target="_blank" rel="noreferrer"')
     expect(html).toMatch(/development Discord|Join Discord/i)
     expect(html).not.toContain('discord.gg/mb7B2N7A7')
+    expect(html).toMatch(/href="https:\/\/github\.com\/[A-Za-z0-9-]+\/[A-Za-z0-9_.-]+" target="_blank" rel="noreferrer"[^>]*>Modwerk on GitHub/)
   })
 })

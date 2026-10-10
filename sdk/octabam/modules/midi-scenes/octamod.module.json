@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "version": "0.2.4-experimental",
+  "version": "0.2.5-experimental",
   "nativeManifest": "manifest.py",
   "media": [
     {
@@ -15,8 +15,8 @@
         "page": "MIDI NOTE SETUP",
         "shows": "location",
         "firmware": "1.40C",
-        "moduleVersion": "0.2.4-experimental",
-        "imageSha256": "debb24090cada4be00bc70880136f14e813b0d3a9018b516f922d33671bd9b87",
+        "moduleVersion": "0.2.5-experimental",
+        "imageSha256": "ed7ccf4f9a383caaf3210f526b69fded2384a272670da0a17d0ff87441b622b3",
         "setup": "Headless ot_emu; MKII panel; stopped transport; 128×64 LCD at integer scale 6. Empty scratch card; no external MIDI receiver; channel OFF."
       }
     },
@@ -32,8 +32,8 @@
         "page": "MIDI CTRL 1 SETUP",
         "shows": "location",
         "firmware": "1.40C",
-        "moduleVersion": "0.2.4-experimental",
-        "imageSha256": "debb24090cada4be00bc70880136f14e813b0d3a9018b516f922d33671bd9b87",
+        "moduleVersion": "0.2.5-experimental",
+        "imageSha256": "ed7ccf4f9a383caaf3210f526b69fded2384a272670da0a17d0ff87441b622b3",
         "setup": "Headless ot_emu; MKII panel; stopped transport; 128×64 LCD at integer scale 6. Empty scratch card; no external MIDI receiver; channel OFF."
       }
     },
@@ -49,8 +49,8 @@
         "page": "MIDI CONTROL 1",
         "shows": "location-and-controls",
         "firmware": "1.40C",
-        "moduleVersion": "0.2.4-experimental",
-        "imageSha256": "debb24090cada4be00bc70880136f14e813b0d3a9018b516f922d33671bd9b87",
+        "moduleVersion": "0.2.5-experimental",
+        "imageSha256": "ed7ccf4f9a383caaf3210f526b69fded2384a272670da0a17d0ff87441b622b3",
         "setup": "Headless ot_emu; MKII panel; stopped transport; 128×64 LCD at integer scale 6. Empty scratch card; no external MIDI receiver; channel OFF."
       }
     },
@@ -66,8 +66,8 @@
         "page": "MIDI CONTROL 1, Scene A held",
         "shows": "controls",
         "firmware": "1.40C",
-        "moduleVersion": "0.2.4-experimental",
-        "imageSha256": "debb24090cada4be00bc70880136f14e813b0d3a9018b516f922d33671bd9b87",
+        "moduleVersion": "0.2.5-experimental",
+        "imageSha256": "ed7ccf4f9a383caaf3210f526b69fded2384a272670da0a17d0ff87441b622b3",
         "setup": "Headless ot_emu; MKII panel; stopped transport; 128×64 LCD at integer scale 6. Empty scratch card; no external MIDI receiver; channel OFF."
       }
     },
@@ -83,8 +83,8 @@
         "page": "MIDI CONTROL 1, Scene A released",
         "shows": "controls",
         "firmware": "1.40C",
-        "moduleVersion": "0.2.4-experimental",
-        "imageSha256": "debb24090cada4be00bc70880136f14e813b0d3a9018b516f922d33671bd9b87",
+        "moduleVersion": "0.2.5-experimental",
+        "imageSha256": "ed7ccf4f9a383caaf3210f526b69fded2384a272670da0a17d0ff87441b622b3",
         "setup": "Headless ot_emu; MKII panel; stopped transport; 128×64 LCD at integer scale 6. Empty scratch card; no external MIDI receiver; channel OFF."
       }
     },
@@ -100,8 +100,8 @@
         "page": "MIDI ARPEGGIATOR",
         "shows": "controls",
         "firmware": "1.40C",
-        "moduleVersion": "0.2.4-experimental",
-        "imageSha256": "debb24090cada4be00bc70880136f14e813b0d3a9018b516f922d33671bd9b87",
+        "moduleVersion": "0.2.5-experimental",
+        "imageSha256": "ed7ccf4f9a383caaf3210f526b69fded2384a272670da0a17d0ff87441b622b3",
         "setup": "Headless ot_emu; MKII panel; stopped transport; 128×64 LCD at integer scale 6. Empty scratch card; no external MIDI receiver; channel OFF."
       }
     },
@@ -117,8 +117,8 @@
         "page": "MIDI LFO",
         "shows": "controls",
         "firmware": "1.40C",
-        "moduleVersion": "0.2.4-experimental",
-        "imageSha256": "debb24090cada4be00bc70880136f14e813b0d3a9018b516f922d33671bd9b87",
+        "moduleVersion": "0.2.5-experimental",
+        "imageSha256": "ed7ccf4f9a383caaf3210f526b69fded2384a272670da0a17d0ff87441b622b3",
         "setup": "Headless ot_emu; MKII panel; stopped transport; 128×64 LCD at integer scale 6. Empty scratch card; no external MIDI receiver; channel OFF."
       }
     },
@@ -134,8 +134,8 @@
         "page": "MIDI CONTROL 2",
         "shows": "controls",
         "firmware": "1.40C",
-        "moduleVersion": "0.2.4-experimental",
-        "imageSha256": "debb24090cada4be00bc70880136f14e813b0d3a9018b516f922d33671bd9b87",
+        "moduleVersion": "0.2.5-experimental",
+        "imageSha256": "ed7ccf4f9a383caaf3210f526b69fded2384a272670da0a17d0ff87441b622b3",
         "setup": "Headless ot_emu; MKII panel; stopped transport; 128×64 LCD at integer scale 6. Empty scratch card; no external MIDI receiver; channel OFF."
       }
     }

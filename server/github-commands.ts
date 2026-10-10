@@ -9,18 +9,20 @@ import type { Database, Env } from './platform'
 import { finishModuleRelease } from './release-completion'
 import { HttpError, required } from './security'
 
-const help = 'Use `/modwerk close configuration|duplicate|not_reproducible|withdrawn <explanation>`, `/modwerk reopen <explanation>`, or `/modwerk resolve <version> verified-download` after verifying that exact published download on your unit. Post a new command to retry. Replying and managing reports require no fork or repository write access.'
+const help = 'Use `/modwerk close configuration|duplicate|not_reproducible|withdrawn <explanation>`, `/modwerk reopen <explanation>`, or `/modwerk resolve <version> verified-download` after verifying that exact published download on your unit. A whole-configuration report names the module: `/modwerk resolve <module-id> <version> verified-download`. Post a new command to retry. Replying and managing reports require no fork or repository write access.'
 
 /** Only newly created, signed comments by a registered numeric GitHub identity can act. */
 export async function handleGithubCommand(env: Env, db: Database, config: GithubConfig, issueId: string, number: number, payload: WebhookPayload) {
   const comment = payload.comment!, user = comment.user, login = typeof user?.login === 'string' ? user.login : '', id = user?.id
   if (user?.type !== 'User' || !Number.isSafeInteger(id) || payload.sender?.id !== id || payload.sender?.login !== login || !Number.isSafeInteger(comment.id) || Number(comment.id) <= 0) return { command: 'ignored' }
-  const report = await db.prepare('SELECT module_id,maintainer_sharing,public_sharing FROM issues WHERE id=? AND public_json IS NOT NULL AND github_number=?').bind(issueId, number).first<{ module_id: string; maintainer_sharing: number; public_sharing: number }>()
-  const module = report && communityModule(report.module_id)
+  const report = await db.prepare('SELECT module_id,scope,maintainer_sharing,public_sharing FROM issues WHERE id=? AND public_json IS NOT NULL AND github_number=?').bind(issueId, number).first<{ module_id: string; scope: 'module' | 'configuration'; maintainer_sharing: number; public_sharing: number }>()
+  // A whole-configuration report belongs to every module in it; a maintainer acts for the modules they maintain, and a revoked one drops out.
+  const reported = !report ? [] : report.scope === 'configuration' ? (await db.prepare('SELECT module_id FROM issue_modules WHERE issue_id=? ORDER BY rowid').bind(issueId).all<{ module_id: string }>()).results.map(item => item.module_id) : [report.module_id]
   const registered = (registeredAuthors.accounts as Record<string, number>)[login.toLowerCase()]
-  const blocked = await db.prepare(`SELECT 1 FROM users u WHERE (u.github_id=? OR EXISTS(SELECT 1 FROM auth_accounts a WHERE a.userId=u.id AND a.providerId='github' AND a.accountId=?)) AND u.suspended=1
-    UNION ALL SELECT 1 FROM module_maintainers m JOIN users u ON u.id=m.user_id WHERE m.module_id=? AND m.revoked=1 AND (u.github_id=? OR lower(m.github_login)=lower(?)) LIMIT 1`).bind(String(id), String(id), report?.module_id ?? '', String(id), login).first()
-  if (!module || !report?.maintainer_sharing || report.public_sharing || registered !== id || blocked || !module.maintainers.some(handle => handle.toLowerCase() === login.toLowerCase())) return { command: 'denied' }
+  const suspended = await db.prepare("SELECT 1 FROM users u WHERE (u.github_id=? OR EXISTS(SELECT 1 FROM auth_accounts a WHERE a.userId=u.id AND a.providerId='github' AND a.accountId=?)) AND u.suspended=1 LIMIT 1").bind(String(id), String(id)).first()
+  const revoked = new Set(reported.length ? (await db.prepare(`SELECT m.module_id FROM module_maintainers m JOIN users u ON u.id=m.user_id WHERE m.module_id IN (${reported.map(() => '?').join(',')}) AND m.revoked=1 AND (u.github_id=? OR lower(m.github_login)=lower(?))`).bind(...reported, String(id), login).all<{ module_id: string }>()).results.map(item => item.module_id) : [])
+  const maintained = reported.flatMap(moduleId => { const module = communityModule(moduleId); return module && !revoked.has(moduleId) && module.maintainers.some(handle => handle.toLowerCase() === login.toLowerCase()) ? [module] : [] })
+  if (!report?.maintainer_sharing || report.public_sharing || registered !== id || suspended || !maintained.length) return { command: 'denied' }
   const body = String(comment.body).trim(), key = 'command:' + comment.id
   const receipt = await claimGithubAction(db, key, issueId, String(id), body)
   if (!receipt) return { command: 'already-completed' }
@@ -32,9 +34,12 @@ export async function handleGithubCommand(env: Env, db: Database, config: Github
       if (!match) throw new HttpError(400, help)
       const argument = match[2] ?? ''
       if (match[1] === 'resolve') {
-        const resolve = argument.match(/^(\S+) verified-download$/)
+        // On a whole-configuration report the release belongs to one module, which the command names.
+        const resolve = report.scope === 'configuration' ? argument.match(/^(\S+) (\S+) verified-download$/) : argument.match(/^(\S+) verified-download$/)
         if (!resolve) throw new HttpError(400, help)
-        const completed = await finishModuleRelease(env, db, module, resolve[1], [issueId], { id: null, githubLogin: login })
+        const module = report.scope === 'configuration' ? maintained.find(item => item.id === resolve[1]) : maintained[0]
+        if (!module) throw new HttpError(403, 'Name a module of this configuration that you maintain.')
+        const completed = await finishModuleRelease(env, db, module, resolve[report.scope === 'configuration' ? 2 : 1], [issueId], { id: null, githubLogin: login })
         result = 'Released **' + inert(completed.version) + '**. ' + completed.updateNotificationsQueued + ' module update notifications queued; delivery follows members’ preferences and the existing push/email schedule.'
       } else if (match[1] === 'close') {
         const close = argument.match(/^(\S+)\s+([\s\S]+)$/)

@@ -133,6 +133,16 @@
     ],
     "midi-scenes": [
       {
+        "version": "0.2.5-experimental",
+        "date": "2026-10-09",
+        "changes": [
+          "Fix #329: muting Scene A or B (FUNC + SCENE A/B) now stops that scene's MIDI locks, as stock scene mute does for audio tracks. With one scene muted the crossfader morphs between the base value and the other scene. Muting the last scene sends the CC back to its base or trig-lock value, and the crossfader then leaves it unchanged.",
+          "Editing scene locks while holding a muted scene's key still works, as in stock.",
+          "This is a small Modwerk patch on top of the author's unchanged MIDISC2.0 release recipe. It also corrects an unassigned-scene fallback in the crossfader mix that produced out-of-range values. The reporter tested this build on an Octatrack MKII, including Part, project and reboot persistence. MIDI Scenes must still be selected alone.",
+          "Known limitation, unchanged from 0.2.4: editing a scene lock while holding its key does not send the CC until the crossfader moves."
+        ]
+      },
+      {
         "version": "0.2.4-experimental",
         "date": "2026-10-03",
         "changes": [

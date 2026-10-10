@@ -1,9 +1,8 @@
 import { DSP_EFFECT_IDS, MODULES, resolveSelection } from './modules.ts'
 import { MODULE_DOCUMENTS_BY_ID } from './documents.ts'
-import compact from './compatibility-checks.json' with { type: 'json' }
-import { recordedCheck, type CompactChecks } from './compatibility-checks.ts'
-const DECLARATION_CHECKS = compact as CompactChecks
-const CHECKED_SELECTIONS = new Set(DECLARATION_CHECKS.checked)
+import pairs from './compatibility-pairs.json' with { type: 'json' }
+import { selectionKey } from './compatibility-checks.ts'
+const PASSING_PAIRS = new Set(pairs.passing)
 
 export type ConflictFix = { label: string; removeIds?: string[]; keepStockFx2?: boolean }
 export type SelectionConflict = { id: string; title: string; description: string; moduleIds: string[]; fixes: ConflictFix[] }
@@ -15,7 +14,7 @@ const FITS_BESIDE_STOCK_FX2 = ['tapehead', 'sidechain-compressor']
 const crowdedMenuIds = ['miniverb', 'tapeecho', 'euclid', 'repitch', 'quantizer']
 const DECLARED_CONFLICT_PAIRS = MODULES.flatMap((left, index) => MODULES.slice(index + 1).filter(right =>
   (MODULE_DOCUMENTS_BY_ID[left.id]?.compatibility.conflicts.includes(right.id) || MODULE_DOCUMENTS_BY_ID[right.id]?.compatibility.conflicts.includes(left.id)) &&
-  recordedCheck(DECLARATION_CHECKS, [left.id, right.id], CHECKED_SELECTIONS)?.length !== 0
+  !PASSING_PAIRS.has(selectionKey([left.id, right.id]))
 ).map(right => [left, right] as const))
 
 export function selectionConflicts(ids: readonly string[], keepStockFx2 = false): SelectionConflict[] {

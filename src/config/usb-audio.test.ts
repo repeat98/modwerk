@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { USB_AUDIO_LAYOUTS, USB_AUDIO_MODULE, changeUsbAudioLayout, suggestedUsbAudioPairs, parseUsbAudioConfiguration, usbAudioBuildError, usbAudioPreset } from './usb-audio'
+import { USB_AUDIO_LAYOUTS, USB_AUDIO_MODULE, changeUsbAudioLayout, suggestedUsbAudioPairs, parseUsbAudioConfiguration, usbAudioBuildError, usbAudioPreset, type UsbAudioConfiguration } from './usb-audio'
 import { newConfiguration, validateConfiguration } from './workspace'
 import { createSelection, parseSelection } from './selection'
 import { sharedConfiguration } from '../community/forum-contract'
@@ -24,6 +24,7 @@ describe('USB Audio configuration lifecycle', () => {
     expect(createSelection(legacy.moduleIds, null).schemaVersion).toBe(3)
     expect(usbAudioBuildError(undefined)).toBe('')
     expect(usbAudioBuildError(usbAudioPreset('outbox'))).toBe('')
+    expect(usbAudioBuildError({ ...usbAudioPreset('outbox'), version: '0.1.0-experimental' } as unknown as UsbAudioConfiguration)).toBe('USB Audio settings use an unsupported version or layout.')
   })
   it('clears unavailable pairs when switching to a smaller feed, and permits intentional duplicate routing', () => {
     const next = changeUsbAudioLayout({ ...usbAudioPreset('outbox'), outboxPairs: [1, 3, 5, 8] }, 'main-cue')

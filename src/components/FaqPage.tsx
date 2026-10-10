@@ -264,7 +264,7 @@ const SECTIONS: FaqSection[] = [
         title: 'Can I share my configuration or a finished firmware file?',
         keywords: 'export import json backup send copyright redistribute bin syx modules',
         answer: <>
-          <p>For Octatrack, share the JSON file from <strong>Export configuration</strong>. Another Octatrack owner can use <strong>Import JSON</strong> in Configuration and supply their own original OS {BASE_FIRMWARE.version} file. Your browser’s saved configurations do not sync between devices automatically.</p>
+          <p>For Octatrack, share the JSON file from <strong>Export configuration</strong>. Another Octatrack owner can use <strong>Import JSON</strong> from the actions menu (<strong>⋯</strong>) in Configuration and supply their own original OS {BASE_FIRMWARE.version} file. Your browser’s saved configurations do not sync between devices automatically.</p>
           <p>Do not redistribute original or built firmware .bin or .syx files: they contain Elektron’s copyrighted OS. Share your module choices instead.</p>
         </>,
       },
@@ -273,7 +273,7 @@ const SECTIONS: FaqSection[] = [
         title: 'Do I need an account? How do I report a module issue?',
         keywords: 'guest comments ratings likes email sign in bug author community github contribution',
         answer: <>
-          <p>Browsing and the configurator work without an account. To post in the forum, comment, rate, like or use <strong>Report an issue</strong>, register and verify your email. Your email address stays private. New issue reports become public GitHub issues, where the module developers track and fix bugs. You don’t need a GitHub account: their replies and fixes appear in your notifications. Manage private configuration details and logs in <a href="#account">Your account</a>.</p>
+          <p>Browsing and the configurator work without an account. To post in the forum, comment, rate, like or use <strong>Report an issue</strong>, register and verify your email. Your email address stays private. New issue reports become public GitHub issues, where the module developers track and fix bugs. You don’t need a GitHub account: their replies and fixes appear in your notifications. When the problem comes from a combination of modules, use <strong>Report a problem</strong> on your configuration: every module’s developers see it. Manage private configuration details and logs in <a href="#account">Your account</a>.</p>
           <p>Describe the module, your machine and model, the displayed OS version and how to reproduce the problem. Never attach firmware. Module contributions and updates go through GitHub pull requests and owner review; see <a href="#submit">Start developing</a>.</p>
         </>,
       },

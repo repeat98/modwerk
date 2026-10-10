@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import { decodeFirmware, encodeFirmware, type DecodedFirmware } from './elek'
 import { createEngineSession } from './session'
+import { composeSelection } from './compose-os'
 import { FIRMWARE_VERSION, type EngineResponse } from './protocol'
 
 // Exercise the real session/report/packaging boundary with synthetic bytes.
@@ -54,4 +55,34 @@ describe('Octatrack firmware boot name', () => {
       expect(input).toEqual(before)
     },
   )
+})
+
+describe('placement diagnosis', () => {
+  it('stops trying removals for a selection once a newer one arrives', async () => {
+    // Recorded with stock FX2 off, as is each selection one module smaller, so the diagnosis composes candidates.
+    const crowded = ['miniverb', 'tapeecho', 'euclid', 'repitch', 'tapehead', 'analog-bassdrum', 'previewvol', 'sidechain-compressor', 'playmodes', 'mute-modes', 'recorder-loop-fix']
+    const compose = vi.mocked(composeSelection), original = compose.getMockImplementation()!
+    let attempts = 0, reached = () => {}
+    const second = new Promise<void>(resolve => { reached = resolve })
+    compose.mockImplementation(async (bytes, ids, ...rest) => {
+      if (ids.length === 1) return original(bytes, ids, ...rest)
+      if (++attempts === 2) reached()
+      await new Promise(resolve => setTimeout(resolve, 1))
+      throw new Error('Demo overruns the region')
+    })
+    try {
+      const firmware = synthetic(), replies: EngineResponse[] = []
+      const handle = createEngineSession(response => { replies.push(response) })
+      await handle({ id: 1, type: 'inspect', name: 'synthetic.bin', buffer: new Uint8Array(encodeFirmware(firmware, firmware.mainOs, 'STOCK')).buffer })
+      const stale = handle({ id: 2, type: 'validate', moduleIds: crowded, keepStockFx2: false })
+      await second
+      await handle({ id: 3, type: 'validate', moduleIds: ['repitch'], keepStockFx2: false })
+      await stale
+      // The full diagnosis would compose the selection and 66 candidates; the newer request stopped it after a few.
+      expect(attempts).toBeLessThan(6)
+      const last = (id: number) => replies.filter(reply => reply.id === id).at(-1)
+      expect(last(2)).toMatchObject({ type: 'error', message: expect.stringContaining('newer selection') })
+      expect(last(3)?.type).toBe('validated')
+    } finally { compose.mockImplementation(original) }
+  })
 })

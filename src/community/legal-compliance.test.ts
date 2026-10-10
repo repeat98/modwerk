@@ -117,7 +117,7 @@ describe('public legal information',()=>{
  it('publishes supplied operator details and an unauthenticated human reporting channel',()=>{
   const imprint=renderToStaticMarkup(createElement(LegalPage,{route:'impressum'})),report=renderToStaticMarkup(createElement(LegalPage,{route:'report-content'})),privacy=renderToStaticMarkup(createElement(PrivacyPage))
   for(const value of [OPERATOR.name,OPERATOR.street,OPERATOR.locality])expect(imprint).toContain(value)
-  expect(report).toContain('No account required');expect(report).toContain('2011/93/EU');expect(CONTENT_REPORT_MAILTO).toContain('mailto:jannik.assfalg@gmail.com')
+  expect(report).toContain('No account required');expect(report).toContain('2011/93/EU');expect(CONTENT_REPORT_MAILTO).toContain('mailto:support@modwerk.app')
   expect(privacy).toContain('off by default');expect(privacy).toContain(OPERATOR.complaintsUrl);expect(privacy).toContain('Deutsch');expect(privacy).not.toMatch(/type="checkbox"[^>]*checked/)
  })
 })

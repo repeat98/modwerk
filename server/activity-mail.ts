@@ -4,7 +4,8 @@ import { mailLimits, reserveMailBudget } from './mail-budget'
 import { emailReady, recordMail } from './email'
 import { SUPPORT_EMAIL } from '../src/support'
 import { renderActivityEmail } from './activity-email-template'
-import { ITEM_SQL, RECIPIENTS, toItem, unsubscribeToken, VISIBLE } from './notifications'
+import { ITEM_SQL, RECIPIENTS, toItem, VISIBLE } from './notifications'
+import { unsubscribeToken } from './unsubscribe'
 import { DIGEST_HOURS, EMAIL_SETTING, type NotificationItem } from '../src/community/notification-contract'
 import { parseReleaseNotes } from '../src/community/module-release-notes'
 
@@ -46,7 +47,7 @@ export async function sendActivityDigests(env: Env, db: Database, now = new Date
       if (error instanceof HttpError && error.status === 429) { await recordMail(db, 'activity', 'limited'); break }
       throw error
     }
-    const token = await unsubscribeToken(env.AUTH_SECRET, member.id)
+    const token = await unsubscribeToken(env.AUTH_SECRET, 'activity', member.id)
     const settings = new URL(app); settings.hash = 'account/notifications'
     const page = new URL(app); page.hash = 'account/unsubscribe/' + token
     const inbox = new URL(app); inbox.hash = 'account'

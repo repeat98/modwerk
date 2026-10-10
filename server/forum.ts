@@ -5,7 +5,7 @@ import { HttpError, jsonBody, required, response } from './security'
 import { FORUM_CATEGORIES, forumMachine, REQUEST_STATUSES, sharedConfiguration } from '../src/community/forum-contract'
 import { communityModule } from '../src/community/modules'
 import { ensureDiscussionThread, ensureModuleThreadsOnce, SYSTEM_AUTHOR } from './module-threads'
-import { notifyMentions, notifyPostLike, notifyReplies, notifyRequestStatus, RECIPIENTS } from './notifications'
+import { notifyMentions, notifyPostLike, notifyReplies, notifyRequestStatus } from './notifications'
 import { attachMedia, postAttachments } from './forum-media'
 import { shoutbox } from './shoutbox'
 import { FIRST_UNREAD_FIELDS, FIRST_UNREAD_JOIN, markForumRead, noteForumVisit, recordThreadRead, UNREAD, UNREAD_FIELDS, UNREAD_JOINS } from './forum-unread'
@@ -168,16 +168,6 @@ export async function forum(request: Request, db: Database, user: User|null, adm
   if (path === '/api/forum/visit' && request.method === 'GET') return response(await noteForumVisit(db,needMember(user).id))
   if (path === '/api/forum/machines' && request.method === 'GET') {
     return response((await db.prepare('SELECT machine,COUNT(*) AS threads,MAX(updated_at) AS updated_at FROM forum_threads WHERE hidden=0 AND user_id<>? AND machine IS NOT NULL GROUP BY machine').bind(SYSTEM_AUTHOR).all()).results)
-  }
-  if (path === '/api/forum/notifications' && request.method === 'GET') {
-    const member = needMember(user)
-    // Superseded by /api/notifications; kept with its original shape for frontends deployed before the bell.
-    return response((await db.prepare(`SELECT n.id,n.thread_id,n.post_id,n.seen,n.created_at,t.title FROM notifications n JOIN forum_threads t ON t.id=n.thread_id JOIN forum_posts p ON p.id=n.post_id WHERE n.kind IN ('reply','mention','bug_report') AND n.user_id IN (${RECIPIENTS}) AND t.hidden=0 AND p.hidden=0 ORDER BY n.created_at DESC,n.id LIMIT 100`).bind(member.id,member.id).all()).results)
-  }
-  if (path === '/api/forum/notifications' && request.method === 'PATCH') {
-    const member = needMember(user)
-    await db.prepare(`UPDATE notifications SET seen=1 WHERE kind IN ('reply','mention','bug_report') AND user_id IN (${RECIPIENTS})`).bind(member.id,member.id).run()
-    return response({ok:true})
   }
   if (path === '/api/forum/members' && request.method === 'GET') {
     // Name suggestions while typing @ in a composer: members only, by prefix, eight names, never the asker.

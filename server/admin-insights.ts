@@ -19,9 +19,9 @@ export async function adminInsights(db: Database, now = new Date()): Promise<Adm
     db.prepare('SELECT p.module_id,s.title FROM module_publications p JOIN submissions s ON s.id=p.submission_id').all<{module_id:string;title:string}>(),
     // Aggregate each source before joining so independent comments, ratings and issues never multiply totals.
     db.prepare(`WITH discussion AS (SELECT t.module_id,p.id FROM forum_posts p JOIN forum_threads t ON t.id=p.thread_id WHERE t.id='module-' || t.module_id AND p.id<>t.id AND p.hidden=0 AND t.hidden=0),
-      ids AS (SELECT module_id FROM discussion UNION SELECT module_id FROM issues UNION SELECT module_id FROM likes UNION SELECT module_id FROM ratings UNION SELECT module_id FROM module_downloads),
+      ids AS (SELECT module_id FROM discussion UNION SELECT module_id FROM issues WHERE scope='module' UNION SELECT module_id FROM likes UNION SELECT module_id FROM ratings UNION SELECT module_id FROM module_downloads),
       c AS (SELECT module_id,COUNT(*) AS comments FROM discussion GROUP BY module_id),
-      i AS (SELECT module_id,COUNT(*) AS openIssues FROM issues WHERE status='open' GROUP BY module_id),
+      i AS (SELECT module_id,COUNT(*) AS openIssues FROM issues WHERE status='open' AND scope='module' GROUP BY module_id),
       l AS (SELECT module_id,COUNT(*) AS likes FROM likes GROUP BY module_id),
       r AS (SELECT module_id,COUNT(*) AS ratings,AVG(value) AS ratingAverage FROM ratings GROUP BY module_id),
       w AS (SELECT module_id,SUM(CASE WHEN day>=? THEN downloads ELSE 0 END) AS week,SUM(CASE WHEN day<? THEN downloads ELSE 0 END) AS previousWeek FROM module_downloads_daily WHERE day>=? GROUP BY module_id)

@@ -37,6 +37,6 @@ export function parseUsbAudioConfiguration(value: unknown): UsbAudioConfiguratio
 // Keep validation at every public entry point; no older/future settings inherit it.
 export function usbAudioBuildError(value: UsbAudioConfiguration | undefined) {
   if (value === undefined) return ''
-  parseUsbAudioConfiguration(value)
-  return ''
+  try { parseUsbAudioConfiguration(value); return '' }
+  catch (error) { return error instanceof Error ? error.message : 'USB Audio settings are unreadable.' }
 }

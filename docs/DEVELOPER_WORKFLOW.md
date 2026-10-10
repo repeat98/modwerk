@@ -35,6 +35,8 @@ Public reports and GitHub replies share a thread, with replies/status synchroniz
 /modwerk reopen <public explanation>
 ```
 
+A report titled `[configuration] …` covers a whole saved configuration and lists its modules; every module's registered maintainer can use `close` and `reopen` on it. Name the module in `resolve`, `/modwerk resolve <module-id> <version> verified-download`, because the fix ships in one module; it closes the whole report.
+
 Use `resolve` only after the exact published download and hardware fix have actually been verified. Push and merge alone leave the report open. Other closure reasons are `duplicate`, `not_reproducible` and `withdrawn`; these claim no firmware fix. GitHub-only issues use authorized native GitHub closure. Private details remain access-controlled and consent-based.
 
 Verify GitHub status, Modwerk synchronization and reporter notification. Release completion uses the existing idempotent follower/downloader fanout, preserving opt-outs and push/email preferences. Report actual queue counts separately from provider acceptance or delivery/digest delays; do not create another scheduler or send a separate blast.
@@ -56,6 +58,14 @@ Today Modwerk's Octatrack path uses Octabam-derived tooling, and Digitakt/Digito
 The shared machine entry point and private Octatrack format-2 verification now exist. The [Octatrack migration record](OCTATRACK_ELEKLOADER_MIGRATION.md) names the source ports, actual parity results, remaining cutover requirements and proposed USB update path. Public Octatrack builds continue through the approved composer while these requirements are completed.
 
 After publication, authors can verify their developer account, claim their module and add, change or remove a Ko-fi link in Creator settings. Preserve the existing cup/dialog flow and per-module ownership checks; see [creator support](APP_DEVELOPMENT.md#module-creator-support).
+
+## Share what you learn
+
+The guides are the context every prompt and agent reads, so a finding that helps all development belongs in them, not only in a session, a PR comment or private notes. Examples: a trap in the shared builder, a tool that behaves differently than its help says, a measured budget, a step a guide omits or states wrongly. Put it in the file a reader would open for that task: the category guide under `docs/module-guides/`, [Add or port a module](ADD_A_MODULE.md), this page, or `AGENTS.md` when it affects every task. Because the prompts point at these files, no prompt change is needed for a new lesson. A rule that must reach every contributor's agent without a file being read goes in `DEVELOPER_RULES`.
+
+- Correct a stale or wrong statement instead of adding a contradicting one. Keep the entry short and general, and say a hardware behaviour only as observed on a named build, otherwise "not tested".
+- Keep it stock-free: no firmware bytes, code, tables or dumps. `sdk/octabam/AGENTS.md` stays unchanged because octabam's code cites it; put Modwerk-specific traps in a Modwerk guide.
+- Send it as its own docs-only pull request. Inside a module release it is outside a registered author's scope and would remove the update from the automatic path, and one pull request should hold one piece of work. Docs-only edits use the lightweight checks. The owner reviews the wording, and the agent tells the contributor what it added.
 
 ## Keep the prompt and page aligned
 

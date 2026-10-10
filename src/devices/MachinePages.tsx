@@ -14,6 +14,7 @@ import { DETAILS } from '../catalog/details'
 import type { CatalogBrowse } from '../catalog/catalog-browse'
 import { AVAILABLE_MODULES } from '../catalog/availability'
 import type { SelectionConflict } from '../catalog/selection-conflicts'
+import type { AddBlock } from '../catalog/add-blocks'
 import { moduleStability, STABILITY_NOTE } from '../catalog/module-stability'
 import { AddButton, CardProof, CardStats, ModuleCard } from '../components/ModuleCard'
 import { SelectionWarning } from '../components/SelectionWarning'
@@ -28,6 +29,7 @@ import { MemberGate } from '../community/MemberGate'
 import { useDigiFirmware } from '../hooks/useDigiFirmware'
 import { DigiFirmwarePanel } from '../components/DigiFirmwarePanel'
 import { DigiBuildPanel } from '../components/DigiBuildPanel'
+import { ConfigurationHeader } from '../components/ConfigurationLayout'
 import { ModuleAuthors } from '../components/ModuleAuthors'
 import { contributorSearchText } from '../catalog/module-authors'
 
@@ -71,6 +73,9 @@ type AllMachinesLibraryProps = {
   onSortChange: (value: string) => void
   statistics: readonly ModuleStatistics[] | null
   octatrackConflicts: readonly SelectionConflict[]
+  // What adding each Octatrack module would do to the current configuration, by module id.
+  octatrackBlocks?: Record<string, AddBlock>
+  onSwapOctatrack?: (id: string, removeIds: readonly string[]) => void
   comparison: readonly string[]
   onCompare: (id: string) => void
   onOpenComparison: () => void
@@ -82,7 +87,7 @@ type AllMachinesLibraryProps = {
 // On phones the machine picker sits in the category row and the results bar renders into resultsSlot, beneath it.
 type MachineLibraryProps = AllMachinesLibraryProps & { device?: DeviceProfile; children?: ReactNode; onClearSearch?: () => void; phone?: boolean; resultsSlot?: HTMLElement | null }
 
-export function MachineLibrary({ device, query, category, octatrackModules: octatrack, octatrackSelected, onToggleOctatrack, digiSelected, onToggleDigi, family, onFamilyChange, sort, onSortChange, statistics, octatrackConflicts, comparison, onCompare, onOpenComparison, viewedModuleVersions, moduleBaseline, machinePicker, children, onClearSearch, onBrowse, phone = false, resultsSlot }: MachineLibraryProps) {
+export function MachineLibrary({ device, query, category, octatrackModules: octatrack, octatrackSelected, onToggleOctatrack, digiSelected, onToggleDigi, family, onFamilyChange, sort, onSortChange, statistics, octatrackConflicts, octatrackBlocks, onSwapOctatrack, comparison, onCompare, onOpenComparison, viewedModuleVersions, moduleBaseline, machinePicker, children, onClearSearch, onBrowse, phone = false, resultsSlot }: MachineLibraryProps) {
   const term = query.toLowerCase().trim()
   const hasMods = !device || device.status === 'available' || device.status === 'preview'
   const families = Array.from(new Set([
@@ -116,7 +121,7 @@ export function MachineLibrary({ device, query, category, octatrackModules: octa
     })
   }
   const groups: { device: DeviceProfile; count: number; cards: ReactNode[] }[] = [
-    ...(!device || device.id === 'octatrack' ? [{device: DEVICES_BY_ID.octatrack, count: octatrack.length, cards: octatrack.map(module => <ModuleCard key={module.id} module={module} selected={octatrackSelected.includes(module.id)} statistics={statistics?.find(item => item.module_id === module.id)} viewedVersion={viewedModuleVersions[module.id]} baseline={moduleBaseline} compared={comparison.includes(module.id)} canCompare={comparison.length < 3 || comparison.includes(module.id)} onToggle={() => onToggleOctatrack(module.id)} onCompare={() => onCompare(module.id)} onBrowse={browseResults} />)}] : []),
+    ...(!device || device.id === 'octatrack' ? [{device: DEVICES_BY_ID.octatrack, count: octatrack.length, cards: octatrack.map(module => <ModuleCard key={module.id} module={module} selected={octatrackSelected.includes(module.id)} statistics={statistics?.find(item => item.module_id === module.id)} viewedVersion={viewedModuleVersions[module.id]} baseline={moduleBaseline} compared={comparison.includes(module.id)} canCompare={comparison.length < 3 || comparison.includes(module.id)} onToggle={() => onToggleOctatrack(module.id)} onCompare={() => onCompare(module.id)} onBrowse={browseResults} block={octatrackBlocks?.[module.id]} onSwap={removeIds => onSwapOctatrack?.(module.id, removeIds)} />)}] : []),
     ...digiGroups.map(({ id, mods }) => ({device: DEVICES_BY_ID[id], count: mods.length, cards: mods.map(mod => <DigiModCard key={mod.id} mod={mod} selected={digiSelected[id].includes(mod.id)} statistics={statistics?.find(item => item.module_id === id + '-' + mod.id)} onToggle={() => onToggleDigi(id, mod.id)} compared={comparison.includes(id + '-' + mod.id)} canCompare={comparison.length < 3 || comparison.includes(id + '-' + mod.id)} onCompare={() => onCompare(id + '-' + mod.id)} onBrowse={browseResults} />)})),
   ]
   const total = groups.reduce((sum, group) => sum + group.count, 0)
@@ -143,14 +148,8 @@ export function MachineLibrary({ device, query, category, octatrackModules: octa
   </div>
 }
 
-export function AllMachinesLibrary(props: AllMachinesLibraryProps) { return <MachineLibrary {...props} /> }
-
-export function DigiLibrary({ device, machinePicker, category, query, selectedIds, onToggle, family, onFamilyChange, sort, onSortChange, statistics, comparison, onCompare, onOpenComparison }: { device: DigiDevice; category?: string; query: string; selectedIds: string[]; onToggle: (id: string) => void; family: string; onFamilyChange: (value: string) => void; sort: string; onSortChange: (value: string) => void; statistics: readonly ModuleStatistics[] | null; comparison: readonly string[]; onCompare: (id: string) => void; onOpenComparison: () => void; machinePicker?: ReactNode }) {
-  return <MachineLibrary device={device} machinePicker={machinePicker} category={category as ModuleCategory | undefined} query={query} octatrackModules={[]} octatrackSelected={[]} onToggleOctatrack={() => {}} digiSelected={{digitakt: device.id === 'digitakt' ? selectedIds : [], digitone: device.id === 'digitone' ? selectedIds : []}} onToggleDigi={(_, id) => onToggle(id)} family={family} onFamilyChange={onFamilyChange} sort={sort} onSortChange={onSortChange} statistics={statistics} octatrackConflicts={[]} comparison={comparison} onCompare={onCompare} onOpenComparison={onOpenComparison} viewedModuleVersions={{}} moduleBaseline={null} />
-}
-
-export function DigiConfiguration({ device, configuration, configurations, onSelect, onDialog, onToggle, onImport }: { device: DigiDevice; configuration?: Configuration; configurations: Configuration[]; onSelect: (id: string) => void; onDialog: (mode: 'create' | 'rename' | 'duplicate' | 'delete') => void; onToggle: (id: string) => void; onImport: (configuration: ReturnType<typeof parseDigiSelection>) => void }) {
-  const importRef = useRef<HTMLInputElement>(null), [importError, setImportError] = useState(''), [importNotes, setImportNotes] = useState<string[]>([]), [exported, setExported] = useState('')
+export function DigiConfiguration({ device, configuration, configurations, onSelect, onDialog, onToggle, onImport, onReport }: { device: DigiDevice; onReport: () => void; configuration?: Configuration; configurations: Configuration[]; onSelect: (id: string) => void; onDialog: (mode: 'create' | 'rename' | 'duplicate' | 'delete') => void; onToggle: (id: string) => void; onImport: (configuration: ReturnType<typeof parseDigiSelection>) => void }) {
+  const importRef = useRef<HTMLInputElement>(null), [buildResults, setBuildResults] = useState<HTMLDivElement | null>(null), [importError, setImportError] = useState(''), [importNotes, setImportNotes] = useState<string[]>([]), [exported, setExported] = useState('')
   const firmware = useDigiFirmware(device.id)
   const ids = configuration?.moduleIds ?? []
   const selection = DIGI_MODS.filter(mod => mod.device === device.id && ids.includes(mod.id))
@@ -165,32 +164,34 @@ export function DigiConfiguration({ device, configuration, configurations, onSel
   }
   return (
     <div className="configuration-page">
-      <div className="page-heading"><div><p className="page-kicker">YOUR WORKSPACE · {device.name.toUpperCase()}</p><h1>{configuration?.name ?? 'No ' + device.name + ' configuration yet'}</h1><p>Changes save automatically on this device.</p></div><span className="pill">OS {device.firmware?.releases.join(' / ')}</span></div>
-      <div className="configuration-actions">
-        {configurations.length > 0 && <select aria-label="Choose configuration" value={configuration?.id ?? ''} onChange={event => onSelect(event.target.value)}>{configurations.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select>}
-        <button className="button button-primary" onClick={() => onDialog('create')}><Icon name="plus" size={16} />New</button>
-        {configuration && <><button className="button button-quiet" onClick={() => onDialog('rename')}>Rename</button><button className="button button-quiet" onClick={() => onDialog('duplicate')}>Duplicate</button><button className="button button-quiet" onClick={() => onDialog('delete')}>Delete</button><button className="button button-quiet" onClick={() => importRef.current?.click()}>Import JSON</button><a className="button button-quiet" href={'#forum/new?category=configs&machine='+device.id}>Share in forum</a></>}
-      </div>
+      <ConfigurationHeader kicker={'YOUR WORKSPACE · ' + device.name.toUpperCase()} meta={device.name + ' · OS ' + (device.firmware?.releases.join(' / ') ?? '') + ' · Changes save automatically on this device.'} emptyTitle={'No ' + device.name + ' configuration yet'} configuration={configuration} configurations={configurations} onSelect={onSelect} onDialog={onDialog} onImport={() => importRef.current?.click()} shareHref={'#forum/new?category=configs&machine=' + device.id} canReport={!!ids.length} onReport={onReport}/>
       <input ref={importRef} type="file" accept="application/json,.json" hidden aria-label="Import configuration backup" onChange={event => { void importBackup(event.target.files?.[0]); event.target.value = '' }}/>
       {importError && <p className="file-error" role="alert">{importError}</p>}
       {importNotes.length > 0 && <div className="import-notes" role="status"><strong>Imported from an older catalog</strong>{importNotes.map(note => <p key={note}>{note}</p>)}</div>}
-      <section className={'compatibility-panel compatibility-' + (estimate.fits && !estimate.clashes.length ? 'clear' : 'conflict')} aria-live="polite" aria-labelledby="digi-compatibility-title"><div className="compatibility-heading"><span className="compatibility-icon"><Icon name={estimate.fits && !estimate.clashes.length ? 'shield' : 'sliders'} size={20}/></span><div><h2 id="digi-compatibility-title">{!estimate.fits || estimate.clashes.length ? 'Your selection needs a change' : selection.length ? 'No declared conflicts' : 'Choose your modules'}</h2><p>{!estimate.fits || estimate.clashes.length ? 'Review the resources below and choose a compatible set.' : selection.length ? 'Choose your base firmware for placement checks.' : 'Add a module from the library, or build the core alone. Compatibility updates as you make changes.'}</p></div></div></section>
-      <section className="configuration-section" aria-labelledby="digi-firmware-title"><div className="section-title"><h2 id="digi-firmware-title">Base firmware</h2><span className="subtle">Read locally</span></div>
-        <DigiFirmwarePanel name={device.name} releases={device.firmware?.releases ?? []} firmware={firmware} />
-      </section>
-      <section className="configuration-section" aria-labelledby="digi-selection-title"><div className="section-title"><h2 id="digi-selection-title">Selected modules <span className="subtle">{selection.length}</span></h2><a className="text-button" href={deviceHref(device.id)}>Browse modules <Icon name="plus" size={14} /></a></div>
-        {selection.length ? <ul className="selected-list">{selection.map(mod => <li key={mod.id}><a className="selected-module-link" href={deviceHref(device.id, 'module/' + mod.id)}><DigiModPreview mod={mod} compact /><span><strong>{mod.title}</strong><small>{mod.category} · {mod.author} · {kib(mod.ramBytes)}</small></span></a><button className="icon-button" aria-label={'Remove ' + mod.title} onClick={() => onToggle(mod.id)}><Icon name="close" size={17} /></button></li>)}</ul>
-          : <div className="selection-empty"><Icon name="grid" size={26} /><strong>No modules selected</strong><p>Find something in the library and add it to your configuration.</p><a className="button button-quiet" href={deviceHref(device.id)}>Browse modules</a></div>}
-      </section>
-      <section className="configuration-section" aria-labelledby="digi-resources-title"><div className="section-title"><h2 id="digi-resources-title">Resources</h2><span className="subtle">core {DIGI_CORES[device.id].version} · {DIGI_CORES[device.id].slots}</span></div>
-        <div className={'resource-meter' + (estimate.fits ? '' : ' is-over')} role="meter" aria-valuemin={0} aria-valuemax={estimate.areaBytes} aria-valuenow={estimate.usedBytes} aria-label="Shared mod memory">
-          <div className="resource-meter-head"><strong>Shared mod memory</strong><span>{kib(estimate.usedBytes)} of {kib(estimate.areaBytes)}</span></div>
-          <div className="resource-meter-track"><span style={{ width: percent + '%' }} /></div>
-          <small>{estimate.fits ? 'Estimated from each mod’s code and data sizes; the build’s own check decides.' : 'Over the shared area: this set will not link. Remove a mod.'}</small>
+      <div className="configuration-layout">
+        <div className="configuration-main">
+          <section className="configuration-section" aria-labelledby="digi-selection-title"><div className="section-title"><h2 id="digi-selection-title">Selected modules <span className="subtle">{selection.length}</span></h2><a className="text-button" href={deviceHref(device.id)}>Browse modules <Icon name="plus" size={14} /></a></div>
+            {selection.length ? <ul className="selected-list">{selection.map(mod => <li key={mod.id}><a className="selected-module-link" href={deviceHref(device.id, 'module/' + mod.id)}><DigiModPreview mod={mod} compact /><span><strong>{mod.title}</strong><small>{mod.category} · {mod.author} · {kib(mod.ramBytes)}</small></span></a><button className="icon-button" aria-label={'Remove ' + mod.title} onClick={() => onToggle(mod.id)}><Icon name="close" size={17} /></button></li>)}</ul>
+              : <div className="selection-empty"><Icon name="grid" size={26} /><strong>No modules selected</strong><p>Find something in the library and add it to your configuration.</p><a className="button button-quiet" href={deviceHref(device.id)}>Browse modules</a></div>}
+          </section>
+          <section className="configuration-section" aria-labelledby="digi-resources-title"><div className="section-title"><h2 id="digi-resources-title">Resources</h2><span className="subtle">core {DIGI_CORES[device.id].version} · {DIGI_CORES[device.id].slots}</span></div>
+            <div className={'resource-meter' + (estimate.fits ? '' : ' is-over')} role="meter" aria-valuemin={0} aria-valuemax={estimate.areaBytes} aria-valuenow={estimate.usedBytes} aria-label="Shared mod memory">
+              <div className="resource-meter-head"><strong>Shared mod memory</strong><span>{kib(estimate.usedBytes)} of {kib(estimate.areaBytes)}</span></div>
+              <div className="resource-meter-track"><span style={{ width: percent + '%' }} /></div>
+              <small>{estimate.fits ? 'Estimated from each mod’s code and data sizes; the build’s own check decides.' : 'Over the shared area: this set will not link. Remove a mod.'}</small>
+            </div>
+            {estimate.clashes.map((clash, index) => <p key={clash.claim + index} className="file-error" role="alert">{clash.mods.join(' and ')} cannot be used together: {clash.claim}.</p>)}
+          </section>
+          <section className="configuration-section" aria-labelledby="digi-firmware-title"><div className="section-title"><h2 id="digi-firmware-title">Base firmware</h2><span className="subtle">Read locally</span></div>
+            <DigiFirmwarePanel name={device.name} releases={device.firmware?.releases ?? []} firmware={firmware} />
+          </section>
+          <div ref={setBuildResults} className="build-results" />
         </div>
-        {estimate.clashes.map((clash, index) => <p key={clash.claim + index} className="file-error" role="alert">{clash.mods.join(' and ')} cannot be used together: {clash.claim}.</p>)}
-      </section>
-      <MemberGate action="build firmware" next={device.id+'/configuration'}><DigiBuildPanel device={device} firmware={firmware} moduleIds={ids} onExport={() => { if (configuration) { downloadDigiSelection(configuration, device.id); setExported(exportKey) } }} exported={exported===exportKey} canExport={!!configuration}/></MemberGate>
+        <div className="configuration-checkout">
+          <section className={'compatibility-panel compatibility-' + (estimate.fits && !estimate.clashes.length ? 'clear' : 'conflict')} aria-live="polite" aria-labelledby="digi-compatibility-title"><div className="compatibility-heading"><span className="compatibility-icon"><Icon name={estimate.fits && !estimate.clashes.length ? 'shield' : 'sliders'} size={20}/></span><div><h2 id="digi-compatibility-title">{!estimate.fits || estimate.clashes.length ? 'Your selection needs a change' : selection.length ? 'No declared conflicts' : 'Choose your modules'}</h2><p>{!estimate.fits || estimate.clashes.length ? 'Review the resources below and choose a compatible set.' : selection.length ? 'Choose your base firmware for placement checks.' : 'Add a module from the library, or build the core alone. Compatibility updates as you make changes.'}</p></div></div></section>
+          <div className="checkout-card"><MemberGate action="build firmware" next={device.id+'/configuration'}><DigiBuildPanel device={device} firmware={firmware} moduleIds={ids} onExport={() => { if (configuration) { downloadDigiSelection(configuration, device.id); setExported(exportKey) } }} exported={exported===exportKey} canExport={!!configuration} results={buildResults}/></MemberGate></div>
+        </div>
+      </div>
     </div>
   )
 }

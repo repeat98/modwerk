@@ -5,6 +5,7 @@ import { useState } from 'react'
 import { ModuleControls } from './ModuleControls'
 import { IssueReport } from '../community/IssueReport'
 import type { FirmwareModule } from '../catalog/modules'
+import type { AddBlock } from '../catalog/add-blocks'
 import { getModuleSource } from '../catalog/modules'
 import { DETAILS } from '../catalog/details'
 import { Icon } from './Icon'
@@ -18,7 +19,7 @@ import { UsbAudioConfigurator } from './UsbAudioConfigurator'
 import { USB_AUDIO_MIDI_CREDITS } from './credits'
 import { USB_AUDIO_MODULE, usbAudioPreset, type UsbAudioConfiguration } from '../config/usb-audio'
 
-export function ModuleDetail({ module, selected, onToggle, browse, onBackToResults, usbAudio, configurationName, configurationId, onConfigureUsbAudio }: { browse?: CatalogBrowse | null; onBackToResults?: () => void; module: FirmwareModule; selected: boolean; onToggle: () => void; usbAudio?: UsbAudioConfiguration; configurationName?: string; configurationId?: string; onConfigureUsbAudio?: (value: UsbAudioConfiguration | undefined) => void }) {
+export function ModuleDetail({ module, selected, onToggle, addBlock, onSwap, browse, onBackToResults, usbAudio, configurationName, configurationId, onConfigureUsbAudio }: { browse?: CatalogBrowse | null; onBackToResults?: () => void; module: FirmwareModule; selected: boolean; onToggle: () => void; addBlock?: AddBlock; onSwap?: (removeIds: readonly string[]) => void; usbAudio?: UsbAudioConfiguration; configurationName?: string; configurationId?: string; onConfigureUsbAudio?: (value: UsbAudioConfiguration | undefined) => void }) {
   const previewKey = configurationId + JSON.stringify(usbAudio)
   const [usbDraft, setUsbDraft] = useState<{ key: string; value: UsbAudioConfiguration }>({ key: previewKey, value: usbAudio ?? usbAudioPreset('outbox') })
   const draft = usbDraft.key === previewKey ? usbDraft.value : usbAudio ?? usbAudioPreset('outbox')
@@ -28,7 +29,7 @@ export function ModuleDetail({ module, selected, onToggle, browse, onBackToResul
     titleBadge={isBetaModule(module.id) ? 'Beta' : module.id === USB_AUDIO_MODULE ? 'Outbox 8 compatible' : undefined}
     configureTarget={module.id === USB_AUDIO_MODULE && onConfigureUsbAudio ? 'usb-setup' : undefined}
     author={module.authorName} authorUrl={module.authorUrl} contributors={module.contributors} description={module.description}
-    selected={selected} onToggle={onToggle} backHref="#library" backLabel="All modules"
+    selected={selected} onToggle={onToggle} addBlock={addBlock} onSwap={onSwap} backHref="#library" backLabel="All modules"
     preview={<ModulePreview id={module.id} />} resources={<ModuleResourceIndicators id={module.id} usbLayout={module.id === USB_AUDIO_MODULE && onConfigureUsbAudio ? draft.layout : undefined} />}
     notice={moduleDocument.build && <p className="service-note" role="status">{moduleDocument.build.reason}</p>}
     overviewIntro={module.id === USB_AUDIO_MODULE && onConfigureUsbAudio && <UsbAudioConfigurator key={previewKey} draft={draft} onDraftChange={value => setUsbDraft({ key: previewKey, value })} configuration={usbAudio} selected={selected} configurationName={configurationName} onConfigure={onConfigureUsbAudio} />}

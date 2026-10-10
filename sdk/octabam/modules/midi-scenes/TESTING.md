@@ -1,6 +1,6 @@
 # MIDISC2.0 build verification
 
-Version `0.2.4-experimental`; source `bkkbrls-del/midisc`
+Version `0.2.5-experimental`; source `bkkbrls-del/midisc`
 `4f9a89453fdcdd39a3cd57f010ffa489cac721cd`, `tools/midisc/release20.json`.
 The native remixer still pins the old 8.2 author dependency; this release
 cannot inherit that port's acceptance, relocation or selection matrix.
@@ -105,6 +105,90 @@ No firmware-dependent command was added to application checks.
 The promoted version `0.2.4-experimental` retains the identical author MAIN and
 screenshot pixels. The unchanged emulator reports retain their historical
 `0.2.3-experimental` identity; the new build approval binds this release.
+
+## Scene mute fix (0.2.5)
+
+Issue #329: stock FUNC + SCENE A/B sets the bytes `0x80000006` / `0x80000007`
+to 1, and the stock scene morph then ignores that side. MIDISC2.0 never read
+either byte. `patch.py` (`SCENE_MUTE`) and `src/engine/midi-scenes-patch.ts`
+(`MIDI_SCENES_SCENE_MUTE`) apply the same guarded rows after the author MAIN
+is verified (`debb2409…`), producing release MAIN `ed7ccf4f…`:
+
+- The crossfader mix (`0x400d2928`), endpoint snapshot (`0x400d7092`) and XF
+  cache key (`0x400d6884`) call helpers that load a muted side's scene as
+  unassigned, so a mute toggle also invalidates the cached context.
+- The mix's null scene pointer paths (`0x400d2984`, `0x400d299e`) loaded -1
+  rather than the 0xff "no lock" marker, so an unassigned side mixed as an
+  out-of-range lock. Their branches now reach stubs that load 0xff.
+- When neither side locks a parameter, the author writes its base value
+  without sending a CC (`0x400d69d2`). With either mute active it now takes
+  the author's send-if-changed path, so muting the last scene sends the
+  static value, as stock does.
+- Scene-held edit paths are unchanged.
+
+The helpers and stubs occupy 114 of 116 bytes at `0x400d738c` and 26 of 140
+bytes at `0x400d7470`, two unreferenced 0xff runs inside the author's main
+cave. Nothing in the patched image refers into either run, and stock leaves
+the area unused.
+
+### Emulator checks (9 October 2026, local original 1.40C, no firmware kept)
+
+- Native `patch.apply()` and the browser `reconstructMidiScenes()` both give
+  `ed7ccf4f…`; the per-region native pokes match the whole image.
+- The full standalone browser composition (logger, platform and startup
+  writes) keeps every scene-mute row and reports no overlapping guard.
+- The crossfader entry (`0x400d28c8`) was run in `ot_emu` with one CC lock
+  (Scene A 100, Scene B 20, base 50) at crossfader 0, 64 and 127. With no
+  mute the output equals 0.2.4. For each of the four mute combinations, the
+  output equals the author image with that scene blank (no locks). On 0.2.4
+  the mute flags changed nothing, reproducing the report.
+- A persistent sequence (A 0, B 127, base 64, crossfader fixed) sends one CC
+  for: no mute, mute B, then mute A (the static 64), and unmuting A. Moving
+  the crossfader with both muted sends none.
+- The retained 360-case `probe.cpp` passes with results identical to 0.2.4.
+  The focused crossfader maximum rises by 816 modeled cycles (47,642 →
+  48,458, about 1.7%), mostly one mute test per unlocked parameter. Observed
+  stack stays 156 bytes.
+- All eight LCD captures from `ed7ccf4f…` are pixel-identical to 0.2.4.
+
+The local emulator libraries were not checked against `native-inputs.json`.
+Its 0.2.4 baseline matches the recorded 47,642-cycle and 156-byte figures.
+These are emulator observations, not hardware timing.
+
+### Contributor hardware tests (reported)
+
+Both runs were by @JamCones on an Octatrack MKII, with MIDI out looped to
+MIDI in controlling CC 42 (FX2) on channel 1: static value 64, Scene A 0,
+Scene B 127. These are contributor-reported results, not measurements.
+
+**10 October 2026, final 0.2.5 build** (release MAIN `ed7ccf4f…`; private
+update file SHA-256 `b8cff4d8ffe1c2c45b0b382ca6a1853d1ad4781d7b556c4ee30faa7119e27943`):
+all fourteen checks passed.
+
+- Morph with no mutes, A muted and B muted, at full A, ¼, middle and full B.
+- Muting the last unmuted scene, in both orders and at both ends, sends the
+  static value; with both muted the crossfader sends no MIDI.
+- Unmuting in both orders resumes the expected morph.
+- With the static value changed to 100, muting the last scene sends 100.
+- Trig locks under scene mute behave as stock.
+- A second CC with no scene locks is not sent when scenes are muted or
+  unmuted.
+- Two MIDI tracks each return to their own static value.
+- The same behaviour with the sequencer playing, including notes at full A
+  or full B with that side muted.
+- Editing a muted scene's lock while holding its key.
+- Part save/reload, project save/load and reboot.
+- 30 minutes of playback with looping audio, crossfader moves and mute
+  toggles.
+
+**9 October 2026, first candidate** (release MAIN `c7fb7d5b…`, without the
+`0x400d69d2` change): everything passed except muting the last unmuted
+scene, which left the CC at its morphed value. The final build fixes this.
+
+Observed separately: with no scene muted, editing a scene lock while holding
+its key at that crossfader end does not send the CC immediately, unlike
+stock audio scenes. With no mute active, every row above leaves the author's
+values unchanged, so this is existing MIDISC2.0 behaviour outside #329.
 
 ## Hardware report
 

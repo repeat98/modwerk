@@ -7,7 +7,6 @@ import type { CfRuntimeLink } from './coldfire-link.ts'
 import { compiledModuleSource } from './module-build.ts'
 import { resolveSelection } from '../catalog/modules.ts'
 import type { OsWrite } from './os-patches.ts'
-export const CORE_LOGGER_VERSION = pkg.version
 export const LOGGER_RESERVE_BYTES = 16 * 6144
 export const LOGGER_RETAINED_BYTES = 8192
 const BASE = 0x40a955e0, OS_BASE = 0x40000400

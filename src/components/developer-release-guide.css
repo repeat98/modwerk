@@ -1,5 +1,8 @@
 .developer-heading { align-items: center; }
 .developer-heading .button { flex-shrink: 0; }
+.developer-heading-links { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; flex-shrink: 0; }
+.developer-repository-link { font-size: 13px; color: var(--muted); }
+.developer-repository-link:hover { color: var(--text); text-decoration: underline; }
 .developer-section-heading { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 6px 20px; margin-bottom: 18px; }
 .developer-section-heading .subtle { font-size: 12px; }
 .developer-task-choice { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-bottom: 18px; }
@@ -56,6 +59,7 @@
 }
 @media (max-width: 760px) {
   .developer-heading { flex-wrap: wrap; gap: 16px; }
+  .developer-heading-links { align-items: flex-start; }
   .developer-setup-content { grid-template-columns: minmax(0, 1fr); }
 }
 @media (max-width: 480px) {

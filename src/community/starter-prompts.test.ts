@@ -4,7 +4,7 @@ import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
 import { SubmissionPage } from './SubmissionPage'
 import { cloneCommands, STARTER_MACHINES, starterPrompt, starterReading, startersFor, updatePrompt } from './starter-prompts'
-import { AUTHOR_RELEASE_OPT_IN, DEVELOPER_CONTEXT, ISSUE_COMMANDS, RELEASE_STEPS } from './developer-guidance'
+import { AUTHOR_RELEASE_OPT_IN, DEVELOPER_CONTEXT, DEVELOPER_RULES, ISSUE_COMMANDS, RELEASE_STEPS } from './developer-guidance'
 import { DEVICES } from '../devices/registry'
 
 const all = STARTER_MACHINES.flatMap(machine => startersFor(machine.id).map(starter => ({ machine: machine.id, starter })))
@@ -54,10 +54,19 @@ describe('starter prompts', () => {
         const prompt = prompts[task]
         for (const step of RELEASE_STEPS[task]) expect(prompt).toContain(step.summary)
         for (const item of DEVELOPER_CONTEXT) expect(prompt).toContain(item.summary)
+        for (const rule of DEVELOPER_RULES) expect(prompt).toContain(rule.summary)
         expect(prompt).toContain(AUTHOR_RELEASE_OPT_IN)
         expect(prompt).toContain(ISSUE_COMMANDS)
         expect(prompt).not.toMatch(/Jannik|Assfalg/i)
       }
+    }
+  })
+
+  it('asks the agent to share findings as a separate docs-only PR', () => {
+    for (const prompt of [starterPrompt('octatrack', startersFor('octatrack')[0]), updatePrompt('digitakt')]) {
+      expect(prompt).toContain('Share what you learn')
+      expect(prompt).toContain('separate docs-only PR')
+      expect(prompt).toContain('Leave sdk/octabam/AGENTS.md unchanged')
     }
   })
 

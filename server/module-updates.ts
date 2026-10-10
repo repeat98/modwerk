@@ -15,6 +15,11 @@ export function followReportedModule(db: Database, moduleId: string, userId: str
   return db.prepare(`INSERT INTO module_update_subscriptions(user_id,module_id,after_version) VALUES(?,?,COALESCE((SELECT version FROM module_release_state WHERE module_id=?),?)) ON CONFLICT(user_id,module_id) DO NOTHING`).bind(userId, moduleId, moduleId, communityModule(moduleId)?.version ?? null)
 }
 
+/** A configuration report follows releases of each of its modules the reporter has not opted out of. */
+export function followReportedModules(db: Database, moduleIds: readonly string[], userId: string) {
+  return moduleIds.map(moduleId => db.prepare(`INSERT INTO module_update_subscriptions(user_id,module_id,after_version) SELECT ?,?,COALESCE((SELECT version FROM module_release_state WHERE module_id=?),?) WHERE NOT EXISTS(SELECT 1 FROM module_update_opt_outs WHERE user_id=? AND module_id=?) ON CONFLICT(user_id,module_id) DO NOTHING`).bind(userId, moduleId, moduleId, communityModule(moduleId)?.version ?? null, userId, moduleId))
+}
+
 export async function moduleUpdateRoutes(request: Request, env: Env, db: Database, moduleId: string, user: Parameters<typeof needMember>[0]) {
   const member = needMember(user)
   // Reviewed catalog modules have release versions; sets and legacy contributions have no versioned publication flow.

@@ -6,6 +6,7 @@ import { firmwareFilename } from '../config/firmware-filename'
 import { FLASHING_RISKS, FIRMWARE_SHARING_NOTICE } from '../firmware-notices'
 import { assetUrl } from '../hosting'
 import { useState } from 'react'
+import { createPortal } from 'react-dom'
 import type { useFirmwareBuild } from '../hooks/useFirmwareBuild'
 import { BuildProgressIndicator } from './BuildProgressIndicator'
 import { FirmwareDownloadDialog } from './FirmwareDownloadDialog'
@@ -18,7 +19,7 @@ function saveFirmware(buffer:ArrayBuffer,name:string,sha256:string) {
 // Only the FX2-only reverbs give up their space selectively; any other omission is the compact FX2 menu.
 const REVERB_NAMES:Record<string,string>={'SPRING REV':'Spring Reverb','PLATE REV':'Plate Reverb','DARK REV':'Dark Reverb'}
 function omittedLabel(keys:readonly string[]){return keys.every(key=>key in REVERB_NAMES)?keys.map(key=>REVERB_NAMES[key]).join(', '):'Original effects'}
-export function FirmwareBuildPanel({build,available,downloadsEnabled,firmwareReady,moduleCount,riskAccepted,configurationName,onExport,exported}:{build:ReturnType<typeof useFirmwareBuild>;available:boolean;downloadsEnabled:boolean;firmwareReady:boolean;moduleCount:number;riskAccepted:boolean;configurationName:string;onExport:()=>void;exported:boolean}){
+export function FirmwareBuildPanel({build,available,downloadsEnabled,firmwareReady,moduleCount,riskAccepted,configurationName,onExport,exported,results}:{build:ReturnType<typeof useFirmwareBuild>;available:boolean;downloadsEnabled:boolean;firmwareReady:boolean;moduleCount:number;riskAccepted:boolean;configurationName:string;onExport:()=>void;exported:boolean;results:HTMLElement|null}){
   const [downloadedKey,setDownloadedKey]=useState('')
   const [pendingDownload,setPendingDownload]=useState<typeof build.result>()
   const {followDownloads,followNotice}=useDownloadFollows()
@@ -44,9 +45,12 @@ export function FirmwareBuildPanel({build,available,downloadsEnabled,firmwareRea
       </div>
     </section>
     {finished&&downloadsEnabled&&riskAccepted&&pendingDownload&&pendingDownload===build.result&&<FirmwareDownloadDialog onDownload={downloadFirmware} onClose={()=>setPendingDownload(undefined)}/>}
+    {/* The build card stays in the page's sticky column; what follows a build reads in the main column. */}
+    {results&&createPortal(<>
     {build.report&&<div className="build-facts"><span>FX1 <strong>{build.report.fx1Rows} {build.report.fx1Rows===1?'effect':'effects'}</strong></span><span>FX2 <strong>{build.report.fx2Rows} {build.report.fx2Rows===1?'effect':'effects'}</strong></span>{build.report.omittedStockFx2.length>0&&<span>Not in FX2 <strong>{omittedLabel(build.report.omittedStockFx2)}</strong></span>}<span>OS image <strong>{(build.report.osBytes/1024).toFixed(1)} KB</strong></span>{finished&&<span>Finished file <strong>{(build.result!.buffer.byteLength/1024).toFixed(1)} KB</strong></span>}</div>}
     {finished&&downloadsEnabled&&<section className="configuration-section install-guide" aria-labelledby="install-title"><div className="section-title"><h2 id="install-title">Install on your Octatrack</h2><span className="pill">{build.report?.version}</span></div><p className="service-note">Keep your original OS 1.40C file and back up projects, banks and samples. This configuration reserves {((build.report?.reservedBytes??0)/1024).toFixed(0)} KB of sample memory, including the built-in logger. {build.report?.moduleIds.includes('midi-scenes')&&'MIDI Scenes uses additional working memory; its complete memory bounds remain unverified.'}</p><ol><li>Download the .bin and copy it to the root of the Octatrack’s CompactFlash card.</li><li>Unmount the card safely, then choose OS UPGRADE from the Octatrack’s system settings and confirm the prompts. Follow the manual for your model. Use a stable power supply and never interrupt an update.</li><li>After updating, confirm the displayed OS version, create and open a fresh project, and test the selected effects before using the firmware in a live set.</li></ol><p><a href="https://www.elektron.se/wp-content/uploads/2024/09/Octatrack-MKII-User-Manual_ENG_OS1.40A_210414.pdf" target="_blank" rel="noreferrer">Official MKII manual, §8.5.2 ↗</a> · <a href="https://www.elektron.se/wp-content/uploads/2024/09/Octatrack-User-Manual_ENG-OS1.40A_220204.pdf" target="_blank" rel="noreferrer">MKI manual, §8.5.2 ↗</a></p><p className="service-note">{FLASHING_RISKS} Flash at your own risk. Emulator evidence and local integrity checks cannot guarantee hardware safety.</p><p className="service-note">{FIRMWARE_SHARING_NOTICE}</p><p><a href={assetUrl('licenses/THIRD_PARTY_NOTICES.txt')} download="THIRD_PARTY_NOTICES.txt">Download copyright &amp; licence notices</a> · Keep these notices with any permitted module distribution.</p>{downloadedKey===build.key&&<p className="success-note" role="status">Download requested. Check your browser’s downloads folder before copying the file.</p>}{downloadedKey===build.key&&followNotice&&<p className="service-note" role="status">{followNotice}</p>}</section>}
     {finished&&downloadsEnabled&&downloadedKey===build.key&&<DownloadedBuildOverview build={{ machine: 'Octatrack', os: '1.40C', modules: builtModules(build.report?.moduleIds??[],build.report?.moduleVersions) }}/>}
     {finished&&<section className="configuration-section"><details><summary>File identity & source revision</summary><dl className="build-identity"><dt>SHA-256</dt><dd>{build.result!.sha256}</dd><dt>Module versions</dt><dd>{Object.entries(build.report?.moduleVersions??{}).map(([id,version])=>id+' '+version).join(', ')}</dd><dt>Source commit</dt><dd>{build.report?.sourceCommit??'Local development build'}</dd><dt>Source fingerprint</dt><dd>{build.report?.sourceTreeSha256}</dd><dt>Native profile</dt><dd>{build.report?.revision}</dd></dl></details></section>}
+    </>,results)}
   </>
 }

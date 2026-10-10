@@ -12,7 +12,8 @@ export async function publicIssueReplies(request: Request, env: Env, db: Databas
   if (!match || !['GET', 'POST'].includes(request.method)) return null
   const page = Number(url.searchParams.get('page') ?? 0)
   if (!Number.isSafeInteger(page) || page < 0 || page > 10000) throw new HttpError(400, 'Choose a valid reply page.')
-  const issue = await db.prepare('SELECT github_number FROM issues WHERE id=? AND module_id=? AND public_json IS NOT NULL AND github_url IS NOT NULL AND github_number IS NOT NULL').bind(match[2], match[1]).first<{ github_number: number }>()
+  // A whole-configuration report is a conversation on each of its modules.
+  const issue = await db.prepare('SELECT github_number FROM issues WHERE id=? AND (module_id=? OR EXISTS(SELECT 1 FROM issue_modules m WHERE m.issue_id=issues.id AND m.module_id=?)) AND public_json IS NOT NULL AND github_url IS NOT NULL AND github_number IS NOT NULL').bind(match[2], match[1], match[1]).first<{ github_number: number }>()
   if (!issue || !Number.isSafeInteger(issue.github_number) || issue.github_number <= 0) throw new HttpError(404, 'Public GitHub report not found.')
   const config = githubConfig(env)
   if (!config) throw new HttpError(503, 'GitHub replies are temporarily unavailable. Open the conversation on GitHub.')

@@ -12,7 +12,8 @@ import { moduleAvailabilityError } from '../catalog/availability'
 import { CATALOG_SOURCE, resolveSelection } from '../catalog/modules'
 import { DOWNLOADS_ENABLED, DSP_LOADER, FIRMWARE_VERSION, type BuildReport, type EngineRequest, type EngineResponse } from './protocol'
 export function createEngineSession(reply: (response: EngineResponse, transfer?: Transferable[]) => void) {
-  let base: DecodedFirmware | null = null, generation = 0
+  // `newest` is the latest validate or build: the worker runs requests concurrently, and the page ignores older answers.
+  let base: DecodedFirmware | null = null, generation = 0, newest = 0
   return async (request: EngineRequest) => {
     try {
       if (request.type === 'clear') { ++generation; base = null; reply({ id: request.id, type: 'cleared' }); return }
@@ -27,6 +28,7 @@ export function createEngineSession(reply: (response: EngineResponse, transfer?:
       const usbError = usbAudioBuildError(request.usbAudio)
       if (usbError) throw new Error(usbError)
       const original = base, current = generation
+      newest = request.id
       if (!original) throw new Error('Choose and verify your base firmware first.')
       const modules = resolveSelection(request.moduleIds)
       const unavailable = moduleAvailabilityError(request.moduleIds,request.betaAccess === true)
@@ -45,8 +47,10 @@ export function createEngineSession(reply: (response: EngineResponse, transfer?:
           if (!claims.checked || claims.issues.length) return Promise.reject(new Error('Selection declarations did not pass.'))
           // USB settings belong only to the USB Audio module; removing it must remove its settings too.
           return composeSelection(original.mainOs, ids, request.keepStockFx2, ids.includes('usb-audio-out-tracks-main-cue') ? request.usbAudio : undefined)
-        }, () => current === generation)
+        }, () => current === generation && newest === request.id)
         if (current !== generation) throw new Error('The selected firmware changed. Build again.', { cause: error })
+        // A newer selection replaced this one; its partial diagnosis would mislead and nobody waits for it.
+        if (newest !== request.id) throw new Error('A newer selection replaced this check.', { cause: error })
         reply({ id: request.id, type: 'error', message: conflict.description, conflict }); return
       }
       if (current !== generation) throw new Error('The selected firmware changed. Build again.')

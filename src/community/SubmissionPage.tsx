@@ -23,9 +23,12 @@ export function SubmissionPage({ moduleId = '' }: { moduleId?: string }) {
       <div><p className="page-kicker">MODWERK / DEVELOPERS</p><h1>{module ? 'Update ' + module.name : 'Start developing'}</h1>
         <p>{module ? 'Current version ' + module.version + '. ' : ''}One prompt for your agent. Four steps to publication.</p>
       </div>
-      <a className="button development-discord-button" href={DEVELOPMENT_DISCORD_URL} target="_blank" rel="noreferrer" aria-label="Join Discord for module development (opens in a new tab)">
-        <img src={assetUrl('auth/discord.svg')} width={20} height={15} alt="" aria-hidden="true" /><span>Join Discord</span><span aria-hidden="true">↗</span>
-      </a>
+      <div className="developer-heading-links">
+        <a className="button development-discord-button" href={DEVELOPMENT_DISCORD_URL} target="_blank" rel="noreferrer" aria-label="Join Discord for module development (opens in a new tab)">
+          <img src={assetUrl('auth/discord.svg')} width={20} height={15} alt="" aria-hidden="true" /><span>Join Discord</span><span aria-hidden="true">↗</span>
+        </a>
+        <a className="developer-repository-link" href={repository} target="_blank" rel="noreferrer" aria-label="Modwerk repository on GitHub (opens in a new tab)">Modwerk on GitHub <span aria-hidden="true">↗</span></a>
+      </div>
     </header>
 
     <section className="configuration-section developer-start" aria-labelledby="agent-start-title">

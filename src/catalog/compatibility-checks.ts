@@ -38,3 +38,15 @@ export function recordedCheck(compact: CompactChecks, ids: readonly string[], ch
   if (!checkedSet.has(mask)) return undefined
   return compact.problems[selectionKey(ids)] ?? []
 }
+
+/** The two-module selections recorded as passing. Pair rules use this small list so the main bundle never loads every check. */
+export function passingPairs(compact: CompactChecks): string[] {
+  const pairs: string[] = []
+  for (const mask of compact.checked) {
+    const rest = mask & (mask - 1)
+    if (!rest || rest & (rest - 1)) continue // exactly two modules
+    const key = selectionKey(compact.modules.filter((_, position) => mask & (1 << position)))
+    if (!compact.problems[key]) pairs.push(key)
+  }
+  return pairs.sort()
+}

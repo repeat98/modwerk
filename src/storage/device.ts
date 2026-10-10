@@ -32,9 +32,12 @@ export function deviceStore(db: IDBDatabase) {
     })
   }
   return {
-    async listConfigurations() {
-      const items = await transaction('configurations', 'readonly', store => store.getAll())
-      return items.map(validateConfiguration).sort((a, b) => a.createdAt.localeCompare(b.createdAt))
+    /** Readable configurations. A record this version cannot read, such as one naming a module the catalog dropped,
+     * is skipped and reported, never deleted, so it comes back once the catalog can read it again. */
+    async listConfigurations(unreadable?: (error: unknown) => void) {
+      const items: unknown[] = await transaction('configurations', 'readonly', store => store.getAll())
+      return items.flatMap(item => { try { return [validateConfiguration(item)] } catch (error) { unreadable?.(error); return [] } })
+        .sort((a, b) => a.createdAt.localeCompare(b.createdAt))
     },
     async saveConfiguration(item: Configuration) {
       await transaction('configurations', 'readwrite', store => store.put(validateConfiguration(item)))

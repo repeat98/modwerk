@@ -2,7 +2,7 @@
 import { readFile } from 'node:fs/promises'
 import { createHash } from 'node:crypto'
 import assert from 'node:assert/strict'
-import { reconstructMidiScenes, midiScenesConflicts } from '../src/engine/midi-scenes-patch.ts'
+import { MIDI_SCENES_RELEASE_SHA256, reconstructMidiScenes, reconstructMidiScenesAuthor, midiScenesConflicts } from '../src/engine/midi-scenes-patch.ts'
 import { composeOs } from '../src/engine/compose-os.ts'
 import { defaultChoosers } from '../src/engine/choosers.ts'
 const [file, mode] = process.argv.slice(2)
@@ -10,7 +10,8 @@ if (!file || ![undefined,'--compatibility'].includes(mode) || process.argv.lengt
 const recipe = JSON.parse(await readFile(new URL('../sdk/drafts/midi-scenes/recipe.json',import.meta.url),'utf8'))
 const stock = new Uint8Array(await readFile(file)), sha = bytes => createHash('sha256').update(bytes).digest('hex'), before=sha(stock)
 const image = await reconstructMidiScenes(stock, recipe)
-assert.equal(sha(image),recipe.mainSha256)
+assert.equal(sha(await reconstructMidiScenesAuthor(stock, recipe)),recipe.mainSha256)
+assert.equal(sha(image),MIDI_SCENES_RELEASE_SHA256)
 const changed=stock.slice();changed[100]^=1
 await assert.rejects(reconstructMidiScenes(changed,recipe),/unmodified/)
 for(const alter of [

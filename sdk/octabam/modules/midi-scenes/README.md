@@ -1,6 +1,6 @@
 # MIDI Scenes — MIDISC2.0
 
-Version: `0.2.4-experimental`. Original author: **bkkbrls-del**. Source pin:
+Version: `0.2.5-experimental`. Original author: **bkkbrls-del**. Source pin:
 [`4f9a89453fdcdd39a3cd57f010ffa489cac721cd`](https://github.com/bkkbrls-del/midisc/tree/4f9a89453fdcdd39a3cd57f010ffa489cac721cd).
 
 ## Overview
@@ -75,6 +75,19 @@ OUT to its MIDI IN. The screenshot fixture has CHAN OFF and no receiver.
 Pre-trig scene operation, simultaneous trig locks, rapid Part changes,
 Direct Jump and CC/note ordering need their own measured verification;
 successful static screenshots cannot demonstrate those timing behaviors.
+
+## Scene mute
+
+Mute a scene with FUNC + SCENE A or FUNC + SCENE B, as on stock audio
+tracks. A muted scene's MIDI locks stop: the crossfader treats that side
+like a blank scene, so it morphs between the other scene and the base or
+trig-lock value. With both scenes muted, scene-locked CCs return to their
+base value and the crossfader no longer changes them. You can still edit a
+muted scene's locks while holding its key. Unmuting restores the morph.
+
+The author's MIDISC2.0 release ignored scene mute ([#329](https://github.com/repeat98/modwerk/issues/329)).
+`0.2.5-experimental` adds a small Modwerk patch on top of the unchanged
+author recipe; see [TESTING.md](TESTING.md#scene-mute-fix-025).
 
 ## Compatibility and limitations
 

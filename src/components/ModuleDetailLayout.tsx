@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { ModuleCommunity } from '../community/ModuleCommunity'
 import { CreatorSupport } from '../community/CreatorSupport'
 import { ModuleChangelog } from '../community/ModuleChangelog'
@@ -16,6 +16,9 @@ import { catalogNeighbors, type CatalogBrowse } from '../catalog/catalog-browse'
 import { CatalogNavigation } from './CatalogNavigation'
 import { ModuleAuthors } from './ModuleAuthors'
 import type { ModuleContributor } from '../catalog/module-authors'
+import type { AddBlock } from '../catalog/add-blocks'
+import { AddBlockChip, AddBlockPrompt } from './AddBlockPrompt'
+import { useAddBlockPrompt } from './use-add-block-prompt'
 
 type DetailTab = 'Overview' | 'Media' | 'Discussion' | 'Changelog' | 'Issues'
 const tabs: DetailTab[] = ['Overview', 'Media', 'Discussion', 'Changelog', 'Issues']
@@ -26,7 +29,7 @@ function linkedTab(): DetailTab {
   return tabs.find(value => value.toLowerCase() === query.get('tab')) ?? 'Overview'
 }
 
-export function ModuleDetailLayout({ id, title, family, detail, author, authorUrl, contributors, description, selected, onToggle, backHref, backLabel, preview, resources, notice, guide, issueReport, browse, onBackToResults, titleBadge, configureTarget, overviewIntro }: {
+export function ModuleDetailLayout({ id, title, family, detail, author, authorUrl, contributors, description, selected, onToggle, backHref, backLabel, preview, resources, notice, guide, issueReport, browse, onBackToResults, titleBadge, configureTarget, overviewIntro, addBlock, onSwap }: {
   browse?: CatalogBrowse | null; onBackToResults?: () => void
   id: string; title: string; family: string; detail: string; author: string; authorUrl: string; description: string
   contributors?: readonly ModuleContributor[]
@@ -36,9 +39,14 @@ export function ModuleDetailLayout({ id, title, family, detail, author, authorUr
   preview: ReactNode; resources: ReactNode; notice?: ReactNode; guide: ReactNode
   issueReport: (openRequest: number) => ReactNode
   overviewIntro?: ReactNode
+  // What adding this module would do to the current configuration; undefined when it fits.
+  addBlock?: AddBlock; onSwap?: (removeIds: readonly string[]) => void
 }) {
   const navigation = catalogNeighbors(browse, id, hasBetaAccess(useCommunity().session))
   const [tab, setTab] = useState<DetailTab>(linkedTab)
+  const pending = selected ? undefined : addBlock
+  const addTrigger = useRef<HTMLButtonElement>(null)
+  const prompt = useAddBlockPrompt(pending, addTrigger)
   const [issueOpenRequest, setIssueOpenRequest] = useState(0)
   const issues = useModuleIssues(id)
   const workingCount = useModuleWorksReports(id)
@@ -71,7 +79,14 @@ export function ModuleDetailLayout({ id, title, family, detail, author, authorUr
         <div className="module-creator"><ModuleAuthors name={author} url={authorUrl} contributors={contributors} by arrows><CreatorSupport key={id} id={id}/></ModuleAuthors></div>
         <p className="detail-description">{description}</p>
         {notice && <div className="detail-notice">{notice}</div>}
-        <button className={'button module-configure-action ' + (selected ? 'button-added' : 'button-primary')} onClick={configureTarget && !selected ? showConfiguration : onToggle} aria-pressed={selected}><Icon name={selected ? 'check' : configureTarget ? 'sliders' : 'plus'} size={16} />{selected ? 'Added to configuration' : configureTarget ? 'Configure ' + title : 'Add to configuration'}</button>
+        <div className="module-add-region">
+          {prompt.conflict
+            ? <button ref={addTrigger} className="button button-quiet module-configure-action is-conflict" onClick={prompt.toggle} aria-expanded={prompt.open} aria-controls={prompt.id}><Icon name="swap" size={16} /><span className="add-block-label">{prompt.conflict.reason}</span></button>
+            : <button className={'button module-configure-action ' + (selected ? 'button-added' : 'button-primary')} onClick={configureTarget && !selected ? showConfiguration : onToggle} aria-pressed={selected}><Icon name={selected ? 'check' : configureTarget ? 'sliders' : 'plus'} size={16} />{selected ? 'Added to configuration' : configureTarget ? 'Configure ' + title : 'Add to configuration'}</button>}
+          {pending && !prompt.conflict && <AddBlockChip block={pending} />}
+          {prompt.conflict && prompt.open && <AddBlockPrompt id={prompt.id} name={title} block={prompt.conflict} onCancel={prompt.close}
+            onSwap={() => { onSwap?.(prompt.conflict?.swapRemoveIds ?? []); prompt.close() }} onAddAnyway={() => { onToggle(); prompt.close() }} />}
+        </div>
         <ModuleUpdateButton id={id} compact />
         <ModuleFeedbackPanel workingCount={workingCount} workingAction={<ModuleWorksReportButton key={id} id={id}/>} onReportIssue={showIssueReport}/>
         <div className="detail-rating"><button className="text-button" onClick={showDiscussion}>Reviews & discussion{discussionBadge}</button></div>

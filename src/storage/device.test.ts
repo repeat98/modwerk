@@ -77,6 +77,20 @@ describe('device persistence', () => {
     expect((await restored.listConfigurations()).map(item => item.id)).toEqual([b.id])
     restoredDb.close()
   })
+  it('skips a configuration this version cannot read, reports it and keeps it stored', async () => {
+    const db = await openDeviceDatabase('test-' + crypto.randomUUID())
+    const store = deviceStore(db), readable = newConfiguration('Readable', ['miniverb'])
+    await store.saveConfiguration(readable)
+    // As saved before the catalog dropped a module: writing it directly skips today's validation.
+    const retired = { ...newConfiguration('Retired'), moduleIds: ['retired-module'], moduleVersions: { 'retired-module': '1.0.0' } }
+    await new Promise((resolve, reject) => { const tx = db.transaction('configurations', 'readwrite'); tx.objectStore('configurations').put(retired); tx.oncomplete = resolve; tx.onerror = reject })
+    const skipped: unknown[] = []
+    expect((await store.listConfigurations(error => skipped.push(error))).map(item => item.id)).toEqual([readable.id])
+    expect(skipped).toHaveLength(1)
+    const kept = await new Promise(resolve => { const request = db.transaction('configurations').objectStore('configurations').get(retired.id); request.onsuccess = () => resolve(request.result) })
+    expect(kept).toEqual(retired)
+    db.close()
+  })
   it('stores a binary locally and removes it permanently without touching configurations', async () => {
     const db = await openDeviceDatabase('test-' + crypto.randomUUID())
     const store = deviceStore(db)

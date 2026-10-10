@@ -21,6 +21,14 @@ function deviceId() {
 }
 
 export type Configuration = { id: string; name: string; device?: string; moduleIds: string[]; moduleVersions: Record<string,string>; keepStockFx2: boolean; usbAudio?: UsbAudioConfiguration; createdAt: string; updatedAt: string }
+/** What stays open after deleting a configuration: another one for the same machine, else any other, else a new empty one for
+ * that machine, so deleting a machine's last configuration never creates one for a different machine. */
+export function afterDeleting(configurations: Configuration[], id: string) {
+  const deleted = configurations.find(item => item.id === id), device = deleted ? configurationDevice(deleted) : DEFAULT_DEVICE
+  const remaining = configurations.filter(item => item.id !== id)
+  const next = remaining.find(item => configurationDevice(item) === device) ?? remaining[0] ?? newConfiguration('My configuration', [], DSP_LOADER, undefined, device)
+  return { remaining: remaining.includes(next) ? remaining : [...remaining, next], next }
+}
 export function newConfiguration(name: string, moduleIds: string[] = [], keepStockFx2 = DSP_LOADER, moduleVersions?: Record<string,string>, device = DEFAULT_DEVICE, usbAudio?: UsbAudioConfiguration): Configuration {
   const now = new Date().toISOString()
   return { id: deviceId(), name: cleanName(name), ...(device === DEFAULT_DEVICE ? {} : { device }), moduleIds: resolveIds(moduleIds, device).map(m => m.id), moduleVersions: moduleVersions ? normalizeModuleVersions(moduleIds,moduleVersions,device) : pinModuleVersions(moduleIds,device), keepStockFx2, ...usbSettings(moduleIds, device, usbAudio), createdAt: now, updatedAt: now }

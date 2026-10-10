@@ -2,7 +2,7 @@ import { useCommunity } from '../community/context'
 import { hasBetaAccess } from '../community/beta-access'
 import { trackConfigurationStarted } from '../community/usage'
 import { useEffect, useRef, useState } from 'react'
-import { newConfiguration, cleanName, pinModuleVersions, configurationDevice, DEFAULT_DEVICE } from '../config/workspace'
+import { afterDeleting, newConfiguration, cleanName, pinModuleVersions, configurationDevice, DEFAULT_DEVICE } from '../config/workspace'
 import { DEVICES_BY_ID } from '../devices/registry'
 import { isModuleAvailable } from '../catalog/availability'
 import type { Configuration } from '../config/workspace'
@@ -20,6 +20,7 @@ export function useWorkspace() {
   const [ready, setReady] = useState(false)
   const [saving, setSaving] = useState(false)
   const [storageError, setStorageError] = useState('')
+  const [unreadable, setUnreadable] = useState(0)
   const [firmware, setFirmware] = useState<FirmwareInspection | null>(null)
   const [fileState, setFileState] = useState<'empty' | 'reading' | 'ready' | 'error'>('empty')
   const [fileError, setFileError] = useState('')
@@ -50,7 +51,9 @@ export function useWorkspace() {
         database = db
         const store = deviceStore(db)
         storeRef.current = store
-        let items = await store.listConfigurations()
+        let skipped = 0
+        let items = await store.listConfigurations(() => skipped++)
+        setUnreadable(skipped)
         if (!items.length) { const item = newConfiguration('My first configuration'); await store.saveConfiguration(item); items = [item] }
         const rememberedId = await store.activeConfiguration()
         if (cancelled) return
@@ -142,12 +145,11 @@ export function useWorkspace() {
   }
   function deleteConfiguration() {
     const deleting = activeRef.current
-    const remaining = configsRef.current.filter(item => item.id !== deleting)
-    if (!remaining.length) remaining.push(newConfiguration('My configuration'))
-    replaceConfigurations(remaining); changeActive(remaining[0].id)
+    const { remaining, next } = afterDeleting(configsRef.current, deleting)
+    replaceConfigurations(remaining); changeActive(next.id)
     persist(async store => {
-      await store.saveConfiguration(remaining[0])
-      await store.setActiveConfiguration(remaining[0].id)
+      await store.saveConfiguration(next)
+      await store.setActiveConfiguration(next.id)
       await store.deleteConfiguration(deleting)
     })
   }
@@ -179,5 +181,5 @@ export function useWorkspace() {
     persist(store => store.forgetFirmware())
     void clientRef.current?.clear().catch(() => setFileError('The firmware reader stopped. Reload the page.'))
   }
-  return { firmwareClient: clientRef, setKeepStockFx2: (keepStockFx2: boolean) => updateActive({ keepStockFx2 }), configureUsbAudio, importConfiguration, configurations, active, ready, saving, storageError, selectConfiguration, createConfiguration, renameConfiguration, deleteConfiguration, toggleModule, firmware, fileState, fileError, setFileError, firmwareSaved, readFile, clearFile }
+  return { firmwareClient: clientRef, setKeepStockFx2: (keepStockFx2: boolean) => updateActive({ keepStockFx2 }), configureUsbAudio, importConfiguration, configurations, active, ready, saving, storageError, unreadable, selectConfiguration, createConfiguration, renameConfiguration, deleteConfiguration, toggleModule, firmware, fileState, fileError, setFileError, firmwareSaved, readFile, clearFile }
 }

@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import { execFileSync } from 'node:child_process'
-import { mkdtempSync, writeFileSync, rmSync, mkdirSync } from 'node:fs'
+import { existsSync, mkdtempSync, readFileSync, statSync, writeFileSync, rmSync, mkdirSync } from 'node:fs'
 import { tmpdir } from 'node:os'
-import { resolve } from 'node:path'
+import { dirname, relative, resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { classifyChanges, readChangeScope } from './change-scope.mjs'
 
 const digi = { id: 'demo', machine: 'digitakt', version: '1.0.0', name: 'Demo', author: { github: 'author' }, maintainers: ['author'],
@@ -12,6 +13,7 @@ const ot = { ...digi, key: 'DEMO', build: { status: 'verified' } }
 const modulePath = 'sdk/digitakt/modules/demo/modwerk.module.json'
 const change = (path, before = '', after = '') => ({ path, before: typeof before === 'string' || before === null ? before : JSON.stringify(before), after: typeof after === 'string' || after === null ? after : JSON.stringify(after) })
 const scope = (...changes) => classifyChanges(changes)
+const repository = fileURLToPath(new URL('..', import.meta.url))
 
 describe('documentation and firmware scheduling', () => {
   it.each(['octabam', 'digitakt', 'digitone'])('skips firmware and app checks for %s prose, screenshots and evidence', machine => {
@@ -20,9 +22,11 @@ describe('documentation and firmware scheduling', () => {
   })
   it('treats authored changelog data as documentation while retaining app checks for its renderer and validator', () => {
     expect(scope(change('src/community/module-changelogs.json'))).toEqual({ documentation: true, modules: false, elemod: false, windows: false, worker: false, logger: false })
-    for (const path of ['src/community/ModuleChangelog.tsx', 'src/community/module-changelogs.ts', 'scripts/module-changelogs.mjs']) {
+    for (const path of ['src/community/ModuleChangelog.tsx', 'scripts/module-changelogs.mjs']) {
       expect(scope(change(path))).toEqual({ documentation: false, modules: false, elemod: false, windows: false, worker: false, logger: false })
     }
+    // The Worker compiles the changelog loader for module release dates.
+    expect(scope(change('src/community/module-changelogs.ts')).worker).toBe(true)
   })
   it('recognizes manifest/gallery/tutorial edits plus their generated catalog as documentation', () => {
     const updated = { ...digi, presentation: { ...digi.presentation, usage: ['Better tutorial'] }, controls: [{ description: 'Clear label' }], media: [{ path: 'media/control.png' }], tests: { documentation: { tutorial: {} } } }
@@ -71,8 +75,31 @@ describe('documentation and firmware scheduling', () => {
     expect(scope(change('src/community/module-release-contract.ts')).worker).toBe(true)
     expect(scope(change('src/community/module-release-notes.ts')).worker).toBe(true)
     expect(scope(change('src/community/profile-links.ts')).worker).toBe(true)
+    expect(scope(change('src/support.ts')).worker).toBe(true)
     expect(scope(change('.github/module-authors.json')).worker).toBe(true)
     expect(scope(change('src/devices/DigiModDetail.tsx')).worker).toBe(false)
+  })
+  it('redeploys the Worker for every file it compiles', () => {
+    const sources = new Set(), queue = [resolve(repository, 'worker.ts')]
+    while (queue.length) {
+      const file = queue.pop()
+      if (sources.has(file)) continue
+      sources.add(file)
+      if (!/\.tsx?$/.test(file)) continue
+      for (const [, spec] of readFileSync(file, 'utf8').matchAll(/(?:import|export)\s[^'"]*?from\s*['"](\.[^'"]+)['"]/g)) {
+        const target = resolve(dirname(file), spec)
+        const found = [target, target + '.ts', target + '/index.ts'].find(path => existsSync(path) && statSync(path).isFile())
+        if (found) queue.push(found)
+      }
+    }
+    const paths = [...sources].map(file => relative(repository, file).replaceAll('\\', '/'))
+    expect(paths.length).toBeGreaterThan(100)
+    // Generated catalogs are compared field by field, and authored changelog prose deliberately skips the deploy.
+    const missed = paths.filter(path => !['src/catalog/module-documents.json', 'src/catalog/machine-modules.json', 'src/community/module-changelogs.json'].includes(path) && !scope(change(path, readFileSync(resolve(repository, path), 'utf8'), readFileSync(resolve(repository, path), 'utf8'))).worker)
+    expect(missed).toEqual([])
+  })
+  it('never treats an empty change set as documentation only', () => {
+    expect(scope().documentation).toBe(false)
   })
   it('compares compiler job bodies while ignoring scheduling-only changes', () => {
     const before = 'jobs:\n  elemod-source:\n    needs: old\n    if: old\n    steps:\n      - run: compile old\n  octatrack-source:\n    steps:\n      - run: compile OT\n'

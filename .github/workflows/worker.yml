@@ -1,30 +1,10 @@
 name: Deploy community Worker
-# Merging to main redeploys the account/forum API when its sources change.
+# Merging to main redeploys the account/forum API when its sources change. Every push runs the scope job, and
+# scripts/change-scope.mjs decides, so there is no second path list here to fall out of date.
 # Secrets stay attached to the Worker; only code and the vars below are replaced.
 on:
   push:
     branches: [main]
-    paths:
-      - 'server/**'
-      - 'migrations/**'
-      - 'worker.ts'
-      - 'wrangler.worker.jsonc'
-      - 'package-lock.json'
-      - 'src/legal/**'
-      # The API compiles this shared catalog; new frontend modules must be known to it.
-      - 'src/community/modules.ts'
-      - 'src/community/module-release-contract.ts'
-      - 'src/community/module-release-notes.ts'
-      - 'src/community/creator-support.ts'
-      - 'src/community/profile-links.ts'
-      - 'src/community/usage-pages.ts'
-      - 'src/config/support.ts'
-      - 'src/catalog/**'
-      - '!src/catalog/**/*.test.ts'
-      - 'src/devices/**'
-      - '!src/devices/**/*.test.ts'
-      - '.github/workflows/worker.yml'
-      - '.github/module-authors.json'
   workflow_dispatch:
 permissions:
   contents: read

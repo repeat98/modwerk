@@ -1,3 +1,4 @@
+import { configurationSummary } from './configuration-report'
 import { useEffect, useState } from 'react'
 import { api, apiFetch, post } from './api'
 import { isDigiIssue, FLASH_STATES, LOG_MISSING_REASONS, OT_MODELS } from './issue-context'
@@ -5,7 +6,7 @@ import type { IssueContext, LogMissingReason } from './issue-context'
 import { describeOtLog } from './ot-log'
 import type { OtLogSummary } from './ot-log'
 type Issue = {
-  id: string; module_id: string; author_login: string; title: string; body: string; status: string; reporter: string
+  id: string; module_id: string; scope?: 'module' | 'configuration'; module_count?: number; author_login: string; title: string; body: string; status: string; reporter: string
   context: IssueContext | null; log: OtLogSummary | null; log_missing: LogMissingReason | null; log_missing_note: string
   public_sharing: number; github_state: 'none' | 'pending' | 'syncing' | 'synced' | 'failed'; github_url: string | null; github_error: string
 }
@@ -34,7 +35,7 @@ export function IssueInbox({moduleId = '',onClearModule}: {moduleId?: string;onC
     {items.length===200 && <p className="service-note">Showing the latest 200 matching reports.</p>}
     {loading ? <p role="status">Loading reports…</p> : items.length ? items.map(item => <article className="inbox-issue" key={item.id}>
       <div className="section-title"><h3>{item.title}</h3><span className="pill">{item.status}</span></div>
-      <small>{item.module_id} · from {item.reporter} · for @{item.author_login}</small>
+      <small>{item.scope === 'configuration' ? 'Whole configuration · ' + configurationSummary(item.module_count ?? 0) : item.module_id} · from {item.reporter} · for @{item.author_login}</small>
       <p className="preserve-lines">{item.body}</p>
       <dl>
         {item.context && <><dt>Device</dt><dd>{isDigiIssue(item.context)?item.context.model:OT_MODELS[item.context.model]} · {FLASH_STATES[item.context.flash]} · OS {item.context.os}</dd>

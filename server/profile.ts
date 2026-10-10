@@ -54,6 +54,8 @@ export async function profileRoutes(request: Request, env: Env, db: Database, pa
     db.prepare('DELETE FROM module_working_reports WHERE user_id=?').bind(owner.id),
     db.prepare('DELETE FROM module_update_subscriptions WHERE user_id=?').bind(owner.id),
     db.prepare('DELETE FROM module_update_opt_outs WHERE user_id=?').bind(owner.id),
+    // GitHub action receipts reference reports without a cascade, so they go before the member's reports do.
+    db.prepare('DELETE FROM github_actions WHERE actor=? OR issue_id IN (SELECT id FROM issues WHERE reporter_id=?)').bind(owner.id, owner.id),
     ...tables.map(([table, column]) => db.prepare(`DELETE FROM ${table} WHERE ${column}=?`).bind(owner.id)),
     db.prepare('DELETE FROM conversations WHERE NOT EXISTS(SELECT 1 FROM conversation_members cm WHERE cm.conversation_id=conversations.id)'),
     db.prepare('DELETE FROM auth_users WHERE id=?').bind(owner.id),

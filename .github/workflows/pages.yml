@@ -30,7 +30,7 @@ jobs:
         with:
           node-version: 24
       - name: Verify owner or scoped module-author approval for this exact source commit
-        run: node scripts/verify-merge-approval.mjs "$RUNNER_TEMP/octamod-approval.json"
+        run: node scripts/verify-merge-approval.mjs
         env:
           GITHUB_TOKEN: ${{ github.token }}
           OCTAMOD_APPROVER_ID: ${{ vars.MODULE_APPROVER_GITHUB_ID }}

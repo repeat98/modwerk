@@ -48,7 +48,8 @@ export function notificationLines(items: BellItem[], link: (hash: string) => str
     else if (item.kind === 'bug_report') lines.push({ ...base, text: `New bug report for ${moduleName(item.module_id)} from ${actor}: ${quote(item.title)}`, excerpt: excerpt(item.excerpt), href: threadHref(item) })
     else if (item.kind === 'module_comment') lines.push({ ...base, text: `${actor} commented on ${moduleName(item.module_id)}`, excerpt: excerpt(item.excerpt), href: moduleHref(item.module_id) })
     else if (item.kind.startsWith('issue_')) {
-      const report = 'your bug report ' + quote(item.title), href = link('#account/report/' + item.issue_id)
+      const maintainer = item.issueReporter === false
+      const report = (maintainer ? 'the private report ' : item.issue_scope === 'configuration' ? 'your configuration report ' : 'your bug report ') + quote(item.title), href = link((maintainer ? '#developer/report/' : '#account/report/') + item.issue_id)
       const who = item.github_actor ? '@' + item.github_actor + ' on GitHub' : item.actor ? '@' + item.actor : 'A module developer'
       if (item.kind === 'issue_comment') lines.push({ ...base, text: `${who} replied to ${report}`, excerpt: excerpt(item.excerpt), href })
       else lines.push({ ...base, text: `${who} ${item.kind === 'issue_resolved' ? 'marked' : item.kind === 'issue_closed' ? 'closed' : 'reopened'} ${report}${item.kind === 'issue_resolved' ? ' as fixed' : ''}`, excerpt: null, href })

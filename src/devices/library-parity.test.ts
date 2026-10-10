@@ -8,9 +8,16 @@ import { ModuleComparison } from '../components/ModuleComparison'
 import { DEFAULT_MODULE_SORT } from '../community/module-statistics'
 import { DEVICES_BY_ID } from './registry'
 import { DIGI_MODS } from './digi-mods'
-import { AllMachinesLibrary, DigiLibrary, MachineLibrary } from './MachinePages'
+import { MachineLibrary } from './MachinePages'
 
 const noop = () => {}
+// The all-machines library is the machine library without a device; a Digi library is the same view with that machine's selection.
+const AllMachinesLibrary = MachineLibrary
+type DigiDevice = NonNullable<Parameters<typeof MachineLibrary>[0]['device']> & { id: 'digitakt' | 'digitone' }
+type DigiProps = { device: DigiDevice; selectedIds: string[]; onToggle: (id: string) => void } & Omit<Parameters<typeof MachineLibrary>[0], 'device' | 'octatrackModules' | 'octatrackSelected' | 'onToggleOctatrack' | 'digiSelected' | 'onToggleDigi' | 'octatrackConflicts' | 'viewedModuleVersions' | 'moduleBaseline'>
+function DigiLibrary({ device, selectedIds, onToggle, ...rest }: DigiProps) {
+  return createElement(MachineLibrary, { ...rest, device, octatrackModules: [], octatrackSelected: [], onToggleOctatrack: noop, digiSelected: { digitakt: device.id === 'digitakt' ? selectedIds : [], digitone: device.id === 'digitone' ? selectedIds : [] }, onToggleDigi: (_: string, id: string) => onToggle(id), octatrackConflicts: [], viewedModuleVersions: {}, moduleBaseline: null })
+}
 // Likes and downloads show the number beside an icon; the word is there for screen readers only.
 const count = (value: string, word: string) => value + '<span class="sr-only"> ' + word + '</span>'
 const props = {

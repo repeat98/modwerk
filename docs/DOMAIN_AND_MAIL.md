@@ -62,12 +62,15 @@ Before launch, send a verification email to a real inbox from a local Worker (`d
 
 ### 3. Mail: where support mail arrives
 
-The registrar default MX points at a Hetzner mail server with no mailbox, so mail to `@modwerk.app` bounces. Account mail is sent only, so it does not need one. A public support address does:
+The registrar's default MX points at a Hetzner mail server with no mailbox, so it cannot receive mail. Account mail is sent only, so it does not need one. A public support address does.
 
-- **Keep `jannik.assfalg@gmail.com`** as the public support contact until a forwarder is proven. This is the current setting (`src/support.ts`, used as the Reply-To of every account message and linked from the sign-in, privacy and account-removal pages).
-- **Or publish `support@modwerk.app`** (recommended, because it keeps a personal address off the site). Receiving needs a forwarding service, because Hetzner's domain-only registration includes no mailbox. A free forwarder such as ImprovMX or Forward Email replaces the root MX records and forwards the alias to the owner's inbox. Check the current free-tier terms and privacy policy first, and prefer one that keeps the destination address in its dashboard rather than in a public DNS record. Send a message to the alias from another account and confirm it arrives **before** changing `SUPPORT_EMAIL` in `src/support.ts`; this is a one-line change in the launch pull request.
+The public support contact is `support@modwerk.app` (`SUPPORT_EMAIL` in `src/support.ts`). It is the Reply-To of every account, news, activity and welcome message and is linked from the sign-in, privacy, account-removal, imprint, content-report and projects pages, so no personal address appears on the site. The owner's Gmail address was the contact from 3 October to 10 October 2026. Messages already sent keep their old Reply-To.
 
-After the forwarder works, `npm run domain:check -- mail` reports the inbound line green.
+Receiving uses Resend, which already sends for this domain. On 10 October 2026 the owner replaced the registrar's root MX with the record Resend shows under **Domains → modwerk.app → Enable Receiving** (`@  MX  9  inbound-smtp.eu-west-1.amazonaws.com.`, Ireland like the sending region). Resend accepts every address at the domain, so `support@` needs no separate setup, and sending is unaffected because it runs on the `send` subdomain. Received messages are listed under **Emails → Receiving** in the Resend dashboard and are retrievable through its API and an `email.received` webhook. Resend does not forward to another inbox by itself; that needs a webhook handler or a separate forwarding service.
+
+The owner released the switch of `SUPPORT_EMAIL` on 10 October 2026 while Resend still showed the receiving MX as pending, probably because its resolver held the old record's two-hour TTL. Resend drops mail for a receiving domain until that record is verified, so messages sent to `support@` before then may have been lost. Once the dashboard shows the record verified, send a test message from another account and confirm it appears under **Emails → Receiving**. `npm run domain:check -- mail` reports the inbound line green once the registrar MX is gone; that shows the record exists, not that mail arrives.
+
+The Worker reads `SUPPORT_EMAIL` at build time. `scripts/change-scope.mjs` counts every file the Worker compiles, `src/support.ts` included, so merging a change to it redeploys the Worker and the new Reply-To takes effect.
 
 ### 4. GitHub: verify the domain for Pages
 

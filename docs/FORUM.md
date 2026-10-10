@@ -118,6 +118,7 @@ One private `notifications` store (migration 0024, which replaces `forum_notific
 - likes on a member's posts;
 - comments, ratings and likes on a catalog module, for its current claimed maintainers, and new bug reports and their replies (unchanged delivery rules);
 - status changes on a member's own report, whether changed by an authorized maintainer/administrator in Modwerk or by the signed GitHub webhook;
+- replies on a private report: the reporter hears when a maintainer or administrator replies, and the report's current claimed maintainers hear when the reporter replies, while the report stays shared with them;
 - new published versions of a module the member follows.
 
 Module pages offer **Get update notifications** and **Following updates · Unfollow**. This follows releases independently of discussion replies. The report form offers a checked release-follow option; declining it leaves an existing follow alone. Migration 0034 follows modules reported by existing verified members, starting at the first observed live version without replaying historical releases. Account export includes these follows; account deletion removes them.
