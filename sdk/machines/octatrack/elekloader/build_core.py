@@ -22,6 +22,7 @@ FIELDS = {'build': 17, 'os': 17, 'modules': 4096, 'configuration': 65,
 # RAM boot (boot.s): the gate replaces the OS entry's `movea.l #0x48000000,%sp`.
 BOOT_GATE = (0x40000412, '2e7c48000000')
 OS_FIRST, OS_VEROFF, BOOT_IMAGE_BYTES = 0x4fefffe4, 0xde648, 0x140000  # boot.s, boot.h
+BOOT_RESERVE = (0x40a955e0, 0x41495de0)  # boot.s RESERVE_LO/HI: the gate scans only there
 # REMIX SWITCH's DSP park (dsp_park.asm, assembled by Octabam's dsp_asm), by
 # P address, written into both payloads over dead `jmp *` vectors.
 DSP_PARK = {
@@ -266,6 +267,9 @@ modwerk_retained_end:
         if sha(target.read_bytes()) != sha(data):
             raise ValueError('Saved file hash differs.')
     (out/'symbols.json').write_text(json.dumps(mapping, indent=2)+'\n')
+    stage = mapping['modwerk_boot_stage']
+    if stage % 16 or not BOOT_RESERVE[0] <= stage <= BOOT_RESERVE[1] - 320 - BOOT_IMAGE_BYTES:
+        raise ValueError('The RAM boot stage at %#x is outside the reserve the gate scans.' % stage)
     # The unpacked image a RAM boot sends (`npm run device -- boot`); private like the rest.
     main_out = formats.main_image(formats.parse(str(out/'NOT_FLASH_CANDIDATE.bin'), device), device)
     if (int.from_bytes(main_out[:4], 'big') != OS_FIRST or len(main_out) > BOOT_IMAGE_BYTES or

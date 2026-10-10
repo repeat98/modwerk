@@ -29,9 +29,14 @@
         .set    STAGE_STUB,  64             | the copy stub runs here, outside the image it overwrites
         .set    STAGE_IMAGE, 320            | the staged image
         .set    STAGE_MAX,   0x140000       | its maximum length (boot.h)
+| Where any base's stage can be: Octabam's platform reserve (Elekloader's
+| core RAM starts at its bottom). The gate scans it, so a base can arm a boot
+| that another base's gate runs (the flashed one runs after every reset).
+        .set    RESERVE_LO,  0x40a955e0
+        .set    RESERVE_HI,  0x41495de0
+        .set    USBCMD,      0xfc0b0140     | bit 0 RS: the controller runs (D+ pulled up)
 
         .set    ST_BOOT,     0x424f4f54     | "BOOT" handed over
-        .set    ST_NONE,     0x4e4f4e45     | "NONE" no mailbox, or one that does not check out
         .set    ST_SIZE,     0x53495a45     | "SIZE"
         .set    ST_BVER,     0x42564552     | "BVER" its bootstrap version is not NOR's: it would reflash the bootstrap
         .set    ST_HASH,     0x48415348     | "HASH" the stage changed between arming and the boot
@@ -61,24 +66,37 @@
 
 | ---- the gate, at the OS entry (site 0x40000412) ---------------------------
 | Nothing has run yet: no DSP upload, no cache set-up, no interrupts, and
-| core's boot has not cleared .bss. With a mailbox, spend it first, so an
-| image that hangs costs one reset, never a loop; then check the stage and
-| hand over, or record why not and resume the entry. Never a hang.
+| core's boot has not cleared .bss. Scan the reserve for mailboxes (16-byte
+| aligned) and spend every one found first, so an image that hangs costs one
+| reset, never a loop, and no stale mailbox survives; with exactly one, check
+| the stage and hand over, or record why not and resume the entry. Never a
+| hang. About 0.1 s with the caches still off.
         .section .boot, "ax"
         .globl  modwerk_boot_gate
 modwerk_boot_gate:
-        lea     (modwerk_boot_stage+UNCACHED).l,%a1
-        move.l  (MB_MAGIC,%a1),%d0
-        cmpi.l  #BOOT_MAGIC,%d0
-        bne.w   g_none
+        lea     (RESERVE_LO+UNCACHED).l,%a1
+        suba.l  %a2,%a2
+        moveq   #0,%d4                  | mailboxes found
+        move.l  #BOOT_MAGIC,%d1
+3:      cmp.l   (MB_MAGIC,%a1),%d1
+        bne.s   4f
+        move.l  (MB_LEN,%a1),%d0
+        eor.l   %d1,%d0
+        move.l  (MB_HASH,%a1),%d2
+        eor.l   %d2,%d0
+        cmp.l   (MB_CHECK,%a1),%d0
+        bne.s   4f                      | random DRAM, not a mailbox
         clr.l   (MB_MAGIC,%a1)          | one-shot, before anything below can fail
+        movea.l %a1,%a2
+        addq.l  #1,%d4
+4:      lea     (16,%a1),%a1
+        cmpa.l  #RESERVE_HI+UNCACHED,%a1
+        bcs.s   3b
+        subq.l  #1,%d4
+        bne.w   g_quiet                 | none, or several: boot this image
+        movea.l %a2,%a1
         move.l  (MB_LEN,%a1),%d2
         move.l  (MB_HASH,%a1),%d3
-        move.l  #BOOT_MAGIC,%d0
-        eor.l   %d2,%d0
-        eor.l   %d3,%d0
-        cmp.l   (MB_CHECK,%a1),%d0
-        bne.w   g_none
         cmpi.l  #STAGE_MAX,%d2
         bhi.w   g_size
         cmpi.l  #OS_VEROFF+2,%d2
@@ -124,9 +142,6 @@ modwerk_boot_gate:
         lea     (OS_ENTRY).l,%a2
         move.l  %d2,%d0
         jmp     (%a3)
-g_none:
-        move.l  #ST_NONE,%d0
-        bra.s   g_resume
 g_size:
         move.l  #ST_SIZE,%d0
         bra.s   g_resume
@@ -140,6 +155,7 @@ g_hash:
         move.l  #ST_HASH,%d0
 g_resume:
         move.l  %d0,(MB_STATUS,%a1)
+g_quiet:
         movea.l #0x48000000,%sp         | the displaced instruction
         jmp     (OS_RESUME).l
 
@@ -211,7 +227,15 @@ modwerk_boot_reset:
         move.l  #0x00400000,%d0         | ~20 ms for the panel to act on it (REMIX SWITCH's count)
 7:      subq.l  #1,%d0
         bne.s   7b
-9:      lea     (modwerk_boot_stage+UNCACHED).l,%a1
+        | USB off before the reset: the host sees a clean unplug, and the
+        | controller is at rest when stock's start-up brings it up again.
+9:      move.l  (USBCMD).l,%d0
+        bclr    #0,%d0
+        move.l  %d0,(USBCMD).l
+        move.l  #0x00a00000,%d0         | ~50 ms (REMIX SWITCH's 0x00400000 is ~20)
+6:      subq.l  #1,%d0
+        bne.s   6b
+        lea     (modwerk_boot_stage+UNCACHED).l,%a1
         move.l  #RS_RCR,%d0
         move.l  %d0,(MB_RESET,%a1)
         move.b  #0x80,%d0

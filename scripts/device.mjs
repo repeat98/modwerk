@@ -67,19 +67,21 @@ async function trial(session, pkg) {
   return session.leaveUploadMode()
 }
 
-/** After a RAM boot: wait for the unit to come back reporting `expected` as its base. */
-async function booted(expected) {
-  bench.socket.end()
-  for (const start = Date.now(); Date.now() - start < 60000; await wait(1000)) {
-    const again = new Bench(values.socket)
+/** After a RAM boot: wait until the unit has gone away and come back far enough to answer HELLO. */
+let backBench
+async function rebooted() {
+  let gone = false
+  for (const start = Date.now(); Date.now() - start < 60000; await wait(500)) {
+    const again = backBench = new Bench(values.socket)
     try {
       await again.ready()
       const d = device(again), i = findVendorInterface(await enumerate(again, true))
-      const base = (await new UsbVendorTransport(d, i, { pollMs: 5 }).identify()).base
-      if (base === expected) return console.log(`booted: base ${base.slice(0, 16)}…`)
-    } catch { /* still restarting */ } finally { again.socket.end() }
+      const t = new UsbVendorTransport(d, i, { pollMs: 5 }), base = (await t.identify()).base
+      if (gone) return { base, session: await UploadSession.connect(t, base, { timeoutMs: 60000 }) } // the engine refuses until it runs
+      again.socket.end()
+    } catch { gone = true; again.socket.end() }
   }
-  throw new Error('The unit did not come back with the new base within 60 s; a power cycle boots the flashed base.')
+  throw new Error('The unit did not come back within 60 s; a power cycle boots the flashed base.')
 }
 
 try {
@@ -104,17 +106,33 @@ try {
     const expected = JSON.parse(readFileSync(join(file, 'proofs.json'), 'utf8')).configurationHash
     if (image.length < 4 || new DataView(image.buffer, image.byteOffset).getUint32(0) !== 0x4fefffe4)
       throw new Error(join(file, 'MAIN.raw') + ' is not an OS image.')
-    let shown = 0
-    await session.stage({ base: identity.base, data: image, sha256: sha(image) }, { signal: interrupt.signal, progress: (done, total) => {
-      if (Math.floor(10 * done / total) > shown) console.log(`  staged ${10 * (shown = Math.floor(10 * done / total))}%`)
-    } })
-    await session.activate() // the base arms the boot and resets half a second later
-    console.log(`armed: the unit restarts into ${expected.slice(0, 16)}… from RAM; a power cycle returns to the flashed base`)
-    if (!values.emulator) await booted(expected)
-    else await wait(3000) // ot_emu stops when the client hangs up; let the reset run first
+    const arm = async (s, base) => {
+      let shown = 0
+      await s.stage({ base, data: image, sha256: sha(image) }, { signal: interrupt.signal, progress: (done, total) => {
+        if (Math.floor(10 * done / total) > shown) console.log(`  staged ${10 * (shown = Math.floor(10 * done / total))}%`)
+      } })
+      await s.activate() // the base arms the boot and resets half a second later
+      console.log(`armed: the unit restarts into ${expected.slice(0, 16)}… from RAM; a power cycle returns to the flashed base`)
+    }
+    await arm(session, identity.base)
+    if (values.emulator) await wait(3000) // ot_emu stops when the client hangs up; let the reset run first
+    else {
+      bench.socket.end()
+      let back = await rebooted()
+      // Only the flashed base's gate reads the mailbox, at its own address: armed from a RAM-booted base,
+      // the boot falls back to the flashed one, which can then arm it properly.
+      if (back.base !== expected && back.base !== identity.base) {
+        console.log(`came back on the flashed base ${back.base.slice(0, 16)}…: arming again from it`)
+        await arm(back.session, back.base)
+        backBench.socket.end()
+        back = await rebooted()
+      }
+      if (back.base !== expected) throw new Error(`The unit came back on base ${back.base.slice(0, 16)}…, not the one sent; a power cycle boots the flashed base.`)
+      console.log(`booted: base ${expected.slice(0, 16)}…`)
+    }
   }
 } catch (error) {
   console.error(error.message, error.cause?.message ?? '')
   console.error('If a module was left in trial, unplug USB: the base rolls back anything not accepted.')
   process.exitCode = 1
-} finally { bench.socket.end() }
+} finally { bench.socket.end(); backBench?.socket.end() }

@@ -438,6 +438,28 @@ Development and tests on the owner's unit must never brick it:
 - A crash or freeze from a bad module costs a power cycle, never the flash.
   Unplugging USB rolls back anything not accepted.
 
+### RAM boot on hardware: USB after the soft reset (10 October 2026)
+
+Of about six RAM boots on the owner's MKII with `usbtest7` flashed, one came
+back with the screen working but no USB: the Mac saw no device, a replug did
+not help, a power cycle did (same port). The likely cause is that the soft
+reset restarts the ColdFire but leaves the USB controller (and its PHY) as
+they were, while stock's start-up expects them as after power-on. Also, a
+boot armed by a RAM-booted base fell back to the flashed base, because the
+flashed base's gate read the mailbox only at its own stage address, which
+moves between builds.
+
+`usbtest9` changes both: before the reset the base stops the USB controller
+(USBCMD.RS = 0) and waits about 50 ms, so the host sees a clean unplug; and
+the gate scans Octabam's platform reserve (`0x40a955e0`-`0x41495de0`, 16-byte
+steps, about 0.1 s with the caches off) and spends every mailbox it finds,
+booting only when exactly one checks out. The build refuses a stage outside
+that range. In the emulator: the proof image boots from a mailbox at the
+base's own stage and at another address; two mailboxes, a flipped byte and
+another bootstrap version each boot the base instead. Not yet on the unit.
+`npm run device -- boot` now waits for the unit to go away and answer HELLO
+again, and re-arms once from the flashed base if a boot falls back to it.
+
 ### Windows without a driver (10 October 2026)
 
 The base reports USB 2.10 from its own copy of the device descriptor (one
