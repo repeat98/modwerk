@@ -177,6 +177,12 @@ static void recover(void)
         }
         *(volatile uint8_t *)0xfc04401du = 0; /* CERR: channel 0 */
         modwerk_dsp_edma_errors = modwerk_dsp_edma_errors + 1;
+    } else if (dl_phase && !(*(volatile uint16_t *)0xfc04501eu & 0x80u)) {
+        /* No error, but channel 0 never finished (TCD0 not DONE): the selected DSP never took the
+         * words, so the transfer waits on the host handshake for ever. Cancel it to free the channel
+         * and the host port; the job is abandoned and the loader shut off below. */
+        modwerk_dsp_edma_es = EDMA_ES;
+        *(volatile uint32_t *)0xfc044000u |= 1u << 17; /* eDMA CR: cancel the running transfer */
     }
     for (unsigned core = 0; core < 2; ++core) {
         DSP_SELECT = (uint8_t)core;

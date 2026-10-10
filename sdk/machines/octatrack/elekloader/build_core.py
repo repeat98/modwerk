@@ -281,9 +281,10 @@ def main():
                         help='Development base: drive and watch the unit over USB (dev.c) and stream MAIN/CUE as USB audio. Never for users.')
     parser.add_argument('--dsp-hook', choices=tuple(DSP_HOOK_EDITS), default='guard',
                         help="with --dsp-loader: the state-7 entry, guard (default); usbin, pretend, noflags, long: hardware bisect variants")
-    parser.add_argument('--dsp-probe', choices=('A', 'B', 'S'),
+    parser.add_argument('--dsp-probe', choices=('A', 'B', 'S', 'W'),
                         help='Hardware probe of the DSP loader (dsp_loader.PROBES): A delivery only, B answer only, '
-                             'S stock DSP payloads (the ColdFire transport alone; nothing answers).')
+                             'S stock DSP payloads (the ColdFire transport alone; nothing answers); '
+                             'W full loader, but one word per upload packet to pinpoint a rejected word.')
     parser.add_argument('--dsp-loader', action='store_true',
                         help='Load module DSP effects on demand; takes PLATE, SPRING and DARK REV off FX2 (needs ELEKLOADER_DSP_ASM, Node 24).')
     args = parser.parse_args()
@@ -354,7 +355,15 @@ def main():
         loader_dsp = importlib.util.module_from_spec(spec); spec.loader.exec_module(loader_dsp)
         for name in DYNLOAD_SOURCES + ('hooks.s',):
             text = (DYNLOAD / name).read_text()
-            for old, new in DSP_EDITS.get(name, ()) + DSP_HOOK_EDITS[args.dsp_hook].get(name, ()):
+            edits = DSP_EDITS.get(name, ()) + DSP_HOOK_EDITS[args.dsp_hook].get(name, ())
+            if name == 'transfer.c' and args.dsp_probe == 'W':
+                # One word per upload packet: the count of accepted packets before a reject is the exact
+                # index of the first word the DSP read back wrong (device report rejected0/accepted0).
+                edits += (('unsigned n=j->upload.count-j->position;\n            if(n>DL_DATA) n=DL_DATA;',
+                           'unsigned n=j->upload.count-j->position;\n            if(n>1) n=1;'),
+                          ('unsigned n=jobs[c].upload.count-jobs[c].position;\n                        if(n>DL_DATA) n=DL_DATA;',
+                           'unsigned n=jobs[c].upload.count-jobs[c].position;\n                        if(n>1) n=1;'))
+            for old, new in edits:
                 if text.count(old) != 1:
                     raise ValueError('Octabam DSP loader seam changed in %s; review the port.' % name)
                 text = text.replace(old, new)
@@ -364,7 +373,7 @@ def main():
             if int.from_bytes(image[lea - device.main_load:lea - device.main_load + 4], 'big') != stock_list:
                 raise ValueError('An FX selector no longer reads its chooser list at %#x.' % lea)
         dsp_sites, dsp_layout = loader_dsp.recipe(image, device, dsp, lambda path: sdk.dsp_assemble(path, str(source)), str(source),
-                                                  None if args.dsp_probe == 'S' else args.dsp_probe)
+                                                  args.dsp_probe if args.dsp_probe in ('A', 'B') else None)
         chooser_sites, rows = loader_dsp.choosers(image)
         dsp_sites += chooser_sites
     (source/'usb_base.h').write_text(usb.header())
