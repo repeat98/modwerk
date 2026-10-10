@@ -68,8 +68,9 @@ checked byte for byte against Elekloader's static link. On the owner's MKII
 ([record](OCTATRACK_ELEKLOADER_MIGRATION.md#catalogue-modules-patching-stock-code-at-load-time-10-october-2026)).
 A host that goes quiet for 10 s mid-upload or mid-trial is now handled as
 unplugged (`usbtest6`, checked in the emulator and on the owner's MKII). Next: the rest of the fail-safe
-sync requirements, the sync mode on the unit, and folding USB MIDI and USB Audio
-into the base. The target user flow (sync mode on the unit,
+sync requirements, the site connecting by itself (no mode on the unit, owner
+10 October), and folding USB MIDI and USB Audio
+into the base. The target user flow (automatic connection,
 WebUSB, module loading, automated checks, automatic failure reports and
 issues) and its gaps are in the
 [migration record](OCTATRACK_ELEKLOADER_MIGRATION.md#end-user-workflow-owner-10-october-2026),

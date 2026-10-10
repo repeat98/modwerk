@@ -826,21 +826,21 @@ explicit trial-acceptance rules still apply.
 
 ## End-user workflow (owner, 10 October 2026)
 
-The target for the browser flow: the user opens a sync mode on the unit,
-connects over WebUSB, loads new modules, the site runs automated stress and
+The target for the browser flow: the site connects to the unit over WebUSB
+by itself, loads new modules, the site runs automated stress and
 bug checks, and failed attempts are uploaded and filed as issues
 automatically. Base installs and base updates (including USB MIDI/Audio
 changes) remain a card OS install.
 
 | Step | Built (emulator only) | Still needed | Rules |
 | --- | --- | --- | --- |
-| 1. Sync mode on the unit | Upload mode entered by the host's ENTER while nothing plays or records | A MODWERK SYNC entry in the unit's menus (REMIX SWITCH's BRAIN rows are a reference) that shows the session, holds transport and recording, and is the only state in which state-changing commands are accepted; leaving it on the unit leaves upload mode and rolls back an unaccepted trial | Physical presence gates every write. IDENTIFY, HELLO and DIAG stay read-only and always available; stock MIDI recovery is untouched |
+| 1. Connect automatically | Upload mode entered by the host's ENTER while nothing plays or records | The site finds a unit it was granted before (`navigator.usb.getDevices()`, the `connect` event) and connects without a prompt; Chrome's device chooser appears once per site, on a click, and cannot be skipped. The unit may show that a host is linked | No mode to open on the unit (owner, 10 October 2026: the site should just connect). Writes need a stopped unit and a host the user granted the device to. IDENTIFY, HELLO and DIAG stay read-only; stock MIDI recovery is untouched |
 | 2. Connect over WebUSB | `UsbVendorTransport`, the session client and a Chrome test page (`dev/octatrack-usb.html`) | Site UI on the configuration page, Chrome/Edge only; Windows WinUSB binding; the first hardware run | Claim only the vendor interface; a mismatched base identity is refused before any write |
 | 3. Load new modules | One runtime module with tick, draw, key and encoder hooks, its own data and relocations, and patches to stock code ([machine-neutral loader](../sdk/runtime/loader/README.md)): load, trial, accept, replace, roll back and remove without a reboot; catalogue ColdFire modules converted by Elekloader | Data-table patches, modules that add to the core's tables, MIDI and audio-frame hooks, runtime DSP allocation (sequence step 3), several modules at once, ledger memory, a browser builder | The previous set stays live until acceptance; refusals happen before dispatch changes |
-| 4. Automated stress and bug checks | DIAG counters, emulator checks, Octabam's MIDI/audio hardware tools | A test runner driven over the vendor interface in sync mode: bounded transport and parameter actions on a generated test project, CPU/DSP load and audio-path counters, a trial verdict per module | Never write the user's projects. A failed check rolls back automatically; acceptance stays an explicit user action unless the owner changes that rule |
+| 4. Automated stress and bug checks | DIAG counters, emulator checks, Octabam's MIDI/audio hardware tools | A test runner driven over the vendor interface: bounded transport and parameter actions on a generated test project, CPU/DSP load and audio-path counters, a trial verdict per module | Never write the user's projects. A failed check rolls back automatically; acceptance stays an explicit user action unless the owner changes that rule |
 | 5. Upload failures, open issues | `OCTAMOD.LOG` format, the strict browser/Worker parser, the report API and GitHub issue mirroring with author commands | Read the logger ring and test results over USB (a bounded read command) instead of from the card; a run report bound to the exact base and module identities; automatic submission after a one-time opt-in, de-duplicated by failure signature and version into existing reports for the module's author | Show the user what is sent. Never upload firmware, stock bytes, projects, samples or audio. Reuse the existing sanitized report contract and rate limits |
 
-Sync mode must survive disconnects, dropouts, faulty cables and host USB
+The connection must survive disconnects, dropouts, faulty cables and host USB
 driver failures (owner, 10 October 2026). The unit must never wait on the
 host and must end every interruption in a known, working state.
 
@@ -861,7 +861,7 @@ Node WebUSB implementation is a new dependency to review) and the emulator
 through the bench socket that `scripts/verify-octatrack-vendor-client.mjs`
 already uses, so the same commands work on both. It follows the
 [safe-access contract](#modwerks-own-interface-for-safe-agent-access): the
-sync-mode gate, base identity binding, bounded commands and no raw memory
+base identity binding, bounded commands and no raw memory
 access.
 
 The first version is `npm run device` ([`scripts/device.mjs`](../scripts/device.mjs)),
@@ -873,8 +873,7 @@ stage, publish, run the trial while printing DIAG, then roll back unless
 anything not accepted. All four commands passed on the owner's MKII
 (`usbtest3`, 10 October 2026), including Ctrl-C during an `--accept` trial.
 `--emulator` drives `ot_emu`'s bench socket instead (one command per
-emulator run). Not yet built: `logs`, a module file that names its base, and
-the sync-mode gate.
+emulator run). Not yet built: `logs` and a module file that names its base.
 
 Down the road the interface should cover every supported machine. The
 frames, sessions, IDENTIFY's model and capability fields, the transport's
