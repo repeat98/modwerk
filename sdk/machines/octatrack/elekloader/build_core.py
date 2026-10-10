@@ -276,8 +276,9 @@ def main():
                         help='Development base: drive and watch the unit over USB (dev.c) and stream MAIN/CUE as USB audio. Never for users.')
     parser.add_argument('--dsp-hook', choices=tuple(DSP_HOOK_EDITS), default='guard',
                         help="with --dsp-loader: the state-7 entry, guard (default); usbin, pretend, noflags, long: hardware bisect variants")
-    parser.add_argument('--dsp-probe', choices=('A', 'B'),
-                        help='Hardware probe of the DSP loader (dsp_loader.PROBES): A delivery only, B answer only.')
+    parser.add_argument('--dsp-probe', choices=('A', 'B', 'S'),
+                        help='Hardware probe of the DSP loader (dsp_loader.PROBES): A delivery only, B answer only, '
+                             'S stock DSP payloads (the ColdFire transport alone; nothing answers).')
     parser.add_argument('--dsp-loader', action='store_true',
                         help='Load module DSP effects on demand; takes PLATE, SPRING and DARK REV off FX2 (needs ELEKLOADER_DSP_ASM, Node 24).')
     args = parser.parse_args()
@@ -358,7 +359,7 @@ def main():
             if int.from_bytes(image[lea - device.main_load:lea - device.main_load + 4], 'big') != stock_list:
                 raise ValueError('An FX selector no longer reads its chooser list at %#x.' % lea)
         dsp_sites, dsp_layout = loader_dsp.recipe(image, device, dsp, lambda path: sdk.dsp_assemble(path, str(source)), str(source),
-                                                  args.dsp_probe)
+                                                  None if args.dsp_probe == 'S' else args.dsp_probe)
         chooser_sites, rows = loader_dsp.choosers(image)
         dsp_sites += chooser_sites
     (source/'usb_base.h').write_text(usb.header())
@@ -472,7 +473,7 @@ modwerk_retained_end:
             if sha(stock) != guard:
                 raise ValueError('Stock bytes at %#x are not the ones the DSP loader hooks.' % addr)
             recipe['sites'].append(dict(addr=hex(addr), stock=stock.hex(), op='jmp', target=label))
-        recipe['sites'] += dsp_sites
+        recipe['sites'] += [] if args.dsp_probe == 'S' else dsp_sites
     spec = importlib.util.spec_from_file_location('modwerk_startup', artwork.parent/'build.py')
     startup = importlib.util.module_from_spec(spec); spec.loader.exec_module(startup)
     for guard, authored in startup.writes():
