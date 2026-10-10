@@ -107,6 +107,12 @@ def check(b, base, hs, sessions):
     results['identify length refused'] = stalls(lambda: b.ctrl_in(VENDOR_IN, IDENTIFY, 0, vendor, 64))
     results['identify value refused'] = stalls(lambda: b.ctrl_in(VENDOR_IN, IDENTIFY, 1, vendor, 72))
     results['other interface refused'] = stalls(lambda: b.ctrl_in(VENDOR_IN, IDENTIFY, 0, usb.MSC_INTERFACE, 72))
+    # What Windows reads before it binds WinUSB to the vendor interface.
+    results['device reports USB 2.10'] = answers(lambda: b.ctrl_in(0x80, 6, 0x0100, 0, 18), usb.device())
+    results['BOS header'] = answers(lambda: b.ctrl_in(0x80, 6, 0x0f00, 0, 5), usb.bos()[:5])
+    results['BOS'] = answers(lambda: b.ctrl_in(0x80, 6, 0x0f00, 0, 255), usb.bos())
+    results['Microsoft OS 2.0 set'] = answers(lambda: b.ctrl_in(0xc0, usb.MS_VENDOR_CODE, 0, usb.MS_OS_20_INDEX,
+                                                                len(usb.msos20())), usb.msos20())
 
     s = Submitter(b)
     hello = s.exchange(frame(0))

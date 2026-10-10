@@ -103,7 +103,7 @@ class UsbBaseTests(unittest.TestCase):
     def test_assembly_aligns_each_table_and_keeps_the_stock_rejoins(self):
         text = self.usb.assembly()
         self.assertIn('.set modwerk_cfg_len, 41', text)
-        self.assertEqual(text.count('    .balign 64\n'), 4)
+        self.assertEqual(text.count('    .balign 64\n'), 7)  # four configurations, device, BOS, MS OS 2.0 set
         for name in self.usb.tables():
             self.assertIn('\n%s:\n' % name, text)
         for rejoin in ('0x4001d864', '0x4001d8a2', '0x4001de5c', '0x4001de6a', '0x4001de74',
@@ -116,6 +116,7 @@ class UsbBaseTests(unittest.TestCase):
         for addr, length, _, _ in self.usb.DETOURS:
             stock[addr] = bytes(range(addr & 0xff, (addr & 0xff) + length))
         stock[self.usb.CACR_GUARD[0]] = bytes(self.usb.CACR_GUARD[1])
+        stock[0x400e2000] = self.usb.STOCK_DEVICE
         stock.update(changes)
         return stock, lambda addr, n: stock[addr][:n]
 
@@ -133,7 +134,7 @@ class UsbBaseTests(unittest.TestCase):
         self.setUpGuards(stock)
         sites = self.usb.sites(image_at)
         self.assertEqual([s['target'] for s in sites if s['op'] == 'ptr'],
-                         ['modwerk_cfg_fs', 'modwerk_cfg_hs', 'modwerk_cfg_os_hs', 'modwerk_cfg_os_fs'])
+                         ['modwerk_cfg_fs', 'modwerk_cfg_hs', 'modwerk_cfg_os_hs', 'modwerk_cfg_os_fs', 'modwerk_device'])
         jumps = [s for s in sites if s['op'] == 'jmp']
         self.assertEqual([s['target'] for s in jumps], ['modwerk_usb_clamp1', 'modwerk_usb_clamp2', 'modwerk_ep0_shim',
                                                         'modwerk_ep0_poll_shim', 'modwerk_bus_reset_shim',
@@ -149,6 +150,28 @@ class UsbBaseTests(unittest.TestCase):
             _, image_at = self.image(changes)
             with self.subTest(changes=list(changes)), self.assertRaisesRegex(ValueError, 'not stock'):
                 self.usb.sites(image_at)
+        _, image_at = self.image({0x400e2000: self.usb.STOCK_DEVICE[:-1] + b'\x02'})
+        with self.assertRaisesRegex(ValueError, 'device descriptor'):
+            self.usb.sites(image_at)
+
+    def test_windows_descriptors_bind_winusb_to_the_vendor_interface(self):
+        import struct, uuid
+        dev, bos, ms = self.usb.device(), self.usb.bos(), self.usb.msos20()
+        self.assertEqual(dev[2:4], b'\x10\x02')  # USB 2.10: Windows reads BOS
+        self.assertEqual(dev[:2] + dev[4:], self.usb.STOCK_DEVICE[:2] + self.usb.STOCK_DEVICE[4:])
+        self.assertEqual(bos[:5], bytes([5, 0x0f, len(bos), 0, 1]))
+        self.assertEqual(bos[9:25], uuid.UUID('D8DD60DF-4589-4CC7-9CD2-659D9E648A9F').bytes_le)
+        self.assertEqual(struct.unpack('<IHBB', bos[25:33]), (0x06030000, len(ms), self.usb.MS_VENDOR_CODE, 0))
+        # Every MS OS 2.0 length field covers exactly what follows it.
+        self.assertEqual(struct.unpack('<HHIH', ms[:10]), (10, 0, 0x06030000, len(ms)))
+        self.assertEqual(struct.unpack('<HHBBH', ms[10:18]), (8, 1, 0, 0, len(ms) - 10))
+        self.assertEqual(struct.unpack('<HHBBH', ms[18:26]), (8, 2, self.usb.VENDOR_INTERFACE, 0, len(ms) - 18))
+        self.assertEqual(ms[26:46], struct.pack('<HH', 20, 3) + b'WINUSB' + bytes(10))
+        prop = ms[46:]
+        self.assertEqual(struct.unpack('<HHHH', prop[:8]), (len(prop), 4, 7, 42))
+        self.assertEqual(prop[8:50].decode('utf-16-le'), 'DeviceInterfaceGUIDs\0')
+        self.assertEqual(prop[52:].decode('utf-16-le'), str(uuid.UUID(self.usb.INTERFACE_GUID)).upper().join('{}') + '\0\0')
+        self.assertTrue(len(bos) % 64 and len(ms) % 64)  # never a whole number of EP0 packets
 
 
 

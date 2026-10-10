@@ -114,6 +114,25 @@ static int diag(const uint8_t *s, uint8_t *out)
     return 1;
 }
 
+/* What Windows asks before it binds WinUSB to the vendor interface: the BOS
+ * descriptor (GET_DESCRIPTOR 0x0F) and the Microsoft OS 2.0 descriptor set
+ * (vendor device request, wIndex 7); both from usb_base.py. Replies are cut
+ * to wLength, so neither needs a zero-length packet. */
+static uint32_t windows(const uint8_t *s, uint8_t *out)
+{
+    const uint8_t *blob;
+    uint32_t n, want = s[6] | (uint32_t)s[7] << 8;
+    if (s[0] == 0x80 && s[1] == 6 && s[3] == 0x0f && !s[2] && !s[4] && !s[5])
+        blob = modwerk_bos, n = MODWERK_BOS_BYTES;
+    else if (s[0] == 0xc0 && s[1] == MODWERK_MS_VENDOR_CODE && !s[2] && !s[3] && s[4] == MODWERK_MS_OS_20_INDEX && !s[5])
+        blob = modwerk_msos20, n = MODWERK_MSOS20_BYTES;
+    else return 0;
+    if (n > want) n = want;
+    for (uint32_t i = 0; i < n; ++i) out[i] = blob[i];
+    modwerk_ep0_reply = out;
+    return n;
+}
+
 /* Unknown-request tail. A length sends modwerk_ep0_reply; 0 leaves a request
  * that is not ours to the stock STALL; REFUSE stalls EP0 both ways; RECEIVING
  * returns with our data stage primed and no status yet. */
@@ -128,7 +147,7 @@ uint32_t modwerk_ep0_dispatch(void)
         ++abandons;
         flush_receive();
     }
-    if (r.action == MV_PASS) return 0;
+    if (r.action == MV_PASS) return windows(SETUP, out);
     if (r.action == MV_STALL && diag(SETUP, out)) { /* mv_setup stalls requests it does not know */
         modwerk_ep0_reply = out;
         return 68;
