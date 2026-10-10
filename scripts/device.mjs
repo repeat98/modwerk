@@ -52,16 +52,23 @@ console.log(`${identity.model}, base ${identity.base.slice(0, 16)}…`)
 const interrupt = new AbortController()
 process.once('SIGINT', () => { console.log('interrupted: rolling back'); process.exitCode = 130; interrupt.abort() })
 
+/** While the unit plays, the base presses STOP and refuses with `unsafe`; retry for 3 s as the site does. */
+async function stopping(step) {
+  for (const start = Date.now(); ; await wait(200)) {
+    try { return await step() } catch (error) { if (error.status?.result !== 'unsafe' || Date.now() - start > 3000) throw error }
+  }
+}
+
 /** Stage, publish and run `pkg` in a trial for `seconds`, then accept or roll back. */
 async function trial(session, pkg) {
-  await session.stage(pkg, { signal: interrupt.signal }); await session.activate(); await session.startTrial()
+  await stopping(() => session.stage(pkg, { signal: interrupt.signal })); await session.activate(); await session.startTrial()
   console.log(`trial: ${pkg.sha256.slice(0, 16)}… running`)
   for (let second = 1; second <= seconds && !interrupt.signal.aborted; second++) {
     await wait(1000)
     const d = await diag()
     if (d) console.log(`  ${second}s: ticks ${d.ticks}, value 0x${d.value.toString(16)}, slot ${d.active ? 'running' : 'empty'}, refusals ${d.refusals}`)
   }
-  await session.holdTrial()
+  await stopping(() => session.holdTrial())
   if (values.accept && !interrupt.signal.aborted) { await session.accept(); console.log('accepted') }
   else { await session.rollback(); console.log('rolled back' + (values.accept ? '' : ' (pass --accept to keep it)')) }
   return session.leaveUploadMode()

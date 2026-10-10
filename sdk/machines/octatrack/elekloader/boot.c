@@ -24,14 +24,41 @@ static volatile int due;
 
 #ifdef MODWERK_HOST
 uint32_t modwerk_test_nor_version = 0x0408u;
-int modwerk_test_resets;
+int modwerk_test_resets, modwerk_test_recording, modwerk_test_stops;
+int mu_disconnecting; /* upload.c's, which this host test does not link */
 static void *uncached(void *p) { return p; }
 static uint32_t nor_version(void) { return modwerk_test_nor_version; }
+static int recording(void) { return modwerk_test_recording; }
+static void press_stop(void) { ++modwerk_test_stops; }
 void modwerk_boot_quiesce(void) {}
 void modwerk_boot_reset(void) { ++modwerk_test_resets; }
 #else
 static void *uncached(void *p) { return (void *)((uintptr_t)p + 0x08000000u); }
 static uint32_t nor_version(void) { return *(volatile uint16_t *)0x3ffcu; }
+/* runtime.c's stopped check, recorder half: two 84-byte state rows per track. */
+static int recording(void)
+{
+    for (unsigned i = 0; i < 16; ++i) if (*(volatile uint8_t *)(0x80004f1eu + i * 84u)) return 1;
+    return 0;
+}
+/* STOP as the panel presses it (parser 0x4009228c): a press and a release
+ * record {01, code, press/release byte, 0, panel time} from the key's keymap
+ * entry, posted by pointer to the queue(s) the entry names. The records stay
+ * put until the UI task reads them; one press a second at most. */
+static uint8_t stop_events[2][8] __attribute__((aligned(4)));
+static void press_stop(void)
+{
+    const uint8_t *key = *(const uint8_t *const volatile *)0x46c901dcu + 12u * 0x27u;
+    for (unsigned i = 0; i < 2; ++i) {
+        uint8_t *e = stop_events[i];
+        e[0] = key[0]; e[1] = key[1]; e[2] = key[2 + i]; e[3] = 0;
+        *(uint32_t *)(void *)(e + 4) = *(volatile uint32_t *)0x46104cf4u;
+        for (unsigned q = 4; q <= 8; q += 4) {
+            void *queue = *(void *const *)(const void *)(key + q);
+            if (queue) ((void (*)(void *, const void *))0x40000c3cu)(queue, e);
+        }
+    }
+}
 void modwerk_boot_quiesce(void);
 void modwerk_boot_reset(void);
 #endif
@@ -72,7 +99,20 @@ static int restore(void *u)
     return 1;
 }
 static int retire(void *u) { return armed ? 1 : modwerk_runtime_backend.retire(u); }
-static int enter(void *u) { return modwerk_runtime_backend.enter(u); }
+/* Updates stop playback themselves (owner, 10 October 2026; the site asks
+ * first): STOP as if pressed, then the runtime's own check, which still
+ * refuses until the unit has stopped; the host retries. Never a recording,
+ * and never for a disconnect's rollback (no one asked). */
+static int enter(void *u)
+{
+    static uint32_t pressed_at;
+    static int pressed;
+    if (!mu_disconnecting && !modwerk_machine_stopped() && !recording() && (!pressed || modwerk_runtime_ticks - pressed_at >= 60u)) {
+        press_stop();
+        pressed = 1; pressed_at = modwerk_runtime_ticks;
+    }
+    return modwerk_runtime_backend.enter(u);
+}
 static int safe(void *u) { return modwerk_runtime_backend.safe(u); }
 static int leave(void *u) { return modwerk_runtime_backend.leave(u); }
 const struct mu_backend modwerk_boot_backend = {0, enter, safe, leave, prepare, discard, publish, restore, retire};

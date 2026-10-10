@@ -53,7 +53,18 @@ int main(void)
     CHECK(b->restore(0) && mb[0] == 0);
     for (unsigned i = 0; i < BOOT_DELAY_TICKS + 2u; ++i) CHECK(!modwerk_boot_tick());
     modwerk_boot_service(); CHECK(modwerk_test_resets == 1);
+    /* Auto-stop: playing presses STOP once a second at most, never while
+     * recording; enter itself still refuses until the unit has stopped. */
+    extern int modwerk_test_stopped;
+    modwerk_test_stopped = 0; modwerk_runtime_ticks = 1000;
+    CHECK(b->enter(0) == 0 && modwerk_test_stops == 1);
+    modwerk_runtime_ticks += 59; CHECK(b->enter(0) == 0 && modwerk_test_stops == 1);
+    modwerk_runtime_ticks += 1; CHECK(b->enter(0) == 0 && modwerk_test_stops == 2);
+    modwerk_test_recording = 1; modwerk_runtime_ticks += 120; CHECK(b->enter(0) == 0 && modwerk_test_stops == 2);
+    modwerk_test_recording = 0; mu_disconnecting = 1; modwerk_runtime_ticks += 120; CHECK(b->enter(0) == 0 && modwerk_test_stops == 2);
+    mu_disconnecting = 0; modwerk_test_stopped = 1; CHECK(b->enter(0) == 1 && modwerk_test_stops == 2);
+    CHECK(b->leave(0) == 1);
     if (failures) { fprintf(stderr, "%u boot checks failed\n", failures); return 1; }
-    puts("RAM boot backend: refusals, module pass-through, mailbox, delayed reset and disarm passed.");
+    puts("RAM boot backend: refusals, module pass-through, mailbox, delayed reset, disarm and auto-stop passed.");
     return 0;
 }

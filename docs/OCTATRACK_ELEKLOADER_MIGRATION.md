@@ -487,6 +487,19 @@ scan across different addresses is shown by the emulator only.
 `npm run device -- boot` now waits for the unit to go away and answer HELLO
 again, and re-arms once from the flashed base if a boot falls back to it.
 
+### Updates stop playback themselves (owner, 10 October 2026)
+
+The owner wants an update started from the site (and Keep or Undo) to stop
+playback itself after the site asks in a modal, instead of refusing. While
+the unit plays, the host's ENTER (or the hold before Keep or Undo) makes the
+base press STOP exactly as the panel does: a press and a release record from
+STOP's keymap entry, stamped with the panel's clock, posted by pointer to the
+queue(s) the entry names, at most once a second. The step still answers
+`unsafe` (the controller now maps the backend's "not stopped" to `unsafe`,
+other backend failures stay `backend`) and the host retries every 200 ms for
+up to 3 s. A recording is never stopped this way, and a disconnect's rollback
+(`mu_disconnecting`) never presses STOP. Host-tested; on the unit next.
+
 ### Windows without a driver (10 October 2026)
 
 The base reports USB 2.10 from its own copy of the device descriptor (one

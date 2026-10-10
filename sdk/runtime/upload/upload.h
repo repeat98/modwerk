@@ -54,6 +54,9 @@ enum mu_result mu_accept(struct mu_context *, uint32_t);
 enum mu_result mu_abort(struct mu_context *, uint32_t);
 enum mu_result mu_rollback(struct mu_context *, uint32_t);
 enum mu_result mu_leave(struct mu_context *);
+/* Nonzero while a disconnect, not the host, asks the backend to hold
+ * (a backend may act on the host's request only, e.g. stop playback). */
+extern int mu_disconnecting;
 enum mu_result mu_disconnect(struct mu_context *);
 void mu_sha256(const uint8_t *, uint32_t, uint8_t[MU_DIGEST_BYTES]);
 #endif

@@ -121,7 +121,7 @@ static void input_refusals(void)
 {
     struct fixture f; init(&f);
     assert(mu_begin(&f.c, &f.o) == MU_STATE);
-    f.recording = 1; assert(mu_enter(&f.c) == MU_BACKEND && !f.held);
+    f.recording = 1; assert(mu_enter(&f.c) == MU_UNSAFE && !f.held);
     f.recording = 0; assert(mu_enter(&f.c) == MU_OK);
     struct mu_offer o = f.o;
     o.base[0] ^= 1; assert(mu_begin(&f.c, &o) == MU_IDENTITY); o = f.o;
@@ -207,7 +207,7 @@ static void rollback_and_disconnect(void)
     init(&f); active(&f);
     assert(mu_leave(&f.c) == MU_OK && f.retained);
     f.playing = 1;
-    assert(mu_disconnect(&f.c) == MU_BACKEND && f.c.phase == MU_TRIAL && f.retained);
+    assert(mu_disconnect(&f.c) == MU_UNSAFE && f.c.phase == MU_TRIAL && f.retained);
     f.playing = 0;
     assert(mu_disconnect(&f.c) == MU_OK && f.c.generation == 6 && !f.retained);
     assert(mu_rollback(&f.c, 10) == MU_OK && f.restores == 1);

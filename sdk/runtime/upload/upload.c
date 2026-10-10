@@ -76,7 +76,8 @@ enum mu_result mu_enter(struct mu_context *c)
     if (c->phase == MU_READY) return safe(c) ? MU_OK : MU_UNSAFE;
     if (c->phase != MU_NORMAL && c->phase != MU_TRIAL) return MU_STATE;
     unsigned trial = c->phase == MU_TRIAL;
-    if (c->backend.enter(c->backend.user) != 1) return MU_BACKEND;
+    int held = c->backend.enter(c->backend.user); /* 0: not stopped (playing or recording) */
+    if (held != 1) return held == 0 ? MU_UNSAFE : MU_BACKEND;
     c->phase = trial ? MU_PENDING : MU_READY;
     return safe(c) ? MU_OK : MU_UNSAFE;
 }
@@ -210,12 +211,15 @@ enum mu_result mu_leave(struct mu_context *c)
     c->phase = c->phase == MU_PENDING ? MU_TRIAL : MU_NORMAL;
     return MU_OK;
 }
+int mu_disconnecting;
 enum mu_result mu_disconnect(struct mu_context *c)
 {
     if (!live(c)) return MU_STATE;
     enum mu_result result = MU_OK;
     if (c->phase == MU_TRIAL) {
+        mu_disconnecting = 1;
         result = mu_enter(c);
+        mu_disconnecting = 0;
         if (result != MU_OK) return result;
     }
     if (c->phase == MU_RECEIVING || c->phase == MU_VERIFIED) result = mu_abort(c, c->offer.transaction);
