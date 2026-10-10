@@ -80,5 +80,75 @@ class TableContractTests(unittest.TestCase):
                 check_table_contract(SimpleNamespace(tables=(SimpleNamespace(insert_at=position, count=16, label='PERSONALIZE'),)))
 
 
+
+class UsbBaseTests(unittest.TestCase):
+    """The base's own configuration and sites, with synthetic stock bytes only."""
+    def setUp(self):
+        import hashlib, importlib.util, pathlib
+        import usb_base
+        self.usb, self.sha = usb_base, lambda data: hashlib.sha256(data).hexdigest()
+        path = pathlib.Path(__file__).resolve().parents[3] / 'octabam/platform/usb-midi/descriptors.py'
+        spec = importlib.util.spec_from_file_location('usbmidi_descriptors', path)
+        self.midi = importlib.util.module_from_spec(spec); spec.loader.exec_module(self.midi)
+
+    def test_mass_storage_is_usb_midis_and_the_vendor_interface_follows(self):
+        for hs in (True, False):
+            for other in (True, False):
+                cfg = self.usb.configuration(hs, other)
+                self.assertEqual(len(cfg), 41)
+                self.assertEqual(cfg[:9], bytes([9, 7 if other else 2, 41, 0, 2, 1, 0, 0xc0, 3]))
+                self.assertEqual(cfg[9:32], self.midi.midi_config(hs, other)[9:32])
+                self.assertEqual(cfg[32:], bytes([9, 4, 1, 0, 0, 0xff, 0x4d, 1, 0]))
+
+    def test_assembly_aligns_each_table_and_keeps_the_stock_rejoins(self):
+        text = self.usb.assembly()
+        self.assertIn('.set modwerk_cfg_len, 41', text)
+        self.assertEqual(text.count('    .balign 64\n'), 4)
+        for name in self.usb.tables():
+            self.assertIn('\n%s:\n' % name, text)
+        for rejoin in ('0x4001d864', '0x4001d8a2', '0x4001de5c', '0x4001de6a', '0x4001de74'):
+            self.assertIn('jmp     ' + rejoin, text)
+        self.assertIn('orl     #0x00010001,%d0', text)
+
+    def image(self, changes=()):
+        stock = {addr: expected.to_bytes(4, 'big') for addr, expected, _ in self.usb.POINTERS}
+        for addr, length, _, _ in self.usb.DETOURS:
+            stock[addr] = bytes(range(addr & 0xff, (addr & 0xff) + length))
+        stock.update(changes)
+        return stock, lambda addr, n: stock[addr][:n]
+
+    def guarded(self, stock):
+        return tuple((addr, length, self.sha(stock[addr]), symbol) for addr, length, _, symbol in self.usb.DETOURS)
+
+    def test_sites_replace_six_bytes_and_point_at_the_tables(self):
+        stock, image_at = self.image()
+        original = self.usb.DETOURS
+        try:
+            self.usb.DETOURS = self.guarded(stock)
+            sites = self.usb.sites(image_at)
+        finally:
+            self.usb.DETOURS = original
+        self.assertEqual([s['target'] for s in sites if s['op'] == 'ptr'],
+                         ['modwerk_cfg_fs', 'modwerk_cfg_hs', 'modwerk_cfg_os_hs', 'modwerk_cfg_os_fs'])
+        jumps = [s for s in sites if s['op'] == 'jmp']
+        self.assertEqual([s['target'] for s in jumps], ['modwerk_usb_clamp1', 'modwerk_usb_clamp2', 'modwerk_ep0_shim'])
+        self.assertTrue(all(len(bytes.fromhex(s['stock'])) == 6 for s in jumps))
+
+    def test_any_changed_stock_byte_is_refused_including_skipped_ones(self):
+        stock, _ = self.image()
+        guards = self.guarded(stock)
+        clamp = self.usb.DETOURS[0][0]
+        for changes in ({self.usb.POINTERS[0][0]: b'\x40\x0e\x20\x00'},
+                        {clamp: stock[clamp][:11] + b'\xff'}):
+            _, image_at = self.image(changes)
+            original = self.usb.DETOURS
+            try:
+                self.usb.DETOURS = guards
+                with self.subTest(changes=list(changes)), self.assertRaisesRegex(ValueError, 'not stock'):
+                    self.usb.sites(image_at)
+            finally:
+                self.usb.DETOURS = original
+
+
 if __name__ == '__main__':
     unittest.main()

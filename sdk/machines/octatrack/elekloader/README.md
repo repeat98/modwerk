@@ -21,8 +21,9 @@ replays use guarded format-2 stock references recovered locally from the
 owner's original firmware. Generated stock-bearing recipes, packages, maps,
 images and proofs stay outside Git.
 
-The bounded upload controller is compiled into the prototype but has no USB
-adapter, lifecycle backend or module executor connected. This prototype is
+The bounded upload controller is compiled into the prototype but has no
+lifecycle backend or module executor connected, and USB answers only the
+read-only IDENTIFY below. This prototype is
 **not a flash candidate**. Native linking and Python/TypeScript byte parity
 do not establish safe boot, logger retention, cache handling or hardware
 behaviour. The current identity describes only the base; arbitrary module
@@ -44,6 +45,37 @@ npm run octatrack:elekloader:verify -- \
   /private/pinned-elekloader \
   /private/NEW-core-output/package/core-0.3.1-modwerk-dev.1.elemod
 ```
+
+## Read-only USB vendor interface
+
+The base owns the USB configuration responder and the unknown-request tail:
+Elekloader cannot share a stock site between packages, and a descriptor
+change needs a base install anyway. [`usb_base.py`](usb_base.py) generates
+41-byte configurations (stock mass storage, byte for byte USB MIDI's, plus an
+endpoint-free vendor interface, class `ff/4d/01`), the two length clamps and
+the shim that hands vendor requests to [`ep0.c`](ep0.c). Every replaced or
+skipped stock span is hash-guarded against your firmware. `ep0.c` runs the
+[EP0 transport](../../../runtime/upload/README.md#ep0-vendor-transport-version-1)
+in the USB ISR, built without frame submission: it answers IDENTIFY with
+this base's configuration identity and stalls SUBMIT/RESULT in both
+directions. USB MIDI and USB Audio claim the same sites, so they cannot be
+combined with this base yet; they have to become base features.
+
+`verify_vendor_usb.py` checks a build in the emulator with Octabam's USB
+bench: enumeration and the other-speed descriptor at both speeds, IDENTIFY's
+exact bytes, its refusals, SUBMIT/RESULT stalls and mass storage. Decode the
+built MAIN with Elekloader's `formats.parse(..., device)` and run, for
+example in the Docker toolchain image that builds `ot_emu`:
+
+```sh
+ot_emu --image /private/MAIN.raw --usb-host /tmp/ot-usb.sock --ms 120000 &
+python3 -B sdk/machines/octatrack/elekloader/verify_vendor_usb.py /tmp/ot-usb.sock \
+  --proofs /private/NEW-core-output/proofs.json
+```
+
+This is emulator protocol evidence only: no host OS driver, WebUSB claim,
+cache behaviour, timing or hardware. Stock firmware fails the same check
+(32-byte configuration, IDENTIFY stalls).
 
 `build_ports.py` prepares independent source ports with the same pinned SDK
 and its native source checker. It registers the internal USB MIDI dependency

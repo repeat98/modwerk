@@ -287,6 +287,21 @@ regenerated. These gaps and the documented unsupported publication/ABI paths
 must be resolved before reusing its runtime; old model/host evidence is not
 hardware qualification for the new Elekloader base.
 
+### First milestone: read-only IDENTIFY in the emulator
+
+On 10 October 2026 the private base gained its own USB configuration (stock
+mass storage plus the vendor interface, 41 bytes) and the EP0 glue, built
+without frame submission ([recipe](../sdk/machines/octatrack/elekloader/README.md#read-only-usb-vendor-interface)).
+The TypeScript-linked base enumerated in the emulator at high and full speed
+and passed 20 checks: both configurations and other-speed descriptors,
+IDENTIFY returning this base's exact configuration identity, refusals of
+wrong lengths, values and interfaces, SUBMIT and RESULT stalling in both
+directions, and mass storage still answering INQUIRY. Unmodified stock
+failed the same check. This needs no control OUT data stage. It is emulator
+protocol evidence only: no host OS driver, WebUSB claim, cache behaviour,
+timing or hardware result exists yet. The next step is the data stage and
+the engine-task wakeup, after disassembling the stock completion loop.
+
 ### Reference: Octabam's REMIX SWITCH
 
 Sam's open [Octabam PR #655](https://github.com/sambanks/octabam/pull/655)
@@ -460,6 +475,11 @@ unit:
   sector buffer and the file-layer staging buffer (`0x4ec94004`–`0x4ecd3000`,
   sizes unmeasured). They enter the ownership ledger; staging and response
   buffers are allocated against it, never placed beside them by assumption.
+- Elekloader refuses two packages on one stock site and has no USB or
+  engine-task event, so the base owns the configuration responder (its four
+  table pointers and two length clamps) and the unknown-request tail. USB MIDI
+  and USB Audio claim the same sites; they become base features compiled into
+  it, which their descriptor changes require anyway.
 - The emulator models EP0–EP3, transfers up to 8 KiB and no packet timing.
   Its source here cannot build as is: the CPU cores under `sdk/octabam/vendor/`
   and `remixes/` are absent, and the 27 USB checks used a private adapter.

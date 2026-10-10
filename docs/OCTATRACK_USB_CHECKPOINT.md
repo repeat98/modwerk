@@ -43,11 +43,14 @@ The vendor interface has no endpoints and uses EP0 control transfers, so EP3
 OUT stays free for USB Audio In. Its transport state machine and browser peer
 are done and host-tested against the real controller
 ([upload README](../sdk/runtime/upload/README.md#ep0-vendor-transport-version-1)).
-Next is the ColdFire glue, read-only first (identity and status). The
-[migration record](OCTATRACK_ELEKLOADER_MIGRATION.md#what-the-imported-usb-stack-leaves-for-the-vendor-interface)
-lists the gaps: no control OUT data stage, the shared request hook at
-`0x4001de64`, uncached response buffers, the unproven ISR-to-task wakeup, the
-interface descriptor, Windows driver binding and the emulator's limits.
+The private base now owns the USB configuration and answers a read-only
+IDENTIFY: 20 emulator checks pass at both speeds and stock fails them
+([first milestone](OCTATRACK_ELEKLOADER_MIGRATION.md#first-milestone-read-only-identify-in-the-emulator)).
+Next: disassemble the stock EP0 completion loop, then receive SUBMIT's data
+stage without spinning in the ISR and wake the engine task. Still open from
+the [migration record](OCTATRACK_ELEKLOADER_MIGRATION.md#what-the-imported-usb-stack-leaves-for-the-vendor-interface):
+the unproven ISR-to-task wakeup, folding USB MIDI and USB Audio into the base,
+Windows driver binding, and every hardware result.
 
 Sam's open REMIX SWITCH (Octabam PR #655) switches whole images from the card
 with a soft reset. The owner chose on 10 October to use it as a reference

@@ -136,8 +136,14 @@ def main():
         'typedef char modwerk_io_capacity[(sizeof io == 512)?1:-1];')
     (source/'stock_140c.c').write_text(adapter)
     upload = APP / 'sdk/runtime/upload'
-    for name in ('upload.c', 'upload.h', 'sha256.c', 'wire.c', 'wire.h'):
+    for name in ('upload.c', 'upload.h', 'sha256.c', 'wire.c', 'wire.h', 'vendor.c', 'vendor.h'):
         shutil.copyfile(upload / name, source / name)
+    # The base owns the USB configuration and the EP0 unknown-request tail.
+    spec = importlib.util.spec_from_file_location('modwerk_usb_base', HERE/'usb_base.py')
+    usb = importlib.util.module_from_spec(spec); spec.loader.exec_module(usb)
+    shutil.copyfile(HERE / 'ep0.c', source / 'ep0.c')
+    (source/'usb_base.h').write_text(usb.header())
+    (source/'usb_base.s').write_text(usb.assembly())
     # Identity describes this core-only private base. Later selections need
     # their complete module/version/chooser identities regenerated explicitly.
     inputs = {str(p.relative_to(APP)): sha(p.read_bytes()) for folder in (logger, upload, HERE)
@@ -149,12 +155,16 @@ def main():
     source_hash = sha(json.dumps(inputs, sort_keys=True, separators=(',', ':')).encode())
     chooser = json.loads((APP/'src/engine/assets/chooser-metadata.json').read_text())
     configuration = dict(fx1=['NONE', *chooser['stockFx1']], fx2=['NONE', *chooser['stockFx2']],
-                         hidden=[], logger='0.2.0', modules=[], os='1.40C', source=source_hash, stockfx2=True)
+                         hidden=[], logger='0.2.0', modules=[], os='1.40C', source=source_hash, stockfx2=True,
+                         usb=dict(interfaces=['msc', 'modwerk-vendor'], vendor=1, submit=False))
     identity = sha(json.dumps(configuration, separators=(',', ':')).encode())
     values = dict(build=identity[:16], os='1.40C', modules='', configuration=identity,
                   source=source_hash, fx1=';'.join(configuration['fx1']),
                   fx2=';'.join(configuration['fx2']), hidden='')
-    definitions = '#include "octamod_log_port.h"\n'
+    definitions = '#include <stdint.h>\n#include "octamod_log_port.h"\n'
+    # IDENTIFY reports this configuration identity as the installed base.
+    definitions += 'const uint8_t modwerk_base_digest[32] = {%s};\n' % ','.join(
+        '0x' + identity[i:i+2] for i in range(0, 64, 2))
     for key, size in FIELDS.items():
         if len(values[key]) >= size:
             raise ValueError('Logger identity field exceeds capacity: ' + key)
@@ -177,8 +187,8 @@ modwerk_retained_end:
 ''')
     recipe.update(version=VERSION, title='Modwerk base prototype', author='irpina; Modwerk contributors',
                   license='GPL-3.0-or-later',
-                  description='Private core-only Elekloader base with logger/startup and unwired upload controller; NOT a flash candidate.')
-    recipe['sources'] += [p.name for p in sorted(source.glob('*.c'))] + ['hooks.s', 'retained.s']
+                  description='Private core-only Elekloader base with logger/startup, an unwired upload controller and a read-only USB vendor IDENTIFY; NOT a flash candidate.')
+    recipe['sources'] += [p.name for p in sorted(source.glob('*.c'))] + ['hooks.s', 'retained.s', 'usb_base.s']
     recipe['cflags'] = ['-std=c99', '-ffreestanding', '-fno-builtin', '-fno-common',
                         '-fno-zero-initialized-in-bss', '-fno-tree-loop-distribute-patterns',
                         '-fno-merge-constants', '-fno-asynchronous-unwind-tables', '-fno-unwind-tables',
@@ -188,6 +198,7 @@ modwerk_retained_end:
         at = guard['address'] - device.main_load
         recipe['sites'].append(dict(addr=hex(guard['address']), stock=image[at:at+n].hex(),
                                     op='jmp', target='olog_' + key + '_hook'))
+    recipe['sites'] += usb.sites(lambda addr, n: image[addr-device.main_load:addr-device.main_load+n])
     spec = importlib.util.spec_from_file_location('modwerk_startup', artwork.parent/'build.py')
     startup = importlib.util.module_from_spec(spec); spec.loader.exec_module(startup)
     for guard, authored in startup.writes():
@@ -222,7 +233,8 @@ modwerk_retained_end:
                   packageSha256=sha(Path(path).read_bytes()), manifest=manifest,
                   savedHashes={ext:sha(data) for ext,data in outputs.items()},
                   productionReady=False, hardware='not tested', emulator='not tested',
-                  limitations=['USB adapter, lifecycle executor and DSP resource manager are not connected.',
+                  limitations=['USB vendor interface answers IDENTIFY only; SUBMIT data stages, lifecycle executor and DSP resource manager are not connected.',
+                               'The base owns the USB configuration: USB MIDI/Audio cannot be combined with it yet.',
                                'Logger retention/ABI and modified bootstrap require emulator/hardware qualification.',
                                'Core-only identity; catalogue selections need exact configuration integration.'])
     (out/'proofs.json').write_text(json.dumps(report, indent=2)+'\n')
