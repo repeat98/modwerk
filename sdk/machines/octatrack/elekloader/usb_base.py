@@ -43,6 +43,9 @@ DETOURS = (  # address, guarded bytes, their SHA-256, shim; 6 bytes are replaced
 )
 # The engine's idle site, which the logger already hooks: ours runs first.
 IDLE_HOOK = 'modwerk_idle_hook'
+# runtime.c invalidates code caches with the OS's CACR value: the boot write
+# `movel #0xa40ce000,%d0; movec %d0,%cacr` must still be stock.
+CACR_GUARD = (0x40000596, 10, 'eb3f5686af1b0f58c8d27473148bd597d87905636bde18120034634ddae1f782')
 
 
 def endpoint(address, size):
@@ -187,7 +190,10 @@ def header():
 
 
 def sites(image_at):
-    """Elekloader sites after checking every stock span this base replaces or skips."""
+    """Elekloader sites after checking every stock span this base replaces, skips or relies on."""
+    addr, length, digest = CACR_GUARD
+    if hashlib.sha256(image_at(addr, length)).hexdigest() != digest:
+        raise ValueError('The OS cache configuration at 0x%08x is not stock.' % addr)
     out = []
     for addr, expected, symbol in POINTERS:
         stock = image_at(addr, 4)

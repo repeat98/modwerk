@@ -73,16 +73,24 @@ in the USB ISR and its controller on the engine task:
   byte is `0xFF`; the engine ignores opcodes above 45 and returns to its
   receive, where the base's idle hook services the transport before the
   logger's.
-- The controller's backend refuses every state change: HELLO reports the
-  base identity, a per-boot session nonce and a 4-byte staging capacity, and
-  ENTER is refused. A bus reset or session end becomes its disconnect.
+- The controller's backend is [`runtime.c`](runtime.c): one runtime module
+  slot called from core-ot's `ev_tick`. ENTER and activation need nothing
+  playing or recording (the logger's own check). A package (`MWRM`, ABI 1,
+  entry offset, position-independent ColdFire code; empty removes) is copied
+  into the inactive of two 16 KiB slots, after which the instruction and
+  branch caches are invalidated with the OS's own CACR value (guarded).
+  Publish swaps the slot's pointer, rollback swaps it back, and old code is
+  retired or reused only after the tick has passed the swap. A bus reset or
+  session end becomes the controller's disconnect.
 
 `verify_vendor_usb.py` checks a build in the emulator with Octabam's USB
 bench, at both speeds: configurations, IDENTIFY's exact bytes and refusals,
 a HELLO through the data stage, engine and RESULT, a refused ENTER,
 duplicate and short submissions, the session surviving a bus reset, and mass
 storage. [`verify-octatrack-vendor-client.mjs`](../../../../scripts/verify-octatrack-vendor-client.mjs) runs the browser's `UsbVendorTransport`
-and `UploadSession` against the same build. Decode the built MAIN with
+and `UploadSession` against the same build: it loads, trials and accepts a
+test module, replaces and rolls it back, removes it, and resets the bus
+mid-staging, reading the module's effect through the bench's `call`. Decode the built MAIN with
 Elekloader's `formats.parse(..., device)` and run, for example in the Docker
 toolchain image that builds `ot_emu` (it has Node 24):
 

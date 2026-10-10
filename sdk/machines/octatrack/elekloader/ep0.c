@@ -12,10 +12,10 @@
  * the completion raises the USB interrupt again, and the poll finishes the
  * transfer from the descriptor itself. No ISR spin waits for the host.
  *
- * The controller's backend refuses every state change: this base answers
- * HELLO with its identity and status, and nothing else succeeds. */
+ * The controller's backend is runtime.c's single module slot. */
 #include "vendor.h"
 #include "usb_base.h"
+#include "runtime.h"
 
 #define UNCACHED(p) ((void *)((uintptr_t)(p) + 0x08000000u))
 #define REG(a) (*(volatile uint32_t *)(a))
@@ -63,17 +63,7 @@ const uint8_t *modwerk_ep0_reply;
 static const uint8_t wake_message[4] __attribute__((aligned(4))) = {0xff, 0, 0, 0};
 
 static struct mu_context controller;
-static uint8_t staging[4], controller_started;
-static int refuse(void *user) { (void)user; return 0; }
-static int succeed(void *user) { (void)user; return 1; }
-static int refuse_prepare(void *user, const uint8_t *data, uint32_t length)
-{
-    (void)user; (void)data; (void)length;
-    return 0;
-}
-static enum mu_publication unchanged(void *user) { (void)user; return MU_UNCHANGED; }
-static const struct mu_backend read_only = {0, refuse, refuse, succeed, refuse_prepare, succeed,
-                                            unchanged, refuse, refuse};
+static uint8_t controller_started;
 
 static void wake(void)
 {
@@ -191,8 +181,8 @@ void modwerk_engine_idle(void)
         for (uint32_t i = 0; i < MU_DIGEST_BYTES; ++i) ((uint8_t *)&seed[6])[i] = modwerk_base_digest[i];
         mu_sha256((const uint8_t *)seed, sizeof seed, session);
         session[0] |= 1u;
-        if (!mu_init(&controller, staging, sizeof staging, modwerk_base_digest, session,
-                     modwerk_base_digest, 0, &read_only)) return;
+        if (!mu_init(&controller, modwerk_runtime_staging, sizeof modwerk_runtime_staging,
+                     modwerk_base_digest, session, modwerk_base_digest, 0, &modwerk_runtime_backend)) return;
         controller_started = 1;
     }
     (void)mv_service(UNCACHED(&transport), &controller);

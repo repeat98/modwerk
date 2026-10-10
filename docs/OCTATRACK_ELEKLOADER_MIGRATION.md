@@ -310,11 +310,21 @@ Unmodified stock fails the same checks.
    controller → RESULT; ENTER is refused by a backend that refuses every
    change; a bus reset keeps the session.
 
+3. **One runtime module without a reboot.** The backend runs one
+   position-independent ColdFire module on core-ot's 60 Hz tick: load,
+   trial, accept, replace, roll back and remove over USB, with activation
+   only while nothing plays or records, and a bus reset mid-staging leaving
+   the active module running. Stock sets no instruction ACR and its CACR
+   (`0xa40ce000` on every write) caches instruction fetches even through the
+   uncached alias, so new code is followed by an instruction- and
+   branch-cache invalidation with that value.
+
 Octabam's bench passed 27 checks at both speeds, and the unmodified browser
-`UsbVendorTransport` and `UploadSession` passed 5 against the same build:
-interface discovery from the device's descriptors, IDENTIFY, HELLO status, a
-positive staging refusal with the session still trusted, and a second
-transport continuing the sequence. This is emulator protocol evidence only.
+`UsbVendorTransport` and `UploadSession` passed 7 against the same build:
+interface discovery from the device's descriptors, IDENTIFY, HELLO status,
+and the whole module lifecycle above with its effect read back from the
+module. The emulator models no caches, so the invalidation is unverified
+until hardware. This is emulator protocol evidence only.
 The emulator has no packet timing, so the race between priming and the
 stock loop is exercised only in its worst ordering; no host OS driver,
 WebUSB claim, cache behaviour or hardware result exists yet.

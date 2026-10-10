@@ -9,7 +9,7 @@ Drives Octabam's USB bench (sdk/octabam/tools/harness/usb_host.py) against a
 running ot_emu: enumeration at both speeds, the other-speed descriptor,
 IDENTIFY's exact bytes against the built base's configuration identity, its
 refusals, a HELLO through SUBMIT's data stage, the engine task and RESULT,
-a refused ENTER, duplicate and short submissions, the session surviving a
+ENTER and LEAVE of upload mode, duplicate and short submissions, the session surviving a
 bus reset, and mass storage still answering. Exit 0 only when every check
 passed. This is emulator protocol evidence: no host OS driver, WebUSB,
 timing or hardware.
@@ -112,12 +112,14 @@ def check(b, base, hs, sessions):
     hello = s.exchange(frame(0))
     st = status(hello) if hello else {}
     results['hello through the engine'] = bool(hello) and st['magic'] == b'MWUR' and st['result'] == 0 and \
-        st['phase'] == 0 and st['known'] == 1 and st['capacity'] == 4 and st['base'] == base and \
+        st['phase'] == 0 and st['known'] == 1 and st['capacity'] == 16400 and st['base'] == base and \
         st['active'] == base and any(st['session'])
     sessions.append(st.get('session'))
-    enter = s.exchange(frame(1, st.get('session', bytes(32)))) if hello else None
-    results['enter refused, phase normal'] = bool(enter) and status(enter)['result'] != 0 and \
-        status(enter)['phase'] == 0 and status(enter)['command'] == 1
+    session = st.get('session', bytes(32))
+    enter = s.exchange(frame(1, session)) if hello else None
+    leave = s.exchange(frame(9, session)) if enter else None
+    results['enter and leave upload mode'] = bool(leave) and status(enter)['result'] == 0 and \
+        status(enter)['phase'] == 1 and status(leave)['result'] == 0 and status(leave)['phase'] == 0
     results['duplicate sequence refused'] = stalls(lambda: s.submit(frame(0), sequence=s.sequence))
     results['short frame refused'] = stalls(lambda: s.submit(frame(0)[:47]))
     results['hello after refusals'] = s.exchange(frame(0)) is not None

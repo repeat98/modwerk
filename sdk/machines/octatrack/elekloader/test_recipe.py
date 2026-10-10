@@ -115,20 +115,23 @@ class UsbBaseTests(unittest.TestCase):
         stock = {addr: expected.to_bytes(4, 'big') for addr, expected, _ in self.usb.POINTERS}
         for addr, length, _, _ in self.usb.DETOURS:
             stock[addr] = bytes(range(addr & 0xff, (addr & 0xff) + length))
+        stock[self.usb.CACR_GUARD[0]] = bytes(self.usb.CACR_GUARD[1])
         stock.update(changes)
         return stock, lambda addr, n: stock[addr][:n]
 
     def guarded(self, stock):
         return tuple((addr, length, self.sha(stock[addr]), symbol) for addr, length, _, symbol in self.usb.DETOURS)
 
+    def setUpGuards(self, stock):
+        original = self.usb.DETOURS, self.usb.CACR_GUARD
+        addr, length, _ = original[1]
+        self.usb.DETOURS, self.usb.CACR_GUARD = self.guarded(stock), (addr, length, self.sha(stock[addr]))
+        self.addCleanup(lambda: setattr(self.usb, 'DETOURS', original[0]) or setattr(self.usb, 'CACR_GUARD', original[1]))
+
     def test_sites_replace_six_bytes_and_point_at_the_tables(self):
         stock, image_at = self.image()
-        original = self.usb.DETOURS
-        try:
-            self.usb.DETOURS = self.guarded(stock)
-            sites = self.usb.sites(image_at)
-        finally:
-            self.usb.DETOURS = original
+        self.setUpGuards(stock)
+        sites = self.usb.sites(image_at)
         self.assertEqual([s['target'] for s in sites if s['op'] == 'ptr'],
                          ['modwerk_cfg_fs', 'modwerk_cfg_hs', 'modwerk_cfg_os_hs', 'modwerk_cfg_os_fs'])
         jumps = [s for s in sites if s['op'] == 'jmp']
@@ -139,18 +142,29 @@ class UsbBaseTests(unittest.TestCase):
 
     def test_any_changed_stock_byte_is_refused_including_skipped_ones(self):
         stock, _ = self.image()
-        guards = self.guarded(stock)
-        clamp = self.usb.DETOURS[0][0]
+        self.setUpGuards(stock)
+        clamp, cacr = self.usb.DETOURS[0][0], self.usb.CACR_GUARD[0]
         for changes in ({self.usb.POINTERS[0][0]: b'\x40\x0e\x20\x00'},
-                        {clamp: stock[clamp][:11] + b'\xff'}):
+                        {clamp: stock[clamp][:11] + b'\xff'}, {cacr: b'\x02' * 10}):
             _, image_at = self.image(changes)
-            original = self.usb.DETOURS
-            try:
-                self.usb.DETOURS = guards
-                with self.subTest(changes=list(changes)), self.assertRaisesRegex(ValueError, 'not stock'):
-                    self.usb.sites(image_at)
-            finally:
-                self.usb.DETOURS = original
+            with self.subTest(changes=list(changes)), self.assertRaisesRegex(ValueError, 'not stock'):
+                self.usb.sites(image_at)
+
+
+
+class RuntimeSlotTests(unittest.TestCase):
+    def test_runtime_bookkeeping_on_the_host(self):
+        import pathlib, shutil, subprocess, tempfile
+        cc = shutil.which('cc')
+        if not cc:
+            self.skipTest('no host C compiler')
+        here = pathlib.Path(__file__).resolve().parent
+        with tempfile.TemporaryDirectory() as temp:
+            subprocess.run([cc, '-std=c99', '-Wall', '-Wextra', '-Werror', '-pedantic', '-DMODWERK_HOST', '-I', here,
+                            '-I', here.parents[2] / 'runtime/upload', here / 'test_runtime.c', '-o', temp + '/t'],
+                           check=True, capture_output=True)
+            result = subprocess.run([temp + '/t'], capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
 
 
 if __name__ == '__main__':
