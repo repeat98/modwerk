@@ -3,7 +3,7 @@
   "kind": "authored-utility-packages",
   "stockRead": false,
   "revision": "b8deefc88b2c3e5f3c6158e364eb741df1924e1d",
-  "sourceCommit": "88ff1cb803ab171161dd74ee2c075d48765a2d59",
+  "sourceCommit": "9831b366798ce2aa73a548fb1f1c3004ee73d0bd",
   "moduleVersions": {
     "spectrum": "0.1.1-experimental",
     "modulation": "0.1.1-experimental",
@@ -27,7 +27,7 @@
     "playmodes": "0.1.1-experimental",
     "mute-modes": "0.1.0-experimental",
     "recorder-loop-fix": "0.1.0-experimental",
-    "poly8": "0.2.6-experimental",
+    "poly8": "0.2.7-experimental",
     "output-matrix": "0.1.0-experimental"
   },
   "compilerSha256": "ba4cfc6b0c5948f8b0a2809d5b73bea85633eb32f82ffc761a6373d9c4d48c5f",
