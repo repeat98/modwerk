@@ -9,6 +9,8 @@
 //   npm run device -- remove [MODULE.mwrm] [--accept]   # that file's module, else module 0
 //   npm run device -- lifecycle
 //   npm run device -- boot BUILD_DIR       # RAM boot: build_core.py's output, no flashing
+//   npm run device -- key PLAY | FUNC+PLAY | 0x27   # development bases (build_core.py --dev)
+//   npm run device -- screen                        # the display, in block characters
 //
 // --emulator drives ot_emu's USB bench socket instead (it enumerates the device
 // first; ot_emu takes one connection, so one command per emulator run).
@@ -31,10 +33,10 @@ const { values, positionals: [command, file] } = parseArgs({ allowPositionals: t
   emulator: { type: 'boolean', default: false },
 } })
 const seconds = Number(values.seconds)
-if (!['status', 'try', 'remove', 'lifecycle', 'boot'].includes(command) || (['try', 'boot'].includes(command) && !file) ||
-  (['status', 'lifecycle'].includes(command) && file) ||
+if (!['status', 'try', 'remove', 'lifecycle', 'boot', 'key', 'screen'].includes(command) || (['try', 'boot', 'key'].includes(command) && !file) ||
+  (['status', 'lifecycle', 'screen'].includes(command) && file) ||
   !Number.isInteger(seconds) || seconds < 1 || seconds > 3600) {
-  console.error('Usage: device.mjs status | try MODULE.mwrm [--seconds 1-3600] [--accept] | remove [MODULE.mwrm] [--accept] | lifecycle | boot BUILD_DIR [--socket PATH] [--emulator]')
+  console.error('Usage: device.mjs status | try MODULE.mwrm [--seconds 1-3600] [--accept] | remove [MODULE.mwrm] [--accept] | lifecycle | boot BUILD_DIR | key NAME[+NAME] | screen [--socket PATH] [--emulator]')
   process.exit(2)
 }
 
@@ -46,6 +48,32 @@ const transport = new UsbVendorTransport(unit, index, { pollMs: 5 })
 const identity = await transport.identify()
 // DIAG is the Octatrack base's own request; other bases may not answer it.
 const diag = () => diagnostics(unit, index).catch(() => undefined)
+
+// Development bases (build_core.py --dev, dev.c): keys as the panel reports them, and the composed screen.
+const KEYS = { DOWN: 0x20, RIGHT: 0x21, SRC: 0x22, AMP: 0x23, LFO: 0x24, FX1: 0x25, FX2: 0x26, STOP: 0x27, PLAY: 0x28,
+  REC: 0x29, CUE: 0x2a, FUNC: 0x2d, PATTERN: 0x2e, BANK: 0x2f, YES: 0x31, NO: 0x32, UP: 0x33, LEFT: 0x34, MIDI: 0x35,
+  PROJ: 0x1c, PART: 0x1d, AED: 0x1e, ARR: 0x1f, LEVEL: 0x3e,
+  ...Object.fromEntries(Array.from({ length: 16 }, (_, i) => ['TRIG' + (i + 1), i])),
+  ...Object.fromEntries(Array.from({ length: 8 }, (_, i) => ['T' + (i + 1), 0x10 + i])),
+  ...Object.fromEntries(['A', 'B', 'C', 'D', 'E', 'F'].map((e, i) => ['PUSH' + e, 0x38 + i])) }
+async function devIn(request, value, length) {
+  const reply = await unit.controlTransferIn({ requestType: 'vendor', recipient: 'interface', request, value, index }, length)
+  if (reply.status !== 'ok' || reply.data?.byteLength !== length) throw new Error('This base does not answer development requests: build it with --dev.')
+  return new Uint8Array(reply.data.buffer, reply.data.byteOffset, reply.data.byteLength)
+}
+/** FUNC+PLAY: hold every key but the last, tap the last, release the held ones. */
+async function keys(spec) {
+  const codes = spec.split('+').map(name => KEYS[name.toUpperCase()] ?? Number(name))
+  if (codes.some(code => !Number.isInteger(code) || code < 0 || code > 63)) throw new Error('Unknown key in ' + spec + ': ' + Object.keys(KEYS).join(' '))
+  for (const code of codes) { await devIn(5, code | 0x100, 1); await wait(code === codes.at(-1) ? 80 : 30) }
+  for (const code of codes.reverse()) { await devIn(5, code, 1); await wait(30) }
+}
+async function screen() {
+  const frame = (await devIn(7, 0, 1028)).subarray(4)
+  const on = (x, y) => (frame[x * 8 + ((63 - y) >> 3)] >> (7 - ((63 - y) & 7))) & 1
+  for (let y = 0; y < 64; y += 2)
+    console.log(Array.from({ length: 128 }, (_, x) => ' ▄▀█'[on(x, y) * 2 + on(x, y + 1)]).join(''))
+}
 const state = s => `${s.phase}, generation ${s.generation}, active ${s.active?.slice(0, 16) ?? 'unknown'}…`
 console.log(`${identity.model}, base ${identity.base.slice(0, 16)}…`)
 
@@ -92,6 +120,8 @@ async function rebooted() {
 }
 
 try {
+  if (command === 'key') { await keys(file); process.exit(0) }
+  if (command === 'screen') { await screen(); process.exit(0) }
   // A whole OS image takes the unit (and far longer the emulator) a while to hash.
   const session = await UploadSession.connect(transport, identity.base, { timeoutMs: command === 'boot' ? 60000 : 10000 })
   if (command === 'status') console.log(state(session.status), '\nDIAG', await diag() ?? 'not answered')

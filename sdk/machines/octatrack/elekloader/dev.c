@@ -1,0 +1,48 @@
+/* SPDX-License-Identifier: GPL-3.0-or-later
+ * Development bases only (build_core.py --dev): drive and watch the unit over
+ * the vendor interface, so a bug can be reproduced without anyone at it.
+ * Never in a base users install.
+ *
+ *   KEY    0xC1, bRequest 5, wValue = code | pressed << 8, wLength 1:
+ *          the key as the panel reports it (boot.c); replies 1.
+ *   SCREEN 0xC1, bRequest 7, wValue 0, wLength 1028: "MWLC" and the last
+ *          composed 128x64 frame (ev_draw: 8 bytes a column, bit 7 = row 0).
+ *
+ * Replies are never a whole number of 64-byte packets (vendor.h). */
+#include "boot.h"
+#include "usb_base.h"
+
+#define UNCACHED(p) ((uint8_t *)((uintptr_t)(p) + 0x08000000u))
+
+/* One 4 KiB page: usb_ep0_send fills only the first page of its descriptor. */
+static uint8_t screen[1028] __attribute__((aligned(2048)));
+
+/* ev_draw, after the modules' own drawing (order 95). */
+void modwerk_dev_draw(unsigned char *frame);
+void modwerk_dev_draw(unsigned char *frame)
+{
+    uint8_t *s = UNCACHED(screen);
+    for (unsigned i = 0; i < 1024; ++i) s[4 + i] = frame[i];
+}
+
+/* From ep0.c's unknown-request tail, for requests the transport stalls: a
+ * reply length with *reply set, or 0 when the request is not one of these. */
+uint32_t modwerk_dev_request(const uint8_t *s, const uint8_t **reply, uint8_t *out);
+uint32_t modwerk_dev_request(const uint8_t *s, const uint8_t **reply, uint8_t *out)
+{
+    uint32_t want = s[6] | (uint32_t)s[7] << 8;
+    if (s[0] != 0xc1 || s[4] != MODWERK_VENDOR_INTERFACE || s[5]) return 0;
+    if (s[1] == 5 && want == 1 && s[2] < 64u && s[3] <= 1u) {
+        modwerk_post_key(s[2], s[3]);
+        out[0] = 1;
+        *reply = out;
+        return 1;
+    }
+    if (s[1] == 7 && want == sizeof screen && !s[2] && !s[3]) {
+        uint8_t *u = UNCACHED(screen);
+        u[0] = 'M'; u[1] = 'W'; u[2] = 'L'; u[3] = 'C';
+        *reply = u;
+        return sizeof screen;
+    }
+    return 0;
+}

@@ -29,7 +29,7 @@ int mu_disconnecting; /* upload.c's, which this host test does not link */
 static void *uncached(void *p) { return p; }
 static uint32_t nor_version(void) { return modwerk_test_nor_version; }
 static int recording(void) { return modwerk_test_recording; }
-static void press_stop(void) { ++modwerk_test_stops; }
+void modwerk_post_key(unsigned code, int pressed) { if (code == 0x27u && pressed) ++modwerk_test_stops; }
 void modwerk_boot_quiesce(void) {}
 void modwerk_boot_reset(void) { ++modwerk_test_resets; }
 #else
@@ -41,22 +41,26 @@ static int recording(void)
     for (unsigned i = 0; i < 16; ++i) if (*(volatile uint8_t *)(0x80004f1eu + i * 84u)) return 1;
     return 0;
 }
-/* STOP as the panel presses it (parser 0x4009228c): a press and a release
- * record {01, code, press/release byte, 0, panel time} from the key's keymap
- * entry, posted by pointer to the queue(s) the entry names. The records stay
- * put until the UI task reads them; one press a second at most. */
-static uint8_t stop_events[2][8] __attribute__((aligned(4)));
-static void press_stop(void)
+/* A key as the panel reports it (parser 0x4009228c): a record {01, code,
+ * press or release byte, 0, panel time} from the key's keymap entry, posted
+ * by pointer to the queue(s) the entry names. Like the parser's own ring, a
+ * record is reused only after the 31 posted since. The USB interrupt
+ * (dev.c) and the engine task (auto-stop) both post, so claiming a record is
+ * masked; the post itself is not (it masks itself and may switch tasks). */
+static uint8_t key_events[32][8] __attribute__((aligned(4)));
+void modwerk_post_key(unsigned code, int pressed)
 {
-    const uint8_t *key = *(const uint8_t *const volatile *)0x46c901dcu + 12u * 0x27u;
-    for (unsigned i = 0; i < 2; ++i) {
-        uint8_t *e = stop_events[i];
-        e[0] = key[0]; e[1] = key[1]; e[2] = key[2 + i]; e[3] = 0;
-        *(uint32_t *)(void *)(e + 4) = *(volatile uint32_t *)0x46104cf4u;
-        for (unsigned q = 4; q <= 8; q += 4) {
-            void *queue = *(void *const *)(const void *)(key + q);
-            if (queue) ((void (*)(void *, const void *))0x40000c3cu)(queue, e);
-        }
+    static unsigned next;
+    if (code >= 64u) return;
+    const uint8_t *key = *(const uint8_t *const volatile *)0x46c901dcu + 12u * code;
+    uint32_t sr = modwerk_machine_mask();
+    uint8_t *e = key_events[next++ % 32u];
+    modwerk_machine_unmask(sr);
+    e[0] = key[0]; e[1] = key[1]; e[2] = key[pressed ? 2 : 3]; e[3] = 0;
+    *(uint32_t *)(void *)(e + 4) = *(volatile uint32_t *)0x46104cf4u;
+    for (unsigned q = 4; q <= 8; q += 4) {
+        void *queue = *(void *const *)(const void *)(key + q);
+        if (queue) ((void (*)(void *, const void *))0x40000c3cu)(queue, e);
     }
 }
 void modwerk_boot_quiesce(void);
@@ -108,7 +112,7 @@ static int enter(void *u)
     static uint32_t pressed_at;
     static int pressed;
     if (!mu_disconnecting && !modwerk_machine_stopped() && !recording() && (!pressed || modwerk_runtime_ticks - pressed_at >= 60u)) {
-        press_stop();
+        modwerk_post_key(0x27u, 1); modwerk_post_key(0x27u, 0); /* STOP */
         pressed = 1; pressed_at = modwerk_runtime_ticks;
     }
     return modwerk_runtime_backend.enter(u);

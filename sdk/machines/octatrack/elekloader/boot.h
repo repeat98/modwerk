@@ -12,5 +12,7 @@ extern struct modwerk_boot_stage modwerk_boot_stage;
 extern const struct mu_backend modwerk_boot_backend;
 uint8_t *modwerk_boot_staging(void); /* uncached */
 int modwerk_boot_tick(void);         /* sys task: nonzero when an armed boot is due; wake the engine */
-void modwerk_boot_service(void);     /* engine task: runs a due boot; does not return then */
+void modwerk_boot_service(void);
+/* A key press or release as the panel reports it (codes 0..63, PANEL.md). */
+void modwerk_post_key(unsigned code, int pressed);     /* engine task: runs a due boot; does not return then */
 #endif

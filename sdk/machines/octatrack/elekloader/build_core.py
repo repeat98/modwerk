@@ -98,6 +98,8 @@ def main():
     parser.add_argument('--upstream', type=Path, required=True)
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--cross', default='m68k-elf-', help='Use Modwerk\'s reviewed GNU toolchain.')
+    parser.add_argument('--dev', action='store_true',
+                        help='Development base: KEY and SCREEN requests (dev.c) to drive the unit over USB. Never for users.')
     args = parser.parse_args()
     os.environ['ELEKLOADER_CROSS'] = args.cross
     upstream = args.upstream.resolve()
@@ -158,7 +160,7 @@ def main():
     # The base owns the USB configuration and the EP0 unknown-request tail.
     spec = importlib.util.spec_from_file_location('modwerk_usb_base', HERE/'usb_base.py')
     usb = importlib.util.module_from_spec(spec); spec.loader.exec_module(usb)
-    for name in ('ep0.c', 'runtime.c', 'runtime.h', 'boot.c', 'boot.h', 'boot.s'):
+    for name in ('ep0.c', 'runtime.c', 'runtime.h', 'boot.c', 'boot.h', 'boot.s') + (('dev.c',) if args.dev else ()):
         shutil.copyfile(HERE / name, source / name)
     (source/'usb_base.h').write_text(usb.header())
     (source/'usb_base.s').write_text(usb.assembly())
@@ -175,7 +177,7 @@ def main():
     configuration = dict(fx1=['NONE', *chooser['stockFx1']], fx2=['NONE', *chooser['stockFx2']],
                          hidden=[], logger='0.2.0', modules=[], os='1.40C', source=source_hash, stockfx2=True,
                          usb=dict(interfaces=['msc', 'modwerk-vendor'], vendor=1, submit=True, backend='runtime-loader-3'),
-                         boot='ram-1')
+                         boot='ram-1', **({'dev': ['key', 'screen']} if args.dev else {}))
     identity = sha(json.dumps(configuration, separators=(',', ':')).encode())
     values = dict(build=identity[:16], os='1.40C', modules='', configuration=identity,
                   source=source_hash, fx1=';'.join(configuration['fx1']),
@@ -211,7 +213,7 @@ modwerk_retained_end:
     recipe['cflags'] = ['-std=c99', '-ffreestanding', '-fno-builtin', '-fno-common',
                         '-fno-zero-initialized-in-bss', '-fno-tree-loop-distribute-patterns',
                         '-fno-merge-constants', '-fno-asynchronous-unwind-tables', '-fno-unwind-tables',
-                        '-Wall', '-Wextra', '-Werror']
+                        '-Wall', '-Wextra', '-Werror'] + (['-DMODWERK_DEV'] if args.dev else [])
     for key in ('idle', 'job', 'transport', 'open', 'read', 'write', 'close'):
         guard = guards[key]; n = guard.get('patchLength', guard['length'])
         at = guard['address'] - device.main_load
@@ -238,6 +240,8 @@ modwerk_retained_end:
                                               for e in ('tick', 'draw', 'key', 'enc'))
     # The host time limit counts on the same tick (ep0.c).
     recipe['subscribe'].append(dict(event='ev_tick', fn='modwerk_ep0_tick', order=91))
+    if args.dev:  # the screen as composed, modules' drawing included
+        recipe['subscribe'].append(dict(event='ev_draw', fn='modwerk_dev_draw', order=95))
     spec = importlib.util.spec_from_file_location('modwerk_startup', artwork.parent/'build.py')
     startup = importlib.util.module_from_spec(spec); spec.loader.exec_module(startup)
     for guard, authored in startup.writes():

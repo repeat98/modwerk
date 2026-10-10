@@ -152,6 +152,13 @@ uint32_t modwerk_ep0_dispatch(void)
         modwerk_ep0_reply = out;
         return 68;
     }
+#ifdef MODWERK_DEV
+    if (r.action == MV_STALL) { /* development bases: KEY and SCREEN (dev.c) */
+        uint32_t modwerk_dev_request(const uint8_t *, const uint8_t **, uint8_t *);
+        uint32_t n = modwerk_dev_request(SETUP, &modwerk_ep0_reply, out);
+        if (n) return n;
+    }
+#endif
     if (r.action == MV_RECEIVE) {
         /* Stock's completion loop handles an EP0 OUT completion harmlessly
          * only in its idle state (11) with no awaited OUT descriptor; in any
