@@ -63,11 +63,10 @@ screen and counted its keys and encoders
 ([record](OCTATRACK_ELEKLOADER_MIGRATION.md#hooks-for-real-modules-reusable-on-every-machine-10-october-2026)).
 The loader now also patches stock code at load time, so catalogue ColdFire
 modules converted by Elekloader load without a reboot; each package is
-checked byte for byte against Elekloader's static link, and `usbtest5` runs
-them in the emulator, not yet on the unit
+checked byte for byte against Elekloader's static link. On the owner's MKII
+(`usbtest5`), PREVIEW VOL loaded, worked audibly and was removed over USB
 ([record](OCTATRACK_ELEKLOADER_MIGRATION.md#catalogue-modules-patching-stock-code-at-load-time-10-october-2026)).
-Next: PREVIEW VOL on the unit, the fail-safe sync requirements (a trial
-lease first), the sync mode on the unit, and folding USB MIDI and USB Audio
+Next: the fail-safe sync requirements (a trial lease first), the sync mode on the unit, and folding USB MIDI and USB Audio
 into the base. The target user flow (sync mode on the unit,
 WebUSB, module loading, automated checks, automatic failure reports and
 issues) and its gaps are in the

@@ -413,7 +413,14 @@ before their relocation) on the way. In the emulator with `usbtest5` (base
 `5b170b8d…`, rebuilt from the commit, flash-safety check passed): the bench and client lifecycle
 passed, PREVIEW VOL loaded with both jumps in RAM pointing at its code 0x12
 apart as statically linked, its rollback put the stock bytes back, and
-PLAYMODES loaded, ran and was accepted. Not yet on the unit. Not supported:
+PLAYMODES loaded, ran and was accepted.
+
+On the owner's MKII the same day, `usbtest5` passed the client lifecycle,
+and PREVIEW VOL, loaded over USB without a reboot, made a sample preview on
+a turned-down Flex/Static track play at the default volume (heard by the
+owner). Removed over USB, the same preview was quiet again: the first
+catalogue module whose patches to stock code were applied and undone on a
+running unit. Not supported:
 data-table sites, modules that add to the core's tables (CC MAP), DSP
 modules.
 
