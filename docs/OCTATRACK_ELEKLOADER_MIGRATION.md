@@ -701,11 +701,29 @@ check passed, RAM-booted on a blank project):
 - Rebinding on both cores (item D) is still unverified: the emulator runner
   started node in the wrong directory, and its rerun lacked the package mount.
 
-Next, untested: compare a clean accumulator in the receiver and record bits
-16 to 23 of words 2, 4 and 5; for core 1, read what the state-7 path does
-while a core-1 job is pending before the send. DSP-loader work stopped in
-this session after these runs; the unit was returned to the flashed
-`usbtest9`.
+What arming a core-1 job did at state 7: the packet builder and every frame
+of a pending job read the core's host flags by switching the DSP select
+byte to it and back. For core 0 that is a no-op; for core 1 it is the only
+thing AB2 did to core 1 before the freeze.
+
+**Both cores on the unit** (`dsp2-AB3`, `35b48eb4`, identity `afb310d1…`,
+flash-safety check passed, RAM-booted on a blank project, 10 October 2026).
+Two changes: core 1's flags are read at state 3's entry, where stock's
+state 2 left it selected, so the loader never switches cores; the receiver
+rewrites the header words masked to 16 bits before its compares. In the
+emulator E-Verb on T1, T2 and T5 loaded word for word on both cores (68
+packets each, none refused). On the unit:
+
+- Probes: core 0 and core 1 each answered, with frames running and no errors.
+- E-Verb picked on T5 (core 0): 68 upload packets accepted in under a second,
+  none refused, the pick completed, 1,588 words resident; the screen showed
+  E-Verb with its own page (TILT, PRE, REV, EDCY, ESIZ).
+- E-Verb picked on T1 (core 1): the same, `core1Sent` 69; both cores then
+  held their copy.
+- PLAY afterwards: the sequencer moved, frames kept counting, no stalls.
+
+Not yet shown: E-Verb's sound on the unit (the blank project plays nothing),
+removing it again on hardware, the stock effects coming back, and timing.
 
 ### Windows without a driver (10 October 2026)
 

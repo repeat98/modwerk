@@ -99,25 +99,28 @@ drained the frame words, but frames never resumed: a corrupted DSP needs
 both cores stopped, parked and re-uploaded, as RAM boot does. Prevent the
 collision instead of relying on the watchdog.
 
-**Core 1 must not receive packets where core 0 does.** A packet to core 1
-at the loader's frame hook completed (TCD0 DONE, no eDMA error) and core 1's
-frame chain died, in either memory bank. Moving the send to right after
-stock's own state-2 push to core 1 (`dsp2-AB2`) froze it too, and there the
-loader had sent nothing to core 1 yet (`core1Sent` 0, frames stopped in
-state 7): what arming a core-1 job changes before the send is the suspect,
-not the packet. Open.
+**Never select core 1 at state 7, not even to read its host flags.** The
+loader read each core's answer flags by setting the DSP select byte
+(`0xfc0a400c`) to the core and back, from state 7. For core 0 that wrote the
+value already there; for core 1 it switched, and the frames stopped: with
+a packet sent there, and with nothing sent at all (`dsp2-AB2`, `core1Sent`
+0). Stock switches cores only early in the frame (state 2 selects core 1,
+state 3 core 0). Core 1's packet now goes right after stock's state-2 push,
+and its flags are read at state 3's entry, while state 2 still has it
+selected. With that (`dsp2-AB3`, `35b48eb4`) core 1 answered a probe and
+took E-Verb's 68 packets with frames running.
 
-**E-Verb's upload to core 0 is refused at its fifth packet, before anything
-is written.** It was refused every time, with frames and audio running. Its
-refusal record (`dsp2-AB2`) is `$020003`, count 24, offset 136: the
-bounds-or-opcode branch refused a WRITE whose opcode, count and offset, as
-recorded, are all in range (offset + count 160 of a 2245-word table). Its
-checksum passed and no frame overran (`pin7` = frames, no straddles), so it
-was not torn. The receiver records each word masked with `and #$ffff` but
-compares the whole accumulator, and `and` leaves A2 stale (Octabam's own
-trap): a word with bit 23 set would look right in the record and fail the
-compare. Unconfirmed; the next build should compare a clean accumulator and
-record bits 16 to 23 of words 2, 4 and 5. Open.
+**Clean a host word before a 56-bit compare.** E-Verb's upload to core 0
+was refused at its fifth packet every time: a WRITE whose opcode, count and
+offset, masked to 16 bits, were all in range (record `$020003`, count 24,
+offset 136, `dsp2-AB2`), with a good checksum and no overrun. The receiver
+masked each word with `and #$ffff` and then used `cmp` and `do`, which read
+all of A, and `and` leaves A2 stale (Octabam's own trap). The receiver now
+rewrites the header words masked once, after the magic check, and tests the
+magic with `eor` then `and`, whose Z flag looks only at A1. All 68 packets
+then went through on the unit (`dsp2-AB3`). The fix confirms that some header
+words reach the DSP with junk in bits 16 to 23. Which bits and why was not
+measured.
 
 **A project that used a static module triggers its load at install.**
 Static E-Verb and dynamic E-Verb share effect id 27, so installing E-Verb
