@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { sha } from '../../../vendor/elekloader/kit/src/bytes.ts'
 import { FAKE_BASE, fakeSession, fakeUnit } from '../../dev/octatrack-link-fake'
 import { OctatrackLink } from './octatrack-link'
 
@@ -16,7 +17,7 @@ describe('finding the unit', () => {
   })
   it('reopens an allowed unit and reads its base without the picker', async () => {
     const { link } = await linked()
-    expect(link.getState()).toMatchObject({ status: 'ready', identity: { base: FAKE_BASE, model: 'OCTATRACK MKII', canSubmit: true } })
+    expect(link.getState()).toMatchObject({ status: 'ready', identity: { base: FAKE_BASE, model: 'OCTATRACK MKII', canSubmit: true }, active: FAKE_BASE })
   })
   it('tells a stock unit apart, then finds the base when the unit restarts after its OS upgrade', async () => {
     const { unit, link } = await linked('stock')
@@ -41,10 +42,10 @@ describe('sending a module', () => {
     const progress: number[] = []
     link.subscribe(() => { if (link.getState().status === 'sending') progress.push(link.getState().progress!) })
     await link.send('PREVIEW VOL', data)
-    expect(link.getState()).toMatchObject({ status: 'trial', module: 'PREVIEW VOL' })
+    expect(link.getState()).toMatchObject({ status: 'trial', module: 'PREVIEW VOL', active: sha(data) })
     expect(progress.at(-1)).toBe(1)
     await link.keep()
-    expect(link.getState()).toMatchObject({ status: 'ready', notice: { tone: 'success' } })
+    expect(link.getState()).toMatchObject({ status: 'ready', notice: { tone: 'success' }, active: sha(data) })
     expect(link.getState().notice!.text).toMatch(/Kept\. PREVIEW VOL stays loaded until you switch the Octatrack off/)
   })
   it('keeps the trial running when playback blocks keep, and finishes once stopped', async () => {
@@ -53,7 +54,7 @@ describe('sending a module', () => {
     unit.playing = true; await link.undo()
     expect(link.getState()).toMatchObject({ status: 'trial', notice: { tone: 'error', text: expect.stringMatching(/Stop playback/) } })
     unit.playing = false; await link.undo()
-    expect(link.getState().notice?.text).toMatch(/^Undone/)
+    expect(link.getState()).toMatchObject({ active: FAKE_BASE, notice: { text: expect.stringMatching(/^Undone/) } })
   })
   it('refuses to start while playing, without asking the user to unplug', async () => {
     const { unit, link } = await linked()

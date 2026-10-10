@@ -21,6 +21,8 @@ export interface FakeUnit {
   /** Another tab or app holds the interface. */
   taken: boolean
   playing: boolean
+  /** The kept set's digest; the base's own while nothing is loaded. */
+  active: string
 }
 
 export function fakeUnit(kind: 'base' | 'stock' | 'none' = 'base'): FakeUnit {
@@ -45,7 +47,7 @@ export function fakeUnit(kind: 'base' | 'stock' | 'none' = 'base'): FakeUnit {
   }
   let device: LinkDevice | undefined = kind === 'none' ? undefined : make(kind === 'base')
   const unit: FakeUnit = {
-    taken: false, playing: false,
+    taken: false, playing: false, active: FAKE_BASE,
     usb: {
       async requestDevice() { if (!device) throw new DOMException('No device selected.', 'NotFoundError'); return device },
       async getDevices() { return device ? [device] : [] },
@@ -63,7 +65,8 @@ export function fakeSession(unit: FakeUnit, delay = 0) {
   const wait = () => new Promise(resolve => setTimeout(resolve, delay))
   return async (): Promise<LinkSession> => {
     let status: UploadStatus = { command: 'hello', transaction: 0, result: 'ok', phase: 'normal', activeKnown: true, generation: 0,
-      lastTransaction: 0, currentTransaction: 0, received: 0, capacity: 262144, base: FAKE_BASE, session: '00'.repeat(32), active: '00'.repeat(32) }
+      lastTransaction: 0, currentTransaction: 0, received: 0, capacity: 262144, base: FAKE_BASE, session: '00'.repeat(32), active: unit.active }
+    let staged = unit.active
     const step = async (phase: UploadPhaseName, refuse?: UploadResultName) => {
       await wait()
       if (refuse) throw new UploadDeviceError(status = { ...status, result: refuse })
@@ -75,6 +78,7 @@ export function fakeSession(unit: FakeUnit, delay = 0) {
       get status() { return status }, connectionTrusted: true,
       async stage(pkg, { signal, progress } = {}) {
         if (unit.playing) return step('normal', 'unsafe')
+        staged = pkg.sha256
         for (let sent = 0; sent < pkg.data.length;) {
           if (signal?.aborted) { status = { ...status, phase: 'normal' }; throw new DOMException('Module staging cancelled.', 'AbortError') }
           await wait()
@@ -83,10 +87,10 @@ export function fakeSession(unit: FakeUnit, delay = 0) {
         return step('verified')
       },
       activate: () => step('pending'),
-      startTrial: () => step('trial'),
+      startTrial: async () => status = { ...await step('trial'), active: staged },
       holdTrial: () => step('pending', unit.playing ? 'unsafe' : undefined),
-      accept: () => step('ready'),
-      rollback: () => step('ready'),
+      accept: async () => { await step('ready'); unit.active = status.active!; return status },
+      rollback: async () => status = { ...await step('ready'), active: unit.active },
       cancel: () => step('normal'),
       leaveUploadMode: () => step('normal'),
     }

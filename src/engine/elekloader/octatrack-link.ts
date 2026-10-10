@@ -36,6 +36,8 @@ export interface LinkState {
   readonly status: LinkStatus
   /** From IDENTIFY. `ready` without `canSubmit` is a base this page cannot send to. */
   readonly identity?: VendorIdentity
+  /** HELLO's running set: the base's own digest while no module runs; null or absent when unknown. */
+  readonly active?: string | null
   readonly module?: string
   /** 0–1 while sending. */
   readonly progress?: number
@@ -84,7 +86,7 @@ export class OctatrackLink {
   readonly subscribe = (listener: () => void) => { this.listeners.add(listener); return () => { this.listeners.delete(listener) } }
   readonly getState = () => this.state
   private set(state: LinkState) { this.state = state; for (const listener of this.listeners) listener() }
-  private ready(notice?: LinkState['notice']) { this.set({ status: 'ready', identity: this.state.identity, notice }) }
+  private ready(notice?: LinkState['notice'], active = this.state.active) { this.set({ status: 'ready', identity: this.state.identity, active, notice }) }
 
   /** Listen for the unit coming and going, and reopen one this site was allowed before, without the picker. */
   start() {
@@ -132,7 +134,12 @@ export class OctatrackLink {
       if (index === undefined) { await device.close().catch(() => {}); return this.set({ status: 'stock' }) }
       this.index = index; this.transport = new UsbVendorTransport(device, index)
       if (!await this.claim()) return
-      try { this.set({ status: 'ready', identity: await this.transport.identify() }) }
+      try {
+        const identity = await this.transport.identify()
+        // HELLO is read-only; a base that cannot answer it still counts as ready.
+        const active = identity.canSubmit ? await this.connectSession(this.transport, identity.base).then(s => s.status.active, () => undefined) : undefined
+        this.set({ status: 'ready', identity, active })
+      }
       catch { this.set({ status: 'ready', identity: undefined }) } // a Modwerk base this page does not speak
       finally { await this.release() }
     } catch (error) {
@@ -159,7 +166,7 @@ export class OctatrackLink {
     const base = this.state.identity?.base
     if (this.state.status !== 'ready' || !this.state.identity?.canSubmit || !base || !await this.claim()) return
     const abort = this.abort = new AbortController()
-    this.set({ status: 'sending', identity: this.state.identity, module, progress: 0 })
+    this.set({ status: 'sending', identity: this.state.identity, active: this.state.active, module, progress: 0 })
     let session: LinkSession | undefined
     try {
       session = this.session = await this.connectSession(this.transport!, base)
@@ -171,7 +178,7 @@ export class OctatrackLink {
       await session.activate()
       await session.startTrial()
       this.startKeepalive()
-      this.set({ status: 'trial', identity: this.state.identity, module })
+      this.set({ status: 'trial', identity: this.state.identity, active: session.status.active, module })
     } catch (error) {
       await this.failed(error, session)
     }
@@ -190,7 +197,8 @@ export class OctatrackLink {
       if (keep) await session.accept(); else await session.rollback()
       await session.leaveUploadMode()
       await this.release()
-      this.ready({ tone: 'success', text: keep ? `Kept. ${module} stays loaded until you switch the Octatrack off.` : 'Undone. Your Octatrack is back to how it was.' })
+      this.ready({ tone: 'success', text: keep ? `Kept. ${module} stays loaded until you switch the Octatrack off.` : 'Undone. Your Octatrack is back to how it was.' },
+        session.status.active)
     } catch (error) {
       // Playing blocks the stop that keep and undo need; the trial carries on until the user stops.
       if (unsafe(error) && session.connectionTrusted && session.status.phase === 'trial') {
@@ -217,7 +225,9 @@ export class OctatrackLink {
     }
     this.session = undefined
     await this.release()
-    if (this.device) this.ready({ tone: 'error', text: explainLinkError(error) + (clean ? '' : ' ' + UNPLUG) })
+    // An untrusted connection leaves the running set unknown.
+    if (this.device) this.ready({ tone: 'error', text: explainLinkError(error) + (clean ? '' : ' ' + UNPLUG) },
+      session ? (session.connectionTrusted ? session.status.active : undefined) : this.state.active)
   }
   private startKeepalive() {
     this.stopKeepalive()
