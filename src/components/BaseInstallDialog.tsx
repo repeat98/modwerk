@@ -3,7 +3,7 @@ import { saveFirmware } from '../config/firmware-filename'
 import type { OctatrackLink } from '../engine/elekloader/octatrack-link'
 import { useOctatrackLink } from '../hooks/useOctatrackLink'
 import { RiskAcceptance } from './ConfigurationLayout'
-import { Icon } from './Icon'
+import { Icon, type IconName } from './Icon'
 import './octatrack-link.css'
 
 export interface BaseImage { buffer: ArrayBuffer; sha256: string }
@@ -11,28 +11,33 @@ export interface BaseImage { buffer: ArrayBuffer; sha256: string }
 const LAUNCH_HOLD_SECONDS = 10
 // What the release prompt promises. Every line must be true on release day: several modules at once, the
 // stress tests and the automatic reports are still to be built (docs/OCTATRACK_ELEKLOADER_MIGRATION.md).
-const ALSO_NEW = [
-  'You can run as many modules at once as the firmware can fit.',
-  'Modules share the DSP memory much better now, so more effects fit side by side.',
-  'Every module gets stress-tested on your Octatrack before you keep it.',
-  'If something crashes, a bug report goes straight to the module’s author. You’ll see what gets sent.',
+const ALSO_NEW: [IconName, string, string][] = [
+  ['grid', 'As many modules as fit', ', all selectable from the Octatrack’s menus'],
+  ['wave', 'Better DSP memory use', ', so more effects fit side by side'],
+  ['shield', 'Automatic stress tests', ' for every module and configuration before it lands'],
+  ['message', 'Automatic bug reports', ' when something fails, straight to the module’s author'],
 ]
-// What the site does, in the voice of `npm run device`. No shell prompt: there is no such command to type.
-const LOG: [string, string][] = [['usb', 'OCTATRACK MKII found · base 7c2e91d0'], ['send', 'preview-vol'], ['trial', 'running · unplug to undo'], ['keep', 'done. no card, no reboot']]
+const SCREEN = ['LOADING', 'TRYING', 'KEPT']
 
-/** The flow as a log typing itself out, a line a second, in the module previews' screen colours. */
-function LinkLog() {
-  const [shown, setShown] = useState(() => matchMedia('(prefers-reduced-motion: reduce)').matches ? LOG.length : 1)
-  useEffect(() => {
-    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return
-    const timer = window.setInterval(() => setShown(count => count > LOG.length + 1 ? 1 : count + 1), 1000) // two beats on the full log, then again
-    return () => window.clearInterval(timer)
-  }, [])
-  return <div className="module-preview link-log" aria-hidden="true">
+/** This page, a cable and the Octatrack, drawn like the module previews; the unit's screen shows what happens. */
+function LinkHero() {
+  return <div className="module-preview link-hero" aria-hidden="true">
     <div className="preview-label"><span>NEW</span><span className="preview-led" /></div>
-    <ol className="link-log-lines">{LOG.map(([verb, text], i) => <li key={verb} className={i < shown ? 'is-shown' : undefined}>
-      <b>{verb}</b><span>{verb === 'send' && <span className="link-log-bar"><span /></span>}{text}{i === Math.min(shown, LOG.length) - 1 && <span className="link-log-cursor" />}</span>
-    </li>)}</ol>
+    <svg viewBox="0 0 600 196" className="signal-art link-hero-art" fill="none">
+      <g className="signal-grid">{[52, 98, 144].map(y => <path key={y} d={'M16 ' + y + 'H584'} />)}{[120, 240, 360, 480].map(x => <path key={x} d={'M' + x + ' 16V180'} />)}</g>
+      <rect className="signal-secondary" x="40" y="36" width="150" height="96" rx="6" />
+      {[50, 74, 98].map((y, row) => <rect key={y} className={row === 1 ? 'signal-main link-hero-pick' : 'signal-ghost'} x="52" y={y} width="126" height="16" rx="3" />)}
+      <path className="signal-secondary" d="M28 140H202L192 149H38Z" />
+      <path className="signal-ghost" d="M196 145C260 145 270 186 320 186S360 150 384 150" />
+      <path className="signal-main link-hero-flow" d="M196 145C260 145 270 186 320 186S360 150 384 150" />
+      <rect className="signal-secondary" x="384" y="24" width="188" height="140" rx="9" />
+      <rect className="link-hero-screen" x="400" y="40" width="92" height="46" rx="3" />
+      {SCREEN.map(word => <text key={word} className="link-hero-word" x="446" y="68" textAnchor="middle">{word}</text>)}
+      {[514, 537, 560].flatMap(x => [52, 76].map(y => <circle key={x + '-' + y} className="signal-secondary" cx={x} cy={y} r="7" />))}
+      <rect className="signal-ghost" x="400" y="104" width="72" height="6" rx="3" /><rect className="signal-secondary" x="430" y="100" width="8" height="14" rx="2" />
+      {Array.from({ length: 16 }, (_, i) => <rect key={i} className="rhythm-off link-hero-trig" style={{ animationDelay: i * 0.15 + 's' }} x={400 + i * 10.4} y="138" width="7.5" height="10" rx="1.5" />)}
+      <text x="115" y="172" textAnchor="middle">THIS PAGE</text><text x="478" y="184" textAnchor="middle">OCTATRACK</text>
+    </svg>
   </div>
 }
 
@@ -81,13 +86,10 @@ export function BaseInstallDialog({ link, launch = false, firmwareReady, onChoos
   return <dialog ref={dialog} className="base-install-dialog" aria-labelledby="base-install-title" aria-describedby="base-install-intro" onCancel={event => { event.preventDefault(); if (canClose) finish() }} onClose={() => { if (!finished.current && !dialog.current?.open) onClose(false) }}>
     {canClose && <button type="button" className="icon-button base-install-close" aria-label="Close" onClick={finish}><Icon name="close" size={18} /></button>}
     {view === 'intro' ? <>
-      <LinkLog />
-      <p className="base-install-kicker">A note from Jannik</p>
-      <h2 id="base-install-title" className="link-title" tabIndex={-1}>Modules over USB are here</h2>
-      <p id="base-install-intro" className="base-install-intro">No more copying files to the card and rebooting. Install the Modwerk base once, and from then on you send modules to your Octatrack straight from this page. Each one runs as a trial first: keep it, undo it, or just pull the cable.</p>
-      <p className="link-also">Also new:</p>
-      <ul className="link-promises">{ALSO_NEW.map(line => <li key={line}><span className="preview-led" aria-hidden="true" />{line}</li>)}</ul>
-      <p className="link-signoff">Have fun with it,<br />Jannik</p>
+      <LinkHero />
+      <h2 id="base-install-title" className="link-title" tabIndex={-1}>Load modules over USB</h2>
+      <p id="base-install-intro" className="base-install-intro">Install the Modwerk base once from the card. After that, modules go straight from this page to your Octatrack, without the card and without a reboot.</p>
+      <ul className="link-promises">{ALSO_NEW.map(([icon, lead, rest]) => <li key={lead}><span className="link-feature-icon" aria-hidden="true"><Icon name={icon} size={18} /></span><span><strong>{lead}</strong>{rest}</span></li>)}</ul>
       <p className={'link-needs' + (state.status === 'unsupported' ? ' is-missing' : '')}>You need an Octatrack MKII, your OS 1.40C file, a USB cable and Chrome or Edge on a computer.</p>
       {state.status === 'unsupported' && <p className="file-error" role="alert">This browser can’t talk to USB devices. Open this page in Chrome or Edge on a computer.</p>}
     </> : <>
