@@ -1,0 +1,37 @@
+{
+  "file": "media/audio-preview.mp3",
+  "sha256": "68394bcfd9fe4985006e2f2563b5b59229217119bbb1cac2e7c32d9039def91e",
+  "seconds": 12.7,
+  "moduleVersion": "0.1.2-experimental",
+  "method": "Offline render on a computer: the module's DSP built into a private OS 1.40C image and run in dsp_host (Mini Verb, E-Verb, Air Chorus, TapeHead), its fixed-point C engine built natively (Tape Echo), or its 808/909 DSP engines in bd909_host (Analog BD). Not recorded on an Octatrack; no firmware or image is included.",
+  "sample": {
+    "file": "LOOPS/LOOP_909_21.wav",
+    "pack": "Malin Genie Drum Sample Pack"
+  },
+  "passes": [
+    {
+      "start": 0.0,
+      "label": "light",
+      "sets": {
+        "DRIVE": 10,
+        "TRIM": 18,
+        "COLOR": 0
+      }
+    },
+    {
+      "start": 4.23,
+      "label": "driven",
+      "sets": {
+        "DRIVE": 70
+      }
+    },
+    {
+      "start": 8.47,
+      "label": "hot, bright",
+      "sets": {
+        "DRIVE": 115,
+        "COLOR": 2
+      }
+    }
+  ]
+}

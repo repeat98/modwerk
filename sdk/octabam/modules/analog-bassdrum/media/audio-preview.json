@@ -1,0 +1,86 @@
+{
+  "file": "media/audio-preview.mp3",
+  "sha256": "5d7fd5b3e52cbec420f003afef317081c6cbb241407fc36bbc7e97a17931b4bb",
+  "seconds": 10.2,
+  "moduleVersion": "0.1.5-experimental",
+  "method": "Offline render on a computer: the module's DSP built into a private OS 1.40C image and run in dsp_host (Mini Verb, E-Verb, Air Chorus, TapeHead), its fixed-point C engine built natively (Tape Echo), or its 808/909 DSP engines in bd909_host (Analog BD). Not recorded on an Octatrack; no firmware or image is included.",
+  "sample": null,
+  "passes": [
+    {
+      "start": 0.0,
+      "engine": "808",
+      "label": "808 default",
+      "knobs": [
+        64,
+        80,
+        80,
+        64,
+        64,
+        0,
+        0,
+        100,
+        127,
+        64,
+        64,
+        0
+      ]
+    },
+    {
+      "start": 2.4,
+      "engine": "808",
+      "label": "808 low and long",
+      "knobs": [
+        40,
+        110,
+        60,
+        64,
+        100,
+        0,
+        0,
+        100,
+        127,
+        64,
+        64,
+        0
+      ]
+    },
+    {
+      "start": 4.8,
+      "engine": "909",
+      "label": "909 default",
+      "knobs": [
+        64,
+        32,
+        64,
+        32,
+        64,
+        0,
+        1,
+        100,
+        127,
+        64,
+        64,
+        0
+      ]
+    },
+    {
+      "start": 7.2,
+      "engine": "909",
+      "label": "909 hard attack, drive",
+      "knobs": [
+        64,
+        20,
+        64,
+        100,
+        100,
+        50,
+        1,
+        100,
+        127,
+        64,
+        64,
+        0
+      ]
+    }
+  ]
+}

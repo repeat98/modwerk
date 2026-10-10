@@ -166,13 +166,15 @@ See [TESTING.md](TESTING.md) for commands and numbers. In short:
 Captured from the MKII panel of the Octamod emulator running the 0.1.2
 hardware test image (`hardware-test-remix.py`, BUILD=7): real LCD pixels, not
 a reconstruction. They are byte-identical to the 0.1.1 captures: 0.1.2 does
-not change the menu, controls or labels. No audio is included.
+not change the menu, controls or labels.
 
 ![TAPEHEAD assigned in FX2 SETUP](media/ot-location.png)
 
 ![TAPEHEAD's main page: DRIVE, TRIM, COLOR](media/ot-controls.png)
 
 ![COLOR set to MED](media/ot-color.png)
+
+**Audio preview.** [Listen](media/audio-preview.mp3). One 909 drum loop, played three times through TapeHead: DRIVE 10, then DRIVE 70, then DRIVE 115 with COLOR set to BRGT. Each pass is level-matched to the first, so only the character changes. It is an offline render on a computer through the module's own code, not a recording of an Octatrack. The sample, settings and method are in [audio-preview.json](media/audio-preview.json); rights are in [media rights](media/LICENSE.md).
 
 ## Files
 

@@ -192,4 +192,4 @@ the interface only, not sound or hardware behaviour.
 
 More screenshots: ![The FX2 main page at the defaults.](media/ot-main.png) ![The SETUP page with REV switched ON.](media/ot-reverse.png)
 
-No audio examples yet.
+**Audio preview.** [Listen](media/audio-preview.mp3). One chord stab, played three times: dry, then the Hall starting point (SIZE 110, DCY 90, ABSB 45, MIX 70), then the Shimmer pad starting point (SIZE 100, DCY 100, ABSB 70, DPTH +56, MIX 100). It is an offline render on a computer through the module's own code, not a recording of an Octatrack. The sample, settings and method are in [audio-preview.json](media/audio-preview.json); rights are in [media rights](media/LICENSE.md).

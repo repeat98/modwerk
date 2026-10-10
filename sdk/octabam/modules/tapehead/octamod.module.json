@@ -283,6 +283,15 @@
         "imageSha256": "774aa99723625fb698e5f0bb6fc32ea3196996931f55beb10ce1ec53eccc328b",
         "setup": "ot_emu (MKII panel) on 1.40C composed with the tapehead-spring remix: stock effects, TAPEHEAD in SPRING REV's FX2 row, stock DSP code built in; empty scratch card; transport stopped; actual 128x64 LCD pixels at integer scale 6."
       }
+    },
+    {
+      "path": "media/audio-preview.mp3",
+      "captureType": "audio",
+      "caption": "One 909 drum loop, played three times through TapeHead: DRIVE 10, then DRIVE 70, then DRIVE 115 with COLOR set to BRGT. Each pass is level-matched to the first, so only the character changes. Rendered offline through the module's own code on a computer, not recorded on an Octatrack.",
+      "alt": "A 909 drum loop heard with light tape drive, then driven, then hot and bright.",
+      "credit": "Modwerk contributors (offline render). Sample: Malin Genie Drum Sample Pack.",
+      "license": "Render MIT; sample per its pack terms (media/LICENSE.md)",
+      "source": "original"
     }
   ],
   "access": {
