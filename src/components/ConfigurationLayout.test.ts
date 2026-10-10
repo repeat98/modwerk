@@ -17,6 +17,15 @@ describe('configuration page layout', () => {
     expect(html).not.toContain('Delete')
   })
 
+  it('keeps Report a problem in view beside New, off while the configuration has no modules', () => {
+    const configuration = newConfiguration('Live set')
+    const open = renderToStaticMarkup(createElement(ConfigurationHeader, { ...header, configuration, configurations: [configuration] }))
+    expect(open).toMatch(/<button class="button button-quiet module-issue-action" aria-haspopup="dialog">.*Report a problem<\/button>/)
+    const empty = renderToStaticMarkup(createElement(ConfigurationHeader, { ...header, canReport: false, configuration, configurations: [configuration] }))
+    expect(empty).toMatch(/<button class="button button-quiet module-issue-action" disabled="" aria-haspopup="dialog">/)
+    expect(renderToStaticMarkup(createElement(ConfigurationHeader, header))).not.toContain('Report a problem')
+  })
+
   it('shows only New and the empty title without a configuration', () => {
     const html = renderToStaticMarkup(createElement(ConfigurationHeader, { ...header, emptyTitle: 'No Digitakt configuration yet' }))
     expect(html).toContain('<h1>No Digitakt configuration yet</h1>')

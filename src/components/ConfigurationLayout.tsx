@@ -39,6 +39,7 @@ export function ConfigurationHeader({ kicker, meta, emptyTitle, configuration, c
     </div>
     <div className="configuration-heading-actions">
       <button className="button button-primary" onClick={() => onDialog('create')}><Icon name="plus" size={16} />New</button>
+      {configuration && <button className="button button-quiet module-issue-action" disabled={!canReport} aria-haspopup="dialog" onClick={onReport}><Icon name="message" size={16} />Report a problem</button>}
       {configuration && <div className="configuration-menu">
         <button ref={buttonRef} className="button button-quiet" aria-label="Configuration actions" title="Configuration actions" aria-expanded={open} aria-controls={open ? panelId : undefined} onClick={() => setOpen(value => !value)}><Icon name="more" size={18} /></button>
         {open && <div ref={panelRef} id={panelId} className="configuration-menu-panel" role="group" aria-label="Configuration actions" onKeyDown={moveFocus}>
@@ -46,7 +47,6 @@ export function ConfigurationHeader({ kicker, meta, emptyTitle, configuration, c
           <button onClick={() => choose(() => onDialog('duplicate'))}>Duplicate</button>
           <button onClick={() => choose(onImport)}>Import JSON</button>
           <a href={shareHref}>Share in forum</a>
-          <button disabled={!canReport} aria-haspopup="dialog" onClick={() => choose(onReport)}>Report a problem</button>
           <hr />
           <button className="is-danger" onClick={() => choose(() => onDialog('delete'))}>Delete</button>
         </div>}
