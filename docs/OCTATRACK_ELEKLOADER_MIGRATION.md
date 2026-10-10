@@ -654,6 +654,16 @@ takes back the frame words, unmasks the frame interrupt, shuts the loader
 off and shows `DSP STOPPED`. Report version 5 (44 words) counts those errors
 and keeps the last `ES`.
 
+**On the unit with the fix** (aligned builds, blank project): core 0 now
+takes packets with frames running. A1x's probe to core 0 timed out as built,
+with frames counting and no eDMA error. B1x's receiver answered both probes
+(the HF2 toggle flipped each time). C1x's E-Verb pick on T5 kept frames and
+audio running while the upload failed safely at its fifth packet: the
+receiver's read-back check refused it, the pick was refused and T5 kept
+DELAY. Still open: core 1 stops frames on its first packet, with no eDMA
+error this time (A1x's probe 1; most likely the shared host port switching
+back to core 0 mid transfer), and the P-write mismatch on core 0.
+
 ### Windows without a driver (10 October 2026)
 
 The base reports USB 2.10 from its own copy of the device descriptor (one
