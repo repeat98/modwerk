@@ -12,8 +12,8 @@ import manifest from '../../sdk/octabam/modules/sidechain-compressor/octamod.mod
 const key = (ids: readonly string[], keep: boolean) => [...ids].sort().join('+') + ':' + keep
 const visible = ['miniverb', 'tapeecho', 'euclid', 'repitch', 'tapehead', 'usb-audio-out-tracks-main-cue', 'quantizer', 'previewvol', 'cc-map']
 const suites = [
-  { name: 'original eight modules', data: composition, built: 216, scope: ['spectrum', 'modulation', 'character', 'miniverb', 'tapeecho', 'euclid', 'repitch', 'tapehead', 'sidechain-compressor'], member: (ids: string[]) => ids.includes('sidechain-compressor'), expected: 512 },
-  { name: 'nine visible modules without Analog BD', data: visibleProofs, built: 798, scope: [...visible, 'sidechain-compressor'], member: (ids: string[]) => ids.includes('sidechain-compressor'), expected: 1024 },
+  { name: 'original eight modules', data: composition, built: 200, scope: ['spectrum', 'modulation', 'character', 'miniverb', 'tapeecho', 'euclid', 'repitch', 'tapehead', 'sidechain-compressor'], member: (ids: string[]) => ids.includes('sidechain-compressor'), expected: 512 },
+  { name: 'nine visible modules without Analog BD', data: visibleProofs, built: 786, scope: [...visible, 'sidechain-compressor'], member: (ids: string[]) => ids.includes('sidechain-compressor'), expected: 1024 },
   { name: 'Analog BD', data: analogProofs, built: 0, scope: ['analog-bassdrum', ...visible, 'sidechain-compressor'], member: (ids: string[]) => ids.includes('sidechain-compressor') && ids.includes('analog-bassdrum') && [2, 3, 11].includes(ids.length), expected: 22 },
 ]
 const refusalClass = /overruns the region|label formatters do not fit|wide dial hook|chooser list of|not free|past the stock zero run|fits neither the clone window|stock effects only/
@@ -69,8 +69,8 @@ describe('Sidechain Compressor native evidence on the shared builder', () => {
   })
   it('pins the native image of the module alone, both menu modes', () => {
     const alone = (keep: boolean) => composition.proofs.find(proof => key(proof.moduleIds, proof.keepStockFx2) === key(['sidechain-compressor'], keep))!
-    expect(alone(true)).toMatchObject({ bytes: 1112560, sha256: '4fd5fcb49ed17cd4e707d407a6e42a64ec30b50aefaad3b1eeb1bb804493aef0' })
-    expect(alone(false)).toMatchObject({ bytes: 1112560, sha256: 'a50b99cf373cca589f97e94d1ac8e6c9c777c5aa9a17777edbbba722d9dbcf4c' })
+    expect(alone(true)).toMatchObject({ bytes: 1112560, sha256: '2816f0bce5aaabfadac6dba9e778dc184b8af3e4a611990d6e6b3e36095bc5eb' })
+    expect(alone(false)).toMatchObject({ bytes: 1112560, sha256: '9b6342c28437f026673d07bb8ac3680626f4ee6f89c01637ac3ea01e6ae9c324' })
   })
   it('retains the historical Analog BD refusals without treating them as current limits', () => {
     expect(analogProofs.proofs.every(proof => 'error' in proof)).toBe(true)
@@ -85,21 +85,23 @@ describe('Sidechain Compressor native evidence on the shared builder', () => {
       expect(result.notes).toEqual([])
     }
   })
-  it('grants the hardware-only waiver to this exact release and nothing else', () => {
-    const waived = () => parseModuleDocument(JSON.parse(JSON.stringify(manifest)))
-    expect(() => requireModuleQualificationForPublication(waived())).not.toThrow()
-    expect(waived().tests.qualification?.hardware).toMatchObject({ kind: 'owner-waived', status: 'waived', approvedBy: 'repeat98', approvedOn: '2026-10-05' })
-    expect(waived().tests.hardwareStatus).toBe('historical')
-    // Another module, another version or a reported hardware status cannot use it.
-    for (const change of [
-      (doc: ReturnType<typeof waived>) => { (doc as { id: string }).id = 'other-module' },
-      (doc: ReturnType<typeof waived>) => { (doc as { version: string }).version = '0.1.2-experimental'; doc.tests.qualification!.moduleVersion = '0.1.2-experimental' },
-      (doc: ReturnType<typeof waived>) => { (doc.tests as { hardwareStatus: string }).hardwareStatus = 'reported' },
-    ]) { const doc = waived(); change(doc); expect(() => requireModuleQualificationForPublication(doc)).toThrow('hardware-only owner approval covers only') }
-    // Both processor bounds and the sixteen-instance memory accounting stay mandatory.
-    const noColdFire = waived(); noColdFire.tests.qualification!.cycles = noColdFire.tests.qualification!.cycles.filter(cycle => cycle.processor === 'dsp')
-    expect(() => requireModuleQualificationForPublication(noColdFire)).toThrow('both processor bounds')
-    const fewer = waived(); fewer.tests.qualification!.memory.maxInstances = 15
-    expect(() => requireModuleQualificationForPublication(fewer)).toThrow()
+  it('carries its own reported hardware evidence and cannot reuse the 0.1.1 waiver', () => {
+    const current = () => parseModuleDocument(JSON.parse(JSON.stringify(manifest)))
+    expect(() => requireModuleQualificationForPublication(current())).not.toThrow()
+    expect(current().tests.hardwareStatus).toBe('reported')
+    expect(current().tests.qualification?.hardware).toMatchObject({ kind: 'functional', status: 'reported', model: 'MKI', imageSha256: '2816f0bce5aaabfadac6dba9e778dc184b8af3e4a611990d6e6b3e36095bc5eb' })
+    // The pinned image is the one the hardware report names.
+    expect(composition.proofs.find(proof => key(proof.moduleIds, proof.keepStockFx2) === key(['sidechain-compressor'], true))!.sha256).toBe(current().tests.qualification!.imageSha256)
+    // The owner's 5 October waiver covered 0.1.1 only.
+    const waived = current()
+    waived.tests.qualification!.hardware = { kind: 'owner-waived', status: 'waived', approvedBy: 'repeat98', approvedOn: '2026-10-05', reason: 'reuse', report: 'evidence/software.json' }
+    ;(waived.tests as { hardwareStatus: string }).hardwareStatus = 'historical'
+    expect(() => requireModuleQualificationForPublication(waived)).toThrow('hardware-only owner approval covers only')
+    // A report for another image or source does not qualify this one.
+    const otherImage = current(); otherImage.tests.qualification!.imageSha256 = '0'.repeat(64)
+    expect(() => requireModuleQualificationForPublication(otherImage)).toThrow('must match the tested source and image')
+    // The sixteen-instance memory accounting must add up.
+    const fewer = JSON.parse(JSON.stringify(manifest)); fewer.tests.qualification.memory.maxInstances = 15
+    expect(() => parseModuleDocument(fewer)).toThrow('region sums and maximum-instance total')
   })
 })

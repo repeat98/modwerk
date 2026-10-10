@@ -2,6 +2,16 @@
 
 **Owner-approved logger release (3 October 2026):** the owner explicitly lifted the logger addition’s qualification restrictions, authorized local firmware/DSP checks, approved the current module versions and logger for release, and waived hardware testing. Downloads are enabled with the logger included. This exception does not claim measured chip timing, complete stress qualification or new hardware evidence. Existing firmware isolation, original-source provenance, compatibility checks, stock fingerprint guards and packaging integrity remain in force. MIDI Scenes keeps its pinned standalone code and 12-page reservation; the logger occupies the top 16 pages of the arena, and a one-page guard separates it from the sample arena; guarded arena updates reserve all 29 pages. Mixed MIDI Scenes configurations remain incompatible. The earlier full-image proofs below predate logger integration; local verification of this change is recorded separately. See [logger evidence and limitations](../sdk/runtime/logging/TESTING.md).
 
+## Sidechain Compressor 0.1.2 — 10 October 2026
+
+0.1.2 adds `sc_norm` (ColdFire unit 134 → 338 B) and two guarded `jsr` detours over the page-2 copiers' first instruction, so a COMPRESSOR saved on stock firmware (page-2 slots `0x7f/0/0/0`) comes up with KEY OFF, KFLT and KGN centred and MON OFF. DSP source and tables are unchanged. Source: octabam `9228782`, author pin `329b801`. [TESTING.md](../sdk/octabam/modules/sidechain-compressor/TESTING.md) has the details.
+
+**Native and browser.** `npm run module:verify -- sidechain-compressor` built all 122 coverage selections natively and compared the composer against them. The two native suites were regenerated with `export-composition-proofs.py`: the original eight modules build 200 of 512 and the nine visible modules 786 of 1,024. 16 original-suite selections built in the 0.1.1 record now refuse for core A DSP space; all hold Spectrum or Character, and unchanged `main` refuses the same 16 with the same word counts. 12 visible-suite selections that `main` builds are refused by 0.1.2's larger unit, for ColdFire cave space; every selection of one or two other modules still builds. The Analog BD suite (22 refusals, stock effects only) is unchanged and was not regenerated.
+
+**Packages.** Rebuilt in the pinned image with `scripts/build-modules-isolated.sh`; only the sidechain ROM unit's bytes change, the DSP package's code words are identical and the other packages move only their version labels.
+
+**Hardware.** The author flashed the module-alone native image (MAIN OS `2816f0bc…`) on an MKI and reported a functional pass: a stock-saved compressor reset, two instances across both cores, MON, Part/project reload and a power cycle. No stress, timing or maximum-load test.
+
 ## Output Matrix 0.1.0 and hooked DSP without a menu entry — 9 October 2026
 
 Output Matrix is the first module whose DSP code is reached only through stock-code hooks, with no FX menu entry, beside a ColdFire unit. The packager compiles it as a requested ColdFire module and as a hooked DSP module; a hooked package without a menu entry carries no effect id or stock key. The browser's static placer puts hooked code only on the payloads its packages name, as native `build_bus.py` does (core 0 here), and the loader path refuses the module. Native octabam needed no change.

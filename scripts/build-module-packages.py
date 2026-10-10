@@ -553,6 +553,13 @@ def main():
             lo, hi = native.penable(module.active_params, module.linked_params)
             integer(native.P_PENABLE_LO, 4, lo); integer(native.P_PENABLE_HI, 4, hi)
             extra = {'inheritedEnable': list(module.inherited_enable), 'rawPointers':raw, 'replaces':module.menu.replaces} if module.menu.stock_dsp else {}
+            if module.menu.stock_dsp and module.detours:
+                rows = []
+                for detour in module.detours:
+                    length, sha = fingerprint(detour.expect, detour.site)
+                    if detour.kind not in ('jmp', 'jsr') or detour.target is not None or detour.unit not in {pointer['unit'] for pointer in raw}: raise ValueError('Unsupported stock-DSP module detour')
+                    rows.append({'address': detour.site, 'guardLength': length, 'guardSha256': sha, 'unit': detour.unit, 'symbol': detour.symbol, 'kind': detour.kind, 'bytes': detour.pad_to or 6, 'note': detour.note})
+                extra['detours'] = rows
             descriptors.append(dict(old, sourceSha256=sources[f'modules/{module.name}/manifest.py'], integers=integers, strings=strings, **extra))
         products['descriptor-recipes.json'] = dict(baseline['descriptor-recipes.json'], **provenance, recipes=descriptors)
         groups = []

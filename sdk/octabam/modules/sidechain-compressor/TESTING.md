@@ -1,8 +1,76 @@
 # Sidechain Compressor verification
 
-Version **0.1.1-experimental**, recorded **5 October 2026**. Built by Modwerk's shared firmware builder, beside any other module that fits. New physical hardware evidence is waived by the owner's explicit instruction. No current-image hardware pass or chip wall-clock timing is claimed.
+Version **0.1.2-experimental**, recorded **10 October 2026**. Built by Modwerk's shared firmware builder, beside any other module that fits. The author flashed the exact image this source builds on an MKI and reported a functional pass; no chip wall-clock timing or stress run is claimed. The 0.1.1 record follows unchanged below as history; where 0.1.2 did not change something (the DSP code, the descriptor, the controls), its measurements still describe 0.1.2 and the section says so.
 
-## Source, tools and reproduction
+## 0.1.2-experimental
+
+### What changed
+
+A COMPRESSOR saved on stock firmware holds stock's page-2 slot 8..11 defaults `0x7f/0/0/0`, which 0.1.1 read as KEY "T127" (the detector keyed from unrelated Y memory), KFLT fully low-passed and KGN at minimum. Turning KEY down lands on T8 first with KFLT/KGN still at minimum, so the key barely reaches the detector (a likely route to Modwerk report #321). 0.1.2 adds `sc_norm` to the ColdFire unit (134 → 338 B) and two guarded `jsr` detours over the first instruction of both page-2 copiers (`lea 0x80000a50,%a3` at `0x4000cae8`, the frame builder's, and its twin `0x40003d1c`; the 6 stock bytes at each are declared by address, length and SHA-256 `9a4b68c7…`, never carried). For each track and FX slot it resets a COMPRESSOR whose KEY is above 8 to KEY 0, KFLT 64, KGN 64, MON 0, in the current Part's working store and in the live lane, each copy judged only by its own FX id. A KEY of 0..8 is never touched. No flags, kernel or UI calls, no private state. The DSP source and tables are byte-identical to 0.1.1 (`patch_sc_dsp3.asm` `aaa1a1c9…`, `sc_tables.py` `8045e06f…`).
+
+### Source and identities
+
+- octabam `922878234b22221a1c298b3c7e0b3bdeffb468a9`; author pin Zac-Kyoti/octatrack-kyoti-fw `329b801cf90f32cbca97c6699a908908968e4df6`. Per-file provenance: [the import record](../../../imports/sidechain-compressor-9228782.json).
+- Native source SHA-256 `0a0e8d770973eef0acc580724ab16732ba593e1b6b0240cc1c48e83b05248ae2`.
+- ColdFire unit `sc_cf`, linked at the standalone's address, equals the author's reference (`76a4badcef6024b7de8bd6f05930146bdb6a47ffd577da340a6c252c316ff854`, 338 B) on every build.
+- Tested image: Modwerk's native build of the module alone, stock FX2 kept, MAIN OS `2816f0bce5aaabfadac6dba9e778dc184b8af3e4a611990d6e6b3e36095bc5eb` (stock FX2 removed: `9b6342c28437f026673d07bb8ac3680626f4ee6f89c01637ac3ea01e6ae9c324`). Both detour sites read `4eb9 400d6d86` (`jsr sc_norm`) in it.
+- Toolchain: `sdk/build/Dockerfile` (binutils 2.47, GCC 16.2.0, dsp56300 `8ccdd843…`), run under Colima on an Apple-silicon Mac.
+
+### Building it with other modules
+
+| Check | Result |
+| --- | --- |
+| Coverage set | `npm run module:verify -- sidechain-compressor --os <1.40C>`: native octabam built all 122 selections of the coverage set (alone, beside each module, the fullest selections and the fixed sample, with and without stock FX2). |
+| Original eight modules | `export-composition-proofs.py --suite sidechain`: 512 selections, native builds 200 and refuses 312, all for code or cave space. 16 selections built in the 0.1.1 record are now refused for core A DSP code space (2,726–2,738 of 2,724 words); every one holds Spectrum or Character, and unchanged `main` refuses the same 16 with the same word counts, so this is drift in other modules since the 0.1.1 record, not 0.1.2. |
+| Nine visible modules | `--suite sidechain-visible`: 1,024 selections, native builds 786 and refuses 238, all for ColdFire cave space. Every selection of one or two other modules builds (92 of 92). 12 selections built by 0.1.1 (and by unchanged `main`) are refused with 0.1.2's larger unit: the dial hook or FX1 chooser list no longer fits; each holds Euclid with Scale Quantizer, or eight or more modules. |
+| Analog BD suite | Not regenerated: all 22 selections refuse because Analog BD runs with stock effects only, which does not depend on this module's bytes. The exporter's current Analog BD list also includes Air Chorus, so a rerun would not be the recorded suite. |
+| Packages | `scripts/build-modules-isolated.sh` in the pinned image, then `modules:import --development`: the sidechain ROM unit changes (968 → 1,524 B object, 338 B code); the DSP package's code words are unchanged, only labels and manifest hashes move. |
+
+### ColdFire bound
+
+`sc_norm` runs once per frame from the frame builder's copier (transport running or stopped). Its twin site has no static caller and never ran in a 600-frame emulator coverage run; it is priced as if it also ran every frame.
+
+Executed instructions, counted from the source (every branch, `jsr` at the site included):
+
+| Case | Instructions/call |
+| --- | ---: |
+| No COMPRESSOR in any slot | 144 |
+| One COMPRESSOR reset (working store and lane) | 182 |
+| Sixteen COMPRESSORs reset in one frame (worst) | 752 |
+| Measured, OT DEMO project, emulator (standalone image) | 171/frame |
+
+A reset happens once per stale compressor; afterwards its KEY is in range and the slot costs the compare path only. Model: **4 cycles per executed instruction** (the routine uses `moveq`/`cmpi`/`Bcc`/`move.b`/`lea`, one `mulu.w` per track and two six-register `movem`s, within that allowance per the [MCF547x reference manual](https://www.nxp.com/docs/en/reference-manual/MCF5475RM.pdf)), plus **32 cycles per cold 16-byte line fill** from SDRAM: 14 code lines, the part-store id and page-2 lines (up to 18) and 2 stack lines, every call cold. The lane, live ids and current-part byte are internal SRAM (0x8000xxxx), priced inside the per-instruction allowance; counted as cold SDRAM fills too, the worst frame would be 9,344.
+
+    one instance   = 2 × (182 × 4 + 21 × 32) = 2,800 cycles/frame
+    sixteen        = 2 × (752 × 4 + 34 × 32) = 8,192 cycles/frame
+    frame          = 264 MHz × 362.8 µs (16 samples at 44.1 kHz) = 95,779 cycles
+    allowance      = 10% of the frame = 9,577 cycles (Modwerk's ColdFire allowance; the rest is stock)
+
+The KEY/KFLT formatters and the KEY list trampoline are unchanged from 0.1.1 (132/60 executed instructions, 88/72 B stack peaks) and run in the UI task at the 30 Hz redraw, outside the frame path; their 0.1.1 bound below still applies. This is a conditional static model, not a chip measurement.
+
+### Memory
+
+0.1.2 adds 204 B of ColdFire code (unit 134 → 338 B, 340 B with alignment) and raises the extra caller stack from 16 to 40 B (`sc_norm`: 24 B of saved registers, its return address and three nested words; the formatters' 16 B run in a different context). The two detours rewrite 12 stock bytes in place and allocate nothing. Everything else is the 0.1.1 inventory below. Sixteen instances: **768 B/instance + 11,232 B shared = 23,520 logical bytes**.
+
+### DSP
+
+Unchanged. The DSP code and the 48 table words per core are the 0.1.1 bytes, so the 0.1.1 static stage costs, the 69,496-cycle sixteen-slot bound and the 6,196-cycle single-instance ceiling below describe 0.1.2 too.
+
+### Hardware
+
+[evidence/hardware.md](evidence/hardware.md): on 10 October 2026 the author flashed the tested image above on an **MKI** and reported every item of the checklist passing: a COMPRESSOR saved before installation came up with KEY OFF, KFLT and KGN centred and MON OFF; COMPRESSOR on T1 FX1 keyed from T5 and on T5 FX2 keyed from T1 both ducked and stayed independent; MON auditioned the key; Part save/reload, project save/reload and a power cycle kept both compressors' settings; nothing odd was seen. Duration and project were not reported; two instances, not sixteen; no stress, maximum-load, timing or recovery test.
+
+### Not tested
+
+- The Modwerk download itself (the composed image with the core logger) and any selection with other modules, on hardware.
+- Sixteen instances, maximum load, MIDI/USB activity alongside, and cross-core key latency on hardware.
+- Sound quality (`npm run fx:audit`: aliasing, DC, clipping, idle behaviour): not tested. The DSP code is unchanged from 0.1.1.
+
+## 0.1.1-experimental (history)
+
+Recorded **5 October 2026**. Built by Modwerk's shared firmware builder, beside any other module that fits. New physical hardware evidence is waived by the owner's explicit instruction. No current-image hardware pass or chip wall-clock timing is claimed.
+
+### Source, tools and reproduction
 
 - octabam wrapper and tools: f80ecfeabc187a33403588678e707443161afc96.
 - Zac Kyoti dependency: d3e0801a5f666abc04bc05fc1cb37969d7fb38d0.
@@ -12,7 +80,7 @@ Version **0.1.1-experimental**, recorded **5 October 2026**. Built by Modwerk's 
 
 [The import record](../../../imports/sidechain-compressor-f80ecfe.json) retains hashes and attribution without firmware. Release automation compiles the authored source in the pinned container without firmware or network; the browser rebuilds the guarded stock fields from the visitor's own firmware and checks each against its fingerprint.
 
-## Building it with other modules
+### Building it with other modules
 
 The module takes COMPRESSOR's row on FX1 and in the FX2 chooser and keeps stock COMPRESSOR's dispatch; three guarded hooks per core carry its code. Modwerk's composer was compared with native octabam on every selection that contains it, with and without the stock FX2 effects: the eight original modules (512 selections), the nine visible modules other than Analog BD (1,024), and Analog BD alone, beside each other visible module and beside all of them (22). That is 1,558 selections: native builds 1,014 and refuses 544. [evidence/common-builder.json](evidence/common-builder.json) records the counts; the selection-by-selection fingerprints are `sidechain-composition-proofs.json`, `sidechain-visible-proofs.json` and `sidechain-analog-bd-proofs.json` in `src/engine/assets/`, and `node scripts/verify-sidechain-native.mjs` repeats the comparison against your own 1.40C update.
 
@@ -30,11 +98,11 @@ The module takes COMPRESSOR's row on FX1 and in the FX2 chooser and keeps stock 
 
 What it costs other selections is small. Among the nine visible modules other than Analog BD, it builds beside every other module (18 of 18 selections) and every pair (72 of 72), and of the 882 selections that build without it, 798 still build with it. No selection refused without it builds with it. The other 84 (48 module sets, each holding Euclid or Scale Quantizer with at least two more modules) run out of effect-menu cave space once its descriptor clone and ColdFire unit are added. Among the eight original modules, the 48 selections it newly refuses (24 sets) each include Spectrum, Modulation or Character, which Modwerk does not offer: its 388 words per core no longer fit core A's code space beside them. Analog BD runs with the original effects only, so it is refused beside every custom DSP module, this one included.
 
-### What the stock-code difference is
+#### What the stock-code difference is
 
 The author-form image (below) and the shared builder's image of the module alone differ in 56 bytes: the relocated FX1 list and its three references, and six stock DSP words that newer octabam applies to every build (stock's cross-core mailbox moves from Y:0x38000 to 0x37F00, and payload B's boot zero loop widens to cover it). The module's own bytes are identical. [evidence/common-builder.json](evidence/common-builder.json) lists every address.
 
-## Measurements
+### Measurements
 
 The cycle matrix, static pricing, numerical stages and ColdFire counts below were measured on the **author-form image**, built by octabam f80ecfe from `remixes/test/sidechain-compressor` (MAIN SHA-256 `b5aa8cee7787a3dc0ea53007fe31358ba14d155421ebec9c7f98948de740675f`, 2,462 changed bytes). That image and the shared builder's differ only as described above, so the measurements describe the module's own contribution in both. They do not price other modules sharing a core, and no mixed image has been stress-tested.
 
@@ -51,7 +119,7 @@ The cycle matrix, static pricing, numerical stages and ColdFire counts below wer
 
 The matrix exercises full patched stock compressor calls on both DSPs at the real X:0 audio base and r7 three-block track stride. It is an isolated algorithm workload, not the firmware's streaming/transport scheduler. The numerical suite is same-core payload B detector verification; it does not measure whole-chip cross-core synchronization or audible live ducking. Static bounds do not depend on the matrix finding every signal-dependent path.
 
-## DSP bound
+### DSP bound
 
 44.1 kHz, 16 stereo frames/block, 200 MHz/core. Conservative available budget: 4,535 × 16 = **72,560 cycles/core/block**. The core reserve **1,415 × 16 = 22,640** comes from pinned octabam tools/build/cycle_count.py and covers standard stock scheduling/transport work; it is a budget reservation, not a new measured scheduler maximum.
 
@@ -81,13 +149,13 @@ The 2× allowance is an explicit conservative model for instruction interlocks a
 
 This is a conditional engineering bound under the stated standard reserve and bounded contention model. Arbitrarily stalled memory, clock changes, corrupted parameters and unscheduled RTOS interruptions have no finite software-only wall-clock guarantee. Streaming/MIDI/USB/control dispatch use the stock reserve; the module adds no separate USB/MIDI event loop. LFO, p-lock, scene and CC modulation all update the same bounded parameter words. Static coverage prices all extremes/modes irrespective of input; the software matrix adds rapid block-rate changes and all split positions. The bound is for this module's contribution; it is not summed with other modules selected on the same core.
 
-## ColdFire bound
+### ColdFire bound
 
 ColdFire callbacks add UI formatting only; audio processing remains on the DSPs. Direct calls used the native linked unit and the real stock sprintf tail. KEY 0..8 peaks at 132 executed instructions/88 stack bytes; KFLT 0..127 peaks at 60/72. tools/cf-probe.cpp records that workload. The four-instruction KEY list trampoline changes one flag then tail-calls the unchanged stock widget.
 
 At an explicit 30 Hz UI event basis and 264 MHz, budget **8,800,000 cycles/event**. A conservative allowance of **1,024 cycles/executed instruction**, including bounded memory service, prices the longest formatter at **135,168 cycles/event**. Charging sixteen such callbacks plus a **6,000,000-cycle stock UI/scheduling reserve** yields **8,162,688 cycles/event**. This is a conditional model, not a hardware measurement or a claim that the emulator's instruction counter equals cycles. The existing stock list/raster rendering is charged to the reserve, not omitted. The CPU arithmetic/cache/peripheral distinction follows the [MCF547x reference manual](https://www.nxp.com/docs/en/reference-manual/MCF5475RM.pdf).
 
-## Exact memory inventory
+### Exact memory inventory
 
 All DSP values below are **logical 24-bit words**, three bytes each. Host .mem representations use four bytes/word and are temporary host files, not target allocations. Maximum is sixteen compressor instances; state is not reallocated per hook. The declaration totals **768 bytes/instance + 11,004 shared bytes = 23,292 logical bytes**.
 
@@ -107,7 +175,7 @@ All DSP values below are **logical 24-bit words**, three bytes each. Host .mem r
 
 These reused stock capacities are counted once; they are not incremental memory consumption. The exact incremental claim consists of the authored code/tables, keybus/windows, clone/UI caves and at most 16 B extra caller stack. The unused SPRING REV donor space remains available slack: original 1,063 words minus the 35-word DARK REV helper leaves 1,028 words; this module uses 388/core and leaves 640. That retained 35-word helper is existing stock, not a new allocation. No heap, SDRAM reservation, appended runtime, delay-line allocation or other dynamic peak is introduced by the module. Temporary DSP addresses lie in the declared scratch/state ranges; table indices and key addressing are bounded by the control domain. Stock DARK/PLATE buffers stay below the shared tail claim; the resource ledger enforces competing claims. Hardware canaries and physical stack peaks were not measured.
 
-## Historical author evidence and waiver
+### Historical author evidence and waiver
 
 The pinned author report says the MKI ran this octabam form on 4 October 2026 with all six KYOTI modules and REC_TRIG_MUTE: both pages, same-core/cross-core KEY both ways, KFLT/KGN/MON, no T7 reverb crosstalk, muted KEY in each MUTE MODE and the first kick after PLAY. Earlier standalone/KYOTI tests covered ducking, MON and muted KEY with MUTE_MODES. This is attributed upstream operation evidence for a different combined image; duration, exact hardware image hash and sustained maximum-load timing were not supplied.
 
@@ -115,13 +183,13 @@ On 5 October 2026 the owner explicitly stated: “I explicitely approve not need
 
 Known physical caveats remain: cross-core rate locking/two-generation latency, shared-KEY MON stash interactions, dirty persisted state, effect replacement with MON left on, project reload and recovery. Turn MON off before replacing the effect; KEY OFF restores self-keying. No new physical maximum-load or live ducking claim follows from this report.
 
-## Ordinary checks and data hygiene
+### Ordinary checks and data hygiene
 
 npm run check, modules:check -- --base origin/main and git diff --check read source/data and never run submitted firmware/emulator/native manifests. Focused tests validate the hardware-only exception, resource arithmetic, report identities, the committed composition fingerprints, the ledger's range checks and the module's chooser, conflict and package declarations.
 
 Keep firmware/images/updates, cards/projects, extracted stock disassembly, instrumented vendor/host copies, audio renders and raw logs private and temporary. Commit only authored sources, source-only recipes/packages, full licenses, sanitized hashes/counts and reviewed media.
 
-## Reproduce
+### Reproduce
 
 Composition: build a private copy of `sdk/octabam` with its vendored DSP tools, put your own original MAIN OS at `out/raw/section_3_MAIN_OS.bin`, and run `python3 scripts/export-composition-proofs.py PRIVATE_SDK DEST --app . --vendored-sdk --static-stock --suite sidechain` (or `sidechain-visible`, `sidechain-analog-bd`; add `--cache` to reuse octabam's content-addressed compiler memo and `--shard i --shards n` to split a suite), then `node scripts/verify-sidechain-native.mjs YOUR_1.40C_UPDATE [--shard=i/n]`. The resource ledger's cases run with `python3 sdk/octabam/tools/remix/selftest.py`.
 

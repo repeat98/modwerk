@@ -2535,7 +2535,29 @@
         }
       ],
       "replaces": "COMPRESSOR",
-      "sourceSha256": "aaa7c593ec62745a540cf82d7b4d7ac2f17f393cfedd5a9e1ff1a1453165ecd7"
+      "sourceSha256": "3bba6ac8ba315e10d6d7f2cb6342fb5ce6564e1ba6cd6ec362787d685c5e0cd7",
+      "detours": [
+        {
+          "address": 1073793768,
+          "guardLength": 6,
+          "guardSha256": "9a4b68c7876e6a4b172ba77e67b4305494b67444bae1a8e13c5f6e62ac6e7c2c",
+          "unit": "sc_cf",
+          "symbol": "sc_norm",
+          "kind": "jsr",
+          "bytes": 6,
+          "note": "frame builder's page-2 copier: a stale KEY (> 8) -> side-chain defaults"
+        },
+        {
+          "address": 1073757468,
+          "guardLength": 6,
+          "guardSha256": "9a4b68c7876e6a4b172ba77e67b4305494b67444bae1a8e13c5f6e62ac6e7c2c",
+          "unit": "sc_cf",
+          "symbol": "sc_norm",
+          "kind": "jsr",
+          "bytes": 6,
+          "note": "the copier's twin: the same check"
+        }
+      ]
     },
     {
       "id": "airwindows-chorus",
@@ -3292,7 +3314,7 @@
     "synth": "0.1.2-experimental",
     "previewvol": "0.1.2-experimental",
     "cc-map": "0.1.2-experimental",
-    "sidechain-compressor": "0.1.1-experimental",
+    "sidechain-compressor": "0.1.2-experimental",
     "vector": "0.2.4-experimental",
     "playmodes": "0.1.1-experimental",
     "mute-modes": "0.1.0-experimental",

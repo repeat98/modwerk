@@ -1,0 +1,161 @@
+{
+  "schemaVersion": 1,
+  "repository": "https://github.com/sambanks/octabam",
+  "revision": "922878234b22221a1c298b3c7e0b3bdeffb468a9",
+  "moduleVersion": "0.1.2-experimental",
+  "root": "sdk/octabam/modules/sidechain-compressor",
+  "modules": [
+    "sidechain-compressor"
+  ],
+  "authorPin": {
+    "repository": "https://github.com/Zac-Kyoti/octatrack-kyoti-fw",
+    "revision": "329b801cf90f32cbca97c6699a908908968e4df6"
+  },
+  "files": [
+    {
+      "path": "upstream/tools/patch_sidechain.s",
+      "repository": "https://github.com/Zac-Kyoti/octatrack-kyoti-fw",
+      "revision": "329b801cf90f32cbca97c6699a908908968e4df6",
+      "sourcePath": "tools/patch_sidechain.s",
+      "sourceBytes": 10580,
+      "sourceGitBlob": "6d43b9f611c74041886c9e4f162840959f67162e",
+      "sourceSha256": "e47f44a7685f0ea82d908897d222c04a6c3729c87dc6443d8d18d2af914b0d20",
+      "vendoredSha256": "e47f44a7685f0ea82d908897d222c04a6c3729c87dc6443d8d18d2af914b0d20"
+    },
+    {
+      "path": "upstream/tools/patch_sc_dsp3.asm",
+      "repository": "https://github.com/Zac-Kyoti/octatrack-kyoti-fw",
+      "revision": "329b801cf90f32cbca97c6699a908908968e4df6",
+      "sourcePath": "tools/patch_sc_dsp3.asm",
+      "sourceBytes": 45415,
+      "sourceGitBlob": "0b015f242711048eaa2827e24cb24a4a57839112",
+      "sourceSha256": "aaa1a1c947a8bcb5d19ebc9454ec3f020d1f00afe51fe786fe1f3ed4d5eccde3",
+      "vendoredSha256": "aaa1a1c947a8bcb5d19ebc9454ec3f020d1f00afe51fe786fe1f3ed4d5eccde3"
+    },
+    {
+      "path": "upstream/tools/sc_tables.py",
+      "repository": "https://github.com/Zac-Kyoti/octatrack-kyoti-fw",
+      "revision": "329b801cf90f32cbca97c6699a908908968e4df6",
+      "sourcePath": "tools/sc_tables.py",
+      "sourceBytes": 4645,
+      "sourceGitBlob": "27874ae2d385c2294397051f0d6cdbad066a1f4b",
+      "sourceSha256": "8045e06f97fa462ca3f986b5a46e8ee48f9f9663691ae291221ce8ed6489c71a",
+      "vendoredSha256": "8045e06f97fa462ca3f986b5a46e8ee48f9f9663691ae291221ce8ed6489c71a"
+    },
+    {
+      "path": "upstream/LICENSE",
+      "repository": "https://github.com/Zac-Kyoti/octatrack-kyoti-fw",
+      "revision": "329b801cf90f32cbca97c6699a908908968e4df6",
+      "sourcePath": "LICENSE",
+      "sourceBytes": 4451,
+      "sourceGitBlob": "3e76489f7da43570add4342b27fd9e1aff949672",
+      "sourceSha256": "0d3f46fdaa57dcf513b0d62975eb019334f4eb9cc8ea0b973ce191dd661741f5",
+      "vendoredSha256": "0d3f46fdaa57dcf513b0d62975eb019334f4eb9cc8ea0b973ce191dd661741f5"
+    },
+    {
+      "path": "upstream/octabam-modules/sidechain-compressor/README.md",
+      "repository": "https://github.com/Zac-Kyoti/octatrack-kyoti-fw",
+      "revision": "329b801cf90f32cbca97c6699a908908968e4df6",
+      "sourcePath": "octabam-modules/sidechain-compressor/README.md",
+      "sourceBytes": 5412,
+      "sourceGitBlob": "d56669cdcf18f2e5ace0edbff4de03a2bd667b06",
+      "sourceSha256": "10c64efcb452e47ae33a770684e1255681da794315541af5b2f3a563354019c7",
+      "vendoredSha256": "10c64efcb452e47ae33a770684e1255681da794315541af5b2f3a563354019c7"
+    },
+    {
+      "path": "manifest.py",
+      "repository": "https://github.com/Zac-Kyoti/octatrack-kyoti-fw",
+      "revision": "329b801cf90f32cbca97c6699a908908968e4df6",
+      "sourcePath": "octabam-modules/sidechain-compressor/manifest.py",
+      "sourceSha256": "36aa25e00e517569a1f451db5de01c57855293a654196a80542ed9f39deef2e8",
+      "sourceGitBlob": "146f4b46faf741b829b3545e882878c7886e2b27",
+      "vendoredSha256": "3bba6ac8ba315e10d6d7f2cb6342fb5ce6564e1ba6cd6ec362787d685c5e0cd7",
+      "transforms": [
+        "module-local tool paths",
+        "lazy local stock DSP guard declarations",
+        "stock COMPRESSOR kept and hooked: MenuEntry(replaces, stock_dsp), inherited stock enable nibbles (Param active=None), raw descriptor formatter/widget words into the module's ColdFire unit",
+        "per-core hook sites and substitutions (DspHook with payload addresses, DspSection.subst)",
+        "declared DSP data ranges (Claims.dsp_ranges) for the keybus and cross-core window",
+        "guarded local stock CPU bytes for the two sc_norm jsr detours (stock_guard)",
+        "author, author_url and category"
+      ],
+      "sourceBytes": 9293
+    },
+    {
+      "path": "upstream/tools/sc_assemble_oracle.py",
+      "repository": "https://github.com/Zac-Kyoti/octatrack-kyoti-fw",
+      "revision": "329b801cf90f32cbca97c6699a908908968e4df6",
+      "sourcePath": "tools/build_sidechain_compressor.py",
+      "sourceSha256": "5d3a5547053a4a259eb971a3285cdd745f889f28af15cd4e44e700b157fb983a",
+      "sourceGitBlob": "f6a0935dbcdd4e33d25640e67b2f4a4ff111c4a4",
+      "vendoredSha256": "5363c74485a17efee1e41cca9f91f895d4dd051d9c62e264913e66a742c43887",
+      "transforms": [
+        "AST extraction of sc_assemble only; excludes standalone stock expectation spans and firmware packaging code"
+      ],
+      "sourceBytes": 33428
+    },
+    {
+      "path": "upstream/tools/dsp_asm_util.py",
+      "repository": "https://github.com/Zac-Kyoti/octatrack-kyoti-fw",
+      "revision": "329b801cf90f32cbca97c6699a908908968e4df6",
+      "sourcePath": "tools/dsp_asm_util.py",
+      "sourceSha256": "11cb6148335cb9434268e679895b853bc57fc4ba1e01583878381a678c64c6bc",
+      "sourceGitBlob": "724c582018258c47255d066dba6a88bcf8d21287",
+      "vendoredSha256": "11cb6148335cb9434268e679895b853bc57fc4ba1e01583878381a678c64c6bc",
+      "sourceBytes": 1942
+    }
+  ],
+  "stockGuards": [
+    {
+      "kind": "guarded-local-dsp-read",
+      "payload": "A",
+      "address": 1191,
+      "words": 2,
+      "sha256": "92441a8fc9f1dd20359d87c8342e3d5653d8c853a274358df0cfc0451c57115b",
+      "note": "Both payloads have the same guarded instruction at their declared sites; recover expectations only from a verified local stock OS."
+    },
+    {
+      "kind": "guarded-local-dsp-read",
+      "payload": "A",
+      "address": 6833,
+      "words": 2,
+      "sha256": "114aacb95ee45437fff14f2dcd91b67e26d8bc42ef3ba2e9f6ae0cb8be1574fa",
+      "note": "Both payloads have the same guarded instruction at their declared sites; recover expectations only from a verified local stock OS."
+    },
+    {
+      "kind": "guarded-local-dsp-read",
+      "payload": "A",
+      "address": 1294,
+      "words": 2,
+      "sha256": "9dad4262559be3a41c85136d50f7d017f161cff9a609d17d21da895cd2137118",
+      "note": "Both payloads have the same guarded instruction at their declared sites; recover expectations only from a verified local stock OS."
+    },
+    {
+      "address": "0x4000cae8",
+      "bytes": 6,
+      "sha256": "9a4b68c7876e6a4b172ba77e67b4305494b67444bae1a8e13c5f6e62ac6e7c2c"
+    },
+    {
+      "address": "0x40003d1c",
+      "bytes": 6,
+      "sha256": "9a4b68c7876e6a4b172ba77e67b4305494b67444bae1a8e13c5f6e62ac6e7c2c"
+    }
+  ],
+  "status": "Pinned; built by Modwerk's shared firmware builder and compared with native octabam on the module's coverage set; native suites of 512 and 1,024 selections regenerated; author-reported MKI functional hardware test of the exact image.",
+  "nativeProof": {
+    "report": "TESTING.md",
+    "builderRevision": "b8deefc88b2c3e5f3c6158e364eb741df1924e1d",
+    "referenceRevision": "922878234b22221a1c298b3c7e0b3bdeffb468a9",
+    "profile": "the module's module:verify coverage set, and every selection of the original eight and of the nine visible modules that contains it, with and without stock FX2",
+    "status": "passed; refusals match native, module-owned writes reproduce native outside the platform writes, and the module's ColdFire unit equals the author's reference. Hardware: author-reported functional test, not stress qualification."
+  },
+  "nativeSourceSha256": "0a0e8d770973eef0acc580724ab16732ba593e1b6b0240cc1c48e83b05248ae2",
+  "releaseRequirements": [
+    "Guarded stock bytes at both sc_norm detour sites, with unchanged native output for the existing SDK modules",
+    "Source-only package generation reproduced in the pinned container",
+    "Browser/native composition and refusal comparison on the coverage set and the regenerated suites",
+    "Worst-case cycle (DSP and per-frame ColdFire) and complete memory qualification",
+    "Author-reported functional hardware test of the exact image (MKI, 10 October 2026)",
+    "Owner-reviewed PR merge (the shared test fixtures and proofs are outside the author scope) and release reproduction"
+  ]
+}

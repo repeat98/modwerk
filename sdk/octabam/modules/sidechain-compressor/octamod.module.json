@@ -3,11 +3,11 @@
   "id": "sidechain-compressor",
   "key": "SIDECHAIN_COMPRESSOR",
   "name": "Sidechain Compressor",
-  "version": "0.1.1-experimental",
+  "version": "0.1.2-experimental",
   "category": "effects",
   "source": {
     "repository": "https://github.com/sambanks/octabam",
-    "revision": "f80ecfeabc187a33403588678e707443161afc96",
+    "revision": "922878234b22221a1c298b3c7e0b3bdeffb468a9",
     "path": "modules/sidechain-compressor"
   },
   "author": {
@@ -156,7 +156,7 @@
     "limitations": [
       "Replaces COMPRESSOR on FX1 and in the FX2 chooser with the same stock effect ID 0x18; the visible effect name remains COMPRESSOR.",
       "With Keep stock FX2 effects on, SPRING REV gives up its code space for this module; reassign any old SPRING REV slots. With it off, every stock FX2 effect leaves the FX2 chooser and the stock FX1 effects stay.",
-      "It builds beside the other Modwerk modules unless native octabam and Modwerk both refuse the selection. Among the nine visible modules other than Analog BD it builds beside every other module and every pair, and 798 of the 882 selections that build without it still build with it; the other 84, which hold Euclid or Scale Quantizer with at least two more modules, run out of effect-menu space. The selection checker says which applies.",
+      "It builds beside the other Modwerk modules unless native octabam and Modwerk both refuse the selection. Among the nine visible modules other than Analog BD it builds beside every other module and every pair; 786 of the 1,024 selections that contain it build. 0.1.2's larger ColdFire unit (sc_norm, +204 B) runs the effect-menu cave out of room in 12 selections that 0.1.1 built, each holding Euclid with Scale Quantizer or eight or more modules. The selection checker says which applies.",
       "It cannot be combined with Analog BD, which currently runs with the original effects only, or with MIDI Scenes, which is standalone firmware.",
       "Its core-private keybus and cross-core window overlap BusDelay and BusVerb, which Modwerk does not carry; the native resource ledger refuses them beside it.",
       "MUTE_MODES is not imported here. The author reports that muted-key behavior with MUTE_MODES needs its matching integration variant.",
@@ -168,14 +168,14 @@
     ]
   },
   "resources": {
-    "recorded": "2026-10-05; software/static qualification and owner hardware-only approval",
+    "recorded": "2026-10-10; static qualification and author-reported MKI hardware operation",
     "storage": {
       "label": "Declared DSP reservation",
-      "display": "23,292 logical bytes / 16 instances",
-      "value": 23292,
+      "display": "23,520 logical bytes / 16 instances",
+      "value": 23520,
       "unit": "bytes",
       "method": "static",
-      "conditions": "Full reservation of the module's own contribution including inherited stock state/scratch and complete hardware DSP stack capacity; no new heap, SDRAM or delay buffer. Stock RTOS/UI frames remain inherited. Measured on the author-form standalone image, whose Sidechain bytes the shared-builder image reproduces. See exact addresses in TESTING.md.",
+      "conditions": "Full reservation of the module's own contribution including inherited stock state/scratch and complete hardware DSP stack capacity; no new heap, SDRAM or delay buffer. Stock RTOS/UI frames remain inherited. Measured on Modwerk's native image of this source (MAIN OS 2816f0bc...); 0.1.2 adds 204 B of ColdFire code (sc_norm) and 24 B of caller stack, and rewrites 12 stock bytes at the two detour sites in place. See exact addresses in TESTING.md.",
       "source": "TESTING.md"
     },
     "processing": {
@@ -192,7 +192,7 @@
       "cpu": {
         "level": "low",
         "basis": "source-estimate",
-        "rationale": "Formatters only; no new DSP-streaming CPU callback. Maximum KEY call 132 instructions.",
+        "rationale": "UI formatters (KEY peak 132 instructions) plus sc_norm, a per-frame check of the sixteen FX slots: 144 instructions/frame with no compressor, 752 worst when sixteen stale compressors reset in one frame; 171 measured in the OT DEMO project. Static frame bound 8,192 of a 9,577-cycle allowance.",
         "source": "TESTING.md"
       },
       "dsp": {
@@ -204,31 +204,31 @@
       "memory": {
         "level": "low",
         "basis": "source-estimate",
-        "rationale": "23,292 bytes at sixteen instances including inherited stock buffers; no new heap/SDRAM delay storage.",
+        "rationale": "23,520 bytes at sixteen instances including inherited stock buffers; no new heap/SDRAM delay storage.",
         "source": "TESTING.md"
       }
     }
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Native octabam and the Modwerk composer compared on 1,558 selections: every refusal matches and every native build is reproduced in the module-owned writes; the module's own bytes equal the author-form image; ledger checks of its DSP ranges; software cycle model and static bounds, exact memory inventory, numerical stages and emulator LCD frames. Fresh hardware evidence is explicitly owner-waived.",
-    "hardwareStatus": "historical",
-    "evidenceRevision": "f80ecfeabc187a33403588678e707443161afc96",
+    "summary": "Native octabam builds 0.1.2 in every selection Modwerk compares (122 coverage selections, 1,536 suite selections); the module's ColdFire unit equals the author's 338-byte reference; DSP code byte-identical to 0.1.1; ledger checks of its DSP ranges; static cycle bounds for both processors, including sc_norm's per-frame cost, and an exact memory inventory; author-reported MKI functional test of this exact image on 10 October 2026.",
+    "hardwareStatus": "reported",
+    "evidenceRevision": "922878234b22221a1c298b3c7e0b3bdeffb468a9",
     "gates": [
-      "Native octabam and browser composition compared on every selection containing the module, with and without stock FX2",
-      "Module-owned writes byte-identical to native outside the platform writes; refusals matching",
-      "Sidechain-owned bytes identical to the author-form standalone image",
+      "Native octabam and browser composition compared on the module's coverage set, with and without stock FX2",
+      "Native suites regenerated: 512 selections of the original eight modules and 1,024 of the nine visible modules",
+      "ColdFire unit byte-identical to the author's reference build (338 B, sha256 76a4badc...)",
+      "DSP payload code and tables unchanged from 0.1.1",
       "Resource ledger: declared DSP ranges, source literals and stock shared-window tenants",
       "Source-only reproducible package build in the pinned toolchain",
-      "Conditional bounded cycle model and exact memory inventory",
-      "Original firmware and malformed recipe rejection",
-      "Actual LCD captures on the native and the composed image, and a complete tutorial",
-      "Fresh hardware evidence owner-waived; historical report retained"
+      "Static cycle bound per processor, sc_norm priced per audio frame; exact memory inventory",
+      "Guarded stock bytes at both sc_norm detour sites; original firmware and malformed recipe rejection",
+      "Author-reported MKI functional hardware test of the exact image"
     ],
     "qualification": {
-      "moduleVersion": "0.1.1-experimental",
-      "sourceSha256": "301d7dc13d0f7f4567e9bb121e8fc50c8cebbc1fb4bf544c511c28769370edbc",
-      "imageSha256": "4fd5fcb49ed17cd4e707d407a6e42a64ec30b50aefaad3b1eeb1bb804493aef0",
+      "moduleVersion": "0.1.2-experimental",
+      "sourceSha256": "0a0e8d770973eef0acc580724ab16732ba593e1b6b0240cc1c48e83b05248ae2",
+      "imageSha256": "2816f0bce5aaabfadac6dba9e778dc184b8af3e4a611990d6e6b3e36095bc5eb",
       "cycles": [
         {
           "processor": "dsp",
@@ -249,18 +249,18 @@
         },
         {
           "processor": "coldfire",
-          "worstCase": 135168,
-          "maxConfiguration": 8162688,
+          "worstCase": 2800,
+          "maxConfiguration": 8192,
           "maxInstances": 16,
-          "budget": 8800000,
+          "budget": 9577,
           "unit": "cycles/event",
           "method": "static",
           "conditions": {
-            "parameterExtremes": "Every KEY 0..8, KFLT 0..127, sixteen KGN table buckets, MON/RMS switches and stock parameter endpoints; static all-branch analysis.",
-            "parameterModulation": "Block-wise simultaneous parameter changes model published LFO/scene/p-lock/CC values; no new control-source callback or unbounded DSP loop.",
-            "modeSwitching": "Every split 0..15, both stock init and split COMPRESSOR calls; OFF/ON KEY, HP re-entry and MON toggle. Firmware Part reload scheduling belongs to reserved stock work.",
-            "maxLoad": "Sixteen COMPRESSOR FX slots, eight per core. Standard stock dispatcher/transport reserve; the bound is this module's contribution and is not summed with other modules. Arbitrary other stock FX/USB or RTOS stalls are not a measured streaming deadline.",
-            "inputConditions": "Silence and impulse matrix; author numeric stage suite; signal-independent all-branch bound includes every fixed loop. No physical audible or cross-core timing claim."
+            "parameterExtremes": "sc_norm: every FX slot holding COMPRESSOR (id 0x18) with KEY 0..8 (left alone) and KEY 9..255 (reset), in the Part working store and the live lane; KEY 0..8 and KFLT 0..127 formatter calls through the real stock sprintf.",
+            "parameterModulation": "LFO, p-lock, scene and CC changes write the same page-2 bytes the stock editor writes; sc_norm reads them once per frame and never calls the kernel or UI. A KEY inside 0..8 is never rewritten, so modulation inside the control range costs only the compare path.",
+            "modeSwitching": "Part change, Part reload, project load and transport start bring stored page-2 bytes into the working store or the lane; each copy is judged only against its own FX id. The worst frame is sixteen stale compressors reset at once (both copies of all eight tracks' FX1 and FX2), priced cold.",
+            "maxLoad": "Sixteen COMPRESSOR slots (FX1 and FX2 on eight tracks), both detour sites (0x4000cae8 every frame; 0x40003d1c has no static caller and never ran in a 600-frame coverage run, priced as if it also ran every frame). Budget: 10% of a 362.8 us frame at 264 MHz (9,577 of 95,779 cycles), Modwerk's ColdFire allowance; the other 90% is reserved for stock frame work. UI formatters run in the UI task at the 30 Hz redraw, outside the frame path (TESTING.md).",
+            "inputConditions": "Signal-independent: sc_norm reads only FX ids and page-2 bytes. Stock-saved compressors (slots 8..11 = 0x7f/0/0/0), in-range keys and arbitrary byte values were exercised in the emulator; the bound covers every branch."
           },
           "report": "TESTING.md"
         }
@@ -334,9 +334,9 @@
           {
             "name": "ColdFire authored code and alignment",
             "space": "cpu-flash",
-            "words": 136,
+            "words": 340,
             "wordBits": 8,
-            "bytes": 136,
+            "bytes": 340,
             "scope": "shared"
           },
           {
@@ -348,28 +348,37 @@
             "scope": "shared"
           },
           {
-            "name": "Additional formatter arguments/return stack",
+            "name": "Additional ColdFire caller stack (sc_norm peak)",
             "space": "cpu-ram",
-            "words": 16,
+            "words": 40,
             "wordBits": 8,
-            "bytes": 16,
+            "bytes": 40,
             "scope": "shared"
           }
         ],
         "perInstanceBytes": 768,
-        "sharedBytes": 11004,
+        "sharedBytes": 11232,
         "maxInstances": 16,
-        "totalBytes": 23292,
-        "conditions": "Full reservation of the module's own contribution including inherited stock state/scratch and complete hardware DSP stack capacity; no new heap, SDRAM or delay buffer. Stock RTOS/UI frames remain inherited. Measured on the author-form standalone image, whose Sidechain bytes the shared-builder image reproduces. See exact addresses in TESTING.md.",
+        "totalBytes": 23520,
+        "conditions": "Full reservation of the module's own contribution including inherited stock state/scratch and complete hardware DSP stack capacity; no new heap, SDRAM or delay buffer. Stock RTOS/UI frames remain inherited. Measured on Modwerk's native image of this source (MAIN OS 2816f0bc...); 0.1.2 adds 204 B of ColdFire code (sc_norm) and 24 B of caller stack, and rewrites 12 stock bytes at the two detour sites in place. See exact addresses in TESTING.md.",
         "report": "TESTING.md"
       },
       "hardware": {
-        "kind": "owner-waived",
-        "status": "waived",
-        "approvedBy": "repeat98",
-        "approvedOn": "2026-10-05",
-        "reason": "Owner explicitly approved release without fresh physical hardware evidence on 5 October 2026; upstream author reports live MKI operation. This waives hardware evidence only: cycles, memory, composition and software checks are still required.",
-        "report": "evidence/software.json"
+        "kind": "functional",
+        "status": "reported",
+        "model": "MKI",
+        "testedOn": "2026-10-10",
+        "tester": "Zac-Kyoti",
+        "sourceRevision": "922878234b22221a1c298b3c7e0b3bdeffb468a9",
+        "imageSha256": "2816f0bce5aaabfadac6dba9e778dc184b8af3e4a611990d6e6b3e36095bc5eb",
+        "summary": "On an Octatrack MKI the author flashed Modwerk's native image of this source (the module alone, stock FX2 kept) and reported all checks passing: a COMPRESSOR saved before the module was installed came up with KEY OFF, KFLT and KGN centred and MON OFF; two instances on T1 FX1 and T5 FX2, keyed from each other across the DSP cores, both ducked and stayed independent; MON auditioned the key; Part save/reload, project save/reload and a power cycle kept both compressors' settings.",
+        "limitations": [
+          "A functional report: duration, project, material and tempo were not reported.",
+          "Two instances, not the sixteen-slot maximum the cycle and memory models price; no overload was reported, none was measured.",
+          "No measured chip timing, memory canary, recording, recovery or stress test; cross-core key latency and rate locking were not measured.",
+          "The flashed image is the module alone; the Modwerk download (with the core logger) and selections with other modules were not flashed."
+        ],
+        "report": "evidence/hardware.md"
       },
       "documentation": {
         "tutorial": {
@@ -409,8 +418,8 @@
         "page": "FX1 SETUP",
         "shows": "location-and-controls",
         "firmware": "1.40C",
-        "moduleVersion": "0.1.1-experimental",
-        "imageSha256": "4fd5fcb49ed17cd4e707d407a6e42a64ec30b50aefaad3b1eeb1bb804493aef0",
+        "moduleVersion": "0.1.2-experimental",
+        "imageSha256": "2816f0bce5aaabfadac6dba9e778dc184b8af3e4a611990d6e6b3e36095bc5eb",
         "setup": "Headless ot_emu; MKII panel; stopped transport; 128\u00d764 LCD at integer scale 6. Empty scratch card; no project loaded."
       }
     },
@@ -426,8 +435,8 @@
         "page": "FX1 main",
         "shows": "controls",
         "firmware": "1.40C",
-        "moduleVersion": "0.1.1-experimental",
-        "imageSha256": "4fd5fcb49ed17cd4e707d407a6e42a64ec30b50aefaad3b1eeb1bb804493aef0",
+        "moduleVersion": "0.1.2-experimental",
+        "imageSha256": "2816f0bce5aaabfadac6dba9e778dc184b8af3e4a611990d6e6b3e36095bc5eb",
         "setup": "Headless ot_emu; MKII panel; stopped transport; 128\u00d764 LCD at integer scale 6. Empty scratch card; no project loaded."
       }
     },
@@ -443,8 +452,8 @@
         "page": "FX1 SETUP",
         "shows": "controls",
         "firmware": "1.40C",
-        "moduleVersion": "0.1.1-experimental",
-        "imageSha256": "4fd5fcb49ed17cd4e707d407a6e42a64ec30b50aefaad3b1eeb1bb804493aef0",
+        "moduleVersion": "0.1.2-experimental",
+        "imageSha256": "2816f0bce5aaabfadac6dba9e778dc184b8af3e4a611990d6e6b3e36095bc5eb",
         "setup": "Headless ot_emu; MKII panel; stopped transport; 128\u00d764 LCD at integer scale 6. Empty scratch card; no project loaded."
       }
     }

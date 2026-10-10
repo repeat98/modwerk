@@ -6,7 +6,7 @@
 
 Drive the Octatrack stock **COMPRESSOR** detector from any audio track. A kick on T1 can duck a loop on T5, even though the tracks run on different DSP cores. KEY, KFLT, KGN and MON join RMS on page 2; all seven stock compression controls keep their stock behavior.
 
-Version **0.1.1-experimental** is built by Modwerk's firmware builder together with the other modules you select. Modwerk's composer was compared with native octabam on 1,558 module selections; the results, the cycle bounds and the exact memory accounting are in [TESTING.md](TESTING.md). The owner explicitly waived fresh physical hardware evidence.
+Version **0.1.2-experimental** is built by Modwerk's firmware builder together with the other modules you select. A COMPRESSOR saved before the module was installed comes up with its side-chain off (KEY OFF, KFLT and KGN centred, MON OFF), so nothing changes until you set a KEY. Native octabam builds it in every selection compared; the results, the cycle bounds and the exact memory accounting are in [TESTING.md](TESTING.md). The author reported a functional test of this exact image on an MKI.
 
 ## Controls
 
@@ -53,9 +53,9 @@ It takes COMPRESSOR's row on FX1 and in the FX2 chooser, keeps stock COMPRESSOR'
 ### Using it with other modules
 
 - **Every other module, and every pair.** Among the nine visible modules other than Analog BD it builds beside each one (18 of 18 selections) and each pair (72 of 72).
-- **Most larger selections.** Of the 882 selections of those nine modules that build without it, 798 still build with it. The other 84 each hold Euclid or Scale Quantizer with at least two more modules and run out of effect-menu space once its descriptor and ColdFire unit are added. The selection checker tells you which applies; removing one module resolves it.
+- **Most larger selections.** 786 of the 1,024 selections of those nine modules that contain it build. The others run out of effect-menu space once its descriptor and ColdFire unit are added, mostly selections holding Euclid or Scale Quantizer with at least two more modules. 0.1.2's larger ColdFire unit refuses 12 selections that 0.1.1 built, each holding Euclid with Scale Quantizer or eight or more modules. The selection checker tells you which applies; removing one module resolves it.
 - **Analog BD and MIDI Scenes are not compatible.** Analog BD currently runs with the original effects only, so it is refused beside every custom DSP module, this one included. MIDI Scenes is standalone firmware.
-- **The paused modules.** Spectrum, Modulation and Character are not offered; with them the module needs more of core A's DSP code space than is left in 48 selections.
+- **The paused modules.** Spectrum, Modulation and Character are not offered; with them the module needs more of core A's DSP code space than is left in many larger selections.
 - **Stock FX2.** With Keep stock FX2 effects on, SPRING REV gives up its code space for this module; PLATE and DARK REV stay. With it off, every stock FX2 effect leaves the FX2 chooser and the stock FX1 effects stay.
 
 Every download carries Modwerk's core logger; the module's pages are identical with and without it.
@@ -65,23 +65,24 @@ Every download carries Modwerk's core logger; the module's pages are identical w
 - Original OS **1.40C**, Octatrack MKI/MKII; the captured panel is MKII.
 - Its core-private keybus and cross-core window overlap BusDelay and BusVerb, which Modwerk does not carry; the native resource ledger refuses them beside it.
 - No MUTE_MODES module is imported. The upstream muted-key report concerns a combined image with its matching MUTE_MODES variant; do not infer the same behavior under every mute mode.
-- Both-core timing/rate locking, simultaneous instances sharing one KEY, detector state transitions, stale MON behavior on effect changes, maximum load, persistent project reload and recovery remain qualification cases.
+- Both-core timing/rate locking, simultaneous instances sharing one KEY, detector state transitions, stale MON behavior on effect changes, maximum load and recovery remain qualification cases. Part and project reload and a power cycle were reported working with two instances.
+- A COMPRESSOR whose KEY holds a value above T8 is treated as never set up and reset to the side-chain defaults. Only stock firmware leaves such a value; a KEY of OFF or T1..T8 is never changed.
 - Cycle bounds describe this module's own contribution and are not summed with other modules selected on the same core. No stress, audio or ducking run was made on a mixed image.
 - Firmware, private project/card state and extracted stock bytes stay local.
 
 ## Tests and measurements
 
-[TESTING.md](TESTING.md) and [evidence/common-builder.json](evidence/common-builder.json) give the source, tool and image identities and the actual results. The 134-byte ColdFire UI unit matches its author reference. Both cores place 340 DSP code words and 48 identical table words; only the two documented table-load substitutions differ from the author's instructions, and the module's bytes in Modwerk's image equal those in the author-form image.
+[TESTING.md](TESTING.md) and [evidence/common-builder.json](evidence/common-builder.json) give the source, tool and image identities and the actual results. The 338-byte ColdFire unit (KEY/KFLT formatters, the KEY list widget and `sc_norm`) matches its author reference; `sc_norm` is reached by two guarded `jsr` detours over the first instruction of the page-2 copiers. Both cores place 340 DSP code words and 48 identical table words; only the two documented table-load substitutions differ from the author's instructions, and the module's bytes in Modwerk's image equal those in the author-form image.
 
-Exact accounting for sixteen instances is **23,292 logical bytes**, including inherited instance/scratch/stack capacities and all authored code/tables, Y windows, descriptor, chooser and extra formatter stack. No new heap, SDRAM or delay buffer is allocated. The conditional DSP bound is **69,496 cycles/core/block** against **72,560**, including stock reserve and a 2× instruction-model allowance. These are software bounds under stated assumptions; silicon timing and current-build hardware canaries are unmeasured.
+Exact accounting for sixteen instances is **23,520 logical bytes**, including inherited instance/scratch/stack capacities and all authored code/tables, Y windows, descriptor, chooser and extra ColdFire caller stack. No new heap, SDRAM or delay buffer is allocated. The conditional DSP bound is **69,496 cycles/core/block** against **72,560**, including stock reserve and a 2× instruction-model allowance. `sc_norm`'s static ColdFire bound is **8,192 cycles per 362.8 µs frame** against a **9,577**-cycle allowance (10% of the frame). These are software bounds under stated assumptions; silicon timing and current-build hardware canaries are unmeasured.
 
-The author's MKI report from 4 October 2026 is attributed in TESTING.md. It is upstream evidence, not a test of this Modwerk version.
+On 10 October 2026 the author flashed this exact image on an MKI and reported every check passing: a stock-saved COMPRESSOR came up with its side-chain off, two instances across both DSP cores ducked independently, MON auditioned the key, and both survived Part and project reload and a power cycle ([evidence/hardware.md](evidence/hardware.md)). Duration was not reported and no stress or maximum-load test was made.
 
 ## Authorship and licences
 
-Zac Kyoti (@Zac-Kyoti) and the OT Kyoti FW contributors wrote the sidechain source, table generator and standalone build. Sam Banks (@sambanks) integrated it into octabam. This import pins octabam f80ecfeabc187a33403588678e707443161afc96 and author d3e0801a5f666abc04bc05fc1cb37969d7fb38d0.
+Zac Kyoti (@Zac-Kyoti) and the OT Kyoti FW contributors wrote the sidechain source, table generator and standalone build. Sam Banks (@sambanks) integrated it into octabam. This import pins octabam 922878234b22221a1c298b3c7e0b3bdeffb468a9 and author 329b801cf90f32cbca97c6699a908908968e4df6.
 
-[LICENSE](LICENSE) and [upstream/LICENSE](upstream/LICENSE) preserve the full MIT terms, copyright and exclusions. Modwerk's original documentation/thumbnail uses MIT. The author assembly and table generator remain byte-identical; the native manifest changes only paths, replaces stock expectation literals with lazy fingerprinted local reads, and declares the module's stock-DSP hooks, replaced row, raw descriptor words and DSP data ranges. Per-file provenance and transforms are in [the import record](../../../imports/sidechain-compressor-f80ecfe.json).
+[LICENSE](LICENSE) and [upstream/LICENSE](upstream/LICENSE) preserve the full MIT terms, copyright and exclusions. Modwerk's original documentation/thumbnail uses MIT. The author assembly and table generator remain byte-identical; the native manifest changes only paths, replaces stock expectation literals with lazy fingerprinted local reads, and declares the module's stock-DSP hooks, replaced row, raw descriptor words, the two guarded `sc_norm` detours and DSP data ranges. Per-file provenance and transforms are in [the import record](../../../imports/sidechain-compressor-9228782.json).
 
 No Elektron firmware or private project/card is part of this source distribution. LCD captures have a separate rights declaration; underlying Elektron rights remain reserved.
 
