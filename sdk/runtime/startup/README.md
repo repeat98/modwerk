@@ -85,6 +85,9 @@ and matching panel lamps. The compact screen says **NEW / BETA**; it does not
 claim that the complete new Elekloader base is installed. Ordinary builds retain
 the original two graphics writes and 2.8-second stock renderer.
 
+The shockwave bends the artwork and reveals the text without drawing a circular
+outline or dotted echo. Its timing and panel-lamp sweep are unchanged.
+
 `boot_anim.c`, `base.json` and `base_art.py` are ported from migration commit
 `fbef9d564`. `hooks.s` adapts the score to the existing runtime rather than importing
 the migration's loader, DSP, USB or module infrastructure. The two six-byte stock

@@ -196,19 +196,6 @@ static int near(int32_t x, int32_t y, int32_t r) /* is pixel (x, y) within r px 
     return dx * dx + dy * dy <= r * r * 256;
 }
 
-static void ring(unsigned char *frame, int32_t r, int every) /* a circle round the dock, every n-th pixel */
-{
-    int32_t cx = DOCK_X >> 4, cy = DOCK_Y >> 4, x = r, y = 0, err = 0;
-    for (int n = 0; x >= y; n++) {
-        if (n % every == 0) {
-            dot(frame, cx + x, cy + y), dot(frame, cx + y, cy + x), dot(frame, cx - y, cy + x), dot(frame, cx - x, cy + y);
-            dot(frame, cx - x, cy - y), dot(frame, cx - y, cy - x), dot(frame, cx + y, cy - x), dot(frame, cx + x, cy - y);
-        }
-        y++, err += 2 * y + 1;
-        if (2 * err > 2 * x - 1) x--, err -= 2 * x + 1;
-    }
-}
-
 static int lit(const unsigned char *frame, int32_t x, int32_t y)
 {
     int32_t bit = 63 - y;
@@ -286,11 +273,6 @@ void modwerk_boot_draw(unsigned char *frame)
     }
     if ((r > 0 && r < 110) || (t >= T_DOCK && t < T_DOCK + SHAKE_MS))   /* until it has left the screen */
         bend(frame, t, r);
-    if (r > 0 && r < 110) {   /* the ring itself on top, with a dotted echo behind it */
-        ring(frame, r, 1);
-        if (r > 8)
-            ring(frame, r - 6, 3);
-    }
 }
 
 static void light(int32_t t, int32_t dt)

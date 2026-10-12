@@ -1,8 +1,8 @@
 {
  "kind": "modwerk-beta-startup-emulator",
  "version": "3.0.0",
- "imageSha256": "08dcf3d1d48029ac0ea81e10e402450b662d63970dcf67915becdb2bcdd66662",
- "emulatorSha256": "9889a52d419d125b947bdd2e856d56c1281ae392d1d9f4178b58d6251cd7967b",
+ "imageSha256": "f41729c255f9ed0996a51485519239e263be06f581b47fdb412d0c2fc580e8e3",
+ "emulatorSha256": "a2151c36f1f1f4e04b9eb9a43c61a4a36079c6384092fa2547e45709418b32dc",
  "captureMethod": "--boot-logo --ms 50 --main-level off --interactive --rtc off (+ --mkii); run 10 ms, read the panel UART with tx",
  "results": {
   "MKI": {
@@ -32,12 +32,13 @@
  },
  "hardware": "untested",
  "sourceSha256": {
-  "sdk/runtime/startup/boot_anim.c": "7e0072570f7bdf5a3152cc453022df77087b4a262e4c3aff42922966947080b4",
+  "sdk/runtime/startup/boot_anim.c": "73cda1bfc775edad26064a97d0e598490955e5e9645af800635472da52014420",
   "sdk/runtime/startup/hooks.s": "66cea0188c80fbf39574934424cfef14fe62c42be43ca495d4437e14e8597565",
   "sdk/runtime/startup/rom_gate.s": "800acdf8f0cc37bc0579d776d1dfaf0b1b05c8a223e03b639c25d634d501ad8e",
   "sdk/runtime/startup/base_art.py": "294f5b6f3377d2f4bda2ee69e26f536fce65dba37d4947a09b97537841b7a252",
   "sdk/runtime/startup/base.json": "81315cdddcde6c048bee49c53723f52edb11fa56738ab788de74e47d461c7ed4",
-  "sdk/runtime/startup/package.py": "8fd85521bca93eb958f31cfd773766e4e3c648b43654f858870aa591022278fb",
+  "sdk/runtime/startup/package.py": "a3fdc668611cac462f40f4974ff28fee0b6465d06448ae67b7b518e42dc344a2",
   "scripts/verify-startup-beta.py": "eae676b2eaec07a755546be6a3c5971bc9511e46e3c8ba70cc6e7f323822615a"
- }
+ },
+ "startupPackageVersion": "3.0.0-beta.2"
 }

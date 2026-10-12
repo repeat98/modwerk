@@ -2,6 +2,7 @@
 
 ## 12 October 2026
 
+- Removed the beta Octatrack boot shockwave's solid outline and dotted echo, retaining its screen distortion, text reveal and panel-lamp sweep.
 - Made hardware feedback reminders and download follow-ups more compact, with module thumbnails, divided rows and side-by-side actions. Narrow panels keep full-sized touch controls, and reports retain the exact downloaded versions.
 - Removed the New badges from Forum and Other projects in the sidebar and mobile menu.
 - Made module-release announcements opt-in for each version. Deployments and media edits record release history quietly unless that version's authored notes explicitly set `announce: true`; existing subscriptions and delivery preferences remain intact.

@@ -9,7 +9,7 @@ import tempfile
 import base_art
 
 HERE = Path(__file__).resolve().parent
-VERSION = '3.0.0-beta.1'
+VERSION = '3.0.0-beta.2'
 SOURCE_FILES = ('boot_anim.c', 'hooks.s', 'rom_gate.s', 'base_art.py', 'base.json', 'beta-guards.json', 'package.py')
 sha = lambda data: hashlib.sha256(data).hexdigest()
 

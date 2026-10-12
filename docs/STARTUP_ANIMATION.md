@@ -8,6 +8,12 @@ The mark flies in, a module crosses the lamps and docks, and its wave reveals
 MODWERK with **NEW / BETA**. It lasts 3.5 seconds. Ordinary members keep the existing
 2.8-second startup. Existing firmware files need to be rebuilt to receive it.
 
+Startup package `3.0.0-beta.2` removes the shockwave's solid circular outline and
+dotted echo. The expanding distortion, text reveal and panel-lamp sweep retain
+their original timing. A host-renderer comparison across 350 frames on both
+models found only removed pixels during the outline phase; all other frames,
+including the final artwork, remain byte-identical.
+
 Beta eligibility is carried through validation, composition, alternative placement
 checks and standalone MIDI Scenes. The server rechecks beta access immediately
 before a beta build; revocation also changes the frontend build key. The build
@@ -37,13 +43,19 @@ and handed over to the stock screen with identical LED levels, rows and colours.
 The native matrix passed for core only, Repitch, Mini Verb, Tape Echo + Euclid,
 Analog BD, Sidechain Compressor, USB Audio + Quantizer, standalone MIDI Scenes,
 Airwindows Chorus and Poly8; the developer dynamic-loader Repitch path passed
-as well. With Node 24, the full app/SDK/lint/typecheck/bundle suite passed
-all 1,748 tests in 233 files. GNU/browser startup links matched at both runtime bases, and the ROM
+as well. The authored startup package reproduced exactly with the macOS and
+isolated Linux toolchains. GNU/browser startup links matched at both runtime bases, and the ROM
 gate matched GNU placement. Every final image round-tripped through the original
 firmware container without changing its tail or seed. Changed hooks and repeated
 patching were rejected. The standalone live CC-cache table remained intact.
 
-![Actual beta docking final frame, captured from MKII firmware](media/startup/beta-docking.png)
+The current full repository check rejects the changed startup package while
+Tape Echo retains evidence bound to the previous shared runtime. It reports a
+stale `vector.json` builder-preservation record. The qualification gate and
+existing owner exceptions have not been changed; release remains pending that
+evidence review. SDK tests, lint and TypeScript checks passed independently.
+
+![Outline-free beta docking animation, captured from MKII firmware](media/startup/beta-docking.gif)
 
 [Native composition evidence](media/startup/beta-docking-native.json),
 [core boot captures](media/startup/beta-docking-core.json) and
