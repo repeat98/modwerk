@@ -1,0 +1,357 @@
+{
+  "schemaVersion": 2,
+  "id": "tuner",
+  "key": "TUNER",
+  "name": "Tuner",
+  "version": "0.1.0-experimental",
+  "category": "system",
+  "source": {
+    "repository": "https://github.com/timhastie/octatrick-modules",
+    "revision": "ca13ed85547790f788ceaaada5df3cdd31508441",
+    "path": "tuner"
+  },
+  "author": {
+    "github": "timhastie",
+    "name": "Tim Hastie",
+    "credits": [
+      "Tim Hastie (@timhastie): TUNER (octatrick-modules v2.12: tuner.s with its detector, manifest, README) and the Modwerk package, MIT.",
+      "Sam Banks (@sambanks): octabam, the build system, whose USB AUDIO module documents the track read-back layout the tuner reads, MIT."
+    ]
+  },
+  "nativeManifest": "manifest.py",
+  "presentation": {
+    "label": "Tuner",
+    "family": "System readouts",
+    "summary": "Hold UP and press TEMPO: a tuner window for the current audio track with the note, octave, a cents needle and the frequency.",
+    "overview": "Tuner reads the current audio track's own signal, after its effects and before its fader, and shows the note and octave, a needle on a -50 to +50 cent scale, the cents and the frequency in a window the size of the stock TEMPO window, about seven times a second. Hold UP and press TEMPO to open it; TEMPO, YES or NO close it. It tunes whatever the track plays: a sample, or a Thru machine with an instrument on its input. The detector (McLeod's normalised square difference refined by the YIN difference, integer only) runs in the UI task, never in the audio interrupt. Tim Hastie's octatrick-modules v2.11.",
+    "highlights": [
+      "Note, octave, a -50..+50 cent needle, signed cents and Hz, about seven readings a second.",
+      "Tunes the current audio track post-FX, pre-fader: samples, or an instrument through a Thru machine.",
+      "UP + TEMPO opens it on any page; TEMPO, YES or NO close it; track keys switch the track while it is open.",
+      "Nothing saved; no knob; the analysis runs in the UI task, the audio interrupt only gains a short copy while open."
+    ],
+    "usage": [
+      "Play one pitched note on a track, hold UP and press TEMPO, and tune until the needle is centred and it reads 0c; press TEMPO to close."
+    ]
+  },
+  "access": {
+    "location": "Any page: hold UP and press TEMPO. The window opens over the page for the current audio track; there is nothing to select or enable.",
+    "steps": [
+      "Install a firmware built with Tuner.",
+      "Select an audio track that plays one pitched note and make it play.",
+      "Hold UP and press TEMPO: the tuner window opens and reads the track.",
+      "Press TEMPO, YES or NO to close it."
+    ],
+    "screenshots": [
+      "media/ot-tuner-silence.png",
+      "media/ot-tuner-flat.png",
+      "media/ot-tuner-sharp.png",
+      "media/ot-tuner-hold.png",
+      "media/ot-tuner-closed.png"
+    ]
+  },
+  "controls": [],
+  "compatibility": {
+    "firmware": "1.40C",
+    "effectId": null,
+    "location": "Audio tracks",
+    "conflicts": [],
+    "limitations": [
+      "Stock-gesture change: with UP held, TEMPO opens the tuner instead of the stock TEMPO window. TEMPO alone, FUNC + TEMPO (tap tempo), UP alone and TEMPO pressed before UP stay stock.",
+      "Nothing is saved: no Part, project, card or battery-RAM byte; the window starts closed after every start-up.",
+      "Like every DRAM module it gives the shared platform reserve about 10 MB of Flex sample RAM (sample pages 14,602 -> 12,895); beside other DRAM modules the reserve is shared, not added again.",
+      "While the window is open the ColdFire runs the analysis about seven times a second in the UI task; closed, it costs a few instructions a block.",
+      "To the nearest cent (0.42-cent steps, so a reading can sit one cent off at a boundary); one 93 ms window a reading, no averaging. Chords, drums and inharmonic sounds have no single period and wander or hold.",
+      "It tunes the UI's current audio track; in MIDI mode it keeps the last audio track.",
+      "Emulator-verified on MKII panel emulation; the same tuner.s ran on the author's MKI (Octatrick test build 3.0 b40), the hardware report for this exact image is pending; an MKII has not run this module."
+    ]
+  },
+  "resources": {
+    "recorded": "2026-10-10; emulator instruction counts and exact memory, image 66489376; hardware report pending",
+    "storage": {
+      "label": "Tuner code, buffers and image bytes",
+      "display": "24,589 bytes plus the shared platform reserve",
+      "value": 24589,
+      "unit": "bytes",
+      "method": "static",
+      "conditions": "Exact from the native build: the DRAM unit (2,830 B of code and tables, 19,500 B of state, ring and analysis buffers), 18 B of hook sites rewritten in the OS image and the 2,241-byte appended platform loader and packed unit. Excludes the 8,194 B of link alignment and the rest of the shared Flex sample-RAM platform reserve, and the 172-byte stack bound. See TESTING.md.",
+      "source": "TESTING.md"
+    },
+    "processing": {
+      "label": "ColdFire processing",
+      "display": "4 instructions/block closed, 195 open (emulated); analysis 1,007,065 every 145 ms in the UI task",
+      "value": 486,
+      "unit": "cycles/block",
+      "method": "emulator",
+      "conditions": "Emulated ColdFire instructions on the pinned ot_emu. In the frame interrupt, per 16-sample block: 4 added with the window closed, at most 195 (mean 195) with it open. 486 cycles = 195 instructions at 2.49216 cycles an instruction (Modwerk's FM Synth convention), not chip wall-clock. In the UI task, outside the interrupt: 4 instructions a pass closed, and while open one analysis and redraw every 145 ms of at most 1,007,065 instructions. The whole emulated ColdFire instruction rate rose by 6.0 k per emulated ms with the window open on a playing tone. See TESTING.md.",
+      "source": "TESTING.md"
+    },
+    "impact": {
+      "conditions": "One window, opened on demand; the cost is per audio block (closed: a check; open: a 16-frame copy) and, while open, one analysis every 145 ms in the UI task.",
+      "cpu": {
+        "level": "moderate",
+        "basis": "measured-comparison",
+        "rationale": "Closed: 4 emulated instructions per block against a stock interrupt of about 28,292 to 43,324. Open: up to 1,007,065 instructions every 145 ms in the UI task, about 6 % more ColdFire instructions overall than closed in the same emulated run.",
+        "source": "TESTING.md"
+      },
+      "dsp": {
+        "level": "minimal",
+        "basis": "source-estimate",
+        "rationale": "No DSP code, table or effect slot; the DSPs are untouched. It reads the track read-back the stock eDMA writes anyway.",
+        "source": "TESTING.md"
+      },
+      "memory": {
+        "level": "moderate",
+        "basis": "source-estimate",
+        "rationale": "The module itself is about 22 KB of DRAM, but as the platform's DRAM unit it brings the shared 10 MB sample-RAM reserve with it when no other DRAM module does.",
+        "source": "TESTING.md"
+      }
+    }
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "Emulator qualification of the native Tuner 0.1.0 image (MAIN OS 66489376..., the author's v2.12 ca13ed8 exported alone (tuner/ identical to v2.11 5f3d745) with the stock effects): per-block and per-UI-pass instruction counts on the pinned ColdFire emulator (4 a block closed, 195 open, the analysis about 1.0 M instructions every 145 ms in the UI task), exact memory from the link map and build log, a static stack bound, readings on seven generated tones (82.5 Hz to 1,318.5 Hz, within 1 cent) plus a silent track, silence and HOLD, every opening and closing key on the MKII and MKI panels, the stock TEMPO window and tap tempo beside it, a menu over it, a 60 s run open on a playing project, the native smoke (verify.py, 24 checks), five LCD captures, tools/align_check.py of v2.12 on the build, module:verify 130 selections with 0 mismatches. A hardware report for this exact image is pending.",
+    "hardwareStatus": "historical",
+    "evidenceRevision": "a6616266a5cd0302c6e0ea397f21cc66a026aef7",
+    "gates": [
+      "verify.py: native smoke on image 66489376 (TEMPO alone and FUNC + TEMPO stock, UP + TEMPO opens, the ring fills only while open, -- on silence, closing by TEMPO / YES / NO / UP + TEMPO, reopening; with a generated tone project: seven tones read within 1 cent, HOLD on silence and after STOP): 24/24 passed (evidence/native-smoke.json)",
+      "Emulator instruction counts per block (frame tail) and per UI pass, window closed and open, stopped and playing, eight tracks and one; the same sessions on the stock image",
+      "Exact memory inventory reconciled with the native link map and build log; static stack bound",
+      "align_check (octatrick-modules v2.12 tools/align_check.py) on the kept native build: 712 instruction rows, 3 transfer targets, all even",
+      "Stock flows with and without the module on the emulator: TEMPO alone, FUNC + TEMPO, UP + TEMPO, TEMPO then UP, a menu over the window, PLAY / STOP",
+      "Native/browser composition (npm run module:verify, host toolchain): 130 selections, 62 built images match outside the platform writes, 68 refusals match, 0 mismatches",
+      "Hardware report for this source and image: pending (TIM placeholders)"
+    ],
+    "qualification": {
+      "moduleVersion": "0.1.0-experimental",
+      "sourceSha256": "1ab3af493f9658d38a1461f3c744ad5f3903323d306718ff164d083676f6d810",
+      "imageSha256": "66489376d2cfbe36cb27b6e8b755a75aec2e7b3eab3583f7026f55cc7e877f94",
+      "cycles": [
+        {
+          "processor": "coldfire",
+          "worstCase": 486,
+          "maxConfiguration": 486,
+          "maxInstances": 1,
+          "budget": 9578,
+          "unit": "cycles/block",
+          "method": "emulator",
+          "conditions": {
+            "parameterExtremes": "The module has no parameter. Its branches were all driven: window closed (the frame tail adds 4 instructions a block, the UI pass 4), window open (the copy of 16 frames, 195 a block at most, mean 195), the UI pass that is not yet due (7), the analysis-and-redraw pass (1,007,065 at most, on tones from 82.5 Hz to 1,318.5 Hz, on silence and on a silent track after a reading), the peak gate (silence: no analysis beyond the snapshot), the HOLD path, the first '--' window. Counted instruction by instruction on the pinned ot_emu (watched PCs, 400 ms windows of about 1,100 blocks).",
+            "parameterModulation": "Not applicable as parameters: the tuner reads no parameter, lock, LFO, scene or MIDI CC. What it analyses changes instead: the tracks switched with T1-T8 while it was open and playing (seven tones and a silent track), the transport started and stopped under it; the frame copy is the same 16-frame loop whatever the audio, and the analysis cost depends only on whether the peak gate passes (counted on each).",
+            "modeSwitching": "Opened and closed repeatedly by every closing key (TEMPO, YES, NO, UP + TEMPO), reopened, evicted by the PROJECT menu (the MENU key) and reopened, PLAY / STOP under it, track changes while open. Opening clears the reading and draws the window once (inside the key handler, in the UI task); closing destroys the window and pops the key layer. No start-up or reset spike: the unit's state starts zeroed (window closed) after every boot.",
+            "maxLoad": "One instance by construction (one window), so maxConfiguration is the tuner's own worst block: 195 instructions = 486 cycles at 2.49216 cycles an instruction (Modwerk's FM Synth convention: 9.44 ns at 264 MHz), against a budget of 10 % of the 16-sample block (9,578 of 95,779 cycles: the perf audit's limit for what a ColdFire module may add to the frame interrupt, the form Output Matrix's record uses). Measured under the heaviest load available, the tone project with all eight Flex tracks playing: the whole interrupt peaked at 43,328 instructions on the tuner image and 43,324 on the stock image with the same project and input (the tuner adds exactly 4 to every block with the window closed and 195 with it open). That stock peak is above one block's 95,779 cycles at the same conversion, so the conversion is an upper estimate and the stock firmware's own blocks are not summed into this record. The analysis runs in the UI task, outside the interrupt: 1,007,065 instructions at most every 145 ms with the frame interrupts it spans subtracted (about 9.5 ms at the conversion, 6.6 % of the time while the window is open). A 60 s run with the window open on playing tones showed no stall. No USB, MIDI or other module was in the image.",
+            "inputConditions": "Silence (the peak gate holds; '--' or HOLD), -12 dBFS looping sines from 82.5 Hz to 1,318.5 Hz, a silent track after a reading. The copy is the same 16-frame loop for any signal; the analysis is the full detector for every signal that passes the -54 dBFS gate, so its worst case is any audible signal. Full-scale input cannot overflow: the snapshot is normalised to a peak in [384, 768) before the sums (the author's bound in tuner.s)."
+          },
+          "report": "TESTING.md"
+        }
+      ],
+      "memory": {
+        "regions": [
+          {
+            "name": "Tuner state: window handle, ring index, block count, reading and flags (tu_win .. tu_t0)",
+            "space": "sdram",
+            "words": 44,
+            "wordBits": 8,
+            "bytes": 44,
+            "scope": "instance"
+          },
+          {
+            "name": "Sample ring written by the frame interrupt (tu_ring, 4,096 x 16-bit)",
+            "space": "sdram",
+            "words": 8192,
+            "wordBits": 8,
+            "bytes": 8192,
+            "scope": "instance"
+          },
+          {
+            "name": "Analysis buffers: tu_x 8,192 B, tu_y 2,048 B, tu_n 740 B, tu_lobes 256 B, tu_d 28 B",
+            "space": "sdram",
+            "words": 11264,
+            "wordBits": 8,
+            "bytes": 11264,
+            "scope": "instance"
+          },
+          {
+            "name": "TUNER DRAM unit code, strings, note and cent tables, key layer (.text)",
+            "space": "sdram",
+            "words": 2830,
+            "wordBits": 8,
+            "bytes": 2830,
+            "scope": "shared"
+          },
+          {
+            "name": "Link alignment between the unit's .text and .data in the platform runtime",
+            "space": "sdram",
+            "words": 8194,
+            "wordBits": 8,
+            "bytes": 8194,
+            "scope": "shared"
+          },
+          {
+            "name": "Hook sites rewritten in place: three 6-byte detours",
+            "space": "cpu-flash",
+            "words": 18,
+            "wordBits": 8,
+            "bytes": 18,
+            "scope": "shared"
+          },
+          {
+            "name": "Platform loader and the packed DRAM unit appended to the image",
+            "space": "cpu-flash",
+            "words": 2241,
+            "wordBits": 8,
+            "bytes": 2241,
+            "scope": "shared"
+          },
+          {
+            "name": "Platform reserve: Flex sample RAM for the DRAM platform (1,707 pages) less the 30,524 B runtime",
+            "space": "sdram",
+            "words": 10457284,
+            "wordBits": 8,
+            "bytes": 10457284,
+            "scope": "shared"
+          },
+          {
+            "name": "UI-task stack increment bound (tu_tick 44 B, tu_draw 92 B, returns and stock-call arguments)",
+            "space": "sdram",
+            "words": 172,
+            "wordBits": 8,
+            "bytes": 172,
+            "scope": "shared"
+          }
+        ],
+        "perInstanceBytes": 19500,
+        "sharedBytes": 10470739,
+        "maxInstances": 1,
+        "totalBytes": 10490239,
+        "conditions": "Exact from the native build of this image (runtime.elf: one DRAM unit at 0x40a955e0, .text 2,830 B, .data 19,500 B at 0x40a980f0 = state 44 B + ring 8,192 B + analysis buffers 11,264 B, runtime 0x40a955e0..0x40a9cd1c = 30,524 B with 8,194 B of link alignment between the sections; the build log: three detours, no poke, append 2,241 B at 0x4010fdf0, the platform takes 1,707 pages, 0x40a955e0..0x41495de0, 10,487,808 B, sample pages 14,602 -> 12,895). The platform reserve is the Flex sample RAM every DRAM module shares; with TUNER alone it exists because of this module. No heap, no dynamic allocation, no battery RAM, no card file, no DSP memory. Stack: static upper bound from tuner.s (the frame-interrupt copy uses no stack; the UI pass and the key handler path, 172 B at most); the stock drawing and window routines' own frames are not counted (the stock TEMPO window calls them the same way). Hardware canaries not measured.",
+        "report": "TESTING.md"
+      },
+      "hardware": {
+        "kind": "functional",
+        "status": "reported",
+        "model": "MKI",
+        "testedOn": "TIM: YYYY-MM-DD",
+        "tester": "TIM: credited handle",
+        "sourceRevision": "a6616266a5cd0302c6e0ea397f21cc66a026aef7",
+        "imageSha256": "66489376d2cfbe36cb27b6e8b755a75aec2e7b3eab3583f7026f55cc7e877f94",
+        "summary": "TIM: what was tuned on the unit with the Tuner 0.1.0 update file (MAIN OS 66489376...): the known-pitch sample and its reading, the live input and its reading against a reference, closing by each key, open while the sequencer runs, after a power-cycle",
+        "limitations": [
+          "TIM: how long it ran, the project, what was not tried (MKII, ...)"
+        ],
+        "report": "TESTING.md"
+      },
+      "documentation": {
+        "tutorial": {
+          "title": "Quick tutorial: tune a track",
+          "steps": [
+            "Build a firmware with Tuner in the Modwerk configurator and install it. There is nothing to set up: the tuner is part of the firmware you built.",
+            "Select a track that plays one pitched note (a sample, or a Thru machine with your instrument on its input) and play it. Hold UP and press TEMPO: the tuner window opens over the page and shows -- until the first reading.",
+            "Read the note, the octave and the needle: a needle left of centre with -20c is 20 cents flat, right of centre is sharp. Tune the instrument, or change the sample's pitch, until the needle is in the middle and it reads 0c. Press another track key to tune that track instead.",
+            "Stop playing: the last reading stays with HOLD. Press TEMPO (or YES or NO) to close the window; the page underneath is back as it was."
+          ]
+        },
+        "screenshots": [
+          "media/ot-tuner-silence.png",
+          "media/ot-tuner-flat.png",
+          "media/ot-tuner-sharp.png",
+          "media/ot-tuner-hold.png",
+          "media/ot-tuner-closed.png"
+        ],
+        "screenshotStyle": "black-and-white"
+      }
+    }
+  },
+  "license": {
+    "spdx": "MIT",
+    "file": "LICENSE",
+    "declaration": "Tim Hastie's MIT source (octatrick-modules v2.12, upstream/LICENSE unchanged) and the Modwerk packaging by the same author under MIT; octabam's MIT notice for the build system. Stock spans are address/length/SHA-256 guards resolved from the user's own OS; no firmware, extracted routine or table, image, card, sample or RAM/LCD dump is included. LCD captures retain the underlying Elektron rights as declared in media/LICENSE.md."
+  },
+  "media": [
+    {
+      "path": "media/ot-tuner-silence.png",
+      "captureType": "emulator",
+      "caption": "Hold UP and press TEMPO on any page: the tuner window opens over it for the current audio track (T8 here, which is silent), and shows -- until the first reading. Play a pitched note on the track to get one.",
+      "alt": "The tuner window over the playback page: TUNER and T8 in the header, -- in the middle, an empty cents scale with ticks.",
+      "credit": "Tim Hastie; Elektron Octatrack UI",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "Tuner window (UP + TEMPO)",
+        "shows": "location",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "66489376d2cfbe36cb27b6e8b755a75aec2e7b3eab3583f7026f55cc7e877f94",
+        "setup": "Headless pinned ot_emu (9dc31d12...); MKII panel; a disposable card with a project made from an OS-created blank one and seven generated looping mono sines on FLEX tracks T1-T7 (440, 82.5, 300, 1000, 110, 435, 1318.5 Hz; -12 dBFS) and a silent sample on T8; 128x64 LCD at integer scale 6; captured with scripts/capture-module-ui.py. Emulator readings, not hardware ones."
+      }
+    },
+    {
+      "path": "media/ot-tuner-flat.png",
+      "captureType": "emulator",
+      "caption": "Press a track key while the window is open to tune that track: T6 plays a 435 Hz tone, which reads A4 -20c with the needle left of centre (flat). Tune until the needle is in the middle and it reads 0c.",
+      "alt": "The tuner window for T6: A4, the needle left of centre, -20c and 435.0Hz.",
+      "credit": "Tim Hastie; Elektron Octatrack UI",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "Tuner window, a flat note",
+        "shows": "controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "66489376d2cfbe36cb27b6e8b755a75aec2e7b3eab3583f7026f55cc7e877f94",
+        "setup": "Headless pinned ot_emu (9dc31d12...); MKII panel; a disposable card with a project made from an OS-created blank one and seven generated looping mono sines on FLEX tracks T1-T7 (440, 82.5, 300, 1000, 110, 435, 1318.5 Hz; -12 dBFS) and a silent sample on T8; 128x64 LCD at integer scale 6; captured with scripts/capture-module-ui.py. Emulator readings, not hardware ones."
+      }
+    },
+    {
+      "path": "media/ot-tuner-sharp.png",
+      "captureType": "emulator",
+      "caption": "A sharp note puts the needle right of centre: T3 plays 300 Hz, which is D4 +37c. The bottom right shows the frequency to a tenth of a hertz.",
+      "alt": "The tuner window for T3: D4, the needle right of centre, +37c and 300.0Hz.",
+      "credit": "Tim Hastie; Elektron Octatrack UI",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "Tuner window, a sharp note",
+        "shows": "controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "66489376d2cfbe36cb27b6e8b755a75aec2e7b3eab3583f7026f55cc7e877f94",
+        "setup": "Headless pinned ot_emu (9dc31d12...); MKII panel; a disposable card with a project made from an OS-created blank one and seven generated looping mono sines on FLEX tracks T1-T7 (440, 82.5, 300, 1000, 110, 435, 1318.5 Hz; -12 dBFS) and a silent sample on T8; 128x64 LCD at integer scale 6; captured with scripts/capture-module-ui.py. Emulator readings, not hardware ones."
+      }
+    },
+    {
+      "path": "media/ot-tuner-hold.png",
+      "captureType": "emulator",
+      "caption": "When the sound stops (here STOP), the last reading stays and the header shows HOLD until a pitched signal returns.",
+      "alt": "The tuner window for T3 with HOLD in the header: D4, +37c, 300.0Hz.",
+      "credit": "Tim Hastie; Elektron Octatrack UI",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "Tuner window, HOLD",
+        "shows": "controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "66489376d2cfbe36cb27b6e8b755a75aec2e7b3eab3583f7026f55cc7e877f94",
+        "setup": "Headless pinned ot_emu (9dc31d12...); MKII panel; a disposable card with a project made from an OS-created blank one and seven generated looping mono sines on FLEX tracks T1-T7 (440, 82.5, 300, 1000, 110, 435, 1318.5 Hz; -12 dBFS) and a silent sample on T8; 128x64 LCD at integer scale 6; captured with scripts/capture-module-ui.py. Emulator readings, not hardware ones."
+      }
+    },
+    {
+      "path": "media/ot-tuner-closed.png",
+      "captureType": "emulator",
+      "caption": "Press TEMPO (or YES or NO) to close the tuner: the page underneath is back as it was. UP + TEMPO opens it again.",
+      "alt": "The PLAYBACK page of a FLEX track after closing the tuner, transport stopped.",
+      "credit": "Tim Hastie; Elektron Octatrack UI",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "PLAYBACK page",
+        "shows": "location",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "66489376d2cfbe36cb27b6e8b755a75aec2e7b3eab3583f7026f55cc7e877f94",
+        "setup": "Headless pinned ot_emu (9dc31d12...); MKII panel; a disposable card with a project made from an OS-created blank one and seven generated looping mono sines on FLEX tracks T1-T7 (440, 82.5, 300, 1000, 110, 435, 1318.5 Hz; -12 dBFS) and a silent sample on T8; 128x64 LCD at integer scale 6; captured with scripts/capture-module-ui.py. Emulator readings, not hardware ones."
+      }
+    }
+  ]
+}

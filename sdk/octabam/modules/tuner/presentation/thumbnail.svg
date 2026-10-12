@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="576" viewBox="0 0 320 192" class="signal-art" fill="none" role="img" aria-labelledby="title description">
+<title id="title">Tuner: note, cents and a needle for the current audio track</title>
+<desc id="description">A conceptual diagram: a sine wave along the bottom for the track's audio, above it a scale from minus fifty to plus fifty cents with ticks at the ends, the quarters and the centre, a filled needle just right of centre, the note A4 in large letters and the reading +5c and 441.3Hz.</desc>
+<style>.signal-art{ width: 100%; height: calc(100% - 55px); overflow: visible; stroke-width: 1.3; stroke-linecap: round; stroke-linejoin: round; }
+.signal-grid{ stroke: #ffffff; opacity: .035; stroke-width: .7; }
+.signal-ghost{ stroke: #b5a0ff; opacity: .3; stroke-width: 1.0; }
+.signal-secondary{ stroke: #b5a0ff; opacity: .65; stroke-width: 1.7; }
+.needle{ fill: rgba(181,160,255,.85); stroke: #b5a0ff; stroke-width: 1.0; }
+.signal-art text{ fill: #b5a0ff; opacity: .8; font: 10px monospace; letter-spacing: .7px; stroke: none; }
+.signal-art .big{ font-size: 30px; opacity: .95; letter-spacing: -1px; }</style>
+<rect width="320" height="192" fill="#1c1c22"/>
+<g class="signal-grid"><path d="M20 40H300"></path><path d="M20 96H300"></path><path d="M20 150H300"></path></g>
+<g><text x="24" y="28">TUNER</text><text x="268" y="28">T1</text>
+<text class="big" x="136" y="76">A4</text>
+<path class="signal-secondary" d="M40 96H280"></path><path class="signal-secondary" d="M40 90V102"></path><path class="signal-secondary" d="M100 93V99"></path><path class="signal-secondary" d="M160 86V106"></path><path class="signal-secondary" d="M220 93V99"></path><path class="signal-secondary" d="M280 90V102"></path>
+<rect class="needle" x="170" y="86" width="5" height="20"></rect>
+<text x="24" y="124">+5c</text><text x="236" y="124">441.3Hz</text>
+<path class="signal-ghost" d="M20 150.0 L22 146.2 L24 142.7 L26 139.8 L28 137.6 L30 136.3 L32 136.0 L34 136.8 L36 138.6 L38 141.2 L40 144.4 L42 148.1 L44 151.9 L46 155.6 L48 158.8 L50 161.4 L52 163.2 L54 164.0 L56 163.7 L58 162.4 L60 160.2 L62 157.3 L64 153.8 L66 150.0 L68 146.2 L70 142.7 L72 139.8 L74 137.6 L76 136.3 L78 136.0 L80 136.8 L82 138.6 L84 141.2 L86 144.4 L88 148.1 L90 151.9 L92 155.6 L94 158.8 L96 161.4 L98 163.2 L100 164.0 L102 163.7 L104 162.4 L106 160.2 L108 157.3 L110 153.8 L112 150.0 L114 146.2 L116 142.7 L118 139.8 L120 137.6 L122 136.3 L124 136.0 L126 136.8 L128 138.6 L130 141.2 L132 144.4 L134 148.1 L136 151.9 L138 155.6 L140 158.8 L142 161.4 L144 163.2 L146 164.0 L148 163.7 L150 162.4 L152 160.2 L154 157.3 L156 153.8 L158 150.0 L160 146.2 L162 142.7 L164 139.8 L166 137.6 L168 136.3 L170 136.0 L172 136.8 L174 138.6 L176 141.2 L178 144.4 L180 148.1 L182 151.9 L184 155.6 L186 158.8 L188 161.4 L190 163.2 L192 164.0 L194 163.7 L196 162.4 L198 160.2 L200 157.3 L202 153.8 L204 150.0 L206 146.2 L208 142.7 L210 139.8 L212 137.6 L214 136.3 L216 136.0 L218 136.8 L220 138.6 L222 141.2 L224 144.4 L226 148.1 L228 151.9 L230 155.6 L232 158.8 L234 161.4 L236 163.2 L238 164.0 L240 163.7 L242 162.4 L244 160.2 L246 157.3 L248 153.8 L250 150.0 L252 146.2 L254 142.7 L256 139.8 L258 137.6 L260 136.3 L262 136.0 L264 136.8 L266 138.6 L268 141.2 L270 144.4 L272 148.1 L274 151.9 L276 155.6 L278 158.8 L280 161.4 L282 163.2 L284 164.0 L286 163.7 L288 162.4 L290 160.2 L292 157.3 L294 153.8 L296 150.0 L298 146.2 L300 142.7"></path>
+<text x="24" y="182">UP + TEMPO · -50 TO +50 CENTS</text></g>
+</svg>

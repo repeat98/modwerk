@@ -989,6 +989,17 @@
           "Author's functional MKII report (7–9 Oct 2026) covers routing, levels, everyday flows, saving and power; no timed stress run or chip timing."
         ]
       }
+    ],
+    "tuner": [
+      {
+        "version": "0.1.0-experimental",
+        "date": "2026-10-10",
+        "changes": [
+          "New: hold UP and press TEMPO for a tuner window over any page that reads the current audio track after its effects and before its fader: note and octave, a needle on a -50 to +50 cent scale, the cents and the frequency, about seven readings a second; TEMPO, YES or NO close it. From the author's octatrick-modules v2.11 (the tuner's code is unchanged since 2.8).",
+          "With UP held, TEMPO opens the tuner instead of the stock TEMPO window; TEMPO alone, tap tempo and UP alone stay stock. Nothing is saved. Like every DRAM module it brings the shared platform reserve (about 10 MB of Flex sample RAM).",
+          "Emulator-qualified (instruction counts, memory, readings on generated tones, smoke, captures); the same tuner code ran on the author's MKI in an earlier Octatrick build, the hardware report for this exact image is pending, and no MKII has run it."
+        ]
+      }
     ]
   }
 }

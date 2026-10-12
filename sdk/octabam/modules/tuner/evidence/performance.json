@@ -1,0 +1,30 @@
+{
+  "schema": 1,
+  "module": "tuner",
+  "version": "0.1.0-experimental",
+  "kind": "coldfire",
+  "cycles": {
+    "unit": "cycles/event",
+    "static": 486,
+    "measured": 486,
+    "budget": 95779,
+    "method": "The event is one 16-sample frame interrupt (362.8 us), the tuner's only real-time work. static = the longest path through tu_frame with the window open by hand count from tuner.s (195 instructions incl. the detour jmp and the jmp back); measured = the most counted on the pinned ot_emu (195; closed 4), watched PCs, about 1,100 blocks a window, the tone project stopped and playing, open and closed. Instructions converted at 2.49216 cycles (Modwerk's FM Synth convention, 9.44 ns at 264 MHz); not chip wall-clock. budget = 362.8 us at 264 MHz. The analysis (1,007,065 instructions at most every 145 ms) runs in the UI task, not in this event; it is in load below and in TESTING.md."
+  },
+  "load": {
+    "frameUs": 362.8,
+    "stockLongestUs": 238.0,
+    "moduleLongestUs": 239.9,
+    "stockIdlePercent": 34.5,
+    "moduleIdlePercent": 27.4,
+    "method": "Emulator, not cfmeter.py (no hardware capture exists yet). The same project on the stock image and on the image with the module, one Flex track playing a looping 440 Hz tone, the tuner window OPEN on it (its worst case: the analysis runs every 145 ms), pinned ot_emu: longest frame interrupt over about 1,100 blocks: stock 25,216 instructions; module = that + the tuner's static 195 = 25,411 (the tuner adds exactly 195 to every block; its own run peaked at 23,771 in a different 400 ms window); idle = 100 - the share of emulated time the ColdFire spent executing, from the whole emulated instruction rate over 2 s (the emulator counts nothing while the CPU waits): stock 69.4 k instructions per emulated ms, module 76.95 k (window closed: 69.41 k). Instructions at 9.44 ns. With all eight tracks playing the stock image alone already reads 105.11 k per ms, which this conversion would call fully busy; that run is in TESTING.md."
+  },
+  "stress": {
+    "floodMessagesPerSecond": null,
+    "clockBpm": null,
+    "seconds": null,
+    "stuckNotes": null,
+    "hangs": null,
+    "dropped": null,
+    "droppedExplanation": "Not run. The MIDI flood is the template for MIDI modules; TUNER reads no MIDI and has no note path. Its stress is the window open on a playing project: a 60 s emulated run open on looping tones (eight Flex tracks playing) with readings every 5 s, no stall, the frame copy at most 195 instructions a block throughout (TESTING.md)."
+  }
+}
