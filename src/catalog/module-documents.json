@@ -6922,14 +6922,14 @@
         "report": "TESTING.md",
         "summary": "Emulator qualification of the native Processor Load 0.1.0 image (MAIN OS f3ebd1c5..., the author's processor-load/ of v2.12 ca13ed8, unchanged since v2.11 5f3d745, exported alone with the stock effects): per-block instruction counts on the pinned ColdFire emulator (12 + 17..19 a block, 16 on the arming block), exact memory from the link map and build log, a static stack bound, the readings stopped and playing on an empty project and on the author's project, FUNC, the --% paths, the start-up, the stock TEMPO popup and BPM change beside it, the native smoke (verify.py, 12 checks), six LCD captures, tools/align_check.py of octatrick-modules (unchanged between v2.11 and v2.12) on the build. timhastie's MKI report for this exact image is in TESTING.md.",
         "hardwareStatus": "reported",
-        "evidenceRevision": "e77aa81854797fd80d8169fea30a2e6827c1a239",
+        "evidenceRevision": "1b69df8c5c005c65696b52c7d8f5ffdfb6a371e6",
         "gates": [
           "verify.py: native smoke on image f3ebd1c5 (arming, block count, header poke, popup, mean stopped and playing, FUNC, --% by fault injection and recovery, popup closed): 12/12 passed (evidence/native-smoke.json)",
           "Emulator per-block instruction counts, entry and exit, on an empty project and the author's project, stopped and playing; the same sessions on the stock image",
           "Exact memory inventory reconciled with the native link map and build log; static stack bound",
           "align_check (octatrick-modules v2.12 tools/align_check.py, unchanged since v2.11) on the kept native build: 233 instruction rows, 4 transfer targets, all even",
           "Stock flows with and without the module on the emulator: the screens outside the popup pixel-identical, the popup identical outside the meter band and the header, the BPM encoder works",
-          "Native/browser composition (npm run module:verify, host toolchain): 126 selections, 51 built images match outside the platform writes, 73 refusals match, 2 mismatches that are not this module: the same selection without processor-load (Air Chorus, CC Map, MiniVerb, POLY8, Recorder Loop Fix, Sidechain Compressor, Tape Echo, Tapehead) is refused natively and built by the browser, so no record was written; declaration checks: 286,208 selections clean",
+          "Native/browser composition (npm run module:verify, host toolchain, Modwerk main 3151975): 130 selections, 62 built images match outside the platform writes, 68 refusals match, 0 mismatches (sdk/native-comparisons/processor-load.json); declaration checks: 493,056 selections clean",
           "Hardware report for this source and image: timhastie, MKI, 2026-10-10 (reported; TESTING.md)"
         ],
         "qualification": {
@@ -7047,7 +7047,7 @@
             "model": "MKI",
             "testedOn": "2026-10-10",
             "tester": "timhastie",
-            "sourceRevision": "e77aa81854797fd80d8169fea30a2e6827c1a239",
+            "sourceRevision": "1b69df8c5c005c65696b52c7d8f5ffdfb6a371e6",
             "imageSha256": "f3ebd1c55f0c2ca9aeec1a9a934ecbd253ad6564784e860cbb2303435662a2b1",
             "summary": "Functional check: the author ran this exact image on his MKI and saw no issue with the meter; it worked as described.",
             "limitations": [
