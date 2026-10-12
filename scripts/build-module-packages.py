@@ -11,7 +11,7 @@ APP = Path(__file__).resolve().parents[1]
 ORDER = ['spectrum', 'modulation', 'character', 'miniverb', 'tapeecho', 'euclid', 'repitch', 'tapehead', 'airwindows-chorus', 'everb']
 # DSP code that stock code reaches through hooks. Output Matrix has no FX menu entry and is also a requested ColdFire module.
 HOOKED = ['sidechain-compressor', 'output-matrix']
-REQUESTED = ['analog-bassdrum', 'midi-scenes', 'usb-audio-out-tracks-main-cue', 'quantizer', 'synth', 'vector', 'playmodes', 'mute-modes', 'recorder-loop-fix', 'poly8', 'output-matrix']
+REQUESTED = ['analog-bassdrum', 'midi-scenes', 'usb-audio-out-tracks-main-cue', 'quantizer', 'synth', 'vector', 'playmodes', 'mute-modes', 'recorder-loop-fix', 'poly8', 'output-matrix', 'sy-drum']
 UTILITIES = ['previewvol', 'cc-map']
 ASSET_NAMES = ['dsp-packages.json', 'coldfire-packages.json', 'resident-dsp.json', 'rom-packages.json',
                'bootstrap-package.json', 'menu-recipes.json', 'descriptor-recipes.json', 'platform-writes.json', 'requested-packages.json', 'utility-packages.json', 'usb-audio-packages.json']
@@ -127,7 +127,9 @@ def compile_requested(root, known, documents, versions, revision, provenance, na
             text = (root / u.source).read_text(); validate_source(text.replace('.include "remix.inc"', ''))
             extra = []
             if u.include:
-                (work / 'remix.inc').write_text(u.include(selection)); extra = ['-I', work]
+                # FM Synth's ordinary objects are FM Synth alone; with SY DRUM they are the variants below.
+                own = {k: v for k, v in selection.items() if not (m.name == 'synth' and k == 'SY DRUM')}
+                (work / 'remix.inc').write_text(u.include(own)); extra = ['-I', work]
             obj = work / 'unit.o'; cpu = '54455' if u.dram else u.cpu
             from remix.platform_build import as_defsyms, redefined
             run(['m68k-elf-as', '-mcpu=' + cpu, *extra, *as_defsyms(u.defsyms), '-o', obj, root / u.source], root)
@@ -170,6 +172,18 @@ def compile_requested(root, known, documents, versions, revision, provenance, na
                     promote_symbols(obj,exports.get('symbols',[]) if sidechain and exports.get('whenModule')=='sidechain-compressor' else [])
                     raw=obj.read_bytes()
                     pkg['variants'].append(dict(whenModules=['poly8']+(['sidechain-compressor'] if sidechain else []),withoutModules=[] if sidechain or m.name=='repitch' else ['sidechain-compressor'],bytes=len(raw),code=raw.hex(),sha256=HASH(raw)))
+        if m.name == 'synth' and 'sy-drum' in ids:
+            # SY DRUM runs on FM Synth's engine and machine list (its native manifest requires SYNTH MACHINE).
+            # With SY DRUM selected, each FM Synth unit written per remix is assembled with SY DRUM in its
+            # remix.inc (HAVE_SYDRUM 1: the machine-list row and the engine's calls into SY DRUM's unit).
+            from remix.platform_build import as_defsyms
+            for unit in m.linked:
+                if not unit.include: continue
+                work = root / 'requested' / unit.label; obj = work / 'sy-drum.o'
+                (work / 'remix.inc').write_text(unit.include(selection))
+                run(['m68k-elf-as', '-mcpu=' + ('54455' if unit.dram else unit.cpu), '-I', work, *as_defsyms(unit.defsyms), '-o', obj, root / unit.source], root)
+                raw = obj.read_bytes(); pkg = next(row for row in objects if row['label'] == unit.label)
+                pkg['variants'].append(dict(whenModules=['sy-drum'], withoutModules=['poly8'], bytes=len(raw), code=raw.hex(), sha256=HASH(raw)))
         if m.name == 'synth' and 'poly8' in ids:
             recipe=next(r for r in composition['groups'] if r['moduleId']==m.name)
             for unit in m.linked:
@@ -237,7 +251,9 @@ def compile_requested(root, known, documents, versions, revision, provenance, na
     obj=work/'loader.o';run(['m68k-elf-as','-mcpu=5475','-I',work,'--defsym','PREBOOT=1','-o',obj,work/'loader.S'],root)
     raw=obj.read_bytes(); bootstrap=dict(bytes=len(raw),code=raw.hex(),sha256=HASH(raw))
     print(f'Compiled {len(objects)} requested ColdFire objects, both Analog BD engines and stock-free pre-boot skeleton.',flush=True)
-    return dict(schema=1,revision=revision,**provenance,objects=objects,groups=groups,composition=composition,analog=analog,bootstrap=bootstrap)
+    # A module whose native manifest requires another (SY DRUM: SYNTH MACHINE); the browser refuses it without that module.
+    requires={m.name:list(m.requires) for m in selected if m.requires}
+    return dict(schema=1,revision=revision,**provenance,objects=objects,groups=groups,composition=composition,analog=analog,bootstrap=bootstrap,**({'requires':requires} if requires else {}))
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)

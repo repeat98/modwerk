@@ -136,3 +136,19 @@ describe('POLY8 companion composition', () => {
     expect(plain.object.symbols.some(row => row.name === 'KEYMASK')).toBe(false)
   })
 })
+describe('SY DRUM on FM Synth', () => {
+  it('refuses SY DRUM without FM Synth, as the native ledger refuses its required SYNTH MACHINE', () => {
+    expect(() => selectedRequestedGroups(['sy-drum'])).toThrow('conflicting native declarations: SY DRUM requires SYNTH MACHINE')
+    expect(selectedRequestedGroups(['synth', 'sy-drum']).map(group => group.moduleId)).toEqual(expect.arrayContaining(['synth', 'sy-drum']))
+  })
+  it('links FM Synth’s per-remix units assembled with SY DRUM only when SY DRUM is selected', async () => {
+    for (const label of ['poly', 'fmmachine', 'fm_qz']) {
+      const pkg = requestedFacts.objects.find(p => p.label === label)!
+      const variant = pkg.variants.find(row => row.whenModules.includes('sy-drum'))!
+      expect(variant.withoutModules).toEqual(['poly8'])
+      const alone = await readRequestedObject(label, undefined, ['synth'])
+      const beside = await readRequestedObject(label, undefined, ['synth', 'sy-drum'])
+      expect(alone.object.sections.find(s => s.name === '.text')!.data.length).toBeLessThan(beside.object.sections.find(s => s.name === '.text')!.data.length)
+    }
+  })
+})

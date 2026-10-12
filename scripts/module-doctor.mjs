@@ -5,6 +5,7 @@
 //
 // Each line is a point where a module meets an existing workflow, with the command that fixes it when it fails. Run it until
 // it is green, then walk the checklist in docs/module-guides/<category>.md, which covers what a program cannot see.
+import { selectionConflicts } from '../src/catalog/selection-conflicts.ts'
 import { existsSync, readFileSync, readdirSync } from 'node:fs'
 import { spawnSync } from 'node:child_process'
 import { dirname, resolve } from 'node:path'
@@ -122,7 +123,10 @@ function octatrack(id) {
   }
 
   const { checks, pairs: pairCounts } = nativeChecks(), pairs = pairCounts.get(id) ?? 0
-  if (!(id in checks)) fail('declaration checks', 'the module alone has no recorded ledger check, so a build of it is refused', 'npm run module:verify -- ' + id + ' --os <your OCTATRACK_OS1.40C.bin> (it records them)')
+  // A module the configurator refuses alone (SY DRUM needs FM Synth) has no record alone, by design.
+  const alone = id in checks ? [] : selectionConflicts([id])
+  if (alone.length) ok('declaration checks', 'refused alone by design (' + alone[0].title + '); recorded beside ' + pairs + ' other modules')
+  else if (!(id in checks)) fail('declaration checks', 'the module alone has no recorded ledger check, so a build of it is refused', 'npm run module:verify -- ' + id + ' --os <your OCTATRACK_OS1.40C.bin> (it records them)')
   else ok('declaration checks', 'recorded alone and beside ' + pairs + ' other modules')
 
   const conflicts = document.compatibility.conflicts ?? []

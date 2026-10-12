@@ -48,6 +48,10 @@ export function selectedRequestedGroups(ids: readonly string[]) {
   if (selection.has('usb-audio-out-tracks-main-cue')) selection.add('usb-midi')
   if (facts.schema !== 1 || facts.revision !== CATALOG_SOURCE.revision) throw new Error('The requested packages do not match the pinned catalog.')
   const groups = composedGroups(facts.groups.filter(g => selection.has(g.moduleId) && (!g.activeWith || selection.has(g.activeWith))), selection)
+  // A module whose native manifest requires another (SY DRUM: SYNTH MACHINE) is refused without it, as the native ledger refuses it.
+  const requires = (facts as { requires?: Record<string, string[]> }).requires ?? {}
+  for (const group of groups) for (const need of requires[group.moduleId] ?? [])
+    if (!groups.some(other => other.key === need)) throw new Error('The selected modules have conflicting native declarations: ' + group.key + ' requires ' + need + '.')
   // Refuse overlapping native hooks before linking or placing either module.
   const claims: { start: number; end: number; owner: string }[] = []
   for (const group of groups) {

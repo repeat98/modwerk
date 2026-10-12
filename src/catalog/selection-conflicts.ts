@@ -42,6 +42,13 @@ export function selectionConflicts(ids: readonly string[], keepStockFx2 = false)
       moduleIds: ['synth', ...companions.map(module => module.id)],
       fixes: [{ label: 'Keep FM Synth', removeIds: companions.map(module => module.id) }, { label: 'Remove FM Synth', removeIds: ['synth'] }] })
   }
+  // SY DRUM runs on FM Synth's engine and machine list: native octabam refuses it without FM Synth
+  // (its manifest requires SYNTH MACHINE), so the configurator refuses the same selection.
+  if (selected.has('sy-drum') && !selected.has('synth')) conflicts.push({ id: 'sy-drum-needs-synth', title: 'SY DRUM needs FM Synth',
+    description: 'SY DRUM runs on FM Synth’s engine and appears in its machine list. Add FM Synth to the selection, or remove SY DRUM.',
+    moduleIds: ['sy-drum'],
+    fixes: [{ label: 'Remove SY DRUM', removeIds: ['sy-drum'] }],
+  })
   if (selected.has('analog-bassdrum') && analogBdBlockers.length) conflicts.push({
     id: 'analog-bd-custom-dsp', title: 'Choose effects that fit with Analog BD',
     description: 'Analog BD can share effect memory with Mini Verb, Tape Echo, Euclid, TapeHead, Sidechain Compressor and Air Chorus, subject to space. It cannot run alongside ' + analogBdBlockers.map(module => module.name).join(', ') + '.',

@@ -7,10 +7,14 @@ import { newConfiguration, validateConfiguration } from '../config/workspace'
 
 describe('temporary module availability', () => {
   it('keeps every visible module buildable as an individual selection', () => {
+    // SY DRUM needs FM Synth (selection-conflicts.ts): it builds beside it and is refused alone.
+    const companions: Record<string, string[]> = { 'sy-drum': ['synth'] }
     for (const module of AVAILABLE_MODULES) {
-      expect(moduleBuildError([module.id])).toBe('')
-      expect(checkSelection([module.id], false).checked).toBe(true)
+      const ids = [...(companions[module.id] ?? []), module.id]
+      expect(moduleBuildError(ids)).toBe('')
+      expect(checkSelection(ids, false).checked).toBe(true)
     }
+    expect(checkSelection(['sy-drum'], false).checked).toBe(false)
   })
   it('offers every catalog module that is not paused and retains their GitHub identity', () => {
     expect(AVAILABLE_MODULES.map(module => module.id)).toEqual(MODULES.map(module => module.id).filter(id => !PAUSED_MODULE_IDS.includes(id)))

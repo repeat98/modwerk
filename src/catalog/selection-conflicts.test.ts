@@ -40,6 +40,11 @@ describe('native selection conflicts', () => {
     expect(selectionConflicts(['poly8', ...seven])[0].id).toBe('module-menu-space')
     expect(selectionConflicts(['poly8', 'previewvol'])).toEqual([])
   })
+  it('refuses SY DRUM without FM Synth, as native octabam does', () => {
+    expect(selectionConflicts(['sy-drum']).map(conflict => conflict.id)).toEqual(['sy-drum-needs-synth'])
+    expect(selectionConflicts(['sy-drum', 'miniverb'])[0].fixes).toEqual([{ label: 'Remove SY DRUM', removeIds: ['sy-drum'] }])
+    expect(selectionConflicts(['synth', 'sy-drum'])).toEqual([])
+  })
   it('rejects unknown IDs and includes paused custom DSP modules in Analog BD conflicts', () => {
     expect(() => selectionConflicts(['unknown'])).toThrow()
     expect(selectionConflicts(['analog-bassdrum', 'character'])[0].moduleIds).toContain('character')

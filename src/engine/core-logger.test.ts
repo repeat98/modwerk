@@ -2,7 +2,7 @@ import {describe,it,expect} from 'vitest'
 import {readFileSync,readdirSync} from 'node:fs'
 import {createHash} from 'node:crypto'
 import pkg from './assets/core-logger.json'
-import {readCoreLogger,loggerExternals,LOGGER_RESERVE_BYTES} from './core-logger'
+import {readCoreLogger,loggerExternals,loggerYields,LOGGER_RESERVE_BYTES} from './core-logger'
 import {createStaticColdFireRuntime} from './coldfire-runtime'
 import {runtimeStageLayout} from './bootstrap'
 import {DOWNLOADS_ENABLED} from './protocol'
@@ -31,6 +31,12 @@ describe('mandatory core logger',()=>{
    const ceiling=loggerExternals(runtime.reserveBytes).get('octamod_log_retained')!
    expect(runtimeStageLayout(runtime.bytes.length,8192,runtime.reserveBytes-8192).stageEnd).toBeLessThan(ceiling)
   }
+ })
+ it('yields only a hook site a selected module owns (SY DRUM\'s engine-job dispatch hook)',()=>{
+  expect(loggerYields([])).toEqual([])
+  expect(loggerYields([{address:0x4008485e,guardLength:6}])).toEqual(['job'])
+  expect(loggerYields([{address:0x40084858,guardLength:6}])).toEqual([])
+  expect(loggerYields([{address:0x40084852,guardLength:6}])).toEqual(['idle'])
  })
  it('allows downloads under the explicit owner-approved logger exception',()=>{
   expect(DOWNLOADS_ENABLED).toBe(true)
