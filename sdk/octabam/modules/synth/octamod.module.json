@@ -253,7 +253,7 @@
     "report": "TESTING.md",
     "summary": "Emulator qualification of the native FM Synth 0.1.5 image (MAIN OS 37661aee..., built from the author's 48b89e7: the octatrick 2.12 engine, page and chooser, byte-identical in the image to 0.1.4's, and his 2.13 quantizer): the quantizer's MIDI-track gates against a model of the rules (NOTE knob and NOTE locks 409 of 409 over eight SCALE / ROOT settings; CHROMATIC keys 245 of 245 with balanced note-offs and the arpeggiator fed snapped notes; a LIVE RECORDING lock as the author's build), SCALE OFF equal to stock, CHROMATIC on a MIDI track draws and plays, and its added cost per call. Frame-interrupt instruction counts for 1 to 8 FM tracks at VOIC 1, 2 and 4 are 0.1.4's (image 00fa6caa, the same FM objects), with the bounding cards rerun twice on this image, converted at the hardware CF METER calibration (9.44 ns/instruction, 264 MHz). One FM track at VOIC 4 keeps every block, including the first START, inside the 16-sample block (81,459 of 95,779 cycles); eight VOIC 4 tracks do not. Exact memory from the link map: 44,404 module-owned bytes plus the shared 10,460,844-byte sample-RAM platform reserve. Software verification on this image: the module's own native Part smoke (verify.py); two FM tracks pass Part save/reload, project save/reload and a fresh project load in the emulator (the battery-RAM-only restart is the hardware test); the machine-change init; seven LCD captures; the author's odd-address check. The native/browser coverage record is not refreshed: POLY8's chooser bridge stops on this chooser (TESTING.md). A hardware report for this exact image is pending; Modwerk's 0.1.1/0.1.2 owner approvals stay with those versions.",
     "hardwareStatus": "historical",
-    "evidenceRevision": "651dc0f2d233eb9dce69fbe7f5f0d064ee33ddf5",
+    "evidenceRevision": "7a5988a753534e523593f0100d5230429abbf10e",
     "gates": [
       "verify.py: native Part smoke on image 37661aee (eight-track selection, Part and shadow signature, sample slots unchanged, reselection keeps controls, return to FLEX): passed (evidence/native-smoke.json)",
       "2.13 quantizer on MIDI track 1 of image 37661aee in the emulator: NOTE knob and NOTE locks 409 of 409 against the model of the rules (eight SCALE / ROOT settings, SCALE OFF included); CHROMATIC keys 1..16 at five octave words 245 of 245, note-offs balanced, keys held across SCALE / ROOT changes released, the arpeggiator fed snapped notes; LIVE RECORDING lock as the author's build (TESTING.md)",
@@ -404,7 +404,7 @@
         "model": "MKI",
         "testedOn": "TIM: YYYY-MM-DD",
         "tester": "TIM: credited handle",
-        "sourceRevision": "651dc0f2d233eb9dce69fbe7f5f0d064ee33ddf5",
+        "sourceRevision": "7a5988a753534e523593f0100d5230429abbf10e",
         "imageSha256": "37661aee03a49f310d47e1447f043489c1bce9430c13824dd49ab93ad835e236",
         "summary": "TIM: what was played on the unit and what happened (MAIN OS 37661aee..., the hardware test sheet)",
         "limitations": [
