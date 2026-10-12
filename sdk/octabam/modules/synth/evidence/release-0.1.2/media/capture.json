@@ -1,0 +1,203 @@
+{
+  "firmware": "1.40C",
+  "imageSha256": "d5464195fac0033852546fbbc8f809b64d16646309c21ab25e2f203fbf123157",
+  "emulatorSha256": "f521565f3866947788d7c45507576a4ed386d2e4ef57e9683ab65fa0acc6a166",
+  "setup": "Headless ot_emu; MKII panel; stopped transport; 128×64 LCD at integer scale 6.",
+  "palette": {
+    "on": [
+      240,
+      240,
+      240
+    ],
+    "off": [
+      24,
+      24,
+      24
+    ]
+  },
+  "keyMs": 150,
+  "plan": [
+    {
+      "wait": 3000
+    },
+    {
+      "press": [
+        "YES"
+      ]
+    },
+    {
+      "wait": 2000
+    },
+    {
+      "press": [
+        "NO"
+      ]
+    },
+    {
+      "press": [
+        "FUNC",
+        "SRC"
+      ]
+    },
+    {
+      "press": [
+        "DOWN"
+      ]
+    },
+    {
+      "press": [
+        "DOWN"
+      ]
+    },
+    {
+      "press": [
+        "DOWN"
+      ]
+    },
+    {
+      "press": [
+        "DOWN"
+      ]
+    },
+    {
+      "press": [
+        "DOWN"
+      ]
+    },
+    {
+      "press": [
+        "YES"
+      ]
+    },
+    {
+      "capture": "ot-location.png"
+    },
+    {
+      "press": [
+        "SRC"
+      ]
+    },
+    {
+      "capture": "ot-controls.png"
+    },
+    {
+      "press": [
+        "LFO"
+      ]
+    },
+    {
+      "capture": "ot-voices.png"
+    },
+    {
+      "press": [
+        "FUNC",
+        "AMP"
+      ]
+    },
+    {
+      "capture": "ot-legato.png"
+    },
+    {
+      "press": [
+        "NO"
+      ]
+    },
+    {
+      "press": [
+        "MENU"
+      ]
+    },
+    {
+      "press": [
+        "DOWN"
+      ]
+    },
+    {
+      "press": [
+        "DOWN"
+      ]
+    },
+    {
+      "press": [
+        "RIGHT"
+      ]
+    },
+    {
+      "press": [
+        "DOWN"
+      ]
+    },
+    {
+      "press": [
+        "DOWN"
+      ]
+    },
+    {
+      "press": [
+        "YES"
+      ]
+    },
+    {
+      "press": [
+        "DOWN"
+      ]
+    },
+    {
+      "press": [
+        "DOWN"
+      ]
+    },
+    {
+      "press": [
+        "DOWN"
+      ]
+    },
+    {
+      "encoder": {
+        "name": "LEVEL",
+        "delta": 1
+      }
+    },
+    {
+      "capture": "ot-scale.png"
+    },
+    {
+      "press": [
+        "DOWN"
+      ]
+    },
+    {
+      "capture": "ot-root.png"
+    },
+    {
+      "press": [
+        "DOWN"
+      ]
+    },
+    {
+      "capture": "ot-glide.png"
+    }
+  ],
+  "screenshots": {
+    "ot-location.png": "4e1d84898790433813720c437d2e767cb3225c7770ea15be9115f76e70b82270",
+    "ot-controls.png": "2eb52e9b732308891e289aa23d92556a87dd8820b12a37cbe73f66e720a162f0",
+    "ot-voices.png": "0e99bbc3cdecc61bb66920b5648f517198b191ad3dc04a78af14e2256e1cdf3c",
+    "ot-legato.png": "e5cd86583126a834f8a9351a8f2b51bca9f76c101023e37db4c933be957d5bc8",
+    "ot-scale.png": "71ffe8fe7413a1e2eb0605ad7119159bba95db7f7734dc47ae13468f68a74d13",
+    "ot-root.png": "53f0f6dacf09665f41629428569d9fbfac5847698c20f35a6cbe6b78a88f99e4",
+    "ot-glide.png": "77b4cf73fd16e96d1c78f5a9cdd0590b20a7958c614d1c6cdb93b77791dc505b"
+  },
+  "schemaVersion": 1,
+  "moduleId": "synth",
+  "moduleVersion": "0.1.2-experimental",
+  "captured": "2026-10-08",
+  "imageProfile": {
+    "modules": [
+      "SYNTH MACHINE"
+    ],
+    "keepStockFx2": true,
+    "staticStock": true
+  },
+  "releaseProvenance": "Fresh 8 October captures from the native Synth 0.1.2 executable. Promotion must reproduce the exact emitted MAIN image fingerprint; existing software captures confer no hardware verification.",
+  "sourceSha256": "8fa263bfcd30dca9aff4f83dbcb001d4ccf06286e31839c8e0afd61100a9315c"
+}

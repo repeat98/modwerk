@@ -143,6 +143,8 @@
 | the qz_names entries, which the linker resolves.
 
         .text
+        .include "remix.inc"            | 2.11: HAVE_SYDRUM -- 1 when SY DRUM is in the remix (manifest.py); 0
+                                        | assembles this unit byte for byte as 2.10's
         .global qz_knob, qz_plock, qz_chrom, qz_draw, qz_ld_entry, qz_ld_line, qz_wr
         .global qz_get, qz_set, qz_lbl_scale, qz_scale
         .global qz_get_glide, qz_set_glide, qz_lbl_glide, qz_leg1, qz_leg2
@@ -208,7 +210,11 @@ qz_glide_of:
 | (the LFO page's slot 2: Part + 0x8ee9a + track*24 + 2) is 2..4, else 0
 | (EQ). Preserves everything but d0.
 qz_polytrack:
+        .if     HAVE_SYDRUM
+        jbsr    qz_fmtrack              | (2.11) VOIC is FM's: a SY DRUM track stays mono
+        .else
         jbsr    qz_is_synth
+        .endif
         jbeq    qz_pt_ret
         move.l  %a0,-(%sp)
         move.l  %d1,-(%sp)
@@ -240,11 +246,22 @@ qz_pt_out:
 qz_pt_ret:
         rts
 
-| qz_is_synth: d0 := 1 (NE) when track d2's machine is FLEX and its assigned
+| qz_is_synth: d0 := 1 (NE) when track d2's machine is FLEX and either the FM
+| SYNTH machine is chosen (the Part's "FM", 1) or its assigned
 | FLEX slot's settings record names a SYNTH* file -- the synth page's own test
 | (modules/synth/page.s pg_resolve): slot = Part + 0x8f04a + track*5 + 1, its
 | record 0x100b14f0 + 0x448*slot, the path at +0 scanned for the basename.
 | Preserves everything but d0.
+        .if     HAVE_SYDRUM
+| qz_fmtrack (2.11): d0 := 1 (NE) when track d2 plays FM (qz_is_synth's 1: FM SYNTH chosen
+| or a SYNTH* marker), 0 for SY DRUM (2) and sample tracks. Preserves everything but d0.
+qz_fmtrack:
+        jbsr    qz_is_synth
+        subq.l  #1,%d0
+        seq     %d0
+        andi.l  #1,%d0
+        rts
+        .endif
 qz_is_synth:
         lea     -16(%sp),%sp
         movem.l %d1/%d3/%a0/%a1,(%sp)
@@ -258,20 +275,34 @@ qz_is_synth:
         mvz.b   (%a1,%d2.l),%d0         | the track's machine
         subq.l  #1,%d0                  | FLEX
         jbne    qz_is_no
-        move.l  %a0,%a1
-        move.l  %d2,%d0
-        mulu.w  #30,%d0
+        move.l  %a0,%a1                 | the FM SYNTH machine chosen in the machine list
+        move.l  %d2,%d0                 | (the synth module's machine.s): "FM", 1 in the
+        mulu.w  #30,%d0                 | track's NEIGHBOR column, Part + 0x8edbc + 30*track
         adda.l  %d0,%a1
         adda.l  #0x8edbc,%a1
+        .if     HAVE_SYDRUM
+        mvz.b   2(%a1),%d0              | (2.11) or SY DRUM (sy-drum/): "SY", 1 -- its PTCH is semitones
+        subq.l  #1,%d0                  | too, its keys and locks as FM SYNTH's
+        jbne    qz_is_unsigned
         mvz.w   (%a1),%d0
-        cmpi.w  #0x464d,%d0
-        jbne    1f
+        cmpi.l  #0x464d,%d0             | "FM": 1
+        jbeq    qz_is_fmsig
+        cmpi.l  #0x5359,%d0             | "SY": 2
+        jbne    qz_is_unsigned
+        moveq   #2,%d0
+        jbra    qz_is_out
+qz_is_fmsig:
+        .else
+        mvz.w   (%a1),%d0
+        cmpi.l  #0x464d,%d0
+        jbne    qz_is_unsigned
         mvz.b   2(%a1),%d0
-        cmpi.b  #1,%d0
-        jbne    1f
+        subq.l  #1,%d0
+        jbne    qz_is_unsigned
+        .endif
         moveq   #1,%d0
         jbra    qz_is_out
-1:
+qz_is_unsigned:
         move.l  %d2,%d0
         lsl.l   #2,%d0
         add.l   %d2,%d0                 | track * 5
@@ -909,6 +940,18 @@ qz_g2_mono:
         jbsr    qz_chain_of             | legato: the new step continues the held note's chain
         lea     HELD,%a0
         move.b  %d3,(%a0,%d2.l)         | legato: the new key is the held key
+        .if     HAVE_SYDRUM
+        jbsr    qz_is_synth             | (2.11) a synth track: the engine's po_legkey (-28) hears the key --
+        jbeq    qz_g2_mono_mark         | SY DRUM recharges its envelopes at the key's trigless frame (FM and
+        movea.l qz_clock,%a0            | samples: nothing); the engine there (its clock published)?
+        move.l  %a0,%d0
+        jbeq    qz_g2_mono_mark
+        movea.l KIND_FLEX,%a0
+        movea.l -28(%a0),%a0
+        move.l  %d3,%d0
+        jsr     (%a0)
+qz_g2_mono_mark:
+        .endif
         lea     qz_legato(%pc),%a0
         move.b  %d3,(%a0)               | ... and the live recorder records it as trigless (qz_leg3)
 qz_g2_trigless:

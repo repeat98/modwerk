@@ -375,6 +375,21 @@
     ],
     "synth": [
       {
+        "version": "0.1.4-experimental",
+        "date": "2026-10-11",
+        "changes": [
+          "move to the author’s octatrick 2.12 line (timhastie/octatrick-modules tag v2.12, ca13ed8): the FM SYNTH chooser is the author’s machine.s, adapted from Modwerk’s, with the same FLEX + FM/1 Part signature, so 0.1.1/0.1.2 projects open unchanged.",
+          "the metronome click no longer cuts a held note: the engine had hooked the frame builder’s clear of the metronome’s click word (read as a STOP word), so with CLICK ON every beat released held notes and chords. 2.12 removes that hook; STOP still ends the engine’s voices through the stock voice kill.",
+          "a machine change to or from FM SYNTH, through SELECT MACHINE TYPE, SRC SETUP or the file browser, resets the track’s machine parameters (PLAYBACK, PLAYBACK SETUP, AMP, AMP SETUP, LFO and LFO SETUP) to init: FM SYNTH’s own seeds, or a stock machine’s defaults as the stock Part initialiser writes them. Step and scene locks are kept, as in the stock firmware; FX1 and FX2 stay.",
+          "the machine list is shared with the author’s SY DRUM machine: the rows after PICKUP are a row table, the six row-count and row-bound constants became detours that read it, and SELECT MACHINE TYPE scrolls like SRC SETUP. With FM Synth alone the list keeps its six rows.",
+          "DEC puts HOLD at 127 and 0 is the shortest decay; note starts no longer click (attacks of at least one carrier period, S-shaped; low notes start slightly slower).",
+          "LFO SETUP lists the FM page’s names (PTCH RATO INDX FINE FDBK DEC) as destinations on an FM track and skips SPD3/DEP3; a held CHROMATIC key is the gate, HOLD applies to sequencer trigs.",
+          "fixes from the author’s MKI test: no click when a sounding note restarts at a short DEC, no lost notes in fast VOIC 2–4 runs, recorded legato phrases keep sounding, and FM SYNTH chosen after a sample plays C4 at FINE 0c.",
+          "6 dB of headroom in the engine (author’s decision; replaces the 18.06 dB OUTPUT_SHIFT of 0.1.2): the mono voice and each paraphonic voice are 6.02 dB lower than the author’s earlier 2.10 builds, so AMP VOL 0 is the reference and VOL up to about +6 stays clean; output is about 12 dB louder than 0.1.2 at the same settings. The 0.1.2 MIDI chromatic drawer fix is kept.",
+          "Emulator worst-case ColdFire cost, exact memory and two-track Part/project save and reload are recorded for this build (TESTING.md). The author’s MKI report of this exact image is pending; physical reboot survival is not yet verified."
+        ]
+      },
+      {
         "version": "0.1.2-experimental",
         "date": "2026-10-08",
         "changes": [

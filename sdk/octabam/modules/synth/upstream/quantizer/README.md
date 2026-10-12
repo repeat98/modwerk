@@ -43,15 +43,15 @@ tables, one poke — all in the main-OS section; the bootstrap and every
 flash-programming path are untouched. The SCALE half was **flashed** as
 OCTATRICK1..3 (23-24 Sep 2026) and works on the unit; the GLIDE half is
 measured under `ot_emu` through the virtual panel only (24 Sep 2026). The
-13 Sep measurements below are the SCALE half's; logs and screens:
-`out/_agents/quantizer/`.
+13 Sep measurements below are the SCALE half's; logs and screens are in the
+author's workspace, not in this repository.
 
 ## The scales
 
 `qz_masks` in `quantizer.s`: bit k = semitone k above the root (the
 track's pitch 0 = raw 64); the same set repeats an octave down. Names are
 seven characters at most: the SEQUENCER window's value column is 33 px
-wide (`PHRYGIAN` lost its N, `shots/a7_3_phrygian_x4.png` of the first
+wide (`PHRYGIAN` lost its N, `a7_3_phrygian_x4.png` of the first
 build).
 
 | # | shown as | semitones |
@@ -221,8 +221,8 @@ the unit is 3,404 B (was 3,000). Measurements: `modules/synth/README.md`,
 
 ## What was hooked, and what is displaced
 
-All addresses are the stock 1.40C main OS at `0x40000400` (listing:
-`out/_agents/direct-jump/mainos.dis`). Sites are asserted against the
+All addresses are the stock 1.40C main OS at `0x40000400` (a disassembly
+listing of it). Sites are asserted against the
 stock bytes before anything is written (`manifest.py`).
 
 | site | stock bytes (displaced) | kind | stub | replays |
@@ -397,9 +397,9 @@ changes pitch without a restart the way FUNC + key does. Live recording
 records the legato press as stock records a key press (a sample trig with
 the PTCH lock, `0x40042d1c`), not as a trigless trig.
 
-### Measurements (24 Sep 2026, `out/mainos_cf.bin` = `REMIX=tim make cf`, the panel on 8593 with a copy of the OTLIVE card, `--sound on`; scripts and rows in the session scratchpad `glide_*.py`, `ga2/`, `ga3/`, `gs2/`)
+### Measurements (24 Sep 2026, `out/mainos_cf.bin` = `REMIX=tim make cf`, the panel on 8593 with a copy of the OTLIVE card, `--sound on`; the glide scripts and their rows are in the author's workspace, not in this repository)
 
-**1. The rows** (`gm/`): boot (the card's project: CHAIN AFTER 256/16 —
+**1. The rows** (the menu run): boot (the card's project: CHAIN AFTER 256/16 —
 a 17 saved by the 13 Sep build, clamped; SCALE MIXOLYD; GLIDE OFF), PROJECT
 > CONTROL > SEQUENCER, [DOWN] ×4 → `GLIDE OFF` (list state offset 2,
 cursor 4, count 5, visible 3); LEVEL +1 → 1, +63 → 64, +100 → 127
@@ -409,7 +409,7 @@ cursor 4, count 5, visible 3); LEVEL +1 → 1, +63 → 64, +100 → 127
 → 2/16 by LEVEL +1, DIRECT + [YES] → 2/16, −20 → PAT.LEN; the byte
 `0x8000004e` / mirror `0x100b14ae` read 0 → 1 → 2.
 
-**2. Legato and glide, T2 = the FM synth** (`ga2/`, `ga3/`; T2's Part set
+**2. Legato and glide, T2 = the FM synth** (two runs; T2's Part set
 to STRT 0 / LEN 0 = a clean carrier, AMP HOLD INF / REL 40; CHROMATIC
 mode; the card's SCALE = MIXOLYD snaps [TRIG 16] (+3) to +2 semitones —
 the quantizer at work). Hold [TRIG 13] (C4), press [TRIG 16] 0.6 s later,
@@ -433,7 +433,7 @@ What does move: a **2.3 dB level step 200 ms after the second key** (−17.4
 → −19.7 → −16.6 dB across the GLIDE 64 transition, the same at GLIDE 1
 once the pitch had settled) — and exactly the same step follows every
 fresh note start and every stock FUNC + key trigless trig on this track
-(`ga3/`, `ga4/FUNC_key_stock_trigless`: −19..−20 dB for 200 ms, then
+(the second run, and a run of stock FUNC + key trigless trigs: −19..−20 dB for 200 ms, then
 −17). It is not the AMP envelope (above) and not the pitch (GLIDE 1); it
 is the DSP's own response to a trig word — T2's FX1 is a FILTER with a
 0.5 s envelope (DEPTH 111, DEC 49), the likely consumer, but DEPTH 0 left
@@ -443,7 +443,7 @@ event-byte bit 3) changed neither the step nor the glide (t63 113 ms), so
 the legato keeps stock's own trigless word (`0x4004fc9c`, `0x119`): the
 legato behaves exactly as FUNC + key does, minus the FUNC.
 
-**3. Sequenced** (`gs2/`, GLIDE 64): the pattern cleared, T2 trig on step 1
+**3. Sequenced** (GLIDE 64): the pattern cleared, T2 trig on step 1
 (PTCH −12 from the Part: 130.8 Hz) and a trigless trig on step 9 with a
 PTCH lock of +12 (`0x7c`): PLAY → 130.8 Hz, then from step 9 (1.0 s at
 120 BPM) a two-octave glide to 523.0 Hz, 63 % / 95 % at 120 / 320 ms;
@@ -451,7 +451,7 @@ GLIDE OFF: the same pattern jumps in one 10 ms bin (t63 = t95 = 40 ms, the
 step-time estimate). (The level rises 14 dB with the pitch: T2's FX1 is
 a FILTER with BASE 0 / WIDTH 72, its response, not the voice.)
 
-**4. Persistence** (`pt/`): PROJECT > SYNC TO CARD with CHAIN AFTER =
+**4. Persistence**: PROJECT > SYNC TO CARD with CHAIN AFTER =
 DIRECT, SCALE MIXOLYD, GLIDE 64 → the card's `OTLIVE/PROJECT/project.work`
 reads `PATTERN_CHANGE_CHAIN_BEHAVIOR=1` / `#SEQUENCER_SCALE=5` /
 `#SYNTH_GLIDE=64` (read on the Mac through `/card/eject`); `/card/insert`
@@ -459,7 +459,7 @@ reads `PATTERN_CHANGE_CHAIN_BEHAVIOR=1` / `#SEQUENCER_SCALE=5` /
 power cycle -- see 26 Sep 2026 above) reloads `0x8000004e = 01`,
 `0x400d2cdc = 40`.
 Then the migration cases, editing the mounted card's `project.work` and
-`/card/insert`-ing (`pt3/`, `bc/`): `PATTERN_CHANGE_CHAIN_BEHAVIOR=17` +
+`/card/insert`-ing: `PATTERN_CHANGE_CHAIN_BEHAVIOR=17` +
 `#SYNTH_GLIDE=100` (a project saved by the 13 Sep DIRECT JUMP build) →
 `0x8000004e = 0x10` (the window shows **256/16**), GLIDE **100**;
 `=1` + `#SYNTH_GLIDE=33` → `0x01` (**DIRECT**), GLIDE **33**; `=5` +
@@ -486,7 +486,7 @@ FUNC held and the paraphonic VOIC 2..4 path leave it clear), and `qz_leg3`
 sends a legato press down the trigless branch -- exactly what FUNC + key
 records. GLIDE off, FUNC held, VOIC 2..4 and non-synth tracks: stock.
 
-Measured (`poly/liverec.py`, T2 = SYNTH, VOIC 1, INDX 0, SCALE OFF, 120 BPM,
+Measured (`liverec.py`, T2 = SYNTH, VOIC 1, INDX 0, SCALE OFF, 120 BPM,
 the pattern cleared before each; T2's track record `0x400e21e0 + 0x91a`:
 byte 7 = the sample-trig mask of steps 1-8, byte 15 the trigless mask of
 steps 1-8 (byte 14 steps 9-16), locks at `+0x59 + step*32`):
@@ -537,7 +537,7 @@ start (`qz_chain_of` -> `qz_chain` -> `qz_leg4`) and the held key's release
 writes the chain's whole length on every step of it (`qz_holdall`).
 Non-synth tracks, programmed trigs and playing without recording: untouched.
 
-Measured (`poly/holdrec.py`, T2 = SYNTH, VOIC 1, GLIDE 64, INDX 0, AMP ATK 0
+Measured (`holdrec.py`, T2 = SYNTH, VOIC 1, GLIDE 64, INDX 0, AMP ATK 0
 HOLD INF REL 20, 120 BPM = 8 steps a second, fresh boot; level per 50 ms
 from the note's onset, "ends" = the bin that drops below -40 dBFS):
 
@@ -623,7 +623,7 @@ SCALE OFF 1 : 1.26 : 1.498. Unit size: `quantizer.s` 1,888 B (`REMIX=tim
 make cf`, at `0x400d6d00`), `scale.s` 6 B, `keys.s` 40 B, `glide.s` 4 B
 (gone since 26 Sep 2026; `quantizer.s` 3,000 B in `octatrick-usb` BUILD 10).
 
-## Measurements (all `out/_agents/quantizer/`)
+## Measurements (the logs and screens are in the author's workspace, not in this repository)
 
 Image: `REMIX=quantizer make bus` → `out/mainos_bus.bin`, 1,112,560
 bytes, **1,250 bytes changed** vs `out/raw/section_3_MAIN_OS.bin`
@@ -645,11 +645,11 @@ image-cf` packs it). The `tim` image (this module + DIRECT JUMP, 1,657
 bytes) booted under the panel shows the stock chooser — NONE, FILTER, EQ,
 DJ EQ, PHASER, FLANGER, CHORUS, SPATIALIZER, COMB, COMPRESSOR, LOFI, DELAY,
 PLATE, SPRING, DARK — and the SCALE row still turns OFF → PHRYGN
-(`out/_agents/cfbuild/`). Panel: `tools/panel/panel_server.py --image <remix> --project
+(the cf build's own run). Panel: `tools/panel/panel_server.py --image <remix> --project
 out/_projects/otlive/OTLIVE/PROJECT --set OTLIVE --name PROJECT --sound
-off --card out/_agents/quantizer/card.img` on port 8596, stock on 8597,
+off --card <a copy of the OTLIVE card>` on port 8596, stock on 8597,
 driven through `/key`, `/tap`, `/knob`, `/peek`, `/screen.txt`
-(`shots/*_x4.png` are the text screens at 4×). PTCH slot of T1 (STATIC,
+(`*_x4.png` are the text screens at 4×). PTCH slot of T1 (STATIC,
 part 0) `0x40170f8a`, of T5 (FLEX) `0x40171008`; T5 step 1's PTCH lock
 `0x400e46a1`; the chromatic staging byte `0x46c7dfda + t*32` (with
 `--sound off` no frame consumes it, so it keeps the pitch the key
@@ -698,7 +698,7 @@ PHRYGIAN: `64 69 69 79 54 54 44 44 39 29 4` = 0, +1, **+1** (from +2:
 `+0x139`: `ff → 45` (the recorded PTCH lock = 69 = +1, the snapped
 value) and the trig bit; with OFF `+0x119`: `ff → 4a` (74 = +2, stock).
 
-**5. OFF vs stock, boot A/B** (`ab/`). `tools/emu/ot_emu/oracle/drive.py
+**5. OFF vs stock, boot A/B**. `tools/emu/ot_emu/oracle/drive.py
 --emu out/emu/ot_emu --image <stock | remix>` (the `inter` battery:
 boot, YES, MIXER, NO, T1 ×2, DOWN, RIGHT, NO, NO, PLAY 20×100 ms, STOP
 5×100 ms). `ready.txt`, `stamps.txt`, `peeks.txt`, `stderr.txt` are
@@ -709,7 +709,7 @@ difference is 712 vs 708 pairs, one fewer `0x3d`/`0x3f` toggle each of
 LEDs `0x24` and `0x25` — a breathing pair whose phase against the
 battery's fixed windows shifted, because the project load now runs the
 two loader detours on every line (`boot.log`: 65,402 vs 65,410 vectors
-acknowledged over the boot; a stock-vs-stock re-run, `ab/stock2`, is
+acknowledged over the boot; a second stock-vs-stock run is
 byte-identical, so the shift is real, not noise). No screen and no state
 peek differs. The battery never opens the SEQUENCER menu.
 
@@ -886,9 +886,9 @@ The clamp per root (the other position; keys named on the 13-key picture):
 (each range is before the scale snap; "+12 x2" = the clamped keys, all at
 the ceiling)
 
-### Measured (the second pass: the octatrick-tuner BUILD 20 bus = OCTATRK2.9 on ot_emu `--dsp-rt` through the poke panel on 8950, a copy of the OTLIVE card whose four loop files are same-length sines -- `third-0.wav` = 95 whole cycles in its 9,551 frames = 438.645 Hz, the slots' TSMODE 0 / LOOPMODE 1; T1 = FLEX slot 3 = that sine (assigned through the machine window: OTLIVE's T1 is STATIC slot 5, the Amen break; a STATIC slot streaming the 2,679-frame `first-0.wav` came out as a 689 Hz buzz = 44100 / 64, a stuck 64-frame chunk under the port, so FLEX), PLAYBACK PTCH 0 / STRT 0 / LEN max / RATE +63, AMP HOLD INF REL 20; T2 = FM SYNTH slot 5 as before; the ef2944b bus (the first pass, byte-identical to the BUILD 19 bus) on 8951 with the same card as the baseline; pitches = the strongest spectral peak over 0.3-0.8 s of a 0.9 s key hold, in semitones from the sample's own pitch (SCALE OFF, position 0, key 13: 438.7 Hz, named C4 below), every value within 0.5 cent of the semitone; the session's `root29b/m30.py`, shots and `report.txt` / `report_keys.txt` in `root29b/out20/` and `outbase/`, the readouts cropped as `*_ro.png`)
+### Measured (the second pass: the octatrick-tuner BUILD 20 bus = OCTATRK2.9 on ot_emu `--dsp-rt` through the poke panel on 8950, a copy of the OTLIVE card whose four loop files are same-length sines -- `third-0.wav` = 95 whole cycles in its 9,551 frames = 438.645 Hz, the slots' TSMODE 0 / LOOPMODE 1; T1 = FLEX slot 3 = that sine (assigned through the machine window: OTLIVE's T1 is STATIC slot 5, the Amen break; a STATIC slot streaming the 2,679-frame `first-0.wav` came out as a 689 Hz buzz = 44100 / 64, a stuck 64-frame chunk under the port, so FLEX), PLAYBACK PTCH 0 / STRT 0 / LEN max / RATE +63, AMP HOLD INF REL 20; T2 = FM SYNTH slot 5 as before; the ef2944b bus (the first pass, byte-identical to the BUILD 19 bus) on 8951 with the same card as the baseline; pitches = the strongest spectral peak over 0.3-0.8 s of a 0.9 s key hold, in semitones from the sample's own pitch (SCALE OFF, position 0, key 13: 438.7 Hz, named C4 below), every value within 0.5 cent of the semitone; `m30.py`, its shots and `report.txt` / `report_keys.txt` for this bus and the first-pass bus, the readouts cropped as `*_ro.png`)
 
-- **The stock model** (the disassembly, `root29/stock.dis`): `0x460d16fc`
+- **The stock model** (the disassembly of the stock 1.40C main OS): `0x460d16fc`
   has one writer, `eorl #1` at `0x4004591a`, and reads at `0x40044968`
   (the picture), `0x400449b8` (the number), `0x40044abe` (the marks),
   `0x4004d442`, `0x4004fde4` and `0x40050254` (the index: key + 12 *
@@ -925,13 +925,13 @@ the ceiling)
   585.5 657.2 657.2 737.7 737.7 828.1 877.3 Hz = C4 C4 D4 D4 E4 F4 F4 G4 G4
   A4 A4 B4 C5 (0 .. +12); the numbers `C 0` / `C 1`. The **ef2944b bus** (the first pass) on the same
   card gave the same 29 numbers to 0.1 Hz, and the same five SCALE OFF /
-  ROOT A numbers in each position (`outbase/report_keys.txt`) -- ROOT C
+  ROOT A numbers in each position (the first-pass bus's `report_keys.txt`) -- ROOT C
   and SCALE OFF are unchanged. That bus with **ROOT A / MAJOR** shows what
   the second pass fixes: position 0 the same sixteen numbers as above, but
   position 1 = 737.7 737.7 828.1 x11 Hz -- A4 A4 then **B4 on eleven of the
   thirteen keys** (every key from 3 up clamped at index 24 = C5, not in A
   major, snapped down to B4), its number reading `A 1`
-  (`outbase/a_A_pos1_ro.png`).
+  (`a_A_pos1_ro.png`).
 - **(e) T2 (FM SYNTH), SCALE MINOR / ROOT A, octave 0**: keys 1 3 5 6 8 10
   12 13 = 220.0 247.0 261.6 293.7 329.6 349.2 392.0 440.0 Hz = A3 B3 C4 D4
   E4 F4 G4 A4, the number `A 0` (`e_T2_minor_A_ro.png`) -- as at the first
@@ -962,7 +962,7 @@ the ceiling)
   hits as at the first pass (direct-jump's displaced hook bytes and the
   synth manifest's 16-byte run), nothing new.
 
-### Measured (28 Sep 2026, the octatrick-tuner BUILD 19 bus = OCTATRK2.9 on ot_emu `--dsp-rt` through the poke panel on 8930, a copy of the OTLIVE card, T2 = FM SYNTH slot 5, INDX 0 / FDBK 0, AMP HOLD INF REL 20, VOIC 1 unless said; the 2.8 baseline = the same remix at the `tuning` tree, BUILD 19, on 8931; notes as spectral peaks over 0.3-0.5 s windows named from C4 = 261.6256 Hz; the session's `root29/m29.py`, shots and `report.txt` in `root29/out29/` and `out28/`)
+### Measured (28 Sep 2026, the octatrick-tuner BUILD 19 bus = OCTATRK2.9 on ot_emu `--dsp-rt` through the poke panel on 8930, a copy of the OTLIVE card, T2 = FM SYNTH slot 5, INDX 0 / FDBK 0, AMP HOLD INF REL 20, VOIC 1 unless said; the 2.8 baseline = the same remix at the `tuning` tree, BUILD 19, on 8931; notes as spectral peaks over 0.3-0.5 s windows named from C4 = 261.6256 Hz; `m29.py`, its shots and `report.txt` for the 2.9 bus and the 2.8 baseline)
 
 - **The ROOT row** (`row_root_A.png`, `row_glide.png`): PROJECT > CONTROL >
   SEQUENCER, [DOWN] x4 shows `LFO AUTO CHANGE / SCALE OFF / ROOT C`; the
@@ -979,7 +979,7 @@ the ceiling)
   `06 0c 09` -- preloaded into a fresh `ot_emu` with `OT_SRAM_IN`, no LOAD
   PROJECT posted, `OT_NO_LOAD=1`): headless, the bytes read SCALE 6 / GLIDE
   12 / ROOT 9 at ready and 20 s later, no fault; through the panel, the
-  SEQUENCER window reads `SCALE MINOR / ROOT A` (`outwarm/warm_row_root.png`)
+  SEQUENCER window reads `SCALE MINOR / ROOT A` (`warm_row_root.png`)
   and the unit plays. `--watch-pc` on that warm boot: loader `0x4010fdf0` at
   instruction 4,270,945, depack `0x400e0aca` at 4,505,240, `.data` copy at
   6,526,781, main at 12,342,579, the warm-boot path `0x40025770` at
@@ -994,7 +994,7 @@ the ceiling)
   keyboard reads `A 0` (`kbd_minor_A.png`). **ROOT C** on the same keys:
   130.8 / 146.8 / 155.6 / 174.6 / 196.0 / 207.7 / 233.1 / 261.6 Hz = C3 D3
   D#3 F3 G3 G#3 A#3 C4 (C minor), and the **2.8 baseline bus** (the `tuning`
-  tree at BUILD 19, `out28/`) gave the same eight numbers to 0.1 Hz with
+  tree at BUILD 19) gave the same eight numbers to 0.1 Hz with
   its number reading `0` (`kbd_minor_28.png`; the 2.9 shot at ROOT C,
   `kbd_minor_C.png`, still reads `A 0` -- a stale draw, see (e); the fresh
   draws are `probe_kbd_E_major.png` = `E 0` and `probe_kbd_off_E.png` = `0`).
@@ -1006,7 +1006,7 @@ the ceiling)
   +1 -> 75 (B), -2 -> 71 (G), +1 -> 73 (A), the Part byte untouched at 73;
   the pattern played step 10 at 439.9 Hz. **ROOT C**: 66 67 69 71 72 74 76
   up and 74 72 71 69 67 66 64 down -- the 2.8 baseline's numbers exactly
-  (`out28/report.txt`: 66 67 69 71 72 74 76 / 74 72 71 69 67 66 64).
+  (the baseline's `report.txt`: 66 67 69 71 72 74 76 / 74 72 71 69 67 66 64).
 - **(d) A CHRD chord, SCALE MAJOR / ROOT E, VOIC 3, CHRD MAJ (byte 8)**:
   key 13 (E4 with ROOT E) sounded **329.6 / 415.3 / 493.9 Hz = E4 G#4 B4**
   (twice); key 16 (G4 chromatic, snapped to F#4, in E major) sounded 370.0

@@ -212,6 +212,13 @@ KEYS_AT = 0x400d2cb0
 # does the DRAM unit quantizer.s for every snap (one ROOT-rotated mask).
 SCALE_AT = 0x400d2ca8
 
+def _qz_include(modules):
+    """quantizer.s's remix.inc (2.11): HAVE_SYDRUM, 1 when SY DRUM is in the remix -- its
+    signature "SY", 1 counts as a synth track (semitone PTCH, the keys, MIDI), mono (VOIC is
+    FM's), and its legato keys reach the engine. 0 assembles the unit as 2.10's."""
+    return f".set HAVE_SYDRUM, {int('SY DRUM' in modules)}\n"
+
+
 MODULE = Module(
     name="quantizer",
     key="SCALE QUANTIZER",
@@ -227,7 +234,7 @@ MODULE = Module(
         Linked("qzc", os.path.join(_HERE, "core.s"), cpu="5475"),
         Linked("qzs", os.path.join(_HERE, "scale.s"), cpu="5475", cave_addr=SCALE_AT),
         # the DRAM unit: the platform runtime (KEYS_AT / SCALE_AT reached as fixed addresses)
-        Linked("qz", os.path.join(_HERE, "quantizer.s"), cpu="5475", dram=True),
+        Linked("qz", os.path.join(_HERE, "quantizer.s"), cpu="5475", dram=True, include=_qz_include),
     ),
     detours=(
         Detour(0x40055170, stock_guard(0x40055170, 6, "dc6543d672cdf223fc2ec7cc3c04b8a584dbd6e7bb1e3590b91cd3e469e0b324"), "qz", "qz_knob",

@@ -1,7 +1,9 @@
 # FM Synth media declaration
 
-The seven `ot-*.png` files are original headless-emulator LCD exports made for
-Modwerk at the owner's request on 6 October 2026. Credit: Modwerk contributors.
+The eight `ot-*.png` files are original headless-emulator LCD exports of the
+FM Synth 0.1.3 native image, made on 8 October 2026 with Modwerk's capture
+tool and capture plan (six are byte-identical to the 0.1.2 captures of 6-8
+October, made for Modwerk at the owner's request). Credit: Modwerk contributors.
 Their provenance, capture plan and hashes are in [capture.json](capture.json).
 Only the rendered LCD images and sanitized metadata are submitted; firmware,
 stock-containing runtime binaries, raw LCD/RAM dumps, cards, source project

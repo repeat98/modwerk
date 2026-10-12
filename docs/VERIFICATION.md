@@ -1170,7 +1170,6 @@ Waives fresh physical reboot, Part/project restore after unsaved edits,
 distinct-track isolation and stock/flood performance tests. Retain the
 author's MKII functional report; missing checks stay unverified.
 
-
 ## Air Chorus 0.1.0 — 9 October 2026
 
 Chris Johnson’s MIT-licensed Airwindows Chorus is ported from pinned published
@@ -1388,3 +1387,60 @@ E-Verb is in none of them.
 
 No hardware result exists for 0.1.1; the owner's MKII report covers 0.1.0.
 Publication needs the owner's approval of this exact source.
+
+## FM Synth 0.1.4 (octatrick 2.12) — 11 October 2026
+
+Local draft by the module author's port; not published, no owner approval.
+FM Synth moves to the author's octatrick 2.12 line
+(`timhastie/octatrick-modules` `ca13ed8`, tag `v2.12`). The engine, page,
+the author's FM SYNTH chooser (`machine.s`, adapted from Modwerk's 0.1.1
+chooser, same Part signature) and its machine-list table are vendored byte
+for byte. Modwerk's `machine.s` / `registration.s` and their hooks are
+dropped; the bundled quantizer keeps 0.1.2's drawer fix. The six chooser
+row-count pokes of the 2.10 line are detours reading the table, five more
+widen the machine window's row clamp, and SELECT MACHINE TYPE can scroll.
+2.12 removes the engine's hook on the metronome's click word (with CLICK ON
+it released held notes at every beat) and adds a machine-change init: a
+change to or from FM SYNTH resets the track's PLAYBACK, PLAYBACK SETUP, AMP,
+AMP SETUP, LFO and LFO SETUP to init, keeping step and scene locks and FX1 /
+FX2 as a stock machine change does (one new detour, `po_unload` at
+`0x40022732`). The engine carries the author's 6 dB of headroom in place of
+0.1.2's 18.06 dB `OUTPUT_SHIFT`: 0.1.4 plays about 12 dB louder than 0.1.2.
+Inventory: `sdk/imports/synth-ca13ed8.json`; native source SHA-256 `4fc06072…`.
+
+The native exporter built the standalone image, MAIN OS `00fa6caa…`
+(update file 462,396 B, `2267af13…`; Modwerk's TS packer decodes it to that
+MAIN OS and re-encodes the same bytes). The author's page linked to his
+ratified bytes, and the author's `tools/align_check.py` (v2.12) found every
+instruction and every detour target at an even address. The module's own
+`verify.py` Part smoke passed on that image. Seven of the eight LCD captures
+are byte-identical to the 2.11 build's; the LFO page's VOIC dial now shows
+the init byte. In the emulator on the same image, a held key is
+sample-identical with the metronome on and off and a held VOIC 4 chord's
+voices are never released (the 2.11 build `248d987e…` cut both), and
+FLEX → FM SYNTH → FLEX → FM SYNTH gives FM SYNTH's init both times with FX1
+kept. Emulator qualification: one VOIC 4 track at 81,422 of 95,779
+cycles/block (the largest of five runs, + the wrapper allowance), exact
+memory of 10,505,016 bytes, of which 43,812 are module-owned, and a 352-byte
+stack bound from the assembled runtime. Two FM tracks with distinct
+settings pass Part save/reload, project save/reload and a fresh project
+load in the emulator; the battery-RAM-only restart needs the unit.
+The hardware fields are `TIM:` placeholders pending the author's MKI report of
+this exact image, so the publication gate fails there.
+
+POLY8 0.2.6's shared-chooser bridge is bound to 0.1.2's chooser claims, which
+this update replaces: a selection with POLY8 and FM Synth stops at the
+bridge's seam check on both sides. `module:verify -- synth` therefore stops at
+the first such selection, and two POLY8 composition tests fail; the
+`sdk/native-comparisons/synth.json` record is not refreshed. Without POLY8 in
+the pool (a local run on main `3151975`, not committed) the comparison gave
+122 selections: 35 builds match outside the platform writes, 87 refusals
+match, 0 mismatches, the native side on the host toolchain instead of Docker.
+
+Packages were rebuilt from source with `--include-requested` and imported
+with `--development` on main `3151975`; only the Synth objects change. The
+DSP assembler was Modwerk's pinned dsp56300 with the current patch. The
+retained Analog BD record was re-verified against the new packages (162
+native OS and GNU bootloader comparisons, 50 matching refusals, 6 firmware
+round trips) before its source-inventory binding was updated. No firmware is
+committed.
