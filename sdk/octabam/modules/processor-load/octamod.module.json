@@ -7,14 +7,14 @@
   "category": "system",
   "source": {
     "repository": "https://github.com/timhastie/octatrick-modules",
-    "revision": "5f3d7456a885d37c933b2f47fce2bed29176f3e6",
+    "revision": "ca13ed85547790f788ceaaada5df3cdd31508441",
     "path": "processor-load"
   },
   "author": {
     "github": "timhastie",
     "name": "Tim Hastie",
     "credits": [
-      "Tim Hastie (@timhastie): PROCESSOR LOAD (octatrick-modules v2.11, loadmeter.s, manifest, README) and the Modwerk package, MIT.",
+      "Tim Hastie (@timhastie): PROCESSOR LOAD (octatrick-modules v2.12, processor-load/ unchanged since v2.11: loadmeter.s, manifest, README) and the Modwerk package, MIT.",
       "Sam Banks (@sambanks): the CF METER probe in octabam (the two frame-interrupt sites and the DTIM3 timing method) and octabam, MIT."
     ]
   },
@@ -23,7 +23,7 @@
     "label": "ColdFire load meter",
     "family": "System readouts",
     "summary": "How busy the ColdFire is making audio, as a percentage in the stock TEMPO popup; FUNC shows the longest block.",
-    "overview": "Processor Load times the ColdFire audio interrupt (every 16-sample block, 362.8 us) from its first instruction to its return with the free-running DMA timer 3, and shows the share of time it takes as a quarter-second mean in the top left corner of the TEMPO popup: 47%, 70%! from 70 up, --% without a fresh reading. Holding FUNC shows the longest single block of the window. It cannot see the two DSPs, the UI, the card or USB, and it measures, it does not predict. Tim Hastie's octatrick-modules v2.11, credited to Sam Banks's CF METER probe for the method.",
+    "overview": "Processor Load times the ColdFire audio interrupt (every 16-sample block, 362.8 us) from its first instruction to its return with the free-running DMA timer 3, and shows the share of time it takes as a quarter-second mean in the top left corner of the TEMPO popup: 47%, 70%! from 70 up, --% without a fresh reading. Holding FUNC shows the longest single block of the window. It cannot see the two DSPs, the UI, the card or USB, and it measures, it does not predict. Tim Hastie's octatrick-modules v2.12 (processor-load/ unchanged since v2.11), credited to Sam Banks's CF METER probe for the method.",
     "highlights": [
       "Mean load of the ColdFire audio interrupt, four readings a second, in the stock TEMPO popup.",
       "FUNC held: the longest single block of the last quarter second (W112 = 112 % of a block).",
@@ -68,11 +68,11 @@
       "The reading assumes DMA timer 3 counts the 132 MHz bus clock (measured on an MKI by the author and on an MKII by Sam Banks); between about 36 and 48 % the stock eDMA chain's delay routine starts to fall inside the timed interrupt and the number climbs faster than the work.",
       "The ! at 70 % is one unit's experience (the author's MKI froze above about 75 % with the diagnostic meter), not a guarantee.",
       "Declared conflicts with octabam's CF METER (cfmeter: the same two interrupt sites) and TEMPO BUS (tempo-bus: it replaces the TEMPO popup); neither is in this catalogue today.",
-      "Emulator-verified on MKII panel emulation; the author's MKI hardware report for this exact image is pending; an MKII has not run this module."
+      "Reported on the author's MKI (2026-10-10) for this exact image; an MKII has not run this module."
     ]
   },
   "resources": {
-    "recorded": "2026-10-09; emulator instruction counts and exact memory, image f3ebd1c5; hardware report pending",
+    "recorded": "2026-10-09; emulator instruction counts and exact memory, image f3ebd1c5; MKI report 2026-10-10",
     "storage": {
       "label": "Meter code, state and image bytes",
       "display": "1,848 bytes plus the shared platform reserve",
@@ -115,17 +115,17 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Emulator qualification of the native Processor Load 0.1.0 image (MAIN OS f3ebd1c5..., the author's v2.11 5f3d745 exported alone with the stock effects): per-block instruction counts on the pinned ColdFire emulator (12 + 17..19 a block, 16 on the arming block), exact memory from the link map and build log, a static stack bound, the readings stopped and playing on an empty project and on the author's project, FUNC, the --% paths, the start-up, the stock TEMPO popup and BPM change beside it, the native smoke (verify.py, 12 checks), six LCD captures, tools/align_check.py of v2.11 on the build. A hardware report for this exact image is pending.",
-    "hardwareStatus": "historical",
-    "evidenceRevision": "bfcfc3b8cf52502e5376eb597176a31defc64d4a",
+    "summary": "Emulator qualification of the native Processor Load 0.1.0 image (MAIN OS f3ebd1c5..., the author's processor-load/ of v2.12 ca13ed8, unchanged since v2.11 5f3d745, exported alone with the stock effects): per-block instruction counts on the pinned ColdFire emulator (12 + 17..19 a block, 16 on the arming block), exact memory from the link map and build log, a static stack bound, the readings stopped and playing on an empty project and on the author's project, FUNC, the --% paths, the start-up, the stock TEMPO popup and BPM change beside it, the native smoke (verify.py, 12 checks), six LCD captures, tools/align_check.py of octatrick-modules (unchanged between v2.11 and v2.12) on the build. timhastie's MKI report for this exact image is in TESTING.md.",
+    "hardwareStatus": "reported",
+    "evidenceRevision": "e77aa81854797fd80d8169fea30a2e6827c1a239",
     "gates": [
       "verify.py: native smoke on image f3ebd1c5 (arming, block count, header poke, popup, mean stopped and playing, FUNC, --% by fault injection and recovery, popup closed): 12/12 passed (evidence/native-smoke.json)",
       "Emulator per-block instruction counts, entry and exit, on an empty project and the author's project, stopped and playing; the same sessions on the stock image",
       "Exact memory inventory reconciled with the native link map and build log; static stack bound",
-      "align_check (octatrick-modules v2.11 tools/align_check.py) on the kept native build: 233 instruction rows, 4 transfer targets, all even",
+      "align_check (octatrick-modules v2.12 tools/align_check.py, unchanged since v2.11) on the kept native build: 233 instruction rows, 4 transfer targets, all even",
       "Stock flows with and without the module on the emulator: the screens outside the popup pixel-identical, the popup identical outside the meter band and the header, the BPM encoder works",
       "Native/browser composition (npm run module:verify, host toolchain): 126 selections, 51 built images match outside the platform writes, 73 refusals match, 2 mismatches that are not this module: the same selection without processor-load (Air Chorus, CC Map, MiniVerb, POLY8, Recorder Loop Fix, Sidechain Compressor, Tape Echo, Tapehead) is refused natively and built by the browser, so no record was written; declaration checks: 286,208 selections clean",
-      "Hardware report for this source and image: pending (TIM placeholders)"
+      "Hardware report for this source and image: timhastie, MKI, 2026-10-10 (reported; TESTING.md)"
     ],
     "qualification": {
       "moduleVersion": "0.1.0-experimental",
@@ -220,13 +220,14 @@
         "kind": "functional",
         "status": "reported",
         "model": "MKI",
-        "testedOn": "TIM: YYYY-MM-DD",
-        "tester": "TIM: credited handle",
-        "sourceRevision": "bfcfc3b8cf52502e5376eb597176a31defc64d4a",
+        "testedOn": "2026-10-10",
+        "tester": "timhastie",
+        "sourceRevision": "e77aa81854797fd80d8169fea30a2e6827c1a239",
         "imageSha256": "f3ebd1c55f0c2ca9aeec1a9a934ecbd253ad6564784e860cbb2303435662a2b1",
-        "summary": "TIM: what was played on the unit with OCTATRACK_MODWERK_PROCLOAD_TEST1.bin (MAIN OS f3ebd1c5...) and the readings seen (stopped / playing / with effects, FUNC held, the !)",
+        "summary": "Functional check: the author ran this exact image on his MKI and saw no issue with the meter; it worked as described.",
         "limitations": [
-          "TIM: how long it ran, the project, what was not tried (MKII, a reading at 70 or more, ...)"
+          "A functional check only: no readings, project, run length or power-cycle were recorded with the report.",
+          "Not run on an MKII; a reading of 70 % or more (the !) was not reported."
         ],
         "report": "TESTING.md"
       },
@@ -255,7 +256,7 @@
   "license": {
     "spdx": "MIT",
     "file": "LICENSE",
-    "declaration": "Tim Hastie's MIT source (octatrick-modules v2.11, upstream/LICENSE unchanged) and the Modwerk packaging by the same author under MIT; octabam's MIT notice for the build system and CF METER's method. Stock spans are address/length/SHA-256 guards resolved from the user's own OS; no firmware, extracted routine or table, image, card or RAM/LCD dump is included. LCD captures retain the underlying Elektron rights as declared in media/LICENSE.md."
+    "declaration": "Tim Hastie's MIT source (octatrick-modules v2.12, processor-load/ and upstream/LICENSE unchanged since v2.11) and the Modwerk packaging by the same author under MIT; octabam's MIT notice for the build system and CF METER's method. Stock spans are address/length/SHA-256 guards resolved from the user's own OS; no firmware, extracted routine or table, image, card or RAM/LCD dump is included. LCD captures retain the underlying Elektron rights as declared in media/LICENSE.md."
   },
   "media": [
     {

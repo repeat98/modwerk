@@ -1,6 +1,6 @@
 # Processor Load
 
-Version `0.1.0-experimental` · author [@timhastie](https://github.com/timhastie) · source [timhastie/octatrick-modules](https://github.com/timhastie/octatrick-modules/tree/v2.11/processor-load), tag `v2.11` (`5f3d7456a885d37c933b2f47fce2bed29176f3e6`)
+Version `0.1.0-experimental` · author [@timhastie](https://github.com/timhastie) · source [timhastie/octatrick-modules](https://github.com/timhastie/octatrick-modules/tree/v2.12/processor-load), tag `v2.12` (`ca13ed85547790f788ceaaada5df3cdd31508441`); `processor-load/` is unchanged since `v2.11` (`5f3d745`)
 
 ## Overview
 
@@ -57,7 +57,7 @@ Open the TEMPO popup while you build up a project and watch the reading: it show
 
 ## Compatibility and limitations
 
-OS 1.40C only. MKI and MKII share the hook sites; the module has run on the emulator with the MKII panel, the author's MKI report for this exact image is pending, and no MKII has run it.
+OS 1.40C only. MKI and MKII share the hook sites; the author's MKI report for this exact image is in TESTING.md (2026-10-10), and no MKII has run it.
 
 - **Always on.** The meter is chosen when the firmware is built; there is no OFF setting on the unit, because there is nothing to turn off but the number in one popup. A firmware without Processor Load is exactly stock. If the owner prefers an OFF switch, it would be a PERSONALIZE row; it is not in this version.
 - **One change to a stock flow (minor).** In the TEMPO popup the TEMPO / EXT SYNC / PICKUP SYNC header draws two pixels lower than stock, to leave the reading its 18 x 6 pixel band above it. *Who:* everyone who opens the TEMPO popup on a firmware with this module. *Why:* the popup has no free space for the number; an own page or a new gesture was considered and rejected because the TEMPO popup is where tempo and timing are already looked at and it needs no new key. *What a musician sees:* the number, and the header two pixels lower; the BPM, tap tempo, sync settings and keys behave as stock. *Off:* build without the module. *Checked:* the popup and the BPM encoder, the screen after closing it, PLAY / STOP, a project load (TESTING.md, Stock flows).
@@ -80,11 +80,11 @@ All on the pinned ColdFire emulator with the image Modwerk's exporter builds fro
 - **Smoke.** `verify.py` (12 checks: arming, block count, the header poke, the popup, the mean stopped and playing, FUNC, `--%` and recovery, closing) passes on this image ([evidence/native-smoke.json](evidence/native-smoke.json)).
 - **Stock flows.** On the empty project the screens outside the popup are pixel-identical to the stock image's and the popup differs only in the meter's band and the header's two pixels; the BPM encoder changes the tempo as on stock.
 - **Builds beside the others.** Native octabam and Modwerk's browser builder agree on 124 of 126 selections in the coverage set; the two that differ differ the same way without Processor Load (TESTING.md). All 286,208 allowed selections with it pass the native declaration checks.
-- **Hardware.** Pending: the author's MKI report of this exact image.
+- **Hardware.** The author's MKI report of this exact image (2026-10-10): see TESTING.md.
 
 ## Authorship and licences
 
-Tim Hastie: Processor Load (loadmeter.s, its manifest and README in [`upstream/processor-load/`](upstream/processor-load/), byte-identical to octatrick-modules v2.11 except the manifest's stock spans, written as `stock_guard` fingerprints) and this Modwerk package, MIT ([LICENSE](LICENSE); [upstream/LICENSE](upstream/LICENSE) unchanged). Sam Banks: octabam's CF METER probe, which found the two interrupt sites (the vector install and the universal epilogue) and the method of timing the frame interrupt on DTIM3, and octabam itself, MIT. The meter is the TEMPO meter of the Octatrick diagnostic build, stripped of everything USB and diagnostic and made standalone. Exact pins and per-file hashes: `sdk/imports/processor-load-5f3d745.json`. No Elektron firmware, extracted routine or table is included; the five stock spans the module touches are address / length / SHA-256 guards read from your own OS file when you build.
+Tim Hastie: Processor Load (loadmeter.s, its manifest and README in [`upstream/processor-load/`](upstream/processor-load/), byte-identical to octatrick-modules v2.12 (and v2.11: the folder did not change between them) except the manifest's stock spans, written as `stock_guard` fingerprints) and this Modwerk package, MIT ([LICENSE](LICENSE); [upstream/LICENSE](upstream/LICENSE) unchanged). Sam Banks: octabam's CF METER probe, which found the two interrupt sites (the vector install and the universal epilogue) and the method of timing the frame interrupt on DTIM3, and octabam itself, MIT. The meter is the TEMPO meter of the Octatrick diagnostic build, stripped of everything USB and diagnostic and made standalone. Exact pins and per-file hashes: `sdk/imports/processor-load-ca13ed8.json`. No Elektron firmware, extracted routine or table is included; the five stock spans the module touches are address / length / SHA-256 guards read from your own OS file when you build.
 
 ## Screens and audio
 

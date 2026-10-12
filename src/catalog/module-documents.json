@@ -6802,6 +6802,371 @@
           }
         }
       ]
+    },
+    {
+      "schemaVersion": 2,
+      "id": "processor-load",
+      "key": "PROCESSOR LOAD",
+      "name": "Processor Load",
+      "version": "0.1.0-experimental",
+      "category": "system",
+      "source": {
+        "repository": "https://github.com/timhastie/octatrick-modules",
+        "revision": "ca13ed85547790f788ceaaada5df3cdd31508441",
+        "path": "processor-load"
+      },
+      "access": {
+        "location": "The stock TEMPO popup (the TEMPO key), top left corner; there is nothing to select or enable on the unit.",
+        "steps": [
+          "Install a firmware built with Processor Load.",
+          "Press TEMPO: the load shows in the popup's top left corner.",
+          "Hold FUNC for the longest block of the last quarter second; release it for the mean.",
+          "Press TEMPO again to close the popup."
+        ],
+        "screenshots": [
+          "media/ot-tempo-stopped.png",
+          "media/ot-tempo-start.png",
+          "media/ot-tempo-func.png",
+          "media/ot-tempo-playing.png",
+          "media/ot-tempo-bpm.png",
+          "media/ot-tempo-closed.png"
+        ]
+      },
+      "author": {
+        "github": "timhastie",
+        "name": "Tim Hastie",
+        "credits": [
+          "Tim Hastie (@timhastie): PROCESSOR LOAD (octatrick-modules v2.12, processor-load/ unchanged since v2.11: loadmeter.s, manifest, README) and the Modwerk package, MIT.",
+          "Sam Banks (@sambanks): the CF METER probe in octabam (the two frame-interrupt sites and the DTIM3 timing method) and octabam, MIT."
+        ]
+      },
+      "nativeManifest": "manifest.py",
+      "presentation": {
+        "label": "ColdFire load meter",
+        "family": "System readouts",
+        "summary": "How busy the ColdFire is making audio, as a percentage in the stock TEMPO popup; FUNC shows the longest block.",
+        "overview": "Processor Load times the ColdFire audio interrupt (every 16-sample block, 362.8 us) from its first instruction to its return with the free-running DMA timer 3, and shows the share of time it takes as a quarter-second mean in the top left corner of the TEMPO popup: 47%, 70%! from 70 up, --% without a fresh reading. Holding FUNC shows the longest single block of the window. It cannot see the two DSPs, the UI, the card or USB, and it measures, it does not predict. Tim Hastie's octatrick-modules v2.12 (processor-load/ unchanged since v2.11), credited to Sam Banks's CF METER probe for the method.",
+        "highlights": [
+          "Mean load of the ColdFire audio interrupt, four readings a second, in the stock TEMPO popup.",
+          "FUNC held: the longest single block of the last quarter second (W112 = 112 % of a block).",
+          "A ! from 70 % and --% when there is no fresh reading.",
+          "No setting, no key hooked, nothing saved; 12 + 17 to 19 ColdFire instructions a block (emulator count)."
+        ],
+        "usage": [
+          "Press TEMPO and read the top left corner; hold FUNC for the longest block; press TEMPO to close."
+        ]
+      },
+      "controls": [],
+      "compatibility": {
+        "firmware": "1.40C",
+        "effectId": null,
+        "location": "Project sequencer",
+        "conflicts": [
+          "cfmeter",
+          "tempo-bus"
+        ],
+        "limitations": [
+          "Always on: the meter is chosen when the firmware is built; there is no OFF setting on the unit. Without the module the TEMPO popup is stock.",
+          "Stock-flow change: the TEMPO / EXT SYNC / PICKUP SYNC header in the TEMPO popup draws two pixels lower than stock, to leave the reading its band. Nothing else in the popup or anywhere else changes; no key is hooked.",
+          "Like every DRAM module it gives the shared platform reserve about 10 MB of Flex sample RAM (sample pages 14,602 -> 12,895); beside other DRAM modules the reserve is shared, not added again.",
+          "ColdFire only: the two DSPs (effects, the DSP side of every voice), the UI task, card and USB work outside the interrupt are not in the number.",
+          "The reading assumes DMA timer 3 counts the 132 MHz bus clock (measured on an MKI by the author and on an MKII by Sam Banks); between about 36 and 48 % the stock eDMA chain's delay routine starts to fall inside the timed interrupt and the number climbs faster than the work.",
+          "The ! at 70 % is one unit's experience (the author's MKI froze above about 75 % with the diagnostic meter), not a guarantee.",
+          "Declared conflicts with octabam's CF METER (cfmeter: the same two interrupt sites) and TEMPO BUS (tempo-bus: it replaces the TEMPO popup); neither is in this catalogue today.",
+          "Reported on the author's MKI (2026-10-10) for this exact image; an MKII has not run this module."
+        ]
+      },
+      "resources": {
+        "recorded": "2026-10-09; emulator instruction counts and exact memory, image f3ebd1c5; MKI report 2026-10-10",
+        "storage": {
+          "label": "Meter code, state and image bytes",
+          "display": "1,848 bytes plus the shared platform reserve",
+          "value": 1848,
+          "unit": "bytes",
+          "method": "static",
+          "conditions": "Exact from the native build: the 884-byte DRAM unit (800 B code, 84 B state), 34 B of hook sites rewritten in the OS image and the 930-byte appended platform loader and packed unit. Excludes the shared 10,486,924-byte Flex sample-RAM platform reserve and the 112-byte stack bound. See TESTING.md.",
+          "source": "TESTING.md"
+        },
+        "processing": {
+          "label": "ColdFire processing",
+          "display": "31 instructions/block measured (35 static, emulated)",
+          "value": 88,
+          "unit": "cycles/block",
+          "method": "emulator",
+          "conditions": "Emulated ColdFire instructions per 16-sample frame interrupt on the pinned ot_emu: 12 at the entry (16 on the one arming block) and 17 at the exit (19 when the block is the longest of the window so far), the same on an empty project and on the author's project, stopped and playing. 88 cycles = the static 35 instructions at 2.49216 cycles an instruction (Modwerk's FM Synth convention), not chip wall-clock. In the UI task, outside the interrupt: 23 instructions on each of about 60 ticks a second, 607 (stock drawing included) on the about four a second that take a reading. See TESTING.md.",
+          "source": "TESTING.md"
+        },
+        "impact": {
+          "conditions": "One meter, always on while the firmware carries it; the whole cost is per audio block and per UI tick, independent of the project.",
+          "cpu": {
+            "level": "minimal",
+            "basis": "measured-comparison",
+            "rationale": "31 emulated instructions per block against a stock interrupt of about 22,000 to 33,000 in the same runs (about 0.1 %); the division and drawing run in the UI task about four times a second.",
+            "source": "TESTING.md"
+          },
+          "dsp": {
+            "level": "minimal",
+            "basis": "source-estimate",
+            "rationale": "No DSP code, table or effect slot; the DSPs are untouched.",
+            "source": "TESTING.md"
+          },
+          "memory": {
+            "level": "moderate",
+            "basis": "source-estimate",
+            "rationale": "The module itself is 884 bytes of DRAM, but as the platform's DRAM unit it brings the shared 10 MB sample-RAM reserve with it when no other DRAM module does.",
+            "source": "TESTING.md"
+          }
+        }
+      },
+      "tests": {
+        "report": "TESTING.md",
+        "summary": "Emulator qualification of the native Processor Load 0.1.0 image (MAIN OS f3ebd1c5..., the author's processor-load/ of v2.12 ca13ed8, unchanged since v2.11 5f3d745, exported alone with the stock effects): per-block instruction counts on the pinned ColdFire emulator (12 + 17..19 a block, 16 on the arming block), exact memory from the link map and build log, a static stack bound, the readings stopped and playing on an empty project and on the author's project, FUNC, the --% paths, the start-up, the stock TEMPO popup and BPM change beside it, the native smoke (verify.py, 12 checks), six LCD captures, tools/align_check.py of octatrick-modules (unchanged between v2.11 and v2.12) on the build. timhastie's MKI report for this exact image is in TESTING.md.",
+        "hardwareStatus": "reported",
+        "evidenceRevision": "e77aa81854797fd80d8169fea30a2e6827c1a239",
+        "gates": [
+          "verify.py: native smoke on image f3ebd1c5 (arming, block count, header poke, popup, mean stopped and playing, FUNC, --% by fault injection and recovery, popup closed): 12/12 passed (evidence/native-smoke.json)",
+          "Emulator per-block instruction counts, entry and exit, on an empty project and the author's project, stopped and playing; the same sessions on the stock image",
+          "Exact memory inventory reconciled with the native link map and build log; static stack bound",
+          "align_check (octatrick-modules v2.12 tools/align_check.py, unchanged since v2.11) on the kept native build: 233 instruction rows, 4 transfer targets, all even",
+          "Stock flows with and without the module on the emulator: the screens outside the popup pixel-identical, the popup identical outside the meter band and the header, the BPM encoder works",
+          "Native/browser composition (npm run module:verify, host toolchain): 126 selections, 51 built images match outside the platform writes, 73 refusals match, 2 mismatches that are not this module: the same selection without processor-load (Air Chorus, CC Map, MiniVerb, POLY8, Recorder Loop Fix, Sidechain Compressor, Tape Echo, Tapehead) is refused natively and built by the browser, so no record was written; declaration checks: 286,208 selections clean",
+          "Hardware report for this source and image: timhastie, MKI, 2026-10-10 (reported; TESTING.md)"
+        ],
+        "qualification": {
+          "documentation": {
+            "tutorial": {
+              "title": "Quick tutorial: read the processor load",
+              "steps": [
+                "Build a firmware with Processor Load in the Modwerk configurator and install it. It has no setting: the meter is part of the firmware you built.",
+                "Press TEMPO. The top left corner of the TEMPO popup shows the ColdFire load, for example 34%: the share of time the processor spends making audio blocks, updated about four times a second. It reads --% for the first moment after start-up.",
+                "Press PLAY and watch the number follow the project; hold FUNC to see W and the longest single block of the last quarter second in percent of one block (over 100: that block ran long). 70% or more shows a !.",
+                "Release FUNC to return to the mean, and press TEMPO again to close the popup. To remove the meter, build and install a firmware without Processor Load."
+              ]
+            },
+            "screenshots": [
+              "media/ot-tempo-stopped.png",
+              "media/ot-tempo-start.png",
+              "media/ot-tempo-func.png",
+              "media/ot-tempo-playing.png",
+              "media/ot-tempo-bpm.png",
+              "media/ot-tempo-closed.png"
+            ],
+            "screenshotStyle": "black-and-white"
+          },
+          "moduleVersion": "0.1.0-experimental",
+          "sourceSha256": "9a119f5d4889d5751fc598b0db4a5037d17cd8a16c7bab8bf35d46e12fce3b15",
+          "imageSha256": "f3ebd1c55f0c2ca9aeec1a9a934ecbd253ad6564784e860cbb2303435662a2b1",
+          "cycles": [
+            {
+              "processor": "coldfire",
+              "worstCase": 88,
+              "maxConfiguration": 83099,
+              "maxInstances": 1,
+              "budget": 95779,
+              "unit": "cycles/block",
+              "method": "emulator",
+              "conditions": {
+                "parameterExtremes": "The module has no parameter. Its branches were all driven: not yet armed (the first blocks after start-up), the arming block (pl_isr 16 instructions), every later block (12), the exit with and without a new longest block (19 / 17 instructions including the epilogue jmp), the UI tick that only checks the clock (23) and the one that takes a reading and redraws (607, the stock BOX and TEXT calls included), FUNC held and released, the `--%` paths (the first window, a window with no completed block forced by setting the tail's timer-reset limit to 0 in emulator RAM, then restored). Counted instruction by instruction on the pinned ot_emu (watched PCs, 400 ms windows of about 1,100 blocks).",
+                "parameterModulation": "Not applicable: PROCESSOR LOAD reads no parameter, lock, LFO, scene or MIDI CC; its interrupt path is the same 12 + 17..19 instructions whatever the stock code does in the block. The stock modulation load it measures was present in the measured project (the author's project with sample tracks, locks and LFOs, playing): the module's own counts were identical there and on an empty project.",
+                "modeSwitching": "Transport STOP / PLAY, the TEMPO popup opened and closed, FUNC held and released, the BPM changed in the popup: none changes the interrupt path (12 + 17..19). The one-off arming block (+4) and the first window's `--%` are the only start-up costs; a project load runs with the meter armed (measured: reading from the first moment the panel answered).",
+                "maxLoad": "One instance by construction (one meter). The heaviest block measured on this image: the author's project playing, 32,576 instructions for the whole interrupt including the meter; the same project on the stock image peaked at 33,309. maxConfiguration = that stock peak plus the meter's static worst (35 instructions) = 33,344 instructions, converted at 2.49216 cycles an instruction (Modwerk's FM Synth convention: 9.44 ns at 264 MHz, the hardware CF METER calibration), against the 16-sample block. No USB, MIDI or other module was in the image; other modules add their own work to the block the meter times, not to the meter.",
+                "inputConditions": "No audio input. The cost does not depend on the signal; it depends only on whether the block is the longest of the window so far (+2). A timer value that would make a body longer than 127 ms is discarded by the same compare."
+              },
+              "report": "TESTING.md"
+            }
+          ],
+          "memory": {
+            "regions": [
+              {
+                "name": "Meter state: interrupt counters (pl_stats, 32 B) and UI state with its texts (pl_state, 52 B)",
+                "space": "sdram",
+                "words": 84,
+                "wordBits": 8,
+                "bytes": 84,
+                "scope": "instance"
+              },
+              {
+                "name": "PROCESSOR LOAD DRAM unit code (pl_isr, pl_tail, pl_ui, pl_tick, pl_format, pl_overlay)",
+                "space": "sdram",
+                "words": 800,
+                "wordBits": 8,
+                "bytes": 800,
+                "scope": "shared"
+              },
+              {
+                "name": "Hook sites rewritten in place: four detours (30 B) and the TEMPO header poke (4 B)",
+                "space": "cpu-flash",
+                "words": 34,
+                "wordBits": 8,
+                "bytes": 34,
+                "scope": "shared"
+              },
+              {
+                "name": "Platform loader and the packed DRAM unit appended to the image",
+                "space": "cpu-flash",
+                "words": 930,
+                "wordBits": 8,
+                "bytes": 930,
+                "scope": "shared"
+              },
+              {
+                "name": "Platform reserve: Flex sample RAM given to the DRAM platform (1,707 pages), less the unit",
+                "space": "sdram",
+                "words": 10486924,
+                "wordBits": 8,
+                "bytes": 10486924,
+                "scope": "shared"
+              },
+              {
+                "name": "Frame-interrupt stack increment (pl_isr saves D0/A0 before the stock handler)",
+                "space": "sdram",
+                "words": 8,
+                "wordBits": 8,
+                "bytes": 8,
+                "scope": "shared"
+              },
+              {
+                "name": "UI-task stack increment bound (pl_ui, pl_tick and pl_overlay saves, BOX/TEXT arguments, returns)",
+                "space": "sdram",
+                "words": 104,
+                "wordBits": 8,
+                "bytes": 104,
+                "scope": "shared"
+              }
+            ],
+            "perInstanceBytes": 84,
+            "sharedBytes": 10488800,
+            "maxInstances": 1,
+            "totalBytes": 10488884,
+            "conditions": "Exact from the native build of this image (runtime.elf: one DRAM unit, .text 884 B at 0x40a955e0 = 800 B code + 84 B state; the build log: four detours, one poke, append 930 B at 0x4010fdf0, the platform takes 1,707 pages, 0x40a955e0..0x41495de0, 10,487,808 B, sample pages 14,602 -> 12,895). The platform reserve is the Flex sample RAM every DRAM module shares; with PROCESSOR LOAD alone it exists because of this module. No heap, no dynamic allocation, no battery RAM, no card file, no DSP memory. Stack: static upper bound from loadmeter.s; the stock BOX and TEXT routines' own frames are not counted (the stock TEMPO draw calls them the same way). Hardware canaries not measured.",
+            "report": "TESTING.md"
+          },
+          "hardware": {
+            "kind": "functional",
+            "status": "reported",
+            "model": "MKI",
+            "testedOn": "2026-10-10",
+            "tester": "timhastie",
+            "sourceRevision": "e77aa81854797fd80d8169fea30a2e6827c1a239",
+            "imageSha256": "f3ebd1c55f0c2ca9aeec1a9a934ecbd253ad6564784e860cbb2303435662a2b1",
+            "summary": "Functional check: the author ran this exact image on his MKI and saw no issue with the meter; it worked as described.",
+            "limitations": [
+              "A functional check only: no readings, project, run length or power-cycle were recorded with the report.",
+              "Not run on an MKII; a reading of 70 % or more (the !) was not reported."
+            ],
+            "report": "TESTING.md"
+          }
+        }
+      },
+      "license": {
+        "spdx": "MIT",
+        "file": "LICENSE",
+        "declaration": "Tim Hastie's MIT source (octatrick-modules v2.12, processor-load/ and upstream/LICENSE unchanged since v2.11) and the Modwerk packaging by the same author under MIT; octabam's MIT notice for the build system and CF METER's method. Stock spans are address/length/SHA-256 guards resolved from the user's own OS; no firmware, extracted routine or table, image, card or RAM/LCD dump is included. LCD captures retain the underlying Elektron rights as declared in media/LICENSE.md."
+      },
+      "media": [
+        {
+          "path": "media/ot-tempo-stopped.png",
+          "captureType": "emulator",
+          "caption": "Press TEMPO: the top left corner shows the ColdFire load, here 34% with the transport stopped. The header (TEMPO) sits two pixels lower than stock to leave the number its band; the rest of the popup is the stock one.",
+          "alt": "The TEMPO popup at 120.0 BPM with 34% in its top left corner.",
+          "credit": "Tim Hastie; Elektron Octatrack UI",
+          "license": "LicenseRef-OT-UI-Documentation",
+          "source": "original",
+          "otUi": {
+            "page": "TEMPO popup",
+            "shows": "location-and-controls",
+            "firmware": "1.40C",
+            "moduleVersion": "0.1.0-experimental",
+            "imageSha256": "f3ebd1c55f0c2ca9aeec1a9a934ecbd253ad6564784e860cbb2303435662a2b1",
+            "setup": "Headless pinned ot_emu (9dc31d12...); MKII panel; empty scratch card, the project the OS creates, no samples; 128x64 LCD at integer scale 6; captured with scripts/capture-module-ui.py --key-ms 20. Emulator readings, not hardware ones."
+          }
+        },
+        {
+          "path": "media/ot-tempo-start.png",
+          "captureType": "emulator",
+          "caption": "Right after start-up the popup reads --% for a moment: the meter needs one quarter-second window before its first reading. It also reads --% whenever a window gives no valid reading.",
+          "alt": "The TEMPO popup with --% in its top left corner.",
+          "credit": "Tim Hastie; Elektron Octatrack UI",
+          "license": "LicenseRef-OT-UI-Documentation",
+          "source": "original",
+          "otUi": {
+            "page": "TEMPO popup",
+            "shows": "controls",
+            "firmware": "1.40C",
+            "moduleVersion": "0.1.0-experimental",
+            "imageSha256": "f3ebd1c55f0c2ca9aeec1a9a934ecbd253ad6564784e860cbb2303435662a2b1",
+            "setup": "Headless pinned ot_emu (9dc31d12...); MKII panel; empty scratch card, the project the OS creates, no samples; 128x64 LCD at integer scale 6; captured with scripts/capture-module-ui.py --key-ms 20. Emulator readings, not hardware ones."
+          }
+        },
+        {
+          "path": "media/ot-tempo-func.png",
+          "captureType": "emulator",
+          "caption": "Hold FUNC with the popup open: W35 is the longest single audio block of the last quarter second, in percent of one block (362.8 us). Over 100 means that block ran long. Release FUNC to return to the mean.",
+          "alt": "The TEMPO popup with W35 in its top left corner.",
+          "credit": "Tim Hastie; Elektron Octatrack UI",
+          "license": "LicenseRef-OT-UI-Documentation",
+          "source": "original",
+          "otUi": {
+            "page": "TEMPO popup, FUNC held",
+            "shows": "controls",
+            "firmware": "1.40C",
+            "moduleVersion": "0.1.0-experimental",
+            "imageSha256": "f3ebd1c55f0c2ca9aeec1a9a934ecbd253ad6564784e860cbb2303435662a2b1",
+            "setup": "Headless pinned ot_emu (9dc31d12...); MKII panel; empty scratch card, the project the OS creates, no samples; 128x64 LCD at integer scale 6; captured with scripts/capture-module-ui.py --key-ms 20. Emulator readings, not hardware ones."
+          }
+        },
+        {
+          "path": "media/ot-tempo-playing.png",
+          "captureType": "emulator",
+          "caption": "Press PLAY: the number follows the work the project makes, updated about four times a second. This empty project adds almost nothing (35%); a project with sample tracks reads higher, and 70% or more shows a !.",
+          "alt": "The TEMPO popup with 35% while the transport plays.",
+          "credit": "Tim Hastie; Elektron Octatrack UI",
+          "license": "LicenseRef-OT-UI-Documentation",
+          "source": "original",
+          "otUi": {
+            "page": "TEMPO popup, playing",
+            "shows": "controls",
+            "firmware": "1.40C",
+            "moduleVersion": "0.1.0-experimental",
+            "imageSha256": "f3ebd1c55f0c2ca9aeec1a9a934ecbd253ad6564784e860cbb2303435662a2b1",
+            "setup": "Headless pinned ot_emu (9dc31d12...); MKII panel; empty scratch card, the project the OS creates, no samples; 128x64 LCD at integer scale 6; captured with scripts/capture-module-ui.py --key-ms 20. Emulator readings, not hardware ones."
+          }
+        },
+        {
+          "path": "media/ot-tempo-bpm.png",
+          "captureType": "emulator",
+          "caption": "The popup still works as stock: turning the encoder changes the tempo (here to 125.0) while the meter keeps reading. The module hooks no key.",
+          "alt": "The TEMPO popup at 125.0 BPM with 35% in its top left corner.",
+          "credit": "Tim Hastie; Elektron Octatrack UI",
+          "license": "LicenseRef-OT-UI-Documentation",
+          "source": "original",
+          "otUi": {
+            "page": "TEMPO popup, BPM changed",
+            "shows": "controls",
+            "firmware": "1.40C",
+            "moduleVersion": "0.1.0-experimental",
+            "imageSha256": "f3ebd1c55f0c2ca9aeec1a9a934ecbd253ad6564784e860cbb2303435662a2b1",
+            "setup": "Headless pinned ot_emu (9dc31d12...); MKII panel; empty scratch card, the project the OS creates, no samples; 128x64 LCD at integer scale 6; captured with scripts/capture-module-ui.py --key-ms 20. Emulator readings, not hardware ones."
+          }
+        },
+        {
+          "path": "media/ot-tempo-closed.png",
+          "captureType": "emulator",
+          "caption": "Press TEMPO again to close the popup: the page behind it is untouched. The meter keeps timing in the background and shows only inside the TEMPO popup.",
+          "alt": "The PLAYBACK page of a STATIC track at 125.0 BPM, no popup.",
+          "credit": "Tim Hastie; Elektron Octatrack UI",
+          "license": "LicenseRef-OT-UI-Documentation",
+          "source": "original",
+          "otUi": {
+            "page": "PLAYBACK page",
+            "shows": "location",
+            "firmware": "1.40C",
+            "moduleVersion": "0.1.0-experimental",
+            "imageSha256": "f3ebd1c55f0c2ca9aeec1a9a934ecbd253ad6564784e860cbb2303435662a2b1",
+            "setup": "Headless pinned ot_emu (9dc31d12...); MKII panel; empty scratch card, the project the OS creates, no samples; 128x64 LCD at integer scale 6; captured with scripts/capture-module-ui.py --key-ms 20. Emulator readings, not hardware ones."
+          }
+        }
+      ]
     }
   ]
 }

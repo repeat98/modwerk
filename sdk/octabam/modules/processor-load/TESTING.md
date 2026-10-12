@@ -2,10 +2,10 @@
 
 ## Commands and exact revision
 
-- **Source:** `upstream/` = [timhastie/octatrick-modules](https://github.com/timhastie/octatrick-modules) tag `v2.11`, commit `5f3d7456a885d37c933b2f47fce2bed29176f3e6`, `processor-load/` (README.md, loadmeter.s, tempo_popup.png byte-identical; manifest.py with its five stock `expect`s written as `stock_guard(site, length, sha256)` and its `conflicts` moved to `octamod.module.json`; per-file hashes in `sdk/imports/processor-load-5f3d745.json`). The conversion checked every guard against the local 1.40C MAIN OS (`164f3122…`) and against the SHA-256 of the author's literal: 5 guards, 0 mismatches.
+- **Source:** `upstream/` = [timhastie/octatrick-modules](https://github.com/timhastie/octatrick-modules) tag `v2.12`, commit `ca13ed85547790f788ceaaada5df3cdd31508441`, `processor-load/` (unchanged since `v2.11` `5f3d745`: `git diff v2.11 v2.12 -- processor-load/ LICENSE` is empty; README.md, loadmeter.s, tempo_popup.png byte-identical; manifest.py with its five stock `expect`s written as `stock_guard(site, length, sha256)` and its `conflicts` moved to `octamod.module.json`; per-file hashes in `sdk/imports/processor-load-ca13ed8.json`). The conversion checked every guard against the local 1.40C MAIN OS (`164f3122…`) and against the SHA-256 of the author's literal: 5 guards, 0 mismatches.
 - **Image:** Modwerk's exporter, this module alone with the stock effects (`--select processor-load:true`), the vendored SDK, `--static-stock`, the user's own `OCTATRACK_OS1.40C.bin` (`34695b60…`):
   `python3 -B scripts/export-composition-proofs.py <staged sdk> <proofs> --app . --vendored-sdk --static-stock --modules processor-load --select processor-load:true --menus <menus> --image-dir <private dir> --stock-bin <OS 1.40C .bin> --verbose`
-  MAIN OS `f3ebd1c55f0c2ca9aeec1a9a934ecbd253ad6564784e860cbb2303435662a2b1` (1,113,490 B); update file `OCTATRACK_MODWERK_PROCLOAD_TEST1.bin` 446,596 B, `9e1d72f51414b4cae4ea441d3327262f21affbb0be238f5dea809812da507cc3`, version `OCTAMOD79`. The exporter's recorded firmware identity, Modwerk's TypeScript packer (`src/engine/elek.ts`, `encodeFirmware`) and a decode of the packed file all give the same bytes. The same case rebuilt in a kept work tree gave the same MAIN OS, and octatrick-modules v2.11's `tools/align_check.py` on that tree: `ok -- 233 instruction rows (17 at a code symbol) in 1 linked objects, all even; 4 detour / symbol-ref / hook / poke targets even`.
+  MAIN OS `f3ebd1c55f0c2ca9aeec1a9a934ecbd253ad6564784e860cbb2303435662a2b1` (1,113,490 B); update file (Modwerk's packer) 446,596 B, `9e1d72f51414b4cae4ea441d3327262f21affbb0be238f5dea809812da507cc3`, version `OCTAMOD79`. The exporter's recorded firmware identity, Modwerk's TypeScript packer (`src/engine/elek.ts`, `encodeFirmware`) and a decode of the packed file all give the same bytes. The same case rebuilt in a kept work tree gave the same MAIN OS, and octatrick-modules' `tools/align_check.py` (v2.12; the file is unchanged since v2.11) on that tree: `ok -- 233 instruction rows (17 at a code symbol) in 1 linked objects, all even; 4 detour / symbol-ref / hook / poke targets even`.
 - **Build log facts:** one DRAM unit `procload` linked at `0x40a955e0` (`.text` 884 B: code 800 B, `pl_stats` 32 B at `0x40a95900`, `pl_state` 52 B at `0x40a95920`); detours `0x4001fbf8` (lea) → `pl_isr`, `0x4000d9a6` (10 B) → `pl_tail`, `0x40056c8a` (6 B) → `pl_ui`, `0x4004b528` (8 B) → `pl_tempo_draw`; poke `0x4004b5b4` `pea 0x25` → `pea 0x23`; append 930 B at `0x4010fdf0`; the platform takes 1,707 pages (`0x40a955e0..0x41495de0`, 10,487,808 B), 12,895 sample pages left (stock 14,602).
 - **Emulator:** the pinned `ot_emu` (`9dc31d12…`), `--dsp --frame --interactive --main-level off --rtc host --mkii`, an empty scratch card made with `tools/emu/emu_card.py` (the project the OS creates), or a local copy of the author's own card with one of his projects loaded (`--mount --set … --project …`; the card stays local, its names are not recorded here). Panel keys, `peek` of the meter's state and watched PCs (`watch` / `hits`) over the line protocol. Each session also ran on the stock MAIN OS for comparison.
 - **Smoke:** `python3 -B verify.py --output <json> --emulator <ot_emu> --image <MAIN OS> --image-sha256 f3ebd1c5… --sdk sdk/octabam` → 12/12 checks passed ([evidence/native-smoke.json](evidence/native-smoke.json)).
@@ -20,7 +20,14 @@
 
 ## Hardware and audio quality
 
-The hardware fields of `tests.qualification` are `TIM:` placeholders until the author reports his MKI test of this exact image (MAIN OS `f3ebd1c5…`; the test sheet asks for the reading stopped, playing and with effects, FUNC held, the `!` at 70 or more, and a power-cycle). `hardwareStatus` stays `historical` until then; it is the only remaining qualification failure. Audio quality: not applicable, the module makes and changes no audio. MKII: not run.
+**Report** (timhastie, MKI, 2026-10-10, Processor Load `0.1.0-experimental`, MAIN OS `f3ebd1c55f0c2ca9aeec1a9a934ecbd253ad6564784e860cbb2303435662a2b1`). Functional check: the author ran this exact image on his MKI and saw no issue with the meter; it worked as described.
+
+Limitations:
+
+- A functional check only: no readings, project, run length or power-cycle were recorded with the report.
+- Not run on an MKII; a reading of 70 % or more (the !) was not reported.
+
+Audio quality: not applicable, the module makes and changes no audio. MKII: not run.
 
 ## Persistence and multiple instances
 

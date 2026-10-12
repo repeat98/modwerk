@@ -103,8 +103,9 @@ SOFTWARE.
 
 PROCESSOR LOAD's source (upstream/processor-load/loadmeter.s, its manifest and
 README) is Tim Hastie's, from https://github.com/timhastie/octatrick-modules at
-tag v2.11 (commit 5f3d7456a885d37c933b2f47fce2bed29176f3e6); upstream/LICENSE is
-that repository's licence file, unchanged. The Modwerk packaging in this folder
+tag v2.12 (commit ca13ed85547790f788ceaaada5df3cdd31508441; processor-load/
+and LICENSE are unchanged since v2.11, 5f3d745); upstream/LICENSE is that
+repository's licence file, unchanged. The Modwerk packaging in this folder
 (manifest.py, octamod.module.json, README.md, TESTING.md, verify.py, evidence/,
 media/ and presentation/) is by the same author under the same MIT terms.
 

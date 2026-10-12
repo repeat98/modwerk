@@ -3,13 +3,18 @@
   "id": "processor-load",
   "version": "0.1.0-experimental",
   "status": "local-draft-unpublished",
-  "basedOn": "ca36b1fa13be9e6c3bf8be670799dcdd2bc84e12",
+  "basedOn": "31519756b17566c35ad67c61301b770bc5522a07",
   "folder": "sdk/octabam/modules/processor-load",
   "authorPin": {
     "repository": "https://github.com/timhastie/octatrick-modules",
-    "revision": "5f3d7456a885d37c933b2f47fce2bed29176f3e6",
-    "tag": "v2.11",
-    "path": "processor-load"
+    "revision": "ca13ed85547790f788ceaaada5df3cdd31508441",
+    "tag": "v2.12",
+    "path": "processor-load",
+    "unchangedSince": {
+      "tag": "v2.11",
+      "revision": "5f3d7456a885d37c933b2f47fce2bed29176f3e6",
+      "check": "git diff v2.11 v2.12 -- processor-load/ LICENSE is empty; every blob below is the same at both tags"
+    }
   },
   "conversion": {
     "tool": "to_stock_guard.py (local, not committed): each expect -> stock_guard(site, len, sha256 of the user OS 1.40C span, MAIN OS 164f3122...); every hash equal to sha256 of the author literal",
@@ -19,7 +24,7 @@
     {
       "path": "upstream/LICENSE",
       "repository": "https://github.com/timhastie/octatrick-modules",
-      "revision": "5f3d7456a885d37c933b2f47fce2bed29176f3e6",
+      "revision": "ca13ed85547790f788ceaaada5df3cdd31508441",
       "sourcePath": "LICENSE",
       "sourceBytes": 4876,
       "sourceGitBlob": "d350f0f05432680ad29157ae93669dbd585da978",
@@ -29,7 +34,7 @@
     {
       "path": "upstream/processor-load/README.md",
       "repository": "https://github.com/timhastie/octatrick-modules",
-      "revision": "5f3d7456a885d37c933b2f47fce2bed29176f3e6",
+      "revision": "ca13ed85547790f788ceaaada5df3cdd31508441",
       "sourcePath": "processor-load/README.md",
       "sourceBytes": 12876,
       "sourceGitBlob": "46e2d840b494581636c75ebe3b2f1518195feabd",
@@ -39,7 +44,7 @@
     {
       "path": "upstream/processor-load/loadmeter.s",
       "repository": "https://github.com/timhastie/octatrick-modules",
-      "revision": "5f3d7456a885d37c933b2f47fce2bed29176f3e6",
+      "revision": "ca13ed85547790f788ceaaada5df3cdd31508441",
       "sourcePath": "processor-load/loadmeter.s",
       "sourceBytes": 13807,
       "sourceGitBlob": "19b312c24b0d21e3c0239b7ddb306581b470574a",
@@ -49,7 +54,7 @@
     {
       "path": "upstream/processor-load/tempo_popup.png",
       "repository": "https://github.com/timhastie/octatrick-modules",
-      "revision": "5f3d7456a885d37c933b2f47fce2bed29176f3e6",
+      "revision": "ca13ed85547790f788ceaaada5df3cdd31508441",
       "sourcePath": "processor-load/tempo_popup.png",
       "sourceBytes": 6802,
       "sourceGitBlob": "ba7cc4be6f872933e770832b6ccc3feb74012040",
@@ -59,7 +64,7 @@
     {
       "path": "upstream/processor-load/manifest.py",
       "repository": "https://github.com/timhastie/octatrick-modules",
-      "revision": "5f3d7456a885d37c933b2f47fce2bed29176f3e6",
+      "revision": "ca13ed85547790f788ceaaada5df3cdd31508441",
       "sourcePath": "processor-load/manifest.py",
       "sourceBytes": 4839,
       "sourceGitBlob": "2e42c0ef7b0ddd60377803f42559e7f1ac56950f",
