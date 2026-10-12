@@ -5,7 +5,7 @@ import { resolve } from 'node:path'
 import { createHash } from 'node:crypto'
 import { readEle3Syx, mainImage, ELE3_DEVICES } from '../src/engine/elektron/ele3.ts'
 import { LINK_DEVICES, parseElemod, linkMods } from '../src/engine/elektron/elemod.ts'
-import { materializeModuleObject } from '../src/engine/elektron/module-object.ts'
+import { materializeElemodRecipe as materializeModuleObject } from '../src/catalog/elemod-recipe.ts'
 const args = process.argv.slice(2), values = name => args.flatMap((arg, i) => arg === name ? [args[i + 1]] : []), one = name => values(name)[0]
 if (!one('--packages') || !one('--oracle') || !one('--out') || !values('--firmware').length) throw new Error('Usage: verify-elemod-source-parity.mjs --packages DIR --oracle DIR --out DIR --firmware machine:stock.syx [--firmware ...]')
 const sha = bytes => createHash('sha256').update(bytes).digest('hex'), json = async path => JSON.parse(await readFile(path, 'utf8'))

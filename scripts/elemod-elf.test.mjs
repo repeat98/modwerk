@@ -54,6 +54,7 @@ describe('source-only m68k ELF conversion', () => {
   it('keeps the core independent while requiring it for ordinary modules', () => {
     expect(elfToElemod(fixture(), { ...doc, id: 'core' }, { ...build, weak: [], subscribe: [] }, {}).requires).toEqual([])
     expect(elfToElemod(fixture(), doc, build, {}).requires).toEqual(['core'])
+    expect(elfToElemod(fixture(), { ...doc, platform: { core: '3.0' } }, build, {}).resources.core).toBe('3.0')
   })
   it('refuses allocated sections that the linker cannot place and relocations outside data', () => {
     const raw = fixture(); raw.writeUInt32BE(29, 52 + 40); expect(() => elfToElemod(raw, doc, build, {})).toThrow('unplaced allocated section')

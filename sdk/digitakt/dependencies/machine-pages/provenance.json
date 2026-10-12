@@ -1,0 +1,21 @@
+{
+  "repository": "https://github.com/sumedho/digirequests",
+  "revision": "8eba613dc3e0b1698797609256fd4081923b4ef2",
+  "license": "GPL-2.0-or-later",
+  "upstreamVersion": "1.2",
+  "sources": {
+    "src/digitakt-mk1/core3.h": "9ad3512ee2ced8f9eaadcb48e5633547d861d7a71f5443d5e9f759d0b790de26",
+    "src/pages.c": "870cb94408a0b7e0fb47f6a5ff3ba9bce7a3ca77a3eea7987e6820a9268188f0",
+    "src/pages.s": "fe372401bf0ab82808d16b41b737436c67c7294f856b60829cb2001a3b62bce2"
+  },
+  "adaptation": "irpina’s Machine Pages 1.1 adapted to Core 2.1 by sumedho (NOTICE); authored instruction recipes; stock preconditions are hashes only.",
+  "upstreamSourceBytesIdentical": true,
+  "sourcePath": "mods/machine-pages",
+  "path": "dependencies/machine-pages",
+  "upstream": {
+    "repository": "https://github.com/irpina/elekloader",
+    "revision": "3acac10ea86882a2ea51c9377ac6bd58fc4fec57",
+    "path": "mods/machine-pages",
+    "version": "1.1"
+  }
+}

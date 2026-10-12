@@ -29,3 +29,12 @@ test('refuses a module from another version or OS', () => {
   assert.throws(() => packageRecipe({ ...plan, version: '0.14.0-experimental' }), /identity/)
   assert.throws(() => packageRecipe({ ...plan, release: '1.54' }), /identity/)
 })
+
+test('exports explicit authored bytes and LEA with guards, and refuses partial instructions', () => {
+  const guard = { addr: '0x40030daa', len: 6, stockSha256: 'a'.repeat(64) }
+  const lea = { ...guard, op: 'lea', register: 5, target: 'digimono_sname' }
+  const bytes = { ...guard, op: 'bytes', new: '72084e714e71', kind: 'code' }
+  assert.equal(packageRecipe({ ...plan, sites: [lea] }).sites[0].new, '4bf900000000')
+  assert.equal(packageRecipe({ ...plan, sites: [bytes] }).sites[0].new, bytes.new)
+  for (const site of [{ ...bytes, target: 'bad' }, { ...bytes, new: '4e714e714ef9' }, { ...lea, register: 8 }]) assert.throws(() => packageRecipe({ ...plan, sites: [site] }))
+})

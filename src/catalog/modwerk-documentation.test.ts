@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import { createHash } from 'node:crypto'
-import { mkdtemp, rm, mkdir, writeFile } from 'node:fs/promises'
+import { mkdtemp, rm, mkdir, writeFile, readFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import type { ModwerkModule } from './module-contract-v3'
@@ -41,4 +41,21 @@ describe('Digi documentation files', () => {
     record.captures[0].plan = 'tap SRC'; record.captures[0].sha256 = 'c'.repeat(64); await save()
     await expect(requireModwerkDocumentation(folder, document)).rejects.toThrow('screenshot hash')
   })
+})
+
+it('keeps each OS capture tied to its own image and rejects duplicate or stale bundled records', async () => {
+  const { folder, document, record } = await fixture()
+  const second = structuredClone(record)
+  second.firmware = '1.54'; second.imageSha256 = 'b'.repeat(64); second.captures[0].path = 'media/ui154.png'
+  await writeFile(join(folder, 'media/ui154.png'), qualificationPng)
+  document.media.push({ ...document.media[0], path: 'media/ui154.png', capture: { ...document.media[0].capture!, release: '1.54', imageSha256: second.imageSha256 } })
+  document.tests.documentation!.screenshots.push('media/ui154.png')
+  await writeFile(join(folder, 'README.md'), await readFile(join(folder, 'README.md'), 'utf8') + '\n![OS 1.54](media/ui154.png)\n')
+  const bundle = { schemaVersion: 2, machine: 'digitakt', moduleId: 'proof', moduleVersion: '0.1.0', records: [record, second] }
+  const save = () => writeFile(join(folder, 'media/capture.json'), JSON.stringify(bundle))
+  await save(); await expect(requireModwerkDocumentation(folder, document)).resolves.toBeUndefined()
+  bundle.records.push(record); await save()
+  await expect(requireModwerkDocumentation(folder, document)).rejects.toThrow('one capture record')
+  bundle.records.pop(); second.imageSha256 = 'c'.repeat(64); await save()
+  await expect(requireModwerkDocumentation(folder, document)).rejects.toThrow('matching image/release')
 })

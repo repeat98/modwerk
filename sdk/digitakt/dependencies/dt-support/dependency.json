@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "document": {
+    "id": "dt-support",
+    "version": "1.0.1",
+    "name": "Digitakt feature support",
+    "machine": "digitakt",
+    "presentation": {
+      "summary": "Shared allocation-lifecycle hook for CC Names and Euclidean. Does not add controls."
+    },
+    "category": "system",
+    "author": {
+      "github": "sumedho"
+    },
+    "license": {
+      "spdx": "GPL-2.0-or-later"
+    },
+    "compatibility": {
+      "releases": [
+        "1.53",
+        "1.54"
+      ],
+      "requires": [
+        "core"
+      ],
+      "conflicts": []
+    },
+    "platform": {
+      "build": "build.json",
+      "events": [],
+      "claims": []
+    }
+  }
+}

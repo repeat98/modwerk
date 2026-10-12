@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "document": {
+    "id": "machine-pages",
+    "version": "1.2",
+    "name": "machine pages",
+    "machine": "digitakt",
+    "presentation": {
+      "summary": "Draws the SRC and LFO pages of the SRC machines that describe their own, and gives the render an event for machines that make or take a track's sound, so several machine mods combine. irpina's Machine Pages 1.1, adapted by sumedho to run on Core 2.1. On its own, and for machines that do not describe a page, it changes nothing the unit does."
+    },
+    "category": "system",
+    "author": {
+      "github": "irpina"
+    },
+    "license": {
+      "spdx": "GPL-2.0-or-later"
+    },
+    "compatibility": {
+      "releases": [
+        "1.53",
+        "1.54"
+      ],
+      "requires": [
+        "core"
+      ],
+      "conflicts": [
+        "digichain"
+      ]
+    },
+    "platform": {
+      "build": "build.json",
+      "events": [
+        "ev_tick"
+      ],
+      "claims": []
+    }
+  }
+}

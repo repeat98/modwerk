@@ -2,6 +2,7 @@
 // Export explicit, source-authored patch recipes without reading firmware.
 import { readFile, writeFile } from 'node:fs/promises'
 import { pathToFileURL } from 'node:url'
+import { explicitSite } from '../src/catalog/elemod-site-recipe.ts'
 import { parseElemod } from '../src/engine/elektron/elemod.ts'
 
 export function packageRecipe(plan) {
@@ -9,15 +10,8 @@ export function packageRecipe(plan) {
   const parsed = parseElemod(plan.module)
   if (parsed.format !== 2 || parsed.id !== plan.id || parsed.version !== plan.version || parsed.release.version !== plan.release || parsed.device.machine !== plan.machine) throw new Error('Recipe identity mismatch')
   const sites = plan.sites.map(site => {
-    if (!['ptr', 'jsr', 'jmp'].includes(site.op)) throw new Error('Stock-dependent operations must remain local: ' + site.op)
-    if (site.op === 'ptr' ? site.len !== 4 : site.len < 6 || site.len % 2) throw new Error('Invalid explicit patch length')
-    if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(site.target)) throw new Error('Invalid patch target')
-    const bytes = Buffer.alloc(site.len)
-    if (site.op !== 'ptr') {
-      bytes.writeUInt16BE(site.op === 'jsr' ? 0x4eb9 : 0x4ef9)
-      for (let i = 6; i < site.len; i += 2) bytes.writeUInt16BE(0x4e71, i)
-    }
-    return { addr: site.addr, len: site.len, stock_sha256: site.stockSha256, new: bytes.toString('hex'), kind: site.op === 'ptr' ? 'data' : 'code', relocs: [[site.op === 'ptr' ? 0 : 2, 'abs32', 'sym:' + site.target, 0]] }
+    if (site.op === 'keep2') throw new Error('Stock-dependent operations must remain local: keep2')
+    return explicitSite(site)
   })
   const module = { ...plan.module, sites }
   parseElemod(module)

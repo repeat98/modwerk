@@ -595,11 +595,12 @@ describe('identifier-free usage counts',()=>{
 const moduleDownload=(moduleId='miniverb',eventId=crypto.randomUUID())=>({moduleId,eventId,visitor:'11111111-1111-4111-8111-111111111111'})
 describe('public module popularity',()=>{
  it('includes every machine and keeps Digi likes, ratings and both download paths separate',async()=>{
-  const {call,tokens,admin}=await fixture()
+  const {db,call,tokens,admin}=await fixture()
   const summary=await (await call('/community/summary')).json()
   for(const module of COMMUNITY_MODULES)expect(summary.find((item:{module_id:string})=>item.module_id===module.id)).toMatchObject({count:0,likes:0,downloads:0})
   const digi=COMMUNITY_MODULES.filter(module=>module.machine!=='octatrack')
   for(const [index,module] of digi.entries()){
+   db.exec('DELETE FROM rate_limits') // one member likes and rates every Digi module; the hourly limit is not under test here
    const auth='octamod_session='+tokens.author,value=index%5+1  // ratings are 1-5, whatever the number of modules
    expect((await call('/modules/'+module.id+'/like','POST',{liked:true},auth)).status).toBe(200)
    expect((await call('/modules/'+module.id+'/rating','POST',{value},auth)).status).toBe(200)

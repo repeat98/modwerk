@@ -247,8 +247,13 @@ export function requireModwerkPublication(document: ModwerkModule) {
 
 // The elemod build spec (build.json): what Modwerk's toolchain compiles and links. Stock bytes never appear here:
 // each patch site names its address, length and the SHA-256 of the stock bytes it expects in the owner's own file.
-export const ELEMOD_SITE_OPS = ['jmp', 'jsr', 'keep2', 'ptr'] as const
-export type ElemodSite = { addr: string; len: number; stockSha256: string; op: typeof ELEMOD_SITE_OPS[number]; target: string }
+export const ELEMOD_SITE_OPS = ['jmp', 'jsr', 'keep2', 'ptr', 'lea', 'bytes'] as const
+type ElemodSiteGuard = { addr: string; len: number; stockSha256: string }
+export type ElemodSite = ElemodSiteGuard & (
+  { op: 'jmp' | 'jsr' | 'keep2' | 'ptr'; target: string } |
+  { op: 'lea'; target: string; register: number } |
+  { op: 'bytes'; new: string; kind: 'code' | 'data'; target?: never }
+)
 export type ElemodRelease = { defsym: Record<string, string>; cflags: string[]; sites: ElemodSite[] }
 export type ElemodBuildSpec = {
   strings: Record<string, string>
@@ -268,13 +273,32 @@ function defines(value: unknown, path: string): Record<string, string> {
   const item = object(value, path, Object.keys((value ?? {}) as object))
   return Object.fromEntries(Object.entries(item).map(([key, entry]) => [symbol(key, path + '.' + key), text(String(entry), path + '.' + key, 40)]))
 }
+/** Also validate compiled recipes at their consumption boundary, not just build.json. */
+export function parseElemodSite(value: unknown, path = 'site'): ElemodSite {
+  const entry = object(value, path, ['addr', 'len', 'stockSha256', 'op'], ['target', 'register', 'new', 'kind'])
+  const op = choice(entry.op, path + '.op', ELEMOD_SITE_OPS)
+  const required = op === 'bytes' ? ['new', 'kind'] : op === 'lea' ? ['target', 'register'] : ['target']
+  const site = object(value, path, ['addr', 'len', 'stockSha256', 'op', ...required])
+  const len = count(site.len, path + '.len')
+  if (!len || len > 64) fail(path + '.len', 'expected a length of 1–64 bytes')
+  const guard = { addr: address(site.addr, path + '.addr'), len, stockSha256: sha256(site.stockSha256, path + '.stockSha256') }
+  if (op === 'bytes') {
+    const bytes = hexBytes(site.new, path + '.new'), kind = choice(site.kind, path + '.kind', ['code', 'data'] as const)
+    if (bytes.length !== len * 2 || kind === 'code' && (len % 2 || Number(guard.addr) % 2)) fail(path, 'invalid authored byte patch length or alignment')
+    return { ...guard, op, new: bytes, kind }
+  }
+  if (op === 'ptr' ? len !== 4 : op === 'keep2' || op === 'lea' ? len !== 6 : len < 6 || len % 2) fail(path, 'invalid explicit patch length')
+  if (op !== 'ptr' && Number(guard.addr) % 2) fail(path, 'code patch must be aligned')
+  const target = symbol(site.target, path + '.target')
+  if (op === 'lea') {
+    const register = count(site.register, path + '.register')
+    if (register === null || register > 7) fail(path + '.register', 'expected address register 0–7')
+    return { ...guard, op, target, register }
+  }
+  return { ...guard, op, target }
+}
 function sites(value: unknown, path: string): ElemodSite[] {
-  return list(value, path, 0, 256).map((entry, index) => {
-    const at = path + '[' + index + ']', site = object(entry, at, ['addr', 'len', 'stockSha256', 'op', 'target'])
-    const len = count(site.len, at + '.len')
-    if (!len || len > 64) fail(at + '.len', 'expected 1–64 bytes')
-    return { addr: address(site.addr, at + '.addr'), len, stockSha256: sha256(site.stockSha256, at + '.stockSha256'), op: choice(site.op, at + '.op', ELEMOD_SITE_OPS), target: symbol(site.target, at + '.target') }
-  })
+  return list(value, path, 0, 256).map((entry, index) => parseElemodSite(entry, path + '[' + index + ']'))
 }
 function range(value: unknown, path: string): [string, string] {
   const pair = list(value, path, 2, 2), lo = address(pair[0], path + '[0]'), hi = address(pair[1], path + '[1]')
@@ -335,4 +359,27 @@ export function parseElemodBuild(value: unknown, document: Pick<ModwerkModule, '
   const stringsValue = object(item.strings ?? {}, 'build.strings', Object.keys((item.strings ?? {}) as object))
   const strings = Object.fromEntries(Object.entries(stringsValue).map(([name, value]) => [symbol(name, 'build.strings.' + name), text(value, 'build.strings.' + name, 120)]))
   return { schemaVersion: 1, sources, strings, defsym: defines(item.defsym, 'build.defsym'), cflags: texts(item.cflags, 'build.cflags', 0, 16, 60), weak: list(item.weak, 'build.weak', 0, 64).map((name, index) => symbol(name, 'build.weak[' + index + ']')), subscribe, contribute, collections, copied, regions, claims, requires, derive, releases }
+}
+
+// Framework sources are compiled and resolved, but are not library/UI modules.
+export function parseElemodDependency(value: unknown, machine: MachineProfile) {
+  const item = object(value, 'dependency', ['schemaVersion', 'document'])
+  if (item.schemaVersion !== 1) fail('dependency.schemaVersion', 'expected 1')
+  const d = object(item.document, 'dependency.document', ['id', 'version', 'name', 'machine', 'presentation', 'category', 'author', 'license', 'compatibility', 'platform'])
+  const id = text(d.id, 'dependency.id', 60)
+  if (!/^[a-z][a-z0-9-]*$/.test(id) || d.machine !== machine.id || d.category !== 'system') fail('dependency', 'invalid framework identity')
+  const c = object(d.compatibility, 'dependency.compatibility', ['releases', 'requires', 'conflicts'])
+  const releases = texts(c.releases, 'dependency.releases', 1, 12, 20)
+  if (new Set(releases).size !== releases.length || releases.some(release => !machine.firmware?.releases.some(r => r.version === release))) fail('dependency.releases', 'expected unique supported releases')
+  const ids = (v: unknown, path: string) => texts(v, path, 0, 20, 60).map(id => { if (!/^[a-z][a-z0-9-]*$/.test(id)) fail(path, 'invalid module id'); return id })
+  const platform = object(d.platform, 'dependency.platform', ['build', 'events', 'claims'])
+  return {
+    id, version: coreVersion(d.version, 'dependency.version'), name: text(d.name, 'dependency.name', 60), machine: machine.id,
+    category: 'system', exclusive: false,
+    presentation: { summary: text(object(d.presentation, 'dependency.presentation', ['summary']).summary, 'dependency.summary', 1200) },
+    author: { github: login(object(d.author, 'dependency.author', ['github']).github, 'dependency.author.github') },
+    license: { spdx: text(object(d.license, 'dependency.license', ['spdx']).spdx, 'dependency.license.spdx', 120) },
+    compatibility: { releases, requires: ids(c.requires, 'dependency.requires'), conflicts: ids(c.conflicts, 'dependency.conflicts'), limitations: [] },
+    platform: { kind: 'elemod' as const, core: machine.sdk?.core?.version ?? '1.0', build: modulePath(platform.build, 'dependency.build'), events: texts(platform.events, 'dependency.events', 0, 32, 40), claims: texts(platform.claims, 'dependency.claims', 0, 32, 80) },
+  }
 }

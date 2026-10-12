@@ -1,0 +1,18 @@
+{
+  "repository": "https://github.com/sumedho/digirequests",
+  "revision": "8eba613dc3e0b1698797609256fd4081923b4ef2",
+  "license": "GPL-2.0-or-later",
+  "upstreamVersion": "1.0.1",
+  "sources": {
+    "src/release-153/firmware.h": "3343d8bfc12f8b409c0b3ff8ea8c7eeaf717cb373c5514c90a8339e1bd228899",
+    "src/release-153/support.S": "dc1f893f3a598cc31398fea10139c28e8425040e0c8188601423ebe0c4491cc5",
+    "src/release-153/support.c": "950c499f9c5782c733c3ca87b1fe216a1e0c60f9d832b0b508bae5e295c5f4a5",
+    "src/release-154/firmware.h": "31fbe86139cc1fdcedc73bea998d1f9ae5414cc5bae765074a23ff871096ff71",
+    "src/release-154/support.S": "071eebf8708f299050dc6720fff39d78dc96df6c6c6121f6cdbc2f0e30d772f5",
+    "src/release-154/support.c": "950c499f9c5782c733c3ca87b1fe216a1e0c60f9d832b0b508bae5e295c5f4a5",
+    "src/support.S": "0073c2acc22adc64964d2471fc9cf128a1c988a6a17d2c35570d09c3beba2ce4",
+    "src/support.c": "5086161e9013adaec0ffc3e4c38ebd6b8153e60c092aecd13f0e5a81b7cb791f"
+  },
+  "adaptation": "Original source and authored instruction recipes; stock preconditions are hashes only.",
+  "path": "dependencies/dt-support"
+}

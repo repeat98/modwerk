@@ -1,5 +1,48 @@
 # Verification record
 
+## Six Digitakt mods by sumedho on Core 2.1 — 14 October 2026
+
+Source: `sdk/digitakt/dependencies/{machine-pages,dt-support}` and
+`sdk/digitakt/modules/{midi-retrig,cc-names,euclidean,ram-machines,note-accumulator,sample-tools}`,
+also published at [sumedho/digirequests](https://github.com/sumedho/digirequests)
+`8eba613dc3e0b1698797609256fd4081923b4ef2`.
+
+**Core.** The mods run on the catalogue's Core 2.1, so no core is added.
+Machine Pages 1.2 is irpina's 1.1 adapted to Core 2.1:
+- it reads a machine descriptor's UI tail itself instead of calling Core
+  3.0's `core_machine_ui`;
+- three firmware locations come from per-OS `cflags` and `defsym`.
+
+`scripts/elemod-dependencies.mjs` leaves `core` to the machine's interface.
+`scripts/verify-elemod-matrix.mjs` links the catalogue's pinned Core 2.1.
+
+**Compilation and exports.** `scripts/build-elemod-packages.mjs` compiles the
+eight objects for OS 1.53 and 1.54 with local m68k-elf GCC 16.2.0; no Docker
+runtime was available. `scripts/package-elemod-recipe.mjs` exports the 16
+packages under `sdk/imports/packages/`.
+
+**Native parity.** `scripts/verify-elemod-matrix.mjs` compares the compiled
+objects with the author's native Elekloader build of the same sources.
+- Every object matches semantically. The only differences allowed are the
+  non-executable `DT_OS154` selector and Sample Tools' added DIGISLICER
+  conflict.
+- All 63 feature selections per OS, 126 in total, link with Core 2.1 to the
+  native MAIN byte for byte, through Modwerk's linker and the vendored kit.
+- The all-mods MAIN is `ce2c0bd0…` on 1.53 and `14469be1…` on 1.54.
+
+**Browser catalogue.** Machine Pages, DT Support and the six mods are pinned
+through `--overlay` files in `sdk/imports/elekloader-*-2026-10-14.json`. Each
+pin names the Modwerk commit that adds its package.
+
+**Emulator and load.** The 13 regression cases of the author's 1.54
+integration pass on both OSes: 26 runs, 0 failures. Render-load comparisons
+with stock are in each module's `TESTING.md`. The worst audio block with all
+six mods is 73% of the budget, against 62% for stock.
+
+**Test change.** `src/community/service.test.ts` likes and rates every Digi
+module as one member, and 18 modules exceed the 30-per-hour community limit.
+The test now clears `rate_limits` per module; the limit itself is unchanged.
+
 ## Digi EQ 1.0.2-experimental — 11 October 2026
 
 For issue [#185](https://github.com/repeat98/modwerk/issues/185), the native page-clear callback now resets all sixteen EQ band parameters; the EQ box aligns with the pattern header at x=13. Filter DSP and stored EQ layout are unchanged. Source-only packages from commit `1107d484c8d7ad84cfff14917b34acdcb83a53e6` replace the two 1.0b pins through `npm run elekloader:update`; kit 0.5.0 remains unchanged and the catalogue revision is `94516877d374af1e7c14a69c6c7602773590e8045fd8f3b8c1fcaa47e155f6fc`.

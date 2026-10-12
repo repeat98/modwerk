@@ -1,0 +1,9 @@
+Machine Pages 1.1: irpina / Elekloader, GPL-2.0-or-later, pinned at
+3acac10ea86882a2ea51c9377ac6bd58fc4fec57 (mods/machine-pages).
+
+Version 1.2, modified by sumedho on 2026-10-14 to run on Elekloader Core 2.1:
+- pages.c reads a machine descriptor's UI tail directly instead of calling
+  Core 3.0's core_machine_ui();
+- fw_active_track, fw_kit (pages.c) and fw_track_blocks (pages.s) come from
+  mod.json's per-OS cflags and defsym instead of Core 3.0's exports.
+Nothing else is changed.

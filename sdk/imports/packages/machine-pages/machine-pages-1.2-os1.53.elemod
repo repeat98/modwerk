@@ -1,0 +1,1017 @@
+{
+ "elemod": 2,
+ "id": "machine-pages",
+ "version": "1.2",
+ "title": "machine pages",
+ "description": "Draws the SRC and LFO pages of the SRC machines that describe their own, and gives the render an event for machines that make or take a track's sound, so several machine mods combine. irpina's Machine Pages 1.1, adapted by sumedho to run on Core 2.1. On its own, and for machines that do not describe a page, it changes nothing the unit does.",
+ "category": "system",
+ "author": "irpina",
+ "license": "GPL-2.0-or-later",
+ "target": {
+  "device": "digitakt-mk1",
+  "product": "Digitakt mk1",
+  "os": "1.53",
+  "syx_sha256": "9bdd44bb6102fb25c143cfab97bc92b7a89c463f795d3112dce89771e29bcc92",
+  "section3_sha256": "4b47a9507758ca5669ca02ab2c0374d2c04c98aece445408295cc1dcb265c5df",
+  "section3_len": 2475584
+ },
+ "sections": {
+  ".run": {
+   "align": 4,
+   "len": 2651,
+   "parts": [
+    [
+     "hex",
+     "2f2f00044eb900000000588f4a80660c7203202f00044ef9400657d24e757203202f00044ef9400657d242a72f2f000c4eb900000000508f4a806610222f00080c81000000a44ef94000fe944e75487800012f2f000c4eb900000000508f4a806610222f00080c81000000a44ef94000feb64e752f2f00102f2f00102f2f00104eb9000000004fef000c4a806706202f00104e754fefffec48d70c1c4ef94000f32c486f00084eb900000000588f4a80660e4fefffec48d7007c4ef94000f2c44e752f2f00044eb900000000588f22000c81000000a44ef94006579e2f2f00082f2f00084eb900000000508f4a806610222f00040c81000000a44ef9400657f84e75224a6004226f00242f092f082f2f000c4eb940078f0c588f2057226f000461182f4000042f2f000c4eb900000000588f2057508f20084e7520110c804017eb58661a2269001020110c8040181330660c2269001070001029007e4e7570ff4e754fefffc448d77fff45f900000000201a670e487980001a1820404e90588f60ee4cd77fff4fef003c49f94199e4444e752f0042a7487800022f004eb9000000004fef000c4a806710588f2e8041f9401a9d9c4ef940060baa201f41f9401a9d9c4ef940060b942f172f174fefffc448d77fff2e002f330828487800012f074eb9000000004fef000c2f4000442f0642a72f074eb9000000004fef000c2f4000404cd77fff4fef003c4e752f172f174fefffc448d77fff2f332830487800022f024eb9000000004fef000c2f4000442f0642a72f024eb9000000004fef000c2f4000404cd77fff4fef003c4e752f172f174fefffc448d77fff2f4200402f30082c42a72f004eb9000000004fef000c2f4000444cd77fff4fef003c4e752f174fefffc448d77fff41f9401d09ca2f4800402f2f0044487800022f034eb9000000004fef000c2f4000444cd77fff4fef003c4e750c8000000087660e612667044a804e750c80000000874e750c8200000087660e610e67044a824e750c82000000874e754feffff048d703034eb9000000004a804cd703034fef00104e75202f00047203b28065064ef940029e805a804e7500004fefffdc7003222f002848d70c1cb081642c2279000000004ab900000000672a4a896f1a41f900000000428041e8003cb2a8ffc4670000ec5280b3c066ee4cd70c1c42804fef00244e75207900000000740123c2000000004a8867c44202203c000000002f4900161f420023761fb6af00166d0000e2263c55493330b6a80018661c2468001c4a8a670000ac24120c820000000067160c8200000000670e244020524a886700009a588060ca75aa00047603b68265e824107603b6826ce0262f0016783c47f90000000052af00164c0438002f43001a7601d7ef001a2768001000082f4b001e2640205b200b266f001a1f430023263c0000000027823800266f001e274a00044a886600ff62202f0016224023c0000000004a896e00ff086000ff1e4cd70c1cc0fc003c0680000000004fef00244e75264020534a886600ff6a4a2f00236700feda202f0016224023c00000000060c24a2f00236700fec4282f00164280224441f90000000023c4000000006000feb8207900000000598f2f0a4a88673822680004246f000c71a9000445eaff94220ae7882f4a000492807007b081641020280008220ae78892807007b0816510c2fc002841f11810245f2008588f4e75245f91c82008588f4e75518f2f0a2f022f2f00144ebafe26588f224023c0000000004a806700008e4aa9000c671443e900102f49000c202f000c241f245f508f4e7520690004347cfff071a800042f002f49000c4eb900000000226f000c95c92400200906800000003c41e900102f480010588f2202d28820f21800b08866f424290004204245e9001806820000016141e80021101041e800280800000067024292588ab48866ec70012340000c202f000c6086241f4280245f508f4e75207900000000598f2f024a88676022680004202f000c0680ffffff9473a900042400e78994812f4200047207b2826434222800087407e7899081b48065304aaf0010671072284c010800241f20310814588f4e7574284c020800241f20310810588f4e7520024aaf001067e860d6241f4280588f4e752f2f00044ebafe78588f4a80672c2240206900204a8867222279000000002f1142a72f2f00102f2f00184e904fef00104a8056c0710044804e7542804e752f2f00044ebafe3a588f4a8067422240206900204a886738420022790000000013c0000000002f11487800012f2f00104879000000004e904fef00104a806710420013c000000000203c000000004e7542804e75598f2f0a206f000c2f104ebafde0588f20404a80673810280011080000046636226800244a896718246f000c2f2a00042f4800084e91588f206f0004254000041028001067087180206f000c2080245f4280588f4e7522790000000045f90000000022690004b5d166d6226800244a8967ce246f000c2f2a00082f2a00042f2a00182f2a00142f2a00102f4800184e914fef0014206f00044a8067a4245f7001588f4e752279000000002f0a2f024a89674624690004740773aa0004202f000c0680ffffff94e789204122009288b481641222290008e7892041220070079288b081651474284c021800123218206708241f7181245f4e75202f000c241f245f4e752079000000004a88671020680004720171a80099e688c0814e7542804e75518f2f0a2f02202f001c4a806d0000942f004ebafb42588f4a80670000862440226a0004206f001473a9000441e8ff942408e78994812f4200087207b282646a202a00082208e78892807007b081655274284c01280041f128001028002145e800212f4200082f4a000c08000001671e702852814c001800246f001824a8002441f1180025500004246f000c101244c06610206f000845f1882c206f001821520008241f245f508f4e75220274284c01280041f128001028002145e800212f4200082f4a000c0800000167c260a220394197b6b42f02740722394199dc44b480656a4a816766243c000000a24c020800d280204171a8009e2f004ebafa5a588f22404a80674620290008222f00080681ffffff94e78892807007b081652e206900044aaf000c671c7401b4af000c674074284c021800d1c1202800184a806714241f4e75202800084a8066f4202f0010241f4e75202800104a8066e4102800210800000067e6241f203c000000004e7570284c001800d1c12028001c4a8066c0202800144a8066b8102800210800000067ba241f203c000000004e752f027434202f0008226f000c4c4200014c4200002040202f00104a816704241f4e752f4000102f49000c2f480008241f6000ff004fefffec48d71c0c24794199dc444a8a672ab5f900000000672c200a0680000005ae41ea009e43f90000000012d041e800a2b08866f623ca000000004cd71c0c4fef00144e7545ea009e428247f90000000049faf932121277b328007181b680672a178128002f004e94588f4a80671c2240206900042068000c4a88670e486aff822f032f024e904fef000c528245ea00a27008b08266be4cd71c0c4fef00144e756d616368696e652d706167657320332e31006d616368696e652d7061676573203300556e75736564002d00"
+    ]
+   ]
+  },
+  ".bss": {
+   "align": 4,
+   "size": 1960
+  }
+ },
+ "symbols": {
+  "FW_TRACK_BLOCKS": [
+   "abs",
+   2147490328
+  ],
+  "M_TYPE_FN": [
+   "abs",
+   1073913472
+  ],
+  "FMT_S": [
+   "abs",
+   1075644874
+  ],
+  "LFO_LABEL_PUT": [
+   "abs",
+   1074138026
+  ],
+  "LFO_LABEL_ON": [
+   "abs",
+   1074138004
+  ],
+  "DESC_TAB": [
+   "abs",
+   1075486108
+  ],
+  "INJECT_LEA": [
+   "abs",
+   1100604484
+  ],
+  "SNDREF_VT": [
+   "abs",
+   1075319600
+  ],
+  "PARAM_VT": [
+   "abs",
+   1075309400
+  ],
+  "PRANGE_FN": [
+   "abs",
+   1074237196
+  ],
+  "POP_TEXT_ON": [
+   "abs",
+   1074157560
+  ],
+  "UI_REC_ON": [
+   "abs",
+   1074157470
+  ],
+  "KNOB_GFX_ON": [
+   "abs",
+   1073803972
+  ],
+  "VAL_TEXT_ON": [
+   "abs",
+   1073804076
+  ],
+  "LAB_LONG_ON": [
+   "abs",
+   1073807030
+  ],
+  "LAB_SHORT_ON": [
+   "abs",
+   1073806996
+  ],
+  "LAYOUT_ON": [
+   "abs",
+   1074157522
+  ],
+  "mp_rmach": [
+   ".run",
+   314
+  ],
+  "mp_samp_ours": [
+   ".run",
+   740
+  ],
+  "page_of": [
+   ".run",
+   788
+  ],
+  "npages": [
+   ".bss",
+   36
+  ],
+  "found": [
+   ".bss",
+   32
+  ],
+  "pages": [
+   ".bss",
+   40
+  ],
+  "page_knob": [
+   ".run",
+   1162
+  ],
+  "page_now": [
+   ".bss",
+   28
+  ],
+  "pop": [
+   ".bss",
+   12
+  ],
+  "seen_kit": [
+   ".bss",
+   8
+  ],
+  "seen": [
+   ".bss",
+   0
+  ],
+  "mp_range": [
+   ".run",
+   1982
+  ],
+  "mp_lfo_label_s": [
+   ".run",
+   402
+  ],
+  "mp_samp_d2_s": [
+   ".run",
+   716
+  ],
+  "mp_stock_layout": [
+   ".run",
+   30
+  ],
+  "mp_knob": [
+   ".run",
+   1694
+  ],
+  "mp_lab_long_s": [
+   ".run",
+   78
+  ],
+  "mp_value_text": [
+   ".run",
+   1548
+  ],
+  "mp_look": [
+   ".run",
+   1858
+  ],
+  "mp_pop_text_s": [
+   ".run",
+   220
+  ],
+  "mp_val_text_s": [
+   ".run",
+   116
+  ],
+  "cm_ui_v3": [
+   ".run",
+   2626
+  ],
+  "mp_render_s": [
+   ".run",
+   354
+  ],
+  "mp_lfo_list_s": [
+   ".run",
+   456
+  ],
+  "mp_not_sample": [
+   ".run",
+   1952
+  ],
+  "mp_lfo52": [
+   ".run",
+   2394
+  ],
+  "mp_pop_text": [
+   ".run",
+   1610
+  ],
+  "mp_prange_s": [
+   ".run",
+   258
+  ],
+  "mp_lab_short_s": [
+   ".run",
+   42
+  ],
+  "mp_mtype": [
+   ".run",
+   766
+  ],
+  "mp_prange_f_s": [
+   ".run",
+   262
+  ],
+  "mp_samp_d0_s": [
+   ".run",
+   692
+  ],
+  "mp_lfo": [
+   ".run",
+   2188
+  ],
+  "mp_lfo_bgrp_s": [
+   ".run",
+   590
+  ],
+  "mp_lfo_bname_s": [
+   ".run",
+   638
+  ],
+  "mp_lfo_lshort_s": [
+   ".run",
+   524
+  ],
+  "mp_layout_s": [
+   ".run",
+   0
+  ],
+  "mp_layout": [
+   ".run",
+   1250
+  ],
+  "mp_ui_rec_s": [
+   ".run",
+   194
+  ],
+  "mp_label": [
+   ".run",
+   1430
+  ],
+  "mp_knob_gfx_s": [
+   ".run",
+   162
+  ],
+  "mp_tick": [
+   ".run",
+   2446
+  ],
+  "cm_ui_v31": [
+   ".run",
+   2608
+  ]
+ },
+ "exports": [
+  "cm_ui_v3",
+  "cm_ui_v31",
+  "mp_knob",
+  "mp_knob_gfx_s",
+  "mp_lab_long_s",
+  "mp_lab_short_s",
+  "mp_label",
+  "mp_layout",
+  "mp_layout_s",
+  "mp_lfo",
+  "mp_lfo52",
+  "mp_lfo_bgrp_s",
+  "mp_lfo_bname_s",
+  "mp_lfo_label_s",
+  "mp_lfo_list_s",
+  "mp_lfo_lshort_s",
+  "mp_look",
+  "mp_mtype",
+  "mp_not_sample",
+  "mp_pop_text",
+  "mp_pop_text_s",
+  "mp_prange_f_s",
+  "mp_prange_s",
+  "mp_range",
+  "mp_render_s",
+  "mp_samp_d0_s",
+  "mp_samp_d2_s",
+  "mp_stock_layout",
+  "mp_tick",
+  "mp_ui_rec_s",
+  "mp_val_text_s",
+  "mp_value_text"
+ ],
+ "imports": [
+  "core_machines",
+  "ev_render_voices"
+ ],
+ "weak": [],
+ "relocs": [
+  [
+   ".run",
+   6,
+   "abs32",
+   "sec:.run",
+   1250
+  ],
+  [
+   ".run",
+   50,
+   "abs32",
+   "sec:.run",
+   1430
+  ],
+  [
+   ".run",
+   88,
+   "abs32",
+   "sec:.run",
+   1430
+  ],
+  [
+   ".run",
+   130,
+   "abs32",
+   "sec:.run",
+   1548
+  ],
+  [
+   ".run",
+   168,
+   "abs32",
+   "sec:.run",
+   1694
+  ],
+  [
+   ".run",
+   200,
+   "abs32",
+   "sec:.run",
+   1858
+  ],
+  [
+   ".run",
+   230,
+   "abs32",
+   "sec:.run",
+   1610
+  ],
+  [
+   ".run",
+   300,
+   "abs32",
+   "sec:.run",
+   1982
+  ],
+  [
+   ".run",
+   364,
+   "abs32",
+   "sym:ev_render_voices",
+   0
+  ],
+  [
+   ".run",
+   414,
+   "abs32",
+   "sec:.run",
+   2188
+  ],
+  [
+   ".run",
+   482,
+   "abs32",
+   "sec:.run",
+   2394
+  ],
+  [
+   ".run",
+   502,
+   "abs32",
+   "sec:.run",
+   2394
+  ],
+  [
+   ".run",
+   548,
+   "abs32",
+   "sec:.run",
+   2394
+  ],
+  [
+   ".run",
+   568,
+   "abs32",
+   "sec:.run",
+   2394
+  ],
+  [
+   ".run",
+   616,
+   "abs32",
+   "sec:.run",
+   2394
+  ],
+  [
+   ".run",
+   670,
+   "abs32",
+   "sec:.run",
+   2394
+  ],
+  [
+   ".run",
+   750,
+   "abs32",
+   "sec:.run",
+   1952
+  ],
+  [
+   ".run",
+   808,
+   "abs32",
+   "sec:.bss",
+   36
+  ],
+  [
+   ".run",
+   814,
+   "abs32",
+   "sec:.bss",
+   32
+  ],
+  [
+   ".run",
+   826,
+   "abs32",
+   "sec:.bss",
+   40
+  ],
+  [
+   ".run",
+   864,
+   "abs32",
+   "sym:core_machines",
+   0
+  ],
+  [
+   ".run",
+   872,
+   "abs32",
+   "sec:.bss",
+   32
+  ],
+  [
+   ".run",
+   884,
+   "abs32",
+   "sym:core_machines",
+   4
+  ],
+  [
+   ".run",
+   932,
+   "abs32",
+   "sec:.run",
+   2626
+  ],
+  [
+   ".run",
+   940,
+   "abs32",
+   "sec:.run",
+   2608
+  ],
+  [
+   ".run",
+   986,
+   "abs32",
+   "sec:.bss",
+   40
+  ],
+  [
+   ".run",
+   1034,
+   "abs32",
+   "sec:.bss",
+   40
+  ],
+  [
+   ".run",
+   1064,
+   "abs32",
+   "sec:.bss",
+   36
+  ],
+  [
+   ".run",
+   1088,
+   "abs32",
+   "sec:.bss",
+   40
+  ],
+  [
+   ".run",
+   1124,
+   "abs32",
+   "sec:.bss",
+   36
+  ],
+  [
+   ".run",
+   1148,
+   "abs32",
+   "sec:.bss",
+   40
+  ],
+  [
+   ".run",
+   1154,
+   "abs32",
+   "sec:.bss",
+   36
+  ],
+  [
+   ".run",
+   1164,
+   "abs32",
+   "sec:.bss",
+   28
+  ],
+  [
+   ".run",
+   1270,
+   "abs32",
+   "sec:.bss",
+   28
+  ],
+  [
+   ".run",
+   1326,
+   "abs32",
+   "sec:.run",
+   30
+  ],
+  [
+   ".run",
+   1432,
+   "abs32",
+   "sec:.bss",
+   28
+  ],
+  [
+   ".run",
+   1574,
+   "abs32",
+   "sec:.bss",
+   28
+  ],
+  [
+   ".run",
+   1638,
+   "abs32",
+   "sec:.bss",
+   28
+  ],
+  [
+   ".run",
+   1644,
+   "abs32",
+   "sec:.bss",
+   12
+  ],
+  [
+   ".run",
+   1660,
+   "abs32",
+   "sec:.bss",
+   12
+  ],
+  [
+   ".run",
+   1678,
+   "abs32",
+   "sec:.bss",
+   27
+  ],
+  [
+   ".run",
+   1684,
+   "abs32",
+   "sec:.bss",
+   12
+  ],
+  [
+   ".run",
+   1782,
+   "abs32",
+   "sec:.bss",
+   28
+  ],
+  [
+   ".run",
+   1788,
+   "abs32",
+   "sec:.run",
+   2608
+  ],
+  [
+   ".run",
+   1860,
+   "abs32",
+   "sec:.bss",
+   28
+  ],
+  [
+   ".run",
+   1954,
+   "abs32",
+   "sec:.bss",
+   28
+  ],
+  [
+   ".run",
+   2344,
+   "abs32",
+   "sec:.run",
+   2649
+  ],
+  [
+   ".run",
+   2388,
+   "abs32",
+   "sec:.run",
+   2642
+  ],
+  [
+   ".run",
+   2466,
+   "abs32",
+   "sec:.bss",
+   8
+  ],
+  [
+   ".run",
+   2486,
+   "abs32",
+   "sec:.bss",
+   0
+  ],
+  [
+   ".run",
+   2502,
+   "abs32",
+   "sec:.bss",
+   8
+  ],
+  [
+   ".run",
+   2524,
+   "abs32",
+   "sec:.bss",
+   0
+  ]
+ ],
+ "sites": [
+  {
+   "addr": "0x400657cc",
+   "len": 6,
+   "stock_sha256": "3b618e4eaaafbc05f3a3649b08bde56616971a07cc578ed13570b010e70bf072",
+   "new": "4ef900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:mp_layout_s",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x4000fe8a",
+   "len": 10,
+   "stock_sha256": "5a18bd3f39db0448ad3452128af8f9e63d1e9c011cafecfc54210fba10c19677",
+   "new": "4ef9000000004e714e71",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:mp_lab_short_s",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x4000feac",
+   "len": 10,
+   "stock_sha256": "5a18bd3f39db0448ad3452128af8f9e63d1e9c011cafecfc54210fba10c19677",
+   "new": "4ef9000000004e714e71",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:mp_lab_long_s",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x4000f324",
+   "len": 8,
+   "stock_sha256": "a04973fb79ed0896aa768e97902a85f61a10ad9d106955b3fe7a112c76d0e51f",
+   "new": "4ef9000000004e71",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:mp_val_text_s",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x4000f2bc",
+   "len": 8,
+   "stock_sha256": "7357d174dda33b71e4d29ed8e6d02a3b96a76167a0a44ebe35f2a439406880f4",
+   "new": "4ef9000000004e71",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:mp_knob_gfx_s",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x40065794",
+   "len": 10,
+   "stock_sha256": "6fac3f4794a986259c5b1076561f1b40f68fd968c6940bb6c785ee20e1334617",
+   "new": "4ef9000000004e714e71",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:mp_ui_rec_s",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x400657ee",
+   "len": 10,
+   "stock_sha256": "6fac3f4794a986259c5b1076561f1b40f68fd968c6940bb6c785ee20e1334617",
+   "new": "4ef9000000004e714e71",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:mp_pop_text_s",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x4000ff20",
+   "len": 6,
+   "stock_sha256": "37ace07d53dc6aa9eba5ede1b616b09eb19800992fd652169e5fd1051c3ffde3",
+   "new": "4eb900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:mp_prange_s",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x400100c4",
+   "len": 6,
+   "stock_sha256": "37ace07d53dc6aa9eba5ede1b616b09eb19800992fd652169e5fd1051c3ffde3",
+   "new": "4eb900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:mp_prange_s",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x4000f534",
+   "len": 6,
+   "stock_sha256": "37ace07d53dc6aa9eba5ede1b616b09eb19800992fd652169e5fd1051c3ffde3",
+   "new": "4eb900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:mp_prange_s",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x4000f5fc",
+   "len": 6,
+   "stock_sha256": "d3c6f631568fb7f26a844c1e364989f7ebc04db477e5d6bf13b33bda9b26878e",
+   "new": "45f900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:mp_prange_f_s",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x40077fba",
+   "len": 6,
+   "stock_sha256": "5181c52f3e1d44ffa7a732058855f98b3431533e9c7f38684d4739f47fe261aa",
+   "new": "4eb900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:mp_render_s",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x40060b8e",
+   "len": 6,
+   "stock_sha256": "2089e24a3da4b21a87a1724df31552cb6f4ff6d713d2ff60a1750f391471e710",
+   "new": "4ef900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:mp_lfo_label_s",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x400a4374",
+   "len": 6,
+   "stock_sha256": "81ec6bd4f514d9f1ac3300455338b01169f581a9eba9bcbdb8c5d68c865084fa",
+   "new": "4eb900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:mp_lfo_list_s",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x400a43f0",
+   "len": 6,
+   "stock_sha256": "3900fb0c2d68aa3c036b14b69338b9c4498b92b1a090707f96375c14607b45ed",
+   "new": "4eb900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:mp_lfo_lshort_s",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x40065de6",
+   "len": 6,
+   "stock_sha256": "752240e3f074673bf7d0e6dba45d264fa097aba6578c196030eeeada3d7b5fd5",
+   "new": "4eb900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:mp_lfo_bgrp_s",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x40065e68",
+   "len": 6,
+   "stock_sha256": "034daf466a84a080e7aa51b52900b82e2b79577991ccfa4dbe9382f58e729569",
+   "new": "4eb900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:mp_lfo_bname_s",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x4003b314",
+   "len": 6,
+   "stock_sha256": "430d21da6f8a168fa69041d4619b17bc229ff0db503be583281dc96585cfbadc",
+   "new": "4eb900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:mp_samp_d0_s",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x4003b5b2",
+   "len": 6,
+   "stock_sha256": "7212dc8bce4d59b25677b6c581025995dd597668cc8a605473ad545d6c978e97",
+   "new": "4eb900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:mp_samp_d2_s",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x4002a382",
+   "len": 6,
+   "stock_sha256": "56b34659cd862f9a3842db744fdc66748017e519f8030fced7aca6cb52630d30",
+   "new": "4eb900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:mp_mtype",
+     0
+    ]
+   ]
+  }
+ ],
+ "collections": {
+  "ev_render_voices": {
+   "entry": 4
+  }
+ },
+ "contribute": [
+  {
+   "to": "ev_tick",
+   "order": 20,
+   "data": "00000000",
+   "relocs": [
+    [
+     0,
+     "abs32",
+     "sym:mp_tick",
+     0
+    ]
+   ],
+   "claims": []
+  }
+ ],
+ "copied": [],
+ "resources": {
+  "regions": [],
+  "names": [],
+  "core": "2.1"
+ },
+ "requires": [
+  "core"
+ ],
+ "conflicts": [
+  "digichain"
+ ],
+ "signature": null
+}

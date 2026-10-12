@@ -1,0 +1,102 @@
+{
+ "elemod": 2,
+ "id": "dt-support",
+ "version": "1.0.1",
+ "title": "Digitakt feature support",
+ "description": "Shared allocation-lifecycle hook for CC Names and Euclidean. Does not add controls.",
+ "category": "system",
+ "author": "sumedho",
+ "license": "GPL-2.0-or-later",
+ "target": {
+  "device": "digitakt-mk1",
+  "product": "Digitakt mk1",
+  "os": "1.54",
+  "syx_sha256": "f78ba80fa7b1da5fb0e1ff61ad61e9e71aafe79f4364fc49679f3651353e3cf6",
+  "section3_sha256": "5c58bf9e3949ef09977c5fc007a61e8d026931f67f1621238379dfb8ee4d31a2",
+  "section3_len": 2479680
+ },
+ "sections": {
+  ".run": {
+   "align": 4,
+   "len": 60,
+   "parts": [
+    [
+     "hex",
+     "2f0a2f02242f000c45f90000000020524a88660e2f42000c241f245f4ef9000000002f024e90588a588f60e24feffff448d7001c4ef9400d433a0000"
+    ]
+   ]
+  }
+ },
+ "symbols": {
+  "DT_OS154": [
+   "abs",
+   1
+  ],
+  "dt_free": [
+   ".run",
+   0
+  ],
+  "dt_native_free": [
+   ".run",
+   44
+  ]
+ },
+ "exports": [
+  "dt_free",
+  "dt_native_free"
+ ],
+ "imports": [
+  "dt_free_observers"
+ ],
+ "weak": [],
+ "relocs": [
+  [
+   ".run",
+   10,
+   "abs32",
+   "sym:dt_free_observers",
+   0
+  ],
+  [
+   ".run",
+   30,
+   "abs32",
+   "sec:.run",
+   44
+  ]
+ ],
+ "sites": [
+  {
+   "addr": "0x400d4332",
+   "len": 8,
+   "stock_sha256": "74c5c24f09bf544b8fad303723b3935f248a9f48eefdbd230049cf63bd8fee5e",
+   "new": "4ef9000000004e71",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:dt_free",
+     0
+    ]
+   ]
+  }
+ ],
+ "collections": {
+  "dt_free_observers": {
+   "entry": 4
+  }
+ },
+ "contribute": [],
+ "copied": [],
+ "resources": {
+  "regions": [],
+  "names": [],
+  "core": "2.1"
+ },
+ "requires": [
+  "core"
+ ],
+ "conflicts": [],
+ "signature": null
+}

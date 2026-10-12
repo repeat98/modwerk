@@ -1,0 +1,65 @@
+{
+  "schemaVersion": 1,
+  "sources": [
+    "src/support.c",
+    "src/support.s"
+  ],
+  "defsym": {},
+  "cflags": [
+    "-DDT_LINKABLE=1",
+    "-std=c99",
+    "-Os",
+    "-msoft-float",
+    "-fno-common",
+    "-fno-asynchronous-unwind-tables",
+    "-Wextra",
+    "-Werror"
+  ],
+  "weak": [],
+  "subscribe": [],
+  "contribute": [],
+  "collections": {
+    "dt_free_observers": 4
+  },
+  "copied": [],
+  "regions": [],
+  "claims": [],
+  "requires": [],
+  "derive": null,
+  "releases": {
+    "1.53": {
+      "defsym": {
+        "DT_OS154": 0
+      },
+      "cflags": [
+        "-DDT_OS154=0"
+      ],
+      "sites": [
+        {
+          "addr": "0x400d410a",
+          "op": "jmp",
+          "target": "dt_free",
+          "len": 8,
+          "stockSha256": "74c5c24f09bf544b8fad303723b3935f248a9f48eefdbd230049cf63bd8fee5e"
+        }
+      ]
+    },
+    "1.54": {
+      "defsym": {
+        "DT_OS154": 1
+      },
+      "cflags": [
+        "-DDT_OS154=1"
+      ],
+      "sites": [
+        {
+          "addr": "0x400d4332",
+          "op": "jmp",
+          "target": "dt_free",
+          "len": 8,
+          "stockSha256": "74c5c24f09bf544b8fad303723b3935f248a9f48eefdbd230049cf63bd8fee5e"
+        }
+      ]
+    }
+  }
+}

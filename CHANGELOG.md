@@ -103,6 +103,10 @@
 
 - Counted active site visitors in the public online total, including people who are signed out. Visible tabs check in once a minute; repeated tabs and signed-in devices are deduplicated, inactive visitors expire after five minutes, and privacy opt-outs and hidden member names are respected. Anonymous visitors are estimated without browser storage; people sharing an IP address and browser signature can share a count.
 
+- Added guarded authored-byte and LEA source recipes, an explicit compiler flag allowlist, and a separate source adapter that preserves the frozen engines and all publication gates.
+- Registered Machine Pages 1.2 (irpina's 1.1, adapted to Core 2.1) and DT Support as source dependencies with OS-specific definitions. Shared tables/events resolve only through required dependencies; `core` stays the machine's Core 2.1 interface, so no new core is added.
+- Added opt-in draft compilation/validation, per-OS screenshot provenance bundles, and an exhaustive local source/semantic/browser/native parity verifier. The six Digitakt mods that use them follow in separate pull requests.
+
 ## 12 October 2026
 
 - Keep the Octatrack beta publication check valid when release automation stamps the current commit and approval. Authored package contents and qualification fields remain pinned to the validated Git snapshot, and derived package hashes must match the published files.

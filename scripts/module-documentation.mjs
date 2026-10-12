@@ -94,10 +94,14 @@ export async function requireModwerkDocumentation(folder, document) {
   if (!docs) return
   requireCompleteReadme(document, await readFile(await resolveModuleFile(folder, 'README.md'), 'utf8'))
   const record = JSON.parse(await readFile(await resolveModuleFile(folder, docs.captureRecord), 'utf8'))
-  if (record.schemaVersion !== 1 || record.machine !== document.machine || record.moduleId !== document.id || record.moduleVersion !== document.version || !/^[a-f0-9]{64}$/.test(record.imageSha256)) throw new Error(document.id + ': capture record must identify this module, version and built image')
+  const records = record.schemaVersion === 2 && Array.isArray(record.records) && record.records.length > 0 && record.records.length <= 12 ? record.records : [record]
+  if (record.machine !== document.machine || record.moduleId !== document.id || record.moduleVersion !== document.version) throw new Error(document.id + ': capture record identity differs')
+  for (const record of records) if (record.schemaVersion !== 1 || record.machine !== document.machine || record.moduleId !== document.id || record.moduleVersion !== document.version || !/^[a-f0-9]{64}$/.test(record.imageSha256)) throw new Error(document.id + ': capture record must identify this module, version and built image')
   for (const path of new Set([...('screenshots' in document.access ? document.access.screenshots : []), ...docs.screenshots])) {
     const media = document.media.find(item => item.path === path && item.kind === 'screenshot')
-    const capture = record.captures?.find(item => item.path === path)
+    const matches = records.flatMap(record => (record.captures ?? []).filter(item => item.path === path).map(capture => ({ record, capture })))
+    if (matches.length !== 1) throw new Error(document.id + ': screenshot needs one capture record: ' + path)
+    const { record, capture } = matches[0]
     if (!path.endsWith('.png') || !media?.capture || media.capture.imageSha256 !== record.imageSha256 || media.capture.release !== record.firmware || !capture?.plan?.trim()) throw new Error(document.id + ': screenshot needs a matching image/release and panel-input plan in capture.json: ' + path)
     const bytes = await readFile(await resolveModuleFile(folder, path))
     requireMonochromePng(bytes)
