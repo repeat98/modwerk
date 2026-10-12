@@ -1444,3 +1444,61 @@ retained Analog BD record was re-verified against the new packages (162
 native OS and GNU bootloader comparisons, 50 matching refusals, 6 firmware
 round trips) before its source-inventory binding was updated. No firmware is
 committed.
+
+## FM Synth 0.1.5 (octatrick 2.13 quantizer) — 12 October 2026
+
+Local draft by the module author's port; not published, no owner approval;
+it follows the unpublished 0.1.4 above. FM Synth's bundled quantizer moves to
+the author's 2.13 line (`timhastie/octatrick-modules` `48b89e7`, tag `v2.13`,
+which leaves `synth/` byte-identical to `v2.12`): with a scale on, a MIDI
+track's NOTE knob and NOTE locks step through the scale from ROOT and its
+CHROMATIC keys play the scale from ROOT (three new detours: `0x40055382`,
+`0x40050b98`, `0x400436a8`); chord offsets, TRAN, the arpeggiator, MIDI IN
+and SCALE OFF are unchanged. The CHROMATIC drawer hook at `0x400449be` is
+now the author's own form of Modwerk's #264 fix, so `quantizer.s` is his
+file byte for byte; its manifest is his 2.13 manifest in stock-guard form
+(23 guards, each checked against the developer's MAIN OS). Inventory:
+`sdk/imports/synth-48b89e7.json`; native source SHA-256 `401d3b61…`.
+
+The native exporter built MAIN OS `37661aee…` (update file 462,628 B,
+`b42048d5…`; Modwerk's TS packer decodes it to that MAIN OS and re-encodes
+the same bytes). The FM engine and chooser objects are byte-identical to
+0.1.4's and link to the same addresses; the page links to the author's
+ratified bytes; the author's 2.13 `tools/align_check.py` found every
+instruction and every detour target at an even address. In the pinned
+emulator on that image: the NOTE knob and NOTE locks matched a model of the
+rules in 409 of 409 cases over eight SCALE / ROOT settings (0.1.4's image
+matches the stock clamp in all 409), the MIDI CHROMATIC keys in 245 of 245
+(note-offs balanced, the arpeggiator fed snapped notes), CHROMATIC on a MIDI
+track draws and plays, the sequencer, MIDI IN and the arpeggiator send the same MIDI
+events as on 0.1.4's image under SCALE OFF and three scales. The quantizer's added cost is 49–77
+instructions per CHROMATIC key and up to 278 / 302 per NOTE knob / lock
+turn of three clicks, all in the UI task. The module's `verify.py` Part
+smoke, two-track Part / project save and reload, a fresh project load and
+the 2.12 machine-change init passed on this image. Exact memory: 44,404
+module-owned bytes (+592: the quantizer's DRAM unit +360, three hook sites,
+the larger loader); stack bound 352 B, unchanged. Cycles: 0.1.4's table
+(same FM objects); the bounding cards rerun twice on this image stay inside
+the rig's spread, and the record's bounds over all seven runs give one VOIC
+4 track 81,459 of 95,779 cycles/block. Seven LCD captures (five
+byte-identical to 0.1.4's; a MIDI track's CHROMATIC page is new). The
+hardware fields are `TIM:` placeholders pending the author's MKI report of
+this exact image.
+
+POLY8's bridge still stops on the author's chooser, as for 0.1.4, so
+`sdk/native-comparisons/synth.json` is not refreshed. Without POLY8 in the pool (a local
+run on main `263aa1b` in a scratch copy, not committed) the comparison gave
+122 selections: 35 builds match outside the platform writes, 87 refusals
+match, 0 mismatches, the native side on the host toolchain instead of Docker.
+
+Packages were rebuilt from source with `--include-requested` and imported
+with `--development` on main `263aa1b`; only the Synth objects and the Synth
+version change against main's 0.1.2 packages (Modwerk's `fmregistration`
+object is gone, the author's `poly` and `fmmachine` objects come in, the
+bundled quantizer objects change); 0.1.4 has no package commit of its own on
+this branch, so these packages serve both.
+A fresh import of the same build reproduces the committed assets
+(`--check-only --verify-existing`). The retained Analog BD record was
+re-verified against the new packages (162 native OS and GNU bootloader
+comparisons, 50 matching refusals, 6 firmware round trips) before its
+source-inventory binding was updated. No firmware is committed.

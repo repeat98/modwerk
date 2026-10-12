@@ -7,8 +7,9 @@ import unittest
 
 APP = Path(__file__).resolve().parents[2]
 ORIGINAL = json.loads((APP/'sdk/imports/synth-949f3be.json').read_text())
-PREVIOUS = json.loads((APP/'sdk/imports/synth-fixes-273-264.json').read_text())
-RECORD = json.loads((APP/'sdk/imports/synth-ca13ed8.json').read_text())
+PUBLISHED = json.loads((APP/'sdk/imports/synth-fixes-273-264.json').read_text())
+PREVIOUS = json.loads((APP/'sdk/imports/synth-ca13ed8.json').read_text())
+RECORD = json.loads((APP/'sdk/imports/synth-48b89e7.json').read_text())
 FOLDER = APP/RECORD['folder']
 sha = lambda path: hashlib.sha256(path.read_bytes()).hexdigest()
 
@@ -16,8 +17,10 @@ sha = lambda path: hashlib.sha256(path.read_bytes()).hexdigest()
 class SynthRelease(unittest.TestCase):
     def test_source_identities_and_complete_notices(self):
         self.assertEqual(RECORD['originalImport'], 'synth-949f3be.json')
-        self.assertEqual(RECORD['previousUpdate'], 'synth-fixes-273-264.json')
-        self.assertEqual(PREVIOUS['version'], '0.1.2-experimental')
+        self.assertEqual(RECORD['previousUpdate'], 'synth-ca13ed8.json')
+        self.assertEqual(PREVIOUS['previousUpdate'], 'synth-fixes-273-264.json')
+        self.assertEqual(PREVIOUS['version'], '0.1.4-experimental')
+        self.assertEqual(PUBLISHED['version'], '0.1.2-experimental')
         self.assertRegex(RECORD['authorPin']['revision'], r'^[a-f0-9]{40}$')
         files = {item['path']: item for item in RECORD['files']}
         on_disk = sorted(str(p.relative_to(FOLDER)) for p in FOLDER.rglob('*') if p.is_file() and '__pycache__' not in p.parts and p.name != '.DS_Store')
@@ -28,7 +31,8 @@ class SynthRelease(unittest.TestCase):
                 self.assertRegex(item['sourceSha256'], r'^[a-f0-9]{64}$')
                 if not item.get('changes'):
                     self.assertEqual(item['sourceSha256'], item['sha256'], path)
-        for path in ['upstream/synth/poly.s', 'upstream/synth/page.s', 'upstream/synth/machine.s', 'upstream/synth/engine_abi.inc', 'upstream/synth/README.md', 'upstream/LICENSE']:
+        for path in ['upstream/synth/poly.s', 'upstream/synth/page.s', 'upstream/synth/machine.s', 'upstream/synth/engine_abi.inc', 'upstream/synth/README.md', 'upstream/LICENSE',
+                     'upstream/quantizer/quantizer.s', 'upstream/quantizer/core.s', 'upstream/quantizer/keys.s', 'upstream/quantizer/scale.s', 'upstream/quantizer/README.md']:
             self.assertEqual(files[path]['revision'], RECORD['authorPin']['revision'])
             self.assertEqual(files[path]['sourceSha256'], files[path]['sha256'], path + ' must be the author file byte for byte')
         for path in RECORD['removed']:
@@ -47,6 +51,8 @@ class SynthRelease(unittest.TestCase):
             if name.endswith('_STOCK'):
                 self.assertIsInstance(value, ast.Call, name)
                 self.assertEqual(value.func.id, 'stock_guard', name)
+        quantizer = (FOLDER/'upstream/quantizer/manifest.py').read_text()
+        self.assertNotRegex(quantizer, r'(Detour\(0x[0-9a-fA-F]+,\s*H\(|expect=H\()')
         top = (FOLDER/'manifest.py').read_text()
         self.assertNotIn('fromhex("', top)
         guards = json.loads((FOLDER/'stock-guards.json').read_text())['guards']

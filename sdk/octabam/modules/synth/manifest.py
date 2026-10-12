@@ -1,4 +1,4 @@
-"""FM SYNTH: Tim Hastie's FM engine and machine-list chooser (octatrick 2.12).
+"""FM SYNTH: Tim Hastie's FM engine and machine-list chooser (octatrick 2.12 engine, 2.13 quantizer).
 
 The engine, the PLAYBACK page and, since 2.10, the FM SYNTH chooser itself
 (upstream/synth/machine.s: FLEX + "FM", 1 in unused NEIGHBOR PLAYBACK bytes,
@@ -13,7 +13,9 @@ TYPE scrolls); a build with FM Synth alone has one row, FM SYNTH, and the
 units' remix.inc sets HAVE_SYDRUM 0, so the engine assembles as 2.10's.
 This wrapper adds only what the Modwerk build needs: the page as a Linked unit at its pinned cave, checked against the
 author's ratified page bytes; the resolver's jump into it; and the matching
-quantizer bundled privately. Combining with the public quantizer or Analog BD
+quantizer bundled privately (the author's 2.13 quantizer: on a MIDI track the NOTE
+knob, NOTE locks and the CHROMATIC keys follow SCALE and ROOT, and the CHROMATIC
+drawer hook sits at the common push 0x400449be, Modwerk #264). Combining with the public quantizer or Analog BD
 is refused for overlapping registrations. The author's manifest also names the
 Analog BD conflict as a native `conflicts` entry; Modwerk declares conflicts in
 octamod.module.json (compatibility.conflicts already lists analog-bassdrum), and
@@ -47,7 +49,7 @@ _RESOLVER_JMP=bytes.fromhex('4ef9')+(_UP['PAGE_AT']+_UP['PG_RESOLVE_AT']).to_byt
 MODULE=dataclasses.replace(_SY,
     category=Category.MACHINES, author='timhastie', author_url='https://github.com/timhastie',
     doc='Dedicated FM SYNTH machine: two-operator FM, one to four voices, chords, MIDI and glide.',
-    proof=Proof.UNTESTED, proof_note='Octatrick 2.12 engine and machine list; emulator-qualified, hardware report for this build pending',
+    proof=Proof.UNTESTED, proof_note='Octatrick 2.12 engine and machine list, 2.13 quantizer; emulator-qualified, hardware report for this build pending',
     requires=(), conflicts=(), cf_patches=(),
     linked=_SY.linked+_QZ.linked+(
         Linked('fmpage',_REL('upstream/synth/page.s'),cpu='5475',cave_addr=_UP['PAGE_AT'],

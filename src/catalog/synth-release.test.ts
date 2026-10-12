@@ -16,7 +16,7 @@ import { MODULES, resolveSelection } from './modules'
 
 const folder = resolve('sdk/octabam/modules/synth')
 
-describe('FM Synth 0.1.4 (octatrick 2.12)', () => {
+describe('FM Synth 0.1.5 (octatrick 2.12 engine, 2.13 quantizer)', () => {
   it('publishes through measured cycles, exact memory and the attributed hardware report of this exact source and image', async () => {
     const document = parseModuleDocument(source)
     const q = document.tests.qualification!
@@ -37,7 +37,7 @@ describe('FM Synth 0.1.4 (octatrick 2.12)', () => {
     expect(resolveSelection([document.id]).map(module => module.id)).toEqual(['synth'])
     expect(MODULES.some(module => module.id === document.id)).toBe(true)
     for (const mutate of [
-      (d: typeof document) => { d.version = '0.1.5-experimental' },
+      (d: typeof document) => { d.version = '0.1.6-experimental' },
       (d: typeof document) => { d.tests.qualification!.sourceSha256 = 'f'.repeat(64) },
     ]) {
       const changed = structuredClone(document); mutate(changed)

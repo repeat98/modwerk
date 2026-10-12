@@ -1,0 +1,415 @@
+{
+  "schemaVersion": 1,
+  "id": "synth",
+  "version": "0.1.5-experimental",
+  "status": "local-draft-unpublished",
+  "basedOn": "263aa1b9a8db278b1da96a8a33e07f6f65a94a74",
+  "originalImport": "synth-949f3be.json",
+  "previousUpdate": "synth-ca13ed8.json",
+  "folder": "sdk/octabam/modules/synth",
+  "authorPin": {
+    "repository": "https://github.com/timhastie/octatrick-modules",
+    "revision": "48b89e7e5315971bf5c29a3fd86183abe8df48f3",
+    "path": "synth",
+    "version": "2.13 (commit 48b89e7, tag v2.13; the engine, page and chooser files are the same bytes as v2.12 ca13ed8)"
+  },
+  "hooks": {
+    "added2_13": [
+      "0x40055382 qz_mknob (jsr, 8 B): the knob handler's MIDI-track clamp just before its store 0x4005538a (which stays stock) -- a MIDI track's NOTE knob steps by scale degree from ROOT",
+      "0x40050b98 qz_mplock (jsr, 10 B): the MIDI p-lock editor's lock store -- a NOTE lock steps by scale degree from ROOT",
+      "0x400436a8 qz_mkey (jmp, 10 B): the MIDI CHROMATIC key press -- the key's note + ROOT snapped to the nearest scale note (ties down); the note-on, the arpeggiator's add, the held note (so the note-off) and the live recorder take it"
+    ],
+    "unchangedSite": [
+      "0x400449be qz_octnum (jmp, 8 B): the CHROMATIC drawer's common argument push -- Modwerk 0.1.2's #264 site, now the author's own form (2.13); a MIDI track keeps stock's number, with ROOT's name before it when a scale is on"
+    ],
+    "engine": "The FM engine (poly.s), the chooser (machine.s), the page (page.s), engine_abi.inc and upstream/synth/manifest.py are unchanged from 0.1.4 (same bytes); their hooks are synth-ca13ed8.json's."
+  },
+  "files": [
+    {
+      "path": "LICENSE",
+      "sha256": "669826ea22d68ec500f50eb955bf0faf98b4dba20cb713644a1ca864f951175f",
+      "previousSha256": "4d8c71b951cb102a1e6cb761d8e1101748346de633d695a85c48461f49a2cfa2"
+    },
+    {
+      "path": "OCTABAM-LICENSE",
+      "sha256": "f91a43799d9e31ccc3540f385f68c4d6ff5a096f93ae933be2ce98f6b3f7f113",
+      "previousSha256": "f91a43799d9e31ccc3540f385f68c4d6ff5a096f93ae933be2ce98f6b3f7f113"
+    },
+    {
+      "path": "OCTABAM.md",
+      "sha256": "ae18a9a1dfc7512fd199141e8ff2c1d7932fcda9e08c5e90f4ec862246cb3e79",
+      "previousSha256": "be0806b7c13cca799018bce3e1f431bf7c29362ff16ca04ad06e27a80b95eedf"
+    },
+    {
+      "path": "README.md",
+      "sha256": "581d224a2fae36253ca1ae919aaad5d92897b51a8e22505655ea871fac580829",
+      "previousSha256": "827248dce8d0577732c416ff2921d8ef34d7383740e341b1b752b4b8b63b4fb5"
+    },
+    {
+      "path": "TESTING.md",
+      "sha256": "78c25654ea7ff2802946bd093ddc5d3963fb126c3f2911d0ff0b224d7981c005",
+      "previousSha256": "08b83d4b002489695b300efae2b58c4d023085dbc7668671e0e96c3ae688e0ad"
+    },
+    {
+      "path": "evidence/native-smoke.json",
+      "sha256": "67edca9902c9fd839d81ca0ff4ee406c5c7931f4550d4faa0bbecb139824ddf0",
+      "previousSha256": "66ebc4af8515b6af8a83730e04769fc8a85a806c3274fa3e652cba78adefbcdc"
+    },
+    {
+      "path": "evidence/release-0.1.1/TESTING.md",
+      "sha256": "682641b3cbfec00bb58b70ea5cd172d8b07e63430c2af851ccea3f3ee9e58173",
+      "previousSha256": "682641b3cbfec00bb58b70ea5cd172d8b07e63430c2af851ccea3f3ee9e58173"
+    },
+    {
+      "path": "evidence/release-0.1.1/audio.json",
+      "sha256": "aea4e6b640318b3db237cb0bfe0af184f303c0a70caf6870cc8a630225e49668",
+      "previousSha256": "aea4e6b640318b3db237cb0bfe0af184f303c0a70caf6870cc8a630225e49668"
+    },
+    {
+      "path": "evidence/release-0.1.1/browser-audio.json",
+      "sha256": "cb35c8c26264ca44cb98ccc3f66a053f1ff93c1ac2d414dbc397736d43dab028",
+      "previousSha256": "cb35c8c26264ca44cb98ccc3f66a053f1ff93c1ac2d414dbc397736d43dab028"
+    },
+    {
+      "path": "evidence/release-0.1.1/build-approval.json",
+      "sha256": "bb73f69b436d48c6e1a6c38b8ff2187d6c6512130d770634e279725b2ebebbda",
+      "previousSha256": "bb73f69b436d48c6e1a6c38b8ff2187d6c6512130d770634e279725b2ebebbda"
+    },
+    {
+      "path": "evidence/release-0.1.1/native-build.json",
+      "sha256": "618c96e7c6eb1f412bd1ef1cc82c0887814f6ddb99dd6a69f2e431f0a2fb1f8f",
+      "previousSha256": "618c96e7c6eb1f412bd1ef1cc82c0887814f6ddb99dd6a69f2e431f0a2fb1f8f"
+    },
+    {
+      "path": "evidence/release-0.1.1/octemu-walk.jsonl",
+      "sha256": "7625d9d9047393924668b8fee9d6c032507c6087b14b48fcec01d81e5ba9bc3b",
+      "previousSha256": "7625d9d9047393924668b8fee9d6c032507c6087b14b48fcec01d81e5ba9bc3b"
+    },
+    {
+      "path": "evidence/release-0.1.1/owner-hardware.md",
+      "sha256": "f48c3e5b54463bf91b695189e6c5e9a51b9876bfea5561e775b550c1e25d7e6f",
+      "previousSha256": "f48c3e5b54463bf91b695189e6c5e9a51b9876bfea5561e775b550c1e25d7e6f"
+    },
+    {
+      "path": "evidence/release-0.1.1/software.json",
+      "sha256": "f74a7cf16898043c03abe3e3c1b591abfe5d908eecc76367aceddb6d2e8b85a0",
+      "previousSha256": "f74a7cf16898043c03abe3e3c1b591abfe5d908eecc76367aceddb6d2e8b85a0"
+    },
+    {
+      "path": "evidence/release-0.1.1/storage.json",
+      "sha256": "87b0368ad8e955f178531cea0faeb3b7124e2c211c58899b9ea3015318ce6ed6",
+      "previousSha256": "87b0368ad8e955f178531cea0faeb3b7124e2c211c58899b9ea3015318ce6ed6"
+    },
+    {
+      "path": "evidence/release-0.1.2/TESTING.md",
+      "sha256": "d096affbb1985a3fd495a55d546cd67759973d84754aa68eaff22048a04be60c",
+      "previousSha256": "d096affbb1985a3fd495a55d546cd67759973d84754aa68eaff22048a04be60c"
+    },
+    {
+      "path": "evidence/release-0.1.2/build-approval.json",
+      "sha256": "11984dd38136e2947c6e05920b71cd65ecfb4b2d85074c4d781f720502f0238f",
+      "previousSha256": "11984dd38136e2947c6e05920b71cd65ecfb4b2d85074c4d781f720502f0238f"
+    },
+    {
+      "path": "evidence/release-0.1.2/composition.json",
+      "sha256": "e47b77ee626dd014836e6561eb3e68034b68b404c77bc19d203347695dc1f466",
+      "previousSha256": "e47b77ee626dd014836e6561eb3e68034b68b404c77bc19d203347695dc1f466"
+    },
+    {
+      "path": "evidence/release-0.1.2/development-regressions.json",
+      "sha256": "10772b3699adebb982818e09620c4febbd2e45ef7b67ed6ca49ad4d82eee8b69",
+      "previousSha256": "10772b3699adebb982818e09620c4febbd2e45ef7b67ed6ca49ad4d82eee8b69"
+    },
+    {
+      "path": "evidence/release-0.1.2/media/amp-max-fixed.png",
+      "sha256": "d776d287d403deffa07330350a33d4b2313db2c6d0710610ec46b4ba98b0fc1f",
+      "previousSha256": "d776d287d403deffa07330350a33d4b2313db2c6d0710610ec46b4ba98b0fc1f"
+    },
+    {
+      "path": "evidence/release-0.1.2/media/capture.json",
+      "sha256": "3e90641f7a8a8b0f872864f308836308d4fd3190e2095f507c4f724fd5f2a34b",
+      "previousSha256": "3e90641f7a8a8b0f872864f308836308d4fd3190e2095f507c4f724fd5f2a34b"
+    },
+    {
+      "path": "evidence/release-0.1.2/media/midi-synth-chromatic-fixed.png",
+      "sha256": "0b4a8a395c4e17f4fd4c675857e692716c7d0f9345b45680887fb25edd4f2468",
+      "previousSha256": "0b4a8a395c4e17f4fd4c675857e692716c7d0f9345b45680887fb25edd4f2468"
+    },
+    {
+      "path": "evidence/release-0.1.2/media/poly-controls.png",
+      "sha256": "376fcdc83ed4df158bf6cb747f6deb92e2518172f02f5f23ca9a946b6000911a",
+      "previousSha256": "376fcdc83ed4df158bf6cb747f6deb92e2518172f02f5f23ca9a946b6000911a"
+    },
+    {
+      "path": "evidence/release-0.1.2/media/regression-capture.json",
+      "sha256": "a42ea9a3bfd9ee50445face5a551235fbae5a10579820cc2bc44e7bbdfc634f6",
+      "previousSha256": "a42ea9a3bfd9ee50445face5a551235fbae5a10579820cc2bc44e7bbdfc634f6"
+    },
+    {
+      "path": "evidence/release-0.1.2/midi-walk.jsonl",
+      "sha256": "a755ea8eaf205ab4c3a0f5639dcaee4019d5602aeb6dec5bc026d0bb4272b4ba",
+      "previousSha256": "a755ea8eaf205ab4c3a0f5639dcaee4019d5602aeb6dec5bc026d0bb4272b4ba"
+    },
+    {
+      "path": "evidence/release-0.1.2/mono-max-walk.jsonl",
+      "sha256": "a5bafa1d26e8d09771ae4b7e4aee046fddc10dac88cd9cee482179bac6be2272",
+      "previousSha256": "a5bafa1d26e8d09771ae4b7e4aee046fddc10dac88cd9cee482179bac6be2272"
+    },
+    {
+      "path": "evidence/release-0.1.2/poly-max-walk.jsonl",
+      "sha256": "4d407f2777a1b166ef11b096b80bbeaf3c4f546f647d776461cd821e852ed615",
+      "previousSha256": "4d407f2777a1b166ef11b096b80bbeaf3c4f546f647d776461cd821e852ed615"
+    },
+    {
+      "path": "evidence/release-0.1.2/regressions.json",
+      "sha256": "cf0043058c17eb4655b1d22c441063f73dbf6d42984506a7041a95b18a4d8e15",
+      "previousSha256": "cf0043058c17eb4655b1d22c441063f73dbf6d42984506a7041a95b18a4d8e15"
+    },
+    {
+      "path": "evidence/release-0.1.2/software-checks.json",
+      "sha256": "61f410796ea1453cd657614629c8e71a537ef9bdc89f42f27085b7b76dac0fb4",
+      "previousSha256": "61f410796ea1453cd657614629c8e71a537ef9bdc89f42f27085b7b76dac0fb4"
+    },
+    {
+      "path": "manifest.py",
+      "sha256": "f364cd97b5a2a416b3029752fe2ce0691fc977d59203419d9d5a52bbeb7913b7",
+      "previousSha256": "e1f89e0e9557e9e615af51e07e87140fc1e8b3a300956339a2f25748a641ef92"
+    },
+    {
+      "path": "media/LICENSE.md",
+      "sha256": "d80830f21f4a9da2508f723078beedce2920ff3655e5dfdc8bb54bec82113f47",
+      "previousSha256": "9157e7a9de0a397617e28af2326c2e83d7ecb98eee209ece7495f9b5850622fe"
+    },
+    {
+      "path": "media/audio-preview.json",
+      "sha256": "55cb73aec46766a7c285f8c2258edb225bcec17a74435ade8fd410cd93d360ca"
+    },
+    {
+      "path": "media/audio-preview.mp3",
+      "sha256": "b44fa27659fd947eacf5d0dfe186cddfeaf0ecef44b0cfe7d59b48e3ac185f7f"
+    },
+    {
+      "path": "media/capture.json",
+      "sha256": "fe025c685875be38e19155769cd6bd0d867e2637339decf3dcfb6cc959144727",
+      "previousSha256": "aba4e896a00418964b801da68fbccd8869523d2ddeb08cb979c22fa617c672aa"
+    },
+    {
+      "path": "media/ot-controls.png",
+      "sha256": "2eb52e9b732308891e289aa23d92556a87dd8820b12a37cbe73f66e720a162f0",
+      "previousSha256": "2eb52e9b732308891e289aa23d92556a87dd8820b12a37cbe73f66e720a162f0"
+    },
+    {
+      "path": "media/ot-glide.png",
+      "sha256": "f67a2c2d5fff741e4a1cca6bf897af7a56d857cb18705d5d64c1e404dfa3ec7c",
+      "previousSha256": "77b4cf73fd16e96d1c78f5a9cdd0590b20a7958c614d1c6cdb93b77791dc505b"
+    },
+    {
+      "path": "media/ot-legato.png",
+      "sha256": "e5cd86583126a834f8a9351a8f2b51bca9f76c101023e37db4c933be957d5bc8",
+      "previousSha256": "e5cd86583126a834f8a9351a8f2b51bca9f76c101023e37db4c933be957d5bc8"
+    },
+    {
+      "path": "media/ot-lfo-setup.png",
+      "sha256": "ab3071680706882acdf5f9ccdefb1adcc24c50690afd90560ca42e25535e3e94",
+      "previousSha256": "ab3071680706882acdf5f9ccdefb1adcc24c50690afd90560ca42e25535e3e94"
+    },
+    {
+      "path": "media/ot-location.png",
+      "sha256": "4e1d84898790433813720c437d2e767cb3225c7770ea15be9115f76e70b82270",
+      "previousSha256": "4e1d84898790433813720c437d2e767cb3225c7770ea15be9115f76e70b82270"
+    },
+    {
+      "path": "media/ot-midi-chromatic.png",
+      "sha256": "29ee87e6fef88d3ab7c8a52a90d7c5bc69852f9d175720e89b76c723985a45d0"
+    },
+    {
+      "path": "media/ot-voices.png",
+      "sha256": "603b3e5d31446bf31570b02dc56b6efccb958b371a06b87c3dc79a6a6090d1e5",
+      "previousSha256": "603b3e5d31446bf31570b02dc56b6efccb958b371a06b87c3dc79a6a6090d1e5"
+    },
+    {
+      "path": "octamod.module.json",
+      "sha256": "c116a69c3ea6c3ff568fff823b4a3b329274b0cd1e1feadd7fa6d64ae910bcee",
+      "previousSha256": "2650be7edc1198c4864f9018925965cd1ff6b1d2ca2fbf31abae13a5d173a5a6"
+    },
+    {
+      "path": "presentation/LICENSE",
+      "sha256": "dc99139facc8371c0830c830eb381263467de65e6fd834ff7f1642996dd9bc8a",
+      "previousSha256": "dc99139facc8371c0830c830eb381263467de65e6fd834ff7f1642996dd9bc8a"
+    },
+    {
+      "path": "presentation/thumbnail.svg",
+      "sha256": "451e1fcf768d8c13ea8f5be9c77c9ad82c49bc28c373fb07c8809954dfd3e21f",
+      "previousSha256": "451e1fcf768d8c13ea8f5be9c77c9ad82c49bc28c373fb07c8809954dfd3e21f"
+    },
+    {
+      "path": "release-notes.json",
+      "sha256": "50e2dd52ea63e6ea351f9899eba440ffcab069326e83e9097c96ec9eda360f74",
+      "previousSha256": "f84f858de9b6817dde325e197c51c8f91fb7601ceeafdf97d1da5b4e54d360af"
+    },
+    {
+      "path": "stock-guards.json",
+      "sha256": "da4ed4a80b845a759e0a5fbbf95c00b477fd01a2bc82e15653e5378a5302f02a",
+      "previousSha256": "09c5cc87e78b0a0498629137233f6fd9eba6bb49772f10291f371a942f4d6a95"
+    },
+    {
+      "path": "upstream/LICENSE",
+      "sha256": "9895a0c9da98720fec21e348456c9716ca81ca6438b7f046eca1fb2f456b24a7",
+      "previousSha256": "1f72dbab3547d1d94861cf9f129519301295395129fe3f56760ed767d07f04fe",
+      "repository": "https://github.com/timhastie/octatrick-modules",
+      "revision": "48b89e7e5315971bf5c29a3fd86183abe8df48f3",
+      "sourcePath": "LICENSE",
+      "sourceBytes": 5068,
+      "sourceSha256": "9895a0c9da98720fec21e348456c9716ca81ca6438b7f046eca1fb2f456b24a7"
+    },
+    {
+      "path": "upstream/quantizer/README.md",
+      "sha256": "4b12e1f27539cf91aabe9f9282c2f96f168c22803d5986442ed30b192c17f1fe",
+      "previousSha256": "9b7e0323af6133d0260b2e1a69c4321c8af4dad776bbce64fd8b4b9a8c04bfb2",
+      "repository": "https://github.com/timhastie/octatrick-modules",
+      "revision": "48b89e7e5315971bf5c29a3fd86183abe8df48f3",
+      "sourcePath": "quantizer/README.md",
+      "sourceBytes": 87033,
+      "sourceSha256": "4b12e1f27539cf91aabe9f9282c2f96f168c22803d5986442ed30b192c17f1fe"
+    },
+    {
+      "path": "upstream/quantizer/core.s",
+      "sha256": "2992b6c85cff440de03ae84eb22dee8b8a83a84f23e94b699404d28940b6f958",
+      "previousSha256": "2992b6c85cff440de03ae84eb22dee8b8a83a84f23e94b699404d28940b6f958",
+      "repository": "https://github.com/timhastie/octatrick-modules",
+      "revision": "48b89e7e5315971bf5c29a3fd86183abe8df48f3",
+      "sourcePath": "quantizer/core.s",
+      "sourceBytes": 5883,
+      "sourceSha256": "2992b6c85cff440de03ae84eb22dee8b8a83a84f23e94b699404d28940b6f958"
+    },
+    {
+      "path": "upstream/quantizer/keys.s",
+      "sha256": "e2ffdbfae34b0828794a4eb4cc229e3efcaed25dc953bf7c05c13f6e37f65587",
+      "previousSha256": "e2ffdbfae34b0828794a4eb4cc229e3efcaed25dc953bf7c05c13f6e37f65587",
+      "repository": "https://github.com/timhastie/octatrick-modules",
+      "revision": "48b89e7e5315971bf5c29a3fd86183abe8df48f3",
+      "sourcePath": "quantizer/keys.s",
+      "sourceBytes": 1765,
+      "sourceSha256": "e2ffdbfae34b0828794a4eb4cc229e3efcaed25dc953bf7c05c13f6e37f65587"
+    },
+    {
+      "path": "upstream/quantizer/manifest.py",
+      "sha256": "e114460f9e0107bbda9c6663ba232f6a52c8dd477ae5eb10efe92e918b5b5a63",
+      "previousSha256": "f6a4af8e934500c57eacec9fb5a994ecd2c0821f60d05696249a3ea79bf6215b",
+      "repository": "https://github.com/timhastie/octatrick-modules",
+      "revision": "48b89e7e5315971bf5c29a3fd86183abe8df48f3",
+      "sourcePath": "quantizer/manifest.py",
+      "sourceBytes": 23039,
+      "sourceSha256": "5640dea05225ddf95e964ab6f257f86eae316421796c294b117222c200758caa",
+      "changes": [
+        "Modwerk's stock-guard form of the author's 2.13 manifest: each of its 23 embedded stock expectations (22 detour sites and the poke's expect) replaced by stock_guard(address, length, SHA-256), each literal checked against the developer's MAIN OS 164f3122..., and the stock_guard import added; nothing else changed (descriptions, the per-build include and the poke's write are the author's)."
+      ]
+    },
+    {
+      "path": "upstream/quantizer/quantizer.s",
+      "sha256": "bdf7fe4815d0a742ceb77a4688db0eeb79f6c2d472fcc4f9bfb869a77db9ea8c",
+      "previousSha256": "0e6c0a0238a563a1092eb9ab8c1b7962038a6ca74d29f8978cee3bb8e5eccba7",
+      "repository": "https://github.com/timhastie/octatrick-modules",
+      "revision": "48b89e7e5315971bf5c29a3fd86183abe8df48f3",
+      "sourcePath": "quantizer/quantizer.s",
+      "sourceBytes": 81971,
+      "sourceSha256": "bdf7fe4815d0a742ceb77a4688db0eeb79f6c2d472fcc4f9bfb869a77db9ea8c"
+    },
+    {
+      "path": "upstream/quantizer/scale.s",
+      "sha256": "82242c407847ac61a6f60fe15bdc5b0b4fc852bac82c39745b5c838ec9389c64",
+      "previousSha256": "82242c407847ac61a6f60fe15bdc5b0b4fc852bac82c39745b5c838ec9389c64",
+      "repository": "https://github.com/timhastie/octatrick-modules",
+      "revision": "48b89e7e5315971bf5c29a3fd86183abe8df48f3",
+      "sourcePath": "quantizer/scale.s",
+      "sourceBytes": 695,
+      "sourceSha256": "82242c407847ac61a6f60fe15bdc5b0b4fc852bac82c39745b5c838ec9389c64"
+    },
+    {
+      "path": "upstream/synth/README.md",
+      "sha256": "8c3f499e4d327c78115a42c971e3f39f27d6dd7a4dffde222d3e3d8fb8f368ad",
+      "previousSha256": "8c3f499e4d327c78115a42c971e3f39f27d6dd7a4dffde222d3e3d8fb8f368ad",
+      "repository": "https://github.com/timhastie/octatrick-modules",
+      "revision": "48b89e7e5315971bf5c29a3fd86183abe8df48f3",
+      "sourcePath": "synth/README.md",
+      "sourceBytes": 324402,
+      "sourceSha256": "8c3f499e4d327c78115a42c971e3f39f27d6dd7a4dffde222d3e3d8fb8f368ad"
+    },
+    {
+      "path": "upstream/synth/engine_abi.inc",
+      "sha256": "50a855a7c0e148332bae159159584965baa709230b7e59d0bf8644c7ff51adf6",
+      "previousSha256": "50a855a7c0e148332bae159159584965baa709230b7e59d0bf8644c7ff51adf6",
+      "repository": "https://github.com/timhastie/octatrick-modules",
+      "revision": "48b89e7e5315971bf5c29a3fd86183abe8df48f3",
+      "sourcePath": "synth/engine_abi.inc",
+      "sourceBytes": 4596,
+      "sourceSha256": "50a855a7c0e148332bae159159584965baa709230b7e59d0bf8644c7ff51adf6"
+    },
+    {
+      "path": "upstream/synth/machine.s",
+      "sha256": "63ff52340e82f55535a81a678921f3be1c7a281dcd05f25aaea072221c01cd50",
+      "previousSha256": "63ff52340e82f55535a81a678921f3be1c7a281dcd05f25aaea072221c01cd50",
+      "repository": "https://github.com/timhastie/octatrick-modules",
+      "revision": "48b89e7e5315971bf5c29a3fd86183abe8df48f3",
+      "sourcePath": "synth/machine.s",
+      "sourceBytes": 42214,
+      "sourceSha256": "63ff52340e82f55535a81a678921f3be1c7a281dcd05f25aaea072221c01cd50"
+    },
+    {
+      "path": "upstream/synth/manifest.py",
+      "sha256": "197a85ad6a7abd5934ce423f6b227da26451bb2a933af890255fe3fb1c368383",
+      "previousSha256": "197a85ad6a7abd5934ce423f6b227da26451bb2a933af890255fe3fb1c368383",
+      "repository": "https://github.com/timhastie/octatrick-modules",
+      "revision": "48b89e7e5315971bf5c29a3fd86183abe8df48f3",
+      "sourcePath": "synth/manifest.py",
+      "sourceBytes": 60294,
+      "sourceSha256": "0337158f4cfe0500a88d42baaddcb679d7111aedc5f79250e18822c46c2cee6a",
+      "changes": [
+        "Unchanged from 0.1.4 (the author's file has the same bytes at 48b89e7 as at ca13ed8): every embedded stock expectation replaced by stock_guard(address, length, SHA-256) (53 guards); the precompiled PINNED_PAGE, its asserts, emit_page and the CavePatch removed (synth-ca13ed8.json)."
+      ]
+    },
+    {
+      "path": "upstream/synth/page.s",
+      "sha256": "8d85620ee336174eea12767745023897ff99b8f63589bff9dfd817642564965d",
+      "previousSha256": "8d85620ee336174eea12767745023897ff99b8f63589bff9dfd817642564965d",
+      "repository": "https://github.com/timhastie/octatrick-modules",
+      "revision": "48b89e7e5315971bf5c29a3fd86183abe8df48f3",
+      "sourcePath": "synth/page.s",
+      "sourceBytes": 27806,
+      "sourceSha256": "8d85620ee336174eea12767745023897ff99b8f63589bff9dfd817642564965d"
+    },
+    {
+      "path": "upstream/synth/poly.s",
+      "sha256": "9d2f68963a735b98e909d7537ce8896eba370aa651f984dbbb5085354071e6d8",
+      "previousSha256": "9d2f68963a735b98e909d7537ce8896eba370aa651f984dbbb5085354071e6d8",
+      "repository": "https://github.com/timhastie/octatrick-modules",
+      "revision": "48b89e7e5315971bf5c29a3fd86183abe8df48f3",
+      "sourcePath": "synth/poly.s",
+      "sourceBytes": 298601,
+      "sourceSha256": "9d2f68963a735b98e909d7537ce8896eba370aa651f984dbbb5085354071e6d8"
+    },
+    {
+      "path": "verify-audio.py",
+      "sha256": "d02b7b916d9b198b9e10e34d21c7eb0242267ef8bdac5762b5958721c05b0283",
+      "previousSha256": "d02b7b916d9b198b9e10e34d21c7eb0242267ef8bdac5762b5958721c05b0283"
+    },
+    {
+      "path": "verify-regressions.py",
+      "sha256": "86f6eb9e2a0c738212703bfcec2ad830910702e4064052b1b7e2bc10fbba444d",
+      "previousSha256": "86f6eb9e2a0c738212703bfcec2ad830910702e4064052b1b7e2bc10fbba444d"
+    },
+    {
+      "path": "verify.py",
+      "sha256": "685d4aa146ed206caf8c9d78acf0f635e727f8eccc359167bb46205d647f3a75",
+      "previousSha256": "685d4aa146ed206caf8c9d78acf0f635e727f8eccc359167bb46205d647f3a75"
+    }
+  ],
+  "removed": [
+    "media/ot-machine-list.png",
+    "media/ot-scale.png"
+  ],
+  "notes": [
+    "The author's 48b89e7 is the head of his quant-2.13 line (local tag v2.13; to be pushed to timhastie/octatrick-modules after his hardware test). From v2.12 (ca13ed8) it changes quantizer/quantizer.s, quantizer/manifest.py, quantizer/README.md, LICENSE (a sentence crediting Modwerk's #264 form of the drawer hook), README.md and tools/align_check.py; synth/ is unchanged. The bundled quantizer's quantizer.s, core.s, keys.s, scale.s and README.md are his 48b89e7 files byte for byte.",
+    "0.1.4-experimental (synth-ca13ed8.json) is still unpublished; this record follows it. The published version before both is 0.1.2-experimental."
+  ]
+}

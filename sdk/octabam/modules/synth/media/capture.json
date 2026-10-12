@@ -1,6 +1,6 @@
 {
   "firmware": "1.40C",
-  "imageSha256": "00fa6caab06dbfa95d5258b2f255fd174f3492a7aebfdbb7c3658ede9157033e",
+  "imageSha256": "37661aee03a49f310d47e1447f043489c1bce9430c13824dd49ab93ad835e236",
   "emulatorSha256": "9dc31d1249793fcf857fa6b1c1ac72ab7966646fd59f3e09e90683c8eb41e711",
   "setup": "Headless ot_emu; MKII panel; stopped transport; 128×64 LCD at integer scale 6.",
   "palette": {
@@ -229,7 +229,7 @@
     {
       "encoder": {
         "name": "LEVEL",
-        "delta": 1
+        "delta": 6
       }
     },
     {
@@ -242,6 +242,15 @@
       "press": [
         "DOWN"
       ]
+    },
+    {
+      "wait": 300
+    },
+    {
+      "encoder": {
+        "name": "LEVEL",
+        "delta": 9
+      }
     },
     {
       "wait": 300
@@ -315,6 +324,102 @@
     },
     {
       "capture": "ot-machine-list.png"
+    },
+    {
+      "press": [
+        "NO"
+      ]
+    },
+    {
+      "wait": 300
+    },
+    {
+      "press": [
+        "NO"
+      ]
+    },
+    {
+      "wait": 300
+    },
+    {
+      "press": [
+        "MIDI"
+      ]
+    },
+    {
+      "wait": 500
+    },
+    {
+      "press": [
+        "SRC"
+      ]
+    },
+    {
+      "wait": 300
+    },
+    {
+      "capture": "ot-midi-note-c3.png"
+    },
+    {
+      "encoder": {
+        "name": "A",
+        "delta": 1
+      }
+    },
+    {
+      "wait": 300
+    },
+    {
+      "capture": "ot-midi-note.png"
+    },
+    {
+      "hold": [
+        "FUNC"
+      ]
+    },
+    {
+      "wait": 200
+    },
+    {
+      "hold": [
+        "DOWN"
+      ]
+    },
+    {
+      "wait": 250
+    },
+    {
+      "release": [
+        "DOWN"
+      ]
+    },
+    {
+      "wait": 200
+    },
+    {
+      "wait": 300
+    },
+    {
+      "release": [
+        "FUNC"
+      ]
+    },
+    {
+      "wait": 500
+    },
+    {
+      "capture": "ot-midi-chromatic.png"
+    },
+    {
+      "press": [
+        "TRIG1"
+      ]
+    },
+    {
+      "wait": 300
+    },
+    {
+      "capture": "ot-midi-chromatic-key1.png"
     }
   ],
   "screenshots": {
@@ -323,14 +428,13 @@
     "ot-voices.png": "603b3e5d31446bf31570b02dc56b6efccb958b371a06b87c3dc79a6a6090d1e5",
     "ot-lfo-setup.png": "ab3071680706882acdf5f9ccdefb1adcc24c50690afd90560ca42e25535e3e94",
     "ot-legato.png": "e5cd86583126a834f8a9351a8f2b51bca9f76c101023e37db4c933be957d5bc8",
-    "ot-scale.png": "71ffe8fe7413a1e2eb0605ad7119159bba95db7f7734dc47ae13468f68a74d13",
-    "ot-glide.png": "77b4cf73fd16e96d1c78f5a9cdd0590b20a7958c614d1c6cdb93b77791dc505b",
-    "ot-machine-list.png": "47305d8bdb86bc29f838f4e3ba712af7b0a6e6d3c063e987adc9a59f82daa8ba"
+    "ot-glide.png": "f67a2c2d5fff741e4a1cca6bf897af7a56d857cb18705d5d64c1e404dfa3ec7c",
+    "ot-midi-chromatic.png": "29ee87e6fef88d3ab7c8a52a90d7c5bc69852f9d175720e89b76c723985a45d0"
   },
   "schemaVersion": 1,
   "moduleId": "synth",
-  "moduleVersion": "0.1.4-experimental",
-  "captured": "2026-10-11",
+  "moduleVersion": "0.1.5-experimental",
+  "captured": "2026-10-12",
   "imageProfile": {
     "modules": [
       "SYNTH MACHINE"
@@ -338,6 +442,6 @@
     "keepStockFx2": true,
     "staticStock": true
   },
-  "releaseProvenance": "Fresh 11 October captures from the native Synth 0.1.4 image on the author's octatrick 2.12 (MAIN OS 00fa6caa..., Modwerk's export-composition-proofs.py, author source ca13ed8, tag v2.12). Seven screenshots are byte-identical to the capture of the same plan on the 0.1.4 build of the 2.11 line (MAIN OS 248d987e..., author source 5f3d745). ot-voices.png differs by design: choosing FM SYNTH now writes its init, VOIC 1 into LFO 3's SPD3 byte, so the VOIC dial is drawn at its first position (the 2.11 build left the stock byte, which also reads VOIC 1). The plan is 0.1.2's with waits, plus LFO SETUP and SELECT MACHINE TYPE; ot-root.png was captured but is not committed (eight media per module). No hardware verification is conferred.",
-  "sourceSha256": "4fc06072b4039db83cba1600e949d00770c9753d974bbf76a5809f8e1be9e851"
+  "releaseProvenance": "Fresh 12 October captures from the native Synth 0.1.5 image (MAIN OS 37661aee..., Modwerk's export-composition-proofs.py, author source 48b89e7: the 2.12 engine, page and chooser and the 2.13 quantizer). The plan is 0.1.4's up to AMP SETUP, then SCALE MINOR, ROOT A and GLIDE in CONTROL > SEQUENCER, SELECT MACHINE TYPE, and a MIDI track: the NOTE page (C3, one NOTE click up to D3) and CHROMATIC (FUNC held, DOWN) with the readout A 3. Seven of the twelve captures are committed (a module carries at most eight media, one of them the audio preview); SRC SETUP, the FM page, the LFO page, LFO SETUP and AMP SETUP are byte-identical to 0.1.4's captures of the same plan on image 00fa6caa; SELECT MACHINE TYPE, also byte-identical to 0.1.4's, the SCALE and ROOT rows, the NOTE page and a key press are kept local.",
+  "sourceSha256": "401d3b61412aff964617581f9f0bfcfe0ac83d6a6ee970bb1440f2393a6ac60a"
 }

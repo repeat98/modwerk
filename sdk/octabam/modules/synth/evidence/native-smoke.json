@@ -1,5 +1,5 @@
 {
-  "imageSha256": "00fa6caab06dbfa95d5258b2f255fd174f3492a7aebfdbb7c3658ede9157033e",
+  "imageSha256": "37661aee03a49f310d47e1447f043489c1bce9430c13824dd49ab93ad835e236",
   "checks": {
     "eightTrackSelection": "passed",
     "sampleSlotsUnchanged": "passed",

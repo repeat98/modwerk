@@ -1,11 +1,13 @@
-# `synth` — SYNTH MACHINE (octabam build notes, 2.12)
+# `synth` — SYNTH MACHINE (octabam build notes, 2.12 engine, 2.13 quantizer)
 
 Adapted from Sam Banks's octabam `modules/synth/README.md` (pinned at
-`949f3be`, MIT) for the octatrick 2.12 line the module now carries.
+`949f3be`, MIT) for the octatrick line the module now carries: the 2.12 engine,
+page and chooser, and the 2.13 quantizer.
 
 A two-operator FM synth machine built from
 [timhastie/octatrick-modules](https://github.com/timhastie/octatrick-modules)
-at `ca13ed8` (tag `v2.12`), vendored under `upstream/`.
+at `48b89e7` (tag `v2.13`; its `synth/` files are the same bytes as `v2.12`
+`ca13ed8`), vendored under `upstream/`.
 `Kind.CF_PATCH`: the voice engine and the FM SYNTH chooser as DRAM units
 (`poly.s`, `machine.s`), the PLAYBACK page as a pinned ROM cave (`page.s`;
 the page descriptor itself is cloned from the unit's own ROM at first use,
@@ -51,6 +53,14 @@ again: the earlier `po_stop` hook there released held notes at every click.
 `upstream/synth/README.md` is the author's full description, with every
 measurement.
 
+Since 2.13 the bundled quantizer also acts on MIDI tracks: with a scale on, the
+NOTE knob (`qz_mknob` at `0x40055382`, the knob handler's MIDI clamp before
+its store `0x4005538a`, which stays stock), NOTE locks (`qz_mplock` at
+`0x40050b98`) and the MIDI CHROMATIC keys (`qz_mkey` at `0x400436a8`) follow
+SCALE and ROOT; the CHROMATIC drawer hook `qz_octnum` sits at the common
+argument push `0x400449be` (Modwerk #264, now the author's own form).
+`upstream/quantizer/README.md`, "MIDI tracks (2.13)", is his description.
+
 ## How it is built here
 
 `manifest.py` executes `upstream/synth/manifest.py` (the author's manifest,
@@ -62,7 +72,8 @@ Quantizer's objects). It adds the page as a `Linked` unit pinned at
 fails if `page.s` or the toolchain drifts from them), and one guarded poke at
 the page resolver (`0x40031ece`) that jumps to `pg_resolve` at the cave's
 +16, the same bytes the author's `emit_page` writes. `poly.s`, `machine.s`,
-`page.s` and `engine_abi.inc` are the author's files byte for byte. The
+`page.s` and `engine_abi.inc` are the author's files byte for byte, and so are
+the quantizer's `quantizer.s`, `core.s`, `keys.s` and `scale.s`. The
 author's manifest declares Analog BD as a native `conflicts` entry; the
 wrapper clears it, because Modwerk declares conflicts in
 `octamod.module.json`. The DRAM units are linked

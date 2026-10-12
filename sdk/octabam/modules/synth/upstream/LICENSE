@@ -41,8 +41,10 @@ The FM SYNTH machine-list chooser -- synth/machine.s and the chooser's parts of
 synth/poly.s, synth/page.s and quantizer/quantizer.s -- is adapted from
 Modwerk's FM Synth module (https://github.com/repeat98/modwerk,
 sdk/octabam/modules/synth, commit 1c1d938), whose chooser is derived from
-Modwerk's Analog BD chooser hooks. Their notices, as that module's LICENSE
-carries them:
+Modwerk's Analog BD chooser hooks. Since 2.13 the quantizer's CHROMATIC drawer
+hook at the drawer's common push (quantizer/quantizer.s qz_octnum at 0x400449be,
+Modwerk #264) takes the form of the quantizer that module bundles. Their
+notices, as that module's LICENSE carries them:
 
 Dedicated chooser, Part validation, sample-free transport and original presentation:
 

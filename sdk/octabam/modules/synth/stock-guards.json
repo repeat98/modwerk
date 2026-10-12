@@ -334,6 +334,24 @@
     },
     {
       "path": "upstream/quantizer/manifest.py",
+      "address": 1074090882,
+      "length": 8,
+      "sha256": "03bcaf390b2fd396821abc005afa9853b59e2fcaf10ddc223c001b3a9d276e08"
+    },
+    {
+      "path": "upstream/quantizer/manifest.py",
+      "address": 1074072472,
+      "length": 10,
+      "sha256": "9cb4af08e685b7a46a08340cfec555868a0568533c1fb6fc2ec37159dfd980d9"
+    },
+    {
+      "path": "upstream/quantizer/manifest.py",
+      "address": 1074017960,
+      "length": 10,
+      "sha256": "2ab0a5529e7748a00dea86e66bc4fbb6105ec7f36e73e481bb840f6570da98cc"
+    },
+    {
+      "path": "upstream/quantizer/manifest.py",
       "address": 1074068568,
       "length": 10,
       "sha256": "ddfca03eed59b4f4fffffc9061b138ce3e2a33c30712b5e377d94d054fa7b0f0"
