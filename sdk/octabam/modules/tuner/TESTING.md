@@ -20,7 +20,15 @@
 
 ## Hardware and audio quality
 
-The hardware fields of `tests.qualification` are `TIM:` placeholders until the author reports his MKI test of this exact image (MAIN OS `66489376…`; the test sheet asks for a sample of known pitch and its reading, a live input through a Thru machine against a reference tuner, closing by each key, the window open while the sequencer runs, and a power-cycle). `hardwareStatus` stays `historical` until then. History: the same `tuner.s` ran on the author's MKI in the Octatrick test build 3.0 b40 (29 September 2026: UP + TEMPO opens the window and tunes; readings not compared with a reference there), recorded in octabam as `HARDWARE` (sambanks/octabam#544). Audio quality: not applicable, the module makes and changes no audio. MKII: not run on hardware.
+**Report** (timhastie, MKI, 2026-10-13, the Tuner 0.1.0 update file, MAIN OS `66489376…`): Every item of the test sheet for the Tuner 0.1.0 update file (MAIN OS 66489376...) worked: the unit boots and reads OCTAMOD79; TEMPO alone opens the stock TEMPO window, FUNC + TEMPO taps tempo and UP alone does what it always does; with a sample of known pitch playing, UP held + TEMPO opens the tuner window with the note, the needle on the side the cents say, the cents and the frequency; a pitch change on the track moves the reading; a track key switches the tuned track while the window is open; it read a live instrument through a Thru machine; after STOP the last reading stays with HOLD, and a fresh window on silence shows --; TEMPO, YES, NO and UP + TEMPO each close it and leave the page underneath as it was; TEMPO then UP opens the stock TEMPO window and steps its BPM; open while a busy pattern plays, the audio does not click or drop out and the readings keep updating; the PROJECT menu takes over from it and UP + TEMPO opens it again afterwards; after a power-cycle TEMPO is stock, UP + TEMPO opens the tuner and the project loads and plays as before.
+
+Limitations:
+
+- The report is that each item of the sheet worked; the figures the sheet asks to note down (the sample's pitch and its reading, the live input's reading and the reference tuner's) were not recorded.
+- Play time, MIDI gear and track counts were not recorded.
+- MKI only: no MKII has run this image.
+
+History: the same `tuner.s` ran on the author's MKI in the Octatrick test build 3.0 b40 (29 September 2026: UP + TEMPO opens the window and tunes; readings not compared with a reference there), recorded in octabam as `HARDWARE` (sambanks/octabam#544). Audio quality: not applicable, the module makes and changes no audio. MKII: not run on hardware.
 
 ## Persistence and multiple instances
 

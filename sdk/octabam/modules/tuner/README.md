@@ -47,7 +47,7 @@ Put something pitched on a track: a sample of one note, a synth line, or a Thru 
 
 ## Compatibility and limitations
 
-OS 1.40C only. MKI and MKII share the hook sites; the module has run on the emulator with the MKII panel. The same `tuner.s` has run on the author's MKI (UP + TEMPO opens the window and tunes; Octatrick test build 3.0 b40, 29 September 2026), but this exact Modwerk image is not yet reported on hardware, and no MKII has run it.
+OS 1.40C only. MKI and MKII share the hook sites; the module has run on the emulator with the MKII panel. The same `tuner.s` has run on the author's MKI (UP + TEMPO opens the window and tunes; Octatrick test build 3.0 b40, 29 September 2026), and the author's MKI report for this exact image is in TESTING.md (2026-10-13); no MKII has run it.
 
 - **One change to a stock gesture (minor).** With **UP held**, TEMPO opens the tuner instead of the stock TEMPO window. *Who:* everyone who presses UP and then TEMPO on a firmware with this module. *Why:* the tuner needs a way in that works over every page, mid-performance; a page or menu row of its own was considered and rejected because it would take the musician away from the page they are playing. *What a musician sees:* the tuner window instead of the TEMPO window for that chord only; TEMPO alone, FUNC + TEMPO (tap tempo) and UP alone are stock, and TEMPO pressed **first** still opens the TEMPO window with UP stepping its BPM, as on stock. *Off:* build without the module. *Checked:* TEMPO alone, FUNC + TEMPO, the chord on the stock image, closing by each key, a menu over the window (TESTING.md, Stock flows).
 - **Nothing is saved.** No Part, project, card file or battery-RAM byte is written; the window starts closed after every start-up and project load. A project saved on a firmware with the module loads unchanged on one without it, and the other way round.
@@ -68,7 +68,7 @@ All on the pinned ColdFire emulator with the image Modwerk's exporter builds fro
 - **Keys.** TEMPO alone opens the stock TEMPO window; FUNC + TEMPO is tap tempo; UP + TEMPO opens the tuner; TEMPO, YES, NO and UP + TEMPO each close it, on the MKII and the MKI panel; TEMPO held then UP opens the stock window and steps its BPM (120.0 → 120.1, as on the stock image); the PROJECT menu closes it.
 - **Smoke.** `verify.py` (24 checks: the keys, the ring, `--` on silence, and with a generated tone project seven readings, HOLD and STOP) passes on this image ([evidence/native-smoke.json](evidence/native-smoke.json)).
 - **Builds beside the others.** Native octabam and Modwerk's browser builder agree on all 130 selections of the coverage set (62 built, 68 refused for reasons between other modules); all 493,056 allowed selections with the tuner pass the native declaration checks.
-- **Hardware.** Pending: the author's MKI report of this exact image. The same `tuner.s` ran on his MKI in Octatrick test build 3.0 b40.
+- **Hardware.** The author's MKI report of this exact image (2026-10-13): see TESTING.md. The same `tuner.s` ran on his MKI in Octatrick test build 3.0 b40.
 
 ## Authorship and licences
 

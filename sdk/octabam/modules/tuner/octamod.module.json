@@ -63,11 +63,11 @@
       "While the window is open the ColdFire runs the analysis about seven times a second in the UI task; closed, it costs a few instructions a block.",
       "To the nearest cent (0.42-cent steps, so a reading can sit one cent off at a boundary); one 93 ms window a reading, no averaging. Chords, drums and inharmonic sounds have no single period and wander or hold.",
       "It tunes the UI's current audio track; in MIDI mode it keeps the last audio track.",
-      "Emulator-verified on MKII panel emulation; the same tuner.s ran on the author's MKI (Octatrick test build 3.0 b40), the hardware report for this exact image is pending; an MKII has not run this module."
+      "Reported on the author's MKI (2026-10-13) for this exact image; an MKII has not run this module."
     ]
   },
   "resources": {
-    "recorded": "2026-10-10; emulator instruction counts and exact memory, image 66489376; hardware report pending",
+    "recorded": "2026-10-10; emulator instruction counts and exact memory, image 66489376; MKI report 2026-10-13",
     "storage": {
       "label": "Tuner code, buffers and image bytes",
       "display": "24,589 bytes plus the shared platform reserve",
@@ -110,8 +110,8 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Emulator qualification of the native Tuner 0.1.0 image (MAIN OS 66489376..., the author's v2.12 ca13ed8 exported alone (tuner/ identical to v2.11 5f3d745) with the stock effects): per-block and per-UI-pass instruction counts on the pinned ColdFire emulator (4 a block closed, 195 open, the analysis about 1.0 M instructions every 145 ms in the UI task), exact memory from the link map and build log, a static stack bound, readings on seven generated tones (82.5 Hz to 1,318.5 Hz, within 1 cent) plus a silent track, silence and HOLD, every opening and closing key on the MKII and MKI panels, the stock TEMPO window and tap tempo beside it, a menu over it, a 60 s run open on a playing project, the native smoke (verify.py, 24 checks), five LCD captures, tools/align_check.py of v2.12 on the build, module:verify 130 selections with 0 mismatches. A hardware report for this exact image is pending.",
-    "hardwareStatus": "historical",
+    "summary": "Emulator qualification of the native Tuner 0.1.0 image (MAIN OS 66489376..., the author's v2.12 ca13ed8 exported alone (tuner/ identical to v2.11 5f3d745) with the stock effects): per-block and per-UI-pass instruction counts on the pinned ColdFire emulator (4 a block closed, 195 open, the analysis about 1.0 M instructions every 145 ms in the UI task), exact memory from the link map and build log, a static stack bound, readings on seven generated tones (82.5 Hz to 1,318.5 Hz, within 1 cent) plus a silent track, silence and HOLD, every opening and closing key on the MKII and MKI panels, the stock TEMPO window and tap tempo beside it, a menu over it, a 60 s run open on a playing project, the native smoke (verify.py, 24 checks), five LCD captures, tools/align_check.py of v2.12 on the build, module:verify 130 selections with 0 mismatches. timhastie's MKI report for this exact image is in TESTING.md.",
+    "hardwareStatus": "reported",
     "evidenceRevision": "d63e24469ac144ea173a76feb734ac0565942c7d",
     "gates": [
       "verify.py: native smoke on image 66489376 (TEMPO alone and FUNC + TEMPO stock, UP + TEMPO opens, the ring fills only while open, -- on silence, closing by TEMPO / YES / NO / UP + TEMPO, reopening; with a generated tone project: seven tones read within 1 cent, HOLD on silence and after STOP): 24/24 passed (evidence/native-smoke.json)",
@@ -120,7 +120,7 @@
       "align_check (octatrick-modules v2.12 tools/align_check.py) on the kept native build: 712 instruction rows, 3 transfer targets, all even",
       "Stock flows with and without the module on the emulator: TEMPO alone, FUNC + TEMPO, UP + TEMPO, TEMPO then UP, a menu over the window, PLAY / STOP",
       "Native/browser composition (npm run module:verify, host toolchain): 130 selections, 62 built images match outside the platform writes, 68 refusals match, 0 mismatches",
-      "Hardware report for this source and image: pending (TIM placeholders)"
+      "Hardware report for this source and image: timhastie, MKI, 2026-10-13 (reported; TESTING.md)"
     ],
     "qualification": {
       "moduleVersion": "0.1.0-experimental",
@@ -231,13 +231,15 @@
         "kind": "functional",
         "status": "reported",
         "model": "MKI",
-        "testedOn": "TIM: YYYY-MM-DD",
-        "tester": "TIM: credited handle",
+        "testedOn": "2026-10-13",
+        "tester": "timhastie",
         "sourceRevision": "d63e24469ac144ea173a76feb734ac0565942c7d",
         "imageSha256": "66489376d2cfbe36cb27b6e8b755a75aec2e7b3eab3583f7026f55cc7e877f94",
-        "summary": "TIM: what was tuned on the unit with the Tuner 0.1.0 update file (MAIN OS 66489376...): the known-pitch sample and its reading, the live input and its reading against a reference, closing by each key, open while the sequencer runs, after a power-cycle",
+        "summary": "Every item of the test sheet for the Tuner 0.1.0 update file (MAIN OS 66489376...) worked: the unit boots and reads OCTAMOD79; TEMPO alone opens the stock TEMPO window, FUNC + TEMPO taps tempo and UP alone does what it always does; with a sample of known pitch playing, UP held + TEMPO opens the tuner window with the note, the needle on the side the cents say, the cents and the frequency; a pitch change on the track moves the reading; a track key switches the tuned track while the window is open; it read a live instrument through a Thru machine; after STOP the last reading stays with HOLD, and a fresh window on silence shows --; TEMPO, YES, NO and UP + TEMPO each close it and leave the page underneath as it was; TEMPO then UP opens the stock TEMPO window and steps its BPM; open while a busy pattern plays, the audio does not click or drop out and the readings keep updating; the PROJECT menu takes over from it and UP + TEMPO opens it again afterwards; after a power-cycle TEMPO is stock, UP + TEMPO opens the tuner and the project loads and plays as before.",
         "limitations": [
-          "TIM: how long it ran, the project, what was not tried (MKII, ...)"
+          "The report is that each item of the sheet worked; the figures the sheet asks to note down (the sample's pitch and its reading, the live input's reading and the reference tuner's) were not recorded.",
+          "Play time, MIDI gear and track counts were not recorded.",
+          "MKI only: no MKII has run this image."
         ],
         "report": "TESTING.md"
       },

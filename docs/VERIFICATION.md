@@ -1400,4 +1400,5 @@ every 145 ms while open); opening and closing by every key on the MKII and MKI p
 and a menu beside it; a 60 s open run; the native smoke (`verify.py`, 24/24) and five LCD captures. `module:verify` (host
 toolchain): 130 selections, 62 built images and 68 refusals match, 0 mismatches; the declaration scan records 493,056
 clean selections (kept out of this branch: see the pull request). Packages rebuilt; every existing payload is unchanged;
-Analog BD's matrix re-verified (162 + 50 + 6) before its source-tree hash was rebound. Hardware report pending.
+Analog BD's matrix re-verified (162 + 50 + 6) before its source-tree hash was rebound. Hardware: the author's MKI report of this exact image
+(13 October 2026, every item of its test sheet worked; the figures were not recorded); no MKII has run it.
