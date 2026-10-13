@@ -205,7 +205,7 @@
     "report": "TESTING.md",
     "summary": "Emulator qualification of the native image MAIN OS 27c213b2... (FM Synth 0.1.5 + SY DRUM 0.1.0, octatrick 2.14 SY DRUM with the author's 2.13 quantizer in FM Synth, all stock effects): frame-interrupt instruction counts for 0, 1, 2, 3, 4 and 8 SY DRUM tracks at their worst, each load run five times and its maximum taken, converted at the CF METER calibration (9.44 ns/instruction, 264 MHz): 2 tracks keep every block, including the first START, inside the 16-sample block with room for the run-to-run spread (84,213 of 95,779 cycles); 3 tracks stay inside it by less than that spread and are not qualified. Exact memory from the link map. Software verification: the module's native Part smoke, the machine-list walk, the 2.12 machine change, two-instance isolation, Part save/reload, project save, project load and RELOAD with the lock files (emulator), the power-off without SAVE while playing, after STOP and stopped with the power-on load and the battery-backed memory carried over (an emulator build that keeps it; the previous image as the failing control), a damaged stock bank file at that load, 126 native/browser selections with 0 mismatches, seven sample comparisons with the author's renders, five LCD captures. A hardware report for this exact image is pending.",
     "hardwareStatus": "historical",
-    "evidenceRevision": "1506cbcea19aa1c8e0801c4d7b7b72ccc25896de",
+    "evidenceRevision": "7a135ff45647554063028789cacb1c4ffe7780bc",
     "gates": [
       "verify.py: native Part smoke on image 27c213b2 (eightTrackSelection, sampleSlotsUnchanged, partAndShadowSignature, reselectPreservesControls, fmSynthRowBeside, returnToFlex): passed (evidence/native-smoke.json)",
       "Native/browser composition: 126 selections without POLY8 in the pool (sdk/native-comparisons/sy-drum.json): 4 builds match outside the platform writes, 122 refusals match, 0 mismatches",
@@ -333,7 +333,7 @@
         "model": "MKI",
         "testedOn": "TIM: YYYY-MM-DD",
         "tester": "TIM: credited handle",
-        "sourceRevision": "1506cbcea19aa1c8e0801c4d7b7b72ccc25896de",
+        "sourceRevision": "7a135ff45647554063028789cacb1c4ffe7780bc",
         "imageSha256": "27c213b2dca96e071200d97441de821c900bf9f87556af0918da200ef623aed9",
         "summary": "TIM: what was played on the unit and what happened (MAIN OS 27c213b2..., the hardware test sheet)",
         "limitations": [
