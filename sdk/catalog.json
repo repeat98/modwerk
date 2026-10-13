@@ -121,6 +121,11 @@
       "id": "output-matrix",
       "version": "0.1.0-experimental",
       "addedAt": "2026-10-08T21:55:32Z"
+    },
+    {
+      "id": "sy-drum",
+      "version": "0.1.0-experimental",
+      "addedAt": "2026-10-10T03:50:00Z"
     }
   ]
 }

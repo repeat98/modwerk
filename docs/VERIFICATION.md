@@ -1502,3 +1502,54 @@ A fresh import of the same build reproduces the committed assets
 re-verified against the new packages (162 native OS and GNU bootloader
 comparisons, 50 matching refusals, 6 firmware round trips) before its
 source-inventory binding was updated. No firmware is committed.
+
+## SY DRUM 0.1.0 (octatrick 2.14, with FM Synth 0.1.5) — 13 October 2026
+
+Local draft by the module author's port; not published, no owner approval.
+A new module, `sy-drum` `0.1.0-experimental`: Tim Hastie's octatrick 2.14
+`sy-drum/` (`timhastie/octatrick-modules` `39dc5d8`, tag `v2.14`), an
+analog-style drum voice in the machine list after FM SYNTH. It needs FM Synth
+0.1.5, which stays pinned to the author's v2.13 (`48b89e7`; v2.14 changes only
+`sy-drum/` and the README). Every stock expectation of the author's manifest is a
+`stock_guard` (53 sites, 410 bytes, each recomputed from MAIN OS `164f3122…`);
+the import inventory is `sdk/imports/sy-drum-39dc5d8.json`. 2.14 is the author's
+fix of his hardware finding on the previous test image (`d0dab5fe…`): the step
+locks' working file is now written while the sequencer plays too (one hook more,
+the UI tick's transport test), so a power-off without SAVE keeps the PLAYBACK
+SETUP locks edited during playback, and the lock files load when a stock bank
+file is missing or damaged. In the image the SY DRUM unit differs from the
+previous build's only in the code assembled from `locks_io.inc.s` (+346 B).
+
+Shared code (unchanged by the re-pin): the configurator refuses SY DRUM without
+FM Synth (`sy-drum-needs-synth`), and so does the browser engine, from the native
+manifest's `requires` carried in the requested group; FM Synth's per-remix units
+gain one `whenModules: ["sy-drum"]` variant each; the core logger leaves out its
+`job` hook when a selected module owns that site (SY DRUM's card-file dispatch,
+`0x4008485e`) and names it in its identity; `module:doctor` accepts a module that
+is refused alone by such a rule.
+
+Image: MAIN OS `27c213b2…`, FM Synth 0.1.5 + SY DRUM with all stock effects, built
+by Modwerk's exporter (update file 521,012 B, `1644e5fa…`;
+Modwerk's TS packer decodes it to that MAIN OS and re-encodes the same bytes;
+the author's `tools/align_check.py` finds every instruction and detour target at
+an even address). On the pinned emulator: the module's Part smoke, the
+machine-list walk, the machine change SY DRUM → FM SYNTH → SY DRUM (21 of 21
+checks), two SY DRUM tracks isolated, Part SAVE/RELOAD, SAVE PROJECT, the
+project's load from the card and PROJECT > RELOAD with the `sylockNN` files pass;
+2 SY DRUM tracks at their worst keep every frame interrupt inside the budget with room for the run-to-run spread; 3 stay inside it by less than that spread and are not qualified (emulated instructions at the CF METER calibration, not chip timing; the
+maximum over five runs of each load). On an emulator build that carries the
+battery-backed memory over a power-off (`07a7c08e…`): locks edited while
+playing come back whole after a power cut while playing, 0.6 s after pressing STOP and
+when stopped (the previous image, as the control, loses the PLAYBACK SETUP
+edits in the two play cases), and a removed, cut or damaged `bank05.work` at
+the power-on load keeps every bank's step locks (the previous image: none).
+Native/browser: 126 selections, 4 builds matching outside the
+platform writes, 122 matching refusals, 0 mismatches (POLY8 left out of the
+pool locally). The hardware fields are `TIM:` placeholders pending the author's
+MKI report of this exact image; the earlier builds (`d0dab5fe…`, `199e9b09…`,
+`b9b65cd9…`) are superseded. Against `d0dab5fe…`: the captures, the walks other
+than the power-off ones, and the renders are the same; the peak blocks are
+s1 29,017 (-16), s2 33,419 (+14), s3 37,749 (-154), s4 42,304 (-14), s8 59,601 (-344) instructions against its maxima, inside the run-to-run spread.
+On its base, `modules:generate` stops at Tape Echo 0.1.3's retained-evidence
+gate: SY DRUM's shared code and packages change its protected build inputs
+(open, for the owner; TESTING.md).

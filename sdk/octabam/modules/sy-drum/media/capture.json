@@ -1,0 +1,348 @@
+{
+  "firmware": "1.40C",
+  "imageSha256": "27c213b2dca96e071200d97441de821c900bf9f87556af0918da200ef623aed9",
+  "emulatorSha256": "9dc31d1249793fcf857fa6b1c1ac72ab7966646fd59f3e09e90683c8eb41e711",
+  "setup": "Headless ot_emu; MKII panel; stopped transport; 128\u00d764 LCD at integer scale 6.",
+  "palette": {
+    "on": [
+      240,
+      240,
+      240
+    ],
+    "off": [
+      24,
+      24,
+      24
+    ]
+  },
+  "keyMs": 50,
+  "plan": [
+    {
+      "wait": 3000
+    },
+    {
+      "press": [
+        "YES"
+      ]
+    },
+    {
+      "wait": 2000
+    },
+    {
+      "press": [
+        "NO"
+      ]
+    },
+    {
+      "wait": 500
+    },
+    {
+      "press": [
+        "T1"
+      ]
+    },
+    {
+      "press": [
+        "T1"
+      ]
+    },
+    {
+      "wait": 300
+    },
+    {
+      "press": [
+        "LEFT"
+      ]
+    },
+    {
+      "wait": 400
+    },
+    {
+      "press": [
+        "DOWN"
+      ]
+    },
+    {
+      "wait": 150
+    },
+    {
+      "press": [
+        "DOWN"
+      ]
+    },
+    {
+      "wait": 150
+    },
+    {
+      "press": [
+        "DOWN"
+      ]
+    },
+    {
+      "wait": 150
+    },
+    {
+      "press": [
+        "DOWN"
+      ]
+    },
+    {
+      "wait": 150
+    },
+    {
+      "press": [
+        "DOWN"
+      ]
+    },
+    {
+      "wait": 150
+    },
+    {
+      "press": [
+        "DOWN"
+      ]
+    },
+    {
+      "wait": 150
+    },
+    {
+      "capture": "ot-machine-list.png"
+    },
+    {
+      "press": [
+        "NO"
+      ]
+    },
+    {
+      "wait": 300
+    },
+    {
+      "press": [
+        "NO"
+      ]
+    },
+    {
+      "wait": 300
+    },
+    {
+      "press": [
+        "FUNC",
+        "SRC"
+      ]
+    },
+    {
+      "wait": 400
+    },
+    {
+      "press": [
+        "DOWN"
+      ]
+    },
+    {
+      "wait": 150
+    },
+    {
+      "press": [
+        "DOWN"
+      ]
+    },
+    {
+      "wait": 150
+    },
+    {
+      "press": [
+        "DOWN"
+      ]
+    },
+    {
+      "wait": 150
+    },
+    {
+      "press": [
+        "DOWN"
+      ]
+    },
+    {
+      "wait": 150
+    },
+    {
+      "press": [
+        "DOWN"
+      ]
+    },
+    {
+      "wait": 150
+    },
+    {
+      "press": [
+        "DOWN"
+      ]
+    },
+    {
+      "wait": 150
+    },
+    {
+      "capture": "ot-src-setup.png"
+    },
+    {
+      "press": [
+        "YES"
+      ]
+    },
+    {
+      "wait": 600
+    },
+    {
+      "press": [
+        "SRC"
+      ]
+    },
+    {
+      "wait": 400
+    },
+    {
+      "encoder": {
+        "name": "B",
+        "delta": 2
+      }
+    },
+    {
+      "encoder": {
+        "name": "F",
+        "delta": -20
+      }
+    },
+    {
+      "wait": 300
+    },
+    {
+      "capture": "ot-controls.png"
+    },
+    {
+      "press": [
+        "FUNC",
+        "SRC"
+      ]
+    },
+    {
+      "wait": 500
+    },
+    {
+      "encoder": {
+        "name": "B",
+        "delta": 40
+      }
+    },
+    {
+      "wait": 200
+    },
+    {
+      "encoder": {
+        "name": "C",
+        "delta": 4
+      }
+    },
+    {
+      "wait": 300
+    },
+    {
+      "capture": "ot-setup-lfo.png"
+    },
+    {
+      "hold": [
+        "REC"
+      ]
+    },
+    {
+      "wait": 150
+    },
+    {
+      "release": [
+        "REC"
+      ]
+    },
+    {
+      "wait": 300
+    },
+    {
+      "hold": [
+        "TRIG5"
+      ]
+    },
+    {
+      "wait": 200
+    },
+    {
+      "encoder": {
+        "name": "B",
+        "delta": 20
+      }
+    },
+    {
+      "wait": 300
+    },
+    {
+      "release": [
+        "TRIG5"
+      ]
+    },
+    {
+      "wait": 300
+    },
+    {
+      "hold": [
+        "TRIG5"
+      ]
+    },
+    {
+      "wait": 300
+    },
+    {
+      "capture": "ot-step-lock.png"
+    },
+    {
+      "release": [
+        "TRIG5"
+      ]
+    },
+    {
+      "wait": 300
+    },
+    {
+      "hold": [
+        "REC"
+      ]
+    },
+    {
+      "wait": 150
+    },
+    {
+      "release": [
+        "REC"
+      ]
+    },
+    {
+      "wait": 300
+    },
+    {
+      "press": [
+        "NO"
+      ]
+    },
+    {
+      "wait": 300
+    }
+  ],
+  "screenshots": {
+    "ot-machine-list.png": "e9677137ab5b1ff594ece6c93bd0fc652f2bb0f4d6361b003b34cdd2d4bdaa68",
+    "ot-src-setup.png": "c88ab44cb7baecca80f90d0938b5163194fbfa549b35da3d34c1ec90c6171d7a",
+    "ot-controls.png": "cf46942e3d829a27a931c3578881ea8fba06395367ca51264a41d9b0832440fc",
+    "ot-setup-lfo.png": "1776206bf479f8be96c3ad85779e58fa725ec07ac8bc13fc6eaeb96ecc42bcb2",
+    "ot-step-lock.png": "2d4c5ef23cf93fe4bec92d0a7ff65bdb1ecb1381bb1176c55f603bb7b4d89ffb"
+  },
+  "cardSha256": "0dead716b21efdec8f5ee840fa5f29a533c7c57a4d6aadcf67ec9f0e87be474c",
+  "project": {
+    "set": "SYTEST",
+    "name": "PROJECT 260930"
+  }
+}

@@ -219,7 +219,7 @@
     },
     {
       "id": "octa-panel",
-      "name": "octatrick Scale Quantizer and FM Synth",
+      "name": "octatrick Scale Quantizer, FM Synth and SY DRUM",
       "spdx": "MIT",
       "noticeFile": "octa-panel.txt",
       "sources": [
@@ -228,11 +228,15 @@
         },
         {
           "path": "sdk/octabam/modules/synth/upstream/LICENSE"
+        },
+        {
+          "path": "sdk/octabam/modules/sy-drum/upstream/LICENSE"
         }
       ],
       "usedIn": [
         "modules/quantizer/upstream",
-        "modules/synth/upstream"
+        "modules/synth/upstream",
+        "modules/sy-drum/upstream"
       ]
     },
     {
@@ -309,6 +313,9 @@
     ],
     "airwindows-chorus": [
       "airwindows"
+    ],
+    "sy-drum": [
+      "octa-panel"
     ]
   }
 }

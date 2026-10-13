@@ -1,0 +1,14 @@
+{
+  "imageSha256": "27c213b2dca96e071200d97441de821c900bf9f87556af0918da200ef623aed9",
+  "checks": {
+    "eightTrackSelection": "passed",
+    "sampleSlotsUnchanged": "passed",
+    "partAndShadowSignature": "passed",
+    "reselectPreservesControls": "passed",
+    "fmSynthRowBeside": "passed",
+    "returnToFlex": "passed"
+  },
+  "limitations": [
+    "Panel smoke only on an empty card: machine-list selection, Part and battery-RAM shadow bytes. Audio, step locks, card files, cycles and hardware are tested separately (TESTING.md)."
+  ]
+}

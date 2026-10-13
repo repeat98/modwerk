@@ -1015,6 +1015,20 @@
           "Author's functional MKII report (7–9 Oct 2026) covers routing, levels, everyday flows, saving and power; no timed stress run or chip timing."
         ]
       }
+    ],
+    "sy-drum": [
+      {
+        "version": "0.1.0-experimental",
+        "date": "2026-10-13",
+        "changes": [
+          "First SY DRUM release, Tim Hastie's octatrick 2.14 module (timhastie/octatrick-modules v2.14): an analog-style drum voice for audio tracks, chosen in the machine list after FM SYNTH, one voice a track, no sample needed.",
+          "PTCH MODE WDTH SWEP SPED DEC on the PLAYBACK page with stock p-locks, LFOs and scenes; a dedicated LFO and sample-and-hold (LSPD LDEP WAVE S&H) on the setup page, lockable per step in GRID and LIVE RECORDING, saved beside the project in sylockNN files.",
+          "The step locks' working files are written while the sequencer plays too (2.14), so a power-off without SAVE PROJECT keeps the locks edited during playback (all but an edit in about the last 1.2 s); they also load when a stock bank file of the project is missing or damaged.",
+          "A machine change to or from SY DRUM resets the track's PLAYBACK, PLAYBACK SETUP, AMP and LFO pages and their SETUP pages to the new machine's init; step and scene locks are kept as in the stock firmware, and so are SY DRUM's own setup-LFO locks and the FX slots (octatrick 2.12, through FM Synth's machine list).",
+          "Needs FM Synth 0.1.5 in the same build; the configurator refuses it alone, as native octabam does.",
+          "Emulator worst-case ColdFire cost, exact memory, the Part, project-load, machine-change and two-instance checks and power-off walks (the power-on load with the battery-backed memory carried over) are recorded; the hardware report for this exact build is pending."
+        ]
+      }
     ]
   }
 }

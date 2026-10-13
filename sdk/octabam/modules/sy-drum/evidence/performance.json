@@ -1,0 +1,30 @@
+{
+  "schema": 1,
+  "module": "sy-drum",
+  "version": "0.1.0-experimental",
+  "kind": "coldfire",
+  "cycles": {
+    "unit": "cycles/event",
+    "static": null,
+    "measured": 72316,
+    "budget": 95779,
+    "method": "Emulator: the pinned ot_emu's PC watch on the frame interrupt (0x4000aad8..0x4000d9a6 + 4), one SY DRUM track with a trig on every step, its LFO and S&H at their most active, step locks and p-locks on every step, LFO1/LFO2 and scenes (TESTING.md, card s1): the dearest frame is the first START, at most 29,017 instructions over 5 runs, the whole interrupt with the stock reserve, at 2.49216 cycles an instruction (the CF METER calibration FM Synth's record uses); not chip cycles. No static upper bound of SY DRUM's per-frame path has been derived (static is null)."
+  },
+  "load": {
+    "frameUs": 362.8,
+    "stockLongestUs": 239.4,
+    "moduleLongestUs": 273.9,
+    "stockIdlePercent": 40.4,
+    "moduleIdlePercent": 32.4,
+    "method": "Emulator, not cfmeter.py on hardware: the same sequence on the stock 1.40C image (track 1 a FLEX drum sample, card q_st1) and on the FM Synth + SY DRUM image (track 1 SY DRUM, card s1), 3 s each with the first START; longest frame interrupt 25,361 vs 29,017 instructions (the latter the maximum over 5 runs on MAIN OS 27c213b2; the stock figures are the stock image's, unchanged) at 9.44 ns; idle = 100 minus the mean frame-interrupt share (22,914 vs 25,978 instructions a frame), an upper bound because the UI and engine tasks are not subtracted."
+  },
+  "stress": {
+    "floodMessagesPerSecond": null,
+    "clockBpm": null,
+    "seconds": null,
+    "stuckNotes": null,
+    "hangs": null,
+    "dropped": null,
+    "droppedExplanation": "Not run: SY DRUM is a track machine, not a MIDI generator or effect; its MIDI notes take FM Synth's path. The load stress in the record is eight SY DRUM tracks at their worst (TESTING.md), not a MIDI wire-rate flood."
+  }
+}

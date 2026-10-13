@@ -1,0 +1,317 @@
+{
+  "schemaVersion": 1,
+  "id": "sy-drum",
+  "version": "0.1.0-experimental",
+  "status": "local-draft-unpublished",
+  "basedOn": "263aa1b9a8db278b1da96a8a33e07f6f65a94a74",
+  "folder": "sdk/octabam/modules/sy-drum",
+  "authorPin": {
+    "repository": "https://github.com/timhastie/octatrick-modules",
+    "revision": "39dc5d8ca285c14674b66a452f58a5a0364efb96",
+    "path": "sy-drum",
+    "version": "2.14 (tag v2.14)"
+  },
+  "requires": {
+    "module": "synth",
+    "key": "SYNTH MACHINE",
+    "note": "SY DRUM runs on FM Synth's engine and machine list; FM Synth 0.1.5 carries the author's synth/ at v2.13 (48b89e7; with HAVE_SYDRUM, its row table and engine_abi.inc), the same bytes at v2.14 (39dc5d8): v2.14 changes only sy-drum/ and the top-level README."
+  },
+  "files": [
+    {
+      "path": "LICENSE",
+      "sha256": "857d2e1c46de76e14d08d092e5cc3d93fdd015e1db71339806cc136d1cc8c039"
+    },
+    {
+      "path": "README.md",
+      "sha256": "a49967ca5f3174d903192c67d129de86c3ddb059682536d24083314f39357828"
+    },
+    {
+      "path": "TESTING.md",
+      "sha256": "7ab305158a5e64abd17f20874cb735423bd27654c3f7278afb70867e0af9fa01"
+    },
+    {
+      "path": "evidence/native-smoke.json",
+      "sha256": "950553e2475677ab8f57370e72fb7495c7515850c85cad576da162494f9d1385"
+    },
+    {
+      "path": "evidence/performance.json",
+      "sha256": "0771ed3ed395b4f3d639e995311bd7aa44c48a46c23664144763c8cf9cd26e73"
+    },
+    {
+      "path": "manifest.py",
+      "sha256": "8f4bd72bac041e5cfade3726cc6bdccbf427863c7768cb632a31ef819fd379af"
+    },
+    {
+      "path": "media/LICENSE.md",
+      "sha256": "1dce6b5b5592e376f235e2dc8a1dbde581fe7f93fb944455e607ba675519f6a0"
+    },
+    {
+      "path": "media/capture.json",
+      "sha256": "bcd1a1793dec38def67b432392be843095fe1152c0cfd7924d40b7c604bdc56c"
+    },
+    {
+      "path": "media/ot-controls.png",
+      "sha256": "cf46942e3d829a27a931c3578881ea8fba06395367ca51264a41d9b0832440fc"
+    },
+    {
+      "path": "media/ot-machine-list.png",
+      "sha256": "e9677137ab5b1ff594ece6c93bd0fc652f2bb0f4d6361b003b34cdd2d4bdaa68"
+    },
+    {
+      "path": "media/ot-setup-lfo.png",
+      "sha256": "1776206bf479f8be96c3ad85779e58fa725ec07ac8bc13fc6eaeb96ecc42bcb2"
+    },
+    {
+      "path": "media/ot-src-setup.png",
+      "sha256": "c88ab44cb7baecca80f90d0938b5163194fbfa549b35da3d34c1ec90c6171d7a"
+    },
+    {
+      "path": "media/ot-step-lock.png",
+      "sha256": "2d4c5ef23cf93fe4bec92d0a7ff65bdb1ecb1381bb1176c55f603bb7b4d89ffb"
+    },
+    {
+      "path": "octamod.module.json",
+      "sha256": "e6206c79d977f04449ae75d4ca5a6f61fee08ef565bdf034f8f776dbe683c3c5"
+    },
+    {
+      "path": "presentation/LICENSE",
+      "sha256": "6ef458708c20c89e2f80191f0174b7600ad507a360d5220f625ab2c8e8c4aa1d"
+    },
+    {
+      "path": "presentation/thumbnail.svg",
+      "sha256": "3b3efc07cc8baa159acdf8c21aedbc0ed758fe8fbb5ea8e37e5106acfef6c2d7"
+    },
+    {
+      "path": "stock-guards.json",
+      "sha256": "6682a07000aefa7a2b1e663a22b2abd1de04cae4251e5201ac04b92fcbaff709"
+    },
+    {
+      "path": "upstream/LICENSE",
+      "sha256": "9895a0c9da98720fec21e348456c9716ca81ca6438b7f046eca1fb2f456b24a7",
+      "repository": "https://github.com/timhastie/octatrick-modules",
+      "revision": "39dc5d8ca285c14674b66a452f58a5a0364efb96",
+      "sourcePath": "LICENSE",
+      "sourceBytes": 5068,
+      "sourceSha256": "9895a0c9da98720fec21e348456c9716ca81ca6438b7f046eca1fb2f456b24a7"
+    },
+    {
+      "path": "upstream/sy-drum/README.md",
+      "sha256": "4305621f375996eeb39e9a5a8711a542f533ad329f7f9117a43832494783ce7f",
+      "repository": "https://github.com/timhastie/octatrick-modules",
+      "revision": "39dc5d8ca285c14674b66a452f58a5a0364efb96",
+      "sourcePath": "sy-drum/README.md",
+      "sourceBytes": 25379,
+      "sourceSha256": "4305621f375996eeb39e9a5a8711a542f533ad329f7f9117a43832494783ce7f"
+    },
+    {
+      "path": "upstream/sy-drum/engine.inc.s",
+      "sha256": "4a9dd51b05901b2ed9f331f31790f09d846410e9e49a74521e13eac216190a6d",
+      "repository": "https://github.com/timhastie/octatrick-modules",
+      "revision": "39dc5d8ca285c14674b66a452f58a5a0364efb96",
+      "sourcePath": "sy-drum/engine.inc.s",
+      "sourceBytes": 177216,
+      "sourceSha256": "4a9dd51b05901b2ed9f331f31790f09d846410e9e49a74521e13eac216190a6d"
+    },
+    {
+      "path": "upstream/sy-drum/locks_clip.inc.s",
+      "sha256": "73fca059941c7aeefd0f960aba1d4f889dd833e9781aa6ae5bc3c8360fcbdc2f",
+      "repository": "https://github.com/timhastie/octatrick-modules",
+      "revision": "39dc5d8ca285c14674b66a452f58a5a0364efb96",
+      "sourcePath": "sy-drum/locks_clip.inc.s",
+      "sourceBytes": 6762,
+      "sourceSha256": "73fca059941c7aeefd0f960aba1d4f889dd833e9781aa6ae5bc3c8360fcbdc2f"
+    },
+    {
+      "path": "upstream/sy-drum/locks_delete.inc.s",
+      "sha256": "00e73a3a7025bb56df601e4cbca65c0ad3bb8ff754320ca4cf410e1d27681edb",
+      "repository": "https://github.com/timhastie/octatrick-modules",
+      "revision": "39dc5d8ca285c14674b66a452f58a5a0364efb96",
+      "sourcePath": "sy-drum/locks_delete.inc.s",
+      "sourceBytes": 1300,
+      "sourceSha256": "00e73a3a7025bb56df601e4cbca65c0ad3bb8ff754320ca4cf410e1d27681edb"
+    },
+    {
+      "path": "upstream/sy-drum/locks_io.inc.s",
+      "sha256": "b2acc61df4c4e2956a346c4785846716a010a3e7d54f3170418757841d755927",
+      "repository": "https://github.com/timhastie/octatrick-modules",
+      "revision": "39dc5d8ca285c14674b66a452f58a5a0364efb96",
+      "sourcePath": "sy-drum/locks_io.inc.s",
+      "sourceBytes": 69442,
+      "sourceSha256": "b2acc61df4c4e2956a346c4785846716a010a3e7d54f3170418757841d755927"
+    },
+    {
+      "path": "upstream/sy-drum/locks_live.inc.s",
+      "sha256": "693a311748327ca426f96e8a7c69fd12bed46c1e92c588ccf4f4477beab8063e",
+      "repository": "https://github.com/timhastie/octatrick-modules",
+      "revision": "39dc5d8ca285c14674b66a452f58a5a0364efb96",
+      "sourcePath": "sy-drum/locks_live.inc.s",
+      "sourceBytes": 3909,
+      "sourceSha256": "693a311748327ca426f96e8a7c69fd12bed46c1e92c588ccf4f4477beab8063e"
+    },
+    {
+      "path": "upstream/sy-drum/locks_seq.inc.s",
+      "sha256": "d4aea5f2a4c4a0b98666dc3457a957a866f24330f8cca108332b66a716857a5e",
+      "repository": "https://github.com/timhastie/octatrick-modules",
+      "revision": "39dc5d8ca285c14674b66a452f58a5a0364efb96",
+      "sourcePath": "sy-drum/locks_seq.inc.s",
+      "sourceBytes": 16720,
+      "sourceSha256": "d4aea5f2a4c4a0b98666dc3457a957a866f24330f8cca108332b66a716857a5e"
+    },
+    {
+      "path": "upstream/sy-drum/locks_sparse.inc.s",
+      "sha256": "17aac817b575ecd6394d64cc63bdddf4c3671a1481e829501f251458c249b7e0",
+      "repository": "https://github.com/timhastie/octatrick-modules",
+      "revision": "39dc5d8ca285c14674b66a452f58a5a0364efb96",
+      "sourcePath": "sy-drum/locks_sparse.inc.s",
+      "sourceBytes": 3892,
+      "sourceSha256": "17aac817b575ecd6394d64cc63bdddf4c3671a1481e829501f251458c249b7e0"
+    },
+    {
+      "path": "upstream/sy-drum/locks_store.inc.s",
+      "sha256": "42a45afdf279036c48aabaaea0afef56518bafe1bc218b623aa68653d01de97f",
+      "repository": "https://github.com/timhastie/octatrick-modules",
+      "revision": "39dc5d8ca285c14674b66a452f58a5a0364efb96",
+      "sourcePath": "sy-drum/locks_store.inc.s",
+      "sourceBytes": 19806,
+      "sourceSha256": "42a45afdf279036c48aabaaea0afef56518bafe1bc218b623aa68653d01de97f"
+    },
+    {
+      "path": "upstream/sy-drum/locks_transform.inc.s",
+      "sha256": "04d0d641225dcd3a63eaffce9e84d2761b00566cc9ebcaa92f1e744ca1953513",
+      "repository": "https://github.com/timhastie/octatrick-modules",
+      "revision": "39dc5d8ca285c14674b66a452f58a5a0364efb96",
+      "sourcePath": "sy-drum/locks_transform.inc.s",
+      "sourceBytes": 10122,
+      "sourceSha256": "04d0d641225dcd3a63eaffce9e84d2761b00566cc9ebcaa92f1e744ca1953513"
+    },
+    {
+      "path": "upstream/sy-drum/locks_ui.inc.s",
+      "sha256": "01e54b23647e2571377f7e41519e32846576ee8da2251fb9975d24d07e0e8e05",
+      "repository": "https://github.com/timhastie/octatrick-modules",
+      "revision": "39dc5d8ca285c14674b66a452f58a5a0364efb96",
+      "sourcePath": "sy-drum/locks_ui.inc.s",
+      "sourceBytes": 18410,
+      "sourceSha256": "01e54b23647e2571377f7e41519e32846576ee8da2251fb9975d24d07e0e8e05"
+    },
+    {
+      "path": "upstream/sy-drum/manifest.py",
+      "sha256": "f1834813b01308cb8a2332b2a7877395bb48fa6e5fb11481b4445de6bcb758ff",
+      "repository": "https://github.com/timhastie/octatrick-modules",
+      "revision": "39dc5d8ca285c14674b66a452f58a5a0364efb96",
+      "sourcePath": "sy-drum/manifest.py",
+      "sourceBytes": 12841,
+      "sourceSha256": "608437c621709478988c2c174df297030d7a4d0b30fd0cdd5f6a78d17c65ff6c",
+      "changes": [
+        "Every stock expectation (PAGE_STOCK, SETUP_EDIT_STOCK and the 51 LOCK_HOOKS rows) is stock_guard(address, length, sha256 of the user's local 1.40C span), each hash checked equal to the sha256 of the literal it replaces (53 guards, 410 bytes, 0 mismatches); the Detour builder takes the guard and its length. No other line changed."
+      ]
+    },
+    {
+      "path": "upstream/sy-drum/setup_stage.inc.s",
+      "sha256": "bb603c6fb81fadaeb63a97ff5058dff4d544d5cb0b45db686286893453b29d97",
+      "repository": "https://github.com/timhastie/octatrick-modules",
+      "revision": "39dc5d8ca285c14674b66a452f58a5a0364efb96",
+      "sourcePath": "sy-drum/setup_stage.inc.s",
+      "sourceBytes": 4339,
+      "sourceSha256": "bb603c6fb81fadaeb63a97ff5058dff4d544d5cb0b45db686286893453b29d97"
+    },
+    {
+      "path": "upstream/sy-drum/sydrum.s",
+      "sha256": "5f768ca71ae520b8b9c5a4b7abb2e9609384adf4557c32b218684beac3759361",
+      "repository": "https://github.com/timhastie/octatrick-modules",
+      "revision": "39dc5d8ca285c14674b66a452f58a5a0364efb96",
+      "sourcePath": "sy-drum/sydrum.s",
+      "sourceBytes": 33759,
+      "sourceSha256": "5f768ca71ae520b8b9c5a4b7abb2e9609384adf4557c32b218684beac3759361"
+    },
+    {
+      "path": "upstream/sy-drum/tools/gen_locks_io.py",
+      "sha256": "239db3dd79d3d7b3a033b8c9f5746ed4a55218f9fa5b8547c620251e886fcfac",
+      "repository": "https://github.com/timhastie/octatrick-modules",
+      "revision": "39dc5d8ca285c14674b66a452f58a5a0364efb96",
+      "sourcePath": "sy-drum/tools/gen_locks_io.py",
+      "sourceBytes": 6511,
+      "sourceSha256": "239db3dd79d3d7b3a033b8c9f5746ed4a55218f9fa5b8547c620251e886fcfac"
+    },
+    {
+      "path": "upstream/sy-drum/tools/gen_tables.py",
+      "sha256": "5e1c709a329a1bf2ef28c66b8cc190585eec3182ad5062e90b70f363403f7524",
+      "repository": "https://github.com/timhastie/octatrick-modules",
+      "revision": "39dc5d8ca285c14674b66a452f58a5a0364efb96",
+      "sourcePath": "sy-drum/tools/gen_tables.py",
+      "sourceBytes": 7675,
+      "sourceSha256": "5e1c709a329a1bf2ef28c66b8cc190585eec3182ad5062e90b70f363403f7524"
+    },
+    {
+      "path": "upstream/sy-drum/tools/gjlocks_io.h",
+      "sha256": "dec8dc2f0d69e130b626e53d7da26e65fbbfe20014d867f059fdf61314138a56",
+      "repository": "https://github.com/timhastie/octatrick-modules",
+      "revision": "39dc5d8ca285c14674b66a452f58a5a0364efb96",
+      "sourcePath": "sy-drum/tools/gjlocks_io.h",
+      "sourceBytes": 10089,
+      "sourceSha256": "dec8dc2f0d69e130b626e53d7da26e65fbbfe20014d867f059fdf61314138a56"
+    },
+    {
+      "path": "upstream/sy-drum/tools/lockfile.py",
+      "sha256": "4893d47c125657442e15779b1c005adea4e00102c5445809fe5a5f045785520e",
+      "repository": "https://github.com/timhastie/octatrick-modules",
+      "revision": "39dc5d8ca285c14674b66a452f58a5a0364efb96",
+      "sourcePath": "sy-drum/tools/lockfile.py",
+      "sourceBytes": 10435,
+      "sourceSha256": "4893d47c125657442e15779b1c005adea4e00102c5445809fe5a5f045785520e"
+    },
+    {
+      "path": "upstream/sy-drum/tools/locks_io.c",
+      "sha256": "e56c8e089c592556eece6b2a041ed6cfae433460f4cc5ffc6e88842ba79c6549",
+      "repository": "https://github.com/timhastie/octatrick-modules",
+      "revision": "39dc5d8ca285c14674b66a452f58a5a0364efb96",
+      "sourcePath": "sy-drum/tools/locks_io.c",
+      "sourceBytes": 24088,
+      "sourceSha256": "e56c8e089c592556eece6b2a041ed6cfae433460f4cc5ffc6e88842ba79c6549"
+    },
+    {
+      "path": "upstream/sy-drum/tools/scenes_io.h",
+      "sha256": "fac757fb678a9a2389b9085e403e2d39ad3c091a1c3cbdb3065cffb036c399d0",
+      "repository": "https://github.com/timhastie/octatrick-modules",
+      "revision": "39dc5d8ca285c14674b66a452f58a5a0364efb96",
+      "sourcePath": "sy-drum/tools/scenes_io.h",
+      "sourceBytes": 4318,
+      "sourceSha256": "fac757fb678a9a2389b9085e403e2d39ad3c091a1c3cbdb3065cffb036c399d0"
+    },
+    {
+      "path": "upstream/sy-drum/tools/sy1_mod_model.py",
+      "sha256": "9e351726a20ae093d9b711d395f8caee7f9a489e9e3916bebd4cc7fba166c6ed",
+      "repository": "https://github.com/timhastie/octatrick-modules",
+      "revision": "39dc5d8ca285c14674b66a452f58a5a0364efb96",
+      "sourcePath": "sy-drum/tools/sy1_mod_model.py",
+      "sourceBytes": 9909,
+      "sourceSha256": "9e351726a20ae093d9b711d395f8caee7f9a489e9e3916bebd4cc7fba166c6ed"
+    },
+    {
+      "path": "upstream/sy-drum/tools/sy1_model.py",
+      "sha256": "21a14a0210a69d0be03175d1ead9f51e6fcdd5f1411ce87eb7a568a3f7074561",
+      "repository": "https://github.com/timhastie/octatrick-modules",
+      "revision": "39dc5d8ca285c14674b66a452f58a5a0364efb96",
+      "sourcePath": "sy-drum/tools/sy1_model.py",
+      "sourceBytes": 12024,
+      "sourceSha256": "21a14a0210a69d0be03175d1ead9f51e6fcdd5f1411ce87eb7a568a3f7074561"
+    },
+    {
+      "path": "upstream/synth/engine_abi.inc",
+      "sha256": "50a855a7c0e148332bae159159584965baa709230b7e59d0bf8644c7ff51adf6",
+      "repository": "https://github.com/timhastie/octatrick-modules",
+      "revision": "39dc5d8ca285c14674b66a452f58a5a0364efb96",
+      "sourcePath": "synth/engine_abi.inc",
+      "sourceBytes": 4596,
+      "sourceSha256": "50a855a7c0e148332bae159159584965baa709230b7e59d0bf8644c7ff51adf6"
+    },
+    {
+      "path": "verify.py",
+      "sha256": "a5626019cd8b40256c2511d20630697b3b5998f7debc3ff04f662e684eabeebf"
+    }
+  ],
+  "notes": [
+    "upstream/ is the author's sy-drum/ at v2.14 plus the one file its manifest reads from his synth/ (engine_abi.inc) and his LICENSE at v2.14. v2.14 (39dc5d8) changes sy-drum/ only against v2.13 (48b89e7, FM Synth 0.1.5's pin): the step-lock card code (tools/locks_io.c and the generated locks_io.inc.s: the lock files written while the sequencer plays, and read whatever the stock bank load returned), one new LOCK_HOOKS row (0x4005224a, sl_io_tick_hook), tools/gen_locks_io.py and README.md.",
+    "The author's native conflicts (KITS, PLOCKS P2, STEM REC: octabam modules outside this catalogue) are cleared in manifest.py and listed in octamod.module.json and README.md.",
+    "Stock spans: stock-guards.json (53 detour sites). No stock bytes are stored."
+  ]
+}

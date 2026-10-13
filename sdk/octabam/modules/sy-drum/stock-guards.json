@@ -1,0 +1,324 @@
+{
+  "schemaVersion": 1,
+  "policy": "Stock spans resolve locally from the verified user OS; no stock expectations distributed.",
+  "guards": [
+    {
+      "path": "upstream/sy-drum/manifest.py",
+      "address": 1073946326,
+      "length": 8,
+      "sha256": "185563f89a350a9dafa830e003e1f364a0924eac9252760a48b05ce4266db463"
+    },
+    {
+      "path": "upstream/sy-drum/manifest.py",
+      "address": 1073980708,
+      "length": 10,
+      "sha256": "5fcdfa76b149403ffc5c9e965ab4f72c0792156a1191eba88132e0de418f1307"
+    },
+    {
+      "path": "upstream/sy-drum/manifest.py",
+      "address": 1073789694,
+      "length": 8,
+      "sha256": "9127ff5b8f4845a81a10deda9554796ba9ed6501e08ce308b04f046b3bc50d74"
+    },
+    {
+      "path": "upstream/sy-drum/manifest.py",
+      "address": 1073792034,
+      "length": 6,
+      "sha256": "38745d184855ca6e210f5229966abac017f1f536d9224187b2a42bed756560a5"
+    },
+    {
+      "path": "upstream/sy-drum/manifest.py",
+      "address": 1073792558,
+      "length": 6,
+      "sha256": "b05db0e2c6e818a323c3e72cc9a8a5070faf9d4fff1106356df02553a940850b"
+    },
+    {
+      "path": "upstream/sy-drum/manifest.py",
+      "address": 1073884182,
+      "length": 6,
+      "sha256": "503cc83327f17ac270360f256196789c6cf7a061489249142f90cabf7bed632f"
+    },
+    {
+      "path": "upstream/sy-drum/manifest.py",
+      "address": 1074078282,
+      "length": 8,
+      "sha256": "1f32afe109a68799b4ab5f3772a8ffd7f113cee714374eda804945044d91fe3d"
+    },
+    {
+      "path": "upstream/sy-drum/manifest.py",
+      "address": 1073899368,
+      "length": 6,
+      "sha256": "1f78fbfb9a5a1d1d0517417369c81f72056176e41d1cb3e803cd8088b94455a9"
+    },
+    {
+      "path": "upstream/sy-drum/manifest.py",
+      "address": 1073899676,
+      "length": 8,
+      "sha256": "1a241bd7b3090391ae8bfc0352ae22425a70817ccd477fa5d7aba231b95b8bc9"
+    },
+    {
+      "path": "upstream/sy-drum/manifest.py",
+      "address": 1073899920,
+      "length": 8,
+      "sha256": "1a241bd7b3090391ae8bfc0352ae22425a70817ccd477fa5d7aba231b95b8bc9"
+    },
+    {
+      "path": "upstream/sy-drum/manifest.py",
+      "address": 1073901232,
+      "length": 10,
+      "sha256": "1026d523a4f46be54546a3e5b42d970c6847f7899b5a007cccd51216361d6d11"
+    },
+    {
+      "path": "upstream/sy-drum/manifest.py",
+      "address": 1073901296,
+      "length": 8,
+      "sha256": "4c6de0100c3e5eb1e6fc9b7e0d99266f375aef1318b8e3757199f2924e182e85"
+    },
+    {
+      "path": "upstream/sy-drum/manifest.py",
+      "address": 1073910976,
+      "length": 8,
+      "sha256": "aafc8f979f6aeb11a4358bcf7b01706892acebe4c40d3e520f88528b3cac80a8"
+    },
+    {
+      "path": "upstream/sy-drum/manifest.py",
+      "address": 1073911636,
+      "length": 8,
+      "sha256": "57ce6a873a72d55110bfba4569069ecc773810ea4134eb9191e9c6c1ccaa0714"
+    },
+    {
+      "path": "upstream/sy-drum/manifest.py",
+      "address": 1073914764,
+      "length": 8,
+      "sha256": "9d8b5c6fa44fca2b22f8cb24de82782737e5615dff673baad1c7423135d0d27f"
+    },
+    {
+      "path": "upstream/sy-drum/manifest.py",
+      "address": 1073917692,
+      "length": 8,
+      "sha256": "9763fb611c807f5dc904f9b5ee15ae74bda1e39d0f9e46671289a147cd2daaa7"
+    },
+    {
+      "path": "upstream/sy-drum/manifest.py",
+      "address": 1073919056,
+      "length": 6,
+      "sha256": "8521e13dbb173ca0918443c83caf86ae18f86aefdb67d09dfbfa23f822053fe8"
+    },
+    {
+      "path": "upstream/sy-drum/manifest.py",
+      "address": 1073919572,
+      "length": 8,
+      "sha256": "3e7c95b32f444fd280cb96b2a6ea90525fe223d6e6b9352086d2cf41941ae854"
+    },
+    {
+      "path": "upstream/sy-drum/manifest.py",
+      "address": 1073920432,
+      "length": 8,
+      "sha256": "efa23c0a55aebcd8ffb29c8ba97d3970d8e88ed9c16272d7b5ea0b4e8309ecf5"
+    },
+    {
+      "path": "upstream/sy-drum/manifest.py",
+      "address": 1073921848,
+      "length": 8,
+      "sha256": "2f00d9fdb64f51c6d0127dfa877aafe06a2b563333fd0cf980219fbddab7e663"
+    },
+    {
+      "path": "upstream/sy-drum/manifest.py",
+      "address": 1073925010,
+      "length": 8,
+      "sha256": "4c84d29db6ad3c55ff49e18d8710dd799b0a217a3fdf31ff931161ab4072749c"
+    },
+    {
+      "path": "upstream/sy-drum/manifest.py",
+      "address": 1073953452,
+      "length": 8,
+      "sha256": "f104315925f98abf6c188a4f4a881e112b5853119a570e5c603d34432837fe39"
+    },
+    {
+      "path": "upstream/sy-drum/manifest.py",
+      "address": 1073953586,
+      "length": 8,
+      "sha256": "185186ff675407f6190e294d2b11a5ff985e5bee7c7485d7678db0be97893c10"
+    },
+    {
+      "path": "upstream/sy-drum/manifest.py",
+      "address": 1073973416,
+      "length": 8,
+      "sha256": "f43e013ef43cd87b96b92b3069a52bdd86f668da5abc30168cca144d58c0261d"
+    },
+    {
+      "path": "upstream/sy-drum/manifest.py",
+      "address": 1073974022,
+      "length": 8,
+      "sha256": "f1c88be8c97ae96dc5e8f024c7dac1e5eabc1abb0fa1dc26d1c142522f7a3a65"
+    },
+    {
+      "path": "upstream/sy-drum/manifest.py",
+      "address": 1073977524,
+      "length": 8,
+      "sha256": "52dccc03e103dca3839c839017cffce1d4a1e675d8dfb2804764141e86c63841"
+    },
+    {
+      "path": "upstream/sy-drum/manifest.py",
+      "address": 1073978868,
+      "length": 8,
+      "sha256": "0c6d3f0bfd198ddc78800e6503eccdc6cbc5c442209d882244584eda864e93ca"
+    },
+    {
+      "path": "upstream/sy-drum/manifest.py",
+      "address": 1073980948,
+      "length": 10,
+      "sha256": "ad14a643a51b28ae439d5e7d2988b9e42dd2b973b4e1a2ae230b8a6ecd99435f"
+    },
+    {
+      "path": "upstream/sy-drum/manifest.py",
+      "address": 1073994006,
+      "length": 8,
+      "sha256": "d76f469591191c1c7b41715238acb38172b1f7be3d1d07d862a2d46fe53ca2e1"
+    },
+    {
+      "path": "upstream/sy-drum/manifest.py",
+      "address": 1074007572,
+      "length": 8,
+      "sha256": "52dccc03e103dca3839c839017cffce1d4a1e675d8dfb2804764141e86c63841"
+    },
+    {
+      "path": "upstream/sy-drum/manifest.py",
+      "address": 1074070540,
+      "length": 8,
+      "sha256": "82f9c301aead4e1a90d91f8f679ba9cb91d05c1ed69dcc1c270dc59485285f1e"
+    },
+    {
+      "path": "upstream/sy-drum/manifest.py",
+      "address": 1074073558,
+      "length": 6,
+      "sha256": "a56b367231e7d77a7c24613c65d499e76fae9c1b1a0cec40037b6e7bf0b437d8"
+    },
+    {
+      "path": "upstream/sy-drum/manifest.py",
+      "address": 1074133970,
+      "length": 6,
+      "sha256": "a56b367231e7d77a7c24613c65d499e76fae9c1b1a0cec40037b6e7bf0b437d8"
+    },
+    {
+      "path": "upstream/sy-drum/manifest.py",
+      "address": 1074071780,
+      "length": 8,
+      "sha256": "2207fffe6c6df168aa44f4d606cde43662645ed9419bdd8f89b00259d5778c93"
+    },
+    {
+      "path": "upstream/sy-drum/manifest.py",
+      "address": 1074136050,
+      "length": 6,
+      "sha256": "d317798a5e6f5ff9e9d75b8f659bd29463e1f73689d72c532df8029adfa081ba"
+    },
+    {
+      "path": "upstream/sy-drum/manifest.py",
+      "address": 1074284638,
+      "length": 6,
+      "sha256": "0bc2ef188c68224486591693fb94e822b6cc59b94e31323c678457ef5363120e"
+    },
+    {
+      "path": "upstream/sy-drum/manifest.py",
+      "address": 1074326604,
+      "length": 8,
+      "sha256": "d2d2ad55cf4a4dffa571fd968940e80d2baadc54b64ae62376a41653870f3755"
+    },
+    {
+      "path": "upstream/sy-drum/manifest.py",
+      "address": 1074326948,
+      "length": 8,
+      "sha256": "da4b8bf41daeba784e24ed3a16d4ef7c5f6397ee3db9e47c007b1022b395d2b9"
+    },
+    {
+      "path": "upstream/sy-drum/manifest.py",
+      "address": 1074327156,
+      "length": 8,
+      "sha256": "7d5c431d467d3f7e6d9e050e69120eb7faae9c6eede0a0b6c5a8e01f12a224cc"
+    },
+    {
+      "path": "upstream/sy-drum/manifest.py",
+      "address": 1074327728,
+      "length": 8,
+      "sha256": "da4b8bf41daeba784e24ed3a16d4ef7c5f6397ee3db9e47c007b1022b395d2b9"
+    },
+    {
+      "path": "upstream/sy-drum/manifest.py",
+      "address": 1074327936,
+      "length": 8,
+      "sha256": "7d5c431d467d3f7e6d9e050e69120eb7faae9c6eede0a0b6c5a8e01f12a224cc"
+    },
+    {
+      "path": "upstream/sy-drum/manifest.py",
+      "address": 1074333140,
+      "length": 8,
+      "sha256": "604756f90fe2564cd1c75b712a1c239b10ef2db438579e307632b3382bacd165"
+    },
+    {
+      "path": "upstream/sy-drum/manifest.py",
+      "address": 1074334168,
+      "length": 10,
+      "sha256": "04b9d7a74c6bd182603087f929a77f363eac1667a5135d86b8fda1c6d35d9b82"
+    },
+    {
+      "path": "upstream/sy-drum/manifest.py",
+      "address": 1074336452,
+      "length": 8,
+      "sha256": "ef3b763ec7fe48e228294def257018f5a1753bd89854058291f5ed24af485e1d"
+    },
+    {
+      "path": "upstream/sy-drum/manifest.py",
+      "address": 1074337736,
+      "length": 8,
+      "sha256": "b692e058a2f3049810c18b0571d61c085c3daba589a09b531fed42f528b96012"
+    },
+    {
+      "path": "upstream/sy-drum/manifest.py",
+      "address": 1074338276,
+      "length": 8,
+      "sha256": "74c5c24f09bf544b8fad303723b3935f248a9f48eefdbd230049cf63bd8fee5e"
+    },
+    {
+      "path": "upstream/sy-drum/manifest.py",
+      "address": 1074374244,
+      "length": 8,
+      "sha256": "2effba8e990d9a5e8d0ccefb64ff38bff78d39b97a08de89d32a809d669697ce"
+    },
+    {
+      "path": "upstream/sy-drum/manifest.py",
+      "address": 1074377248,
+      "length": 8,
+      "sha256": "04c6b670df9acf88738d96b42b425126ef6eb1b19681ddbad2f9a6aa460f881a"
+    },
+    {
+      "path": "upstream/sy-drum/manifest.py",
+      "address": 1074378862,
+      "length": 6,
+      "sha256": "280015090fac9b58d39bf5bcd9f920fcbab7973643dbf5ce8300be5098b299c7"
+    },
+    {
+      "path": "upstream/sy-drum/manifest.py",
+      "address": 1074380878,
+      "length": 6,
+      "sha256": "280015090fac9b58d39bf5bcd9f920fcbab7973643dbf5ce8300be5098b299c7"
+    },
+    {
+      "path": "upstream/sy-drum/manifest.py",
+      "address": 1074383036,
+      "length": 8,
+      "sha256": "e398ae4718aa25b1a93c5bce98f6ab1c42cf49239c934a30b67dee219734f4a9"
+    },
+    {
+      "path": "upstream/sy-drum/manifest.py",
+      "address": 1074385384,
+      "length": 8,
+      "sha256": "9921e7a2179ac4fdb8cde53f686de2defea4b78e13c5a2c3e88958b635063458"
+    },
+    {
+      "path": "upstream/sy-drum/manifest.py",
+      "address": 1074385822,
+      "length": 8,
+      "sha256": "65b427004cad9ff6b83cd000147daf500848cd9b33cf89eb948bdcf4be58e266"
+    }
+  ]
+}

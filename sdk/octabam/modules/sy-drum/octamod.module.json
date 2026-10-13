@@ -1,0 +1,457 @@
+{
+  "schemaVersion": 2,
+  "id": "sy-drum",
+  "key": "SY DRUM",
+  "name": "SY DRUM",
+  "version": "0.1.0-experimental",
+  "category": "machines",
+  "source": {
+    "repository": "https://github.com/timhastie/octatrick-modules",
+    "revision": "39dc5d8ca285c14674b66a452f58a5a0364efb96",
+    "path": "sy-drum"
+  },
+  "author": {
+    "github": "timhastie",
+    "name": "Tim Hastie",
+    "credits": [
+      "Tim Hastie (@timhastie): SY DRUM engine, its pages, the setup LFO and its per-step locks and card files, octatrick 2.14 (timhastie/octatrick-modules v2.14), MIT.",
+      "Modwerk packaging (manifest, documentation, captures and records for this catalogue): Tim Hastie, MIT."
+    ]
+  },
+  "nativeManifest": "manifest.py",
+  "presentation": {
+    "label": "Analog-style drum voice",
+    "family": "Synth machines",
+    "summary": "An analog-style drum voice in the machine list after FM SYNTH: six modes, a pitch sweep, a filter opened by the decay, and an LFO / S&H lockable per step. Needs FM Synth.",
+    "overview": "SY DRUM adds a drum machine to the track machine list, the row after FM SYNTH. Each SY DRUM track is one voice: two oscillators, a pitch sweep, a two-pole low-pass filter opened by the decay envelope, six modes and a dedicated LFO with sample-and-hold whose four controls can be locked per step. It plays without a sample and runs on FM Synth’s engine, machine list, keys and MIDI, so FM Synth must be in the same build. SY DRUM is modelled on the 1979 Pearl Syncussion SY-1, written from a study of that unit’s circuit. It is not affiliated with or endorsed by Pearl or Behringer. Syncussion is a trademark of its owner. A machine change to or from SY DRUM resets the track’s machine parameters to the new machine’s init; step locks stay, as in the stock firmware. This is Tim Hastie’s octatrick 2.14 module; ColdFire cost, memory and the persistence checks are measured in the emulator, and the hardware report for this exact build is pending.",
+    "highlights": [
+      "A seventh machine row, SY DRUM, in SELECT MACHINE TYPE and SRC SETUP; no sample or marker file.",
+      "PTCH MODE WDTH SWEP SPED DEC with stock p-locks, the three LFOs and scenes.",
+      "A dedicated LFO and sample-and-hold (LSPD LDEP WAVE S&H) on the setup page, each lockable per step in GRID and LIVE RECORDING.",
+      "Locks follow copy, paste, clear, shift and undo, and save beside the project in sylockNN files."
+    ],
+    "usage": [
+      "Open a disposable project with FM Synth and SY DRUM firmware. Select an audio track, hold FUNC and press SRC, go DOWN past FM SYNTH to SY DRUM and press YES. No sample is required.",
+      "Press SRC. Turn MODE for one of the six voices A–F, DEC for the decay, WDTH for the filter and SWEP/SPED for a pitch sweep. Place trigs and press PLAY; PTCH is in semitones.",
+      "Hold FUNC and press SRC for the setup half: set WAVE to TRI and turn LDEP up for a pitch LFO; LSPD sets its rate and S&H holds one value per hit. In GRID RECORDING, hold a trig and turn A–D to lock these per step.",
+      "Press STOP twice to silence it. To return to a sample machine, hold FUNC and press SRC, choose FLEX or STATIC and press YES: the track starts from that machine’s init (the step locks stay)."
+    ]
+  },
+  "access": {
+    "location": "Audio track > FUNC+SRC (or SELECT MACHINE TYPE) > SY DRUM; SRC for the voice, FUNC+SRC for the LFO and its step locks.",
+    "steps": [
+      "Open a disposable project with FM Synth and SY DRUM firmware. Select an audio track, hold FUNC and press SRC, go DOWN past FM SYNTH to SY DRUM and press YES. No sample is required.",
+      "Press SRC. Turn MODE for one of the six voices A–F, DEC for the decay, WDTH for the filter and SWEP/SPED for a pitch sweep. Place trigs and press PLAY; PTCH is in semitones.",
+      "Hold FUNC and press SRC for the setup half: set WAVE to TRI and turn LDEP up for a pitch LFO; LSPD sets its rate and S&H holds one value per hit. In GRID RECORDING, hold a trig and turn A–D to lock these per step.",
+      "SELECT MACHINE TYPE: press the track key twice quickly, press LEFT on << MACHINE, go DOWN to SY DRUM (the seventh row; the window scrolls) and press YES.",
+      "Press STOP twice to silence it. To return to a sample machine, hold FUNC and press SRC, choose FLEX or STATIC and press YES: the track starts from that machine’s init (the step locks stay)."
+    ],
+    "screenshots": [
+      "media/ot-machine-list.png",
+      "media/ot-src-setup.png",
+      "media/ot-controls.png",
+      "media/ot-setup-lfo.png",
+      "media/ot-step-lock.png"
+    ]
+  },
+  "controls": [
+    {
+      "name": "PTCH",
+      "default": 64,
+      "count": 128,
+      "doc": "SRC A: raw 64 is 0 semitones (C4); raw 0–127 gives −64…+63. CHROMATIC keys, MIDI notes and the bundled scale quantizer use semitones.",
+      "labels": null
+    },
+    {
+      "name": "MODE",
+      "default": 0,
+      "count": 128,
+      "doc": "SRC B: six voices spaced evenly over the dial (raw 0, 25, 51, 76, 102, 127): A triangle, B exponential FM, C mixed oscillators, D independently swept oscillators, E FM pseudo-saw, F noise.",
+      "labels": null
+    },
+    {
+      "name": "WDTH",
+      "default": 64,
+      "count": 128,
+      "doc": "SRC C: how far the decay envelope opens the two-pole low-pass filter; turn left for a darker attack and tail.",
+      "labels": null
+    },
+    {
+      "name": "SWEP",
+      "default": 64,
+      "count": 128,
+      "doc": "SRC D: raw 64 is no sweep; below starts above PTCH and sweeps down, above starts below and sweeps up (−64…+63).",
+      "labels": null
+    },
+    {
+      "name": "SPED",
+      "default": 64,
+      "count": 128,
+      "doc": "SRC E: the sweep’s time constant, 20 ms…1.1 s; clockwise is longer and slower.",
+      "labels": null
+    },
+    {
+      "name": "DEC",
+      "default": 64,
+      "count": 128,
+      "doc": "SRC F: the amplitude decay’s time constant at C4, 6 ms…2.5 s; higher tuning shortens it.",
+      "labels": null
+    },
+    {
+      "name": "LSPD",
+      "default": 64,
+      "count": 128,
+      "doc": "FUNC+SRC A: the dedicated LFO’s speed, 0.40…200.0 Hz (raw 64 = 4.56 Hz). Part value, lockable per step.",
+      "labels": null
+    },
+    {
+      "name": "LDEP",
+      "default": 0,
+      "count": 128,
+      "doc": "FUNC+SRC B: continuous LFO depth on the tuning, nominally ±24 semitones at 127. Part value, lockable per step.",
+      "labels": null
+    },
+    {
+      "name": "WAVE",
+      "default": 0,
+      "count": 4,
+      "doc": "FUNC+SRC C: OFF, TRI, SQR or RND (RND steps once a cycle when S&H is off). Part value, lockable per step.",
+      "labels": [
+        "OFF",
+        "TRI",
+        "SQR",
+        "RND"
+      ]
+    },
+    {
+      "name": "S&H",
+      "default": 0,
+      "count": 2,
+      "doc": "FUNC+SRC D: capture the selected waveform at each hit (fixed ±24 semitones, independent of LDEP); RND draws a fresh value per hit. Part value, lockable per step.",
+      "labels": [
+        "OFF",
+        "ON"
+      ]
+    }
+  ],
+  "compatibility": {
+    "firmware": "1.40C",
+    "effectId": null,
+    "location": "Track machine",
+    "conflicts": [
+      "analog-bassdrum",
+      "vector",
+      "quantizer",
+      "poly8",
+      "kits",
+      "plocks-p2",
+      "stem-rec"
+    ],
+    "limitations": [
+      "Needs FM Synth: SY DRUM runs on its engine and machine list. The configurator refuses SY DRUM without FM Synth, as native octabam does (its manifest requires SYNTH MACHINE).",
+      "Inherits FM Synth’s exclusions (Analog BD, VECTOR, the public Scale Quantizer: the same chooser and quantizer hooks) and is not built with POLY8, which owns the machine list itself.",
+      "Octabam modules outside this catalogue that SY DRUM declares conflicts with: KITS and PLOCKS P2 (the same project-file and lock-queue hooks) and STEM REC (the 2 MiB lock table and its buffers do not fit the platform reserve together).",
+      "Parts store FLEX plus \"SY\", 1 in unused NEIGHBOR bytes. A build without SY DRUM reads such a track as an empty FLEX track (silent) and clamps its bytes; choose a stock machine and save before downgrading.",
+      "Step locks of LSPD LDEP WAVE S&H live in sylock01–16 .work/.strd files beside the banks (a file format of the author’s, read by his development builds too); keep them with the project when copying it on a computer. The .work file follows lock edits within about 1.2 s, stopped or playing (2.14); a power-off without SAVE PROJECT less than that after an edit can bring the step back without it.",
+      "One voice a track (no VOIC/CHRD); the setup controls are not in scenes and are not LFO destinations.",
+      "A machine change to or from SY DRUM (or FM SYNTH) resets the track’s PLAYBACK, PLAYBACK SETUP, AMP and LFO pages and their SETUP pages to the new machine’s init (FM Synth’s machine list); step and scene locks, SY DRUM’s setup-LFO locks and the FX slots are kept.",
+      "Emulator measurements, the maximum over five runs of each load, price 2 SY DRUM tracks at their worst (a trig on every step, LFO, locks, p-locks, LFOs, scenes) inside every audio block including the first START. 3 tracks also stay inside the block in every run, but by 311 instructions, less than the 418-instruction spread between runs seen on this frame-interrupt code, so they are not qualified; 4 tracks reach 1.110x and 8 tracks reach 1.560x the block on their START blocks (not shown to fail on a unit). Mixed FM Synth and SY DRUM loads were not measured.",
+      "Part and project-load persistence, the power-off without SAVE (the power-on load with the battery-backed memory carried over, on an emulator build that keeps it), the machine-change init and two-instance isolation pass in the emulator; the same on a unit with this exact build and usable audio on hardware need the author's report (pending)."
+    ]
+  },
+  "resources": {
+    "recorded": "2026-10-13; emulator cycles, exact memory, image 27c213b2 (with FM Synth 0.1.5); hardware pending",
+    "storage": {
+      "label": "SY DRUM code, state, lock table and image bytes",
+      "display": "2,297,463 bytes incl. the 2 MiB lock table",
+      "value": 2297463,
+      "unit": "bytes",
+      "method": "static",
+      "conditions": "Exact from the link map: the 136,061-byte SY DRUM DRAM unit (code, tables, eight tracks' state, the lock machinery's buffers), 8,195 B of link alignment, 488 B of FM Synth growth, the 2,097,152-byte step-lock table (a region at the top of the existing platform reserve), 410 B of hook sites and 53,869 B of appended payload, and the 1,288-byte stack bound. See TESTING.md.",
+      "source": "TESTING.md"
+    },
+    "processing": {
+      "label": "ColdFire processing",
+      "display": "14,246 cycles/block per SY DRUM track at its START (emulated)",
+      "value": 14246,
+      "unit": "cycles/block",
+      "method": "emulator",
+      "conditions": "Emulated ColdFire instructions per 16-sample frame interrupt (362.8 us at 44.1 kHz), converted at 9.44 ns per instruction (the CF METER calibration FM Synth's record uses, 2.49216 cycles at 264 MHz); not chip wall-clock cycles. One SY DRUM track with a trig on every step, its LFO at full speed and depth with S&H, step locks and p-locks on every step, two LFOs and scenes: over 5 runs the START block peaks at most 29,017 instructions against an idle minimum of 23,301 (+5,716, 14,246 cycles), sustained about 2,590 more than idle. The peak moves by up to 208 instructions between runs on this image (418 on the previous image's runs of the same frame-interrupt code). 2 tracks keep every block inside the budget with room for the larger: 33,791 instructions with FM's 372 allowance, 84,213 of 95,779 cycles. See TESTING.md.",
+      "source": "TESTING.md"
+    },
+    "impact": {
+      "conditions": "One voice per SY DRUM track; state preallocated for eight tracks. Emulator qualification (the maximum over five runs of each load): 2 SY DRUM tracks at their worst keep every block in budget; 3 stay inside it by less than the run-to-run spread and are not qualified; 4 and 8 do not on their START blocks.",
+      "cpu": {
+        "level": "high",
+        "basis": "source-estimate",
+        "rationale": "ColdFire renders the SY-1 model per sample (about 859 instructions a render call, two calls a frame), runs the setup LFO and step-lock staging once a frame (about 1,642 with one track; about 606 with none) and publishes a step's locks at each START. The UI tick's hook (2.14) adds 34 instructions a UI tick while playing (2 while stopped), outside the audio interrupt.",
+        "source": "TESTING.md"
+      },
+      "dsp": {
+        "level": "minimal",
+        "basis": "source-estimate",
+        "rationale": "Adds no DSP program, table or effect buffer; the track’s stock AMP, filter and effects still run on the DSP as for any FLEX track.",
+        "source": "TESTING.md"
+      },
+      "memory": {
+        "level": "high",
+        "basis": "source-estimate",
+        "rationale": "A 136,061-byte DRAM unit (engine, tables, the lock machinery's 49 KB card-file buffer and clipboards) and a 2 MiB lock table at the top of the existing platform reserve; FM Synth's units grow 488 bytes when built with it.",
+        "source": "TESTING.md"
+      }
+    }
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "Emulator qualification of the native image MAIN OS 27c213b2... (FM Synth 0.1.5 + SY DRUM 0.1.0, octatrick 2.14 SY DRUM with the author's 2.13 quantizer in FM Synth, all stock effects): frame-interrupt instruction counts for 0, 1, 2, 3, 4 and 8 SY DRUM tracks at their worst, each load run five times and its maximum taken, converted at the CF METER calibration (9.44 ns/instruction, 264 MHz): 2 tracks keep every block, including the first START, inside the 16-sample block with room for the run-to-run spread (84,213 of 95,779 cycles); 3 tracks stay inside it by less than that spread and are not qualified. Exact memory from the link map. Software verification: the module's native Part smoke, the machine-list walk, the 2.12 machine change, two-instance isolation, Part save/reload, project save, project load and RELOAD with the lock files (emulator), the power-off without SAVE while playing, after STOP and stopped with the power-on load and the battery-backed memory carried over (an emulator build that keeps it; the previous image as the failing control), a damaged stock bank file at that load, 126 native/browser selections with 0 mismatches, seven sample comparisons with the author's renders, five LCD captures. A hardware report for this exact image is pending.",
+    "hardwareStatus": "historical",
+    "evidenceRevision": "1506cbcea19aa1c8e0801c4d7b7b72ccc25896de",
+    "gates": [
+      "verify.py: native Part smoke on image 27c213b2 (eightTrackSelection, sampleSlotsUnchanged, partAndShadowSignature, reselectPreservesControls, fmSynthRowBeside, returnToFlex): passed (evidence/native-smoke.json)",
+      "Native/browser composition: 126 selections without POLY8 in the pool (sdk/native-comparisons/sy-drum.json): 4 builds match outside the platform writes, 122 refusals match, 0 mismatches",
+      "Emulator worst-case frame-interrupt cycles with stock reserve, the maximum over at least five runs per load, converted at the CF METER calibration",
+      "Exact memory inventory reconciled with the native link map; static stack bounds of every SY DRUM entry",
+      "Emulator persistence: two SY DRUM tracks isolated; the 2.12 machine change SY DRUM -> FM SYNTH -> SY DRUM gives each init and keeps the setup-LFO locks and FX slots; Part save/reload; project save, project load and RELOAD with the sylock files; a power-off without SAVE (while playing, 0.6 s after pressing STOP, stopped) with the power-on load and the battery-backed memory carried over brings every lock back (the previous image: the PLAYBACK SETUP edits lost); a damaged stock bank file at that load keeps the step locks: passed (TESTING.md)",
+      "Hardware report for this source and image: pending (TIM placeholders)"
+    ],
+    "qualification": {
+      "moduleVersion": "0.1.0-experimental",
+      "sourceSha256": "8526f406181896a65943c3c907e8f752e7e3643fbb1b7b4ee8ac100942490d52",
+      "imageSha256": "27c213b2dca96e071200d97441de821c900bf9f87556af0918da200ef623aed9",
+      "cycles": [
+        {
+          "processor": "coldfire",
+          "worstCase": 14246,
+          "maxConfiguration": 84213,
+          "maxInstances": 2,
+          "budget": 95779,
+          "unit": "cycles/block",
+          "method": "emulator",
+          "conditions": {
+            "parameterExtremes": "Every step p-locks all six PLAYBACK controls at alternating extremes (PTCH 52..75, MODE A..F in turn, WDTH/SWEP/SPED/DEC 0 and 127), the setup LFO at its most active (LSPD 127 = 200 Hz, LDEP 127, WAVE RND, S&H ON) and a step lock of all four setup controls on every step (all four values change every step). The render cost per call does not depend on the patch: about 858..938 instructions a call across these cards. Measured in emulated ColdFire instructions on the pinned ot_emu; see TESTING.md.",
+            "parameterModulation": "LFO1 on WDTH and LFO2 on SPED at full speed and depth on every SY DRUM track; scene locks on all six PLAYBACK controls in all sixteen scenes with the crossfader at its project position; the dedicated LFO and S&H every frame; step locks published at every START (sl_seq_publish 268 instructions with locks, 223 without). MIDI CC and live knob turns use the same stock lock/parameter path and were not driven separately.",
+            "modeSwitching": "The first START after PLAY (the stock publication of every track's first trig) is the measured peak of every run; every later step is a warm retrigger. Machine choice (SRC SETUP, SELECT MACHINE TYPE) and its 2.12 init, the setup editor, step-lock editing and the card jobs (with 2.14's play-time write of the lock files) run in the UI and engine tasks, outside the frame interrupt's deadline, and were not timed; their stack is bounded statically. A track switched to SY DRUM while the pattern plays is the author's measured case (sd_tick's per-frame test, upstream README 'Cost').",
+            "maxLoad": "1, 2, 3, 4 and 8 SY DRUM tracks, all starting on the same step every step at 120 BPM, FX stock, each load run five times (the maximum taken; the peak moves by up to 208 instructions between runs on this image, 418 on the previous image's runs of the same frame-interrupt code; the margin is the larger): 1 track peaks at most 29,017 (29,389 with FM's 372 allowance, 9,043 to spare); 2 tracks peak at most 33,419 (33,791 with FM's 372 allowance, 4,641 to spare); 3 tracks peak at most 37,749 (38,121 with FM's 372 allowance, 311 to spare); 4 tracks peak at most 42,304 (42,676 with FM's 372 allowance, 1.110x the block); 8 tracks peak at most 59,601 (59,973 with FM's 372 allowance, 1.560x the block). maxInstances is therefore 2 (3 tracks fit by less than the spread). Sustained 37,756 with 8. No FM Synth track and no USB/MIDI traffic in the measured load.",
+            "inputConditions": "SY DRUM generates its own signal and has no audio input. Its cost depends on the number of sounding voices, the START of each trig and the lock staging, all driven at their worst. Idle (no SY DRUM track, the module present): 23,301..23,829 instructions a block, of which sd_tick is about 606."
+          },
+          "report": "TESTING.md"
+        }
+      ],
+      "memory": {
+        "regions": [
+          {
+            "name": "Per-track SY DRUM state: engine track record, four voice records, LFO / S&H state, setup-stage bytes",
+            "space": "sdram",
+            "words": 698,
+            "wordBits": 8,
+            "bytes": 698,
+            "scope": "instance"
+          },
+          {
+            "name": "SY DRUM DRAM unit code and tables (.text less the per-track state)",
+            "space": "sdram",
+            "words": 62704,
+            "wordBits": 8,
+            "bytes": 62704,
+            "scope": "shared"
+          },
+          {
+            "name": "SY DRUM unit data (.data less the setup-stage bytes): 49,184 B card-file buffer, lock clipboard and undo, queues",
+            "space": "sdram",
+            "words": 67660,
+            "wordBits": 8,
+            "bytes": 67660,
+            "scope": "shared"
+          },
+          {
+            "name": "SY DRUM read-only strings (.rodata)",
+            "space": "sdram",
+            "words": 113,
+            "wordBits": 8,
+            "bytes": 113,
+            "scope": "shared"
+          },
+          {
+            "name": "Runtime link padding before .data (alignment, present only with SY DRUM)",
+            "space": "sdram",
+            "words": 8195,
+            "wordBits": 8,
+            "bytes": 8195,
+            "scope": "shared"
+          },
+          {
+            "name": "FM Synth's units assembled with SY DRUM: poly +420, fmmachine +8, fm_qz +60",
+            "space": "sdram",
+            "words": 488,
+            "wordBits": 8,
+            "bytes": 488,
+            "scope": "shared"
+          },
+          {
+            "name": "Step-lock table sl_work_table: 16 banks x 8,192 rows x 16 B, a DRAM region at the top of the platform reserve",
+            "space": "sdram",
+            "words": 2097152,
+            "wordBits": 8,
+            "bytes": 2097152,
+            "scope": "shared"
+          },
+          {
+            "name": "SY DRUM hook sites rewritten in place: 53 detours",
+            "space": "cpu-flash",
+            "words": 410,
+            "wordBits": 8,
+            "bytes": 410,
+            "scope": "shared"
+          },
+          {
+            "name": "Appended platform payload growth (the packed SY DRUM unit and FM growth)",
+            "space": "cpu-flash",
+            "words": 53869,
+            "wordBits": 8,
+            "bytes": 53869,
+            "scope": "shared"
+          },
+          {
+            "name": "ColdFire stack increment upper bound (engine-task card job 1,216 B plus the frame path 72 B)",
+            "space": "sdram",
+            "words": 1288,
+            "wordBits": 8,
+            "bytes": 1288,
+            "scope": "shared"
+          }
+        ],
+        "perInstanceBytes": 698,
+        "sharedBytes": 2291879,
+        "maxInstances": 8,
+        "totalBytes": 2297463,
+        "conditions": "Exact link map of the measured native build (runtime.elf, layout.json, the exporter's build directory) against FM Synth 0.1.5 alone built from the same source. The SY DRUM unit is 136,061 B (68,184 .text, 67,764 .data, 113 .rodata), of which 698 B a track x 8 is preallocated per-track state; the link adds 8,195 B of alignment before .data; FM Synth's three per-remix units grow 488 B when built with SY DRUM; the 2,097,152-byte lock table is a DramRegion at the top of the platform's 10,487,808-byte reserve (layout: 0x41295de0), so it takes no sample memory beyond the reserve FM Synth already creates (counted in FM Synth's record, not here). OS image: 53 hook sites (410 B) and 53,869 B more appended payload. No heap or dynamic allocation; no SRAM, battery-RAM or DSP allocation (the SY DRUM choice and the setup controls use stock Part bytes and their battery-RAM shadow; the step locks are in the RAM table and the sylockNN card files). Stack: static bounds from the linked disassembly, the stock file-system routines the card jobs call through pointers excluded (their frames are stock's). Hardware canaries not measured.",
+        "report": "TESTING.md"
+      },
+      "hardware": {
+        "kind": "functional",
+        "status": "reported",
+        "model": "MKI",
+        "testedOn": "TIM: YYYY-MM-DD",
+        "tester": "TIM: credited handle",
+        "sourceRevision": "1506cbcea19aa1c8e0801c4d7b7b72ccc25896de",
+        "imageSha256": "27c213b2dca96e071200d97441de821c900bf9f87556af0918da200ef623aed9",
+        "summary": "TIM: what was played on the unit and what happened (MAIN OS 27c213b2..., the hardware test sheet)",
+        "limitations": [
+          "TIM: duration, track counts, the power-off cases run, untested cases"
+        ],
+        "report": "TESTING.md"
+      },
+      "documentation": {
+        "tutorial": {
+          "title": "Quick tutorial: play SY DRUM",
+          "steps": [
+            "Open a disposable project with FM Synth and SY DRUM firmware. Select an audio track, hold FUNC and press SRC, go DOWN past FM SYNTH to SY DRUM and press YES. No sample is required.",
+            "Press SRC. Turn MODE for one of the six voices A–F, DEC for the decay, WDTH for the filter and SWEP/SPED for a pitch sweep. Place trigs and press PLAY; PTCH is in semitones.",
+            "Hold FUNC and press SRC for the setup half: set WAVE to TRI and turn LDEP up for a pitch LFO; LSPD sets its rate and S&H holds one value per hit. In GRID RECORDING, hold a trig and turn A–D to lock these per step.",
+            "Press STOP twice to silence it. To return to a sample machine, hold FUNC and press SRC, choose FLEX or STATIC and press YES: the track starts from that machine’s init (the step locks stay)."
+          ]
+        },
+        "screenshots": [
+          "media/ot-machine-list.png",
+          "media/ot-src-setup.png",
+          "media/ot-controls.png",
+          "media/ot-setup-lfo.png",
+          "media/ot-step-lock.png"
+        ],
+        "screenshotStyle": "black-and-white"
+      }
+    }
+  },
+  "license": {
+    "spdx": "MIT",
+    "file": "LICENSE",
+    "declaration": "Tim Hastie’s MIT notice retained with the exact source pin (upstream/LICENSE, timhastie/octatrick-modules v2.14 39dc5d8); the Modwerk packaging and the SVG are his, MIT. Stock dependencies use lazy address/length/SHA-256 guards (stock-guards.json). No firmware, extracted stock byte blobs, cards, RAM or generated binaries are included. Actual LCD captures use media/LICENSE.md; underlying Elektron rights remain reserved. SY DRUM names no trademark of Pearl or Behringer as its own. Review is not legal clearance."
+  },
+  "media": [
+    {
+      "path": "media/ot-machine-list.png",
+      "captureType": "emulator",
+      "caption": "SY DRUM is the row after FM SYNTH in SELECT MACHINE TYPE (press the track key twice, LEFT, then DOWN); the list scrolls.",
+      "alt": "Actual Octatrack LCD: SY DRUM is the row after FM SYNTH in SELECT MACHINE TYPE (press the track key twice, LEFT, then DOWN); the list scrolls.",
+      "credit": "Tim Hastie",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "SELECT MACHINE TYPE",
+        "shows": "location",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "27c213b2dca96e071200d97441de821c900bf9f87556af0918da200ef623aed9",
+        "setup": "Headless ot_emu (pinned build); MKII panel; a disposable project card (SYTEST / PROJECT 260930, all tracks STATIC, no sample assigned) loaded first; stopped transport; actual 128×64 LCD pixels at integer scale 6."
+      }
+    },
+    {
+      "path": "media/ot-src-setup.png",
+      "captureType": "emulator",
+      "caption": "Hold FUNC and press SRC: SRC SETUP lists SY DRUM after FM SYNTH; YES chooses it.",
+      "alt": "Actual Octatrack LCD: Hold FUNC and press SRC: SRC SETUP lists SY DRUM after FM SYNTH; YES chooses it.",
+      "credit": "Tim Hastie",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "SRC SETUP",
+        "shows": "location",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "27c213b2dca96e071200d97441de821c900bf9f87556af0918da200ef623aed9",
+        "setup": "Headless ot_emu (pinned build); MKII panel; a disposable project card (SYTEST / PROJECT 260930, all tracks STATIC, no sample assigned) loaded first; stopped transport; actual 128×64 LCD pixels at integer scale 6."
+      }
+    },
+    {
+      "path": "media/ot-controls.png",
+      "captureType": "emulator",
+      "caption": "Press SRC: PTCH, MODE, WDTH, SWEP, SPED and DEC on encoders A–F.",
+      "alt": "Actual Octatrack LCD: Press SRC: PTCH, MODE, WDTH, SWEP, SPED and DEC on encoders A–F.",
+      "credit": "Tim Hastie",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "PLAYBACK (SRC)",
+        "shows": "controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "27c213b2dca96e071200d97441de821c900bf9f87556af0918da200ef623aed9",
+        "setup": "Headless ot_emu (pinned build); MKII panel; a disposable project card (SYTEST / PROJECT 260930, all tracks STATIC, no sample assigned) loaded first; stopped transport; actual 128×64 LCD pixels at integer scale 6."
+      }
+    },
+    {
+      "path": "media/ot-setup-lfo.png",
+      "captureType": "emulator",
+      "caption": "FUNC+SRC on a SY DRUM track: the LFO setup LSPD, LDEP, WAVE and S&H on encoders A–D.",
+      "alt": "Actual Octatrack LCD: FUNC+SRC on a SY DRUM track: the LFO setup LSPD, LDEP, WAVE and S&H on encoders A–D.",
+      "credit": "Tim Hastie",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "PLAYBACK SETUP (FUNC+SRC)",
+        "shows": "location-and-controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "27c213b2dca96e071200d97441de821c900bf9f87556af0918da200ef623aed9",
+        "setup": "Headless ot_emu (pinned build); MKII panel; a disposable project card (SYTEST / PROJECT 260930, all tracks STATIC, no sample assigned) loaded first; stopped transport; actual 128×64 LCD pixels at integer scale 6."
+      }
+    },
+    {
+      "path": "media/ot-step-lock.png",
+      "captureType": "emulator",
+      "caption": "In GRID RECORDING, hold a trig: a control locked on that step is drawn inverted with the step’s value; turn A–D to lock.",
+      "alt": "Actual Octatrack LCD: In GRID RECORDING, hold a trig: a control locked on that step is drawn inverted with the step’s value; turn A–D to lock.",
+      "credit": "Tim Hastie",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "PLAYBACK SETUP, GRID RECORDING, trig held",
+        "shows": "controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "27c213b2dca96e071200d97441de821c900bf9f87556af0918da200ef623aed9",
+        "setup": "Headless ot_emu (pinned build); MKII panel; a disposable project card (SYTEST / PROJECT 260930, all tracks STATIC, no sample assigned) loaded first; stopped transport; actual 128×64 LCD pixels at integer scale 6."
+      }
+    }
+  ]
+}
