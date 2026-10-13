@@ -1549,7 +1549,7 @@ pool locally). The hardware fields are `TIM:` placeholders pending the author's
 MKI report of this exact image; the earlier builds (`d0dab5fe…`, `199e9b09…`,
 `b9b65cd9…`) are superseded. Against `d0dab5fe…`: the captures, the walks other
 than the power-off ones, and the renders are the same; the peak blocks are
-s1 29,017 (-16), s2 33,419 (+14), s3 37,749 (-154), s4 42,304 (-14), s8 59,601 (-344) instructions against its maxima, inside the run-to-run spread.
+s1 29,017 (-16), s2 33,419 (+14), s3 37,749 (-154), s4 42,304 (-14), s8 59,601 (-344) instructions against its maxima, inside the larger run-to-run spread (418).
 On its base, `modules:generate` stops at Tape Echo 0.1.3's retained-evidence
 gate: SY DRUM's shared code and packages change its protected build inputs
 (open, for the owner; TESTING.md).
