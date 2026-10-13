@@ -1545,8 +1545,8 @@ edits in the two play cases), and a removed, cut or damaged `bank05.work` at
 the power-on load keeps every bank's step locks (the previous image: none).
 Native/browser: 126 selections, 4 builds matching outside the
 platform writes, 122 matching refusals, 0 mismatches (POLY8 left out of the
-pool locally). The hardware fields are `TIM:` placeholders pending the author's
-MKI report of this exact image; the earlier builds (`d0dab5fe…`, `199e9b09…`,
+pool locally). The hardware fields hold the author's MKI report of this exact
+image (timhastie, 2026-10-13); the earlier builds (`d0dab5fe…`, `199e9b09…`,
 `b9b65cd9…`) are superseded. Against `d0dab5fe…`: the captures, the walks other
 than the power-off ones, and the renders are the same; the peak blocks are
 s1 29,017 (-16), s2 33,419 (+14), s3 37,749 (-154), s4 42,304 (-14), s8 59,601 (-344) instructions against its maxima, inside the larger run-to-run spread (418).

@@ -3,7 +3,7 @@
   "id": "sy-drum",
   "version": "0.1.0-experimental",
   "status": "local-draft-unpublished",
-  "basedOn": "263aa1b9a8db278b1da96a8a33e07f6f65a94a74",
+  "basedOn": "c181b76b0155c68db4f0efc558f34cfa3a5c8b58",
   "folder": "sdk/octabam/modules/sy-drum",
   "authorPin": {
     "repository": "https://github.com/timhastie/octatrick-modules",
@@ -23,11 +23,11 @@
     },
     {
       "path": "README.md",
-      "sha256": "a49967ca5f3174d903192c67d129de86c3ddb059682536d24083314f39357828"
+      "sha256": "2779f8430b87b536241ad809a295344260dffab5cbfb63c67c6b7fd6f0cec42b"
     },
     {
       "path": "TESTING.md",
-      "sha256": "85ba6ab866bf250d6958ec2d2304382a286fb875aa88b390ad193975712b8a2d"
+      "sha256": "91d7a41e17321d03455a485d9f5c05e53670ed5a15873e8523cb2bd514165505"
     },
     {
       "path": "evidence/native-smoke.json",
@@ -71,7 +71,7 @@
     },
     {
       "path": "octamod.module.json",
-      "sha256": "b425daa1eeb9d25c94b35b15ca8f58accf8501ddefae3d2a6ac39e4517ea8fb0"
+      "sha256": "2bbaec3bed6a7dbe0251b86637e77f9a615c3a89fbb2de667d268c2558481b6f"
     },
     {
       "path": "presentation/LICENSE",

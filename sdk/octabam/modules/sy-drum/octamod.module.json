@@ -156,11 +156,11 @@
       "One voice a track (no VOIC/CHRD); the setup controls are not in scenes and are not LFO destinations.",
       "A machine change to or from SY DRUM (or FM SYNTH) resets the track’s PLAYBACK, PLAYBACK SETUP, AMP and LFO pages and their SETUP pages to the new machine’s init (FM Synth’s machine list); step and scene locks, SY DRUM’s setup-LFO locks and the FX slots are kept.",
       "Emulator measurements, the maximum over five runs of each load, price 2 SY DRUM tracks at their worst (a trig on every step, LFO, locks, p-locks, LFOs, scenes) inside every audio block including the first START. 3 tracks also stay inside the block in every run, but by 311 instructions, less than the 418-instruction spread between runs seen on this frame-interrupt code, so they are not qualified; 4 tracks reach 1.110x and 8 tracks reach 1.560x the block on their START blocks (not shown to fail on a unit). Mixed FM Synth and SY DRUM loads were not measured.",
-      "Part and project-load persistence, the power-off without SAVE (the power-on load with the battery-backed memory carried over, on an emulator build that keeps it), the machine-change init and two-instance isolation pass in the emulator; the same on a unit with this exact build and usable audio on hardware need the author's report (pending)."
+      "Part and project-load persistence, the power-off without SAVE (the power-on load with the battery-backed memory carried over, on an emulator build that keeps it), the machine-change init and two-instance isolation pass in the emulator; the same on a unit with this exact build and usable audio on hardware are in the author’s hardware report (TESTING.md)."
     ]
   },
   "resources": {
-    "recorded": "2026-10-13; emulator cycles, exact memory, image 27c213b2 (with FM Synth 0.1.5); hardware pending",
+    "recorded": "2026-10-13; emulator cycles, exact memory, image 27c213b2 (with FM Synth 0.1.5); MKI report",
     "storage": {
       "label": "SY DRUM code, state, lock table and image bytes",
       "display": "2,297,463 bytes incl. the 2 MiB lock table",
@@ -203,16 +203,16 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Emulator qualification of the native image MAIN OS 27c213b2... (FM Synth 0.1.5 + SY DRUM 0.1.0, octatrick 2.14 SY DRUM with the author's 2.13 quantizer in FM Synth, all stock effects): frame-interrupt instruction counts for 0, 1, 2, 3, 4 and 8 SY DRUM tracks at their worst, each load run five times and its maximum taken, converted at the CF METER calibration (9.44 ns/instruction, 264 MHz): 2 tracks keep every block, including the first START, inside the 16-sample block with room for the run-to-run spread (84,213 of 95,779 cycles); 3 tracks stay inside it by less than that spread and are not qualified. Exact memory from the link map. Software verification: the module's native Part smoke, the machine-list walk, the 2.12 machine change, two-instance isolation, Part save/reload, project save, project load and RELOAD with the lock files (emulator), the power-off without SAVE while playing, after STOP and stopped with the power-on load and the battery-backed memory carried over (an emulator build that keeps it; the previous image as the failing control), a damaged stock bank file at that load, 126 native/browser selections with 0 mismatches, seven sample comparisons with the author's renders, five LCD captures. A hardware report for this exact image is pending.",
-    "hardwareStatus": "historical",
-    "evidenceRevision": "7a135ff45647554063028789cacb1c4ffe7780bc",
+    "summary": "Emulator qualification of the native image MAIN OS 27c213b2... (FM Synth 0.1.5 + SY DRUM 0.1.0, octatrick 2.14 SY DRUM with the author's 2.13 quantizer in FM Synth, all stock effects): frame-interrupt instruction counts for 0, 1, 2, 3, 4 and 8 SY DRUM tracks at their worst, each load run five times and its maximum taken, converted at the CF METER calibration (9.44 ns/instruction, 264 MHz): 2 tracks keep every block, including the first START, inside the 16-sample block with room for the run-to-run spread (84,213 of 95,779 cycles); 3 tracks stay inside it by less than that spread and are not qualified. Exact memory from the link map. Software verification: the module's native Part smoke, the machine-list walk, the 2.12 machine change, two-instance isolation, Part save/reload, project save, project load and RELOAD with the lock files (emulator), the power-off without SAVE while playing, after STOP and stopped with the power-on load and the battery-backed memory carried over (an emulator build that keeps it; the previous image as the failing control), a damaged stock bank file at that load, 126 native/browser selections with 0 mismatches, seven sample comparisons with the author's renders, five LCD captures. timhastie's MKI report for this exact image is in TESTING.md.",
+    "hardwareStatus": "reported",
+    "evidenceRevision": "341b779e21a73e3d715c0936078dfadbbf65c908",
     "gates": [
       "verify.py: native Part smoke on image 27c213b2 (eightTrackSelection, sampleSlotsUnchanged, partAndShadowSignature, reselectPreservesControls, fmSynthRowBeside, returnToFlex): passed (evidence/native-smoke.json)",
       "Native/browser composition: 126 selections without POLY8 in the pool (sdk/native-comparisons/sy-drum.json): 4 builds match outside the platform writes, 122 refusals match, 0 mismatches",
       "Emulator worst-case frame-interrupt cycles with stock reserve, the maximum over at least five runs per load, converted at the CF METER calibration",
       "Exact memory inventory reconciled with the native link map; static stack bounds of every SY DRUM entry",
       "Emulator persistence: two SY DRUM tracks isolated; the 2.12 machine change SY DRUM -> FM SYNTH -> SY DRUM gives each init and keeps the setup-LFO locks and FX slots; Part save/reload; project save, project load and RELOAD with the sylock files; a power-off without SAVE (while playing, 0.6 s after pressing STOP, stopped) with the power-on load and the battery-backed memory carried over brings every lock back (the previous image: the PLAYBACK SETUP edits lost); a damaged stock bank file at that load keeps the step locks: passed (TESTING.md)",
-      "Hardware report for this source and image: pending (TIM placeholders)"
+      "Hardware report for this source and image: timhastie, MKI, 2026-10-13 (reported; TESTING.md)"
     ],
     "qualification": {
       "moduleVersion": "0.1.0-experimental",
@@ -331,13 +331,15 @@
         "kind": "functional",
         "status": "reported",
         "model": "MKI",
-        "testedOn": "TIM: YYYY-MM-DD",
-        "tester": "TIM: credited handle",
-        "sourceRevision": "7a135ff45647554063028789cacb1c4ffe7780bc",
+        "testedOn": "2026-10-13",
+        "tester": "timhastie",
+        "sourceRevision": "341b779e21a73e3d715c0936078dfadbbf65c908",
         "imageSha256": "27c213b2dca96e071200d97441de821c900bf9f87556af0918da200ef623aed9",
-        "summary": "TIM: what was played on the unit and what happened (MAIN OS 27c213b2..., the hardware test sheet)",
+        "summary": "The author flashed this exact image (FM Synth 0.1.5 + SY DRUM 0.1.0, MAIN OS 27c213b2...) on his Octatrack MKI and reported every item of its test sheet working: SY DRUM and FM SYNTH in both machine lists; SY DRUM -> FM SYNTH -> SY DRUM gave each machine's init and kept the PLAYBACK SETUP step locks; a held SY DRUM note rang out with CLICK ON; after a power-off without SAVE PROJECT while playing (and about a second after STOP), the stock and PLAYBACK SETUP step locks on two SY DRUM tracks were kept; two SY DRUM tracks with their own step locks came back and played after SAVE PROJECT and a power-cycle; a STATIC track streaming from the card played without crackling while PLAYBACK SETUP locks were edited.",
         "limitations": [
-          "TIM: duration, track counts, the power-off cases run, untested cases"
+          "Play time, the MIDI gear used, the number of tracks played at once and the number of power-off runs were not recorded.",
+          "Whether the one lock edited just before the quick power-off (the sheet's known limit) came back was not recorded; TESTING.md's emulator measurement shows it can be lost.",
+          "A functional check of the test sheet's items, not a load or stress qualification: the cycle and memory figures in this record are emulator measurements, not hardware times."
         ],
         "report": "TESTING.md"
       },

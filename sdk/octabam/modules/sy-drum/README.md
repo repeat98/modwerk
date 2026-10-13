@@ -8,7 +8,7 @@ SY DRUM is modelled on the 1979 Pearl Syncussion SY-1, written from a study of t
 
 **It needs FM Synth.** SY DRUM runs on FM Synth’s engine: the machine list, the sample-free voice, the engine-owned AMP envelope, the CHROMATIC keys, MIDI IN, LEG and the live recorder are FM Synth’s. With SY DRUM selected, FM Synth’s engine is built with SY DRUM’s row and calls; without it, FM Synth is unchanged. The configurator refuses SY DRUM on its own and offers to remove it; native octabam refuses the same selection.
 
-The four LFO controls on the setup page can be locked per step, as on the author’s development builds, and those locks are saved beside the project in `sylock01`–`sylock16` files. Worst-case ColdFire cost, exact memory and the Part, project and two-instance checks were measured in the emulator for this build; see TESTING.md. The hardware report for this exact build is pending.
+The four LFO controls on the setup page can be locked per step, as on the author’s development builds, and those locks are saved beside the project in `sylock01`–`sylock16` files. Worst-case ColdFire cost, exact memory and the Part, project and two-instance checks were measured in the emulator for this build; see TESTING.md. The author’s MKI report for this exact build is in TESTING.md.
 
 ## Controls
 
@@ -77,7 +77,7 @@ Keep the `sylockNN` files with a project when copying or backing it up on a comp
 
 ## Tests and measurements
 
-See [TESTING.md](TESTING.md). The native image used for the captures and measurements is built by Modwerk’s own exporter from this source together with FM Synth 0.1.5. Worst-case ColdFire instruction counts come from the pinned emulator and are converted at the CF METER calibration; they are not chip wall-clock measurements. Exact memory comes from the image’s link map. The module’s native Part smoke, the machine-list walk, the 2.12 machine change, two-instance isolation, the Part, project-load and RELOAD checks and the power-off walks pass on that image; 126 native/browser selections match. The hardware report fields stay pending until the author’s MKI test of this exact image.
+See [TESTING.md](TESTING.md). The native image used for the captures and measurements is built by Modwerk’s own exporter from this source together with FM Synth 0.1.5. Worst-case ColdFire instruction counts come from the pinned emulator and are converted at the CF METER calibration; they are not chip wall-clock measurements. Exact memory comes from the image’s link map. The module’s native Part smoke, the machine-list walk, the 2.12 machine change, two-instance isolation, the Part, project-load and RELOAD checks and the power-off walks pass on that image; 126 native/browser selections match. The author’s MKI report of this exact image is in TESTING.md, under “Hardware”.
 
 ## Authorship and licences
 
