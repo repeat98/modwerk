@@ -4,9 +4,15 @@
  * values are empty (no problem found), and the keys repeat the same ids thousands of times, so the
  * site ships a compact form instead: the sorted id universe, each checked selection as a bit mask
  * over it, and only the selections that recorded a problem by key.
+ *
+ * The masks are the bulk of that. In the committed file they are one base64 string of ascending gaps
+ * (each a variable-length integer), which is about 0.8 MB and gzips to under 10 KB. A plain number
+ * list was 4.8 MB, and both the compatibility panel and the firmware worker bundle this file.
  */
 export type NativeChecks = { revision: string; checks: Record<string, string[]> }
-export type CompactChecks = { schemaVersion: 1; revision: string; modules: string[]; checked: number[]; problems: Record<string, string[]> }
+export type CompactChecks = { schemaVersion: 2; revision: string; modules: string[]; checked: number[]; problems: Record<string, string[]> }
+/** The committed file: `checked` is the ascending masks as gaps, seven bits per byte with the high bit set to continue, in base64. */
+export type StoredChecks = Omit<CompactChecks, 'checked'> & { count: number; checked: string }
 const MAX_MODULES = 30 // masks stay exact 31-bit integers
 
 export function selectionKey(ids: readonly string[]) { return [...ids].sort().join('+') }
@@ -24,7 +30,35 @@ export function compactChecks(metadata: NativeChecks): CompactChecks {
   }
   checked.sort((a, b) => a - b)
   for (let position = 1; position < checked.length; position++) if (checked[position] === checked[position - 1]) throw new Error('Duplicate compatibility check: ' + checked[position])
-  return { schemaVersion: 1, revision: metadata.revision, modules, checked, problems }
+  return { schemaVersion: 2, revision: metadata.revision, modules, checked, problems }
+}
+
+/** The committed form of the compact checks; `openChecks` reverses it exactly. */
+export function storeChecks(compact: CompactChecks): StoredChecks {
+  const bytes: number[] = []
+  let previous = 0
+  for (const mask of compact.checked) {
+    let gap = mask - previous
+    previous = mask
+    while (gap >= 128) { bytes.push(gap % 128 + 128); gap = Math.floor(gap / 128) }
+    bytes.push(gap)
+  }
+  let binary = ''
+  for (let start = 0; start < bytes.length; start += 0x8000) binary += String.fromCharCode(...bytes.slice(start, start + 0x8000))
+  return { schemaVersion: 2, revision: compact.revision, modules: compact.modules, count: compact.checked.length, checked: btoa(binary), problems: compact.problems }
+}
+
+export function openChecks(stored: StoredChecks): CompactChecks {
+  if (stored.schemaVersion !== 2) throw new Error('Unsupported compatibility checks format.')
+  const binary = atob(stored.checked), checked: number[] = []
+  let value = 0, scale = 1, previous = 0
+  for (let index = 0; index < binary.length; index++) {
+    const byte = binary.charCodeAt(index)
+    value += (byte & 127) * scale
+    if (byte < 128) { previous += value; checked.push(previous); value = 0; scale = 1 } else scale *= 128
+  }
+  if (scale !== 1 || checked.length !== stored.count) throw new Error('The compatibility checks file is damaged.')
+  return { schemaVersion: 2, revision: stored.revision, modules: stored.modules, checked, problems: stored.problems }
 }
 
 /** The recorded notes for a selection: an empty list when the check passed, undefined when never recorded. */

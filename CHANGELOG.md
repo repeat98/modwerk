@@ -2,6 +2,8 @@
 
 ## 13 October 2026
 
+- Made the module compatibility record far smaller. The configuration page's compatibility panel and the firmware worker each carried a 4.8 MB table of checked module combinations, about 1.3 MB compressed per copy. It is now stored as a compact list of gaps and decoded when first needed: 0.8 MB, about 10 KB compressed. What the panel and the build check say does not change, and a test confirms the decoded table equals the current record exactly. Limit: browser bundle sizes were measured from a local build, not from the live site.
+
 - Fixed beta Octatrack sync work continuing after its review or USB connection ended. Package preparation now returns to review when the selected set or connection changes, and discards results after the dialog closes. Stale USB replies cannot reopen the link, activate a staged package, start a trial or confirm Keep; leaving the last view also releases the trial's tab lock. Synthetic USB and DOM regressions cover these races; physical device recovery and persistence remain unverified by this change.
 
 - Documented, in the guides a developer opens for the task, that new Octatrack modules deliver the base/USB lifecycle alongside card builds (companion and DSP ownership on both cores, browser-package and lifecycle evidence, owner review of unavoidable limits), the separation of card and USB compatibility, the Analog BD lifetime gate, the disassembler's exclusive DO-loop endpoint, the Vitest discovery suffix and the GCC/MinGW host C test trap. Corrected the guides' stale blanket "Analog BD refuses every effect" rule. Documentation only.

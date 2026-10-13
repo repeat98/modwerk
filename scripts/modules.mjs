@@ -13,7 +13,7 @@ import { BASELINE_PATH, WAIVERS_PATH, parseQualificationBaseline, parseReleaseWa
 import { parseRetainedResourceImpacts, requireModuleResourceImpact } from '../src/catalog/resource-impact.ts'
 import { parseMachineProfile } from '../src/devices/machine-contract.ts'
 import { parseElemodBuild, parseModwerkModule, requireModwerkPublication } from '../src/catalog/module-contract-v3.ts'
-import { compactChecks, passingPairs } from '../src/catalog/compatibility-checks.ts'
+import { compactChecks, passingPairs, storeChecks } from '../src/catalog/compatibility-checks.ts'
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'..'),modules=resolve(root,'sdk/octabam/modules')
 const args=process.argv.slice(2),write=args.includes('--write'),baseIndex=args.indexOf('--base'),base=baseIndex<0?null:args[baseIndex+1]
 if(baseIndex>=0&&!base)throw new Error('--base requires a Git commit/ref')
@@ -58,7 +58,7 @@ if(write){await mkdir(dirname(target),{recursive:true});await writeFile(target,g
 // The site reads the native declaration checks in their compact form; the full record stays the exporters' file.
 const compact=compactChecks(await json(resolve(root,'src/catalog/native-metadata.json')))
 // Pair rules on every page read only the passing pairs; the full checks load with the compatibility panel and the firmware worker.
-for(const [name,content] of [['compatibility-checks.json',compact],['compatibility-pairs.json',{revision:compact.revision,passing:passingPairs(compact)}]]){
+for(const [name,content] of [['compatibility-checks.json',storeChecks(compact)],['compatibility-pairs.json',{revision:compact.revision,passing:passingPairs(compact)}]]){
  const target=resolve(root,'src/catalog',name),generated=JSON.stringify(content)+'\n'
  if(write)await writeFile(target,generated)
  else if((await readFile(target,'utf8').catch(()=>''))!==generated)throw new Error('src/catalog/'+name+' is stale; run npm run modules:generate')
