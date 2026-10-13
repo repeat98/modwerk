@@ -3,7 +3,7 @@
   "id": "synth",
   "version": "0.1.5-experimental",
   "status": "local-draft-unpublished",
-  "basedOn": "263aa1b9a8db278b1da96a8a33e07f6f65a94a74",
+  "basedOn": "c181b76b0155c68db4f0efc558f34cfa3a5c8b58",
   "originalImport": "synth-949f3be.json",
   "previousUpdate": "synth-ca13ed8.json",
   "folder": "sdk/octabam/modules/synth",
@@ -42,12 +42,12 @@
     },
     {
       "path": "README.md",
-      "sha256": "581d224a2fae36253ca1ae919aaad5d92897b51a8e22505655ea871fac580829",
+      "sha256": "039258d085b3462c7bfd43ef9879844d10e265f6c14bf0e2b79e7b568d3d7fe6",
       "previousSha256": "827248dce8d0577732c416ff2921d8ef34d7383740e341b1b752b4b8b63b4fb5"
     },
     {
       "path": "TESTING.md",
-      "sha256": "78c25654ea7ff2802946bd093ddc5d3963fb126c3f2911d0ff0b224d7981c005",
+      "sha256": "b99be0de58e6f54c05cb5368d080b44edaa4e3fad0c09527bcc44eadea1f1ff0",
       "previousSha256": "08b83d4b002489695b300efae2b58c4d023085dbc7668671e0e96c3ae688e0ad"
     },
     {
@@ -229,7 +229,7 @@
     },
     {
       "path": "octamod.module.json",
-      "sha256": "7a579b7ee03d9656ebd9b735c13c79120a0496c6db5797492d4951eabd657446",
+      "sha256": "c927dd96262dbaac406f8506aa4eea73ae69489571379d81c83673e17095b858",
       "previousSha256": "2650be7edc1198c4864f9018925965cd1ff6b1d2ca2fbf31abae13a5d173a5a6"
     },
     {
@@ -409,7 +409,7 @@
     "media/ot-scale.png"
   ],
   "notes": [
-    "The author's 48b89e7 is the head of his quant-2.13 line (local tag v2.13; to be pushed to timhastie/octatrick-modules after his hardware test). From v2.12 (ca13ed8) it changes quantizer/quantizer.s, quantizer/manifest.py, quantizer/README.md, LICENSE (a sentence crediting Modwerk's #264 form of the drawer hook), README.md and tools/align_check.py; synth/ is unchanged. The bundled quantizer's quantizer.s, core.s, keys.s, scale.s and README.md are his 48b89e7 files byte for byte.",
-    "0.1.4-experimental (synth-ca13ed8.json) is still unpublished; this record follows it. The published version before both is 0.1.2-experimental."
+    "The author's 48b89e7 is the head of his quant-2.13 line (tag v2.13, pushed to timhastie/octatrick-modules on 13 October 2026). From v2.12 (ca13ed8) it changes quantizer/quantizer.s, quantizer/manifest.py, quantizer/README.md, LICENSE (a sentence crediting Modwerk's #264 form of the drawer hook), README.md and tools/align_check.py; synth/ is unchanged. The bundled quantizer's quantizer.s, core.s, keys.s, scale.s and README.md are his 48b89e7 files byte for byte.",
+    "0.1.4-experimental (synth-ca13ed8.json) was never published on its own; this record follows it, and both are submitted together. The published version before both is 0.1.2-experimental."
   ]
 }

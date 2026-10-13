@@ -24,7 +24,7 @@
     "label": "Two-operator FM",
     "family": "Synth machines",
     "summary": "Two-operator FM with a dedicated track machine, one to four voices, chords and glide; scale and root on MIDI tracks too; octatrick 2.12 engine, 2.13 quantizer.",
-    "overview": "FM SYNTH provides one to four paraphonic FM voices through the stock AMP and effects. Version 0.1.5 carries Tim Hastie's 2.13 quantizer: with a scale on, a MIDI track's NOTE knob, NOTE locks and CHROMATIC keys follow SCALE and ROOT as the audio tracks do (chord offsets, TRAN, the arpeggiator and SCALE OFF unchanged), and the CHROMATIC drawer fix for #264 is now the author's own. The engine, chooser and page are 0.1.4's, his octatrick 2.12 line: his own FM SYNTH chooser (adapted from Modwerk's, same Part signature) with the machine list he shares with his SY DRUM machine (a row table; SELECT MACHINE TYPE scrolls), a machine change that resets the track's machine parameters to init (locks kept, as in stock), held notes that no longer stop at the metronome click, DEC HOLD at 127, click-free note starts, FM names in the LFO destination list, the held key as gate and the fixes from his MKI test of the first 2.10 build. With FM Synth alone the list keeps its six rows. The engine leaves 6 dB of headroom, the author's choice in place of 0.1.2's 18 dB attenuation. Worst-case ColdFire cost and exact memory are emulator-measured; the hardware report for this exact build is pending.",
+    "overview": "FM SYNTH provides one to four paraphonic FM voices through the stock AMP and effects. Version 0.1.5 carries Tim Hastie's 2.13 quantizer: with a scale on, a MIDI track's NOTE knob, NOTE locks and CHROMATIC keys follow SCALE and ROOT as the audio tracks do (chord offsets, TRAN, the arpeggiator and SCALE OFF unchanged), and the CHROMATIC drawer fix for #264 is now the author's own. The engine, chooser and page are 0.1.4's, his octatrick 2.12 line: his own FM SYNTH chooser (adapted from Modwerk's, same Part signature) with the machine list he shares with his SY DRUM machine (a row table; SELECT MACHINE TYPE scrolls), a machine change that resets the track's machine parameters to init (locks kept, as in stock), held notes that no longer stop at the metronome click, DEC HOLD at 127, click-free note starts, FM names in the LFO destination list, the held key as gate and the fixes from his MKI test of the first 2.10 build. With FM Synth alone the list keeps its six rows. The engine leaves 6 dB of headroom, the author's choice in place of 0.1.2's 18 dB attenuation. Worst-case ColdFire cost and exact memory are emulator-measured; the author's MKI hardware report of this exact build is in TESTING.md.",
     "highlights": [
       "Dedicated machine chooser entry in SRC SETUP and SELECT MACHINE TYPE; no sample required.",
       "Pitch, ratio, index, fine tuning, feedback and index decay (HOLD at 127) on SRC.",
@@ -208,7 +208,7 @@
     ]
   },
   "resources": {
-    "recorded": "2026-10-12; emulator cycles and exact memory, image 37661aee; hardware report pending",
+    "recorded": "2026-10-12; emulator cycles and exact memory, image 37661aee; MKI hardware report 2026-10-13",
     "storage": {
       "label": "FM code, state and image bytes (bundled quantizer included)",
       "display": "44,052 bytes plus shared platform reserve",
@@ -251,9 +251,9 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Emulator qualification of the native FM Synth 0.1.5 image (MAIN OS 37661aee..., built from the author's 48b89e7: the octatrick 2.12 engine, page and chooser, byte-identical in the image to 0.1.4's, and his 2.13 quantizer): the quantizer's MIDI-track gates against a model of the rules (NOTE knob and NOTE locks 409 of 409 over eight SCALE / ROOT settings; CHROMATIC keys 245 of 245 with balanced note-offs and the arpeggiator fed snapped notes; a LIVE RECORDING lock as the author's build), SCALE OFF equal to stock, CHROMATIC on a MIDI track draws and plays, and its added cost per call. Frame-interrupt instruction counts for 1 to 8 FM tracks at VOIC 1, 2 and 4 are 0.1.4's (image 00fa6caa, the same FM objects), with the bounding cards rerun twice on this image, converted at the hardware CF METER calibration (9.44 ns/instruction, 264 MHz). One FM track at VOIC 4 keeps every block, including the first START, inside the 16-sample block (81,459 of 95,779 cycles); eight VOIC 4 tracks do not. Exact memory from the link map: 44,404 module-owned bytes plus the shared 10,460,844-byte sample-RAM platform reserve. Software verification on this image: the module's own native Part smoke (verify.py); two FM tracks pass Part save/reload, project save/reload and a fresh project load in the emulator (the battery-RAM-only restart is the hardware test); the machine-change init; seven LCD captures; the author's odd-address check. The native/browser coverage record is not refreshed: POLY8's chooser bridge stops on this chooser (TESTING.md). A hardware report for this exact image is pending; Modwerk's 0.1.1/0.1.2 owner approvals stay with those versions.",
-    "hardwareStatus": "historical",
-    "evidenceRevision": "7a5988a753534e523593f0100d5230429abbf10e",
+    "summary": "Emulator qualification of the native FM Synth 0.1.5 image (MAIN OS 37661aee..., built from the author's 48b89e7: the octatrick 2.12 engine, page and chooser, byte-identical in the image to 0.1.4's, and his 2.13 quantizer): the quantizer's MIDI-track gates against a model of the rules (NOTE knob and NOTE locks 409 of 409 over eight SCALE / ROOT settings; CHROMATIC keys 245 of 245 with balanced note-offs and the arpeggiator fed snapped notes; a LIVE RECORDING lock as the author's build), SCALE OFF equal to stock, CHROMATIC on a MIDI track draws and plays, and its added cost per call. Frame-interrupt instruction counts for 1 to 8 FM tracks at VOIC 1, 2 and 4 are 0.1.4's (image 00fa6caa, the same FM objects), with the bounding cards rerun twice on this image, converted at the hardware CF METER calibration (9.44 ns/instruction, 264 MHz). One FM track at VOIC 4 keeps every block, including the first START, inside the 16-sample block (81,459 of 95,779 cycles); eight VOIC 4 tracks do not. Exact memory from the link map: 44,404 module-owned bytes plus the shared 10,460,844-byte sample-RAM platform reserve. Software verification on this image: the module's own native Part smoke (verify.py); two FM tracks pass Part save/reload, project save/reload and a fresh project load in the emulator (the battery-RAM-only restart is the hardware test); the machine-change init; seven LCD captures; the author's odd-address check. The native/browser coverage record is not refreshed: POLY8's chooser bridge stops on this chooser (TESTING.md). timhastie's MKI report for this exact image is in TESTING.md; Modwerk's 0.1.1/0.1.2 owner approvals stay with those versions.",
+    "hardwareStatus": "reported",
+    "evidenceRevision": "bcf3b7fde7b15dbd7ee744fc2b5b6ea862f4db9f",
     "gates": [
       "verify.py: native Part smoke on image 37661aee (eight-track selection, Part and shadow signature, sample slots unchanged, reselection keeps controls, return to FLEX): passed (evidence/native-smoke.json)",
       "2.13 quantizer on MIDI track 1 of image 37661aee in the emulator: NOTE knob and NOTE locks 409 of 409 against the model of the rules (eight SCALE / ROOT settings, SCALE OFF included); CHROMATIC keys 1..16 at five octave words 245 of 245, note-offs balanced, keys held across SCALE / ROOT changes released, the arpeggiator fed snapped notes; LIVE RECORDING lock as the author's build (TESTING.md)",
@@ -267,7 +267,7 @@
       "Exact memory inventory reconciled with the native link map; static stack bound from the assembled runtime",
       "The author's tools/align_check.py (2.13): no instruction and no detour target at an odd address",
       "verify-audio.py and verify-regressions.py (Octemu audio and the #264 MIDI selector): not rerun; 0.1.2 results in evidence/release-0.1.2",
-      "Hardware report for this source and image: pending (TIM placeholders)"
+      "Hardware report for this source and image: timhastie, MKI, 2026-10-13 (reported; TESTING.md)"
     ],
     "qualification": {
       "moduleVersion": "0.1.5-experimental",
@@ -402,13 +402,14 @@
         "kind": "functional",
         "status": "reported",
         "model": "MKI",
-        "testedOn": "TIM: YYYY-MM-DD",
-        "tester": "TIM: credited handle",
-        "sourceRevision": "7a5988a753534e523593f0100d5230429abbf10e",
+        "testedOn": "2026-10-13",
+        "tester": "timhastie",
+        "sourceRevision": "bcf3b7fde7b15dbd7ee744fc2b5b6ea862f4db9f",
         "imageSha256": "37661aee03a49f310d47e1447f043489c1bce9430c13824dd49ab93ad835e236",
-        "summary": "TIM: what was played on the unit and what happened (MAIN OS 37661aee..., the hardware test sheet)",
+        "summary": "The author flashed this exact image (FM Synth 0.1.5 alone, MAIN OS 37661aee...) on his Octatrack MKI and reported every item of its test sheet working: on a MIDI track the NOTE knob and NOTE locks stepped through the scale, the CHROMATIC keys followed ROOT, chords and the arpeggiator played as before, CHROMATIC trig mode no longer froze the unit, and SCALE OFF behaved as before; FM SYNTH played as in 0.1.4; after SAVE and a power-cycle with the card in, SCALE, ROOT and the FM SYNTH track were kept and the NOTE knob still followed the scale.",
         "limitations": [
-          "TIM: duration, track and voice counts, untested cases"
+          "Play time, the MIDI gear used and the number of tracks were not recorded.",
+          "A functional check of the test sheet's items, not a load or stress qualification: the cycle and memory figures in this record are emulator measurements, not hardware times."
         ],
         "report": "TESTING.md"
       },

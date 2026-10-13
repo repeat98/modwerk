@@ -2,7 +2,7 @@
 
 0.1.5 updates FM Synth 0.1.4 (the author's octatrick 2.12 line, still unpublished) to the author's 2.13 quantizer, `timhastie/octatrick-modules` at `48b89e7e5315971bf5c29a3fd86183abe8df48f3` (tag `v2.13`). At that commit the engine, page and chooser files (`synth/`) are the same bytes as at `v2.12` (`ca13ed8`); the quantizer (`quantizer/`), the repository's `LICENSE` and README change. The published version before 0.1.4 is 0.1.2. This file is the report that `tests.qualification` names. Earlier reports are kept unchanged: `evidence/release-0.1.1/TESTING.md` and `evidence/release-0.1.2/TESTING.md`. 0.1.4's measurements are carried below where its objects are byte-identical in this image, and named as such.
 
-**Status.** On the exact 0.1.5 image (MAIN OS `37661aee…`), in the pinned emulator: the quantizer's new MIDI-track behaviour against a model of its rules, SCALE OFF against stock, the quantizer's added cost per call, the module's own native Part smoke, the 8 October persistence and two-instance checks, the 2.12 machine-change init, exact memory, the stack bound, the LCD captures and the author's odd-address check. The frame-interrupt cycle table is 0.1.4's (the FM engine and chooser are the same compiled objects at the same addresses), with its bounding cards rerun on this image. The hardware fields are `TIM:` placeholders until the author reports his MKI test of this exact image (`hardwareStatus` stays `historical` until then). Modwerk's owner approvals are kept as they are: 0.1.1's in `evidence/release-0.1.1/` (`owner-hardware.md`, `build-approval.json`), and 0.1.2's in `sdk/synth-build-approval.json`, copied to `evidence/release-0.1.2/build-approval.json`. They cover only those versions and are not extended to 0.1.4 or 0.1.5.
+**Status.** On the exact 0.1.5 image (MAIN OS `37661aee…`), in the pinned emulator: the quantizer's new MIDI-track behaviour against a model of its rules, SCALE OFF against stock, the quantizer's added cost per call, the module's own native Part smoke, the 8 October persistence and two-instance checks, the 2.12 machine-change init, exact memory, the stack bound, the LCD captures and the author's odd-address check. The frame-interrupt cycle table is 0.1.4's (the FM engine and chooser are the same compiled objects at the same addresses), with its bounding cards rerun on this image. The author's MKI report of this exact image is below (`hardwareStatus` `reported`). Modwerk's owner approvals are kept as they are: 0.1.1's in `evidence/release-0.1.1/` (`owner-hardware.md`, `build-approval.json`), and 0.1.2's in `sdk/synth-build-approval.json`, copied to `evidence/release-0.1.2/build-approval.json`. They cover only those versions and are not extended to 0.1.4 or 0.1.5.
 
 ## What changed from 0.1.4
 
@@ -262,7 +262,14 @@ The author tests this image (the update file above, MAIN OS `37661aee…`) with 
 - FM SYNTH still plays and chooses as on 0.1.4;
 - a power cycle with the card in (the battery-RAM case the emulator cannot test).
 
-His report fills `tests.qualification.hardware`, whose `TIM:` fields are placeholders, and sets `hardwareStatus` to `reported`. Until then this version is not publishable under the qualification gate. 0.1.4's image (`00fa6caa…`) has its own pending hardware sheet; it does not qualify this image.
+**Report** (timhastie, MKI, 2026-10-13, MAIN OS `37661aee…`): The author flashed this exact image (FM Synth 0.1.5 alone, MAIN OS 37661aee...) on his Octatrack MKI and reported every item of its test sheet working: on a MIDI track the NOTE knob and NOTE locks stepped through the scale, the CHROMATIC keys followed ROOT, chords and the arpeggiator played as before, CHROMATIC trig mode no longer froze the unit, and SCALE OFF behaved as before; FM SYNTH played as in 0.1.4; after SAVE and a power-cycle with the card in, SCALE, ROOT and the FM SYNTH track were kept and the NOTE knob still followed the scale.
+
+Limitations:
+
+- Play time, the MIDI gear used and the number of tracks were not recorded.
+- A functional check of the test sheet's items, not a load or stress qualification: the cycle and memory figures in this record are emulator measurements, not hardware times.
+
+0.1.4's image (`00fa6caa…`) is not covered by this report.
 
 Historical hardware: the 2.3–2.9 builds and the first 2.10 build ran on the author's MKI, and his 7–8 October report on that build produced the 2.10 fixes. On 10 October he reported the metronome cut-out and the machine-change request on the 2.11 build (`248d987e…`); 2.12 is his answer to both. Those reports do not qualify this exact image.
 

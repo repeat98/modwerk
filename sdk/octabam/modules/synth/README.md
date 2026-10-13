@@ -19,7 +19,7 @@ Version 0.1.4 moved the module to the author’s 2.12 line (`timhastie/octatrick
 
 0.1.4 kept 0.1.2’s MIDI chromatic drawer fix in the bundled quantizer; since 0.1.5 the quantizer carries the author’s own form of it. **The engine leaves 6 dB of headroom** (the author’s decision): the mono voice and each paraphonic voice are 6.02 dB below his earlier 2.10 builds, so AMP VOL 0 is the reference and VOL up to about +6 stays clean. This replaces 0.1.2’s 18.06 dB `OUTPUT_SHIFT`: at the same mixer settings 0.1.4 plays about 12 dB louder than 0.1.2. Lower track LEVEL or AMP VOL if a mix clips.
 
-Worst-case ColdFire cost, exact memory and two-track Part/project save and reload are measured in the emulator for this build; see TESTING.md. The hardware report for this exact build is pending.
+Worst-case ColdFire cost, exact memory and two-track Part/project save and reload are measured in the emulator for this build; see TESTING.md. The author's MKI report for this exact build is in TESTING.md.
 
 ## Controls
 
@@ -71,7 +71,7 @@ External MIDI note/CC traffic, Part/project reloads and a power cycle on hardwar
 
 ## Tests and measurements
 
-See [TESTING.md](TESTING.md). The native image used for the captures and measurements is built by Modwerk’s own native exporter from this source. The author’s page links byte for byte to the bytes he ratified. Worst-case ColdFire instruction counts and exact memory come from the pinned emulator and the image’s link map. The hardware report fields stay pending until the author’s MKI test of this exact image (MAIN OS `37661aee…`). Release notes are in [release-notes.json](release-notes.json).
+See [TESTING.md](TESTING.md). The native image used for the captures and measurements is built by Modwerk’s own native exporter from this source. The author’s page links byte for byte to the bytes he ratified. Worst-case ColdFire instruction counts and exact memory come from the pinned emulator and the image’s link map. The hardware report fields hold the author’s MKI test of this exact image (MAIN OS `37661aee…`, 13 October 2026). Release notes are in [release-notes.json](release-notes.json).
 
 ## Authorship and licences
 

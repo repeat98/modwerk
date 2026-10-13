@@ -1425,8 +1425,8 @@ memory of 10,505,016 bytes, of which 43,812 are module-owned, and a 352-byte
 stack bound from the assembled runtime. Two FM tracks with distinct
 settings pass Part save/reload, project save/reload and a fresh project
 load in the emulator; the battery-RAM-only restart needs the unit.
-The hardware fields are `TIM:` placeholders pending the author's MKI report of
-this exact image, so the publication gate fails there.
+0.1.4's hardware fields were never filled: 0.1.5 (below) superseded it before
+submission, and its report covers the 0.1.5 image only.
 
 POLY8 0.2.6's shared-chooser bridge is bound to 0.1.2's chooser claims, which
 this update replaces: a selection with POLY8 and FM Synth stops at the
@@ -1482,8 +1482,8 @@ the larger loader); stack bound 352 B, unchanged. Cycles: 0.1.4's table
 the rig's spread, and the record's bounds over all seven runs give one VOIC
 4 track 81,459 of 95,779 cycles/block. Seven LCD captures (five
 byte-identical to 0.1.4's; a MIDI track's CHROMATIC page is new). The
-hardware fields are `TIM:` placeholders pending the author's MKI report of
-this exact image.
+hardware fields hold the author's MKI report of this exact image
+(timhastie, 2026-10-13).
 
 POLY8's bridge still stops on the author's chooser, as for 0.1.4, so
 `sdk/native-comparisons/synth.json` is not refreshed. Without POLY8 in the pool (a local
