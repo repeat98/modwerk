@@ -13,13 +13,14 @@
 
 ## Native comparison and packages
 
-On Modwerk main `3151975` (11 October 2026):
+On Modwerk main `0b71ff7` (13 October 2026; the first run was on main `3151975`, 11 October 2026, with the same counts). Rebased onto main `6cff0f2` (13 October 2026), which changes none of the native inputs: the packages rebuild identical, `module:verify -- processor-load --check` (the browser side against this record) matches all 130 selections again, and the image rebuilds byte-identical:
 
 - `npm run module:verify -- processor-load --os <OS 1.40C>` with the native side on the host toolchain (no Docker here; the container command run by a local shim, the dsp56300 assembler built from the pinned commit with `sdk/octabam/tools/patches/dsp56300.patch`): 130 selections in the coverage set, 62 built images match native outside the platform writes, 68 refusals match, 0 mismatches. Recorded in [`sdk/native-comparisons/processor-load.json`](../../../native-comparisons/processor-load.json). Every refusal is between other modules in crowded selections; Processor Load places nothing in the clone window or the chooser lists.
 - The declaration scan of the same run: all 493,056 configurator-allowed selections that contain processor-load are clean. Recorded in `src/catalog/native-metadata.json`, which that grows from 70,472,264 to 136,706,376 bytes, over GitHub's 100 MB file limit; the pull request says how it is delivered.
 - Packages: `python3 -B scripts/build-module-packages.py --vendor <vendor> --output <new dir> --include-requested`, then `node scripts/import-module-build.mjs <dir> --development`: `requested-packages.json` gains the `procload` object and its group; the 37 existing objects and 12 groups are unchanged, and every other asset file only gains the module's version. On macOS the builder's POLY8 host test needs a gcc shim (GNU `--gc-sections` → Apple `-dead_strip`, built for x86_64 with a 4 KB `__PAGEZERO` so its fixed mapping at `0x400d3000` works); it passes.
 - Analog BD: `node scripts/verify-analog-bd-native.mjs <OS 1.40C> <proofs with the new moduleSourceTreeSha256>`: 162 native OS and bootloader comparisons, 50 matching refusals, 6 firmware round trips; then the hash was rebound.
 - The image rebuilt on this base is byte-identical to the tested one (MAIN OS `f3ebd1c5…`, update file `9e1d72f5…`), and `tools/align_check.py` gives the same result on it.
+- On this base, main's Tape Echo 0.1.3 retained-evidence check (`scripts/retained-evidence.mjs` with the browser preservation binding `sdk/browser-infrastructure-preservation/tapeecho-usb-integration.json`) refuses any change to `src/engine`, its assets and `scripts/build-module-packages.py`; this module's one-id additions to `src/engine/compose-os.ts` and the package builder, and the regenerated package assets, each trip it, so `npm run modules:generate`, `modules:check` and `npm run check` stop there. The checks after that point ran in a scratch copy with that comparison switched off (never committed); the pull request lists them.
 
 ## Hardware and audio quality
 

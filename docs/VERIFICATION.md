@@ -1388,6 +1388,7 @@ E-Verb is in none of them.
 
 No hardware result exists for 0.1.1; the owner's MKII report covers 0.1.0.
 Publication needs the owner's approval of this exact source.
+
 ## Processor Load 0.1.0-experimental — 9 October 2026
 
 New system module from timhastie/octatrick-modules v2.12 (`ca13ed8`; `processor-load/` is unchanged since v2.11
@@ -1395,8 +1396,10 @@ New system module from timhastie/octatrick-modules v2.12 (`ca13ed8`; `processor-
 `f3ebd1c5…`, update `9e1d72f5…`) ran on the pinned ColdFire emulator: 12 instructions at the interrupt's entry and 17
 to 19 at its exit over 4,411 counted blocks, readings stopped and playing, FUNC, the `--%` paths, the native smoke
 (`verify.py`, 12/12) and six LCD captures; the screens outside the popup are pixel-identical to the stock image's.
-On main `3151975` (11 October 2026) the same image rebuilds byte-identical; `module:verify` (host toolchain): 130
-selections, 62 built images and 68 refusals match, 0 mismatches. The declaration scan finds all 493,056 selections
+On main `0b71ff7` (13 October 2026) the same image rebuilds byte-identical; `module:verify` (host toolchain): 130
+selections, 62 built images and 68 refusals match, 0 mismatches; on main `6cff0f2` the image again, and the browser
+side (`--check`) matches the record. Main's Tape Echo retained-evidence binding refuses
+the module's shared-code and package-asset changes until the owner binds or requalifies them. The declaration scan finds all 493,056 selections
 clean (not in this branch: the record would take `src/catalog/native-metadata.json` past GitHub's 100 MB file limit).
 Packages rebuilt; every existing payload is unchanged; Analog BD's matrix re-verified (162 + 50 + 6) before its
 source-tree hash was rebound. Hardware: the author's functional MKI report for this exact image (10 October 2026)
