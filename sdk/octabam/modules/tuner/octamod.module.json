@@ -112,7 +112,7 @@
     "report": "TESTING.md",
     "summary": "Emulator qualification of the native Tuner 0.1.0 image (MAIN OS 66489376..., the author's v2.12 ca13ed8 exported alone (tuner/ identical to v2.11 5f3d745) with the stock effects): per-block and per-UI-pass instruction counts on the pinned ColdFire emulator (4 a block closed, 195 open, the analysis about 1.0 M instructions every 145 ms in the UI task), exact memory from the link map and build log, a static stack bound, readings on seven generated tones (82.5 Hz to 1,318.5 Hz, within 1 cent) plus a silent track, silence and HOLD, every opening and closing key on the MKII and MKI panels, the stock TEMPO window and tap tempo beside it, a menu over it, a 60 s run open on a playing project, the native smoke (verify.py, 24 checks), five LCD captures, tools/align_check.py of v2.12 on the build, module:verify 130 selections with 0 mismatches. A hardware report for this exact image is pending.",
     "hardwareStatus": "historical",
-    "evidenceRevision": "a6616266a5cd0302c6e0ea397f21cc66a026aef7",
+    "evidenceRevision": "d63e24469ac144ea173a76feb734ac0565942c7d",
     "gates": [
       "verify.py: native smoke on image 66489376 (TEMPO alone and FUNC + TEMPO stock, UP + TEMPO opens, the ring fills only while open, -- on silence, closing by TEMPO / YES / NO / UP + TEMPO, reopening; with a generated tone project: seven tones read within 1 cent, HOLD on silence and after STOP): 24/24 passed (evidence/native-smoke.json)",
       "Emulator instruction counts per block (frame tail) and per UI pass, window closed and open, stopped and playing, eight tracks and one; the same sessions on the stock image",
@@ -233,7 +233,7 @@
         "model": "MKI",
         "testedOn": "TIM: YYYY-MM-DD",
         "tester": "TIM: credited handle",
-        "sourceRevision": "a6616266a5cd0302c6e0ea397f21cc66a026aef7",
+        "sourceRevision": "d63e24469ac144ea173a76feb734ac0565942c7d",
         "imageSha256": "66489376d2cfbe36cb27b6e8b755a75aec2e7b3eab3583f7026f55cc7e877f94",
         "summary": "TIM: what was tuned on the unit with the Tuner 0.1.0 update file (MAIN OS 66489376...): the known-pitch sample and its reading, the live input and its reading against a reference, closing by each key, open while the sequencer runs, after a power-cycle",
         "limitations": [
