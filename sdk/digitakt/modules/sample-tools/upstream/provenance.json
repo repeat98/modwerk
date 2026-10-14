@@ -1,0 +1,44 @@
+{
+  "moduleId": "sample-tools",
+  "version": "0.2.1",
+  "sourceRevision": null,
+  "sourceStatus": "Exact local source snapshot prepared; public source publication pending.",
+  "sources": {
+    "src/audio.c": "7473e4eda1f72457df08db504fb19b6e6589bed9e7d655043f75d0a53d76dc2d",
+    "src/digitakt-mk1/core3.h": "9ad3512ee2ced8f9eaadcb48e5633547d861d7a71f5443d5e9f759d0b790de26",
+    "src/release-153/audio.c": "52516d58a9a2a5b1ac0cc3bd1960dcb1d818d0cd8417ac6bfeed33c2f9da0804",
+    "src/release-153/audio.h": "eeafbde68414c61ff3d1f4b5d3814300562c63ef7958ebc3392f20bb1773017b",
+    "src/release-153/core21.h": "a56cf302ca91bddb05e9c543972942d929843eeec7b7aa0564ed6be1928e6e01",
+    "src/release-153/sample_tools.c": "707489a0c20efe35b276a41b5007ff1453e9777b8ad0ad3c4f3f35a2aaaa55c7",
+    "src/release-153/sample_tools.s": "2374860679ed7274df00d2bae503f8436a867f1ae8dac38ba64fc5b398248654",
+    "src/release-153/src_snap.c": "fb66c0e4fb9ffe83a3e4afa93a820b3032f79a2c58ce36441f8a283a36c51d7f",
+    "src/release-154/audio.c": "52516d58a9a2a5b1ac0cc3bd1960dcb1d818d0cd8417ac6bfeed33c2f9da0804",
+    "src/release-154/audio.h": "eeafbde68414c61ff3d1f4b5d3814300562c63ef7958ebc3392f20bb1773017b",
+    "src/release-154/core21.h": "c4d31ee8d6d8699ed0ea2b2197712d00b3433b8a5b03865806788fea5ecc265c",
+    "src/release-154/sample_tools.c": "1018a3235f3c4bc8579e524609a0b629b165d6d7dc51bb4fbbdc3461c9a9ba6e",
+    "src/release-154/sample_tools.s": "cb35e8d2e4b08fb24623804ce59dba28c3c8610108af85490f922ed7f0920361",
+    "src/release-154/src_snap.c": "28b965edf1a19ef35f547bdfcad37873ae31c7bdcbe1fd9e317bb1d67fb646c3",
+    "src/sample_tools.c": "89105c6aa4bbea2c0761863d85286baf308abf7d6c68593e76223379d7090cfa",
+    "src/sample_tools.s": "e786a335984ae27b984c2fdf511269f5224b0281e4f8233da73fde0697626cad",
+    "src/src_snap.c": "7379ca504baddfbe8f8abce03ab9a8b7e61bb52a148d52d7f9c87705e9b5bb1a"
+  },
+  "originalPackageSha256": "6791a50f977fd67c8b03a636f04cb2f387a0d7372eab1084f489e440d4e729c9",
+  "originalPackageOs": "1.53",
+  "frameworkRevision": "3acac10ea86882a2ea51c9377ac6bd58fc4fec57",
+  "targetReleases": [
+    "1.53",
+    "1.54"
+  ],
+  "packageSha256ByOs": {
+    "1.53": "33adc8b74943f15e2c3c3fea49c29700b66660bd28fb88a349bd880416f5a457",
+    "1.54": "dac97024ad69180f5c7a24d062598063c431c1e26492ae8ce9f76441382675b5"
+  },
+  "sourceAdapter": "Explicit DT_OS154 C/assembler selector; original per-OS code preserved. Object parity excludes build provenance and the checked absolute selector symbol only; linked MAIN must match exactly.",
+  "authorGithub": "sumedho",
+  "sourceSha256": "4d05bba43df453edf79df863e3f74f1f64bde36e80880eaf07e7afd3e2819676",
+  "localSourceRevision": "de3dab731ba75610ddd1bb4290ebbdd057b7b161",
+  "localSourcePath": "sdk/digitakt/modules/_submissions/sample-tools",
+  "repository": "https://github.com/sumedho/digirequests",
+  "revision": "8eba613dc3e0b1698797609256fd4081923b4ef2",
+  "path": "modules/sample-tools"
+}

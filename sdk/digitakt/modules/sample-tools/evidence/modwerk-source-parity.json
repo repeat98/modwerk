@@ -1,0 +1,79 @@
+{
+  "schemaVersion": 1,
+  "core": "2.1",
+  "sourceCommit": "157f712907e8246b63f15e3955d918f67b6e06ca",
+  "compiler": {
+    "gcc": "m68k-elf-gcc (GCC) 16.2.0",
+    "assembler": "GNU assembler (GNU Binutils) 2.47.20260726",
+    "linker": "GNU ld (GNU Binutils) 2.47.20260726",
+    "node": "v24.16.0"
+  },
+  "scope": "Modwerk-compiled objects compared semantically with the native Elekloader build of the same sources; every one of the 63 feature selections per OS linked with the catalogue Core 2.1 through Modwerk, reversed order, the vendored browser kit and the native objects, and compared with the native MAIN.",
+  "passed": true,
+  "selections": 126,
+  "allSelectionsMatch": true,
+  "allModsMainSha256": {
+    "1.53": "ce2c0bd03393ca5f7e9427874bad4f5daa32b7e5699ff003af5e6fc35573ab39",
+    "1.54": "14469be1cb112830aa283e034d90c9372135b3f6b3fb7d3b077202101f758017"
+  },
+  "objects": [
+    {
+      "id": "dt-support",
+      "os": "1.53",
+      "semanticParity": true,
+      "addedConflicts": [],
+      "recipeSha256": "4a2138b72d572aa24da4f75814f82d1d94104f475393b8f4147d9605d3e14234",
+      "sourceTreeSha256": "10b03865ef928631fe0ee1285e16c192d47cacb76413be6311a44e3da546f5b3",
+      "exportedSha256": "2164a3bf1d89743189616127a5bc7e93743f2a691502d4750f517915fbd0180c"
+    },
+    {
+      "id": "machine-pages",
+      "os": "1.53",
+      "semanticParity": true,
+      "addedConflicts": [],
+      "recipeSha256": "01d2dda24bd6d4e69214d411d817621f5e78a2225bb2ab4726641a2a41b733be",
+      "sourceTreeSha256": "1c8fabc43d7e9b6da6cdce061712855594d30034233b2f70520f65f93c6f3354",
+      "exportedSha256": "93092ba38bf65583a3d436e3d8c560b0df0480477f81127fe9de7a3264ba38c6"
+    },
+    {
+      "id": "sample-tools",
+      "os": "1.53",
+      "semanticParity": true,
+      "addedConflicts": [
+        "digislicer"
+      ],
+      "recipeSha256": "e93aacb1a59f9ed95c42648e63eaccdaee3e69cb9d76abaaf017207a2e40b05a",
+      "sourceTreeSha256": "08fd07474b2d7c3a42b77b504e73e496b2a235b802db766e6dbaeb7867ae331f",
+      "exportedSha256": "dea6b2624b278bb2f469c166c792aa3b4f93cd585d62244bd4dc07c6264ceb73"
+    },
+    {
+      "id": "dt-support",
+      "os": "1.54",
+      "semanticParity": true,
+      "addedConflicts": [],
+      "recipeSha256": "67b5f65eef07c6615ce9440c36c808b6be71e2780b4b6344ef3c056cdf603a81",
+      "sourceTreeSha256": "10b03865ef928631fe0ee1285e16c192d47cacb76413be6311a44e3da546f5b3",
+      "exportedSha256": "7378c51c4970df68a47e51c9a85402b91577a1495931f2ef4ec566a572dd0b88"
+    },
+    {
+      "id": "machine-pages",
+      "os": "1.54",
+      "semanticParity": true,
+      "addedConflicts": [],
+      "recipeSha256": "72f76da61da163d99233a98e4fadf25baab55e4809b781e9f6ffeb438fa1aa37",
+      "sourceTreeSha256": "1c8fabc43d7e9b6da6cdce061712855594d30034233b2f70520f65f93c6f3354",
+      "exportedSha256": "1ab853a2ff628dd60b8fa0c5693f3babac64b95c456b331162797aac1526b1a0"
+    },
+    {
+      "id": "sample-tools",
+      "os": "1.54",
+      "semanticParity": true,
+      "addedConflicts": [
+        "digislicer"
+      ],
+      "recipeSha256": "2285a754b74f0e44b5112fb368dfa12088771e6c964cada7da67c5d92e594eee",
+      "sourceTreeSha256": "08fd07474b2d7c3a42b77b504e73e496b2a235b802db766e6dbaeb7867ae331f",
+      "exportedSha256": "7a8c98d1a839b2f48b58a4464f958465c4f238961abe5ca3aacdb39e7c341d2d"
+    }
+  ]
+}

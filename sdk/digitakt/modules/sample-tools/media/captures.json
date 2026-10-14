@@ -1,0 +1,708 @@
+{
+  "schemaVersion": 2,
+  "machine": "digitakt",
+  "moduleId": "sample-tools",
+  "moduleVersion": "0.2.2",
+  "records": [
+    {
+      "schemaVersion": 1,
+      "capturedAt": "2026-10-14T00:52:18.463952+00:00",
+      "imageSha256": "23503ca42478c1644dea5fd296893f628eafb6662d2ce5e291bfc591f045ae4e",
+      "mainSha256": "ce2c0bd03393ca5f7e9427874bad4f5daa32b7e5699ff003af5e6fc35573ab39",
+      "snapshotSha256": "5b67a64f7e24b719c87ac6547a180ad8775b7a193f46f23ae1fc6d23acd0e990",
+      "planSha256": "6f599069d737bf253307bc15e298400e61ab91f07586b4f96c87deee9932443f",
+      "plan": "# Capture with --fixture-loop --fresh-boot on the original EU04 snapshot.\n# Load the original DOC_LOOP through Settings > Samples.\nwait 1000\ntap STOP\npress TRK\ntap 1\nrelease TRK\ntap GLOBAL\ntap DOWN\ntap YES\ntap DOWN\ntap DOWN\ntap YES\ntap RIGHT\ntap DOWN\ntap DOWN\ntap YES\ntap YES\nwait 1500\ntap NO\ntap LEFT\ntap GLOBAL\ntap SRC\n# DOC_LOOP occupies the first empty sample slot, slot 1 in this project.\nturn D -160 100\nturn D 2 300\ntap AMP\ntap SRC\nwait 700\nsnap sample-parameters\ntap SRC\nwait 700\nsnap sample-waveform\npress FUNC\nturn E 1 400\nrelease FUNC\nwait 100\nsnap sample-snapped\ntap AMP\ntap SRC\nwait 700\nsnap waveform-settled\n",
+      "emulatorRevision": "a422394af3db9ed0c6ae3ee8e9eb83429957004f",
+      "unicornVersion": "2.1.4",
+      "inputs": [
+        [
+          1000.698,
+          "press STOP"
+        ],
+        [
+          1100.706,
+          "release STOP"
+        ],
+        [
+          1400.707,
+          "press TRK"
+        ],
+        [
+          1500.707,
+          "press 1"
+        ],
+        [
+          1600.707,
+          "release 1"
+        ],
+        [
+          1900.708,
+          "release TRK"
+        ],
+        [
+          2000.709,
+          "press GLOBAL"
+        ],
+        [
+          2100.709,
+          "release GLOBAL"
+        ],
+        [
+          2400.71,
+          "press DOWN"
+        ],
+        [
+          2500.711,
+          "release DOWN"
+        ],
+        [
+          2800.712,
+          "press YES"
+        ],
+        [
+          2900.712,
+          "release YES"
+        ],
+        [
+          3200.713,
+          "press DOWN"
+        ],
+        [
+          3300.714,
+          "release DOWN"
+        ],
+        [
+          3600.715,
+          "press DOWN"
+        ],
+        [
+          3700.715,
+          "release DOWN"
+        ],
+        [
+          4000.716,
+          "press YES"
+        ],
+        [
+          4100.716,
+          "release YES"
+        ],
+        [
+          4400.717,
+          "press RIGHT"
+        ],
+        [
+          4500.718,
+          "release RIGHT"
+        ],
+        [
+          4800.719,
+          "press DOWN"
+        ],
+        [
+          4900.719,
+          "release DOWN"
+        ],
+        [
+          5200.72,
+          "press DOWN"
+        ],
+        [
+          5300.721,
+          "release DOWN"
+        ],
+        [
+          5600.722,
+          "press YES"
+        ],
+        [
+          5700.722,
+          "release YES"
+        ],
+        [
+          6000.723,
+          "press YES"
+        ],
+        [
+          6100.724,
+          "release YES"
+        ],
+        [
+          7900.73,
+          "press NO"
+        ],
+        [
+          8000.731,
+          "release NO"
+        ],
+        [
+          8300.732,
+          "press LEFT"
+        ],
+        [
+          8400.732,
+          "release LEFT"
+        ],
+        [
+          8700.733,
+          "press GLOBAL"
+        ],
+        [
+          8800.733,
+          "release GLOBAL"
+        ],
+        [
+          9100.735,
+          "press SRC"
+        ],
+        [
+          9200.735,
+          "release SRC"
+        ],
+        [
+          9500.736,
+          "turn D -28"
+        ],
+        [
+          9600.736,
+          "turn D -28"
+        ],
+        [
+          9700.737,
+          "turn D -28"
+        ],
+        [
+          9800.737,
+          "turn D -28"
+        ],
+        [
+          9900.737,
+          "turn D -28"
+        ],
+        [
+          10000.738,
+          "turn D -28"
+        ],
+        [
+          10100.738,
+          "turn D -28"
+        ],
+        [
+          10200.739,
+          "turn D -28"
+        ],
+        [
+          10300.739,
+          "turn D -28"
+        ],
+        [
+          10400.739,
+          "turn D -28"
+        ],
+        [
+          10500.74,
+          "turn D -28"
+        ],
+        [
+          10600.74,
+          "turn D -28"
+        ],
+        [
+          10700.74,
+          "turn D -28"
+        ],
+        [
+          10800.741,
+          "turn D -28"
+        ],
+        [
+          10900.741,
+          "turn D -28"
+        ],
+        [
+          11000.742,
+          "turn D -28"
+        ],
+        [
+          11100.742,
+          "turn D -28"
+        ],
+        [
+          11200.742,
+          "turn D -28"
+        ],
+        [
+          11300.743,
+          "turn D -28"
+        ],
+        [
+          11400.743,
+          "turn D -28"
+        ],
+        [
+          11500.743,
+          "turn D -28"
+        ],
+        [
+          11600.744,
+          "turn D -28"
+        ],
+        [
+          11700.744,
+          "turn D -24"
+        ],
+        [
+          11800.744,
+          "turn D 8"
+        ],
+        [
+          12100.745,
+          "press AMP"
+        ],
+        [
+          12200.746,
+          "release AMP"
+        ],
+        [
+          12500.747,
+          "press SRC"
+        ],
+        [
+          12600.747,
+          "release SRC"
+        ],
+        [
+          13600.751,
+          "press SRC"
+        ],
+        [
+          13700.751,
+          "release SRC"
+        ],
+        [
+          14700.755,
+          "press FUNC"
+        ],
+        [
+          14800.755,
+          "turn E 4"
+        ],
+        [
+          15200.757,
+          "release FUNC"
+        ],
+        [
+          15400.758,
+          "press AMP"
+        ],
+        [
+          15500.758,
+          "release AMP"
+        ],
+        [
+          15800.759,
+          "press SRC"
+        ],
+        [
+          15900.759,
+          "release SRC"
+        ]
+      ],
+      "hle": true,
+      "instructionsPerSecond": 64000000,
+      "fixture": {
+        "name": "DOC_LOOP",
+        "source": "Original generated one-second percussive tone, 48 kHz mono PCM",
+        "wavSha256": "8f700f1c2a754ee2febe481a9a362593291d24d92ee0d9584730009ab1f41940"
+      },
+      "captureToolSha256": "983d31367308763e3e3c77c2f750570b8a09664d9b2af729d353f302605988ba",
+      "halted": null,
+      "frameSelection": "One complete unmodified firmware framebuffer from the final 250 ms, chosen by populated pixels; nearest-neighbor 6x scaling.",
+      "limitations": [
+        "UI documentation only; no hardware, timing or audio-quality qualification.",
+        "The crossfade image is a retained regression frame on the same MAIN; the button plan recreates the SRC images only."
+      ],
+      "captures": [
+        {
+          "path": "media/sample-parameters.png",
+          "sha256": "584af9ebc89c5469689584de9b22173783aa8f9ca8da741bd4c61856dd851b05",
+          "atMs": 13534.945828125,
+          "requestedAtMs": 13600.750953125,
+          "plan": "# Capture with --fixture-loop --fresh-boot on the original EU04 snapshot.\n# Load the original DOC_LOOP through Settings > Samples.\nwait 1000\ntap STOP\npress TRK\ntap 1\nrelease TRK\ntap GLOBAL\ntap DOWN\ntap YES\ntap DOWN\ntap DOWN\ntap YES\ntap RIGHT\ntap DOWN\ntap DOWN\ntap YES\ntap YES\nwait 1500\ntap NO\ntap LEFT\ntap GLOBAL\ntap SRC\n# DOC_LOOP occupies the first empty sample slot, slot 1 in this project.\nturn D -160 100\nturn D 2 300\ntap AMP\ntap SRC\nwait 700\nsnap sample-parameters\ntap SRC\nwait 700\nsnap sample-waveform\npress FUNC\nturn E 1 400\nrelease FUNC\nwait 100\nsnap sample-snapped\ntap AMP\ntap SRC\nwait 700\nsnap waveform-settled\n"
+        },
+        {
+          "path": "media/sample-waveform.png",
+          "sha256": "0dbcccb52a625ee9c5bc004c89ec6cb14631ce4484bfbcda42492b24fa075732",
+          "atMs": 14700.75496875,
+          "requestedAtMs": 14700.75496875,
+          "plan": "# Capture with --fixture-loop --fresh-boot on the original EU04 snapshot.\n# Load the original DOC_LOOP through Settings > Samples.\nwait 1000\ntap STOP\npress TRK\ntap 1\nrelease TRK\ntap GLOBAL\ntap DOWN\ntap YES\ntap DOWN\ntap DOWN\ntap YES\ntap RIGHT\ntap DOWN\ntap DOWN\ntap YES\ntap YES\nwait 1500\ntap NO\ntap LEFT\ntap GLOBAL\ntap SRC\n# DOC_LOOP occupies the first empty sample slot, slot 1 in this project.\nturn D -160 100\nturn D 2 300\ntap AMP\ntap SRC\nwait 700\nsnap sample-parameters\ntap SRC\nwait 700\nsnap sample-waveform\npress FUNC\nturn E 1 400\nrelease FUNC\nwait 100\nsnap sample-snapped\ntap AMP\ntap SRC\nwait 700\nsnap waveform-settled\n"
+        },
+        {
+          "path": "media/crossfade-applied.png",
+          "sha256": "268f89b07d255de79c7d693abfcb4592ec39a2a1d9353a0ff8f46c68444788f1",
+          "retainedRegressionCapture": true,
+          "sourceReport": "evidence/crossfade-applied-regression.json",
+          "sourceReportSha256": "0ae2a8e4f7ab596af31238b6e1a305537a63bb1ebc94ca19a28d5ebda6ab29a6",
+          "sourceScript": "tools/firmware/digitakt_sample_tools/verify_ui.py",
+          "setup": "The same all-mods MAIN installed into a matching stock snapshot by verify_ui.py. The native trim editor holds a synthetic PCM fixture, opened through a test-only dispatcher; the crossfade controls use real panel events. No pixels modified. This does not show a public import command for loaded samples or RAM takes.",
+          "plan": "# Capture with --fixture-loop --fresh-boot on the original EU04 snapshot.\n# Load the original DOC_LOOP through Settings > Samples.\nwait 1000\ntap STOP\npress TRK\ntap 1\nrelease TRK\ntap GLOBAL\ntap DOWN\ntap YES\ntap DOWN\ntap DOWN\ntap YES\ntap RIGHT\ntap DOWN\ntap DOWN\ntap YES\ntap YES\nwait 1500\ntap NO\ntap LEFT\ntap GLOBAL\ntap SRC\n# DOC_LOOP occupies the first empty sample slot, slot 1 in this project.\nturn D -160 100\nturn D 2 300\ntap AMP\ntap SRC\nwait 700\nsnap sample-parameters\ntap SRC\nwait 700\nsnap sample-waveform\npress FUNC\nturn E 1 400\nrelease FUNC\nwait 100\nsnap sample-snapped\ntap AMP\ntap SRC\nwait 700\nsnap waveform-settled\n"
+        }
+      ],
+      "machine": "digitakt",
+      "moduleId": "sample-tools",
+      "moduleVersion": "0.2.2",
+      "firmware": "1.53",
+      "stockSha256": "9bdd44bb6102fb25c143cfab97bc92b7a89c463f795d3112dce89771e29bcc92"
+    },
+    {
+      "schemaVersion": 1,
+      "capturedAt": "2026-10-14T00:52:19.524099+00:00",
+      "imageSha256": "257144e4a584172e470c3dde83d7ccda636eeb195b4e5ff0492b3ebc8bdfaba2",
+      "mainSha256": "14469be1cb112830aa283e034d90c9372135b3f6b3fb7d3b077202101f758017",
+      "snapshotSha256": "0926fc88867d226458e6df48742b6a8abb8f95f4e0c0eed9fcfca868d6f26b95",
+      "planSha256": "6f599069d737bf253307bc15e298400e61ab91f07586b4f96c87deee9932443f",
+      "plan": "# Capture with --fixture-loop --fresh-boot on the original EU04 snapshot.\n# Load the original DOC_LOOP through Settings > Samples.\nwait 1000\ntap STOP\npress TRK\ntap 1\nrelease TRK\ntap GLOBAL\ntap DOWN\ntap YES\ntap DOWN\ntap DOWN\ntap YES\ntap RIGHT\ntap DOWN\ntap DOWN\ntap YES\ntap YES\nwait 1500\ntap NO\ntap LEFT\ntap GLOBAL\ntap SRC\n# DOC_LOOP occupies the first empty sample slot, slot 1 in this project.\nturn D -160 100\nturn D 2 300\ntap AMP\ntap SRC\nwait 700\nsnap sample-parameters\ntap SRC\nwait 700\nsnap sample-waveform\npress FUNC\nturn E 1 400\nrelease FUNC\nwait 100\nsnap sample-snapped\ntap AMP\ntap SRC\nwait 700\nsnap waveform-settled\n",
+      "emulatorRevision": "a422394af3db9ed0c6ae3ee8e9eb83429957004f",
+      "unicornVersion": "2.1.4",
+      "inputs": [
+        [
+          1000.057,
+          "press STOP"
+        ],
+        [
+          1100.06,
+          "release STOP"
+        ],
+        [
+          1400.069,
+          "press TRK"
+        ],
+        [
+          1500.071,
+          "press 1"
+        ],
+        [
+          1600.074,
+          "release 1"
+        ],
+        [
+          1900.083,
+          "release TRK"
+        ],
+        [
+          2000.086,
+          "press GLOBAL"
+        ],
+        [
+          2100.089,
+          "release GLOBAL"
+        ],
+        [
+          2400.098,
+          "press DOWN"
+        ],
+        [
+          2500.101,
+          "release DOWN"
+        ],
+        [
+          2800.109,
+          "press YES"
+        ],
+        [
+          2900.112,
+          "release YES"
+        ],
+        [
+          3200.121,
+          "press DOWN"
+        ],
+        [
+          3300.124,
+          "release DOWN"
+        ],
+        [
+          3600.133,
+          "press DOWN"
+        ],
+        [
+          3700.135,
+          "release DOWN"
+        ],
+        [
+          4000.144,
+          "press YES"
+        ],
+        [
+          4100.147,
+          "release YES"
+        ],
+        [
+          4400.156,
+          "press RIGHT"
+        ],
+        [
+          4500.159,
+          "release RIGHT"
+        ],
+        [
+          4800.167,
+          "press DOWN"
+        ],
+        [
+          4900.17,
+          "release DOWN"
+        ],
+        [
+          5200.179,
+          "press DOWN"
+        ],
+        [
+          5300.182,
+          "release DOWN"
+        ],
+        [
+          5600.191,
+          "press YES"
+        ],
+        [
+          5700.194,
+          "release YES"
+        ],
+        [
+          6000.202,
+          "press YES"
+        ],
+        [
+          6100.205,
+          "release YES"
+        ],
+        [
+          7900.258,
+          "press NO"
+        ],
+        [
+          8000.261,
+          "release NO"
+        ],
+        [
+          8300.269,
+          "press LEFT"
+        ],
+        [
+          8400.272,
+          "release LEFT"
+        ],
+        [
+          8700.281,
+          "press GLOBAL"
+        ],
+        [
+          8800.284,
+          "release GLOBAL"
+        ],
+        [
+          9100.293,
+          "press SRC"
+        ],
+        [
+          9200.295,
+          "release SRC"
+        ],
+        [
+          9500.304,
+          "turn D -28"
+        ],
+        [
+          9600.307,
+          "turn D -28"
+        ],
+        [
+          9700.31,
+          "turn D -28"
+        ],
+        [
+          9800.313,
+          "turn D -28"
+        ],
+        [
+          9900.316,
+          "turn D -28"
+        ],
+        [
+          10000.319,
+          "turn D -28"
+        ],
+        [
+          10100.322,
+          "turn D -28"
+        ],
+        [
+          10200.325,
+          "turn D -28"
+        ],
+        [
+          10300.327,
+          "turn D -28"
+        ],
+        [
+          10400.33,
+          "turn D -28"
+        ],
+        [
+          10500.333,
+          "turn D -28"
+        ],
+        [
+          10600.336,
+          "turn D -28"
+        ],
+        [
+          10700.339,
+          "turn D -28"
+        ],
+        [
+          10800.342,
+          "turn D -28"
+        ],
+        [
+          10900.345,
+          "turn D -28"
+        ],
+        [
+          11000.348,
+          "turn D -28"
+        ],
+        [
+          11100.351,
+          "turn D -28"
+        ],
+        [
+          11200.354,
+          "turn D -28"
+        ],
+        [
+          11300.357,
+          "turn D -28"
+        ],
+        [
+          11400.359,
+          "turn D -28"
+        ],
+        [
+          11500.362,
+          "turn D -28"
+        ],
+        [
+          11600.365,
+          "turn D -28"
+        ],
+        [
+          11700.368,
+          "turn D -24"
+        ],
+        [
+          11800.371,
+          "turn D 8"
+        ],
+        [
+          12100.38,
+          "press AMP"
+        ],
+        [
+          12200.383,
+          "release AMP"
+        ],
+        [
+          12500.391,
+          "press SRC"
+        ],
+        [
+          12600.394,
+          "release SRC"
+        ],
+        [
+          13600.423,
+          "press SRC"
+        ],
+        [
+          13700.426,
+          "release SRC"
+        ],
+        [
+          14700.455,
+          "press FUNC"
+        ],
+        [
+          14800.458,
+          "turn E 4"
+        ],
+        [
+          15200.47,
+          "release FUNC"
+        ],
+        [
+          15400.476,
+          "press AMP"
+        ],
+        [
+          15500.479,
+          "release AMP"
+        ],
+        [
+          15800.487,
+          "press SRC"
+        ],
+        [
+          15900.49,
+          "release SRC"
+        ]
+      ],
+      "hle": true,
+      "instructionsPerSecond": 64000000,
+      "fixture": {
+        "name": "DOC_LOOP",
+        "source": "Original generated one-second percussive tone, 48 kHz mono PCM",
+        "wavSha256": "8f700f1c2a754ee2febe481a9a362593291d24d92ee0d9584730009ab1f41940"
+      },
+      "captureToolSha256": "983d31367308763e3e3c77c2f750570b8a09664d9b2af729d353f302605988ba",
+      "halted": null,
+      "frameSelection": "One complete unmodified firmware framebuffer from the final 250 ms, chosen by populated pixels; nearest-neighbor 6x scaling.",
+      "limitations": [
+        "UI documentation only; no hardware, timing or audio-quality qualification.",
+        "The crossfade image is a retained regression frame on the same MAIN; the button plan recreates the SRC images only."
+      ],
+      "captures": [
+        {
+          "path": "media/1.54/sample-parameters.png",
+          "sha256": "584af9ebc89c5469689584de9b22173783aa8f9ca8da741bd4c61856dd851b05",
+          "atMs": 13469.15315625,
+          "requestedAtMs": 13600.423421875,
+          "plan": "# Capture with --fixture-loop --fresh-boot on the original EU04 snapshot.\n# Load the original DOC_LOOP through Settings > Samples.\nwait 1000\ntap STOP\npress TRK\ntap 1\nrelease TRK\ntap GLOBAL\ntap DOWN\ntap YES\ntap DOWN\ntap DOWN\ntap YES\ntap RIGHT\ntap DOWN\ntap DOWN\ntap YES\ntap YES\nwait 1500\ntap NO\ntap LEFT\ntap GLOBAL\ntap SRC\n# DOC_LOOP occupies the first empty sample slot, slot 1 in this project.\nturn D -160 100\nturn D 2 300\ntap AMP\ntap SRC\nwait 700\nsnap sample-parameters\ntap SRC\nwait 700\nsnap sample-waveform\npress FUNC\nturn E 1 400\nrelease FUNC\nwait 100\nsnap sample-snapped\ntap AMP\ntap SRC\nwait 700\nsnap waveform-settled\n"
+        },
+        {
+          "path": "media/1.54/sample-waveform.png",
+          "sha256": "0dbcccb52a625ee9c5bc004c89ec6cb14631ce4484bfbcda42492b24fa075732",
+          "atMs": 14669.15753125,
+          "requestedAtMs": 14700.455453125,
+          "plan": "# Capture with --fixture-loop --fresh-boot on the original EU04 snapshot.\n# Load the original DOC_LOOP through Settings > Samples.\nwait 1000\ntap STOP\npress TRK\ntap 1\nrelease TRK\ntap GLOBAL\ntap DOWN\ntap YES\ntap DOWN\ntap DOWN\ntap YES\ntap RIGHT\ntap DOWN\ntap DOWN\ntap YES\ntap YES\nwait 1500\ntap NO\ntap LEFT\ntap GLOBAL\ntap SRC\n# DOC_LOOP occupies the first empty sample slot, slot 1 in this project.\nturn D -160 100\nturn D 2 300\ntap AMP\ntap SRC\nwait 700\nsnap sample-parameters\ntap SRC\nwait 700\nsnap sample-waveform\npress FUNC\nturn E 1 400\nrelease FUNC\nwait 100\nsnap sample-snapped\ntap AMP\ntap SRC\nwait 700\nsnap waveform-settled\n"
+        },
+        {
+          "path": "media/1.54/crossfade-applied.png",
+          "sha256": "268f89b07d255de79c7d693abfcb4592ec39a2a1d9353a0ff8f46c68444788f1",
+          "retainedRegressionCapture": true,
+          "sourceReport": "evidence/1.54-crossfade-applied-regression.json",
+          "sourceReportSha256": "88cdd757e518fbae03ac9acae1dea901734d8b6cb748774f7ef1f6d77d859643",
+          "sourceScript": "tools/firmware/digitakt_sample_tools/verify_ui.py",
+          "setup": "The same all-mods MAIN installed into a matching stock snapshot by verify_ui.py. The native trim editor holds a synthetic PCM fixture, opened through a test-only dispatcher; the crossfade controls use real panel events. No pixels modified. This does not show a public import command for loaded samples or RAM takes.",
+          "plan": "# Capture with --fixture-loop --fresh-boot on the original EU04 snapshot.\n# Load the original DOC_LOOP through Settings > Samples.\nwait 1000\ntap STOP\npress TRK\ntap 1\nrelease TRK\ntap GLOBAL\ntap DOWN\ntap YES\ntap DOWN\ntap DOWN\ntap YES\ntap RIGHT\ntap DOWN\ntap DOWN\ntap YES\ntap YES\nwait 1500\ntap NO\ntap LEFT\ntap GLOBAL\ntap SRC\n# DOC_LOOP occupies the first empty sample slot, slot 1 in this project.\nturn D -160 100\nturn D 2 300\ntap AMP\ntap SRC\nwait 700\nsnap sample-parameters\ntap SRC\nwait 700\nsnap sample-waveform\npress FUNC\nturn E 1 400\nrelease FUNC\nwait 100\nsnap sample-snapped\ntap AMP\ntap SRC\nwait 700\nsnap waveform-settled\n"
+        }
+      ],
+      "machine": "digitakt",
+      "moduleId": "sample-tools",
+      "moduleVersion": "0.2.2",
+      "firmware": "1.54",
+      "stockSha256": "f78ba80fa7b1da5fb0e1ff61ad61e9e71aafe79f4364fc49679f3651353e3cf6"
+    }
+  ]
+}

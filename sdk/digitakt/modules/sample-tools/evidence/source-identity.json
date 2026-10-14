@@ -1,0 +1,239 @@
+{
+  "schemaVersion": 1,
+  "algorithm": "sha256 of canonical sorted JSON {sources,build}; UTF-8, compact separators",
+  "sha256": "4d05bba43df453edf79df863e3f74f1f64bde36e80880eaf07e7afd3e2819676",
+  "sources": {
+    "src/audio.c": "7473e4eda1f72457df08db504fb19b6e6589bed9e7d655043f75d0a53d76dc2d",
+    "src/digitakt-mk1/core3.h": "9ad3512ee2ced8f9eaadcb48e5633547d861d7a71f5443d5e9f759d0b790de26",
+    "src/release-153/audio.c": "52516d58a9a2a5b1ac0cc3bd1960dcb1d818d0cd8417ac6bfeed33c2f9da0804",
+    "src/release-153/audio.h": "eeafbde68414c61ff3d1f4b5d3814300562c63ef7958ebc3392f20bb1773017b",
+    "src/release-153/core21.h": "a56cf302ca91bddb05e9c543972942d929843eeec7b7aa0564ed6be1928e6e01",
+    "src/release-153/sample_tools.c": "707489a0c20efe35b276a41b5007ff1453e9777b8ad0ad3c4f3f35a2aaaa55c7",
+    "src/release-153/sample_tools.s": "2374860679ed7274df00d2bae503f8436a867f1ae8dac38ba64fc5b398248654",
+    "src/release-153/src_snap.c": "fb66c0e4fb9ffe83a3e4afa93a820b3032f79a2c58ce36441f8a283a36c51d7f",
+    "src/release-154/audio.c": "52516d58a9a2a5b1ac0cc3bd1960dcb1d818d0cd8417ac6bfeed33c2f9da0804",
+    "src/release-154/audio.h": "eeafbde68414c61ff3d1f4b5d3814300562c63ef7958ebc3392f20bb1773017b",
+    "src/release-154/core21.h": "c4d31ee8d6d8699ed0ea2b2197712d00b3433b8a5b03865806788fea5ecc265c",
+    "src/release-154/sample_tools.c": "1018a3235f3c4bc8579e524609a0b629b165d6d7dc51bb4fbbdc3461c9a9ba6e",
+    "src/release-154/sample_tools.s": "cb35e8d2e4b08fb24623804ce59dba28c3c8610108af85490f922ed7f0920361",
+    "src/release-154/src_snap.c": "28b965edf1a19ef35f547bdfcad37873ae31c7bdcbe1fd9e317bb1d67fb646c3",
+    "src/sample_tools.c": "89105c6aa4bbea2c0761863d85286baf308abf7d6c68593e76223379d7090cfa",
+    "src/sample_tools.s": "e786a335984ae27b984c2fdf511269f5224b0281e4f8233da73fde0697626cad",
+    "src/src_snap.c": "7379ca504baddfbe8f8abce03ab9a8b7e61bb52a148d52d7f9c87705e9b5bb1a"
+  },
+  "build": {
+    "schemaVersion": 1,
+    "sources": [
+      "src/sample_tools.c",
+      "src/sample_tools.s",
+      "src/src_snap.c",
+      "src/audio.c"
+    ],
+    "defsym": {},
+    "cflags": [
+      "-Os",
+      "-std=c99",
+      "-Wall",
+      "-Wextra",
+      "-Werror"
+    ],
+    "weak": [],
+    "subscribe": [
+      {
+        "event": "ev_tick",
+        "fn": "se_tick",
+        "order": 60
+      }
+    ],
+    "contribute": [],
+    "collections": {},
+    "copied": [],
+    "regions": [],
+    "claims": [
+      "ui:SRC:FUNC+E/F/G zero snap",
+      "ui:recorder:FUNC+E/F snap crossfade",
+      "sample:audition:130:exact window"
+    ],
+    "requires": [],
+    "derive": null,
+    "releases": {
+      "1.53": {
+        "defsym": {
+          "DT_OS154": 0
+        },
+        "cflags": [
+          "-DDT_OS154=0"
+        ],
+        "sites": [
+          {
+            "addr": "0x401b32d0",
+            "op": "ptr",
+            "target": "se_rec_key",
+            "len": 4,
+            "stockSha256": "05a9e6a69930c133820b710f11337c9f626424da3ec8b828d7e7f602f7fb5eea"
+          },
+          {
+            "addr": "0x401b32d8",
+            "op": "ptr",
+            "target": "se_paint",
+            "len": 4,
+            "stockSha256": "b06f26a5a66ef76174fb512156f423f1010dea174c3f48e58b391f9eea3af103"
+          },
+          {
+            "addr": "0x401b330c",
+            "op": "ptr",
+            "target": "se_enc",
+            "len": 4,
+            "stockSha256": "14b49cea0bbbfd6534a8bc784e4e98416d96c187d0dfd437295c67f3ae6d6c70"
+          },
+          {
+            "addr": "0x401b3324",
+            "op": "ptr",
+            "target": "se_enc_iface",
+            "len": 4,
+            "stockSha256": "17d5a30a5c502a9508242b74c4ef56c007809646d0e8902d947738cda1ecc1b3"
+          },
+          {
+            "addr": "0x401848dc",
+            "op": "ptr",
+            "target": "se_src_key",
+            "len": 4,
+            "stockSha256": "3a2c272a4fc9bf3d7e21da368908eb4a0b8f59caa35708e396c2956b1101948a"
+          },
+          {
+            "addr": "0x40184918",
+            "op": "ptr",
+            "target": "se_src_enc",
+            "len": 4,
+            "stockSha256": "c6a54bd7637c2e1298ee68334ba2d2dd3992dc387e24b56817db4f1efff8a487"
+          },
+          {
+            "addr": "0x401849b4",
+            "op": "ptr",
+            "target": "se_src_enc_iface",
+            "len": 4,
+            "stockSha256": "99bd58084450a9f3a4f459d7465f9fcdc1eedaf192f8f0153e8b938f461d68c8"
+          },
+          {
+            "addr": "0x400a7f62",
+            "op": "jmp",
+            "target": "se_ctor",
+            "len": 8,
+            "stockSha256": "99d3ea39411187aae5eba2f200f006155e36dba86280e3f7d14b49ff200717be"
+          },
+          {
+            "addr": "0x40074c9c",
+            "op": "jmp",
+            "target": "se_window",
+            "len": 8,
+            "stockSha256": "7357d174dda33b71e4d29ed8e6d02a3b96a76167a0a44ebe35f2a439406880f4"
+          },
+          {
+            "addr": "0x400763b4",
+            "op": "jmp",
+            "target": "se_register",
+            "len": 8,
+            "stockSha256": "e398ae4718aa25b1a93c5bce98f6ab1c42cf49239c934a30b67dee219734f4a9"
+          },
+          {
+            "addr": "0x400a7450",
+            "op": "jsr",
+            "target": "se_preview_align",
+            "len": 10,
+            "stockSha256": "42c2d2fd96ee7041640911ffdd65379c6f041be426f03e61e873a637366be357"
+          }
+        ]
+      },
+      "1.54": {
+        "defsym": {
+          "DT_OS154": 1
+        },
+        "cflags": [
+          "-DDT_OS154=1"
+        ],
+        "sites": [
+          {
+            "addr": "0x401b3650",
+            "op": "ptr",
+            "target": "se_rec_key",
+            "len": 4,
+            "stockSha256": "51faac6295d4b8571d5f60b890a54c0e8f2f8f5ede59c25911d4140e0f310319"
+          },
+          {
+            "addr": "0x401b3658",
+            "op": "ptr",
+            "target": "se_paint",
+            "len": 4,
+            "stockSha256": "7e41f11c34c04fa61252c7715239bf0f9638e20f9bd62eaea4be3c0db58871c2"
+          },
+          {
+            "addr": "0x401b368c",
+            "op": "ptr",
+            "target": "se_enc",
+            "len": 4,
+            "stockSha256": "b8af280b82c024028d631f1c447ba37a90eb1eee7fc2ba122e87b7df3752fae7"
+          },
+          {
+            "addr": "0x401b36a4",
+            "op": "ptr",
+            "target": "se_enc_iface",
+            "len": 4,
+            "stockSha256": "f8e856e915c80b851178c5498ed76358f55e129e6fd062cccf05f6fe925c628f"
+          },
+          {
+            "addr": "0x40184bdc",
+            "op": "ptr",
+            "target": "se_src_key",
+            "len": 4,
+            "stockSha256": "3a2c272a4fc9bf3d7e21da368908eb4a0b8f59caa35708e396c2956b1101948a"
+          },
+          {
+            "addr": "0x40184c18",
+            "op": "ptr",
+            "target": "se_src_enc",
+            "len": 4,
+            "stockSha256": "c6a54bd7637c2e1298ee68334ba2d2dd3992dc387e24b56817db4f1efff8a487"
+          },
+          {
+            "addr": "0x40184cb4",
+            "op": "ptr",
+            "target": "se_src_enc_iface",
+            "len": 4,
+            "stockSha256": "99bd58084450a9f3a4f459d7465f9fcdc1eedaf192f8f0153e8b938f461d68c8"
+          },
+          {
+            "addr": "0x400a818a",
+            "op": "jmp",
+            "target": "se_ctor",
+            "len": 8,
+            "stockSha256": "99d3ea39411187aae5eba2f200f006155e36dba86280e3f7d14b49ff200717be"
+          },
+          {
+            "addr": "0x40074c9c",
+            "op": "jmp",
+            "target": "se_window",
+            "len": 8,
+            "stockSha256": "7357d174dda33b71e4d29ed8e6d02a3b96a76167a0a44ebe35f2a439406880f4"
+          },
+          {
+            "addr": "0x400763b4",
+            "op": "jmp",
+            "target": "se_register",
+            "len": 8,
+            "stockSha256": "e398ae4718aa25b1a93c5bce98f6ab1c42cf49239c934a30b67dee219734f4a9"
+          },
+          {
+            "addr": "0x400a7678",
+            "op": "jsr",
+            "target": "se_preview_align",
+            "len": 10,
+            "stockSha256": "44109d93e1040e2b5d1321eb75c7a91418a6841833f2d7b5f9accf8c357304d2"
+          }
+        ]
+      }
+    }
+  },
+  "repository": "https://github.com/sumedho/digirequests",
+  "revision": "8eba613dc3e0b1698797609256fd4081923b4ef2",
+  "path": "modules/sample-tools"
+}
