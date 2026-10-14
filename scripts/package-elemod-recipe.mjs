@@ -18,11 +18,25 @@ export function packageRecipe(plan) {
   return module
 }
 
+export const exportText = recipe => JSON.stringify(recipe, null, 1) + '\n'
+
+/**
+ * Whether `committed` is the export of `plan`. An export published before the optional `resources.core` field existed keeps its
+ * bytes, because hardware evidence binds their hash ("byte-identical to tested candidate"). A source rebuild reproduces such an
+ * export when it differs only by that one added field. The field is metadata: the linked image does not change.
+ */
+export function reproducesExport(committed, plan) {
+  const recipe = packageRecipe(plan)
+  if (committed === exportText(recipe)) return true
+  const { core, ...resources } = recipe.resources
+  return core !== undefined && committed === exportText({ ...recipe, resources })
+}
+
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const [recipe, output, mode] = process.argv.slice(2)
   if (!recipe || !output || process.argv.length > 5 || (mode && mode !== '--check')) throw new Error('Usage: node scripts/package-elemod-recipe.mjs RECIPE.json OUTPUT.elemod [--check]')
-  const bytes = JSON.stringify(packageRecipe(JSON.parse(await readFile(recipe, 'utf8'))), null, 1) + '\n'
+  const plan = JSON.parse(await readFile(recipe, 'utf8'))
   if (mode === '--check') {
-    if (await readFile(output, 'utf8') !== bytes) throw new Error('Committed package does not reproduce from source: ' + output)
-  } else await writeFile(output, bytes, { flag: 'wx' })
+    if (!reproducesExport(await readFile(output, 'utf8'), plan)) throw new Error('Committed package does not reproduce from source: ' + output)
+  } else await writeFile(output, exportText(packageRecipe(plan)), { flag: 'wx' })
 }

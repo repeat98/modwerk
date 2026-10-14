@@ -1,6 +1,6 @@
 import { test } from 'vitest'
 import assert from 'node:assert/strict'
-import { packageRecipe } from './package-elemod-recipe.mjs'
+import { exportText, packageRecipe, reproducesExport } from './package-elemod-recipe.mjs'
 import { readFile } from 'node:fs/promises'
 
 const original = JSON.parse(await readFile(new URL('../sdk/imports/packages/digimono/digimono-0.13.2-experimental-os1.53.elemod', import.meta.url), 'utf8'))
@@ -37,4 +37,16 @@ test('exports explicit authored bytes and LEA with guards, and refuses partial i
   assert.equal(packageRecipe({ ...plan, sites: [lea] }).sites[0].new, '4bf900000000')
   assert.equal(packageRecipe({ ...plan, sites: [bytes] }).sites[0].new, bytes.new)
   for (const site of [{ ...bytes, target: 'bad' }, { ...bytes, new: '4e714e714ef9' }, { ...lea, register: 8 }]) assert.throws(() => packageRecipe({ ...plan, sites: [site] }))
+})
+
+test('an export published without resources.core still reproduces, and nothing else may differ', () => {
+  const withCore = { ...plan, module: { ...plan.module, resources: { ...plan.module.resources, core: '2.1' } } }
+  const old = exportText(packageRecipe(plan)), current = exportText(packageRecipe(withCore))
+  assert.notEqual(old, current)
+  assert.equal(reproducesExport(current, withCore), true)
+  assert.equal(reproducesExport(old, withCore), true)
+  assert.equal(reproducesExport(old, plan), true)
+  assert.equal(reproducesExport(current, plan), false, 'an export may not gain a core the source does not declare')
+  assert.equal(reproducesExport(old.replace('"names"', '"claims"'), withCore), false)
+  assert.equal(reproducesExport(current.replace('"2.1"', '"3.0"'), withCore), false)
 })

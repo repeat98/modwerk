@@ -3,7 +3,7 @@
 import { access, readFile } from 'node:fs/promises'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { packageRecipe } from './package-elemod-recipe.mjs'
+import { reproducesExport } from './package-elemod-recipe.mjs'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const output = process.argv[2]
@@ -16,7 +16,7 @@ for (const entry of inventory.artifacts) {
   try { await access(path) } catch (error) { if (error.code === 'ENOENT') continue; throw error }
   const plan = JSON.parse(await readFile(resolve(output, entry.path), 'utf8'))
   if (plan.id !== entry.id || plan.machine !== entry.machine || plan.version !== entry.version || plan.release !== entry.release) throw new Error('Artifact identity differs from inventory')
-  if (await readFile(path, 'utf8') !== JSON.stringify(packageRecipe(plan), null, 1) + '\n') throw new Error('Committed release does not reproduce: ' + path)
+  if (!reproducesExport(await readFile(path, 'utf8'), plan)) throw new Error('Committed release does not reproduce: ' + path)
   checked++
 }
 if (!checked) throw new Error('No committed source-only release exports checked')
