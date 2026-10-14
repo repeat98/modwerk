@@ -1,0 +1,280 @@
+{
+  "schemaVersion": 2,
+  "machine": "digitakt",
+  "moduleId": "note-accumulator",
+  "moduleVersion": "1.1.1",
+  "records": [
+    {
+      "schemaVersion": 1,
+      "capturedAt": "2026-10-14T00:53:46.280143+00:00",
+      "imageSha256": "23503ca42478c1644dea5fd296893f628eafb6662d2ce5e291bfc591f045ae4e",
+      "mainSha256": "ce2c0bd03393ca5f7e9427874bad4f5daa32b7e5699ff003af5e6fc35573ab39",
+      "snapshotSha256": "57b4504cbb96630a7d782e7fdd4993874056faaba67e3b0f7726973bc45049b3",
+      "planSha256": "3cacc724b24fb0ad9fbbe478605dfff00727ff60b7fa2f0302d670276c64073f",
+      "plan": "wait 1000\ntap STOP\npress TRK\ntap 1\nrelease TRK\ntap TRIG\nsnap accumulator-page\nturn G 2 500\nturn G 2 500\nturn G 2 500\nturn G 2 500\nturn G 2 500\ntap SRC\ntap TRIG\nwait 500\nsnap accumulator-value\npress G\ntap NO\nrelease G\ntap SRC\ntap TRIG\nwait 1000\nsnap accumulator-off\n",
+      "emulatorRevision": "a422394af3db9ed0c6ae3ee8e9eb83429957004f",
+      "unicornVersion": "2.1.4",
+      "inputs": [
+        [
+          1000.698,
+          "press STOP"
+        ],
+        [
+          1100.705,
+          "release STOP"
+        ],
+        [
+          1400.707,
+          "press TRK"
+        ],
+        [
+          1500.707,
+          "press 1"
+        ],
+        [
+          1600.707,
+          "release 1"
+        ],
+        [
+          1900.708,
+          "release TRK"
+        ],
+        [
+          2000.709,
+          "press TRIG"
+        ],
+        [
+          2100.709,
+          "release TRIG"
+        ],
+        [
+          2400.71,
+          "turn G 8"
+        ],
+        [
+          2900.712,
+          "turn G 8"
+        ],
+        [
+          3400.714,
+          "turn G 8"
+        ],
+        [
+          3900.716,
+          "turn G 8"
+        ],
+        [
+          4400.718,
+          "turn G 8"
+        ],
+        [
+          4900.719,
+          "press SRC"
+        ],
+        [
+          5000.72,
+          "release SRC"
+        ],
+        [
+          5300.721,
+          "press TRIG"
+        ],
+        [
+          5400.721,
+          "release TRIG"
+        ],
+        [
+          6200.724,
+          "press G"
+        ],
+        [
+          6300.724,
+          "press NO"
+        ],
+        [
+          6400.725,
+          "release NO"
+        ],
+        [
+          6700.726,
+          "release G"
+        ],
+        [
+          6800.726,
+          "press SRC"
+        ],
+        [
+          6900.727,
+          "release SRC"
+        ],
+        [
+          7200.728,
+          "press TRIG"
+        ],
+        [
+          7300.728,
+          "release TRIG"
+        ]
+      ],
+      "hle": true,
+      "instructionsPerSecond": 64000000,
+      "fixture": null,
+      "captureToolSha256": "983d31367308763e3e3c77c2f750570b8a09664d9b2af729d353f302605988ba",
+      "halted": null,
+      "frameSelection": "One complete unmodified firmware framebuffer from the final 250 ms, chosen by populated pixels; nearest-neighbor 6x scaling.",
+      "limitations": [
+        "UI documentation only; no hardware, timing or audio-quality qualification."
+      ],
+      "captures": [
+        {
+          "path": "media/accumulator-page.png",
+          "sha256": "477124ef1d773a2cb8b744c3c5e84ad0ae4df3e41caf4d481a24bf8f408807c7",
+          "atMs": 2368.018390625,
+          "requestedAtMs": 2400.71025,
+          "plan": "wait 1000\ntap STOP\npress TRK\ntap 1\nrelease TRK\ntap TRIG\nsnap accumulator-page\nturn G 2 500\nturn G 2 500\nturn G 2 500\nturn G 2 500\nturn G 2 500\ntap SRC\ntap TRIG\nwait 500\nsnap accumulator-value\npress G\ntap NO\nrelease G\ntap SRC\ntap TRIG\nwait 1000\nsnap accumulator-off\n"
+        }
+      ],
+      "machine": "digitakt",
+      "moduleId": "note-accumulator",
+      "moduleVersion": "1.1.1",
+      "firmware": "1.53",
+      "stockSha256": "9bdd44bb6102fb25c143cfab97bc92b7a89c463f795d3112dce89771e29bcc92"
+    },
+    {
+      "schemaVersion": 1,
+      "capturedAt": "2026-10-14T00:51:24.536379+00:00",
+      "imageSha256": "257144e4a584172e470c3dde83d7ccda636eeb195b4e5ff0492b3ebc8bdfaba2",
+      "mainSha256": "14469be1cb112830aa283e034d90c9372135b3f6b3fb7d3b077202101f758017",
+      "snapshotSha256": "d339a10b5b3bbe2c28885d3ccc9ba40393cef88e335d87811d8e9adb104509e4",
+      "planSha256": "3cacc724b24fb0ad9fbbe478605dfff00727ff60b7fa2f0302d670276c64073f",
+      "plan": "wait 1000\ntap STOP\npress TRK\ntap 1\nrelease TRK\ntap TRIG\nsnap accumulator-page\nturn G 2 500\nturn G 2 500\nturn G 2 500\nturn G 2 500\nturn G 2 500\ntap SRC\ntap TRIG\nwait 500\nsnap accumulator-value\npress G\ntap NO\nrelease G\ntap SRC\ntap TRIG\nwait 1000\nsnap accumulator-off\n",
+      "emulatorRevision": "a422394af3db9ed0c6ae3ee8e9eb83429957004f",
+      "unicornVersion": "2.1.4",
+      "inputs": [
+        [
+          1000.057,
+          "press STOP"
+        ],
+        [
+          1100.06,
+          "release STOP"
+        ],
+        [
+          1400.069,
+          "press TRK"
+        ],
+        [
+          1500.071,
+          "press 1"
+        ],
+        [
+          1600.074,
+          "release 1"
+        ],
+        [
+          1900.083,
+          "release TRK"
+        ],
+        [
+          2000.086,
+          "press TRIG"
+        ],
+        [
+          2100.089,
+          "release TRIG"
+        ],
+        [
+          2400.098,
+          "turn G 8"
+        ],
+        [
+          2900.112,
+          "turn G 8"
+        ],
+        [
+          3400.127,
+          "turn G 8"
+        ],
+        [
+          3900.141,
+          "turn G 8"
+        ],
+        [
+          4400.156,
+          "turn G 8"
+        ],
+        [
+          4900.17,
+          "press SRC"
+        ],
+        [
+          5000.173,
+          "release SRC"
+        ],
+        [
+          5300.182,
+          "press TRIG"
+        ],
+        [
+          5400.185,
+          "release TRIG"
+        ],
+        [
+          6200.208,
+          "press G"
+        ],
+        [
+          6300.211,
+          "press NO"
+        ],
+        [
+          6400.214,
+          "release NO"
+        ],
+        [
+          6700.223,
+          "release G"
+        ],
+        [
+          6800.226,
+          "press SRC"
+        ],
+        [
+          6900.229,
+          "release SRC"
+        ],
+        [
+          7200.237,
+          "press TRIG"
+        ],
+        [
+          7300.24,
+          "release TRIG"
+        ]
+      ],
+      "hle": true,
+      "instructionsPerSecond": 64000000,
+      "fixture": null,
+      "captureToolSha256": "983d31367308763e3e3c77c2f750570b8a09664d9b2af729d353f302605988ba",
+      "halted": null,
+      "frameSelection": "One complete unmodified firmware framebuffer from the final 250 ms, chosen by populated pixels; nearest-neighbor 6x scaling.",
+      "limitations": [
+        "UI documentation only; no hardware, timing or audio-quality qualification."
+      ],
+      "captures": [
+        {
+          "path": "media/1.54/accumulator-page.png",
+          "sha256": "477124ef1d773a2cb8b744c3c5e84ad0ae4df3e41caf4d481a24bf8f408807c7",
+          "atMs": 2369.11275,
+          "requestedAtMs": 2400.097578125,
+          "plan": "wait 1000\ntap STOP\npress TRK\ntap 1\nrelease TRK\ntap TRIG\nsnap accumulator-page\nturn G 2 500\nturn G 2 500\nturn G 2 500\nturn G 2 500\nturn G 2 500\ntap SRC\ntap TRIG\nwait 500\nsnap accumulator-value\npress G\ntap NO\nrelease G\ntap SRC\ntap TRIG\nwait 1000\nsnap accumulator-off\n"
+        }
+      ],
+      "machine": "digitakt",
+      "moduleId": "note-accumulator",
+      "moduleVersion": "1.1.1",
+      "firmware": "1.54",
+      "stockSha256": "f78ba80fa7b1da5fb0e1ff61ad61e9e71aafe79f4364fc49679f3651353e3cf6"
+    }
+  ]
+}

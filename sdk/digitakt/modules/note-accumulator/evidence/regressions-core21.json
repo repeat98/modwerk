@@ -1,0 +1,275 @@
+{
+  "schemaVersion": 1,
+  "core": "2.1",
+  "scope": "The 13 regression cases of the earlier 1.54 integration, run on both OSes against the Core 2.1 builds. Emulator only; booted stock snapshots with the build installed.",
+  "allModsMainSha256": {
+    "1.53": "ce2c0bd03393ca5f7e9427874bad4f5daa32b7e5699ff003af5e6fc35573ab39",
+    "1.54": "14469be1cb112830aa283e034d90c9372135b3f6b3fb7d3b077202101f758017"
+  },
+  "allModsSysexSha256": {
+    "1.53": "23503ca42478c1644dea5fd296893f628eafb6662d2ce5e291bfc591f045ae4e",
+    "1.54": "257144e4a584172e470c3dde83d7ccda636eeb195b4e5ff0492b3ebc8bdfaba2"
+  },
+  "cases": [
+    {
+      "case": "cc-combined",
+      "os": "1.53",
+      "script": "digitakt154_ccnames/verify_lifecycle.py",
+      "build": "1.53/combinations/all",
+      "mainSha256": "ce2c0bd03393ca5f7e9427874bad4f5daa32b7e5699ff003af5e6fc35573ab39",
+      "passed": 50,
+      "failed": 0,
+      "exitCode": 0
+    },
+    {
+      "case": "euclidean-standalone",
+      "os": "1.53",
+      "script": "digitakt_euclidean/verify_ui.py",
+      "build": "1.53/combinations/euclidean",
+      "mainSha256": "894e51d981c1bf6b2dc0b5dd6e23c9da459dbd736e67941998517056101d7e2e",
+      "passed": 54,
+      "failed": 0,
+      "exitCode": 0
+    },
+    {
+      "case": "euclidean-combined",
+      "os": "1.53",
+      "script": "digitakt_euclidean/verify_ui.py",
+      "build": "1.53/combinations/all",
+      "mainSha256": "ce2c0bd03393ca5f7e9427874bad4f5daa32b7e5699ff003af5e6fc35573ab39",
+      "passed": 59,
+      "failed": 0,
+      "exitCode": 0
+    },
+    {
+      "case": "ram-standalone",
+      "os": "1.53",
+      "script": "digitakt_ram/verify_modes.py",
+      "build": "1.53/combinations/ram-machines",
+      "mainSha256": "bcdf25dd85bef7014c8b289535df3bbbfe96a2ccc80de7594d4a37dbced4afaa",
+      "passed": 90,
+      "failed": 0,
+      "exitCode": 0
+    },
+    {
+      "case": "ram-combined",
+      "os": "1.53",
+      "script": "digitakt_ram/verify_modes.py",
+      "build": "1.53/combinations/all",
+      "mainSha256": "ce2c0bd03393ca5f7e9427874bad4f5daa32b7e5699ff003af5e6fc35573ab39",
+      "passed": 90,
+      "failed": 0,
+      "exitCode": 0
+    },
+    {
+      "case": "accumulator-standalone",
+      "os": "1.53",
+      "script": "digitakt_accumulator/verify_live.py",
+      "build": "1.53/combinations/note-accumulator",
+      "mainSha256": "10fb885433376bd890bc9d42c87ff427a652adab9aed2fb89d6394a1a61b91d2",
+      "passed": 31,
+      "failed": 0,
+      "exitCode": 0
+    },
+    {
+      "case": "accumulator-combined",
+      "os": "1.53",
+      "script": "digitakt_accumulator/verify_live.py",
+      "build": "1.53/combinations/all",
+      "mainSha256": "ce2c0bd03393ca5f7e9427874bad4f5daa32b7e5699ff003af5e6fc35573ab39",
+      "passed": 41,
+      "failed": 0,
+      "exitCode": 0
+    },
+    {
+      "case": "sample-standalone",
+      "os": "1.53",
+      "script": "digitakt_sample_tools/verify_ui.py",
+      "build": "1.53/combinations/sample-tools",
+      "mainSha256": "322fecf0108748406e1aa36a31a8f71a97a40b211ffcfd787af02a1e95d6d186",
+      "passed": 47,
+      "failed": 0,
+      "exitCode": 0
+    },
+    {
+      "case": "sample-combined",
+      "os": "1.53",
+      "script": "digitakt_sample_tools/verify_ui.py",
+      "build": "1.53/combinations/all",
+      "mainSha256": "ce2c0bd03393ca5f7e9427874bad4f5daa32b7e5699ff003af5e6fc35573ab39",
+      "passed": 60,
+      "failed": 0,
+      "exitCode": 0
+    },
+    {
+      "case": "playback-combined",
+      "os": "1.53",
+      "script": "digitakt_euclidean/verify_live.py",
+      "build": "1.53/combinations/all",
+      "mainSha256": "ce2c0bd03393ca5f7e9427874bad4f5daa32b7e5699ff003af5e6fc35573ab39",
+      "passed": 1,
+      "failed": 0,
+      "exitCode": 0
+    },
+    {
+      "case": "editing-combined",
+      "os": "1.53",
+      "script": "digitakt_euclidean/verify_editing.py",
+      "build": "1.53/combinations/all",
+      "mainSha256": "ce2c0bd03393ca5f7e9427874bad4f5daa32b7e5699ff003af5e6fc35573ab39",
+      "passed": 21,
+      "failed": 0,
+      "exitCode": 0
+    },
+    {
+      "case": "accumulator-pattern-transitions",
+      "os": "1.53",
+      "script": "digitakt_accumulator/verify_live.py",
+      "build": "1.53/combinations/all",
+      "mainSha256": "ce2c0bd03393ca5f7e9427874bad4f5daa32b7e5699ff003af5e6fc35573ab39",
+      "passed": 6,
+      "failed": 0,
+      "exitCode": 0
+    },
+    {
+      "case": "ram-allocation-failure",
+      "os": "1.53",
+      "script": "digitakt_ram/verify_modes.py",
+      "build": "1.53/combinations/ram-machines",
+      "mainSha256": "bcdf25dd85bef7014c8b289535df3bbbfe96a2ccc80de7594d4a37dbced4afaa",
+      "passed": 31,
+      "failed": 0,
+      "exitCode": 0
+    },
+    {
+      "case": "cc-combined",
+      "os": "1.54",
+      "script": "digitakt154_ccnames/verify_lifecycle.py",
+      "build": "1.54/combinations/all",
+      "mainSha256": "14469be1cb112830aa283e034d90c9372135b3f6b3fb7d3b077202101f758017",
+      "passed": 50,
+      "failed": 0,
+      "exitCode": 0
+    },
+    {
+      "case": "euclidean-standalone",
+      "os": "1.54",
+      "script": "digitakt_euclidean/verify_ui.py",
+      "build": "1.54/combinations/euclidean",
+      "mainSha256": "5fa70935fb5dfa6ea66339db62bbd97a749741072a6868f812534790bfb110db",
+      "passed": 54,
+      "failed": 0,
+      "exitCode": 0
+    },
+    {
+      "case": "euclidean-combined",
+      "os": "1.54",
+      "script": "digitakt_euclidean/verify_ui.py",
+      "build": "1.54/combinations/all",
+      "mainSha256": "14469be1cb112830aa283e034d90c9372135b3f6b3fb7d3b077202101f758017",
+      "passed": 59,
+      "failed": 0,
+      "exitCode": 0
+    },
+    {
+      "case": "ram-standalone",
+      "os": "1.54",
+      "script": "digitakt_ram/verify_modes.py",
+      "build": "1.54/combinations/ram-machines",
+      "mainSha256": "c70a1e85f1071df9b5d7d84eac86e5c87632989ebc170dec08452c5e504e9ecc",
+      "passed": 90,
+      "failed": 0,
+      "exitCode": 0
+    },
+    {
+      "case": "ram-combined",
+      "os": "1.54",
+      "script": "digitakt_ram/verify_modes.py",
+      "build": "1.54/combinations/all",
+      "mainSha256": "14469be1cb112830aa283e034d90c9372135b3f6b3fb7d3b077202101f758017",
+      "passed": 90,
+      "failed": 0,
+      "exitCode": 0
+    },
+    {
+      "case": "accumulator-standalone",
+      "os": "1.54",
+      "script": "digitakt_accumulator/verify_live.py",
+      "build": "1.54/combinations/note-accumulator",
+      "mainSha256": "e9482c9320bef208c2fad4390d0f460df3d1bb060b0cae12ff4cd29339ba61c9",
+      "passed": 31,
+      "failed": 0,
+      "exitCode": 0
+    },
+    {
+      "case": "accumulator-combined",
+      "os": "1.54",
+      "script": "digitakt_accumulator/verify_live.py",
+      "build": "1.54/combinations/all",
+      "mainSha256": "14469be1cb112830aa283e034d90c9372135b3f6b3fb7d3b077202101f758017",
+      "passed": 41,
+      "failed": 0,
+      "exitCode": 0
+    },
+    {
+      "case": "sample-standalone",
+      "os": "1.54",
+      "script": "digitakt_sample_tools/verify_ui.py",
+      "build": "1.54/combinations/sample-tools",
+      "mainSha256": "347916187d12a8e152429cede06c9a5661fb8a3abe8d3de5d2d80f998c2ebb1c",
+      "passed": 47,
+      "failed": 0,
+      "exitCode": 0
+    },
+    {
+      "case": "sample-combined",
+      "os": "1.54",
+      "script": "digitakt_sample_tools/verify_ui.py",
+      "build": "1.54/combinations/all",
+      "mainSha256": "14469be1cb112830aa283e034d90c9372135b3f6b3fb7d3b077202101f758017",
+      "passed": 60,
+      "failed": 0,
+      "exitCode": 0
+    },
+    {
+      "case": "playback-combined",
+      "os": "1.54",
+      "script": "digitakt_euclidean/verify_live.py",
+      "build": "1.54/combinations/all",
+      "mainSha256": "14469be1cb112830aa283e034d90c9372135b3f6b3fb7d3b077202101f758017",
+      "passed": 1,
+      "failed": 0,
+      "exitCode": 0
+    },
+    {
+      "case": "editing-combined",
+      "os": "1.54",
+      "script": "digitakt_euclidean/verify_editing.py",
+      "build": "1.54/combinations/all",
+      "mainSha256": "14469be1cb112830aa283e034d90c9372135b3f6b3fb7d3b077202101f758017",
+      "passed": 21,
+      "failed": 0,
+      "exitCode": 0
+    },
+    {
+      "case": "accumulator-pattern-transitions",
+      "os": "1.54",
+      "script": "digitakt_accumulator/verify_live.py",
+      "build": "1.54/combinations/all",
+      "mainSha256": "14469be1cb112830aa283e034d90c9372135b3f6b3fb7d3b077202101f758017",
+      "passed": 6,
+      "failed": 0,
+      "exitCode": 0
+    },
+    {
+      "case": "ram-allocation-failure",
+      "os": "1.54",
+      "script": "digitakt_ram/verify_modes.py",
+      "build": "1.54/combinations/ram-machines",
+      "mainSha256": "c70a1e85f1071df9b5d7d84eac86e5c87632989ebc170dec08452c5e504e9ecc",
+      "passed": 31,
+      "failed": 0,
+      "exitCode": 0
+    }
+  ]
+}

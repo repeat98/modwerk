@@ -1,0 +1,353 @@
+{
+  "schemaVersion": 1,
+  "algorithm": "sha256 of canonical sorted JSON {sources,build}; UTF-8, compact separators",
+  "sha256": "bb68b4081e90543a6967d1573d50e01b8953519dcf06ce5b5068c7605e2d2743",
+  "sources": {
+    "src/accumulator.S": "40dc8cad93f8e6f8a86e75b599c9aba555d4fcbd7068deca7e7e360cf3ba28e3",
+    "src/accumulator.c": "ea9358b00e49926e02f89f028cbcae7baf707bc619d450777bdbf85a02fc4c14",
+    "src/digitakt-mk1/core3.h": "9ad3512ee2ced8f9eaadcb48e5633547d861d7a71f5443d5e9f759d0b790de26",
+    "src/release-153/accumulator.S": "77827cc345afec9ae938db2af1964b926583f669b5e10f426d709fd645c6d7ef",
+    "src/release-153/accumulator.c": "7d8adf1dd165aa8749272b16f6c4c9e4a60ad754b0043a477fa31bf960ea27cf",
+    "src/release-153/core21.h": "a56cf302ca91bddb05e9c543972942d929843eeec7b7aa0564ed6be1928e6e01",
+    "src/release-153/firmware.h": "3343d8bfc12f8b409c0b3ff8ea8c7eeaf717cb373c5514c90a8339e1bd228899",
+    "src/release-154/accumulator.S": "839a56c5d8e9b72fda1f0c8104cde805bd0aee4910bee647e88b232e27c213c2",
+    "src/release-154/accumulator.c": "ae2e2483b8af2e1f12dd0ec8b0b2ab89b0dee1afe3482c33a5d405acfc46df81",
+    "src/release-154/core21.h": "c4d31ee8d6d8699ed0ea2b2197712d00b3433b8a5b03865806788fea5ecc265c",
+    "src/release-154/firmware.h": "31fbe86139cc1fdcedc73bea998d1f9ae5414cc5bae765074a23ff871096ff71"
+  },
+  "build": {
+    "schemaVersion": 1,
+    "sources": [
+      "src/accumulator.c",
+      "src/accumulator.s"
+    ],
+    "defsym": {},
+    "cflags": [
+      "-DDT_LINKABLE=1",
+      "-std=c99",
+      "-Os",
+      "-msoft-float",
+      "-fno-common",
+      "-fno-asynchronous-unwind-tables",
+      "-Wextra",
+      "-Werror"
+    ],
+    "weak": [],
+    "subscribe": [
+      {
+        "event": "ev_tick",
+        "fn": "acc_tick",
+        "order": 40
+      },
+      {
+        "event": "ev_render_in",
+        "fn": "acc_render",
+        "order": 40
+      }
+    ],
+    "contribute": [],
+    "collections": {},
+    "copied": [],
+    "regions": [],
+    "claims": [
+      "ui:audio TRIG:G/H",
+      "storage:audio-note2-4:ACC1",
+      "audio-event:28/32/64:ACC1"
+    ],
+    "requires": [],
+    "derive": null,
+    "releases": {
+      "1.53": {
+        "defsym": {
+          "DT_OS154": 0
+        },
+        "cflags": [
+          "-DDT_OS154=0"
+        ],
+        "sites": [
+          {
+            "addr": "0x4017ec68",
+            "op": "ptr",
+            "target": "acc_default",
+            "len": 4,
+            "stockSha256": "88c7b37885b06e813453a35eb473b75f77f08ebae1c6a1147cfb229555bab7fb"
+          },
+          {
+            "addr": "0x4017ec78",
+            "op": "ptr",
+            "target": "acc_change",
+            "len": 4,
+            "stockSha256": "d5944d8fb88029ef281053f865cdce034f573c9d19628f10f9aeeb461148ae28"
+          },
+          {
+            "addr": "0x4017ec7c",
+            "op": "ptr",
+            "target": "acc_valid",
+            "len": 4,
+            "stockSha256": "a629b2b2186b9858bd0177c8232bc55a9cf384ab7be05f37d388724382c2d021"
+          },
+          {
+            "addr": "0x4017ec80",
+            "op": "ptr",
+            "target": "acc_get",
+            "len": 4,
+            "stockSha256": "b01ce17f569818e682f7373b00799566f90ed167242ce016d48f9a9a2f0ecc72"
+          },
+          {
+            "addr": "0x4017ec98",
+            "op": "ptr",
+            "target": "acc_get_step",
+            "len": 4,
+            "stockSha256": "54e477b4d47a98b11ceaeb05441b6793bb0cf70a8bee786ac994c19d30368514"
+          },
+          {
+            "addr": "0x4017ec9c",
+            "op": "ptr",
+            "target": "acc_set_step",
+            "len": 4,
+            "stockSha256": "38ec24fb0f61a04fe5ebc0874bcd496970dc019e06ec1081192261935f397899"
+          },
+          {
+            "addr": "0x4017ecb0",
+            "op": "ptr",
+            "target": "acc_text",
+            "len": 4,
+            "stockSha256": "07d21168887876cd17e6df85803da189fe3de7adacdbabcb4b23d55dcff91960"
+          },
+          {
+            "addr": "0x4017ecb4",
+            "op": "ptr",
+            "target": "acc_gfx",
+            "len": 4,
+            "stockSha256": "d8a1dc5992ad1682f860a7f6fd3230561cca64e1ffe143b7b119092869159c0c"
+          },
+          {
+            "addr": "0x4017eccc",
+            "op": "ptr",
+            "target": "acc_set",
+            "len": 4,
+            "stockSha256": "bc73ba53d5765a3d613a6910d8b442206092ba4929ff86319efe6ec676f195ca"
+          },
+          {
+            "addr": "0x40181c80",
+            "op": "ptr",
+            "target": "acc_track_changed",
+            "len": 4,
+            "stockSha256": "6e7f7bb0127bdb55bd2feab675ff8b81946a220fd8e8b0c6a0fb00a9a7e24372"
+          },
+          {
+            "addr": "0x4000fe94",
+            "op": "jmp",
+            "target": "acc_short",
+            "len": 8,
+            "stockSha256": "6689ff53b4363920d5b60e194d9d5459f916612e4ed055667b6a73b2bb340c7c"
+          },
+          {
+            "addr": "0x4000feb6",
+            "op": "jmp",
+            "target": "acc_long",
+            "len": 8,
+            "stockSha256": "6689ff53b4363920d5b60e194d9d5459f916612e4ed055667b6a73b2bb340c7c"
+          },
+          {
+            "addr": "0x400657f8",
+            "op": "jmp",
+            "target": "acc_popup",
+            "len": 8,
+            "stockSha256": "a9cb0530ab39b2e2175ab651cdfd35085a8b480ce5f40b6f45adfad03be33e72"
+          },
+          {
+            "addr": "0x40033866",
+            "op": "lea",
+            "target": "acc_clear_default",
+            "len": 6,
+            "stockSha256": "a6ce30dcb2e320e189d15d4d28155f2865fc9e08e7fbb9959067687c1bc781d2",
+            "register": 5
+          },
+          {
+            "addr": "0x40033930",
+            "op": "jsr",
+            "target": "acc_clear_popup",
+            "len": 6,
+            "stockSha256": "ffdf631dbc91bbd9d532941bb3c975030eb42fd9ecf3e9ace5516deb606c8aea"
+          },
+          {
+            "addr": "0x400776c6",
+            "op": "jsr",
+            "target": "acc_pattern_s",
+            "len": 6,
+            "stockSha256": "9dc628ff9d7f4d36f677799275cdfa5628d29a9505cfd3f05974321ee080ea68"
+          },
+          {
+            "addr": "0x4006f7ea",
+            "op": "jsr",
+            "target": "acc_builder_s",
+            "len": 6,
+            "stockSha256": "bc35df1fb9589323927aed17c2c2d986c620b75768e2ee8fd57724cbc4ff9e06"
+          },
+          {
+            "addr": "0x400778ec",
+            "op": "jsr",
+            "target": "acc_accept_s",
+            "len": 6,
+            "stockSha256": "06aea71776f597dbcdef256382e56e34f5ec5e09eae2602088c88eb1d5dd6594"
+          },
+          {
+            "addr": "0x400779f2",
+            "op": "jsr",
+            "target": "acc_pitch_s",
+            "len": 10,
+            "stockSha256": "9452b615b82c79db9f29b62065bf1fd3ea8ae75123c15b3fe12e7821c157d7b2"
+          }
+        ]
+      },
+      "1.54": {
+        "defsym": {
+          "DT_OS154": 1
+        },
+        "cflags": [
+          "-DDT_OS154=1"
+        ],
+        "sites": [
+          {
+            "addr": "0x4017ef68",
+            "op": "ptr",
+            "target": "acc_default",
+            "len": 4,
+            "stockSha256": "88c7b37885b06e813453a35eb473b75f77f08ebae1c6a1147cfb229555bab7fb"
+          },
+          {
+            "addr": "0x4017ef78",
+            "op": "ptr",
+            "target": "acc_change",
+            "len": 4,
+            "stockSha256": "d5944d8fb88029ef281053f865cdce034f573c9d19628f10f9aeeb461148ae28"
+          },
+          {
+            "addr": "0x4017ef7c",
+            "op": "ptr",
+            "target": "acc_valid",
+            "len": 4,
+            "stockSha256": "a629b2b2186b9858bd0177c8232bc55a9cf384ab7be05f37d388724382c2d021"
+          },
+          {
+            "addr": "0x4017ef80",
+            "op": "ptr",
+            "target": "acc_get",
+            "len": 4,
+            "stockSha256": "b01ce17f569818e682f7373b00799566f90ed167242ce016d48f9a9a2f0ecc72"
+          },
+          {
+            "addr": "0x4017ef98",
+            "op": "ptr",
+            "target": "acc_get_step",
+            "len": 4,
+            "stockSha256": "54e477b4d47a98b11ceaeb05441b6793bb0cf70a8bee786ac994c19d30368514"
+          },
+          {
+            "addr": "0x4017ef9c",
+            "op": "ptr",
+            "target": "acc_set_step",
+            "len": 4,
+            "stockSha256": "38ec24fb0f61a04fe5ebc0874bcd496970dc019e06ec1081192261935f397899"
+          },
+          {
+            "addr": "0x4017efb0",
+            "op": "ptr",
+            "target": "acc_text",
+            "len": 4,
+            "stockSha256": "07d21168887876cd17e6df85803da189fe3de7adacdbabcb4b23d55dcff91960"
+          },
+          {
+            "addr": "0x4017efb4",
+            "op": "ptr",
+            "target": "acc_gfx",
+            "len": 4,
+            "stockSha256": "d8a1dc5992ad1682f860a7f6fd3230561cca64e1ffe143b7b119092869159c0c"
+          },
+          {
+            "addr": "0x4017efcc",
+            "op": "ptr",
+            "target": "acc_set",
+            "len": 4,
+            "stockSha256": "bc73ba53d5765a3d613a6910d8b442206092ba4929ff86319efe6ec676f195ca"
+          },
+          {
+            "addr": "0x40181f80",
+            "op": "ptr",
+            "target": "acc_track_changed",
+            "len": 4,
+            "stockSha256": "6e7f7bb0127bdb55bd2feab675ff8b81946a220fd8e8b0c6a0fb00a9a7e24372"
+          },
+          {
+            "addr": "0x4000fe94",
+            "op": "jmp",
+            "target": "acc_short",
+            "len": 8,
+            "stockSha256": "2a46e8f565e18b396444af8d57b4985aa2c7f46ea42194b5ef46aa22a26f36f7"
+          },
+          {
+            "addr": "0x4000feb6",
+            "op": "jmp",
+            "target": "acc_long",
+            "len": 8,
+            "stockSha256": "2a46e8f565e18b396444af8d57b4985aa2c7f46ea42194b5ef46aa22a26f36f7"
+          },
+          {
+            "addr": "0x400657f8",
+            "op": "jmp",
+            "target": "acc_popup",
+            "len": 8,
+            "stockSha256": "4976456b16a990d0e36b68619b21a97e92542db3c3f26867a0761b13a8981f78"
+          },
+          {
+            "addr": "0x40033866",
+            "op": "lea",
+            "target": "acc_clear_default",
+            "len": 6,
+            "stockSha256": "a6ce30dcb2e320e189d15d4d28155f2865fc9e08e7fbb9959067687c1bc781d2",
+            "register": 5
+          },
+          {
+            "addr": "0x40033930",
+            "op": "jsr",
+            "target": "acc_clear_popup",
+            "len": 6,
+            "stockSha256": "a60dc838b63ab80504c5d249b7b5c6634356be66efe59997019780788216deb2"
+          },
+          {
+            "addr": "0x400776c6",
+            "op": "jsr",
+            "target": "acc_pattern_s",
+            "len": 6,
+            "stockSha256": "9dc628ff9d7f4d36f677799275cdfa5628d29a9505cfd3f05974321ee080ea68"
+          },
+          {
+            "addr": "0x4006f7ea",
+            "op": "jsr",
+            "target": "acc_builder_s",
+            "len": 6,
+            "stockSha256": "bc35df1fb9589323927aed17c2c2d986c620b75768e2ee8fd57724cbc4ff9e06"
+          },
+          {
+            "addr": "0x400778ec",
+            "op": "jsr",
+            "target": "acc_accept_s",
+            "len": 6,
+            "stockSha256": "270d5e376b13fa1f0442499b1f50dbc608e57bd324445252330ab08da7d359bd"
+          },
+          {
+            "addr": "0x400779f2",
+            "op": "jsr",
+            "target": "acc_pitch_s",
+            "len": 10,
+            "stockSha256": "9452b615b82c79db9f29b62065bf1fd3ea8ae75123c15b3fe12e7821c157d7b2"
+          }
+        ]
+      }
+    }
+  },
+  "repository": "https://github.com/sumedho/digirequests",
+  "revision": "8eba613dc3e0b1698797609256fd4081923b4ef2",
+  "path": "modules/note-accumulator"
+}
