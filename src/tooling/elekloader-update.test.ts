@@ -204,7 +204,8 @@ function identities(root: string) {
   return Object.fromEntries(noticePaths.flatMap(path => Object.entries(fileBytes(join(root, path))).map(([name, data]) => [path + '/' + name, sha(data)])))
 }
 
-describe('elekloader update CLI', () => {
+// Each case runs the real CLI, up to 20 s per call: vitest's 5 s default timed out on loaded CI runners.
+describe('elekloader update CLI', { timeout: 60_000 }, () => {
   it('ships changed upstream notices and full licence terms, and keeps an identical update unchanged', () => {
     const root = fixture()
     try {
