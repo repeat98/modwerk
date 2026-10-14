@@ -1056,6 +1056,7 @@
         "version": "2.0.1",
         "date": "2026-10-14",
         "changes": [
+          "Media-only: replace the placeholder thumbnail with one in the library’s shared signal-art style, with its grid, palette and typography; update the illustration alt text. Source and packages are unchanged.",
           "First Modwerk release for Digitakt I OS 1.53 and 1.54, on Core 2.1. Use the native retrig menu on MIDI tracks A–H. Repeated notes follow the Digitakt sequencer, including chords, retrig rate, finite length and velocity changes."
         ]
       }

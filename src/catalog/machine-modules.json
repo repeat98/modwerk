@@ -3563,7 +3563,7 @@
           "path": "media/thumbnail.svg",
           "kind": "thumbnail",
           "caption": "MIDI Retrig",
-          "alt": "Original sequencer illustration for MIDI Retrig",
+          "alt": "A chord on a MIDI track repeated at the retrig rate, its velocity fading over the length.",
           "credit": "sumedho",
           "license": "GPL-2.0-or-later",
           "source": "Original vector illustration; not a device screenshot."
