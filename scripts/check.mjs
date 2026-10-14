@@ -55,7 +55,8 @@ const documentationOnly = !buildOnly && !!base && readChangeScope({ root, base }
 let passed = true
 // Reject stale notices/catalog before generation can overwrite the evidence of staleness.
 if (!buildOnly) passed = await run('licenses:check') && await run('machines:check') && await run('modules:check', base ? ['--base', base] : [])
-if (!buildOnly && !documentationOnly && passed) passed = await run('elekloader:check')
+// Every active Octatrack module must still install beside every other (declarations only, no firmware).
+if (!buildOnly && !documentationOnly && passed) passed = await run('elekloader:check') && await run('modules:compat')
 // Finish generated notice/catalog/media writes before lint, tests, typecheck or bundling read them.
 if (passed && !documentationOnly) passed = await run('licenses:generate') && await run('machines:generate') && await run('modules:generate')
 // Every path, including documentation-only checks and release builds, requires current-version notes.

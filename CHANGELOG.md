@@ -1,5 +1,9 @@
 # Application changelog
 
+## 14 October 2026
+
+- Added an automatic cross-compatibility gate for Octatrack modules (`npm run modules:compat`, part of `npm run check` and `npm run module:doctor`, so registered authors' automatic updates pass it too). It reads declarations only (octabam's claim model, the integration's port recipes when present, the committed base package; no firmware, no emulator) and checks every pair of active modules, the whole set and the base for overlapping patched bytes, stock copies taken from bytes another owner patches, shared tables, effect IDs and octabam's DSP resource rules. Shared behaviour is moving to Elekloader-style events: a raw patch on an event's stock site fails and points to subscribing, and two behaviour hooks meeting on a new site are told to request an event. Today's intended overlaps are listed with reasons in `sdk/machines/octatrack/compatibility.json`: the POLY8-owned machine group (POLY8, VECTOR, FM Synth, Scale Quantizer, Analog BD) and Repitch/POLY8 and Mute Modes/POLY8 as pending migration to their planned events. Any new overlap, or a stale entry, fails with the modules, the byte range and the fix. The event registry is a two-site fixture until `sdk/machines/octatrack/events.json` lands; the gate does not prove runtime behaviour, DSP placement or hardware compatibility.
+
 ## 13 October 2026
 
 - Fixed public report replies reaching only the original reporter. GitHub and Modwerk replies now also notify verified members who successfully joined that report through Modwerk, using their authenticated reply receipts. Participants open the public module conversation; private report access, email preferences and digest timing are preserved. Failed replies, typed mentions, self-replies and service-account echoes do not create extra notifications. Existing comments are not replayed automatically.

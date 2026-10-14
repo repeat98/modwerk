@@ -1,0 +1,78 @@
+{
+  "schema": 1,
+  "about": "Reviewed places where two active Octatrack modules meet on the same stock bytes; read by scripts/module-compat.py (npm run modules:compat, part of npm run check). Any overlap not listed here fails, and so does an entry naming a module that is no longer active or a site where nothing meets any more. group-owned: one module's reviewed composition owns every listed site. pending-migration: allowed only until both modules subscribe to the named event. New entries need owner review; for shared behaviour, request an event instead (docs/module-guides/README.md#propose-an-event).",
+  "relations": [
+    {
+      "modules": ["analog-bassdrum", "poly8"],
+      "kind": "group-owned",
+      "owner": "poly8",
+      "reason": "Machine-group seams owned by POLY8's composition (sdk/octabam/modules/poly8/composition.json, applied by sdk/octabam/tools/remix/machine_composition.py; dispatch order POLY8, VECTOR, FM, QZ, AB). Analog BD's chooser, SETUP editor/drawer and renderer seams; POLY8's displaced-instruction replays copy the same sites from the user's own OS file.",
+      "sites": ["0x40002318", "0x40031e74", "0x400334d8", "0x4003a52e", "0x4003c928", "0x4003c950", "0x4003c980", "0x4003cd98", "0x4003d718", "0x4004c36a", "0x4005221e", "0x400585dc", "0x400585fa", "0x4005a616", "0x4005a850", "0x4006d784", "0x40077b5c", "0x40078678", "0x400786c8", "0x400786ce", "0x40078886", "0x400791e4", "0x40079248", "0x4007981c", "0x40079904", "0x400ce10e", "0x400cf714", "0x400d6438"]
+    },
+    {
+      "modules": ["analog-bassdrum", "synth"],
+      "kind": "group-owned",
+      "owner": "poly8",
+      "reason": "Machine-group seams owned by POLY8's composition (sdk/octabam/modules/poly8/composition.json, applied by sdk/octabam/tools/remix/machine_composition.py; dispatch order POLY8, VECTOR, FM, QZ, AB). Without POLY8 the configurator refuses this pair (src/catalog/selection-conflicts.ts). Both add a machine row at the same chooser, page and renderer seams.",
+      "sites": ["0x40002318", "0x40031e74", "0x400334d8", "0x4003a52e", "0x4003c928", "0x4003c950", "0x4003c980", "0x4003cd98", "0x4003d718", "0x4004c36a", "0x4005221e", "0x400585dc", "0x400585fa", "0x4005a616", "0x4005a850", "0x40078678", "0x400786c8", "0x400786ce", "0x40078886", "0x40079248", "0x4007981c", "0x40079904", "0x400d6438"]
+    },
+    {
+      "modules": ["analog-bassdrum", "vector"],
+      "kind": "group-owned",
+      "owner": "poly8",
+      "reason": "Machine-group seams owned by POLY8's composition (sdk/octabam/modules/poly8/composition.json, applied by sdk/octabam/tools/remix/machine_composition.py; dispatch order POLY8, VECTOR, FM, QZ, AB). Without POLY8 the configurator refuses this pair (src/catalog/selection-conflicts.ts). Both add a machine row at the same chooser, page, renderer and Part-validation seams; VECTOR's replays copy the same sites from the user's own OS file.",
+      "sites": ["0x40002318", "0x400334d8", "0x4003a52e", "0x4003c928", "0x4003c950", "0x4003c980", "0x4003cd98", "0x4003d718", "0x4004c36a", "0x4005221e", "0x400585dc", "0x400585fa", "0x4005a616", "0x4005a850", "0x4006d784", "0x40077b5c", "0x40078678", "0x400786c8", "0x400786ce", "0x40078886", "0x400791e4", "0x40079248", "0x4007981c", "0x40079904", "0x400ce10e", "0x400cf714"]
+    },
+    {
+      "modules": ["poly8", "quantizer"],
+      "kind": "group-owned",
+      "owner": "poly8",
+      "reason": "Machine-group seams owned by POLY8's composition (sdk/octabam/modules/poly8/composition.json, applied by sdk/octabam/tools/remix/machine_composition.py; dispatch order POLY8, VECTOR, FM, QZ, AB). Scale Quantizer's octave key and number seams are POLY8's keyboard hooks: POLY8's MR_NEXT chain calls Quantizer's handlers for every non-POLY track (quantizer/composition.json).",
+      "sites": ["0x400449be", "0x40045918"]
+    },
+    {
+      "modules": ["poly8", "synth"],
+      "kind": "group-owned",
+      "owner": "poly8",
+      "reason": "Machine-group seams owned by POLY8's composition (sdk/octabam/modules/poly8/composition.json, applied by sdk/octabam/tools/remix/machine_composition.py; dispatch order POLY8, VECTOR, FM, QZ, AB). FM Synth's machine, MIDI note and bundled-quantizer keyboard seams.",
+      "sites": ["0x40002318", "0x4000dfd4", "0x4000e746", "0x40031e74", "0x400334d8", "0x4003a52e", "0x4003c928", "0x4003c950", "0x4003c980", "0x4003cd98", "0x4003d718", "0x400449be", "0x40045918", "0x4004c36a", "0x4005221e", "0x400585dc", "0x400585fa", "0x4005a616", "0x4005a850", "0x40078678", "0x400786c8", "0x400786ce", "0x40078886", "0x40079248", "0x4007981c", "0x40079904", "0x400d6438"]
+    },
+    {
+      "modules": ["poly8", "vector"],
+      "kind": "group-owned",
+      "owner": "poly8",
+      "reason": "Machine-group seams owned by POLY8's composition (sdk/octabam/modules/poly8/composition.json, applied by sdk/octabam/tools/remix/machine_composition.py; dispatch order POLY8, VECTOR, FM, QZ, AB). VECTOR's chooser, sample-pool navigation and renderer seams; both modules' replays copy the same sites from the user's own OS file.",
+      "sites": ["0x40002318", "0x400334d8", "0x4003a52e", "0x4003c928", "0x4003c950", "0x4003c980", "0x4003cd98", "0x4003d718", "0x4004c36a", "0x4005221e", "0x400585dc", "0x400585fa", "0x4005a616", "0x4005a850", "0x4006d784", "0x40077b5c", "0x40078678", "0x400786c8", "0x400786ce", "0x40078886", "0x400791e4", "0x40079248", "0x4007981c", "0x40079904", "0x400ce10e", "0x400cf6fa", "0x400cf702", "0x400cf714"]
+    },
+    {
+      "modules": ["quantizer", "synth"],
+      "kind": "group-owned",
+      "owner": "poly8",
+      "reason": "Machine-group seams owned by POLY8's composition (sdk/octabam/modules/poly8/composition.json, applied by sdk/octabam/tools/remix/machine_composition.py; dispatch order POLY8, VECTOR, FM, QZ, AB). Without POLY8 the configurator refuses this pair (src/catalog/selection-conflicts.ts). FM Synth bundles a private Scale Quantizer (the same hooks, two pinned caves and the three SEQUENCER table roots); with POLY8 the composition keeps FM's quantizer as the one SEQUENCER table owner and drops the public Quantizer's claims.",
+      "sites": ["0x40010212", "0x40025ac2", "0x40044968", "0x400449be", "0x40045918", "0x4004fbde", "0x4004fbfe", "0x4004fc58", "0x4004fc94", "0x4004fce0", "0x4004fd06", "0x4004fd20", "0x40050254", "0x40050e60", "0x40055170", "0x40065bca", "0x40065bd8", "0x40065bde", "0x40065c7c", "0x40065cc4", "0x40065d3e", "0x40065d58", "0x40065d72", "0x400866cc", "0x400867a2", "0x400888aa", "0x400b27d0", "0x400b27dc", "0x400b282c", "0x400d2ca8", "0x400d2cb0"]
+    },
+    {
+      "modules": ["synth", "vector"],
+      "kind": "group-owned",
+      "owner": "poly8",
+      "reason": "Machine-group seams owned by POLY8's composition (sdk/octabam/modules/poly8/composition.json, applied by sdk/octabam/tools/remix/machine_composition.py; dispatch order POLY8, VECTOR, FM, QZ, AB). Without POLY8 the configurator refuses this pair (src/catalog/selection-conflicts.ts). Both add a machine row at the same chooser, page and renderer seams.",
+      "sites": ["0x40002318", "0x400334d8", "0x4003a52e", "0x4003c928", "0x4003c950", "0x4003c980", "0x4003cd98", "0x4003d718", "0x4004c36a", "0x4005221e", "0x400585dc", "0x400585fa", "0x4005a616", "0x4005a850", "0x40078678", "0x400786c8", "0x400786ce", "0x40078886", "0x40079248", "0x4007981c", "0x40079904"]
+    },
+    {
+      "modules": ["poly8", "repitch"],
+      "kind": "pending-migration",
+      "event": "ev_play_increment",
+      "until": "Repitch and POLY8 subscribe to ev_play_increment once the USB loader supports subscribe; then both raw detours go and this entry is removed.",
+      "reason": "Both scale the shared CPU/DSP playback increment at 0x40004100. Today POLY8's composition owns the site: its mr_rate_hook (poly8/shared-machine-hooks.s, MR_NEXT) takes POLY tracks and chains Repitch's rate_hook for every other track, so the reviewed order is POLY8, then Repitch.",
+      "sites": ["0x40004100"]
+    },
+    {
+      "modules": ["mute-modes", "poly8"],
+      "kind": "pending-migration",
+      "event": "ev_voice_bind",
+      "until": "Mute Modes and POLY8 subscribe to ev_voice_bind once the USB loader supports subscribe; then both raw detours go and this entry is removed.",
+      "reason": "Both act when a fresh voice is bound at 0x40006820. POLY8's mr_stop_voice stops the selected POLY extension, then chains Mute Modes' fresh_bind (poly8/polyphony.s) unless POLY8 is rendering, so the reviewed order is POLY8, then Mute Modes.",
+      "sites": ["0x40006820"]
+    }
+  ]
+}
