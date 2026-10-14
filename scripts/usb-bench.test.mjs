@@ -1,6 +1,10 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 import { describe, expect, it } from 'vitest'
-import { Bench, device } from './usb-bench.mjs'
+import { once } from 'node:events'
+import { createConnection } from 'node:net'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+import { Bench, device, shareBench } from './usb-bench.mjs'
 
 const deferred = () => {
   let resolve
@@ -97,5 +101,46 @@ describe('bench EP0 transaction ownership', () => {
     expect(await stalled).toEqual({ status: 'stall', bytesWritten: 0 })
     expect((await next).data.byteLength).toBe(72)
     expect(lines).toEqual([setupLine(0x41, 22, 1), 'out 0 04', 'in 0 64', setupLine(0xc1, 3, 72), 'in 0 72', 'out 0'])
+  })
+})
+
+describe('a shared bench (test plan T1: the frontend MCP beside the development session)', () => {
+  async function shared(options) {
+    const owner = endpoint(options), path = join(tmpdir(), `modwerk-bench-share-${process.pid}-${Math.random().toString(16).slice(2)}.sock`)
+    const server = shareBench(owner.bench, path)
+    await once(server, 'listening')
+    const client = new Bench(path, { timeoutMs: 2000 })
+    await client.ready()
+    return { ...owner, path, server, client, close: () => { client.socket.destroy(); server.close() } }
+  }
+  it('runs the second client\'s control transfer after the owner\'s, never inside it', async () => {
+    const { bench, lines, entered, release, client, close } = await shared({ request: 21 })
+    try {
+      const mine = device(bench).controlTransferIn(setup(21), 96)
+      await entered
+      const theirs = device(client).controlTransferIn(setup(3), 72)
+      await new Promise(resolve => setTimeout(resolve, 50))
+      expect(lines).toEqual([setupLine(0xc1, 21, 96)])
+      release()
+      const [a, b] = await Promise.all([mine, theirs])
+      expect([a.data.getUint8(0), b.data.byteLength, b.data.getUint8(0)]).toEqual([21, 72, 3])
+      expect(await device(client).controlTransferOut(setup(22), new Uint8Array([1, 2]))).toEqual({ status: 'ok', bytesWritten: 2 })
+      expect(lines).toEqual([setupLine(0xc1, 21, 96), 'in 0 96', 'out 0', setupLine(0xc1, 3, 72), 'in 0 72', 'out 0',
+        setupLine(0x41, 22, 2), 'out 0 0102', 'in 0 64'])
+    } finally { close() }
+  })
+  it('ends a transfer at a stall, keeps reset to the owner, and frees the bench when the client leaves mid-transfer', async () => {
+    const { bench, lines, client, path, close } = await shared({ stall: 'out 0 0102' })
+    try {
+      expect(await device(client).controlTransferOut(setup(22), new Uint8Array([1, 2]))).toEqual({ status: 'stall', bytesWritten: 0 })
+      await expect(client.command('reset')).rejects.toThrow(/err reset outside a control transfer/)
+      const raw = createConnection(path)
+      await once(raw, 'connect')
+      raw.write(setupLine(0xc1, 7, 8) + '\n')
+      await new Promise(resolve => setTimeout(resolve, 50))
+      raw.destroy()
+      expect((await device(bench).controlTransferIn(setup(3), 72)).data.byteLength).toBe(72)
+      expect(lines.slice(-4)).toEqual([setupLine(0xc1, 7, 8), setupLine(0xc1, 3, 72), 'in 0 72', 'out 0'])
+    } finally { close() }
   })
 })

@@ -1,0 +1,335 @@
+{
+  "schemaVersion": 1,
+  "algorithm": "sha256 of canonical sorted JSON {sources,build}; UTF-8, compact separators",
+  "sha256": "5c7b8b27f81154ff33e1785857abb03c3a15fe4431eaef3df45c1475e671e01d",
+  "sources": {
+    "src/digitakt-mk1/core3.h": "9ad3512ee2ced8f9eaadcb48e5633547d861d7a71f5443d5e9f759d0b790de26",
+    "src/euclidean.c": "0fb08b2e2e635507b76003f6f1f3d4e6a0e367890a0da76e4d06a20b9c9a17c1",
+    "src/full.S": "aa236c7bdf187bb1bc5bea4835266219630f0a858d1bf242bceacc332384f7b2",
+    "src/grid.c": "f500343106470af5230a919155fd0f2daf453061f098258400a4741377a6f535",
+    "src/page.c": "2f514fc269bc4ada03747e9bd12d60f8d7fb828fb09583c33e2c9952da99fcdf",
+    "src/release-153/euclidean.c": "6a3d556c7ccbb4b9ea8e1c4fde48c4a079a5c240c2854ca5b9e4914fb6408d18",
+    "src/release-153/euclidean.h": "ad57a044a339510972bc566dd05a3cba890aba5200b99b7d7ae3be86e3639674",
+    "src/release-153/firmware.h": "3343d8bfc12f8b409c0b3ff8ea8c7eeaf717cb373c5514c90a8339e1bd228899",
+    "src/release-153/full.S": "dc3a0561e2bfeb86208685266f224f275ca7f5995c4f37617663e06943285d28",
+    "src/release-153/grid.c": "10d4aad58c9d618ab6c811c962323d162d14ea8cc396a32b69745318fc11e218",
+    "src/release-153/page.c": "854496d4afe688912b6c5b24ac15fa7c0f5de45b510db5c4aac9cf1868831006",
+    "src/release-154/euclidean.c": "6a3d556c7ccbb4b9ea8e1c4fde48c4a079a5c240c2854ca5b9e4914fb6408d18",
+    "src/release-154/euclidean.h": "ad57a044a339510972bc566dd05a3cba890aba5200b99b7d7ae3be86e3639674",
+    "src/release-154/firmware.h": "31fbe86139cc1fdcedc73bea998d1f9ae5414cc5bae765074a23ff871096ff71",
+    "src/release-154/full.S": "dbb4eaeafaae999f99cd3ab8b92accd3b4eaef71101281b88d75c1ee3715d474",
+    "src/release-154/grid.c": "10d4aad58c9d618ab6c811c962323d162d14ea8cc396a32b69745318fc11e218",
+    "src/release-154/page.c": "854496d4afe688912b6c5b24ac15fa7c0f5de45b510db5c4aac9cf1868831006"
+  },
+  "build": {
+    "schemaVersion": 1,
+    "sources": [
+      "src/euclidean.c",
+      "src/page.c",
+      "src/grid.c",
+      "src/full.s"
+    ],
+    "defsym": {},
+    "cflags": [
+      "-DDT_LINKABLE=1",
+      "-std=c99",
+      "-Os",
+      "-msoft-float",
+      "-fno-common",
+      "-fno-asynchronous-unwind-tables",
+      "-Wextra",
+      "-Werror"
+    ],
+    "weak": [],
+    "subscribe": [],
+    "contribute": [
+      {
+        "to": "dt_free_observers",
+        "order": 20,
+        "data": "00000000",
+        "relocs": [
+          [
+            0,
+            "abs32",
+            "sym:euc_cleanup",
+            0
+          ]
+        ]
+      }
+    ],
+    "collections": {},
+    "copied": [],
+    "regions": [],
+    "claims": [
+      "ui:parameter pages:hold FUNC+AMP",
+      "storage:pattern-padding:EUC1"
+    ],
+    "requires": [
+      "dt-support"
+    ],
+    "derive": null,
+    "releases": {
+      "1.53": {
+        "defsym": {
+          "DT_OS154": 0
+        },
+        "cflags": [
+          "-DDT_OS154=0"
+        ],
+        "sites": [
+          {
+            "addr": "0x4006f4be",
+            "op": "jmp",
+            "target": "euc_audio",
+            "len": 6,
+            "stockSha256": "d3de965f7fbce71e0cbba307ce788a642cf92f0a8b2bf73468e9d944e93234ce"
+          },
+          {
+            "addr": "0x4006f846",
+            "op": "jmp",
+            "target": "euc_midi",
+            "len": 6,
+            "stockSha256": "5025f48f435ca8ccaaad711001d307cea29d529c500c5bef0afce9a6c9e5cbab"
+          },
+          {
+            "addr": "0x4006f51a",
+            "op": "jsr",
+            "target": "euc_audio_gate",
+            "len": 6,
+            "stockSha256": "a59f0209c9835aa2214ea3116c71eef8b65b96fa50e2e09cb914fa4cbd7b913d"
+          },
+          {
+            "addr": "0x4006f584",
+            "op": "jsr",
+            "target": "euc_audio_flags",
+            "len": 6,
+            "stockSha256": "eae894dd3af5a366285929c6d416518e2913b1eb6a83b24e1c45f3bd98736a05"
+          },
+          {
+            "addr": "0x4006f8a4",
+            "op": "jsr",
+            "target": "euc_midi_gate",
+            "len": 6,
+            "stockSha256": "c222c8806f341be527c8b0833ac6b5fc68d530d9c68010ee9bbad610fa43887a"
+          },
+          {
+            "addr": "0x4006f90e",
+            "op": "jsr",
+            "target": "euc_midi_flags",
+            "len": 8,
+            "stockSha256": "7d59e02cfec7b4c2f33ef458f7d51dd89095553bc4f0fc5f0e3652919088a7d6"
+          },
+          {
+            "addr": "0x4007ae6e",
+            "op": "jmp",
+            "target": "euc_save",
+            "len": 8,
+            "stockSha256": "74c9188127d3241e9b2f750392fda1550a0be1780b7e06291e415aaa6d20de19"
+          },
+          {
+            "addr": "0x4007ace2",
+            "op": "jmp",
+            "target": "euc_load",
+            "len": 8,
+            "stockSha256": "534e5693c800e439722db3cb8a0b817470f23c204088f74f23049608ad80afa9"
+          },
+          {
+            "addr": "0x40084820",
+            "op": "jmp",
+            "target": "euc_clear",
+            "len": 8,
+            "stockSha256": "b68bc7d23c230258939a138565f6ce0857c8519234b2e5f45b2120f58d4b44db"
+          },
+          {
+            "addr": "0x40033076",
+            "op": "jmp",
+            "target": "euc_key",
+            "len": 8,
+            "stockSha256": "6b5979593d2cdf86959793bf1fa1a0520d01c563ef868a01522106ba1428cf5e"
+          },
+          {
+            "addr": "0x400345a0",
+            "op": "jmp",
+            "target": "euc_grid",
+            "len": 8,
+            "stockSha256": "8354955127e86b459dff4e2b1d9730c802fbdc96e8d5cb0dbd691744c1f10136"
+          },
+          {
+            "addr": "0x40023a42",
+            "op": "jmp",
+            "target": "euc_track_mirror",
+            "len": 8,
+            "stockSha256": "d43e64e0210fdd98e9dd8476d7cea57c93492ec611d50eddcbf6fd90ea80cef7"
+          },
+          {
+            "addr": "0x40035b14",
+            "op": "jsr",
+            "target": "euc_led_note",
+            "len": 6,
+            "stockSha256": "f919b8d81d0c86769c19f4e986bc2e8b962d0f87024e5149dfa4a7dd366c0386"
+          },
+          {
+            "addr": "0x40035b22",
+            "op": "jsr",
+            "target": "euc_led_lock",
+            "len": 6,
+            "stockSha256": "d99578dda32fa5499a235912628d75998ddf7551e41de6092d357dddfe5910eb"
+          },
+          {
+            "addr": "0x400e88c0",
+            "op": "jmp",
+            "target": "euc_memcpy",
+            "len": 8,
+            "stockSha256": "bb19a1dbec6b271e7f1b1669acbf01ed93b42e2545a2db01fea716fda4a47905"
+          },
+          {
+            "addr": "0x40093d0c",
+            "op": "jmp",
+            "target": "euc_selected",
+            "len": 8,
+            "stockSha256": "ebf4428790e0cb83c9fbe587265206f93f1604a23dc977f2240e48dfcd83a8cc"
+          },
+          {
+            "addr": "0x40093b0c",
+            "op": "jmp",
+            "target": "euc_first",
+            "len": 8,
+            "stockSha256": "d43e64e0210fdd98e9dd8476d7cea57c93492ec611d50eddcbf6fd90ea80cef7"
+          }
+        ]
+      },
+      "1.54": {
+        "defsym": {
+          "DT_OS154": 1
+        },
+        "cflags": [
+          "-DDT_OS154=1"
+        ],
+        "sites": [
+          {
+            "addr": "0x4006f4be",
+            "op": "jmp",
+            "target": "euc_audio",
+            "len": 6,
+            "stockSha256": "d3de965f7fbce71e0cbba307ce788a642cf92f0a8b2bf73468e9d944e93234ce"
+          },
+          {
+            "addr": "0x4006f846",
+            "op": "jmp",
+            "target": "euc_midi",
+            "len": 6,
+            "stockSha256": "5025f48f435ca8ccaaad711001d307cea29d529c500c5bef0afce9a6c9e5cbab"
+          },
+          {
+            "addr": "0x4006f51a",
+            "op": "jsr",
+            "target": "euc_audio_gate",
+            "len": 6,
+            "stockSha256": "a59f0209c9835aa2214ea3116c71eef8b65b96fa50e2e09cb914fa4cbd7b913d"
+          },
+          {
+            "addr": "0x4006f584",
+            "op": "jsr",
+            "target": "euc_audio_flags",
+            "len": 6,
+            "stockSha256": "eae894dd3af5a366285929c6d416518e2913b1eb6a83b24e1c45f3bd98736a05"
+          },
+          {
+            "addr": "0x4006f8a4",
+            "op": "jsr",
+            "target": "euc_midi_gate",
+            "len": 6,
+            "stockSha256": "c222c8806f341be527c8b0833ac6b5fc68d530d9c68010ee9bbad610fa43887a"
+          },
+          {
+            "addr": "0x4006f90e",
+            "op": "jsr",
+            "target": "euc_midi_flags",
+            "len": 8,
+            "stockSha256": "7d59e02cfec7b4c2f33ef458f7d51dd89095553bc4f0fc5f0e3652919088a7d6"
+          },
+          {
+            "addr": "0x4007ae6e",
+            "op": "jmp",
+            "target": "euc_save",
+            "len": 8,
+            "stockSha256": "74c9188127d3241e9b2f750392fda1550a0be1780b7e06291e415aaa6d20de19"
+          },
+          {
+            "addr": "0x4007ace2",
+            "op": "jmp",
+            "target": "euc_load",
+            "len": 8,
+            "stockSha256": "534e5693c800e439722db3cb8a0b817470f23c204088f74f23049608ad80afa9"
+          },
+          {
+            "addr": "0x40084820",
+            "op": "jmp",
+            "target": "euc_clear",
+            "len": 8,
+            "stockSha256": "b68bc7d23c230258939a138565f6ce0857c8519234b2e5f45b2120f58d4b44db"
+          },
+          {
+            "addr": "0x40033076",
+            "op": "jmp",
+            "target": "euc_key",
+            "len": 8,
+            "stockSha256": "6b5979593d2cdf86959793bf1fa1a0520d01c563ef868a01522106ba1428cf5e"
+          },
+          {
+            "addr": "0x400345a0",
+            "op": "jmp",
+            "target": "euc_grid",
+            "len": 8,
+            "stockSha256": "8354955127e86b459dff4e2b1d9730c802fbdc96e8d5cb0dbd691744c1f10136"
+          },
+          {
+            "addr": "0x40023a42",
+            "op": "jmp",
+            "target": "euc_track_mirror",
+            "len": 8,
+            "stockSha256": "d43e64e0210fdd98e9dd8476d7cea57c93492ec611d50eddcbf6fd90ea80cef7"
+          },
+          {
+            "addr": "0x40035b14",
+            "op": "jsr",
+            "target": "euc_led_note",
+            "len": 6,
+            "stockSha256": "f919b8d81d0c86769c19f4e986bc2e8b962d0f87024e5149dfa4a7dd366c0386"
+          },
+          {
+            "addr": "0x40035b22",
+            "op": "jsr",
+            "target": "euc_led_lock",
+            "len": 6,
+            "stockSha256": "d99578dda32fa5499a235912628d75998ddf7551e41de6092d357dddfe5910eb"
+          },
+          {
+            "addr": "0x400e8ae8",
+            "op": "jmp",
+            "target": "euc_memcpy",
+            "len": 8,
+            "stockSha256": "bb19a1dbec6b271e7f1b1669acbf01ed93b42e2545a2db01fea716fda4a47905"
+          },
+          {
+            "addr": "0x40093d50",
+            "op": "jmp",
+            "target": "euc_selected",
+            "len": 8,
+            "stockSha256": "ebf4428790e0cb83c9fbe587265206f93f1604a23dc977f2240e48dfcd83a8cc"
+          },
+          {
+            "addr": "0x40093b50",
+            "op": "jmp",
+            "target": "euc_first",
+            "len": 8,
+            "stockSha256": "d43e64e0210fdd98e9dd8476d7cea57c93492ec611d50eddcbf6fd90ea80cef7"
+          }
+        ]
+      }
+    }
+  },
+  "repository": "https://github.com/sumedho/digirequests",
+  "revision": "8eba613dc3e0b1698797609256fd4081923b4ef2",
+  "path": "modules/euclidean"
+}

@@ -14,7 +14,8 @@
           "Documentation/media-only (12 October 2026): replace the preview with five isolated 808/909 hits, longer tail windows, clean/attack/long 909 comparisons and one common gain; retain the released 0.1.5 engine source identity. Firmware and its version are unchanged; these offline previews add no physical-hardware or performance qualification.",
           "Documentation/media-only (12 October 2026): replace the isolated-hit preview with a 22.5-second four-on-the-floor groove at 128 BPM: default 808, one-bar 909 TUNE endpoints and slow TUNE/built-in Mackie SAT sweeps. Keep Tune Depth at default 64 and PITCH at 49; hold 909 ATK at 0 so the envelope bend is clearer. Use a common gain and remove added silence. Include exact trigger/automation/render provenance. Firmware behavior and hardware/performance qualification are unchanged.",
           "USB package (14 Oct 2026; distribution only, the module source and version are unchanged): loads over USB on the Modwerk beta base as an independent machine package. Its chooser row, page and renderer go through the base’s machine table, and its 909/808 DSP engine is resident in the base on both cores. The base admits this exact package through a trust row built into it; its renderer writes only under the base’s write lease and renders silent until the base has reset and enabled the engine, whose reset restores its authored tables. It needs that exact base; with an older base the site asks for a base update first. Its compiled bytes that coincide with stock are copied at install from bytes the base checks against its running stock, so the package carries no stock bytes.",
-          "USB package limits: removing it converts its tracks back to FLEX in every known Part copy and fails closed otherwise. Host tests only (the base’s reset, enable, lease and removal against a modelled DSP receiver); no emulator or hardware run of this package. The owner waived hardware evidence for this exact version’s USB package for the beta."
+          "USB package limits: removing it converts its tracks back to FLEX in every known Part copy and fails closed otherwise. Host tests only (the base’s reset, enable, lease and removal against a modelled DSP receiver); no emulator or hardware run of this package. The owner waived hardware evidence for this exact version’s USB package for the beta.",
+          "Site sync on the beta base (beta test run 2, 14 Oct 2026; the package is unchanged): removing it while its controller runs no longer ends the sync with “The Octatrack refused this step.” The base answers the first removal busy while it stops the controller and drops the staged package; the site now stages it again, as it does for the base's other busy refusals. Checked on a development twin through the development link (Sidechain installed, running, removed in one command) and by the site's tests; the site's own path has not run on the unit yet."
         ]
       },
       {
@@ -358,7 +359,8 @@
           "A KEY already set to OFF or T1..T8 is never changed, so projects saved with 0.1.1 load as before. The check runs once per audio frame over the sixteen FX slots and never marks the Part as edited.",
           "The ColdFire code grows by 204 bytes. 12 selections that 0.1.1 built now run out of effect-menu space, each holding Euclid with Scale Quantizer or eight or more modules; every selection of one or two other modules still builds.",
           "Hardware: author-reported functional test on an MKI with two instances across both DSP cores, Part/project save and reload and a power cycle. Duration was not reported and no stress or maximum-load test was made.",
-          "USB package (14 Oct 2026; distribution only, the module source and version are unchanged): loads over USB on the Modwerk beta base, which carries Sidechain’s DSP engine resident and dormant and admits this exact package through a trust row built into it. The package calls the base’s write lease by address, so it needs that exact base; with an older base the site asks for a base update first. It answers Mute Modes’ ev_mute_keep for its key track. Host tests only: the emulator controllers scenario has not run, and there is no hardware run of this package. The owner waived hardware evidence for this exact version’s USB package for the beta."
+          "USB package (14 Oct 2026; distribution only, the module source and version are unchanged): loads over USB on the Modwerk beta base, which carries Sidechain’s DSP engine resident and dormant and admits this exact package through a trust row built into it. The package calls the base’s write lease by address, so it needs that exact base; with an older base the site asks for a base update first. It answers Mute Modes’ ev_mute_keep for its key track. Host tests only: the emulator controllers scenario has not run, and there is no hardware run of this package. The owner waived hardware evidence for this exact version’s USB package for the beta.",
+          "Site sync on the beta base (beta test run 2, 14 Oct 2026; the package is unchanged): removing it while its controller runs no longer ends the sync with “The Octatrack refused this step.” The base answers the first removal busy while it stops the controller and drops the staged package; the site now stages it again, as it does for the base's other busy refusals. Checked on a development twin through the development link (Sidechain installed, running, removed in one command) and by the site's tests; the site's own path has not run on the unit yet."
         ]
       },
       {
@@ -1047,7 +1049,8 @@
           "Builds with the stock DSP code built in: its core-0 code takes a given-up stock reverb's space (SPRING REV first), which leaves the FX2 menu. It cannot be combined with Analog BD yet.",
           "Author's functional MKII report (7–9 Oct 2026) covers routing, levels, everyday flows, saving and power; no timed stress run or chip timing.",
           "USB package (14 Oct 2026; distribution only, the module source and version are unchanged): loads over USB on the Modwerk beta base, which carries Output Matrix’s DSP engine resident and dormant, owns its boot widenings and admits this exact package through a trust row built into it. Its compiled bytes that coincide with stock are copied at install from bytes the base checks against its running stock, so the package carries no stock bytes. It needs that exact base; with an older base the site asks for a base update first. Removing it is refused while MATRIX is selected: switch the AUDIO page back first. Host tests only: the emulator controllers scenario has not run, and there is no hardware run of this package. The owner waived hardware evidence for this exact version’s USB package for the beta.",
-          "USB package rebuilt for the fixed beta base (beta test run 1, 14 Oct 2026). Its controller never started before (the base's owned DSP job channel closed at boot), so MATRIX could not be chosen. Fixed; outside MATRIX its frame hook no longer takes the write lease. Seen on a development twin of the fixed base: MATRIX entered, T3 routed to MN and PHN as expected in USB recordings, and left with levels unchanged. Not yet tested: the tester image, mono jacks and a power cycle."
+          "USB package rebuilt for the fixed beta base (beta test run 1, 14 Oct 2026). Its controller never started before (the base's owned DSP job channel closed at boot), so MATRIX could not be chosen. Fixed; outside MATRIX its frame hook no longer takes the write lease. Seen on a development twin of the fixed base: MATRIX entered, T3 routed to MN and PHN as expected in USB recordings, and left with levels unchanged. Not yet tested: the tester image, mono jacks and a power cycle.",
+          "Site sync on the beta base (beta test run 2, 14 Oct 2026; the package is unchanged): removing it while its controller runs no longer ends the sync with “The Octatrack refused this step.” The base answers the first removal busy while it stops the controller and drops the staged package; the site now stages it again, as it does for the base's other busy refusals. Checked on a development twin through the development link (Sidechain installed, running, removed in one command) and by the site's tests; the site's own path has not run on the unit yet."
         ]
       }
     ],
@@ -1056,7 +1059,17 @@
         "version": "2.0.1",
         "date": "2026-10-14",
         "changes": [
+          "Media-only: replace the placeholder thumbnail with one in the library’s shared signal-art style, with its grid, palette and typography; update the illustration alt text. Source and packages are unchanged.",
           "First Modwerk release for Digitakt I OS 1.53 and 1.54, on Core 2.1. Use the native retrig menu on MIDI tracks A–H. Repeated notes follow the Digitakt sequencer, including chords, retrig rate, finite length and velocity changes."
+        ]
+      }
+    ],
+    "digitakt-euclidean": [
+      {
+        "version": "1.1.4",
+        "date": "2026-10-14",
+        "changes": [
+          "First Modwerk release for Digitakt I OS 1.53 and 1.54, on Core 2.1. Generate rhythms from two pulse generators on each audio or MIDI track. Rotate either generator, rotate the whole result and combine them with OR, XOR, AND or SUB."
         ]
       }
     ],

@@ -5,7 +5,8 @@
 //
 //   ~/.cache/modwerk-upstream/venv/bin/python -B scripts/octatrack-usb-bridge.py /tmp/modwerk-ot.sock &
 //   npm run device -- status
-//   while :; do npm run device -- serve; sleep 1; done   # one long-lived link (starts the bridge if needed); send it
+//   while :; do npm run device -- serve [--share /tmp/modwerk-share.sock]; sleep 1; done   # one long-lived link (starts the bridge
+//       if needed; --share lets the frontend MCP use the unit through it, --device-socket that path); send it
 //       scripts/device-send.py part2 pick:T1:FX2:E-Verb stats png:/tmp/s.png   # or 'try FILE', 'remove FILE', 'boot DIR'
 //   npm run device -- try MODULE.mwrm [--seconds 5] [--accept]
 //   npm run device -- remove [MODULE.mwrm] [--accept]   # that file's module, else module 0
@@ -35,14 +36,14 @@ import { deflateSync, crc32 } from 'node:zlib'
 import { join } from 'node:path'
 import { createConnection, createServer } from 'node:net'
 import { spawn, spawnSync } from 'node:child_process'
-import { homedir } from 'node:os'
+import { homedir, tmpdir } from 'node:os'
 import { rmSync } from 'node:fs'
 import { parseArgs } from 'node:util'
 import { sha } from '../vendor/elekloader/kit/src/bytes.ts'
 import { UploadSession } from '../src/engine/elekloader/upload-session.ts'
 import { findVendorInterface, UsbVendorTransport } from '../src/engine/elekloader/upload-usb.ts'
 import { diagnostics, removal, runLifecycle } from '../src/dev/octatrack-usb-lifecycle.ts'
-import { Bench, benchEndpoint, device, enumerate } from './usb-bench.mjs'
+import { Bench, benchEndpoint, device, enumerate, shareBench } from './usb-bench.mjs'
 
 const { values, positionals: [command, file] } = parseArgs({ allowPositionals: true, options: {
   socket: { type: 'string', default: '/tmp/modwerk-ot.sock' },
@@ -51,6 +52,7 @@ const { values, positionals: [command, file] } = parseArgs({ allowPositionals: t
   emulator: { type: 'boolean', default: false },
   png: { type: 'string' },
   scale: { type: 'string', default: '2' },
+  share: { type: 'string' }, // serve: a second bench socket for the frontend MCP (shareBench)
   chunk: { type: 'string' }, // boot: bytes a frame (4096 for the flashed usbtest9 on macOS; docs/OCTATRACK_HARDWARE_TRAPS.md)
 } })
 let seconds = Number(values.seconds)
@@ -85,7 +87,9 @@ const KEYS = { DOWN: 0x20, RIGHT: 0x21, SRC: 0x22, AMP: 0x23, LFO: 0x24, FX1: 0x
   ...Object.fromEntries(['A', 'B', 'C', 'D', 'E', 'F'].map((e, i) => ['PUSH' + e, 0x38 + i])) }
 async function devIn(request, value, length) {
   const reply = await unit.controlTransferIn({ requestType: 'vendor', recipient: 'interface', request, value, index }, length)
-  if (reply.status !== 'ok' || reply.data?.byteLength !== length) throw new Error('This base does not answer development requests: build it with --dev.')
+  if (reply.status !== 'ok' || reply.data?.byteLength !== length) throw new Error(request === 16 ?
+    'The base refused this MEM read: development bases read 0x40000400-0x40cfffff, 0x46000000-0x46ffffff, 0x80000000-0x8000ffff and 0x100f0000-0x100fffff only (dev.c).' :
+    'This base does not answer development requests: build it with --dev.')
   return new Uint8Array(reply.data.buffer, reply.data.byteOffset, reply.data.byteLength)
 }
 /** FUNC+PLAY: hold every key but the last, tap the last, release the held ones. */
@@ -173,7 +177,11 @@ async function pick(track, slot, wanted) {
   await keys('YES')
   let no = false
   const ok = await until(async () => (await mem(0x80000ec4 + 8 * (slot - 1) + track, 1))[0] === id || (no = (await statusWords())(21) !== refused))
-  if (no) { await keys('NO'); throw new Error(wanted + ' refused on T' + (track + 1) + ' FX' + slot + ' (the loader said no)') }
+  if (no) { // the refusal's reason is on the screen (DSP MEMORY FULL, cycles, ...): keep it before NO clears it
+    const shot = join(tmpdir(), `modwerk-refused-T${track + 1}-FX${slot}.png`)
+    await screen(shot)
+    await keys('NO'); throw new Error(wanted + ' refused on T' + (track + 1) + ' FX' + slot + ' (the loader said no; its screen: ' + shot + ')')
+  }
   const took = Date.now() - start
   await keys('NO')
   if (!ok) throw new Error(wanted + ' was not admitted on T' + (track + 1) + ' FX' + slot + ' within 5 s.')
@@ -358,6 +366,18 @@ async function stopping(step) {
 }
 
 /** Stage, publish and run `pkg` in a trial for `seconds`, then accept or roll back. */
+/** A step the loader refused as busy (refusal 5: DSP code moving, a resident controller quiescing before it leaves) is
+ * tried again for 5 s, as the site does; any other refusal is named (loader.h runtime_refusal: 7 a track plays it). */
+async function retried(step) {
+  for (const start = Date.now(); ; await wait(300)) {
+    try { return await step() } catch (error) {
+      const refusal = /rejected|backend/.test(error.message) ? (await transport.selftest(false).catch(() => undefined))?.refusal : undefined
+      if (refusal === 5 && Date.now() - start < 5000) continue
+      if (refusal !== undefined) error.message += ` (loader refusal ${refusal})`
+      throw error
+    }
+  }
+}
 async function trial(session, pkg) {
   await stopping(() => session.stage(pkg, { signal: interrupt.signal })); await session.activate(); await session.startTrial()
   console.log(`trial: ${pkg.sha256.slice(0, 16)}… running`)
@@ -416,11 +436,7 @@ if (command === 'serve') {
         const session = await UploadSession.connect(transport, identity.base, { timeoutMs: 10000 })
         const view = arg ? new DataView(new Uint8Array(readFileSync(arg)).buffer) : undefined, data = verb === 'try' ? new Uint8Array(readFileSync(arg)) : undefined
         values.accept = true; seconds = 1 // the session accepts at once; `try` from the shell keeps its trial
-        try { console.log(state(await trial(session, data ? { base: identity.base, data, sha256: sha(data) } : removal(identity.base, view?.getUint16(4) >= 4 ? view.getUint32(28) : undefined)))) }
-        catch (error) { // why the loader rejected it (loader.h runtime_refusal: 5 busy, 7 a track plays the effect)
-          if (/rejected/.test(error.message)) error.message += ` (loader refusal ${(await transport.selftest(false).catch(() => undefined))?.refusal})`
-          throw error
-        }
+        console.log(state(await retried(() => trial(session, data ? { base: identity.base, data, sha256: sha(data) } : removal(identity.base, view?.getUint16(4) >= 4 ? view.getUint32(28) : undefined)))))
       } else await run(line, until)
     } catch (error) { out.push('error: ' + error.message + (error.cause ? ' (cause: ' + (error.cause.message ?? error.cause) + ')' : '')) } finally { console.log = log }
     return out.join('\n') + '\n'
@@ -442,6 +458,9 @@ if (command === 'serve') {
       })
     })
   }).listen(path, () => console.log('serving on ' + path))
+  // --share PATH: the bench for one more client, such as the frontend MCP (--device-socket PATH), its transfers between
+  // this session's (test plan T1). Only one of them may stage or try modules at a time; the session reads and presses keys.
+  if (values.share) { if (!/^\d+$/.test(values.share)) rmSync(values.share, { force: true }); shareBench(bench, values.share).on('listening', () => console.log('sharing the unit on ' + values.share)) }
   setInterval(() => serial(() => devIn(6, 0, 2).catch(() => {})), 4000) // a request every 4 s: MODWERK CONNECTED shows once
 } else try {
   if (command === 'key') { await keys(file); process.exit(0) }
@@ -512,13 +531,13 @@ if (command === 'serve') {
     // An ABI 4 file names its module (sdk/runtime/loader/README.md); ABI 3 modules are module 0.
     const view = file ? new DataView(new Uint8Array(readFileSync(file)).buffer) : undefined
     if (view && (view.byteLength < 32 || view.getUint32(0) !== 0x4d57524d)) throw new Error(file + ' is not a runtime module.')
-    console.log(state(await trial(session, removal(identity.base, view?.getUint16(4) >= 4 ? view.getUint32(28) : undefined))))
+    console.log(state(await retried(() => trial(session, removal(identity.base, view?.getUint16(4) >= 4 ? view.getUint32(28) : undefined)))))
   }
   if (command === 'try') {
     const data = new Uint8Array(readFileSync(file))
     // shortcut: runtime module files do not name their base yet, so any file is offered to the connected base,
     // whose loader validates it; bind the base once the hook ABI defines module files.
-    console.log(state(await trial(session, { base: identity.base, data, sha256: sha(data) })))
+    console.log(state(await retried(() => trial(session, { base: identity.base, data, sha256: sha(data) }))))
   }
   if (command === 'boot') {
     const image = new Uint8Array(readFileSync(join(file, 'MAIN.raw')))
