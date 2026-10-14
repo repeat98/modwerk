@@ -57,6 +57,7 @@ npm run modules:generate                      # regenerate the catalog from the 
 npm run check -- --base origin/main            # scopes docs to metadata/provenance; code runs the full app suite
 npm run module:doctor -- <id>                 # does the module fit every workflow? lists each gap and the command that fixes it
 npm run modules:check -- --base origin/main   # version and publication rules for the folders you changed
+npm run modules:compat -- <id>                # Octatrack: installs beside every other active module and the base? each clash and its fix
 ```
 
 ## What CI runs
