@@ -1,0 +1,40 @@
+{
+  "moduleId": "ram-machines",
+  "version": "1.1.1",
+  "sourceRevision": null,
+  "sourceStatus": "Exact local source snapshot prepared; public source publication pending.",
+  "sources": {
+    "src/digitakt-mk1/core3.h": "9ad3512ee2ced8f9eaadcb48e5633547d861d7a71f5443d5e9f759d0b790de26",
+    "src/ram.S": "90b12ca7e14860a13e3beb8faae639cef43c1d8162fd74a09e4dd7a046baf1a4",
+    "src/ram.c": "c4edb810fa5909a562599a9502a7fc00eb4beb8dd03e396512ec46978238a38b",
+    "src/release-153/core21.h": "a56cf302ca91bddb05e9c543972942d929843eeec7b7aa0564ed6be1928e6e01",
+    "src/release-153/euclidean.h": "ad57a044a339510972bc566dd05a3cba890aba5200b99b7d7ae3be86e3639674",
+    "src/release-153/firmware.h": "3343d8bfc12f8b409c0b3ff8ea8c7eeaf717cb373c5514c90a8339e1bd228899",
+    "src/release-153/ram.S": "b08335d5691c708272b5be87568035f9a4a2d8ac304518efae6afc494937f3bd",
+    "src/release-153/ram.c": "881b1138cd2e4314db43fae3365345a1ad63cfea75025dca3f46825dda261f65",
+    "src/release-154/core21.h": "c4d31ee8d6d8699ed0ea2b2197712d00b3433b8a5b03865806788fea5ecc265c",
+    "src/release-154/euclidean.h": "ad57a044a339510972bc566dd05a3cba890aba5200b99b7d7ae3be86e3639674",
+    "src/release-154/firmware.h": "31fbe86139cc1fdcedc73bea998d1f9ae5414cc5bae765074a23ff871096ff71",
+    "src/release-154/ram.S": "b7d6b1ba1c5af5d95d014e418abbf42fcb654f9e05dcd156c25db9cff6af0f3c",
+    "src/release-154/ram.c": "ce68902511420ea057b07fdcd2165ea72516640ae7ac8e213d26969d4cba5c41"
+  },
+  "originalPackageSha256": "52496377acf808b30bda466e407ba813c84f077ece8335a2f2154cd773ed1a5d",
+  "originalPackageOs": "1.53",
+  "frameworkRevision": "3acac10ea86882a2ea51c9377ac6bd58fc4fec57",
+  "targetReleases": [
+    "1.53",
+    "1.54"
+  ],
+  "packageSha256ByOs": {
+    "1.53": "ebdd501e825f141c325c9554d9819cb0de9cc33078c734df7fe919eeffd5e79b",
+    "1.54": "59b67ceaa8ac0fc06190fc3f66306f191a92440a1ea412281130b3ca20e9c313"
+  },
+  "sourceAdapter": "Explicit DT_OS154 C/assembler selector; original per-OS code preserved. Object parity excludes build provenance and the checked absolute selector symbol only; linked MAIN must match exactly.",
+  "authorGithub": "sumedho",
+  "sourceSha256": "636d2cd900cb7a71bbe1591067acd4337021a366735901972d5cae59b00850d2",
+  "localSourceRevision": "de3dab731ba75610ddd1bb4290ebbdd057b7b161",
+  "localSourcePath": "sdk/digitakt/modules/_submissions/ram-machines",
+  "repository": "https://github.com/sumedho/digirequests",
+  "revision": "8eba613dc3e0b1698797609256fd4081923b4ef2",
+  "path": "modules/ram-machines"
+}
