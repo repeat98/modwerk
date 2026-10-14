@@ -1,7 +1,7 @@
 {
  "schema": 1,
  "kind": "elekloader-catalog",
- "revision": "4f1c332fd66cb5a9f4a895fd57db368db37f4b1987656b1769306fb712ccb784",
+ "revision": "6c207db2ddd184031f3d4249bc8e4e8fd9640a92ad817c06c323c18978cf18d6",
  "about": "elekloader's curated catalog: the cores and mods a site may offer, each pinned by sha256 to its author's release or commit. docs/INTEGRATING.md.",
  "cores": [
   {
@@ -794,6 +794,58 @@
    "summary": "Use the native retrig menu on MIDI tracks A–H. Repeated notes follow the Digitakt sequencer, including chords, retrig rate, finite length and velocity changes.",
    "description": "Use the native retrig menu on MIDI tracks A–H. Repeated notes follow the Digitakt sequencer, including chords, retrig rate, finite length and velocity changes.",
    "category": "Sequencer",
+   "author": "sumedho",
+   "needs_core": "2.1",
+   "on_unit": "The author reports this build fully tested and working with all six mods on a Digitakt 1, OS 1.53 and 1.54, for about one to two hours including project save/reload and a power cycle (2026-10-14)."
+  },
+  {
+   "file": "ram-machines-1.3.1-os1.53.elemod",
+   "sha256": "75cad6c7148709ea1e9188def89ebae200497ad78b295d9762a4af83dca15a6d",
+   "id": "ram-machines",
+   "version": "1.3.1",
+   "device": "digitakt-mk1",
+   "os": "1.53",
+   "license": "GPL-2.0-or-later",
+   "source": {
+    "repo": "repeat98/modwerk",
+    "commit": "17bcb8f756f8f1c1d21fe84750b67d032d3d9bc0",
+    "path": "sdk/imports/packages/ram-machines/ram-machines-1.3.1-os1.53.elemod"
+   },
+   "title": "RAM Record and Playback",
+   "requires": [
+    "core",
+    "machine-pages"
+   ],
+   "conflicts": [],
+   "summary": "RAM-R1 records a temporary mono take from the master mix or inputs when triggered. RAM-P1 plays that shared take using the native sample controls.",
+   "description": "RAM-R1 records a temporary mono take from the master mix or inputs when triggered. RAM-P1 plays that shared take using the native sample controls.",
+   "category": "Sampling",
+   "author": "sumedho",
+   "needs_core": "2.1",
+   "on_unit": "The author reports this build fully tested and working with all six mods on a Digitakt 1, OS 1.53 and 1.54, for about one to two hours including project save/reload and a power cycle (2026-10-14)."
+  },
+  {
+   "file": "ram-machines-1.3.1-os1.54.elemod",
+   "sha256": "0e6d4ca589b84da505b29e3b245b326635c1148730a86d87a93c8ff0dad221eb",
+   "id": "ram-machines",
+   "version": "1.3.1",
+   "device": "digitakt-mk1",
+   "os": "1.54",
+   "license": "GPL-2.0-or-later",
+   "source": {
+    "repo": "repeat98/modwerk",
+    "commit": "17bcb8f756f8f1c1d21fe84750b67d032d3d9bc0",
+    "path": "sdk/imports/packages/ram-machines/ram-machines-1.3.1-os1.54.elemod"
+   },
+   "title": "RAM Record and Playback",
+   "requires": [
+    "core",
+    "machine-pages"
+   ],
+   "conflicts": [],
+   "summary": "RAM-R1 records a temporary mono take from the master mix or inputs when triggered. RAM-P1 plays that shared take using the native sample controls.",
+   "description": "RAM-R1 records a temporary mono take from the master mix or inputs when triggered. RAM-P1 plays that shared take using the native sample controls.",
+   "category": "Sampling",
    "author": "sumedho",
    "needs_core": "2.1",
    "on_unit": "The author reports this build fully tested and working with all six mods on a Digitakt 1, OS 1.53 and 1.54, for about one to two hours including project save/reload and a power cycle (2026-10-14)."
