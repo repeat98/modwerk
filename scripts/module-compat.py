@@ -123,7 +123,9 @@ def ledger_findings(selected, platform):
     from remix import ledger
     need = {o.module for m in selected for o in m.overrides} | {k for m in selected for k in m.requires}
     # Kept bytes are compared above; the ledger would read stock to compare two keeps.
-    modules = [replace(m, keeps=()) for m in selected] + [platform[k] for k in sorted(need) if k in platform]
+    # Linked sources as POSIX paths: octabam's composition signature splits them on "modules/" (Windows has "\").
+    posix = lambda m: replace(m, linked=tuple(replace(u, source=str(u.source).replace('\\', '/')) for u in m.linked))
+    modules = [posix(replace(m, keeps=())) for m in selected] + [posix(platform[k]) for k in sorted(need) if k in platform]
     try:
         problems = ledger.check(modules)
     except (ValueError, SystemExit) as error:

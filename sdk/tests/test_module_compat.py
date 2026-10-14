@@ -89,6 +89,15 @@ class GateTests(unittest.TestCase):
         self.assertEqual(problems + gate.check(modules, **inputs), [])
         self.assertGreaterEqual(len(modules), 20)
 
+    def test_windows_linked_paths_give_the_same_findings(self):
+        # Windows manifests carry backslash sources; octabam's composition signature splits on "modules/".
+        from dataclasses import replace
+        ids, modules, inputs, problems = gate.repository_inputs()
+        windows = [replace(m, linked=tuple(replace(u, source=str(u.source).replace('/', '\\')) for u in m.linked))
+                   for m in modules]
+        self.assertTrue(any('\\' in str(u.source) for m in windows for u in m.linked))
+        self.assertEqual(gate.check(windows, **inputs), gate.check(modules, **inputs))
+
 
 if __name__ == '__main__':
     unittest.main()
