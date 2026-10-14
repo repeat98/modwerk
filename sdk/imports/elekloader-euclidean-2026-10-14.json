@@ -1,0 +1,61 @@
+{
+  "schema": 1,
+  "kind": "elekloader-catalog",
+  "revision": "euclidean-2026-10-14",
+  "about": "Modwerk source-only euclidean packages for Digitakt I OS 1.53 and 1.54, compiled from sdk/digitakt/modules/euclidean.",
+  "cores": [],
+  "mods": [
+    {
+      "file": "euclidean-1.1.4-os1.53.elemod",
+      "sha256": "da551e67332ffa070bd9d51879319fb4e4a5807eea684555860c0179cb65db20",
+      "id": "euclidean",
+      "version": "1.1.4",
+      "device": "digitakt-mk1",
+      "os": "1.53",
+      "license": "GPL-2.0-or-later",
+      "source": {
+        "repo": "repeat98/modwerk",
+        "commit": "6534fd648f5b2911a6ec7e7284c9dabc6afa021f",
+        "path": "sdk/imports/packages/euclidean/euclidean-1.1.4-os1.53.elemod"
+      },
+      "title": "Euclidean Sequencing",
+      "requires": [
+        "core",
+        "dt-support"
+      ],
+      "conflicts": [],
+      "summary": "Generate rhythms from two pulse generators on each audio or MIDI track. Rotate either generator, rotate the whole result and combine them with OR, XOR, AND or SUB.",
+      "description": "Generate rhythms from two pulse generators on each audio or MIDI track. Rotate either generator, rotate the whole result and combine them with OR, XOR, AND or SUB.",
+      "category": "Sequencer",
+      "author": "sumedho",
+      "needs_core": "2.1",
+      "on_unit": "The author reports this build fully tested and working with all six mods on a Digitakt 1, OS 1.53 and 1.54, for about one to two hours including project save/reload and a power cycle (2026-10-14)."
+    },
+    {
+      "file": "euclidean-1.1.4-os1.54.elemod",
+      "sha256": "7093ef6573081f1bb5180e8576bdcba92359ddf8e91aec0ec666f306464a068d",
+      "id": "euclidean",
+      "version": "1.1.4",
+      "device": "digitakt-mk1",
+      "os": "1.54",
+      "license": "GPL-2.0-or-later",
+      "source": {
+        "repo": "repeat98/modwerk",
+        "commit": "6534fd648f5b2911a6ec7e7284c9dabc6afa021f",
+        "path": "sdk/imports/packages/euclidean/euclidean-1.1.4-os1.54.elemod"
+      },
+      "title": "Euclidean Sequencing",
+      "requires": [
+        "core",
+        "dt-support"
+      ],
+      "conflicts": [],
+      "summary": "Generate rhythms from two pulse generators on each audio or MIDI track. Rotate either generator, rotate the whole result and combine them with OR, XOR, AND or SUB.",
+      "description": "Generate rhythms from two pulse generators on each audio or MIDI track. Rotate either generator, rotate the whole result and combine them with OR, XOR, AND or SUB.",
+      "category": "Sequencer",
+      "author": "sumedho",
+      "needs_core": "2.1",
+      "on_unit": "The author reports this build fully tested and working with all six mods on a Digitakt 1, OS 1.53 and 1.54, for about one to two hours including project save/reload and a power cycle (2026-10-14)."
+    }
+  ]
+}

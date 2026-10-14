@@ -333,9 +333,13 @@ export class OctatrackLink {
   private async install(session: LinkSession, data: Uint8Array, signal?: AbortSignal, progress?: (received: number) => void) {
     const connection = this.connection
     if (data.length > session.status.capacity) throw new UploadDeviceError({ ...session.status, result: 'limit' })
-    await this.whenStopped(() => session.stage({ base: session.status.base, data, sha256: sha(data) }, { signal, progress }))
-    signal?.throwIfAborted() // cancelled, unplugged or left while the last chunk's reply was on its way
-    await session.activate()
+    // A publication the loader refused as busy (a resident controller quiescing before it can leave) drops the staged
+    // package: stage it again. One refused as playing keeps it: publish it again.
+    await this.whenStopped(async () => {
+      if (session.status.phase !== 'verified') await session.stage({ base: session.status.base, data, sha256: sha(data) }, { signal, progress })
+      signal?.throwIfAborted() // cancelled, unplugged or left while the last chunk's reply was on its way
+      await session.activate()
+    })
     this.live(connection); signal?.throwIfAborted()
   }
   /** Put back what the load's kept changes did, newest first, each kept at once; the modules it had no package for. */
@@ -432,7 +436,7 @@ export class OctatrackLink {
       try { clean = await this.cleanUp(settled) } catch { clean = false }
     }
     if (connection !== this.connection) return
-    const why = error instanceof UploadDeviceError && error.status.result === 'rejected' ?
+    const why = error instanceof UploadDeviceError && ['rejected', 'backend'].includes(error.status.result) ?
       (await this.transport?.selftest(false).catch(() => undefined))?.refusal : undefined
     if (connection !== this.connection) return
     this.diagnostic('sync_failed', {error: error instanceof UploadDeviceError ? 'device' : error instanceof StressTestFailure ? 'selftest' : error instanceof UploadUnconfirmedError ? 'transport' : error instanceof StaleLoadError ? 'stale' : error instanceof DOMException && error.name === 'AbortError' ? 'cancelled' : 'unknown', ...(error instanceof UploadDeviceError ? {result:error.status.result} : {}), ...(why !== undefined ? {refusal:why} : {})})
@@ -474,7 +478,7 @@ export class OctatrackLink {
     }
   }
   private async loaderBusy(error: unknown) {
-    return error instanceof UploadDeviceError && error.status.result === 'rejected' &&
+    return error instanceof UploadDeviceError && ['rejected', 'backend'].includes(error.status.result) &&
       (await this.transport?.selftest(false).catch(() => undefined))?.refusal === 5
   }
   private startKeepalive() {

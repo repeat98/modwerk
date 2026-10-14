@@ -61,7 +61,8 @@ the package ships literally (`--min 8` lists the chance ones below that: effect 
 
 The committed pair is `src/engine/assets/octatrack-base.elemod` and `octatrack-base-fills.json`. Any change
 to what the base's source hash covers (this folder, the logger, upload, loader, DSP transport and startup
-sources) changes the base. `octatrack-base-sources.json` lists those inputs and their hashes, and a test
+sources; their `.c`, `.h`, `.s`, `.asm`, `.py` and `.json` files) changes the base, even a file only `--dev` twins
+compile (`dev.c`) or a test there (`test_recipe.py`). `octatrack-base-sources.json` lists those inputs and their hashes, and a test
 (`octatrack-base.test.ts`, no firmware) fails when one changed or a file joined those folders. Rebuild and
 commit it with
 

@@ -1,0 +1,38 @@
+{
+  "moduleId": "note-accumulator",
+  "version": "1.1.0",
+  "sourceRevision": null,
+  "sourceStatus": "Exact local source snapshot prepared; public source publication pending.",
+  "sources": {
+    "src/accumulator.S": "40dc8cad93f8e6f8a86e75b599c9aba555d4fcbd7068deca7e7e360cf3ba28e3",
+    "src/accumulator.c": "ea9358b00e49926e02f89f028cbcae7baf707bc619d450777bdbf85a02fc4c14",
+    "src/digitakt-mk1/core3.h": "9ad3512ee2ced8f9eaadcb48e5633547d861d7a71f5443d5e9f759d0b790de26",
+    "src/release-153/accumulator.S": "77827cc345afec9ae938db2af1964b926583f669b5e10f426d709fd645c6d7ef",
+    "src/release-153/accumulator.c": "7d8adf1dd165aa8749272b16f6c4c9e4a60ad754b0043a477fa31bf960ea27cf",
+    "src/release-153/core21.h": "a56cf302ca91bddb05e9c543972942d929843eeec7b7aa0564ed6be1928e6e01",
+    "src/release-153/firmware.h": "3343d8bfc12f8b409c0b3ff8ea8c7eeaf717cb373c5514c90a8339e1bd228899",
+    "src/release-154/accumulator.S": "839a56c5d8e9b72fda1f0c8104cde805bd0aee4910bee647e88b232e27c213c2",
+    "src/release-154/accumulator.c": "ae2e2483b8af2e1f12dd0ec8b0b2ab89b0dee1afe3482c33a5d405acfc46df81",
+    "src/release-154/core21.h": "c4d31ee8d6d8699ed0ea2b2197712d00b3433b8a5b03865806788fea5ecc265c",
+    "src/release-154/firmware.h": "31fbe86139cc1fdcedc73bea998d1f9ae5414cc5bae765074a23ff871096ff71"
+  },
+  "originalPackageSha256": "36d370ad25edf5deff1835e16e37d2ee087ed38a4db0adad521d779bb3fd2a0a",
+  "originalPackageOs": "1.53",
+  "frameworkRevision": "3acac10ea86882a2ea51c9377ac6bd58fc4fec57",
+  "targetReleases": [
+    "1.53",
+    "1.54"
+  ],
+  "packageSha256ByOs": {
+    "1.53": "69d7d72913cccf52ce4a7b07562e1e1253a9ced9c546daa267d5b51f18da1a22",
+    "1.54": "744dd3df15615b0b4c98d2ff9c8843bb114782b63c9323c474ca62f362ff6e71"
+  },
+  "sourceAdapter": "Explicit DT_OS154 C/assembler selector; original per-OS code preserved. Object parity excludes build provenance and the checked absolute selector symbol only; linked MAIN must match exactly.",
+  "authorGithub": "sumedho",
+  "sourceSha256": "bb68b4081e90543a6967d1573d50e01b8953519dcf06ce5b5068c7605e2d2743",
+  "localSourceRevision": "de3dab731ba75610ddd1bb4290ebbdd057b7b161",
+  "localSourcePath": "sdk/digitakt/modules/_submissions/note-accumulator",
+  "repository": "https://github.com/sumedho/digirequests",
+  "revision": "8eba613dc3e0b1698797609256fd4081923b4ef2",
+  "path": "modules/note-accumulator"
+}
