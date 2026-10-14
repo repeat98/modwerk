@@ -1,0 +1,59 @@
+{
+  "schema": 1,
+  "kind": "elekloader-catalog",
+  "revision": "note-accumulator-2026-10-14",
+  "about": "Modwerk source-only note-accumulator packages for Digitakt I OS 1.53 and 1.54, compiled from sdk/digitakt/modules/note-accumulator.",
+  "cores": [],
+  "mods": [
+    {
+      "file": "note-accumulator-1.1.1-os1.53.elemod",
+      "sha256": "5e52d94a0991469c2efc83531d96fb42ffacc6de11aa287de6df54929f500f23",
+      "id": "note-accumulator",
+      "version": "1.1.1",
+      "device": "digitakt-mk1",
+      "os": "1.53",
+      "license": "GPL-2.0-or-later",
+      "source": {
+        "repo": "repeat98/modwerk",
+        "commit": "f61a8ae5328e4ef816921c2e686bac477131459e",
+        "path": "sdk/imports/packages/note-accumulator/note-accumulator-1.1.1-os1.53.elemod"
+      },
+      "title": "Per-step Note Accumulator",
+      "requires": [
+        "core"
+      ],
+      "conflicts": [],
+      "summary": "Each enabled audio step remembers its own pitch increment between visits. Positive values climb, negative values descend, and the pitch wraps to the original note at the chosen range.",
+      "description": "Each enabled audio step remembers its own pitch increment between visits. Positive values climb, negative values descend, and the pitch wraps to the original note at the chosen range.",
+      "category": "Sequencer",
+      "author": "sumedho",
+      "needs_core": "2.1",
+      "on_unit": "The author reports this build fully tested and working with all six mods on a Digitakt 1, OS 1.53 and 1.54, for about one to two hours including project save/reload and a power cycle (2026-10-14)."
+    },
+    {
+      "file": "note-accumulator-1.1.1-os1.54.elemod",
+      "sha256": "1f9004c33e91eb8f7eba0ba44c8c0f0dcd2c3731116218f510ab04b7fbdd471e",
+      "id": "note-accumulator",
+      "version": "1.1.1",
+      "device": "digitakt-mk1",
+      "os": "1.54",
+      "license": "GPL-2.0-or-later",
+      "source": {
+        "repo": "repeat98/modwerk",
+        "commit": "f61a8ae5328e4ef816921c2e686bac477131459e",
+        "path": "sdk/imports/packages/note-accumulator/note-accumulator-1.1.1-os1.54.elemod"
+      },
+      "title": "Per-step Note Accumulator",
+      "requires": [
+        "core"
+      ],
+      "conflicts": [],
+      "summary": "Each enabled audio step remembers its own pitch increment between visits. Positive values climb, negative values descend, and the pitch wraps to the original note at the chosen range.",
+      "description": "Each enabled audio step remembers its own pitch increment between visits. Positive values climb, negative values descend, and the pitch wraps to the original note at the chosen range.",
+      "category": "Sequencer",
+      "author": "sumedho",
+      "needs_core": "2.1",
+      "on_unit": "The author reports this build fully tested and working with all six mods on a Digitakt 1, OS 1.53 and 1.54, for about one to two hours including project save/reload and a power cycle (2026-10-14)."
+    }
+  ]
+}

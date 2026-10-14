@@ -1,0 +1,777 @@
+{
+ "elemod": 2,
+ "id": "note-accumulator",
+ "version": "1.1.1",
+ "title": "Per-step Note Accumulator",
+ "description": "Each enabled audio step remembers its own pitch increment between visits. Positive values climb, negative values descend, and the pitch wraps to the original note at the chosen range.",
+ "category": "playback",
+ "author": "sumedho",
+ "license": "GPL-2.0-or-later",
+ "target": {
+  "device": "digitakt-mk1",
+  "product": "Digitakt mk1",
+  "os": "1.53",
+  "syx_sha256": "9bdd44bb6102fb25c143cfab97bc92b7a89c463f795d3112dce89771e29bcc92",
+  "section3_sha256": "4b47a9507758ca5669ca02ab2c0374d2c04c98aece445408295cc1dcb265c5df",
+  "section3_len": 2475584
+ },
+ "sections": {
+  ".run": {
+   "align": 4,
+   "len": 3109,
+   "parts": [
+    [
+     "hex",
+     "202f00080680ffffffe6e288206f00044a80670442804e754a8867f87207b2a8000854c07100448060ec206f0004206800042250226900282f4800044ed12f02701a222f000c206f0008b081662a203c0000038575a8038771b008000c82000000ac66262040741a5388b4816612727eb28864127040600e203c0000038660d47447b488650a241f4e75701ab08167e4700c60f24feffff4721a202f0014e08048d7040c206f0018b2af0010665e4ab900000000672a4ab9000000006622428043f90000000045f108007207119208005280b28066f04cd7040c4fef000c4e75220074400681ffffffc0b480660820bc4f46460060e04a816c3e327c002d360910c34a816c047240928020017409b4806c102200760a4c43180106810000003010c1760a4c4308014200068100000030108111400001609e327c002b60c04ab900000000660442804e75202f00040680ffffffe6e28866ee4eb94013865a2f004eb940014d862f004eb94001d24e508f7207b28054c07100448060cc2f02721a226f000c202f0010b289663c223c000002c0206f0008d1c075a803400c82000000c16630d2af0008741a204171b0080022005381b4896618747eb48154c144814a016710241f4e75223c0000030060c2744760e670ff60ec2f032f02242f0010262f000c2f022f034ebafe16508f4a8066122f4200102f43000c241f261f4ef94000f4042f034ebafe22588f4a8067122f022f004ebafe28508fe188241f261f4e75701ab0826608203c0000400060ec203c00000c0060e44feffff448d7001c242f0014282f0010262f00182f022f044ebafdae508f4a80661a2f4300182f4200142f4400104cd7001c4fef000c4ef94000f67c2f044ebafdb2588f4a80660c70ff4cd7001c4fef000c4e75723fb28365ee2f032f022f004ebafee24fef000c72ffb28067dae18860d84fefffe448d7003c2a2f0024282f0020262f00282f6f002c00102f6f003000142f6f003400182f052f044ebafd2a508f24004a8067422f044ebafd46588f20404a80673471a803870c80000000ac670e303c400c3140038570ac11400387e083701ab085663e707f4a836f082403b0836c0224002602e18b2f4300282f4500242f4400204cd7003c2f6f001800342f6f001400302f6f0010002c4fef001c4ef9400109d6704860c04fefffec48d7007c2c2f001c2a2f0018262f0020282f00242f062f054ebafc90508f24004a80675a2f054ebafcac588f4a806770723fb284656a204073e80388b8816460204441e80340d1c073900c81000000c167122240d3c450c0134002c01340030010bcffc1e083721ab2866630707f4a836f082403b0836c0224002602e18b2f4400242f4300202f46001c2f4500184cd7007c4fef00144ef94000f79c704860ce4cd7007c42804fef00144e754feffff048d7003c262f0018282f0014242f001c2a2f00202f032f044ebafbe0508f4a806728d485e082721ab283661a727f4a826f082002b2826c022001e1884cd7003c4fef00104e75724860e42f4500202f42001c2f4300182f4400144cd7003c4fef00104ef94000f50a4feffff448d7001c242f0014282f0010262f00182f022f044ebafb78508f4a8067320c83000000ff6f26701ab0826618203c00007f00b6805fc0710044804cd7001c4fef000c4e75203c0000480060e6428060ea2f4300182f4200142f4400104cd7001c4fef000c4ef94000f5da2f032f02242f0010262f000c2f022f034ebafb12508f4a806738701ab082662a203c00004000487800014878000142a74878ffff2f002f022f034eb94000fef64fef001c241f261f4e75203c00000c0060d42f4200102f43000c241f261f4ef94000ff9a4fefffe448d7001c242f0024282f0020262f00282f6f002c000c2f6f003000102f6f003400142f6f003800182f022f044ebafa8e508f4a80670c701ab0826638263c000040002f4300282f4200242f4400204cd7001c2f6f001800382f6f001400342f6f001000302f6f000c002c4fef001c4ef94000fef6263c00000c0060c6598f2f0a246f000c2f6f00100004202a00385180e68866522052206800282f0a4e90588f20404a80674071a803870c80000000ac660e303c40407240314003851141038743e8034041e8038071910c80000000c1660e50c012bcffff1340ffc01340ff805289b1c966e22f6f000400102f4a000c245f588f4ef9400274dc2f02242f000c2f024ebafaf6588f4a806718701ab082660a203c00000000241f4e75203c0000000060f40c82000000a3621270344c0028002042d1fc401a9dcc201060da207c401a9dcc60f42f02242f000c2f024ebafaaa588f4a806718701ab082660a203c00000000241f4e75203c0000000060f40c82000000a3621270344c0028002042d1fc401a9dc4201060da207c401a9dc460f4518f2f02242f00182f6f001000042f6f001400084878001a4ebafa4e588f4a80671cb4b9401aa30c6606243c00000000b4b9401aa3406606243c000000002f4200182f6f000800142f6f00040010241f508f4ef940093a6c4feffff048d7003c242f0018262f0014282f001c2a2f00202f022f034ebaf8b4508f4a80661e2f4500202f44001c2f4200182f4300144cd7003c4fef00104ef94000f3242f052f042f024ebaf91a4cef003c000c42804fef001c4e752f032f02242f000c262f00102f024ebaf9a4588f4a8066122f4300102f42000c241f261f4ef9000000004879000000002f032f024ebaf8d44fef000c241f203c00000000261f4e754fefffd448d74c1c2c6f0034242f0030262f0038282f0044246f0048266f004c2f6f003c00182f6f0040001c2f0e2f024ebaf7fc508f4a8066322f4b004c2f4a00482f4400442f4300382f4e00342f4200304cd74c1c2f6f001c00402f6f0018003c4fef002c4ef94000f2bc240f0682000000202f022f032f0e4ebaf8462f0248790000000048780002486b0006486a00092f3c4208cc702f044eb9400c25c04cef4c1c00284fef00544e754ab9000000006626487808004eb9400d4180588f20404a80672e22000681000008004298b28866fa23c000000000701a23c04197cfd4701b23c04197cfd8700123c0000000004e7552b90000000060de2079000000004a88670e20080680000008004298b08866fa42b90000000052b9000000004e754ab94199e12066124ab94199e130660a2039421b5e244a80670a4ab900000000670a700123c0000000004e754ebaffac60f04fefffec720748d70c1c246f0018202f001c206f0020282f0024226f002842aa001c42aa002042aa0040b28065000090723fb284650000884a896710724c4c0018000681421fa664b3c16672223c0000038f4c01080026082548002047faf7f8d68020040080acc100002540001c2f044878001a2f034e934fef000c72ffb280660c4878001a2f034ebaf68e508f2f044878001b24002f034e934fef000ce18a72ffb280660c4878001b2f034ebaf66a508f848052b900000000254200404cd70c1c4fef00144e754fefffe048d70c7c246f0024266a002c4a8b6604266a00282079000000004a886740262a00087007b08365367201b2aa000c662e202a002422000281000100810c8100010081661a242a001c22020281ffff00000c81acc20000661052b9000000004cd70c7c4fef00204e750c81acc1000066ee0800001266e8223900000000703f282a00402a04c480e08d2c2a0018b2aa002067162f48001c4ebafe44206f001c43ea002023d100000000e18b7040d1c3b085671c4a8b670a71ab007e7278b280670e200672480680fffffff4b2806408420011802c00608843f02c00200471807391bc81661073a90001b285660873b02c02b0816710420112861345000111842c0211812c0373302c03264543f318c0b3c06e064480b3c06c0493c9600a47f168f47048b08b65f23009dc8111802c030082acc200002546004052b9000000002542001c6000ff1a4feffff048d703034eb9000000004cd703034fef001023c0800019ac4e75254d00444feffff048ef030200042f2f00642f2f00642f2f00602f2f00602f0a4eb9000000004fef00144cef030200044fef0010200a4e754feffff048d703032f0a4eb900000000588f4cd703034fef001043f94399db544e75222a001c0281ffff00000c81acc200006600000a222a004060000006222a001843f980001f284e75222f00040c81000000a455c048794197ce984ef9400658004e4f2052414d0041434300524e47004e6f746520416363756d756c61746f7200416363756d756c61746f722052616e676500257300"
+    ]
+   ]
+  },
+  ".bss": {
+   "align": 4,
+   "size": 60
+  }
+ },
+ "symbols": {
+  "ours": [
+   ".run",
+   0
+  ],
+  "data": [
+   ".run",
+   42
+  ],
+  "default_value": [
+   ".run",
+   62
+  ],
+  "format": [
+   ".run",
+   148
+  ],
+  "ready": [
+   ".bss",
+   44
+  ],
+  "counters": [
+   ".bss",
+   56
+  ],
+  "audio_ui": [
+   ".run",
+   318
+  ],
+  "locked_value": [
+   ".run",
+   380
+  ],
+  "buf.0": [
+   ".bss",
+   32
+  ],
+  "pattern_seen": [
+   ".bss",
+   52
+  ],
+  "reset_seen": [
+   ".bss",
+   48
+  ],
+  "DT_OS154": [
+   "abs",
+   0
+  ],
+  "acc_change": [
+   ".run",
+   1026
+  ],
+  "acc_long": [
+   ".run",
+   1674
+  ],
+  "acc_tick": [
+   ".run",
+   2174
+  ],
+  "acc_accept_s": [
+   ".run",
+   2958
+  ],
+  "acc_pattern_s": [
+   ".run",
+   2872
+  ],
+  "acc_clear_popup": [
+   ".run",
+   1750
+  ],
+  "acc_default": [
+   ".run",
+   1244
+  ],
+  "acc_gfx": [
+   ".run",
+   2002
+  ],
+  "acc_render": [
+   ".run",
+   2292
+  ],
+  "acc_stock_popup": [
+   ".run",
+   3032
+  ],
+  "acc_set": [
+   ".run",
+   682
+  ],
+  "acc_get_step": [
+   ".run",
+   568
+  ],
+  "acc_short": [
+   ".run",
+   1598
+  ],
+  "acc_accept": [
+   ".run",
+   2542
+  ],
+  "acc_popup": [
+   ".run",
+   1930
+  ],
+  "acc_valid": [
+   ".run",
+   1134
+  ],
+  "acc_reset": [
+   ".run",
+   2254
+  ],
+  "acc_prepare": [
+   ".run",
+   2342
+  ],
+  "acc_track_changed": [
+   ".run",
+   1472
+  ],
+  "acc_stats": [
+   ".bss",
+   0
+  ],
+  "acc_pitch_s": [
+   ".run",
+   2992
+  ],
+  "acc_clear_default": [
+   ".run",
+   1344
+  ],
+  "acc_builder_s": [
+   ".run",
+   2902
+  ],
+  "acc_get": [
+   ".run",
+   472
+  ],
+  "acc_text": [
+   ".run",
+   1838
+  ],
+  "acc_set_step": [
+   ".run",
+   850
+  ]
+ },
+ "exports": [
+  "acc_accept",
+  "acc_accept_s",
+  "acc_builder_s",
+  "acc_change",
+  "acc_clear_default",
+  "acc_clear_popup",
+  "acc_default",
+  "acc_get",
+  "acc_get_step",
+  "acc_gfx",
+  "acc_long",
+  "acc_pattern_s",
+  "acc_pitch_s",
+  "acc_popup",
+  "acc_prepare",
+  "acc_render",
+  "acc_reset",
+  "acc_set",
+  "acc_set_step",
+  "acc_short",
+  "acc_stats",
+  "acc_stock_popup",
+  "acc_text",
+  "acc_tick",
+  "acc_track_changed",
+  "acc_valid"
+ ],
+ "imports": [],
+ "weak": [],
+ "relocs": [
+  [
+   ".run",
+   176,
+   "abs32",
+   "sec:.bss",
+   44
+  ],
+  [
+   ".run",
+   184,
+   "abs32",
+   "sec:.bss",
+   56
+  ],
+  [
+   ".run",
+   194,
+   "abs32",
+   "sec:.run",
+   3056
+  ],
+  [
+   ".run",
+   320,
+   "abs32",
+   "sec:.bss",
+   44
+  ],
+  [
+   ".run",
+   1624,
+   "abs32",
+   "sec:.run",
+   3063
+  ],
+  [
+   ".run",
+   1634,
+   "abs32",
+   "sec:.run",
+   3067
+  ],
+  [
+   ".run",
+   1700,
+   "abs32",
+   "sec:.run",
+   3071
+  ],
+  [
+   ".run",
+   1710,
+   "abs32",
+   "sec:.run",
+   3088
+  ],
+  [
+   ".run",
+   1794,
+   "abs32",
+   "sec:.run",
+   3071
+  ],
+  [
+   ".run",
+   1808,
+   "abs32",
+   "sec:.run",
+   3088
+  ],
+  [
+   ".run",
+   1968,
+   "abs32",
+   "sec:.run",
+   3032
+  ],
+  [
+   ".run",
+   1974,
+   "abs32",
+   "sec:.bss",
+   32
+  ],
+  [
+   ".run",
+   1994,
+   "abs32",
+   "sec:.bss",
+   32
+  ],
+  [
+   ".run",
+   2132,
+   "abs32",
+   "sec:.run",
+   3106
+  ],
+  [
+   ".run",
+   2176,
+   "abs32",
+   "sec:.bss",
+   56
+  ],
+  [
+   ".run",
+   2216,
+   "abs32",
+   "sec:.bss",
+   56
+  ],
+  [
+   ".run",
+   2240,
+   "abs32",
+   "sec:.bss",
+   44
+  ],
+  [
+   ".run",
+   2248,
+   "abs32",
+   "sec:.bss",
+   16
+  ],
+  [
+   ".run",
+   2256,
+   "abs32",
+   "sec:.bss",
+   56
+  ],
+  [
+   ".run",
+   2280,
+   "abs32",
+   "sec:.bss",
+   52
+  ],
+  [
+   ".run",
+   2286,
+   "abs32",
+   "sec:.bss",
+   12
+  ],
+  [
+   ".run",
+   2320,
+   "abs32",
+   "sec:.bss",
+   48
+  ],
+  [
+   ".run",
+   2330,
+   "abs32",
+   "sec:.bss",
+   48
+  ],
+  [
+   ".run",
+   2524,
+   "abs32",
+   "sec:.bss",
+   0
+  ],
+  [
+   ".run",
+   2568,
+   "abs32",
+   "sec:.bss",
+   56
+  ],
+  [
+   ".run",
+   2636,
+   "abs32",
+   "sec:.bss",
+   8
+  ],
+  [
+   ".run",
+   2666,
+   "abs32",
+   "sec:.bss",
+   52
+  ],
+  [
+   ".run",
+   2710,
+   "abs32",
+   "sec:.bss",
+   52
+  ],
+  [
+   ".run",
+   2860,
+   "abs32",
+   "sec:.bss",
+   4
+  ],
+  [
+   ".run",
+   2882,
+   "abs32",
+   "sec:.run",
+   2254
+  ],
+  [
+   ".run",
+   2936,
+   "abs32",
+   "sec:.run",
+   2342
+  ],
+  [
+   ".run",
+   2970,
+   "abs32",
+   "sec:.run",
+   2542
+  ]
+ ],
+ "sites": [
+  {
+   "addr": "0x4017ec68",
+   "len": 4,
+   "stock_sha256": "88c7b37885b06e813453a35eb473b75f77f08ebae1c6a1147cfb229555bab7fb",
+   "new": "00000000",
+   "kind": "data",
+   "relocs": [
+    [
+     0,
+     "abs32",
+     "sym:acc_default",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x4017ec78",
+   "len": 4,
+   "stock_sha256": "d5944d8fb88029ef281053f865cdce034f573c9d19628f10f9aeeb461148ae28",
+   "new": "00000000",
+   "kind": "data",
+   "relocs": [
+    [
+     0,
+     "abs32",
+     "sym:acc_change",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x4017ec7c",
+   "len": 4,
+   "stock_sha256": "a629b2b2186b9858bd0177c8232bc55a9cf384ab7be05f37d388724382c2d021",
+   "new": "00000000",
+   "kind": "data",
+   "relocs": [
+    [
+     0,
+     "abs32",
+     "sym:acc_valid",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x4017ec80",
+   "len": 4,
+   "stock_sha256": "b01ce17f569818e682f7373b00799566f90ed167242ce016d48f9a9a2f0ecc72",
+   "new": "00000000",
+   "kind": "data",
+   "relocs": [
+    [
+     0,
+     "abs32",
+     "sym:acc_get",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x4017ec98",
+   "len": 4,
+   "stock_sha256": "54e477b4d47a98b11ceaeb05441b6793bb0cf70a8bee786ac994c19d30368514",
+   "new": "00000000",
+   "kind": "data",
+   "relocs": [
+    [
+     0,
+     "abs32",
+     "sym:acc_get_step",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x4017ec9c",
+   "len": 4,
+   "stock_sha256": "38ec24fb0f61a04fe5ebc0874bcd496970dc019e06ec1081192261935f397899",
+   "new": "00000000",
+   "kind": "data",
+   "relocs": [
+    [
+     0,
+     "abs32",
+     "sym:acc_set_step",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x4017ecb0",
+   "len": 4,
+   "stock_sha256": "07d21168887876cd17e6df85803da189fe3de7adacdbabcb4b23d55dcff91960",
+   "new": "00000000",
+   "kind": "data",
+   "relocs": [
+    [
+     0,
+     "abs32",
+     "sym:acc_text",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x4017ecb4",
+   "len": 4,
+   "stock_sha256": "d8a1dc5992ad1682f860a7f6fd3230561cca64e1ffe143b7b119092869159c0c",
+   "new": "00000000",
+   "kind": "data",
+   "relocs": [
+    [
+     0,
+     "abs32",
+     "sym:acc_gfx",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x4017eccc",
+   "len": 4,
+   "stock_sha256": "bc73ba53d5765a3d613a6910d8b442206092ba4929ff86319efe6ec676f195ca",
+   "new": "00000000",
+   "kind": "data",
+   "relocs": [
+    [
+     0,
+     "abs32",
+     "sym:acc_set",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x40181c80",
+   "len": 4,
+   "stock_sha256": "6e7f7bb0127bdb55bd2feab675ff8b81946a220fd8e8b0c6a0fb00a9a7e24372",
+   "new": "00000000",
+   "kind": "data",
+   "relocs": [
+    [
+     0,
+     "abs32",
+     "sym:acc_track_changed",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x4000fe94",
+   "len": 8,
+   "stock_sha256": "6689ff53b4363920d5b60e194d9d5459f916612e4ed055667b6a73b2bb340c7c",
+   "new": "4ef9000000004e71",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:acc_short",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x4000feb6",
+   "len": 8,
+   "stock_sha256": "6689ff53b4363920d5b60e194d9d5459f916612e4ed055667b6a73b2bb340c7c",
+   "new": "4ef9000000004e71",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:acc_long",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x400657f8",
+   "len": 8,
+   "stock_sha256": "a9cb0530ab39b2e2175ab651cdfd35085a8b480ce5f40b6f45adfad03be33e72",
+   "new": "4ef9000000004e71",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:acc_popup",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x40033866",
+   "len": 6,
+   "stock_sha256": "a6ce30dcb2e320e189d15d4d28155f2865fc9e08e7fbb9959067687c1bc781d2",
+   "new": "4bf900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:acc_clear_default",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x40033930",
+   "len": 6,
+   "stock_sha256": "ffdf631dbc91bbd9d532941bb3c975030eb42fd9ecf3e9ace5516deb606c8aea",
+   "new": "4eb900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:acc_clear_popup",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x400776c6",
+   "len": 6,
+   "stock_sha256": "9dc628ff9d7f4d36f677799275cdfa5628d29a9505cfd3f05974321ee080ea68",
+   "new": "4eb900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:acc_pattern_s",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x4006f7ea",
+   "len": 6,
+   "stock_sha256": "bc35df1fb9589323927aed17c2c2d986c620b75768e2ee8fd57724cbc4ff9e06",
+   "new": "4eb900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:acc_builder_s",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x400778ec",
+   "len": 6,
+   "stock_sha256": "06aea71776f597dbcdef256382e56e34f5ec5e09eae2602088c88eb1d5dd6594",
+   "new": "4eb900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:acc_accept_s",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x400779f2",
+   "len": 10,
+   "stock_sha256": "9452b615b82c79db9f29b62065bf1fd3ea8ae75123c15b3fe12e7821c157d7b2",
+   "new": "4eb9000000004e714e71",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:acc_pitch_s",
+     0
+    ]
+   ]
+  }
+ ],
+ "collections": {},
+ "contribute": [
+  {
+   "to": "ev_tick",
+   "order": 40,
+   "data": "00000000",
+   "relocs": [
+    [
+     0,
+     "abs32",
+     "sym:acc_tick",
+     0
+    ]
+   ],
+   "claims": []
+  },
+  {
+   "to": "ev_render_in",
+   "order": 40,
+   "data": "00000000",
+   "relocs": [
+    [
+     0,
+     "abs32",
+     "sym:acc_render",
+     0
+    ]
+   ],
+   "claims": []
+  }
+ ],
+ "copied": [],
+ "resources": {
+  "regions": [],
+  "names": [
+   "ui:audio TRIG:G/H",
+   "storage:audio-note2-4:ACC1",
+   "audio-event:28/32/64:ACC1"
+  ],
+  "core": "2.1"
+ },
+ "requires": [
+  "core"
+ ],
+ "conflicts": [],
+ "signature": null
+}
