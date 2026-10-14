@@ -1,0 +1,113 @@
+{
+  "schema": 1,
+  "kind": "elekloader-catalog",
+  "revision": "digitakt-dependencies-2026-10-14",
+  "about": "Modwerk source-only Machine Pages 1.2 (irpina’s 1.1 adapted to Core 2.1) and DT Support 1.0.1 for Digitakt I OS 1.53 and 1.54, compiled from sdk/digitakt/dependencies.",
+  "cores": [],
+  "mods": [
+    {
+      "file": "machine-pages-1.2-os1.53.elemod",
+      "sha256": "93092ba38bf65583a3d436e3d8c560b0df0480477f81127fe9de7a3264ba38c6",
+      "id": "machine-pages",
+      "version": "1.2",
+      "device": "digitakt-mk1",
+      "os": "1.53",
+      "license": "GPL-2.0-or-later",
+      "source": {
+        "repo": "repeat98/modwerk",
+        "commit": "a74bd736c26b235946e3d2e5c4466746de968cd9",
+        "path": "sdk/imports/packages/machine-pages/machine-pages-1.2-os1.53.elemod"
+      },
+      "title": "machine pages",
+      "requires": [
+        "core"
+      ],
+      "conflicts": [
+        "digichain"
+      ],
+      "summary": "Draws the SRC and LFO pages of the SRC machines that describe their own, and gives the render an event for machines that make or take a track's sound, so several machine mods combine. irpina's Machine Pages 1.1, adapted by sumedho to run on Core 2.1. On its own, and for machines that do not describe a page, it changes nothing the unit does.",
+      "description": "Draws the SRC and LFO pages of the SRC machines that describe their own, and gives the render an event for machines that make or take a track's sound, so several machine mods combine. irpina's Machine Pages 1.1, adapted by sumedho to run on Core 2.1. On its own, and for machines that do not describe a page, it changes nothing the unit does.",
+      "category": "System",
+      "author": "irpina",
+      "needs_core": "2.1",
+      "on_unit": "Shared dependency of sumedho’s Digitakt mods; included automatically."
+    },
+    {
+      "file": "machine-pages-1.2-os1.54.elemod",
+      "sha256": "1ab853a2ff628dd60b8fa0c5693f3babac64b95c456b331162797aac1526b1a0",
+      "id": "machine-pages",
+      "version": "1.2",
+      "device": "digitakt-mk1",
+      "os": "1.54",
+      "license": "GPL-2.0-or-later",
+      "source": {
+        "repo": "repeat98/modwerk",
+        "commit": "a74bd736c26b235946e3d2e5c4466746de968cd9",
+        "path": "sdk/imports/packages/machine-pages/machine-pages-1.2-os1.54.elemod"
+      },
+      "title": "machine pages",
+      "requires": [
+        "core"
+      ],
+      "conflicts": [
+        "digichain"
+      ],
+      "summary": "Draws the SRC and LFO pages of the SRC machines that describe their own, and gives the render an event for machines that make or take a track's sound, so several machine mods combine. irpina's Machine Pages 1.1, adapted by sumedho to run on Core 2.1. On its own, and for machines that do not describe a page, it changes nothing the unit does.",
+      "description": "Draws the SRC and LFO pages of the SRC machines that describe their own, and gives the render an event for machines that make or take a track's sound, so several machine mods combine. irpina's Machine Pages 1.1, adapted by sumedho to run on Core 2.1. On its own, and for machines that do not describe a page, it changes nothing the unit does.",
+      "category": "System",
+      "author": "irpina",
+      "needs_core": "2.1",
+      "on_unit": "Shared dependency of sumedho’s Digitakt mods; included automatically."
+    },
+    {
+      "file": "dt-support-1.0.1-os1.53.elemod",
+      "sha256": "2164a3bf1d89743189616127a5bc7e93743f2a691502d4750f517915fbd0180c",
+      "id": "dt-support",
+      "version": "1.0.1",
+      "device": "digitakt-mk1",
+      "os": "1.53",
+      "license": "GPL-2.0-or-later",
+      "source": {
+        "repo": "repeat98/modwerk",
+        "commit": "a74bd736c26b235946e3d2e5c4466746de968cd9",
+        "path": "sdk/imports/packages/dt-support/dt-support-1.0.1-os1.53.elemod"
+      },
+      "title": "Digitakt feature support",
+      "requires": [
+        "core"
+      ],
+      "conflicts": [],
+      "summary": "Shared allocation-lifecycle hook for CC Names and Euclidean. Does not add controls.",
+      "description": "Shared allocation-lifecycle hook for CC Names and Euclidean. Does not add controls.",
+      "category": "System",
+      "author": "sumedho",
+      "needs_core": "2.1",
+      "on_unit": "Shared dependency of sumedho’s Digitakt mods; included automatically."
+    },
+    {
+      "file": "dt-support-1.0.1-os1.54.elemod",
+      "sha256": "7378c51c4970df68a47e51c9a85402b91577a1495931f2ef4ec566a572dd0b88",
+      "id": "dt-support",
+      "version": "1.0.1",
+      "device": "digitakt-mk1",
+      "os": "1.54",
+      "license": "GPL-2.0-or-later",
+      "source": {
+        "repo": "repeat98/modwerk",
+        "commit": "a74bd736c26b235946e3d2e5c4466746de968cd9",
+        "path": "sdk/imports/packages/dt-support/dt-support-1.0.1-os1.54.elemod"
+      },
+      "title": "Digitakt feature support",
+      "requires": [
+        "core"
+      ],
+      "conflicts": [],
+      "summary": "Shared allocation-lifecycle hook for CC Names and Euclidean. Does not add controls.",
+      "description": "Shared allocation-lifecycle hook for CC Names and Euclidean. Does not add controls.",
+      "category": "System",
+      "author": "sumedho",
+      "needs_core": "2.1",
+      "on_unit": "Shared dependency of sumedho’s Digitakt mods; included automatically."
+    }
+  ]
+}
