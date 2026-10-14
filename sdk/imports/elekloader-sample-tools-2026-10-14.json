@@ -1,0 +1,63 @@
+{
+  "schema": 1,
+  "kind": "elekloader-catalog",
+  "revision": "sample-tools-2026-10-14",
+  "about": "Modwerk source-only sample-tools packages for Digitakt I OS 1.53 and 1.54, compiled from sdk/digitakt/modules/sample-tools.",
+  "cores": [],
+  "mods": [
+    {
+      "file": "sample-tools-0.2.2-os1.53.elemod",
+      "sha256": "dea6b2624b278bb2f469c166c792aa3b4f93cd585d62244bd4dc07c6264ceb73",
+      "id": "sample-tools",
+      "version": "0.2.2",
+      "device": "digitakt-mk1",
+      "os": "1.53",
+      "license": "GPL-2.0-or-later",
+      "source": {
+        "repo": "repeat98/modwerk",
+        "commit": "56ce94812bcf5002178129cc7320d6b109f0d173",
+        "path": "sdk/imports/packages/sample-tools/sample-tools-0.2.2-os1.53.elemod"
+      },
+      "title": "Sample Snap and Crossfade",
+      "requires": [
+        "core"
+      ],
+      "conflicts": [
+        "digislicer"
+      ],
+      "summary": "Snap native SRC start, end and loop markers to nearby zero crossings. In the normal recording editor, apply an adjustable loop crossfade with one-level undo.",
+      "description": "Snap native SRC start, end and loop markers to nearby zero crossings. In the normal recording editor, apply an adjustable loop crossfade with one-level undo.",
+      "category": "Sampling",
+      "author": "sumedho",
+      "needs_core": "2.1",
+      "on_unit": "The author reports this build fully tested and working with all six mods on a Digitakt 1, OS 1.53 and 1.54, for about one to two hours including project save/reload and a power cycle (2026-10-14)."
+    },
+    {
+      "file": "sample-tools-0.2.2-os1.54.elemod",
+      "sha256": "7a8c98d1a839b2f48b58a4464f958465c4f238961abe5ca3aacdb39e7c341d2d",
+      "id": "sample-tools",
+      "version": "0.2.2",
+      "device": "digitakt-mk1",
+      "os": "1.54",
+      "license": "GPL-2.0-or-later",
+      "source": {
+        "repo": "repeat98/modwerk",
+        "commit": "56ce94812bcf5002178129cc7320d6b109f0d173",
+        "path": "sdk/imports/packages/sample-tools/sample-tools-0.2.2-os1.54.elemod"
+      },
+      "title": "Sample Snap and Crossfade",
+      "requires": [
+        "core"
+      ],
+      "conflicts": [
+        "digislicer"
+      ],
+      "summary": "Snap native SRC start, end and loop markers to nearby zero crossings. In the normal recording editor, apply an adjustable loop crossfade with one-level undo.",
+      "description": "Snap native SRC start, end and loop markers to nearby zero crossings. In the normal recording editor, apply an adjustable loop crossfade with one-level undo.",
+      "category": "Sampling",
+      "author": "sumedho",
+      "needs_core": "2.1",
+      "on_unit": "The author reports this build fully tested and working with all six mods on a Digitakt 1, OS 1.53 and 1.54, for about one to two hours including project save/reload and a power cycle (2026-10-14)."
+    }
+  ]
+}
