@@ -34,11 +34,17 @@ it('rejects a stale catalog before generation or any dependent check can run', (
   expect(result.scripts).toEqual(['licenses:check', 'machines:check', 'modules:check'])
 })
 
+it('refuses a cross-compatibility clash before generation or any dependent check can run', () => {
+  const result = check('modules:compat')
+  expect(result.status).toBe(1)
+  expect(result.scripts).toEqual(['licenses:check', 'machines:check', 'modules:check', 'elekloader:check', 'modules:compat'])
+})
+
 it.each(['sdk:check', 'lint', 'test', 'build:bundle', ''])('keeps every independent check mandatory and waits for all results (failure: %s)', failure => {
   const result = check(failure)
   expect(result.status).toBe(failure ? 1 : 0)
-  expect(result.scripts.slice(0, 7)).toEqual(['licenses:check', 'machines:check', 'modules:check', 'elekloader:check', 'licenses:generate', 'machines:generate', 'modules:generate'])
-  expect(result.scripts.slice(7).sort()).toEqual(['build:bundle', 'lint', 'sdk:check', 'test', 'typecheck'])
+  expect(result.scripts.slice(0, 8)).toEqual(['licenses:check', 'machines:check', 'modules:check', 'elekloader:check', 'modules:compat', 'licenses:generate', 'machines:generate', 'modules:generate'])
+  expect(result.scripts.slice(8).sort()).toEqual(['build:bundle', 'lint', 'sdk:check', 'test', 'typecheck'])
   expect(result.scripts.indexOf('build:bundle')).toBeGreaterThan(result.scripts.indexOf('typecheck'))
 })
 

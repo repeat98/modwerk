@@ -1,4 +1,5 @@
-// Does this module fit every Modwerk workflow? Read-only: no firmware, no module code, no network.
+// Does this module fit every Modwerk workflow? Read-only: no firmware, no network; module code runs only as the
+// Octatrack manifests' declarations, read by the cross-compatibility gate.
 //
 //   npm run module:doctor -- <module-id>
 //   npm run module:doctor -- --all        # every catalog module and every Digitakt/Digitone module; CI runs this
@@ -33,6 +34,9 @@ if (!all && !exists('sdk/octabam/modules/' + ids[0]) && !machineModules.some(ite
 // The module and catalog rules every PR already enforces (versions, documentation, qualification, gauges, media): run once.
 const rules = spawnSync(process.execPath, ['scripts/modules.mjs'], { cwd: root, encoding: 'utf8' })
 const rulesProblem = rules.status === 0 ? '' : (rules.stderr.trim().split('\n').filter(line => line && !/^\s+at /.test(line)).slice(-1)[0] ?? 'failed')
+// Cross-compatibility of every active Octatrack module with every other and the base (scripts/module-compat.py): run once.
+const compat = spawnSync(process.platform === 'win32' ? 'python' : 'python3', ['-B', 'scripts/module-compat.py', '--json'], { cwd: root, encoding: 'utf8' })
+const compatResult = (() => { try { return JSON.parse(compat.stdout) } catch { return null } })(), compatProblems = compatResult?.problems
 
 // native-metadata.json holds one ledger check per module combination (hundreds of thousands): parse it and count
 // each module's pairs once, not once per module.
@@ -124,6 +128,13 @@ function octatrack(id) {
   const { checks, pairs: pairCounts } = nativeChecks(), pairs = pairCounts.get(id) ?? 0
   if (!(id in checks)) fail('declaration checks', 'the module alone has no recorded ledger check, so a build of it is refused', 'npm run module:verify -- ' + id + ' --os <your OCTATRACK_OS1.40C.bin> (it records them)')
   else ok('declaration checks', 'recorded alone and beside ' + pairs + ' other modules')
+
+  const clashes = compatProblems?.filter(problem => problem.modules.includes(id)) ?? []
+  if (!compatProblems) fail('cross-compatibility', 'the gate did not run: ' + ((compat.stderr || compat.error?.message || '').trim().split('\n').pop() || 'no output'), 'install Python 3.10+, then npm run modules:compat')
+  else if (!entry || paused) info('cross-compatibility', 'compared with every other module once it is listed and not paused (npm run modules:compat)')
+  else if (clashes.length) fail('cross-compatibility', clashes.length + ' clash(es), first: ' + clashes[0].text, clashes[0].fix + ' (' + clashes[0].guide + '); npm run modules:compat -- ' + id + ' lists every one')
+  else ok('cross-compatibility', 'installs beside every other active module and the base (npm run modules:compat)')
+  for (const pending of compatResult?.summary.pending.filter(row => row.modules.includes(id)) ?? []) info('event migration', 'still patches the site of ' + pending.event + ', allowed until: ' + pending.until + ' (docs/module-guides/README.md#events)')
 
   const conflicts = document.compatibility.conflicts ?? []
   info('conflicts', (document.compatibility.effectId != null ? 'effect id ' + document.compatibility.effectId + ': ' + (ANALOG_BD_DSP_COMPANIONS.includes(document.id) ? 'reviewed beside Analog BD, subject to DSP space; ' : 'refused beside Analog BD automatically; ') : '') + (conflicts.length ? 'declared: ' + conflicts.join(', ') : 'none declared') + '. Are they complete? (guide: Integrate)')

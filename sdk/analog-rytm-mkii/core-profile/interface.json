@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 1,
+  "machine": "analog-rytm-mkii",
+  "interface": "0.1",
+  "status": "Upstream elekloader core-ar2 0.1 for Analog Rytm MKII OS 1.73: the Digitakt mk1 core with the Rytm's addresses. Every event has run on a unit; no Modwerk module targets it yet.",
+  "events": [
+    {
+      "name": "ev_tick",
+      "when": "the UI compose check, approximately 20 Hz",
+      "handler": "void f(void *ctrl); set ctrl + 0x20 to 1 to request redraw; not an audio-rate clock"
+    },
+    {
+      "name": "ev_draw",
+      "when": "after the OS composes the screen",
+      "handler": "void f(void *bmp, void *ctrl); y counts up from the bottom row (0) to the top (63)"
+    },
+    {
+      "name": "ev_key",
+      "when": "a UI key event",
+      "handler": "int f(void *brain, void *event); nonzero consumes the event"
+    },
+    {
+      "name": "ev_enc",
+      "when": "a UI encoder event",
+      "handler": "int f(void *brain, void *event); nonzero consumes the event"
+    },
+    {
+      "name": "ev_settings",
+      "when": "building the SETTINGS menu",
+      "handler": "void f(void *menu)"
+    },
+    {
+      "name": "ev_render_in",
+      "when": "entry of the ColdFire's 32-frame audio block, which renders the digital delay and reverb; the analog voices are not rendered here",
+      "handler": "void f(void)"
+    },
+    {
+      "name": "ev_render_out",
+      "when": "exit of the same audio block",
+      "handler": "void f(void)"
+    }
+  ],
+  "tables": [],
+  "exports": [
+    {
+      "name": "core_additem",
+      "prototype": "void core_additem(menu, row)",
+      "purpose": "Add a SETTINGS row from an ev_settings handler."
+    }
+  ],
+  "claims": [
+    "timer:DTIM0"
+  ],
+  "memory": {
+    "area": "0x47be0000-0x47c00000"
+  }
+}

@@ -65,6 +65,10 @@ function fastStubs(derive) {
 await mkdir(dirname(output), { recursive: true })
 await mkdir(output) // A stale successful inventory must never survive a failed rebuild.
 for (const machine of machines.filter(item => item.sdk?.platform === 'elemod')) {
+  const folderRoot = resolve(root, machine.sdk.modules)
+  const entries = (await readdir(folderRoot, { withFileTypes: true })).filter(entry => entry.isDirectory() && !entry.name.startsWith('_')).sort((a, b) => a.name.localeCompare(b.name))
+  // A machine whose SDK has no module yet needs no linker profile; its first module brings one.
+  if (!entries.length) continue
   const device = LINK_DEVICES.find(item => item.machine === machine.id)
   if (!device) throw new Error('No linker profile for ' + machine.id)
   const folderRoot = resolve(root, machine.sdk.modules)
@@ -75,6 +79,8 @@ for (const machine of machines.filter(item => item.sdk?.platform === 'elemod')) 
     if (!entry.isDirectory() || entry.name.startsWith('_')) continue
     if (inputs.some(input => input.document.id === entry.name)) throw new Error('Module duplicates a dependency: ' + entry.name)
     const folder = resolve(moduleRoot, entry.name)
+  for (const entry of entries) {
+    const folder = resolve(folderRoot, entry.name)
     const document = parseModwerkModule(await json(await resolveModuleFile(folder, 'modwerk.module.json')), machines)
     if (document.machine !== machine.id || document.id !== entry.name || document.exclusive) throw new Error('Expected a linkable module in its machine folder')
     const build = parseElemodBuild(await json(await resolveModuleFile(folder, document.platform.build)), document)

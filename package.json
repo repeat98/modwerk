@@ -35,6 +35,7 @@
     "device": "node scripts/device.mjs",
     "modules:generate": "node scripts/modules.mjs --write",
     "modules:check": "node scripts/modules.mjs",
+    "modules:compat": "python3 -B scripts/module-compat.py",
     "licenses:generate": "node scripts/licenses.mjs --write",
     "licenses:check": "node scripts/platform-licenses.mjs && node scripts/licenses.mjs && node --test scripts/license-notices.node-test.mjs scripts/platform-licenses.node-test.mjs",
     "module:new": "node scripts/scaffold-module.mjs",
