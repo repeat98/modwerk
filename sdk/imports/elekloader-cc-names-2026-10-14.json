@@ -1,0 +1,61 @@
+{
+  "schema": 1,
+  "kind": "elekloader-catalog",
+  "revision": "cc-names-2026-10-14",
+  "about": "Modwerk source-only cc-names packages for Digitakt I OS 1.53 and 1.54, compiled from sdk/digitakt/modules/cc-names.",
+  "cores": [],
+  "mods": [
+    {
+      "file": "cc-names-2.1.1-os1.53.elemod",
+      "sha256": "24aff56846b356b6f0c78459ee38854980804d39949d149076e53f24fe0755ac",
+      "id": "cc-names",
+      "version": "2.1.1",
+      "device": "digitakt-mk1",
+      "os": "1.53",
+      "license": "GPL-2.0-or-later",
+      "source": {
+        "repo": "repeat98/modwerk",
+        "commit": "fd9dafa79451497fa0106b0a5ca19f81bfe31370",
+        "path": "sdk/imports/packages/cc-names/cc-names-2.1.1-os1.53.elemod"
+      },
+      "title": "CC Assignment Names",
+      "requires": [
+        "core",
+        "dt-support"
+      ],
+      "conflicts": [],
+      "summary": "Give each MIDI CC assignment a label of up to five characters. Labels appear on CC VALUE and follow native pattern and project operations.",
+      "description": "Give each MIDI CC assignment a label of up to five characters. Labels appear on CC VALUE and follow native pattern and project operations.",
+      "category": "MIDI",
+      "author": "sumedho",
+      "needs_core": "2.1",
+      "on_unit": "The author reports this build fully tested and working with all six mods on a Digitakt 1, OS 1.53 and 1.54, for about one to two hours including project save/reload and a power cycle (2026-10-14)."
+    },
+    {
+      "file": "cc-names-2.1.1-os1.54.elemod",
+      "sha256": "78de45bbe8a206422f14c227b5a1b4db7214b388ec06410c7513385287627459",
+      "id": "cc-names",
+      "version": "2.1.1",
+      "device": "digitakt-mk1",
+      "os": "1.54",
+      "license": "GPL-2.0-or-later",
+      "source": {
+        "repo": "repeat98/modwerk",
+        "commit": "fd9dafa79451497fa0106b0a5ca19f81bfe31370",
+        "path": "sdk/imports/packages/cc-names/cc-names-2.1.1-os1.54.elemod"
+      },
+      "title": "CC Assignment Names",
+      "requires": [
+        "core",
+        "dt-support"
+      ],
+      "conflicts": [],
+      "summary": "Give each MIDI CC assignment a label of up to five characters. Labels appear on CC VALUE and follow native pattern and project operations.",
+      "description": "Give each MIDI CC assignment a label of up to five characters. Labels appear on CC VALUE and follow native pattern and project operations.",
+      "category": "MIDI",
+      "author": "sumedho",
+      "needs_core": "2.1",
+      "on_unit": "The author reports this build fully tested and working with all six mods on a Digitakt 1, OS 1.53 and 1.54, for about one to two hours including project save/reload and a power cycle (2026-10-14)."
+    }
+  ]
+}
