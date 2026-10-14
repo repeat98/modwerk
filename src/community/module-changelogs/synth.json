@@ -1,0 +1,22 @@
+[
+  {
+    "version": "0.1.2-experimental",
+    "date": "2026-10-08",
+    "changes": [
+      "correct the MIDI chromatic drawer’s argument stack so changing MIDI trig mode keeps the instrument responsive (#264).",
+      "add 18.06 dB of source headroom before mono output and paraphonic summing, preserving envelopes and relative voice levels (#273). Sounds are quieter at unchanged mixer settings; effect and multi-track mix clipping remains possible.",
+      "Owner-approved experimental release without current hardware validation. Chip timing and complete memory bounds remain unmeasured; the original static symptom is not hardware-confirmed.",
+      "Documentation/media-only (12 October 2026): add a sample-free melodic preview using VECTOR’s native generator offline to supply FM note locks, with native 128 BPM sequencing, index/feedback sweeps and actual Mini Verb in FX2. Remove boot/edit silence and added gaps; include exact generator, source/image, controls, recording and decoded peak provenance. Firmware and hardware/performance qualification are unchanged.",
+      "USB package (14 Oct 2026; distribution only, the module source and version are unchanged): loads over USB as one independent package beside every other module, on a Modwerk base built with site events. What it shares with other machines goes through the base's machine chooser table and take events instead of a machine group, and its authored bytes that coincide with stock are rebuilt from your own OS at install. Emulator and host tests only; no hardware run of this package. The owner waived hardware evidence for this exact version's USB package for the beta."
+    ]
+  },
+  {
+    "version": "0.1.1-experimental",
+    "date": "2026-10-06",
+    "changes": [
+      "First Modwerk catalog release of FM Synth as a dedicated SRC track machine, without needing a sample.",
+      "Support one to four voices, chords, glide and sequenced parameter locks. Native UI/software evidence is recorded; hardware behaviour remains untested."
+    ],
+    "sourceCommit": "a1d8fa7d6bd4eb105d7851009a442d729369aadf"
+  }
+]

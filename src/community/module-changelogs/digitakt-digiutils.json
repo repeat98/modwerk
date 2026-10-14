@@ -1,0 +1,19 @@
+[
+  {
+    "version": "1.9.1-experimental",
+    "date": "2026-10-07",
+    "changes": [
+      "Media-only: match the saved SVG thumbnail to the library’s existing signal illustration, including its grid, palette and typography; update the illustration alt text.",
+      "Documentation-only: expand access and display controls, fullscreen/close behaviour and real utility-page captures. Pinned firmware code is unchanged."
+    ],
+    "sourceCommit": "27995ac9dfcc1fd507a7a47962d6cdf7e06795f4"
+  },
+  {
+    "version": "1.9.0-experimental",
+    "date": "2026-10-06",
+    "changes": [
+      "Import the pinned utility pages for waveform, spectrum, XY, tuning and track activity. Master EQ is provided separately by Digi EQ."
+    ],
+    "sourceCommit": "2f2a09f2c8eb0ebf5695919c7174494b6093705a"
+  }
+]

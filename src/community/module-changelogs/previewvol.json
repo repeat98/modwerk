@@ -1,0 +1,11 @@
+[
+  {
+    "version": "0.1.2-experimental",
+    "date": "2026-10-02",
+    "changes": [
+      "First Modwerk catalog release of Sam Banks’s preview-volume patch: Flex/Static sample previews use the default AMP volume even when the active track is turned down.",
+      "Retain the upstream implementation and real UI captures; verify stock bytes from the user’s own local firmware."
+    ],
+    "sourceCommit": "b98abc5fcefad5e7c180f3746aa740159c19c422"
+  }
+]

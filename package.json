@@ -18,6 +18,8 @@
     "test": "vitest run",
     "check": "node scripts/check.mjs",
     "pr:ready": "node scripts/pr-ready.mjs",
+    "prepare": "node scripts/machine-modules.mjs && node scripts/module-changelogs.mjs --write && node scripts/elekloader-vendor.ts --write",
+    "predev": "npm run prepare",
     "deploy": "npm run build && wrangler deploy --config wrangler.worker.jsonc",
     "dev:community": "wrangler dev --config wrangler.worker.jsonc --port 8788",
     "db:local": "wrangler d1 migrations apply octamod-community --config wrangler.worker.jsonc --local",

@@ -1,4 +1,4 @@
-digi1_mods releases by gdeo607, built by the vendored elekloader builder, unmodified and pinned by SHA-256 in vendor/elekloader/catalog/catalog.json to commit 35bacb3730d108e4dc48a7bd6de4c99ae9b161e6:
+digi1_mods releases by gdeo607, built by the vendored elekloader builder, unmodified and pinned by SHA-256 in vendor/elekloader/upstream-catalog.json to commit 35bacb3730d108e4dc48a7bd6de4c99ae9b161e6:
 - digichain 1.6, Digi EQ 1.0b, Digi Matrix 1.0b, Digi Mono 0.13b, Digi Poly 2.0 and Digi utilities 1.9a, each for Digitakt OS 1.53 and 1.54: https://github.com/gdeo607/digi1_mods/tree/35bacb3730d108e4dc48a7bd6de4c99ae9b161e6/elemods
 The imported sources and documentation are in sdk/digitakt/modules.
 

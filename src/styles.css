@@ -264,6 +264,8 @@ h2 { font-size: 16px; letter-spacing: -.15px; font-weight: 600; }
 .preview-label { color: var(--signal); font: 8px var(--mono); letter-spacing: 1px; display: flex; align-items: center; justify-content: space-between; padding: 14px 16px 0; height: 24px; flex-shrink: 0; }
 .preview-led { width: 4px; height: 4px; border-radius: 50%; background: var(--signal); opacity: .6; }
 .signal-art { width: 100%; height: calc(100% - 46px); overflow: visible; stroke-width: 1.3; stroke-linecap: round; stroke-linejoin: round; }
+/* A saved thumbnail paints its own #232328 surface, the same as --preview: lighten keeps the card's accent glow instead of a flat panel. */
+.signal-art .saved-thumbnail { mix-blend-mode: lighten; }
 .signal-grid { stroke: #ffffff; opacity: .035; stroke-width: .7; }
 .signal-main { stroke: var(--signal); stroke-width: 2.3; }
 .signal-secondary { stroke: var(--signal); opacity: .45; stroke-width: 1.7; }

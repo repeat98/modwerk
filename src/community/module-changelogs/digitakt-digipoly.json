@@ -1,0 +1,19 @@
+[
+  {
+    "version": "2.0.1-experimental",
+    "date": "2026-10-07",
+    "changes": [
+      "Media-only: match the saved SVG thumbnail to the library’s existing signal illustration, including its grid, palette and typography; update the illustration alt text.",
+      "Documentation-only: explain NOT1–NOT4, borrowed voice tracks and voice-pool settings, with real page captures. Pinned firmware code is unchanged."
+    ],
+    "sourceCommit": "0bc09b7a4ef53477b897951fdf851e42a4f140dd"
+  },
+  {
+    "version": "2.0.0-experimental",
+    "date": "2026-10-06",
+    "changes": [
+      "Import the pinned POLY SRC machine and SETTINGS > POLY voice pool, using additional tracks for chord voices."
+    ],
+    "sourceCommit": "2f2a09f2c8eb0ebf5695919c7174494b6093705a"
+  }
+]

@@ -66,9 +66,9 @@ def main():
         if entry['id'] == 'airwindows-chorus':
             entry['version'] = VERSION
     catalog_path.write_text(json.dumps(catalog, indent=2)+'\n')
-    notes_path = output/'src/community/module-changelogs.json'
+    notes_path = output/'src/community/module-changelogs/airwindows-chorus.json'
     notes = json.loads(notes_path.read_text())
-    notes['modules']['airwindows-chorus'].insert(0, {
+    notes.insert(0, {
         'version': VERSION, 'date': '2026-10-09',
         'changes': [
             'Reduces DSP work while preserving the full stereo delay range, control smoothing and bit-identical output in the recorded comparison fixtures.',

@@ -1,0 +1,19 @@
+[
+  {
+    "version": "0.6.1-experimental",
+    "date": "2026-10-07",
+    "changes": [
+      "Media-only: match the saved SVG thumbnail to the library’s existing signal illustration, including its grid, palette and typography; update the illustration alt text.",
+      "Documentation-only: explain source-track selection, pitch/gain, AMP gating and the upstream prototype limitations, with real page captures. Pinned firmware code is unchanged."
+    ],
+    "sourceCommit": "8fe05a8f9b22e35e409dec99bf99933865d2be13"
+  },
+  {
+    "version": "0.6.0-experimental",
+    "date": "2026-10-04",
+    "changes": [
+      "First Modwerk import of NEIGHBOR: route another audio track’s post-filter signal through the receiving track’s AMP and effects."
+    ],
+    "sourceCommit": "0a6f0fa0c290f683f31cc28af170f10334b0839a"
+  }
+]

@@ -1,0 +1,19 @@
+[
+  {
+    "version": "1.0.1-experimental",
+    "date": "2026-10-07",
+    "changes": [
+      "Media-only: match the saved SVG thumbnail to the library’s existing signal illustration, including its grid, palette and typography; update the illustration alt text.",
+      "Documentation-only: explain route source/destination, OWN selection and bipolar depth, with real matrix-page captures. Pinned firmware code is unchanged."
+    ],
+    "sourceCommit": "a6af902335302572a4623216a167c8ad8e1560e1"
+  },
+  {
+    "version": "1.0.0-experimental",
+    "date": "2026-10-06",
+    "changes": [
+      "Import the pinned modulation matrix, adding eight routes from track LFOs to parameters on other tracks through SETTINGS > MOD MATRIX."
+    ],
+    "sourceCommit": "2f2a09f2c8eb0ebf5695919c7174494b6093705a"
+  }
+]

@@ -1,0 +1,9 @@
+[
+  {
+    "version": "0.2.2",
+    "date": "2026-10-14",
+    "changes": [
+      "First Modwerk release for Digitakt I OS 1.53 and 1.54, on Core 2.1. Snap native SRC start, end and loop markers to nearby zero crossings. In the normal recording editor, apply an adjustable loop crossfade with one-level undo."
+    ]
+  }
+]

@@ -1,0 +1,9 @@
+[
+  {
+    "version": "1.1.4",
+    "date": "2026-10-14",
+    "changes": [
+      "First Modwerk release for Digitakt I OS 1.53 and 1.54, on Core 2.1. Generate rhythms from two pulse generators on each audio or MIDI track. Rotate either generator, rotate the whole result and combine them with OR, XOR, AND or SUB."
+    ]
+  }
+]

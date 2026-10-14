@@ -1,0 +1,32 @@
+[
+  {
+    "version": "0.1.2-experimental",
+    "date": "2026-10-09",
+    "changes": [
+      "Media-only: redraw the Air Chorus thumbnail with phase-offset signal curves using the library’s shared grid, lavender palette and typography.",
+      "Protect stock T3 inter-core mailbox and T7 parameter staging data by keeping the first 72 virtual ring words in safe per-instance X state. Preserve stock track state, full stereo delay range, smoothing, controls and saved parameter layout.",
+      "Losslessly pack all original sine values into 256 DSP words and reduce code/table storage from 1,425 to 795 words per core. Air Chorus now combines with E-Verb and Analog BD, including more DSP companions; larger selections remain limited by available program space.",
+      "The shared-data corruption is reproduced and checked in software. The tester still reported T3 clicking in 0.1.1; whether this update fixes that audible hardware symptom remains unverified. Current hardware timing, multi-instance audio and Part/project/reboot persistence are owner-waived for this exact beta source/version.",
+      "Documentation/media-only: add an offline audio preview rendered through 0.1.2-experimental, with sample credits, settings and provenance; firmware is unchanged."
+    ]
+  },
+  {
+    "version": "0.1.1-experimental",
+    "date": "2026-10-09",
+    "changes": [
+      "Beta release for beta testers: reduces measured DSP work by 35.80% with the original full stereo delay range, smoothing and control meanings retained. Thirty recorded comparison fixtures are bit-identical to 0.1.0.",
+      "Targets the reported multi-instance clicking by reducing DSP load. The T3/T4 emulator reproduction did not reproduce the hardware symptom, so this is a mitigation pending beta hardware results, not a confirmed clicking fix.",
+      "FX2 only. Current hardware testing is owner-waived for this exact version/source; physical timing, multi-instance audio and Part/project/reboot persistence remain unverified. Existing control values and saved parameter layout are unchanged."
+    ]
+  },
+  {
+    "version": "0.1.0-experimental",
+    "date": "2026-10-08",
+    "changes": [
+      "First release of Chris Johnson’s MIT-licensed Airwindows Chorus as an Octatrack FX2 module; original source and full attribution retained.",
+      "Smooth SPD, RNG and MIX per sample, preserve the original air compensation and three-point delay read, and initialize dirty rings without a long synchronous clear.",
+      "Owner reports 50 minutes of successful MKII use with several instances and full knob sweeps on the first image. Fresh hardware testing of the bounded-init image is waived; eight-track timing, locks/scenes/LFOs and physical persistence remain unverified.",
+      "Delay precision is approximately 16 bits; extreme modulation retains pitch and aliasing artifacts."
+    ]
+  }
+]

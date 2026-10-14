@@ -52,9 +52,10 @@ const buildOnly = process.argv.includes('--build')
 const baseIndex = process.argv.indexOf('--base'), base = baseIndex < 0 ? null : process.argv[baseIndex + 1]
 if (baseIndex >= 0 && !base) throw new Error('--base requires a Git commit/ref')
 const documentationOnly = !buildOnly && !!base && readChangeScope({ root, base }).documentation
-let passed = true
+// The combined module list and changelog are generated, never committed; write them as npm ci does before anything reads them.
+let passed = await run('prepare')
 // Reject stale notices/catalog before generation can overwrite the evidence of staleness.
-if (!buildOnly) passed = await run('licenses:check') && await run('machines:check') && await run('modules:check', base ? ['--base', base] : [])
+if (!buildOnly && passed) passed = await run('licenses:check') && await run('machines:check') && await run('modules:check', base ? ['--base', base] : [])
 // Every active Octatrack module must still install beside every other (declarations only, no firmware).
 if (!buildOnly && !documentationOnly && passed) passed = await run('elekloader:check') && await run('modules:compat')
 // Finish generated notice/catalog/media writes before lint, tests, typecheck or bundling read them.
@@ -62,7 +63,7 @@ if (passed && !documentationOnly) passed = await run('licenses:generate') && awa
 // Every path, including documentation-only checks and release builds, requires current-version notes.
 if (passed) {
   try {
-    const notes = checkModuleChangelogs(root)
+    const notes = await checkModuleChangelogs(root)
     console.log(`Module changelogs: ${notes.modules} modules, ${notes.releases} releases`)
   } catch (error) { console.error(error.message); passed = false }
 }

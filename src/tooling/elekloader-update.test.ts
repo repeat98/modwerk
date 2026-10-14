@@ -171,6 +171,8 @@ function fixture() {
     cpSync(join(ROOT, path), join(root, path), { recursive: true })
   }
   for (const path of [...noticePaths, 'LICENSE', 'LICENSES', 'docs/USB_AUDIO_ATTRIBUTION.txt', 'scripts/elekloader-update.ts', 'scripts/elekloader-vendor.ts', 'scripts/licenses.mjs', 'scripts/license-notices.mjs']) copy(path)
+  // The module records that add Modwerk-built pins to the upstream catalog.
+  for (const name of readdirSync(join(ROOT, 'sdk/imports')).filter(name => /^elekloader-.*\.json$/.test(name))) copy('sdk/imports/' + name)
   const manifest = JSON.parse(readFileSync(join(root, 'sdk/octabam/licenses/manifest.json'), 'utf8')) as { moduleComponents: Record<string, string[]> }
   for (const id of Object.keys(manifest.moduleComponents)) {
     const folder = `sdk/octabam/modules/${id}`
@@ -248,7 +250,8 @@ describe('elekloader update CLI', () => {
       const absent = join(root, 'public/licenses/THIRD_PARTY_NOTICES.html')
       rmSync(absent)
       if (failure === 'notice generation') writeFileSync(script, `import { writeFileSync } from 'node:fs'; writeFileSync(${JSON.stringify(absent)}, 'partial notices'); throw new Error('fixture generation failure')`)
-      else writeFileSync(script, "throw new Error('fixture validation failure')")
+      // The update imports this module, so only its run as the final vendor check fails.
+      else writeFileSync(script, readFileSync(script, 'utf8') + "\nif (process.argv[1]?.endsWith('elekloader-vendor.ts')) throw new Error('fixture validation failure')\n")
       const before = identities(root)
       const result = update(root, [...args, catalogPath])
       expect(result.status).toBe(1)

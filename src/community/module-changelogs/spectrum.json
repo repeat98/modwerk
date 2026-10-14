@@ -1,0 +1,18 @@
+[
+  {
+    "version": "0.1.1-experimental",
+    "date": "2026-10-01",
+    "changes": [
+      "Documentation-only: correct copyright notices, component licence terms and SPDX metadata. No DSP implementation changed."
+    ],
+    "sourceCommit": "7ed7d4efe69c88f0542fb8402e6e0f7c2b5e4e7e"
+  },
+  {
+    "version": "0.1.0-experimental",
+    "date": "2026-10-01",
+    "changes": [
+      "First Modwerk catalog release of the FX1 filter bank, with ladder, SEM, isolator and vowel modes plus envelope and LFO modulation."
+    ],
+    "sourceCommit": "b16a5e3b880cb141153f0648e0c8700fc54175ef"
+  }
+]

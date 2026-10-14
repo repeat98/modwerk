@@ -50,8 +50,11 @@ describe('module author release authority', () => {
     const next = { ...catalog, modules: [{ ...document, version: '0.1.3-experimental' }, modules[1].document] }
     expect(authorizeAuthorUpdate(registry, author, modules, [...update(), change('src/catalog/module-documents.json', catalog, next)]).modules).toEqual(['tapehead'])
     expect(() => authorizeAuthorUpdate(registry, author, modules, [...update(), change('src/catalog/module-documents.json', catalog, { ...next, modules: [next.modules[0], { ...next.modules[1], version: '9.0.0' }] })])).toThrow('Catalog')
-    const notes = { schemaVersion: 1, modules: { tapehead: [{ version: '0.1.2', changes: ['original'] }], quantizer: [] } }
-    expect(() => authorizeAuthorUpdate(registry, author, modules, [...update(), change('src/community/module-changelogs.json', notes, { ...notes, modules: { ...notes.modules, tapehead: [] } })])).toThrow('Preserve')
+    const notes = [{ version: '0.1.2', changes: ['original'] }], added = [{ version: '0.1.3-experimental', changes: ['fixed'] }, ...notes]
+    expect(authorizeAuthorUpdate(registry, author, modules, [...update(), change('src/community/module-changelogs/tapehead.json', notes, added)]).modules).toEqual(['tapehead'])
+    expect(() => authorizeAuthorUpdate(registry, author, modules, [...update(), change('src/community/module-changelogs/tapehead.json', notes, [])])).toThrow('Preserve')
+    expect(() => authorizeAuthorUpdate(registry, author, modules, [...update(), change('src/community/module-changelogs/quantizer.json', notes, added)])).toThrow('another module')
+    expect(() => authorizeAuthorUpdate(registry, author, modules, [...update(), change('src/community/module-changelogs/tapehead.json', notes, null)])).toThrow('cannot be removed')
   })
   it('freezes other compiled modules and common runtime even when package reproduction passes', () => {
     const pkg = { schema: 1, sourceCommit: null, moduleVersions: { tapehead: document.version, quantizer: '1.0.0' }, packages: [{ id: 'tapehead', code: 'old' }, { id: 'quantizer', code: 'fixed' }] }

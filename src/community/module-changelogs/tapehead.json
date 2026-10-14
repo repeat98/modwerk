@@ -1,0 +1,20 @@
+[
+  {
+    "version": "0.1.2-experimental",
+    "date": "2026-10-05",
+    "changes": [
+      "Correct the input drive level to compensate for the stock AMP volume scaling, bringing saturation closer to the original DAW effect.",
+      "Apply +12 dB before the saturation stage and compensate by −12 dB afterward.",
+      "Documentation/media-only: add an offline audio preview rendered through 0.1.2-experimental, with sample credits, settings and provenance; firmware is unchanged."
+    ],
+    "sourceCommit": "177df636fde9419cba2fcb42ddaacdc14a736458"
+  },
+  {
+    "version": "0.1.1-experimental",
+    "date": "2026-10-02",
+    "changes": [
+      "First Modwerk catalog release of the TapeHead saturation effect, ported from JClones with its input limiting, clipping-term and COLOR-mapping corrections."
+    ],
+    "sourceCommit": "979842c888466fc79680ca44f33fd40082e1c50e"
+  }
+]

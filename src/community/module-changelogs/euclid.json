@@ -1,0 +1,46 @@
+[
+  {
+    "version": "0.1.4-experimental",
+    "date": "2026-10-07",
+    "changes": [
+      "Protect clock reset when playback starts: preserve the CPU status register and mask interrupts while resetting timing state.",
+      "Clear the initialized flag before the reset and publish it after the new state is ready, preventing an interrupt from seeing a partial reset. Existing timing, swing and controls are unchanged.",
+      "Documentation/media-only: add an offline audio preview rendered through 0.1.4-experimental, with sample credits, settings and provenance; firmware is unchanged.",
+      "Documentation/media-only (12 October 2026): replace the abrupt, short-decay demo with the owner-supplied modpad.wav preview at 128 BPM. Use its eight-bar middle (22.5–37.5 seconds), excluding the render-error ends and preserving its supplied sound/decay. Record source permission, hashes, crop and encoding. Capture setup and recorded module version are unverified; firmware and existing hardware/performance status are unchanged.",
+      "USB package (14 Oct 2026; distribution only, the module source and version are unchanged): loads over USB on a Modwerk base. Its compiled bytes that coincide with stock are rebuilt at install from the reviewed spans of your own OS, which the base checks against its running stock, so the package carries no stock bytes. Emulator and host tests only; no hardware run of this package. The owner waived hardware evidence for this exact version's USB package for the beta."
+    ],
+    "sourceCommit": "e027bea0fcaed334ef69c11be4474627814a2e21"
+  },
+  {
+    "version": "0.1.3-experimental",
+    "date": "2026-10-06",
+    "changes": [
+      "Documentation-only: explain how Euclid follows the track’s SWING settings and add a real settings-page capture. The timing implementation is unchanged."
+    ],
+    "sourceCommit": "66486c04df327a6ed0ee03570b8452e7b12bc6df"
+  },
+  {
+    "version": "0.1.2-experimental",
+    "date": "2026-10-01",
+    "changes": [
+      "Documentation-only: add real emulator screenshots of the selection and control pages, access instructions and capture provenance. The firmware implementation is unchanged."
+    ],
+    "sourceCommit": "dd9ea93fd62a3699d54f5e63c5f1a33fe1544cad"
+  },
+  {
+    "version": "0.1.1-experimental",
+    "date": "2026-10-01",
+    "changes": [
+      "Documentation-only: update author credits in the manifest and guides. The firmware implementation is unchanged."
+    ],
+    "sourceCommit": "d1136ce4c65ea7e1a00c4516cd4aa41c4b0c0d56"
+  },
+  {
+    "version": "0.1.0-experimental",
+    "date": "2026-10-01",
+    "changes": [
+      "First Modwerk catalog release of the stereo Euclidean modulation effect, following the instrument’s transport, tempo, track speed and swing."
+    ],
+    "sourceCommit": "b16a5e3b880cb141153f0648e0c8700fc54175ef"
+  }
+]

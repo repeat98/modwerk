@@ -1,0 +1,20 @@
+[
+  {
+    "version": "1.6.1-experimental",
+    "date": "2026-10-07",
+    "changes": [
+      "Media-only: match the saved SVG thumbnail to the library’s existing signal illustration, including its grid, palette and typography; update the illustration alt text.",
+      "Documentation-only: explain the shared hooks, machine icons, Digi Mono/Digi Poly integration and refused combinations. Add guide screenshots; pinned firmware code is unchanged."
+    ],
+    "sourceCommit": "3d437d1747ed0821a132cd6576b8a2fdff01e72c"
+  },
+  {
+    "version": "1.6.0-experimental",
+    "date": "2026-10-06",
+    "changes": [
+      "Import the pinned upstream framework for shared SRC-page hooks, machine rendering and icons used by Digi Mono and Digi Poly.",
+      "The imported SOPHIE, NEIGHBOR and DIGISLICER builds cannot be combined with digichain in Modwerk."
+    ],
+    "sourceCommit": "2f2a09f2c8eb0ebf5695919c7174494b6093705a"
+  }
+]

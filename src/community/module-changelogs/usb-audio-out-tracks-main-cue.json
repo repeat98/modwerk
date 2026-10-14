@@ -1,0 +1,54 @@
+[
+  {
+    "version": "0.2.0-experimental",
+    "date": "2026-10-08",
+    "changes": [
+      "Add Outbox 8 support and six selectable USB audio output layouts with a configure-before-add setup.",
+      "Show source explanations, per-layout CPU estimates, physical-output routing, and saved / unsaved state. Save and share USB settings in configuration backups.",
+      "Support the Outbox 44.1 kHz control handshake and retain USB MIDI receive / clock and reset handling. Existing configurations without USB settings keep the classic twenty-channel code path.",
+      "Experimental release approved without current-build hardware tests. Chip timing, complete hardware memory bounds and untested host combinations remain unmeasured."
+    ]
+  },
+  {
+    "version": "0.1.4-experimental",
+    "date": "2026-10-07",
+    "changes": [
+      "Handle USB reset and disconnect by closing the audio stream and tearing down its endpoint from the frame interrupt.",
+      "Bound endpoint flush polling when the controller stops, skip producer writes while the host stream is closed, and clear the startup buffer when reopening to avoid an old session’s audio tail."
+    ],
+    "sourceCommit": "0b8d61038fbc4eece094d73480217608bfa17f7b"
+  },
+  {
+    "version": "0.1.3-experimental",
+    "date": "2026-10-07",
+    "changes": [
+      "Make incoming USB MIDI clock update the instrument’s tempo as well as advance the sequencer, so tempo-dependent timestretch, LFOs and effects follow it.",
+      "Retain the 64-byte high-speed USB MIDI receive path."
+    ],
+    "sourceCommit": "9bb586344f6684363e6593ad31d4d1d3b9989ca8"
+  },
+  {
+    "version": "0.1.2-experimental",
+    "date": "2026-10-01",
+    "changes": [
+      "Documentation-only: clarify that streaming starts from the host and has no dedicated instrument control page; document access and retained evidence. The firmware implementation is unchanged."
+    ],
+    "sourceCommit": "dd9ea93fd62a3699d54f5e63c5f1a33fe1544cad"
+  },
+  {
+    "version": "0.1.1-experimental",
+    "date": "2026-10-01",
+    "changes": [
+      "Enable browser firmware builds from verified source packages, with native/browser composition and rejection checks recorded."
+    ],
+    "sourceCommit": "9c4e0e3b7990c6952812d89ac165dfa14151c3ee"
+  },
+  {
+    "version": "0.1.0-experimental",
+    "date": "2026-10-01",
+    "changes": [
+      "First Modwerk catalog release of USB audio output for the track, main and cue streams alongside USB MIDI."
+    ],
+    "sourceCommit": "d1136ce4c65ea7e1a00c4516cd4aa41c4b0c0d56"
+  }
+]

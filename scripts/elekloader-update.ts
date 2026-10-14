@@ -1,15 +1,16 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Updates the vendored elekloader kit, upstream catalog, site-owned catalog overlays, or a combination:
+// Updates the vendored elekloader kit, upstream catalog, site-owned module records, or a combination:
 //
-//   npm run elekloader:update -- [elekloader-kit-<version>.zip [--sha256 <the release's>]] [elekloader-catalog.json [--library]] [--overlay site-catalog.json]
+//   npm run elekloader:update -- [elekloader-kit-<version>.zip [--sha256 <the release's>]] [elekloader-catalog.json [--library]] [--overlay sdk/imports/elekloader-<id>-<date>.json]
 //
 // - The kit: every file in the zip checked against its kit.json, and the files Modwerk vendors put in place of kit/.
 //   A kit of another protocol is refused: src/engine/elekloader/digi-build.ts is written for KIT_PROTOCOL.
 // - The catalog: its Digitakt and Digitone entries, each file downloaded from its author's release by the kit's own
 //   sync and checked against its pin. Files it no longer names are removed. With --library, only the mods Modwerk's
 //   library lists (sdk/<machine>/modules/<id>/modwerk.module.json) and the mods they require are taken, so elekloader's
-//   whole catalog can go in as it is; the rest are not downloaded.
-// - The optional overlay adds site-owned pins to the upstream catalog without replacing it.
+//   whole catalog can go in as it is; the rest are not downloaded. It becomes vendor/elekloader/upstream-catalog.json.
+// - Site-owned pins live in each module's own record, sdk/imports/elekloader-*.json. Every record joins the served
+//   catalog; --overlay names a new or changed record so only its packages need syncing.
 // Then the lock, the elekloader licence entry and the notices, and the vendor check. It prints what changed and what
 // is left to do by hand. Both new copies and their lock are checked in a temporary folder first. If installing them
 // or regenerating/checking notices fails, the original files are restored.
@@ -17,10 +18,12 @@ import { spawnSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, rmdirSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
-import { dirname, join, resolve } from 'node:path'
+import { basename, dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { members, read } from '../vendor/elekloader/kit/src/zip.ts'
-import { parseCatalog } from '../vendor/elekloader/kit/src/kit/catalog.ts'
+import { UPSTREAM_CATALOG, assembleCatalog, isCatalogRecord, type CatalogFile } from './elekloader-vendor.ts'
+
+export { mergeCatalogOverlay } from './elekloader-vendor.ts'
 
 /** The kit protocol src/engine/elekloader/digi-build.ts is written for. */
 export const KIT_PROTOCOL = 1
@@ -30,8 +33,7 @@ export const DEVICES: Record<string, string> = { 'digitakt-mk1': 'digitakt', 'di
 const VENDORED = (name: string) => name.startsWith('src/') || ['tools/kit.ts', 'LICENSE', 'NOTICE', 'README.md', 'kit.json'].includes(name)
 
 export type KitJson = { name: string; version: string; protocol: number; commit: string; files: Record<string, string> }
-type Pin = { file: string; sha256: string; id: string; version: string; device: string; os: string; requires?: string[] }
-type CatalogFile = { schema?: number; kind?: string; about?: string; revision: string; cores: Pin[]; mods: Pin[] }
+type Pin = CatalogFile['mods'][number]
 
 const sha = (data: Uint8Array) => createHash('sha256').update(data).digest('hex')
 
@@ -105,30 +107,6 @@ export function catalogChanges(before: CatalogFile, after: CatalogFile): Change[
   return [...groups.values()].sort((x, y) => (x.key < y.key ? -1 : x.key > y.key ? 1 : 0))
 }
 
-/** Add pinned site-owned package pins without replacing the upstream catalog. */
-export function mergeCatalogOverlay(base: CatalogFile, overlay: CatalogFile): CatalogFile {
-  parseCatalog(overlay)
-  const names = new Map<string, Pin>()
-  for (const pin of [...base.cores, ...base.mods]) names.set(pin.file, pin)
-  const cores = [...base.cores], mods = [...base.mods]
-  const append = (target: Pin[], pins: Pin[]) => {
-    for (const pin of pins) {
-      const existing = names.get(pin.file)
-      if (existing) {
-        if (existing.sha256 !== pin.sha256) throw new Error(`Catalog overlay changes the existing file ${pin.file}.`)
-        continue
-      }
-      names.set(pin.file, pin)
-      target.push(pin)
-    }
-  }
-  append(cores, overlay.cores)
-  append(mods, overlay.mods)
-  const merged = { ...base, cores, mods, revision: '' }
-  merged.revision = sha(new TextEncoder().encode(JSON.stringify({ schema: merged.schema, kind: merged.kind, cores, mods })))
-  parseCatalog(merged)
-  return merged
-}
 
 /** A change in a line: replaced, added or removed. */
 export function describeChange(c: Change) {
@@ -197,7 +175,7 @@ async function main(root: string, argv: string[]) {
     else paths.push(argv[i])
   }
   const zip = paths.find(p => p.toLowerCase().endsWith('.zip')), from = paths.find(p => p.toLowerCase().endsWith('.json'))
-  if ((!paths.length && !overlayPath) || paths.length !== [zip, from].filter(Boolean).length || expected !== undefined && (!zip || !/^[0-9a-fA-F]{64}$/.test(expected)) || library && !(from || overlayPath)) throw new Error(usage)
+  if ((!paths.length && !overlayPath) || paths.length !== [zip, from].filter(Boolean).length || expected !== undefined && (!zip || !/^[0-9a-fA-F]{64}$/.test(expected)) || library && !from) throw new Error(usage)
   const vendor = resolve(root, 'vendor/elekloader'), kitDir = join(vendor, 'kit'), catalogDir = join(vendor, 'catalog')
   const scratch = mkdtempSync(join(tmpdir(), 'modwerk-elekloader-')), notes: string[] = []
   const kitNext = join(scratch, 'kit'), catalogNext = join(scratch, 'catalog')
@@ -214,43 +192,56 @@ async function main(root: string, argv: string[]) {
       changedKit = [...files.keys()].filter(name => !existsSync(join(kitDir, name)) || sha(readFileSync(join(kitDir, name))) !== sha(files.get(name)!))
       after = kit; kitCount = files.size
     }
-    const oldCatalog = JSON.parse(readFileSync(join(catalogDir, 'catalog.json'), 'utf8')) as CatalogFile
-    let newCatalog = oldCatalog, required: ReadonlySet<string> = new Set()
-    if (from || overlayPath) {
-      let source = from ? resolve(from) : undefined
-      if (overlayPath) {
-        const base = source ? JSON.parse(readFileSync(source, 'utf8')) as CatalogFile : oldCatalog
-        const overlay = JSON.parse(readFileSync(resolve(overlayPath), 'utf8')) as CatalogFile
-        source = join(scratch, 'catalog-overlay.json')
-        writeFileSync(source, JSON.stringify(mergeCatalogOverlay(base, overlay), null, 1) + '\n')
-      }
+    // Upstream pins are locked on their own; each module's record in sdk/imports/ adds its pins, so the served catalog
+    // is upstream-catalog.json plus every record.
+    if (overlayPath && !(dirname(resolve(overlayPath)) === resolve(root, 'sdk/imports') && isCatalogRecord('sdk/imports/' + basename(overlayPath)) && existsSync(resolve(overlayPath))))
+      throw new Error('--overlay takes a module record in sdk/imports/ (elekloader-<id>-<date>.json); the catalog includes every record there.')
+    const repo = (path: string) => existsSync(resolve(root, path)) ? readFileSync(resolve(root, path), 'utf8') : undefined
+    const records = readdirSync(resolve(root, 'sdk/imports')).map(name => 'sdk/imports/' + name)
+    const recordPins = records.filter(isCatalogRecord).flatMap(path => { const record = JSON.parse(repo(path)!) as CatalogFile; return [...record.cores, ...record.mods] })
+    const notRecord = (pins: Pin[]) => pins.filter(pin => !recordPins.some(own => own.file === pin.file))
+    const oldCatalog = assembleCatalog(repo, records).catalog
+    let upstream = JSON.parse(repo(UPSTREAM_CATALOG)!) as CatalogFile, required: ReadonlySet<string> = new Set()
+    const nextKit = zip ? kitNext : kitDir, tool = join(nextKit, 'tools/kit.ts'), devices = Object.keys(DEVICES).flatMap(key => ['--device', key])
+    // the kit's own sync, the new kit's if there is one, into a copy of the current folder: files already there
+    // with the pinned sha256 are not downloaded again
+    cpSync(catalogDir, catalogNext, { recursive: true })
+    if (from) {
+      // A full catalog can hold module-record pins too; they stay in their records.
+      const source = JSON.parse(readFileSync(resolve(from), 'utf8')) as CatalogFile
+      let next: CatalogFile = { ...source, cores: notRecord(source.cores), mods: notRecord(source.mods) }
       if (library) {
-        // only what Modwerk's library lists, and what that requires: the rest is not downloaded. Site-owned overlay
-        // packages have no library record yet, so the cut must not drop them.
-        const owned = new Set(overlayPath ? (JSON.parse(readFileSync(resolve(overlayPath), 'utf8')) as CatalogFile).mods.map(m => `${DEVICES[m.device]}/${m.id}`) : [])
-        const cut = libraryCatalog(JSON.parse(readFileSync(source!, 'utf8')), (machine, id) => owned.has(`${machine}/${id}`) || existsSync(resolve(root, `sdk/${machine}/modules/${id}/modwerk.module.json`)))
-        source = join(scratch, 'catalog-library.json')
-        writeFileSync(source, JSON.stringify(cut.catalog, null, 1) + '\n')
+        // only what Modwerk's library lists, what that requires, and what the module records require: the rest is not downloaded.
+        const owned = new Set(recordPins.map(m => `${DEVICES[m.device]}/${m.id}`))
+        const withRecords = assembleCatalog(path => path === UPSTREAM_CATALOG ? JSON.stringify(next) : repo(path), records).catalog
+        const cut = libraryCatalog(withRecords, (machine, id) => owned.has(`${machine}/${id}`) || existsSync(resolve(root, `sdk/${machine}/modules/${id}/modwerk.module.json`)))
+        next = { ...next, cores: notRecord(cut.catalog.cores), mods: notRecord(cut.catalog.mods) }
         required = cut.required
         if (cut.leftOut.length) console.log(`--library: left out ${cut.leftOut.length} mods Modwerk's library does not list: ${cut.leftOut.join(', ')}`)
         if (required.size) console.log(`--library: kept as requirements of library mods: ${[...required].join(', ')}`)
       }
-      // the kit's own sync, the new kit's if there is one, into a copy of the current folder: files already there
-      // with the pinned sha256 are not downloaded again
-      cpSync(catalogDir, catalogNext, { recursive: true })
-      const tool = join(zip ? kitNext : kitDir, 'tools/kit.ts')
-      run([tool, 'sync', source!, catalogNext, ...Object.keys(DEVICES).flatMap(key => ['--device', key])], { cwd: root })
-      newCatalog = JSON.parse(readFileSync(join(catalogNext, 'catalog.json'), 'utf8')) as CatalogFile
-      const named = new Set([...newCatalog.cores, ...newCatalog.mods].map(p => p.file))
-      for (const name of readdirSync(catalogNext)) if (name !== 'catalog.json' && !named.has(name)) rmSync(join(catalogNext, name))
+      writeFileSync(join(scratch, 'upstream.json'), JSON.stringify(next, null, 1) + '\n')
+      run([tool, 'sync', join(scratch, 'upstream.json'), catalogNext, ...devices], { cwd: root })
+      upstream = JSON.parse(readFileSync(join(catalogNext, 'catalog.json'), 'utf8')) as CatalogFile
     }
+    const upstreamText = JSON.stringify(upstream, null, 1) + '\n'
+    const site = assembleCatalog(path => path === UPSTREAM_CATALOG ? upstreamText : repo(path), records), newCatalog = site.catalog
+    writeFileSync(join(scratch, 'site.json'), site.text)
+    run([tool, 'sync', join(scratch, 'site.json'), catalogNext, ...devices], { cwd: root })
+    writeFileSync(join(catalogNext, 'catalog.json'), site.text)
+    const named = new Set([...newCatalog.cores, ...newCatalog.mods].map(p => p.file))
+    for (const name of readdirSync(catalogNext)) if (name !== 'catalog.json' && !named.has(name)) rmSync(join(catalogNext, name))
     // The incoming kit must read the catalog even for a kit-only update. Generate and verify its lock before
-    // replacing any installed file: the worker protocol and the catalog schema can change independently.
-    const nextKit = zip ? kitNext : kitDir, nextCatalog = from || overlayPath ? catalogNext : catalogDir
-    const tool = join(nextKit, 'tools/kit.ts'), lockPath = join(scratch, 'elekloader.lock.json')
-    const lock = run([tool, 'lock', '--kit', nextKit, '--catalog', nextCatalog], { capture: true, cwd: root })
+    // replacing any installed file: the worker protocol and the catalog schema can change independently. The lock
+    // pins the kit and the upstream catalog alone; the served folder is verified whole.
+    const upstreamDir = join(scratch, 'upstream'), lockPath = join(scratch, 'elekloader.lock.json')
+    mkdirSync(upstreamDir)
+    writeFileSync(join(upstreamDir, 'catalog.json'), upstreamText)
+    for (const pin of [...upstream.cores, ...upstream.mods]) cpSync(join(catalogNext, pin.file), join(upstreamDir, pin.file))
+    const lock = run([tool, 'lock', '--kit', nextKit, '--catalog', upstreamDir], { capture: true, cwd: root })
     writeFileSync(lockPath, lock)
-    run([tool, 'verify', nextCatalog, '--lock', lockPath, '--kit', nextKit], { cwd: root })
+    run([tool, 'verify', upstreamDir, '--lock', lockPath, '--kit', nextKit], { cwd: root })
+    run([tool, 'verify', catalogNext], { cwd: root })
 
     const manifestPath = resolve(root, 'vendor/licenses/manifest.json')
     let manifest = readFileSync(manifestPath, 'utf8')
@@ -263,8 +254,8 @@ async function main(root: string, argv: string[]) {
 
     // Keep every affected file, including the generated distribution notices. A later generation/verification
     // error must not leave a new kit beside an old lock, or a partially regenerated set of licence notices.
-    const folders = [...(zip ? ['vendor/elekloader/kit'] : []), ...(from || overlayPath ? ['vendor/elekloader/catalog'] : [])]
-    const files = ['vendor/elekloader/elekloader.lock.json', 'vendor/licenses/manifest.json', 'vendor/licenses/elekloader.txt',
+    const folders = [...(zip ? ['vendor/elekloader/kit'] : []), 'vendor/elekloader/catalog']
+    const files = ['vendor/elekloader/elekloader.lock.json', UPSTREAM_CATALOG, 'vendor/licenses/manifest.json', 'vendor/licenses/elekloader.txt',
       'sdk/octabam/licenses/THIRD_PARTY_NOTICES.txt', 'public/licenses/THIRD_PARTY_NOTICES.txt', 'public/licenses/THIRD_PARTY_NOTICES.html']
     const originals = new Map(files.map(path => [path, existsSync(resolve(root, path)) ? readFileSync(resolve(root, path)) : undefined]))
     for (const path of folders) cpSync(resolve(root, path), join(scratch, 'original', path), { recursive: true })
@@ -274,7 +265,8 @@ async function main(root: string, argv: string[]) {
     }
     try {
       if (zip) mirror(kitNext, kitDir)
-      if (from || overlayPath) mirror(catalogNext, catalogDir)
+      mirror(catalogNext, catalogDir)
+      writeFileSync(resolve(root, UPSTREAM_CATALOG), upstreamText)
       writeFileSync(join(vendor, 'elekloader.lock.json'), lock)
       writeFileSync(manifestPath, manifest)
       writeFileSync(resolve(root, 'vendor/licenses/elekloader.txt'), notice)

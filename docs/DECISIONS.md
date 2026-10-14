@@ -220,7 +220,7 @@ elekloader packaged its builder as a kit that any website can use, with nothing 
 
 - **Vendored kit.** [`vendor/elekloader/kit`](../vendor/elekloader/README.md) is the kit's release zip, unchanged: the engine, the builder worker, the page's client and the catalog format.
 - **The catalog.** [`vendor/elekloader/catalog`](../vendor/elekloader/README.md) holds the same cores and mods, in the kit's catalog format, with revision `e4d8ba8`, so backups keep importing.
-- **The lock.** `vendor/elekloader/elekloader.lock.json` pins every kit file and the catalog. `npm run elekloader:check` checks against it.
+- **The lock.** `vendor/elekloader/elekloader.lock.json` pins every kit file and the upstream catalog (`upstream-catalog.json`). Site-owned modules keep their pins in their own records under `sdk/imports/`, so module PRs never edit the lock; the served `catalog.json` is generated from both. `npm run elekloader:check` checks against it.
 - **What Modwerk keeps.** `src/engine/elekloader/digi-build.ts` maps machine ids to the kit's device keys and starts the kit's worker. Modwerk's own worker and client are gone.
 - **Same builds.** It is the same engine, so the same bytes: the browser check gave the parity record's identities ([verification record](VERIFICATION.md)).
 

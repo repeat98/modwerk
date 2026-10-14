@@ -67,8 +67,8 @@ for(const machine of machineProfiles.filter(profile=>profile.sdk?.platform==='el
 // The website lists every machine's modules from the same validated folders.
 machineDocuments.sort((a,b)=>a.machine.localeCompare(b.machine)||a.id.localeCompare(b.id))
 const machineTarget=resolve(root,'src/catalog/machine-modules.json'),machineGenerated=JSON.stringify({schemaVersion:3,modules:machineDocuments},null,2)+'\n'
-if(write)await writeFile(machineTarget,machineGenerated)
-else if(!includeDrafts&&(await readFile(machineTarget,'utf8').catch(()=>''))!==machineGenerated&&machineDocuments.length)throw new Error('src/catalog/machine-modules.json is stale; run npm run modules:generate')
+// Generated, not committed, so module PRs never edit the same lines; rewritten only when it changed.
+if(!includeDrafts&&(await readFile(machineTarget,'utf8').catch(()=>''))!==machineGenerated)await writeFile(machineTarget,machineGenerated)
 return machineModules
 }
 if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href){

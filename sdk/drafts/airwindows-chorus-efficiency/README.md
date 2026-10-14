@@ -37,7 +37,7 @@ Choose a new directory. This exports tracked repository source and overlays
 only the candidate DSP and its verification helpers. It pins the published
 assembly hash before preparing anything, saves the original assembly for A/B
 comparisons, sets the staged manifest/catalog to 0.1.1 and adds version-matched
-release notes to the staged `src/community/module-changelogs.json`, preserving
+release notes to the staged `src/community/module-changelogs/airwindows-chorus.json`, preserving
 history. It reuses the published reference, control, instance and stress tests
 and the shared native builder. It never reads firmware.
 

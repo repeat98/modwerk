@@ -1,0 +1,27 @@
+[
+  {
+    "version": "1.1.13-experimental.2",
+    "date": "2026-10-07",
+    "changes": [
+      "Media-only: match the saved SVG thumbnail to the library’s existing signal illustration, including its grid, palette and typography; update the illustration alt text.",
+      "Documentation-only: add the model and control guide, including SWEEP, METAL, COLOR, FBK and FOLD, with real page captures. Pinned firmware code is unchanged."
+    ],
+    "sourceCommit": "c886095a7931e34c8a0e43268ce5d399f092382c"
+  },
+  {
+    "version": "1.1.13-experimental.1",
+    "date": "2026-10-05",
+    "changes": [
+      "Metadata-only: correct authorship and upstream adaptation credits. The pinned firmware implementation is unchanged."
+    ],
+    "sourceCommit": "217ee599ef18fecbd6fb3895605dcfffe8455d2e"
+  },
+  {
+    "version": "1.1.13-experimental",
+    "date": "2026-10-04",
+    "changes": [
+      "First Modwerk import of SOPHIE’s FUSE, BOOM, PIPE and SHARD percussion models, with lockable synthesis controls."
+    ],
+    "sourceCommit": "0a6f0fa0c290f683f31cc28af170f10334b0839a"
+  }
+]

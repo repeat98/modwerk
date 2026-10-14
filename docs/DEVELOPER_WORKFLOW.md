@@ -8,7 +8,7 @@ The instrument dropdown lists every profile in `sdk/machines/<id>/machine.json`,
 
 ## Check what already exists
 
-Before planning a new module, look at the library on modwerk.app or, in an up-to-date checkout (`git fetch upstream`), `sdk/catalog.json` (Octatrack), `src/catalog/machine-modules.json` (Digitakt, Digitone) and `sdk/drafts/`, plus the open pull requests (`gh pr list`). If a module already does the job, or a port is already listed, extend it through [the update workflow](#update-or-fix-an-approved-module) instead of building a duplicate. A new module goes ahead only when it is clearly different, and the proposal says how.
+Before planning a new module, look at the library on modwerk.app or, in an up-to-date checkout (`git fetch upstream`), `sdk/catalog.json` (Octatrack), `sdk/digitakt/modules/` and `sdk/digitone/modules/` (Digitakt, Digitone) and `sdk/drafts/`, plus the open pull requests (`gh pr list`). If a module already does the job, or a port is already listed, extend it through [the update workflow](#update-or-fix-an-approved-module) instead of building a duplicate. A new module goes ahead only when it is clearly different, and the proposal says how.
 
 ## Refuse infringing work
 
@@ -63,7 +63,7 @@ Use the beta [frontend and device MCP](FRONTEND_MCP.md) for developer site check
 
 ## Update or fix an approved module
 
-Read the report and reproduce it where possible. Every fix must include a changelog update in `src/community/module-changelogs.json` in the same PR; it is part of the fix, not a later follow-up. Describe the actual fix or mitigation, link the issue when available, and disclose remaining limitations and unverified behavior. Change the module, explicitly bump its semantic version for behavior changes, and synchronize the catalog pin, shipped packages, docs and the exact version in the changelog. Preserve previous entries. Documentation/media-only fixes add a clearly marked note to the current version unless publishing a new version. Pushing commits neither increments the version nor publishes the frontend.
+Read the report and reproduce it where possible. Every fix must include a changelog update in the module’s `src/community/module-changelogs/<id>.json` in the same PR; it is part of the fix, not a later follow-up. Describe the actual fix or mitigation, link the issue when available, and disclose remaining limitations and unverified behavior. Change the module, explicitly bump its semantic version for behavior changes, and synchronize the catalog pin, shipped packages, docs and the exact version in the changelog. Preserve previous entries. Documentation/media-only fixes add a clearly marked note to the current version unless publishing a new version. Pushing commits neither increments the version nor publishes the frontend.
 
 The registered author personally verifies the exact source, rights, UI and qualification evidence. Missing, failed or untested required hardware acceptance checks block automatic publication. An agent records only reported results and never attests on the author's behalf without that actual verification. Editorial updates retain approved evidence only through the documented checked path.
 

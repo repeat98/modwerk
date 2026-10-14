@@ -33,7 +33,7 @@ export function parseModuleChangelogs(value: unknown, catalog?: readonly Catalog
     for (const id of Object.keys(modules)) if (!ids.has(id)) throw new Error('Unknown changelog module: ' + id)
     for (const module of catalog) {
       const entries = modules[module.id] ?? []
-      if (!entries.some(entry => entry.version === module.version)) throw new Error('Missing release notes for ' + module.id + ' v' + module.version + '. Add them to src/community/module-changelogs.json.')
+      if (!entries.some(entry => entry.version === module.version)) throw new Error('Missing release notes for ' + module.id + ' v' + module.version + '. Add them to src/community/module-changelogs/' + module.id + '.json.')
       if (entries.some(entry => compareModuleVersions(entry.version, module.version) > 0)) throw new Error('Changelog version is newer than the catalog for ' + module.id)
     }
   }

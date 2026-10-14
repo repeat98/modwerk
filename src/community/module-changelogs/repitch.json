@@ -1,0 +1,35 @@
+[
+  {
+    "version": "0.2.0-experimental",
+    "date": "2026-10-14",
+    "changes": [
+      "Runtime package only: on a Modwerk base that owns the playback-increment site 0x40004100 (sdk/machines/octatrack/events.json), REPITCH's tempo scaling is an ev_play_increment subscriber (order 50) instead of a raw detour, so it installs beside POLY8 and any other subscriber. The scaling code is the same macro rate_hook uses; native octabam builds assemble byte-identical.",
+      "Limits: needs a base built with site events; older bases refuse this package, and Undo keeps 0.1.2-experimental for them. Emulator evidence only (synthetic register state at the site); no hardware run, and the native gate verify_repitch.py was not rerun because the native bytes are unchanged."
+    ]
+  },
+  {
+    "version": "0.1.2-experimental",
+    "date": "2026-10-01",
+    "changes": [
+      "Documentation-only: add real emulator screenshots of the selection and control pages, access instructions and capture provenance. The firmware implementation is unchanged."
+    ],
+    "sourceCommit": "dd9ea93fd62a3699d54f5e63c5f1a33fe1544cad"
+  },
+  {
+    "version": "0.1.1-experimental",
+    "date": "2026-10-01",
+    "changes": [
+      "Documentation-only: update author credits in the manifest and guides. The firmware implementation is unchanged."
+    ],
+    "sourceCommit": "d1136ce4c65ea7e1a00c4516cd4aa41c4b0c0d56"
+  },
+  {
+    "version": "0.1.0-experimental",
+    "date": "2026-10-01",
+    "changes": [
+      "First Modwerk catalog release of REPITCH for Flex/Static tracks: follow project tempo through playback speed instead of granular timestretch.",
+      "Add RPCH to track TSTR and REPITCH to sample attributes. PTCH is disabled while RATE still applies; Pickup machines are unsupported."
+    ],
+    "sourceCommit": "b16a5e3b880cb141153f0648e0c8700fc54175ef"
+  }
+]

@@ -1,0 +1,20 @@
+[
+  {
+    "version": "0.1.1-experimental",
+    "date": "2026-10-08",
+    "changes": [
+      "Import devilfish707's build-24 fixes: switching NORMAL to PER TRACK follows the track's actual length, and PER TRACK uses MASTER SCALE instead of the former NORMAL-mode scale.",
+      "Keep the full track length across short MASTER LENGTH passes; restart both pingpong modes at master loops, including 14/16 and 15/16 lengths, and show the played step on the trig LEDs.",
+      "Rebuild Modwerk's source packages and verify native/browser composition. Author-reported MKII functional tests are retained; current physical persistence/isolation, MKI, chip timing and stress tests remain unverified. The owner approved those missing current-build hardware checks for this exact release.",
+      "USB package (14 Oct 2026; distribution only, the module source and version are unchanged): loads over USB on a Modwerk base. Its compiled bytes that coincide with stock are rebuilt at install from the reviewed spans of your own OS, which the base checks against its running stock, so the package carries no stock bytes. Emulator and host tests only; no hardware run of this package. The owner waived hardware evidence for this exact version's USB package for the beta."
+    ]
+  },
+  {
+    "version": "0.1.0-experimental",
+    "date": "2026-10-07",
+    "changes": [
+      "Add forward, reverse and ping-pong playhead directions per pattern and audio track, with selectable pattern defaults and track overrides.",
+      "Integrate the module into source packages and native/browser composition; retain the contributor's MKII functional hardware report. Missing current hardware timing and stress evidence is owner-approved."
+    ]
+  }
+]

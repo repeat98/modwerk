@@ -1,0 +1,15 @@
+[
+  {
+    "version": "0.1.0-experimental",
+    "date": "2026-10-09",
+    "changes": [
+      "First release: the CUE CFG box, titled OUT CFG with the module, gains MATRIX, which makes the headphone jack a third assignable output beside MAIN and CUE. CUE + LEVEL picks each track's outputs (any combination of MAIN, CUE and PHONES, or one of six mono jacks); the routing lives in the Part. MIX becomes the PHONES level, and the metronome also plays on PHONES.",
+      "Switching to or from MATRIX converts every Part's LEVEL and cue bytes by documented rules, and switching into NORMAL also sets the project's cue settings.",
+      "Builds with the stock DSP code built in: its core-0 code takes a given-up stock reverb's space (SPRING REV first), which leaves the FX2 menu. It cannot be combined with Analog BD yet.",
+      "Author's functional MKII report (7–9 Oct 2026) covers routing, levels, everyday flows, saving and power; no timed stress run or chip timing.",
+      "USB package (14 Oct 2026; distribution only, the module source and version are unchanged): loads over USB on the Modwerk beta base, which carries Output Matrix’s DSP engine resident and dormant, owns its boot widenings and admits this exact package through a trust row built into it. Its compiled bytes that coincide with stock are copied at install from bytes the base checks against its running stock, so the package carries no stock bytes. It needs that exact base; with an older base the site asks for a base update first. Removing it is refused while MATRIX is selected: switch the AUDIO page back first. Host tests only: the emulator controllers scenario has not run, and there is no hardware run of this package. The owner waived hardware evidence for this exact version’s USB package for the beta.",
+      "USB package rebuilt for the fixed beta base (beta test run 1, 14 Oct 2026). Its controller never started before (the base's owned DSP job channel closed at boot), so MATRIX could not be chosen. Fixed; outside MATRIX its frame hook no longer takes the write lease. Seen on a development twin of the fixed base: MATRIX entered, T3 routed to MN and PHN as expected in USB recordings, and left with levels unchanged. Not yet tested: the tester image, mono jacks and a power cycle.",
+      "Site sync on the beta base (beta test run 2, 14 Oct 2026; the package is unchanged): removing it while its controller runs no longer ends the sync with “The Octatrack refused this step.” The base answers the first removal busy while it stops the controller and drops the staged package; the site now stages it again, as it does for the base's other busy refusals. Checked on a development twin through the development link (Sidechain installed, running, removed in one command) and by the site's tests; the site's own path has not run on the unit yet."
+    ]
+  }
+]

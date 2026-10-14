@@ -103,7 +103,7 @@ Same unit and image as the functional check above.
 
 ## Release notes to add when the module is listed
 
-`src/community/module-changelogs.json` refuses notes for a module that is not yet in `sdk/catalog.json`. When it is listed, add under `lofi-amf-fix`, version `0.1.0-experimental`: the import and what the fix does; that saved projects at the affected AMF values play at the corrected pitch, with no runtime switch; that Modwerk declares the writes as guarded pokes with no change to the addresses or word; and which of the tests above were actually run.
+The changelog check refuses notes for a module that is not yet in `sdk/catalog.json`. When it is listed, add `src/community/module-changelogs/lofi-amf-fix.json` with version `0.1.0-experimental`: the import and what the fix does; that saved projects at the affected AMF values play at the corrected pitch, with no runtime switch; that Modwerk declares the writes as guarded pokes with no change to the addresses or word; and which of the tests above were actually run.
 
 ## module:doctor, 8 October 2026
 

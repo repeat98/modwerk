@@ -30,7 +30,7 @@
       "noticeFile": "digi-mods.txt",
       "sources": [
         {
-          "path": "vendor/elekloader/catalog/catalog.json"
+          "path": "vendor/elekloader/upstream-catalog.json"
         },
         {
           "path": "sdk/digitakt/modules/digislicer/LICENSE"

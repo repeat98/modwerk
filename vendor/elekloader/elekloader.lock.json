@@ -40,9 +40,9 @@
   }
  },
  "catalog": {
-  "revision": "a0d96d4fb2542456336fd1e439323d230a5dc166658bd57d5777b805e8601145",
-  "sha256": "e56f5d2bd6e5cc6b068b0e9b29fc6bb15490eb76aa2e4726eb2a6ebc8b5a647f",
-  "cores": 6,
-  "mods": 39
+  "revision": "0da420d6532225851c0fb0ae7da58638054406c134bd34889a00c624e4a17687",
+  "sha256": "551e50618333e06875df838b0981b591eedbfa87cc7e500cd37985ba53665881",
+  "cores": 5,
+  "mods": 21
  }
 }

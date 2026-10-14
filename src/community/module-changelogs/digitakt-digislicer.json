@@ -1,0 +1,19 @@
+[
+  {
+    "version": "2.1.1-experimental",
+    "date": "2026-10-07",
+    "changes": [
+      "Media-only: match the saved SVG thumbnail to the library’s existing signal illustration, including its grid, palette and typography; update the illustration alt text.",
+      "Documentation-only: explain waveform/slice editing, up to 64 slices, multi-slice loops and trig controls, with real page captures. Pinned firmware code is unchanged."
+    ],
+    "sourceCommit": "f690e95fdd52a91a9e4f5919d4ad790efe3d7b65"
+  },
+  {
+    "version": "2.1.0-experimental",
+    "date": "2026-10-04",
+    "changes": [
+      "First Modwerk import of DIGISLICER: a waveform SRC machine with custom slices, transient/grid editing and sample slice persistence."
+    ],
+    "sourceCommit": "0a6f0fa0c290f683f31cc28af170f10334b0839a"
+  }
+]

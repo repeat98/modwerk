@@ -1,0 +1,19 @@
+[
+  {
+    "version": "1.1.2-experimental",
+    "date": "2026-10-07",
+    "changes": [
+      "Media-only: match the saved SVG thumbnail to the library’s existing signal illustration, including its grid, palette and typography; update the illustration alt text.",
+      "Documentation-only: explain Digitone-specific load indicators and read-only diagnostics, with real menu/page captures. Pinned firmware code is unchanged."
+    ],
+    "sourceCommit": "f45b5b7d3271acd363dbe75c60b802b0f9c4a6d5"
+  },
+  {
+    "version": "1.1.1-experimental",
+    "date": "2026-10-04",
+    "changes": [
+      "First Modwerk import of Digitone SYSTEM INFO diagnostics for load, RAM and USB information. This version does not provide Digitakt’s FAST AUDIO mode."
+    ],
+    "sourceCommit": "0a6f0fa0c290f683f31cc28af170f10334b0839a"
+  }
+]

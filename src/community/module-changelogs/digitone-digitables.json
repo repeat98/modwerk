@@ -1,0 +1,19 @@
+[
+  {
+    "version": "1.3.1-experimental",
+    "date": "2026-10-07",
+    "changes": [
+      "Media-only: match the saved SVG thumbnail to the library’s existing signal illustration, including its grid, palette and typography; update the illustration alt text.",
+      "Documentation-only: explain table editing, TBL/SPD, loops and trig/chord controls, with real table-page captures. Pinned firmware code is unchanged."
+    ],
+    "sourceCommit": "26211d72aa4eb4dd6081be88c0bf63e5ba19cb2e"
+  },
+  {
+    "version": "1.3.0-experimental",
+    "date": "2026-10-06",
+    "changes": [
+      "Import the pinned M8-style pitch tables: 16 tables of 16 semitone steps with table speed, loops and per-trig arpeggio/chord controls."
+    ],
+    "sourceCommit": "2f2a09f2c8eb0ebf5695919c7174494b6093705a"
+  }
+]

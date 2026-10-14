@@ -1,0 +1,54 @@
+[
+  {
+    "version": "0.2.2-experimental",
+    "date": "2026-10-13",
+    "changes": [
+      "Lower Mini Verb's DSP cost without changing its sound: two coefficient reloads whose register already held the value are removed from the sample loop. The modeled loop cost falls from 415 to 411 cycles per sample. The Octatrack USB loader charges 7/4 of that, 720 chip cycles (415 would be 727), which fits the smaller DSP core's 726-cycle allowance for one module beside seven stock effects.",
+      "Output is bit-identical to 0.2.1-experimental in native DSP tests: eight moving instances, every trigger split on both DSP cores, and a hot input at TONE 0, 64 and 127. Controls, defaults, saved projects, FX ID 0x17 and memory are unchanged.",
+      "Worst-case executed instructions in the emulator fall from 364.75 to 362.75 per sample, 1.16 times stock SPRING REV at its worst under matched conditions. Chip timing of this source is unmeasured (0.2.0 measured 665 chip cycles per sample on one MKII core). Hardware, the original THRU noise in #428, played automation, persistence and physical reboot remain unverified."
+    ]
+  },
+  {
+    "version": "0.2.1-experimental",
+    "date": "2026-10-11",
+    "changes": [
+      "Fix intermediate dry/wet clipping at hot input levels by preserving the wet-minus-dry headroom before multiplication. MIX 32 remains 25% and MIX 0 remains exact dry.",
+      "Keep the feedback tank, controls, defaults, effect ID and memory allocation unchanged. Multiplier quantization can change otherwise unclipped output by up to 8 of the 24-bit least significant bits.",
+      "The mixer defect is reproduced in native DSP tests on both cores. The original THRU noise in #428 has not been confirmed on hardware; chip timing, complete runtime memory bounds, played automation, persistence and physical reboot remain unverified.",
+      "Documentation/media-only: add an offline audio preview rendered through 0.2.0-experimental, with sample credits, settings and provenance; firmware is unchanged. The clip predates the 0.2.1 mixer fix and does not verify it."
+    ]
+  },
+  {
+    "version": "0.2.0-experimental",
+    "date": "2026-10-08",
+    "changes": [
+      "Move MIX from upper-right encoder C to lower-right encoder F and add TONE above it.",
+      "TONE is neutral at 64; darker settings low-pass the wet output and brighter settings high-pass it using one pole per stereo channel. The feedback tank and DAMP remain unchanged.",
+      "Old MIX values, locks, scenes and LFO destinations in slot C now address TONE. Restore TONE to 64 and move Mix settings/automation to slot F. Owner accepted sound and stability in Octemu and explicitly waived physical hardware evidence for this exact experimental update."
+    ]
+  },
+  {
+    "version": "0.1.2-experimental",
+    "date": "2026-10-01",
+    "changes": [
+      "Documentation-only: add real emulator screenshots of the selection and control pages, access instructions and capture provenance. The firmware implementation is unchanged."
+    ],
+    "sourceCommit": "dd9ea93fd62a3699d54f5e63c5f1a33fe1544cad"
+  },
+  {
+    "version": "0.1.1-experimental",
+    "date": "2026-10-01",
+    "changes": [
+      "Documentation-only: update author credits in the manifest and guides. The firmware implementation is unchanged."
+    ],
+    "sourceCommit": "d1136ce4c65ea7e1a00c4516cd4aa41c4b0c0d56"
+  },
+  {
+    "version": "0.1.0-experimental",
+    "date": "2026-10-01",
+    "changes": [
+      "First Modwerk catalog release of the full-rate stereo FX2 reverb, on its own effect ID beside DARK REV."
+    ],
+    "sourceCommit": "b16a5e3b880cb141153f0648e0c8700fc54175ef"
+  }
+]

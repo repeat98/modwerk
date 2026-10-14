@@ -9,4 +9,4 @@
 - Preserve the 808 engine, saved controls and existing TDEP/SAT smoothing. Matched native 909 instruction counts grow by about 6.2%; 808 cost and memory allocations are unchanged. High ACCNT/LOW can still reach the existing output limiter.
 - The owner accepted actual AB014REF05 emulator audio and approved this exact release with fresh physical hardware/persistence testing, worst-case chip timing and complete memory bounds waived. Physical audio, persistence and demanding FX loads remain untested; no hardware result is inferred.
 
-These notes are reflected in the public `src/community/module-changelogs.json` entry. Earlier 0.1.3 history is retained.
+These notes are reflected in the public `src/community/module-changelogs/analog-bassdrum.json`. Earlier 0.1.3 history is retained.

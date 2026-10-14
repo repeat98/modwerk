@@ -1,4 +1,4 @@
-Digitakt/Digitone mod releases built by the vendored elekloader builder, unmodified and pinned by SHA-256 in vendor/elekloader/catalog/catalog.json:
+Digitakt/Digitone mod releases built by the vendored elekloader builder, unmodified and pinned by SHA-256 in vendor/elekloader/upstream-catalog.json:
 - DIGISLICER 2.1 by irpina: https://github.com/irpina/digislicer/releases/tag/v2.1
 - NEIGHBOR (digineighbor) 0.6 by irpina: https://github.com/irpina/digineighbor/releases/tag/v0.6
 - digihealth 1.0 (Digitakt) and 1.1 (Digitone) by irpina: https://github.com/irpina/digihealth/releases/tag/v1.1

@@ -27,27 +27,28 @@ describe('documentation and firmware scheduling', () => {
     expect(actual).toEqual({ documentation: true, modules: false, elemod: false, windows: false, worker: false, logger: false })
   })
   it('treats authored changelog data as documentation while retaining app checks for its renderer and validator', () => {
-    expect(scope(change('src/community/module-changelogs.json'))).toEqual({ documentation: true, modules: false, elemod: false, windows: false, worker: false, logger: false })
+    expect(scope(change('src/community/module-changelogs/euclid.json'))).toEqual({ documentation: true, modules: false, elemod: false, windows: false, worker: false, logger: false })
     for (const path of ['src/community/ModuleChangelog.tsx', 'scripts/module-changelogs.mjs']) {
       expect(scope(change(path))).toEqual({ documentation: false, modules: false, elemod: false, windows: false, worker: false, logger: false })
     }
     // The Worker compiles the changelog loader for module release dates.
     expect(scope(change('src/community/module-changelogs.ts')).worker).toBe(true)
   })
-  it('recognizes manifest/gallery/tutorial edits plus their generated catalog as documentation', () => {
+  it('recognizes manifest/gallery/tutorial edits as documentation', () => {
     const updated = { ...digi, presentation: { ...digi.presentation, usage: ['Better tutorial'] }, controls: [{ description: 'Clear label' }], media: [{ path: 'media/control.png' }], tests: { documentation: { tutorial: {} } } }
-    const actual = scope(change(modulePath, digi, updated), change('src/catalog/machine-modules.json', { modules: [digi] }, { modules: [updated] }))
+    const actual = scope(change(modulePath, digi, updated))
     expect(actual.documentation).toBe(true)
     expect(actual.worker).toBe(false)
     expect(actual.elemod).toBe(false)
   })
   it('keeps genuine Worker module fields current without compiling metadata labels', () => {
     const updated = { ...digi, version: '1.0.1', presentation: { summary: 'New summary' } }
-    const actual = scope(change(modulePath, digi, updated), change('src/catalog/machine-modules.json', { modules: [digi] }, { modules: [updated] }))
+    const actual = scope(change(modulePath, digi, updated))
     expect(actual.documentation).toBe(false)
     expect(actual.worker).toBe(true)
     expect(actual.elemod).toBe(false)
     expect(actual.modules).toBe(false)
+    expect(scope(change(modulePath, null, digi)).worker).toBe(true)
   })
   it.each(['src/demo.c', 'build.json', 'src/demo.s', 'media/native.c'])('compiles actual Digi firmware input %s', path => {
     const actual = scope(change('sdk/digitakt/modules/demo/' + path))
@@ -60,7 +61,7 @@ describe('documentation and firmware scheduling', () => {
     expect(actual.elemod).toBe(true)
     expect(actual.documentation).toBe(false)
   })
-  it.each(['vendor/elekloader/catalog/catalog.json', 'vendor/elekloader/catalog/digihealth.elemod', 'vendor/elekloader/elekloader.lock.json'])('compiles and checks downloaded native package input %s', path => {
+  it.each(['vendor/elekloader/upstream-catalog.json', 'sdk/imports/elekloader-digihealth-2026-10-14.json', 'vendor/elekloader/catalog/digihealth.elemod', 'vendor/elekloader/elekloader.lock.json'])('compiles and checks downloaded native package input %s', path => {
     expect(scope(change(path))).toMatchObject({ elemod: true, documentation: false })
   })
   it('compiles new/removed modules and refuses invalid manifest JSON', () => {

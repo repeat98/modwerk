@@ -1,0 +1,19 @@
+[
+  {
+    "version": "1.0.2-experimental",
+    "date": "2026-10-07",
+    "changes": [
+      "Media-only: match the saved SVG thumbnail to the library’s existing signal illustration, including its grid, palette and typography; update the illustration alt text.",
+      "Documentation-only: explain FAST AUDIO, top-bar indicators and SYSTEM INFO, with real menu and diagnostics captures. Pinned firmware code is unchanged."
+    ],
+    "sourceCommit": "259c2a105d2267c8bad6fc38d832ddfb6059753a"
+  },
+  {
+    "version": "1.0.1-experimental",
+    "date": "2026-10-04",
+    "changes": [
+      "First Modwerk import of the upstream Digitakt diagnostics mod, including FAST AUDIO and SYSTEM INFO with load, RAM and USB information."
+    ],
+    "sourceCommit": "0a6f0fa0c290f683f31cc28af170f10334b0839a"
+  }
+]

@@ -17,7 +17,6 @@ function fixture({ foreign = false, symlink = false, registryChange = false } = 
   const doc = { id: 'playmodes', version: '0.1.0-experimental', author: { github: 'devilfish707' }, license: { spdx: 'MIT' }, compatibility: { effectId: null } }
   write('.github/module-authors.json', { schemaVersion: 1, accounts: { devilfish707: author.id } })
   write('sdk/catalog.json', { schemaVersion: 1, sourceRevision: 'd'.repeat(40), modules: [{ id: 'playmodes', version: doc.version }] })
-  write('src/catalog/machine-modules.json', { schemaVersion: 3, modules: [] })
   write('sdk/octabam/modules/playmodes/octamod.module.json', doc)
   write('sdk/octabam/modules/playmodes/source.c', 'original code\n')
   write('sdk/octabam/modules/playmodes/media/location.png', 'fixture only')
@@ -48,7 +47,6 @@ describe('trusted Git object inspection', () => {
     const doc = { id: 'demo', machine: 'digitakt', version: '1.0.0', author: { github: author.login }, license: { spdx: 'MIT' } }
     writeFileSync(join(f.root, folder, 'modwerk.module.json'), JSON.stringify(doc))
     writeFileSync(join(f.root, folder, 'source.c'), 'old code')
-    writeFileSync(join(f.root, 'src/catalog/machine-modules.json'), JSON.stringify({ schemaVersion: 3, modules: [doc] }))
     f.git('add', '.'); f.git('commit', '-qm', 'owner-approved Digi addition'); const base = f.git('rev-parse', 'HEAD')
     writeFileSync(join(f.root, folder, 'modwerk.module.json'), JSON.stringify({ ...doc, version: '1.0.1' }))
     writeFileSync(join(f.root, folder, 'source.c'), 'fixed code')
@@ -58,6 +56,39 @@ describe('trusted Git object inspection', () => {
   it.each([{ foreign: true }, { symlink: true }, { registryChange: true }])('rejects unsafe Git trees: %j', options => {
     const f = fixture(options)
     expect(() => inspectAuthorUpdate(f.root, f.base, f.head, author)).toThrow()
+  })
+  it('assembles the served elekloader catalog from the upstream catalog and module records at both commits', () => {
+    const root = mkdtempSync(join(tmpdir(), 'modwerk-author-records-')); roots.push(root)
+    const git = (...args) => execFileSync('git', args, { cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim()
+    const write = (path, data) => { mkdirSync(dirname(join(root, path)), { recursive: true }); writeFileSync(join(root, path), JSON.stringify(data) + '\n') }
+    git('init', '-q'); git('config', 'user.name', 'Modwerk test'); git('config', 'user.email', 'modwerk-test@example.test')
+    const doc = { id: 'demo', machine: 'digitakt', version: '1.0.0', author: { github: author.login }, license: { spdx: 'MIT' }, source: { repository: 'https://github.com/' + author.login + '/demo', revision: 'c'.repeat(40) } }
+    const source = { repo: author.login + '/demo', commit: 'c'.repeat(40), path: 'demo.elemod' }
+    const pin = { file: 'demo-1.0.0.elemod', sha256: '1'.repeat(64), id: 'demo', version: '1.0.0', device: 'digitakt-mk1', os: '1.54', license: 'MIT', author: author.login, title: 'Demo', requires: ['core'], conflicts: [], source }
+    const other = { ...pin, file: 'other.elemod', id: 'other', title: 'Other', author: 'someone' }
+    const record = mods => ({ schema: 1, kind: 'elekloader-catalog', revision: 'record', cores: [], mods })
+    const artifact = { elemod: 2, id: 'demo', version: '1.0.0', license: 'MIT', author: author.login, target: { device: 'digitakt-mk1', os: '1.54' } }
+    write('.github/module-authors.json', { schemaVersion: 1, accounts: { [author.login]: author.id } })
+    write('sdk/catalog.json', { schemaVersion: 1, sourceRevision: 'd'.repeat(40), modules: [] })
+    write('sdk/digitakt/modules/demo/modwerk.module.json', doc)
+    write('vendor/elekloader/upstream-catalog.json', { schema: 1, kind: 'elekloader-catalog', revision: 'upstream', cores: [{ file: 'core.elemod', sha256: '0'.repeat(64), id: 'core', version: '2.1', device: 'digitakt-mk1', os: '1.54', license: 'GPL-3.0', source: { repo: 'irpina/elekloader', tag: 'v1' } }], mods: [] })
+    write('vendor/elekloader/elekloader.lock.json', { schema: 1, kind: 'elekloader-kit-lock', kit: { files: {} }, catalog: {} })
+    write('vendor/elekloader/catalog/demo-1.0.0.elemod', artifact)
+    write('sdk/imports/elekloader-demo-2026-10-14.json', record([pin]))
+    write('sdk/imports/elekloader-other-2026-10-14.json', record([other]))
+    git('add', '.'); git('commit', '-qm', 'approved base'); const base = git('rev-parse', 'HEAD')
+    const update = (extra = () => {}) => {
+      git('checkout', '-q', '--detach', base)
+      write('sdk/digitakt/modules/demo/modwerk.module.json', { ...doc, version: '1.0.1', source: { ...doc.source, revision: 'e'.repeat(40) } })
+      write('vendor/elekloader/catalog/demo-1.0.1.elemod', { ...artifact, version: '1.0.1' })
+      rmSync(join(root, 'vendor/elekloader/catalog/demo-1.0.0.elemod'))
+      write('sdk/imports/elekloader-demo-2026-10-14.json', record([{ ...pin, file: 'demo-1.0.1.elemod', sha256: '2'.repeat(64), version: '1.0.1', source: { ...source, commit: 'e'.repeat(40) } }]))
+      extra()
+      git('add', '-A'); git('commit', '-qm', 'author update'); return git('rev-parse', 'HEAD')
+    }
+    expect(inspectAuthorUpdate(root, base, update(), author)).toMatchObject({ modules: ['digitakt-demo'], vendorPackages: true })
+    expect(() => inspectAuthorUpdate(root, base, update(() => write('sdk/imports/elekloader-other-2026-10-14.json', record([{ ...other, sha256: '3'.repeat(64) }]))), author)).toThrow('Other elekloader modules')
+    expect(() => inspectAuthorUpdate(root, base, update(() => write('sdk/imports/elekloader-demo-2026-10-14.json', { kind: 'not a catalog' })), author)).toThrow('valid elekloader catalog')
   })
 })
 

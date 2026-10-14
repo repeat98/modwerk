@@ -1,0 +1,40 @@
+[
+  {
+    "version": "0.13.3-experimental",
+    "date": "2026-10-11",
+    "changes": [
+      "Media-only: match the saved SVG thumbnail to the library’s existing signal illustration, including its grid, palette and typography; update the illustration alt text.",
+      "Align MONO PULSE SUB1 and SUB2 with MONO SAW on encoders G and H. PULSE PW, PWAD and PWRS move to D, E and F; TUNE and unison stay on A, B and C.",
+      "Reorder the page descriptors without changing saved parameter slots, defaults, synth code, parameter locks or LFO destination meanings. Existing sounds need no parameter migration.",
+      "Current-build native encoder and LCD checks are recorded separately from hardware, audio, DSP timing, complete runtime memory bounds, persistence, physical reboot, parameter-lock/LFO execution and stress qualification, which remain unverified.",
+      "The owner approved this exact experimental source and both D182 images for release and #182 closure after live-download verification with those qualification limits and NOISE/ENS common-region capture omissions disclosed. No hardware pass is recorded."
+    ],
+    "sourceCommit": "20ce6bcc910741ab2bc49fd288ee57dd13d7900f"
+  },
+  {
+    "version": "0.13.2-experimental",
+    "date": "2026-10-11",
+    "changes": [
+      "Fix repeated SRC presses opening a label-only sample-detail page on Digi Mono synth tracks. Preserve the normal controls, track number and level display; stock sample tracks keep their detail page.",
+      "Preserve all seven engines, parameter positions and saved sound settings. Current-build physical hardware, audio, timing and project/power-cycle persistence remain unverified.",
+      "Owner-approved experimental release with hardware, audio, timing, complete runtime memory bounds, persistence, reboot and stress unverified."
+    ],
+    "sourceCommit": "48a9b5ade88052d4fb0130d87a79be64935d4d9d"
+  },
+  {
+    "version": "0.13.1-experimental",
+    "date": "2026-10-07",
+    "changes": [
+      "Documentation-only: add a machine/control guide and real SRC-page captures, explaining stock filter, AMP, LFO and parameter-lock integration. Pinned firmware code is unchanged."
+    ],
+    "sourceCommit": "544668443cc63a06bac0cc26b235b1654a3f30e0"
+  },
+  {
+    "version": "0.13.0-experimental",
+    "date": "2026-10-06",
+    "changes": [
+      "Import the pinned synth-machine collection: MONOSIN, NOISE, SAW, PULSE, ENS, VO and POLYSIN, selected with FUNC + SRC."
+    ],
+    "sourceCommit": "2f2a09f2c8eb0ebf5695919c7174494b6093705a"
+  }
+]

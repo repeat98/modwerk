@@ -10,7 +10,7 @@ The DSP engines and upload images are byte-identical to the approved 0.1.4 build
 
 [evidence/packages.json](evidence/packages.json) records private stock-free development packages at 0.1.5; clean release compilation and browser/native composition remain pending promotion. [evidence/emulator.json](evidence/emulator.json) pins the current emulator source/executable and its passing CPU/peripheral gates.
 
-[evidence/private-build.json](evidence/private-build.json) pins **AB015FIX01**, its source, MAIN OS, saved upgrade and unchanged DSP hashes. Firmware, stock recovery, projects, CS1 and raw memory/logs stay private. [TESTING.md](TESTING.md) gives exact-image hardware steps and reproduction. [release-notes.json](release-notes.json) is the prepared version-matched note; copy it into `src/community/module-changelogs.json` at promotion, preserving previous entries.
+[evidence/private-build.json](evidence/private-build.json) pins **AB015FIX01**, its source, MAIN OS, saved upgrade and unchanged DSP hashes. Firmware, stock recovery, projects, CS1 and raw memory/logs stay private. [TESTING.md](TESTING.md) gives exact-image hardware steps and reproduction. [release-notes.json](release-notes.json) is the prepared version-matched note; copy it into `src/community/module-changelogs/analog-bassdrum.json` at promotion, preserving previous entries.
 
 Promotion requires actual version-matched physical results or a new explicit owner exception for named missing qualification. Keep issue #363 open until publication, saved live-download verification and report/notification completion. The Output Matrix halt is a separate unverified symptom; this candidate addresses the confirmed invalid-bank cause, and does not establish a fix for that halt.
 
