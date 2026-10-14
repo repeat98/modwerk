@@ -1,0 +1,59 @@
+{
+  "schema": 1,
+  "kind": "elekloader-catalog",
+  "revision": "midi-retrig-2026-10-14",
+  "about": "Modwerk source-only midi-retrig packages for Digitakt I OS 1.53 and 1.54, compiled from sdk/digitakt/modules/midi-retrig.",
+  "cores": [],
+  "mods": [
+    {
+      "file": "midi-retrig-2.0.1-os1.53.elemod",
+      "sha256": "ffe2e60aba95ae09df36ecc3d9e5d185c64e97f52fa02c1ff4ca84e9709486b9",
+      "id": "midi-retrig",
+      "version": "2.0.1",
+      "device": "digitakt-mk1",
+      "os": "1.53",
+      "license": "GPL-2.0-or-later",
+      "source": {
+        "repo": "repeat98/modwerk",
+        "commit": "d2f91e3d710acfd1f438bfa996b51b67a77a1534",
+        "path": "sdk/imports/packages/midi-retrig/midi-retrig-2.0.1-os1.53.elemod"
+      },
+      "title": "MIDI Retrig",
+      "requires": [
+        "core"
+      ],
+      "conflicts": [],
+      "summary": "Use the native retrig menu on MIDI tracks A–H. Repeated notes follow the Digitakt sequencer, including chords, retrig rate, finite length and velocity changes.",
+      "description": "Use the native retrig menu on MIDI tracks A–H. Repeated notes follow the Digitakt sequencer, including chords, retrig rate, finite length and velocity changes.",
+      "category": "Sequencer",
+      "author": "sumedho",
+      "needs_core": "2.1",
+      "on_unit": "The author reports this build fully tested and working with all six mods on a Digitakt 1, OS 1.53 and 1.54, for about one to two hours including project save/reload and a power cycle (2026-10-14)."
+    },
+    {
+      "file": "midi-retrig-2.0.1-os1.54.elemod",
+      "sha256": "29d1f2f99bf47c4688808253a19cfad0627845370170949b19159640f2116d3d",
+      "id": "midi-retrig",
+      "version": "2.0.1",
+      "device": "digitakt-mk1",
+      "os": "1.54",
+      "license": "GPL-2.0-or-later",
+      "source": {
+        "repo": "repeat98/modwerk",
+        "commit": "d2f91e3d710acfd1f438bfa996b51b67a77a1534",
+        "path": "sdk/imports/packages/midi-retrig/midi-retrig-2.0.1-os1.54.elemod"
+      },
+      "title": "MIDI Retrig",
+      "requires": [
+        "core"
+      ],
+      "conflicts": [],
+      "summary": "Use the native retrig menu on MIDI tracks A–H. Repeated notes follow the Digitakt sequencer, including chords, retrig rate, finite length and velocity changes.",
+      "description": "Use the native retrig menu on MIDI tracks A–H. Repeated notes follow the Digitakt sequencer, including chords, retrig rate, finite length and velocity changes.",
+      "category": "Sequencer",
+      "author": "sumedho",
+      "needs_core": "2.1",
+      "on_unit": "The author reports this build fully tested and working with all six mods on a Digitakt 1, OS 1.53 and 1.54, for about one to two hours including project save/reload and a power cycle (2026-10-14)."
+    }
+  ]
+}

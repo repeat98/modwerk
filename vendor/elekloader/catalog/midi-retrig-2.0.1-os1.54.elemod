@@ -1,0 +1,260 @@
+{
+ "elemod": 2,
+ "id": "midi-retrig",
+ "version": "2.0.1",
+ "title": "MIDI Retrig",
+ "description": "Use the native retrig menu on MIDI tracks A–H. Repeated notes follow the Digitakt sequencer, including chords, retrig rate, finite length and velocity changes.",
+ "category": "midi-usb",
+ "author": "sumedho",
+ "license": "GPL-2.0-or-later",
+ "target": {
+  "device": "digitakt-mk1",
+  "product": "Digitakt mk1",
+  "os": "1.54",
+  "syx_sha256": "f78ba80fa7b1da5fb0e1ff61ad61e9e71aafe79f4364fc49679f3651353e3cf6",
+  "section3_sha256": "5c58bf9e3949ef09977c5fc007a61e8d026931f67f1621238379dfb8ee4d31a2",
+  "section3_len": 2479680
+ },
+ "sections": {
+  ".run": {
+   "align": 4,
+   "len": 1472,
+   "parts": [
+    [
+     "hex",
+     "2f0a246f000820124a80670a2f004eb9400e0c7a588f429252aa0004245f4e752239421c95582039421c955c4a8067042200468171f9421c91408081222f00045081e2a87201c0814e752079421c4e384fefffec48d73c044a88660e428220024cd73c044fef00144e754aa8002c67ec206f001826680024284b4a8b67162079421c5a3c7035b09365d24a8867ce4aa8000467c84eb9400e0cb091c824402400226f001870304bf18800259588005888b08866ec429242aa002442aa002c4a8b679c4eb9400e0c3c22135481224093cb4a81660e204042a80004254000246000ff7e204c538129989800284860e24feffff448d7040c263c00000000428245faff002f034e92528206830000001c588f7008b08266ec4cd7040c4fef000c4e75202f000c223c0000038f226f00044c0108002040203c4d525431d1ef001023400004d1ef000871a801802340003471a8014023400038732801c02341003c4e754fefffe8720248d71c1c246f001c2012b2806624203900000000b0aa0010670e4ebaff6c45ea001023d2000000004cd71c1c4fef00184e7557804a8066f0242a000870075182b08265e47201b2aa000c66dc701c4c0208002640203c4d525432d7fc00000000b0aa0004662a4a93671e266b0004b7ea003466142f024ebafe42588f4a8066084ab9421b6e2467a072ff2541000c6098286a00107001b0ac0008668c202c000c0280000000804a806700ff7e2f0b4ebafdea588f223c4d525431b2aa00046600ff68202c000c0280000080004a806700ff58262a00347010b0836500ff4c282a0038727eb2846500ff402f024ebafdcc588f4a806600ff324ab9421b6e246600ff28207c4019159424304c00207c4019179420303c00d48227400014b4806300ff082f0c4ebafdbe588f26804a806700fef8222f00202742001027410008d2ab00142741000c276a003c00186000feda4fefffe048d77c1c267980001f4c20794020df104ab94199f12066124ab94199f130660a2439421b6e244a82670c4cd77c1c4fef00206000fe0049f38a0045f9000000004dfafd0426124a8367222f024ebafd18588f4a806610222a0010200b206a00089088b2806e1c2f0a4e96588f528245ea001c7208b28266cc4cd77c1c4fef00204e75202a000c224093cc4a896cde9088b08164d82079421f7eec4a88670e4aa8004867084ab9421f7ee866082f0a4ebafc9660b62f034ebafcd8588f26004a8067ea4eb9400ee25e780122025081224070032280203c4d5254322344000c23400004234100082343001041ea0018236a00040034222a000c202a0010e08892aa00084c4010014c1018004a816c060681000000ffe0812052d2a8001c20432141001c2001727fb2806c22707f20432140001c2f2a000c2f094eb9400ee3e4508f202a0014d1aa000c6000ff224a806edc700160d800004fefffec48d7030340c03f40001046fc27002f042f062f0a2f0b4eb9000000004fef0010302f001046c04cd703034fef00147003268070014e754fefffec48d7030340c03f40001046fc27002f2d00042f0a4eb900000000508f302f001046c04cd703034fef001472022012b2804e754fefffec48d7030340c03f40001046fc27004eb900000000302f001046c04cd703034fef00144ef9400ee1284fefffec48d7030340c03f40001046fc27004eb900000000302f001046c04cd703034fef0014700123c0421b6e244e75000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+    ]
+   ]
+  }
+ },
+ "symbols": {
+  "cancel": [
+   ".run",
+   0
+  ],
+  "muted": [
+   ".run",
+   32
+  ],
+  "clone": [
+   ".run",
+   74
+  ],
+  "DT_OS154": [
+   "abs",
+   1
+  ],
+  "mr_prepare": [
+   ".run",
+   288
+  ],
+  "mr_states": [
+   ".run",
+   1248
+  ],
+  "mr_cancel_all": [
+   ".run",
+   238
+  ],
+  "mr_stop_hook": [
+   ".run",
+   1196
+  ],
+  "mr_prepare_hook": [
+   ".run",
+   1040
+  ],
+  "mr_tick_hook": [
+   ".run",
+   1152
+  ],
+  "mr_tick": [
+   ".run",
+   694
+  ],
+  "mr_pattern": [
+   ".run",
+   1244
+  ],
+  "mr_dispatch": [
+   ".run",
+   352
+  ],
+  "mr_dispatch_hook": [
+   ".run",
+   1098
+  ]
+ },
+ "exports": [
+  "mr_cancel_all",
+  "mr_dispatch",
+  "mr_dispatch_hook",
+  "mr_pattern",
+  "mr_prepare",
+  "mr_prepare_hook",
+  "mr_states",
+  "mr_stop_hook",
+  "mr_tick",
+  "mr_tick_hook"
+ ],
+ "imports": [],
+ "weak": [],
+ "relocs": [
+  [
+   ".run",
+   248,
+   "abs32",
+   "sec:.run",
+   1248
+  ],
+  [
+   ".run",
+   374,
+   "abs32",
+   "sec:.run",
+   1244
+  ],
+  [
+   ".run",
+   394,
+   "abs32",
+   "sec:.run",
+   1244
+  ],
+  [
+   ".run",
+   450,
+   "abs32",
+   "sec:.run",
+   1248
+  ],
+  [
+   ".run",
+   758,
+   "abs32",
+   "sec:.run",
+   1248
+  ],
+  [
+   ".run",
+   1068,
+   "abs32",
+   "sec:.run",
+   288
+  ],
+  [
+   ".run",
+   1124,
+   "abs32",
+   "sec:.run",
+   352
+  ],
+  [
+   ".run",
+   1172,
+   "abs32",
+   "sec:.run",
+   694
+  ],
+  [
+   ".run",
+   1216,
+   "abs32",
+   "sec:.run",
+   238
+  ]
+ ],
+ "sites": [
+  {
+   "addr": "0x40034d6c",
+   "len": 4,
+   "stock_sha256": "cc80f012e558fa413023e0aa88ae427fe757a10a86796e3f4b5683e24e177c1c",
+   "new": "4e714e71",
+   "kind": "code",
+   "relocs": []
+  },
+  {
+   "addr": "0x40041188",
+   "len": 2,
+   "stock_sha256": "2a30aa67b93279e4b85dd86976c310e396630e37d2aa1241c9b19b8984ec5fcd",
+   "new": "6016",
+   "kind": "code",
+   "relocs": []
+  },
+  {
+   "addr": "0x4006fb2a",
+   "len": 6,
+   "stock_sha256": "c04ae43caaf8668ac37ac2078face2a1ffcb993bbec24874350f32a0097f8de6",
+   "new": "4eb900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:mr_prepare_hook",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x40077682",
+   "len": 6,
+   "stock_sha256": "72975b2bb6f4e08f2d04a77f93ac6f76c3a99d85fe816fddab007c34e2c34711",
+   "new": "4eb900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:mr_dispatch_hook",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x40077632",
+   "len": 6,
+   "stock_sha256": "1b5425e25c165caad250796fe4c9abc8b5a982f8967a8cb8a6991dc41ee657de",
+   "new": "4eb900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:mr_tick_hook",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x400e0cde",
+   "len": 8,
+   "stock_sha256": "d7bcb21006ce095f74e92107e5a48ba71999a1c8b10de32c97794a3e8ee19858",
+   "new": "4eb9000000004e71",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:mr_stop_hook",
+     0
+    ]
+   ]
+  }
+ ],
+ "collections": {},
+ "contribute": [],
+ "copied": [],
+ "resources": {
+  "regions": [],
+  "names": [
+   "ui:MIDI track:hold trig+UP/DOWN"
+  ],
+  "core": "2.1"
+ },
+ "requires": [
+  "core"
+ ],
+ "conflicts": [],
+ "signature": null
+}
