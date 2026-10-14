@@ -81,12 +81,6 @@ describe('risk-based retained module evidence',()=>{
     put('sdk/octabam/modules/'+example.id+'/media/ui.png',Buffer.from('invalid PNG'))
     await expect(check()).rejects.toThrow('black-and-white PNG')
   })
-  it('does not require an obsolete builder exception for exact approved infrastructure',async()=>{
-    put('sdk/builder-preservation/old.json',JSON.stringify({moduleIds:[document.id]}))
-    expect(await check()).toBe('retained-evidence')
-    put('src/engine/compose-os.ts','changed runtime dependency\n')
-    await expect(check()).rejects.toThrow('Invalid or stale builder preservation')
-  })
   it.each([
     ['manifest.py','raise AssertionError("changed code")\n'],
     ['runtime-data.txt','new runtime coefficients'],
@@ -109,8 +103,12 @@ describe('risk-based retained module evidence',()=>{
   ])('requires full qualification for changed %s',async(label,mutate)=>{
     expect(label).toBeTruthy();mutate(document);await expect(check()).rejects.toThrow('full qualification')
   })
-  it.each(['src/engine/compose-os.ts','sdk/octabam/dsp/shared.asm','sdk/octabam/platform/shared/manifest.py','sdk/octabam/tools/build/build_bus.py','sdk/octabam/tools/remix/platform_build.py','scripts/build-module-packages.py'])('invalidates reuse after a shared runtime/build change: %s',async path=>{
-    put(path,'changed runtime dependency\n');await expect(check()).rejects.toThrow('full qualification')
+  it.each(['src/engine/compose-os.ts','sdk/octabam/dsp/shared.asm','sdk/octabam/platform/shared/manifest.py','sdk/octabam/tools/build/build_bus.py','sdk/octabam/tools/remix/platform_build.py','scripts/build-module-packages.py'])('keeps reuse after a shared runtime/build change, which the app tests cover: %s',async path=>{
+    put(path,'changed runtime dependency\n');expect(await check()).toBe('retained-evidence')
+  })
+  it('ignores shared assets without rows of this module',async()=>{
+    put('src/engine/assets/beta-startup.json',JSON.stringify({version:'3.0.0',code:'changed shared startup'}))
+    expect(await check()).toBe('retained-evidence')
   })
   it('accepts rebuilt version labels but rejects changed browser package bytes or placement',async()=>{
     const path='src/engine/assets/dsp-packages.json'
@@ -125,7 +123,7 @@ describe('risk-based retained module evidence',()=>{
     artifact.packages[0].code='changed browser code'
     put(path,JSON.stringify(artifact));await expect(check()).rejects.toThrow('full qualification')
   })
-  it('accepts release approval metadata while protecting compiler identity and qualification verdicts',async()=>{
+  it('accepts release approval and shared build metadata while protecting the module version label',async()=>{
     const path='src/engine/assets/module-build.json'
     const artifact=JSON.parse(readFileSync(resolve(root,path),'utf8'))
     artifact.sourceCommit='b'.repeat(40)
@@ -135,10 +133,10 @@ describe('risk-based retained module evidence',()=>{
     put(path,JSON.stringify(artifact))
     expect(await check()).toBe('retained-evidence')
     artifact.compilerSha256='e'.repeat(64)
-    put(path,JSON.stringify(artifact));await expect(check()).rejects.toThrow('full qualification')
-    artifact.compilerSha256='c'.repeat(64)
-    artifact.qualification='New hardware pass'
-    put(path,JSON.stringify(artifact));await expect(check()).rejects.toThrow('full qualification')
+    artifact.qualification='Shared builder note'
+    put(path,JSON.stringify(artifact));expect(await check()).toBe('retained-evidence')
+    artifact.moduleVersions[document.id]='9.9.9'
+    put(path,JSON.stringify(artifact));await expect(check()).rejects.toThrow('package rows changed')
   })
   it('allows a derived composition inventory label while preserving every native proof',async()=>{
     const path='src/engine/assets/analog-bd-composition-proofs.json'

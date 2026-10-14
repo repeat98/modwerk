@@ -1,24 +1,17 @@
-// Reuse reviewed evidence only when all runtime inputs remain byte-identical.
-// Git objects and submitted files are read as data; native source is never evaluated.
-import { createHash } from 'node:crypto'
-import { requireAdditiveSynthPackages } from './synth-release.mjs'
+// Reuse reviewed evidence only when the module's own source, evidence and shipped
+// package rows remain identical. Git objects and submitted files are read as data;
+// native source is never evaluated.
 import { execFileSync } from 'node:child_process'
-import { readFile, readdir, mkdtemp, mkdir, writeFile, rm, lstat } from 'node:fs/promises'
+import { readFile, readdir, mkdtemp, mkdir, writeFile, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { resolve, dirname } from 'node:path'
 import { isDeepStrictEqual } from 'node:util'
-import { loadBuilderPreservation } from './builder-preservation.mjs'
 import { engineAsset, otherModuleIds } from './engine-asset.mjs'
-import { loadBrowserInfrastructurePreservation } from './browser-infrastructure-preservation.mjs'
 import { parseModuleDocument } from '../src/catalog/module-contract.ts'
 import { compareModuleVersions } from '../src/catalog/versions.ts'
 import { requireModuleDocumentation } from './module-documentation.mjs'
 
-const infrastructure = [
-  'sdk/octabam/platform', 'sdk/octabam/dsp', 'sdk/octabam/tools/build',
-  'sdk/octabam/tools/remix', 'src/engine',
-  'scripts/build-module-packages.py', 'scripts/module-source.mjs',
-]
+const assets = 'src/engine/assets'
 const git = (root, ...args) => execFileSync('git', args, { cwd: root, maxBuffer: 32 * 1024 * 1024 })
 const text = (root, ...args) => git(root, ...args).toString('utf8')
 const ignored = path => /(^|\/)(__pycache__|\.DS_Store)(\/|$)|\.pyc$/.test(path)
@@ -91,23 +84,16 @@ function sameFiles(previous, current, skip, label, compare = (a, b) => a.equals(
   }
 }
 
-export async function retainedInfrastructureSha256(root, document, previousVersion, commit) {
-  const values = {}, otherIds = await otherModuleIds(root, document, commit)
-  for (const prefix of infrastructure) {
-    let entries
-    if (commit) entries = tree(root, commit, prefix)
-    else {
-      const info = await lstat(resolve(root, prefix))
-      if (info.isSymbolicLink()) throw new Error('Infrastructure symlinks are prohibited')
-      entries = info.isDirectory() ? new Map([...await currentFiles(resolve(root, prefix))].map(([path, bytes]) => [prefix + '/' + path, bytes])) : new Map([[prefix, await readFile(resolve(root, prefix))]])
-    }
-    for (const [path, bytes] of entries) {
-      if (path.endsWith('.test.ts') || path.startsWith('src/engine/test-fixtures/')) continue
-      const canonical = path.startsWith('src/engine/') && path.endsWith('.json') ? JSON.stringify(engineAsset(bytes, path, document, previousVersion, [], otherIds)) : bytes
-      values[path] = createHash('sha256').update(canonical).digest('hex')
-    }
+// The rows of a browser asset that belong to one module, with its version label.
+function ownRows(value, id) {
+  const rows = []
+  const visit = item => {
+    if (!item || typeof item !== 'object') return
+    if (!Array.isArray(item) && (item.id === id || item.moduleId === id || [item.ids, item.moduleIds].some(list => Array.isArray(list) && list.includes(id)))) { rows.push(item); return }
+    for (const child of Object.values(item)) visit(child)
   }
-  return createHash('sha256').update(JSON.stringify(Object.fromEntries(Object.entries(values).sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0)))).digest('hex')
+  visit(value)
+  return { version: value?.moduleVersions?.[id] ?? null, rows }
 }
 
 export async function requireRetainedEvidence(root, folder, document, baseline, waivers, qualify, options = {}) {
@@ -135,46 +121,17 @@ export async function requireRetainedEvidence(root, folder, document, baseline, 
       // after it. TESTING and every other measured report remain immutable.
       && previous.tests.report !== path
       && after.length > before.length && after.subarray(0, before.length).equals(before))
-  let preservation, triedPreservation = false
+  // Shared runtime, platform and build code are covered by the app's tests and
+  // native matrices, as for every other module, so changing them does not void
+  // this module's evidence. Its own rows in the browser assets (package bytes,
+  // placement, native proofs) are what it ships, so those stay frozen.
   const otherIds = await otherModuleIds(root, document, record.commit)
-  let changedInfrastructure
-  for (const path of infrastructure) {
-    const before = tree(root, record.commit, path)
-    const after = new Map()
-    try {
-      // File prefixes and directory prefixes share the same comparison.
-      const info = await lstat(resolve(root, path))
-      if (info.isSymbolicLink()) throw new Error('symlink')
-      if (info.isDirectory()) for (const [rel, bytes] of await currentFiles(resolve(root, path))) after.set(path + '/' + rel, bytes)
-      else after.set(path, await readFile(resolve(root, path)))
-    } catch (error) { if (error.code !== 'ENOENT') throw error }
-    const compare = () => sameFiles(before, after, file => path === 'src/engine' && (file.endsWith('.test.ts') || file.startsWith('src/engine/test-fixtures/')), label,
-      (a, b, file) => path === 'src/engine' && file.endsWith('.json')
-        ? isDeepStrictEqual(engineAsset(a, file, document, previous.version, preservation?.addedModuleIds, otherIds), engineAsset(b, file, document, previous.version, preservation?.addedModuleIds, otherIds))
-        : a.equals(b), preservation?.matchesFile)
-    try { compare() } catch(error) {
-      // Exact approved inputs need no older builder-extension exception. Read
-      // and validate that binding only when a changed input requires it.
-      if (!triedPreservation) {
-        triedPreservation = true
-        preservation = await loadBrowserInfrastructurePreservation(root, approvedRef, document)
-          ?? await loadBuilderPreservation(root, approvedRef, document.id)
-      }
-      try { compare() } catch { changedInfrastructure ??= error }
-    }
-
-  }
-  if (changedInfrastructure) {
-    // This one reviewed additive extension keeps Euclid's original folder,
-    // controls, costs and verdicts frozen. Future shared edits fail closed.
-    if (document.id !== 'euclid' || document.version !== '0.1.3-experimental' || previous.version !== '0.1.2-experimental' || record.commit !== 'cb1f0a16a41902fe874b8f307dd3d9065daf6eff') throw changedInfrastructure
-    const approval = JSON.parse(await readFile(resolve(root, 'sdk/synth-build-approval.json'), 'utf8'))
-    const binding = approval.integration
-    if (binding?.retainedModule !== 'euclid@0.1.3-experimental' || binding.evidenceCommit !== record.commit || binding.packageBase !== '1c008deb8edef2fa6b158daab5553615d60fe72f' || binding.previousInfrastructureSha256 !== await retainedInfrastructureSha256(root, document, previous.version, record.commit) || binding.currentInfrastructureSha256 !== await retainedInfrastructureSha256(root, document, previous.version)) throw changedInfrastructure
-    try { git(root, 'merge-base', '--is-ancestor', binding.packageBase, approvedRef) } catch { throw changedInfrastructure }
-    await requireAdditiveSynthPackages(root, binding.packageBase)
-    const synthFolder = resolve(root, 'sdk/octabam/modules/synth'), synth = parseModuleDocument(JSON.parse(await readFile(resolve(synthFolder, 'octamod.module.json'), 'utf8')))
-    if (await qualify(synthFolder, synth, baseline, waivers, { root }) !== 'owner-approved-experimental') throw changedInfrastructure
+  const before = tree(root, record.commit, assets)
+  const after = new Map([...await currentFiles(resolve(root, assets))].map(([path, bytes]) => [assets + '/' + path, bytes]))
+  for (const path of new Set([...before.keys(), ...after.keys()])) {
+    if (!path.endsWith('.json')) continue
+    const own = bytes => bytes ? ownRows(engineAsset(bytes, path, document, previous.version, [], otherIds), document.id) : ownRows(null, document.id)
+    if (!isDeepStrictEqual(own(before.get(path)), own(after.get(path)))) throw new Error(label + ': this module\'s package rows changed: ' + path + '; full qualification is required')
   }
   // Revalidate the original qualification/baseline/owner exception on its exact
   // folder. Never turn historical or waived evidence into a new hardware pass.

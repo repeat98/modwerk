@@ -1,5 +1,5 @@
-// Shared by retained evidence and the Tape Echo browser binding: the one definition of
-// which package rows belong to other modules and so are not the retained module's inputs.
+// Shared by retained evidence: the one definition of which package rows belong to
+// other modules and so are not the retained module's inputs.
 import { readFile } from 'node:fs/promises'
 import { execFileSync } from 'node:child_process'
 import { resolve } from 'node:path'
