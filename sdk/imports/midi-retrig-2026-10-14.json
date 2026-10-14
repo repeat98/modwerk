@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "module": "digitakt/midi-retrig",
+  "version": "2.0.1",
+  "date": "2026-10-14",
+  "upstream": {
+    "repository": "https://github.com/sumedho/digirequests",
+    "revision": "8eba613dc3e0b1698797609256fd4081923b4ef2",
+    "path": "modules/midi-retrig",
+    "license": "GPL-2.0-or-later"
+  },
+  "changes": [
+    "First Modwerk release for Digitakt I OS 1.53 and 1.54, on Core 2.1. Use the native retrig menu on MIDI tracks A–H. Repeated notes follow the Digitakt sequencer, including chords, retrig rate, finite length and velocity changes.",
+    "Source-only exports compiled with the pinned GCC 16.2 toolchain; every one of the 63 feature selections per OS links with Core 2.1 to the native Elekloader MAIN byte for byte."
+  ],
+  "runtimeSourceSha256": "01d44a6790ce2058ee996098cd0430023ec35dedc215930105b6c07cac24e88c",
+  "packages": [
+    {
+      "os": "1.53",
+      "path": "sdk/imports/packages/midi-retrig/midi-retrig-2.0.1-os1.53.elemod",
+      "sha256": "ffe2e60aba95ae09df36ecc3d9e5d185c64e97f52fa02c1ff4ca84e9709486b9"
+    },
+    {
+      "os": "1.54",
+      "path": "sdk/imports/packages/midi-retrig/midi-retrig-2.0.1-os1.54.elemod",
+      "sha256": "29d1f2f99bf47c4688808253a19cfad0627845370170949b19159640f2116d3d"
+    }
+  ],
+  "stockPolicy": "No firmware or stock-derived code/tables are present. Addresses, lengths and SHA-256 guards are metadata; exported instructions and sections are authored module code. Local materialized recipes and firmware are never committed.",
+  "evidence": "sdk/digitakt/modules/midi-retrig/evidence/modwerk-source-parity.json",
+  "requires": []
+}

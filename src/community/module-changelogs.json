@@ -989,6 +989,15 @@
           "Author's functional MKII report (7–9 Oct 2026) covers routing, levels, everyday flows, saving and power; no timed stress run or chip timing."
         ]
       }
+    ],
+    "digitakt-midi-retrig": [
+      {
+        "version": "2.0.1",
+        "date": "2026-10-14",
+        "changes": [
+          "First Modwerk release for Digitakt I OS 1.53 and 1.54, on Core 2.1. Use the native retrig menu on MIDI tracks A–H. Repeated notes follow the Digitakt sequencer, including chords, retrig rate, finite length and velocity changes."
+        ]
+      }
     ]
   }
 }

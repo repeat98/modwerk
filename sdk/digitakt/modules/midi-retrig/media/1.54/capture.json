@@ -1,0 +1,159 @@
+{
+  "schemaVersion": 1,
+  "capturedAt": "2026-10-14T00:50:37.945619+00:00",
+  "imageSha256": "257144e4a584172e470c3dde83d7ccda636eeb195b4e5ff0492b3ebc8bdfaba2",
+  "mainSha256": "14469be1cb112830aa283e034d90c9372135b3f6b3fb7d3b077202101f758017",
+  "snapshotSha256": "d339a10b5b3bbe2c28885d3ccc9ba40393cef88e335d87811d8e9adb104509e4",
+  "planSha256": "fb670c0802e1c7ee713712b5f23673257fff64afa4b2de36d8df15056260c823",
+  "plan": "wait 1000\ntap STOP\npress TRK\ntap 9\nrelease TRK\ntap TRIG\ntap RECORD\ntap 1\npress 1\ntap UP\nsnap retrig-open\nturn A 1 350\ntap UP\ntap UP\nrelease 1\npress 1\ntap UP\nsnap retrig-settings\nrelease 1\ntap NO\ntap STOP\nsnap retrig-closed\n",
+  "emulatorRevision": "a422394af3db9ed0c6ae3ee8e9eb83429957004f",
+  "unicornVersion": "2.1.4",
+  "inputs": [
+    [
+      1000.057,
+      "press STOP"
+    ],
+    [
+      1100.06,
+      "release STOP"
+    ],
+    [
+      1400.069,
+      "press TRK"
+    ],
+    [
+      1500.071,
+      "press 9"
+    ],
+    [
+      1600.074,
+      "release 9"
+    ],
+    [
+      1900.083,
+      "release TRK"
+    ],
+    [
+      2000.086,
+      "press TRIG"
+    ],
+    [
+      2100.089,
+      "release TRIG"
+    ],
+    [
+      2400.098,
+      "press RECORD"
+    ],
+    [
+      2500.101,
+      "release RECORD"
+    ],
+    [
+      2800.109,
+      "press 1"
+    ],
+    [
+      2900.112,
+      "release 1"
+    ],
+    [
+      3200.121,
+      "press 1"
+    ],
+    [
+      3300.124,
+      "press UP"
+    ],
+    [
+      3400.127,
+      "release UP"
+    ],
+    [
+      3700.135,
+      "turn A 4"
+    ],
+    [
+      4050.146,
+      "press UP"
+    ],
+    [
+      4150.148,
+      "release UP"
+    ],
+    [
+      4450.157,
+      "press UP"
+    ],
+    [
+      4550.16,
+      "release UP"
+    ],
+    [
+      4850.169,
+      "release 1"
+    ],
+    [
+      4950.172,
+      "press 1"
+    ],
+    [
+      5050.175,
+      "press UP"
+    ],
+    [
+      5150.178,
+      "release UP"
+    ],
+    [
+      5450.186,
+      "release 1"
+    ],
+    [
+      5550.189,
+      "press NO"
+    ],
+    [
+      5650.192,
+      "release NO"
+    ],
+    [
+      5950.201,
+      "press STOP"
+    ],
+    [
+      6050.204,
+      "release STOP"
+    ]
+  ],
+  "hle": true,
+  "instructionsPerSecond": 64000000,
+  "fixture": null,
+  "captureToolSha256": "983d31367308763e3e3c77c2f750570b8a09664d9b2af729d353f302605988ba",
+  "halted": null,
+  "frameSelection": "One complete unmodified firmware framebuffer from the final 250 ms, chosen by populated pixels; nearest-neighbor 6x scaling.",
+  "limitations": [
+    "UI documentation only; no hardware, timing or audio-quality qualification."
+  ],
+  "captures": [
+    {
+      "path": "media/1.54/retrig-open.png",
+      "sha256": "7a59c117025ad709398e9bffd0df5428c444a4c3977cd82d71f63a7ca90ad4a1",
+      "atMs": 3469.116765625,
+      "requestedAtMs": 3700.135390625,
+      "plan": "wait 1000\ntap STOP\npress TRK\ntap 9\nrelease TRK\ntap TRIG\ntap RECORD\ntap 1\npress 1\ntap UP\nsnap retrig-open\nturn A 1 350\ntap UP\ntap UP\nrelease 1\npress 1\ntap UP\nsnap retrig-settings\nrelease 1\ntap NO\ntap STOP\nsnap retrig-closed\n"
+    },
+    {
+      "path": "media/1.54/retrig-closed.png",
+      "sha256": "a7d9629f2723bc2fd00fd3022b6840505fd74049bd6aebcb66b4d1689d49f34d",
+      "atMs": 6350.2125,
+      "requestedAtMs": 6350.2125,
+      "plan": "wait 1000\ntap STOP\npress TRK\ntap 9\nrelease TRK\ntap TRIG\ntap RECORD\ntap 1\npress 1\ntap UP\nsnap retrig-open\nturn A 1 350\ntap UP\ntap UP\nrelease 1\npress 1\ntap UP\nsnap retrig-settings\nrelease 1\ntap NO\ntap STOP\nsnap retrig-closed\n"
+    }
+  ],
+  "machine": "digitakt",
+  "moduleId": "midi-retrig",
+  "moduleVersion": "2.0.1",
+  "firmware": "1.54",
+  "stockSha256": "f78ba80fa7b1da5fb0e1ff61ad61e9e71aafe79f4364fc49679f3651353e3cf6"
+}

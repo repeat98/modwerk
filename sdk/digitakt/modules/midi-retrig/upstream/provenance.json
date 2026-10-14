@@ -1,0 +1,36 @@
+{
+  "moduleId": "midi-retrig",
+  "version": "2.0.0",
+  "sourceRevision": null,
+  "sourceStatus": "Exact local source snapshot prepared; public source publication pending.",
+  "sources": {
+    "src/digitakt-mk1/core3.h": "9ad3512ee2ced8f9eaadcb48e5633547d861d7a71f5443d5e9f759d0b790de26",
+    "src/release-153/firmware.h": "20eac0d404833d73c5c5239b11d4b8ca017d1dd5988779ea579a17a675cd12f7",
+    "src/release-153/retrig.S": "e3d65aa843afd499e9a701f128d09501eb9fc5845ae6ac289267f003bc4acebd",
+    "src/release-153/retrig.c": "2e825e82761c254a099a40494992c1d533dc253f1657a0570bd9655d1766cd68",
+    "src/release-154/firmware.h": "23f196258c8b4f91995b16d230cd4f26019ad8da582d7a729378b0bcd7cff23a",
+    "src/release-154/retrig.S": "e2a534bdd8fc557c121a099d70ab363544164b5a766cafb0cef52c545539333c",
+    "src/release-154/retrig.c": "2e825e82761c254a099a40494992c1d533dc253f1657a0570bd9655d1766cd68",
+    "src/retrig.S": "c79c146509fa0ca69de1b69d10e4b44bee2a8cee453eda2c7b861fdf1cbc6424",
+    "src/retrig.c": "c63a1716979c661e92b5ccf0f24efd2877c7edd5d657d01a514a54fb068a19bc"
+  },
+  "originalPackageSha256": "88346d08d9283ff9ed21d6348664dda4007a1a72eaf2fa9389df2c9223d2aa8c",
+  "originalPackageOs": "1.53",
+  "frameworkRevision": "3acac10ea86882a2ea51c9377ac6bd58fc4fec57",
+  "targetReleases": [
+    "1.53",
+    "1.54"
+  ],
+  "packageSha256ByOs": {
+    "1.53": "3dcc78767ef00b23bf11413bf48a9964d092261512254e67197be9ee709d549e",
+    "1.54": "0193ef28cf8de160293bc972668edb8c797a4b6035398a322dfb7e1922208176"
+  },
+  "sourceAdapter": "Explicit DT_OS154 C/assembler selector; original per-OS code preserved. Object parity excludes build provenance and the checked absolute selector symbol only; linked MAIN must match exactly.",
+  "authorGithub": "sumedho",
+  "sourceSha256": "d722cf885a65f6b436376a2b8a260a0ee38ca01d72479a1acaeef0e745783ccc",
+  "localSourceRevision": "de3dab731ba75610ddd1bb4290ebbdd057b7b161",
+  "localSourcePath": "sdk/digitakt/modules/_submissions/midi-retrig",
+  "repository": "https://github.com/sumedho/digirequests",
+  "revision": "8eba613dc3e0b1698797609256fd4081923b4ef2",
+  "path": "modules/midi-retrig"
+}

@@ -1,0 +1,158 @@
+{
+  "schemaVersion": 1,
+  "algorithm": "sha256 of canonical sorted JSON {sources,build}; UTF-8, compact separators",
+  "sha256": "d722cf885a65f6b436376a2b8a260a0ee38ca01d72479a1acaeef0e745783ccc",
+  "sources": {
+    "src/digitakt-mk1/core3.h": "9ad3512ee2ced8f9eaadcb48e5633547d861d7a71f5443d5e9f759d0b790de26",
+    "src/release-153/firmware.h": "20eac0d404833d73c5c5239b11d4b8ca017d1dd5988779ea579a17a675cd12f7",
+    "src/release-153/retrig.S": "e3d65aa843afd499e9a701f128d09501eb9fc5845ae6ac289267f003bc4acebd",
+    "src/release-153/retrig.c": "2e825e82761c254a099a40494992c1d533dc253f1657a0570bd9655d1766cd68",
+    "src/release-154/firmware.h": "23f196258c8b4f91995b16d230cd4f26019ad8da582d7a729378b0bcd7cff23a",
+    "src/release-154/retrig.S": "e2a534bdd8fc557c121a099d70ab363544164b5a766cafb0cef52c545539333c",
+    "src/release-154/retrig.c": "2e825e82761c254a099a40494992c1d533dc253f1657a0570bd9655d1766cd68",
+    "src/retrig.S": "c79c146509fa0ca69de1b69d10e4b44bee2a8cee453eda2c7b861fdf1cbc6424",
+    "src/retrig.c": "c63a1716979c661e92b5ccf0f24efd2877c7edd5d657d01a514a54fb068a19bc"
+  },
+  "build": {
+    "schemaVersion": 1,
+    "sources": [
+      "src/retrig.c",
+      "src/retrig.s"
+    ],
+    "defsym": {},
+    "cflags": [
+      "-DDT_LINKABLE=1",
+      "-std=c99",
+      "-Os",
+      "-msoft-float",
+      "-fno-common",
+      "-fno-asynchronous-unwind-tables",
+      "-Wextra",
+      "-Werror"
+    ],
+    "weak": [],
+    "subscribe": [],
+    "contribute": [],
+    "collections": {},
+    "copied": [],
+    "regions": [],
+    "claims": [
+      "ui:MIDI track:hold trig+UP/DOWN"
+    ],
+    "requires": [],
+    "derive": null,
+    "releases": {
+      "1.53": {
+        "defsym": {
+          "DT_OS154": 0
+        },
+        "cflags": [
+          "-DDT_OS154=0"
+        ],
+        "sites": [
+          {
+            "addr": "0x40034d6c",
+            "op": "bytes",
+            "new": "4e714e71",
+            "kind": "code",
+            "len": 4,
+            "stockSha256": "cc80f012e558fa413023e0aa88ae427fe757a10a86796e3f4b5683e24e177c1c"
+          },
+          {
+            "addr": "0x40041188",
+            "op": "bytes",
+            "new": "6016",
+            "kind": "code",
+            "len": 2,
+            "stockSha256": "2a30aa67b93279e4b85dd86976c310e396630e37d2aa1241c9b19b8984ec5fcd"
+          },
+          {
+            "addr": "0x4006fb2a",
+            "op": "jsr",
+            "target": "mr_prepare_hook",
+            "len": 6,
+            "stockSha256": "c04ae43caaf8668ac37ac2078face2a1ffcb993bbec24874350f32a0097f8de6"
+          },
+          {
+            "addr": "0x40077682",
+            "op": "jsr",
+            "target": "mr_dispatch_hook",
+            "len": 6,
+            "stockSha256": "72975b2bb6f4e08f2d04a77f93ac6f76c3a99d85fe816fddab007c34e2c34711"
+          },
+          {
+            "addr": "0x40077632",
+            "op": "jsr",
+            "target": "mr_tick_hook",
+            "len": 6,
+            "stockSha256": "142e7ee401314727388716424851bbcb0951f24e6d575c64e3e902187c51fa7f"
+          },
+          {
+            "addr": "0x400e0ab6",
+            "op": "jsr",
+            "target": "mr_stop_hook",
+            "len": 8,
+            "stockSha256": "14bdbf5cd55ee80011fae730e20f9f65e784dcea0243da36c9e09a7b4a45f9ea"
+          }
+        ]
+      },
+      "1.54": {
+        "defsym": {
+          "DT_OS154": 1
+        },
+        "cflags": [
+          "-DDT_OS154=1"
+        ],
+        "sites": [
+          {
+            "addr": "0x40034d6c",
+            "op": "bytes",
+            "new": "4e714e71",
+            "kind": "code",
+            "len": 4,
+            "stockSha256": "cc80f012e558fa413023e0aa88ae427fe757a10a86796e3f4b5683e24e177c1c"
+          },
+          {
+            "addr": "0x40041188",
+            "op": "bytes",
+            "new": "6016",
+            "kind": "code",
+            "len": 2,
+            "stockSha256": "2a30aa67b93279e4b85dd86976c310e396630e37d2aa1241c9b19b8984ec5fcd"
+          },
+          {
+            "addr": "0x4006fb2a",
+            "op": "jsr",
+            "target": "mr_prepare_hook",
+            "len": 6,
+            "stockSha256": "c04ae43caaf8668ac37ac2078face2a1ffcb993bbec24874350f32a0097f8de6"
+          },
+          {
+            "addr": "0x40077682",
+            "op": "jsr",
+            "target": "mr_dispatch_hook",
+            "len": 6,
+            "stockSha256": "72975b2bb6f4e08f2d04a77f93ac6f76c3a99d85fe816fddab007c34e2c34711"
+          },
+          {
+            "addr": "0x40077632",
+            "op": "jsr",
+            "target": "mr_tick_hook",
+            "len": 6,
+            "stockSha256": "1b5425e25c165caad250796fe4c9abc8b5a982f8967a8cb8a6991dc41ee657de"
+          },
+          {
+            "addr": "0x400e0cde",
+            "op": "jsr",
+            "target": "mr_stop_hook",
+            "len": 8,
+            "stockSha256": "d7bcb21006ce095f74e92107e5a48ba71999a1c8b10de32c97794a3e8ee19858"
+          }
+        ]
+      }
+    }
+  },
+  "repository": "https://github.com/sumedho/digirequests",
+  "revision": "8eba613dc3e0b1698797609256fd4081923b4ef2",
+  "path": "modules/midi-retrig"
+}

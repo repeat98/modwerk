@@ -3400,6 +3400,301 @@
     },
     {
       "schemaVersion": 3,
+      "id": "midi-retrig",
+      "name": "MIDI Retrig",
+      "version": "2.0.1",
+      "machine": "digitakt",
+      "category": "midi-usb",
+      "exclusive": false,
+      "author": {
+        "github": "sumedho",
+        "credits": [
+          "sumedho — module design and development with Codex assistance.",
+          "irpina — Elekloader Core 2.1, the Core 3.0 header, Machine Pages (adapted to Core 2.1 by sumedho) and SDK."
+        ]
+      },
+      "maintainers": [
+        "sumedho"
+      ],
+      "presentation": {
+        "label": "MIDI Retrig",
+        "family": "Sequencer",
+        "summary": "Use the native retrig menu on MIDI tracks A–H. Repeated notes follow the Digitakt sequencer, including chords, retrig rate, finite length and velocity changes.",
+        "overview": "Use the native retrig menu on MIDI tracks A–H. Repeated notes follow the Digitakt sequencer, including chords, retrig rate, finite length and velocity changes.",
+        "highlights": [
+          "Open the native retrig menu on a MIDI step.",
+          "Enable or disable retrig for the held step.",
+          "Set repeat spacing."
+        ],
+        "usage": [
+          "Select MIDI track A with TRK + trig 9. Configure its MIDI channel for a connected synth and enter grid recording with RECORD.",
+          "Place a note trig. Hold that trig and press UP or DOWN to open RETRIG; turn A to enable it.",
+          "Choose RATE 1/32, a finite LEN and VEL 0. Release the trig and press PLAY to hear repeated MIDI notes.",
+          "Press STOP. To bypass this step, reopen its retrig menu and turn A to OFF."
+        ]
+      },
+      "access": {
+        "location": "MIDI track; grid recording; hold a trig and press UP or DOWN",
+        "steps": [
+          "Select MIDI track A with TRK + trig 9. Configure its MIDI channel for a connected synth and enter grid recording with RECORD.",
+          "Place a note trig. Hold that trig and press UP or DOWN to open RETRIG; turn A to enable it."
+        ],
+        "screenshots": [
+          "media/retrig-open.png"
+        ]
+      },
+      "controls": [
+        {
+          "name": "Hold trig + UP/DOWN",
+          "default": null,
+          "doc": "Open the native retrig menu on a MIDI step.",
+          "labels": null
+        },
+        {
+          "name": "A — RETRIG",
+          "default": null,
+          "doc": "Enable or disable retrig for the held step.",
+          "labels": null
+        },
+        {
+          "name": "E — RATE / UP/DOWN",
+          "default": null,
+          "doc": "Set repeat spacing.",
+          "labels": null
+        },
+        {
+          "name": "D — LEN",
+          "default": null,
+          "doc": "Set the retrig length.",
+          "labels": null
+        },
+        {
+          "name": "H — VEL",
+          "default": null,
+          "doc": "Set the velocity change across the retrig burst.",
+          "labels": null
+        }
+      ],
+      "compatibility": {
+        "releases": [
+          "1.53",
+          "1.54"
+        ],
+        "requires": [],
+        "conflicts": [],
+        "limitations": [
+          "Requires an external MIDI destination to hear the result.",
+          "Dense chords at fast retrig rates increase MIDI traffic; hardware timing and downstream synth behavior need checking."
+        ]
+      },
+      "platform": {
+        "kind": "elemod",
+        "core": "2.1",
+        "build": "build.json",
+        "events": [],
+        "claims": [
+          "ui:MIDI track:hold trig+UP/DOWN"
+        ]
+      },
+      "resources": {
+        "memoryBytes": 1472,
+        "fastBytes": 0,
+        "load": {
+          "display": "Adds 0.4% average, 6.5% worst-case of an audio block over stock (emulator)",
+          "method": "emulator",
+          "conditions": "Emulator: OS 1.53 on Core 2.1, 8 audio tracks triggering a full-scale sample and 8 MIDI tracks a note on every step at 120 BPM, 3,000 audio blocks timed with the MCF5441x instruction-timing model at 250 MHz, zero-wait memory. Module workload: retrig on all eight MIDI tracks at retrig rate index 16 and length 126. Stock: 59.1% average, 61.8% worst block. All six mods together: 73.2% worst block on 1.53, 73.3% on 1.54. Not a hardware measurement."
+        }
+      },
+      "evidence": {
+        "tier": "author-hardware",
+        "moduleVersion": "2.0.1",
+        "sourceSha256": "d722cf885a65f6b436376a2b8a260a0ee38ca01d72479a1acaeef0e745783ccc",
+        "reports": [
+          "evidence/hardware-testing.json",
+          "evidence/source-identity.json",
+          "evidence/regressions-core21.json",
+          "evidence/cpu-load.json",
+          "evidence/modwerk-source-parity.json"
+        ],
+        "hardware": {
+          "model": "Digitakt 1",
+          "release": "1.53 and 1.54",
+          "testedOn": "2026-10-14",
+          "tester": "sumedho",
+          "durationMinutes": 90,
+          "summary": "sumedho reports the Core 2.1 all-mods builds fully tested and working on a Digitakt 1, OS 1.53 and 1.54, for about one to two hours in total, including project save and reload and a power cycle (2026-10-14): “ok fully tested on hardware and working”.",
+          "limitations": [
+            "Duration is the reporter’s range (1–2 hours) for the combined session across both OS releases; recorded as 90 minutes.",
+            "Individual test outcomes were not itemized; standalone (single-mod) hardware coverage is not claimed.",
+            "Tested SysEx: 1.53 23503ca42478c1644dea5fd296893f628eafb6662d2ce5e291bfc591f045ae4e, 1.54 257144e4a584172e470c3dde83d7ccda636eeb195b4e5ff0492b3ebc8bdfaba2; firmware was not read back from the device."
+          ]
+        },
+        "verifiedBy": null
+      },
+      "tests": {
+        "report": "TESTING.md",
+        "summary": "Runs on Core 2.1. Emulator regressions on OS 1.53 and 1.54, an emulator CPU-load comparison with stock, and Modwerk source-build parity with the native build are in TESTING.md. sumedho reports this Core 2.1 build fully tested and working on a Digitakt 1, OS 1.53 and 1.54, for about one to two hours including project save/reload and a power cycle (2026-10-14).",
+        "documentation": {
+          "tutorial": {
+            "title": "Quick tutorial",
+            "steps": [
+              "Select MIDI track A with TRK + trig 9. Configure its MIDI channel for a connected synth and enter grid recording with RECORD.",
+              "Place a note trig. Hold that trig and press UP or DOWN to open RETRIG; turn A to enable it.",
+              "Choose RATE 1/32, a finite LEN and VEL 0. Release the trig and press PLAY to hear repeated MIDI notes.",
+              "Press STOP. To bypass this step, reopen its retrig menu and turn A to OFF."
+            ]
+          },
+          "screenshots": [
+            "media/retrig-open.png",
+            "media/retrig-closed.png",
+            "media/1.54/retrig-open.png",
+            "media/1.54/retrig-closed.png"
+          ],
+          "captureRecord": "media/captures.json"
+        }
+      },
+      "license": {
+        "spdx": "GPL-2.0-or-later",
+        "file": "LICENSE",
+        "declaration": "Original module source and irpina’s unchanged Core 3.0 header under GPL-2.0-or-later. Native patch preconditions are represented by addresses, lengths and hashes."
+      },
+      "media": [
+        {
+          "path": "media/thumbnail.svg",
+          "kind": "thumbnail",
+          "caption": "MIDI Retrig",
+          "alt": "Original sequencer illustration for MIDI Retrig",
+          "credit": "sumedho",
+          "license": "GPL-2.0-or-later",
+          "source": "Original vector illustration; not a device screenshot."
+        },
+        {
+          "path": "media/retrig-open.png",
+          "kind": "screenshot",
+          "caption": "In grid recording on MIDI A, hold a note trig and press UP. Enable RETRIG with A and set RATE with E or UP/DOWN.",
+          "alt": "MIDI A with the retrig popup.",
+          "credit": "sumedho documentation capture; Elektron interface",
+          "license": "LicenseRef-Digi-UI-Documentation",
+          "source": "original",
+          "capture": {
+            "type": "emulator",
+            "release": "1.53",
+            "moduleVersion": "2.0.1",
+            "imageSha256": "23503ca42478c1644dea5fd296893f628eafb6662d2ce5e291bfc591f045ae4e",
+            "setup": "Actual cold-booted OS 1.53 all-mods SysEx on Core 2.1; cloned drive and native panel input. UI documentation only."
+          }
+        },
+        {
+          "path": "media/retrig-closed.png",
+          "kind": "screenshot",
+          "caption": "Release the trig to return to TRIG. Press PLAY to hear the burst, then STOP.",
+          "alt": "MIDI A TRIG parameter page.",
+          "credit": "sumedho documentation capture; Elektron interface",
+          "license": "LicenseRef-Digi-UI-Documentation",
+          "source": "original",
+          "capture": {
+            "type": "emulator",
+            "release": "1.53",
+            "moduleVersion": "2.0.1",
+            "imageSha256": "23503ca42478c1644dea5fd296893f628eafb6662d2ce5e291bfc591f045ae4e",
+            "setup": "Actual cold-booted OS 1.53 all-mods SysEx on Core 2.1; cloned drive and native panel input. UI documentation only."
+          }
+        },
+        {
+          "path": "media/1.54/retrig-open.png",
+          "kind": "screenshot",
+          "caption": "In grid recording on MIDI A, hold a note trig and press UP. Enable RETRIG with A and set RATE with E or UP/DOWN. (OS 1.54)",
+          "alt": "MIDI A with the retrig popup.",
+          "credit": "sumedho documentation capture; Elektron interface",
+          "license": "LicenseRef-Digi-UI-Documentation",
+          "source": "original",
+          "capture": {
+            "type": "emulator",
+            "release": "1.54",
+            "moduleVersion": "2.0.1",
+            "imageSha256": "257144e4a584172e470c3dde83d7ccda636eeb195b4e5ff0492b3ebc8bdfaba2",
+            "setup": "Actual cold-booted OS 1.54 all-mods SysEx on Core 2.1; cloned drive and native panel input. UI documentation only."
+          }
+        },
+        {
+          "path": "media/1.54/retrig-closed.png",
+          "kind": "screenshot",
+          "caption": "Release the trig to return to TRIG. Press PLAY to hear the burst, then STOP. (OS 1.54)",
+          "alt": "MIDI A TRIG parameter page.",
+          "credit": "sumedho documentation capture; Elektron interface",
+          "license": "LicenseRef-Digi-UI-Documentation",
+          "source": "original",
+          "capture": {
+            "type": "emulator",
+            "release": "1.54",
+            "moduleVersion": "2.0.1",
+            "imageSha256": "257144e4a584172e470c3dde83d7ccda636eeb195b4e5ff0492b3ebc8bdfaba2",
+            "setup": "Actual cold-booted OS 1.54 all-mods SysEx on Core 2.1; cloned drive and native panel input. UI documentation only."
+          }
+        }
+      ],
+      "source": {
+        "repository": "https://github.com/sumedho/digirequests",
+        "revision": "8eba613dc3e0b1698797609256fd4081923b4ef2",
+        "path": "modules/midi-retrig"
+      },
+      "patchSites": {
+        "1.53": [
+          {
+            "addr": "0x40034d6c",
+            "len": 4
+          },
+          {
+            "addr": "0x40041188",
+            "len": 2
+          },
+          {
+            "addr": "0x4006fb2a",
+            "len": 6
+          },
+          {
+            "addr": "0x40077682",
+            "len": 6
+          },
+          {
+            "addr": "0x40077632",
+            "len": 6
+          },
+          {
+            "addr": "0x400e0ab6",
+            "len": 8
+          }
+        ],
+        "1.54": [
+          {
+            "addr": "0x40034d6c",
+            "len": 4
+          },
+          {
+            "addr": "0x40041188",
+            "len": 2
+          },
+          {
+            "addr": "0x4006fb2a",
+            "len": 6
+          },
+          {
+            "addr": "0x40077682",
+            "len": 6
+          },
+          {
+            "addr": "0x40077632",
+            "len": 6
+          },
+          {
+            "addr": "0x400e0cde",
+            "len": 8
+          }
+        ]
+      }
+    },
+    {
+      "schemaVersion": 3,
       "id": "digihealth",
       "name": "digihealth",
       "version": "1.1.2-experimental",
