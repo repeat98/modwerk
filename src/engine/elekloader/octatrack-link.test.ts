@@ -206,6 +206,17 @@ describe('sending a module', () => {
     await link.update('PREVIEW VOL', one)
     expect(link.getState().status).toBe('trial')
   })
+  it('stages again when the loader refused the publication as busy (a controller quiescing before it leaves)', async () => {
+    const { unit, link } = await linked()
+    unit.publishRefusal = 5 // the board answers busy once and quiesces; the base dropped the staged package
+    setTimeout(() => { unit.publishRefusal = undefined }, 50)
+    await link.update('PREVIEW VOL', one)
+    expect(link.getState().status).toBe('trial')
+    await link.undo()
+    unit.publishRefusal = 7 // anything else stays a refusal, in words
+    await link.update('PREVIEW VOL', one)
+    expect(link.getState().notice?.text).toMatch(/A track is playing this module’s effect/)
+  })
   it('recovers from a missing reply without asking to unplug', async () => {
     const unit = fakeUnit(), base = fakeSession(unit)
     let calls = 0

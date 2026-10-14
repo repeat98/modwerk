@@ -1,0 +1,248 @@
+{
+  "schemaVersion": 1,
+  "algorithm": "sha256 of canonical sorted JSON {sources,build}; UTF-8, compact separators",
+  "sha256": "636d2cd900cb7a71bbe1591067acd4337021a366735901972d5cae59b00850d2",
+  "sources": {
+    "src/digitakt-mk1/core3.h": "9ad3512ee2ced8f9eaadcb48e5633547d861d7a71f5443d5e9f759d0b790de26",
+    "src/ram.S": "90b12ca7e14860a13e3beb8faae639cef43c1d8162fd74a09e4dd7a046baf1a4",
+    "src/ram.c": "c4edb810fa5909a562599a9502a7fc00eb4beb8dd03e396512ec46978238a38b",
+    "src/release-153/core21.h": "a56cf302ca91bddb05e9c543972942d929843eeec7b7aa0564ed6be1928e6e01",
+    "src/release-153/euclidean.h": "ad57a044a339510972bc566dd05a3cba890aba5200b99b7d7ae3be86e3639674",
+    "src/release-153/firmware.h": "3343d8bfc12f8b409c0b3ff8ea8c7eeaf717cb373c5514c90a8339e1bd228899",
+    "src/release-153/ram.S": "b08335d5691c708272b5be87568035f9a4a2d8ac304518efae6afc494937f3bd",
+    "src/release-153/ram.c": "881b1138cd2e4314db43fae3365345a1ad63cfea75025dca3f46825dda261f65",
+    "src/release-154/core21.h": "c4d31ee8d6d8699ed0ea2b2197712d00b3433b8a5b03865806788fea5ecc265c",
+    "src/release-154/euclidean.h": "ad57a044a339510972bc566dd05a3cba890aba5200b99b7d7ae3be86e3639674",
+    "src/release-154/firmware.h": "31fbe86139cc1fdcedc73bea998d1f9ae5414cc5bae765074a23ff871096ff71",
+    "src/release-154/ram.S": "b7d6b1ba1c5af5d95d014e418abbf42fcb654f9e05dcd156c25db9cff6af0f3c",
+    "src/release-154/ram.c": "ce68902511420ea057b07fdcd2165ea72516640ae7ac8e213d26969d4cba5c41"
+  },
+  "build": {
+    "schemaVersion": 1,
+    "sources": [
+      "src/ram.c",
+      "src/ram.s"
+    ],
+    "defsym": {},
+    "cflags": [
+      "-DDT_LINKABLE=1",
+      "-std=c99",
+      "-Os",
+      "-msoft-float",
+      "-fno-common",
+      "-fno-asynchronous-unwind-tables",
+      "-Wextra",
+      "-Werror"
+    ],
+    "weak": [],
+    "subscribe": [
+      {
+        "event": "ev_tick",
+        "fn": "ram_tick",
+        "order": 30
+      },
+      {
+        "event": "ev_key",
+        "fn": "ram_key",
+        "order": 10
+      },
+      {
+        "event": "ev_render_voices",
+        "fn": "ram_gate",
+        "order": 80
+      }
+    ],
+    "contribute": [
+      {
+        "to": "core_machines",
+        "order": 50,
+        "data": "00000000",
+        "relocs": [
+          [
+            0,
+            "abs32",
+            "sym:ram_record_machine",
+            0
+          ]
+        ]
+      },
+      {
+        "to": "core_machines",
+        "order": 50,
+        "data": "00000000",
+        "relocs": [
+          [
+            0,
+            "abs32",
+            "sym:ram_play_machine",
+            0
+          ]
+        ]
+      }
+    ],
+    "collections": {},
+    "copied": [],
+    "regions": [],
+    "claims": [
+      "sample:private:131",
+      "ui:SRC:RAM waveform override",
+      "machine:120",
+      "machine:121"
+    ],
+    "requires": [
+      "machine-pages"
+    ],
+    "derive": null,
+    "releases": {
+      "1.53": {
+        "defsym": {
+          "DT_OS154": 0
+        },
+        "cflags": [
+          "-DDT_OS154=0"
+        ],
+        "sites": [
+          {
+            "addr": "0x401848e4",
+            "op": "ptr",
+            "target": "ram_src_draw",
+            "len": 4,
+            "stockSha256": "7e54079f260eda74a8c97c0c99a6f6c92a80a5d69d4f1d8782a3ea8866407833"
+          },
+          {
+            "addr": "0x40077f8e",
+            "op": "jsr",
+            "target": "ram_audio",
+            "len": 6,
+            "stockSha256": "0c96a362d7ed186efff320fa0e511fec27bca812eaeacb302cb8135234e40c22"
+          },
+          {
+            "addr": "0x400782cc",
+            "op": "jsr",
+            "target": "ram_capture",
+            "len": 6,
+            "stockSha256": "4e8160db8e8362bbffb40afea26dbe1eca4973e9721160642e75f39887f2f233"
+          },
+          {
+            "addr": "0x4007814a",
+            "op": "jsr",
+            "target": "ram_mix",
+            "len": 6,
+            "stockSha256": "df1b3bb51fe6696251fe98dbd089906b898d4e209f28a28aa3aaf804edd6b235"
+          },
+          {
+            "addr": "0x400751ea",
+            "op": "jsr",
+            "target": "ram_lookup",
+            "len": 6,
+            "stockSha256": "fb6702579c568c0a2a87965ef26cae977fc7727675c8f948de6455f0843c330d"
+          },
+          {
+            "addr": "0x40075934",
+            "op": "jsr",
+            "target": "ram_lookup",
+            "len": 6,
+            "stockSha256": "fb6702579c568c0a2a87965ef26cae977fc7727675c8f948de6455f0843c330d"
+          },
+          {
+            "addr": "0x400225ca",
+            "op": "jmp",
+            "target": "ram_set",
+            "len": 8,
+            "stockSha256": "1a241bd7b3090391ae8bfc0352ae22425a70817ccd477fa5d7aba231b95b8bc9"
+          },
+          {
+            "addr": "0x40084c00",
+            "op": "jmp",
+            "target": "ram_new",
+            "len": 8,
+            "stockSha256": "a04973fb79ed0896aa768e97902a85f61a10ad9d106955b3fe7a112c76d0e51f"
+          },
+          {
+            "addr": "0x4001ac20",
+            "op": "jmp",
+            "target": "ram_load",
+            "len": 8,
+            "stockSha256": "757fbde3cb1eb7e84e6e8585255783de8dc9f5b00b7c66a8e337c1b8709417a9"
+          }
+        ]
+      },
+      "1.54": {
+        "defsym": {
+          "DT_OS154": 1
+        },
+        "cflags": [
+          "-DDT_OS154=1"
+        ],
+        "sites": [
+          {
+            "addr": "0x40184be4",
+            "op": "ptr",
+            "target": "ram_src_draw",
+            "len": 4,
+            "stockSha256": "7e54079f260eda74a8c97c0c99a6f6c92a80a5d69d4f1d8782a3ea8866407833"
+          },
+          {
+            "addr": "0x40077f8e",
+            "op": "jsr",
+            "target": "ram_audio",
+            "len": 6,
+            "stockSha256": "0c96a362d7ed186efff320fa0e511fec27bca812eaeacb302cb8135234e40c22"
+          },
+          {
+            "addr": "0x400782cc",
+            "op": "jsr",
+            "target": "ram_capture",
+            "len": 6,
+            "stockSha256": "4e8160db8e8362bbffb40afea26dbe1eca4973e9721160642e75f39887f2f233"
+          },
+          {
+            "addr": "0x4007814a",
+            "op": "jsr",
+            "target": "ram_mix",
+            "len": 6,
+            "stockSha256": "df1b3bb51fe6696251fe98dbd089906b898d4e209f28a28aa3aaf804edd6b235"
+          },
+          {
+            "addr": "0x400751ea",
+            "op": "jsr",
+            "target": "ram_lookup",
+            "len": 6,
+            "stockSha256": "05e2da2d63224933dca6b6ef35c31fdab1ca9e63a3beea07aacf6d431863b94e"
+          },
+          {
+            "addr": "0x40075934",
+            "op": "jsr",
+            "target": "ram_lookup",
+            "len": 6,
+            "stockSha256": "05e2da2d63224933dca6b6ef35c31fdab1ca9e63a3beea07aacf6d431863b94e"
+          },
+          {
+            "addr": "0x400225ca",
+            "op": "jmp",
+            "target": "ram_set",
+            "len": 8,
+            "stockSha256": "1a241bd7b3090391ae8bfc0352ae22425a70817ccd477fa5d7aba231b95b8bc9"
+          },
+          {
+            "addr": "0x40084c00",
+            "op": "jmp",
+            "target": "ram_new",
+            "len": 8,
+            "stockSha256": "a04973fb79ed0896aa768e97902a85f61a10ad9d106955b3fe7a112c76d0e51f"
+          },
+          {
+            "addr": "0x4001ac20",
+            "op": "jmp",
+            "target": "ram_load",
+            "len": 8,
+            "stockSha256": "757fbde3cb1eb7e84e6e8585255783de8dc9f5b00b7c66a8e337c1b8709417a9"
+          }
+        ]
+      }
+    }
+  },
+  "repository": "https://github.com/sumedho/digirequests",
+  "revision": "8eba613dc3e0b1698797609256fd4081923b4ef2",
+  "path": "modules/ram-machines"
+}

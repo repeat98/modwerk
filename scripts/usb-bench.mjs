@@ -2,7 +2,7 @@
 // The USB bench's line protocol (sdk/octabam/tools/emu/ot_emu/usb.h), spoken by
 // ot_emu and by scripts/octatrack-usb-bridge.py for a real unit,
 // plus the WebUSB calls UsbVendorTransport makes, carried over it.
-import { createConnection } from 'node:net'
+import { createConnection, createServer } from 'node:net'
 
 /** A bench socket: a Unix socket's path, or a TCP port on this computer (octatrack-usb-bridge.py on Windows, reached from WSL). */
 export const benchEndpoint = path => /^\d+$/.test(path) ? Number(path) : path
@@ -101,4 +101,44 @@ export async function enumerate(bench, hardware) {
       endpoints: Array.from({ length: cfg[i + 4] }) }] })
   }
   return { interfaces }
+}
+
+/** A second client on an open bench (test plan T1: the frontend MCP beside `device.mjs serve`, one USB owner): a socket
+ * speaking the same line protocol, whose control transfers each run inside `bench.transaction`, so their stages never
+ * interleave with the owner's. Only EP0 transfers pass; `speed` and `reset` stay the owner's. Returns the server. */
+export function shareBench(bench, path) {
+  return createServer(client => {
+    const lines = []
+    let buffer = '', wake
+    const next = () => lines.length ? Promise.resolve(lines.shift()) : new Promise(resolve => { wake = resolve })
+    const push = line => { if (wake) { const resolve = wake; wake = undefined; resolve(line) } else lines.push(line) }
+    const reply = line => { if (!client.destroyed) client.write(line + '\n') }
+    const forward = line => bench.command(line).then(words => words.join(' '), error => String(error.message).replace(/^Bench: /, '').replace(/^(?!err)/, 'err '))
+    client.setEncoding('utf8')
+    client.on('data', chunk => {
+      buffer += chunk
+      for (let i; (i = buffer.indexOf('\n')) >= 0; buffer = buffer.slice(i + 1)) push(buffer.slice(0, i))
+    })
+    client.on('close', () => push(null)).on('error', () => {})
+    ;(async () => {
+      for (let line; (line = await next()) !== null;) {
+        if (!line.startsWith('setup ')) { reply('err ' + line.split(' ')[0] + ' outside a control transfer'); continue }
+        const length = Buffer.from(line.slice(6), 'hex').readUInt16LE(6)
+        let gone = false
+        await bench.transaction(async () => { // the setup, its data stage if any, its status stage; a stall or error ends it
+          const answer = await forward(line)
+          reply(answer)
+          if (answer.startsWith('err')) return
+          for (let stages = length ? 2 : 1; stages--;) {
+            const stage = await next()
+            if (stage === null) { gone = true; return }
+            const answer = await forward(stage)
+            reply(answer)
+            if (answer.startsWith('err') || answer.split(' ')[2] === 'stall') return
+          }
+        })
+        if (gone) return
+      }
+    })()
+  }).listen(benchEndpoint(path))
 }

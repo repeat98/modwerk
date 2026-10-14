@@ -1,0 +1,806 @@
+{
+ "elemod": 2,
+ "id": "cc-names",
+ "version": "2.1.1",
+ "title": "CC Assignment Names",
+ "description": "Give each MIDI CC assignment a label of up to five characters. Labels appear on CC VALUE and follow native pattern and project operations.",
+ "category": "midi-usb",
+ "author": "sumedho",
+ "license": "GPL-2.0-or-later",
+ "target": {
+  "device": "digitakt-mk1",
+  "product": "Digitakt mk1",
+  "os": "1.53",
+  "syx_sha256": "9bdd44bb6102fb25c143cfab97bc92b7a89c463f795d3112dce89771e29bcc92",
+  "section3_sha256": "4b47a9507758ca5669ca02ab2c0374d2c04c98aece445408295cc1dcb265c5df",
+  "section3_len": 2475584
+ },
+ "sections": {
+  ".run": {
+   "align": 4,
+   "len": 3061,
+   "parts": [
+    [
+     "hex",
+     "2f0a206f00084280226f000c45f10800119208005280b0af001066f0245f4e75206f00042008d0af00084218b08866fa4e754feffff048d7041c243900000000262f00144a82662e4aaf001c67664a83675c487863004eb9400d3f04588f24404a806742487863002f004ebaffb423ca00000000508f40c446fc2700207900000000428295ca2010b6806634222f0018b2a80004662a46c4d4b90000000006820000000c600e4ab90000000066c852b90000000020024cd7041c4fef00104e754a8066064a8a6602244841e8018c06820000018c0c820000630066aa4aaf001c67504a8a67464a83674248780180240a06820000000c2f024ebaff262483203900000000528023c000000000256f00200004256f00280008508fb0b900000000630623c00000000046c4608852b90000000046c442826000ff7c4fefffec226f0018200948d7041c0680be6e1fe80c8000048eff6244243c0000091e4c4200014c4200000681fffffa660c810000037f622876704c4310024c4310014a82661ac0fc0180c2fc0030d0810680000000004cd7041c4fef00144e7540c246fc27002239000000004a81675845e9fa6691c82f4a00106044263018004a8367387801b8b018046630202f001090830c800000037f622278704c4400034c4400004a83661446c2c0fc003041f0080c203900000000d088609a41e8018cb1fc0000630066b446c22f092f2f0020487800022f094ebafe204fef00106000ff764fefffe8727f206f001c48d7440c246f0020202800042400ec8ab282650000982200e689760724522c50c6817207c280428041ef0012224316320800670c1183080052807605b68066ee42031183080052807606b68066f240c346fc2700203c000001804c020800c2fc0006487800062f08d0813209c2fc0030d0810680000000002f004ebafd5e46c352b900000000206e0078225042a72f022f082069005c4e902f4e00344cef440c00184fef00304ef9400c98124cd7440c4fef00184e752f032f02222f000c20010680be6e1fe80c8000048eff6222243c0000091e4c4200034c4200004a836610c0fc0180068000000000241f261f4e752f012f2f0014487800012f014ebafd0e4fef001060e4202f000c206f0004226f00084a806606429042804e757201b2806604208960f255804a8066ec209121690004000460e24feffe6048d744fc2c6f01a84284428245f90000000070077c06c0822202e6897e30428343ef01a04c0718004c0608002040d1c1d1c9603e2c017e074686cc872a01e68dd08052817bb65810eca57c01ca868085b88166e07e3cbe8065564a80671c103208ff43f0380052831340fe807005b083670c220442805c8460ba420060e4420152827a401141fe85ba826686428043f70820206f01a41191080052800c800000018066ea70014cd744fc4fef01a04e75428060f22f0370ff2f02226f000c4281307c000875b11800b58024007601c083e28a538844800280edb88320b5804a8866e852810c81000000f066d4241f4680261f4e754feffef0428048d744fc2c6f0114420152801f81081f0c80000000f066f0428193c92009e688206f011876072c0106860000001ec0fc0030d1c02009c083c0fc0006d1c010106726710045f90000000074017912b0846718528a5282763db68266f042804cd744fc4fef01104e7542825288280176052004e68845ef01107a017e07d5c02002e6a85383c0852a044685ca875284eba81a2aff1080851540ff1070ffb08366d05c81b286669852897440b4896600ff6e7a012e3c000000f02cbc43434e312d4500042d470008486f00204ebafeee588f2d40000c428041f708201d90081052800c80000000f066ee70016000ff72518f2f0a203c43434e31246f00142f6f00100008b092663e7001b0aa00046636203c000000f0b0aa0008662a202a000c2f400004486a00104ebafe92588fb0af000466122f4a00142f6f00080010245f508f6000fdc0245f4280508f4e754feffe7048d7401c242f01982c6f01942f2f019c2f022f0e4eb9000000004fef000c26004a00675242a72f024ebafd0840c446fc2700508f240f0682000000104a806742487801802f002f024ebafa0c4fef000c46c42f024dee09002f0e4ebafe4e508f4a80660c487801002f0e4ebafa0a508f52b90000000020034cd7401c4fef01904e75487801802f024ebaf9ec508f60c04feffe7448d7400c2c6f0194262f01902f0e2f034eb900000000508f24004a006754486e09004def00102f0e4ebafee0508f4a806612487801802f0e4ebaf9a852b900000000508f487800012f034ebafc52508f4a80671840c346fc2700487801802f0e2f004ebaf95e46c34fef000c52b90000000020024cd7400c4fef018c4e752f032f02242f000c487800012f024ebafc10508f4a80671440c346fc2700487801802f004ebaf93e46c3508f2f42000c241f52b900000000261f4ef9000000002f032f02242f000c487800012f024ebafa2e508f4a80671440c346fc2700487800302f004ebaf8fe46c3508f2f42000c241f52b900000000261f4ef9000000004fefffe848d7047c2a2f0024242f001c282f00200c850000091e665a42a72f0445fafb7e4e9242a72f0226004e924fef00104a80667c20020680fffe13942f0048780001487800012f024ebaf8aa4fef0010223c000001804a80665c2f4500242f4400202f42001c4cd7047c4fef00184ef9400e88c07c70bc8566e042a72f0445faf97c4e9242a72f0226004e924fef00104a80664a20424868fffc48780001487800022f024ebaf84e4fef0010723060a6223c0000018040c646fc270024464a8367202f012f032f004ebaf7f84fef000c200a46c052b9000000006000ff7e723060d42f012f004ebaf7fa508f60e2202f00044ab90000000067364a80673240c146fc270020790000000043e863004a906714b0a80008660e429053b90000000052b90000000041e8018cb3c866e046c14e754fefffec700748d7041c262f001c2403246f00180682ffffff6cb08265522f2a00744eb94001d24e2f4000142f2a00784eb94013befc508f727fb2806532222f001078075181b881652678064c042800283c000001804c040800d08274304c021800d08106800000000020404a1066162f43001c4cd7041c42af00184fef00144ef94000fe8a4cd7041c4fef00144e754e56ffb8223c434331202d41ffe7420148d70c3c243c4e414d45246e000c266e00082d42ffeb202a0010262a000c1d41ffef7209c28053814a81660642b900000000b6b900000000661808000004671242b90000000070014cee0c3cffb84e5e4e7522030681ffffffd82d41ffd0e689660001b0720bc081b280660001a62f2b00744eb94001d24e20532f2effd02f0b2068009c24004e902f2b007828004eb94013befc4fef00102a00707fb0856500017251827207b282650001680684ffffff6cb2846500015c20052202ed88e78941faf95a487800b02d4bfff02d48fff880aeffd080812d40fff4203c000000002d40fffc102effe9d0aeffd01d40ffe94eb9400d3f04588f24404a80660a23c3000000006000ff4042a7486effe7280e0684ffffffd62f044eb94017ac204fef000c222effd070064c00180041f9000000002d41ffd072304c012800223c000001804c015800202effd0d082d0854a300800670000b0daaeffd0d485d48842a72d42ffd02f2effd0240e0682ffffffda2f024eb94017ac202a0a06850000001024bc4018609c2545000c70012540000425400008486efff042a74878000542a72f022f042f054eb9400c64544fef00247201204341e8ffd9254800ac2d45ffde2d4affe252b900000000154100a44297486effde2f0b4eb9400c9916486effe24eb94013771c2f044eb9401791702f024eb94017917023c3000000004fef00186000fe44242effd00682000000006000ff4e2f0a486bfffc4eb94003041c508f6000fe264fefffe448d73c1c4ef94007a6ae202f0004206f00084ef94007a4d64fefffec48d73c044ef9400846b44fefffe048d73c044ef9400847682f052f0a4eb900000000508f4e752f022f0c4eb900000000508f4e754142434445464748494a4b4c4d4e4f505152535455565758595ac5c4d6dcdfc6d8c7d1303132333435363738397e21402324255e2628295f2b2d3d200056414c31000056414c32000056414c33000056414c34000056414c35000056414c36000056414c37000056414c380000"
+    ]
+   ]
+  },
+  ".bss": {
+   "align": 4,
+   "size": 49228
+  }
+ },
+ "symbols": {
+  "copy": [
+   ".run",
+   0
+  ],
+  "zero": [
+   ".run",
+   32
+  ],
+  "temp_names": [
+   ".run",
+   50
+  ],
+  "ccn_temporary": [
+   ".bss",
+   49224
+  ],
+  "track_names": [
+   ".run",
+   314
+  ],
+  "accepted": [
+   ".run",
+   540
+  ],
+  "kit_names": [
+   ".run",
+   732
+  ],
+  "manager": [
+   ".run",
+   812
+  ],
+  "unpack_names.part.0": [
+   ".run",
+   860
+  ],
+  "name_alphabet": [
+   ".run",
+   2952
+  ],
+  "crc.constprop.0": [
+   ".run",
+   1044
+  ],
+  "fallback": [
+   ".run",
+   3013
+  ],
+  "DT_OS154": [
+   "abs",
+   0
+  ],
+  "ccn_stock_save": [
+   ".run",
+   2868
+  ],
+  "ccn_stock_load": [
+   ".run",
+   2882
+  ],
+  "ccn_copy_hook": [
+   ".run",
+   1852
+  ],
+  "unpack_names": [
+   ".run",
+   1352
+  ],
+  "ccn_temporary_count": [
+   ".bss",
+   68
+  ],
+  "ccn_enabled_label_hook": [
+   ".run",
+   2938
+  ],
+  "ccn_save_hook": [
+   ".run",
+   1446
+  ],
+  "pack_names": [
+   ".run",
+   1108
+  ],
+  "ccn_key_hook": [
+   ".run",
+   2304
+  ],
+  "ccn_released_key": [
+   ".bss",
+   0
+  ],
+  "ccn_clear_kit_hook": [
+   ".run",
+   1724
+  ],
+  "ccn_stock_clear_kit": [
+   ".run",
+   2896
+  ],
+  "ccn_load_hook": [
+   ".run",
+   1594
+  ],
+  "ccn_pattern_names": [
+   ".bss",
+   72
+  ],
+  "ccn_stock_clear_midi": [
+   ".run",
+   2910
+  ],
+  "ccn_page_label": [
+   ".run",
+   2160
+  ],
+  "ccn_disabled_label_hook": [
+   ".run",
+   2924
+  ],
+  "ccn_stats": [
+   ".bss",
+   4
+  ],
+  "ccn_cleanup": [
+   ".run",
+   2092
+  ],
+  "ccn_clear_midi_hook": [
+   ".run",
+   1788
+  ]
+ },
+ "exports": [
+  "ccn_cleanup",
+  "ccn_clear_kit_hook",
+  "ccn_clear_midi_hook",
+  "ccn_copy_hook",
+  "ccn_disabled_label_hook",
+  "ccn_enabled_label_hook",
+  "ccn_key_hook",
+  "ccn_load_hook",
+  "ccn_page_label",
+  "ccn_pattern_names",
+  "ccn_released_key",
+  "ccn_save_hook",
+  "ccn_stats",
+  "ccn_stock_clear_kit",
+  "ccn_stock_clear_midi",
+  "ccn_stock_load",
+  "ccn_stock_save",
+  "ccn_temporary_count",
+  "pack_names",
+  "unpack_names"
+ ],
+ "imports": [],
+ "weak": [],
+ "relocs": [
+  [
+   ".run",
+   60,
+   "abs32",
+   "sec:.bss",
+   49224
+  ],
+  [
+   ".run",
+   112,
+   "abs32",
+   "sec:.bss",
+   49224
+  ],
+  [
+   ".run",
+   126,
+   "abs32",
+   "sec:.bss",
+   49224
+  ],
+  [
+   ".run",
+   154,
+   "abs32",
+   "sec:.bss",
+   49224
+  ],
+  [
+   ".run",
+   168,
+   "abs32",
+   "sec:.bss",
+   49224
+  ],
+  [
+   ".run",
+   176,
+   "abs32",
+   "sec:.bss",
+   32
+  ],
+  [
+   ".run",
+   256,
+   "abs32",
+   "sec:.bss",
+   68
+  ],
+  [
+   ".run",
+   264,
+   "abs32",
+   "sec:.bss",
+   68
+  ],
+  [
+   ".run",
+   284,
+   "abs32",
+   "sec:.bss",
+   36
+  ],
+  [
+   ".run",
+   292,
+   "abs32",
+   "sec:.bss",
+   36
+  ],
+  [
+   ".run",
+   302,
+   "abs32",
+   "sec:.bss",
+   32
+  ],
+  [
+   ".run",
+   396,
+   "abs32",
+   "sec:.bss",
+   72
+  ],
+  [
+   ".run",
+   418,
+   "abs32",
+   "sec:.bss",
+   49224
+  ],
+  [
+   ".run",
+   494,
+   "abs32",
+   "sec:.bss",
+   49224
+  ],
+  [
+   ".run",
+   666,
+   "abs32",
+   "sec:.bss",
+   72
+  ],
+  [
+   ".run",
+   680,
+   "abs32",
+   "sec:.bss",
+   4
+  ],
+  [
+   ".run",
+   780,
+   "abs32",
+   "sec:.bss",
+   72
+  ],
+  [
+   ".run",
+   878,
+   "abs32",
+   "sec:.run",
+   2952
+  ],
+  [
+   ".run",
+   1184,
+   "abs32",
+   "sec:.run",
+   2952
+  ],
+  [
+   ".run",
+   1472,
+   "abs32",
+   "sec:.run",
+   2868
+  ],
+  [
+   ".run",
+   1564,
+   "abs32",
+   "sec:.bss",
+   8
+  ],
+  [
+   ".run",
+   1616,
+   "abs32",
+   "sec:.run",
+   2882
+  ],
+  [
+   ".run",
+   1660,
+   "abs32",
+   "sec:.bss",
+   16
+  ],
+  [
+   ".run",
+   1708,
+   "abs32",
+   "sec:.bss",
+   12
+  ],
+  [
+   ".run",
+   1776,
+   "abs32",
+   "sec:.bss",
+   24
+  ],
+  [
+   ".run",
+   1784,
+   "abs32",
+   "sec:.run",
+   2896
+  ],
+  [
+   ".run",
+   1840,
+   "abs32",
+   "sec:.bss",
+   24
+  ],
+  [
+   ".run",
+   1848,
+   "abs32",
+   "sec:.run",
+   2910
+  ],
+  [
+   ".run",
+   2068,
+   "abs32",
+   "sec:.bss",
+   20
+  ],
+  [
+   ".run",
+   2098,
+   "abs32",
+   "sec:.bss",
+   68
+  ],
+  [
+   ".run",
+   2116,
+   "abs32",
+   "sec:.bss",
+   49224
+  ],
+  [
+   ".run",
+   2138,
+   "abs32",
+   "sec:.bss",
+   68
+  ],
+  [
+   ".run",
+   2144,
+   "abs32",
+   "sec:.bss",
+   28
+  ],
+  [
+   ".run",
+   2262,
+   "abs32",
+   "sec:.bss",
+   72
+  ],
+  [
+   ".run",
+   2366,
+   "abs32",
+   "sec:.bss",
+   0
+  ],
+  [
+   ".run",
+   2372,
+   "abs32",
+   "sec:.bss",
+   0
+  ],
+  [
+   ".run",
+   2386,
+   "abs32",
+   "sec:.bss",
+   0
+  ],
+  [
+   ".run",
+   2540,
+   "abs32",
+   "sec:.run",
+   540
+  ],
+  [
+   ".run",
+   2576,
+   "abs32",
+   "sec:.bss",
+   0
+  ],
+  [
+   ".run",
+   2622,
+   "abs32",
+   "sec:.bss",
+   72
+  ],
+  [
+   ".run",
+   2774,
+   "abs32",
+   "sec:.bss",
+   40
+  ],
+  [
+   ".run",
+   2824,
+   "abs32",
+   "sec:.bss",
+   0
+  ],
+  [
+   ".run",
+   2842,
+   "abs32",
+   "sec:.run",
+   3013
+  ],
+  [
+   ".run",
+   2930,
+   "abs32",
+   "sec:.run",
+   2160
+  ],
+  [
+   ".run",
+   2944,
+   "abs32",
+   "sec:.run",
+   2160
+  ]
+ ],
+ "sites": [
+  {
+   "addr": "0x4007a6a6",
+   "len": 8,
+   "stock_sha256": "57ce6a873a72d55110bfba4569069ecc773810ea4134eb9191e9c6c1ccaa0714",
+   "new": "4ef9000000004e71",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:ccn_save_hook",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x4007a4ce",
+   "len": 8,
+   "stock_sha256": "18aca459f8e6ace91c549e59847c61b45044a89ab000d796b99143834f2e1234",
+   "new": "4ef9000000004e71",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:ccn_load_hook",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x400846ac",
+   "len": 8,
+   "stock_sha256": "e1f0c30ba50be61a73c667d403a4df1aebf7d22838a172685f623adc914c8bfb",
+   "new": "4ef9000000004e71",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:ccn_clear_kit_hook",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x40084760",
+   "len": 8,
+   "stock_sha256": "0a423d13c42f9d5f7cb5c555a3df797f9f23ea1ecd6dcd043bac3e259b764cf4",
+   "new": "4ef9000000004e71",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:ccn_clear_midi_hook",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x4018351c",
+   "len": 4,
+   "stock_sha256": "96f488fded6896976f1642abea785a1ec250dc979cb2c51306491ad565ab5961",
+   "new": "00000000",
+   "kind": "data",
+   "relocs": [
+    [
+     0,
+     "abs32",
+     "sym:ccn_key_hook",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x40030daa",
+   "len": 6,
+   "stock_sha256": "efb810ce3d45e77cd38d986b5913e98d706474cc610b1f365e9133a1b78634ce",
+   "new": "4eb900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:ccn_enabled_label_hook",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x400318b2",
+   "len": 6,
+   "stock_sha256": "ede057d369e3202ba1cec508618dd69dfd072fb66ba2aa50750cbf1d434dc4aa",
+   "new": "4eb900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:ccn_disabled_label_hook",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x400318b8",
+   "len": 22,
+   "stock_sha256": "985c93276a013482f3ce433984b47ebe10372db6d0742bdba7af2ce11234f8f3",
+   "new": "2f004e714e714e714e714e714e714e714e714e714e71",
+   "kind": "code",
+   "relocs": []
+  },
+  {
+   "addr": "0x4000e9ba",
+   "len": 6,
+   "stock_sha256": "ad50293223c7c53a1c699a142e7135b15daed8e8fc2ac882c2fd8d00a20400e1",
+   "new": "4eb900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:ccn_copy_hook",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x4000eaac",
+   "len": 6,
+   "stock_sha256": "ad50293223c7c53a1c699a142e7135b15daed8e8fc2ac882c2fd8d00a20400e1",
+   "new": "4eb900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:ccn_copy_hook",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x4000eb68",
+   "len": 6,
+   "stock_sha256": "ad50293223c7c53a1c699a142e7135b15daed8e8fc2ac882c2fd8d00a20400e1",
+   "new": "4eb900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:ccn_copy_hook",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x4000ec22",
+   "len": 6,
+   "stock_sha256": "ad50293223c7c53a1c699a142e7135b15daed8e8fc2ac882c2fd8d00a20400e1",
+   "new": "4eb900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:ccn_copy_hook",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x4000ec86",
+   "len": 6,
+   "stock_sha256": "ad50293223c7c53a1c699a142e7135b15daed8e8fc2ac882c2fd8d00a20400e1",
+   "new": "4eb900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:ccn_copy_hook",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x40017e92",
+   "len": 6,
+   "stock_sha256": "33b052db62316e9cc16b3437316bc1947bc2feb933cde22ba2d9f8720a97fd54",
+   "new": "49f900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:ccn_copy_hook",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x4001804c",
+   "len": 6,
+   "stock_sha256": "33b052db62316e9cc16b3437316bc1947bc2feb933cde22ba2d9f8720a97fd54",
+   "new": "49f900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:ccn_copy_hook",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x4001a38c",
+   "len": 6,
+   "stock_sha256": "01cc007018acc6766e463df7b0af2fb2f9e2c7f10f59b7a9fd66fc4a7a6e0571",
+   "new": "4bf900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:ccn_copy_hook",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x4001a50a",
+   "len": 6,
+   "stock_sha256": "33b052db62316e9cc16b3437316bc1947bc2feb933cde22ba2d9f8720a97fd54",
+   "new": "49f900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:ccn_copy_hook",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x40084c3c",
+   "len": 6,
+   "stock_sha256": "76fad57e084fd03eb4ef8236464c25031c7707dea63e232d931e8eae34815211",
+   "new": "45f900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:ccn_copy_hook",
+     0
+    ]
+   ]
+  }
+ ],
+ "collections": {},
+ "contribute": [
+  {
+   "to": "dt_free_observers",
+   "order": 10,
+   "data": "00000000",
+   "relocs": [
+    [
+     0,
+     "abs32",
+     "sym:ccn_cleanup",
+     0
+    ]
+   ],
+   "claims": []
+  }
+ ],
+ "copied": [],
+ "resources": {
+  "regions": [],
+  "names": [
+   "ui:MIDI CC Value:FUNC+hold encoder",
+   "storage:kit-tail:CCN1"
+  ],
+  "core": "2.1"
+ },
+ "requires": [
+  "core",
+  "dt-support"
+ ],
+ "conflicts": [],
+ "signature": null
+}

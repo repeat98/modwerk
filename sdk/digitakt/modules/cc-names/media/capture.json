@@ -1,0 +1,123 @@
+{
+  "schemaVersion": 1,
+  "capturedAt": "2026-10-14T00:53:31.615644+00:00",
+  "imageSha256": "23503ca42478c1644dea5fd296893f628eafb6662d2ce5e291bfc591f045ae4e",
+  "mainSha256": "ce2c0bd03393ca5f7e9427874bad4f5daa32b7e5699ff003af5e6fc35573ab39",
+  "snapshotSha256": "57b4504cbb96630a7d782e7fdd4993874056faaba67e3b0f7726973bc45049b3",
+  "planSha256": "5fe1aac5085acf68fe2794a708f81c0b01273126bdf28e25ebdfb24f6ade5cbe",
+  "plan": "wait 1000\ntap STOP\npress TRK\ntap 9\nrelease TRK\ntap FLTR\nsnap cc-values\npress FUNC\npress A 800\nrelease A\nrelease FUNC\nsnap name-editor\ntap UP\ntap YES\ntap AMP\ntap FLTR\nwait 700\nsnap renamed\n",
+  "emulatorRevision": "a422394af3db9ed0c6ae3ee8e9eb83429957004f",
+  "unicornVersion": "2.1.4",
+  "inputs": [
+    [
+      1000.698,
+      "press STOP"
+    ],
+    [
+      1100.705,
+      "release STOP"
+    ],
+    [
+      1400.707,
+      "press TRK"
+    ],
+    [
+      1500.707,
+      "press 9"
+    ],
+    [
+      1600.707,
+      "release 9"
+    ],
+    [
+      1900.708,
+      "release TRK"
+    ],
+    [
+      2000.709,
+      "press FLTR"
+    ],
+    [
+      2100.709,
+      "release FLTR"
+    ],
+    [
+      2400.71,
+      "press FUNC"
+    ],
+    [
+      2500.711,
+      "press A"
+    ],
+    [
+      3300.714,
+      "release A"
+    ],
+    [
+      3400.714,
+      "release FUNC"
+    ],
+    [
+      3500.714,
+      "press UP"
+    ],
+    [
+      3600.715,
+      "release UP"
+    ],
+    [
+      3900.716,
+      "press YES"
+    ],
+    [
+      4000.716,
+      "release YES"
+    ],
+    [
+      4300.717,
+      "press AMP"
+    ],
+    [
+      4400.718,
+      "release AMP"
+    ],
+    [
+      4700.719,
+      "press FLTR"
+    ],
+    [
+      4800.719,
+      "release FLTR"
+    ]
+  ],
+  "hle": true,
+  "instructionsPerSecond": 64000000,
+  "fixture": null,
+  "captureToolSha256": "983d31367308763e3e3c77c2f750570b8a09664d9b2af729d353f302605988ba",
+  "halted": null,
+  "frameSelection": "One complete unmodified firmware framebuffer from the final 250 ms, chosen by populated pixels; nearest-neighbor 6x scaling.",
+  "limitations": [
+    "UI documentation only; no hardware, timing or audio-quality qualification."
+  ],
+  "captures": [
+    {
+      "path": "media/name-editor.png",
+      "sha256": "a43cec116c942a9af3ae3c0d2a44ec25f2937a64534f61f46893ba76f124d66e",
+      "atMs": 3401.317734375,
+      "requestedAtMs": 3500.714234375,
+      "plan": "wait 1000\ntap STOP\npress TRK\ntap 9\nrelease TRK\ntap FLTR\nsnap cc-values\npress FUNC\npress A 800\nrelease A\nrelease FUNC\nsnap name-editor\ntap UP\ntap YES\ntap AMP\ntap FLTR\nwait 700\nsnap renamed\n"
+    },
+    {
+      "path": "media/renamed.png",
+      "sha256": "5d4027a7a561d7340e7ca221da64f072d8434f74df9b63eea4ff101b02335a21",
+      "atMs": 5800.722609375,
+      "requestedAtMs": 5800.722609375,
+      "plan": "wait 1000\ntap STOP\npress TRK\ntap 9\nrelease TRK\ntap FLTR\nsnap cc-values\npress FUNC\npress A 800\nrelease A\nrelease FUNC\nsnap name-editor\ntap UP\ntap YES\ntap AMP\ntap FLTR\nwait 700\nsnap renamed\n"
+    }
+  ],
+  "machine": "digitakt",
+  "moduleId": "cc-names",
+  "moduleVersion": "2.1.1",
+  "firmware": "1.53",
+  "stockSha256": "9bdd44bb6102fb25c143cfab97bc92b7a89c463f795d3112dce89771e29bcc92"
+}

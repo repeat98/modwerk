@@ -512,6 +512,32 @@ int main(int argc, char **argv)
         assert(!end_impl(l, exec + 24, sp) && sr == 0 && !writing.active && slot_for(SC, MW_CTL_QUARANTINED));
         m->dsp.package_sha256[7] ^= 1u;
         assert(!lease(SC, 1) && lease(MATRIX, 2));
+    } else if (mode == 12) {
+        /* Beta run 2 on the unit (finding 30): all three in; a removal of each refused busy and then abandoned (they
+         * restore); then each removed for good, Sidechain in and out once more, and Output Matrix installed beside a
+         * running Sidechain. The unit crashed at that last install's verify; this model does not, so the cause lies
+         * outside the board (the crash record names it). */
+        assert(install(pkg_matrix, sizeof pkg_matrix) == MU_APPLIED && install(pkg_ab, sizeof pkg_ab) == MU_APPLIED);
+        run(500);
+        assert(slot_for(SC, MW_CTL_ACTIVE) && slot_for(MATRIX, MW_CTL_ACTIVE) && slot_for(AB, MW_CTL_ACTIVE));
+        static const uint32_t order[3] = {AB, MATRIX, SC};
+        for (unsigned k = 0; k < 3; ++k) assert(install_refused(removal(order[k]), 32, &why) && why == RUNTIME_BUSY);
+        run(1500);
+        assert(slot_for(SC, MW_CTL_ACTIVE) && slot_for(MATRIX, MW_CTL_ACTIVE) && slot_for(AB, MW_CTL_ACTIVE));
+        for (unsigned k = 0; k < 4; ++k) {
+            uint32_t module = k == 0 ? MATRIX : k == 3 ? AB : SC;
+            if (k == 2) { assert(install(pkg_sc, sizeof pkg_sc) == MU_APPLIED); run(120); assert(slot_for(SC, MW_CTL_ACTIVE)); }
+            assert(install_refused(removal(module), 32, &why) && why == RUNTIME_BUSY);
+            run(10);
+            assert(install(removal(module), 32) == MU_APPLIED);
+            run(2);
+        }
+        assert(!modwerk_controller_held());
+        assert(install(pkg_sc, sizeof pkg_sc) == MU_APPLIED);
+        run(120);
+        assert(install(pkg_matrix, sizeof pkg_matrix) == MU_APPLIED);
+        run(60);
+        assert(slot_for(SC, MW_CTL_ACTIVE) && slot_for(MATRIX, MW_CTL_ACTIVE) && lease(SC, 1) && lease(MATRIX, 2));
     } else assert(0);
     return 0;
 #endif
@@ -596,7 +622,7 @@ class ControllerBoard(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp:
             work = Path(temp); self.generated(work)
             binary = self.build(work, True)
-            for mode in range(12):
+            for mode in range(13):
                 with self.subTest(mode=mode):
                     result = subprocess.run([str(binary), str(mode)], capture_output=True, text=True)
                     self.assertEqual(result.returncode, 0, result.stderr)
