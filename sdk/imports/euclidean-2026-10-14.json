@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "module": "digitakt/euclidean",
+  "version": "1.1.4",
+  "date": "2026-10-14",
+  "upstream": {
+    "repository": "https://github.com/sumedho/digirequests",
+    "revision": "8eba613dc3e0b1698797609256fd4081923b4ef2",
+    "path": "modules/euclidean",
+    "license": "GPL-2.0-or-later"
+  },
+  "changes": [
+    "First Modwerk release for Digitakt I OS 1.53 and 1.54, on Core 2.1. Generate rhythms from two pulse generators on each audio or MIDI track. Rotate either generator, rotate the whole result and combine them with OR, XOR, AND or SUB.",
+    "Source-only exports compiled with the pinned GCC 16.2 toolchain; every one of the 63 feature selections per OS links with Core 2.1 to the native Elekloader MAIN byte for byte."
+  ],
+  "runtimeSourceSha256": "da4c089285f61c579ecb2a005e7c7f0bf6c608a58a8198b17cbf81e05b74c0f9",
+  "packages": [
+    {
+      "os": "1.53",
+      "path": "sdk/imports/packages/euclidean/euclidean-1.1.4-os1.53.elemod",
+      "sha256": "da551e67332ffa070bd9d51879319fb4e4a5807eea684555860c0179cb65db20"
+    },
+    {
+      "os": "1.54",
+      "path": "sdk/imports/packages/euclidean/euclidean-1.1.4-os1.54.elemod",
+      "sha256": "7093ef6573081f1bb5180e8576bdcba92359ddf8e91aec0ec666f306464a068d"
+    }
+  ],
+  "stockPolicy": "No firmware or stock-derived code/tables are present. Addresses, lengths and SHA-256 guards are metadata; exported instructions and sections are authored module code. Local materialized recipes and firmware are never committed.",
+  "evidence": "sdk/digitakt/modules/euclidean/evidence/modwerk-source-parity.json",
+  "requires": [
+    "dt-support"
+  ]
+}

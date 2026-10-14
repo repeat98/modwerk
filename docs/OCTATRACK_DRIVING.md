@@ -35,7 +35,10 @@ while :; do npm run device -- serve; sleep 1; done
 
 Run it in a terminal of the owner's, or in a background task: those stop after two hours. It starts the USB
 bridge, keeps one connection open, pings every 4 s (so MODWERK CONNECTED shows once) and comes back after a
-RAM boot. One process at a time: a second `serve` or a one-shot `npm run device` fights it for the bridge.
+RAM boot. One process at a time: a second `serve` or a one-shot `npm run device` fights it for the bridge. To let the
+frontend MCP use the unit beside the session, start it with `serve --share /tmp/modwerk-share.sock` and the MCP with
+`--device-socket /tmp/modwerk-share.sock`: each MCP control transfer runs between the session's. Then only one of them
+stages modules at a time (the MCP's sync, or the session's `try`/`remove`); the session reads and presses keys.
 After an unplug, a crash restart or a RAM boot, the bridge can hold a dead handle; `pkill -f usb_bridge;
 pkill -f '^node scripts/device.mjs serve'` and the loop starts both again. Anchor the pattern: without `^` it also
 matches any shell whose command line contains it (the loop's, or the one running `pkill`), and kills that.
@@ -78,7 +81,7 @@ error and moves on. macOS `nc -U` hangs up before the reply, so use the script.
 | `ui` | each track's FX1/FX2 as they run, the current track, Part, transport |
 | `stats` | CPU, each core's mean/peak per mille, idle passes |
 | `loader` | packets accepted, rejected, errors, jobs, selections, commits, rollbacks, code words per core |
-| `mem:0x80000ec4:16` | RAM in hex, read-only, any length (not below the image) |
+| `mem:0x80000ec4:16` | RAM in hex, read-only, any length, within 0x40000400-0x40cfffff (short of the pool's end and the loader's statics), 0x46000000-0x46ffffff, 0x80000000-0x8000ffff and the battery RAM's records 0x100f0000-0x100fffff (`dev.c`); the battery-RAM Part copies are outside it |
 | (any sequence) | answers within 20 s beyond its own `w` waits, else an error, and the next request runs |
 | `png:/path.png` | a screenshot, 256 x 128: cheaper to read than the text rendering |
 | `screen` | the screen as block characters (thousands of tokens; avoid) |

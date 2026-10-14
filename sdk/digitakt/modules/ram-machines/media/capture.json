@@ -1,0 +1,277 @@
+{
+  "schemaVersion": 1,
+  "capturedAt": "2026-10-14T00:51:51.633774+00:00",
+  "imageSha256": "23503ca42478c1644dea5fd296893f628eafb6662d2ce5e291bfc591f045ae4e",
+  "mainSha256": "ce2c0bd03393ca5f7e9427874bad4f5daa32b7e5699ff003af5e6fc35573ab39",
+  "snapshotSha256": "57b4504cbb96630a7d782e7fdd4993874056faaba67e3b0f7726973bc45049b3",
+  "planSha256": "684151f1c7e8a2a1f77fe885c35a18e497b8bd90a9bedc47a44797649e97ed48",
+  "plan": "wait 1000\ntap STOP\npress TRK\ntap 8\nrelease TRK\ntap SRC\npress FUNC\ntap SRC\nrelease FUNC\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\nsnap ram-record-choice\ntap YES\ntap YES\ntap AMP\ntap SRC\nwait 700\nsnap ram-record-controls\nturn C 1 400\nsnap ram-input\npress TRK\ntap 7\nrelease TRK\npress FUNC\ntap SRC\nrelease FUNC\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\nsnap ram-play-choice\ntap YES\ntap YES\ntap AMP\ntap SRC\nwait 700\nsnap ram-play-controls\n",
+  "emulatorRevision": "a422394af3db9ed0c6ae3ee8e9eb83429957004f",
+  "unicornVersion": "2.1.4",
+  "inputs": [
+    [
+      1000.698,
+      "press STOP"
+    ],
+    [
+      1100.705,
+      "release STOP"
+    ],
+    [
+      1400.707,
+      "press TRK"
+    ],
+    [
+      1500.707,
+      "press 8"
+    ],
+    [
+      1600.707,
+      "release 8"
+    ],
+    [
+      1900.708,
+      "release TRK"
+    ],
+    [
+      2000.709,
+      "press SRC"
+    ],
+    [
+      2100.709,
+      "release SRC"
+    ],
+    [
+      2400.71,
+      "press FUNC"
+    ],
+    [
+      2500.711,
+      "press SRC"
+    ],
+    [
+      2600.711,
+      "release SRC"
+    ],
+    [
+      2900.712,
+      "release FUNC"
+    ],
+    [
+      3000.712,
+      "press DOWN"
+    ],
+    [
+      3100.713,
+      "release DOWN"
+    ],
+    [
+      3400.714,
+      "press DOWN"
+    ],
+    [
+      3500.714,
+      "release DOWN"
+    ],
+    [
+      3800.715,
+      "press DOWN"
+    ],
+    [
+      3900.716,
+      "release DOWN"
+    ],
+    [
+      4200.717,
+      "press DOWN"
+    ],
+    [
+      4300.717,
+      "release DOWN"
+    ],
+    [
+      4600.718,
+      "press YES"
+    ],
+    [
+      4700.719,
+      "release YES"
+    ],
+    [
+      5000.72,
+      "press YES"
+    ],
+    [
+      5100.72,
+      "release YES"
+    ],
+    [
+      5400.721,
+      "press AMP"
+    ],
+    [
+      5500.722,
+      "release AMP"
+    ],
+    [
+      5800.723,
+      "press SRC"
+    ],
+    [
+      5900.723,
+      "release SRC"
+    ],
+    [
+      6900.727,
+      "turn C 4"
+    ],
+    [
+      7300.728,
+      "press TRK"
+    ],
+    [
+      7400.728,
+      "press 7"
+    ],
+    [
+      7500.729,
+      "release 7"
+    ],
+    [
+      7800.73,
+      "release TRK"
+    ],
+    [
+      7900.73,
+      "press FUNC"
+    ],
+    [
+      8000.731,
+      "press SRC"
+    ],
+    [
+      8100.731,
+      "release SRC"
+    ],
+    [
+      8400.732,
+      "release FUNC"
+    ],
+    [
+      8500.732,
+      "press DOWN"
+    ],
+    [
+      8600.733,
+      "release DOWN"
+    ],
+    [
+      8900.734,
+      "press DOWN"
+    ],
+    [
+      9000.734,
+      "release DOWN"
+    ],
+    [
+      9300.735,
+      "press DOWN"
+    ],
+    [
+      9400.736,
+      "release DOWN"
+    ],
+    [
+      9700.737,
+      "press DOWN"
+    ],
+    [
+      9800.737,
+      "release DOWN"
+    ],
+    [
+      10100.738,
+      "press DOWN"
+    ],
+    [
+      10200.739,
+      "release DOWN"
+    ],
+    [
+      10500.74,
+      "press YES"
+    ],
+    [
+      10600.74,
+      "release YES"
+    ],
+    [
+      10900.741,
+      "press YES"
+    ],
+    [
+      11000.741,
+      "release YES"
+    ],
+    [
+      11300.743,
+      "press AMP"
+    ],
+    [
+      11400.743,
+      "release AMP"
+    ],
+    [
+      11700.744,
+      "press SRC"
+    ],
+    [
+      11800.744,
+      "release SRC"
+    ]
+  ],
+  "hle": false,
+  "instructionsPerSecond": 64000000,
+  "fixture": null,
+  "captureToolSha256": "983d31367308763e3e3c77c2f750570b8a09664d9b2af729d353f302605988ba",
+  "halted": null,
+  "frameSelection": "One complete unmodified firmware framebuffer from the final 250 ms, chosen by populated pixels; nearest-neighbor 6x scaling.",
+  "limitations": [
+    "UI documentation only; no hardware, timing or audio-quality qualification."
+  ],
+  "captures": [
+    {
+      "path": "media/ram-record-choice.png",
+      "sha256": "4c97c49d22a095f7874e00c43031afa010a087914939d71d114ecb6067728d23",
+      "atMs": 4600.71825,
+      "requestedAtMs": 4600.71825,
+      "plan": "wait 1000\ntap STOP\npress TRK\ntap 8\nrelease TRK\ntap SRC\npress FUNC\ntap SRC\nrelease FUNC\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\nsnap ram-record-choice\ntap YES\ntap YES\ntap AMP\ntap SRC\nwait 700\nsnap ram-record-controls\nturn C 1 400\nsnap ram-input\npress TRK\ntap 7\nrelease TRK\npress FUNC\ntap SRC\nrelease FUNC\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\nsnap ram-play-choice\ntap YES\ntap YES\ntap AMP\ntap SRC\nwait 700\nsnap ram-play-controls\n"
+    },
+    {
+      "path": "media/ram-record-controls.png",
+      "sha256": "130f47cccce8bec03f3b1ea65ab6ec7462d7e03aba94804a592d96a30f6264b1",
+      "atMs": 6734.74803125,
+      "requestedAtMs": 6900.726609375,
+      "plan": "wait 1000\ntap STOP\npress TRK\ntap 8\nrelease TRK\ntap SRC\npress FUNC\ntap SRC\nrelease FUNC\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\nsnap ram-record-choice\ntap YES\ntap YES\ntap AMP\ntap SRC\nwait 700\nsnap ram-record-controls\nturn C 1 400\nsnap ram-input\npress TRK\ntap 7\nrelease TRK\npress FUNC\ntap SRC\nrelease FUNC\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\nsnap ram-play-choice\ntap YES\ntap YES\ntap AMP\ntap SRC\nwait 700\nsnap ram-play-controls\n"
+    },
+    {
+      "path": "media/ram-play-choice.png",
+      "sha256": "c5d40ffcf27d55db6f4ea6cda2ac105a6d40cdeb05ffd4e22f2372599fcc7b8a",
+      "atMs": 10334.852765625,
+      "requestedAtMs": 10500.739671875,
+      "plan": "wait 1000\ntap STOP\npress TRK\ntap 8\nrelease TRK\ntap SRC\npress FUNC\ntap SRC\nrelease FUNC\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\nsnap ram-record-choice\ntap YES\ntap YES\ntap AMP\ntap SRC\nwait 700\nsnap ram-record-controls\nturn C 1 400\nsnap ram-input\npress TRK\ntap 7\nrelease TRK\npress FUNC\ntap SRC\nrelease FUNC\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\nsnap ram-play-choice\ntap YES\ntap YES\ntap AMP\ntap SRC\nwait 700\nsnap ram-play-controls\n"
+    },
+    {
+      "path": "media/ram-play-controls.png",
+      "sha256": "4ba0ed1ab8cc3e264d49bc37441f8a60c06dc60c2652dc84d3ad85e793927cc0",
+      "atMs": 12734.954609375,
+      "requestedAtMs": 12800.7480625,
+      "plan": "wait 1000\ntap STOP\npress TRK\ntap 8\nrelease TRK\ntap SRC\npress FUNC\ntap SRC\nrelease FUNC\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\nsnap ram-record-choice\ntap YES\ntap YES\ntap AMP\ntap SRC\nwait 700\nsnap ram-record-controls\nturn C 1 400\nsnap ram-input\npress TRK\ntap 7\nrelease TRK\npress FUNC\ntap SRC\nrelease FUNC\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\nsnap ram-play-choice\ntap YES\ntap YES\ntap AMP\ntap SRC\nwait 700\nsnap ram-play-controls\n"
+    }
+  ],
+  "machine": "digitakt",
+  "moduleId": "ram-machines",
+  "moduleVersion": "1.3.1",
+  "firmware": "1.53",
+  "stockSha256": "9bdd44bb6102fb25c143cfab97bc92b7a89c463f795d3112dce89771e29bcc92"
+}
