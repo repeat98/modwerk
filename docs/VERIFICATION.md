@@ -1170,7 +1170,6 @@ Waives fresh physical reboot, Part/project restore after unsaved edits,
 distinct-track isolation and stock/flood performance tests. Retain the
 author's MKII functional report; missing checks stay unverified.
 
-
 ## Air Chorus 0.1.0 — 9 October 2026
 
 Chris Johnson’s MIT-licensed Airwindows Chorus is ported from pinned published
@@ -1388,3 +1387,118 @@ E-Verb is in none of them.
 
 No hardware result exists for 0.1.1; the owner's MKII report covers 0.1.0.
 Publication needs the owner's approval of this exact source.
+
+## FM Synth 0.1.4 (octatrick 2.12) — 11 October 2026
+
+Local draft by the module author's port; not published, no owner approval.
+FM Synth moves to the author's octatrick 2.12 line
+(`timhastie/octatrick-modules` `ca13ed8`, tag `v2.12`). The engine, page,
+the author's FM SYNTH chooser (`machine.s`, adapted from Modwerk's 0.1.1
+chooser, same Part signature) and its machine-list table are vendored byte
+for byte. Modwerk's `machine.s` / `registration.s` and their hooks are
+dropped; the bundled quantizer keeps 0.1.2's drawer fix. The six chooser
+row-count pokes of the 2.10 line are detours reading the table, five more
+widen the machine window's row clamp, and SELECT MACHINE TYPE can scroll.
+2.12 removes the engine's hook on the metronome's click word (with CLICK ON
+it released held notes at every beat) and adds a machine-change init: a
+change to or from FM SYNTH resets the track's PLAYBACK, PLAYBACK SETUP, AMP,
+AMP SETUP, LFO and LFO SETUP to init, keeping step and scene locks and FX1 /
+FX2 as a stock machine change does (one new detour, `po_unload` at
+`0x40022732`). The engine carries the author's 6 dB of headroom in place of
+0.1.2's 18.06 dB `OUTPUT_SHIFT`: 0.1.4 plays about 12 dB louder than 0.1.2.
+Inventory: `sdk/imports/synth-ca13ed8.json`; native source SHA-256 `4fc06072…`.
+
+The native exporter built the standalone image, MAIN OS `00fa6caa…`
+(update file 462,396 B, `2267af13…`; Modwerk's TS packer decodes it to that
+MAIN OS and re-encodes the same bytes). The author's page linked to his
+ratified bytes, and the author's `tools/align_check.py` (v2.12) found every
+instruction and every detour target at an even address. The module's own
+`verify.py` Part smoke passed on that image. Seven of the eight LCD captures
+are byte-identical to the 2.11 build's; the LFO page's VOIC dial now shows
+the init byte. In the emulator on the same image, a held key is
+sample-identical with the metronome on and off and a held VOIC 4 chord's
+voices are never released (the 2.11 build `248d987e…` cut both), and
+FLEX → FM SYNTH → FLEX → FM SYNTH gives FM SYNTH's init both times with FX1
+kept. Emulator qualification: one VOIC 4 track at 81,422 of 95,779
+cycles/block (the largest of five runs, + the wrapper allowance), exact
+memory of 10,505,016 bytes, of which 43,812 are module-owned, and a 352-byte
+stack bound from the assembled runtime. Two FM tracks with distinct
+settings pass Part save/reload, project save/reload and a fresh project
+load in the emulator; the battery-RAM-only restart needs the unit.
+0.1.4's hardware fields were never filled: 0.1.5 (below) superseded it before
+submission, and its report covers the 0.1.5 image only.
+
+POLY8 0.2.6's shared-chooser bridge is bound to 0.1.2's chooser claims, which
+this update replaces: a selection with POLY8 and FM Synth stops at the
+bridge's seam check on both sides. `module:verify -- synth` therefore stops at
+the first such selection, and two POLY8 composition tests fail; the
+`sdk/native-comparisons/synth.json` record is not refreshed. Without POLY8 in
+the pool (a local run on main `3151975`, not committed) the comparison gave
+122 selections: 35 builds match outside the platform writes, 87 refusals
+match, 0 mismatches, the native side on the host toolchain instead of Docker.
+
+Packages were rebuilt from source with `--include-requested` and imported
+with `--development` on main `3151975`; only the Synth objects change. The
+DSP assembler was Modwerk's pinned dsp56300 with the current patch. The
+retained Analog BD record was re-verified against the new packages (162
+native OS and GNU bootloader comparisons, 50 matching refusals, 6 firmware
+round trips) before its source-inventory binding was updated. No firmware is
+committed.
+
+## FM Synth 0.1.5 (octatrick 2.13 quantizer) — 12 October 2026
+
+Local draft by the module author's port; not published, no owner approval;
+it follows the unpublished 0.1.4 above. FM Synth's bundled quantizer moves to
+the author's 2.13 line (`timhastie/octatrick-modules` `48b89e7`, tag `v2.13`,
+which leaves `synth/` byte-identical to `v2.12`): with a scale on, a MIDI
+track's NOTE knob and NOTE locks step through the scale from ROOT and its
+CHROMATIC keys play the scale from ROOT (three new detours: `0x40055382`,
+`0x40050b98`, `0x400436a8`); chord offsets, TRAN, the arpeggiator, MIDI IN
+and SCALE OFF are unchanged. The CHROMATIC drawer hook at `0x400449be` is
+now the author's own form of Modwerk's #264 fix, so `quantizer.s` is his
+file byte for byte; its manifest is his 2.13 manifest in stock-guard form
+(23 guards, each checked against the developer's MAIN OS). Inventory:
+`sdk/imports/synth-48b89e7.json`; native source SHA-256 `401d3b61…`.
+
+The native exporter built MAIN OS `37661aee…` (update file 462,628 B,
+`b42048d5…`; Modwerk's TS packer decodes it to that MAIN OS and re-encodes
+the same bytes). The FM engine and chooser objects are byte-identical to
+0.1.4's and link to the same addresses; the page links to the author's
+ratified bytes; the author's 2.13 `tools/align_check.py` found every
+instruction and every detour target at an even address. In the pinned
+emulator on that image: the NOTE knob and NOTE locks matched a model of the
+rules in 409 of 409 cases over eight SCALE / ROOT settings (0.1.4's image
+matches the stock clamp in all 409), the MIDI CHROMATIC keys in 245 of 245
+(note-offs balanced, the arpeggiator fed snapped notes), CHROMATIC on a MIDI
+track draws and plays, the sequencer, MIDI IN and the arpeggiator send the same MIDI
+events as on 0.1.4's image under SCALE OFF and three scales. The quantizer's added cost is 49–77
+instructions per CHROMATIC key and up to 278 / 302 per NOTE knob / lock
+turn of three clicks, all in the UI task. The module's `verify.py` Part
+smoke, two-track Part / project save and reload, a fresh project load and
+the 2.12 machine-change init passed on this image. Exact memory: 44,404
+module-owned bytes (+592: the quantizer's DRAM unit +360, three hook sites,
+the larger loader); stack bound 352 B, unchanged. Cycles: 0.1.4's table
+(same FM objects); the bounding cards rerun twice on this image stay inside
+the rig's spread, and the record's bounds over all seven runs give one VOIC
+4 track 81,459 of 95,779 cycles/block. Seven LCD captures (five
+byte-identical to 0.1.4's; a MIDI track's CHROMATIC page is new). The
+hardware fields hold the author's MKI report of this exact image
+(timhastie, 2026-10-13).
+
+POLY8's bridge still stops on the author's chooser, as for 0.1.4, so
+`sdk/native-comparisons/synth.json` is not refreshed. Without POLY8 in the pool (a local
+run on main `263aa1b` in a scratch copy, not committed) the comparison gave
+122 selections: 35 builds match outside the platform writes, 87 refusals
+match, 0 mismatches, the native side on the host toolchain instead of Docker.
+
+Packages were rebuilt from source with `--include-requested` and imported
+with `--development` on main `263aa1b`; only the Synth objects and the Synth
+version change against main's 0.1.2 packages (Modwerk's `fmregistration`
+object is gone, the author's `poly` and `fmmachine` objects come in, the
+bundled quantizer objects change); 0.1.4 has no package commit of its own on
+this branch, so these packages serve both.
+A fresh import of the same build reproduces the committed assets
+(`--check-only --verify-existing`). The retained Analog BD record was
+re-verified against the new packages (162 native OS and GNU bootloader
+comparisons, 50 matching refusals, 6 firmware round trips) before its
+source-inventory binding was updated. No firmware is committed.

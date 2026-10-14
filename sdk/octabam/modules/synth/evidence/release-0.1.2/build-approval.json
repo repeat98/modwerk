@@ -1,0 +1,15 @@
+{
+  "kind": "owner-approved-update",
+  "id": "synth",
+  "version": "0.1.2-experimental",
+  "sourceSha256": "8fa263bfcd30dca9aff4f83dbcb001d4ccf06286e31839c8e0afd61100a9315c",
+  "approvedBy": "repeat98",
+  "approvedOn": "2026-10-08",
+  "waived": [
+    "current-build-hardware",
+    "chip-worst-case-cycles",
+    "complete-memory-bounds"
+  ],
+  "ownerStatement": "please release them and close. I green light no hardware validation for now",
+  "reason": "The owner authorized release of the experimental 0.1.2 fixes after being told that current hardware, chip timing and complete memory qualification remain missing. Software MIDI and mono/four-voice regressions and native/browser parity are retained; all unknown quantities stay unmeasured. This exception covers only the exact current source."
+}

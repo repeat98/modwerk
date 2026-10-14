@@ -1,0 +1,13 @@
+{
+  "imageSha256": "37661aee03a49f310d47e1447f043489c1bce9430c13824dd49ab93ad835e236",
+  "checks": {
+    "eightTrackSelection": "passed",
+    "sampleSlotsUnchanged": "passed",
+    "partAndShadowSignature": "passed",
+    "reselectPreservesControls": "passed",
+    "returnToFlex": "passed"
+  },
+  "limitations": [
+    "Panel smoke only; Empty-card storage/UI smoke; audio is tested separately in Octemu. No cycle, hardware, file persistence or maximum-load qualification."
+  ]
+}

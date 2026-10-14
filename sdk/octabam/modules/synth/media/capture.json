@@ -1,7 +1,7 @@
 {
   "firmware": "1.40C",
-  "imageSha256": "d5464195fac0033852546fbbc8f809b64d16646309c21ab25e2f203fbf123157",
-  "emulatorSha256": "f521565f3866947788d7c45507576a4ed386d2e4ef57e9683ab65fa0acc6a166",
+  "imageSha256": "37661aee03a49f310d47e1447f043489c1bce9430c13824dd49ab93ad835e236",
+  "emulatorSha256": "9dc31d1249793fcf857fa6b1c1ac72ab7966646fd59f3e09e90683c8eb41e711",
   "setup": "Headless ot_emu; MKII panel; stopped transport; 128×64 LCD at integer scale 6.",
   "palette": {
     "on": [
@@ -15,7 +15,7 @@
       24
     ]
   },
-  "keyMs": 150,
+  "keyMs": 50,
   "plan": [
     {
       "wait": 3000
@@ -34,15 +34,16 @@
       ]
     },
     {
+      "wait": 500
+    },
+    {
       "press": [
         "FUNC",
         "SRC"
       ]
     },
     {
-      "press": [
-        "DOWN"
-      ]
+      "wait": 300
     },
     {
       "press": [
@@ -63,11 +64,22 @@
       "press": [
         "DOWN"
       ]
+    },
+    {
+      "press": [
+        "DOWN"
+      ]
+    },
+    {
+      "wait": 300
     },
     {
       "press": [
         "YES"
       ]
+    },
+    {
+      "wait": 300
     },
     {
       "capture": "ot-location.png"
@@ -78,6 +90,9 @@
       ]
     },
     {
+      "wait": 300
+    },
+    {
       "capture": "ot-controls.png"
     },
     {
@@ -86,7 +101,57 @@
       ]
     },
     {
+      "wait": 300
+    },
+    {
       "capture": "ot-voices.png"
+    },
+    {
+      "press": [
+        "FUNC",
+        "LFO"
+      ]
+    },
+    {
+      "wait": 300
+    },
+    {
+      "encoder": {
+        "name": "A",
+        "delta": -100
+      }
+    },
+    {
+      "wait": 300
+    },
+    {
+      "encoder": {
+        "name": "A",
+        "delta": -100
+      }
+    },
+    {
+      "wait": 300
+    },
+    {
+      "encoder": {
+        "name": "A",
+        "delta": 4
+      }
+    },
+    {
+      "wait": 300
+    },
+    {
+      "capture": "ot-lfo-setup.png"
+    },
+    {
+      "press": [
+        "NO"
+      ]
+    },
+    {
+      "wait": 300
     },
     {
       "press": [
@@ -95,12 +160,18 @@
       ]
     },
     {
+      "wait": 300
+    },
+    {
       "capture": "ot-legato.png"
     },
     {
       "press": [
         "NO"
       ]
+    },
+    {
+      "wait": 300
     },
     {
       "press": [
@@ -153,10 +224,16 @@
       ]
     },
     {
+      "wait": 300
+    },
+    {
       "encoder": {
         "name": "LEVEL",
-        "delta": 1
+        "delta": 6
       }
+    },
+    {
+      "wait": 300
     },
     {
       "capture": "ot-scale.png"
@@ -167,6 +244,18 @@
       ]
     },
     {
+      "wait": 300
+    },
+    {
+      "encoder": {
+        "name": "LEVEL",
+        "delta": 9
+      }
+    },
+    {
+      "wait": 300
+    },
+    {
       "capture": "ot-root.png"
     },
     {
@@ -175,22 +264,177 @@
       ]
     },
     {
+      "wait": 300
+    },
+    {
       "capture": "ot-glide.png"
+    },
+    {
+      "press": [
+        "NO"
+      ]
+    },
+    {
+      "wait": 300
+    },
+    {
+      "press": [
+        "NO"
+      ]
+    },
+    {
+      "wait": 300
+    },
+    {
+      "press": [
+        "NO"
+      ]
+    },
+    {
+      "wait": 300
+    },
+    {
+      "press": [
+        "NO"
+      ]
+    },
+    {
+      "wait": 300
+    },
+    {
+      "press": [
+        "T1"
+      ]
+    },
+    {
+      "press": [
+        "T1"
+      ]
+    },
+    {
+      "wait": 500
+    },
+    {
+      "press": [
+        "LEFT"
+      ]
+    },
+    {
+      "wait": 300
+    },
+    {
+      "capture": "ot-machine-list.png"
+    },
+    {
+      "press": [
+        "NO"
+      ]
+    },
+    {
+      "wait": 300
+    },
+    {
+      "press": [
+        "NO"
+      ]
+    },
+    {
+      "wait": 300
+    },
+    {
+      "press": [
+        "MIDI"
+      ]
+    },
+    {
+      "wait": 500
+    },
+    {
+      "press": [
+        "SRC"
+      ]
+    },
+    {
+      "wait": 300
+    },
+    {
+      "capture": "ot-midi-note-c3.png"
+    },
+    {
+      "encoder": {
+        "name": "A",
+        "delta": 1
+      }
+    },
+    {
+      "wait": 300
+    },
+    {
+      "capture": "ot-midi-note.png"
+    },
+    {
+      "hold": [
+        "FUNC"
+      ]
+    },
+    {
+      "wait": 200
+    },
+    {
+      "hold": [
+        "DOWN"
+      ]
+    },
+    {
+      "wait": 250
+    },
+    {
+      "release": [
+        "DOWN"
+      ]
+    },
+    {
+      "wait": 200
+    },
+    {
+      "wait": 300
+    },
+    {
+      "release": [
+        "FUNC"
+      ]
+    },
+    {
+      "wait": 500
+    },
+    {
+      "capture": "ot-midi-chromatic.png"
+    },
+    {
+      "press": [
+        "TRIG1"
+      ]
+    },
+    {
+      "wait": 300
+    },
+    {
+      "capture": "ot-midi-chromatic-key1.png"
     }
   ],
   "screenshots": {
     "ot-location.png": "4e1d84898790433813720c437d2e767cb3225c7770ea15be9115f76e70b82270",
     "ot-controls.png": "2eb52e9b732308891e289aa23d92556a87dd8820b12a37cbe73f66e720a162f0",
-    "ot-voices.png": "0e99bbc3cdecc61bb66920b5648f517198b191ad3dc04a78af14e2256e1cdf3c",
+    "ot-voices.png": "603b3e5d31446bf31570b02dc56b6efccb958b371a06b87c3dc79a6a6090d1e5",
+    "ot-lfo-setup.png": "ab3071680706882acdf5f9ccdefb1adcc24c50690afd90560ca42e25535e3e94",
     "ot-legato.png": "e5cd86583126a834f8a9351a8f2b51bca9f76c101023e37db4c933be957d5bc8",
-    "ot-scale.png": "71ffe8fe7413a1e2eb0605ad7119159bba95db7f7734dc47ae13468f68a74d13",
-    "ot-root.png": "53f0f6dacf09665f41629428569d9fbfac5847698c20f35a6cbe6b78a88f99e4",
-    "ot-glide.png": "77b4cf73fd16e96d1c78f5a9cdd0590b20a7958c614d1c6cdb93b77791dc505b"
+    "ot-glide.png": "f67a2c2d5fff741e4a1cca6bf897af7a56d857cb18705d5d64c1e404dfa3ec7c",
+    "ot-midi-chromatic.png": "29ee87e6fef88d3ab7c8a52a90d7c5bc69852f9d175720e89b76c723985a45d0"
   },
   "schemaVersion": 1,
   "moduleId": "synth",
-  "moduleVersion": "0.1.2-experimental",
-  "captured": "2026-10-08",
+  "moduleVersion": "0.1.5-experimental",
+  "captured": "2026-10-12",
   "imageProfile": {
     "modules": [
       "SYNTH MACHINE"
@@ -198,6 +442,6 @@
     "keepStockFx2": true,
     "staticStock": true
   },
-  "releaseProvenance": "Fresh 8 October captures from the native Synth 0.1.2 executable. Promotion must reproduce the exact emitted MAIN image fingerprint; existing software captures confer no hardware verification.",
-  "sourceSha256": "8fa263bfcd30dca9aff4f83dbcb001d4ccf06286e31839c8e0afd61100a9315c"
+  "releaseProvenance": "Fresh 12 October captures from the native Synth 0.1.5 image (MAIN OS 37661aee..., Modwerk's export-composition-proofs.py, author source 48b89e7: the 2.12 engine, page and chooser and the 2.13 quantizer). The plan is 0.1.4's up to AMP SETUP, then SCALE MINOR, ROOT A and GLIDE in CONTROL > SEQUENCER, SELECT MACHINE TYPE, and a MIDI track: the NOTE page (C3, one NOTE click up to D3) and CHROMATIC (FUNC held, DOWN) with the readout A 3. Seven of the twelve captures are committed (a module carries at most eight media, one of them the audio preview); SRC SETUP, the FM page, the LFO page, LFO SETUP and AMP SETUP are byte-identical to 0.1.4's captures of the same plan on image 00fa6caa; SELECT MACHINE TYPE, also byte-identical to 0.1.4's, the SCALE and ROOT rows, the NOTE page and a key press are kept local.",
+  "sourceSha256": "401d3b61412aff964617581f9f0bfcfe0ac83d6a6ee970bb1440f2393a6ac60a"
 }

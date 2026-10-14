@@ -1,9 +1,11 @@
 {
-  "version": "0.1.2-experimental",
-  "date": "2026-10-08",
+  "version": "0.1.5-experimental",
+  "date": "2026-10-12",
   "changes": [
-    "correct the MIDI chromatic drawer’s argument stack so changing MIDI trig mode keeps the instrument responsive (#264).",
-    "add 18.06 dB of source headroom before mono output and paraphonic summing, preserving envelopes and relative voice levels (#273). Sounds are quieter at unchanged mixer settings; effect and multi-track mix clipping remains possible.",
-    "Owner-approved experimental release without current hardware validation. Chip timing and complete memory bounds remain unmeasured; the original static symptom is not hardware-confirmed."
+    "SCALE QUANTIZER on MIDI tracks (the author’s octatrick 2.13 quantizer, timhastie/octatrick-modules 48b89e7): with a scale on, a MIDI track’s NOTE knob and NOTE locks step through the scale’s notes from ROOT, and the MIDI CHROMATIC keys play the scale from ROOT (key 1 sounds the root; the number beside the keyboard reads the root and the octave, for example “A 3”).",
+    "chord offsets (NOT2–NOT4), the arpeggiator, TRAN, MIDI IN and the sequencer are unchanged on MIDI tracks: the quantizer acts where a note is edited or played from the panel (ARP SETUP KEY still forces every note a track sends into a key). SCALE OFF is unchanged.",
+    "the MIDI chromatic freeze is fixed in the author’s own line: since 2.13 his quantizer hooks the CHROMATIC drawer at its common argument push (0x400449be), the form of Modwerk’s 0.1.2 fix for #264, credited to the Modwerk contributors. The bundled quantizer’s sources are now the author’s, byte for byte (its manifest in Modwerk’s stock_guard form); FM Synth images carried the fix already.",
+    "the FM engine, the FM SYNTH chooser and the page are unchanged from 0.1.4: the same compiled objects at the same addresses in the image.",
+    "Emulator checks on this exact image (TESTING.md): the NOTE knob and locks against a model of the rules (409 of 409), the CHROMATIC keys (245 of 245), SCALE OFF equal to stock, the quantizer’s added cost, exact memory, two-track Part/project save and reload. The author’s MKI report of this exact image is pending; physical reboot survival is not yet verified."
   ]
 }

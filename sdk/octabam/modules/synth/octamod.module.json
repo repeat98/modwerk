@@ -3,39 +3,39 @@
   "id": "synth",
   "key": "SYNTH MACHINE",
   "name": "FM Synth",
-  "version": "0.1.2-experimental",
+  "version": "0.1.5-experimental",
   "category": "machines",
   "source": {
-    "repository": "https://github.com/sambanks/octabam",
-    "revision": "949f3be15eae5d3d16a7682b9e3218d42f6c1284",
-    "path": "modules/synth"
+    "repository": "https://github.com/timhastie/octatrick-modules",
+    "revision": "48b89e7e5315971bf5c29a3fd86183abe8df48f3",
+    "path": "synth"
   },
   "author": {
     "github": "timhastie",
     "name": "Tim Hastie",
     "credits": [
-      "Tim Hastie (@timhastie): octatrick v2.9 two-operator FM engine, voices, chords, MIDI, legato and quantizer, MIT.",
+      "Tim Hastie (@timhastie): octatrick 2.12 two-operator FM engine, voices, chords, MIDI, legato, the FM SYNTH chooser (adapted from Modwerk's) with the shared machine-list row table and the machine-change init, and the quantizer, MIT.",
       "Sam Banks (@sambanks): octabam wrapper and native platform, MIT.",
-      "Modwerk contributors: dedicated FM SYNTH chooser, Part signature, sample-free source transport, validation and documentation; MIT."
+      "Modwerk contributors: the original dedicated FM SYNTH chooser, Part signature, sample-free source transport and validation (0.1.1), the quantizer drawer fix (0.1.2), documentation; MIT."
     ]
   },
   "nativeManifest": "manifest.py",
   "presentation": {
     "label": "Two-operator FM",
     "family": "Synth machines",
-    "summary": "Two-operator FM with a dedicated track machine, one to four voices, chords and glide.",
-    "overview": "FM SYNTH provides one to four paraphonic FM voices through the stock AMP and effects. Version 0.1.2 preserves the MIDI chromatic drawer stack and adds 18.06 dB source headroom. Software regression and native/browser composition checks pass. The owner approved release without current hardware validation; chip timing and complete memory bounds remain unknown. The original static symptom remains unconfirmed on hardware.",
+    "summary": "Two-operator FM with a dedicated track machine, one to four voices, chords and glide; scale and root on MIDI tracks too; octatrick 2.12 engine, 2.13 quantizer.",
+    "overview": "FM SYNTH provides one to four paraphonic FM voices through the stock AMP and effects. Version 0.1.5 carries Tim Hastie's 2.13 quantizer: with a scale on, a MIDI track's NOTE knob, NOTE locks and CHROMATIC keys follow SCALE and ROOT as the audio tracks do (chord offsets, TRAN, the arpeggiator and SCALE OFF unchanged), and the CHROMATIC drawer fix for #264 is now the author's own. The engine, chooser and page are 0.1.4's, his octatrick 2.12 line: his own FM SYNTH chooser (adapted from Modwerk's, same Part signature) with the machine list he shares with his SY DRUM machine (a row table; SELECT MACHINE TYPE scrolls), a machine change that resets the track's machine parameters to init (locks kept, as in stock), held notes that no longer stop at the metronome click, DEC HOLD at 127, click-free note starts, FM names in the LFO destination list, the held key as gate and the fixes from his MKI test of the first 2.10 build. With FM Synth alone the list keeps its six rows. The engine leaves 6 dB of headroom, the author's choice in place of 0.1.2's 18 dB attenuation. Worst-case ColdFire cost and exact memory are emulator-measured; the author's MKI hardware report of this exact build is in TESTING.md.",
     "highlights": [
-      "Dedicated machine chooser entry; no sample required.",
-      "Pitch, ratio, index, fine tuning, feedback and index decay on SRC.",
-      "One to four paraphonic voices, chord shapes and inversions.",
-      "Chromatic playing, MIDI, legato and privately bundled scale/glide controls."
+      "Dedicated machine chooser entry in SRC SETUP and SELECT MACHINE TYPE; no sample required.",
+      "Pitch, ratio, index, fine tuning, feedback and index decay (HOLD at 127) on SRC.",
+      "One to four paraphonic voices, chord shapes and inversions; click-free note starts.",
+      "Chromatic playing with held-key gate, MIDI, legato, FM LFO destinations and privately bundled scale/root/glide controls; on MIDI tracks the NOTE knob, locks and CHROMATIC keys follow the scale."
     ],
     "usage": [
       "Open a disposable project with FM Synth firmware. Select an audio track, hold FUNC and press SRC, select FM SYNTH with UP/DOWN and press YES. No sample is required.",
       "Press SRC. Set RATO to 1 and turn INDX from 0 upwards to hear a sine tone acquire FM harmonics. PTCH transposes it; FINE tunes it in cents; FDBK adds feedback; DEC shortens the modulation envelope.",
       "Place a trig and press PLAY. Press LFO to set VOIC to 2–4 and CHRD to a chord if wanted. AMP ATK/HOLD/REL shape the gain envelope; FUNC+AMP exposes LEG.",
-      "Press STOP twice to silence the voice. To return to a sample machine, hold FUNC and press SRC, select FLEX or STATIC and press YES; assign the desired sample in the normal way."
+      "For scales and glide, open PROJECT > CONTROL > SEQUENCER. Select SCALE, ROOT or GLIDE with UP/DOWN and turn LEVEL. SCALE OFF restores unquantized pitch. With a scale on, a MIDI track's NOTE knob and NOTE locks step through the scale from ROOT, and its CHROMATIC keys (FUNC + DOWN on the NOTE page) play the scale from ROOT."
     ]
   },
   "access": {
@@ -45,16 +45,16 @@
       "Press SRC. Set RATO to 1 and turn INDX from 0 upwards to hear a sine tone acquire FM harmonics. PTCH transposes it; FINE tunes it in cents; FDBK adds feedback; DEC shortens the modulation envelope.",
       "Place a trig and press PLAY. Press LFO to set VOIC to 2–4 and CHRD to a chord if wanted. AMP ATK/HOLD/REL shape the gain envelope; FUNC+AMP exposes LEG.",
       "Press STOP twice to silence the voice. To return to a sample machine, hold FUNC and press SRC, select FLEX or STATIC and press YES; assign the desired sample in the normal way.",
-      "For scales and glide, open PROJECT > CONTROL > SEQUENCER. Select SCALE, ROOT or GLIDE with UP/DOWN and turn LEVEL. SCALE OFF restores unquantized pitch."
+      "For scales and glide, open PROJECT > CONTROL > SEQUENCER. Select SCALE, ROOT or GLIDE with UP/DOWN and turn LEVEL. SCALE OFF restores unquantized pitch. With a scale on, a MIDI track's NOTE knob and NOTE locks step through the scale from ROOT, and its CHROMATIC keys (FUNC + DOWN on the NOTE page) play the scale from ROOT."
     ],
     "screenshots": [
       "media/ot-location.png",
       "media/ot-controls.png",
       "media/ot-voices.png",
+      "media/ot-lfo-setup.png",
       "media/ot-legato.png",
-      "media/ot-scale.png",
-      "media/ot-root.png",
-      "media/ot-glide.png"
+      "media/ot-glide.png",
+      "media/ot-midi-chromatic.png"
     ]
   },
   "controls": [
@@ -97,7 +97,7 @@
       "name": "DEC",
       "default": 40,
       "count": 128,
-      "doc": "SRC F: modulation-index decay. Default raw 40 displays about 199 ms. This is separate from the AMP gain envelope.",
+      "doc": "SRC F: modulation-index decay. 0 is the shortest decay, 1–126 lengthen it (default raw 40 displays about 198 ms), 127 is HOLD. This is separate from the AMP gain envelope.",
       "labels": null
     },
     {
@@ -129,7 +129,7 @@
       "name": "SCALE",
       "default": 0,
       "count": 25,
-      "doc": "OFF restores stock pitch behavior; select a scale to constrain PTCH edits, locks and chromatic keys.",
+      "doc": "OFF restores stock pitch behavior; select a scale to constrain PTCH edits, locks and chromatic keys, and on MIDI tracks the NOTE knob, NOTE locks and CHROMATIC keys.",
       "labels": [
         "OFF",
         "MAJOR",
@@ -162,7 +162,7 @@
       "name": "ROOT",
       "default": 0,
       "count": 12,
-      "doc": "Root of the scale and chromatic keyboard. Ignored with SCALE OFF.",
+      "doc": "Root of the scale and of the chromatic keyboards (audio and MIDI tracks). Ignored with SCALE OFF.",
       "labels": [
         "C",
         "C#",
@@ -196,92 +196,251 @@
     ],
     "limitations": [
       "Parts store stock FLEX kind 1 plus FM/1 in unused NEIGHBOR control bytes. A stock build reads the track as FLEX; it does not synthesize FM. Choose stock explicitly before downgrading.",
+      "A machine change to or from FM SYNTH (either machine list or the file browser) resets the track's PLAYBACK, PLAYBACK SETUP, AMP, AMP SETUP, LFO and LFO SETUP to the new machine's init; step and scene locks are kept and apply by position, as at a stock machine change; FX1 and FX2 stay.",
       "LFO3 speed/depth become VOIC/CHRD; LFO3 depth is muted. ATK/HOLD/REL remain inherited stock AMP controls and drive the synth’s own envelope.",
       "The matching quantizer is bundled privately because the engine shares its mailbox and fixed scale accessor. Do not also select the public Scale Quantizer.",
       "Cannot combine with Analog BD or the public Scale Quantizer because their native hooks overlap. Compatible mixed builds have native/browser byte-parity evidence; mixed audio loads have not been stress-tested.",
-      "MIDI selector recovery and one-track mono/four-voice playback are emulator-tested. External MIDI note/CC traffic, saved project/Part reloads, legato, modulation, maximum simultaneous tracks and hardware timing remain unqualified.",
-      "Historical upstream marker-FLEX activation remains for compatibility; the verified route is the dedicated FM SYNTH chooser.",
-      "Source output is 18.06 dB quieter at identical mixer settings. Added headroom mitigates gain clipping; effects, resonant filtering and summed tracks can still clip. The hardware static report has not been reproduced."
+      "Emulator measurements qualify one FM track at VOIC 4 (or three at VOIC 1) inside every audio block including the first START; larger loads exceed the conservative per-block budget on START blocks and are not qualified. External MIDI note/CC traffic and Part/project reloads and a power cycle on hardware remain unqualified.",
+      "Marker-file activation (FMSYNTH*.wav / SYNTH*.wav in a FLEX slot) remains for compatibility; the machine list is the recommended route.",
+      "The engine leaves 6 dB of headroom (the author's 6.02 dB in place of 0.1.2's 18.06 dB source attenuation), so 0.1.4 is about 12 dB louder than 0.1.2 at identical mixer settings: AMP VOL 0 is the reference and VOL up to about +6 stays clean. Effects, resonant filtering, higher VOL and summed tracks can clip.",
+      "On MIDI tracks the quantizer acts where a note is edited or played from the panel: the NOTE knob, NOTE locks (grid and live recording) and the CHROMATIC keys. NOT2–NOT4 stay semitone offsets, and TRAN, the arpeggiator's own notes, MIDI IN, LFOs on NOTE and scene locks are not quantized; ARP SETUP KEY forces a track's notes into a key. A NOTE set before the scale was on plays as stored until it is turned.",
+      "POLY8's shared chooser bridge (sdk/octabam/modules/poly8/composition.json) is reviewed against 0.1.2's chooser hooks, which 0.1.4 and this version replace with the author's; until that bridge is updated, a build that selects POLY8 together with FM Synth stops at POLY8's seam check (native and browser alike) instead of building."
     ]
   },
   "resources": {
-    "recorded": "Build extents and source estimates; unknown chip timing/memory under owner release exception",
+    "recorded": "2026-10-12; emulator cycles and exact memory, image 37661aee; MKI hardware report 2026-10-13",
     "storage": {
-      "label": "Shared audio arena reservation",
-      "display": "10,487,808 bytes (1,707 pages)",
-      "value": 10487808,
+      "label": "FM code, state and image bytes (bundled quantizer included)",
+      "display": "44,052 bytes plus shared platform reserve",
+      "value": 44052,
       "unit": "bytes",
       "method": "static",
-      "conditions": "Shared native platform reservation of 1,707 × 6,144-byte pages. This is not the exact incremental FM memory cost: complete code/state/table/stack/padding and peak lifetime accounting remains pending.",
+      "conditions": "Exact from the link map: 20,996-byte engine DRAM unit (code, tables and state for all eight tracks), 2,076-byte chooser unit (machine.s with the 2.11 machine-list row table and 2.12's machine-change init), 3,892-byte bundled quantizer unit (2.13), 1,868-byte pinned page, 489 bytes of quantizer ROM units, tables and hook sites, 422 bytes of FM hook sites and 12 bytes of kind-table entries in the OS image, and the 14,297-byte appended platform loader. Excludes the 352-byte stack bound and the shared 10,460,844-byte Flex sample-RAM platform reserve (sample pages 14,602 -> 12,895). See TESTING.md.",
       "source": "TESTING.md"
     },
     "processing": {
-      "label": "ColdFire synthesis",
-      "display": "Worst-case cycles unmeasured",
-      "value": null,
+      "label": "ColdFire processing",
+      "display": "24,167 cycles/block per VOIC 4 track (emulated)",
+      "value": 24167,
       "unit": "cycles/block",
-      "method": "unmeasured",
-      "conditions": "CF computes each FM sample and up to four voices per track. Parameter modulation, MIDI, mode changes and maximum eight-track loads have not been priced.",
+      "method": "emulator",
+      "conditions": "Emulated ColdFire instructions per 16-sample frame interrupt (362.8 us at 44.1 kHz), converted at 9.44 ns per instruction (the hardware CF METER calibration, 2.49216 cycles at 264 MHz); not chip wall-clock cycles. One VOIC 4 track adds up to 9,697 instructions on its START block (24,167 cycles; the largest one-track peak of seven runs, five on 0.1.4's image and two on this one, over the smallest no-FM block) and about 5,018 to 5,087 sustained; one VOIC 1 track adds up to 4,981 on START and about 2,184 to 2,215 sustained. Worst case with one VOIC 4 track: 32,314 instructions + 372 wrapper allowance = 81,459 of 95,779 cycles/block, stock reserve included. Eight VOIC 4 tracks peak at 97,745 instructions (243,597 cycles, 2.54x the block) and are over budget. The 2.13 quantizer adds no frame-interrupt code. See TESTING.md.",
       "source": "TESTING.md"
     },
     "impact": {
-      "conditions": "Estimates for eight FM tracks with up to four voices each; no measured comparison or real-time guarantee.",
+      "conditions": "One to four voices per active synth track; state allocated for eight tracks. Emulator qualification: one VOIC 4 track or three VOIC 1 tracks keep every block in budget; two VOIC 2 or VOIC 4 tracks and four VOIC 1 tracks fit only at the fast end of the calibration; eight VOIC 4 tracks do not.",
       "cpu": {
         "level": "high",
         "basis": "source-estimate",
-        "rationale": "Per-sample two-operator FM and multiple voice/envelope/chord/glide paths execute on ColdFire.",
-        "source": "upstream/synth/poly.s"
+        "rationale": "ColdFire generates two sine operators per voice per sample, plus envelopes, glide, crossfades and fades at note changes and UI hooks. Measured: about 625 own instructions per render call at VOIC 1 and 2,066 at VOIC 4; one VOIC 4 track adds up to 9,697 instructions on its START block. The 2.13 quantizer's MIDI-track hooks run in the UI task: up to 77 instructions per CHROMATIC key, 302 per NOTE lock turn of three clicks.",
+        "source": "TESTING.md"
       },
       "dsp": {
         "level": "minimal",
         "basis": "source-estimate",
-        "rationale": "No new DSP algorithm; generated audio passes through existing stock source, AMP and effect processing.",
-        "source": "manifest.py"
+        "rationale": "Adds no DSP program, table or effect buffer; existing track processing and selected effects still use DSP time. This tier describes added FM code, not the cost of a complete track.",
+        "source": "TESTING.md"
       },
       "memory": {
-        "level": "high",
+        "level": "moderate",
         "basis": "source-estimate",
-        "rationale": "The native platform reserves a shared 10 MiB audio arena plus synth/quantizer state and page clones.",
+        "rationale": "20,996-byte engine unit with state for all eight tracks, 2,076-byte chooser, 3,892-byte bundled quantizer and a 1,868-byte fixed UI page; the 14,297-byte loader and the 10,460,844-byte sample-RAM platform reserve are the shared DRAM platform's.",
         "source": "TESTING.md"
       }
     }
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Owner-approved experimental 0.1.2: MIDI selector regression passes; mono and four-voice output have 18.06 dB more headroom. Current hardware remains untested; chip timing and complete memory bounds remain unmeasured. See TESTING.md and evidence/regressions.json.",
-    "hardwareStatus": "untested",
-    "evidenceRevision": "73490ef77f36bf523bc28f2b385d62e331ec7c5c",
+    "summary": "Emulator qualification of the native FM Synth 0.1.5 image (MAIN OS 37661aee..., built from the author's 48b89e7: the octatrick 2.12 engine, page and chooser, byte-identical in the image to 0.1.4's, and his 2.13 quantizer): the quantizer's MIDI-track gates against a model of the rules (NOTE knob and NOTE locks 409 of 409 over eight SCALE / ROOT settings; CHROMATIC keys 245 of 245 with balanced note-offs and the arpeggiator fed snapped notes; a LIVE RECORDING lock as the author's build), SCALE OFF equal to stock, CHROMATIC on a MIDI track draws and plays, and its added cost per call. Frame-interrupt instruction counts for 1 to 8 FM tracks at VOIC 1, 2 and 4 are 0.1.4's (image 00fa6caa, the same FM objects), with the bounding cards rerun twice on this image, converted at the hardware CF METER calibration (9.44 ns/instruction, 264 MHz). One FM track at VOIC 4 keeps every block, including the first START, inside the 16-sample block (81,459 of 95,779 cycles); eight VOIC 4 tracks do not. Exact memory from the link map: 44,404 module-owned bytes plus the shared 10,460,844-byte sample-RAM platform reserve. Software verification on this image: the module's own native Part smoke (verify.py); two FM tracks pass Part save/reload, project save/reload and a fresh project load in the emulator (the battery-RAM-only restart is the hardware test); the machine-change init; seven LCD captures; the author's odd-address check. The native/browser coverage record is not refreshed: POLY8's chooser bridge stops on this chooser (TESTING.md). timhastie's MKI report for this exact image is in TESTING.md; Modwerk's 0.1.1/0.1.2 owner approvals stay with those versions.",
+    "hardwareStatus": "reported",
+    "evidenceRevision": "bcf3b7fde7b15dbd7ee744fc2b5b6ea862f4db9f",
     "gates": [
-      "verify.py",
-      "verify-audio.py",
-      "verify-regressions.py"
+      "verify.py: native Part smoke on image 37661aee (eight-track selection, Part and shadow signature, sample slots unchanged, reselection keeps controls, return to FLEX): passed (evidence/native-smoke.json)",
+      "2.13 quantizer on MIDI track 1 of image 37661aee in the emulator: NOTE knob and NOTE locks 409 of 409 against the model of the rules (eight SCALE / ROOT settings, SCALE OFF included); CHROMATIC keys 1..16 at five octave words 245 of 245, note-offs balanced, keys held across SCALE / ROOT changes released, the arpeggiator fed snapped notes; LIVE RECORDING lock as the author's build (TESTING.md)",
+      "0.1.4's image 00fa6caa under the same knob script: 409 of 409 equal to the stock clamp (the stock behaviour SCALE OFF must keep)",
+      "CHROMATIC on a MIDI track (the #264 freeze of the author's 2.9..2.12 public tags): the drawer draws with the readout and the keys play on image 37661aee",
+      "Two FM instances (T1, T5) with distinct settings on image 37661aee in the emulator: isolation, Part save/reload, project save/reload and a fresh project load restore both; audio after each transition (TESTING.md)",
+      "Battery-RAM-only restart: not testable on the pinned emulator; on the author's hardware sheet",
+      "2.12 machine-change init on image 37661aee: FLEX -> FM SYNTH -> FLEX -> FM SYNTH gives FM SYNTH's init both times, FLEX's defaults between, FX1 kept (TESTING.md)",
+      "Native/browser composition: the coverage set with POLY8 stops at POLY8's seam check (open, TESTING.md); without POLY8 in the pool, a local run (TESTING.md; sdk/native-comparisons/synth.json not refreshed)",
+      "Emulator worst-case frame-interrupt cycles with stock reserve: 0.1.4's cards (the same FM objects), the bounding cards measured five times on image 00fa6caa and twice on image 37661aee, converted at the CF METER calibration",
+      "Exact memory inventory reconciled with the native link map; static stack bound from the assembled runtime",
+      "The author's tools/align_check.py (2.13): no instruction and no detour target at an odd address",
+      "verify-audio.py and verify-regressions.py (Octemu audio and the #264 MIDI selector): not rerun; 0.1.2 results in evidence/release-0.1.2",
+      "Hardware report for this source and image: timhastie, MKI, 2026-10-13 (reported; TESTING.md)"
     ],
-    "documentation": {
-      "tutorial": {
-        "title": "Quick tutorial: play FM Synth",
-        "steps": [
-          "Open a disposable project with FM Synth firmware. Select an audio track, hold FUNC and press SRC, select FM SYNTH with UP/DOWN and press YES. No sample is required.",
-          "Press SRC. Set RATO to 1 and turn INDX from 0 upwards to hear a sine tone acquire FM harmonics. PTCH transposes it; FINE tunes it in cents; FDBK adds feedback; DEC shortens the modulation envelope.",
-          "Place a trig and press PLAY. Press LFO to set VOIC to 2–4 and CHRD to a chord if wanted. AMP ATK/HOLD/REL shape the gain envelope; FUNC+AMP exposes LEG.",
-          "Press STOP twice to silence the voice. To return to a sample machine, hold FUNC and press SRC, select FLEX or STATIC and press YES; assign the desired sample in the normal way."
-        ]
-      },
-      "screenshots": [
-        "media/ot-location.png",
-        "media/ot-controls.png",
-        "media/ot-voices.png",
-        "media/ot-legato.png",
-        "media/ot-scale.png",
-        "media/ot-root.png",
-        "media/ot-glide.png"
+    "qualification": {
+      "moduleVersion": "0.1.5-experimental",
+      "sourceSha256": "401d3b61412aff964617581f9f0bfcfe0ac83d6a6ee970bb1440f2393a6ac60a",
+      "imageSha256": "37661aee03a49f310d47e1447f043489c1bce9430c13824dd49ab93ad835e236",
+      "cycles": [
+        {
+          "processor": "coldfire",
+          "worstCase": 24167,
+          "maxConfiguration": 81459,
+          "maxInstances": 1,
+          "budget": 95779,
+          "unit": "cycles/block",
+          "method": "emulator",
+          "conditions": {
+            "parameterExtremes": "Emulator windows with PTCH/RATO/INDX/FINE/FDBK p-locked to their endpoints (alternating 0 and 127 every step, PTCH 52..75), Part RATO/INDX/FDBK at 127, DEC at both extremes (Part and lock 0 and 127: 63,369 vs 63,398 instr/block sustained at eight tracks, peaks 97,705 vs 97,697 in the first run of image 7 and 97,681..97,745 over its five runs and image 8's two, so decay does not bound the render), VOIC 1, 2 and 4, CHRD stepping through 22 shapes with all four inversions as step locks, GLIDE 20 in battery RAM. Every step changes the pitch, so the 2.10 crossfades, voice fades and waiting notes run every step. Measured in emulated ColdFire instructions on the pinned ot_emu and converted at the CF METER calibration; see TESTING.md.",
+            "parameterModulation": "Every trig carries locks on all six PLAYBACK controls plus VOIC and CHRD; LFO1 and LFO2 of every track at full speed and depth on INDX and FDBK; scene locks on all six PLAYBACK controls in all sixteen scenes with the crossfader at mid-travel, so scene interpolation and LFO evaluation run every block. MIDI CC and live knob turns use the same stock lock/parameter path inside the measured frame ISR and were not driven separately.",
+            "modeSwitching": "The first PLAY after boot (the stock full Part publication on every track's first trig) is the measured peak; every later step is a warm retrigger of all voices (VOIC 4 chords steal and restart voices every step). STOP/PLAY repeated once per run. The bundled quantizer's MIDI-track hooks (NOTE knob, NOTE lock, CHROMATIC key) run in the UI task when a knob is turned or a key pressed: emulator instruction counts per call in TESTING.md. Machine choice (SRC SETUP, SELECT MACHINE TYPE, the file browser) with 2.12's machine-change init, the Part validator, page and setup-window changes run in the UI task, outside the frame ISR deadline, and were not timed; their stack is bounded statically.",
+            "maxLoad": "Eight FLEX tracks on the SYNTH marker, all starting on the same step every step at 120 BPM, stock DELAY in FX2 on all eight tracks, FX1 stock; the same load with the tracks chosen as FM SYNTH by the Part signature (no sample renderer nested) peaks lower, 88,317. Measured scaling: 1, 2, 3, 4 and 8 tracks at VOIC 1, 2 and 4. One track at VOIC 4 (32,314 instr peak, the maximum of seven runs over image 7 and image 8, spread 142) and three at VOIC 1 (37,368) keep every block, including the first START, inside the 38,432-instruction-time block; two at VOIC 2 (39,415), two at VOIC 4 (41,613) and four at VOIC 1 (42,140) fit only at the 8.38 ns end; eight tracks at VOIC 4 peak at 97,745 and run at 63,362..63,405 sustained. maxInstances is therefore 1 under the module's own worst case. No USB modules are in the measured image; USB/MIDI traffic and held chromatic keys were not driven.",
+            "inputConditions": "The FM engine generates its own signal; it has no audio input. Render cost depends on voice count, glide, note changes (crossfades and fades) and lock/LFO/scene activity, all driven at their worst; DEC extremes do not change cost. Silence (n0: no FM track playing) was measured as the stock reserve plus the per-track source hook: 22,617..22,893 instr/block over seven runs."
+          },
+          "report": "TESTING.md"
+        }
       ],
-      "screenshotStyle": "black-and-white"
+      "memory": {
+        "regions": [
+          {
+            "name": "Per-track engine state: track record, four voices, four waiting notes, chord record, MIDI held keys and ring",
+            "space": "sdram",
+            "words": 506,
+            "wordBits": 8,
+            "bytes": 506,
+            "scope": "instance"
+          },
+          {
+            "name": "FM engine DRAM unit code and tables",
+            "space": "sdram",
+            "words": 15420,
+            "wordBits": 8,
+            "bytes": 15420,
+            "scope": "shared"
+          },
+          {
+            "name": "FM shared state: clock, sequencer word, retrig log, LFO/PLAYBACK/AMP descriptor clones",
+            "space": "sdram",
+            "words": 1528,
+            "wordBits": 8,
+            "bytes": 1528,
+            "scope": "shared"
+          },
+          {
+            "name": "FM SYNTH chooser DRAM unit (machine.s): code, name and row tables, the 2.12 machine-change init",
+            "space": "sdram",
+            "words": 2076,
+            "wordBits": 8,
+            "bytes": 2076,
+            "scope": "shared"
+          },
+          {
+            "name": "Pinned FM PLAYBACK page in the OS-image cave",
+            "space": "cpu-flash",
+            "words": 1868,
+            "wordBits": 8,
+            "bytes": 1868,
+            "scope": "shared"
+          },
+          {
+            "name": "FM hook sites rewritten in place: 52 detours (416 B, one the 2.12 file-browser site) and the resolver jump (6 B)",
+            "space": "cpu-flash",
+            "words": 422,
+            "wordBits": 8,
+            "bytes": 422,
+            "scope": "shared"
+          },
+          {
+            "name": "Three kind-table entries repointed (FLEX and STATIC renderer, FLEX START)",
+            "space": "cpu-flash",
+            "words": 12,
+            "wordBits": 8,
+            "bytes": 12,
+            "scope": "shared"
+          },
+          {
+            "name": "Bundled quantizer DRAM unit (2.13: the MIDI-track NOTE knob, NOTE lock and CHROMATIC key code)",
+            "space": "sdram",
+            "words": 3892,
+            "wordBits": 8,
+            "bytes": 3892,
+            "scope": "shared"
+          },
+          {
+            "name": "Bundled quantizer ROM units (243 B), SEQUENCER tables (72 B) and hook sites (22 detours 170 B, one poke 4 B)",
+            "space": "cpu-flash",
+            "words": 489,
+            "wordBits": 8,
+            "bytes": 489,
+            "scope": "shared"
+          },
+          {
+            "name": "Platform loader and packed DRAM units appended to the image",
+            "space": "cpu-flash",
+            "words": 14297,
+            "wordBits": 8,
+            "bytes": 14297,
+            "scope": "shared"
+          },
+          {
+            "name": "Platform reserve: Flex sample RAM given up to the DRAM platform, less the three DRAM units",
+            "space": "sdram",
+            "words": 10460844,
+            "wordBits": 8,
+            "bytes": 10460844,
+            "scope": "shared"
+          },
+          {
+            "name": "ColdFire stack increment upper bound (UI path 220 B, the Part validator wrap, plus frame path 132 B)",
+            "space": "sdram",
+            "words": 352,
+            "wordBits": 8,
+            "bytes": 352,
+            "scope": "shared"
+          }
+        ],
+        "perInstanceBytes": 506,
+        "sharedBytes": 10501200,
+        "maxInstances": 8,
+        "totalBytes": 10505248,
+        "conditions": "Exact link map of the measured native build (runtime.elf, layout.json, the native build log). The module's own bytes are 44,404: the 20,996-byte engine DRAM unit (15,420 code/tables + 1,528 shared state + 8 x 506 per-track state, preallocated for all eight tracks) and the 2,076-byte chooser unit (machine.s), both byte-identical to 0.1.4's and linked at the same addresses; the 3,892-byte bundled quantizer unit (3,532 in 0.1.4: the 2.13 MIDI-track code); the 1,868-byte pinned page; 489 bytes of quantizer ROM units/tables and hook sites (three new 2.13 sites, 28 B); FM hook sites and kind-table entries; the 14,297-byte appended platform loader and the 352-byte stack bound. The 10,460,844-byte platform reserve is the Flex sample RAM given up to the DRAM platform (sample pages 14,602 -> 12,895, 1,707 pages of 6,144 bytes, less the three DRAM units): any DRAM module creates it, and it is counted once here, not per track. No heap or dynamic allocation; no SRAM, battery-RAM or DSP allocation of its own (GLIDE is the bundled quantizer's battery-RAM byte; the MIDI-track hooks read the existing SCALE and ROOT bytes and write only the stock NOTE Part byte, lock byte or note register they replace; LEG, the LFO destination and the FM SYNTH signature use stock Part bytes and their battery-RAM shadow; the machine-change init writes stock Part bytes, their shadow and the live lane). Stack: static upper bound from the assembled runtime of this image, following its control flow (the deepest UI-task path is still the Part validator wrap fm_validate, 220 B including the replayed stock 96-byte prologue; the 2.13 quantizer hooks reach 72 B; the frame path sy_render 132 B). Hardware canaries not measured.",
+        "report": "TESTING.md"
+      },
+      "hardware": {
+        "kind": "functional",
+        "status": "reported",
+        "model": "MKI",
+        "testedOn": "2026-10-13",
+        "tester": "timhastie",
+        "sourceRevision": "bcf3b7fde7b15dbd7ee744fc2b5b6ea862f4db9f",
+        "imageSha256": "37661aee03a49f310d47e1447f043489c1bce9430c13824dd49ab93ad835e236",
+        "summary": "The author flashed this exact image (FM Synth 0.1.5 alone, MAIN OS 37661aee...) on his Octatrack MKI and reported every item of its test sheet working: on a MIDI track the NOTE knob and NOTE locks stepped through the scale, the CHROMATIC keys followed ROOT, chords and the arpeggiator played as before, CHROMATIC trig mode no longer froze the unit, and SCALE OFF behaved as before; FM SYNTH played as in 0.1.4; after SAVE and a power-cycle with the card in, SCALE, ROOT and the FM SYNTH track were kept and the NOTE knob still followed the scale.",
+        "limitations": [
+          "Play time, the MIDI gear used and the number of tracks were not recorded.",
+          "A functional check of the test sheet's items, not a load or stress qualification: the cycle and memory figures in this record are emulator measurements, not hardware times."
+        ],
+        "report": "TESTING.md"
+      },
+      "documentation": {
+        "tutorial": {
+          "title": "Quick tutorial: play FM Synth",
+          "steps": [
+            "Open a disposable project with FM Synth firmware. Select an audio track, hold FUNC and press SRC, select FM SYNTH with UP/DOWN and press YES. No sample is required.",
+            "Press SRC. Set RATO to 1 and turn INDX from 0 upwards to hear a sine tone acquire FM harmonics. PTCH transposes it; FINE tunes it in cents; FDBK adds feedback; DEC shortens the modulation envelope.",
+            "Place a trig and press PLAY. Press LFO to set VOIC to 2–4 and CHRD to a chord if wanted. AMP ATK/HOLD/REL shape the gain envelope; FUNC+AMP exposes LEG.",
+            "Press STOP twice to silence the voice. To return to a sample machine, hold FUNC and press SRC, select FLEX or STATIC and press YES; PLAYBACK, AMP and LFO return to the init values of that machine (step and scene locks stay, as in stock). Assign the desired sample in the normal way.",
+            "For scales and glide, open PROJECT > CONTROL > SEQUENCER. Select SCALE, ROOT or GLIDE with UP/DOWN and turn LEVEL. SCALE OFF restores unquantized pitch. With a scale on, a MIDI track's NOTE knob and NOTE locks step through the scale from ROOT, and its CHROMATIC keys (FUNC + DOWN on the NOTE page) play the scale from ROOT."
+          ]
+        },
+        "screenshots": [
+          "media/ot-location.png",
+          "media/ot-controls.png",
+          "media/ot-voices.png",
+          "media/ot-lfo-setup.png",
+          "media/ot-legato.png",
+          "media/ot-glide.png",
+          "media/ot-midi-chromatic.png"
+        ],
+        "screenshotStyle": "black-and-white"
+      }
     }
   },
   "license": {
     "spdx": "MIT",
     "file": "LICENSE",
-    "declaration": "Tim Hastie and Sam Banks full MIT notices retained with exact source pins; local dedicated-machine adaptations and SVG are MIT. Stock dependencies use lazy address/length/SHA-256 guards. No firmware, extracted stock byte blobs, cards, RAM or generated binaries are included. Actual LCD captures use media/LICENSE.md; underlying Elektron rights remain reserved. Review is not legal clearance."
+    "declaration": "Tim Hastie and Sam Banks full MIT notices retained with exact source pins (Tim's LICENSE, unchanged from 2.10 to 2.12, carries the Modwerk and Sam Banks notices for the adapted chooser); Modwerk adaptations and SVG are MIT. Stock dependencies use lazy address/length/SHA-256 guards. No firmware, extracted stock byte blobs, cards, RAM or generated binaries are included. Actual LCD captures use media/LICENSE.md; underlying Elektron rights remain reserved. Review is not legal clearance."
   },
   "media": [
     {
@@ -296,8 +455,8 @@
         "page": "SRC SETUP",
         "shows": "location",
         "firmware": "1.40C",
-        "moduleVersion": "0.1.2-experimental",
-        "imageSha256": "d5464195fac0033852546fbbc8f809b64d16646309c21ab25e2f203fbf123157",
+        "moduleVersion": "0.1.5-experimental",
+        "imageSha256": "37661aee03a49f310d47e1447f043489c1bce9430c13824dd49ab93ad835e236",
         "setup": "Headless ot_emu; MKII panel; empty 32 MiB disposable card; stopped transport; actual 128×64 LCD pixels at integer scale 6."
       }
     },
@@ -313,8 +472,8 @@
         "page": "FM SYNTH SRC",
         "shows": "controls",
         "firmware": "1.40C",
-        "moduleVersion": "0.1.2-experimental",
-        "imageSha256": "d5464195fac0033852546fbbc8f809b64d16646309c21ab25e2f203fbf123157",
+        "moduleVersion": "0.1.5-experimental",
+        "imageSha256": "37661aee03a49f310d47e1447f043489c1bce9430c13824dd49ab93ad835e236",
         "setup": "Headless ot_emu; MKII panel; empty 32 MiB disposable card; stopped transport; actual 128×64 LCD pixels at integer scale 6."
       }
     },
@@ -330,8 +489,25 @@
         "page": "FM SYNTH LFO",
         "shows": "controls",
         "firmware": "1.40C",
-        "moduleVersion": "0.1.2-experimental",
-        "imageSha256": "d5464195fac0033852546fbbc8f809b64d16646309c21ab25e2f203fbf123157",
+        "moduleVersion": "0.1.5-experimental",
+        "imageSha256": "37661aee03a49f310d47e1447f043489c1bce9430c13824dd49ab93ad835e236",
+        "setup": "Headless ot_emu; MKII panel; empty 32 MiB disposable card; stopped transport; actual 128×64 LCD pixels at integer scale 6."
+      }
+    },
+    {
+      "path": "media/ot-lfo-setup.png",
+      "captureType": "emulator",
+      "caption": "LFO SETUP lists the FM page's names as destinations; this example shows SRC RATO.",
+      "alt": "Actual Octatrack LCD: LFO SETUP lists the FM page's names as destinations; this example shows SRC RATO.",
+      "credit": "Modwerk contributors",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "LFO SETUP",
+        "shows": "controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.5-experimental",
+        "imageSha256": "37661aee03a49f310d47e1447f043489c1bce9430c13824dd49ab93ad835e236",
         "setup": "Headless ot_emu; MKII panel; empty 32 MiB disposable card; stopped transport; actual 128×64 LCD pixels at integer scale 6."
       }
     },
@@ -347,59 +523,42 @@
         "page": "AMP SETUP",
         "shows": "controls",
         "firmware": "1.40C",
-        "moduleVersion": "0.1.2-experimental",
-        "imageSha256": "d5464195fac0033852546fbbc8f809b64d16646309c21ab25e2f203fbf123157",
-        "setup": "Headless ot_emu; MKII panel; empty 32 MiB disposable card; stopped transport; actual 128×64 LCD pixels at integer scale 6."
-      }
-    },
-    {
-      "path": "media/ot-scale.png",
-      "captureType": "emulator",
-      "caption": "The privately bundled quantizer adds SCALE; this example selects MAJOR.",
-      "alt": "Actual Octatrack LCD: The privately bundled quantizer adds SCALE; this example selects MAJOR.",
-      "credit": "Modwerk contributors",
-      "license": "LicenseRef-OT-UI-Documentation",
-      "source": "original",
-      "otUi": {
-        "page": "CONTROL SEQUENCER: SCALE",
-        "shows": "controls",
-        "firmware": "1.40C",
-        "moduleVersion": "0.1.2-experimental",
-        "imageSha256": "d5464195fac0033852546fbbc8f809b64d16646309c21ab25e2f203fbf123157",
-        "setup": "Headless ot_emu; MKII panel; empty 32 MiB disposable card; stopped transport; actual 128×64 LCD pixels at integer scale 6."
-      }
-    },
-    {
-      "path": "media/ot-root.png",
-      "captureType": "emulator",
-      "caption": "ROOT chooses the key; this example uses C.",
-      "alt": "Actual Octatrack LCD: ROOT chooses the key; this example uses C.",
-      "credit": "Modwerk contributors",
-      "license": "LicenseRef-OT-UI-Documentation",
-      "source": "original",
-      "otUi": {
-        "page": "CONTROL SEQUENCER: ROOT",
-        "shows": "controls",
-        "firmware": "1.40C",
-        "moduleVersion": "0.1.2-experimental",
-        "imageSha256": "d5464195fac0033852546fbbc8f809b64d16646309c21ab25e2f203fbf123157",
+        "moduleVersion": "0.1.5-experimental",
+        "imageSha256": "37661aee03a49f310d47e1447f043489c1bce9430c13824dd49ab93ad835e236",
         "setup": "Headless ot_emu; MKII panel; empty 32 MiB disposable card; stopped transport; actual 128×64 LCD pixels at integer scale 6."
       }
     },
     {
       "path": "media/ot-glide.png",
       "captureType": "emulator",
-      "caption": "GLIDE sets pitch slide time; this example shows OFF.",
-      "alt": "Actual Octatrack LCD: GLIDE sets pitch slide time; this example shows OFF.",
+      "caption": "The privately bundled quantizer adds SCALE, ROOT and GLIDE; this example is MINOR with ROOT A and GLIDE OFF.",
+      "alt": "Actual Octatrack LCD: The privately bundled quantizer adds SCALE, ROOT and GLIDE; this example is MINOR with ROOT A and GLIDE OFF.",
       "credit": "Modwerk contributors",
       "license": "LicenseRef-OT-UI-Documentation",
       "source": "original",
       "otUi": {
-        "page": "CONTROL SEQUENCER: GLIDE",
+        "page": "CONTROL SEQUENCER: SCALE, ROOT, GLIDE",
         "shows": "controls",
         "firmware": "1.40C",
-        "moduleVersion": "0.1.2-experimental",
-        "imageSha256": "d5464195fac0033852546fbbc8f809b64d16646309c21ab25e2f203fbf123157",
+        "moduleVersion": "0.1.5-experimental",
+        "imageSha256": "37661aee03a49f310d47e1447f043489c1bce9430c13824dd49ab93ad835e236",
+        "setup": "Headless ot_emu; MKII panel; empty 32 MiB disposable card; stopped transport; actual 128×64 LCD pixels at integer scale 6."
+      }
+    },
+    {
+      "path": "media/ot-midi-chromatic.png",
+      "captureType": "emulator",
+      "caption": "On a MIDI track with a scale on, the CHROMATIC keyboard plays the scale from ROOT; the number beside it reads A 3 (ROOT A, octave 3).",
+      "alt": "Actual Octatrack LCD: On a MIDI track with a scale on, the CHROMATIC keyboard plays the scale from ROOT; the number beside it reads A 3 (ROOT A, octave 3).",
+      "credit": "Modwerk contributors",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "MIDI NOTE: CHROMATIC",
+        "shows": "controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.5-experimental",
+        "imageSha256": "37661aee03a49f310d47e1447f043489c1bce9430c13824dd49ab93ad835e236",
         "setup": "Headless ot_emu; MKII panel; empty 32 MiB disposable card; stopped transport; actual 128×64 LCD pixels at integer scale 6."
       }
     },

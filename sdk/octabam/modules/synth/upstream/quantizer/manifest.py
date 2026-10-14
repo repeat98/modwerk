@@ -8,6 +8,26 @@ in the turn direction instead of one raw unit (from 0 up in PHRYGIAN: 1, 3,
 lower) before it becomes the pitch the voice, the lock and the screen see.
 OFF is stock: every detour replays what it displaced.
 
+MIDI TRACKS (12 Oct 2026, Octatrick 2.13). With a scale on, a MIDI track's
+NOTE knob (qz_mknob at 0x40055382, the knob handler's MIDI clamp just before
+its store 0x4005538a, which stays stock: octabam's MIDI SCENES detours that
+store and composes with this hook) and its
+NOTE locks (qz_mplock at 0x40050b98, the MIDI p-lock editor's store; a LIVE
+REC lock reads the knob's value) step to the next note of the ROOT-rotated
+scale in the turn direction (pitch class = note mod 12; qz_quant's MIDI
+mode), and a MIDI CHROMATIC key (qz_mkey at 0x400436a8, the press path of
+0x40043664) plays note + ROOT snapped to the nearest scale note (qz_msnap,
+ties down): the note-on, the arpeggiator's add, the held note its release
+turns off and the live recorder all take it. The drawer's number reads
+"<ROOT> <octave>" (qz_octnum). NOT2..4, TRAN, the arpeggiator's output, MIDI
+IN, VEL / LEN and the sequencer are stock (editing only: stock's ARP SETUP
+KEY forces a track's every note into a key); SCALE OFF replays every
+displaced instruction. qz_octnum moved from 0x400449b8 to the drawer's
+common push 0x400449be (Modwerk #264): stock's MIDI branch jumps to
+0x400449be, so the 2.9 .. 2.12 detour skipped the octave push there and
+the drawer's call ran one argument short -- CHROMATIC on a MIDI track froze
+the unit.
+
 ROOT (28 Sep 2026, Octatrick 2.9). One per project, a fifth SEQUENCER row
 right under SCALE: C C# D D# E F F# G G# A A# B (C = 2.8's behaviour: the
 pitches, the knob and the locks byte for byte; the keyboard's number reads
@@ -173,7 +193,7 @@ raw = 64 + (key - 12) + 12 * octave with the octave qz_oct, -4..+4, stepped
 by FUNC + LEFT / RIGHT (qz_octkey at 0x40045918) while stock's 0/1 octave
 word is held at 0 on such a track (qz_keyidx at the handler's caller
 0x40050254, qz_octdraw in the drawer 0x40044968) and the number beside the
-keyboard prints qz_oct (qz_octnum, 0x400449b8, stock's "%d"). MIDI IN on
+keyboard prints qz_oct (qz_octnum, 0x400449be since 2.13, stock's "%d"). MIDI IN on
 a synth track is modules/synth's (30 Sep 2026: its po_mon at the block's
 START 0x4000e746 replaced this module's qz_midi at 0x4000e74c). Sample tracks: the displaced
 instructions, byte for byte.
@@ -212,6 +232,13 @@ KEYS_AT = 0x400d2cb0
 # does the DRAM unit quantizer.s for every snap (one ROOT-rotated mask).
 SCALE_AT = 0x400d2ca8
 
+def _qz_include(modules):
+    """quantizer.s's remix.inc (2.11): HAVE_SYDRUM, 1 when SY DRUM is in the remix -- its
+    signature "SY", 1 counts as a synth track (semitone PTCH, the keys, MIDI), mono (VOIC is
+    FM's), and its legato keys reach the engine. 0 assembles the unit as 2.10's."""
+    return f".set HAVE_SYDRUM, {int('SY DRUM' in modules)}\n"
+
+
 MODULE = Module(
     name="quantizer",
     key="SCALE QUANTIZER",
@@ -221,13 +248,14 @@ MODULE = Module(
         "the scale is built on (C..B; key 1 of the CHROMATIC keyboard sounds it); > GLIDE: the "
         "synth's glide time (OFF, 1..127; the legato switch is the synth track's LEG setting); "
         "polyphonic chromatic keys on a synth track whose VOIC is 2..4; on a synth track "
-        "PTCH is semitones (-64..+63) and the CHROMATIC octave runs -4..+4.",
+        "PTCH is semitones (-64..+63) and the CHROMATIC octave runs -4..+4; on a MIDI track "
+        "(2.13) the NOTE knob, NOTE locks and the CHROMATIC keys follow the scale and root.",
     linked=(                                   # ROM link order: qzs names core.s's qz_scale_mask
         Linked("qzk", os.path.join(_HERE, "keys.s"), cpu="5475", cave_addr=KEYS_AT),
         Linked("qzc", os.path.join(_HERE, "core.s"), cpu="5475"),
         Linked("qzs", os.path.join(_HERE, "scale.s"), cpu="5475", cave_addr=SCALE_AT),
         # the DRAM unit: the platform runtime (KEYS_AT / SCALE_AT reached as fixed addresses)
-        Linked("qz", os.path.join(_HERE, "quantizer.s"), cpu="5475", dram=True),
+        Linked("qz", os.path.join(_HERE, "quantizer.s"), cpu="5475", dram=True, include=_qz_include),
     ),
     detours=(
         Detour(0x40055170, stock_guard(0x40055170, 6, "dc6543d672cdf223fc2ec7cc3c04b8a584dbd6e7bb1e3590b91cd3e469e0b324"), "qz", "qz_knob",
@@ -236,6 +264,16 @@ MODULE = Module(
         Detour(0x40050e60, stock_guard(0x40050e60, 10, "ccf689e403ebd88a651c829b4ae191d609c85baa2a99409bd0a2870d20aaa73e"), "qz", "qz_plock",
                "p-lock editor (TRIG held): the lock store -- PTCH steps by scale degree",
                kind="jsr", pad_to=10),
+        Detour(0x40055382, stock_guard(0x40055382, 8, "03bcaf390b2fd396821abc005afa9853b59e2fcaf10ddc223c001b3a9d276e08"), "qz", "qz_mknob",
+               "knob handler, the MIDI tracks' branch: the clamp to the max just before the store 0x4005538a -- a MIDI "
+               "track's NOTE steps by scale degree from ROOT (2.13); the store stays stock, so MIDI SCENES' detour there composes",
+               kind="jsr", pad_to=8),
+        Detour(0x40050b98, stock_guard(0x40050b98, 10, "9cb4af08e685b7a46a08340cfec555868a0568533c1fb6fc2ec37159dfd980d9"), "qz", "qz_mplock",
+               "MIDI p-lock editor (TRIG held): the lock store -- a NOTE lock steps by scale degree from ROOT (2.13)",
+               kind="jsr", pad_to=10),
+        Detour(0x400436a8, stock_guard(0x400436a8, 10, "2ab0a5529e7748a00dea86e66bc4fbb6105ec7f36e73e481bb840f6570da98cc"), "qz", "qz_mkey",
+               "MIDI track CHROMATIC key press: the note + ROOT snapped to the nearest scale note (key 1 sounds the root); the note-on, the arp, the held note (so the note-off) and the recorder take it (2.13)",
+               kind="jmp", pad_to=10),
         Detour(0x4004fc58, stock_guard(0x4004fc58, 10, "ddfca03eed59b4f4fffffc9061b138ce3e2a33c30712b5e377d94d054fa7b0f0"), "qz", "qz_chrom",
                "CHROMATIC trig key -> pitch: transpose the key index by ROOT (a sample track: within -12..+12 st, the other position an octave below for ROOT G..B) and snap it to the scale",
                kind="jsr", pad_to=10),
@@ -267,7 +305,9 @@ MODULE = Module(
                "CHROMATIC drawer: a synth track draws the keyboard at stock octave 0 (the word is cleared)",
                kind="jmp", pad_to=8),
         Detour(0x400449be, stock_guard(0x400449be, 8, "494435e3f72313a14453f642bdba5b064022c657c63c015752fe23092eabd19f"), "qz", "qz_octnum",
-               "CHROMATIC drawer common argument push preserves MIDI stack; audio octave is qz_oct on a synth track, the position 0 / 1 / -1 on a sample track, with ROOT's name before it when a scale is on",
+               "CHROMATIC drawer, the common push of the octave number both branches reach (2.13, Modwerk #264: the MIDI branch "
+               "jumps here, so the push is never skipped): a MIDI track keeps stock's number, a synth track prints qz_oct, a sample "
+               "track the position 0 / 1 / -1, with ROOT's name before it when a scale is on",
                kind="jmp", pad_to=8),
         Detour(0x40065bca, stock_guard(0x40065bca, 6, "484a241b3cea4a13c5b18550e3ab44eaffc021673bd5677a424bb05cc6486a37"), "qz", "qz_draw",
                "SEQUENCER window draw loop: index the row tables from the scroll offset",

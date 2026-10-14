@@ -1,104 +1,96 @@
-# `synth` — SYNTH MACHINE
+# `synth` — SYNTH MACHINE (octabam build notes, 2.12 engine, 2.13 quantizer)
 
-A two-operator FM synth machine for FLEX tracks, built from
+Adapted from Sam Banks's octabam `modules/synth/README.md` (pinned at
+`949f3be`, MIT) for the octatrick line the module now carries: the 2.12 engine,
+page and chooser, and the 2.13 quantizer.
+
+A two-operator FM synth machine built from
 [timhastie/octatrick-modules](https://github.com/timhastie/octatrick-modules)
-(submodule `upstream/`, pinned to `v2.9` (`525f4b1`)). `Kind.CF_PATCH`: the voice engine as
-a DRAM unit (`poly.s`), the page code as a pinned ROM cave (`page.s`; the
-page descriptor itself is cloned from the unit's own ROM at first use, so no
-stock bytes ship in the repo), a `SymbolRef` on the kind table's FLEX
-renderer entry (and the STATIC entry, for the sample-track glide), detours
-and pokes. No DSP code, no FX2 row. Since 2.9 the engine owns the AMP
-envelope of a synth track and there is no peak limiter.
+at `48b89e7` (tag `v2.13`; its `synth/` files are the same bytes as `v2.12`
+`ca13ed8`), vendored under `upstream/`.
+`Kind.CF_PATCH`: the voice engine and the FM SYNTH chooser as DRAM units
+(`poly.s`, `machine.s`), the PLAYBACK page as a pinned ROM cave (`page.s`;
+the page descriptor itself is cloned from the unit's own ROM at first use,
+so no stock bytes ship), `SymbolRef`s on the kind table's FLEX renderer,
+STATIC renderer and FLEX START entries, and detours. No DSP code, no FX2
+row. The engine owns the AMP envelope of a synth track.
 
-Any FLEX track whose sample is named FMSYNTH*.wav becomes a synth (a
-silent 4 s marker file will do; SYNTH*.wav is still accepted, and the
-marker's length never ends the note): the DSP shapes and effects the voice
-as a sample. Its PLAYBACK page reads PTCH RATO INDX FINE FDBK DEC (title FM
-SYNTH; PTCH in semitones, FINE in cents); on the LFO page VOIC (1 = mono,
-2..4 = paraphonic) and CHRD (32 chord shapes in Syntakt order, each with
-three inversions on the knob, lockable per step, snapped onto SCALE
-QUANTIZER's scale); GLIDE from the quantizer's row. Since 2.8: MIDI IN
-plays a synth track like the CHROMATIC keys (one voice a note up to VOIC, a
-note-off releases it); a chord fingered on the keys or over MIDI during live
-recording is recorded as PTCH / CHRD / VOIC locks (the bass, the shape and
-its inversion, the voices heard; keys within a rolling 150 ms join, a
-legato hand-over records single notes); LEG on every audio track's AMP
-SETUP page (OFF / MONO on a sample track, OFF / MONO / POLY on a synth
-track) is the legato switch, GLIDE the slide time, and a FLEX or STATIC
-track with LEG MONO slides every pitch change over GLIDE; in GRID
-RECORDING a held trig + FUNC + DOWN / UP moves its PTCH lock an octave.
-Since 2.9: the engine owns the AMP envelope -- ATK / HOLD / REL are read
-from the AMP page (locks, scenes and LFOs included) and applied in the
-engine with the DSP's own laws, the DSP seeing an always-open envelope, so
-a voice is never cut: a re-press continues the sounding oscillator from its
-level, a faded note starts from silence over 16 frames, a release is at
-least 1 ms, stealing and VOIC hand-overs fade, STOP kills at the stock
-voice kill; the peak limiter is gone (the 1/sqrt(VOIC) level law stays, a
-4-note chord about -10 dBFS); FINE reads 0c the moment a track becomes a
-synth track (a file-browser load into a new project included); a sequencer
-trig on a still-sounding note is delivered in the panel key's form
-(`po_retrig`) so the DSP keeps its voice; a warm START ramps the FM index
-envelope over 16 frames; chords snap onto SCALE QUANTIZER's root. Known
-limit: a MACHINE change while a REL INF note sounds leaves it sounding
-until the next key. `upstream/synth/README.md` is the full description
-(the five phases, the voice model, what was measured and what was
-inferred).
+## What selects the engine
 
-## Measured
+- **The machine list (2.10; shared since 2.11).** FM SYNTH is the sixth row
+  of SRC SETUP (FUNC + SRC) and of SELECT MACHINE TYPE. Since 2.11 the rows
+  after PICKUP are a table in `machine.s` (`ml_rows`), assembled per build
+  through the units' `remix.inc` (`HAVE_SYDRUM`; the shared equates in
+  `engine_abi.inc`): FM SYNTH always, the author's SY DRUM when a build
+  carries it. The six row-count / row-bound constants that 2.10 poked
+  (5 -> 6) are six detours reading the table's count, and five more detours
+  widen the machine window's row clamp, so SELECT MACHINE TYPE scrolls like
+  SRC SETUP. This package carries FM SYNTH alone: one table row, the same
+  six rows as 2.10, `HAVE_SYDRUM` 0. The choice is stored as FLEX
+  plus `FM`, 1 in the track's unused NEIGHBOR PLAYBACK bytes (Part and
+  battery-RAM shadow); any other row clears it. `machine.s` is the author's
+  adaptation of Modwerk's 0.1.1 chooser: the same signature and Part
+  validator wrap, a sample-free source supplier (`po_fmsource`) and START
+  callback (`po_fmstart`) in `poly.s`.
+- **A machine change resets the track to init (2.12).** To or from FM SYNTH,
+  through either list (`fm_choose`), the slot assigner (`po_assign` ->
+  `ml_became`) or the file browser (`po_loadsel`, with the new `po_unload`
+  detour at `0x40022732` keeping the slot's marker state across the browser's
+  unload), `machine.s` `ml_reset` writes the new machine's init into the
+  track's PLAYBACK, PLAYBACK SETUP, AMP, AMP SETUP, LFO and LFO SETUP bytes
+  (Part, battery-RAM shadow and live lane); step and scene locks and FX1 /
+  FX2 are kept, as at a stock machine change.
+- **Marker files.** A FLEX track whose sample is named `FMSYNTH*.wav` or
+  `SYNTH*.wav` still plays FM, as in every earlier version.
 
-- At `v9.1`, remixes `octatrick` and `octatrick-usb` built byte-identical
-  with the module sources as a plain `modules/<name>/` directory and as this
-  wrapper over the submodule (same base, same build reports), and
-  byte-identical to the OCTATRICK9 images Tim flashed (built on
-  upstream `0e93543`; upstream's changes since touch modules these
-  remixes do not carry).
-- The 2.8 features (MIDI IN, chord recording with inversions, the LEG
-  modes, the sample-track glide, step transpose, the chord order) and the
-  2.9 engine (the envelope laws against the DSP's, the START rule, the
-  fades, STOP, `po_retrig`, the index ramp: the step / slope and |d2|
-  figures) were each measured in the port through the virtual panel; the
-  tables are in `upstream/synth/README.md`, per feature, with what is open.
-- Cost against 2.8 (a static count of the FM loops): +6 instructions a
-  sample a voice with the limiter's per-sample stage gone, about +15-20 %
-  of a VOIC 1 synth track's frame work, ~0.1-0.2 % of the frame budget; the
-  platform reserve and FREE MEM unchanged; the OS image's ROM section about
-  3 KB smaller (the quantizer's move), the DRAM append a few KB larger.
+The PLAYBACK page reads PTCH RATO INDX FINE FDBK DEC (title FM SYNTH; PTCH in
+semitones, FINE in cents, DEC 127 = HOLD); the LFO page VOIC (1 = mono, 2..4 =
+paraphonic) and CHRD (32 chord shapes, each with inversions, lockable per
+step, snapped onto the bundled quantizer's scale); LFO SETUP's destination
+list shows the FM names; GLIDE is the quantizer's row; LEG is on AMP SETUP.
+Since 2.12 the frame builder's metronome-click clear (`0x4000b2c8`) is stock
+again: the earlier `po_stop` hook there released held notes at every click.
+`upstream/synth/README.md` is the author's full description, with every
+measurement.
 
-## On the unit
+Since 2.13 the bundled quantizer also acts on MIDI tracks: with a scale on, the
+NOTE knob (`qz_mknob` at `0x40055382`, the knob handler's MIDI clamp before
+its store `0x4005538a`, which stays stock), NOTE locks (`qz_mplock` at
+`0x40050b98`) and the MIDI CHROMATIC keys (`qz_mkey` at `0x400436a8`) follow
+SCALE and ROOT; the CHROMATIC drawer hook `qz_octnum` sits at the common
+argument push `0x400449be` (Modwerk #264, now the author's own form).
+`upstream/quantizer/README.md`, "MIDI tracks (2.13)", is his description.
 
-- 26 Sep 2026: `OCTATRICK9` (remix `octatrick-usb`) on Tim's Octatrack
-  MKI: the synth, the quantizer and direct jump, and USB audio on all 20
-  channels on the MKI.
-- Every test build since, 2.3 .. 2.8, flashed on the same MKI from Tim's
-  own tree ([timhastie/octatrick](https://github.com/timhastie/octatrick),
-  the same wrappers over the same submodule), and the 2.9 line up to the
-  build before its last two fixes: ROOT, the DRAM quantizer, FINE 0c, the
-  envelope engine and the limiter's removal ran on the MKI (the held-chord
-  crackle gone, the live-key pops gone, by ear). The last two fixes (the
-  sequencer trigs, the index ramp) are emulator-verified on `octatrick`
-  (`make check` on this tree), not yet flashed.
+## How it is built here
 
-## How it is built
-
-Source: `upstream/` is Tim's repository (submodule, pinned to `v2.9` (`525f4b1`)).
-Nothing inside `upstream/` is edited here. The manifest here
-(`manifest.py`) executes `upstream/synth/manifest.py` from the source on
-disk and re-exports its `MODULE`; that manifest derives its source paths
-from its own directory, so the same file builds at `modules/synth/` in
-Tim's tree and at `modules/synth/upstream/synth/` here. The engine is
-`Linked(dram=True)`: linked into the platform runtime with the other DRAM
-units and depacked at boot into the arena reserve
-(`docs/contributing/PLACEMENT.md`). The page is pinned at `0x400d24d0`, the
-start of the second free gap.
+`manifest.py` executes `upstream/synth/manifest.py` (the author's manifest,
+its stock expectations replaced by address/length/SHA-256 guards and its
+precompiled page blob removed) and `upstream/quantizer/manifest.py` (the
+matching quantizer, relabelled `fm_*` so it never aliases the public Scale
+Quantizer's objects). It adds the page as a `Linked` unit pinned at
+`0x400d24d0` with a `reference` to the author's ratified page bytes (the build
+fails if `page.s` or the toolchain drifts from them), and one guarded poke at
+the page resolver (`0x40031ece`) that jumps to `pg_resolve` at the cave's
++16, the same bytes the author's `emit_page` writes. `poly.s`, `machine.s`,
+`page.s` and `engine_abi.inc` are the author's files byte for byte, and so are
+the quantizer's `quantizer.s`, `core.s`, `keys.s` and `scale.s`. The
+author's manifest declares Analog BD as a native `conflicts` entry; the
+wrapper clears it, because Modwerk declares conflicts in
+`octamod.module.json`. The DRAM units are linked
+into the platform runtime with the other DRAM units and depacked at boot into
+the arena reserve.
 
 ## Collisions
 
 `tempo-bus` also uses the second free gap, so the ledger refuses that pair.
-The engine shares the platform reserve with the other DRAM modules (USB
-MIDI, USB AUDIO, MIDI SCENES) inside one runtime.
+The public Scale Quantizer and Analog BD overlap the bundled quantizer's and
+the chooser's hooks and are refused. The engine shares the platform reserve
+with the other DRAM modules inside one runtime.
 
 ## Updating
 
-Bump the submodule pin and rebuild; the pinned page bytes and the engine's
-reads of SCALE QUANTIZER's pinned addresses either hold or the build
-refuses.
+Re-vendor `upstream/` at the new pin, convert any new stock expectation to a
+guard (`stock-guards.json` lists them), keep the page `reference` equal to the
+author's ratified page hash, and rebuild; the guards, the page reference and
+the engine's reads of the quantizer's pinned addresses either hold or the
+build refuses.

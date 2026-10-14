@@ -1,15 +1,14 @@
 import { describe, expect, it } from 'vitest'
 import { resolve } from 'node:path'
 import { readFile } from 'node:fs/promises'
-import { cpSync, mkdtempSync, readFileSync, writeFileSync, rmSync } from 'node:fs'
+import { cpSync, mkdtempSync, writeFileSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { createHash } from 'node:crypto'
 import source from '../../sdk/octabam/modules/synth/octamod.module.json'
-import template from '../../sdk/octabam/modules/synth/qualification.example.json'
 import capture from '../../sdk/octabam/modules/synth/media/capture.json'
 import baseline from '../../sdk/module-qualification-baseline.json'
 import approval from '../../sdk/synth-build-approval.json'
-import regressions from '../../sdk/octabam/modules/synth/evidence/regressions.json'
+import comparison from '../../sdk/native-comparisons/synth.json'
 import { parseModuleDocument, requireModuleUiForPublication, requireModuleQualificationForPublication } from './module-contract'
 import { moduleNativeSourceSha256, parseQualificationBaseline, requireFolderQualification } from '../../scripts/module-qualification.mjs'
 import { requireCompleteReadme, requireMonochromePng } from '../../scripts/module-documentation.mjs'
@@ -17,43 +16,41 @@ import { MODULES, resolveSelection } from './modules'
 
 const folder = resolve('sdk/octabam/modules/synth')
 
-describe('FM Synth exact experimental release', () => {
-  it('publishes only the exact owner-approved experimental release and keeps unknown measurements visible', async () => {
+describe('FM Synth 0.1.5 (octatrick 2.12 engine, 2.13 quantizer)', () => {
+  it('publishes through measured cycles, exact memory and the attributed hardware report of this exact source and image', async () => {
     const document = parseModuleDocument(source)
-    expect(document.tests.hardwareStatus).toBe('untested')
-    expect(document.resources.processing.value).toBeNull()
+    const q = document.tests.qualification!
+    expect(q).toBeDefined()
+    expect(document.tests.releaseWaiver).toBeUndefined()
     expect(() => requireModuleUiForPublication(document)).not.toThrow()
-    expect(() => requireModuleQualificationForPublication(document)).toThrow('worst-case cycles, exact memory and hardware')
-    expect(await requireFolderQualification(folder, document, parseQualificationBaseline(baseline))).toBe('owner-approved-update')
-    expect(approval.version).toBe(document.version)
-    expect(approval.sourceSha256).toBe(await moduleNativeSourceSha256(folder, document))
-    expect(regressions.moduleVersion).toBe(document.version)
-    for (const regression of Object.values(regressions.releaseRegressions)) {
-      expect(regression.status).toBe('passed')
-      expect(regression.imageSha256).toBe(regressions.patchedBrowser.mainSha256)
-    }
+    expect(() => requireModuleQualificationForPublication(document)).not.toThrow()
+    expect(q.moduleVersion).toBe(document.version)
+    expect(q.sourceSha256).toBe(await moduleNativeSourceSha256(folder, document))
+    expect(q.imageSha256).toBe(capture.imageSha256)
+    expect(q.cycles.every(c => c.maxConfiguration <= c.budget)).toBe(true)
+    expect(await requireFolderQualification(folder, document, parseQualificationBaseline(baseline))).toBe('qualified')
+    // The owner's update approval stays bound to the version it named; it never covers this one.
+    expect(approval.version).not.toBe(document.version)
+    expect(comparison.moduleVersion).toBe(document.version)
+    expect(comparison.moduleSourceSha256).toBe(q.sourceSha256)
+    expect(comparison.summary.mismatches).toBe(0)
     expect(resolveSelection([document.id]).map(module => module.id)).toEqual(['synth'])
     expect(MODULES.some(module => module.id === document.id)).toBe(true)
     for (const mutate of [
-      (d: typeof document) => { d.version = '0.1.3-experimental' },
-      (d: typeof document) => { d.tests.hardwareStatus = 'verified' },
+      (d: typeof document) => { d.version = '0.1.6-experimental' },
+      (d: typeof document) => { d.tests.qualification!.sourceSha256 = 'f'.repeat(64) },
     ]) {
       const changed = structuredClone(document); mutate(changed)
       await expect(requireFolderQualification(folder, changed, parseQualificationBaseline(baseline))).rejects.toThrow()
     }
   })
 
-  it('refuses changed native source or regression evidence under the exact source approval', async () => {
+  it('refuses changed native source under the recorded qualification', async () => {
     const copy = mkdtempSync(resolve(tmpdir(), 'modwerk-synth-release-test.'))
     try {
       cpSync(folder, copy, { recursive: true })
-      const path = resolve(copy, 'evidence/regressions.json'), report = JSON.parse(readFileSync(path, 'utf8'))
-      report.releaseRegressions.midi.status = 'failed'
-      writeFileSync(path, JSON.stringify(report))
-      await expect(requireFolderQualification(copy, parseModuleDocument(source), parseQualificationBaseline(baseline))).rejects.toThrow('exact native source')
-      cpSync(resolve(folder, 'evidence/regressions.json'), path)
       writeFileSync(resolve(copy, 'manifest.py'), 'raise AssertionError("changed submitted source must never execute")')
-      await expect(requireFolderQualification(copy, parseModuleDocument(source), parseQualificationBaseline(baseline))).rejects.toThrow('exact native source')
+      await expect(requireFolderQualification(copy, parseModuleDocument(source), parseQualificationBaseline(baseline))).rejects.toThrow('source SHA-256')
     } finally { rmSync(copy, { recursive: true, force: true }) }
   })
 
@@ -61,9 +58,7 @@ describe('FM Synth exact experimental release', () => {
     const document = parseModuleDocument(source)
     expect(capture.moduleVersion).toBe(document.version)
     expect(capture.sourceSha256).toBe(await moduleNativeSourceSha256(folder, document))
-    expect(template.documentation.screenshots).toEqual(document.access!.screenshots)
-    // Validate only the template's documentation; never assert its pending hardware/cycles qualify.
-    requireCompleteReadme({ id: document.id, tests: { qualification: { documentation: { ...template.documentation, screenshotStyle: 'black-and-white' as const } } } }, await readFile(resolve(folder, 'README.md'), 'utf8'))
+    requireCompleteReadme(document, await readFile(resolve(folder, 'README.md'), 'utf8'))
     for (const media of document.media.filter(item => item.otUi)) {
       const bytes = await readFile(resolve(folder, media.path))
       requireMonochromePng(bytes)

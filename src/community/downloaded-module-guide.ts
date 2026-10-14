@@ -69,7 +69,7 @@ const QUICK_TESTS: Record<string, { version: string; steps: Step[] }> = {
     { title: 'Shape the clang.', text: 'Add trigs and press PLAY. Adjust TUNE, then raise METAL and turn COLOR. Add FBK gradually.' },
     { title: 'Finish the test.', text: 'Press STOP and let the AMP release finish. Remove example locks and return SWEEP and FOLD to 0.' },
   ] },
-  synth: { version: '0.1.2-experimental', steps: [
+  synth: { version: '0.1.5-experimental', steps: [
     { title: 'Choose FM SYNTH.', text: 'In a fresh project, select an audio track. Hold FUNC + SRC, choose FM SYNTH with UP/DOWN and press YES. No sample is needed.' },
     { title: 'Add harmonics.', text: 'Press SRC, set RATO to 1 and raise INDX from 0. The sine tone gains FM harmonics; PTCH changes pitch.' },
     { title: 'Play a pattern.', text: 'Place a trig and press PLAY. Use AMP ATK, HOLD and REL to shape note length. The full instructions cover voices, chords and glide.' },
