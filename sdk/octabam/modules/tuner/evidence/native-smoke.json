@@ -1,0 +1,167 @@
+{
+  "imageSha256": "66489376d2cfbe36cb27b6e8b755a75aec2e7b3eab3583f7026f55cc7e877f94",
+  "emulatorSha256": "9dc31d1249793fcf857fa6b1c1ac72ab7966646fd59f3e09e90683c8eb41e711",
+  "tuWin": "0x40a980f0",
+  "checks": {
+    "closed_ring_idle": {
+      "passed": true,
+      "wr": [
+        0,
+        0
+      ]
+    },
+    "tempo_alone_is_stock": {
+      "passed": true
+    },
+    "stock_tempo_window_closes": {
+      "passed": true
+    },
+    "up_tempo_opens_tuner": {
+      "passed": true
+    },
+    "ring_fills_16_per_block": {
+      "passed": true,
+      "blocks": 1378,
+      "wr": [
+        3776,
+        1248
+      ]
+    },
+    "silence_reads_dashes": {
+      "passed": true,
+      "reading": "--"
+    },
+    "closes_with_TEMPO": {
+      "passed": true
+    },
+    "closes_with_YES": {
+      "passed": true
+    },
+    "closes_with_NO": {
+      "passed": true
+    },
+    "closes_with_UP_TEMPO": {
+      "passed": true
+    },
+    "func_tempo_does_not_open_tuner": {
+      "passed": true
+    },
+    "reopens": {
+      "passed": true
+    },
+    "project_loaded": {
+      "passed": true
+    },
+    "reads_T1": {
+      "passed": true,
+      "read": "A4 +0c 440.0Hz",
+      "expected": "A4 +0.0c 440.0Hz"
+    },
+    "reads_T3": {
+      "passed": true,
+      "read": "D4 +37c 300.0Hz",
+      "expected": "D4 +37.0c 300.0Hz"
+    },
+    "reads_T2": {
+      "passed": true,
+      "read": "E2 +2c 82.4Hz",
+      "expected": "E2 +2.0c 82.5Hz"
+    },
+    "reads_T4": {
+      "passed": true,
+      "read": "B5 +21c 1000.0Hz",
+      "expected": "B5 +21.3c 1000.0Hz"
+    },
+    "reads_T5": {
+      "passed": true,
+      "read": "A2 -1c 109.9Hz",
+      "expected": "A2 +0.0c 110.0Hz"
+    },
+    "reads_T6": {
+      "passed": true,
+      "read": "A4 -20c 435.0Hz",
+      "expected": "A4 -19.8c 435.0Hz"
+    },
+    "reads_T7": {
+      "passed": true,
+      "read": "E6 +0c 1318.5Hz",
+      "expected": "E6 -0.0c 1318.5Hz"
+    },
+    "silent_track_holds": {
+      "passed": true,
+      "read": "E6 +0c 1318.5Hz HOLD",
+      "last": "E6 +0c 1318.5Hz"
+    },
+    "reads_again": {
+      "passed": true,
+      "read": "A4 +0c 440.0Hz"
+    },
+    "stop_holds": {
+      "passed": true,
+      "read": "A4 +0c 440.0Hz HOLD"
+    },
+    "closed_after_reading": {
+      "passed": true
+    }
+  },
+  "readings": [
+    {
+      "track": 1,
+      "toneHz": 440.0,
+      "expected": "A4 +0.0c",
+      "read": "A4 +0c 440.0Hz"
+    },
+    {
+      "track": 3,
+      "toneHz": 300.0,
+      "expected": "D4 +37.0c",
+      "read": "D4 +37c 300.0Hz"
+    },
+    {
+      "track": 2,
+      "toneHz": 82.5,
+      "expected": "E2 +2.0c",
+      "read": "E2 +2c 82.4Hz"
+    },
+    {
+      "track": 4,
+      "toneHz": 1000.0,
+      "expected": "B5 +21.3c",
+      "read": "B5 +21c 1000.0Hz"
+    },
+    {
+      "track": 5,
+      "toneHz": 110.0,
+      "expected": "A2 +0.0c",
+      "read": "A2 -1c 109.9Hz"
+    },
+    {
+      "track": 6,
+      "toneHz": 435.0,
+      "expected": "A4 -19.8c",
+      "read": "A4 -20c 435.0Hz"
+    },
+    {
+      "track": 7,
+      "toneHz": 1318.5,
+      "expected": "E6 -0.0c",
+      "read": "E6 +0c 1318.5Hz"
+    },
+    {
+      "track": 8,
+      "toneHz": 0,
+      "expected": "HOLD (last note kept)",
+      "read": "E6 +0c 1318.5Hz HOLD"
+    },
+    {
+      "track": 1,
+      "toneHz": 0,
+      "expected": "after STOP: HOLD",
+      "read": "A4 +0c 440.0Hz HOLD"
+    }
+  ],
+  "limitations": [
+    "Emulator panel smoke on the MKII panel. The key checks use an empty card and the project the OS creates; the reading checks (only with --template) use generated looping sines on FLEX tracks. No live input, no hardware, no cycle-budget or long-run check."
+  ],
+  "passed": true
+}

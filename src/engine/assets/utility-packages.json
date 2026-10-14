@@ -28,7 +28,8 @@
     "mute-modes": "0.1.0-experimental",
     "recorder-loop-fix": "0.1.0-experimental",
     "poly8": "0.2.7-experimental",
-    "output-matrix": "0.1.0-experimental"
+    "output-matrix": "0.1.0-experimental",
+    "tuner": "0.1.0-experimental"
   },
   "compilerSha256": "ba4cfc6b0c5948f8b0a2809d5b73bea85633eb32f82ffc761a6373d9c4d48c5f",
   "qualification": "Source assembly and relocation only. Hardware and release approval are not supplied by this artifact.",

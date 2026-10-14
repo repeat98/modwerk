@@ -1,0 +1,124 @@
+{
+  "firmware": "1.40C",
+  "imageSha256": "66489376d2cfbe36cb27b6e8b755a75aec2e7b3eab3583f7026f55cc7e877f94",
+  "emulatorSha256": "9dc31d1249793fcf857fa6b1c1ac72ab7966646fd59f3e09e90683c8eb41e711",
+  "setup": "Headless ot_emu; MKII panel; stopped transport; 128\u00d764 LCD at integer scale 6.",
+  "palette": {
+    "on": [
+      240,
+      240,
+      240
+    ],
+    "off": [
+      24,
+      24,
+      24
+    ]
+  },
+  "keyMs": 50,
+  "plan": [
+    {
+      "wait": 1000
+    },
+    {
+      "press": [
+        "YES"
+      ]
+    },
+    {
+      "wait": 2000
+    },
+    {
+      "press": [
+        "NO"
+      ]
+    },
+    {
+      "wait": 500
+    },
+    {
+      "capture": "ot-page-closed.png"
+    },
+    {
+      "press": [
+        "T8"
+      ]
+    },
+    {
+      "press": [
+        "PLAY"
+      ]
+    },
+    {
+      "wait": 1000
+    },
+    {
+      "press": [
+        "UP",
+        "TEMPO"
+      ]
+    },
+    {
+      "wait": 1200
+    },
+    {
+      "capture": "ot-tuner-silence.png"
+    },
+    {
+      "press": [
+        "T6"
+      ]
+    },
+    {
+      "wait": 1500
+    },
+    {
+      "capture": "ot-tuner-flat.png"
+    },
+    {
+      "press": [
+        "T3"
+      ]
+    },
+    {
+      "wait": 1500
+    },
+    {
+      "capture": "ot-tuner-sharp.png"
+    },
+    {
+      "press": [
+        "STOP"
+      ]
+    },
+    {
+      "wait": 1500
+    },
+    {
+      "capture": "ot-tuner-hold.png"
+    },
+    {
+      "press": [
+        "TEMPO"
+      ]
+    },
+    {
+      "wait": 500
+    },
+    {
+      "capture": "ot-tuner-closed.png"
+    }
+  ],
+  "screenshots": {
+    "ot-tuner-silence.png": "4fe90920bf6df7070839590111e27f9c944b5862be0a40cb77af3695c1b81ca7",
+    "ot-tuner-flat.png": "806903daa112773358356728b3af35dea1a48cf8ea8c30b804452961c3e7cbc2",
+    "ot-tuner-sharp.png": "65f899848e1213b57b6d801abce07ebc3bdada770ed34fe3df302b00735656ba",
+    "ot-tuner-hold.png": "b9b8d15d0403c77c90c2f931298972f19dcc8b1e784cf7136f836e29ee5c46f3",
+    "ot-tuner-closed.png": "c1ef71f436cfb6438c0a3e44a7d8fd10e63179e69bbd56151a8d873867840eb4"
+  },
+  "cardSha256": "53ab02f863ac192cfb9edeccd6896605a493bee676b7b10695152d99795f9b11",
+  "project": {
+    "set": "TONE",
+    "name": "TUNE"
+  }
+}

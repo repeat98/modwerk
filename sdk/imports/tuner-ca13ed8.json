@@ -1,0 +1,83 @@
+{
+  "schemaVersion": 1,
+  "id": "tuner",
+  "version": "0.1.0-experimental",
+  "status": "local-draft-unpublished",
+  "basedOn": "b04365595efc9baaf1421fdd10afacd1eedd23f7",
+  "folder": "sdk/octabam/modules/tuner",
+  "authorPin": {
+    "repository": "https://github.com/timhastie/octatrick-modules",
+    "revision": "ca13ed85547790f788ceaaada5df3cdd31508441",
+    "tag": "v2.12",
+    "path": "tuner"
+  },
+  "history": "tuner/tuner.s and tuner/manifest.py are unchanged since v2.8 (237d40b, the commit that added the tuner); between the v2.9 tag and v2.11 only tuner/README.md changed (one line became three: the author's MKI hardware note); the tuner/ tree and LICENSE are identical at v2.11 (5f3d745) and v2.12 (ca13ed8), git tree 1b52b94d72c8a73706fd0edeaccea37536eaed42.",
+  "conversion": {
+    "tool": "to_stock_guard.py (local, not committed): each expect -> stock_guard(site, len, sha256 of the user OS 1.40C span, MAIN OS 164f3122...); every hash equal to sha256 of the author literal (3 guards, 0 mismatches)"
+  },
+  "files": [
+    {
+      "path": "upstream/LICENSE",
+      "repository": "https://github.com/timhastie/octatrick-modules",
+      "revision": "ca13ed85547790f788ceaaada5df3cdd31508441",
+      "sourcePath": "LICENSE",
+      "sourceBytes": 4876,
+      "sourceGitBlob": "d350f0f05432680ad29157ae93669dbd585da978",
+      "sourceSha256": "1f72dbab3547d1d94861cf9f129519301295395129fe3f56760ed767d07f04fe",
+      "vendoredSha256": "1f72dbab3547d1d94861cf9f129519301295395129fe3f56760ed767d07f04fe"
+    },
+    {
+      "path": "upstream/tuner/README.md",
+      "repository": "https://github.com/timhastie/octatrick-modules",
+      "revision": "ca13ed85547790f788ceaaada5df3cdd31508441",
+      "sourcePath": "tuner/README.md",
+      "sourceBytes": 8525,
+      "sourceGitBlob": "1f47bc29adf4cfee1874fce06c4d628c96ca2e0f",
+      "sourceSha256": "2989765c64d1f1084fadffda0c34dcf33d4d31742267b5d02c513faec4eebde2",
+      "vendoredSha256": "2989765c64d1f1084fadffda0c34dcf33d4d31742267b5d02c513faec4eebde2"
+    },
+    {
+      "path": "upstream/tuner/tuner.s",
+      "repository": "https://github.com/timhastie/octatrick-modules",
+      "revision": "ca13ed85547790f788ceaaada5df3cdd31508441",
+      "sourcePath": "tuner/tuner.s",
+      "sourceBytes": 30817,
+      "sourceGitBlob": "e8195a7d6cfd9f9a84498f19aed7232a8d529bcb",
+      "sourceSha256": "5239642eb3439a7838757e4e2391a0773f1aeff3fa1df010855009101a770a45",
+      "vendoredSha256": "5239642eb3439a7838757e4e2391a0773f1aeff3fa1df010855009101a770a45"
+    },
+    {
+      "path": "upstream/tuner/manifest.py",
+      "repository": "https://github.com/timhastie/octatrick-modules",
+      "revision": "ca13ed85547790f788ceaaada5df3cdd31508441",
+      "sourcePath": "tuner/manifest.py",
+      "sourceBytes": 2356,
+      "sourceGitBlob": "e3fa9aded3233b20271915f26e56e225ed9492b1",
+      "sourceSha256": "f01785aa15f62049700820d6f797f38a15e6a4ecede5939c4581559adf1d8a40",
+      "vendoredSha256": "89913becf3004e2dabb7834dea3f93ea2eeb541efd0e32fcf1d761f282624aa3",
+      "changes": [
+        "Every Detour stock `expect` H(\"..\") rewritten as stock_guard(site, length, sha256 of the local 1.40C span); each hash checked equal to the sha256 of the author's literal (3 guards, 0 mismatches). `from remix.stock_guard import stock_guard` added. Nothing else changed."
+      ]
+    }
+  ],
+  "stockGuards": [
+    {
+      "path": "upstream/tuner/manifest.py",
+      "address": 1074110192,
+      "bytes": 6,
+      "sha256": "f6a3ca67f755cf77cada82cbb69793ccf442a7994c8ec87a9dff56f83ca048c5"
+    },
+    {
+      "path": "upstream/tuner/manifest.py",
+      "address": 1073797530,
+      "bytes": 6,
+      "sha256": "9a7d100114ea50c9317af4f9de9210dd0eeae82f9ce03b255ac0d7bb5f707b91"
+    },
+    {
+      "path": "upstream/tuner/manifest.py",
+      "address": 1074097266,
+      "bytes": 6,
+      "sha256": "9c0a1089c078d792bc2cdac2cf3b905c17ad1f4466addf54f4b84f2fa2f9cdd0"
+    }
+  ]
+}

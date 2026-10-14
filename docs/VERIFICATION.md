@@ -1388,3 +1388,17 @@ E-Verb is in none of them.
 
 No hardware result exists for 0.1.1; the owner's MKII report covers 0.1.0.
 Publication needs the owner's approval of this exact source.
+
+## Tuner 0.1.0-experimental — 10 October 2026
+
+New system module from timhastie/octatrick-modules v2.12 (`ca13ed8`; the `tuner/` tree is identical to v2.11's and the tuner's code is unchanged since v2.8): UP + TEMPO
+opens a tuner window for the current audio track. The exporter's image of the module alone (MAIN OS `66489376…`, update
+`5f56dbce…`) ran on the pinned ColdFire emulator with seven generated looping tones on Flex tracks and a silent eighth: the seven tones from
+82.5 Hz to 1,318.5 Hz read within 1 cent, silence and STOP hold the last reading; the frame interrupt gains 4 instructions
+a block with the window closed and exactly 195 with it open; the analysis runs in the UI task (about 1.0 M instructions
+every 145 ms while open); opening and closing by every key on the MKII and MKI panels, the stock TEMPO window, tap tempo
+and a menu beside it; a 60 s open run; the native smoke (`verify.py`, 24/24) and five LCD captures. `module:verify` (host
+toolchain): 130 selections, 62 built images and 68 refusals match, 0 mismatches; the declaration scan records 493,056
+clean selections (kept out of this branch: see the pull request). Packages rebuilt; every existing payload is unchanged;
+Analog BD's matrix re-verified (162 + 50 + 6) before its source-tree hash was rebound. Hardware: the author's MKI report of this exact image
+(13 October 2026, every item of its test sheet worked; the figures were not recorded); no MKII has run it.

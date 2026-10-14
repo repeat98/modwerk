@@ -239,6 +239,13 @@
       "fxId": null,
       "fx1": false,
       "fx1Only": false
+    },
+    {
+      "id": "tuner",
+      "key": "TUNER",
+      "fxId": null,
+      "fx1": false,
+      "fx1Only": false
     }
   ],
   "customIds": [
