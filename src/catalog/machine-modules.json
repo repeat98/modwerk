@@ -3,6 +3,395 @@
   "modules": [
     {
       "schemaVersion": 3,
+      "id": "cc-names",
+      "name": "CC Assignment Names",
+      "version": "2.1.1",
+      "machine": "digitakt",
+      "category": "midi-usb",
+      "exclusive": false,
+      "author": {
+        "github": "sumedho",
+        "credits": [
+          "sumedho — module design and development with Codex assistance.",
+          "irpina — Elekloader Core 2.1, the Core 3.0 header, Machine Pages (adapted to Core 2.1 by sumedho) and SDK."
+        ]
+      },
+      "maintainers": [
+        "sumedho"
+      ],
+      "presentation": {
+        "label": "CC Assignment Names",
+        "family": "MIDI",
+        "summary": "Give each MIDI CC assignment a label of up to five characters. Labels appear on CC VALUE and follow native pattern and project operations.",
+        "overview": "Give each MIDI CC assignment a label of up to five characters. Labels appear on CC VALUE and follow native pattern and project operations.",
+        "highlights": [
+          "Open the native name editor for that CC VALUE slot.",
+          "Move the text cursor and change a character in the name editor.",
+          "Accept the name / cancel the edit."
+        ],
+        "usage": [
+          "Select MIDI A with TRK + trig 9. Set the desired CC number on CC SELECT, then press FLTR for CC VALUE.",
+          "Hold FUNC and press and hold the encoder for the assignment you want to name.",
+          "Use LEFT/RIGHT to select a character and UP/DOWN to change it. Enter a short name such as CUTO.",
+          "Press YES to accept, or NO to cancel. The label appears below that assignment; turning its encoder still sends the assigned CC."
+        ]
+      },
+      "access": {
+        "location": "MIDI track CC VALUE page; hold FUNC and the assignment encoder",
+        "steps": [
+          "Select MIDI A with TRK + trig 9. Set the desired CC number on CC SELECT, then press FLTR for CC VALUE.",
+          "Hold FUNC and press and hold the encoder for the assignment you want to name."
+        ],
+        "screenshots": [
+          "media/name-editor.png"
+        ]
+      },
+      "controls": [
+        {
+          "name": "FUNC + hold A–H",
+          "default": null,
+          "doc": "Open the native name editor for that CC VALUE slot.",
+          "labels": null
+        },
+        {
+          "name": "LEFT/RIGHT and UP/DOWN",
+          "default": null,
+          "doc": "Move the text cursor and change a character in the name editor.",
+          "labels": null
+        },
+        {
+          "name": "YES / NO",
+          "default": null,
+          "doc": "Accept the name / cancel the edit.",
+          "labels": null
+        },
+        {
+          "name": "Short FUNC + encoder press",
+          "default": null,
+          "doc": "Retains the native CC-enable toggle; hold longer to rename.",
+          "labels": null
+        }
+      ],
+      "compatibility": {
+        "releases": [
+          "1.53",
+          "1.54"
+        ],
+        "requires": [
+          "dt-support"
+        ],
+        "conflicts": [],
+        "limitations": [
+          "Labels are limited to five characters.",
+          "Labels do not change CC numbers or MIDI values.",
+          "Stock firmware can discard the added name data when saving projects."
+        ]
+      },
+      "platform": {
+        "kind": "elemod",
+        "core": "2.1",
+        "build": "build.json",
+        "events": [],
+        "claims": [
+          "ui:MIDI CC Value:FUNC+hold encoder",
+          "storage:kit-tail:CCN1"
+        ]
+      },
+      "resources": {
+        "memoryBytes": 52289,
+        "fastBytes": 0,
+        "load": {
+          "display": "Adds under 0.1% of an audio block over stock, average and worst case (emulator)",
+          "method": "emulator",
+          "conditions": "Emulator: OS 1.53 on Core 2.1, 8 audio tracks triggering a full-scale sample and 8 MIDI tracks a note on every step at 120 BPM, 3,000 audio blocks timed with the MCF5441x instruction-timing model at 250 MHz, zero-wait memory. Module workload: no audio-path feature (CC names are UI only). Stock: 59.1% average, 61.8% worst block. All six mods together: 73.2% worst block on 1.53, 73.3% on 1.54. Not a hardware measurement."
+        }
+      },
+      "evidence": {
+        "tier": "author-hardware",
+        "moduleVersion": "2.1.1",
+        "sourceSha256": "b55e776090d820a93980371b213e3f1e71a8dc697177ae9b321788cfc166fa45",
+        "reports": [
+          "evidence/hardware-testing.json",
+          "evidence/source-identity.json",
+          "evidence/regressions-core21.json",
+          "evidence/cpu-load.json",
+          "evidence/modwerk-source-parity.json"
+        ],
+        "hardware": {
+          "model": "Digitakt 1",
+          "release": "1.53 and 1.54",
+          "testedOn": "2026-10-14",
+          "tester": "sumedho",
+          "durationMinutes": 90,
+          "summary": "sumedho reports the Core 2.1 all-mods builds fully tested and working on a Digitakt 1, OS 1.53 and 1.54, for about one to two hours in total, including project save and reload and a power cycle (2026-10-14): “ok fully tested on hardware and working”.",
+          "limitations": [
+            "Duration is the reporter’s range (1–2 hours) for the combined session across both OS releases; recorded as 90 minutes.",
+            "Individual test outcomes were not itemized; standalone (single-mod) hardware coverage is not claimed.",
+            "Tested SysEx: 1.53 23503ca42478c1644dea5fd296893f628eafb6662d2ce5e291bfc591f045ae4e, 1.54 257144e4a584172e470c3dde83d7ccda636eeb195b4e5ff0492b3ebc8bdfaba2; firmware was not read back from the device."
+          ]
+        },
+        "verifiedBy": null
+      },
+      "tests": {
+        "report": "TESTING.md",
+        "summary": "Runs on Core 2.1. Emulator regressions on OS 1.53 and 1.54, an emulator CPU-load comparison with stock, and Modwerk source-build parity with the native build are in TESTING.md. sumedho reports this Core 2.1 build fully tested and working on a Digitakt 1, OS 1.53 and 1.54, for about one to two hours including project save/reload and a power cycle (2026-10-14).",
+        "documentation": {
+          "tutorial": {
+            "title": "Quick tutorial",
+            "steps": [
+              "Select MIDI A with TRK + trig 9. Set the desired CC number on CC SELECT, then press FLTR for CC VALUE.",
+              "Hold FUNC and press and hold the encoder for the assignment you want to name.",
+              "Use LEFT/RIGHT to select a character and UP/DOWN to change it. Enter a short name such as CUTO.",
+              "Press YES to accept, or NO to cancel. The label appears below that assignment; turning its encoder still sends the assigned CC."
+            ]
+          },
+          "screenshots": [
+            "media/name-editor.png",
+            "media/renamed.png",
+            "media/1.54/name-editor.png",
+            "media/1.54/renamed.png"
+          ],
+          "captureRecord": "media/captures.json"
+        }
+      },
+      "license": {
+        "spdx": "GPL-2.0-or-later",
+        "file": "LICENSE",
+        "declaration": "Original module source and irpina’s unchanged Core 3.0 header under GPL-2.0-or-later. Native patch preconditions are represented by addresses, lengths and hashes."
+      },
+      "media": [
+        {
+          "path": "media/thumbnail.svg",
+          "kind": "thumbnail",
+          "caption": "CC Assignment Names",
+          "alt": "Five MIDI CC numbers, each routed to its own short name.",
+          "credit": "sumedho",
+          "license": "GPL-2.0-or-later",
+          "source": "Original vector illustration; not a device screenshot."
+        },
+        {
+          "path": "media/name-editor.png",
+          "kind": "screenshot",
+          "caption": "Hold FUNC and the slot’s encoder to open CC NAME. Move the cursor and edit the label.",
+          "alt": "Native CC NAME editor.",
+          "credit": "sumedho documentation capture; Elektron interface",
+          "license": "LicenseRef-Digi-UI-Documentation",
+          "source": "original",
+          "capture": {
+            "type": "emulator",
+            "release": "1.53",
+            "moduleVersion": "2.1.1",
+            "imageSha256": "23503ca42478c1644dea5fd296893f628eafb6662d2ce5e291bfc591f045ae4e",
+            "setup": "Actual cold-booted OS 1.53 all-mods SysEx on Core 2.1; cloned drive and native panel input. UI documentation only."
+          }
+        },
+        {
+          "path": "media/renamed.png",
+          "kind": "screenshot",
+          "caption": "Press YES to accept. The assignment keeps its MIDI function and shows its new label.",
+          "alt": "CC VALUE after accepting a name.",
+          "credit": "sumedho documentation capture; Elektron interface",
+          "license": "LicenseRef-Digi-UI-Documentation",
+          "source": "original",
+          "capture": {
+            "type": "emulator",
+            "release": "1.53",
+            "moduleVersion": "2.1.1",
+            "imageSha256": "23503ca42478c1644dea5fd296893f628eafb6662d2ce5e291bfc591f045ae4e",
+            "setup": "Actual cold-booted OS 1.53 all-mods SysEx on Core 2.1; cloned drive and native panel input. UI documentation only."
+          }
+        },
+        {
+          "path": "media/1.54/name-editor.png",
+          "kind": "screenshot",
+          "caption": "Hold FUNC and the slot’s encoder to open CC NAME. Move the cursor and edit the label. (OS 1.54)",
+          "alt": "Native CC NAME editor.",
+          "credit": "sumedho documentation capture; Elektron interface",
+          "license": "LicenseRef-Digi-UI-Documentation",
+          "source": "original",
+          "capture": {
+            "type": "emulator",
+            "release": "1.54",
+            "moduleVersion": "2.1.1",
+            "imageSha256": "257144e4a584172e470c3dde83d7ccda636eeb195b4e5ff0492b3ebc8bdfaba2",
+            "setup": "Actual cold-booted OS 1.54 all-mods SysEx on Core 2.1; cloned drive and native panel input. UI documentation only."
+          }
+        },
+        {
+          "path": "media/1.54/renamed.png",
+          "kind": "screenshot",
+          "caption": "Press YES to accept. The assignment keeps its MIDI function and shows its new label. (OS 1.54)",
+          "alt": "CC VALUE after accepting a name.",
+          "credit": "sumedho documentation capture; Elektron interface",
+          "license": "LicenseRef-Digi-UI-Documentation",
+          "source": "original",
+          "capture": {
+            "type": "emulator",
+            "release": "1.54",
+            "moduleVersion": "2.1.1",
+            "imageSha256": "257144e4a584172e470c3dde83d7ccda636eeb195b4e5ff0492b3ebc8bdfaba2",
+            "setup": "Actual cold-booted OS 1.54 all-mods SysEx on Core 2.1; cloned drive and native panel input. UI documentation only."
+          }
+        }
+      ],
+      "source": {
+        "repository": "https://github.com/sumedho/digirequests",
+        "revision": "8eba613dc3e0b1698797609256fd4081923b4ef2",
+        "path": "modules/cc-names"
+      },
+      "patchSites": {
+        "1.53": [
+          {
+            "addr": "0x4007a6a6",
+            "len": 8
+          },
+          {
+            "addr": "0x4007a4ce",
+            "len": 8
+          },
+          {
+            "addr": "0x400846ac",
+            "len": 8
+          },
+          {
+            "addr": "0x40084760",
+            "len": 8
+          },
+          {
+            "addr": "0x4018351c",
+            "len": 4
+          },
+          {
+            "addr": "0x40030daa",
+            "len": 6
+          },
+          {
+            "addr": "0x400318b2",
+            "len": 6
+          },
+          {
+            "addr": "0x400318b8",
+            "len": 22
+          },
+          {
+            "addr": "0x4000e9ba",
+            "len": 6
+          },
+          {
+            "addr": "0x4000eaac",
+            "len": 6
+          },
+          {
+            "addr": "0x4000eb68",
+            "len": 6
+          },
+          {
+            "addr": "0x4000ec22",
+            "len": 6
+          },
+          {
+            "addr": "0x4000ec86",
+            "len": 6
+          },
+          {
+            "addr": "0x40017e92",
+            "len": 6
+          },
+          {
+            "addr": "0x4001804c",
+            "len": 6
+          },
+          {
+            "addr": "0x4001a38c",
+            "len": 6
+          },
+          {
+            "addr": "0x4001a50a",
+            "len": 6
+          },
+          {
+            "addr": "0x40084c3c",
+            "len": 6
+          }
+        ],
+        "1.54": [
+          {
+            "addr": "0x4007a6a6",
+            "len": 8
+          },
+          {
+            "addr": "0x4007a4ce",
+            "len": 8
+          },
+          {
+            "addr": "0x400846ac",
+            "len": 8
+          },
+          {
+            "addr": "0x40084760",
+            "len": 8
+          },
+          {
+            "addr": "0x4018381c",
+            "len": 4
+          },
+          {
+            "addr": "0x40030daa",
+            "len": 6
+          },
+          {
+            "addr": "0x400318b2",
+            "len": 6
+          },
+          {
+            "addr": "0x400318b8",
+            "len": 22
+          },
+          {
+            "addr": "0x4000e9ba",
+            "len": 6
+          },
+          {
+            "addr": "0x4000eaac",
+            "len": 6
+          },
+          {
+            "addr": "0x4000eb68",
+            "len": 6
+          },
+          {
+            "addr": "0x4000ec22",
+            "len": 6
+          },
+          {
+            "addr": "0x4000ec86",
+            "len": 6
+          },
+          {
+            "addr": "0x40017e92",
+            "len": 6
+          },
+          {
+            "addr": "0x4001804c",
+            "len": 6
+          },
+          {
+            "addr": "0x4001a38c",
+            "len": 6
+          },
+          {
+            "addr": "0x4001a50a",
+            "len": 6
+          },
+          {
+            "addr": "0x40084c3c",
+            "len": 6
+          }
+        ]
+      }
+    },
+    {
+      "schemaVersion": 3,
       "id": "digichain",
       "name": "digichain",
       "version": "1.6.1-experimental",

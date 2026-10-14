@@ -1,0 +1,38 @@
+{
+  "moduleId": "cc-names",
+  "version": "2.1.0",
+  "sourceRevision": null,
+  "sourceStatus": "Exact local source snapshot prepared; public source publication pending.",
+  "sources": {
+    "src/ccnames.S": "227157fa166a3ab72ce04cd5d9e0a6cecefb722e6601e0b4b6549859457df3da",
+    "src/ccnames.c": "9a94991e0db8d625736985be74c92d0b7411f163b5c7edcb285bfc4ac40dc839",
+    "src/digitakt-mk1/core3.h": "9ad3512ee2ced8f9eaadcb48e5633547d861d7a71f5443d5e9f759d0b790de26",
+    "src/release-153/ccnames.S": "592d103192b9b877f2477d1146b13dd2763275a727fcc2a4909835bf629fd08d",
+    "src/release-153/ccnames.c": "5ac6bf12b279ee74189015df0249361e64c2788588e7c581496c23a9971c1a0d",
+    "src/release-153/firmware.h": "0f4c4f3f55c300f6428d21a9972f97c124f4e4f998f5d7a429afe840dd18547c",
+    "src/release-153/name_codec.h": "052fc6d284d0b54002c24add48f39751de0f410dff2dd0b52b1e3cf3cc6d3be5",
+    "src/release-154/ccnames.S": "592d103192b9b877f2477d1146b13dd2763275a727fcc2a4909835bf629fd08d",
+    "src/release-154/ccnames.c": "5ac6bf12b279ee74189015df0249361e64c2788588e7c581496c23a9971c1a0d",
+    "src/release-154/firmware.h": "3fa3401d47145a6143e9ff28e59cb6457142bcf42241581b01bb9132b3377a0e",
+    "src/release-154/name_codec.h": "052fc6d284d0b54002c24add48f39751de0f410dff2dd0b52b1e3cf3cc6d3be5"
+  },
+  "originalPackageSha256": "b99fe97147ee2013f08caf2a294b3453235a9d492c979f941f561a9e11f8d86e",
+  "originalPackageOs": "1.53",
+  "frameworkRevision": "3acac10ea86882a2ea51c9377ac6bd58fc4fec57",
+  "targetReleases": [
+    "1.53",
+    "1.54"
+  ],
+  "packageSha256ByOs": {
+    "1.53": "4af83b1ad68ecd2e1c6ed1a933416007f23de738c6c64f96961c41327d52a0c5",
+    "1.54": "f0de609ec0129e0ccdbddc3e1c37bcd4c1bc3aa156efa8a05ed7c5490eb094fe"
+  },
+  "sourceAdapter": "Explicit DT_OS154 C/assembler selector; original per-OS code preserved. Object parity excludes build provenance and the checked absolute selector symbol only; linked MAIN must match exactly.",
+  "authorGithub": "sumedho",
+  "sourceSha256": "b55e776090d820a93980371b213e3f1e71a8dc697177ae9b321788cfc166fa45",
+  "localSourceRevision": "de3dab731ba75610ddd1bb4290ebbdd057b7b161",
+  "localSourcePath": "sdk/digitakt/modules/_submissions/cc-names",
+  "repository": "https://github.com/sumedho/digirequests",
+  "revision": "8eba613dc3e0b1698797609256fd4081923b4ef2",
+  "path": "modules/cc-names"
+}

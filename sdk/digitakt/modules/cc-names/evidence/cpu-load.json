@@ -1,0 +1,69 @@
+{
+  "schemaVersion": 1,
+  "tool": "tools/firmware/elemods/measure_load.py (digiemu)",
+  "method": "emu.cftiming.CycleClock, 250 MHz, zero-wait memory; vector-191 handler entry (0x40077420) to its rte (0x400784d0), nested interrupts included",
+  "periodCycles": 166666,
+  "core": "2.1",
+  "stock": {
+    "mean_cycles": 98484,
+    "p99_cycles": 98901,
+    "max_cycles": 103027,
+    "mean_fraction": 0.5909,
+    "max_fraction": 0.6182,
+    "stock_main_sha256": "4b47a9507758ca5669ca02ab2c0374d2c04c98aece445408295cc1dcb265c5df"
+  },
+  "module": {
+    "build_sha256": "e0438de8404a12ccaf60afaf127d0024e297ad699e4336d7f93c0655bff2647f",
+    "configured": [],
+    "blocks": 3006,
+    "mean_cycles": 98523,
+    "p99_cycles": 98930,
+    "max_cycles": 103069,
+    "mean_fraction": 0.5911,
+    "max_fraction": 0.6184
+  },
+  "addedMeanCycles": 39,
+  "addedWorstCycles": 42,
+  "allMods": {
+    "153": {
+      "build_sha256": "ce2c0bd03393ca5f7e9427874bad4f5daa32b7e5699ff003af5e6fc35573ab39",
+      "configured": [
+        "euclidean 16/16 on 15 tracks",
+        "ACC +1 on 8 audio tracks",
+        "retrig rate index 16, length 126 on 8 MIDI tracks",
+        "RAM-R1 on T8, 4 steps of each 16, RAM-P1 on T1-T7"
+      ],
+      "mean_cycles": 103887,
+      "p99_cycles": 108782,
+      "max_cycles": 121916,
+      "mean_fraction": 0.6233,
+      "max_fraction": 0.7315
+    },
+    "154": {
+      "build_sha256": "14469be1cb112830aa283e034d90c9372135b3f6b3fb7d3b077202101f758017",
+      "configured": [
+        "euclidean 16/16 on 15 tracks",
+        "ACC +1 on 8 audio tracks",
+        "retrig rate index 16, length 126 on 8 MIDI tracks",
+        "RAM-R1 on T8, 4 steps of each 16, RAM-P1 on T1-T7"
+      ],
+      "mean_cycles": 104063,
+      "p99_cycles": 109107,
+      "max_cycles": 122169,
+      "mean_fraction": 0.6244,
+      "max_fraction": 0.733
+    }
+  },
+  "stock154": {
+    "mean_cycles": 98656,
+    "max_cycles": 103329,
+    "mean_fraction": 0.5919,
+    "max_fraction": 0.62
+  },
+  "limitations": [
+    "Cycle estimates from the MCF5441x manual tables; no cache misses, DDR latency or bus contention.",
+    "The Digitakt core clock is assumed to be 250 MHz.",
+    "UI-task work is not included; only the audio render interrupt is timed.",
+    "Single-module figures are OS 1.53; the all-mods run covers both OSes."
+  ]
+}
