@@ -88,13 +88,13 @@ The gate does not prove runtime behaviour, DSP placement, cycles or hardware com
 
 Shared behaviour on the Octatrack follows Elekloader's hook bus ([ADAPTING.md](https://github.com/irpina/elekloader/blob/main/docs/ADAPTING.md), "Do not patch the shared sites: subscribe"). The base owns each event's stock site and calls every subscribed handler in a fixed order. A module adds a handler with `subscribe` entries of `event`, `fn` and `order`, for example `{"event": "ev_play_increment", "fn": "mymod_rate", "order": 50}`. Lower `order` runs first. Each event's registry entry gives its C prototype and says what a return value means, for example whether a handler can take the event so that later handlers do not see it.
 
-The registry is `sdk/machines/octatrack/events.json`. Its first two events, `ev_play_increment` and `ev_voice_bind`, and subscribe support in the USB loader are still being built. Until they land, the gate checks the two planned sites from a small fixture in `scripts/module-compat.py`, and no module can subscribe yet. Do not add a new raw patch at either site in the meantime.
+The registry will be a file called `events.json` beside `sdk/machines/octatrack/compatibility.json`. Its first two events, `ev_play_increment` and `ev_voice_bind`, and subscribe support in the USB loader are still being built. Until they land, the gate checks the two planned sites from a small fixture in `scripts/module-compat.py`, and no module can subscribe yet. Do not add a new raw patch at either site in the meantime.
 
 ### Propose an event
 
 Propose an event when the gate says two behaviour hooks meet, or when you need a site that another module or the base already patches:
 
-1. Open a pull request that adds one entry to `sdk/machines/octatrack/events.json`: the name (`ev_` and what happens), the stock site (address and length, whole instructions), when it runs (task or interrupt level), the handler's C prototype and its order rule. Addresses and lengths only: no stock bytes.
+1. Open a pull request that adds one entry to the registry (`events.json`, once it exists): the name (`ev_` and what happens), the stock site (address and length, whole instructions), when it runs (task or interrupt level), the handler's C prototype and its order rule. Addresses and lengths only: no stock bytes.
 2. Say which modules patch that site today. Until they subscribe, list each such pair in `compatibility.json` as `pending-migration`, with the event and `until`.
 3. The owner reviews the entry. Every later module subscribes to it instead of patching.
 

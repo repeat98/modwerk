@@ -105,12 +105,12 @@ function documentationCheck(missingNotes = false, failure = '') {
   } finally { rmSync(folder, { recursive: true, force: true }) }
 }
 
-it('checks documentation without starting the application suite, build or generators', () => {
+it('checks documentation without starting the full application suite, build or generators', () => {
   const result = documentationCheck()
   expect(result.status, result.stderr).toBe(0)
   expect(result.stdout).toContain('Documentation check passed')
   expect(result.stdout).toContain('Module changelogs: 1 modules, 1 releases')
-  expect(result.scripts).toEqual(['licenses:check', 'machines:check', 'modules:check', 'sdk:imports:check'])
+  expect(result.scripts).toEqual(['licenses:check', 'machines:check', 'modules:check', 'sdk:imports:check', 'test'])
 })
 
 it('catches imported-source drift before a documentation PR can reach publication', () => {
@@ -118,6 +118,13 @@ it('catches imported-source drift before a documentation PR can reach publicatio
   expect(result.status).toBe(1)
   expect(result.stdout).toContain('Documentation check FAILED')
   expect(result.scripts).toEqual(['licenses:check', 'machines:check', 'modules:check', 'sdk:imports:check'])
+})
+
+it('runs the catalogue tests that read Markdown, so a prose-only change cannot break main unseen', () => {
+  const result = documentationCheck(false, 'test')
+  expect(result.status).toBe(1)
+  expect(result.stdout).toContain('Documentation check FAILED')
+  expect(result.scripts).toEqual(['licenses:check', 'machines:check', 'modules:check', 'sdk:imports:check', 'test'])
 })
 
 it('requires current-version release notes even on the documentation-only validation path', () => {

@@ -66,8 +66,9 @@ if (passed) {
     console.log(`Module changelogs: ${notes.modules} modules, ${notes.releases} releases`)
   } catch (error) { console.error(error.message); passed = false }
 }
-// Documentation uses the same import policy as publication without running firmware gates.
-if (passed && documentationOnly) passed = await run('sdk:imports:check')
+// Documentation uses the same import policy as publication without running firmware gates. The catalogue tests read Markdown
+// (the module guides' links, the agent files, the pull request template), so a prose-only change can break them and must run them.
+if (passed && documentationOnly) passed = await run('sdk:imports:check') && await run('test', ['src/catalog'])
 if (passed && !documentationOnly) {
   const results = buildOnly
     ? [await build()]

@@ -62,7 +62,7 @@ npm run modules:compat -- <id>                # Octatrack: installs beside every
 
 ## What CI runs
 
-- **Documentation-only pull requests:** licence, generated catalogue, release-note coverage, module contract, tutorial and screenshot-provenance validation. No application test suite, bundle, Windows runner or native compiler.
+- **Documentation-only pull requests:** licence, generated catalogue, release-note coverage, module contract, tutorial and screenshot-provenance validation, plus the catalogue tests (`src/catalog`, about 15 seconds), because some of them check that the guides link to files that exist. No full application test suite, bundle, Windows runner or native compiler.
 - **Application or behaviour changes:** the full `npm run check` (lint, tests, types, build).
 - **Only a pull request that changes module source, the module build or the committed packages:** the Docker compile that must reproduce the committed packages. Changes to module folders or their path handling also run the Windows check. These are the same inputs the release uses to decide whether to rebuild the modules.
 - **After the merge:** the release verifies the merge approval, re-verifies the generated files, licences and module records, then type-checks and bundles what the pull request already tested. It rebuilds the modules only if module inputs changed.

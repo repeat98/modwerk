@@ -53,3 +53,16 @@ it('validates real files and rejects traversal, file symlinks and directory syml
     await rm(temporary, { recursive: true, force: true })
   }
 })
+
+it('names the file on disk when a path differs from it only in letter case, on every host', async () => {
+  const folder = await mkdtemp(path.join(tmpdir(), 'octamod-case-'))
+  try {
+    await mkdir(path.join(folder, 'src'))
+    await writeFile(path.join(folder, 'src', 'retrig.S'), 'assembly')
+    await expect(resolveModuleFile(folder, 'src/retrig.S')).resolves.toBe(path.join(folder, 'src', 'retrig.S'))
+    await expect(resolveModuleFile(folder, 'src/retrig.s')).rejects.toThrow('the file on disk is named retrig.S')
+    await expect(resolveModuleFile(folder, 'SRC/retrig.S')).rejects.toThrow('the file on disk is named src')
+    await expect(resolveModuleFile(folder, 'src/missing.S')).rejects.toMatchObject({ code: 'ENOENT' })
+    await expect(resolveModuleFile(folder, 'presentation/thumbnail.svg')).rejects.toMatchObject({ code: 'ENOENT' })
+  } finally { await rm(folder, { recursive: true, force: true }) }
+})
