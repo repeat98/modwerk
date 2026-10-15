@@ -1,5 +1,9 @@
 # Application changelog
 
+## 15 October 2026
+
+- Fixed `npm run module:doctor` and `npm run modules:compat` failing on Windows with a `UnicodeDecodeError`: the cross-compatibility gate now reads the repository's JSON and source files as UTF-8 instead of the Windows code page. Nothing changes on macOS and Linux. `npm run modules:pairs` (part of `npm run check`) still stops on Windows because octabam's pinned tools read files the same way and use `\` in paths; that is not fixed here.
+
 ## 14 October 2026
 
 - Card-builder compatibility now grows with the square of the number of Octatrack modules instead of doubling with each one. `npm run modules:pairs` runs octabam's ledger on every module alone and in every pair, in each context POLY8's shared machine list creates, and writes a 13 KB `src/catalog/compatibility-pairs.json`. It replaces 585,455 recorded selections (68 MB in `native-metadata.json`, 4.8 MB shipped to the site) and the 30-module ceiling of their bit masks. The same check proves with the full ledger that pairs decide every larger selection: it found all 585,327 recorded composed selections clean and agreed with the full ledger on 6,000 further selections, including every one of 20 modules or more. The configurator derives its refusals from refused pairs, replacing the hand-written VECTOR, Analog BD and FM Synth rules and POLY8's exception list, and honours every module's flagged conflicts, except two stale flags that Sidechain Compressor and TapeHead keep until their next versions. A pair the ledger refuses that neither module flags now fails the check ([flag every incompatibility](docs/module-guides/README.md#flag-every-incompatibility)). Limits: USB sets still refuse every byte collision, and the ledger proves declarations, not DSP placement, cycles or hardware behaviour.

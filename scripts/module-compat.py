@@ -268,14 +268,14 @@ def check(modules, base_sites=(), events=(), copies=None, relations=(), base_own
 
 def active_ids():
     """Catalogue modules the library offers (beta included), as src/catalog/availability.ts decides."""
-    source = (APP / 'src/catalog/availability.ts').read_text()
+    source = (APP / 'src/catalog/availability.ts').read_text(encoding='utf-8')
     lists = {}
     for name in ('BETA_MODULE_IDS', 'PAUSED_MODULE_IDS'):
         found = re.search(rf'export const {name}: readonly string\[\] = \[([^\]]*)\]', source)
         if not found:
             raise SystemExit(f'src/catalog/availability.ts: cannot read {name}; update scripts/module-compat.py')
         lists[name] = set(re.findall(r"'([^']+)'", found.group(1)))
-    catalog = json.loads((APP / 'sdk/catalog.json').read_text())['modules']
+    catalog = json.loads((APP / 'sdk/catalog.json').read_text(encoding='utf-8'))['modules']
     return [row['id'] for row in catalog
             if row['id'] not in lists['PAUSED_MODULE_IDS'] or row['id'] in lists['BETA_MODULE_IDS']]
 
@@ -286,7 +286,7 @@ def read_events():
     if not (APP / EVENTS).exists():
         return PLANNED_EVENTS
     out = []
-    for e in json.loads((APP / EVENTS).read_text())['events']:
+    for e in json.loads((APP / EVENTS).read_text(encoding='utf-8'))['events']:
         if e.get('kind') == 'table':
             out += [dict(event=e['event'], site=s['site'], length=s['length'], table=True) for s in e.get('sites', [])]
         elif e.get('site') is not None:
@@ -331,28 +331,28 @@ def repository_inputs():
         if i not in by_name:
             load.append(dict(modules=[i], text=f'{i} is in the catalogue but has no sdk/octabam/modules/{i}/manifest.py',
                              route='other'))
-    base = json.loads((APP / 'src/engine/assets/octatrack-base.elemod').read_text())
+    base = json.loads((APP / 'src/engine/assets/octatrack-base.elemod').read_text(encoding='utf-8'))
     copies = {}
     for path in RECIPES:  # the loader integration's runtime ports; absent on branches without them
         if (APP / path).exists():
-            for name, recipe in json.loads((APP / path).read_text())['ports'].items():
+            for name, recipe in json.loads((APP / path).read_text(encoding='utf-8'))['ports'].items():
                 rows = recipe.get('copies', []) + [c for t in recipe.get('tables', []) for c in t.get('copies', [])]
                 copies.setdefault(name, []).extend((c['address'], c['length'], f'{Path(path).name} copy') for c in rows)
-    for layout in json.loads((APP / 'src/engine/assets/usb-audio-packages.json').read_text())['layouts']:
+    for layout in json.loads((APP / 'src/engine/assets/usb-audio-packages.json').read_text(encoding='utf-8'))['layouts']:
         copies.setdefault('usb-audio-out-' + layout['id'], []).extend(
             (c['source'], c['bytes'], f'{o["label"]}:{c["section"]}') for o in layout['objects'] for c in o.get('stockCopies', []))
-    owns = next(node.value for node in ast.parse((APP / 'sdk/machines/octatrack/elekloader/build_core.py').read_text()).body
+    owns = next(node.value for node in ast.parse((APP / 'sdk/machines/octatrack/elekloader/build_core.py').read_text(encoding='utf-8')).body
                 if isinstance(node, ast.Assign) and any(getattr(t, 'id', '') == 'BASE_OWNS' for t in node.targets))
     subscriptions = {}
     for i in ids:
         path = APP / 'sdk/octabam/modules' / i / 'runtime.json'
         if path.is_file():
-            subscriptions[i] = json.loads(path.read_text()).get('subscribe', [])
+            subscriptions[i] = json.loads(path.read_text(encoding='utf-8')).get('subscribe', [])
     inputs = dict(base_sites=[(int(s['addr'], 16), s['len'], s['kind']) for s in base['sites']], events=read_events(),
                   subscriptions=subscriptions,
-                  copies=copies, relations=json.loads((APP / RELATIONS).read_text())['relations'],
+                  copies=copies, relations=json.loads((APP / RELATIONS).read_text(encoding='utf-8'))['relations'],
                   base_owns=ast.literal_eval(owns), platform=platform,
-                  manifests={i: {'uiClaims': LISTED_UI_CLAIMS.get(i, []), **json.loads(p.read_text())['compatibility']}
+                  manifests={i: {'uiClaims': LISTED_UI_CLAIMS.get(i, []), **json.loads(p.read_text(encoding='utf-8'))['compatibility']}
                              for i in ids if (p := APP / 'sdk/octabam/modules' / i / 'octamod.module.json').is_file()})
     natives = [by_name[i] for i in ids if i in by_name]
     modules, mismatched = ported(natives)
@@ -362,6 +362,7 @@ def repository_inputs():
 
 def main(argv):
     started = time.perf_counter()
+    sys.stdout.reconfigure(encoding='utf-8')  # the report prints '✗'; a Windows pipe defaults to the ANSI code page
     as_json, only = '--json' in argv, [a for a in argv if not a.startswith('--')]
     ids, modules, inputs, problems = repository_inputs()
     if modules:
