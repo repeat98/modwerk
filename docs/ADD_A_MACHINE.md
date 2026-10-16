@@ -22,6 +22,17 @@ Open a pull request that edits the machine's profile:
 
 A pull request that marks steps done includes the evidence in its description: links to the public writer, emulator or boot reports. It never includes firmware.
 
+## Research a ColdFire OS image
+
+What the Syntakt research turned up that applies to every ColdFire machine (the report is [SYNTAKT_OS_RESEARCH.md](SYNTAKT_OS_RESEARCH.md)):
+
+- REA (6.5.0) cannot open a headless m68k image: its ELF admission has no `EM_68K` and its raw-binary route admits only x86, x86_64, ARM, ARM64 and 6502, with no language override. Use Ghidra's `analyzeHeadless` directly: `BinaryLoader` at the image's load address, processor `68000:BE:32:Coldfire`, your own pre-script to seed the entry and a post-script that exports what you need. Keep your own ledger of tool, version, import settings, target hash and the query behind each claim, since no REA Evidence IDs exist on that route.
+- Ghidra's Coldfire language does not decode `movec`, so disassembly stops after each one and the reset, cache and VBR code looks empty. Read those few windows from a throwaway MC68020-language import of the same bytes; ISA_A boot code shares the encodings. EMAC-dense functions have undecoded holes too; treat function boundaries as approximate.
+- Pin the load base of a headerless image before trusting anything: at the right base, nearly every absolute call target lands on a function prologue; at a wrong base almost none do. Check the image's own structure next (reset entry, vector-table fill, stack and cache setup).
+- A region with no static reference is not free. On the Syntakt, hardware showed runtime page writes into memory nothing in the image names (Synthack-OS issue #4). Prove a range two ways, static and allocator, in every supported release, and offer mods only what both proofs cover.
+- Check where the image's BSS starts before appending code: on the Syntakt everything after the initialised data, including an appended tail, lies inside the range the OS zeroes at reset, so a core must hook before the clear and move its payload first.
+- The repository's packer may store the main OS more densely than Elektron's, which narrows the in-place depack margin rather than widening it; check the margin of the actual build, not of the stock file.
+
 ## Give a machine an SDK
 
 When steps 1–4 are done:
