@@ -44,14 +44,18 @@ export async function sendActivityDigests(env: Env, db: Database, now = new Date
     const rows = (await db.prepare(`${ITEM_SQL} WHERE n.user_id IN (${RECIPIENTS}) AND n.emailed=0 AND ${VISIBLE} ORDER BY n.created_at DESC,n.rowid DESC LIMIT 500`).bind(member.id, member.id).all<Parameters<typeof toItem>[0]>()).results
     const wanted: NotificationItem[] = rows.map(toItem).filter(item => !!member[EMAIL_SETTING[item.kind]])
     const wantedIds = new Set(wanted.map(item => item.id)), unwanted = pending.filter(row => row.created_at <= settled && !wantedIds.has(row.id)).map(row => row.id)
-    // Keep the newest pending version of each module, including a fresh one so an older version cannot slip out.
-    const modules = new Set<string | null>()
+    // Deduplicate notifications by their content (same post/thread/module/issue) that appear for both direct and linked accounts.
+    const seen = new Map<string, boolean>()
     const bundled = wanted.filter(item => {
-      if (item.kind === 'module_update') {
-        if (modules.has(item.module_id)) return false
-        modules.add(item.module_id)
-        if (!member.updates_due) return false
-      }
+      let key: string | null = null
+      if (item.kind === 'reply' || item.kind === 'mention' || item.kind === 'bug_report') key = 'post:' + item.post_id
+      else if (item.kind === 'module_comment' || item.kind === 'module_like' || item.kind === 'module_rating') key = 'module:' + item.module_id
+      else if (item.kind === 'module_update') key = 'update:' + item.module_id
+      else if (item.kind.startsWith('issue_')) key = 'issue:' + item.issue_id
+      else if (item.kind === 'request_status') key = 'thread:' + item.thread_id
+      if (key && seen.has(key)) return false
+      if (key) seen.set(key, true)
+      if (item.kind === 'module_update' && !member.updates_due) return false
       return item.created_at <= settled
     })
     const included = bundled.slice(0, ITEMS_PER_DIGEST)
