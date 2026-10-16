@@ -141,6 +141,37 @@ class CycleExit(unittest.TestCase):
         with patch.object(sys, 'argv', ['cycle_count', '--json']):
             exec(compile(text, 'cycle_count.py', 'exec'), {'__name__': '__main__', '__file__': str(ROOT / 'tools/build/cycle_count.py')})
 
+class FloatingCavePlacement(unittest.TestCase):
+    """A floating cave past the clone window goes to the overflow run, as the browser places it."""
+    def setUp(self):
+        names = {'OVERFLOW_RUN', 'OVERFLOW_RUN_END', 'floating_cave_at'}
+        body = [n for n in tree.body if getattr(n, 'name', None) in names or
+                isinstance(n, ast.Assign) and any(isinstance(t, ast.Name) and t.id in names for t in n.targets)]
+        self.ns = {}
+        exec(compile(ast.Module(body=body, type_ignores=[]), 'floating_cave_fixture', 'exec'), self.ns)
+
+    def test_window_first_then_overflow_then_refusal(self):
+        at, run, end, limit = self.ns['floating_cave_at'], self.ns['OVERFLOW_RUN'], self.ns['OVERFLOW_RUN_END'], 0x400d7c3c
+        self.assertEqual(at(0x400d7001, run, 0x80, limit), 0x400d7080)        # next 128-byte boundary
+        self.assertEqual(at(0x400d7b00, run, 0x13c, limit), 0x400d7b00)       # ends exactly at the limit
+        self.assertEqual(at(0x400d7b00, run + 2, 0x13d, limit), run + 4)      # one byte over: overflow, 4-aligned
+        self.assertEqual(at(0x400d7c80, run, 4, limit), run)                  # window cursor already past the limit
+        self.assertEqual(at(0x400d7c01, end - 0x10, 0x10, limit), end - 0x10)  # the overflow's last bytes
+        self.assertIsNone(at(0x400d7b00, end - 0x10, 0x200, limit))           # fits neither: the build refuses
+
+    def test_browser_uses_the_same_overflow_run(self):
+        menus = (ROOT.parents[1] / 'src/engine/module-menus.ts').read_text(encoding='utf-8')
+        caves = (ROOT.parents[1] / 'src/engine/requested-modules.ts').read_text(encoding='utf-8')
+        self.assertIn('OVERFLOW_START = 0x%x, OVERFLOW_END = 0x%x' % (self.ns['OVERFLOW_RUN'], self.ns['OVERFLOW_RUN_END']), menus)
+        # requestedCaves: window at the next 128 bytes when the cave fits whole, else the overflow at the next 4.
+        self.assertIn('let address = Math.ceil(cursor / 128) * 128', caves)
+        self.assertIn('if (!inside) { address = Math.ceil(overflow / 4) * 4', caves)
+
+    def test_the_window_assert_no_longer_runs_before_the_overflow(self):
+        source = (ROOT / 'tools/build/build_bus.py').read_text(encoding='utf-8')
+        loop = source[source.index('    for _c, _b in _plan:'):]
+        self.assertLess(loop.index('floating_cave_at('), loop.index('past the stock zero run (or into the long chooser list)'))
+
 class ToolSyntax(unittest.TestCase):
     def test_all_vendored_python_tools_parse(self):
         import ast
@@ -149,7 +180,7 @@ class ToolSyntax(unittest.TestCase):
                 ast.parse(source.read_text(encoding='utf-8'), str(source))
 
 # Builder extensions after the Poly8 record, oldest first. Each proves its own exact before/after transition.
-EXTENSIONS = ['air-chorus-split-builder.json', 'plain-formatter-builder.json']
+EXTENSIONS = ['air-chorus-split-builder.json', 'plain-formatter-builder.json', 'floating-cave-overflow-builder.json']
 
 class SelectiveImport(unittest.TestCase):
     def assert_current_builder_identity(self, path, historical):
@@ -202,6 +233,23 @@ class SelectiveImport(unittest.TestCase):
             self.assert_extension_holds('plain-formatter-builder.json', path, change['after'])
         for row in record['selections']:
             self.assertEqual(row['before'], row['after'])
+
+    def test_floating_cave_overflow_keeps_every_image_and_refuses_no_less(self):
+        import json
+        record = json.loads((ROOT.parent / 'infrastructure-verification/floating-cave-overflow-builder.json').read_text())
+        self.assertEqual(record['kind'], 'floating-cave-overflow-builder-regression')
+        self.assertEqual(set(record['builderAdaptations']), {'tools/build/build_bus.py'})
+        for path, change in record['builderAdaptations'].items():
+            self.assert_extension_holds('floating-cave-overflow-builder.json', path, change['after'])
+        changed = [row for row in record['selections'] if row['before'] != row['after']]
+        self.assertGreaterEqual(len(record['selections']) - len(changed), 100)
+        self.assertTrue(any('bytes' in row['after'] for row in record['selections']))
+        for row in changed:
+            # Only refusals change, and only their reason: no image moves and nothing refused now builds.
+            self.assertIn('refused', row['before'])
+            self.assertIn('refused', row['after'])
+        self.assertTrue(any('past the stock zero run' in row['before']['refused'] for row in changed))
+        self.assertFalse(any('past the stock zero run' in row['after'].get('refused', '') for row in record['selections']))
 
     def test_poly8_builder_preserves_current_main_without_poly8(self):
         import json
