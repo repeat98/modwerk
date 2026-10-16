@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "machine": "syntakt",
+  "version": "0.1.0-dev",
+  "stage": "boot-probe",
+  "providesInterface": false,
+  "hook": "The BSS-clear entry: the one place a core must run on this machine, because everything appended to the main OS lies inside the memory the OS zeroes right after. The displaced instructions are replayed by the stub and stock resumes at the continuation.",
+  "releases": {
+    "1.40": {
+      "boot": { "addr": "0x400004b2", "len": 8, "stockSha256": "02baba67a7ec7d7bdf683fa37f268620e3a694853b398205df521c64128da818", "resume": "0x400004ba" },
+      "stackTop": { "addr": "0x400004f4", "len": 4, "stockSha256": "97f3f29734d22b764958054cf0fcce9cb81a679be081fb982af63bf246237d49", "note": "Initial supervisor stack pointer word; a candidate data patch for an SDRAM region above a lowered stack. Not used by the probe." }
+    },
+    "1.42": {
+      "boot": { "addr": "0x400004b2", "len": 8, "stockSha256": "02baba67a7ec7d7bdf683fa37f268620e3a694853b398205df521c64128da818", "resume": "0x400004ba" },
+      "stackTop": { "addr": "0x400004f4", "len": 4, "stockSha256": "97f3f29734d22b764958054cf0fcce9cb81a679be081fb982af63bf246237d49", "note": "Initial supervisor stack pointer word; a candidate data patch for an SDRAM region above a lowered stack. Not used by the probe." }
+    }
+  }
+}

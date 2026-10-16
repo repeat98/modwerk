@@ -356,12 +356,12 @@
     "order": 60,
     "name": "Syntakt",
     "status": "research",
-    "summary": "OS 1.40A and 1.42 files documented and rebuilt byte-identical; modified builds boot on a unit and the stock 1.42 file returns it to stock. No shared core yet.",
+    "summary": "OS 1.40, 1.40A and 1.42 files documented and rebuilt byte-identical; modified builds boot on a unit. Core started: a boot probe links and verifies locally; no SDRAM for mods is proven yet.",
     "steps": {
       "format": "done",
       "rebuild": "done",
       "boot": "done",
-      "core": "open",
+      "core": "started",
       "mods": "open"
     },
     "art": {
@@ -372,6 +372,15 @@
     },
     "firmware": {
       "releases": [
+        {
+          "version": "1.40",
+          "files": [
+            {
+              "name": "Syntakt_OS1.40.syx",
+              "sha256": "7781245917cd3b0334e85da252846c0dc81a676ec0873b735cf51d9029e88ebf"
+            }
+          ]
+        },
         {
           "version": "1.40A",
           "files": [
@@ -403,7 +412,7 @@
       {
         "label": "Synthack-OS",
         "url": "https://github.com/Angelo-politek/Synthack-OS",
-        "note": "MIT mods for OS 1.41 as patch.json with expected-byte hashes, plus modarea/vparams infrastructure. The project states seven mods run on hardware, and it documents recovery over MIDI DIN. No firmware hosted."
+        "note": "MIT mods for OS 1.41 as patch.json with expected-byte hashes, plus modarea/vparams infrastructure. The project states seven mods run on hardware, documents recovery over MIDI DIN, and its issue #4 reports runtime page writes above the BSS on a unit."
       },
       {
         "label": "Synthack-OS 1.42 port",
@@ -414,6 +423,11 @@
         "label": "digiemu Syntakt port",
         "url": "https://github.com/irpina/digiemu/pull/33",
         "note": "Emulator boots OS 1.40A to the live UI with the second ColdFire rendering its digital machines; analog tracks and the FPGA are not modelled. Open PR."
+      },
+      {
+        "label": "Modwerk Syntakt OS research",
+        "url": "https://github.com/repeat98/modwerk/blob/main/docs/SYNTAKT_OS_RESEARCH.md",
+        "note": "Static analysis of the owner's 1.40 and 1.42 files: boot chain, memory ownership with verdicts, hook sites with guards, cross-release diff, the boot-probe core. Nothing run on a unit."
       }
     ]
   },

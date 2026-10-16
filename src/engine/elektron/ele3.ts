@@ -11,7 +11,7 @@ const OFFSET_BIAS = 767, FAR_OFFSET = 3328
 
 export type DigiMachine = 'digitakt' | 'digitakt-ii' | 'digitone'
 // Machines with a container and linker profile; the app's firmware flow covers DigiMachine only.
-export type ElemodMachine = DigiMachine | 'analog-rytm-mkii'
+export type ElemodMachine = DigiMachine | 'analog-rytm-mkii' | 'syntakt'
 export type Ele3Device = { mainSection: number; mainLoad: number; stage: number; flashAt: number; flashLimit: number; sysexId: number; seal?: 'hmac' }
 
 // Facts about each machine's container and loader, from public research (elekloader device profiles).
@@ -21,6 +21,9 @@ export const ELE3_DEVICES: Record<ElemodMachine, Ele3Device> = {
   digitone: { mainSection: 3, mainLoad: 0x40000400, stage: 0x40200000, flashAt: 0x80000, flashLimit: 0x380000, sysexId: 0x0d },
   // The Analog Rytm MKII's OS keeps its own store at 0x300000, so the main OS must end below it.
   'analog-rytm-mkii': { mainSection: 3, mainLoad: 0x40000400, stage: 0x40200000, flashAt: 0x80000, flashLimit: 0x300000, sysexId: 0x0c },
+  // Syntakt (docs/SYNTAKT_OS_RESEARCH.md): the container is read from host SPI flash at 0x80000; the limit is the 2 MB
+  // in-OS upgrade receive buffer, the only size bound seen (inferred), so a build never exceeds a stock-sized container by more.
+  syntakt: { mainSection: 3, mainLoad: 0x40000400, stage: 0x40200000, flashAt: 0x80000, flashLimit: 0x280000, sysexId: 0x16 },
 }
 
 export type Ele3Section = { id: number; offset: number; length: number; destination: number }

@@ -1,5 +1,22 @@
 # Verification record
 
+## Syntakt boot probe on OS 1.40 and 1.42 — 16 October 2026
+
+Source: `sdk/syntakt/core`, `src/engine/elektron/syntakt.ts`, `src/engine/elektron/stock-writes.ts`, from the static research in [SYNTAKT_OS_RESEARCH.md](SYNTAKT_OS_RESEARCH.md). Nothing below ran on a unit or in an emulator.
+
+**Firmware-free (CI).** `src/engine/elektron/stock-writes.test.ts` proves the checker on synthetic NOP images: declared code change accepted, change outside a site refused, bad or missing guard refused, overlapping sites refused, protected range refused, tail over budget or without its hook refused, partial-instruction and PC-relative code sites refused, every problem reported at once. `src/engine/elektron/syntakt.test.ts` proves the profile: both releases bound by hash, no SDRAM area, protected map consistent with the probe site, the boot stub decodes as eight whole ColdFire instructions ending in the continuation jump (Ghidra 12.1.4's Coldfire decoder agreed locally), the probe links against a stand-in image with the `jmp`/`nop` site and relocated continuation, and any mod with `.run`, `.bss` or `.fast` is refused.
+
+**Local (owner's files, `node scripts/verify-syntakt-core-probe.mjs`).** For each stock file the probe linked with one site (0x400004b2, 8 bytes) and a 48-byte tail, the stock-write checker reported exactly that change, and the rebuilt container passed `verifyEle3Build` (sections other than 3 byte-identical, 16-aligned layout, checksums, version `MW01`):
+
+| Release | Stock `.syx` | Build `.syx` | Linked image | Stored main | Container | In-place margin (stock → build) |
+| --- | --- | --- | --- | --- | --- | --- |
+| 1.42 | `ded3c59f…37c1` | `f8493da70c09706337b20be1911eb8c77ca584f00d314e8d9052ec84d49f059f` | `041903b65fedbf885195c94f71e58dbb4371e84966b80f552507028e6bb095f6` | 1,363,181 B (stock 1,442,812) | 1,949,760 B (stock 2,029,392) | 96,357 → 16,679 B |
+| 1.40 | `77812459…88ebf` | `5c7a5ac2714462f434b717188d223f924164634cae06613fbdbd07b326218c08` | `e46d4a52870eb44fdec3db7f281dc90f6f61f33e022ecf5fdc0c662aea2d44b6` | 1,332,261 B (stock 1,409,140) | 1,815,408 B (stock 1,892,288) | 160,989 → 84,063 B |
+
+The repository's packer stores section 3 about 80 KB more densely than Elektron's, which narrows the in-place depack margin; the tail budget is 16 KB and every build is checked exactly.
+
+**Not verified.** That the unit's bootstrap accepts a recompressed section 3 rests on public reports (Synthack-OS builds on 1.41 and 1.42); that the hook runs and the OS reaches the live UI; the SRAM signature; persistence; the FUNC + TRIG 4 recovery path on the owner's unit. The hardware steps are in the report's §10.
+
 ## Six Digitakt mods by sumedho on Core 2.1 — 14 October 2026
 
 Source: `sdk/digitakt/dependencies/{machine-pages,dt-support}` and

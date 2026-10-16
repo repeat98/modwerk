@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "machine": "syntakt",
+  "interface": "0.1",
+  "status": "Boot-probe stage. The core reserves on-chip SRAM only, exposes no events and offers no SDRAM to mods; the research report names the two SDRAM candidates the owner must decide on after hardware qualification.",
+  "events": [],
+  "tables": [],
+  "exports": [],
+  "claims": [],
+  "memory": {
+    "area": null,
+    "fast": "0x8000733c-0x80008000"
+  }
+}

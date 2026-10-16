@@ -1,0 +1,122 @@
+{
+  "schemaVersion": 1,
+  "machine": "syntakt",
+  "source": "docs/SYNTAKT_OS_RESEARCH.md",
+  "mainLoad": "0x40000400",
+  "stage": "0x40200000",
+  "areas": {
+    "sram-tail": {
+      "lo": "0x8000733c",
+      "hi": "0x80008000",
+      "verdict": "proven free",
+      "note": "On-chip SRAM, zero after the reset copy, unreferenced in both releases; re-zeroed at every reset."
+    }
+  },
+  "candidates": {
+    "ddr-top": {
+      "lo": "0x47fe0000",
+      "hi": "0x48000000",
+      "verdict": "not proven",
+      "note": "Needs the stackTop patch and a hardware stress run with every sample slot loaded."
+    },
+    "heap-block": {
+      "verdict": "not proven",
+      "note": "First 64 KB of the OS heap taken at initialisation; stock allocates it, which the design invariant forbids literally."
+    }
+  },
+  "tailBudget": 16384,
+  "releases": {
+    "1.40": {
+      "syxSha256": "7781245917cd3b0334e85da252846c0dc81a676ec0873b735cf51d9029e88ebf",
+      "mainSha256": "847b1e539e581e226df8e705dcb8913fb686d2bc96bf1bb3a155b593b2a67d77",
+      "mainLength": 3344272,
+      "imageEnd": "0x40330b90",
+      "bssStart": "0x40322000",
+      "bssEnd": "0x4554da50",
+      "sramInitSource": [
+        [
+          "0x40322000",
+          "0x40329330"
+        ],
+        [
+          "0x40329330",
+          "0x40330b90"
+        ]
+      ],
+      "tailFill": [
+        "0x40321718",
+        "0x40322000"
+      ],
+      "heapPool": [
+        "0x444cbe80",
+        "0x454cbe80"
+      ],
+      "heapDescriptor": "0x402bddf0",
+      "sysexRegistry": "0x402bde1c",
+      "inplaceDepackMargin": 160989,
+      "containerBytes": 1892288,
+      "probeInplaceMargin": 84063,
+      "probeContainerBytes": 1815408
+    },
+    "1.42": {
+      "syxSha256": "ded3c59fdb909eb9e2c3307b30a486452c8fa6947b12c14e0ce35a187b7f37c1",
+      "mainSha256": "1a9723b19fb54d0566c1f690379d2e6dfe43227f77e170ad731dd029430eb3e7",
+      "mainLength": 3442576,
+      "imageEnd": "0x40348b90",
+      "bssStart": "0x4033a000",
+      "bssEnd": "0x45566490",
+      "sramInitSource": [
+        [
+          "0x4033a000",
+          "0x40341330"
+        ],
+        [
+          "0x40341330",
+          "0x40348b90"
+        ]
+      ],
+      "tailFill": [
+        "0x40339730",
+        "0x4033a000"
+      ],
+      "heapPool": [
+        "0x444e48c0",
+        "0x454e48c0"
+      ],
+      "heapDescriptor": "0x402d5324",
+      "sysexRegistry": "0x402d5350",
+      "inplaceDepackMargin": 96357,
+      "containerBytes": 2029392,
+      "probeInplaceMargin": 16679,
+      "probeContainerBytes": 1949760
+    }
+  },
+  "protected": [
+    [
+      "0x40000400",
+      "0x40000410",
+      "the image header with the reset entry pointer"
+    ],
+    [
+      "0x40000410",
+      "0x400004b2",
+      "the context-switch handler and the SRAM initialisation"
+    ],
+    [
+      "0x400004ba",
+      "0x400004f4",
+      "the BSS clear and the reset chain"
+    ],
+    [
+      "0x400004f8",
+      "0x40000570",
+      "the reset chain up to the main initialisation call"
+    ],
+    [
+      "0x40001d0a",
+      "0x40001d34",
+      "the vector-table filler and the VBR setter"
+    ]
+  ],
+  "tailBudgetNote": "Below the in-place depack margin the repository packer leaves on the probe build of every supported release (probeInplaceMargin); the container verifier still checks the exact margin of each build."
+}
