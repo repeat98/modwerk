@@ -22,6 +22,11 @@ passes all 233 checks on 1.53 and 1.54, standalone and with all six mods.
 The earlier Euclidean UI, editing and playback regressions pass with the
 same counts as 1.1.4, and both all-mods SysEx files cold-boot.
 
+**Source parity** ([evidence/modwerk-source-parity.json](evidence/modwerk-source-parity.json)):
+Modwerk's compile of this source links all 63 feature selections per OS
+(126 in total) to the same MAIN as the native build, through Modwerk, in
+reversed order, through the browser kit and with the native objects.
+
 **Hardware** (sumedho, Digitakt 1, 2026-10-16, under 30 minutes): OS 1.53 and
 1.54, with all six mods and with Euclidean alone. The page keys and FUNC
 shortcuts leave Euclidean on audio and MIDI tracks, holding FUNC + AMP
