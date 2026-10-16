@@ -4,7 +4,7 @@
 
 Generate rhythms from two pulse generators on each audio or MIDI track. Rotate either generator, rotate the whole result and combine them with OR, XOR, AND or SUB.
 
-Version **1.1.4** for Digitakt I OS **1.53 and 1.54**, with separate packages
+Version **1.1.5** for Digitakt I OS **1.53 and 1.54**, with separate packages
 for each OS. Do not use a 1.53 package on 1.54. Hardware testing is recorded in the
 [hardware report](evidence/hardware-testing.json) and [TESTING.md](TESTING.md).
 
@@ -20,6 +20,7 @@ for each OS. Do not use a 1.53 package on 1.54. Hardware testing is recorded in 
 | H — OP | Choose OR, XOR, AND or SUB. |
 | FUNC + turn D off | Convert the generated sequence into ordinary trigs. |
 | TRK + trig / NO | Select an audio or MIDI track / close the page. |
+| TRIG / SRC / FLTR / AMP / LFO | Close Euclidean and open that page. FUNC + TRIG, FLTR, AMP or LFO opens Quantize, Delay, Reverb or Compressor. |
 
 ## Usage
 
@@ -30,7 +31,7 @@ Follow these steps on either supported OS release.
 1. Create a few source trigs on an audio track with a loaded sample. Hold FUNC + AMP to open Euclidean.
 2. Set PL1 to 5, PL2 to 0 and enable EUC with D. With a 16-step track this distributes five hits across the loop.
 3. Press PLAY. Turn RO1 to move those hits, then add PL2 pulses and try the OP combinations.
-4. Turn D off to restore the ordinary sequence and press NO to close. Use FUNC while turning D off only when you want to replace the ordinary trigs with the generated result.
+4. Turn D off to restore the ordinary sequence. Press NO, or a page key such as TRIG or FLTR, to leave. Use FUNC while turning D off only when you want to replace the ordinary trigs with the generated result.
 
 ## Compatibility and limitations
 

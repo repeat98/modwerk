@@ -1,5 +1,14 @@
 [
   {
+    "version": "1.1.5",
+    "date": "2026-10-16",
+    "changes": [
+      "Fixes [#662](https://github.com/repeat98/modwerk/issues/662): with Euclidean open, TRIG, SRC, FLTR, AMP and LFO now leave it for that page, as from any parameter page. Before, only NO closed it.",
+      "FUNC + TRIG, FLTR, AMP or LFO now opens Quantize, Delay, Reverb or Compressor from Euclidean. Before, FUNC + FLTR and FUNC + LFO changed the header while the Euclidean controls stayed on screen. FUNC + SRC has no native action and keeps Euclidean open.",
+      "Tested by the author on a Digitakt 1, OS 1.53 and 1.54, with all six mods and alone, including project save/reload and a power cycle (under 30 minutes). Emulator page-key regression on both OSes."
+    ]
+  },
+  {
     "version": "1.1.4",
     "date": "2026-10-14",
     "changes": [

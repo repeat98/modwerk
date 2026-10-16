@@ -2,7 +2,7 @@
   "schemaVersion": 3,
   "id": "euclidean",
   "name": "Euclidean Sequencing",
-  "version": "1.1.4",
+  "version": "1.1.5",
   "machine": "digitakt",
   "category": "machines",
   "exclusive": false,
@@ -18,7 +18,7 @@
   ],
   "source": {
     "repository": "https://github.com/sumedho/digirequests",
-    "revision": "8eba613dc3e0b1698797609256fd4081923b4ef2",
+    "revision": "27432d5aa7281422e7f80467e7e848c7f5433f33",
     "path": "modules/euclidean"
   },
   "presentation": {
@@ -35,11 +35,11 @@
       "Create a few source trigs on an audio track with a loaded sample. Hold FUNC + AMP to open Euclidean.",
       "Set PL1 to 5, PL2 to 0 and enable EUC with D. With a 16-step track this distributes five hits across the loop.",
       "Press PLAY. Turn RO1 to move those hits, then add PL2 pulses and try the OP combinations.",
-      "Turn D off to restore the ordinary sequence and press NO to close. Use FUNC while turning D off only when you want to replace the ordinary trigs with the generated result."
+      "Turn D off to restore the ordinary sequence. Press NO, or a page key such as TRIG or FLTR, to leave. Use FUNC while turning D off only when you want to replace the ordinary trigs with the generated result."
     ]
   },
   "access": {
-    "location": "Hold FUNC + AMP; NO closes the page",
+    "location": "Hold FUNC + AMP; NO or a page key closes the page",
     "steps": [
       "Create a few source trigs on an audio track with a loaded sample. Hold FUNC + AMP to open Euclidean.",
       "Set PL1 to 5, PL2 to 0 and enable EUC with D. With a 16-step track this distributes five hits across the loop."
@@ -96,6 +96,12 @@
       "default": null,
       "doc": "Select an audio or MIDI track / close the page.",
       "labels": null
+    },
+    {
+      "name": "TRIG / SRC / FLTR / AMP / LFO",
+      "default": null,
+      "doc": "Close Euclidean and open that page. FUNC + TRIG, FLTR, AMP or LFO opens Quantize, Delay, Reverb or Compressor.",
+      "labels": null
     }
   ],
   "compatibility": {
@@ -136,9 +142,10 @@
   },
   "evidence": {
     "tier": "author-hardware",
-    "moduleVersion": "1.1.4",
-    "sourceSha256": "5c7b8b27f81154ff33e1785857abb03c3a15fe4431eaef3df45c1475e671e01d",
+    "moduleVersion": "1.1.5",
+    "sourceSha256": "56ce0d64930138fe1bb5d504355d45fd693b10865f0527b56039008c4e36f2df",
     "reports": [
+      "evidence/page-keys-1.1.5.json",
       "evidence/hardware-testing.json",
       "evidence/source-identity.json",
       "evidence/regressions-core21.json",
@@ -148,21 +155,21 @@
     "hardware": {
       "model": "Digitakt 1",
       "release": "1.53 and 1.54",
-      "testedOn": "2026-10-14",
+      "testedOn": "2026-10-16",
       "tester": "sumedho",
-      "durationMinutes": 90,
-      "summary": "sumedho reports the Core 2.1 all-mods builds fully tested and working on a Digitakt 1, OS 1.53 and 1.54, for about one to two hours in total, including project save and reload and a power cycle (2026-10-14): “ok fully tested on hardware and working”.",
+      "durationMinutes": 30,
+      "summary": "sumedho tested 1.1.5 on a Digitakt 1, OS 1.53 and 1.54, with all six mods and with Euclidean alone: the page keys and FUNC shortcuts leave Euclidean on audio and MIDI tracks, holding FUNC + AMP reopens it, and settings survived project save/reload and a power cycle (2026-10-16). Reported working, with no failures.",
       "limitations": [
-        "Duration is the reporter’s range (1–2 hours) for the combined session across both OS releases; recorded as 90 minutes.",
-        "Individual test outcomes were not itemized; standalone (single-mod) hardware coverage is not claimed.",
-        "Tested SysEx: 1.53 23503ca42478c1644dea5fd296893f628eafb6662d2ce5e291bfc591f045ae4e, 1.54 257144e4a584172e470c3dde83d7ccda636eeb195b4e5ff0492b3ebc8bdfaba2; firmware was not read back from the device."
+        "Reported as under 30 minutes in total; 30 is an upper bound, not a measured duration.",
+        "Individual outcomes were not itemized beyond the coverage listed in evidence/page-keys-1.1.5.json.",
+        "Tested SysEx (all six mods): 1.53 f84a7159a4c1054febb9aa566804bc5953507906625815b49fe55d9afabee6cb, 1.54 4479e908e120e2ecb8890b62374355909303790208c8b83b17101704ea3e75fc; Euclidean alone: 1.53 b32f3bb8c7c56a7ff6d9e55b25e35895275d709d0c5ed9cd62ce958bd069aca0, 1.54 e7c3e4448a0fa42908756fe889957b3362e7eff97aa12223523583ec4c30c634. Firmware was not read back from the device."
       ]
     },
     "verifiedBy": null
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Runs on Core 2.1. Emulator regressions on OS 1.53 and 1.54, an emulator CPU-load comparison with stock, and Modwerk source-build parity with the native build are in TESTING.md. sumedho reports this Core 2.1 build fully tested and working on a Digitakt 1, OS 1.53 and 1.54, for about one to two hours including project save/reload and a power cycle (2026-10-14).",
+    "summary": "Runs on Core 2.1. Emulator regressions on OS 1.53 and 1.54, an emulator CPU-load comparison with stock, Modwerk source-build parity with the native build, and the 1.1.5 page-key regression are in TESTING.md. sumedho tested 1.1.5 on a Digitakt 1, OS 1.53 and 1.54, with all six mods and alone, including project save/reload and a power cycle (2026-10-16).",
     "documentation": {
       "tutorial": {
         "title": "Quick tutorial",
@@ -170,7 +177,7 @@
           "Create a few source trigs on an audio track with a loaded sample. Hold FUNC + AMP to open Euclidean.",
           "Set PL1 to 5, PL2 to 0 and enable EUC with D. With a 16-step track this distributes five hits across the loop.",
           "Press PLAY. Turn RO1 to move those hits, then add PL2 pulses and try the OP combinations.",
-          "Turn D off to restore the ordinary sequence and press NO to close. Use FUNC while turning D off only when you want to replace the ordinary trigs with the generated result."
+          "Turn D off to restore the ordinary sequence. Press NO, or a page key such as TRIG or FLTR, to leave. Use FUNC while turning D off only when you want to replace the ordinary trigs with the generated result."
         ]
       },
       "screenshots": [
@@ -208,8 +215,8 @@
       "capture": {
         "type": "emulator",
         "release": "1.53",
-        "moduleVersion": "1.1.4",
-        "imageSha256": "23503ca42478c1644dea5fd296893f628eafb6662d2ce5e291bfc591f045ae4e",
+        "moduleVersion": "1.1.5",
+        "imageSha256": "f84a7159a4c1054febb9aa566804bc5953507906625815b49fe55d9afabee6cb",
         "setup": "Actual cold-booted OS 1.53 all-mods SysEx on Core 2.1; cloned drive and native panel input. UI documentation only."
       }
     },
@@ -224,8 +231,8 @@
       "capture": {
         "type": "emulator",
         "release": "1.53",
-        "moduleVersion": "1.1.4",
-        "imageSha256": "23503ca42478c1644dea5fd296893f628eafb6662d2ce5e291bfc591f045ae4e",
+        "moduleVersion": "1.1.5",
+        "imageSha256": "f84a7159a4c1054febb9aa566804bc5953507906625815b49fe55d9afabee6cb",
         "setup": "Actual cold-booted OS 1.53 all-mods SysEx on Core 2.1; cloned drive and native panel input. UI documentation only."
       }
     },
@@ -240,8 +247,8 @@
       "capture": {
         "type": "emulator",
         "release": "1.54",
-        "moduleVersion": "1.1.4",
-        "imageSha256": "257144e4a584172e470c3dde83d7ccda636eeb195b4e5ff0492b3ebc8bdfaba2",
+        "moduleVersion": "1.1.5",
+        "imageSha256": "4479e908e120e2ecb8890b62374355909303790208c8b83b17101704ea3e75fc",
         "setup": "Actual cold-booted OS 1.54 all-mods SysEx on Core 2.1; cloned drive and native panel input. UI documentation only."
       }
     },
@@ -256,8 +263,8 @@
       "capture": {
         "type": "emulator",
         "release": "1.54",
-        "moduleVersion": "1.1.4",
-        "imageSha256": "257144e4a584172e470c3dde83d7ccda636eeb195b4e5ff0492b3ebc8bdfaba2",
+        "moduleVersion": "1.1.5",
+        "imageSha256": "4479e908e120e2ecb8890b62374355909303790208c8b83b17101704ea3e75fc",
         "setup": "Actual cold-booted OS 1.54 all-mods SysEx on Core 2.1; cloned drive and native panel input. UI documentation only."
       }
     }

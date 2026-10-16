@@ -1,0 +1,72 @@
+{
+  "schemaVersion": 1,
+  "moduleVersion": "1.1.5",
+  "issue": "https://github.com/repeat98/modwerk/issues/662",
+  "sourceSha256": "56ce0d64930138fe1bb5d504355d45fd693b10865f0527b56039008c4e36f2df",
+  "source": {
+    "repository": "https://github.com/sumedho/digirequests",
+    "revision": "27432d5aa7281422e7f80467e7e848c7f5433f33",
+    "path": "modules/euclidean"
+  },
+  "fix": "With Euclidean open, TRIG, SRC, FLTR, AMP and LFO, and FUNC + TRIG/FLTR/AMP/LFO (Quantize, Delay, Reverb, Compressor), now close Euclidean and pass the same press to the parameter page underneath, as from any native page. Before, only NO left the page; FUNC + FLTR/LFO changed the header underneath while the Euclidean controls stayed on screen. FUNC + SRC has no native action and keeps Euclidean open. Holding FUNC + AMP from Euclidean closes and reopens it.",
+  "emulator": {
+    "scope": "Emulator only; not hardware evidence. Core 2.1 native builds of the same source, OS 1.53 (stock SHA-256 9bdd44bb…) and 1.54 (f78ba80f…).",
+    "pageKeys": {
+      "method": "On a MIDI and an audio track, each of the ten combinations (five page keys, alone and with FUNC) is applied natively from the Reverb page as a reference; Euclidean is then opened with a long FUNC + AMP, the combination pressed, and the modal must close and the LCD below the header must match the reference. FUNC + SRC must keep Euclidean open; holding FUNC + AMP must reopen it; NO must still close it.",
+      "previousVersion": "1.1.4 fails at \"MIDI TRIG closes Euclidean\".",
+      "results": {
+        "1.53 standalone": 233,
+        "1.53 all": 233,
+        "1.54 standalone": 233,
+        "1.54 all": 233
+      },
+      "allPassed": true
+    },
+    "regressions": {
+      "counts": {
+        "1.53-euclidean-standalone": 54,
+        "1.53-euclidean-combined": 59,
+        "1.53-playback-combined": 1,
+        "1.53-editing-combined": 21,
+        "1.54-euclidean-standalone": 54,
+        "1.54-euclidean-combined": 59,
+        "1.54-playback-combined": 1,
+        "1.54-editing-combined": 21
+      },
+      "note": "Same pass counts as 1.1.4 on both OSes."
+    },
+    "coldBoot": "Both all-mods SysEx files cold-boot to a settled UI."
+  },
+  "hardware": {
+    "tester": "sumedho",
+    "model": "Digitakt 1",
+    "testedOn": "2026-10-16",
+    "releases": [
+      "1.53",
+      "1.54"
+    ],
+    "builds": {
+      "1.53": {
+        "all": "f84a7159a4c1054febb9aa566804bc5953507906625815b49fe55d9afabee6cb",
+        "euclidean": "b32f3bb8c7c56a7ff6d9e55b25e35895275d709d0c5ed9cd62ce958bd069aca0"
+      },
+      "1.54": {
+        "all": "4479e908e120e2ecb8890b62374355909303790208c8b83b17101704ea3e75fc",
+        "euclidean": "e7c3e4448a0fa42908756fe889957b3362e7eff97aa12223523583ec4c30c634"
+      }
+    },
+    "coverage": [
+      "Page keys and FUNC shortcuts leave Euclidean; holding FUNC + AMP reopens it",
+      "Audio and MIDI tracks",
+      "Project save and reload",
+      "Power cycle"
+    ],
+    "configurations": "All six mods together, and Euclidean alone, on each OS.",
+    "duration": "Under 30 minutes in total.",
+    "result": "Working as intended; no failures reported.",
+    "limitations": [
+      "Individual outcomes were not itemized beyond the coverage listed.",
+      "Firmware was not read back from the device; build hashes identify the files provided for testing."
+    ]
+  }
+}
