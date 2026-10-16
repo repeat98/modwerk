@@ -1,5 +1,6 @@
 #include "euclidean.h"
 extern u32 euc_native_key(u32,u32);
+u32 euc_key(u32,u32);
 static u32 view_table[39],shared_table[5];
 u32 euc_view;
 static s32 clamp(s32 x,s32 a,s32 b){return x<a?a:x>b?b:x;}
@@ -135,6 +136,12 @@ static u32 key(u32 view,u32 ev){
   euc_dial_reset();
   if(code==13){FW(FW_VIEW_CLOSE)(view);return 1;}
   if(code==43){u32 enabled=0,sr=euc_lock();s=euc_settings(pattern,0);if(s)enabled=s[track].enabled;euc_unlock(sr);edit(view,3,enabled?-1:1,flags&2);return 1;}
+  /* TRIG, SRC, FLTR, AMP and LFO, and the FUNC shortcuts that open
+   * something (TRIG Quantize, FLTR Delay, AMP Reverb, LFO Compressor), leave
+   * Euclidean as from any parameter page: close the modal, then give the
+   * same press to the parameter page underneath. FUNC + SRC has no native
+   * action and stays here. A held FUNC + AMP reopens Euclidean via euc_key. */
+  if(code>=19&&code<=23&&!(code==20&&(flags&2))){u32 parent=R32(view+0x50);FW(FW_VIEW_CLOSE)(view);return euc_key(parent,ev);}
  }
  /* Transport and pattern selection remain handled by the application. */
  return FW(FW_VIEW_KEY)(view,ev);

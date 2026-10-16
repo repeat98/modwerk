@@ -1,22 +1,22 @@
 {
   "schema": 1,
   "kind": "elekloader-catalog",
-  "revision": "euclidean-2026-10-14",
+  "revision": "euclidean-2026-10-16",
   "about": "Modwerk source-only euclidean packages for Digitakt I OS 1.53 and 1.54, compiled from sdk/digitakt/modules/euclidean.",
   "cores": [],
   "mods": [
     {
-      "file": "euclidean-1.1.4-os1.53.elemod",
-      "sha256": "da551e67332ffa070bd9d51879319fb4e4a5807eea684555860c0179cb65db20",
+      "file": "euclidean-1.1.5-os1.53.elemod",
+      "sha256": "1fce621ede91db064b0d1c6c8c337d962fa08dda31eef1248052fd5b5ffe4dfa",
       "id": "euclidean",
-      "version": "1.1.4",
+      "version": "1.1.5",
       "device": "digitakt-mk1",
       "os": "1.53",
       "license": "GPL-2.0-or-later",
       "source": {
         "repo": "repeat98/modwerk",
-        "commit": "6534fd648f5b2911a6ec7e7284c9dabc6afa021f",
-        "path": "sdk/imports/packages/euclidean/euclidean-1.1.4-os1.53.elemod"
+        "commit": "08097aa2c7497e45e15780376339ad295d8d0ee0",
+        "path": "sdk/imports/packages/euclidean/euclidean-1.1.5-os1.53.elemod"
       },
       "title": "Euclidean Sequencing",
       "requires": [
@@ -29,20 +29,20 @@
       "category": "Sequencer",
       "author": "sumedho",
       "needs_core": "2.1",
-      "on_unit": "The author reports this build fully tested and working with all six mods on a Digitakt 1, OS 1.53 and 1.54, for about one to two hours including project save/reload and a power cycle (2026-10-14)."
+      "on_unit": "The author tested 1.1.5 on a Digitakt 1, OS 1.53 and 1.54, with all six mods and alone, including project save/reload and a power cycle (2026-10-16): the page keys and FUNC shortcuts leave Euclidean and it reopens with FUNC + AMP."
     },
     {
-      "file": "euclidean-1.1.4-os1.54.elemod",
-      "sha256": "7093ef6573081f1bb5180e8576bdcba92359ddf8e91aec0ec666f306464a068d",
+      "file": "euclidean-1.1.5-os1.54.elemod",
+      "sha256": "b8315446ecd011d3798ed70692dd4762301458c930209465c2bd58bc52568bd9",
       "id": "euclidean",
-      "version": "1.1.4",
+      "version": "1.1.5",
       "device": "digitakt-mk1",
       "os": "1.54",
       "license": "GPL-2.0-or-later",
       "source": {
         "repo": "repeat98/modwerk",
-        "commit": "6534fd648f5b2911a6ec7e7284c9dabc6afa021f",
-        "path": "sdk/imports/packages/euclidean/euclidean-1.1.4-os1.54.elemod"
+        "commit": "08097aa2c7497e45e15780376339ad295d8d0ee0",
+        "path": "sdk/imports/packages/euclidean/euclidean-1.1.5-os1.54.elemod"
       },
       "title": "Euclidean Sequencing",
       "requires": [
@@ -55,7 +55,7 @@
       "category": "Sequencer",
       "author": "sumedho",
       "needs_core": "2.1",
-      "on_unit": "The author reports this build fully tested and working with all six mods on a Digitakt 1, OS 1.53 and 1.54, for about one to two hours including project save/reload and a power cycle (2026-10-14)."
+      "on_unit": "The author tested 1.1.5 on a Digitakt 1, OS 1.53 and 1.54, with all six mods and alone, including project save/reload and a power cycle (2026-10-16): the page keys and FUNC shortcuts leave Euclidean and it reopens with FUNC + AMP."
     }
   ]
 }

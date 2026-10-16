@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "module": "digitakt/euclidean",
+  "version": "1.1.5",
+  "date": "2026-10-16",
+  "upstream": {
+    "repository": "https://github.com/sumedho/digirequests",
+    "revision": "27432d5aa7281422e7f80467e7e848c7f5433f33",
+    "path": "modules/euclidean",
+    "license": "GPL-2.0-or-later"
+  },
+  "changes": [
+    "Fixes #662: with Euclidean open, TRIG, SRC, FLTR, AMP and LFO, and FUNC + TRIG/FLTR/AMP/LFO, leave Euclidean for that page as from any parameter page. Only the Euclidean page key handler (src/release-*/page.c) changes.",
+    "Source-only exports compiled with the pinned GCC 16.2 toolchain; every one of the 63 feature selections per OS links with Core 2.1 to the native Elekloader MAIN byte for byte."
+  ],
+  "runtimeSourceSha256": "7400bf35fd74b6ed66e4fc59b067b27fe963c66e37265aecc33879654f9777bd",
+  "packages": [
+    {
+      "os": "1.53",
+      "path": "sdk/imports/packages/euclidean/euclidean-1.1.5-os1.53.elemod",
+      "sha256": "1fce621ede91db064b0d1c6c8c337d962fa08dda31eef1248052fd5b5ffe4dfa"
+    },
+    {
+      "os": "1.54",
+      "path": "sdk/imports/packages/euclidean/euclidean-1.1.5-os1.54.elemod",
+      "sha256": "b8315446ecd011d3798ed70692dd4762301458c930209465c2bd58bc52568bd9"
+    }
+  ],
+  "stockPolicy": "No firmware or stock-derived code/tables are present. Addresses, lengths and SHA-256 guards are metadata; exported instructions and sections are authored module code. Local materialized recipes and firmware are never committed.",
+  "evidence": "sdk/digitakt/modules/euclidean/evidence/modwerk-source-parity.json",
+  "requires": [
+    "dt-support"
+  ]
+}

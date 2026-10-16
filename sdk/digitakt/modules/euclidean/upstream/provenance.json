@@ -35,10 +35,10 @@
   },
   "sourceAdapter": "Explicit DT_OS154 C/assembler selector; original per-OS code preserved. Object parity excludes build provenance and the checked absolute selector symbol only; linked MAIN must match exactly.",
   "authorGithub": "sumedho",
-  "sourceSha256": "5c7b8b27f81154ff33e1785857abb03c3a15fe4431eaef3df45c1475e671e01d",
+  "sourceSha256": "56ce0d64930138fe1bb5d504355d45fd693b10865f0527b56039008c4e36f2df",
   "localSourceRevision": "de3dab731ba75610ddd1bb4290ebbdd057b7b161",
   "localSourcePath": "sdk/digitakt/modules/_submissions/euclidean",
   "repository": "https://github.com/sumedho/digirequests",
-  "revision": "8eba613dc3e0b1698797609256fd4081923b4ef2",
+  "revision": "27432d5aa7281422e7f80467e7e848c7f5433f33",
   "path": "modules/euclidean"
 }

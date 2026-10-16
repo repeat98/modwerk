@@ -1,7 +1,45 @@
 # Euclidean Sequencing — test report
 
-- Module: `euclidean` 1.1.4, for Digitakt I OS 1.53 and 1.54 on Elekloader Core 2.1.
-- Source: https://github.com/sumedho/digirequests at `8eba613dc3e0b1698797609256fd4081923b4ef2`, `modules/euclidean`.
+- Module: `euclidean` 1.1.5, for Digitakt I OS 1.53 and 1.54 on Elekloader Core 2.1.
+- Source: https://github.com/sumedho/digirequests at `27432d5aa7281422e7f80467e7e848c7f5433f33`, `modules/euclidean`.
+
+## 1.1.5: page keys leave Euclidean ([#662](https://github.com/repeat98/modwerk/issues/662))
+
+With Euclidean open, TRIG, SRC, FLTR, AMP and LFO did nothing; only NO left
+the page. FUNC + FLTR and FUNC + LFO changed the header underneath to Delay
+or Compressor while the Euclidean controls stayed on screen. 1.1.5 closes
+Euclidean on these keys and passes the same press to the parameter page, as
+from any native page. FUNC + SRC has no native action and keeps Euclidean
+open. Holding FUNC + AMP from Euclidean closes and reopens it. The only
+source change is the Euclidean page's key handler (`src/release-*/page.c`).
+
+**Emulator** ([evidence/page-keys-1.1.5.json](evidence/page-keys-1.1.5.json)):
+on a MIDI and an audio track, each of the ten combinations is applied
+natively from the Reverb page (the page under an open Euclidean) as a
+reference, then pressed with Euclidean open; Euclidean must close and the
+screen below the header must match. 1.1.4 fails at the first check. 1.1.5
+passes all 233 checks on 1.53 and 1.54, standalone and with all six mods.
+The earlier Euclidean UI, editing and playback regressions pass with the
+same counts as 1.1.4, and both all-mods SysEx files cold-boot.
+
+**Source parity** ([evidence/modwerk-source-parity.json](evidence/modwerk-source-parity.json)):
+Modwerk's compile of this source links all 63 feature selections per OS
+(126 in total) to the same MAIN as the native build, through Modwerk, in
+reversed order, through the browser kit and with the native objects.
+
+**Hardware** (sumedho, Digitakt 1, 2026-10-16, under 30 minutes): OS 1.53 and
+1.54, with all six mods and with Euclidean alone. The page keys and FUNC
+shortcuts leave Euclidean on audio and MIDI tracks, holding FUNC + AMP
+reopens it, and settings survived project save/reload and a power cycle.
+Reported working, with no failures. Tested SysEx:
+
+| OS | All six mods | Euclidean alone |
+| --- | --- | --- |
+| 1.53 | `f84a7159a4c1054febb9aa566804bc5953507906625815b49fe55d9afabee6cb` | `b32f3bb8c7c56a7ff6d9e55b25e35895275d709d0c5ed9cd62ce958bd069aca0` |
+| 1.54 | `4479e908e120e2ecb8890b62374355909303790208c8b83b17101704ea3e75fc` | `e7c3e4448a0fa42908756fe889957b3362e7eff97aa12223523583ec4c30c634` |
+
+The sections below describe the 1.1.4 qualification; the rest of the
+module is unchanged.
 - All-mods SysEx used for the screenshots and the hardware test:
   - 1.53: `23503ca42478c1644dea5fd296893f628eafb6662d2ce5e291bfc591f045ae4e`;
   - 1.54: `257144e4a584172e470c3dde83d7ccda636eeb195b4e5ff0492b3ebc8bdfaba2`.

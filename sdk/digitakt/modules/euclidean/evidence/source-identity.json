@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "algorithm": "sha256 of canonical sorted JSON {sources,build}; UTF-8, compact separators",
-  "sha256": "5c7b8b27f81154ff33e1785857abb03c3a15fe4431eaef3df45c1475e671e01d",
+  "sha256": "56ce0d64930138fe1bb5d504355d45fd693b10865f0527b56039008c4e36f2df",
   "sources": {
     "src/digitakt-mk1/core3.h": "9ad3512ee2ced8f9eaadcb48e5633547d861d7a71f5443d5e9f759d0b790de26",
     "src/euclidean.c": "0fb08b2e2e635507b76003f6f1f3d4e6a0e367890a0da76e4d06a20b9c9a17c1",
@@ -13,13 +13,13 @@
     "src/release-153/firmware.h": "3343d8bfc12f8b409c0b3ff8ea8c7eeaf717cb373c5514c90a8339e1bd228899",
     "src/release-153/full.S": "dc3a0561e2bfeb86208685266f224f275ca7f5995c4f37617663e06943285d28",
     "src/release-153/grid.c": "10d4aad58c9d618ab6c811c962323d162d14ea8cc396a32b69745318fc11e218",
-    "src/release-153/page.c": "854496d4afe688912b6c5b24ac15fa7c0f5de45b510db5c4aac9cf1868831006",
+    "src/release-153/page.c": "dbf47699b8169e8a6bf3fc2bfb79ea9e91251f2665964aa5944ac5b7089e14e8",
     "src/release-154/euclidean.c": "6a3d556c7ccbb4b9ea8e1c4fde48c4a079a5c240c2854ca5b9e4914fb6408d18",
     "src/release-154/euclidean.h": "ad57a044a339510972bc566dd05a3cba890aba5200b99b7d7ae3be86e3639674",
     "src/release-154/firmware.h": "31fbe86139cc1fdcedc73bea998d1f9ae5414cc5bae765074a23ff871096ff71",
     "src/release-154/full.S": "dbb4eaeafaae999f99cd3ab8b92accd3b4eaef71101281b88d75c1ee3715d474",
     "src/release-154/grid.c": "10d4aad58c9d618ab6c811c962323d162d14ea8cc396a32b69745318fc11e218",
-    "src/release-154/page.c": "854496d4afe688912b6c5b24ac15fa7c0f5de45b510db5c4aac9cf1868831006"
+    "src/release-154/page.c": "dbf47699b8169e8a6bf3fc2bfb79ea9e91251f2665964aa5944ac5b7089e14e8"
   },
   "build": {
     "schemaVersion": 1,
@@ -330,6 +330,6 @@
     }
   },
   "repository": "https://github.com/sumedho/digirequests",
-  "revision": "8eba613dc3e0b1698797609256fd4081923b4ef2",
+  "revision": "27432d5aa7281422e7f80467e7e848c7f5433f33",
   "path": "modules/euclidean"
 }
