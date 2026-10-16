@@ -96,7 +96,7 @@ export function collectOctatrackDiagnostics(memberId: string, link: OctatrackLin
         const data = queue.shift()!, controller = transfer = new AbortController()
         sent++
         try {
-          const result = await client.fetch('/octatrack/diagnostics',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({version:OCTATRACK_DIAGNOSTICS_VERSION,data}),signal:controller.signal})
+          const result = await client.fetch('/octatrack/diagnostics',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({version:OCTATRACK_DIAGNOSTICS_VERSION,data}),signal:controller.signal,keepalive:true})
           if (!current() || controller.signal.aborted) break
           if (result.status === 403) { publish({enabled:false}); break }
           if (result.ok) {
@@ -115,6 +115,7 @@ export function collectOctatrackDiagnostics(memberId: string, link: OctatrackLin
     else if (activeSync && ['kept','undone','sync_failed','disconnected'].includes(event.event)) {
       countOctatrackAction(event.event === 'kept' ? 'usb_sync_kept' : event.event === 'undone' ? 'usb_sync_undone' : 'usb_sync_failed'); activeSync = false
     }
+    if (['sync_started','kept','undone','sync_failed','disconnected'].includes(event.event)) flushLoad()
     void send(event)
   })
   const unit = () => { const state = link!.getState(); return {phase:state.status,...(state.identity ? {base:state.identity.base} : {}),...(state.active ? {active:state.active} : {})} }
@@ -130,7 +131,7 @@ export function collectOctatrackDiagnostics(memberId: string, link: OctatrackLin
   }
   /* The live meters, read with the status every 30 s: a summary every five minutes, at once (at most every ten minutes)
    * when the CPU reaches 90 %, and `unresponsive` when reads fail twice (usb) or the UI tick stands still (ui). */
-  let samples: LoadReading[] = [], lastTicks: number | undefined, failures = 0, stuck = false, hotAt = 0, logAt = 0
+  let samples: LoadReading[] = [], sampledUnit: ReturnType<typeof unit> | undefined, lastTicks: number | undefined, failures = 0, stuck = false, hotAt = 0, logAt = 0
   const live = (): DiagnosticLive => {
     const meter = (pick: (reading: LoadReading) => number | null, peak = pick) => {
       const values = samples.map(pick).filter((value): value is number => value !== null), peaks = samples.map(peak).filter((value): value is number => value !== null)
@@ -138,6 +139,11 @@ export function collectOctatrackDiagnostics(memberId: string, link: OctatrackLin
     }
     const cpu = meter(reading => reading.cpu), dsp1to4 = meter(reading => reading.tracks1to4, reading => reading.peak1to4), dsp5to8 = meter(reading => reading.tracks5to8, reading => reading.peak5to8)
     return {samples:samples.length,...(cpu ? {cpu} : {}),...(dsp1to4 ? {dsp1to4} : {}),...(dsp5to8 ? {dsp5to8} : {})}
+  }
+  /** The readings so far, with the unit as it was when they were read: every ten readings, and before a sync, after it and when the connection or page ends. */
+  function flushLoad() {
+    if (!samples.length || !sampledUnit) return
+    send({event:'load',...sampledUnit,live:live()}); samples = []
   }
   async function sample(signal: AbortSignal) {
     try {
@@ -148,10 +154,10 @@ export function collectOctatrackDiagnostics(memberId: string, link: OctatrackLin
       lastTicks = reading.ticks
       if (still && !stuck) send({event:'unresponsive',...unit(),reason:'ui',live:live()})
       stuck = still
-      samples.push(reading)
+      samples.push(reading); sampledUnit = unit()
       const hot = reading.cpu !== null && reading.cpu >= 900 && Date.now() - hotAt >= 600_000
       if (hot) hotAt = Date.now()
-      if (hot || samples.length >= 10) { send({event:'load',...unit(),live:live()}); samples = [] }
+      if (hot || samples.length >= 10) flushLoad()
     } catch (error) {
       // The link's LinkBusyError (retry: true), checked by shape so this chunk doesn't load the USB link's code.
       const transfer = error instanceof Error && (error as { retry?: boolean }).retry === true && error.cause instanceof Error && error.cause.name !== 'AbortError'
@@ -192,7 +198,9 @@ export function collectOctatrackDiagnostics(memberId: string, link: OctatrackLin
   }
   void refresh()
   const timer = setInterval(() => { void tick() }, 30_000)
-  return () => { stopped = true; requests.abort(); clearInterval(timer); unsubscribe?.(); stopPreference(); siteCleanup?.(); if (generation === currentGeneration) { transfer?.abort(); healthRead?.abort(); owner = null; accountApi = undefined; publish({accountId:null,available:false,enabled:false,ready:false}) } }
+  // shortcut: a report still sending when the tab closes holds the readings back, so they are lost; a queue on disk would keep them.
+  globalThis.addEventListener?.('pagehide', flushLoad)
+  return () => { stopped = true; requests.abort(); clearInterval(timer); globalThis.removeEventListener?.('pagehide', flushLoad); unsubscribe?.(); stopPreference(); siteCleanup?.(); if (generation === currentGeneration) { transfer?.abort(); healthRead?.abort(); owner = null; accountApi = undefined; publish({accountId:null,available:false,enabled:false,ready:false}) } }
 }
 
 const chunks = <T>(items: T[], size: number) => Array.from({ length: Math.ceil(items.length / size) }, (_, i) => items.slice(i * size, (i + 1) * size))

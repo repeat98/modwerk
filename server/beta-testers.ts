@@ -13,15 +13,20 @@ export async function adminBetaTesterRoutes(request: Request, db: Database, path
   if (path === '/api/admin/forum/beta-invitation') {
     if (request.method === 'PUT') {
       const body = await jsonBody(request)
-      if (typeof body.publicEnabled !== 'boolean') throw new HttpError(400, 'Choose whether the public beta invitation is open.')
-      await db.batch([
+      // A new random token retires any earlier extra link; false closes it.
+      if (typeof body.extraLink === 'boolean') await db.batch([
+        db.prepare('UPDATE beta_invitation_settings SET extra_token=? WHERE id=1').bind(body.extraLink ? crypto.randomUUID().replaceAll('-', '') : null),
+        db.prepare('INSERT INTO forum_moderation(id,actor_id,target,action,reason) VALUES(?,?,?,?,?)').bind(crypto.randomUUID(), actorId, 'beta-pool', 'beta-invitation:extra-' + (body.extraLink ? 'new' : 'close'), 'Extra beta invitation link'),
+      ])
+      else if (typeof body.publicEnabled !== 'boolean') throw new HttpError(400, 'Choose whether the public beta invitation is open.')
+      else await db.batch([
         db.prepare('UPDATE beta_invitation_settings SET public_enabled=? WHERE id=1').bind(Number(body.publicEnabled)),
         db.prepare('INSERT INTO forum_moderation(id,actor_id,target,action,reason) VALUES(?,?,?,?,?)').bind(crypto.randomUUID(), actorId, 'beta-pool', 'beta-invitation:' + (body.publicEnabled ? 'open' : 'close'), 'Public beta invitation'),
       ])
     } else if (request.method !== 'GET') throw new HttpError(405, 'Use GET or PUT for the beta invitation.')
-    const settings = await db.prepare('SELECT public_enabled FROM beta_invitation_settings WHERE id=1').first<{ public_enabled: number }>()
+    const settings = await db.prepare('SELECT public_enabled,extra_token FROM beta_invitation_settings WHERE id=1').first<{ public_enabled: number; extra_token: string | null }>()
     const pool = await db.prepare('SELECT COUNT(*) AS total FROM users WHERE beta_tester=1').first<{ total: number }>()
-    return response({ publicEnabled: !!settings?.public_enabled, testers: pool?.total ?? 0, limit: BETA_TESTER_LIMIT })
+    return response({ publicEnabled: !!settings?.public_enabled, extraToken: settings?.extra_token ?? null, testers: pool?.total ?? 0, limit: BETA_TESTER_LIMIT })
   }
   if (path === '/api/admin/forum/beta-testers' && request.method === 'GET')
     return response((await db.prepare('SELECT username,display_name AS displayName FROM users WHERE beta_tester=1 AND suspended=0 AND username IS NOT NULL ORDER BY username LIMIT 200').all()).results)

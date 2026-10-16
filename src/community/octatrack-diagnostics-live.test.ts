@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { DeviceIncident, DeviceLoad, DiagnosticConsent } from './octatrack-diagnostics-contract'
-import type { OctatrackLink } from '../engine/elekloader/octatrack-link'
+import type { LinkDiagnostic, OctatrackLink } from '../engine/elekloader/octatrack-link'
 import type { LoadReading } from '../engine/elekloader/upload-wire'
 const mocked = vi.hoisted(() => ({ request: vi.fn(), fetch: vi.fn() }))
 vi.mock('./api', () => ({ scopedApi: () => ({ current: () => true, request: mocked.request, fetch: mocked.fetch }) }))
@@ -16,7 +16,7 @@ const load = (seq: number): DeviceLoad => ({ seq, boot: 1, minute: seq * 5, cpu:
 const incident = (seq: number): DeviceIncident => ({ seq, boot: 1, second: seq, kind: 'freeze', a: 0, cpu: 950, dsp1to4: 0, dsp5to8: 0,
   machines: Array(24).fill(0), fx: Array(16).fill(0), keys: Array(16).fill(255), screen: 0x400cbf2c, tempo24: 2880, playing: true })
 function unit(log = { nonce: 7, boot: 1, seq: 3, loads: [load(1), load(3)], incidents: [incident(2)] }) {
-  return { getState: () => ({ status: 'ready', identity: { base: 'a'.repeat(64) }, active: 'b'.repeat(64) }), subscribeDiagnostics: () => () => {},
+  return { getState: () => ({ status: 'ready', identity: { base: 'a'.repeat(64) }, active: 'b'.repeat(64) }), subscribeDiagnostics: (() => () => {}) as (listener: (event: LinkDiagnostic) => void) => () => void,
     health: vi.fn(async () => undefined), liveLoad: vi.fn(async () => reading()), deviceLog: vi.fn(async () => log) }
 }
 beforeEach(async () => {
@@ -49,6 +49,23 @@ describe('live load and the unit’s own log, with consent', () => {
     expect(sent().filter(data => data.event === 'load').at(-1).live).toMatchObject({ samples: 1, cpu: [950, 950] })
     await rounds(1) // the next hot reading within ten minutes waits for the window
     expect(sent().filter(data => data.event === 'load')).toHaveLength(2)
+  })
+  it('sends the readings so far before a sync, after it, at a disconnect and when the page closes', async () => {
+    let listener!: (event: LinkDiagnostic) => void
+    const link = { ...unit(), subscribeDiagnostics: (next: typeof listener) => { listener = next; return () => {} } }
+    const emit = async (event: LinkDiagnostic['event']) => { listener({ event, phase: 'ready' }); await vi.advanceTimersByTimeAsync(0) }
+    const events = () => sent().map(data => data.event === 'load' ? 'load:' + data.live.samples : data.event)
+    await collect(link); await rounds(3)
+    expect(events()).not.toContain('load:3')
+    await emit('sync_started'); await emit('kept')
+    expect(events()).toEqual(expect.arrayContaining(['load:3', 'sync_started', 'kept']))
+    expect(events().indexOf('load:3')).toBeLessThan(events().indexOf('sync_started'))
+    await rounds(2); await emit('disconnected')
+    expect(events().indexOf('load:2')).toBeLessThan(events().indexOf('disconnected'))
+    expect(sent().filter(data => data.event === 'load').at(-1)).toMatchObject({ phase: 'ready', base: 'a'.repeat(64), active: 'b'.repeat(64) })
+    await rounds(1); window.dispatchEvent(new Event('pagehide')); await vi.advanceTimersByTimeAsync(0)
+    expect(events().at(-1)).toBe('load:1')
+    expect(mocked.fetch.mock.calls.at(-1)![1]).toMatchObject({ keepalive: true })
   })
   it('says once when the UI tick stands still and when reads fail twice', async () => {
     const link = unit(); await collect(link); await rounds(1)

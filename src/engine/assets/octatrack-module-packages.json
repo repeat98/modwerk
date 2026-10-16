@@ -273,7 +273,7 @@
       "bytes": 1236,
       "sha256": "fdfddb9d93a28c2c8d8c83a9c430dab1a09f0df2e416a24a4b37c7e23d6f5227",
       "path": "octatrack-modules/sidechain-compressor/0.1.2-experimental.mwrm",
-      "requiredBase": "99336d354ca07f1d94acd89ada154d7a8a27996c4a752761677b4437b47e26f2"
+      "requiredBase": "a1471aeb2dab7de08bd519b6a1eef702d1524a20175d5dd4513413a89c764bd3"
     },
     {
       "id": "output-matrix",
@@ -289,7 +289,7 @@
       "bytes": 3580,
       "sha256": "4589b10b10842bda55b34607460257f9a2f9c317f75a253b2d5c3e6c9191ebad",
       "path": "octatrack-modules/output-matrix/0.1.0-experimental.mwrm",
-      "requiredBase": "99336d354ca07f1d94acd89ada154d7a8a27996c4a752761677b4437b47e26f2"
+      "requiredBase": "a1471aeb2dab7de08bd519b6a1eef702d1524a20175d5dd4513413a89c764bd3"
     },
     {
       "id": "cc-map",
@@ -305,7 +305,7 @@
       "bytes": 966,
       "sha256": "c7cd39a5f645d69279d3a288c40b8366e6638acdc042cf0fe68dfb9964a68ea2",
       "path": "octatrack-modules/cc-map/0.1.2-experimental.mwrm",
-      "requiredBase": "99336d354ca07f1d94acd89ada154d7a8a27996c4a752761677b4437b47e26f2"
+      "requiredBase": "a1471aeb2dab7de08bd519b6a1eef702d1524a20175d5dd4513413a89c764bd3"
     },
     {
       "id": "recorder-loop-fix",
@@ -321,7 +321,7 @@
       "bytes": 1818,
       "sha256": "ad2522060cb48adec49a2847b80757c7cebb489ae1bb9b3e4d5b8b97d5093f71",
       "path": "octatrack-modules/recorder-loop-fix/0.1.0-experimental.mwrm",
-      "requiredBase": "99336d354ca07f1d94acd89ada154d7a8a27996c4a752761677b4437b47e26f2"
+      "requiredBase": "a1471aeb2dab7de08bd519b6a1eef702d1524a20175d5dd4513413a89c764bd3"
     },
     {
       "id": "analog-bassdrum",
@@ -337,7 +337,7 @@
       "bytes": 6676,
       "sha256": "20211430d3c9eafd3253a50ebf936357ae6847420ac41717b8bcea28eec9f1ac",
       "path": "octatrack-modules/analog-bassdrum/0.1.5-experimental.mwrm",
-      "requiredBase": "99336d354ca07f1d94acd89ada154d7a8a27996c4a752761677b4437b47e26f2"
+      "requiredBase": "a1471aeb2dab7de08bd519b6a1eef702d1524a20175d5dd4513413a89c764bd3"
     }
   ]
 }

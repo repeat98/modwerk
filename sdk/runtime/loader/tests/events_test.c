@@ -37,10 +37,12 @@ static int kept(void)
 }
 int modwerk_machine_stopped(void) { return 1; }
 void *modwerk_machine_uncached(void *p) { return p; }
-void modwerk_machine_invalidate_code(void) {}
+static int lose_write; /* the next switch's writes: one byte does not land (invalidate runs right after them) */
+void modwerk_machine_invalidate_code(void) { if (lose_write) stock[0x40] ^= 1, lose_write = 0; }
 int modwerk_machine_patchable(uint32_t a, uint32_t n) { return a >= STOCK + 16u && n <= STOCK + sizeof stock - a; }
-uint8_t *modwerk_machine_code(uint32_t a) { CHECK(masked); return stock + (a - STOCK); }
-void modwerk_machine_flush_data(uint32_t a, uint32_t n) { (void)a; (void)n; }
+/* Code is read under the lock and written masked (put() flushes each site just before writing it). */
+uint8_t *modwerk_machine_code(uint32_t a) { CHECK(locked); return stock + (a - STOCK); }
+void modwerk_machine_flush_data(uint32_t a, uint32_t n) { CHECK(masked); (void)a; (void)n; }
 /* Rows may change only while masked: compare them at each mask boundary. */
 uint32_t modwerk_machine_mask(void) { CHECK(!masked && locked); rows_written_unmasked += !rows_same(); masked = 1; return 7; }
 void modwerk_machine_unmask(uint32_t sr) { CHECK(masked && sr == 7); masked = 0; snapshot(); }
@@ -206,6 +208,11 @@ int main(void)
     CHECK(b->prepare(0, p, n)); stock[0x40] ^= 1;
     CHECK(b->publish(0) == MU_UNCHANGED && b->discard(0) && kept() && !live_id(72));
     stock[0x40] ^= 1;
+    /* A write that did not land, found by the check after the unmask: its sites and rows are put back, masked. */
+    pkg(72, two, RUNTIME_HOOKS, 1, 0); site8(0x1040u, 6, 6); keep();
+    CHECK(b->prepare(0, p, n)); lose_write = 1;
+    CHECK(b->publish(0) == MU_UNCHANGED && b->discard(0) && kept() && !live_id(72) && !lose_write);
+    CHECK(!memcmp(stock, original, sizeof stock) && !rows_written_unmasked);
 
     /* Groups may subscribe; a group's legacy hook stays malformed. */
     uint32_t group[RUNTIME_HOOKS]; memcpy(group, none, sizeof group); group[RUNTIME_EVENTS] = 15u << 24 | 16u;

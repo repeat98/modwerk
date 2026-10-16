@@ -6,7 +6,8 @@ import { api, post } from './api'
 import { useCommunity } from './context'
 import { accountHref } from './member-access'
 
-type Invitation = { status: 'pending' | 'active' | 'full'; testers: number; limit: number; risksVersion: string }
+// The extra link has no limit, so it reports null and the page drops the pool sentence.
+type Invitation = { status: 'pending' | 'active' | 'full'; testers: number; limit: number | null; risksVersion: string }
 export function BetaInvitationPage({ campaign }: { campaign: string }) {
   const { session, loading, refresh } = useCommunity()
   const [invitation, setInvitation] = useState<Invitation | null>(null), [error, setError] = useState(''), [accepted, setAccepted] = useState(false), [busy, setBusy] = useState(false)
@@ -40,7 +41,7 @@ export function BetaInvitationPage({ campaign }: { campaign: string }) {
       <a className="text-button" href="#octatrack/setup">Set up your Octatrack</a>
     </> : <>
       <p>Try early features, including Octatrack USB loading and beta modules. Some features need an Octatrack and a computer.</p>
-      <p>The tester pool is limited to <strong>{BETA_TESTER_LIMIT} people</strong>. Places are first come, first served when you accept.{invitation && ` ${invitation.testers} of ${invitation.limit} places are currently taken.`}</p>
+      {invitation?.limit !== null && <p>The tester pool is limited to <strong>{BETA_TESTER_LIMIT} people</strong>. Places are first come, first served when you accept.{invitation && ` ${invitation.testers} of ${invitation.limit} places are currently taken.`}</p>}
       <div className="beta-invitation-risks"><h2>Before you join</h2><p>Beta features are experimental. Expect bugs and unfinished behavior.</p><p>{FLASHING_RISKS}</p><p>Back up your projects and samples before trying custom firmware. {INDEPENDENCE_NOTICE}</p></div>
       {valid && discordInvitation}
       <p>Joining the beta does not enable diagnostics or change your email preferences.</p>

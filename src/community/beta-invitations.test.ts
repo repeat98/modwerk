@@ -108,3 +108,26 @@ it('lets a tester leave the beta on their own and logs it once', async () => {
   expect(db.prepare("SELECT actor_id,target FROM forum_moderation WHERE action='beta-tester:leave'").all()).toEqual([{ actor_id: tester.id, target: tester.id }])
   expect((await call('/auth/beta-discord-invite', 'GET', undefined, tester.session)).status).toBe(403)
 })
+
+it('admits members beyond the full pool only through the current secret extra link', async () => {
+  const { db, call, member, admin, accept } = await fixture()
+  const late = await member('betalateone'), other = await member('betalatetwo'), outsider = await member('betaoutsiderx')
+  for (let i = 0; i < BETA_TESTER_LIMIT; i++) db.prepare('INSERT INTO users(id,display_name,username,email_verified,beta_tester) VALUES(?,?,?,1,1)').run('pool-' + i, 'Pool tester', 'pool' + i)
+  expect((await call('/admin/forum/beta-invitation', 'PUT', { extraLink: true }, outsider.session)).status).toBe(403)
+  expect(await (await call('/admin/forum/beta-invitation', 'GET', undefined, '', admin)).json()).toMatchObject({ extraToken: null })
+  const token = (await (await call('/admin/forum/beta-invitation', 'PUT', { extraLink: true }, '', admin)).json()).extraToken as string
+  expect(token).toMatch(/^[a-f0-9]{32}$/)
+  const path = '/auth/beta-invitations/' + token
+  expect(await (await call(path, 'GET', undefined, late.session)).json()).toMatchObject({ status: 'pending', testers: 50, limit: null })
+  expect((await call(path, 'POST', accept, late.session)).status).toBe(200)
+  expect(db.prepare('SELECT COUNT(*) AS n FROM users WHERE beta_tester=1').get()).toEqual({ n: 51 })
+  // The cap still holds for every other path.
+  expect((await call('/admin/forum/beta-testers/betaoutsiderx', 'PUT', { betaTester: true, reason: 'Extra place' }, '', admin)).status).toBe(409)
+  expect(() => db.prepare('UPDATE users SET beta_tester=1 WHERE id=?').run(outsider.id)).toThrow('pool is full')
+  const replaced = (await (await call('/admin/forum/beta-invitation', 'PUT', { extraLink: true }, '', admin)).json()).extraToken as string
+  expect(replaced).not.toBe(token)
+  expect((await call(path, 'POST', accept, other.session)).status).toBe(404)
+  expect((await call('/admin/forum/beta-invitation', 'PUT', { extraLink: false }, '', admin)).status).toBe(200)
+  expect((await call('/auth/beta-invitations/' + replaced, 'POST', accept, other.session)).status).toBe(404)
+  expect(db.prepare("SELECT action FROM forum_moderation WHERE action LIKE 'beta-invitation:extra-%' ORDER BY rowid").all()).toEqual([{ action: 'beta-invitation:extra-new' }, { action: 'beta-invitation:extra-new' }, { action: 'beta-invitation:extra-close' }])
+}, 120000)

@@ -19,8 +19,10 @@ int modwerk_machine_stopped(void) { return stopped; }
 void *modwerk_machine_uncached(void *p) { return p; }
 void modwerk_machine_invalidate_code(void) {}
 int modwerk_machine_patchable(uint32_t a, uint32_t n) { return a >= STOCK + 16u && n <= STOCK + sizeof stock - a; }
-uint8_t *modwerk_machine_code(uint32_t a) { CHECK(masked); return stock + (a - STOCK); }
-void modwerk_machine_flush_data(uint32_t a, uint32_t n) { (void)a; (void)n; flushed++; }
+/* Code is read under the lock (the checks before a switch run unmasked) and written masked: put() flushes each
+ * site just before writing it. */
+uint8_t *modwerk_machine_code(uint32_t a) { CHECK(locked); return stock + (a - STOCK); }
+void modwerk_machine_flush_data(uint32_t a, uint32_t n) { CHECK(masked); (void)a; (void)n; flushed++; }
 uint32_t modwerk_machine_mask(void) { CHECK(!masked && locked); masked = 1; return 7; }
 void modwerk_machine_unmask(uint32_t sr) { CHECK(masked && sr == 7); masked = 0; }
 uint32_t modwerk_machine_lock(void) { CHECK(!locked && !masked); locked = 1; return 4; }

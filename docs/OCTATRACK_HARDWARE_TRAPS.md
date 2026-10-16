@@ -245,6 +245,18 @@ How it hit the loader:
 
 Any other code that masks at level 5 or above must stay well under 200 µs.
 
+**A switch's masked span grows with the module's stock-code sites.** The loader used to check, write and read back
+every site byte through the uncached alias inside the mask, about 6.5 µs a site: Play Modes (35 sites) held frames
+229 µs, FM Synth (24) 203 µs, Euclid (3) 25 µs (development twins of `99336d35`, 16 October 2026). With both in a set,
+a sync's self-test and a power-on restore each stopped the DSPs once ([finding 46](OCTATRACK_BETA_TEST_PLAN.md#findings-log)).
+Now only the writes are masked, a word at a time, and the checks run under the lock: 69 µs for the same set. To
+measure, read `modwerk_masked_max` with `mem` on a development base (the outermost masked span since boot, in
+132 MHz counts); recording `__builtin_return_address(0)` in `modwerk_machine_unmask` beside it names the caller.
+
+**The DSP watchdog only sees stopped frames while a loader job waits.** `modwerk_dsp_stalled` counts only while a
+transfer or a job (a meter PEEK, a pick) is in flight, so the record is taken at the next such job, not when the
+frames stopped.
+
 **A RAM boot does not rescue a stalled DSP; it hangs at the logo.** The soft reset parks both DSP cores first, and a
 hung core does not park. After a DSP stall only a power cycle helps.
 

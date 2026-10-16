@@ -56,8 +56,9 @@ static uintptr_t volatile machine_row[5], sequencer_row[9];
 static int masked;
 uint32_t modwerk_machine_mask(void) { CHECK(!masked); masked = 1; return 7; }
 void modwerk_machine_unmask(uint32_t s) { CHECK(masked && s == 7); masked = 0; }
-void modwerk_machine_flush_data(uint32_t a, uint32_t n) { (void)a; (void)n; }
-uint8_t *modwerk_machine_code(uint32_t a) { CHECK(masked); return host_at(a); }
+/* Code is read unmasked and written masked (put() flushes each site just before writing it). */
+void modwerk_machine_flush_data(uint32_t a, uint32_t n) { CHECK(masked); (void)a; (void)n; }
+uint8_t *modwerk_machine_code(uint32_t a) { return host_at(a); }
 void modwerk_machine_invalidate_code(void) {}
 /* The asm side (machine_registry.s). */
 static uint8_t seen[12]; static int stock_validations;
