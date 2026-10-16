@@ -134,6 +134,10 @@ To compare a Part's working and saved copies: `mem:` both addresses with length 
 - One session; a handful of steps per command; `perl -e 'alarm N; exec @ARGV'` around anything that talks to
   the unit.
 - Let steps wait for their result (`pick:`, `part`), not fixed `w` waits.
+- After a power cycle, the first `npm run device` command often fails while the bridge reopens the unit; run it
+  again before treating it as a fault. `status` then shows generation 0 and the base's own digest as the active
+  set even when kept modules were restored ([case 16](OCTATRACK_MODULE_EDGE_CASES.md)); `npm run device -- do
+  inventory` lists what is installed (a contributor's MKII, beta bases `38a0bde1…` and `99336d35…`, 15 October 2026).
 - Before a test: `ui`, the bank and Part bytes, the Part's working-equals-saved check. After: restore and
   read them again.
 - Long runs (`scripts/octatrack-qualify.py`, benchmarks) in the background with a progress log; look at the

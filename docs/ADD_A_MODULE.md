@@ -198,6 +198,13 @@ the [loader compatibility guide](../sdk/machines/octatrack/elekloader/README.md#
    npm run modules:import -- ../module-packages/packages --development
    ```
    Commit what the import changes. CI compiles the same packages again and fails if they differ.
+   On macOS with colima, Docker sees only your home folder, and the script stages the source with `mktemp -d`, which on macOS makes it under `/var/folders` and ignores `TMPDIR`. Put a `mktemp` shim first on `PATH` for that run so the staging folder lands under `$HOME`:
+   ```sh
+   mkdir -p ~/.cache/mktemp-shim ~/.cache/tmp-isolated
+   printf '#!/bin/sh\nexec /usr/bin/mktemp -d "$HOME/.cache/tmp-isolated/tmp.XXXXXXXX"\n' > ~/.cache/mktemp-shim/mktemp
+   chmod +x ~/.cache/mktemp-shim/mktemp
+   PATH=~/.cache/mktemp-shim:$PATH bash scripts/build-modules-isolated.sh . ../module-packages "$image"
+   ```
 5. **Compare with native octabam** on your own 1.40C update file:
    ```sh
    npm run module:verify -- <id> --os ~/path/to/OCTATRACK_OS1.40C.bin
