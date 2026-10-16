@@ -20,8 +20,9 @@ ColdFire port; reference/phase0-notes.md in the Modwerk worktree):
 - AUDIO page: draw 0x400651a8, key handler 0x40065430 (menu-state table
   0x400cbdd4), label/getter/action tables 0x400b277c..0x400b27ab.
 - CUE + LEVEL: 0x4004e98c (in MATRIX it steps a destination code and
-  hands it to the stock store at 0x4004ea10). LEV box with CUE held:
-  0x4004dd64 (label), 0x4004ddb4 (the name), 0x4004df8c (the bars).
+  hands it to the stock store at 0x4004ea10). LEV box: 0x4004dcfa (the
+  plain label, LEV -> the destination); with CUE held 0x4004dd64 (label),
+  0x4004ddb4 (the name); 0x4004df8c (the bars).
 - Level page builder 0x4000d1a6 (detour 0x4000d1ea, after $29 is stored): in
   MATRIX the MAIN level word ($29) is rewritten
   as unity, so each track's ramped MAIN gain is its own level x XVOL; the
@@ -47,9 +48,10 @@ from remix.stock_guard import stock_dsp_words, stock_guard
 UNIT = "matrix"
 
 # The destination codes, in CUE + LEVEL order (matrix.s dest_names), as the
-# DSP's code table: per code, for CUE, MAIN and PHONES in turn, the number
-# of the list the track joins, 3 x bus + kind (kind 1 stereo, 2 mono left,
-# 3 mono right), or 0 when the code does not reach that bus.
+# DSP's code table: a word per code holding, for CUE, MAIN and PHONES in bits
+# 3..0, 7..4 and 11..8, the number of the list the track joins, 3 x bus +
+# kind (kind 1 stereo, 2 mono left, 3 mono right), or 0 when the code does
+# not reach that bus.
 _KIND = {"off": 0, "st": 1, "L": 2, "R": 3}
 _CODES = (  # (CUE, MAIN, PHONES)
     ("off", "st", "off"),   # 0 MAIN
@@ -67,8 +69,9 @@ _CODES = (  # (CUE, MAIN, PHONES)
     ("off", "off", "R"),    # 12 PHR
     ("off", "off", "off"),  # 13 OFF
 )
-CODE_TABLE = tuple(3 * bus + _KIND[k] if _KIND[k] else 0
-                   for code in _CODES for bus, k in enumerate(code))
+CODE_TABLE = tuple(sum((3 * bus + _KIND[k] if _KIND[k] else 0) << 4 * bus
+                       for bus, k in enumerate(code))
+                   for code in _CODES)
 
 MODULE = Module(
     name="output-matrix",
@@ -90,6 +93,8 @@ MODULE = Module(
                pad_to=8),
         Detour(0x4004DD64, stock_guard(0x4004dd64, 6, "4a0e8b026de2be316135a324da1ec8860f198cd3d26d2c6e1477772403baa3f0"),
                UNIT, "lev_box_cue", "LEV box with CUE held: in MATRIX, labelled with the track's destination"),
+        Detour(0x4004DCFA, stock_guard(0x4004dcfa, 6, "6b112717da66c861a652a9b72284300e00956b293a5c6425031cee49333d91f1"),
+               UNIT, "lev_box_lev", "LEV box: in MATRIX, labelled with the track's destination instead of LEV"),
         Detour(0x4004DDB4, stock_guard(0x4004ddb4, 18, "599199441e3ed6b14d404d9165c6960c172372cb3afb1138eb987a85056f356c"),
                UNIT, "lev_box_val", "LEV box with CUE held: in MATRIX, the destination's name",
                pad_to=18),

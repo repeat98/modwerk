@@ -1,0 +1,2308 @@
+{
+  "schemaVersion": 1,
+  "kind": "floating-cave-overflow-builder-regression",
+  "baseCommit": "d3ad0bdf580ed95225b018a692029beed984e304",
+  "historicalRecord": "plain-formatter-builder.json",
+  "originalOsSha256": "164f31224bf61181e3f50e7dec40df9afcae5b16dbf6e4c0d0cc5e986af0a84e",
+  "builderAdaptations": {
+    "tools/build/build_bus.py": {
+      "before": "d8e1548844601f9b69646152134d78ddc646accd6e6f50f3353b2c62b3cfcc56",
+      "after": "c70c79b6829e264e881f4a8d0284cb77d070ebe4fcdbbccf633fd33f110a1ac9"
+    }
+  },
+  "scope": "A floating ColdFire cave that does not fit the clone window now goes to the overflow run before the window's overrun check, as the browser composer places it (requestedCaves). Two fresh native builds of 194 selections (the earlier builder records' selections still offered, plus every LOFI2 coverage selection without LOFI2), one with the base commit's build_bus.py and one with this one, in the pinned toolchain image with the static stock loader. 66 selections the declaration ledger refuses before any placement (colliding modules, identical text before and after) are left out of this record; the other 128 are listed. Every built image is identical (100) and no refused selection now builds. 10 refusals change their reason: the window assert no longer fires first, so the build refuses where the browser does (a DSP region overrun) or at the next placement that does not fit. On main, the browser comparison of the two refused EVERB selections goes from a refusal mismatch to a match; merged with LOFI2's branch, module:verify lofi2 reports 0 mismatches of 130 selections. No hardware result is inferred.",
+  "selections": [
+    {
+      "moduleIds": [
+        "airwindows-chorus"
+      ],
+      "keepStockFx2": false,
+      "before": {
+        "bytes": 1112560,
+        "osSha256": "9e492fdaefcdfbcd23bb71fb31d320879c4219ff9c32d92220663dfb06443d04",
+        "maskedOsSha256": "9e492fdaefcdfbcd23bb71fb31d320879c4219ff9c32d92220663dfb06443d04"
+      },
+      "after": {
+        "bytes": 1112560,
+        "osSha256": "9e492fdaefcdfbcd23bb71fb31d320879c4219ff9c32d92220663dfb06443d04",
+        "maskedOsSha256": "9e492fdaefcdfbcd23bb71fb31d320879c4219ff9c32d92220663dfb06443d04"
+      }
+    },
+    {
+      "moduleIds": [
+        "airwindows-chorus"
+      ],
+      "keepStockFx2": true,
+      "before": {
+        "bytes": 1112560,
+        "osSha256": "2f31c73dbbe8a7ef619d92bb998539287ead660288c1fdef4de385f0af018f72",
+        "maskedOsSha256": "2f31c73dbbe8a7ef619d92bb998539287ead660288c1fdef4de385f0af018f72"
+      },
+      "after": {
+        "bytes": 1112560,
+        "osSha256": "2f31c73dbbe8a7ef619d92bb998539287ead660288c1fdef4de385f0af018f72",
+        "maskedOsSha256": "2f31c73dbbe8a7ef619d92bb998539287ead660288c1fdef4de385f0af018f72"
+      }
+    },
+    {
+      "moduleIds": [
+        "analog-bassdrum"
+      ],
+      "keepStockFx2": false,
+      "before": {
+        "bytes": 1266195,
+        "osSha256": "8585a03dbe35d6cde8269f8e4319fab88b9569115dfee2c01526947148e1ae10",
+        "maskedOsSha256": "ffd4a6c9de97551bcb65d9710988723bff1d8fb788c2d79eafc31bd3591f27fc"
+      },
+      "after": {
+        "bytes": 1266195,
+        "osSha256": "8585a03dbe35d6cde8269f8e4319fab88b9569115dfee2c01526947148e1ae10",
+        "maskedOsSha256": "ffd4a6c9de97551bcb65d9710988723bff1d8fb788c2d79eafc31bd3591f27fc"
+      }
+    },
+    {
+      "moduleIds": [
+        "analog-bassdrum"
+      ],
+      "keepStockFx2": true,
+      "before": {
+        "bytes": 1266195,
+        "osSha256": "2a230496f4d4fc486e8b9a96b574b55373668d50d05ada21631c042253d8d5e4",
+        "maskedOsSha256": "12d6dd097a2eee1efd750a6f706a1f15126b9c788c7f48134a1596a8b798c28c"
+      },
+      "after": {
+        "bytes": 1266195,
+        "osSha256": "2a230496f4d4fc486e8b9a96b574b55373668d50d05ada21631c042253d8d5e4",
+        "maskedOsSha256": "12d6dd097a2eee1efd750a6f706a1f15126b9c788c7f48134a1596a8b798c28c"
+      }
+    },
+    {
+      "moduleIds": [
+        "bbd"
+      ],
+      "keepStockFx2": false,
+      "before": {
+        "bytes": 1112843,
+        "osSha256": "6a995f5207b897e3c25dc8808377b2b8ef7edc1400c197632d05c480838fbf47",
+        "maskedOsSha256": "6c7a275a708a200c16503d0e008a1e1e3bafb6371aa027ed0cdf67ff06d76db9"
+      },
+      "after": {
+        "bytes": 1112843,
+        "osSha256": "6a995f5207b897e3c25dc8808377b2b8ef7edc1400c197632d05c480838fbf47",
+        "maskedOsSha256": "6c7a275a708a200c16503d0e008a1e1e3bafb6371aa027ed0cdf67ff06d76db9"
+      }
+    },
+    {
+      "moduleIds": [
+        "bbd"
+      ],
+      "keepStockFx2": true,
+      "before": {
+        "bytes": 1112843,
+        "osSha256": "4640f9a53d73bcd46e3c2961fcbd28bd5917d1b43890da0260dd1f1a38e3d8d0",
+        "maskedOsSha256": "ab029ec15ce6b8eece8a3484919f6cd59b6ddbe71e424973696f6a94674ab279"
+      },
+      "after": {
+        "bytes": 1112843,
+        "osSha256": "4640f9a53d73bcd46e3c2961fcbd28bd5917d1b43890da0260dd1f1a38e3d8d0",
+        "maskedOsSha256": "ab029ec15ce6b8eece8a3484919f6cd59b6ddbe71e424973696f6a94674ab279"
+      }
+    },
+    {
+      "moduleIds": [
+        "cc-map"
+      ],
+      "keepStockFx2": false,
+      "before": {
+        "bytes": 1112560,
+        "osSha256": "a5c97fe6734b9f39e4ba58d8b8ff61cb009fedea730697aa05e89d77b89f7429",
+        "maskedOsSha256": "a5c97fe6734b9f39e4ba58d8b8ff61cb009fedea730697aa05e89d77b89f7429"
+      },
+      "after": {
+        "bytes": 1112560,
+        "osSha256": "a5c97fe6734b9f39e4ba58d8b8ff61cb009fedea730697aa05e89d77b89f7429",
+        "maskedOsSha256": "a5c97fe6734b9f39e4ba58d8b8ff61cb009fedea730697aa05e89d77b89f7429"
+      }
+    },
+    {
+      "moduleIds": [
+        "cc-map"
+      ],
+      "keepStockFx2": true,
+      "before": {
+        "bytes": 1112560,
+        "osSha256": "2ca87b1313e1f6a1776eb11314dfd2082ec273fad3fa8c0432dc23a35ab59812",
+        "maskedOsSha256": "2ca87b1313e1f6a1776eb11314dfd2082ec273fad3fa8c0432dc23a35ab59812"
+      },
+      "after": {
+        "bytes": 1112560,
+        "osSha256": "2ca87b1313e1f6a1776eb11314dfd2082ec273fad3fa8c0432dc23a35ab59812",
+        "maskedOsSha256": "2ca87b1313e1f6a1776eb11314dfd2082ec273fad3fa8c0432dc23a35ab59812"
+      }
+    },
+    {
+      "moduleIds": [
+        "euclid"
+      ],
+      "keepStockFx2": false,
+      "before": {
+        "bytes": 1114986,
+        "osSha256": "648c2faf296415e932237fbcffd3277dc03e6bb681ea03a43004db0b9cd2eb63",
+        "maskedOsSha256": "fe11a7d5f8b4250a6803e11d952e20843a281f91dc606fd41055dd6daf3eb27d"
+      },
+      "after": {
+        "bytes": 1114986,
+        "osSha256": "648c2faf296415e932237fbcffd3277dc03e6bb681ea03a43004db0b9cd2eb63",
+        "maskedOsSha256": "fe11a7d5f8b4250a6803e11d952e20843a281f91dc606fd41055dd6daf3eb27d"
+      }
+    },
+    {
+      "moduleIds": [
+        "euclid"
+      ],
+      "keepStockFx2": true,
+      "before": {
+        "bytes": 1114986,
+        "osSha256": "b39327052c92d526d5401a47333750c8c088f7892d4fcc8ed3c63a17412c21aa",
+        "maskedOsSha256": "13524ea309dc0cec57bf502d8244d2f97425db836eef7cd623210588d6e717b0"
+      },
+      "after": {
+        "bytes": 1114986,
+        "osSha256": "b39327052c92d526d5401a47333750c8c088f7892d4fcc8ed3c63a17412c21aa",
+        "maskedOsSha256": "13524ea309dc0cec57bf502d8244d2f97425db836eef7cd623210588d6e717b0"
+      }
+    },
+    {
+      "moduleIds": [
+        "everb"
+      ],
+      "keepStockFx2": false,
+      "before": {
+        "bytes": 1112560,
+        "osSha256": "00e1bce5e41af823303095cd0dac4aa902afa3ed1c195a2f0ced4ef085243a28",
+        "maskedOsSha256": "00e1bce5e41af823303095cd0dac4aa902afa3ed1c195a2f0ced4ef085243a28"
+      },
+      "after": {
+        "bytes": 1112560,
+        "osSha256": "00e1bce5e41af823303095cd0dac4aa902afa3ed1c195a2f0ced4ef085243a28",
+        "maskedOsSha256": "00e1bce5e41af823303095cd0dac4aa902afa3ed1c195a2f0ced4ef085243a28"
+      }
+    },
+    {
+      "moduleIds": [
+        "everb"
+      ],
+      "keepStockFx2": true,
+      "before": {
+        "bytes": 1112560,
+        "osSha256": "b525e4a42fdddaf6c6f381478bc54e56206e3d5df9be1c76272d8c36d84cdc7a",
+        "maskedOsSha256": "b525e4a42fdddaf6c6f381478bc54e56206e3d5df9be1c76272d8c36d84cdc7a"
+      },
+      "after": {
+        "bytes": 1112560,
+        "osSha256": "b525e4a42fdddaf6c6f381478bc54e56206e3d5df9be1c76272d8c36d84cdc7a",
+        "maskedOsSha256": "b525e4a42fdddaf6c6f381478bc54e56206e3d5df9be1c76272d8c36d84cdc7a"
+      }
+    },
+    {
+      "moduleIds": [
+        "miniverb"
+      ],
+      "keepStockFx2": false,
+      "before": {
+        "bytes": 1112560,
+        "osSha256": "f48222597652db1d09bfcd07675a94a494c40336b9e4bb222b34b82a96010be9",
+        "maskedOsSha256": "f48222597652db1d09bfcd07675a94a494c40336b9e4bb222b34b82a96010be9"
+      },
+      "after": {
+        "bytes": 1112560,
+        "osSha256": "f48222597652db1d09bfcd07675a94a494c40336b9e4bb222b34b82a96010be9",
+        "maskedOsSha256": "f48222597652db1d09bfcd07675a94a494c40336b9e4bb222b34b82a96010be9"
+      }
+    },
+    {
+      "moduleIds": [
+        "miniverb"
+      ],
+      "keepStockFx2": true,
+      "before": {
+        "bytes": 1112560,
+        "osSha256": "266117031665a6ef070440bb0cda634b86bc03f408670de7463433da854e4a4d",
+        "maskedOsSha256": "266117031665a6ef070440bb0cda634b86bc03f408670de7463433da854e4a4d"
+      },
+      "after": {
+        "bytes": 1112560,
+        "osSha256": "266117031665a6ef070440bb0cda634b86bc03f408670de7463433da854e4a4d",
+        "maskedOsSha256": "266117031665a6ef070440bb0cda634b86bc03f408670de7463433da854e4a4d"
+      }
+    },
+    {
+      "moduleIds": [
+        "mute-modes"
+      ],
+      "keepStockFx2": false,
+      "before": {
+        "bytes": 1112560,
+        "osSha256": "9b79cc30b0a5585903ab271daf1325a70925c00b4b4b44c60a5004928665ab18",
+        "maskedOsSha256": "9b79cc30b0a5585903ab271daf1325a70925c00b4b4b44c60a5004928665ab18"
+      },
+      "after": {
+        "bytes": 1112560,
+        "osSha256": "9b79cc30b0a5585903ab271daf1325a70925c00b4b4b44c60a5004928665ab18",
+        "maskedOsSha256": "9b79cc30b0a5585903ab271daf1325a70925c00b4b4b44c60a5004928665ab18"
+      }
+    },
+    {
+      "moduleIds": [
+        "mute-modes"
+      ],
+      "keepStockFx2": true,
+      "before": {
+        "bytes": 1112560,
+        "osSha256": "b4aa648e63c314b01a42edfdd23cc7d15d3868eb1f76e81e860872d5cbe81112",
+        "maskedOsSha256": "b4aa648e63c314b01a42edfdd23cc7d15d3868eb1f76e81e860872d5cbe81112"
+      },
+      "after": {
+        "bytes": 1112560,
+        "osSha256": "b4aa648e63c314b01a42edfdd23cc7d15d3868eb1f76e81e860872d5cbe81112",
+        "maskedOsSha256": "b4aa648e63c314b01a42edfdd23cc7d15d3868eb1f76e81e860872d5cbe81112"
+      }
+    },
+    {
+      "moduleIds": [
+        "output-matrix"
+      ],
+      "keepStockFx2": false,
+      "before": {
+        "bytes": 1114033,
+        "osSha256": "293ed4e5c10c8133bb60dfc6b118a4b2dbd745c6446291075927148ace373af2",
+        "maskedOsSha256": "b94606636467cd5a50e6dbc00d46b77669c2fc6a9e3d208a570cae43d8086107"
+      },
+      "after": {
+        "bytes": 1114033,
+        "osSha256": "293ed4e5c10c8133bb60dfc6b118a4b2dbd745c6446291075927148ace373af2",
+        "maskedOsSha256": "b94606636467cd5a50e6dbc00d46b77669c2fc6a9e3d208a570cae43d8086107"
+      }
+    },
+    {
+      "moduleIds": [
+        "output-matrix"
+      ],
+      "keepStockFx2": true,
+      "before": {
+        "bytes": 1114033,
+        "osSha256": "a12ca396b5b2a4e4da79395a91382a55b001dfb0e24a7d135793df2a66030b13",
+        "maskedOsSha256": "f6ab5cd47082b810b5e25c182b93224913608ebb860ec68ec619d914328a809d"
+      },
+      "after": {
+        "bytes": 1114033,
+        "osSha256": "a12ca396b5b2a4e4da79395a91382a55b001dfb0e24a7d135793df2a66030b13",
+        "maskedOsSha256": "f6ab5cd47082b810b5e25c182b93224913608ebb860ec68ec619d914328a809d"
+      }
+    },
+    {
+      "moduleIds": [
+        "playmodes"
+      ],
+      "keepStockFx2": false,
+      "before": {
+        "bytes": 1118019,
+        "osSha256": "8a76439db2e8a01b65bb23c45d38adba81972afd3cb2a8203dceaf97aa5b50ec",
+        "maskedOsSha256": "0f297729da630da6483d2e1892aae3122337fdf36366a14b69e31b46dcb53a68"
+      },
+      "after": {
+        "bytes": 1118019,
+        "osSha256": "8a76439db2e8a01b65bb23c45d38adba81972afd3cb2a8203dceaf97aa5b50ec",
+        "maskedOsSha256": "0f297729da630da6483d2e1892aae3122337fdf36366a14b69e31b46dcb53a68"
+      }
+    },
+    {
+      "moduleIds": [
+        "playmodes"
+      ],
+      "keepStockFx2": true,
+      "before": {
+        "bytes": 1118019,
+        "osSha256": "3e4e81f0da64b0e997f4bf40c1a9ea07a1908b6171e7d51d26eab2077056e823",
+        "maskedOsSha256": "c25ddf4e2da176583275e78612997910a88bfef393145c46c087a9366930ccf2"
+      },
+      "after": {
+        "bytes": 1118019,
+        "osSha256": "3e4e81f0da64b0e997f4bf40c1a9ea07a1908b6171e7d51d26eab2077056e823",
+        "maskedOsSha256": "c25ddf4e2da176583275e78612997910a88bfef393145c46c087a9366930ccf2"
+      }
+    },
+    {
+      "moduleIds": [
+        "previewvol"
+      ],
+      "keepStockFx2": false,
+      "before": {
+        "bytes": 1112560,
+        "osSha256": "687b86044f3638644c44f63a2765af9241885a8d49796ab7af8c3f57cc43b643",
+        "maskedOsSha256": "687b86044f3638644c44f63a2765af9241885a8d49796ab7af8c3f57cc43b643"
+      },
+      "after": {
+        "bytes": 1112560,
+        "osSha256": "687b86044f3638644c44f63a2765af9241885a8d49796ab7af8c3f57cc43b643",
+        "maskedOsSha256": "687b86044f3638644c44f63a2765af9241885a8d49796ab7af8c3f57cc43b643"
+      }
+    },
+    {
+      "moduleIds": [
+        "previewvol"
+      ],
+      "keepStockFx2": true,
+      "before": {
+        "bytes": 1112560,
+        "osSha256": "3900e54e9154d66df6001b0f96da2ca07c42bf5c7be7f1157ddd9a071601f2cc",
+        "maskedOsSha256": "3900e54e9154d66df6001b0f96da2ca07c42bf5c7be7f1157ddd9a071601f2cc"
+      },
+      "after": {
+        "bytes": 1112560,
+        "osSha256": "3900e54e9154d66df6001b0f96da2ca07c42bf5c7be7f1157ddd9a071601f2cc",
+        "maskedOsSha256": "3900e54e9154d66df6001b0f96da2ca07c42bf5c7be7f1157ddd9a071601f2cc"
+      }
+    },
+    {
+      "moduleIds": [
+        "quantizer"
+      ],
+      "keepStockFx2": false,
+      "before": {
+        "bytes": 1115065,
+        "osSha256": "9075cc33afb2c47aeae1e718e284a1a84d6fe30b64950a78dcf0e9c5e6777d2c",
+        "maskedOsSha256": "7f361933dd228381e2c9c501a1ac9f562577fe95cfd7389791de990ba707c082"
+      },
+      "after": {
+        "bytes": 1115065,
+        "osSha256": "9075cc33afb2c47aeae1e718e284a1a84d6fe30b64950a78dcf0e9c5e6777d2c",
+        "maskedOsSha256": "7f361933dd228381e2c9c501a1ac9f562577fe95cfd7389791de990ba707c082"
+      }
+    },
+    {
+      "moduleIds": [
+        "quantizer"
+      ],
+      "keepStockFx2": true,
+      "before": {
+        "bytes": 1115065,
+        "osSha256": "91b17bec41cc577cf13165394b8264d0b88ef2e1649ebd680a73424e59a32cca",
+        "maskedOsSha256": "6d17f807e1c485c451cc57c3b4dd9dc9eeb7372f6f12e0090dc3ea7231c9e90e"
+      },
+      "after": {
+        "bytes": 1115065,
+        "osSha256": "91b17bec41cc577cf13165394b8264d0b88ef2e1649ebd680a73424e59a32cca",
+        "maskedOsSha256": "6d17f807e1c485c451cc57c3b4dd9dc9eeb7372f6f12e0090dc3ea7231c9e90e"
+      }
+    },
+    {
+      "moduleIds": [
+        "recorder-loop-fix"
+      ],
+      "keepStockFx2": false,
+      "before": {
+        "bytes": 1112560,
+        "osSha256": "7578fff74c7e43c2db402505c1465f361ebb33d885c712ddff795f0e31c42a35",
+        "maskedOsSha256": "3ab39ff476589e48f239debf947f321c40edf4877500a501a929027b1c0c3011"
+      },
+      "after": {
+        "bytes": 1112560,
+        "osSha256": "7578fff74c7e43c2db402505c1465f361ebb33d885c712ddff795f0e31c42a35",
+        "maskedOsSha256": "3ab39ff476589e48f239debf947f321c40edf4877500a501a929027b1c0c3011"
+      }
+    },
+    {
+      "moduleIds": [
+        "recorder-loop-fix"
+      ],
+      "keepStockFx2": true,
+      "before": {
+        "bytes": 1112560,
+        "osSha256": "7bd4bbdeaa05030f2b9f6d7f9bbd513e02b4ee4222aec0902b75ad713833ee95",
+        "maskedOsSha256": "ae6b575264b227ddb07d74a268886cb728a467b818f4fd78bd736b2a4223e30d"
+      },
+      "after": {
+        "bytes": 1112560,
+        "osSha256": "7bd4bbdeaa05030f2b9f6d7f9bbd513e02b4ee4222aec0902b75ad713833ee95",
+        "maskedOsSha256": "ae6b575264b227ddb07d74a268886cb728a467b818f4fd78bd736b2a4223e30d"
+      }
+    },
+    {
+      "moduleIds": [
+        "repitch"
+      ],
+      "keepStockFx2": false,
+      "before": {
+        "bytes": 1112560,
+        "osSha256": "0639f301725e13f76ffd11e8ba6dbc12945f77c46f7a1e6e9d906beb904ca182",
+        "maskedOsSha256": "0639f301725e13f76ffd11e8ba6dbc12945f77c46f7a1e6e9d906beb904ca182"
+      },
+      "after": {
+        "bytes": 1112560,
+        "osSha256": "0639f301725e13f76ffd11e8ba6dbc12945f77c46f7a1e6e9d906beb904ca182",
+        "maskedOsSha256": "0639f301725e13f76ffd11e8ba6dbc12945f77c46f7a1e6e9d906beb904ca182"
+      }
+    },
+    {
+      "moduleIds": [
+        "repitch"
+      ],
+      "keepStockFx2": true,
+      "before": {
+        "bytes": 1112560,
+        "osSha256": "f2555851696a0da70e63d434fe6ca7d877061000c990dadde925014f17dc2482",
+        "maskedOsSha256": "f2555851696a0da70e63d434fe6ca7d877061000c990dadde925014f17dc2482"
+      },
+      "after": {
+        "bytes": 1112560,
+        "osSha256": "f2555851696a0da70e63d434fe6ca7d877061000c990dadde925014f17dc2482",
+        "maskedOsSha256": "f2555851696a0da70e63d434fe6ca7d877061000c990dadde925014f17dc2482"
+      }
+    },
+    {
+      "moduleIds": [
+        "sidechain-compressor"
+      ],
+      "keepStockFx2": false,
+      "before": {
+        "bytes": 1112560,
+        "osSha256": "9b6342c28437f026673d07bb8ac3680626f4ee6f89c01637ac3ea01e6ae9c324",
+        "maskedOsSha256": "9b6342c28437f026673d07bb8ac3680626f4ee6f89c01637ac3ea01e6ae9c324"
+      },
+      "after": {
+        "bytes": 1112560,
+        "osSha256": "9b6342c28437f026673d07bb8ac3680626f4ee6f89c01637ac3ea01e6ae9c324",
+        "maskedOsSha256": "9b6342c28437f026673d07bb8ac3680626f4ee6f89c01637ac3ea01e6ae9c324"
+      }
+    },
+    {
+      "moduleIds": [
+        "sidechain-compressor"
+      ],
+      "keepStockFx2": true,
+      "before": {
+        "bytes": 1112560,
+        "osSha256": "2816f0bce5aaabfadac6dba9e778dc184b8af3e4a611990d6e6b3e36095bc5eb",
+        "maskedOsSha256": "2816f0bce5aaabfadac6dba9e778dc184b8af3e4a611990d6e6b3e36095bc5eb"
+      },
+      "after": {
+        "bytes": 1112560,
+        "osSha256": "2816f0bce5aaabfadac6dba9e778dc184b8af3e4a611990d6e6b3e36095bc5eb",
+        "maskedOsSha256": "2816f0bce5aaabfadac6dba9e778dc184b8af3e4a611990d6e6b3e36095bc5eb"
+      }
+    },
+    {
+      "moduleIds": [
+        "synth"
+      ],
+      "keepStockFx2": false,
+      "before": {
+        "bytes": 1125240,
+        "osSha256": "d775e2160276d784282711afbde2e97ab444e50ffcd441f5781eb8e80702bade",
+        "maskedOsSha256": "0ab270288e66172169418edce22ad495d82243dd45aab17c277fb8821a48e089"
+      },
+      "after": {
+        "bytes": 1125240,
+        "osSha256": "d775e2160276d784282711afbde2e97ab444e50ffcd441f5781eb8e80702bade",
+        "maskedOsSha256": "0ab270288e66172169418edce22ad495d82243dd45aab17c277fb8821a48e089"
+      }
+    },
+    {
+      "moduleIds": [
+        "synth"
+      ],
+      "keepStockFx2": true,
+      "before": {
+        "bytes": 1125240,
+        "osSha256": "1ffd8803f54612857f3d5c2d8c380b04962ffee78a6c56c06d927c20a1e75d5b",
+        "maskedOsSha256": "08d0116944fcb72630ed16a0741033d7bcd218f70e09ed4c91bc31ed2c239bfc"
+      },
+      "after": {
+        "bytes": 1125240,
+        "osSha256": "1ffd8803f54612857f3d5c2d8c380b04962ffee78a6c56c06d927c20a1e75d5b",
+        "maskedOsSha256": "08d0116944fcb72630ed16a0741033d7bcd218f70e09ed4c91bc31ed2c239bfc"
+      }
+    },
+    {
+      "moduleIds": [
+        "tapeecho"
+      ],
+      "keepStockFx2": false,
+      "before": {
+        "bytes": 1215051,
+        "osSha256": "705825b260a43a0a69749ab0dc085dfe6130b7fb8d3862a6844e80093704b351",
+        "maskedOsSha256": "e805be5c86f63764631d15c7b1572246b7eac08e7b117df17471259a42a81473"
+      },
+      "after": {
+        "bytes": 1215051,
+        "osSha256": "705825b260a43a0a69749ab0dc085dfe6130b7fb8d3862a6844e80093704b351",
+        "maskedOsSha256": "e805be5c86f63764631d15c7b1572246b7eac08e7b117df17471259a42a81473"
+      }
+    },
+    {
+      "moduleIds": [
+        "tapeecho"
+      ],
+      "keepStockFx2": true,
+      "before": {
+        "bytes": 1215051,
+        "osSha256": "89cb8bac1d3c79bdd8f01c723f5160ec107036c64f083279dcdc59c1f0261b8c",
+        "maskedOsSha256": "b2cd596ab24fb142a30995235a116d57dff33ed3d2a4964bd58434c6e43e0e77"
+      },
+      "after": {
+        "bytes": 1215051,
+        "osSha256": "89cb8bac1d3c79bdd8f01c723f5160ec107036c64f083279dcdc59c1f0261b8c",
+        "maskedOsSha256": "b2cd596ab24fb142a30995235a116d57dff33ed3d2a4964bd58434c6e43e0e77"
+      }
+    },
+    {
+      "moduleIds": [
+        "tapehead"
+      ],
+      "keepStockFx2": false,
+      "before": {
+        "bytes": 1112560,
+        "osSha256": "3e6e192dbd2ff26ecb2421e13fbdae14c896edd1ccc3743b227950efb46ded19",
+        "maskedOsSha256": "3e6e192dbd2ff26ecb2421e13fbdae14c896edd1ccc3743b227950efb46ded19"
+      },
+      "after": {
+        "bytes": 1112560,
+        "osSha256": "3e6e192dbd2ff26ecb2421e13fbdae14c896edd1ccc3743b227950efb46ded19",
+        "maskedOsSha256": "3e6e192dbd2ff26ecb2421e13fbdae14c896edd1ccc3743b227950efb46ded19"
+      }
+    },
+    {
+      "moduleIds": [
+        "tapehead"
+      ],
+      "keepStockFx2": true,
+      "before": {
+        "bytes": 1112560,
+        "osSha256": "a1262231396fd46c228bb67f4a7c286dc3889ce20d2bcb0a9bdd5fcef061d24f",
+        "maskedOsSha256": "a1262231396fd46c228bb67f4a7c286dc3889ce20d2bcb0a9bdd5fcef061d24f"
+      },
+      "after": {
+        "bytes": 1112560,
+        "osSha256": "a1262231396fd46c228bb67f4a7c286dc3889ce20d2bcb0a9bdd5fcef061d24f",
+        "maskedOsSha256": "a1262231396fd46c228bb67f4a7c286dc3889ce20d2bcb0a9bdd5fcef061d24f"
+      }
+    },
+    {
+      "moduleIds": [
+        "usb-audio-out-tracks-main-cue"
+      ],
+      "keepStockFx2": false,
+      "before": {
+        "bytes": 1115534,
+        "osSha256": "559ebb7cf24a2e5723bb7acf6bab4c0e2efa3f75e25373483e48fe5d9ab99942",
+        "maskedOsSha256": "6b8571929e435b8a970d4e6f1890df94c8ac4cc9af6ed757f089fc2d952814d9"
+      },
+      "after": {
+        "bytes": 1115534,
+        "osSha256": "559ebb7cf24a2e5723bb7acf6bab4c0e2efa3f75e25373483e48fe5d9ab99942",
+        "maskedOsSha256": "6b8571929e435b8a970d4e6f1890df94c8ac4cc9af6ed757f089fc2d952814d9"
+      }
+    },
+    {
+      "moduleIds": [
+        "usb-audio-out-tracks-main-cue"
+      ],
+      "keepStockFx2": true,
+      "before": {
+        "bytes": 1115534,
+        "osSha256": "013330b92b2df592b9faa5d6e242ec70b3580d061bf6fb4045a45d5e591a8739",
+        "maskedOsSha256": "bd880d0069eab1ff42e6498d4bcd58af7764bd57d42ea96c96a179fc24261872"
+      },
+      "after": {
+        "bytes": 1115534,
+        "osSha256": "013330b92b2df592b9faa5d6e242ec70b3580d061bf6fb4045a45d5e591a8739",
+        "maskedOsSha256": "bd880d0069eab1ff42e6498d4bcd58af7764bd57d42ea96c96a179fc24261872"
+      }
+    },
+    {
+      "moduleIds": [
+        "vector"
+      ],
+      "keepStockFx2": false,
+      "before": {
+        "bytes": 1121076,
+        "osSha256": "126e6076bba8ab056579d103fb0134365a7d49bd9eb25b499c2ce483a1502041",
+        "maskedOsSha256": "f914320de31a948195ca34a259355536d55ffd9791da78b6245b02a08251b9e8"
+      },
+      "after": {
+        "bytes": 1121076,
+        "osSha256": "126e6076bba8ab056579d103fb0134365a7d49bd9eb25b499c2ce483a1502041",
+        "maskedOsSha256": "f914320de31a948195ca34a259355536d55ffd9791da78b6245b02a08251b9e8"
+      }
+    },
+    {
+      "moduleIds": [
+        "vector"
+      ],
+      "keepStockFx2": true,
+      "before": {
+        "bytes": 1121076,
+        "osSha256": "d64284abbb02e1bedab13282218ac3d5d0c4e1c57fe165dce8148b5c5226ab95",
+        "maskedOsSha256": "c241d50a5a4728e097bcdae58e6a5b8afd7fdee4f6dfcc534d060ba668e489fe"
+      },
+      "after": {
+        "bytes": 1121076,
+        "osSha256": "d64284abbb02e1bedab13282218ac3d5d0c4e1c57fe165dce8148b5c5226ab95",
+        "maskedOsSha256": "c241d50a5a4728e097bcdae58e6a5b8afd7fdee4f6dfcc534d060ba668e489fe"
+      }
+    },
+    {
+      "moduleIds": [
+        "airwindows-chorus",
+        "analog-bassdrum"
+      ],
+      "keepStockFx2": false,
+      "before": {
+        "bytes": 1266806,
+        "osSha256": "6def828ece8f76ef3c6c1600ad4547e7959cb1698eff45c8f19b2e2b6cbe691a",
+        "maskedOsSha256": "935d8292d09d402df33135b5c0f565933f2086567d7ca3f0350ccb99b2c31f81"
+      },
+      "after": {
+        "bytes": 1266806,
+        "osSha256": "6def828ece8f76ef3c6c1600ad4547e7959cb1698eff45c8f19b2e2b6cbe691a",
+        "maskedOsSha256": "935d8292d09d402df33135b5c0f565933f2086567d7ca3f0350ccb99b2c31f81"
+      }
+    },
+    {
+      "moduleIds": [
+        "airwindows-chorus",
+        "analog-bassdrum"
+      ],
+      "keepStockFx2": true,
+      "before": {
+        "bytes": 1266806,
+        "osSha256": "3b2fae42eb224eb402e7c3b325fc586896b00d868e452cbf6532191b9b0ea4c9",
+        "maskedOsSha256": "2ae2a8c9b41f7b13392577f2dbba2b04fada98d26bd75690f8c10a5af9d1a854"
+      },
+      "after": {
+        "bytes": 1266806,
+        "osSha256": "3b2fae42eb224eb402e7c3b325fc586896b00d868e452cbf6532191b9b0ea4c9",
+        "maskedOsSha256": "2ae2a8c9b41f7b13392577f2dbba2b04fada98d26bd75690f8c10a5af9d1a854"
+      }
+    },
+    {
+      "moduleIds": [
+        "airwindows-chorus",
+        "cc-map"
+      ],
+      "keepStockFx2": false,
+      "before": {
+        "bytes": 1112560,
+        "osSha256": "5d8c2dd41242deac97e85460970d808cbf59ea4c398fe25504ad6f0e28941802",
+        "maskedOsSha256": "5d8c2dd41242deac97e85460970d808cbf59ea4c398fe25504ad6f0e28941802"
+      },
+      "after": {
+        "bytes": 1112560,
+        "osSha256": "5d8c2dd41242deac97e85460970d808cbf59ea4c398fe25504ad6f0e28941802",
+        "maskedOsSha256": "5d8c2dd41242deac97e85460970d808cbf59ea4c398fe25504ad6f0e28941802"
+      }
+    },
+    {
+      "moduleIds": [
+        "airwindows-chorus",
+        "cc-map"
+      ],
+      "keepStockFx2": true,
+      "before": {
+        "bytes": 1112560,
+        "osSha256": "98a36e55fd9a43217050988b184b77e9c5f9a7549e611f5380ee9e9afe0a2581",
+        "maskedOsSha256": "98a36e55fd9a43217050988b184b77e9c5f9a7549e611f5380ee9e9afe0a2581"
+      },
+      "after": {
+        "bytes": 1112560,
+        "osSha256": "98a36e55fd9a43217050988b184b77e9c5f9a7549e611f5380ee9e9afe0a2581",
+        "maskedOsSha256": "98a36e55fd9a43217050988b184b77e9c5f9a7549e611f5380ee9e9afe0a2581"
+      }
+    },
+    {
+      "moduleIds": [
+        "airwindows-chorus",
+        "everb"
+      ],
+      "keepStockFx2": false,
+      "before": {
+        "bytes": 1112560,
+        "osSha256": "c1cee035c1c474c70140abf379318ae8b17c2fca53181f5578d6228f7183e50b",
+        "maskedOsSha256": "c1cee035c1c474c70140abf379318ae8b17c2fca53181f5578d6228f7183e50b"
+      },
+      "after": {
+        "bytes": 1112560,
+        "osSha256": "c1cee035c1c474c70140abf379318ae8b17c2fca53181f5578d6228f7183e50b",
+        "maskedOsSha256": "c1cee035c1c474c70140abf379318ae8b17c2fca53181f5578d6228f7183e50b"
+      }
+    },
+    {
+      "moduleIds": [
+        "airwindows-chorus",
+        "everb"
+      ],
+      "keepStockFx2": true,
+      "before": {
+        "bytes": 1112560,
+        "osSha256": "ec9c5ce1d30d4b205e7adf7f431b1348b1f281a2a152b1bd7602b286d8a34d2d",
+        "maskedOsSha256": "ec9c5ce1d30d4b205e7adf7f431b1348b1f281a2a152b1bd7602b286d8a34d2d"
+      },
+      "after": {
+        "bytes": 1112560,
+        "osSha256": "ec9c5ce1d30d4b205e7adf7f431b1348b1f281a2a152b1bd7602b286d8a34d2d",
+        "maskedOsSha256": "ec9c5ce1d30d4b205e7adf7f431b1348b1f281a2a152b1bd7602b286d8a34d2d"
+      }
+    },
+    {
+      "moduleIds": [
+        "airwindows-chorus",
+        "mute-modes"
+      ],
+      "keepStockFx2": false,
+      "before": {
+        "bytes": 1112560,
+        "osSha256": "6c2950beff0afa1ddf0dfe2f355a5c8069b72a6cf2bb07dc55a4ac7bd081c845",
+        "maskedOsSha256": "6c2950beff0afa1ddf0dfe2f355a5c8069b72a6cf2bb07dc55a4ac7bd081c845"
+      },
+      "after": {
+        "bytes": 1112560,
+        "osSha256": "6c2950beff0afa1ddf0dfe2f355a5c8069b72a6cf2bb07dc55a4ac7bd081c845",
+        "maskedOsSha256": "6c2950beff0afa1ddf0dfe2f355a5c8069b72a6cf2bb07dc55a4ac7bd081c845"
+      }
+    },
+    {
+      "moduleIds": [
+        "airwindows-chorus",
+        "mute-modes"
+      ],
+      "keepStockFx2": true,
+      "before": {
+        "bytes": 1112560,
+        "osSha256": "ac096aa6d28ea827037ecdd3f316edb4dd23492237613620182449388b86efd6",
+        "maskedOsSha256": "ac096aa6d28ea827037ecdd3f316edb4dd23492237613620182449388b86efd6"
+      },
+      "after": {
+        "bytes": 1112560,
+        "osSha256": "ac096aa6d28ea827037ecdd3f316edb4dd23492237613620182449388b86efd6",
+        "maskedOsSha256": "ac096aa6d28ea827037ecdd3f316edb4dd23492237613620182449388b86efd6"
+      }
+    },
+    {
+      "moduleIds": [
+        "airwindows-chorus",
+        "playmodes"
+      ],
+      "keepStockFx2": false,
+      "before": {
+        "bytes": 1118019,
+        "osSha256": "b2bda0b45f6b672a40371ffc36b588b33358b0f23b6d84d65d21bf2eed2c6dc0",
+        "maskedOsSha256": "c5256416c73161d888c1e2e8266756db673d392c1f388b16996ae37bbf985db3"
+      },
+      "after": {
+        "bytes": 1118019,
+        "osSha256": "b2bda0b45f6b672a40371ffc36b588b33358b0f23b6d84d65d21bf2eed2c6dc0",
+        "maskedOsSha256": "c5256416c73161d888c1e2e8266756db673d392c1f388b16996ae37bbf985db3"
+      }
+    },
+    {
+      "moduleIds": [
+        "airwindows-chorus",
+        "playmodes"
+      ],
+      "keepStockFx2": true,
+      "before": {
+        "bytes": 1118019,
+        "osSha256": "e91affcc9af60b0f0033613f0c4c3ef5f3cea76ebcb9f98cc09d39331c37ee8b",
+        "maskedOsSha256": "91a651930ccb831e2aa6f48fdb2d1681d8c87cadbb4c9c87f968c9bb5f540943"
+      },
+      "after": {
+        "bytes": 1118019,
+        "osSha256": "e91affcc9af60b0f0033613f0c4c3ef5f3cea76ebcb9f98cc09d39331c37ee8b",
+        "maskedOsSha256": "91a651930ccb831e2aa6f48fdb2d1681d8c87cadbb4c9c87f968c9bb5f540943"
+      }
+    },
+    {
+      "moduleIds": [
+        "airwindows-chorus",
+        "previewvol"
+      ],
+      "keepStockFx2": false,
+      "before": {
+        "bytes": 1112560,
+        "osSha256": "36b2c68dc184ff53dc3cf9d768e3ba41885b0aca36c07a1c24868b90dbb51465",
+        "maskedOsSha256": "36b2c68dc184ff53dc3cf9d768e3ba41885b0aca36c07a1c24868b90dbb51465"
+      },
+      "after": {
+        "bytes": 1112560,
+        "osSha256": "36b2c68dc184ff53dc3cf9d768e3ba41885b0aca36c07a1c24868b90dbb51465",
+        "maskedOsSha256": "36b2c68dc184ff53dc3cf9d768e3ba41885b0aca36c07a1c24868b90dbb51465"
+      }
+    },
+    {
+      "moduleIds": [
+        "airwindows-chorus",
+        "previewvol"
+      ],
+      "keepStockFx2": true,
+      "before": {
+        "bytes": 1112560,
+        "osSha256": "5fadd2997eee3045dbeb6bccf6d6932de41aab437702b2075f5de50b54fa6b95",
+        "maskedOsSha256": "5fadd2997eee3045dbeb6bccf6d6932de41aab437702b2075f5de50b54fa6b95"
+      },
+      "after": {
+        "bytes": 1112560,
+        "osSha256": "5fadd2997eee3045dbeb6bccf6d6932de41aab437702b2075f5de50b54fa6b95",
+        "maskedOsSha256": "5fadd2997eee3045dbeb6bccf6d6932de41aab437702b2075f5de50b54fa6b95"
+      }
+    },
+    {
+      "moduleIds": [
+        "airwindows-chorus",
+        "quantizer"
+      ],
+      "keepStockFx2": false,
+      "before": {
+        "bytes": 1115065,
+        "osSha256": "722c5cbb3468909cd03410e1d7f749f183750c3d2bfdbaf06241a34833bff486",
+        "maskedOsSha256": "0c1c786a36ab5d298d01a297cbc343c0719f901e90deb48a720a8ee03c3e2c85"
+      },
+      "after": {
+        "bytes": 1115065,
+        "osSha256": "722c5cbb3468909cd03410e1d7f749f183750c3d2bfdbaf06241a34833bff486",
+        "maskedOsSha256": "0c1c786a36ab5d298d01a297cbc343c0719f901e90deb48a720a8ee03c3e2c85"
+      }
+    },
+    {
+      "moduleIds": [
+        "airwindows-chorus",
+        "quantizer"
+      ],
+      "keepStockFx2": true,
+      "before": {
+        "bytes": 1115065,
+        "osSha256": "0533093c1485227e87ff27d73f36920f439e3dfd95bd4f0a5560feca4f62213a",
+        "maskedOsSha256": "e3b01c46e423ffbfe955a5c26e15825a64d8d1c0d5118a34da84a5d7cefa8261"
+      },
+      "after": {
+        "bytes": 1115065,
+        "osSha256": "0533093c1485227e87ff27d73f36920f439e3dfd95bd4f0a5560feca4f62213a",
+        "maskedOsSha256": "e3b01c46e423ffbfe955a5c26e15825a64d8d1c0d5118a34da84a5d7cefa8261"
+      }
+    },
+    {
+      "moduleIds": [
+        "airwindows-chorus",
+        "recorder-loop-fix"
+      ],
+      "keepStockFx2": false,
+      "before": {
+        "bytes": 1112560,
+        "osSha256": "7561380b19ef9c4e65f258229ec01d551e1a2a0e61bead69184de49140ac2894",
+        "maskedOsSha256": "15e9ce319bf1bbda09edb79ca03584fbe4f05c56cb650714543506714092f4d2"
+      },
+      "after": {
+        "bytes": 1112560,
+        "osSha256": "7561380b19ef9c4e65f258229ec01d551e1a2a0e61bead69184de49140ac2894",
+        "maskedOsSha256": "15e9ce319bf1bbda09edb79ca03584fbe4f05c56cb650714543506714092f4d2"
+      }
+    },
+    {
+      "moduleIds": [
+        "airwindows-chorus",
+        "recorder-loop-fix"
+      ],
+      "keepStockFx2": true,
+      "before": {
+        "bytes": 1112560,
+        "osSha256": "fedc61401490ba96f8719af44ccd06372a35512b914fae43852acad26ecb9dc0",
+        "maskedOsSha256": "e8917092504f19f6cfb1641337a10b5086ddaee6768c8345e6f92d7275efe3d5"
+      },
+      "after": {
+        "bytes": 1112560,
+        "osSha256": "fedc61401490ba96f8719af44ccd06372a35512b914fae43852acad26ecb9dc0",
+        "maskedOsSha256": "e8917092504f19f6cfb1641337a10b5086ddaee6768c8345e6f92d7275efe3d5"
+      }
+    },
+    {
+      "moduleIds": [
+        "airwindows-chorus",
+        "sidechain-compressor"
+      ],
+      "keepStockFx2": false,
+      "before": {
+        "bytes": 1112560,
+        "osSha256": "ff702dc6d0505a485a99368a19b521cfed58953c03079294144e9e2cd0ddf88c",
+        "maskedOsSha256": "ff702dc6d0505a485a99368a19b521cfed58953c03079294144e9e2cd0ddf88c"
+      },
+      "after": {
+        "bytes": 1112560,
+        "osSha256": "ff702dc6d0505a485a99368a19b521cfed58953c03079294144e9e2cd0ddf88c",
+        "maskedOsSha256": "ff702dc6d0505a485a99368a19b521cfed58953c03079294144e9e2cd0ddf88c"
+      }
+    },
+    {
+      "moduleIds": [
+        "airwindows-chorus",
+        "sidechain-compressor"
+      ],
+      "keepStockFx2": true,
+      "before": {
+        "bytes": 1112560,
+        "osSha256": "9d0421caf01b40e5cae9a85299b3ffcdc85e6b794fd3554b512b7128e1a7f39e",
+        "maskedOsSha256": "9d0421caf01b40e5cae9a85299b3ffcdc85e6b794fd3554b512b7128e1a7f39e"
+      },
+      "after": {
+        "bytes": 1112560,
+        "osSha256": "9d0421caf01b40e5cae9a85299b3ffcdc85e6b794fd3554b512b7128e1a7f39e",
+        "maskedOsSha256": "9d0421caf01b40e5cae9a85299b3ffcdc85e6b794fd3554b512b7128e1a7f39e"
+      }
+    },
+    {
+      "moduleIds": [
+        "airwindows-chorus",
+        "synth"
+      ],
+      "keepStockFx2": false,
+      "before": {
+        "bytes": 1125240,
+        "osSha256": "8dc849846962c6deaedbd189b5edde6b3e8cd047ac03f3e9775e7566f14300e1",
+        "maskedOsSha256": "90350df1f497719cc3789bf56fa8e4f411b88e8a1d4ff2515a16fffd44e20db0"
+      },
+      "after": {
+        "bytes": 1125240,
+        "osSha256": "8dc849846962c6deaedbd189b5edde6b3e8cd047ac03f3e9775e7566f14300e1",
+        "maskedOsSha256": "90350df1f497719cc3789bf56fa8e4f411b88e8a1d4ff2515a16fffd44e20db0"
+      }
+    },
+    {
+      "moduleIds": [
+        "airwindows-chorus",
+        "synth"
+      ],
+      "keepStockFx2": true,
+      "before": {
+        "bytes": 1125240,
+        "osSha256": "ab1c64d3f47bc7509c0c21581a5c8ef497d6d26cefed08c6c245f602a763e293",
+        "maskedOsSha256": "9fe1fdd139a2099ac5e327c69c820d0240859b899af7178a74796c4181dd93c0"
+      },
+      "after": {
+        "bytes": 1125240,
+        "osSha256": "ab1c64d3f47bc7509c0c21581a5c8ef497d6d26cefed08c6c245f602a763e293",
+        "maskedOsSha256": "9fe1fdd139a2099ac5e327c69c820d0240859b899af7178a74796c4181dd93c0"
+      }
+    },
+    {
+      "moduleIds": [
+        "airwindows-chorus",
+        "usb-audio-out-tracks-main-cue"
+      ],
+      "keepStockFx2": false,
+      "before": {
+        "bytes": 1115534,
+        "osSha256": "e3c0520ba8759bd3bf1bfaa8d213d711d1ecbd164d025ccf833cdb834c9fe774",
+        "maskedOsSha256": "c58ea0bdf107de6e4fac319ffa5f8fc1b798eface7bbaefadb6f3a32a6dbc452"
+      },
+      "after": {
+        "bytes": 1115534,
+        "osSha256": "e3c0520ba8759bd3bf1bfaa8d213d711d1ecbd164d025ccf833cdb834c9fe774",
+        "maskedOsSha256": "c58ea0bdf107de6e4fac319ffa5f8fc1b798eface7bbaefadb6f3a32a6dbc452"
+      }
+    },
+    {
+      "moduleIds": [
+        "airwindows-chorus",
+        "usb-audio-out-tracks-main-cue"
+      ],
+      "keepStockFx2": true,
+      "before": {
+        "bytes": 1115534,
+        "osSha256": "c855fbfd88fa7dbc379e5d44d048078aebd0e4410dd8652185ab48e359895210",
+        "maskedOsSha256": "5f346516926eb7850ced3f3124d06f5d39ecce5e3f78d91aa2719f23e5e99234"
+      },
+      "after": {
+        "bytes": 1115534,
+        "osSha256": "c855fbfd88fa7dbc379e5d44d048078aebd0e4410dd8652185ab48e359895210",
+        "maskedOsSha256": "5f346516926eb7850ced3f3124d06f5d39ecce5e3f78d91aa2719f23e5e99234"
+      }
+    },
+    {
+      "moduleIds": [
+        "airwindows-chorus",
+        "vector"
+      ],
+      "keepStockFx2": false,
+      "before": {
+        "bytes": 1121076,
+        "osSha256": "4435f630bcae5ff52106c8de022c27f9e2c7e12dd4dab03929911eb15193c4f8",
+        "maskedOsSha256": "19e2378caa863e547fa177364d196ce36456b95b35635fbaef8b17d09fbb1d5b"
+      },
+      "after": {
+        "bytes": 1121076,
+        "osSha256": "4435f630bcae5ff52106c8de022c27f9e2c7e12dd4dab03929911eb15193c4f8",
+        "maskedOsSha256": "19e2378caa863e547fa177364d196ce36456b95b35635fbaef8b17d09fbb1d5b"
+      }
+    },
+    {
+      "moduleIds": [
+        "airwindows-chorus",
+        "vector"
+      ],
+      "keepStockFx2": true,
+      "before": {
+        "bytes": 1121076,
+        "osSha256": "c68eb93e1346ecb87f711a41018c5fc36468891dd646bf33089453f76e64ea9a",
+        "maskedOsSha256": "42dd305131322c980219ad3970e1e7aa10c2bc798a24f12c22ac51a28e017674"
+      },
+      "after": {
+        "bytes": 1121076,
+        "osSha256": "c68eb93e1346ecb87f711a41018c5fc36468891dd646bf33089453f76e64ea9a",
+        "maskedOsSha256": "42dd305131322c980219ad3970e1e7aa10c2bc798a24f12c22ac51a28e017674"
+      }
+    },
+    {
+      "moduleIds": [
+        "cc-map",
+        "sidechain-compressor"
+      ],
+      "keepStockFx2": false,
+      "before": {
+        "bytes": 1112560,
+        "osSha256": "ecb1e3bf5b608d08566b8fdea5a38798e889cef91d4af54441db75cfc04f3015",
+        "maskedOsSha256": "ecb1e3bf5b608d08566b8fdea5a38798e889cef91d4af54441db75cfc04f3015"
+      },
+      "after": {
+        "bytes": 1112560,
+        "osSha256": "ecb1e3bf5b608d08566b8fdea5a38798e889cef91d4af54441db75cfc04f3015",
+        "maskedOsSha256": "ecb1e3bf5b608d08566b8fdea5a38798e889cef91d4af54441db75cfc04f3015"
+      }
+    },
+    {
+      "moduleIds": [
+        "cc-map",
+        "sidechain-compressor"
+      ],
+      "keepStockFx2": true,
+      "before": {
+        "bytes": 1112560,
+        "osSha256": "ad6059ae87473a99cb191c6143c12c535fb9292a9c45bb3a8d2f3421d350a21e",
+        "maskedOsSha256": "ad6059ae87473a99cb191c6143c12c535fb9292a9c45bb3a8d2f3421d350a21e"
+      },
+      "after": {
+        "bytes": 1112560,
+        "osSha256": "ad6059ae87473a99cb191c6143c12c535fb9292a9c45bb3a8d2f3421d350a21e",
+        "maskedOsSha256": "ad6059ae87473a99cb191c6143c12c535fb9292a9c45bb3a8d2f3421d350a21e"
+      }
+    },
+    {
+      "moduleIds": [
+        "euclid",
+        "airwindows-chorus"
+      ],
+      "keepStockFx2": false,
+      "before": {
+        "bytes": 1114986,
+        "osSha256": "ff8606d4c77d5f8e9da774d470be1017b0b48ca4ff9ee3671a00f10b0111bfbc",
+        "maskedOsSha256": "0a5987523f2ae868b9c978edbdf5f73ad3cac135b561435ad95431d014fd459e"
+      },
+      "after": {
+        "bytes": 1114986,
+        "osSha256": "ff8606d4c77d5f8e9da774d470be1017b0b48ca4ff9ee3671a00f10b0111bfbc",
+        "maskedOsSha256": "0a5987523f2ae868b9c978edbdf5f73ad3cac135b561435ad95431d014fd459e"
+      }
+    },
+    {
+      "moduleIds": [
+        "euclid",
+        "airwindows-chorus"
+      ],
+      "keepStockFx2": true,
+      "before": {
+        "bytes": 1114986,
+        "osSha256": "7b704bdd5224a2b402598bd589ed96c11978da8e16b851dd2ac497d48198f191",
+        "maskedOsSha256": "a95d0c26ceaf36803df6aa9781957a5b3a2775a2d96ae2e948d66e4a0ca1e642"
+      },
+      "after": {
+        "bytes": 1114986,
+        "osSha256": "7b704bdd5224a2b402598bd589ed96c11978da8e16b851dd2ac497d48198f191",
+        "maskedOsSha256": "a95d0c26ceaf36803df6aa9781957a5b3a2775a2d96ae2e948d66e4a0ca1e642"
+      }
+    },
+    {
+      "moduleIds": [
+        "miniverb",
+        "airwindows-chorus"
+      ],
+      "keepStockFx2": false,
+      "before": {
+        "bytes": 1112560,
+        "osSha256": "ecff84db593b39dfa4e715d9d2dafa84b939731cc607178dc1f1a3c6a52ad633",
+        "maskedOsSha256": "ecff84db593b39dfa4e715d9d2dafa84b939731cc607178dc1f1a3c6a52ad633"
+      },
+      "after": {
+        "bytes": 1112560,
+        "osSha256": "ecff84db593b39dfa4e715d9d2dafa84b939731cc607178dc1f1a3c6a52ad633",
+        "maskedOsSha256": "ecff84db593b39dfa4e715d9d2dafa84b939731cc607178dc1f1a3c6a52ad633"
+      }
+    },
+    {
+      "moduleIds": [
+        "miniverb",
+        "airwindows-chorus"
+      ],
+      "keepStockFx2": true,
+      "before": {
+        "bytes": 1112560,
+        "osSha256": "b88edc7a83068197fbc0c85c08ed2ffb25bdce13a1e844513535b3c3b70e0f20",
+        "maskedOsSha256": "b88edc7a83068197fbc0c85c08ed2ffb25bdce13a1e844513535b3c3b70e0f20"
+      },
+      "after": {
+        "bytes": 1112560,
+        "osSha256": "b88edc7a83068197fbc0c85c08ed2ffb25bdce13a1e844513535b3c3b70e0f20",
+        "maskedOsSha256": "b88edc7a83068197fbc0c85c08ed2ffb25bdce13a1e844513535b3c3b70e0f20"
+      }
+    },
+    {
+      "moduleIds": [
+        "repitch",
+        "airwindows-chorus"
+      ],
+      "keepStockFx2": false,
+      "before": {
+        "bytes": 1112560,
+        "osSha256": "cd2a04fd2077d515867a24e76f58501373f04fa1397062d1bcf45eced3e0d8b0",
+        "maskedOsSha256": "cd2a04fd2077d515867a24e76f58501373f04fa1397062d1bcf45eced3e0d8b0"
+      },
+      "after": {
+        "bytes": 1112560,
+        "osSha256": "cd2a04fd2077d515867a24e76f58501373f04fa1397062d1bcf45eced3e0d8b0",
+        "maskedOsSha256": "cd2a04fd2077d515867a24e76f58501373f04fa1397062d1bcf45eced3e0d8b0"
+      }
+    },
+    {
+      "moduleIds": [
+        "repitch",
+        "airwindows-chorus"
+      ],
+      "keepStockFx2": true,
+      "before": {
+        "bytes": 1112560,
+        "osSha256": "2c42466d1f6ef2148b007f06c9adc87e813110fe22c6662fe224e19a7a69fa92",
+        "maskedOsSha256": "2c42466d1f6ef2148b007f06c9adc87e813110fe22c6662fe224e19a7a69fa92"
+      },
+      "after": {
+        "bytes": 1112560,
+        "osSha256": "2c42466d1f6ef2148b007f06c9adc87e813110fe22c6662fe224e19a7a69fa92",
+        "maskedOsSha256": "2c42466d1f6ef2148b007f06c9adc87e813110fe22c6662fe224e19a7a69fa92"
+      }
+    },
+    {
+      "moduleIds": [
+        "repitch",
+        "synth"
+      ],
+      "keepStockFx2": false,
+      "before": {
+        "bytes": 1125240,
+        "osSha256": "eae1f3344ffb9cb6714fe204011bc83f415d048022b4fc67a7c9148107dc2798",
+        "maskedOsSha256": "70bd2017a28c49efcf6d23f9685553d9821022d200bb89294146de7303ee24a5"
+      },
+      "after": {
+        "bytes": 1125240,
+        "osSha256": "eae1f3344ffb9cb6714fe204011bc83f415d048022b4fc67a7c9148107dc2798",
+        "maskedOsSha256": "70bd2017a28c49efcf6d23f9685553d9821022d200bb89294146de7303ee24a5"
+      }
+    },
+    {
+      "moduleIds": [
+        "repitch",
+        "synth"
+      ],
+      "keepStockFx2": true,
+      "before": {
+        "bytes": 1125240,
+        "osSha256": "97016bf7cc4bfdfec4f184bd70972746ef24cb7881c6980fe5d7b1cc064e4def",
+        "maskedOsSha256": "9cfd7975a8746467c4b5e382d23ad85e89ac3a1f6d0930dba1a5e158bdf0640c"
+      },
+      "after": {
+        "bytes": 1125240,
+        "osSha256": "97016bf7cc4bfdfec4f184bd70972746ef24cb7881c6980fe5d7b1cc064e4def",
+        "maskedOsSha256": "9cfd7975a8746467c4b5e382d23ad85e89ac3a1f6d0930dba1a5e158bdf0640c"
+      }
+    },
+    {
+      "moduleIds": [
+        "tapeecho",
+        "airwindows-chorus"
+      ],
+      "keepStockFx2": false,
+      "before": {
+        "bytes": 1215051,
+        "osSha256": "8d313b8d9ca5d12b5234857b29a8fa2ccc184ea436b8d970334674ab89ba173d",
+        "maskedOsSha256": "6a6a1fb8343ca532d8b9754c1388736a68327ccf6a302926c6729787e0bee1e8"
+      },
+      "after": {
+        "bytes": 1215051,
+        "osSha256": "8d313b8d9ca5d12b5234857b29a8fa2ccc184ea436b8d970334674ab89ba173d",
+        "maskedOsSha256": "6a6a1fb8343ca532d8b9754c1388736a68327ccf6a302926c6729787e0bee1e8"
+      }
+    },
+    {
+      "moduleIds": [
+        "tapeecho",
+        "airwindows-chorus"
+      ],
+      "keepStockFx2": true,
+      "before": {
+        "bytes": 1215051,
+        "osSha256": "540312a964f1daacfb8fd7a9305e98e646770115467a79b390c0887ce2db14d4",
+        "maskedOsSha256": "6750548465fece2af8b5b62fdfef5ba37867fcf4c18cadf3431f4a9f97ba4309"
+      },
+      "after": {
+        "bytes": 1215051,
+        "osSha256": "540312a964f1daacfb8fd7a9305e98e646770115467a79b390c0887ce2db14d4",
+        "maskedOsSha256": "6750548465fece2af8b5b62fdfef5ba37867fcf4c18cadf3431f4a9f97ba4309"
+      }
+    },
+    {
+      "moduleIds": [
+        "tapehead",
+        "airwindows-chorus"
+      ],
+      "keepStockFx2": false,
+      "before": {
+        "bytes": 1112560,
+        "osSha256": "48536018c2874d4f61c5165a7eb4a73e8f542c054890dacb94555411f8cb5005",
+        "maskedOsSha256": "48536018c2874d4f61c5165a7eb4a73e8f542c054890dacb94555411f8cb5005"
+      },
+      "after": {
+        "bytes": 1112560,
+        "osSha256": "48536018c2874d4f61c5165a7eb4a73e8f542c054890dacb94555411f8cb5005",
+        "maskedOsSha256": "48536018c2874d4f61c5165a7eb4a73e8f542c054890dacb94555411f8cb5005"
+      }
+    },
+    {
+      "moduleIds": [
+        "tapehead",
+        "airwindows-chorus"
+      ],
+      "keepStockFx2": true,
+      "before": {
+        "bytes": 1112560,
+        "osSha256": "3e2033ee896eeea0873b89e707009148c64a6ced386f45aa4cc2ad45693420b7",
+        "maskedOsSha256": "3e2033ee896eeea0873b89e707009148c64a6ced386f45aa4cc2ad45693420b7"
+      },
+      "after": {
+        "bytes": 1112560,
+        "osSha256": "3e2033ee896eeea0873b89e707009148c64a6ced386f45aa4cc2ad45693420b7",
+        "maskedOsSha256": "3e2033ee896eeea0873b89e707009148c64a6ced386f45aa4cc2ad45693420b7"
+      }
+    },
+    {
+      "moduleIds": [
+        "usb-audio-out-tracks-main-cue",
+        "cc-map"
+      ],
+      "keepStockFx2": false,
+      "before": {
+        "bytes": 1115534,
+        "osSha256": "b614686a4f725681c4d3490315a742d594daf4989ac579639882d62b4be63781",
+        "maskedOsSha256": "e2a03706b31345424e6ebeee3fc687c69d637d16b49fd76b451c34cfdcf7f11c"
+      },
+      "after": {
+        "bytes": 1115534,
+        "osSha256": "b614686a4f725681c4d3490315a742d594daf4989ac579639882d62b4be63781",
+        "maskedOsSha256": "e2a03706b31345424e6ebeee3fc687c69d637d16b49fd76b451c34cfdcf7f11c"
+      }
+    },
+    {
+      "moduleIds": [
+        "usb-audio-out-tracks-main-cue",
+        "cc-map"
+      ],
+      "keepStockFx2": true,
+      "before": {
+        "bytes": 1115534,
+        "osSha256": "ee4292c5f12e457fd9a14c1d0f8e0a5682239f7d289a63f185e2116355a5873e",
+        "maskedOsSha256": "f292dbe319899fa06e135fb8b0f1c9f8a873c7c2698f2a8481c3044090129bab"
+      },
+      "after": {
+        "bytes": 1115534,
+        "osSha256": "ee4292c5f12e457fd9a14c1d0f8e0a5682239f7d289a63f185e2116355a5873e",
+        "maskedOsSha256": "f292dbe319899fa06e135fb8b0f1c9f8a873c7c2698f2a8481c3044090129bab"
+      }
+    },
+    {
+      "moduleIds": [
+        "airwindows-chorus",
+        "quantizer",
+        "previewvol"
+      ],
+      "keepStockFx2": false,
+      "before": {
+        "bytes": 1115065,
+        "osSha256": "cdad7f67f62adc70b827da0c953b0a0e039bc96b806450d1195125eddb29c869",
+        "maskedOsSha256": "664f54c42e5a4fe3f435612ecb10db35e71ccee3c464ad159c87c074e75f7113"
+      },
+      "after": {
+        "bytes": 1115065,
+        "osSha256": "cdad7f67f62adc70b827da0c953b0a0e039bc96b806450d1195125eddb29c869",
+        "maskedOsSha256": "664f54c42e5a4fe3f435612ecb10db35e71ccee3c464ad159c87c074e75f7113"
+      }
+    },
+    {
+      "moduleIds": [
+        "airwindows-chorus",
+        "quantizer",
+        "previewvol"
+      ],
+      "keepStockFx2": true,
+      "before": {
+        "bytes": 1115065,
+        "osSha256": "5deb2d93a6bd80e58b7694e4e04bacee0d9ac270ba23af7181f587f9ad9ae7b6",
+        "maskedOsSha256": "18d2845a05f217a35801a4c8bfb895ec880840c0f4386639c062ab1e159fa9ce"
+      },
+      "after": {
+        "bytes": 1115065,
+        "osSha256": "5deb2d93a6bd80e58b7694e4e04bacee0d9ac270ba23af7181f587f9ad9ae7b6",
+        "maskedOsSha256": "18d2845a05f217a35801a4c8bfb895ec880840c0f4386639c062ab1e159fa9ce"
+      }
+    },
+    {
+      "moduleIds": [
+        "tapehead",
+        "usb-audio-out-tracks-main-cue",
+        "sidechain-compressor"
+      ],
+      "keepStockFx2": false,
+      "before": {
+        "bytes": 1115534,
+        "osSha256": "48e425958db72309549c85f3d3b74850f6d77cfed5469fb48ccf6041f197f2d1",
+        "maskedOsSha256": "258f9f20979dc936686acb8549f816d62d74069398677cbc273784bebd4046a6"
+      },
+      "after": {
+        "bytes": 1115534,
+        "osSha256": "48e425958db72309549c85f3d3b74850f6d77cfed5469fb48ccf6041f197f2d1",
+        "maskedOsSha256": "258f9f20979dc936686acb8549f816d62d74069398677cbc273784bebd4046a6"
+      }
+    },
+    {
+      "moduleIds": [
+        "tapehead",
+        "usb-audio-out-tracks-main-cue",
+        "sidechain-compressor"
+      ],
+      "keepStockFx2": true,
+      "before": {
+        "bytes": 1115534,
+        "osSha256": "65638170e047f4e29f1e69ada88a772d0dce84fd5b87c5beca5958c532f8c5ed",
+        "maskedOsSha256": "f50ebe3316c771201dda3d8e4ad904cab84d12997ad3bba6ee436da485581618"
+      },
+      "after": {
+        "bytes": 1115534,
+        "osSha256": "65638170e047f4e29f1e69ada88a772d0dce84fd5b87c5beca5958c532f8c5ed",
+        "maskedOsSha256": "f50ebe3316c771201dda3d8e4ad904cab84d12997ad3bba6ee436da485581618"
+      }
+    },
+    {
+      "moduleIds": [
+        "airwindows-chorus",
+        "usb-audio-out-tracks-main-cue",
+        "cc-map",
+        "sidechain-compressor"
+      ],
+      "keepStockFx2": false,
+      "before": {
+        "bytes": 1115534,
+        "osSha256": "54d142fc4c15d8b16c5c1fb5228e9c752531801a4ba64f7f269b8e575199ed3f",
+        "maskedOsSha256": "01902cab905624c32f662aa89edaf0f5274c212bec350ef7ffb833084168dfad"
+      },
+      "after": {
+        "bytes": 1115534,
+        "osSha256": "54d142fc4c15d8b16c5c1fb5228e9c752531801a4ba64f7f269b8e575199ed3f",
+        "maskedOsSha256": "01902cab905624c32f662aa89edaf0f5274c212bec350ef7ffb833084168dfad"
+      }
+    },
+    {
+      "moduleIds": [
+        "airwindows-chorus",
+        "usb-audio-out-tracks-main-cue",
+        "cc-map",
+        "sidechain-compressor"
+      ],
+      "keepStockFx2": true,
+      "before": {
+        "bytes": 1115534,
+        "osSha256": "7ee1e92000da61bd530cc527b67912e2f718988fb934a5068e0bc758c1dcfa3b",
+        "maskedOsSha256": "fbd78af45e6055f97483055a0abf20ee526e1d840bc96328f4bea74dc07bc26b"
+      },
+      "after": {
+        "bytes": 1115534,
+        "osSha256": "7ee1e92000da61bd530cc527b67912e2f718988fb934a5068e0bc758c1dcfa3b",
+        "maskedOsSha256": "fbd78af45e6055f97483055a0abf20ee526e1d840bc96328f4bea74dc07bc26b"
+      }
+    },
+    {
+      "moduleIds": [
+        "analog-bassdrum",
+        "usb-audio-out-tracks-main-cue",
+        "previewvol",
+        "cc-map"
+      ],
+      "keepStockFx2": false,
+      "before": {
+        "bytes": 1268863,
+        "osSha256": "e4b6fd2496806a9fc7ff11e620a937d81328a41b5f8af852a5f86efadab688f3",
+        "maskedOsSha256": "91a1fcd831b651f63c01d1e39c744de41c098d5f300931926225e8af0c5a05e7"
+      },
+      "after": {
+        "bytes": 1268863,
+        "osSha256": "e4b6fd2496806a9fc7ff11e620a937d81328a41b5f8af852a5f86efadab688f3",
+        "maskedOsSha256": "91a1fcd831b651f63c01d1e39c744de41c098d5f300931926225e8af0c5a05e7"
+      }
+    },
+    {
+      "moduleIds": [
+        "analog-bassdrum",
+        "usb-audio-out-tracks-main-cue",
+        "previewvol",
+        "cc-map"
+      ],
+      "keepStockFx2": true,
+      "before": {
+        "bytes": 1268863,
+        "osSha256": "fdbf8c2b169dbcf169004c6645bbb32aa71f24fd18cbbb9e3639b573168f2058",
+        "maskedOsSha256": "9fa3954c21e591ec1f777b7467799e0cd2e726e7f5b9151d025956c85f377585"
+      },
+      "after": {
+        "bytes": 1268863,
+        "osSha256": "fdbf8c2b169dbcf169004c6645bbb32aa71f24fd18cbbb9e3639b573168f2058",
+        "maskedOsSha256": "9fa3954c21e591ec1f777b7467799e0cd2e726e7f5b9151d025956c85f377585"
+      }
+    },
+    {
+      "moduleIds": [
+        "euclid",
+        "airwindows-chorus",
+        "cc-map",
+        "recorder-loop-fix"
+      ],
+      "keepStockFx2": false,
+      "before": {
+        "bytes": 1114986,
+        "osSha256": "7b2e31d17caacd6edb42f30fe86906689d513089ecab5b689843e5d1d80e9bc3",
+        "maskedOsSha256": "d67c5ac15c2dc7677a9f8ec158ed52aaea729f0c13577ae9aa56b7039bdebea5"
+      },
+      "after": {
+        "bytes": 1114986,
+        "osSha256": "7b2e31d17caacd6edb42f30fe86906689d513089ecab5b689843e5d1d80e9bc3",
+        "maskedOsSha256": "d67c5ac15c2dc7677a9f8ec158ed52aaea729f0c13577ae9aa56b7039bdebea5"
+      }
+    },
+    {
+      "moduleIds": [
+        "euclid",
+        "airwindows-chorus",
+        "cc-map",
+        "recorder-loop-fix"
+      ],
+      "keepStockFx2": true,
+      "before": {
+        "bytes": 1114986,
+        "osSha256": "725ed3605b680998050f9e5332af762f9c703bec8806449d7391243a2de6b8f9",
+        "maskedOsSha256": "960237bced08b282e4ba343ba5526aa9db2c1b1db96bd7d8f9a2fba142a7ac9c"
+      },
+      "after": {
+        "bytes": 1114986,
+        "osSha256": "725ed3605b680998050f9e5332af762f9c703bec8806449d7391243a2de6b8f9",
+        "maskedOsSha256": "960237bced08b282e4ba343ba5526aa9db2c1b1db96bd7d8f9a2fba142a7ac9c"
+      }
+    },
+    {
+      "moduleIds": [
+        "euclid",
+        "repitch",
+        "previewvol",
+        "cc-map"
+      ],
+      "keepStockFx2": false,
+      "before": {
+        "bytes": 1114986,
+        "osSha256": "dd4ca2aa8fdff3273abe3dbed6b600d9bf7adf87895e6bca802cb3309383db90",
+        "maskedOsSha256": "671403e4ffe58cefd579f4a676fcc511e0f5083fe65288424b8795ae0550f7b0"
+      },
+      "after": {
+        "bytes": 1114986,
+        "osSha256": "dd4ca2aa8fdff3273abe3dbed6b600d9bf7adf87895e6bca802cb3309383db90",
+        "maskedOsSha256": "671403e4ffe58cefd579f4a676fcc511e0f5083fe65288424b8795ae0550f7b0"
+      }
+    },
+    {
+      "moduleIds": [
+        "euclid",
+        "repitch",
+        "previewvol",
+        "cc-map"
+      ],
+      "keepStockFx2": true,
+      "before": {
+        "bytes": 1114986,
+        "osSha256": "444476936d2c8082e2771a64c3d340f6b8222386db5536560f34c0e278ad5fbd",
+        "maskedOsSha256": "16db456c3a8176ebb062fae2985fc651f017c868c9a78d588743bf2c99f66ccd"
+      },
+      "after": {
+        "bytes": 1114986,
+        "osSha256": "444476936d2c8082e2771a64c3d340f6b8222386db5536560f34c0e278ad5fbd",
+        "maskedOsSha256": "16db456c3a8176ebb062fae2985fc651f017c868c9a78d588743bf2c99f66ccd"
+      }
+    },
+    {
+      "moduleIds": [
+        "euclid",
+        "tapehead",
+        "airwindows-chorus",
+        "sidechain-compressor"
+      ],
+      "keepStockFx2": false,
+      "before": {
+        "bytes": 1114986,
+        "osSha256": "30cffdbc3b5d59fbe72e2688ac01ead76f494a419fd9198d92d7d1d391d258e9",
+        "maskedOsSha256": "f9b11378ac8684cbece7c16e93a5817e625c3d9ecd71b2337890d457c7ac161a"
+      },
+      "after": {
+        "bytes": 1114986,
+        "osSha256": "30cffdbc3b5d59fbe72e2688ac01ead76f494a419fd9198d92d7d1d391d258e9",
+        "maskedOsSha256": "f9b11378ac8684cbece7c16e93a5817e625c3d9ecd71b2337890d457c7ac161a"
+      }
+    },
+    {
+      "moduleIds": [
+        "euclid",
+        "tapehead",
+        "airwindows-chorus",
+        "sidechain-compressor"
+      ],
+      "keepStockFx2": true,
+      "before": {
+        "bytes": 1114986,
+        "osSha256": "7a182359f23fb413b2eca0797390b300269f9ae133d9ed08bee6b2c8a88e4f7d",
+        "maskedOsSha256": "bd1cad6081cc8472be1418b31d74a377fd11a471794ad44d874be7a8d2c56334"
+      },
+      "after": {
+        "bytes": 1114986,
+        "osSha256": "7a182359f23fb413b2eca0797390b300269f9ae133d9ed08bee6b2c8a88e4f7d",
+        "maskedOsSha256": "bd1cad6081cc8472be1418b31d74a377fd11a471794ad44d874be7a8d2c56334"
+      }
+    },
+    {
+      "moduleIds": [
+        "miniverb",
+        "euclid",
+        "repitch",
+        "airwindows-chorus",
+        "bbd"
+      ],
+      "keepStockFx2": false,
+      "before": {
+        "refused": "payload A: AIR CHORUS overruns the region (2834 > 2724 words)"
+      },
+      "after": {
+        "refused": "payload A: AIR CHORUS overruns the region (2834 > 2724 words)"
+      }
+    },
+    {
+      "moduleIds": [
+        "miniverb",
+        "euclid",
+        "repitch",
+        "airwindows-chorus",
+        "bbd"
+      ],
+      "keepStockFx2": true,
+      "before": {
+        "refused": "payload A: AIR CHORUS overruns the region (2834 > 2724 words)"
+      },
+      "after": {
+        "refused": "payload A: AIR CHORUS overruns the region (2834 > 2724 words)"
+      }
+    },
+    {
+      "moduleIds": [
+        "euclid",
+        "repitch",
+        "airwindows-chorus",
+        "usb-audio-out-tracks-main-cue",
+        "synth",
+        "previewvol"
+      ],
+      "keepStockFx2": false,
+      "before": {
+        "bytes": 1130024,
+        "osSha256": "8beded839ececa93579a4df81e3a109bdfa8dcd1fc1f00c5faa7f2a6936ab9a1",
+        "maskedOsSha256": "5ea2c0457d9efb027640765e2b3f88411f4826e3c044c45d15bd8a16526e4588"
+      },
+      "after": {
+        "bytes": 1130024,
+        "osSha256": "8beded839ececa93579a4df81e3a109bdfa8dcd1fc1f00c5faa7f2a6936ab9a1",
+        "maskedOsSha256": "5ea2c0457d9efb027640765e2b3f88411f4826e3c044c45d15bd8a16526e4588"
+      }
+    },
+    {
+      "moduleIds": [
+        "euclid",
+        "repitch",
+        "airwindows-chorus",
+        "usb-audio-out-tracks-main-cue",
+        "synth",
+        "previewvol"
+      ],
+      "keepStockFx2": true,
+      "before": {
+        "bytes": 1130024,
+        "osSha256": "2d7210c2ab3c59962df135a84dc021f467afbd71afc74b8de12e9d3a4a4c4637",
+        "maskedOsSha256": "6d630d09119c6ecc47fba9deac9eecc351d3be6a24d64aec63d2c99248e532aa"
+      },
+      "after": {
+        "bytes": 1130024,
+        "osSha256": "2d7210c2ab3c59962df135a84dc021f467afbd71afc74b8de12e9d3a4a4c4637",
+        "maskedOsSha256": "6d630d09119c6ecc47fba9deac9eecc351d3be6a24d64aec63d2c99248e532aa"
+      }
+    },
+    {
+      "moduleIds": [
+        "miniverb",
+        "tapeecho",
+        "repitch",
+        "tapehead",
+        "vector",
+        "output-matrix"
+      ],
+      "keepStockFx2": false,
+      "before": {
+        "bytes": 1224396,
+        "osSha256": "6314595c2f5126b19d123fa72341022a428598c3c6f55ca295a4fa6edda5e4b1",
+        "maskedOsSha256": "e9836f8c9ef3e946b166936395ac47ca295aadeb680d4b161afc882c682122b3"
+      },
+      "after": {
+        "bytes": 1224396,
+        "osSha256": "6314595c2f5126b19d123fa72341022a428598c3c6f55ca295a4fa6edda5e4b1",
+        "maskedOsSha256": "e9836f8c9ef3e946b166936395ac47ca295aadeb680d4b161afc882c682122b3"
+      }
+    },
+    {
+      "moduleIds": [
+        "miniverb",
+        "tapeecho",
+        "repitch",
+        "tapehead",
+        "vector",
+        "output-matrix"
+      ],
+      "keepStockFx2": true,
+      "before": {
+        "bytes": 1224396,
+        "osSha256": "c8cb5ed910614b335e01b04dbe7314b5b892748234c3494c4740f704aa0dc3d8",
+        "maskedOsSha256": "40272ff72637f9b5c12df87221e75ac8325f76a76c1c2a4cc5a32e04d06a7a28"
+      },
+      "after": {
+        "bytes": 1224396,
+        "osSha256": "c8cb5ed910614b335e01b04dbe7314b5b892748234c3494c4740f704aa0dc3d8",
+        "maskedOsSha256": "40272ff72637f9b5c12df87221e75ac8325f76a76c1c2a4cc5a32e04d06a7a28"
+      }
+    },
+    {
+      "moduleIds": [
+        "tapehead",
+        "airwindows-chorus",
+        "everb",
+        "usb-audio-out-tracks-main-cue",
+        "quantizer",
+        "previewvol"
+      ],
+      "keepStockFx2": false,
+      "before": {
+        "refused": "payload A: EVERB overruns the region (2805 > 2724 words)"
+      },
+      "after": {
+        "refused": "payload A: EVERB overruns the region (2805 > 2724 words)"
+      }
+    },
+    {
+      "moduleIds": [
+        "tapehead",
+        "airwindows-chorus",
+        "everb",
+        "usb-audio-out-tracks-main-cue",
+        "quantizer",
+        "previewvol"
+      ],
+      "keepStockFx2": true,
+      "before": {
+        "refused": "payload A: EVERB overruns the region (2805 > 2724 words)"
+      },
+      "after": {
+        "refused": "payload A: EVERB overruns the region (2805 > 2724 words)"
+      }
+    },
+    {
+      "moduleIds": [
+        "euclid",
+        "airwindows-chorus",
+        "cc-map",
+        "sidechain-compressor",
+        "vector",
+        "mute-modes",
+        "recorder-loop-fix"
+      ],
+      "keepStockFx2": false,
+      "before": {
+        "refused": "hold cave (copy) not free"
+      },
+      "after": {
+        "refused": "MUTE_MODES table PERSONALIZE labels at 0x400d7c80 not free"
+      }
+    },
+    {
+      "moduleIds": [
+        "euclid",
+        "airwindows-chorus",
+        "cc-map",
+        "sidechain-compressor",
+        "vector",
+        "mute-modes",
+        "recorder-loop-fix"
+      ],
+      "keepStockFx2": true,
+      "before": {
+        "refused": "past the stock zero run (or into the long chooser list)"
+      },
+      "after": {
+        "refused": "MUTE_MODES table PERSONALIZE labels at 0x400d7b80 not free"
+      }
+    },
+    {
+      "moduleIds": [
+        "miniverb",
+        "euclid",
+        "repitch",
+        "airwindows-chorus",
+        "playmodes",
+        "mute-modes",
+        "recorder-loop-fix"
+      ],
+      "keepStockFx2": false,
+      "before": {
+        "refused": "past the stock zero run (or into the long chooser list)"
+      },
+      "after": {
+        "refused": "MUTE_MODES table PERSONALIZE labels at 0x400d7c00 not free"
+      }
+    },
+    {
+      "moduleIds": [
+        "miniverb",
+        "euclid",
+        "repitch",
+        "airwindows-chorus",
+        "playmodes",
+        "mute-modes",
+        "recorder-loop-fix"
+      ],
+      "keepStockFx2": true,
+      "before": {
+        "refused": "past the stock zero run (or into the long chooser list)"
+      },
+      "after": {
+        "refused": "MUTE_MODES table PERSONALIZE labels at 0x400d7b80 not free"
+      }
+    },
+    {
+      "moduleIds": [
+        "quantizer",
+        "previewvol",
+        "cc-map",
+        "sidechain-compressor",
+        "playmodes",
+        "recorder-loop-fix",
+        "output-matrix"
+      ],
+      "keepStockFx2": false,
+      "before": {
+        "bytes": 1121385,
+        "osSha256": "9bf354ac1c0c93237e47ddb21ca941711b9b19695330f224fd194b4ead6d628a",
+        "maskedOsSha256": "2b239b7c2edc2040cf089afe02c63165aaaa5e17137a38ab2d762f045df03df0"
+      },
+      "after": {
+        "bytes": 1121385,
+        "osSha256": "9bf354ac1c0c93237e47ddb21ca941711b9b19695330f224fd194b4ead6d628a",
+        "maskedOsSha256": "2b239b7c2edc2040cf089afe02c63165aaaa5e17137a38ab2d762f045df03df0"
+      }
+    },
+    {
+      "moduleIds": [
+        "quantizer",
+        "previewvol",
+        "cc-map",
+        "sidechain-compressor",
+        "playmodes",
+        "recorder-loop-fix",
+        "output-matrix"
+      ],
+      "keepStockFx2": true,
+      "before": {
+        "bytes": 1121385,
+        "osSha256": "7936058f3168dc099bd33e4d899593be47061c43ddc816507d93fcffa32e05f8",
+        "maskedOsSha256": "12bfe6472425afbec42dd0c65d7ad859c525ba433c14850436c46b2777fec0e5"
+      },
+      "after": {
+        "bytes": 1121385,
+        "osSha256": "7936058f3168dc099bd33e4d899593be47061c43ddc816507d93fcffa32e05f8",
+        "maskedOsSha256": "12bfe6472425afbec42dd0c65d7ad859c525ba433c14850436c46b2777fec0e5"
+      }
+    },
+    {
+      "moduleIds": [
+        "euclid",
+        "airwindows-chorus",
+        "everb",
+        "bbd",
+        "usb-audio-out-tracks-main-cue",
+        "synth",
+        "playmodes",
+        "mute-modes"
+      ],
+      "keepStockFx2": false,
+      "before": {
+        "refused": "label formatters do not fit: EUCLID slot 5 needs 356 B; the clone window ends at 0x400d7c3c and the overflow run at 0x400d2ce0 (next free 0x400d2ce0)"
+      },
+      "after": {
+        "refused": "label formatters do not fit: EUCLID slot 5 needs 356 B; the clone window ends at 0x400d7c3c and the overflow run at 0x400d2ce0 (next free 0x400d2ce0)"
+      }
+    },
+    {
+      "moduleIds": [
+        "euclid",
+        "airwindows-chorus",
+        "everb",
+        "bbd",
+        "usb-audio-out-tracks-main-cue",
+        "synth",
+        "playmodes",
+        "mute-modes"
+      ],
+      "keepStockFx2": true,
+      "before": {
+        "refused": "label formatters do not fit: EUCLID slot 4 needs 352 B; the clone window ends at 0x400d7bbc and the overflow run at 0x400d2ce0 (next free 0x400d2ce0)"
+      },
+      "after": {
+        "refused": "label formatters do not fit: EUCLID slot 4 needs 352 B; the clone window ends at 0x400d7bbc and the overflow run at 0x400d2ce0 (next free 0x400d2ce0)"
+      }
+    },
+    {
+      "moduleIds": [
+        "tapeecho",
+        "euclid",
+        "airwindows-chorus",
+        "everb",
+        "previewvol",
+        "sidechain-compressor",
+        "playmodes",
+        "mute-modes",
+        "recorder-loop-fix"
+      ],
+      "keepStockFx2": false,
+      "before": {
+        "refused": "seek-bind counter cave not free"
+      },
+      "after": {
+        "refused": "MUTE_MODES table PERSONALIZE labels at 0x400d7c80 not free"
+      }
+    },
+    {
+      "moduleIds": [
+        "tapeecho",
+        "euclid",
+        "airwindows-chorus",
+        "everb",
+        "previewvol",
+        "sidechain-compressor",
+        "playmodes",
+        "mute-modes",
+        "recorder-loop-fix"
+      ],
+      "keepStockFx2": true,
+      "before": {
+        "refused": "past the stock zero run (or into the long chooser list)"
+      },
+      "after": {
+        "refused": "MUTE_MODES table PERSONALIZE labels at 0x400d7c00 not free"
+      }
+    },
+    {
+      "moduleIds": [
+        "miniverb",
+        "repitch",
+        "airwindows-chorus",
+        "everb",
+        "bbd",
+        "usb-audio-out-tracks-main-cue",
+        "cc-map",
+        "playmodes",
+        "recorder-loop-fix",
+        "output-matrix"
+      ],
+      "keepStockFx2": false,
+      "before": {
+        "refused": "past the stock zero run (or into the long chooser list)"
+      },
+      "after": {
+        "refused": "payload A: EVERB overruns the region (4027 > 2724 words)"
+      }
+    },
+    {
+      "moduleIds": [
+        "miniverb",
+        "repitch",
+        "airwindows-chorus",
+        "everb",
+        "bbd",
+        "usb-audio-out-tracks-main-cue",
+        "cc-map",
+        "playmodes",
+        "recorder-loop-fix",
+        "output-matrix"
+      ],
+      "keepStockFx2": true,
+      "before": {
+        "refused": "past the stock zero run (or into the long chooser list)"
+      },
+      "after": {
+        "refused": "payload A: EVERB overruns the region (4027 > 2724 words)"
+      }
+    },
+    {
+      "moduleIds": [
+        "miniverb",
+        "tapeecho",
+        "euclid",
+        "repitch",
+        "airwindows-chorus",
+        "bbd",
+        "usb-audio-out-tracks-main-cue",
+        "previewvol",
+        "cc-map",
+        "sidechain-compressor"
+      ],
+      "keepStockFx2": false,
+      "before": {
+        "refused": "label formatters do not fit: EUCLID slot 8 needs 290 B; the clone window ends at 0x400d7c3c and the overflow run at 0x400d2ce0 (next free 0x400d2bc8)"
+      },
+      "after": {
+        "refused": "label formatters do not fit: EUCLID slot 8 needs 290 B; the clone window ends at 0x400d7c3c and the overflow run at 0x400d2ce0 (next free 0x400d2bc8)"
+      }
+    },
+    {
+      "moduleIds": [
+        "miniverb",
+        "tapeecho",
+        "euclid",
+        "repitch",
+        "airwindows-chorus",
+        "bbd",
+        "usb-audio-out-tracks-main-cue",
+        "previewvol",
+        "cc-map",
+        "sidechain-compressor"
+      ],
+      "keepStockFx2": true,
+      "before": {
+        "refused": "label formatters do not fit: EUCLID slot 8 needs 290 B; the clone window ends at 0x400d7bbc and the overflow run at 0x400d2ce0 (next free 0x400d2bc8)"
+      },
+      "after": {
+        "refused": "label formatters do not fit: EUCLID slot 8 needs 290 B; the clone window ends at 0x400d7bbc and the overflow run at 0x400d2ce0 (next free 0x400d2bc8)"
+      }
+    },
+    {
+      "moduleIds": [
+        "euclid",
+        "airwindows-chorus",
+        "everb",
+        "usb-audio-out-tracks-main-cue",
+        "quantizer",
+        "previewvol",
+        "cc-map",
+        "sidechain-compressor",
+        "vector",
+        "mute-modes",
+        "output-matrix"
+      ],
+      "keepStockFx2": false,
+      "before": {
+        "refused": "CC->FX2/FX1 page-2 cave + dispatch repoint: 724 B fits neither the clone window (from 0x400d7a80) nor the overflow run"
+      },
+      "after": {
+        "refused": "CC->FX2/FX1 page-2 cave + dispatch repoint: 724 B fits neither the clone window (from 0x400d7a80) nor the overflow run"
+      }
+    },
+    {
+      "moduleIds": [
+        "euclid",
+        "airwindows-chorus",
+        "everb",
+        "usb-audio-out-tracks-main-cue",
+        "quantizer",
+        "previewvol",
+        "cc-map",
+        "sidechain-compressor",
+        "vector",
+        "mute-modes",
+        "output-matrix"
+      ],
+      "keepStockFx2": true,
+      "before": {
+        "refused": "CC->FX2/FX1 page-2 cave + dispatch repoint: 724 B fits neither the clone window (from 0x400d7a80) nor the overflow run"
+      },
+      "after": {
+        "refused": "CC->FX2/FX1 page-2 cave + dispatch repoint: 724 B fits neither the clone window (from 0x400d7a80) nor the overflow run"
+      }
+    },
+    {
+      "moduleIds": [
+        "miniverb",
+        "tapeecho",
+        "tapehead",
+        "everb",
+        "bbd",
+        "usb-audio-out-tracks-main-cue",
+        "quantizer",
+        "previewvol",
+        "cc-map",
+        "vector",
+        "output-matrix"
+      ],
+      "keepStockFx2": false,
+      "before": {
+        "refused": "payload A: EVERB overruns the region (3659 > 2724 words)"
+      },
+      "after": {
+        "refused": "payload A: EVERB overruns the region (3659 > 2724 words)"
+      }
+    },
+    {
+      "moduleIds": [
+        "miniverb",
+        "tapeecho",
+        "tapehead",
+        "everb",
+        "bbd",
+        "usb-audio-out-tracks-main-cue",
+        "quantizer",
+        "previewvol",
+        "cc-map",
+        "vector",
+        "output-matrix"
+      ],
+      "keepStockFx2": true,
+      "before": {
+        "refused": "payload A: EVERB overruns the region (3659 > 2724 words)"
+      },
+      "after": {
+        "refused": "payload A: EVERB overruns the region (3659 > 2724 words)"
+      }
+    },
+    {
+      "moduleIds": [
+        "tapeecho",
+        "euclid",
+        "tapehead",
+        "airwindows-chorus",
+        "everb",
+        "usb-audio-out-tracks-main-cue",
+        "quantizer",
+        "previewvol",
+        "sidechain-compressor",
+        "vector",
+        "mute-modes"
+      ],
+      "keepStockFx2": false,
+      "before": {
+        "refused": "MUTE_MODES mm_softmute at 0x400d7800 not free"
+      },
+      "after": {
+        "refused": "MUTE_MODES mm_softmute at 0x400d7800 not free"
+      }
+    },
+    {
+      "moduleIds": [
+        "tapeecho",
+        "euclid",
+        "tapehead",
+        "airwindows-chorus",
+        "everb",
+        "usb-audio-out-tracks-main-cue",
+        "quantizer",
+        "previewvol",
+        "sidechain-compressor",
+        "vector",
+        "mute-modes"
+      ],
+      "keepStockFx2": true,
+      "before": {
+        "refused": "MUTE_MODES mm_softmute at 0x400d7800 not free"
+      },
+      "after": {
+        "refused": "MUTE_MODES mm_softmute at 0x400d7800 not free"
+      }
+    },
+    {
+      "moduleIds": [
+        "euclid",
+        "repitch",
+        "airwindows-chorus",
+        "bbd",
+        "quantizer",
+        "previewvol",
+        "cc-map",
+        "sidechain-compressor",
+        "vector",
+        "playmodes",
+        "recorder-loop-fix",
+        "output-matrix"
+      ],
+      "keepStockFx2": false,
+      "before": {
+        "refused": "past the stock zero run (or into the long chooser list)"
+      },
+      "after": {
+        "refused": "spacing cave: 286 B fits neither the clone window (from 0x400d7b80) nor the overflow run"
+      }
+    },
+    {
+      "moduleIds": [
+        "euclid",
+        "repitch",
+        "airwindows-chorus",
+        "bbd",
+        "quantizer",
+        "previewvol",
+        "cc-map",
+        "sidechain-compressor",
+        "vector",
+        "playmodes",
+        "recorder-loop-fix",
+        "output-matrix"
+      ],
+      "keepStockFx2": true,
+      "before": {
+        "refused": "past the stock zero run (or into the long chooser list)"
+      },
+      "after": {
+        "refused": "spacing cave: 286 B fits neither the clone window (from 0x400d7b80) nor the overflow run"
+      }
+    },
+    {
+      "moduleIds": [
+        "miniverb",
+        "tapeecho",
+        "euclid",
+        "repitch",
+        "airwindows-chorus",
+        "everb",
+        "bbd",
+        "usb-audio-out-tracks-main-cue",
+        "cc-map",
+        "vector",
+        "playmodes",
+        "mute-modes"
+      ],
+      "keepStockFx2": false,
+      "before": {
+        "refused": "MUTE_MODES mm_menu at 0x400d7b80 not free"
+      },
+      "after": {
+        "refused": "MUTE_MODES mm_menu at 0x400d7b80 not free"
+      }
+    },
+    {
+      "moduleIds": [
+        "miniverb",
+        "tapeecho",
+        "euclid",
+        "repitch",
+        "airwindows-chorus",
+        "everb",
+        "bbd",
+        "usb-audio-out-tracks-main-cue",
+        "cc-map",
+        "vector",
+        "playmodes",
+        "mute-modes"
+      ],
+      "keepStockFx2": true,
+      "before": {
+        "refused": "MUTE_MODES mm_menu at 0x400d7b80 not free"
+      },
+      "after": {
+        "refused": "MUTE_MODES mm_menu at 0x400d7b80 not free"
+      }
+    },
+    {
+      "moduleIds": [
+        "miniverb",
+        "tapeecho",
+        "euclid",
+        "repitch",
+        "tapehead",
+        "airwindows-chorus",
+        "everb",
+        "bbd",
+        "usb-audio-out-tracks-main-cue",
+        "quantizer",
+        "previewvol",
+        "cc-map",
+        "sidechain-compressor",
+        "vector",
+        "playmodes",
+        "mute-modes",
+        "recorder-loop-fix",
+        "output-matrix"
+      ],
+      "keepStockFx2": false,
+      "before": {
+        "refused": "SCALE QUANTIZER qzc at 0x400d7b00 not free"
+      },
+      "after": {
+        "refused": "SCALE QUANTIZER qzc at 0x400d7b00 not free"
+      }
+    },
+    {
+      "moduleIds": [
+        "miniverb",
+        "tapeecho",
+        "euclid",
+        "repitch",
+        "tapehead",
+        "airwindows-chorus",
+        "everb",
+        "bbd",
+        "usb-audio-out-tracks-main-cue",
+        "quantizer",
+        "previewvol",
+        "cc-map",
+        "sidechain-compressor",
+        "vector",
+        "playmodes",
+        "mute-modes",
+        "recorder-loop-fix",
+        "output-matrix"
+      ],
+      "keepStockFx2": true,
+      "before": {
+        "refused": "REPITCH repitch at 0x400d7a00 not free"
+      },
+      "after": {
+        "refused": "REPITCH repitch at 0x400d7a00 not free"
+      }
+    }
+  ]
+}

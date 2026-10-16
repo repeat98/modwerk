@@ -152,7 +152,7 @@ class ResidentEngines(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp:
             relocated = c_relocated(self.units, bases, Path(temp))
         for (tag, feature), unit in self.units.items():
-            self.assertEqual(len(unit['words']), {1: 423, 2: 773, 4: 998}[feature])
+            self.assertEqual(len(unit['words']), {1: 423, 2: 675, 4: 998}[feature])
             for base in bases:
                 with self.subTest(tag=tag, feature=feature, base=hex(base)):
                     python = resident_dsp.relocate(unit, base)

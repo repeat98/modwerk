@@ -54,7 +54,7 @@ describe('independently authored DSP package relocation', () => {
     const fixtures = catalog.packages.filter(pkg => pkg.id === 'output-matrix')
     expect(fixtures.map(pkg => 'tag' in pkg && pkg.tag)).toEqual(['A'])
     const pkg = await readDspPackage('output-matrix', 'A')
-    expect(pkg).toMatchObject({ stockDsp: true, fxId: null, words: 769, tag: 'A' })
+    expect(pkg).toMatchObject({ stockDsp: true, fxId: null, words: 671, tag: 'A' })
     expect(pkg).not.toHaveProperty('stockKey')
     // The mixdown's MASTER TRACK branch and the phones crossfade, each a fingerprinted two-word stock instruction.
     expect(pkg.hooks?.map(hook => hook.site)).toEqual([0x257, 0x30a])

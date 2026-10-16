@@ -1,5 +1,15 @@
 [
   {
+    "version": "0.1.1-experimental",
+    "date": "2026-10-16",
+    "changes": [
+      "In MATRIX the LEV box is always labelled with the track's destination (MN, PHN, M+C, ...), not only while CUE is held, so each track's routing stays in view. The value shown while turning LEVEL is still the level; XLV (scene editing), FUNC's MAIN view, NORMAL, STUDIO and MIDI tracks are as before. The author tested the label on an MKII from a card image (OMXLBL01, 13-14 Oct 2026) built before the DSP change below.",
+      "Smaller core-0 DSP code: 727 code + 42 table words become 657 + 14 (671 in all), with the same output sample for sample in 26 emulator scenarios (ot_emu: every destination, levels moving, MASTER, MKII, DIR, destination changes during playback). Worst case 4,240 -> 4,194 executed instructions per 16-sample frame, 275 per sample with the headphone crossfade. Emulator only: this DSP code has not run on hardware.",
+      "USB: the Modwerk base carries Output Matrix's DSP engine, so the smaller engine needs a new base, and the label needs a re-ported controller package (20 stock sites instead of 19, six stock-copy spans). Both are built locally (base 3e3e3de1, package e2df2fbf) and not published; the published base and the 0.1.0 package are unchanged. On the author's MKII over USB (RAM-booted base, 16 Oct 2026) the switch into MATRIX and back, the label, routing to MAIN, CUE, PHONES, a mono jack and OFF, and the PHONES level passed; the first trial's rollback was refused once (needs-recovery) and completed by the base on its own. On the flashed base a power cycle kept MATRIX, the routing and six other modules installed beside it; after it the LEV box showed stock's split bars until CUE redrew the page (display only). Not checked on the unit for this version: project or Part reload and MASTER TRACK.",
+      "Test-only: the gate compares runs over the same samples from transport start, which removes a false DIR AB 127 failure in combined images. Gate 117/117 in the emulator."
+    ]
+  },
+  {
     "version": "0.1.0-experimental",
     "date": "2026-10-09",
     "changes": [

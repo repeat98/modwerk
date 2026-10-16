@@ -3,7 +3,7 @@
   "id": "output-matrix",
   "key": "OUTPUT MATRIX",
   "name": "Output Matrix",
-  "version": "0.1.0-experimental",
+  "version": "0.1.1-experimental",
   "category": "system",
   "author": {
     "github": "npp1993",
@@ -25,7 +25,7 @@
     ],
     "usage": [
       "PROJECT > CONTROL > AUDIO: select OUT CFG > MATRIX and press YES.",
-      "On a track, hold CUE: the LEV box shows the destination. Turn LEVEL to change it.",
+      "On a track, the LEV box is labelled with the destination (MN, PHN, ...). Hold CUE and turn LEVEL to change it.",
       "In the MIXER, MIX (labelled PHN) sets the PHONES output level. Choose NORMAL or STUDIO again to return to stock behaviour."
     ]
   },
@@ -38,7 +38,7 @@
     ],
     "limitations": [
       "Builds with the stock DSP code built in and takes a given-up stock effect's program memory on core 0. The builder chooses it: SPRING REV first, then PLATE REV or DARK REV when other modules also need room. The given-up effect leaves the FX2 menu.",
-      "The MATRIX mixdown costs core 0 up to about 210 more instructions per sample than stock (every track on ALL, MASTER on, bus levels moving); every track on MAIN adds about 20.",
+      "The MATRIX mixdown costs core 0 up to about 208 more instructions per sample than stock (every track on ALL, MASTER on, bus levels moving); every track on MAIN adds about 20.",
       "Switching to or from MATRIX rewrites every Part's LEVEL and cue bytes (and, into NORMAL, the project's cue settings) by documented rules; save to keep it.",
       "A MATRIX project opened on a stock OS loads as STUDIO with tiny cue levels; switch to NORMAL or STUDIO before flashing another OS.",
       "Changes core 0's mixdown and headphone crossfade; other modules that hook those sites are refused by the ledger.",
@@ -50,20 +50,20 @@
     "recorded": "Measured in the ColdFire port (instructions) and from the build report",
     "storage": {
       "label": "Memory",
-      "display": "1,610 B DRAM + 769 DSP P words + 193 DSP Y words",
-      "value": 4496,
+      "display": "1,678 B DRAM + 671 DSP P words + 193 DSP Y words",
+      "value": 4270,
       "unit": "bytes",
       "method": "static",
-      "conditions": "ColdFire unit .text 1,464 B and .data 146 B (runtime ELF); DSP P code 727 words and a 42-word table in SPRING REV's harvested span on core 0; DSP Y $c00..$cc0. No per-track copies, no audio buffers.",
+      "conditions": "ColdFire unit .text 1,532 B and .data 146 B (m68k-elf-as section sizes of matrix.s); DSP P code 657 words and a 14-word table in SPRING REV's harvested span on core 0 (727 + 42 before 0.1.1); DSP Y $c00..$cc0. No per-track copies, no audio buffers.",
       "source": "TESTING.md"
     },
     "processing": {
       "label": "DSP core 0 mixdown",
-      "display": "≤ 277 instructions/sample (stock 67)",
-      "value": 277,
+      "display": "≤ 275 instructions/sample (stock 67)",
+      "value": 275,
       "unit": "instructions/sample",
       "method": "emulator",
-      "conditions": "Executed instructions of the mixdown (P:$257..$2d5) and headphone crossfade (P:$30a..$35a) per 16-sample frame, every track on ALL, MASTER on, MAIN/CUE/PHONES levels moving, including the frame that rebuilds the routing lists: 4,240 + 192 per frame (4,336 before the 12-word trim, TESTING.md). Stock: 880 + 191. Cycles and bus stalls are not modelled.",
+      "conditions": "Executed instructions of the mixdown (P:$257..$2d5) and headphone crossfade (P:$30a..$35a) per 16-sample frame, every track on ALL, MASTER on, MAIN/CUE/PHONES levels moving, including the frame that rebuilds the routing lists: 4,194 + 192 per frame, rounded up per sample (0.1.0: 4,240 + 192; 4,336 before the 12-word trim, TESTING.md). Stock: 880 + 191. Cycles and bus stalls are not modelled.",
       "source": "TESTING.md"
     },
     "impact": {
@@ -77,34 +77,34 @@
       "dsp": {
         "level": "low",
         "basis": "measured-comparison",
-        "rationale": "Up to about 210 extra instructions per sample on core 0 (about 7% of 3,120); about 20 with every track on MAIN.",
+        "rationale": "Up to about 208 extra instructions per sample on core 0 (about 7% of 3,120); about 20 with every track on MAIN.",
         "source": "TESTING.md"
       },
       "memory": {
         "level": "low",
         "basis": "measured-comparison",
-        "rationale": "1,610 bytes of DRAM code and data, 769 DSP program words reused from SPRING REV and 193 DSP Y words.",
+        "rationale": "1,678 bytes of DRAM code and data, 671 DSP program words reused from SPRING REV and 193 DSP Y words.",
         "source": "TESTING.md"
       }
     }
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "The image gate passes 117 checks under the ColdFire port: every destination, mono sums, MAIN against stock, the level law, MKII, MASTER, mute, DIR, the declick, every mode-conversion rule by the keys (including track 8 as the master and the power-cycle copies), CC 51 out and a power cycle. On an MKII the author tested routing, levels, the MIXER, everyday flows, saving and power and the conversion (functional report, 7–9 Oct 2026). No timed stress run, no chip timing.",
+    "summary": "The image gate passes 117 checks under the ColdFire port: every destination, mono sums, MAIN against stock, the level law, MKII, MASTER, mute, DIR, the declick, every mode-conversion rule by the keys (including track 8 as the master and the power-cycle copies), CC 51 out and a power cycle. On an MKII the author tested routing, levels, the MIXER, everyday flows, saving and power and the conversion (functional report, 7–9 Oct 2026). No timed stress run, no chip timing. 0.1.1 over USB on the MKII (RAM-booted beta base, 16 Oct 2026): MATRIX on and off, the always-on LEV label, routing to MAIN, CUE, PHONES, a mono jack and OFF, and the PHONES level all passed and, on the flashed base, a power cycle kept MATRIX, the routing and the module set (the LEV box needed a redraw).",
     "hardwareStatus": "reported",
-    "evidenceRevision": "a118cf12c801921196854c15608654b460946c4a",
+    "evidenceRevision": "44738eaf4d935438bfae0899dd5287e2b2d10b20",
     "gates": [
       "modules/output-matrix/verify.py"
     ],
     "qualification": {
-      "moduleVersion": "0.1.0-experimental",
-      "sourceSha256": "b5a6b32d98de4a305f901a7e7d3ea89ed9dc39a5bfbebcbcfe4fd3559613e337",
-      "imageSha256": "3e883adbaff67781f526e6e2c01a7833bdcd0696be79df296b624937b969e514",
+      "moduleVersion": "0.1.1-experimental",
+      "sourceSha256": "96b9783ca53ef04a828673220e884409338821683ddaf004a5bb5a6c1370ebdc",
+      "imageSha256": "5ca0afbf038e17f7919c4d7cfb6ef518e3a4d9c41a12cfa69f59f1ac64a2acc4",
       "cycles": [
         {
           "processor": "dsp",
-          "worstCase": 277,
-          "maxConfiguration": 277,
+          "worstCase": 275,
+          "maxConfiguration": 275,
           "maxInstances": 1,
           "budget": 3120,
           "unit": "cycles/sample",
@@ -113,7 +113,7 @@
             "parameterExtremes": "Every destination code 0..13 per track, all eight tracks on ALL, mixed stereo and mono routings, MAIN/CUE/PHONES levels 0..127, MASTER on and off.",
             "parameterModulation": "MAIN, CUE and MIX levels changed every other frame for 60 frames; LEVEL, XVOL scenes, locks and LFOs act through stock gain ramps the mixdown reads, unchanged.",
             "modeSwitching": "All eight tracks changing destination in one frame (list rebuild and declick), and NORMAL/STUDIO/MATRIX switches.",
-            "maxLoad": "One instance per unit (a global mode). Worst measured: 4,240 + 192 executed instructions per 16-sample frame on core 0, every track on ALL with MASTER on; stock 880 + 191.",
+            "maxLoad": "One instance per unit (a global mode). Worst measured: 4,194 + 192 executed instructions per 16-sample frame on core 0, every track on ALL with MASTER on; stock 880 + 191.",
             "inputConditions": "Tone and four-input test audio; the code path does not depend on sample values. Counts are executed instructions, not modelled cycles."
           },
           "report": "TESTING.md"
@@ -141,9 +141,9 @@
           {
             "name": "ColdFire code and the AUDIO page tables stock code points at (DRAM unit .text)",
             "space": "sdram",
-            "words": 1464,
+            "words": 1532,
             "wordBits": 8,
-            "bytes": 1464,
+            "bytes": 1532,
             "scope": "shared"
           },
           {
@@ -157,17 +157,17 @@
           {
             "name": "DSP core 0 program: mixdown and phones hooks, in SPRING REV's harvested span",
             "space": "dsp-p",
-            "words": 727,
+            "words": 657,
             "wordBits": 24,
-            "bytes": 2181,
+            "bytes": 1971,
             "scope": "shared"
           },
           {
-            "name": "DSP core 0 program: the 42-word destination table",
+            "name": "DSP core 0 program: the 14-word destination table (3 codes a word)",
             "space": "dsp-p",
-            "words": 42,
+            "words": 14,
             "wordBits": 24,
-            "bytes": 126,
+            "bytes": 42,
             "scope": "shared"
           },
           {
@@ -180,9 +180,9 @@
           }
         ],
         "perInstanceBytes": 0,
-        "sharedBytes": 4496,
+        "sharedBytes": 4270,
         "maxInstances": 1,
-        "totalBytes": 4496,
+        "totalBytes": 4270,
         "conditions": "From the static build's runtime ELF and the DSP placement report. Detours patch stock instructions in place; the level-page words and battery-RAM copies the module uses are stock's. No heap; ColdFire stack use is the callers' frames plus at most 48 bytes (set_mode's saved registers and the conversion's call chain).",
         "report": "TESTING.md"
       },
@@ -190,20 +190,19 @@
         "kind": "functional",
         "status": "reported",
         "model": "MKII",
-        "testedOn": "2026-10-09",
+        "testedOn": "2026-10-16",
         "tester": "npp1993",
-        "sourceRevision": "a118cf12c801921196854c15608654b460946c4a",
-        "imageSha256": "3e883adbaff67781f526e6e2c01a7833bdcd0696be79df296b624937b969e514",
-        "summary": "On an Octatrack MKII the author flashed PHNSTAT8 and PHNSTAT9 (7-8 Oct, the module under its earlier name, stock DSP code built in, SPRING REV off the menus) and checked: tracks reach MAIN, CUE and PHONES separately, mono jacks and sides, LEVEL on every output, the MIXER's MAIN, CUE and PHN, the headphone knob, no zipper noise, a semi-busy project with tracks on PHONES without dropouts, mute and solo, page resets, Parts and Part reload, patterns, XVOL, metronome, inputs, the master track, save and power cycle with unsaved routing, project reload, the stock NORMAL and STUDIO flows, and the mode conversion to STUDIO and NORMAL and back. On 9 Oct the author flashed OUTMTX10 (the renaming only: the AUDIO page reads OUT CFG with NORMAL, STUDIO and MATRIX) then OUTMTX11, which adds the review fixes: with track 8 as the master routed to M+C, switching to NORMAL leaves it uncued with the master still on MAIN, and switching back shows MN; a track routed to PHN plays only in the headphones. Then OUTMTX12, which loads each routing list's length in one instruction (-12 DSP words): tracks on MN, CUE and PHN, several on one output, the mono jacks, M+P and ALL, the master track and destination changes during playback all played as before. Then OUTMTX13, this source, which moves the AUDIO page's tables into the unit's code section so the website builder places them where native does: OUT CFG with NORMAL, STUDIO and MATRIX, track 8 as the master (MASTER and NORMAL rows), MATRIX to NORMAL and back, routing changes, and routing kept over a power cycle.",
+        "sourceRevision": "44738eaf4d935438bfae0899dd5287e2b2d10b20",
+        "imageSha256": "5ca0afbf038e17f7919c4d7cfb6ef518e3a4d9c41a12cfa69f59f1ac64a2acc4",
+        "summary": "Over USB on an Octatrack MKII: a RAM-booted beta base built from this source (identity 3e3e3de1..., MAIN 5ca0afbf...) with the 0.1.1 package (e2df2fbf...) installed by trial, rollback and then trial and keep. The author checked: the switch into MATRIX and back to NORMAL, the always-on destination label in the LEV box, CUE + LEVEL routing to MAIN, CUE, PHONES, a mono jack and OFF on a playing track with the audio where the label says, and MIX as the PHONES level. All passed. Then flashed the same base: with MATRIX selected and a track on MNL, a power cycle restored all seven installed modules, MATRIX and the routing; the LEV box first showed stock's split bars until CUE redrew it.",
         "limitations": [
-          "A functional interactive report, not a timed stress run; no audio or timing measurement on the chip.",
-          "One MKII; no MKI.",
-          "Conversions in Parts other than the current one and in other banks were checked in the emulator only.",
-          "No combination with other modules on the unit.",
-          "OUTMTX10, OUTMTX11 and OUTMTX12 were given short checks of what changed; the full checks ran on PHNSTAT8/9, whose behaviour the gate shows unchanged otherwise.",
-          "CC 51 out on a switch into NORMAL is emulator-verified only (no controller was connected)."
+          "One power cycle on the flashed base; no project save and reload or Part reload on this version over USB. After the power cycle the LEV box showed stock's split bars until CUE redrew the page (display only; routing was right).",
+          "Output Matrix alone on the base; MASTER TRACK, STUDIO, conversions in other Parts and banks and CC 51 out not checked on the unit for this version.",
+          "Checked by ear; no audio recording or chip timing. The smaller DSP code's identical output is shown in the emulator only.",
+          "The first trial's rollback was refused once (needs-recovery) and completed by the base without a further command.",
+          "One MKII; no MKI."
         ],
-        "report": "TESTING.md"
+        "report": "evidence/usb-hardware.md"
       },
       "documentation": {
         "tutorial": {
@@ -242,15 +241,15 @@
         "page": "PROJECT > CONTROL > AUDIO",
         "shows": "location",
         "firmware": "1.40C",
-        "moduleVersion": "0.1.0-experimental",
-        "imageSha256": "4bba473634b4a9c9f946ae7f721240e8fcef354bff849ad501a29c8b2568176f",
+        "moduleVersion": "0.1.1-experimental",
+        "imageSha256": "a9d5e3b8fcd11c8bbec777866699c1a389b6034025feadcdb35d619a31962996",
         "setup": "Headless ot_emu; MKII panel; empty disposable card (fresh project); stopped transport; actual 128×64 LCD pixels at integer scale 6."
       }
     },
     {
       "path": "media/ot-cue-held.png",
       "captureType": "emulator",
-      "caption": "Hold CUE on any audio track: the LEV box shows where the track plays. MN means MAIN, the starting point after switching from NORMAL.",
+      "caption": "In MATRIX the LEV box is labelled with where the track plays, with or without CUE held. MN means MAIN, the starting point after switching from NORMAL.",
       "alt": "Actual Octatrack LCD: a track's SRC page with the LEV box labelled MN above its level bar.",
       "credit": "npp1993",
       "license": "LicenseRef-OT-UI-Documentation",
@@ -259,8 +258,8 @@
         "page": "SRC page, CUE held",
         "shows": "controls",
         "firmware": "1.40C",
-        "moduleVersion": "0.1.0-experimental",
-        "imageSha256": "4bba473634b4a9c9f946ae7f721240e8fcef354bff849ad501a29c8b2568176f",
+        "moduleVersion": "0.1.1-experimental",
+        "imageSha256": "a9d5e3b8fcd11c8bbec777866699c1a389b6034025feadcdb35d619a31962996",
         "setup": "Headless ot_emu; MKII panel; empty disposable card (fresh project); stopped transport; actual 128×64 LCD pixels at integer scale 6."
       }
     },
@@ -276,8 +275,8 @@
         "page": "SRC page, CUE + LEVEL",
         "shows": "controls",
         "firmware": "1.40C",
-        "moduleVersion": "0.1.0-experimental",
-        "imageSha256": "4bba473634b4a9c9f946ae7f721240e8fcef354bff849ad501a29c8b2568176f",
+        "moduleVersion": "0.1.1-experimental",
+        "imageSha256": "a9d5e3b8fcd11c8bbec777866699c1a389b6034025feadcdb35d619a31962996",
         "setup": "Headless ot_emu; MKII panel; empty disposable card (fresh project); stopped transport; actual 128×64 LCD pixels at integer scale 6."
       }
     },
@@ -293,8 +292,8 @@
         "page": "MIXER",
         "shows": "controls",
         "firmware": "1.40C",
-        "moduleVersion": "0.1.0-experimental",
-        "imageSha256": "4bba473634b4a9c9f946ae7f721240e8fcef354bff849ad501a29c8b2568176f",
+        "moduleVersion": "0.1.1-experimental",
+        "imageSha256": "a9d5e3b8fcd11c8bbec777866699c1a389b6034025feadcdb35d619a31962996",
         "setup": "Headless ot_emu; MKII panel; empty disposable card (fresh project); stopped transport; actual 128×64 LCD pixels at integer scale 6."
       }
     }
@@ -304,7 +303,7 @@
     "steps": [
       "Include Output Matrix in your build.",
       "Press PROJ (MKII), open CONTROL > AUDIO, move right into the OUT CFG box, select MATRIX and press YES.",
-      "Select an audio track, hold CUE and turn LEVEL to pick its outputs; the LEV box shows the destination.",
+      "Select an audio track, hold CUE and turn LEVEL to pick its outputs; the LEV box's label always shows the destination.",
       "Open the MIXER: MIX, labelled PHN, sets the headphone output level."
     ],
     "screenshots": [

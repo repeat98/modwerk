@@ -1,8 +1,8 @@
 {
  "schema": 1,
- "identity": "a1471aeb2dab7de08bd519b6a1eef702d1524a20175d5dd4513413a89c764bd3",
+ "identity": "3e3e3de1f350781b0d5b91736f77e7f3753ac9987f499cc83b32cd02568a36fc",
  "arena": 1088568800,
- "pool": 1086626384,
+ "pool": 1086625872,
  "symbols": {
   "modwerk_controller_write_begin": 1084865596,
   "modwerk_controller_write_end": 1084865624,
@@ -11,7 +11,7 @@
  },
  "controllers": {
   "sidechain-compressor": "fdfddb9d93a28c2c8d8c83a9c430dab1a09f0df2e416a24a4b37c7e23d6f5227",
-  "output-matrix": "4589b10b10842bda55b34607460257f9a2f9c317f75a253b2d5c3e6c9191ebad",
+  "output-matrix": "e2df2fbfff7f956846c030a87c50ff391af427b8719d40018e6449cef8e48acd",
   "analog-bassdrum": "20211430d3c9eafd3253a50ebf936357ae6847420ac41717b8bcea28eec9f1ac"
  }
 }

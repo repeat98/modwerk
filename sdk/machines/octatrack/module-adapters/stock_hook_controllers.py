@@ -25,8 +25,8 @@ _private = importlib.util.module_from_spec(_spec); _spec.loader.exec_module(_pri
 SOURCE_PINS = {
     'modules/sidechain-compressor/manifest.py': '3bba6ac8ba315e10d6d7f2cb6342fb5ce6564e1ba6cd6ec362787d685c5e0cd7',
     'modules/sidechain-compressor/upstream/tools/patch_sidechain.s': 'e47f44a7685f0ea82d908897d222c04a6c3729c87dc6443d8d18d2af914b0d20',
-    'modules/output-matrix/manifest.py': '1e9f844eff11dc2e262fd7efc733ae309c4285fd0a14e494da6b568d24af1216',
-    'modules/output-matrix/matrix.s': '41bb06ce2e43d46d32a4b12a1c91df6dddf03f89281c4bcfe1129baa22a7cca1',
+    'modules/output-matrix/manifest.py': '65d1ae009dc1c956ce2036181667434e31b361179ca138e5c8f1091227b55619',
+    'modules/output-matrix/matrix.s': 'a4b9f74062520437ed0db2f8b497d6af89661621ab3deef5078158514194b287',
 }
 UNITS = {
     'sidechain-compressor': ('modules/sidechain-compressor/upstream/tools/patch_sidechain.s', 1, ('sc_norm',)),
@@ -51,7 +51,8 @@ STOCK_COPIES = {'output-matrix': (
     ('mw_mode_done', 2, 0x40055e62, 14, '91a4bbc12afccfa7100e67201876284c378c5e2ce3fa01d7729b37c918a4e9cb'),
     ('part_cue', 0, 0x4000eab0, 16, '76615980349044858d2d9013919133c736ea96190fad78cc59e5e55748ca263b'),
     ('part_cue', 22, 0x4004eb96, 13, 'f6bb5520b783d035828391c47f07f2457e9bf7f6cb785f9518abf6829d44f3da'),
-    ('lev_box_cue', 58, 0x4003ffd8, 14, 'e3d21ed07e823ecac61ec2b4dd20ebf1eac251c1886b5381ce9c33a9d1783e48'))}
+    ('lev_box_cue', 38, 0x4003ffd8, 14, 'e3d21ed07e823ecac61ec2b4dd20ebf1eac251c1886b5381ce9c33a9d1783e48'),
+    ('lev_box_lev', 38, 0x4003ffd8, 14, 'e3d21ed07e823ecac61ec2b4dd20ebf1eac251c1886b5381ce9c33a9d1783e48'))}
 # Sidechain's KEY/KFLT/KGN/MON on COMPRESSOR's own page: the catalogue's
 # descriptor recipe, carried at the head of the image as an MWPP record the
 # board applies in place while the controller is ACTIVE (controller_board.c).

@@ -35,7 +35,7 @@ installed, so resident bases own those widenings (`resident-runtime/cue_cfg.s`:
 CUE CFG 0..2 kept, three sites) and the package leaves them out; MATRIX then
 survives a power cycle and `matrix_enter` is trusted by default. Retirement
 refuses while MATRIX is selected (live or CS1 mirror): leave it on the AUDIO
-page first. Five authored Matrix spans equal stock code byte for byte; they
+page first. Six authored Matrix spans equal stock code byte for byte; they
 ship as zeros plus hash-checked ABI 7 stock copies from bytes nobody patches.
 
 Sidechain answers the base's raised `ev_mute_keep` (order 50, `sc_mute_keep`,

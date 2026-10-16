@@ -11,7 +11,7 @@ SOURCE=ROOT/'sdk/machines/octatrack/module-adapters/analog-bd-parts'
 PINS={
     'sdk/octabam/modules/analog-bassdrum/machine.s':'90f9ddb5c2a4cee47e0334c3cd35a7e92d42b0ee37eb3bbc8062cc7821e6aeb4',
     'sdk/octabam/modules/analog-bassdrum/control.c':'29f392c7e007aaa695076eff0c897729a941676ff582e4bb17957074d56ceac5',
-    'sdk/octabam/modules/output-matrix/matrix.s':'41bb06ce2e43d46d32a4b12a1c91df6dddf03f89281c4bcfe1129baa22a7cca1',
+    'sdk/octabam/modules/output-matrix/matrix.s':'a4b9f74062520437ed0db2f8b497d6af89661621ab3deef5078158514194b287',
 }
 class AnalogBdPartFence(unittest.TestCase):
     def test_authored_marker_and_complete_bank_layout_inputs_remain_exact(self):

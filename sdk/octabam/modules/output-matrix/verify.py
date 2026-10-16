@@ -145,9 +145,22 @@ class Run:
         return [v[f * n:(f + 1) * n] for f in range(start, len(v) // n)]
 
     @staticmethod
-    def rms(frames, last=2000):
-        tail = frames[-last:]
+    def rms(frames, last=2000, end=None):
+        """Per word, over the `last` samples before `end` (frames counted from
+        transport start; default the capture's own end)."""
+        end = len(frames) if end is None else end
+        tail = frames[end - last:end]
         return [math.sqrt(sum(f[c] ** 2 for f in tail) / len(tail)) for c in range(8)]
+
+    @classmethod
+    def aligned(cls, *prefixes):
+        """rms of captures that are compared with each other, over the SAME
+        samples from transport start: two runs can capture a frame more or
+        less after it, and each capture's own last 2,000 would then sit a
+        sample apart (+0.057% on DIR AB 127 in a combined image)."""
+        caps = [cls.words(p) for p in prefixes]
+        end = min(len(c) for c in caps)
+        return [cls.rms(c, end=end) for c in caps]
 
 
 def main():
@@ -185,24 +198,23 @@ def main():
     res = {t: j.result() for t, j in jobs.items()}
 
     print("verify output-matrix: routing")
-    normal = run.rms(run.words(res["normal"]))
+    normal, main0, cue1, ph2 = run.aligned(res["normal"], res["c0"], res["c1"], res["c2"])
     for c in range(14):
         r = run.rms(run.words(res[f"c{c}"]))
         want = expected_words(c)
         check(all((r[w] > 1000) == (w in want) for w in range(8)),
               f"code {c:2d}: signal on words {sorted(w for w in range(8) if r[w] > 1000)}, expected {sorted(want)}")
-    main0 = run.rms(run.words(res["c0"]))
     check(all(abs(main0[w] - normal[w]) <= 5e-4 * normal[w] for w in (2, 3)),
           f"MATRIX MAIN {main0[2]:.0f}/{main0[3]:.0f} = stock path {normal[2]:.0f}/{normal[3]:.0f}")
-    cue1, ph2 = run.rms(run.words(res["c1"])), run.rms(run.words(res["c2"]))
     ratio = (127 / 64) ** 2                                     # the fixture: MAIN 127, CUE 64, MIX 64
     check(abs(main0[2] / cue1[0] / ratio - 1) < 0.01 and abs(main0[2] / ph2[4] / ratio - 1) < 0.01,
           f"MAIN/CUE {main0[2] / cue1[0]:.3f}, MAIN/PHONES {main0[2] / ph2[4]:.3f}, law (127/64)^2 = {ratio:.3f}")
 
     print("verify output-matrix: mono, MKII, master, mute, inputs")
-    st = run.rms(run.words(res["st_tone"]))[2]
-    for c, word in zip(range(7, 13), (2, 3, 0, 1, 4, 5)):
-        m = run.rms(run.words(res[f"mono{c}"]))[word]
+    st, *monos = run.aligned(res["st_tone"], *(res[f"mono{c}"] for c in range(7, 13)))
+    st = st[2]
+    for c, word, mono in zip(range(7, 13), (2, 3, 0, 1, 4, 5), monos):
+        m = mono[word]
         check(abs(m / st - 1) < 2e-3, f"code {c} on word {word}: {m:.0f}, stereo per side {st:.0f}")
     mk = run.rms(run.words(res["mkii"]))
     check(mk[4] == 0 and mk[5] > 1000, f"MKII PHL: words 4/5 = {mk[4]:.0f}/{mk[5]:.0f} (left on 5)")
@@ -211,7 +223,7 @@ def main():
     check(mp[2] == 0 and mp[4] > 1000, f"MASTER, T1 PHNS: MAIN {mp[2]:.0f}, PHONES {mp[4]:.0f}")
     mu = run.rms(run.words(res["mute"]))
     check(max(mu[:6]) == 0, f"T1 on ALL, muted: {[round(x) for x in mu[:6]]}")
-    dn, dr = run.rms(run.words(res["dir_normal"])), run.rms(run.words(res["dir_matrix"]))
+    dn, dr = run.aligned(res["dir_normal"], res["dir_matrix"])
     check(abs(dr[2] / dn[2] - 1) < 5e-4, f"DIR AB 127: MATRIX MAIN {dr[2]:.0f}, stock path {dn[2]:.0f}")
 
     print("verify output-matrix: declick")

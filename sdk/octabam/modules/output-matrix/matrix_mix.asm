@@ -83,39 +83,37 @@ omx_stockm:
 omx_active:
         and     #>$400,a                ; MASTER TRACK, from the record word
         move    a1,y:>$c06
-        move    r2,x0                   ; the inputs, as stock pointed them
-        move    x0,y:>$c0c
+        move    r2,y:>$c0c              ; the inputs, as stock pointed them
         move    x:>$209,r3
         move    #>$1f8,n3
         move    (r3)+n3
-        move    r3,x0
-        move    x0,y:>$c07              ; the master's input, this frame
+        move    r3,y:>$c07              ; the master's input, this frame
 
 ; ---- bus factors: target (level/128)^2, a ramp from the current value
+        move    #>$c08,r5               ; where omx_ramp stores the targets
+        move    #>1,y0                  ; one pass
         move    y:>$c0b,a               ; RAM starts dirty on the unit: first
         move    #>$5a5a5a,x0            ; time, start the ramps at the targets
         cmp     x0,a                    ; and force the lists to build
-        beq     omx_inited
+        beq     omx_rpass
         move    x0,y:>$c0b
         move    #>$ffffff,x0
         move    x0,y:>$c0e
-        move    x:(r6+$28),a
-        bsr     omx_sq
-        move    a,y:>$c00
-        move    x:(r6+$37),a
-        bsr     omx_sq
-        move    a,y:>$c01
-        move    x:(r6+$38),a
-        bsr     omx_sq
-        move    a,y:>$c02
-omx_inited:
+        move    #>$c00,r5               ; two passes: the first stores the
+        move    #>2,y0                  ; targets as the current values (steps 0)
+omx_rpass:
+        do      y0,omx_rdone
         clr     b                       ; b1 collects the three steps (or)
+        move    #>$c00,r4               ; the current values
+        move    #>$c03,r7               ; the steps
         move    x:(r6+$28),a
-        bsr     omx_ramp0
+        bsr     omx_ramp
         move    x:(r6+$37),a
-        bsr     omx_ramp1
+        bsr     omx_ramp
         move    x:(r6+$38),a
-        bsr     omx_ramp2
+        bsr     omx_ramp
+        move    #>$c08,r5               ; a second pass: the real targets
+omx_rdone:
         move    b1,y:>$c0d              ; the lists' build uses b
 
 ; ---- the lists, when the destinations or MASTER TRACK changed
@@ -159,19 +157,12 @@ omx_f3:
         beq     omx_f4a
         bset    #3,a
 omx_f4a:
-        move    y:>$48,b
-        tst     b
-        bne     omx_f4b
-        move    y:>$49,b
-        tst     b
-        bne     omx_f4b
-        move    y:>$174,b               ; $40 + 20*15 + 8
-        tst     b
-        bne     omx_f4b
-        move    y:>$175,b
-        tst     b
+        move    y:>$48,b                ; the cue gains, samples 0 and 15,
+        move    y:>$49,x0               ; or-ed: zero only when all four are
+        or      x0,b    y:>$174,x0      ; $40 + 20*15 + 8
+        or      x0,b    y:>$175,x0
+        or      x0,b
         beq     omx_f5
-omx_f4b:
         bset    #3,a
         bset    #9,a
 omx_f5:
@@ -198,18 +189,11 @@ omx_f7:
         bset    #4,a
 omx_f8:
         move    y:>$52,b                ; bit 7: the inputs' DIR gains, sample 0
-        tst     b
-        bne     omx_f9b
-        move    y:>$53,b
-        tst     b
-        bne     omx_f9b
-        move    y:>$17e,b               ; and sample 15: $4a + 20*15 + 8
-        tst     b
-        bne     omx_f9b
-        move    y:>$17f,b
-        tst     b
+        move    y:>$53,x0
+        or      x0,b    y:>$17e,x0      ; and sample 15: $4a + 20*15 + 8
+        or      x0,b    y:>$17f,x0
+        or      x0,b
         beq     omx_fdir0
-omx_f9b:
         bset    #7,a
 omx_fdir0:
         move    a1,x0                   ; bit 8: the fast path, when MAIN stereo
@@ -226,8 +210,7 @@ omx_ffast:
         move    x0,x1
 
 ; ---- the 16 samples
-        move    y:>$c0c,x0
-        move    x0,r2                   ; inputs: AB L, AB R, CD L, CD R a sample
+        move    y:>$c0c,r2              ; inputs: AB L, AB R, CD L, CD R a sample
         move    x:>$204,r0              ; T1's block; track k at +32k, L/R a sample
         move    #$ff,m0                 ; the eight blocks wrap, as stock walks them
         move    #$1f,n0
@@ -316,8 +299,7 @@ omx_nocuein:
         asl     #2,a,a
         asl     #2,b,b
         move    a,x0
-        mpy     y0,x0,a
-        move    b,x0
+        mpy     y0,x0,a         b,x0    ; x0 is read before the move writes it
         mpy     y0,x0,b
         asl     #2,a,a
         asl     #2,b,b
@@ -368,12 +350,10 @@ omx_mainin:
 omx_nodir:
         btst    #5,x1                   ; MASTER TRACK?
         bcc     omx_mainout
-        move    y:>$c07,x0              ; T1-T7 and the inputs, unscaled, into
-        move    x0,r3                   ; the master's input as stock writes it
-        move    a,x:(r3)+
+        move    y:>$c07,r3              ; T1-T7 and the inputs, unscaled, into
+        move    a,x:(r3)+               ; the master's input as stock writes it
         move    b,x:(r3)+
-        move    r3,x0
-        move    x0,y:>$c07
+        move    r3,y:>$c07
         clr     a                       ; MAIN is T8's own MAIN routing
         clr     b
         move    #>$c1d,r7
@@ -403,8 +383,7 @@ omx_mainout:
         asl     #2,a,a
         asl     #2,b,b
         move    a,x0
-        mpy     y0,x0,a
-        move    b,x0
+        mpy     y0,x0,a         b,x0    ; x0 is read before the move writes it
         mpy     y0,x0,b
         asl     #2,a,a
         asl     #2,b,b
@@ -452,8 +431,7 @@ omx_pnomono:
         asl     #2,a,a
         asl     #2,b,b
         move    a,x0
-        mpy     y0,x0,a
-        move    b,x0
+        mpy     y0,x0,a         b,x0    ; x0 is read before the move writes it
         mpy     y0,x0,b
         asl     #2,a,a
         asl     #2,b,b
@@ -463,73 +441,50 @@ omx_phdone:
 
         btst    #6,x1                   ; the bus ramps, unless steady
         bcs     omx_noramp
-        move    y:>$c00,a
-        move    y:>$c03,x0
+        move    #>$c00,r4               ; current values
+        move    #>$c03,r7               ; their steps
+        move    y:(r7)+,x0
+        move    y:(r4),a
+        add     x0,a    y:(r7)+,x0
+        move    a,y:(r4)+
+        move    y:(r4),a
+        add     x0,a    y:(r7)+,x0
+        move    a,y:(r4)+
+        move    y:(r4),a
         add     x0,a
-        move    a,y:>$c00
-        move    y:>$c01,a
-        move    y:>$c04,x0
-        add     x0,a
-        move    a,y:>$c01
-        move    y:>$c02,a
-        move    y:>$c05,x0
-        add     x0,a
-        move    a,y:>$c02
+        move    a,y:(r4)
 omx_noramp:
         lua     (r5+$b),r5              ; next sample's MAIN gains (r5 was at slot 9)
         lua     (r2+4),r2
 omx_samples:
 
-        move    y:>$c08,x0              ; the ramps end on their targets
-        move    x0,y:>$c00
-        move    y:>$c09,x0
-        move    x0,y:>$c01
-        move    y:>$c0a,x0
-        move    x0,y:>$c02
+        move    #>$c08,r4               ; the ramps end on their targets
+        move    #>$c00,r7
+        move    y:(r4)+,x0
+        move    x0,y:(r7)+
+        move    y:(r4)+,x0
+        move    x0,y:(r7)+
+        move    y:(r4)+,x0
+        move    x0,y:(r7)+
         move    #>$ffffff,m0
         move    ssh,x0                  ; drop the hook's return
         jmp     $2d5
 
-; One bus's ramp from its page word in a: target, step (target - current)
-; / 16; bit 0 of b set when the stored step is not 0.
-omx_ramp0:
+; One bus's ramp from its page word in a: the target to y:(r5)+, the step
+; (target - current y:(r4)+) / 16 to y:(r7)+; bit 0 of b set when the
+; stored step is not 0.
+omx_ramp:
         bsr     omx_sq
-        move    a,y:>$c08
-        move    y:>$c00,x0
+        move    a,y:(r5)+
+        move    y:(r4)+,x0
         sub     x0,a
         asr     #4,a,a
-        move    a,y:>$c03
-        move    y:>$c03,a             ; reloaded: a0 still holds mpy's low bits,
+        move    a,y:(r7)
+        move    y:(r7)+,a               ; reloaded: a0 still holds mpy's low bits,
         tst     a                       ; and tst sees all 56
-        beq     omx_rs0
+        beq     omx_rs
         bset    #0,b                    ; this level moves
-omx_rs0:
-        rts
-omx_ramp1:
-        bsr     omx_sq
-        move    a,y:>$c09
-        move    y:>$c01,x0
-        sub     x0,a
-        asr     #4,a,a
-        move    a,y:>$c04
-        move    y:>$c04,a             ; reloaded: a0 still holds mpy's low bits,
-        tst     a                       ; and tst sees all 56
-        beq     omx_rs1
-        bset    #0,b                    ; this level moves
-omx_rs1:
-        rts
-omx_ramp2:
-        bsr     omx_sq
-        move    a,y:>$c0a
-        move    y:>$c02,x0
-        sub     x0,a
-        asr     #4,a,a
-        move    a,y:>$c05
-        move    y:>$c05,a             ; reloaded: a0 still holds mpy's low bits,
-        tst     a                       ; and tst sees all 56
-        beq     omx_rs2
-        bset    #0,b                    ; this level moves
-omx_rs2:
+omx_rs:
         rts
 
 ; a = (level/128)^2 from a page word in a (top byte: the transfer's tag).
@@ -540,8 +495,9 @@ omx_sq:
         rts
 
 ; The nine lists from the eight codes on the page at r6. Table at the
-; ptable: per code, for CUE, MAIN and PHONES, the list's number 1-9 (3 x bus
-; + kind, kind 1 stereo, 2 mono L, 3 mono R) or 0. List w's length is at
+; ptable, a word per code: for CUE, MAIN and PHONES in bits 3..0, 7..4 and
+; 11..8, the list's number 1-9 (3 x bus + kind, kind 1 stereo, 2 mono L,
+; 3 mono R) or 0. List w's length is at
 ; $c10 + w and its entries at $c18 + 8w. With MASTER TRACK on, T8 (listed
 ; last) leaves the MAIN lists for $c1a-$c1c.
 omx_build:
@@ -556,7 +512,7 @@ omx_build:
         do      #12,omx_bclr
         move    b,y:(r4)+
 omx_bclr:
-        move    #>$fab1e0,r3            ; the code table: 14 codes x 3 words
+        move    #>$fab1e0,r3            ; the code table: 14 codes, a word each
         move    #>$cb1,x1               ; T1's y address
         bsr     omx_codes
         move    y1,a
@@ -604,19 +560,18 @@ omx_codes:
         move    b1,x0                   ; so reload it clean before shifting left
         move    x0,b
         move    #>13,y0                 ; above 13 (dirty RAM, never the ColdFire):
-        cmp     y0,b                    ; OFF, so the table read stays in its 14 rows
+        cmp     y0,b                    ; OFF, so the table read stays in its 14 words
         ble     omx_cok
         move    y0,b
         move    y0,x0
 omx_cok:
-        asl     #1,b,b                  ; 2c
-        add     x0,b                    ; 3c
-        move    b1,n2
+        move    x0,n2
         move    r3,r2
-        move    (r2)+n2                 ; this code: CUE, MAIN, PHONES list numbers
+        move    (r2)+n2
+        move    p:(r2),y0               ; this code: CUE, MAIN, PHONES list numbers
         do      #3,omx_cbus
-        move    p:(r2)+,b               ; w, 0 = not routed to this bus
-        tst     b
+        move    y0,b
+        and     #>$f,b                  ; w, 0 = not routed to this bus
         beq     omx_cnext
         move    b1,n4
         move    #>$c10,r4
@@ -631,7 +586,9 @@ omx_cok:
         add     #1,b
         move    b1,y:(r4)
 omx_cnext:
-        nop
+        move    y0,b                    ; the next bus's number
+        lsr     #4,b
+        move    b1,y0
 omx_cbus:
         move    x1,b                    ; the next track's y address
         add     #2,b

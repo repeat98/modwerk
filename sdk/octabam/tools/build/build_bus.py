@@ -245,6 +245,21 @@ def plain_slots(m) -> tuple[int, ...]:
                  if p.formatter is Formatter.PLAIN and p.active is not False)
 
 
+def floating_cave_at(cave_top: int, ovf_top: int, need: int, cave_limit: int) -> int | None:
+    """Where a floating cave of `need` bytes goes: the next 128-byte boundary
+    in the clone window if it fits whole below `cave_limit`, else the next
+    4-byte boundary in the overflow run, else None (it fits neither). The
+    browser composer places requested caves by the same rule
+    (src/engine/requested-modules.ts, requestedCaves); the window's overrun
+    check used to refuse first here, so the two refused one selection for
+    different reasons (module:verify, 15 Oct 2026)."""
+    at = (cave_top + 0x7f) & ~0x7f
+    if at + need <= cave_limit:
+        return at
+    at = (ovf_top + 3) & ~3
+    return at if at + need <= OVERFLOW_RUN_END else None
+
+
 PLAIN_SLOTS = {m.key: plain_slots(m) for m in _CLONED if plain_slots(m)}
 BIPOLAR_SLOTS = {m.key: m.bipolar_slots for m in _CLONED if m.bipolar_slots}
 _DEF_ASM = {m.key: m.dsp.asm for m in _CLONED}
@@ -1228,7 +1243,16 @@ def main():
     for _c, _b in _plan:
         _floating = _c.cave_addr is None
         if _floating:
-            _c = dataclasses.replace(_c, cave_addr=(_cave_top + 0x7f) & ~0x7f)
+            # Past the clone window: the overflow run, before any other check
+            # (floating_cave_at says why).
+            _need = max(len(_b), _c.reserve)
+            _at2 = floating_cave_at(_cave_top, _ovf_top, _need, cave_limit)
+            if _at2 is None:
+                sys.exit(f"{_c.label}: {_need} B fits neither the clone window "
+                         f"(from 0x{(_cave_top + 0x7f) & ~0x7f:08x}) nor the overflow run")
+            _c = dataclasses.replace(_c, cave_addr=_at2)
+            if not CLONE_BASE <= _at2 < cave_limit:
+                print(f"  {_c.label}: past the clone window, placed in the overflow run")
         # ⚠️ A CAVE MAY LIVE OUTSIDE THE CLONE WINDOW. The region from
         # CLONE_BASE to the chooser list is crowded -- six descriptor clones
         # and fifteen label formatters left 84 bytes on the rig -- and

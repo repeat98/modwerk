@@ -21,8 +21,8 @@
  {
   "module": "output-matrix",
   "moduleId": 3404814517,
-  "packageSha256": "4589b10b10842bda55b34607460257f9a2f9c317f75a253b2d5c3e6c9191ebad",
-  "sourcePolicySha256": "df589505c87f72735bc230661711af764e57ec5e73f1470d7af2eafb81dc3751",
+  "packageSha256": "e2df2fbfff7f956846c030a87c50ff391af427b8719d40018e6449cef8e48acd",
+  "sourcePolicySha256": "0994f291fc10c4b89c827cf60802e30ba152bf49c6572027e9edc0a22524a232",
   "revisions": [
    1,
    1,
@@ -31,17 +31,17 @@
   "feature": 2,
   "requiredCores": 1,
   "version": 1,
-  "imageBytes": 2248,
+  "imageBytes": 2316,
   "entryName": "page_levels",
-  "entry": 1564,
-  "beginReturn": 1656,
-  "endReturn": 1706
+  "entry": 1632,
+  "beginReturn": 1724,
+  "endReturn": 1774
  },
  {
   "module": "output-matrix",
   "moduleId": 3404814517,
-  "packageSha256": "4589b10b10842bda55b34607460257f9a2f9c317f75a253b2d5c3e6c9191ebad",
-  "sourcePolicySha256": "df589505c87f72735bc230661711af764e57ec5e73f1470d7af2eafb81dc3751",
+  "packageSha256": "e2df2fbfff7f956846c030a87c50ff391af427b8719d40018e6449cef8e48acd",
+  "sourcePolicySha256": "0994f291fc10c4b89c827cf60802e30ba152bf49c6572027e9edc0a22524a232",
   "revisions": [
    1,
    1,
@@ -50,17 +50,17 @@
   "feature": 2,
   "requiredCores": 1,
   "version": 1,
-  "imageBytes": 2248,
+  "imageBytes": 2316,
   "entryName": "matrix_leave",
-  "entry": 1780,
-  "beginReturn": 1814,
-  "endReturn": 1864
+  "entry": 1848,
+  "beginReturn": 1882,
+  "endReturn": 1932
  },
  {
   "module": "output-matrix",
   "moduleId": 3404814517,
-  "packageSha256": "4589b10b10842bda55b34607460257f9a2f9c317f75a253b2d5c3e6c9191ebad",
-  "sourcePolicySha256": "df589505c87f72735bc230661711af764e57ec5e73f1470d7af2eafb81dc3751",
+  "packageSha256": "e2df2fbfff7f956846c030a87c50ff391af427b8719d40018e6449cef8e48acd",
+  "sourcePolicySha256": "0994f291fc10c4b89c827cf60802e30ba152bf49c6572027e9edc0a22524a232",
   "revisions": [
    1,
    1,
@@ -69,11 +69,11 @@
   "feature": 2,
   "requiredCores": 1,
   "version": 1,
-  "imageBytes": 2248,
+  "imageBytes": 2316,
   "entryName": "matrix_enter",
-  "entry": 1936,
-  "beginReturn": 1970,
-  "endReturn": 2020
+  "entry": 2004,
+  "beginReturn": 2038,
+  "endReturn": 2088
  },
  {
   "module": "analog-bassdrum",

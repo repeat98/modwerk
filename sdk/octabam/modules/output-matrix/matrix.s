@@ -7,7 +7,7 @@
 | This file: the AUDIO page's third CUE CFG row and its YES actions (with
 | the cue-byte conversion on a mode switch), the project load and the
 | power-up CS1 check (pokes in the manifest), CUE + LEVEL as the destination
-| chooser and its LEV box, and the level page that carries the bus levels,
+| chooser, the LEV box labelled with the destination, and the level page that carries the bus levels,
 | the eight destinations and the declick to the DSP (matrix_mix.asm).
 | Tested under the ColdFire port only: see TESTING.md.
 
@@ -452,13 +452,25 @@ part_cue:
         moveq   #0,%d3                   | a cue level, not a code: MAIN
 1:      rts
 
+| a0 = the current track's destination name, d0 = its x in the LEV box:
+| 45 for three letters, as stock's label; 47 for two, centred as the
+| value is while turning (glyphs advance 4 pixels). Uses d1, d3.
+dest_label:
+        bsr.s   part_cue                 | d3 = the track's destination
+        lea     dest_names:l,%a0
+        movea.l (%a0,%d3.l*4),%a0
+        moveq   #45,%d0
+        tst.b   2(%a0)
+        bne.s   1f
+        moveq   #47,%d0
+1:      rts
+
 | ---- LEV box with CUE held (jmp detour, displaced: pea 0x400b7b98 "CUE")
-| MATRIX labels the box with the current track's destination, so holding
-| CUE shows it without a turn. Stock draws the label from x 45 (the
-| arguments pushed at 0x4004dd6a); a name is centred there as the value is
-| while turning: glyphs advance 4 pixels, so a two-letter name starts at
-| 47. This path pushes the same six arguments and joins at the jsr. d3 is
-| free: stock loads it after the draw.
+| MATRIX labels the box with the current track's destination, as without
+| CUE (lev_box_lev). Stock draws the label from x 45 (the arguments pushed
+| at 0x4004dd6a); dest_label centres a two-letter name. This path pushes
+| the same six arguments and joins at the jsr. d3 is free: stock loads it
+| after the draw.
         .global lev_box_cue
 lev_box_cue:
         mvs.b   CUE_CFG,%d0
@@ -466,22 +478,43 @@ lev_box_cue:
         beq.s   1f
         pea     0x400b7b98
         jmp     0x4004dd6a
-1:      bsr.s   part_cue                 | d3 = the track's destination
-        lea     dest_names:l,%a0
-        movea.l (%a0,%d3.l*4),%a0
+1:      bsr.s   dest_label
         move.l  %a0,-(%sp)               | the string
         moveq   #-1,%d1
         move.l  %d1,-(%sp)               | the limit, as stock
         moveq   #0x38,%d1
         move.l  %d1,-(%sp)
-        moveq   #45,%d0                  | x: three letters, as stock's
-        tst.b   2(%a0)
-        bne.s   2f
-        moveq   #47,%d0                  | two letters, centred
-2:      move.l  %d0,-(%sp)
+        move.l  %d0,-(%sp)               | x
         pea     0x400bf10a               | the surface
         pea     0x400ba876               | the font
         jmp     0x4004dd82               | the stock jsr 0x40012bd8
+
+| ---- LEV box, plain (jmp detour, displaced: pea 0x400b47d1 "LEV")
+| Stock STUDIO labels the box LEV, or XLV while 0x460d1694 is set (that
+| path pushes its label at 0x4004dcf2 and skips this site). MATRIX labels
+| it with the track's destination, as with CUE held, so the routing is
+| always in view; the value below stays the level. Same six arguments,
+| then stock's jsr through a0 (0x40012bd8, loaded at 0x4004dce4, which
+| dest_label clobbers). d3 is free: stock sets it at 0x4004de76 before
+| any read.
+        .global lev_box_lev
+lev_box_lev:
+        mvs.b   CUE_CFG,%d0
+        cmpi.l  #2,%d0
+        beq.s   1f
+        pea     0x400b47d1
+        jmp     0x4004dd00
+1:      bsr.s   dest_label
+        move.l  %a0,-(%sp)               | the string
+        moveq   #-1,%d1
+        move.l  %d1,-(%sp)               | the limit, as stock
+        moveq   #0x38,%d1
+        move.l  %d1,-(%sp)
+        move.l  %d0,-(%sp)               | x
+        pea     0x400bf10a               | the surface
+        pea     0x400ba876               | the font
+        lea     0x40012bd8,%a0
+        jmp     0x4004dd18               | the stock jsr (%a0)
 
 | ---- its value (jmp detour, displaced: the push of d4, "%d" and the buffer
 | and the jsr to sprintf; 0x4004ddc6 goes on to draw it). MATRIX prints the

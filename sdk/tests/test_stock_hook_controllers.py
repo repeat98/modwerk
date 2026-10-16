@@ -131,7 +131,7 @@ class StockHookControllers(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             matrix = controllers.encode('output-matrix', SDK, builder, Path(tmp), base, UPSTREAM)
         data = matrix['package']
-        self.assertEqual((matrix['sites'], matrix['copies']), (19, len(controllers.STOCK_COPIES['output-matrix'])))
+        self.assertEqual((matrix['sites'], matrix['copies']), (20, len(controllers.STOCK_COPIES['output-matrix'])))
         image = data[72:72 + matrix['imageBytes']]
         for label, delta, address, length, digest in controllers.STOCK_COPIES['output-matrix']:
             self.assertIn(struct.pack('>IIHH', 0, address, length, 0)[4:] + bytes.fromhex(digest), data)

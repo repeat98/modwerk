@@ -22,7 +22,7 @@ The module has no effect slot and no knob of its own.
 | --- | --- | --- |
 | PROJECT > CONTROL > AUDIO | OUT CFG (stock: CUE CFG) | NORMAL, STUDIO or MATRIX |
 | Any audio track | LEVEL | The track's level, the same on every output it plays on |
-| Any audio track | CUE + LEVEL | The track's outputs, shown in the LEV box |
+| Any audio track | CUE + LEVEL | The track's outputs, always shown as the LEV box's label |
 | MIXER | MIX | The PHONES output level |
 
 Destinations, in the order CUE + LEVEL steps through them: MN, CUE, PHN, M+C, M+P, C+P, ALL, MNL, MNR, CUL, CUR, PHL, PHR, OFF.
@@ -95,7 +95,7 @@ The module changes nothing until you choose MATRIX, except the box title in chan
    - **Checked:** NORMAL, STUDIO and TRACK 8 still select as stock.
 2. **In MATRIX, CUE + LEVEL chooses the track's outputs instead of setting a cue level.**
    - **Why:** MATRIX has a single level per track, so the cue level has nothing to do. STUDIO already uses this gesture for the second output pair, so it stays where musicians expect it. A new gesture (FUNC + LEVEL is MAIN's) was considered, but every LEVEL combination is taken.
-   - **What you see:** holding CUE labels the LEV box with the track's destination (MN, PHN, …) in place of CUE, so you can read it without turning; both bars show the level, solid on every track. STUDIO shades the master track's second bar (it has no cue there); in MATRIX the master may go to CUE or PHONES, so it is solid too.
+   - **What you see:** the LEV box is labelled with the track's destination (MN, PHN, …) in place of LEV, and in place of CUE while CUE is held, so each track's routing is always in view; the value shown while turning LEVEL is still the level, and XLV (scene editing) and FUNC's MAIN view are stock. Both bars show the level, solid on every track. STUDIO shades the master track's second bar (it has no cue there); in MATRIX the master may go to CUE or PHONES, so it is solid too.
    - **Also:** CC 47 in and out carries the destination number (0–13). CUE + TRACK does nothing, as in STUDIO. A destination change fades the track out on its old outputs and in on the new ones over one 16-sample frame each (0.3 ms), the ramp stock uses for mute, so it clicks no more than muting a playing track does.
    - **Checked:** NORMAL and STUDIO's CUE + LEVEL store exactly what stock stores. FUNC + TRACK mute and solo silence a track on every output it uses.
 3. **In MATRIX, MIX sets the PHONES output level instead of the headphone blend.**
