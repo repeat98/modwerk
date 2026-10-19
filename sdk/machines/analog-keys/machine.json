@@ -3,15 +3,47 @@
   "id": "analog-keys",
   "order": 120,
   "name": "Analog Keys",
-  "status": "open",
-  "summary": "Analog Four voices with a keyboard. No public firmware research yet.",
+  "status": "research",
+  "summary": "OS 1.56 is an ELE2 image whose MAIN OS section rebuilds byte-identically. A modified OS boots: ours in rytm-emu, and a third party's on A4/Keys MK1 hardware, 2026-10-17.",
+  "firmware": {
+    "releases": [
+      {
+        "version": "1.56",
+        "files": [
+          {
+            "name": "Analog-Four_Analog-Keys_OS1.56.syx",
+            "sha256": "cda4459d14bfba40635440ad9dfa8fc183e5317e5e3ffa7116704f307fdf7010"
+          }
+        ]
+      }
+    ],
+    "flash": "Elektron Transfer over USB: set MIDI IN and OUT to the device, drop the .syx and press YES on the unit. Or from the STARTUP menu: hold FUNC at power-on, choose OS UPGRADE with TRIG 4, and send the .syx from Transfer's LEGACY OS UPGRADE mode over MIDI DIN.",
+    "recovery": "Hold FUNC at power-on to reach the STARTUP menu and send the owner's stock .syx over MIDI DIN; the startup menu does not enumerate USB, so the DIN path is required. Do not power the unit off until it has finished the bootstrap upgrade that follows the first restart after some upgrades. Elektron states the Analog Keys cannot be downgraded below OS 1.1."
+  },
   "steps": {
-    "format": "open",
-    "rebuild": "open",
-    "boot": "open",
+    "format": "done",
+    "rebuild": "done",
+    "boot": "done",
     "core": "open",
     "mods": "open"
   },
+  "research": [
+    {
+      "label": "elektron-firmware-tool",
+      "url": "https://github.com/mischa85/elektron-firmware-tool",
+      "note": "MIT. Reads, verifies, extracts and rewrites this image's ELE2 container and Adler-32 section checksum unchanged; a verbatim section repack is byte-identical to stock OS 1.56. No firmware hosted."
+    },
+    {
+      "label": "AE-analog-four-mods",
+      "url": "https://github.com/hugz202/AE-analog-four-mods",
+      "note": "Mods for the Analog Four / Keys MK1 on OS 1.56: verified symbol map, free-space registry, byte-checked build, and a modded OS booted on MK1 hardware on 2026-10-17. Supplies the boot step's evidence. No firmware hosted."
+    },
+    {
+      "label": "rytm-emu",
+      "url": "https://github.com/trigcondition/rytm-emu",
+      "note": "MIT. Boots stock OS 1.56 for the Analog Four MKI and the Analog Keys to its main screen, headless or in a window. Our local branch adds DTEMU_PROFILE to run a modified image by name; nothing pushed."
+    }
+  ],
   "art": {
     "body": "keys",
     "encoders": 10,
