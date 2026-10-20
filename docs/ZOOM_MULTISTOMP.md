@@ -1,6 +1,6 @@
 # Proposal: Zoom MultiStomp pedals (ZDL effects)
 
-Status: **proposal for owner review**. Nothing here changes the site, the
+Status: **proposal, with the owner's first answers**. Nothing here changes the site, the
 machine registry or the builder. The draft profiles in
 [zoom-multistomp/](zoom-multistomp/) sit outside `sdk/machines/` on purpose:
 they need contract changes the owner decides first.
@@ -52,7 +52,7 @@ own pipelines.
 | Platform (`octabam`, `elemod`) | A new `zdl` platform | Contract section in `module-contract-v3.ts` |
 | Module | One ZDL effect, or a NAM/cab slot built from a template | Module manifest for a prebuilt binary plus source |
 | Build | Effects: prebuilt (the TI compiler cannot run in CI or the browser and is not redistributed). NAM/cab: in the browser from MIT templates (`nam_loader.js`, `cab_loader.js`, `slot_identity.js`, `cover_art.js`) | No native build in Modwerk |
-| Install | Zoom Effect Manager 2.3.3+ (USB), a guided download | No USB link, runtime loader, trial or Keep/Undo: the stock firmware has no such path |
+| Install | Fallback: Zoom Effect Manager 2.3.3+ (USB), a guided download. Primary (planned): direct browser install, once the transfer protocol is known | No runtime loader, trial or Keep/Undo: the stock firmware has no such path |
 | Patches | The project's Web MIDI patch editor (MS-70CDR mapped; read-only elsewhere) | Optional integration |
 | Combination budget | Summed DSP cost per patch: refused between 224.4 and 228.4 on the MS-70CDR 2.10 (measured); 6 slots | A `percent`-style budget in the profile |
 | Resource rules | Effect ID unique per pedal (the project reserves 403-499, 500-699 NAM, 700-899 cab, 900-957), file name 8 characters unique, file size cap (~32 KB proven) | A per-family ID ledger, like Stomphacks' author ranges for ZD2 |
@@ -60,8 +60,8 @@ own pipelines.
 
 ## Contract changes the drafts need
 
-1. A `vendor` (or `family`) field, so the site can show non-Elektron devices
-   apart and keep "for Elektron instruments" true for the rest.
+1. A `vendor` (or `family`) field, so the Zoom pedals can be shown as one
+   family (see the owner's answers below).
 2. `MACHINE_PLATFORMS` gains `zdl`.
 3. Steps per platform: for `zdl`, `format`, `load` and `mods`, with
    `rebuild` and `core` marked not applicable rather than `open`.
@@ -69,22 +69,31 @@ own pipelines.
    touch the OS (Zoom ships firmware as an updater app, not `.syx`/`.bin`).
 5. `art.body` gains `pedal`, with knob count and footswitches.
 
-## Open questions for the owner
+## Owner's answers (Janik, 2026-10-20)
 
-1. Should Modwerk list non-Elektron devices at all? The README describes it as
-   firmware modules for Elektron instruments.
-2. If yes: a separate device family on the site, or alongside the machines?
-3. Licensing: the project is MIT; the upstream toolchain carries no licence
-   file and is the owner's own; Matujuice effects are MIT by their author.
-4. Is a guided Effect Manager install acceptable where the base/USB lifecycle
-   cannot exist?
+1. **Non-Elektron devices:** yes. The "Elektron instruments" wording is stale.
+2. **A family:** if modules work on more than one Zoom pedal, show them as a
+   family. They do: a ZDL is the same file on every pedal of the ZDL family
+   (MS-70CDR, MS-50G, MS-60B, G1on/B1on), so one module can serve the whole
+   family, with compatibility evidence recorded per pedal. Known limits stay
+   per pedal: DSP budget, slot count, firmware version, and which effects have
+   been confirmed where.
+3. **Licensing:** still open. The project is MIT; the upstream toolchain
+   carries no licence file and is the owner's own; Matujuice effects are MIT
+   by their author.
+4. **Install:** keep Zoom Effect Manager as the **fallback**. The primary path
+   should be a direct install from the browser; that needs the effect-transfer
+   protocol, which is being researched on the project side (read-only first:
+   list installed effects) and is not available yet.
 
 ## Proposed sequence
 
-1. Owner decision on scope and the contract changes above.
+1. Agree the contract changes above, with the Zoom pedals as one family.
 2. Promote the draft profiles to `sdk/machines/` with the agreed fields.
 3. A `zdl` module contract for prebuilt effects (binary hash, source path,
    knobs, DSP cost, effect ID, evidence), then a first module set: the 22-effect
    pack.
 4. In-browser NAM and cab builds from the project's templates.
-5. Optional: the patch editor as a device page.
+5. Install: Effect Manager download as the fallback now; a direct browser
+   install once the transfer protocol is understood and checked.
+6. Optional: the patch editor as a device page.
