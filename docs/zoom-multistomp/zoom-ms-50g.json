@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "id": "zoom-ms-50g",
+  "order": 210,
+  "name": "MS-50G",
+  "vendor": "Zoom",
+  "status": "research",
+  "summary": "Same ZDL format. NAM and cab effects confirmed by a user on firmware 3.10; the 22-effect pack is unconfirmed.",
+  "steps": {
+    "format": "done",
+    "load": "done",
+    "mods": "open"
+  },
+  "research": [
+    {
+      "label": "ZoomMultistompZDL",
+      "url": "https://github.com/themanro/ZoomMultistompZDL",
+      "note": "MIT. ZDL linker, ABI notes, DSP safety rules, effects, NAM/cab template loaders, Web MIDI patch editor, Ziddle emulator tests."
+    },
+    {
+      "label": "repeat98/ZoomMultistompZDL",
+      "url": "https://github.com/repeat98/ZoomMultistompZDL",
+      "note": "The upstream reverse-engineered toolchain the project builds on."
+    },
+    {
+      "label": "Issue #5",
+      "url": "https://github.com/themanro/ZoomMultistompZDL/issues/5",
+      "note": "MS-50G 3.10: NAM full rate and Eco, CabIR and patch editor writes reported working."
+    }
+  ],
+  "art": {
+    "body": "pedal",
+    "encoders": 0,
+    "trigs": 0,
+    "knobs": 3
+  }
+}
