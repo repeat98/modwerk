@@ -15,6 +15,9 @@
 extern uint32_t modwerk_fx1_list[MODWERK_LIST_ROWS], modwerk_fx2_list[MODWERK_LIST_ROWS]; /* identity.c: NONE and the stock rows, then 0 */
 extern const uint32_t modwerk_fx_rows[2];                   /* the stock rows, NONE included: FX1, FX2 */
 void modwerk_machine_invalidate_code(void);
+#ifdef MODWERK_CACHED_MODULES /* build_core.py --cached-modules: the fixups land in the data cache (runtime.c) */
+void modwerk_machine_flush_data(uint32_t address, uint32_t length);
+#endif
 #ifdef MODWERK_HOST
 /* The host test's address space: a 32-bit address is an offset into it, as the unit's addresses are. */
 extern uint8_t modwerk_test_memory[0x40000];
@@ -108,6 +111,9 @@ int modwerk_fxpage_build(unsigned id, uint8_t *recipe, uint32_t bytes, unsigned 
             uint8_t *word = AT(code + be16(e + 12 + 2u * f));
             put32(word, be32(word) + delta);
         }
+#ifdef MODWERK_CACHED_MODULES /* the formatter runs from the cached alias: its fixed words reach memory first */
+        modwerk_machine_flush_data(code, be16(e + 8));
+#endif
         put32(d + 0xca + 4u * slot, code);
         if (e[2]) put32(d + 0xfa + 4u * slot, 0); /* its own formatter draws it: no stock widget */
         if (e[3]) wide[id][wides][0] = code, wide[id][wides++][1] = e[3]; /* more than five labels */

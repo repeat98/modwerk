@@ -25,6 +25,7 @@
 #define HEADER 84u
 #define SET_BYTES (RUNTIME_POOL_BYTES + 0x1000u) /* the pool's worth of packages, and the header */
 extern const uint8_t modwerk_base_digest[32];
+void modwerk_diag_set(void); /* diag.c: the installed set, into the unit's log */
 extern const struct mu_backend modwerk_runtime_backend;
 struct file_object { uint32_t word[6]; };
 #ifdef MODWERK_HOST
@@ -210,6 +211,7 @@ static void restore(void)
     if (!wa && !wb) {
         if (modwerk_modset_result != FOREIGN) modwerk_modset_result = a || b ? DAMAGED : NONE_SAVED;
         for (unsigned i = 0; i < HEADER; ++i) set[i] = 0;
+        modwerk_diag_set(); /* nothing restored: the log says so */
         return;
     }
     slot = wb && (!wa || gb > ga) ? 1u : 0u; /* the newer one; the next save goes to the other */
@@ -228,9 +230,12 @@ static void restore(void)
     modwerk_modset_result = installed == count ? RESTORED : REFUSED;
     if (installed) SAY(installed == count ? "MODULES LOADED" : "SOME MODULES FAILED");
     else SAY("MODULES NOT LOADED");
+    modwerk_diag_set(); /* diag.c: the set this boot runs, in the unit's log */
 }
 /* ep0.c holds host frames until the restore has run: an install before it would race it, and the restore would undo it. */
 int modwerk_modset_restored(void) { return (int)restored; }
+/* ep0.c's tick wakes the engine for this: a kept set not yet on the card whose save may run now (first try or retry). */
+int modwerk_modset_due(void) { return restored && pending && TICKS >= retry_at && !VOLATILE_BLOCKED(); }
 #ifdef MODWERK_SAVED_SET_EXPORT
 /* A restored baseline without a staged package or any queued/retrying save. */
 int modwerk_modset_export_idle(void) { return restored && !pending && !candidate && !VOLATILE_BLOCKED(); }
@@ -246,6 +251,6 @@ void modwerk_modset_service(void)
     if (!restored) { if (TICKS > 180u) restore(); return; } /* three seconds in: the project and the card are up */
     if (!pending || TICKS < retry_at) return;
     slot ^= 1u;
-    if (store(slot)) pending = 0, modwerk_modset_result = SAVED;
+    if (store(slot)) pending = 0, modwerk_modset_result = SAVED, modwerk_diag_set(); /* the set as the card holds it, in the unit's log */
     else slot ^= 1u, retry_at = TICKS + 600u, modwerk_modset_result = SAVE_FAILED; /* ten seconds, then again */
 }

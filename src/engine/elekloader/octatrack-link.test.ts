@@ -60,6 +60,15 @@ describe('finding the unit', () => {
     const { link } = await linked()
     expect(link.getState()).toMatchObject({ status: 'ready', identity: { base: FAKE_BASE, model: 'OCTATRACK MKII', canSubmit: true }, active: FAKE_BASE })
   })
+  it('undoes a sync whose page closed during its trial, instead of failing every sync until the cable is pulled', async () => {
+    const unit = fakeUnit()
+    unit.orphan = '77'.repeat(32) // the base waits for 10 s without any USB request, which this page's reads prevent
+    const link = new OctatrackLink(unit.usb, fakeSession(unit), 300)
+    link.start()
+    await vi.waitFor(() => expect(link.getState().status).toBe('ready'))
+    expect(unit.orphan).toBeUndefined()
+    expect(link.getState()).toMatchObject({ status: 'ready', active: FAKE_BASE, notice: { tone: 'success', text: 'The last sync wasn’t finished, so the Octatrack undid it.' } })
+  })
   it('tells a stock unit apart, then finds the base when the unit restarts after its OS upgrade', async () => {
     const { unit, link } = await linked('stock')
     expect(link.getState().status).toBe('stock')

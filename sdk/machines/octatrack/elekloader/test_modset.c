@@ -6,6 +6,8 @@
 #define MODWERK_RUNTIME_VOLATILE_JOURNAL
 #include "sha256.c"
 #include "modset.c"
+static unsigned set_records;
+void modwerk_diag_set(void) { ++set_records; } /* diag.c: counted here */
 #include <stdio.h>
 #include <string.h>
 
@@ -136,11 +138,13 @@ int main(void)
     CHECK(modwerk_modset_keep(kept, kept_bytes, 2, want) && !memcmp(before_set, set, HEADER) && !pending);
     modwerk_modset_kept(); modwerk_modset_kept();                                 /* sealed once */
     CHECK(modwerk_modset_generation == g + 1 && modwerk_modset_count == 3 && pending && modwerk_modset_unsaved() == 1u);
+    CHECK(modwerk_modset_due());                                                  /* ep0.c's tick wakes the engine */
+    modwerk_test_gate = 0; modwerk_modset_service(); CHECK(pending && modwerk_modset_due()); modwerk_test_gate = 1;
     write_fail = 1; modwerk_modset_service();
-    CHECK(modwerk_modset_result == SAVE_FAILED && pending && modwerk_modset_unsaved() == 3u);
+    CHECK(modwerk_modset_result == SAVE_FAILED && pending && modwerk_modset_unsaved() == 3u && !modwerk_modset_due());
     write_fail = 0; written = writes; modwerk_modset_service(); CHECK(writes == written); /* ten seconds to the retry */
-    modwerk_test_ticks += 600; modwerk_modset_service();
-    CHECK(modwerk_modset_result == SAVED && !pending && !modwerk_modset_unsaved());
+    modwerk_test_ticks += 600; CHECK(modwerk_modset_due()); modwerk_modset_service();
+    CHECK(modwerk_modset_result == SAVED && !pending && !modwerk_modset_unsaved() && !modwerk_modset_due());
     accept(0, 48); CHECK(modwerk_modset_count == 4); modwerk_modset_service(); /* a legacy install keeps the kept */
     boot(); modwerk_modset_service(); CHECK(modwerk_modset_result == RESTORED && installed == 4);
     /* A FUNC boot installs nothing yet keeps the card's newest generation: what is saved after it wins at the next

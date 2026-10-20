@@ -30,7 +30,9 @@ class LoaderTests(unittest.TestCase):
         cc = shutil.which('cc')
         if not cc:
             self.skipTest('no host C compiler')
-        for defines in ((), ('-DRUNTIME_MODULES=128u', '-DRUNTIME_POOL_BYTES=786432u')):  # the default, the Octatrack's
+        octatrack = ('-DRUNTIME_MODULES=128u', '-DRUNTIME_POOL_BYTES=786432u')
+        # the default, the Octatrack's, and both with build_core.py --cached-modules
+        for defines in ((), octatrack, ('-DMODWERK_CACHED_MODULES',), octatrack + ('-DMODWERK_CACHED_MODULES',)):
             with self.subTest(defines), tempfile.TemporaryDirectory() as temp:
                 subprocess.run([cc, '-std=c99', '-Wall', '-Wextra', '-Werror', '-pedantic', *defines, '-I', LOADER,
                                 '-I', ROOT / 'sdk/runtime/upload', LOADER / 'tests/host_test.c', '-o', temp + '/t'],

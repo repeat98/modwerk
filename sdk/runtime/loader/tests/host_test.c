@@ -16,13 +16,30 @@ static unsigned failures;
 static uint8_t stock[256], original[256], paused[64], saved_registers[64];
 static int stopped = 1, masked, locked, flushed, unknown;
 int modwerk_machine_stopped(void) { return stopped; }
-void *modwerk_machine_uncached(void *p) { return p; }
-void modwerk_machine_invalidate_code(void) {}
+/* Pool pushes (MODWERK_CACHED_MODULES): how many, the last range, and how many an instruction-cache invalidation
+ * followed before the next one. Host addresses are truncated to 32 bits, as the loader passes them. */
+static unsigned uncached_calls, pool_flushes, pool_flushes_invalidated;
+static uint32_t pushed_at, pushed_bytes;
+static int push_pending;
+static int in_pool(uint32_t a, uint32_t n) { uint32_t lo = (uint32_t)(uintptr_t)pool; return a >= lo && n <= RUNTIME_POOL_BYTES - (a - lo); }
+void *modwerk_machine_uncached(void *p) { ++uncached_calls; return p; }
+void modwerk_machine_invalidate_code(void) { if (push_pending) push_pending = 0, ++pool_flushes_invalidated; }
 int modwerk_machine_patchable(uint32_t a, uint32_t n) { return a >= STOCK + 16u && n <= STOCK + sizeof stock - a; }
 /* Code is read under the lock (the checks before a switch run unmasked) and written masked: put() flushes each
- * site just before writing it. */
+ * site just before writing it. A pool extent is pushed off-line, before anything runs there (cached modules). */
 uint8_t *modwerk_machine_code(uint32_t a) { CHECK(locked); return stock + (a - STOCK); }
-void modwerk_machine_flush_data(uint32_t a, uint32_t n) { CHECK(masked); (void)a; (void)n; flushed++; }
+void modwerk_machine_flush_data(uint32_t a, uint32_t n)
+{
+    flushed++;
+    if (!in_pool(a, n)) { CHECK(masked); return; }
+    CHECK(!push_pending && !locked && !masked && !(a & 15u) && !(n & 15u)); /* whole lines, off-line: nothing runs there yet */
+    ++pool_flushes, pushed_at = a, pushed_bytes = n, push_pending = 1;
+}
+#ifdef MODWERK_CACHED_MODULES
+/* The last push covered exactly m's extent, and an instruction-cache invalidation followed it. */
+static int pushed(const struct runtime_module *m)
+{ return m && !push_pending && pushed_at == (uint32_t)(uintptr_t)m && pushed_bytes == m->size; }
+#endif
 uint32_t modwerk_machine_mask(void) { CHECK(!masked && locked); masked = 1; return 7; }
 void modwerk_machine_unmask(uint32_t sr) { CHECK(masked && sr == 7); masked = 0; }
 uint32_t modwerk_machine_lock(void) { CHECK(!locked && !masked); locked = 1; return 4; }
@@ -258,6 +275,13 @@ int main(void)
     CHECK(a && a->sites == 1 && code[0] == 0xa1 && be32(code + 4) == (uint32_t)(uintptr_t)code + 6 && be32(code + 8) == 0);
     CHECK(stock[32] == 0x4e && stock[33] == 0xf9 && word(STOCK + 34) == (uint32_t)(uintptr_t)code + 2 && flushed > 0);
     CHECK(bytes_at(STOCK + 38, original + 38, sizeof stock - 38) && bytes_at(STOCK, original, 32));
+#ifdef MODWERK_CACHED_MODULES
+    /* Cached modules: the record, its hooks and its relocated words are in the pool's own alias, and its extent was
+     * pushed once, then the instruction caches invalidated. */
+    CHECK(in_pool((uint32_t)(uintptr_t)a, a->size) && in_pool((uint32_t)a->hook[RUNTIME_TICK], 2) &&
+          in_pool(be32(code + 4), 4) && word(STOCK + 34) == (uint32_t)a->hook[RUNTIME_TICK]);
+    CHECK(pool_flushes == 1 && pushed(a));
+#endif
     CHECK(b->retire(0));
 
     /* B patches the same place: A's bytes go back first. A paused task inside
@@ -399,6 +423,9 @@ int main(void)
     id = 40; begin5(0, 26, 5, 2); dsp_words(5, reloc, 2);
     CHECK(b->prepare(0, p, n) && b->publish(0) == MU_APPLIED && b->retire(0) && dsp_switches == 1);
     const struct runtime_module *fx = modwerk_runtime_module(0);
+#ifdef MODWERK_CACHED_MODULES
+    CHECK(pushed(fx) && in_pool((uint32_t)(uintptr_t)fx->dsp.words, 20)); /* the push covers the DSP words, the extent's tail */
+#endif
     CHECK(fx && fx->id == 40 && !fx->hook[RUNTIME_TICK] && dsp_to.count == 5 && dsp_to.id == 26 && dsp_to.module == 40 && dsp_to.slots == 1 && dsp_to.init == 1 &&
           dsp_to.proc == 2 && dsp_to.cycles == 244 && dsp_to.kind == RUNTIME_MODELED && dsp_to.state == 70 && dsp_to.buffer == 0x4000 && !dsp_from.count);
     CHECK(dsp_to.words == fx->dsp.words && dsp_to.words[0] == 0x0c0000u && dsp_to.words[1] == 1 && dsp_to.words[4] == 0x0c0004u &&
@@ -806,6 +833,14 @@ int main(void)
     }
     CHECK(modwerk_runtime_active()==2 && live[0]==baseline0 && live[1]==baseline1);
     CHECK(modwerk_runtime_free(0)==baseline_free && !memcmp(stock,baseline_stock,sizeof stock));
+#ifdef MODWERK_CACHED_MODULES
+    /* Every install pushed its extent exactly once (each one takes an owner generation, and nothing refuses after the
+     * push), followed by an invalidation; frees, discards, rollbacks and removals pushed nothing; nothing used the
+     * uncached alias. */
+    CHECK(pool_flushes == owner_generation && pool_flushes_invalidated == pool_flushes && !push_pending && !uncached_calls);
+#else
+    CHECK(!pool_flushes);
+#endif
     if (failures) { fprintf(stderr, "%u loader checks failed\n", failures); return 1; }
     puts("Loader: refusals, relocation, bss, hooks, stock-code sites (in-flight, stock and changed-code refusals, "
          "replace, rollback, removal), reclamation, several modules (conflicts, positions), exhaustion, DSP sections and ABI 7's "

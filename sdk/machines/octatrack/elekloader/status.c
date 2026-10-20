@@ -15,6 +15,12 @@
 #include "fxids.h"
 #include "load_wire.h"
 void modwerk_status_close_menu(void); /* below, with the menu rows */
+#ifdef MODWERK_DEV
+void modwerk_cost_stamp(unsigned k); /* diag.c: the development profile of the base's hooks */
+#define MW_STAMP(k) modwerk_cost_stamp(k)
+#else
+#define MW_STAMP(k) ((void)0)
+#endif
 
 #define CUE 0x2a
 #define PROJ 0x1c
@@ -80,7 +86,12 @@ static unsigned waited;
 static uint32_t cpu_recent[8];
 static void missing_check(void);
 static void memory_tick(void);
+static void status_tick(void);
 void modwerk_status_tick(void)
+{
+    MW_STAMP(5); status_tick(); MW_STAMP(6);
+}
+static void status_tick(void)
 {
     modwerk_status_close_menu();
     memory_tick();
@@ -119,7 +130,7 @@ void modwerk_status_tick(void)
 /* The dialogs: while one shows it takes every key and encoder, so nothing changes under it; NO closes it and the
  * screen it covered is back as it was. CUE + PROJ toggles the status from anywhere; PROJ's MODWERK category (the
  * fifth root row build_core.py adds, owner 12 October 2026) opens each page: LOAD, MODULE LOAD, MISSING, SELF TEST. */
-enum { CLOSED, SHOWN, TEST, MISSING, MEMORY, MODULE_LOAD };
+enum { CLOSED, SHOWN, TEST, MISSING, MEMORY, MODULE_LOAD, REFUSED };
 static int open, taken = -1; /* which shows; a key press the handler took, whose release it takes too (-1: none; TRIG 1 is 0) */
 #define YES 0x31
 /* Our rows close PROJ's menu on the next tick, as its NO does (stock's FUN_40064bc0, Octabam's MAINMENU.md; not from
@@ -201,6 +212,13 @@ extern uint8_t modwerk_test_live_fx[16];
 #endif
 extern volatile uint32_t dl_selection_completed, modwerk_boot_accepted;
 static unsigned memory_left; /* ticks the box still shows */
+/* DSP FULL and DSP MEMORY FULL, said with numbers (owner, 20 October 2026: testers took the bare popup for a bug): the
+ * refused effect's core, its DSP time and code memory as admission counts them with what the effect would add, or its
+ * buffer blocks. A snapshot at the refusal (manager.c's dl_refusal, build_core.py), for three seconds; a key closes it. */
+extern volatile uint32_t dl_refusal[8];
+static unsigned refused_left, refused_reason, refused_core;
+static uint32_t refused[8], refused_booked, refused_words, refused_arena;
+static char refused_name[17];
 static int budget_slot = -1; /* the slot the pick put a module on; -1: an accept over USB (memory only) */
 /* Each core's code words before the pick: what it took is the change, so a second instance on the core or a module
  * another Part already holds takes +0% (one copy of the code per core), and a swap for a smaller one shows minus.
@@ -221,6 +239,7 @@ static void memory_tick(void)
     completed = dl_selection_completed, accepted = modwerk_boot_accepted;
     if ((picked || over_usb) && (open == CLOSED || open == MEMORY)) open = MEMORY, memory_left = 90u;
     if (open == MEMORY && memory_left && !--memory_left) open = CLOSED;
+    if (open == REFUSED && refused_left && !--refused_left) open = CLOSED;
     if (open != MEMORY) words_before[0] = dl_residency_words[0], words_before[1] = dl_residency_words[1];
 }
 /* MODULE LOAD (owner, 12 October 2026: "load per module"): each installed module effect, with what its instances
@@ -536,8 +555,78 @@ static void memory_box(unsigned char *frame)
         percent(89u, y, used[i]);
     }
 }
+/* transfer.c's dl_ui, reason 2 (DSP MEMORY FULL) or 3 (DSP FULL): 1 when the box shows instead of the bare popup. */
+int modwerk_status_refused(unsigned reason)
+{
+    if ((open != CLOSED && open != MEMORY) || dl_refusal[1] > 15u || (reason == 3u) != (dl_refusal[0] == 1u)) return 0;
+    for (unsigned i = 0; i < 8u; ++i) refused[i] = dl_refusal[i];
+    unsigned slot = refused[1], id = refused[2], c = (slot & 7u) < 4u ? 1u : 0u;
+    refused_reason = reason, refused_core = c, refused_booked = modwerk_dsp_booked(c), refused_words = dl_residency_words[c];
+    refused_arena = c ? modwerk_status[ARENA] >> 16 : modwerk_status[ARENA] & 0xffffu; /* the arena as the page reads it */
+    for (unsigned i = 0; i < sizeof refused_name; ++i) refused_name[i] = 0; /* a shorter name after a longer one */
+    for (unsigned k = 0, n = modules_count(); k < n; ++k)
+        if (modules[k].id == id) for (unsigned i = 0; i < 16u; ++i) refused_name[i] = modules[k].name[i];
+#ifndef MODWERK_HOST
+    if (!refused_name[0] && id < 32u) { /* a stock effect: its descriptor's name, as the chooser lists it */
+        const char *d = *(const char *const *)(uintptr_t)((slot < 8u ? 0x400d5f58u : 0x400d5fdcu) + 4u * id);
+        for (unsigned i = 0; d && i < 16u && d[9 + i] >= ' '; ++i) refused_name[i] = d[9 + i];
+    }
+#endif
+    refused_name[16] = 0;
+    for (char *t = refused_name; *t; ++t) if (*t >= 'a' && *t <= 'z') *t = (char)(*t - 32);
+    open = REFUSED, refused_left = 180u;
+    return 1;
+}
+static void refused_box(unsigned char *frame)
+{
+    for (unsigned i = 0; i < 7u; ++i) surface[i] = ((const volatile uint32_t *)SURFACE)[i];
+    surface[3] = (uint32_t)(uintptr_t)frame;
+    fill(frame, 18u, 12u, 109u, 50u, 0);
+    outline(frame, 18u, 12u, 109u, 50u);
+    unsigned slot = refused[1], c = refused_core;
+    char where[8] = {'T', (char)('1' + (slot & 7u)), ' ', 'F', 'X', (char)(slot < 8u ? '1' : '2'), 0};
+    const char *title = refused_reason == 3u ? "DSP FULL" : "DSP MEMORY FULL";
+    if (TEXT_WIDTH(FONT, -1, title) + TEXT_WIDTH(FONT, -1, where) + 6 > 82) title += 4; /* "MEMORY FULL": clear of the slot */
+    label(23u, 15u, title), label((unsigned)(105 - TEXT_WIDTH(FONT, -1, where)), 15u, where);
+    fill(frame, 18u, 22u, 109u, 22u, 1);
+    char need[32], *e = need;
+    for (const char *t = refused_name[0] ? refused_name : "THIS EFFECT"; *t && e < need + 16; ) *e++ = *t++;
+    const uint32_t allowance = c ? MODWERK_DSP_ALLOWANCE1 : MODWERK_DSP_ALLOWANCE0;
+    if (refused[0] == 3u) { /* a Y buffer: the blocks this slot kind has on the core, all taken */
+        const char *t = " NEEDS A BUFFER";
+        while (*t) *e++ = *t++;
+        *e = 0, label(23u, 26u, need);
+        char line[24] = "FX1 BUFFERS T1-4", count[8], *n = count;
+        line[2] = slot < 8u ? '1' : '2';
+        if (!c) line[13] = '5', line[15] = '8';
+        label(23u, 36u, line);
+        n = number(n, refused[6]), *n++ = '/', n = number(n, refused[7]), *n = 0;
+        label((unsigned)(105 - TEXT_WIDTH(FONT, -1, count)), 36u, count);
+        return;
+    }
+    /* DSP: what admission books on the core now, and what the effect adds (its cycles less the slot's old effect's);
+     * MEM: the core's code words, and the effect's when its code is not on the core yet. Past 100 % is why. Only the
+     * bar that refused it carries the effect: the core keeps other Parts' code loaded until it needs the room, so its
+     * words plus the effect's can pass 100 % on a DSP FULL that memory never refused (owner's MKII, 20 October 2026). */
+    const int32_t add = (int32_t)refused[4];
+    const uint32_t dsp_add = add > 0 && refused[0] == 1u ? (uint32_t)add * 1000u / allowance : 0u,
+                   mem_add = refused_arena && refused[0] == 2u ? refused[5] * 1000u / refused_arena : 0u;
+    const uint32_t dsp = refused_booked + dsp_add, mem = (refused_arena ? refused_words * 1000u / refused_arena : 0u) + mem_add;
+    const char *t = " NEEDS ";
+    while (*t) *e++ = *t++;
+    *e++ = '+', e = number(e, ((refused[0] == 1u ? dsp_add : mem_add) + 5u) / 10u), *e++ = '%', *e = 0;
+    label(23u, 26u, need);
+    label(23u, 34u, "DSP"), share_bar(frame, 45u, 34u, 40, 6, dsp, dsp_add), percent(89u, 34u, dsp);
+    label(23u, 42u, "MEM"), share_bar(frame, 45u, 42u, 40, 6, mem, mem_add), percent(89u, 42u, mem);
+}
+static void status_draw(unsigned char *frame);
 void modwerk_status_draw(unsigned char *frame)
 {
+    MW_STAMP(22); status_draw(frame); MW_STAMP(13);
+}
+static void status_draw(unsigned char *frame)
+{
+    if (open == REFUSED) { refused_box(frame); return; }
     if (open == MEMORY) { memory_box(frame); return; }
     if (open == MISSING) { missing_page(frame); return; }
     if (open == TEST) { test_page(frame); return; }

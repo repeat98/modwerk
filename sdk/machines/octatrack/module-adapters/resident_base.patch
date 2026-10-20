@@ -1,6 +1,6 @@
 --- a/dsp.c
 +++ b/dsp.c
-@@ -1235,6 +1235,88 @@
+@@ -1249,6 +1249,88 @@
  /* Development (dev.c request 20): this many microseconds with interrupts masked on the next tick, timed by DTCN3
   * (132 MHz), to find how long the frame chain survives a held-off frame interrupt. Off the USB request path. */
  volatile uint32_t modwerk_dsp_mask_test;
@@ -89,7 +89,7 @@
  void modwerk_dsp_tick(void)
  {
      modwerk_dsp_watch_ticks = modwerk_dsp_watch_ticks + 1; /* the watchdog's heartbeat */
-@@ -1247,9 +1329,14 @@
+@@ -1261,9 +1343,14 @@
      }
      static int unpacked;
      if (!unpacked) unpacked = 1, modwerk_dsp_unpack();
@@ -107,7 +107,7 @@
      if (probing >= 0 && dl_job_status((unsigned)probing) != 0) {
          if (dl_job_status((unsigned)probing) > 0) modwerk_dsp_probes_ok = modwerk_dsp_probes_ok + 1;
          else modwerk_dsp_probes_failed = modwerk_dsp_probes_failed + 1;
-@@ -1258,7 +1345,7 @@
+@@ -1272,7 +1359,7 @@
      }
      if ((dl_phase || dl_c1_phase) && EDMA_ES >> 31 && !(EDMA_ES >> 8 & 0xfu)) recover(2); /* eDMA refused our transfer: at once */
      else if (modwerk_dsp_stalled(dl_frames, dl_phase || !dl_job_status(0) || !dl_job_status(1))) recover(1);

@@ -21,7 +21,11 @@ function controller(refusals: number) {
   const exchange = async (frame: Uint8Array) => {
     const view = new DataView(frame.buffer, frame.byteOffset), command = view.getUint16(6), transaction = view.getUint32(8)
     switch (names[command]) {
-      case 'enter': state.phase = 'ready'; break
+      case 'enter': state.phase = state.phase === 'trial' ? 'pending' : 'ready'; break // a trial is held, stopped
+      case 'leave': state.phase = state.phase === 'pending' ? 'trial' : 'normal'; break
+      case 'rollback':
+        if (state.phase !== 'pending' || transaction !== state.current) return reply(command, transaction, 'state')
+        state.phase = 'ready'; state.active = old; state.generation++; break
       case 'begin':
         if (state.phase !== 'ready' || transaction !== state.last + 1) return reply(command, transaction, 'state')
         state.last = state.current = transaction; state.phase = 'receiving'; state.received = 0
@@ -49,4 +53,16 @@ it('stages a package again after the base dropped it at a refused publication', 
   await client.stage(pkg) // the base holds no package now: this session no longer owns one either
   expect(await client.activate()).toMatchObject({ result: 'ok', phase: 'pending', active: pkg.sha256 })
   expect(unit.state).toMatchObject({ last: 2, generation: 1 })
+})
+
+it('rolls back a trial whose page closed, from a new session', async () => {
+  const unit = controller(0), data = new Uint8Array(100).fill(9), pkg = { base, data, sha256: sha(data) }
+  const gone = await UploadSession.connect(unit.transport, base)
+  await gone.stage(pkg); await gone.activate(); await gone.startTrial() // then the page closed
+  const next = await UploadSession.connect(unit.transport, base)
+  expect(next.status).toMatchObject({ phase: 'trial', active: pkg.sha256 })
+  await expect(next.rollback()).rejects.toThrow('does not own')
+  expect(next.adopt()).toBe(true)
+  expect(await next.rollback()).toMatchObject({ result: 'ok', phase: 'ready', active: old, generation: 2 })
+  expect(await next.leaveUploadMode()).toMatchObject({ phase: 'normal', active: old })
 })

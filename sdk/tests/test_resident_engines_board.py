@@ -93,6 +93,7 @@ static uint8_t last[16];
 uint32_t test_bank = 0x400e21e0u;
 uint8_t dl_journal_test_live[16];
 uint8_t test_qb, test_qp, test_parts[4][16];
+unsigned test_parts_used = 0xfu; /* the Parts the bank's patterns play (part_mask): all four unless a mode says */
 #include "manager.c"
 struct dl_package dl_catalog[MODWERK_FX_IDS];
 struct code dl_codes[2][MODWERK_FX_IDS];
@@ -114,6 +115,10 @@ int test_target(unsigned c, unsigned p) { return allocator.phase && allocator.ta
 unsigned test_active(unsigned i) { return allocator.active[i]; }
 unsigned test_words(unsigned p) { return dl_catalog[p].resident ? 0u : dl_catalog[p].words; }
 unsigned test_phase(void) { return phase; }
+uint32_t test_trims(void) { return dl_trims; }
+uint32_t test_unloads(void) { return dl_unloads; }
+unsigned test_observed_valid(void) { return observed_valid; }
+void test_set_observed_valid(unsigned v) { observed_valid = v; }
 /* dl_move (dsp.c's compaction), whether a core's dispatch of p is the stub, and the owned job the manager last waited for. */
 int test_move(unsigned c, unsigned p, unsigned offset) { return dl_move(c, p, offset); }
 int test_stubbed(unsigned c, unsigned p) { return fx_in(stubbed[c], p); }
@@ -167,6 +172,11 @@ int test_target(unsigned c, unsigned p);
 unsigned test_active(unsigned i);
 unsigned test_words(unsigned p);
 unsigned test_phase(void);
+uint32_t test_trims(void);
+uint32_t test_unloads(void);
+unsigned test_observed_valid(void);
+void test_set_observed_valid(unsigned v);
+extern unsigned test_parts_used;
 int test_move(unsigned c, unsigned p, unsigned offset);
 int test_stubbed(unsigned c, unsigned p);
 uint32_t test_owned_seen(void);
@@ -882,6 +892,109 @@ int main(int argc, char **argv)
         placed_at(0, 1, sc); placed_at(1, 1, sc);
         assert(dl_residency_rollbacks == rollbacks && dl_residency_failures == failures);
         assert(dispatch[0][5] == 64u + (unsigned)test_live(0, 5) + 1u && dispatch[0][6] == 64u + (unsigned)test_live(0, 6) + 1u);
+    } else if (mode == 29) {
+        /* Cached code never blocks a pick (beta finding 54): Part 1's four effects (1,600 words) stay loaded for the
+         * bank's union while Part 2 runs none of them; a pick there of a 900-word effect fits the arena but not beside
+         * them, so the manager retires them first, in a transaction of its own that writes nothing, then loads it. */
+        memset(test_parts, 0, sizeof test_parts);
+        test_parts[0][4] = 5; test_parts[0][5] = 6; test_parts[0][6] = 7; test_parts[0][7] = 8;
+        uint8_t ids[16];
+        memcpy(ids, test_parts[0], 16);
+        assert(test_select(ids, pump) == 1);
+        memset(ids, 0, 16);
+        assert(test_select(ids, pump) == 1); /* Part 2: nothing runs, the union stays loaded */
+        assert(test_live(0, 5) >= 0 && test_live(0, 6) >= 0 && test_live(0, 7) >= 0 && test_live(0, 8) >= 0);
+        unsigned from = trails[0], trims = test_trims();
+        ids[4] = 3;
+        assert(test_select(ids, pump) == 1);
+        assert(test_trims() == trims + 1 && test_idle() && test_live(0, 3) >= 0);
+        assert(test_live(0, 5) < 0 && test_live(0, 6) < 0 && test_live(0, 7) < 0 && test_live(0, 8) < 0);
+        assert(trail[0][from].op == 5u || trail[0][from].op == 6u);             /* the retirement first, no WRITE in it */
+        assert(count_ops(0, from, 5) + count_ops(0, from, 6) >= 4 && first_op(0, from, 3, 0, 0) > from + 3);
+        /* The same pick again changes nothing and trims nothing. */
+        trims = test_trims();
+        assert(test_select(ids, pump) == 1 && test_trims() == trims);
+    } else if (mode == 30) {
+        /* Nothing cached, the running code itself blocks: a 700-word effect on T8 FX1 fits from scratch (1,900) but not
+         * beside the running four (2,300). The slot's old effect is unloaded first (the slot runs the stub meanwhile), and
+         * the hole it leaves joins the free top of the arena, so the pick loads; the other three stay where they are. */
+        test_fx(11, 700);
+        memset(test_parts, 0, sizeof test_parts);
+        test_parts[0][4] = 5; test_parts[0][5] = 6; test_parts[0][6] = 7; test_parts[0][7] = 8;
+        uint8_t ids[16];
+        memcpy(ids, test_parts[0], 16);
+        assert(test_select(ids, pump) == 1);
+        unsigned from = trails[0], trims = test_trims(), unloads = test_unloads();
+        ids[7] = 11;
+        assert(test_select(ids, pump) == 1);
+        assert(test_trims() == trims && test_unloads() == unloads + 1 && test_idle());
+        assert(test_live(0, 11) >= 0 && test_live(0, 8) < 0 && test_live(0, 5) == 0 && test_live(0, 6) == 400 && test_live(0, 7) == 800);
+        assert(trail[0][from].op == 6u && trail[0][from].w4 == 8u && count_ops(0, from, 6) == 1); /* 8's unload alone, first */
+        assert(first_op(0, from, 3, 0, 0) > from);
+    } else if (mode == 31) {
+        /* Every selected effect stays loaded while the bank fits (1,600 of 1,936), whatever the patterns play. Short of
+         * room (900 + 3 x 400), the Parts the patterns play (and the current one) are held, then modules only. */
+        memset(test_parts, 0, sizeof test_parts);
+        test_parts[0][4] = 5; test_parts[1][5] = 6; test_parts[2][6] = 7; test_parts[3][7] = 8;
+        test_parts_used = 0x1u;
+        uint8_t ids[16];
+        memcpy(ids, test_parts[0], 16);
+        assert(test_select(ids, pump) == 1);
+        assert(test_live(0, 5) >= 0 && test_live(0, 6) >= 0 && test_live(0, 7) >= 0 && test_live(0, 8) >= 0);
+        test_parts[0][4] = 3; memcpy(ids, test_parts[0], 16);
+        assert(test_select(ids, pump) == 1);                                        /* Part 1 played: its 900 only */
+        assert(test_live(0, 3) >= 0 && test_live(0, 6) < 0 && test_live(0, 7) < 0 && test_live(0, 8) < 0);
+        test_parts_used = 0x3u;
+        assert(test_select(ids, pump) == 1);                                        /* Part 2 played too */
+        assert(test_live(0, 3) >= 0 && test_live(0, 6) >= 0 && test_live(0, 7) < 0 && test_live(0, 8) < 0);
+        test_parts_used = 0xfu;
+        assert(test_select(ids, pump) == 1);                                        /* all played, none fit: the target */
+        assert(test_live(0, 3) >= 0 && test_live(0, 6) < 0 && test_live(0, 7) < 0 && test_live(0, 8) < 0);
+    } else if (mode == 32) {
+        /* Past the arena from scratch (2,100 of 1,936): refused as before, nothing retired, nothing sent, idle after. */
+        memset(test_parts, 0, sizeof test_parts);
+        test_parts[0][4] = 5; test_parts[0][5] = 6; test_parts[0][6] = 7; test_parts[0][7] = 8;
+        uint8_t ids[16];
+        memcpy(ids, test_parts[0], 16);
+        assert(test_select(ids, pump) == 1);
+        unsigned from = trails[0], trims = test_trims(), unloads = test_unloads();
+        ids[4] = 3;
+        assert(test_select(ids, pump) == DL_SELECT_MEMORY);
+        assert(test_trims() == trims && test_unloads() == unloads && test_idle() && trails[0] == from && test_live(0, 5) >= 0);
+    } else if (mode == 33) {
+        /* Both in turn: Part 2's 400-word effect (loaded for the bank, no slot runs it) is retired first; the 600-word
+         * pick still does not fit beside the slot's own 600 words at the arena's top, so that is unloaded too, then the
+         * pick loads into its place. */
+        test_fx(11, 600); test_fx(12, 600);
+        memset(test_parts, 0, sizeof test_parts);
+        test_parts[0][4] = 12; test_parts[0][5] = 3; test_parts[1][6] = 5;
+        uint8_t ids[16];
+        memcpy(ids, test_parts[0], 16);
+        assert(test_select(ids, pump) == 1);
+        assert(test_live(0, 5) == 0 && test_live(0, 3) == 436 && test_live(0, 12) == 1336); /* 1,900 of 1,936 */
+        unsigned from = trails[0], trims = test_trims(), unloads = test_unloads();
+        ids[4] = 11;
+        assert(test_select(ids, pump) == 1);
+        assert(test_trims() == trims + 1 && test_unloads() == unloads + 1 && test_idle());
+        assert(test_live(0, 11) == 1336 && test_live(0, 3) == 436 && test_live(0, 5) < 0 && test_live(0, 12) < 0);
+        unsigned gone5 = first_op(0, from, 6, 5, 0), gone12 = first_op(0, from, 6, 12, 0), load = first_op(0, from, 3, 0, 0);
+        assert(gone5 < gone12 && gone12 < load && load < trails[0]);
+    } else if (mode == 34) {
+        /* A request unloaded for, then dropped (another pick replaced it): its slot runs the stub on its old id, so the
+         * observer is nudged to load that back; the manager ends idle with the request's code never loaded. */
+        test_fx(10, 500);
+        memset(test_parts, 0, sizeof test_parts);
+        test_parts[0][4] = 5; test_parts[0][5] = 6; test_parts[0][6] = 7; test_parts[0][7] = 8;
+        uint8_t ids[16];
+        memcpy(ids, test_parts[0], 16);
+        assert(test_select(ids, pump) == 1);
+        test_set_observed_valid(1);
+        struct dl_selection s;
+        memset(&s, 0, sizeof s); memcpy(s.target, ids, 16); s.target[4] = 10;
+        assert(dl_selection_prepare(&s, 99) == DL_SELECT_WAIT && test_unloads() == 1 && test_phase());
+        dl_selection_cancel(99);
+        for (unsigned n = 0; n < 4000 && test_phase(); ++n) { pump(); test_advance(); }
+        assert(test_idle() && !test_observed_valid() && test_live(0, 5) < 0 && test_live(0, 10) < 0 && test_live(0, 6) >= 0);
     } else if (mode == 27) {
         /* The wait is bounded per owned job: two jobs in a row hold core A for 800 frames, and the switch completes after
          * them; one reservation that never ends refuses the switch after 600 refused starts, as before the wait; once it
@@ -948,7 +1061,11 @@ def generated(work, units):
                              ('unsigned qb=*(volatile uint8_t *)0x800065bfu,qp=*(volatile uint8_t *)0x800065c0u,qpart=4u;',
                               'extern uint8_t test_qb,test_qp,test_parts[4][16];unsigned qb=test_qb,qp=test_qp,qpart=4u;'),
                              (': bank ? *(volatile uint8_t *)(uintptr_t)(bank+0x8ed80u+n*6322u+i) : 255u;',
-                              ': bank ? test_parts[n][i] : 255u;')):
+                              ': bank ? test_parts[n][i] : 255u;'),
+                             ('    unsigned part=*(volatile uint8_t *)0x80000003u,m=part<4u ? 1u<<part : 0u;\n'
+                              '    for(unsigned p=0;bank && p<16u;++p) { unsigned q=*(volatile uint8_t *)(uintptr_t)(bank+p*0x8ed8u+0x8e57u); if(q<4u) m|=1u<<q; }\n'
+                              '    return m;',
+                              '    extern unsigned test_parts_used;(void)bank;return test_parts_used;')):
                 assert text.count(old) == 1, old
                 text = text.replace(old, new)
         (work / name).write_text(text)
@@ -987,7 +1104,7 @@ def build(work):
 
 @unittest.skipUnless(shutil.which('cc'), 'host C compiler unavailable')
 class ResidentEnginesBoard(unittest.TestCase):
-    MODES = 29
+    MODES = 35
 
     def test_place_switch_run_disable_unswitch_free_and_their_refusals(self):
         with tempfile.TemporaryDirectory() as temp:

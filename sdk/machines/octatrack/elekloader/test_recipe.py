@@ -255,6 +255,12 @@ class RuntimeSlotTests(unittest.TestCase):
     def test_fx_pages_on_the_host(self):
         self.host_test('test_fxpage.c')
 
+    def test_cached_modules_on_the_host(self):
+        # build_core.py --cached-modules: the trampolines and the FX pages' formatter pushes.
+        for test in ('test_runtime.c', 'test_fxpage.c'):
+            with self.subTest(test):
+                self.host_test(test, defines=('-DMODWERK_CACHED_MODULES',))
+
     def test_module_set_on_the_host(self):
         self.host_test('test_modset.c')
 

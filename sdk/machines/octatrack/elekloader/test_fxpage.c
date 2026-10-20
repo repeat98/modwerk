@@ -12,8 +12,13 @@ static unsigned failures;
 const fx_set modwerk_fx_modules = {{1u << 26 | 1u << 27}};
 uint32_t modwerk_fx1_list[MODWERK_LIST_ROWS] = {0x1000, 0x1100, 0x1200}, modwerk_fx2_list[MODWERK_LIST_ROWS] = {0x1000, 0x2100, 0x2200, 0x2300};
 const uint32_t modwerk_fx_rows[2] = {3, 4};
-static unsigned invalidations;
+static unsigned invalidations, pushes, pushed_before;
+static uint32_t pushed_at, pushed_bytes;
 void modwerk_machine_invalidate_code(void) { ++invalidations; }
+#ifdef MODWERK_CACHED_MODULES /* build_core.py --cached-modules: each formatter's fixed code is pushed before the invalidation */
+void modwerk_machine_flush_data(uint32_t address, uint32_t length)
+{ ++pushes, pushed_at = address, pushed_bytes = length, pushed_before = invalidations; }
+#endif
 
 uint8_t modwerk_test_memory[0x40000] __attribute__((aligned(4))); /* pages from 0x10000: 128 ids need 0xd000 */
 #define donor (modwerk_test_memory + 0x100)
@@ -46,6 +51,11 @@ int main(void)
     CHECK((be32(d + 0x18e) & 0xf00u) == 0x600u);                              /* inherited from the donor */
     CHECK(be32(d + 0xca + 32) == ADDR(image + 128) && be32(d + 0xfa + 32) == 0);
     CHECK(be32(image + 128 + 8) == ADDR(d) + 0x16 && be32(image + 48) == ADDR(d) && invalidations == 1);
+#ifdef MODWERK_CACHED_MODULES
+    CHECK(pushes == 1 && pushed_at == ADDR(image + 128) && pushed_bytes == 16 && pushed_before == 0);
+#else
+    CHECK(!pushes && !pushed_at && !pushed_bytes && !pushed_before);
+#endif
     /* FX2 lists it after the stock rows; FX1 does not; the tables name its descriptor and row. */
     CHECK(modwerk_fx2_list[4] == ADDR(d) && !modwerk_fx2_list[5] && modwerk_fx2_list[3] == 0x2300 && !modwerk_fx1_list[3]);
     CHECK(TABLE(1)[27] == ADDR(d) && TABLE(3)[27] == 4 && TABLE(0)[27] == 0x1000 && !TABLE(2)[27] && TABLE(1)[26] == 0x1000);

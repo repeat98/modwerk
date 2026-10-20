@@ -8,7 +8,7 @@
 static unsigned failures;
 #define CHECK(x) do { if (!(x)) { failures++; fprintf(stderr, "%s:%d: %s\n", __FILE__, __LINE__, #x); } } while (0)
 /* What status.c reads from the rest of the base; the keys never touch it. */
-volatile uint32_t dl_frames, dl_residency_words[2], modwerk_dsp_meter_bits, modwerk_dsp_meter[5];
+volatile uint32_t dl_frames, dl_residency_words[2], modwerk_dsp_meter_bits, modwerk_dsp_meter[5], dl_refusal[8];
 volatile int32_t modwerk_dsp_meter_core;
 const uint16_t modwerk_dsp_arena[2];
 int modwerk_dsp_meter_read(unsigned core, unsigned first, unsigned words) { (void)core, (void)first, (void)words; return 0; }
@@ -129,6 +129,22 @@ int main(void)
     CHECK(open == MEMORY && budget_slot == -1);                        /* over USB: memory only, no slot */
     for (unsigned i = 0; i < 90u; ++i) memory_tick();
     CHECK(open == CLOSED);                                             /* gone after a second and a half */
+    /* DSP FULL with numbers (owner, 20 October 2026): the refused effect's slot and need, instead of the bare popup. */
+    dl_refusal[0] = 1, dl_refusal[1] = 9, dl_refusal[2] = 27, dl_refusal[3] = 22, dl_refusal[4] = 327, dl_refusal[5] = 1602;
+    dl_residency_words[1] = 1508;
+    CHECK(!modwerk_status_refused(2) && open == CLOSED);                /* a DSP time refusal is not DSP MEMORY FULL */
+    CHECK(modwerk_status_refused(3) && open == REFUSED);                /* DSP FULL on T2 FX2: the box */
+    CHECK(refused_core == 1 && refused[4] == 327 && refused_words == 1508 && refused_reason == 3);
+    dl_refusal[4] = 0; CHECK(refused[4] == 327);                        /* a snapshot: later refusals change nothing shown */
+    CHECK(!modwerk_status_key(0, 1) && open == CLOSED);                 /* a press closes it and goes on to stock */
+    dl_refusal[0] = 3, dl_refusal[6] = 3, dl_refusal[7] = 3;
+    CHECK(modwerk_status_refused(2) && open == REFUSED && refused[0] == 3); /* a buffer: DSP MEMORY FULL */
+    for (unsigned i = 0; i < 180u; ++i) memory_tick();
+    CHECK(open == CLOSED);                                             /* gone after three seconds */
+    dl_refusal[1] = 16; CHECK(!modwerk_status_refused(2));             /* no slot known: the bare popup */
+    modwerk_load_menu(0); dl_refusal[1] = 9;
+    CHECK(!modwerk_status_refused(2) && open == SHOWN);                 /* a page is open: not covered */
+    modwerk_status_key(NO, 1); modwerk_status_key(NO, 0);
     /* PROJ > MODWERK's other rows: each opens its page; NO closes it. */
     modwerk_load_menu(0);
     CHECK(open == SHOWN && tip_until == ticks + 120u);                 /* from the menu: the CUE + PROJ tip for 2 s */

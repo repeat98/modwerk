@@ -181,6 +181,11 @@ export function collectOctatrackDiagnostics(memberId: string, link: OctatrackLin
         const seqs = [...group.loads, ...group.incidents].map(record => record.seq)
         send({event:'device_log',...unit(),log:group}, eventId(await digest(scope + ':' + seqs.join(','))), keep(Math.max(...seqs)))
       }
+      /* The crash and stall records (log version 2), once per count: the id makes a resend a duplicate. */
+      if (log.crash || log.stall) {
+        const id = await digest(scope + ':records:' + (log.crash?.count ?? 0) + ':' + (log.stall?.count ?? 0))
+        send({event:'device_log',...unit(),log:{loads:[],incidents:[],...(log.crash ? {crash:log.crash} : {}),...(log.stall ? {stall:log.stall} : {})}}, eventId(id), () => {})
+      }
     } catch { /* Busy or an older base; the next round asks again. */ }
   }
   async function tick() {

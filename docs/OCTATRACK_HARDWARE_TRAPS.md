@@ -361,6 +361,14 @@ record MAIN with SRC3 = MAIN; leaked frames are the muted audio. Sweeping a knob
 through a heavy mode and back flipped the stuck states. The emulator models
 neither contention nor interrupt latency, so neither shows there.
 
+*The data cache and module memory (cached modules):* the pool is cached copy-back, so code written through the
+cached alias sits dirty in the data cache until CPUSHL pushes each line. CPUSHL names a line by set and way, and this
+cache has more sets than address bits 12:4 name: a push that walked `0x2000` bytes of sets "once for the whole cache"
+left half of a 17 KB extent in the cache while memory still held the BSS zeros, and the first call into it hit an
+illegal instruction (`ori.b`, beta finding 60). Push every line of a range by its own address. The crash record
+reads the PC's bytes both cached and through the uncached alias so this is visible: equal bytes mean a wrong jump or
+a stale instruction cache, zeros or other bytes uncached mean the push did not happen.
+
 ## Patching stock code
 
 **A detour returns after the whole span it displaced, never into it.** The
@@ -458,6 +466,35 @@ same page.
   "sluggish knobs" report): about 65 % CPU stopped, about 73 % playing. The
   unit's own log shows a 100 % peak in every five-minute window, as testers'
   logs do even on the bare base.
+
+**The base's own CPU cost, measured** (owner's MKII, 20 October 2026, development twins with the profile below;
+stopped, nothing installed, no page of ours open): the tick hooks 843 µs a tick (5.1 % of the CPU), the draw hooks
+28 µs a composition (0.2 %), `dl_frame` 1.1 µs a frame (0.3 %), `mw_ui_tick` 18 µs (0.1 %): about 5.7 % in all. Of
+the tick, `modwerk_fxmap_generation` took 410-446 µs on its own: the fx map's 3 KB checksum in battery RAM, every
+tick (fixed: 8 µs, the whole sum once in 60 calls). With that and the Part-union scan every fourth tick, the tick
+hooks cost 311 µs (1.9 %) and the base about 2.5 %. With FM Synth and five effects installed the tick hooks cost
+530-550 µs: `controller_tick` 170-180 µs (it derives every installed module's trust binding each tick) and
+`dsp_tick` 240-250 µs (the compaction planner plans both cores each idle tick); both fixed: the binding is derived
+again only when the runtime's owners change (or one waits), the planner holds off until a commit, a rollback or an
+arena change. Then: 175 µs a tick idle (1.1 %), 280 µs with that layout (1.7 %); the base about 1.7 % in all. A page
+of ours that is open costs
+its drawing on every composition: MISSING MODULES 818 µs (4.9 %), the STATUS page about 1 ms. No stock-OS baseline
+exists yet: the meter's 41 % idle is stock's own tasks.
+
+*The profile* (development bases only): `modwerk_cost[24]` (diag.h) accumulates DTIM3 counts between stamps at
+each hook's entry and some exits; read it over `mem` twice some seconds apart and divide by 132 for µs (`modwerk_cost[15]`
+counts ticks, `[13]` compositions, `[11]` frames, `[19]` fx map checks). A tester base has none of it.
+
+*Reading the battery-RAM log (diag.c):* an OS upgrade leaves the same trace as a hang. Stock halts the DSPs for the
+upgrade while the loader may still have a job open, so the next boot logs a `stall` (reason 1, frames stopped) after a
+`hot` record at 100 % CPU whose last keys are the PROJECT > SYSTEM > OS UPGRADE walk (PROJ, arrows, YES). Seen on the
+owner's MKII flashing `a0dd21c4` (20 October 2026) and in every tester stall of the 16-20 October pull. Until the start
+record carries the base id, read a stall followed by a start on another base as an upgrade.
+
+*The DSP peak meter:* a core's peak (status.c, the diag log's five-minute windows) is the busiest single frame of a
+1,024-frame receiver window. A self-test that runs DSP modules, or a sync, leaves the window at 99.7-99.8 % although
+the mean stays flat and the audio is fine; a stock effect load does not. Read the self-test's longest frame for
+overload, not the peak (finding 59 in the beta test plan).
 
 ## The emulator and the tools
 

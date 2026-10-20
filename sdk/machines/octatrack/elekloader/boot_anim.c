@@ -21,6 +21,12 @@
  * free-running DTIM3 count, as in the stock loop. */
 #include <stdint.h>
 #include "boot_art.h"
+#ifdef MODWERK_DEV
+void modwerk_cost_stamp(unsigned k); /* diag.c: the development profile of the base's hooks */
+#define MW_STAMP(k) modwerk_cost_stamp(k)
+#else
+#define MW_STAMP(k) ((void)0)
+#endif
 
 #ifdef MODWERK_HOST
 void host_clear(void *window, int a, int b);
@@ -227,7 +233,12 @@ static void bend(unsigned char *frame, int32_t t, int32_t r)
     }
 }
 
+static void boot_draw(unsigned char *frame);
 void modwerk_boot_draw(unsigned char *frame)
+{
+    MW_STAMP(12); boot_draw(frame); MW_STAMP(20);
+}
+static void boot_draw(unsigned char *frame)
 {
     int32_t t = now, r = wave(t);
     if (!on)

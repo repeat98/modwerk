@@ -80,10 +80,16 @@ static void seeded(void)
             put(&MAP->e[modwerk_fx_legacy[i].id], modwerk_fx_legacy[i].module, 0, modwerk_fx_legacy[i].name);
     MAP->magic = MAGIC, MAP->generation = 1, MAP->sum = checksum();
 }
+/* The whole check (the map's 3 KB in battery RAM, uncached: about 420 µs on the unit, 2.5 % of the CPU when it ran on
+ * every tick, 20 October 2026) once in 60 calls; between, the magic and the generation word, which every writer here
+ * changes when it seals the map, so a change by this base is seen at once and damage within a second. */
+static uint32_t checked_generation, checked_at, checks;
 static int valid(void)
 {
-    if ((MAP->magic == MAGIC && MAP->sum == checksum()) || widened()) return 1;
-    seeded();
+    ++checks;
+    if (checked_at && checks - checked_at < 60u && MAP->magic == MAGIC && MAP->generation == checked_generation) return 1;
+    if (!((MAP->magic == MAGIC && MAP->sum == checksum()) || widened())) seeded();
+    checked_at = checks, checked_generation = MAP->generation;
     return 1;
 }
 static void seal(void)
@@ -110,7 +116,17 @@ fx_set modwerk_fxmap_used(void)
             for (unsigned i = 0; i < 16u; ++i) used = fx_with(used, PART_FX(bank, part, i));
     return fx_and(used, modwerk_fx_modules);
 }
+#ifdef MODWERK_DEV
+extern volatile uint32_t modwerk_cost[24]; /* diag.h: [18] this function's time, [19] its calls */
+uint32_t modwerk_fxmap_generation(void)
+{
+    uint32_t t0 = *(volatile uint32_t *)0xfc07c00cu, g = valid() ? MAP->generation : 0;
+    modwerk_cost[18] += *(volatile uint32_t *)0xfc07c00cu - t0; ++modwerk_cost[19];
+    return g;
+}
+#else
 uint32_t modwerk_fxmap_generation(void) { return valid() ? MAP->generation : 0; }
+#endif
 /* The module the map names at handle `id`, 0 none. */
 uint32_t modwerk_fxmap_module(unsigned id) { return id < MODWERK_FX_IDS && valid() ? MAP->e[id].module : 0; }
 /* The handle the map gives `module`, -1 none. */

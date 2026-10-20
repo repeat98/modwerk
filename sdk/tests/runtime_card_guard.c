@@ -12,6 +12,7 @@
 #define be32 card_be32
 #define put32 card_put32
 #include "../../sdk/machines/octatrack/elekloader/modset.c"
+void modwerk_diag_set(void) {} /* diag.c's log record of the set: not under test here */
 #undef candidate
 #undef candidate_bytes
 #undef slot

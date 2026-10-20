@@ -20,8 +20,14 @@ export type DiagnosticErrorKind = typeof DIAGNOSTIC_ERROR_KINDS[number]
 export interface DiagnosticLive { samples: number; cpu?: [number, number]; dsp1to4?: [number, number]; dsp5to8?: [number, number] }
 export const DIAGNOSTIC_UNRESPONSIVE = ['usb', 'ui'] as const
 /** `device_log`: records from the unit's own log (diag.h), uploaded at the next connection. */
-export const DEVICE_INCIDENTS = ['start', 'hot', 'freeze', 'crash', 'stall'] as const
-export interface DeviceLoad { seq: number; boot: number; minute: number; cpu: [number, number]; dsp1to4: [number, number]; dsp5to8: [number, number]; samples: number; playing: number }
+export const DEVICE_INCIDENTS = ['start', 'hot', 'freeze', 'crash', 'stall', 'set', 'base'] as const
+/** `frameGap`: the window's longest time between two audio frames, µs (log version 2); `tickGap` its longest run of
+ * frames without a UI tick. */
+export interface DeviceLoad { seq: number; boot: number; minute: number; cpu: [number, number]; dsp1to4: [number, number]; dsp5to8: [number, number]; samples: number; playing: number; frameGap?: number; tickGap?: number }
+/** crash.c's record: the last error exception, with the eight longs at its PC read cached and uncached (log version 2). */
+export interface DeviceCrash { count: number; vector: number; pc: number; sr: number; sp: number; d: number[]; a: number[]; stack: number[]; code: number[]; memory: number[] }
+/** dsp.c's record of the last DSP stall: why (1 frames stopped, 2 eDMA refused, 0 a test), the tick, the loader's report words. */
+export interface DeviceStall { count: number; reason: number; ticks: number; report: number[] }
 export interface DeviceIncident {
   seq: number; boot: number; second: number; kind: typeof DEVICE_INCIDENTS[number]; a: number
   cpu: number; dsp1to4: number; dsp5to8: number
@@ -69,7 +75,7 @@ export interface OctatrackDiagnostic {
   kind?: DiagnosticErrorKind
   live?: DiagnosticLive
   reason?: typeof DIAGNOSTIC_UNRESPONSIVE[number]
-  log?: { loads: DeviceLoad[]; incidents: DeviceIncident[] }
+  log?: { loads: DeviceLoad[]; incidents: DeviceIncident[]; crash?: DeviceCrash; stall?: DeviceStall }
 }
 export interface DiagnosticConsent { accountId: string; enabled: boolean; version: string; changedAt: string | null; expiresAt: string | null }
 export interface DiagnosticEntry { eventId: string; createdAt: string; data: OctatrackDiagnostic; username?: string }

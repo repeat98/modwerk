@@ -34,6 +34,8 @@ export interface FakeUnit {
   project?: { id: string; name: string }[]
   /** A transaction a session left staged when its reply went missing: only a session that adopts it can cancel it. */
   staged?: boolean
+  /** A published candidate whose page closed during its trial (its digest): only a session that adopts it can roll it back. */
+  orphan?: string
   /** Previews only: a passed self-test with the set saved on the card, and live meters (requests 21 and 30). */
   status?: boolean
   /** The loader refuses the next load with this reason (loader.h runtime_refusal), as the base's record reports it. */
@@ -121,8 +123,9 @@ export function fakeUnit(kind: 'base' | 'stock' | 'none' = 'base'): FakeUnit {
 export function fakeSession(unit: FakeUnit, delay = 0) {
   const wait = () => new Promise(resolve => setTimeout(resolve, delay))
   return async (): Promise<LinkSession> => {
-    let status: UploadStatus = { command: 'hello', transaction: 0, result: 'ok', phase: unit.staged ? 'receiving' : 'normal', activeKnown: true, generation: 0,
-      lastTransaction: 0, currentTransaction: 0, received: 0, capacity: 262144, base: FAKE_BASE, session: '00'.repeat(32), active: unit.active }
+    let status: UploadStatus = { command: 'hello', transaction: 0, result: 'ok', phase: unit.staged ? 'receiving' : unit.orphan ? 'trial' : 'normal', activeKnown: true, generation: unit.orphan ? 1 : 0,
+      lastTransaction: unit.orphan ? 7 : 0, currentTransaction: unit.orphan ? 7 : 0, received: 0, capacity: 262144, base: FAKE_BASE, session: '00'.repeat(32),
+      active: unit.orphan ?? unit.active }
     let staged = unit.active, owned = false, data: Uint8Array | undefined
     const step = async (phase: UploadPhaseName, refuse?: UploadResultName) => {
       await wait()
@@ -161,9 +164,10 @@ export function fakeSession(unit: FakeUnit, delay = 0) {
       },
       rollback: async () => {
         if (unit.stuck && unit.stuck-- > 0) return step('recovery', 'needs-recovery')
-        unit.pending = undefined; return status = { ...await step('ready'), active: unit.active }
+        if (unit.orphan && !owned) throw new Error('This client does not own a staged transaction.')
+        unit.orphan = undefined; unit.pending = undefined; return status = { ...await step('ready'), active: unit.active }
       },
-      adopt: () => owned ||= status.phase === 'receiving',
+      adopt: () => owned ||= ['receiving', 'pending', 'trial', 'recovery'].includes(status.phase),
       cancel: async () => {
         if (unit.staged && !owned) throw new Error('This client does not own a staged transaction.')
         unit.staged = false; return step('normal')

@@ -345,19 +345,23 @@ async function run(sequence, until = Infinity) { // serve: past its time limit a
       if (!log) console.log('diaglog: no log yet')
       else {
         console.log(`diaglog boot ${log.boot} seq ${log.seq}: ${log.incidents.length} incidents, ${log.loads.length} loads`)
-        for (const r of log.incidents) console.log(`  #${r.seq} boot ${r.boot} +${r.second}s ${r.kind} a=${r.a} cpu ${r.cpu / 10}% T1-4 ${r.dsp1to4 / 10}% T5-8 ${r.dsp5to8 / 10}% ` +
+        for (const r of log.incidents) console.log(`  #${r.seq} boot ${r.boot} +${r.second}s ${r.kind} a=${r.kind === 'base' ? r.a.toString(16).padStart(8, '0') : r.kind === 'set' ? r.a + ' [' + [...r.machines, ...r.fx, ...r.keys].slice(0, 4 * r.a).map((b, i, all) => i % 4 ? '' : all.slice(i, i + 4).map(x => x.toString(16).padStart(2, '0')).join('')).filter(Boolean).join(' ') + ']' : r.a} cpu ${r.cpu / 10}% T1-4 ${r.dsp1to4 / 10}% T5-8 ${r.dsp5to8 / 10}% ` +
           `${r.playing ? 'playing' : 'stopped'} tempo ${(r.tempo24 / 24).toFixed(1)} screen 0x${r.screen.toString(16)} keys ${r.keys.filter(k => k !== 255).map(k => k.toString(16)).join(',')} ` +
           `fx ${r.fx.map(f => f.toString(16)).join(',')} machines ${r.machines.join(',')}`)
         for (const r of log.loads.slice(-6)) console.log(`  #${r.seq} boot ${r.boot} min ${r.minute} cpu ${r.cpu.map(v => v / 10).join('/')}% T1-4 ${r.dsp1to4.map(v => v / 10).join('/')}% ` +
-          `T5-8 ${r.dsp5to8.map(v => v / 10).join('/')}% playing ${r.playing}/${r.samples}`)
+          `T5-8 ${r.dsp5to8.map(v => v / 10).join('/')}% playing ${r.playing}/${r.samples}` + (r.frameGap !== undefined ? ` frame gap ${r.frameGap} us, tick gap ${r.tickGap} frames` : ''))
+        if (log.crash) console.log(`  crash record ${log.crash.count}: vector ${log.crash.vector} PC 0x${log.crash.pc.toString(16)} code ${log.crash.code.map(w => w.toString(16).padStart(8, '0')).join(' ')} uncached ${log.crash.memory.map(w => w.toString(16).padStart(8, '0')).join(' ')}`)
+        if (log.stall) console.log(`  stall record ${log.stall.count}: reason ${log.stall.reason} tick ${log.stall.ticks}, ${log.stall.report.length} report words`)
       }
     }
     else if (step === 'crash') { // crash.c's record in battery RAM: what the last error exception was, and where
-      const b = await mem(0x100ff800, 116), v = new DataView(b.buffer, b.byteOffset, 116), w = i => v.getUint32(4 * i)
+      const b = await mem(0x100ff800, 180), v = new DataView(b.buffer, b.byteOffset, 180), w = i => v.getUint32(4 * i)
       if (w(0) !== 0x4d574352) console.log('crash: none recorded')
       else console.log(`crash ${w(1)} (shown ${w(28)}): vector ${w(2) >>> 18 & 0xff} PC 0x${w(3).toString(16)} SR 0x${(w(2) & 0xffff).toString(16)} ` +
         `FS ${(w(2) >>> 24 & 0xc) | (w(2) >>> 16 & 3)} SP 0x${w(19).toString(16)}\n  d ${[...Array(8)].map((_, i) => w(4 + i).toString(16)).join(' ')}\n` +
-        `  a ${[...Array(7)].map((_, i) => w(12 + i).toString(16)).join(' ')}\n  stack ${[...Array(8)].map((_, i) => w(20 + i).toString(16)).join(' ')}`)
+        `  a ${[...Array(7)].map((_, i) => w(12 + i).toString(16)).join(' ')}\n  stack ${[...Array(8)].map((_, i) => w(20 + i).toString(16)).join(' ')}\n` +
+        `  code at PC ${[...Array(8)].map((_, i) => w(29 + i).toString(16).padStart(8, '0')).join(' ')}\n` +
+        `  uncached   ${[...Array(8)].map((_, i) => w(37 + i).toString(16).padStart(8, '0')).join(' ')}`)
     }
     else if (step === 'loader') { // packets each core took, the jobs in flight, the manager's transactions (report words)
       const w = await statusWords()
@@ -378,10 +382,12 @@ console.log(`${identity.model}, base ${identity.base.slice(0, 16)}…`)
 const interrupt = new AbortController()
 process.once('SIGINT', () => { console.log('interrupted: rolling back'); process.exitCode = 130; interrupt.abort() })
 
-/** While the unit plays, the base presses STOP and refuses with `unsafe`; retry for 3 s as the site does. */
+/** While the unit plays, the base presses STOP and refuses with `unsafe`; retry for 3 s as the site does. A rollback
+ * the loader could not switch yet answers `needs-recovery` and stays in recovery, from where it rolls back again
+ * (OctatrackLink.whenStopped); given up at once, it left the unit in recovery until the base's own timeout. */
 async function stopping(step) {
   for (const start = Date.now(); ; await wait(200)) {
-    try { return await step() } catch (error) { if (error.status?.result !== 'unsafe' || Date.now() - start > 3000) throw error }
+    try { return await step() } catch (error) { if (!['unsafe', 'needs-recovery'].includes(error.status?.result) || Date.now() - start > 3000) throw error }
   }
 }
 
@@ -408,7 +414,7 @@ async function trial(session, pkg) {
   }
   await stopping(() => session.holdTrial())
   if (values.accept && !interrupt.signal.aborted) { await session.accept(); console.log('accepted') }
-  else { await session.rollback(); console.log('rolled back' + (values.accept ? '' : ' (pass --accept to keep it)')) }
+  else { await stopping(() => session.rollback()); console.log('rolled back' + (values.accept ? '' : ' (pass --accept to keep it)')) }
   const left = Date.now(), status = await session.leaveUploadMode()
   console.log(`left upload mode in ${Date.now() - left} ms`) // the card-set save runs first, in the same task
   return status

@@ -233,9 +233,9 @@ int dl_engine_claim(unsigned c,unsigned reserve,int commit) {
     if(moving && evac_closed[c]) { dl_engine_why[c]=8; return -1; }
     if(moving && commit==1) { dl_engine_why[c]=7; return 0; } /* asked again each tick until it may move: no dry run yet */
     uint8_t now[16];
-    fx_set firm[2],named[2],soft[2],both[2],saved[2]={allocator.keep[0],allocator.keep[1]};
+    fx_set firm[2],named[2],soft[2],played[2],both[2],saved[2]={allocator.keep[0],allocator.keep[1]};
     running(now);
-    parts(now,firm,named,soft);
+    parts(now,firm,named,soft,played);
     for(unsigned i=0;i<16;++i) {                     /* what runs now counts too */
         unsigned p=now[i],k=(i&7)<4 ? 1:0;
         if(p<DL_PACKAGES && !dl_catalog[p].resident && (dl_catalog[p].slots&(i<8 ? 1u:2u))) firm[k]=fx_with(firm[k],p);

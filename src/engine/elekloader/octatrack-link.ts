@@ -252,9 +252,18 @@ export class OctatrackLink {
         this.live(connection)
         if (capabilities) identity.capabilities = capabilities
         // HELLO is read-only; a base that cannot answer it still counts as ready.
-        const active = identity.canSubmit ? await this.connectSession(this.transport, identity.base).then(s => s.status.active, () => undefined) : undefined
+        const session = identity.canSubmit ? await this.connectSession(this.transport, identity.base).catch(() => undefined) : undefined
         this.live(connection)
-        this.set({ status: 'ready', identity, active })
+        // A sync another page left open (closed or reloaded during it): this page holds the lock every page's sync
+        // keeps until it is kept or undone, so nobody finishes it. The base would undo it only after 10 s without
+        // any USB request, which this page's own reads prevent: undo it now, as the base would have.
+        let notice: LinkState['notice']
+        if (session && session.status.phase !== 'normal') {
+          const staged = session.status.phase !== 'ready', undone = await this.cleanUp(session).catch(() => false)
+          this.live(connection)
+          notice = !undone ? { tone: 'error', text: UNPLUG } : staged ? { tone: 'success', text: 'The last sync wasn’t finished, so the Octatrack undid it.' } : undefined
+        }
+        this.set({ status: 'ready', identity, active: session?.status.active, notice })
         this.diagnostic('connected')
       }
       catch { this.setFor(connection, { status: 'ready', identity: undefined }) } // a Modwerk base this page does not speak
@@ -485,7 +494,7 @@ export class OctatrackLink {
   private async cleanUp(session: LinkSession) {
     const phase = session.status.phase
     if (phase === 'receiving' || phase === 'verified') { session.adopt(); await session.cancel() } // a fresh session adopts what the lost one staged
-    else if (phase === 'pending' || phase === 'trial' || phase === 'recovery') { await this.whenStopped(() => session.rollback()); await session.leaveUploadMode() }
+    else if (phase === 'pending' || phase === 'trial' || phase === 'recovery') { session.adopt(); await this.whenStopped(() => session.rollback()); await session.leaveUploadMode() }
     else if (phase === 'ready') await session.leaveUploadMode()
     return session.status.phase === 'normal'
   }

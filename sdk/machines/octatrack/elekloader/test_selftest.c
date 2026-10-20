@@ -54,12 +54,13 @@ void modwerk_post_key(unsigned code, int pressed)
     if (pressed && code == 0x28u) modwerk_test_playing = 1; /* PLAY */
     if (pressed && code == 0x27u) modwerk_test_playing = 0; /* STOP */
 }
-/* The modelled manager: per core, the ids whose code is loaded; a refused set changes nothing. */
-static uint8_t loaded[2][MODWERK_FX_IDS], observed[16];
+/* The modelled manager: per core, the ids whose code is loaded; a refused set changes nothing. `cached`: code still
+ * bound from an earlier run, which the manager drops only when it needs the room (here: never). */
+static uint8_t loaded[2][MODWERK_FX_IDS], cached[2][MODWERK_FX_IDS], observed[16];
 static int observed_valid, job[2] = {-2, -2};
 static unsigned sums, emptied_runs;
 static const uint8_t *the_part;
-int dl_bound(unsigned core, unsigned id) { return id < MODWERK_FX_IDS && loaded[core][id]; }
+int dl_bound(unsigned core, unsigned id) { return id < MODWERK_FX_IDS && (loaded[core][id] || cached[core][id]); }
 int dl_placed(unsigned core, unsigned id) { return dl_bound(core, id) ? 0 : -1; }
 int dl_sum_start(unsigned core, unsigned offset, unsigned count, uint32_t expected)
 {
@@ -86,7 +87,12 @@ static void manager(void)
         unsigned words = 0;
         for (unsigned p = 0; p < MODWERK_FX_IDS; ++p) if (want[c][p] || loaded[c][p]) words += dl_catalog[p].words;
         if (words > modwerk_dsp_arena[c] || cycles[c] > (c ? MODWERK_DSP_ALLOWANCE1 : MODWERK_DSP_ALLOWANCE0)) {
-            ++dl_residency_failures; /* refused: nothing changes */
+            ++dl_residency_failures; /* refused: no code changes; a slot whose code is not bound is parked (NONE) */
+            for (unsigned i = 0; i < 16u; ++i) {
+                unsigned p = modwerk_test_live_fx[i];
+                if (p && !dl_catalog[p].resident && !dl_bound(core_of_slot(i), p)) modwerk_test_live_fx[i] = 0;
+            }
+            memcpy(observed, modwerk_test_live_fx, 16);
             return;
         }
     }
@@ -168,6 +174,16 @@ int main(void)
     run(crowded0, pair, 2);
     CHECK(modwerk_selftest.state == SELFTEST_PASSED && !modwerk_selftest.failed && modwerk_selftest.ran == 2);
     CHECK(sums >= 2u);
+    /* Two that together pass core 0's cycles (8 x 342 floor, each module 258 more: 3,252 of 3,120), the second's code
+     * still bound on core 0 from an earlier run: refused beside the first, it must not count as run there. It waits
+     * for the next batch and runs alone (the owner's MKII, E-Verb beside Air Chorus, failed as refused under load). */
+    const uint8_t blank[16] = {0};
+    struct runtime_dsp heavy[2] = {verb, module(26, 400, 600, 0x5678u, "Small")};
+    cached[0][27] = 1; /* Small goes first; the E-Verb-sized one is the refused second */
+    run(blank, heavy, 2);
+    cached[0][27] = 0;
+    CHECK(modwerk_selftest.state == SELFTEST_PASSED && !modwerk_selftest.failed && modwerk_selftest.ran == 2);
+    CHECK(modwerk_selftest.track[4] == 27 && !modwerk_selftest.track[5] && dl_residency_failures >= 1u); /* last batch: alone, T5 */
     if (failures) { fprintf(stderr, "%u self-test checks failed\n", failures); return 1; }
     puts("Octatrack self-test: a module crowded off one core runs on the other or on a core of its own, one no core holds "
          "fails alone and is named, a refused batch member runs in the next batch, and the Part and its knobs come back.");

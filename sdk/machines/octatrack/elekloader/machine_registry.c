@@ -28,6 +28,12 @@ typedef volatile uint8_t Part;
 typedef struct modwerk_machine Machine;
 #define MACHINES (MODWERK_OT_MACHINES - RUNTIME_EVENTS)
 #define SEQUENCER (MODWERK_OT_SEQUENCER_ROWS - RUNTIME_EVENTS)
+#ifdef MODWERK_DEV
+void modwerk_cost_stamp(unsigned k); /* diag.c: the development profile of the base's hooks */
+#define MW_STAMP(k) modwerk_cost_stamp(k)
+#else
+#define MW_STAMP(k) ((void)0)
+#endif
 
 /* The rows' machines, read from the table masked so a switch is never seen half-way; the
  * pointers stay on the reader's stack, so the loader keeps their modules until it returns. */
@@ -292,7 +298,12 @@ unsigned mw_assign(Part *part, unsigned track, unsigned row)
     }
     return row < 5 ? row : 1;
 }
+static void ui_tick(void);
 void mw_ui_tick(void)
+{
+    MW_STAMP(14); ui_tick(); MW_STAMP(15);
+}
+static void ui_tick(void)
 {
     const Machine *m[ROWS - 5u]; unsigned n = machines(m);
     for (unsigned k = 0; k < n; ++k) if (m[k]->ui_tick) m[k]->ui_tick();

@@ -265,7 +265,9 @@ export class UploadSession {
     const generation = before.generation + (published ? 1 : 0)
     const status = await this.control('rollback', offer.transaction, status => {
       this.sameTransaction(status, offer)
-      this.expect(status.result === 'ok' ? status.phase === 'ready' && status.active === offer.previous && status.generation === generation :
+      // An adopted candidate's previous set is unknown here (previous ''): the base's confirmed one stands.
+      this.expect(status.result === 'ok' ? status.phase === 'ready' && (offer.previous ? status.active === offer.previous : status.activeKnown) &&
+        status.generation === generation :
         status.generation === before.generation && status.received === before.received &&
         (status.phase === before.phase || status.phase === 'recovery') &&
         (status.active === before.active || published && status.phase === 'recovery' && !status.activeKnown),
@@ -295,14 +297,22 @@ export class UploadSession {
     return leave ? this.leaveInternal() : this.status
   }
   async cancel() { return this.exclusive(() => this.cancelInternal(true)) }
-  /** Takes over a staged transaction another session left when its reply went missing, so cancel() can undo it:
-   * staging keeps the old set active, which is all cancellation checks. True when this session now owns one. A
-   * published candidate cannot be adopted (its previous set is unknown here); the base rolls it back by itself
-   * once USB has been quiet for 10 s. */
+  /** Takes over a transaction another session left, so cancel() or rollback() can undo it: a staged package (its reply
+   * went missing; staging keeps the old set active, which is all cancellation checks), or a published candidate
+   * whose page closed during its trial. The base rolls a candidate back by itself only after 10 s without any USB
+   * request, which never comes while a page polls the unit, so every new sync failed until the cable was pulled
+   * (owner's MKII, 20 October 2026). Its previous set is unknown here: rollback() then accepts the set the base
+   * confirms. True when this session now owns one. */
   adopt() {
     const status = this.status
-    if (this.offer || !['receiving', 'verified'].includes(status.phase) || !status.activeKnown) return !!this.offer
-    this.offer = { transaction: status.currentTransaction, generation: status.generation, previous: status.active!, digest: '', length: status.received }
+    if (this.offer) return true
+    if (['receiving', 'verified'].includes(status.phase) && status.activeKnown) {
+      this.offer = { transaction: status.currentTransaction, generation: status.generation, previous: status.active!, digest: '', length: status.received }
+      return true
+    }
+    if (!['pending', 'trial', 'recovery'].includes(status.phase) || !status.currentTransaction) return false
+    this.offer = { transaction: status.currentTransaction, generation: status.generation - (status.activeKnown ? 1 : 0), previous: '',
+      digest: status.active ?? '', length: status.received }
     return true
   }
   private async leaveInternal() {

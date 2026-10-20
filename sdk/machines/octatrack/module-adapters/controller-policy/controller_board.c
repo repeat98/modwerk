@@ -162,6 +162,12 @@ static int live(const struct mw_controller_binding *b)
     return 0;
 }
 
+/* The alias a module's code runs from: the canonical (cached) one itself in a base built with --cached-modules. */
+#ifdef MODWERK_CACHED_MODULES
+#define EXEC_ALIAS(canonical) (canonical)
+#else
+#define EXEC_ALIAS(canonical) modwerk_machine_uncached((void *)canonical)
+#endif
 /* A trusted image may begin with an MWPP record (stock_hook_controllers.page_record):
  * its page extends a stock effect's own descriptor in place. Staged from the
  * descriptor as it is now, checked against the record's stock SHA-256, into
@@ -173,7 +179,7 @@ static uint32_t be16(const uint8_t *p) { return (uint32_t)p[0] << 8 | p[1]; }
 static uint32_t be32(const uint8_t *p) { return be16(p) << 16 | be16(p + 2); }
 static uint32_t page_stage(const struct mw_controller_binding *b, uint8_t saved[PAGE_BYTES])
 {
-    uintptr_t exec = (uintptr_t)modwerk_machine_uncached((void *)b->canonical_extent) + b->image_offset;
+    uintptr_t exec = (uintptr_t)EXEC_ALIAS(b->canonical_extent) + b->image_offset;
     const uint8_t *r = (const uint8_t *)exec; uint32_t n = b->image_bytes, at = 44u;
     if (n < at || r[0] != 'M' || r[1] != 'W' || r[2] != 'P' || r[3] != 'P' || r[4] != 1u ||
         r[5] > 64u || r[6] > 16u || r[7] > 8u) return 0;
@@ -255,7 +261,7 @@ static int owns_image(void *u, const struct mw_controller_binding *b)
     const struct mw_controller_write_policy *p = b ? row_for(b->identity.package_sha256, b->identity.module, b->image_bytes) : 0;
     struct runtime_owner o; uintptr_t canonical;
     if (!p || !same_identity(&p->identity, &b->identity) || !b->canonical_extent) return 0;
-    uintptr_t exec = (uintptr_t)modwerk_machine_uncached((void *)b->canonical_extent) + b->image_offset;
+    uintptr_t exec = (uintptr_t)EXEC_ALIAS(b->canonical_extent) + b->image_offset;
     return modwerk_runtime_owner_at(exec, &o) == 1 && modwerk_runtime_owner_canonical(&o, &canonical) == 1 &&
         canonical == b->canonical_extent && o.generation == b->generation && o.module == b->identity.module &&
         o.extent_bytes == b->extent_bytes && o.image_offset == b->image_offset && o.image_bytes == b->image_bytes &&
@@ -369,26 +375,36 @@ static void view(void)
 #endif
 /* A live trusted controller with no slot: reserve and bind its owner generation.
  * At most one other held slot of the feature, a disabled predecessor. */
+/* Runs when the runtime's owners changed since the last pass, or a pass left a controller waiting (its predecessor's
+ * disable, a refused reservation, an owner mid-change): deriving every installed module's trust binding on every tick
+ * cost 170-180 µs with six modules (1 % of the CPU; owner's MKII, 20 October 2026). */
+static uint32_t bound_epoch;
+static unsigned bind_again = 1;
 static void bind_live(void)
 {
+    uint32_t epoch = modwerk_runtime_owner_epoch();
+    if (epoch == bound_epoch && !bind_again) return;
+    bound_epoch = epoch; bind_again = 0;
     for (unsigned i = 0; i < RUNTIME_MODULES; ++i) {
         const struct runtime_module *m = modwerk_runtime_module(i);
         struct runtime_owner o; struct mw_controller_binding b;
         const struct mw_controller_write_policy *p;
-        if (!m || modwerk_runtime_owner_snapshot(m->dsp.image, &o) != 1 ||
-            !(p = row_for(o.package_sha256, o.module, o.image_bytes)) || !binding_of(&o, p, &b) ||
-            slot_of(&b) < MW_CONTROLLER_SLOTS) continue;
+        if (!m) continue;
+        if (modwerk_runtime_owner_snapshot(m->dsp.image, &o) != 1) { bind_again = 1; continue; }
+        if (!(p = row_for(o.package_sha256, o.module, o.image_bytes)) || !binding_of(&o, p, &b) || slot_of(&b) < MW_CONTROLLER_SLOTS) continue;
         const struct mw_controller_slot *previous = 0; unsigned others = 0;
         for (unsigned k = 0; k < MW_CONTROLLER_SLOTS; ++k) {
             const struct mw_controller_slot *s = &REGISTRY.slots[k];
             if (held(s) && s->binding.identity.feature == p->identity.feature) { ++others; previous = s; }
         }
+        bind_again = 1; /* until it is bound, or gone */
         if (others > 1u || (previous && previous->state != MW_CTL_RETIRING)) continue; /* wait for its disable */
         struct mw_controller_declaration d = {p->identity, {total(p->identity.feature, 0), total(p->identity.feature, 1)}};
         unsigned at;
         if (mw_controller_reserve(&REGISTRY, &d, &d.identity, previous ? &previous->binding : 0, &at) != MW_CTL_OK) continue;
         if (mw_controller_bind(&REGISTRY, at, &b) != MW_CTL_OK) { (void)mw_controller_cancel(&REGISTRY, &REGISTRY.slots[at].binding); continue; }
         want[at].generation = b.generation; want[at].since = ticks; want[at].quiesce = 0; verified[at] = 0;
+        bind_again = 0;
     }
 }
 static void advance(unsigned at)

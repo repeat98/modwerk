@@ -178,9 +178,19 @@ static int in_dispatch(uint32_t v) { (void)v; return 0; }
 static uintptr_t raise_of(uint32_t hook) { (void)hook; return 0; }
 #endif
 
+#ifdef MODWERK_CACHED_MODULES
+/* build_core.py --cached-modules (prototype, README.md "Cached modules"): the ledger and the modules use the pool's
+ * own, cached alias and never the uncached one, so neither alias can hold a stale copy of the other. Extents are
+ * whole 16-byte lines, so no cache line is shared by two. What the data cache holds must still reach memory before
+ * the instruction cache fetches it: prepare pushes the extent it wrote, then invalidates the instruction caches. */
+static uint8_t *first(void) { return pool; }
+#define CACHED_MODULES 1
+#else
 /* The ledger. Extents are whole 16-byte lines, written and read only through
  * the uncached alias, so no cache line outlives the memory it came from. */
 static uint8_t *first(void) { return modwerk_machine_uncached(pool); }
+#define CACHED_MODULES 0
+#endif
 static uint8_t *end_of(const struct runtime_module *m) { return (uint8_t *)(uintptr_t)m + m->size; }
 /* Free bytes from `from` to the next owned extent or the end of the pool. */
 static uint32_t run(const uint8_t *from)
@@ -305,11 +315,14 @@ static void reclaim(const struct runtime_context *context)
     unsigned n = modwerk_machine_paused(span, RUNTIME_PAUSED, context);
     for (unsigned i = owners; n <= RUNTIME_PAUSED && i--;) {
         uint32_t lo = (uint32_t)(uintptr_t)owned[i], hi = lo + owned[i]->size;
+#if CACHED_MODULES /* code runs from the cached alias, which is not the canonical one: compare canonical addresses */
+        lo = modwerk_machine_reference(lo), hi = lo + owned[i]->size;
+#endif
         int reached = reachable(owned[i]);
         for (unsigned k = 0; k < n && !reached; ++k)
             for (const uint8_t *p = span[k].from; p + 4 <= span[k].to && !reached; p += 2) {
                 uint32_t v = be32(p);
-                if ((owned[i]->dsp.flags & RUNTIME_GROUP_METADATA) || owned[i]->dsp.foreign_roots) v = modwerk_machine_reference(v);
+                if (CACHED_MODULES || (owned[i]->dsp.flags & RUNTIME_GROUP_METADATA) || owned[i]->dsp.foreign_roots) v = modwerk_machine_reference(v);
                 reached = v >= lo && v < hi;
             }
         if (!reached) forget(owned[i]);
@@ -793,6 +806,9 @@ static int __attribute__((used)) prepare_context(void *u, const uint8_t *data, u
             }
             p += site_bytes(abi, n, r);
         }
+#if CACHED_MODULES /* instruction fetches read memory, not the data cache: the extent's lines reach memory first */
+        modwerk_machine_flush_data((uint32_t)(uintptr_t)m, head + code + tail);
+#endif
         modwerk_machine_invalidate_code();
         uint32_t *dsp_words = (uint32_t *)(void *)((uint8_t *)m + head + code);
         uint16_t *dsp_relocations = (uint16_t *)(void *)(dsp_words + dsp.count);

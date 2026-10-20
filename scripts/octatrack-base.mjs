@@ -10,7 +10,8 @@
 // Private transport candidates may add --usb-midi and --usb-audio "USB AUDIO OUT TRACKS MAIN CUE". --site-events builds the
 // base that owns sdk/machines/octatrack/events.json's sites and tables and dispatches them to subscribed packages;
 // --table-owners also fills its table-owner storage from module-adapters/table-owners.json (the reviewed table owners).
-// --resident-stock-hooks --controllers adds the resident Sidechain, Output Matrix and Analog BD engines and admits their packages
+// --cached-modules runs installed module code from the pool's cached alias (cache maintenance on install; a development
+// prototype until it is qualified). --resident-stock-hooks --controllers adds the resident Sidechain, Output Matrix and Analog BD engines and admits their packages
 // through committed trust rows (module-adapters/controller-policies.json). --resident-on-demand (with --resident-stock-hooks)
 // keeps those engines out of the DSP cores until a package that needs one is installed, so the cores' effect arena is
 // larger (docs/OCTATRACK_RESIDENT_ENGINES_ON_DEMAND.md). Every build also writes
@@ -36,6 +37,7 @@ const { values: args } = parseArgs({ options: {
   'resident-stock-hooks': { type: 'boolean', default: false }, 'resident-on-demand': { type: 'boolean', default: false },
   'saved-set-export': { type: 'boolean', default: false },
   controllers: { type: 'boolean', default: false },
+  'cached-modules': { type: 'boolean', default: false },
 } })
 if (!args.stock) throw new Error('Usage: npm run octatrack:base -- --stock OCTATRACK_OS1.40C.bin [--upstream ELEKLOADER] [--write] [--out NEW-DIR]')
 const root = resolve(import.meta.dirname, '..'), here = join(root, 'sdk/machines/octatrack/elekloader')
@@ -54,7 +56,7 @@ if (args['resident-on-demand'] && !args['resident-stock-hooks']) throw new Error
 const work = mkdtempSync(join(tmpdir(), 'modwerk-base-')), core = join(work, 'core')
 const build = (output, ...rest) => python('build_core.py', '--stock', args.stock, '--upstream', args.upstream, '--output', output, '--dsp-loader',
   ...(args['usb-midi'] ? ['--usb-midi'] : []), ...(args['usb-audio'] ? ['--usb-audio', args['usb-audio']] : []),
-  ...(args['site-events'] ? ['--site-events'] : []),
+  ...(args['site-events'] ? ['--site-events'] : []), ...(args['cached-modules'] ? ['--cached-modules'] : []),
   ...(args['table-owners'] ? ['--table-owners', join(adapters, 'table-owners.json')] : []),
   ...(args['resident-stock-hooks'] ? ['--resident-stock-hooks'] : []), ...(args['resident-on-demand'] ? ['--resident-on-demand'] : []),
   ...(args['saved-set-export'] ? ['--saved-set-export'] : []), ...rest)

@@ -9,8 +9,10 @@
 static unsigned failures;
 #define CHECK(x) do { if (!(x)) { failures++; fprintf(stderr, "%s:%d: %s\n", __FILE__, __LINE__, #x); } } while (0)
 volatile struct diag_log modwerk_test_log;
-volatile uint32_t modwerk_test_crash[4], modwerk_test_stall[3], modwerk_test_playing, modwerk_test_tempo24,
+volatile uint32_t modwerk_test_crash[DIAG_CRASH_BYTES / 4u], modwerk_test_stall[DIAG_STALL_BYTES / 4u], modwerk_test_playing, modwerk_test_tempo24,
     modwerk_test_screen, modwerk_test_timer;
+uint32_t modwerk_test_modules[16];
+const uint8_t modwerk_base_digest[32] = {0x32, 0x0f, 0xc4, 0x54, 9};
 volatile uint8_t modwerk_test_running[16];
 volatile uint32_t modwerk_status[5], modwerk_runtime_ticks, dl_frames;
 void modwerk_track_machines(volatile uint8_t *out) { for (unsigned i = 0; i < 24u; ++i) out[i] = (uint8_t)(i + 1u); }
@@ -26,27 +28,40 @@ int main(void)
     for (unsigned i = 0; i < sizeof modwerk_test_log; ++i) ((volatile uint8_t *)&modwerk_test_log)[i] = 0xa5;
     restart();
     CHECK(LOG->magic == DIAG_MAGIC && LOG->version == DIAG_VERSION && LOG->boot == 1u);
-    CHECK(LOG->incidents == 1u && last()->kind == DIAG_START && last()->seq == 1u && last()->a == 2u << 16); /* old crashes: no CRASH */
+    CHECK(LOG->incidents == 2u && LOG->incident[0].kind == DIAG_START && LOG->incident[0].seq == 1u && LOG->incident[0].a == 2u << 16); /* old crashes: no CRASH */
+    CHECK(last()->kind == DIAG_BASE && last()->a == 0x320fc454u && last()->keys[0] == 0xffu); /* the base, right after each start */
     CHECK(LOG->loads == 0u && LOG->freeze_state == 0u);
+    /* The installed set, after a restore or a Keep: the ids as one run of bytes. */
+    modwerk_test_modules[0] = 0x95cff696u, modwerk_test_modules[1] = 0xbcf0d674u;
+    modwerk_diag_set();
+    CHECK(LOG->incidents == 3u && last()->kind == DIAG_SET && last()->a == 2u && last()->machine[0] == 0x95u && last()->machine[3] == 0x96u);
+    CHECK(last()->machine[4] == 0xbcu && last()->machine[7] == 0x74u && last()->machine[8] == 0u && last()->keys[0] == 0u);
+    modwerk_test_modules[0] = modwerk_test_modules[1] = 0;
 
     /* A crash and a stall since the last start. */
     modwerk_test_crash[1] = 3, modwerk_test_stall[0] = 0x4d575354u, modwerk_test_stall[1] = 1, modwerk_test_stall[2] = 2;
     restart();
-    CHECK(LOG->boot == 2u && LOG->incidents == 4u);
-    CHECK(LOG->incident[1].kind == DIAG_START && LOG->incident[2].kind == DIAG_CRASH && LOG->incident[2].a == 0x40012345u);
-    CHECK(LOG->incident[3].kind == DIAG_STALL && LOG->incident[3].a == 2u && LOG->incident[3].fx[0] == 0 && LOG->incident[3].keys[0] == 0xffu);
+    CHECK(LOG->boot == 2u && LOG->incidents == 7u); /* START, BASE, CRASH, STALL after the first boot's three */
+    CHECK(LOG->incident[3].kind == DIAG_START && LOG->incident[4].kind == DIAG_BASE && LOG->incident[5].kind == DIAG_CRASH && LOG->incident[5].a == 0x40012345u);
+    CHECK(LOG->incident[6].kind == DIAG_STALL && LOG->incident[6].a == 2u && LOG->incident[6].fx[0] == 0 && LOG->incident[6].keys[0] == 0xffu);
     restart();
-    CHECK(LOG->boot == 3u && LOG->incidents == 5u); /* nothing new crashed */
+    CHECK(LOG->boot == 3u && LOG->incidents == 9u); /* nothing new crashed: START and BASE only */
 
     /* Five minutes of meters: CPU 40 % then 60 %, playing half the time. */
     for (unsigned s = 0; s < WINDOW; ++s) {
         modwerk_status[0] = s < WINDOW / 2u ? 400u : 600u, modwerk_status[1] = 100u, modwerk_status[2] = 300u;
         modwerk_status[3] = 200u, modwerk_status[4] = 250u, modwerk_test_playing = s % 2u;
-        for (unsigned t = 0; t < 30u; ++t) tick();
+        for (unsigned t = 0; t < 30u; ++t) {
+            tick();
+            /* frames: 2.7 a tick, 363 µs apart (47,916 counts), one of them 2 ms late; the UI stood still for 7 frames once */
+            for (unsigned f = 0; f < 3u; ++f) { modwerk_test_timer += s == 100u && t == 3u && f == 1u ? 264000u : 47916u; modwerk_diag_frame(); }
+            if (s == 200u && t == 7u) for (unsigned f = 0; f < 7u; ++f) { modwerk_test_timer += 47916u; modwerk_diag_frame(); }
+        }
     }
     CHECK(LOG->loads == 1u && LOG->load[0].seq == LOG->seq && LOG->load[0].boot == 3u && LOG->load[0].minute == 5u);
     CHECK(LOG->load[0].cpu_mean == 500u && LOG->load[0].cpu_peak == 600u && LOG->load[0].dsp0_mean == 100u && LOG->load[0].dsp0_peak == 300u);
     CHECK(LOG->load[0].dsp1_mean == 200u && LOG->load[0].dsp1_peak == 250u && LOG->load[0].samples == WINDOW && LOG->load[0].playing == WINDOW / 2u);
+    CHECK(LOG->load[0].frame_gap == 2000u && LOG->load[0].tick_gap == 10u && frame_gap <= 47916u && tick_gap <= 3u); /* the late frame; 3 + 7 frames without a tick; then the window's maxima start over */
 
     /* Not in the first minute after a start (the project load). */
     restart();
@@ -88,8 +103,8 @@ int main(void)
     CHECK(LOG->freeze_state == 1u);
     restart();
     CHECK(LOG->boot == 5u && LOG->freeze_state == 0u);
-    CHECK(LOG->incident[(LOG->incidents - 2u) % DIAG_INCIDENTS].kind == DIAG_FREEZE && LOG->incident[(LOG->incidents - 2u) % DIAG_INCIDENTS].a == 0u);
-    CHECK(LOG->incident[(LOG->incidents - 2u) % DIAG_INCIDENTS].boot == 4u && last()->kind == DIAG_START && last()->boot == 5u);
+    CHECK(LOG->incident[(LOG->incidents - 3u) % DIAG_INCIDENTS].kind == DIAG_FREEZE && LOG->incident[(LOG->incidents - 3u) % DIAG_INCIDENTS].a == 0u);
+    CHECK(LOG->incident[(LOG->incidents - 3u) % DIAG_INCIDENTS].boot == 4u && LOG->incident[(LOG->incidents - 2u) % DIAG_INCIDENTS].kind == DIAG_START && last()->kind == DIAG_BASE && last()->boot == 5u);
 
     /* Frames before the first tick of a start belong to nobody. */
     started = 0;
@@ -108,8 +123,13 @@ int main(void)
     /* LOG pages: 244 bytes each, the log byte for byte, then zeros. */
     uint8_t page[DIAG_PAGE];
     CHECK(modwerk_diag_read(page, 0) == DIAG_PAGE && page[0] == ((const uint8_t *)&modwerk_test_log)[0]);
-    unsigned pages = (unsigned)((sizeof(struct diag_log) + DIAG_PAGE - 1u) / DIAG_PAGE);
-    CHECK(modwerk_diag_read(page, pages - 1u) == DIAG_PAGE && page[DIAG_PAGE - 1u] == 0);
+    /* After the log: crash.c's record, then dsp.c's, then zeros (diag.h). */
+    modwerk_test_stall[0] = 0x4d575354u;
+    unsigned at = (unsigned)sizeof(struct diag_log), stall_at = at + DIAG_CRASH_BYTES, end = (unsigned)DIAG_IMAGE_BYTES;
+    const volatile uint8_t *cb = (const volatile uint8_t *)modwerk_test_crash, *sb = (const volatile uint8_t *)modwerk_test_stall; /* the host's byte order */
+    CHECK(modwerk_diag_read(page, at / DIAG_PAGE) == DIAG_PAGE && page[at % DIAG_PAGE] == cb[0] && page[at % DIAG_PAGE + 3u] == cb[3] && (cb[0] == 'M' || cb[3] == 'M'));
+    CHECK(modwerk_diag_read(page, stall_at / DIAG_PAGE) == DIAG_PAGE && page[stall_at % DIAG_PAGE] == sb[0] && page[stall_at % DIAG_PAGE + 3u] == sb[3]);
+    CHECK(modwerk_diag_read(page, end / DIAG_PAGE) == DIAG_PAGE && page[end % DIAG_PAGE] == 0 && page[DIAG_PAGE - 1u] == 0);
     CHECK(DIAG_PAGE % 64u != 0u);
 
     if (failures) fprintf(stderr, "%u failure(s)\n", failures);

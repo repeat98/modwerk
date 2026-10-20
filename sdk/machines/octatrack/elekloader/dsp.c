@@ -996,11 +996,15 @@ static void together(volatile struct selftest *t)
     }
     if (st_step == WAIT) {
         unsigned id = st_queue[0], i = st_slot;
-        if (settled(st_want)) {
+        /* A refusal first: the manager leaves code loaded until it needs the room, so a module it refused here can
+         * still be bound from an earlier run and read as settled (owner's MKII, 20 October 2026: E-Verb refused on
+         * T6 for cycles beside Air Chorus on T5, counted as run, then failed the stress as refused). */
+        int refused = dl_residency_failures != st_failures && dl_publication_idle();
+        if (!refused && settled(st_want)) {
             if (st_batch < 8u) batch_ids[st_batch] = (uint8_t)id;
             t->track[i & 7u] = (uint8_t)id, t->ran = t->ran + 1, t->done = t->done + 1, ++st_batch;
             st_used |= 1u << (i & 7u), st_try = 0;
-        } else if ((dl_residency_failures != st_failures && dl_publication_idle()) || st_ticks > 120u) {
+        } else if (refused || st_ticks > 120u) {
             st_want[i] = st_base[i], set_live(st_want); /* refused: its core is full */
             if (!st_batch) { ++st_try, st_step = RESET, st_ticks = 0; return; } /* alone: the next attempt */
             st_later[st_deferred++] = (uint8_t)id, st_used |= 1u << (i & 7u); /* first in the next batch, alone */
@@ -1164,6 +1168,7 @@ static int move_one(void)
     }
     return 0;
 }
+extern volatile uint32_t dl_residency_commits, dl_residency_rollbacks; /* manager.c */
 static void compact_tick(void)
 {
     if (modwerk_selftest.state == SELFTEST_RUNNING || !dl_publication_idle() || rebinding || picks_in != picks_out) return;
@@ -1172,9 +1177,18 @@ static void compact_tick(void)
         *(volatile uint8_t *)0x800065c0u != *(volatile uint8_t *)0x800065beu) return; /* a pattern change is queued */
     if (!modwerk_dsp_compact_step && modwerk_runtime_ticks - modwerk_status_key_at < 120u) return;
     static unsigned spent, key; /* moves since the last key: a layout that cannot be packed stops after 32 */
+    /* A layout a plan found packed is not planned again until it changes (a commit, a rollback, an arena): the plan
+     * on every idle tick cost about 120 µs with six modules placed (owner's MKII, 20 October 2026). */
+    static uint32_t packed_commits, packed_rollbacks; static unsigned packed_arena[2], packed;
     if (key != modwerk_status_key_at || modwerk_dsp_compact_step == 1u) key = modwerk_status_key_at, spent = 0;
     if (modwerk_dsp_compact_step == 1u) modwerk_dsp_compact_step = 2u;
-    if (spent < 32u && move_one()) { ++spent, modwerk_dsp_compact_moves = modwerk_dsp_compact_moves + 1; return; }
+    if (packed && (packed_commits != dl_residency_commits || packed_rollbacks != dl_residency_rollbacks ||
+                   packed_arena[0] != dl_arena(0) || packed_arena[1] != dl_arena(1))) packed = 0;
+    if (spent < 32u && (!packed || modwerk_dsp_compact_step)) {
+        if (move_one()) { ++spent, modwerk_dsp_compact_moves = modwerk_dsp_compact_moves + 1; return; }
+        packed = 1, packed_commits = dl_residency_commits, packed_rollbacks = dl_residency_rollbacks;
+        packed_arena[0] = dl_arena(0), packed_arena[1] = dl_arena(1);
+    }
     if (modwerk_dsp_compact_step)
         modwerk_dsp_compact_counts = holes() ? 0xffffffffu : *(volatile uint32_t *)0xfc07c00cu - compact_at, modwerk_dsp_compact_step = 0;
 }

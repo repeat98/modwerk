@@ -215,6 +215,27 @@ hook index. MWCP feature 128 says the base has events.
 - Activation needs nothing playing or recording. A bus reset or unplug rolls
   back anything not accepted (the controller's disconnect).
 
+## Cached modules (prototype)
+
+A base built with `MODWERK_CACHED_MODULES` (the Octatrack's `build_core.py --cached-modules`,
+off by default; for a development twin to measure) places, relocates and runs modules
+through the pool's own cached alias instead of the uncached one, so a module's loads
+and stores of its own code and data hit the data cache instead of each going to memory.
+Neither the ledger nor a module uses the uncached alias of the pool, so neither alias
+can hold a stale copy of the other, and extents are whole 16-byte lines. What stays:
+
+- **New code reaches memory before it runs.** Instruction fetches read memory, not the
+  data cache: prepare pushes the extent it wrote (`modwerk_machine_flush_data`, every
+  way of each set it maps to), then invalidates the instruction and branch caches, all
+  before publication. The Octatrack's FX pages push each formatter after its fixups.
+- **Freeing needs nothing.** A freed extent is reused only through the same alias, and
+  its next owner is pushed in turn.
+- **Reachability compares canonical addresses** (`modwerk_machine_reference`): return
+  addresses on stacks are in the cached alias.
+
+Unproven on hardware: a module that rewrites its own code, or hands its own memory to a
+DMA engine or to code that reads it through the uncached alias, needs its own pushes.
+
 ## Porting to another machine
 
 A machine provides, next to its base:
