@@ -214,7 +214,7 @@
   "sdk/runtime/upload/vendor.h": "e6cd2ffd6137f668c6939a2c4a3990848cf05e92e3f84d04c862bc23e229b363",
   "sdk/runtime/upload/wire.c": "591075e9661b10e1a25acc52720984b864210df6469a3a6b4dcafba279fabede",
   "sdk/runtime/upload/wire.h": "781b3dc8cd4e59ffdd4e2c60b1b1f99356050be58c3c529b945d82e60e768829",
-  "src/engine/assets/chooser-metadata.json": "2655c00b918cc6d8454202da925dff4d8ac62dcdef343c0e43c5976f51004575",
+  "src/engine/assets/chooser-metadata.json": "514a1ef07ee341292b4f4107d12e94b42b097c1e32cc1e7c2828e65213dbc6c0",
   "src/engine/assets/stock-dsp-metadata.json": "caa1f67b85f4c62e4e57c8179f7c5f952581c3f38ec8b51b87431fba21ed0dc8"
  }
 }

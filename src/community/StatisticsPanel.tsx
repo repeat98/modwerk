@@ -4,7 +4,7 @@ import { PageTraffic } from './PageTraffic'
 import { CommunityInsights } from './CommunityInsights'
 import { HOURLY_ERA_METRICS, hourlyRows, usageCsv, usageInsights, usageMetrics } from './statistics-insights'
 import type { UsageMetric } from './statistics-insights'
-import type { DiscordInviteCounts, UsageStatistics } from './usage-contract'
+import type { DiscordInviteCounts, DownloadSignupCounts, UsageStatistics } from './usage-contract'
 import type { AdminInsights } from './admin-insights-contract'
 import { DEVICES_BY_ID } from '../devices/registry'
 
@@ -30,6 +30,17 @@ function DiscordInviteStatistics({ data }: { data: UsageStatistics }) {
       <tr><th scope="row">Signed-in members</th><td>{value('discord_member_shown')}</td><td>—</td><td>{value('discord_member_joins')}</td><td>{value('discord_member_dismissals')}</td></tr>
       <tr><th scope="row">Signed-out visitors</th><td>{value('discord_visitor_shown')}</td><td>{value('discord_visitor_signups')}</td><td>{value('discord_visitor_joins')}</td><td>{value('discord_visitor_dismissals')}</td></tr>
       <tr><th scope="row">Signup welcome link</th><td>—</td><td>—</td><td>{value('discord_welcome_joins')}</td><td>—</td></tr>
+    </tbody></table></div>
+  </section>
+}
+
+function DownloadSignupStatistics({ data }: { data: UsageStatistics }) {
+  const value = (key: keyof DownloadSignupCounts) => data.downloadSignupStarted ? format(data.rows.reduce((total, row) => total + (row[key] ?? 0), 0)) : '—'
+  return <section className="configuration-section" aria-labelledby="download-signup-statistics-title">
+    <h2 id="download-signup-statistics-title">Sign-up invitation after a download</h2>
+    <p className="service-note">{data.downloadSignupStarted ? 'Counted from ' + data.downloadSignupStarted.slice(0, 10) + ' · selected period.' : 'Invitation counts have not begun.'} Guests see it once per visit after a firmware download. Followed counts accounts that, once verified, followed what they had downloaded on that device.</p>
+    <div className="statistics-table" tabIndex={0}><table><thead><tr><th scope="col">Shown</th><th scope="col">Create account</th><th scope="col">Followed after sign-up</th></tr></thead><tbody>
+      <tr><td>{value('download_signup_shown')}</td><td>{value('download_signup_clicks')}</td><td>{value('download_follows_claimed')}</td></tr>
     </tbody></table></div>
   </section>
 }
@@ -71,6 +82,7 @@ export function UsageDashboard({data}: {data: UsageStatistics}) {
 
   return <>
     <DiscordInviteStatistics data={data} />
+    <DownloadSignupStatistics data={data} />
     <dl className="admin-overview statistics-cards">
       <div><dt>Visitors today</dt><dd>{covered ? format(insights.today) : '—'}</dd><small>Estimated unique visitors · today is partial</small></div>
       {usageMetrics.slice(1).map(([key,title]) => <div key={key}><dt>{title}</dt><dd>{covered ? format(insights.totals[key]) : '—'}</dd><small>Selected period · includes today</small>{covered && <Comparison value={comparable(key) ? insights.compare(key) : null}/>}</div>)}

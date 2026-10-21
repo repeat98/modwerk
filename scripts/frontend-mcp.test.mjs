@@ -69,6 +69,7 @@ describe('frontend MCP protocol and isolated site workflows', () => {
     expect((await service.call('site_selection', { moduleIds: ['vector', 'analog-bassdrum'] })).conflicts.length).toBeGreaterThan(0)
     const usb = catalogue.modules.filter(module => module.usb).map(module => module.id)
     expect(usb.length).toBeGreaterThanOrEqual(4)
+    expect(usb).toContain('usb-audio-out-tracks-main-cue')
     // Every published package alone, every pair and all together, on the published base with site events (every subset
     // of 19 would be 2^19 sets; preparing one only preflights each package).
     const { identity: base } = JSON.parse(await readFile(new URL('../sdk/machines/octatrack/base-binding.json', import.meta.url), 'utf8'))
@@ -76,7 +77,8 @@ describe('frontend MCP protocol and isolated site workflows', () => {
     const sets = [...usb.map(id => [id]), ...usb.flatMap((a, i) => usb.slice(i + 1).map(b => [a, b])), usb]
     for (const moduleIds of sets) {
       const prepared = await service.call('site_selection', { moduleIds, usb: true, capabilities, base })
-      expect(prepared.changes).toHaveLength(moduleIds.length)
+      // USB Audio comes with the base (here in its default layout, the set's), so it adds no package.
+      expect(prepared.changes).toHaveLength(moduleIds.filter(id => id !== 'usb-audio-out-tracks-main-cue').length)
       expect(prepared.changes.every(change => /^[a-f0-9]{64}$/.test(change.sha256) && change.undoSha256)).toBe(true)
     }
     await expect(service.call('site_selection', { moduleIds: ['sidechain-compressor'], usb: true, capabilities })).rejects.toThrow('latest Modwerk base')

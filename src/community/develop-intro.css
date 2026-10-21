@@ -1,0 +1,16 @@
+/* Start developing: the no-coding promise and the three steps, above the starter prompt. Apricot marks "open for development". */
+.start-developing .developer-heading h1 span { color: #e6cfa8; }
+.develop-intro { display: grid; gap: 28px; margin: 0 0 32px; }
+.develop-intro h2 { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 12px; margin-bottom: 12px; font-size: 16px; }
+.develop-intro h2 .subtle { font-size: 12px; }
+.develop-needs, .develop-steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; margin: 0; padding: 0; list-style: none; }
+.develop-needs li { display: grid; grid-template-columns: 36px minmax(0, 1fr); align-content: start; gap: 2px 12px; padding: 14px; border: 1px solid #4a4236; border-radius: 12px; background: #2b2823; }
+.develop-need-icon { grid-row: span 2; display: grid; place-items: center; width: 36px; height: 36px; border-radius: 9px; background: #3d3326; color: #ecd6b0; }
+.develop-needs strong { color: #fff1da; font-size: 14px; font-weight: 620; }
+.develop-needs small { color: #d6cfc2; font-size: 12.5px; line-height: 1.55; }
+.develop-needs li.is-optional strong::after { content: 'recommended'; margin-left: 8px; padding: 1px 6px; border-radius: 4px; background: #3a3a44; color: var(--muted); font: 9.5px var(--mono); letter-spacing: .9px; text-transform: uppercase; vertical-align: 2px; }
+.develop-steps li { display: flex; flex-direction: column; gap: 9px; padding: 18px 20px 20px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); }
+.develop-step-number { font: 650 30px/1 var(--mono); letter-spacing: -1px; color: var(--accent); }
+.develop-steps h3 { margin: 0; font-size: 15px; font-weight: 620; }
+.develop-steps p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.65; }
+.develop-step-who { align-self: flex-start; margin-top: auto; padding: 3px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface-raised); color: var(--text-secondary); font: 10.5px var(--mono); letter-spacing: .8px; text-transform: uppercase; }

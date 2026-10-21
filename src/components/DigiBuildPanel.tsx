@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 import { useState } from 'react'
 import { createPortal } from 'react-dom'
+import { DownloadSignupCard, DownloadSignupInvite } from '../community/DownloadSignupInvite'
 import { DownloadedBuildOverview } from '../community/HardwareFeedbackCheckIn'
 import { builtModules } from '../community/build-follow-up'
 import { useDownloadFollows } from '../community/useDownloadFollows'
@@ -33,7 +34,7 @@ export function DigiBuildPanel({ device, firmware, moduleIds, onExport, exported
   const missing = plan?.missing.map(id => DIGI_MODS.find(mod => mod.device === device.id && mod.id === id)?.title ?? id) ?? []
   const { state, check, build, cancel } = useDigiBuild(device.id, ready && !missing.length ? firmware.file : undefined, release, moduleIds)
   const [version, setVersion] = useState(''), [accepted, setAccepted] = useState(''), [downloaded, setDownloaded] = useState(''), [recoveryKnown, setRecoveryKnown] = useState('')
-  const {followDownloads,followNotice}=useDownloadFollows()
+  const {followDownloads,followNotice,invite,closeInvite,closeCard}=useDownloadFollows()
   const deviceInfo = 'device' in state ? state.device : undefined, key = 'key' in state ? state.key : ''
   const shown = version || deviceInfo?.default_version || '2.0a', length = deviceInfo?.version_len ?? 4
   const result = state.phase === 'built' && state.result.version === shown ? state.result : undefined
@@ -87,6 +88,7 @@ export function DigiBuildPanel({ device, firmware, moduleIds, onExport, exported
         <button className="button button-quiet" disabled={!canExport} onClick={onExport}><Icon name="download" size={16}/>{'Export ' + w.set}</button><p className="export-note" aria-live="polite">{exported ? w.Set + ' exported as JSON.' : 'JSON backup · no firmware included'}</p>
       </div>
     </section>
+    {invite?.stage === 'dialog' && <DownloadSignupInvite modules={invite.modules} onClose={closeInvite}/>}
     <p className="file-footnote"><span>Builder: <a href={BUILDER_SOURCE.repository} target="_blank" rel="noreferrer">elekloader ↗</a> by irpina (GPL-3.0-or-later), with each mod’s pinned author release. It runs in this browser.</span></p>
     {/* The build card stays in the page's sticky column; what follows a build reads in the main column. */}
     {results && createPortal(<>
@@ -96,7 +98,7 @@ export function DigiBuildPanel({ device, firmware, moduleIds, onExport, exported
         <ol><li>Connect the {device.name} over USB and open Elektron Transfer.</li><li>Select the unit, connect, and drop the .syx onto Transfer.</li><li>Press YES on the unit and keep it powered until the update finishes.</li></ol>
         <p className="service-note">{FLASHING_RISKS} Flash at your own risk. Local checks cannot guarantee hardware safety.</p>
         <p className="service-note">{FIRMWARE_SHARING_NOTICE}</p>
-        {downloaded === key && <p className="success-note" role="status">Download requested. Check your browser’s downloads folder.</p>}{downloaded===key&&followNotice&&<p className="service-note" role="status">{followNotice}</p>}</section>}
+        {downloaded === key && <p className="success-note" role="status">Download requested. Check your browser’s downloads folder.</p>}{downloaded===key&&followNotice&&<p className="service-note" role="status">{followNotice}</p>}{downloaded===key&&invite?.stage==='card'&&<DownloadSignupCard modules={invite.modules} onClose={closeCard}/>}</section>}
       {result && downloadsEnabled && downloaded === key && state.phase === 'built' && <DownloadedBuildOverview build={{ machine: device.name, os: release ?? '', modules: builtModules(state.moduleIds.map(id => device.id + '-' + id)) }}/>}
       {result && <section className="configuration-section"><details><summary>File identity &amp; builder</summary><dl className="build-identity">
         <dt>SHA-256</dt><dd>{result.sha256}</dd><dt>Mods</dt><dd>{result.mods.join(', ')}</dd>

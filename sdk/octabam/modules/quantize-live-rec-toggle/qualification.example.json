@@ -1,0 +1,83 @@
+{
+  "moduleVersion": "0.1.0-experimental",
+  "sourceSha256": "403c3e4b47e312d78c4ba5a6049d80452efbd63905f33573666c22f281e498b5",
+  "imageSha256": "026464deb27c8178d44ad1fd5866b754478b11c114561e73000cdca3b44f86e8",
+  "cycles": [
+    {
+      "processor": "coldfire",
+      "worstCase": 416,
+      "maxConfiguration": 416,
+      "maxInstances": 1,
+      "budget": 95778,
+      "unit": "cycles/event",
+      "method": "static",
+      "conditions": {
+        "parameterExtremes": "Both values of the setting (stored 0 and 1), toast present and absent, [REC] held and not held, live recording stopped and running: every branch of the two entries.",
+        "parameterModulation": "Not applicable: one global boolean reached by a key gesture; no LFO, parameter lock, scene or MIDI CC reaches it.",
+        "modeSwitching": "Repeated show, invert and invert-back presses inside one toast, and [REC] release with and without a toast on screen.",
+        "maxLoad": "One instance per unit (a global key gesture). The code runs once per [PLAY] press or [REC] release in the key handler, never in the frame or audio path.",
+        "inputConditions": "Independent of audio. Counts cover the authored instructions only; the stock routines they call (project gate, checksum, notification open and close) are stock cost and excluded. The qualified image is the USB package 026464de (ABI 7, 356 bytes), which carries this 188-byte unit byte for byte; the instructions were counted on the same unit in the card image QLRTEST03 (MAIN OS eb34c12e9c906107fc6a8285ec757eaacf83a39c8dfb42e7bc390421f4189afd)."
+      },
+      "report": "TESTING.md"
+    }
+  ],
+  "memory": {
+    "regions": [
+      {
+        "name": "Authored ColdFire code and the two toast strings (linked unit qlr, ROM cave)",
+        "space": "cpu-flash",
+        "words": 188,
+        "wordBits": 8,
+        "bytes": 188,
+        "scope": "shared"
+      },
+      {
+        "name": "Two six-byte jmp detours written over stock instructions in place",
+        "space": "cpu-flash",
+        "words": 12,
+        "wordBits": 8,
+        "bytes": 12,
+        "scope": "shared"
+      }
+    ],
+    "perInstanceBytes": 0,
+    "sharedBytes": 200,
+    "maxInstances": 1,
+    "totalBytes": 200,
+    "conditions": "From the linked unit (188 bytes at any address; it is position independent) and the two detours. No RAM of its own: it reads and writes the stock setting word and its battery copy, and reads stock key and notification state. No heap; at most 8 bytes of stack beyond the stock key handler (two pushed arguments) before the stock calls.",
+    "report": "TESTING.md"
+  },
+  "hardware": {
+    "kind": "functional",
+    "status": "reported",
+    "model": "MKII",
+    "testedOn": "2026-10-15",
+    "tester": "npp1993",
+    "sourceRevision": "d7526ad548965cebea84b211a60d3bc00c1c6f3a",
+    "imageSha256": "026464deb27c8178d44ad1fd5866b754478b11c114561e73000cdca3b44f86e8",
+    "summary": "Package 026464de (source d7526ad5) over USB on the user's MKII with the flashed Modwerk beta base, OS 1.40C, APPLY SCENE installed beside it. Two trials without Keep rolled back; a kept trial was accepted and listed as Quant Live Rec. With it kept the user reported: hold [REC] + tap [PLAY] shows the toast and starts live recording; a tap within about a second flips the setting; a tap after the toast has gone only shows it; releasing [REC] closes the toast; with PERSONALIZE open the box follows a flip; a changed setting survives a power cycle, and the module was still installed after it. Removal was accepted and the inventory no longer listed it.",
+    "limitations": [
+      "Over USB only: the card image of this source (QLRTEST03) has not run on a unit. An earlier source (50f65395, QLRTEST02) ran from the card on the same MKII with the same results, before the stock-free re-encoding.",
+      "Not checked: stock [REC] + [PLAY] behaviour after the removal, grid recording, MIDI tracks, an MKI with this build. Part and project reload ran on 20 October 2026 (same MKII, same package, beside other modules) and left the setting unchanged; whether the gesture was used again after each reload was not recorded.",
+      "How long the tests ran was not recorded."
+    ],
+    "report": "TESTING.md"
+  },
+  "documentation": {
+    "tutorial": {
+      "title": "Quick tutorial: check and switch live-record quantize",
+      "steps": [
+        "Hold [REC] and tap [PLAY]: a toast shows LIVE REC: QUANTIZED or LIVE REC: UNQUANTIZED, the current setting, and live recording starts as on the stock OS.",
+        "While the toast is still on screen (about one second), keep [REC] held and tap [PLAY] again to invert the setting; the toast reopens with the new value.",
+        "Tap [PLAY] once more while it is up to switch back, or release [REC] to close the toast; the setting stays as last shown.",
+        "Press [STOP] to end live recording. PROJECT > SYSTEM > PERSONALIZE > QUANTIZE LIVE REC shows and edits the same setting."
+      ]
+    },
+    "screenshots": [
+      "media/ot-toast-on.png",
+      "media/ot-toast-off.png",
+      "media/ot-personalize.png"
+    ],
+    "screenshotStyle": "black-and-white"
+  }
+}

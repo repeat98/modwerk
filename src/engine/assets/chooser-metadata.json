@@ -114,6 +114,13 @@
       "fx1Only": true
     },
     {
+      "id": "poly8",
+      "key": "POLY8",
+      "fxId": null,
+      "fx1": false,
+      "fx1Only": false
+    },
+    {
       "id": "miniverb",
       "key": "MINIVERB",
       "fxId": 23,
@@ -234,15 +241,15 @@
       "fx1Only": false
     },
     {
-      "id": "poly8",
-      "key": "POLY8",
+      "id": "output-matrix",
+      "key": "OUTPUT MATRIX",
       "fxId": null,
       "fx1": false,
       "fx1Only": false
     },
     {
-      "id": "output-matrix",
-      "key": "OUTPUT MATRIX",
+      "id": "quantize-live-rec-toggle",
+      "key": "QUANTIZE_LIVE_REC_TOGGLE",
       "fxId": null,
       "fx1": false,
       "fx1Only": false

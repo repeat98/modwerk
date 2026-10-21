@@ -1,0 +1,289 @@
+{
+  "schemaVersion": 2,
+  "id": "quantize-live-rec-toggle",
+  "key": "QUANTIZE_LIVE_REC_TOGGLE",
+  "name": "Quant Live Rec",
+  "version": "0.1.0-experimental",
+  "category": "system",
+  "source": {
+    "repository": "https://github.com/sambanks/octabam",
+    "revision": "6e4aeb76695cbb612e4b424c55fd2207facf73ef",
+    "path": "modules/quantize-live-rec-toggle"
+  },
+  "author": {
+    "github": "Zac-Kyoti",
+    "credits": [
+      "Zac-Kyoti: the gesture, its ColdFire source and the MKI hardware work behind it. Sam Banks: octabam integration.",
+      "Modwerk contributors: source import with stock guards in place of stock bytes, the reworded toast, the PERSONALIZE redraw after a flip, the image gate, documentation and SVG thumbnail."
+    ]
+  },
+  "nativeManifest": "manifest.py",
+  "presentation": {
+    "label": "Live-record quantize on [REC] + [PLAY]",
+    "family": "Front-panel shortcut",
+    "summary": "Hold [REC] and tap [PLAY] to see QUANTIZE LIVE REC in a toast; tap [PLAY] again while it is up to switch it.",
+    "overview": "QUANTIZE LIVE REC decides whether live-recorded trigs snap to the steps. Stock keeps it in PROJECT > SYSTEM > PERSONALIZE. This module shows it on the gesture that starts live recording and lets a second tap switch it, without leaving the page you are on.",
+    "highlights": [
+      "OS 1.40C only. The author tested the gesture and a power cycle on an MKI. On an MKII (13 October 2026) the user reported the gesture, both toasts fitting the screen, the PERSONALIZE redraw and a power cycle working, with this module alone and, before the redraw was added, in combined builds with other modules.",
+      "The first [REC] + [PLAY] still starts live recording, as on stock. While live recording runs, further [REC] + [PLAY] presses do nothing on stock; here they show or invert the setting.",
+      "If a stock notification happens to be on screen while [REC] is held, the first [PLAY] inverts the setting instead of only showing it; the toast then shows the new value.",
+      "The setting is the stock global PERSONALIZE value in battery-backed memory: not saved per project or Part, and reset by an OS upgrade like the rest of PERSONALIZE."
+    ],
+    "usage": [
+      "Hold [REC] and tap [PLAY]: a toast shows LIVE REC: QUANTIZED or LIVE REC: UNQUANTIZED, the current setting, and live recording starts as on the stock OS.",
+      "While the toast is still on screen (about one second), keep [REC] held and tap [PLAY] again to invert the setting; the toast reopens with the new value.",
+      "Tap [PLAY] once more while it is up to switch back, or release [REC] to close the toast; the setting stays as last shown.",
+      "Press [STOP] to end live recording. PROJECT > SYSTEM > PERSONALIZE > QUANTIZE LIVE REC shows and edits the same setting."
+    ]
+  },
+  "access": {
+    "location": "Front panel: hold [REC], tap [PLAY]. The setting itself stays in PROJECT > SYSTEM > PERSONALIZE > QUANTIZE LIVE REC.",
+    "steps": [
+      "Hold [REC] and tap [PLAY]: a toast shows LIVE REC: QUANTIZED or LIVE REC: UNQUANTIZED, the current setting, and live recording starts as on the stock OS.",
+      "While the toast is still on screen (about one second), keep [REC] held and tap [PLAY] again to invert the setting; the toast reopens with the new value.",
+      "Tap [PLAY] once more while it is up to switch back, or release [REC] to close the toast; the setting stays as last shown.",
+      "Press [STOP] to end live recording. PROJECT > SYSTEM > PERSONALIZE > QUANTIZE LIVE REC shows and edits the same setting."
+    ],
+    "screenshots": [
+      "media/ot-toast-on.png",
+      "media/ot-toast-off.png",
+      "media/ot-personalize.png"
+    ]
+  },
+  "controls": [
+    {
+      "name": "QUANTIZE LIVE REC",
+      "default": 0,
+      "count": 2,
+      "labels": [
+        "QUANTIZED",
+        "UNQUANTIZED"
+      ],
+      "doc": "The stock PERSONALIZE setting. QUANTIZED is the ticked QUANTIZE LIVE REC box. The module does not change its stored value or default; it only adds the [REC] + [PLAY] gesture that shows and inverts it."
+    }
+  ],
+  "compatibility": {
+    "firmware": "1.40C",
+    "effectId": null,
+    "location": "Project sequencer",
+    "conflicts": [],
+    "limitations": [
+      "OS 1.40C only. The author tested the gesture and a power cycle on an MKI. On an MKII (13 October 2026) the user reported the gesture, both toasts fitting the screen, the PERSONALIZE redraw and a power cycle working, with this module alone and, before the redraw was added, in combined builds with other modules.",
+      "The first [REC] + [PLAY] still starts live recording, as on stock. While live recording runs, further [REC] + [PLAY] presses do nothing on stock; here they show or invert the setting.",
+      "If a stock notification happens to be on screen while [REC] is held, the first [PLAY] inverts the setting instead of only showing it; the toast then shows the new value.",
+      "The setting is the stock global PERSONALIZE value in battery-backed memory: not saved per project or Part, and reset by an OS upgrade like the rest of PERSONALIZE.",
+      "With PROJECT > SYSTEM > PERSONALIZE open, a flip redraws the list so the box follows at once (emulator and MKII; beside Output Matrix, emulator only). The author noted an occasional small empty box where the toast was right after it closes.",
+      "This is the all-or-nothing QUANTIZE LIVE REC setting, not the per-track TRIG QUANT. No effect slot, menu row or project data is added.",
+      "Over USB for beta testers: one ColdFire package with its two jmp sites, loaded, kept, undone and removed on the Modwerk beta base (tested on an MKII, 15 October 2026); it adds no effect row or project data, so a project never names it as missing."
+    ]
+  },
+  "resources": {
+    "recorded": "15 October 2026; source assembly, the image gate and executed instructions under the ColdFire port",
+    "storage": {
+      "label": "ROM code and detours",
+      "display": "188 B code + two 6 B detours",
+      "value": 200,
+      "unit": "bytes",
+      "method": "static",
+      "conditions": "One position-independent linked unit of 188 bytes (code and two strings) in free ROM space, and two six-byte jmp detours over stock instructions. No RAM, no DSP memory.",
+      "source": "TESTING.md"
+    },
+    "processing": {
+      "label": "ColdFire, per key press",
+      "display": "at most 26 authored instructions per press",
+      "value": 26,
+      "unit": "instructions/event",
+      "method": "static",
+      "conditions": "Longest path through the [PLAY] entry (invert, then reopen the toast), counted from the source; stock routines it calls (among them the menu redraw after a flip) are excluded. Runs only on a [PLAY] press or [REC] release, never per frame. Under a MIDI flood in ot_emu (emulator, not hardware) it executed 4 to 25 per event, and MIDI transport messages never reached it.",
+      "source": "TESTING.md"
+    },
+    "impact": {
+      "conditions": "A key-press handler: nothing runs between presses.",
+      "cpu": {
+        "level": "minimal",
+        "basis": "source-estimate",
+        "rationale": "Two to about two dozen instructions on a [PLAY] press or [REC] release; no per-frame or per-sample work. In ot_emu under a MIDI flood (about 1,000 messages a second and clock at 240 BPM) the longest frame interrupt was the stock image's (129 us with the flood alone, 150 us with the gesture on both) and idle 0.3 points lower while the gesture was used; emulator figures, not the unit's time.",
+        "source": "TESTING.md"
+      },
+      "dsp": {
+        "level": "minimal",
+        "basis": "source-estimate",
+        "rationale": "No DSP code and no change to the DSP programs.",
+        "source": "manifest.py"
+      },
+      "memory": {
+        "level": "minimal",
+        "basis": "source-estimate",
+        "rationale": "200 bytes of ROM; no RAM or audio memory of its own.",
+        "source": "TESTING.md"
+      }
+    }
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "The image gate passes 36 checks: the retired 0x400522ca site left as the original OS has it, both jmp detours and the unit's 188 bytes in place, then under the ColdFire port by the keys (MKII panel) the show, invert, invert-back, expiry and [REC]-release behaviour beside the original OS under the same keys, an open PERSONALIZE list redrawn by a flip, and a power cycle of the port keeping an inverted setting. The toast wording is Modwerk’s; the author reported the gesture and a power cycle on an MKI (25 and 30 September 2026) for his own build. On an MKII (13 October 2026), with this module alone at the current source, the user reported the gesture working, both toasts fitting the screen, an open PERSONALIZE list following each flip and a changed setting surviving a power cycle; combined test builds with other modules gave the same results before the redraw was added. The flip's two stores and its redraw call were re-encoded afterwards (15 October 2026) so a USB package repeats no stock run; loaded over USB on the user's MKII (15 October 2026), that source passed the gesture, PERSONALIZE redraw and power-cycle checks, and its trial, Keep and removal worked.",
+    "hardwareStatus": "reported",
+    "evidenceRevision": "d7526ad548965cebea84b211a60d3bc00c1c6f3a",
+    "gates": [
+      "modules/quantize-live-rec-toggle/verify.py"
+    ],
+    "documentation": {
+      "tutorial": {
+        "title": "Quick tutorial: check and switch live-record quantize",
+        "steps": [
+          "Hold [REC] and tap [PLAY]: a toast shows LIVE REC: QUANTIZED or LIVE REC: UNQUANTIZED, the current setting, and live recording starts as on the stock OS.",
+          "While the toast is still on screen (about one second), keep [REC] held and tap [PLAY] again to invert the setting; the toast reopens with the new value.",
+          "Tap [PLAY] once more while it is up to switch back, or release [REC] to close the toast; the setting stays as last shown.",
+          "Press [STOP] to end live recording. PROJECT > SYSTEM > PERSONALIZE > QUANTIZE LIVE REC shows and edits the same setting."
+        ]
+      },
+      "screenshots": [
+        "media/ot-toast-on.png",
+        "media/ot-toast-off.png",
+        "media/ot-personalize.png"
+      ],
+      "screenshotStyle": "black-and-white"
+    },
+    "qualification": {
+      "moduleVersion": "0.1.0-experimental",
+      "sourceSha256": "403c3e4b47e312d78c4ba5a6049d80452efbd63905f33573666c22f281e498b5",
+      "imageSha256": "026464deb27c8178d44ad1fd5866b754478b11c114561e73000cdca3b44f86e8",
+      "cycles": [
+        {
+          "processor": "coldfire",
+          "worstCase": 416,
+          "maxConfiguration": 416,
+          "maxInstances": 1,
+          "budget": 95778,
+          "unit": "cycles/event",
+          "method": "static",
+          "conditions": {
+            "parameterExtremes": "Both values of the setting (stored 0 and 1), toast present and absent, [REC] held and not held, live recording stopped and running: every branch of the two entries.",
+            "parameterModulation": "Not applicable: one global boolean reached by a key gesture; no LFO, parameter lock, scene or MIDI CC reaches it.",
+            "modeSwitching": "Repeated show, invert and invert-back presses inside one toast, and [REC] release with and without a toast on screen.",
+            "maxLoad": "One instance per unit (a global key gesture). The code runs once per [PLAY] press or [REC] release in the key handler, never in the frame or audio path.",
+            "inputConditions": "Independent of audio. Counts cover the authored instructions only; the stock routines they call (project gate, checksum, notification open and close) are stock cost and excluded. The qualified image is the USB package 026464de (ABI 7, 356 bytes), which carries this 188-byte unit byte for byte; the instructions were counted on the same unit in the card image QLRTEST03 (MAIN OS eb34c12e9c906107fc6a8285ec757eaacf83a39c8dfb42e7bc390421f4189afd)."
+          },
+          "report": "TESTING.md"
+        }
+      ],
+      "memory": {
+        "regions": [
+          {
+            "name": "Authored ColdFire code and the two toast strings (linked unit qlr, ROM cave)",
+            "space": "cpu-flash",
+            "words": 188,
+            "wordBits": 8,
+            "bytes": 188,
+            "scope": "shared"
+          },
+          {
+            "name": "Two six-byte jmp detours written over stock instructions in place",
+            "space": "cpu-flash",
+            "words": 12,
+            "wordBits": 8,
+            "bytes": 12,
+            "scope": "shared"
+          }
+        ],
+        "perInstanceBytes": 0,
+        "sharedBytes": 200,
+        "maxInstances": 1,
+        "totalBytes": 200,
+        "conditions": "From the linked unit (188 bytes at any address; it is position independent) and the two detours. No RAM of its own: it reads and writes the stock setting word and its battery copy, and reads stock key and notification state. No heap; at most 8 bytes of stack beyond the stock key handler (two pushed arguments) before the stock calls.",
+        "report": "TESTING.md"
+      },
+      "hardware": {
+        "kind": "functional",
+        "status": "reported",
+        "model": "MKII",
+        "testedOn": "2026-10-15",
+        "tester": "npp1993",
+        "sourceRevision": "d7526ad548965cebea84b211a60d3bc00c1c6f3a",
+        "imageSha256": "026464deb27c8178d44ad1fd5866b754478b11c114561e73000cdca3b44f86e8",
+        "summary": "Package 026464de (source d7526ad5) over USB on the user's MKII with the flashed Modwerk beta base, OS 1.40C, APPLY SCENE installed beside it. Two trials without Keep rolled back; a kept trial was accepted and listed as Quant Live Rec. With it kept the user reported: hold [REC] + tap [PLAY] shows the toast and starts live recording; a tap within about a second flips the setting; a tap after the toast has gone only shows it; releasing [REC] closes the toast; with PERSONALIZE open the box follows a flip; a changed setting survives a power cycle, and the module was still installed after it. Removal was accepted and the inventory no longer listed it.",
+        "limitations": [
+          "Over USB only: the card image of this source (QLRTEST03) has not run on a unit. An earlier source (50f65395, QLRTEST02) ran from the card on the same MKII with the same results, before the stock-free re-encoding.",
+          "Not checked: stock [REC] + [PLAY] behaviour after the removal, grid recording, MIDI tracks, an MKI with this build. Part and project reload ran on 20 October 2026 (same MKII, same package, beside other modules) and left the setting unchanged; whether the gesture was used again after each reload was not recorded.",
+          "How long the tests ran was not recorded."
+        ],
+        "report": "TESTING.md"
+      },
+      "documentation": {
+        "tutorial": {
+          "title": "Quick tutorial: check and switch live-record quantize",
+          "steps": [
+            "Hold [REC] and tap [PLAY]: a toast shows LIVE REC: QUANTIZED or LIVE REC: UNQUANTIZED, the current setting, and live recording starts as on the stock OS.",
+            "While the toast is still on screen (about one second), keep [REC] held and tap [PLAY] again to invert the setting; the toast reopens with the new value.",
+            "Tap [PLAY] once more while it is up to switch back, or release [REC] to close the toast; the setting stays as last shown.",
+            "Press [STOP] to end live recording. PROJECT > SYSTEM > PERSONALIZE > QUANTIZE LIVE REC shows and edits the same setting."
+          ]
+        },
+        "screenshots": [
+          "media/ot-toast-on.png",
+          "media/ot-toast-off.png",
+          "media/ot-personalize.png"
+        ],
+        "screenshotStyle": "black-and-white"
+      }
+    }
+  },
+  "license": {
+    "spdx": "MIT",
+    "file": "LICENSE",
+    "declaration": "The authored source and both upstream licence notices are kept with exact source pins. Stock code is referenced only by address, length and SHA-256. No firmware, extracted stock routine or table, built image, card or memory dump is included. The Modwerk gate, documentation and thumbnail are original Modwerk work under GPL-3.0-or-later. LCD captures keep the underlying Elektron rights as declared in media/LICENSE.md."
+  },
+  "media": [
+    {
+      "path": "media/ot-toast-on.png",
+      "captureType": "emulator",
+      "caption": "Hold [REC] and tap [PLAY]. A toast shows the current setting, here LIVE REC: QUANTIZED, and live recording starts as it does on the stock OS.",
+      "alt": "Octatrack main screen with a notification box reading LIVE REC: QUANTIZED.",
+      "credit": "Modwerk contributors; Elektron Octatrack UI",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "Main screen with the notification",
+        "shows": "location-and-controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "eb34c12e9c906107fc6a8285ec757eaacf83a39c8dfb42e7bc390421f4189afd",
+        "setup": "Headless ot_emu; MKII panel; 128×64 LCD at integer scale 6; DSP cores running; empty scratch card, its missing-project prompts dismissed with three NO presses; native initialized state, no saved project. Static native build of this module alone with every stock effect kept: the MAIN OS of QLRTEST03 (the stock-free reorder; QLRTEST02, which the MKII ran, gave the same pictures)."
+      }
+    },
+    {
+      "path": "media/ot-toast-off.png",
+      "captureType": "emulator",
+      "caption": "Keep [REC] held and tap [PLAY] again while the toast is still up. The setting inverts and the toast reopens with the new value, here LIVE REC: UNQUANTIZED. Another tap switches it back.",
+      "alt": "Octatrack main screen with a notification box reading LIVE REC: UNQUANTIZED.",
+      "credit": "Modwerk contributors; Elektron Octatrack UI",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "Main screen with the notification",
+        "shows": "controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "eb34c12e9c906107fc6a8285ec757eaacf83a39c8dfb42e7bc390421f4189afd",
+        "setup": "Headless ot_emu; MKII panel; 128×64 LCD at integer scale 6; DSP cores running; empty scratch card, its missing-project prompts dismissed with three NO presses; native initialized state, no saved project. Static native build of this module alone with every stock effect kept: the MAIN OS of QLRTEST03 (the stock-free reorder; QLRTEST02, which the MKII ran, gave the same pictures)."
+      }
+    },
+    {
+      "path": "media/ot-personalize.png",
+      "captureType": "emulator",
+      "caption": "Release [REC] and press [STOP]. PROJECT > SYSTEM > PERSONALIZE shows the same setting: after the switch to UNQUANTIZED, the QUANTIZE LIVE REC box is empty. You can still change it here as on the stock OS.",
+      "alt": "PERSONAL SETTINGS list with QUANTIZE LIVE REC selected and its checkbox empty.",
+      "credit": "Modwerk contributors; Elektron Octatrack UI",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "PROJECT / SYSTEM / PERSONALIZE",
+        "shows": "location",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "eb34c12e9c906107fc6a8285ec757eaacf83a39c8dfb42e7bc390421f4189afd",
+        "setup": "Headless ot_emu; MKII panel; 128×64 LCD at integer scale 6; DSP cores running; empty scratch card, its missing-project prompts dismissed with three NO presses; native initialized state, no saved project. Static native build of this module alone with every stock effect kept: the MAIN OS of QLRTEST03 (the stock-free reorder; QLRTEST02, which the MKII ran, gave the same pictures)."
+      }
+    }
+  ]
+}

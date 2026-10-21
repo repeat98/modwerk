@@ -144,20 +144,37 @@ describe('starter prompts', () => {
 })
 
 describe('start developing page', () => {
+  it('says that unlocking a machine without a core needs programming experience', () => {
+    const html = renderToStaticMarkup(createElement(SubmissionPage, { machine: 'analog-heat' }))
+    expect(html).toContain('Help unlock the Analog Heat')
+    expect(html).toContain('Programming experience needed.')
+    expect(html).not.toContain('Describe it, paste one prompt, build it together.')
+    expect(html).not.toContain('What you need')
+  })
+
   it('shows one complete prompt and hides its long preview and setup by default', () => {
     const html = renderToStaticMarkup(createElement(SubmissionPage))
-    expect(html).toContain('<h1>Start developing</h1>')
+    expect(html).toContain('Describe it, paste one prompt, build it together.')
+    expect(html).toContain('An AI coding assistant')
     expect(html).toContain('/fork"')
     expect(html).toContain('Copy prompt')
     expect(html.match(/Copy prompt/g)).toHaveLength(1)
     expect(html).toContain('Preview complete prompt')
     expect(html).toContain('DEVELOPER_WORKFLOW.md#your-development-setup')
     expect(html).not.toContain('<details open')
-    expect(html.indexOf('Your coding prompt')).toBeLessThan(html.indexOf('Your first release'))
+    expect(html.indexOf('What you need')).toBeLessThan(html.indexOf('Your starter prompt'))
+    expect(html.indexOf('Your starter prompt')).toBeLessThan(html.indexOf('Your first release'))
+  })
+
+  it('preselects the machine an overview link names', () => {
+    const html = renderToStaticMarkup(createElement(SubmissionPage, { machine: 'syntakt' }))
+    expect(html).toMatch(/<option value="syntakt" selected="">/)
+    expect(html).toContain('Instrument integration')
   })
 
   it.each(['miniverb', 'digitakt-digihealth', 'digitone-digihealth'])('prefills the correct update path for %s', moduleId => {
     const html = renderToStaticMarkup(createElement(SubmissionPage, { moduleId }))
+    expect(html).not.toContain('What you need')
     expect(html).toContain('Fixes and updates')
     expect(html).toContain('Module ID or source link')
     expect(html).not.toContain('npm run module:new')

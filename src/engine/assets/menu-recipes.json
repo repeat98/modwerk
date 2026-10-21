@@ -1296,7 +1296,7 @@
       "caveLimit": 1074625596
     }
   ],
-  "sourceCommit": "203edb598ff8edc3c0842c0dbae962e44720a06a",
+  "sourceCommit": "b3c17fa76d2e2fd0d8797b79b9e7f012501ab854",
   "moduleVersions": {
     "spectrum": "0.1.1-experimental",
     "modulation": "0.1.1-experimental",
@@ -1322,6 +1322,7 @@
     "mute-modes": "0.2.1-experimental",
     "recorder-loop-fix": "0.1.0-experimental",
     "poly8": "0.3.0-experimental",
-    "output-matrix": "0.1.1-experimental"
+    "output-matrix": "0.1.1-experimental",
+    "quantize-live-rec-toggle": "0.1.0-experimental"
   }
 }

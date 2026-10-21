@@ -1,0 +1,11 @@
+[
+  {
+    "version": "0.1.0-experimental",
+    "date": "2026-10-15",
+    "changes": [
+      "First Modwerk release of Zac-Kyoti's QUANTIZE LIVE REC gesture, listed as Quant Live Rec: hold [REC] and tap [PLAY] to see the PERSONALIZE setting in a toast, LIVE REC: QUANTIZED or LIVE REC: UNQUANTIZED; tap [PLAY] again while it is up to switch it. The first [REC] + [PLAY] still starts live recording as on stock.",
+      "Modwerk changes to the author's source: reworded toasts, a redraw so an open PERSONALIZE list follows a flip, and the flip's two stores and redraw call re-encoded so its USB package repeats no stock code; the same calls in the same order.",
+      "Over USB for beta testers: loaded, kept, undone and removed on the Modwerk beta base on an MKII, with the gesture, the PERSONALIZE redraw and a power cycle checked there. Card builds were tested on an MKII from an earlier build of the same behaviour. Part and project reload (20 October 2026, same MKII) left the setting unchanged. Not tested: an MKI with this build, grid recording, MIDI tracks. The frame-interrupt benchmark and a 62 s MIDI flood stress run were measured in the ot_emu emulator only, not on a unit: no change to the longest frame interrupt, idle 0.3 points lower while the gesture is used, nothing dropped or stuck; MIDI transport does not reach the module."
+    ]
+  }
+]

@@ -18,6 +18,8 @@ export type DigiMod = {
   version: string
   updatedAt?: string
   author: string
+  // GitHub login, so one creator counts once across machines.
+  authorLogin?: string
   contributors?: readonly ModuleContributor[]
   repository: string
   license: string
@@ -47,7 +49,7 @@ export const DIGI_CORES: Record<DigiMachine, { version: string; ramBytes: number
 export const DIGI_MODS: DigiMod[] = (MACHINE_MODULES.modules as (ModwerkModule & Pick<DigiMod, 'patchSites'>)[]).map(module => ({
   id: module.id, device: module.machine as DigiMod['device'], title: module.name, version: module.version.split('-')[0],
   updatedAt: moduleReleasedAt(module.machine + '-' + module.id, module.version),
-  author: displayName(module.author.github, module.author.name), repository: module.source?.repository ?? 'https://github.com/' + module.author.github,
+  author: displayName(module.author.github, module.author.name), authorLogin: module.author.github, repository: module.source?.repository ?? 'https://github.com/' + module.author.github,
   contributors: module.author.contributors,
   license: module.license.spdx, category: module.presentation.family, libraryCategory: module.category, summary: module.presentation.summary,
   ramBytes: module.resources.memoryBytes ?? 0, claims: module.platform.claims, conflicts: module.compatibility.conflicts, exclusive: module.exclusive,

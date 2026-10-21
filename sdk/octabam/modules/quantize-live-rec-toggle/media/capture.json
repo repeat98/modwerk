@@ -1,0 +1,121 @@
+{
+  "firmware": "1.40C",
+  "imageSha256": "eb34c12e9c906107fc6a8285ec757eaacf83a39c8dfb42e7bc390421f4189afd",
+  "emulatorSha256": "23ba6f6cdc6ec4b89b8cf206915e66d3160aec8499b1abfc9b475ac849152b28",
+  "setup": "Headless ot_emu; MKII panel; stopped transport; 128\u00d764 LCD at integer scale 6.",
+  "palette": {
+    "on": [
+      240,
+      240,
+      240
+    ],
+    "off": [
+      24,
+      24,
+      24
+    ]
+  },
+  "keyMs": 100,
+  "plan": [
+    {
+      "press": [
+        "NO"
+      ]
+    },
+    {
+      "press": [
+        "NO"
+      ]
+    },
+    {
+      "press": [
+        "NO"
+      ]
+    },
+    {
+      "wait": 1500
+    },
+    {
+      "hold": [
+        "REC"
+      ]
+    },
+    {
+      "press": [
+        "PLAY"
+      ]
+    },
+    {
+      "capture": "ot-toast-on.png"
+    },
+    {
+      "press": [
+        "PLAY"
+      ]
+    },
+    {
+      "capture": "ot-toast-off.png"
+    },
+    {
+      "release": [
+        "REC"
+      ]
+    },
+    {
+      "press": [
+        "STOP"
+      ]
+    },
+    {
+      "wait": 500
+    },
+    {
+      "press": [
+        "MENU"
+      ]
+    },
+    {
+      "press": [
+        "LEFT"
+      ]
+    },
+    {
+      "press": [
+        "DOWN"
+      ]
+    },
+    {
+      "press": [
+        "RIGHT"
+      ]
+    },
+    {
+      "press": [
+        "DOWN"
+      ]
+    },
+    {
+      "press": [
+        "DOWN"
+      ]
+    },
+    {
+      "press": [
+        "DOWN"
+      ]
+    },
+    {
+      "press": [
+        "YES"
+      ]
+    },
+    {
+      "capture": "ot-personalize.png"
+    }
+  ],
+  "screenshots": {
+    "ot-toast-on.png": "fde37da549cff7a10286247812f0c73fb74722e130162bcb796a08efa61b7a02",
+    "ot-toast-off.png": "b89d9d49d65dd379355c4fd09dcb1b168e5f10bc0c9c61797296018e4e8990d7",
+    "ot-personalize.png": "cea8d93b21b8ce20c6b9e9abf42af1f28722ee6f0049cff5e0cd891562c52977"
+  }
+}

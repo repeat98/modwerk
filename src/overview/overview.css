@@ -1,0 +1,139 @@
+/* The landing page (#overview) and the temporary Start developing highlight. Colours reuse the app tokens;
+   apricot is the kicker colour and stands for "open for development" throughout. */
+.overview-page, .develop-card, .mobile-menu-panel a.is-highlight { --apricot: #c7a16c; --apricot-text: #ecd6b0; --apricot-line: #7a6546; --apricot-surface: #2a2620; --done: #7fd1a0; }
+.overview-page { width: 100%; max-width: 1280px; margin: 0 auto; }
+
+/* Heading: the title, one line of numbers and the filters in a single row */
+.overview-heading { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 14px 24px; margin-bottom: 18px; }
+.overview-heading h1 { font-size: 28px; line-height: 1.15; letter-spacing: -.6px; }
+.overview-heading p { margin-top: 6px; color: var(--muted); font-size: 13px; }
+.overview-heading p { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 18px; }
+.overview-heading p b { color: var(--text); font-weight: 600; font-variant-numeric: tabular-nums; }
+.overview-key { display: flex; flex-wrap: wrap; gap: 4px 14px; }
+.overview-key > span { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.overview-key b { font-weight: 500; color: var(--text-secondary); }
+.overview-key i { width: 8px; height: 8px; border-radius: 2px; }
+.overview-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.overview-chip { display: inline-flex; align-items: center; gap: 7px; min-height: 32px; padding: 0 11px; border: 1px solid var(--line); border-radius: 7px; background: transparent; color: var(--muted); font-size: 12.5px; white-space: nowrap; transition: background .15s, border-color .15s, color .15s; }
+.overview-chip:hover { background: var(--surface); color: var(--text-secondary); }
+.overview-chip[aria-pressed="true"] { border-color: var(--accent-line); background: var(--accent-soft); color: var(--text); }
+.overview-chip small { color: var(--faint); font-size: 12px; font-variant-numeric: tabular-nums; }
+.overview-chip i { width: 6px; height: 6px; border-radius: 50%; }
+.overview-chip.is-mods i { background: var(--done); }
+.overview-chip.is-research i { background: var(--accent); }
+.overview-chip.is-open i { border: 1.5px dashed #8a8a98; width: 4px; height: 4px; }
+.overview-chip-short { display: none; }
+
+/* Machine cards: a dark panel rather than a grey box. A faint top-lit surface, a hairline edge that barely separates
+   it from the page and a thin highlight along the top. Every card is the same size; on hover the panel brightens one
+   step and nothing moves. */
+.machine-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); grid-auto-rows: 1fr; gap: 18px; }
+.overview-tile { display: flex; flex-direction: column; min-width: 0; border: 1px solid #ffffff0d; border-radius: 14px; background: linear-gradient(180deg, #ffffff09, #ffffff02 60%); box-shadow: inset 0 1px 0 #ffffff0d, 0 10px 24px -14px #00000080; color: inherit; transition: background .2s, border-color .2s; }
+.overview-tile:hover { border-color: #ffffff1a; background: linear-gradient(180deg, #ffffff0f, #ffffff04 60%); }
+.overview-tile:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.overview-art { position: relative; display: block; aspect-ratio: 16 / 10; border-radius: 13px 13px 0 0; }
+/* A soft white shine behind each machine, brighter on hover */
+/* A soft halo behind each machine. The gradient reaches zero exactly at its own edge (closest-side), which stays inside
+   the card, so it never shows a cut. Brighter on hover. */
+.overview-art::before { content: ''; position: absolute; inset: 4% 3%; pointer-events: none; background: radial-gradient(closest-side, #ffffff1c, #ffffff0a 45%, #ffffff03 72%, transparent); opacity: .8; transition: opacity .3s; }
+.overview-tile:hover .overview-art::before { opacity: 1; }
+.overview-art > :not(.overview-lock):not(.overview-cta) { z-index: 1; }
+.overview-art .device-photo { position: absolute; inset: 0; width: 100%; height: 100%; }
+.overview-art .device-photo.is-cutout { padding: 26px 30px 18px; filter: drop-shadow(0 10px 16px #00000066); }
+.overview-art .device-art { position: absolute; left: 50%; top: 50%; width: 66%; height: auto; transform: translate(-50%, -50%); }
+.overview-tile.is-locked .overview-art .device-photo { filter: grayscale(1) brightness(.38) contrast(.9); }
+.overview-tile.is-locked .overview-art .device-photo.is-cutout { filter: grayscale(1) brightness(.38) contrast(.9) drop-shadow(0 10px 16px #00000066); }
+.overview-tile-name a { color: inherit; }
+.overview-tile-name a:hover { text-decoration: underline; text-decoration-color: var(--line-hover); text-underline-offset: 4px; }
+
+/* Locked: a lock at rest; on hover or keyboard focus the lock gives way to the action in the same place */
+.overview-lock, .overview-cta { position: absolute; z-index: 2; transition: opacity .15s; }
+.overview-lock { left: 50%; top: 50%; display: grid; place-items: center; width: 52px; height: 52px; border: 1px solid #ffffff2b; border-radius: 50%; background: #19191ce6; color: var(--text-secondary); box-shadow: 0 6px 16px #00000059; transform: translate(-50%, -50%); }
+.overview-cta { inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; opacity: 0; }
+.overview-cta > span { display: inline-flex; align-items: center; gap: 7px; min-height: 40px; padding: 0 15px; border-radius: 6px; background: var(--apricot); color: #19191c; font-size: 13px; font-weight: 650; box-shadow: 0 6px 16px #00000059; }
+.overview-cta small { padding: 2px 8px; border-radius: 5px; background: #19191ce0; color: #e6dccb; font-size: 11.5px; }
+/* Locked machines: a dimmer panel and halo that turn warm when they offer to be unlocked */
+.overview-tile.is-locked { background: linear-gradient(180deg, #ffffff05, #ffffff01 60%); }
+.overview-tile.is-locked:hover { border-color: #c7a16c33; background: linear-gradient(180deg, #c7a16c0c, #c7a16c03 60%); }
+.overview-tile.is-locked .overview-art::before { opacity: .3; }
+.overview-tile.is-locked:hover .overview-art::before { background: radial-gradient(closest-side, #e2b77a33, #e2b77a12 45%, #e2b77a05 72%, transparent); opacity: 1; }
+.overview-tile.is-locked:hover .overview-cta, .overview-tile.is-locked .overview-art:focus-visible .overview-cta { opacity: 1; }
+.overview-tile.is-locked:hover .overview-lock, .overview-tile.is-locked .overview-art:focus-visible .overview-lock { opacity: 0; }
+.overview-tile.is-locked .overview-art:focus-visible { outline: 2px solid var(--apricot); outline-offset: -2px; }
+@media (hover: none) {
+  .overview-lock { width: 44px; height: 44px; top: 44%; }
+  .overview-cta { justify-content: flex-end; padding-bottom: 10px; opacity: 1; }
+  .overview-cta small { display: none; }
+  .overview-cta > span { min-height: 32px; padding: 0 11px; font-size: 12px; }
+}
+.overview-tile-body { display: flex; flex-direction: column; flex: 1; gap: 11px; padding: 6px 20px 20px; }
+.overview-tile-line { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; min-width: 0; }
+.overview-tile-name { display: flex; align-items: baseline; gap: 7px; min-width: 0; overflow: hidden; white-space: nowrap; font-size: 17px; font-weight: 600; letter-spacing: -.25px; }
+.overview-tile-name small { overflow: hidden; text-overflow: ellipsis; color: var(--muted); font-size: 12.5px; font-weight: 400; letter-spacing: 0; }
+.overview-state { display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0; color: var(--text-secondary); font-size: 13px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.overview-state::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--done); }
+.overview-tile.is-preview .overview-state::before { background: var(--apricot); }
+.overview-tile.is-research .overview-state::before { background: var(--accent); }
+.overview-tile.is-open .overview-state { color: var(--muted); }
+.overview-tile.is-open .overview-state::before { width: 4px; height: 4px; background: transparent; border: 1.5px dashed #8a8a98; }
+
+/* The bar under each name: modules by category, or one segment per research step */
+.overview-page .is-effects { background: #83c7bc; }
+.overview-page .is-machines { background: #e9ab83; }
+.overview-page .is-playback { background: #d5bd96; }
+.overview-page .is-midi-usb { background: #79b5f8; }
+.overview-page .is-system { background: #c09be9; }
+.overview-page .is-scenes { background: #9eb4ed; }
+.overview-page .is-standalone { background: #b5a0ff; }
+.overview-mix, .overview-ladder { display: flex; gap: 2px; height: 2px; opacity: .7; }
+.overview-mix { border-radius: 1px; overflow: hidden; }
+.overview-mix span { display: block; flex-basis: 0; height: 100%; }
+.overview-ladder i { flex: 1; border-radius: 1px; background: #3a3a42; }
+.overview-ladder i.is-done { background: var(--done); }
+.overview-ladder i.is-started { background: var(--accent); }
+
+/* Start developing, as one more slot after the machines with mods: a warm glow instead of a machine */
+.overview-tile.is-develop { border-color: #c7a16c26; background: linear-gradient(180deg, #c7a16c14, #c7a16c05 60%); box-shadow: inset 0 1px 0 #c7a16c1f, 0 10px 24px -14px #00000080; }
+.overview-tile.is-develop:hover { border-color: #c7a16c4d; background: linear-gradient(180deg, #c7a16c1c, #c7a16c08 60%); }
+.overview-tile.is-develop .overview-art { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 16px 22px; text-align: center; }
+.overview-tile.is-develop .overview-art::before { background: radial-gradient(closest-side, #e2b77a2c, #e2b77a10 45%, #e2b77a05 72%, transparent); }
+.overview-waiting, .overview-pitch { position: relative; }
+.overview-waiting { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.overview-waiting strong { font-size: 24px; font-weight: 680; line-height: 1.15; letter-spacing: -.4px; color: #fff1da; }
+.overview-waiting small { color: var(--apricot-text); font: 10.5px/1.5 var(--mono); letter-spacing: 1.1px; text-transform: uppercase; }
+.overview-pitch { max-width: 32ch; color: #d9cfbf; font-size: 13.5px; line-height: 1.5; }
+.overview-tile.is-develop .overview-tile-name { color: var(--apricot-text); }
+.overview-tile.is-develop .overview-tile-line svg { flex-shrink: 0; align-self: center; color: var(--apricot); }
+.overview-page > .photo-credits { margin-top: 24px; }
+
+/* The temporary Start developing highlight: a card under Overview in the sidebar, an accent row in the phone menu */
+.sidebar-home { margin-bottom: 20px; }
+.sidebar-home:has(+ .develop-card) { margin-bottom: 0; }
+.develop-card { position: relative; display: grid; grid-template-columns: 24px minmax(0, 1fr); align-items: center; gap: 1px 9px; margin: 6px 0 18px; padding: 8px 10px; border: 1px solid var(--apricot-line); border-radius: 10px; background: var(--apricot-surface); transition: border-color .15s, background .15s; }
+.develop-card:hover, .develop-card.active { border-color: var(--apricot); background: #322b22; }
+.develop-card.active { box-shadow: inset 3px 0 var(--apricot); }
+.develop-card-icon { grid-row: span 2; display: grid; place-items: center; width: 24px; height: 24px; border-radius: 6px; background: var(--apricot); color: #19191c; }
+.develop-card strong { padding-right: 16px; color: #fff1da; font-size: 13px; font-weight: 650; }
+.develop-card small { color: #d9cfbf; font-size: 11.5px; line-height: 1.4; }
+.develop-card::after { content: ''; position: absolute; right: 10px; top: 13px; width: 8px; height: 8px; border-radius: 50%; background: var(--apricot); animation: develop-pulse 2.4s ease-out infinite; }
+@keyframes develop-pulse { 0% { box-shadow: 0 0 0 0 #c7a16c90; } 70% { box-shadow: 0 0 0 9px #c7a16c00; } 100% { box-shadow: 0 0 0 0 #c7a16c00; } }
+@media (prefers-reduced-motion: reduce) { .develop-card::after { animation: none; } }
+.mobile-menu-panel a.is-highlight { border: 1px solid var(--apricot-line); background: var(--apricot-surface); color: #fff1da; }
+.mobile-menu-panel a.is-highlight svg { color: var(--apricot); }
+.mobile-menu-panel a.is-highlight small { color: var(--apricot-text); font: 10px var(--mono); letter-spacing: 1px; text-transform: uppercase; }
+
+@media (max-width: 600px) {
+  .sidebar-home, .develop-card { display: none; }
+  .overview-heading { gap: 12px; margin-bottom: 14px; }
+  .overview-heading h1 { font-size: 24px; }
+  /* Phones: the filters become one segmented control with short labels; the colour key and bars stay on larger screens */
+  .overview-heading p { display: block; }
+  .overview-key, .overview-mix { display: none; }
+  .overview-chips { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 2px; width: 100%; padding: 3px; border: 1px solid var(--line); border-radius: 9px; }
+  .overview-chip { justify-content: center; gap: 5px; min-height: 36px; padding: 0 4px; border: 0; border-radius: 6px; }
+  .overview-chip i { display: none; }
+  .overview-chip-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .overview-chip-short { display: inline; }
+  .machine-grid { grid-template-columns: 1fr; gap: 14px; }
+  .overview-tile-body { padding: 4px 16px 16px; }
+}

@@ -59,7 +59,7 @@ describe('startup-only private prepared modules', () => {
   it('uses real catalogue/package parsing, preserves public bytes and excludes held ports', async () => {
     const { folder } = await fixture(), prepared = await loadPreparedModules(folder, manifest, frontend)
     expect(prepared.info).toEqual({ base, moduleIds: ['cc-map'], admission: false })
-    expect(prepared.catalogue.ids).toEqual([...manifest.packages.map(entry => entry.id), 'cc-map'])
+    expect(prepared.catalogue.ids).toEqual([...manifest.packages.map(entry => entry.id), 'cc-map', 'usb-audio-out-tracks-main-cue']) // USB Audio comes with the published base
     expect(prepared.catalogue.ids.filter(id => id === 'mute-modes')).toHaveLength(1) // the published package; the held copy adds none
     expect(() => prepared.requireBase(['cc-map'], 'b'.repeat(64))).toThrow('exact observed')
     expect(() => prepared.requireBase(['cc-map'], base)).not.toThrow()

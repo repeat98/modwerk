@@ -4,6 +4,7 @@ import { apiUrl } from '../hosting'
 import { useCommunity } from './context'
 import { Icon } from '../components/Icon'
 import { AudioPlayer } from '../components/AudioPlayer'
+import '../components/audio-preview.css'
 import { ForumAuthorName, ForumAvatar, ForumMachineBadge } from './ForumIdentity'
 import { ForumTime } from './ForumTime'
 import type { ForumShowcaseItem } from './forum-contract'
@@ -16,12 +17,16 @@ function Card({ item }: { item: ForumShowcaseItem }) {
   return <li className="forum-showcase-card" data-kind={image ? 'image' : 'audio'} data-category={item.category}>
     <div className="forum-showcase-cover">
       {image && <img src={apiUrl('/forum/media/' + image.id)} alt={image.caption || 'Image from “' + item.title + '”'} loading="lazy" decoding="async" />}
-      {sound && <div className="forum-showcase-sound" data-cover={!!image || undefined}><AudioPlayer src={apiUrl('/forum/media/' + sound.id)} label={'sound clip from “' + item.title + '”' + (sound.caption ? ': ' + sound.caption : '')} variant="card"/></div>}
+      {sound && <div className="forum-showcase-sound" data-cover={!!image || undefined}>
+        {!image && <span className="forum-showcase-sound-mark" aria-hidden="true"><Icon name="wave" size={36}/></span>}
+        {/* The module pages' compact player: a strip along the bottom of the cover. */}
+        <div className="audio-preview-dock"><div className="audio-preview-player"><AudioPlayer src={apiUrl('/forum/media/' + sound.id)} label={'sound clip from “' + item.title + '”' + (sound.caption ? ': ' + sound.caption : '')} variant="dock"/></div></div>
+      </div>}
       <span className="forum-showcase-chips"><ForumMachineBadge machine={item.machine} />{more > 0 && <span className="forum-showcase-more">+{more} more</span>}{sound && <span className="forum-showcase-audio-label" aria-hidden="true"><Icon name="wave" size={12}/>Audio</span>}</span>
     </div>
     <div className="forum-showcase-copy">
-      <h3><a className="forum-showcase-title" href={href}>{item.title}</a></h3>
-      {caption && <p className="forum-showcase-caption">{caption}</p>}
+      <h3><a className="forum-showcase-title" href={href} title={item.title}>{item.title}</a></h3>
+      <p className="forum-showcase-caption" aria-hidden={!caption || undefined}>{caption}</p>
       <div className="forum-showcase-meta"><ForumAvatar username={item.username} official={item.official} avatar={item.avatar} /><ForumAuthorName username={item.username} official={item.official} /><ForumTime value={item.created_at} relative /></div>
     </div>
   </li>

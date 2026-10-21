@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="576" viewBox="0 0 320 192" class="signal-art" fill="none" role="img" aria-labelledby="title description">
+<title id="title">Quantize Live Rec Toggle — show, then invert</title>
+<desc id="description">A conceptual diagram: holding REC and tapping PLAY shows the live-record quantize setting in a toast, and tapping PLAY again while it is up inverts it. It illustrates the gesture, not a measured screen.</desc>
+<style>.signal-art{ width: 100%; height: calc(100% - 46px); overflow: visible; stroke-width: 1.3; stroke-linecap: round; stroke-linejoin: round; }
+.signal-grid{ stroke: #ffffff; opacity: .035; stroke-width: .7; }
+.signal-main{ stroke: #b5a0ff; stroke-width: 2.3; }
+.signal-secondary{ stroke: #b5a0ff; opacity: .45; stroke-width: 1.7; }
+.signal-ghost{ stroke: #b5a0ff; opacity: .2; stroke-width: 1.3; }
+.signal-dot, .rhythm-on{ fill: #b5a0ff; }
+.rhythm-off{ stroke: #b5a0ff; fill: #2c2837; opacity: .4; }
+.signal-art text{ fill: #b5a0ff; opacity: .52; font: 8px monospace; letter-spacing: .7px; stroke: none; }
+.signal-art .rhythm-count{ font-size: 20px; opacity: .95; letter-spacing: -1px; }
+.reel-outline{ fill: rgba(181,160,255, .06); stroke: #b5a0ff; opacity: .8; stroke-width: 1.4; }
+.reel-spoke{ fill: #b5a0ff; opacity: .4; stroke: none; }
+.reel-head{ fill: #2d2a26; stroke: #b5a0ff; stroke-width: 1; }
+.signal-art{ height: calc(100% - 55px); }
+.signal-art text{ opacity: .8; font-size: 10px; }
+.signal-main{ stroke-width: 2.7; }
+.signal-secondary{ opacity: .65; }</style>
+<rect width="320" height="192" fill="#1c1c22"/>
+<g class="signal-grid"><path d="M20 52H300"></path><path d="M20 97H300"></path><path d="M20 142H300"></path><path d="M64 33V163"></path><path d="M128 33V163"></path><path d="M192 33V163"></path><path d="M256 33V163"></path></g><g><rect class="rhythm-on" x="28" y="46" width="34" height="22" rx="4"></rect><text x="45" y="83" text-anchor="middle">REC</text><text x="45" y="39" text-anchor="middle">HOLD</text><rect class="rhythm-off" x="74" y="46" width="34" height="22" rx="4"></rect><text x="91" y="83" text-anchor="middle">PLAY</text><text x="91" y="39" text-anchor="middle">TAP</text><path class="signal-secondary" d="M114 57H138M132 52L138 57L132 62"></path><rect class="signal-secondary" x="144" y="44" width="158" height="26" rx="2"></rect><text x="223" y="61" text-anchor="middle">LIVE REC: QUANTIZED</text><rect class="rhythm-on" x="28" y="116" width="34" height="22" rx="4"></rect><text x="45" y="153" text-anchor="middle">REC</text><text x="45" y="109" text-anchor="middle">HOLD</text><rect class="rhythm-off" x="74" y="116" width="34" height="22" rx="4"></rect><text x="91" y="153" text-anchor="middle">PLAY</text><text x="91" y="109" text-anchor="middle">AGAIN</text><path class="signal-main" d="M114 127H138M132 122L138 127L132 132"></path><rect class="signal-main" x="144" y="114" width="158" height="26" rx="2"></rect><text x="223" y="131" text-anchor="middle">LIVE REC: UNQUANTIZED</text><path class="signal-ghost" d="M223 74V110M218 104L223 110L228 104" stroke-dasharray="3 5"></path><text x="25" y="177">SHOW</text><text x="212" y="177">THEN INVERT</text></g>
+</svg>

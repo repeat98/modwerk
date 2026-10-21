@@ -276,6 +276,20 @@
       "usedIn": [
         "modules/sidechain-compressor"
       ]
+    },
+    {
+      "id": "kyoti-quantize-live-rec-toggle",
+      "name": "Zac Kyoti Quantize Live Rec Toggle",
+      "spdx": "MIT",
+      "noticeFile": "kyoti-quantize-live-rec-toggle.txt",
+      "sources": [
+        {
+          "path": "sdk/octabam/modules/quantize-live-rec-toggle/LICENSE"
+        }
+      ],
+      "usedIn": [
+        "modules/quantize-live-rec-toggle"
+      ]
     }
   ],
   "moduleComponents": {
@@ -309,6 +323,9 @@
     ],
     "airwindows-chorus": [
       "airwindows"
+    ],
+    "quantize-live-rec-toggle": [
+      "kyoti-quantize-live-rec-toggle"
     ]
   }
 }

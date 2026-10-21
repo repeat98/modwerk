@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react'
 import { api } from './api'
 import type { ForumMachineSummary } from './forum-contract'
-import { DeviceImage } from '../devices/DeviceImage'
-import { MACHINE_PHOTOS } from '../devices/photos'
+import { DeviceImage, MachinePhotoCredits } from '../devices/DeviceImage'
 import { DEVICES, STATUS_LABELS } from '../devices/registry'
 
 // The forum's front page groups discussions by machine, every Elektron machine included.
@@ -20,7 +19,7 @@ export function ForumMachines({ href }: { href: (machine: string) => string }) {
           <span className="forum-machine-copy"><strong>{device.name}</strong>{device.variants && <small>{device.variants.join(' · ')}</small>}<small className="forum-machine-count">{activity}</small></span>
         </a>
       })}</div>
-      <details className="photo-credits"><summary>Image credits</summary><p>Machine images come from elektronmods.com, used with permission, and from Wikimedia Commons under their authors’ free licences. Elektron product names identify the machines only; Modwerk is not affiliated with Elektron.</p><ul>{DEVICES.filter(device => MACHINE_PHOTOS[device.id]).map(device => { const photo = MACHINE_PHOTOS[device.id]; return <li key={device.id}>{device.name}{device.variants ? ' ' + device.variants.join(' / ') : ''}: <a href={photo.source} target="_blank" rel="noreferrer">{photo.author}</a>, {photo.licenseUrl ? <a href={photo.licenseUrl} target="_blank" rel="noreferrer">{photo.license}</a> : photo.license.toLowerCase()}</li> })}</ul></details>
+      <MachinePhotoCredits />
     </section>
   )
 }

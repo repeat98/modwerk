@@ -210,7 +210,9 @@ export function createRuntimeCatalogue(document: RuntimePackageManifest) {
       layouts.add(variant.layout); if (variant.current) current.add(key)
     }
   }
-  const ids = [...new Set([...published.keys(), ...groups.flatMap(group => group.variants.filter(variant => variant.current).flatMap(variant => variant.members.map(member => member.id)))])]
+  // USB Audio comes with the base once the base is published in its layouts (base-variants.ts), not as a package.
+  const ids = [...new Set([...published.keys(), ...groups.flatMap(group => group.variants.filter(variant => variant.current).flatMap(variant => variant.members.map(member => member.id))),
+    ...(Object.keys((baseBinding as { variants?: object }).variants ?? {}).length > 1 ? [USB_AUDIO_MODULE] : [])])]
   const name = (id: string) => published.get(id)?.name ?? MODULES.find(module => module.id === id)?.name ?? id
   type Step = { id: string; name: string; add?: RuntimePackage; undo?: RuntimePackage; group?: boolean }
   function plan(target: InventoryTarget, current: Inventory) {
@@ -315,8 +317,7 @@ export function createRuntimeCatalogue(document: RuntimePackageManifest) {
 const catalogue = createRuntimeCatalogue(manifest)
 /** Only modules with an actually published package or reviewed current group variant are USB-selectable, and USB
  * Audio once the base is published in its layouts. */
-export const USB_MODULE_IDS = layoutIdentity('tracks-main-cue') && Object.keys((baseBinding as { variants?: object }).variants ?? {}).length > 1
-  ? [...catalogue.ids, USB_AUDIO_MODULE] : catalogue.ids
+export const USB_MODULE_IDS = catalogue.ids
 export const inventoryFrom = catalogue.inventory
 export const moduleSetProblem = catalogue.problem
 export const moduleSetReview = catalogue.review
