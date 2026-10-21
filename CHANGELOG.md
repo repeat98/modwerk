@@ -2,6 +2,8 @@
 
 ## 21 October 2026
 
+- USB Audio over USB (beta): a module set with USB Audio no longer stops at “Card only”. USB Audio is part of the Octatrack base, so each of its six output layouts, and USB MIDI alone, is now a published base, and the Load dialog installs the base in the set’s layout over USB (the existing Update over USB: RAM boot first, then the write) before anything else syncs. A set without USB Audio leaves the base’s layout alone. The base links its USB code last in a fixed reserve, so every layout keeps every other address and takes the same Sidechain, Output Matrix, Analog BD, CC Map and Recorder Loop Fix packages; the build proves this for each layout, and the browser builds each layout’s base from the default package plus a hash-checked patch. On the owner’s MKII the published twenty-channel, Main + Cue and Main bases RAM-booted and answered over USB, and the twenty-channel base streamed all channels to Windows with no under- or overruns. Windows keeps the old channel count after a switch to a smaller layout, so the dialog tells Windows users to reselect it in Sound settings. Not yet run on a unit: the write to flash for a layout switch, audible routing per channel, the other three layouts and macOS.
+
 - Qualification note: the owner approved #745’s exact ordinary Octatrack beta-base candidate with final-build physical qualification waived. Current-source cable recovery, audio/timing and persistence remain unverified; historical unit observations keep their original build identities. Offline multi-profile tooling remains staging, and the reported hardware symptoms remain open. See `sdk/machines/octatrack/evidence/usb-base-owner-approval-20261021.json`.
 
 ## 21 October 2026

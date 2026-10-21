@@ -1,5 +1,6 @@
 import { sha } from '../../vendor/elekloader/kit/src/bytes.ts'
 import { STOCK_EFFECTS } from '../catalog/stock-effects'
+import type { UsbAudioLayout } from './usb-audio'
 
 /** What an Octatrack running the Modwerk base has on it: its modules and the stock effects left out of the menus. */
 export interface Inventory {
@@ -7,8 +8,9 @@ export interface Inventory {
   /** Exact combined machine packages reported by the unit. Never inferred from the displayed member names. */
   runtimeGroups?: { id: string; layout: number }[]
 }
-/** What a load makes the unit match: a module set, or the device page's edits. */
-export interface InventoryTarget { name: string; moduleIds: string[]; removedStockFx?: string[] }
+/** What a load makes the unit match: a module set, or the device page's edits. `usbAudio` holds the set's USB Audio
+ * layout, which the base itself provides (engine/elekloader/base-variants.ts). */
+export interface InventoryTarget { name: string; moduleIds: string[]; removedStockFx?: string[]; usbAudio?: { layout: UsbAudioLayout } }
 export interface InventoryChanges { add: string[]; remove: string[]; stockOff: string[]; stockOn: string[] }
 
 /** The changes that make `current` match `target`: the unit matches the set exactly, stock effects included. */

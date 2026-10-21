@@ -28,6 +28,8 @@ import { parseArgs } from 'node:util'
 import { sha } from '../vendor/elekloader/kit/src/bytes.ts'
 import * as formats from '../vendor/elekloader/kit/src/formats.ts'
 import { buildBase } from '../src/engine/elekloader/octatrack-base.ts'
+import { applyVariantPatch } from '../src/engine/elekloader/base-variants.ts'
+import { USB_AUDIO_LAYOUTS } from '../src/config/usb-audio.ts'
 
 const { values: args } = parseArgs({ options: {
   stock: { type: 'string' }, upstream: { type: 'string', default: join(homedir(), '.cache/modwerk-upstream/elekloader') },
@@ -36,7 +38,7 @@ const { values: args } = parseArgs({ options: {
   'table-owners': { type: 'boolean', default: false },
   'resident-stock-hooks': { type: 'boolean', default: false }, 'resident-on-demand': { type: 'boolean', default: false },
   'saved-set-export': { type: 'boolean', default: false },
-  controllers: { type: 'boolean', default: false },
+  controllers: { type: 'boolean', default: false }, 'usb-audio-variants': { type: 'boolean', default: false },
   'cached-modules': { type: 'boolean', default: false },
 } })
 if (!args.stock) throw new Error('Usage: npm run octatrack:base -- --stock OCTATRACK_OS1.40C.bin [--upstream ELEKLOADER] [--write] [--out NEW-DIR]')
@@ -44,6 +46,7 @@ const root = resolve(import.meta.dirname, '..'), here = join(root, 'sdk/machines
 const adapters = join(root, 'sdk/machines/octatrack/module-adapters')
 const committed = { package: join(root, 'src/engine/assets/octatrack-base.elemod'), fills: join(root, 'src/engine/assets/octatrack-base-fills.json'),
   sources: join(root, 'src/engine/assets/octatrack-base-sources.json'), binding: join(root, 'sdk/machines/octatrack/base-binding.json'),
+  variants: join(root, 'src/engine/assets/octatrack-base-variants.json'),
   policies: join(adapters, 'controller-policies.json') }
 const asm = process.env.ELEKLOADER_DSP_ASM ?? join(homedir(), '.cache/modwerk-upstream/octabam/vendor/dsp56300/build/source/dsp_host/dsp_asm')
 const python = (script, ...rest) => execFileSync('python3', ['-B', script.includes('/') ? script : join(here, script), ...rest], { stdio: 'inherit', env: { ...process.env, ELEKLOADER_DSP_ASM: asm } })
@@ -54,12 +57,15 @@ const same = (fresh, path) => {
 
 if (args['resident-on-demand'] && !args['resident-stock-hooks']) throw new Error('--resident-on-demand needs --resident-stock-hooks.')
 const work = mkdtempSync(join(tmpdir(), 'modwerk-base-')), core = join(work, 'core')
-const build = (output, ...rest) => python('build_core.py', '--stock', args.stock, '--upstream', args.upstream, '--output', output, '--dsp-loader',
-  ...(args['usb-midi'] ? ['--usb-midi'] : []), ...(args['usb-audio'] ? ['--usb-audio', args['usb-audio']] : []),
+const buildLayout = (layout, output, ...rest) => python('build_core.py', '--stock', args.stock, '--upstream', args.upstream, '--output', output, '--dsp-loader',
+  ...(args['usb-midi'] ? ['--usb-midi'] : []), ...(layout ? ['--usb-audio', layout] : []),
   ...(args['site-events'] ? ['--site-events'] : []), ...(args['cached-modules'] ? ['--cached-modules'] : []),
   ...(args['table-owners'] ? ['--table-owners', join(adapters, 'table-owners.json')] : []),
   ...(args['resident-stock-hooks'] ? ['--resident-stock-hooks'] : []), ...(args['resident-on-demand'] ? ['--resident-on-demand'] : []),
   ...(args['saved-set-export'] ? ['--saved-set-export'] : []), ...rest)
+const build = (output, ...rest) => buildLayout(args['usb-audio'], output, ...rest)
+const defaultLayout = USB_AUDIO_LAYOUTS.find(layout => layout.key === args['usb-audio'])?.id
+if (args['usb-audio-variants'] && (!args['usb-midi'] || !defaultLayout)) throw new Error('--usb-audio-variants needs --usb-midi and a --usb-audio layout, the default variant.')
 if (args.controllers) {
   // Sidechain, Output Matrix and Analog BD call the base's lease entries by address, and the base admits them by their
   // hashes: build it with empty trust rows, encode the packages against that link (base_bound.py rows), then build it
@@ -76,14 +82,52 @@ python('check_stock_free.py', join(core, 'base.elemod'), '--stock', args.stock, 
 for (const [key, file] of [['package', 'base.elemod'], ['fills', 'base-fills.json'], ['sources', 'base-sources.json']])
   same(readFileSync(join(core, file)), committed[key])
 // What the base-bound packages link against (module-adapters/base_bound.py): its identity, arena, pool and lease entries.
-python(join(adapters, 'base_bound.py'), 'bind', core, ...(args.controllers ? ['--policies', committed.policies] : []), '-o', join(work, 'binding.json'))
-same(readFileSync(join(work, 'binding.json')), committed.binding)
+const bind = (dir, out) => {
+  python(join(adapters, 'base_bound.py'), 'bind', dir, ...(args.controllers ? ['--policies', committed.policies] : []), '-o', out)
+  return JSON.parse(readFileSync(out, 'utf8'))
+}
+const binding = bind(core, join(work, 'binding.json'))
 
 const stock = new Uint8Array(readFileSync(args.stock))
 const browser = await buildBase(stock, readFileSync(committed.package, 'utf8'), JSON.parse(readFileSync(committed.fills, 'utf8')))
 const native = new Uint8Array(readFileSync(join(core, 'NOT_FLASH_CANDIDATE.bin')))
 assert.equal(browser.sha256, sha(native), 'The browser-built .bin differs from build_core.py\'s.')
 python('check_flash_safety.py', '--stock', args.stock, '--build', core, '--upstream', args.upstream)
+
+// Every other USB Audio layout, and USB MIDI alone: the same base with another USB block (build_core.py usb_reserve).
+// Each must take the very same controller packages and link everything else where the default does, patch no stock
+// site the default leaves alone (stock copies are checked against the default's sites), and build in the browser
+// from the default package and its patch exactly as build_core.py builds it.
+if (args['usb-audio-variants']) {
+  const defaultText = readFileSync(join(core, 'base.elemod'), 'utf8'), defaultSites = new Set(JSON.parse(defaultText).sites.map(site => site.addr + '+' + site.len))
+  const variants = [], identities = { [defaultLayout]: binding.identity }
+  for (const layout of [...USB_AUDIO_LAYOUTS.map(item => item.id), 'off'].filter(id => id !== defaultLayout)) {
+    const key = USB_AUDIO_LAYOUTS.find(item => item.id === layout)?.key, dir = join(work, 'variant-' + layout)
+    if (args.controllers) {
+      buildLayout(key, dir + '-empty')
+      python(join(adapters, 'base_bound.py'), 'rows', '--base-symbols', join(dir + '-empty', 'symbols.json'), '--upstream', args.upstream, '--out', dir + '-encoded')
+      assert(readFileSync(join(dir + '-encoded', 'controller-policies.json')).equals(readFileSync(committed.policies)), layout + ': the controller packages differ on this layout.')
+      buildLayout(key, dir, '--controller-policies', committed.policies, '--controller-layout', join(dir + '-empty', 'symbols.json'))
+    } else buildLayout(key, dir)
+    python('check_stock_free.py', join(dir, 'base.elemod'), '--stock', args.stock, '--upstream', args.upstream)
+    const own = bind(dir, dir + '-binding.json')
+    assert.deepEqual({ ...own, identity: '' }, { ...binding, identity: '' }, layout + ': the base-bound packages would link differently on this layout.')
+    const text = readFileSync(join(dir, 'base.elemod'), 'utf8'), extra = JSON.parse(text).sites.filter(site => !defaultSites.has(site.addr + '+' + site.len))
+    assert.equal(extra.length, 0, layout + ': patches stock sites the default layout leaves alone: ' + extra.map(site => site.addr).join(', '))
+    const patch = JSON.parse(execFileSync('python3', ['-B', join(root, 'scripts/octatrack-base-variant-patch.py'), join(core, 'base.elemod'), join(dir, 'base.elemod')], { maxBuffer: 1 << 28 }).toString())
+    const fills = JSON.parse(readFileSync(join(dir, 'base-fills.json'), 'utf8'))
+    const built = await buildBase(stock, applyVariantPatch(defaultText, patch, sha(Buffer.from(text))), fills)
+    assert.equal(built.sha256, sha(readFileSync(join(dir, 'NOT_FLASH_CANDIDATE.bin'))), layout + ': the browser-built .bin differs from build_core.py\'s.')
+    assert.equal(built.base, own.identity, layout + ': the browser build reports another identity.')
+    python('check_flash_safety.py', '--stock', args.stock, '--build', dir, '--upstream', args.upstream)
+    variants.push({ layout, identity: own.identity, packageSha256: sha(Buffer.from(text)), patch, fills })
+    identities[layout] = own.identity
+    console.log(layout + ': ' + own.identity + ', patch ' + JSON.stringify(patch).length + ' bytes, browser .bin ' + built.sha256)
+  }
+  binding.variants = identities
+  same(Buffer.from(JSON.stringify({ schema: 1, packageSha256: sha(Buffer.from(defaultText)), variants }) + '\n'), committed.variants)
+}
+same(Buffer.from(JSON.stringify(binding, null, 1) + '\n'), committed.binding)
 console.log('package ' + sha(readFileSync(committed.package)) + ', fills ' + sha(readFileSync(committed.fills)))
 console.log('browser .bin = build_core.py .bin: ' + browser.sha256 + ' (' + browser.bin.length + ' bytes)')
 if (args.out) {

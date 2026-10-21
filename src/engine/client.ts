@@ -2,6 +2,7 @@ import type { UsbAudioConfiguration } from '../config/usb-audio'
 import { BASE_FIRMWARE, type FirmwareInspection } from './base'
 import type { BuildProgress, EngineRequest, EngineResponse, StartupAnimation } from './protocol'
 import type { SelectionConflict } from '../catalog/selection-conflicts'
+import type { BaseLayout } from './elekloader/base-variants'
 export class FirmwareBuildError extends Error {
   readonly conflict?: SelectionConflict
   constructor(message: string, conflict?: SelectionConflict) { super(message); this.name = 'FirmwareBuildError'; this.conflict = conflict }
@@ -64,9 +65,9 @@ export function createFirmwareClient() {
       return response
     },
     /** The Modwerk base's .bin, built from the verified OS file. */
-    async buildBase() {
+    async buildBase(layout?: BaseLayout) {
       await recovering
-      const response = await send({ id: ++nextId, type: 'base' })
+      const response = await send({ id: ++nextId, type: 'base', ...(layout ? { layout } : {}) })
       if (response.type !== 'base') throw new Error('The local firmware worker returned an unexpected result.')
       return { buffer: response.buffer, sha256: response.sha256, base: response.base }
     },

@@ -24,7 +24,7 @@ export function createLazyFirmwareClient(create: () => FirmwareClient = createFi
       let phase: DiagnosticBuildPhase = 'building'
       return observe(() => engine().build(ids, keepStock, next => { phase = next; progress(next) }, usbAudio, betaAccess, startup), 'octatrack-firmware', () => phase, 'build')
     },
-    buildBase: () => observe(() => engine().buildBase(), 'octatrack-base', () => 'building', 'build'),
+    buildBase: layout => observe(() => engine().buildBase(layout), 'octatrack-base', () => 'building', 'build'),
     cancelBuild: () => { ++cancellation; client?.cancelBuild() },
     clear: () => { ++cancellation; return client?.clear() ?? Promise.resolve() },
     dispose: () => { disposed = true; ++cancellation; client?.dispose(); client = null },

@@ -1,13 +1,14 @@
 import { useEffect, useState, useSyncExternalStore } from 'react'
 import { api, post } from '../community/api'
 import type { LinkState, OctatrackLink } from '../engine/elekloader/octatrack-link'
-import baseBinding from '../../sdk/machines/octatrack/base-binding.json' with { type: 'json' }
+import { isPublishedBase } from '../engine/elekloader/base-variants'
 
 const noSubscription = () => () => {}
 /** What the prompt needs to know of the unit: it runs the current Modwerk base, an older one (including a base this
  * page cannot talk to), it is still being read, or no base is connected. */
 export function unitForPrompt(state?: LinkState): 'current' | 'older' | 'connecting' | 'none' {
-  if (state?.identity) return state.identity.base === baseBinding.identity ? 'current' : 'older'
+  // Every USB Audio layout of the published base is current (base-variants.ts).
+  if (state?.identity) return isPublishedBase(state.identity.base) ? 'current' : 'older'
   return state?.status === 'ready' ? 'older' : state?.status === 'connecting' ? 'connecting' : 'none'
 }
 

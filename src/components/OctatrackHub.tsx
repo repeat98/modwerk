@@ -4,7 +4,9 @@ import { useLayoutEffect, useRef, type ReactNode } from 'react'
 import { MODULES } from '../catalog/modules'
 import { lastInventory, sameModules, type Inventory } from '../config/inventory'
 import { lastSuccessfulSync } from '../config/octatrack-progress'
-import { BaseUpdateRequired, baseOutdated, moduleSetReview } from '../engine/elekloader/module-set'
+import { BaseLayoutRequired, BaseUpdateRequired, baseOutdated, moduleSetReview, setLayout } from '../engine/elekloader/module-set'
+import { baseLayout, type BaseLayout } from '../engine/elekloader/base-variants'
+import { USB_AUDIO_MODULE } from '../config/usb-audio'
 import type { Configuration } from '../config/workspace'
 import { DeviceImage } from '../devices/DeviceImage'
 import { DEVICES_BY_ID } from '../devices/registry'
@@ -56,7 +58,9 @@ function SetMenu({ set, onAction }: { set: Configuration; onAction: (id: string,
  */
 type OctatrackHubProps = {
   view: HubView; link: OctatrackLink | null; inventory?: Inventory; sets: Configuration[]; selectedId?: string; needs?: ProjectNeeds; username?: string | null
-  onSelect: (id: string) => void; onSync: (id: string) => void; onInstall: () => void
+  onSelect: (id: string) => void; onSync: (id: string) => void
+  /** Opens the base installer: with a layout when the set needs the base in another USB Audio layout. */
+  onInstall: (layout?: BaseLayout) => void
   onNew: () => void; onImport: () => void; onSetAction: (id: string, action: SetAction) => void
   onFill: (ids: string[]) => void; onSaveUnit: () => void; onReport: (id?: string) => void
   header: ReactNode; grid: ReactNode; card: ReactNode
@@ -103,10 +107,13 @@ function DesktopOctatrackHub({ view, link, inventory, sets, selectedId, needs, u
   const last = connected || busy ? undefined : lastInventory()
   const unitIds = connected ? inventory?.moduleIds : last?.moduleIds
   const selected = sets.find(set => set.id === selectedId) ?? sets[0]
-  const same = (set: Configuration) => set.moduleIds.length > 0 && !!unitIds && sameModules(set.moduleIds, unitIds)
+  // USB Audio is on the unit when its base runs the set's layout (base-variants.ts); the inventory lists packages only.
+  const same = (set: Configuration) => set.moduleIds.length > 0 && !!unitIds && sameModules(set.moduleIds.filter(id => id !== USB_AUDIO_MODULE), unitIds) &&
+    (setLayout(set) === undefined || connected && baseLayout(identity?.base) === setLayout(set))
   const review = connected && inventory && selected ? moduleSetReview(selected, inventory, identity?.capabilities, identity?.base) : undefined
   const changes = review?.changes, updates = review?.updates ?? []
   const needsBase = review?.problem instanceof BaseUpdateRequired || connected && baseOutdated(identity?.base)
+  const wantedLayout = review?.problem instanceof BaseLayoutRequired ? review.problem.layout : undefined
   const model = identity?.model ? identity.model.replace('OCTATRACK', 'Octatrack') : 'Octatrack'
   const led = connected ? 'on' : busy ? 'load' : 'off'
   const health = useOctatrackHealth(link)
@@ -118,7 +125,7 @@ function DesktopOctatrackHub({ view, link, inventory, sets, selectedId, needs, u
     : connected ? [<>Connected · {inventory ? modules(inventory.moduleIds.length) + ' on it' : 'reading what’s on it…'}{onUnit && <> · same as <b>{onUnit.name}</b></>}</>, null]
     : status === 'connecting' ? ['Looking for your Octatrack…', null]
     : status === 'busy' ? ['Another tab or app is using your Octatrack.', <button key="retry" className="button button-quiet" onClick={() => void link?.retry()}>Try again</button>]
-    : status === 'stock' || status === 'ready' ? [status === 'stock' ? 'Connected · original OS' : 'Connected · a Modwerk base this site can’t talk to', <button key="install" className="button button-primary" onClick={onInstall}>Install the base</button>]
+    : status === 'stock' || status === 'ready' ? [status === 'stock' ? 'Connected · original OS' : 'Connected · a Modwerk base this site can’t talk to', <button key="install" className="button button-primary" onClick={() => onInstall()}>Install the base</button>]
     : state.notice?.tone === 'error' ? [state.notice.text, <button key="connect" className="button button-quiet" onClick={() => void link?.connect()}>Connect</button>]
     : [<>Not connected{last ? <> · Last seen: {lastName ? <b>{lastName}</b> : modules(last.moduleIds.length)} · {when(last.at)}</> : null}</>, <button key="connect" className="button button-quiet" onClick={() => void link?.connect()}>Connect</button>]
   const panel = (name: HubView, content: ReactNode) => <section key={name} className={'hub-view hub-view-' + name} hidden={view !== name} aria-label={name === 'set' ? selected?.name ?? 'Module set' : UNIT_VIEWS.find(item => item.view === name)!.title}>{content}</section>
@@ -178,11 +185,11 @@ function DesktopOctatrackHub({ view, link, inventory, sets, selectedId, needs, u
           <section className="hub-section" aria-labelledby="setup-base-title">
             <h3 id="setup-base-title">Modwerk base</h3>
             <p>{!usb ? 'This browser can’t use USB. Install the base from the card below, or open this page in Chrome or Edge on a computer.'
-              : connected ? <>Your {model} runs the Modwerk base <code>{identity!.base.slice(0, 8)}</code>.{needsBase && ' This site needs a newer one to sync your set.'}</>
+              : connected ? <>Your {model} runs the Modwerk base <code>{identity!.base.slice(0, 8)}</code>.{needsBase && (wantedLayout ? ' Your set needs it in another USB Audio layout.' : ' This site needs a newer one to sync your set.')}</>
               : status === 'stock' ? <>Your {model} runs the original OS. Install the base once to sync module sets over USB.</>
               : status === 'ready' ? 'Your Octatrack runs a Modwerk base this site can’t talk to. Install the current one.'
               : 'Connect your Octatrack to see which base it runs.'}</p>
-            {usb && <button type="button" className={'button ' + (status === 'stock' || needsBase || status === 'ready' && !connected ? 'button-primary' : 'button-quiet')} onClick={onInstall}><Icon name="download" size={16} />{needsBase ? 'Install latest base' : status === 'stock' ? 'Install the base' : 'Install the base again'}</button>}
+            {usb && <button type="button" className={'button ' + (status === 'stock' || needsBase || status === 'ready' && !connected ? 'button-primary' : 'button-quiet')} onClick={() => onInstall(wantedLayout)}><Icon name="download" size={16} />{wantedLayout ? 'Install base with this layout' : needsBase ? 'Install latest base' : status === 'stock' ? 'Install the base' : 'Install the base again'}</button>}
             <p className="link-hint">Going back to the original OS works from the card: <a className="text-button" href="#faq">FAQ & flashing guide</a></p>
           </section>
           {usb && <section className="hub-section" aria-labelledby="setup-connect-title">
@@ -202,7 +209,7 @@ function DesktopOctatrackHub({ view, link, inventory, sets, selectedId, needs, u
           </header>
           <div className="hub-sync" role="group" aria-label="Module set sync">
             <p>{syncLine}</p>
-            {usb && <button type="button" className="button button-primary" disabled={!review || !needsBase && (!review.needsSync || !!review.problem)} onClick={() => { onSync(selected.id); if (needsBase) onInstall() }}><Icon name="download" size={16} />{needsBase ? 'Install latest base' : 'Sync to Octatrack'}</button>}
+            {usb && <button type="button" className="button button-primary" disabled={!review || !needsBase && (!review.needsSync || !!review.problem)} onClick={() => { onSync(selected.id); if (needsBase) onInstall(wantedLayout) }}><Icon name="download" size={16} />{wantedLayout ? 'Install base with this layout' : needsBase ? 'Install latest base' : 'Sync to Octatrack'}</button>}
           </div>
           {connected && <MissingNote needs={needs} onSync={() => onSync(selected.id)} />}
           {connected && !selected.moduleIds.length && !!inventory?.moduleIds.length && <div className="hub-fill" role="note">

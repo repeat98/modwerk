@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { fakeSession, fakeUnit } from '../dev/octatrack-link-fake'
 import { OctatrackLink } from '../engine/elekloader/octatrack-link'
 import { BaseInstallDialog } from './BaseInstallDialog'
+import { layoutIdentity } from '../engine/elekloader/base-variants'
 
 let root: Root, container: HTMLDivElement
 beforeEach(() => {
@@ -54,5 +55,24 @@ describe('the base dialog for a unit on an older base', () => {
     click(buttonNamed('Update from the card')!)
     expect(buttonNamed('Download base .bin')).toBeDefined()
     expect(container.textContent).toContain('from the card, the same way as the first time')
+  })
+})
+
+describe('the base dialog for another USB Audio layout', () => {
+  it('sends the current base in the set’s layout over USB, from a unit already on the current base', async () => {
+    const unit = fakeUnit(), link = new OctatrackLink(unit.usb, fakeSession(unit), 300)
+    unit.base = layoutIdentity('tracks-main-cue')!
+    link.start(); await vi.waitFor(() => expect(link.getState().status).toBe('ready'))
+    const expected = layoutIdentity('main')!, bin = new Uint8Array([5, 6])
+    const update = vi.spyOn(link, 'updateBase').mockImplementation(async (_bin, _base, report) => { report?.('done') })
+    const buildBase = vi.fn(async () => ({ buffer: bin.buffer, sha256: 'y', base: expected }))
+    await act(() => root.render(createElement(BaseInstallDialog, { link, layout: 'main', firmwareReady: true, onChooseFirmware: () => {}, buildBase, onClose: () => {}, onReady: () => {} })))
+    expect(container.textContent).toContain('Change USB Audio')
+    expect(container.textContent).toContain('USB Audio · Tracks + Main + Cue')
+    expect(container.textContent).toContain('USB Audio · Main over USB')
+    expect(buttonNamed('Download base .bin')).toBeUndefined()
+    click(container.querySelector('.risk-accept input')!); click(buttonNamed('Update over USB')!); await settle(); await settle()
+    expect(buildBase).toHaveBeenCalledWith('main')
+    expect(update.mock.calls[0][1]).toBe(expected)
   })
 })

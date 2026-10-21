@@ -7,7 +7,8 @@
       "Show source explanations, per-layout CPU estimates, physical-output routing, and saved / unsaved state. Save and share USB settings in configuration backups.",
       "Support the Outbox 44.1 kHz control handshake and retain USB MIDI receive / clock and reset handling. Existing configurations without USB settings keep the classic twenty-channel code path.",
       "Experimental release approved without current-build hardware tests. Chip timing, complete hardware memory bounds and untested host combinations remain unmeasured.",
-      "Documentation-only (19 October 2026): say that, like every DRAM module, the build gives up about 10 MB of sample memory, so a project that filled Flex and recorder memory can show OUT OF MEMORY, and what frees memory ([#433](https://github.com/repeat98/modwerk/issues/433)). The firmware is unchanged; whether #433 also involves a separate allocation problem is still open."
+      "Documentation-only (19 October 2026): say that, like every DRAM module, the build gives up about 10 MB of sample memory, so a project that filled Flex and recorder memory can show OUT OF MEMORY, and what frees memory ([#433](https://github.com/repeat98/modwerk/issues/433)). The firmware is unchanged; whether #433 also involves a separate allocation problem is still open.",
+      "Site and base only (21 October 2026): on the Octatrack beta base, USB Audio now syncs over USB. Each output layout is its own base, which the Load dialog installs over USB when a module set asks for it. The card module and its downloads are unchanged; reports #548, #689, #718, #489 and #462 stay open, and only the twenty-channel layout has run on a unit in this form."
     ]
   },
   {

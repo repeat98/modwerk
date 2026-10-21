@@ -1,6 +1,7 @@
 import type { FirmwareInspection } from './base'
 import type { UsbAudioConfiguration } from '../config/usb-audio'
 import type { SelectionConflict } from '../catalog/selection-conflicts'
+import type { BaseLayout } from './elekloader/base-variants'
 /** The docking startup, or the classic one: the stock renderer with Modwerk's two graphic tables. */
 export type StartupAnimation = 'docking' | 'classic'
 export type BuildReport = {
@@ -17,7 +18,7 @@ export type EngineRequest =
   | { id: number; type: 'inspect'; buffer: ArrayBuffer; name: string }
   | { id: number; type: 'validate' | 'build'; moduleIds: string[]; keepStockFx2: boolean; usbAudio?: UsbAudioConfiguration; betaAccess?: boolean; startup?: StartupAnimation }
   | { id: number; type: 'clear' }
-  | { id: number; type: 'base' }
+  | { id: number; type: 'base'; layout?: BaseLayout }
 export type EngineResponse =
   | { id: number; type: 'inspection'; inspection: FirmwareInspection }
   | { id: number; type: 'validated'; report: BuildReport }

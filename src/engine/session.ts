@@ -13,6 +13,8 @@ import { CATALOG_SOURCE, resolveSelection } from '../catalog/modules'
 import { buildBase, type BaseFill } from './elekloader/octatrack-base'
 // A file of its own, fetched when a base is built: the worker bundle inlines imports, and the package is 600 KB.
 import basePackage from './assets/octatrack-base.elemod?url'
+import baseVariants from './assets/octatrack-base-variants.json?url'
+import { variantPackage, type BaseVariants } from './elekloader/base-variants'
 import baseFills from './assets/octatrack-base-fills.json'
 import { DOWNLOADS_ENABLED, DSP_LOADER, FIRMWARE_VERSION, type BuildReport, type EngineRequest, type EngineResponse, type StartupAnimation } from './protocol'
 export function createEngineSession(reply: (response: EngineResponse, transfer?: Transferable[]) => void) {
@@ -34,7 +36,15 @@ export function createEngineSession(reply: (response: EngineResponse, transfer?:
         if (!original) throw new Error('Choose and verify your OS 1.40C file first.')
         const response = await fetch(basePackage)
         if (!response.ok) throw new Error('The base package did not load. Reload the page and try again.')
-        const built = await buildBase(original, await response.text(), baseFills as BaseFill[])
+        // Another USB Audio layout is the default package with its reviewed patch (base-variants.ts).
+        let text = await response.text(), fills = baseFills as BaseFill[]
+        if (request.layout) {
+          const layouts = await fetch(baseVariants)
+          if (!layouts.ok) throw new Error('The base layouts did not load. Reload the page and try again.')
+          const variant = variantPackage(text, await layouts.json() as BaseVariants, request.layout)
+          if (variant) ({ text, fills } = variant)
+        }
+        const built = await buildBase(original, text, fills)
         if (current !== generation) throw new Error('The selected firmware changed. Build again.')
         const buffer = built.bin.slice().buffer
         reply({ id: request.id, type: 'base', buffer, sha256: built.sha256, base: built.base }, [buffer]); return

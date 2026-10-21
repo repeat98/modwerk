@@ -1041,6 +1041,62 @@ def sha(data):
     return hashlib.sha256(data).hexdigest()
 
 
+# Every USB Audio layout, and USB MIDI alone, links the base's USB sources last and pads them to these sizes, so a
+# layout changes nothing outside this block: the base-bound packages (base-binding.json) hold for every layout's base.
+USB_GROUP = ('usb_base.s', 'usbmidi.s', 'usbmidi_rx.s', 'usbaudio.s')
+USB_RESERVE = {'.text': 8192, '.data': 2560, '.bss': 98304}
+USB_ALIGN = {'.text': 512, '.data': 32, '.bss': 32}
+
+
+def usb_reserve(source, sources, defsym, device, sdk):
+    """Moves the USB sources to the end of `sources` between usb_align.s and usb_reserve.s, whose padding brings each
+    of their sections to USB_RESERVE. The sizes come from assembling them as Elekloader's build does; the build's
+    own symbols prove the result (usb_reserve_check)."""
+    from elekloader.sdk.elf import Elf
+    group = [name for name in USB_GROUP if name in sources]
+    head = ''.join('        %s\n        .balign %d\n        .globl modwerk_usb%s_start\nmodwerk_usb%s_start:\n'
+                   % (k, USB_ALIGN[k], k.replace('.', '_'), k.replace('.', '_'))
+                   for k in USB_RESERVE)
+    (source / 'usb_align.s').write_text(head)
+    tool = os.environ.get('ELEKLOADER_CROSS', device.toolchain['prefix']) + 'as'
+    defs = [a for k, v in defsym.items() for a in ('--defsym', '%s=%s' % (k, v))]
+    work = source / 'usb-reserve.work'
+    work.mkdir(exist_ok=True)
+
+    def sections(name):
+        out = work / (name + '.o')
+        subprocess.run([tool, *device.toolchain['asflags'], '-I', str(source), '-I', sdk.INCLUDE, *defs,
+                        '-o', str(out), str(source / name)], check=True, capture_output=True)
+        return {s.name: (s.size, max(1, s.align)) for s in Elf.load(str(out)).sections if s.flags & 2}
+
+    def tail(skips):
+        return ''.join('        %s\n        .skip %d\n        .globl modwerk_usb%s_end\nmodwerk_usb%s_end:\n'
+                       % (k, skips.get(k, 0), k.replace('.', '_'), k.replace('.', '_'))
+                       for k in USB_RESERVE)
+    (source / 'usb_reserve.s').write_text(tail({}))
+    at = dict.fromkeys(USB_RESERVE, 0)
+    for name in group + ['usb_reserve.s']:
+        for kind, (size, align) in sections(name).items():
+            if kind not in USB_RESERVE:
+                raise ValueError('%s has a %s section the USB reserve does not cover.' % (name, kind))
+            if align > USB_ALIGN[kind]:
+                raise ValueError('%s aligns %s to %d, past the USB reserve\'s %d.' % (name, kind, align, USB_ALIGN[kind]))
+            at[kind] = -(-at[kind] // align) * align + (size if name != 'usb_reserve.s' else 0)
+    if any(at[k] > USB_RESERVE[k] for k in USB_RESERVE):
+        raise ValueError('The USB sources outgrow their reserve: %s of %s.' % (at, USB_RESERVE))
+    (source / 'usb_reserve.s').write_text(tail({k: USB_RESERVE[k] - at[k] for k in USB_RESERVE}))
+    shutil.rmtree(work)
+    return [name for name in sources if name not in USB_GROUP] + ['usb_align.s', *group, 'usb_reserve.s']
+
+
+def usb_reserve_check(symbols):
+    """Each USB reserve spans exactly its size in the linked base."""
+    for kind, size in USB_RESERVE.items():
+        start, end = (symbols.get('modwerk_usb%s_%s' % (kind.replace('.', '_'), edge)) for edge in ('start', 'end'))
+        if not start or not end or start[0] != end[0] or end[1] - start[1] != size:
+            raise ValueError('The USB %s reserve is not %d bytes in the linked base.' % (kind, size))
+
+
 def git(root, *args):
     return subprocess.check_output(['git', '-C', str(root), *args], text=True, stderr=subprocess.PIPE).strip()
 
@@ -1982,8 +2038,12 @@ modwerk_retained_end:
     locked = catalogue_overlaps(recipe['sites'])
     if locked:
         raise ValueError('Base sites overlap what these catalogue modules patch: ' + ', '.join(locked))
+    if usb_functions and not usb_profiles:
+        recipe['sources'] = usb_reserve(source, recipe['sources'], recipe.get('defsym', {}), device, sdk)
     (source/'mod.json').write_text(json.dumps(recipe, indent=2)+'\n')
     path, _ = sdk.build(str(source), str(args.stock), str(out/'package'))
+    if usb_functions and not usb_profiles:
+        usb_reserve_check(json.loads(Path(path).read_text())['symbols'])
     # Every C object of the base, before anything is packaged (sdk/runtime/m68k_codegen.py).
     if not CODEGEN.check(sorted((out/'package').glob('*.work/*.c.o')), args.cross + 'objdump'):
         raise ValueError('The base build left no C objects to check.')

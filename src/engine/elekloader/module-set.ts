@@ -10,6 +10,8 @@ import { MODULES } from '../../catalog/modules.ts'
 import { inventoryChanges, type Inventory, type InventoryTarget } from '../../config/inventory.ts'
 import type { OctatrackLink, SetChange } from './octatrack-link.ts'
 import { RuntimeFeature, type MissingModule, type RuntimeCapabilities } from './upload-usb.ts'
+import { USB_AUDIO_MODULE } from '../../config/usb-audio.ts'
+import { baseLayout, isPublishedBase, layoutIdentity, layoutName, type BaseLayout } from './base-variants.ts'
 
 /** Why a set cannot be loaded over USB, in the user's words. */
 export class ModuleSetError extends Error {}
@@ -27,12 +29,26 @@ export interface RuntimePackageManifest {
   groups?: { id: string; name: string; variants: MachineVariant[] }[]
 }
 export class BaseUpdateRequired extends ModuleSetError {
-  constructor() { super('Install the latest Modwerk base from the card to sync this module set. Your selected modules will stay here.') }
+  constructor(message = 'Install the latest Modwerk base from the card to sync this module set. Your selected modules will stay here.') { super(message) }
 }
-/** The base the site publishes (sdk/machines/octatrack/base-binding.json). While USB sync is a beta every tester runs
- * it (owner, 15 October 2026): the site syncs nothing to an older base and guides the update instead. */
+/** USB Audio is part of the base: its layout sets the USB descriptors, so another layout is another base, sent over
+ * USB like any base update (base-variants.ts). The set's modules stay; nothing is synced until it runs. */
+export class BaseLayoutRequired extends BaseUpdateRequired {
+  readonly layout: BaseLayout
+  constructor(layout: BaseLayout) {
+    super(`${layoutName(layout)} comes with the Modwerk base. Install the base with this layout over USB first; your modules stay as they are.`)
+    this.layout = layout
+  }
+}
+/** The base the site publishes (sdk/machines/octatrack/base-binding.json), in each USB Audio layout. While USB sync is a
+ * beta every tester runs it (owner, 15 October 2026): the site syncs nothing to an older base and guides the update instead. */
 export const CURRENT_BASE: string = baseBinding.identity
-export const baseOutdated = (base?: string) => !!base && base !== CURRENT_BASE
+export const baseOutdated = (base?: string) => !!base && !isPublishedBase(base)
+/** The USB Audio layout a set asks of the base; undefined when it leaves USB Audio out (any layout's base takes it). */
+export const setLayout = (target: InventoryTarget): BaseLayout | undefined =>
+  target.moduleIds.includes(USB_AUDIO_MODULE) ? target.usbAudio?.layout ?? 'tracks-main-cue' : undefined
+/** The set without USB Audio: what the runtime packages must make the unit match. */
+const packagedTarget = (target: InventoryTarget): InventoryTarget => ({ ...target, moduleIds: target.moduleIds.filter(id => id !== USB_AUDIO_MODULE) })
 
 /** A module's runtime id (sdk/runtime/loader/build.py module_id): the first four bytes of the SHA-256 of its catalogue
  * id, hex. The inventory names a module the catalogue does not know by this id. */
@@ -238,9 +254,11 @@ export function createRuntimeCatalogue(document: RuntimePackageManifest) {
   function requireBase(steps: Step[], capabilities?: RuntimeCapabilities, base?: string) {
     for (const step of steps) for (const entry of [step.add, step.undo]) {
       if (!entry) continue
-      // A published package bound to the published base (sdk/machines/octatrack/base-binding.json) needs that base: an older one is an update.
-      if (entry.requiredBase && entry.requiredBase !== base) throw entry.requiredBase === baseBinding.identity ? new BaseUpdateRequired() :
-        new ModuleSetError('This module package needs the exact Modwerk base it was prepared for. Reconnect that base before syncing.')
+      // A published package bound to the published base (sdk/machines/octatrack/base-binding.json) needs that base in any
+      // of its USB Audio layouts, which share every address the package links against: an older base is an update.
+      if (entry.requiredBase === baseBinding.identity ? !isPublishedBase(base) : entry.requiredBase && entry.requiredBase !== base)
+        throw entry.requiredBase === baseBinding.identity ? new BaseUpdateRequired() :
+          new ModuleSetError('This module package needs the exact Modwerk base it was prepared for. Reconnect that base before syncing.')
       const { abi, features, sites, copies } = requirements(entry, step.group)
       if ((!capabilities && (abi > 6 || features)) || capabilities && (abi > capabilities.abi || (features & capabilities.features) !== features || sites > capabilities.maxSites || copies > capabilities.maxCopies))
         throw new BaseUpdateRequired()
@@ -256,24 +274,31 @@ export function createRuntimeCatalogue(document: RuntimePackageManifest) {
     if (new Set(moduleIds).size !== moduleIds.length) throw new ModuleSetError('The Octatrack’s module list contains overlapping machine packages. Reconnect and read it again.')
     return { moduleIds, removedStockFx: [], ...runtimeGroups.length ? { runtimeGroups } : {} }
   }
-  function review(target: InventoryTarget, current: Inventory, capabilities?: RuntimeCapabilities, base?: string) {
-    const changes = inventoryChanges(current, target)
+  /** The base layout the set needs, when the connected base runs another (or isn't a published base at all). */
+  function requireLayout(target: InventoryTarget, base?: string) {
+    const layout = setLayout(target)
+    if (layout === undefined || base === undefined || baseLayout(base) === layout) return
+    throw layoutIdentity(layout) ? new BaseLayoutRequired(layout) : new ModuleSetError(`${layoutName(layout)} can’t be installed over USB yet. Download the .bin for the card instead.`)
+  }
+  function review(full: InventoryTarget, current: Inventory, capabilities?: RuntimeCapabilities, base?: string) {
+    const target = packagedTarget(full), changes = inventoryChanges(current, target)
     let updates: string[] = [], needsSync = !!(changes.add.length + changes.remove.length + changes.stockOff.length + changes.stockOn.length)
     try {
       const planned = plan(target, current)
       updates = planned.updates; needsSync = planned.steps.length > 0
       requireBase(planned.steps, capabilities, base)
+      requireLayout(full, base)
       return { changes, updates, needsSync, problem: undefined as ModuleSetError | undefined }
     } catch (error) {
       if (!(error instanceof ModuleSetError)) throw error
-      return { changes, updates, needsSync, problem: error }
+      return { changes, updates, needsSync: needsSync || error instanceof BaseLayoutRequired, problem: error }
     }
   }
   return {
     ids, inventory, review,
     problem: (target: InventoryTarget, current: Inventory, capabilities?: RuntimeCapabilities, base?: string) => review(target, current, capabilities, base).problem,
-    async prepare(target: InventoryTarget, current: Inventory, load = fetchPackage, capabilities?: RuntimeCapabilities, base?: string): Promise<{ name: string; changes: SetChange[] }> {
-      const { steps } = plan(target, current); requireBase(steps, capabilities, base)
+    async prepare(full: InventoryTarget, current: Inventory, load = fetchPackage, capabilities?: RuntimeCapabilities, base?: string): Promise<{ name: string; changes: SetChange[] }> {
+      const target = packagedTarget(full), { steps } = plan(target, current); requireBase(steps, capabilities, base); requireLayout(full, base)
       // Fetch and verify every forward and rollback package before the first write to the unit.
       const packages = new Map<RuntimePackage, Uint8Array>()
       await Promise.all(steps.flatMap(step => [step.add, step.undo].filter((entry): entry is RuntimePackage => !!entry).map(async entry => {
@@ -288,8 +313,10 @@ export function createRuntimeCatalogue(document: RuntimePackageManifest) {
 }
 
 const catalogue = createRuntimeCatalogue(manifest)
-/** Only modules with an actually published package or reviewed current group variant are USB-selectable. */
-export const USB_MODULE_IDS = catalogue.ids
+/** Only modules with an actually published package or reviewed current group variant are USB-selectable, and USB
+ * Audio once the base is published in its layouts. */
+export const USB_MODULE_IDS = layoutIdentity('tracks-main-cue') && Object.keys((baseBinding as { variants?: object }).variants ?? {}).length > 1
+  ? [...catalogue.ids, USB_AUDIO_MODULE] : catalogue.ids
 export const inventoryFrom = catalogue.inventory
 export const moduleSetProblem = catalogue.problem
 export const moduleSetReview = catalogue.review

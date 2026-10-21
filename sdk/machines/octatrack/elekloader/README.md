@@ -68,8 +68,22 @@ commit it with the beta base's options (the committed base is the beta base):
 
 ```sh
 npm run octatrack:base -- --stock /private/OCTATRACK_OS1.40C.bin --usb-midi --usb-audio 'USB AUDIO OUT TRACKS MAIN CUE' \
-  --site-events --table-owners --resident-stock-hooks --resident-on-demand --controllers --write
+  --site-events --table-owners --resident-stock-hooks --resident-on-demand --controllers --usb-audio-variants --write
 ```
+
+USB Audio is part of the base: its output layout sets the USB descriptors, so each layout is its own base, sent over
+USB like any base update when a module set asks for another layout (`src/engine/elekloader/base-variants.ts`). The
+command above builds the twenty-channel default and, with `--usb-audio-variants`, the five other layouts and USB MIDI
+alone (`off`). `build_core.py` links the USB sources last and pads them to a fixed reserve (`USB_RESERVE`: 8 KiB of
+code, 2.5 KiB of data, 96 KiB of bss), so every layout links everything else at the same addresses and one set of
+base-bound packages fits each. For every variant the script proves it: the controller packages encode byte for byte
+as on the default, `base_bound.py bind` gives the same binding but for the identity, the variant patches no stock site
+the default leaves alone (stock copies are checked against the default's sites), and the browser builds its `.bin`
+from the default package plus the variant's line patch exactly as `build_core.py` does. It writes the patches and
+fills to `src/engine/assets/octatrack-base-variants.json` and each layout's identity to `base-binding.json`
+(`variants`). A USB source that outgrows the reserve fails the build: raise `USB_RESERVE`, which moves the base.
+Build with the reviewed GCC 16.2 (`sdk/build/Dockerfile`): another compiler links a different base, and Analog BD's
+reviewed recipe then refuses its image.
 
 When the change moves the base's write-lease entries, recapture Analog BD's reviewed recipe
 (`module-adapters/machine-recipes.json` imageSha256) against the new base's symbols first, then rebuild the

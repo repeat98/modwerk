@@ -2,7 +2,9 @@ import { useEffect, useRef, useState } from 'react'
 import { loadStep, sameModules, type Inventory, type InventoryTarget } from '../config/inventory'
 import { lastSuccessfulSync, recordSync, rememberSuccessfulSync } from '../config/octatrack-progress'
 import { LinkBusyError, type OctatrackLink } from '../engine/elekloader/octatrack-link'
-import { BaseUpdateRequired, baseOutdated, ModuleSetError, moduleSetReview, USB_MODULE_IDS } from '../engine/elekloader/module-set'
+import { BaseLayoutRequired, BaseUpdateRequired, baseOutdated, ModuleSetError, moduleSetReview, setLayout, USB_MODULE_IDS } from '../engine/elekloader/module-set'
+import { baseLayout, layoutName, type BaseLayout } from '../engine/elekloader/base-variants'
+import { USB_AUDIO_MODULE } from '../config/usb-audio'
 import { useOctatrackLink } from '../hooks/useOctatrackLink'
 import { MODULES } from '../catalog/modules'
 import { isModuleAvailable } from '../catalog/availability'
@@ -25,7 +27,8 @@ const list = (ids: string[]) => new Intl.ListFormat('en', { type: 'conjunction' 
 export function LoadDialog({ link, set, inventory, previousName, prepareUpdate, stressTest, onClose, onInstallBase, onEdit, onCard, onReport }: {
   link: OctatrackLink; set: InventoryTarget; inventory?: Inventory; prepareUpdate?: PrepareUpdate; stressTest?: StressTest; onClose: () => void
   previousName?: string
-  onInstallBase: () => void; onEdit: () => void; onCard: () => void; onReport: () => void
+  /** Opens the base installer: with a layout when the set needs the base in another USB Audio layout. */
+  onInstallBase: (layout?: BaseLayout) => void; onEdit: () => void; onCard: () => void; onReport: () => void
 }) {
   const dialog = useRef<HTMLDialogElement>(null), title = useRef<HTMLHeadingElement>(null)
   const state = useOctatrackLink(link), { status, progress = 0, tested, notice } = state
@@ -45,7 +48,9 @@ export function LoadDialog({ link, set, inventory, previousName, prepareUpdate, 
   const changes = review?.changes, updates = review?.updates ?? []
   const problem = preparationError?.review === reviewKey ? preparationError.error : baseOutdated(state.identity?.base) ? new BaseUpdateRequired() : review?.problem
   const needsBase = problem instanceof BaseUpdateRequired
-  const stays = inventory ? set.moduleIds.filter(id => inventory.moduleIds.includes(id) && !updates.includes(id)) : []
+  // USB Audio comes with the base: on when the connected base runs the set's layout, otherwise a base install first.
+  const audio = setLayout(set), audioOn = audio !== undefined && baseLayout(state.identity?.base) === audio
+  const stays = inventory ? set.moduleIds.filter(id => (id === USB_AUDIO_MODULE ? audioOn : inventory.moduleIds.includes(id)) && !updates.includes(id)) : []
   const cardOnly = changes ? changes.add.filter(id => !USB_MODULE_IDS.includes(id)) : []
   // Only beta testers reach this dialog. A paused module can still be removed, never added.
   const paused = changes ? changes.add.filter(id => !isModuleAvailable(id, true)) : []
@@ -112,11 +117,11 @@ export function LoadDialog({ link, set, inventory, previousName, prepareUpdate, 
         : <>
           <p className="load-summary">Adds {changes.add.length} · Removes {changes.remove.length}{updates.length > 0 && <> · Updates {updates.length}</>}</p>
           <p className="base-install-intro">After syncing, the Octatrack tests itself, then you keep it or undo. Your project isn’t changed.</p>
-          <ul className="load-changes">{([['card', 'Card only', cardOnly], ['load', 'Adds', changes.add.filter(id => !cardOnly.includes(id))], ['load', 'Updates', updates], ['leaving', 'Removes', changes.remove]] as const).flatMap(([state, label, ids]) => ids.map(id => {
+          <ul className="load-changes">{([['card', 'Card only', cardOnly], ['load', 'Base', audio !== undefined && !audioOn ? [USB_AUDIO_MODULE] : []], ['load', 'Adds', changes.add.filter(id => !cardOnly.includes(id))], ['load', 'Updates', updates], ['leaving', 'Removes', changes.remove]] as const).flatMap(([state, label, ids]) => ids.map(id => {
             const module = MODULES.find(item => item.id === id)
             return <li key={id} className={'load-change is-' + state}>
               {module ? <ModulePreview id={id} compact /> : <span className="compact-preview" />}
-              <span className="load-change-name"><strong>{module?.name ?? id}</strong>{state === 'card' && <small>Can’t be loaded over USB yet.</small>}</span>
+              <span className="load-change-name"><strong>{module?.name ?? id}</strong>{state === 'card' && <small>Can’t be loaded over USB yet.</small>}{label === 'Base' && audio && <small>{layoutName(audio)}: installed with the base, over USB.</small>}</span>
               <StateChip state={state}>{label}</StateChip>
             </li>
           }))}</ul>
@@ -148,7 +153,7 @@ export function LoadDialog({ link, set, inventory, previousName, prepareUpdate, 
         ? <p className="link-hint">Syncing stops playback on the Octatrack.</p> : <span />}
       <div className="base-install-actions">
         {step === 'review' && <><button type="button" className="button button-quiet" onClick={onClose}>Cancel</button>
-          {needsBase ? <button type="button" className="button button-primary" onClick={onInstallBase}><Icon name="download" size={16} />Install latest base</button>
+          {needsBase ? <button type="button" className="button button-primary" onClick={() => onInstallBase(problem instanceof BaseLayoutRequired ? problem.layout : undefined)}><Icon name="download" size={16} />{problem instanceof BaseLayoutRequired ? 'Install base with this layout' : 'Install latest base'}</button>
             : <button type="button" className="button button-primary" disabled={!connected || !review?.needsSync || !!problem || cardOnly.length > 0 || paused.length > 0 || !prepareUpdate} onClick={() => void load()}><Icon name="download" size={16} />Sync to Octatrack</button>}</>}
         {step === 'loading' && !preparing && progress < 1 && <button type="button" className="button button-quiet" onClick={() => link.cancel()}>Cancel</button>}
         {step === 'trial' && <><button type="button" className="button button-quiet load-undo" disabled={status === 'finishing'} onClick={() => { ending.current = 'undone'; void link.undo() }}>Undo → {undoName ?? 'Previous modules'}</button>
