@@ -47,7 +47,7 @@ export function SubmissionPage({ moduleId = '', machine: initialMachine }: { mod
       <StarterPrompts login={login} repository={repository} task={task} machine={machine} onMachine={setMachine} initialModule={module?.sourcePath} />
       <details className="developer-guide-details developer-setup">
         <summary>Need to set up your fork?</summary>
-        <div className="developer-setup-content"><div><p>Fork, clone and open the folder in your coding agent. No GitHub account or agent yet? Paste the prompt into ChatGPT, Gemini or Claude and it walks you through setup. Node 24; Octatrack native builds also need Python 3.10+, Docker and your own OS 1.40C.</p>
+        <div className="developer-setup-content"><div><p>Fork, clone and open the folder in your coding agent. No GitHub account or agent yet? Paste the prompt into your AI assistant and it walks you through setup. Node 24; Octatrack native builds also need Python 3.10+, Docker and your own OS 1.40C.</p>
           <p>Test on your own unit where you can: on the Octatrack your agent drives it over USB through the <a href={repository + '/blob/main/docs/DEVELOPER_WORKFLOW.md#your-development-setup'} target="_blank" rel="noreferrer">developer MCP ↗</a>, which also reaches the site. Without a unit, the emulators get you started, though they only approximate the instrument.</p>
           <a className="button button-quiet" href={repository + '/fork'} target="_blank" rel="noreferrer">Fork on GitHub ↗</a>
           <label className="starter-field"><span>Your GitHub login <small>optional</small></span><input value={login} onChange={event => setLogin(event.target.value)} placeholder="your-github-login" autoCapitalize="off" autoCorrect="off" spellCheck={false} /></label>
