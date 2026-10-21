@@ -245,7 +245,8 @@ void modwerk_fxmap_write(uint32_t file)
         char line[64];
         unsigned n = 0;
         for (const char *p = LINE; *p; ++p) line[n++] = *p;
-        if (k >= 10u) line[n++] = (char)('0' + k / 10u);
+        if (k >= 100u) line[n++] = (char)('0' + k / 100u); /* 100-127 at 128 ids */
+        if (k >= 10u) line[n++] = (char)('0' + k / 10u % 10u);
         line[n++] = (char)('0' + k % 10u);
         line[n++] = ':';
         for (int shift = 28; shift >= 0; shift -= 4) line[n++] = "0123456789abcdef"[MAP->e[k].module >> shift & 15u];

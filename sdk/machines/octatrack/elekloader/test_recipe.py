@@ -311,6 +311,10 @@ class RuntimeSlotTests(unittest.TestCase):
             with self.subTest(test):
                 self.host_test(test, defines=('-DMODWERK_FX_IDS=128u',))
 
+    def test_handle_map_past_99_on_the_host(self):
+        # fxmap.c: a saved project keeps handles 100-127 (three digits in its '#MODWERK_FX=' lines).
+        self.host_test('test_fxmap.c', defines=('-DMODWERK_FX_IDS=128u',))
+
     def test_allocator_move_on_the_host(self):
         """build_core.py's edits to Octabam's allocator, applied to copies, with test_move.c."""
         import importlib.util, pathlib, shutil, subprocess, tempfile

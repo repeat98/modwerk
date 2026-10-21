@@ -103,7 +103,8 @@ An inventory of every 32-wide site (12 October 2026, about 120 sites) found thes
   16 bits; a package carries its preferred id in one byte.
 - **Battery RAM.** The handle map (`fxmap.c`, 0x100fe000) grows from 780 to 3,084 bytes at 128 ids, still below
   the crash record at 0x100ff800 (checked at compile time); give it a new magic so an old map is dropped on purpose, not by a checksum miss. The
-  `#MODWERK_FX=` lines keep their format (two-digit ids); an older base ignores lines with ids of 32 and up.
+  `#MODWERK_FX=` lines keep their format, the id in decimal (three digits from 100; until the 21 October 2026
+  fix the writer printed two, so a handle of 100-127 was not saved); an older base ignores lines with ids of 32 and up.
 - **The DSP's saved region** is two words per id at the arena's head (`DL_CODE_START`, `SAVED`, the receiver's
   `#>64`). Only stock's 32 ids have originals to keep: ids from 32 up go back to the null stub, so the region stays
   64 words and the code arena keeps its size. The receiver's `r1+32` (proc = init + 32) becomes the table width.
