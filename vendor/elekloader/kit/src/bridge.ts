@@ -3,6 +3,7 @@
 // names, arguments and results, so a page that ran the Python in Pyodide runs this instead unchanged. Files live in
 // a Store under the same paths (/work/stock, /work/mods, /work/core, /work/out); nothing here reads anything else or
 // talks to a network.
+import type { Lock } from './store.ts'
 import { isAscii, sha } from './bytes.ts'
 import { type Device, type Release, devices, linkable, supported } from './devices.ts'
 import { EXTS, ModError } from './elemod.ts'
@@ -149,7 +150,7 @@ export class Bridge {
 
   /** Build, verify and save into /work/out, as the window does. -> the facts the window shows, every file written
    * (with its bytes), the log with its times. */
-  async build(args: { enabled: string[]; version: string; name: string }, progress?: (line: string) => void) {
+  async build(args: { enabled: string[]; version: string; name: string; store?: Lock | null }, progress?: (line: string) => void) {
     if (!this.model.stock.ok) return { ok: false, error: 'Choose your stock firmware first' }
     const v = args.version
     if (v && !isAscii(v)) return { ok: false, error: this.versionProblem(v) }
@@ -164,7 +165,8 @@ export class Bridge {
     }
     let r
     try {
-      r = await this.model.build([...args.enabled].sort((a, b) => (a < b ? -1 : a > b ? 1 : 0)), args.version || null, OUT + '/' + name, say)
+      r = await this.model.build([...args.enabled].sort((a, b) => (a < b ? -1 : a > b ? 1 : 0)), args.version || null, OUT + '/' + name, say,
+        args.store ?? null)
     } catch (e) {
       if (e instanceof PatchError) return { ok: false, error: e.message, log, seconds: Math.round((now() - t0) / 10) / 100 }
       throw e
@@ -180,6 +182,8 @@ export class Bridge {
       // what the window's "Firmware built" dialog shows (gui.LoaderModel.build)
       sha256: r.sha256, bytes: r.bytes, version: r.version, flash_end: r.flash_end, headroom: r.headroom,
       gap: r.gap, inplace: r.inplace, mods: r.mods, untouched: r.untouched, recovery: this.model.dev!.recovery,
+      // a core with mod storage: the lockfile to keep for the next build
+      store: r.man.store ?? null,
     }
   }
 

@@ -169,8 +169,22 @@ export const ANALOG_RYTM_MK2: Device = {
     + 'then send the stock .syx over MIDI DIN (not USB)',
 }
 
+export const ANALOG_FOUR_MK2: Device = {
+  ...base,
+  key: 'analog-four-mk2', name: 'Analog Four MKII', sysexId: 0x0b,
+  releases: [
+    rel('1.56', '5aea489db3e747547f71d5e08a2d20253149fe6258defad60306402d2fc23cb5',
+      '748fec15ddc61bc3ff66047facba74328934c5fb59f427ddaf34a4e2629a474c', 2500408),
+  ],
+  stage: 0x40200000, flashAt: 0x80000, flashLimit: 0x300000,
+  areas: { ddr: [0x47be0000, 0x47c00000] },
+  ddr: [0x47be0000, 0x47c00000],
+  recovery: 'hold FUNC while powering on for the STARTUP menu, press TRIG 4 (OS UPGRADE), '
+    + 'then send the stock .syx over MIDI DIN (not USB)',
+}
+
 const DEVICES: Device[] = [DIGITAKT_MK1, DIGITAKT_MK2, DIGITONE_MK1, OCTATRACK, MODEL_CYCLES, MODEL_SAMPLES,
-  ANALOG_RYTM_MK2]
+  ANALOG_RYTM_MK2, ANALOG_FOUR_MK2]
 
 export const devices = (): Device[] => DEVICES
 

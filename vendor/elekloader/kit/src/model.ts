@@ -10,6 +10,7 @@ import { type Mod2, ddrFor, link } from './link.ts'
 import { apply, type Mod } from './elemod.ts'
 import { basename, build as patchBuild, dirname, loadAny, save } from './patch.ts'
 import { PyException, truthy } from './py.ts'
+import type { Lock } from './store.ts'
 
 /** Python's OSError: a file that is not there. */
 export class OSError_ extends PyException {}
@@ -302,9 +303,10 @@ export class LoaderModel {
   }
 
   /** Build, verify and write outPath (+ .json, + .map.json) into the store. -> facts and the files. */
-  async build(paths: string[], version: string | null, outPath: string, log: (line: string) => void = () => {}) {
+  async build(paths: string[], version: string | null, outPath: string, log: (line: string) => void = () => {},
+    lock: Lock | null = null) {
     const [outputs, man] = await patchBuild({ path: this.stock.path, data: this.store.read(this.stock.path) },
-      paths.map(p => ({ path: p, data: this.store.read(p) })), version || null, false, log)
+      paths.map(p => ({ path: p, data: this.store.read(p) })), version || null, false, log, lock)
     const files = save(outputs!, man, outPath)
     for (const f of files) this.store.write(f.path, f.data)
     const f = man.output
