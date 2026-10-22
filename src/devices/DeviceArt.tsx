@@ -2,7 +2,8 @@ import type { DeviceArt as Art } from './registry'
 
 // Original schematic line art: a generic box with a screen, encoders, keys and pads. Not a likeness of any product.
 export function DeviceArt({ art, label }: { art: Art; label?: string }) {
-  if (art.body === 'pedal') return <PedalArt art={art} label={label} />
+  if (art.body === 'pedal') return <StompArt art={art} label={label} />
+  if (art.body === 'floor') return <FloorArt label={label} />
   const width = art.body === 'compact' ? 200 : art.body === 'box' ? 150 : art.body === 'model' ? 180 : 240
   const keys = art.body === 'keys'
   const height = keys ? 150 : art.body === 'box' ? 120 : 120
@@ -42,17 +43,45 @@ export function DeviceArt({ art, label }: { art: Art; label?: string }) {
   )
 }
 
-// A generic floor pedal seen from above: a small screen, a row of knobs and a footswitch at the bottom.
-function PedalArt({ art, label }: { art: Art; label?: string }) {
-  const knobs = art.knobs ?? 3, width = 70 + knobs * 34, height = 120, x0 = (240 - width) / 2, y0 = (160 - height) / 2
-  const switches = 1, switchStep = width
+// A MultiStomp-style stompbox seen from above, in its real proportions: a screen showing the parameter dials, a strip of
+// knobs, a status LED and one footswitch in its ring. No logos or printed panel graphics.
+function StompArt({ art, label }: { art: Art; label?: string }) {
+  const knobs = art.knobs ?? 3, w = 88, h = 146, x0 = (240 - w) / 2, y0 = (160 - h) / 2, cx = 120, cy = y0 + 112
   return (
     <svg className="device-art" viewBox="0 0 240 160" fill="none" role={label ? 'img' : undefined} aria-label={label} aria-hidden={label ? undefined : true}>
-      <rect className="device-body" x={x0} y={y0} width={width} height={height} rx="9" />
-      <rect className="device-screen" x={x0 + 14} y={y0 + 14} width={width - 28} height="22" rx="2" />
-      <path className="device-screen-line" d={`M${x0 + 20} ${y0 + 28}h${(width - 40) * .3}l6-8 6 12 5-6h${(width - 40) * .3}`} />
-      {Array.from({ length: knobs }, (_, i) => <circle key={'k' + i} className="device-knob" cx={x0 + width / 2 + (i - (knobs - 1) / 2) * 34} cy={y0 + 58} r="9" />)}
-      {Array.from({ length: switches }, (_, i) => <circle key={'s' + i} className="device-encoder" cx={x0 + switchStep * (i + .5)} cy={y0 + 100} r="10" />)}
+      <path className="device-body" d={`M${x0 + 9} ${y0}H${x0 + w - 9}L${x0 + w} ${y0 + 9}V${y0 + h - 6}Q${x0 + w} ${y0 + h} ${x0 + w - 6} ${y0 + h}H${x0 + 6}Q${x0} ${y0 + h} ${x0} ${y0 + h - 6}V${y0 + 9}Z`} />
+      <rect className="device-screen" x={cx - 26} y={y0 + 12} width="52" height="32" rx="2" />
+      {Array.from({ length: knobs }, (_, i) => { const x = cx + (i - (knobs - 1) / 2) * 15, y = y0 + 29, a = [-.7, .4, 1.1][i % 3]; return <path key={'d' + i} className="device-screen-line" d={`M${x - 3.5} ${y + 3.5}A5 5 0 1 1 ${x + 3.5} ${y + 3.5}M${x} ${y}l${(4 * Math.sin(a)).toFixed(2)} ${(-4 * Math.cos(a)).toFixed(2)}`} /> })}
+      <rect className="device-panel" x={x0 + 4} y={y0 + 51} width={w - 8} height="20" rx="3" />
+      {Array.from({ length: knobs }, (_, i) => <circle key={'k' + i} className="device-knob" cx={x0 + w * (i + .5) / knobs} cy={y0 + 61} r="7" />)}
+      <circle className="device-led" cx={x0 + 19} cy={y0 + 94} r="2.2" />
+      <circle className="device-pad" cx={cx} cy={cy} r="22" />
+      <path className="device-panel" d={[45, 135, 225, 315].map(deg => { const r = deg * Math.PI / 180; return `M${(cx + 13 * Math.cos(r)).toFixed(2)} ${(cy + 13 * Math.sin(r)).toFixed(2)}L${(cx + 22 * Math.cos(r)).toFixed(2)} ${(cy + 22 * Math.sin(r)).toFixed(2)}` }).join('')} />
+      <circle className="device-encoder" cx={cx} cy={cy} r="10" />
+    </svg>
+  )
+}
+
+// A two-footswitch floor unit seen from above (G1on layout): screen, parameter knob and keys on the left, a cursor pad and
+// two keys on the right, and two ridged footswitch plates below. No logos or printed panel graphics.
+function FloorArt({ label }: { label?: string }) {
+  const w = 140, h = 148, x0 = (240 - w) / 2, y0 = (160 - h) / 2, mid = x0 + w / 2, split = y0 + 72, row = y0 + 59
+  const ridges = (x: number, narrowing: boolean) => Array.from({ length: 6 }, (_, i) => { const width = narrowing ? 46 - i * 6.4 : 14 + i * 6.4; return <rect key={x + '-' + i} className="device-panel" x={x - width / 2} y={split + 14 + i * 9.5} width={width} height="4" rx="2" /> })
+  return (
+    <svg className="device-art" viewBox="0 0 240 160" fill="none" role={label ? 'img' : undefined} aria-label={label} aria-hidden={label ? undefined : true}>
+      <rect className="device-body" x={x0} y={y0} width={w} height={h} rx="6" />
+      <path className="device-body" d={`M${mid} ${y0}V${y0 + h}M${x0} ${split}H${x0 + w}`} />
+      <rect className="device-screen" x={x0 + 15} y={y0 + 16} width="40" height="30" rx="2" />
+      <path className="device-screen-line" d={`M${x0 + 20} ${y0 + 34}h10l5-8 5 12 4-6h6`} />
+      <circle className="device-encoder" cx={x0 + 17} cy={row} r="5.5" />
+      <circle className="device-knob" cx={x0 + 35} cy={row} r="8" />
+      <circle className="device-encoder" cx={x0 + 53} cy={row} r="5.5" />
+      <rect className="device-pad" x={x0 + 90} y={y0 + 16} width="30" height="30" rx="4" />
+      <path className="device-panel" d={`M${x0 + 92} ${y0 + 18}l26 26M${x0 + 118} ${y0 + 18}l-26 26`} />
+      <circle className="device-encoder" cx={x0 + 92} cy={row} r="5.5" />
+      <circle className="device-encoder" cx={x0 + 118} cy={row} r="5.5" />
+      {ridges(x0 + 35, true)}
+      {ridges(x0 + 105, false)}
     </svg>
   )
 }

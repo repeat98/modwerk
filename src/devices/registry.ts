@@ -11,7 +11,7 @@ export type StepState = 'done' | 'started' | 'open'
 export type DeviceStepId = 'format' | 'rebuild' | 'boot' | 'core' | 'load' | 'mods'
 
 export type DeviceArt = {
-  body: 'compact' | 'wide' | 'keys' | 'box' | 'model' | 'pedal'
+  body: 'compact' | 'wide' | 'keys' | 'box' | 'model' | 'pedal' | 'floor'
   encoders: number
   trigs: number
   pads?: number

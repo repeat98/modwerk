@@ -12,7 +12,7 @@ export const FAMILY_STEP_IDS = {
 export const MACHINE_STEP_IDS = ['format', 'rebuild', 'boot', 'core', 'load', 'mods'] as const
 export const MACHINE_STEP_STATES = ['done', 'started', 'open'] as const
 export const MACHINE_PLATFORMS = ['octabam', 'elemod'] as const
-export const MACHINE_BODIES = ['compact', 'wide', 'keys', 'box', 'model', 'pedal'] as const
+export const MACHINE_BODIES = ['compact', 'wide', 'keys', 'box', 'model', 'pedal', 'floor'] as const
 
 export type MachineFamily = typeof MACHINE_FAMILIES[number]
 export type MachineStatus = typeof MACHINE_STATUSES[number]

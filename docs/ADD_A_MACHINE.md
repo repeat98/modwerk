@@ -16,7 +16,7 @@ A Zoom MultiStomp pedal (`family: "zoom"`) loads separate effect files on its st
 2. **Own effect runs.** An effect built from original source loads on the stock firmware, plays and is removed again.
 3. **First mods.** Reviewed effects with documentation, licences and evidence.
 
-A Zoom firmware release lists its version with `"files": []`: Zoom ships its OS as an updater app and no mod touches it. A Zoom pedal stays locked for modules until a `zdl` module contract exists ([proposal](ZOOM_MULTISTOMP.md)). The profiles use the `pedal` art body.
+A Zoom firmware release lists its version with `"files": []`: Zoom ships its OS as an updater app and no mod touches it. A Zoom pedal stays locked for modules until a `zdl` module contract exists ([proposal](ZOOM_MULTISTOMP.md)). MultiStomp profiles use the `pedal` art body (an upright stompbox) and the G1on series uses `floor` (two footswitch plates).
 
 ## Never share firmware
 

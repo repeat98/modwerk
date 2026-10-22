@@ -67,7 +67,8 @@ Done (22 October 2026):
 2. Steps per family: Zoom pedals have `format`, `load` and `mods` only.
 3. A Zoom firmware release lists no stock file (Zoom ships firmware as an
    updater app, not `.syx`/`.bin`).
-4. `art.body` gains `pedal`: an original line drawing, never a product photo.
+4. `art.body` gains `pedal` (the MultiStomp stompbox) and `floor` (the G1on
+   series): original line drawings of each layout, never a product photo.
 
 Still to come: `MACHINE_PLATFORMS` gains `zdl`, with its module contract.
 

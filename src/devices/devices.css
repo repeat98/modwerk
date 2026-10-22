@@ -34,6 +34,8 @@
 .device-art .device-fader path { stroke: #6d6d7a; }
 .device-art .device-fader rect { stroke: #c7a16c; fill: var(--surface-hover); }
 .device-art .device-keys rect { stroke: #6d6d7a; fill: #e6e6ee10; stroke-width: 1; }
+.device-art .device-panel { stroke: #6d6d7a; fill: var(--surface-hover); stroke-width: 1; }
+.device-art .device-led { stroke: none; fill: #c7a16c; }
 
 .device-hero { display: grid; grid-template-columns: minmax(220px, 340px) minmax(0, 1fr); gap: 32px; align-items: center; margin-bottom: 30px; }
 .device-hero-art { display: grid; place-items: center; border: 1px solid var(--line); border-radius: 12px; background: radial-gradient(circle at 50% 30%, #2d2d36, var(--surface) 72%); aspect-ratio: 4 / 3; }

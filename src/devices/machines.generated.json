@@ -963,10 +963,10 @@
       "mods": "open"
     },
     "art": {
-      "body": "pedal",
+      "body": "floor",
       "encoders": 0,
       "trigs": 0,
-      "knobs": 3
+      "knobs": 1
     },
     "variants": [
       "G1on",
