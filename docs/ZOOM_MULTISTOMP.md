@@ -1,9 +1,9 @@
 # Proposal: Zoom MultiStomp pedals (ZDL effects)
 
-Status: **proposal, with the owner's first answers**. Nothing here changes the site, the
-machine registry or the builder. The draft profiles in
-[zoom-multistomp/](zoom-multistomp/) sit outside `sdk/machines/` on purpose:
-they need contract changes the owner decides first.
+Status: **proposal, with the owner's first answers; the machine contract part is in.** The
+four pedals have profiles in `sdk/machines/zoom-*/` (family `zoom`, all in
+research) and machine pages on the site. Modwerk lists no ZDL effects yet:
+that needs the `zdl` platform and module contract (steps 3 onward below).
 
 Source project: [themanro/ZoomMultistompZDL](https://github.com/themanro/ZoomMultistompZDL)
 (MIT), a fork of [repeat98/ZoomMultistompZDL](https://github.com/repeat98/ZoomMultistompZDL),
@@ -58,16 +58,18 @@ own pipelines.
 | Resource rules | Effect ID unique per pedal (the project reserves 403-499, 500-699 NAM, 700-899 cab, 900-957), file name 8 characters unique, file size cap (~32 KB proven) | A per-family ID ledger, like Stomphacks' author ranges for ZD2 |
 | Evidence | Owner hardware tests per release, user reports, emulator/host parity | Same evidence rules apply |
 
-## Contract changes the drafts need
+## Contract changes
 
-1. A `vendor` (or `family`) field, so the Zoom pedals can be shown as one
-   family (see the owner's answers below).
-2. `MACHINE_PLATFORMS` gains `zdl`.
-3. Steps per platform: for `zdl`, `format`, `load` and `mods`, with
-   `rebuild` and `core` marked not applicable rather than `open`.
-4. `firmware.releases[].files` allows no stock file for platforms that never
-   touch the OS (Zoom ships firmware as an updater app, not `.syx`/`.bin`).
-5. `art.body` gains `pedal`, with knob count and footswitches.
+Done (22 October 2026):
+
+1. A `family` field (`elektron` by default, or `zoom`); the machine menu shows
+   the Zoom pedals as one group.
+2. Steps per family: Zoom pedals have `format`, `load` and `mods` only.
+3. A Zoom firmware release lists no stock file (Zoom ships firmware as an
+   updater app, not `.syx`/`.bin`).
+4. `art.body` gains `pedal`: an original line drawing, never a product photo.
+
+Still to come: `MACHINE_PLATFORMS` gains `zdl`, with its module contract.
 
 ## Owner's answers (Janik, 2026-10-20)
 
@@ -78,9 +80,9 @@ own pipelines.
    family, with compatibility evidence recorded per pedal. Known limits stay
    per pedal: DSP budget, slot count, firmware version, and which effects have
    been confirmed where.
-3. **Licensing:** still open. The project is MIT; the upstream toolchain
-   carries no licence file and is the owner's own; Matujuice effects are MIT
-   by their author.
+3. **Licensing:** the project is MIT; the upstream toolchain
+   (repeat98/ZoomMultistompZDL) is MIT since October 2026; Matujuice effects
+   are MIT by their author.
 4. **Install:** keep Zoom Effect Manager as the **fallback**. The primary path
    should be a direct install from the browser; that needs the effect-transfer
    protocol, which is being researched on the project side (read-only first:
@@ -89,7 +91,7 @@ own pipelines.
 ## Proposed sequence
 
 1. Agree the contract changes above, with the Zoom pedals as one family.
-2. Promote the draft profiles to `sdk/machines/` with the agreed fields.
+2. ~~Promote the draft profiles to `sdk/machines/` with the agreed fields.~~ Done.
 3. A `zdl` module contract for prebuilt effects (binary hash, source path,
    knobs, DSP cost, effect ID, evidence), then a first module set: the 22-effect
    pack.

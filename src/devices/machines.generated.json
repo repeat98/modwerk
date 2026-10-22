@@ -4,6 +4,7 @@
     "id": "octatrack",
     "order": 10,
     "name": "Octatrack",
+    "family": "elektron",
     "status": "available",
     "summary": "Effects, machines, MIDI and USB modules built on octabam.",
     "steps": {
@@ -63,6 +64,7 @@
     "id": "digitakt",
     "order": 20,
     "name": "Digitakt",
+    "family": "elektron",
     "status": "preview",
     "summary": "New SRC machines, a slice editor and system diagnostics.",
     "steps": {
@@ -153,6 +155,7 @@
     "id": "digitone",
     "order": 30,
     "name": "Digitone",
+    "family": "elektron",
     "status": "preview",
     "summary": "Parameter slots, mod pages, project data and a Mod Menu for FM mods.",
     "steps": {
@@ -239,6 +242,7 @@
     "id": "digitakt-ii",
     "order": 40,
     "name": "Digitakt II",
+    "family": "elektron",
     "status": "research",
     "summary": "Experimental OS 1.17 support exists in elekloader, with a core and released perform mods. Modwerk integration and qualification are not complete.",
     "steps": {
@@ -328,6 +332,7 @@
     "id": "digitone-ii",
     "order": 50,
     "name": "Digitone II",
+    "family": "elektron",
     "status": "research",
     "summary": "Shares the Digitakt II platform and its sealed OS file.",
     "steps": {
@@ -355,6 +360,7 @@
     "id": "syntakt",
     "order": 60,
     "name": "Syntakt",
+    "family": "elektron",
     "status": "research",
     "summary": "OS 1.40, 1.40A and 1.42 documented; 1.40A and 1.42 rebuilt byte-identical; modified builds boot on a unit. Core started: a boot probe links and verifies locally; no SDRAM for mods yet.",
     "steps": {
@@ -436,6 +442,7 @@
     "id": "tonverk",
     "order": 70,
     "name": "Tonverk",
+    "family": "elektron",
     "status": "open",
     "summary": "Multitimbral sampler. No public firmware research yet.",
     "steps": {
@@ -456,6 +463,7 @@
     "id": "analog-rytm-mkii",
     "order": 80,
     "name": "Analog Rytm",
+    "family": "elektron",
     "status": "research",
     "summary": "OS 1.73 and 1.74 formats rebuilt byte-identical; modified 1.73 and a from-source 1.74 OS boot on hardware; stock recovers both over MIDI DIN; an elemod core runs on 1.73 hardware.",
     "steps": {
@@ -562,6 +570,7 @@
     "id": "analog-rytm-mki",
     "order": 90,
     "name": "Analog Rytm",
+    "family": "elektron",
     "status": "open",
     "summary": "The original Rytm. No public firmware research yet.",
     "steps": {
@@ -586,6 +595,7 @@
     "id": "analog-four-mkii",
     "order": 100,
     "name": "Analog Four",
+    "family": "elektron",
     "status": "open",
     "summary": "Four-voice analog synthesizer. No public firmware research yet.",
     "steps": {
@@ -609,6 +619,7 @@
     "id": "analog-four-mki",
     "order": 110,
     "name": "Analog Four",
+    "family": "elektron",
     "status": "open",
     "summary": "The original Four. No public firmware research yet.",
     "steps": {
@@ -632,6 +643,7 @@
     "id": "analog-keys",
     "order": 120,
     "name": "Analog Keys",
+    "family": "elektron",
     "status": "research",
     "summary": "OS 1.56 is an ELE2 image whose MAIN OS section rebuilds byte-identically. A modified OS boots: ours in rytm-emu, and a third party's on A4/Keys MK1 hardware, 2026-10-17.",
     "steps": {
@@ -684,6 +696,7 @@
     "id": "analog-heat",
     "order": 130,
     "name": "Analog Heat",
+    "family": "elektron",
     "status": "open",
     "summary": "Stereo analog sound processor. No public firmware research yet.",
     "steps": {
@@ -710,6 +723,7 @@
     "id": "model-samples",
     "order": 140,
     "name": "Model:Samples",
+    "family": "elektron",
     "status": "open",
     "summary": "Six-track sample groovebox. No public firmware research yet.",
     "steps": {
@@ -732,6 +746,7 @@
     "id": "model-cycles",
     "order": 150,
     "name": "Model:Cycles",
+    "family": "elektron",
     "status": "research",
     "summary": "Six-track FM groovebox. Its OS file is documented and rebuilt byte for byte, and modified builds boot on units. No shared core yet.",
     "steps": {
@@ -776,6 +791,7 @@
     "id": "machinedrum",
     "order": 160,
     "name": "Machinedrum",
+    "family": "elektron",
     "status": "open",
     "summary": "Classic digital drum machine. No public firmware research yet.",
     "steps": {
@@ -796,6 +812,7 @@
     "id": "monomachine",
     "order": 170,
     "name": "Monomachine",
+    "family": "elektron",
     "status": "open",
     "summary": "Classic six-track synthesizer. No public firmware research yet.",
     "steps": {
@@ -810,5 +827,179 @@
       "encoders": 8,
       "trigs": 16
     }
+  },
+  {
+    "schemaVersion": 1,
+    "id": "zoom-ms-70cdr",
+    "order": 200,
+    "name": "MS-70CDR",
+    "family": "zoom",
+    "status": "research",
+    "summary": "Main target of ZoomMultistompZDL: about 30 custom effects, NAM and cab loaders and a patch editor, tested on firmware 2.10. Modwerk does not list ZDL effects yet.",
+    "steps": {
+      "format": "done",
+      "load": "done",
+      "mods": "open"
+    },
+    "art": {
+      "body": "pedal",
+      "encoders": 0,
+      "trigs": 0,
+      "knobs": 3
+    },
+    "firmware": {
+      "releases": [
+        {
+          "version": "2.10",
+          "files": []
+        }
+      ],
+      "flash": "Effects are installed with Zoom Effect Manager 2.3.3 or later over USB; the OS is not modified.",
+      "recovery": "Remove the effect in Effect Manager. If a bad effect freezes the pedal at boot, run All Initialize (hold the leftmost knob while powering on), then remove the effect."
+    },
+    "research": [
+      {
+        "label": "ZoomMultistompZDL",
+        "url": "https://github.com/themanro/ZoomMultistompZDL",
+        "note": "MIT. ZDL linker, ABI notes, DSP safety rules, effects, NAM/cab template loaders, Web MIDI patch editor, Ziddle emulator tests."
+      },
+      {
+        "label": "repeat98/ZoomMultistompZDL",
+        "url": "https://github.com/repeat98/ZoomMultistompZDL",
+        "note": "The upstream reverse-engineered toolchain the project builds on."
+      }
+    ]
+  },
+  {
+    "schemaVersion": 1,
+    "id": "zoom-ms-50g",
+    "order": 210,
+    "name": "MS-50G",
+    "family": "zoom",
+    "status": "research",
+    "summary": "Same ZDL format. NAM and cab effects confirmed by a user on firmware 3.10; the 22-effect pack is unconfirmed.",
+    "steps": {
+      "format": "done",
+      "load": "done",
+      "mods": "open"
+    },
+    "art": {
+      "body": "pedal",
+      "encoders": 0,
+      "trigs": 0,
+      "knobs": 3
+    },
+    "firmware": {
+      "releases": [
+        {
+          "version": "3.10",
+          "files": []
+        }
+      ],
+      "flash": "Effects are installed with Zoom Effect Manager 2.3.3 or later over USB; the OS is not modified.",
+      "recovery": "Remove the effect in Effect Manager. If a bad effect freezes the pedal at boot, run All Initialize (hold the leftmost knob while powering on), then remove the effect."
+    },
+    "research": [
+      {
+        "label": "ZoomMultistompZDL",
+        "url": "https://github.com/themanro/ZoomMultistompZDL",
+        "note": "MIT. ZDL linker, ABI notes, DSP safety rules, effects, NAM/cab template loaders, Web MIDI patch editor, Ziddle emulator tests."
+      },
+      {
+        "label": "repeat98/ZoomMultistompZDL",
+        "url": "https://github.com/repeat98/ZoomMultistompZDL",
+        "note": "The upstream reverse-engineered toolchain the project builds on."
+      },
+      {
+        "label": "Issue #5",
+        "url": "https://github.com/themanro/ZoomMultistompZDL/issues/5",
+        "note": "MS-50G 3.10: NAM full rate and Eco, CabIR and patch editor writes reported working."
+      }
+    ]
+  },
+  {
+    "schemaVersion": 1,
+    "id": "zoom-ms-60b",
+    "order": 220,
+    "name": "MS-60B",
+    "family": "zoom",
+    "status": "research",
+    "summary": "Same ZDL family; custom effects unconfirmed on stock MS-60B firmware.",
+    "steps": {
+      "format": "done",
+      "load": "open",
+      "mods": "open"
+    },
+    "art": {
+      "body": "pedal",
+      "encoders": 0,
+      "trigs": 0,
+      "knobs": 3
+    },
+    "research": [
+      {
+        "label": "ZoomMultistompZDL",
+        "url": "https://github.com/themanro/ZoomMultistompZDL",
+        "note": "MIT. ZDL linker, ABI notes, DSP safety rules, effects, NAM/cab template loaders, Web MIDI patch editor, Ziddle emulator tests."
+      },
+      {
+        "label": "repeat98/ZoomMultistompZDL",
+        "url": "https://github.com/repeat98/ZoomMultistompZDL",
+        "note": "The upstream reverse-engineered toolchain the project builds on."
+      }
+    ]
+  },
+  {
+    "schemaVersion": 1,
+    "id": "zoom-g1on",
+    "order": 230,
+    "name": "G1on series",
+    "family": "zoom",
+    "status": "research",
+    "summary": "Same ZDL family. NAM loader effects reported working on a G1Xon 1.21; other models unconfirmed.",
+    "steps": {
+      "format": "done",
+      "load": "started",
+      "mods": "open"
+    },
+    "art": {
+      "body": "pedal",
+      "encoders": 0,
+      "trigs": 0,
+      "knobs": 3
+    },
+    "variants": [
+      "G1on",
+      "G1Xon",
+      "B1on",
+      "B1Xon"
+    ],
+    "firmware": {
+      "releases": [
+        {
+          "version": "1.21",
+          "files": []
+        }
+      ],
+      "flash": "Effects are installed with Zoom Effect Manager 2.3.3 or later over USB; the OS is not modified.",
+      "recovery": "Remove the effect in Effect Manager. If a bad effect freezes the pedal at boot, run All Initialize (hold the leftmost knob while powering on), then remove the effect."
+    },
+    "research": [
+      {
+        "label": "ZoomMultistompZDL",
+        "url": "https://github.com/themanro/ZoomMultistompZDL",
+        "note": "MIT. ZDL linker, ABI notes, DSP safety rules, effects, NAM/cab template loaders, Web MIDI patch editor, Ziddle emulator tests."
+      },
+      {
+        "label": "repeat98/ZoomMultistompZDL",
+        "url": "https://github.com/repeat98/ZoomMultistompZDL",
+        "note": "The upstream reverse-engineered toolchain the project builds on."
+      },
+      {
+        "label": "Issue #6",
+        "url": "https://github.com/themanro/ZoomMultistompZDL/issues/6",
+        "note": "G1Xon 1.21: NAM loader effects work; the patch editor reads banks only up to E."
+      }
+    ]
   }
 ]

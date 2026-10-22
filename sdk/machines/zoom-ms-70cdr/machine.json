@@ -1,11 +1,21 @@
 {
   "schemaVersion": 1,
-  "id": "zoom-ms-50g",
-  "order": 210,
-  "name": "MS-50G",
-  "vendor": "Zoom",
+  "id": "zoom-ms-70cdr",
+  "order": 200,
+  "name": "MS-70CDR",
+  "family": "zoom",
   "status": "research",
-  "summary": "Same ZDL format. NAM and cab effects confirmed by a user on firmware 3.10; the 22-effect pack is unconfirmed.",
+  "summary": "Main target of ZoomMultistompZDL: about 30 custom effects, NAM and cab loaders and a patch editor, tested on firmware 2.10. Modwerk does not list ZDL effects yet.",
+  "firmware": {
+    "releases": [
+      {
+        "version": "2.10",
+        "files": []
+      }
+    ],
+    "flash": "Effects are installed with Zoom Effect Manager 2.3.3 or later over USB; the OS is not modified.",
+    "recovery": "Remove the effect in Effect Manager. If a bad effect freezes the pedal at boot, run All Initialize (hold the leftmost knob while powering on), then remove the effect."
+  },
   "steps": {
     "format": "done",
     "load": "done",
@@ -21,11 +31,6 @@
       "label": "repeat98/ZoomMultistompZDL",
       "url": "https://github.com/repeat98/ZoomMultistompZDL",
       "note": "The upstream reverse-engineered toolchain the project builds on."
-    },
-    {
-      "label": "Issue #5",
-      "url": "https://github.com/themanro/ZoomMultistompZDL/issues/5",
-      "note": "MS-50G 3.10: NAM full rate and Eco, CabIR and patch editor writes reported working."
     }
   ],
   "art": {

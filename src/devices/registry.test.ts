@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { DEVICES, DEVICES_BY_ID, DEVICE_STEPS } from './registry'
+import { DEVICES, DEVICES_BY_ID, deviceSteps, readyForMods } from './registry'
+import { FAMILY_STEP_IDS } from './machine-contract'
 import { DIGI_MODS, estimateCombination } from './digi-mods'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
@@ -7,7 +8,20 @@ import { resolve } from 'node:path'
 describe('device registry', () => {
   it('has unique ids and a state for every step', () => {
     expect(new Set(DEVICES.map(device => device.id)).size).toBe(DEVICES.length)
-    for (const device of DEVICES) for (const step of DEVICE_STEPS) expect(device.steps[step.id]).toMatch(/^(done|started|open)$/)
+    for (const device of DEVICES) for (const step of deviceSteps(device)) expect(device.steps[step.id]).toMatch(/^(done|started|open)$/)
+  })
+
+  it('gives each family its own road, matching the contract', () => {
+    for (const device of DEVICES) expect(deviceSteps(device).map(step => step.id)).toEqual(FAMILY_STEP_IDS[device.family])
+    const zoom = DEVICES.filter(device => device.family === 'zoom')
+    expect(zoom.map(device => device.id)).toEqual(['zoom-ms-70cdr', 'zoom-ms-50g', 'zoom-ms-60b', 'zoom-g1on'])
+    for (const device of zoom) {
+      expect(device.steps.core).toBeUndefined()
+      expect(device.firmware?.file).toBeUndefined()
+      // No zdl module contract yet: the pedals stay locked even where an effect loads.
+      expect(readyForMods(device)).toBe(false)
+    }
+    expect(readyForMods(DEVICES_BY_ID.octatrack)).toBe(true)
   })
 
   it('shows firmware identities independently from module availability', () => {

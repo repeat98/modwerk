@@ -34,4 +34,20 @@ describe('machine profiles', () => {
     expect(() => parseMachineProfile({ ...octatrack(), id: 'all' })).toThrow('other than "all"')
     expect(() => parseMachineProfile({ ...octatrack(), dump: 'x' })).toThrow('unknown field')
   })
+
+  it('reads the family and its step set', () => {
+    const zoom = () => structuredClone(profiles.find(profile => profile.id === 'zoom-ms-70cdr'))
+    expect(parseMachineProfile(octatrack()).family).toBe('elektron')
+    expect(parseMachineProfile(zoom()).steps).toEqual({ format: 'done', load: 'done', mods: 'open' })
+    expect(() => parseMachineProfile({ ...zoom(), family: 'roland' })).toThrow('machine.family')
+    expect(() => parseMachineProfile({ ...zoom(), steps: { ...zoom().steps, core: 'open' } })).toThrow('unknown field')
+    expect(() => parseMachineProfile({ ...octatrack(), steps: { ...octatrack().steps, load: 'done' } })).toThrow('unknown field')
+    // A Zoom release names no stock file; an Elektron release must name one.
+    const withFile = zoom()
+    withFile.firmware.releases[0].files = octatrack().firmware.releases[0].files
+    expect(() => parseMachineProfile(withFile)).toThrow('machine.firmware.releases[0].files')
+    const noFile = octatrack()
+    noFile.firmware.releases[0].files = []
+    expect(() => parseMachineProfile(noFile)).toThrow('machine.firmware.releases[0].files')
+  })
 })

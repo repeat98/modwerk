@@ -1,20 +1,14 @@
 {
   "schemaVersion": 1,
-  "id": "zoom-g1on",
-  "order": 230,
-  "name": "G1on / B1on",
-  "vendor": "Zoom",
-  "variants": [
-    "G1on",
-    "G1Xon",
-    "B1on",
-    "B1Xon"
-  ],
+  "id": "zoom-ms-60b",
+  "order": 220,
+  "name": "MS-60B",
+  "family": "zoom",
   "status": "research",
-  "summary": "Same ZDL family. NAM loader effects reported working on a G1Xon 1.21; other models unconfirmed.",
+  "summary": "Same ZDL family; custom effects unconfirmed on stock MS-60B firmware.",
   "steps": {
     "format": "done",
-    "load": "started",
+    "load": "open",
     "mods": "open"
   },
   "research": [
@@ -27,11 +21,6 @@
       "label": "repeat98/ZoomMultistompZDL",
       "url": "https://github.com/repeat98/ZoomMultistompZDL",
       "note": "The upstream reverse-engineered toolchain the project builds on."
-    },
-    {
-      "label": "Issue #6",
-      "url": "https://github.com/themanro/ZoomMultistompZDL/issues/6",
-      "note": "G1Xon 1.21: NAM loader effects work; the patch editor reads banks only up to E."
     }
   ],
   "art": {

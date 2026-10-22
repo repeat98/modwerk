@@ -6,9 +6,12 @@ import { useSheetScrollLock } from '../hooks/useSheetScrollLock'
 import { useSheetFocus } from '../hooks/useSheetFocus'
 import { ALL_MACHINES, DEVICES, STATUS_LABELS, deviceHref, type DeviceProfile } from './registry'
 
+const hasMods = (device: DeviceProfile) => device.status === 'available' || device.status === 'preview'
+// The Zoom MultiStomp pedals stay together as one family, whatever their status.
 const GROUPS = [
-  { title: 'Mods available', match: (device: DeviceProfile) => device.status === 'available' || device.status === 'preview' },
-  { title: 'No mods yet', match: (device: DeviceProfile) => device.status === 'research' || device.status === 'open' },
+  { title: 'Mods available', match: (device: DeviceProfile) => device.family === 'elektron' && hasMods(device) },
+  { title: 'No mods yet', match: (device: DeviceProfile) => device.family === 'elektron' && !hasMods(device) },
+  { title: 'Zoom MultiStomp', match: (device: DeviceProfile) => device.family === 'zoom' },
 ]
 
 type MachineSwitcherProps = { current: DeviceProfile; all: boolean; counts: Record<string, number>; compact?: boolean; active?: boolean }

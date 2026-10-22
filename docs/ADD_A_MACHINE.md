@@ -1,6 +1,8 @@
 # Add a machine
 
-Every Elektron machine has a page on Modwerk. A machine gets mods by moving through five steps, each recorded in its profile at `sdk/machines/<id>/machine.json`:
+Every machine Modwerk knows about has a page. A machine gets mods by moving through its family's steps, each recorded in its profile at `sdk/machines/<id>/machine.json`. A profile's `family` is `elektron` (the default) or `zoom`.
+
+An Elektron machine moves through five steps:
 
 1. **Firmware file understood.** The OS file's container, packing and checksums are documented.
 2. **Stock file rebuilt exactly.** A writer rebuilds the stock OS file byte for byte from its own contents.
@@ -8,9 +10,17 @@ Every Elektron machine has a page on Modwerk. A machine gets mods by moving thro
 4. **Core with hooks.** A small core reserves memory and gives mods shared events, so several mods run together.
 5. **First mods.** Reviewed modules with documentation, licences and evidence.
 
+A Zoom MultiStomp pedal (`family: "zoom"`) loads separate effect files on its stock OS, which is never modified, so it has no image to rebuild or core to boot. It moves through three steps, `format`, `load` and `mods`:
+
+1. **Effect file understood.** The ZDL container, its ELF and the calling convention for the audio and knob code are documented.
+2. **Own effect runs.** An effect built from original source loads on the stock firmware, plays and is removed again.
+3. **First mods.** Reviewed effects with documentation, licences and evidence.
+
+A Zoom firmware release lists its version with `"files": []`: Zoom ships its OS as an updater app and no mod touches it. A Zoom pedal stays locked for modules until a `zdl` module contract exists ([proposal](ZOOM_MULTISTOMP.md)). The profiles use the `pedal` art body.
+
 ## Never share firmware
 
-Do not put OS files, memory dumps, disassembly listings or extracted Elektron code in a pull request, issue or forum post. Work from your own download of the stock OS. Share hashes, file structure, addresses, notes and your own code only.
+Do not put OS files, stock effects, memory dumps, disassembly listings or extracted Elektron or Zoom code in a pull request, issue or forum post. Work from your own download of the stock OS. Share hashes, file structure, addresses, notes and your own code only.
 
 ## Update a machine's progress
 
