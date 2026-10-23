@@ -38,7 +38,7 @@ Set a loop track to AUTO and play at any tempo; correct a mis-cut loop with FUNC
 - A tempo or correction change glides to the new shift (1/64 of the way each audio block, settled in about 140 ms) instead of stepping, as a turntable speeds up; a new sample, region or mode jumps straight to its own shift.
 - `ev_tick` copies each sound's mode for the interrupt and redraws when the SYNC mark changes; `ev_key` notes when SMPL opened the SAMPLE page; `ev_enc` takes FUNC + A and FUNC + B there; `ev_draw` draws the box; `ev_project` resets the caches.
 
-It keeps no clock of its own: its timing is the tempo word ([sequencing.md](../../../../docs/module-guides/sequencing.md)).
+It keeps no clock of its own: its timing is the tempo word ([sequencing.md](../../../../../docs/module-guides/sequencing.md)).
 
 ## Changes to stock flows
 
