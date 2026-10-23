@@ -1,0 +1,214 @@
+{
+  "schemaVersion": 3,
+  "id": "loop-sync",
+  "name": "Loop Sync",
+  "version": "0.2.0-experimental",
+  "machine": "analog-rytm-mkii",
+  "category": "playback",
+  "exclusive": false,
+  "author": {
+    "github": "stigmagit",
+    "credits": [
+      "stigmagit"
+    ]
+  },
+  "maintainers": [
+    "stigmagit"
+  ],
+  "presentation": {
+    "label": "LOOP SYNC",
+    "family": "Sample playback",
+    "summary": "Keeps sample loops in time with the project tempo by repitching them; AUTO reads each loop's tempo from its length, locks and scenes included.",
+    "overview": "In AUTO the mod works out each loop's source tempo from the length of the sample that plays (between STA and END, 4/4, cut on the bar) and adds the matching pitch shift to the track's effective TUN every audio block, after parameter locks, scenes and the LFO. A SMP lock or a scene that changes the sample is followed, each sample by its own length. A percentage correction (FUNC + FIN) on top of any mode puts loops with a tail or a gap back in time. Pitch follows tempo; no time-stretch.",
+    "highlights": [
+      "AUTO: no tempo to enter for loops cut on the bar.",
+      "SMP locks and scenes stay in time, each sample from its own length.",
+      "TUN stays yours: the shift is added on top, so a TUN lock still transposes.",
+      "Trailing silence is left out automatically, and each sample keeps its own correction."
+    ],
+    "usage": [
+      "Load a loop cut on the bar, for example one bar at 120 BPM, on a sound track with a trig on step 1.",
+      "Press SMPL, hold FUNC and turn TUN to AUTO: the box reads AUTO over 1BAR 120.0, and SYNC appears at the bottom right.",
+      "Play and change the tempo: the loop follows, and the pitch glides with each tempo step. Lock SMP on a step to another loop: it is in time too, from its own length.",
+      "For a loop with a tail or a gap, hold FUNC and turn FIN until it sits in time; that sample keeps its correction. Save the project to keep it."
+    ]
+  },
+  "access": {
+    "location": "SAMPLE page of any sound track.",
+    "steps": [
+      "Press SMPL to open the SAMPLE page.",
+      "Hold FUNC and turn TUN to choose OFF, AUTO or 1/2/4/8 BAR.",
+      "Hold FUNC and turn FIN to correct the source tempo in percent."
+    ],
+    "screenshots": [
+      "media/sync-auto.png"
+    ]
+  },
+  "controls": [
+    {
+      "name": "MODE",
+      "default": 0,
+      "doc": "OFF, AUTO, 1 BAR, 2 BAR, 4 BAR or 8 BAR. FUNC + TUN on the SAMPLE page. Kept in the sound.",
+      "labels": [
+        "OFF",
+        "AUTO",
+        "1 BAR",
+        "2 BAR",
+        "4 BAR",
+        "8 BAR"
+      ]
+    },
+    {
+      "name": "AJUST",
+      "default": 0,
+      "doc": "Correction of the source tempo of the sample the selected track plays, -12.7 to +12.7 % in 0.1 % steps, sample slots 1-123. FUNC + FIN on the SAMPLE page. Kept per sample slot with the project.",
+      "labels": null
+    }
+  ],
+  "compatibility": {
+    "releases": [
+      "1.74"
+    ],
+    "requires": [],
+    "conflicts": [],
+    "limitations": [
+      "Pitch follows tempo: no time-stretch.",
+      "The shift is clamped to TUN's +-24 semitones and skipped beyond a factor of 8.",
+      "The silence check sees only digital silence under 5 % of a sample; other mis-cut loops need the per-sample correction.",
+      "Hooks the audio interrupt one instruction after rytm2_mods lfo-rnd's site; the pair is not tested."
+    ]
+  },
+  "platform": {
+    "kind": "elemod",
+    "core": "0.3",
+    "build": "build.json",
+    "events": [
+      "ev_tick",
+      "ev_draw",
+      "ev_key",
+      "ev_enc",
+      "ev_project"
+    ],
+    "claims": [
+      "ui:FUNC + SAMPLE TUN turn",
+      "ui:FUNC + SAMPLE FIN turn"
+    ]
+  },
+  "resources": {
+    "memoryBytes": null,
+    "fastBytes": null,
+    "load": {
+      "display": "Not measured yet",
+      "method": "unmeasured",
+      "conditions": "Measure with every track playing, parameters modulated and the mod at its heaviest setting."
+    }
+  },
+  "evidence": {
+    "tier": "author-hardware",
+    "moduleVersion": "0.2.0-experimental",
+    "sourceSha256": "7e8b515f1e28c92ec66323ec378ef3aeb72fa4531b60ff6953e70e9dc763710d",
+    "reports": [
+      "TESTING.md"
+    ],
+    "hardware": {
+      "model": "Analog Rytm MKII",
+      "release": "1.74",
+      "testedOn": "2026-10-24",
+      "tester": "stigmagit",
+      "durationMinutes": null,
+      "summary": "Build LS17 (core-ar2 0.3 + loop-sync 0.2.0-experimental) flashed with Elektron Transfer over USB on the author's unit, after LS16 on 24 October 2026. Loops follow the project tempo in AUTO, with SMP parameter locks, the per-sample percentage correction and the trailing-silence check; the pitch now glides when the tempo changes (\"ça glisse bien maintenant\").",
+      "limitations": [
+        "Informal listening test; no timing measured on the unit.",
+        "Persistence of the mode across kit save and reboot, and of the corrections across project save and reboot, not reported.",
+        "Scenes that change SMP not reported separately for LS16.",
+        "No CPU or memory measurement on the unit."
+      ]
+    },
+    "verifiedBy": null
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "Author tested LS17 on an Analog Rytm MKII (OS 1.74): loops in time with SMP locks, per-sample correction and trailing-silence check; the pitch glides on tempo changes. Emulator audio measurements in TESTING.md.",
+    "documentation": {
+      "tutorial": {
+        "title": "Quick tutorial",
+        "steps": [
+          "Load a loop cut on the bar, for example one bar at 120 BPM, on a sound track with a trig on step 1.",
+          "Press SMPL, hold FUNC and turn TUN to AUTO: the box reads AUTO over 1BAR 120.0, and SYNC appears at the bottom right.",
+          "Play and change the tempo: the loop follows, and the pitch glides with each tempo step. Lock SMP on a step to another loop: it is in time too, from its own length.",
+          "For a loop with a tail or a gap, hold FUNC and turn FIN until it sits in time; that sample keeps its correction. Save the project to keep it."
+        ]
+      },
+      "screenshots": [
+        "media/sync-auto.png",
+        "media/sync-percent.png",
+        "media/sync-mark.png"
+      ],
+      "captureRecord": "media/capture.json"
+    }
+  },
+  "license": {
+    "spdx": "GPL-3.0-or-later",
+    "file": "LICENSE",
+    "declaration": "Original work by the author. Replace if you choose another GPL-compatible licence."
+  },
+  "media": [
+    {
+      "path": "media/thumbnail.svg",
+      "kind": "thumbnail",
+      "caption": "Loop Sync thumbnail",
+      "alt": "Placeholder thumbnail for Loop Sync",
+      "credit": "stigmagit",
+      "license": "GPL-3.0-or-later",
+      "source": "Original placeholder from the Modwerk SDK template; replace with your own artwork."
+    },
+    {
+      "path": "media/sync-auto.png",
+      "kind": "screenshot",
+      "caption": "Hold FUNC and turn TUN on the SAMPLE page: AUTO reads the loop as one bar at 120.0 BPM.",
+      "alt": "SAMPLE page with the Loop Sync box AUTO, 1BAR 120.0 and the SYNC mark.",
+      "credit": "stigmagit documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "0.2.0-experimental",
+        "imageSha256": "3d969bcce223a672dbd20968d0a4c98ae791c33c39b8c4c7618c74dfb896711f",
+        "setup": "rytm-emu 3c4c42c headless; LS17 build (core-ar2 0.3 + this module); test loops made for the capture. UI documentation only."
+      }
+    },
+    {
+      "path": "media/sync-percent.png",
+      "kind": "screenshot",
+      "caption": "Hold FUNC and turn FIN: a mis-cut loop corrected by +5.1 %.",
+      "alt": "Loop Sync box AUTO +5.1%, 1BAR 120.1.",
+      "credit": "stigmagit documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "0.2.0-experimental",
+        "imageSha256": "3d969bcce223a672dbd20968d0a4c98ae791c33c39b8c4c7618c74dfb896711f",
+        "setup": "rytm-emu 3c4c42c headless; LS17 build (core-ar2 0.3 + this module); test loops made for the capture. UI documentation only."
+      }
+    },
+    {
+      "path": "media/sync-mark.png",
+      "kind": "screenshot",
+      "caption": "While the selected track is synced, SYNC stays at the bottom right.",
+      "alt": "SAMPLE page playing, SYNC mark at the bottom right.",
+      "credit": "stigmagit documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "0.2.0-experimental",
+        "imageSha256": "3d969bcce223a672dbd20968d0a4c98ae791c33c39b8c4c7618c74dfb896711f",
+        "setup": "rytm-emu 3c4c42c headless; LS17 build (core-ar2 0.3 + this module); test loops made for the capture. UI documentation only."
+      }
+    }
+  ]
+}

@@ -1,0 +1,238 @@
+{
+  "schemaVersion": 1,
+  "sources": [
+    "src/loop-sync.c",
+    "src/audio.s"
+  ],
+  "defsym": {},
+  "cflags": [],
+  "weak": [],
+  "subscribe": [
+    {
+      "event": "ev_tick",
+      "fn": "loop_sync_tick",
+      "order": 50
+    },
+    {
+      "event": "ev_draw",
+      "fn": "loop_sync_draw",
+      "order": 50
+    },
+    {
+      "event": "ev_key",
+      "fn": "loop_sync_key",
+      "order": 50
+    },
+    {
+      "event": "ev_enc",
+      "fn": "loop_sync_enc",
+      "order": 50
+    },
+    {
+      "event": "ev_project",
+      "fn": "loop_sync_project",
+      "order": 50
+    }
+  ],
+  "contribute": [],
+  "collections": {},
+  "copied": [],
+  "regions": [],
+  "storage": [
+    {
+      "sym": "loop_sync_mode",
+      "scope": "sound",
+      "bits": 3
+    },
+    {
+      "sym": "loop_sync_p0",
+      "scope": "project",
+      "bits": 32
+    },
+    {
+      "sym": "loop_sync_p1",
+      "scope": "project",
+      "bits": 32
+    },
+    {
+      "sym": "loop_sync_p2",
+      "scope": "project",
+      "bits": 32
+    },
+    {
+      "sym": "loop_sync_p3",
+      "scope": "project",
+      "bits": 32
+    },
+    {
+      "sym": "loop_sync_p4",
+      "scope": "project",
+      "bits": 32
+    },
+    {
+      "sym": "loop_sync_p5",
+      "scope": "project",
+      "bits": 32
+    },
+    {
+      "sym": "loop_sync_p6",
+      "scope": "project",
+      "bits": 32
+    },
+    {
+      "sym": "loop_sync_p7",
+      "scope": "project",
+      "bits": 32
+    },
+    {
+      "sym": "loop_sync_p8",
+      "scope": "project",
+      "bits": 32
+    },
+    {
+      "sym": "loop_sync_p9",
+      "scope": "project",
+      "bits": 32
+    },
+    {
+      "sym": "loop_sync_p10",
+      "scope": "project",
+      "bits": 32
+    },
+    {
+      "sym": "loop_sync_p11",
+      "scope": "project",
+      "bits": 32
+    },
+    {
+      "sym": "loop_sync_p12",
+      "scope": "project",
+      "bits": 32
+    },
+    {
+      "sym": "loop_sync_p13",
+      "scope": "project",
+      "bits": 32
+    },
+    {
+      "sym": "loop_sync_p14",
+      "scope": "project",
+      "bits": 32
+    },
+    {
+      "sym": "loop_sync_p15",
+      "scope": "project",
+      "bits": 32
+    },
+    {
+      "sym": "loop_sync_p16",
+      "scope": "project",
+      "bits": 32
+    },
+    {
+      "sym": "loop_sync_p17",
+      "scope": "project",
+      "bits": 32
+    },
+    {
+      "sym": "loop_sync_p18",
+      "scope": "project",
+      "bits": 32
+    },
+    {
+      "sym": "loop_sync_p19",
+      "scope": "project",
+      "bits": 32
+    },
+    {
+      "sym": "loop_sync_p20",
+      "scope": "project",
+      "bits": 32
+    },
+    {
+      "sym": "loop_sync_p21",
+      "scope": "project",
+      "bits": 32
+    },
+    {
+      "sym": "loop_sync_p22",
+      "scope": "project",
+      "bits": 32
+    },
+    {
+      "sym": "loop_sync_p23",
+      "scope": "project",
+      "bits": 32
+    },
+    {
+      "sym": "loop_sync_p24",
+      "scope": "project",
+      "bits": 32
+    },
+    {
+      "sym": "loop_sync_p25",
+      "scope": "project",
+      "bits": 32
+    },
+    {
+      "sym": "loop_sync_p26",
+      "scope": "project",
+      "bits": 32
+    },
+    {
+      "sym": "loop_sync_p27",
+      "scope": "project",
+      "bits": 32
+    },
+    {
+      "sym": "loop_sync_p28",
+      "scope": "project",
+      "bits": 32
+    },
+    {
+      "sym": "loop_sync_p29",
+      "scope": "project",
+      "bits": 32
+    },
+    {
+      "sym": "loop_sync_p30",
+      "scope": "project",
+      "bits": 32
+    }
+  ],
+  "claims": [
+    "ui:FUNC + SAMPLE TUN turn",
+    "ui:FUNC + SAMPLE FIN turn"
+  ],
+  "requires": [],
+  "derive": null,
+  "releases": {
+    "1.74": {
+      "defsym": {
+        "loop_sync_audio_resume": "0x4012102a",
+        "loop_sync_lfo_area": "0x80005eac"
+      },
+      "cflags": [
+        "-DTEMPO_GET_AT=0x4011f35c",
+        "-DIS_KEY_HELD_AT=0x40081c28",
+        "-DPROJECT_SINGLETON_AT=0x4017fa0a",
+        "-DTRACK_INDEX_OF_AT=0x400b693e",
+        "-DKIT_TRACK_SOUND_AT=0x400a67ca",
+        "-DFILLRECT_AT=0x40070726",
+        "-DSOUND_CONFIG_CHANGED_VT=0x401cb88c",
+        "-DTEMPO_WORD_AT=0x40287ffc",
+        "-DSAMPLE_SLOTS_AT=0x41329e70",
+        "-DPARAMS_EFF_AT=0x8000f7a8"
+      ],
+      "sites": [
+        {
+          "addr": "0x40121020",
+          "len": 10,
+          "stockSha256": "6d2041fb73f9e6ebc3c747be1156bcbffd78ede7ce9d6c7f2fecd1dab1268b60",
+          "op": "jmp",
+          "target": "loop_sync_audio_gate"
+        }
+      ]
+    }
+  }
+}
