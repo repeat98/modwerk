@@ -1,0 +1,10 @@
+[
+  {
+    "version": "0.1.0-experimental",
+    "date": "2026-10-22",
+    "changes": [
+      "First version: PERSONALIZE PLAY START (OFF/ON, default OFF). When ON, panel [PLAY] starts the sequencer from the beginning instead of pausing or continuing. Conflicts with Mute Modes. Hardware and emulator behaviour are not tested.",
+      "Staging-only correction: keep this unqualified, unlisted module under sdk/drafts so its missing publication evidence does not block catalogue generation for all modules. Firmware source is unchanged; hardware, UI, performance and USB qualification remain pending."
+    ]
+  }
+]

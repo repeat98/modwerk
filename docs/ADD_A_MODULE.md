@@ -51,6 +51,13 @@ separately; failures or unavailable paths remain explicit qualification gaps.
 
 ## The fast loop
 
+Keep unqualified Octatrack work under `sdk/drafts/<id>/`, with its draft
+release notes in `CHANGELOG.json`. Every folder in `sdk/octabam/modules/` is
+validated for publication even when absent from `sdk/catalog.json`; placing
+a draft there blocks catalogue generation for everyone. Move it into that
+directory and move its notes into `src/community/module-changelogs/` only
+when the publication requirements are met.
+
 Run this after every edit. It takes about 15 seconds, never reads firmware and never runs module code.
 
 ```sh

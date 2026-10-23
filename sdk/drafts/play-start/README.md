@@ -1,5 +1,9 @@
 # Play Start
 
+Unlisted development draft under `sdk/drafts/play-start`; not a published or
+installable Modwerk module. Source is preserved while the qualification work
+in TESTING.md remains pending. Draft release notes are in CHANGELOG.json.
+
 Version: `0.1.0-experimental` · author: [@jonathanwardle1992-beep](https://github.com/jonathanwardle1992-beep)
 
 A global sequencer setting: **[PLAY] always starts from the beginning and never pauses.** Turn it on or off in PERSONALIZE. Default **OFF** is stock play/pause, so installing the module changes nothing until you enable it.
