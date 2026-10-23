@@ -357,19 +357,23 @@ if the owner wants RINGMOD SC sooner than the bus can be qualified.
 with #640's phase rule: it copies every track's FX1 input to the local bus and the window on every block. Sidechain's DSP
 stays byte-identical; only its feature split moves (KEYBUS, bit 8, out of SIDECHAIN; a held SIDECHAIN holds KEYBUS).
 
-- KEYBUS is placed only while a reader package or Sidechain is installed, so it costs nothing otherwise.
+- KEYBUS is placed only while a reader package or Sidechain is installed, so it costs nothing otherwise. On a base with
+  engines on demand (the beta base) a reader holds it only while the bank's Parts name the reader's effect
+  (`keybus_read` in `controller_board.c`): installed but unused, the bus is off.
 - While a live package requires it, the base charges the tap on both cores as a per-core constant, before every FX
-  slot, the way a source engine is charged: counted statically from the source (`resident_dsp.keybus_executed`, 41
-  executed instructions a sample for a core's four tracks, seeded), charged at 7/4 like every emulator figure until it
-  is timed on a unit. Sidechain alone is not charged for it, as on main (review, change 1); a reader installed beside
-  Sidechain is. The price is paid at the pick, never at install (owner, 24 October 2026): a reader always goes in, and
-  the FX allocator adds the price to any set that names a reader's effect while the tap is not charged
-  (`modwerk_controller_keybus_pending`), so that pick or Part change is DSP FULL until it fits. The box counts the price
-  and shows the core that ran out (`dl_cycles_core`, `dl_refusal_core`): with the tap on both cores, that is often T5-8
-  (the smaller allowance) for a reader picked on T1-4. An install check against the Part on screen reserved nothing and refused syncs for a Part that may change.
-- Measuring it on a unit: NONE on every track, one pattern playing, `scripts/octatrack-measure.py` on both cores with
-  nothing installed, then with a KEYBUS reader installed (KEYBUS placed and enabled, no reader on any track), then with
-  Sidechain installed; the difference is the tap's cost per core.
+  slot, the way a source engine is charged: 51 chip cycles a sample for a core's four tracks, timed on an MKII on 23
+  October 2026 ([evidence](../sdk/machines/octatrack/evidence/keybus-tap-timing-20261023.json)). Until then it was
+  charged at 7/4 of its static count (`resident_dsp.keybus_executed`, 41 executed instructions), 72. Sidechain alone
+  is not charged for it, as on main (review, change 1); a reader installed beside Sidechain is. The price is paid at
+  the pick, never at install (owner, 24 October 2026): a reader always goes in, and the FX allocator adds the price to
+  any set that names a reader's effect while the tap is not charged (`modwerk_controller_keybus_pending`), so that
+  pick or Part change is DSP FULL until it fits. The box counts the price and shows the core that ran out
+  (`dl_cycles_core`, `dl_refusal_core`): with the tap on both cores, that is often T5-8 (the smaller allowance) for a
+  reader picked on T1-4. An install check against the Part on screen reserved nothing and refused syncs for a Part that may change.
+- Timing it on a unit: the load meter (`npm run device -- stats`, core 0's idle passes a frame, 20 cycles each), a
+  stopped project, no Sidechain. OFF: no Part names a reader. ON: a reader on a core-1 track (T1-T4) only, so core 0
+  carries the tap and no instance. "Installed, on no track" measures nothing on an on-demand base (above). Core 1's
+  meter is not calibrated.
 
 **Resets.** KEYBUS resets the window ($33dfe / $3bdfe, $202 words) and then the bus (Y $800, $200 words), 1,026 words
 per core, when it is placed: the window first, so the first chunk zeroes the seed mark and counter. Once it is let go

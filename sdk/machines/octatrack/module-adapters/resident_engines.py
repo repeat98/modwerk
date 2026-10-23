@@ -389,8 +389,8 @@ def dev(text):
 KEYBUS_CHARGE = r'''/* Resident engines on demand: the key bus's tap (dsp_ledger.h), a per-core price like a source engine's. It runs for
  * every track of each core while the key bus is enabled, whoever holds it, but it is charged on both cores only while a
  * live package requires the key bus (a reader; controller_board.c): Sidechain alone is admitted and charged as before
- * the key bus (docs/OCTATRACK_PACKAGE_DSP_HOOKS.md, review change 1). Executed instructions per sample for a core's four
- * tracks, counted statically from the source, at 7/4 like every emulator figure until it is timed on a unit. */
+ * the key bus (docs/OCTATRACK_PACKAGE_DSP_HOOKS.md, review change 1). Chip cycles per sample for a core's four tracks,
+ * timed on an MKII with the load meter (dsp-sites.json's evidence), so charged as they are, without the 7/4. */
 #include "dsp_ledger.h"
 #define KEYBUS_MODULE 0x4b425553u
 static unsigned keybus_at(unsigned c, uint32_t module)
@@ -401,7 +401,7 @@ static unsigned keybus_at(unsigned c, uint32_t module)
 /* 1: already charged on both cores, or it would fit beside every slot and source of each core now. */
 int modwerk_dsp_keybus_fits(void)
 {
-    uint32_t e = charged(MW_DSP_KEYBUS_EXECUTED, RUNTIME_EXECUTED);
+    uint32_t e = charged(MW_DSP_KEYBUS_HARDWARE, RUNTIME_HARDWARE);
     for (unsigned c = 0; c < 2u; ++c) {
         if (keybus_at(c, KEYBUS_MODULE) < SOURCE_ENGINES) continue;
         if (keybus_at(c, 0) == SOURCE_ENGINES ||
@@ -424,7 +424,7 @@ int modwerk_dsp_keybus_charge(int on)
     for (unsigned c = 0; c < 2u; ++c)
         if (keybus_at(c, KEYBUS_MODULE) == SOURCE_ENGINES) {
             unsigned e = keybus_at(c, 0);
-            source_engine[c][e].module = KEYBUS_MODULE, source_engine[c][e].cycles = charged(MW_DSP_KEYBUS_EXECUTED, RUNTIME_EXECUTED);
+            source_engine[c][e].module = KEYBUS_MODULE, source_engine[c][e].cycles = charged(MW_DSP_KEYBUS_HARDWARE, RUNTIME_HARDWARE);
         }
     return 1;
 }
