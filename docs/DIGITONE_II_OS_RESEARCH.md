@@ -49,9 +49,9 @@ digikit's ColdFire emulator, without the DSP:
 
 - Core alone: cold boot reaches the ready screen at the same instruction count as stock, and the screen is identical to stock's.
 - Core with a test mod that counts `ev_tick`, `ev_draw`, `ev_key` and `ev_enc` and takes nothing: all four count. Two trig presses give four `ev_key` calls (press and release) and two encoder turns two `ev_enc` calls. After those inputs the screen is identical to stock's under the same inputs.
+- Core with a test mod that adds one row through `core_additem` from `ev_settings` and one from `ev_personalize` (labels built with `std::string`'s constructor `0x401ceab8`, as the firmware's own labels are): the OS builds both menus once at boot, so each event runs once before any input. SETTINGS lists the row last, after SYSTEM, in the stock row style; PERSONALIZE lists its row last, after NOTE EDIT MENU. Selecting either row with YES runs its select callback once. Panel codes from digikit: SETTINGS 8, YES 10, UP 11, NO 12, DOWN 14.
 
 ## Still open
 
-- `ev_settings` and `ev_personalize` have not run: no row mod has been shown in SETTINGS or PERSONALIZE.
 - No run with the DSP, no hardware run, and recovery with the stock file has not been tried on a Digitone II.
 - `core-dn2` and the device profile live in a local elekloader checkout; they belong upstream in elekloader before Modwerk can list an SDK.

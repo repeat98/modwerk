@@ -334,7 +334,7 @@
     "name": "Digitone II",
     "family": "elektron",
     "status": "research",
-    "summary": "Shares the Digitakt II platform and its sealed OS file. OS 1.12 rebuilds byte for byte, and a draft core with the Digitakt II's events boots in the emulator.",
+    "summary": "Shares the Digitakt II platform and its sealed OS file. OS 1.12 rebuilds byte for byte, and a draft core with the Digitakt II's six events runs in the emulator.",
     "steps": {
       "format": "done",
       "rebuild": "done",
