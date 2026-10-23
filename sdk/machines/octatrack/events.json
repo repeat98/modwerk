@@ -338,6 +338,20 @@
     "jmp 0x40004d16"
    ],
    "done": null
+  },
+  {
+   "site": "0x40031460",
+   "length": 8,
+   "guard": "f11f862371e646936f2afea4477272e01dc54c2557a1da4d6d3085611743af41",
+   "routine": "the key-map rebuild 0x4003125c, its epilogue (register restore, frame pop, then rts at 0x40031468): it clears the key records 0x46c7d8de + 0x18 x code and the encoder records 0x46c7dede + 0x14 x encoder, then copies every registered map in list order from the head 0x460d165c, the last registered winning. Push 0x40031494(map) and remove 0x4003146c(map) end in it; its only branch here is the empty-list test at 0x400312b2",
+   "head": [],
+   "tail": [
+    {
+     "stock": 8
+    },
+    "jmp 0x40031468"
+   ],
+   "done": null
   }
  ],
  "events": [
@@ -1538,6 +1552,21 @@
     }
    ],
    "orderEvidence": "Every handler acts only on a track whose FX2 runs its own effect id, so no order is needed between them."
+  },
+  {
+   "event": "ev_keymap_built",
+   "index": 31,
+   "site": "0x40031460",
+   "length": 8,
+   "prototype": "void f(void)",
+   "args": [],
+   "results": "notify",
+   "when": "stock has rebuilt the key and encoder records from its registered key maps: after every push or removal, such as a window opening or closing (FUNC + PAGE opens PATTERN SCALE and pushes map 0x400c0cd8 from 0x40059f70; NO removes it from 0x40056986)",
+   "context": "the task that pushed or removed the map (the UI task in every case measured): short, no firmware call that can block",
+   "contract": "A notification: every handler runs, then stock returns. The registered maps are the list from the word at 0x460d165c (each map's first long is the next; the last one is on top). A handler may give a turn handler to an encoder the rebuild left free: it writes the long at 0x46c7dede + 0x14 x encoder (0-5 = A-F, 6 = LEVEL) only while that long is 0, so a stock handler or an earlier subscriber's is never replaced; stock calls it as it calls a map's own (LEVEL's 0x4004c930 is reached from 0x40061e06 with the encoder in d0). It must check that the map it serves is on top, and it changes no key record. d2-d7/a2-a6 are the rebuild's and must be kept.",
+   "order": "lower first, then module id; 10-90. An encoder goes to the first handler that fills it.",
+   "subscribers": [],
+   "orderEvidence": "No subscriber yet. Proposed for Play Modes' STEP WINDOW (devilfish707/Octaplay#3): PATTERN SCALE's map leaves encoders A-F at 0 (measured under the ColdFire port, OS 1.40C, --mkii, 23 Oct 2026), so a module can add controls there without patching the window's code."
   }
  ]
 }

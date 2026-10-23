@@ -245,6 +245,29 @@ modwerk_stock_40025ac2_6:
         .space  6 | the site's own stock bytes
         jmp 0x40025ac8
 
+| ---- 0x40031460: ev_keymap_built
+        .globl  modwerk_site_40031460
+modwerk_site_40031460:
+        lea     -20(%sp),%sp
+        movem.l %d0-%d1/%a0-%a2,(%sp)
+| ev_keymap_built: void f(void)
+        movea.l modwerk_runtime_event_row+108,%a2
+.L40031460_ev_keymap_built:
+        move.l  (%a2)+,%d0
+        beq     .L40031460_ev_keymap_built_end
+        movea.l %d0,%a0
+        jsr     (%a0)
+        lea     0(%sp),%sp
+        bra     .L40031460_ev_keymap_built
+.L40031460_ev_keymap_built_end:
+.L40031460_tail:
+        movem.l (%sp),%d0-%d1/%a0-%a2
+        lea     20(%sp),%sp
+        .globl  modwerk_stock_40031460_8
+modwerk_stock_40031460_8:
+        .space  8 | the site's own stock bytes
+        jmp 0x40031468
+
 | ---- 0x40044968: ev_keyboard_draw
         .globl  modwerk_site_40044968
 modwerk_site_40044968:

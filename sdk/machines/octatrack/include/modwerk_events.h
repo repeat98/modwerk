@@ -138,4 +138,8 @@ struct modwerk_sequencer_rows { uint32_t count; struct modwerk_sequencer_row row
 #define MODWERK_EV_TAIL_KILL 30
 typedef void modwerk_ev_tail_kill(uint8_t *record, unsigned track);
 
+/* ev_keymap_built (0x40031460): stock has rebuilt the key and encoder records from its registered key maps: after every push or removal, such as a window opening or closing (FUNC + PAGE opens PATTERN SCALE and pushes map 0x400c0cd8 from 0x40059f70; NO removes it from 0x40056986). The task that pushed or removed the map (the UI task in every case measured): short, no firmware call that can block. A notification: every handler runs, then stock returns. The registered maps are the list from the word at 0x460d165c (each map's first long is the next; the last one is on top). A handler may give a turn handler to an encoder the rebuild left free: it writes the long at 0x46c7dede + 0x14 x encoder (0-5 = A-F, 6 = LEVEL) only while that long is 0, so a stock handler or an earlier subscriber's is never replaced; stock calls it as it calls a map's own (LEVEL's 0x4004c930 is reached from 0x40061e06 with the encoder in d0). It must check that the map it serves is on top, and it changes no key record. d2-d7/a2-a6 are the rebuild's and must be kept. */
+#define MODWERK_EV_KEYMAP_BUILT 31
+typedef void modwerk_ev_keymap_built(void);
+
 #endif

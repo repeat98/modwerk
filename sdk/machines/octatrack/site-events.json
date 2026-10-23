@@ -159,6 +159,11 @@
    "index": 30,
    "event": "ev_tail_kill",
    "kind": "call"
+  },
+  {
+   "index": 31,
+   "event": "ev_keymap_built",
+   "kind": "call"
   }
  ]
 }

@@ -1,0 +1,1 @@
+Octatrack base: a new event, `ev_keymap_built`, runs after stock rebuilds its key and encoder records (a window opening or closing). A module can now give a job to an encoder a stock window leaves unused, such as A-F in PATTERN SCALE, without patching the window. No module subscribes yet; the base dispatch takes effect at the next base build.
