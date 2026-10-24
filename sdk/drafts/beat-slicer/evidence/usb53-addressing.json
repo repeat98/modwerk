@@ -1,0 +1,62 @@
+{
+  "scope": "compile exact probe source for wrong and SDK CPU targets; forbidden-index guard rejects the physical-failure class; no hardware retest",
+  "sourceSha256": {
+    "usb_probe.c": "bb5d50e5cc22b5aa85ad2146fb47bf1ce43be28187916723418db5d66e311326",
+    "planner.h": "1a10ce9e6b34dfd35eb138690e2134550621c3bf91b2178fb50f95b9def6b7ae",
+    "build_usb_probe.py": "aea0171bbb2dc2ad3238486880ef4279f43b7cd1c393159097b6d180df02e081",
+    "test_usb_probe_addressing.py": "9c1ef9335eb76b2003a9ba70f05c709db9f958fbaa7ea458153a8c9eae9fc2db"
+  },
+  "sdkRevision": "1d19d3b8d29dd48d7b92744eb01d2d488934d24d",
+  "sdkDependencySha256": {
+    "sdk/runtime/loader/build.py": "1bc1a0e66f9b93871f429c53c8adebb39d21b5da7b7b101bf0f1f7c558313407",
+    "sdk/runtime/loader/modwerk_module.h": "55f39232ec7eb2fe8a497f946f559a9f4e78f90e637ea5475cca686bc5c56218",
+    "sdk/runtime/m68k_codegen.py": "861da4bf86f662362055f1082147b2c14824075724f7c7a2b77acca3e0c973c0"
+  },
+  "compiler": "m68k-elf-gcc (GCC) 16.2.0",
+  "targets": {
+    "5475": {
+      "rejected": true,
+      "flags": [
+        "-Os",
+        "-std=c99",
+        "-ffreestanding",
+        "-fno-builtin",
+        "-fno-common",
+        "-fno-tree-loop-distribute-patterns",
+        "-fno-asynchronous-unwind-tables",
+        "-fno-unwind-tables",
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+        "-I",
+        "/source/sdk/runtime/loader",
+        "-mcpu=5475",
+        "-fno-late-combine-instructions"
+      ],
+      "objectSha256": "f761ff75c87b89be84d5852ca084656a4ea1ac5b62ca983cf432eee8aefb3267"
+    },
+    "54455": {
+      "rejected": false,
+      "flags": [
+        "-Os",
+        "-std=c99",
+        "-ffreestanding",
+        "-fno-builtin",
+        "-fno-common",
+        "-fno-tree-loop-distribute-patterns",
+        "-fno-asynchronous-unwind-tables",
+        "-fno-unwind-tables",
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+        "-I",
+        "/source/sdk/runtime/loader",
+        "-mcpu=54455",
+        "-fno-late-combine-instructions"
+      ],
+      "objectSha256": "8d0a6f60eeab80e455fd044bdb160e7f87e0f3e3edfaeebd288495901edceaf3"
+    }
+  },
+  "exitCode": 0,
+  "hardware": "not retested"
+}

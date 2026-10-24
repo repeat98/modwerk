@@ -3,6 +3,7 @@
 #define BEAT_SLICER_PREVIEW_SESSION_H
 #include "pcm_reader.h"
 #include "preview_guard.h"
+#define BS_SESSION_WORK_MAX 32u
 #define BS_SESSION_BYTES (BS_PCM_BLOCK_FRAMES * 6u)
 /* Proposed base-side adapter, not an installed service/ABI or native lock.
  * One background owner calls a session. Backend functions/context and guard
@@ -63,10 +64,20 @@ void bs_session_init(struct bs_preview_session *, struct bs_preview_guard *,
  * retains options; step retries. No hook, IO, source write or guard enablement.
  */
 enum bs_session_state bs_session_begin(struct bs_preview_session *, const struct bs_preview_options *);
-/* One bounded transition; WAITING never spins. The backend's duration still
- * needs a real-unit budget. READY is revalidated by step and result as well.
+/* One bounded transition; WAITING never spins. Private planner arithmetic and
+ * decoding run outside the source lock. Capture/copy remain locked, with a new
+ * validation after reacquiring for a copy. No concurrent session calls/reentry.
+ * Backend critical sections still need a real-unit budget. READY is revalidated
+ * by step and result as well.
  */
 enum bs_session_state bs_session_step(struct bs_preview_session *);
+/* Bounded private arithmetic batch: 1..BS_SESSION_WORK_MAX reader transitions,
+ * at most one live PCM copy. Revalidate before the batch and after reacquiring
+ * for a read, and validate results separately. Private arithmetic/decoding stay
+ * unlocked. WAITING does not retry inside a batch. Invalid budgets refuse without
+ * changing the session. This work count is not a physical-time guarantee.
+ */
+enum bs_session_state bs_session_work(struct bs_preview_session *, uint32_t private_steps);
 void bs_session_cancel(struct bs_preview_session *);
 /* Explicit current-state revalidation under lock. Failure leaves out unchanged.
  * A result is a preview only: it grants no permission to Apply native markers.

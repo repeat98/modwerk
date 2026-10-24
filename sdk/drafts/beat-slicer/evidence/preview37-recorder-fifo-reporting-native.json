@@ -1,0 +1,77 @@
+{
+  "scope": "Compiled command observer around real queued recorder-stop follow-ups; 16 silent synthetic-active recorder positive controls and 32 single follow-ups plus four paired-recorder FIFO cases; no mocks, scheduler, ISR, UI consumer, manual stop/overdub, native source admission or hardware",
+  "mainSha256": "164f31224bf61181e3f50e7dec40df9afcae5b16dbf6e4c0d0cc5e986af0a84e",
+  "recorderPositiveControls": 16,
+  "followupCases": 32,
+  "pairedRecorderCases": 4,
+  "codegenGuardSha256": "861da4bf86f662362055f1082147b2c14824075724f7c7a2b77acca3e0c973c0",
+  "sdkRevision": "c8fcb8054b10366b3a7881ec957a566460aab3d4",
+  "sdkDependencySha256": {
+    "sdk/runtime/m68k_codegen.py": "861da4bf86f662362055f1082147b2c14824075724f7c7a2b77acca3e0c973c0"
+  },
+  "textBase": 1191444480,
+  "binarySha256": "7a1861fa438e18d281f793f9d4f3257bc8549a5125d7280ac8858713baa6ac9e",
+  "symbolsSha256": "9abad18da7f20f921e4995a21d62f7362e442aa798cbad261c2ee7d4c9eb9885",
+  "sourceSha256": {
+    "worker_boundary.c": "3ed8a447076bda230939b112b53602c5acd2af4254b14971ef9fe7f929f306d7",
+    "worker_boundary.h": "13f826c6ffdce8e773879bc91c92ff9150a49edee1c27606210932adcdc0ac46",
+    "preview_guard.c": "da1299674cf2ae967c58231ee9c16891afa94e27254407b5d09df6b73cc4343e",
+    "preview_guard.h": "abcaff39ef1b9a21cb238f0021344ffb5b812ea1740a354cbc1d1f2ace4ddf36",
+    "test_worker_stock.c": "6381b6ed64765e66329fb29a8149169d7c90b033050da7fbae52d923f414fef6",
+    "recorder_followup_native.py": "40b93c785c16e8d64d21d84259455ea404b88672976e1003baf3ae787367933a",
+    "stock_probe/recorder_followup_probe.cpp": "72093f9ffc95ba1e3b914e44bc250e8c7c3770516e0fae1d66884852d5fd8f8a",
+    "stock_probe/recorder_probe.cpp": "94b75d22f9f475ee429c8950faf36453a202ef2616377881a38e30682e435d2b",
+    "stock_probe/CMakeLists.txt": "3abe477f875944e80bf8cb7ad660750797a031934ab977ae81a8dcf450734df8",
+    "inspect_stock.py": "3df8e0019c7c1b095132a16da21a40c739b233548b9030a6dd8befadceb59190"
+  },
+  "compiler": "m68k-elf-gcc (GCC) 16.2.0",
+  "flags": [
+    "-std=c99",
+    "-mcpu=5475",
+    "-msoft-float",
+    "-O2",
+    "-ffreestanding",
+    "-fno-builtin",
+    "-fno-common",
+    "-fno-jump-tables",
+    "-fno-tree-loop-distribute-patterns",
+    "-fno-optimize-sibling-calls",
+    "-fno-asynchronous-unwind-tables",
+    "-fno-unwind-tables",
+    "-fno-ident",
+    "-fstack-usage",
+    "-Wall",
+    "-Wextra",
+    "-Werror",
+    "-pedantic",
+    "-fno-late-combine-instructions"
+  ],
+  "objectSha256": {
+    "preview_guard.o": "9c246ad2e54d39275f17c672f2dbed461df158345dbbb214153c180d6cb5b24b",
+    "worker_boundary.o": "0396bf891ada027668bca9296d4142e0e9dcc71cbf67e4739f59a21bd9ed3fef",
+    "test_worker_stock.o": "13c73e2b473b8a781e32da4d2058608ab77cff3c19d9336e46685b6765c26e91"
+  },
+  "runnerSha256": "504e5774b51a94affb2e3c16a69ba39372753e3f892652101556b2a68a0161e5",
+  "codegenGuard": "passed",
+  "freestandingLink": true,
+  "boundarySize": [
+    "text\t   data\t    bss\t    dec\t    hex\tfilename",
+    "    398\t      0\t      0\t    398\t    18e\t/evidence/recorder49-native1/worker_boundary.o"
+  ],
+  "boundaryStackUsage": [
+    "/source/sdk/drafts/beat-slicer/worker_boundary.c:4:7:bs_worker_receive\t28\tdynamic,bounded"
+  ],
+  "exitCode": 0,
+  "stdout": [
+    "SOURCE_SHA256: 837f4084b91dfb1c9f0581944bf9b4b762750ae44fa37661762870bd7b715882",
+    "PASS: four paired-recorder FIFO cases; tracks 1/8 keep distinct pending records and map extents; post-stop PCM, controls and allocation state preserved",
+    "PASS: 32 recorder follow-ups; 16/24-bit, tracks 1/8, both banks; exhausted/disabled allocation and two length-limited stops; 14601/14600 zero tail-map stores; post-stop PCM/controls/counts/state/free cursors unchanged",
+    "PASS: compiled worker observer covers every follow-up map store and retires before unmasked queue wait"
+  ],
+  "stderrLines": 416,
+  "stderrSha256": "2b265d4897be20bd2b60df06f2b0302b2b3287b2b246b7928db4c6648080bd46",
+  "hardware": "not tested",
+  "audio": "not tested",
+  "timing": "not measured",
+  "nativeSourceAccess": "not implemented"
+}

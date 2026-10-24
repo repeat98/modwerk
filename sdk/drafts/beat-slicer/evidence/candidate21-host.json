@@ -1,0 +1,40 @@
+{
+  "scope": "preview-bound candidate preparation and full-table validation; no native Apply or Undo",
+  "sourceSha256": {
+    "planner.c": "01c9c25efa363679a591969931dd376a3b694a949dd8b9f89eda4bf77a88cee4",
+    "planner.h": "4faab6f03e679d0b9389dbf016416afc87fb4d2d354952b22efb81a0381c5c1b",
+    "planner_job.c": "767d82cc375677a115e9457af35e26fddd9de66a0dc80aa2af0fe3b5adaf0581",
+    "planner_job.h": "c4dd3faa8b3320194b54ab4d7bec6541d9e936f544b0e6236efa4fa5518d6547",
+    "pcm_reader.c": "8762e389a39b7407a7d987dc6e3e36d7d75aa6c408b1d3232d8672a380226088",
+    "pcm_reader.h": "462f495a86f32730b79a56177f99929f685d82729e4646e7b391df475d929821",
+    "preview_guard.c": "da1299674cf2ae967c58231ee9c16891afa94e27254407b5d09df6b73cc4343e",
+    "preview_guard.h": "abcaff39ef1b9a21cb238f0021344ffb5b812ea1740a354cbc1d1f2ace4ddf36",
+    "preview_session.c": "f87a51c77c6fda24159dcdc137cfa3b895224b0c17605c3612558e37b5a049f5",
+    "preview_session.h": "1dfe1f9ea8fb6785edc48020609c51f6b88e75381043504c011dc4bfedc8ca9d",
+    "marker_edit.c": "645b7bdcb68a755f903b6b592e029d96bac868b763845faa5cf4806fedc9e0ea",
+    "marker_edit.h": "cd8c16a7771bf5a6d251b20e3a02fd0887d68cf4f8e5900e0c6a7fdecc0d4f05",
+    "edit_candidate.c": "67a7c7ec5f060846d2483b2d06b4b4a70ef7eced0b04e0b489e9b4556ca32490",
+    "edit_candidate.h": "862a3e09932072e42021acabe6814e969bdb8ef07b109dec8ba82ff7973d3ed0",
+    "test_edit_candidate.c": "faa489a317293dba0bfcae032677a8977cba6bee5f7050ced34614cf75d0b5b5",
+    "test_edit_candidate.py": "b9eb836ec3b3030306c80e390f094d0d200c0ceeb7fabdcddd3f69bafb9adec8"
+  },
+  "compiler": "Apple clang version 17.0.0 (clang-1700.6.4.2)",
+  "flags": [
+    "-std=c99",
+    "-O1",
+    "-g",
+    "-Wall",
+    "-Wextra",
+    "-Werror",
+    "-pedantic",
+    "-fsanitize=address,undefined",
+    "-fno-omit-frame-pointer"
+  ],
+  "exitCode": 0,
+  "stdout": [
+    "PASS: 40 bound candidates, 193 full-table mutations, 21 metadata changes and lifecycle/refusal cases"
+  ],
+  "hardware": "not tested",
+  "audio": "not tested",
+  "nativeSourceAccess": "not implemented"
+}

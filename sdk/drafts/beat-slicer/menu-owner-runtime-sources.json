@@ -1,0 +1,30 @@
+{
+  "revision": "c8fcb8054b10366b3a7881ec957a566460aab3d4",
+  "sha256": {
+    "sdk/runtime/loader/context.h": "7c811eb9f3bccef7b03a129f2ebe00ba477422f07315e682f6211d761aacf44b",
+    "sdk/runtime/loader/journal.h": "b7bdf800ac2d59413582ae0626cec1d951c29e9567fbd4c15f77856ae509811f",
+    "sdk/runtime/loader/loader.c": "cdd05233d078324b0bf4f706adfb5d19e03e8a735e11fa976c315adb726357ac",
+    "sdk/runtime/loader/loader.h": "0e97ec78ed5a25f93d8c2c390542c2c42bd1cdcf677d345095c953781067719b",
+    "sdk/runtime/loader/modwerk_module.h": "55f39232ec7eb2fe8a497f946f559a9f4e78f90e637ea5475cca686bc5c56218",
+    "sdk/runtime/loader/set_package.h": "bcfd3829af0785cfd15ec801237226c24959d32d44d0c1fb2df4fb08806ac743",
+    "sdk/runtime/loader/tests/events/runtime_events.h": "da56edc53d46a30617ef66d9a230ea2ffeeb011a3e5932ff1168870c99ae955c",
+    "sdk/runtime/loader/tests/events_test.c": "c813e2eff396e5e8ba670dbbbfed7dafa2a1fc5e15b7b88f95659ca4f5b5da91",
+    "sdk/runtime/loader/tests/host_test.c": "bf7460412ca756eb8117888788d3d086e0bf94086d93018d8c462deeb73152c7",
+    "sdk/runtime/loader/tests/journal_board_fixture.c": "22f05f4c472eed7d95027b99cc88d67ba76261baa292762e03a3e2a0ec3b0880",
+    "sdk/runtime/loader/tests/saved_set_fixture.c": "48e335d63c37ed380f3bd4ab326e4c063901549a2ce2e9ac4b6c8a7e80ea8bec",
+    "sdk/runtime/loader/tests/set_test.h": "643d6dd135cb2c15f46d49fa1e1448953e8965dff1a7342aeb3d541e80d4c8be",
+    "sdk/runtime/loader/tests/volatile_service_fixture.c": "577fb40bdac61e051f1c0f5fa543c746c45e5f522eca5456db7fc0eca9478b7d",
+    "sdk/runtime/upload/sha256.c": "9e19fb3a7de7ff56a3910610eac0304c66ab1b5df1290979c732c1642fdee7d1",
+    "sdk/runtime/upload/tests/hash_probe.c": "c5bc46a5958a3f45c16a72098fd15f08acca53f7c58774db8fd0b984c3818bff",
+    "sdk/runtime/upload/tests/host_test.c": "60119676359f2abe67b30a5b6571334f9381040ba2780148c2f289abbdf04d93",
+    "sdk/runtime/upload/tests/vendor_probe.c": "cd70cbedce34ddeca4aee3ce59a5f99a76de6c2bc7b5357c3be0ef2bdff3b434",
+    "sdk/runtime/upload/tests/vendor_test.c": "0615a48dc18c63719494db81cbe245927578bd2f2a3a1d470e4f16bdc557676b",
+    "sdk/runtime/upload/tests/wire_probe.c": "8b54e89a0b0f3af835cdb7d747606e7b6b2ca1d64e3a7b12f5cce3db5611ae87",
+    "sdk/runtime/upload/upload.c": "ec9716df5ee61e45e19a5846839e6cb4dca54faf58eaa6df0256b50ede260cd8",
+    "sdk/runtime/upload/upload.h": "4717f5f55c48e7d3f1d045aee72b5cf5e1194f707eb4a9da2bef0ca48b22ef6b",
+    "sdk/runtime/upload/vendor.c": "493ec28358a3b859aec6e4a8fd58b9c84d38964a180269545c8d21cbb4e4c665",
+    "sdk/runtime/upload/vendor.h": "e6cd2ffd6137f668c6939a2c4a3990848cf05e92e3f84d04c862bc23e229b363",
+    "sdk/runtime/upload/wire.c": "591075e9661b10e1a25acc52720984b864210df6469a3a6b4dcafba279fabede",
+    "sdk/runtime/upload/wire.h": "781b3dc8cd4e59ffdd4e2c60b1b1f99356050be58c3c529b945d82e60e768829"
+  }
+}

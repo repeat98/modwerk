@@ -153,4 +153,8 @@ struct modwerk_midi_generator {
 };
 #define MODWERK_MIDI_GENERATOR_ABI 2u
 
+/* ot_sample_editor_actions (table, contribute {"to": "ot_sample_editor_actions", "order", "data"}): the shared AED SLICE action menu lists admitted sample-editor contributions; selection opens the package with a fresh base-owned source token. The UI task; entry is nonblocking and receives copied settings through the base API. Staging interface for owner review, not released capability. Contribute one 64-byte struct modwerk_sample_action, ABI 1, flags/reserved zero and inline printable label. A nonzero action key is globally unique. The base validates the whole initialized record and entry against its exact published owner, copies its label into resident menus, and retains no module pointer in stock UI. Source capture, stock confirmation and marker publication belong to the base; owner/source/writer changes retire or refuse access before mutation. Actual waveform-read dispatch remains blocked until idle and complete metadata revalidation. Flex and Static file slots only, playback and recording stopped. No PCM access, automatic sample/project save or slice Undo. Older bases refuse the longer hook list. */
+#define MODWERK_OT_SAMPLE_EDITOR_ACTIONS 32
+#include "modwerk_sample_editor.h"
+
 #endif

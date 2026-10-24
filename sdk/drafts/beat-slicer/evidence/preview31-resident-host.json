@@ -1,0 +1,32 @@
+{
+  "scope": "portable fixed-owner resident-menu checks; immutable pinned tables and serialized adapter model, not native lifetime or loader qualification",
+  "sourceSha256": {
+    "resident_menu.c": "33a94aa3b7bca129bcb2d79b16fad7ab0856bcc54adfd23fcfe003dfaacdf0a6",
+    "resident_menu.h": "9cfb8d5dca03c45aefe93ff362fbf1412f37b438a66202b537393f56b87a52d5",
+    "selection_context.c": "6b48e848921ded1de4fb7f3be11dfcf52a9a505674924b91c514935b0aa7d1b4",
+    "selection_context.h": "1d3b65173bf534d96c9cf4af9f444d7115cdd052d40505ce7fc38d8e5726f98c",
+    "editor_menu.c": "9e7a73ff05e65eddb9db7d4163c29e4d6f55d6bce33379f4f9dfac64e451a043",
+    "editor_menu.h": "211496964f026a650e3e28847314478b25dac5106a586cede963109ff0b26631",
+    "test_resident.c": "5fb0b814c5141a41871dd25ba80a4b9413d859968004aab1797aaba2e89c4aa0",
+    "test_resident.py": "d00048fab3a4edc2d97a72b73c0601eb8d521e5377288fa7c72f92595819f0d3"
+  },
+  "compiler": "cc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0",
+  "flags": [
+    "-std=c99",
+    "-O1",
+    "-g",
+    "-Wall",
+    "-Wextra",
+    "-Werror",
+    "-pedantic",
+    "-fsanitize=address,undefined",
+    "-fno-omit-frame-pointer"
+  ],
+  "exitCode": 0,
+  "stdout": [
+    "PASS: 200 context-authorized actions across repeated openings; immutable tables; stale contexts, stock rows, owner/layout changes, nesting and exhaustion refused"
+  ],
+  "hardware": "not tested",
+  "audio": "not tested",
+  "nativeSourceAccess": "not implemented"
+}

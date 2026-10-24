@@ -296,6 +296,13 @@ static void restore(void)
 }
 /* ep0.c holds host frames until the restore has run: an install before it would race it, and the restore would undo it. */
 int modwerk_modset_restored(void) { return (int)restored; }
+#ifdef MODWERK_SAMPLE_EDITOR
+/* Used together with ep0.c's actual MU_TRIAL/MU_NORMAL phase, never alone.
+ * Completed trials retain both candidate and SET_ROWS until Keep/Undo. Those
+ * are not active writes; export-idle would wrongly refuse every trial module.
+ * Still exclude incomplete restore, queued saves and volatile work. */
+int mw_sample_storage_ready(void) { return restored && !pending && !JOURNAL_BLOCKED(); }
+#endif
 /* ep0.c's tick wakes the engine for this: a kept set not yet on the card whose save may run now (first try or retry). */
 int modwerk_modset_due(void) { return restored && pending && TICKS >= retry_at && !VOLATILE_BLOCKED(); }
 #ifdef MODWERK_SAVED_SET_EXPORT

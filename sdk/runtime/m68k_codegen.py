@@ -83,6 +83,36 @@ def check(objects, objdump='m68k-elf-objdump'):
     return len(objects)
 
 
+def index_hits(disassembly):
+    """MCF54455 rejects word indexes and scale-eight indexed addresses (RM 3.3.4.2).
+
+    The emulator's MCF5475 target accepts them; emulator execution is therefore
+    not this check. Keep this explicit for shipping MCF54455 builds rather than
+    silently changing the contract of older emulator-only research fixtures.
+    """
+    found, function = [], '?'
+    for line in disassembly.splitlines():
+        label = re.match(r'^[0-9a-f]+ <(.+)>:$', line)
+        if label:
+            function = label.group(1)
+        m = _LINE.match(line)
+        if m and re.search(r'%(?:[ad][0-7]|fp|sp):w|:[wl]:8', m.group(3)):
+            found.append('%s+0x%s: %s %s' % (function, m.group(1), m.group(2), m.group(3).strip()))
+    return found
+
+
+def check_mcf54455(objects, objdump='m68k-elf-objdump'):
+    """Shipping C code: late-combine safety AND the instrument's indexed modes."""
+    check(objects, objdump)
+    problems = []
+    for obj in objects:
+        text = subprocess.run([str(objdump), '-d', str(obj)], check=True, capture_output=True, text=True).stdout
+        problems += ['%s: %s' % (Path(obj).name, h) for h in index_hits(text)]
+    if problems:
+        raise ValueError('MCF54455-incompatible indexed addressing:\n  ' + '\n  '.join(problems))
+    return len(objects)
+
+
 def check_assembly(assembly, cross='m68k-elf-', cpu='54455'):
     """The same check for compiler output kept as assembly (gcc -S): assembled privately, then disassembled."""
     with tempfile.TemporaryDirectory(prefix='modwerk-codegen-') as tmp:

@@ -534,6 +534,16 @@ PLAY MODES' three project-file seams; it now sits beside them and SCALE
 QUANTIZER's, and the build fails when a base site meets the stock bytes any
 catalogue module patches or keeps (`catalogue_overlaps`).
 
+**Use the SDK's MCF54455 CPU target, not the emulator's MCF5475 target.** On the owner's MKII
+(24 October 2026, base `cd39c494`, Beat Slicer private USB probe 0.1.52), an override to
+`-mcpu=5475` emitted scale-eight indexed LEA in text drawing; the unit restarted with vector 3
+at that exact instruction. MCF54455 rejects scale-eight and word-sized indexes with address
+errors ([reference manual, 3.3.4.2](https://www.nxp.com/docs/en/reference-manual/MCF54455RM.pdf)).
+The emulator accepted it. Keep the machine SDK's target flags and audit final code; emulator
+execution is not an ISA-compatibility check. Corrected probe 0.1.53 subsequently passed
+physical self-test, planner diagnostic and Undo on the same base with an empty pattern;
+an earlier playing-pattern run failed the CPU limit. This does not qualify live sample access.
+
 **GCC 16.2 at -O2 can store one byte late.** Its late-combine pass turned
 the controller board's byte copy into `move.b (%a0)+,(0,%a0,%d0.l)`. The
 ColdFire computes the destination from the register it has just

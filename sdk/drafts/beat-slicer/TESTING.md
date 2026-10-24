@@ -1,9 +1,14 @@
 # Beat Slicer testing
 
-Current draft: 0.1.19-experimental. Development checks: 23–24 October 2026 (Taipei).
+For the current completion boundary, see [integration readiness](INTEGRATION.md#current-readiness).
+The versioned sections below retain historical research evidence; old Undo
+experiments do not add a player-facing Undo requirement. USB Keep/Undo remains
+an independent installation lifecycle requirement.
+
+Current draft: 0.1.57-experimental. Development checks: 23–25 October 2026 (Taipei).
 The chronological records below retain their own versions and source bindings;
 older results do not qualify newer source or an installed module.
-See the latest [Flex metadata results](#bounded-flex-metadata-0119) and the
+See [unlocked planning](#private-planning-outside-the-source-lock-0121), the [whole-command observer](#whole-command-observer-0120) and [Flex metadata results](#bounded-flex-metadata-0119) and the
 [stock-style commit results](#stock-style-commit-and-clearing-0118).
 
 Historical 0.1.4 record: the prior 0.1.3 evidence source was
@@ -1347,3 +1352,1769 @@ The provenance audit now covers 57 reports and 650 source bindings; the one
 explicitly unbound historical compile diagnostic remains excluded. Historical
 receipts and their source revisions are unchanged. Full Node 24 validation of
 this source passes 2,527 app tests plus SDK checks, lint, types and bundling.
+
+
+## Whole-command observer (0.1.20)
+
+The original `worker_boundary.c` wraps a supplied queue receive with native
+admission bookkeeping. Host ASan/UBSan passes 120 consecutive commands, a
+reader acquiring while receive waits, nested exclusion, revoke, recursive
+receive, null reply, exhausted identities and malformed bindings.
+
+The compiled ColdFire fixture redirects the private stock worker's single
+six-byte receive call, retaining its stock return path. Twelve cases pass:
+four packed-format gain paths, busy/empty-range failures, null callback,
+exhausted UI completion pool, release, unknown opcode, crop refusal and FIFO
+commands. Actual native guard stores cover PCM writes and optional completion
+posting; previous tickets retire before entering the empty queue's wait.
+Stock PCM and completion results remain independently checked.
+
+The observer is 398 text bytes, zero data/BSS, with a 28-byte local stack report
+excluding callees. The largest observed observer-masked run is 49 executed
+instructions: not cycles, cache cost or hardware time. The isolated fixture
+mocks display and runs no scheduler, DSP or UI consumer. The production source
+provider stays disabled; other-task/recorder writers remain outside this observer.
+
+The full-boot `boot_worker_native.py` experiment also passes on the exact
+reserved-placement binary: two stock reversals and five edit/waveform commands,
+with the native writer ticket set before each edit's dirty store and retired
+before queue wait. Original PCM is restored by the second reversal. Both
+prepared settings/control records, original observer code and reservation
+canaries stay exact; the copied/source cards remain unchanged. The real stock
+scheduler and both DSPs run. The retained trace has 46 increasing frame samples
+from 40,006 through 55,242; this is emulator progress, not hardware timing.
+
+Three top audio pages are reserved using pinned upstream `arena.py` before
+boot; code begins sixteen bytes inside the reserve to avoid the known clear
+overshoot. The first attempt rejected an incorrect test assumption that the
+mutable map endpoint equals physical pool capacity. Stock also reserves recorder
+pages: the passed fixture has 14,599 physical usable pages and a map endpoint
+of 10,919. The rerun checks the actual geometry operands and current map bounds.
+Only the corrected run is passing evidence; its predecessor remains private.
+
+The three `worker20-{host,native,boot}.json` receipts bind their exact inputs
+to `37cb05abbb02e7c56917b9a23a61185cd20d68ca`. No
+installable module, exported ABI, browser/USB package, complete source ownership
+or hardware qualification follows. The injection/initializer are private test
+operations, and the first command already waiting inside an unwrapped receive
+must not be assumed covered during future native admission.
+
+
+## Session lock accounting baseline (0.1.20)
+
+`session_lock_native.py --expect baseline` runs the existing compiled session
+regression with an instruction observer around its synthetic backend lock.
+The baseline passes 4,404 successful lock sections, a longest section of 9,808
+executed instructions, and 4,747 planner/reader begin/step/supply calls while
+locked (zero outside). These are instruction observations of this fixture's
+byte-copy metadata backend, not physical latency or native Flex capture timing.
+The purpose is to verify moving private arithmetic/decoding outside source
+ownership while retaining all capture/copy and stale-result checks.
+
+
+## Private planning outside the source lock (0.1.21)
+
+Planner initialization/transitions and decoding an owned PCM block now happen
+after source ownership is released. Before a new PCM copy, the session reacquires
+and revalidates; it still validates immediately after the copy and before
+returning a result. The API remains single-owner/non-reentrant. READY is not an
+Apply authorization, and postchecks cannot repair an unsafe backend read.
+
+Six host sanitizer suites and seven compiled ColdFire runs pass: session,
+candidate, commit, Flex chain, stock-backed commit/refresh and metadata, plus
+the lock observer. Existing 120 commit/clear cycles, 194 internal rollback
+points and the 300 actual stock refreshes remain passing. Historical Undo
+regressions remain research and do not add a player control.
+
+Nine new interleavings change guard, marker metadata, extent or encoding after
+release, or force reacquisition/pending validation. Changes before a copy cause
+no source read; changes after a copy retire the session before a result can be
+used. Retries preserve the pending request, an unselected tempo change remains
+allowed, output stays untouched on refusal, and lock/unlock counts balance.
+
+The compiled suite observes 4,986 lock sections, longest 7,293 executed
+instructions, with zero reader begin/step/supply calls locked and 4,898 unlocked.
+The prior suite's baseline was 9,808 instructions and 4,747 locked calls; the
+new suite includes the nine additional interleavings. Its metadata backend is
+synthetic and byte-copies a snapshot, so neither maximum is a native Flex timing
+budget. Physical cache/latency and whole-service budget remain unmeasured.
+
+The session component is 2,828 text bytes, zero data/BSS; compiler local stack
+reports range from 0 to 164 bytes, excluding callees and the full call chain.
+No native backend, package, USB or hardware qualification is introduced.
+The baseline receipt is bound to `79cde45170681eb6abda0e249456a78cec416654`;
+the thirteen `*21-host.json` / `*21-native.json` receipts bind `a5254c50e562c0b54c336a173f0e199becd3b536`.
+
+
+## Composed Flex source backend (0.1.22)
+
+`test_flex_source.py` runs the metadata decoder and PCM reader through one
+backend, rather than a test-only capture implementation. Its 32 previews cover
+all four encodings, first/last slots, both tempo choices and snap on/off. The
+plans match the synchronous planner using independently generated sample bytes;
+reads cross non-contiguous pages. Every used PCM byte and all 274 selected
+settings words stay exact; complete 64-record capture preserves inactive entries.
+
+Ten intervening changes to owner/sample/editor/playback identity, selection,
+ready/control bindings, region extent or guard reject the preview before any
+page lookup. Denied ownership retries without spinning; nested acquisition is
+refused; unlocked/stale marker reads leave output untouched. Locks balance.
+`flex_source_native.py` runs the same assertions compiled for ColdFire, using
+real private stock page lookup and its preserved-register checks. Fixture regions,
+identities and ownership remain synthetic. No live admission, address discovery,
+writer completion guarantee, native publication, cache or hardware timing is
+established. `evidence/source22-host.json` and `evidence/source22-native.json` bind the exact
+source `c49c3cff97c5cccb745bd3a17b39575ecb315b96`.
+
+
+## Compiled full-boot Flex previews (0.1.23)
+
+The private 1.40C fixture reserves eight top audio pages with the pinned arena
+helper and injects only original test code there. The actual scheduler, both
+DSPs, stock-loaded BEATLAB PCM and the whole-command observer run. The native
+metadata/PCM backend reads stock regions through real page lookup. Lifetimes
+and admission remain test-owned; the fixture's interrupt mask is not hardware
+ownership or latency qualification. No module/base package is installed.
+
+Twenty initial previews cover SAMPLE/PROJECT, EXACT/SMOOTH and all five beat
+spacings. Four further previews after each of two stock reverse operations give
+28 exact whole-plan comparisons, 167 page queries and 2,386 bounded step calls.
+Sample tempo is 2,886 and runtime project tempo 2,880 in 1/24 BPM units, so the
+test exercises distinct actual values. Pattern multipliers/external clock and
+live tempo ownership remain unqualified. Plans match the host synchronous
+planner over the original or expected reversed PCM, including all fade flags.
+
+The first reverse retires RUNNING, the second READY. Neither stale case copies
+another block or alters result output. Fresh previews match the changed sample.
+Every preview batch leaves all logical PCM, 44 control bytes and 274 settings
+words exact; only the deliberate stock reverse operations alter audio. The
+second reverse restores the original under the previously observed inclusive
+endpoint model. Original code/reservation canaries survive; both source and
+private cards stay unchanged. There is no marker publication or playback claim.
+
+The initial run stopped before native initialization: an interactive `call`
+refused because panel runs had paused outside main's idle spin. The corrected
+driver retries only that exact pre-entry guard, advancing normal execution in
+0.01 ms increments with a fixed retry bound; any uncertain/post-entry error is
+terminal. Four driver tests include wrong target/spin contracts and budget
+exhaustion. The first run remains a failed private diagnostic, not evidence.
+The successful compile, boot and lock receipts `evidence/source23-*.json` bind
+`1179af1f4c33a6f6f38fd8f86928057a6338bac3`.
+
+A separate physical MCP preflight on 24 October read base
+`d6bfff70cd237c1c2597ce37273cbdc4e8da0c595a9378455d3861137aa53224`,
+ABI 10/features 903, ten installed modules and no missing modules. Its public
+status/load reads work; development panel/memory reads are refused. No Beat
+Slicer package, project edit or hardware behavior was tested by this preflight.
+
+
+The separate `source_lock_native.py` runner executes the composed-backend suite
+with real stock lookup and synthetic regions/ownership. It observes 514 lock
+sections, longest 2,652 executed instructions; all 544 metadata captures, 66
+copies and 66 stock page queries occur while held. All 439 planner calls and
+130 PCM decodes occur outside. Stack and callee-save registers are preserved.
+This uses a different backend/fixture from the earlier session baseline and is
+not a matched performance comparison, cycle count or hardware-time bound.
+
+
+## Private native menu and engine service (0.1.24)
+
+The one-shot menu fixture preserves all six unsliced or nine selected-slice
+stock rows, labels and callbacks, appends BEAT GRID and selects it through real
+panel events. All eight normal/stale-owner/late-owner/cancel combinations pass.
+A normal selection begins a matching read-only preview; stale or cancelled
+selection makes no PCM query. The second open is stock-only and its remembered
+index stays valid. Stable menu storage remains pinned forever. The initial
+unsliced attempt failed because the saved fixture already had four slices;
+the successful runner explicitly clears or creates the required stock layout.
+
+The configuration fixture exercises 20 BPM/spacing/boundary combinations and
+an option-change restart in each stock menu variant, giving 42 whole plans that
+match the host oracle. READY does not restart; a synthetic invalidation removes
+its result, and BACK returns to configuration before closing. Stock-NO and
+owner-retirement runs in both stock menu variants cancel a running preview before another query and close the owned popup; all six control/terminal
+scenario runs pass.
+Every completed run preserves full PCM, controls and settings and both cards.
+The dialog shows total count/fade flags, not a qualified playback policy or Apply.
+
+A separate compiled-source run follows actual stock DELETE SLICE, DELETE ALL,
+unaligned grid and aligned grid creation. Each retires RUNNING or READY before
+another query; fresh previews match the new stock table and leave it unchanged.
+Twenty previews use 148 page queries and 4,331 steps. Guard revisions also
+advance, so this is not isolated metadata-only invalidation evidence. The actual
+stock actions leave PCM unchanged; previews preserve active/inactive markers,
+other metadata, controls and the Static settings arena. Cards stay unchanged.
+
+The new idle/job boundary passes host ASan/UBSan and compiled ColdFire tests for
+120 lifetimes, closed bootstrap, independent writer ownership, reentry, invalid
+retirement and exhaustion. Its native object is 374 text bytes, no data/BSS;
+compiler local stack reports 0–12 bytes, excluding callees and the full chain.
+Its separate full-boot hook-only run tracks five reverse/waveform commands,
+protects the actual dirty-store interval and preserves worker/UI completion.
+Admission starts closed until an actual idle boundary; the receive call stays
+unchanged. Both reversals match the previously observed inclusive endpoint
+model, the second restores PCM, and metadata/code/canaries/cards stay intact.
+
+The engine-service full boot uses those existing base-owned hook sites, leaving
+the receive call intact. Twenty initial previews plus four after each of two
+normal stock reversals give 28 whole-plan matches, 167 queries and 2,386 steps,
+with no driver step calls. A further waiting/readiness case completes one plan.
+An independent synthetic writer makes the service wait without self-posting or
+polling; a separate readiness notification resumes it. Cancellation before
+consumption makes no new query. An unrelated message with the same no-op opcode
+still advances the guard and invalidates READY without touching result output.
+
+Across that run the service sees 403 idle calls, 2,957 explicit steps, 394 posted
+and consumed owned wakes, nine ordinary commands, two cancellations and 29 ready
+results. No idle callback makes more than eight explicit step calls, plus an
+optional begin call with its initial capture/setup. The transition counter
+excludes that begin work; these are not cycle or hardware-time measurements.
+Source/settings stay unchanged by previews, the second stock reversal restores
+PCM, code/canaries survive and both
+cards stay unchanged. The real base USB/logging/module-set chain is not installed;
+its ordering, full ownership, cache, stack and hardware budget remain unqualified.
+
+Node 24.22.1 full validation against actual `upstream/main` passes: 2,529 app
+tests, SDK tests, lint, typecheck, production build and catalogue/import checks.
+The required `origin/main` invocation still fails on inherited CHANGELOG.md
+history from the stale fork base; no unrelated history or remote ref is rewritten.
+These are development fixtures, with no source service/ABI published and no
+module installed or qualified on hardware. The 23 `menu24-*`, `ui24-*`,
+`slices24-*`, `engine24-*` and `service24-*` receipts bind source `9f4d7e4a7a0262073e6c59333e5ea8eda4026b2b`. Provenance
+audit covers 102 reports and preserves earlier exact historical source identities.
+The one unbound historical failed-link diagnostic remains excluded.
+
+
+## Automatic native preview and result labels (0.1.25)
+
+The private UI fixture uses the existing base-owned UI-tick topology, preserving
+registers and the stock tail call. Normal scheduler execution drives the service;
+the driver never invokes it. Both six-row unsliced and nine-row selected-slice
+layouts pass 20 control combinations plus an option-change restart, giving 42
+whole-plan matches. Completed plans survive an observed further stock waveform
+read, remain stable without restarting, and invalidate on an unknown command.
+
+The six-row controls run observes 1,483 ticks and 3,113 service calls; the nine-row
+run observes 1,341 and 2,292. Neither exceeds eight calls per tick or reenters.
+Pending-source ticks yield after one call. Tick, menu callback and PCM query
+observations identify the same UI task. All borrowed entrypoints have zero
+arguments, and main's stack stays unchanged. These counts do not establish a
+physical latency or the production base's whole-chain stack budget.
+
+The four-row result displays captured BPM, total/existing/new slices, the fade
+warning and BACK. Private LCD review confirms both zero-existing and four-existing
+examples fit the stock popup. Host ASan/UBSan and compiled ColdFire runs check
+12,962 tempo labels and 2,145 count pairs, invalid inputs, output capacity and
+canaries. The formatter links freestanding with 1,226 text bytes and no data/BSS;
+compiler local stack reports 20–64 bytes, excluding callees and the full chain.
+
+A separate stock renderer probe checks 48 fresh/cached ordinary Flex calls over
+four packed formats, slots 0/127 and three bin widths. All 102 extrema/extent
+bins per fresh call match an independent oracle; matching cached calls read no PCM. Source
+write watches remain zero, and the inherited display mock is never reached.
+Unavailable-pool and busy-slot cases and one full worker dispatch also pass.
+The busy flag does not prevent the stock renderer's reads; the preview provider
+still enforces its own busy refusal. The narrowed command classification is
+private to fixed stopped-source inputs. Mutable queued-record stability, Static,
+recorder paths, complete live ownership and hardware remain unqualified.
+
+Build the automatic fixture with `ui_tick_native.py --help`, then run
+`boot_ui_tick.py --help` for each controls/cancel/owner scenario and each menu
+variant. The compiler requires the pinned external core recipe and its hash;
+the runner requires private stock/card identities and explicit injection opt-in.
+Run `test_ui_text.py` on the host and `ui_text_native.py` with the compiled target
+runner. `stock_probe.py --kind waveform` runs the isolated renderer probe. Keep
+stock images, cards, LCD dumps and derived native binaries outside Git.
+
+All six automatic controls/cancel/owner runs pass. Stock NO and owner retirement
+while waiting cancel before another source query and close the owned popup in
+both menu variants. Every completed run preserves full PCM, controls, settings,
+code/canaries, main's stack and both card copies. Storage remains pinned; these
+results do not qualify real package detachment or pointer reclamation.
+
+The 0.1.25 source check against current Modwerk upstream passes all 2,529 app
+tests, 37 SDK tests (one skipped), lint, types, build and catalogue/import gates.
+The mandatory fork-base invocation still fails on inherited CHANGELOG.md history
+from stale origin/main. Final prose-only follow-ups use the lightweight catalogue,
+licence, import and provenance checks; no hardware or publication claim is added.
+
+The ten `ui25-*`, `ui-text25-*` and `waveform25-stock.json` receipts bind
+source `ebf3634483db5971fc92cfdd2fdae7eb3fd661c3`. They retain raw report content
+and exact input hashes; earlier receipts continue to bind their own historical
+source revisions. No binary rerun is implied by the provenance audit.
+
+
+## Engine previews from four stock-loaded formats (0.1.26)
+
+Four fresh full scheduler/DSP boots load authored 44,100-frame, 44.1-kHz files
+through stock into retained 16-bit mono/stereo and 24-bit mono/stereo Flex pools.
+Each runs 20 BPM-source, boundary and spacing combinations through the private
+engine service. All 80 complete plans match the independent decoded-PCM oracle.
+The retained 24-bit fixtures include nonzero low bytes, which remain exact.
+
+| Loaded format | Oracle plans | Page queries for those plans | Explicit steps for those plans |
+| --- | ---: | ---: | ---: |
+| 16-bit mono | 20 | 109 | 1,062 |
+| 16-bit stereo | 20 | 109 | 1,062 |
+| 24-bit mono | 20 | 109 | 1,062 |
+| 24-bit stereo | 20 | 110 | 1,063 |
+
+Each boot also verifies waiting without polling, a separate readiness wake,
+pending cancellation before another query, and invalidation by an unrelated
+message sharing the owned wake opcode. Four additional waiting/resumption cases
+reach READY; those are distinct from the 80 whole-plan oracle comparisons.
+Across all four runs there are 912 engine idle callbacks, 6,534 explicit steps,
+896 posted/consumed owned wakes, 16 ordinary commands, eight cancellations and
+84 READY results. No callback exceeds eight explicit steps plus optional
+begin/setup; these counts do not establish physical CPU time or audio headroom.
+
+All previews preserve full logical PCM, 44 control bytes and 274 settings words.
+Original code and reservation canaries survive, the receive call stays intact,
+and both original and copied cards remain unchanged. The typed three-word
+mailbox is written only while the emulator is paused; all borrowed calls have
+zero arguments. Main's stack compares equal before and after the request cases.
+This driver technique does not qualify a concurrent UI/engine publication API.
+
+Build `engine_service_native.py` with the private pinned stock input and run
+`boot_engine_formats.py` once for each retained-width card/WAV pair; its `--help`
+lists exact hash, arena and explicit-injection arguments. A source compiled for
+another revision or a converted-width project is refused. Keep all images,
+cards and full PCM observations private. These fixed stopped-source tests retain
+synthetic lifetime/admission, partial writer coverage and full masking. Static,
+live replacement, cache behavior, actual playback, browser/USB integration and
+physical persistence remain unqualified.
+
+The source check against current upstream passes 2,529 app tests, 37 SDK tests
+(one skipped), lint, types, bundle and catalogue/import checks. The required
+origin/main invocation retains the inherited historical CHANGELOG.md failure;
+prose/evidence follow-ups use the lightweight checks.
+
+The five `formats26-*` compile/boot receipts bind source
+`1338539aba333f37b3dbfd9e6867c875c9fe66c3`. Their raw contents and complete
+source hashes are retained, alongside earlier exact historical evidence.
+
+
+## Copied UI/engine exchange (0.1.27)
+
+The portable exchange gives one engine consumer ownership of the preview
+session. UI producers submit copied options/cancellation and read a copied plan
+with its exact request sequence. A backend gate checks cancellation/replacement
+again before capture and copy, after any unlocked planner work. No UI callback
+mutates the reader or session. Published results remain preview-only.
+
+Host ASan/UBSan and compiled ColdFire tests pass 32 complete plans and 72 modeled
+interleavings covering cancellation, replacement, owner retirement, nested
+service refusal, lock denial and publication. Two cases deliver a new intent as
+the completed result's final lock is released: old results stay unreadable even
+though the engine's local return value was already selected. Each accepted intent
+therefore still needs its own wake/ordinary-event guarantee. Further cases cover
+wrong owners/options, waiting without immediate begin retry, source readiness,
+pending READY revalidation, unchanged output on refusal, metadata becoming stale
+and sequence exhaustion. These are serialized callback models, not RTOS or
+physical concurrency evidence.
+
+The target library object has 3,148 text bytes and no global data/BSS of its own;
+its caller-owned state is 4,244 bytes in the compiled native fixture. Local
+compiler stack estimates are 8–40 bytes, excluding callees and the full chain.
+The combined native test image compiles at 23,436 text bytes, no initialized data
+and 10,212 BSS bytes, including the retained manual reference session. It fits
+its explicit eight-page arena reservation. These sizes do not establish timing,
+cache behavior, shared-base memory placement or installable-package headroom.
+
+`test_preview_async.py` and `async_native.py` reproduce the portable checks.
+`async_ui_native.py` compiles the separate engine/UI fixture; `boot_async_ui.py`
+exercises its conservative or explicitly opted-in fixed-input waveform-read
+classification. Completed native run outcomes follow below.
+The fixture retains pinned storage, synthetic source/owner identities and partial
+writer coverage. No production API, event assignment, loader retirement, native
+Apply, playback, browser/USB package or hardware qualification is implied.
+
+Six fresh scheduler/DSP boots cover controls, waiting cancellation and owner
+retirement in both six-row and nine-row stock menus. The two control runs
+produce 42 complete oracle-matching plans and correct tempo/count/fade labels.
+Changing options while waiting cancels the old request before another query;
+normal NO and owner retirement close the waiting dialog without another read.
+A foreign message sharing the wake opcode invalidates a completed preview.
+The explicitly opted-in fixed-input waveform classification lets completed
+results survive normal redraw work; it is not production writer admission.
+
+Across those six boots, 2,942 UI ticks each perform exactly one UI service call,
+with no reentry. All observed PCM queries occur in the separate engine task.
+There are 508 engine callbacks, 2,944 explicit session steps, 48 begin calls and
+458 posted/consumed owned wakes, with no wake left pending. The maximum remains
+eight explicit steps plus optional begin/setup and result validation/publication.
+These are execution/work counts, not cycles or physical latency.
+
+A seventh, conservative six-row boot keeps the default all-command invalidation.
+Its UI briefly completes one preview, then normal waveform work retires it before
+the driver observes READY; this receipt contains **zero** whole-plan oracle
+comparisons. It verifies the stale result, no subsequent queries and normal
+closure. Every successful boot preserves complete logical PCM, controls,
+settings, both cards, code/reservation canaries, the original receive call and
+main's stack. All storage remains pinned, so none proves physical removal,
+reclamation or a production base/USB lifecycle.
+
+The source check against current upstream passes 2,529 app tests, 37 SDK tests
+(one skipped), lint, types, bundle and catalogue/import checks in 135.90 seconds.
+The required origin/main check retains the inherited CHANGELOG.md history
+failure. Documentation/evidence follow-ups use the lightweight checks.
+
+The ten asynchronous-exchange reports are pinned to source commit
+`e9169abf655f1fefef4c9cc7fdccae57a925714a` in `evidence-sources.json`.
+
+
+## Longer previews and measured baseline (0.1.28)
+
+`preview_cost_native.py` compiles an original synthetic provider with the preview
+exchange and runs sixteen one/30-second cases: exact/smooth boundaries, one/64
+beats and sample/project tempo. All complete plans match the direct planner.
+The observer counts executed ColdFire instructions within service calls and
+ownership sections, with positive controls and preserved stack/callee registers.
+Planner/decoder entries are never observed under the backend lock. This provider
+models 1,536-frame page boundaries; it does not model stock metadata capture,
+cache, RTOS scheduling, cycles or physical time.
+
+For the 30-second, smooth, one-beat sample-tempo case (120.25 BPM), the baseline
+uses 4,074 service calls and 22,924,183 service instructions; its longest call is
+19,160 instructions. It enters 41,166 lock sections, totaling 13,900,774 locked
+instructions, with a longest section of 1,969. It performs 32,591 explicit steps,
+33,439 captures and 423 copies to produce 61 markers. Project tempo (120 BPM)
+uses 4,007 calls, 22,540,198 service instructions and a longest call of 19,437,
+with 60 markers. These are a reproducible optimization baseline, not a native
+performance qualification or a stock-effect comparison.
+
+A separate full scheduler/DSP boot uses authored 16-bit stereo PCM with
+1,323,000 frames at 44.1 kHz. Loading a longer WAV into the retained project
+initially leaves the old one-second trim. Stock EDIT SELECT ALL does not change
+that trim in this pinned 1.40C emulator. The driver therefore uses ordinary stock
+sample clear/reload, verifies the full trim and zero markers, then admits the
+preview. Stock sets sample BPM to 128; project BPM remains 120. The driver checks
+the captured values rather than assuming the older fixture's sample tempo.
+
+All 21 control plans match the independent PCM oracle, including a 64-marker
+sample-tempo plan and 60-marker project-tempo plan. Normal UI ticks produce the
+results without driver service calls. The run records 1,344 UI calls, 10,991
+engine callbacks, 87,505 explicit steps, 22 begins and 10,969 posted/consumed owned
+wakes. PCM, unrelated settings, cards, code/reservation canaries, receive call and
+main stack remain unchanged. The LCD's tempo, existing/new counts and fade
+warning match the plan. No Apply or audible playback is exercised.
+
+Each plan records the window from request selection through first observed READY.
+The smooth one-beat sample request records 115,158,006 whole-machine instructions
+and 840.282 emulated ms; the project request records 87,275,438 and 580.264 ms.
+These windows include panel holds/releases, polling, UI, stock work and scheduler
+execution. They are neither isolated module CPU cost nor measured hardware time.
+
+The first long-source driver attempt exhausted the existing two-ms pre-entry idle
+wait before activation; no borrowed call executed. The successful run permits
+200 verified pre-entry waits of five emulated ms. Seven driver regressions cover
+bounded custom waits, invalid budgets, terminal uncertain execution and failure
+while advancing normal execution. The default remains 200 waits of 0.01 ms;
+callers cannot request more than 200 waits or ten ms per wait. This is emulator
+driver readiness, not a new module clock or permission to replay uncertain work.
+
+The full boot reuses the exact 0.1.27 native image because all its compiled inputs
+are unchanged. The changed driver and new compiled cost fixture have their own
+source hashes. Synthetic ownership, pinned storage and private fixed-input
+waveform classification remain. Live admission, Static, native publication,
+playback, production base/browser/USB lifecycle and hardware are still unqualified.
+
+The long-source and cost reports bind source
+`91d443832e638f81b657813aa2edb1a5fd88d9a1`. Current-upstream validation passes
+2,529 app tests, 37 SDK tests (one skipped), lint, types, bundle and catalogue /
+import checks in 132.07 seconds. The required origin/main invocation retains
+the inherited CHANGELOG.md history failure. Evidence-only follow-ups use the
+lightweight checks.
+
+
+## Bounded private work batches (0.1.29)
+
+`bs_session_work` batches only session-owned reader transitions and stops at its
+first live-read request. A new acquisition and metadata/guard check precede the
+single permitted PCM copy, followed by another validation and unlocked decoding.
+The original `bs_session_step` remains a budget-one wrapper. The async exchange
+uses eight private transitions per work call; its native fixture selects one
+work call per engine callback, plus optional begin/setup and publication.
+
+Host ASan/UBSan and compiled ColdFire tests pass 192 complete plans and 132
+metadata invalidations across private budgets 1, 2, 4, 8, 16 and 32. Extra cases
+check at most one copy/three captures/two source-lock sections per work call,
+warm owned-cache transitions, writers becoming runnable at unlock, pending
+capture, refused lock acquisition, unchanged invalid-budget state and identical
+plans/copy counts with fewer captures. These are serialized models. The session
+object adds no storage; its compiled code is 2,918 bytes with no global data/BSS.
+Its largest local compiler stack estimate is 164 bytes, excluding callees and
+the full chain.
+
+The copied exchange still passes 32 complete plans and 72 modeled interleavings.
+Batching can complete before a later injection target, so the tests also drive
+normal READY revalidation events to reach those targets. Assertions check the
+accepted request's published state/result, cancellation with no later copy, and
+the independent wake after late replacement; they do not mistake a previously
+selected local return value for the current copied UI state.
+
+All sixteen synthetic cost cases retain complete planner equality and exactly
+the baseline's PCM-copy, marker and private-reader counts. No planner/decoder
+entry is observed under source ownership. The selected callback budget is one:
+
+| 30-second, one-beat case | Baseline service instructions | Batched service instructions | Baseline maximum call | Batched maximum call |
+| --- | ---: | ---: | ---: | ---: |
+| Sample smooth, 120.25 BPM | 22,924,183 | 9,591,985 | 19,160 | 10,663 |
+| Project smooth, 120 BPM | 22,540,198 | 9,430,825 | 19,437 | 10,631 |
+| Sample exact, 120.25 BPM | 704,194 | 566,113 | 19,145 | 15,209 |
+
+Across all sixteen cases the maximum callback falls from 19,437 to 15,209
+executed instructions. Sample-smooth source captures fall from 33,439 to 5,171;
+423 copies and all 33,015 private reader calls remain. The selected budget uses
+4,323 service calls, so fewer service calls are not the claimed improvement.
+Locked instructions fall from 13,900,774 to 2,837,223; the maximum locked section
+is 1,968 versus 1,969. This synthetic scalar-only metadata provider excludes
+stock capture cost and cache behavior. These are instructions, not cycles,
+physical latency, audible headroom or native timing qualification.
+
+Final source-bound probes also record budgets two and eight for the tradeoff.
+Budget two reduces the long smooth total to 9,239,745 instructions, but its worst
+callback across the matrix grows to 25,889. Budget eight lowers that smooth total
+to 8,975,522 with a 65,469-instruction smooth callback. Neither is the selected
+native default. Reproduce the accepted cost run with `preview_cost_native.py
+--budget 1`; the report records the budget and private-transition unit explicitly.
+
+The new combined native image has 23,528 text bytes and 10,212 BSS bytes, including
+the retained manual reference session; it fits the same eight-page reservation.
+The async state remains 4,244 bytes. Execution outcomes below remain separate
+from compile success and from hardware qualification.
+
+
+The optimized 30-second full boot passes all 21 oracle plans, preserving PCM,
+settings, cards, code/reservation canaries, receive call and main stack. Its
+sample-smooth one-beat request window records 58,355,127 whole-machine
+instructions and 520.282 emulated ms, versus the baseline's 115,158,006 and
+840.282. Source queries stay 444; source-lock acquisitions fall from 43,254 to
+14,082. The corresponding project request records 32,329,686 instructions and
+280.067 emulated ms, versus 87,275,438 and 580.264, with 417 source queries in
+both runs. These windows include panel/polling/UI/stock/scheduler work and do
+not establish isolated module cost or physical timing.
+
+The long run has 1,321 UI calls, 11,733 engine callbacks, 11,694 bounded work
+calls, 22 begins and 11,712 posted/consumed owned wakes. At most one work call
+occurs per callback; the work-call counter is not comparable to the baseline's
+individual-step counter without naming that change. The LCD still shows the
+correct 64-slice, 128-BPM preview and fade warning. No Apply is exercised.
+
+Current-upstream source validation passes 2,529 app tests, 37 SDK tests (one
+skipped), lint, types, bundle and catalogue/import checks in 140.31 seconds.
+The required origin/main invocation retains the inherited CHANGELOG.md history
+failure. Documentation/evidence follow-ups use the lightweight checks.
+
+
+The optimized short-source matrix passes both six-row and nine-row stock menus:
+42 complete oracle previews, cancellation while waiting and owner retirement
+while waiting. Across all six runs, 2,942 UI calls, 591 engine callbacks,
+486 bounded work calls, 48 begins and 541 posted/consumed wakes
+complete with no pending wake. Source queries stay in the separate engine task;
+UI/selection task identity, code/arena canaries, receive call and main stack stay
+intact. PCM, complete settings and cards remain unchanged. The retained private
+waveform classification, synthetic owner/source admission and pinned storage
+remain limitations; no Apply, loader removal or hardware behavior is qualified.
+
+Fifteen optimized-work reports bind exact source commit `cb3c76a1374fe43663ef561375f0d81d63f5841b`. Historical baseline reports retain their own earlier source pins.
+
+
+## Selection-bound callback authority (0.1.30)
+
+Host ASan/UBSan and compiled ColdFire tests pass 200 repeated context lifetimes
+across both menu shapes. They reject direct/late/duplicate calls, wrong tasks,
+tables, rows, callbacks, owners, generations, domains and epochs, blocked
+selections and exhausted serials. Refused output remains unchanged. Capture,
+arm, consume and post-return retirement are distinct; a captured context alone
+is not authority. These portable tests model the trusted adapter boundary.
+The compiled context uses 668 text bytes, no global data/BSS, and at most 48
+local stack bytes excluding callees and the complete chain.
+
+An isolated actual-stock probe compares 48 original/wrapped selections with
+closed popups: four SR values, three rows, present/absent selection output and
+null/hostile callbacks. Authored hostile code clobbers every data/address
+register and changes SR. Both paths match all D0–D7/A0–A6 registers, SP, SR,
+the original return slot, the callback overwrite of the caller's first argument,
+other argument words and selected-row writes. Four nested calls are refused
+before stock dispatch while preserving the outer state and argument layout.
+This probe has no scheduler or popup destruction; full native UI checks are
+separate. The private return trampoline preserves the original stack rather
+than introducing an extra stock call frame.
+
+The combined guarded fixture size report is:
+
+```text
+text	   data	    bss	    dec	    hex	filename
+  25610	      0	  10308	  35918	   8c4e	/evidence/selection30-ui-compile2/source-boot.elf
+```
+
+It fits the eight-page private reservation. Compile size and isolated ABI
+comparisons are not physical timing, native loader admission or module removal
+qualification. Full-boot outcomes are recorded separately below.
+
+
+Both full native menu layouts pass all 42 complete control plans and preserve
+PCM, complete settings, cards, private code/reservation canaries, receive call
+and main stack. Each run traces three actual popup selections through entry,
+tail, stock helper and post-return trampoline, checking registers and stack at
+each boundary. Interactive PC traces do not expose SR; the separate paired ABI
+probe above checks SR directly.
+
+Each layout refuses 40 direct callbacks across configuration, READY, closed and
+post-stock-grid states without changing UI epoch/options, request identity,
+pending work or invocation count. Capture/arm/consume counts agree; dispatch
+entry/exit counts balance, with no nested selection, active context or fault
+left. A later original stock SLICE menu and its eleven-row grid chooser still
+open and cancel without modifying markers. No module Apply or Undo is exposed.
+
+Across the two runs: 152 stock selection dispatches, 2,634 UI calls, 574 engine callbacks, 482 bounded work calls and 530 posted/consumed wakes, with none pending. Source queries remain in the separate engine task. This does not prove production loader retirement, live source admission or physical timing.
+
+Current-upstream full source validation: Check passed in 136.49s. The required origin/main invocation retains the inherited CHANGELOG.md history failure. The new CMake probe target also builds and passes the separate 48-case ABI comparison.
+
+Six selection-context reports bind exact source commit `604af6bbcf7a1feaea14d40c846a2ce7acce9ccb`.
+
+
+## Immutable fixed-owner openings (0.1.31)
+
+Host ASan/UBSan and compiled ColdFire tests pass 200 context-authorized actions
+across 100 openings of each layout. Labels, callback slots, action records and
+backend remain byte-identical. Stale armed contexts, wrong tasks, stock rows,
+busy native/context state, reentrant retirement, changed owner/layout and serial
+exhaustion are refused. These are serialized adapter models, not loader leases.
+The resident helper has 634 text bytes and no global data/BSS; its largest local
+stack estimate is 40 bytes excluding callees and the complete chain.
+
+The native fixture keeps two independently pinned 648-byte layouts. Every
+contributed selection goes through the exact context guard; original stock rows
+retain the unowned stock callback path. The owner check remains synthetic.
+Its combined image has 27,152 text bytes, 0 data bytes and 10,980 BSS bytes, fitting the same eight-page reservation. The CMake-built ABI probe separately passes 48 paired dispatcher cases and four nested refusals against this exact image.
+
+Both native control runs pass 27 oracle previews each: the complete 21-case
+workflow followed by six fresh openings. Ten root openings per run include an
+extra NO dismissal, ordinary stock grid chooser and outstanding-popup owner
+retirement. Each layout's serial advances from 1 through 10 without rewriting
+its tables. Options persist, UI epochs advance and late calls cannot change
+current authority. Each run refuses 100 direct callbacks. Retiring the owner
+closes its outstanding root popup; later openings are stock-only.
+
+Separate runs cover NO cancellation while waiting, owner retirement while
+waiting and conservative waveform invalidation in both layouts. All eight runs
+preserve PCM, full settings and cards, plus code/reservation canaries, receive
+call, main stack and separate UI/engine task ownership. Every posted wake is
+consumed; no callback exceeds one bounded work call.
+
+The conservative runs record 0 driver-observed oracle comparisons and 2 UI completions; those are distinct observations.
+
+Two additional native boots alternate between six-row and nine-row layouts in
+the same process. Each performs six stock marker transitions and seven fresh
+Beat Grid previews. Stock grid creation uses its normal four-slice chooser and
+NO-for-unaligned decision. Cancelled clear leaves every setting intact; confirmed
+clear changes the count while preserving inactive records. Both resident layouts
+remain byte-identical across transitions. Preview changes no setting; only the
+explicit stock operations change expected marker fields. PCM, source controls,
+non-marker attributes and all Static-slot settings stay unchanged. Cards are
+not saved. This is stock grid/clear behavior alongside the contribution, not
+Beat Slicer Apply or persistence qualification.
+
+Fixed-owner reopening does not support changed contributions, new package
+owners, native reference reclamation or USB replacement/removal. Production
+registry transitions, live source admission, Apply/playback and physical
+qualification remain open.
+
+Current-upstream full source validation: Check passed in 139.33s. The required origin/main invocation retains the inherited CHANGELOG.md history failure. The exact native fixture passes the separate CMake-built 48-case ABI comparison.
+
+Fourteen resident-menu reports bind exact source commit `02ad4c874e2f9af84bf25877ce27b72ae515a6cc`.
+
+
+## Published owner and normal project tempo (0.1.32)
+
+The menu-owner helper checks the complete real loader record and its exact
+current published extent under the caller's stable loader lock. Six host
+ASan/UBSan configurations cover ordinary/cached images, the 128-module Octatrack
+pool, and module sets. Each runs the unchanged upstream loader suite plus staged,
+live, rollback-retained, replaced, restored and removed owners; eight full-record
+field mismatches are refused. Observed absence or explicit pre-transition
+retirement is permanent for that activation, including a restored old image.
+Every transitive SDK compilation input matches the committed dependency manifest.
+The retained-evidence audit also resolves each declared SDK dependency against
+its exact Git commit, including the code-generation guard where recorded. Seven
+focused host regressions reject missing pairs, malformed identities/paths,
+changed source/guard hashes and a module-relative/repository-path cache collision.
+Synthetic machine glue remains; uploaded module code does not execute.
+
+The proposed helper compiles with the freestanding ColdFire toolchain and shared
+code-generation guard: 308 text bytes, 0 data bytes,
+0 BSS bytes. Its only unresolved imports are the expected loader
+owner-validity and published-position queries. This is compile-only evidence;
+no complete native loader link, execution or registry transition hook is claimed.
+
+A separate stock-free ColdFire binary links and executes this exact helper with
+explicit synthetic loader answers. It exercises all 128 publication positions,
+complete owner-field/digest copies, destruction of the original caller record,
+intact-but-unpublished refusal and permanent retirement after invalidation,
+replacement or explicit retirement. Guard canaries, stack and preserved registers
+survive. This validates the compiled helper, not real native loader execution,
+menu dispatch, USB or physical timing.
+
+A separate unmodified stock boot changes project tempo through TEMPO and the
+LEVEL encoder: 120 → 90 → 137 → 120 BPM. Each measured detent is one BPM, bounded
+turns are checked against the runtime word, and NO leaves the accepted tempo
+unchanged. Retained open-popup LCD captures were rendered and inspected: 90.0, 137.0 and
+120.0 BPM with PRJ selected. Complete
+PCM, sample controls/settings and the unsaved card stay unchanged. No direct
+tempo stores or borrowed native calls set these values.
+
+A further native resident-menu boot starts at a normally selected 90 BPM and
+passes 27 whole-plan oracle comparisons across SAMPLE/PROJECT, all spacings and
+both boundary modes, followed by repeated openings. PROJECT results use 2160
+in 1/24-BPM units; SAMPLE results retain the sample's distinct tempo. Preview
+never alters project tempo, PCM or sample settings. The same ten opening serials,
+stale callback refusals, ordinary stock grid path and owner retirement checks
+remain active. This adds a distinct captured project tempo; it does not prove
+live clock changes, external sync or pattern-tempo modes.
+
+Production typed contribution admission, pre-transition lease retirement,
+module-set readiness, native reference reclamation, source ownership,
+Apply/playback and source-built browser/USB packages remain unfinished.
+Hardware, audible headroom and physical reboot persistence are not tested.
+
+Current-upstream full source validation: Check passed in 134.43s. The required origin/main invocation retains the inherited CHANGELOG.md history failure. The owner helper has separate compile-only and synthetic ColdFire execution evidence; real native loader execution is unqualified. The tempo driver reuses the unchanged linked resident fixture.
+
+Five owner/tempo reports bind exact source commit `f4334909b812547282acdcc2cee50b61795b9e13`.
+
+
+## Full-owner menu dispatch adapter (0.1.33)
+
+The proposed backend connects the compositor's short module/generation identity
+to an admitted full runtime-owner lease. It copies an explicit action allowlist,
+refuses ambiguous/duplicate registration, and revalidates current publication
+before forwarding to a trusted base dispatcher. It neither parses uploaded
+metadata nor resolves a raw module-pool function pointer.
+
+Six actual-loader host ASan/UBSan configurations pass the upstream loader suite
+and adapter extension. Two coexisting modules share an action ID; sorted menu
+selection reaches the correct complete owner. Changing the caller's binding
+array cannot alter registered actions. Unknown identities/actions and malformed
+bindings are refused without registry mutation. Callback refusal is propagated;
+a second dispatch of the same menu opening is stale. Replacement retires the
+old activation even while its image stays intact for rollback. Restoration does
+not revive it, and explicit pre-transition retirement also covers a missed
+replace/restore interval. Removing one owner preserves its companion action;
+removing the companion refuses that action too. Original loader active count
+and free space are restored. Uploaded module code never executes.
+
+The separate stock-free ColdFire binary links and executes the helper, adapter
+and compositor. Both six-row and nine-row models cover copied bindings, sorted
+dispatch, callback refusal and permanently stale authority after replacement and
+restoration. The included owner-copy fixture also covers all 128 publication
+positions. Code-generation checks, stack and preserved-register checks pass.
+The adapter object has 786 text bytes, 0 data bytes and
+0 BSS bytes; local stack estimates are retained in its report and
+do not establish the complete production call-chain budget.
+
+Host and target fixtures acknowledge detachment only in their synthetic menu
+models, which have no stock-retained pointers. They do not demonstrate native
+reclamation, uploaded-code execution, typed package admission, module-set
+readiness or USB transitions. Production pre-transition hooks, source admission,
+Apply/playback and physical qualification remain unfinished.
+
+Current-upstream full source validation: Check passed in 137.32s. The required origin/main invocation retains the inherited CHANGELOG.md history failure. The composed owner adapter passes actual-loader host checks and a separate synthetic ColdFire link/execution fixture. Real native registry and USB integration remain unqualified.
+
+Two full-owner menu adapter reports bind exact source commit `9b2dcbb9f77d01a40c42e1afb58c46476be3024f`.
+
+
+## Real SDK loader on ColdFire (0.1.34)
+
+The new fixture links the unchanged runtime loader and SHA implementation with
+the full-owner menu backend and compositor. Six ASan/UBSan host configurations
+pass both menu layouts and two coexisting owners. Two separate stock-free
+ColdFire binaries pass the same fixture with 128 module positions and a 786,432
+byte pool, in uncached and cached loader branches. The actual target backend
+entry wrappers execute; synthetic paused-task callbacks check that their context
+and captured SP are present. Stack and preserved registers return intact.
+
+The scenarios refuse staged owners, dispatch the correct sorted action through a
+complete live owner, reject duplicate dispatch, retire replaced owners while
+their images remain retained, and refuse revival after restoration. A newly
+admitted activation can dispatch; explicit pre-transition retirement covers a
+replace/restore interval with no intervening query. Removing one owner leaves
+the companion's identical action ID usable. Removal and reclamation restore the
+original active-module count and free pool bytes for each layout.
+
+Four original ABI 10 package identities and their controller digests match
+independent Python hashlib vectors on both host and ColdFire. Each layout also
+refuses eight altered full-owner fields, including both digests. The generated
+expected-digest header is verified against its generator before compilation.
+No package bytes or stock data are stored in that header.
+
+All SDK compilation dependencies and the recorded code-generation guard match
+exact commit pins. The target links without unresolved helpers. Original bounded
+byte-copy/clear helpers satisfy compiler-generated memory operations only inside
+this fixture; no production loader source was changed. Its BSS starts at
+`0x47400000` and spans 812,048 bytes in separate synthetic
+RAM, away from the runner's code and stack. This includes the test's loader pool,
+ledger and state; it is not Beat Slicer's installed resource cost.
+
+Machine stopped-state, locks/masks, task reachability, cache maintenance/aliases
+and DSP services are synthetic. In particular, the cached branch uses an identity
+alias and does not qualify real caches. The machine reports no consumers in
+uploaded memory; that is not an Octatrack reference-retirement implementation.
+Menu detachment is acknowledged only in a model with no stock references. The
+authored packages have no executable hooks and uploaded module code never runs.
+No stock firmware, menu scheduling, USB traffic, module-set trial/Keep/Undo,
+physical timing or audio is exercised. Production typed admission, transition
+hooks, live source ownership, Apply/playback, packages and hardware remain open.
+
+Current-upstream full source validation: Check passed in 136.07s. The required origin/main invocation retains the inherited CHANGELOG.md history failure. The unchanged real SDK loader and owner adapter pass host and ColdFire execution with synthetic machine services. Production stock-menu and USB integration remain unqualified.
+
+Three actual-loader integration reports bind exact source commit `c65edade167b9eedff37c40e117b2a4912cbe8b1`.
+
+
+## Whole-set menu-owner transactions (0.1.35)
+
+The isolated real-loader fixture now also executes the unchanged SDK upload
+controller and module-set backend. Six host configurations pass with ASan/UBSan;
+the two set-enabled configurations each run four additional scenarios. Separate
+cached and uncached ColdFire set builds run the same four scenarios with 128
+module positions and a 768 KiB pool. Exact SDK compilation dependencies and the
+code-generation guard remain pinned. Stack and preserved registers return intact.
+
+Each scenario installs three original hook-free packages. A two-row transaction
+replaces the first owner and removes the second, leaving the third unchanged.
+Disconnect is exercised before publication, after the first row and after both
+rows (including return to the running-trial phase); complete-set acceptance is
+checked separately. Acceptance before complete publication is refused. Every
+rollback restores the baseline active identity.
+
+The fixture explicitly retires both changing owners before publication. It
+checks retained-but-unpublished predecessors at each boundary, refuses both old
+menu activations after restoration or acceptance, and keeps the unchanged
+companion callable throughout. Fresh admission is required for a restored or
+kept owner. Final removals reclaim the original free pool bytes and leave no
+active module or set transaction.
+
+This executes actual controller/set-backend code, not USB traffic. Synthetic
+stopped-state, locks, cache aliases/maintenance, empty paused-task reachability
+and DSP services retain the earlier limits. Retirement calls are test-side, not
+installed production hooks. No uploaded module hooks, stock menu, self-test,
+physical disconnect, audio, persistence or browser-built package is qualified.
+
+Current-upstream full source validation: Check passed in 133.23s. The required origin/main invocation retains the inherited CHANGELOG.md history failure. The unchanged real SDK loader/upload controller and owner adapter pass host and ColdFire whole-set transitions with synthetic machine services. Production stock-menu and USB integration remain unqualified.
+
+Three actual-loader integration reports bind exact source commit `8659d8652775a221117801396e31f8072d24a154`.
+
+
+## Recorder-stop follow-ups and compiled worker exclusion (0.1.36)
+
+The new isolated stock runner passes 32 stop/follow-up scenarios with the host
+admission observer, then the same 32 with the actual compiled worker-boundary
+prototype substituted at the engine queue-receive call. The private MAIN hash
+remains the original 1.40C input. Both runs also execute 16 original recorder
+positive controls covering preallocated/lazy allocation and PCM stores. Exact
+runner/helper/source hashes are bound separately from the compiled target and
+its code-generation guard. The imported emulator/SDK sources are unchanged.
+
+The matrix covers tracks 1/8, both state banks and both packed stereo widths.
+Two allocation-shortage scenarios produce one queued cleanup and a separate UI
+notification without writing PCM from that recorder call. Two length-limit
+scenarios write their final four/two frames before stopping and queue cleanup
+without that shortage notification. Per-track command records carry opcode 34
+and their track index; they are not a shared track-mask record.
+
+Worker startup performs no watched map writes. The subsequent command stores
+zero through the recorder-map tail beyond its one/two allocated entries: 14,601
+or 14,600 stores while the queue count is already zero. The tail was zero before
+cleanup, so write observations and byte comparisons are checked independently.
+Full post-stop PCM, map, sample-control, allocation-count, recorder-state-bank
+and free-cursor regions remain byte-identical. The follow-up adds no PCM,
+dirty-byte or slot-counter stores. The stock UI notification remains queued;
+its consumer is not run. Worker loop stack/frame and caller mask are preserved.
+
+In the compiled-observer run, every map store requires the actual native guard
+ticket. That ticket remains active at return to the loop, then ends on the next
+receive before the empty-queue event wait. The wait is unmasked. The original
+host guard remains an independent recorder/fixture observer; it is not counted
+as native execution. Fixture construction of a distinct free page is guarded
+and counted separately from the recording/worker observations.
+
+No scheduler, audio ISR, UI consumer, real cache behavior or device runs. Active
+recorder state, silent inputs, partial allocation geometry and source ownership
+are synthetic. Manual stopping, Pickup/overdub, other finalization paths and
+complete shared-pool ownership remain open. The observer is privately injected,
+not an admitted base service. Source-built USB packages, native Apply/playback,
+audio and physical persistence remain unqualified.
+
+Current-upstream full source validation: Check passed in 135.43s. The required origin/main invocation retains the inherited CHANGELOG.md history failure. Isolated recorder-stop and compiled worker-observer executions pass under synthetic active state. Production stock-menu and USB integration remain unqualified.
+
+Two recorder-stop integration reports bind exact source commit `e3f171d8caa01aeca6438e8205419bfad2dbbfff`.
+
+
+## Two pending recorder stop records (0.1.37)
+
+Both isolated host-observed and compiled-observer runs now retain 32 individual
+stop/follow-up scenarios and 16 recording positive controls, plus four paired
+scenarios: both stereo widths times both state banks. Each paired case stops
+tracks 1 and 8 in two complete recorder calls before running the worker.
+Distinct synthetic owned pages and separate queued per-track records are
+verified. These are serialized calls, not simultaneous audio ISR execution.
+
+FIFO execution writes only the current recorder's unused map tail: 14,601
+stores per command, with one pending command during the first and none during
+the second. The full post-stop PCM/map/control/count/state/free-cursor regions
+remain byte-identical, and both shortage UI notifications stay queued. Loop
+stack/frame and caller mask remain intact.
+
+Every native-observed store requires the current compiled guard ticket. The
+second command must receive a newer ticket and revision; the final empty receive
+retires it before an unmasked event wait. The host observer remains independent.
+No production hook, scheduler, ISR, UI consumer, live allocator ownership,
+manual stop/overdub, USB, native Apply/playback or hardware is qualified.
+
+Current-upstream full source validation: Check passed in 135.40s. The required origin/main invocation retains the inherited CHANGELOG.md history failure. Isolated recorder-stop and compiled worker-observer executions pass under synthetic active state. Production stock-menu and USB integration remain unqualified.
+
+Two recorder-stop integration reports bind exact source commit `9eccbb0cc5f2a3607f593e4731bd3673d2e2dac7`.
+
+
+### Reporting clarification for 0.1.37
+
+The shared paired-recorder success line now describes only identity, map and
+preservation checks executed in both modes. Native guard/wait checks are named
+separately by the compiled-observer run; the host run names its host observer.
+No assertion or recorder behavior changed. Both modes were rebuilt and rerun
+with 32 single-recorder cases, four paired cases and 16 recording positive
+controls. Earlier reports remain bound to their historical source; the new
+reports retain the corrected output and their own exact source revision.
+
+Current-upstream full source validation: Check passed in 131.44s. The required origin/main invocation retains the inherited CHANGELOG.md history failure. Isolated recorder-stop and compiled worker-observer executions pass under synthetic active state. Production stock-menu and USB integration remain unqualified.
+
+Two recorder-stop integration reports bind exact source commit `66ec0116a5ea4b7ed6ec83659493366a249edce8`.
+
+## Typed menu contribution proposal (0.1.38)
+
+The new `menu_package.c` decoder validates one copied 64-byte descriptor from
+an exact currently published loader owner. It bounds initialized-image access,
+entry alignment and descriptor overlap; refuses unknown schema/size/reserved
+fields and malformed labels; and freezes admitted metadata in base-owned
+storage. Neither its proposed record layout nor its table/event is released.
+
+The actual-loader host suite passes six configurations with address/undefined
+sanitizers: default and cached branches, default and 128-position/768 KiB pools,
+and two whole-set variants. Each configuration retains the earlier two-owner,
+both-layout and loader rollback checks. New cases run both six-row and nine-row
+menu models, with 30 malformed descriptors, eight forged owner fields and four
+legal entry/label boundary cases per layout. Failure output preservation,
+staged-owner refusal, one-time binding, copied-label lifetime, wrong-action
+refusal, replacement/restore retirement and final allocation recovery pass.
+
+Native executions use the real unchanged SDK loader/SHA and upload controller,
+128 positions and a 768 KiB pool, with whole-set support in both cached and
+uncached branches. A four-byte original return-42 callback is reconstructed in
+the module pool, resolved through the admitted binding and actually called
+through the owner-backed menu model, once per layout. The host run only models
+that dispatch. An independent hashlib oracle checks the new package/controller
+identity before mutation tests, alongside the four retained owner-test vectors.
+The fixture preserves the loader-populated image preamble when resetting data.
+
+This is stock-free isolated CPU execution, not the stock popup, USB transport or
+Beat Slicer planner running in an installed package. Machine locks, cache flush,
+stopped state, paused-task reachability and DSP services are synthetic. Metadata
+is stable during the bounded copy by fixture construction; the native boundary
+that would exclude real-time module writers is not implemented. Full-set
+readiness, production typed admission, pre-transition retirement hooks, retained
+native references, source ownership, Apply/playback and hardware remain open.
+
+Three typed-contribution reports bind source commit `0411151155c2364a63e1d16beba2253ea961969a`. Current-upstream full validation passed in 143.06 seconds (2,529 app tests; 37 SDK tests, one skipped). The required origin/main invocation retains the inherited CHANGELOG.md history failure.
+
+The compiled decoder object contains 872 text bytes and no static data/BSS. GCC reports 136 bytes of bounded local stack for binding, 12 for view and 8 for entry resolution. These are per-function figures, not complete call-chain storage or physical latency qualification.
+
+## Recorder bank and normal-panel transitions (0.1.39)
+
+The stock full-boot driver uses normal TRACK + REC1 start/retrigger and STOP on
+tracks 1 and 8, with the scheduler and both DSPs running. In the original
+ONE/MAX, 16-bit stereo fixture, each recorder has 460 preallocated pages. It
+checks both bank selections, advancing selected positions, retained old-bank
+positions and a quiet interval after STOP. Full unrelated Flex PCM and
+controls/settings, allocation counts and first recorder pages remain intact;
+the private card is not saved or written back.
+
+The pending state is published by an overlapping four-byte write, followed by
+the active-byte store. Each track's two starts and stop produce the state
+sequence `(bank 1, 1) → (1, 2) → (0, 1) → (0, 2) → (0, 0)`. The old bank stays
+`2` after STOP without advancing. The driver decodes the state byte inside each
+store's full big-endian extent; filtering only the store's starting address
+would miss both pending publications. Calls enter from both stock frame
+dispatch returns; separate PCM-prefix and map-tail watches provide positive
+write observations. The first recorder owns physical page 14,602, valid in the
+14,603-page physical arena: usable count and exclusive physical bound differ.
+
+The isolated CPU runner covers 48 two-bank starting states and 16 delayed
+follow-up calls with the complete stock recorder routine and real callees.
+There are no mocked stock calls. Both packed stereo widths, tracks 1/8 and
+both bank selections run with synthetic allocation/input/state and a host-side
+guard. It checks exact PCM in the initial cases, including untouched regions,
+pending delay/state/position transitions, map/dirty/counter preservation and
+callee-save/stack behavior inherited from the original recorder runner. The
+pending follow-ups reach delay zero before starting; retained inactive state
+alone performs no PCM write.
+
+These are separate experiments: the full boot does not run the host guard,
+and the isolated runner does not run the real scheduler or audio interrupt.
+They install no production recorder boundary and establish neither all writer
+coverage nor a native source lease. Pickup/overdub, long dynamic growth,
+interrupt/cache/physical latency, USB, audible behavior and persistence remain
+unqualified. The typed-menu and earlier recorder evidence remains historical
+and source-bound; no prior report is relabeled as the new test.
+
+Two recorder-bank reports bind source commit `034701491d876f54ccfda11ed6164771485073dd`. Current-upstream full validation passed in 141.28 seconds (2,529 app tests; 37 SDK tests, one skipped). The required origin/main invocation retains the inherited CHANGELOG.md history failure.
+
+## Compiled recorder entry/return boundary (0.1.40)
+
+The private prototype described in [RECORDER_BOUNDARY.md](RECORDER_BOUNDARY.md)
+passes 72 host sanitizer bank/track cases, nested independent writers and 13
+terminal fault families. The portable self-test also runs on the native target.
+The actual-stock runner passes 896 original/compiled-guard pairs across tracks
+1/8, both stereo widths and banks, 14 bank/allocation scenarios, four incoming
+SR patterns and both normal and faulted observers. All data/address registers,
+SP/SR at both continuations and return, caller arguments and ordered external
+stores match. Native guard tickets cover source mutations; two exact idle
+voice-flag clears remain in the full write comparison without invalidating
+previews. Private and lower-stack canaries remain intact.
+
+The observer adds at most 231 executed instructions in these cases, 168 on
+inactive/retained-bank calls. The largest observed observer-only masked run is
+113 executed instructions for callers below level 7. These are instruction
+counts, not cycles, physical interrupt latency or acceptable audio headroom.
+The portable boundary object is 554 text bytes with no static data/BSS; its
+reported local stack is 24 bytes for enter and 32 for leave. The wrapper,
+fixture storage and complete stock call chain are additional costs.
+
+The full-boot panel report from 0.1.39 remains a separate uninstrumented run.
+This milestone does not compose recorder and engine lifetimes in a live boot,
+install production hooks, admit a live source, or qualify Pickup/overdub,
+cache/interrupt timing, USB, playback or hardware. Replay bytes and binaries
+remain private; the conservative interior-target scan is not a complete
+control-flow or indirect-target proof.
+
+Two recorder-boundary reports bind source commit `a3cd85dabb842e5f23199df31c7602281d06bbc7`. Peak observed stack below the original caller SP is 176 bytes for stock and 260 bytes for the guarded isolated calls, not a complete ISR/task stack budget. Current-upstream validation passed in 142.59 seconds (2,529 app tests; 37 SDK tests, one skipped). The required origin/main invocation retains the inherited CHANGELOG.md history failure.
+
+## Shared recorder/engine guard in a full boot (0.1.41)
+
+The private source-built composition uses one guard for recorder execution and
+the existing base-owned engine idle/job sites. The original queue receive call
+is unchanged. Normal panel start/retrigger/STOP passes on tracks 1 and 8, with
+32 watched PCM-prefix stores per track under the recorder's own ticket and
+three map-tail stores under the engine's own ticket. Native entry/return counts
+balance at quiescent checkpoints. The old inactive bank remains 2; a 500 ms idle
+interval has no watched PCM/map stores or recorder scopes. Prepared Flex PCM,
+all controls/settings, allocation counts, code/canaries and the card remain
+intact. Both DSPs and the real emulator scheduler run.
+
+Twenty-four preparation stores per track remain unguarded: 12 actual store PCs
+executed on both starts, including the longword pending-state publications.
+The corresponding active and Stop state transitions hold recorder tickets.
+These are positive gap observations, not a complete source-exclusion pass.
+The production reader remains disabled. The native fixture has explicit
+synthetic enablement only after a real engine job/idle pair and no live scopes.
+
+The initial empty Static binding queues no waveform job on AED opening. The
+fixture's known Flex assignment/SELECT ALL preparation obtains a real engine
+boundary and changes exactly settings word 271 from 0 to 44,100; PCM and
+controls remain equal. The full prepared settings are then preserved during
+recording. Merely observing empty queues or faking an idle flag is not accepted.
+
+This experiment reserves eight audio pages and binds the SDK codegen helper
+and stock engine guards to an exact SDK commit. It does not publish a base,
+module package or reader API, qualify all recorder/Pickup paths, or establish
+physical timing, DMA/cache ownership, USB, audio quality or persistence.
+
+Two composition reports bind source commit `d65c0cf4528d7a2ed316d0fdd14224c196783dee`. Current-upstream validation passed in 137.89 seconds (2,529 app tests; 37 SDK tests, one skipped). The required origin/main invocation retains the inherited CHANGELOG.md history failure.
+
+Both preparation calls per track return to the stock frame dispatcher at `0x4000d35c`, with observed command words `0x9010` and `0x1010`. The Stop helper returns to `0x40007942` inside the guarded recorder body; its state clear holds the recorder ticket. These are named fixture observations, not a released calling convention.
+
+## Complete preparation scope (0.1.42)
+
+Host sanitizers pass 72 bank/track cases, eight preparation scopes with nested
+recorder activity, eight nested scopes with an independent writer and 14 fault
+families. ColdFire pairs 192 original/guarded preparation calls and retains all
+896 recorder comparisons. All D/A registers, SP/SR, caller arguments and ordered
+external writes match at the checked continuations and return, with intact
+stack/private canaries. Preparation publishes the expected pending bank and
+queued cleanup record; no PCM/map write is invented by the fixture.
+
+The native preparation wrapper adds at most 217 executed instructions, with a
+95-instruction maximum observed observer-only masked run. The recorder wrapper,
+including saved-SR diagnostic counters, adds at most 257 (194 idle), with a
+134-instruction maximum masked run. Peak isolated stack is 72/176 bytes for
+stock/guarded preparation and 176/260 for stock/guarded recorder. These are
+fixture instruction/stack observations, not physical latency or whole-ISR cost.
+
+Normal-panel start/retrigger/STOP full boots pass on tracks 1/8 with zero
+uncovered watched recorder-bank stores, 32 PCM-prefix and three map-tail stores
+per track under their corresponding native tickets, and all five state changes
+guarded. Exactly two preparation scopes occur per track. Saved caller mask is
+level 5 at both entry/return for preparation and recorder callbacks. Prepared
+Flex data/settings/controls, code/canaries, receive call and unsaved card remain
+intact. Ordinary preallocated ONE/MAX is the tested mode. No production source
+reader, Pickup/overdub, complete writer/cache ownership, USB or hardware result
+is established.
+
+Four preparation/composition reports bind source commit `d6bfe235501e16cc421a8deddd84c6ba3a621535`. Current-upstream full validation passed in 138.07 seconds (2,529 app tests; 37 SDK tests, one skipped). The required origin/main invocation retains the inherited CHANGELOG.md history failure.
+
+## Preview invalidation during ordinary recording (0.1.43)
+
+The source-built private fixture composes Flex metadata/copy/session code with
+the same recorder, preparation and engine guard. Before recording, the test
+checks that the captured revision is still current. Track 1 interrupts RUNNING
+work after a positive PCM copy; track 8 interrupts a READY plan. Both refuse
+result output and become STALE before another lookup. Stop does not revive the
+old token. T8's normal TRACK+REC selection changes the editor to empty Static
+slot 7; normal T1 selection restores Flex slot 0, and the old token still refuses.
+
+Four complete fresh SAMPLE/SMOOTH/one-beat previews match all 131 plan words
+from the host PCM oracle. Each takes 78 bounded work calls and 12 stock lookups,
+returns five markers at captured BPM24 2,886, and balances source locks. Existing
+markers are included. Source PCM, controls/settings, native code/canaries, the
+stock receive call and unsaved card remain intact. The earlier native ticket,
+state-transition, preparation and idle assertions remain enabled on both tracks.
+
+The binary through BSS occupies 20,880 bytes inside the explicit eight-page
+reservation; this excludes runtime stack and is not an installed module budget.
+All new borrowed-main entries have zero arguments. The pinned emulator's
+`callAsMain` pushes supplied arguments but does not perform the caller's cleanup,
+so repeated argument-bearing calls need a balanced native wrapper. These tests
+use no driver register/PC repair or replay after uncertain execution.
+
+The preparation routine takes two arguments: track and command word. Its stock
+caller removes eight bytes. The older 0.1.41/0.1.42 reports' four-word `arguments`
+field also captured two adjacent caller-frame words; those values are not ABI
+arguments. The new report separates them and stops asserting incidental stack
+contents. Historical source-bound reports remain unchanged.
+
+This is one borrowed-main consumer with fixed synthetic source/owner lifetimes.
+The coarse guard deliberately invalidates previews of an unrelated Flex sample
+when another track records. It is not a production source API or a background
+service, and it does not qualify other recording modes, complete UI/allocator/
+DMA/cache ownership, USB, Apply/playback or physical behavior.
+
+Two source-composition reports bind source commit `fee30608d51c0c41d454197133e5392a8347af8d`. Current-upstream full validation passed in 140.30 seconds (2,529 app tests; 37 SDK tests, one skipped). The required origin/main invocation retains the inherited CHANGELOG.md history failure.
+
+## Engine-owned shared-guard previews (0.1.44)
+
+The private composition now advances previews only from the stock engine
+idle/job topology. The borrowed-main API copies requests and results; the driver
+never calls the service or a session step. Memory-watch task identities place
+all source lookups on the engine task, distinct from the producer. Five complete
+131-word plans match the host PCM oracle, with 12 lookups each. READY results
+retire on normal track 1/8 recording; Stop and normal editor restoration do not
+revive them, and fresh requests recover.
+
+The observed totals are 402 engine callbacks, 390 bounded work calls, five
+begins and 390 posted/consumed wakes, with none pending at completion. Maximum
+work calls per callback is one; each work call allows eight private reader
+transitions and at most one PCM copy, plus optional begin/setup and publication.
+Each finished plan was visible at the first driver poll after a 1 ms emulator
+run; that polling interval is not a measured physical completion time.
+
+Only the exact immutable owned wake with an outstanding pending flag bypasses
+writer classification. All ordinary jobs remain conservative, including stock
+waveform jobs. The source fixture does not enable the older private waveform
+exception. Prepared PCM/settings/controls, recorder ticket assertions, code,
+reservation canaries, original queue receive and the unsaved card remain intact.
+Code through BSS occupies 36,848 bytes of the eight-page private reservation;
+runtime stack and physical callback/interrupt latency are unqualified.
+
+This is fixed synthetic ownership with a borrowed-main producer and one actual
+engine consumer. It supplies no production source API, module menu integration,
+loader retirement, package/browser/USB lifecycle, complete writer/cache coverage,
+audible behavior or device persistence.
+
+Two engine-service reports bind source commit `2217522f3fa20d4224a82c4f7d3aec6ee6afdf9b`. Current-upstream full validation passed in 139.37 seconds (2,529 app tests; 37 SDK tests, one skipped). The required origin/main invocation retains the inherited CHANGELOG.md history failure.
+
+## Native engine-service cancellation and retirement (0.1.45)
+
+The full boot queues two distinct immutable records with identical four-byte
+payloads, foreign first, while the owned wake is pending. An in-lock diagnostic
+captures exactly two job decisions: foreign/ordinary with pending=1, then
+owned/consumed with pending=1. The foreign command advances the writer revision
+and retires READY without another PCM read or modifying the last copied output.
+This tests actual queue order and pending identity, not only opcode equality.
+
+An independent synthetic writer then blocks acquisition. The requested preview
+stays WAITING for 200 emulated milliseconds without additional self-posted wakes
+or PCM reads. Cancellation receives a fresh sequence; retiring that writer and
+waking the engine does not revive cancelled work. A new request succeeds. After
+fixed-owner revocation, result copying and new requests refuse, with no further
+PCM reads or output changes over another 200 emulated milliseconds. No callback
+storage is freed, and this is not a loader-removal or USB-disconnect test.
+
+Seven complete plans match the host PCM oracle. The final totals are 564 engine
+callbacks, 546 bounded work calls, eight begins (including blocked acquisition),
+551 posted/consumed owned wakes and none pending. Watched lookups remain solely
+on the engine task. Normal track 1/8 recording guards, prepared source/settings,
+code/canaries, original receive call and unsaved card checks remain enabled.
+Fixed lifetimes, complete writer/cache ownership, production API/UI/USB lifecycle,
+physical latency, audio and device persistence remain unqualified.
+
+Two lifecycle reports bind source commit `2eb5b64406fb6368459bd8c4d7dd0cb56b3ab0d9`. Current-upstream full validation passed in 138.34 seconds (2,529 app tests; 37 SDK tests, one skipped). The required origin/main invocation retains the inherited CHANGELOG.md history failure.
+
+## Resident menus with recorder exclusion (0.1.46)
+
+`recorder_resident_native.py` links the existing immutable menu/selection/UI
+fixtures with the complete preparation and recorder scopes. Engine hooks use
+the same SR-preserving 64-byte entry frame and extract the original queued
+record from saved A2. All three observers share one guard. No production event,
+source lease or module package is assigned by this test.
+
+Both six- and nine-row layouts complete an oracle preview, then use the normal
+TRACK + REC1 chord. Stock closes the popup and returns to the playback page;
+the preview cancels without another PCM read. Stop does not revive the request
+or reopen the popup. Normal AED/SLICE navigation and a fresh Beat Grid opening
+complete another whole-plan oracle comparison. Watched recorder PCM-prefix
+stores and deferred map-tail stores carry their respective native writer
+tickets. The prepared source/settings, code, reservation canaries and unsaved
+card stay unchanged. Existing one-use selection, late-callback refusal,
+stock-grid popup/cancel, task identity and main-stack assertions remain enabled.
+The recording scenario does not exercise WAITING; its legacy report field
+`waitingOneServicePerTick` must not be read as evidence that WAITING was reached.
+Per-tick and per-engine work maxima are reported separately.
+
+Positive UI runs use the older explicitly private fixed-input waveform-read
+classification. They do not establish mutable queued-record lifetime. A
+separate run with that exception disabled treats waveform work as a writer,
+shows PREVIEW UNAVAILABLE / SOURCE CHANGED and performs no further PCM reads.
+
+The combined fixture occupies 49,000 bytes through BSS, leaving 104 bytes after
+the 32-byte trailing canary in the same eight-page reservation. This excludes
+stack. Its async-only build omits the unused direct-result buffer/function;
+normal direct-source and async intermediate objects were byte-identical to
+those before the optional macro. This tight private fixture is not a production
+memory or compatibility budget. Complete writer/cache ownership, replaceable
+menu lifetime, physical timing, audio, Apply and source-built USB remain open.
+
+The four retained 0.1.46 compile/UI reports bind source `95bf7deacbcfc96533c60e849fbafd54b6248552`. The full current-upstream source check passed in 140.49 seconds; the inherited stale-fork changelog failure remains recorded separately.
+
+## Source-mask instruction measurements (0.1.47)
+
+`boot_recorder_engine.py --profile-locks` watches the original own-code
+instruction before full masking and the exact instruction restoring saved SR.
+It checks their compiled shapes, pairs every interval, verifies matching saved
+caller SR and reconciles all windows against native lock/unlock counters. PC
+counters precede execution, so the difference plus one includes both mask and
+restore instructions. No profiling callbacks are inserted in the native code.
+
+The first engine preview produced 251 balanced windows and
+12 PCM lookups. All observed caller interrupt masks were zero.
+
+| Protected work | Windows | Minimum instructions | Maximum instructions |
+| --- | ---: | ---: | ---: |
+| coordination | 159 | 55 | 414 |
+| capture | 80 | 1061 | 1861 |
+| copy | 12 | 2882 | 3255 |
+
+Coordination windows contain no metadata capture: the asynchronous request,
+state and copied-result paths use the same backend lock. Metadata-only windows
+capture once; PCM-copy windows capture both before and after the bounded copy.
+The latter include stock pool lookup. Counts are specific to this driver and
+one-second stereo 16-bit stopped Flex source; they are not cycle measurements,
+physical interrupt latency, cache/ISR costs or a worst-case metadata workload.
+The complete fixed-lifetime recording/recovery run still passes five whole-plan
+oracle comparisons, engine-only PCM lookup and source/card/code preservation.
+No production source admission or USB package is enabled.
+
+The two retained 0.1.47 compile/profile reports bind source `a38ca2601335abe5339e7ff8416700ad26c5c28e`. The full current-upstream source check passed in 133.94 seconds; the inherited stale-fork changelog failure remains recorded separately.
+
+## Full 64-marker source-mask workload (0.1.48)
+
+`boot_recorder_engine.py --profile-markers 64` creates a 64-slice grid through
+normal stock SLICE-menu input before enabling the private reader. Preparation
+may change marker records/count and SELECT ALL's known selection endpoint;
+all other settings and the authored PCM remain unchanged. No marker-memory
+poke or card save supplies the workload.
+
+The bounded checkpoint now waits for both empty writer scopes and balanced
+entry/exit diagnostics. An emulator pause can occur after the entry counter
+increments but before scope publication, or during the matching return. An
+empty scope alone is not a complete diagnostic checkpoint. Observer faults
+still fail immediately; persistent imbalance still fails the 200 × 0.1 ms
+emulated wait bound. This run records 1 such observation
+and a maximum of 1 retry at a checkpoint; the report retains the totals.
+
+A zero-argument native producer requests EXACT boundaries at 64-beat spacing.
+That spacing exceeds the one-second source, retaining all 64 stock starts
+without adding a start beyond capacity. This targets full metadata validation
+and existing-boundary checks, not a worst-case SMOOTH scan. Five complete plans
+match the independent host PCM oracle, retaining all 64 starts through normal
+track 1/8 recording, Stop and editor restoration. Prepared settings/PCM, native
+code/canaries and the unsaved card remain unchanged.
+
+The first preview has 268 balanced mask/restore windows and
+65 PCM lookups. Captured/restored caller interrupt masks
+are zero. The same original-instruction measurement method as 0.1.47 gives:
+
+| Protected work | Windows | Minimum instructions | Maximum instructions |
+| --- | ---: | ---: | ---: |
+| coordination | 135 | 55 | 414 |
+| capture | 68 | 1061 | 2761 |
+| copy | 65 | 4682 | 5055 |
+
+This establishes the observed full-marker cost on the named stereo 16-bit
+fixture. It does not establish all-format or allocation-layout maxima,
+physical lock latency, cycles, cache behavior, ISR stack or production source
+admission. Full metadata count is one dimension of the remaining budget.
+
+The resident UI driver now emits `waitingOneServicePerTick=false` for recording
+scenarios, which exercise dismissal/cancellation rather than WAITING. Existing
+0.1.46 reports remain unchanged at their exact original source. Their legacy
+flag must be interpreted with the qualification above; no old native run is
+relabelled as a new execution.
+
+The two retained 0.1.48 compile/profile reports bind source `8efd17400916b23203d53c99e80593e84bd96b63`. The full current-upstream source check passed in 140.04 seconds; the inherited stale-fork changelog failure remains recorded separately.
+
+## Complete-table copy optimization (0.1.49)
+
+The metadata helper copies two complete records per loop. Every capture still reads all 64 records, including inactive rows, in its original volatile order. No record count, snapshot field or preservation rule is omitted. The existing ASan/UBSan host suite passes 1,536 full captures, 39 paired refusals, null outputs, 40 session transitions and both inactive-record candidate refusals.
+
+Matched native service runs change only `flex_metadata.c` in their recorded source inputs; stock image, card, WAV, emulator, compiler and flags stay matched. Each workload retains five full oracle-matching plans and track 1/8 recording invalidation/recovery. These are executed instruction counts for the same observed protected intervals, not cycles or physical time.
+
+| Workload | Protected work | Previous maximum | New maximum | Instructions saved |
+| --- | --- | ---: | ---: | ---: |
+| 4 markers | capture | 1861 | 1669 | 192 |
+| 4 markers | copy | 3255 | 2871 | 384 |
+| 64 markers | capture | 2761 | 2569 | 192 |
+| 64 markers | copy | 5055 | 4671 | 384 |
+
+The combined resident fixture occupies 49,068 bytes through BSS, leaving 36 bytes after its 32-byte canary in the unchanged eight-page reservation; this excludes stack. Both stock layouts retain two complete previews, ordinary recording dismissal/cancellation, guarded watched writes, fresh preview after Stop/reopening, and unchanged source/settings/card/code. The positive UI runs still use the explicit private fixed-input waveform-read exception. The conservative run uses no exception and refuses stale source output.
+
+The resident driver now uses the same bounded empty-scope plus balanced counter/mask checkpoint as the service driver. Faults still fail immediately, and persistent diagnostic imbalance still fails the fixed wait bound. This observer correction grants no native retirement or source admission. Production ownership, mutable queued-command stability, cache behavior, USB delivery, audio and physical persistence remain unqualified.
+
+The eight optimized 0.1.49 reports bind source `2c3d4cf9a1049d3699d8f3a9e652d325781c4f72`; the matched common-workload baseline binds unchanged source `8efd17400916b23203d53c99e80593e84bd96b63`. The full current-upstream source check passed in 137.15 seconds; the inherited stale-fork changelog failure remains recorded separately.
+
+## Retirement from the existing loader callback (0.1.50)
+
+`test_menu_owner_loader.py --transition` composes the proposed
+`bs_menu_owner_backend_transition_locked` with the unchanged real loader's
+`modwerk_machine_metadata_admit` callback. The fixture preserves ordinary-only
+metadata admission and asserts the stable lock, unmasked admission phase and
+outgoing owner's publication while the callback runs. This is an isolated
+machine adapter, not registration in the production Octatrack board.
+
+PREPARE leaves activations intact. SWITCH retires only the exact outgoing
+owner's bound leases before publication can change. The adapter validates all
+registry entries before mutation and uses full ledger checks; short
+module/generation matching alone is insufficient. Duplicate actions sharing
+one lease retire that lease together. A same-image transition does nothing.
+
+Four single-module scenarios cover both stock row counts and successful or
+refused publication. Replacement and restoration occur without an intervening
+menu/lease query. The old action stays retired, the companion still dispatches,
+and a fresh activation can dispatch the restored owner. A later admission
+refusal leaves the old image published but its previous activation retired:
+this conservative cancellation is intentional, and requires a fresh activation.
+Removal retires the fresh lease before reclamation. Each scenario also checks
+nine malformed-input refusals and unchanged activation state for preparation
+and same-image operations.
+
+Four whole-set scenarios disconnect before any publication, after one row or
+a complete trial, or Keep the complete set. Actual upload/loader callbacks
+retire only owners whose rows transition; unchanged rows and the third
+companion retain authority. Rollback cannot revive the affected activations,
+even without an intermediate dispatch/lease lookup. Allocation returns to its
+initial value after cleanup. The older loader/menu/typed-independent-vector
+checks remain in the exercised compilation path.
+
+Host ASan/UBSan passes six loader configurations, including two with set support.
+The exact source also compiles and runs on the pinned ColdFire CPU runner with
+set support in both cached and uncached branches. Native entry wrappers,
+freestanding linking, code-generation checks and exact SDK dependency hashes
+pass. Machine stop/cache/paused-task/DSP services remain synthetic; these new
+scenarios do not execute the stock menu or uploaded callback code and do not
+qualify physical cache, timing, USB or reference reclamation.
+
+This callback prototype revokes menu authority only. Native registry wiring,
+source-reader cancellation, complete-set readiness and retained menu/job storage
+retirement remain separate requirements. The production shared loader and its
+machine adapter are unchanged; no editor event/table ABI is assigned.
+
+The three retained 0.1.50 callback-retirement reports bind source `878fda00b94917ba5100fff2d5bd5dd31e6079eb`. The full current-upstream source check passed in 136.81 seconds; the inherited stale-fork changelog failure remains recorded separately.
+
+## Preview cancellation at owner transitions (0.1.51)
+
+`test_menu_owner_loader.py --preview-owner` composes the proposed
+`bs_preview_owner_transition_locked` with the real loader metadata callback,
+before menu activation retirement and publication. It uses the exchange's
+ordinary nonblocking revoke API. PREPARE and same-image switches preserve work;
+a failed source lock refuses publication. If a later exchange refuses after an
+earlier one was cancelled, the module stays published and the cancelled
+activation requires a fresh exchange. No engine-owned session is modified by
+the loader callback, and cancellation performs no PCM capture/copy.
+
+Eighteen single-owner scenarios combine RUNNING, WAITING and READY states with
+replacement/removal and successful, first-lock-refused or partially-cancelled
+publication. Replacement and restoration have no intervening preview/lease
+query. Retired requests cannot read or publish again; refused result calls leave
+the caller's output untouched. The companion and a fresh activation each match
+the complete independent planner oracle. Nine malformed-input cases per single
+scenario check count, pointers, duplicate exchange and full-owner identity.
+Storage remains pinned; fresh exchanges use separate objects.
+
+Four whole-set scenarios disconnect before publication, after one row or after
+a complete trial, or Keep the complete set. A READY, WAITING and RUNNING exchange
+coexist. Only affected owners are cancelled; untouched exchanges finish and
+match complete oracles. Rollback cannot revive cancelled output, even without
+polling between publication and restoration. Cancellation leaves source-query
+counts unchanged; final cleanup restores allocation and balances locks.
+
+The retained host ASan/UBSan report covers six loader configurations, including
+two set variants. Both cached and uncached ColdFire set builds pass the same
+scenarios, freestanding link and code-generation checks with exact SDK hashes.
+The combined test initially exceeded the CPU runner's 64 KiB code window.
+Function/data sections and linker garbage collection discard unused fixture
+functions only in `--preview-owner` mode; the runner's bounds remain intact.
+The passing uncached/cached images are 60,786/60,832 bytes. These are isolated
+CPU fixtures, not production memory budgets.
+
+PCM, source locks, cache and paused-task services are synthetic. Production
+pointer/handle admission, independent module packages, complete writer/cache
+coverage and native reference retirement remain absent. Module-specific planner
+or controller code must stay in its package rather than be built into the base.
+No stock source, USB, audible output or physical persistence is qualified here.
+
+The three retained 0.1.51 reports bind source `5ff97af6850b0c81da18c574f4fe18d67f84bca0`. Their source/SDK hashes, native object hashes and runner identity were checked before retention. The current-upstream source check passed in 139.74 seconds; the inherited stale-fork changelog failure remains recorded separately.
+
+## First USB device-test candidate (0.1.52)
+
+`build_usb_probe.py` builds a separate private diagnostic package on the existing
+base tick/draw hooks. It runs two fixed-input requests through the actual planner:
+SAMPLE 120 BPM gives five starts and PROJECT 60 BPM gives three, retaining the
+original 1,000-frame start. Generated silence gives no fade warnings. It exposes
+no source/editor/recording hooks, stock patch, DSP payload or key/encoder claim.
+The first tick performs the bounded fixed work once; later ticks only publish
+its diagnostic result. The frame hook displays the result within 1,024 bytes.
+
+Host ASan/UBSan passes success and injected first/second planner-failure cases,
+checking one-shot work and guarded display storage. The exact 2,280-byte package
+also passes two real-loader ColdFire install/Undo/reinstall cycles while retaining
+a companion, invoking its relocated tick/draw code and restoring allocation.
+The saved package SHA-256 is
+`f5432b875899a2262ddb17af3c34120bac58b52ec4f58a6d858687564fcb8328`.
+The SDK scanner finds no 16-byte high-entropy stock runs in the complete package
+against pinned 1.40C MAIN and its three reversed 24-bit alignments. Source-built
+frontend validation accepts this exact package and prepares its removal Undo;
+the planning capabilities/base identity in that check are hypothetical.
+
+The [private device client](USB_TEST.md) uses the standard frontend validator,
+OctatrackLink, actual physical self-test and Undo. Review is read-only and expires
+in 60 seconds. Trial requires unchanged package/source/SDK hashes, frontend Git
+revision, base, active identity and inventory. It refuses an existing probe,
+requires an observed passed self-test and planner PASS diagnostic, then Undoes
+and verifies the baseline. It never Keeps. The general MCP package allowlist is
+unchanged; MCP supplies read-only preflight for this unlisted diagnostic.
+
+Preparation results do not qualify USB, display, audio or persistence. The first
+read-only MCP attempt found a disconnected unit; physical results are recorded
+only after an actual authorized trial. Live Flex preview, production handles,
+Apply and finished module delivery remain separate work.
+
+## Physical failure and CPU-target correction (0.1.52 / 0.1.53)
+
+The authorized 0.1.52 private package on the owner's MKII, Modwerk base
+`cd39c494b63beae086271f8790f7e704f46fe0a617a8eb1c341c9a925f917e4e`,
+lost USB during trial. The owner observed a restart. The bounded USB diagnostic
+log records crash count 1, vector 3 at `0x40d52f64`. Its cached/uncached code
+matches; that position uniquely maps to image offset `0x84` in this exact
+package, a scale-eight indexed LEA in `text`. No firmware bytes or raw crash
+record are retained in Git.
+
+The builder incorrectly replaced the SDK's `-mcpu=54455` with `-mcpu=5475`.
+[NXP's MCF54455 reference manual, section 3.3.4.2](https://www.nxp.com/docs/en/reference-manual/MCF54455RM.pdf)
+specifies an address error for scale-eight or word-sized indexed addressing.
+The emulator accepted the compiled instruction; this did not establish target
+ISA compatibility. The SDK target produces a different address calculation.
+The 0.1.53 builder retains SDK flags and rejects these forbidden index modes;
+the trial client also rejects the exact failed package hash.
+
+Read-only recovery checks verified the original base, active identity and exact
+11-module inventory after the restart, with the probe absent. This is restart
+recovery, not successful trial Undo. No passed physical self-test, display result,
+Keep or persistence is claimed. The failed artifact remains private and marked
+REJECTED. No further package has been sent; corrected-candidate hardware results
+remain pending a fresh explicit trial authorization.
+
+The corrected 0.1.53 preparation produces a 2,288-byte package with SHA-256
+`3f62f662f5eca55a8b6bc48301810feb5d5d9b17fc05d41ad3b380a97b3c5d35`.
+The native compiler regression rebuilds the same probe for both targets: the
+new addressing guard rejects the MCF5475 object and accepts the SDK MCF54455
+object. The corrected exact package passes real-loader CPU install/Undo/reinstall
+and the complete stock-free scan. These remain offline results, not a hardware
+fix verification.
+
+Private USB probe evidence: `usb52-*` binds source `1d19d3b8d29dd48d7b92744eb01d2d488934d24d`; `usb53-*` binds corrected source `b670fa7506c824d73eee741e3bdca2c51b2bd4aa`. Host/native/stock-free preparation passed, but both physical trials failed: 0.1.52 restarted with vector 3; 0.1.53 had no new crash but failed SELFTEST_CPU at 937 per mille. The second trial recovered the exact original base, active identity and 11-module inventory. Frame gap 52824 is below the 68000 limit. The reported culprit is Mini Verb, without a causal conclusion. No hardware planner PASS, successful self-test/Undo, rendered display or live sample behavior is claimed. Both raw device records and built packages remain private. Source checks 52b and 53a passed before their source commits.
+
+Owner clarification after the 0.1.53 trial: a pattern was already running and peaked at 92% by itself. This was reported by the owner, not measured as a separate baseline by the trial client. It exceeds the self-test CPU limit and prevents attributing the 93.7% result to the probe. A stopped-transport repeat remains pending; the failed run is not relabeled as a pass.
+
+A separately authorized repeat of the exact 0.1.53 package on the owner-selected empty pattern passed: self-test state 2, failed 0, CPU peak 724 per mille, frame-gap count 51644, planner diagnostic 0x42534f4b. The client waited five seconds and verified Undo against the complete raw baseline inventory and active identity. `usb53-hardware-empty-pattern.json` binds module source `b670fa7506c824d73eee741e3bdca2c51b2bd4aa` and records frontend revision `4519794c92891c1ccc6c84c46bee938f838a85da`. The first CPU failure remains preserved. Visible display confirmation, live Flex sources, Apply, audible behavior and persistence remain separate qualification gaps.
+
+The owner was not looking at the unit during the successful trial; no rendered-display result is claimed and no extra device run was made for that alone.
+
+## Geometry-only exact grid (0.1.54)
+
+`grid_preview.c` accepts copied scalar settings and retained starts. It has no
+PCM callback or source pointer. `bs_grid_plan` is a distinct informational result,
+without amplitude/fade flags; unknown boundaries are never represented as quiet.
+No new Apply path or source permission is introduced.
+
+The 193-vector independent Python big-integer oracle covers fractional tempo,
+all spacings, both tempo sources, high trim offsets, duplicate/retained starts,
+64-slice capacity and invalid inputs. The generated C fixture checks complete
+outputs and unchanged failure outputs with canaries. Successful plans also match
+the existing exact audio planner on a genuine generated-silence test input.
+Host ASAN/UBSAN and compiled MCF54455 execution both pass. The native objects pass
+the code-generation and forbidden-index guards; no runtime helper remains unresolved.
+
+Run in the pinned source-tools image with outputs outside Git:
+
+```sh
+python3 -B sdk/drafts/beat-slicer/test_grid_preview.py \
+  --output /PRIVATE/grid-test --sdk-revision SDK_COMMIT \
+  --runner /PRIVATE/build/beat_slicer_job_probe
+```
+
+These are generated-input engine tests, not a physical Flex snapshot, a live
+reader or new USB package. Production settings capture and its writer/menu/owner
+boundaries still require shared-base implementation and owner review. The earlier
+0.1.53 physical result is preserved at its exact source; 0.1.54 is not hardware-qualified.
+
+The retained `grid54-host-native.json` binds source `f0a5bca9f5aa74374862820246723ae0ca27af9c`; source checks against current Modwerk main passed before that commit (136.36 seconds). Native and sanitizer results remain generated-input evidence, not a live base binding.
+
+
+## Basic shared AED candidate (0.1.55, staging)
+
+The owner selected a basic working slicer first. Flex and Static share the AED
+slice commands and record layout, with separate settings/control tables. The
+current exact-grid candidate covers both file-backed source kinds without a
+PCM reader; smooth boundary analysis and playback fades are deferred. Ordinary
+stock playback and stock DELETE SLICE / DELETE ALL SLICES remain the workflow.
+
+`python3 -B -m unittest discover -s sdk/tests -p test_sample_editor.py -v`
+runs the actual independent controller/grid and shared service with ASan/UBSan,
+plus the actual native board adapter against authored sparse metadata. Cases
+cover both source kinds and slots 0/127, all owner digest bytes, unchanged NO,
+duplicate YES, temporary BUSY versus permanent stale rejection, BSS output
+bounds, exact EP0-wake identity, native readiness gates, verified complete
+rollback after a failed store and permanent refusal after uncertain rollback.
+The typed decoder accepts real C code at offset zero, rejects descriptor/BSS
+entries, and confirms default/public bases refuse the new action contribution.
+These model checks do not prove stock writer coverage or hardware behavior.
+
+The actual first target-built descriptor exposed ColdFire's default two-byte
+struct alignment: the base correctly refused its offset 2694. The public action
+type now requires four-byte alignment, with an additional cross-compiled package
+regression. An authored generic error phrase also coincided with 13 non-filler
+stock bytes; the controller now reports the actual busy/refused distinction.
+The corrected 3,672-byte package passes both unchanged strict stock-free scans.
+No rejected package was sent to a physical unit.
+
+The current service test also executes as MCF54455 code with preserved ABI
+registers. Private native empty-row and controller-bound bases link with the
+new service enabled; their stock seams and flash-preservation checks pass.
+The initial software checkpoint preceded its hardware trial recorded below.
+The exact private base passes native/browser
+byte parity. Full-menu/USB emulator results are below; companion qualification,
+physical timing, audio and persistence remain pending.
+The new service is a private `--sample-editor` base opt-in, not part of the
+released beta capability. First candidate admission requires stopped playback
+and recording. No hardware authorization from the old probe applies here.
+
+Use `scripts/octatrack-emulator/build.py` for a Modwerk base. On candidate
+`d41ede89`, the stock-oriented port missed task p1b and failed M6a; the adapted
+port passed M6a, loaded the original disposable project, enumerated USB and
+reached the real package-admission check. The initial misaligned package was
+refused before installation. This is emulator evidence, not hardware evidence.
+
+The first real USB/menu confirmation trace showed a later engine job retiring
+the pending edit after the native question opened (no answer callback and no
+marker write). The new boundary therefore distinguishes a possible waveform
+read from an actually executed read: a byte-16 record stays inaccessible until
+the separately guarded native display branch is observed and the whole job
+reaches idle. A changed/reused dispatch, foreign record, recorder kind, nested
+job or missing observer retires the token before admission reopens. Complete
+metadata is still revalidated after a confirmed file-backed display read,
+including Static error/status changes. New host cases cover those refusals;
+the combined Flex/Static confirmation rerun passes on 25 October.
+
+The normal-boot adapted emulator installed the actual independent 3,672-byte
+package (`c58883ddef1dcb38fa5fdf490e4db20fbd779f818a78dc8a12b2acd13600ea9b`)
+through the real USB loader on private base
+`2278e2a0113edc28b0e07c66c913b3194be56a02750d299268cb2eff5f0b3ea4`.
+Both file-backed kinds passed preview and native NO without metadata changes,
+native YES with exact slice records, unchanged attributes/inactive records,
+and stock DELETE ALL SLICES cancellation/confirmation. Flex used its actual
+120.25 BPM attribute (three slices); Static used 120 BPM (two slices). Expected
+positions were independently calculated with Python Fraction arithmetic.
+The run ended with actual USB Rollback/Leave, without Keep.
+
+`boot_device_module.py --help` describes the retained disposable fixture and
+required paths. It copies the card and exercises panel gestures without memory
+writes or native call injection. A receipt is written only after both source
+kinds and USB Undo pass, binding emulator/base/package/card/driver hashes.
+Private raw logs, card images and frame captures stay outside Git. This is
+emulator integration evidence, not audible, physical or saved-project evidence.
+
+Maintain USB HELLO traffic according to elapsed *emulated* time while driving
+panels. Without it the base correctly auto-Undoes a silent host's trial after
+ten seconds, removing the contributed row. That removed row in an earlier
+combined run was a client keepalive error, not a separate Static AED path.
+
+After merging upstream `f7ad1209` into `c39a8eae`, the rebuilt private base
+`52c291c2afb412286ed0e20332aef0868d3c76a3ad01dfa92dacf094a3c96246`
+passes the same combined run with package `c58883ddef1d…`. Native/browser BIN
+bytes match at SHA-256
+`8e1ca0e2982432d047d6de07748769e3f0dc00b31de8dbf8bef6fd8ebf0d91ac`.
+After actual USB Undo, the retained driver additionally opens the displayed
+stock AED menu, verifies its original label-table pointer and absence of the
+contributed action. Cached binding counts are historical storage, not the
+displayed menu; the earlier count-based assertion was a driver error. This
+result still does not qualify physical removal, audio or persistence.
+
+## First MKII trials and long-grid correction (0.1.56 staging)
+
+The owner authorized private base `52c291c2…` with 0.1.55 package `c58883ddef1d…`.
+Actual USB RAM boot succeeded on the MKII. The owner confirmed that the AED
+Beat Slicer options appeared. A combined trial of the original 11 module IDs plus
+Beat Slicer passed the physical self-test: 12 live/intact modules, seven DSP
+modules run, failed mask zero, CPU peak 718 per mille, DSP peaks 638/578 per
+mille and maximum frame gap 51,333 DTCN3 counts. This measures that self-test
+only; it does not qualify worst-case FM/Poly voices, audio or persistence.
+The earlier one-controller-only test reported CPU zero, which is not a usable
+headroom measurement. Temporary trials did not Keep, flash or save projects.
+
+A first client attempt called the frontend's public inventory read while its own
+trial held the link and got a host-busy error; actual Undo restored the empty
+temporary-base inventory. It was a client error, not a passed slicing test.
+A later 15-minute timer also completed an observed successful Undo. The owner's
+recorder-setting/RAM-clear report does not establish that firmware was erased.
+After clarification, the complete 12-module temporary set was loaded together.
+The Sidechain package byte-matches the exact candidate's privately encoded
+controller and its bound trust row; other companion payload hashes match their
+source-built published packages. No foreign kept-set file was intentionally written.
+
+The owner then reported no AED contribution for recorder buffers, and an
+approximately 22 MB file refusing with OLD SLICES CONFLICT or busy, despite
+stock DELETE ALL SLICES and stopped playback/recording. Reported tempo is
+SAMPLE 122 BPM, four bars and a displayed count of 49. Recorder buffers remain
+explicitly excluded from this file-backed draft. The exact long-file hardware
+cause is not yet confirmed and the report remains open.
+
+The controller/service host regression reproduces a concrete empty-source
+refusal: a 49th mathematical point at 122 BPM leaves only ten frames at trim
+end, and the writer returns PRESERVATION although the old count is zero. The
+old controller fails; 0.1.56 omits that new point while preserving the original
+trim end. Cases cover four-beat and sixteen-beat grids, final gaps 1/63/64, a
+65th tiny-tail point hiding a valid 64-slice grid, protected old tail markers,
+short trims and complete tiny sources. Separate regressions exercise automatic
+busy recovery, a job starting between copy/confirm, and NO, knob or stale-source
+cancellation without publication. The generic rational-grid engine is unchanged.
+
+A 24-bit stereo long-wave fixture loaded 4,164,207 frames through a normal
+emulator boot, but its initial USB HELLO did not complete. That failed harness
+attempt did not install or exercise Beat Slicer and is not evidence of a fix.
+The new 4,008-byte module (`31c65f383807…`) compiles for MCF54455, passes both
+unchanged strict stock-free scans and all five target-enabled slicer tests.
+It uses the same proposed base API, with no base firmware update. A normal-boot
+emulator rerun with this exact package passed file-backed Flex and Static
+preview/NO with unchanged metadata, native YES with exact records (three Flex,
+two Static), unchanged attributes/inactive records, stock clearing, USB Undo
+and restoration of the stock menu. These are small authored fixtures, not the
+owner's long file. The exact corrected-build physical retest remains pending.
+
+The current upstream-base repository check passes (2,570 app tests and the SDK check; 37 SDK tests, one skipped). The literal `origin/main` comparison still fails only on the inherited stale-fork CHANGELOG.md policy check. No native base rebuild is needed for this module-only correction.
+
+The combined 0.1.55 hardware trial's 60-minute Undo did not restore a known
+active identity: read-only status showed recovery, generation 7, active unknown
+on base `52c291c2…`. A fresh standard recovery client adopted transaction 4
+and retried rollback for three seconds; every reply remained needs-recovery.
+No corrected package was installed. The owner was asked to power-cycle before
+continuing; recovery and the exact long-file test remain unverified. Earlier
+successful single-module Undos do not qualify this combined-set removal.
+
+After the owner-confirmed power cycle, the flashed base `cd39c494…` returned
+in normal phase with all original 11 module IDs present. The same private
+base `52c291c2…` was RAM-booted again and the owner-approved 0.1.56 package
+`31c65f383807…` plus those companions passed an actual physical self-test:
+12 live/intact modules, seven DSP modules run, failed mask zero, CPU peak
+718 per mille, DSP peaks 772/578 per mille, frame gap 51,323 DTCN3 counts.
+The corrected set entered a fresh 60-minute trial without Keep, flash or save.
+The owner's long-file panel result and this set's final Undo remain pending.
+
+## Repeated edits and explicit replacement (0.1.57 staging)
+
+On the exact 0.1.56/base `52c291c2…` trial, the owner reported the combination
+worked initially, then failed after repeated stock clearing and different beat
+steps. WAITING FOR SOURCE was followed by CREATE SLICES? and a clipped banner
+consistent with the base's SAMPLE CHANGED - NOT APPLIED message. The exact
+reply at that physical failure was not captured; the service does, however,
+consume a confirmed YES on transient BUSY and mislabel it as source mutation.
+
+0.1.57 keeps the stock confirmation pending across BUSY and rechecks complete
+source metadata, owner and revision before any publication. NO or another stock
+gesture cancels the wait. A genuine source change still refuses. The proposed
+ABI 1 interface gains a size-checked optional replacement entry; old callers'
+confirm entry remains preservation-only. Replacement generates a fresh grid,
+warns REPLACE SLICES? for nonempty tables, and writes only after native YES.
+Inactive rows outside the new count remain unchanged and are not active slices.
+The new options frame uses an outline, inverse title and bounded short labels.
+Host/target, rendered UI and physical results are recorded separately below;
+this source has not yet run on hardware.
+
+The 0.1.56 trial disconnected at 20:41:57 UTC on 24 October (before its
+60-minute timer). The client recorded idle/disconnected and did not verify
+Undo. A later read-only bridge request reported the unit away. No cause of
+the disconnect, automatic removal or physical reboot result is inferred.
+
+The 0.1.57 actual controller/service regressions pass 100 repeated cycles over
+both kinds and all five steps, alternating stock-clear-equivalent empty counts
+and nonempty replacements, with BUSY after stock YES, readiness return,
+cancellation and duplicate-answer refusal. Service tests retain genuine source,
+revision and owner refusal while busy. Actual board tests cover nonempty-to-smaller
+replacement, complete-table NO/BUSY preservation, pointer bounds and selected-row
+retirement on YES, at Flex/Static slots 0 and 127. All five tests pass with the
+ColdFire compiler enabled. These are generated metadata fixtures, not hardware.
+
+The 4,372-byte package is `544125c5f1538d12283ae872192d49b1016184dc66f4e966aa5ad34ec3da2bfe`,
+module ID `c8d078f2`, ABI 8 with 33 hook words. Both unchanged strict stock-free
+scans pass. Private base `aba69ad57d71621d48e1b3be690d4d61136b04b201eda8b3ec35ef2c14921098`
+passes native/browser byte parity (BIN SHA-256
+`10c062cb290abe1392efc25a72dcb580eefae1238f22b2b31aaa1a095c94e014`),
+stock-free, guarded stock-site and bootloader-preservation checks. It has not
+run on the physical unit. Default beta generation remains sample-editor-off;
+all seven USB layouts pass native/browser parity and stock-free checks.
+
+The normal-boot emulator run with the above 4,372-byte prototype completed:
+actual USB installation; Flex preview/NO unchanged and exact native YES with
+three records; Static preview/NO unchanged and exact native YES with two;
+then repeated replacement at 4, 16, 32, 64 and 1 beats on each kind. Each
+replacement first exercised native NO against the complete old table, then
+YES against the rational oracle. Stock clearing, actual USB Undo and restoration
+of the displayed stock-only menu also passed. This is emulator evidence only.
+The retained driver exposes this run with `--repeat`; neither the unit nor
+emulator memory was written by the harness.
+
+Frame review found the maximum-count replacement label would exceed the
+20-character content width. The final controller changes only the literal
+OLD SLICES to SLICES, making REPLACE 64 SLICES fit. It is 4,360 bytes, SHA-256
+`11127a1f184b78c0b402a81b9e23a7b41216d0aafd2ceb35280418757303c9d0`.
+The final build passes both strict stock-free scans and all five target-enabled
+tests, now also including 40 repeated long-source cycles across Flex/Static:
+48, 24 and 12 slices at 122 BPM, and refusal of both over-64 grids, with clears,
+replacement and BUSY after confirmed YES. The full-menu emulator receipt stays
+bound to prototype `544125…`; it is not relabeled as this final image. All final
+longest labels were checked against the 20-character width. Exact final-package
+physical installation, rendered display and repeated-edit results remain pending.
+
+The integrated upstream-main check passes in 140.41 seconds: 2,570 app tests
+in 325 files, lint/type/build and the SDK check (37 tests, one skipped). All
+25 current published USB packages rebuild identically with stock-free checks;
+Play Modes retains the declared older release and issue #764 gap. The literal
+stale-fork origin/main check still fails on inherited CHANGELOG.md changes.
+The unlisted draft remains unavailable to module:doctor until release integration.

@@ -2,6 +2,7 @@
  * Production saved-set transaction against the actual modset.c and a pretend
  * card. No firmware, hardware, USB stack or reboot-persistence qualification. */
 #define MODWERK_RUNTIME_SETS
+#define MODWERK_SAMPLE_EDITOR
 #define main legacy_modset_checks
 #include "test_modset.c"
 #undef main
@@ -31,6 +32,12 @@ int main(void)
     offer[48]^=1;CHECK(!modwerk_modset_check_set(offer,offer_bytes));offer[48]^=1;
     modwerk_modset_candidate(offer,offer_bytes);set_busy=1;
     CHECK(modwerk_modset_check_set(0,0));
+    /* A completed trial retains its candidate/rows until Keep or Undo. The
+     * transport phase independently rejects receiving/partial publication. */
+    CHECK(mw_sample_storage_ready());
+    restored=0;CHECK(!mw_sample_storage_ready());restored=1;
+    pending=1;CHECK(!mw_sample_storage_ready());pending=0;
+    volatile_busy=1;CHECK(!mw_sample_storage_ready());volatile_busy=0;
     modwerk_modset_service();modwerk_modset_accepted();
     CHECK(writes==written && modwerk_modset_generation==generation && !memcmp(baseline,set,sizeof set));
     /* Undo/disconnect discards the candidate. Neither saved file nor the

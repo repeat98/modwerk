@@ -12,7 +12,7 @@
     "sdk/octabam/modules/poly8/polyphony.s": "c86a3a783c46ecdbb3b44341098f0c094c65b9a8d11716835c2d28c2d2d6ecee",
     "sdk/octabam/modules/poly8/registration.s": "9bd549a03c7008d45e5ffcd647375ed5ea7507845857f68c407bb247edd942ae",
     "sdk/octabam/modules/poly8/shared-machine.s": "e49d47ed22aa70a770e5738e69225106219b0337eabe67351d2e09150220ee80",
-    "sdk/runtime/loader/build.py": "1bc1a0e66f9b93871f429c53c8adebb39d21b5da7b7b101bf0f1f7c558313407"
+    "sdk/runtime/loader/build.py": "67a37b3a2c91cbb4c0cf01bafc033062a6cc275e0ffd55bdb870bb6332e1b69b"
    },
    "copies": [
     {
@@ -66,7 +66,7 @@
     "sdk/octabam/modules/quantizer/upstream/quantizer/manifest.py": "e637e3718e4b65320b847ef0758e0d46800f8be6b8020290f89192c798c535ef",
     "sdk/octabam/modules/quantizer/upstream/quantizer/quantizer.s": "b14f214cc8236c19b8881d1113ea42359052a6d7ef0e9e0f02aaa88279da64a9",
     "sdk/octabam/modules/quantizer/upstream/quantizer/scale.s": "82242c407847ac61a6f60fe15bdc5b0b4fc852bac82c39745b5c838ec9389c64",
-    "sdk/runtime/loader/build.py": "1bc1a0e66f9b93871f429c53c8adebb39d21b5da7b7b101bf0f1f7c558313407"
+    "sdk/runtime/loader/build.py": "67a37b3a2c91cbb4c0cf01bafc033062a6cc275e0ffd55bdb870bb6332e1b69b"
    },
    "copies": [
     {
@@ -125,7 +125,7 @@
     "sdk/octabam/modules/synth/upstream/synth/manifest.py": "58c7acd5684fe0b59c42501f7fdbfd1b288b3bfb71938dcadf43bc1774b3e5e8",
     "sdk/octabam/modules/synth/upstream/synth/page.s": "25e2a0624fcc30ee3a8db5966954113119fb5942855042f765e664a2f8544a70",
     "sdk/octabam/modules/synth/upstream/synth/poly.s": "ce21f5f7cddcd7268d27e25c500f1403cc59a9dff28044b1832cf2b45592d34c",
-    "sdk/runtime/loader/build.py": "1bc1a0e66f9b93871f429c53c8adebb39d21b5da7b7b101bf0f1f7c558313407"
+    "sdk/runtime/loader/build.py": "67a37b3a2c91cbb4c0cf01bafc033062a6cc275e0ffd55bdb870bb6332e1b69b"
    },
    "copies": [
     {
@@ -406,7 +406,7 @@
     "sdk/machines/octatrack/module-adapters/vector_runtime.py": "9f0a0ffe8c0e3bacef6e6aad057f8f454b43b5daef32e9adb8fa2def0937ea39",
     "sdk/octabam/modules/vector/control.s": "c4f829e437ffbde1275c00827031b694a86011013d37269077e4696818323471",
     "sdk/octabam/modules/vector/manifest.py": "4d921f24256038797a99671534885b0bb9a27eaa79261b11136cf0a95a75af21",
-    "sdk/runtime/loader/build.py": "1bc1a0e66f9b93871f429c53c8adebb39d21b5da7b7b101bf0f1f7c558313407"
+    "sdk/runtime/loader/build.py": "67a37b3a2c91cbb4c0cf01bafc033062a6cc275e0ffd55bdb870bb6332e1b69b"
    },
    "copies": [
     {
@@ -481,7 +481,7 @@
     "sdk/octabam/modules/analog-bassdrum/engine.s": "c86a6ac24326fb52f71dd766b1ccc25e5dfd8511028b162459447c279da48425",
     "sdk/octabam/modules/analog-bassdrum/machine.s": "90f9ddb5c2a4cee47e0334c3cd35a7e92d42b0ee37eb3bbc8062cc7821e6aeb4",
     "sdk/octabam/modules/analog-bassdrum/manifest.py": "20fa1f744630354b3986a3ad82ac6a41744345796dc783891a4c9f0bd81c787e",
-    "sdk/runtime/loader/build.py": "1bc1a0e66f9b93871f429c53c8adebb39d21b5da7b7b101bf0f1f7c558313407"
+    "sdk/runtime/loader/build.py": "67a37b3a2c91cbb4c0cf01bafc033062a6cc275e0ffd55bdb870bb6332e1b69b"
    },
    "copies": [
     {

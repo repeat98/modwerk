@@ -1,7 +1,8 @@
 """Host success must never masquerade as native qualification."""
 raise SystemExit(
-    "[FAIL] Beat Slicer is a host-tested planning draft, not installable firmware. "
-    "Editor event/adapter, verified playback fades, stock save/reload, native/browser "
-    "parity, USB lifecycle and actual MKII results are pending. "
-    "Run test_planner.py separately for portable-core regressions."
+    "[FAIL] Beat Slicer is an unlisted staging draft, not released firmware. "
+    "The basic Flex/Static controller and shared AED service are under integration; "
+    "exact menu/USB lifecycle, stock save/reload, companion and MKII qualification "
+    "remain pending. Basic playback uses stock behavior; fades are deferred. "
+    "See TESTING.md for software checks; they do not authorize publication."
 )

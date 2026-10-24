@@ -37,7 +37,10 @@ MACHINE_TRUST_SOURCES = ('machine_admission.c', 'machine_admission.h',
     'machine_admission_runtime.c', 'machine_declarations.c',
     'machine_lifetime.c', 'machine_lifetime.h', 'machine_parts.c', 'machine_parts.h',
     'table_admission.c', 'table_admission.h', 'table_declarations.c', 'table_declarations.h',
-    'machine_contributors.c', 'machine_contributors.h')
+    'machine_contributors.c', 'machine_contributors.h',
+    'sample_editor_actions.c', 'sample_editor_actions.h')
+SAMPLE_EDITOR_SOURCES = ('sample_editor_service.c', 'sample_editor_service.h',
+    'sample_editor_board.c', 'sample_editor_board.h', 'sample_editor_menu.c', 'sample_editor_hooks.s')
 RETIREMENT_SOURCES = tuple('analog-bd-parts/' + n for n in ('analog_bd_part_restore.c', 'analog_bd_part_restore.h',
                                                           'analog_bd_part_board.c', 'analog_bd_part_board.h'))
 
@@ -1445,6 +1448,8 @@ def main():
                         help='Private fixed-two-file read-only recovery snapshot. No card writes.')
     parser.add_argument('--site-events', action='store_true',
                         help='own the stock sites of sdk/machines/octatrack/events.json and dispatch their events to subscribed modules')
+    parser.add_argument('--sample-editor', action='store_true',
+                        help='Private staged AED sample-editor service; needs site events and the ordinary DSP loader. Not a released base capability.')
     parser.add_argument('--table-owners', type=Path,
                         help='reviewed table owners (module-adapters/table-owners.json): their records go into the base\'s '
                              'table-owner storage, so it admits those exact packages')
@@ -1472,6 +1477,8 @@ def main():
                         help='with --dsp-loader: the base\'s effect ids (fxids.h, the dispatch and chooser tables; '
                              'docs/OCTATRACK_MORE_EFFECT_IDS.md). 32, the old width, only to bisect a fault.')
     args = parser.parse_args()
+    if args.sample_editor and (not args.site_events or not args.dsp_loader or args.dsp_probe or args.dsp_burn):
+        parser.error('--sample-editor needs --site-events and the ordinary --dsp-loader, without probes/burn.')
     if args.usb_audio_profiles and (not args.usb_midi or not args.usb_audio or not args.dsp_loader or args.dev or args.controller_policies):
         parser.error('--usb-audio-profiles needs --usb-midi, an explicit --usb-audio and --dsp-loader; development mode and controller admission are not qualified.')
     if args.saved_set_export and (not args.dsp_loader or args.dsp_probe or args.dsp_burn):
@@ -1573,6 +1580,10 @@ def main():
     machine_trust = APP / 'sdk/machines/octatrack/module-adapters'
     for name in MACHINE_TRUST_SOURCES:
         shutil.copyfile(machine_trust / name, source / name)
+    shutil.copyfile(APP / 'sdk/machines/octatrack/include/modwerk_sample_editor.h', source / 'modwerk_sample_editor.h')
+    if args.sample_editor:
+        for name in SAMPLE_EDITOR_SOURCES:
+            shutil.copyfile(machine_trust / name, source / name)
     # Retirements the base carries for contributed machines (machine_contributors.c): Analog BD's Part conversion,
     # when the analog-bd lane's files are present (-O2: it runs with the machine lock held).
     for name in RETIREMENT_SOURCES:
@@ -1802,6 +1813,12 @@ def main():
     for name in MACHINE_TRUST_SOURCES:
         path = machine_trust / name
         inputs[str(path.relative_to(APP))] = sha(path.read_bytes())
+    path = APP / 'sdk/machines/octatrack/include/modwerk_sample_editor.h'
+    inputs[str(path.relative_to(APP))] = sha(path.read_bytes())
+    if args.sample_editor:
+        for name in SAMPLE_EDITOR_SOURCES:
+            path = machine_trust / name
+            inputs[str(path.relative_to(APP))] = sha(path.read_bytes())
     for name in RETIREMENT_SOURCES:
         path = machine_trust / name
         if path.is_file():
@@ -1944,7 +1961,16 @@ def main():
     # Only authored zero placeholders: stock is recovered by format-2 parts.
     spec = importlib.util.spec_from_file_location('modwerk_logger_package', logger/'package.py')
     package = importlib.util.module_from_spec(spec); spec.loader.exec_module(package)
-    (source/'hooks.s').write_text(package.hooks(guards))
+    hook_source = package.hooks(guards)
+    if args.sample_editor:
+        idle_seam = 'jsr octamod_log_engine_idle\n'
+        job_seam = 'jsr octamod_log_engine_begin\naddq.l #4,%sp\n'
+        if hook_source.count(idle_seam)!=1 or hook_source.count(job_seam)!=1:
+            raise ValueError('The logger engine boundary changed; review the sample-editor composition.')
+        hook_source = hook_source.replace(idle_seam, 'jsr mw_sample_engine_idle\n' + idle_seam)
+        hook_source = hook_source.replace(job_seam, job_seam +
+            'move.l %a2,-(%sp)\njsr mw_sample_engine_job\naddq.l #4,%sp\n')
+    (source/'hooks.s').write_text(hook_source)
     (source/'retained.s').write_text('''.section .bss
 .balign 512
 .globl modwerk_retained_start, modwerk_retained_end, octamod_log_retained
@@ -2003,6 +2029,8 @@ modwerk_retained_end:
         # The tables' sites: the machine registry's and the SEQUENCER rows' (machine_registry.c/.s). 'own' sites keep
         # their stock bytes; the registry rewrites their immediates while the table changes.
         for s in EVENTS.owned_sites():
+            if s['table']=='ot_sample_editor_actions' and not args.sample_editor:
+                continue  # knowing the staged registry entry does not enable its stock sites
             addr, n = s['site'], s['length']
             stock = image[addr - device.main_load:addr - device.main_load + n]
             if sha(stock) != s['guard']:
@@ -2055,6 +2083,11 @@ modwerk_retained_end:
     # The machine-neutral loader's events (sdk/runtime/loader/loader.h), from core-ot's bus.
     recipe.setdefault('subscribe', []).extend(dict(event='ev_' + e, fn='modwerk_runtime_' + e, order=90)
                                               for e in ('tick', 'draw', 'key', 'enc'))
+    if args.sample_editor:
+        recipe['cflags'].append('-DMODWERK_SAMPLE_EDITOR')
+        recipe['sources'].append('sample_editor_hooks.s')
+        recipe['subscribe'] += [dict(event='ev_tick', fn='mw_sample_ui_tick', order=89),
+                                dict(event='ev_key', fn='mw_sample_ui_key', order=87)]
     recipe['subscribe'].append(dict(event='ev_draw', fn='modwerk_boot_draw', order=10))  # boot_anim.c, while it runs
     # The host time limit counts on the same tick (ep0.c).
     recipe['subscribe'].append(dict(event='ev_tick', fn='modwerk_ep0_tick', order=91))
@@ -2109,7 +2142,7 @@ modwerk_retained_end:
     if usb_functions and not usb_profiles:
         usb_reserve_check(json.loads(Path(path).read_text())['symbols'])
     # Every C object of the base, before anything is packaged (sdk/runtime/m68k_codegen.py).
-    if not CODEGEN.check(sorted((out/'package').glob('*.work/*.c.o')), args.cross + 'objdump'):
+    if not CODEGEN.check_mcf54455(sorted((out/'package').glob('*.work/*.c.o')), args.cross + 'objdump'):
         raise ValueError('The base build left no C objects to check.')
     document = json.loads(Path(path).read_text())
     for key in ('idle', 'job', 'transport', 'open', 'read', 'write', 'close'):

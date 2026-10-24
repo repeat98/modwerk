@@ -1,0 +1,30 @@
+{
+  "scope": "Single-consumer command boundary with synthetic callbacks; no installed ownership service",
+  "sourceSha256": {
+    "worker_boundary.c": "3ed8a447076bda230939b112b53602c5acd2af4254b14971ef9fe7f929f306d7",
+    "worker_boundary.h": "13f826c6ffdce8e773879bc91c92ff9150a49edee1c27606210932adcdc0ac46",
+    "preview_guard.c": "da1299674cf2ae967c58231ee9c16891afa94e27254407b5d09df6b73cc4343e",
+    "preview_guard.h": "abcaff39ef1b9a21cb238f0021344ffb5b812ea1740a354cbc1d1f2ace4ddf36",
+    "test_worker_boundary.c": "137f5fb50d9409c7c91d2ad9d54b5ee0370eddafb0e9bedbefbdd5b95fce0eea",
+    "test_worker_boundary.py": "cf679ebd9cd6812b443ba9f01f3cc09b2d54ad350b0a8cefecf245a43bf01adc"
+  },
+  "compiler": "Apple clang version 17.0.0 (clang-1700.6.4.2)",
+  "flags": [
+    "-std=c99",
+    "-O1",
+    "-g",
+    "-Wall",
+    "-Wextra",
+    "-Werror",
+    "-pedantic",
+    "-fsanitize=address,undefined",
+    "-fno-omit-frame-pointer"
+  ],
+  "exitCode": 0,
+  "stdout": [
+    "PASS: 120 command lifetimes, waiting-reader invalidation, nested writer, revoke, recursive receive, null result, exhaustion and malformed bindings"
+  ],
+  "hardware": "not tested",
+  "audio": "not tested",
+  "nativeSourceAccess": "not implemented"
+}

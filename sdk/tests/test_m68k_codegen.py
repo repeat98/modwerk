@@ -36,6 +36,32 @@ def disassembled(obj):
 
 
 class M68kCodegen(unittest.TestCase):
+    def test_instrument_index_modes_are_separate_from_the_emulator_guard(self):
+        text = '''00000000 <indexes>:
+   0: 41f0 0e00      lea %a0@(0,%d0:l:8),%a0
+   4: 41f0 0200      lea %a0@(0,%d0:w:2),%a0
+   8: 41f0 0c00      lea %a0@(0,%d0:l:4),%a0
+   c: 41f0 6200      lea %a0@(0,%fp:w:2),%a0
+'''
+        self.assertEqual(len(codegen.index_hits(text)), 3)
+        self.assertEqual(codegen.hits(text), [])
+
+    @unittest.skipUnless(TOOLS, 'no ColdFire compiler')
+    def test_sdk_target_rejects_the_wrong_target_failure_class(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            work = Path(tmp); source = work / 'index.c'
+            source.write_text('char *index8(char *p,unsigned n){return p+8*n;}\n')
+            # An explicit incompatible object is stable across optimizer
+            # heuristics; a small C expression need not choose scaled LEA.
+            wrong_source = work / 'wrong.s'
+            wrong_source.write_text('.text\n.globl wrong_index\nwrong_index:\n'
+                                    'lea (%a0,%d0.l*8),%a0\nrts\n')
+            wrong = compile_c(wrong_source, ['-mcpu=5475'], work)
+            with self.assertRaisesRegex(ValueError, 'MCF54455'):
+                codegen.check_mcf54455([wrong])
+            correct = compile_c(source, ['-mcpu=54455', '-Os', *codegen.FLAGS], work)
+            self.assertEqual(codegen.check_mcf54455([correct]), 1)
+
     def test_refuses_a_stepped_source_register_its_destination_reuses(self):
         text = '''00000000 <copy>:
    0:	1198 0800      	moveb %a0@+,%a0@(0,%d0:l)

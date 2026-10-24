@@ -166,6 +166,13 @@
    "kind": "table",
    "room": 4,
    "record": 36
+  },
+  {
+   "index": 32,
+   "event": "ot_sample_editor_actions",
+   "kind": "table",
+   "room": 4,
+   "record": 64
   }
  ]
 }
