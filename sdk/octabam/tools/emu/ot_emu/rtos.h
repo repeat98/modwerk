@@ -369,6 +369,12 @@ namespace ot
 		struct MemWrite { double sample; uint32_t tcb, pc, addr, val; uint8_t size; uint64_t instr; };	// instr: the machine's instruction count, the PC watch's clock (O9b)
 		void watchMem(uint32_t _addr, uint32_t _len);
 		const std::vector<MemWrite>& memWrites() const { return m_memWrites; }
+		// MEMORY's gate (verify_reserve_writes): every write into the range
+		// whose PC lies outside `_stock` ([begin, end) pairs, stock's own
+		// code), kept to the first 10,000 and counted past that.
+		void watchForeign(uint32_t _addr, uint32_t _len, std::vector<std::pair<uint32_t, uint32_t>> _stock);
+		const std::vector<MemWrite>& foreignWrites() const { return m_foreignWrites; }
+		uint64_t foreignCount() const { return m_foreignCount; }
 
 		void installTrigLog();
 		struct TrigWrite { uint64_t frame; uint32_t index, value, pc; };
@@ -745,6 +751,8 @@ namespace ot
 		// `rte` is not the ack.
 		std::vector<TrigWrite> m_liveNibble, m_trigWords;
 		std::vector<MemWrite> m_memWrites;
+		std::vector<MemWrite> m_foreignWrites;
+		uint64_t m_foreignCount = 0;
 		bool m_trigLogInstalled = false;
 		bool m_partPtrWatched = false;
 		bool m_noPost = false;

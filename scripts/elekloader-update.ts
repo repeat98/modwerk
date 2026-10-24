@@ -28,7 +28,7 @@ export { mergeCatalogOverlay } from './elekloader-vendor.ts'
 /** The kit protocol src/engine/elekloader/digi-build.ts is written for. */
 export const KIT_PROTOCOL = 1
 /** The devices Modwerk builds for: digi-build.ts's DEVICE, the machine folders under sdk/. */
-export const DEVICES: Record<string, string> = { 'digitakt-mk1': 'digitakt', 'digitakt-mk2': 'digitakt-ii', 'digitone-mk1': 'digitone' }
+export const DEVICES: Record<string, string> = { 'digitakt-mk1': 'digitakt', 'digitakt-mk2': 'digitakt-ii', 'digitone-mk1': 'digitone', 'analog-rytm-mk2': 'analog-rytm-mkii' }
 /** The kit files Modwerk vendors; the zip's dist/, tools/build.ts and examples/ are for sites without a bundler. */
 const VENDORED = (name: string) => name.startsWith('src/') || ['tools/kit.ts', 'LICENSE', 'NOTICE', 'README.md', 'kit.json'].includes(name)
 

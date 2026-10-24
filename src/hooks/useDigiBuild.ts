@@ -3,7 +3,8 @@ import { useEffect, useRef, useState } from 'react'
 import { requireBuildAccount } from '../community/member-access'
 import { captureSiteDiagnosticContext, emitSiteDiagnosticEvent, isExpectedDiagnosticCancellation } from '../community/site-diagnostic-events'
 import { trackUsage } from '../community/usage'
-import { buildStep, createMachineBuilder, prepareBuild, type Builder } from '../engine/elekloader/machine-build'
+import { buildStep, buildWithLock, builtLock, createMachineBuilder, prepareBuild, type Builder } from '../engine/elekloader/machine-build'
+import type { StorageLock } from '../config/workspace'
 import type { BuilderCheck, BuilderDevice, BuilderMachine, BuilderResult } from '../engine/elekloader/protocol'
 import type { BuildProgress } from '../engine/protocol'
 
@@ -18,13 +19,21 @@ export type DigiBuildState =
 
 const message = (error: unknown, fallback: string) => error instanceof Error ? error.message : fallback
 
-/** Local Digitakt/Digitone and DTII-preview builds. The engine loads only when asked; changed inputs discard checks and results. */
-export function useDigiBuild(machine: BuilderMachine, file: File | undefined, release: string | undefined, moduleIds: readonly string[]) {
+/** A configuration's mod-storage lockfile and where a build's new one is saved. */
+export type BuildStorage = { lock?: StorageLock; save: (lock: StorageLock) => void }
+
+/** Local Digitakt/Digitone builds and the DTII and Rytm previews. The engine loads only when asked; changed inputs discard checks and results.
+ * storage: each build starts from the configuration's lockfile and saves the one it returns, so a rebuild keeps every mod's
+ * stored data where projects on the unit expect it. It is not part of the inputs: saving a lockfile keeps the result. */
+export function useDigiBuild(machine: BuilderMachine, file: File | undefined, release: string | undefined, moduleIds: readonly string[], storage?: BuildStorage) {
   const [engaged, setEngaged] = useState(false), [attempt, setAttempt] = useState(0), [loaded, setLoaded] = useState(false)
   const inputs = JSON.stringify([machine, release ?? '', file ? [file.name, file.size, file.lastModified] : null, [...moduleIds].sort()])
   const key = inputs + '#' + attempt
   const [view, setView] = useState<DigiBuildState>({ phase: 'idle', key: '' })
-  const client = useRef<Builder | null>(null), operation = useRef(0)
+  // Core build previews (Digitakt II, Analog Rytm MKII) stay out of usage counts.
+  const usageMachine = machine === 'digitakt' || machine === 'digitone' ? machine : undefined
+  const client = useRef<Builder | null>(null), operation = useRef(0), storageRef = useRef(storage)
+  useEffect(() => { storageRef.current = storage })
   useEffect(() => () => { client.current?.dispose(); client.current = null }, [])
   useEffect(() => {
     if (!engaged || !file || !release) return
@@ -54,6 +63,8 @@ export function useDigiBuild(machine: BuilderMachine, file: File | undefined, re
   async function build(version: string) {
     if (state.phase !== 'ready' && state.phase !== 'built' && state.phase !== 'failed') return
     const { enabled, device } = state, request = ++operation.current, builder = client.current!, context = captureSiteDiagnosticContext()
+    // the configuration this build is for, even if another is opened while it runs
+    const storage = storageRef.current
     let step: BuildProgress = 'composing'
     setView({ phase: 'building', key, enabled, device, log: 'Starting the build…', step })
     let started = false
@@ -64,20 +75,22 @@ export function useDigiBuild(machine: BuilderMachine, file: File | undefined, re
       const named = await builder.version(version, enabled)
       if (operation.current !== request) return
       if (!named.ok) { emitSiteDiagnosticEvent({ event: 'build_failed', phase: 'preparing', buildKind: 'elekloader', error: 'input' }, context); setView({ phase: 'failed', key, enabled, device, error: named.error ?? 'Check the OS version.' }); return }
-      const result = await builder.build(enabled, version, named.name, line => {
+      const result = await buildWithLock(builder, enabled, version, named.name, storage?.lock ?? null, line => {
         step = buildStep(line, step)
         if (operation.current === request) setView({ phase: 'building', key, enabled, device, log: line, step })
       })
+      const lock = builtLock(result)
+      if (lock && storage && JSON.stringify(lock) !== JSON.stringify(storage.lock)) storage.save(lock)
       if (operation.current !== request) return
       if (!result.ok) emitSiteDiagnosticEvent({ event: 'build_failed', phase: step, buildKind: 'elekloader', error: 'build' }, context)
       setView(result.ok ? { phase: 'built', key, enabled, device, moduleIds: [...moduleIds], result } : { phase: 'failed', key, enabled, device, error: result.error, result })
-      trackUsage(result.ok ? 'build_succeeded' : 'build_failed', machine === 'digitakt-ii' ? undefined : machine)
+      trackUsage(result.ok ? 'build_succeeded' : 'build_failed', usageMachine)
     } catch (error) {
       if (operation.current !== request) return
       setView({ phase: 'failed', key, enabled, device, error: message(error, 'The build failed.') })
       // A refused sign-in is not a failed build; a rejected OS version name returns above without counting.
       if (started && !isExpectedDiagnosticCancellation(error)) emitSiteDiagnosticEvent({ event: 'build_failed', phase: step, buildKind: 'elekloader', error: 'build' }, context)
-      if (started) trackUsage('build_failed', machine === 'digitakt-ii' ? undefined : machine)
+      if (started) trackUsage('build_failed', usageMachine)
     }
   }
   function cancel() {

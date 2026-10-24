@@ -138,4 +138,19 @@ struct modwerk_sequencer_rows { uint32_t count; struct modwerk_sequencer_row row
 #define MODWERK_EV_TAIL_KILL 30
 typedef void modwerk_ev_tail_kill(uint8_t *record, unsigned track);
 
+/* ot_midi_generators (table, contribute {"to": "ot_midi_generators", "order", "data"}): MIDI NOTE SETUP (double-tap SRC, or double-tap TRACK in MIDI mode) lists OFF and the contributed generators in its empty left half; a MIDI track running one shows that generator's pages on the MIDI pages it takes (always ARP; FUNC+AMP: the ARP page's second). The UI task. Contribute one struct modwerk_midi_generator (every field but abi, label and id optional, 0). Choosing it puts 'M' and its id in the track's arp step mask (Part 0x1822 + 2 t, high byte first), which stock's validator never reads and only ARP SETUP edits; stock's default there is ffff. On every change of generator the base first puts the track's arpeggiator back to stock's defaults (MODE OFF, every note 0), then calls the old generator's assign(t, 0) and the new one's assign(t, 1). While a generator runs a track it owns that track's 16 arpeggiator note bytes (Part 0x1832 + 16 t, each -64..63, the range stock's validator keeps), so the ARP page is always its own and FUNC+AMP never opens ARP SETUP there. Its pages show while no trig or scene is held (stock's then, so locks stay stock's); the base takes encoders A-F, YES and, on the second ARP page, NO there. Values behind the pages it takes stay stock's and keep their meaning (a NOTE page's NOT2-4 still add chord notes): set or show them itself. Layout A (owner, 24 October 2026): generators take SRC and AMP; FX1 and FX2 are kept for MIDI effects. A track whose id has no installed generator reads as stock. */
+#define MODWERK_OT_MIDI_GENERATORS 31
+struct modwerk_midi_generator {
+    uint32_t abi;                       /* MODWERK_MIDI_GENERATOR_ABI */
+    const char *label;                  /* its row in MIDI NOTE SETUP's list: up to 8 characters */
+    uint32_t id;                        /* 1-255, its own: a MIDI track running it keeps 'M' and it in its arp step mask */
+    uint32_t pages;                     /* the MIDI pages it draws, bit k for page k: 0 NOTE (SRC), 1 LFO, 2 ARP (AMP, always), 3 CTRL1 (FX1), 4 CTRL2 (FX2) */
+    void (*assign)(unsigned track, unsigned on); /* MIDI track 0-7 of the current Part becomes it (1) or leaves it (0) */
+    uint32_t (*page)(uint32_t stock, unsigned page, unsigned second); /* the descriptor to draw on page 0-4 instead of stock's; second: FUNC+AMP's second ARP page */
+    void (*knob)(unsigned page, unsigned index, int delta, unsigned second); /* encoder A-F (0-5) turned on that page */
+    void (*yes)(unsigned page);         /* YES on that page */
+    void (*ui_tick)(void);
+};
+#define MODWERK_MIDI_GENERATOR_ABI 2u
+
 #endif

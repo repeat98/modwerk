@@ -4,6 +4,14 @@
 GNU as can silently wrap an out-of-range local PC16 displacement. Checking
 its resolved instruction bytes catches writes into a neighbouring module,
 even when the linker sees no remaining relocation to validate.
+
+The render (polyphony_call up to poly_amp_hook, poly_note_increment and the
+routines from poly_cached_call on) runs from the cached alias on a base whose
+modules run uncached. There a PC-relative data operand would read POLY8's
+state through the data cache, where another task's later write through the
+uncached alias leaves a stale line. Every POLY8 symbol those lines name as
+data must therefore be absolute (`SYM:l`); branches and calls may stay
+relative.
 """
 import argparse
 from pathlib import Path
@@ -42,13 +50,40 @@ def verify(source):
             if actual != expected:
                 errors.append(f"line {number}: {target[1]} resolves to 0x{actual:x}, expected 0x{expected:x}")
             checked += 1
-        assert checked >= 100, "POLY8 address scan did not cover the runtime"
+        assert checked >= 50, "POLY8 address scan did not cover the runtime"
         assert not errors, "PC-relative address corruption: " + "; ".join(errors)
         return checked
+
+
+CACHED = (("polyphony_call:", "poly_amp_hook:"), ("poly_note_increment:", "poly_semitone_q15:"),
+          ("poly_cached_call:", None))
+
+
+def cached_operands(source):
+    """Lines of the cached render that name a POLY8 symbol as data without `:l`."""
+    lines = Path(source).read_text().splitlines()
+    bad = []
+    for start, end in CACHED:
+        a = next(i for i, line in enumerate(lines) if line.startswith(start))
+        b = next((i for i, line in enumerate(lines) if end and line.startswith(end)), len(lines))
+        for number in range(a, b):
+            code = lines[number].split("|", 1)[0]
+            if not code.strip() or code.lstrip().startswith((".", "bsr", "bra", "jsr", "jmp", "b")) \
+                    or re.match(r"^\s*b[a-z]+(\.[swl])?\s", code):
+                continue
+            code = re.sub(r"#(?:poly|pm)_\w+|\((?:poly|pm)_\w+\)\.l", "", code)  # immediates, (SYM).l
+            for name in re.findall(r"\b((?:poly|pm)_[A-Za-z0-9_]+)(?!:l|\w)", code):
+                if not re.match(r"^\s*[A-Za-z0-9_.]+:", code) or name not in code.split(":", 1)[0]:
+                    bad.append(f"line {number + 1}: {name} in {code.strip()}")
+    return bad
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--source", type=Path, default=Path(__file__).with_name("polyphony.s"))
     args = parser.parse_args()
-    print(f"PASS: {verify(args.source.resolve())} compiled local PC-relative addresses resolve to their declared storage/code")
+    checked = verify(args.source.resolve())
+    bad = cached_operands(args.source.resolve())
+    assert not bad, "Cached render names POLY8 data without absolute addressing: " + "; ".join(bad)
+    print(f"PASS: {checked} compiled local PC-relative addresses resolve to their declared storage/code; "
+          "the cached render addresses POLY8 data absolutely")

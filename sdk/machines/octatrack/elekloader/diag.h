@@ -66,8 +66,10 @@ void modwerk_diag_set(void);                           /* modset.c: the installe
  * diag_tick 8 and its end 9), so cost[k] is the time from stamp k to stamp k + 1: [1] runtime_tick, [2] ep0_tick,
  * [3] dsp_tick, [4] dl_ui, [5] status_tick, [6] controller_tick, [7] crash_tick, [8] diag_tick; [0] the whole chain,
  * [15] its ticks. The draw chain: [12] boot_draw to the end of status_draw (stamps 12, 13). [14] mw_ui_tick (14, 15).
- * [10] dl_frame's body, [11] its frames (transfer.c, build_core.py). */
-extern volatile uint32_t modwerk_cost[24];
+ * [10] dl_frame's body, [11] its frames (transfer.c, build_core.py). [18] the fx map check's time, [19] its calls
+ * (fxmap.c). [24] mg_tick (stamps 24, 25); [25] the dearest MIDI generator knob turn with its regeneration, [26] their
+ * count and [27] their time (stamps 26, 27; midi_generators.c). */
+extern volatile uint32_t modwerk_cost[28];
 void modwerk_cost_stamp(unsigned k);
 #endif
 #endif

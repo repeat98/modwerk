@@ -15,7 +15,7 @@ export function parseModuleReleases(value: unknown): ModuleRelease[] {
   return value.modules.map((item: unknown) => {
     if (!item || typeof item !== 'object') throw new Error('Invalid module release.')
     const { id, name, version, href, notes, beta } = item as Partial<ModuleRelease>
-    if (typeof id !== 'string' || !/^[a-z0-9][a-z0-9-]{0,99}$/.test(id) || ids.has(id) || typeof name !== 'string' || !name.trim() || name.length > 120 || typeof version !== 'string' || version.length > 80 || typeof href !== 'string' || !/^#(?:module\/[a-z0-9-]+|(?:digitakt|digitone)\/module\/[a-z0-9-]+)$/.test(href)) throw new Error('Invalid module release.')
+    if (typeof id !== 'string' || !/^[a-z0-9][a-z0-9-]{0,99}$/.test(id) || ids.has(id) || typeof name !== 'string' || !name.trim() || name.length > 120 || typeof version !== 'string' || version.length > 80 || typeof href !== 'string' || !/^#(?:module\/[a-z0-9-]+|[a-z0-9][a-z0-9-]{0,99}\/module\/[a-z0-9-]+)$/.test(href)) throw new Error('Invalid module release.')
     if (beta !== undefined && typeof beta !== 'boolean') throw new Error('Invalid beta release flag.')
     compareModuleVersions(version, version)
     const releaseNotes = notes === undefined ? undefined : parseReleaseNotes(notes, id)

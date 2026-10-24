@@ -1,13 +1,24 @@
 [
   {
+    "version": "0.2.0-experimental",
+    "date": "2026-10-22",
+    "changes": [
+      "New: in grid recording, hold trigs and press SCENE A, SCENE B or both. When you let go, the scene's values (or the blend) become p-locks on those steps.",
+      "One scene writes every value it locks, even when muted, replacing that parameter's p-lock on the step. Both keys write what the step plays at the current fader position.",
+      "A trig pressed or a knob turned while the scene key is held still selects a scene or writes a scene lock, and then no p-lock is written.",
+      "To remove the new p-locks, hold the trig and press PLAY, as on stock. SCENE + YES into the Part works as before.",
+      "Known issue: the new trig gesture is tested on one MKII over USB, not yet on the MKI."
+    ]
+  },
+  {
     "version": "0.1.0-experimental",
     "date": "2026-10-15",
     "changes": [
-      "New module: hold SCENE A or SCENE B and press YES to write that scene's locked values into the active Part as its own knob values; hold both scene keys and press YES to write the sound the crossfader blends right now. Covers SRC page 1 of the assigned machine, LFO speed and depth, AMP, FX1 and FX2 on all eight audio tracks.",
-      "The scenes, the scene selection, the mutes, the crossfader and the saved Part are not changed, so RELOAD PART (FUNC + CUE) is the undo. An apply that changes no value (no locks, the same apply twice, or the blend with both scenes muted) shows NOTHING TO APPLY.",
-      "Changes one stock gesture: YES with a scene key held no longer shows ARM ALL; YES alone still does. XVOL and XLV stay scene locks; trig locks and LFO modulation are not written. A parameter locked in only one scene can change sound after an apply.",
-      "Tested on one MKII over USB on the beta base (the contributor, by watching values, no audio check): all three modes, NOTHING TO APPLY, Keep, Undo, removal and a power cycle with the module kept, with a package that differs from the published one only in its display name (the published one was installed and kept, not run). Under ot_emu: the applied bytes equal stock's morph model, Part and project save and reload, and an emulated power cycle; under a MIDI flood it costs nothing between presses, and an apply raises the emulated frame interrupt by under 2% of a frame. Not measured: how long an apply takes on the unit; a card build on hardware was not run for this version.",
-      "Documentation note (21 Oct 2026, no package change): the module page credits the author as Nathaniel Pavel (GitHub @npp1993)."
+      "New module: hold SCENE A or SCENE B and press YES to write that scene's locked values into the active Part; hold both to write the current crossfader blend.",
+      "Covers SRC page 1, LFO speed and depth, AMP, FX1 and FX2 on all eight audio tracks. XVOL, XLV, trig locks and LFO modulation are not written.",
+      "Scenes, mutes, the crossfader and the saved Part stay unchanged, so RELOAD PART (FUNC + CUE) undoes an apply. NOTHING TO APPLY means no value would change.",
+      "YES with a scene key held no longer shows ARM ALL; YES alone still does. A parameter locked in only one scene can sound different after an apply.",
+      "Documentation only: the module page credits the author as Nathaniel Pavel (GitHub @npp1993)."
     ]
   }
 ]

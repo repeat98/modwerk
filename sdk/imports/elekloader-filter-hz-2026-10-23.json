@@ -1,0 +1,34 @@
+{
+  "schema": 1,
+  "kind": "elekloader-catalog",
+  "revision": "filter-hz-2026-10-23",
+  "about": "Modwerk source-only filter-hz package for Analog Rytm MKII OS 1.74, compiled from sdk/analog-rytm-mkii/modules/filter-hz.",
+  "cores": [],
+  "mods": [
+    {
+      "file": "filter-hz-1.2.0-os1.74.elemod",
+      "sha256": "95e455cb67339b6cd32006ec9693024b1860b10df8d8b70b661a150dcd920446",
+      "id": "filter-hz",
+      "version": "1.2.0",
+      "device": "analog-rytm-mk2",
+      "os": "1.74",
+      "license": "GPL-2.0-only",
+      "source": {
+        "repo": "repeat98/modwerk",
+        "commit": "67558bbaa14f6efe7c2d37b59bb07425efa8c2c9",
+        "path": "sdk/imports/packages/filter-hz/filter-hz-1.2.0-os1.74.elemod"
+      },
+      "title": "Filter Hz",
+      "requires": [
+        "core"
+      ],
+      "conflicts": [],
+      "summary": "The FILTER page's FRQ popup shows the cutoff in hertz, from 13.8Hz to 21.1kHz, instead of 0 to 127.",
+      "description": "The FILTER page's FRQ popup shows the cutoff in hertz, from 13.8Hz to 21.1kHz, instead of 0 to 127.",
+      "category": "System",
+      "author": "Iced-Cream",
+      "needs_core": "0.3",
+      "on_unit": "Tested on an Analog Rytm MKII on OS 1.74 with the released core-ar2 0.3 (FZ74)."
+    }
+  ]
+}

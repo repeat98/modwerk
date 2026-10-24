@@ -9,9 +9,9 @@ import { CHUNK_SIZE, FIRST_COUNTER, contentChecksum, decodeDataMessages, encodeS
 const COUNT_OFFSET = 0x1c, TABLE_OFFSET = 0x20, ENTRY_SIZE = 16, VERSION_FIELD = [0x14, 0x18] as const
 const OFFSET_BIAS = 767, FAR_OFFSET = 3328
 
-export type DigiMachine = 'digitakt' | 'digitakt-ii' | 'digitone'
+export type DigiMachine = 'digitakt' | 'digitakt-ii' | 'digitone' | 'analog-rytm-mkii'
 // Machines with a container and linker profile; the app's firmware flow covers DigiMachine only.
-export type ElemodMachine = DigiMachine | 'analog-rytm-mkii' | 'syntakt'
+export type ElemodMachine = DigiMachine | 'syntakt'
 export type Ele3Device = { mainSection: number; mainLoad: number; stage: number; flashAt: number; flashLimit: number; sysexId: number; seal?: 'hmac' }
 
 // Facts about each machine's container and loader, from public research (elekloader device profiles).

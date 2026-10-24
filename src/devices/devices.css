@@ -24,6 +24,8 @@
 .device-progress i.is-done { background: #7fd1a0; }
 .device-progress i.is-started { background: var(--accent); }
 
+.zoom-pedal-art { filter: drop-shadow(0 5px 5px #00000040); }
+
 .device-art .device-body { stroke: #8a8a98; fill: var(--field); }
 .device-art .device-screen { stroke: var(--accent); fill: #1a1b2a; }
 .device-art .device-screen-line { stroke: var(--accent); stroke-width: 1.2; }

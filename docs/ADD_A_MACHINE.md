@@ -1,6 +1,6 @@
 # Add a machine
 
-Every machine Modwerk knows about has a page. A machine gets mods by moving through its family's steps, each recorded in its profile at `sdk/machines/<id>/machine.json`. A profile's `family` is `elektron` (the default) or `zoom`.
+Every machine Modwerk knows about has a page. A machine gets mods by moving through its family's steps, each recorded in its profile at `sdk/machines/<id>/machine.json`. A profile's `family` is `elektron` (the default), `zoom` or `erica`.
 
 An Elektron machine moves through five steps:
 
@@ -18,9 +18,18 @@ A Zoom MultiStomp pedal (`family: "zoom"`) loads separate effect files on its st
 
 A Zoom firmware release lists its version with `"files": []`: Zoom ships its OS as an updater app and no mod touches it. A Zoom pedal stays locked for modules until a `zdl` module contract exists ([proposal](ZOOM_MULTISTOMP.md)). MultiStomp profiles use the `pedal` art body (an upright stompbox) and the G1on series uses `floor` (two footswitch plates).
 
+An Erica Synths machine (`family: "erica"`) has published firmware source (the LXR-02, GPL-3.0), so mods are changes to that source and nothing is reverse-engineered or rebuilt from a stock image. It moves through four steps, `source`, `boot`, `core` and `mods`:
+
+1. **Firmware source builds.** The published source builds an SD-card update image, reproducibly, with the documented toolchain.
+2. **Marked build boots.** A build whose start-up screen shows it is modified starts on a real unit, and the official update restores it from the SD card.
+3. **Modwerk base with hooks.** A base built from the source gives mods shared events and budgets, so several mods run together.
+4. **First mods.** Reviewed modules with documentation, licences and evidence.
+
+An Erica Synths release lists its version with `"files": []`, and the machine stays locked for modules until an `lxr` module contract exists. The licence, trademark and install terms a build must meet are in [LXR_02.md](LXR_02.md).
+
 ## Never share firmware
 
-Do not put OS files, stock effects, memory dumps, disassembly listings or extracted Elektron or Zoom code in a pull request, issue or forum post. Work from your own download of the stock OS. Share hashes, file structure, addresses, notes and your own code only.
+Do not put OS files, stock effects, memory dumps, disassembly listings or extracted Elektron or Zoom code in a pull request, issue or forum post. Work from your own download of the stock OS. Share hashes, file structure, addresses, notes and your own code only. Erica Synths' published source is not stock firmware: link and cite it under its GPL-3.0 licence, but never commit a built image.
 
 ## Update a machine's progress
 
@@ -42,6 +51,14 @@ What the Syntakt research turned up that applies to every ColdFire machine (the 
 - A region with no static reference is not free. On the Syntakt, hardware showed runtime page writes into memory nothing in the image names (Synthack-OS issue #4). Prove a range two ways, static and allocator, in every supported release, and offer mods only what both proofs cover.
 - Check where the image's BSS starts before appending code: on the Syntakt everything after the initialised data, including an appended tail, lies inside the range the OS zeroes at reset, so a core must hook before the clear and move its payload first.
 - The repository's packer may store the main OS more densely than Elektron's, which narrows the in-place depack margin rather than widening it; check the margin of the actual build, not of the stock file.
+
+## Research a Linux-class OS image
+
+What the Tonverk research turned up applies to every machine that ships a Linux-class `.swu` update instead of a ColdFire `.syx` (the report is [TONVERK_OS_RESEARCH.md](TONVERK_OS_RESEARCH.md)):
+
+- A `.swu` is the SWUpdate convention: a cpio archive whose `sw-description` manifest drives verification. When the manifest and the payloads are encrypted with device-held keys, the container documents cleanly but the checksum contract cannot be read off-device, and no modified image can be re-signed: the OS-image mod route is closed before it starts. Establish that before planning any core.
+- Record the boot and recovery design from the signed boot script (A/B roots, rescue partition, rollback): it decides how safe on-unit research is.
+- The machine profile contract accepts stock file names ending `.syx` or `.bin` only, so a `.swu` release cannot be recorded until the contract is widened — an owner-reviewed change on its own pull request.
 
 ## Give a machine an SDK
 

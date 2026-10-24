@@ -172,12 +172,24 @@ static int choose(uint32_t module, unsigned preferred, int pinned)
     for (unsigned k = 0; k < MODWERK_FX_IDS; ++k) if (free_for(k, module, used)) return (int)k;
     return -1;
 }
+/* An Undo of a module a track runs (beta finding 66): before its change that track ran the null stub, dry, under the
+ * same handle, as a project naming a module that is not installed does. So a restore makes such a slot dry again
+ * first: NONE written into its live id, as the manager parks one (manager.c reinit). Stock gives the track its Part's
+ * id back at its next trig, which with the module gone is the stub. Any other removal still waits for the track. */
+static void park(unsigned id)
+{
+    volatile uint8_t *live = (volatile uint8_t *)(uintptr_t)LIVE_FX;
+    for (unsigned i = 0; i < 16; ++i) if (live[i] == id) live[i] = 0;
+}
 int modwerk_machine_dsp_admit(const struct runtime_dsp *from, struct runtime_dsp *to)
 {
     /* An effect a track runs, or one a transaction may hold between prepare and retirement, stays.
      * A new one may register at any time: no transaction names an effect nobody has picked. */
     int had = from->count ? handle_of(from->module) : -1;
-    if (from->count && had >= 0 && in_use((unsigned)had)) return RUNTIME_IN_USE; /* the host says why: pick another effect */
+    if (from->count && had >= 0 && in_use((unsigned)had)) {
+        if (!modwerk_runtime_restoring()) return RUNTIME_IN_USE; /* the host says why: pick another effect */
+        park((unsigned)had);
+    }
     if (from->count && (!dl_publication_idle() || rebinding)) return RUNTIME_BUSY;
     if (!to->count) return RUNTIME_OK;
     if (rebinding) return RUNTIME_BUSY;

@@ -2173,7 +2173,7 @@ Notice source: sdk/octabam/modules/quantize-live-rec-toggle/LICENSE
 
 MIT License
 
-Copyright (c) 2026 Zac-Kyoti and the OT Kyoti FW contributors
+Copyright (c) 2026 Zac Kyoti and the OT Kyoti FW contributors
 
 WHAT THIS LICENSE COVERS
 

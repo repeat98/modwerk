@@ -5,6 +5,7 @@ import { FORUM_CATEGORIES } from '../src/community/forum-contract.ts'
 import { siteUrls } from './module-pages.ts'
 import { socialCard } from './social-cards.ts'
 import { escapeHtml, pageMetadataHtml, pageContentHtml, paragraph, link } from './page-html.ts'
+import { pageTitle } from '../src/site-metadata.ts'
 
 /** One row of the Worker's `GET /api/forum/pages.json`: public threads only. */
 export type ForumPageThread = { id: string; title: string; category: string; machine: string | null; username: string; created_at: string; updated_at: string; replies: number; excerpt: string; image: string | null }
@@ -21,7 +22,7 @@ export function forumThreadPageHtml(html: string, thread: ForumPageThread, base:
   const { appUrl, siteName } = siteUrls(html, base)
   const path = threadPath(thread.id, thread.title), pageUrl = new URL(path, appUrl).href
   const topic = (FORUM_CATEGORIES as Record<string, string>)[thread.category] ?? thread.category
-  const title = thread.title + ' — ' + siteName + ' forum'
+  const title = pageTitle(thread.title, siteName + ' forum')
   const description = thread.excerpt || `A ${topic} discussion started by @${thread.username} on the ${siteName} forum.`
   const values: Record<string, string> = {
     description, 'og:type': 'article', 'og:title': title, 'og:description': description, 'og:url': pageUrl,

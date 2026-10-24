@@ -1,0 +1,36 @@
+{
+ "schemaVersion": 1,
+ "recorded": "2026-10-22",
+ "decision": "Filter Hz 1.1.0 adds the Analog Rytm MKII OS 1.74 release from rytm2_mods v1.2, the same port of MrScruff's rytm-mods 0008-filter-hz, under GPL-2.0-only with attribution.",
+ "modules": [
+  {
+   "module": "analog-rytm-mkii/filter-hz",
+   "version": "1.1.0",
+   "repository": "https://github.com/Iced-Cream/rytm2_mods",
+   "tag": "v1.2",
+   "revision": "afd461d4a8ef4306bb2a57d4c61ad35c362b3940",
+   "license": "GPL-2.0-only",
+   "files": [
+    {
+     "from": "include/ar2-1.74.inc",
+     "to": "include/ar2-1.74.inc",
+     "sha256": "c57431f7b678c68cc007d2a180339edfcb395e9a40b753fe53ea649364e0874b"
+    },
+    {
+     "from": "filter-hz/os1.74/filter-hz.s",
+     "to": "src/filter-hz.s",
+     "sha256": "9d2488442d48c02fb955bdbfc7f1167640a38e37cf318b6637c58b3cb4b4d5bb",
+     "note": "Merged with filter-hz/filter-hz.s (7de4714b…7a8d, the OS 1.73 source already imported at 698b859); the two differ only in their .include line."
+    }
+   ],
+   "excluded": [
+    "filter-hz/mod.json"
+   ],
+   "transformations": [
+    "mod.json's 1.74 port site (0x400a86b4, 8 stock bytes, jmp filter_hz_gate) became an address, length and SHA-256 guard in build.json's 1.74 release, with defsym OS174.",
+    "src/filter-hz.s chooses include/ar2-1.74.inc under .ifdef OS174 and include/ar2-1.73.inc otherwise, and its site comment names both addresses. Result sha256: 7f04cc85036679ca0b29d54f6fd90f31ffea47f42d0e81efefbeb2bfed775b64.",
+    "include/ar2-1.73.inc stays at 698b859; v1.2 adds three symbol names to it that Filter Hz does not use."
+   ]
+  }
+ ]
+}

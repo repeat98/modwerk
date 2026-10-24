@@ -3,37 +3,36 @@
     "version": "0.1.5-experimental",
     "date": "2026-10-15",
     "changes": [
-      "Rollback of 0.1.4: Tape Echo runs the 0.1.3-experimental code again, unchanged. MIX is the plain dry/wet crossfade once more, so at the default MIX 90 the dry signal is at 29% (-10.7 dB). The level problem reported in [#607](https://github.com/repeat98/modwerk/issues/607) is back and not fixed.",
-      "Saved projects that were set up with 0.1.4 sound different at the same settings: the dry signal is up to 10.7 dB quieter at MIX 90. Raise the track volume or lower MIX to taste.",
-      "Verification: the runtime and its package rows are the reviewed 0.1.2/0.1.3 ones (retained evidence), rebuilt from source. No new hardware run, chip timing or listening test, and the hardware freeze at seven instances remains open."
+      "Rolls back 0.1.4: Tape Echo runs the 0.1.3 code again and MIX is a plain dry/wet crossfade once more. The level drop at the default MIX 90 (#607) is back.",
+      "Projects set up with 0.1.4 sound different: the dry signal is up to 10.7 dB quieter at MIX 90. Raise the track volume or lower MIX to taste.",
+      "Known issue: the Octatrack can freeze with seven Tape Echo instances."
     ]
   },
   {
     "version": "0.1.4-experimental",
     "date": "2026-10-14",
     "changes": [
-      "Fix [#607](https://github.com/repeat98/modwerk/issues/607): Tape Echo no longer turns the track down. MIX was a linear dry/wet crossfade, so at the default MIX 90 the dry signal was at 29% (-10.7 dB) and a broadband test signal came out 7 to 8 dB quieter. The dry signal now stays at full level through MIX 95 and fades out only above it; the same signal stays within 0.5 dB of its input from MIX 0 to 95 (FDBK 0 and 64, AGE 64). MIX 0 is still exact dry and 127 is still full wet.",
-      "Unchanged on purpose: echo level, feedback law, tone and self-oscillation headroom. Raising the echo level to match the input was tried and rejected, because the highest feedback settings then clip the output at full wet (25% of samples at FDBK 102, 68% at FDBK 127, against none before).",
-      "Saved projects sound different at the same settings: the dry signal is up to 10.7 dB louder at MIX 90 and the echoes sit lower against it. Lower MIX or the track volume to taste.",
-      "Stereo, asked for in the same report, is not planned: a tape echo has one tape and one playback head, so the echo stays mono (the dry signal stays stereo), and a second channel would double its per-track CPU cost while the freeze at seven instances is still open.",
-      "Verification is software only: the changed mixer kernel matches the native arithmetic bit for bit on the ColdFire emulator (1,024 blocks across dry, full wet, mixed and ramping MIX), the host voicing gate gained dry-level checks, the browser builder matches native octabam on all 126 Tape Echo selections (54 images, 72 refusals, 0 mismatches) and on the 162 Analog BD compositions, and the USB package was rebuilt (host tests only, no run on a real base). No hardware run, chip timing or listening test exists for this version, and the earlier hardware freeze at seven instances remains open.",
-      "Beta base fix (beta test run 2, 14 Oct 2026; the package is unchanged): picking it showed DSP MEMORY FULL whenever the modules the bank's Parts name did not fit on a DSP core together, even with room for it, and a pick on T1-T4 could be refused for T5-T8's Parts. The base keeps the bank's modules loaded for instant Part changes only while they fit; on a core where they never fitted it now loads what the Part runs, so the pick goes through. Where they fit and the pick does not, DSP MEMORY FULL stays. Seen on a development twin with all 19 modules and bank A: Tape Echo and Mini Verb on T1 and T5 were refused before and are taken now; with the bank's modules held, Mini Verb is still refused on both cores and Tape Echo taken. The tester base itself has not run on the unit."
+      "Fixes Tape Echo turning the track down (#607): the dry signal stays at full level up to MIX 95 and fades out above it. Echoes, feedback and tone are unchanged.",
+      "Projects saved earlier sound different: the dry signal is up to 10.7 dB louder at MIX 90 and the echoes sit lower. Lower MIX or the track volume to taste.",
+      "Stereo echo, also asked for in #607, is not planned: the echo stays mono and the dry signal stays stereo.",
+      "On the beta base, picking it no longer shows DSP MEMORY FULL just because the modules named in the bank's Parts do not all fit on one DSP core.",
+      "Known issue: not tested on hardware, and the freeze with seven instances is still open."
     ]
   },
   {
     "version": "0.1.3-experimental",
     "date": "2026-10-12",
     "changes": [
-      "Documentation/media-only: retain the exact 0.1.2-experimental runtime and historical UI, source and test evidence while adding a 7.85-second Legowelt Juno 106 chord-pluck preview: dry, clean eighth-note repeats and worn dotted-eighth echoes at 128 BPM, without added gaps. Include pack permission, source/excerpt hashes and offline render settings; refresh monochrome exports from the existing LCD captures.",
-      "Retain the approved 0.1.2-experimental runtime and evidence. No DSP behavior, hardware freeze mitigation, timing headroom or new physical-hardware qualification is claimed.",
-      "USB package (14 Oct 2026; distribution only, the module source and version are unchanged): loads over USB on a Modwerk base. Its compiled bytes that coincide with stock are rebuilt at install from the reviewed spans of your own OS, which the base checks against its running stock, so the package carries no stock bytes. Emulator and host tests only; no hardware run of this package. The owner waived hardware evidence for this exact version's USB package for the beta."
+      "Media only: adds an audio preview of a Legowelt Juno 106 chord pluck with clean and worn echoes. The firmware is unchanged.",
+      "Installs over USB on the Modwerk beta base.",
+      "Known issue: the USB version has not yet run on a unit."
     ]
   },
   {
     "version": "0.1.2-experimental",
     "date": "2026-10-01",
     "changes": [
-      "Documentation-only: add real emulator screenshots of the selection and control pages, access instructions and capture provenance. The firmware implementation is unchanged."
+      "Documentation only: adds screenshots of the selection and control pages and how to reach them. The firmware is unchanged."
     ],
     "sourceCommit": "dd9ea93fd62a3699d54f5e63c5f1a33fe1544cad"
   },
@@ -41,7 +40,7 @@
     "version": "0.1.1-experimental",
     "date": "2026-10-01",
     "changes": [
-      "Documentation-only: update author credits in the manifest and guides. The firmware implementation is unchanged."
+      "Documentation only: updates the author credits. The firmware is unchanged."
     ],
     "sourceCommit": "d1136ce4c65ea7e1a00c4516cd4aa41c4b0c0d56"
   },

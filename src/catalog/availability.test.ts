@@ -20,7 +20,8 @@ describe('temporary module availability', () => {
       expect(module.author).toBe('repeat98')
       expect(module.authorUrl).toBe('https://github.com/repeat98')
     }
-    for (const id of ['spectrum', 'modulation', 'character', 'airwindows-chorus', 'midi-scenes', 'poly8', 'unknown']) expect(isModuleAvailable(id)).toBe(false)
+    for (const id of ['spectrum', 'modulation', 'character', 'airwindows-chorus', 'midi-scenes', 'unknown']) expect(isModuleAvailable(id)).toBe(false)
+    expect(isModuleAvailable('poly8')).toBe(true) // offered again from 0.3.1 (#646)
   })
   it('keeps older configurations readable and flags their paused modules before a build', () => {
     const saved = newConfiguration('Older configuration', ['spectrum', 'euclid', 'character', 'airwindows-chorus', 'midi-scenes'])
@@ -33,14 +34,15 @@ describe('temporary module availability', () => {
     expect(moduleAvailabilityError(restored.moduleIds)).toContain('Remove these modules')
     expect(resolveSelection(['spectrum', 'modulation', 'character', 'airwindows-chorus'])).toHaveLength(4)
   })
-  it('offers and builds only Air Chorus for beta access while retaining other pauses, POLY8 included', () => {
+  it('offers and builds only Air Chorus for beta access while retaining other pauses', () => {
     expect(availableModules(true).map(module => module.id)).toEqual([...MODULES].filter(module => !PAUSED_MODULE_IDS.includes(module.id) || BETA_MODULE_IDS.includes(module.id)).map(module => module.id))
     expect(BETA_MODULE_IDS).toEqual(['airwindows-chorus'])
-    expect(isModuleAvailable('poly8')).toBe(false)
-    expect(moduleAvailabilityError(['poly8', 'euclid'])).toContain('POLY8')
+    expect(isModuleAvailable('midi-scenes')).toBe(false)
+    expect(moduleAvailabilityError(['midi-scenes', 'euclid'])).toContain('MIDI Scenes')
     for (const id of BETA_MODULE_IDS) expect(isModuleAvailable(id, true)).toBe(true)
-    expect(isModuleAvailable('poly8', true)).toBe(false)
-    expect(moduleAvailabilityError(['poly8'], true)).toContain('POLY8')
+    expect(isModuleAvailable('midi-scenes', true)).toBe(false)
+    expect(moduleAvailabilityError(['midi-scenes'], true)).toContain('MIDI Scenes')
+    expect(moduleAvailabilityError(['poly8'], true)).toBe('')
     expect(isModuleAvailable('airwindows-chorus', true)).toBe(true)
     expect(moduleAvailabilityError(['airwindows-chorus'], true)).toBe('')
     expect(moduleAvailabilityError(['spectrum', 'airwindows-chorus'], true)).toContain('Spectrum')

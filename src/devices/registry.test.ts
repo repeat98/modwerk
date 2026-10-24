@@ -21,6 +21,10 @@ describe('device registry', () => {
       // No zdl module contract yet: the pedals stay locked even where an effect loads.
       expect(readyForMods(device)).toBe(false)
     }
+    // An Erica Synths machine needs its Modwerk base and a module contract (an SDK) before it takes mods.
+    expect(readyForMods(DEVICES_BY_ID['lxr-02'])).toBe(false)
+    expect(readyForMods({ ...DEVICES_BY_ID['lxr-02'], steps: { ...DEVICES_BY_ID['lxr-02'].steps, core: 'done' } })).toBe(false)
+    expect(readyForMods({ ...DEVICES_BY_ID['lxr-02'], steps: { core: 'done' }, sdk: 'sdk/machines/lxr-02/README.md' })).toBe(true)
     expect(readyForMods(DEVICES_BY_ID.octatrack)).toBe(true)
   })
 
@@ -74,7 +78,7 @@ describe('digi combination estimate', () => {
 
   it('checks partial overlaps per release, allows touching ranges and keeps machine ids apart', () => {
     const original = DIGI_MODS.slice()
-    const base = { ...DIGI_MODS[0], claims: [], conflicts: [] }
+    const base = { ...DIGI_MODS.find(mod => mod.device === 'digitakt')!, claims: [], conflicts: [] }
     DIGI_MODS.push(
       { ...base, id: 'range-a', title: 'A', releases: ['1.53', '1.54'], patchSites: { '1.53': [{ addr: '0x40001000', len: 8 }], '1.54': [{ addr: '0x40001000', len: 8 }] } },
       { ...base, id: 'range-b', title: 'B', releases: ['1.53', '1.54'], patchSites: { '1.53': [{ addr: '0x40001006', len: 8 }], '1.54': [{ addr: '0x40001008', len: 8 }] } },
@@ -91,7 +95,7 @@ describe('digi combination estimate', () => {
 
   it('refuses a pair one author flagged, even when their firmware changes do not overlap', () => {
     const original = DIGI_MODS.slice()
-    const base = { ...DIGI_MODS[0], claims: [], conflicts: [], releases: ['1.53', '1.54'], patchSites: {} }
+    const base = { ...DIGI_MODS.find(mod => mod.device === 'digitakt')!, claims: [], conflicts: [], releases: ['1.53', '1.54'], patchSites: {} }
     DIGI_MODS.push({ ...base, id: 'flag-a', title: 'A', conflicts: ['flag-b'] }, { ...base, id: 'flag-b', title: 'B' }, { ...base, id: 'flag-c', title: 'C' })
     try {
       expect(estimateCombination('digitakt', ['flag-b', 'flag-a']).clashes).toEqual([{ claim: 'marked as incompatible by their authors', mods: ['A', 'B'] }])
@@ -105,10 +109,11 @@ describe('standalone firmware', () => {
   it('never combines with other mods', async () => {
     const { DIGI_MODS: mods } = await import('./digi-mods')
     const original = mods.slice()
-    mods.push({ ...mods[0], id: 'whole-os', title: 'WHOLE OS', exclusive: true, claims: [], libraryCategory: 'standalone' })
+    const digitakt = mods.find(mod => mod.device === 'digitakt')!
+    mods.push({ ...digitakt, id: 'whole-os', title: 'WHOLE OS', exclusive: true, claims: [], libraryCategory: 'standalone' })
     try {
       expect(estimateCombination('digitakt', ['whole-os']).clashes).toEqual([])
-      expect(estimateCombination('digitakt', ['whole-os']).usedBytes).toBe(mods[0].ramBytes)
+      expect(estimateCombination('digitakt', ['whole-os']).usedBytes).toBe(digitakt.ramBytes)
       expect(estimateCombination('digitakt', ['whole-os', 'digisophie']).clashes[0].claim).toContain('standalone firmware')
     } finally { mods.splice(0, mods.length, ...original) }
   })

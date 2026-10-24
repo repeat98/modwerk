@@ -49,6 +49,8 @@ static void *host_stock(uint32_t a)
 #define ADDR(p) host_addr(p)
 #define STOCK(type, a) ((type)(uintptr_t)host_stock(a))
 
+void mg_tick(void); /* midi_generators.c, checked by test_midi_generators.c */
+void mg_tick(void) {}
 /* The loader's side: the table rows and the machine glue. */
 #include "loader.h"
 #include "modwerk_events.h"

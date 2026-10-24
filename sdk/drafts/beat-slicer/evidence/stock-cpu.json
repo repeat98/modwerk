@@ -1,0 +1,36 @@
+{
+  "scope": "isolated stock CPU routines with explicit UI/task mocks; no device access",
+  "mainSha256": "164f31224bf61181e3f50e7dec40df9afcae5b16dbf6e4c0d0cc5e986af0a84e",
+  "sourceSha256": {
+    "stock_probe.py": "dec1c1971252b5233379af57c350a2876e8c0ddbcfe1013253b99c8974d82fca",
+    "stock_probe/probe.cpp": "d383ee6729622bc03f836f662bb8cfa598fc5de3a67eb7015da66a1d918dbf74",
+    "stock_probe/CMakeLists.txt": "bf48f09cd98fedf4307d2cf2a8686cee04c102af946a640d9bfbbc7660ffe564"
+  },
+  "executableSha256": "e229dda93987541683a15b6f36b72fdab297bf20d29dc1fddaf7f04c49398c14",
+  "exitCode": 0,
+  "stdout": [
+    "SOURCE_SHA256: d383ee6729622bc03f836f662bb8cfa598fc5de3a67eb7015da66a1d918dbf74",
+    "PASS: settings lookup boundaries",
+    "PASS: slice menu variants",
+    "PASS: retained menu pointers and synchronous callback",
+    "PASS: stable complete-record sort",
+    "PASS: 12-byte slice record pointers",
+    "PASS: manual insertion renumbers an existing record",
+    "6 passed, 0 failed; isolated emulator probes, no hardware/audio/persistence evidence"
+  ],
+  "stderrLines": 56,
+  "stderrSha256": "180bed2001b8c84c5e308863f63e44fcdc3948659833929382f144aef9159e09",
+  "hardware": "not tested",
+  "audio": "not tested",
+  "stockPersistence": "not tested",
+  "emulator": {
+    "octabamCommit": "8250be0c23ca0a0a953cb7e5721e3bdb98dadfe5",
+    "mc68kCommit": "4a6d0d17a1f2b30077ab726c27fe9bb770fa0456",
+    "image": "sha256:da70d46e10b243277fa3ae2e015f7258d56b3ee08ca4be47e61899958872e792",
+    "hostCompiler": "GNU 13.3.0",
+    "lto": false,
+    "emacGate": "passed",
+    "peripheralGate": "passed",
+    "dspExecution": false
+  }
+}

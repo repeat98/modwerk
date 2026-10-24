@@ -15,14 +15,14 @@
   </p>
   <p>
     <a href="#get-started"><img src="https://img.shields.io/badge/Node.js-24-417e38?logo=nodedotjs&amp;logoColor=white" alt="Node.js 24" /></a>
-    <a href="sdk/README.md#native-development"><img src="https://img.shields.io/badge/Python-3.10%2B-3776ab?logo=python&amp;logoColor=white" alt="Python 3.10 or newer" /></a>
+    <a href="sdk/README.md#octatrack-native-development"><img src="https://img.shields.io/badge/Python-3.10%2B-3776ab?logo=python&amp;logoColor=white" alt="Python 3.10 or newer" /></a>
     <a href="sdk/octabam/docs/remixer/MODULES.md"><img src="https://img.shields.io/badge/Assembly-DSP56300_%2F_ColdFire-5755c5" alt="DSP56300 and ColdFire assembly" /></a>
   </p>
 </div>
 
 For Octatrack modules, write DSP effects in **DSP56300 assembly** or playback and system patches in **ColdFire assembly**, with Python manifests describing their controls, placement and compatibility. Source, documentation and module metadata live together in this repository.
 
-> **Experimental SDK.** Scaffolding and metadata checks are ready to use. Native builds require a locally prepared toolchain; portable setup and hardware qualification remain incomplete. See the [SDK guide](sdk/README.md#native-development) and [verification status](docs/VERIFICATION.md).
+> **Experimental SDK.** Scaffolding and metadata checks are ready to use. Native builds require a locally prepared toolchain; portable setup and hardware qualification remain incomplete. See the [SDK guide](sdk/README.md#octatrack-native-development) and [verification status](docs/VERIFICATION.md).
 
 > **Flashing risks.** Custom firmware can leave your device unusable, cause data loss, affect warranty coverage and prevent future official updates. Recovery is not guaranteed. Back up projects and samples, keep the original OS and read the [flashing and recovery procedure](sdk/octabam/docs/remixer/FLASHING.md) first. Flash at your own risk.
 >
@@ -70,9 +70,9 @@ npm run check
 npm run modules:check -- --base origin/main
 ```
 
-These validate metadata, version changes and repository code; they do not compile or qualify your native module. Native compilation needs CMake, the patched DSP assembler/disassembler and GNU `m68k-elf` tools described in the [SDK guide](sdk/README.md#native-development). Record native behavior, resource and hardware evidence separately.
+These validate metadata, version changes and repository code; they do not compile or qualify your native module. Native compilation needs CMake, the patched DSP assembler/disassembler and GNU `m68k-elf` tools described in the [SDK guide](sdk/README.md#octatrack-native-development). Record native behavior, resource and hardware evidence separately.
 
-For updates, increase the module's semantic version for **every code change** (documentation and media edits do not need one; see [CONTRIBUTING](CONTRIBUTING.md#required-version-increase)), and update its pin in `sdk/catalog.json` if listed. New catalog entries need approved scope, engine integration and native parity/rejection evidence.
+For updates, increase the module's semantic version for **every code change** (documentation and media edits do not need one; see [CONTRIBUTING](CONTRIBUTING.md#versions)), and update its pin in `sdk/catalog.json` if listed. New catalog entries need approved scope, engine integration and native parity/rejection evidence.
 
 ## Contribute
 

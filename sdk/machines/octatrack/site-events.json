@@ -159,6 +159,13 @@
    "index": 30,
    "event": "ev_tail_kill",
    "kind": "call"
+  },
+  {
+   "index": 31,
+   "event": "ot_midi_generators",
+   "kind": "table",
+   "room": 4,
+   "record": 36
   }
  ]
 }

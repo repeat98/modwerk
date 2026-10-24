@@ -1,0 +1,25 @@
+{
+  "scope": "isolated stock pool lookup and PCM conversion with synthetic memory and recorder mocks; no device access",
+  "mainSha256": "164f31224bf61181e3f50e7dec40df9afcae5b16dbf6e4c0d0cc5e986af0a84e",
+  "sourceSha256": {
+    "stock_probe.py": "8a4de5a16324154dea38d4aae4301461c2e9d642f0d454a83e0ac70b9be7e4a6",
+    "stock_probe/reader_probe.cpp": "e02f874905d40ea73469366d7d411083cd1aa3d2f2ec3983d834ae82f2952354",
+    "stock_probe/CMakeLists.txt": "7689bacabf1998274e1f82d778f4618da92f609559b340b1d18c474d0b488c82"
+  },
+  "executableSha256": "aa7dcf940b470fa910bbb9d90e44906268a228fd1c897f3ee6880fda216ce124",
+  "exitCode": 0,
+  "stdout": [
+    "SOURCE_SHA256: e02f874905d40ea73469366d7d411083cd1aa3d2f2ec3983d834ae82f2952354",
+    "PASS: Flex/Static control lookup and invalid Flex preconditions",
+    "PASS: 88 forward page lookups across four authored layouts and two Flex slots",
+    "PASS: 36 reverse page lookups including zero d1 at first frame",
+    "PASS: four recorder dynamic-length fixtures with mocked state helpers",
+    "PASS: 40 signed PCM conversion fixtures, byte orders, vector/tail paths and read extents",
+    "5 passed, 0 failed; synthetic pool only, no Static streaming, concurrency or audio"
+  ],
+  "stderrLines": 40,
+  "stderrSha256": "ab5304496ed49225020ab6de6353430203c5704a3f1347358e34fcf1e66cee2a",
+  "hardware": "not tested",
+  "audio": "not tested",
+  "stockPersistence": "not tested"
+}

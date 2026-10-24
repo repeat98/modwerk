@@ -21,7 +21,7 @@ exactly.
 - **The tester image stays the qualified one.** Testers' browser-built base must equal the image the owner
   flashed and tested (`dc1d7a39…`, from c9146e66). Any change to a base input (anything `build_core.py` hashes)
   makes `src/engine/elekloader/octatrack-base.test.ts` fail until the package is regenerated
-  (`npm run octatrack:base -- --stock ~/Downloads/OCTATRACK_OS1.40C_dist/OCTATRACK_OS1.40C.bin --write`). Base changes
+  (`npm run octatrack:base -- --stock ~/Downloads/OCTATRACK_OS1.40C_dist/OCTATRACK_OS1.40C.bin --beta --write`). Base changes
   therefore live on side branches until the owner OKs a requalification on the unit.
 - **Hardware.** Only one agent talks to the owner's Octatrack at a time. Read `docs/OCTATRACK_DRIVING.md` and
   `docs/OCTATRACK_HARDWARE_TRAPS.md` first. Never flash, never power-cycle, never SAVE or SYNC the owner's project:

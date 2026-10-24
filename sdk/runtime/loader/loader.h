@@ -224,6 +224,9 @@ enum runtime_metadata_operation { RUNTIME_METADATA_PREPARE=1, RUNTIME_METADATA_S
 int modwerk_machine_metadata_admit(const struct runtime_dsp *from, struct runtime_dsp *to,
     const struct runtime_context *,enum runtime_metadata_operation);
 int modwerk_machine_dsp_admit(const struct runtime_dsp *from, struct runtime_dsp *to); /* may set to->id */
+/* 1 while a restore switches (an Undo, or the rollback after a failed self-test): it puts a position back as it was
+ * before its change, so a machine may make a track that runs the outgoing module dry first (Octatrack, dsp.c). */
+int modwerk_runtime_restoring(void);
 /* ABI 9: the base feature bits this base provides to packages (`requires`); weak, 0 by default (the Octatrack's
  * on-demand base: sdk/machines/octatrack/dsp-sites.json's features). */
 unsigned modwerk_machine_dsp_features(void);

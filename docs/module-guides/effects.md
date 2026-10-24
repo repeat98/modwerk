@@ -120,7 +120,7 @@ Octabam's behaviour tests run through its DSP host and need a native toolchain (
 
 ## Traps
 
-- No `rep` in DSP code that runs every frame: a `rep` cannot be interrupted, so the host-port handlers that arm the ColdFire's DMA answer late. The audio crackles, a core's tracks go silent or ColdFire RAM is written out of place, on hardware only. A `do` loop is bit-identical. Keep dense X work out of the 8K memory blocks a DMA uses as well; both are in [OCTATRACK_HARDWARE_TRAPS.md](../OCTATRACK_HARDWARE_TRAPS.md#dsp-loader-dynamic-dsp-code).
+- No `rep` anywhere in a DSP source (`npm run modules:check` refuses one in a module listed from 23 October 2026; `do #n,>label / <one instruction> / label:` is bit-identical and interruptible): a `rep` cannot be interrupted, so the host-port handlers that arm the ColdFire's DMA answer late. The audio crackles, a core's tracks go silent or ColdFire RAM is written out of place, on hardware only. A `do` loop is bit-identical. Keep dense X work out of the 8K memory blocks a DMA uses as well; both are in [OCTATRACK_HARDWARE_TRAPS.md](../OCTATRACK_HARDWARE_TRAPS.md#dsp-loader-dynamic-dsp-code).
 - `dsp56kDisassemble` prints a `DO` endpoint as the exclusive next-instruction address (`LA+1`); the encoded loop-address word is the inclusive last loop word. CFG/cycle tooling must use `pc < printed_endpoint`. Do not reprice existing effects by confusing the two representations.
 - The DSP assembler silently mis-encodes some instructions: [octabam's AGENTS.md](../../sdk/octabam/AGENTS.md). Disassemble what you assemble.
 - A knob rename or count change is a stored-data change. Stamp every project before anyone plays it.

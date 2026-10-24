@@ -14,7 +14,7 @@
     "github": "Zac-Kyoti",
     "name": "Zac Kyoti",
     "credits": [
-      "Zac-Kyoti and the OT Kyoti FW contributors: original ColdFire/DSP source and coefficient generator, MIT.",
+      "Zac Kyoti and the OT Kyoti FW contributors: original ColdFire/DSP source and coefficient generator, MIT.",
       "Sam Banks (@sambanks): octabam integration and stock-preserving module composition, MIT.",
       "Modwerk contributors: fingerprint-only stock guards, documentation, original thumbnail and emulator captures."
     ]

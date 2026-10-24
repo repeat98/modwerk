@@ -49,5 +49,10 @@ describe('machine profiles', () => {
     const noFile = octatrack()
     noFile.firmware.releases[0].files = []
     expect(() => parseMachineProfile(noFile)).toThrow('machine.firmware.releases[0].files')
+
+    // Erica Synths machines build from published source: their own road, and no Elektron steps.
+    const lxr = () => structuredClone(profiles.find(profile => profile.id === 'lxr-02'))
+    expect(parseMachineProfile(lxr()).steps).toEqual({ source: 'started', boot: 'open', core: 'open', mods: 'open' })
+    expect(() => parseMachineProfile({ ...lxr(), steps: { ...lxr().steps, rebuild: 'open' } })).toThrow('unknown field')
   })
 })

@@ -1,0 +1,27 @@
+{
+  "scope": "synthetic stock producer, queues, worker and completion posts; display mock, no scheduler/UI consumer/device access",
+  "mainSha256": "164f31224bf61181e3f50e7dec40df9afcae5b16dbf6e4c0d0cc5e986af0a84e",
+  "sourceSha256": {
+    "stock_probe.py": "6088c7cbdf902065881cd8d2ac2127b96fe1cdf6e180a842f65e9700a601aefe",
+    "stock_probe/worker_probe.cpp": "72f31f51d771a5277023fb5e86afd03be150786656298fec242beb2bd5533a97",
+    "stock_probe/CMakeLists.txt": "89f8061a91cf80fa06de839932274ed3510dbf9103c9d7888e734fdb993e285d"
+  },
+  "executableSha256": "c4991b4664033a0bd2c964ac02746a9c5755379fdb67675e642997fccc265736",
+  "exitCode": 0,
+  "stdout": [
+    "SOURCE_SHA256: 72f31f51d771a5277023fb5e86afd03be150786656298fec242beb2bd5533a97",
+    "PASS: four producer-to-worker gain paths: deferred PCM, empty queue during edit, deferred UI completion",
+    "PASS: seven stock opcode paths: enter writer, return, attempt completion and restore worker frame",
+    "PASS: two refused commands: no PCM/dirty mutation and deferred failure result",
+    "PASS: null callback and exhausted completion pool: edit finishes without UI notification",
+    "PASS: two queued writers execute FIFO with separate completion records",
+    "PASS: forced producer-record reuse: queued pointers observe overwritten payload; outer UI preflight omitted",
+    "PASS: 35 queue posts/receives wrap FIFO; unknown opcode drains; empty worker stops at event wait",
+    "7 passed, 0 failed; synthetic worker, display mock, no scheduler/UI consumer/hardware"
+  ],
+  "stderrLines": 144,
+  "stderrSha256": "43db63f5c6029500497a6debe324f496cf3e5bf2cd6b863a131b040c8affb22b",
+  "hardware": "not tested",
+  "audio": "not tested",
+  "stockPersistence": "not tested"
+}

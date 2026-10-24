@@ -1,14 +1,17 @@
 import type { BuilderMachine } from '../engine/elekloader/protocol'
-import { BUILDER_SOURCE } from '../engine/elekloader/machine-build'
+import { BUILDER_SOURCE, checkStorageLock } from '../engine/elekloader/machine-build'
 import { DIGI_MODS, resolveDigiSelection } from '../devices/digi-mods'
-import { cleanName, normalizeModuleVersions, type Configuration } from './workspace'
+import { cleanName, normalizeModuleVersions, type Configuration, type StorageLock } from './workspace'
 
-/** A JSON selection backup contains no stock file, local filename, account or build output. */
-export function createDigiSelection(configuration: Pick<Configuration, 'name' | 'moduleIds' | 'moduleVersions'>, device: BuilderMachine) {
+type Saved = Pick<Configuration, 'name' | 'moduleIds' | 'moduleVersions' | 'storageLock'>
+/** A JSON selection backup contains no stock file, local filename, account or firmware. It does carry the mod-storage
+ * lockfile of the last build (field places only, no data), so a configuration restored elsewhere keeps reading its projects. */
+export function createDigiSelection(configuration: Saved, device: BuilderMachine) {
   return { app: 'modwerk', schemaVersion: 1, device, name: cleanName(configuration.name), catalog: { revision: BUILDER_SOURCE.catalogRevision },
-    modules: resolveDigiSelection(device, configuration.moduleIds).map(module => ({ id: module.id, version: configuration.moduleVersions[module.id] ?? module.version })) }
+    modules: resolveDigiSelection(device, configuration.moduleIds).map(module => ({ id: module.id, version: configuration.moduleVersions[module.id] ?? module.version })),
+    ...(configuration.storageLock ? { storage: configuration.storageLock } : {}) }
 }
-export function downloadDigiSelection(configuration: Pick<Configuration, 'name' | 'moduleIds' | 'moduleVersions'>, device: BuilderMachine) {
+export function downloadDigiSelection(configuration: Saved, device: BuilderMachine) {
   const backup = createDigiSelection(configuration, device)
   const url = URL.createObjectURL(new Blob([JSON.stringify(backup, null, 2) + '\n'], { type: 'application/json' })), link = document.createElement('a')
   link.href = url; link.download = (backup.name.replace(/[^a-zA-Z0-9_-]+/g, '-').replace(/^-|-$/g, '') || device) + '.json'
@@ -16,7 +19,7 @@ export function downloadDigiSelection(configuration: Pick<Configuration, 'name' 
 }
 /** A backup to import: its name and modules, at the library's current versions, and what the page should tell the
  * owner about it. */
-export type DigiImport = { name: string; moduleIds: string[]; moduleVersions: Record<string, string>; notes: string[] }
+export type DigiImport = { name: string; moduleIds: string[]; moduleVersions: Record<string, string>; storageLock?: StorageLock; notes: string[] }
 
 /** A backup made with another catalog revision still imports: each module is looked up again in the current library,
  * by id. Modules no longer there are left out, and the notes say so, with each version that changed. */
@@ -25,9 +28,14 @@ export function parseDigiSelection(text: string, device: BuilderMachine): DigiIm
   let value: unknown
   try { value = JSON.parse(text) } catch { throw new Error('This file is not valid configuration JSON.') }
   if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error('Choose a Modwerk configuration backup.')
-  const item = value as { app?: unknown; schemaVersion?: unknown; device?: unknown; name?: unknown; catalog?: { revision?: unknown }; modules?: { id?: unknown; version?: unknown }[] }
-  if (Object.keys(item).some(key => !['app', 'schemaVersion', 'device', 'name', 'catalog', 'modules'].includes(key)) || item.app !== 'modwerk' || item.schemaVersion !== 1 || typeof item.name !== 'string' || !Array.isArray(item.modules) || item.modules.length > 100 || item.modules.some(module => !module || typeof module.id !== 'string' || typeof module.version !== 'string')) throw new Error('Choose a Modwerk configuration backup.')
+  const item = value as { app?: unknown; schemaVersion?: unknown; device?: unknown; name?: unknown; catalog?: { revision?: unknown }; modules?: { id?: unknown; version?: unknown }[]; storage?: unknown }
+  if (Object.keys(item).some(key => !['app', 'schemaVersion', 'device', 'name', 'catalog', 'modules', 'storage'].includes(key)) || item.app !== 'modwerk' || item.schemaVersion !== 1 || typeof item.name !== 'string' || !Array.isArray(item.modules) || item.modules.length > 100 || item.modules.some(module => !module || typeof module.id !== 'string' || typeof module.version !== 'string')) throw new Error('Choose a Modwerk configuration backup.')
   if (item.device !== device) throw new Error('This backup belongs to a different machine. Open its configuration page to import it.')
+  let storageLock: StorageLock | undefined
+  if (item.storage !== undefined) {
+    try { storageLock = checkStorageLock(device, item.storage) }
+    catch (error) { throw new Error('This backup’s mod storage layout cannot be used: ' + (error instanceof Error ? error.message : 'it is unreadable') + '.', { cause: error }) }
+  }
   const revision = item.catalog?.revision
   if (typeof revision !== 'string' || !/^[\w.-]{1,64}$/.test(revision)) throw new Error('Choose a Modwerk configuration backup.')
   const saved = item.modules as { id: string; version: string }[], current = revision === BUILDER_SOURCE.catalogRevision
@@ -46,5 +54,5 @@ export function parseDigiSelection(text: string, device: BuilderMachine): DigiIm
     for (const id of changed) notes.push(library.find(mod => mod.id === id)!.title + ': ' + versions[id] + ' in the backup, ' + moduleVersions[id] + ' now.')
     if (!gone.length && !changed.length) notes.push('Every module is still in the library, at the same version.')
   }
-  return { name: cleanName(item.name), moduleIds, moduleVersions, notes }
+  return { name: cleanName(item.name), moduleIds, moduleVersions, ...(storageLock ? { storageLock } : {}), notes }
 }

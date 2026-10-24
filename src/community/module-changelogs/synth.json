@@ -3,21 +3,20 @@
     "version": "0.1.2-experimental",
     "date": "2026-10-08",
     "changes": [
-      "correct the MIDI chromatic drawer’s argument stack so changing MIDI trig mode keeps the instrument responsive (#264).",
-      "add 18.06 dB of source headroom before mono output and paraphonic summing, preserving envelopes and relative voice levels (#273). Sounds are quieter at unchanged mixer settings; effect and multi-track mix clipping remains possible.",
-      "Owner-approved experimental release without current hardware validation. Chip timing and complete memory bounds remain unmeasured; the original static symptom is not hardware-confirmed.",
-      "Documentation/media-only (12 October 2026): add a sample-free melodic preview using VECTOR’s native generator offline to supply FM note locks, with native 128 BPM sequencing, index/feedback sweeps and actual Mini Verb in FX2. Remove boot/edit silence and added gaps; include exact generator, source/image, controls, recording and decoded peak provenance. Firmware and hardware/performance qualification are unchanged.",
-      "USB package (14 Oct 2026; distribution only, the module source and version are unchanged): loads over USB as one independent package beside every other module, on a Modwerk base built with site events. What it shares with other machines goes through the base's machine chooser table and take events instead of a machine group, and its authored bytes that coincide with stock are rebuilt from your own OS at install. Emulator and host tests only; no hardware run of this package. The owner waived hardware evidence for this exact version's USB package for the beta.",
-      "Beta base fix (beta test run 2, 14 Oct 2026; the package is unchanged): removing it after the transport had played left stock's per-track renderer slots of the tracks it had bound pointing into its code, so the unit kept running the removed module and crashed (a restart onto the flashed base) once another install was copied over that memory, as Output Matrix was. The base now puts those slots back to stock with the type table. Verified on a development twin with freed memory filled with illegal instructions: install, play, stop and remove three times, no crash and the slots back to stock; the tester base itself has not run on the unit yet.",
-      "Documentation-only (19 October 2026): note that ATK 0 with a short HOLD or REL can click on every trig, and how to soften it ([#557](https://github.com/repeat98/modwerk/issues/557)); and that LFO1/LFO2 list FLEX's destination names on an FM SYNTH track, mapped to the FM knob in the same position ([#589](https://github.com/repeat98/modwerk/issues/589)). The firmware is unchanged: the LFO names are still FLEX's, and whether those LFO destinations change the FM sound is not tested."
+      "Fixes the instrument stopping responding after changing the MIDI trig mode (#264).",
+      "Adds headroom so FM Synth no longer clips inside the machine (#273). It is about 18 dB quieter at the same mixer settings; effects and the mix can still clip.",
+      "Installs over USB beside every other module on the Modwerk beta base. Removing it after playing no longer crashes the unit.",
+      "Media and documentation only: adds a melodic audio preview, and notes that ATK 0 with a short HOLD or REL can click (#557) and that LFO1/LFO2 show FLEX's destination names (#589).",
+      "Known issue: this version has not been tested on hardware."
     ]
   },
   {
     "version": "0.1.1-experimental",
     "date": "2026-10-06",
     "changes": [
-      "First Modwerk catalog release of FM Synth as a dedicated SRC track machine, without needing a sample.",
-      "Support one to four voices, chords, glide and sequenced parameter locks. Native UI/software evidence is recorded; hardware behaviour remains untested."
+      "First Modwerk release of FM Synth, an SRC track machine that needs no sample.",
+      "Supports one to four voices, chords, glide and parameter locks.",
+      "Known issue: not yet tested on hardware."
     ],
     "sourceCommit": "a1d8fa7d6bd4eb105d7851009a442d729369aadf"
   }

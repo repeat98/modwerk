@@ -406,23 +406,6 @@ int main()
 	}
 
 
-	// Injected media exhaustion must fail without changing the refused sector.
-	{
-		ot::AtaCard c(std::vector<uint8_t>(2 * ot::AtaCard::g_sector, 0x55));
-		c.failWritesAfter(1);
-		c.write(ot::AtaCard::R_COUNT, 1, 1);
-		c.write(ot::AtaCard::R_CMD, 1, 0x30);
-		for(unsigned i = 0; i < 256; ++i) c.write(ot::AtaCard::R_DATA, 2, 0xbeef);
-		checkEq("one sector succeeds before the injected write limit", c.sectorsWritten(), 1);
-		c.write(ot::AtaCard::R_LBA0, 1, 1);
-		c.write(ot::AtaCard::R_CMD, 1, 0x30);
-		check("injected card failure raises ERR and drops DRQ", (c.status() & 1) && !(c.status() & ot::AtaCard::ST_DRQ));
-		checkEq("injected card failure reports ABRT", c.read(ot::AtaCard::R_FEAT, 1), 4);
-		checkEq("a refused sector is unchanged", c.image()[ot::AtaCard::g_sector], 0x55);
-		checkEq("failed writes do not increment the sector tally", c.sectorsWritten(), 1);
-		check("the failure is distinguishable in the command census", c.log().back().what == "WRITE-FAIL");
-	}
-
 	// ---- USB device controller ------------------------------------------
 	// The rules the firmware's driver and the bench depend on (usb.h), on a
 	// fake guest memory: queue heads and transfer descriptors laid out the
@@ -599,17 +582,45 @@ int main()
 		check("SOF interrupts once the guest enables SRE", u.irq());
 	}
 
-	// Unplug drops the session and waits for the firmware's session-end ack.
+	// Injected media exhaustion must fail without changing the refused sector.
 	{
+		ot::AtaCard c(std::vector<uint8_t>(2 * ot::AtaCard::g_sector, 0x55));
+		c.failWritesAfter(1);
+		c.write(ot::AtaCard::R_COUNT, 1, 1);
+		c.write(ot::AtaCard::R_CMD, 1, 0x30);
+		for(unsigned i = 0; i < 256; ++i) c.write(ot::AtaCard::R_DATA, 2, 0xbeef);
+		checkEq("one sector succeeds before the injected write limit", c.sectorsWritten(), 1);
+		c.write(ot::AtaCard::R_LBA0, 1, 1);
+		c.write(ot::AtaCard::R_CMD, 1, 0x30);
+		check("injected card failure raises ERR and drops DRQ", (c.status() & 1) && !(c.status() & ot::AtaCard::ST_DRQ));
+		checkEq("injected card failure reports ABRT", c.read(ot::AtaCard::R_FEAT, 1), 4);
+		checkEq("a refused sector is unchanged", c.image()[ot::AtaCard::g_sector], 0x55);
+		checkEq("failed writes do not increment the sector tally", c.sectorsWritten(), 1);
+		check("the failure is distinguishable in the command census", c.log().back().what == "WRITE-FAIL");
+	}
+
+	// ---- USB unplug / plug: B-session valid drops and returns, BSVIS
+	// latching each time; each command is answered once the guest
+	// acknowledges BSVIS (its session-end or session-start handling done).
+	{
+		auto rd = [](uint32_t) { return uint8_t(0); };
+		auto wr = [](uint32_t, uint8_t) {};
+		ot::UsbDevice u(rd, wr);
 		using U = ot::UsbDevice;
-		U u([](uint32_t) { return uint8_t(0); }, [](uint32_t, uint8_t) {});
-		std::vector<std::string> replies;
+		std::vector<std::string> acks;
+		auto ack = [&](const std::string& s) { acks.push_back(s); };
+		u.write(U::R_OTGSC, 4, U::OTGSC_BSVIE, false);
 		u.write(U::R_OTGSC, 4, U::OTGSC_BSVIE | U::OTGSC_BSVIS, false);
-		u.command("unplug", [&](const std::string& s) { replies.push_back(s); });
-		check("unplug clears B-session valid and interrupts", !(u.read(U::R_OTGSC, 4) & U::OTGSC_BSV) && u.irq());
-		check("unplug waits for the guest acknowledgement", replies.empty());
-		u.write(U::R_OTGSC, 4, U::OTGSC_BSVIS, false);
-		check("session-end acknowledge completes unplug", replies.size() == 1 && replies.back() == "ok\n" && !u.irq());
+		u.command("unplug", ack);
+		check("unplug: B-session no longer valid, BSVIS latched", !(u.read(U::R_OTGSC, 4) & U::OTGSC_BSV) && u.irq());
+		check("unplug: not answered before the guest acknowledges", acks.empty());
+		u.write(U::R_OTGSC, 4, U::OTGSC_BSVIE | U::OTGSC_BSVIS, false);
+		check("unplug: answered ok on the acknowledge", acks.size() == 1 && acks[0] == "ok\n" && !u.irq());
+		u.command("plug", ack);
+		check("plug: B-session valid again, BSVIS latched", (u.read(U::R_OTGSC, 4) & U::OTGSC_BSV) && u.irq());
+		check("plug: not answered before the guest acknowledges", acks.size() == 1);
+		u.write(U::R_OTGSC, 4, U::OTGSC_BSVIE | U::OTGSC_BSVIS, false);
+		check("plug: answered ok on the acknowledge", acks.size() == 2 && acks[1] == "ok\n" && !u.irq());
 	}
 
 	// ---- the MKII panel's replies (periph.h MkiiPanel, docs/firmware/PANEL.md)

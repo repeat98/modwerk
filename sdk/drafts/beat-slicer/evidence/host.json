@@ -1,0 +1,18 @@
+{
+  "date": "2026-10-22",
+  "scope": "host portable core only; not firmware or audio qualification",
+  "baseCommit": "610a934da51b8f8518e6296493da9059b83e9a7e",
+  "command": "python3 -B sdk/drafts/beat-slicer/test_planner.py",
+  "testsPassed": 14,
+  "rationalGridCases": 250,
+  "compiler": "cc (Debian 14.2.0-19) 14.2.0",
+  "sha256": {
+    "planner.c": "199ba2afd2f1c89458dd63297f3c0e4e4b9541d4b2833e0006b30d4d13504baf",
+    "planner.h": "4faab6f03e679d0b9389dbf016416afc87fb4d2d354952b22efb81a0381c5c1b",
+    "test_planner.py": "d39a96c4ac4e7cc35c65323249dbe076b4bf73ae88c2a2a5b27963b97253bf16"
+  },
+  "native": "not run",
+  "hardware": "not run",
+  "audio": "not run",
+  "publication": "blocked; verify.py deliberately fails"
+}

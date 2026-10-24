@@ -148,7 +148,7 @@ def build(module, upstream, work, stock_at=None, binding=None):
     if (module in stock_hook_controllers.UNITS or module in MACHINES) and \
             binding['controllers'].get(module) != stock_hook_controllers.controller_sha256(data):
         raise ValueError('%s: the base\'s trust row names another controller (its CF part changed); rebuild the base '
-                         '(npm run octatrack:base -- --controllers --write).' % module)
+                         '(npm run octatrack:base -- --beta --write).' % module)
     # Never a write or copy on a site the base owns: its records are its controller's (an engine adds none).
     builder.unevented(*candidate_packages.records((work / (module + '.mwrm')).read_bytes() if module in MACHINES else data))
     return data, binding['identity']

@@ -3,11 +3,11 @@
     "version": "0.1.2-experimental",
     "date": "2026-10-02",
     "changes": [
-      "First Modwerk catalog release of Sam Banks’s MIDI mapping patch: CC68–73 control the six FX1 SETUP parameters.",
-      "Retain the upstream implementation and real UI captures; verify stock bytes from the user’s own local firmware.",
-      "USB package (14 Oct 2026; distribution only, the module source and version are unchanged): loads over USB on the Modwerk beta base. It is linked for that base’s sample arena and module pool, so it needs that exact base; with an older base the site asks for a base update first. Its compiled bytes that coincide with stock are copied at install from bytes the base checks against its running stock, so the package carries no stock bytes. Host tests only; no hardware run of this package. The owner waived hardware evidence for this exact version’s USB package for the beta.",
-      "USB package bound to the new beta base acf91e0a (beta test run 2, 14 Oct 2026, rebuilt 15 Oct with the resident engines placed on demand, BBD Delay's chooser row and a startup without the wave's outline; the package bytes are unchanged): the base now puts a removed machine's per-track routines back to stock, shows what a picked effect took and each core's DSP budget (the STATUS page's new DSP rows; DSP FULL comes from it), and no longer refuses effect picks for a bank whose Parts never fitted. A tester base from before needs the base update first.",
-      "USB package bound to the new beta base d6bfff70 (22 Oct 2026): the package bytes are unchanged; only its manifest names the new base."
+      "First Modwerk catalog release of Sam Banks's MIDI mapping patch: CC68–73 control the six FX1 SETUP parameters.",
+      "Modwerk only repackages the upstream patch; the stock parts it changes are checked against your own firmware.",
+      "Now loads over USB on the Modwerk beta base; the site asks for a base update first.",
+      "Updated for newer beta bases on 14 and 22 Oct without changing the module itself; update the base first when the site asks.",
+      "Known issue: the USB package is not yet tested on hardware."
     ],
     "sourceCommit": "b98abc5fcefad5e7c180f3746aa740159c19c422"
   }

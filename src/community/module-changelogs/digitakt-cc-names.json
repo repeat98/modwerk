@@ -3,8 +3,9 @@
     "version": "2.1.1",
     "date": "2026-10-14",
     "changes": [
-      "First Modwerk release for Digitakt I OS 1.53 and 1.54, on Core 2.1. Give each MIDI CC assignment a label of up to five characters. Labels appear on CC VALUE and follow native pattern and project operations.",
-      "Compatibility flag only: marked as incompatible with digimono, because both patch the same firmware code (0x40030daa on OS 1.53 and 1.54). The site already refused the pair for overlapping firmware changes; it now names the conflict too. Pinned firmware code is unchanged."
+      "First Modwerk release for Digitakt I OS 1.53 and 1.54, on Core 2.1. Give each MIDI CC assignment a label of up to five characters.",
+      "Labels appear on CC VALUE and follow the native pattern and project operations.",
+      "Now listed as incompatible with Digi Mono, which changes the same firmware code. The builder already refused this pair."
     ]
   }
 ]

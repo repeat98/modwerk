@@ -1538,6 +1538,57 @@
     }
    ],
    "orderEvidence": "Every handler acts only on a track whose FX2 runs its own effect id, so no order is needed between them."
+  },
+  {
+   "event": "ot_midi_generators",
+   "index": 31,
+   "kind": "table",
+   "site": null,
+   "length": 0,
+   "record": 36,
+   "key": null,
+   "room": 4,
+   "declaration": "struct modwerk_midi_generator {\n    uint32_t abi;                       /* MODWERK_MIDI_GENERATOR_ABI */\n    const char *label;                  /* its row in MIDI NOTE SETUP's list: up to 8 characters */\n    uint32_t id;                        /* 1-255, its own: a MIDI track running it keeps 'M' and it in its arp step mask */\n    uint32_t pages;                     /* the MIDI pages it draws, bit k for page k: 0 NOTE (SRC), 1 LFO, 2 ARP (AMP, always), 3 CTRL1 (FX1), 4 CTRL2 (FX2) */\n    void (*assign)(unsigned track, unsigned on); /* MIDI track 0-7 of the current Part becomes it (1) or leaves it (0) */\n    uint32_t (*page)(uint32_t stock, unsigned page, unsigned second); /* the descriptor to draw on page 0-4 instead of stock's; second: FUNC+AMP's second ARP page */\n    void (*knob)(unsigned page, unsigned index, int delta, unsigned second); /* encoder A-F (0-5) turned on that page */\n    void (*yes)(unsigned page);         /* YES on that page */\n    void (*ui_tick)(void);\n};\n#define MODWERK_MIDI_GENERATOR_ABI 2u",
+   "when": "MIDI NOTE SETUP (double-tap SRC, or double-tap TRACK in MIDI mode) lists OFF and the contributed generators in its empty left half; a MIDI track running one shows that generator's pages on the MIDI pages it takes (always ARP; FUNC+AMP: the ARP page's second)",
+   "context": "the UI task",
+   "contract": "Contribute one struct modwerk_midi_generator (every field but abi, label and id optional, 0). Choosing it puts 'M' and its id in the track's arp step mask (Part 0x1822 + 2 t, high byte first), which stock's validator never reads and only ARP SETUP edits; stock's default there is ffff. On every change of generator the base first puts the track's arpeggiator back to stock's defaults (MODE OFF, every note 0), then calls the old generator's assign(t, 0) and the new one's assign(t, 1). While a generator runs a track it owns that track's 16 arpeggiator note bytes (Part 0x1832 + 16 t, each -64..63, the range stock's validator keeps), so the ARP page is always its own and FUNC+AMP never opens ARP SETUP there. Its pages show while no trig or scene is held (stock's then, so locks stay stock's); the base takes encoders A-F, YES and, on the second ARP page, NO there. Values behind the pages it takes stay stock's and keep their meaning (a NOTE page's NOT2-4 still add chord notes): set or show them itself. Layout A (owner, 24 October 2026): generators take SRC and AMP; FX1 and FX2 are kept for MIDI effects. A track whose id has no installed generator reads as stock.",
+   "order": "lower first, then module id: the list's order. 30 for the first generator; others 40-90.",
+   "subscribers": [],
+   "orderEvidence": "No generator in the catalogue yet.",
+   "sites": [
+    {
+     "site": "0x40083afc",
+     "length": 10,
+     "guard": "d611d680ad5031e96fe61f954ea40fd87a76bbc961c6d2deefdfc55935dd9f1e",
+     "op": "jmp",
+     "target": "mg_tap_site",
+     "what": "double-tap TRACK: stock does nothing in MIDI mode (jsr 0x40033970; tst.l d0; bne); the base opens MIDI NOTE SETUP when a generator is installed"
+    },
+    {
+     "site": "0x4004e1ea",
+     "length": 10,
+     "guard": "b40743bf9a64ff977ac996a4a3c34f6582d8fcda08b78cf52fdf634c94c54959",
+     "op": "jmp",
+     "target": "mg_page_site",
+     "what": "the main page drawer's MIDI arm asks 0x40031ee0 for its descriptor: a generator's page on its tracks' ARP page"
+    },
+    {
+     "site": "0x40032280",
+     "length": 8,
+     "guard": "de77e904028311689866c543af3ce42a7fcfa1e3fdc531807fc98eaf0689d1cf",
+     "op": "jmp",
+     "target": "mg_setup_site",
+     "what": "the setup opener's MIDI ARP branch: on a generator's track the ARP page turns to its second page instead"
+    },
+    {
+     "site": "0x40036548",
+     "length": 8,
+     "guard": "e7935464f6aea76650f55814efc9b45785485164937f3bd5ed6f2a4d384b8d4b",
+     "op": "jmp",
+     "target": "mg_note_setup_draw",
+     "what": "MIDI NOTE SETUP's drawer (its window's and its writers' calls): stock's, then the generator list in its empty left half"
+    }
+   ]
   }
  ]
 }

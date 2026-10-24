@@ -15,6 +15,12 @@ const INVITATION = `SELECT i.state FROM member_beta_invitations i JOIN users u O
 const poolCount = (db: Database) => db.prepare('SELECT COUNT(*) AS total FROM users WHERE beta_tester=1').first<{ total: number }>()
 
 export async function betaInvitationRoutes(request: Request, db: Database, path: string, user: User | null): Promise<Response | null> {
+  // Anyone may see whether the public round is open, so the site can invite visitors while places are left.
+  if (path === '/api/auth/beta-join') {
+    if (request.method !== 'GET') throw new HttpError(405, 'Use GET to see whether the beta is open.')
+    const row = await db.prepare('SELECT ?-(SELECT COUNT(*) FROM users WHERE beta_tester=1) AS places FROM beta_invitation_settings WHERE id=1 AND public_enabled=1').bind(BETA_TESTER_LIMIT).first<{ places: number }>()
+    return response({ placesLeft: Math.max(0, row?.places ?? 0) })
+  }
   if (path === '/api/auth/beta-discord-invite') {
     const member = needMember(user)
     if (!memberBetaAccess(member)) throw new HttpError(403, 'Beta tester access is required.')

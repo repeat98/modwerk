@@ -86,6 +86,14 @@ describe('finding the unit', () => {
     unit.taken = false; await link.retry()
     expect(link.getState().status).toBe('ready')
   })
+  it('connects by itself once the other window or app lets go', async () => {
+    vi.useFakeTimers({ toFake: ['setTimeout'] })
+    const unit = fakeUnit(), link = new OctatrackLink(unit.usb, fakeSession(unit))
+    unit.taken = true; link.start()
+    await vi.waitFor(() => expect(link.getState().status).toBe('busy'))
+    unit.taken = false; await vi.advanceTimersByTimeAsync(3000)
+    await vi.waitFor(() => expect(link.getState().status).toBe('ready'))
+  })
   it('stays connected while any view still uses it', async () => {
     const unit = fakeUnit(), link = new OctatrackLink(unit.usb, fakeSession(unit))
     const card = link.start(), dialog = link.start(); await settle(); await settle()
@@ -549,11 +557,14 @@ describe('updating the base over USB', () => {
   }
   const dedupe = (steps: string[]) => steps.filter((step, i) => step !== steps[i - 1])
   it('RAM-boots the new base, has it write itself to NOR and comes back on it', async () => {
-    const { unit, link } = await linked(), { bin, expected } = fakeBin(), steps: string[] = []
+    const { unit, link } = await linked(), { bin, expected } = fakeBin(), steps: string[] = [], shown = new Set<string>()
+    link.subscribe(() => { const { status, baseUpdate } = link.getState(); shown.add(status + ':' + baseUpdate) })
     await link.updateBase(bin, expected, step => steps.push(step))
     expect(dedupe(steps)).toEqual(['staging', 'starting', 'started', 'writing', 'restarting', 'done'])
     expect(unit.flashed).toBe(expected)
-    expect(link.getState()).toMatchObject({ status: 'ready', identity: { base: expected }, active: expected })
+    expect(link.getState()).toMatchObject({ status: 'ready', identity: { base: expected }, active: expected, baseUpdate: undefined })
+    // Every view shows the update, also while the unit restarts and the link is idle in between.
+    expect(shown).toContain('idle:starting'); expect(shown).toContain('idle:restarting'); expect(shown).toContain('ready:writing')
   })
   it('arms the trial again from the flashed base when the unit was running another from RAM', async () => {
     const unit = fakeUnit(), link = new OctatrackLink(unit.usb, fakeSession(unit), 300)
@@ -576,6 +587,16 @@ describe('updating the base over USB', () => {
     await expect(old.updateBase(bin, expected, step => steps2.push(step))).rejects.toThrow('install it from the card')
     expect(dedupe(steps2)).toEqual(['staging', 'starting', 'started']) // the trial ran; nothing was written
     expect(older.flashed).toBe(FAKE_BASE); expect(older.base).toBe(expected)
+  })
+  it('says why the new base refused to write itself, and leaves upload mode', async () => {
+    const { unit, link } = await linked(), { bin, expected } = fakeBin(), steps: string[] = []
+    unit.writeRefusal = 5 // flash.h FLASH_PROTECTED: every write was refused this way before the boot snapshot
+    await expect(link.updateBase(bin, expected, step => steps.push(step))).rejects.toThrow(
+      'The new base refused to write itself (reason 105), so nothing was written. A power cycle returns the Octatrack to its current base and modules.')
+    expect(dedupe(steps)).toEqual(['staging', 'starting', 'started', 'writing'])
+    expect(unit.flashed).toBe(FAKE_BASE); expect(unit.base).toBe(expected)
+    await vi.waitFor(() => expect(link.getState().status).toBe('ready'))
+    expect(link.getState().baseUpdate).toBeUndefined()
   })
 })
 

@@ -1629,6 +1629,18 @@ int main(int argc, char **argv)
         run(600);
         assert(slot_for(AB, MW_CTL_ACTIVE) && dsp_mask[0] == 4 && dsp_mask[1] == 4 && ab_reset_is(0));
         placed_at(0, 4, top - 998u); placed_at(1, 4, top - 998u);
+    } else if (mode == 60) {
+        /* Beta finding 64: the tap's price fitted when the reader was prepared, and a set's earlier row took that room
+         * before the reader's switch. The switch no longer refuses it (RUNTIME_CYCLES at every retry left the set in
+         * publishing): the reader goes live, the bus waits for its price with nothing placed, and comes with room. */
+        assert(loader->enter(0) && loader->prepare(0, pkg_reader, sizeof pkg_reader));
+        kb_fits = 0;
+        assert(loader->publish(0) == MU_APPLIED && loader->retire(0) && loader->leave(0));
+        run(200);
+        assert(!kb_charged && !dsp_mask[0] && !dsp_mask[1] && !mw_engines_jobs);
+        kb_fits = 1;
+        run(200);
+        assert(kb_charged && dsp_mask[0] == 8 && dsp_mask[1] == 8);
     } else assert(0);
     return 0;
 }
@@ -1736,7 +1748,7 @@ def build(work):
 
 @unittest.skipUnless(shutil.which('cc'), 'host C compiler unavailable')
 class ResidentEnginesBoard(unittest.TestCase):
-    MODES = 60
+    MODES = 61
 
     def test_place_switch_run_disable_unswitch_free_and_their_refusals(self):
         with tempfile.TemporaryDirectory() as temp:

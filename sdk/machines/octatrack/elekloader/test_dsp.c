@@ -11,6 +11,8 @@ volatile uint32_t modwerk_flash_refusal; /* flash.c, not linked here */
 #include <string.h>
 const struct fx_legacy modwerk_fx_legacy[] = {{0x873d83ccu, 27, "E-Verb"}};
 int modwerk_fxpage_build(unsigned id, uint8_t *recipe, uint32_t bytes, unsigned slots) { (void)id; (void)recipe; (void)bytes; (void)slots; return 1; }
+static int restoring; /* loader.c's: 1 while a restore switches */
+int modwerk_runtime_restoring(void) { return restoring; }
 void modwerk_fxpage_drop(unsigned id) { (void)id; }
 /* Legacy tests have no production owner/journal authority. */
 int modwerk_runtime_owner_snapshot(const uint8_t *p,struct runtime_owner *o) { (void)p;(void)o;return 0; }
@@ -218,6 +220,10 @@ int main(void)
     /* A track running it, or the manager mid-transaction, keeps it: removal and replacement wait. */
     modwerk_test_live_fx[13] = 26;
     CHECK(modwerk_machine_dsp_admit(&fx, &none) == RUNTIME_IN_USE && modwerk_machine_dsp_admit(&fx, &fx) == RUNTIME_IN_USE);
+    /* An Undo puts it back as it was (beta finding 66): the track goes dry (NONE) and the removal is admitted. */
+    modwerk_test_live_fx[5] = 26, restoring = 1;
+    CHECK(modwerk_machine_dsp_admit(&fx, &none) == RUNTIME_OK && !modwerk_test_live_fx[13] && !modwerk_test_live_fx[5]);
+    restoring = 0, modwerk_test_live_fx[5] = 4, modwerk_test_live_fx[13] = 26;
     /* MODULE LOAD (status.c): the one module, unfloored 7/4 of its claim, an estimate, on T6 FX2 (core 0). */
     struct modwerk_module_load loads[MODWERK_FX_IDS];
     CHECK(modwerk_dsp_module_loads(loads) == 1 && loads[0].id == 26 && loads[0].cycles == (244 * 7 + 3) / 4 &&

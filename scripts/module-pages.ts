@@ -14,6 +14,7 @@ import { ModulePreview } from '../src/components/ModulePreview.tsx'
 import { DIGI_MODS, type DigiMod } from '../src/devices/digi-mods.ts'
 import { DEVICES_BY_ID } from '../src/devices/registry.ts'
 import { escapeHtml, pageMetadataHtml, pageContentHtml } from './page-html.ts'
+import { pageTitle } from '../src/site-metadata.ts'
 import { digiContent, octatrackContent } from './seo-content.ts'
 import { socialCard } from './social-cards.ts'
 
@@ -70,7 +71,7 @@ export function modulePageHtml(html: string, module: FirmwareModule, imagePath: 
   const { appUrl, siteName } = siteUrls(html, base)
   const pageUrl = new URL(modulePath(module.id), appUrl).href
   const imageUrl = new URL(imagePath, appUrl).href
-  const title = module.name + ' for Elektron Octatrack — ' + siteName
+  const title = pageTitle(module.name + ' for Elektron Octatrack', siteName)
   const alt = module.name + ' module thumbnail'
   const values: Record<string, string> = {
     description: module.description,
@@ -87,7 +88,7 @@ export function modulePageHtml(html: string, module: FirmwareModule, imagePath: 
 export function digiModulePageHtml(html: string, mod: DigiMod, imagePath: string, base: string): string {
   const { appUrl, siteName } = siteUrls(html, base)
   const pageUrl = new URL(`${mod.device}/module/${mod.id}/`, appUrl).href
-  const title = `${mod.title} for Elektron ${DEVICES_BY_ID[mod.device].name} — ${siteName}`
+  const title = pageTitle(`${mod.title} for Elektron ${DEVICES_BY_ID[mod.device].name}`, siteName)
   const imageUrl = new URL(imagePath, appUrl).href, alt = mod.title + ' for ' + DEVICES_BY_ID[mod.device].name
   const page = pageMetadataHtml(html, title, pageUrl, {
     description: mod.summary, 'og:title': title, 'og:description': mod.summary, 'og:url': pageUrl, 'og:image': imageUrl, 'og:image:alt': alt,

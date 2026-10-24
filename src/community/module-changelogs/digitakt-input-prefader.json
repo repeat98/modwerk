@@ -3,18 +3,20 @@
     "version": "0.2.0-experimental",
     "date": "2026-10-21",
     "changes": [
-      "New SETTINGS > KEEP FX AWAKE row. Stock, loading a project or pressing STOP twice holds the delay and reverb silent until an audio track trigs, so external inputs get no effect while nothing plays. Ticked, that hold releases itself once its fade-out has finished: a double STOP still cuts the effects, and they come back for the inputs within about a second. Unticked, the stock hold is unchanged.",
-      "Tested by the author on a Digitakt I, OS 1.54, alone and with Digi Health and Digi EQ: the effects return without a trig after a double STOP and after a project load, and the double STOP still cuts the tail completely. With Digi Health and Digi EQ the input effects were already awake 5-10 seconds after power-on, also without this module.",
-      "Like INPUT SENDS PRE, the row is not saved and starts unticked at every power-on. Ticked, it overrides a safety hold: high delay feedback on the inputs can build up again after a double STOP. Pattern changes and sampling from the inputs are not tested.",
-      "Correction to the 0.1.0 notes: 0.1.0 was tested by its author on a Digitakt I, OS 1.54, on 2026-10-19, alone and with Digi Health and Digi EQ, before its release."
+      "Adds SETTINGS > KEEP FX AWAKE. Stock, a project load or a double STOP keeps the delay and reverb silent until an audio track trigs, so the inputs get no effect.",
+      "Ticked, the effects come back for the inputs about a second later, with no track playing. A double STOP still cuts them. Unticked, nothing changes.",
+      "Like INPUT SENDS PRE, the setting is not saved and starts unticked at every power-on.",
+      "Ticked, it overrides a safety hold: high delay feedback on the inputs can build up again after a double STOP.",
+      "Known issue: pattern changes and sampling from the inputs are not yet tested with it."
     ]
   },
   {
     "version": "0.1.0-experimental",
     "date": "2026-10-19",
     "changes": [
-      "First release for Digitakt I OS 1.54, on Core 2.1. SETTINGS > INPUT SENDS PRE takes IN L and IN R’s delay and reverb sends before their External Mixer LEV (after PAN), so an input at LEV 0 goes fully wet to the effects. Unticked, the mixer runs the stock instructions; tracks and DUAL MONO are unchanged.",
-      "The setting is not saved and starts unticked at every power-on. Hardware audio, timing and combination behaviour are not yet verified on a unit; see TESTING.md."
+      "First release for Digitakt I OS 1.54, on Core 2.1. SETTINGS > INPUT SENDS PRE takes the IN L and IN R delay and reverb sends before their External Mixer LEV.",
+      "An input at LEV 0 then goes fully wet to the effects. Unticked, the mixer is stock; tracks and DUAL MONO are unchanged.",
+      "The setting is not saved and starts unticked at every power-on."
     ]
   }
 ]

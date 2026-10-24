@@ -85,7 +85,7 @@ const diag = () => diagnostics(unit, index).catch(() => undefined)
 // Development bases (build_core.py --dev, dev.c): keys as the panel reports them, and the composed screen.
 const KEYS = { DOWN: 0x20, RIGHT: 0x21, SRC: 0x22, AMP: 0x23, LFO: 0x24, FX1: 0x25, FX2: 0x26, STOP: 0x27, PLAY: 0x28,
   REC: 0x29, CUE: 0x2a, FUNC: 0x2d, PATTERN: 0x2e, BANK: 0x2f, YES: 0x31, NO: 0x32, UP: 0x33, LEFT: 0x34, MIDI: 0x35,
-  PROJ: 0x1c, PART: 0x1d, AED: 0x1e, ARR: 0x1f, LEVEL: 0x3e,
+  PAGE: 0x1b, PROJ: 0x1c, PART: 0x1d, AED: 0x1e, ARR: 0x1f, SCENEA: 0x19, SCENEB: 0x1a, LEVEL: 0x3e,
   ...Object.fromEntries(Array.from({ length: 16 }, (_, i) => ['TRIG' + (i + 1), i])),
   ...Object.fromEntries(Array.from({ length: 8 }, (_, i) => ['T' + (i + 1), 0x10 + i])),
   ...Object.fromEntries(['A', 'B', 'C', 'D', 'E', 'F'].map((e, i) => ['PUSH' + e, 0x38 + i])) }
@@ -253,7 +253,11 @@ async function run(sequence, until = Infinity) { // serve: past its time limit a
     else if ((m = /^fader(\d+)$/.exec(step))) await devIn(8, 0x40 | Number(m[1]) << 8, 1)
     else if (step === 'ui') await ui()
     else if (step === 'screen') await screen()
-    else if ((m = /^([+-])([A-Z0-9]+)$/i.exec(step))) await devIn(5, KEYS[m[2].toUpperCase()] | (m[1] === '+' ? 0x100 : 0), 1) // +BANK holds, -BANK lets go
+    else if ((m = /^([+-])([A-Z0-9]+)$/i.exec(step))) { // +BANK holds, -BANK lets go
+      const code = KEYS[m[2].toUpperCase()]
+      if (code === undefined) throw new Error('Unknown key in ' + step + ': ' + Object.keys(KEYS).join(' ')) // not TRIG1 (undefined | 0x100)
+      await devIn(5, code | (m[1] === '+' ? 0x100 : 0), 1)
+    }
     else if ((m = /^png:(\S+)$/.exec(step))) await screen(m[1])
     else if ((m = /^mem:(0x[0-9a-f]+):(\d+)$/i.exec(step))) { // RAM, read-only, hex; any length (500-byte reads)
       const at = Number(m[1]), length = Number(m[2]), parts = []
@@ -460,7 +464,9 @@ if (command === 'serve') {
         const session = await UploadSession.connect(transport, identity.base, { timeoutMs: 10000 })
         const phase = session.status.phase
         console.log(`found ${state(session.status)}`)
-        if (session.adopt()) await session.cancel() // staged by the session that lost its reply
+        // A published candidate (pending, trial, recovery, publishing) is rolled back, a staged one cancelled, as the site's cleanUp does.
+        if (['pending', 'trial', 'recovery', 'publishing'].includes(phase) && session.adopt()) { await stopping(() => session.rollback()); await session.leaveUploadMode() }
+        else if (session.adopt()) await session.cancel() // staged by the session that lost its reply
         else if (phase === 'ready') await session.leaveUploadMode() // a published candidate: the base rolls it back after 10 s of quiet
         console.log(`now ${state(session.status)}`)
       } else if (verb === 'try' || verb === 'remove') {

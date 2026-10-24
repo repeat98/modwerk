@@ -9,6 +9,7 @@ describe.each(['https://modwerk.app/', 'https://example.github.io/octamod/'])('m
   it('opens a direct module URL and its index.html on static hosting', () => {
     expect(routeFromUrl(new URL('module/analog-bassdrum/', appUrl), appUrl)).toBe('module/analog-bassdrum')
     expect(routeFromUrl(new URL('module/miniverb/index.html', appUrl), appUrl)).toBe('module/miniverb')
+    expect(routeFromUrl(new URL('analog-rytm-mkii/module/filter-hz/', appUrl), appUrl)).toBe('analog-rytm-mkii/module/filter-hz')
   })
   it('opens machine-qualified module paths and upgrades legacy Digi hashes', () => {
     for (const device of ['digitakt', 'digitone']) {

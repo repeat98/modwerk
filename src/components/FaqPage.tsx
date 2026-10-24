@@ -193,11 +193,12 @@ const SECTIONS: FaqSection[] = [
       },
       {
         id: 'digi-recovery',
-        title: 'How do I recover a Digitakt or Digitone that will not boot?',
-        keywords: 'digitakt digitone keys recovery restore stock startup midi din sysex transfer usb failed boot',
+        title: 'How do I recover a Digitakt, Digitone or Analog Rytm MKII that will not boot?',
+        keywords: 'digitakt digitone keys analog rytm mkii recovery restore stock startup midi din sysex transfer usb failed boot',
         answer: <>
           <p>Keep power connected while an update is running. If it has finished and the machine will not boot, follow the model’s startup-menu OS upgrade procedure using Elektron’s original .syx.</p>
           <p>In Elektron Transfer, open <strong>SYSEX TRANSFER</strong> and choose <strong>OS upgrade via device startup menu</strong>. Load the official OS file and follow the instructions for that machine. Startup-menu upgrades require a physical MIDI interface connected to the machine’s MIDI port; USB cannot carry this recovery update.</p>
+          <p>On the Analog Rytm MKII, hold <strong>FUNC</strong> while powering on, choose <strong>OS UPGRADE</strong> (TRIG 4) and send the original .syx over MIDI DIN. The startup menu never appears over USB.</p>
           <p>Recovery is not guaranteed. If the startup menu is unavailable or the original OS will not install, contact <OfficialLink href="https://www.elektron.se/support">Elektron support</OfficialLink>.</p>
           <p className="faq-source"><OfficialLink href="https://support.elektron.se/support/solutions/articles/43000662701-how-to-update-your-device-via-sysex-transfer">Elektron’s SysEx and startup-menu update instructions</OfficialLink></p>
         </>,

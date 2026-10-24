@@ -3,18 +3,19 @@
     "version": "0.2.5-experimental",
     "date": "2026-10-09",
     "changes": [
-      "Fix #329: muting Scene A or B (FUNC + SCENE A/B) now stops that scene's MIDI locks, as stock scene mute does for audio tracks. With one scene muted the crossfader morphs between the base value and the other scene. Muting the last scene sends the CC back to its base or trig-lock value, and the crossfader then leaves it unchanged.",
-      "Editing scene locks while holding a muted scene's key still works, as in stock.",
-      "This is a small Modwerk patch on top of the author's unchanged MIDISC2.0 release recipe. It also corrects an unassigned-scene fallback in the crossfader mix that produced out-of-range values. The reporter tested this build on an Octatrack MKII, including Part, project and reboot persistence. MIDI Scenes must still be selected alone.",
-      "Known limitation, unchanged from 0.2.4: editing a scene lock while holding its key does not send the CC until the crossfader moves."
+      "Fixes #329: muting Scene A or B (FUNC + SCENE A/B) now stops that scene’s MIDI locks, as stock scene mute does for audio tracks.",
+      "With one scene muted, the crossfader morphs between the base value and the other scene. With both muted, the CC returns to its base or trig-lock value.",
+      "Editing scene locks while holding a muted scene’s key still works, as on stock.",
+      "Fixes out-of-range CC values from the crossfader when a scene has nothing assigned.",
+      "Known issue: editing a scene lock while holding its key does not send the CC until you move the crossfader."
     ]
   },
   {
     "version": "0.2.4-experimental",
     "date": "2026-10-03",
     "changes": [
-      "Replace the earlier relocatable package with the author’s exact standalone MIDISC2.0 release recipe and enable its verified browser build.",
-      "MIDI Scenes must be selected alone; combinations with other modules are refused. Broad hardware and timing qualification is still pending."
+      "Now uses the author’s own MIDISC2.0 release unchanged, and can be built in the browser.",
+      "Known issue: MIDI Scenes must be selected alone; it cannot yet be combined with other modules."
     ],
     "sourceCommit": "58a55da047ee1a3183ccf3f3f6290efadda931ba"
   },
@@ -22,7 +23,7 @@
     "version": "0.2.1-experimental",
     "date": "2026-10-01",
     "changes": [
-      "Documentation-only: add real emulator screenshots of the selection and control pages, access instructions and capture provenance. The firmware implementation is unchanged."
+      "Documentation only: adds screenshots of the selection and control pages and explains how to open them."
     ],
     "sourceCommit": "dd9ea93fd62a3699d54f5e63c5f1a33fe1544cad"
   },
@@ -30,8 +31,8 @@
     "version": "0.2.0-experimental",
     "date": "2026-10-01",
     "changes": [
-      "Documentation/catalog update to the author’s MIDISC2.0 feature set. Firmware builds are held pending verification; the retained relocatable assembly still implements the earlier 8.2-derived version.",
-      "Document standalone pre-trig scenes, pattern/Part boundary timing, held trig locks, CC-before-notes and the author’s fixes without claiming they are already in the Modwerk build."
+      "Documentation only: the module page describes the author’s MIDISC2.0 features, such as pre-trig scenes, held trig locks and CCs sent before notes.",
+      "Builds still contain the earlier version of the module; these features are not in this release yet."
     ],
     "sourceCommit": "3ab925a29e8334ac2bfec518e5f5bc78414e4474"
   },
@@ -39,7 +40,7 @@
     "version": "0.1.1-experimental",
     "date": "2026-10-01",
     "changes": [
-      "Enable browser firmware builds from verified source packages, with native/browser composition and rejection checks recorded."
+      "MIDI Scenes can now be built in the browser."
     ],
     "sourceCommit": "9c4e0e3b7990c6952812d89ac165dfa14151c3ee"
   },
@@ -47,7 +48,7 @@
     "version": "0.1.0-experimental",
     "date": "2026-10-01",
     "changes": [
-      "First Modwerk catalog release of the 1.40MIDISC8.2-derived MIDI scene-lock patch, with scene A/B crossfader morphing and Part save/reload support."
+      "First Modwerk release of the MIDI scene-lock patch (based on 1.40MIDISC8.2), with scene A/B crossfader morphing and Part save and reload."
     ],
     "sourceCommit": "d1136ce4c65ea7e1a00c4516cd4aa41c4b0c0d56"
   }

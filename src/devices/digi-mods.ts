@@ -9,7 +9,7 @@ import type { ModwerkModule } from '../catalog/module-contract-v3'
 import { displayName, type ModuleContributor } from '../catalog/module-authors'
 import { moduleReleasedAt } from '../catalog/module-releases'
 
-export type DigiMachine = 'digitakt' | 'digitakt-ii' | 'digitone'
+export type DigiMachine = 'digitakt' | 'digitakt-ii' | 'digitone' | 'analog-rytm-mkii'
 
 export type DigiMod = {
   id: string
@@ -40,7 +40,7 @@ export type DigiMod = {
 // The Modwerk core is not built yet; until it is measured, the estimate reserves room for it.
 export const CORE_RESERVE_BYTES = 4096
 const profile = (id: DigiMachine) => (MACHINES as MachineProfile[]).find(machine => machine.id === id)!.sdk!
-export const DIGI_CORES: Record<DigiMachine, { version: string; ramBytes: number; areaBytes: number; slots: string }> = Object.fromEntries((['digitakt', 'digitakt-ii', 'digitone'] as const).map(id => {
+export const DIGI_CORES: Record<DigiMachine, { version: string; ramBytes: number; areaBytes: number; slots: string }> = Object.fromEntries((['digitakt', 'digitakt-ii', 'digitone', 'analog-rytm-mkii'] as const).map(id => {
   const sdk = profile(id)
   return [id, { version: sdk.core?.version ?? '', ramBytes: sdk.budgets.find(budget => budget.name === 'Core image')?.value ?? CORE_RESERVE_BYTES, areaBytes: sdk.budgets.find(budget => budget.name === 'Shared mod memory')!.value, slots: sdk.budgets.filter(budget => budget.unit === 'slots').map(budget => budget.value + ' ' + budget.name.toLowerCase()).join(' · ') }]
 })) as Record<DigiMachine, { version: string; ramBytes: number; areaBytes: number; slots: string }>

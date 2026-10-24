@@ -1,0 +1,126 @@
+{
+  "schemaVersion": 2,
+  "id": "play-start",
+  "key": "PLAY START",
+  "name": "Play Start",
+  "version": "0.1.0-experimental",
+  "category": "system",
+  "author": {
+    "github": "jonathanwardle1992-beep",
+    "credits": [
+      "jonathanwardle1992-beep: PLAY START PERSONALIZE row, the [PLAY] start-from-beginning gate, documentation and thumbnail."
+    ]
+  },
+  "nativeManifest": "manifest.py",
+  "presentation": {
+    "label": "PLAY starts from the beginning",
+    "family": "Transport",
+    "summary": "PERSONALIZE setting: when ON, [PLAY] always starts the sequencer from the beginning and never pauses.",
+    "overview": "A global sequencer setting: [PLAY] always starts from the beginning and never pauses. Turn it on or off in PERSONALIZE. Default OFF is stock play/pause, so installing the module changes nothing until you enable it.",
+    "highlights": [
+      "Default OFF: stock [PLAY] pause and continue.",
+      "ON: [PLAY] starts from the beginning even if the sequencer is already running or paused. [STOP] still stops.",
+      "PERSONALIZE only: not a Part or project field. Mute Modes cannot be chosen with it until PERSONALIZE is a shared base table."
+    ],
+    "usage": [
+      "Press [PROJ], open SYSTEM, then PERSONALIZE, and scroll to PLAY START.",
+      "Turn LEVEL (or YES) to ON. Close the menu.",
+      "Press [STOP], then [PLAY]: the sequencer starts. Press [PLAY] again while it runs: it starts from the beginning instead of pausing. [STOP] still stops."
+    ]
+  },
+  "access": {
+    "location": "PROJECT > SYSTEM > PERSONALIZE > PLAY START",
+    "steps": [
+      "Press [PROJ], open SYSTEM, then PERSONALIZE, and scroll to PLAY START.",
+      "Turn LEVEL (or YES) to ON. Close the menu.",
+      "Press [STOP], then [PLAY]: the sequencer starts. Press [PLAY] again while it runs: it starts from the beginning instead of pausing. [STOP] still stops."
+    ],
+    "screenshots": []
+  },
+  "controls": [
+    {
+      "name": "PLAY START",
+      "default": 0,
+      "count": 2,
+      "labels": [
+        "OFF",
+        "ON"
+      ],
+      "doc": "OFF is stock play/pause. ON makes panel [PLAY] always start from the beginning. LEFT/RIGHT clamp; YES wraps. Stored in PERSONALIZE, not in the project."
+    }
+  ],
+  "compatibility": {
+    "firmware": "1.40C",
+    "effectId": null,
+    "location": "Project sequencer",
+    "conflicts": [
+      "mute-modes"
+    ],
+    "uiClaims": [
+      "key:PLAY"
+    ],
+    "limitations": [
+      "OS 1.40C. Hardware and emulator transport checks have not been run.",
+      "Conflicts with Mute Modes: both relocate the PERSONALIZE tables and poke the ANDY restore length.",
+      "MIDI START / CONTINUE / STOP do not follow this setting.",
+      "An OS upgrade resets PERSONALIZE."
+    ]
+  },
+  "resources": {
+    "recorded": "22 October 2026; source only, unmeasured",
+    "storage": {
+      "label": "ROM unit, detour and PERSONALIZE table growth",
+      "display": "Unmeasured",
+      "value": null,
+      "unit": "bytes",
+      "method": "unmeasured",
+      "conditions": "One ColdFire unit, one six-byte detour, ANDY length pokes and relocated PERSONALIZE pointer arrays. No DSP memory.",
+      "source": "TESTING.md"
+    },
+    "processing": {
+      "label": "ColdFire, per [PLAY] press",
+      "display": "Unmeasured",
+      "value": null,
+      "unit": "instructions/event",
+      "method": "unmeasured",
+      "conditions": "Runs in the [PLAY] key handler when PLAY START is ON and the transport is not stopped. Nothing per sample.",
+      "source": "TESTING.md"
+    },
+    "impact": {
+      "conditions": "Key-press handler; default OFF adds a test and a branch.",
+      "cpu": {
+        "level": "minimal",
+        "basis": "source-estimate",
+        "rationale": "A handful of ColdFire instructions on a [PLAY] press; no per-frame work.",
+        "source": "TESTING.md"
+      },
+      "dsp": {
+        "level": "minimal",
+        "basis": "source-estimate",
+        "rationale": "No DSP code.",
+        "source": "manifest.py"
+      },
+      "memory": {
+        "level": "minimal",
+        "basis": "source-estimate",
+        "rationale": "Small ROM unit and one PERSONALIZE word with its battery shadow.",
+        "source": "TESTING.md"
+      }
+    }
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "No emulator or hardware transport results yet. Stock guards for the [PLAY] state load, PERSONALIZE count and ANDY restore sites match original OS 1.40C hashes recorded in TESTING.md. Publication checks cannot pass until captures, performance and a unit report exist.",
+    "hardwareStatus": "untested",
+    "evidenceRevision": "b8deefc88b2c3e5f3c6158e364eb741df1924e1d",
+    "gates": [
+      "modules/play-start/verify.py"
+    ]
+  },
+  "license": {
+    "spdx": "MIT",
+    "file": "LICENSE",
+    "declaration": "Original module by jonathanwardle1992-beep, MIT. No firmware, extracted stock code or built images are included."
+  },
+  "media": []
+}

@@ -39,5 +39,6 @@ export function developerWorkflowPrompt(task: DeveloperTask) {
     'Before every push, and after merging main, run `npm run pr:ready' + (task === 'update' ? ' -- --author <my login>' : '') + '` until it says Ready, then watch the PR checks until they are green ("Make it mergeable" in docs/DEVELOPER_WORKFLOW.md).',
     'Give me concrete steps to test the exact build on my unit and record only results I actually report. My stock OS stays on my computer; never commit firmware, extracted stock code or built images.',
     'When you learn something every later developer needs, or find a bug, a fix or an improvement outside this work, offer it to me as its own small PR titled "Fix: …", "Improvement: …" or "Docs: …", in plain words (Fixes and improvements in docs/DEVELOPER_WORKFLOW.md). Never put it in the module PR.',
+    'Before you run pr:ready, tell me in one line what the guides lacked or got wrong while we worked and where you fixed it ("nothing" is a fine answer); the pull request template asks for it.',
   ].join('\n')
 }

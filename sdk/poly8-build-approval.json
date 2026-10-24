@@ -1,9 +1,9 @@
 {
   "kind": "owner-approved-update",
   "id": "poly8",
-  "version": "0.3.0-experimental",
+  "version": "0.3.1-experimental",
   "approvedBy": "repeat98",
-  "approvedOn": "2026-10-14",
+  "approvedOn": "2026-10-23",
   "waived": [
     "current-build-hardware",
     "chip-worst-case-cycles",
@@ -11,7 +11,7 @@
     "release-documentation"
   ],
   "retainedUiVersion": "0.2.7-experimental",
-  "sourceSha256": "f8b12d55e76faaa98113f26a2af9575a996cdbf40e1225ab0c1c1fac79be3765",
-  "ownerStatement": "Approved by repeat98 in chat 14 Oct 2026: release POLY8 0.3.0.",
-  "reason": "The owner approved this exact native source: 0.2.7 with its runtime package subscribing to ev_play_increment and ev_voice_bind (order 20) and ev_voice_bind_run instead of patching 0x40004100 and 0x40006820; the subscribers are appended under MODWERK_EVENTS and native octabam builds assemble byte-identical. The OT pages and controls are unchanged, so the 0.2.7 captures are retained. Evidence is emulator-only (synthetic renderer flags and register state); current-build hardware, chip worst-case timing and complete memory bounds stay waived for this exact version only. Native/browser parity, source-only reproduction and repository checks remain required; the release can only publish once a base built with site events ships. Re-bound on 14 Oct 2026 from ed9b925f3083… to cover evidence/performance.json relabelled to 0.3.0-experimental with every measurement unmeasured (its earlier figures not carried over); the native code is unchanged, and the owner gave the go-ahead to ship the beta without hardware verification."
+  "sourceSha256": "8e22fdd90c079c8c09305bce504db98e5f1b0c1ea1f645fa9d473bf5e6047791",
+  "ownerStatement": "Asked by repeat98 in chat 23 Oct 2026: make POLY8 stable, optimize it and bring it live again for the card and USB approaches.",
+  "reason": "0.3.1 bounds POLY8's own time with a frame-timer voice governor and runs its render through cached memory, pushing every line it touched before the audio interrupt ends; the OT pages and controls are unchanged, so the 0.2.7 captures are retained. Measured on the owner's MKII with RAM-booted development twins of the current beta base (cached and uncached module code): no freeze or frame stall under eight held keys, chords over the sequencer and rapid presses, where 0.3.0 froze; audio from PLAY matches 0.3.0 to the recorder floor, including after replacing 0.3.0 with the published package. Waived for this exact source: the card build and the exact tester image on a unit, Part/project reload and power cycles, chip worst-case cycles and complete memory bounds."
 }

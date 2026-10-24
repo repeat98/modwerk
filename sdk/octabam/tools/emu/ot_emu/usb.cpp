@@ -101,6 +101,12 @@ namespace ot
 				usbTrace(m_stats.sofs, "unplug acknowledged");
 				reply("ok\n");
 			}
+			else if((val & OTGSC_BSVIS) && m_plugUnacked)
+			{
+				m_plugUnacked = false;
+				usbTrace(m_stats.sofs, "plug acknowledged");
+				reply("ok\n");
+			}
 			if((val & OTGSC_BSVIE) && !(old & OTGSC_BSVIE))
 				m_otgscIs |= OTGSC_BSVIS;
 			return;
@@ -383,7 +389,7 @@ namespace ot
 
 	bool UsbDevice::benchBusy() const
 	{
-		if(m_request || m_resetPending || m_resetUnacked || m_unplugUnacked)
+		if(m_request || m_resetPending || m_resetUnacked || m_unplugUnacked || m_plugUnacked)
 			return true;
 		for(int ep = 0; ep < g_endpoints; ++ep)
 			if(m_in[ep].pending || m_out[ep].pending)
@@ -561,6 +567,20 @@ namespace ot
 			m_unplugUnacked = true;
 			m_otgscIs |= OTGSC_BSVIS;
 		}
+		else if(l.rfind("plug", 0) == 0)
+		{
+			// The cable back in after an `unplug`: B-session valid returns
+			// and BSVIS latches again, which the stock ISR takes as a new
+			// session (the path the boot's BSVIE enable edge reaches). The
+			// controller's registers are not reset here: whatever the
+			// session-end path left (ENDPTSTAT included) is what the guest
+			// finds, as on silicon, where nothing but software or a bus
+			// reset touches them. A real host then resets the bus and
+			// enumerates; the bench sends `reset` itself.
+			m_sessionEnded = false;
+			m_plugUnacked = true;
+			m_otgscIs |= OTGSC_BSVIS;
+		}
 		else if(l.rfind("speed ", 0) == 0)
 		{
 			m_speedHs = l.compare(6, 2, "hs") == 0;
@@ -593,6 +613,19 @@ namespace ot
 					}
 			}
 			m_request = std::move(r);		// answered by whoever serves it
+		}
+		else if(l.rfind("peek ", 0) == 0)
+		{
+			// read <len> bytes (the machine serves it: the memory is the
+			// guest's, readable only between run slices)
+			auto r = std::make_unique<Request>();
+			r->kind = "peek";
+			const std::string rest = l.substr(5);
+			const auto sp = rest.find(' ');
+			r->addr = uint32_t(std::strtoul(rest.substr(0, sp).c_str(), nullptr, 0));
+			if(sp != std::string::npos)
+				r->args.push_back(uint32_t(std::strtoul(rest.substr(sp + 1).c_str(), nullptr, 0)));
+			m_request = std::move(r);
 		}
 		else
 			_reply("err unknown\n");
@@ -665,9 +698,21 @@ namespace ot
 		while(off < _s.size())
 		{
 			const auto n = ::write(m_fd, _s.data() + off, _s.size() - off);
-			if(n <= 0)
-				break;
-			off += size_t(n);
+			if(n > 0)
+			{
+				off += size_t(n);
+				continue;
+			}
+			if(n < 0 && (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR))
+			{
+				// The socket is non-blocking: a reply larger than the send
+				// buffer waits for the client to drain it.
+				pollfd pf{m_fd, POLLOUT, 0};
+				if(::poll(&pf, 1, -1) <= 0)
+					break;
+				continue;
+			}
+			break;
 		}
 	}
 

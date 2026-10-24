@@ -10,17 +10,18 @@ const activity = ({ status, progress = 0 }: LinkState) => status === 'sending' ?
 
 /** The beta Octatrack card's next step (connect, install, retry); nothing once connected or syncing, which the card shows. */
 export function OctatrackSidebarStatus({ link, onInstall }: { link: OctatrackLink; onInstall: () => void }) {
-  const { status, identity } = useOctatrackLink(link)
-  if (ACTIVE.includes(status) || status === 'ready' && identity?.canSubmit) return null
+  const { status, identity, baseUpdate } = useOctatrackLink(link)
+  if (baseUpdate || ACTIVE.includes(status) || status === 'ready' && identity?.canSubmit) return null
   const install = status === 'stock' || status === 'ready' || status === 'unsupported'
   const title = install ? 'Install the base' : status === 'connecting' ? 'Connecting…' : status === 'busy' ? 'Try connecting again' : 'Connect Octatrack'
-  const hint = status === 'stock' ? 'Original OS detected. Install once from the card.' : install ? 'Install from the card to get started.' : status === 'busy' ? 'Close the other tab or app using it.' : 'Plug in USB, then choose your Octatrack.'
+  const hint = status === 'stock' ? 'Original OS detected. Install once from the card.' : install ? 'Install from the card to get started.' : status === 'busy' ? 'Close the other browser window or app using it. This page connects by itself once it’s free.' : 'Plug in USB, then choose your Octatrack.'
   return <button type="button" className="instrument-action" title={hint} disabled={status === 'connecting'} onClick={() => { if (install) onInstall(); else void (status === 'busy' ? link.retry() : link.connect()) }}><span>{title}</span><Icon name="arrow" size={14} /></button>
 }
 
 /** The Octatrack's connection in the status bar; nothing while idle or without WebUSB. */
 export function OctatrackStatus({ link }: { link: OctatrackLink }) {
   const state = useOctatrackLink(link), { status, identity } = state
+  if (state.baseUpdate) return <span className="octatrack-status-bar"><span className="status-dot is-updating" />Updating the base · don’t unplug the Octatrack</span>
   if (status === 'unsupported' || status === 'idle' || status === 'connecting') return null
   const busy = ACTIVE.includes(status)
   return <span className="octatrack-status-bar"><span className={'status-dot' + (busy ? ' is-live' : identity?.canSubmit ? ' verified' : '')} />{busy ? (state.module ? 'Syncing to Octatrack · ' : 'Octatrack · ') + activity(state) : status === 'busy' ? 'Octatrack in use' : 'Octatrack connected'}</span>

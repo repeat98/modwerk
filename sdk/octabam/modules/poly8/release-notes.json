@@ -1,12 +1,23 @@
 {
-  "version": "0.3.0-experimental",
-  "date": "2026-10-14",
+  "version": "0.3.1-experimental",
+  "date": "2026-10-23",
   "changes": [
-    "Runtime package only: on a Modwerk base that owns 0x40004100 and 0x40006820 (sdk/machines/octatrack/events.json), POLY8 subscribes instead of patching them: ev_play_increment (order 20) takes POLY tracks, ev_voice_bind (order 20) handles resets its renderer causes, ev_voice_bind_run discards a track's extension voices when a reset runs. Repitch and Mute Modes then install beside it without POLY8 linking their code.",
-    "The subscribers are appended to polyphony.s under MODWERK_EVENTS with absolute addressing, so no existing PC-relative displacement moves; native octabam builds assemble byte-identical.",
-    "Limits: needs a base built with site events; older bases refuse this package, and Undo keeps 0.2.7-experimental for them. Emulator evidence only (synthetic renderer flags and register state); current-build hardware, chip worst-case timing and complete memory bounds remain unqualified."
+    "Fixed POLY8 freezing the Octatrack (#646, likely #520). Every POLY8 voice is rendered in the audio interrupt. On the Modwerk beta base, which runs module code uncached, each voice cost about 13 points of CPU on the owner's MKII; three or four held notes took the CPU to 100 %, the panel stopped answering and the key releases that would have ended the notes could not run, so the unit stayed frozen for 30 s or more. POLY8 now times its own work every frame and plays fewer voices when it would take more than 40 % of the CPU on average, more than about 197 us in one frame, or when the panel stops ticking for about 100 ms. Release tails go first, then the oldest notes, and voices come back once there is room.",
+    "Fixed the sequencer and audio stopping for good under load (likely #408). With enough voices the audio interrupt ran so long that the DSP frames stopped until a power cycle (reproduced on the owner's MKII with six held voices and the limit switched off). The per-frame limit keeps POLY8 far below that point.",
+    "Faster on the beta base: the render's inner loops, its buffers and the extension voices' records now run through the ColdFire's cached memory, and every cache line POLY8 touched is written back and dropped before the audio interrupt ends, so removing or replacing POLY8 never leaves stale data behind. On the owner's MKII (development twin of the current beta base) one to four held voices took 8.7, 25, 34 and 41 % of the CPU, where 0.3.0 reached 100 % at three to four. Audio is unchanged: recordings of the same pattern from PLAY match 0.3.0 to the recorder's noise floor, on both a cached and an uncached base. Card builds and a base with cached module code already run POLY8 cached, so there only the voice limit changes anything.",
+    "How many voices play depends on the base and on what else runs: on the current beta base three, on a base with cached module code seven to eight (measured with one POLY8 track and the stock project). A frame's POLY time, the voice limit and the longest time the key handlers block interrupts (measured 15 us) are kept as diagnostics.",
+    "Limits: measured on RAM-booted development twins of the beta base, not the exact tester image; the card build was compiled and compared but not run on a unit; Part and project reload, power cycles and MKI were not re-tested; chip worst-case cycles and complete memory bounds stay unmeasured and waived by the owner for this version."
   ],
   "history": [
+    {
+      "version": "0.3.0-experimental",
+      "date": "2026-10-14",
+      "changes": [
+        "Runtime package only: on a Modwerk base that owns 0x40004100 and 0x40006820 (sdk/machines/octatrack/events.json), POLY8 subscribes instead of patching them: ev_play_increment (order 20) takes POLY tracks, ev_voice_bind (order 20) handles resets its renderer causes, ev_voice_bind_run discards a track's extension voices when a reset runs. Repitch and Mute Modes then install beside it without POLY8 linking their code.",
+        "The subscribers are appended to polyphony.s under MODWERK_EVENTS with absolute addressing, so no existing PC-relative displacement moves; native octabam builds assemble byte-identical.",
+        "Limits: needs a base built with site events; older bases refuse this package, and Undo keeps 0.2.7-experimental for them. Emulator evidence only (synthetic renderer flags and register state); current-build hardware, chip worst-case timing and complete memory bounds remain unqualified."
+      ]
+    },
     {
       "version": "0.2.7-experimental",
       "date": "2026-10-12",

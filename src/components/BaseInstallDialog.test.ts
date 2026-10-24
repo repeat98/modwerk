@@ -62,7 +62,7 @@ describe('the base dialog for a unit on an older base', () => {
       vi.stubGlobal('fetch', async () => new Response('<script type="module" crossorigin src="./assets/index-new.js"></script>'))
       const { update } = await older(true); await settle()
       expect(container.textContent).toContain('Modwerk was updated since you opened this page')
-      expect(container.textContent).not.toContain('runs an older Modwerk base')
+      expect(container.textContent).not.toContain('has an older one')
       expect(buttonNamed('Update over USB')).toBeUndefined(); expect(buttonNamed('Reload page')).toBeDefined()
       expect(update).not.toHaveBeenCalled()
     } finally { script.remove() }
@@ -80,7 +80,7 @@ describe('the base dialog for another USB Audio layout', () => {
     await act(() => root.render(createElement(BaseInstallDialog, { link, layout: 'main', firmwareReady: true, onChooseFirmware: () => {}, buildBase, onClose: () => {}, onReady: () => {} })))
     expect(container.textContent).toContain('Change USB Audio')
     expect(container.textContent).toContain('USB Audio · Tracks + Main + Cue')
-    expect(container.textContent).toContain('USB Audio · Main over USB')
+    expect(container.textContent).toContain('switching to USB Audio · Main updates the base over USB')
     expect(buttonNamed('Download base .bin')).toBeUndefined()
     click(container.querySelector('.risk-accept input')!); click(buttonNamed('Update over USB')!); await settle(); await settle()
     expect(buildBase).toHaveBeenCalledWith('main')

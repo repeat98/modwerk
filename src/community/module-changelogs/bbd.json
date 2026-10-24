@@ -3,24 +3,22 @@
     "version": "0.1.1-experimental",
     "date": "2026-10-15",
     "changes": [
-      "Over USB for beta testers: BBD Delay loads onto an Octatrack running the Modwerk beta base, in a module set like the other effects. It needs the base with the new `ev_tail_kill` event; Sync to Octatrack updates the base first. Card builds keep BBD for everyone.",
-      "Cheaper worst case, same sound: after a reset (a STGS change, the stop kill or the first call) BBD rebuilt all nine of its clock filter sections in the first call that plays audio, and a trig split put a second full call in the same block. They are now built one call earlier, in the last silent clear call, so the worst case with trig splits drops from 439 to 400 executed instructions per sample (405 to 363 without splits). The output is bit-identical to 0.1.0 except when TIME moves in the two calls around a reset, where the filters start from TIME's value one block earlier and catch up within nine calls; in the gate's worst render the largest difference is 520 LSB (-84 dBFS).",
-      "STOP, STOP, STOP now cuts BBD's tail, as it cuts the stock reverbs': while the kill holds, BBD plays the input exactly and clears its line. On card builds a ColdFire hook does this at the stock tail kill; over USB it is the base's new `ev_tail_kill` event.",
-      "Code size 1,075 to 1,112 DSP words; card builds still give up SPRING REV and PLATE REV and keep DARK REV unchanged.",
-      "On today's beta base, T5-T8 share a smaller DSP memory: a bank whose Parts keep DARK REV on T5-T8 has no room for BBD there (DSP MEMORY FULL). One BBD per DSP core fits beside seven stock effects; a second fits on T1-T4 only.",
-      "Verification: the render gates (52, one new for resets while TIME moves), the browser builder against native octabam (53 images match, 77 refusals agree, 0 mismatches), and the owner's MKII over USB on a development build of the new base: installed, BBD on T1, T2 and T5, Part switches, removal and reinstall, the self-test, STOP, STOP, STOP cutting a ringing tail to silence and the next trig releasing it; one instance cost 453-527 chip cycles a sample. Not tested on hardware: the card build's stop-kill hook, project save and reload and a power cycle on this version, and an MKI. The eight-instance stress render ran 2 s (0.1.0: 32 s).",
-      "Compatibility flag only, added by the owner: not offered beside Sidechain Compressor for now. BBD declares its whole 16K FX2 slot, whose last 514 words on T3 and T7 are Sidechain's cross-core key window, and the builder now refuses that overlap for every effect. BBD's measured writes end well before the window, so a version that declares its real extent can lift this. Pinned firmware code is unchanged."
+      "Now loads over USB on the Modwerk beta base beside other effects; Sync to Octatrack updates the base first. Card builds still include BBD for everyone.",
+      "STOP, STOP, STOP now cuts BBD's tail, as it does the stock reverbs'. BBD also uses less DSP time at its worst, with the same sound.",
+      "On the beta base, T5-T8 have less DSP memory: a bank whose Parts keep DARK REV on T5-T8 has no room for BBD there. A second BBD fits only on T1-T4.",
+      "Not offered beside Sidechain Compressor for now, because both claim the same memory on T3 and T7.",
+      "Known issue: the tail cut in card builds, project reload, power cycles and the MKI are not yet tested on hardware."
     ]
   },
   {
     "version": "0.1.0-experimental",
     "date": "2026-10-14",
     "changes": [
-      "First BBD Delay release: an original bucket-brigade delay for FX2 with a 2:1 compander, anti-alias and reconstruction filters that follow the clock, a clocked bucket line of 1,023 or 4,095 buckets with charge-transfer curve and bucket noise, a resonant feedback tilt (TONE, FREQ), a freeze (FRZ) and a feedback governor (LIM). TIME is the bucket clock and glides, so locks and LFOs bend the pitch of the repeats.",
-      "Main page: TIME, FDBK, FRZ, TONE, FREQ and MIX take locks, LFOs, scenes and MIDI CC. SETUP: STGS (1024 by default, 50-200 ms; 4096 for 200-800 ms), LIM on encoder C and HPF on encoder E, a 12 dB/octave input high-pass from 20 to 400 Hz (0 is off). MIX 0 is exact dry passthrough.",
-      "STOP, STOP, STOP does not cut BBD's tail in this release: the stock tail kill tests the stock reverbs' ids only. BBD's DSP already takes the signal on a hidden slot, and a ColdFire hook that writes it comes in a later version.",
-      "Card builds give up SPRING REV and PLATE REV for BBD's 1,075 DSP words and keep every other stock effect, DARK REV unchanged.",
-      "Mono wet and free-running TIME (not tempo-synced). Dearer than any stock effect: up to 439 executed instructions per sample with trig splits (SPRING REV 314). The author played this build on an MKII: two instances on T1 and T5, Part/project reload and a power cycle, LFOs and trigless locks. MKI, MIDI/USB load and silicon timing are untested. Card builds only for now: BBD is not offered over USB until the USB port."
+      "First release of BBD Delay: an original bucket-brigade delay for FX2 with mono repeats, compander, clock-following filters, bucket noise, resonant tone, freeze and a feedback limiter.",
+      "TIME sets the bucket clock (free-running, not tempo-synced) and glides, so locks and LFOs bend the repeats' pitch. TIME, FDBK, FRZ, TONE, FREQ and MIX take locks, LFOs, scenes and CC.",
+      "SETUP: STGS picks 1024 stages (50-200 ms) or 4096 (200-800 ms), LIM sets the feedback limiter and HPF a 20-400 Hz input high-pass. MIX 0 is fully dry.",
+      "Card builds replace SPRING REV and PLATE REV with BBD; DARK REV and all other stock effects stay. Not available over USB yet.",
+      "Known issue: STOP, STOP, STOP does not cut BBD's tail yet, it costs more DSP than any stock effect, and it is not yet tested on the MKI."
     ]
   }
 ]

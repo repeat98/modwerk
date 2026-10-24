@@ -1,0 +1,44 @@
+/* The prompt dialogs and the USB hero, apart from octatrack-link.css: the beta join prompt loads them for visitors without beta access, and octatrack-link.css restyles shared classes (.module-tile) so it stays with the beta interface. */
+.base-install-dialog { width: min(640px, calc(100% - 32px)); max-height: calc(100dvh - 32px); overflow-y: auto; padding: 28px 32px; border: 1px solid var(--control-border); border-radius: 14px; background: var(--surface); color: var(--text); box-shadow: 0 24px 90px #000a; outline: none; }
+.base-install-dialog::backdrop { background: #000b; backdrop-filter: blur(4px); }
+.base-install-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+.base-install-header h2 { font-size: 24px; letter-spacing: -.4px; outline: none; }
+.base-install-kicker { margin-bottom: 6px; color: var(--accent); font-size: 12px; font-weight: 600; letter-spacing: .6px; text-transform: uppercase; }
+.base-install-intro { margin: 12px 0 26px; color: var(--text-secondary); font-size: 14px; line-height: 1.75; }
+.base-install-footer { position: sticky; bottom: -28px; display: flex; align-items: center; justify-content: space-between; gap: 16px; margin: 22px -32px -28px; padding: 16px 32px; border-top: 1px solid var(--line); background: var(--surface); }
+.base-install-footer .button { min-width: 120px; }
+.base-install-actions { display: flex; gap: 8px; }
+.base-install-close { position: absolute; top: 14px; right: 14px; z-index: 1; }
+.base-install-header { padding-right: 40px; }
+.module-preview.link-hero { height: auto; margin: -28px -32px 26px; border-bottom: 1px solid var(--line); border-radius: 14px 14px 0 0; }
+.link-hero .link-hero-art { display: block; width: 100%; height: auto; aspect-ratio: 640 / 220; padding: 0 24px 16px; } /* without it Chrome sizes an inline SVG 150px high; two classes beat the shared .signal-art/.module-preview heights */
+.link-hero-art text { font-size: 9px; }
+.link-hero-pick { fill: rgba(var(--signal-rgb), .14); }
+.link-hero-flow { stroke-dasharray: 3 13; animation: link-flow 1s linear infinite; }
+.link-hero-screen { fill: rgba(var(--signal-rgb), .1); stroke: var(--signal); stroke-width: 1.6; }
+.signal-art .link-hero-name { opacity: .7; font-size: 5.5px; letter-spacing: .8px; }
+.signal-art .link-hero-word { opacity: 0; font-size: 10px; font-weight: 600; letter-spacing: 1.2px; animation: link-word 6s infinite; }
+.link-hero-trig { animation: link-trig 2.4s infinite; }
+.link-title { font-size: 30px; letter-spacing: -.8px; outline: none; }
+.base-install-dialog h2 .module-beta-badge, #usb-update-title .module-beta-badge { margin-left: 6px; vertical-align: middle; letter-spacing: normal; }
+.link-promises { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 28px; margin: 0 0 22px; padding: 0; list-style: none; color: var(--muted); font-size: 16px; line-height: 1.5; }
+.link-promises li { display: flex; align-items: center; gap: 14px; }
+.link-promises strong { color: var(--text); font-weight: 600; }
+.link-feature-icon { display: inline-flex; flex: none; align-items: center; justify-content: center; width: 38px; height: 38px; border-radius: 10px; background: var(--accent-soft); color: var(--accent); }
+.link-needs { color: var(--faint); font-size: 12px; line-height: 1.6; }
+.link-needs.is-missing { color: #e4b0b4; }
+@keyframes link-flow { to { stroke-dashoffset: -16; } }
+@keyframes link-word { 0%, 30% { opacity: 1; } 33.4%, 100% { opacity: 0; } }
+@keyframes link-trig { 0%, 6% { fill: #f0a07a; stroke: #f0a07a; opacity: 1; } 14%, 100% { fill: #2c2837; stroke: var(--signal); opacity: .4; } } /* lit trigs glow warm, as on the unit */
+@media (prefers-reduced-motion: reduce) { .link-hero * { animation: none !important; } .signal-art .link-hero-word.is-first { opacity: 1; } }
+.base-install-dialog .file-error { margin: 12px 0 0; }
+@media (max-width: 600px) { .base-install-dialog { padding: 22px 18px; } .base-install-footer { margin: 18px -18px -22px; padding: 14px 18px; bottom: -22px; } .base-install-footer .link-hint { display: none; } .base-install-actions, .base-install-footer .button { flex: 1; } .base-install-footer .button { min-width: 0; } .module-preview.link-hero { margin: -22px -18px 18px; } .link-hero .link-hero-art { padding: 0 6px 10px; } .link-title { font-size: 24px; letter-spacing: -.5px; } .base-install-dialog .base-install-intro { margin: 8px 0 18px; font-size: 14px; line-height: 1.55; } }
+/* Phones: the features as a 2×3 grid of small tiles, headline only, so the whole prompt fits on one screen. */
+@media (max-width: 600px) {
+  .link-promises { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-bottom: 16px; font-size: 13px; line-height: 1.3; }
+  .link-promises li { flex-direction: column; align-items: flex-start; gap: 8px; padding: 10px 12px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface-raised); }
+  .link-feature-icon { width: 30px; height: 30px; border-radius: 8px; }
+  .link-feature-rest { display: none; }
+  .link-hero .link-hero-art text:not(.link-hero-name, .link-hero-word) { font-size: 15px; }
+  .link-needs { font-size: 12px; line-height: 1.5; }
+}

@@ -93,6 +93,17 @@ int main(void)
     CHECK(modwerk_fxpage_build(26, image, bytes, 2) && be32(pages[26] + 0xca + 36) == ADDR(image + 144) &&
           be32(image + 144 + 8) == ADDR(pages[26]));
     modwerk_fxpage_drop(26);
+    /* A handle no installed module serves (MISSING): NONE's own page until the first tick builds the MISSING page,
+     * NONE's bytes with its two names changed; a listed page is untouched, and a dropped one falls back to it. */
+    memset(image, 0, PAGE); image[3] = 0; memcpy(image + 4, "NONE", 4); memcpy(image + 9, "NONE", 4); image[0x40] = 0x5a;
+    CHECK(TABLE(0)[26] == 0x1000 && TABLE(1)[26] == 0x1000 && modwerk_fxpage_current(26, 0, 0, 0));
+    modwerk_fxpage_missing();
+    CHECK(TABLE(0)[26] == ADDR(MISSING_PAGE) && TABLE(1)[26] == ADDR(MISSING_PAGE) && TABLE(0)[27] == ADDR(MISSING_PAGE));
+    CHECK(TABLE(1)[27] == ADDR(pages[27]) && !TABLE(2)[26] && !TABLE(3)[26] && modwerk_fxpage_current(26, 0, 0, 0));
+    CHECK(!memcmp(MISSING_PAGE + 4, "MISS", 5) && !memcmp(MISSING_PAGE + 9, "MISSING\0\0\0\0\0", 13) &&
+          MISSING_PAGE[3] == 0 && MISSING_PAGE[0x40] == 0x5a);
+    bytes = recipe(); CHECK(modwerk_fxpage_build(26, image, bytes, 2) && TABLE(1)[26] == ADDR(pages[26]) && TABLE(0)[26] == ADDR(MISSING_PAGE));
+    modwerk_fxpage_drop(26); CHECK(TABLE(1)[26] == ADDR(MISSING_PAGE) && modwerk_fxpage_current(26, 0, 0, 0));
     if (failures) { fprintf(stderr, "%u FX page checks failed\n", failures); return 1; }
     puts("Octatrack FX pages: a recipe becomes its descriptor and chooser rows, follows its handle, and is refused when it is wrong.");
     return 0;

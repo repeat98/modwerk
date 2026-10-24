@@ -515,7 +515,7 @@ describe('private aggregate usage statistics',()=>{
   for(let i=0;i<200;i++)expect((await call('/usage/events','POST',usageEvent())).status).toBe(200)
   expect((await call('/usage/events','POST',usageEvent())).status).toBe(429)
   expect(db.prepare('SELECT visitors,page_views FROM usage_daily').get()).toEqual({visitors:1,page_views:200})
- })
+ },15000) // 201 requests through the service; past 5 s on a busy CI runner
 })
 
 describe('page-level traffic',()=>{

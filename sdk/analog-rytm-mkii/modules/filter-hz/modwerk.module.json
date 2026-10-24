@@ -1,0 +1,199 @@
+{
+  "schemaVersion": 3,
+  "id": "filter-hz",
+  "name": "Filter Hz",
+  "version": "1.2.0",
+  "machine": "analog-rytm-mkii",
+  "category": "system",
+  "exclusive": false,
+  "author": {
+    "github": "Iced-Cream",
+    "credits": [
+      "MrScruff — the original mod, 0008-filter-hz in rytm-mods, its design, code and frequency measurements; published in rytm-mods-src with permission.",
+      "Iced-Cream — the elemod port (rytm2_mods) and this Modwerk module.",
+      "irpina — Elekloader and core-ar2, the core it links with."
+    ]
+  },
+  "maintainers": [
+    "Iced-Cream"
+  ],
+  "source": {
+    "repository": "https://github.com/Iced-Cream/rytm2_mods",
+    "revision": "afd461d4a8ef4306bb2a57d4c61ad35c362b3940",
+    "path": "filter-hz"
+  },
+  "presentation": {
+    "label": "FILTER HZ",
+    "family": "Display",
+    "summary": "The FILTER page's FRQ popup shows the cutoff in hertz, from 13.8Hz to 21.1kHz, instead of 0 to 127.",
+    "overview": "Filter Hz changes what the FRQ value popup on the FILTER page says. Instead of the stock 0 to 127 it shows the cutoff frequency to three significant figures: 13.8Hz at 0, 440Hz at 60, 1.11kHz at 76 and 21.1kHz at 127, one semitone a step. The scale comes from MrScruff's measurement of the self-oscillating filter. Only the text changes: the filter, its range, saved kits and every other parameter are untouched. It is an elemod port of MrScruff's rytm-mods 0008-filter-hz, with his code unchanged.",
+    "highlights": [
+      "The FRQ popup reads in Hz and kHz to three significant figures.",
+      "One semitone a step, with 440Hz at the stock value 60.",
+      "Display only: the filter, its range and saved kits are unchanged.",
+      "MrScruff's rytm-mods code, unchanged, linked by the elemod core."
+    ],
+    "usage": [
+      "Use a build containing Filter Hz. Select a track and press FILTER to open its FILTER page.",
+      "Turn FRQ (knob E). The value popup reads the cutoff in hertz instead of 0 to 127: 440Hz at the stock value 60, one semitone a step.",
+      "Turn FRQ fully right for 21.1kHz, the open filter, or fully left for 13.8Hz. RES and every other parameter still show their plain numbers."
+    ]
+  },
+  "access": {
+    "location": "Any track's FILTER page: the FRQ value popup (knob E).",
+    "steps": [
+      "Select a track and press FILTER.",
+      "Turn FRQ (knob E); its value popup reads the cutoff in Hz or kHz."
+    ],
+    "screenshots": [
+      "media/filter-page.png",
+      "media/frq-440hz.png"
+    ]
+  },
+  "controls": [
+    {
+      "name": "Knob E — FRQ",
+      "default": null,
+      "doc": "Unchanged control. Its value popup shows the cutoff frequency, 13.8Hz at 0 to 21.1kHz at 127, one semitone a step, instead of the number.",
+      "labels": null
+    }
+  ],
+  "compatibility": {
+    "releases": [
+      "1.74"
+    ],
+    "requires": [],
+    "conflicts": [],
+    "limitations": [
+      "Built for OS 1.74 only, with core-ar2 0.3. Version 1.2.0 drops the OS 1.73 release (core-ar2 0.1), which Modwerk no longer supports.",
+      "The scale was measured on the self-oscillating LP2 filter; the other filter types are assumed to share it.",
+      "The popup shows the knob's value: envelope depth, LFO modulation and parameter locks applied elsewhere are not included.",
+      "The 0 to 127 number is no longer shown for FRQ."
+    ]
+  },
+  "platform": {
+    "kind": "elemod",
+    "core": "0.1",
+    "build": "build.json",
+    "events": [],
+    "claims": [
+      "ui:FILTER page FRQ value text"
+    ]
+  },
+  "resources": {
+    "memoryBytes": 256,
+    "fastBytes": 0,
+    "load": {
+      "display": "None in the audio path: runs only when the FRQ popup's text is drawn",
+      "method": "static",
+      "conditions": "Static: the one site is in param_value_text, the routine that formats a parameter's value text for the screen; nothing is added to the audio, sequencer or tick paths. Not a measurement."
+    }
+  },
+  "evidence": {
+    "tier": "author-hardware",
+    "moduleVersion": "1.2.0",
+    "sourceSha256": "456b3752807d5ccbcbcc3ad9f51fe7d99d82b154def1a99385703b063723439b",
+    "reports": [
+      "evidence/hardware-testing.json",
+      "evidence/source-parity.json"
+    ],
+    "hardware": {
+      "model": "Analog Rytm MKII",
+      "release": "1.74",
+      "testedOn": "2026-10-22",
+      "tester": "Iced-Cream",
+      "durationMinutes": null,
+      "summary": "Iced-Cream reports that on an Analog Rytm MKII with OS 1.74 the FILTER page's FRQ popup shows the cutoff in Hz, in FZ74, the released core-ar2 0.3 with Filter Hz alone (2026-10-22), and beside all ten other rytm2_mods ports (C3A4, 2026-10-20). Modwerk's 1.2.0 build links to FZ74's main OS byte for byte.",
+      "limitations": [
+        "Only FZ74's one-minute playback was timed; other durations were not recorded.",
+        "FZ74: .syx 62c256261d643752c9e8ffb357aada048af75a9b03c1f1aae649287e4bae7745. Firmware was not read back from the device.",
+        "FZ74's playback check was heard over Overbridge, with samples and delay and reverb sends on all tracks."
+      ]
+    },
+    "verifiedBy": null
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "Hardware: the FRQ popup shows Hz on an Analog Rytm MKII, OS 1.74, with the released core-ar2 0.3 and Filter Hz alone (FZ74, 2026-10-22). Modwerk's source build gives a main OS byte-identical to FZ74. rytm-emu shows Hz where stock shows numbers, every other pixel the same.",
+    "documentation": {
+      "tutorial": {
+        "title": "Quick tutorial",
+        "steps": [
+          "Use a build containing Filter Hz. Select a track and press FILTER to open its FILTER page.",
+          "Turn FRQ (knob E). The value popup reads the cutoff in hertz instead of 0 to 127: 440Hz at the stock value 60, one semitone a step.",
+          "Turn FRQ fully right for 21.1kHz, the open filter, or fully left for 13.8Hz. RES and every other parameter still show their plain numbers."
+        ]
+      },
+      "screenshots": [
+        "media/filter-page.png",
+        "media/frq-440hz.png",
+        "media/frq-open.png"
+      ],
+      "captureRecord": "media/capture.json"
+    }
+  },
+  "license": {
+    "spdx": "GPL-2.0-only",
+    "file": "LICENSE",
+    "declaration": "MrScruff's rytm-mods code and Iced-Cream's elemod port, under GPL-2.0-only as rytm-mods-src. include/ar2-1.74.inc names firmware routines by address only; the patch precondition is an address, a length and a SHA-256."
+  },
+  "media": [
+    {
+      "path": "media/thumbnail.svg",
+      "kind": "thumbnail",
+      "caption": "Filter Hz",
+      "alt": "Original illustration of a low-pass response with its cutoff on a 13.8Hz to 21.1kHz scale",
+      "credit": "Iced-Cream",
+      "license": "GPL-2.0-only",
+      "source": "Original vector illustration; not a device screenshot."
+    },
+    {
+      "path": "media/filter-page.png",
+      "kind": "screenshot",
+      "caption": "Press FILTER on any track to open its FILTER page. FRQ is knob E, at the left of the lower row.",
+      "alt": "FILTER page with ATK, DEC, SUS and REL above FRQ, RES, TYP and ENV.",
+      "credit": "Iced-Cream documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "1.2.0",
+        "imageSha256": "62c256261d643752c9e8ffb357aada048af75a9b03c1f1aae649287e4bae7745",
+        "setup": "Headless rytm-emu c5732f0 (dtboot) running FZ74, the released core-ar2 0.3 and Filter Hz built from the owner's stock OS 1.74; Modwerk's 1.2.0 build of this folder links to the same main OS. The frames were first captured in rytm-emu 3c4c42c on an OS 1.73 build and are byte-identical to FZ74's. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+      }
+    },
+    {
+      "path": "media/frq-440hz.png",
+      "kind": "screenshot",
+      "caption": "Turn FRQ: the popup now reads the cutoff in hertz. At the stock value 60 it shows 440Hz; each step is one semitone.",
+      "alt": "FREQUENCY popup with the FRQ label reading 440Hz and the filter curve cut off in the middle.",
+      "credit": "Iced-Cream documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "1.2.0",
+        "imageSha256": "62c256261d643752c9e8ffb357aada048af75a9b03c1f1aae649287e4bae7745",
+        "setup": "Headless rytm-emu c5732f0 (dtboot) running FZ74, the released core-ar2 0.3 and Filter Hz built from the owner's stock OS 1.74; Modwerk's 1.2.0 build of this folder links to the same main OS. The frames were first captured in rytm-emu 3c4c42c on an OS 1.73 build and are byte-identical to FZ74's. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+      }
+    },
+    {
+      "path": "media/frq-open.png",
+      "kind": "screenshot",
+      "caption": "Turn FRQ fully right and the popup reads 21.1kHz, the open filter; fully left reads 13.8Hz.",
+      "alt": "FREQUENCY popup with the FRQ label reading 21.1kHz and the filter curve fully open.",
+      "credit": "Iced-Cream documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "1.2.0",
+        "imageSha256": "62c256261d643752c9e8ffb357aada048af75a9b03c1f1aae649287e4bae7745",
+        "setup": "Headless rytm-emu c5732f0 (dtboot) running FZ74, the released core-ar2 0.3 and Filter Hz built from the owner's stock OS 1.74; Modwerk's 1.2.0 build of this folder links to the same main OS. The frames were first captured in rytm-emu 3c4c42c on an OS 1.73 build and are byte-identical to FZ74's. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+      }
+    }
+  ]
+}

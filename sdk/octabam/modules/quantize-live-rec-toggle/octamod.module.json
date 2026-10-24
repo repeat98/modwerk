@@ -3,18 +3,19 @@
   "id": "quantize-live-rec-toggle",
   "key": "QUANTIZE_LIVE_REC_TOGGLE",
   "name": "Quant Live Rec",
-  "version": "0.1.0-experimental",
+  "version": "0.1.1-experimental",
   "category": "system",
   "source": {
-    "repository": "https://github.com/sambanks/octabam",
-    "revision": "6e4aeb76695cbb612e4b424c55fd2207facf73ef",
-    "path": "modules/quantize-live-rec-toggle"
+    "repository": "https://github.com/Zac-Kyoti/octatrack-kyoti-fw",
+    "revision": "8ffec2b60bf0c309d9f3f2bf8384c8c224141be2",
+    "path": "modwerk-modules/quantize-live-rec-toggle"
   },
   "author": {
     "github": "Zac-Kyoti",
+    "name": "Zac Kyoti",
     "credits": [
-      "Zac-Kyoti: the gesture, its ColdFire source and the MKI hardware work behind it. Sam Banks: octabam integration.",
-      "Modwerk contributors: source import with stock guards in place of stock bytes, the reworded toast, the PERSONALIZE redraw after a flip, the image gate, documentation and SVG thumbnail."
+      "Zac Kyoti: the gesture and its ColdFire source, including the LIVE REC toasts, the PERSONALIZE redraw after a flip and the stock-free order of the flip's stores, and the MKI hardware work behind it. Sam Banks: octabam integration.",
+      "Modwerk contributors: the manifest's stock guards in place of stock bytes, the image gate, documentation and SVG thumbnail."
     ]
   },
   "nativeManifest": "manifest.py",
@@ -24,7 +25,7 @@
     "summary": "Hold [REC] and tap [PLAY] to see QUANTIZE LIVE REC in a toast; tap [PLAY] again while it is up to switch it.",
     "overview": "QUANTIZE LIVE REC decides whether live-recorded trigs snap to the steps. Stock keeps it in PROJECT > SYSTEM > PERSONALIZE. This module shows it on the gesture that starts live recording and lets a second tap switch it, without leaving the page you are on.",
     "highlights": [
-      "OS 1.40C only. The author tested the gesture and a power cycle on an MKI. On an MKII (13 October 2026) the user reported the gesture, both toasts fitting the screen, the PERSONALIZE redraw and a power cycle working, with this module alone and, before the redraw was added, in combined builds with other modules.",
+      "OS 1.40C only. The author tested this version from the card on his MKI (23 October 2026): the gesture, the PERSONALIZE redraw and a power cycle. 0.1.0, with the same gesture, ran on an MKII from the card and over USB.",
       "The first [REC] + [PLAY] still starts live recording, as on stock. While live recording runs, further [REC] + [PLAY] presses do nothing on stock; here they show or invert the setting.",
       "If a stock notification happens to be on screen while [REC] is held, the first [PLAY] inverts the setting instead of only showing it; the toast then shows the new value.",
       "The setting is the stock global PERSONALIZE value in battery-backed memory: not saved per project or Part, and reset by an OS upgrade like the rest of PERSONALIZE."
@@ -68,33 +69,33 @@
     "location": "Project sequencer",
     "conflicts": [],
     "limitations": [
-      "OS 1.40C only. The author tested the gesture and a power cycle on an MKI. On an MKII (13 October 2026) the user reported the gesture, both toasts fitting the screen, the PERSONALIZE redraw and a power cycle working, with this module alone and, before the redraw was added, in combined builds with other modules.",
+      "OS 1.40C only. The author tested this version from the card on his MKI (23 October 2026): the gesture, the PERSONALIZE redraw and a power cycle. 0.1.0, with the same gesture, ran on an MKII from the card and over USB.",
       "The first [REC] + [PLAY] still starts live recording, as on stock. While live recording runs, further [REC] + [PLAY] presses do nothing on stock; here they show or invert the setting.",
       "If a stock notification happens to be on screen while [REC] is held, the first [PLAY] inverts the setting instead of only showing it; the toast then shows the new value.",
       "The setting is the stock global PERSONALIZE value in battery-backed memory: not saved per project or Part, and reset by an OS upgrade like the rest of PERSONALIZE.",
-      "With PROJECT > SYSTEM > PERSONALIZE open, a flip redraws the list so the box follows at once (emulator and MKII; beside Output Matrix, emulator only). The author noted an occasional small empty box where the toast was right after it closes.",
+      "With PROJECT > SYSTEM > PERSONALIZE open, a flip redraws the list so the box follows at once (emulator and MKI). The author noted an occasional small empty box where the toast was right after it closes.",
       "This is the all-or-nothing QUANTIZE LIVE REC setting, not the per-track TRIG QUANT. No effect slot, menu row or project data is added.",
-      "Over USB for beta testers: one ColdFire package with its two jmp sites, loaded, kept, undone and removed on the Modwerk beta base (tested on an MKII, 15 October 2026); it adds no effect row or project data, so a project never names it as missing."
+      "Over USB for beta testers: one ColdFire package with its two jmp sites; it adds no effect row or project data, so a project never names it as missing. This version's package has not run over USB on a unit (0.1.0's did, on an MKII, 15 October 2026)."
     ]
   },
   "resources": {
-    "recorded": "15 October 2026; source assembly, the image gate and executed instructions under the ColdFire port",
+    "recorded": "23 October 2026; source assembly, the image gate and executed instructions under the ColdFire port",
     "storage": {
       "label": "ROM code and detours",
-      "display": "188 B code + two 6 B detours",
-      "value": 200,
+      "display": "196 B code + two 6 B detours",
+      "value": 208,
       "unit": "bytes",
       "method": "static",
-      "conditions": "One position-independent linked unit of 188 bytes (code and two strings) in free ROM space, and two six-byte jmp detours over stock instructions. No RAM, no DSP memory.",
+      "conditions": "One position-independent linked unit of 196 bytes (code and two strings) in free ROM space, and two six-byte jmp detours over stock instructions. No RAM, no DSP memory.",
       "source": "TESTING.md"
     },
     "processing": {
       "label": "ColdFire, per key press",
-      "display": "at most 26 authored instructions per press",
-      "value": 26,
+      "display": "at most 28 authored instructions per press",
+      "value": 28,
       "unit": "instructions/event",
       "method": "static",
-      "conditions": "Longest path through the [PLAY] entry (invert, then reopen the toast), counted from the source; stock routines it calls (among them the menu redraw after a flip) are excluded. Runs only on a [PLAY] press or [REC] release, never per frame. Under a MIDI flood in ot_emu (emulator, not hardware) it executed 4 to 25 per event, and MIDI transport messages never reached it.",
+      "conditions": "Longest path through the [PLAY] entry (invert, redraw PERSONALIZE when it is the open page, reopen the toast, then stock's [PLAY] path), counted from the source; stock routines it calls are excluded. Runs only on a [PLAY] press or [REC] release, never per frame. In ot_emu (emulator, not hardware) the longest press executed 26.",
       "source": "TESTING.md"
     },
     "impact": {
@@ -102,7 +103,7 @@
       "cpu": {
         "level": "minimal",
         "basis": "source-estimate",
-        "rationale": "Two to about two dozen instructions on a [PLAY] press or [REC] release; no per-frame or per-sample work. In ot_emu under a MIDI flood (about 1,000 messages a second and clock at 240 BPM) the longest frame interrupt was the stock image's (129 us with the flood alone, 150 us with the gesture on both) and idle 0.3 points lower while the gesture was used; emulator figures, not the unit's time.",
+        "rationale": "Two to about two dozen instructions on a [PLAY] press or [REC] release; no per-frame or per-sample work. 0.1.0 in ot_emu under a MIDI flood (about 1,000 messages a second and clock at 240 BPM) left the longest frame interrupt at the stock image's; emulator figures, not the unit's time.",
         "source": "TESTING.md"
       },
       "dsp": {
@@ -114,16 +115,16 @@
       "memory": {
         "level": "minimal",
         "basis": "source-estimate",
-        "rationale": "200 bytes of ROM; no RAM or audio memory of its own.",
+        "rationale": "208 bytes of ROM; no RAM or audio memory of its own.",
         "source": "TESTING.md"
       }
     }
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "The image gate passes 36 checks: the retired 0x400522ca site left as the original OS has it, both jmp detours and the unit's 188 bytes in place, then under the ColdFire port by the keys (MKII panel) the show, invert, invert-back, expiry and [REC]-release behaviour beside the original OS under the same keys, an open PERSONALIZE list redrawn by a flip, and a power cycle of the port keeping an inverted setting. The toast wording is Modwerk’s; the author reported the gesture and a power cycle on an MKI (25 and 30 September 2026) for his own build. On an MKII (13 October 2026), with this module alone at the current source, the user reported the gesture working, both toasts fitting the screen, an open PERSONALIZE list following each flip and a changed setting surviving a power cycle; combined test builds with other modules gave the same results before the redraw was added. The flip's two stores and its redraw call were re-encoded afterwards (15 October 2026) so a USB package repeats no stock run; loaded over USB on the user's MKII (15 October 2026), that source passed the gesture, PERSONALIZE redraw and power-cycle checks, and its trial, Keep and removal worked.",
+    "summary": "The image gate passes 36 checks on the native image of this module alone: the retired 0x400522ca site left as the original OS has it, both jmp detours and the unit's 196 bytes in place, then under the ColdFire port by the keys (MKII panel) the show, invert, invert-back, expiry and [REC]-release behaviour beside the original OS under the same keys, an open PERSONALIZE list redrawn by a flip, and a power cycle of the port keeping an inverted setting. On his MKI (23 October 2026) the author flashed that image from the card and reported the gesture, the PERSONALIZE redraw and a power cycle working.",
     "hardwareStatus": "reported",
-    "evidenceRevision": "d7526ad548965cebea84b211a60d3bc00c1c6f3a",
+    "evidenceRevision": "3ff9dee1b0fc81da1fd20209a3f5a05f0ec37018",
     "gates": [
       "modules/quantize-live-rec-toggle/verify.py"
     ],
@@ -145,14 +146,14 @@
       "screenshotStyle": "black-and-white"
     },
     "qualification": {
-      "moduleVersion": "0.1.0-experimental",
-      "sourceSha256": "403c3e4b47e312d78c4ba5a6049d80452efbd63905f33573666c22f281e498b5",
-      "imageSha256": "026464deb27c8178d44ad1fd5866b754478b11c114561e73000cdca3b44f86e8",
+      "moduleVersion": "0.1.1-experimental",
+      "sourceSha256": "dc262e3b08448b7955d3436792a5ba03c3336b120a8e9e1bc20dfa2e37da09f9",
+      "imageSha256": "3a39f682b372ad1ad962cc3f327893b51db54273ac5a0690918552298a7b9328",
       "cycles": [
         {
           "processor": "coldfire",
-          "worstCase": 416,
-          "maxConfiguration": 416,
+          "worstCase": 448,
+          "maxConfiguration": 448,
           "maxInstances": 1,
           "budget": 95778,
           "unit": "cycles/event",
@@ -162,7 +163,7 @@
             "parameterModulation": "Not applicable: one global boolean reached by a key gesture; no LFO, parameter lock, scene or MIDI CC reaches it.",
             "modeSwitching": "Repeated show, invert and invert-back presses inside one toast, and [REC] release with and without a toast on screen.",
             "maxLoad": "One instance per unit (a global key gesture). The code runs once per [PLAY] press or [REC] release in the key handler, never in the frame or audio path.",
-            "inputConditions": "Independent of audio. Counts cover the authored instructions only; the stock routines they call (project gate, checksum, notification open and close) are stock cost and excluded. The qualified image is the USB package 026464de (ABI 7, 356 bytes), which carries this 188-byte unit byte for byte; the instructions were counted on the same unit in the card image QLRTEST03 (MAIN OS eb34c12e9c906107fc6a8285ec757eaacf83a39c8dfb42e7bc390421f4189afd)."
+            "inputConditions": "Independent of audio. Counts cover the authored instructions only; the stock routines they call (project gate, checksum, menu redraw, notification open and close) are stock cost and excluded. Counted on the qualified image, the native card image of this module alone with every stock effect kept (MAIN OS 3a39f682b372ad1ad962cc3f327893b51db54273ac5a0690918552298a7b9328); the USB package 297f79ef (ABI 7, 364 bytes) carries the same 196-byte unit byte for byte."
           },
           "report": "TESTING.md"
         }
@@ -172,9 +173,9 @@
           {
             "name": "Authored ColdFire code and the two toast strings (linked unit qlr, ROM cave)",
             "space": "cpu-flash",
-            "words": 188,
+            "words": 196,
             "wordBits": 8,
-            "bytes": 188,
+            "bytes": 196,
             "scope": "shared"
           },
           {
@@ -187,25 +188,25 @@
           }
         ],
         "perInstanceBytes": 0,
-        "sharedBytes": 200,
+        "sharedBytes": 208,
         "maxInstances": 1,
-        "totalBytes": 200,
-        "conditions": "From the linked unit (188 bytes at any address; it is position independent) and the two detours. No RAM of its own: it reads and writes the stock setting word and its battery copy, and reads stock key and notification state. No heap; at most 8 bytes of stack beyond the stock key handler (two pushed arguments) before the stock calls.",
+        "totalBytes": 208,
+        "conditions": "From the linked unit (196 bytes at any address; it is position independent) and the two detours. No RAM of its own: it reads and writes the stock setting word and its battery copy, and reads stock key and notification state. No heap; at most 8 bytes of stack beyond the stock key handler (two pushed arguments) before the stock calls.",
         "report": "TESTING.md"
       },
       "hardware": {
         "kind": "functional",
         "status": "reported",
-        "model": "MKII",
-        "testedOn": "2026-10-15",
-        "tester": "npp1993",
-        "sourceRevision": "d7526ad548965cebea84b211a60d3bc00c1c6f3a",
-        "imageSha256": "026464deb27c8178d44ad1fd5866b754478b11c114561e73000cdca3b44f86e8",
-        "summary": "Package 026464de (source d7526ad5) over USB on the user's MKII with the flashed Modwerk beta base, OS 1.40C, APPLY SCENE installed beside it. Two trials without Keep rolled back; a kept trial was accepted and listed as Quant Live Rec. With it kept the user reported: hold [REC] + tap [PLAY] shows the toast and starts live recording; a tap within about a second flips the setting; a tap after the toast has gone only shows it; releasing [REC] closes the toast; with PERSONALIZE open the box follows a flip; a changed setting survives a power cycle, and the module was still installed after it. Removal was accepted and the inventory no longer listed it.",
+        "model": "MKI",
+        "testedOn": "2026-10-23",
+        "tester": "Zac Kyoti",
+        "sourceRevision": "3ff9dee1b0fc81da1fd20209a3f5a05f0ec37018",
+        "imageSha256": "3a39f682b372ad1ad962cc3f327893b51db54273ac5a0690918552298a7b9328",
+        "summary": "The author flashed the native card image of this module alone (MAIN OS 3a39f682, OS VERSION MW_QLR011) on his MKI and ran it for about five minutes. All passed: hold [REC] + tap [PLAY] shows the toast and starts live recording; a second tap while the toast is up flips the setting and another flips it back; a tap after the toast has gone only shows it; releasing [REC] closes the toast and [STOP] ends live recording; with PROJECT > SYSTEM > PERSONALIZE open on QUANTIZE LIVE REC the show press leaves the box alone and a flip changes it at once; a changed setting survives a power cycle.",
         "limitations": [
-          "Over USB only: the card image of this source (QLRTEST03) has not run on a unit. An earlier source (50f65395, QLRTEST02) ran from the card on the same MKII with the same results, before the stock-free re-encoding.",
-          "Not checked: stock [REC] + [PLAY] behaviour after the removal, grid recording, MIDI tracks, an MKI with this build. Part and project reload ran on 20 October 2026 (same MKII, same package, beside other modules) and left the setting unchanged; whether the gesture was used again after each reload was not recorded.",
-          "How long the tests ran was not recorded."
+          "From the card only: the USB package 297f79ef has not run on a unit; 0.1.0's USB package ran on an MKII (15 October 2026).",
+          "Not checked on this version: an MKII, grid recording, MIDI tracks, Part and project reload, combined builds with other modules.",
+          "About five minutes of use; nothing timed or recorded."
         ],
         "report": "TESTING.md"
       },
@@ -239,16 +240,16 @@
       "captureType": "emulator",
       "caption": "Hold [REC] and tap [PLAY]. A toast shows the current setting, here LIVE REC: QUANTIZED, and live recording starts as it does on the stock OS.",
       "alt": "Octatrack main screen with a notification box reading LIVE REC: QUANTIZED.",
-      "credit": "Modwerk contributors; Elektron Octatrack UI",
+      "credit": "Modwerk contributors (capture plan); Zac Kyoti; Elektron Octatrack UI",
       "license": "LicenseRef-OT-UI-Documentation",
       "source": "original",
       "otUi": {
         "page": "Main screen with the notification",
         "shows": "location-and-controls",
         "firmware": "1.40C",
-        "moduleVersion": "0.1.0-experimental",
-        "imageSha256": "eb34c12e9c906107fc6a8285ec757eaacf83a39c8dfb42e7bc390421f4189afd",
-        "setup": "Headless ot_emu; MKII panel; 128×64 LCD at integer scale 6; DSP cores running; empty scratch card, its missing-project prompts dismissed with three NO presses; native initialized state, no saved project. Static native build of this module alone with every stock effect kept: the MAIN OS of QLRTEST03 (the stock-free reorder; QLRTEST02, which the MKII ran, gave the same pictures)."
+        "moduleVersion": "0.1.1-experimental",
+        "imageSha256": "3a39f682b372ad1ad962cc3f327893b51db54273ac5a0690918552298a7b9328",
+        "setup": "Headless ot_emu; MKII panel; 128×64 LCD at integer scale 6; DSP cores running; empty scratch card, its missing-project prompts dismissed with three NO presses; native initialized state, no saved project. Static native build of this module alone with every stock effect kept (MAIN OS 3a39f682, the image the author flashed on his MKI)."
       }
     },
     {
@@ -256,16 +257,16 @@
       "captureType": "emulator",
       "caption": "Keep [REC] held and tap [PLAY] again while the toast is still up. The setting inverts and the toast reopens with the new value, here LIVE REC: UNQUANTIZED. Another tap switches it back.",
       "alt": "Octatrack main screen with a notification box reading LIVE REC: UNQUANTIZED.",
-      "credit": "Modwerk contributors; Elektron Octatrack UI",
+      "credit": "Modwerk contributors (capture plan); Zac Kyoti; Elektron Octatrack UI",
       "license": "LicenseRef-OT-UI-Documentation",
       "source": "original",
       "otUi": {
         "page": "Main screen with the notification",
         "shows": "controls",
         "firmware": "1.40C",
-        "moduleVersion": "0.1.0-experimental",
-        "imageSha256": "eb34c12e9c906107fc6a8285ec757eaacf83a39c8dfb42e7bc390421f4189afd",
-        "setup": "Headless ot_emu; MKII panel; 128×64 LCD at integer scale 6; DSP cores running; empty scratch card, its missing-project prompts dismissed with three NO presses; native initialized state, no saved project. Static native build of this module alone with every stock effect kept: the MAIN OS of QLRTEST03 (the stock-free reorder; QLRTEST02, which the MKII ran, gave the same pictures)."
+        "moduleVersion": "0.1.1-experimental",
+        "imageSha256": "3a39f682b372ad1ad962cc3f327893b51db54273ac5a0690918552298a7b9328",
+        "setup": "Headless ot_emu; MKII panel; 128×64 LCD at integer scale 6; DSP cores running; empty scratch card, its missing-project prompts dismissed with three NO presses; native initialized state, no saved project. Static native build of this module alone with every stock effect kept (MAIN OS 3a39f682, the image the author flashed on his MKI)."
       }
     },
     {
@@ -273,16 +274,16 @@
       "captureType": "emulator",
       "caption": "Release [REC] and press [STOP]. PROJECT > SYSTEM > PERSONALIZE shows the same setting: after the switch to UNQUANTIZED, the QUANTIZE LIVE REC box is empty. You can still change it here as on the stock OS.",
       "alt": "PERSONAL SETTINGS list with QUANTIZE LIVE REC selected and its checkbox empty.",
-      "credit": "Modwerk contributors; Elektron Octatrack UI",
+      "credit": "Modwerk contributors (capture plan); Zac Kyoti; Elektron Octatrack UI",
       "license": "LicenseRef-OT-UI-Documentation",
       "source": "original",
       "otUi": {
         "page": "PROJECT / SYSTEM / PERSONALIZE",
         "shows": "location",
         "firmware": "1.40C",
-        "moduleVersion": "0.1.0-experimental",
-        "imageSha256": "eb34c12e9c906107fc6a8285ec757eaacf83a39c8dfb42e7bc390421f4189afd",
-        "setup": "Headless ot_emu; MKII panel; 128×64 LCD at integer scale 6; DSP cores running; empty scratch card, its missing-project prompts dismissed with three NO presses; native initialized state, no saved project. Static native build of this module alone with every stock effect kept: the MAIN OS of QLRTEST03 (the stock-free reorder; QLRTEST02, which the MKII ran, gave the same pictures)."
+        "moduleVersion": "0.1.1-experimental",
+        "imageSha256": "3a39f682b372ad1ad962cc3f327893b51db54273ac5a0690918552298a7b9328",
+        "setup": "Headless ot_emu; MKII panel; 128×64 LCD at integer scale 6; DSP cores running; empty scratch card, its missing-project prompts dismissed with three NO presses; native initialized state, no saved project. Static native build of this module alone with every stock effect kept (MAIN OS 3a39f682, the image the author flashed on his MKI)."
       }
     }
   ]

@@ -39,6 +39,19 @@ describe('GitHub approval lookup',()=>{
   github(2)
   expect((await fetchOwnerApproval(repository,commit,owner,'',4,0)).pullRequest).toBe(7)
  })
+ it('retries a GitHub server error or dropped connection instead of failing the release',async()=>{
+  const fetcher=github(0)
+  fetcher.mockImplementationOnce(async()=>new Response('',{status:500})).mockImplementationOnce(async()=>{throw new TypeError('fetch failed')})
+  expect((await fetchOwnerApproval(repository,commit,owner,'',1,0,0)).pullRequest).toBe(7)
+  fetcher.mockImplementation(async()=>new Response('',{status:502}))
+  await expect(fetchOwnerApproval(repository,commit,owner,'',1,0,0)).rejects.toThrow('HTTP 502')
+ })
+ it('does not retry a client error',async()=>{
+  const fetcher=github(0)
+  fetcher.mockImplementation(async()=>new Response('',{status:403}))
+  await expect(fetchOwnerApproval(repository,commit,owner,'',1,0,0)).rejects.toThrow('HTTP 403')
+  expect(fetcher).toHaveBeenCalledTimes(1)
+ })
  it('keeps the previous publication when no owner-merged PR appears',async()=>{
   const fetcher=github(Infinity)
   await expect(fetchOwnerApproval(repository,commit,owner,'',3,0)).rejects.toThrow('keep the previous publication')

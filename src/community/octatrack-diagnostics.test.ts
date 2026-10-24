@@ -228,8 +228,11 @@ describe('private consented Octatrack diagnostics',()=>{
       {...browser,filename:'private.bin'},{...browser,message:'private error'},{...browser,base:'a'.repeat(64)},{...browser,modules:[]},{...browser,phase:'sending'},{...browser,area:'/private/route'},{...browser,kind:'private message'},{...browser,area:undefined},
       {...build,phase:'sending'},{...build,buildKind:'private file name'},{...build,error:'private failure'},{...build,reading:{}},{...build,result:'ok'},{...build,packages:[]},
       {...build,phase:undefined},{...build,buildKind:undefined},{...build,error:undefined},{id:crypto.randomUUID(),event:'sync_failed',phase:'browser'},
-      {id:crypto.randomUUID(),event:'sync_failed',phase:'sending',buildKind:'elekloader'},{id:crypto.randomUUID(),event:'sync_failed',phase:'sending',error:'input'}]
+      {id:crypto.randomUUID(),event:'sync_failed',phase:'sending',buildKind:'elekloader'},{id:crypto.randomUUID(),event:'sync_failed',phase:'sending',error:'input'},
+      {id:crypto.randomUUID(),event:'sync_failed',phase:'sending',error:'unknown',kind:'private message'},{id:crypto.randomUUID(),event:'sync_failed',phase:'sending',error:'device',kind:'TypeError'},
+      {id:crypto.randomUUID(),event:'kept',phase:'ready',kind:'TypeError'}]
     for(const value of cases)expect((await send(value,token)).status).toBe(400)
+    expect((await send({id:crypto.randomUUID(),event:'sync_failed',phase:'sending',error:'unknown',kind:'TypeError'},token)).status).toBe(200)
   })
   it('keeps the 1000 event cap for regular-member collections',async()=>{
     const {db,consent,send,data}=await fixture(), token='c'.repeat(64);await consent(true,token)

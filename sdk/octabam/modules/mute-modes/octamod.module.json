@@ -12,8 +12,9 @@
   },
   "author": {
     "github": "Zac-Kyoti",
+    "name": "Zac Kyoti",
     "credits": [
-      "Zac-Kyoti: mute runtime, PERSONALIZE menu and author byte references. Sam Banks: octabam integration.",
+      "Zac Kyoti: mute runtime, PERSONALIZE menu and author byte references. Sam Banks: octabam integration.",
       "Modwerk contributors: source import, original qualification probes, documentation and SVG thumbnail."
     ]
   },

@@ -1,5 +1,33 @@
 # APPLY SCENE hardware report
 
+## 0.2.0: TRIG + SCENE (23 October 2026)
+
+- **Tester:** npp1993 (the contributor) and the coding agent driving the unit over USB.
+- **Unit:** Octatrack MKII, OS 1.40C, flashed main base `a408c505…`.
+- **Source and package:** commit 2ebc3f72; USB package SHA-256 `5b1db5c76dabfd3023c0d2a81d53fac43610fa579142870190f7ca41c89c2ed1`, 2,282 bytes, installed with the device tool's `try` (accepted at once).
+
+| Check | Result |
+| --- | --- |
+| Agent, on a RAM-booted development twin of main's base (`8dc7692c…`), bank P pattern 16, T3 AMP page, values read back over USB | |
+| TRIG + SCENE A | step 1 got exactly scene A's two locks, the trigs stayed, SCENE A TO TRIGS: pass |
+| TRIG + SCENE A + B, crossfader 76 | the morph model's values; XVOL (no p-lock exists) skipped: pass |
+| The same press again | NOTHING TO LOCK, nothing changed: pass |
+| A trig, or a knob, inside the gesture | scene selected, or scene lock written; no p-lock, no toast: pass |
+| Three trigs + SCENE B; trig released first; scene A muted | all written as expected: pass |
+| TRIG + PLAY (stock) | the step's p-locks cleared: pass |
+| Playback | T3's live AMP lane took each step's p-locks in turn: pass (not listened to) |
+| Removal | the three sites read stock's bytes again: pass |
+| User, by hand, on the flashed base beside seven other modules | |
+| One scene and the blend onto trigs | pass |
+| Playback, listened to | pass |
+| Project save, then a power cycle | the p-locks kept: pass |
+| A trig or knob inside the gesture | stock's meaning, no p-lock: pass |
+| TRIG + PLAY | cleared: pass |
+
+Limits: one unit; MKI not tested; nothing timed; the card build not flashed; the site's review/Keep/Undo flow not used; MIDI mode, trig pages past the first and pattern or Part changes inside the gesture not tested. SCENE + YES did not change in 0.2.0 and was tested on hardware with 0.1.0's package (below).
+
+## 0.1.0 (15 October 2026)
+
 - **Tester:** npp1993 (the contributor), 15 October 2026.
 - **Unit:** Octatrack MKII, OS 1.40C, Modwerk beta base (flashed base acf91e0a…; the first install went to a RAM-booted base e8601162…).
 - **Source and package:** commit ae2a6eed; USB package `apply-scene-ae2a6eed.mwrm`, 758 bytes, SHA-256 `c63e2868e39669a3b22f0077923f9d542a521f73a75f5844fe62646d1382d163`, loaded with `npm run device -- try … [--accept]` and removed with `remove … --accept`.

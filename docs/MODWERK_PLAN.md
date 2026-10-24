@@ -54,7 +54,7 @@ The aim is that the owner reviews new modules, new maintainers and shared infras
   - every automated gate passes: schema, licence, no firmware, reproducible build, resource budgets, required docs, media and evidence fields.
   - The bot merges after a cooling-off period (for example 48 hours), during which the owner or a co-maintainer can block it with a label.
 - **Owner review lane:** new modules, new devices, cores and platform, SDK and tooling, the frozen baseline, and maintainer changes.
-- **Easy updates.** When an author tags a release in their own repository, a workflow opens the version-bump PR in Modwerk, in the style of Renovate. Authors can also run `npm run module:update`.
+- **Easy updates.** When an author tags a release in their own repository, a workflow opens the version-bump PR in Modwerk, in the style of Renovate. A planned `module:update` command would open the same pull request from the author's checkout.
 - **Channels.** Maintainers can publish `beta` versions that users opt into; promotion to stable uses the same lane.
 - **Community moderation by maintainers.**
   - A maintainer links their forum account by listing it in the manifest (the merged PR proves GitHub identity) and confirming the claim from the account page. Both sides have to agree.

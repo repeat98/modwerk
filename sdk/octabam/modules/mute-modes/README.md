@@ -44,7 +44,7 @@ Source identity, actual native-code probes, instruction counts, conservative cor
 
 ## Authorship and licences
 
-Zac-Kyoti: mute runtime, PERSONALIZE menu and author byte references. Sam Banks: octabam integration. Original MIT notices are retained in [LICENSE](LICENSE). See `../../../imports/mute-modes-6f9e5bc.json` for exact repository pins and per-file transformations. Original Modwerk probes use GPL-3.0-or-later; authored source is unchanged. No stock firmware, extracted tables/routines, compiled image or card is distributed here.
+Zac Kyoti: mute runtime, PERSONALIZE menu and author byte references. Sam Banks: octabam integration. Original MIT notices are retained in [LICENSE](LICENSE). See `../../../imports/mute-modes-6f9e5bc.json` for exact repository pins and per-file transformations. Original Modwerk probes use GPL-3.0-or-later; authored source is unchanged. No stock firmware, extracted tables/routines, compiled image or card is distributed here.
 
 ## Screens and audio
 

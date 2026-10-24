@@ -3,8 +3,9 @@
     "version": "1.1.1",
     "date": "2026-10-14",
     "changes": [
-      "First Modwerk release for Digitakt I OS 1.53 and 1.54, on Core 2.1. Each enabled audio step remembers its own pitch increment between visits. Positive values climb, negative values descend, and the pitch wraps to the original note at the chosen range.",
-      "Compatibility flag only: marked as incompatible with digipoly, because both patch the same firmware code (0x4006f7ea on OS 1.53 and 1.54). The site already refused the pair for overlapping firmware changes; it now names the conflict too. Pinned firmware code is unchanged."
+      "First Modwerk release for Digitakt I OS 1.53 and 1.54, on Core 2.1. Each enabled audio step remembers its own pitch increment between visits.",
+      "Positive values climb, negative values descend, and the pitch wraps back to the original note at the chosen range.",
+      "Now listed as incompatible with Digi Poly, which changes the same firmware code. The builder already refused this pair."
     ]
   }
 ]

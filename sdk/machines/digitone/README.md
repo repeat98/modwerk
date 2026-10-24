@@ -28,6 +28,8 @@ Handlers use the C calling convention: arguments on the stack, d0–d1/a0–a1 f
 | `ev_hold` | a track key held on its own; none taken opens the Mod Menu | `int f(brain, event, track)` |
 | Tables | `core_params` (parameter ids 182–184), `core_pages` (pages 27–30), `core_projdata` (blocks saved with the project), `core_menu` (Mod Menu entries) | — |
 
+A site the core does not expose is proposed as an event before the mod, never patched by it ([propose an event](../../../docs/module-guides/README.md#propose-an-event-on-the-digitakt-digitone-or-digitakt-ii)).
+
 ## Budgets
 
 - **Shared mod memory:** 128 KiB of DDR (0x47BE0000–0x47C00000) for the core and every mod's code and data.

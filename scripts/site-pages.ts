@@ -4,6 +4,7 @@ import { siteUrls } from './module-pages.ts'
 import { socialCard } from './social-cards.ts'
 import type { SocialCard } from './social-cards.ts'
 import { escapeHtml, pageMetadataHtml, pageContentHtml } from './page-html.ts'
+import { pageTitle } from '../src/site-metadata.ts'
 import { developerContent, projectsContent } from './seo-content.ts'
 import { PROJECT_TITLE, PROJECT_DESCRIPTION, PROJECT_PREVIEW_IMAGE, PROJECT_PREVIEW_ALT } from '../src/projects/projects.ts'
 
@@ -18,7 +19,7 @@ export type SitePage = (typeof SITE_PAGES)[number]
 export function sitePageHtml(html: string, page: SitePage, imagePath: string, base: string): string {
   const { appUrl, siteName } = siteUrls(html, base)
   const pageUrl = new URL(page.path, appUrl).href, imageUrl = new URL(imagePath, appUrl).href
-  const title = page.name + ' — ' + siteName, alt = page.path === 'projects/' ? PROJECT_PREVIEW_ALT : page.name + ' — ' + siteName
+  const title = pageTitle(page.name, siteName), alt = page.path === 'projects/' ? PROJECT_PREVIEW_ALT : title
   const values: Record<string, string> = {
     description: page.description,
     'og:title': title, 'og:description': page.description, 'og:url': pageUrl, 'og:image': imageUrl, 'og:image:alt': alt,

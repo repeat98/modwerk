@@ -1,14 +1,14 @@
 {
   "schema": 1,
   "module": "poly8",
-  "version": "0.3.0-experimental",
+  "version": "0.3.1-experimental",
   "kind": "coldfire",
   "cycles": {
     "unit": "cycles/event",
     "static": null,
     "measured": null,
     "budget": null,
-    "method": "No chip-cycle bound or worst-case interrupt timing for 0.3.0. evidence/performance-t06.json records historical native instruction averages only; those are not substituted for cycles. The owner waived chip worst-case cycles for this exact source (sdk/poly8-build-approval.json)."
+    "method": "No chip-cycle bound or worst-case interrupt timing for 0.3.1. Instead the module bounds its own time: pm_govern (pool.c) reads the frame timer around each POLY render and sheds voices above 40 % of a frame on average or 26,000 counts (about 197 us) in one frame. evidence/performance-t06.json records historical native instruction averages only. The owner waived chip worst-case cycles for this exact source (sdk/poly8-build-approval.json)."
   },
   "load": {
     "frameUs": 362.8,
@@ -16,7 +16,7 @@
     "moduleLongestUs": null,
     "stockIdlePercent": null,
     "moduleIdlePercent": null,
-    "method": "No physical cfmeter.py stock/module interrupt and idle capture for 0.3.0."
+    "method": "No cfmeter.py capture for 0.3.1. Measured with the frame timer on the owner's MKII, RAM-booted development twin of the beta base without cached module code (23 Oct 2026): POLY render share 8.7/25.3/34.2/40.8 % of the CPU for 1-4 held voices; with eight keys held and the limit active the longest frame's POLY time was 24,781 counts (188 us) and the panel kept answering. 0.3.0 on the same twin reached 100 % CPU at three to four voices and froze the panel for about 33 s."
   },
   "stress": {
     "floodMessagesPerSecond": null,
@@ -25,11 +25,11 @@
     "stuckNotes": null,
     "hangs": null,
     "dropped": null,
-    "droppedExplanation": "No qualified physical wire-rate MIDI/audio flood for 0.3.0. The historical 128-key/load workloads and the 0.2.7 native sequencer release cases are recorded separately and do not qualify this version."
+    "droppedExplanation": "No qualified wire-rate MIDI flood for 0.3.1. Panel stress on the owner's MKII twin: eight held keys, chords over the playing sequencer and 40 rapid presses with a six-key chord; no freeze, no stall record, longest masked span in the key handlers 1,937 counts (15 us)."
   },
   "nativeEvidence": {
     "report": "evidence/performance-t06.json",
-    "method": "Historical 0.2.5/T06 only: twelve 1,000-block before/after native ColdFire instruction comparisons; all eight-channel 16,000-frame audio comparisons identical. These averages do not qualify the 0.2.7 sequencer release pass or 0.3.0. Current functional cases are in evidence/sequence-release-0.2.7.md; they are not timing or load measurements.",
+    "method": "Historical 0.2.5/T06 only: twelve 1,000-block before/after native ColdFire instruction comparisons; all eight-channel 16,000-frame audio comparisons identical. They do not qualify 0.3.1. For 0.3.1, USB recordings of the same pattern from PLAY match 0.3.0 to the recorder floor (residual RMS 5e-8 against a 7.5e-4 signal) on cached and uncached twins.",
     "highestTestedAverageInstructionsPer16SampleBlock": 58606.766,
     "hardwareTiming": null
   }

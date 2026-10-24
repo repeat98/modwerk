@@ -2,6 +2,31 @@
 
 Status: experimental release preparation, **not hardware-qualified**.
 
+## 0.3.1: voice limit and cached render (23 October 2026)
+
+All hardware results are from the owner's MKII (OS 1.40C), RAM-booted development twins of main's beta base built with `build_core.py --dsp-loader --usb-midi --usb-audio 'USB AUDIO OUT TRACKS MAIN CUE' --site-events --table-owners --resident-stock-hooks --resident-on-demand --module-sets --dev`: `4b5c309c…` (module code uncached, as the beta base main ships) and `8ab61614…` (the same with `--cached-modules`). Project `261019`, T1 POLY8 with a 6.9 s sample in FLEX slot 1, AMP HOLD INF, REL 60 (REL INF where noted), the other tracks stock. Packages were installed with `try`; times are DTIM3 counts (132 MHz; a frame is about 47,900).
+
+**The freeze, reproduced on 0.3.0** (uncached twin, stopped): idle 41.7 %, one held voice 55.6 %, two 68.7 %; at four the CPU meter froze at 87.7 % because the UI task no longer ran. Key releases queued behind it, so the voices never ended; the base's log recorded freezes of 90,791 and 91,828 frames (about 33 s) at 87.7-100 % CPU. On the cached twin 0.3.0 cost about 10 points for the first voice and 3-4.7 for each further one (eight voices 74.2 %). A stock FLEX note on T2 cost 8.5 points.
+
+**Frames stop when the interrupt runs too long.** A measuring build with the limit off (`GOV_BUDGET` raised) took 4,681 / 16,829 / 21,880 / 26,576 / 30,146 / 34,231 counts of POLY work in a frame for one to six voices on the uncached twin; at six the base recorded stall 29 ("frames stopped"): audio and sequencer stopped until a power cycle.
+
+**Where the time went**, profiled with the frame timer (per render call, about 1.6 calls a frame): stock's sample fetch about 1,300-1,450 counts per voice, rising to 1,840-3,030 for extension voices whose records sat in uncached pool memory; POLY8's own code and buffers through the uncached alias about 4,000 more per voice. Running only the loops cached did not help; the buffers' uncached reads dominated. The final 0.3.1 runs the whole render from the cached alias, reads POLY8's state through absolute (uncached) addresses, and keeps the render's buffers and the extension records it renders in the data cache only within the interrupt: each touched line is pushed and invalidated (every way of its set, as the base's `modwerk_machine_flush_data`) before the interrupt returns. Measured on the uncached twin: POLY share 8.7 / 25.3 / 34.2 / 40.8 % of the CPU for one to four held voices.
+
+**The voice limit** (`pm_govern`, `pool.c`): average over about 16 frames at most 40 % of a frame (19,200 counts), any one frame at most 26,000 counts (about 197 us), and a shed when the UI has not ticked for 280 frames (about 100 ms). Release tails go first, then the oldest notes; a voice comes back after 256 calm frames with room for it.
+
+| Twin | Test | Result |
+| --- | --- | --- |
+| uncached | eight keys held 8 s, AMP and SRC pages opened meanwhile | pages changed; CPU 70.4 %; cap 3 after one shed; longest frame 23,135 counts |
+| uncached | pattern playing (eight T1 trigs), chords of three and four keys over it | CPU 63-66 %, POLY share 18 %; no stall |
+| uncached | 40 rapid presses plus a six-key chord over the playing pattern | longest frame 24,781; cap 3; masked span in the key handlers at most 1,937 counts (15 us); no stall or freeze record |
+| cached | one to eight keys | 2,495 / 4,127 / 5,353 / 6,565 / 16,110 / 16,394 / 17,118 / 19,982 counts a frame; cap 7 after one shed |
+
+**Audio is unchanged.** The same pattern recorded over USB (track 1's pair, 20-channel capture) from PLAY after silence, aligned on the first onset: two 0.3.0 takes differ by 6.2e-8 RMS; 0.3.1 against 0.3.0 by 5.3e-8 and 4.8e-8 (max 9.5e-7) on the uncached twin and 5.4e-8 (max 4.8e-7) on the cached twin, against a signal of 7.5e-4 RMS: the recorder's floor.
+
+**Host and build checks:** `pool-test.c` with ASan/UBSan (frame peak, average budget, calls within one frame, calm recovery, UI starvation); `verify-addressing.py` in the pinned toolchain (binutils 2.47): every remaining PC-relative reference resolves, and no line of the cached render names POLY8 data without `:l`. The USB package rebuilds stock-free from the reviewed recipe, recaptured for this source.
+
+Not run: the card build or the exact tester base on a unit; Part and project reload, power cycles and Keep/Undo with this version; MKI; MIDI note floods; chip worst-case cycles and complete memory bounds (waived for this exact source).
+
 ## 0.3.0: site-event subscribers (prepared 14 October 2026, not released)
 
 - **Native builds unchanged.** `polyphony.s` assembled without `MODWERK_EVENTS` (`m68k-elf-as -mcpu=54455`) gives the same `.text` bytes and relocations as 0.2.7 (SHA-256 `09e0afb64086bcfbbd2e12dce2ef4417da4ddd710ba422637d7c54bae67e457a`). The pinned shared-machine sources are untouched.

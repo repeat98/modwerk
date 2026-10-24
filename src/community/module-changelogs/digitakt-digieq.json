@@ -3,10 +3,11 @@
     "version": "1.0.2-experimental",
     "date": "2026-10-11",
     "changes": [
-      "Media-only: match the saved SVG thumbnail to the library’s existing signal illustration, including its grid, palette and typography; update the illustration alt text.",
-      "Fix page Clear: hold FUNC and LFO, then press PLAY (CLEAR) to restore every EQ band’s default gain, frequency, Q and type. Preserve selected knob modes, global override and other master pages.",
-      "Align the left EQ box with the pattern header and center its label. Filter DSP and stored EQ layout are unchanged.",
-      "Owner-approved experimental release for this exact source and both D185 images. Native panel regressions and current UI captures pass; hardware, audio, DSP timing, complete runtime memory bounds, persistence, physical reboot and stress remain unverified. Global override preservation is source-reviewed only; page Copy/Paste and Undo Clear are unqualified."
+      "Media only: a new thumbnail in the library’s shared art style.",
+      "Fixes page Clear on the EQ page: hold FUNC and LFO, then press PLAY (CLEAR) to reset every band’s gain, frequency, Q and type to default.",
+      "Clear keeps the selected knob modes, the global setting and the other master pages.",
+      "Aligns the left EQ box with the pattern header and centres its label. These are Modwerk changes; the sound and saved EQ settings are unchanged.",
+      "Known issue: not yet tested on a unit. Page Copy/Paste and undoing a Clear are untested."
     ],
     "sourceCommit": "1107d484c8d7ad84cfff14917b34acdcb83a53e6"
   },
@@ -14,7 +15,7 @@
     "version": "1.0.1-experimental",
     "date": "2026-10-07",
     "changes": [
-      "Documentation-only: expand the EQ controls, kit/global settings and persistence guide, with real page captures. Pinned firmware code is unchanged."
+      "Documentation only: a fuller guide to the EQ controls, kit and global settings and how settings are saved, with real page captures."
     ],
     "sourceCommit": "369b13546c4e7b8fbdbd0376a2c299c77171e569"
   },
@@ -22,7 +23,7 @@
     "version": "1.0.0-experimental",
     "date": "2026-10-06",
     "changes": [
-      "Import the pinned four-band master EQ, reached with FUNC + LFO, with frequency, level, Q/type and kit/global master settings."
+      "First Modwerk release of the upstream Digi EQ: a four-band master EQ on FUNC + LFO, with frequency, level, Q/type and kit or global settings."
     ],
     "sourceCommit": "2f2a09f2c8eb0ebf5695919c7174494b6093705a"
   }

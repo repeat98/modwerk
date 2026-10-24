@@ -63,12 +63,17 @@ to what the base's source hash covers (this folder, the logger, upload, loader, 
 sources; their `.c`, `.h`, `.s`, `.asm`, `.py` and `.json` files) changes the base, even a file only `--dev` twins
 compile (`dev.c`) or a test there (`test_recipe.py`). `octatrack-base-sources.json` lists those inputs and their hashes, and a test
 (`octatrack-base.test.ts`, no firmware) fails when one changed or a file joined those folders. Rebuild and
-commit it with the beta base's options (the committed base is the beta base):
+commit it with the beta base's options (the committed base is the beta base). `--beta` names every one of them
+(`BETA` in `scripts/octatrack-base.mjs`: USB MIDI, the twenty-channel USB Audio default and its variants, site
+events, table owners, the resident engines on demand, the controllers, module sets and cached module code), and
+`--write` takes no other:
 
 ```sh
-npm run octatrack:base -- --stock /private/OCTATRACK_OS1.40C.bin --usb-midi --usb-audio 'USB AUDIO OUT TRACKS MAIN CUE' \
-  --site-events --table-owners --resident-stock-hooks --resident-on-demand --controllers --module-sets --usb-audio-variants --write
+npm run octatrack:base -- --stock /private/OCTATRACK_OS1.40C.bin --beta --write
 ```
+
+Analog BD's trust row hashes its reviewed inputs, `machine-ports.json` among them, so an edit there (any machine's
+entry) also needs this regeneration.
 
 USB Audio is part of the base: its output layout sets the USB descriptors, so each layout is its own base, sent over
 USB like any base update when a module set asks for another layout (`src/engine/elekloader/base-variants.ts`). The
@@ -96,7 +101,10 @@ module packages (`npm run octatrack:module-packages -- --base-only`) so every ba
 checks the remaining published files against their manifest hashes without
 rebuilding or deleting them. Use the full generator for a separately qualified
 module update; existing standalone recipes may name earlier source/tool inputs.
-The cave/table declarations also pin the generator source. Refresh a generator-only pin only after rebuilding
+The cave/table declarations also pin the generator source, and they and the standalone recipes pin the Elekloader
+checkout's files, so a kit update (`vendor/elekloader/kit/kit.json`) needs the same refresh in its own pull request:
+CI has no firmware and cannot see it, and until then the builds refuse with "does not name the exact source inputs"
+(kit 0.7.0, 22 October 2026). Refresh a generator-only pin only after rebuilding
 the affected packages and proving every published byte unchanged; never replace a pin merely to make a check pass.
 
 `--module-sets` enables the candidate whole-set lifecycle (MWCP feature 512,
@@ -242,7 +250,9 @@ of what admission books and its code memory: what says DSP MEMORY FULL first); `
 bases. PROJ > MODWERK is a fifth root category (Octabam's MAINMENU.md: the root window is five rows tall, stock fills
 four; `build_core.py` copies the four stock rows and appends it, with its icon and list): LOAD, MODULE LOAD (each
 installed module's share of each core's frame from its own cycle figure, `~` when that is 7/4 of an emulator claim:
-the meters see only each core's sum), MISSING and SELF TEST. SYSTEM stays stock. A DSP core's load is its idle passes times their calibrated cycles (20.0 on core 0, 14.5 on core 1)
+the meters see only each core's sum), MISSING (each module a project names but no installed module serves, with where
+it is named first: the current bank, then the others, a working Part before a saved copy, `BANK A SAVED PART 2 T5`;
+its slots show NONE's page renamed MISSING, `MISS` in the footer) and SELF TEST. SYSTEM stays stock. A DSP core's load is its idle passes times their calibrated cycles (20.0 on core 0, 14.5 on core 1)
 of a 72,520-cycle frame; recalibrate with `build_core.py --dsp-burn 1000` (core 0) or `-1000` (core 1).
 
 
@@ -465,6 +475,9 @@ NOR when a host asks, with stock's OS UPGRADE routines (the sector erase and
    an OS entry carrying NOR's bootstrap version, stock's bootloader copy byte for
    byte and the running base's own packed `.run` stream: **a base writes only
    itself**, so nothing reaches NOR that did not boot and answer on this unit.
+   Both are compared by SHA-256, never with the running RAM, which stock rewrites
+   once started: the copy with stock 1.40C's digest, the stream with the digest
+   `.boot` takes right after unpacking it (`modwerk_flash_snapshot`).
    Then OS UPGRADE's quiesce, the sectors up to the container's end erased, the
    pages programmed, NOR compared word by word (once more after a second write),
    and the reply. A container NOR already holds writes nothing.

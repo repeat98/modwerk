@@ -1,0 +1,1 @@
+Sidebar tagline: the line under the Modwerk name now reads "Community-built firmware" instead of "Custom Firmware". Contributors write and credit the modules, so the line says that. The page title, search description and flashing notices still say custom firmware.

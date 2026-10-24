@@ -1,0 +1,33 @@
+{
+  "scope": "pure marker preparation and full-table before/after comparisons; no native Apply or Undo",
+  "sourceSha256": {
+    "marker_edit.c": "645b7bdcb68a755f903b6b592e029d96bac868b763845faa5cf4806fedc9e0ea",
+    "marker_edit.h": "cd8c16a7771bf5a6d251b20e3a02fd0887d68cf4f8e5900e0c6a7fdecc0d4f05",
+    "preview_session.h": "f435cc256dca02dc5b575f2ffc53d7d6779b9bf898b02c2ba3a4cc3ed674805f",
+    "preview_guard.h": "abcaff39ef1b9a21cb238f0021344ffb5b812ea1740a354cbc1d1f2ace4ddf36",
+    "pcm_reader.h": "462f495a86f32730b79a56177f99929f685d82729e4646e7b391df475d929821",
+    "planner_job.h": "c4dd3faa8b3320194b54ab4d7bec6541d9e936f544b0e6236efa4fa5518d6547",
+    "planner.h": "4faab6f03e679d0b9389dbf016416afc87fb4d2d354952b22efb81a0381c5c1b",
+    "test_marker_edit.c": "3d809fc0da6f631c9fc82a30a9eaf0403e64e138de8d903db94eeac17703ffc5",
+    "test_marker_edit.py": "0cbf479b6a849641c9a23d044dd7cf70f61c999ca5e093a4a449d59dd80b4ac2"
+  },
+  "compiler": "Apple clang version 17.0.0 (clang-1700.6.4.2)",
+  "flags": [
+    "-std=c99",
+    "-O1",
+    "-g",
+    "-Wall",
+    "-Wextra",
+    "-Werror",
+    "-pedantic",
+    "-fsanitize=address,undefined",
+    "-fno-omit-frame-pointer"
+  ],
+  "exitCode": 0,
+  "stdout": [
+    "PASS: 2144 retained-prefix candidates, 386 full-table stale checks, refusals and boundaries"
+  ],
+  "hardware": "not tested",
+  "audio": "not tested",
+  "nativeSourceAccess": "not implemented"
+}

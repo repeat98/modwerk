@@ -1,0 +1,22 @@
+{
+  "scope": "host cooperative preview, 500 oracle vectors and lifecycle checks",
+  "sourceSha256": {
+    "planner.c": "01c9c25efa363679a591969931dd376a3b694a949dd8b9f89eda4bf77a88cee4",
+    "planner.h": "4faab6f03e679d0b9389dbf016416afc87fb4d2d354952b22efb81a0381c5c1b",
+    "planner_job.c": "767d82cc375677a115e9457af35e26fddd9de66a0dc80aa2af0fe3b5adaf0581",
+    "planner_job.h": "c4dd3faa8b3320194b54ab4d7bec6541d9e936f544b0e6236efa4fa5518d6547",
+    "test_job.c": "664fc274014febe193844ca7885527e7ac58834e8bc004e3ae69493f7e2df0e6",
+    "test_job.py": "ebd5bf9d7b058f88098eb16980923bf48b8e9a104f4d9d9c12aea7950beb14f8"
+  },
+  "compiler": "Apple clang version 17.0.0 (clang-1700.6.4.2)",
+  "sanitizers": [
+    "address",
+    "undefined"
+  ],
+  "exitCode": 0,
+  "stdout": [
+    "PASS: 500 oracle vectors and cooperative lifecycle checks"
+  ],
+  "hardware": "not tested",
+  "audio": "not tested"
+}

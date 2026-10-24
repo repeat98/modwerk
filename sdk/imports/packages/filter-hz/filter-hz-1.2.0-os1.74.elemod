@@ -1,0 +1,1206 @@
+{
+ "elemod": 2,
+ "id": "filter-hz",
+ "version": "1.2.0",
+ "title": "Filter Hz",
+ "description": "The FILTER page's FRQ popup shows the cutoff in hertz, from 13.8Hz to 21.1kHz, instead of 0 to 127.",
+ "category": "system",
+ "author": "Iced-Cream",
+ "license": "GPL-2.0-only",
+ "target": {
+  "device": "analog-rytm-mk2",
+  "product": "Analog Rytm MKII",
+  "os": "1.74",
+  "syx_sha256": "cb0f99d620edde994fb860c0e79cc2464e427d06882828cfdfb00fc53700e123",
+  "section3_sha256": "34cd0c4da8e4b810d1b25284475a99ea53821e2ab7d30a978bf15dc578251f3b",
+  "section3_len": 3005432
+ },
+ "sections": {
+  ".run": {
+   "align": 4,
+   "len": 256,
+   "parts": [
+    [
+     "hex",
+     "702fb084670e41ea00142f4300204ef9400a86bc22432002e0806a027000727fb0816f02200180fc000c2200484173c1d28141fa008473f01800c2fc055f71c0740f94807001e5a8e288d280e4a941fa0080b290650641e8000c60f6202800042400e28ad2824c40100175a8000882fc006471c16130484173c182fc000a71c16124484171c1611e4a280009670412fc006b12fc004812fc007a42114cd70c1c4fef00144e7506800000003012c05382660412fc002e4e758000879c8fad9838a145aadcb505bfc9cb30d745e412f1a2000027100000000a02000000000186a00000006400000000000f4240000003e801010000ffffffff0000271002010000"
+    ]
+   ]
+  }
+ },
+ "symbols": {
+  "TRIG_BIT_TRIG": [
+   "abs",
+   1
+  ],
+  "TRIG_BIT_LOCK": [
+   "abs",
+   4
+  ],
+  "TRIG_BIT_ACCENT": [
+   "abs",
+   8
+  ],
+  "TRIG_BIT_SWING": [
+   "abs",
+   16
+  ],
+  "MICROTIMING_MAX": [
+   "abs",
+   23
+  ],
+  "MICROTIMING_UNIT_TICKS": [
+   "abs",
+   25
+  ],
+  "TRIG_BIT_SLIDE": [
+   "abs",
+   32
+  ],
+  "FX_RETURN_PRE_OFFSET": [
+   "abs",
+   48
+  ],
+  "KEY_LEFT": [
+   "abs",
+   64
+  ],
+  "OUTPUT_FRAME_STRIDE": [
+   "abs",
+   64
+  ],
+  "KEY_RIGHT": [
+   "abs",
+   65
+  ],
+  "KEY_FUNC": [
+   "abs",
+   128
+  ],
+  "KEY_TRK": [
+   "abs",
+   134
+  ],
+  "PARAM_ID_BOOL_OP": [
+   "abs",
+   467
+  ],
+  "STEP_TICKS": [
+   "abs",
+   600
+  ],
+  "fpga_status_bit5": [
+   "abs",
+   1073743722
+  ],
+  "param_tables_build": [
+   "abs",
+   1073769688
+  ],
+  "param_container_index": [
+   "abs",
+   1073770152
+  ],
+  "param_is_machine": [
+   "abs",
+   1073770264
+  ],
+  "sound_param_id_for_index": [
+   "abs",
+   1073770536
+  ],
+  "machine_available": [
+   "abs",
+   1073770726
+  ],
+  "machine_home_track": [
+   "abs",
+   1073770774
+  ],
+  "param_machine": [
+   "abs",
+   1073770826
+  ],
+  "track_physical_voice_get": [
+   "abs",
+   1073770862
+  ],
+  "sound_load": [
+   "abs",
+   1073775094
+  ],
+  "sound_save": [
+   "abs",
+   1073775674
+  ],
+  "kit_load_machine_fallback": [
+   "abs",
+   1073776392
+  ],
+  "pattern_track_load": [
+   "abs",
+   1073777454
+  ],
+  "pattern_track_load_euclid_resume": [
+   "abs",
+   1073777866
+  ],
+  "pattern_track_save": [
+   "abs",
+   1073778120
+  ],
+  "microtiming_pack_site": [
+   "abs",
+   1073778320
+  ],
+  "pattern_track_save_euclid_resume": [
+   "abs",
+   1073778536
+  ],
+  "sound_init_defaults": [
+   "abs",
+   1073816246
+  ],
+  "kit_param_changed": [
+   "abs",
+   1073952092
+  ],
+  "ui_set_title": [
+   "abs",
+   1073962984
+  ],
+  "trig_keys_held": [
+   "abs",
+   1073964998
+  ],
+  "page_view_activate": [
+   "abs",
+   1073969190
+  ],
+  "param_apply_delta": [
+   "abs",
+   1073969318
+  ],
+  "param_apply_delta_resume": [
+   "abs",
+   1073969326
+  ],
+  "param_apply_delta_body": [
+   "abs",
+   1073969334
+  ],
+  "param_apply_delta_track": [
+   "abs",
+   1073969340
+  ],
+  "param_apply_delta_dispatch": [
+   "abs",
+   1073969346
+  ],
+  "param_apply_delta_dispatch_resume": [
+   "abs",
+   1073969352
+  ],
+  "page_param_set": [
+   "abs",
+   1073969402
+  ],
+  "knob_draw": [
+   "abs",
+   1073969750
+  ],
+  "knob_draw_alt": [
+   "abs",
+   1073970214
+  ],
+  "page_get_value": [
+   "abs",
+   1073972322
+  ],
+  "page_get_value_body": [
+   "abs",
+   1073972330
+  ],
+  "filter_env_graph_draw": [
+   "abs",
+   1073973680
+  ],
+  "filter_graph_draw": [
+   "abs",
+   1073974710
+  ],
+  "page_knob_turn": [
+   "abs",
+   1073979196
+  ],
+  "param_edit_handler": [
+   "abs",
+   1073979196
+  ],
+  "param_edit_resume": [
+   "abs",
+   1073979464
+  ],
+  "page_cycle_after_invalidate": [
+   "abs",
+   1073982364
+  ],
+  "sound_apply_step_locks": [
+   "abs",
+   1073985706
+  ],
+  "pattern_grid_view_keys": [
+   "abs",
+   1073990804
+  ],
+  "microtiming_menu_draw": [
+   "abs",
+   1074024180
+  ],
+  "microtiming_clamp_lo": [
+   "abs",
+   1074024758
+  ],
+  "microtiming_clamp_hi": [
+   "abs",
+   1074024774
+  ],
+  "microtiming_change": [
+   "abs",
+   1074025010
+  ],
+  "microtiming_menu_keys": [
+   "abs",
+   1074025256
+  ],
+  "dest_list_view_ctor": [
+   "abs",
+   1074048288
+  ],
+  "dest_list_build_resume": [
+   "abs",
+   1074048716
+  ],
+  "bitmap_ctor": [
+   "abs",
+   1074199086
+  ],
+  "fill_rect": [
+   "abs",
+   1074202406
+  ],
+  "text_draw": [
+   "abs",
+   1074206028
+  ],
+  "bitmap_draw": [
+   "abs",
+   1074206432
+  ],
+  "text_font": [
+   "abs",
+   1074207720
+  ],
+  "popup_ctor": [
+   "abs",
+   1074227028
+  ],
+  "view_show_popup": [
+   "abs",
+   1074238562
+  ],
+  "control_frame_send": [
+   "abs",
+   1074242980
+  ],
+  "control_frame_dma_start": [
+   "abs",
+   1074243122
+  ],
+  "is_key_held": [
+   "abs",
+   1074273320
+  ],
+  "mem_new": [
+   "abs",
+   1074276928
+  ],
+  "exp_convert": [
+   "abs",
+   1074366952
+  ],
+  "memcpy": [
+   "abs",
+   1074367424
+  ],
+  "trig_fire": [
+   "abs",
+   1074375208
+  ],
+  "trig_fire_euclid_flag_load": [
+   "abs",
+   1074375478
+  ],
+  "trig_fire_euclid_flag_resume": [
+   "abs",
+   1074375486
+  ],
+  "trig_fire_grid_flags_load": [
+   "abs",
+   1074375646
+  ],
+  "trig_fire_flags_join": [
+   "abs",
+   1074375672
+  ],
+  "microtiming_scale_shift": [
+   "abs",
+   1074376020
+  ],
+  "microtiming_unit_mul": [
+   "abs",
+   1074376042
+  ],
+  "trig_fire_vel_resume": [
+   "abs",
+   1074376722
+  ],
+  "trig_fire_cfg_resume": [
+   "abs",
+   1074376820
+  ],
+  "getFadeStep": [
+   "abs",
+   1074390508
+  ],
+  "lfo_block": [
+   "abs",
+   1074391036
+  ],
+  "lfo_mod_block": [
+   "abs",
+   1074391036
+  ],
+  "kit_param_set": [
+   "abs",
+   1074422926
+  ],
+  "kit_apply": [
+   "abs",
+   1074423204
+  ],
+  "kit_track_sound": [
+   "abs",
+   1074423754
+  ],
+  "param_knob_draw": [
+   "abs",
+   1074431464
+  ],
+  "param_knob_draw_body": [
+   "abs",
+   1074431472
+  ],
+  "param_value_text": [
+   "abs",
+   1074431564
+  ],
+  "param_value_text_resume": [
+   "abs",
+   1074431572
+  ],
+  "param_value_text_body": [
+   "abs",
+   1074431580
+  ],
+  "param_value_text_args": [
+   "abs",
+   1074431588
+  ],
+  "param_value_text_invoke": [
+   "abs",
+   1074431668
+  ],
+  "param_value_text_invoke_resume": [
+   "abs",
+   1074431676
+  ],
+  "param_get_boolop_arm": [
+   "abs",
+   1074432184
+  ],
+  "param_set_read": [
+   "abs",
+   1074433638
+  ],
+  "param_set_read_body": [
+   "abs",
+   1074433646
+  ],
+  "param_minmax": [
+   "abs",
+   1074433952
+  ],
+  "param_short_name": [
+   "abs",
+   1074434048
+  ],
+  "param_short_name_body": [
+   "abs",
+   1074434058
+  ],
+  "param_set_value": [
+   "abs",
+   1074434156
+  ],
+  "param_set_value_body": [
+   "abs",
+   1074434164
+  ],
+  "param_set_apply_delta": [
+   "abs",
+   1074435656
+  ],
+  "param_set_boolop_arm": [
+   "abs",
+   1074437398
+  ],
+  "sound_set_write": [
+   "abs",
+   1074438154
+  ],
+  "dest_list_build": [
+   "abs",
+   1074438784
+  ],
+  "pattern_track": [
+   "abs",
+   1074442910
+  ],
+  "lock_pool_set": [
+   "abs",
+   1074448092
+  ],
+  "track_selection": [
+   "abs",
+   1074455698
+  ],
+  "current_track_pattern": [
+   "abs",
+   1074458850
+  ],
+  "kit_reload": [
+   "abs",
+   1074458942
+  ],
+  "param_target_for_track": [
+   "abs",
+   1074459930
+  ],
+  "track_index_of": [
+   "abs",
+   1074489662
+  ],
+  "sound_randomize_values": [
+   "abs",
+   1074513266
+  ],
+  "sound_randomize": [
+   "abs",
+   1074513502
+  ],
+  "env_reset_get": [
+   "abs",
+   1074515744
+  ],
+  "env_reset_set": [
+   "abs",
+   1074515792
+  ],
+  "machine_list_build": [
+   "abs",
+   1074523086
+  ],
+  "trig_flag_get": [
+   "abs",
+   1074526840
+  ],
+  "vel_get_stock": [
+   "abs",
+   1074527628
+  ],
+  "pattern_step_has_trig": [
+   "abs",
+   1074528126
+  ],
+  "Pattern_getMicrotiming": [
+   "abs",
+   1074529096
+  ],
+  "pattern_length": [
+   "abs",
+   1074529572
+  ],
+  "track_lock_set": [
+   "abs",
+   1074529676
+  ],
+  "Pattern_setMicrotiming": [
+   "abs",
+   1074530532
+  ],
+  "euclid_bool_op_get": [
+   "abs",
+   1074532892
+  ],
+  "euclid_bool_op_set": [
+   "abs",
+   1074532940
+  ],
+  "euclid_step_map_get": [
+   "abs",
+   1074533038
+  ],
+  "euclid_generate": [
+   "abs",
+   1074534916
+  ],
+  "trig_flags_set": [
+   "abs",
+   1074537602
+  ],
+  "trig_place": [
+   "abs",
+   1074538016
+  ],
+  "trig_place_lock": [
+   "abs",
+   1074538136
+  ],
+  "euclid_bake": [
+   "abs",
+   1074543738
+  ],
+  "euclid_bake_body": [
+   "abs",
+   1074543746
+  ],
+  "top_bar_draw": [
+   "abs",
+   1074561766
+  ],
+  "view_lfo_page_count": [
+   "abs",
+   1074573462
+  ],
+  "euclid_toggle_handler": [
+   "abs",
+   1074601084
+  ],
+  "sound_page_draw": [
+   "abs",
+   1074605702
+  ],
+  "kit_reload_key": [
+   "abs",
+   1074648498
+  ],
+  "env_reset_menu_change": [
+   "abs",
+   1074722982
+  ],
+  "track_menu_ctor": [
+   "abs",
+   1074764708
+  ],
+  "track_menu_ctor_tail": [
+   "abs",
+   1074765570
+  ],
+  "fx_prepost_format": [
+   "abs",
+   1074773642
+  ],
+  "filter_type_knob_draw": [
+   "abs",
+   1074786578
+  ],
+  "filter_type_text": [
+   "abs",
+   1074786830
+  ],
+  "euclid_bool_op_format": [
+   "abs",
+   1074787398
+  ],
+  "boolop_icon_draw": [
+   "abs",
+   1074787550
+  ],
+  "param_info": [
+   "abs",
+   1074787778
+  ],
+  "param_info_resume": [
+   "abs",
+   1074787788
+  ],
+  "page_info": [
+   "abs",
+   1074787808
+  ],
+  "page_info_resume": [
+   "abs",
+   1074787814
+  ],
+  "synth_page_knob_table": [
+   "abs",
+   1074787846
+  ],
+  "lfo_dst_knob_draw": [
+   "abs",
+   1074788968
+  ],
+  "audio_dsp_region": [
+   "abs",
+   1074790508
+  ],
+  "static_ctors_run": [
+   "abs",
+   1074792174
+  ],
+  "control_frame_cal_init": [
+   "abs",
+   1074825222
+  ],
+  "balance_linear": [
+   "abs",
+   1074829436
+  ],
+  "balance_clamped": [
+   "abs",
+   1074829492
+  ],
+  "amp_env_commands": [
+   "abs",
+   1074829632
+  ],
+  "amp_env_attack_cmd": [
+   "abs",
+   1074830192
+  ],
+  "amp_env_attack_resume": [
+   "abs",
+   1074830198
+  ],
+  "filter_cal_build": [
+   "abs",
+   1074843636
+  ],
+  "filter_env_commands": [
+   "abs",
+   1074843900
+  ],
+  "audio_dsp_block_example": [
+   "abs",
+   1074845772
+  ],
+  "master_controls_write": [
+   "abs",
+   1074848268
+  ],
+  "fx_generate": [
+   "abs",
+   1074849468
+  ],
+  "fx_return_gain_route_site": [
+   "abs",
+   1074850060
+  ],
+  "voice_output_mix": [
+   "abs",
+   1074850460
+  ],
+  "fx_return_mix_pre": [
+   "abs",
+   1074850706
+  ],
+  "fx_return_mix_post": [
+   "abs",
+   1074850922
+  ],
+  "machine_func_gen": [
+   "abs",
+   1074873032
+  ],
+  "machine_hh_test": [
+   "abs",
+   1074873548
+  ],
+  "osc_trim_band": [
+   "abs",
+   1074892796
+  ],
+  "osc_cal_set": [
+   "abs",
+   1074893020
+  ],
+  "osc_trim_write": [
+   "abs",
+   1074894836
+  ],
+  "chip_step_offset": [
+   "abs",
+   1074896832
+  ],
+  "machine_bt_improved": [
+   "abs",
+   1074901732
+  ],
+  "noise_generate": [
+   "abs",
+   1074904250
+  ],
+  "clap_noise": [
+   "abs",
+   1074904540
+  ],
+  "machine_sd_test": [
+   "abs",
+   1074909940
+  ],
+  "machine_rs_test": [
+   "abs",
+   1074910328
+  ],
+  "machine_cy_test": [
+   "abs",
+   1074910752
+  ],
+  "machine_cb_test": [
+   "abs",
+   1074911516
+  ],
+  "machine_bd_test": [
+   "abs",
+   1074912094
+  ],
+  "machine_mt_test": [
+   "abs",
+   1074912892
+  ],
+  "machine_bt_test": [
+   "abs",
+   1074913132
+  ],
+  "voice_trig_reset": [
+   "abs",
+   1074914498
+  ],
+  "segment_rate": [
+   "abs",
+   1074915354
+  ],
+  "segment_length": [
+   "abs",
+   1074915438
+  ],
+  "pitch_tune_unipolar": [
+   "abs",
+   1074915456
+  ],
+  "pitch_tune_bipolar": [
+   "abs",
+   1074915504
+  ],
+  "pitch_to_cv": [
+   "abs",
+   1074915546
+  ],
+  "machine_lt_test": [
+   "abs",
+   1074915588
+  ],
+  "click_level": [
+   "abs",
+   1074915908
+  ],
+  "hat_bank_write": [
+   "abs",
+   1074915926
+  ],
+  "control_frame_defaults": [
+   "abs",
+   1074916194
+  ],
+  "tempo_get": [
+   "abs",
+   1074918236
+  ],
+  "kit_push": [
+   "abs",
+   1074919690
+  ],
+  "lfo_block_call_site": [
+   "abs",
+   1074925594
+  ],
+  "lfo_call_resume": [
+   "abs",
+   1074925600
+  ],
+  "machine_dispatch": [
+   "abs",
+   1074925914
+  ],
+  "audio_rx_filled": [
+   "abs",
+   1074926538
+  ],
+  "audio_rx_filled_resume": [
+   "abs",
+   1074926544
+  ],
+  "adc_average": [
+   "abs",
+   1075027508
+  ],
+  "adc_pedal_update": [
+   "abs",
+   1075049364
+  ],
+  "param_text_format": [
+   "abs",
+   1075196960
+  ],
+  "shared_ptr_release": [
+   "abs",
+   1075252184
+  ],
+  "project_singleton": [
+   "abs",
+   1075313162
+  ],
+  "view_list_open": [
+   "abs",
+   1075321608
+  ],
+  "kit_mark": [
+   "abs",
+   1075407750
+  ],
+  "kit_working_data": [
+   "abs",
+   1075407792
+  ],
+  "bitmap_set_make": [
+   "abs",
+   1075543924
+  ],
+  "std_string_dtor": [
+   "abs",
+   1075557696
+  ],
+  "std_string_from_cstr": [
+   "abs",
+   1075564528
+  ],
+  "voice_channel_map": [
+   "abs",
+   1075572032
+  ],
+  "machine_names": [
+   "abs",
+   1075573332
+  ],
+  "track_default_machine": [
+   "abs",
+   1075573756
+  ],
+  "machine_voice_mask": [
+   "abs",
+   1075573804
+  ],
+  "track_physical_voice": [
+   "abs",
+   1075573912
+  ],
+  "param_modflags": [
+   "abs",
+   1075575752
+  ],
+  "param_record_base": [
+   "abs",
+   1075575752
+  ],
+  "param_table_rom": [
+   "abs",
+   1075575792
+  ],
+  "machine_to_storage_fx": [
+   "abs",
+   1075600204
+  ],
+  "machine_to_storage_voice": [
+   "abs",
+   1075600508
+  ],
+  "sound_slot_map": [
+   "abs",
+   1075600508
+  ],
+  "sound_config_changed_info_vt": [
+   "abs",
+   1075624076
+  ],
+  "pattern_grid_view_vtable": [
+   "abs",
+   1075628332
+  ],
+  "microtiming_label_table": [
+   "abs",
+   1075632924
+  ],
+  "parameter_set_vtables": [
+   "abs",
+   1075695016
+  ],
+  "SOUND_PARAM_SET_VT": [
+   "abs",
+   1075695140
+  ],
+  "TRIG_PARAM_SET_VT": [
+   "abs",
+   1075695388
+  ],
+  "comp_view_knob_draw": [
+   "abs",
+   1075713260
+  ],
+  "params_seq_note_view_vtable": [
+   "abs",
+   1075720520
+  ],
+  "track_selection_view_vtable": [
+   "abs",
+   1075722656
+  ],
+  "env_reset_labels": [
+   "abs",
+   1075745148
+  ],
+  "filter_type_labels": [
+   "abs",
+   1075758740
+  ],
+  "euclid_bool_op_labels": [
+   "abs",
+   1075758768
+  ],
+  "amp_env_rate_tables": [
+   "abs",
+   1075766812
+  ],
+  "voice_switch_bits_rs": [
+   "abs",
+   1075798500
+  ],
+  "voice_switch_bits_sd": [
+   "abs",
+   1075798528
+  ],
+  "voice_switch_bits_bd": [
+   "abs",
+   1075798556
+  ],
+  "str_fmt_s": [
+   "abs",
+   1076106196
+  ],
+  "str_width_xxx": [
+   "abs",
+   1076106200
+  ],
+  "key_scan_ids": [
+   "abs",
+   1076386256
+  ],
+  "tempo_word": [
+   "abs",
+   1076396028
+  ],
+  "param_page_table": [
+   "abs",
+   1076397980
+  ],
+  "machine_engine_table": [
+   "abs",
+   1076430556
+  ],
+  "voice_owner_track": [
+   "abs",
+   1076433208
+  ],
+  "filter_type_icon_pixels": [
+   "abs",
+   1076569344
+  ],
+  "text_ctx": [
+   "abs",
+   1098791068
+  ],
+  "lfo_state_base": [
+   "abs",
+   1100227924
+  ],
+  "PARAM_INFO_BASE": [
+   "abs",
+   1100630152
+  ],
+  "filter_cal_coeffs": [
+   "abs",
+   1100783380
+  ],
+  "fx_return_gain_pre_current": [
+   "abs",
+   1100783648
+  ],
+  "filter_type_icon_set": [
+   "abs",
+   1100946232
+  ],
+  "fx_mix_stage_buffer": [
+   "abs",
+   1118596644
+  ],
+  "fx_mix_ring": [
+   "abs",
+   1118596912
+  ],
+  "fx_return_gain_pre": [
+   "abs",
+   1123764916
+  ],
+  "fx_return_gain_post": [
+   "abs",
+   1123764924
+  ],
+  "machine_pitch_cache": [
+   "abs",
+   1123773048
+  ],
+  "output_ring_base": [
+   "abs",
+   2147483648
+  ],
+  "voice_control_block": [
+   "abs",
+   2147509184
+  ],
+  "voice_digital_buf": [
+   "abs",
+   2147511288
+  ],
+  "voice_noise_gain": [
+   "abs",
+   2147512320
+  ],
+  "voice_noise_buf": [
+   "abs",
+   2147512384
+  ],
+  "fx_reverb_out": [
+   "abs",
+   2147515204
+  ],
+  "fx_delay_out": [
+   "abs",
+   2147515460
+  ],
+  "engine_sound_settings": [
+   "abs",
+   2147543552
+  ],
+  "lfo_track_array": [
+   "abs",
+   2147547048
+  ],
+  "fx_return_level_delay": [
+   "abs",
+   2147548088
+  ],
+  "fx_return_route_flag_delay": [
+   "abs",
+   2147548092
+  ],
+  "fx_mix_ring_slot": [
+   "abs",
+   2147548916
+  ],
+  "voice_machine_state": [
+   "abs",
+   2147548920
+  ],
+  "PARAM_ID_FRQ": [
+   "abs",
+   47
+  ],
+  "semitones": [
+   ".run",
+   184
+  ],
+  "ranges": [
+   ".run",
+   208
+  ],
+  "RANGE": [
+   "abs",
+   12
+  ],
+  "digit": [
+   ".run",
+   166
+  ],
+  "filter_hz_gate": [
+   ".run",
+   0
+  ]
+ },
+ "exports": [
+  "filter_hz_gate"
+ ],
+ "imports": [],
+ "weak": [],
+ "relocs": [],
+ "sites": [
+  {
+   "addr": "0x400a86b4",
+   "len": 8,
+   "stock_sha256": "f08a5394f726a8f4773d5695b9807dc82b76b38d0f0379253281fba25625729c",
+   "new": "4ef9000000004e71",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:filter_hz_gate",
+     0
+    ]
+   ]
+  }
+ ],
+ "collections": {},
+ "contribute": [],
+ "copied": [],
+ "resources": {
+  "regions": [],
+  "names": [
+   "ui:FILTER page FRQ value text"
+  ],
+  "core": "0.1"
+ },
+ "requires": [
+  "core"
+ ],
+ "conflicts": [],
+ "signature": null
+}

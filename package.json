@@ -10,6 +10,7 @@
   "scripts": {
     "dev": "vite --host 127.0.0.1",
     "build": "node scripts/check.mjs --build",
+    "changelog": "node scripts/changelog.mjs",
     "preview": "vite preview --host 127.0.0.1",
     "firmware:download": "node scripts/firmware-download.mjs",
     "firmware:api": "node scripts/firmware-api.mjs",

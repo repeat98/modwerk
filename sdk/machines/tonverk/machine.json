@@ -3,15 +3,37 @@
   "id": "tonverk",
   "order": 70,
   "name": "Tonverk",
-  "status": "open",
-  "summary": "Multitimbral sampler. No public firmware research yet.",
+  "status": "research",
+  "summary": "Multitimbral sampler. OS 1.4.1 update container documented: SWUpdate .swu, encrypted payloads, signed boot chain, strong stock recovery. No mod route yet.",
   "steps": {
-    "format": "open",
+    "format": "started",
     "rebuild": "open",
     "boot": "open",
     "core": "open",
     "mods": "open"
   },
+  "research": [
+    {
+      "label": "Elektron Tonverk release notes",
+      "url": "https://www.elektron.se/release-notes/tonverk-os-release-notes",
+      "note": "OS 1.0.0-1.4.1 history; .swu updates from the SD card root through USB disk mode and SETTINGS > SYSTEM > OS UPGRADE; downgrading unsupported."
+    },
+    {
+      "label": "Elektron Tonverk downloads",
+      "url": "https://www.elektron.se/support-downloads/tonverk",
+      "note": "The OS 1.4.1 zip and manuals this research inspected; identities are recorded in docs/TONVERK_OS_RESEARCH.md."
+    },
+    {
+      "label": "SWUpdate",
+      "url": "https://github.com/sbabic/swupdate",
+      "note": "The .swu container convention the Tonverk update follows: cpio archive, sw-description manifest, preinst/postinst hooks, signatures and encrypted artifacts."
+    },
+    {
+      "label": "U-Boot FIT documentation",
+      "url": "https://docs.u-boot.org/en/latest/usage/fit/index.html",
+      "note": "The FIT image and signed boot-script format the readable Tonverk bootscript uses (mkimage 2025.04, sha256,rsa3072)."
+    }
+  ],
   "art": {
     "body": "wide",
     "encoders": 8,

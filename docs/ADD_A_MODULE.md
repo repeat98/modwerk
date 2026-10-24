@@ -51,6 +51,13 @@ separately; failures or unavailable paths remain explicit qualification gaps.
 
 ## The fast loop
 
+Keep unqualified Octatrack work under `sdk/drafts/<id>/`, with its draft
+release notes in `CHANGELOG.json`. Every folder in `sdk/octabam/modules/` is
+validated for publication even when absent from `sdk/catalog.json`; placing
+a draft there blocks catalogue generation for everyone. Move it into that
+directory and move its notes into `src/community/module-changelogs/` only
+when the publication requirements are met.
+
 Run this after every edit. It takes about 15 seconds, never reads firmware and never runs module code.
 
 ```sh
@@ -80,13 +87,25 @@ Every module fix must include its changelog update in the same PR; do not defer 
 {
   "version": "0.1.5-experimental",
   "date": "2026-10-08",
-  "changes": ["Describe the user-visible fix or feature and any compatibility or saved-project limits."]
+  "changes": ["Fixes the step lights staying lit after STOP (#123)."]
 }
 ```
 
-Use the exact catalog/manifest version and the source-update date (`YYYY-MM-DD`). An optional `sourceCommit` is a full 40-character repository commit SHA; omit it until the referenced commit exists. Explain the actual fix or mitigation, not just “updated module”, and link the issue when available. Mention changed controls, migration requirements and remaining limitations when relevant. Never imply hardware or audio testing that did not happen. Imported releases must distinguish upstream implementation changes from Modwerk packaging or documentation changes.
+Use the exact catalog/manifest version and the source-update date (`YYYY-MM-DD`). An optional `sourceCommit` is a full 40-character repository commit SHA; omit it until the referenced commit exists. Write for the people who play the module: they read these notes on the module page and in the update email. Use at most five lines, each one plain sentence of at most 200 characters about what changed for them: a new feature, a fixed bug with its issue number, a changed control, something to redo after updating. “Updated module” is not enough. Leave out how it was done, measurements, addresses, internal names, test evidence and owner waivers; they belong in the pull request and the verification record. When players need to know a limit, add one line that starts with `Known issue:` in plain words, for example `Known issue: not yet tested on the MKI.` Never imply hardware or audio testing that did not happen. For an imported release, say in a few words whether upstream changed the module or Modwerk only repackaged it.
 
-`npm run check -- --base origin/main` and `npm run build` reject missing current-version notes, duplicate/invalid versions, malformed dates and unknown module IDs. `node scripts/module-changelogs.mjs` runs just this inexpensive metadata check. Regenerate catalogs after a manifest version changes, then validate before committing. Notes live outside module source folders so adding them does not invalidate retained qualification records or trigger native compilation.
+```json
+{
+  "version": "0.3.1-experimental",
+  "date": "2026-10-23",
+  "changes": [
+    "Fixes the Octatrack freezing while POLY8 plays (#646). When the CPU runs short, POLY8 now drops voices: release tails first, then the oldest notes.",
+    "Uses much less CPU on the beta base. The sound is unchanged.",
+    "Known issue: not yet tested on the MKI or after reloading a project."
+  ]
+}
+```
+
+`npm run check -- --base origin/main` and `npm run build` reject missing current-version notes, duplicate/invalid versions, malformed dates, unknown module IDs and entries over five lines or with a line over 200 characters. `node scripts/module-changelogs.mjs` runs just this inexpensive metadata check. Regenerate catalogs after a manifest version changes, then validate before committing. Notes live outside module source folders so adding them does not invalidate retained qualification records or trigger native compilation.
 
 The published release inventory includes these exact version-matched notes. Published module versions automatically notify their followers, including eligible prior downloaders. Update email is enabled by default and uses the existing daily module digest; members can unfollow a module or opt out of update/activity email. No per-release announcement opt-in is required, and legacy `announce` flags do not suppress notifications. Equal-version media or documentation edits do not replay an update, and superseded inventories never announce an older release. Before pushing a module update, the coding agent must tell the maintainer in chat that successful publication will notify followers, including by email according to their preferences; a push alone does not send mail. Update emails include the saved change list and limitations in HTML and plain text, with a link to the Changelog tab.
 
@@ -252,7 +271,7 @@ Firmware for these machines is built by elekloader's builder, vendored unchanged
 4. Build it in `npm run dev` with your own stock OS file, flash it and test it. Then set `evidence.tier` to what you actually did ([tiers](SDK.md#evidence-tiers)).
 
 **Writing a new mod:** `npm run module:new -- my-mod --machine digitakt --author <github-login>` creates the folder (`--machine digitone` for Digitone).
-- Write `src/`, and subscribe to core events in `build.json` ([events and budgets](../sdk/machines/digitakt/README.md)).
+- Write `src/`, and subscribe to core events in `build.json` ([events and budgets](../sdk/machines/digitakt/README.md)). A stock site the core does not expose is proposed as an event before the mod ([propose an event](module-guides/README.md#propose-an-event-on-the-digitakt-digitone-or-digitakt-ii)); a mod never patches it.
 - Modwerk compiles the source in its pinned toolchain ([source builds](ELEMOD_SOURCE_BUILDS.md)).
 - The browser builds only from the `.elemod` files in elekloader's catalog, so to appear in the configurator a new mod needs an `.elemod` release pinned in its own record, `sdk/imports/elekloader-<id>-<date>.json`, and downloaded with `npm run elekloader:update -- --overlay <that record>`. Never edit `vendor/elekloader/catalog/catalog.json`: it is generated from the upstream catalog and the records.
 - `npm run module:doctor -- <id>` checks the module's manifest, category guide, catalog pin and module rules.

@@ -50,7 +50,6 @@ export const LINK_DEVICES: LinkDevice[] = [
   {
     key: 'analog-rytm-mk2', machine: 'analog-rytm-mkii', name: 'Analog Rytm MKII', sysexId: 0x0c, mainLoad: 0x40000400,
     releases: [
-      { version: '1.73', syxSha256: '8ad671087ec30433d5407c7380d2396e0915ab931c5d3dd18a78bf284d3d1e52', mainSha256: '28d9ef40c895e03f17dfce096543109adaf708947392db72818fc2a412d685d6', mainLength: 3005432 },
       { version: '1.74', syxSha256: 'cb0f99d620edde994fb860c0e79cc2464e427d06882828cfdfb00fc53700e123', mainSha256: '34cd0c4da8e4b810d1b25284475a99ea53821e2ab7d30a978bf15dc578251f3b', mainLength: 3005432 },
     ],
     areas: { ddr: [0x47be0000, 0x47c00000] },

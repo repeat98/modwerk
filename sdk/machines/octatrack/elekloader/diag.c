@@ -138,8 +138,8 @@ static void start(volatile struct diag_log *l)
 
 #ifdef MODWERK_DEV
 /* The hooks' cost (diag.h): each stamp closes the span the one before it opened. */
-volatile uint32_t modwerk_cost[24];
-static uint32_t cost_at[24];
+volatile uint32_t modwerk_cost[28];
+static uint32_t cost_at[28];
 void modwerk_cost_stamp(unsigned k)
 {
     uint32_t now = DTCN3;
@@ -154,6 +154,12 @@ void modwerk_cost_stamp(unsigned k)
     if (k == 21u) modwerk_cost[21] += now - cost_at[20];  /* the bus between boot_draw and runtime_draw */
     if (k == 22u) modwerk_cost[22] += now - cost_at[21];  /* runtime_draw */
     if (k == 13u) modwerk_cost[23] += now - cost_at[22];  /* status_draw */
+    if (k == 25u) modwerk_cost[24] += now - cost_at[24];  /* mg_tick, the MIDI generators' (midi_generators.c) */
+    if (k == 27u) {                                       /* a generator's knob turn with its regeneration */
+        uint32_t d = now - cost_at[26];
+        if (d > modwerk_cost[25]) modwerk_cost[25] = d;
+        ++modwerk_cost[26]; modwerk_cost[27] += d;
+    }
 }
 /* dev.c's FREEZE TEST: the UI tick stands still this many seconds (the timer runs at 132 MHz), audio and USB go on. */
 volatile uint32_t modwerk_diag_test_freeze;

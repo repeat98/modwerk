@@ -1,0 +1,57 @@
+"""Host ASan/UBSan tests of base-owned editor menu composition."""
+import argparse
+import hashlib
+import json
+import os
+from pathlib import Path
+import subprocess
+import tempfile
+
+ROOT = Path(__file__).resolve().parent
+SOURCES = ('editor_menu.c', 'editor_menu.h', 'test_editor_menu.c', 'test_editor_menu.py')
+DRIVER = r'''
+#include <stdio.h>
+int bs_menu_selftest(void);
+int main(void) {
+    int line = bs_menu_selftest();
+    if (line) { printf("FAIL line %d\n", line); return 1; }
+    puts("PASS: 20 composed menus, immutable labels, owner/token retirement, callback lifetime and refusal cases");
+    return 0;
+}
+'''
+
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--output', type=Path)
+    args = parser.parse_args()
+    if args.output and args.output.exists():
+        parser.error('Use a new evidence path.')
+    cc = os.environ.get('CC', 'cc')
+    with tempfile.TemporaryDirectory(prefix='beat-slicer-menu-') as work:
+        work = Path(work)
+        driver, exe = work / 'main.c', work / 'test-markers'
+        driver.write_text(DRIVER)
+        flags = ['-std=c99', '-O1', '-g', '-Wall', '-Wextra', '-Werror', '-pedantic',
+                 '-fsanitize=address,undefined', '-fno-omit-frame-pointer']
+        subprocess.run([cc, *flags, '-I', str(ROOT),
+                        *[str(ROOT / n) for n in SOURCES if n.endswith('.c')],
+                        str(driver), '-o', str(exe)], check=True)
+        result = subprocess.run([str(exe)], text=True, capture_output=True, timeout=60)
+        print(result.stdout, end='')
+        print(result.stderr, end='')
+        if args.output:
+            report = {
+                'scope': 'base-owned menu composition; supplied ownership only, no installed menu hook',
+                'sourceSha256': {n: hashlib.sha256((ROOT / n).read_bytes()).hexdigest() for n in SOURCES},
+                'compiler': subprocess.check_output([cc, '--version'], text=True).splitlines()[0],
+                'flags': flags, 'exitCode': result.returncode, 'stdout': result.stdout.splitlines(),
+                'hardware': 'not tested', 'audio': 'not tested', 'nativeSourceAccess': 'not implemented',
+            }
+            args.output.write_text(json.dumps(report, indent=2) + '\n')
+        raise SystemExit(result.returncode)
+
+
+if __name__ == '__main__':
+    main()

@@ -1,5 +1,7 @@
 # Application changelog
 
+From 23 October 2026, each entry is its own file in [changelog/](changelog/), named `<YYYY-MM-DD>-<topic>.md`, so pull requests no longer edit the same lines here. `npm run changelog` prints every entry, newest first. This file keeps the entries up to 22 October 2026; `npm run check` refuses new ones in it.
+
 ## 22 October 2026
 
 - Fix: Octatrack card firmware, PURGE SAMPLES no longer freezes the unit (#707). A card build moves the start of sample memory to make room for Modwerk, and it moved one address too many: the end of PURGE SAMPLES' walk over the 16 sample banks has the same value only because the banks end where sample memory starts. Moved, PURGE walked past the banks off the end of RAM and the Octatrack froze, whatever modules the build had (#707 on an MKII, and a beta tester on an MKI on Discord). Card builds now leave that address stock, as upstream octabam (#753) and the Modwerk base already do. Firmware built before this fix still freezes on PURGE SAMPLES: build it again and install it. The USB beta base was not affected. Checked: card builds of both reported selections, composed from the stock 1.40C OS, keep the stock bytes there and still move sample memory; a test refuses the write again; every rebuildable USB package is byte-identical (the Tape Echo, Euclid, Play Modes, CC Map and Mute Modes recipes are only re-pinned to the changed `arena.py`). Not yet run: PURGE SAMPLES on a unit with a rebuilt card image.

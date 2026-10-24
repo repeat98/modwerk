@@ -15,12 +15,20 @@ export function ownerMergeApproval(pull: unknown, events: unknown, repository: s
   if (merges.length !== 1 || merges[0].commit_id !== commit || object(merges[0].actor).id !== ownerId || (pr.merge_commit_sha !== undefined && pr.merge_commit_sha !== null && pr.merge_commit_sha !== commit) || pr.merged !== true || pr.state !== 'closed' || base.ref !== 'main' || typeof repo.full_name !== 'string' || repo.full_name.toLowerCase() !== repository.toLowerCase() || merger.id !== ownerId || typeof merger.login !== 'string' || !/^[A-Za-z0-9-]{1,39}$/.test(merger.login) || typeof pr.number !== 'number' || !Number.isSafeInteger(pr.number) || pr.number < 1 || typeof pr.merged_at !== 'string' || !Number.isFinite(Date.parse(pr.merged_at))) throw new Error('This exact main commit was not introduced by an owner-merged PR.')
   return {kind:'github-pr-merge',repository,sourceCommit:commit,baseRef:'main',pullRequest:pr.number,mergedBy:merger.login,mergedById:ownerId,moduleApproverId:ownerId,mergedAt:pr.merged_at}
 }
-export async function fetchOwnerApproval(repository: string, commit: string, ownerId: number, token='', attempts=7, retryMs=15000): Promise<MergeApproval> {
+export async function fetchOwnerApproval(repository: string, commit: string, ownerId: number, token='', attempts=7, retryMs=15000, backoffMs=2000): Promise<MergeApproval> {
   releaseIdentity(repository,commit,ownerId)
   const headers: Record<string,string>={Accept:'application/vnd.github+json','X-GitHub-Api-Version':'2026-03-10'}
   if(token)headers.Authorization='Bearer '+token
   async function get(path:string) {
-    const response=await fetch('https://api.github.com/repos/'+repository+path,{headers,redirect:'error',signal:AbortSignal.timeout(10000)})
+    let response:Response
+    // GitHub's API answers 5xx or drops a connection now and then; one such blip must not fail a release.
+    for(let retry=0;;retry++){
+      const last=retry>=3
+      try{response=await fetch('https://api.github.com/repos/'+repository+path,{headers,redirect:'error',signal:AbortSignal.timeout(10000)})}
+      catch(error){if(last)throw error;await new Promise(resolve=>setTimeout(resolve,backoffMs*2**retry));continue}
+      if(response.status<500||last)break
+      await new Promise(resolve=>setTimeout(resolve,backoffMs*2**retry))
+    }
     if(!response.ok)throw new Error('GitHub approval lookup failed: HTTP '+response.status)
     const text=await response.text();if(text.length>4*1024*1024)throw new Error('GitHub approval response is too large.')
     return JSON.parse(text) as unknown

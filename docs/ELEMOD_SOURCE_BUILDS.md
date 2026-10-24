@@ -38,7 +38,14 @@ Pass `--check` to compare the source-derived output byte for byte with an existi
 
 `bytes` sites declare `new` lowercase hex and `kind` (`code` or `data`), with exact
 length and stock SHA-256 and no target. Code must contain complete supported
-ColdFire instructions. `lea` declares an address register 0–7 and a symbol target;
+ColdFire instructions. A `bytes` site may add `relocs`, a list of `{ "at", "target" }`
+entries: the linker writes the absolute 32-bit address of the module symbol `target`
+into the four bytes at offset `at`, which must be `00000000` in `new`. In code, `at`
+must fall inside one instruction's extension words, never its opcode word, so the
+opcode stays in your source and the stock hash still guards the whole site. For
+example, `move.l #handler,d0` is `new: "203c00000000"` with
+`relocs: [{ "at": 2, "target": "handler" }]`, and `pea.l handler` is `487900000000`
+with the same reloc. `lea` declares an address register 0–7 and a symbol target;
 it emits the ISA instruction without retaining a stock opcode. `keep2` is still
 local-only and cannot be exported. `package-elemod-recipe.mjs` and the local
 adapter share these checks. Whole-image identity, local stock guards, instruction

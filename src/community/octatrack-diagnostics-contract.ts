@@ -72,6 +72,7 @@ export interface OctatrackDiagnostic {
   modules?: { id: string; catalogVersion: string }[]
   packages?: { sha256: string; bytes: number }[]
   area?: DiagnosticSiteArea
+  /** A browser error's type, or an unclassified (`unknown`) sync failure's; never a message. */
   kind?: DiagnosticErrorKind
   live?: DiagnosticLive
   reason?: typeof DIAGNOSTIC_UNRESPONSIVE[number]

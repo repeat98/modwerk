@@ -77,6 +77,6 @@ describe('the Octatrack base from the stock file', () => {
         (!existsSync(new URL(path, root)) || sha(readFileSync(new URL(path, root))) !== sources[path])),
       ...scanned.filter(path => !(path in sources)),
     ]
-    expect(stale, 'The committed Octatrack base is stale: run npm run octatrack:base -- --write').toEqual([])
+    expect(stale, 'The committed Octatrack base is stale: run npm run octatrack:base -- --stock OS.bin --beta --write').toEqual([])
   })
 })

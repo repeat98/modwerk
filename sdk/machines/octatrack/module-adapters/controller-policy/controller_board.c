@@ -831,7 +831,11 @@ int modwerk_controller_admit(const struct runtime_dsp *from, const struct runtim
             if (kb_lane[c].op == KB_DISABLE || kb_lane[c].op == KB_SCRUB || (kb_dirty[c] && !(mask[c] & KEYBUS))) return RUNTIME_BUSY;
         /* The bus engine waits for room as any engine does; stuck on a core, it never places. */
         if (mw_engines_admit(KEYBUS, modwerk_controller_held() | live_features(), 0) == MW_ENGINE_STUCK_BOOT) return RUNTIME_FEATURE;
-        if (!kb_priced && !modwerk_dsp_keybus_fits()) return RUNTIME_CYCLES;
+        /* The tap's price is the admission's promise, checked when the package is prepared. A set's earlier rows can take
+         * that room before this one switches (an effect the project already names starts to run: beta finding 64), and a
+         * refusal at the switch repeats at every retry, so the set stayed in publishing until a power cycle. There the
+         * board makes the reader wait for its price instead (keybus_tick), as an engine waits for room. */
+        if (operation == RUNTIME_METADATA_PREPARE && !kb_priced && !modwerk_dsp_keybus_fits()) return RUNTIME_CYCLES;
     }
 #endif
     if (!outgoing) return RUNTIME_OK;

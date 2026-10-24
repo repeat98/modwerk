@@ -13,6 +13,16 @@ PTCH tunes the whole chord. Panel and MIDI notes add their own semitone offset
 without moving PTCH or overwriting its live lock. The machine follows the
 instrument's audio frames and sequencer; it has no independent clock.
 
+0.3.1-experimental limits POLY8 by CPU time. Every voice is rendered in the
+audio interrupt, and on the Modwerk beta base, which runs module code uncached,
+four held notes used to take the CPU to 100 %: the panel froze and the notes
+never ended (#646). POLY8 now times its own work each frame and plays fewer
+voices when it would take more than 40 % of the CPU on average, about 197 us of
+one frame, or starve the panel; release tails go first, then the oldest notes.
+Its render also runs through cached memory: on that base four held voices now
+take about 41 % of the CPU, where 0.3.0 used up all that was left. The sound is
+unchanged. See [TESTING.md](TESTING.md).
+
 The 0.2.7-experimental candidate releases the previous sequenced chord before
 starting the next native trig. Finite AMP REL can therefore end its tails even
 with HOLD INF. The incoming chord starts together; held panel/MIDI notes keep

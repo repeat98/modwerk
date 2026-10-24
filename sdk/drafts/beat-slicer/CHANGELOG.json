@@ -1,0 +1,191 @@
+[
+  {
+    "version": "0.1.19-experimental",
+    "date": "2026-10-24",
+    "changes": [
+      "Development draft: decode bounded Flex metadata into previews and complete marker tables; check source selection, readiness and format without altering settings.",
+      "Keep sample and project BPM independent; preserve inactive records for commit validation and internal failure rollback.",
+      "Development tests cover all Flex slots/formats and preview invalidation, including changed inactive records; live ownership remains unimplemented.",
+      "Documentation: align remaining integration notes with stock clear and internal rollback; record stock persistence, inactive-row normalization and exact test sources.",
+      "Known issue: not installable; live bindings, source ownership, atomic publication, playback, USB and physical qualification remain unfinished."
+    ]
+  },
+  {
+    "version": "0.1.18-experimental",
+    "date": "2026-10-23",
+    "changes": [
+      "Development draft: commit a grid without retaining Undo history or requiring a history-discard step before the next grid.",
+      "Keep internal failure rollback and refuse stale previews after slice clearing; stock DELETE SLICE and DELETE ALL SLICES remain the intended workflow.",
+      "Development tests exercise stock Flex/Static grid choices and confirmed/cancelled deletion; installed controls and hardware behavior remain unverified.",
+      "Documentation: bind commit and stock-clearing test receipts to their exact source; retain historical Undo evidence as research.",
+      "Known issue: not installable; native ownership, atomic publication, playback safety, USB and device qualification remain unfinished."
+    ]
+  },
+  {
+    "version": "0.1.17-experimental",
+    "date": "2026-10-23",
+    "changes": [
+      "Development draft: check Undo safety against the complete slice table being restored, including its old end and loop points.",
+      "Development tests now connect Flex previews to Apply/Undo and stock editor refresh; these remain isolated fixtures.",
+      "Development tooling now checks historical source evidence and exercises stock file formats and normal editor-worker completion.",
+      "Documentation: use stock slice clearing, not a separate Undo workflow; keep failure rollback internal. Clarify that PCM mutation need not change every frame.",
+      "Known issue: not installable; native ownership, atomic publication, playback safety, USB and device qualification remain unfinished."
+    ]
+  },
+  {
+    "version": "0.1.16-experimental",
+    "date": "2026-10-23",
+    "changes": [
+      "Development draft: bind Apply and Undo confirmations to exact previews and complete slice history; refuse stale edits and replayed confirmations.",
+      "Known issue: not installable; native atomic publication, sample ownership, playback safety, USB and hardware tests remain unfinished."
+    ]
+  },
+  {
+    "version": "0.1.15-experimental",
+    "date": "2026-10-23",
+    "changes": [
+      "Development draft: prepare an additive Beat Grid menu action that preserves stock actions and rejects stale selections.",
+      "Documentation: corrected the proposed slice-menu path to AED, AMP, then YES after a stock emulator check.",
+      "Known issue: not installable; native menu ownership, Apply/Undo, USB and device testing are unfinished."
+    ]
+  },
+  {
+    "version": "0.1.14-experimental",
+    "date": "2026-10-23",
+    "changes": [
+      "Development draft: Flex previews now connect to preparation that preserves complete existing slice settings.",
+      "Known issue: not installable; native editor controls, Apply/Undo, USB and device testing are unfinished."
+    ]
+  },
+  {
+    "version": "0.1.13-experimental",
+    "date": "2026-10-23",
+    "changes": [
+      "Unlisted development: add bounded native Flex copying and an original ColdFire ABI shim for the stock page lookup. Validate source readiness/format/extent, runtime descriptor geometry, current map pointer regions, owned-page extent and physical-page bounds before lookup; verify returned pointer/run before copying. Maps are reacquired for every call and no raw pointer escapes.",
+      "Host ASan/UBSan and compiled ColdFire code calling actual private stock pass 96 boundary/page-shortened copies, 34 precondition refusals, four malformed reply cases, short output capacity and four map relocations. The C component and ABI shim pass code-generation, freestanding-link and register-preservation checks.",
+      "The binding and memory geometry are synthetic fixtures, not a live source service. Complete writer tracking, a verified native lock/cache boundary, metadata identity/getters, Static access, scheduling, Apply/Undo, USB and hardware qualification remain pending. This does not enable source admission or publish an installable module."
+    ]
+  },
+  {
+    "version": "0.1.12-experimental",
+    "date": "2026-10-23",
+    "changes": [
+      "Unlisted development: bind complete marker candidates to an exact ready preview and unique candidate operation ID. Capture complete active/inactive records under the supplied ownership boundary, preserve exact before/after tables and revalidate the source, chosen tempo, guard and full before-table before returning a candidate. Cancellation/restart retires older IDs; pending callbacks yield.",
+      "Host ASan/UBSan and compiled ColdFire selftests pass 40 successful candidates, 193 full-table stale cases, 21 metadata changes, selected-tempo handling, cancellation/restart, busy/pending/failure and exhaustion cases. The refactored locked-result helper retains the existing 32-preview/22-invalidation session coverage on host and target.",
+      "Candidates remain read-only preparation, not permission to perform a later unlocked write. Native lock/callbacks, writer coverage, atomic Apply/Undo, playback policy, browser/card/USB integration and physical qualification remain absent. No installable module is released."
+    ]
+  },
+  {
+    "version": "0.1.11-experimental",
+    "date": "2026-10-23",
+    "changes": [
+      "Unlisted integration research: execute stock grid opening, generation, complete-record publication, editor pointer/selection refresh and redraw notification against original synthetic Flex/Static settings. Twenty-four immediate grids, four deferred grids, four busy-source refusals and a redraw-only fixture pass with explicit display/progress/zero-search mocks.",
+      "Grid creation clears the count before deferred searches finish, then publishes records without raising the fixture interrupt mask and finally refreshes editor pointers/selection. The redraw helper is a notification, not a marker-history or transaction service. Update the shared proposal to require exclusion across the entire deferred operation.",
+      "The stock grid replaces existing markers and cannot implement Beat Slicer preservation or atomic Apply directly. Actual zero-search scheduling/cancellation, voice refresh, Undo, working/saved-copy persistence, native backend, USB and physical qualification remain open. Portable runtime code is unchanged; no installable module is released."
+    ]
+  },
+  {
+    "version": "0.1.10-experimental",
+    "date": "2026-10-23",
+    "changes": [
+      "Unlisted integration evidence: connect the portable host preview session to real stock Flex page lookup, gain edits and release in synthetic firmware memory. Eight mono/stereo 16/24-bit exact/smooth previews match reference plans while preserving source PCM, controls and metadata.",
+      "Four real stock gain edits invalidate partial previews despite unchanged controls; three metadata/identity changes refuse completed results. Released slots reject new admission, pending copies yield, and copy-time metadata changes discard the block. Five source-bound groups and pinned EMAC/peripheral gates pass.",
+      "Session identity, rate, tempo and exclusive ownership are synthetic fixture callbacks. Native synchronization, complete writer coverage, Static streaming, editor Apply/Undo, playback smoothing and browser/card/USB/hardware qualification remain pending; no installable module is released."
+    ]
+  },
+  {
+    "version": "0.1.9-experimental",
+    "date": "2026-10-23",
+    "changes": [
+      "Unlisted development: prepare complete marker before/after tables without changing live settings. Preserve existing start/end/loop values and ordinals, retain inactive rows for exact restoration, and reject missing or renumbered records, overlaps, short regions and unsupported bounds before writing output. New records use the next start or trim end with looping disabled; this conservative policy still requires owner review.",
+      "Host sanitizers and compiled ColdFire tests pass 2,144 retained-prefix candidates, 386 full-table stale comparisons and refusal/boundary cases. Twenty-four synthetic Flex/Static candidates remain unchanged through real stock sorting/sanitation with explicit tempo/name/track-update mocks. All 64 records survive the in-memory restoration model.",
+      "Candidate preparation and before/after equality are not native Apply/Undo, source identity or synchronization. Full session binding, working/saved-copy publication, playback smoothing, native backend, browser/card/USB lifecycle and physical qualification remain pending; no installable module is released."
+    ]
+  },
+  {
+    "version": "0.1.8-experimental",
+    "date": "2026-10-23",
+    "changes": [
+      "Unlisted development: add a portable preview-session adapter that captures base-owned source/owner/editor identity and complete marker metadata, coordinates bounded PCM copies under supplied synchronization, and revalidates metadata and guard tokens around each copy and before returning a result. Pending, cancellation, restart, malformed replies and unsupported sources refuse safely; no native provider is enabled.",
+      "Host sanitizers and compiled ColdFire selftests pass 32 full-preview comparisons, 22 snapshot invalidations, selected-tempo handling and lifecycle/failure cases. Fourteen stock Flex replacement-refusal fixtures execute real release/allocation with explicit filesystem/header mocks; failed loads can already clear old PCM and relocate surviving maps. Nested release must not reopen preview admission.",
+      "Native lock/callback implementation, complete writer coverage, actual file decoding/streaming, shared-base review, editor Apply/Undo, playback smoothing, browser/card/USB lifecycle and physical qualification remain pending. This version is noninstallable staging."
+    ]
+  },
+  {
+    "version": "0.1.7-experimental",
+    "date": "2026-10-23",
+    "changes": [
+      "Unlisted integration research: add complete ordinary-recorder stock-CPU fixtures for 16/24-bit stereo page crossings, tracks 1/8, both state banks and lazy shared-pool allocation. Original synthetic silent inputs and the host admission guard exercise 20 calls without mocking callees; portable core behavior is unchanged.",
+      "Observe map/position publication before PCM, with no edit-queue, dirty-array or slot-counter signal. Inactive/empty calls and allocation shortages exercise guard cleanup; a shortage can publish a prepared position without writing this call\u2019s PCM and queue engine/UI follow-up work. Refine the provider contract to require independent source validation, follow-up writer coverage and shared-pool serialization.",
+      "This remains noninstallable staging. Arming, Pickup/overdub, remaining recorder modes, non-silent mixing, follow-up execution, real ISR/scheduling, native hooks/locks, Flex/Static access, editor Apply/Undo, playback smoothing, USB lifecycle and physical qualification remain pending."
+    ]
+  },
+  {
+    "version": "0.1.6-experimental",
+    "date": "2026-10-23",
+    "changes": [
+      "Unlisted development: implement portable preview-admission bookkeeping with unique operation/writer tickets, global revision invalidation, nested-writer exclusion, owner revocation and fail-closed capacity/counter exhaustion. It starts disabled and requires externally proved synchronization and complete native writer coverage; no live provider is enabled.",
+      "Connect the guard to staged-reader lifecycle tests and stock worker instruction observations. Extend stock dispatch probes to copy, crop and release, including crop calling rotation, crop changing its counter before an empty-range refusal, and release returning without UI completion.",
+      "Host sanitizers and compiled ColdFire selftests exercise 120 event schedules and three reader invalidation timings. Stock traces use the host guard and remain synthetic. Native hooks/locks, Flex/Static ownership, editor Apply/Undo, playback smoothing, USB lifecycle and physical qualification remain pending; this version is not installable."
+    ]
+  },
+  {
+    "version": "0.1.5-experimental",
+    "date": "2026-10-23",
+    "changes": [
+      "Unlisted integration research: execute the stock zero-gain producer, actual queue post/receive, worker prologue and seven edit dispatch paths using original synthetic memory. Trace writer entry/return, deferred completion and balanced worker frames; portable planner and reader behavior is unchanged.",
+      "Verify that queue emptiness does not mean an edit is finished, and that a null callback or exhausted completion-record pool can omit UI notification after a successful edit. Test FIFO/wrap, refused operations and forced reuse of a queued command pointer; the latter bypasses panel preflight and is not a demonstrated stock UI bug.",
+      "Require native writer exclusion to follow actual execution lifetime independently of UI completion, with owned operation identity. Full caller/writer coverage, scheduler behavior, live Flex/Static reading, editor Apply/Undo, smoothing, USB lifecycle and hardware qualification remain pending. No production hook, shared ABI or installable module is added."
+    ]
+  },
+  {
+    "version": "0.1.4-experimental",
+    "date": "2026-10-23",
+    "changes": [
+      "Unlisted integration research: extend the hash-bound stock-CPU probes to stereo channel processing, reverse, fade, gain, normalization and cross-slot copy/mix, with independent PCM expectations and invalid-input checks. Portable planner and reader behavior is unchanged.",
+      "Observe dirty-store ordering and interrupt masks across eight edit families. The tested busy fields and counters stay unchanged while unmasked instruction intervals occur between PCM writes. Silent normalization can fail after marking dirty without writing PCM. These observations require complete writer-lifetime exclusion; a dirty-store notification alone cannot admit a safe live reader.",
+      "Add an explicit writer-coverage checklist and refine the proposed base contract. Full writer enumeration, native exclusion, coherent Flex/Static access, editor Apply/Undo, playback smoothing, USB lifecycle and hardware qualification remain pending. No installable module or production hook is published."
+    ]
+  },
+  {
+    "version": "0.1.3-experimental",
+    "date": "2026-10-23",
+    "changes": [
+      "Unlisted integration evidence: add five synthetic stock-CPU probe groups for repeated polarity/rotation edits, invalid-input refusals, slot release and allocation-map lifetime. Stock edits can change PCM without changing the slot counter, and the dirty flag remains set across repeated edits; neither field is a sufficient preview revision.",
+      "Connect stock page-lookup results to the host-compiled bounded reader in eight synthetic previews and compare full plans against an independent oracle. Explicit test revision invalidation refuses completed previews after a stock edit. The production planner/reader code is unchanged.",
+      "Tighten the proposed shared-base contract: invalidate before relevant writers and guard each bounded copy against allocation changes. This native writer coverage, live Flex/Static access, editor Apply/Undo, playback smoothing, USB lifecycle and hardware qualification remain unimplemented or unverified; no installable module is published.",
+      "Validation metadata fix: add the required tests.evidenceRevision pin for the exact tested source commit. This records synthetic evidence provenance and does not grant publication or hardware qualification."
+    ]
+  },
+  {
+    "version": "0.1.2-experimental",
+    "date": "2026-10-23",
+    "changes": [
+      "Unlisted development: add bounded packed signed 16/24-bit mono/stereo decoding in both byte orders. It reads only complete supplied frames, avoiding the stock converter padding-byte requirement; source audio is never changed.",
+      "Feed resumable previews through a copied 32-frame PCM cache, accept shorter replies at page boundaries, reject stale operation/revision/serial/extent replies, and invalidate completed previews when the caller reports a changed revision. Native source identity and coherent live-memory access are still required.",
+      "Validate 4,160 decoder vectors, 40 paged previews and cancellation/failure/storage-reuse checks on host and compiled ColdFire, plus 256 exact-buffer host sanitizer cases. No instrument timing, audio, native pool/Static reader, editor Apply/Undo or USB lifecycle is qualified; this remains non-installable staging."
+    ]
+  },
+  {
+    "version": "0.1.1-experimental",
+    "date": "2026-10-23",
+    "changes": [
+      "Unlisted software preparation: replace 64-bit planner arithmetic with bounded quotient/remainder arithmetic and explicit plan fields so the pinned freestanding ColdFire compile has no unresolved multiply, divide or memory helpers. Beat-grid and marker behavior is unchanged in host regression tests.",
+      "Add 2,000 independent rational-grid/marker cases, 200 exhaustive stereo-search cases and threshold/refusal checks, plus reproducible native and read-only stock-reference probes.",
+      "Development evidence: execute the compiled planner on 164 synthetic CPU-emulator vectors and six isolated stock editor probes. Document complete-record sorting, slice renumbering and retained menu-pointer lifetime in an unimplemented shared-base contract; no hardware or persistence qualification is implied.",
+      "Add a resumable preview prototype that requests PCM without blocking callbacks, snapshots request metadata, rejects out-of-order read replies and cancels without publishing partial results. Native sample identity, streaming and scheduler integration remain pending; this does not enable Apply.",
+      "Add isolated stock storage probes using synthetic memory IO. Establish complete marker round-trips, late checksum/short-read failures that already changed destination memory, and Flex/Static sanitization that can alter retained records. These findings tighten the proposed transaction contract; no physical save/reload or audio behavior is qualified.",
+      "Add five isolated pool/converter probe groups: authored Flex page layouts and boundaries, reverse return conventions, mocked recorder-length selection, and signed PCM conversion with read watches. Confirm the 24-bit scalar tail needs one readable padding byte. No native reader, Static streaming or coherent live-source claim follows.",
+      "Native planner only: no editor adapter, verified transaction ABI, playback smoothing, installable package or click-free playback claim. Stock preservation, USB lifecycle and physical MKII qualification remain pending."
+    ]
+  },
+  {
+    "version": "0.1.0-experimental",
+    "date": "2026-10-22",
+    "changes": [
+      "Unlisted development draft: portable planner for 1, 4, 16, 32 or 64 beat slice intervals, with a choice of sample or project BPM, retained existing markers and a 64-slice capacity check.",
+      "Optional bounded stereo quiet-boundary search and explicit unsafe-boundary flags; no playback fades or click-free audio claim. Fourteen host tests include 250 exact rational grid cases.",
+      "Not installable or published: native editor/base event, stock persistence, playback smoothing, card/browser/USB packages and real MKII verification are pending. No hardware results are claimed."
+    ]
+  }
+]

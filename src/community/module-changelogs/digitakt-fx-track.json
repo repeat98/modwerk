@@ -3,8 +3,11 @@
     "version": "0.1.0-experimental",
     "date": "2026-10-22",
     "changes": [
-      "First release for Digitakt I OS 1.54, on Core 2.1. SETTINGS > FX TRACK turns a MIDI track into an effects track: the control changes a MIDI track sends on FX CONTROL CH for the delay (CC 85-92), reverb (CC 24-31), compressor (CC 111-119) and External Mixer (CC 102-109) go into the Digitakt’s own MIDI handling instead of out of MIDI OUT and USB, so parameter locks and the track’s LFO play the effects. Unticked, MIDI output is stock.",
-      "The setting is not saved and starts unticked at every power-on. Notes and every other message still go out; messages also reach any track whose TRACK CHANNEL equals FX CONTROL CH. Hardware behaviour is not yet verified on a unit; see TESTING.md."
+      "First release for Digitakt I OS 1.54, on Core 2.1. SETTINGS > FX TRACK lets a MIDI track play the delay, reverb, compressor and External Mixer.",
+      "Ticked, the control changes a MIDI track sends on FX CONTROL CH go into the Digitakt instead of MIDI OUT and USB, so parameter locks and the LFO play the effects.",
+      "Notes and all other messages still go out, and the messages also reach any track whose TRACK CHANNEL equals FX CONTROL CH. Unticked, MIDI output is stock.",
+      "The setting is not saved and starts unticked at every power-on.",
+      "Known issue: not yet tested on a unit."
     ]
   }
 ]

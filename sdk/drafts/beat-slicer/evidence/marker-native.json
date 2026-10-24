@@ -1,0 +1,66 @@
+{
+  "scope": "pure marker target execution: 2144 retained-prefix candidates, 386 stale checks, refusals and boundaries",
+  "sourceSha256": {
+    "marker_edit.c": "645b7bdcb68a755f903b6b592e029d96bac868b763845faa5cf4806fedc9e0ea",
+    "marker_edit.h": "cd8c16a7771bf5a6d251b20e3a02fd0887d68cf4f8e5900e0c6a7fdecc0d4f05",
+    "preview_session.h": "f435cc256dca02dc5b575f2ffc53d7d6779b9bf898b02c2ba3a4cc3ed674805f",
+    "preview_guard.h": "abcaff39ef1b9a21cb238f0021344ffb5b812ea1740a354cbc1d1f2ace4ddf36",
+    "pcm_reader.h": "462f495a86f32730b79a56177f99929f685d82729e4646e7b391df475d929821",
+    "planner_job.h": "c4dd3faa8b3320194b54ab4d7bec6541d9e936f544b0e6236efa4fa5518d6547",
+    "planner.h": "4faab6f03e679d0b9389dbf016416afc87fb4d2d354952b22efb81a0381c5c1b",
+    "test_marker_edit.c": "3d809fc0da6f631c9fc82a30a9eaf0403e64e138de8d903db94eeac17703ffc5",
+    "marker_native.py": "41e4967c6687be8064c38d5336a6da89e56ed907b7449c1d3d9c3c560585c26d",
+    "stock_probe/job_probe.cpp": "eba70897030ec3b8804de5641d533955455761df75c19db278438006bc8b4e1a",
+    "stock_probe/CMakeLists.txt": "7d3890e80d8d2902e5cea637c9a618314d654f9b924477fc95a43a7a8c1401ad"
+  },
+  "compiler": "m68k-elf-gcc (GCC) 16.2.0",
+  "flags": [
+    "-std=c99",
+    "-mcpu=5475",
+    "-msoft-float",
+    "-O2",
+    "-ffreestanding",
+    "-fno-builtin",
+    "-fno-common",
+    "-fno-jump-tables",
+    "-fno-tree-loop-distribute-patterns",
+    "-fno-optimize-sibling-calls",
+    "-fno-asynchronous-unwind-tables",
+    "-fno-unwind-tables",
+    "-fno-ident",
+    "-fstack-usage",
+    "-Wall",
+    "-Wextra",
+    "-Werror",
+    "-pedantic",
+    "-fno-late-combine-instructions"
+  ],
+  "objectSha256": {
+    "marker_edit.o": "5de3021d1f2ef0bf9f9527922a437f5f0d79fc9f9c008ae71d2a427197e0f410",
+    "test_marker_edit.o": "242a12ea9380fe9d2beb468340bce732f9fc1891b5a231fa15c4324b94a96cd9"
+  },
+  "runnerSha256": "fa8c5f47aab4d97bff73d8afaea9b69701c1a1df095062460f2c3bbeb9969103",
+  "codegenGuard": "passed",
+  "freestandingLink": true,
+  "markerSize": [
+    "text\t   data\t    bss\t    dec\t    hex\tfilename",
+    "   1218\t      0\t      0\t   1218\t    4c2\t/evidence/marker-native-attempt1/marker_edit.o"
+  ],
+  "markerStackUsage": [
+    "/source/sdk/drafts/beat-slicer/marker_edit.c:56:12:same_table\t0\tstatic",
+    "/source/sdk/drafts/beat-slicer/marker_edit.c:6:23:bs_marker_prepare\t48\tstatic",
+    "/source/sdk/drafts/beat-slicer/marker_edit.c:64:5:bs_marker_matches_before\t8\tdynamic,bounded",
+    "/source/sdk/drafts/beat-slicer/marker_edit.c:67:5:bs_marker_matches_after\t8\tdynamic,bounded"
+  ],
+  "exitCode": 0,
+  "stdout": [
+    "SOURCE_SHA256: eba70897030ec3b8804de5641d533955455761df75c19db278438006bc8b4e1a",
+    "PASS: cooperative preview target selftest and preserved registers"
+  ],
+  "stderrLines": 8,
+  "stderrSha256": "21495107133b98459d58d78262e4935ad828b0578af9c62da412effd72215f99",
+  "hardware": "not tested",
+  "audio": "not tested",
+  "timing": "not measured",
+  "nativeApplyUndo": "not implemented"
+}

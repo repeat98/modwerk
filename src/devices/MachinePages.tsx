@@ -10,7 +10,7 @@ import { Icon } from '../components/Icon'
 import { assetUrl } from '../hosting'
 import { projectMachineForDevice } from '../projects/projects'
 import { issueRepository } from '../community/report-context'
-import type { Configuration } from '../config/workspace'
+import type { Configuration, StorageLock } from '../config/workspace'
 import { LIBRARY_CATEGORY_LABELS, STANDALONE_NOTE, type FirmwareModule, type ModuleCategory } from '../catalog/modules'
 import { DETAILS } from '../catalog/details'
 import type { CatalogBrowse } from '../catalog/catalog-browse'
@@ -25,11 +25,13 @@ import { LibraryResultsBar } from '../components/LibraryResultsBar'
 import { compareModules, downloadCoverage, type ModuleStatistics } from '../community/module-statistics'
 import { DeviceImage, PhotoCredit } from './DeviceImage'
 import { ALL_MACHINES, DEVICES, DEVICES_BY_ID, STATUS_LABELS, deviceHref, deviceSteps, deviceTitle, readyForMods, stepsDone, type DeviceProfile } from './registry'
+import { isCoreBuildPreview } from '../engine/elekloader/protocol'
 import { DIGI_CORES, DIGI_DEVICES, DIGI_MODS, estimateCombination, type DigiMod } from './digi-mods'
 import { MemberGate } from '../community/MemberGate'
 import { useDigiFirmware } from '../hooks/useDigiFirmware'
 import { DigiFirmwarePanel } from '../components/DigiFirmwarePanel'
 import { DigiBuildPanel } from '../components/DigiBuildPanel'
+import { BUILDER_SOURCE } from '../engine/elekloader/machine-build'
 import { ConfigurationHeader } from '../components/ConfigurationLayout'
 import { ModuleAuthors } from '../components/ModuleAuthors'
 import { digiMatchesQuery, octatrackMatchesQuery } from '../catalog/module-search'
@@ -40,7 +42,39 @@ import { DEVELOP_PITCH, UNLOCK_NOTE, developHref } from '../overview/overview'
 
 type DigiDevice = DeviceProfile & { id: DigiMod['device'] }
 const STEP_LABELS = { done: 'Done', started: 'Started', open: 'Open' } as const
-const ZOOM_UNLOCK_NOTE = 'Opening the pedal to Modwerk needs programming experience. Once Modwerk has a module contract for its effects, they start from the same starter prompt as every other module.'
+// What an empty machine page says, per family: how its mods are made, how to start and what never to share.
+const FAMILY_PAGE: Record<DeviceProfile['family'], { invite: string; unlock: string; start: (id: string) => [string, ReactNode][]; risk: [string, string] }> = {
+  elektron: {
+    invite: 'Nobody has published a working mod for this machine yet. Modwerk never hosts firmware: every build starts from the stock OS file each owner downloads from Elektron, so the work is in understanding that file and sharing only your own code.',
+    unlock: UNLOCK_NOTE,
+    start: id => [
+      ['Study the stock OS file', 'Work from your own download of the newest OS. Record hashes and structure, never the file’s contents.'],
+      ['Propose a device profile', <>Open a PR with <code>sdk/machines/{id}/machine.json</code>: OS releases and hashes, file format, flashing and recovery steps.</>],
+      ['Build a core, then a first mod', 'A core reserves memory and shares hooks so mods combine. Your first mod ships with documentation and test evidence.'],
+    ],
+    risk: ['Never attach firmware', 'Do not put OS files, stock effects, memory dumps or extracted Elektron code in a PR, issue or forum post. Share hashes, notes and your own source only.'],
+  },
+  zoom: {
+    invite: 'Modwerk lists no effects for this pedal yet. Its effects are separate files that load on the stock firmware, which is never modified, so the work is in the effect format and in sharing only your own code.',
+    unlock: 'Opening the pedal to Modwerk needs programming experience. Once Modwerk has a module contract for its effects, they start from the same starter prompt as every other module.',
+    start: id => [
+      ['Study the effect format', 'Work from public research and your own builds. Record structure and behaviour, never the contents of Zoom’s own effects or firmware.'],
+      ['Update the device profile', <>Open a PR on <code>sdk/machines/{id}/machine.json</code>: tested firmware versions, install and recovery steps, limits measured on the pedal.</>],
+      ['Agree the module contract, then a first effect', 'Effects need a module contract before Modwerk lists them. Your first effect ships with documentation and test evidence from the pedal.'],
+    ],
+    risk: ['Never attach firmware', 'Do not put OS files, stock effects, memory dumps or extracted Zoom code in a PR, issue or forum post. Share hashes, notes and your own source only.'],
+  },
+  erica: {
+    invite: 'Modwerk lists no mods for this machine yet. Erica Synths publishes its firmware source under GPL-3.0, so a mod is a change to that source, built into an SD-card update. Nothing has to be reverse engineered.',
+    unlock: 'Opening it to Modwerk needs programming experience: a Modwerk base built from the source and a module contract. After that, its mods start from the same starter prompt as every other module.',
+    start: () => [
+      ['Build the source', 'Build Erica Synths’ firmware with the toolchain its README names, and check that two builds give the same image.'],
+      ['Boot a marked build', 'Change the start-up screen so it shows the build is modified, install it from the SD card, then put the official update back the same way.'],
+      ['Agree the base, then a first mod', 'A Modwerk base adds shared events to the source so mods combine. Your first mod ships with its source, documentation and test evidence from the unit.'],
+    ],
+    risk: ['Keep the bootloader', 'Update only from the SD card. Never run the full-flash or bootloader targets: if writing the bootloader fails, only a debug probe brings the unit back. Share source, not built images.'],
+  },
+}
 
 function kib(bytes: number) { return (bytes / 1024).toFixed(bytes < 10240 ? 1 : 0) + ' KiB' }
 
@@ -172,7 +206,7 @@ export function MachineLibrary({ device, query, category, octatrackModules: octa
   </div>
 }
 
-export function DigiConfiguration({ device, configuration, configurations, onSelect, onDialog, onToggle, onImport, onReport }: { device: DigiDevice; onReport: () => void; configuration?: Configuration; configurations: Configuration[]; onSelect: (id: string) => void; onDialog: (mode: 'create' | 'rename' | 'duplicate' | 'delete') => void; onToggle: (id: string) => void; onImport: (configuration: ReturnType<typeof parseDigiSelection>) => void }) {
+export function DigiConfiguration({ device, configuration, configurations, onSelect, onDialog, onToggle, onImport, onStorageLock, onReport }: { device: DigiDevice; onReport: () => void; configuration?: Configuration; configurations: Configuration[]; onSelect: (id: string) => void; onDialog: (mode: 'create' | 'rename' | 'duplicate' | 'delete') => void; onToggle: (id: string) => void; onImport: (configuration: ReturnType<typeof parseDigiSelection>) => void; onStorageLock: (id: string, lock: StorageLock) => void }) {
   const w = useSetWords()
   const importRef = useRef<HTMLInputElement>(null), [buildResults, setBuildResults] = useState<HTMLDivElement | null>(null), [importError, setImportError] = useState(''), [importNotes, setImportNotes] = useState<string[]>([]), [exported, setExported] = useState('')
   const mobile = useMobileWorkspace()
@@ -200,7 +234,7 @@ export function DigiConfiguration({ device, configuration, configurations, onSel
             {selection.length ? <ul className="selected-list">{selection.map(mod => <li key={mod.id}><a className="selected-module-link" href={deviceHref(device.id, 'module/' + mod.id)}><DigiModPreview mod={mod} compact /><span><strong>{mod.title}</strong><small>{mod.category} · {mod.author} · {kib(mod.ramBytes)}</small></span></a><button className="icon-button" aria-label={'Remove ' + mod.title} onClick={() => onToggle(mod.id)}><Icon name="close" size={17} /></button></li>)}</ul>
               : <div className="selection-empty"><Icon name="grid" size={26} /><strong>No modules selected</strong><p>{'Find something in the library and add it to your ' + w.set + '.'}</p><a className="button button-quiet" href={deviceHref(device.id)}>Browse modules</a></div>}
           </section>
-          <section className="configuration-section" aria-labelledby="digi-resources-title"><div className="section-title"><h2 id="digi-resources-title">Resources</h2><span className="subtle">core {DIGI_CORES[device.id].version} · {DIGI_CORES[device.id].slots}</span></div>
+          <section className="configuration-section" aria-labelledby="digi-resources-title"><div className="section-title"><h2 id="digi-resources-title">Resources</h2><span className="subtle">core {DIGI_CORES[device.id].version}{DIGI_CORES[device.id].slots && ' · ' + DIGI_CORES[device.id].slots}</span></div>
             <div className={'resource-meter' + (estimate.fits ? '' : ' is-over')} role="meter" aria-valuemin={0} aria-valuemax={estimate.areaBytes} aria-valuenow={estimate.usedBytes} aria-label="Shared mod memory">
               <div className="resource-meter-head"><strong>Shared mod memory</strong><span>{kib(estimate.usedBytes)} of {kib(estimate.areaBytes)}</span></div>
               <div className="resource-meter-track"><span style={{ width: percent + '%' }} /></div>
@@ -215,7 +249,8 @@ export function DigiConfiguration({ device, configuration, configurations, onSel
         </div>
         <div className="configuration-checkout">
           <section className={'compatibility-panel compatibility-' + (estimate.fits && !estimate.clashes.length ? 'clear' : 'conflict')} aria-live="polite" aria-labelledby="digi-compatibility-title"><div className="compatibility-heading"><span className="compatibility-icon"><Icon name={estimate.fits && !estimate.clashes.length ? 'shield' : 'sliders'} size={20}/></span><div><h2 id="digi-compatibility-title">{!estimate.fits || estimate.clashes.length ? 'Your selection needs a change' : selection.length ? 'No declared conflicts' : 'Choose your modules'}</h2><p>{!estimate.fits || estimate.clashes.length ? 'Review the resources below and choose a compatible set.' : selection.length ? mobile ? 'Module claims were checked. Placement checks happen on a computer with your base firmware.' : 'Choose your base firmware for placement checks.' : 'Add a module from the library, or build the core alone. Compatibility updates as you make changes.'}</p></div></div></section>
-          <div className="checkout-card">{mobile ? <ConfigurationHandoff onExport={() => { if (configuration) { downloadDigiSelection(configuration, device.id); setExported(exportKey) } }} exported={exported === exportKey} canExport={!!configuration} /> : <MemberGate action="build firmware" next={device.id+'/configuration'}><DigiBuildPanel device={device} firmware={firmware} moduleIds={ids} onExport={() => { if (configuration) { downloadDigiSelection(configuration, device.id); setExported(exportKey) } }} exported={exported===exportKey} canExport={!!configuration} results={buildResults}/></MemberGate>}</div>
+          <div className="checkout-card">{mobile ? <ConfigurationHandoff onExport={() => { if (configuration) { downloadDigiSelection(configuration, device.id); setExported(exportKey) } }} exported={exported === exportKey} canExport={!!configuration} /> : <MemberGate action="build firmware" next={device.id+'/configuration'}><DigiBuildPanel device={device} firmware={firmware} moduleIds={ids} storage={configuration && { lock: configuration.storageLock, save: lock => onStorageLock(configuration.id, lock) }} onExport={() => { if (configuration) { downloadDigiSelection(configuration, device.id); setExported(exportKey) } }} exported={exported===exportKey} canExport={!!configuration} results={buildResults}/></MemberGate>}</div>
+          <p className="builder-credit">Powered by <a href={BUILDER_SOURCE.repository} target="_blank" rel="noreferrer">elekloader ↗</a></p>
         </div>
       </div>
     </div>
@@ -241,12 +276,12 @@ function Hero({ device, children, embedded = false }: { device: DeviceProfile; c
 // Machines without mods: the library page becomes an invitation to open the first one.
 export function EmptyMachine({ device, machinePicker, embedded = false }: { device: DeviceProfile; machinePicker?: ReactNode; embedded?: boolean }) {
   const repository = issueRepository(), mobile = useMobileWorkspace()
-  const zoom = device.family === 'zoom', ready = readyForMods(device), steps = deviceSteps(device)
+  const page = FAMILY_PAGE[device.family], ready = readyForMods(device), steps = deviceSteps(device)
   return (
     <div className="device-page">
       {machinePicker && <div className="discovery-tools">{machinePicker}</div>}
-      <Hero device={device} embedded={embedded}><div className="device-hero-actions">{device.id === 'digitakt-ii' && device.sdk && <a className="button button-primary" href={deviceHref(device.id, 'configuration')}><Icon name="sliders" size={16} />{mobile ? 'Open configuration' : 'Open local build preview'}</a>}<a className={'button ' + (device.id === 'digitakt-ii' && device.sdk ? 'button-quiet' : 'button-primary')} href={developHref(device.id)}><Icon name="plus" size={16} />{ready ? 'Build the first mod' : 'Help unlock'}</a><a className="button button-quiet" href={repository + '/blob/main/docs/ADD_A_MACHINE.md'} target="_blank" rel="noreferrer"><Icon name="plus" size={16} />Open a device PR</a><a className="button button-quiet" href="#forum"><Icon name="message" size={16} />Discuss in the forum</a></div></Hero>
-      <section className="device-invite"><h2>Be the first to mod the {device.name}</h2><p>{zoom ? 'Modwerk lists no effects for this pedal yet. Its effects are separate files that load on the stock firmware, which is never modified, so the work is in the effect format and in sharing only your own code.' : 'Nobody has published a working mod for this machine yet. Modwerk never hosts firmware: every build starts from the stock OS file each owner downloads from Elektron, so the work is in understanding that file and sharing only your own code.'} {ready ? DEVELOP_PITCH : zoom ? ZOOM_UNLOCK_NOTE : UNLOCK_NOTE}</p></section>
+      <Hero device={device} embedded={embedded}><div className="device-hero-actions">{isCoreBuildPreview(device.id) && device.sdk && <a className="button button-primary" href={deviceHref(device.id, 'configuration')}><Icon name="sliders" size={16} />{mobile ? 'Open configuration' : 'Open local build preview'}</a>}<a className={'button ' + (isCoreBuildPreview(device.id) && device.sdk ? 'button-quiet' : 'button-primary')} href={developHref(device.id)}><Icon name="plus" size={16} />{ready ? 'Build the first mod' : 'Help unlock'}</a><a className="button button-quiet" href={repository + '/blob/main/docs/ADD_A_MACHINE.md'} target="_blank" rel="noreferrer"><Icon name="plus" size={16} />Open a device PR</a><a className="button button-quiet" href="#forum"><Icon name="message" size={16} />Discuss in the forum</a></div></Hero>
+      <section className="device-invite"><h2>Be the first to mod the {device.name}</h2><p>{page.invite} {ready ? DEVELOP_PITCH : page.unlock}</p></section>
       <section className="configuration-section" aria-labelledby="ladder-title">
         <div className="section-title"><h2 id="ladder-title">Road to the first mod</h2><span className="subtle">{stepsDone(device)} of {steps.length} done</span></div>
         <ol className="device-ladder">{steps.map((step, index) => { const state = device.steps[step.id] ?? 'open'; return <li key={step.id} className={'is-' + state}><span className="device-ladder-marker">{state === 'done' ? <Icon name="check" size={14} /> : index + 1}</span><span><strong>{step.title}</strong><small>{step.description}</small></span><span className={'device-step-state is-' + state}>{STEP_LABELS[state]}</span></li> })}</ol>
@@ -254,18 +289,10 @@ export function EmptyMachine({ device, machinePicker, embedded = false }: { devi
       {device.research?.length ? <section className="configuration-section" aria-labelledby="research-title"><div className="section-title"><h2 id="research-title">Public research</h2><span className="subtle">Credit to its authors</span></div><ul className="device-research">{device.research.map(item => <li key={item.url}><a href={item.url} target="_blank" rel="noreferrer"><strong>{item.label}</strong><Icon name="arrow" size={13} /></a><p>{item.note}</p></li>)}</ul></section> : null}
       <section className="configuration-section" aria-labelledby="start-title"><div className="section-title"><h2 id="start-title">How to start</h2></div>
         <ol className="device-start">
-          {zoom ? <>
-            <li><strong>Study the effect format</strong><p>Work from public research and your own builds. Record structure and behaviour, never the contents of Zoom’s own effects or firmware.</p></li>
-            <li><strong>Update the device profile</strong><p>Open a PR on <code>sdk/machines/{device.id}/machine.json</code>: tested firmware versions, install and recovery steps, limits measured on the pedal.</p></li>
-            <li><strong>Agree the module contract, then a first effect</strong><p>Effects need a module contract before Modwerk lists them. Your first effect ships with documentation and test evidence from the pedal.</p></li>
-          </> : <>
-            <li><strong>Study the stock OS file</strong><p>Work from your own download of the newest OS. Record hashes and structure, never the file’s contents.</p></li>
-            <li><strong>Propose a device profile</strong><p>Open a PR with <code>sdk/machines/{device.id}/machine.json</code>: OS releases and hashes, file format, flashing and recovery steps.</p></li>
-            <li><strong>Build a core, then a first mod</strong><p>A core reserves memory and shares hooks so mods combine. Your first mod ships with documentation and test evidence.</p></li>
-          </>}
+          {page.start(device.id).map(([title, text]) => <li key={title}><strong>{title}</strong><p>{text}</p></li>)}
         </ol>
       </section>
-      <aside className="risk-note"><strong>Never attach firmware</strong><p>Do not put OS files, stock effects, memory dumps or extracted {zoom ? 'Zoom' : 'Elektron'} code in a PR, issue or forum post. Share hashes, notes and your own source only.</p></aside>
+      <aside className="risk-note"><strong>{page.risk[0]}</strong><p>{page.risk[1]}</p></aside>
     </div>
   )
 }

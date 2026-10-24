@@ -93,6 +93,15 @@ function octatrack(id) {
   if (exists(folder + '/presentation/thumbnail.svg') || new RegExp("^\\s+'?" + id + "'?: \\(\\) =>", 'm').test(art)) ok('thumbnail', 'the library card has art')
   else fail('thumbnail', 'no presentation/thumbnail.svg and no hand-drawn art', 'add a 320x192 presentation/thumbnail.svg that shows what the module does')
 
+  // The two DSP source gates (octabam's norep and nolabelprefix, sdk/octabam/docs/TRAPS.md): a label prefix is always refused; a rep is refused in a module listed from 2026-10-23.
+  const gates = spawnSync(process.platform === 'win32' ? 'python' : 'python3', ['-B', 'scripts/dsp-source-gates.py', '--json', id], { cwd: root, encoding: 'utf8' })
+  const found = gates.status === 0 ? JSON.parse(gates.stdout) : null
+  if (!found) fail('dsp sources', 'the gates did not run: ' + (gates.stderr || gates.error?.message || '').trim().split('\n').pop(), 'python3 -B scripts/dsp-source-gates.py --json ' + id)
+  else if (found.errors.length) fail('dsp sources', found.errors[0], 'rewrite it as the message says, then npm run modules:check')
+  else if (found.warnings.length) info('dsp sources', found.warnings[0].replace(/^sdk\/octabam\/modules\/[^/]+\//, '') + '. Not refused in a module listed before 2026-10-23; a new rep is')
+  else if (found.files) ok('dsp sources', found.files + ' DSP source' + (found.files === 1 ? '' : 's') + ': no rep, no label that prefixes another')
+  else info('dsp sources', 'no .asm source (ColdFire-only module)')
+
   if (rulesProblem) fail('module rules', 'npm run modules:check fails: ' + rulesProblem.slice(0, 220), 'fix what it names, then run npm run modules:check -- --base origin/main')
   else ok('module rules', 'versions, documentation, tutorial, screenshots, qualification, resource gauges (npm run modules:check)')
 

@@ -11,6 +11,8 @@ enum flash_refusal { FLASH_OK, FLASH_FORMAT, FLASH_DEPACK, FLASH_ENTRY, FLASH_BO
 extern volatile uint32_t modwerk_flash_refusal;
 /* The RAM boot's backend, plus NOR writes of the running base's own container. */
 extern const struct mu_backend modwerk_flash_backend;
+/* The running base's packed .run digest, taken by .boot before stock's start reuses its RAM. */
+void modwerk_flash_snapshot(void);
 /* The bounded decoder for the kit's section stream (codec/elz.py): the output
  * length, or -1 unless the end marker lands exactly on `in_len` and the
  * output fits `out_max`. */

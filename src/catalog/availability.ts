@@ -2,12 +2,12 @@
 // Copyright (c) 2026 Jannik Aßfalg (repeat98)
 import { MODULES, resolveSelection } from './modules.ts'
 
-// POLY8 left the beta on 15 October 2026 (testers' freezes, #646) and stays paused for everyone.
+// POLY8 was paused on 15 October 2026 (testers' freezes, #646) and is offered again from 0.3.1-experimental (23 October 2026).
 export const BETA_MODULE_IDS: readonly string[] = ['airwindows-chorus']
 export const isBetaModule = (id: string) => BETA_MODULE_IDS.includes(id)
 
 // Temporary frontend suspension. Keep the full source catalog and saved pins intact.
-export const PAUSED_MODULE_IDS: readonly string[] = ['spectrum', 'modulation', 'character', 'airwindows-chorus', 'midi-scenes', 'poly8']
+export const PAUSED_MODULE_IDS: readonly string[] = ['spectrum', 'modulation', 'character', 'airwindows-chorus', 'midi-scenes']
 export function isModulePaused(id: string) { return PAUSED_MODULE_IDS.includes(id) }
 // Every module in sdk/catalog.json is offered unless it is paused; build support separately gates firmware.
 export const AVAILABLE_MODULES = MODULES.filter(module => !isModulePaused(module.id))

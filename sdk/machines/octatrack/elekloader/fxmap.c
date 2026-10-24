@@ -29,6 +29,8 @@ int (*modwerk_test_write)(uint32_t file, const void *data, unsigned length);
 #define MAP (&modwerk_test_map)
 #define RUNNING(i) modwerk_test_live_fx[i]
 #define PART_FX(bank, part, i) modwerk_test_banks[bank][part][i]
+unsigned modwerk_test_bank_now;
+#define BANK_NOW() modwerk_test_bank_now
 #define WRITE modwerk_test_write
 #else
 /* Battery RAM nothing else uses: stock references nothing in 0x100f859c-0x100fff00 (Octabam's
@@ -41,6 +43,8 @@ typedef char map_fits[sizeof(struct fx_map) <= 0x1800u ? 1 : -1];
 #define PART_FX(bank, part, i) (((const volatile uint8_t *)(0x400e21e0u + (bank) * 0x9b340u + \
     ((part) < 4 ? 0x8ed80u : 0x9504au - 4u * 6322u) + (part) * 6322u))[i])
 #define WRITE ((int (*)(uint32_t, const void *, unsigned))0x400166b8u) /* write(file, data, n), the writer's own */
+/* The current bank (selection.c): its base, 0 before a project. */
+#define BANK_NOW() ((*(volatile const uint32_t *)0x46c82456u - 0x400e21e0u) / 0x9b340u)
 #endif
 
 static uint32_t checksum_of(unsigned words) /* the map's first `words` words */
@@ -106,6 +110,21 @@ static void put(volatile struct fx_entry *e, uint32_t module, unsigned layout, c
     for (; i < 16u; ++i) e->name[i] = 0;
 }
 
+/* Where the project names `id` first, for status.c's MISSING page: the current bank first, its working Parts before
+ * the saved copies, then the other banks in order. 0 when nowhere, 1 a working Part, 2 only a saved copy; with the
+ * bank (0-15), Part (0-3) and track (0-7). */
+int modwerk_fxmap_where(unsigned id, unsigned *bank, unsigned *part, unsigned *track)
+{
+    unsigned now = BANK_NOW();
+    if (now > 15u) now = 0; /* before a project the base reads as 0, below the first bank */
+    for (unsigned b = 0; b < 16u; ++b) {
+        unsigned at = !b ? now : b - 1u < now ? b - 1u : b;
+        for (unsigned p = 0; p < 8u; ++p)
+            for (unsigned i = 0; i < 16u; ++i)
+                if (PART_FX(at, p, i) == id) { *bank = at, *part = p & 3u, *track = i & 7u; return p < 4u ? 1 : 2; }
+    }
+    return 0;
+}
 /* The module effect ids the project names anywhere: what runs, and every bank's Parts, working and saved. */
 fx_set modwerk_fxmap_used(void)
 {
@@ -117,7 +136,7 @@ fx_set modwerk_fxmap_used(void)
     return fx_and(used, modwerk_fx_modules);
 }
 #ifdef MODWERK_DEV
-extern volatile uint32_t modwerk_cost[24]; /* diag.h: [18] this function's time, [19] its calls */
+extern volatile uint32_t modwerk_cost[28]; /* diag.h: [18] this function's time, [19] its calls */
 uint32_t modwerk_fxmap_generation(void)
 {
     uint32_t t0 = *(volatile uint32_t *)0xfc07c00cu, g = valid() ? MAP->generation : 0;

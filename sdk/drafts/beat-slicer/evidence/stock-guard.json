@@ -1,0 +1,31 @@
+{
+  "scope": "synthetic stock producer, queues, worker and completion posts with host admission guard; display mock, no scheduler/UI consumer/device access",
+  "mainSha256": "164f31224bf61181e3f50e7dec40df9afcae5b16dbf6e4c0d0cc5e986af0a84e",
+  "sourceSha256": {
+    "stock_probe.py": "b8afdecc00ca3af3ed31874a3332a3630eca26da18f8b69d5bb0955ef01738e8",
+    "stock_probe/worker_probe.cpp": "0e44372642d87681548d4a9dbcfa17de7cb273236d0999fee2f5d10aa97eb90e",
+    "preview_guard.c": "da1299674cf2ae967c58231ee9c16891afa94e27254407b5d09df6b73cc4343e",
+    "preview_guard.h": "abcaff39ef1b9a21cb238f0021344ffb5b812ea1740a354cbc1d1f2ace4ddf36",
+    "stock_probe/CMakeLists.txt": "69993411d3d957d17b19244c80d1edaf6d810f6acd278634cf492c142c6694d1"
+  },
+  "executableSha256": "143c9d1835672fca072c66e1772950547691cc87bb2c566fb2d2127f92364498",
+  "exitCode": 0,
+  "stdout": [
+    "SOURCE_SHA256: 2117b63143cd5eed788986c83507f9bb15eacabcd2a852df2458f7f24b81c82a",
+    "PASS: four producer-to-worker gain paths: deferred PCM, empty queue during edit, deferred UI completion",
+    "PASS: seven stock opcode paths: enter writer, return, attempt completion and restore worker frame",
+    "PASS: two refused commands: no PCM/dirty mutation and deferred failure result",
+    "PASS: null callback and exhausted completion pool: edit finishes without UI notification",
+    "PASS: two queued writers execute FIFO with separate completion records",
+    "PASS: forced producer-record reuse: queued pointers observe overwritten payload; outer UI preflight omitted",
+    "PASS: copy and crop dispatch, nested rotation exclusion and crop refusal metadata",
+    "PASS: release dispatch retires exclusion without attempting UI completion",
+    "PASS: 35 queue posts/receives wrap FIFO; unknown opcode drains; empty worker stops at event wait",
+    "9 passed, 0 failed; synthetic worker with host admission guard, display mock, no scheduler/UI consumer/hardware"
+  ],
+  "stderrLines": 176,
+  "stderrSha256": "fe93dca03dd05902438a9e29b01afad0a78834704200b6e58abd8d2d06e74c43",
+  "hardware": "not tested",
+  "audio": "not tested",
+  "stockPersistence": "not tested"
+}

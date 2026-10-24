@@ -184,3 +184,23 @@ jobs:
       - run: npm ci
       - name: Require compiled packages to reproduce the committed, native-verified packages
         run: node scripts/import-module-build.mjs "$RUNNER_TEMP/octatrack-source/packages" --development --check-only --verify-existing
+  # The one check the main ruleset requires, so nothing merges while a check is running or red.
+  # A job the scope skips counts as passed; a failed, cancelled or unrun job does not.
+  module-pr-ok:
+    if: always()
+    needs: [scope, module-contract, module-paths-windows, core-logger-host, elemod-source, octatrack-source]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 2
+    permissions: {}
+    steps:
+      - name: Require every check above to pass
+        env:
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          echo "Results: $RESULTS"
+          for result in $RESULTS; do
+            case "$result" in
+              success|skipped) ;;
+              *) echo "::error::A check did not pass ($result). Fix it and push; this PR can merge once every check is green."; exit 1 ;;
+            esac
+          done

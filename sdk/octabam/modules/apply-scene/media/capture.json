@@ -1,8 +1,8 @@
 {
   "firmware": "1.40C",
-  "imageSha256": "3a74ff3635ce172ec3ef5949d188ebb297b0e8d969ca2b5d060b76420dded0bc",
+  "imageSha256": "c625bbd1ec4faff6a98bb054abad1522042a09dc68262b3629991af7c00fc48d",
   "emulatorSha256": "23ba6f6cdc6ec4b89b8cf206915e66d3160aec8499b1abfc9b475ac849152b28",
-  "setup": "Headless ot_emu; MKII panel; stopped transport; 128×64 LCD at integer scale 6. Card staged from octabam's TMPL project (set CAPTURE, project APPLY); the SET DATE/TIME prompt dismissed with NO. Image: a private native build of APPLY SCENE at commit a90849c9 alone beside every stock effect (static stock). The same plan on ae2a6eed's image gave pixel-identical PNGs.",
+  "setup": "Headless ot_emu; MKII panel; stopped transport; 128×64 LCD at integer scale 6. Card staged from octabam's TMPL project (set CAPTURE, project APPLY); the SET DATE/TIME prompt dismissed with NO. Image: a private native build of APPLY SCENE 0.2.0 at commit 2ebc3f72 alone beside every stock effect (static stock). The seven 0.1.0 screens are pixel-identical to those of a90849c9's image; the plan adds grid recording, TRIG + SCENE A and TRIG + SCENE A + B.",
   "palette": {
     "on": [
       240,
@@ -178,6 +178,125 @@
     },
     {
       "capture": "ot-after-blend.png"
+    },
+    {
+      "wait": 2500
+    },
+    {
+      "press": [
+        "REC"
+      ]
+    },
+    {
+      "wait": 400
+    },
+    {
+      "press": [
+        "TRIG1"
+      ]
+    },
+    {
+      "wait": 300
+    },
+    {
+      "hold": [
+        "TRIG1"
+      ]
+    },
+    {
+      "wait": 300
+    },
+    {
+      "hold": [
+        "SCENE A"
+      ]
+    },
+    {
+      "wait": 300
+    },
+    {
+      "release": [
+        "SCENE A"
+      ]
+    },
+    {
+      "wait": 100
+    },
+    {
+      "capture": "ot-trig-scene-a.png"
+    },
+    {
+      "wait": 2500
+    },
+    {
+      "capture": "ot-trig-lock.png"
+    },
+    {
+      "release": [
+        "TRIG1"
+      ]
+    },
+    {
+      "wait": 400
+    },
+    {
+      "press": [
+        "TRIG5"
+      ]
+    },
+    {
+      "wait": 300
+    },
+    {
+      "hold": [
+        "TRIG5"
+      ]
+    },
+    {
+      "wait": 300
+    },
+    {
+      "hold": [
+        "SCENE A"
+      ]
+    },
+    {
+      "hold": [
+        "SCENE B"
+      ]
+    },
+    {
+      "wait": 300
+    },
+    {
+      "release": [
+        "SCENE B"
+      ]
+    },
+    {
+      "release": [
+        "SCENE A"
+      ]
+    },
+    {
+      "wait": 100
+    },
+    {
+      "capture": "ot-trig-blend.png"
+    },
+    {
+      "wait": 2500
+    },
+    {
+      "capture": "ot-trig-blend-lock.png"
+    },
+    {
+      "release": [
+        "TRIG5"
+      ]
+    },
+    {
+      "wait": 300
     }
   ],
   "screenshots": {
@@ -187,7 +306,11 @@
     "ot-after-a.png": "2fc694ac97e3bb4b2232bb2d737e5d3e24918aa3041c23642ff38db8c6263c50",
     "ot-nothing-to-apply.png": "9b5e822a797debcae80959669e2d755faab001696128ad80b04f68be8a1c0f93",
     "ot-blend-applied.png": "f449cf953df710ffd207e22d788a7597b5829238d86e1e01144c3843ca3098d2",
-    "ot-after-blend.png": "196abb36a1ca397c5c1e0c1ecdc71b34e64fa318e45a82749b2c65e5439e1d44"
+    "ot-after-blend.png": "196abb36a1ca397c5c1e0c1ecdc71b34e64fa318e45a82749b2c65e5439e1d44",
+    "ot-trig-scene-a.png": "e4afd09570e2e1286de6e2e0727ecc0686daa042ed0f53d5154a73c75cba0de4",
+    "ot-trig-lock.png": "7601b0a3b7ad61be9ed494f4c671a029bf79cf38f60f4e15e7a791a055859e64",
+    "ot-trig-blend.png": "b06d79ed447d4a32560b47de4705fd3b39e24f63cf623c0943196f26bf4cf176",
+    "ot-trig-blend-lock.png": "a1704e5077cf231a1b74f4b966e2b54125448c981eb5001763a6225b8245b692"
   },
   "cardSha256": "70f85539e521fdfa6cd7d6aa7901ad606887b249087894e1369f576deca63c7c",
   "project": {

@@ -6,19 +6,10 @@
   "variants": [
     "MKII"
   ],
-  "status": "research",
-  "summary": "OS 1.73 and 1.74 rebuilt byte-identical; modified OSes boot on hardware; stock recovers both over MIDI DIN; elemod cores run on 1.73 (core-ar2 0.1) and 1.74 (0.3, mod storage) units.",
+  "status": "preview",
+  "summary": "OS 1.74 rebuilt byte-identical; modified OSes boot on hardware; stock recovers over MIDI DIN; core-ar2 0.3 with mod storage runs on units. Filter Hz is the first library module.",
   "firmware": {
     "releases": [
-      {
-        "version": "1.73",
-        "files": [
-          {
-            "name": "Analog-Rytm_MKII_OS1.73.syx",
-            "sha256": "8ad671087ec30433d5407c7380d2396e0915ab931c5d3dd18a78bf284d3d1e52"
-          }
-        ]
-      },
       {
         "version": "1.74",
         "files": [
@@ -37,7 +28,7 @@
     "rebuild": "done",
     "boot": "done",
     "core": "done",
-    "mods": "open"
+    "mods": "done"
   },
   "research": [
     {
@@ -90,7 +81,7 @@
       "version": "0.3",
       "path": "sdk/analog-rytm-mkii/core-profile"
     },
-    "toolchain": "m68k-linux-gnu (or m68k-elf) GCC and binutils for ColdFire, and elekloader's builder: core-ar2 0.3 from the owner's exact OS 1.74 .syx (1.74 only), core-ar2 0.1 for the OS 1.73 submission.",
+    "toolchain": "m68k-linux-gnu (or m68k-elf) GCC and binutils for ColdFire, and elekloader's builder: core-ar2 0.3 from the owner's exact OS 1.74 .syx.",
     "budgets": [
       {
         "name": "Shared mod memory",
@@ -102,7 +93,7 @@
         "name": "Core image",
         "unit": "bytes",
         "value": 7576,
-        "note": "Core 0.3 build (core-ar2-v0.3 pre-release): 7,540 bytes .run plus 36 bytes .bss in the shared area, and an 88-byte .boot copier; the link check measures each selected module set. Core 0.1 for OS 1.73 is 476 bytes."
+        "note": "Core 0.3 build (core-ar2-v0.3 pre-release): 7,540 bytes .run plus 36 bytes .bss in the shared area, and an 88-byte .boot copier; the link check measures each selected module set."
       }
     ]
   },

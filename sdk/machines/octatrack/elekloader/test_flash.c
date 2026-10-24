@@ -58,7 +58,8 @@ int main(void)
     CHECK(image_len > OS_VEROFF + 2u && rd(image) == OS_FIRST && container_len % 4 == 0);
 
     /* The running image: the fixture's, with a word outside the compared regions changed (stock .data a module
-     * patched): only the bootloader copy and the packed .run must be the candidate's. */
+     * patched). Its packed .run is digested at boot, then stock's start overwrites it and rewrites bytes of the
+     * bootloader copy, as on a unit (ot_emu, 23 October 2026: every write was refused against the running RAM). */
     static const uint32_t starts[SECTORS] = {0x4000, 0x6000, 0x8000, 0xa000, 0xc000, 0xe000, 0x10000, 0x20000, 0x30000, 0x40000,
         0x50000, 0x60000, 0x70000, 0x80000, 0x90000, 0xa0000, 0xb0000, 0xc0000, 0xd0000, 0xe0000, 0xf0000, 0x100000, 0x110000,
         0x120000, 0x130000, 0x140000, 0x150000, 0x160000, 0x170000, 0x180000, 0x190000, 0x1a0000, 0x1b0000, 0x1c0000, 0x1d0000,
@@ -68,6 +69,11 @@ int main(void)
     memcpy(running, image, image_len);
     running[0x1000] ^= 0xff; running[0xb9650 + 0x400 - 0x400] ^= 0x55;
     modwerk_test_running = running; modwerk_test_run_load = running + run_off;
+    mu_sha256(image + (BOOTLOADER_FROM - OS_ENTRY), BOOTLOADER_END - BOOTLOADER_FROM, modwerk_test_bootloader_digest);
+    modwerk_flash_snapshot();
+    uint32_t run_len = 8u + rd(running + run_off);
+    memset(running + run_off, 0xa5, run_len);
+    running[0x400e201eu - 0x40000400u] ^= 0x20; running[0x400e2108u - 0x40000400u] ^= 0x1a;
     memset(modwerk_test_nor, 0x5a, sizeof modwerk_test_nor); /* another base's bytes */
 
     /* The bounded decoder reproduces the image and refuses a short output buffer. */
@@ -110,12 +116,16 @@ int main(void)
     modwerk_test_flash_version = 0x0409u; /* NOR's bootstrap is another: the entry would reprogram it */
     CHECK(offered() == 1 && b->publish(0) == MU_UNCHANGED && modwerk_flash_refusal == FLASH_BOOTSTRAP);
     modwerk_test_flash_version = 0x0408u;
-    running[0x400de1e0u - 0x40000400u + 100u] ^= 1; /* the bootloader copy differs */
+    modwerk_test_bootloader_digest[0] ^= 1; /* the candidate's bootloader copy is not stock's */
     CHECK(offered() == 1 && b->publish(0) == MU_UNCHANGED && modwerk_flash_refusal == FLASH_PROTECTED);
-    running[0x400de1e0u - 0x40000400u + 100u] ^= 1;
-    running[run_off + 12] ^= 1; /* another base's .run */
+    modwerk_test_bootloader_digest[0] ^= 1;
+    memcpy(running + run_off, image + run_off, run_len);
+    running[run_off + 12] ^= 1; modwerk_flash_snapshot(); /* another base's .run booted */
     CHECK(offered() == 1 && b->publish(0) == MU_UNCHANGED && modwerk_flash_refusal == FLASH_OTHER_BASE);
-    running[run_off + 12] ^= 1;
+    running[run_off] = 0xff; modwerk_flash_snapshot(); /* a length past the stage: no digest taken */
+    CHECK(offered() == 1 && b->publish(0) == MU_UNCHANGED && modwerk_flash_refusal == FLASH_OTHER_BASE);
+    memcpy(running + run_off, image + run_off, run_len); modwerk_flash_snapshot();
+    memset(running + run_off, 0xa5, run_len);
     {   /* a stream that does not end where its length says (a byte dropped in the middle: resummed) */
         uint32_t len = rd(container + SECT), sum = 0;
         memmove(container + SECT + 8u + len / 2, container + SECT + 9u + len / 2, len / 2 - 1);

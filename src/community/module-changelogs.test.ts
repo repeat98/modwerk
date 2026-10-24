@@ -19,16 +19,23 @@ describe('module release notes', () => {
     expect(() => parseModuleChangelogs({ schemaVersion: 1, modules: { euclid: [{ ...entry, announce: 'true' }] } })).toThrow('Invalid announcement opt-in')
   })
 
-  it('covers every current catalog release across all three instruments', () => {
+  it('covers every current catalog release across every instrument', () => {
     const notes = parseModuleChangelogs(data, COMMUNITY_MODULES)
     expect(Object.keys(notes).length).toBe(COMMUNITY_MODULES.length)
-    expect(new Set(COMMUNITY_MODULES.map(module => module.machine))).toEqual(new Set(['octatrack', 'digitakt', 'digitone']))
+    expect(new Set(COMMUNITY_MODULES.map(module => module.machine))).toEqual(new Set(['octatrack', 'digitakt', 'digitone', 'analog-rytm-mkii']))
   })
 
   it('rejects an updated catalog version without matching written notes', () => {
     expect(() => parseModuleChangelogs(fixture(), [{ id: 'euclid', version: '1.0.1-experimental' }])).toThrow('Missing release notes for euclid v1.0.1-experimental')
     expect(() => parseModuleChangelogs(fixture(), [{ id: 'euclid', version: '0.9.0-experimental' }])).toThrow('Missing release notes')
     expect(() => parseModuleChangelogs(fixture(), [{ id: 'other', version: entry.version }])).toThrow('Unknown changelog module')
+  })
+
+  it('keeps every release short enough for players to read', () => {
+    const catalog = [{ id: 'euclid', version: entry.version }]
+    expect(() => parseModuleChangelogs(fixture([{ ...entry, changes: Array(5).fill(entry.changes[0]) }]), catalog)).not.toThrow()
+    expect(() => parseModuleChangelogs(fixture([{ ...entry, changes: Array(6).fill(entry.changes[0]) }]), catalog)).toThrow('Keep the release notes for euclid v1.0.0-experimental short')
+    expect(() => parseModuleChangelogs(fixture([{ ...entry, changes: ['x'.repeat(201)] }]), catalog)).toThrow('at most 200 characters')
   })
 
   it('rejects duplicate versions, impossible dates, empty summaries and invalid references', () => {

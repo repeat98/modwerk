@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { fresh } from '../../vendor/elekloader/kit/src/store.ts'
 import { createDigiSelection, parseDigiSelection } from './digi-selection'
 import { pinModuleVersions } from './workspace'
 
@@ -46,5 +47,21 @@ describe('Digi configuration backups', () => {
     expect(() => parseDigiSelection('not json', 'digitakt')).toThrow('not valid configuration JSON')
     expect(() => parseDigiSelection(JSON.stringify({ ...backup, modules: [{ id: 'digihealth', version: 'latest' }] }), 'digitakt')).toThrow('semantic version')
     expect(() => parseDigiSelection(' '.repeat(32769), 'digitakt')).toThrow('32 KB')
+  })
+})
+describe('mod-storage lockfiles in backups', () => {
+  const lock = fresh('analog-rytm-mk2')
+  it('round-trips the lockfile of the last build with a Rytm selection', () => {
+    const configuration = { name: 'Rytm', moduleIds: ['filter-hz'], moduleVersions: pinModuleVersions(['filter-hz'], 'analog-rytm-mkii'), storageLock: lock }
+    const backup = createDigiSelection(configuration, 'analog-rytm-mkii')
+    expect(backup.storage).toEqual(lock)
+    expect(parseDigiSelection(JSON.stringify(backup), 'analog-rytm-mkii')).toEqual({ ...configuration, notes: [] })
+  })
+  it('leaves the field out when nothing was built, and refuses a lockfile the kit would refuse', () => {
+    const backup = createDigiSelection({ name: 'Rytm', moduleIds: ['filter-hz'], moduleVersions: {} }, 'analog-rytm-mkii')
+    expect('storage' in backup).toBe(false)
+    expect(parseDigiSelection(JSON.stringify(backup), 'analog-rytm-mkii').storageLock).toBeUndefined()
+    expect(() => parseDigiSelection(JSON.stringify({ ...backup, storage: { ...lock, device: 'digitakt-mk1' } }), 'analog-rytm-mkii')).toThrow('mod storage layout cannot be used: lockfile: made for the digitakt-mk1')
+    expect(() => parseDigiSelection(JSON.stringify({ ...backup, storage: [] }), 'analog-rytm-mkii')).toThrow('mod storage layout cannot be used')
   })
 })

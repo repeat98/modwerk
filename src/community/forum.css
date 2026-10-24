@@ -953,6 +953,8 @@ li[data-status="error"] .forum-media-status { color: #f0a6ad; }
 .forum-highlight-members a, .members-online-list a { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; }
 .forum-highlight-members .forum-avatar, .members-online-list .forum-avatar { width: 22px; height: 22px; border-radius: 6px; font-size: 8px; }
 .members-online-list { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; margin: 0; padding: 0; list-style: none; }
+/* Picture and initial avatars have different inline baselines; keep links out of line boxes. */
+.members-online-list > li { display: flex; }
 .members-online-more { color: var(--muted); font-size: 12px; }
 .forum-online-now { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; margin: -8px 0 20px; }
 .forum-online-now-label { display: inline-flex; align-items: center; color: #bcd7c5; font-size: 12px; font-weight: 600; }

@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "module": "analog-rytm-mkii/filter-hz",
+  "version": "1.2.0",
+  "date": "2026-10-23",
+  "upstream": {
+    "repository": "https://github.com/Iced-Cream/rytm2_mods",
+    "revision": "afd461d4a8ef4306bb2a57d4c61ad35c362b3940",
+    "path": "filter-hz/os1.74",
+    "license": "GPL-2.0-only"
+  },
+  "changes": [
+    "First library release for Analog Rytm MKII OS 1.74, on core-ar2 0.3. The FILTER page's FRQ popup shows the cutoff in hertz.",
+    "Source-only export compiled from sdk/analog-rytm-mkii/modules/filter-hz; elekloader kit 0.7.0 links it with the released core-ar2 0.3 on stock 1.74 into the hardware-tested FZ74 .syx byte for byte."
+  ],
+  "runtimeSourceSha256": "456b3752807d5ccbcbcc3ad9f51fe7d99d82b154def1a99385703b063723439b",
+  "packages": [
+    {
+      "os": "1.74",
+      "path": "sdk/imports/packages/filter-hz/filter-hz-1.2.0-os1.74.elemod",
+      "sha256": "95e455cb67339b6cd32006ec9693024b1860b10df8d8b70b661a150dcd920446"
+    }
+  ],
+  "stockPolicy": "No firmware or stock-derived code/tables are present. Addresses, lengths and SHA-256 guards are metadata; exported instructions and sections are authored module code. Local materialized recipes and firmware are never committed.",
+  "evidence": "sdk/analog-rytm-mkii/modules/filter-hz/TESTING.md",
+  "requires": []
+}

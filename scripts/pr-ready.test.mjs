@@ -27,6 +27,13 @@ describe('pr:ready verdict', () => {
     expect(notes[0]).toContain('owner reviews it and merges it with one click')
     expect(notes.at(-1)).toContain('If main moves before the merge, run this again')
   })
+  it('asks what the guides lacked, listing the guide edits on the branch', () => {
+    const asked = readiness({}).notes.find(note => note.startsWith('What did the guides lack'))
+    expect(asked).toContain('write "nothing" in the PR')
+    const listed = readiness({ guideEdits: ['docs/module-guides/effects.md'] }).notes.find(note => note.startsWith('What did the guides lack'))
+    expect(listed).toContain('docs/module-guides/effects.md')
+    expect(readiness({ guideEdits: ['docs/SDK.md'] }).ok).toBe(true)
+  })
   it('refreshes a narrow clone’s main tracking ref so the suggested merge uses current main', () => {
     const directory = realpathSync(mkdtempSync(join(tmpdir(), 'modwerk-ready-fetch-')))
     const env = { ...process.env, GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_GLOBAL: join(directory, 'no-global-config') }

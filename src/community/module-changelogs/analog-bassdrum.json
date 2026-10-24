@@ -3,52 +3,38 @@
     "version": "0.1.5-experimental",
     "date": "2026-10-09",
     "changes": [
-      "Restore stock FLEX playback and SETUP defaults in both working Part copies before removing the Analog BD marker, preventing invalid borrowed parameters from rejecting the retained bank after a machine switch.",
-      "Cover both SRC SETUP commit paths and the main machine chooser; preserve existing Analog BD patches on reselection and leave unsigned tracks and other Parts untouched.",
-      "808/909 DSP code is byte-identical to 0.1.4. Existing SRC locks, scene targets and LFO destinations remain assigned to their parameter slots and may require adjustment when changing machines.",
-      "Owner reports physical FLEX reboot persistence on exact AB015FIX01 and authorizes this experimental release. Broader hardware/maximum-load, worst-case chip timing and complete memory bounds remain unverified under a new exact-source approval; Output Matrix sequencer halt remains unverified.",
-      "Documentation/media-only: add an offline audio preview rendered through 0.1.5-experimental, with sample credits, settings and provenance; firmware is unchanged.",
-      "Documentation/media-only (12 October 2026): replace the preview with five isolated 808/909 hits, longer tail windows, clean/attack/long 909 comparisons and one common gain; retain the released 0.1.5 engine source identity. Firmware and its version are unchanged; these offline previews add no physical-hardware or performance qualification.",
-      "Documentation/media-only (12 October 2026): replace the isolated-hit preview with a 22.5-second four-on-the-floor groove at 128 BPM: default 808, one-bar 909 TUNE endpoints and slow TUNE/built-in Mackie SAT sweeps. Keep Tune Depth at default 64 and PITCH at 49; hold 909 ATK at 0 so the envelope bend is clearer. Use a common gain and remove added silence. Include exact trigger/automation/render provenance. Firmware behavior and hardware/performance qualification are unchanged.",
-      "USB package (14 Oct 2026; distribution only, the module source and version are unchanged): loads over USB on the Modwerk beta base as an independent machine package. Its chooser row, page and renderer go through the base’s machine table, and its 909/808 DSP engine is resident in the base on both cores. The base admits this exact package through a trust row built into it; its renderer writes only under the base’s write lease and renders silent until the base has reset and enabled the engine, whose reset restores its authored tables. It needs that exact base; with an older base the site asks for a base update first. Its compiled bytes that coincide with stock are copied at install from bytes the base checks against its running stock, so the package carries no stock bytes.",
-      "USB package limits: removing it converts its tracks back to FLEX in every known Part copy and fails closed otherwise. Host tests only (the base’s reset, enable, lease and removal against a modelled DSP receiver); no emulator or hardware run of this package. The owner waived hardware evidence for this exact version’s USB package for the beta.",
-      "Site sync on the beta base (beta test run 2, 14 Oct 2026; the package is unchanged): removing it while its controller runs no longer ends the sync with “The Octatrack refused this step.” The base answers the first removal busy while it stops the controller and drops the staged package; the site now stages it again, as it does for the base's other busy refusals. Checked on a development twin through the development link (Sidechain installed, running, removed in one command) and by the site's tests; the site's own path has not run on the unit yet.",
-      "USB package bound to the new beta base acf91e0a (beta test run 2, 14 Oct 2026, rebuilt 15 Oct with the resident engines placed on demand, BBD Delay's chooser row and a startup without the wave's outline; the base's addresses moved, so the package is relinked against them, its module code unchanged and not yet run on hardware): the base now puts a removed machine's per-track routines back to stock, shows what a picked effect took and each core's DSP budget (the STATUS page's new DSP rows; DSP FULL comes from it), and no longer refuses effect picks for a bank whose Parts never fitted. A tester base from before needs the base update first.",
-      "Beta base fix (beta finding 24, 15 Oct 2026; the package bytes are unchanged): an Analog BD track in the current bank no longer silences the unit after a reboot. The base validated the battery-backed Parts before its saved module set reinstalled Analog BD, so stock judged the track's 12 parameter bytes as FLEX values and refused the whole restore: the bank stayed empty (every track STATIC, nothing playing), and the check had already clamped those bytes in the battery copy. The base now keeps Analog BD's (and FM Synth's) bytes away from that check even before the module is back; the track reads FLEX and renders silent until Analog BD returns, and choosing another machine for it puts stock's FLEX defaults back first.",
-      "Beta base fix limits (finding 24): Checked by host tests and on the emulator (boot with an Analog BD track in the battery copy: refused and silent on base 43fe3fc4, restored and every track bound on the fixed development base); the unit run is pending. Stock firmware or an older base still refuses such a bank at power-up (seen on the unit as BANK UNAVAILABLE until LOAD PROJECT); keep a separate project copy for them.",
-      "USB package bound to the new beta base d58f542d (22 Oct 2026; the module source and version are unchanged): its 909/808 DSP engine and its tables now travel in this package (ABI 10) instead of in the base. The base keeps only the engine's hook site, one placement word and its X region, and admits the package by a trust row that pins only the package's ColdFire part, so a later DSP-only update of Analog BD installs over USB without a new base. The engine is the base's earlier resident engine word for word (checked on both cores when the package is built); the ColdFire code differs only in the two base addresses it calls.",
-      "USB package bound to the new beta base d6bfff70 (22 Oct 2026; the module code is unchanged, the package differs only in the two base addresses it calls): the base places Analog BD's engine only once a track of the current bank is set to Analog BD, not when the module is installed, so installing it no longer fails with “not enough module memory” when the bank's effects fill a DSP core (#791). In a bank without an Analog BD track the engine is put away once the unit is stopped.",
-      "USB package on d6bfff70 (22 Oct 2026): its engine now goes on both DSP cores or on neither, so it is no longer left on core 0 alone when core 1 has no room, holding words it cannot use there. The self-test no longer lets an Analog BD track claim its DSP time on a core the test has just emptied: in a bank whose effects fill core 1, the track took that room and the bank’s own effects could not come back, so the self-test, and a sync with it, failed with “a module did not run alone” (beta finding 63). The track stays silent while the self-test runs. A track first set to Analog BD while the unit plays stays silent until the transport stops, about two seconds. Host-tested, and run on the owner's MKII on a development twin of this base (not placed at install, put away in a bank without an Analog BD track, placed again in a bank with one); not yet on the release image, across a power cycle, or with a track first set while playing.",
-      "USB package limits (d58f542d, unchanged on a849d17e and d6bfff70): checked by host tests (the loader, the controller board and the receiver against a modelled DSP, including a DSP-only update under the same trust row and a return to the earlier package) and in the DSP interpreter (the placed engine bit-exact at two places, beside Sidechain and the key bus). Run on the owner's MKII on RAM-booted builds of this change (not the exact d58f542d image): install, placement, reset and enable, and a DSP-only replacement under the same trust row; the owner heard it play. Power-cycle behaviour with this base is not yet checked. A base older than d6bfff70 refuses the package; the site asks for the base update first.",
-      "USB package ColdFire load (22 Oct 2026, beta base d58f542d; the module source and version are unchanged): one Analog BD track cost the ColdFire about 20 points over USB, stopped or playing, measured on the owner's MKII. Nearly all of it was the base's write lease, taken twice a frame, whose owner check reads the module header through uncached memory. The package's renderer now takes the lease once a frame (the frame's first call, which writes no control record, uses the stock silent source, as a refused lease already did), and the base's check reads fewer words: about 10 points, measured on a profiling build of this base. Known issue, fixed in 0.1.6: over USB, a 909 on tracks 1-4 with PITCH at 0 plays a wrong, jittery pitch: the base's core-1 load meter counts in the word that holds that pitch step."
+      "Switching an Analog BD track to another machine now restores the FLEX defaults, so the bank is no longer rejected. Locks, scenes and LFOs keep their slots and may need adjusting.",
+      "Now loads over USB on the Modwerk beta base; the site asks for a base update first. Installing, removing or self-testing it no longer fails a sync (#791).",
+      "Beta base: an Analog BD track no longer silences the unit after a reboot. Stock firmware or an older base still shows BANK UNAVAILABLE for such a bank until LOAD PROJECT.",
+      "Known issue: over USB, a 909 on tracks 1-4 with PITCH at 0 plays a wrong, jittery pitch (fixed in 0.1.6). A track first set to Analog BD during playback stays silent until you stop.",
+      "Media only: a new audio preview, a 128 BPM groove with 808 and 909 sounds."
     ]
   },
   {
     "version": "0.1.4-experimental",
     "date": "2026-10-09",
     "changes": [
-      "Match the 909 body’s harmonic phase/asymmetry and complete envelope/DC response more closely to the supplied direct-out recordings.",
-      "Refit minimum/maximum Attack at LPF bypass and correct both Tune endpoints, including their small settled-pitch difference. Intermediate physical knob positions remain a design interpolation.",
-      "Add subtle attack strength/noise differences between hits, without random pitch or trigger delay. Transient-shape variation remains more consistent than in the recordings.",
-      "Many thanks to Skee Mask, who kindly recorded his TR-909 so we could match Analog BD more closely. His instrument has a decay modification; its full modified-decay range is not reproduced.",
-      "Preserve 808, saved controls, assignment defaults, shared desk and existing TDEP/SAT smoothing. 909 executed instruction counts increase about 6.2%; 808 cost and X/Y/ColdFire allocations are unchanged.",
-      "Owner-approved experimental release with fresh physical hardware/persistence testing, worst-case chip timing and complete memory bounds explicitly waived for this source. Maximum FX load remains untested; high ACCNT/LOW settings can still reach the output limiter."
+      "The 909 now matches recordings of a real TR-909 more closely in body, envelope, Attack and Tune.",
+      "Many thanks to Skee Mask, who recorded his TR-909 for this. His 909 has a decay modification whose full range is not reproduced.",
+      "Adds subtle attack and noise differences between hits, without random pitch or timing.",
+      "The 808, saved controls and smoothing are unchanged; the 909 uses about 6% more DSP time.",
+      "Known issue: not yet tested on hardware, and high ACCNT or LOW settings can reach the output limiter."
     ]
   },
   {
     "version": "0.1.3-experimental",
     "date": "2026-10-08",
     "changes": [
-      "Smooth 909 TDEP and both engines' SAT modulation to reduce audible zipper noise while preserving fixed-control sound and saved parameter layouts.",
-      "Owner reports stable MKII operation with distinct 808/909 instances and Part/project reload and power-cycle persistence. Worst-case chip timing and maximum FX load remain unmeasured.",
-      "Development note (9 October 2026): many thanks to Skee Mask, who kindly recorded his TR-909 so we could match Analog BD more closely. The new 909 reference candidate is awaiting hardware qualification; the public 0.1.3 sound is unchanged."
+      "Smooths the 909's TDEP and both engines' SAT to reduce zipper noise. Saved settings sound the same.",
+      "Known issue: not yet tested with the heaviest effect loads.",
+      "Development note: many thanks to Skee Mask, who recorded his TR-909 for a closer 909 in a later version. This version sounds the same."
     ]
   },
   {
     "version": "0.1.2-experimental",
     "date": "2026-10-01",
     "changes": [
-      "Documentation-only: add real emulator screenshots of the selection and control pages, access instructions and capture provenance. The firmware implementation is unchanged."
+      "Documentation only: adds emulator screenshots of the selection and control pages and how to reach them."
     ],
     "sourceCommit": "dd9ea93fd62a3699d54f5e63c5f1a33fe1544cad"
   },
@@ -56,7 +42,7 @@
     "version": "0.1.1-experimental",
     "date": "2026-10-01",
     "changes": [
-      "Enable browser firmware builds from verified source packages, with native/browser composition and rejection checks recorded."
+      "Analog BD can now be built into firmware in the browser on the site."
     ],
     "sourceCommit": "9c4e0e3b7990c6952812d89ac165dfa14151c3ee"
   },
@@ -64,9 +50,10 @@
     "version": "0.1.0-experimental",
     "date": "2026-10-01",
     "changes": [
-      "First Modwerk catalog release of the native 808/909 bass-drum track machine, with synthesis before the stock AMP and FX stages.",
-      "Current engine-browser and eight-track behaviour still require hardware qualification.",
-      "USB package rebuilt for the fixed beta base (beta test run 1, 14 Oct 2026); its reviewed recipe was recaptured because the base's lease entries moved, with the same sources and copies. Its controller now reaches ACTIVE on the unit (before, the base's owned DSP job channel closed at boot), and the base's Part restore no longer writes one byte high (GCC 16.2 miscompile). Known open on the unit: with trigs it rendered silence on one build and stalled the DSP on another; a second track in the same Part is refused without a message. Do not use it for music in the beta until those are resolved."
+      "First Modwerk release of the native 808/909 bass drum track machine, with synthesis before the stock AMP and FX stages.",
+      "Known issue: the machine chooser and use on all eight tracks are not yet tested on hardware.",
+      "USB package for the beta base: it now starts on the unit, and restoring a Part no longer writes a wrong value.",
+      "Known issue: over USB it may play silence or stall with trigs, and a second track in the same Part is refused without a message. Don't use it for music in the beta yet."
     ],
     "sourceCommit": "d1136ce4c65ea7e1a00c4516cd4aa41c4b0c0d56"
   }

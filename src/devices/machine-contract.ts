@@ -2,14 +2,16 @@
 // Shared by the website (through the generated registry) and stock-free repository checks. No firmware is read.
 
 export const MACHINE_STATUSES = ['available', 'preview', 'research', 'open'] as const
-export const MACHINE_FAMILIES = ['elektron', 'zoom'] as const
+export const MACHINE_FAMILIES = ['elektron', 'zoom', 'erica'] as const
 // Each family's road to mods. Elektron machines are modded through the OS image; Zoom MultiStomp
 // pedals load separate effect files on their stock OS, so they have no image to rebuild or core to boot.
+// Erica Synths publishes its firmware source, so mods are built from that source instead of a stock image.
 export const FAMILY_STEP_IDS = {
   elektron: ['format', 'rebuild', 'boot', 'core', 'mods'],
   zoom: ['format', 'load', 'mods'],
+  erica: ['source', 'boot', 'core', 'mods'],
 } as const
-export const MACHINE_STEP_IDS = ['format', 'rebuild', 'boot', 'core', 'load', 'mods'] as const
+export const MACHINE_STEP_IDS = ['format', 'rebuild', 'source', 'boot', 'core', 'load', 'mods'] as const
 export const MACHINE_STEP_STATES = ['done', 'started', 'open'] as const
 export const MACHINE_PLATFORMS = ['octabam', 'elemod'] as const
 export const MACHINE_BODIES = ['compact', 'wide', 'keys', 'box', 'model', 'pedal', 'floor'] as const
@@ -127,14 +129,15 @@ function parseArt(value: unknown): MachineProfile['art'] {
 }
 
 // Elektron releases name their stock OS file and its hash. Zoom ships its OS as an updater app and no mod
-// touches it, so a Zoom release lists no files: only the version the effects were tested on.
+// touches it, and Erica Synths builds come from the published source, so their releases list no files:
+// only the version the mods were tested on.
 function parseFirmware(value: unknown, family: MachineFamily): NonNullable<MachineProfile['firmware']> {
   const firmware = object(value, 'machine.firmware', ['releases', 'flash', 'recovery'])
   const releases = list(firmware.releases, 'machine.firmware.releases', 1, 12).map((entry, index) => {
     const path = 'machine.firmware.releases[' + index + ']', release = object(entry, path, ['version', 'files'])
     return {
       version: text(release.version, path + '.version', 20),
-      files: list(release.files, path + '.files', family === 'zoom' ? 0 : 1, family === 'zoom' ? 0 : 4).map((file, fileIndex) => {
+      files: list(release.files, path + '.files', family === 'elektron' ? 1 : 0, family === 'elektron' ? 4 : 0).map((file, fileIndex) => {
         const filePath = path + '.files[' + fileIndex + ']', item = object(file, filePath, ['name', 'sha256'])
         const name = text(item.name, filePath + '.name', 120), sha256 = text(item.sha256, filePath + '.sha256', 64)
         if (!/^[A-Za-z0-9._-]+\.(syx|bin)$/.test(name)) fail(filePath + '.name', 'expected the stock .syx or .bin file name')

@@ -17,11 +17,11 @@ A module's category is the `category` field of its manifest (`octamod.module.jso
 
 ## The workflow, in order
 
-1. Read the category guide, then [octabam's trap list](../../sdk/octabam/AGENTS.md) before any DSP or ColdFire code.
+1. Read the category guide, then [octabam's trap list](../../sdk/octabam/AGENTS.md) and its later [register](../../sdk/octabam/docs/TRAPS.md) before any DSP or ColdFire code.
 2. Follow [Add or port a module](../ADD_A_MODULE.md) for the folder, the manifest, the packages and the comparison with native octabam.
 3. Walk the guide's checklists: **Behave like the instrument** and **Integrate**, and for an effect **Sound quality** (aliasing, clipping, DC, idle behaviour). Tick an item only when you did it.
 4. Measure the [performance](#performance) and write `evidence/performance.json`: worst-case cycles, a benchmark against stock and a stress run. `npm run perf:audit -- check <that file>` must pass.
-5. Run `npm run module:doctor -- <id>` until every line is green. It reads the repository only: no firmware runs, and module code runs only as manifest declarations (for the cross-compatibility line). For a module listed from 7 October 2026 it also refuses a missing or failing performance record.
+5. Run `npm run module:doctor -- <id>` until every line is green. It reads the repository only: no firmware runs, and module code runs only as manifest declarations (for the cross-compatibility line). Its `dsp sources` line, and `npm run modules:check`, refuse a DSP source with a label that is a prefix of another label, and a `rep` in a module listed from 23 October 2026 (`scripts/dsp-source-gates.py`, octabam's two gates). For a module listed from 7 October 2026 it also refuses a missing or failing performance record.
 6. Run `npm run check`, and `npm run module:verify -- <id> --os <your 1.40C update>` for an Octatrack module.
 7. If you learned something the next developer needs and no guide says, write it into the guide that fits, as its own docs-only pull request ([Share what you learn](../DEVELOPER_WORKFLOW.md#share-what-you-learn)).
 
@@ -105,7 +105,7 @@ Shared behaviour on the Octatrack follows Elekloader's hook bus ([ADAPTING.md](h
 | Call event | Runs every handler at its stock site, lowest `order` first, then stock. A handler's result passes, takes or drops the call, as the event's contract says. | `subscribe`: `event`, `fn` (a C function) and `order` | `ev_play_increment`: Repitch changes a track's playback increment |
 | Raised event | Has no stock site. A module asks it, and the base runs every handler and returns their answers OR'd. | To ask it: `raise`, and a zero word `raise_<event>` in initialized data, which the loader points at the base's entry at install. To answer it: `subscribe`, as for a call event | `ev_mute_keep`: Mute Modes asks which tracks another module still reads while they are muted |
 | Take event | Gives its site to one subscriber: the first record, in `order`, whose `claims` is 0 or accepts the call. Its `entry` runs with every register as at the site, replays the stock instructions and returns to stock itself. | `subscribe`, with `fn` naming a `struct modwerk_take` {claims, entry} | `ev_octave_key`: POLY8, FM Synth and Scale Quantizer each claim their own tracks |
-| Table | Has no site. Modules contribute fixed-size records, and base code reads them in `order`. | `contribute`: `to`, `data` (the record's symbol) and `order` | `ot_machines`: each track machine's chooser row, page and renderer |
+| Table | Has no site. Modules contribute fixed-size records, and base code reads them in `order`. | `contribute`: `to`, `data` (the record's symbol) and `order` | `ot_machines`: each track machine's chooser row, page and renderer; `ot_midi_generators`: each MIDI generator's list row and pages |
 
 A `runtime.json` needs `schema` and at least one subscription or contribution. The other keys are optional:
 
@@ -135,6 +135,14 @@ Propose an event or a table when the gate says two behaviour hooks meet, or when
 2. Say which modules patch that site today. Until they subscribe, list each such pair in `compatibility.json` as `pending-migration`, with the event and `until`.
 3. The owner reviews the entry. Every later module subscribes or contributes instead of patching.
 
+### Propose an event on the Digitakt, Digitone or Digitakt II
+
+On the elemod machines the core owns the shared sites, and the core is pinned from an upstream release: elekloader's core (interface 2.1) for the Digitakt and Digitone, and toonst's digitakt2-perform core 1.0 for the Digitakt II ([sdk/imports/elekloader-digitakt2-perform-v1.0.json](../../sdk/imports/elekloader-digitakt2-perform-v1.0.json)). Its contract is `sdk/<machine>/core/interface.json` (`sdk/digitakt-ii/core-profile/interface.json` for the Digitakt II), and `modules:check` refuses a mod that uses anything else. So a mod that needs a stock site the core does not expose (an LFO or voice path, the render, a page the OS builds, state another mod could want) does not patch it: propose the event, and the mod ships once the core carries it.
+
+1. Write the proposal as one pull request against the core's interface file, before the module. For each event: its name (`ev_` and what happens), the stock site (OS release, address, length in whole instructions and a SHA-256 guard; addresses, lengths and hashes only, no stock bytes), when it runs and in which context (UI tick, key, sequencer, render), its C prototype, what a nonzero result means and its order rule. For shared state: a named table with its record size, room and reader. Add at the end: hook indices are an ABI, and a released one is never renumbered.
+2. Say which mods patch that site or hold that state privately today, and what each would subscribe to instead. On the Digitakt mk1 the SRC machines share the SRC page, render and LFO destination sites, so a proposal there covers them together.
+3. The owner reviews the proposal and takes it to the core's upstream. When the new core is released, Modwerk pins it with `npm run elekloader:update`, updates the interface file and records the import under `sdk/imports/`. The module pull request follows, subscribing in `build.json`, and it builds and runs on its own: a mod that shares another mod's state or code is refused ([no module depends on another](#cross-compatibility)).
+
 ### Flag every incompatibility
 
 Build your module to work beside everything else. Machine lists, effect lists and menu rows belong to the base, so modules that add to them never collide. Where your module truly cannot run beside another, that is allowed, but say exactly which: add the other module's id to `compatibility.conflicts` in `octamod.module.json`. The configurator then never offers both together.
@@ -156,7 +164,8 @@ The more of these the base owns, the more modules combine. Each is an event or a
 | Track machine list (SRC SETUP) | Base table `ot_machines`; on the card, POLY8's shared machine list |
 | Effect lists (FX1, FX2) | USB: the base has 128 effect ids, 109 of them for modules, and gives each installed effect module its own ([wider ids](../OCTATRACK_MORE_EFFECT_IDS.md)); card: stock's 32, 13 of them for modules, pinned |
 | SEQUENCER rows | Base table `ot_sequencer_rows` |
-| MIDI generators on a MIDI track's SRC SETUP | Not built: a base table of MIDI sources, as `ot_machines` is for audio tracks |
+| MIDI generators on a MIDI track (MIDI NOTE SETUP's list, the ARP page) | Base table `ot_midi_generators`; on the card, VECTOR's own registry ([midi-usb.md](midi-usb.md#midi-generators-and-midi-effects)) |
+| MIDI effects on a MIDI track's notes | Not built: an event where a MIDI track's note leaves the sequencer, with the base keeping every note-off |
 | Stock DSP effects a module hooks (Sidechain Compressor, Output Matrix) | Not built: DSP-side taps, one owner per stock site |
 | Module settings | Not built: upstream octabam's [OTX settings store proposal](https://github.com/sambanks/octabam/blob/main/docs/proposals/OTX_PROJECT_PROPOSAL.md) |
 

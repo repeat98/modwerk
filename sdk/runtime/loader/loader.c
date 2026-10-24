@@ -636,6 +636,13 @@ static int switch_to(unsigned position,struct runtime_module *to,const struct ru
     int ok=switch_locked(position,to,context,1);
     modwerk_machine_unlock(lock);return ok;
 }
+/* A restore's switch (loader.h modwerk_runtime_restoring): the position goes back to what it held before. */
+static uint8_t restoring;
+int modwerk_runtime_restoring(void) { return restoring; }
+static int restore_to(unsigned position,struct runtime_module *to,const struct runtime_context *context)
+{
+    restoring=1;int ok=switch_to(position,to,context);restoring=0;return ok;
+}
 /* The position of the live module `id`, else the first free one. */
 static unsigned position_of(uint32_t id)
 {
@@ -990,7 +997,7 @@ static enum mu_publication __attribute__((used)) publish_context(void *u, const 
 }
 /* The trial module is no longer reachable from a position; reclaim frees it once no task holds it. */
 static int __attribute__((used)) restore_context(void *u, const struct runtime_context *context)
-{ (void)u; if (modwerk_runtime_volatile_busy() || !switch_to(slot, previous, context)) return 0; previous = 0; return 1; }
+{ (void)u; if (modwerk_runtime_volatile_busy() || !restore_to(slot, previous, context)) return 0; previous = 0; return 1; }
 static int __attribute__((used)) retire_context(void *u, const struct runtime_context *context)
 { (void)u; if(modwerk_runtime_volatile_busy()) return 0; previous = 0; reclaim(context); return 1; }
 #ifdef __m68k__
@@ -1279,7 +1286,7 @@ static int __attribute__((used)) set_restore_context(void *u,const struct runtim
     if(change_set.published) {
         struct journal_row *r=&change_set.row[change_set.published-1u];
         uint32_t lock=modwerk_machine_lock();int valid=set_row_valid(r,1);modwerk_machine_unlock(lock);
-        if(!valid || !switch_to(r->position,r->before,context)) return 0;
+        if(!valid || !restore_to(r->position,r->before,context)) return 0;
         r->published=0;--change_set.published;
         if(change_set.published) return 0; /* recovery retains every image until the last row is restored */
     }

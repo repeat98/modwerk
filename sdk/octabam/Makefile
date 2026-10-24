@@ -59,6 +59,12 @@ HOST_ARCH := $(shell if [ "$$(uname -s)" = Darwin ] && [ "$$(sysctl -n hw.option
 setup: ## Install/build the toolchain (idempotent)
 	scripts/setup.sh
 
+.PHONY: setup-linux setup-mac
+setup-linux: ## Debian/Ubuntu/WSL2: apt install the system tools, build m68k-elf binutils 2.47 + gcc 16.2.0 from source (scripts/m68k-toolchain.sh), then make setup
+	scripts/setup-linux.sh
+setup-mac: ## macOS: brew install the system tools, then make setup
+	scripts/setup-mac.sh
+
 .PHONY: os
 os: ## Download the official Elektron OS (you supply your own copy)
 	scripts/fetch-os.sh

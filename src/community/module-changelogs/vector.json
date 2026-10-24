@@ -3,18 +3,20 @@
     "version": "0.2.4-experimental",
     "date": "2026-10-09",
     "changes": [
-      "Prevent packed VECTOR settings from making stock Part validation reject the saved bank at startup, which reset machines to STATIC and left PLAY stuck on the first step. Preserve existing S2 version 1/2 settings while retaining stock validation of other data.",
-      "Two-instance Part/project save-reload, saved-card fresh load and battery-RAM-only restart pass in the emulator. Physical reboot/audio remain unverified under the owner-approved exception for this exact version. Already reset projects require restoration from a backup.",
-      "USB package (14 Oct 2026; distribution only, the module source and version are unchanged): loads over USB as one independent package beside every other module, on a Modwerk base built with site events. What it shares with other machines goes through the base's machine chooser table and take events instead of a machine group, and its authored bytes that coincide with stock are rebuilt from your own OS at install. Emulator and host tests only; no hardware run of this package. The owner waived hardware evidence for this exact version's USB package for the beta.",
-      "Documentation-only (19 October 2026): warn that switching a VECTOR track back to STATIC or FLEX with SPAN 8 or higher can leave the bank empty after a save and reboot, read from the source and not yet reproduced, with how to avoid it and keep the saved trigs ([#596](https://github.com/repeat98/modwerk/issues/596)). The firmware is unchanged and the problem is not fixed."
+      "Fixes saved VECTOR settings making the Octatrack reject the bank at startup, which reset machines to STATIC and left PLAY stuck on the first step. Existing settings are kept.",
+      "Projects already reset by this bug need to be restored from a backup.",
+      "Installs over USB beside every other module on the Modwerk beta base.",
+      "Documentation only: switching a VECTOR track back to STATIC or FLEX with SPAN 8 or higher can empty the bank after a save and reboot; the guide shows how to avoid it (#596).",
+      "Known issue: #596 is not fixed, and a reboot and the audio are not yet tested on hardware."
     ]
   },
   {
     "version": "0.2.3-experimental",
     "date": "2026-10-06",
     "changes": [
-      "First Modwerk catalog release of VECTOR as a native SRC pattern generator for Flex/Static sample phrases.",
-      "Provide backing-pool/sample selection and both native control pages; generated phrases edit the current pattern. Saved-project and hardware behaviour remain unverified."
+      "First Modwerk release of VECTOR, an SRC pattern generator for Flex and Static sample phrases.",
+      "Adds sample selection and two control pages; generated phrases edit the current pattern.",
+      "Known issue: saved projects and hardware are not yet tested."
     ],
     "sourceCommit": "10775906ee490a590460c5fa7215cf1bd1db61cf"
   }

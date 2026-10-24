@@ -3,7 +3,7 @@ import { DatabaseSync } from 'node:sqlite'
 import { readFileSync, readdirSync } from 'node:fs'
 import { COMMUNITY_RULES_VERSION } from '../legal/policy'
 import { testDatabase, testServer } from './test-server'
-import { communityModule } from './modules'
+import { COMMUNITY_MODULES, communityModule } from './modules'
 import { parseModuleReleases, type ModuleRelease } from './module-release-contract'
 import type { BellItem } from './notification-contract'
 import { notificationLines } from './notification-text'
@@ -220,6 +220,15 @@ describe('module update subscriptions', () => {
     expect(db.prepare('SELECT version FROM module_release_state').get()!.version).toBe('10.0.0')
     expect(() => parseModuleReleases(manifest([release(), release()]))).toThrow()
     expect(() => parseModuleReleases(manifest([{ ...release(), href: 'https://evil.example/' }]))).toThrow()
+  })
+
+  it('accepts release links from every catalogue machine and rejects malformed machine routes', () => {
+    const releases = COMMUNITY_MODULES.map(({ id, name, version, href }) => ({ id, name, version, href }))
+    expect(releases.some(item => item.href === '#analog-rytm-mkii/module/filter-hz')).toBe(true)
+    expect(parseModuleReleases(manifest(releases))).toEqual(releases)
+    for (const href of ['https://evil.example/module/filter-hz', '#/module/filter-hz', '#analog-rytm-mkii/module/../filter-hz', '#analog-rytm-mkii/module/filter-hz?redirect=elsewhere']) {
+      expect(() => parseModuleReleases(manifest([{ ...release(), href }]))).toThrow('Invalid module release.')
+    }
   })
 
   it('uses a Workers-supported fetch mode and rejects redirected inventories before recording releases', async () => {

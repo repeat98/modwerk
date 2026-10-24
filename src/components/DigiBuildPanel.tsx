@@ -6,13 +6,13 @@ import { builtModules } from '../community/build-follow-up'
 import { useDownloadFollows } from '../community/useDownloadFollows'
 import { trackFirmwareDownload } from '../community/usage'
 import { DIGI_MODS, type DigiMod } from '../devices/digi-mods'
-import { BUILDER_SOURCE, buildLogText, planBuild } from '../engine/elekloader/machine-build'
+import { BUILDER_SOURCE, buildLogText, builtLock, planBuild } from '../engine/elekloader/machine-build'
 import { digiDownloadsEnabled } from '../engine/elekloader/protocol'
 import { FIRMWARE_SHARING_NOTICE, FLASHING_RISKS } from '../firmware-notices'
 import { RiskAcceptance } from './ConfigurationLayout'
 import { RecoveryNotice } from './RecoveryNotice'
 import { assetUrl } from '../hosting'
-import { useDigiBuild } from '../hooks/useDigiBuild'
+import { useDigiBuild, type BuildStorage } from '../hooks/useDigiBuild'
 import type { useDigiFirmware } from '../hooks/useDigiFirmware'
 import { Icon } from './Icon'
 import { BuildProgressIndicator } from './BuildProgressIndicator'
@@ -25,19 +25,20 @@ function save(data: BlobPart, name: string, type = 'application/octet-stream') {
 }
 const kib = (bytes: number) => (bytes / 1024).toFixed(0) + ' KB'
 
-export function DigiBuildPanel({ device, firmware, moduleIds, onExport, exported, canExport, results }: { device: { id: DigiMod['device']; name: string; firmware?: { recovery: string } }; firmware: ReturnType<typeof useDigiFirmware>; moduleIds: readonly string[]; onExport: () => void; exported: boolean; canExport: boolean; results: HTMLElement | null }) {
+export function DigiBuildPanel({ device, firmware, moduleIds, storage, onExport, exported, canExport, results }: { device: { id: DigiMod['device']; name: string; firmware?: { recovery: string } }; firmware: ReturnType<typeof useDigiFirmware>; moduleIds: readonly string[]; storage?: BuildStorage; onExport: () => void; exported: boolean; canExport: boolean; results: HTMLElement | null }) {
   const w = useSetWords()
   const downloadsEnabled = digiDownloadsEnabled(device.id)
   const ready = firmware.state === 'ready' && !!firmware.file, release = ready ? firmware.firmware?.release : undefined
   const plan = release ? planBuild(device.id, release, moduleIds) : undefined
   const missing = plan?.missing.map(id => DIGI_MODS.find(mod => mod.device === device.id && mod.id === id)?.title ?? id) ?? []
-  const { state, check, build, cancel } = useDigiBuild(device.id, ready && !missing.length ? firmware.file : undefined, release, moduleIds)
+  const { state, check, build, cancel } = useDigiBuild(device.id, ready && !missing.length ? firmware.file : undefined, release, moduleIds, storage)
   const [version, setVersion] = useState(''), [accepted, setAccepted] = useState(''), [downloaded, setDownloaded] = useState(''), [recoveryKnown, setRecoveryKnown] = useState('')
   const {followDownloads,followNotice}=useDownloadFollows()
   const deviceInfo = 'device' in state ? state.device : undefined, key = 'key' in state ? state.key : ''
   const shown = version || deviceInfo?.default_version || '2.0a', length = deviceInfo?.version_len ?? 4
   const result = state.phase === 'built' && state.result.version === shown ? state.result : undefined
   // ticked for this exact file: a build that gives other bytes asks again
+  const storageId = result ? builtLock(result)?.id : undefined
   const knowsRecovery = !!result?.sha256 && recoveryKnown === result.sha256
   const downloadName = result ? 'Modwerk-' + device.id + '-' + result.files[0].name : ''
   const approvalKey = JSON.stringify([device.id,ready ? firmware.firmware?.sha256 : '',[...moduleIds].sort(),shown])
@@ -80,7 +81,7 @@ export function DigiBuildPanel({ device, firmware, moduleIds, onExport, exported
         {result && downloadsEnabled && <RecoveryNotice machine={device.id} steps={result.recovery || device.firmware?.recovery} checked={knowsRecovery} onChange={checked => setRecoveryKnown(checked ? result.sha256 : '')}/>}
       </div>
       <div className="build-actions">
-        {busy ? <button className="button button-quiet" onClick={cancel}>Cancel build</button> : result && downloadsEnabled ? <button className="button button-primary" disabled={!riskAccepted || !knowsRecovery} onClick={() => { save(result.files[0].data, downloadName); setDownloaded(key); if (state.phase === 'built' && device.id !== 'digitakt-ii') { const ids=state.moduleIds.map(id => device.id + '-' + id);trackFirmwareDownload(ids, device.id);followDownloads(ids, { machine: device.name, os: release ?? '', modules: builtModules(ids) }) } }}><Icon name="download" size={16}/>Download .syx</button> : null}
+        {busy ? <button className="button button-quiet" onClick={cancel}>Cancel build</button> : result && downloadsEnabled ? <button className="button button-primary" disabled={!riskAccepted || !knowsRecovery} onClick={() => { save(result.files[0].data, downloadName); setDownloaded(key); if (state.phase === 'built' && (device.id === 'digitakt' || device.id === 'digitone')) { const ids=state.moduleIds.map(id => device.id + '-' + id);trackFirmwareDownload(ids, device.id);followDownloads(ids, { machine: device.name, os: release ?? '', modules: builtModules(ids) }) } }}><Icon name="download" size={16}/>Download .syx</button> : null}
         {!busy && (state.phase === 'ready' || state.phase === 'failed' || state.phase === 'built'
           ? <button className={'button ' + (result ? 'button-quiet' : 'button-primary')} disabled={!!versionError || !riskAccepted} onClick={() => void build(shown)} aria-describedby="digi-build-status"><Icon name="sliders" size={16} />{result ? 'Build again' : 'Build firmware'}</button>
           : <button className="button button-primary" disabled={!ready || !!missing.length || busy} onClick={() => void check()} aria-describedby="digi-build-status"><Icon name="check" size={16} />{state.phase === 'blocked' ? 'Check again' : 'Check selection'}</button>)}
@@ -100,6 +101,7 @@ export function DigiBuildPanel({ device, firmware, moduleIds, onExport, exported
       {result && downloadsEnabled && downloaded === key && state.phase === 'built' && <DownloadedBuildOverview build={{ machine: device.name, os: release ?? '', modules: builtModules(state.moduleIds.map(id => device.id + '-' + id)) }}/>}
       {result && <section className="configuration-section"><details><summary>File identity &amp; builder</summary><dl className="build-identity">
         <dt>SHA-256</dt><dd>{result.sha256}</dd><dt>Mods</dt><dd>{result.mods.join(', ')}</dd>
+        {storageId && <><dt>Mod storage</dt><dd>Layout {storageId}, saved with this {w.set} for its next build</dd></>}
         <dt>Builder</dt><dd><a href={BUILDER_SOURCE.repository + '/tree/' + BUILDER_SOURCE.commit} target="_blank" rel="noreferrer">elekloader {BUILDER_SOURCE.commit.slice(0, 7)} ↗</a> by irpina, GPL-3.0-or-later · <a href={assetUrl('licenses/THIRD_PARTY_NOTICES.html')} target="_blank" rel="noreferrer">Licence notices</a></dd>
       </dl></details></section>}
       {lines.length > 0 && <section className="configuration-section"><details open={state.phase === 'failed'}><summary>Build log</summary>

@@ -400,7 +400,8 @@ effect's buffer. RINGMOD SC is the first reader; CHARACTER 0.1.2's KEY
 - Host, ColdFire side (`test_resident_engines_board.py` modes 39-40, `test_controller_board.py`, ASan/UBSan): a reader
   alone places, resets (1,026 words) and enables the bus on both cores and pays its price; Sidechain beside it needs no
   second bus job and never enables before the bus is on (`sc_before_bus`); removal in both orders; with no room for the
-  price a reader is refused (`RUNTIME_CYCLES`) while Sidechain is still admitted and charged nothing, as on main; the bus
+  price a reader is refused at admission (`RUNTIME_CYCLES`; at its switch it goes in and waits for the price, mode 60,
+  beta finding 64) while Sidechain is still admitted and charged nothing, as on main; the bus
   waits while a slot buffer covers its window. The loader's ABI 9 parsing, claims and refusals (`host_test.c`,
   `test_runtime_loader.py`).
 - The site (`module-set.ts`, `module-set.test.ts`): an ABI 9 reader is chosen and synced only to a base reporting ABI

@@ -515,6 +515,7 @@ h2 { font-size: 16px; letter-spacing: -.15px; font-weight: 600; }
 .checkout-card .build-section { display: block; padding: 0; border: 0; background: none; }
 .checkout-card .build-actions { margin-top: 16px; }
 .checkout-card .risk-note, .checkout-card .file-footnote { margin: 0; }
+.builder-credit { margin: 0 2px 0 0; text-align: right; color: var(--faint); font-size: 12px; }
 .risk-acceptance { padding-bottom: 18px; border-bottom: 1px solid var(--line); }
 .risk-acceptance p { margin: 0; color: #b5b2c2; font-size: 12px; line-height: 1.7; }
 .risk-acceptance strong { color: #c8c3de; }

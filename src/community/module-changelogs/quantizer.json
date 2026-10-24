@@ -3,16 +3,16 @@
     "version": "0.1.3-experimental",
     "date": "2026-10-11",
     "changes": [
-      "Fix MIDI trig-mode popup freezes caused by the octave display hook skipping a stack argument. MIDI keeps its stock octave value and formatting; audio scale/root behavior is preserved.",
-      "Physical hardware, chip worst-case timing and complete memory bounds have not been verified for this update.",
-      "USB package (14 Oct 2026; distribution only, the module source and version are unchanged): loads over USB as one independent package beside every other module, on a Modwerk base built with site events. What it shares with other machines goes through the base's machine chooser table and take events instead of a machine group, and its authored bytes that coincide with stock are rebuilt from your own OS at install. Emulator and host tests only; no hardware run of this package. The owner waived hardware evidence for this exact version's USB package for the beta."
+      "Fixes freezes when opening the trig-mode popup on MIDI tracks. MIDI keeps its stock octave display; SCALE and ROOT on audio tracks work as before.",
+      "Available over USB as its own package on the Modwerk beta base; the module itself is unchanged.",
+      "Known issue: not yet tested on a unit."
     ]
   },
   {
     "version": "0.1.2-experimental",
     "date": "2026-10-01",
     "changes": [
-      "Documentation-only: add real emulator screenshots of the selection and control pages, access instructions and capture provenance. The firmware implementation is unchanged."
+      "Documentation only: adds screenshots of the selection and control pages and explains how to open them."
     ],
     "sourceCommit": "dd9ea93fd62a3699d54f5e63c5f1a33fe1544cad"
   },
@@ -20,7 +20,7 @@
     "version": "0.1.1-experimental",
     "date": "2026-10-01",
     "changes": [
-      "Enable browser firmware builds from verified source packages, with native/browser composition and rejection checks recorded."
+      "Scale Quantizer can now be built in the browser."
     ],
     "sourceCommit": "9c4e0e3b7990c6952812d89ac165dfa14151c3ee"
   },
@@ -28,8 +28,8 @@
     "version": "0.1.0-experimental",
     "date": "2026-10-01",
     "changes": [
-      "First Modwerk catalog release of the v2.9-derived scale quantizer, adding SCALE, ROOT and synth GLIDE settings.",
-      "Snap the PTCH knob and chromatic trig keys to the selected scale and root."
+      "First Modwerk release of the scale quantizer (based on v2.9), adding SCALE, ROOT and synth GLIDE settings.",
+      "Snaps the PTCH knob and chromatic trig keys to the selected scale and root."
     ],
     "sourceCommit": "d1136ce4c65ea7e1a00c4516cd4aa41c4b0c0d56"
   }

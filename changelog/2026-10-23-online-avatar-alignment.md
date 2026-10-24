@@ -1,0 +1,1 @@
+The forum's online list now keeps uploaded photo avatars and initials at the same vertical position. Previously, the different inline baselines made members with a photo appear a few pixels higher than the others.

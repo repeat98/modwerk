@@ -1,0 +1,31 @@
+{
+  "scope": "compiled ColdFire planner executed in synthetic CPU memory; no stock OS or device access",
+  "objectSha256": "862fbf786e4388477f7c3efa7601dad7bef8d9583c5b0a21db5351e3276594d4",
+  "runnerSha256": "ced5d49637b4179a5c137b09ca45895cabad0fd827b801dd88518322eb9e15e7",
+  "sourceSha256": {
+    "planner.c": "01c9c25efa363679a591969931dd376a3b694a949dd8b9f89eda4bf77a88cee4",
+    "planner.h": "4faab6f03e679d0b9389dbf016416afc87fb4d2d354952b22efb81a0381c5c1b",
+    "native_execution.py": "175efd2ada6b81d0e76114b7343d3ed29eece13eb93084febdf42f102bbef98b",
+    "stock_probe/planner_probe.cpp": "3b1ea748376bfec80833af79f705505ca452b81b50811a6cdda3be5f54ca7d97"
+  },
+  "exitCode": 0,
+  "stdout": [
+    "SOURCE_SHA256: 3b1ea748376bfec80833af79f705505ca452b81b50811a6cdda3be5f54ca7d97",
+    "PASS: 164 native planner vectors, callback ABI, preserved registers and atomic errors"
+  ],
+  "stderrLines": 8,
+  "stderrSha256": "21495107133b98459d58d78262e4935ad828b0578af9c62da412effd72215f99",
+  "hardware": "not tested",
+  "audio": "not tested",
+  "timing": "not measured",
+  "emulator": {
+    "octabamCommit": "8250be0c23ca0a0a953cb7e5721e3bdb98dadfe5",
+    "mc68kCommit": "4a6d0d17a1f2b30077ab726c27fe9bb770fa0456",
+    "image": "sha256:da70d46e10b243277fa3ae2e015f7258d56b3ee08ca4be47e61899958872e792",
+    "hostCompiler": "GNU 13.3.0",
+    "lto": false,
+    "emacGate": "passed",
+    "peripheralGate": "passed",
+    "dspExecution": false
+  }
+}

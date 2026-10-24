@@ -71,7 +71,7 @@ describe('mobile configuration workspaces', () => {
   it.each(['digitakt', 'digitone'] as const)('retains %s selection, compatibility and JSON actions without starting a firmware worker', async id => {
     const device = DEVICES_BY_ID[id] as typeof DEVICES_BY_ID[string] & { id: DigiMod['device'] }
     const configuration = newConfiguration('Mobile set', [], true, undefined, id), onDialog = vi.fn()
-    await act(() => root.render(createElement(DigiConfiguration, { device, configuration, configurations: [configuration], onSelect: noop, onDialog, onToggle: noop, onImport: noop, onReport: noop })))
+    await act(() => root.render(createElement(DigiConfiguration, { device, configuration, configurations: [configuration], onSelect: noop, onDialog, onToggle: noop, onImport: noop, onStorageLock: noop, onReport: noop })))
     noFirmware()
     expect(container.querySelector('input[accept="application/json,.json"]')).not.toBeNull()
     expect(container.querySelector('[aria-label="Choose configuration"]')).not.toBeNull()

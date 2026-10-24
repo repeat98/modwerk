@@ -3,24 +3,19 @@
     "version": "0.1.2-experimental",
     "date": "2026-10-10",
     "changes": [
-      "A COMPRESSOR saved before the module was installed (on stock firmware) now comes up with its side-chain off: KEY OFF, KFLT and KGN centred, MON OFF. Stock firmware leaves 127/0/0/0 in the hidden page-2 slots, which 0.1.1 read as KEY \"T127\" with the key filter shut and the key gain at minimum, so the key barely reached the detector after KEY was turned down (Modwerk report #321).",
-      "A KEY already set to OFF or T1..T8 is never changed, so projects saved with 0.1.1 load as before. The check runs once per audio frame over the sixteen FX slots and never marks the Part as edited.",
-      "The ColdFire code grows by 204 bytes. 12 selections that 0.1.1 built now run out of effect-menu space, each holding Euclid with Scale Quantizer or eight or more modules; every selection of one or two other modules still builds.",
-      "Hardware: author-reported functional test on an MKI with two instances across both DSP cores, Part/project save and reload and a power cycle. Duration was not reported and no stress or maximum-load test was made.",
-      "USB package (14 Oct 2026; distribution only, the module source and version are unchanged): loads over USB on the Modwerk beta base, which carries Sidechain’s DSP engine resident and dormant and admits this exact package through a trust row built into it. The package calls the base’s write lease by address, so it needs that exact base; with an older base the site asks for a base update first. It answers Mute Modes’ ev_mute_keep for its key track. Host tests only: the emulator controllers scenario has not run, and there is no hardware run of this package. The owner waived hardware evidence for this exact version’s USB package for the beta.",
-      "Site sync on the beta base (beta test run 2, 14 Oct 2026; the package is unchanged): removing it while its controller runs no longer ends the sync with “The Octatrack refused this step.” The base answers the first removal busy while it stops the controller and drops the staged package; the site now stages it again, as it does for the base's other busy refusals. Checked on a development twin through the development link (Sidechain installed, running, removed in one command) and by the site's tests; the site's own path has not run on the unit yet.",
-      "USB package bound to the new beta base acf91e0a (beta test run 2, 14 Oct 2026, rebuilt 15 Oct with the resident engines placed on demand, BBD Delay's chooser row and a startup without the wave's outline; the base's addresses moved, so the package is relinked against them, its module code unchanged and not yet run on hardware): the base now puts a removed machine's per-track routines back to stock, shows what a picked effect took and each core's DSP budget (the STATUS page's new DSP rows; DSP FULL comes from it), and no longer refuses effect picks for a bank whose Parts never fitted. A tester base from before needs the base update first.",
-      "Modwerk base, key timing across the DSP cores (15 Oct 2026; an owner-approved change to the base's resident Sidechain engine; this module's source, card build and version are unchanged; in the beta base acf91e0a): with KEY on a track of the other core, each core started its own block counter when the base switched it on, and the base switches the cores on at different blocks. So the key reached the detector and MON 1 to 4 blocks late depending on the enable (T5 keyed from T3 lagged it by 89 samples after one enable and 121 after another), and about one enable in four read the key while the other core was writing it. The core switched on second now takes over the other core's counter, so the key is two blocks late on every enable, as in the native build, and never read while it is written. Checked in the DSP interpreter with both cores (enable orders 0 to 5 blocks apart either way, several timings between the cores); not yet measured on the unit.",
-      "Modwerk base, MON (15 Oct 2026, the same base change): a COMPRESSOR taken off a track while MON was ON no longer leaves that track looping the last 16 samples of the key until the module is removed. Shown in the DSP interpreter; not seen or checked on the unit.",
-      "USB package bound to the new beta base d6bfff70 (22 Oct 2026; the module code is unchanged, the package differs only in the two base addresses it calls): the base loads Sidechain's DSP engine and the key bus only while a track runs COMPRESSOR or one of the bank's Parts names it, not when the module is installed, so installing it no longer fails with “not enough module memory” when the bank's effects fill a DSP core (#791). In a bank without COMPRESSOR the engine is put away once the unit is stopped. A COMPRESSOR first picked while the unit plays works as stock's, without the KEY page, until the transport stops. The base also takes Analog BD's DSP engine from Analog BD's package, and a trust row pins a controller's ColdFire part. Host-tested, and run on the owner's MKII on a development twin of this base (Sidechain and the key bus placed when COMPRESSOR was picked and unplaced when it went, twice); not yet on the release image or across a power cycle."
+      "Fixes a COMPRESSOR saved on stock firmware coming up with the key barely reaching it (#321). It now starts with KEY OFF; KEY settings saved with 0.1.1 load as before.",
+      "Twelve large selections that 0.1.1 built (Euclid with Scale Quantizer, or eight or more modules) no longer fit in the effect menu.",
+      "Installs over USB on the beta base, also when the bank's effects fill a DSP core (#791). With Mute Modes, a muted key track still drives the compressor.",
+      "On the beta base: a key from the other DSP core now always arrives with the same short delay, and removing the module no longer stops the sync with an error.",
+      "Known issue: a COMPRESSOR first picked while the unit plays has no KEY page until you stop the transport. The USB version is not yet tested across a power cycle."
     ]
   },
   {
     "version": "0.1.1-experimental",
     "date": "2026-10-05",
     "changes": [
-      "Integrate Sidechain Compressor into the shared browser builder so it can compose with compatible modules.",
-      "Keep native COMPRESSOR key and monitoring controls. Recorded software/resource checks do not claim broad hardware qualification."
+      "Can now be combined with other compatible modules in the firmware builder.",
+      "Keeps the COMPRESSOR's key and monitoring controls."
     ],
     "sourceCommit": "5434063c4fc84a37020fbad21c1c4a8db79bfbba"
   },
@@ -28,8 +23,9 @@
     "version": "0.1.0-experimental",
     "date": "2026-10-05",
     "changes": [
-      "First Modwerk catalog release as standalone firmware, with COMPRESSOR key-source selection and sidechain monitoring controls.",
-      "USB package rebuilt for the fixed beta base (beta test run 1, 14 Oct 2026). On the unit its controller never started before, so the KEY page was missing: the base's owned DSP job channel closed at boot, and a stock delay on T3 or T7 FX2 kept it waiting. Both are fixed, and its page record now keeps stock's page-1 enables and no longer lands one byte high (a GCC 16.2 miscompile that crashed the unit when COMPRESSOR's SETUP opened). Its frame hook takes the write lease only when a COMPRESSOR needs resetting. Seen on a development twin of the fixed base: KEY, KFLT, KGN and MON on SETUP, and T4 ducked 27 dB keyed from T3 on the same core. Not yet tested: keying across cores, MON, Mute Modes keeping the key track, the tester image and a power cycle."
+      "First Modwerk release as standalone firmware: COMPRESSOR gets a key source selection and side-chain monitoring.",
+      "Over USB on the fixed beta base, the KEY page now appears and opening COMPRESSOR's SETUP no longer crashes the unit.",
+      "Known issue: over USB, keying from the other DSP core, MON and a power cycle are not yet tested."
     ],
     "sourceCommit": "8cce62689c269a5d6d70bfc8e087a843eb3a8caf"
   }

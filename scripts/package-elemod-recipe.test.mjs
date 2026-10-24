@@ -37,6 +37,9 @@ test('exports explicit authored bytes and LEA with guards, and refuses partial i
   assert.equal(packageRecipe({ ...plan, sites: [lea] }).sites[0].new, '4bf900000000')
   assert.equal(packageRecipe({ ...plan, sites: [bytes] }).sites[0].new, bytes.new)
   for (const site of [{ ...bytes, target: 'bad' }, { ...bytes, new: '4e714e714ef9' }, { ...lea, register: 8 }]) assert.throws(() => packageRecipe({ ...plan, sites: [site] }))
+  const pea = { ...guard, op: 'bytes', new: '487900000000', kind: 'code', relocs: [{ at: 2, target: 'digimono_sname' }] }
+  assert.deepEqual(packageRecipe({ ...plan, sites: [pea] }).sites[0].relocs, [[2, 'abs32', 'sym:digimono_sname', 0]])
+  for (const relocs of [[{ at: 0, target: 'digimono_sname' }], [{ at: 2, target: 'digimono_sname', addend: 1 }]]) assert.throws(() => packageRecipe({ ...plan, sites: [{ ...pea, relocs }] }))
 })
 
 test('an export published without resources.core still reproduces, and nothing else may differ', () => {

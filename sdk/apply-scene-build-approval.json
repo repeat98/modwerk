@@ -1,13 +1,13 @@
 {
   "kind": "owner-approved-update",
   "id": "apply-scene",
-  "version": "0.1.0-experimental",
+  "version": "0.2.0-experimental",
   "approvedBy": "repeat98",
-  "approvedOn": "2026-10-21",
+  "approvedOn": "2026-10-23",
   "waived": [
     "chip-worst-case-cycles"
   ],
-  "sourceSha256": "37051fcea2b241e80d78c3ae8aed63414da53f9a8adcbcac29ad9546c5b7efce",
-  "ownerStatement": "Approved by repeat98 in chat 21 Oct 2026: \"waive and merge\", then \"waived\", for APPLY SCENE 0.1.0-experimental (PR #744), after being told its performance record has no static cycle bound.",
-  "reason": "The module's cost is dominated by stock's page-1 parameter writer, which took 76 to 1,404,162 instructions per write in one apply, so nothing in this repository bounds it and the contributor could not give a static upper bound. Measured emulator figures are in evidence/performance.json (11,083,553 executed ColdFire instructions for the worst blend, 8,268,075 for verify.py's worst case), against a 100 ms key-press target; they are emulator measurements, not chip cycles or hardware results. The owner waives only the missing static worst-case bound for this exact native source. Hardware results remain as recorded in evidence/hardware.md (one MKII, 15 Oct 2026, functional only); no waiver covers current-build hardware."
+  "sourceSha256": "d837cd5f07c278d4e7bbc7b0a14fe96197a9f9928fef1fff03ad229b3a8cc0f2",
+  "ownerStatement": "Approved by repeat98 in chat on 23 Oct 2026 for PR #830: \"Approve the documented exception for 0.2.0\", after disclosure of the missing static cycle bound, retained 0.1.0 load/stress measurements, and unverified hardware coverage.",
+  "reason": "Exact Apply Scene 0.2.0-experimental native source only. Stock's page-1 writer has no static bound in this repository. The owner accepts the retained, explicitly labelled 0.1.0 emulator load/stress measurements for the unchanged Part-apply path; new TRIG + SCENE measures at most 98,681 executed emulator instructions, not chip cycles. MKII functional and project/reboot results remain as reported in evidence/hardware.md. Hardware timing, MKI, MIDI mode, later trig pages, pattern/Part changes inside the chord, the card build on hardware and the site review/Keep/Undo flow remain unverified. This exception records no new hardware result and does not apply to other versions or sources."
 }

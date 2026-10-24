@@ -126,7 +126,7 @@ for (const machine of machines.filter(item => item.sdk?.platform === 'elemod')) 
       const target = { device: device.key, product: device.name, os: release, syx_sha256: identity.syxSha256, section3_sha256: identity.mainSha256, section3_len: identity.mainLength }
       const module = elfToElemod(await readFile(object), document, build, target)
       const sites = port.sites
-      for (const site of sites) if ('target' in site && !Object.hasOwn(module.symbols, site.target) && !module.imports.includes(site.target)) module.imports.push(site.target)
+      for (const target of sites.flatMap(site => 'target' in site ? [site.target] : (site.relocs ?? []).map(reloc => reloc.target))) if (!Object.hasOwn(module.symbols, target) && !module.imports.includes(target)) module.imports.push(target)
       module.imports.sort()
       parseElemod(module)
       const plan = { schemaVersion: 1, machine: machine.id, id: document.id, version: document.version, release, module, sites, derive: build.derive,

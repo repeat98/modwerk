@@ -22,6 +22,13 @@ runs short. Everything here was done on the owner's MKII on 11 October 2026. Why
 - Keep each command short: a few steps, a time limit, its output read at once. A long run goes in the
   background and logs every step, and you look at the log.
 - Never power-cycle on your own; ask the owner. Never flash.
+- A Keep on a RAM-booted base overwrites the owner's kept modules. The kept set lives in two card files,
+  `/MODWERK0.SET` and `/MODWERK1.SET`, written alternately and stamped with the writing base's identity
+  (`modset.c`); a base loads neither file another base wrote. Two Keeps on a twin (a `try`, then a `remove`)
+  replace both, and after the power cycle the flashed base starts with no modules (23 October 2026, MKII, flashed
+  `a408c505`, twin `8dc7692c`). Before a twin, note the flashed set (`inventory`) and where its packages are; base-bound
+  ones (Analog BD, Output Matrix) must be the copies bound to that base, from the commit that built it. Afterwards,
+  power-cycle and `try` each again.
 - After a crash restart, or finding the unit on the flashed base with no power cycle you know of, ask for a power
   cycle before the next RAM boot: one such boot hung at the logo (12 October 2026,
   [traps](OCTATRACK_HARDWARE_TRAPS.md#dsp-loader-dynamic-dsp-code)).
@@ -72,9 +79,9 @@ error and moves on. macOS `nc -U` hangs up before the reply, so use the script.
 
 | Step | What it does |
 |---|---|
-| `KEY`, `KEY+KEY`, `KEY*N` | press (holding all but the last); `T1`-`T8`, `TRIG1`-`TRIG16`, `FX1`, `FX2`, `SRC`, `AMP`, `LFO`, `FUNC`, `YES`, `NO`, `UP`, `DOWN`, `LEFT`, `RIGHT`, `PLAY`, `STOP`, `REC`, `CUE`, `PATTERN`, `BANK`, `PROJ`, `PART`, `AED`, `ARR`, `MIDI`, `PUSHA`-`PUSHF` |
+| `KEY`, `KEY+KEY`, `KEY*N` | press (holding all but the last); `T1`-`T8`, `TRIG1`-`TRIG16`, `FX1`, `FX2`, `SRC`, `AMP`, `LFO`, `FUNC`, `YES`, `NO`, `UP`, `DOWN`, `LEFT`, `RIGHT`, `PLAY`, `STOP`, `REC`, `CUE`, `PATTERN`, `BANK`, `PAGE`, `PROJ`, `PART`, `AED`, `ARR`, `MIDI`, `SCENEA`, `SCENEB`, `PUSHA`-`PUSHF` (`FUNC+PAGE`: PATTERN SCALE, where LEVEL sets the length) |
 | `+KEY`, `-KEY` | hold, let go |
-| `encA+3`, `encLEVEL-2`, `fader128` | encoders A-F, LEVEL, the crossfader |
+| `encA+3`, `encLEVEL-2`, `fader128` | encoders A-F, LEVEL, the crossfader. Some setup values take several detents a step: MIDI NOTE SETUP's CHAN, BANK and PROG did not move on `encA+3`, and `encA+20` moved CHAN by 6 (21 October 2026) |
 | `w300` | wait 300 ms (rarely needed: the steps below wait for their own result) |
 | `pick:T1:FX2:SPRING_REV` | pick an effect by name (spaces as `_`), FX1 or FX2: the chooser opens, LEVEL scrolls the exact rows, YES; done once the track runs it (about 120 ms after YES); fails at once if the loader refuses. A notice on screen eats its first keys and it times out after 5 s: after removing a module the bank names (MISSING MODULES) send `YES` first |
 | `part1`-`part4` | switch Parts (PART + an arrow), done once the Part changed |

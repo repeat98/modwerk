@@ -12,6 +12,7 @@ import { StateChip } from './ModuleGrid'
 import { ModulePreview } from './ModulePreview'
 import { Icon } from './Icon'
 import type { PrepareUpdate, StressTest } from './OctatrackUpdate'
+import './link-hero.css'
 import './octatrack-link.css'
 
 const STEPS = ['Sync', 'Self-test', 'Try it']
@@ -137,7 +138,7 @@ export function LoadDialog({ link, set, inventory, previousName, prepareUpdate, 
         </>}
       {problem && <p className="file-error" role="alert">{problem.message}</p>}
       {error && <p className="file-error" role="alert">{error}</p>}
-    </> : step === 'done' ? <p className={'base-install-intro ' + (error || notice?.tone === 'error' ? 'file-error' : 'success-note')} role={error || notice?.tone === 'error' ? 'alert' : 'status'}>{error || notice?.text || (status === 'busy' ? 'Another tab or app is using your Octatrack, so nothing was sent.' : 'Done.')}</p>
+    </> : step === 'done' ? <p className={'base-install-intro ' + (error || notice?.tone === 'error' ? 'file-error' : 'success-note')} role={error || notice?.tone === 'error' ? 'alert' : 'status'}>{error || notice?.text || (status === 'busy' ? 'Another browser window or app is using your Octatrack, so nothing was sent.' : 'Done.')}</p>
     : <>
       <ol className="load-steps" aria-label="Steps">{STEPS.map((label, i) => <li key={label} className={i < index ? 'is-complete' : i === index ? 'is-active' : undefined} aria-current={i === index ? 'step' : undefined}>{label}</li>)}</ol>
       {/* Sending and the self-test report how far they are; the trial waits on you. */}

@@ -3,6 +3,8 @@
 import { digestBytes, UPLOAD_MAX_BYTES } from './upload-wire.ts'
 
 export const SET_CHANGES = 20
+/** The newest package ABI the base's set parser takes (loader.h RUNTIME_ABI, set_package.h). */
+export const SET_MAX_ABI = 10
 export function encodeModuleSet(base: string, baseline: string, packages: readonly Uint8Array[]): Uint8Array {
   const baseBytes = digestBytes(base), baselineBytes = digestBytes(baseline)
   if (!packages.length || packages.length > SET_CHANGES) throw new Error('A module set needs between 1 and 20 changes.')
@@ -11,7 +13,7 @@ export function encodeModuleSet(base: string, baseline: string, packages: readon
   for (const data of packages) {
     if (data.length < 32) throw new Error('A module package is incomplete.')
     const view = new DataView(data.buffer, data.byteOffset, data.byteLength), id = view.getUint32(28)
-    if (view.getUint32(0) !== 0x4d57524d || view.getUint16(4) < 4 || view.getUint16(4) > 9 || !id || ids.has(id))
+    if (view.getUint32(0) !== 0x4d57524d || view.getUint16(4) < 4 || view.getUint16(4) > SET_MAX_ABI || !id || ids.has(id))
       throw new Error('A module set contains an invalid or repeated module.')
     ids.add(id); bytes += 4 + Math.ceil(data.length / 4) * 4
     if (bytes > UPLOAD_MAX_BYTES) throw new Error('The module set exceeds the upload limit.')

@@ -3,8 +3,9 @@
 - **What was wrong or hard:**
 - **What this changes:**
 - **How I checked it:** (`npm run pr:ready` and anything else you ran)
+- **What the guides lacked or got wrong, and where I fixed it:** ("nothing" is a fine answer)
 
-**A module or module update:** describe the change in behavior, module version(s), compatibility and source/media attribution.
+**A module or module update:** describe the change in behavior, module version(s), compatibility and source/media attribution. Then say what the guides lacked or got wrong while you built it and link the `Docs:` pull request that fixes it, or write "nothing"; the module release itself stays free of guide edits.
 
 Existing module authors can opt into [automatic publication](../docs/MODULE_AUTHOR_UPDATES.md) after reviewing all evidence:
 

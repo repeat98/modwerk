@@ -125,7 +125,7 @@ function DesktopOctatrackHub({ view, link, inventory, sets, selectedId, needs, u
     : busy ? [state.module || status !== 'testing' ? 'Syncing…' : 'Self-test running…', null]
     : connected ? [<>Connected · {inventory ? modules(inventory.moduleIds.length) + ' on it' : 'reading what’s on it…'}{onUnit && <> · same as <b>{onUnit.name}</b></>}</>, null]
     : status === 'connecting' ? ['Looking for your Octatrack…', null]
-    : status === 'busy' ? ['Another tab or app is using your Octatrack.', <button key="retry" className="button button-quiet" onClick={() => void link?.retry()}>Try again</button>]
+    : status === 'busy' ? ['Another browser window or app is using your Octatrack. This page connects by itself once it’s free.', <button key="retry" className="button button-quiet" onClick={() => void link?.retry()}>Try again</button>]
     : status === 'stock' || status === 'ready' ? [status === 'stock' ? 'Connected · original OS' : 'Connected · a Modwerk base this site can’t talk to', <button key="install" className="button button-primary" onClick={() => onInstall()}>Install the base</button>]
     : state.notice?.tone === 'error' ? [state.notice.text, <button key="connect" className="button button-quiet" onClick={() => void link?.connect()}>Connect</button>]
     : [<>Not connected{last ? <> · Last seen: {lastName ? <b>{lastName}</b> : modules(last.moduleIds.length)} · {when(last.at)}</> : null}</>, <button key="connect" className="button button-quiet" onClick={() => void link?.connect()}>Connect</button>]
@@ -201,6 +201,7 @@ function DesktopOctatrackHub({ view, link, inventory, sets, selectedId, needs, u
             <pre className="hub-code">{'echo \'SUBSYSTEM=="usb", ATTR{idVendor}=="1935", TAG+="uaccess"\' | sudo tee /etc/udev/rules.d/70-octatrack.rules\nsudo udevadm control --reload-rules'}</pre>
             <p>Chromium from the Snap Store also needs <code>sudo snap connect chromium:raw-usb</code>.</p>
             <p><strong>Windows:</strong> Chrome can open the Octatrack only once it runs the Modwerk base. With the original OS, install the base from the card first.</p>
+            <p><strong>In use by another window or app:</strong> Modwerk open in another browser, another Chrome profile or a private window holds the Octatrack, and so can another app that talks to it. Close it, and this page connects by itself. If it stays in use, quit the browser completely and open it again, or unplug the Octatrack and plug it back in.</p>
           </section>}
           {card}
           <OctatrackDiagnosticsSettings username={username} />

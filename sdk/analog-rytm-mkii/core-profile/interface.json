@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "machine": "analog-rytm-mkii",
   "interface": "0.3",
-  "status": "Upstream elekloader core-ar2 0.3 for Analog Rytm MKII OS 1.74 (the core-ar2-v0.3 pre-release): the Digitakt mk1 core with the Rytm's addresses, plus mod storage. 0.3 is for OS 1.74 only; the OS 1.73 submission keeps core-ar2 0.1, whose events are the first seven below.",
+  "status": "Upstream elekloader core-ar2 0.3 for Analog Rytm MKII OS 1.74 (the core-ar2-v0.3 pre-release): the Digitakt mk1 core with the Rytm's addresses, plus mod storage. 0.3 is for OS 1.74 only.",
   "events": [
     {
       "name": "ev_tick",

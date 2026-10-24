@@ -1,3 +1,5 @@
 # Analog Rytm MKII modules
 
-No module targets the Analog Rytm MKII yet. Create one with `npm run module:new -- my-mod --machine analog-rytm-mkii --author your-github-login`; see [the Analog Rytm MKII SDK guide](../../machines/analog-rytm-mkii/README.md). A module needs its own reviewed module contract, documentation, licensed source, captures, resource record and hardware evidence on OS 1.73 before it is added to the public library catalog.
+Each folder here is a library module for the Analog Rytm MKII on OS 1.74 and core-ar2 0.3: [Filter Hz](filter-hz/). Unpublished modules wait in `_submissions/` until they have documentation, licensed source, captures, a resource record and hardware evidence, and the browser can build them.
+
+Create one with `npm run module:new -- my-mod --machine analog-rytm-mkii --author your-github-login`; see [the Analog Rytm MKII SDK guide](../../machines/analog-rytm-mkii/README.md).

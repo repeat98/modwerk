@@ -3,10 +3,10 @@ import { useCommunity } from '../community/context'
 import { hasBetaAccess } from '../community/beta-access'
 import { trackConfigurationStarted } from '../community/usage'
 import { useEffect, useRef, useState } from 'react'
-import { afterDeleting, newConfiguration, cleanName, pinModuleVersions, configurationDevice, DEFAULT_DEVICE, removedSettings, startupSettings } from '../config/workspace'
+import { afterDeleting, newConfiguration, cleanName, pinModuleVersions, configurationDevice, DEFAULT_DEVICE, removedSettings, startupSettings, storageSettings } from '../config/workspace'
 import { DEVICES_BY_ID } from '../devices/registry'
 import { isModuleAvailable } from '../catalog/availability'
-import type { Configuration } from '../config/workspace'
+import type { Configuration, StorageLock } from '../config/workspace'
 import { deviceStore, openDeviceDatabase } from '../storage/device'
 import type { DeviceStore } from '../storage/device'
 import { createLazyFirmwareClient } from './firmware-client'
@@ -104,14 +104,14 @@ export function useWorkspace() {
   function createConfiguration(name: string, copy = false, device = DEFAULT_DEVICE) {
     const original = configsRef.current.find(item => item.id === activeRef.current)
     const source = copy && original && configurationDevice(original) === device ? original : undefined
-    const item = { ...newConfiguration(name, source?.moduleIds, source?.keepStockFx2 ?? true, source?.moduleVersions, device, source?.usbAudio), ...removedSettings(device, source?.removedStockFx), ...startupSettings(device, source?.classicStartup) }
+    const item = { ...newConfiguration(name, source?.moduleIds, source?.keepStockFx2 ?? true, source?.moduleVersions, device, source?.usbAudio), ...removedSettings(device, source?.removedStockFx), ...startupSettings(device, source?.classicStartup), ...storageSettings(source?.storageLock) }
     replaceConfigurations([...configsRef.current, item]); changeActive(item.id)
     persist(async store => { await store.saveConfiguration(item); await store.setActiveConfiguration(item.id) })
     if(item.moduleIds.length)trackConfigurationStarted(item.id)
     return item
   }
-  function importConfiguration(name: string, ids: string[], keepStockFx2 = true, moduleVersions?: Record<string,string>, device = DEFAULT_DEVICE, usbAudio?: UsbAudioConfiguration, removedStockFx?: string[], classicStartup?: boolean) {
-    const item = { ...newConfiguration(name, ids, keepStockFx2, moduleVersions, device, usbAudio), ...removedSettings(device, removedStockFx), ...startupSettings(device, classicStartup) }
+  function importConfiguration(name: string, ids: string[], keepStockFx2 = true, moduleVersions?: Record<string,string>, device = DEFAULT_DEVICE, usbAudio?: UsbAudioConfiguration, removedStockFx?: string[], classicStartup?: boolean, storageLock?: StorageLock) {
+    const item = { ...newConfiguration(name, ids, keepStockFx2, moduleVersions, device, usbAudio), ...removedSettings(device, removedStockFx), ...startupSettings(device, classicStartup), ...storageSettings(storageLock) }
     replaceConfigurations([...configsRef.current,item]);changeActive(item.id)
     if(item.moduleIds.length)trackConfigurationStarted(item.id)
     persist(async store => {await store.saveConfiguration(item);await store.setActiveConfiguration(item.id)})
@@ -121,6 +121,15 @@ export function useWorkspace() {
     if (!current) return
     const updated = { ...current, ...update, updatedAt: new Date().toISOString() }
     replaceConfigurations(configsRef.current.map(item => item.id === updated.id ? updated : item))
+    persist(store => store.saveConfiguration(updated))
+  }
+  // A build's lockfile belongs to the configuration it was built from, which need not be the active one by the time it returns.
+  // It is build output, not an edit, so updatedAt stays.
+  function saveStorageLock(id: string, storageLock: StorageLock) {
+    const current = configsRef.current.find(item => item.id === id)
+    if (!current) return
+    const updated = { ...current, storageLock }
+    replaceConfigurations(configsRef.current.map(item => item.id === id ? updated : item))
     persist(store => store.saveConfiguration(updated))
   }
   function renameConfiguration(name: string) { updateActive({ name: cleanName(name) }) }
@@ -186,5 +195,5 @@ export function useWorkspace() {
     persist(store => store.forgetFirmware())
     void clientRef.current?.clear().catch(() => setFileError('The firmware reader stopped. Reload the page.'))
   }
-  return { firmwareClient: clientRef, setKeepStockFx2: (keepStockFx2: boolean) => updateActive({ keepStockFx2 }), setClassicStartup: (classicStartup: boolean) => updateActive({ classicStartup }), setRemovedStockFx: (keys: string[]) => updateActive({ removedStockFx: normalizeRemovedStockFx(keys) }), configureUsbAudio, importConfiguration, configurations, active, ready, saving, storageError, unreadable, selectConfiguration, createConfiguration, renameConfiguration, deleteConfiguration, toggleModule, firmware, fileState, fileError, setFileError, firmwareSaved, readFile, clearFile }
+  return { firmwareClient: clientRef, setKeepStockFx2: (keepStockFx2: boolean) => updateActive({ keepStockFx2 }), setClassicStartup: (classicStartup: boolean) => updateActive({ classicStartup }), setRemovedStockFx: (keys: string[]) => updateActive({ removedStockFx: normalizeRemovedStockFx(keys) }), configureUsbAudio, importConfiguration, saveStorageLock, configurations, active, ready, saving, storageError, unreadable, selectConfiguration, createConfiguration, renameConfiguration, deleteConfiguration, toggleModule, firmware, fileState, fileError, setFileError, firmwareSaved, readFile, clearFile }
 }

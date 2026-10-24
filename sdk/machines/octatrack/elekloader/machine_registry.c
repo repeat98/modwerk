@@ -299,9 +299,10 @@ unsigned mw_assign(Part *part, unsigned track, unsigned row)
     return row < 5 ? row : 1;
 }
 static void ui_tick(void);
+void mg_tick(void); /* midi_generators.c: the MIDI tracks' generators */
 void mw_ui_tick(void)
 {
-    MW_STAMP(14); ui_tick(); MW_STAMP(15);
+    MW_STAMP(14); ui_tick(); MW_STAMP(24); mg_tick(); MW_STAMP(25); MW_STAMP(15);
 }
 static void ui_tick(void)
 {

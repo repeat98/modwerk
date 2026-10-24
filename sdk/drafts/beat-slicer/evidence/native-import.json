@@ -1,0 +1,50 @@
+{
+  "scope": "ColdFire object compilation only; no native execution, adapter or package",
+  "compiler": "m68k-elf-gcc (GCC) 16.2.0",
+  "assembler": "GNU assembler (GNU Binutils) 2.47.20260726",
+  "flags": [
+    "-std=c99",
+    "-mcpu=5475",
+    "-msoft-float",
+    "-O2",
+    "-ffreestanding",
+    "-fno-builtin",
+    "-fno-common",
+    "-fno-jump-tables",
+    "-fno-optimize-sibling-calls",
+    "-fno-asynchronous-unwind-tables",
+    "-fno-unwind-tables",
+    "-fno-ident",
+    "-fstack-usage",
+    "-Wall",
+    "-Wextra",
+    "-Werror",
+    "-pedantic",
+    "-fno-late-combine-instructions"
+  ],
+  "sourceSha256": {
+    "planner.c": "199ba2afd2f1c89458dd63297f3c0e4e4b9541d4b2833e0006b30d4d13504baf",
+    "planner.h": "4faab6f03e679d0b9389dbf016416afc87fb4d2d354952b22efb81a0381c5c1b",
+    "native_probe.py": "ebf977ecd4de7bebf6a6855caf35afede382d6bf4e707717e320eee1ca024637"
+  },
+  "objectSha256": "3c6a99aac025793b9ae8a1fa3e16c96c4807e3013b68d30c7410caf192d744da",
+  "size": [
+    "text\t   data\t    bss\t    dec\t    hex\tfilename",
+    "   2294\t      0\t      0\t   2294\t    8f6\t/output/planner.o"
+  ],
+  "stackUsage": [
+    "/source/sdk/drafts/beat-slicer/planner.c:7:12:read_peak.isra\t20\tdynamic,bounded",
+    "/source/sdk/drafts/beat-slicer/planner.c:31:16:bs_preview\t704\tdynamic,bounded"
+  ],
+  "codegenGuard": "passed",
+  "undefinedSymbols": [
+    "U __muldi3",
+    "         U __udivdi3",
+    "         U memcpy",
+    "         U memset"
+  ],
+  "hardware": "not tested",
+  "audio": "not tested",
+  "date": "2026-10-23",
+  "toolchainImage": "sha256:da70d46e10b243277fa3ae2e015f7258d56b3ee08ca4be47e61899958872e792"
+}

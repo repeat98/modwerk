@@ -12,7 +12,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url'
 const GENERATORS = [['licenses:generate'], ['machines:generate'], ['modules:generate'], ['modules:pairs', '--', '--write']]
 
 /** The verdict from what was found; every problem says what to do. */
-export function readiness({ dirty = [], behind = false, remote = 'upstream', regenerated = [], checkPassed = true, author = null, scope = null }) {
+export function readiness({ dirty = [], behind = false, remote = 'upstream', regenerated = [], checkPassed = true, author = null, scope = null, guideEdits = [] }) {
   const problems = [], notes = []
   if (dirty.length) problems.push('Commit or discard these changes first; only commits reach the PR: ' + dirty.join(', '))
   if (behind) problems.push(`Your branch does not contain current main. Merge it (git merge ${remote}/main), resolve any conflict, then run this again.`)
@@ -22,6 +22,10 @@ export function readiness({ dirty = [], behind = false, remote = 'upstream', reg
     if (scope?.error) problems.push(`This is not an automatic author update (${scope.error}). Keep the PR to your own module's folder and its changelog entry, or ask the owner for a review.`)
     else if (scope) notes.push('Automatic merge: the bot can merge this update to ' + scope.modules.join(', ') + ' once both release boxes are ticked and CI is green.')
   } else notes.push('Without --author this is a new module or a shared change: the owner reviews it and merges it with one click once CI is green.')
+  // The guides are the context every later agent reads, so each PR says what they lacked or got wrong (AGENTS.md, "Fold what you learn back").
+  notes.push('What did the guides lack or get wrong while you did this? ' + (guideEdits.length
+    ? 'Guide edits on this branch: ' + guideEdits.join(', ') + '. Say in the PR what they fix.'
+    : 'No guide edit is on this branch: fix it where a reader would look (docs/, AGENTS.md, the machine guide; for a module release, a separate Docs: PR), or write "nothing" in the PR.'))
   notes.push('Then push, open or update the PR, and watch it: gh pr checks <number> --watch. If main moves before the merge, run this again and push.')
   return { ok: problems.length === 0, problems, notes }
 }
@@ -54,7 +58,8 @@ async function main(argv) {
     if (!regenerated.length) checkPassed = npm('check', '--', '--base', base)
   }
   if (author && !behind) scope = await authorScope(root, git, base, head, author)
-  const verdict = readiness({ dirty, behind, remote, regenerated, checkPassed, author, scope })
+  const guideEdits = git('diff', '--name-only', base + '...' + head, '--', 'AGENTS.md', 'sdk/AGENTS.md', 'docs', 'sdk/machines/*/README.md').split('\n').filter(Boolean)
+  const verdict = readiness({ dirty, behind, remote, regenerated, checkPassed, author, scope, guideEdits })
   console.log('')
   for (const line of verdict.problems) console.log('✗ ' + line)
   for (const line of verdict.notes) console.log('· ' + line)

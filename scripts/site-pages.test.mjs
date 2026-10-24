@@ -8,7 +8,7 @@ const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8').rep
 it('gives the page its own title, description, canonical URL and card', () => {
   const page = sitePageHtml(html, SITE_PAGES[0], 'page-thumbnails/submit-abc.jpg', './')
   expect(page).toContain('<base href="../" />')
-  expect(page).toContain('<title>Start developing — Modwerk</title>')
+  expect(page).toContain('<title>Start developing · Modwerk</title>')
   expect(page).toContain('<link rel="canonical" href="https://modwerk.app/submit/" />')
   expect(page).toContain('<meta property="og:url" content="https://modwerk.app/submit/" />')
   expect(page).toContain('<meta property="og:image" content="https://modwerk.app/page-thumbnails/submit-abc.jpg" />')

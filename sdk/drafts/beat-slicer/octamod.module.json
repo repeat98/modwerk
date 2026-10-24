@@ -1,0 +1,138 @@
+{
+  "schemaVersion": 2,
+  "id": "beat-slicer",
+  "key": "BEAT SLICER",
+  "name": "Beat Slicer",
+  "version": "0.1.19-experimental",
+  "category": "system",
+  "author": {
+    "github": "twwwy",
+    "credits": [
+      "Original Beat Slicer planning core by twwwy and contributors."
+    ]
+  },
+  "nativeManifest": "manifest.py",
+  "presentation": {
+    "label": "BEAT SLICER",
+    "family": "Sample workflow",
+    "summary": "Development draft: preview beat-spaced slice starts from sample or project BPM.",
+    "overview": "A tested portable planning core, not an installed Octatrack module. Native editor, persistence, playback fade and USB integration are pending.",
+    "highlights": [
+      "Choose sample BPM or project BPM.",
+      "1, 4, 16, 32 or 64 beats per slice.",
+      "Retain existing markers and inspect stereo boundary amplitude."
+    ],
+    "usage": [
+      "Not installable yet. See README.md for the proposed editor workflow and integration blockers."
+    ]
+  },
+  "controls": [
+    {
+      "name": "BPM SOURCE",
+      "default": 0,
+      "count": 2,
+      "doc": "Proposed dialog: use the sample ATTR BPM or the project BPM captured at preview. No silent fallback.",
+      "labels": [
+        "SAMPLE",
+        "PROJECT"
+      ]
+    },
+    {
+      "name": "SPACING",
+      "default": 0,
+      "count": 5,
+      "doc": "Proposed dialog: beat spacing, anchored at trim start. A beat is a quarter note.",
+      "labels": [
+        "1 BEAT",
+        "4 BEATS",
+        "16 BEATS",
+        "32 BEATS",
+        "64 BEATS"
+      ]
+    },
+    {
+      "name": "BOUNDARY",
+      "default": 1,
+      "count": 2,
+      "doc": "Proposed dialog: exact grid or a stereo-aware quiet-boundary search within 2 ms. This does not guarantee click-free playback.",
+      "labels": [
+        "EXACT",
+        "SMOOTH"
+      ]
+    }
+  ],
+  "compatibility": {
+    "firmware": "1.40C",
+    "location": "Flex / Static",
+    "conflicts": [],
+    "uiClaims": [],
+    "limitations": [
+      "Development draft, not listed or installable.",
+      "No native slice-editor event/adapter, stock persistence integration or USB package exists yet.",
+      "No audio playback or MKII hardware verification; click-free playback is not established.",
+      "Planner accepts BPM 30\u2013300 in 1/24 BPM units, signed 24-bit mono/stereo decoded PCM, 8\u2013192 kHz, at most 64 slice starts.",
+      "Sample/project identity, live preview invalidation, stock slice clearing/saving and internal failure rollback need native integration; no separate Undo UI is planned."
+    ],
+    "effectId": null
+  },
+  "resources": {
+    "recorded": "Not measured",
+    "storage": {
+      "label": "Storage",
+      "display": "Not measured",
+      "value": null,
+      "unit": "unknown",
+      "method": "unmeasured",
+      "conditions": "No measurements exist yet. Add exact conditions and source evidence when available.",
+      "source": "TESTING.md"
+    },
+    "processing": {
+      "label": "CPU / DSP load",
+      "display": "Not measured",
+      "value": null,
+      "unit": "unknown",
+      "method": "unmeasured",
+      "conditions": "No measurements exist yet. Add exact conditions and source evidence when available.",
+      "source": "TESTING.md"
+    }
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "Stock save/revert and project reload now pass across three fresh emulator processes, with exact serialized tables and separately reported inactive-row normalization. Bounded Flex metadata capture now feeds preview/candidate tests, preserving complete records and independent tempo values while refusing invalid bindings. Native identity, binding and ownership remain unimplemented. Commit without user history passes host sanitizers and compiled ColdFire, including repeated create/clear cycles, stale-clear refusal, internal rollback and terminal faults. The stock-backed Flex chain exercises 300 actual editor refreshes with synthetic ownership/publication/playback. Normal stock Flex/Static menus cover grid alignment choices, cancellation and individual/all-slice deletion; isolated callbacks cover 144 cancellation/deletion cases. Earlier PCM, source lifecycle and historical Undo research retains its exact evidence bindings. No installed Beat Grid controls, complete native source ownership, atomic publisher, playback qualification, browser/USB package or physical persistence results exist.",
+    "hardwareStatus": "untested",
+    "gates": [
+      "python3 -B sdk/drafts/beat-slicer/test_planner.py",
+      "python3 -B sdk/drafts/beat-slicer/test_independent.py",
+      "python3 -B sdk/drafts/beat-slicer/test_job.py",
+      "python3 -B sdk/drafts/beat-slicer/test_pcm_reader.py",
+      "python3 -B sdk/drafts/beat-slicer/test_preview_guard.py",
+      "python3 -B sdk/drafts/beat-slicer/test_preview_session.py",
+      "python3 -B sdk/drafts/beat-slicer/test_marker_edit.py",
+      "python3 -B sdk/drafts/beat-slicer/test_edit_candidate.py",
+      "python3 -B sdk/drafts/beat-slicer/test_flex_copy.py",
+      "python3 -B sdk/drafts/beat-slicer/test_flex_chain.py",
+      "python3 -B sdk/drafts/beat-slicer/test_editor_menu.py",
+      "python3 -B sdk/drafts/beat-slicer/test_edit_transaction.py",
+      "python3 -B sdk/drafts/beat-slicer/test_transaction_stock.py",
+      "python3 -B sdk/drafts/beat-slicer/test_flex_metadata.py",
+      "python3 -B sdk/drafts/beat-slicer/audit_evidence.py",
+      "verify.py deliberately refuses qualification until native/UI/USB/audio/persistence integration is verified"
+    ],
+    "evidenceRevision": "b53daa6b06ff7ed5d43507e696419dfaaa86ed8e"
+  },
+  "license": {
+    "spdx": "MIT",
+    "file": "LICENSE",
+    "declaration": "Original planning core and synthetic tests. No Elektron firmware, extracted routines, tables, samples or dumps included."
+  },
+  "media": [],
+  "access": {
+    "location": "Proposed MKII audio editor SLICE menu; unavailable in firmware",
+    "steps": [
+      "Pending native integration: select a Flex or Static audio track and open AED.",
+      "Proposed: press AMP for SLICE, then YES for its menu, then select BEAT GRID. Stock menu integration is not verified.",
+      "Choose BPM SOURCE, SPACING and BOUNDARY, preview and confirm through the stock-style slice workflow. Use stock slice clearing afterwards; no separate Undo action. Native controls remain unimplemented."
+    ],
+    "screenshots": []
+  }
+}

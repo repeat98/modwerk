@@ -4,6 +4,8 @@ Modwerk's Digitakt II path is experimental and targets stock OS 1.17 only. It us
 
 ## Core events
 
+The core is toonst's digitakt2-perform core 1.0 (GPL-2.0-or-later), pinned by hash in [sdk/imports/elekloader-digitakt2-perform-v1.0.json](../../imports/elekloader-digitakt2-perform-v1.0.json); its contract is [core-profile/interface.json](../../digitakt-ii/core-profile/interface.json). It exposes the UI events below and nothing of the sequencer, the LFOs or the voices. A mod that needs one of those sites proposes an event first and never patches the site itself ([propose an event](../../../docs/module-guides/README.md#propose-an-event-on-the-digitakt-digitone-or-digitakt-ii)); a new core release is pinned the same way.
+
 The core subscribes mods to these ColdFire/UI events:
 
 | Event | Handler | Use |

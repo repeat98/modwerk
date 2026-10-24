@@ -12,7 +12,7 @@ afterEach(() => vi.unstubAllGlobals())
 it('provides thread cards to crawlers and loads the app relative to the thread path', () => {
   const page = forumThreadPageHtml(html, thread, './')
   expect(page).toContain('<base href="../../../" />')
-  expect(page).toContain('<title>Granular pad from &quot;Tapehead&quot; — Modwerk forum</title>')
+  expect(page).toContain('<title>Granular pad from &quot;Tapehead&quot; · Modwerk forum</title>')
   expect(page).toContain('<link rel="canonical" href="https://modwerk.app/forum/thread/' + id + '-granular-pad-from-tapehead/" />')
   expect(page).toContain('<meta property="og:url" content="https://modwerk.app/forum/thread/' + id + '-granular-pad-from-tapehead/" />')
   expect(page).toContain('<meta property="og:type" content="article" />')

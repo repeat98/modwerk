@@ -52,9 +52,24 @@ describe('the vendored elekloader catalog', () => {
     })
     expect(builderReleases('digitakt-ii', 'perform-direct', catalog)).toEqual(['1.17'])
   })
+  it('plans the Analog Rytm MKII core build preview from the pinned core-ar2 0.3', () => {
+    expect(planBuild('analog-rytm-mkii', '1.74', [])).toMatchObject({
+      core: { file: 'core-ar2-0.3.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.3' },
+      mods: [], missing: [],
+    })
+    expect(planBuild('analog-rytm-mkii', '1.73', []).core).toBeUndefined()
+  })
+  it('plans Filter Hz from its pinned source-only package with core-ar2 0.3', () => {
+    expect(planBuild('analog-rytm-mkii', '1.74', ['filter-hz'])).toMatchObject({
+      core: { file: 'core-ar2-0.3.elemod', version: '0.3' },
+      mods: [{ id: 'filter-hz', file: 'filter-hz-1.2.0-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '1.2.0' }],
+      missing: [],
+    })
+  })
   it('keeps download approval specific to each device', () => {
-    expect(DIGI_DOWNLOADS_ENABLED).toEqual({ digitakt: true, 'digitakt-ii': false, digitone: true })
+    expect(DIGI_DOWNLOADS_ENABLED).toEqual({ digitakt: true, 'digitakt-ii': false, digitone: true, 'analog-rytm-mkii': false })
     expect(digiDownloadsEnabled('digitakt-ii')).toBe(false)
+    expect(digiDownloadsEnabled('analog-rytm-mkii')).toBe(false)
     expect(digiDownloadsEnabled('unknown-device')).toBe(false)
     expect(digiDownloadsEnabled('constructor')).toBe(false)
   })

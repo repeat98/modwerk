@@ -52,7 +52,7 @@ own pipelines.
 | Platform (`octabam`, `elemod`) | A new `zdl` platform | Contract section in `module-contract-v3.ts` |
 | Module | One ZDL effect, or a NAM/cab slot built from a template | Module manifest for a prebuilt binary plus source |
 | Build | Effects: prebuilt (the TI compiler cannot run in CI or the browser and is not redistributed). NAM/cab: in the browser from MIT templates (`nam_loader.js`, `cab_loader.js`, `slot_identity.js`, `cover_art.js`) | No native build in Modwerk |
-| Install | Fallback: Zoom Effect Manager 2.3.3+ (USB), a guided download. Primary (planned): direct browser install, once the transfer protocol is known | No runtime loader, trial or Keep/Undo: the stock firmware has no such path |
+| Install | Now: Zoom Effect Manager 2.3.3+ (USB), a guided download. Planned: a browser install from the owner's own Zoom updater ([below](#installing-on-stock-firmware)) | No runtime loader, trial or Keep/Undo: Effect Manager reflashes the whole effect file system; per-effect USB replacement is now demonstrated |
 | Patches | The project's Web MIDI patch editor (MS-70CDR mapped; read-only elsewhere) | Optional integration |
 | Combination budget | Summed DSP cost per patch: refused between 224.4 and 228.4 on the MS-70CDR 2.10 (measured); 6 slots | A `percent`-style budget in the profile |
 | Resource rules | Effect ID unique per pedal (the project reserves 403-499, 500-699 NAM, 700-899 cab, 900-957), file name 8 characters unique, file size cap (~32 KB proven) | A per-family ID ledger, like Stomphacks' author ranges for ZD2 |
@@ -88,6 +88,80 @@ Still to come: `MACHINE_PLATFORMS` gains `zdl`, with its module contract.
    should be a direct install from the browser; that needs the effect-transfer
    protocol, which is being researched on the project side (read-only first:
    list installed effects) and is not available yet.
+   *Update, 23 October 2026:* the protocol is known now: Effect Manager reflashes
+   the whole effect file system, while the pedal also accepts per-effect USB writes; see the next section. Until that path is
+   qualified, Effect Manager is the install path.
+
+## Installing on stock firmware
+
+Findings from recording Zoom Effect Manager 2 on an MS-70CDR 2.10 (two full
+install cycles), written up in the project's
+[EFFECT-INSTALL-PROTOCOL.md](https://github.com/themanro/ZoomMultistompZDL/blob/main/docs/EFFECT-INSTALL-PROTOCOL.md):
+
+- Effect Manager has no per-effect transfer. The owner starts the pedal in
+  update mode, and Effect Manager erases and rewrites the whole effect file
+  system (2.7 MB) over USB MIDI, then the pedal reboots. Adding one effect
+  rewrites them all.
+- So its image must hold every effect that stays on the pedal, Zoom's
+  included, and Effect Manager does not read them back from the pedal.
+- The pedal itself can do more (probes on the owner's MS-70CDR 2.10, normal
+  mode, 23 October 2026): it answers the file commands that zoom-zt2 uses on
+  the ZD2 pedals. It reports its disk usage, lists all 162 files with their
+  sizes, and reads a file back: its effect list read this way matches
+  Effect Manager's copy byte for byte. So a full backup over USB is
+  possible, and stock effects can come from the user's own pedal. It also
+  writes and deletes single files: a test file was written, read back
+  identical, kept over a power cycle (the pedal booted and played normally)
+  and deleted. Replacing an installed effect works as well: Loop was swapped
+  0.03 -> 0.02 -> 0.03 over USB, and each build ran after a power cycle. So a
+  per-effect install without update mode or stock updaters is possible.
+  Adding a new effect (its file, then one record in the effect list) and
+  removing it again work too: the pedal listed and loaded the added effect
+  after a power cycle, and after removal everything else was unchanged.
+- In normal mode, Effect Manager learns which effects are installed by
+  writing a temporary patch with several effect ids into the edit buffer and
+  reading it back. That works without update mode.
+
+The owner's plan (Janik, 23 October 2026), the same as for the Octatrack OS:
+the user opens their own copy of Zoom's updater in the browser, which never
+uploads it. The updaters are free downloads on each pedal's support page, and
+their `FS.bin` holds that pedal's stock effects. The browser takes the stock
+effects from it, adds the chosen Modwerk effects, builds the image and flashes
+it.
+
+Checked offline, nothing written to a pedal:
+
+- The project's `tools/zoom_fs.py` rebuilds both captured Effect Manager
+  images byte for byte, and builds the second one from independent sources
+  (the MS-70CDR updater, the owner's own stock copies and the project's
+  effects) except for four stock effects no local updater held.
+- Effect Manager installs stock effects with their debug sections removed;
+  TI's `strip6x` reproduces that exactly (99 of 104 checked; the other five
+  are newer builds that Effect Manager takes from another pedal's updater).
+  Some effects and `CMN_DRV.ZDL` (needed by the amp effects) are only in the
+  MS-50G, G1Xon or B1Xon updaters, so a user may need more than one updater.
+- Effect Manager's own effect library offers many more effects than a pedal
+  has installed, drawn from every pedal it supports. Its order (which the
+  pedal's effect list follows) and the full set of sources are still to be
+  mapped; until then a browser install covers the effects the user's updaters
+  hold.
+
+Before any browser write, in this order:
+
+1. A browser builder (no `strip6x` in the browser: a port, checked against
+   it on every stock effect) that reproduces Effect Manager's image from the
+   same selection.
+2. The read-only "what is installed" check over USB.
+3. A first write on the maintainer's own pedal with the stock updater ready
+   for recovery, then a documented recovery path for users.
+
+What this means for the Octatrack interface ([ADD_A_MACHINE.md](ADD_A_MACHINE.md#aim-for-the-octatracks-interface)):
+stock Zoom firmware has no way to load an effect into RAM, so there is no
+trial, Keep or Undo; installs write persistent storage. That is a resource
+reason for the exception, for owner review. A Modwerk base firmware for these
+pedals, which could load and flash differently and need no stock updater, is
+an option for later (owner, 23 October 2026), not the current priority: the
+first effects ship safely through Effect Manager and are documented first.
 
 ## Proposed sequence
 
@@ -97,6 +171,7 @@ Still to come: `MACHINE_PLATFORMS` gains `zdl`, with its module contract.
    knobs, DSP cost, effect ID, evidence), then a first module set: the 22-effect
    pack.
 4. In-browser NAM and cab builds from the project's templates.
-5. Install: Effect Manager download as the fallback now; a direct browser
-   install once the transfer protocol is understood and checked.
+5. Install: Effect Manager download now; a browser install from the user's own
+   Zoom updater once the steps in [Installing on stock firmware](#installing-on-stock-firmware)
+   are done.
 6. Optional: the patch editor as a device page.

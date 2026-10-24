@@ -3,7 +3,7 @@
   "id": "poly8",
   "key": "POLY8",
   "name": "POLY8",
-  "version": "0.3.0-experimental",
+  "version": "0.3.1-experimental",
   "category": "machines",
   "source": {
     "repository": "https://github.com/repeat98/octamad",
@@ -27,7 +27,7 @@
     "overview": "One POLY8 per Part, eight sample voices and fixed headroom. Combine with Repitch, Mute Modes, Scale Quantizer, Analog BD, VECTOR and FM Synth, subject to native memory limits. Physical timing and reboot qualification remain incomplete.",
     "highlights": [
       "One POLY8 per Part; refusal modal closes with NO or automatically after 120 native UI ticks.",
-      "Eight shared voices; release tails yield before held notes.",
+      "Up to eight shared voices; release tails yield before held notes, and a voice limit keeps POLY8 under 40 % of the CPU so the panel never freezes.",
       "Independent ATK/HOLD/REL, with no per-note DSP or heap allocation.",
       "Ten panel octave positions and dedicated-route MIDI notes 0–127.",
       "PTCH tunes the chord; double-TRACK opens FLEX samples.",
@@ -92,6 +92,7 @@
     ],
     "limitations": [
       "Experimental release: physical CPU deadlines, recording, reboot persistence and broader stock workflows remain unqualified.",
+      "Voices are limited by CPU time: POLY8 plays fewer voices when its rendering would take more than 40 % of the CPU on average, about 197 us of one audio frame, or starve the panel. On the current beta base (module code uncached) that is about three voices with one POLY8 track; on a base with cached module code seven to eight.",
       "Only one newly assigned POLY8 machine per Part; older multi-POLY8 Parts must be reduced to one before use. Fixed headroom makes a single note 18.06 dB quieter than 0.2.1.",
       "TSTR is OFF while POLY8 is active.",
       "FLEX only; STATIC requires independent streaming-cache support.",
@@ -111,7 +112,7 @@
       "value": null,
       "unit": "cycles/frame",
       "method": "unmeasured",
-      "conditions": "Native emulator instruction counts are not hardware cycles. Pitch-weighted eight-voice physical deadlines need qualification.",
+      "conditions": "Native emulator instruction counts are not hardware cycles. On the owner's MKII (RAM-booted development twins of the beta base, 23 Oct 2026) one to four voices took 8.7/25/34/41 % of the CPU uncached; the voice limit holds the average under 40 % and each frame under about 197 us. Chip worst-case cycles remain unmeasured.",
       "source": "TESTING.md"
     },
     "storage": {
@@ -148,7 +149,7 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "The 0.2.7 sequencer release correction passes three native ColdFire/DSP cases, sanitizer ownership/recording regressions and the native dirty-RAM selection-flow/UI gate. The owner approved this exact experimental source with current hardware, chip worst-case timing and complete memory qualification waived. Physical MKI confirmation remains pending; earlier T09/T10 MKII reports are historical evidence.",
+    "summary": "0.3.1 adds a self-timed voice limit and runs the render through cached memory. On the owner's MKII (RAM-booted development twins of the current beta base, cached and uncached module code): eight held keys, chords over the playing sequencer and 40 rapid presses never froze the panel or stopped the frames; the published 0.3.0 froze the same unit at three to four voices and, with the limit off, six voices stopped the frames. Recordings from PLAY match 0.3.0 to the recorder floor on both bases. Host tests cover the limit (pool-test.c); verify-addressing.py proves the cached render reads POLY8 data only through the uncached alias. Not run: the card build on a unit, Part/project reload and power cycles with this version, MKI; chip worst-case cycles and complete memory bounds stay waived for this exact version.",
     "hardwareStatus": "untested",
     "gates": [
       "verify-source.py",

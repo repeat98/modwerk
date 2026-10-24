@@ -4,7 +4,7 @@ import { profilePath, threadIdFromSegment, threadPath } from './community/forum-
 import { AUDIO_PREVIEW_GUIDE_ROUTE } from './components/audio-preview-guide'
 
 const moduleRoute = /^module\/([a-z0-9-]+)$/
-const digiModuleRoute = /^(digitakt|digitone)\/module\/([a-z0-9-]+)$/
+const digiModuleRoute = /^(digitakt|digitone|analog-rytm-mkii)\/module\/([a-z0-9-]+)$/
 const threadPathRoute = /^forum\/thread\/([a-zA-Z0-9-]+)\/(?:index\.html)?$/
 const profilePathRoute = /^forum\/profile\/([a-z0-9_]{3,24})\/(?:index\.html)?$/
 const forumRoute = /^forum\/(?:thread\/([a-zA-Z0-9-]+)|profile\/([a-z0-9_]{3,24}))$/
@@ -18,7 +18,7 @@ export function profileHref(username: string) { return assetUrl(profilePath(user
 function pathRoute(url: URL, appUrl: URL) {
   const path = url.pathname.slice(appUrl.pathname.length)
   const module = /^module\/([a-z0-9-]+)\/(?:index\.html)?$/.exec(path), thread = threadPathRoute.exec(path), profile = profilePathRoute.exec(path)
-  const digi = /^(digitakt|digitone)\/module\/([a-z0-9-]+)\/(?:index\.html)?$/.exec(path)
+  const digi = /^(digitakt|digitone|analog-rytm-mkii)\/module\/([a-z0-9-]+)\/(?:index\.html)?$/.exec(path)
   return /^projects\/(?:index\.html)?$/.test(path) ? 'projects' + url.search : /^submit\/(?:index\.html)?$/.test(path) ? 'submit' : digi ? digi[1] + '/module/' + digi[2] : module ? 'module/' + module[1] : thread ? 'forum/thread/' + threadIdFromSegment(thread[1]) + url.search : profile ? 'forum/profile/' + profile[1] + url.search : ''
 }
 

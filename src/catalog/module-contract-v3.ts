@@ -252,8 +252,10 @@ type ElemodSiteGuard = { addr: string; len: number; stockSha256: string }
 export type ElemodSite = ElemodSiteGuard & (
   { op: 'jmp' | 'jsr' | 'keep2' | 'ptr'; target: string } |
   { op: 'lea'; target: string; register: number } |
-  { op: 'bytes'; new: string; kind: 'code' | 'data'; target?: never }
+  { op: 'bytes'; new: string; kind: 'code' | 'data'; relocs?: ElemodSiteReloc[]; target?: never }
 )
+/** An absolute 32-bit address of a module symbol, written at byte `at` of a `bytes` site. */
+export type ElemodSiteReloc = { at: number; target: string }
 export type ElemodRelease = { defsym: Record<string, string>; cflags: string[]; sites: ElemodSite[] }
 export type ElemodBuildSpec = {
   strings: Record<string, string>
@@ -276,17 +278,27 @@ function defines(value: unknown, path: string): Record<string, string> {
 }
 /** Also validate compiled recipes at their consumption boundary, not just build.json. */
 export function parseElemodSite(value: unknown, path = 'site'): ElemodSite {
-  const entry = object(value, path, ['addr', 'len', 'stockSha256', 'op'], ['target', 'register', 'new', 'kind'])
+  const entry = object(value, path, ['addr', 'len', 'stockSha256', 'op'], ['target', 'register', 'new', 'kind', 'relocs'])
   const op = choice(entry.op, path + '.op', ELEMOD_SITE_OPS)
   const required = op === 'bytes' ? ['new', 'kind'] : op === 'lea' ? ['target', 'register'] : ['target']
-  const site = object(value, path, ['addr', 'len', 'stockSha256', 'op', ...required])
+  const site = object(value, path, ['addr', 'len', 'stockSha256', 'op', ...required], op === 'bytes' ? ['relocs'] : [])
   const len = count(site.len, path + '.len')
   if (!len || len > 64) fail(path + '.len', 'expected a length of 1–64 bytes')
   const guard = { addr: address(site.addr, path + '.addr'), len, stockSha256: sha256(site.stockSha256, path + '.stockSha256') }
   if (op === 'bytes') {
     const bytes = hexBytes(site.new, path + '.new'), kind = choice(site.kind, path + '.kind', ['code', 'data'] as const)
     if (bytes.length !== len * 2 || kind === 'code' && (len % 2 || Number(guard.addr) % 2)) fail(path, 'invalid authored byte patch length or alignment')
-    return { ...guard, op, new: bytes, kind }
+    if (!('relocs' in site)) return { ...guard, op, new: bytes, kind }
+    // Each reloc fills four zero bytes of `new` with a symbol's address; the stock hash still guards the whole site.
+    const relocs = list(site.relocs, path + '.relocs', 1, 16).map((value, index) => {
+      const where = path + '.relocs[' + index + ']', reloc = object(value, where, ['at', 'target'])
+      const at = count(reloc.at, where + '.at')
+      if (at === null || at + 4 > len || kind === 'code' && (at < 2 || at % 2)) fail(where + '.at', kind === 'code' ? 'expected an even offset past the opcode word, inside the site' : 'expected an offset inside the site')
+      if (bytes.slice(at * 2, at * 2 + 8) !== '00000000') fail(where + '.at', 'expected the four bytes the address fills to be 00000000 in new')
+      return { at, target: symbol(reloc.target, where + '.target') }
+    }).sort((a, b) => a.at - b.at)
+    relocs.forEach((reloc, index) => { if (index && reloc.at < relocs[index - 1].at + 4) fail(path + '.relocs', 'relocations overlap') })
+    return { ...guard, op, new: bytes, kind, relocs }
   }
   if (op === 'ptr' ? len !== 4 : op === 'keep2' || op === 'lea' ? len !== 6 : len < 6 || len % 2) fail(path, 'invalid explicit patch length')
   if (op !== 'ptr' && Number(guard.addr) % 2) fail(path, 'code patch must be aligned')

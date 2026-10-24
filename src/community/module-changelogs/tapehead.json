@@ -3,10 +3,9 @@
     "version": "0.1.2-experimental",
     "date": "2026-10-05",
     "changes": [
-      "Correct the input drive level to compensate for the stock AMP volume scaling, bringing saturation closer to the original DAW effect.",
-      "Apply +12 dB before the saturation stage and compensate by −12 dB afterward.",
-      "Documentation/media-only: add an offline audio preview rendered through 0.1.2-experimental, with sample credits, settings and provenance; firmware is unchanged.",
-      "Beta base fix (beta test run 2, 14 Oct 2026; the package is unchanged): picking it showed DSP MEMORY FULL whenever the modules the bank's Parts name did not fit on a DSP core together, even with room for it, and a pick on T1-T4 could be refused for T5-T8's Parts. The base keeps the bank's modules loaded for instant Part changes only while they fit; on a core where they never fitted it now loads what the Part runs, so the pick goes through. Where they fit and the pick does not, DSP MEMORY FULL stays. Seen on a development twin with all 19 modules and bank A: Tape Echo and Mini Verb on T1 and T5 were refused before and are taken now; with the bank's modules held, Mini Verb is still refused on both cores and Tape Echo taken. The tester base itself has not run on the unit."
+      "Corrects the input drive to make up for the stock AMP volume scaling, so the saturation is closer to the original DAW effect.",
+      "Media only: adds an audio preview. The firmware is unchanged.",
+      "On the beta base, picking it no longer shows DSP MEMORY FULL just because the modules named in the bank's Parts do not all fit on one DSP core."
     ],
     "sourceCommit": "177df636fde9419cba2fcb42ddaacdc14a736458"
   },
@@ -14,7 +13,7 @@
     "version": "0.1.1-experimental",
     "date": "2026-10-02",
     "changes": [
-      "First Modwerk catalog release of the TapeHead saturation effect, ported from JClones with its input limiting, clipping-term and COLOR-mapping corrections."
+      "First Modwerk release of the TapeHead saturation effect, ported from JClones with fixes to its input limiting, clipping and COLOR control."
     ],
     "sourceCommit": "979842c888466fc79680ca44f33fd40082e1c50e"
   }

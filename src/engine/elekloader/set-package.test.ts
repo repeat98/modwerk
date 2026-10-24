@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { encodeModuleSet, parseSetIdentity } from './set-package'
+import { readFileSync } from 'node:fs'
+import { encodeModuleSet, parseSetIdentity, SET_MAX_ABI } from './set-package'
 
 const base = '31'.repeat(32), baseline = '45'.repeat(32)
 const pkg = (id: number, length = 33) => {
@@ -27,10 +28,16 @@ describe('one module-set offer', () => {
     expect(view.getUint16(84 + 76)).toBe(8)
     expect(data.subarray(168, 168 + legacy.length)).toEqual(legacy)
   })
+  it('takes every ABI the base takes, ABI 10 (Analog BD 0.1.5) among them', () => {
+    const loader = readFileSync(new URL('../../../sdk/runtime/loader/loader.h', import.meta.url), 'utf8')
+    expect(Number(/#define RUNTIME_ABI (\d+)u/.exec(loader)?.[1])).toBe(SET_MAX_ABI)
+    const engine = pkg(11); engine[5] = SET_MAX_ABI
+    expect(new DataView(encodeModuleSet(base, baseline, [engine]).buffer).getUint16(6)).toBe(1)
+  })
   it('refuses duplicates, malformed packages and capacity exhaustion before any upload', () => {
     for (const packages of [[], [pkg(0)], [pkg(1), pkg(1)], [new Uint8Array(31)], Array.from({ length: 21 }, (_, i) => pkg(i + 1)), [pkg(1, 2097152)]])
       expect(() => encodeModuleSet(base, baseline, packages)).toThrow()
-    const bad = pkg(1); bad[5] = 10
+    const bad = pkg(1); bad[5] = SET_MAX_ABI + 1
     expect(() => encodeModuleSet(base, baseline, [bad])).toThrow()
     expect(() => encodeModuleSet('', baseline, [pkg(1)])).toThrow()
   })

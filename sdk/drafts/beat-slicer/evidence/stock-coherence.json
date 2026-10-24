@@ -1,0 +1,31 @@
+{
+  "scope": "isolated stock edits, release and pool-to-host-reader previews; synthetic memory, no mocked callees or device access",
+  "mainSha256": "164f31224bf61181e3f50e7dec40df9afcae5b16dbf6e4c0d0cc5e986af0a84e",
+  "sourceSha256": {
+    "stock_probe.py": "65b4f8ed23bb41e41367334e9fb2a86610e553ee352ba273e6093f68f84d0c93",
+    "stock_probe/coherence_probe.cpp": "28320cb1295c70758af14c8554f64d354ee9864f8ca7a20a4183fa8107efa12e",
+    "planner.c": "01c9c25efa363679a591969931dd376a3b694a949dd8b9f89eda4bf77a88cee4",
+    "planner.h": "4faab6f03e679d0b9389dbf016416afc87fb4d2d354952b22efb81a0381c5c1b",
+    "planner_job.c": "767d82cc375677a115e9457af35e26fddd9de66a0dc80aa2af0fe3b5adaf0581",
+    "planner_job.h": "c4dd3faa8b3320194b54ab4d7bec6541d9e936f544b0e6236efa4fa5518d6547",
+    "pcm_reader.c": "8762e389a39b7407a7d987dc6e3e36d7d75aa6c408b1d3232d8672a380226088",
+    "pcm_reader.h": "462f495a86f32730b79a56177f99929f685d82729e4646e7b391df475d929821",
+    "stock_probe/CMakeLists.txt": "0339e6017afab5c5a43643fa860694b65fc0bd4743ceb4761cd2700a2808d1b8"
+  },
+  "executableSha256": "2f2841cc195705384c176fb87b33a9f35de935875ff1ef6ba87f588f83b5484a",
+  "exitCode": 0,
+  "stdout": [
+    "SOURCE_SHA256: 0b2c9288f37e82a9eab79b9db805606cf402b19ba1c6e14f508a2ac1ddc830da",
+    "PASS: 12 stereo inversions across page boundaries leave control counter unchanged and dirty sticky",
+    "PASS: eight rotations across four formats leave control counter unchanged and dirty sticky",
+    "PASS: eight unsupported/busy/range refusals preserve source and metadata",
+    "PASS: three pool releases: counter wrap, clearing, temporary maps and survivor isolation",
+    "PASS: eight stock-page to host-reader previews and explicit post-edit invalidation",
+    "5 passed, 0 failed; isolated synthetic pool, no concurrent scheduler or hardware"
+  ],
+  "stderrLines": 232,
+  "stderrSha256": "f9059ad3df4fe525870076d101aa06f149dc941c8d115605ec9c71a7f28e4cc0",
+  "hardware": "not tested",
+  "audio": "not tested",
+  "stockPersistence": "not tested"
+}

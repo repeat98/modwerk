@@ -180,7 +180,7 @@ class ToolSyntax(unittest.TestCase):
                 ast.parse(source.read_text(encoding='utf-8'), str(source))
 
 # Builder extensions after the Poly8 record, oldest first. Each proves its own exact before/after transition.
-EXTENSIONS = ['air-chorus-split-builder.json', 'plain-formatter-builder.json', 'floating-cave-overflow-builder.json']
+EXTENSIONS = ['air-chorus-split-builder.json', 'plain-formatter-builder.json', 'floating-cave-overflow-builder.json', 'octabam-emulator-gates-5c71bc8c.json']
 
 class SelectiveImport(unittest.TestCase):
     def assert_current_builder_identity(self, path, historical):
@@ -260,6 +260,29 @@ class SelectiveImport(unittest.TestCase):
         for row in record['selections']:
             self.assertNotIn('poly8', row['moduleIds'])
             self.assertEqual(row['before'], row['after'])
+
+    def test_emulator_and_gates_extension_changes_no_builder_file(self):
+        import hashlib, json
+        sdk = ROOT.parent
+        record = json.loads((sdk / 'infrastructure-verification/octabam-emulator-gates-5c71bc8c.json').read_text(encoding='utf-8'))
+        self.assertEqual(record['kind'], 'emulator-and-gates-extension')
+        self.assertEqual(set(record['builderAdaptations']), {'Makefile', 'tools/emu/ot_emu/main.cpp', 'tools/emu/ot_emu/rtos.cpp', 'tools/emu/ot_emu/rtos.h',
+                                                             'tools/emu/ot_emu/test_periph.cpp', 'tools/emu/ot_emu/usb.cpp', 'tools/emu/ot_emu/usb.h'})
+        for path, change in record['builderAdaptations'].items():
+            self.assert_extension_holds('octabam-emulator-gates-5c71bc8c.json', path, change['after'])
+        # The builder is untouched: the native images and refusals of the earlier records hold by identity.
+        for path, digest in record['builderSourcesUnchanged'].items():
+            self.assertEqual(hashlib.sha256((ROOT / path).read_bytes()).hexdigest(), digest, path)
+        imported = json.loads((sdk / record['importRecord']).read_text(encoding='utf-8'))
+        self.assertEqual(imported['revision'], record['upstreamRevision'])
+        self.assertEqual(imported['modules'], [])
+        for file in imported['files']:
+            with self.subTest(path=file['path']):
+                self.assertFalse(file['path'].startswith('modules/'))
+                self.assertEqual(hashlib.sha256((ROOT / file['path']).read_bytes()).hexdigest(), file['vendoredSha256'])
+        # Every vendored copy that is not a recorded local adaptation is upstream's file byte for byte.
+        adapted = {f['path'] for f in imported['files'] if f['sourceSha256'] != f['vendoredSha256']}
+        self.assertEqual(adapted, {'Makefile', 'tools/emu/ot_emu/main.cpp', 'tools/emu/ot_emu/test_periph.cpp'})
 
     def test_exact_adapted_file_identities_and_scope(self):
         import hashlib, json

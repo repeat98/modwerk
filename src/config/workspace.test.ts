@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { fresh } from '../../vendor/elekloader/kit/src/store.ts'
 import { afterDeleting, configurationDevice, newConfiguration, validateConfiguration, pinModuleVersions, startupSettings } from './workspace'
 describe('persistent configuration version pins',()=>{
  it('starts empty with stock FX2 disabled while dynamic loading is unavailable',()=>{
@@ -48,4 +49,12 @@ describe('deleting a configuration',()=>{
   expect(configurationDevice(next)).toBe('digitakt')
   expect(next.moduleIds).toEqual([])
  })
+})
+describe('mod-storage lockfiles in saved configurations', () => {
+  it('keeps a saved lockfile and refuses one that is not an object', () => {
+    const configuration = { ...newConfiguration('Rytm', ['filter-hz'], false, undefined, 'analog-rytm-mkii'), storageLock: fresh('analog-rytm-mk2') }
+    expect(validateConfiguration(configuration)).toEqual(configuration)
+    expect(() => validateConfiguration({ ...configuration, storageLock: 'layout' })).toThrow('mod storage layout is unreadable')
+    expect(validateConfiguration({ ...configuration, storageLock: undefined }).storageLock).toBeUndefined()
+  })
 })

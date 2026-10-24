@@ -75,16 +75,21 @@ it('admits only one competing member into the final place and caps admin grants 
   const first = await member('betafinalone'), second = await member('betafinaltwo')
   const path = '/auth/beta-invitations/public'
   expect((await call(path, 'GET', undefined, first.session)).status).toBe(404) // closed until explicitly opened
+  const placesLeft = async () => (await (await call('/auth/beta-join')).json()).placesLeft
+  expect(await placesLeft()).toBe(0)
   expect((await call('/admin/forum/beta-invitation', 'PUT', { publicEnabled: true }, first.session)).status).toBe(403)
   expect((await call('/admin/forum/beta-invitation', 'PUT', { publicEnabled: true }, '', admin)).status).toBe(200)
+  expect(await placesLeft()).toBe(BETA_TESTER_LIMIT)
   for (let i = 0; i < BETA_TESTER_LIMIT - 1; i++) db.prepare('INSERT INTO users(id,display_name,username,email_verified,beta_tester) VALUES(?,?,?,1,1)').run('pool-' + i, 'Pool tester', 'pool' + i)
   expect(await (await call(path, 'GET', undefined, first.session)).json()).toMatchObject({ status: 'pending', testers: 49 })
+  expect(await placesLeft()).toBe(1)
   const joins = await Promise.all([call(path, 'POST', accept, first.session), call(path, 'POST', accept, second.session)])
   expect(joins.map(result => result.status).sort()).toEqual([200, 409])
   expect(db.prepare('SELECT COUNT(*) AS n FROM users WHERE beta_tester=1').get()).toEqual({ n: 50 })
   const remaining = joins[0].status === 409 ? first : second
   const winner = remaining === first ? second : first
   expect(await (await call(path, 'GET', undefined, remaining.session)).json()).toMatchObject({ status: 'full', testers: 50 })
+  expect(await placesLeft()).toBe(0)
   expect((await call('/admin/forum/beta-testers/' + (remaining === first ? 'betafinalone' : 'betafinaltwo'), 'PUT', { betaTester: true, reason: 'Extra beta place' }, '', admin)).status).toBe(409)
   expect(() => db.prepare('UPDATE users SET beta_tester=1 WHERE id=?').run(remaining.id)).toThrow('pool is full')
   expect(await (await call('/auth/beta-discord-invite', 'GET', undefined, winner.session)).json()).toEqual({ show: true })

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later OR Elastic-2.0
 // Copyright (c) 2026 Jannik Aßfalg (repeat98)
-// Every machine Modwerk knows about (Elektron instruments and Zoom MultiStomp pedals), with what is known about modding it.
+// Every machine Modwerk knows about (Elektron instruments, Zoom MultiStomp pedals and the Erica Synths LXR-02), with what is known about modding it.
 // Facts about devices other than the Octatrack come from public research projects and are linked from each profile.
 import MACHINES from './machines.generated.json'
 import type { MachineFamily, MachineProfile } from './machine-contract'
@@ -8,7 +8,7 @@ import { assetUrl } from '../hosting'
 
 export type DeviceStatus = 'available' | 'preview' | 'research' | 'open'
 export type StepState = 'done' | 'started' | 'open'
-export type DeviceStepId = 'format' | 'rebuild' | 'boot' | 'core' | 'load' | 'mods'
+export type DeviceStepId = 'format' | 'rebuild' | 'source' | 'boot' | 'core' | 'load' | 'mods'
 
 export type DeviceArt = {
   body: 'compact' | 'wide' | 'keys' | 'box' | 'model' | 'pedal' | 'floor'
@@ -52,16 +52,25 @@ const ZOOM_STEPS: DeviceStep[] = [
   { id: 'mods', title: 'First mods', description: 'Reviewed effects with documentation, licences and test evidence.' },
 ]
 
-const FAMILY_STEPS: Record<MachineFamily, DeviceStep[]> = { elektron: DEVICE_STEPS, zoom: ZOOM_STEPS }
+// The Erica Synths road: the firmware source is public (GPL-3.0), so mods are built from it, not patched into a stock image.
+const ERICA_STEPS: DeviceStep[] = [
+  { id: 'source', title: 'Firmware source builds', description: 'The published source builds an SD-card update image, reproducibly, with the documented toolchain.' },
+  { id: 'boot', title: 'Marked build boots', description: 'A build that shows it is modified starts on a real unit, and the official update restores it from the SD card.' },
+  { id: 'core', title: 'Modwerk base with hooks', description: 'A base built from the source gives mods shared events and budgets, so several mods can run together.' },
+  { id: 'mods', title: 'First mods', description: 'Reviewed mods with documentation, licences and test evidence.' },
+]
+
+const FAMILY_STEPS: Record<MachineFamily, DeviceStep[]> = { elektron: DEVICE_STEPS, zoom: ZOOM_STEPS, erica: ERICA_STEPS }
 
 export function deviceSteps(device: Pick<DeviceProfile, 'family'>) {
   return FAMILY_STEPS[device.family]
 }
 
-// Where a machine is ready for its first module: the core on Elektron machines; on Zoom pedals a loading effect and
-// an SDK, since Modwerk takes their effects only once a module contract for them exists.
+// Where a machine is ready for its first module: the core on Elektron machines; on Zoom pedals a loading effect, on
+// Erica Synths machines the Modwerk base, each with an SDK, since Modwerk takes their mods only once a module contract exists.
 export function readyForMods(device: Pick<DeviceProfile, 'family' | 'steps' | 'sdk'>) {
-  return device.family === 'zoom' ? device.steps.load === 'done' && !!device.sdk : device.steps.core === 'done'
+  if (device.family === 'elektron') return device.steps.core === 'done'
+  return device.steps[device.family === 'zoom' ? 'load' : 'core'] === 'done' && !!device.sdk
 }
 
 // Machines come from sdk/machines/<id>/machine.json through scripts/machines.mjs; the UI keeps a compact shape.

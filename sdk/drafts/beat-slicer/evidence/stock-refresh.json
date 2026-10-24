@@ -1,0 +1,22 @@
+{
+  "scope": "real stock editor binding/selection refresh with synthetic settings and viewport mock; no scheduler, transaction or device",
+  "mainSha256": "164f31224bf61181e3f50e7dec40df9afcae5b16dbf6e4c0d0cc5e986af0a84e",
+  "sourceSha256": {
+    "stock_probe.py": "b9126e349a1c1c14970e81e56e63a1452c369b1c613593831262d26db39f8ba0",
+    "stock_probe/refresh_probe.cpp": "932003271252c08628203bc202f7c11a06dc5e1a6498a0e19e43821b7952ac4a",
+    "stock_probe/CMakeLists.txt": "6aedd11ab5f67485a269a43f23f7a829f7bcb15a2a21a136999530dd2ea92068"
+  },
+  "executableSha256": "0b651c2291d9fa296029341685d6ee213bc856880eb68d8695c35361b3956477",
+  "exitCode": 0,
+  "stdout": [
+    "SOURCE_SHA256: 932003271252c08628203bc202f7c11a06dc5e1a6498a0e19e43821b7952ac4a",
+    "PASS: 16 retired-row dereferences reproduced; 16 reset-before-refresh reductions avoid them",
+    "PASS: 32 empty/populated refreshes preserve complete settings and select only a containing row"
+  ],
+  "stderrLines": 512,
+  "stderrSha256": "407369923fecf0664d0d9e4a9407c46e95013b3ef02791abbed37fbca0ae29a8",
+  "hardware": "not tested",
+  "audio": "not tested",
+  "stockPersistence": "not tested",
+  "sourceRevision": "af35f3084e01448c26e0cc6a7a287f33756a4eb8"
+}

@@ -3,9 +3,9 @@
     "version": "1.1.13-experimental.2",
     "date": "2026-10-07",
     "changes": [
-      "Media-only: match the saved SVG thumbnail to the library’s existing signal illustration, including its grid, palette and typography; update the illustration alt text.",
-      "Documentation-only: add the model and control guide, including SWEEP, METAL, COLOR, FBK and FOLD, with real page captures. Pinned firmware code is unchanged.",
-      "Compatibility flag only: marked as incompatible with digineighbor and digislicer, because they patch the same firmware code on OS 1.53. The site already refused the pair for overlapping firmware changes; it now names the conflict too. Pinned firmware code is unchanged."
+      "Media only: a new thumbnail in the library’s shared art style.",
+      "Documentation only: a model and control guide, including SWEEP, METAL, COLOR, FBK and FOLD, with real page captures.",
+      "Now listed as incompatible with NEIGHBOR and DIGISLICER, which change the same firmware code on OS 1.53. The builder already refused these pairs."
     ],
     "sourceCommit": "c886095a7931e34c8a0e43268ce5d399f092382c"
   },
@@ -13,7 +13,7 @@
     "version": "1.1.13-experimental.1",
     "date": "2026-10-05",
     "changes": [
-      "Metadata-only: correct authorship and upstream adaptation credits. The pinned firmware implementation is unchanged."
+      "Metadata only: corrects the authorship and upstream credits. The module is unchanged."
     ],
     "sourceCommit": "217ee599ef18fecbd6fb3895605dcfffe8455d2e"
   },

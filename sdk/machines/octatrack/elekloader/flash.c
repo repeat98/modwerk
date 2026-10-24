@@ -7,6 +7,11 @@
  * depack to an OS entry carrying NOR's bootstrap version, stock's bootloader
  * copy byte for byte and this base's own packed .run stream (run_unpack.s).
  * A base that was never booted on this unit can therefore never reach NOR.
+ * Neither is compared with the running RAM: stock rewrites bytes of its
+ * bootloader copy and reuses the RAM the packed .run was loaded into once it
+ * has started (ot_emu, 23 October 2026; every write on a unit was refused).
+ * The copy is checked against stock's digest, and the stream against the
+ * digest .boot takes before stock's start (modwerk_flash_snapshot).
  *
  * verify (prepare): the container's format and section sum, in the stage.
  * commit (publish): the container copied aside, depacked into the stage
@@ -49,6 +54,8 @@ uint8_t modwerk_test_nor[NOR_LIMIT];
 const uint8_t *modwerk_test_running, *modwerk_test_run_load;
 uint32_t modwerk_test_sectors[SECTORS], modwerk_test_flash_version = 0x0408u;
 int modwerk_test_erases, modwerk_test_programs, modwerk_test_drop;
+uint8_t modwerk_test_bootloader_digest[MU_DIGEST_BYTES];
+#define BOOTLOADER_DIGEST modwerk_test_bootloader_digest
 #define RUNNING(a) (modwerk_test_running + ((a) - OS_ENTRY))
 #define RUN_LOAD modwerk_test_run_load
 #define SECTOR modwerk_test_sectors
@@ -72,6 +79,11 @@ extern const uint8_t __run_load[];   /* the packed .run inside this image (run_u
 #define RUNNING(a) ((const uint8_t *)(uintptr_t)(a))
 #define RUN_LOAD __run_load
 #define SECTOR ((const uint32_t *)0x400a95c0u)
+/* SHA-256 of stock 1.40C's bootloader copy, BOOTLOADER_FROM to BOOTLOADER_END, which check_flash_safety.py proves
+ * every base carries unchanged. The running copy is no reference: stock writes 0x400e201e-0x400e2108 at run time. */
+static const uint8_t BOOTLOADER_DIGEST[MU_DIGEST_BYTES] = {
+    0x10,0x95,0x94,0xe7,0x98,0x15,0x4a,0x80,0x3a,0x4b,0xad,0x21,0xc8,0x76,0x56,0x58,
+    0x89,0x5d,0x64,0x44,0x24,0xeb,0x94,0x2c,0xf5,0x8f,0x69,0xea,0x18,0x25,0xd6,0xd7};
 static uint32_t flash_nor_version(void) { return *(volatile uint16_t *)0x3ffcu; }
 static uint16_t nor_word(uint32_t a) { return *(volatile uint16_t *)(uintptr_t)a; }
 /* Stock's sector erase and 256-byte page program (1.40C): both unlock, command and poll the chip
@@ -82,6 +94,20 @@ static void nor_program(uint32_t a, const uint8_t *src) { ((void (*)(uint32_t, c
 
 static uint32_t rd32(const uint8_t *p) { return (uint32_t)p[0] << 24 | (uint32_t)p[1] << 16 | (uint32_t)p[2] << 8 | p[3]; }
 static int refuse(enum flash_refusal why) { modwerk_flash_refusal = why; f_candidate = 0; return 0; }
+
+/* The packed .run as MAIN loaded it: its digest and length with its header, 0 until .boot took them. */
+static uint8_t run_digest[MU_DIGEST_BYTES];
+static uint32_t run_bytes;
+/* .boot calls this right after .run is unpacked and .bss cleared (build_core.py BOOT_FLASH_SNAPSHOT), while the
+ * stream still lies where the image put it: stock's start reuses that RAM. */
+void modwerk_flash_snapshot(void)
+{
+    uint32_t n = rd32(RUN_LOAD);
+    run_bytes = 0;
+    if (n > BOOT_IMAGE_BYTES - 8u) return;
+    mu_sha256(RUN_LOAD, n + 8u, run_digest);
+    run_bytes = n + 8u;
+}
 
 /* The kit's section stream (codec/elz.py, run_unpack.s's format), bounded both ways. */
 struct bits { const uint8_t *p, *end; unsigned tag; int err; };
@@ -159,10 +185,14 @@ static int same_base(void)
     uint32_t size = (uint32_t)out;
     if (size < OS_VEROFF + 2u || rd32(img) != OS_FIRST) return refuse(FLASH_ENTRY);
     if (((uint32_t)img[OS_VEROFF] << 8 | img[OS_VEROFF + 1u]) != flash_nor_version()) return refuse(FLASH_BOOTSTRAP);
-    if (size < BOOTLOADER_END - OS_ENTRY || differ(img + (BOOTLOADER_FROM - OS_ENTRY), RUNNING(BOOTLOADER_FROM), BOOTLOADER_END - BOOTLOADER_FROM))
-        return refuse(FLASH_PROTECTED);
-    uint32_t at = (uint32_t)(RUN_LOAD - RUNNING(OS_ENTRY)), run = 8u + rd32(RUN_LOAD);
-    if (at > size || run > size - at || differ(img + at, RUN_LOAD, run)) return refuse(FLASH_OTHER_BASE);
+    uint8_t digest[MU_DIGEST_BYTES];
+    if (size < BOOTLOADER_END - OS_ENTRY) return refuse(FLASH_PROTECTED);
+    mu_sha256(img + (BOOTLOADER_FROM - OS_ENTRY), BOOTLOADER_END - BOOTLOADER_FROM, digest);
+    if (differ(digest, BOOTLOADER_DIGEST, MU_DIGEST_BYTES)) return refuse(FLASH_PROTECTED);
+    uint32_t at = (uint32_t)(RUN_LOAD - RUNNING(OS_ENTRY));
+    if (!run_bytes || at > size || run_bytes > size - at) return refuse(FLASH_OTHER_BASE);
+    mu_sha256(img + at, run_bytes, digest);
+    if (differ(digest, run_digest, MU_DIGEST_BYTES)) return refuse(FLASH_OTHER_BASE);
     return 1;
 }
 static int same_as_nor(void)

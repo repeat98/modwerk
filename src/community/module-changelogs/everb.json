@@ -3,23 +3,21 @@
     "version": "0.1.2-experimental",
     "date": "2026-10-18",
     "changes": [
-      "On T3 and T7, E-Verb's delay ring overlapped Sidechain Compressor's cross-core key window, which lives in the last 514 words of those tracks' FX2 delay buffer. In a card build with both, each could write over the other's data: the reverb could play back audio from other tracks, and the compressor's key could be corrupted ([#696](https://github.com/repeat98/modwerk/issues/696); the reporter heard the ghost on hardware through Mini Verb, which fills its buffer the same way). The ring now stops 514 words short and never writes or reads them. In the DSP emulator, 0.1.1 wrote all 514 window words on both cores; 0.1.2 writes none, and its output does not change when the window is filled.",
-      "The 499 words come off the top of the pre-delay: PRE 124 to 127 now all give 227 ms, where they rose to 250 ms; with REV on the reverse window tops out at 227 ms too. Below PRE 124 nothing changes: in the emulator every tested setting with PRE at 123 or below renders bit-identically to 0.1.1, including the defaults and moving knobs. Projects saved with 0.1.1 store the same knob values and should sound the same unless PRE is 124 or higher; reloading one into 0.1.2 is not tested.",
-      "The frame loop and the cycle bound are unchanged; the program grows by 14 words (1,602 per core).",
-      "Measured on the DSP emulator only: 0.1.2 has not run on hardware. The owner's MKII report (two distinct simultaneous T1/T5 instances, Part/project save and reload, physical reboot) is for 0.1.0 on EVRB01T01. MKI, full-load chip timing and broader hardware coverage remain unverified."
+      "Fixes E-Verb on T3 and T7 overwriting Sidechain Compressor's data in a card build with both: the reverb could play other tracks' audio and the compressor's key could break (#696).",
+      "To make room, PRE now tops out at 227 ms: settings 124 to 127 all give 227 ms, and so does the REV window. Lower PRE settings sound the same.",
+      "Projects saved with 0.1.1 keep their knob values and should sound the same unless PRE is 124 or higher.",
+      "Known issue: not yet tested on hardware, including reloading a project saved with 0.1.1."
     ]
   },
   {
     "version": "0.1.1-experimental",
     "date": "2026-10-11",
     "changes": [
-      "Holding FUNC while turning SIZE, DCY, ABSB or SPD now steps through 0, the centre (64) and 127, as MIX and DPTH already did and as on the stock reverbs' MIX. In 0.1.0 those four knobs jumped only between 0 and 127, an editor inherited from the stock reverb that E-Verb's page is cloned from (#438).",
-      "Plain turns and every stored value are unchanged: only four editor words in E-Verb's FX2 descriptor change. The DSP code and memory are byte-identical to 0.1.0, so the sound and cycle cost are unchanged, and the knob values a project stores mean the same.",
-      "Measured on the ColdFire emulator only: 0.1.1 has not run on hardware. The owner's MKII report (two simultaneous instances, Part/project reload, physical reboot) covers 0.1.0; MKI, full-load chip timing and broader hardware coverage remain unverified.",
-      "Documentation/media-only: add an offline audio preview rendered through 0.1.0-experimental, with sample credits, settings and provenance; firmware is unchanged.",
-      "Documentation/media-only (12 October 2026): replace the old preview with an original chord stab at dry, hall and shimmer settings, give shimmer a 7.5-second pass, match first-hit RMS and retain exact 0.1.1 DSP/source provenance. Firmware and its version are unchanged; these offline previews add no physical-hardware or performance qualification.",
-      "Documentation/media-only (12 October 2026): use Legowelt’s bright Juno 106 chord for an 11.4-second dry/long-hall/sustaining-shimmer comparison, with audible extended tails, stronger settings, 80 ms first-hit matching and no added gaps. Include pack permission, credit, excerpt/settings hashes and decoded peak validation. Firmware and hardware/performance qualification are unchanged.",
-      "Beta base fix (beta test run 2, 14 Oct 2026; the package is unchanged): picking it showed DSP MEMORY FULL whenever the modules the bank's Parts name did not fit on a DSP core together, even with room for it, and a pick on T1-T4 could be refused for T5-T8's Parts. The base keeps the bank's modules loaded for instant Part changes only while they fit; on a core where they never fitted it now loads what the Part runs, so the pick goes through. Where they fit and the pick does not, DSP MEMORY FULL stays. Seen on a development twin with all 19 modules and bank A: Tape Echo and Mini Verb on T1 and T5 were refused before and are taken now; with the bank's modules held, Mini Verb is still refused on both cores and Tape Echo taken. The tester base itself has not run on the unit."
+      "Holding FUNC while turning SIZE, DCY, ABSB or SPD now steps through 0, 64 and 127, as MIX and DPTH already did (#438).",
+      "Plain knob turns, the sound and saved values are unchanged.",
+      "Beta base update: picking E-Verb no longer shows DSP MEMORY FULL just because the effects of the bank's other Parts don't all fit.",
+      "Media only: a new audio preview with Legowelt's Juno 106 chord through dry, long hall and shimmer settings.",
+      "Known issue: this version is not yet tested on hardware."
     ]
   },
   {
@@ -28,8 +26,8 @@
     "changes": [
       "First E-Verb release: original Erbe-Verb-inspired FX2 feedback-delay reverb with size, saturation/sustain, absorption, chorus/grains/shimmer, reverse pre-delay, tilt and envelope routings.",
       "The six main-page controls support locks, LFOs, scenes and MIDI CC; SETUP controls are per Part. MIX 0 is exact dry passthrough.",
-      "Uses the shared native/browser builder; alone, replaces Spring Rev and Dark Rev while preserving Plate Rev and other stock effects.",
-      "Owner reports working MKII sound, two distinct simultaneous T1/T5 instances, Part/project save/reload and physical reboot on exact EVRB01T01. Full-load silicon timing and broader hardware modulation/recovery coverage remain unverified."
+      "In a card build E-Verb replaces SPRING REV and DARK REV; PLATE REV and the other stock effects stay.",
+      "Known issue: not yet tested on hardware at full DSP load or with heavy modulation."
     ]
   }
 ]

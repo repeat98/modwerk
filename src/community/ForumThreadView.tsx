@@ -14,6 +14,7 @@ import { ForumPostBody as PostContent } from './ForumPostBody'
 import { ForumTime } from './ForumTime'
 import { ForumAvatar as Avatar, ForumAuthorName as AuthorName, ForumCategoryBadge as CategoryBadge, ForumMachineBadge as MachineBadge, ForumMaintainerBadge as MaintainerBadge, ForumRoleBadge as RoleBadge } from './ForumIdentity'
 import { DEVICES_BY_ID } from '../devices/registry'
+import { pageTitle } from '../site-metadata'
 import { ForumAttachments, MediaPicker } from './ForumMedia'
 import { mediaBusy, readyAttachments, type PendingMedia } from './forum-media-client'
 import { ModuleIssueNotice } from './ModuleIssueNotice'
@@ -79,7 +80,7 @@ function ForumThreadContent({id,query=new URLSearchParams(),onCopy,embedded=fals
   const data=loaded?.key===key?loaded.data:null
   useEffect(() => {
     if (embedded || !data) return
-    setPageMetadata({ title: data.thread.title + ' — Modwerk forum', description: page === 0 ? postExcerpt(data.posts[0]?.body ?? '') : 'Discussion on the Modwerk forum.', url: new URL(threadHref(id, data.thread.title), document.baseURI).href })
+    setPageMetadata({ title: pageTitle(data.thread.title, 'Modwerk forum'), description: page === 0 ? postExcerpt(data.posts[0]?.body ?? '') : 'Discussion on the Modwerk forum.', url: new URL(threadHref(id, data.thread.title), document.baseURI).href })
   }, [embedded, data, id, page])
   async function load(nextPage=page){setLoaded({key:identity+':'+nextPage,data:await api<ThreadDetail>('/forum/threads/'+id+'?page='+nextPage)})}
   useEffect(()=>{let cancelled=false;void api<ThreadDetail>('/forum/threads/'+id+'?page='+page).then(value=>{if(!cancelled){setLoaded({key,data:value});setError('');if(value.firstUnread)setUnreadStart(current=>current??value.firstUnread??null)}}).catch(error=>{if(!cancelled)setError(errorText(error))});return()=>{cancelled=true}},[id,page,key,revision])

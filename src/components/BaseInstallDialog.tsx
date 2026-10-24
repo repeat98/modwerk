@@ -9,6 +9,7 @@ import { baseLayout, isPublishedBase, layoutName, type BaseLayout } from '../eng
 import { useOctatrackLink } from '../hooks/useOctatrackLink'
 import { RiskAcceptance } from './ConfigurationLayout'
 import { Icon, type IconName } from './Icon'
+import { LinkHero } from './LinkHero'
 import './octatrack-link.css'
 
 export interface BaseImage { buffer: ArrayBuffer; sha256: string; base: string }
@@ -17,10 +18,10 @@ const LAUNCH_HOLD_SECONDS = 10
 /** The update over USB, step by step, as the link reports it (updateBase). */
 const USB_STEPS: Record<BaseUpdateStep, string> = {
   staging: 'Sending the new base to your Octatrack',
-  starting: 'Your Octatrack restarts on the new base, from memory. Nothing is written yet',
-  started: 'The new base runs and answers. Writing it to the Octatrack now',
-  writing: 'Writing the new base. Keep the power and the cable on',
-  restarting: 'Written and checked. Your Octatrack restarts on it',
+  starting: 'The Octatrack is trying the new base. Nothing is saved yet',
+  started: 'The new base works. Saving it now',
+  writing: 'Saving the new base. Don’t switch off or unplug the Octatrack',
+  restarting: 'Saved and checked. The Octatrack restarts',
   done: 'Done. Your Octatrack runs the new base.',
 }
 // What the beta prompt promises: only what the base does today. Cross-compatibility,
@@ -32,68 +33,6 @@ const ALSO_NEW: [IconName, string, string, boolean?][] = [
   ['search', 'Missing modules named', ' when a project uses one the Octatrack doesn’t have'],
   ['sliders', 'Stock effects stay', ', none of them get replaced'],
 ]
-const SCREEN = ['LOADING', 'TRYING', 'KEPT']
-
-// The Octatrack MKII front panel, traced from a photo (panel 1238 x 640 px, top-left at 22, 322) and scaled into the hero.
-const OT = { x: 316, y: 40, scale: 306 / 1238 }
-const at = (x: number, y: number) => [OT.x + (x - 22) * OT.scale, OT.y + (y - 322) * OT.scale]
-function Key({ x, y, w = 38, h = 38, className = 'signal-ghost', delay }: { x: number; y: number; w?: number; h?: number; className?: string; delay?: number }) {
-  const [cx, cy] = at(x, y)
-  return <rect className={className} style={delay === undefined ? undefined : { animationDelay: delay + 's' }} x={cx - w * OT.scale / 2} y={cy - h * OT.scale / 2} width={w * OT.scale} height={h * OT.scale} rx="2" />
-}
-function Knob({ x, y, r = 25 }: { x: number; y: number; r?: number }) {
-  const [cx, cy] = at(x, y)
-  return <g className="signal-secondary"><circle cx={cx} cy={cy} r={r * OT.scale} /><path d={`M${cx} ${cy - r * OT.scale}v${r * OT.scale * .55}`} /></g>
-}
-const KEYS: [number, number, number?, number?][] = [
-  [77, 519], [193, 497], [251, 497], [309, 497], [75, 592], [134, 592], [192, 592], [251, 592], [309, 592], [193, 687, 60], [88, 775, 60], [193, 775, 60],
-  [285, 716], [285, 775], [401, 716], [343, 775], [401, 775], [459, 775], ...[439, 497, 556, 614].flatMap(y => [[423, y], [792, y]] as [number, number][]),
-  ...[491, 549, 607, 666, 724].map(x => [x, 670, 40] as [number, number, number]), [909, 576, 40], [1197, 870, 60, 40],
-]
-/** A sine squiggle like the module cards' art, `w` wide around (x, y). */
-const squiggle = (x: number, y: number, w: number, a: number) => Array.from({ length: 13 }, (_, i) => (i ? 'L' : 'M') + (x + i * w / 12).toFixed(1) + ' ' + (y + Math.sin(i / 12 * Math.PI * 3) * a).toFixed(1)).join(' ')
-
-/** This page (the module library, one card on its way) and an Octatrack MKII on a USB cable, drawn like the module previews. */
-function LinkHero() {
-  const [sx, sy] = at(473, 425), screenW = 269 * OT.scale, screenH = 205 * OT.scale, [fx, fy] = at(940, 745)
-  return <div className="module-preview link-hero" aria-hidden="true">
-    <div className="preview-label"><span>BETA</span><span className="preview-led" /></div>
-    <svg viewBox="0 0 640 220" className="signal-art link-hero-art" fill="none">
-      <g className="signal-grid">{[60, 110, 160].map(y => <path key={y} d={'M12 ' + y + 'H628'} />)}{[128, 256, 384, 512].map(x => <path key={x} d={'M' + x + ' 12V204'} />)}</g>
-      {/* This page: sidebar, search, a grid of module cards; the highlighted one is being sent. */}
-      <rect className="signal-secondary" x="24" y="44" width="200" height="128" rx="7" />
-      <path className="signal-secondary" d="M12 180H236L224 190H24Z" />
-      <rect className="signal-ghost" x="96" y="52" width="64" height="6" rx="3" />
-      {[64, 72, 80, 88, 96].map((y, row) => <rect key={y} className={row ? 'signal-ghost' : 'signal-main'} x="34" y={y} width={row ? 22 : 26} height="3" rx="1.5" />)}
-      {[0, 1].flatMap(row => [0, 1, 2].map(col => {
-        const x = 74 + col * 48, y = 66 + row * 52, sent = row === 0 && col === 1
-        return <g key={row + '-' + col}>
-          <rect className={sent ? 'signal-main link-hero-pick' : 'signal-ghost'} x={x} y={y} width="44" height="46" rx="3" />
-          <path className={sent ? 'signal-main' : 'signal-secondary'} d={squiggle(x + 7, y + 17, 30, 6)} />
-          <rect className="signal-ghost" x={x + 7} y={y + 34} width="20" height="3" rx="1.5" />
-        </g>
-      }))}
-      {/* The cable reaches the USB socket on the unit's top edge. */}
-      <path className="signal-ghost" d="M236 182C292 182 282 18 384 18H500Q512 18 512 32V40" />
-      <path className="signal-main link-hero-flow" d="M236 182C292 182 282 18 384 18H500Q512 18 512 32V40" />
-      <rect className="signal-secondary" x={OT.x} y={OT.y} width={1238 * OT.scale} height={640 * OT.scale} rx="6" />
-      <rect className="link-hero-screen" x={sx} y={sy} width={screenW} height={screenH} rx="2" />
-      <text className="link-hero-name" x={sx + screenW / 2} y={sy + 14} textAnchor="middle">PREVIEW VOL</text>
-      {SCREEN.map((word, i) => <text key={word} className={'link-hero-word' + (i ? '' : ' is-first')} style={{ animationDelay: -2 * ((3 - i) % 3) + 's' }} x={sx + screenW / 2} y={sy + screenH / 2 + 8} textAnchor="middle">{word}</text>)}
-      <Knob x={102} y={437} r={22} />
-      {[180, 209, 238, 267, 296, 325].map(x => { const [cx, cy] = at(x, 458); return <circle key={x} className="signal-secondary" cx={cx} cy={cy} r="1" /> })}
-      {KEYS.map(([x, y, w, h], i) => <Key key={i} x={x} y={y} w={w} h={h} />)}
-      <Key x={88} y={687} w={62} h={36} className="signal-secondary" />
-      {[573, 642, 711].map(x => <Key key={x} x={x} y={775} w={60} className="signal-secondary" />)}
-      {[[910, 477], [1007, 477], [1106, 477], [1205, 477], [1007, 576], [1106, 576], [1205, 576]].map(([x, y]) => <Knob key={x + '-' + y} x={x} y={y} />)}
-      <path className="signal-secondary" d={`M${fx} ${fy}H${at(1120, 745)[0]}`} /><Key x={940} y={745} w={14} h={44} className="signal-secondary" />
-      <Key x={846} y={746} w={60} h={60} /><Key x={1196} y={746} w={60} h={60} />
-      {[1165, 1185, 1205, 1226].map(x => { const [cx, cy] = at(x, 828); return <circle key={x} className="signal-secondary" cx={cx} cy={cy} r="1.2" /> })}
-      {Array.from({ length: 16 }, (_, i) => <Key key={'trig' + i} x={89 + i * 69.2} y={870} w={58} h={58} className="rhythm-off link-hero-trig" delay={i * 0.15} />)}
-      <text x="124" y="208" textAnchor="middle">THIS PAGE</text><text x={OT.x + 153} y="212" textAnchor="middle">OCTATRACK MKII</text>
-    </svg>
-  </div>
-}
 
 /**
  * The one place to install the Modwerk base. The USB card opens it at any time; for
@@ -184,28 +123,28 @@ export function BaseInstallDialog({ link, launch = false, layout, firmwareReady,
     {view === 'intro' ? <>
       <LinkHero />
       <h2 id="base-install-title" className="link-title" tabIndex={-1}>Sync to Octatrack <span className="module-beta-badge">Beta</span></h2>
-      <p id="base-install-intro" className="base-install-intro">Install the Modwerk base once from the card. After that, modules go straight from this page to your Octatrack, without the card and without a reboot. It’s a beta, so please tell me in <strong>#beta-testers</strong> on the <a href={DEVELOPMENT_DISCORD_URL} target="_blank" rel="noreferrer">development Discord</a> what goes wrong, not through the report forms on this site.</p>
+      <p id="base-install-intro" className="base-install-intro">Install the Modwerk base once from the card. After that, modules go straight from this page to your Octatrack, without the card and without a reboot. It’s a beta: please report problems in <strong>#beta-testers</strong> on the <a href={DEVELOPMENT_DISCORD_URL} target="_blank" rel="noreferrer">development Discord</a>, not through the report forms on this site.</p>
       <ul className="link-promises">{ALSO_NEW.map(([icon, lead, rest, explainOnPhone]) => <li key={lead}><span className="link-feature-icon" aria-hidden="true"><Icon name={icon} size={18} /></span><span><strong>{lead}</strong><span className={explainOnPhone ? undefined : 'link-feature-rest'}>{rest}</span></span></li>)}</ul>
       <p className={'link-needs' + (state.status === 'unsupported' ? ' is-missing' : '')}>You need an Octatrack MKII, your OS 1.40C file, a USB cable, Chrome or Edge on a computer, and a CompactFlash card reader in case USB stops working.</p>
       {state.status === 'unsupported' && <p className="file-error" role="alert">This browser can’t talk to USB devices. Open this page in Chrome or Edge on a computer.</p>}
     </> : <>
     <header className="base-install-header"><h2 id="base-install-title" tabIndex={-1}>{switching ? 'Change USB Audio' : <>{older ? 'Update' : 'Install'} the Modwerk base</>} <span className="module-beta-badge">Beta</span></h2></header>
-    <p id="base-install-intro" className="base-install-intro">{outdated ? 'Modwerk was updated since you opened this page, so it doesn’t know the current base yet. Reload the page; it then checks your Octatrack again.' : switching && running && layout ? <>Your Octatrack runs the Modwerk base with {layoutName(running)}. USB Audio is part of the base, so I’ll send the same base with {layoutName(layout)} over USB. Your modules stay; your computer sees the Octatrack’s audio change after it restarts. On Windows, then open Sound settings → Recording → Octatrack → Properties → Advanced and pick the new channel count: Windows keeps the old one until you do.</> : older ? <>Your Octatrack runs an older Modwerk base{state.identity && <> (<code>{state.identity.base.slice(0, 8)}</code>)</>}. {overUsb ? 'I’ll send the current one over USB; the card is only for the first install.' : 'Install the current one from the card, the same way as the first time.'}</> : 'A one-time install from your Octatrack’s card.'}</p>
+    <p id="base-install-intro" className="base-install-intro">{outdated ? 'Modwerk was updated since you opened this page, so it doesn’t know the current base yet. Reload the page; it then checks your Octatrack again.' : switching && running && layout ? <>Your Octatrack is set to {layoutName(running)}. USB Audio is part of the base, so switching to {layoutName(layout)} updates the base over USB. Your modules stay. After the Octatrack restarts, your computer sees the new audio channels. On Windows, open Sound settings → Recording → Octatrack → Properties → Advanced and pick the new channel count: Windows keeps the old one until you do.</> : older ? <>A new Modwerk base is out. Your Octatrack has an older one{state.identity && <> (<code>{state.identity.base.slice(0, 8)}</code>)</>}. {overUsb ? 'You can update it over USB, no card needed.' : 'Update it from the card, the same way as the first time.'}</> : 'A one-time install from your Octatrack’s card.'}</p>
     {!overUsb && !outdated && <ol className="base-install-progress" aria-label="Installation progress">{stages.map((item, index) => <li key={item} aria-current={stage === item ? 'step' : undefined} className={index < stageIndex ? 'is-past' : undefined}><span aria-hidden="true">{index < stageIndex ? <Icon name="check" size={13}/> : index + 1}</span>{['Download', 'Copy', 'Install', 'Connect'][index]}</li>)}</ol>}
     {!outdated && <section className="base-install-stage" aria-labelledby="base-stage-title">
     {overUsb && <>
       <h3 id="base-stage-title" data-stage-title tabIndex={-1}>Update over USB</h3>
-      <p>I’ll build the current base{layout ? <> with {layoutName(layout)}</> : ''} in your browser from your original OS 1.40C file and send it over USB. Your Octatrack starts it from memory first, without writing anything; only once it runs and answers does it write it and restart. Keep the power and the cable on while it writes.</p>
+      <p>The new base{layout ? <> with {layoutName(layout)}</> : ''} is built in your browser from your original OS 1.40C file and sent to the Octatrack. The Octatrack tries it first without saving anything. If it works, the base is saved and the Octatrack restarts. Don’t switch off the Octatrack or unplug the cable until it’s done.</p>
       <p className="base-install-warning" role="note"><Icon name="warn" size={18}/><span><strong>{BETA_RECOVERY_NOTICE}</strong> Keep the original OS 1.40C .bin and .syx on your computer. <a href="#faq" target="_blank" rel="noreferrer">Recovery in the FAQ</a></span></p>
       <input ref={fileRef} type="file" accept=".bin" hidden aria-label="Choose your original OS 1.40C file" onChange={event => { const file = event.target.files?.[0]; event.target.value = ''; if (file) onChooseFirmware(file) }}/>
       {firmwareReady ? <><p className="base-file-ready"><Icon name="check" size={18}/>Your OS 1.40C file is ready.</p>{!usb && <RiskAcceptance checked={accepted} onChange={setAccepted}/>}</> : <a className="text-button" href="#faq" target="_blank" rel="noreferrer">Where do I get the original OS file? <Icon name="arrow" size={14}/></a>}
       {firmwareError && <p className="file-error" role="alert">{firmwareError}</p>}
-      {usb && 'step' in usb && <p className="base-install-note" role="status">{USB_STEPS[usb.step]}{usb.fraction !== undefined && usb.fraction < 1 ? ` (${Math.round(100 * usb.fraction)} %)` : ''}{usb.step === 'done' ? '' : '…'}</p>}
+      {usb && 'step' in usb && <p className="base-install-note" role="status">{updating && <span className="status-dot is-updating" />}{USB_STEPS[usb.step]}{usb.fraction !== undefined && usb.fraction < 1 ? ` (${Math.round(100 * usb.fraction)} %)` : ''}{usb.step === 'done' ? '' : '…'}</p>}
       {usb && 'error' in usb && <p className="file-error" role="alert">{usb.error} {state.status === 'ready' ? 'You can try again, or update from the card.' : 'Once it is connected again you can try again, or update from the card.'}</p>}
     </>}
     {stage === 'download' && !overUsb && <>
       <h3 id="base-stage-title" data-stage-title tabIndex={-1}>Download the base</h3>
-      <p>I’ll build it in your browser from your original OS 1.40C file. Your firmware stays on your computer.</p>
+      <p>The base is built in your browser from your original OS 1.40C file. The file stays on your computer.</p>
       <p className="base-install-warning" role="note"><Icon name="warn" size={18}/><span><strong>{BETA_RECOVERY_NOTICE}</strong> Keep the original OS 1.40C .bin and .syx on your computer. <a href="#faq" target="_blank" rel="noreferrer">Recovery in the FAQ</a></span></p>
       <input ref={fileRef} type="file" accept=".bin" hidden aria-label="Choose your original OS 1.40C file" onChange={event => { const file = event.target.files?.[0]; event.target.value = ''; if (file) onChooseFirmware(file) }}/>
       {firmwareReady ? <><p className="base-file-ready"><Icon name="check" size={18}/>Your OS 1.40C file is ready.</p><RiskAcceptance checked={accepted} onChange={setAccepted}/></> : <a className="text-button" href="#faq" target="_blank" rel="noreferrer">Where do I get the original OS file? <Icon name="arrow" size={14}/></a>}
@@ -229,13 +168,13 @@ export function BaseInstallDialog({ link, launch = false, layout, firmwareReady,
         <li><strong>Keep the power on while it updates</strong><p>Wait until startup finishes, or the Octatrack explicitly asks you to restart.</p></li>
         <li><strong>Follow the restart prompt, if shown</strong><p>Only then switch the Octatrack off and on again. Leave the USB cable connected.</p></li>
       </ol>
-      <details className="base-install-recovery"><summary>If the Octatrack doesn’t start or connect</summary><p>The original OS can be installed again: from the card with a CompactFlash card reader, or as the .syx through a MIDI interface and the startup menu. Follow <a href="#faq" target="_blank" rel="noreferrer">recovery in the FAQ</a>, and tell me in #beta-testers on Discord.</p></details>
+      <details className="base-install-recovery"><summary>If the Octatrack doesn’t start or connect</summary><p>The original OS can be installed again: from the card with a CompactFlash card reader, or as the .syx through a MIDI interface and the startup menu. Follow <a href="#faq" target="_blank" rel="noreferrer">recovery in the FAQ</a>, and report it in #beta-testers on Discord.</p></details>
     </>}
     {stage === 'connect' && <>
       <h3 id="base-stage-title" data-stage-title tabIndex={-1}>Waiting for your Octatrack</h3>
       {state.status === 'unsupported' ? <><p>This browser can’t connect to USB devices.</p><p>Open Modwerk in <strong>Chrome or Edge on a computer</strong>, sign in and connect your Octatrack. The base you just installed stays on it.</p></> : <>
         <p>Keep the USB cable connected. Choose your Octatrack in the browser’s device list.</p>
-        <p className="base-install-note" role="status">{found ? 'The downloaded base is confirmed. Opening your module set…' : state.status === 'connecting' ? 'Connecting to your Octatrack…' : state.status === 'stock' || state.status === 'ready' ? 'The downloaded base hasn’t been confirmed yet. Finish the installation, then connect again.' : 'Once I recognise the installed base, I’ll open your module set automatically.'}</p>
+        <p className="base-install-note" role="status">{found ? 'The downloaded base is confirmed. Opening your module set…' : state.status === 'connecting' ? 'Connecting to your Octatrack…' : state.status === 'stock' || state.status === 'ready' ? 'The downloaded base hasn’t been confirmed yet. Finish the installation, then connect again.' : 'Once the installed base is recognised, your module set opens automatically.'}</p>
         {state.notice && <p className="file-error" role="status">{state.notice.text}</p>}
       </>}
     </>}

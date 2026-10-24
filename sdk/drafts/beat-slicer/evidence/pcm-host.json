@@ -1,0 +1,32 @@
+{
+  "scope": "portable staged PCM reader; synthetic host execution only",
+  "sourceSha256": {
+    "planner.c": "01c9c25efa363679a591969931dd376a3b694a949dd8b9f89eda4bf77a88cee4",
+    "planner.h": "4faab6f03e679d0b9389dbf016416afc87fb4d2d354952b22efb81a0381c5c1b",
+    "planner_job.c": "767d82cc375677a115e9457af35e26fddd9de66a0dc80aa2af0fe3b5adaf0581",
+    "planner_job.h": "c4dd3faa8b3320194b54ab4d7bec6541d9e936f544b0e6236efa4fa5518d6547",
+    "pcm_reader.c": "8762e389a39b7407a7d987dc6e3e36d7d75aa6c408b1d3232d8672a380226088",
+    "pcm_reader.h": "462f495a86f32730b79a56177f99929f685d82729e4646e7b391df475d929821",
+    "test_pcm_reader.c": "1638089a0bca169af716b664a94245803a024bb11915957a14ef04e296923db5",
+    "test_pcm_reader.py": "d6cbbcf67a4582e46a09727c95d55d6e42ec4722eec67144ce2c87cd29c82cfa"
+  },
+  "compiler": "Apple clang version 17.0.0 (clang-1700.6.4.2)",
+  "flags": [
+    "-std=c99",
+    "-O1",
+    "-g",
+    "-Wall",
+    "-Wextra",
+    "-Werror",
+    "-pedantic",
+    "-fsanitize=address,undefined",
+    "-fno-omit-frame-pointer"
+  ],
+  "exitCode": 0,
+  "stdout": [
+    "PASS: 4160 decoder vectors, 40 paged previews, lifecycle checks and 256 exact-buffer ASan cases"
+  ],
+  "hardware": "not tested",
+  "audio": "not tested",
+  "nativeSourceAccess": "not implemented"
+}

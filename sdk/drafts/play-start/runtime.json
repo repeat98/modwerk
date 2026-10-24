@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "subscribe": [
+    {"event": "module_tick", "fn": "ps_restore"}
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "scope": "real stock grid publication/pointer refresh with synthetic settings and display/progress/zero-search mocks; no scheduler, native transaction, persistence or device",
+  "mainSha256": "164f31224bf61181e3f50e7dec40df9afcae5b16dbf6e4c0d0cc5e986af0a84e",
+  "sourceSha256": {
+    "stock_probe.py": "020297fa15068cbe66732353f5301eb466db21b12e35bf9961cceecd26a69f3a",
+    "stock_probe/publication_probe.cpp": "1111e94735398be5ec9188bc7fe0c052394ee67f74dc7728e96512367586d88f",
+    "stock_probe/CMakeLists.txt": "dfbdf3ac4b7adfcb25e51e75912c20cfcd1242d5c8a73fe7686c6d51a27d7288"
+  },
+  "executableSha256": "946927806a08440dc6a08fb580df04d41e718a316eef5c8d46ca37c02d200321",
+  "exitCode": 0,
+  "stdout": [
+    "SOURCE_SHA256: 1111e94735398be5ec9188bc7fe0c052394ee67f74dc7728e96512367586d88f",
+    "PASS: 24 real grid publications retain trim/inactive rows and refresh editor pointers",
+    "PASS: four deferred grids clear count before eight search continuations and final publication",
+    "PASS: four busy-source grid dialogs refuse without marker changes",
+    "PASS: editor redraw notification changes no marker settings"
+  ],
+  "stderrLines": 264,
+  "stderrSha256": "0c9401c604e00287f38fdc5be66b160963902f119164035062e2beda1086153a",
+  "hardware": "not tested",
+  "audio": "not tested",
+  "stockPersistence": "not tested"
+}

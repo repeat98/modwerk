@@ -62,7 +62,7 @@ describe('activity notifications', () => {
     expect((await items(author.session)).unread).toBe(0)
     expect((await call('/notifications')).status).toBe(401)
     expect((await call('/notifications', 'PATCH', { ids: 'all' }, author.session)).status).toBe(400)
-  })
+  }, 15000) // a full community round trip: 3.2 s of 5 on a busy CI runner
 
   it('links a reply notification to the thread page that holds the reply', async () => {
     const { call, member, items, db } = await fixture(), author = await member('pageauthor'), other = await member('pagereplier')

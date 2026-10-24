@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="576" viewBox="0 0 320 192" class="signal-art" fill="none" role="img" aria-labelledby="title description">
+<title id="title">Play Start  PLAY always starts</title>
+<desc id="description">A conceptual diagram: stock PLAY pauses on a second press; PLAY START ON restarts from the beginning. It is not a measured screen.</desc>
+<style>.signal-art{ width: 100%; height: calc(100% - 46px); overflow: visible; stroke-width: 1.3; stroke-linecap: round; stroke-linejoin: round; }
+.signal-grid{ stroke: #ffffff; opacity: .035; stroke-width: .7; }
+.signal-main{ stroke: #7ec8e3; stroke-width: 2.3; }
+.signal-secondary{ stroke: #7ec8e3; opacity: .45; stroke-width: 1.7; }
+.signal-ghost{ stroke: #7ec8e3; opacity: .2; stroke-width: 1.3; }
+.signal-dot, .rhythm-on{ fill: #7ec8e3; }
+.rhythm-off{ stroke: #7ec8e3; fill: #2c2837; opacity: .4; }
+.signal-art text{ fill: #7ec8e3; opacity: .52; font: 8px monospace; letter-spacing: .7px; stroke: none; }
+.signal-art .rhythm-count{ font-size: 20px; opacity: .95; letter-spacing: -1px; }
+.signal-art{ height: calc(100% - 55px); }
+.signal-art text{ opacity: .8; font-size: 10px; }
+.signal-main{ stroke-width: 2.7; }
+.signal-secondary{ opacity: .65; }</style>
+<rect width="320" height="192" fill="#1c1c22"/>
+<g class="signal-grid"><path d="M20 52H300"></path><path d="M20 97H300"></path><path d="M20 142H300"></path><path d="M64 33V163"></path><path d="M128 33V163"></path><path d="M192 33V163"></path><path d="M256 33V163"></path></g>
+<g>
+<text x="28" y="44">OFF</text>
+<rect class="rhythm-off" x="28" y="54" width="40" height="22" rx="4"></rect>
+<text x="48" y="69" text-anchor="middle">PLAY</text>
+<path class="signal-ghost" d="M78 65H118"></path>
+<circle class="rhythm-off" cx="140" cy="65" r="5"></circle>
+<text x="158" y="69">PAUSE</text>
+<text x="28" y="118">ON</text>
+<rect class="rhythm-on" x="28" y="128" width="40" height="22" rx="4"></rect>
+<text x="48" y="143" text-anchor="middle">PLAY</text>
+<path class="signal-main" d="M78 139H118M112 134L118 139L112 144"></path>
+<path class="signal-main" d="M140 128V150"></path>
+<circle class="signal-dot" cx="140" cy="128" r="4"></circle>
+<text x="158" y="143">START</text>
+<text x="28" y="177">PLAY START</text>
+<text x="210" y="177">NEVER PAUSE</text>
+</g>
+</svg>
