@@ -1,0 +1,209 @@
+{
+  "schemaVersion": 3,
+  "id": "stereo-chorus",
+  "name": "Stereo Chorus",
+  "version": "0.1.0-experimental",
+  "machine": "analog-rytm-mkii",
+  "category": "effects",
+  "exclusive": false,
+  "author": {
+    "github": "stigmagit",
+    "credits": [
+      "stigmagit"
+    ]
+  },
+  "maintainers": [
+    "stigmagit"
+  ],
+  "presentation": {
+    "label": "STEREO CHORUS",
+    "family": "Send effect",
+    "summary": "A stereo chorus beside the delay and the reverb: each sound track sends to it, and it returns with them to the analog mixer.",
+    "overview": "Each sound track gets a CHO send (AMP pressed twice). The voices, as the codec brings them back (the signal the delay and reverb sends take), feed one delay line read by two taps swept by a slow LFO, the right one up to 180 degrees out of phase with the left. The stereo result joins the PRE FX return. The CHORUS page (FX track, DELAY pressed twice) sets TIM, SPD, DEP, WID, FDB and VOL, kept in the kit. With every send at 0, the default, the unit sounds as stock.",
+    "highlights": [
+      "A send per sound track, like DEL and REV.",
+      "Stereo: two taps swept against each other, width from mono to 180 degrees.",
+      "Its own pages, opened by pressing DELAY or AMP a second time; stock does nothing with that press.",
+      "Silent and almost free while no track sends."
+    ],
+    "usage": [
+      "Select a snare or a hi-hat track, press AMP, then AMP again: CHORUS SEND opens. Turn encoder A to about 90.",
+      "Play the track: the chorus joins in at the default settings.",
+      "Press FX, DELAY, then DELAY again: the CHORUS page opens. Turn SPD and DEP for a slower or deeper sweep, WID for width, TIM for a closer or wider double.",
+      "Press DELAY once more to go back to the delay, and save the kit to keep the settings."
+    ]
+  },
+  "access": {
+    "location": "FX track: DELAY page pressed again (CHORUS). Any sound track: AMP page pressed again (CHORUS SEND).",
+    "steps": [
+      "On a sound track press AMP, then AMP again, and turn encoder A to set its CHO send.",
+      "Press FX, DELAY, then DELAY again for the CHORUS page.",
+      "Press the same key once more to go back to the stock page."
+    ],
+    "screenshots": [
+      "media/chorus-page.png",
+      "media/chorus-send.png"
+    ]
+  },
+  "controls": [
+    {
+      "name": "TIM",
+      "default": 48,
+      "doc": "Base delay, 1 ms to 30 ms. CHORUS page, encoder A. Kept in the kit.",
+      "labels": null
+    },
+    {
+      "name": "SPD",
+      "default": 40,
+      "doc": "LFO rate, 0.05 Hz to 5 Hz. CHORUS page, encoder B. Kept in the kit.",
+      "labels": null
+    },
+    {
+      "name": "DEP",
+      "default": 64,
+      "doc": "Sweep depth, up to 5.3 ms each way. CHORUS page, encoder C. Kept in the kit.",
+      "labels": null
+    },
+    {
+      "name": "WID",
+      "default": 127,
+      "doc": "Right LFO phase against the left, 0 (mono) to 180 degrees. CHORUS page, encoder D. Kept in the kit.",
+      "labels": null
+    },
+    {
+      "name": "FDB",
+      "default": 0,
+      "doc": "Feedback, up to 0.85. CHORUS page, encoder E. Kept in the kit.",
+      "labels": null
+    },
+    {
+      "name": "VOL",
+      "default": 100,
+      "doc": "Return level. CHORUS page, encoder H. Kept in the kit.",
+      "labels": null
+    },
+    {
+      "name": "CHO",
+      "default": 0,
+      "doc": "The track's send to the chorus. CHORUS SEND page, encoder A. Kept in the sound.",
+      "labels": null
+    }
+  ],
+  "compatibility": {
+    "releases": [
+      "1.74"
+    ],
+    "requires": [],
+    "conflicts": [],
+    "limitations": [
+      "Not stock parameters: no parameter locks, LFO, scenes or MIDI CC for the chorus values and sends.",
+      "Always on the PRE return (through distortion and compressor).",
+      "Tracks that share a voice (RS/CP, MT/HT, CH/OH, CY/CB) share its send: the last one played sets it.",
+      "Only the analog voices are sent, not the external input.",
+      "Load not measured on a unit; static estimate about 16 million instructions a second with eight voices sending."
+    ]
+  },
+  "platform": {
+    "kind": "elemod",
+    "core": "0.3",
+    "build": "build.json",
+    "events": [
+      "ev_tick",
+      "ev_draw",
+      "ev_key",
+      "ev_enc",
+      "ev_project"
+    ],
+    "claims": [
+      "ui:FX DELAY page key twice",
+      "ui:AMP page key twice"
+    ]
+  },
+  "resources": {
+    "memoryBytes": 22316,
+    "fastBytes": null,
+    "load": {
+      "display": "About 16 M instructions/s with eight voices sending; near zero idle",
+      "method": "static",
+      "conditions": "Static count of the compiled per-frame loop (about 330 instructions with eight voices sending, two Hermite taps), 32 frames a block, 1,500 blocks a second. After 2 s with no send the block returns at once. Not measured on a unit; rytm-emu's profiler does not sample the mod area."
+    }
+  },
+  "evidence": {
+    "tier": "emulator",
+    "moduleVersion": "0.1.0-experimental",
+    "sourceSha256": "70e0cbf84179ff7ad72821319996dd348fb65d5f6870801fff073063407bc60c",
+    "reports": [
+      "TESTING.md"
+    ],
+    "hardware": null,
+    "verifiedBy": null
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "Emulator (rytm-emu, OS 1.74, build SC04): both pages open, set and close as described, stock does nothing with the extra key press, and a send puts the chorus on the PRE return. Not yet tested on a unit. See TESTING.md.",
+    "documentation": {
+      "tutorial": {
+        "title": "Quick tutorial",
+        "steps": [
+          "Select a snare or a hi-hat track, press AMP, then AMP again: CHORUS SEND opens. Turn encoder A to about 90.",
+          "Play the track: the chorus joins in at the default settings.",
+          "Press FX, DELAY, then DELAY again: the CHORUS page opens. Turn SPD and DEP for a slower or deeper sweep, WID for width, TIM for a closer or wider double.",
+          "Press DELAY once more to go back to the delay, and save the kit to keep the settings."
+        ]
+      },
+      "screenshots": [
+        "media/chorus-page.png",
+        "media/chorus-send.png"
+      ],
+      "captureRecord": "media/capture.json"
+    }
+  },
+  "license": {
+    "spdx": "GPL-3.0-or-later",
+    "file": "LICENSE",
+    "declaration": "Original work by the author, under GPL-3.0-or-later."
+  },
+  "media": [
+    {
+      "path": "media/thumbnail.svg",
+      "kind": "thumbnail",
+      "caption": "Stereo Chorus: voices into one line, read by two swept taps",
+      "alt": "The voices' sends summed into one line, read by two taps sweeping against each other, left and right.",
+      "credit": "stigmagit",
+      "license": "GPL-3.0-or-later",
+      "source": "Original conceptual illustration in the shared signal-art style."
+    },
+    {
+      "path": "media/chorus-page.png",
+      "kind": "screenshot",
+      "caption": "FX, DELAY, then DELAY again: the CHORUS page, drawn as stock draws its effect pages.",
+      "alt": "CHORUS page: six stock-style dials, TIM SPD DEP WID / FDB VOL, the name CHORUS over the top bar.",
+      "credit": "stigmagit documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "e5ae75ae67deef492283bb7fe273eaabfd3c236c25b67351149e7e1430672fbd",
+        "setup": "rytm-emu 3c4c42c headless; SC04 build (core-ar2 0.3 + this module). UI documentation only."
+      }
+    },
+    {
+      "path": "media/chorus-send.png",
+      "kind": "screenshot",
+      "caption": "AMP, then AMP again on a sound track: its CHO send, showing its value while it turns.",
+      "alt": "One stock-style dial at A reading 90, the stock top and bottom bars around it.",
+      "credit": "stigmagit documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "e5ae75ae67deef492283bb7fe273eaabfd3c236c25b67351149e7e1430672fbd",
+        "setup": "rytm-emu 3c4c42c headless; SC04 build (core-ar2 0.3 + this module). UI documentation only."
+      }
+    }
+  ]
+}
