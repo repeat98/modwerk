@@ -1,0 +1,1 @@
+SDK documentation: octabam ports must resolve upstream module dependencies through shared SDK/base work before import. The Direct Jump Kyoti proposal records the two relevant stock fixes, exact source pins, candidate shared entry points and the remaining MKII-over-USB qualification work. No firmware behaviour changes in this proposal.
