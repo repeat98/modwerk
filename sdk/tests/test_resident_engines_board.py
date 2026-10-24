@@ -353,6 +353,25 @@ static void dsp(void)
 }
 static void run(unsigned n) { while (n--) { ++ticks; modwerk_controller_lease_seen |= (uint8_t)leasing; modwerk_controller_tick(); test_advance(); dsp(); dsp(); } }
 static void pump(void) { dsp(); }
+/* dsp.c's packer for mode 62 (manager.c's third way to make room): while the manager is idle, the block right above core
+ * A's lowest hole moves down into it, one move a pump, until no hole is left below the free top. */
+static unsigned pack_on, pack_left, packs;
+int modwerk_dsp_pack(void) { if (!pack_on) return 0; ++packs, pack_left = 1; return 1; }
+int modwerk_dsp_packing(void) { return (int)pack_left; }
+static void pack_pump(void)
+{
+    dsp();
+    if (!pack_left || test_phase()) return;
+    unsigned end = 0;
+    for (;;) {
+        int next = -1, at = 1 << 30;
+        for (unsigned p = 0; p < MODWERK_FX_IDS; ++p) if (test_live(0, p) >= (int)end && test_live(0, p) < at) at = test_live(0, p), next = (int)p;
+        if (next < 0) { pack_left = 0; return; }
+        if ((unsigned)at == end) { end += test_words((unsigned)next); continue; }
+        if (end + test_words((unsigned)next) > (unsigned)at || !test_move(0, (unsigned)next, end)) pack_left = 0;
+        return;
+    }
+}
 /* A UI tick of the board alone (the manager advances from the selection's own poll). */
 static void board_pump(void) { ++ticks; modwerk_controller_lease_seen |= (uint8_t)leasing; modwerk_controller_tick(); dsp(); dsp(); }
 /* Mode 28's frames: once the transaction runs, core B's table entry 0 is made to differ; an owned reservation held on
@@ -1674,6 +1693,43 @@ int main(int argc, char **argv)
         kb_price = 3500; /* charged now: a set naming it again adds nothing for the tap */
         ids[1] = 63;
         assert(test_select(ids, pump) == 1);
+    } else if (mode == 62) {
+        /* Beta finding 35: a 600-word pick on T6 FX1 fits core A packed (1,800 of 1,936) but no one run beside the three
+         * running (holes of 400 and 336 words), and no trim or unload frees one. Without a packer it is refused, as
+         * before; with one the manager has the core packed while the request waits, then loads it at the top. */
+        test_fx(11, 600);
+        memset(test_parts, 0, sizeof test_parts);
+        test_parts[0][4] = 5; test_parts[0][5] = 6; test_parts[0][6] = 7; test_parts[0][7] = 8;
+        uint8_t ids[16];
+        memcpy(ids, test_parts[0], 16);
+        assert(test_select(ids, pump) == 1);
+        test_parts[0][5] = 0; memcpy(ids, test_parts[0], 16);
+        assert(test_select(ids, pump) == 1);
+        assert(test_live(0, 5) == 0 && test_live(0, 6) < 0 && test_live(0, 7) == 800 && test_live(0, 8) == 1200);
+        test_parts[0][5] = 11; memcpy(ids, test_parts[0], 16);
+        unsigned trims = test_trims(), unloads = test_unloads();
+        assert(test_select(ids, pump) == DL_SELECT_MEMORY && test_idle() && test_live(0, 11) < 0 && !packs);
+        pack_on = 1;
+        assert(test_select(ids, pack_pump) == 1 && test_idle() && packs == 1 && !pack_left);
+        assert(test_live(0, 5) == 0 && test_live(0, 7) == 400 && test_live(0, 8) == 800 && test_live(0, 11) == 1336);
+        assert(test_trims() == trims && test_unloads() == unloads && test_active(5) == 11);
+        /* Packed, the next pick needs no packing. */
+        ids[5] = 6;
+        assert(test_select(ids, pack_pump) == 1 && packs == 1 && test_live(0, 6) >= 0);
+    } else if (mode == 63) {
+        /* A pick refused after its slot's old code was unloaded for it (no packer): the observer is nudged to load that
+         * code back, since the slot runs the stub under the old effect's name. */
+        test_fx(11, 600);
+        memset(test_parts, 0, sizeof test_parts);
+        test_parts[0][4] = 5; test_parts[0][5] = 6; test_parts[0][6] = 7; test_parts[0][7] = 8;
+        uint8_t ids[16];
+        memcpy(ids, test_parts[0], 16);
+        assert(test_select(ids, pump) == 1);
+        test_set_observed_valid(1);
+        unsigned unloads = test_unloads();
+        ids[5] = 11;
+        assert(test_select(ids, pump) == DL_SELECT_MEMORY && test_unloads() == unloads + 1 && test_idle());
+        assert(test_live(0, 6) < 0 && test_live(0, 11) < 0 && !test_observed_valid());
     } else assert(0);
     return 0;
 }
@@ -1784,7 +1840,7 @@ def build(work):
 
 @unittest.skipUnless(shutil.which('cc'), 'host C compiler unavailable')
 class ResidentEnginesBoard(unittest.TestCase):
-    MODES = 62
+    MODES = 64
 
     def test_place_switch_run_disable_unswitch_free_and_their_refusals(self):
         with tempfile.TemporaryDirectory() as temp:

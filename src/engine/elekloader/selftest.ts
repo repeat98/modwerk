@@ -16,7 +16,7 @@ export const SELFTEST_FAILURES = [
   'the test couldn’t put your tracks back as they were',
   'the test was stopped on the Octatrack',
   'a module doesn’t fit on either DSP core, even with the other effects there removed',
-  'a combination the Octatrack allows overloads the CPU',
+  'the Octatrack’s CPU went over 90 % while your pattern played with these modules; try syncing fewer at once',
   'a frame came late (something held the Octatrack’s interrupts too long)',
   'a module’s code on the DSP doesn’t match its package',
   'the key bus a module needs can’t start until the Octatrack restarts (turn it off and on, then sync again)',
@@ -80,7 +80,8 @@ export function explain(bit: number, module: string): string {
     2: `the Octatrack’s DSP stopped with ${module} running`,
     3: `a combination the Octatrack allows overloads the DSP (with ${module})`,
     7: `${module} doesn’t fit on either DSP core, even with the other effects there removed`,
-    8: `a combination the Octatrack allows overloads the CPU (with ${module})`,
+    // 8 (the CPU) names no module: the base blames the batch's dearest DSP effect, while the CPU is the pattern and every
+    // module's ColdFire code together (a tester was told Mini Verb, then Tape Echo, for one heavy project; 24 October 2026).
     9: `a frame came late with ${module} running (something held the Octatrack’s interrupts too long)`,
     10: `${module}’s code on the DSP doesn’t match its package`,
   }

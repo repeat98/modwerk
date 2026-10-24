@@ -677,7 +677,7 @@ static void status_draw(unsigned char *frame)
     /* each core's arena spelled out: the on-demand build rewrites these reads (resident_engines.py status()) */
     const uint32_t code[2] = {share(dl_residency_words[0], modwerk_dsp_arena[0]), share(dl_residency_words[1], modwerk_dsp_arena[1])};
     uint32_t used[2];
-    for (unsigned core = 0; core < 2u; ++core) used[core] = modwerk_dsp_booked(core) > code[core] ? modwerk_dsp_booked(core) : code[core];
+    for (unsigned core = 0; core < 2u; ++core) { uint32_t booked = modwerk_dsp_booked(core); used[core] = booked > code[core] ? booked : code[core]; }
     static const char *const names[7] = {"WORKING NOW", "CPU", "TRACKS 1-4", "TRACKS 5-8", "DSP SPACE USED", "TRACKS 1-4", "TRACKS 5-8"};
     const uint32_t value[7] = {0, modwerk_status[CPU], modwerk_status[DSP1_MEAN], modwerk_status[DSP0_MEAN], 0, used[1], used[0]},
                    peak[7] = {0, cpu_peak, modwerk_status[DSP1_PEAK], modwerk_status[DSP0_PEAK], 0, 0, 0};

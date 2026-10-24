@@ -187,8 +187,14 @@ static const uint8_t no_target[16] = {255, 255, 255, 255, 255, 255, 255, 255, 25
 unsigned modwerk_dsp_slot_floors(const uint8_t ids[16], uint32_t least[16])
 {
     uint32_t was[16];
-    floors(no_target, was), floors(ids, least);
-    for (unsigned c = 0; c < 2u; ++c) {
+    unsigned raised = 0;
+    floors(no_target, was); /* the Parts once: the target only adds its own stock effects */
+    for (unsigned i = 0; i < 16u; ++i) {
+        unsigned p = ids[i];
+        uint32_t x = p < MODWERK_FX_IDS && !owner[p] ? dl_catalog[p].cycles : 0u;
+        least[i] = x > was[i] ? x : was[i], raised |= least[i] > was[i];
+    }
+    for (unsigned c = 0; raised && c < 2u; ++c) {
         uint32_t voices = modwerk_dsp_source_charge(c), after = bank_booking(least, c) + voices;
         if (after > (c ? MODWERK_DSP_ALLOWANCE1 : MODWERK_DSP_ALLOWANCE0) && after > bank_booking(was, c) + voices) return 1u + c;
     }
@@ -1314,6 +1320,18 @@ static void compact_tick(void)
     if (modwerk_dsp_compact_step)
         modwerk_dsp_compact_counts = holes() ? 0xffffffffu : *(volatile uint32_t *)0xfc07c00cu - compact_at, modwerk_dsp_compact_step = 0;
 }
+/* manager.c's last way to place a pick that fits a core packed but not beside its live code (build_core.py
+ * TRANSITION_EDITS, beta finding 35): pack now, the request waiting. 0 when packing cannot run (the self-test, a
+ * host session) or no core has a hole; the wait ends after five seconds whatever the moves have done. */
+static uint32_t pack_at;
+int modwerk_dsp_pack(void)
+{
+    if (modwerk_selftest.state == SELFTEST_RUNNING || modwerk_upload_busy() || !holes()) return 0;
+    (void)modwerk_dsp_compact(); /* already packing: the request waits for that one */
+    pack_at = modwerk_runtime_ticks;
+    return 1;
+}
+int modwerk_dsp_packing(void) { return modwerk_dsp_compact_step && modwerk_runtime_ticks - pack_at < 300u; }
 #endif
 /* The compaction planner (dsp.c's move_one; host-tested by test_dsp.c): k placed blocks sorted by address (where each
  * starts, its words, its alignment, 0 as 1) in an arena of cap words. A copy needs one free run as big as its block,
