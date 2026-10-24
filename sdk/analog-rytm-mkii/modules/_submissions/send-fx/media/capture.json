@@ -1,0 +1,39 @@
+{
+ "schemaVersion": 1,
+ "machine": "analog-rytm-mkii",
+ "moduleId": "send-fx",
+ "moduleVersion": "0.1.0-experimental",
+ "imageSha256": "b312cabf8889b4e2785550921306ad72b07a4704e0a92893dbe52b7076f6dc0f",
+ "firmware": "1.74",
+ "stockSha256": "cb0f99d620edde994fb860c0e79cc2464e427d06882828cfdfb00fc53700e123",
+ "build": "FX04: core-ar2 0.3 (elekloader tag core-ar2-v0.3, built from source) + send-fx, elekloader.sdk.build / lint / patch, m68k-linux-gnu-gcc 12.2.0",
+ "emulator": "rytm-emu 3c4c42c, dtboot headless, 3x PNG without interpolation",
+ "capturedAt": "2026-10-25",
+ "setup": "A blank card; the default project at 127.0 BPM; the startup calibration notices cleared with NO.",
+ "captures": [
+  {
+   "path": "media/fx-chorus.png",
+   "sha256": "3926a9934c7c1f545967712be3ae00cebc43b5c375082092b27e09e79ccea80f",
+   "plan": "dtboot FX04.syx --instr 9600M --card <blank card> --press NO@4500M:80M --press NO@5300M:80M --press NO@6100M:80M --press NO@6900M:80M --press FX@8000M:60M --press SRC@8600M:60M --press SRC@9200M:60M",
+   "frame": "DTBOOT_END_PNG at 9600M"
+  },
+  {
+   "path": "media/fx-flanger.png",
+   "sha256": "a850945bd66df4d7b9417859d07075b46bc66a4706080e630fc1602d5f61f01b",
+   "plan": "dtboot FX04.syx --instr 10300M --card <blank card> --press NO@4500M:80M --press NO@5300M:80M --press NO@6100M:80M --press NO@6900M:80M --press FX@8000M:60M --press SRC@8600M:60M --press SRC@9200M:60M --press FUNC@9500M:500M --turn 0:6@9600Mx2/30M",
+   "frame": "DTBOOT_END_PNG at 10300M"
+  },
+  {
+   "path": "media/fx-phaser.png",
+   "sha256": "64e2577ed6b9d4bc9a222a08fbcdc994a587068e7e90834be15f88ccf743b925",
+   "plan": "dtboot FX04.syx --instr 10300M --card <blank card> --press NO@4500M:80M --press NO@5300M:80M --press NO@6100M:80M --press NO@6900M:80M --press FX@8000M:60M --press SRC@8600M:60M --press SRC@9200M:60M --press FUNC@9500M:500M --turn 0:6@9600Mx3/30M",
+   "frame": "DTBOOT_END_PNG at 10300M"
+  },
+  {
+   "path": "media/fx-send.png",
+   "sha256": "dbfc51ef284dc2922ef9513da6c8452aebed20294ec6f10b07b6f6dd3bc5fdcd",
+   "plan": "dtboot FX04.syx --instr 10400M --card <blank card> --press NO@4500M:80M --press NO@5300M:80M --press NO@6100M:80M --press NO@6900M:80M --press AMP@8600M:60M --press AMP@9200M:60M --turn 0:6@9500Mx30/20M",
+   "frame": "DTBOOT_END_PNG at 10400M"
+  }
+ ]
+}

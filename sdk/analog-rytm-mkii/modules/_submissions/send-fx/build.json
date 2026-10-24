@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "sources": [
-    "src/chorus.c",
+    "src/send-fx.c",
     "src/gate.s"
   ],
   "defsym": {},
@@ -10,27 +10,27 @@
   "subscribe": [
     {
       "event": "ev_tick",
-      "fn": "stereo_chorus_tick",
+      "fn": "send_fx_tick",
       "order": 50
     },
     {
       "event": "ev_draw",
-      "fn": "stereo_chorus_draw",
+      "fn": "send_fx_draw",
       "order": 50
     },
     {
       "event": "ev_key",
-      "fn": "stereo_chorus_key",
+      "fn": "send_fx_key",
       "order": 50
     },
     {
       "event": "ev_enc",
-      "fn": "stereo_chorus_enc",
+      "fn": "send_fx_enc",
       "order": 50
     },
     {
       "event": "ev_project",
-      "fn": "stereo_chorus_project",
+      "fn": "send_fx_project",
       "order": 50
     }
   ],
@@ -40,19 +40,24 @@
   "regions": [],
   "storage": [
     {
-      "sym": "stereo_chorus_send",
+      "sym": "send_fx_send",
       "scope": "sound",
       "bits": 7
     },
     {
-      "sym": "stereo_chorus_a",
+      "sym": "send_fx_a",
+      "scope": "kit",
+      "bits": 32
+    },
+    {
+      "sym": "send_fx_b",
       "scope": "kit",
       "bits": 28
     },
     {
-      "sym": "stereo_chorus_b",
-      "scope": "kit",
-      "bits": 14
+      "sym": "send_fx_lev",
+      "scope": "project",
+      "bits": 7
     }
   ],
   "claims": [
@@ -64,7 +69,7 @@
   "releases": {
     "1.74": {
       "defsym": {
-        "stereo_chorus_resume": "0x4010ee6c"
+        "send_fx_resume": "0x4010ee6c"
       },
       "cflags": [
         "-DIS_KEY_HELD_AT=0x40081c28",
@@ -87,7 +92,7 @@
           "len": 6,
           "stockSha256": "2d5c036095404da53503812386216abbcc38b98b809fc6197ee476c16dc9a521",
           "op": "jmp",
-          "target": "stereo_chorus_gate"
+          "target": "send_fx_gate"
         }
       ]
     }

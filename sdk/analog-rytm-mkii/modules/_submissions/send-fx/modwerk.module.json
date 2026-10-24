@@ -1,0 +1,229 @@
+{
+  "schemaVersion": 3,
+  "id": "send-fx",
+  "name": "Send FX",
+  "version": "0.1.0-experimental",
+  "machine": "analog-rytm-mkii",
+  "category": "effects",
+  "exclusive": false,
+  "author": {
+    "github": "stigmagit",
+    "credits": [
+      "stigmagit"
+    ]
+  },
+  "maintainers": [
+    "stigmagit"
+  ],
+  "presentation": {
+    "label": "SEND FX",
+    "family": "Send effect",
+    "summary": "A third send effect beside the delay and the reverb, with a choice of effect: chorus, flanger or phaser.",
+    "overview": "Each sound track gets a send (AMP pressed twice). The voices, as the codec brings them back (the signal the delay and reverb sends take), feed the chosen effect, whose stereo return joins the PRE FX return. The FX page (FX track, DELAY pressed twice) chooses the effect with FUNC + A, sets its level with FUNC + E and its eight controls with A-H, in the layout of Elektron's newer effect pages. With every send at 0, the default, the unit sounds as stock.",
+    "highlights": [
+      "A send per sound track, like DEL and REV.",
+      "CHORUS, FLANGER (endless barber-pole sweep) and PHASER (2-8 stages) in one slot.",
+      "A full-screen FX page with illustrated controls; stock does nothing with the second DELAY or AMP press that opens it.",
+      "Silent and almost free while no track sends."
+    ],
+    "usage": [
+      "Select a snare or a hi-hat track, press AMP, then AMP again: the SEND page opens. Turn encoder A to about 90.",
+      "Play the track: the chorus joins in at its defaults.",
+      "Press FX, DELAY, then DELAY again: the FX page opens. Hold FUNC and turn A for the flanger or the phaser, then shape it with A-H.",
+      "Press DELAY once more to go back to the delay, and save the kit to keep the settings."
+    ]
+  },
+  "access": {
+    "location": "FX track: DELAY page pressed again (FX page). Any sound track: AMP page pressed again (SEND page).",
+    "steps": [
+      "On a sound track press AMP, then AMP again, and turn encoder A to set its send.",
+      "Press FX, DELAY, then DELAY again for the FX page; FUNC + A chooses the effect.",
+      "Press the same key once more to go back to the stock page."
+    ],
+    "screenshots": [
+      "media/fx-chorus.png",
+      "media/fx-send.png"
+    ]
+  },
+  "controls": [
+    {
+      "name": "EFFECT",
+      "default": 0,
+      "doc": "CHORUS, FLANGER or PHASER. FUNC + A on the FX page. Kept in the kit.",
+      "labels": [
+        "CHORUS",
+        "FLANGER",
+        "PHASER"
+      ]
+    },
+    {
+      "name": "LEV",
+      "default": 100,
+      "doc": "Return level. FUNC + E on the FX page. Kept in the project.",
+      "labels": null
+    },
+    {
+      "name": "A-H",
+      "default": 0,
+      "doc": "The chosen effect's eight controls (README, Controls), each from its own default when the effect is chosen. Kept in the kit.",
+      "labels": null
+    },
+    {
+      "name": "SEND",
+      "default": 0,
+      "doc": "The track's send. SEND page, encoder A. Kept in the sound.",
+      "labels": null
+    }
+  ],
+  "compatibility": {
+    "releases": [
+      "1.74"
+    ],
+    "requires": [],
+    "conflicts": [],
+    "limitations": [
+      "One effect at a time in the slot.",
+      "Little time left in the audio block: each effect was trimmed until it ran with all eight voices sending in the emulator; not measured on a unit.",
+      "Not stock parameters: no parameter locks, LFO, scenes or MIDI CC.",
+      "Always on the PRE return; only the analog voices are sent.",
+      "Tracks that share a voice share its send."
+    ]
+  },
+  "platform": {
+    "kind": "elemod",
+    "core": "0.3",
+    "build": "build.json",
+    "events": [
+      "ev_tick",
+      "ev_draw",
+      "ev_key",
+      "ev_enc",
+      "ev_project"
+    ],
+    "claims": [
+      "ui:FX DELAY page key twice",
+      "ui:AMP page key twice"
+    ]
+  },
+  "resources": {
+    "memoryBytes": 30053,
+    "fastBytes": null,
+    "load": {
+      "display": "Trimmed to run with all eight voices sending (emulator); near zero idle",
+      "method": "emulator",
+      "conditions": "rytm-emu, OS 1.74: each effect forced on with every send at 127 while a pattern plays; audio keeps running. Earlier drafts with four Hermite taps a frame or twelve phaser stages a side stopped the audio. rytm-emu's profiler does not sample the mod area, so no percentage; not measured on a unit."
+    }
+  },
+  "evidence": {
+    "tier": "emulator",
+    "moduleVersion": "0.1.0-experimental",
+    "sourceSha256": "ec0a276af7051b8221d82a6ee71ac3760350ac918bfc117db76c25c259f752c1",
+    "reports": [
+      "TESTING.md"
+    ],
+    "hardware": null,
+    "verifiedBy": null
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "Emulator (rytm-emu, OS 1.74, build FX04): pages, effect choice and sends as described; each effect on the PRE return, and each running with all eight voices sending. The chorus of an earlier build was heard by the author on a unit; the flanger and phaser are not yet. See TESTING.md.",
+    "documentation": {
+      "tutorial": {
+        "title": "Quick tutorial",
+        "steps": [
+          "Select a snare or a hi-hat track, press AMP, then AMP again: the SEND page opens. Turn encoder A to about 90.",
+          "Play the track: the chorus joins in at its defaults.",
+          "Press FX, DELAY, then DELAY again: the FX page opens. Hold FUNC and turn A for the flanger or the phaser, then shape it with A-H.",
+          "Press DELAY once more to go back to the delay, and save the kit to keep the settings."
+        ]
+      },
+      "screenshots": [
+        "media/fx-chorus.png",
+        "media/fx-flanger.png",
+        "media/fx-phaser.png",
+        "media/fx-send.png"
+      ],
+      "captureRecord": "media/capture.json"
+    }
+  },
+  "license": {
+    "spdx": "GPL-3.0-or-later",
+    "file": "LICENSE",
+    "declaration": "Original work by the author, under GPL-3.0-or-later."
+  },
+  "media": [
+    {
+      "path": "media/thumbnail.svg",
+      "kind": "thumbnail",
+      "caption": "Send FX: voices into one effect slot, a stereo return",
+      "alt": "The voices' sends summed into one line, read by two taps sweeping against each other, left and right.",
+      "credit": "stigmagit",
+      "license": "GPL-3.0-or-later",
+      "source": "Original conceptual illustration in the shared signal-art style."
+    },
+    {
+      "path": "media/fx-chorus.png",
+      "kind": "screenshot",
+      "caption": "FX, DELAY, then DELAY again: the FX page with CHORUS.",
+      "alt": "FX page: 01 CHORUS; SND and LEV on the left; SPD DEP TIME WDTH over FDBK HPF LPF.",
+      "credit": "stigmagit documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "b312cabf8889b4e2785550921306ad72b07a4704e0a92893dbe52b7076f6dc0f",
+        "setup": "rytm-emu 3c4c42c headless; FX04 build (core-ar2 0.3 + this module). UI documentation only."
+      }
+    },
+    {
+      "path": "media/fx-flanger.png",
+      "kind": "screenshot",
+      "caption": "FUNC + A: FLANGER.",
+      "alt": "FX page: 02 FLANGER; SPD with - and +, DEP, TUNE, FDBK over LPF.",
+      "credit": "stigmagit documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "b312cabf8889b4e2785550921306ad72b07a4704e0a92893dbe52b7076f6dc0f",
+        "setup": "rytm-emu 3c4c42c headless; FX04 build (core-ar2 0.3 + this module). UI documentation only."
+      }
+    },
+    {
+      "path": "media/fx-phaser.png",
+      "kind": "screenshot",
+      "caption": "FUNC + A again: PHASER.",
+      "alt": "FX page: 03 PHASER; SPD DEP SHP LAG over a wide FREQ/FDBK box, STG and WDTH.",
+      "credit": "stigmagit documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "b312cabf8889b4e2785550921306ad72b07a4704e0a92893dbe52b7076f6dc0f",
+        "setup": "rytm-emu 3c4c42c headless; FX04 build (core-ar2 0.3 + this module). UI documentation only."
+      }
+    },
+    {
+      "path": "media/fx-send.png",
+      "kind": "screenshot",
+      "caption": "AMP, then AMP again on a sound track: its send.",
+      "alt": "SEND page: one stock-style dial labelled SND between stock's bars.",
+      "credit": "stigmagit documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "b312cabf8889b4e2785550921306ad72b07a4704e0a92893dbe52b7076f6dc0f",
+        "setup": "rytm-emu 3c4c42c headless; FX04 build (core-ar2 0.3 + this module). UI documentation only."
+      }
+    }
+  ]
+}
