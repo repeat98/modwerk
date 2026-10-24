@@ -1,8 +1,9 @@
-// Loop Sync: the project storage fields of the sample slots' corrections.
-// Field n holds slots 4n..4n+3, a signed byte each (tenths of a percent), the
-// first slot in the high byte; slot 0 is OFF and unused. Keep in step with
-// build.json's storage list (Modwerk allows 32 fields in all: 1 + 31).
-#define LOOP_SYNC_SLOT_FIELDS \
+// Loop Sync: the project storage fields of the samples' settings.
+// The 32 fields are one bit stream of 51 entries, 20 bits each: the slot (8
+// bits, 0 a free entry), the mode (4) and the correction (8, signed, in 0.2 %
+// steps), the first bit in a field's high bit. Keep in step with build.json's
+// storage list (Modwerk allows 32 fields in all).
+#define LOOP_SYNC_FIELDS \
     X(0) \
     X(1) \
     X(2) \
@@ -34,4 +35,5 @@
     X(28) \
     X(29) \
     X(30) \
+    X(31) \
 

@@ -2,7 +2,7 @@
   "schemaVersion": 3,
   "id": "loop-sync",
   "name": "Loop Sync",
-  "version": "0.2.0-experimental",
+  "version": "0.3.0-experimental",
   "machine": "analog-rytm-mkii",
   "category": "playback",
   "exclusive": false,
@@ -19,26 +19,26 @@
     "label": "LOOP SYNC",
     "family": "Sample playback",
     "summary": "Keeps sample loops in time with the project tempo by repitching them; AUTO reads each loop's tempo from its length, locks and scenes included.",
-    "overview": "In AUTO the mod works out each loop's source tempo from the length of the sample that plays (between STA and END, 4/4, cut on the bar) and adds the matching pitch shift to the track's effective TUN every audio block, after parameter locks, scenes and the LFO. A SMP lock or a scene that changes the sample is followed, each sample by its own length. A percentage correction (FUNC + FIN) on top of any mode puts loops with a tail or a gap back in time. Pitch follows tempo; no time-stretch.",
+    "overview": "In AUTO the mod works out each loop's source tempo from the length of the sample that plays (between STA and END, 4/4, cut on the bar), picking the bar count (1/4 to 16, powers of two) nearest the project tempo; 3/4, 1.5, 3, 6 and 12 bars are chosen by hand, and adds the matching pitch shift to the track's effective TUN every audio block, after parameter locks, scenes and the LFO. Each sample keeps its own mode and a correction of up to 25 %; a sample played by a SMP lock or a scene without a setting of its own plays like the sound's own sample if it is a copy of it, and in AUTO from its own length otherwise. Pitch follows tempo; no time-stretch.",
     "highlights": [
       "AUTO: no tempo to enter for loops cut on the bar.",
       "SMP locks and scenes stay in time, each sample from its own length.",
       "TUN stays yours: the shift is added on top, so a TUN lock still transposes.",
-      "Trailing silence is left out automatically, and each sample keeps its own correction."
+      "Twelve lengths from 1/4 to 16 bars, 3/4, 1.5, 3, 6 and 12 included, and a correction of up to 25 % per sample."
     ],
     "usage": [
       "Load a loop cut on the bar, for example one bar at 120 BPM, on a sound track with a trig on step 1.",
       "Press SMPL, hold FUNC and turn TUN to AUTO: the box reads AUTO over 1BAR 120.0, and SYNC appears at the bottom right.",
-      "Play and change the tempo: the loop follows, and the pitch glides with each tempo step. Lock SMP on a step to another loop: it is in time too, from its own length.",
-      "For a loop with a tail or a gap, hold FUNC and turn FIN until it sits in time; that sample keeps its correction. Save the project to keep it."
+      "Play and change the tempo: the loop follows, and the pitch glides with each tempo step. Lock SMP on a step to another loop: it plays in AUTO from its own length, in time too, with no setting; a copy of the loop plays at the same speed. Save the project after setting loops: settings live in it.",
+      "For a loop of 3 beats or 1.5 bars, or one with a tail or a gap, hold FUNC and turn TUN to its length, then FIN until it sits in time. Save the project to keep it."
     ]
   },
   "access": {
     "location": "SAMPLE page of any sound track.",
     "steps": [
       "Press SMPL to open the SAMPLE page.",
-      "Hold FUNC and turn TUN to choose OFF, AUTO or 1/2/4/8 BAR.",
-      "Hold FUNC and turn FIN to correct the source tempo in percent."
+      "Hold FUNC and turn TUN to choose OFF, AUTO or a length from 1/4 to 16 BAR for the sample the selected sound loads.",
+      "Hold FUNC and turn FIN to correct that sample's source tempo in percent."
     ],
     "screenshots": [
       "media/sync-auto.png"
@@ -48,20 +48,28 @@
     {
       "name": "MODE",
       "default": 0,
-      "doc": "OFF, AUTO, 1 BAR, 2 BAR, 4 BAR or 8 BAR. FUNC + TUN on the SAMPLE page. Kept in the sound.",
+      "doc": "OFF, AUTO, or 1/4, 1/2, 3/4, 1, 1.5, 2, 3, 4, 6, 8, 12 or 16 BAR, for the sample the selected sound loads. FUNC + TUN on the SAMPLE page. Kept per sample with the project; a locked sample without one plays like the sound sample if it is a copy, else in AUTO.",
       "labels": [
         "OFF",
         "AUTO",
+        "1/4 BAR",
+        "1/2 BAR",
+        "3/4 BAR",
         "1 BAR",
+        "1.5 BAR",
         "2 BAR",
+        "3 BAR",
         "4 BAR",
-        "8 BAR"
+        "6 BAR",
+        "8 BAR",
+        "12 BAR",
+        "16 BAR"
       ]
     },
     {
       "name": "ADJUST",
       "default": 0,
-      "doc": "Correction of the source tempo of the sample the selected track plays, -12.7 to +12.7 % in 0.1 % steps, sample slots 1-123. FUNC + FIN on the SAMPLE page. Kept per sample slot with the project.",
+      "doc": "Correction of the source tempo of the sample the selected sound loads, -25 to +25 % in 0.2 % steps. FUNC + FIN on the SAMPLE page. Kept per sample with the project (up to 51 samples a project).",
       "labels": null
     }
   ],
@@ -73,11 +81,12 @@
     "conflicts": [],
     "limitations": [
       "Pitch follows tempo: no time-stretch.",
-      "The shift is clamped to TUN's +-24 semitones and skipped beyond a factor of 8.",
+      "The shift is clamped to TUN's +-24 semitones (a factor of 4); past it the loop stays as far as TUN goes, out of time.",
       "The silence check sees only digital silence under 5 % of a sample; other mis-cut loops need the per-sample correction.",
       "The loop length comes from the sound's own STA and END: locks and LFOs on STA or END play another region at the same speed.",
       "The SYNC mark shows only on the SAMPLE page.",
-      "Hooks the audio interrupt one instruction after rytm2_mods lfo-rnd's site; the pair is not tested."
+      "Hooks the audio interrupt one instruction after rytm2_mods lfo-rnd's site; the pair is not tested.",
+      "At most 51 samples a project keep a setting; settings saved by 0.2 are not read."
     ]
   },
   "platform": {
@@ -97,7 +106,7 @@
     ]
   },
   "resources": {
-    "memoryBytes": 7412,
+    "memoryBytes": 8268,
     "fastBytes": null,
     "load": {
       "display": "Not measured on a unit",
@@ -106,26 +115,38 @@
     }
   },
   "evidence": {
-    "tier": "emulator",
-    "moduleVersion": "0.2.0-experimental",
-    "sourceSha256": "6df71df64799781b66e0e266297e64a2b6ce18679fd98def305e2536d8d0f0bc",
+    "tier": "author-hardware",
+    "moduleVersion": "0.3.0-experimental",
+    "sourceSha256": "4234e987c8dd9a3a95c1278b31c5966f30438c3718dbb4c6884cf2489abb4269",
     "reports": [
       "TESTING.md"
     ],
-    "hardware": null,
+    "hardware": {
+      "model": "Analog Rytm MKII",
+      "release": "1.74",
+      "testedOn": "2026-10-24",
+      "tester": "stigmagit",
+      "durationMinutes": null,
+      "summary": "Build LS24 (core-ar2 0.3 + loop-sync 0.3.0-experimental) on the author's unit, by ear (\"c'est bon\"), after LS19-LS23 the same day: his pattern with SMP locks to loops in other slots, and his fast loop with the tempo lowered below 128 BPM, where LS21 snapped back to full speed.",
+      "limitations": [
+        "Informal listening test; no timing measured on the unit.",
+        "Persistence across SAVE PROJECT and a reboot not reported separately.",
+        "External MIDI clock and CPU with LFOs on STA not reported."
+      ]
+    },
     "verifiedBy": null
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Emulator (rytm-emu, OS 1.74, build LS18): loops of 120 and 100 BPM alternating by SMP lock, a padded loop, a mis-cut loop with its correction and a STA-locked slice all in time at 127 BPM. Earlier builds tested by the author on a unit; LS18 awaits the unit test. See TESTING.md.",
+    "summary": "Emulator (rytm-emu, OS 1.74, builds LS19-LS24): a one-bar 120 BPM loop in AUTO and in 1.5 BAR with +1.0 % in time at 127 BPM; a SMP-locked loop of another length with no setting in AUTO from its own length, also when FUNC + TUN is turned during playback; a loop beyond TUN's range held at its limit. Unit (author, by ear): LS24 with SMP-locked loops and a fast loop below 128 BPM. See TESTING.md.",
     "documentation": {
       "tutorial": {
         "title": "Quick tutorial",
         "steps": [
           "Load a loop cut on the bar, for example one bar at 120 BPM, on a sound track with a trig on step 1.",
           "Press SMPL, hold FUNC and turn TUN to AUTO: the box reads AUTO over 1BAR 120.0, and SYNC appears at the bottom right.",
-          "Play and change the tempo: the loop follows, and the pitch glides with each tempo step. Lock SMP on a step to another loop: it is in time too, from its own length.",
-          "For a loop with a tail or a gap, hold FUNC and turn FIN until it sits in time; that sample keeps its correction. Save the project to keep it."
+          "Play and change the tempo: the loop follows, and the pitch glides with each tempo step. Lock SMP on a step to another loop: it plays in AUTO from its own length, in time too, with no setting; a copy of the loop plays at the same speed. Save the project after setting loops: settings live in it.",
+          "For a loop of 3 beats or 1.5 bars, or one with a tail or a gap, hold FUNC and turn TUN to its length, then FIN until it sits in time. Save the project to keep it."
         ]
       },
       "screenshots": [
@@ -162,25 +183,25 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "0.2.0-experimental",
-        "imageSha256": "3d969bcce223a672dbd20968d0a4c98ae791c33c39b8c4c7618c74dfb896711f",
-        "setup": "rytm-emu 3c4c42c headless; LS17 build (core-ar2 0.3 + this module); test loops made for the capture. UI documentation only."
+        "moduleVersion": "0.3.0-experimental",
+        "imageSha256": "9ae76e847f3572c460133e98adaa5fdf0e982ae66d0458a7caf5ef7479c12ac4",
+        "setup": "rytm-emu 3c4c42c headless; LS24 build (core-ar2 0.3 + this module); test loops made for the capture. UI documentation only."
       }
     },
     {
       "path": "media/sync-percent.png",
       "kind": "screenshot",
-      "caption": "Hold FUNC and turn FIN: a mis-cut loop corrected by +5.1 %.",
-      "alt": "Loop Sync box AUTO +5.1%, 1BAR 120.1.",
+      "caption": "Hold FUNC and turn TUN, then FIN: a one-bar loop set to 1.5 BAR with +1.0 %.",
+      "alt": "Loop Sync box +1.0%, 1.5BAR 181.8.",
       "credit": "stigmagit documentation capture; Elektron interface",
       "license": "LicenseRef-Rytm-UI-Documentation",
       "source": "original",
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "0.2.0-experimental",
-        "imageSha256": "3d969bcce223a672dbd20968d0a4c98ae791c33c39b8c4c7618c74dfb896711f",
-        "setup": "rytm-emu 3c4c42c headless; LS17 build (core-ar2 0.3 + this module); test loops made for the capture. UI documentation only."
+        "moduleVersion": "0.3.0-experimental",
+        "imageSha256": "9ae76e847f3572c460133e98adaa5fdf0e982ae66d0458a7caf5ef7479c12ac4",
+        "setup": "rytm-emu 3c4c42c headless; LS24 build (core-ar2 0.3 + this module); test loops made for the capture. UI documentation only."
       }
     },
     {
@@ -194,9 +215,9 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "0.2.0-experimental",
-        "imageSha256": "3d969bcce223a672dbd20968d0a4c98ae791c33c39b8c4c7618c74dfb896711f",
-        "setup": "rytm-emu 3c4c42c headless; LS17 build (core-ar2 0.3 + this module); test loops made for the capture. UI documentation only."
+        "moduleVersion": "0.3.0-experimental",
+        "imageSha256": "9ae76e847f3572c460133e98adaa5fdf0e982ae66d0458a7caf5ef7479c12ac4",
+        "setup": "rytm-emu 3c4c42c headless; LS24 build (core-ar2 0.3 + this module); test loops made for the capture. UI documentation only."
       }
     }
   ]

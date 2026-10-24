@@ -2,11 +2,11 @@
  "schemaVersion": 1,
  "machine": "analog-rytm-mkii",
  "moduleId": "loop-sync",
- "moduleVersion": "0.2.0-experimental",
- "imageSha256": "3d969bcce223a672dbd20968d0a4c98ae791c33c39b8c4c7618c74dfb896711f",
+ "moduleVersion": "0.3.0-experimental",
+ "imageSha256": "9ae76e847f3572c460133e98adaa5fdf0e982ae66d0458a7caf5ef7479c12ac4",
  "firmware": "1.74",
  "stockSha256": "cb0f99d620edde994fb860c0e79cc2464e427d06882828cfdfb00fc53700e123",
- "build": "LS17: core-ar2 0.3 (elekloader tag core-ar2-v0.3, built from source) + loop-sync, elekloader.sdk.build / lint / patch, m68k-linux-gnu-gcc 12.2.0",
+ "build": "LS24: core-ar2 0.3 (elekloader tag core-ar2-v0.3, built from source) + loop-sync, elekloader.sdk.build / lint / patch, m68k-linux-gnu-gcc 12.2.0",
  "emulator": "rytm-emu 3c4c42c, dtboot headless, 3x PNG without interpolation",
  "capturedAt": "2026-10-24",
  "setup": "A blank card with four loops made for the test (loop120, loopC, loopP, loopT: generated clicks, no third-party audio) loaded through GLOBAL > SAMPLES; project 127.0 BPM; the startup calibration notices cleared with NO.",
@@ -14,19 +14,19 @@
   {
    "path": "media/sync-auto.png",
    "sha256": "0053448c1faa27320507ad3e2c0a00dff88bb6a7c8fd9a194c3ed31dde5e2124",
-   "plan": "dtboot LS17.syx --instr 24G --card <blank card + loop120 loopC loopP loopT> --press NO@4500M:80M --press NO@5300M:80M --press NO@6100M:80M --press NO@6900M:80M --press GLOBAL@8000M:60M --press DOWN@8400M:60M --press YES@8700M:60M --press DOWN@9300M:60M --press YES@9600M:60M --press RIGHT@10200M:60M --press YES@10500M:60M --press RIGHT@10900M:60M --press DOWN@11200M:60M --press DOWN@11400M:60M --press YES@11700M:60M --press YES@12500M:60M --press NO@13000M:60M --press NO@13200M:60M --press NO@13400M:60M --press FUNC@13600M:300M --press SMPL@13700M:60M --press DOWN@14100M:60M --press DOWN@14300M:60M --press DOWN@14500M:60M --press YES@14700M:60M --press SMPL@15000M:60M --press FUNC@15400M:1000M --turn 0:1@15600Mx8/30M --press RECORD@19000M:60M --press T1@19300M:60M --press RECORD@19600M:60M --press PLAY@19900M:60M",
-   "frame": "PNG after the eighth FUNC + A count (DTBOOT_TURN_PNG, 25M settle)"
+   "plan": "dtboot LS24.syx --instr 16000M --card <blank card + loop120 loopC loopP loopT> --press NO@4500M:80M --press NO@5300M:80M --press NO@6100M:80M --press NO@6900M:80M --press GLOBAL@8000M:60M --press DOWN@8400M:60M --press YES@8700M:60M --press DOWN@9300M:60M --press YES@9600M:60M --press RIGHT@10200M:60M --press YES@10500M:60M --press RIGHT@10900M:60M --press DOWN@11200M:60M --press DOWN@11400M:60M --press YES@11700M:60M --press YES@12500M:60M --press NO@13000M:60M --press NO@13200M:60M --press NO@13400M:60M --press FUNC@13600M:300M --press SMPL@13700M:60M --press DOWN@14100M:60M --press DOWN@14300M:60M --press DOWN@14500M:60M --press YES@14700M:60M --press SMPL@15000M:60M --press FUNC@15400M:1000M --turn 0:1@15600Mx8/30M --press RECORD@19000M:60M --press T1@19300M:60M --press RECORD@19600M:60M --press PLAY@19900M:60M",
+   "frame": "DTBOOT_END_PNG at 16000M, after eight FUNC + A counts"
   },
   {
    "path": "media/sync-percent.png",
-   "sha256": "f611a3eebf954f03de9f6efa6d562b93f61cf5be3a0ac085f972434f78c8c3d3",
-   "plan": "dtboot LS17.syx --instr 24G --card <blank card + loop120 loopC loopP loopT> --press NO@4500M:80M --press NO@5300M:80M --press NO@6100M:80M --press NO@6900M:80M --press GLOBAL@8000M:60M --press DOWN@8400M:60M --press YES@8700M:60M --press DOWN@9300M:60M --press YES@9600M:60M --press RIGHT@10200M:60M --press YES@10500M:60M --press RIGHT@10900M:60M --press DOWN@11200M:60M --press DOWN@11400M:60M --press YES@11700M:60M --press YES@12500M:60M --press NO@13000M:60M --press NO@13200M:60M --press NO@13400M:60M --press FUNC@13600M:300M --press SMPL@13700M:60M --press DOWN@14100M:60M --press DOWN@14300M:60M --press DOWN@14500M:60M --press DOWN@14700M:60M --press YES@14900M:60M --press SMPL@15200M:60M --press FUNC@15500M:3600M --turn 0:1@15700Mx8/30M --turn 1:6@16200Mx17/150M --press RECORD@19300M:60M --press T1@19600M:60M --press T9@19900M:60M --press T9@20300M:1300M --turn 3:-6@20500Mx14/70M --press RECORD@21800M:60M --press PLAY@22100M:60M",
-   "frame": "PNG after the 17th FUNC + B turn (DTBOOT_TURN_PNG, 25M settle)"
+   "sha256": "f2f1709dc5b6f1bc0cc52ce2c83347730ea02400412a460f5de28cbaa1742079",
+   "plan": "dtboot LS24.syx --instr 17700M --card <blank card + loop120 loopC loopP loopT> --press NO@4500M:80M --press NO@5300M:80M --press NO@6100M:80M --press NO@6900M:80M --press GLOBAL@8000M:60M --press DOWN@8400M:60M --press YES@8700M:60M --press DOWN@9300M:60M --press YES@9600M:60M --press RIGHT@10200M:60M --press YES@10500M:60M --press RIGHT@10900M:60M --press DOWN@11200M:60M --press DOWN@11400M:60M --press YES@11700M:60M --press YES@12500M:60M --press NO@13000M:60M --press NO@13200M:60M --press NO@13400M:60M --press FUNC@13600M:300M --press SMPL@13700M:60M --press DOWN@14100M:60M --press DOWN@14300M:60M --press DOWN@14500M:60M --press YES@14700M:60M --press SMPL@15000M:60M --press FUNC@15400M:2400M --turn 0:1@15600Mx48/30M --turn 1:1@17200Mx10/30M --press RECORD@19000M:60M --press T1@19300M:60M --press RECORD@19600M:60M --press PLAY@19900M:60M",
+   "frame": "DTBOOT_END_PNG at 17700M, after 48 FUNC + A counts (1.5 BAR) and ten FUNC + B counts (+1.0 %)"
   },
   {
    "path": "media/sync-mark.png",
    "sha256": "6644a9ae59426395f789ddd29c3c5c9ea1e221d3b0162c6710c94dbde138abaf",
-   "plan": "dtboot LS17.syx --instr 24G --card <blank card + loop120 loopC loopP loopT> --press NO@4500M:80M --press NO@5300M:80M --press NO@6100M:80M --press NO@6900M:80M --press GLOBAL@8000M:60M --press DOWN@8400M:60M --press YES@8700M:60M --press DOWN@9300M:60M --press YES@9600M:60M --press RIGHT@10200M:60M --press YES@10500M:60M --press RIGHT@10900M:60M --press DOWN@11200M:60M --press DOWN@11400M:60M --press YES@11700M:60M --press YES@12500M:60M --press NO@13000M:60M --press NO@13200M:60M --press NO@13400M:60M --press FUNC@13600M:300M --press SMPL@13700M:60M --press DOWN@14100M:60M --press DOWN@14300M:60M --press DOWN@14500M:60M --press DOWN@14700M:60M --press YES@14900M:60M --press SMPL@15200M:60M --press FUNC@15500M:3600M --turn 0:1@15700Mx8/30M --turn 1:6@16200Mx17/150M --press RECORD@19300M:60M --press T1@19600M:60M --press T9@19900M:60M --press T9@20300M:1300M --turn 3:-6@20500Mx14/70M --press RECORD@21800M:60M --press PLAY@22100M:60M",
+   "plan": "dtboot LS24.syx --instr 24G --card <blank card + loop120 loopC loopP loopT> --press NO@4500M:80M --press NO@5300M:80M --press NO@6100M:80M --press NO@6900M:80M --press GLOBAL@8000M:60M --press DOWN@8400M:60M --press YES@8700M:60M --press DOWN@9300M:60M --press YES@9600M:60M --press RIGHT@10200M:60M --press YES@10500M:60M --press RIGHT@10900M:60M --press DOWN@11200M:60M --press DOWN@11400M:60M --press YES@11700M:60M --press YES@12500M:60M --press NO@13000M:60M --press NO@13200M:60M --press NO@13400M:60M --press FUNC@13600M:300M --press SMPL@13700M:60M --press DOWN@14100M:60M --press DOWN@14300M:60M --press DOWN@14500M:60M --press DOWN@14700M:60M --press YES@14900M:60M --press SMPL@15200M:60M --press FUNC@15500M:3600M --turn 0:1@15700Mx8/30M --turn 1:4@16200Mx13/150M --press RECORD@19300M:60M --press T1@19600M:60M --press T9@19900M:60M --press T9@20300M:1300M --turn 3:-6@20500Mx14/70M --press RECORD@21800M:60M --press PLAY@22100M:60M",
    "frame": "DTBOOT_END_PNG at 24G, the pattern playing"
   }
  ]

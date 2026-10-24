@@ -1,5 +1,16 @@
 [
   {
+    "version": "0.3.0-experimental",
+    "date": "2026-10-24",
+    "changes": [
+      "FUNC + TUN now offers 1/4, 1/2, 3/4, 1, 1.5, 2, 3, 4, 6, 8, 12 and 16 bars, so loops of 3 beats or 1.5 bars sync too; AUTO still picks 1/4 to 16 in powers of two.",
+      "FUNC + FIN corrects by up to 25 % in 0.2 % steps.",
+      "Mode and correction are kept per sample with the project (up to 51 samples); a SMP-locked loop without its own setting plays at the sound's loop speed if it is a copy, else in AUTO; FUNC + TUN/FIN always set the sound's loop.",
+      "A loop that needs more than TUN's range no longer jumps back to full speed: it stays as slow or fast as TUN goes.",
+      "Settings saved with 0.2 are not read: set your loops again once."
+    ]
+  },
+  {
     "version": "0.2.0-experimental",
     "date": "2026-10-24",
     "changes": [

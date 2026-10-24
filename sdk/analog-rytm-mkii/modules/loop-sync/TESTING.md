@@ -1,12 +1,12 @@
 # Loop Sync testing
 
-Evidence tier: **emulator** for 0.2.0-experimental, build LS18, source sha256 `6df71df64799781b66e0e266297e64a2b6ce18679fd98def305e2536d8d0f0bc` (sha256 over `build.json` then each `src/` file in name order, each as its path, a NUL, its bytes and a NUL). The author tested LS16 and LS17 on a unit (below); LS18, with the review fixes, awaits that test.
+Evidence tier: **author-hardware** for 0.3.0-experimental, build LS24, source sha256 `4234e987c8dd9a3a95c1278b31c5966f30438c3718dbb4c6884cf2489abb4269` (sha256 over `build.json` then each `src/` file in name order, each as its path, a NUL, its bytes and a NUL). The author tested LS16 and LS17 on a unit (below); LS18 (the review fixes) LS19 (lengths, wider correction, settings per sample) was tried by the author (below); LS20 was tried by the author (below); LS21 was heard by the author on a unit (below), LS23 was tried (below), and LS24 was heard and kept (below).
 
 ## Build
 
 - Stock: Analog Rytm MKII OS 1.74, the owner's own file (sha256 `cb0f99d6…e123`, as `src/engine/elektron/elemod.ts` expects). Not in this repository.
 - elekloader at tag `core-ar2-v0.3`, core-ar2 0.3 built from its source, Debian bookworm `m68k-linux-gnu-gcc` 12.2.0 (amd64 container).
-- `python -m elekloader.sdk.build`, `elekloader.lint` and `elekloader.patch`, build LS18: loop-sync `.run` 5,224 bytes, `.bss` 2,188 bytes (7,412 in all), 1 site (0x40121020, 10 bytes), storage: one 3-bit sound field (`loop_sync_mode`) and 31 32-bit project fields (`loop_sync_p0`..`loop_sync_p30`); lint: links as core 0.3 > loop-sync 0.2, RAM 14,624 of 131,072 bytes.
+- `python -m elekloader.sdk.build`, `elekloader.lint` and `elekloader.patch`, build LS24: loop-sync `.run` 5,884 bytes, `.bss` 2,384 bytes (8,268 in all), 1 site (0x40121020, 10 bytes), storage: 32 32-bit project fields (`loop_sync_t0`..`loop_sync_t31`); lint: links as core 0.3 > loop-sync 0.3, RAM 15,464 of 131,072 bytes. Image sha256 `9ae76e84…2ac4`.
 
 ## Emulator (rytm-emu 3c4c42c, `dtboot`, 22 October 2026)
 
@@ -99,13 +99,81 @@ The owner approved the first library release of 0.2.0-experimental on 24 October
 - **Package:** `scripts/package-elemod-recipe.mjs` exports the source-only recipe as `sdk/imports/packages/loop-sync/loop-sync-0.2.0-experimental-os1.74.elemod`, compiled in Modwerk's pinned toolchain image (`m68k-elf` GCC 16.2.0, binutils 2.47, no network or firmware) with the shared SDK's copy of elekloader's `analog-rytm-mk2/store.h`. `.run` 5,868 bytes, `.bss` 2,188, one site and 32 storage fields, as in LS18. CI's `elemod-source` job compiles it again and requires the committed package to reproduce.
 - **Not run:** this package is compiled by GCC 16.2, not the GCC 12.2 of LS18, so the released code is not byte-identical to the tested build and has not run in the emulator or on a unit. The browser build from a stock OS file and its storage lockfile round trip did not run here (no stock OS file on this computer). Rytm downloads stay off until the owner turns them on.
 
+## LS19: lengths, correction and settings per sample (24 October 2026)
+
+Reported by the author on LS18: a very fast loop could not be synced (AUTO showed `+12.7%` over `8BAR 162.6`): only 1, 2, 4 and 8 bars, and +-12.7 % does not bridge two of them. LS19 adds 1/4, 1/2, 3/4, 1.5, 3, 6, 12 and 16 bars, widens the correction to +-25 % in 0.2 % steps, and keeps the mode and the correction per sample (51 entries of 20 bits over 32 project fields). A sample without a setting followed the mode of the sound's own sample (LS21: its mode and correction).
+
+rytm-emu, the four-loop card, project 127.0 BPM, onsets on the main output (target 0.4724 s for a 120 BPM beat):
+
+| Check | Result |
+| --- | --- |
+| loop120 (slot 1) in AUTO | beats 0.4718-0.4725 s apart; box `AUTO` / `1BAR 120.0` |
+| loop120 at 1.5 BAR, +1.0 % (48 FUNC + A counts, 10 FUNC + B counts) | 0.7157-0.7158 s apart, target 0.5 * 181.8 / 127 = 0.7157 s; box `+1.0%` / `1.5BAR 181.8` |
+| 1/4 BAR (16 counts) | box `1/4BAR 30.0` |
+| loopT (slot 4) in AUTO with +5.2 %, step 9 locked to loopC (100 BPM, no setting) | 0.4714-0.4733 s apart: the locked loop follows the sound's AUTO from its own length |
+| Same, before the fallback to the sound's mode | the locked loop played unsynced (0.6001 s, its own 100 BPM): every locked loop needed its own setting, so the fallback was added at the author's request |
+| AUTO choosing among all twelve lengths (first LS19 draft) | loopC, one bar of 100 BPM, read as 1.5 bars of 150 BPM (0.7089 s = 1.5 x 0.4724): AUTO now picks powers of two only |
+
+Also seen: after choosing a sample in the SMP list and confirming with YES, FUNC + TUN does nothing until SMPL is pressed again (the page flag, as for any menu; documented).
+
+## LS20: settings follow the sound's sample (24 October 2026)
+
+Reported by the author on a unit with LS19: with SMP locks, FUNC + TUN and FIN switched from one loop to the other while the pattern played, and he could never set both. Cause (certain, from the code): LS19 set the sample playing at that moment (the effective SMP). LS20 sets the sample the sound loads; a locked loop follows it or keeps its own setting, given by loading it in the sound for a moment.
+
+| Check (rytm-emu, 127 BPM, tail loop +5.2 % on the sound, step 9 locked to loopC with no setting, FUNC + 8 A counts during playback) | Result |
+| --- | --- |
+| LS19 | one gap 0.5000 s and one 0.4447-0.4454 s each bar: the turn landed on the locked loop |
+| LS20 | 0.4714-0.4733 s: both loops in time |
+| LS20, captures and the LS19 audio checks rerun | same PNGs byte for byte; tail + lock 0.4714-0.4733 s |
+
+Before choosing, stock was checked for a third FUNC gesture: FUNC + SMP opens the sample list, FUNC + BR and FUNC + LEV jump the value (BR to 0, LEV to 127). None is free, so the mod takes none.
+
+## LS21: locked loops take the sound's correction too (24 October 2026)
+
+Reported by the author on a unit with LS20: SMP locks to another slot holding the same loop played at another speed than the main loop. Cause (probable, then reproduced): a locked sample with no setting took the sound's mode but kept its own correction, 0 %, while the main loop had one. LS21 gives it the sound's mode and correction; a sample with any setting of its own (a mode, or a correction) keeps it.
+
+| Check (rytm-emu, 127 BPM, loopT on the sound in AUTO +5.2 %, step 9 locked to loopC with no setting) | Result |
+| --- | --- |
+| LS20 | locked loop 0.473 s apart: AUTO without the +5.2 % |
+| LS21 | locked loop 0.4972 s apart = 0.4724 x 1.052: the sound's AUTO and +5.2 % (for a copy of the main loop this is the main loop's speed; loopC, cut on the bar, would want its own AUTO at 0 %) |
+| LS21, FUNC + 8 A counts during playback | main loop 0.4714-0.4733 s, locked loop 0.4972 s: the turn set the sound's loop only |
+| LS21 captures | same PNGs byte for byte as LS19 |
+
+### On the unit (author, 24 October 2026)
+
+Analog Rytm MKII, OS 1.74 + LS21, by ear: a pattern with SMP locks to other loops in other slots. At first a locked loop of another length did not sit in time (it took the main loop's mode and correction); once each such loop was given its own setting (loaded in the sound for a moment, FUNC + TUN/FIN), every loop played in time ("ça fonctionne"). A build that put such loops in AUTO by themselves (LS22) was made and checked in the emulator, and first set aside for the build he heard; LS24 brings it back (below). Persistence across SAVE PROJECT and a reboot, external MIDI clock and CPU with STA LFOs were not reported.
+
+## LS23: no snap back past TUN's range (24 October 2026)
+
+Reported by the author on a unit with LS21: lowering the tempo, the fast loop followed, then below about 128 BPM it went back to full speed. Cause (probable, then reproduced): `shift_for` returned no shift beyond a factor of 8 between tempo and source, so a loop read far too fast (a length too long for it) snapped back to its own speed; up to that point TUN's +-24 semitones had already held it at a factor of 4, out of time. LS23 caps the shift at 48 semitones and lets the TUN clamp hold the loop as slow (or as fast) as TUN goes.
+
+| Check (rytm-emu, 127 BPM, loop120 set to 16 BAR: source 1920 BPM, a factor of 15) | Result |
+| --- | --- |
+| LS21 | beats 0.5000 s apart: the loop at its own speed |
+| LS23 | one beat per bar, 1.89 s apart: held at -24 semitones (beat 2 would come at 2.0 s, after the pattern retriggers) |
+| LS23, the LS21 checks (AUTO, 1.5 BAR +1.0 %, locked loop, FUNC + TUN during playback) | same gaps as LS21; captures the same byte for byte |
+
+## LS24: other locked loops in AUTO, on top of LS23 (24 October 2026)
+
+Reported by the author on a unit with LS23: the SMP-locked loop was far too fast and could not be set there. Cause (probable): flashing reboots the unit, which reloads the project as last saved, so the locked loops' settings made under LS21 were gone; without a setting, a locked loop of another length took the main loop's mode and correction, which asked for a shift beyond TUN's range, and LS23 now holds such a loop at TUN's limit (+24 semitones) where LS21 let it play at its own speed. FUNC + TUN sets the sound's loop only (LS20), so the locked loop could not be reached while it played. LS24 puts LS22's rule back on LS23: a locked sample without a setting takes the main loop's mode and correction only when it is a copy (as many frames), and AUTO at 0 % from its own length otherwise.
+
+| Check (rytm-emu, LS24) | Result |
+| --- | --- |
+| loopT in AUTO +5.2 %, step 9 locked to loopC (another length, no setting) | 0.4714-0.4733 s: both in time |
+| Same, FUNC + 8 A counts during playback | 0.4714-0.4733 s |
+| loop120 in AUTO; at 1.5 BAR +1.0 % | 0.4724-0.4725 s; 0.7157-0.7158 s |
+| loop120 at 16 BAR (a factor of 15) | held at -24 semitones, one beat per bar (1.89 s) |
+| Captures | same PNGs byte for byte as LS19 |
+
+On the unit, LS24, by ear (author, 24 October 2026): "c'est bon" for his pattern with SMP locks to loops in other slots and his fast loop with the tempo lowered below 128 BPM. Persistence across SAVE PROJECT and a reboot, external MIDI clock and CPU with STA LFOs were not reported separately.
+
 ## Screenshots
 
-`media/sync-auto.png`, `media/sync-percent.png` and `media/sync-mark.png` come from build LS17 in rytm-emu (all on the SAMPLE page, unchanged by LS18); inputs, image and PNG hashes in `media/capture.json`.
+`media/sync-auto.png`, `media/sync-percent.png` and `media/sync-mark.png` come from build LS19 in rytm-emu (identical with LS20 to LS24) (all on the SAMPLE page); inputs, image and PNG hashes in `media/capture.json`.
 
 ## Not tested
 
-- On the unit: persistence of the mode (kit save, reboot) and of the corrections (project save, reboot); scenes that change SMP; timing measured rather than heard.
+- On the unit: persistence of the settings (SAVE PROJECT, reboot); the `FULL` box past 51 samples (not reached in the emulator either); external MIDI clock; CPU with LFOs on STA; scenes that change SMP; timing measured rather than heard.
 - Running beside rytm2_mods' lfo-rnd (neighbouring audio-interrupt sites).
 - Swing, track speed and pattern changes (the mod does not act on steps; it only follows the tempo word).
 - Combination with other Rytm mods.

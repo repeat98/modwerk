@@ -40,162 +40,162 @@
   "regions": [],
   "storage": [
     {
-      "sym": "loop_sync_mode",
-      "scope": "sound",
-      "bits": 3
-    },
-    {
-      "sym": "loop_sync_p0",
+      "sym": "loop_sync_t0",
       "scope": "project",
       "bits": 32
     },
     {
-      "sym": "loop_sync_p1",
+      "sym": "loop_sync_t1",
       "scope": "project",
       "bits": 32
     },
     {
-      "sym": "loop_sync_p2",
+      "sym": "loop_sync_t2",
       "scope": "project",
       "bits": 32
     },
     {
-      "sym": "loop_sync_p3",
+      "sym": "loop_sync_t3",
       "scope": "project",
       "bits": 32
     },
     {
-      "sym": "loop_sync_p4",
+      "sym": "loop_sync_t4",
       "scope": "project",
       "bits": 32
     },
     {
-      "sym": "loop_sync_p5",
+      "sym": "loop_sync_t5",
       "scope": "project",
       "bits": 32
     },
     {
-      "sym": "loop_sync_p6",
+      "sym": "loop_sync_t6",
       "scope": "project",
       "bits": 32
     },
     {
-      "sym": "loop_sync_p7",
+      "sym": "loop_sync_t7",
       "scope": "project",
       "bits": 32
     },
     {
-      "sym": "loop_sync_p8",
+      "sym": "loop_sync_t8",
       "scope": "project",
       "bits": 32
     },
     {
-      "sym": "loop_sync_p9",
+      "sym": "loop_sync_t9",
       "scope": "project",
       "bits": 32
     },
     {
-      "sym": "loop_sync_p10",
+      "sym": "loop_sync_t10",
       "scope": "project",
       "bits": 32
     },
     {
-      "sym": "loop_sync_p11",
+      "sym": "loop_sync_t11",
       "scope": "project",
       "bits": 32
     },
     {
-      "sym": "loop_sync_p12",
+      "sym": "loop_sync_t12",
       "scope": "project",
       "bits": 32
     },
     {
-      "sym": "loop_sync_p13",
+      "sym": "loop_sync_t13",
       "scope": "project",
       "bits": 32
     },
     {
-      "sym": "loop_sync_p14",
+      "sym": "loop_sync_t14",
       "scope": "project",
       "bits": 32
     },
     {
-      "sym": "loop_sync_p15",
+      "sym": "loop_sync_t15",
       "scope": "project",
       "bits": 32
     },
     {
-      "sym": "loop_sync_p16",
+      "sym": "loop_sync_t16",
       "scope": "project",
       "bits": 32
     },
     {
-      "sym": "loop_sync_p17",
+      "sym": "loop_sync_t17",
       "scope": "project",
       "bits": 32
     },
     {
-      "sym": "loop_sync_p18",
+      "sym": "loop_sync_t18",
       "scope": "project",
       "bits": 32
     },
     {
-      "sym": "loop_sync_p19",
+      "sym": "loop_sync_t19",
       "scope": "project",
       "bits": 32
     },
     {
-      "sym": "loop_sync_p20",
+      "sym": "loop_sync_t20",
       "scope": "project",
       "bits": 32
     },
     {
-      "sym": "loop_sync_p21",
+      "sym": "loop_sync_t21",
       "scope": "project",
       "bits": 32
     },
     {
-      "sym": "loop_sync_p22",
+      "sym": "loop_sync_t22",
       "scope": "project",
       "bits": 32
     },
     {
-      "sym": "loop_sync_p23",
+      "sym": "loop_sync_t23",
       "scope": "project",
       "bits": 32
     },
     {
-      "sym": "loop_sync_p24",
+      "sym": "loop_sync_t24",
       "scope": "project",
       "bits": 32
     },
     {
-      "sym": "loop_sync_p25",
+      "sym": "loop_sync_t25",
       "scope": "project",
       "bits": 32
     },
     {
-      "sym": "loop_sync_p26",
+      "sym": "loop_sync_t26",
       "scope": "project",
       "bits": 32
     },
     {
-      "sym": "loop_sync_p27",
+      "sym": "loop_sync_t27",
       "scope": "project",
       "bits": 32
     },
     {
-      "sym": "loop_sync_p28",
+      "sym": "loop_sync_t28",
       "scope": "project",
       "bits": 32
     },
     {
-      "sym": "loop_sync_p29",
+      "sym": "loop_sync_t29",
       "scope": "project",
       "bits": 32
     },
     {
-      "sym": "loop_sync_p30",
+      "sym": "loop_sync_t30",
+      "scope": "project",
+      "bits": 32
+    },
+    {
+      "sym": "loop_sync_t31",
       "scope": "project",
       "bits": 32
     }
@@ -219,7 +219,6 @@
         "-DTRACK_INDEX_OF_AT=0x400b693e",
         "-DKIT_TRACK_SOUND_AT=0x400a67ca",
         "-DFILLRECT_AT=0x40070726",
-        "-DSOUND_CONFIG_CHANGED_VT=0x401cb88c",
         "-DTEMPO_WORD_AT=0x40287ffc",
         "-DSAMPLE_SLOTS_AT=0x41329e70",
         "-DPARAMS_EFF_AT=0x8000f7a8"
