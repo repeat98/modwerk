@@ -72,6 +72,26 @@ events, table owners, the resident engines on demand, the controllers, module se
 npm run octatrack:base -- --stock /private/OCTATRACK_OS1.40C.bin --beta --write
 ```
 
+Without the reviewed GCC on the host (Linux, 24 October 2026), build the toolchain image once with
+`docker build -f sdk/build/Dockerfile -t modwerk-toolchain:local .` (it compiles binutils and GCC, about half an
+hour) and run the same script in it. The image has `node` but no `npm`, and its home is not yours, so call the
+scripts directly and name the upstream checkout:
+
+```sh
+C=~/.cache/modwerk-upstream
+docker run --rm --user "$(id -u):$(id -g)" -e HOME=/tmp -v "$PWD:$PWD" -v "$C:$C:ro" -w "$PWD" \
+  -e ELEKLOADER_DSP_ASM=/opt/toolchain/vendor/dsp56300/build/source/dsp_host/dsp_asm modwerk-toolchain:local \
+  node scripts/octatrack-base.mjs --stock /private/OCTATRACK_OS1.40C.bin --upstream "$C/elekloader" --beta --write
+```
+
+Mount the stock file's folder and any `--out` folder too. The base-bound relink runs the same way
+(`python3 -B scripts/octatrack-module-packages.py --base-only --upstream "$C/elekloader"`). Run the command without
+`--write` on a clean `main` first: it passes only when this toolchain reproduces the committed base. A fresh worktree
+needs `npm ci`'s generated files first (`npm run prepare`). To boot a built base in the emulator, use the adapted
+`ot_emu` from [scripts/octatrack-emulator](../../../../scripts/octatrack-emulator/README.md) with the `--out` folder's
+`MAIN.raw`: the plain octabam `ot_emu` boots it but never creates the base's status task, so the sequencer sends no
+MIDI. On Linux use `flock` where that README says `lockf -k`.
+
 Analog BD's trust row hashes its reviewed inputs, `machine-ports.json` among them, so an edit there (any machine's
 entry) also needs this regeneration.
 

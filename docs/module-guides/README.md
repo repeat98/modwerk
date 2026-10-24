@@ -131,7 +131,7 @@ Machine modules whose native source predates events declare the same subscriptio
 
 Propose an event or a table when the gate says two behaviour hooks meet, or when you need a site that another module or the base already patches:
 
-1. Open a pull request that adds one entry at the end of `sdk/machines/octatrack/events.json`, then run `python3 -B sdk/machines/octatrack/events.py --write` to regenerate the base's dispatch, the headers, EVENTS.md and the site's hook list. An event needs its name (`ev_` and what happens), its kind, its stock site (address, length in whole instructions and a SHA-256 guard), or none for a raised event, when it runs, its C prototype and its order rule. A table needs an `ot_` name, its record size and C declaration, its room and the sites its reader owns. Addresses, lengths and hashes only: no stock bytes.
+1. Open a pull request that adds one entry at the end of `sdk/machines/octatrack/events.json`, then run `python3 -B sdk/machines/octatrack/events.py --write` to regenerate the base's dispatch, the headers, EVENTS.md and the site's hook list. An event needs its name (`ev_` and what happens), its kind, its stock site (address, length in whole instructions and a SHA-256 guard), or none for a raised event, when it runs, its C prototype and its order rule. A table needs an `ot_` name, its record size and C declaration, its room and the sites its reader owns. Addresses, lengths and hashes only: no stock bytes. A take event has no prototype: it needs a `sites` entry (guard and the tail that replays stock when nobody takes the call) beside its `events` entry. `{"stock": n}` copies the site's bytes as they are, so a site holding a PC-relative branch needs its tail written as instructions with the branch made absolute (`ev_midi_note_key`'s `ble`). Then rebuild the base with your own OS ([the base's README](../../sdk/machines/octatrack/elekloader/README.md#the-base-in-the-browser)), since CI has no firmware.
 2. Say which modules patch that site today. Until they subscribe, list each such pair in `compatibility.json` as `pending-migration`, with the event and `until`.
 3. The owner reviews the entry. Every later module subscribes or contributes instead of patching.
 
@@ -165,7 +165,7 @@ The more of these the base owns, the more modules combine. Each is an event or a
 | Effect lists (FX1, FX2) | USB: the base has 128 effect ids, 109 of them for modules, and gives each installed effect module its own ([wider ids](../OCTATRACK_MORE_EFFECT_IDS.md)); card: stock's 32, 13 of them for modules, pinned |
 | SEQUENCER rows | Base table `ot_sequencer_rows` |
 | MIDI generators on a MIDI track (MIDI NOTE SETUP's list, the ARP page) | Base table `ot_midi_generators`; on the card, VECTOR's own registry ([midi-usb.md](midi-usb.md#midi-generators-and-midi-effects)) |
-| MIDI effects on a MIDI track's notes | Not built: an event where a MIDI track's note leaves the sequencer, with the base keeping every note-off |
+| MIDI effects on a MIDI track's notes | Pitch: take event `ev_midi_note_key`, where each sequencer, chord and arp note is about to be corrected to KEY and sent; a taker rewrites or drops the note and stock keeps every note-off. Velocity, timing and added notes: not built |
 | Stock DSP effects a module hooks (Sidechain Compressor, Output Matrix) | Not built: DSP-side taps, one owner per stock site |
 | Module settings | Not built: upstream octabam's [OTX settings store proposal](https://github.com/sambanks/octabam/blob/main/docs/proposals/OTX_PROJECT_PROPOSAL.md) |
 
