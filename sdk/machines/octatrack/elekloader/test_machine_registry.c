@@ -78,6 +78,8 @@ void mw_seq_set_none(void) {}
 #define modwerk_runtime_event_row host_rows
 static uintptr_t volatile *const host_rows[RUNTIME_SITE_EVENTS] = {
     [MODWERK_OT_MACHINES - RUNTIME_EVENTS] = machine_row, [MODWERK_OT_SEQUENCER_ROWS - RUNTIME_EVENTS] = sequencer_row};
+static volatile uint32_t host_timer; /* the frame timer (DTCN3): the synthetic renders advance it */
+#define DTCN3 host_timer
 #include "machine_registry.c"
 #undef modwerk_runtime_event_row
 
@@ -104,7 +106,8 @@ static const uint8_t a_defaults[12] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12};
 static unsigned admit_a(const volatile uint8_t *p, unsigned t) { (void)p; (void)t; return (unsigned)a_admit; }
 static uint32_t page_a(const volatile uint8_t *s) { (void)s; return 0x1234u; }
 static int render_a(unsigned t, unsigned p, unsigned s, unsigned e) { (void)t; (void)p; (void)s; (void)e; return ++a_renders; }
-static int render_f(unsigned t, unsigned p, unsigned s, unsigned e) { (void)t; (void)p; (void)s; (void)e; return 100 + ++f_renders; }
+static uint32_t f_cost;
+static int render_f(unsigned t, unsigned p, unsigned s, unsigned e) { (void)t; (void)p; (void)s; (void)e; host_timer += f_cost; return 100 + ++f_renders; }
 static void leave_a(unsigned t) { left = (int)t + 1; }
 static unsigned assign_v(volatile uint8_t *part, unsigned t, unsigned on)
 { unsigned s = 60 + 30 * t; part[s] = on ? 'S' : 0; part[s + 1] = on ? '2' : 0; part[s + 2] = on ? 2 : 0; return on ? 1 : 0; }
@@ -130,6 +133,20 @@ static void rows(const void *const *m, unsigned n, const void *const *s, unsigne
 }
 static Part *part0(void) { return AT(0x46000000u + PART_OFF); }
 static const Part *slot(unsigned t) { return part0() + 0x22 + t; }
+/* The guard as at boot (machine_registry.c's statics: this file includes it). */
+static void fresh(void)
+{
+    late = timed = 0; credit = 0; mw_frame_max = mw_frame_late_max = mw_frame_busy = mw_frame_count = 0;
+    for (unsigned k = 0; k < 16u; ++k) cost[k] = after[k] = end_at[k] = 0, skipped[k] = 0;
+}
+/* One frame interrupt: its entry, `pre` counts of stock work, the track's render, `tail` counts more, its exit. */
+static int frame(unsigned track, uint32_t pre, uint32_t tail)
+{
+    mw_frame_t0 = host_timer; host_timer += pre;
+    int r = mw_source_render_impl(track, 0, 0, 1);
+    host_timer += tail; mw_frame_exit();
+    return r;
+}
 static unsigned counts_now(void) { return (unsigned)code[0x0b] << 24 | (unsigned)code[0x1d] << 16 | (unsigned)code[0x21] << 8 | code[0x33]; }
 
 int main(void)
@@ -282,6 +299,55 @@ int main(void)
     CHECK(part0()[0x22 + 3] == 1);
     rows(0, 0, 0, 0);
 
+    /* The frame guard (a frame 47,891 counts; each earns 38,312, short ones save up to 23,945; the slack 4,789). F's
+     * render on track 3 runs while the frame it predicts from the last frame's times stays within the budget, and
+     * renders stock's silent source while it would overdraw. */
+    const void *f_only[] = {&F};
+    rows(f_only, 1, 0, 0);
+    CHECK(mw_assign(part0(), 3, 5) == 1);
+    fresh(); int s0 = silent_renders; f_cost = 10000;
+    for (unsigned i = 0; i < 4u; ++i) CHECK(frame(3, 10000, 10000) > 100);
+    CHECK(silent_renders == s0 && mw_frame_max == 30000 && !mw_frame_late_max && !mw_frame_sheds && credit == (int32_t)(FRAME / 2u));
+    /* Saved credit lets one long frame run (65,000: its cost was 10,000); the next two would overdraw and skip, and the
+     * slack keeps the next ones from running until a probe. */
+    f_cost = 45000;
+    CHECK(frame(3, 10000, 10000) > 100 && mw_frame_max == 65000 && mw_frame_late_max == 17109 && !mw_frame_sheds);
+    CHECK(frame(3, 10000, 10000) == -9 && frame(3, 10000, 10000) == -9 && mw_frame_sheds == 2u && mw_frame_shed_tracks == 1u << 3);
+    CHECK(frame(3, 10000, 10000) == -9 && silent_renders == s0 + 3);
+    /* Sustained: each render's frame runs 87.6 % of a frame and the skipped ones 62.6 %. Renders and skips mix so the
+     * frame interrupt's average stays at its share, and no frame starts late. */
+    fresh(); f_cost = 11973; unsigned ran = 0; uint32_t from = host_timer;
+    for (unsigned i = 0; i < 10000u; ++i) ran += frame(3, 0, 30000) > 100;
+    CHECK(ran > 6000u && ran < 7000u && (host_timer - from) / 10000u <= FRAME / 5u * 4u + 50u && !mw_frame_late_max);
+    /* Past the budget even with the credit full (64,000), within the slack: a probe about every 1,026 frames measures
+     * it again; lighter, it comes back within one probe and stays. */
+    fresh(); f_cost = 48000; ran = 0;
+    for (unsigned i = 0; i < 3000u; ++i) ran += frame(3, 6000, 10000) > 100;
+    CHECK(ran >= 3u && ran <= 4u);
+    f_cost = 5000; ran = 0;
+    for (unsigned i = 0; i < 1100u; ++i) ran += frame(3, 6000, 10000) > 100;
+    unsigned stays = 0;
+    for (unsigned i = 0; i < 10u; ++i) stays += frame(3, 6000, 10000) > 100;
+    CHECK(ran >= 10u && stays == 10u);
+    /* A track's second render in a frame has its own estimate: once measured, the heavy second render skips and the
+     * light first one runs (the frame after the first long one skips both: it starts 25,109 late). */
+    fresh(); f_cost = 1000;
+    int one[4], two[4];
+    for (unsigned i = 0; i < 4u; ++i) {
+        mw_frame_t0 = host_timer; host_timer += 1000;
+        one[i] = mw_source_render_impl(3, 0, 0, 1);
+        f_cost = 70000; two[i] = mw_source_render_impl(3, 0, 0, 1); f_cost = 1000;
+        host_timer += 1000; mw_frame_exit();
+    }
+    CHECK(one[0] > 100 && two[0] > 100 && one[1] == -9 && two[1] == -9);
+    CHECK(one[2] > 100 && two[2] == -9 && one[3] > 100 && two[3] == -9);
+    /* A track only stock renders always renders, however late the frame. */
+    const void *v_only2[] = {&V};
+    rows(v_only2, 1, 0, 0);
+    uint32_t sheds = mw_frame_sheds;
+    CHECK(frame(6, 90000, 10000) == -7 && mw_frame_sheds == sheds);
+    rows(0, 0, 0, 0);
+
     /* SEQUENCER: FM's quantizer rows, then Scale Quantizer's with the same labels: one set, FM's; QZ alone: QZ's. */
     const void *both[] = {&FMQ, &QZ, &MORE};
     rows(0, 0, both, 3);
@@ -296,6 +362,6 @@ int main(void)
     if (failures) { fprintf(stderr, "%u registry checks failed\n", failures); return 1; }
     puts("Machine registry: rows by table order, admission before mutation, signatures and defaults in both copies, absent "
          "machines as stock, the validator's protection and wrapper chain, render routing, keyed SEQUENCER rows and chooser "
-         "counts passed.");
+         "counts and the frame guard passed.");
     return 0;
 }

@@ -2,7 +2,8 @@
  * Host check of diag.c: a new log ignores earlier crashes, each start is counted and reports what crashed or stalled
  * since; five minutes of meters make one load record; the CPU at 90 % for a second makes one HOT incident with the
  * unit's context, at most one in ten minutes; five seconds without a UI tick while frames run make a FREEZE, added
- * with its length once the tick moves again, or with length 0 at the next start; LOG pages are 244 bytes. */
+ * with its length once the tick moves again, or with length 0 at the next start; the frame guard's skips make one
+ * SHED, at most one in ten minutes; LOG pages are 244 bytes. */
 #include "diag.c"
 #include <stdio.h>
 
@@ -16,6 +17,7 @@ const uint8_t modwerk_base_digest[32] = {0x32, 0x0f, 0xc4, 0x54, 9};
 volatile uint8_t modwerk_test_running[16];
 volatile uint32_t modwerk_status[5], modwerk_runtime_ticks, dl_frames;
 void modwerk_track_machines(volatile uint8_t *out) { for (unsigned i = 0; i < 24u; ++i) out[i] = (uint8_t)(i + 1u); }
+volatile uint32_t mw_frame_sheds, mw_frame_shed_tracks; /* machine_registry.c's frame guard */
 
 static volatile struct diag_incident *last(void) { return &LOG->incident[(LOG->incidents - 1u) % DIAG_INCIDENTS]; }
 static void restart(void) { started = 0, ticks = 0, n = cpu_sum = cpu_peak = played = hot_run = hot_count = hot_at = 0; modwerk_diag_tick(); }
@@ -85,6 +87,19 @@ int main(void)
     modwerk_status[0] = 950u;
     for (unsigned t = 0; t < 60u; ++t) tick();
     CHECK(LOG->incidents == before + 1u);
+
+    /* The frame guard skipped renders on T2 and T6: one SHED with the tracks and the count, then none for ten
+     * minutes however many more it skips. */
+    modwerk_status[0] = 100u;
+    before = LOG->incidents;
+    mw_frame_sheds = 300u, mw_frame_shed_tracks = 1u << 1 | 1u << 5;
+    tick();
+    CHECK(LOG->incidents == before + 1u && last()->kind == DIAG_SHED && last()->a == (0x22u << 24 | 300u) && last()->machine[0] == 1u);
+    mw_frame_sheds = 900u;
+    for (unsigned t = 0; t < HOT_GAP - 1u; ++t) tick();
+    CHECK(LOG->incidents == before + 1u);
+    tick();
+    CHECK(LOG->incidents == before + 2u && last()->kind == DIAG_SHED && (last()->a & 0xffffffu) == 900u);
 
     /* The UI stands still for six seconds while frames run, then moves again. */
     modwerk_status[0] = 100u;

@@ -247,6 +247,21 @@ modwerk_stock_4006d784_8:
         jmp 0x4006d78c
 mw_source_render:
         jmp mw_source_render_impl
+| The frame guard's clock (machine_registry.c): the frame interrupt's entry stamps DTCN3 after stock's register save,
+| and its exit times the frame before stock's restore and rte.
+        .global mw_frame_entry, mw_frame_leave
+mw_frame_entry:
+        .globl modwerk_stock_4000aad0_8
+modwerk_stock_4000aad0_8:
+        .space 8
+        move.l 0xfc07c00c,%d0
+        move.l %d0,mw_frame_t0
+        jmp 0x4000aad8
+mw_frame_leave:
+        jsr mw_frame_exit
+        .globl modwerk_stock_4000d9a6_10
+modwerk_stock_4000d9a6_10:
+        .space 10
 | SEQUENCER: the draw loop indexes the rows from the list's scroll offset, so contributed
 | rows past the third scroll into view (Scale Quantizer's qz_draw, Tim Hastie).
 mw_seq_draw:
