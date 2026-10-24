@@ -1,0 +1,13 @@
+[
+  {
+    "version": "0.1.0-experimental",
+    "date": "2026-10-24",
+    "changes": [
+      "First release of Jan Kolkmeier's Deja Vu: three new audio-track LFO waves, DJV, DJQ and DJC, that play a loop of remembered random values.",
+      "SPD sets how often a step of the loop replays its value or rolls a new one, from 0 (always new) to 127 (locked). MULT sets the loop length and TRIG what moves through it.",
+      "DJV steps through the values, DJQ plays root, fifth and octaves on PTCH, DJC glides from value to value. Switching between them keeps the loop.",
+      "For card builds and, for beta testers, over USB.",
+      "Known issue: not yet tested on a unit with the HOLD, TRIG, ONE or HALF modes, scenes on SPD, or on an MKI. A project using the waves opened without the module plays SAW."
+    ]
+  }
+]

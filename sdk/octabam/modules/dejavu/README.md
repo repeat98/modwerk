@@ -1,6 +1,6 @@
 # Deja Vu
 
-Version: 0.1.0-experimental (draft) · author: @jankolkmeier
+Version: 0.1.0-experimental · author: @jankolkmeier
 
 ## Overview
 
@@ -16,7 +16,9 @@ The three waves share one loop per LFO, so switching between them keeps it:
 
 On PTCH a knob step is 1/5 semitone and LFO pitch stops at ±12 semitones, so DEP decides which notes DJQ reaches (5 per semitone): below 25 only the root, 25 adds the fifth below, 35 the fifth above, 60 both octaves. On other destinations DEP is the range in knob steps.
 
-## Controls (on DJV, DJQ and DJC)
+## Controls
+
+On DJV, DJQ and DJC:
 
 | Knob | Meaning |
 |---|---|
@@ -41,6 +43,10 @@ In FREE and HOLD the step position is the track's own: with LEN at or above the 
 
 A trig moves or restarts the loop (ONE, TRIG, HALF) and makes HOLD play its step's value when the LFO engine sees it as a trig. That is a sample trig, and also a trigless trig once the track has played a sample trig since PLAY (the sample need not still sound); before that, trigless trigs do nothing. Trigless locks never count. So trigless trigs can step a DJV melody over a held or finished sample without retriggering it. A trig whose condition fails, or a spent one-shot trig, is expected not to count (not tested): in ONE the loop then shifts against the bar, in HOLD and FREE nothing shifts.
 
+## Usage
+
+On an audio track, hold [FUNC] and press [LFO] to open LFO SETUP, then turn B (WAVE) to DJV, DJQ or DJC, the last three waves. Set PMTR and DEP as for any wave; SPD is DEJA, MULT the loop length and TRIG what moves through the loop. A good start is PMTR = PTCH, MULT = 64X, TRIG = HOLD and DEP up, then turning SPD from 0 (fresh) to 127 (locked).
+
 ## Quick tutorial
 
 1. On a FLEX track with trigs, hold [FUNC] and press [LFO]; set WAVE to DJV, PMTR to PTCH, MULT to 64X, TRIG to HOLD, DEP to about 30.
@@ -51,8 +57,24 @@ A trig moves or restarts the loop (ONE, TRIG, HALF) and makes HOLD play its step
 
 ## Compatibility and limitations
 
-Audio-track LFOs only. DJQ's notes are fixed to root and fifth (no scale or chord setting). DJV values are continuous (not quantized to semitones). Every LFO starts from the same random sequence after a power-on. In HOLD, a trig nudged early by microtiming may play the previous step's value (not tested). FREE, TRIG, HOLD and HALF follow the stock step counter, so with the Play Modes module (reverse, pingpong) they follow the stock order, not the played one. A project using DJV, DJQ or DJC opened without the module plays SAW and draws a garbage WAVE icon. First hardware use on one MKII over USB; not yet qualified. See [TESTING.md](TESTING.md).
+Audio-track LFOs only. DJQ's notes are fixed to root and fifth (no scale or chord setting). DJV values are continuous (not quantized to semitones). Every LFO starts from the same random sequence after a power-on. In HOLD, a trig nudged early by microtiming may play the previous step's value (not tested). FREE, TRIG, HOLD and HALF follow the stock step counter, so with the Play Modes module (reverse, pingpong) they follow the stock order, not the played one. A project using DJV, DJQ or DJC opened without the module plays SAW and draws a garbage WAVE icon (not yet run on hardware). Tested on one MKII over USB; the card build was not flashed.
+
+## Tests and measurements
+
+On the owner's MKII over USB, the exact 0.1.0 package installed, kept and passed the self-test on the flashed beta base, came back after a power cycle and passed it again, and was removed. On a development twin the three waves appeared on the WAVE list, a locked loop held its value, SPD 0 took a new value every step, and DJQ on PTCH played only root, fifths and octaves ([evidence/hardware.md](evidence/hardware.md)). The host gate `verify.py` checks the loops, the replay chance, DJQ through the engine's own arithmetic and set-up from garbage memory; in ot_emu all 24 LFOs on one wave cost 0.15-0.17 % of the ColdFire, less than stock RND. Not tested on hardware: the HOLD, TRIG, ONE and HALF modes, p-locks and scenes on SPD or DEP, trig conditions, listening. Details in [TESTING.md](TESTING.md).
 
 ## Authorship and licences
 
 Original work by @jankolkmeier. No Elektron code or tables; patched sites are listed in manifest.py by address and hash.
+
+## Screens and audio
+
+Captured in the headless emulator (white palette):
+
+![LFO SETUP with WAVE = DJV](media/dejavu_lfo_setup.png)
+
+![LFO SETUP with WAVE = DJQ](media/djq_lfo_setup.png)
+
+![LFO SETUP with WAVE = DJC](media/djc_lfo_setup.png)
+
+No audio preview yet.

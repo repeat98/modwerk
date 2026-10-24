@@ -463,6 +463,20 @@ a stale instruction cache, zeros or other bytes uncached mean the push did not h
 - The track's step counter (`0x800064d0 + t`) moves one sequencer tick
   before the step's trig fires and shows 0 on the track's last step; its
   tick (`0x800064f0 + t`) reaches 1 just after the trig.
+- The LFO's output is the word at its record `0x800010e8 + 28 i` + 4
+  (i = 3 t + LFO), which the handler writes every frame: reading it over USB
+  shows a wave's values (owner's MKII, development twin `7889c57a`, 24
+  October 2026).
+- The engine runs the wave handlers inside the frame interrupt, and in FREE
+  every LFO of equally fast tracks changes in the same frame, so a wave's
+  change path and any first-use set-up add to that one interrupt. Measured
+  in `ot_emu` with 24 LFOs on Deja Vu's DJQ under a MIDI flood: the frames
+  where all 24 change took 32.9 µs more than on stock RND, and the frame
+  where all 24 set up their state took 202.9 µs against 131.8 µs.
+- In `ot_emu`, writing a Part's LFO bytes into RAM after the load does not
+  reach the engine, which reads per-track page records filled when the Part
+  loads. Write them into the bank file on the card before the load
+  (`ot_project`'s offsets, checksum fixed).
 
 **A detour returns after the whole span it displaced, never into it.** The
 map's writer detour at `0x400888c8` displaced `lea` (4 bytes) and `tstl` (2)

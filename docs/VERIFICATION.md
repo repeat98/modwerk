@@ -1,5 +1,15 @@
 # Verification record
 
+## Deja Vu 0.1.0-experimental — 24 October 2026
+
+New Octatrack module, Jan Kolkmeier's draft (#869) released: three audio-track LFO waves, DJV, DJQ and DJC, sharing a loop of remembered random values per LFO. ColdFire only: one 2,784-byte DRAM unit with 2,784 bytes of state, three dispatch slots of the waveform table, the WAVE count, the label clamp, the icon bound and the two grown WAVE tables (StockCopy in the USB package, TableGrow in card builds, chosen by the loader's `octabam_<name>` run name). No chooser row and no base input, so the published beta base stays as it is.
+- **Host gate (`verify.py`):** 17 of 17: loops, replay chance, the step modes against the measured step counter, DJQ through the engine's EMAC arithmetic, DJC glides, set-up from garbage memory, the unit generated from its sources.
+- **Native/browser (`module:verify dejavu`):** 154 selections, 62 matching images (all outside the platform writes), 92 matching refusals, 0 mismatches. Native pairs: 30 modules, 435 pairs in 3 contexts, none refused with Deja Vu. `--check` matches with the chooser-metadata row left out.
+- **USB package:** `95079643…` (ABI 7, nine guarded sites, six hash-guarded stock copies of at most 32 bytes); both strict stock-free scans pass with no shared run.
+- **Hardware (owner's MKII, 24 October 2026, agent-driven over USB):** on the flashed beta base `b5fae2ae`, install and Keep, self-test, restore after a power cycle, self-test and removal; on the RAM-booted development twin `7889c57a`, the WAVE list, a locked one-slot loop holding its value, SPD 0 renewing every step, a two-slot loop alternating, DJQ on PTCH giving only −5, 0, +7 and +12 semitones, and the stock sites back after removal. The module's `evidence/hardware.md`.
+- **Load (ot_emu, 62 s under a MIDI flood, all 24 LFOs on DJQ at its dearest against stock RND):** longest frame interrupt 178.6 vs 145.7 µs (+9.1 % of a frame, in the frames where all 24 change together), idle 1.5 points lower, every MIDI message reached its handler. The frame where all 24 first set up their state took 202.9 µs, once, during the project load.
+- **Not tested:** on hardware the HOLD, TRIG, ONE and HALF modes, p-locks and scenes on SPD or DEP, trig conditions, a project with WAVE 19-21 opened without the module, listening, the card build and an MKI.
+
 ## Direct Jump 0.1.0-experimental — 24 October 2026
 
 New Octatrack module: Zac Kyoti's clock-locked DIRECT JUMP from octabam `b725fb1a` (author's repository `329b801c`), toggled with [PTN] + [YES]; a cued pattern takes over on the next step at the position it would hold had it played since START. ColdFire only: one 2,016-byte DRAM unit, `jsr` detours at the tick handler's landing countdown read and its MIDI START gate, a `jmp` at the [PTN] release, and the [PTN] layer's empty YES press slot. The upstream `requires=BATCH_BUGFIXES` is not carried: the author measured the two as independent, and the source reads an out-of-range scale byte as the master's.

@@ -402,6 +402,21 @@
       "path": "octatrack-modules/direct-jump-kyoti/0.1.0-experimental.mwrm"
     },
     {
+      "id": "dejavu",
+      "octabam": true,
+      "abi": 7,
+      "features": 3,
+      "sites": 9,
+      "copies": 6,
+      "fills": 0,
+      "version": "0.1.0-experimental",
+      "name": "Deja Vu",
+      "module": "ede213c6",
+      "bytes": 3600,
+      "sha256": "95079643d3e11914a9fcea21c3417bd95fe7083333660470147d7e89a1f53260",
+      "path": "octatrack-modules/dejavu/0.1.0-experimental.mwrm"
+    },
+    {
       "id": "recorder-loop-fix",
       "base": true,
       "abi": 8,

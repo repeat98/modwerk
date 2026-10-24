@@ -335,7 +335,7 @@
       ]
     }
   ],
-  "sourceCommit": "a81eb5b634c2a93ef45de7e49fc103efe95d9843",
+  "sourceCommit": "f4f1b1d23f6f255a449c602f7de4f021bbe9188a",
   "moduleVersions": {
     "spectrum": "0.1.1-experimental",
     "modulation": "0.1.1-experimental",
@@ -366,6 +366,7 @@
     "output-matrix": "0.1.1-experimental",
     "quantize-live-rec-toggle": "0.1.1-experimental",
     "apply-scene": "0.2.0-experimental",
-    "direct-jump-kyoti": "0.1.0-experimental"
+    "direct-jump-kyoti": "0.1.0-experimental",
+    "dejavu": "0.1.0-experimental"
   }
 }

@@ -151,6 +151,11 @@
       "id": "direct-jump-kyoti",
       "version": "0.1.0-experimental",
       "addedAt": "2026-10-24T12:00:00Z"
+    },
+    {
+      "id": "dejavu",
+      "version": "0.1.0-experimental",
+      "addedAt": "2026-10-24T15:30:00Z"
     }
   ]
 }

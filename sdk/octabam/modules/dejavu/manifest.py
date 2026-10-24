@@ -1,4 +1,4 @@
-"""DEJA VU -- audio-track LFO waveforms with a looping random memory (draft).
+"""DEJA VU -- audio-track LFO waveforms with a looping random memory.
 
 WAVE 19 DJV (stepped), 20 DJQ (snapped to whole knob steps), 21 DJC (glides):
 one loop of remembered values per LFO; SPD sets how often a slot is replayed,
@@ -14,11 +14,11 @@ Sites (docs/firmware/LFO.md sections 4 and 6; re-read in objdump on 1.40C):
               is the `lea` operand at 0x4003be5c
   0x400bdf36  the 19-entry WAVE icon table LFO SETUP draws (stock entry 19 is a
               null pointer); refs: `lea` operands at 0x400469ec and 0x40046a56
-Both tables grow inside the unit: StockCopy fills dv_labels/dv_icons with the
-19 stock pointers and SymbolRefs point the three `lea` operands at them. The
-runtime package (USB) carries that; it carries no TableGrow. Where the schema
-has no StockCopy (upstream octabam, used for emulator dev builds) the same
-growth is declared as TableGrow.
+In the runtime package (USB) both tables grow inside the unit: StockCopy fills
+dv_labels/dv_icons with the 19 stock pointers and SymbolRefs point the three
+`lea` operands at them; it carries no TableGrow. Card builds (Modwerk's builder,
+whose stock copies only replay detoured instructions) and upstream octabam's
+emulator builds declare the same growth as TableGrow.
 Not touched: the MIDI-LFO table 0x400d6290 and its count (MIDI tracks keep 19 waves).
 A project saved with WAVE 19-21 on a firmware without the module dispatches the
 stock SAW padding and draws label 0 (LFO.md section 6).
@@ -28,7 +28,9 @@ from remix import schema
 from remix.schema import Category, Proof, Gate, Kind, Linked, Module, Poke, SymbolRef, TableGrow
 from remix.stock_guard import stock_guard
 
-STOCK_COPY = getattr(schema, "StockCopy", None)
+# A runtime package carries no TableGrow, and the card builder replays stock bytes only behind detours: Elekloader's
+# port, which runs a manifest as octabam_<name>, gets the StockCopy form, every other build the TableGrow form.
+STOCK_COPY = getattr(schema, "StockCopy", None) if __name__.startswith("octabam_") else None
 
 DISPATCH_SLOT19 = 0x400D625C
 DISPATCH_SLOT20 = 0x400D6260
@@ -72,9 +74,9 @@ MODULE = Module(
     name="dejavu",
     key="DEJAVU",
     kind=Kind.CF_PATCH,
-    doc="DEJA VU (draft): audio-track LFO waves DJV, DJQ and DJC, a loop of random values that replay or renew by chance.",
+    doc="DEJA VU: audio-track LFO waves DJV, DJQ and DJC, a loop of random values that replay or renew by chance.",
     category=Category.TRACK, author="jankolkmeier", author_url="https://github.com/jankolkmeier",
-    proof=Proof.CHECK, proof_note="draft; emulator, and first use on one MKII over USB (reported)",
+    proof=Proof.CHECK, proof_note="emulator, and use on one MKII over USB (reported)",
     linked=(UNIT,),
     symbol_refs=(
         SymbolRef(DISPATCH_SLOT19, 0x400038BC, "unit", "dv_wave",

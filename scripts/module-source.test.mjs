@@ -19,8 +19,8 @@ describe('release package scope and reviewed source inventory', () => {
   })
   it('binds approved standalone MIDI Scenes without compiling its archived 8.2 port', async () => {
     const versions = await compiledModuleVersions(root, catalog), paths = await moduleSourcePaths(root)
-    expect(Object.keys(versions)).toEqual(['spectrum', 'modulation', 'character', 'miniverb', 'tapeecho', 'euclid', 'repitch', 'tapehead', 'airwindows-chorus', 'everb', 'bbd', 'lofi2', 'ring-sc', ...requested.filter(id => id !== 'vector'),'previewvol','cc-map','sidechain-compressor','vector','playmodes','mute-modes','recorder-loop-fix','poly8','output-matrix','quantize-live-rec-toggle','apply-scene','direct-jump-kyoti'])
-    for (const id of ['playmodes', 'mute-modes', 'recorder-loop-fix', 'output-matrix', 'quantize-live-rec-toggle','apply-scene','direct-jump-kyoti']) {
+    expect(Object.keys(versions)).toEqual(['spectrum', 'modulation', 'character', 'miniverb', 'tapeecho', 'euclid', 'repitch', 'tapehead', 'airwindows-chorus', 'everb', 'bbd', 'lofi2', 'ring-sc', ...requested.filter(id => id !== 'vector'),'previewvol','cc-map','sidechain-compressor','vector','playmodes','mute-modes','recorder-loop-fix','poly8','output-matrix','quantize-live-rec-toggle','apply-scene','direct-jump-kyoti','dejavu'])
+    for (const id of ['playmodes', 'mute-modes', 'recorder-loop-fix', 'output-matrix', 'quantize-live-rec-toggle','apply-scene','direct-jump-kyoti','dejavu']) {
       expect(versions[id]).toBe(id === 'playmodes' ? '0.2.0-experimental' : id === 'mute-modes' ? '0.2.1-experimental' : id === 'output-matrix' ? '0.1.1-experimental' : id === 'apply-scene' ? '0.2.0-experimental' : id === 'quantize-live-rec-toggle' ? '0.1.1-experimental' : '0.1.0-experimental')
       expect(paths).toContain('modules/' + id + '/manifest.py')
     }

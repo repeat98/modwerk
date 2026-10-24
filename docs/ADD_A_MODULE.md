@@ -194,9 +194,11 @@ table in the module's own unit instead: zero placeholders that `StockCopy`
 fills from the guarded stock entries at install, your entries after them,
 and a `SymbolRef` on every stock reference to the table. One stock copy
 spans at most 32 bytes (`SITE_BYTES` in `loader.h`), so split a longer table
-into chunks with their own symbols. A builder without `StockCopy` in its
-schema can still take the same growth as `TableGrow`
-(`sdk/drafts/dejavu/manifest.py` declares both).
+into chunks with their own symbols. Card builds take the same growth as
+`TableGrow`: Modwerk's card builder accepts a stock copy only where it
+replays instructions a detour displaced, and refuses table copies at import.
+Elekloader's port runs a manifest as `octabam_<name>`, so a manifest can
+pick the form by `__name__` (`sdk/octabam/modules/dejavu/manifest.py`).
 
 **The strict stock-free scan can match original data.** Small, regular data
 such as a sparse icon bitmap or a full-cell mask can equal stock bytes over
