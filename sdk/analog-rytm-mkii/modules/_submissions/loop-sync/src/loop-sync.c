@@ -6,7 +6,7 @@
 // storage): OFF, AUTO, or 1, 2, 4 or 8 BARS. The source tempo comes from the
 // length of the sample that actually plays:
 //
-//     seconds = frames * (END - STA) / 120 / rate
+//     seconds = frames * (END - STA) / 120 / rate    (the sound's own STA/END)
 //     source  = beats * 60 / seconds * (1 + correction)    (4 beats a bar)
 //
 // With END at its end, digital silence at the end of the sample (below about
@@ -79,6 +79,7 @@ typedef void (*fillrect_t)(void *bmp, int x0, int y0, int x1, int y1, int colour
 #define IDX_SMP 19
 #define IDX_STA 21
 #define IDX_END 22
+#define LIVE_PARAMS 0x14            // live sound: 42 parameter words, before locks and the LFO
 #define TUN_MIN (40 * 256)
 #define TUN_MAX (88 * 256)
 
@@ -124,6 +125,7 @@ struct config_changed { const void *vtable; unsigned char kind; };
 // Written by the idle tick and the handlers, read by the audio interrupt (one
 // word each). gen moves on whenever a slot's trim or correction changes.
 static unsigned char cfg_mode[SOUND_TRACKS];
+static short cfg_sta[SOUND_TRACKS], cfg_end[SOUND_TRACKS];   // the sound's own STA/END, 8.8
 static short slot_adj[SLOT_LAST + 1];      // tenths of a percent
 static unsigned trim_frames[SLOT_LAST + 1];   // frames to count, 0 before the scan
 static unsigned trim_data[SLOT_LAST + 1], trim_len[SLOT_LAST + 1];   // what was scanned
@@ -246,9 +248,12 @@ void loop_sync_audio(void)
         int mode = cfg_mode[track], slot, sta, end, tun;
         if (mode == MODE_OFF || mode >= MODES)
             continue;
+        // The sample that plays (SMP locks and scenes follow), over the sound's
+        // own STA/END: a STA lock that slices the loop, or an LFO on STA/END,
+        // must not read as a shorter loop and change the pitch.
         slot = EFF(track, IDX_SMP) >> 8;
-        sta = EFF(track, IDX_STA);
-        end = EFF(track, IDX_END);
+        sta = cfg_sta[track];
+        end = cfg_end[track];
         if (slot != key_slot[track] || sta != key_sta[track] || end != key_end[track]
             || mode != key_mode[track] || gen != key_gen[track] || tempo != key_tempo[track]) {
             // A new sample, region or mode jumps to its shift; a tempo or a
@@ -312,6 +317,11 @@ void loop_sync_tick(char *ctrl)
     for (track = 0; track < SOUND_TRACKS; track++) {
         void *live = live_sound(accessor(track));
         unsigned mode = live ? core_store_get(STORE(loop_sync_mode), live, 0) : 0;
+        if (live) {
+            volatile short *params = (volatile short *)((char *)live + LIVE_PARAMS);
+            cfg_sta[track] = params[IDX_STA];
+            cfg_end[track] = params[IDX_END];
+        }
         cfg_mode[track] = (unsigned char)(mode < MODES ? mode : MODE_OFF);
     }
     for (n = 0; n < SCAN_PER_TICK; n++) {
@@ -322,7 +332,8 @@ void loop_sync_tick(char *ctrl)
     {
         char *project = (char *)PROJECT_SINGLETON();
         int sel = TRACK_INDEX_OF(project + PROJECT_TRACKSEL);
-        int mark = sel >= 0 && sel < SOUND_TRACKS && cfg_mode[sel] != MODE_OFF;
+        // Only on the SAMPLE page: elsewhere the mark would cover stock screens.
+        int mark = on_sample_page && sel >= 0 && sel < SOUND_TRACKS && cfg_mode[sel] != MODE_OFF;
         if (mark != mark_shown || show_ticks)
             ctrl[0x20] = 1;   // redraw: the box goes away, the SYNC mark follows the track
         mark_shown = mark;
@@ -371,8 +382,8 @@ int loop_sync_enc(void *brain, char *ev)
     if (mode >= MODES)
         mode = MODE_OFF;
     slot = EFF(track, IDX_SMP) >> 8;
-    sta = EFF(track, IDX_STA);
-    end = EFF(track, IDX_END);
+    sta = cfg_sta[track];
+    end = cfg_end[track];
     adj = slot > 0 && slot <= SLOT_FIELDS ? slot_adj[slot] : 0;
     // Accumulate counts: one mode step every MODE_COUNTS, 0.1 % every ADJ_COUNTS.
     if (enc != turn_enc || !show_ticks)
@@ -495,6 +506,15 @@ static int put_bpm(unsigned char *t, int n, int src)
     int tenths = (src + 6) / 12, whole = tenths / 10;
     if (!src) {
         t[n++] = G_DOT; t[n++] = G_DOT; t[n++] = G_DOT;
+        return n;
+    }
+    if (whole >= 1000) {
+        // 8 BAR on a short loop reads above 999 BPM: whole BPM, at most 9999
+        if (whole > 9999) whole = 9999;
+        t[n++] = (unsigned char)(whole / 1000);
+        t[n++] = (unsigned char)(whole / 100 % 10);
+        t[n++] = (unsigned char)(whole / 10 % 10);
+        t[n++] = (unsigned char)(whole % 10);
         return n;
     }
     if (whole >= 100) t[n++] = (unsigned char)(whole / 100);

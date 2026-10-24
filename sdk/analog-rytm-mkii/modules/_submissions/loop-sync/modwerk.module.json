@@ -59,7 +59,7 @@
       ]
     },
     {
-      "name": "AJUST",
+      "name": "ADJUST",
       "default": 0,
       "doc": "Correction of the source tempo of the sample the selected track plays, -12.7 to +12.7 % in 0.1 % steps, sample slots 1-123. FUNC + FIN on the SAMPLE page. Kept per sample slot with the project.",
       "labels": null
@@ -75,6 +75,8 @@
       "Pitch follows tempo: no time-stretch.",
       "The shift is clamped to TUN's +-24 semitones and skipped beyond a factor of 8.",
       "The silence check sees only digital silence under 5 % of a sample; other mis-cut loops need the per-sample correction.",
+      "The loop length comes from the sound's own STA and END: locks and LFOs on STA or END play another region at the same speed.",
+      "The SYNC mark shows only on the SAMPLE page.",
       "Hooks the audio interrupt one instruction after rytm2_mods lfo-rnd's site; the pair is not tested."
     ]
   },
@@ -95,40 +97,27 @@
     ]
   },
   "resources": {
-    "memoryBytes": null,
+    "memoryBytes": 7412,
     "fastBytes": null,
     "load": {
-      "display": "Not measured yet",
+      "display": "Not measured on a unit",
       "method": "unmeasured",
-      "conditions": "Measure with every track playing, parameters modulated and the mod at its heaviest setting."
+      "conditions": "The audio-interrupt hook compares each synced track's sample, mode, correction and the tempo every block and recomputes the shift only when one changes; worst case to measure: an external MIDI clock moving the tempo word, several synced tracks."
     }
   },
   "evidence": {
-    "tier": "author-hardware",
+    "tier": "emulator",
     "moduleVersion": "0.2.0-experimental",
-    "sourceSha256": "7e8b515f1e28c92ec66323ec378ef3aeb72fa4531b60ff6953e70e9dc763710d",
+    "sourceSha256": "6df71df64799781b66e0e266297e64a2b6ce18679fd98def305e2536d8d0f0bc",
     "reports": [
       "TESTING.md"
     ],
-    "hardware": {
-      "model": "Analog Rytm MKII",
-      "release": "1.74",
-      "testedOn": "2026-10-24",
-      "tester": "stigmagit",
-      "durationMinutes": null,
-      "summary": "Build LS17 (core-ar2 0.3 + loop-sync 0.2.0-experimental) flashed with Elektron Transfer over USB on the author's unit, after LS16 on 24 October 2026. Loops follow the project tempo in AUTO, with SMP parameter locks, the per-sample percentage correction and the trailing-silence check; the pitch now glides when the tempo changes (\"ça glisse bien maintenant\").",
-      "limitations": [
-        "Informal listening test; no timing measured on the unit.",
-        "Persistence of the mode across kit save and reboot, and of the corrections across project save and reboot, not reported.",
-        "Scenes that change SMP not reported separately for LS16.",
-        "No CPU or memory measurement on the unit."
-      ]
-    },
+    "hardware": null,
     "verifiedBy": null
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Author tested LS17 on an Analog Rytm MKII (OS 1.74): loops in time with SMP locks, per-sample correction and trailing-silence check; the pitch glides on tempo changes. Emulator audio measurements in TESTING.md.",
+    "summary": "Emulator (rytm-emu, OS 1.74, build LS18): loops of 120 and 100 BPM alternating by SMP lock, a padded loop, a mis-cut loop with its correction and a STA-locked slice all in time at 127 BPM. Earlier builds tested by the author on a unit; LS18 awaits the unit test. See TESTING.md.",
     "documentation": {
       "tutorial": {
         "title": "Quick tutorial",
@@ -150,17 +139,17 @@
   "license": {
     "spdx": "GPL-3.0-or-later",
     "file": "LICENSE",
-    "declaration": "Original work by the author. Replace if you choose another GPL-compatible licence."
+    "declaration": "Original work by the author, under GPL-3.0-or-later."
   },
   "media": [
     {
       "path": "media/thumbnail.svg",
       "kind": "thumbnail",
-      "caption": "Loop Sync thumbnail",
-      "alt": "Placeholder thumbnail for Loop Sync",
+      "caption": "Loop Sync: a loop repitched onto the project beats",
+      "alt": "A loop at its source tempo, longer than the bar, and the same loop repitched onto the project beats.",
       "credit": "stigmagit",
       "license": "GPL-3.0-or-later",
-      "source": "Original placeholder from the Modwerk SDK template; replace with your own artwork."
+      "source": "Original conceptual illustration in the shared signal-art style."
     },
     {
       "path": "media/sync-auto.png",

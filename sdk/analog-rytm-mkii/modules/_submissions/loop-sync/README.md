@@ -1,10 +1,10 @@
 # Loop Sync
 
-An Analog Rytm MKII mod by @stigmagit. Version 0.2.0-experimental, for OS 1.74 with core-ar2 0.3. Tested by the author on a unit (build LS17).
+An Analog Rytm MKII mod by @stigmagit. Version 0.2.0-experimental, for OS 1.74 with core-ar2 0.3. Earlier builds tested by the author on a unit; build LS18 awaits that test.
 
 ## Overview
 
-Loop Sync keeps sample loops in time with the project tempo by repitching them, like a varispeed. In AUTO it works out each loop's source tempo from the length of the sample that plays (between STA and END), assuming 4/4 and a loop cut on the bar, and picks the bar count that is nearest the project tempo. Every audio block it adds the matching pitch shift to the track's effective TUN, after parameter locks, scenes and the LFO, so a SMP lock or a scene that changes the sample is followed, each sample by its own length. Pitch follows tempo, as on a turntable: there is no time-stretch.
+Loop Sync keeps sample loops in time with the project tempo by repitching them, like a varispeed. In AUTO it works out each loop's source tempo from the length of the sample that plays (between the sound's own STA and END), assuming 4/4 and a loop cut on the bar, and picks the bar count that is nearest the project tempo. Every audio block it adds the matching pitch shift to the track's effective TUN, after parameter locks, scenes and the LFO, so a SMP lock or a scene that changes the sample is followed, each sample by its own length. Pitch follows tempo, as on a turntable: there is no time-stretch.
 
 The sound's own TUN is never written: a TUN lock still transposes on top of the sync.
 
@@ -17,7 +17,7 @@ On the SAMPLE page (press SMPL), with FUNC held:
 | Turn TUN (encoder A) | Steps the sound's mode, one step about every 8 encoder counts: OFF, AUTO, 1 BAR, 2 BAR, 4 BAR, 8 BAR. A box shows the mode and the source tempo of the sample the selected track plays, for example `AUTO` over `1BAR 120.0`. |
 | Turn FIN (encoder B) | The correction of the sample the selected track plays, -12.7 to +12.7 % in 0.1 % steps (one every 2 counts), on top of the mode's source tempo; sample slots 1-123. A loop with a tail or a gap plays longer than its bars, so AUTO finds it slow: a + correction brings it back. Each sample slot keeps its own correction, in the project. |
 
-The mode is kept in the sound (core-ar2 sound storage), so it travels with the sound and the kit; each sample slot's correction is kept with the project (core-ar2 project storage), so save the project to keep it. A small `SYNC` mark stays at the bottom right of the screen while the selected track is synced. On the stock OS a FUNC + turn on the SAMPLE page does nothing (observed in the emulator on OS 1.74), so these gestures take no stock behaviour away.
+The mode is kept in the sound (core-ar2 sound storage), so it travels with the sound and the kit; each sample slot's correction is kept with the project (core-ar2 project storage), so save the project to keep it. A small `SYNC` mark shows at the bottom right of the SAMPLE page while the selected track is synced. On the stock OS a FUNC + turn on the SAMPLE page does nothing (observed in the emulator on OS 1.74), so these gestures take no stock behaviour away.
 
 ## Usage
 
@@ -34,7 +34,7 @@ Set a loop track to AUTO and play at any tempo; correct a mis-cut loop with FUNC
 
 - With END at its end, digital silence at the end of a sample (below about -72 dB, `SILENCE`) is left out of its length when it is shorter than 5 % of the sample: the padding of a loop exported a little long. A quiet last beat, longer than that, is kept. The idle tick checks four sample slots a tick and scans a slot again when its sample changes.
 
-- `audio.s` hooks the audio interrupt just after its LFO call (one site, 10 bytes), where each track's effective parameter array is complete for the block and the voices have not read it yet. `loop_sync_audio` reads the track's effective SMP, STA and END, the sample slot's frame count and rate from the stock slot table, and the tempo word; it works out `1200 * log2(tempo / source)` cents in integer arithmetic only when one of those changes, and adds the shift to the effective TUN. The array is rebuilt every block, so the add does not accumulate.
+- `audio.s` hooks the audio interrupt just after its LFO call (one site, 10 bytes), where each track's effective parameter array is complete for the block and the voices have not read it yet. `loop_sync_audio` reads the track's effective SMP (so sample locks and scenes follow), the sound's own STA and END (copied by the idle tick from the live sound, before locks and the LFO, so a STA lock that slices the loop plays that slice at the same speed), the sample slot's frame count and rate from the stock slot table, and the tempo word; it works out `1200 * log2(tempo / source)` cents in integer arithmetic only when one of those changes, and adds the shift to the effective TUN. The array is rebuilt every block, so the add does not accumulate.
 - A tempo or correction change glides to the new shift (1/64 of the way each audio block, settled in about 140 ms) instead of stepping, as a turntable speeds up; a new sample, region or mode jumps straight to its own shift.
 - `ev_tick` copies each sound's mode for the interrupt and redraws when the SYNC mark changes; `ev_key` notes when SMPL opened the SAMPLE page; `ev_enc` takes FUNC + A and FUNC + B there; `ev_draw` draws the box; `ev_project` resets the caches.
 
@@ -61,9 +61,9 @@ OS 1.74 only, with core-ar2 0.3 (sound storage: 3 bits per sound, `loop_sync_mod
 
 Full record in [TESTING.md](TESTING.md). In short:
 
-- **On a unit:** the author ran LS17 on an Analog Rytm MKII with OS 1.74: loops in time with SMP locks, the per-sample correction and the silence check, and the pitch glides on tempo changes. Listening only; persistence across saves and reboots is not reported yet.
+- **On a unit:** the author ran LS17 (before the review fixes) on an Analog Rytm MKII with OS 1.74: loops in time with SMP locks, the per-sample correction and the silence check, and the pitch glides on tempo changes. Listening only; persistence across saves and reboots is not reported yet.
 - **In the emulator (rytm-emu, recorded audio):** at 127 BPM, beats of 120 and 100 BPM loops alternating by SMP lock, a padded loop in AUTO and a mis-cut loop with its own +5.1 % all fall 0.4717-0.4730 s apart for a target of 0.4724 s. A tempo step glides over about 140 ms instead of jumping 13.5 cents.
-- **Memory:** loop-sync is about 4 KB of code and data in the 128 KB shared mod area (elekloader lint, LS17). **CPU:** not measured on the unit; the audio-interrupt hook does a compare per sound track and block, and the logarithm only when a track's sample, region, mode, correction or the tempo changes.
+- **Memory:** loop-sync is 7,412 bytes of code and data (5,224 `.run` and 2,188 `.bss`, elekloader lint, LS18) in the 128 KB shared mod area (elekloader lint, LS17). **CPU:** not measured on the unit; the audio-interrupt hook does a compare per sound track and block, and the logarithm only when a track's sample, region, mode, correction or the tempo changes.
 
 ## Screens and audio
 

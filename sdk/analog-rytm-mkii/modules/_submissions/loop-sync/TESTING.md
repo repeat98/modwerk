@@ -1,12 +1,12 @@
 # Loop Sync testing
 
-Evidence tier: **author-hardware** for 0.2.0-experimental, build LS17, source sha256 `7e8b515f1e28c92ec66323ec378ef3aeb72fa4531b60ff6953e70e9dc763710d` (sha256 over `build.json` then each `src/` file in name order, each as its path, a NUL, its bytes and a NUL).
+Evidence tier: **emulator** for 0.2.0-experimental, build LS18, source sha256 `6df71df64799781b66e0e266297e64a2b6ce18679fd98def305e2536d8d0f0bc` (sha256 over `build.json` then each `src/` file in name order, each as its path, a NUL, its bytes and a NUL). The author tested LS16 and LS17 on a unit (below); LS18, with the review fixes, awaits that test.
 
 ## Build
 
 - Stock: Analog Rytm MKII OS 1.74, the owner's own file (sha256 `cb0f99d6…e123`, as `src/engine/elektron/elemod.ts` expects). Not in this repository.
 - elekloader at tag `core-ar2-v0.3`, core-ar2 0.3 built from its source, Debian bookworm `m68k-linux-gnu-gcc` 12.2.0 (amd64 container).
-- `python -m elekloader.sdk.build`, `elekloader.lint` (OK: links as core 0.3 > loop-sync 0.1; RAM 9344 of 131072 bytes) and `elekloader.patch`, build LS09: loop-sync `.run` about 2 KB, `.bss` about 120 bytes, 0 sites, one 16-bit sound storage field.
+- `python -m elekloader.sdk.build`, `elekloader.lint` and `elekloader.patch`, build LS18: loop-sync `.run` 5,224 bytes, `.bss` 2,188 bytes (7,412 in all), 1 site (0x40121020, 10 bytes), storage: one 3-bit sound field (`loop_sync_mode`) and 31 32-bit project fields (`loop_sync_p0`..`loop_sync_p30`); lint: links as core 0.3 > loop-sync 0.2, RAM 14,624 of 131,072 bytes.
 
 ## Emulator (rytm-emu 3c4c42c, `dtboot`, 22 October 2026)
 
@@ -86,9 +86,15 @@ On the unit, the pitch stepped with each tempo click (author report on LS16). LS
 
 Analog Rytm MKII, OS 1.74 + LS09, tested by stigmagit: the loop follows the tempo ("ça marche"); it did not with a SMP parameter lock or a scene that changes the sample, which 0.1 could not follow. LS12 on the unit: mode steps were hard to land on (fixed in LS14); a loop not cut on the bar did not sit in time in AUTO (LS14 adds the percentage correction). LS14 is not tested on a unit yet.
 
+## LS18: review fixes (24 October 2026)
+
+- **STA/END locks.** The length now comes from the sound's own STA and END (live sound `+0x14`, before locks and the LFO); the effective SMP still picks the sample. loop120 in 1 BAR, step 9 locked to STA 52.50, 127 BPM: LS17 played that slice about 770 cents low (beats 0.735 s apart); LS18 plays it at the loop's speed (0.118 s to beat 3, then 0.4725, as the 0.875 s offset predicts).
+- **SYNC mark** only on the SAMPLE page; **box digits** above 999 BPM shown as whole BPM up to 9999.
+- **Thumbnail** in the signal-art style; records and control name (ADJUST) updated.
+
 ## Screenshots
 
-`media/sync-auto.png`, `media/sync-percent.png` and `media/sync-mark.png` come from build LS17 in rytm-emu; inputs, image and PNG hashes in `media/capture.json`.
+`media/sync-auto.png`, `media/sync-percent.png` and `media/sync-mark.png` come from build LS17 in rytm-emu (all on the SAMPLE page, unchanged by LS18); inputs, image and PNG hashes in `media/capture.json`.
 
 ## Not tested
 
