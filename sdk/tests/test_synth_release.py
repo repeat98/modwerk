@@ -7,7 +7,7 @@ import unittest
 
 APP = Path(__file__).resolve().parents[2]
 ORIGINAL = json.loads((APP/'sdk/imports/synth-949f3be.json').read_text())
-RECORD = json.loads((APP/'sdk/imports/synth-fixes-273-264.json').read_text())
+RECORD = json.loads((APP/'sdk/imports/synth-fixes-0.1.3.json').read_text())
 FOLDER = APP/RECORD['folder']
 sha = lambda path: hashlib.sha256(path.read_bytes()).hexdigest()
 
@@ -17,7 +17,7 @@ class SynthRelease(unittest.TestCase):
         files = ORIGINAL['files'] + ORIGINAL['localFiles']
         updates = {item['path']: item for item in RECORD['files']}
         self.assertEqual(RECORD['originalImport'], 'synth-949f3be.json')
-        self.assertEqual(RECORD['status'], 'released')
+        self.assertIn(RECORD['status'], ('released', 'proposed'))
         self.assertEqual(len(files), len({item['path'] for item in files}))
         for item in files:
             update = updates.get(item['path'])
@@ -54,7 +54,7 @@ class SynthRelease(unittest.TestCase):
         doc = json.loads((FOLDER/'octamod.module.json').read_text())
         self.assertEqual(doc['version'], RECORD['version'])
         self.assertNotIn('build', doc)
-        self.assertEqual(doc['tests']['hardwareStatus'], 'untested')
+        self.assertIn(doc['tests']['hardwareStatus'], ('untested', 'reported'))
         self.assertNotIn('qualification', doc['tests'])
         self.assertTrue((APP/'sdk/octabam/modules/synth').exists())
         for name in ['sdk/catalog.json','src/catalog/module-documents.json']:

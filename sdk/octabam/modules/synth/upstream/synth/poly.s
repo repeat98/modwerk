@@ -204,6 +204,10 @@
         .set    PING_AT, 0x800000e0      | the frame builder's ping (the copier 0x4000caf4 reads it: the record set being built this frame)
         .set    DSP_REC, 0x80000110      | the DSP voice records: + (ping << 9) + 64 * track, halfwords 0/1/2 = AMP ATK / HOLD / REL (value << 8)
         .set    CV_ATK, 12               | flat slot 12 = AMP page slot 0 (ATK)
+        .set    SC_PAIRS, 0x80000ed4     | the scene morph's working copy: + 64 t, scene byte k at 2k (A) / 2k+1 (B); negative = no lock (MIDI.md App. C)
+        .set    SC_OFF_A, 0x80000006     | scene A off (the morph's A-absent branch, 0x4000cc6c)
+        .set    SC_OFF_B, 0x80000007     | scene B off
+        .set    XFADER, 0x460d16c8       | the crossfader, long 0..127: 127 = scene A
         .set    CUT_SHIFT, 3             | a stolen voice fades over 8 frames (2.9 ms): T_GMAX / 8 a frame (plan B)
         .set    GLOBAL_WORD, 0x46c80350  | the sequencer's STOP / restart word the frame builder turns into the DSP all-off (po_stop)
         .set    KILL_RET, 0x40006862     | the stock VOICE KILL 0x40006820: after its CF voice-byte clear (po_kill)
@@ -399,10 +403,10 @@ sy_cmp:
         subq.l  #1,%d3
         bne     sy_cmp
 sy_cold:                                 | a synth starts -- THE START RULE (plan B, 28 Sep 2026): the engine owns
-        move.l  #CV_STRIDE,%d1           | the AMP envelope (the DSP sees ATK 0 / HOLD INF / REL INF: sy_ison), so
-        muls.l  %d2,%d1                  | the only question is whether THIS voice still sounds. S_GPREV != 0 (the
-        lea     CURVALS,%a0              | gain the last call ended at): WARM -- the SAME oscillator continues
-        mvz.b   CV_HOLD(%a0,%d1.l),%d1   | phase-continuously at its current level, the pitch changes, the attack
+        bsr     po_amp_snap              | the AMP envelope (the DSP sees ATK 0 / HOLD INF / REL INF: sy_ison), so
+        bsr     po_amp_at                | the only question is whether THIS voice still sounds. S_GPREV != 0 (the
+                                         | gain the last call ended at): WARM -- the SAME oscillator continues
+        mvz.b   1(%a0),%d1               | phase-continuously at its current level, the pitch changes, the attack
                                          | re-runs from that level (an analog mono synth's retrigger), and the index
                                          | envelope RAMPS from its level to ENV_ONE over 16 frames (BUILD 38). S_GPREV
                                          | == 0: COLD -- both operators at phase 0, the gain ramps from 0 (the ATK law,
@@ -441,10 +445,8 @@ sy_warm_env:
 sy_warm:                                 | (sy_env_ramp, 5.8 ms), the carrier and the level continuous (BUILD 38)
         move.l  RS_PTR,%a0
         clr.l   4(%a0)                   | the retrig count the packer just latched: no stock retrigs
-        move.l  #CV_STRIDE,%d1           | VOIC (the current value, locks applied) 2..4: this note
-        muls.l  %d2,%d1                  | is paraphonic; 1, or anything outside 1..4: the mono voice
-        lea     CURVALS,%a0
-        mvz.b   CV_VOIC(%a0,%d1.l),%d1
+        bsr     po_vc_at                 | VOIC (the current value, locks and scenes) 2..4: this note
+        mvz.b   (%a0),%d1                | is paraphonic; 1, or anything outside 1..4: the mono voice
         subq.l  #2,%d1
         cmpi.l  #2,%d1
         sls     %d1
@@ -482,6 +484,7 @@ sy_set:
 sy_ison:
         tst.b   S_ON(%a3)
         beq     sy_sample
+        bsr     po_amp_snap              | the AMP values the frame builder wrote (LFOs, scenes), before the override
         lea     CURVALS,%a0              | LEG (2 Oct 2026): the track's live lane 0x80000810 + t * 72 holds the
         move.l  #CV_STRIDE,%d1           | Part's AMP page-2 bytes at +0x2c; byte 5 (+0x31, LEG) is what the copier
         muls.l  %d2,%d1                  | 0x4000cb6a carries into the DSP record's AMP word 23, low byte, every
@@ -624,7 +627,7 @@ sy_mono_inc:
         move.l  %d0,S_INC(%a3)           | carrier increment: the true pitch
 
 | ---- the parameters ---------------------------------------------------------
-        mvz.w   2(%a4),%d1               | STRT -> ratio
+        bsr     po_ratio_word            | STRT -> ratio (its scenes as a jump)
         lsr.l   #8,%d1
         lsr.l   #2,%d1
         lea     sy_ratio(%pc),%a0
@@ -689,11 +692,200 @@ sy_envdone:
         bsr     po_mono_env              | the mono voice's AMP envelope (plan B): S_GAIN := the level this frame ends at
         bra     sy_check                 | (po_mono_env's body follows: not fall-through)
 
+| ---- po_amp_snap: the track's effective AMP ATK / HOLD / REL this frame -------------
+| The live lane (CURVALS + 72 t + 12..14) holds the Part's bytes with the trig's locks;
+| the scene morph and the LFOs write the DSP voice record's halfwords 0..2 instead
+| (octabam docs/firmware/LFO.md section 5), the words sy_ison overrides. Called
+| while they are still the frame builder's (sy_cold, sy_ison), this keeps their high
+| bytes, capped at 127, in po_amp + 8 t, and byte 3 := 1 (the track has a snapshot).
+| VOIC and CHRD (SPD3 / DEP3) are kept at +4 and +7, the lane's spacing (CV_VOIC,
+| CV_CHRD), with the scenes as counts (po_scene_jump): the lane has only the locks.
+| d2 = track. Clobbers d0, d1, a0.
+po_amp_snap:
+        move.l  %a1,-(%sp)
+        move.l  PING_AT,%d1              | 0x80000110 + (ping << 9) + 64 * track, as sy_ison
+        andi.l  #1,%d1
+        lsl.l   #8,%d1
+        lsl.l   #1,%d1
+        move.l  %d2,%d0
+        lsl.l   #6,%d0
+        add.l   %d0,%d1
+        lea     DSP_REC,%a0
+        add.l   %d1,%a0
+        lea     po_amp(%pc),%a1
+        move.l  %d2,%d0
+        lsl.l   #3,%d0
+        add.l   %d0,%a1
+        moveq   #2,%d1
+po_as_byte:
+        mvz.b   (%a0),%d0                | the knob byte (the low byte is the LFO's fraction)
+        cmpi.l  #127,%d0
+        bls     po_as_put
+        moveq   #127,%d0
+po_as_put:
+        move.b  %d0,(%a1)+
+        addq.l  #2,%a0
+        subq.l  #1,%d1
+        bpl     po_as_byte
+        move.b  #1,(%a1)                 | (a1 = po_amp + 8 t + 3)
+        moveq   #CV_VOIC,%d1
+        bsr     po_scene_jump
+        move.b  %d0,1(%a1)               | VOIC at po_amp + 8 t + 4
+        moveq   #CV_CHRD,%d1
+        bsr     po_scene_jump
+        move.b  %d0,4(%a1)               | CHRD at po_amp + 8 t + 7
+        move.l  (%sp)+,%a1
+        rts
+
+| ---- po_ratio_word: d1 := the RATO (STRT) halfword this frame, its scenes as a jump --
+| RATO picks one of 32 ratios, so a crossfade between two scene ratios would step through
+| every ratio in between. Where a scene locks RATO, the morph's part of the record
+| ((eA xf + eB (127 - xf)) << 8 / 127, MIDI.md App. C) is taken out and the nearer
+| scene's byte put in, as po_scene_jump picks it; what the LFOs added stays. Neither
+| scene locking it: the record as it is. a4 = the parameter record, d2 = track.
+| Preserves everything but d1.
+po_ratio_word:
+        lea     -20(%sp),%sp
+        movem.l %d0/%d3-%d5/%a0,(%sp)
+        mvz.w   2(%a4),%d1               | the record: the Part's byte or the lock, the morph, the LFOs
+        move.l  %d2,%d0
+        lsl.l   #6,%d0
+        lea     SC_PAIRS+2*KN_RATIO,%a0
+        add.l   %d0,%a0
+        mvs.b   (%a0),%d3                | scene A's lock (negative: none)
+        tst.b   SC_OFF_A
+        beq     po_rw_a
+        moveq   #-1,%d3
+po_rw_a:
+        mvs.b   1(%a0),%d4               | scene B's
+        tst.b   SC_OFF_B
+        beq     po_rw_b
+        moveq   #-1,%d4
+po_rw_b:
+        move.l  %d3,%d0
+        and.l   %d4,%d0
+        bmi     po_rw_out                | neither locks RATO
+        move.l  #CV_STRIDE,%d0
+        muls.l  %d2,%d0
+        lea     CURVALS,%a0
+        mvz.b   KN_RATIO(%a0,%d0.l),%d0  | the knob (the lane: locks applied)
+        tst.l   %d3
+        bge     po_rw_ea
+        move.l  %d0,%d3                  | eA
+po_rw_ea:
+        tst.l   %d4
+        bge     po_rw_eb
+        move.l  %d0,%d4                  | eB
+po_rw_eb:
+        move.l  XFADER,%d5
+        move.l  %d5,%d0
+        muls.l  %d3,%d0                  | eA xf
+        neg.l   %d5
+        addi.l  #127,%d5
+        muls.l  %d4,%d5                  | eB (127 - xf)
+        add.l   %d5,%d0
+        lsl.l   #8,%d0
+        moveq   #127,%d5
+        divs.l  %d5,%d0                  | the morph's part, Q8
+        sub.l   %d0,%d1                  | the LFOs' part
+        move.l  XFADER,%d0
+        cmpi.l  #64,%d0
+        blt     po_rw_jb
+        move.l  %d3,%d0
+        bra     po_rw_j
+po_rw_jb:
+        move.l  %d4,%d0
+po_rw_j:
+        lsl.l   #8,%d0
+        add.l   %d0,%d1                  | the nearer scene's byte, the LFOs on it
+        bpl     po_rw_hi
+        moveq   #0,%d1
+po_rw_hi:
+        cmpi.l  #0x7fff,%d1
+        ble     po_rw_out
+        move.l  #0x7fff,%d1
+po_rw_out:
+        movem.l (%sp),%d0/%d3-%d5/%a0
+        lea     20(%sp),%sp
+        rts
+
+| ---- po_scene_jump: d0 := scene slot d1's byte as a count, not a morph ----------------
+| VOIC and CHRD are a voice count and a chord shape: the morph's interpolation would
+| sweep through the counts and shapes in between, so they JUMP: the scene the fader is
+| nearer to, A at 64 and above (127 = A), else B; an unlocked or disabled scene is the
+| knob's (the lane: the Part's byte, locks applied), as the morph treats it at its end.
+| d1 = the scene/lane slot (CV_VOIC, CV_CHRD), d2 = track. Clobbers d0, a0.
+po_scene_jump:
+        move.l  %d2,%d0
+        lsl.l   #6,%d0
+        lea     SC_PAIRS,%a0
+        add.l   %d0,%a0
+        add.l   %d1,%a0
+        add.l   %d1,%a0                  | a0 = the slot's [A, B] pair
+        move.l  XFADER,%d0
+        cmpi.l  #64,%d0
+        blt     po_sj_b
+        tst.b   SC_OFF_A
+        bne     po_sj_knob
+        mvs.b   (%a0),%d0
+        bra     po_sj_pick
+po_sj_b:
+        tst.b   SC_OFF_B
+        bne     po_sj_knob
+        mvs.b   1(%a0),%d0
+po_sj_pick:
+        tst.l   %d0
+        bge     po_sj_out
+po_sj_knob:
+        move.l  #CV_STRIDE,%d0
+        muls.l  %d2,%d0
+        lea     CURVALS,%a0
+        add.l   %d0,%a0
+        mvz.b   (%a0,%d1.l),%d0
+po_sj_out:
+        rts
+
+| ---- po_amp_at: a0 := the track's ATK at 0(a0), HOLD at 1, REL at 2 -----------------
+| po_amp + 8 t once the track has a snapshot, else the live lane (CURVALS + 72 t +
+| CV_ATK: the three slots follow each other). d2 = track. Clobbers d0.
+po_amp_at:
+        lea     po_amp(%pc),%a0
+        move.l  %d2,%d0
+        lsl.l   #3,%d0
+        add.l   %d0,%a0
+        tst.b   3(%a0)
+        bne     po_aa_out
+        move.l  #CV_STRIDE,%d0
+        muls.l  %d2,%d0
+        lea     CURVALS+CV_ATK,%a0
+        add.l   %d0,%a0
+po_aa_out:
+        rts
+
+| ---- po_vc_at: a0 := the track's VOIC at 0(a0), CHRD at 3(a0) ------------------------
+| po_amp + 8 t + 4 once the track has a snapshot (po_amp_snap: locks and scenes), else
+| the live lane (CURVALS + 72 t + CV_VOIC). d2 = track. Clobbers d0.
+po_vc_at:
+        lea     po_amp(%pc),%a0
+        move.l  %d2,%d0
+        lsl.l   #3,%d0
+        add.l   %d0,%a0
+        tst.b   3(%a0)
+        beq     po_vc_lane
+        addq.l  #4,%a0
+        rts
+po_vc_lane:
+        move.l  #CV_STRIDE,%d0
+        muls.l  %d2,%d0
+        lea     CURVALS+CV_VOIC,%a0
+        add.l   %d0,%a0
+        rts
+
 | ---- po_mono_env: the mono voice's AMP envelope, once a frame (plan B) -----------
 | a3 = the track record, d2 = track. The level S_GAIN (Q15, full 32768; sy_loop
-| ramps S_GPREV -> S_GAIN linearly across the call) follows the live lane's AMP
-| bytes (CURVALS + 72 t + 12 / 13 / 14: locks, scenes and LFOs applied by the frame
-| builder before the render loop) with the DSP's own laws as measured (stage 1):
+| ramps S_GPREV -> S_GAIN linearly across the call) follows the track's AMP
+| bytes (po_amp_at: the Part's with locks, scenes and LFOs, as the frame
+| builder wrote them before the render loop) with the DSP's own laws as measured (stage 1):
 |   RELEASING (S_ON bit 1: po_rel for every note-off path -- the panel key's
 |     release, MIDI note-off, the sequencer's -- or the HOLD timer below, or
 |     po_stop): gain -= gain * k, k = po_relk[REL] (Q16 a frame: tau = 0.295 ms x
@@ -710,10 +902,7 @@ sy_envdone:
 | Clobbers d0, d1, a0.
 po_mono_env:
         move.l  S_GAIN(%a3),%d1
-        move.l  #CV_STRIDE,%d0
-        muls.l  %d2,%d0
-        lea     CURVALS,%a0
-        add.l   %d0,%a0                  | a0 = the track's live lane
+        bsr     po_amp_at                | a0 = the track's ATK / HOLD / REL (clobbers d0)
         btst    #1,S_ON(%a3)
         bne     po_me_rel
         move.l  S_HTIM(%a3),%d0          | the HOLD timer
@@ -724,7 +913,7 @@ po_mono_env:
         bset    #1,S_ON(%a3)             | the hold ran out: release
         bra     po_me_rel
 po_me_atk:
-        mvz.b   CV_ATK(%a0),%d0
+        mvz.b   (%a0),%d0
         lea     po_atk(%pc),%a0
         mvz.w   (%a0,%d0.l*2),%d0
         add.l   %d0,%d1
@@ -733,7 +922,7 @@ po_me_atk:
         move.l  #32768,%d1
         bra     po_me_store
 po_me_rel:
-        mvz.b   CV_REL(%a0),%d0
+        mvz.b   2(%a0),%d0
         lea     po_relk(%pc),%a0
         mvz.w   (%a0,%d0.l*2),%d0        | k, Q16 (0 = INF)
         bne     po_me_rel0
@@ -1216,7 +1405,7 @@ po_fr_nolh:
         bsr     po_start
 po_fr_params:
 | ---- the track's parameters this frame ----------------------------------------
-        mvz.w   2(%a4),%d1               | STRT -> ratio
+        bsr     po_ratio_word            | STRT -> ratio (its scenes as a jump)
         lsr.l   #8,%d1
         lsr.l   #2,%d1
         lea     sy_ratio(%pc),%a0
@@ -1247,11 +1436,8 @@ po_fr_dk:
         mulu.l  %d0,%d1
         lsr.l   #8,%d1
         move.l  %d1,T_I(%a5)
-        move.l  #CV_STRIDE,%d0           | AMP REL -> the release k (po_relk: the DSP's law, plan B)
-        muls.l  %d2,%d0
-        lea     CURVALS,%a0
-        add.l   %d0,%a0
-        mvz.b   CV_REL(%a0),%d0
+        bsr     po_amp_at                | AMP REL -> the release k (po_relk: the DSP's law, plan B)
+        mvz.b   2(%a0),%d0
         lea     po_relk(%pc),%a1
         mvz.w   (%a1,%d0.l*2),%d0
         bne     po_fr_rk
@@ -1260,7 +1446,7 @@ po_fr_dk:
         mvz.w   (%a1),%d0
 po_fr_rk:
         move.l  %d0,T_RK(%a5)
-        mvz.b   CV_ATK(%a0),%d0          | AMP ATK -> the attack step a frame, po_atk[ATK] * T_GMAX / 32768 (at least 1)
+        mvz.b   (%a0),%d0                | AMP ATK -> the attack step a frame, po_atk[ATK] * T_GMAX / 32768 (at least 1)
         lea     po_atk(%pc),%a1
         mvz.w   (%a1,%d0.l*2),%d0
         mulu.l  T_GMAX(%a5),%d0
@@ -1715,10 +1901,8 @@ po_st_1a:
 | less than half a step ago adopts that voice (V_KEY := K, no HOLD gate), so
 | the note sustains while the key is held and releases with it. A shape
 | (chord memory), VOIC 1 (the mono path) and every other START: as before.
-        move.l  #CV_STRIDE,%d0
-        muls.l  %d2,%d0
-        lea     CURVALS,%a0
-        mvz.b   CV_CHRD(%a0,%d0.l),%d0
+        bsr     po_vc_at
+        mvz.b   3(%a0),%d0               | CHRD
         lsr.l   #2,%d0
         bne     po_st_go                 | a shape: chord memory decides
         bsr     po_voices_of             | a6 = the voices, a2 = their end (clobbers d0)
@@ -1796,17 +1980,15 @@ po_st_chord:
         jsr     SCALE_AT                 | ... its pitch-class mask, 0 = OFF (clobbers d0, a0)
 po_st_ns:
         move.l  %d0,T_SCALE(%a5)
-        move.l  #CV_STRIDE,%d0
-        muls.l  %d2,%d0
-        lea     CURVALS,%a0
-        mvz.b   CV_VOIC(%a0,%d0.l),%d6   | VOIC: the track's voice cap, locks applied (2..4 here:
+        bsr     po_vc_at
+        mvz.b   (%a0),%d6                | VOIC: the track's voice cap, locks and scenes (2..4 here:
         subq.l  #1,%d6                   | the note started paraphonic on this byte; a byte outside
         cmpi.l  #3,%d6                   | 1..4 reads 1)
         bls     po_st_v1
         moveq   #0,%d6
 po_st_v1:
         addq.l  #1,%d6
-        mvz.b   CV_CHRD(%a0,%d0.l),%d0   | the chord byte, locks applied: shape << 2 | inversion (26 Sep 2026)
+        mvz.b   3(%a0),%d0               | the chord byte, locks and scenes: shape << 2 | inversion (26 Sep 2026)
         move.l  %d0,%d3
         lsr.l   #2,%d3                   | the shape, 0..31 (0 = "----")
         beq     po_st_row0
@@ -1903,10 +2085,18 @@ po_st_env:
         lea     po_clock(%pc),%a6
         move.l  CK_FRAMES(%a6),%d0
         move.l  %d0,V_FRAME(%a0)         | when (the dedupe above)
-        move.l  #CV_STRIDE,%d1           | EVERY note is gated for the lane's HOLD (the lock, else the Part's
-        muls.l  %d2,%d1                  | byte): frames = hold * frames a step -- a sequencer note and a live
-        lea     CURVALS,%a4              | key alike (plan B: the DSP's own timer ran from the START whoever
-        mvz.b   CV_HOLD(%a4,%d1.l),%d1   | started it, stage 1; 127 = INF: until the note-off / the next trig)
+        lea     po_amp(%pc),%a4          | EVERY note is gated for the track's HOLD (po_amp_at's byte, kept in a4:
+        move.l  %d2,%d1                  | a0 is the voice): frames = hold * frames a step -- a sequencer note and a live
+        lsl.l   #3,%d1                   | key alike (plan B: the DSP's own timer ran from the START whoever
+        add.l   %d1,%a4                  | started it, stage 1; 127 = INF: until the note-off / the next trig)
+        tst.b   3(%a4)
+        bne     po_st_hamp
+        move.l  #CV_STRIDE,%d1
+        muls.l  %d2,%d1
+        lea     CURVALS+CV_ATK,%a4
+        add.l   %d1,%a4
+po_st_hamp:
+        mvz.b   1(%a4),%d1
         cmpi.l  #127,%d1
         beq     po_st_hinf
         lea     po_hold128(%pc),%a4
@@ -2069,11 +2259,9 @@ po_ho_fold1:
         bne     po_ho_fold
         move.l  T_W(%a5),%d1
         move.l  %d1,T_REF(%a5)           | the targets are the roots from here
-        move.l  #CV_STRIDE,%d0
-        muls.l  %d2,%d0
-        lea     CURVALS,%a0
-        mvz.b   CV_CHRD(%a0,%d0.l),%d3   | the chord byte, locks applied: shape << 2 | inversion
-        mvz.b   CV_VOIC(%a0,%d0.l),%d6   | VOIC 1..4 (as po_st_v1)
+        bsr     po_vc_at
+        mvz.b   3(%a0),%d3               | the chord byte, locks and scenes: shape << 2 | inversion
+        mvz.b   (%a0),%d6                | VOIC 1..4 (as po_st_v1)
         subq.l  #1,%d6
         cmpi.l  #3,%d6
         bls     po_ho_v1
@@ -2588,8 +2776,6 @@ po_l3b_depth:
 po_lfo3_depth:
         mvs.w   0x12(%a2,%d2.l*2),%d0    | displaced: the depth
         lea     (%a0,%d4.l*2),%a1        | displaced
-        cmpi.l  #2,%d2
-        bne     po_l3_back
         move.l  %a4,%d1                  | (whatever VOIC: slot 5 is the chord byte on a synth track,
         subi.l  #LFO_STATE,%d1
         lsr.l   #3,%d1                   | the track
@@ -2597,6 +2783,18 @@ po_lfo3_depth:
         lea     sy_state(%pc),%a0        | and stock's depth on it would be a pitch LFO, 24 Sep 2026)
         tst.b   S_ON(%a0,%d1.l)          | its playing voice is a synth?
         beq     po_l3_back
+        cmpi.l  #2,%d2
+        beq     po_l3_mute
+        tst.l   %d4                      | PMTR (d4) 0 = PTCH: a synth's PTCH unit is a semitone, five of the
+        bne     po_l3_back               | sample tracks' (sy_word), so the depth is a fifth: an LFO sweeps the
+        cmpi.l  #0x7f00,%d0              | pitch as far as on FLEX (DEP 127 = +-12.8 semitones) and a wave that
+        bne     po_l3_fifth              | lands on 5-unit steps lands on semitones. Full DEP counts as 0x8000,
+        move.l  #0x8000,%d0              | as the engine's own +256 below would make it.
+po_l3_fifth:
+        moveq   #5,%d3                   | (d3 is dead here)
+        divs.l  %d3,%d0
+        rts
+po_l3_mute:
         moveq   #0,%d0                   | muted
 po_l3_back:
         rts
@@ -5365,6 +5563,8 @@ sy_tab:
         .align  4
 sy_state:                                | 8 tracks x 128 bytes
         .fill   8 * ST_STRIDE, 1, 0
+po_amp:                                  | 8 tracks x 8 bytes: ATK, HOLD, REL as the frame builder wrote them, 1 once kept,
+        .fill   8 * 8, 1, 0              | VOIC, -, -, CHRD (po_amp_snap)
 po_voices:                               | 8 tracks x 4 voices x 64 bytes
         .fill   8 * 4 * V_STRIDE, 1, 0
 po_seq:                                  | the allocation stamp

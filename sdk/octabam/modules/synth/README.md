@@ -1,12 +1,14 @@
-# FM Synth — 0.1.2 experimental
+# FM Synth — 0.1.3 experimental
 
 ## Overview
 
 FM SYNTH is a dedicated track machine beside FLEX, STATIC, THRU, NEIGHBOR and PICKUP. It uses Tim Hastie’s octatrick v2.9 two-operator FM engine: a sine carrier with a sine modulator, feedback and an index-decay envelope. One to four paraphonic voices feed the track’s existing AMP, filter and effects.
 
-This update fixes the MIDI chromatic selector stack imbalance and adds 18.06 dB of source headroom before voice summing and stock AMP gain. It keeps the existing voices/envelopes and their relative levels; sounds play quieter at identical mixer settings. Increase track LEVEL or mixer gain as needed while checking the full mix. Effects, resonant filtering and the sum of multiple tracks can still clip.
+This update makes FM Synth take the OT's modulation like the other machines. LFOs and scenes on AMP ATK, HOLD and REL now shape its envelope; an LFO on PTCH sweeps as far as on a FLEX track; scene locks reach VOIC and CHRD. VOIC, CHRD and RATO jump between scenes at the crossfader's midpoint instead of sweeping through the values in between. A saved project with an LFO on an FM track's PTCH swings one fifth as far as before.
 
-The dedicated machine plays without a sample. This experimental version has emulator playback and shared native/browser composition evidence. The owner explicitly authorized releasing 0.1.2 without current hardware validation on 8 October. Hardware is untested. Worst-case chip timing and complete stack/lifetime bounds remain unmeasured. Version-matched release notes are published in the community changelog. These measurements remain unknown; see TESTING.md for the release limits.
+0.1.2 fixed the MIDI chromatic selector stack imbalance and adds 18.06 dB of source headroom before voice summing and stock AMP gain. It keeps the existing voices/envelopes and their relative levels; sounds play quieter at identical mixer settings. Increase track LEVEL or mixer gain as needed while checking the full mix. Effects, resonant filtering and the sum of multiple tracks can still clip.
+
+The dedicated machine plays without a sample. This experimental version has emulator playback and shared native/browser composition evidence. 0.1.3's modulation changes are emulator-measured and were reported working on one MKII; this is not reviewer-verified hardware evidence (0.1.2 was released by the owner without hardware validation). Worst-case chip timing and complete stack/lifetime bounds remain unmeasured. Version-matched release notes are published in the community changelog. These measurements remain unknown; see TESTING.md for the release limits.
 
 ## Controls
 
@@ -52,11 +54,13 @@ The matching quantizer is bundled privately because FM shares its mailbox and sc
 
 One-track mono/four-voice playback and MIDI selector recovery pass in emulation. Eight simultaneous audio tracks, modulation, external MIDI note/CC traffic, parameter locks, neighbouring sample playback, Part/pattern changes, save/reload and real hardware are not tested. Do not infer real-time headroom or project persistence from the UI/storage smoke.
 
-LFO1 and LFO2 list FLEX's destination names on an FM SYNTH track, because the machine's SRC page is a copy of FLEX's. Each name stands for the SRC knob in the same position: STRT is RATO, LEN is INDX, RATE is FINE, RTRG is FDBK and RTIM is DEC; PTCH is PTCH ([#589](https://github.com/repeat98/modwerk/issues/589)). Whether an LFO on these destinations changes the FM sound is not tested.
+LFO1 and LFO2 list FLEX's destination names on an FM SYNTH track, because the machine's SRC page is a copy of FLEX's. Each name stands for the SRC knob in the same position: STRT is RATO, LEN is INDX, RATE is FINE, RTRG is FDBK and RTIM is DEC; PTCH is PTCH ([#589](https://github.com/repeat98/modwerk/issues/589)). LFOs on them change the FM sound. An LFO on PTCH moves one fifth of a PTCH unit per depth unit, the same range as on FLEX (full DEP ≈ ±1 octave), while the PTCH knob, locks and scenes stay in semitones.
+
+**Scenes on counts.** VOIC, CHRD and RATO are counts and table positions, so they don't interpolate under the crossfader as other values do. They take scene A's value from the fader's midpoint on, scene B's below it, or the knob value where that scene doesn't lock them. VOIC and CHRD apply at the next note, RATO at once; an LFO on RATO still adds to it.
 
 ## Tests and measurements
 
-See [TESTING.md](TESTING.md). Source compilation and all 110 native/browser comparisons pass. Fresh LCD captures show the chooser and controls. The original MIDI selector freezes in Octemu; the patched selector changes modes and returns to SRC. Mono and four-voice playback at maximum AMP VOL produce about 18.06 dB lower peaks and double-STOP reaches silence. The original audio runs did not reproduce the reported static, so hardware confirmation remains necessary. Prior 0.1.1 storage checks are retained as historical evidence only.
+See [TESTING.md](TESTING.md) for 0.1.3's measurements and reported hardware results, and [evidence/release-0.1.2/TESTING.md](evidence/release-0.1.2/TESTING.md) for 0.1.2's. For 0.1.2, source compilation and all 110 native/browser comparisons passed. Fresh LCD captures show the chooser and controls. The original MIDI selector freezes in Octemu; the patched selector changes modes and returns to SRC. Mono and four-voice playback at maximum AMP VOL produce about 18.06 dB lower peaks and double-STOP reaches silence. The original audio runs did not reproduce the reported static, so hardware confirmation remains necessary. Prior 0.1.1 storage checks are retained as historical evidence only.
 The shared native platform reserves 1,707 × 6,144 = 10,487,808 audio-arena bytes. This reservation is not the module’s complete memory inventory. Chip worst-case cycles and current hardware are unmeasured/untested. `qualification.example.json` is a pending worksheet, not publication evidence.
 
 ## Authorship and licences

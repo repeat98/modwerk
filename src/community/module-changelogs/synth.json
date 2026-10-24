@@ -1,5 +1,16 @@
 [
   {
+    "version": "0.1.3-experimental",
+    "date": "2026-10-24",
+    "changes": [
+      "LFOs and scene locks on AMP ATK, HOLD and REL now work on FM tracks.",
+      "An LFO on PTCH now moves the pitch as far as on FLEX tracks; before it moved five times further. Saved projects with an LFO on an FM track's PTCH swing one fifth as far.",
+      "Scene locks on VOIC and CHRD now work.",
+      "VOIC, CHRD and RATO switch between scenes at the crossfader's midpoint instead of passing through the values in between.",
+      "Known issue: chip timing and full memory use are not measured."
+    ]
+  },
+  {
     "version": "0.1.2-experimental",
     "date": "2026-10-08",
     "changes": [

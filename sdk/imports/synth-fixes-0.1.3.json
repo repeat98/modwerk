@@ -1,0 +1,49 @@
+{
+ "schemaVersion": 1,
+ "id": "synth",
+ "version": "0.1.3-experimental",
+ "status": "proposed",
+ "basedOn": "3238863f2635f8db840b4d42ab9f0d3bea48c006",
+ "originalImport": "synth-949f3be.json",
+ "folder": "sdk/octabam/modules/synth",
+ "issues": [
+  273,
+  264
+ ],
+ "files": [
+  {
+   "path": "manifest.py",
+   "previousSha256": "780dbb5617d20167a5e3e67d49af7f9525021b89657a559ca678b95c5ae88f79",
+   "draftSha256": "7854330aca001d2841de2fb384f0ca8adb7497db49dacc56da2815c1f444c0e6"
+  },
+  {
+   "path": "stock-guards.json",
+   "previousSha256": "0f7ce8ef13554f5baceda2925ac1d02bc6ad70d776ba971a4f580eeb02883bc7",
+   "draftSha256": "3a197afbd8994e969a9d431b5b3ba4b2c4f0a82d390e9c787199c3610ba93aaf"
+  },
+  {
+   "path": "upstream/synth/poly.s",
+   "previousSha256": "5f6e39e55c813cd351538d00e0b02eb56cc253f803f95ca9450e140442064d60",
+   "draftSha256": "609364afdcafa485ade18586299636ad5ffb3596bbc34ba4c7251520f9bf4225"
+  },
+  {
+   "path": "upstream/quantizer/manifest.py",
+   "previousSha256": "3a8ba2d366320ce702b02129386e3d384f0e9d6ae7df64e4811b32f3e08e4011",
+   "draftSha256": "e637e3718e4b65320b847ef0758e0d46800f8be6b8020290f89192c798c535ef"
+  },
+  {
+   "path": "upstream/quantizer/quantizer.s",
+   "previousSha256": "8dd8f8c59b480dbf63e7c37b7ac11a5c2f03b3e7afbbbb3ca2f84e3a01fc114a",
+   "draftSha256": "d1737168a1750f540b3dfbefdd2a64b11084013b9f7b71b31aa4f189d33a24c5"
+  }
+ ],
+ "changes": [
+  "18.06 dB source headroom before mono output and every paraphonic sum contribution.",
+  "Move the private quantizer octave drawer detour to the common MIDI/audio argument push and preserve stock MIDI octave formatting.",
+  "Envelope: the engine applies AMP ATK/HOLD/REL from the DSP voice record's values (Part, locks, scene morph, LFOs; po_amp_snap before sy_ison's override) instead of the live lane (Part and locks only).",
+  "Pitch: on a synth track an LFO's depth on PTCH is divided by 5 at the existing depth-read detour (po_lfo3_depth), so it sweeps the stock range; PTCH knob/locks/scenes keep semitone units.",
+  "Scenes reach VOIC/CHRD; VOIC, CHRD and RATO take the nearer scene's value (crossfader midpoint) instead of the morph (po_scene_jump, po_ratio_word; LFO contribution to RATO kept)."
+ ],
+ "publication": "Proposed for owner review (Jan Kolkmeier): not released. Emulator measurements and a reported MKII test; chip timing and complete memory bounds unmeasured.",
+ "previousRecord": "synth-fixes-273-264.json"
+}

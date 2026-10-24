@@ -3,7 +3,7 @@
   "id": "synth",
   "key": "SYNTH MACHINE",
   "name": "FM Synth",
-  "version": "0.1.2-experimental",
+  "version": "0.1.3-experimental",
   "category": "machines",
   "source": {
     "repository": "https://github.com/sambanks/octabam",
@@ -198,12 +198,13 @@
       "Parts store stock FLEX kind 1 plus FM/1 in unused NEIGHBOR control bytes. A stock build reads the track as FLEX; it does not synthesize FM. Choose stock explicitly before downgrading.",
       "LFO3 speed/depth become VOIC/CHRD; LFO3 depth is muted. ATK/HOLD/REL remain inherited stock AMP controls and drive the synth’s own envelope.",
       "ATK 0 with a short HOLD or REL starts and stops each voice abruptly and can click; raise ATK a few steps or lengthen REL (#557).",
-      "LFO1/LFO2 destinations keep FLEX's names: STRT is RATO, LEN is INDX, RATE is FINE, RTRG is FDBK, RTIM is DEC (#589). Whether LFOs on them change the FM sound is not tested.",
+      "LFO1/LFO2 destinations keep FLEX's names: STRT is RATO, LEN is INDX, RATE is FINE, RTRG is FDBK, RTIM is DEC (#589). An LFO on PTCH sweeps as far as on a FLEX track (one fifth of a PTCH unit per depth unit); PTCH knob, locks and scenes stay in semitones.",
       "The matching quantizer is bundled privately because the engine shares its mailbox and fixed scale accessor. Do not also select the public Scale Quantizer.",
       "Cannot combine with Analog BD or the public Scale Quantizer because their native hooks overlap. Compatible mixed builds have native/browser byte-parity evidence; mixed audio loads have not been stress-tested.",
       "MIDI selector recovery and one-track mono/four-voice playback are emulator-tested. External MIDI note/CC traffic, saved project/Part reloads, legato, modulation, maximum simultaneous tracks and hardware timing remain unqualified.",
       "Historical upstream marker-FLEX activation remains for compatibility; the verified route is the dedicated FM SYNTH chooser.",
-      "Source output is 18.06 dB quieter at identical mixer settings. Added headroom mitigates gain clipping; effects, resonant filtering and summed tracks can still clip. The hardware static report has not been reproduced."
+      "Source output is 18.06 dB quieter at identical mixer settings. Added headroom mitigates gain clipping; effects, resonant filtering and summed tracks can still clip. The hardware static report has not been reproduced.",
+      "VOIC, CHRD and RATO jump between scenes at the crossfader's midpoint instead of interpolating (counts and table positions); VOIC and CHRD take effect at the next note, RATO at once."
     ]
   },
   "resources": {
@@ -250,8 +251,8 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Owner-approved experimental 0.1.2: MIDI selector regression passes; mono and four-voice output have 18.06 dB more headroom. Current hardware remains untested; chip timing and complete memory bounds remain unmeasured. See TESTING.md and evidence/regressions.json.",
-    "hardwareStatus": "untested",
+    "summary": "Experimental 0.1.3: LFOs and scenes reach AMP ATK/HOLD/REL, an LFO on PTCH sweeps as far as on FLEX, and scenes reach VOIC/CHRD; VOIC, CHRD and RATO jump between scenes instead of interpolating. Emulator measurements and a reported MKII test of this source; chip timing and complete memory bounds remain unmeasured. See TESTING.md.",
+    "hardwareStatus": "reported",
     "evidenceRevision": "73490ef77f36bf523bc28f2b385d62e331ec7c5c",
     "gates": [
       "verify.py",
