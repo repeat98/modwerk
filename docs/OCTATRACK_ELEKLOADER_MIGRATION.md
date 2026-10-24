@@ -1734,6 +1734,12 @@ and MISSING reported nothing. Not yet: a real power cycle into a flashed base
 that has this (the flashed `usbtest9` predates it), the FUNC skip on the unit,
 and what the site offers when the base changed (the set is then refused).
 
+When the base changed (24 October 2026), the site syncs the set again: the self-test record says `saved` 4 (another
+base's set) and nothing is installed, so `PutBackModules` opens the usual review, self-test and Keep for the modules
+this browser last read from the unit under another base (`modulesToPutBack`). The base can't load another base's set
+itself, because base-bound packages (module_packages.py "base") are linked to the base that saved them. Beta
+diagnostics from 20–24 October showed every base update leaving testers' units empty until then.
+
 The plan it follows:
 
 - **What is kept.** The accepted set, the packages exactly as the host staged

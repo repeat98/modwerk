@@ -3,7 +3,8 @@ import { DEVELOPMENT_DISCORD_URL } from '../config/development-discord'
 import { saveFirmware } from '../config/firmware-filename'
 import { BETA_RECOVERY_NOTICE } from '../firmware-notices'
 import { finishBaseInstall, pendingBaseInstall, waitForBaseInstall } from '../config/octatrack-progress'
-import type { BaseUpdateStep, OctatrackLink } from '../engine/elekloader/octatrack-link'
+import { explainLinkError, type BaseUpdateStep, type OctatrackLink } from '../engine/elekloader/octatrack-link'
+import { UploadDeviceError, UploadUnconfirmedError } from '../engine/elekloader/upload-session'
 import { siteUpdated, unitForPrompt } from '../hooks/useBaseInstallPrompt'
 import { baseLayout, isPublishedBase, layoutName, type BaseLayout } from '../engine/elekloader/base-variants'
 import { useOctatrackLink } from '../hooks/useOctatrackLink'
@@ -104,7 +105,12 @@ export function BaseInstallDialog({ link, launch = false, layout, firmwareReady,
       const image = await buildBase!(layout)
       await link.updateBase(new Uint8Array(image.buffer), image.base, (step, fraction) => setUsb({ step, fraction }))
       setUsb({ step: 'done' }); finished.current = true; onReady()
-    } catch (error) { console.error(error); setUsb({ error: error instanceof Error ? error.message : 'The update did not finish.' }) }
+    } catch (error) {
+      console.error(error)
+      // A transport error's own text is for developers ("hello was not confirmed; …"): say it in the link's words.
+      const transport = error instanceof UploadUnconfirmedError || error instanceof UploadDeviceError
+      setUsb({ error: transport ? explainLinkError(error) : error instanceof Error ? error.message : 'The update did not finish.' })
+    }
   }
   async function downloadBase() {
     if (await siteUpdated()) return setOutdated(true)
@@ -129,12 +135,12 @@ export function BaseInstallDialog({ link, launch = false, layout, firmwareReady,
       {state.status === 'unsupported' && <p className="file-error" role="alert">This browser can’t talk to USB devices. Open this page in Chrome or Edge on a computer.</p>}
     </> : <>
     <header className="base-install-header"><h2 id="base-install-title" tabIndex={-1}>{switching ? 'Change USB Audio' : <>{older ? 'Update' : 'Install'} the Modwerk base</>} <span className="module-beta-badge">Beta</span></h2></header>
-    <p id="base-install-intro" className="base-install-intro">{outdated ? 'Modwerk was updated since you opened this page, so it doesn’t know the current base yet. Reload the page; it then checks your Octatrack again.' : switching && running && layout ? <>Your Octatrack is set to {layoutName(running)}. USB Audio is part of the base, so switching to {layoutName(layout)} updates the base over USB. Your modules stay. After the Octatrack restarts, your computer sees the new audio channels. On Windows, open Sound settings → Recording → Octatrack → Properties → Advanced and pick the new channel count: Windows keeps the old one until you do.</> : older ? <>A new Modwerk base is out. Your Octatrack has an older one{state.identity && <> (<code>{state.identity.base.slice(0, 8)}</code>)</>}. {overUsb ? 'You can update it over USB, no card needed.' : 'Update it from the card, the same way as the first time.'}</> : 'A one-time install from your Octatrack’s card.'}</p>
+    <p id="base-install-intro" className="base-install-intro">{outdated ? 'Modwerk was updated since you opened this page, so it doesn’t know the current base yet. Reload the page; it then checks your Octatrack again.' : switching && running && layout ? <>Your Octatrack is set to {layoutName(running)}. USB Audio is part of the base, so switching to {layoutName(layout)} updates the base over USB. Your modules are synced again afterwards. After the Octatrack restarts, your computer sees the new audio channels. On Windows, open Sound settings → Recording → Octatrack → Properties → Advanced and pick the new channel count: Windows keeps the old one until you do.</> : older ? <>A new Modwerk base is out. Your Octatrack has an older one{state.identity && <> (<code>{state.identity.base.slice(0, 8)}</code>)</>}. {overUsb ? 'You can update it over USB, no card needed.' : 'Update it from the card, the same way as the first time.'}</> : 'A one-time install from your Octatrack’s card.'}</p>
     {!overUsb && !outdated && <ol className="base-install-progress" aria-label="Installation progress">{stages.map((item, index) => <li key={item} aria-current={stage === item ? 'step' : undefined} className={index < stageIndex ? 'is-past' : undefined}><span aria-hidden="true">{index < stageIndex ? <Icon name="check" size={13}/> : index + 1}</span>{['Download', 'Copy', 'Install', 'Connect'][index]}</li>)}</ol>}
     {!outdated && <section className="base-install-stage" aria-labelledby="base-stage-title">
     {overUsb && <>
       <h3 id="base-stage-title" data-stage-title tabIndex={-1}>Update over USB</h3>
-      <p>The new base{layout ? <> with {layoutName(layout)}</> : ''} is built in your browser from your original OS 1.40C file and sent to the Octatrack. The Octatrack tries it first without saving anything. If it works, the base is saved and the Octatrack restarts. Don’t switch off the Octatrack or unplug the cable until it’s done.</p>
+      <p>The new base{layout ? <> with {layoutName(layout)}</> : ''} is built in your browser from your original OS 1.40C file and sent to the Octatrack. The Octatrack tries it first without saving anything. If it works, the base is saved and the Octatrack restarts, then this page syncs your modules again. Don’t switch off the Octatrack or unplug the cable until it’s done.</p>
       <p className="base-install-warning" role="note"><Icon name="warn" size={18}/><span><strong>{BETA_RECOVERY_NOTICE}</strong> Keep the original OS 1.40C .bin and .syx on your computer. <a href="#faq" target="_blank" rel="noreferrer">Recovery in the FAQ</a></span></p>
       <input ref={fileRef} type="file" accept=".bin" hidden aria-label="Choose your original OS 1.40C file" onChange={event => { const file = event.target.files?.[0]; event.target.value = ''; if (file) onChooseFirmware(file) }}/>
       {firmwareReady ? <><p className="base-file-ready"><Icon name="check" size={18}/>Your OS 1.40C file is ready.</p>{!usb && <RiskAcceptance checked={accepted} onChange={setAccepted}/>}</> : <a className="text-button" href="#faq" target="_blank" rel="noreferrer">Where do I get the original OS file? <Icon name="arrow" size={14}/></a>}

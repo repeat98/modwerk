@@ -4,6 +4,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { fakeSession, fakeUnit } from '../dev/octatrack-link-fake'
 import { OctatrackLink } from '../engine/elekloader/octatrack-link'
+import { UploadUnconfirmedError } from '../engine/elekloader/upload-session'
 import { BaseInstallDialog } from './BaseInstallDialog'
 import { layoutIdentity } from '../engine/elekloader/base-variants'
 
@@ -55,6 +56,13 @@ describe('the base dialog for a unit on an older base', () => {
     click(buttonNamed('Update from the card')!)
     expect(buttonNamed('Download base .bin')).toBeDefined()
     expect(container.textContent).toContain('from the card, the same way as the first time')
+  })
+  it('says a transport failure in plain words, not the session’s own text', async () => {
+    const { update } = await older(true)
+    update.mockImplementation(async () => { throw new UploadUnconfirmedError('hello was not confirmed; no further commands will be sent on this connection.') })
+    click(container.querySelector('.risk-accept input')!); click(buttonNamed('Update over USB')!); await settle(); await settle()
+    expect(container.textContent).toContain('The Octatrack stopped answering. You can try again, or update from the card.')
+    expect(container.textContent).not.toContain('hello was not confirmed')
   })
   it('asks for a reload instead of sending its base when the site was deployed since the page opened', async () => {
     const script = Object.assign(document.createElement('script'), { type: 'module' }); script.setAttribute('src', './assets/index-old.js'); document.head.append(script)

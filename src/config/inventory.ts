@@ -53,19 +53,31 @@ export function loadStep(status: string, started: boolean, preparing: boolean): 
 
 /** What this browser last read from each unit, by its base, so the sidebar and the hub can show it while the unit is away. */
 const LAST_SEEN = 'modwerk.octatrack.last-seen'
-export interface LastSeen { base: string; moduleIds: string[]; at: string }
+export interface LastSeen { base: string; moduleIds: string[]; removedStockFx: string[]; at: string }
 function allSeen(): Record<string, Omit<LastSeen, 'base'>> {
   try { const value = JSON.parse(localStorage.getItem(LAST_SEEN) ?? '{}'); return value && typeof value === 'object' && !Array.isArray(value) ? value : {} } catch { return {} }
 }
 export function rememberInventory(base: string, inventory: Inventory, at = new Date().toISOString()) {
-  try { localStorage.setItem(LAST_SEEN, JSON.stringify({ ...allSeen(), [base]: { moduleIds: inventory.moduleIds, at } })) } catch { /* without storage it says Not connected */ }
+  try { localStorage.setItem(LAST_SEEN, JSON.stringify({ ...allSeen(), [base]: { moduleIds: inventory.moduleIds, removedStockFx: inventory.removedStockFx, at } })) } catch { /* without storage it says Not connected */ }
 }
-/** The newest record (or one base's); undefined when this browser never read one or the record is damaged. */
-export function lastInventory(base?: string): LastSeen | undefined {
+const strings = (value: unknown): value is string[] => Array.isArray(value) && value.every(id => typeof id === 'string')
+/** The newest record (or one base's, or the newest of any other base); undefined when this browser never read one or the record is damaged. */
+export function lastInventory(base?: string, except?: string): LastSeen | undefined {
   const [found] = Object.entries(allSeen())
-    .filter(([key, seen]) => (!base || key === base) && Array.isArray(seen?.moduleIds) && seen.moduleIds.every(id => typeof id === 'string') && typeof seen.at === 'string')
+    .filter(([key, seen]) => (!base || key === base) && key !== except && strings(seen?.moduleIds) && typeof seen.at === 'string')
     .sort((a, b) => b[1].at.localeCompare(a[1].at))
-  return found && { base: found[0], moduleIds: found[1].moduleIds, at: found[1].at }
+  return found && { base: found[0], moduleIds: found[1].moduleIds, removedStockFx: strings(found[1].removedStockFx) ? found[1].removedStockFx : [], at: found[1].at }
+}
+/** The self-test record's `saved` when this boot loaded nothing because the card's set is another base's (modset.c FOREIGN):
+ * after a base update, or a power cycle back to an older flashed base. The base can't load it itself, since some packages
+ * are linked to the base that saved them (module_packages.py "base"). */
+export const SAVED_BY_ANOTHER_BASE = 4
+/** What to sync again when the unit came up empty on `base` because of that: the modules this browser last saw on it
+ * under another base. Undefined when the card's set loaded, the unit has modules or this browser never saw any. */
+export function modulesToPutBack(base: string, saved: number | undefined, inventory?: Inventory): LastSeen | undefined {
+  if (saved !== SAVED_BY_ANOTHER_BASE || !inventory || inventory.moduleIds.length) return undefined
+  const last = lastInventory(undefined, base)
+  return last?.moduleIds.length ? last : undefined
 }
 
 /** A listbox's keys: the option an arrow, Home or End moves to; undefined for any other key. */

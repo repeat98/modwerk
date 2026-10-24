@@ -53,7 +53,7 @@ import type { PrepareUpdate, ReadInventory, StressTest } from './components/Octa
 import type { HubView, SetAction } from './components/OctatrackHub'
 import type { OctatrackLink } from './engine/elekloader/octatrack-link'
 import type { BaseLayout } from './engine/elekloader/base-variants'
-import { missingFromProject, sameModules, UNIT_STATE, unitState } from './config/inventory'
+import { missingFromProject, sameModules, UNIT_STATE, unitState, type LastSeen } from './config/inventory'
 import { ShareModuleButton } from './community/ShareModuleButton'
 import { useBaseInstallPrompt } from './hooks/useBaseInstallPrompt'
 import { OctatrackLinkContext, useInventory, useMissing } from './hooks/useOctatrackLink'
@@ -110,6 +110,7 @@ const OctatrackStatus = lazy(() => beta().then(module => ({ default: module.Octa
 const OctatrackSidebarStatus = lazy(() => beta().then(module => ({ default: module.OctatrackSidebarStatus })))
 const OctatrackActivity = lazy(() => beta().then(module => ({ default: module.OctatrackActivity })))
 const BaseInstallDialog = lazy(() => beta().then(module => ({ default: module.BaseInstallDialog })))
+const PutBackModules = lazy(() => beta().then(module => ({ default: module.PutBackModules })))
 const OctatrackDiagnosticsCollector = lazy(() => import('./components/OctatrackDiagnostics').then(module => ({ default: module.OctatrackDiagnosticsCollector })))
 const DiagnosticsInvitationGate = lazy(() => import('./components/DiagnosticsInvitation').then(module => ({ default: module.DiagnosticsInvitationGate })))
 const RemoteSessionGate = lazy(() => import('./components/RemoteSession').then(module => ({ default: module.RemoteSessionGate })))
@@ -344,6 +345,13 @@ export default function App() {
     add: neededIds.length ? () => neededIds.forEach(toggleModule) : undefined }
   // The set the guided sync is open for.
   const loadingTarget = loadingSet ? workspace.configurations.find(item => item.id === loadingSet) : undefined
+  // After a base change the unit starts without its modules: their sync, from a set with exactly them or a new one.
+  const [putBackId, setPutBackId] = useState<string>()
+  function putBack(last: LastSeen) {
+    const id = configurationsFor('octatrack').find(set => sameModules(set.moduleIds.filter(module => module !== USB_AUDIO_MODULE), last.moduleIds))?.id
+      ?? workspace.importConfiguration('From my Octatrack', last.moduleIds, true, undefined, 'octatrack', undefined, last.removedStockFx)
+    setPutBackId(id); setLoadingSet(id)
+  }
   // Replaces the modules a new one cannot run beside. Adding last goes through toggleModule, which also opens USB setup.
   function swapModule(id: string, removeIds: readonly string[]) {
     for (const removed of removeIds) if (selectedIds.includes(removed)) workspace.toggleModule(removed)
@@ -447,10 +455,12 @@ export default function App() {
       {startupOptions}
       <div ref={setBuildResultsSlot} className="build-results" />
     </div><div className="configuration-checkout">{compatibilityPanel}<div className="checkout-card">{riskAcceptance}<MemberGate action="build firmware" next={route}>{firmwareBuildPanel}</MemberGate></div></div></div></CardInstall>} /></Suspense>
+  const dialogOpen = !!baseInstall || baseInstallPrompt.open || !!loadingTarget || !!openModule || !!configDialog || configurationsOpen || compareOpen || !!reportingConfiguration
   return (
     <BetaUi.Provider value={betaUi}><OctatrackLinkContext.Provider value={usbLink ?? null}>
       {session.user?.verified && !usbLinkPreview && usbPreview !== 'diagnostics' && <Suspense fallback={null}><OctatrackDiagnosticsCollector memberId={session.user.id} link={usbLink ?? null} inventory={inventory}/></Suspense>}
-      {session.user?.verified && !usbLinkPreview && <Suspense fallback={null}><DiagnosticsInvitationGate key={session.user.id} memberId={session.user.id} link={usbLink ?? null} eligible={hubRoute || configuration || machineView === 'configuration'} blocked={!!baseInstall || baseInstallPrompt.open || !!loadingTarget || !!openModule || !!configDialog || configurationsOpen || compareOpen || !!reportingConfiguration} preview={import.meta.env.DEV && usbPreview === 'diagnostics'}/></Suspense>}
+      {session.user?.verified && !usbLinkPreview && <Suspense fallback={null}><DiagnosticsInvitationGate key={session.user.id} memberId={session.user.id} link={usbLink ?? null} eligible={hubRoute || configuration || machineView === 'configuration'} blocked={dialogOpen} preview={import.meta.env.DEV && usbPreview === 'diagnostics'}/></Suspense>}
+      {usbLink && <Suspense fallback={null}><PutBackModules link={usbLink} inventory={inventory} waiting={dialogOpen} onPutBack={putBack}/></Suspense>}
     <div className={'app-shell' + (phoneLayout ? (libraryNav ? ' has-library-nav' : '') + (toolbarHidden ? ' is-toolbar-hidden' : '') + (libraryDock ? ' has-library-dock' : '') : '')}>
       <a className="skip-link" href="#main-content" onClick={(event) => { event.preventDefault(); mainRef.current?.focus() }}>Skip to content</a>
       <aside className="sidebar" aria-label="App sidebar">
@@ -506,7 +516,7 @@ export default function App() {
         const step = (at: number) => { const id = index >= 0 ? order[at] : undefined; return id ? { title: MODULES.find(item => item.id === id)!.name, go: () => setOpenModule(id) } : undefined }
         const state = unitState(openModule, selectedIds, inventory)
         return module && <ModuleDialog title={module.name} index={index >= 0 ? index : undefined} total={order.length} prev={step(index - 1)} next={step(index + 1)} status={state && <StateChip state={state}>{UNIT_STATE[state]}</StateChip>} actions={<ShareModuleButton id={module.id} title={module.name} />} onClose={() => setOpenModule(undefined)}><ModuleDetail key={module.id} modal module={module} selected={selectedIds.includes(module.id)} addBlock={addBlockMap[module.id]} onSwap={removeIds => swapModule(module.id, removeIds)} usbAudio={active?.usbAudio} configurationName={active?.name} configurationId={active?.id} onConfigureUsbAudio={configureUsbAudio} onToggle={() => toggleModule(module.id)} /></ModuleDialog> })()}
-      {usbKit && loadingTarget && !baseInstall && !baseInstallPrompt.open && <LoadDialog key={loadingTarget.id} link={usbKit.link} set={{ name: loadingTarget.name, moduleIds: loadingTarget.moduleIds, removedStockFx: loadingTarget.removedStockFx, usbAudio: loadingTarget.usbAudio }} inventory={inventory} previousName={inventory && configurationsFor('octatrack').find(set => sameModules(set.moduleIds, inventory.moduleIds))?.name} prepareUpdate={usbKit.prepareUpdate} stressTest={usbKit.stressTest} onClose={() => setLoadingSet(undefined)} onInstallBase={layout => { setBaseLayoutWanted(layout); setBaseInstall('manual') }} onEdit={() => { setLoadingSet(undefined); changeConfiguration(loadingTarget.id) }} onCard={() => { setLoadingSet(undefined); setCardOpen(true); workspace.selectConfiguration(loadingTarget.id); window.location.hash = 'octatrack/setup' }} onReport={() => { setLoadingSet(undefined); setReportingConfiguration({ machine: 'octatrack', id: loadingTarget.id }) }} />}
+      {usbKit && loadingTarget && !baseInstall && !baseInstallPrompt.open && <LoadDialog key={loadingTarget.id} link={usbKit.link} set={{ name: loadingTarget.name, moduleIds: loadingTarget.moduleIds, removedStockFx: loadingTarget.removedStockFx, usbAudio: loadingTarget.usbAudio }} putBack={putBackId === loadingTarget.id} inventory={inventory} previousName={inventory && configurationsFor('octatrack').find(set => sameModules(set.moduleIds, inventory.moduleIds))?.name} prepareUpdate={usbKit.prepareUpdate} stressTest={usbKit.stressTest} onClose={() => { setLoadingSet(undefined); setPutBackId(undefined) }} onInstallBase={layout => { setBaseLayoutWanted(layout); setBaseInstall('manual') }} onEdit={() => { setLoadingSet(undefined); changeConfiguration(loadingTarget.id) }} onCard={() => { setLoadingSet(undefined); setCardOpen(true); workspace.selectConfiguration(loadingTarget.id); window.location.hash = 'octatrack/setup' }} onReport={() => { setLoadingSet(undefined); setReportingConfiguration({ machine: 'octatrack', id: loadingTarget.id }) }} />}
       {usbLink && (baseInstall || baseInstallPrompt.open) && <BaseInstallDialog link={usbLink} returnSetId={loadingSet} launch={baseInstall ? baseInstall === 'preview' : !baseInstallPrompt.update} firmwareReady={!!firmware} firmwareError={fileError} onChooseFirmware={file => void readFile(file)} layout={baseLayoutWanted} buildBase={layout => workspace.firmwareClient.current?.buildBase(layout) ?? Promise.reject(new Error('Reload the page.'))} onClose={() => { setBaseLayoutWanted(undefined); if (baseInstall) setBaseInstall(null); else baseInstallPrompt.close() }} onReady={() => { setBaseLayoutWanted(undefined); setBaseInstall(null); baseInstallPrompt.close(); window.location.hash = 'configuration' }}/>}
       </Suspense>
       {supportOpen && <SupportDialog url={SUPPORT_URL} onClose={() => setSupportOpen(false)} />}

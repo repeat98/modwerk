@@ -12,6 +12,7 @@ export { OctatrackActivity, OctatrackStatus, OctatrackSidebarStatus } from './Oc
 export { BaseInstallDialog } from './BaseInstallDialog'
 export { BetaModuleSets } from './BetaModuleSets'
 export { OctatrackDiagnosticsCollector, OctatrackDiagnosticsSettings } from './OctatrackDiagnostics'
+export { PutBackModules } from './PutBackModules'
 
 /** The site's one link to the unit: module set loads from the site's packages, and the base's own self-test. */
 export function createUsbKit() {

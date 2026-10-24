@@ -14,6 +14,9 @@ runtime is resident-runtime/resident_engines.c; docs/OCTATRACK_RESIDENT_ENGINES_
   retired first in a trim), and the evacuation that moves live FX code out of the region first (a transaction of
   its own, phase 10).
 - `transport(text)`: the owned transport's validator accepts PLACE (op 10, word 7 the engine's words).
+- `allocator(text)`, `refusal(text)`: a set naming a key bus reader's effect carries the tap's price while it is not
+  charged, so the pick that brings a reader is DSP FULL when it does not fit (never its install); the box counts it and
+  shows the core that ran out (`status` reads it), which for the tap can be the other core.
 - `status(text)`, `dsp(text)`: the STATUS page, the box after a pick and the host's ARENA word use the lowered
   arena; `dsp` also tells the evacuation when code may move (`modwerk_dsp_moves_idle`).
 """
@@ -361,7 +364,13 @@ def status(text):
         if text.count(old) != 3:
             raise ValueError('Resident engines seam changed (status arena reads)')
         text = text.replace(old, 'modwerk_dsp_arena_now(%d)' % core)
-    return text
+    # The refusal box shows the core whose DSP time ran out when it is not the slot's (a reader's key bus tap, refusal).
+    text = _change(text, 'static char refused_name[17];\n',
+                   'static char refused_name[17];\nextern volatile uint32_t dl_refusal_core; /* manager.c (resident_engines.refusal) */\n',
+                   'status refusal core declaration')
+    return _change(text, '    unsigned slot = refused[1], id = refused[2], c = (slot & 7u) < 4u ? 1u : 0u;\n',
+                   '    unsigned slot = refused[1], id = refused[2], c = dl_refusal_core < 2u ? dl_refusal_core : (slot & 7u) < 4u ? 1u : 0u;\n',
+                   'status refusal core')
 
 
 DEV_WINDOW = ('    static const uint32_t spans[4][2] = {{0x40000400u, 0x40d00000u}, {0x46000000u, 0x47000000u},',
@@ -400,6 +409,13 @@ int modwerk_dsp_keybus_fits(void)
     }
     return 1;
 }
+/* Its price on core c while it is not charged there, 0 once it is; past any allowance with no source row left. The FX
+ * allocator adds it to a set that names a reader's effect (controller_board.c's modwerk_controller_keybus_pending). */
+uint32_t modwerk_dsp_keybus_price(unsigned c)
+{
+    if (c > 1u || keybus_at(c, KEYBUS_MODULE) < SOURCE_ENGINES) return 0;
+    return keybus_at(c, 0) < SOURCE_ENGINES ? charged(MW_DSP_KEYBUS_EXECUTED, RUNTIME_EXECUTED) : 0x10000u;
+}
 /* on 1: charge it on both cores (1 done, 0 it does not fit: nothing changes); on 0: let it go. Machine lock held. */
 int modwerk_dsp_keybus_charge(int on)
 {
@@ -413,6 +429,54 @@ int modwerk_dsp_keybus_charge(int on)
     return 1;
 }
 '''
+
+
+PENDING = 'uint32_t modwerk_controller_keybus_pending(unsigned, const uint8_t *); /* controller_board.c */\n'
+
+
+def allocator(text):
+    """allocator.c, after build_core.py's source stage: a set that names a key bus reader's effect also carries the tap's
+    price while the tap is not charged, so the pick that brings the reader is refused (DSP FULL) when it does not fit.
+    The core whose time ran out is kept for the refusal box (refusal): the tap is charged on both cores."""
+    text = _change(text, 'uint32_t modwerk_dsp_source_charge(unsigned);\n',
+                   'uint32_t modwerk_dsp_source_charge(unsigned);\n' + PENDING +
+                   'volatile uint32_t dl_cycles_core=2; /* the core the last DL_ALLOC_CYCLES ran out on */\n',
+                   'allocator declaration')
+    text = _change(text, '    uint32_t steady[2]={modwerk_dsp_source_charge(0),modwerk_dsp_source_charge(1)};\n',
+                   '    uint32_t steady[2]={modwerk_dsp_source_charge(0)+modwerk_controller_keybus_pending(0,ids),\n'
+                   '                        modwerk_dsp_source_charge(1)+modwerk_controller_keybus_pending(1,ids)};\n',
+                   'allocator key bus price')
+    text = _change(text, '    if(steady[0]>a->allowance[0] || steady[1]>a->allowance[1]) return DL_ALLOC_CYCLES;',
+                   '    if(steady[0]>a->allowance[0] || steady[1]>a->allowance[1]) {\n'
+                   '        dl_cycles_core=steady[0]>a->allowance[0] ? 0u : 1u; return DL_ALLOC_CYCLES;\n    }',
+                   'allocator steady core')
+    return _change(text, '        if(pkg->cycles>a->allowance[c]-steady[c]) return DL_ALLOC_CYCLES;\n',
+                   '        if(pkg->cycles>a->allowance[c]-steady[c]) { dl_cycles_core=c; return DL_ALLOC_CYCLES; }\n',
+                   'allocator slot core')
+
+
+def refusal(text):
+    """manager.c, after build_core.py's REFUSAL_EDITS: the DSP FULL box blames the core whose time ran out, and counts the
+    tap's price in what the set adds there. A set short on the other core than its first changed slot's names a changed
+    slot there; with none (a reader's tap, charged on both cores) the box shows that core (dl_refusal_core, status)."""
+    text = _change(text, 'volatile uint32_t dl_refusal[8];\n',
+                   'volatile uint32_t dl_refusal[8];\n' + PENDING +
+                   'extern volatile uint32_t dl_cycles_core;\n'
+                   'volatile uint32_t dl_refusal_core=2; /* the core the box shows when not the slot\'s, else 2 */\n',
+                   'refusal declaration')
+    text = _change(text, '    dl_refusal[0]=why; dl_refusal[1]=slot;\n',
+                   '    dl_refusal_core=2u;\n'
+                   '    if(why==1u && slot<16u && dl_cycles_core<2u && dl_cycles_core!=((slot&7u)<4u ? 1u : 0u)) {\n'
+                   '        unsigned there=16;\n'
+                   '        for(unsigned i=0;i<16 && there>15u;++i) if(desired[i]!=now[i] && ((i&7u)<4u ? 1u : 0u)==dl_cycles_core) there=i;\n'
+                   '        if(there<16u) slot=there; else dl_refusal_core=dl_cycles_core;\n'
+                   '    }\n'
+                   '    dl_refusal[0]=why; dl_refusal[1]=slot;\n', 'refusal core')
+    old = '    dl_refusal[2]=id; dl_refusal[3]=old; dl_refusal[4]=(uint32_t)add;\n'
+    return _change(text, old,
+                   '    if(dl_refusal_core<2u) c=dl_refusal_core,add=0; /* nothing of its own changed there */\n'
+                   '    add+=(int32_t)(modwerk_controller_keybus_pending(c,desired)-modwerk_controller_keybus_pending(c,now));\n' + old,
+                   'refusal key bus price')
 
 
 def dsp(text):

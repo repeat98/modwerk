@@ -24,7 +24,8 @@ feature's region), and a replacement waiting while the sequencer plays.
 Engines load when a track uses them (owner, 22 October 2026), not at install: modes 2, 3, 15 and 21 admit a module whose
 engine has no room and let it wait; modes 54-58 place an engine only once its feature is used (Analog BD's lease, stock
 COMPRESSOR for Sidechain, a reader's effect for the key bus), park it when a new bank does not use it, and remove a
-parked or never-used module. Mode 59: an engine is placed on all its cores or none.
+parked or never-used module. Mode 59: an engine is placed on all its cores or none. Mode 61 (owner, 24 October 2026):
+a reader goes in whatever room the Part leaves; the pick that brings its effect pays the key bus's price, or is DSP FULL.
 """
 import importlib.util
 import hashlib
@@ -248,9 +249,11 @@ static unsigned refuse_enable[2];
 static unsigned test_window_busy;
 int dl_hook_buffer_ranges_idle(unsigned feature);
 int board_buffer_ranges_idle(unsigned feature) { return feature == 8u && test_window_busy ? 0 : dl_hook_buffer_ranges_idle(feature); }
-/* The key bus's tap price (dsp.c's resident_engines.dsp seam): whether it would fit, and whether it is charged. */
+/* The key bus's tap price (dsp.c's resident_engines.dsp seam): whether it would fit, whether it is charged, and its
+ * price on a core while it is not (what the FX allocator adds to a set naming a reader's effect). */
 static unsigned kb_fits = 1, kb_charged;
-int modwerk_dsp_keybus_fits(void) { return (int)(kb_fits || kb_charged); }
+static uint32_t kb_price = 72;
+uint32_t modwerk_dsp_keybus_price(unsigned c) { (void)c; return kb_charged ? 0u : kb_price; }
 int modwerk_dsp_keybus_charge(int on)
 {
     if (!on) { kb_charged = 0; return 1; }
@@ -1219,20 +1222,20 @@ int main(int argc, char **argv)
         unplaced(0, 1); unplaced(1, 1); unplaced(0, 8); unplaced(1, 8);
         assert(!dl_engine_reserved(0) && !dl_engine_reserved(1) && test_capacity(0) == top);
     } else if (mode == 40) {
-        /* No room for the tap's price: a reader is refused (RUNTIME_CYCLES), nothing placed. Sidechain is not charged
-         * for the tap (it never was), so it comes as before the key bus, the bus with it, and nothing is charged. A
-         * reader beside it still pays the price: refused while it does not fit, then taken with no bus job at all.
-         * Sidechain goes and the bus stays for the reader (Sidechain's span a hole under it); the reader goes and the
-         * bus is disabled, unplaced and its price let go. */
+        /* No room for the tap's price: a reader still goes in (owner, 24 October 2026: its install never depends on the
+         * Part on screen), nothing placed or charged, the bus waiting for room. Sidechain is not charged for the tap (it
+         * never was), so it comes as before the key bus, the bus with it, and nothing is charged. With room the reader's
+         * price is taken with no bus job at all. Sidechain goes and the bus stays for the reader (Sidechain's span a
+         * hole under it); the reader goes and the bus is disabled, unplaced and its price let go. */
         kb_fits = 0;
-        assert(refused(pkg_reader, sizeof pkg_reader) == RUNTIME_CYCLES && !mw_engines_jobs && !trails[0]);
+        assert(install(pkg_reader, sizeof pkg_reader) == MU_APPLIED);
+        run(100);
+        assert(!mw_engines_jobs && !trails[0] && !kb_charged && !dsp_mask[0] && !dsp_mask[1]);
         assert(install(pkg_sc, sizeof pkg_sc) == MU_APPLIED);
         run(300);
         assert(slot_for(SC, MW_CTL_ACTIVE) && dsp_mask[0] == 9 && dsp_mask[1] == 9 && mw_engines_jobs == 8 && !kb_charged);
-        assert(refused(pkg_reader, sizeof pkg_reader) == RUNTIME_CYCLES && !kb_charged);
         kb_fits = 1;
         unsigned from[2] = {trails[0], trails[1]};
-        assert(install(pkg_reader, sizeof pkg_reader) == MU_APPLIED);
         run(100);
         assert(mw_engines_jobs == 8 && trails[0] == from[0] && trails[1] == from[1] && kb_charged); /* nothing sent */
         remove_module(SC);
@@ -1641,6 +1644,36 @@ int main(int argc, char **argv)
         kb_fits = 1;
         run(200);
         assert(kb_charged && dsp_mask[0] == 8 && dsp_mask[1] == 8);
+    } else if (mode == 61) {
+        /* Owner, 24 October 2026: the pick that brings a reader's effect pays the tap's price, not its install. No Part
+         * names it yet: installed, nothing charged. A pick of it where the price does not fit is DSP FULL, nothing
+         * charged. The tap is charged on both cores, so the box shows the core that ran out: on T5 FX1 (core A, 3,120)
+         * the pick's own, counting 100 its own and 3,200 the tap; on T1 FX1 (core B, 3,565, which has room) core A, the
+         * tap all it adds there. With room the pick goes, and once the bank names it the bus comes with its price, which
+         * no later set pays again. */
+        extern volatile uint32_t dl_refusal[8], dl_refusal_core;
+        names_reader = 0;
+        test_none(); test_fx(63, 50);
+        memset(test_parts, 0, sizeof test_parts);
+        assert(install(pkg_reader, sizeof pkg_reader) == MU_APPLIED);
+        run(100);
+        assert(!kb_charged && !dsp_mask[0] && !dsp_mask[1]);
+        uint8_t ids[16] = {0};
+        kb_price = 3200;
+        ids[4] = 63; /* T5 FX1: core A */
+        assert(test_select(ids, pump) != 1 && test_active(4) != 63 && !kb_charged);
+        assert(dl_refusal[0] == 1u && dl_refusal[1] == 4u && dl_refusal[2] == 63u && dl_refusal[4] == 3300u && dl_refusal_core == 2u);
+        ids[4] = 0; ids[0] = 63; /* T1 FX1: core B */
+        assert(test_select(ids, pump) != 1 && test_active(0) != 63 && !kb_charged);
+        assert(dl_refusal[0] == 1u && dl_refusal[1] == 0u && dl_refusal[2] == 63u && dl_refusal[4] == 3200u && dl_refusal_core == 0u);
+        kb_price = 72;
+        assert(test_select(ids, pump) == 1 && test_active(0) == 63);
+        names_reader = 1; test_parts[0][0] = 63;
+        run(200);
+        assert(kb_charged && dsp_mask[0] == 8 && dsp_mask[1] == 8);
+        kb_price = 3500; /* charged now: a set naming it again adds nothing for the tap */
+        ids[1] = 63;
+        assert(test_select(ids, pump) == 1);
     } else assert(0);
     return 0;
 }
@@ -1668,6 +1701,9 @@ def generated(work, units):
             for old, new in core.REFUSAL_EDITS['manager.c']:
                 assert text.count(old) == 1, old[:60]
                 text = text.replace(old, new)
+            text = resident_engines.refusal(text)
+        elif name == 'allocator.c':
+            text = resident_engines.allocator(text)
         if name in zero_state.UNITS:
             text = zero_state.unit(name, text, reference)
         if name == 'transfer.c':
@@ -1748,7 +1784,7 @@ def build(work):
 
 @unittest.skipUnless(shutil.which('cc'), 'host C compiler unavailable')
 class ResidentEnginesBoard(unittest.TestCase):
-    MODES = 61
+    MODES = 62
 
     def test_place_switch_run_disable_unswitch_free_and_their_refusals(self):
         with tempfile.TemporaryDirectory() as temp:

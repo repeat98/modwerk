@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { MODULES } from '../catalog/modules'
-import { lastInventory, sameModules, type Inventory } from '../config/inventory'
+import { lastInventory, sameModules, SAVED_BY_ANOTHER_BASE, type Inventory } from '../config/inventory'
 import { syncHistory, type SyncRecord } from '../config/octatrack-progress'
 import type { Configuration } from '../config/workspace'
 import type { DiagnosticReading } from '../community/octatrack-diagnostics-contract'
@@ -16,10 +16,11 @@ const percent = (value: number) => (value / 10).toFixed(0) + '%'
 const when = (at: string) => new Date(at).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })
 const OUTCOME: Record<SyncRecord['outcome'], [string, string]> = { kept: ['Kept', 'on'], undone: ['Undone', 'off'], failed: ['Failed', 'leaving'] }
 
-/** What the card holds, from the self-test record (modset.c: 7 saved and read back, 1 restored at startup, 8 failed). */
+/** What the card holds, from the self-test record (modset.c: 7 saved and read back, 1 restored at startup, 8 failed, 4 another base's). */
 function cardLine(health: DiagnosticReading) {
   return health.saved === 7 ? { text: `Saved and checked · ${modules(health.savedCount)}`, led: 'on' } : health.saved === 1 ? { text: `Restored at startup · ${modules(health.savedCount)}`, led: 'on' }
-    : health.saved === 8 ? { text: 'Saving failed. The modules run until you switch the Octatrack off.', led: 'leaving' } : { text: 'Nothing saved on it yet', led: 'off' }
+    : health.saved === 8 ? { text: 'Saving failed. The modules run until you switch the Octatrack off.', led: 'leaving' }
+    : health.saved === SAVED_BY_ANOTHER_BASE ? { text: 'Saved by another base, so not loaded. Sync your modules again.', led: 'leaving' } : { text: 'Nothing saved on it yet', led: 'off' }
 }
 /** The last self-test in words: its result and the first reason it failed. */
 function selftestLine(health: DiagnosticReading) {

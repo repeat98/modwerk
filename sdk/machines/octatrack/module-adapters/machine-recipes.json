@@ -470,7 +470,7 @@
   },
   "analog-bassdrum": {
    "schema": 1,
-   "imageSha256": "04ffdeafb2ea6b13e6c3471da397c343c79e576e7738e2b5d6cebe2b96fce65c",
+   "imageSha256": "6531da82f364b3dcb107cc99ee95ab3b45077714599a223ecc7d81bdfcc929b4",
    "sources": {
     "sdk/machines/octatrack/module-adapters/analog_bd_runtime.py": "c3e3f51076e9ae3579e2e00d96d21eee87a2d12afa4ae69fb7067da3399fa17a",
     "sdk/machines/octatrack/module-adapters/analog_bd_write_lease.py": "7ee9a7bfbefc43064b7578dd3c3e23146896e52b24af47aecd2d1ebe16ee3c30",

@@ -1,0 +1,21 @@
+{
+  "conditions": "Describe the active workload, expensive modes, changing controls, instance count, and whether shared/stock allocations are included.",
+  "cpu": {
+    "level": null,
+    "basis": "source-estimate",
+    "rationale": "Choose minimal, low, moderate or high from source inspection or a documented workload comparison. Explain the ColdFire work and cite the record; do not invent a utilization percentage.",
+    "source": "TESTING.md"
+  },
+  "dsp": {
+    "level": null,
+    "basis": "source-estimate",
+    "rationale": "Choose a relative demand tier covering the expensive DSP modes and modulation. Minimal needs an explanation of the small or absent added DSP path.",
+    "source": "TESTING.md"
+  },
+  "memory": {
+    "level": null,
+    "basis": "source-estimate",
+    "rationale": "Choose a relative footprint tier covering code, state, tables and buffers. Distinguish shared reservations and reused stock buffers from extra per-instance memory.",
+    "source": "TESTING.md"
+  }
+}

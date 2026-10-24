@@ -16,7 +16,7 @@ int modwerk_saved_set_busy(void);
 int dl_hook_buffer_ranges_idle(unsigned);
 #ifdef MODWERK_RESIDENT_ON_DEMAND
 int modwerk_dsp_keybus_charge(int on);       /* dsp.c (resident_engines.dsp): the tap's per-core price, 1 fits and held */
-int modwerk_dsp_keybus_fits(void);           /* ... would it fit now (admission) */
+uint32_t modwerk_dsp_keybus_price(unsigned c); /* ... on core c while it is not charged there, 0 once it is */
 int modwerk_dsp_bank_names(unsigned id);     /* dsp.c: a track runs this FX id, or one of the bank's Parts names it */
 extern volatile uint8_t modwerk_controller_lease_seen; /* controller_write_lease.c: features a trusted controller asked to write */
 #endif
@@ -527,6 +527,22 @@ static int keybus_read(void)
     }
     return 0;
 }
+#ifdef MODWERK_RESIDENT_ON_DEMAND
+/* The FX allocator's seam (resident_engines.allocator): the tap's price on core c that a set of effects (FX1 T1-T8, then
+ * FX2) brings when it names a reader's effect while the tap is not charged there. So the pick or Part change that brings
+ * a reader is DSP FULL when the tap does not fit beside it, as an effect is; its install never is (owner, 24 October
+ * 2026: a project may never name it, and the Part it is installed beside may change). */
+uint32_t modwerk_controller_keybus_pending(unsigned c, const uint8_t ids[16])
+{
+    for (unsigned i = 0; i < RUNTIME_MODULES; ++i) {
+        const struct runtime_module *m = modwerk_runtime_module(i);
+        int id = m && (m->dsp.requires & KEYBUS) ? HANDLE(m->dsp.module) : -1;
+        for (unsigned s = 0; id >= 0 && s < 16u; ++s)
+            if (ids[s] == (unsigned)id) return modwerk_dsp_keybus_price(c);
+    }
+    return 0;
+}
+#endif
 /* The key bus is on for a feature that needs it on this core (Sidechain's detector reads it). */
 static int keybus_ready(unsigned feature, unsigned c) { return !KEYBUS_IMPLIED(feature) || (mask[c] & KEYBUS); }
 /* Drain the key bus's own owned jobs: an ACKed CAS updates the known mask; anything uncertain closes that core's owned
@@ -831,11 +847,10 @@ int modwerk_controller_admit(const struct runtime_dsp *from, const struct runtim
             if (kb_lane[c].op == KB_DISABLE || kb_lane[c].op == KB_SCRUB || (kb_dirty[c] && !(mask[c] & KEYBUS))) return RUNTIME_BUSY;
         /* The bus engine waits for room as any engine does; stuck on a core, it never places. */
         if (mw_engines_admit(KEYBUS, modwerk_controller_held() | live_features(), 0) == MW_ENGINE_STUCK_BOOT) return RUNTIME_FEATURE;
-        /* The tap's price is the admission's promise, checked when the package is prepared. A set's earlier rows can take
-         * that room before this one switches (an effect the project already names starts to run: beta finding 64), and a
-         * refusal at the switch repeats at every retry, so the set stayed in publishing until a power cycle. There the
-         * board makes the reader wait for its price instead (keybus_tick), as an engine waits for room. */
-        if (operation == RUNTIME_METADATA_PREPARE && !kb_priced && !modwerk_dsp_keybus_fits()) return RUNTIME_CYCLES;
+        /* The tap's price is not checked here: it is charged only once the bank names a reader's effect, and the pick
+         * that brings it pays it (modwerk_controller_keybus_pending). A check here promised nothing and refused a sync
+         * whenever the Part on screen left no room (owner, 24 October 2026). A reader the bank already names when it
+         * goes in (beta finding 64) waits for the price (keybus_tick), as an engine waits for room. */
     }
 #endif
     if (!outgoing) return RUNTIME_OK;

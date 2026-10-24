@@ -188,6 +188,23 @@ reboot where applicable. Give hardware steps and record actual results;
 emulator/host tests do not fill missing hardware qualification. Preserve the
 previous approved download while preparing candidates.
 
+**Growing a stock table over USB.** A runtime package carries no `TableGrow`
+(`sdk/runtime/loader/build.py --octabam` refuses `tables`). Keep the grown
+table in the module's own unit instead: zero placeholders that `StockCopy`
+fills from the guarded stock entries at install, your entries after them,
+and a `SymbolRef` on every stock reference to the table. One stock copy
+spans at most 32 bytes (`SITE_BYTES` in `loader.h`), so split a longer table
+into chunks with their own symbols. A builder without `StockCopy` in its
+schema can still take the same growth as `TableGrow`
+(`sdk/drafts/dejavu/manifest.py` declares both).
+
+**The strict stock-free scan can match original data.** Small, regular data
+such as a sparse icon bitmap or a full-cell mask can equal stock bytes over
+the scanner's minimum run, and the package is refused. Find the run with the
+scanner's own `module_packages.runs` and `check_stock_free.stock_runs`, then
+vary bits the data's reader ignores (for an LCD icon column word, the low
+bits below its rows).
+
 A new module version rebuilds its USB package in the same pull request:
 `npm run octatrack:module-packages` with the m68k-elf toolchain and the
 Elekloader checkout (`npm run upstream:tools`), then `-- --check` until every

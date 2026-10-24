@@ -362,7 +362,11 @@ stays byte-identical; only its feature split moves (KEYBUS, bit 8, out of SIDECH
   slot, the way a source engine is charged: counted statically from the source (`resident_dsp.keybus_executed`, 41
   executed instructions a sample for a core's four tracks, seeded), charged at 7/4 like every emulator figure until it
   is timed on a unit. Sidechain alone is not charged for it, as on main (review, change 1); a reader installed beside
-  Sidechain is.
+  Sidechain is. The price is paid at the pick, never at install (owner, 24 October 2026): a reader always goes in, and
+  the FX allocator adds the price to any set that names a reader's effect while the tap is not charged
+  (`modwerk_controller_keybus_pending`), so that pick or Part change is DSP FULL until it fits. The box counts the price
+  and shows the core that ran out (`dl_cycles_core`, `dl_refusal_core`): with the tap on both cores, that is often T5-8
+  (the smaller allowance) for a reader picked on T1-4. An install check against the Part on screen reserved nothing and refused syncs for a Part that may change.
 - Measuring it on a unit: NONE on every track, one pattern playing, `scripts/octatrack-measure.py` on both cores with
   nothing installed, then with a KEYBUS reader installed (KEYBUS placed and enabled, no reader on any track), then with
   Sidechain installed; the difference is the tap's cost per core.
@@ -400,8 +404,8 @@ effect's buffer. RINGMOD SC is the first reader; CHARACTER 0.1.2's KEY
 - Host, ColdFire side (`test_resident_engines_board.py` modes 39-40, `test_controller_board.py`, ASan/UBSan): a reader
   alone places, resets (1,026 words) and enables the bus on both cores and pays its price; Sidechain beside it needs no
   second bus job and never enables before the bus is on (`sc_before_bus`); removal in both orders; with no room for the
-  price a reader is refused at admission (`RUNTIME_CYCLES`; at its switch it goes in and waits for the price, mode 60,
-  beta finding 64) while Sidechain is still admitted and charged nothing, as on main; the bus
+  price a reader still goes in and waits for it (mode 40; at its switch, mode 60, beta finding 64), and the pick that
+  brings its effect is DSP FULL until it fits (mode 61), while Sidechain is still admitted and charged nothing, as on main; the bus
   waits while a slot buffer covers its window. The loader's ABI 9 parsing, claims and refusals (`host_test.c`,
   `test_runtime_loader.py`).
 - The site (`module-set.ts`, `module-set.test.ts`): an ABI 9 reader is chosen and synced only to a base reporting ABI

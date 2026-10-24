@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { changeCount, inventoryChanges, lastInventory, listboxMove, loadStep, missingFromProject, rememberInventory, sameModules, unitState } from './inventory'
+import { changeCount, inventoryChanges, lastInventory, listboxMove, loadStep, missingFromProject, modulesToPutBack, rememberInventory, sameModules, SAVED_BY_ANOTHER_BASE, unitState } from './inventory'
 
 describe('making the unit match a module set', () => {
   it('adds and removes modules and switches stock effects both ways', () => {
@@ -39,10 +39,24 @@ describe('the Octatrack hub', () => {
     expect(lastInventory()).toBeUndefined()
     rememberInventory('aa', { moduleIds: ['everb'], removedStockFx: [] }, '2026-10-12T10:00:00.000Z')
     rememberInventory('bb', { moduleIds: ['poly8', 'tapeecho'], removedStockFx: [] }, '2026-10-12T11:00:00.000Z')
-    expect(lastInventory()).toEqual({ base: 'bb', moduleIds: ['poly8', 'tapeecho'], at: '2026-10-12T11:00:00.000Z' })
+    expect(lastInventory()).toEqual({ base: 'bb', moduleIds: ['poly8', 'tapeecho'], removedStockFx: [], at: '2026-10-12T11:00:00.000Z' })
     expect(lastInventory('aa')?.moduleIds).toEqual(['everb'])
     store.set('modwerk.octatrack.last-seen', '{"cc":{"moduleIds":"broken","at":"2027"}}')
     expect(lastInventory()).toBeUndefined() // a damaged record shows as never seen
+  })
+  it('puts back the modules last seen under another base when the card set was another base\'s', () => {
+    const store = new Map<string, string>()
+    vi.stubGlobal('localStorage', { getItem: (key: string) => store.get(key) ?? null, setItem: (key: string, value: string) => { store.set(key, value) } })
+    rememberInventory('old', { moduleIds: ['everb', 'poly8'], removedStockFx: ['SPRING_REV'] }, '2026-10-20T10:00:00.000Z')
+    rememberInventory('new', { moduleIds: [], removedStockFx: [] }, '2026-10-24T10:00:00.000Z') // the new base's first read
+    const empty = { moduleIds: [], removedStockFx: [] }
+    expect(modulesToPutBack('new', SAVED_BY_ANOTHER_BASE, empty)).toMatchObject({ base: 'old', moduleIds: ['everb', 'poly8'], removedStockFx: ['SPRING_REV'] })
+    expect(modulesToPutBack('new', 2, empty)).toBeUndefined() // nothing saved: the unit was emptied on purpose or is new
+    expect(modulesToPutBack('new', 1, empty)).toBeUndefined() // restored
+    expect(modulesToPutBack('new', SAVED_BY_ANOTHER_BASE, { moduleIds: ['everb'], removedStockFx: [] })).toBeUndefined() // already synced again
+    expect(modulesToPutBack('new', SAVED_BY_ANOTHER_BASE, undefined)).toBeUndefined() // not read yet
+    rememberInventory('old', empty, '2026-10-21T10:00:00.000Z')
+    expect(modulesToPutBack('new', SAVED_BY_ANOTHER_BASE, empty)).toBeUndefined() // the old base was empty too
   })
   it('works without storage', () => {
     vi.stubGlobal('localStorage', { getItem() { throw new Error('blocked') }, setItem() { throw new Error('blocked') } })

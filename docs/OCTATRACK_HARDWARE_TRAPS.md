@@ -425,6 +425,28 @@ a stale instruction cache, zeros or other bytes uncached mean the push did not h
 
 ## Patching stock code
 
+**Audio-track LFO waveforms** (OS 1.40C, measured in `ot_emu`, 24 October
+2026; background in upstream Octabam's `docs/firmware/LFO.md`):
+- Slots 19-31 of the audio waveform dispatch table `0x400d6210` are SAW
+  padding. A new wave also needs the WAVE count (`0x400d38ac`), the label
+  formatter's clamp (`moveq #19` at `0x4003be50`) and the WAVE cell drawer's
+  icon bound (`moveq #19` at `0x4004693c`: no icon is drawn above it), and
+  grows the label (`0x400be38e`) and icon (`0x400bdf36`) tables.
+- The engine calls the handler every frame in every TRIG mode. `fp` holds
+  the TRIG record `0x80006184 + 16 n`, with n the mode and 8 more on a trig
+  of the track. In HOLD the engine keeps its live value between trigs and
+  takes the handler's output only on a trig.
+- A trig is a sample trig, or a trigless trig once the track has played a
+  sample trig since PLAY (the sample need not still sound); trigless locks
+  never count.
+- The engine adds `(DEP_word << 8) * out >> 31` to the destination word in
+  EMAC fractional mode (DEP 127 counts as 128), one knob step being 256 in
+  that word. On PTCH a knob step is 1/5 semitone, and LFO pitch stops at
+  +-12 semitones.
+- The track's step counter (`0x800064d0 + t`) moves one sequencer tick
+  before the step's trig fires and shows 0 on the track's last step; its
+  tick (`0x800064f0 + t`) reaches 1 just after the trig.
+
 **A detour returns after the whole span it displaced, never into it.** The
 map's writer detour at `0x400888c8` displaced `lea` (4 bytes) and `tstl` (2)
 and jumped back to `0x400888cc`, the second half of its own `jmp`. SYNC TO
@@ -688,6 +710,7 @@ What `ot_emu` does not show:
 - It never restarts from RAM, so the park-and-upload path is not covered.
 - `--dsp` dies with a bus error in Docker unless `--shm-size=128m`;
   `--frame` is needed for the audio producer (USB audio) to run.
+- It honours one `--watch-mem`: given several, it reports only the last.
 - It boots as an MKI unless given `--mkii`, and the MKI panel has no PROJ,
   PART, AED or ARR key: remote PROJ does nothing. Card writes stay in memory
   unless given `--card-rw`. Hold remote keys for unit ticks, not wall time:

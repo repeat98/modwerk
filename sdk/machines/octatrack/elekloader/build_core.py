@@ -1659,6 +1659,10 @@ def main():
                 if text.count(old) != 1:
                     raise ValueError('Octabam DSP loader refusal seam changed in %s; review the port.' % name)
                 text = text.replace(old, new)
+            if args.resident_on_demand and name == 'allocator.c':  # the key bus's price at a pick
+                text = resident_engines.allocator(text)
+            elif args.resident_on_demand and name == 'manager.c':  # ... and in the DSP FULL box
+                text = resident_engines.refusal(text)
             if args.resident_stock_hooks and name in zero_state.UNITS:  # last, after every other seam
                 text = zero_state.unit(name, text, preserved_dynload)
             (source / ('dsp_hooks.s' if name == 'hooks.s' else name)).write_text(text)

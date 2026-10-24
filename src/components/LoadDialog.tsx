@@ -25,9 +25,11 @@ const list = (ids: string[]) => new Intl.ListFormat('en', { type: 'conjunction' 
  * Runtime package changes are reviewed even when the visible member IDs stay the same. A base upgrade or
  * unavailable package stops preparation here; the installer preserves this set. A failed sync offers `onReport`.
  */
-export function LoadDialog({ link, set, inventory, previousName, prepareUpdate, stressTest, onClose, onInstallBase, onEdit, onCard, onReport }: {
+export function LoadDialog({ link, set, putBack = false, inventory, previousName, prepareUpdate, stressTest, onClose, onInstallBase, onEdit, onCard, onReport }: {
   link: OctatrackLink; set: InventoryTarget; inventory?: Inventory; prepareUpdate?: PrepareUpdate; stressTest?: StressTest; onClose: () => void
   previousName?: string
+  /** Opened because the base changed and the unit started without these modules (PutBackModules). */
+  putBack?: boolean
   /** Opens the base installer: with a layout when the set needs the base in another USB Audio layout. */
   onInstallBase: (layout?: BaseLayout) => void; onEdit: () => void; onCard: () => void; onReport: () => void
 }) {
@@ -116,6 +118,7 @@ export function LoadDialog({ link, set, inventory, previousName, prepareUpdate, 
         : !changes ? <p className="base-install-intro">Reading what’s on it…</p>
         : !review?.needsSync && !problem ? <p className="base-install-intro">Your Octatrack already has exactly these modules.</p>
         : <>
+          {putBack && <p className="base-install-intro">The base on your Octatrack changed, so it started without your modules. Sync them to put them back.</p>}
           <p className="load-summary">Adds {changes.add.length} · Removes {changes.remove.length}{updates.length > 0 && <> · Updates {updates.length}</>}</p>
           <p className="base-install-intro">After syncing, the Octatrack tests itself, then you keep it or undo. Your project isn’t changed.</p>
           <ul className="load-changes">{([['card', 'Card only', cardOnly], ['load', 'Base', audio !== undefined && !audioOn ? [USB_AUDIO_MODULE] : []], ['load', 'Adds', changes.add.filter(id => !cardOnly.includes(id))], ['load', 'Updates', updates], ['leaving', 'Removes', changes.remove]] as const).flatMap(([state, label, ids]) => ids.map(id => {
