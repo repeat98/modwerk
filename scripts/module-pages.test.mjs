@@ -1,4 +1,5 @@
 import { readFileSync } from 'node:fs'
+import { fileURLToPath } from 'node:url'
 import { expect, it } from 'vitest'
 import sharp from 'sharp'
 import { MODULES } from '../src/catalog/modules.ts'
@@ -35,7 +36,7 @@ it('keeps canonical URLs, thumbnails and app assets under a Pages project base',
 
 it('builds the FM Synth canonical page and keeps the old URL loadable', async () => {
   const plugin = modulePages()
-  plugin.configResolved({ root: new URL('../', import.meta.url).pathname, base: './' })
+  plugin.configResolved({ root: fileURLToPath(new URL('../', import.meta.url)), base: './' })
   const assets = []
   await plugin.generateBundle.call({ emitFile(asset) { assets.push(asset) } }, {}, { 'index.html': { type: 'asset', source: html } })
   const canonical = assets.find(asset => asset.fileName === 'module/fm-synth/index.html')
