@@ -1,0 +1,95 @@
+{
+  "schemaVersion": 1,
+  "sources": [
+    "src/chorus.c",
+    "src/gate.s"
+  ],
+  "defsym": {},
+  "cflags": [],
+  "weak": [],
+  "subscribe": [
+    {
+      "event": "ev_tick",
+      "fn": "stereo_chorus_tick",
+      "order": 50
+    },
+    {
+      "event": "ev_draw",
+      "fn": "stereo_chorus_draw",
+      "order": 50
+    },
+    {
+      "event": "ev_key",
+      "fn": "stereo_chorus_key",
+      "order": 50
+    },
+    {
+      "event": "ev_enc",
+      "fn": "stereo_chorus_enc",
+      "order": 50
+    },
+    {
+      "event": "ev_project",
+      "fn": "stereo_chorus_project",
+      "order": 50
+    }
+  ],
+  "contribute": [],
+  "collections": {},
+  "copied": [],
+  "regions": [],
+  "storage": [
+    {
+      "sym": "stereo_chorus_send",
+      "scope": "sound",
+      "bits": 7
+    },
+    {
+      "sym": "stereo_chorus_a",
+      "scope": "kit",
+      "bits": 28
+    },
+    {
+      "sym": "stereo_chorus_b",
+      "scope": "kit",
+      "bits": 14
+    }
+  ],
+  "claims": [
+    "ui:FX DELAY page key twice",
+    "ui:AMP page key twice"
+  ],
+  "requires": [],
+  "derive": null,
+  "releases": {
+    "1.74": {
+      "defsym": {
+        "stereo_chorus_resume": "0x4010ee6c"
+      },
+      "cflags": [
+        "-DIS_KEY_HELD_AT=0x40081c28",
+        "-DPROJECT_SINGLETON_AT=0x4017fa0a",
+        "-DTRACK_INDEX_OF_AT=0x400b693e",
+        "-DKIT_TRACK_SOUND_AT=0x400a67ca",
+        "-DFILLRECT_AT=0x40070726",
+        "-DSOUND_CONFIG_CHANGED_VT=0x401cb88c",
+        "-DRX_BUFFER_AT=0x80007440",
+        "-DTX_RING_AT=0x80000000",
+        "-DVOICE_WORD_AT=0x401ef480",
+        "-DVOICE_TRACK_AT=0x40291138",
+        "-DTEXT_DRAW_AT=0x4007154c",
+        "-DTEXT_FONT_AT=0x40071be8",
+        "-DTEXT_CTX_AT=0x417e389c"
+      ],
+      "sites": [
+        {
+          "addr": "0x4010ee66",
+          "len": 6,
+          "stockSha256": "2d5c036095404da53503812386216abbcc38b98b809fc6197ee476c16dc9a521",
+          "op": "jmp",
+          "target": "stereo_chorus_gate"
+        }
+      ]
+    }
+  }
+}
