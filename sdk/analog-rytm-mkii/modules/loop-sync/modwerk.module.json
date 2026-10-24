@@ -86,7 +86,8 @@
       "The loop length comes from the sound's own STA and END: locks and LFOs on STA or END play another region at the same speed.",
       "The SYNC mark shows only on the SAMPLE page.",
       "Hooks the audio interrupt one instruction after rytm2_mods lfo-rnd's site; the pair is not tested.",
-      "At most 51 samples a project keep a setting; settings saved by 0.2 are not read."
+      "At most 51 samples a project keep a setting; settings saved by 0.2 are not read.",
+      "An LFO on STA in FREE mode starts each trig at another point of the loop, off the grid; TRIG mode stays in time."
     ]
   },
   "platform": {
@@ -127,11 +128,10 @@
       "testedOn": "2026-10-24",
       "tester": "stigmagit",
       "durationMinutes": null,
-      "summary": "Build LS24 (core-ar2 0.3 + loop-sync 0.3.0-experimental) on the author's unit, by ear (\"c'est bon\"), after LS19-LS23 the same day: his pattern with SMP locks to loops in other slots, and his fast loop with the tempo lowered below 128 BPM, where LS21 snapped back to full speed.",
+      "summary": "Build LS24 (core-ar2 0.3 + loop-sync 0.3.0-experimental) on the author's unit, by ear (\"c'est bon\"), after LS19-LS23 the same day: his pattern with SMP locks to loops in other slots, and his fast loop with the tempo lowered below 128 BPM, where LS21 snapped back to full speed. Also reported: settings kept after SAVE PROJECT and a reboot; loops follow an external MIDI clock; an LFO on SAMP:Start in TRIG mode stays in time (in FREE mode each trig starts elsewhere in the loop).",
       "limitations": [
         "Informal listening test; no timing measured on the unit.",
-        "Persistence across SAVE PROJECT and a reboot not reported separately.",
-        "External MIDI clock and CPU with LFOs on STA not reported."
+        "No CPU measurement on the unit."
       ]
     },
     "verifiedBy": null

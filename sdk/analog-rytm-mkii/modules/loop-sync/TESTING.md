@@ -165,7 +165,7 @@ Reported by the author on a unit with LS23: the SMP-locked loop was far too fast
 | loop120 at 16 BAR (a factor of 15) | held at -24 semitones, one beat per bar (1.89 s) |
 | Captures | same PNGs byte for byte as LS19 |
 
-On the unit, LS24, by ear (author, 24 October 2026): "c'est bon" for his pattern with SMP locks to loops in other slots and his fast loop with the tempo lowered below 128 BPM. Persistence across SAVE PROJECT and a reboot, external MIDI clock and CPU with STA LFOs were not reported separately.
+On the unit, LS24, by ear (author, 24 October 2026): "c'est bon" for his pattern with SMP locks to loops in other slots and his fast loop with the tempo lowered below 128 BPM. Then, same unit and build, reported by the author: settings kept after SAVE PROJECT and a reboot; loops follow an external MIDI clock; with an LFO on SAMP:Start of a synced track, in FREE mode the loop leaves the grid (each trig starts at another point of the loop, so its beats fall off the steps), and in TRIG mode it stays in time. CPU was not measured.
 
 ## Screenshots
 

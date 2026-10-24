@@ -53,6 +53,7 @@ OS 1.74 only, with core-ar2 0.3 (project storage: 32 fields of 32 bits, `loop_sy
 - Pitch follows tempo; no time-stretch.
 - AUTO assumes 4/4 and a loop cut on the bar, and only picks powers of two: among all twelve lengths, a one-bar loop of 100 BPM played at 127 would read as 1.5 bars of 150 BPM (measured in the emulator). Choose 3/4, 1.5, 3, 6 or 12 bars by hand; a loop of 5 beats, say, needs its nearest length and a correction.
 - Settings saved by 0.2 (a mode per sound, a correction per slot) are not read by 0.3: set the loops again.
+- An LFO on STA in FREE mode starts each trig at another point of the loop, so the beats leave the grid although the speed is right; use TRIG mode (heard on a unit).
 - The silence check only sees digital silence (below about -72 dB) under 5 % of a sample; a loop cut long with sound in the extra part still needs the percentage correction.
 - A setting stays with the slot: replacing the sample in that slot keeps it. At most 51 samples a project have one (Modwerk's 32-field limit).
 - The shift is limited to TUN's range: the effective TUN is clamped to +-24 semitones (a factor of 4). Past it the loop stays as slow or as fast as TUN goes, out of time: choose a length that puts the source tempo nearer the project tempo.
@@ -63,7 +64,7 @@ OS 1.74 only, with core-ar2 0.3 (project storage: 32 fields of 32 bits, `loop_sy
 
 Full record in [TESTING.md](TESTING.md). In short:
 
-- **On a unit, LS24:** the author heard his pattern with SMP locks to loops in other slots, and his fast loop with the tempo lowered below 128 BPM, play as they should ("c'est bon"). Listening only; persistence, external MIDI clock and CPU not reported.
+- **On a unit, LS24:** the author heard his pattern with SMP locks to loops in other slots, and his fast loop with the tempo lowered below 128 BPM, play as they should ("c'est bon"); settings kept after SAVE PROJECT and a reboot; loops follow an external MIDI clock; an LFO on STA in TRIG mode stays in time. Listening only; CPU not measured.
 - **On a unit, LS21:** the author heard a pattern with SMP locks to loops in other slots play in time once each locked loop of another length had its own setting. Listening only; persistence, external MIDI clock and CPU not reported.
 - **On a unit, LS17:** the author ran LS17 (before the review fixes) on an Analog Rytm MKII with OS 1.74: loops in time with SMP locks, the per-sample correction and the silence check, and the pitch glides on tempo changes. Listening only; persistence across saves and reboots is not reported yet.
 - **In the emulator, builds LS19 to LS24 (recorded audio):** at 127 BPM, a one-bar 120 BPM loop in AUTO plays its beats 0.4725 s apart (target 0.4724 s); set to 1.5 BAR with +1.0 %, 0.7158 s apart (target 0.7157 s); a tail loop with its own +5.2 % falls 0.4714-0.4733 s apart, also when FUNC + TUN is turned while the pattern plays (LS20; LS19 set the locked loop then), and a 100 BPM loop locked on step 9 with no setting plays in AUTO at 0 % from its own length: 0.4714-0.4733 s apart (LS24; LS21 gave it the main loop's +5.2 %, 0.4972 s). A loop set far too long for its tempo (16 BAR on a one-bar loop) stays at TUN's limit instead of snapping back to its own speed (LS23).
