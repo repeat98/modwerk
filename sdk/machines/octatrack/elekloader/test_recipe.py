@@ -393,7 +393,8 @@ class FlashSafetyTests(unittest.TestCase):
         built = bytearray(stock); built[4:6] = b'\x01\x02'; built[20] = 9
         self.assertEqual(unexplained(stock, bytes(built), 0x1000, [(0x1004, 2)]), [(0x1014, 1)])
         self.assertEqual(unexplained(stock, bytes(built), 0x1000, [(0x1004, 2), (0x1010, 8)]), [])
-        self.assertEqual(unexplained(stock, bytes(built), 0x1000, [(0x1005, 2), (0x1010, 8)]), [(0x1004, 2)])
+        self.assertEqual(unexplained(stock, bytes(built), 0x1000, [(0x1005, 2), (0x1010, 8)]), [(0x1004, 1)])
+        self.assertEqual(unexplained(stock, bytes(built), 0x1000, [(0x1004, 1), (0x1005, 1), (0x1014, 1)]), [])  # adjacent sites
 
 
 if __name__ == '__main__':

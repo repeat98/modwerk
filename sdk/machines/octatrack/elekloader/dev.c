@@ -191,6 +191,20 @@ uint32_t modwerk_dev_request(const uint8_t *s, const uint8_t **reply, uint8_t *o
         *reply = out;
         return 8;
     }
+    if (s[1] == 29 && want == 28u) { /* GUARD: the frame guard (machine_registry.c); wValue its share in per mille of a frame
+                                        * (0 keeps it): since the last read the longest frame interrupt, the latest start, the
+                                        * time in it (/256) and its frames; the skips, their tracks; the share */
+        extern volatile uint32_t mw_frame_max, mw_frame_late_max, mw_frame_busy, mw_frame_count, mw_frame_sheds,
+            mw_frame_shed_tracks, mw_frame_share;
+        unsigned mille = s[2] | (unsigned)s[3] << 8;
+        if (mille) mw_frame_share = 47891u / 100u * mille / 10u;
+        uint32_t v[7] = {mw_frame_max, mw_frame_late_max, mw_frame_busy, mw_frame_count, mw_frame_sheds, mw_frame_shed_tracks,
+                         mw_frame_share};
+        mw_frame_max = mw_frame_late_max = mw_frame_busy = mw_frame_count = 0;
+        for (unsigned i = 0; i < 28u; ++i) out[i] = (uint8_t)(v[i / 4u] >> (24 - 8 * (i % 4u)));
+        *reply = out;
+        return 28;
+    }
     if (s[1] == 23 && want == 4 && !s[2] && !s[3]) { /* GAP: the longest time between two frames since the last read, DTCN3 counts */
         extern volatile uint32_t dl_frame_gap;
         uint32_t gap = dl_frame_gap;

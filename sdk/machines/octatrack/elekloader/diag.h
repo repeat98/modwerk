@@ -12,7 +12,7 @@
 #define DIAG_PAGE 244u        /* ep0.c's LOG reply: never a whole multiple of 64 bytes (OCTATRACK_HARDWARE_TRAPS.md) */
 #define DIAG_LOG_REQUEST 37u  /* bRequest of LOG (0xC1, wValue the page, wLength DIAG_PAGE); 31-36 are taken */
 
-enum diag_kind { DIAG_START = 1, DIAG_HOT = 2, DIAG_FREEZE = 3, DIAG_CRASH = 4, DIAG_STALL = 5, DIAG_SET = 6, DIAG_BASE = 7 };
+enum diag_kind { DIAG_START = 1, DIAG_HOT = 2, DIAG_FREEZE = 3, DIAG_CRASH = 4, DIAG_STALL = 5, DIAG_SET = 6, DIAG_BASE = 7, DIAG_SHED = 8 };
 /* After the log: crash.c's record (struct crash, 0x100ff800) and dsp.c's stall record (struct stall, 0x100ff900),
  * byte for byte, so the site uploads what a crash or a DSP stall left; each starts with its magic ("MWCR", "MWST"). */
 #define DIAG_CRASH_BYTES 180u
@@ -30,7 +30,8 @@ struct diag_load {
 /* An incident and what the unit was doing. `a`: START the crash and stall counts seen (crash.c, dsp.c), HOT the
  * half-seconds at 90 % or more, FREEZE the frames the UI stood still (0: it never came back before a restart),
  * CRASH the program counter, STALL the stall's reason, BASE the first four bytes of the base's identity (right after
- * each START: a stall followed by another base was an OS upgrade), SET how many modules are installed, their ids in
+ * each START: a stall followed by another base was an OS upgrade), SHED the frame guard's skips since the start
+ * (machine_registry.c: the tracks it skipped in the top byte, as bits, then the count), SET how many modules are installed, their ids in
  * `machine`, `fx` and `keys` read as one run of 56 bytes (14 ids of 4, after a restore from the card and each Keep).
  * `machine`: each track's type byte and machine signature
  * (machine_registry.c), `fx` what each slot runs (FX1 T1-T8, then FX2), `keys` the last 16 key codes pressed,
