@@ -1,6 +1,6 @@
 # Send FX testing
 
-Evidence tier: **emulator** for 0.1.0-experimental, build FX08, source sha256 in `modwerk.module.json` (sha256 over `build.json` then each `src/` file in name order, each as its path, a NUL, its bytes and a NUL). The chorus of an earlier build (`stereo-chorus`, same algorithm) was heard by the author on a unit (below); this build awaits that test.
+Evidence tier: **emulator** for 0.1.0-experimental, build FX09, source sha256 in `modwerk.module.json` (sha256 over `build.json` then each `src/` file in name order, each as its path, a NUL, its bytes and a NUL). The chorus of an earlier build (`stereo-chorus`, same algorithm) was heard by the author on a unit (below); this build awaits that test.
 
 ## Build
 
@@ -43,6 +43,7 @@ Host test (the DSP compiled on a Mac with stub addresses): a 1 kHz sine through 
 
 ## On the unit (author)
 
+- 25 October 2026, LF06 (build FX09): the author had seen the screen lag behind the knobs with LF05; with LF06 it follows ("c'est mieux, plus de latence"). The FX page had been redrawn whole at every tick, some 500 drawing calls a frame; it is now redrawn only when what it shows changes, and at once when a knob turns (emulator, 150 knob turns: 86,000 drawing calls in place of 365,000; in the emulator the screen updated within 25-37 ms both before and after, as stock's page does).
 - 25 October 2026, LF05 (Loop Sync + Send FX 01-15, build FX08): reported by the author: no latency, "the effects sound very good". A draft build before it (LF04) had seemed to lag on every effect; after reinstalling, LF05 did not. Not reported: the 8-voice CPU check and a kit save across a reboot.
 - 25 October 2026, LF03 (Loop Sync + Send FX 01-11): the FX page and its values work; the author tried the effects and approved them, keeping WOW AND FLUTTER. Pressing an encoder's knob left the FX page: an encoder press is a key (0x70-0x77) and the mod took any other key as leaving; fixed in FX07 (checked in the emulator). Not reported: the 8-voice CPU check and a kit save across a reboot.
 

@@ -183,6 +183,7 @@ static int page;                   // 0 none, 1 FX, 2 SEND
 static int last_page_key = -1;
 static int acc_enc = -1, acc_cnt, acc_func;
 static int shown_knob = -1, show_ticks, title_ticks;
+static char *g_ctrl;               // the view controller ev_tick last had: +0x20 asks for a redraw
 
 // The effects run on 16-bit signals (about +-2^15, held within +-2^16), so a
 // gain or a coefficient in Q15 takes one multiply that stays within 2^31: the
@@ -1070,6 +1071,23 @@ static int selected_track(void)
     return TRACK_INDEX_OF(project + PROJECT_TRACKSEL);
 }
 
+// What the open page shows, folded into one word: a redraw is asked for when
+// it changes. (A full page is some 500 drawing calls; drawn at every tick it
+// kept the unit's UI busy, and the knobs seemed to lag on the screen.)
+static unsigned last_shown = ~0u;
+
+static int sending(void);
+
+static unsigned shown_state(void)
+{
+    unsigned h = (unsigned)page * 31u + fx_type * 131u + lev * 7u + (unsigned)(shown_knob + 1) * 977u + (title_ticks != 0) * 5u;
+    int k, sel = selected_track();
+    for (k = 0; k < 8; k++) h = h * 33u + par[k];
+    h = h * 33u + (unsigned)sending();
+    if (sel >= 0 && sel < SOUND_TRACKS) h = h * 33u + send[sel] + (unsigned)sel * 128u;
+    return h;
+}
+
 // ev_tick, about 20 Hz: copy each sound's send and the kit's values for the
 // audio block, close a page whose track went away, and redraw an open page.
 void send_fx_tick(char *ctrl)
@@ -1077,6 +1095,7 @@ void send_fx_tick(char *ctrl)
     int track;
     if (!ready)
         return;
+    g_ctrl = ctrl;
     for (track = 0; track < SOUND_TRACKS; track++) {
         void *live = live_sound(accessor(track));
         send[track] = (unsigned char)(live ? core_store_get(STORE(send_fx_send), live, 0) & 127 : 0);
@@ -1088,7 +1107,8 @@ void send_fx_tick(char *ctrl)
         int sel = selected_track();
         if ((page == 1) != (sel == FX_TRACK) || sel < 0 || sel > FX_TRACK)
             page = 0;
-        ctrl[0x20] = 1;
+        if (page && shown_state() != last_shown)  // redraw only on a change, as stock's pages do
+            ctrl[0x20] = 1;
     }
 }
 
@@ -1149,6 +1169,8 @@ int send_fx_enc(void *brain, char *ev)
     acc_cnt -= steps * per;
     shown_knob = func ? (enc == 4 ? SHOWN_LEV : -1) : enc;
     show_ticks = SHOW_TICKS;
+    if (g_ctrl)
+        g_ctrl[0x20] = 1;                        // redraw now, not at the next tick
     if (!steps)
         return 1;
     if (page == 1 && func) {
@@ -1606,6 +1628,7 @@ void send_fx_draw(void *bmp, void *ctrl)
     (void)ctrl;
     if (!page)
         return;
+    last_shown = shown_state();
     g_bmp = bmp;
     if (page == 1) draw_fx(); else draw_send();
 }
