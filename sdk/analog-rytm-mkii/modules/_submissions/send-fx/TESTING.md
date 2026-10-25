@@ -1,6 +1,6 @@
 # Send FX testing
 
-Evidence tier: **emulator** for 0.1.0-experimental, build FX09, source sha256 in `modwerk.module.json` (sha256 over `build.json` then each `src/` file in name order, each as its path, a NUL, its bytes and a NUL). The chorus of an earlier build (`stereo-chorus`, same algorithm) was heard by the author on a unit (below); this build awaits that test.
+Evidence tier: **emulator** for 0.1.0-experimental, build FX12, source sha256 in `modwerk.module.json` (sha256 over `build.json` then each `src/` file in name order, each as its path, a NUL, its bytes and a NUL). The chorus of an earlier build (`stereo-chorus`, same algorithm) was heard by the author on a unit (below); this build awaits that test.
 
 ## Build
 
@@ -43,6 +43,8 @@ Host test (the DSP compiled on a Mac with stub addresses): a 1 kHz sine through 
 
 ## On the unit (author)
 
+- 25 October 2026, LF09 (build FX12): the effect and its controls are kept per kit: the author set kits 3 and 4 (bank B patterns 1-8 and 9-15) to different effects, saved, and they follow the pattern changes. Before (LF07, LF08) the effect was lost or shared by every kit: the kit fields were first kept in the project's +352 object, which is not a kit (they read back but were never saved, and landed in memory stock owns), then in a fixed working-kit address that does not follow a kit change. The kit is now found from the active kit's first sound (stock's accessor), 42 bytes in. Emulator, FX12: DIRT on kit 1 and saved, LOAD KIT 2 shows CHORUS, FLANGER on kit 2 and saved, LOAD KIT 1 shows DIRT; DIRT saved, power off, cold boot: DIRT; BD's send at 90, kit saved, power off, cold boot: 90.
+- LF07 (build FX10): the page's points are written straight into the bitmap (stock's fillrect read for its layout: column-major 32-bit words), not through fillrect: 150 knob turns took 7,500 drawing calls in place of 79,000 (LF06); all sixteen pages captured pixel-identical to FX08's.
 - 25 October 2026, LF06 (build FX09): the author had seen the screen lag behind the knobs with LF05; with LF06 it follows ("c'est mieux, plus de latence"). The FX page had been redrawn whole at every tick, some 500 drawing calls a frame; it is now redrawn only when what it shows changes, and at once when a knob turns (emulator, 150 knob turns: 86,000 drawing calls in place of 365,000; in the emulator the screen updated within 25-37 ms both before and after, as stock's page does).
 - 25 October 2026, LF05 (Loop Sync + Send FX 01-15, build FX08): reported by the author: no latency, "the effects sound very good". A draft build before it (LF04) had seemed to lag on every effect; after reinstalling, LF05 did not. Not reported: the 8-voice CPU check and a kit save across a reboot.
 - 25 October 2026, LF03 (Loop Sync + Send FX 01-11): the FX page and its values work; the author tried the effects and approved them, keeping WOW AND FLUTTER. Pressing an encoder's knob left the FX page: an encoder press is a key (0x70-0x77) and the mod took any other key as leaving; fixed in FX07 (checked in the emulator). Not reported: the 8-voice CPU check and a kit save across a reboot.

@@ -40,7 +40,7 @@ Effects 04-15 follow, control for control, the descriptions of Tonverk's FX mach
 
 **SEND page:** on a sound track, press AMP, then AMP again. Encoder A sets that track's send, 0-127 (default 0).
 
-Pressing the same key once more, or any other page or menu key, goes back to the stock pages. The effect and its controls are kept in the kit, the send in the sound, LEV in the project: save the kit and the project to keep them. A turned control shows its value in place of its name for a moment.
+Pressing the same key once more, or any other page or menu key, goes back to the stock pages. The effect and its controls are kept in the kit (each kit its own), the send in the sound, LEV in the project: save the kit and the project to keep them. A turned control shows its value in place of its name for a moment.
 
 ## Usage
 

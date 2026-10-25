@@ -1022,7 +1022,18 @@ static void notify(void *acc)
     changed(acc, &info);
 }
 
-static void *live_kit(void) { return (char *)PROJECT_SINGLETON() + PROJECT_KIT; }
+// The kit now in use: its first sound sits KIT_SOUND0 bytes in (the layout
+// core-ar2's store-check reads), and stock's accessor gives that sound for the
+// active kit, so the kit follows LOAD KIT and pattern changes. (The project's
+// +352 object is not a kit: fields kept there were never saved; a fixed
+// working-kit address did not follow a kit change.)
+#define KIT_SOUND0 42
+
+static void *live_kit(void)
+{
+    char *s = (char *)live_sound(accessor(0));
+    return s ? s - KIT_SOUND0 : 0;
+}
 
 // Kit fields hold each control XOR its effect's default, so zero is the
 // chorus at its defaults.
@@ -1224,10 +1235,34 @@ void send_fx_project(int how, unsigned dropped)
 
 static void *g_bmp;
 
+// The bitmap as stock's fillrect (FILLRECT_AT, read for OS 1.74) addresses
+// it: +4 width, +8 height, +12 words a column, +16 the words. Each column is
+// a run of 32-bit words, the bitmap's row r at bit 31 - (r & 31) of word
+// r >> 5. A point is set here directly: through fillrect a page took some
+// 500 calls a frame and the screen lagged behind the knobs on the unit.
+static unsigned *g_words;
+static int g_w, g_h, g_stride;
+
+static void bitmap_open(void *bmp)
+{
+    char *b = (char *)bmp;
+    g_bmp = bmp;
+    g_w = *(int *)(b + 4);
+    g_h = *(int *)(b + 8);
+    g_stride = *(int *)(b + 12);
+    g_words = *(unsigned **)(b + 16);
+}
+
 static void px(int x, int y, int c)
 {
-    if (x >= 0 && x < 128 && y >= 0 && y < 64)
-        FILLRECT(g_bmp, x, 63 - y, x, 63 - y, c);
+    int r = 63 - y;
+    unsigned *w, bit;
+    if (x < 0 || x >= g_w || r < 0 || r >= g_h || x >= 128 || y < 0)
+        return;
+    w = g_words + x * g_stride + (r >> 5);
+    bit = 0x80000000u >> (r & 31);
+    if (c) *w |= bit;
+    else *w &= ~bit;
 }
 
 static void rect(int x0, int y0, int x1, int y1, int c) { FILLRECT(g_bmp, x0, 63 - y1, x1, 63 - y0, c); }
@@ -1629,6 +1664,6 @@ void send_fx_draw(void *bmp, void *ctrl)
     if (!page)
         return;
     last_shown = shown_state();
-    g_bmp = bmp;
+    bitmap_open(bmp);
     if (page == 1) draw_fx(); else draw_send();
 }
