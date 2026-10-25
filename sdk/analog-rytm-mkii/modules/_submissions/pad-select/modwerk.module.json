@@ -1,0 +1,128 @@
+{
+  "schemaVersion": 3,
+  "id": "pad-select",
+  "name": "Pad Select",
+  "version": "0.2.0-experimental",
+  "machine": "analog-rytm-mkii",
+  "category": "system",
+  "exclusive": false,
+  "author": {
+    "github": "Iced-Cream",
+    "credits": [
+      "Iced-Cream — the mod (rytm2_mods pad-select), its design and code, and this Modwerk module.",
+      "MrScruff — the globals-slot lookup, after his voice-dac (rytm-mods 0013-voice-dac, as rytm2_mods ports it).",
+      "irpina — Elekloader and core-ar2, the core it links with and whose mod storage keeps its setting."
+    ]
+  },
+  "maintainers": [
+    "Iced-Cream"
+  ],
+  "presentation": {
+    "label": "PAD SELECT",
+    "family": "Workflow",
+    "summary": "With PAD+TRIG SEL TRK checked, the pads and TRIG keys 1-12 sound only in LIVE RECORDING; otherwise a press selects its track silently and FUNC + pad plays it.",
+    "overview": "Pad Select adds PAD+TRIG SEL TRK to GLOBAL > SEQUENCER CONFIG, a checkbox after AUTO TRK SWITCH. Checked, a pad or TRIG key 1-12 makes sound only in LIVE RECORDING. Stopped, playing or in GRID RECORDING, a press selects its track and stays silent, with no MIDI note out; hold FUNC to play it, at the pad's own velocity. STEP RECORDING, CHROMATIC mode, MIDI notes in, TRIG + YES and the sequencer behave as stock. Unchecked, everything is stock. The setting is kept per GLOBAL slot and saved with the project.",
+    "highlights": [
+      "Tap pads to pick tracks without hearing them.",
+      "FUNC + pad plays, at the pad's own velocity.",
+      "LIVE RECORDING and STEP RECORDING work as stock.",
+      "One checkbox per GLOBAL slot, saved with the project; unchecked is stock."
+    ],
+    "usage": [
+      "Use a build containing Pad Select. Press SETTINGS, open GLOBAL > SEQUENCER CONFIG and check PAD+TRIG SEL TRK, just after AUTO TRK SWITCH, with YES or LEFT/RIGHT.",
+      "With the sequencer stopped, tap pad 3: it makes no sound and track 3 is selected. Hold FUNC and tap pad 3 to hear it, soft or hard. TRIG 5 selects track 5 the same way.",
+      "Press RECORD + PLAY for LIVE RECORDING: pads play and record as stock. Uncheck PAD+TRIG SEL TRK to get stock behaviour everywhere."
+    ]
+  },
+  "access": {
+    "location": "SETTINGS > GLOBAL > SEQUENCER CONFIG: PAD+TRIG SEL TRK, after AUTO TRK SWITCH.",
+    "steps": [
+      "Press SETTINGS and open GLOBAL, then SEQUENCER CONFIG.",
+      "Move to PAD+TRIG SEL TRK, after AUTO TRK SWITCH, and press YES (or LEFT/RIGHT) to check it."
+    ],
+    "screenshots": []
+  },
+  "controls": [
+    {
+      "name": "PAD+TRIG SEL TRK",
+      "default": 0,
+      "doc": "Checkbox in GLOBAL > SEQUENCER CONFIG, after AUTO TRK SWITCH. YES toggles it, RIGHT checks, LEFT unchecks. Checked: outside LIVE and STEP RECORDING, pads and TRIG keys 1-12 select their track silently and FUNC + press plays. Kept per GLOBAL slot.",
+      "labels": [
+        "Unchecked",
+        "Checked"
+      ]
+    },
+    {
+      "name": "FUNC + pad, FUNC + TRIG 1-12",
+      "default": null,
+      "doc": "While PAD+TRIG SEL TRK applies, plays the track: a pad at its own velocity, a TRIG key at the track's VEL. In LIVE and STEP RECORDING, or unchecked, as stock.",
+      "labels": null
+    }
+  ],
+  "compatibility": {
+    "releases": [
+      "1.74"
+    ],
+    "requires": [],
+    "conflicts": [],
+    "limitations": [
+      "Built for OS 1.74 only, with core-ar2 0.3.",
+      "Not yet run on a unit or in an emulator.",
+      "Live recording counts only while the sequencer runs: paused in LIVE RECORDING, pads select silently.",
+      "RTRG + pad outside live recording selects silently; FUNC + RTRG + pad rolls.",
+      "A GLOBAL slot saved without the setting, or received as Global SysEx, loads unchecked."
+    ]
+  },
+  "platform": {
+    "kind": "elemod",
+    "core": "0.3",
+    "build": "build.json",
+    "events": [],
+    "claims": [
+      "ui:pad press outside CHROMATIC mode",
+      "ui:TRIG 1-12 press",
+      "ui:FUNC + pad",
+      "ui:FUNC + TRIG 1-12",
+      "ui:GLOBAL > SEQUENCER CONFIG row after AUTO TRK SWITCH"
+    ]
+  },
+  "resources": {
+    "memoryBytes": 764,
+    "fastBytes": 0,
+    "load": {
+      "display": "None in the audio path: a few compares per pad or TRIG key press",
+      "method": "static",
+      "conditions": "Static: the sites are in KeyboardView's pad and TRIG key handlers, their shared play routine and the SEQUENCER CONFIG menu's constructor; each press reads one storage bit and the record state. Nothing is added to the audio, sequencer or tick paths. Not a measurement."
+    }
+  },
+  "evidence": {
+    "tier": "none",
+    "moduleVersion": "0.2.0-experimental",
+    "sourceSha256": "10bc355dc8c3277f7d221fc6ae939358dd5fdb537695216e3b618c777540aecd",
+    "reports": [
+      "TESTING.md"
+    ],
+    "hardware": null,
+    "verifiedBy": null
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "Not run on a unit or in an emulator. Modwerk's linker builds it on stock OS 1.74 with core-ar2 0.3, alone and beside Filter Hz and Loop Sync; see TESTING.md."
+  },
+  "license": {
+    "spdx": "GPL-2.0-only",
+    "file": "LICENSE",
+    "declaration": "Iced-Cream's original code, under GPL-2.0-only as rytm2_mods; the globals-slot lookup follows MrScruff's voice-dac, under the same licence. include/ar2-1.74.inc names firmware routines by address only; each patch precondition is an address, a length and a SHA-256."
+  },
+  "media": [
+    {
+      "path": "media/thumbnail.svg",
+      "kind": "thumbnail",
+      "caption": "Pad Select",
+      "alt": "Original illustration of twelve pads: a tapped pad selects its track silently, and FUNC + pad plays it.",
+      "credit": "Iced-Cream",
+      "license": "GPL-2.0-only",
+      "source": "Original conceptual illustration in the shared signal-art style; not a device screenshot."
+    }
+  ]
+}
