@@ -6,7 +6,7 @@ import { encodeBin } from '../../../vendor/elekloader/kit/src/elek.ts'
 import { removalPackage } from './module-set'
 import { LinkBusyError, OctatrackLink, openFailure, tabLocks } from './octatrack-link'
 import { UploadUnconfirmedError } from './upload-session'
-import { UsbVendorTransport } from './upload-usb'
+import { UsbVendorTransport, parseBaseSlots } from './upload-usb'
 
 const settle = () => new Promise(resolve => setTimeout(resolve, 0))
 const deferred = () => { let resolve!: () => void; const promise = new Promise<void>(done => { resolve = done }); return { promise, resolve } }
@@ -448,6 +448,31 @@ describe('loading a module set', () => {
     unit.stuck = 2; await link.undo()
     expect(link.getState()).toMatchObject({ status: 'ready', notice: { tone: 'success', text: 'Undone. Your Octatrack is back to how it was.' } })
   })
+  it('finishes an acknowledged twenty-row rollback without reporting a failed sync', async () => {
+    const unit = fakeUnit(), base = fakeSession(unit), rollback = vi.fn()
+    unit.moduleSets = true
+    const connect: typeof base = async (...args) => {
+      const session = await base(...args)
+      return Object.create(session, { rollback: { value: () => { rollback(); return session.rollback() } } })
+    }
+    const link = new OctatrackLink(unit.usb, connect), stop = link.start()
+    try {
+      await vi.waitFor(() => expect(link.getState().status).toBe('ready'))
+      const changes = Array.from({ length: 20 }, (_, i) => change((256 + i).toString(16).padStart(8, '0')))
+      await link.update('Large set', changes)
+      expect(link.getState().status).toBe('trial')
+      // The real backend restores one row per acknowledged engine turn.
+      unit.stuck = changes.length - 1
+      vi.useFakeTimers({ toFake: ['setTimeout', 'Date'] })
+      const undo = link.undo()
+      await vi.advanceTimersByTimeAsync(5000)
+      await undo
+      expect(rollback).toHaveBeenCalledTimes(20)
+      expect(unit.kept).toEqual([])
+      expect(unit.modules).toEqual([])
+      expect(link.getState()).toMatchObject({ status: 'ready', active: FAKE_BASE, notice: { tone: 'success', text: 'Undone. Your Octatrack is back to how it was.' } })
+    } finally { stop() }
+  })
   it('undoes the set when the self-test fails', async () => {
     const { unit, link } = await loaded(async () => 'the Octatrack’s DSP stopped')
     expect(unit.kept).toEqual([])
@@ -544,6 +569,14 @@ describe('several tabs of the site', () => {
   })
 })
 
+// flash.h's SLOTS record: "MWSS", layout, the running slot, flags, then per slot generation, state, tries.
+function record(layout: number, running: number, flags: number, a: [number, number, number], b: [number, number, number]) {
+  const view = new DataView(new ArrayBuffer(24))
+  ;[0x4d, 0x57, 0x53, 0x53, layout, running, flags].forEach((byte, i) => view.setUint8(i, byte))
+  ;[a, b].forEach(([generation, state, tries], k) => { view.setUint32(8 + 8 * k, generation); view.setUint8(12 + 8 * k, state); view.setUint8(13 + 8 * k, tries) })
+  return new Uint8Array(view.buffer)
+}
+
 describe('updating the base over USB', () => {
   // A card file as buildBase makes one: the kit's container around a small packed image.
   function fakeBin() {
@@ -597,6 +630,88 @@ describe('updating the base over USB', () => {
     expect(unit.flashed).toBe(FAKE_BASE); expect(unit.base).toBe(expected)
     await vi.waitFor(() => expect(link.getState().status).toBe('ready'))
     expect(link.getState().baseUpdate).toBeUndefined()
+  })
+  // With fake timers: the reconnects wait for the unit to stay connected for seconds.
+  async function run(update: Promise<void>) {
+    let done = false
+    update.then(() => { done = true }, () => { done = true })
+    while (!done) await vi.advanceTimersByTimeAsync(100)
+    return update
+  }
+  it('carries on through a USB dropout during the write until the unit is back on the new base from NOR', async () => {
+    const { unit, link } = await linked(), { bin, expected } = fakeBin(), steps: string[] = []
+    unit.writeDropouts = 1
+    vi.useFakeTimers({ toFake: ['setTimeout'] })
+    await run(link.updateBase(bin, expected, step => steps.push(step)))
+    expect(dedupe(steps)).toEqual(['staging', 'starting', 'started', 'writing', 'reconnecting', 'writing', 'restarting', 'done'])
+    expect(unit.flashed).toBe(expected)
+    expect(link.getState()).toMatchObject({ status: 'ready', identity: { base: expected }, baseUpdate: undefined })
+  })
+  it('writes again after a failed verify, the unit staying up from RAM', async () => {
+    const { unit, link } = await linked(), { bin, expected } = fakeBin(), steps: string[] = []
+    unit.writeFails = 1
+    vi.useFakeTimers({ toFake: ['setTimeout'] })
+    await run(link.updateBase(bin, expected, step => steps.push(step)))
+    expect(dedupe(steps)).toEqual(['staging', 'starting', 'started', 'writing', 'reconnecting', 'writing', 'restarting', 'done'])
+    expect(unit.flashed).toBe(expected)
+  })
+  it('asks to keep the unit on when the save is never confirmed', async () => {
+    const { unit, link } = await linked(), { bin, expected } = fakeBin(), steps: string[] = []
+    unit.writeFails = 9
+    vi.useFakeTimers({ toFake: ['setTimeout'] })
+    await expect(run(link.updateBase(bin, expected, step => steps.push(step)))).rejects.toThrow('Keep it switched on')
+    expect(steps.filter(step => step === 'reconnecting')).toHaveLength(3)
+    expect(unit.flashed).toBe(''); expect(unit.base).toBe(expected) // still up from RAM, for the next try
+    expect(link.getState().baseUpdate).toBeUndefined()
+  })
+  // At most one restart per update (owner, 25 October 2026).
+  async function counting(unit: ReturnType<typeof fakeUnit>, layout: number) {
+    unit.slots = record(layout, layout === 1 ? 0 : 0xff, 0, layout === 1 ? [2, 3, 1] : [0, 0, 0], [0, 0, 0])
+    const link = new OctatrackLink(unit.usb, fakeSession(unit), 300), plug = unit.plug.bind(unit)
+    let starts = 0
+    unit.plug = kind => { starts++; plug(kind) }
+    link.start(); await vi.waitFor(() => expect(link.getState().status).toBe('ready'))
+    return { link, restarts: () => starts }
+  }
+  it('updates a unit on two slots with one restart: the running base writes the new one into its spare slot', async () => {
+    const unit = fakeUnit(), { link, restarts } = await counting(unit, 1), { bin, expected } = fakeBin(), steps: string[] = []
+    expect(link.getState().slots).toMatchObject({ layout: 'two' })
+    await link.updateBase(bin, expected, step => steps.push(step))
+    expect(dedupe(steps)).toEqual(['writing', 'restarting', 'done'])
+    expect(unit.flashed).toBe(expected); expect(unit.base).toBe(expected); expect(restarts()).toBe(1)
+  })
+  it('converts a unit with one copy with one restart: the trial, then the new base saves itself and runs on', async () => {
+    const unit = fakeUnit(), { link, restarts } = await counting(unit, 0), { bin, expected } = fakeBin(), steps: string[] = []
+    await link.updateBase(bin, expected, step => steps.push(step))
+    expect(dedupe(steps)).toEqual(['staging', 'starting', 'started', 'writing', 'done'])
+    expect(unit.flashed).toBe(expected); expect(unit.base).toBe(expected); expect(restarts()).toBe(1)
+    expect(link.getState()).toMatchObject({ status: 'ready', baseUpdate: undefined, slots: { layout: 'two' } })
+  })
+  it('stops at once when flash holds neither layout: nothing was written (refusal 108)', async () => {
+    const { unit, link } = await linked(), { bin, expected } = fakeBin(), steps: string[] = []
+    unit.writeRefusal = 8 // flash.h FLASH_LAYOUT
+    await expect(link.updateBase(bin, expected, step => steps.push(step))).rejects.toThrow('(reason 108), so nothing was written')
+    expect(steps).not.toContain('reconnecting')
+  })
+})
+
+describe('the base slots', () => {
+  it('reads the layout, the running slot and the stub going back to the previous base', () => {
+    expect(parseBaseSlots(new DataView(record(1, 0, 1, [2, 3, 1], [3, 1, 4]).buffer))).toEqual({ layout: 'two', running: 0, fellBack: true, confirmed: false,
+      slots: [{ generation: 2, whole: true, confirmed: true, tries: 1 }, { generation: 3, whole: true, confirmed: false, tries: 4 }] })
+    expect(parseBaseSlots(new DataView(record(0, 0xff, 0, [0, 0, 0], [0, 0, 0]).buffer))).toMatchObject({ layout: 'one', running: null })
+    expect(parseBaseSlots(new DataView(new ArrayBuffer(24)))).toBeNull() // before the base's first look
+    expect(() => parseBaseSlots(new DataView(new ArrayBuffer(12)))).toThrow()
+  })
+  it('says so on connect when the new base did not start and the previous one runs', async () => {
+    const unit = fakeUnit()
+    unit.slots = record(1, 0, 1, [2, 3, 1], [3, 1, 4])
+    const link = new OctatrackLink(unit.usb, fakeSession(unit), 300)
+    link.start(); await vi.waitFor(() => expect(link.getState().status).toBe('ready'))
+    expect(link.getState().notice).toMatchObject({ tone: 'error', text: expect.stringContaining('went back to its previous base') })
+    const quiet = fakeUnit(), other = new OctatrackLink(quiet.usb, fakeSession(quiet), 300) // a base before the slots stalls SLOTS
+    other.start(); await vi.waitFor(() => expect(other.getState().status).toBe('ready'))
+    expect(other.getState().notice).toBeUndefined()
   })
 })
 

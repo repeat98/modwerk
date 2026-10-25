@@ -356,10 +356,11 @@ def recipe(image, device, dsp, assemble, work, probe=None, burn=0, ids=32):
 
 
 
-def catalog_c(layout, reserve, ids=32):
+def catalog_c(layout, costs, ids=32):
     """dl_catalog and dl_codes (manager.c) as C: each stock DSP effect's package per core, and every
-    other id what stock runs there (resident; a module's id until the module registers). Each id is
-    charged `reserve` cycles, the dearest stock effect, as stock-first admission does (dsp.c). `ids` entries (the base's
+    other id what stock runs there (resident; a module's id until the module registers). Each stock effect is charged
+    its own cycles, `costs[id]` (a loaded one must have one), and every other id `costs.get(id, 0)`: dsp.c charges each
+    slot at least the dearest stock effect its bank's Parts name there. `ids` entries (the base's
     MODWERK_FX_IDS): past stock's 32, the null stub, resident, until step 4 of docs/OCTATRACK_MORE_EFFECT_IDS.md."""
     a, b = layout['A'], layout['B']
     if {fx: (len(w), a['stock'][fx]['slots']) for fx, w in a['words'].items()} != \
@@ -382,8 +383,8 @@ def catalog_c(layout, reserve, ids=32):
     lines.append('        all[i].to[w] = (uint32_t)all[i].from[3 * w] << 16 | (uint32_t)all[i].from[3 * w + 1] << 8 | all[i].from[3 * w + 2];')
     lines.append('}')
     lines.append('struct dl_package dl_catalog[%d] = {%s};' % (ids, ', '.join(
-        '{%d, 1, %d, %d, %d, 1, %d}' % ((len(a['words'][fx]), reserve, a['stock'][fx]['slots'], 0, a['reads'][fx]) if fx in a['stock']
-                                        else (0, reserve, 3, 1, a['reads'][fx] if fx < 32 else 0)) for fx in range(ids))))
+        '{%d, 1, %d, %d, %d, 1, %d}' % ((len(a['words'][fx]), costs[fx], a['stock'][fx]['slots'], 0, a['reads'][fx]) if fx in a['stock']
+                                        else (0, costs.get(fx, 0), 3, 1, a['reads'][fx] if fx < 32 else 0)) for fx in range(ids))))
     rows = []
     for n, tag in enumerate('AB'):
         s, w = layout[tag]['stock'], layout[tag]['words']

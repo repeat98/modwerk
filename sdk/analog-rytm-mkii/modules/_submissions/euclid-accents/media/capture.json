@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "machine": "analog-rytm-mkii",
+  "moduleId": "euclid-accents",
+  "moduleVersion": "1.1.0",
+  "firmware": "1.74",
+  "capturedAt": "2026-10-22T22:25:00Z",
+  "imageSha256": "48697da941188e56dadd59f1344fd2becc2069296c0b50d7106e47850ac5efc8",
+  "mainSha256": "acb72de4548d63d850a2f8e97391c010afcfde0f5087abe9e836d800822b3bb4",
+  "stockSha256": "cb0f99d620edde994fb860c0e79cc2464e427d06882828cfdfb00fc53700e123",
+  "build": "Modwerk's linker (kit 0.7.0 parity): core-ar2 0.3 release (6b97dfb3…3e58) + rytm2_mods v1.2 euclid-accents-1.1-os1.74.elemod (ddba6f8a…fd73), --version EA74",
+  "emulator": {
+    "name": "rytm-emu",
+    "repository": "https://github.com/trigcondition/rytm-emu",
+    "revision": "c5732f0",
+    "binary": "dtboot (cargo build --release)",
+    "settings": "no card image, JIT on"
+  },
+  "conditions": "Headless cold boot; four held NO presses clear the missing-calibration notices; TRIG twice opens BD's EUCLIDEAN page; one value step on EUC and five on PL1; then twelve value steps on OP (encoder 7), each followed 150M later by a zero-count turn only to take a frame. The emulator's value steps do not always move OP by exactly one value, so XOR* and SUB* were not framed. Stock 1.74 with the same input gives byte-identical frames until OP passes SUB, where stock stays at SUB.",
+  "captures": [
+    {
+      "path": "media/euclidean-page.png",
+      "sha256": "59e5ccce51f893093791c7e639869ec6408c2222f3b47246531ab1c16ceb7f4b",
+      "frame": "step06_TRIG.png",
+      "plan": "DTBOOT_STEPS=1 DTBOOT_PNG_DIR=out DTBOOT_TURN_PNG=out dtboot ea74.syx --instr 14000M --every 1000M --press NO@4500M:80M --press NO@5300M:80M --press NO@6100M:80M --press NO@6900M:80M --press TRIG@7500M:40M --press TRIG@8000M:40M --nudge 3:1@8400M --nudge 0:1@8800Mx5/100M --turn 3:0@9400Mx1 --nudge 7:1@9600Mx12/300M --turn 7:0@9750Mx12/300M"
+    },
+    {
+      "path": "media/op-or-accent.png",
+      "sha256": "75c4cdfecce670b0ad9403272531bcd652c6ae98e50b167caad8972e1dcaed8b",
+      "frame": "turn17.png",
+      "plan": "DTBOOT_STEPS=1 DTBOOT_PNG_DIR=out DTBOOT_TURN_PNG=out dtboot ea74.syx --instr 14000M --every 1000M --press NO@4500M:80M --press NO@5300M:80M --press NO@6100M:80M --press NO@6900M:80M --press TRIG@7500M:40M --press TRIG@8000M:40M --nudge 3:1@8400M --nudge 0:1@8800Mx5/100M --turn 3:0@9400Mx1 --nudge 7:1@9600Mx12/300M --turn 7:0@9750Mx12/300M"
+    },
+    {
+      "path": "media/op-and-accent.png",
+      "sha256": "54211ca520caf047a6da2d28033e4bb7883cb9f3ca19b691fc8127b857ff8f8c",
+      "frame": "turn19.png",
+      "plan": "DTBOOT_STEPS=1 DTBOOT_PNG_DIR=out DTBOOT_TURN_PNG=out dtboot ea74.syx --instr 14000M --every 1000M --press NO@4500M:80M --press NO@5300M:80M --press NO@6100M:80M --press NO@6900M:80M --press TRIG@7500M:40M --press TRIG@8000M:40M --nudge 3:1@8400M --nudge 0:1@8800Mx5/100M --turn 3:0@9400Mx1 --nudge 7:1@9600Mx12/300M --turn 7:0@9750Mx12/300M"
+    }
+  ]
+}

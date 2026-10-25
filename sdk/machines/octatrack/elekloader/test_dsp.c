@@ -119,7 +119,7 @@ const fx_set modwerk_fx_modules = {{1u << 26 | 1u << 27}};
 #endif
 /* identity.c's catalog: SPRING REV (21) a stock package loaded on demand, every other id what stock runs. */
 #define STOCK4 STOCK, STOCK, STOCK, STOCK
-struct dl_package dl_catalog[MODWERK_FX_IDS] = {STOCK4, STOCK4, STOCK4, STOCK4, STOCK4, STOCK, {1063, 1, MODWERK_DSP_RESERVE, 2, 0, 1, 1}, STOCK, STOCK, STOCK4, STOCK4};
+struct dl_package dl_catalog[MODWERK_FX_IDS] = {STOCK4, STOCK4, STOCK4, STOCK4, STOCK4, STOCK, {1063, 1, 299, 2, 0, 1, 1}, STOCK, STOCK, STOCK4, STOCK4};
 struct code dl_codes[2][MODWERK_FX_IDS];
 const uint16_t modwerk_dsp_arena[2] = {2320, 2300};
 static int idle = 1;
@@ -133,6 +133,7 @@ static void sources(void)
     const uint32_t a = 0xab, b = 0xbb; /* two machine modules' runtime ids */
     /* Core 0 (tracks 5-8) keeps 3120 - 8 x 342 = 384 cycles; core 1 (tracks 1-4) 3565 - 2736 = 829. */
     CHECK(modwerk_dsp_source_claim(4, a, 411, 3, RUNTIME_EXECUTED) == RUNTIME_CYCLES); /* 720 + 6 > 384 */
+    { unsigned rc; uint32_t ra; modwerk_dsp_source_refusal(&rc, &ra); CHECK(rc == 0 && ra == 726); } /* what the box shows */
     CHECK(modwerk_dsp_source_charge(0) == 0 && modwerk_dsp_source_charge(1) == 0);
     CHECK(modwerk_dsp_source_claim(0, a, 411, 3, RUNTIME_EXECUTED) == RUNTIME_OK);     /* 726 <= 829 */
     CHECK(modwerk_dsp_source_charge(1) == 726 && modwerk_dsp_source_charge(0) == 0);
@@ -205,8 +206,8 @@ int main(void)
     modwerk_machine_dsp_switch(&none, &fx);
     CHECK(dl_catalog[26].words == 3 && !dl_catalog[26].resident && dl_catalog[26].qualified && dl_catalog[26].slots == 1 &&
           dl_catalog[26].cycles == (244 * 7 + 3) / 4 && dl_catalog[26].alignment == 1 && !dl_catalog[26].buffer); /* 7/4 of its claim */
-    CHECK(dl_catalog[0].cycles == MODWERK_DSP_RESERVE && dl_catalog[0].resident && dl_catalog[21].cycles == MODWERK_DSP_RESERVE &&
-          !dl_catalog[21].resident); /* NONE; a stock package */
+    CHECK(!dl_catalog[0].cycles && dl_catalog[0].resident && dl_catalog[21].cycles == 299 &&
+          !dl_catalog[21].resident); /* NONE, free; a stock package at its own cost */
     CHECK(dl_codes[0][26].words == words && dl_codes[1][26].words == words && dl_codes[1][26].count == 3 && dl_codes[1][26].init == 1 &&
           dl_codes[1][26].proc == 2 && dl_codes[0][26].relocations == relocations && dl_codes[0][26].relocation_count == 1);
     /* Another module preferring 26 gets 27; with both held there is none left; a replacement keeps its own. */
@@ -228,15 +229,15 @@ int main(void)
     struct modwerk_module_load loads[MODWERK_FX_IDS];
     CHECK(modwerk_dsp_module_loads(loads) == 1 && loads[0].id == 26 && loads[0].cycles == (244 * 7 + 3) / 4 &&
           !loads[0].measured && loads[0].slots[0] == 1 && !loads[0].slots[1]);
-    /* The box after a pick (status.c): T6 FX2 is core 0's; its other seven slots at least the stock reserve. */
+    /* The box after a pick (status.c): T6 FX2 is core 0's; its other seven slots each at least its floor, SPRING REV on T5. */
     struct modwerk_dsp_budget budget;
-    slot_cycles[13] = 427; dl_residency_words[0] = 1200;
+    slot_cycles[13] = 427; dl_residency_words[0] = 1200; modwerk_test_live_fx[4] = 21;
     CHECK(modwerk_dsp_budget(13, &budget) && budget.core == 0 && budget.allowance == 3120 && budget.effect_cycles == 427 &&
-          budget.charge == 7u * MODWERK_DSP_RESERVE + 427u + modwerk_dsp_source_charge(0) && budget.words == 1200 &&
+          budget.charge == 299u + 427u + modwerk_dsp_source_charge(0) && budget.words == 1200 &&
           budget.arena == 2320 && !memcmp(budget.name, loads[0].name, 16));
     CHECK(!modwerk_dsp_budget(5, &budget) && !modwerk_dsp_budget(16, &budget)); /* a slot with no module; past the slots */
     CHECK(modwerk_dsp_booked(0) == budget.charge * 1000u / budget.allowance); /* the STATUS page: the same sum */
-    slot_cycles[13] = 0; dl_residency_words[0] = 0;
+    slot_cycles[13] = 0; dl_residency_words[0] = 0; modwerk_test_live_fx[4] = 0;
     modwerk_test_live_fx[13] = 4; idle = 0;
     CHECK(modwerk_machine_dsp_admit(&fx, &none) == RUNTIME_BUSY && modwerk_machine_dsp_admit(&fx, &fx) == RUNTIME_BUSY);
     third = fx; third.module = 73;
@@ -244,7 +245,7 @@ int main(void)
     idle = 1;
     CHECK(modwerk_machine_dsp_admit(&fx, &none) == RUNTIME_OK);
     modwerk_machine_dsp_switch(&fx, &none);
-    CHECK(dl_catalog[26].resident && !dl_catalog[26].words && dl_catalog[26].qualified && dl_catalog[26].cycles == MODWERK_DSP_RESERVE &&
+    CHECK(dl_catalog[26].resident && !dl_catalog[26].words && dl_catalog[26].qualified && !dl_catalog[26].cycles &&
           !dl_codes[0][26].words && !dl_codes[1][26].count);
     /* What the current bank names: the live effects and every Part, working and saved; module ids only. */
     static uint8_t bank[0x9504a + 4 * 6322];
@@ -256,6 +257,45 @@ int main(void)
     bank[0x9504a + 1 * 6322 + 0] = 27;                  /* Part 2's saved copy, FX1 on T1 */
     bank[0x8ed80 + 5] = 21;                             /* SPRING REV: stock, not a module */
     CHECK(modwerk_dsp_used().w[0] == (1u << 26 | 1u << 27));
+    /* Each slot's least charge (beta finding 34): the dearest stock effect this bank's Parts name there, working or saved,
+     * the live one and the one asked for; a module id counts nothing (Part 2's saved T1 FX1 names 27). */
+    {
+        uint32_t least[16];
+        uint8_t ids[16];
+        for (unsigned i = 0; i < 16u; ++i) ids[i] = 255u;
+        dl_catalog[13].cycles = 342;                    /* DJ EQ, as identity.c charges it */
+        bank[0x9504a + 3 * 6322 + 12] = 13;             /* Part 4's saved copy, FX2 on T5 */
+        modwerk_dsp_slot_floors(ids, least);
+        CHECK(least[5] == 299 && least[12] == 342 && !least[0] && !least[9] && !least[1]);
+        ids[0] = 13;                                    /* DJ EQ asked for on T1 FX1 */
+        modwerk_test_live_fx[1] = 21;                   /* SPRING REV running on T2 FX1 */
+        modwerk_dsp_slot_floors(ids, least);
+        CHECK(least[0] == 342 && least[1] == 299);
+        bank[0x9504a + 3 * 6322 + 12] = 0, modwerk_test_live_fx[1] = 4, dl_catalog[13].cycles = 0;
+        /* A stock pick dearer than the bank uses there, while another Part's modules fill that core, is refused: the
+         * switch back to that Part then needs no room it was not given. A target naming only what the bank and the
+         * tracks do (a Part switch) raises nothing and is never refused here. Core 1: Part 1 books 3,318 of 3,565. */
+        static const uint8_t one[16] = {4, 4, 4, 4, 0, 0, 0, 0, 26, 26, 26, 8, 0, 0, 0, 0}, two[16] = {4, 4, 4, 4, 0, 0, 0, 0, 8, 8, 8, 8, 0, 0, 0, 0};
+        uint8_t live[16], part1[16], part2[16];
+        const uint32_t own26 = owner[26];
+        const struct dl_package cat26 = dl_catalog[26], cat4 = dl_catalog[4], cat5 = dl_catalog[5];
+        memcpy(live, modwerk_test_live_fx, 16), memcpy(part1, bank + 0x8ed80, 16), memcpy(part2, bank + 0x8ed80 + 6322, 16);
+        owner[26] = 0x70, dl_catalog[26].cycles = 726, dl_catalog[4].cycles = 285, dl_catalog[5].cycles = 80;
+        memcpy(bank + 0x8ed80, one, 16), memcpy(bank + 0x8ed80 + 6322, two, 16), memcpy(modwerk_test_live_fx, two, 16);
+        memcpy(ids, two, 16);
+        CHECK(!modwerk_dsp_slot_floors(ids, least));                  /* what runs */
+        memcpy(ids, one, 16);
+        CHECK(!modwerk_dsp_slot_floors(ids, least));                  /* the switch to Part 1 */
+        memcpy(ids, two, 16), ids[11] = 21;                           /* SPRING REV on T4 FX2: 3,318 + 299 */
+        CHECK(modwerk_dsp_slot_floors(ids, least) == 2u && least[11] == 299);
+        ids[11] = 5;                                                  /* SPATIALIZER, 80: fits */
+        CHECK(!modwerk_dsp_slot_floors(ids, least));
+        memcpy(ids, two, 16), ids[15] = 21;                           /* on core 0, which has room */
+        CHECK(!modwerk_dsp_slot_floors(ids, least));
+        CHECK(modwerk_dsp_booked(1) == 3318u * 1000u / 3565u);       /* the STATUS row: the bank's dearest set */
+        memcpy(modwerk_test_live_fx, live, 16), memcpy(bank + 0x8ed80, part1, 16), memcpy(bank + 0x8ed80 + 6322, part2, 16);
+        owner[26] = own26, dl_catalog[26] = cat26, dl_catalog[4] = cat4, dl_catalog[5] = cat5;
+    }
     /* One id, stock or module: what an engine's use reads (stock COMPRESSOR, 24, for Sidechain). */
     CHECK(modwerk_dsp_bank_names(21) && modwerk_dsp_bank_names(26) && modwerk_dsp_bank_names(27) && !modwerk_dsp_bank_names(24));
     bank[0x9504a + 2 * 6322 + 15] = 24;                 /* Part 3's saved copy, FX2 on T8 */

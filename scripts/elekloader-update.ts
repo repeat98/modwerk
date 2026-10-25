@@ -121,7 +121,7 @@ export function describeChange(c: Change) {
 export function followUps(root: string, changes: readonly Change[], manifest: { components: { id: string; usedIn?: string[] }[] }, required: ReadonlySet<string> = new Set()) {
   const out: string[] = []
   const cores = changes.filter(c => c.id === 'core')
-  if (cores.length) out.push(`Cores changed (${cores.map(describeChange).join('; ')}): builds for those OS releases change. Build them and record the identities in docs/VERIFICATION.md.`)
+  if (cores.length) out.push(`Cores changed (${cores.map(describeChange).join('; ')}): builds for those OS releases change. Build them and record the identities in docs/verification/<YYYY-MM-DD>-<topic>.md.`)
   for (const id of [...new Set(changes.filter(c => c.id !== 'core').map(c => `${DEVICES[c.device]}/${c.id}`))].sort()) {
     const [machine, mod] = id.split('/'), folder = `sdk/${machine}/modules/${mod}`
     const mine = changes.filter(c => c.id === mod && DEVICES[c.device] === machine), gone = mine.filter(c => !c.to.length).map(c => 'OS ' + c.os)
@@ -297,7 +297,7 @@ async function main(root: string, argv: string[]) {
       if (newCatalog.revision !== oldCatalog.revision) notes.push('Configuration backups made before this name the old catalog revision. They still import, with their modules checked again against the library.')
     }
     const todo = [...followUps(root, changes, JSON.parse(readFileSync(manifestPath, 'utf8')), required),
-      'Run npm run check, then record the update in docs/VERIFICATION.md (vendor/elekloader/README.md, "Updating").']
+      'Run npm run check, then record the update in docs/verification/<YYYY-MM-DD>-<topic>.md (vendor/elekloader/README.md, "Updating").']
     for (const note of notes) console.log('Note: ' + note)
     console.log('Left to do:\n' + todo.map(item => '  - ' + item).join('\n'))
   } finally {

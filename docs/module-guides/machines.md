@@ -13,7 +13,7 @@ Read [the module guides index](README.md) first. A machine that sequences notes 
 
 A new machine must be a first-class entry wherever the instrument lists machines. Analog BD shows what that takes: about twenty guarded detours, each named for the place it covers (`sdk/octabam/modules/analog-bassdrum/manifest.py`).
 
-- [ ] **The machine chooser.** The track's machine list opens on your machine for a track that uses it, highlights it, and admits it when the choice is committed (`ab_chooser_open`, `ab_chooser_row`, `ab_main_commit`).
+- [ ] **The machine chooser.** The track's machine list opens on your machine for a track that uses it, highlights it, and admits it when the choice is committed (`ab_chooser_open`, `ab_chooser_row`, `ab_main_commit`). It shows six rows at a time and stock's draw loop never scrolled, so with four machines the last three were hidden; the USB base draws the rows from the list's scroll offset (`mw_chooser_name`, `mw_chooser_row`). Check your row is reachable with every other machine installed.
 - [ ] **SRC SETUP.** The same machine is selectable there, with its row highlighted, and every commit path admits it (`ab_src_names`, `ab_setup_open`, `ab_setup_row`, `ab_src_commit`, `ab_src_commit2`, `ab_setup_edit6`, `ab_setup_draw6`).
 - [ ] **Its name everywhere the stock machine names appear,** including the main page (`ab_machine_name`, `ab_name_a`, `ab_name_b`).
 - [ ] **Closing a window does not clear its retained callbacks.** Snapshot the exact original handler, label and destination roots; fence current and paused consumers, then restore those roots before retiring the outgoing image. A null window handle alone is not a lifetime proof.

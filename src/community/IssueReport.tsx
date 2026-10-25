@@ -1,4 +1,4 @@
-import { BetaReportReminder, BugReportNotice, BugReportSuccess, ExistingIssues } from './BugReportNotice'
+import { AuthorExpectations, BetaReportReminder, BugReportNotice, BugReportSuccess, ExistingIssues } from './BugReportNotice'
 import { ReportNotifications } from './ReportNotifications'
 import { refreshModuleIssues, useIssueTracker, type BugReportResult } from './issue-tracker'
 import { useEffect, useId, useRef, useState } from 'react'
@@ -127,6 +127,7 @@ export function IssueReport({id,author,openRequest=0,embedded=false,workspaceCon
    {embedded&&!log?<details className="issue-report-more"><summary>Downloaded build <span>{workspace.modules.length} modules attached</span></summary><ReportConfiguration machine="octatrack" moduleId={reportedModule} workspace={workspace} log={null} value={configuration} onChange={setConfiguration} disabled={busy} os={baseOs}/></details>:<ReportConfiguration machine="octatrack" moduleId={reportedModule} workspace={workspace} log={log?.summary??null} value={configuration} onChange={setConfiguration} disabled={busy} os={baseOs}/>}
    </ReportMoreDetails>
    {isPreview?<p className="service-note">Local preview — nothing is sent.</p>:embedded?<p className="service-note">{tracker?.tracker==='github'?'Your report, configuration and any log are public on GitHub and notify the module’s developers.':'Your report is public and notifies the module’s developers. The configuration and any log stay private to you, the maintainers and the administrator.'}</p>:<BugReportNotice tracker={tracker}/>}
+   {!isPreview&&<AuthorExpectations/>}
    <ReportNotifications id={id} defaultChecked={follow}/>
    <button className="button button-primary" disabled={busy||reading}>{busy?'Posting…':'Post report'}</button>
   </form>}

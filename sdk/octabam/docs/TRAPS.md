@@ -1134,3 +1134,52 @@ reports on a range it never watched. Rule: one comma-joined
 `--watch-mem addr,len;addr,len` argument; when a watch captures nothing,
 check what the command line actually watched before suspecting the
 runtime.
+
+<a name="trap-frame-count"></a>
+
+### A frame count past $7fffff reaches `move a,n1` with A2 stale, and a frame engine that stops after 50.7 minutes
+
+**A COUNT WITH BIT 23 SET, LOADED INTO A AND MASKED, LEAVES A2 AT $FF AND
+`move a,n1` LIMITS.** Core 0's frame count in `dsp_meter.asm` indexed the 16
+OTOP cost cells (`move x:(r1+6),a / and #>$f,a / move a,n1`, then
+`move x:(r1+n1),a`). At 8,388,608 frames the load sign-extends A2 to $FF,
+`and` leaves it (`trap-a2-stale`), and the move limits n1 to $800000: the
+cost read goes to a wild address. The unit's frame interrupt and every
+counter on it stopped 8,388,607 frames after power-up (3,043.6 s at
+2,756.25 a second), on an idle unit, twice (24 Oct 17:23, 25 Oct 07:41). The
+port reads zero at the wild address and goes on; the OTOP costs after the
+crossing are zero. Inferred, not measured: that the read stalls the core on
+the unit (an image with the count preset, Q1, stopped within seconds of boot;
+Q2, with the wrap below, did not).
+- Fix: `and #>$7fffff,a` after the add keeps the count below bit 23 (2^23 is
+  a multiple of 16, so the slot index continues).
+- Located by presetting: the ColdFire seq preset to 8,388,000 (P1) stopped at
+  8,388,607 records from boot, so the stop followed the DSP count and not the
+  ColdFire seq.
+**Gate:** `verify_load_meter` `wrap` (`LM_FRAME0` = 2^23 - 1000; `--wrap-only`
+runs just it): every OTOP slot sampled and the costs read (heaviest slots 1
+and 9, core 0 sum above zero). Without the `and` the sum is 0. A counter
+that must outlive 50 minutes at 2,756 a second needs a preset test.
+
+<a name="trap-ep0-dma"></a>
+
+### An EP0 reply is DMA'd from memory the CPU's cache may not have written, and one of 64 bytes breaks the next request
+
+**A CELL THE CPU STORES RARELY STAYS STALE FOR THE USB DMA, AND A CONTROL REPLY
+OF A MULTIPLE OF 64 BYTES MAKES THE NEXT REQUEST RETURN 0 BYTES.** Both found
+on the first unit run of vendor request `0xc0/0x57` (24 Oct 2026), both clean
+under the port.
+- `lm_stats` is stored once in 0.5 s; the controller reads RAM, not the
+  copyback cache, so the request returned the same window for minutes and then
+  jumped 100 windows at once, while `lm_dsp` and `lm_ot` (stored every frame)
+  looked live. The reply is now copied into `lm_reply` through the uncached
+  alias (`+UNCACHED`) and sent from there, the rule `usbaudio.s` states at the
+  rings.
+- A reply of 64, 128, 192 or 256 bytes left the next control request returning
+  0 bytes once (63, 100, 252, 255 did not): `tools/hw/load_meter.py` alternated
+  success and failure per process. The request now sends a byte short and the
+  host resumes from `wIndex`.
+**Gate:** `verify_usb_load_meter` checks the lengths and the offset; the port
+cannot see the cache or the stale status, so a unit run (`load_meter.py`
+repeated, `--for 10`: `windows` near 20) is the check.
+

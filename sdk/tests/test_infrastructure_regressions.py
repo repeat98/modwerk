@@ -181,6 +181,8 @@ class ToolSyntax(unittest.TestCase):
 
 # Builder extensions after the Poly8 record, oldest first. Each proves its own exact before/after transition.
 EXTENSIONS = ['air-chorus-split-builder.json', 'plain-formatter-builder.json', 'floating-cave-overflow-builder.json', 'octabam-emulator-gates-5c71bc8c.json']
+# Documentation-only imports, oldest first: upstream files byte for byte, no build input.
+DOC_IMPORTS = ['octabam-docs-30fbb8e4.json', 'octabam-docs-dcf93d37.json']
 
 class SelectiveImport(unittest.TestCase):
     def assert_current_builder_identity(self, path, historical):
@@ -276,13 +278,30 @@ class SelectiveImport(unittest.TestCase):
         imported = json.loads((sdk / record['importRecord']).read_text(encoding='utf-8'))
         self.assertEqual(imported['revision'], record['upstreamRevision'])
         self.assertEqual(imported['modules'], [])
+        # A later docs import pins its newer copy of a file this one also brought.
+        later = {f['path'] for name in DOC_IMPORTS for f in json.loads((sdk / 'imports' / name).read_text(encoding='utf-8'))['files']}
         for file in imported['files']:
             with self.subTest(path=file['path']):
                 self.assertFalse(file['path'].startswith('modules/'))
-                self.assertEqual(hashlib.sha256((ROOT / file['path']).read_bytes()).hexdigest(), file['vendoredSha256'])
+                if file['path'] not in later:
+                    self.assertEqual(hashlib.sha256((ROOT / file['path']).read_bytes()).hexdigest(), file['vendoredSha256'])
         # Every vendored copy that is not a recorded local adaptation is upstream's file byte for byte.
         adapted = {f['path'] for f in imported['files'] if f['sourceSha256'] != f['vendoredSha256']}
         self.assertEqual(adapted, {'Makefile', 'tools/emu/ot_emu/main.cpp', 'tools/emu/ot_emu/test_periph.cpp'})
+
+    def test_docs_imports_are_upstream_files_byte_for_byte(self):
+        import hashlib, json
+        records = [json.loads((ROOT.parent / 'imports' / name).read_text(encoding='utf-8')) for name in DOC_IMPORTS]
+        for index, (name, imported) in enumerate(zip(DOC_IMPORTS, records)):
+            self.assertEqual((imported['kind'], imported['modules']), ('docs-backport', []))
+            # A later docs import pins its newer copy of a file this one also brought.
+            later = {f['path'] for record in records[index + 1:] for f in record['files']}
+            for file in imported['files']:
+                with self.subTest(record=name, path=file['path']):
+                    self.assertTrue(file['path'].startswith('docs/') and file['path'].endswith('.md'))
+                    self.assertEqual(file['sourceSha256'], file['vendoredSha256'])
+                    if file['path'] not in later:
+                        self.assertEqual(hashlib.sha256((ROOT / file['path']).read_bytes()).hexdigest(), file['vendoredSha256'])
 
     def test_exact_adapted_file_identities_and_scope(self):
         import hashlib, json

@@ -3,6 +3,7 @@ import { performance } from 'node:perf_hooks'
 import { fileURLToPath } from 'node:url'
 import { readChangeScope } from './change-scope.mjs'
 import { checkChangelog } from './changelog.mjs'
+import { checkDocs } from './docs.mjs'
 import { checkModuleChangelogs } from './module-changelogs.mjs'
 
 const root = fileURLToPath(new URL('../', import.meta.url))
@@ -62,6 +63,9 @@ async function changelogs() {
   try {
     console.log(`Application changelog: ${checkChangelog(root, base).entries} entries in changelog/`)
   } catch (error) { console.error(`Application changelog: ${error.message}`); passed = false }
+  try {
+    console.log(`Documents: ${checkDocs(root, base).documents} within the size limit, frozen logs unchanged`)
+  } catch (error) { console.error(`Documents: ${error.message}`); passed = false }
   return passed
 }
 // Run every check of a stage even when one fails, so a pull request sees all its problems in one run.
@@ -84,7 +88,7 @@ if (!buildOnly && passed) {
 if (!buildOnly && !documentationOnly && passed) passed = await all(() => run('elekloader:check'), () => run('modules:compat'), () => run('modules:pairs'))
 // Finish generated notice/catalog/media writes before lint, tests, typecheck or bundling read them.
 if (passed && !documentationOnly) passed = await run('licenses:generate') && await run('machines:generate') && await run('modules:generate')
-// Every path, including documentation-only checks and release builds, requires current-version notes.
+// Every path, including documentation-only checks and release builds, requires current-version notes and documents within their size.
 if (passed) passed = await changelogs()
 // Documentation uses the same import policy as publication without running firmware gates. The catalogue tests read Markdown
 // (the module guides' links, the agent files, the pull request template), so a prose-only change can break them and must run them.

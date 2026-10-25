@@ -1315,6 +1315,14 @@
      "what": "the machine title's right chevron for rows with a pool"
     },
     {
+     "site": "0x4007865e",
+     "length": 4,
+     "guard": "7d0c3559d87019b7bb3475f5740bad5d216041e6b6cd0f2943aa176156345398",
+     "op": "ptr",
+     "target": "mw_chooser_name",
+     "what": "machine chooser names by the list's row: its scroll offset plus the row on screen"
+    },
+    {
      "site": "0x40078678",
      "length": 2,
      "guard": "04cd1c6d463ba6752ff68f9125991b1c4af983ae355b62366122ba2d47eee3b2",
@@ -1327,7 +1335,7 @@
      "guard": "c611970befafba97f882ab297bd19f0efe0c7d927bfd6110c53f03ad4b7da1c7",
      "op": "jmp",
      "target": "mw_chooser_row",
-     "what": "machine chooser row highlight"
+     "what": "machine chooser row highlight, by the list's row"
     },
     {
      "site": "0x400786ce",

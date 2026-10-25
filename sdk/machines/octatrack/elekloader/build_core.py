@@ -263,9 +263,14 @@ ICON = ('.....#...#...#.....',
 # own work without effects, measured on the owner's MKII on 11 October 2026 (scripts/octatrack-measure.py: core 0 ~959,
 # it mixes; core 1 ~514; one pattern playing). The 90% ceiling is the owner's choice.
 DSP_ALLOWANCE = (3120, 3565)
-# The dearest stock effect per slot, chip cycles: DJ EQUALIZER, 342 a sample on the same unit (its 331 executed
-# instructions in the emulator, stock_dsp_worst.py, run at about one a cycle). Every slot without a module is charged it.
-DSP_RESERVE = 342
+# Each stock effect's chip cycles a sample by effect id, the dearer core at its dearest of three settings, measured on the
+# same unit (docs/OCTATRACK_ELEKLOADER_MIGRATION.md's table; DELAY runs on the ColdFire; NONE and empty ids 0). A slot is
+# charged at least the dearest of these its bank's Parts name there (dsp.c; owner, 24 October 2026, beta finding 34).
+STOCK_CYCLES = {4: 285, 5: 80, 8: 0, 12: 193, 13: 342, 16: 242, 17: 147, 18: 295, 19: 128, 20: 249, 21: 299, 22: 257,
+                24: 102, 28: 311}  # FILTER SPATIALIZER DELAY EQUALIZER DJ-EQ PHASER FLANGER CHORUS COMB PLATE SPRING DARK COMP LO-FI
+# The dearest of them, DJ EQUALIZER (its 331 executed instructions in the emulator, stock_dsp_worst.py, run at about one a
+# cycle): what a machine's voice or engine still books each slot at, since a bank change may bring any stock effect.
+DSP_RESERVE = max(STOCK_CYCLES.values())
 # Effect ids the base handles (fxids.h MODWERK_FX_IDS; docs/OCTATRACK_MORE_EFFECT_IDS.md). 32 only to bisect.
 FX_IDS = 128
 VALIDATOR_CLAMPS = (0x400023b6, 0x400023bc, 0x400023de, 0x400023e4)  # the Part validator's moveq #31, FX1 then FX2
@@ -528,7 +533,19 @@ DSP_EDITS = {
     # The switch frame runs the outgoing effect's first sub-block, then the incoming one's init and its
     # second: no instance runs twice, so no overlap charge (it would refuse stock picks beside modules).
     # Each core's sum starts at its machines' source-stage charge (dsp.c), so FX slots are admitted beside it.
-    'allocator.c': (('#include "allocator.h"\n', '#include "allocator.h"\nuint32_t modwerk_dsp_source_charge(unsigned);\n'),
+    # Each slot is charged at least the dearest stock effect its bank's Parts name there (dsp.c's floors; owner, 24 October
+    # 2026): a Part switch or a RELOAD then needs no room it was not given, and a stock pick dearer than that is admitted.
+    'allocator.c': (('#include "allocator.h"\n', '#include "allocator.h"\nuint32_t modwerk_dsp_source_charge(unsigned);\n'
+                     '/* dsp.c\'s; harnesses without it charge each slot its own effect */\n'
+                     '__attribute__((weak)) unsigned modwerk_dsp_slot_floors(const uint8_t ids[16],uint32_t least[16])\n'
+                     '{ (void)ids; for(unsigned i=0;i<16;++i) least[i]=0; return 0; }\n'),
+                    ('    if(!token || token==a->token) return DL_ALLOC_STALE;\n',
+                     '    if(!token || token==a->token) return DL_ALLOC_STALE;\n'
+                     '    uint32_t least[16]; unsigned crowded=modwerk_dsp_slot_floors(ids,least); /* 1 + a core a raised floor overfills */\n'),
+                    ('        if(pkg->cycles>a->allowance[c]-steady[c]) return DL_ALLOC_CYCLES;\n        steady[c]+=pkg->cycles;\n    }\n',
+                     '        uint32_t cost=pkg->cycles>least[i] ? pkg->cycles : least[i];\n'
+                     '        if(cost>a->allowance[c]-steady[c]) return DL_ALLOC_CYCLES;\n        steady[c]+=cost;\n    }\n'
+                     '    if(crowded) return DL_ALLOC_CYCLES;\n'),
                     ('    uint32_t steady[2]={0,0},overlap[2]={0,0};',
                      '    uint32_t steady[2]={modwerk_dsp_source_charge(0),modwerk_dsp_source_charge(1)};\n'
                      '    if(steady[0]>a->allowance[0] || steady[1]>a->allowance[1]) return DL_ALLOC_CYCLES;'),
@@ -835,14 +852,16 @@ WIDTH_EDITS = {
 # slot runs and the request's keep set does not hold (a trim: nothing a track runs changes, so nothing is heard), and when
 # the running code itself blocks, the old code of the slots the request changes (an unload: those slots run the dry stub
 # until the request binds the new code and the setter applies it, a short gap where before the change was refused).
-# The request runs queued after it; each request gets at most one trim and one unload. Applied with WIDTH_EDITS, so the
-# host tests that rebuild the manager (sdk/tests) carry it.
+# The request runs queued after it; each request gets at most one trim and one unload. When that still leaves no one run
+# for the new code, the cores are packed (dsp.c's compaction, block by block while everything plays) with the request
+# held until that ends, then it runs once more (beta finding 35: EQUALIZER to FILTER at 98 %). Applied with
+# WIDTH_EDITS, so the host tests that rebuild the manager (sdk/tests) carry it.
 TRANSITION_EDITS = {
     'manager.c': (
         ('static void begin(const uint8_t *ids,uint32_t token,unsigned is_auto) {\n'
          '    bytes(desired,ids,16); current=token; automatic=is_auto;\n',
          'static unsigned trimming,queued_auto,trim_stage; /* Modwerk: a retirement before a queued request, that request\'s\n'
-         '                                                   * kind, and what it got (1 a trim, 2 an unload) */\n'
+         '                                                   * kind, and what it got (1 a trim, 2 an unload, 3 a pack) */\n'
          'static uint32_t trimmed_for;\n'
          'static fx_set trim_keep[2];\n'
          'volatile uint32_t dl_trims,dl_unloads; /* diagnostics */\n'
@@ -881,7 +900,19 @@ TRANSITION_EDITS = {
          '    if(unload) dl_unloads=dl_unloads+1; else dl_trims=dl_trims+1;\n'
          '    return 1;\n'
          '}\n'
-         'static void advance(void) {\n'),
+         '/* dsp.c packs the cores for the request in flight, which waits meanwhile; 0 when it cannot (weak 0 for harnesses). */\n'
+         '__attribute__((weak)) int modwerk_dsp_pack(void) { return 0; }\n'
+         '__attribute__((weak)) int modwerk_dsp_packing(void) { return 0; }\n'
+         'volatile uint32_t dl_packs; /* diagnostics */\n'
+         'void dl_residency_nudge(void);\n'
+         'static int pack_room(void) {\n'
+         '    if(!modwerk_dsp_pack()) return 0;\n'
+         '    bytes(queued_ids,desired,16); queued_token=current; queued_auto=automatic;\n'
+         '    trimmed_for=current; trim_stage=3u; phase=0; dl_packs=dl_packs+1;\n'
+         '    return 1;\n'
+         '}\n'
+         'static void advance(void) {\n'
+         '    if(!phase && queued_token && modwerk_dsp_packing()) return; /* the moves first (dl_move runs only when idle) */\n'),
         ('begin(queued_ids,t,0); }\n', 'begin(queued_ids,t,queued_auto); queued_auto=0; }\n'),
         ('        allocator.keep[0]=fx_or(allocator.keep[0],soft[0]); allocator.keep[1]=fx_or(allocator.keep[1],soft[1]);\n',
          '        allocator.keep[0]=fx_or(allocator.keep[0],soft[0]); allocator.keep[1]=fx_or(allocator.keep[1],soft[1]);\n'
@@ -893,8 +924,12 @@ TRANSITION_EDITS = {
         ('        if(r<0) {\n            report(r==DL_ALLOC_MEMORY || r==DL_ALLOC_TRANSITION ? DL_SELECT_MEMORY :',
          '        if(r==DL_ALLOC_TRANSITION && !trimming) {\n'
          '            unsigned stage=current==trimmed_for ? trim_stage : 0u; /* what this request already got */\n'
-         '            if((stage<1u && make_room(0)) || (stage<2u && make_room(1))) return;\n'
+         '            if((stage<1u && make_room(0)) || (stage<2u && make_room(1)) || (stage<3u && pack_room())) return;\n'
          '        }\n'
+         '        /* A pick refused after its slot\'s old code was unloaded: the slot ran the dry stub under the old effect\'s\n'
+         '         * name until the next change (owner\'s MKII, 24 October 2026); the observer loads it back now. Not for an\n'
+         '         * automatic request: the observer would ask for that same set again. */\n'
+         '        if(r<0 && !automatic && current==trimmed_for && trim_stage>=2u) dl_residency_nudge();\n'
          '        if(r<0) {\n            report(r==DL_ALLOC_MEMORY || r==DL_ALLOC_TRANSITION ? DL_SELECT_MEMORY :'),
         # A request a retirement put behind it is not the transaction in flight: its answer is WAIT, never the
         # retirement's own result word (which reads READY once that commits).
@@ -907,7 +942,11 @@ TRANSITION_EDITS = {
         ('void dl_selection_cancel(uint32_t token) {\n    if(token==queued_token) queued_token=0;\n',
          'void dl_residency_nudge(void);\n'
          'void dl_selection_cancel(uint32_t token) {\n'
-         '    if(token==queued_token) { queued_token=0; if(trim_stage==2u && trimmed_for==token) dl_residency_nudge(); }\n'),
+         '    if(token==queued_token) { queued_token=0; if(trim_stage>=2u && trimmed_for==token) dl_residency_nudge(); }\n'),
+        # A pick made while a retirement runs takes the waiting request's place as a manual one: it kept an automatic
+        # request's kind, and an automatic one commits before the stock setter publishes the pick.
+        ('    if(phase) { bytes(queued_ids,s->target,16); queued_token=token; return DL_SELECT_WAIT; }\n',
+         '    if(phase) { bytes(queued_ids,s->target,16); queued_token=token; queued_auto=0; return DL_SELECT_WAIT; }\n'),
         ('    reinit();\n    if(phase) return;\n', '    reinit();\n    if(phase || queued_token) return;\n'),
     ),
 }
@@ -1576,10 +1615,14 @@ def main():
             spec = importlib.util.spec_from_file_location('modwerk_usb_audio_profiles',
                 APP / 'sdk/machines/octatrack/module-adapters/usb-audio-profiles/profiles.py')
             usb_profiles = importlib.util.module_from_spec(spec); spec.loader.exec_module(usb_profiles)
-    for name in ('ep0.c', 'fxids.h', 'runtime.c', 'runtime.h', 'boot.c', 'boot.h', 'boot.s', 'flash.c', 'flash.h', 'modset.c', 'boot_anim.c', 'boot_anim.s', 'crash.c', 'crash.s', 'run_unpack.s') + (('dev.c',) if args.dev else ()) + (
+    for name in ('ep0.c', 'fxids.h', 'runtime.c', 'runtime.h', 'boot.c', 'boot.h', 'boot.s', 'flash.c', 'flash.h', 'slots.c', 'slots.h', 'modset.c', 'boot_anim.c', 'boot_anim.s', 'crash.c', 'crash.s', 'run_unpack.s') + (('dev.c',) if args.dev else ()) + (
             ('runtime_events.h', 'runtime_events.s', 'machine_registry.c', 'machine_registry.s', 'midi_generators.c',
              'midi_generators.s') if args.site_events else ()):
         shutil.copyfile(HERE / name, source / name)
+    # The boot stub's sector, which flash.c writes when it converts a unit to two slots (build_stub.py: stub_body.c).
+    sys.path.insert(0, str(HERE))
+    import build_stub
+    build_stub.build(upstream, source, args.cross + 'gcc')
     if args.dev and args.resident_on_demand:  # dev MEM reaches the engines' diagnostics (resident_engines.dev)
         sys.path.insert(0, str(APP / 'sdk/machines/octatrack/module-adapters'))
         import resident_engines as dev_engines
@@ -1892,7 +1935,7 @@ def main():
         definitions += 'const struct fx_legacy modwerk_fx_legacy[] = {%s};\nconst uint32_t modwerk_fx_legacy_count = %d;\n' % (
             ', '.join('{%#xu, %d, %s}' % (int.from_bytes(hashlib.sha256(key.encode()).digest()[:4], 'big'), fx,
                                            ctext(names.get(key, key)[:15])) for fx, key in legacy), len(legacy))
-        stock_catalog = loader_dsp.catalog_c(dsp_layout, DSP_RESERVE, FX_IDS)
+        stock_catalog = loader_dsp.catalog_c(dsp_layout, STOCK_CYCLES, FX_IDS)
         stock_packed_aliases, stock_packed_deltas = {}, {}
         if args.resident_stock_hooks:
             stock_catalog, stock_packed_aliases, stock_packed_deltas = share_sparse_stock_catalog(stock_catalog, dsp_layout)

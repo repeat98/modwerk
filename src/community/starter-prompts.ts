@@ -89,7 +89,7 @@ function withSetup(body: string[], repository: string, login: string) {
 }
 
 /** Stops a new module that the library already has, or that is already in flight. */
-const CATALOGUE_CHECK = 'First look at what Modwerk already has ("Check what already exists" in docs/DEVELOPER_WORKFLOW.md). If a module already does what I describe, or my port is already listed or in an open pull request, tell me which one and suggest extending it instead of building a duplicate.'
+const CATALOGUE_CHECK = 'First look at what Modwerk already has ("Check what already exists" in docs/DEVELOPER_WORKFLOW.md). If a module already does what I describe, or my port is already listed or in an open pull request, tell me which one and suggest extending it instead of building a duplicate. Extending a module someone else wrote needs its author\'s OK first ("Ask the author first" in docs/DEVELOPER_WORKFLOW.md).'
 
 /** Holds on every machine: modules share the instrument through the events its base or core owns. */
 const SHARE_THE_INSTRUMENT = 'It must install and run beside every other module: never patch a site another module or the base patches; share it through the machine\'s events instead ("Cross-compatibility" in docs/module-guides/README.md).'
@@ -143,6 +143,7 @@ export function updatePrompt(machine: StarterMachine, module = '', idea = '', is
     'Change: ' + (idea.trim() || '<describe the change or investigate the linked report>'),
     ...(issue.trim() ? ['Fix issue ' + issue.trim()] : []),
     '',
+    'First check the module’s manifest. If my GitHub login is not its author or a listed maintainer, ask me for the author’s OK (a GitHub link, or when they gave it on Discord) and stop until I have it: no code, no pull request ("Ask the author first" in docs/DEVELOPER_WORKFLOW.md).',
     'Before changing code, read these, AGENTS.md first:', ...reading.map(file => '- ' + file),
     'Then read the module’s manifest, README, TESTING and its category guide, and reproduce the report where possible. Use Node 24 and npm ci.',
     DEVELOPMENT_SETUP,

@@ -53,6 +53,8 @@ Reported by the developer while playing (not measured):
 | DEP p-locked to 0 on one trig (with a PTCH lock) | that step plays the locked pitch, unaffected by the LFO |
 | DJQ, chromatic version (since replaced) | hard to tell from DJV by ear; measured why (25 cents on average) and replaced by root + fifth |
 
+Removal with the waves in use (PR #869, finding 6), 24 Oct 2026, review-fixed build `675df8f7…`: T1's LFO 1/2/3 on DJV/DJQ/DJC, transport stopped, LFO SETUP closed; then a 120 s trial removal over USB (`npm run device -- remove dejavu.mwrm --seconds 120`, nothing written to the card). Reported by the developer while it ran: LFO SETUP showed track 8's design wave (icon and name) on all three LFOs, turning WAVE and paging LFO 1-3 worked, PLAY played the track with a stock wave, no hang and no garbage. Observed by the agent: the base stayed in its normal state and rolled the module back after 120 s (active `675df8f7…` again). Not tested: a permanent removal followed by a power cycle, and a project saved with WAVE 19-21 opened on stock firmware.
+
 Review fix after this hardware use (PR #869, finding 1): PLAY now counts as a step, so FREE and HOLD play bar 1 exactly as bar 2 (verify.py covers 1-, 2- and 16-step tracks and both counter states at PLAY); not yet run on the unit.
 
 Not tested on hardware: DJQ root + fifth (loaded, not yet played), DJC by ear, CPU load (CUE + PROJ), the self-test with Deja Vu, power-cycle restore of the kept set, a project with WAVE 19-21 opened without the module, trig conditions and one-shot trigs, microtiming in HOLD, Play Modes interplay.

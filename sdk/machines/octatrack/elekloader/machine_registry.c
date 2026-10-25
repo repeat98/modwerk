@@ -56,16 +56,21 @@ extern int mw_stock_validate(uint8_t *);
  * defaults: a priced machine is never admitted, nor its voice rendered. */
 int modwerk_dsp_source_claim(unsigned track, uint32_t module, uint32_t voice, uint32_t engine, uint8_t kind);
 void modwerk_dsp_source_release(unsigned track);
+void modwerk_status_machine_refused(unsigned track, const char *label); /* status.c: the DSP FULL box for a machine */
 void modwerk_dsp_source_engine_off(uint32_t module);
 #ifndef MW_HOST
 __attribute__((weak)) int modwerk_dsp_source_claim(unsigned track, uint32_t module, uint32_t voice, uint32_t engine, uint8_t kind)
 { (void)track; (void)module; (void)voice; (void)engine; (void)kind; return RUNTIME_CYCLES; }
 __attribute__((weak)) void modwerk_dsp_source_release(unsigned track) { (void)track; }
+__attribute__((weak)) void modwerk_status_machine_refused(unsigned track, const char *label) { (void)track; (void)label; }
 __attribute__((weak)) void modwerk_dsp_source_engine_off(uint32_t module) { (void)module; }
 #endif
 /* Each track of the current Part: the priced machine its voice is charged to, or 0. A word each, so the render
  * reads it whole without a mask. */
 static const Machine *volatile charged[8];
+/* Tracks whose refusal the DSP FULL box already showed: charge() retries a refused track on every UI tick, and a box
+ * that reopened each time it timed out would never go away. Cleared when the claim succeeds or the track stops asking. */
+static uint8_t warned;
 static uint32_t key(const Machine *m) { return (uint32_t)(uintptr_t)m; } /* dsp.c's module: the descriptor */
 static unsigned charges(const Machine *m) { unsigned k = 0; for (unsigned t = 0; t < 8; ++t) k += charged[t] == m; return k; }
 /* The track's voice is free; with no other track charged to its machine, so is the machine's engine. */
@@ -82,7 +87,12 @@ static int claim(unsigned track, const Machine *who)
 {
     const Machine *old = charged[track];
     if (old == who) return 1;
-    if (modwerk_dsp_source_claim(track, key(who), who->source_voice, who->source_engine, who->source_kind)) return 0;
+    int refused = modwerk_dsp_source_claim(track, key(who), who->source_voice, who->source_engine, who->source_kind);
+    if (refused) {
+        if (refused == RUNTIME_CYCLES && !(warned & 1u << track)) warned |= (uint8_t)(1u << track), modwerk_status_machine_refused(track, who->label);
+        return 0;
+    }
+    warned &= (uint8_t)~(1u << track);
     charged[track] = who;
     if (old && !charges(old)) modwerk_dsp_source_engine_off(key(old));
     return 1;
@@ -254,6 +264,7 @@ static void charge(const Machine *const *m, unsigned n)
     const Part *part = current_part(); const Machine *who;
     for (unsigned t = 0; t < 8; ++t) {
         if (!owner(m, n, part, t, &who) || !who->source_kind) who = 0;
+        if (!who) warned &= (uint8_t)~(1u << t);
         if (who ? charged[t] != who && !claim(t, who) : charged[t] != 0) release(t);
     }
 }
@@ -272,6 +283,7 @@ unsigned mw_assign(Part *part, unsigned track, unsigned row)
     unsigned absent = !old && orphan(part, track);
     if (next) {
         if (next->admit_track && !next->admit_track(part, track)) return (unsigned)-1;
+        warned &= (uint8_t)~(1u << track); /* a pick is a new ask: say so again if it is refused again */
         if (next->source_kind && old != next && !claim(track, next)) return (unsigned)-1;
         if (old && old != next) leave(part, mirror, track, old);
         if (absent) flex_defaults(part, mirror, track);

@@ -2,7 +2,7 @@
 
 Read [the module guides index](README.md) first. If your effect does anything in time (a delay, a gate, an envelope, a rhythm), also read [sequencing.md](sequencing.md).
 
-**Applies to** modules whose manifest has an `effectId` and a `compatibility.location` of `FX1`, `FX2` or `FX1 / FX2`.
+**Applies to** modules whose manifest has an `effectId` and a `compatibility.location` of `FX1`, `FX2` or `FX1 / FX2`. An effect processes the audio its slot receives, on the DSP. A module that makes or replaces its track's sound is a machine, whichever slot switches it on ([choose the category](README.md#choose-the-category)).
 
 **Already follow it:** [Mini Verb](../../sdk/octabam/modules/miniverb/README.md), [Tape Echo](../../sdk/octabam/modules/tapeecho/README.md), [Euclid](../../sdk/octabam/modules/euclid/README.md), [TapeHead](../../sdk/octabam/modules/tapehead/README.md), [Sidechain Compressor](../../sdk/octabam/modules/sidechain-compressor/README.md), Spectrum, Modulation, Character. Copy the shape of the one closest to yours.
 

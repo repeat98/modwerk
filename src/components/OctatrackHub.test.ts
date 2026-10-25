@@ -107,6 +107,13 @@ describe('the Octatrack page', () => {
     expect(link.update).not.toHaveBeenCalled()
   })
 
+  it('says when not every saved module came back at startup', async () => {
+    const set = newConfiguration('Live', ['miniverb', 'synth']), link = unit(), props = callbacks()
+    link.health.mockResolvedValue({ ...reading, saved: 6, savedCount: 1 })
+    await act(() => root.render(createElement(OctatrackHub, { ...props, view: 'status', link, inventory: { moduleIds: ['miniverb'], removedStockFx: [] }, sets: [set], selectedId: set.id, header: null, grid: null, card: null })))
+    expect(open().textContent).toContain('Not all loaded at startup · 1 module running. Sync your modules to put the rest back.')
+  })
+
   it('keeps local samples while other pages open, and pauses their preview', async () => {
     const createURL = vi.fn(() => 'blob:hub-sample'), revokeURL = vi.fn(), pause = vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => {})
     vi.stubGlobal('URL', class extends URL { static createObjectURL = createURL; static revokeObjectURL = revokeURL })

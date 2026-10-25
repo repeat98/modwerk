@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Elastic-2.0
+// Copyright (c) 2026 Jannik Aßfalg (repeat98)
 // Pulls the private Octatrack diagnostics members chose to share, for the owner and the owner's agents.
 // It uses a read-only key that opens only GET /api/admin/octatrack/diagnostics; the Worker holds its SHA-256.
 // Not part of npm run check. See docs/APP_DEVELOPMENT.md#private-diagnostics.
@@ -43,13 +45,48 @@ const line = ({ createdAt, username, data }) => [when(createdAt), '@' + username
   data.buildKind, data.area && 'area=' + data.area, data.kind && 'type=' + data.kind, data.reason && 'reason=' + data.reason,
   data.live?.cpu && 'cpu ' + data.live.cpu.map(percent).join('/'), data.modules?.map(module => module.id + '@' + module.catalogVersion).join(',')].filter(Boolean).join(' ')
 function percent(permille) { return (permille / 10).toFixed(1) + '%' }
+/** The loader's refusals (loader.h runtime_refusal), as a restore's set record names its first refused package's (modset.c). */
+const REFUSALS = ['no refusal', 'malformed', 'module memory', 'conflict', 'no free handle', 'busy', 'DSP time', 'in use', 'stock bytes differ', 'a base event', 'a base feature down']
 /** An incident from the unit's own log (diag.c): when in its session, what, and what the unit was doing. */
 const ids = r => [...r.machines, ...r.fx, ...r.keys].slice(0, 4 * r.a).map((b, i, all) => i % 4 ? '' : all.slice(i, i + 4).map(x => x.toString(16).padStart(2, '0')).join('')).filter(Boolean)
+const STATELESS = ['crash', 'stall', 'set', 'base'] // records that carry no cpu, keys or screen
 const incident = r => `#${r.seq} start ${r.boot} +${Math.floor(r.second / 60)}m${r.second % 60}s ${r.kind}` +
-  (r.kind === 'base' ? ` ${r.a.toString(16).padStart(8, '0')}` : r.kind === 'set' ? ` ${r.a} installed: ${ids(r).map(id => MODULE_NAMES.get(id) ?? id).join(', ') || 'none'}` : '') +
+  (r.kind === 'base' ? ` ${r.a.toString(16).padStart(8, '0')}` : r.kind === 'set' ? ` ${r.a} installed: ${ids(r).map(id => MODULE_NAMES.get(id) ?? id).join(', ') || 'none'}` +
+    (r.screen ? `; refused ${MODULE_NAMES.get(r.screen.toString(16).padStart(8, '0')) ?? r.screen.toString(16).padStart(8, '0')} (${REFUSALS[r.tempo24] ?? 'refusal ' + r.tempo24})` : '') : '') +
   (r.kind === 'freeze' ? (r.a ? ` ${(r.a * 16 / 44100).toFixed(1)} s` : ' until a restart') : r.kind === 'hot' ? ` (${r.a} half-seconds at 90 %+)` : r.kind === 'crash' ? ` pc 0x${r.a.toString(16)}` : r.kind === 'stall' ? ` reason ${r.a}` : r.kind === 'shed' ? ` ${r.a & 0xffffff} renders skipped, tracks ${[...Array(8).keys()].filter(t => r.a >>> 24 >> t & 1).map(t => t + 1).join(',')}` : '') +
-  (r.kind === 'crash' || r.kind === 'stall' ? '' : `, cpu ${percent(r.cpu)} T1-4 ${percent(r.dsp1to4)} T5-8 ${percent(r.dsp5to8)}, ${r.playing ? 'playing' : 'stopped'} at ${(r.tempo24 / 24).toFixed(1)} BPM, screen 0x${r.screen.toString(16)}` +
+  (STATELESS.includes(r.kind) ? '' : `, cpu ${percent(r.cpu)} T1-4 ${percent(r.dsp1to4)} T5-8 ${percent(r.dsp5to8)}, ${r.playing ? 'playing' : 'stopped'} at ${(r.tempo24 / 24).toFixed(1)} BPM, screen 0x${r.screen.toString(16)}` +
     `, keys ${r.keys.filter(k => k !== 255).map(k => k.toString(16)).join(' ') || '-'}, fx ${r.fx.map(f => f.toString(16)).join(' ')}, machines ${r.machines.join(' ')}`)
+
+/** The base a log began on: its first base record (diag.c writes one after each start), else the base the site saw
+ * when it first uploaded from it (logs written before the base records). */
+const logBase = (incidents, epoch) => {
+  const mine = incidents.filter(r => r.epoch === epoch), first = mine.find(r => r.kind === 'base')
+  return first ? first.a.toString(16).padStart(8, '0') : mine[0]?.upload?.slice(0, 8) ?? 'unknown'
+}
+const PROJ = 0x1c, RIGHT = 0x21, YES = 0x31 // stock key codes (scripts/device.mjs)
+
+/** The unit's last incidents, oldest first, each log's in turn; an earlier log's name the base they ran on. A stall
+ * found at a start that runs another base than the session before is an OS upgrade (stock halts the DSPs for it while
+ * the loader may have a job open; beta finding 55), not a hang: said so. One after a session that ended stopped at
+ * 95 % CPU or more after PROJ … RIGHT YES (PROJ may have left the 16 keys the unit keeps), with the log's last set record
+ * showing none installed, is likely one too, or USB disk mode (beta finding 72): only a hint, since the base stayed the same. */
+export function unitLines(incidents) {
+  const all = [...incidents].map(r => ({ epoch: 0, ...r })).sort((a, b) => a.epoch - b.epoch || a.seq - b.seq)
+  const at = (r, boot = r.boot) => r.epoch + '/' + boot
+  const base = new Map(all.filter(r => r.kind === 'base').map(r => [at(r), r.a]))
+  const upgrade = r => r.kind === 'stall' && base.has(at(r)) && base.has(at(r, r.boot - 1)) && base.get(at(r)) !== base.get(at(r, r.boot - 1))
+  const system = r => {
+    if (r.kind !== 'stall') return false
+    const last = all.findLast(p => at(p) === at(r, r.boot - 1) && !STATELESS.includes(p.kind))
+    const set = all.findLast(p => p.epoch === r.epoch && p.seq < r.seq && p.kind === 'set')
+    const keys = last?.keys.filter(k => k !== 255) ?? [], from = keys.lastIndexOf(PROJ), walk = from >= 0 ? keys.slice(from) : keys.length === 16 ? keys : []
+    return last?.cpu >= 950 && !last.playing && walk.some((k, i) => k === RIGHT && walk[i + 1] === YES) && set?.a === 0
+  }
+  const latest = Math.max(...all.map(r => r.epoch)), on = r => base.has(at(r)) ? base.get(at(r)).toString(16).padStart(8, '0') : logBase(all, r.epoch)
+  return all.filter(r => r.kind !== 'start').slice(-12).map(r => '  unit: ' + incident(r) +
+    (upgrade(r) ? ' (an OS upgrade: this start runs another base; not a hang)' : system(r) ? ' (likely an OS upgrade or USB disk mode, beta finding 72: the session before ended stopped at 95 %+ CPU after PROJ … RIGHT YES, no module installed)' : '') +
+    (r.epoch < latest ? ` (an earlier log, base ${on(r)})` : ''))
+}
 
 /** The base's saved-set result (modset.c) as a reading's `saved` reports it; 1-6 are what a boot's restore found. */
 const SAVED = ['', 'RESTORED', 'nothing saved', 'skipped (FUNC held)', 'another base’s set', 'damaged', 'refused', 'saved', 'save failed', 'too big']
@@ -67,13 +104,30 @@ export function members(events) {
     else if (member.connected && data.reading) {
       member.connected = false
       const { saved, savedCount, live } = data.reading, last = member.reloads.at(-1)
+      // A refused restore (6) names what it dropped: the modules the site saw before, missing now.
+      const missing = saved === 6 && data.modules?.length && member.modules ? member.modules.filter(id => !data.modules.some(m => m.id === id)) : []
       if (saved >= 1 && saved <= 6 && !(last && last.saved === saved && last.savedCount === savedCount && last.live === live))
-        member.reloads.push({ at: createdAt, saved, savedCount, live })
+        member.reloads.push({ at: createdAt, saved, savedCount, live, missing })
     }
+    if (data.modules?.length) member.modules = data.modules.map(m => m.id)
     if (data.event === 'load' && data.live) member.live = { ...data.live, at: createdAt }
-    // The unit's log arrives in pieces and can arrive twice: keep each record once, by its start and seq.
-    for (const r of data.log?.incidents ?? []) (member.incidents ??= new Map()).set(r.boot + '/' + r.seq, r)
-    for (const r of data.log?.loads ?? []) (member.loads ??= new Map()).set(r.boot + '/' + r.seq, r)
+    // The unit's log arrives in pieces and can arrive twice: keep each record once, by its log and seq. A base that
+    // brings a new log restarts it at start 1, seq 1 (diag.c), and the site uploads each log in rising seqs, so a
+    // piece holding a seq this log has with other content, or a new one below its highest, is the next log's.
+    // shortcut: a piece lost in upload and sent again later by another browser also opens a log; upload a hash of the log's nonce if that shows.
+    for (const kind of ['incidents', 'loads']) {
+      const records = data.log?.[kind] ?? []
+      if (!records.length) continue
+      const log = (member.logs ??= {})[kind] ??= { epoch: 0, seen: new Map(), last: 0 }, kept = member[kind] ??= new Map()
+      const same = r => JSON.stringify([r.boot, r.kind, r.second ?? r.minute, r.a, r.cpu])
+      if (records.some(r => log.seen.has(r.seq) ? log.seen.get(r.seq) !== same(r) : r.seq < log.last)) Object.assign(log, { epoch: log.epoch + 1, seen: new Map(), last: 0 })
+      for (const r of records) {
+        log.seen.set(r.seq, same(r))
+        log.last = Math.max(log.last, r.seq)
+        // `upload`: the base the site saw, for logs written before the base records.
+        kept.set(log.epoch + '/' + r.seq, { ...r, epoch: log.epoch, upload: data.base })
+      }
+    }
     if (data.log?.crash) member.crash = data.log.crash
     if (data.log?.stall) member.stall = data.log.stall
     if (data.event === 'selftest' && data.reading?.state >= 2) {
@@ -96,10 +150,14 @@ export function reportsByMember(issues) {
   return found
 }
 
-/** Restarts as the unit's own log counts them: each start after the first it still holds. */
+/** Restarts as the unit's own log counts them: each start after the first it still holds, per log. */
 function restarts(member) {
-  const boots = [...member.incidents?.values() ?? []].filter(r => r.kind === 'start').map(r => r.boot).sort((a, b) => a - b)
-  return boots.length > 1 ? [`  restarts ${boots.length - 1} (the unit's log, starts ${boots[0]}-${boots.at(-1)})`] : []
+  const incidents = [...member.incidents?.values() ?? []], latest = Math.max(0, ...incidents.map(r => r.epoch))
+  return [...Map.groupBy(incidents.filter(r => r.kind === 'start'), r => r.epoch)].sort(([a], [b]) => a - b).flatMap(([epoch, starts]) => {
+    const boots = starts.map(r => r.boot).sort((a, b) => a - b)
+    return boots.length > 1 ? [`  restarts ${boots.length - 1} (the unit's ${epoch < latest ? 'earlier ' : ''}log` +
+      (latest ? ', from base ' + logBase(incidents, epoch) : '') + `, starts ${boots[0]}-${boots.at(-1)})`] : []
+  })
 }
 
 export function summary({ events, counts }, { base = '', reports = new Map() } = {}) {
@@ -117,7 +175,7 @@ export function summary({ events, counts }, { base = '', reports = new Map() } =
       '', `@${name}  last ${when(member.last)}` + (member.bases.length ? '  base ' + member.bases.map(baseName).join(' → ') : ''),
       ...(reports.get(name) ?? []).map(issue => `  report #${issue.number} ${issue.state.toLowerCase()}: ${issue.title}`),
       ...restarts(member),
-      ...member.reloads.length ? ['  set reloads at boot: ' + member.reloads.map(r => `${when(r.at)} ${SAVED[r.saved]}` + (r.saved === 1 ? ` ${r.live}/${r.savedCount}` : '')).join(', ')] : [],
+      ...member.reloads.length ? ['  set reloads at boot: ' + member.reloads.map(r => `${when(r.at)} ${SAVED[r.saved]}` + (r.saved === 1 ? ` ${r.live}/${r.savedCount}` : '') + (r.missing?.length ? ` (missing ${r.missing.join(', ')})` : '')).join(', ')] : [],
       ...member.selftest ? [`  last self-test ${member.selftest.state === 2 ? 'passed' : 'failed (bits ' + member.selftest.failed + ')'}` + (member.selftest.ran ? '' : ', no DSP module ran')] : [],
       ...member.peak ? [`  highest self-test peaks ${when(member.peak.at)}: CPU ${percent(member.peak.cpu)}, DSP T1-4 ${percent(member.peak.tracks1to4)}, T5-8 ${percent(member.peak.tracks5to8)}`] : [],
       ...member.live ? [`  live load ${when(member.live.at)}: CPU ${member.live.cpu?.map(percent).join(' mean, ') ?? '-'} peak, T1-4 ${member.live.dsp1to4?.map(percent).join('/') ?? '-'}, T5-8 ${member.live.dsp5to8?.map(percent).join('/') ?? '-'} (${member.live.samples} readings)`] : [],
@@ -125,7 +183,7 @@ export function summary({ events, counts }, { base = '', reports = new Map() } =
       ...(member.loads && [...member.loads.values()].some(r => r.frameGap !== undefined) ? [`  longest frame gap ${Math.max(...[...member.loads.values()].map(r => r.frameGap ?? 0))} us (frames are 363, DSPs starve past about 515), longest UI-tick gap ${Math.max(...[...member.loads.values()].map(r => r.tickGap ?? 0))} frames (freeze at 13,781)`] : []),
       ...member.crash ? [`  crash record ${member.crash.count}: vector ${member.crash.vector} pc 0x${member.crash.pc.toString(16)} code ${member.crash.code.map(w => w.toString(16).padStart(8, '0')).join(' ')} uncached ${member.crash.memory.map(w => w.toString(16).padStart(8, '0')).join(' ')}`] : [],
       ...member.stall ? [`  stall record ${member.stall.count}: reason ${member.stall.reason} (1 frames stopped, 2 eDMA refused) at tick ${member.stall.ticks}`] : [],
-      ...[...member.incidents?.values() ?? []].filter(r => r.kind !== 'start').sort((a, b) => a.boot - b.boot || a.seq - b.seq).slice(-12).map(r => '  unit: ' + incident(r)),
+      ...unitLines([...member.incidents?.values() ?? []]),
       '  ' + Object.entries(member.kinds).map(([kind, n]) => kind + ' ' + n).join(', '),
     ]),
     '', 'Self-test peaks are measured only while DSP modules run. Live load comes from the site while connected; the unit\'s log covers the time without it. Screen codes are stock input layers, keys stock key codes.',

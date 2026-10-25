@@ -1,6 +1,6 @@
 # Deja Vu
 
-Version: 0.1.0-experimental · author: @jankolkmeier
+Version: 0.1.0-experimental · author: Jan Kolkmeier (@jankolkmeier)
 
 ## Overview
 
@@ -65,7 +65,7 @@ On the owner's MKII over USB, the exact 0.1.0 package installed, kept and passed
 
 ## Authorship and licences
 
-Original work by @jankolkmeier. No Elektron code or tables; patched sites are listed in manifest.py by address and hash.
+Original work by Jan Kolkmeier (@jankolkmeier). No Elektron code or tables; patched sites are listed in manifest.py by address and hash.
 
 ## Screens and audio
 

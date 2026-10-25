@@ -85,6 +85,7 @@ describe('starter prompts', () => {
     }
     for (const file of ['sdk/catalog.json', 'src/catalog/machine-modules.json', 'sdk/drafts']) expect(existsSync(file), file).toBe(true)
     expect(updatePrompt('digitakt')).not.toContain('look at what Modwerk already has')
+    expect(updatePrompt('digitakt')).toContain('Ask the author first')
   })
 
   it('keeps the rules the prompts no longer carry in the files they send the agent to', () => {

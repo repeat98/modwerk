@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Authored COMP bridge survives original-stock reinsertion; no stock fixture."""
+import collections
 import copy
 import hashlib
 import importlib.util
@@ -77,7 +78,7 @@ class ResidentStockFills(unittest.TestCase):
         loader = importlib.util.module_from_spec(spec); spec.loader.exec_module(loader)
         layout = {tag: dict(words={4: list(self.original if tag == 'A' or second is None else second)},
             stock={4: dict(slots=3, init=0, proc=1, relocations=[])}, reads=[0]*32) for tag in 'AB'}
-        return loader.catalog_c(layout, 342), layout
+        return loader.catalog_c(layout, collections.defaultdict(lambda: 342)), layout
 
     def test_only_whole_readonly_equal_arrays_are_shared(self):
         original, layout = self.catalogue()

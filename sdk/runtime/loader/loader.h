@@ -171,6 +171,7 @@ uint32_t modwerk_runtime_broken(void);               /* the first live module wh
 uint32_t modwerk_runtime_free(uint32_t *largest);    /* pool bytes free, and the largest free run */
 unsigned modwerk_runtime_list(uint8_t *out, unsigned first, unsigned most); /* INVENTORY: 4 + 24 x entries bytes */
 enum runtime_refusal modwerk_runtime_refusal(void);
+void modwerk_runtime_refused(enum runtime_refusal why); /* a machine check that refuses before the loader (Octatrack modset.c) */
 unsigned modwerk_runtime_refused_event(void);         /* after RUNTIME_EVENT: that event's hook index */
 #if RUNTIME_SITE_EVENTS
 /* Each site event's handlers in (order, module id) order, then 0: the base's dispatch (runtime_events.s,

@@ -29,10 +29,10 @@ const args = process.argv.slice(2), all = args.includes('--all'), ids = args.fil
 if ((all && ids.length) || (!all && ids.length !== 1)) throw new Error('Usage: npm run module:doctor -- <module-id>   or   npm run module:doctor -- --all')
 const json = path => JSON.parse(readFileSync(resolve(root, path), 'utf8'))
 const exists = path => existsSync(resolve(root, path))
-const catalog = json('sdk/catalog.json'), machineModules = ['digitakt', 'digitone', 'analog-rytm-mkii'].flatMap(machine => exists('sdk/' + machine + '/modules') ? readdirSync(resolve(root, 'sdk', machine, 'modules'), { withFileTypes: true }).filter(entry => entry.isDirectory() && !entry.name.startsWith('_')).map(entry => ({ id: entry.name, machine })) : [])
+const catalog = json('sdk/catalog.json'), machineModules = ['digitakt', 'digitone', 'analog-rytm-mkii', 'analog-four-mkii'].flatMap(machine => exists('sdk/' + machine + '/modules') ? readdirSync(resolve(root, 'sdk', machine, 'modules'), { withFileTypes: true }).filter(entry => entry.isDirectory() && !entry.name.startsWith('_')).map(entry => ({ id: entry.name, machine })) : [])
 
 // An unknown id is answered before any check runs: the rules below take seconds on a large catalogue.
-if (!all && !exists('sdk/octabam/modules/' + ids[0]) && !machineModules.some(item => item.id === ids[0])) { console.error('No module named ' + ids[0] + ' under sdk/octabam/modules, sdk/digitakt/modules, sdk/digitone/modules or sdk/analog-rytm-mkii/modules.'); process.exit(2) }
+if (!all && !exists('sdk/octabam/modules/' + ids[0]) && !machineModules.some(item => item.id === ids[0])) { console.error('No module named ' + ids[0] + ' under sdk/octabam/modules, sdk/digitakt/modules, sdk/digitone/modules, sdk/analog-rytm-mkii/modules or sdk/analog-four-mkii/modules.'); process.exit(2) }
 
 // The module and catalog rules every PR already enforces (versions, documentation, qualification, gauges, media): run once.
 const rules = spawnSync(process.execPath, ['scripts/modules.mjs'], { cwd: root, encoding: 'utf8' })
@@ -70,6 +70,9 @@ function octatrack(id) {
   if (document.category === 'effects') {
     const testing = exists(folder + '/TESTING.md') ? readFileSync(resolve(root, folder + '/TESTING.md'), 'utf8') : ''
     info('sound quality', (/alias/i.test(testing) ? 'TESTING.md mentions aliasing' : 'TESTING.md does not mention aliasing') + '. If it processes audio: npm run fx:audit (aliasing, DC, clipping, idle), or write "not tested" (guide: Sound quality)')
+    // An effect processes its slot's audio on the DSP; ColdFire audio work means it makes its track's sound (FRACT, #926).
+    const record = exists(folder + '/evidence/performance.json') ? json(folder + '/evidence/performance.json') : null
+    if (record?.kind === 'coldfire' || record?.coldfire) fail('category', 'its performance record prices audio work on the ColdFire, so it makes or replaces its track\'s sound: that is a machine, not an effect', 'make it a track machine (docs/module-guides/README.md#choose-the-category)')
   }
 
   // Cycles, a benchmark against stock and a stress run. Required for a module listed from PERFORMANCE_REQUIRED_FROM; older modules are told.
@@ -158,7 +161,7 @@ function machineModule({ id, machine }) {
     else lines.push({ state: 'ok', name: 'category guide', detail: 'walk docs/module-guides/' + manifest.category + '.md, and the Digitakt and Digitone section in it' })
   }
   // The browser builds only from the files elekloader's catalog pins (vendor/elekloader/catalog/catalog.json); a mod's id is its catalog id.
-  // elekloader names the Rytm's device analog-rytm-mk2, which the machine id does not start with.
+  // elekloader names the Rytm's and the Four's devices analog-rytm-mk2 and analog-four-mk2, which their machine ids do not start with.
   const device = LINK_DEVICES.find(item => item.machine === machine)?.key
   const pins = json('vendor/elekloader/catalog/catalog.json').mods.filter(mod => mod.id === id && (mod.device === device || mod.device.startsWith(machine)))
   if (pins.length) lines.push({ state: 'ok', name: 'browser builder', detail: 'pinned in the elekloader catalog for OS ' + pins.map(mod => mod.os).join(', ') })
@@ -193,6 +196,6 @@ for (const id of octatrackIds) {
 }
 const machineIds = all ? machineModules : machineModules.filter(item => ids.includes(item.id))
 for (const item of machineIds) green = report(item.id + ' (' + item.machine + ')', machineModule(item)) && green
-if (!all && !octatrackIds.length && !machineIds.length) { console.error('No module named ' + ids[0] + ' under sdk/octabam/modules, sdk/digitakt/modules, sdk/digitone/modules or sdk/analog-rytm-mkii/modules.'); process.exit(2) }
+if (!all && !octatrackIds.length && !machineIds.length) { console.error('No module named ' + ids[0] + ' under sdk/octabam/modules, sdk/digitakt/modules, sdk/digitone/modules, sdk/analog-rytm-mkii/modules or sdk/analog-four-mkii/modules.'); process.exit(2) }
 console.log(green ? '\nEvery integration point is green. Now walk the category checklist in docs/module-guides/.' : '\nFix the lines marked ✗, then run this again.')
 process.exitCode = green ? 0 : 1

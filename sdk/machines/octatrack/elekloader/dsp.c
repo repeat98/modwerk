@@ -19,11 +19,12 @@
 
 /* manager.c's code descriptor, which it reads from dl_codes. */
 struct code { const uint32_t *words; const uint16_t *relocations; uint16_t count, init, proc, relocation_count; };
-/* Stock first: every slot without a module is charged the dearest stock effect
- * (MODWERK_DSP_RESERVE), and a module at least that, so eight stock slots always
- * fit a core and a stock pick never adds to what was admitted: a module is
- * refused, never a stock effect. All in chip cycles per sample (build_core.py). A module is admitted before its
- * tracks are known, so against the smaller core's allowance. */
+/* Stock first: each slot is charged at least the dearest stock effect its bank's Parts name there
+ * (modwerk_dsp_slot_floors; owner, 24 October 2026, beta finding 34), so a Part switch or a RELOAD never needs room it
+ * was not given, and eight stock slots of any bank fit a core (the dearest, MODWERK_DSP_RESERVE, eight times): only a
+ * module, or a stock pick dearer than its bank's Parts use there, is refused. Machine voices and engines, which a bank
+ * change keeps, still book each slot at MODWERK_DSP_RESERVE. All in chip cycles per sample (build_core.py). A module is
+ * admitted before its tracks are known, so against the smaller core's allowance. */
 #define MODWERK_DSP_ALLOWANCE (MODWERK_DSP_ALLOWANCE0 < MODWERK_DSP_ALLOWANCE1 ? MODWERK_DSP_ALLOWANCE0 : MODWERK_DSP_ALLOWANCE1)
 typedef char stock_always_fits[8u * MODWERK_DSP_RESERVE <= MODWERK_DSP_ALLOWANCE ? 1 : -1];
 /* An instance's chip cycles. A claim from the emulator (executed instructions, modeled cycles) ran 1.42-1.74 times
@@ -40,7 +41,7 @@ static uint32_t source_voice[8], source_owner[8];
 static volatile uint8_t source_frozen; /* the self-test runs: no voice is charged anew until it ends (beta finding 63) */
 static struct { uint32_t module, cycles; } source_engine[2][SOURCE_ENGINES];
 static unsigned source_core(unsigned track) { return track < 4u ? 1u : 0u; } /* the allocator's core_of: tracks 1-4 on core 1 */
-static uint32_t slot_charge(unsigned core) /* each of the core's eight slots at least the stock reserve */
+static uint32_t slot_charge(unsigned core) /* each of the core's eight slots at least the stock reserve: for voices */
 {
     uint32_t sum = 0;
     for (unsigned i = 0; i < 16u; ++i)
@@ -55,6 +56,11 @@ uint32_t modwerk_dsp_source_charge(unsigned core)
     for (unsigned t = 0; t < 8u; ++t) if (source_core(t) == core) sum += source_voice[t];
     return sum;
 }
+/* The last claim refused for cycles: the core and the cycles it asked for (its voice and any engine it adds), for the
+ * DSP FULL box (status.c). A machine's voice has no effect pick to show a refusal, so the box says it. */
+static unsigned refused_core;
+static uint32_t refused_add;
+void modwerk_dsp_source_refusal(unsigned *core, uint32_t *add) { *core = refused_core, *add = refused_add; }
 /* `module` (its runtime id) renders `track`, replacing whatever claimed it; nothing changes unless the core's sources,
  * this voice, the module's engine and every slot fit its allowance. */
 int modwerk_dsp_source_claim(unsigned track, uint32_t module, uint32_t voice, uint32_t engine, uint8_t kind)
@@ -69,7 +75,7 @@ int modwerk_dsp_source_claim(unsigned track, uint32_t module, uint32_t voice, ui
     uint32_t v = charged(voice, kind), e = charged(engine, kind), old = source_engine[c][at].module ? source_engine[c][at].cycles : 0;
     uint32_t keep = old > e ? old : e;
     uint32_t total = slot_charge(c) + modwerk_dsp_source_charge(c) - source_voice[track] - old + v + keep;
-    if (total > (c ? MODWERK_DSP_ALLOWANCE1 : MODWERK_DSP_ALLOWANCE0)) return RUNTIME_CYCLES;
+    if (total > (c ? MODWERK_DSP_ALLOWANCE1 : MODWERK_DSP_ALLOWANCE0)) { refused_core = c, refused_add = v + keep - old; return RUNTIME_CYCLES; }
     source_voice[track] = v, source_owner[track] = module;
     source_engine[c][at].module = module, source_engine[c][at].cycles = keep;
     return RUNTIME_OK;
@@ -88,7 +94,7 @@ void modwerk_dsp_source_engine_off(uint32_t module)
             if (source_engine[c][e].module == module) source_engine[c][e].module = 0, source_engine[c][e].cycles = 0;
 }
 /* A module id with no module: the null stub runs there, free on both slots. */
-#define STOCK {0, 1, MODWERK_DSP_RESERVE, 3, 1, 1, 0}
+#define STOCK {0, 1, 0, 3, 1, 1, 0}
 /* identity.c (dsp_loader.py catalog_c): every stock DSP effect's package per core, loaded on demand;
  * a module registers into its own id. */
 extern struct dl_package dl_catalog[MODWERK_FX_IDS];
@@ -144,6 +150,68 @@ static uint8_t *owner_page[MODWERK_FX_IDS]; /* its page recipe (the module image
 static uint32_t owner_page_bytes[MODWERK_FX_IDS];
 static uint8_t owner_pinned[MODWERK_FX_IDS]; /* its ColdFire code names this id: it never moves (loader.h) */
 static uint32_t owner_cycles[MODWERK_FX_IDS]; /* an instance's chip cycles a sample, unfloored (status.c's MODULE LOAD) */
+/* Each slot's least charge: the dearest stock effect this bank's Parts name there, working or saved, the one it runs and
+ * the one `ids` asks for. A module id counts nothing here: each module is admitted for itself, and a Part naming one
+ * that does not fit is refused at the switch. */
+static void floors(const uint8_t ids[16], uint32_t least[16])
+{
+    uintptr_t bank = BANK;
+    for (unsigned i = 0; i < 16u; ++i) {
+        uint32_t most = 0;
+        for (unsigned n = 0; n < 10u; ++n) {
+            unsigned p = n < 8u ? (bank ? PART(bank, n)[i] : 255u) : n == 8u ? LIVE_FX[i] : ids[i];
+            if (p < MODWERK_FX_IDS && !owner[p] && dl_catalog[p].cycles > most) most = dl_catalog[p].cycles;
+        }
+        least[i] = most;
+    }
+}
+/* What runs and each of the bank's four Parts (working copies), the dearest, on core: each slot its effect's cycles, at
+ * least its floor. No Part switch needs more. */
+static uint32_t bank_booking(const uint32_t least[16], unsigned core)
+{
+    uintptr_t bank = BANK;
+    uint32_t most = 0;
+    for (unsigned n = 0; n < (bank ? 5u : 1u); ++n) {
+        const volatile uint8_t *set = n ? PART(bank, n - 1u) : LIVE_FX;
+        uint32_t sum = 0;
+        for (unsigned i = 0; i < 16u; ++i)
+            if (source_core(i & 7u) == core) {
+                unsigned id = set[i];
+                uint32_t x = id < MODWERK_FX_IDS ? dl_catalog[id].cycles : 0u;
+                sum += x > least[i] ? x : least[i];
+            }
+        most = sum > most ? sum : most;
+    }
+    return most;
+}
+static const uint8_t no_target[16] = {255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255};
+/* The allocator's prepare (`ids` its target): each slot's floor into `least`, and 1 + the core where the target's raised
+ * floors (a stock pick dearer than its bank's Parts use there) take what runs or a Part of the bank past the allowance
+ * beside the machines' voices, else 0, so a Part switch is never refused for a stock effect (owner, 24 October 2026, beta
+ * finding 34). A Part switch, a load or the self-test names nothing the bank and the tracks do not: it raises none. */
+unsigned modwerk_dsp_slot_floors(const uint8_t ids[16], uint32_t least[16])
+{
+    uint32_t was[16];
+    unsigned raised = 0;
+    floors(no_target, was); /* the Parts once: the target only adds its own stock effects */
+    for (unsigned i = 0; i < 16u; ++i) {
+        unsigned p = ids[i];
+        uint32_t x = p < MODWERK_FX_IDS && !owner[p] ? dl_catalog[p].cycles : 0u;
+        least[i] = x > was[i] ? x : was[i], raised |= least[i] > was[i];
+    }
+    for (unsigned c = 0; raised && c < 2u; ++c) {
+        uint32_t voices = modwerk_dsp_source_charge(c), after = bank_booking(least, c) + voices;
+        if (after > (c ? MODWERK_DSP_ALLOWANCE1 : MODWERK_DSP_ALLOWANCE0) && after > bank_booking(was, c) + voices) return 1u + c;
+    }
+    return 0;
+}
+/* The STATUS page's DSP row and the box after a refused pick: the bank's dearest set on core, as the allocator books it. */
+static uint32_t slot_booking(unsigned core)
+{
+    uint32_t least[16];
+    floors(no_target, least);
+    return bank_booking(least, core);
+}
 static uint8_t owner_measured[MODWERK_FX_IDS]; /* 1: a hardware figure; 0: 7/4 of an emulator claim */
 /* shortcut: a pinned module's ColdFire hooks still act on tracks running its id after it lets go of it (a project
  * from elsewhere naming another module there); give such modules their handle at run time to lift this. */
@@ -234,8 +302,7 @@ static void catalogue_stamp(const struct runtime_dsp *d,uint8_t *out)
 /* Shared scalar publication, without a page, map write or manager nudge. */
 static void __attribute__((noinline)) catalogue_install(const struct runtime_dsp *to,uint32_t generation)
 {
-    uint32_t cycles = chip_cycles(to) > MODWERK_DSP_RESERVE ? chip_cycles(to) : MODWERK_DSP_RESERVE;
-    dl_catalog[to->id] = (struct dl_package){(uint16_t)to->count, 1, cycles, to->slots, 0, 1, to->buffer != 0};
+    dl_catalog[to->id] = (struct dl_package){(uint16_t)to->count, 1, chip_cycles(to), to->slots, 0, 1, to->buffer != 0};
     dl_codes[0][to->id] = dl_codes[1][to->id] =
         (struct code){to->words, to->relocations, (uint16_t)to->count, to->init, to->proc, to->relocation_count};
     owner[to->id] = to->module, owner_layout[to->id] = to->layout, owner_pinned[to->id] = to->pinned;
@@ -313,7 +380,7 @@ static int empty_catalogue(unsigned id)
 {
     const struct dl_package *p=&dl_catalog[id];
     if(owner[id] || catalogue_generation[id] || owner_page[id] || owner_pinned[id] || owner_cycles[id] || owner_measured[id] ||
-       p->words || p->alignment!=1u || p->cycles!=MODWERK_DSP_RESERVE || p->slots!=3u || !p->resident || !p->qualified || p->buffer) return 0;
+       p->words || p->alignment!=1u || p->cycles || p->slots!=3u || !p->resident || !p->qualified || p->buffer) return 0;
     for(unsigned c=0;c<2u;++c) { const struct code *k=&dl_codes[c][id];
         if(k->words || k->relocations || k->count || k->init || k->proc || k->relocation_count) return 0; }
     return modwerk_fxpage_current(id,0,0,0);
@@ -330,7 +397,7 @@ static int checked_catalogue(const struct runtime_owner *o,const struct runtime_
     if(catalogue_generation[id]!=o->generation || owner_layout[id]!=d->layout || owner_pinned[id]!=d->pinned ||
        owner_cycles[id]!=cycles || owner_measured[id]!=(d->kind==RUNTIME_HARDWARE) ||
        !same_bytes((const uint8_t *)owner_name[id],(const uint8_t *)d->name,16u) || owner_page[id]!=d->page || owner_page_bytes[id]!=d->page_bytes ||
-       p->words!=d->count || p->alignment!=1u || p->cycles!=(cycles>MODWERK_DSP_RESERVE?cycles:MODWERK_DSP_RESERVE) ||
+       p->words!=d->count || p->alignment!=1u || p->cycles!=cycles ||
        p->slots!=d->slots || p->resident || !p->qualified || p->buffer!=(d->buffer!=0)) return 0;
     for(unsigned c=0;c<2u;++c) { const struct code *k=&dl_codes[c][id];
         if(k->words!=d->words || k->relocations!=d->relocations || k->count!=d->count || k->init!=d->init || k->proc!=d->proc || k->relocation_count!=d->relocation_count) return 0; }
@@ -511,7 +578,7 @@ int modwerk_dsp_budget(unsigned slot, struct modwerk_dsp_budget *out)
     unsigned id = slot < 16u ? LIVE_FX[slot] : 0u, c = source_core(slot & 7u);
     if (slot >= 16u || id >= MODWERK_FX_IDS || !owner[id]) return 0;
     out->core = (uint8_t)c, out->allowance = c ? MODWERK_DSP_ALLOWANCE1 : MODWERK_DSP_ALLOWANCE0;
-    out->charge = slot_charge(c) + modwerk_dsp_source_charge(c), out->effect_cycles = dl_slot_cycles(slot);
+    out->charge = slot_booking(c) + modwerk_dsp_source_charge(c), out->effect_cycles = dl_slot_cycles(slot);
     out->words = dl_residency_words[c], out->arena = modwerk_dsp_arena[c];
     for (unsigned i = 0; i < 16u; ++i) out->name[i] = owner_name[id][i];
     return 1;
@@ -519,7 +586,7 @@ int modwerk_dsp_budget(unsigned slot, struct modwerk_dsp_budget *out)
 
 uint32_t modwerk_dsp_booked(unsigned core)
 {
-    uint32_t allowance = core ? MODWERK_DSP_ALLOWANCE1 : MODWERK_DSP_ALLOWANCE0, charge = slot_charge(core & 1u) + modwerk_dsp_source_charge(core);
+    uint32_t allowance = core ? MODWERK_DSP_ALLOWANCE1 : MODWERK_DSP_ALLOWANCE0, charge = slot_booking(core & 1u) + modwerk_dsp_source_charge(core);
     return charge >= allowance ? 1000u : charge * 1000u / allowance;
 }
 
@@ -856,6 +923,7 @@ volatile uint32_t modwerk_test_playing;
 int dl_bound(unsigned core, unsigned id);           /* manager.c (build_core.py's edit): a slot there runs bound code */
 extern volatile uint8_t dl_intended_override[16];   /* manager.c (build_core.py's edit): what a parked slot waits for */
 unsigned modwerk_runtime_intact(void);              /* loader.c: live modules whose sites hold */
+extern volatile uint32_t dl_residency_enabled;      /* manager.c: 0 once a stall shut the loader off (recover) */
 extern volatile uint32_t modwerk_status[];          /* status.c: [0] the CPU, [2] the T5-8 peak, [4] the T1-4 peak */
 extern volatile uint32_t modwerk_status_reads, modwerk_status_fast; /* status.c: meter windows read; peaks only */
 extern volatile uint32_t dl_residency_rollbacks, dl_residency_failures;
@@ -943,12 +1011,24 @@ static void restore_lanes(void)
 static int st_played;
 static uint32_t counted(void) { return modwerk_dsp_stalls + dl_rejected[0] + dl_rejected[1] + dl_errors + dl_residency_rollbacks; }
 static unsigned core_of_slot(unsigned i) { return (i & 7u) < 4u ? 1u : 0u; }
-static int settled(const uint8_t *want) /* the manager idle, and every slot running `want` with its code bound */
+static unsigned unsettled_slot(const uint8_t *want) /* the first slot not running `want` with its code bound, 16 none */
 {
-    if (!dl_publication_idle()) return 0;
     for (unsigned i = 0; i < 16u; ++i)
-        if (LIVE_SET[i] != want[i] || (want[i] < MODWERK_FX_IDS && !dl_catalog[want[i]].resident && !dl_bound(core_of_slot(i), want[i]))) return 0;
-    return 1;
+        if (LIVE_SET[i] != want[i] || (want[i] < MODWERK_FX_IDS && !dl_catalog[want[i]].resident && !dl_bound(core_of_slot(i), want[i]))) return i;
+    return 16u;
+}
+static int settled(const uint8_t *want) { return dl_publication_idle() && unsettled_slot(want) > 15u; } /* the manager idle too */
+/* A set that never settles (a tester's unit, 25 October 2026: a batch waited with 5 of 7 placed until the site gave up
+ * after three minutes, twice in one boot). The manager never asks again for an automatic set it refused (finding 70),
+ * so it is nudged once; still unsettled after about four seconds, the test fails with `why`, names the first slot's
+ * effect and puts the tracks back. */
+static void waiting(volatile struct selftest *t, const uint8_t *want, uint32_t why)
+{
+    if (st_ticks == 120u) nudge = 1;
+    if (st_ticks <= 240u) return;
+    unsigned i = unsettled_slot(want);
+    if (i < 16u) blame(want[i], 0);
+    t->failed |= why, t->phase = SELFTEST_RESTORE, st_ticks = 0;
 }
 /* Settled, judged at least seven ticks after the change, once the manager has taken it: a set that only takes code
  * off looks settled before the manager has seen it, and its next step would then meet the old code still loaded. */
@@ -996,6 +1076,9 @@ int modwerk_selftest_start(void)
         }
     t->modules = modwerk_runtime_active(), t->dsp = st_queued, t->intact = modwerk_runtime_intact(), t->total = st_queued + 2u;
     if (t->intact != t->modules) t->failed |= SELFTEST_BROKEN, blame(MODWERK_FX_IDS, modwerk_runtime_broken());
+    /* A stall earlier this boot shut the loader off: no module's DSP code loads until a restart, so nothing here can
+     * pass (a release image passed with it so on the owner's MKII, 24 October 2026). */
+    if (!dl_residency_enabled) t->failed |= SELFTEST_STOPPED;
     for (unsigned i = 0; i < 16u; ++i) st_live[i] = st_base[i] = st_want[i] = LIVE_SET[i];
     for (unsigned tr = 0; tr < 8u; ++tr) for (unsigned b = 0; b < 72u; ++b) st_lanes[tr][b] = LANE(tr)[b];
     st_counted = counted(), st_ticks = st_step = st_back = 0, st_played = 0;
@@ -1079,7 +1162,7 @@ static void together(volatile struct selftest *t)
         return;
     }
     if (st_step == HOLD) { /* until both cores' meters have a fresh window with everything bound */
-        if (st_reads == ~0u) { if (settled(st_want)) st_reads = modwerk_status_reads, st_ticks = 0; return; }
+        if (st_reads == ~0u) { if (settled(st_want)) st_reads = modwerk_status_reads, st_ticks = 0; else waiting(t, st_want, SELFTEST_REFUSED); return; }
         if (st_ticks > 6u && modwerk_status[4] > t->peak[0]) t->peak[0] = modwerk_status[4];
         if (st_ticks > 6u && modwerk_status[2] > t->peak[1]) t->peak[1] = modwerk_status[2];
         if (modwerk_status[0] > t->cpu) t->cpu = modwerk_status[0];
@@ -1133,7 +1216,7 @@ static void together(volatile struct selftest *t)
     if (st_queued) { /* the modules off first, then an emptied core's effects back: their code arrives once the modules' left */
         if (!st_back) set_live(st_base), st_back = 1, st_ticks = 0;
         if (st_back == 1u) { if (!taken(st_base) && st_ticks <= 300u) return; set_live(st_live), st_back = 2, st_ticks = 0; }
-        if (!taken(st_live)) return;
+        if (!taken(st_live)) { waiting(t, st_live, SELFTEST_NOT_BACK); return; }
         for (unsigned i = 0; i < 16u; ++i) st_base[i] = st_want[i] = st_live[i];
         for (unsigned i = 0; i < 8u; ++i) t->track[i] = 0;
         st_used = st_try = st_batch = st_back = 0, st_step = PLACE;
@@ -1258,6 +1341,18 @@ static void compact_tick(void)
     if (modwerk_dsp_compact_step)
         modwerk_dsp_compact_counts = holes() ? 0xffffffffu : *(volatile uint32_t *)0xfc07c00cu - compact_at, modwerk_dsp_compact_step = 0;
 }
+/* manager.c's last way to place a pick that fits a core packed but not beside its live code (build_core.py
+ * TRANSITION_EDITS, beta finding 35): pack now, the request waiting. 0 when packing cannot run (the self-test, a
+ * host session) or no core has a hole; the wait ends after five seconds whatever the moves have done. */
+static uint32_t pack_at;
+int modwerk_dsp_pack(void)
+{
+    if (modwerk_selftest.state == SELFTEST_RUNNING || modwerk_upload_busy() || !holes()) return 0;
+    (void)modwerk_dsp_compact(); /* already packing: the request waits for that one */
+    pack_at = modwerk_runtime_ticks;
+    return 1;
+}
+int modwerk_dsp_packing(void) { return modwerk_dsp_compact_step && modwerk_runtime_ticks - pack_at < 300u; }
 #endif
 /* The compaction planner (dsp.c's move_one; host-tested by test_dsp.c): k placed blocks sorted by address (where each
  * starts, its words, its alignment, 0 as 1) in an arena of cap words. A copy needs one free run as big as its block,

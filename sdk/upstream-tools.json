@@ -3,8 +3,8 @@
   "purpose": "Developer checkouts of upstream tooling, kept outside Git by scripts/upstream-tools.py. Not release source: nothing in them enters a Modwerk build, catalogue or release fingerprint.",
   "octabam": {
     "repository": "https://github.com/sambanks/octabam.git",
-    "commit": "8250be0c23ca0a0a953cb7e5721e3bdb98dadfe5",
-    "updated": "2026-10-20"
+    "commit": "dcf93d3709435836e19aab7a7ef18506db3e82ba",
+    "updated": "2026-10-25"
   },
   "elekloader": {
     "repository": "https://github.com/irpina/elekloader.git",

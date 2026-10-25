@@ -8,14 +8,19 @@ choice of licences for the repository as a whole.
    and worker.ts is licensed under Elastic License 2.0 (SPDX: Elastic-2.0).
    Full terms: LICENSES/Elastic-2.0.txt and server/LICENSE.
 
-2. The original shared helpers listed in LICENSES/platform.json are licensed
-   under GPL-3.0-or-later OR Elastic-2.0. Each listed file carries that expression.
-   The browser frontend uses the GPL option; the independent backend uses ELv2.
+2. The original pipeline files listed as pipelineFiles in LICENSES/platform.json
+   (GitHub workflows and build, release, device and service tools) are licensed
+   under Elastic-2.0. Each listed file carries that declaration.
 
-3. Other original Modwerk code remains GPL-3.0-or-later unless a file or its
+3. The original shared helpers listed as sharedFiles in LICENSES/platform.json
+   are licensed under GPL-3.0-or-later OR Elastic-2.0. Each listed file carries
+   that expression. The browser frontend uses the GPL option; the independent
+   backend and the pipeline files use ELv2.
+
+4. Other original Modwerk code remains GPL-3.0-or-later unless a file or its
    component declares another licence. Full GPL terms: LICENSES/GPL-3.0-or-later.txt.
 
-4. SDKs, firmware modules, vendored builders, generated module/machine metadata,
+5. SDKs, firmware modules, vendored builders, generated module/machine metadata,
    media, dependencies and other third-party works retain their respective
    licences and copyright notices. ELv2 does not relicense those works.
 
@@ -26,6 +31,31 @@ No rights to Elektron firmware or third-party trademarks are granted.
 See docs/PLATFORM_LICENSING.md for the scope, provenance audit, contribution
 terms and limits. Retain the relevant scope, copyright notices and full licence
 texts when redistributing source or binaries.
+Pipeline files (Elastic-2.0):
+.github/workflows/module-author-updates.yml
+.github/workflows/module-pr.yml
+.github/workflows/pages.yml
+.github/workflows/pr-flags.yml
+.github/workflows/pr-triage.yml
+.github/workflows/worker.yml
+scripts/admin-key.mjs
+scripts/build-elemod-isolated.sh
+scripts/build-modules-isolated.sh
+scripts/community-backup.mjs
+scripts/device-send.py
+scripts/diagnostics-pull.mjs
+scripts/diagnostics-pull.test.mjs
+scripts/domain-check.mjs
+scripts/domain-check.test.mjs
+scripts/forum-preview-seed.mjs
+scripts/octatrack-base-variant-patch.py
+scripts/octatrack-measure.py
+scripts/push-keys.mjs
+scripts/push-runtime.test.mjs
+scripts/sync-module-releases.mjs
+scripts/sync-module-releases.test.mjs
+scripts/verify-placement-diagnostics.mjs
+
 Shared helpers (GPL-3.0-or-later OR Elastic-2.0):
 src/catalog/availability.ts
 src/catalog/build-support.ts

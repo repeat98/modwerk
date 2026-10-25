@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-License-Identifier: Elastic-2.0
+# Copyright (c) 2026 Jannik Aßfalg (repeat98)
 """An effect's real DSP cost on a unit, over `npm run device -- serve` (a development base with the status meters).
 
   scripts/octatrack-measure.py [--slot 2] [--pkg MODULE.mwrm] NAME ...   (NAME as the chooser shows it; NONE first)

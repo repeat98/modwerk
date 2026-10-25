@@ -7,8 +7,9 @@
   "category": "machines",
   "author": {
     "github": "jankolkmeier",
+    "name": "Jan Kolkmeier",
     "credits": [
-      "jankolkmeier"
+      "Jan Kolkmeier: the LFO waves, their tests and documentation, and the thumbnail."
     ]
   },
   "nativeManifest": "manifest.py",
@@ -39,6 +40,7 @@
       "Audio-track LFOs only; MIDI-track LFOs keep 19 waves",
       "DJQ snaps PTCH to root, fifth and octaves (no scale setting); DJV and DJC move in 1/5-semitone knob steps",
       "Opened without the module, an LFO on WAVE 19-21 plays SAW and the WAVE cell reads past stock's tables (not yet run on hardware)",
+      "Removed while in use (USB trial on one MKII): LFO SETUP shows track 8's design wave for WAVE 19-21 and the LFO plays a stock wave; no hang",
       "Tested on one MKII over USB (install, self-test, power-cycle restore, removal, the three waves); the card build was not flashed"
     ]
   },

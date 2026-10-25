@@ -186,17 +186,33 @@ static unsigned slot_of(const struct mw_controller_binding *b)
     }
     return MW_CONTROLLER_SLOTS;
 }
-/* Published at a position, as this exact owner generation: that module, or 0. */
+/* Published at a position, as this exact owner generation: that module, or 0. The walk over every position is kept per
+ * binding while the owner epoch stands even and unchanged (loader.h: positions and owners are then as found), and the
+ * owner's own header is checked again on every call (owner_held); with 26 modules the walk cost 120 µs a tick. */
+static struct { uint32_t epoch, generation, module; uintptr_t canonical; const struct runtime_module *m; struct runtime_owner o; unsigned hint; }
+    found[MW_CONTROLLER_SLOTS];
+static unsigned found_next;
 static const struct runtime_module *module_of(const struct mw_controller_binding *b)
 {
-    for (unsigned i = 0; i < RUNTIME_MODULES; ++i) {
+    uint32_t epoch = modwerk_runtime_owner_epoch();
+    for (unsigned k = 0; !(epoch & 1u) && k < MW_CONTROLLER_SLOTS; ++k)
+        if (found[k].epoch == epoch && found[k].generation == b->generation && found[k].module == b->identity.module &&
+            found[k].canonical == b->canonical_extent)
+            return found[k].m && modwerk_runtime_owner_held(&found[k].o, &found[k].hint) == 1 ? found[k].m : 0;
+    const struct runtime_module *hit = 0; struct runtime_owner kept = {0};
+    for (unsigned i = 0; i < RUNTIME_MODULES && !hit; ++i) {
         const struct runtime_module *m = modwerk_runtime_module(i);
         struct runtime_owner o; uintptr_t canonical;
-        if (m && modwerk_runtime_owner_snapshot(m->dsp.image, &o) == 1 && o.generation == b->generation &&
-            o.module == b->identity.module && modwerk_runtime_owner_canonical(&o, &canonical) == 1 &&
-            canonical == b->canonical_extent) return m;
+        if (m && m->id == b->identity.module && modwerk_runtime_owner_snapshot(m->dsp.image, &o) == 1 && /* id first: one read */
+            o.generation == b->generation && o.module == b->identity.module && modwerk_runtime_owner_canonical(&o, &canonical) == 1 &&
+            canonical == b->canonical_extent) hit = m, kept = o;
     }
-    return 0;
+    if (!(epoch & 1u) && epoch == modwerk_runtime_owner_epoch()) {
+        unsigned k = found_next++ % MW_CONTROLLER_SLOTS;
+        found[k].epoch = epoch, found[k].generation = b->generation, found[k].module = b->identity.module;
+        found[k].canonical = b->canonical_extent, found[k].m = hit, found[k].o = kept, found[k].hint = 0;
+    }
+    return hit;
 }
 static int live(const struct mw_controller_binding *b) { return module_of(b) != 0; }
 
@@ -513,19 +529,30 @@ static unsigned engine_features(void) { return slot_features(); }
 #endif
 /* A live package requires the key bus (ABI 9 `requires`, loader.h): a reader, once a track runs its effect or the bank's
  * Parts name it (use_tick's rule). A few loads a tick, no hashing. */
+static uint32_t readers_epoch = 1u; /* odd: none taken yet */
+static uint32_t readers[RUNTIME_MODULES], readers_count;
 static int keybus_read(void)
 {
-    for (unsigned i = 0; i < RUNTIME_MODULES; ++i) {
-        const struct runtime_module *m = modwerk_runtime_module(i);
-        if (!m || !(m->dsp.requires & KEYBUS)) continue;
+    /* Which modules require it changes only with the owners (loader.h's epoch): their headers are read again then, not
+     * every tick. Their effect ids are looked up every time, since a project load may move a module's handle. */
+    uint32_t epoch = modwerk_runtime_owner_epoch();
+    if (epoch != readers_epoch || (epoch & 1u)) {
+        readers_count = 0;
+        for (unsigned i = 0; i < RUNTIME_MODULES; ++i) {
+            const struct runtime_module *m = modwerk_runtime_module(i);
+            if (m && (m->dsp.requires & KEYBUS)) readers[readers_count++] = m->dsp.module;
+        }
+        readers_epoch = epoch == modwerk_runtime_owner_epoch() ? epoch : 1u;
+    }
 #ifdef MODWERK_RESIDENT_ON_DEMAND
-        int id = HANDLE(m->dsp.module);
+    for (unsigned n = 0; n < readers_count; ++n) {
+        int id = HANDLE(readers[n]);
         if (id >= 0 && modwerk_dsp_bank_names((unsigned)id)) return 1;
-#else
-        return 1;
-#endif
     }
     return 0;
+#else
+    return readers_count != 0;
+#endif
 }
 #ifdef MODWERK_RESIDENT_ON_DEMAND
 /* The FX allocator's seam (resident_engines.allocator): the tap's price on core c that a set of effects (FX1 T1-T8, then

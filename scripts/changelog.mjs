@@ -40,13 +40,16 @@ export function renderChangelog(root) {
   return ['# Application changelog\n', ...recent, start < 0 ? '' : history.slice(start)].filter(Boolean).join('\n')
 }
 
+/** A frozen log keeps its history: since the base commit, no line may add an entry (`- `) or a section (`## `) to it. */
+export function refuseNewEntries(root, base, file, message) {
+  const diff = execFileSync('git', ['diff', '--no-ext-diff', '--unified=0', base, '--', file], { cwd: root, encoding: 'utf8', maxBuffer: 32 * 1024 * 1024 })
+  if (diff.split('\n').some(line => /^\+(- |## )/.test(line))) throw new Error(file + ': ' + message)
+}
+
 /** Entries are well formed, and with a base commit, no new entry or day was added to the frozen CHANGELOG.md. */
 export function checkChangelog(root, base = null) {
   const entries = readEntries(root)
-  if (base) {
-    const diff = execFileSync('git', ['diff', '--no-ext-diff', '--unified=0', base, '--', 'CHANGELOG.md'], { cwd: root, encoding: 'utf8', maxBuffer: 32 * 1024 * 1024 })
-    if (diff.split('\n').some(line => /^\+(- |## )/.test(line))) throw new Error('CHANGELOG.md: ' + MOVE)
-  }
+  if (base) refuseNewEntries(root, base, 'CHANGELOG.md', MOVE)
   return { entries: entries.length }
 }
 

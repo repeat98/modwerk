@@ -69,7 +69,7 @@ When steps 1–4 are done:
    - `firmware`: every supported OS release with its stock file names and SHA-256.
    - `flash` and `recovery` text users can follow.
    - `sdk`: platform, module folder, guide, core release and source path, toolchain, and every budget (memory, fast memory, slots) that combinations of mods must fit.
-3. **Add the guide** at `sdk/machines/<id>/README.md`: the core's events and their C prototypes, memory areas, budgets, how to build and how to recover.
+3. **Add the guide** at `sdk/machines/<id>/README.md`: the core's events and their C prototypes, memory areas, budgets, how to build and how to recover. Before the first module, agree with the owner how mods will reach the musician: how several mods add pages, rows and controls behind the stock keys, and which shared sites the core should own. Start from what the upstream core already offers, and add a core event only where many mods will use it ([choose how a module hooks in](module-guides/README.md#choose-how-a-module-hooks-in)).
 4. **Create the module folder** (`sdk/<id>/modules/`) and a first module with `npm run module:new -- <mod> --machine <id> --author <login>`.
 5. **Set the status.** Set `status` to `preview` and every step to `done` when the first module validates. The status becomes `available` once Modwerk's engine builds and verifies firmware for the machine.
 

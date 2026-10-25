@@ -233,9 +233,10 @@ published one, built with the resident engines on demand): the capability record
 
 The `MODWERK_RUNTIME_SETS` candidate adds MWCP feature **512** and the
 [`MWMS v1` bundle](set_package.h): an 80-byte header binds the exact base and
-the baseline's sorted `(module id, package SHA-256)` digest; up to 20 unique
-length-prefixed MWRM changes follow, with zero padding to four bytes. The
-resulting census is bounded to 20 modules. The existing single-package
+the baseline's sorted `(module id, package SHA-256)` digest; up to
+`RUNTIME_MODULES` (128 on the Octatrack) unique length-prefixed MWRM changes
+follow, with zero padding to four bytes. The resulting census is bounded to as
+many installed modules (`RUNTIME_JOURNAL_ROWS`). The existing single-package
 protocol and ABI remain available.
 
 All candidates are admitted before publication. Both generations keep their

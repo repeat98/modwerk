@@ -1,0 +1,1 @@
+Octatrack base: the key bus that feeds RINGMOD SC and Sidechain Compressor now counts at its measured cost. Timed on an MKII, it uses 51 DSP cycles a sample per chip instead of the 72 the base charged. That leaves 21 more cycles a sample on each chip for other effects while RINGMOD SC is in use. It takes effect with the next base build.

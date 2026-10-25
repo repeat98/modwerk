@@ -1,0 +1,46 @@
+{
+ "schemaVersion": 1,
+ "recorded": "2026-10-22",
+ "decision": "Analog Rytm MKII module: rytm2_mods' elemod port of MrScruff's rytm-mods 0014-ctrl-all (with his 1.1 and 1.2 updates), for OS 1.74, imported under GPL-2.0-only with attribution. rytm-mods-src is published with MrScruff's permission.",
+ "modules": [
+  {
+   "module": "analog-rytm-mkii/ctrl-all",
+   "version": "1.2.0",
+   "repository": "https://github.com/Iced-Cream/rytm2_mods",
+   "tag": "v1.2",
+   "revision": "afd461d4a8ef4306bb2a57d4c61ad35c362b3940",
+   "license": "GPL-2.0-only",
+   "files": [
+    {
+     "from": "ctrl-all/os1.74/ctrl-all.s",
+     "to": "src/ctrl-all.s",
+     "sha256": "616788792636f33210977fec94999edc8cfd8497d5a3094be86fad8a92ea833d"
+    },
+    {
+     "from": "include/ar2-1.74.inc",
+     "to": "include/ar2-1.74.inc",
+     "sha256": "c57431f7b678c68cc007d2a180339edfcb395e9a40b753fe53ea649364e0874b"
+    },
+    {
+     "from": "LICENSE",
+     "to": "LICENSE",
+     "sha256": "8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643"
+    },
+    {
+     "from": "ctrl-all/README.md",
+     "to": "upstream/README.md",
+     "sha256": "95e8a3f6a77050fcfd32c7aed5605108f72ae6f52de2ef97ef3f3d14d65e91dd"
+    }
+   ],
+   "excluded": [
+    "ctrl-all/mod.json",
+    "ctrl-all/ctrl-all.s"
+   ],
+   "transformations": [
+    "mod.json's OS 1.74 port site (0x400378c2, 6 stock bytes, jmp ctrl_all_gate) became an address, length and SHA-256 guard in build.json's 1.74 release.",
+    "The OS 1.73 source and site are not imported: core-ar2 0.3 is for OS 1.74 only.",
+    "include/ar2-1.74.inc keeps its path relative to the source, so the .include line in src/ctrl-all.s is unchanged."
+   ]
+  }
+ ]
+}

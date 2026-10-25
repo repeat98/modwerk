@@ -4,7 +4,8 @@ import { compareModuleVersions } from '../catalog/versions'
 import { parseReleaseNotes, type ReleaseNotes } from './module-release-notes'
 
 // Older sites have no notes; they remain readable during deployment, but cannot queue new releases.
-export type ModuleRelease = { id: string; name: string; version: string; href: string; notes?: ReleaseNotes; beta?: boolean }
+// authorRelease: a registered author published this version without owner review; followers hear about it later.
+export type ModuleRelease = { id: string; name: string; version: string; href: string; notes?: ReleaseNotes; beta?: boolean; authorRelease?: boolean }
 export type ModuleReleaseManifest = { format: 'modwerk-module-releases-v1'; modules: ModuleRelease[] }
 export type ModuleUpdateSubscription = { enabled: boolean; emailEnabled: boolean; emailAvailable: boolean; version: string | null }
 
@@ -14,13 +15,14 @@ export function parseModuleReleases(value: unknown): ModuleRelease[] {
   const ids = new Set<string>()
   return value.modules.map((item: unknown) => {
     if (!item || typeof item !== 'object') throw new Error('Invalid module release.')
-    const { id, name, version, href, notes, beta } = item as Partial<ModuleRelease>
+    const { id, name, version, href, notes, beta, authorRelease } = item as Partial<ModuleRelease>
     if (typeof id !== 'string' || !/^[a-z0-9][a-z0-9-]{0,99}$/.test(id) || ids.has(id) || typeof name !== 'string' || !name.trim() || name.length > 120 || typeof version !== 'string' || version.length > 80 || typeof href !== 'string' || !/^#(?:module\/[a-z0-9-]+|[a-z0-9][a-z0-9-]{0,99}\/module\/[a-z0-9-]+)$/.test(href)) throw new Error('Invalid module release.')
     if (beta !== undefined && typeof beta !== 'boolean') throw new Error('Invalid beta release flag.')
+    if (authorRelease !== undefined && authorRelease !== true) throw new Error('Invalid author release flag.')
     compareModuleVersions(version, version)
     const releaseNotes = notes === undefined ? undefined : parseReleaseNotes(notes, id)
     if (releaseNotes && releaseNotes.version !== version) throw new Error('Release notes must match the published version for ' + id + '.')
     ids.add(id)
-    return { id, name, version, href, ...(releaseNotes ? { notes: releaseNotes } : {}), ...(beta === undefined ? {} : { beta }) }
+    return { id, name, version, href, ...(releaseNotes ? { notes: releaseNotes } : {}), ...(beta === undefined ? {} : { beta }), ...(authorRelease ? { authorRelease } : {}) }
   })
 }
