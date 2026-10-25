@@ -3437,7 +3437,7 @@
         "uiClaims": [],
         "limitations": [
           "Needs the Modwerk base's key bus, which only the USB base has (loader ABI 9, `requires keybus`), so it is USB-only: the configurator refuses card firmware with it (the site's rule for a package that requires a base feature). A card image built with it anyway has no key bus, and there the effect keeps its depth at 0 and passes the audio untouched.",
-          "While RINGMOD SC is installed the base's tap copies every track's audio on every block, on both cores, and its price (41 executed instructions a sample a core, charged at 7/4) counts toward RINGMOD SC, even with no instance on a track. That figure is counted from the tap's source; the chip cost is not measured.",
+          "While a Part in the bank uses RINGMOD SC the base's tap copies every track's audio on every block, on both cores, and its price counts toward RINGMOD SC: 51 chip cycles a sample a core, timed on an MKII (charged at 72 before). Installed but used in no Part of the bank, it costs nothing.",
           "The key is taken before the key track's own effects.",
           "The key is exact when its track is dispatched before this one on the same DSP core (T1-T4, T5-T8), 16 samples late when after, and 32 samples late across the cores (the key bus's latency, measured on an MKII for Sidechain Compressor; not yet with this module).",
           "A MODE or KEY change fades the effect out, clears the key's state and fades back in over about 1 ms, so a KEY parameter lock shorter than that is not heard.",
