@@ -61,6 +61,8 @@ int modwerk_diag_key(int code, int pressed);           /* ev_key: remembers pres
 void modwerk_diag_frame(void);                         /* dl_frame, in the frame interrupt */
 unsigned modwerk_diag_read(uint8_t *out, unsigned page); /* ep0.c LOG: DIAG_PAGE bytes of the log, then the records */
 void modwerk_diag_set(void);                           /* modset.c: the installed set changed (restore, Keep) */
+void modwerk_diag_refused(uint32_t module, uint32_t refusal); /* modset.c, before a restore's set record: its first refused
+                                                       * package's module and the loader's refusal (screen, tempo24) */
 #ifdef MODWERK_DEV
 /* Development builds: what the base's own hooks cost, in DTIM3 counts (132 MHz), read over MEM. The tick chain is
  * stamped in its order (runtime_tick 1, ep0_tick 2 and its end 3, dl_ui 4, status_tick 5 and its end 6, crash_tick 7,
