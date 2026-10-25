@@ -18,18 +18,19 @@
   "presentation": {
     "label": "SEND FX",
     "family": "Send effect",
-    "summary": "A third send effect beside the delay and the reverb, with a choice of effect: chorus, flanger or phaser.",
+    "summary": "A third send effect beside the delay and the reverb, with a choice of fifteen effects: modulation, filters, grit, pitch and two tempo-synced delays.",
     "overview": "Each sound track gets a send (AMP pressed twice). The voices, as the codec brings them back (the signal the delay and reverb sends take), feed the chosen effect, whose stereo return joins the PRE FX return. The FX page (FX track, DELAY pressed twice) chooses the effect with FUNC + A, sets its level with FUNC + E and its eight controls with A-H, in the layout of Elektron's newer effect pages. With every send at 0, the default, the unit sounds as stock.",
     "highlights": [
       "A send per sound track, like DEL and REV.",
-      "CHORUS, FLANGER (endless barber-pole sweep) and PHASER (2-8 stages) in one slot.",
+      "Fifteen effects in one slot: CHORUS, FLANGER, PHASER, WOW AND FLUTTER, COMB FILTER, BITCRUSH, LOWPASS, MULTIFILTER, DIRT, SAT DELAY, STEREO DELAY, CHRONO PITCH, FILTER FOLDER, FILTERBANK and FREQ WARPER.",
+      "The delays and the comb and low-pass LFOs follow the project tempo.",
       "A full-screen FX page with illustrated controls; stock does nothing with the second DELAY or AMP press that opens it.",
       "Silent and almost free while no track sends."
     ],
     "usage": [
       "Select a snare or a hi-hat track, press AMP, then AMP again: the SEND page opens. Turn encoder A to about 90.",
       "Play the track: the chorus joins in at its defaults.",
-      "Press FX, DELAY, then DELAY again: the FX page opens. Hold FUNC and turn A for the flanger or the phaser, then shape it with A-H.",
+      "Press FX, DELAY, then DELAY again: the FX page opens. Hold FUNC and turn A to choose another effect, then shape it with A-H.",
       "Press DELAY once more to go back to the delay, and save the kit to keep the settings."
     ]
   },
@@ -42,6 +43,7 @@
     ],
     "screenshots": [
       "media/fx-chorus.png",
+      "media/fx-sat-delay.png",
       "media/fx-send.png"
     ]
   },
@@ -49,17 +51,29 @@
     {
       "name": "EFFECT",
       "default": 0,
-      "doc": "CHORUS, FLANGER or PHASER. FUNC + A on the FX page. Kept in the kit.",
+      "doc": "The effect, 01-15. FUNC + A on the FX page. Kept in the kit.",
       "labels": [
         "CHORUS",
         "FLANGER",
-        "PHASER"
+        "PHASER",
+        "WOW AND FLUTTER",
+        "COMB FILTER",
+        "BITCRUSH",
+        "LOWPASS",
+        "MULTIFILTER",
+        "DIRT",
+        "SAT DELAY",
+        "STEREO DELAY",
+        "CHRONO PITCH",
+        "FILTER FOLDER",
+        "FILTERBANK",
+        "FREQ WARPER"
       ]
     },
     {
       "name": "LEV",
-      "default": 100,
-      "doc": "Return level. FUNC + E on the FX page. Kept in the project.",
+      "default": 71,
+      "doc": "Return level, up to about 2x (71: about 0.6x). FUNC + E on the FX page. Kept in the project.",
       "labels": null
     },
     {
@@ -82,7 +96,7 @@
     "requires": [],
     "conflicts": [],
     "limitations": [
-      "One effect at a time in the slot.",
+      "One effect at a time in the slot; the delays reach 0.68 s (a longer division is halved).",
       "Little time left in the audio block: each effect was trimmed until it ran with all eight voices sending in the emulator; not measured on a unit.",
       "Not stock parameters: no parameter locks, LFO, scenes or MIDI CC.",
       "Always on the PRE return; only the analog voices are sent.",
@@ -106,18 +120,18 @@
     ]
   },
   "resources": {
-    "memoryBytes": 30053,
+    "memoryBytes": 105508,
     "fastBytes": null,
     "load": {
       "display": "Trimmed to run with all eight voices sending (emulator); near zero idle",
       "method": "emulator",
-      "conditions": "rytm-emu, OS 1.74: each effect forced on with every send at 127 while a pattern plays; audio keeps running. Earlier drafts with four Hermite taps a frame or twelve phaser stages a side stopped the audio. rytm-emu's profiler does not sample the mod area, so no percentage; not measured on a unit."
+      "conditions": "rytm-emu, OS 1.74: each of the fifteen effects forced on with every send at 127 while a pattern plays (BITCRUSH also at its costliest, SRR 0 with DROP and FREZ at 127); audio keeps running. Earlier drafts with four Hermite taps a frame or twelve phaser stages a side stopped the audio. rytm-emu's profiler does not sample the mod area, so no percentage; not measured on a unit."
     }
   },
   "evidence": {
     "tier": "emulator",
     "moduleVersion": "0.1.0-experimental",
-    "sourceSha256": "ec0a276af7051b8221d82a6ee71ac3760350ac918bfc117db76c25c259f752c1",
+    "sourceSha256": "b80bffb0ac1a59140a6a50c30f6def22f5f53c548b2310b9c9b154b31be0c77b",
     "reports": [
       "TESTING.md"
     ],
@@ -126,14 +140,14 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Emulator (rytm-emu, OS 1.74, build FX04): pages, effect choice and sends as described; each effect on the PRE return, and each running with all eight voices sending. The chorus of an earlier build was heard by the author on a unit; the flanger and phaser are not yet. See TESTING.md.",
+    "summary": "Emulator (rytm-emu, OS 1.74, build FX08): pages, effect choice and sends as described; each of the fifteen effects on the PRE return, and each running with all eight voices sending. On the author's unit (LF05): all fifteen tried, reported to sound very good; the CPU check and a kit save across a reboot are not reported yet. See TESTING.md.",
     "documentation": {
       "tutorial": {
         "title": "Quick tutorial",
         "steps": [
           "Select a snare or a hi-hat track, press AMP, then AMP again: the SEND page opens. Turn encoder A to about 90.",
           "Play the track: the chorus joins in at its defaults.",
-          "Press FX, DELAY, then DELAY again: the FX page opens. Hold FUNC and turn A for the flanger or the phaser, then shape it with A-H.",
+          "Press FX, DELAY, then DELAY again: the FX page opens. Hold FUNC and turn A to choose another effect, then shape it with A-H.",
           "Press DELAY once more to go back to the delay, and save the kit to keep the settings."
         ]
       },
@@ -141,6 +155,18 @@
         "media/fx-chorus.png",
         "media/fx-flanger.png",
         "media/fx-phaser.png",
+        "media/fx-wow-flutter.png",
+        "media/fx-comb-filter.png",
+        "media/fx-bitcrush.png",
+        "media/fx-lowpass.png",
+        "media/fx-multifilter.png",
+        "media/fx-dirt.png",
+        "media/fx-sat-delay.png",
+        "media/fx-stereo-delay.png",
+        "media/fx-chrono-pitch.png",
+        "media/fx-filter-folder.png",
+        "media/fx-filterbank.png",
+        "media/fx-freq-warper.png",
         "media/fx-send.png"
       ],
       "captureRecord": "media/capture.json"
@@ -165,7 +191,7 @@
       "path": "media/fx-chorus.png",
       "kind": "screenshot",
       "caption": "FX, DELAY, then DELAY again: the FX page with CHORUS.",
-      "alt": "FX page: 01 CHORUS; SND and LEV on the left; SPD DEP TIME WDTH over FDBK HPF LPF.",
+      "alt": "FX page: 01 CHORUS; SPD DEP TIME WDTH over FDBK HPF LPF.",
       "credit": "stigmagit documentation capture; Elektron interface",
       "license": "LicenseRef-Rytm-UI-Documentation",
       "source": "original",
@@ -173,8 +199,8 @@
         "type": "emulator",
         "release": "1.74",
         "moduleVersion": "0.1.0-experimental",
-        "imageSha256": "b312cabf8889b4e2785550921306ad72b07a4704e0a92893dbe52b7076f6dc0f",
-        "setup": "rytm-emu 3c4c42c headless; FX04 build (core-ar2 0.3 + this module). UI documentation only."
+        "imageSha256": "1c8607d46a3e9a34062b643a5756dbdd94f7982c7f5471c9ff8ec3575d448e6b",
+        "setup": "rytm-emu 3c4c42c headless; FX08 build (core-ar2 0.3 + this module). UI documentation only."
       }
     },
     {
@@ -189,14 +215,14 @@
         "type": "emulator",
         "release": "1.74",
         "moduleVersion": "0.1.0-experimental",
-        "imageSha256": "b312cabf8889b4e2785550921306ad72b07a4704e0a92893dbe52b7076f6dc0f",
-        "setup": "rytm-emu 3c4c42c headless; FX04 build (core-ar2 0.3 + this module). UI documentation only."
+        "imageSha256": "1c8607d46a3e9a34062b643a5756dbdd94f7982c7f5471c9ff8ec3575d448e6b",
+        "setup": "rytm-emu 3c4c42c headless; FX08 build (core-ar2 0.3 + this module). UI documentation only."
       }
     },
     {
       "path": "media/fx-phaser.png",
       "kind": "screenshot",
-      "caption": "FUNC + A again: PHASER.",
+      "caption": "FUNC + A: PHASER.",
       "alt": "FX page: 03 PHASER; SPD DEP SHP LAG over a wide FREQ/FDBK box, STG and WDTH.",
       "credit": "stigmagit documentation capture; Elektron interface",
       "license": "LicenseRef-Rytm-UI-Documentation",
@@ -205,8 +231,200 @@
         "type": "emulator",
         "release": "1.74",
         "moduleVersion": "0.1.0-experimental",
-        "imageSha256": "b312cabf8889b4e2785550921306ad72b07a4704e0a92893dbe52b7076f6dc0f",
-        "setup": "rytm-emu 3c4c42c headless; FX04 build (core-ar2 0.3 + this module). UI documentation only."
+        "imageSha256": "1c8607d46a3e9a34062b643a5756dbdd94f7982c7f5471c9ff8ec3575d448e6b",
+        "setup": "rytm-emu 3c4c42c headless; FX08 build (core-ar2 0.3 + this module). UI documentation only."
+      }
+    },
+    {
+      "path": "media/fx-wow-flutter.png",
+      "kind": "screenshot",
+      "caption": "FUNC + A: WOW AND FLUTTER.",
+      "alt": "FX page: 04 WOW AND FLUTTER; SPD DEP BASE WDTH over NOIS, N.HPF, STER.",
+      "credit": "stigmagit documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "1c8607d46a3e9a34062b643a5756dbdd94f7982c7f5471c9ff8ec3575d448e6b",
+        "setup": "rytm-emu 3c4c42c headless; FX08 build (core-ar2 0.3 + this module). UI documentation only."
+      }
+    },
+    {
+      "path": "media/fx-comb-filter.png",
+      "kind": "screenshot",
+      "caption": "FUNC + A: COMB FILTER.",
+      "alt": "FX page: 05 COMB FILTER; SPD DEP SPH DTUN over a wide FREQ/FDBK box and LPF.",
+      "credit": "stigmagit documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "1c8607d46a3e9a34062b643a5756dbdd94f7982c7f5471c9ff8ec3575d448e6b",
+        "setup": "rytm-emu 3c4c42c headless; FX08 build (core-ar2 0.3 + this module). UI documentation only."
+      }
+    },
+    {
+      "path": "media/fx-bitcrush.png",
+      "kind": "screenshot",
+      "caption": "FUNC + A: BITCRUSH.",
+      "alt": "FX page: 06 BITCRUSH; BITS OVER SRR DROP over RATE DEP FREZ F.TIM.",
+      "credit": "stigmagit documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "1c8607d46a3e9a34062b643a5756dbdd94f7982c7f5471c9ff8ec3575d448e6b",
+        "setup": "rytm-emu 3c4c42c headless; FX08 build (core-ar2 0.3 + this module). UI documentation only."
+      }
+    },
+    {
+      "path": "media/fx-lowpass.png",
+      "kind": "screenshot",
+      "caption": "FUNC + A: LOWPASS.",
+      "alt": "FX page: 07 LOWPASS; SPD DEP SPH LAG over a wide FREQ/RESO box and SPRD.",
+      "credit": "stigmagit documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "1c8607d46a3e9a34062b643a5756dbdd94f7982c7f5471c9ff8ec3575d448e6b",
+        "setup": "rytm-emu 3c4c42c headless; FX08 build (core-ar2 0.3 + this module). UI documentation only."
+      }
+    },
+    {
+      "path": "media/fx-multifilter.png",
+      "kind": "screenshot",
+      "caption": "FUNC + A: MULTIFILTER.",
+      "alt": "FX page: 08 MULTIFILTER; ATK DEC SUS REL over a wide FREQ/RESO box, TYPE and ENV.",
+      "credit": "stigmagit documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "1c8607d46a3e9a34062b643a5756dbdd94f7982c7f5471c9ff8ec3575d448e6b",
+        "setup": "rytm-emu 3c4c42c headless; FX08 build (core-ar2 0.3 + this module). UI documentation only."
+      }
+    },
+    {
+      "path": "media/fx-dirt.png",
+      "kind": "screenshot",
+      "caption": "FUNC + A: DIRT.",
+      "alt": "FX page: 09 DIRT; DRV RECT, HPF with - and +, LPF over NOIS and a wide N.FRQ/N.RES box.",
+      "credit": "stigmagit documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "1c8607d46a3e9a34062b643a5756dbdd94f7982c7f5471c9ff8ec3575d448e6b",
+        "setup": "rytm-emu 3c4c42c headless; FX08 build (core-ar2 0.3 + this module). UI documentation only."
+      }
+    },
+    {
+      "path": "media/fx-sat-delay.png",
+      "kind": "screenshot",
+      "caption": "FUNC + A: SAT DELAY.",
+      "alt": "FX page: 10 SAT DELAY; TIME 1/8, X ON, WDTH, FDBK over HPF LPF DRV.",
+      "credit": "stigmagit documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "1c8607d46a3e9a34062b643a5756dbdd94f7982c7f5471c9ff8ec3575d448e6b",
+        "setup": "rytm-emu 3c4c42c headless; FX08 build (core-ar2 0.3 + this module). UI documentation only."
+      }
+    },
+    {
+      "path": "media/fx-stereo-delay.png",
+      "kind": "screenshot",
+      "caption": "FUNC + A: STEREO DELAY.",
+      "alt": "FX page: 11 STEREO DELAY; DRV, TIME 1/8, FDBK, WDTH over MOD SKEW FILT.",
+      "credit": "stigmagit documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "1c8607d46a3e9a34062b643a5756dbdd94f7982c7f5471c9ff8ec3575d448e6b",
+        "setup": "rytm-emu 3c4c42c headless; FX08 build (core-ar2 0.3 + this module). UI documentation only."
+      }
+    },
+    {
+      "path": "media/fx-chrono-pitch.png",
+      "kind": "screenshot",
+      "caption": "FUNC + A: CHRONO PITCH.",
+      "alt": "FX page: 12 CHRONO PITCH; TUNE with - and +, WIN, FDBK, DEP over HPF LPF SPD.",
+      "credit": "stigmagit documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "1c8607d46a3e9a34062b643a5756dbdd94f7982c7f5471c9ff8ec3575d448e6b",
+        "setup": "rytm-emu 3c4c42c headless; FX08 build (core-ar2 0.3 + this module). UI documentation only."
+      }
+    },
+    {
+      "path": "media/fx-filter-folder.png",
+      "kind": "screenshot",
+      "caption": "FUNC + A: FILTER FOLDER.",
+      "alt": "FX page: 13 FILTER FOLDER; ILEV, HP, FOLD, OLEV over a wide FREQ/RESO box, TYPE LP4 and DIST.",
+      "credit": "stigmagit documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "1c8607d46a3e9a34062b643a5756dbdd94f7982c7f5471c9ff8ec3575d448e6b",
+        "setup": "rytm-emu 3c4c42c headless; FX08 build (core-ar2 0.3 + this module). UI documentation only."
+      }
+    },
+    {
+      "path": "media/fx-filterbank.png",
+      "kind": "screenshot",
+      "caption": "FUNC + A: FILTERBANK.",
+      "alt": "FX page: 14 FILTERBANK; eight tall sliders, 90 120 225 420 over 780 1.4K 2.7K 4K.",
+      "credit": "stigmagit documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "1c8607d46a3e9a34062b643a5756dbdd94f7982c7f5471c9ff8ec3575d448e6b",
+        "setup": "rytm-emu 3c4c42c headless; FX08 build (core-ar2 0.3 + this module). UI documentation only."
+      }
+    },
+    {
+      "path": "media/fx-freq-warper.png",
+      "kind": "screenshot",
+      "caption": "FUNC + A: FREQ WARPER.",
+      "alt": "FX page: 15 FREQ WARPER; SPD DEP SPH LAG over SHFT, SPRD, SBND.",
+      "credit": "stigmagit documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "1c8607d46a3e9a34062b643a5756dbdd94f7982c7f5471c9ff8ec3575d448e6b",
+        "setup": "rytm-emu 3c4c42c headless; FX08 build (core-ar2 0.3 + this module). UI documentation only."
       }
     },
     {
@@ -221,8 +439,8 @@
         "type": "emulator",
         "release": "1.74",
         "moduleVersion": "0.1.0-experimental",
-        "imageSha256": "b312cabf8889b4e2785550921306ad72b07a4704e0a92893dbe52b7076f6dc0f",
-        "setup": "rytm-emu 3c4c42c headless; FX04 build (core-ar2 0.3 + this module). UI documentation only."
+        "imageSha256": "1c8607d46a3e9a34062b643a5756dbdd94f7982c7f5471c9ff8ec3575d448e6b",
+        "setup": "rytm-emu 3c4c42c headless; FX08 build (core-ar2 0.3 + this module). UI documentation only."
       }
     }
   ]

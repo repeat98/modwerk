@@ -3,36 +3,108 @@
  "machine": "analog-rytm-mkii",
  "moduleId": "send-fx",
  "moduleVersion": "0.1.0-experimental",
- "imageSha256": "b312cabf8889b4e2785550921306ad72b07a4704e0a92893dbe52b7076f6dc0f",
+ "imageSha256": "1c8607d46a3e9a34062b643a5756dbdd94f7982c7f5471c9ff8ec3575d448e6b",
  "firmware": "1.74",
  "stockSha256": "cb0f99d620edde994fb860c0e79cc2464e427d06882828cfdfb00fc53700e123",
- "build": "FX04: core-ar2 0.3 (elekloader tag core-ar2-v0.3, built from source) + send-fx, elekloader.sdk.build / lint / patch, m68k-linux-gnu-gcc 12.2.0",
+ "build": "FX08: core-ar2 0.3 (elekloader tag core-ar2-v0.3, built from source) + send-fx, elekloader.sdk.build / lint / patch, m68k-linux-gnu-gcc 12.2.0",
  "emulator": "rytm-emu 3c4c42c, dtboot headless, 3x PNG without interpolation",
  "capturedAt": "2026-10-25",
- "setup": "A blank card; the default project at 127.0 BPM; the startup calibration notices cleared with NO.",
+ "setup": "A blank card; the default project at 127.0 BPM; the startup calibration notices cleared with NO. Every press and turn is 3M instructions off a multiple of 10M: dtboot drops an event that falls on its 10M chunk boundary while the CPU is busy there.",
  "captures": [
   {
    "path": "media/fx-chorus.png",
-   "sha256": "3926a9934c7c1f545967712be3ae00cebc43b5c375082092b27e09e79ccea80f",
-   "plan": "dtboot FX04.syx --instr 9600M --card <blank card> --press NO@4500M:80M --press NO@5300M:80M --press NO@6100M:80M --press NO@6900M:80M --press FX@8000M:60M --press SRC@8600M:60M --press SRC@9200M:60M",
-   "frame": "DTBOOT_END_PNG at 9600M"
+   "sha256": "9cd1375b61c0ccf47ed76e95156cdfb052a43598d36097edf36827ef7d8257d2",
+   "plan": "dtboot FX08.syx --instr 9700M --card <blank card> --press NO@4503M:80M --press NO@5303M:80M --press NO@6103M:80M --press NO@6903M:80M --press FX@8003M:60M --press SRC@8603M:60M --press SRC@9203M:60M",
+   "frame": "DTBOOT_END_PNG at 9700M"
   },
   {
    "path": "media/fx-flanger.png",
-   "sha256": "a850945bd66df4d7b9417859d07075b46bc66a4706080e630fc1602d5f61f01b",
-   "plan": "dtboot FX04.syx --instr 10300M --card <blank card> --press NO@4500M:80M --press NO@5300M:80M --press NO@6100M:80M --press NO@6900M:80M --press FX@8000M:60M --press SRC@8600M:60M --press SRC@9200M:60M --press FUNC@9500M:500M --turn 0:6@9600Mx2/30M",
-   "frame": "DTBOOT_END_PNG at 10300M"
+   "sha256": "b1a99875a47048cd0f11924fe2a6b63cc15be1355076cda09cb8e4472a45f27c",
+   "plan": "dtboot FX08.syx --instr 10163M --card <blank card> --press NO@4503M:80M --press NO@5303M:80M --press NO@6103M:80M --press NO@6903M:80M --press FX@8003M:60M --press SRC@8603M:60M --press SRC@9203M:60M --press FUNC@9503M:360M --turn 0:6@9603Mx2/30M",
+   "frame": "DTBOOT_END_PNG at 10163M"
   },
   {
    "path": "media/fx-phaser.png",
-   "sha256": "64e2577ed6b9d4bc9a222a08fbcdc994a587068e7e90834be15f88ccf743b925",
-   "plan": "dtboot FX04.syx --instr 10300M --card <blank card> --press NO@4500M:80M --press NO@5300M:80M --press NO@6100M:80M --press NO@6900M:80M --press FX@8000M:60M --press SRC@8600M:60M --press SRC@9200M:60M --press FUNC@9500M:500M --turn 0:6@9600Mx3/30M",
-   "frame": "DTBOOT_END_PNG at 10300M"
+   "sha256": "09d88c0fe1197efcedc41be74c34ca81351202d972c6e7dfc97877560c2d1ec5",
+   "plan": "dtboot FX08.syx --instr 10193M --card <blank card> --press NO@4503M:80M --press NO@5303M:80M --press NO@6103M:80M --press NO@6903M:80M --press FX@8003M:60M --press SRC@8603M:60M --press SRC@9203M:60M --press FUNC@9503M:390M --turn 0:6@9603Mx3/30M",
+   "frame": "DTBOOT_END_PNG at 10193M"
+  },
+  {
+   "path": "media/fx-wow-flutter.png",
+   "sha256": "4f572021cc2cc57435112d4d4c7de0fa7df5b1588f30ea967a6405c5f5d165b2",
+   "plan": "dtboot FX08.syx --instr 10223M --card <blank card> --press NO@4503M:80M --press NO@5303M:80M --press NO@6103M:80M --press NO@6903M:80M --press FX@8003M:60M --press SRC@8603M:60M --press SRC@9203M:60M --press FUNC@9503M:420M --turn 0:6@9603Mx4/30M",
+   "frame": "DTBOOT_END_PNG at 10223M"
+  },
+  {
+   "path": "media/fx-comb-filter.png",
+   "sha256": "e414be2cbaf474ffa533b8207fd451ac1cc09d55d37f2d1d0a23fbbde8931f97",
+   "plan": "dtboot FX08.syx --instr 10283M --card <blank card> --press NO@4503M:80M --press NO@5303M:80M --press NO@6103M:80M --press NO@6903M:80M --press FX@8003M:60M --press SRC@8603M:60M --press SRC@9203M:60M --press FUNC@9503M:480M --turn 0:6@9603Mx6/30M",
+   "frame": "DTBOOT_END_PNG at 10283M"
+  },
+  {
+   "path": "media/fx-bitcrush.png",
+   "sha256": "b89d281cdb4d27a62f2c05356e6595b7716614b3eb4c84076cdeaeafc07d3b43",
+   "plan": "dtboot FX08.syx --instr 10313M --card <blank card> --press NO@4503M:80M --press NO@5303M:80M --press NO@6103M:80M --press NO@6903M:80M --press FX@8003M:60M --press SRC@8603M:60M --press SRC@9203M:60M --press FUNC@9503M:510M --turn 0:6@9603Mx7/30M",
+   "frame": "DTBOOT_END_PNG at 10313M"
+  },
+  {
+   "path": "media/fx-lowpass.png",
+   "sha256": "71fb163492f9165a4731f033e88fa85809eb4e5f1b926aba7afd261781cf155e",
+   "plan": "dtboot FX08.syx --instr 10343M --card <blank card> --press NO@4503M:80M --press NO@5303M:80M --press NO@6103M:80M --press NO@6903M:80M --press FX@8003M:60M --press SRC@8603M:60M --press SRC@9203M:60M --press FUNC@9503M:540M --turn 0:6@9603Mx8/30M",
+   "frame": "DTBOOT_END_PNG at 10343M"
+  },
+  {
+   "path": "media/fx-multifilter.png",
+   "sha256": "a377efd9c866f7df885cde9fcc627deef2b5c6de06ff922cd313795136c19e8d",
+   "plan": "dtboot FX08.syx --instr 10403M --card <blank card> --press NO@4503M:80M --press NO@5303M:80M --press NO@6103M:80M --press NO@6903M:80M --press FX@8003M:60M --press SRC@8603M:60M --press SRC@9203M:60M --press FUNC@9503M:600M --turn 0:6@9603Mx10/30M",
+   "frame": "DTBOOT_END_PNG at 10403M"
+  },
+  {
+   "path": "media/fx-dirt.png",
+   "sha256": "9100170c1a1cb20b0cc12614e76e48b639ff8e4cbae87365a2b5f11bcda60bc3",
+   "plan": "dtboot FX08.syx --instr 10433M --card <blank card> --press NO@4503M:80M --press NO@5303M:80M --press NO@6103M:80M --press NO@6903M:80M --press FX@8003M:60M --press SRC@8603M:60M --press SRC@9203M:60M --press FUNC@9503M:630M --turn 0:6@9603Mx11/30M",
+   "frame": "DTBOOT_END_PNG at 10433M"
+  },
+  {
+   "path": "media/fx-sat-delay.png",
+   "sha256": "e2fbcacf79c201c1d49d9ccc73e5f31fae52b15bcdd8f636c696d29bb498fb22",
+   "plan": "dtboot FX08.syx --instr 10463M --card <blank card> --press NO@4503M:80M --press NO@5303M:80M --press NO@6103M:80M --press NO@6903M:80M --press FX@8003M:60M --press SRC@8603M:60M --press SRC@9203M:60M --press FUNC@9503M:660M --turn 0:6@9603Mx12/30M",
+   "frame": "DTBOOT_END_PNG at 10463M"
+  },
+  {
+   "path": "media/fx-stereo-delay.png",
+   "sha256": "bd48fec59fc73e751614c2ad13daf2246bf678315b97f5caf725fa32fd4e0465",
+   "plan": "dtboot FX08.syx --instr 10523M --card <blank card> --press NO@4503M:80M --press NO@5303M:80M --press NO@6103M:80M --press NO@6903M:80M --press FX@8003M:60M --press SRC@8603M:60M --press SRC@9203M:60M --press FUNC@9503M:720M --turn 0:6@9603Mx14/30M",
+   "frame": "DTBOOT_END_PNG at 10523M"
+  },
+  {
+   "path": "media/fx-chrono-pitch.png",
+   "sha256": "af4181563d55aaf0ac292841e3afdddfe9629d2e23348189d3f42e4395480395",
+   "plan": "dtboot FX08.syx --instr 10553M --card <blank card> --press NO@4503M:80M --press NO@5303M:80M --press NO@6103M:80M --press NO@6903M:80M --press FX@8003M:60M --press SRC@8603M:60M --press SRC@9203M:60M --press FUNC@9503M:750M --turn 0:6@9603Mx15/30M",
+   "frame": "DTBOOT_END_PNG at 10553M"
+  },
+  {
+   "path": "media/fx-filter-folder.png",
+   "sha256": "19bce2aab055708ed0f825f47228ea9fdf4751dbfbb99a6fc4568328e1964ebc",
+   "plan": "dtboot FX08.syx --instr 10583M --card <blank card> --press NO@4503M:80M --press NO@5303M:80M --press NO@6103M:80M --press NO@6903M:80M --press FX@8003M:60M --press SRC@8603M:60M --press SRC@9203M:60M --press FUNC@9503M:780M --turn 0:6@9603Mx16/30M",
+   "frame": "DTBOOT_END_PNG at 10583M"
+  },
+  {
+   "path": "media/fx-filterbank.png",
+   "sha256": "615429a4c47eb8c9331576aff0d5af827cb7bac5023ed3edcb17771bb1e484e4",
+   "plan": "dtboot FX08.syx --instr 10643M --card <blank card> --press NO@4503M:80M --press NO@5303M:80M --press NO@6103M:80M --press NO@6903M:80M --press FX@8003M:60M --press SRC@8603M:60M --press SRC@9203M:60M --press FUNC@9503M:840M --turn 0:6@9603Mx18/30M",
+   "frame": "DTBOOT_END_PNG at 10643M"
+  },
+  {
+   "path": "media/fx-freq-warper.png",
+   "sha256": "69642f9148bb3954da637701c69c07bb9fd3b7a75b0b13c98ee3f8e6a4ef7b4a",
+   "plan": "dtboot FX08.syx --instr 10673M --card <blank card> --press NO@4503M:80M --press NO@5303M:80M --press NO@6103M:80M --press NO@6903M:80M --press FX@8003M:60M --press SRC@8603M:60M --press SRC@9203M:60M --press FUNC@9503M:870M --turn 0:6@9603Mx19/30M",
+   "frame": "DTBOOT_END_PNG at 10673M"
   },
   {
    "path": "media/fx-send.png",
    "sha256": "dbfc51ef284dc2922ef9513da6c8452aebed20294ec6f10b07b6f6dd3bc5fdcd",
-   "plan": "dtboot FX04.syx --instr 10400M --card <blank card> --press NO@4500M:80M --press NO@5300M:80M --press NO@6100M:80M --press NO@6900M:80M --press AMP@8600M:60M --press AMP@9200M:60M --turn 0:6@9500Mx30/20M",
+   "plan": "dtboot FX08.syx --instr 10400M --card <blank card> --press NO@4503M:80M --press NO@5303M:80M --press NO@6103M:80M --press NO@6903M:80M --press AMP@8603M:60M --press AMP@9203M:60M --turn 0:6@9503Mx30/20M",
    "frame": "DTBOOT_END_PNG at 10400M"
   }
  ]

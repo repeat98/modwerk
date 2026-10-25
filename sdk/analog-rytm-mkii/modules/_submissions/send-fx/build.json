@@ -84,7 +84,8 @@
         "-DVOICE_TRACK_AT=0x40291138",
         "-DTEXT_DRAW_AT=0x4007154c",
         "-DTEXT_FONT_AT=0x40071be8",
-        "-DTEXT_CTX_AT=0x417e389c"
+        "-DTEXT_CTX_AT=0x417e389c",
+        "-DTEMPO_WORD_AT=0x40287ffc"
       ],
       "sites": [
         {
