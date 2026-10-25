@@ -22,8 +22,7 @@
     "ui:pad press outside CHROMATIC mode",
     "ui:TRIG 1-12 press",
     "ui:FUNC + pad",
-    "ui:FUNC + TRIG 1-12",
-    "ui:GLOBAL > SEQUENCER CONFIG row after AUTO TRK SWITCH"
+    "ui:GLOBAL > CONTROL > SEQUENCER CONFIG row after AUTO TRK SWITCH"
   ],
   "requires": [],
   "derive": null,
