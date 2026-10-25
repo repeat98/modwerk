@@ -34,6 +34,8 @@ export function openFailure(agent = typeof navigator === 'undefined' ? '' : navi
 const KEEPALIVE_MS = 1000
 /** Asked while playing, the base presses STOP itself and answers `unsafe` that once; ask again until it has stopped. */
 const STOP_RETRY_MS = 200
+/** A whole-set restore acknowledges one row per engine turn: 20 rows already need 3.8 s at this retry interval. */
+const ROLLBACK_WAIT_MS = 10000
 /** How often a unit another window or app holds is tried again, so it connects once they let go. */
 const BUSY_RETRY_MS = 3000
 const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
@@ -529,7 +531,7 @@ export class OctatrackLink {
     try {
       await this.whenStopped(() => session.holdTrial())
       if (keep) await session.accept()
-      else await this.whenStopped(() => session.rollback())
+      else await this.whenStopped(() => session.rollback(), Math.max(this.stopWaitMs, ROLLBACK_WAIT_MS))
       const unsaved = keep && this.transport && !await waitUntilSaved(this.transport).catch(() => false)
       this.live(connection)
       await session.leaveUploadMode()
@@ -582,7 +584,7 @@ export class OctatrackLink {
   private async cleanUp(session: LinkSession) {
     const phase = session.status.phase
     if (phase === 'receiving' || phase === 'verified') { session.adopt(); await session.cancel() } // a fresh session adopts what the lost one staged
-    else if (phase === 'pending' || phase === 'trial' || phase === 'recovery' || phase === 'publishing') { session.adopt(); await this.whenStopped(() => session.rollback()); await session.leaveUploadMode() }
+    else if (phase === 'pending' || phase === 'trial' || phase === 'recovery' || phase === 'publishing') { session.adopt(); await this.whenStopped(() => session.rollback(), Math.max(this.stopWaitMs, ROLLBACK_WAIT_MS)); await session.leaveUploadMode() }
     else if (phase === 'ready') await session.leaveUploadMode()
     return session.status.phase === 'normal'
   }
@@ -590,13 +592,13 @@ export class OctatrackLink {
    * moment (refusal 5: DSP code loading or moving), for `stopWaitMs`. A rollback the loader could not switch yet (an
    * effect's code still being published just after it went in, emulator 12 October 2026) leaves the controller in
    * recovery, from where it rolls back again. */
-  private async whenStopped<T>(step: () => Promise<T>): Promise<T> {
+  private async whenStopped<T>(step: () => Promise<T>, waitMs = this.stopWaitMs): Promise<T> {
     const connection = this.connection
     for (const start = Date.now(); ; await wait(STOP_RETRY_MS)) {
       this.live(connection)
       try { const result = await step(); this.live(connection); return result } catch (error) {
         const recovery = error instanceof UploadDeviceError && error.status.result === 'needs-recovery'
-        if (Date.now() - start >= this.stopWaitMs || !(unsafe(error) || recovery || await this.loaderBusy(error))) throw error
+        if (Date.now() - start >= waitMs || !(unsafe(error) || recovery || await this.loaderBusy(error))) throw error
       }
     }
   }

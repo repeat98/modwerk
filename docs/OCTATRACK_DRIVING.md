@@ -33,6 +33,12 @@ runs short. Everything here was done on the owner's MKII on 11 October 2026. Why
   cycle before the next RAM boot: one such boot hung at the logo (12 October 2026,
   [traps](OCTATRACK_HARDWARE_TRAPS.md#dsp-loader-dynamic-dsp-code)).
 
+A whole-set rollback can need one acknowledged engine turn per changed row.
+The frontend gives Undo/recovery a separate ten-second budget; 20 changes at
+200 ms between requests already take 3.8 seconds before USB latency. An
+unconfirmed reply still stops the connection, and restoration is verified
+before reporting success.
+
 ## Start the link
 
 ```sh

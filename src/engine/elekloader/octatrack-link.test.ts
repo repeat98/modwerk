@@ -448,6 +448,31 @@ describe('loading a module set', () => {
     unit.stuck = 2; await link.undo()
     expect(link.getState()).toMatchObject({ status: 'ready', notice: { tone: 'success', text: 'Undone. Your Octatrack is back to how it was.' } })
   })
+  it('finishes an acknowledged twenty-row rollback without reporting a failed sync', async () => {
+    const unit = fakeUnit(), base = fakeSession(unit), rollback = vi.fn()
+    unit.moduleSets = true
+    const connect: typeof base = async (...args) => {
+      const session = await base(...args)
+      return Object.create(session, { rollback: { value: () => { rollback(); return session.rollback() } } })
+    }
+    const link = new OctatrackLink(unit.usb, connect), stop = link.start()
+    try {
+      await vi.waitFor(() => expect(link.getState().status).toBe('ready'))
+      const changes = Array.from({ length: 20 }, (_, i) => change((256 + i).toString(16).padStart(8, '0')))
+      await link.update('Large set', changes)
+      expect(link.getState().status).toBe('trial')
+      // The real backend restores one row per acknowledged engine turn.
+      unit.stuck = changes.length - 1
+      vi.useFakeTimers({ toFake: ['setTimeout', 'Date'] })
+      const undo = link.undo()
+      await vi.advanceTimersByTimeAsync(5000)
+      await undo
+      expect(rollback).toHaveBeenCalledTimes(20)
+      expect(unit.kept).toEqual([])
+      expect(unit.modules).toEqual([])
+      expect(link.getState()).toMatchObject({ status: 'ready', active: FAKE_BASE, notice: { tone: 'success', text: 'Undone. Your Octatrack is back to how it was.' } })
+    } finally { stop() }
+  })
   it('undoes the set when the self-test fails', async () => {
     const { unit, link } = await loaded(async () => 'the Octatrack’s DSP stopped')
     expect(unit.kept).toEqual([])
