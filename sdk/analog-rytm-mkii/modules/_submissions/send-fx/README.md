@@ -16,6 +16,7 @@ With every send at 0, the default, nothing is added: the unit sounds as stock.
 | --- | --- |
 | FUNC + turn A | Chooses the effect, 01-15. A new effect starts from its own defaults |
 | FUNC + turn E | LEV, the return level, up to about 2x (default 71, about 0.6x) |
+| Hold FUNC | The SND box shows CPU: the share of the audio block's time the mod takes, in percent, the highest of the last second |
 | Turn A-H | The effect's controls below |
 
 | Effect | A | B | C | D | E | F | G | H |

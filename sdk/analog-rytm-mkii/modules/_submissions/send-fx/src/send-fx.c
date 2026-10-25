@@ -939,8 +939,35 @@ static void run_fx(int type, const int *x, int *L, int *R)
 // (TESTING.md), Q8: the effects sound as loud as each other at one LEV.
 static const unsigned short trim[FX_TYPES] = { 256, 256, 256, 359, 147, 139, 573, 350, 151, 183, 211, 352, 74, 375, 245 };
 
-// The audio block, from the FX returns' hook (gate.s).
+// The CPU meter: DMA timer 0's counter, which core-ar2 starts free running
+// at the bus clock (its core.s) and stock reads as a time base. Each block's
+// time over the time since the block before, the highest of about a second,
+// in tenths of a percent: shown with FUNC held on the FX page.
+#define DTCN0 (*(volatile unsigned *)0xFC07000C)
+#define CPU_BLOCKS 1500
+static unsigned cpu_last;
+static int cpu_peak, cpu_blocks, cpu_shown;
+
+static void block_body(int slot);
+
 void send_fx_block(int slot)
+{
+    unsigned t0 = DTCN0, period = t0 - cpu_last, used;
+    cpu_last = t0;
+    block_body(slot);
+    used = DTCN0 - t0;
+    if (period > 1000 && period < 10000000 && used < period) {
+        int pm = (int)(used * 1000u / period);
+        if (pm > cpu_peak) cpu_peak = pm;
+    }
+    if (++cpu_blocks >= CPU_BLOCKS) {
+        cpu_shown = cpu_peak;
+        cpu_peak = cpu_blocks = 0;
+    }
+}
+
+// The audio block, from the FX returns' hook (gate.s) through send_fx_block.
+static void block_body(int slot)
 {
     int v, f, n = 0, type = fx_type < FX_TYPES ? fx_type : FX_CHORUS;
     int gain[VOICES], step[VOICES], wordof[VOICES], tlev, slev;
@@ -1095,6 +1122,7 @@ static unsigned shown_state(void)
     int k, sel = selected_track();
     for (k = 0; k < 8; k++) h = h * 33u + par[k];
     h = h * 33u + (unsigned)sending();
+    if (IS_KEY_HELD(KEY_FUNC)) h = h * 33u + 1000u + (unsigned)cpu_shown;
     if (sel >= 0 && sel < SOUND_TRACKS) h = h * 33u + send[sel] + (unsigned)sel * 128u;
     return h;
 }
@@ -1619,8 +1647,14 @@ static void draw_fx(void)
     rect(20, 0, 127, 10, 1);
     big_text(effects[fx_type].name, 23, 2, 0);
     box(0, 13, 17, 36);
-    label(9, 21, "SND");
-    n = sending();
+    if (IS_KEY_HELD(KEY_FUNC)) {                 // the CPU meter, in percent
+        n = (cpu_shown + 5) / 10;
+        if (n > 99) n = 99;
+        label(9, 21, "CPU");
+    } else {
+        n = sending();
+        label(9, 21, "SND");
+    }
     big_number(n, 0, n >= 10 ? 3 : 6, 26);
     box(4, 39, 13, 56);
     n = lev * 13 / 127;

@@ -28,6 +28,7 @@ The emulator runs the stock firmware's code; it is not hardware evidence. Its an
 | FX08: FX, DELAY, DELAY | FX page, 01 CHORUS, its eight controls and SND, LEV |
 | FX08: FUNC + 2 to 19 turns of A (6 counts each) | 02 FLANGER to 15 FREQ WARPER, each with its own controls (media/, capture.json) |
 | FX08: AMP, AMP, 30 turns of A | SEND page, the send 0 -> 90 |
+| FX16: FX, DELAY, DELAY, then FUNC held | The SND box reads CPU 0 (no send). The meter times each block on DMA timer 0's counter (0xFC07000C, which core-ar2 starts free running) against the time since the block before |
 | Each effect forced, BD send 127, a long snare WAV into the BD voice | The PRE return words carry the effect |
 | Each effect forced, every send at 127 (stress), the pattern playing | Audio runs, the return carries the effect (chorus, flanger, phaser at 8 stages) |
 | FX06, each of the eleven effects forced, every send at 127, the long snare pattern playing (test builds ST00-ST10) | All eleven: MAIN RMS 767 from 80 s on, as with no effect; the return words non-zero (L/R RMS 646 to 5940) |
