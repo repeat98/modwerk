@@ -11,6 +11,8 @@ static unsigned failures;
 /* What status.c reads from the rest of the base; the keys never touch it. */
 volatile uint32_t dl_frames, dl_residency_words[2], modwerk_dsp_meter_bits, modwerk_dsp_meter[5], dl_refusal[8];
 volatile int32_t modwerk_dsp_meter_core;
+static unsigned machine_core = 1; static uint32_t machine_add = 726;
+void modwerk_dsp_source_refusal(unsigned *core, uint32_t *add) { *core = machine_core, *add = machine_add; }
 const uint16_t modwerk_dsp_arena[2];
 int modwerk_dsp_meter_read(unsigned core, unsigned first, unsigned words) { (void)core, (void)first, (void)words; return 0; }
 uint32_t dl_buffers_in_use(void) { return 0; }
@@ -167,6 +169,20 @@ int main(void)
     modwerk_load_menu(0);
     CHECK(open == SHOWN && tip_until == ticks + 120u);                 /* from the menu: the CUE + PROJ tip for 2 s */
     CHECK(modwerk_status_key(NO, 1) && open == CLOSED && modwerk_status_key(NO, 0));
+    /* A machine voice refused for cycles shows the same DSP FULL box, on "Tn SRC" (a track's source, no effect slot). */
+    modwerk_status_machine_refused(0, "Analog BD");
+    CHECK(open == REFUSED && refused_machine && refused_reason == 3 && refused[0] == 1 && refused[1] == 0 && refused[4] == 726);
+    CHECK(refused_core == 1 && !strcmp(refused_name, "ANALOG BD"));
+    machine_add = 5; modwerk_status_machine_refused(4, "Other");        /* the box already shows: not replaced */
+    CHECK(refused[1] == 0 && refused[4] == 726);
+    for (unsigned i = 0; i < 180u; ++i) memory_tick();
+    CHECK(open == CLOSED);
+    modwerk_status_machine_refused(8, "Analog BD"); CHECK(open == CLOSED); /* no such track */
+    modwerk_load_menu(0); modwerk_status_machine_refused(0, "Analog BD");
+    CHECK(open == SHOWN);                                              /* a page is open: not covered */
+    modwerk_status_key(NO, 1); modwerk_status_key(NO, 0);
+    dl_refusal[0] = 1, dl_refusal[1] = 9; CHECK(modwerk_status_refused(3) && !refused_machine); /* an effect's box clears the machine mark */
+    for (unsigned i = 0; i < 180u; ++i) memory_tick();
     modwerk_missing_menu(0);
     missing_check();
     CHECK(open == MISSING);                                            /* asked for: it stays with nothing missing */

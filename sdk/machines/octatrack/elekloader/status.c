@@ -247,7 +247,8 @@ static unsigned memory_left; /* ticks the box still shows */
  * refused effect's core, its DSP time and code memory as admission counts them with what the effect would add, or its
  * buffer blocks. A snapshot at the refusal (manager.c's dl_refusal, build_core.py), for three seconds; a key closes it. */
 extern volatile uint32_t dl_refusal[8];
-static unsigned refused_left, refused_reason, refused_core;
+static unsigned refused_left, refused_reason, refused_core, refused_machine;
+void modwerk_dsp_source_refusal(unsigned *core, uint32_t *add); /* dsp.c: the last machine voice refused for cycles */
 static uint32_t refused[8], refused_booked, refused_words, refused_arena;
 static char refused_name[17];
 static int budget_slot = -1; /* the slot the pick put a module on; -1: an accept over USB (memory only) */
@@ -596,6 +597,7 @@ int modwerk_status_refused(unsigned reason)
     if ((open != CLOSED && open != MEMORY) || dl_refusal[1] > 15u || (reason == 3u) != (dl_refusal[0] == 1u)) return 0;
     for (unsigned i = 0; i < 8u; ++i) refused[i] = dl_refusal[i];
     unsigned slot = refused[1], id = refused[2], c = (slot & 7u) < 4u ? 1u : 0u;
+    refused_machine = 0;
     refused_reason = reason, refused_core = c, refused_booked = modwerk_dsp_booked(c), refused_words = dl_residency_words[c];
     refused_arena = c ? modwerk_status[ARENA] >> 16 : modwerk_status[ARENA] & 0xffffu; /* the arena as the page reads it */
     for (unsigned i = 0; i < sizeof refused_name; ++i) refused_name[i] = 0; /* a shorter name after a longer one */
@@ -612,6 +614,24 @@ int modwerk_status_refused(unsigned reason)
     open = REFUSED, refused_left = 180u;
     return 1;
 }
+/* machine_registry.c's claim(): the track's machine voice did not fit its core. The box as an effect's DSP FULL has it,
+ * on "Tn SRC", with what the voice asks for; the track renders stock's silent source until room is made. Not over a
+ * page, and not twice for the same track while it shows (a Part change claims many tracks). */
+void modwerk_status_machine_refused(unsigned track, const char *label)
+{
+    if ((open != CLOSED && open != MEMORY) || track > 7u) return; /* a page or a box already shows: not over it */
+    unsigned c; uint32_t add;
+    modwerk_dsp_source_refusal(&c, &add);
+    for (unsigned i = 0; i < 8u; ++i) refused[i] = 0;
+    refused[0] = 1u, refused[1] = track, refused[4] = add;
+    refused_machine = 1u, refused_reason = 3u, refused_core = c, refused_booked = modwerk_dsp_booked(c);
+    refused_words = dl_residency_words[c];
+    refused_arena = c ? modwerk_status[ARENA] >> 16 : modwerk_status[ARENA] & 0xffffu;
+    for (unsigned i = 0; i < sizeof refused_name; ++i) refused_name[i] = 0;
+    for (unsigned i = 0; label && i < 16u && label[i]; ++i) refused_name[i] = label[i] >= 'a' && label[i] <= 'z' ? (char)(label[i] - 32) : label[i];
+    refused_name[16] = 0;
+    open = REFUSED, refused_left = 180u;
+}
 static void refused_box(unsigned char *frame)
 {
     for (unsigned i = 0; i < 7u; ++i) surface[i] = ((const volatile uint32_t *)SURFACE)[i];
@@ -620,6 +640,7 @@ static void refused_box(unsigned char *frame)
     outline(frame, 18u, 12u, 109u, 50u);
     unsigned slot = refused[1], c = refused_core;
     char where[8] = {'T', (char)('1' + (slot & 7u)), ' ', 'F', 'X', (char)(slot < 8u ? '1' : '2'), 0};
+    if (refused_machine) where[3] = 'S', where[4] = 'R', where[5] = 'C'; /* a machine's voice, not an effect slot */
     const char *title = refused_reason == 3u ? "DSP FULL" : "DSP MEMORY FULL";
     if (TEXT_WIDTH(FONT, -1, title) + TEXT_WIDTH(FONT, -1, where) + 6 > 82) title += 4; /* "MEMORY FULL": clear of the slot */
     label(23u, 15u, title), label((unsigned)(105 - TEXT_WIDTH(FONT, -1, where)), 15u, where);

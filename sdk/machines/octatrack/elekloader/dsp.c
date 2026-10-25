@@ -56,6 +56,11 @@ uint32_t modwerk_dsp_source_charge(unsigned core)
     for (unsigned t = 0; t < 8u; ++t) if (source_core(t) == core) sum += source_voice[t];
     return sum;
 }
+/* The last claim refused for cycles: the core and the cycles it asked for (its voice and any engine it adds), for the
+ * DSP FULL box (status.c). A machine's voice has no effect pick to show a refusal, so the box says it. */
+static unsigned refused_core;
+static uint32_t refused_add;
+void modwerk_dsp_source_refusal(unsigned *core, uint32_t *add) { *core = refused_core, *add = refused_add; }
 /* `module` (its runtime id) renders `track`, replacing whatever claimed it; nothing changes unless the core's sources,
  * this voice, the module's engine and every slot fit its allowance. */
 int modwerk_dsp_source_claim(unsigned track, uint32_t module, uint32_t voice, uint32_t engine, uint8_t kind)
@@ -70,7 +75,7 @@ int modwerk_dsp_source_claim(unsigned track, uint32_t module, uint32_t voice, ui
     uint32_t v = charged(voice, kind), e = charged(engine, kind), old = source_engine[c][at].module ? source_engine[c][at].cycles : 0;
     uint32_t keep = old > e ? old : e;
     uint32_t total = slot_charge(c) + modwerk_dsp_source_charge(c) - source_voice[track] - old + v + keep;
-    if (total > (c ? MODWERK_DSP_ALLOWANCE1 : MODWERK_DSP_ALLOWANCE0)) return RUNTIME_CYCLES;
+    if (total > (c ? MODWERK_DSP_ALLOWANCE1 : MODWERK_DSP_ALLOWANCE0)) { refused_core = c, refused_add = v + keep - old; return RUNTIME_CYCLES; }
     source_voice[track] = v, source_owner[track] = module;
     source_engine[c][at].module = module, source_engine[c][at].cycles = keep;
     return RUNTIME_OK;
