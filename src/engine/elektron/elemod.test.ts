@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { createHash } from 'node:crypto'
-import { ModError, applyWholeBuilds, linkMods, parseElemod, type LinkDevice } from './elemod'
+import { LINK_DEVICES, ModError, applyWholeBuilds, linkMods, parseElemod, type LinkDevice } from './elemod'
+import { ELE3_DEVICES } from './ele3'
+import A4_PROFILE from '../../../sdk/machines/analog-four-mkii/machine.json'
 import { fromImage } from '../../../vendor/elekloader/kit/src/store.ts'
 
 // A synthetic machine whose "stock" image is 4 KiB of NOPs: no Elektron firmware involved.
@@ -75,5 +77,15 @@ describe('elemod linker', () => {
     await expect(linkMods([parseRytm({ ...core, target: rytmTarget }), parseRytm(keeper('one', 0x40000100, 3))], image)).rejects.toThrow('declares mod storage')
     expect(() => parseRytm({ ...keeper('bad', 0x40000100, 3), storage: [{ sym: 'x', scope: 'song', bits: 3 }] })).toThrow(ModError)
     expect((await linkMods([parse(core), parse(mod('one', 0x40000100))], image)).store).toBeNull()
+  })
+})
+
+describe('Analog Four MKII linker profile', () => {
+  it('matches the machine profile and the elekloader device', () => {
+    const a4 = LINK_DEVICES.find(item => item.machine === 'analog-four-mkii')!
+    // elekloader's device key, which the browser builder and catalog pins use
+    expect(a4).toMatchObject({ key: 'analog-four-mk2', sysexId: ELE3_DEVICES['analog-four-mkii'].sysexId, mainLoad: ELE3_DEVICES['analog-four-mkii'].mainLoad, ddr: [0x47be0000, 0x47c00000] })
+    expect(a4.releases.map(release => [release.version, release.syxSha256])).toEqual(A4_PROFILE.firmware.releases.map(release => [release.version, release.files[0].sha256]))
+    expect(a4.ddr[1] - a4.ddr[0]).toBe(A4_PROFILE.sdk.budgets.find(budget => budget.name === 'Shared mod memory')!.value)
   })
 })

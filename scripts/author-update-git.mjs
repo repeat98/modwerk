@@ -16,8 +16,8 @@ export function inspectAuthorUpdate(root, base, head, author) {
   const registry = parseAuthorRegistry(JSON.parse(text(base, '.github/module-authors.json')))
   const published = new Set(JSON.parse(text(base, 'sdk/catalog.json')).modules.map(row => 'octabam/' + row.id))
   // The generated Digitakt/Digitone/Analog Rytm list (not committed) holds every module folder on main.
-  for (const path of oldTree.keys()) { const folder = path.match(/^sdk\/(digitakt|digitone|analog-rytm-mkii)\/modules\/([^/_][^/]*)\/modwerk\.module\.json$/); if (folder) published.add(folder[1] + '/' + folder[2]) }
-  const modules = [...oldTree.keys()].filter(path => /^sdk\/(octabam|digitakt|digitone|analog-rytm-mkii)\/modules\/[^/]+\/(octamod|modwerk)\.module\.json$/.test(path)).map(path => {
+  for (const path of oldTree.keys()) { const folder = path.match(/^sdk\/(digitakt|digitone|analog-rytm-mkii|analog-four-mkii)\/modules\/([^/_][^/]*)\/modwerk\.module\.json$/); if (folder) published.add(folder[1] + '/' + folder[2]) }
+  const modules = [...oldTree.keys()].filter(path => /^sdk\/(octabam|digitakt|digitone|analog-rytm-mkii|analog-four-mkii)\/modules\/[^/]+\/(octamod|modwerk)\.module\.json$/.test(path)).map(path => {
     const parts = path.split('/'), document = JSON.parse(text(base, path))
     return { folder: parts.slice(0, -1).join('/'), document, published: published.has(parts[1] + '/' + document.id) }
   }).filter(module => module.published)

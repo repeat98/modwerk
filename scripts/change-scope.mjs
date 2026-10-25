@@ -5,9 +5,9 @@ import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { manifestBuildFields } from './module-source.mjs'
 
-const moduleFolder = /^sdk\/(octabam|digitakt|digitone|analog-rytm-mkii)\/modules\/[^/]+\//
-const manifest = /^sdk\/(octabam|digitakt|digitone|analog-rytm-mkii)\/modules\/[^/]+\/(octamod|modwerk)\.module\.json$/
-const digiManifest = /^sdk\/(digitakt|digitone|analog-rytm-mkii)\/modules\/[^/_][^/]*\/modwerk\.module\.json$/
+const moduleFolder = /^sdk\/(octabam|digitakt|digitone|analog-rytm-mkii|analog-four-mkii)\/modules\/[^/]+\//
+const manifest = /^sdk\/(octabam|digitakt|digitone|analog-rytm-mkii|analog-four-mkii)\/modules\/[^/]+\/(octamod|modwerk)\.module\.json$/
+const digiManifest = /^sdk\/(digitakt|digitone|analog-rytm-mkii|analog-four-mkii)\/modules\/[^/_][^/]*\/modwerk\.module\.json$/
 const catalogs = new Set(['src/catalog/module-documents.json'])
 const json = text => text === null ? null : JSON.parse(text)
 const canonical = value => JSON.stringify(value, (_, item) => item && typeof item === 'object' && !Array.isArray(item)
@@ -76,7 +76,7 @@ function nativeChange(change, machine) {
   if (machine === 'octatrack') return common || /^sdk\/octabam\/(modules|platform|tools|dsp|licenses)\//.test(path)
     || path === 'sdk/catalog.json' || /^src\/engine\/assets\/(?!elemod\/)/.test(path)
     || /^scripts\/(build-module-packages\.py|build-utility-packages\.py|build-usb-audio-packages\.py|build-modules-isolated\.sh|import-module-build\.mjs|module-source\.mjs)$/.test(path)
-  return common || /^sdk\/(digitakt|digitone|analog-rytm-mkii|elemod|machines)\//.test(path) || /^vendor\/elekloader\/(catalog\/|elekloader\.lock\.json$|upstream-catalog\.json$)/.test(path) || /^sdk\/imports\/elekloader-[^/]+\.json$/.test(path)
+  return common || /^sdk\/(digitakt|digitone|analog-rytm-mkii|analog-four-mkii|elemod|machines)\//.test(path) || /^vendor\/elekloader\/(catalog\/|elekloader\.lock\.json$|upstream-catalog\.json$)/.test(path) || /^sdk\/imports\/elekloader-[^/]+\.json$/.test(path)
     || /^sdk\/octabam\/(scripts\/vendor\.sh|tools\/patches\/|tools\/harness\/dsp_host)/.test(path)
     || /^scripts\/(build-elemod[^/]*|elemod-elf\.mjs|verify-elemod-source-parity\.mjs|package-elemod-recipe\.mjs|verify-elemod-release-exports\.mjs)$/.test(path)
     || /^src\/engine\/assets\/elemod\//.test(path)
