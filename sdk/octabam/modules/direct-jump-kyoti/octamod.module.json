@@ -3,7 +3,7 @@
   "id": "direct-jump-kyoti",
   "key": "DIRECT_JUMP_KYOTI",
   "name": "Direct Jump",
-  "version": "0.1.0-experimental",
+  "version": "0.1.1-experimental",
   "category": "system",
   "source": {
     "repository": "https://github.com/sambanks/octabam",
@@ -36,6 +36,7 @@
       "Off at every power-on: until you turn it on, pattern changes are the stock ones.",
       "The new pattern lands where it would be had it played since START, also with differing track lengths and scales (PER TRACK mode), so tracks stay in phase with the master clock.",
       "The Part, START SILENT and trig conditions change as on a stock pattern change; the last MIDI Program Change names the pattern that plays; no MIDI START is sent on a jump.",
+      "Includes Zac Kyoti's fix for stock's MIDI Plays-Free stall, so a Plays Free MIDI track in PER TRACK mode keeps playing and Direct Jump places it with its own scale.",
       "The arranger and pattern chains are left alone: while either runs, pattern changes are stock."
     ],
     "usage": [
@@ -83,19 +84,20 @@
       "While the arranger or a pattern chain runs, pattern changes stay stock.",
       "With differing track scales or lengths in PER TRACK mode, the jump waits for the next tick where every track is at a step boundary, at most one common step of all tracks' scales (24 clock ticks for 1x, 3/4x and 1/2x together).",
       "[PTN] + [YES] no longer opens the pattern chooser on releasing [PTN]; [YES] alone and [PTN] with a trig key are unchanged.",
+      "Carries the author's fix for stock's MIDI Plays-Free stall (a Plays Free MIDI track with trig quantize DIRECT under PER TRACK scale stopped after its first step), whether Direct Jump is on or off. The bundle's other two fixes are not included.",
       "A jump changes the Part through stock's own Part-change path, so stock's known Part-change carryover issues (a track going from PICKUP to FLEX can keep the old Part's pickup loop) happen on a jump as on a stock pattern change.",
       "With Play Modes, each jump counts as a transport start for Play Modes, which restarts its own per-track state."
     ]
   },
   "resources": {
-    "recorded": "24 October 2026; source assembly, the image gate and the ColdFire port",
+    "recorded": "25 October 2026; source assembly, the image gate and the ColdFire port",
     "storage": {
       "label": "DRAM code and detours",
-      "display": "2,016 B code and state + three 6 B detours + one 4 B pointer",
-      "value": 2038,
+      "display": "2,078 B code and state + four 6 B detours + one 4 B pointer",
+      "value": 2106,
       "unit": "bytes",
       "method": "static",
-      "conditions": "One linked unit of 2,016 bytes (code, two toast strings and 62 bytes of state) in the DRAM reserve, three six-byte detours over stock instructions and the [PTN]-layer YES press pointer. No DSP memory, no saved data.",
+      "conditions": "Two linked units in the DRAM reserve: Direct Jump's 2,016 bytes (code, two toast strings and 62 bytes of state) and the MIDI Plays-Free fix's 62 bytes of code; four six-byte detours over stock instructions and the [PTN]-layer YES press pointer. The USB package carries the units as 2,080 bytes (aligned). No DSP memory, no saved data.",
       "source": "TESTING.md"
     },
     "processing": {
@@ -124,16 +126,16 @@
       "memory": {
         "level": "minimal",
         "basis": "measured-comparison",
-        "rationale": "2,016 bytes of ColdFire code and state in the DRAM reserve (62 bytes of state) and 22 bytes of stock writes; no DSP memory and no saved data.",
+        "rationale": "2,078 bytes of ColdFire code and state in the DRAM reserve (62 bytes of state) and 28 bytes of stock writes; no DSP memory and no saved data.",
         "source": "TESTING.md"
       }
     }
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "On the owner's MKII over USB (24 Oct 2026): installed, kept, self-tested, restored after a power cycle and removed on the flashed beta base; on a RAM-booted development twin the agent drove the toggle and read the sequencer: jumps from a 64-step to a 16-step pattern and back landed on the next step at the position each would hold had it played since START, three cues in one gesture landed the last, and with the toggle off a cue waited for the pattern end as on stock. Under the ColdFire port (verify.py, 32 checks): OFF identical to the original OS through a pattern change, and three jumps (16 steps; 7 steps on Part 2; PER TRACK lengths and scales) whose sequencer state equals a reference run of the incoming pattern since START on every tick after the landing.",
+    "summary": "On the owner's MKII over USB (25 Oct 2026), on the published beta base 109f23bd: the 0.1.1 package installed and kept beside four other modules as a tester's sync does it, self-test passed (5/5 intact), removed, and the restored set self-tested again. 0.1.0's run on a development twin (24 Oct 2026) drove the toggle and clock-locked jumps with the same Direct Jump unit. Under the ColdFire port (verify.py, 39 checks): OFF identical to the original OS through a pattern change; three jumps (16 steps; 7 steps on Part 2; PER TRACK lengths and scales) whose sequencer state equals a reference run of the incoming pattern since START on every tick after the landing; and the MIDI Plays-Free stall, which the original OS shows and the module fixes.",
     "hardwareStatus": "reported",
-    "evidenceRevision": "6116a6a4d127ee0bac0ec835a474984be8b2c73e",
+    "evidenceRevision": "fd3940e74c5105de7af38dfeb2dbe49c771e15c9",
     "gates": [
       "modules/direct-jump-kyoti/verify.py"
     ],
@@ -154,9 +156,9 @@
       "screenshotStyle": "black-and-white"
     },
     "qualification": {
-      "moduleVersion": "0.1.0-experimental",
-      "sourceSha256": "fc2290016d67e81443722ae5eaf33ab3f253fd13d8dd3cd2a918e62089ed359e",
-      "imageSha256": "c277d24f24bd05d4d75dc008ffced79471e6bf14068de65435175b3a506f655f",
+      "moduleVersion": "0.1.1-experimental",
+      "sourceSha256": "924916295ec37758499d103e5f9fa9290af59801598f45d39b15d3d89037d65a",
+      "imageSha256": "5c7b2d12d9da96e077d21b371c84b1a09935461214d424df57f698f103fc29ed",
       "cycles": [
         {
           "processor": "coldfire",
@@ -179,7 +181,7 @@
       "memory": {
         "regions": [
           {
-            "name": "ColdFire code, two toast strings and 62 bytes of state (one linked unit, DRAM)",
+            "name": "ColdFire code, two toast strings and 62 bytes of state (Direct Jump's linked unit, DRAM)",
             "space": "sdram",
             "words": 2016,
             "wordBits": 8,
@@ -187,35 +189,43 @@
             "scope": "shared"
           },
           {
-            "name": "Three six-byte detours and the four-byte [PTN]-layer YES pointer, written over stock in place",
-            "space": "cpu-flash",
-            "words": 22,
+            "name": "The MIDI Plays-Free fix's code (a second linked unit, DRAM)",
+            "space": "sdram",
+            "words": 62,
             "wordBits": 8,
-            "bytes": 22,
+            "bytes": 62,
+            "scope": "shared"
+          },
+          {
+            "name": "Four six-byte detours and the four-byte [PTN]-layer YES pointer, written over stock in place",
+            "space": "cpu-flash",
+            "words": 28,
+            "wordBits": 8,
+            "bytes": 28,
             "scope": "shared"
           }
         ],
         "perInstanceBytes": 0,
-        "sharedBytes": 2038,
+        "sharedBytes": 2106,
         "maxInstances": 1,
-        "totalBytes": 2038,
-        "conditions": "From the linked unit (2,016 bytes of code and data, no bss; the USB package carries the same bytes with 18 relocations) and the four stock writes. No DSP memory, no heap, no saved data.",
+        "totalBytes": 2106,
+        "conditions": "From the two linked units (2,016 and 62 bytes of code and data, no bss; the USB package carries the same bytes, 2,080 aligned, with 18 relocations) and the five stock writes. No DSP memory, no heap, no saved data.",
         "report": "TESTING.md"
       },
       "hardware": {
         "kind": "functional",
         "status": "reported",
         "model": "MKII",
-        "testedOn": "2026-10-24",
+        "testedOn": "2026-10-25",
         "tester": "repeat98",
-        "sourceRevision": "6116a6a4d127ee0bac0ec835a474984be8b2c73e",
-        "imageSha256": "c277d24f24bd05d4d75dc008ffced79471e6bf14068de65435175b3a506f655f",
-        "summary": "The owner's MKII, OS 1.40C, driven over USB by the agent. On the flashed beta base b5fae2ae: package c277d24f installed and kept as a tester's sync does it, self-test passed (1/1 intact, longest frame 372 us, card set saved), the owner's power cycle restored it, self-test passed again, removal emptied the set. On a RAM-booted development twin (7889c57a, the beta flags plus --dev) in two trials: the three sites jumped into the unit and the [PTN]-layer slot named dj_toggle; [PTN] + [YES] toggled with DIRECT JUMP ON/OFF toasts and the chooser stayed shut; a 64-step A16 jumped to a 16-step A02 and back, landing on step boundaries at the clock-locked position (A16 came back at step 48, not its start); three cues in one gesture landed the last; OFF, a cue waited for the playing pattern's end; each rollback left the sites stock.",
+        "sourceRevision": "fd3940e74c5105de7af38dfeb2dbe49c771e15c9",
+        "imageSha256": "5c7b2d12d9da96e077d21b371c84b1a09935461214d424df57f698f103fc29ed",
+        "summary": "The owner's MKII, OS 1.40C, driven over USB by the agent at the owner's request, on the published beta base 109f23bd (flashed, running from RAM on the same image) with SIDECHAIN COMP, Ringmod SC, Mini Verb and POLY8 kept: package 5c7b2d12 installed and kept as a tester's sync does it (generation 5), self-test passed (5/5 intact, both DSP modules ran, longest frame 421 us, card set saved 5/5); removal kept (generation 6), the four remained; self-test passed again (4/4, 422 us). The 0.1.0 package's toggle and jumps ran on a development twin on 24 Oct 2026 with the byte-identical Direct Jump unit (evidence/hardware.md).",
         "limitations": [
-          "One unit, driven by the agent; nothing judged by ear, the owner did not run the hand test.",
-          "Not tested on hardware: a jump into another Part, START SILENT, trig conditions, PER TRACK scales, external MIDI (Program Change, no MIDI START), the arranger and chains, a cancelled cue (USB key presses arrive about a step apart).",
-          "USB only: the card build was not flashed. Not tested on an MKI. The site's review, Keep and Undo pages were not used: the device tool installed and removed the package.",
-          "About 15 minutes of use in all."
+          "One unit, driven by the agent; nothing judged by ear.",
+          "Not exercised on the unit with 0.1.1: the toggle, a jump and the MIDI Plays-Free fix itself (the beta base answers no key presses or RAM reads over USB). The author confirmed the fix on his MKI; the emulator gate runs the stall against the original OS.",
+          "Not run: a power cycle with 0.1.1 kept, the card build, an MKI, the site's review/Keep/Undo pages.",
+          "About five minutes of use."
         ],
         "report": "evidence/hardware.md"
       },
@@ -255,9 +265,9 @@
         "page": "Main screen with the notification",
         "shows": "location-and-controls",
         "firmware": "1.40C",
-        "moduleVersion": "0.1.0-experimental",
-        "imageSha256": "9af03715a100eeb80c564312e1d6c3d5666ba287a79f03555f19195285a07172",
-        "setup": "Headless ot_emu; MKII panel; 128×64 LCD at integer scale 6; DSP cores running; empty scratch card, its missing-project prompts dismissed with three NO presses; native initialized state, no saved project. Static native build of this module alone with every stock effect kept (MAIN OS 9af03715…)."
+        "moduleVersion": "0.1.1-experimental",
+        "imageSha256": "4453c3684fd72b242bbf9b4abef5b53a344364274391352266b4d81919677768",
+        "setup": "Headless ot_emu; MKII panel; 128×64 LCD at integer scale 6; DSP cores running; empty scratch card, its missing-project prompts dismissed with three NO presses; native initialized state, no saved project. Static native build of this module alone with every stock effect kept (MAIN OS 4453c368…)."
       }
     },
     {
@@ -272,9 +282,9 @@
         "page": "Main screen while playing",
         "shows": "controls",
         "firmware": "1.40C",
-        "moduleVersion": "0.1.0-experimental",
-        "imageSha256": "9af03715a100eeb80c564312e1d6c3d5666ba287a79f03555f19195285a07172",
-        "setup": "Headless ot_emu; MKII panel; 128×64 LCD at integer scale 6; DSP cores running; empty scratch card, its missing-project prompts dismissed with three NO presses; native initialized state, no saved project. Static native build of this module alone with every stock effect kept (MAIN OS 9af03715…)."
+        "moduleVersion": "0.1.1-experimental",
+        "imageSha256": "4453c3684fd72b242bbf9b4abef5b53a344364274391352266b4d81919677768",
+        "setup": "Headless ot_emu; MKII panel; 128×64 LCD at integer scale 6; DSP cores running; empty scratch card, its missing-project prompts dismissed with three NO presses; native initialized state, no saved project. Static native build of this module alone with every stock effect kept (MAIN OS 4453c368…)."
       }
     },
     {
@@ -289,9 +299,9 @@
         "page": "Main screen with the notification",
         "shows": "controls",
         "firmware": "1.40C",
-        "moduleVersion": "0.1.0-experimental",
-        "imageSha256": "9af03715a100eeb80c564312e1d6c3d5666ba287a79f03555f19195285a07172",
-        "setup": "Headless ot_emu; MKII panel; 128×64 LCD at integer scale 6; DSP cores running; empty scratch card, its missing-project prompts dismissed with three NO presses; native initialized state, no saved project. Static native build of this module alone with every stock effect kept (MAIN OS 9af03715…)."
+        "moduleVersion": "0.1.1-experimental",
+        "imageSha256": "4453c3684fd72b242bbf9b4abef5b53a344364274391352266b4d81919677768",
+        "setup": "Headless ot_emu; MKII panel; 128×64 LCD at integer scale 6; DSP cores running; empty scratch card, its missing-project prompts dismissed with three NO presses; native initialized state, no saved project. Static native build of this module alone with every stock effect kept (MAIN OS 4453c368…)."
       }
     }
   ]

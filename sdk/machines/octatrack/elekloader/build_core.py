@@ -852,14 +852,16 @@ WIDTH_EDITS = {
 # slot runs and the request's keep set does not hold (a trim: nothing a track runs changes, so nothing is heard), and when
 # the running code itself blocks, the old code of the slots the request changes (an unload: those slots run the dry stub
 # until the request binds the new code and the setter applies it, a short gap where before the change was refused).
-# The request runs queued after it; each request gets at most one trim and one unload. Applied with WIDTH_EDITS, so the
-# host tests that rebuild the manager (sdk/tests) carry it.
+# The request runs queued after it; each request gets at most one trim and one unload. When that still leaves no one run
+# for the new code, the cores are packed (dsp.c's compaction, block by block while everything plays) with the request
+# held until that ends, then it runs once more (beta finding 35: EQUALIZER to FILTER at 98 %). Applied with
+# WIDTH_EDITS, so the host tests that rebuild the manager (sdk/tests) carry it.
 TRANSITION_EDITS = {
     'manager.c': (
         ('static void begin(const uint8_t *ids,uint32_t token,unsigned is_auto) {\n'
          '    bytes(desired,ids,16); current=token; automatic=is_auto;\n',
          'static unsigned trimming,queued_auto,trim_stage; /* Modwerk: a retirement before a queued request, that request\'s\n'
-         '                                                   * kind, and what it got (1 a trim, 2 an unload) */\n'
+         '                                                   * kind, and what it got (1 a trim, 2 an unload, 3 a pack) */\n'
          'static uint32_t trimmed_for;\n'
          'static fx_set trim_keep[2];\n'
          'volatile uint32_t dl_trims,dl_unloads; /* diagnostics */\n'
@@ -898,7 +900,19 @@ TRANSITION_EDITS = {
          '    if(unload) dl_unloads=dl_unloads+1; else dl_trims=dl_trims+1;\n'
          '    return 1;\n'
          '}\n'
-         'static void advance(void) {\n'),
+         '/* dsp.c packs the cores for the request in flight, which waits meanwhile; 0 when it cannot (weak 0 for harnesses). */\n'
+         '__attribute__((weak)) int modwerk_dsp_pack(void) { return 0; }\n'
+         '__attribute__((weak)) int modwerk_dsp_packing(void) { return 0; }\n'
+         'volatile uint32_t dl_packs; /* diagnostics */\n'
+         'void dl_residency_nudge(void);\n'
+         'static int pack_room(void) {\n'
+         '    if(!modwerk_dsp_pack()) return 0;\n'
+         '    bytes(queued_ids,desired,16); queued_token=current; queued_auto=automatic;\n'
+         '    trimmed_for=current; trim_stage=3u; phase=0; dl_packs=dl_packs+1;\n'
+         '    return 1;\n'
+         '}\n'
+         'static void advance(void) {\n'
+         '    if(!phase && queued_token && modwerk_dsp_packing()) return; /* the moves first (dl_move runs only when idle) */\n'),
         ('begin(queued_ids,t,0); }\n', 'begin(queued_ids,t,queued_auto); queued_auto=0; }\n'),
         ('        allocator.keep[0]=fx_or(allocator.keep[0],soft[0]); allocator.keep[1]=fx_or(allocator.keep[1],soft[1]);\n',
          '        allocator.keep[0]=fx_or(allocator.keep[0],soft[0]); allocator.keep[1]=fx_or(allocator.keep[1],soft[1]);\n'
@@ -910,8 +924,12 @@ TRANSITION_EDITS = {
         ('        if(r<0) {\n            report(r==DL_ALLOC_MEMORY || r==DL_ALLOC_TRANSITION ? DL_SELECT_MEMORY :',
          '        if(r==DL_ALLOC_TRANSITION && !trimming) {\n'
          '            unsigned stage=current==trimmed_for ? trim_stage : 0u; /* what this request already got */\n'
-         '            if((stage<1u && make_room(0)) || (stage<2u && make_room(1))) return;\n'
+         '            if((stage<1u && make_room(0)) || (stage<2u && make_room(1)) || (stage<3u && pack_room())) return;\n'
          '        }\n'
+         '        /* A pick refused after its slot\'s old code was unloaded: the slot ran the dry stub under the old effect\'s\n'
+         '         * name until the next change (owner\'s MKII, 24 October 2026); the observer loads it back now. Not for an\n'
+         '         * automatic request: the observer would ask for that same set again. */\n'
+         '        if(r<0 && !automatic && current==trimmed_for && trim_stage>=2u) dl_residency_nudge();\n'
          '        if(r<0) {\n            report(r==DL_ALLOC_MEMORY || r==DL_ALLOC_TRANSITION ? DL_SELECT_MEMORY :'),
         # A request a retirement put behind it is not the transaction in flight: its answer is WAIT, never the
         # retirement's own result word (which reads READY once that commits).
@@ -924,7 +942,11 @@ TRANSITION_EDITS = {
         ('void dl_selection_cancel(uint32_t token) {\n    if(token==queued_token) queued_token=0;\n',
          'void dl_residency_nudge(void);\n'
          'void dl_selection_cancel(uint32_t token) {\n'
-         '    if(token==queued_token) { queued_token=0; if(trim_stage==2u && trimmed_for==token) dl_residency_nudge(); }\n'),
+         '    if(token==queued_token) { queued_token=0; if(trim_stage>=2u && trimmed_for==token) dl_residency_nudge(); }\n'),
+        # A pick made while a retirement runs takes the waiting request's place as a manual one: it kept an automatic
+        # request's kind, and an automatic one commits before the stock setter publishes the pick.
+        ('    if(phase) { bytes(queued_ids,s->target,16); queued_token=token; return DL_SELECT_WAIT; }\n',
+         '    if(phase) { bytes(queued_ids,s->target,16); queued_token=token; queued_auto=0; return DL_SELECT_WAIT; }\n'),
         ('    reinit();\n    if(phase) return;\n', '    reinit();\n    if(phase || queued_token) return;\n'),
     ),
 }

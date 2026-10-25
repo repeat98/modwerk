@@ -133,6 +133,7 @@ static void sources(void)
     const uint32_t a = 0xab, b = 0xbb; /* two machine modules' runtime ids */
     /* Core 0 (tracks 5-8) keeps 3120 - 8 x 342 = 384 cycles; core 1 (tracks 1-4) 3565 - 2736 = 829. */
     CHECK(modwerk_dsp_source_claim(4, a, 411, 3, RUNTIME_EXECUTED) == RUNTIME_CYCLES); /* 720 + 6 > 384 */
+    { unsigned rc; uint32_t ra; modwerk_dsp_source_refusal(&rc, &ra); CHECK(rc == 0 && ra == 726); } /* what the box shows */
     CHECK(modwerk_dsp_source_charge(0) == 0 && modwerk_dsp_source_charge(1) == 0);
     CHECK(modwerk_dsp_source_claim(0, a, 411, 3, RUNTIME_EXECUTED) == RUNTIME_OK);     /* 726 <= 829 */
     CHECK(modwerk_dsp_source_charge(1) == 726 && modwerk_dsp_source_charge(0) == 0);

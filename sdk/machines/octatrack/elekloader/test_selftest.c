@@ -45,6 +45,7 @@ uint32_t dl_slot_cycles(unsigned i) { (void)i; return 0; }
 volatile uint8_t dl_intended_override[16];
 volatile uint32_t modwerk_status[12], modwerk_status_reads, modwerk_status_fast;
 volatile uint32_t dl_residency_rollbacks, dl_residency_failures, dl_frame_gap, dl_frames, dl_rejected[2], dl_errors;
+volatile uint32_t dl_residency_enabled = 1;
 volatile uint32_t modwerk_modset_generation, modwerk_modset_count, modwerk_modset_result, dl_pool_base[2];
 static unsigned modules;
 unsigned modwerk_runtime_active(void) { return modules; }
@@ -233,6 +234,11 @@ int main(void)
     test_keybus_lost = 0;
     modwerk_selftest_refresh();
     CHECK(modwerk_selftest.refusal == RUNTIME_OK);
+    /* A stall earlier this boot shut the loader off (dsp.c recover): the test fails as stopped, whatever else runs. */
+    dl_residency_enabled = 0;
+    run(blank, &verb, 1);
+    CHECK(modwerk_selftest.state == SELFTEST_FAILED && (modwerk_selftest.failed & SELFTEST_STOPPED));
+    dl_residency_enabled = 1;
     if (failures) { fprintf(stderr, "%u self-test checks failed\n", failures); return 1; }
     puts("Octatrack self-test: a module crowded off one core runs on the other or on a core of its own, one no core holds "
          "fails alone and is named, a refused batch member runs in the next batch, and the Part and its knobs come back.");

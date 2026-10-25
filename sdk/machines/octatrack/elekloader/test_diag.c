@@ -35,8 +35,10 @@ int main(void)
     CHECK(LOG->loads == 0u && LOG->freeze_state == 0u);
     /* The installed set, after a restore or a Keep: the ids as one run of bytes. */
     modwerk_test_modules[0] = 0x95cff696u, modwerk_test_modules[1] = 0xbcf0d674u;
+    modwerk_diag_refused(0x773c84aau, 7u); /* a restore refused Ringmod SC (in use): its record says so, once */
     modwerk_diag_set();
     CHECK(LOG->incidents == 3u && last()->kind == DIAG_SET && last()->a == 2u && last()->machine[0] == 0x95u && last()->machine[3] == 0x96u);
+    CHECK(last()->screen == 0x773c84aau && last()->tempo24 == 7u && !refused_module && !refused_code);
     CHECK(last()->machine[4] == 0xbcu && last()->machine[7] == 0x74u && last()->machine[8] == 0u && last()->keys[0] == 0u);
     modwerk_test_modules[0] = modwerk_test_modules[1] = 0;
 

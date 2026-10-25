@@ -49,6 +49,9 @@ stages modules at a time (the MCP's sync, or the session's `try`/`remove`); the 
 After an unplug, a crash restart or a RAM boot, the bridge can hold a dead handle; `pkill -f usb_bridge;
 pkill -f '^node scripts/device.mjs serve'` and the loop starts both again. Anchor the pattern: without `^` it also
 matches any shell whose command line contains it (the loop's, or the one running `pkill`), and kills that.
+A sequence can also stall past the 20 s limit below (24 October 2026, once, a twin, after `PLAY` and a pick; the unit
+answered as soon as the session restarted). So give `device-send.py` an alarm, and when the session stops answering,
+kill the serve with the second `pkill`.
 
 **On Windows, from WSL** (12 October 2026). WSL sees no USB device, and the unit binds WinUSB by itself, so the
 bridge runs in Windows Python and serves TCP; with WSL's mirrored networking (`networkingMode=mirrored` in
@@ -94,6 +97,8 @@ error and moves on. macOS `nc -U` hangs up before the reply, so use the script.
 | `screen` | the screen as block characters (thousands of tokens; avoid) |
 | `crash` | the last crash record (vector, PC, registers); `crashtest` makes one |
 | `selftest` | PROJ > MODWERK > SELF TEST over USB: start it (transport stopped), wait, print the verdict, the modules that ran and the CPU and core peaks |
+| `dspmap`, `dspmap:watch:N` | each core's DSP code arena drawn as 64 cells, a letter per placed block and `.` per free words, then each block's name, start, words and the slots running it (else `preloaded`: code another Part of the bank names). `watch:N` redraws it for N seconds (at most 15) whenever a block comes, goes or moves, so compaction shows: on 24 October 2026 removing a Mini Verb between SPRING REV and DARK REV left a 538-word hole and DARK REV moved down into it 2.1 s later |
+| `profile`, `profile:N` | the base's tick profile (`modwerk_cost`, diag.h): each UI tick hook's µs a tick over N seconds (3, at most 15) and the frame transfer's µs a frame. It reads the address from the build `boot DIR` last started (`~/.cache/modwerk-octatrack/last-boot`) and refuses when another base runs. On 24 October 2026 it showed the controller tick at 814 µs with 26 modules installed, 212 µs after the fix in #880 |
 | `selftest:trace` | the same, printing each half second's phase, progress, the CPU the test recorded and the meter's latest window beside it: what a CPU or core peak came from |
 | `stall` | the last DSP stall record: why, the loader's whole report, each core's last packet header, the live FX ids, as they stood when the stall was seen (it survives the power cycle); `stalltest` writes one now |
 | `guard`, `guard:MILLE` | the frame guard since the last read: the frame interrupt's longest frame, latest start and share of the CPU, the machine renders it skipped and on which tracks, and its share; `guard:MILLE` sets the share (per mille of a frame, `guard:65535` turns it off) |

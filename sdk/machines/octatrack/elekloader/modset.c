@@ -32,6 +32,7 @@
 #define SET_BYTES (RUNTIME_POOL_BYTES + 0x1000u) /* the pool's worth of packages, and the header */
 extern const uint8_t modwerk_base_digest[32];
 void modwerk_diag_set(void); /* diag.c: the installed set, into the unit's log */
+void modwerk_diag_refused(uint32_t module, uint32_t refusal); /* diag.c: ... and the restore's first refused package */
 extern const struct mu_backend modwerk_runtime_backend;
 struct file_object { uint32_t word[6]; };
 #ifdef MODWERK_HOST
@@ -104,6 +105,9 @@ int modwerk_modset_check_set(const uint8_t *data,uint32_t length)
     const uint8_t *packages[RUNTIME_SET_CHANGES];uint32_t lengths[RUNTIME_SET_CHANGES];
     if(!data) data=candidate,length=candidate_bytes;
     int n=runtime_set_parse(data,length,packages,lengths);
+    /* The reason the site reads after a refusal here, not the loader's last one: BUSY (it retries) while the last
+     * change is on its way to the card, else none. */
+    modwerk_runtime_refused(pending && modwerk_modset_result != SAVE_FAILED ? RUNTIME_BUSY : RUNTIME_OK);
     if(!n || !restored || pending) return 0;
     uint32_t ids[RUNTIME_JOURNAL_ROWS],old_ids[RUNTIME_JOURNAL_ROWS];
     uint8_t sha[RUNTIME_JOURNAL_ROWS*MU_DIGEST_BYTES],old_sha[RUNTIME_JOURNAL_ROWS*MU_DIGEST_BYTES],digest[32];
@@ -176,8 +180,8 @@ void modwerk_modset_accepted(void)
 static uint32_t keep_count, keep_bytes; /* a checked Keep: its packages wait past used() until it is sealed */
 /* volatile_service.c's Keep, engine task under the stable lock, before the journal accepts: the kept fresh packages,
  * appended to this set, must give exactly the trial's whole-set identity, so a boot restores what the journal
- * reported. 0, and the set as it was: no room, the set is not the live baseline (a module refused at boot or too
- * big for it). */
+ * reported. 0, and the set as it was: no room, or the set is not the live baseline (a module too big for it; one
+ * refused at boot has left set[]). */
 int modwerk_modset_keep(const uint8_t *const package[], const uint32_t bytes[], unsigned n, const uint8_t digest[MU_DIGEST_BYTES])
 {
     uint32_t ids[RUNTIME_JOURNAL_ROWS], end = used(), count = 0;
@@ -279,15 +283,26 @@ static void restore(void)
     slot = wb && (!wa || gb > ga) ? 1u : 0u; /* the newer one; the next save goes to the other */
     if (!slot && (int)load(0) != a) { modwerk_modset_result = DAMAGED; return; }
     const struct mu_backend *b6 = &modwerk_runtime_backend;
-    uint32_t n = used(), count = 0, installed = 0;
-    if (!b6->enter(b6->user)) { modwerk_modset_result = REFUSED; return; }
+    uint32_t n = used(), count = 0, installed = 0, refused = 0, refusal = 0, end = HEADER;
+    /* What did not install leaves set[], which must name exactly what runs: a sync's baseline is the live set
+     * (modwerk_modset_check_set refused every one after a partial restore, beta finding 69). The card keeps its
+     * copy until the next change, so the next boot tries the refused ones again. */
+    if (!b6->enter(b6->user)) { seal(0, HEADER); modwerk_modset_result = REFUSED; return; }
     for (uint32_t at = HEADER; at < n; ++count) {
-        uint32_t length = be32(set + at + 4);
-        if (b6->prepare(b6->user, set + at + 8, length) && b6->publish(b6->user) == MU_APPLIED && b6->retire(b6->user)) ++installed;
-        else (void)b6->discard(b6->user);
-        at += 8u + ((length + 3u) & ~3u);
+        uint32_t length = be32(set + at + 4), step = 8u + ((length + 3u) & ~3u);
+        if (b6->prepare(b6->user, set + at + 8, length) && b6->publish(b6->user) == MU_APPLIED && b6->retire(b6->user)) {
+            for (uint32_t k = 0; end != at && k < step; ++k) set[end + k] = set[at + k]; /* the loader keeps its own copy */
+            end += step, ++installed;
+        } else {
+            /* The first one the log names: later installs overwrite the loader's refusal (beta finding 69). */
+            if (!refused) refused = module_of(set + at + 8, length), refusal = (uint32_t)modwerk_runtime_refusal();
+            (void)b6->discard(b6->user);
+        }
+        at += step;
     }
+    if (refused) modwerk_diag_refused(refused, refusal);
     (void)b6->leave(b6->user);
+    if (installed != count) seal(installed, end);
     modwerk_modset_generation = be32(set + 8), modwerk_modset_count = installed;
     modwerk_modset_result = installed == count ? RESTORED : REFUSED;
     if (installed) SAY(installed == count ? "MODULES LOADED" : "SOME MODULES FAILED");

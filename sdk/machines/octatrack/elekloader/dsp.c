@@ -56,6 +56,11 @@ uint32_t modwerk_dsp_source_charge(unsigned core)
     for (unsigned t = 0; t < 8u; ++t) if (source_core(t) == core) sum += source_voice[t];
     return sum;
 }
+/* The last claim refused for cycles: the core and the cycles it asked for (its voice and any engine it adds), for the
+ * DSP FULL box (status.c). A machine's voice has no effect pick to show a refusal, so the box says it. */
+static unsigned refused_core;
+static uint32_t refused_add;
+void modwerk_dsp_source_refusal(unsigned *core, uint32_t *add) { *core = refused_core, *add = refused_add; }
 /* `module` (its runtime id) renders `track`, replacing whatever claimed it; nothing changes unless the core's sources,
  * this voice, the module's engine and every slot fit its allowance. */
 int modwerk_dsp_source_claim(unsigned track, uint32_t module, uint32_t voice, uint32_t engine, uint8_t kind)
@@ -70,7 +75,7 @@ int modwerk_dsp_source_claim(unsigned track, uint32_t module, uint32_t voice, ui
     uint32_t v = charged(voice, kind), e = charged(engine, kind), old = source_engine[c][at].module ? source_engine[c][at].cycles : 0;
     uint32_t keep = old > e ? old : e;
     uint32_t total = slot_charge(c) + modwerk_dsp_source_charge(c) - source_voice[track] - old + v + keep;
-    if (total > (c ? MODWERK_DSP_ALLOWANCE1 : MODWERK_DSP_ALLOWANCE0)) return RUNTIME_CYCLES;
+    if (total > (c ? MODWERK_DSP_ALLOWANCE1 : MODWERK_DSP_ALLOWANCE0)) { refused_core = c, refused_add = v + keep - old; return RUNTIME_CYCLES; }
     source_voice[track] = v, source_owner[track] = module;
     source_engine[c][at].module = module, source_engine[c][at].cycles = keep;
     return RUNTIME_OK;
@@ -187,8 +192,14 @@ static const uint8_t no_target[16] = {255, 255, 255, 255, 255, 255, 255, 255, 25
 unsigned modwerk_dsp_slot_floors(const uint8_t ids[16], uint32_t least[16])
 {
     uint32_t was[16];
-    floors(no_target, was), floors(ids, least);
-    for (unsigned c = 0; c < 2u; ++c) {
+    unsigned raised = 0;
+    floors(no_target, was); /* the Parts once: the target only adds its own stock effects */
+    for (unsigned i = 0; i < 16u; ++i) {
+        unsigned p = ids[i];
+        uint32_t x = p < MODWERK_FX_IDS && !owner[p] ? dl_catalog[p].cycles : 0u;
+        least[i] = x > was[i] ? x : was[i], raised |= least[i] > was[i];
+    }
+    for (unsigned c = 0; raised && c < 2u; ++c) {
         uint32_t voices = modwerk_dsp_source_charge(c), after = bank_booking(least, c) + voices;
         if (after > (c ? MODWERK_DSP_ALLOWANCE1 : MODWERK_DSP_ALLOWANCE0) && after > bank_booking(was, c) + voices) return 1u + c;
     }
@@ -912,6 +923,7 @@ volatile uint32_t modwerk_test_playing;
 int dl_bound(unsigned core, unsigned id);           /* manager.c (build_core.py's edit): a slot there runs bound code */
 extern volatile uint8_t dl_intended_override[16];   /* manager.c (build_core.py's edit): what a parked slot waits for */
 unsigned modwerk_runtime_intact(void);              /* loader.c: live modules whose sites hold */
+extern volatile uint32_t dl_residency_enabled;      /* manager.c: 0 once a stall shut the loader off (recover) */
 extern volatile uint32_t modwerk_status[];          /* status.c: [0] the CPU, [2] the T5-8 peak, [4] the T1-4 peak */
 extern volatile uint32_t modwerk_status_reads, modwerk_status_fast; /* status.c: meter windows read; peaks only */
 extern volatile uint32_t dl_residency_rollbacks, dl_residency_failures;
@@ -1052,6 +1064,9 @@ int modwerk_selftest_start(void)
         }
     t->modules = modwerk_runtime_active(), t->dsp = st_queued, t->intact = modwerk_runtime_intact(), t->total = st_queued + 2u;
     if (t->intact != t->modules) t->failed |= SELFTEST_BROKEN, blame(MODWERK_FX_IDS, modwerk_runtime_broken());
+    /* A stall earlier this boot shut the loader off: no module's DSP code loads until a restart, so nothing here can
+     * pass (a release image passed with it so on the owner's MKII, 24 October 2026). */
+    if (!dl_residency_enabled) t->failed |= SELFTEST_STOPPED;
     for (unsigned i = 0; i < 16u; ++i) st_live[i] = st_base[i] = st_want[i] = LIVE_SET[i];
     for (unsigned tr = 0; tr < 8u; ++tr) for (unsigned b = 0; b < 72u; ++b) st_lanes[tr][b] = LANE(tr)[b];
     st_counted = counted(), st_ticks = st_step = st_back = 0, st_played = 0;
@@ -1314,6 +1329,18 @@ static void compact_tick(void)
     if (modwerk_dsp_compact_step)
         modwerk_dsp_compact_counts = holes() ? 0xffffffffu : *(volatile uint32_t *)0xfc07c00cu - compact_at, modwerk_dsp_compact_step = 0;
 }
+/* manager.c's last way to place a pick that fits a core packed but not beside its live code (build_core.py
+ * TRANSITION_EDITS, beta finding 35): pack now, the request waiting. 0 when packing cannot run (the self-test, a
+ * host session) or no core has a hole; the wait ends after five seconds whatever the moves have done. */
+static uint32_t pack_at;
+int modwerk_dsp_pack(void)
+{
+    if (modwerk_selftest.state == SELFTEST_RUNNING || modwerk_upload_busy() || !holes()) return 0;
+    (void)modwerk_dsp_compact(); /* already packing: the request waits for that one */
+    pack_at = modwerk_runtime_ticks;
+    return 1;
+}
+int modwerk_dsp_packing(void) { return modwerk_dsp_compact_step && modwerk_runtime_ticks - pack_at < 300u; }
 #endif
 /* The compaction planner (dsp.c's move_one; host-tested by test_dsp.c): k placed blocks sorted by address (where each
  * starts, its words, its alignment, 0 as 1) in an arena of cap words. A copy needs one free run as big as its block,

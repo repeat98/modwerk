@@ -86,6 +86,14 @@ An entry fails once a named module is no longer active or nothing meets at a lis
 
 The gate does not prove runtime behaviour, DSP placement, cycles or hardware compatibility. `module:verify` and the qualification steps still cover those.
 
+### Choose how a module hooks in
+
+A module reaches the musician and the instrument through an entry point: a key gesture, a page, a menu row, a stock site. The first module to use one decides how every later module fits beside it, so choose it with the next one in mind, on every machine.
+
+1. **Look at what exists first.** List what the base or core already offers on this machine: its events and tables ([EVENTS.md](../../sdk/machines/octatrack/EVENTS.md) on the Octatrack, the core events in the machine's SDK guide elsewhere), newer upstream core releases not yet pinned, and how the modules already there place their pages and controls. Use what fits.
+2. **Decide it with the developer.** Before you build, set out where a musician would look for the controls, how they get there with stock gestures, and what happens when a second and a third module want the same key, page or site. Bring the options with their trade-offs and let the developer choose, and the owner for a new machine. A gesture only one module can hold, such as a second press on a stock page key, leaves no room for the next one. On a machine just being unlocked the first modules set the pattern every later one copies.
+3. **Add a base or core hook only when many modules will use it.** A hook is code every unit carries, an ABI that is never renumbered, and an owner-reviewed base or upstream core release. It pays off for an entry point or site many modules will share, such as a list of pages behind a stock key. When only your module needs a site, patch it in the module and declare it (`compatibility.uiClaims` on the Octatrack, `platform.claims` on the elemod machines); the module that needs it second proposes the event ([Octatrack](#propose-an-event), [elemod](#propose-an-event-on-the-digitakt-digitone-or-digitakt-ii)).
+
 ### UI claims
 
 Build your module to work with everything else: that is the default. Two modules must not take the same key gesture or the same stock screen, because the musician would get whichever one runs first. Declare what yours takes in `compatibility.uiClaims` in `octamod.module.json`, and the gate compares it with every active module:
@@ -129,7 +137,7 @@ Machine modules whose native source predates events declare the same subscriptio
 
 ### Propose an event
 
-Propose an event or a table when the gate says two behaviour hooks meet, or when you need a site that another module or the base already patches:
+Propose an event or a table when the gate says two behaviour hooks meet, when you need a site that another module or the base already patches, or when many modules will plainly need the same site. A site only your module uses needs no event ([choose how a module hooks in](#choose-how-a-module-hooks-in)):
 
 1. Open a pull request that adds one entry at the end of `sdk/machines/octatrack/events.json`, then run `python3 -B sdk/machines/octatrack/events.py --write` to regenerate the base's dispatch, the headers, EVENTS.md and the site's hook list. An event needs its name (`ev_` and what happens), its kind, its stock site (address, length in whole instructions and a SHA-256 guard), or none for a raised event, when it runs, its C prototype and its order rule. A table needs an `ot_` name, its record size and C declaration, its room and the sites its reader owns. Addresses, lengths and hashes only: no stock bytes.
 2. Say which modules patch that site today. Until they subscribe, list each such pair in `compatibility.json` as `pending-migration`, with the event and `until`.
@@ -137,7 +145,7 @@ Propose an event or a table when the gate says two behaviour hooks meet, or when
 
 ### Propose an event on the Digitakt, Digitone or Digitakt II
 
-On the elemod machines the core owns the shared sites, and the core is pinned from an upstream release: elekloader's core (interface 2.1) for the Digitakt and Digitone, and toonst's digitakt2-perform core 1.0 for the Digitakt II ([sdk/imports/elekloader-digitakt2-perform-v1.0.json](../../sdk/imports/elekloader-digitakt2-perform-v1.0.json)). Its contract is `sdk/<machine>/core/interface.json` (`sdk/digitakt-ii/core-profile/interface.json` for the Digitakt II), and `modules:check` refuses a mod that uses anything else. So a mod that needs a stock site the core does not expose (an LFO or voice path, the render, a page the OS builds, state another mod could want) does not patch it: propose the event, and the mod ships once the core carries it.
+On the elemod machines the core owns the shared sites, and the core is pinned from an upstream release: elekloader's core (interface 2.1) for the Digitakt and Digitone, and toonst's digitakt2-perform core 1.0 for the Digitakt II ([sdk/imports/elekloader-digitakt2-perform-v1.0.json](../../sdk/imports/elekloader-digitakt2-perform-v1.0.json)). Its contract is `sdk/<machine>/core/interface.json` (`sdk/digitakt-ii/core-profile/interface.json` for the Digitakt II), and `modules:check` refuses a mod that uses anything else. So when several mods will need a stock site the core does not expose (an LFO or voice path, the render, a page the OS builds, state another mod could want), the mod does not patch it: propose the event, and the mod ships once the core carries it. A site only this mod needs, it patches and claims ([choose how a module hooks in](#choose-how-a-module-hooks-in)).
 
 1. Write the proposal as one pull request against the core's interface file, before the module. For each event: its name (`ev_` and what happens), the stock site (OS release, address, length in whole instructions and a SHA-256 guard; addresses, lengths and hashes only, no stock bytes), when it runs and in which context (UI tick, key, sequencer, render), its C prototype, what a nonzero result means and its order rule. For shared state: a named table with its record size, room and reader. Add at the end: hook indices are an ABI, and a released one is never renumbered.
 2. Say which mods patch that site or hold that state privately today, and what each would subscribe to instead. On the Digitakt mk1 the SRC machines share the SRC page, render and LFO destination sites, so a proposal there covers them together.

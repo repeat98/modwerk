@@ -23,7 +23,7 @@ def units(temp):
     modset, reader = Path(temp) / 'modset_host.c', Path(temp) / 'reader_host.c'
     modset.write_text('#define MODWERK_HOST\n#define MODWERK_HOST_CARD\n#define MODWERK_SAVED_SET_EXPORT\n'
                       '#define MODWERK_RUNTIME_VOLATILE_JOURNAL\n#include "modset.c"\n'
-                      'void modwerk_diag_set(void) {}\n') # diag.c's log record of the set: not under test here
+                      'void modwerk_diag_set(void) {}\nvoid modwerk_diag_refused(uint32_t m, uint32_t r) { (void)m; (void)r; }\n') # diag.c's log record of the set: not under test here
     reader.write_text('#define MODWERK_HOST\n#include "saved_set_reader.c"\n')
     return ['-I', GLUE, ELEK / 'volatile_service.c', modset, reader, GLUE / 'saved_set_export.c']
 

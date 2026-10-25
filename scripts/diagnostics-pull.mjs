@@ -43,13 +43,25 @@ const line = ({ createdAt, username, data }) => [when(createdAt), '@' + username
   data.buildKind, data.area && 'area=' + data.area, data.kind && 'type=' + data.kind, data.reason && 'reason=' + data.reason,
   data.live?.cpu && 'cpu ' + data.live.cpu.map(percent).join('/'), data.modules?.map(module => module.id + '@' + module.catalogVersion).join(',')].filter(Boolean).join(' ')
 function percent(permille) { return (permille / 10).toFixed(1) + '%' }
+/** The loader's refusals (loader.h runtime_refusal), as a restore's set record names its first refused package's (modset.c). */
+const REFUSALS = ['no refusal', 'malformed', 'module memory', 'conflict', 'no free handle', 'busy', 'DSP time', 'in use', 'stock bytes differ', 'a base event', 'a base feature down']
 /** An incident from the unit's own log (diag.c): when in its session, what, and what the unit was doing. */
 const ids = r => [...r.machines, ...r.fx, ...r.keys].slice(0, 4 * r.a).map((b, i, all) => i % 4 ? '' : all.slice(i, i + 4).map(x => x.toString(16).padStart(2, '0')).join('')).filter(Boolean)
 const incident = r => `#${r.seq} start ${r.boot} +${Math.floor(r.second / 60)}m${r.second % 60}s ${r.kind}` +
-  (r.kind === 'base' ? ` ${r.a.toString(16).padStart(8, '0')}` : r.kind === 'set' ? ` ${r.a} installed: ${ids(r).map(id => MODULE_NAMES.get(id) ?? id).join(', ') || 'none'}` : '') +
+  (r.kind === 'base' ? ` ${r.a.toString(16).padStart(8, '0')}` : r.kind === 'set' ? ` ${r.a} installed: ${ids(r).map(id => MODULE_NAMES.get(id) ?? id).join(', ') || 'none'}` +
+    (r.screen ? `; refused ${MODULE_NAMES.get(r.screen.toString(16).padStart(8, '0')) ?? r.screen.toString(16).padStart(8, '0')} (${REFUSALS[r.tempo24] ?? 'refusal ' + r.tempo24})` : '') : '') +
   (r.kind === 'freeze' ? (r.a ? ` ${(r.a * 16 / 44100).toFixed(1)} s` : ' until a restart') : r.kind === 'hot' ? ` (${r.a} half-seconds at 90 %+)` : r.kind === 'crash' ? ` pc 0x${r.a.toString(16)}` : r.kind === 'stall' ? ` reason ${r.a}` : r.kind === 'shed' ? ` ${r.a & 0xffffff} renders skipped, tracks ${[...Array(8).keys()].filter(t => r.a >>> 24 >> t & 1).map(t => t + 1).join(',')}` : '') +
-  (r.kind === 'crash' || r.kind === 'stall' ? '' : `, cpu ${percent(r.cpu)} T1-4 ${percent(r.dsp1to4)} T5-8 ${percent(r.dsp5to8)}, ${r.playing ? 'playing' : 'stopped'} at ${(r.tempo24 / 24).toFixed(1)} BPM, screen 0x${r.screen.toString(16)}` +
+  (['crash', 'stall', 'set', 'base'].includes(r.kind) ? '' : `, cpu ${percent(r.cpu)} T1-4 ${percent(r.dsp1to4)} T5-8 ${percent(r.dsp5to8)}, ${r.playing ? 'playing' : 'stopped'} at ${(r.tempo24 / 24).toFixed(1)} BPM, screen 0x${r.screen.toString(16)}` +
     `, keys ${r.keys.filter(k => k !== 255).map(k => k.toString(16)).join(' ') || '-'}, fx ${r.fx.map(f => f.toString(16)).join(' ')}, machines ${r.machines.join(' ')}`)
+
+/** The unit's last incidents, oldest first. A stall found at a start that runs another base than the session before is an
+ * OS upgrade (stock halts the DSPs for it while the loader may have a job open; beta finding 55), not a hang: said so. */
+export function unitLines(incidents) {
+  const all = [...incidents].sort((a, b) => a.boot - b.boot || a.seq - b.seq)
+  const base = new Map(all.filter(r => r.kind === 'base').map(r => [r.boot, r.a]))
+  const upgrade = r => r.kind === 'stall' && base.has(r.boot) && base.has(r.boot - 1) && base.get(r.boot) !== base.get(r.boot - 1)
+  return all.filter(r => r.kind !== 'start').slice(-12).map(r => '  unit: ' + incident(r) + (upgrade(r) ? ' (an OS upgrade: this start runs another base; not a hang)' : ''))
+}
 
 /** The base's saved-set result (modset.c) as a reading's `saved` reports it; 1-6 are what a boot's restore found. */
 const SAVED = ['', 'RESTORED', 'nothing saved', 'skipped (FUNC held)', 'another base’s set', 'damaged', 'refused', 'saved', 'save failed', 'too big']
@@ -67,9 +79,12 @@ export function members(events) {
     else if (member.connected && data.reading) {
       member.connected = false
       const { saved, savedCount, live } = data.reading, last = member.reloads.at(-1)
+      // A refused restore (6) names what it dropped: the modules the site saw before, missing now.
+      const missing = saved === 6 && data.modules?.length && member.modules ? member.modules.filter(id => !data.modules.some(m => m.id === id)) : []
       if (saved >= 1 && saved <= 6 && !(last && last.saved === saved && last.savedCount === savedCount && last.live === live))
-        member.reloads.push({ at: createdAt, saved, savedCount, live })
+        member.reloads.push({ at: createdAt, saved, savedCount, live, missing })
     }
+    if (data.modules?.length) member.modules = data.modules.map(m => m.id)
     if (data.event === 'load' && data.live) member.live = { ...data.live, at: createdAt }
     // The unit's log arrives in pieces and can arrive twice: keep each record once, by its start and seq.
     for (const r of data.log?.incidents ?? []) (member.incidents ??= new Map()).set(r.boot + '/' + r.seq, r)
@@ -117,7 +132,7 @@ export function summary({ events, counts }, { base = '', reports = new Map() } =
       '', `@${name}  last ${when(member.last)}` + (member.bases.length ? '  base ' + member.bases.map(baseName).join(' → ') : ''),
       ...(reports.get(name) ?? []).map(issue => `  report #${issue.number} ${issue.state.toLowerCase()}: ${issue.title}`),
       ...restarts(member),
-      ...member.reloads.length ? ['  set reloads at boot: ' + member.reloads.map(r => `${when(r.at)} ${SAVED[r.saved]}` + (r.saved === 1 ? ` ${r.live}/${r.savedCount}` : '')).join(', ')] : [],
+      ...member.reloads.length ? ['  set reloads at boot: ' + member.reloads.map(r => `${when(r.at)} ${SAVED[r.saved]}` + (r.saved === 1 ? ` ${r.live}/${r.savedCount}` : '') + (r.missing?.length ? ` (missing ${r.missing.join(', ')})` : '')).join(', ')] : [],
       ...member.selftest ? [`  last self-test ${member.selftest.state === 2 ? 'passed' : 'failed (bits ' + member.selftest.failed + ')'}` + (member.selftest.ran ? '' : ', no DSP module ran')] : [],
       ...member.peak ? [`  highest self-test peaks ${when(member.peak.at)}: CPU ${percent(member.peak.cpu)}, DSP T1-4 ${percent(member.peak.tracks1to4)}, T5-8 ${percent(member.peak.tracks5to8)}`] : [],
       ...member.live ? [`  live load ${when(member.live.at)}: CPU ${member.live.cpu?.map(percent).join(' mean, ') ?? '-'} peak, T1-4 ${member.live.dsp1to4?.map(percent).join('/') ?? '-'}, T5-8 ${member.live.dsp5to8?.map(percent).join('/') ?? '-'} (${member.live.samples} readings)`] : [],
@@ -125,7 +140,7 @@ export function summary({ events, counts }, { base = '', reports = new Map() } =
       ...(member.loads && [...member.loads.values()].some(r => r.frameGap !== undefined) ? [`  longest frame gap ${Math.max(...[...member.loads.values()].map(r => r.frameGap ?? 0))} us (frames are 363, DSPs starve past about 515), longest UI-tick gap ${Math.max(...[...member.loads.values()].map(r => r.tickGap ?? 0))} frames (freeze at 13,781)`] : []),
       ...member.crash ? [`  crash record ${member.crash.count}: vector ${member.crash.vector} pc 0x${member.crash.pc.toString(16)} code ${member.crash.code.map(w => w.toString(16).padStart(8, '0')).join(' ')} uncached ${member.crash.memory.map(w => w.toString(16).padStart(8, '0')).join(' ')}`] : [],
       ...member.stall ? [`  stall record ${member.stall.count}: reason ${member.stall.reason} (1 frames stopped, 2 eDMA refused) at tick ${member.stall.ticks}`] : [],
-      ...[...member.incidents?.values() ?? []].filter(r => r.kind !== 'start').sort((a, b) => a.boot - b.boot || a.seq - b.seq).slice(-12).map(r => '  unit: ' + incident(r)),
+      ...unitLines([...member.incidents?.values() ?? []]),
       '  ' + Object.entries(member.kinds).map(([kind, n]) => kind + ' ' + n).join(', '),
     ]),
     '', 'Self-test peaks are measured only while DSP modules run. Live load comes from the site while connected; the unit\'s log covers the time without it. Screen codes are stock input layers, keys stock key codes.',

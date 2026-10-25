@@ -1,5 +1,14 @@
 [
   {
+    "version": "0.1.1-experimental",
+    "date": "2026-10-25",
+    "changes": [
+      "Fixes a Plays Free MIDI track with trig quantize DIRECT stalling after its first step in PER TRACK scale mode (#881). This is Zac Kyoti's own fix, now built into Direct Jump.",
+      "With that fix, Direct Jump places such a MIDI track with its own scale instead of the master's.",
+      "Known issue: the MIDI fix has not yet been tried on an MKII; the author tested it on his MKI."
+    ]
+  },
+  {
     "version": "0.1.0-experimental",
     "date": "2026-10-24",
     "changes": [
