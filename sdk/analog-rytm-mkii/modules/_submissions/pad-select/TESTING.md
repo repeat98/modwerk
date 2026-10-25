@@ -105,9 +105,59 @@ SEQUENCER CONFIG without the row, and SD plays.
 Its SEQUENCER CONFIG shows the box unchecked (and slot 2's own stock settings), and SD plays.
 LEFT + YES back to slot 1: the box is checked again, and SD is silent.
 
-Not compared in the emulator: PERF and SCENE modes, TRK + pad, NO + pad in LIVE REC, the SOUND
-BROWSER, a held pad's release over a sounding sequencer note, and loading a project (rather than
-the power-off state).
+### Every mode that takes the pads, TRIG keys or FUNC (2026-10-25)
+
+Three snapshots made with the same key sequence (GLOBAL > CONTROL > SEQUENCER CONFIG, three
+DOWNs, four NOs) from a cold boot: **A** PS74 with YES on the row (checked), **B** PS74 without it
+(unchecked), **S** stock 1.74. Each group below ran from all three at the same clock, with the
+three counters and MIDI out; B against S was identical in counts, MIDI out and every screen in
+every group (except the SEQUENCER CONFIG screens themselves, which have the extra row). "Silent"
+in A means the play routine ran but no trigger, no voice and no MIDI.
+
+| Group | A (checked) | S (stock) | A vs S screens |
+| --- | --- | --- | --- |
+| PERF mode: SD, FUNC + SD, TRIG 3 | pads drive PERF, no play routine; TRIG 3 silent | pads drive PERF; TRIG 3 plays | identical |
+| SCENE mode: the same | pads pick scenes; TRIG 3 silent | pads pick scenes; TRIG 3 plays | identical |
+| MUTE mode: FUNC + SD twice (preselect) | mute CCs out, no play routine | the same | identical |
+| TRK + SD, TRK + TRIG 5 | select, no play routine | the same | identical |
+| QPER + SD, QPER + TRIG 3 | no play routine | the same | identical |
+| FIX on: SD, FUNC + SD | SD silent; FUNC + SD plays at the fixed velocity 100 | both play at 100 | identical |
+| FX track selected: TRIG 3, then SD | silent | play | identical |
+| BANK A + TRIG 2, BANK A + TRIG 1 (pattern select) | no play routine | the same | identical |
+| TRIG 13, FUNC + TRIG 13, TRIG 16 | TRIG 13 silent; the others reach nothing | TRIG 13 plays the FX track (MIDI note 12); the others reach nothing | identical |
+| GLOBAL menu open: SD, FUNC + SD, TRIG 5 | SD and TRIG 5 silent; FUNC + SD plays, velocity 127 | all three play (FUNC + SD at 100) | identical |
+| LIVE REC, then PLAY, SD, TRIG 5, PLAY, SD | pads silent after the first PLAY | pads play | identical |
+| LIVE REC: SD, then NO + SD (erase) | SD plays; NO + SD reaches no play routine | the same | identical |
+| STEP REC: TRIG 3, TRIG 4, SD | TRIG keys pick steps (no play routine); SD plays | the same | identical |
+| FUNC + RTRG + SD held 4 s | one trigger, velocity 127 | one trigger, velocity 100 | identical |
+| RTRG + SD held 4 s | silent | one trigger | identical |
+| SOUND BROWSER (FUNC + LEVEL push): DOWN, DOWN, SD, FUNC + SD, TRIG 3 | SD silent; FUNC + SD auditions, velocity 127; TRIG 3 picks bank C | SD and FUNC + SD audition; TRIG 3 picks bank C | identical |
+| AUTO TRK SWITCH unchecked, then SD, TRIG 5 | silent, and each selects its track (SD, then BT) | play, the track stays BD | differ: the selection, as designed |
+| Soft strikes (raw panel `A1 20`, `A1 60`): plain soft, FUNC + soft, FUNC + hard | plain silent; FUNC + soft MIDI velocity 15, FUNC + hard 127 | plain soft 15; FUNC + either 100 | identical |
+| CHAIN mode: SD, TRIG 3 | silent | play | identical |
+| SONG mode: SD, TRIG 3 | silent | play | identical |
+| FILL held: SD, TRIG 3 | silent | play | identical |
+
+On stock, PLAY during LIVE REC ends live recording and the sequencer keeps playing: sampled
+across its blink, the record mark shows before that PLAY and never after it. So the pads going
+silent there is the module working as designed, not a paused live recording. A paused LIVE REC
+was not reached with the panel keys.
+
+**Audio.** A CY trig on steps 1 and 9 (grid-recorded, TRK + CY to select it in every build),
+PLAY for 9 s, `--analog-wav` drained every 50M with `DTEMU_ANALOG_SEED=1`. In A, holding the CY
+pad for 0.75 s and releasing it while the cymbal rings gives an analog recording byte-identical to
+the same run without the press: the silent press neither retriggers nor cuts the voice. In S
+the press changes the recording (it retriggers).
+
+**Known issue, aftertouch.** The same held CY pad with a stream of pressure values (raw panel
+`9A xx`): in A no note-on is sent, but the polyphonic aftertouch messages are (`AD 0A xx`), and the
+analog recording differs from the run without the press, so the pressure modulates the sound
+playing on that track. Stock sends the same aftertouch after its note-on. The module gates only
+the press, not the pressure that follows it.
+
+Not compared in the emulator: loading a saved project (rather than the power-off state), Global
+SysEx receive, a paused LIVE REC, and the RTRG roll's repeats (one trigger is counted in every
+build).
 
 Captures: the four PNGs in `media/` come from one cold boot whose command line is in
 `media/capture.json`; it gives the same frames as the snapshot runs above.

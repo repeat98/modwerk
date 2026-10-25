@@ -12,12 +12,16 @@ Unchecked, everything is stock.
 | --- | --- | --- |
 | Pad | selects its track, silent | stock |
 | TRIG 1-12 | selects track n, silent (in GRID REC they place trigs, as stock) | stock |
+| TRIG 13 (the FX track) | silent | stock |
 | FUNC + pad | plays, at the pad's own velocity | stock |
 | FUNC + TRIG 1-12 | stock: plays nothing | stock |
 | RTRG + pad | selects, silent; FUNC + RTRG + pad plays | stock |
 
-A silent press sends no MIDI note and leaves no held note, so its release cuts nothing the
-sequencer plays. CHROMATIC mode, MUTE mode, TRK + pad, MIDI notes in, TRIG + YES and the
+This holds wherever stock would play a pressed pad or TRIG key: on any page, with a menu open, in
+the SOUND BROWSER, with the FX track selected, and in CHAIN, SONG, FILL, PERF and SCENE modes
+(where the pads keep their own jobs and only the TRIG keys stop playing). A silent press sends no
+MIDI note and leaves no held note, so its release cuts nothing the sequencer plays. CHROMATIC
+mode, MUTE mode, TRK + pad, QPER + pad, NO + pad, BANK + TRIG, MIDI notes in, TRIG + YES and the
 sequencer itself are as stock.
 
 Version **0.2.0-experimental** for Analog Rytm MKII OS **1.74**, with core-ar2 0.3. It is
@@ -59,10 +63,21 @@ While PAD+TRIG SEL TRK is checked, and only then:
 - **FUNC + pad** plays at the pad's own velocity. Stock's FUNC + pad plays at the TRIG page's VEL;
   with plain presses silent, FUNC + pad is the way to hear a pad, so it keeps the pad's dynamics.
 - **RTRG + pad** selects silently; FUNC + RTRG + pad plays.
+- **SOUND BROWSER**: stock auditions the highlighted sound with a pad press. Checked, the plain
+  press is silent; FUNC + pad auditions.
+- **With a menu open**, a pad or TRIG key no longer plays; FUNC + pad does.
+- **TRIG 13** plays the FX track on stock; checked, it is silent too.
+- **PLAY during LIVE RECORDING** ends live recording on stock while the sequencer keeps playing;
+  from then on the pads are silent again.
+- **With FIX (fixed velocity) on**, FUNC + pad plays at the fixed velocity, as stock pads do.
+- **With AUTO TRK SWITCH unchecked**, a press still selects its track while PAD+TRIG SEL TRK
+  applies.
 
-Neighbouring flows compared with stock in rytm-emu (see [TESTING.md](TESTING.md)): LIVE, STEP and
-GRID RECORDING, CHROMATIC mode, MUTE mode, MIDI notes in, MIDI out, TRIG + YES and FUNC + TRIG.
-Not compared: PERF and SCENE modes, TRK + pad, NO + pad in LIVE RECORDING and the SOUND BROWSER.
+Every mode that takes the pads, TRIG keys or FUNC was compared with stock in rytm-emu, from
+matched snapshots: PERF, SCENE, MUTE, CHROMATIC, CHAIN, SONG, FILL, FIX, QPER, TRK, BANK + TRIG,
+the FX track, the SOUND BROWSER, an open menu, GRID, LIVE and STEP RECORDING, NO + pad, RTRG,
+AUTO TRK SWITCH off, soft strikes, MIDI notes in, MIDI out and TRIG + YES (table in
+[TESTING.md](TESTING.md)). Unchecked, every one matched stock exactly.
 
 ## Compatibility and limitations
 
@@ -71,8 +86,11 @@ Requires core-ar2 0.3 on OS 1.74. Use your own original stock OS 1.74 file.
 - Built for OS 1.74 only.
 - **Tested in rytm-emu only; not yet run on a unit.** The emulator does not prove sound or timing.
 - FUNC + TRIG 1-12 plays nothing, as on stock.
-- LIVE RECORDING counts only while the sequencer runs: paused in LIVE RECORDING, pads select
-  silently.
+- **Known issue:** a silently pressed pad still sends aftertouch while it is held. Its pressure
+  goes out as MIDI polyphonic aftertouch (with no note-on before it) and modulates the sound
+  playing on that track, as stock's aftertouch does after its note-on.
+- LIVE RECORDING counts only while it lasts: PLAY during LIVE RECORDING ends it, as on stock,
+  and the pads are silent again from then.
 - A GLOBAL slot saved without the setting, or received as Global SysEx, loads unchecked. In
   rytm-emu, a card last saved by this build boots on stock OS 1.74 with the stock menu and pads
   that play.
@@ -93,7 +111,9 @@ Loop Sync. In rytm-emu the build boots, shows the row, and with it checked a pad
 outside LIVE and STEP RECORDING reaches the play routine but no voice trigger and no MIDI out,
 while FUNC + pad plays. Unchecked, every screen and every MIDI byte matched stock in the same
 run. The setting came back after a power-off and cold boot, and each GLOBAL slot keeps its own.
-It has **not** run on a unit. Memory: 764 bytes of the 128 KiB shared mod area, no `.bss`, no
+Every other mode that takes the pads, TRIG keys or FUNC was compared too (see the table in
+TESTING.md), and a silent press left the modelled analog output byte-identical while the
+sequencer played. It has **not** run on a unit. Memory: 764 bytes of the 128 KiB shared mod area, no `.bss`, no
 fast SRAM. Nothing runs in the audio, sequencer or tick paths; each key press costs a few
 compares (static reading, not a measurement).
 
