@@ -125,7 +125,7 @@
     "load": {
       "display": "1.1-5.4 % of the audio block with one track sending, at most 5.6 % with all eight (emulator); near zero idle",
       "method": "emulator",
-      "conditions": "rytm-emu, OS 1.74, the mod's CPU meter (each block's time on DMA timer 0 over the time between blocks, the highest of about a second): each of the fifteen effects forced on, track 1's send or every send at 127, the FX page open. On the author's unit, with a busy project, the previous build (CHRONO PITCH at 12-13 % there) left the interface 2-5 s behind; this build (CHRONO PITCH 6.5 -> 3.4 % in the emulator) does not, as the author reports. Its figure on a unit is not reported."
+      "conditions": "rytm-emu, OS 1.74, the mod's CPU meter (each block's time on DMA timer 0 over the time between blocks, the highest of about a second): each of the fifteen effects forced on, track 1's send or every send at 127, the FX page open. On the author's unit, with a busy project, the previous build (CHRONO PITCH at 12-13 % there) left the interface 2-5 s behind; this build (CHRONO PITCH 6.5 -> 3.4 % in the emulator) does not, as the author reports. On the unit, this build's meter read 7 % with eight tracks sending."
     }
   },
   "evidence": {
@@ -140,7 +140,7 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Emulator (rytm-emu, OS 1.74, builds FX08-FX17): pages, effect choice and sends as described; each of the fifteen effects on the PRE return, and each running with all eight voices sending, at 1.1-5.6 % of the audio block. On the author's unit (LF05, LF11): all fifteen tried, reported to sound very good; LF11 removed the interface lag a busy project showed with LF10. The 8-voice CPU check and a kit save across a reboot are not reported yet. See TESTING.md.",
+    "summary": "Emulator (rytm-emu, OS 1.74, builds FX08-FX17): pages, effect choice and sends as described; each of the fifteen effects on the PRE return, and each running with all eight voices sending, at 1.1-5.6 % of the audio block. On the author's unit (LF05, LF11): all fifteen tried, reported to sound very good; LF11 removed the interface lag a busy project showed with LF10, keeps up with eight tracks sending, and keeps a kit save through power off and on. See TESTING.md.",
     "documentation": {
       "tutorial": {
         "title": "Quick tutorial",

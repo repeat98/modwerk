@@ -74,6 +74,7 @@ With eight voices, FX13's code read 5 % with no effect and 10 % for CHORUS. Wher
 
 ## On the unit (author)
 
+- 25 October 2026, LF11, the checks the reviewer asked for, reported by the author ("tout est ok"): with eight tracks sending, the CPU meter read 7 % and the unit kept up; an effect other than the default and its settings, and the tracks' sends, kept through a kit save, power off and power on.
 - 25 October 2026, LF11 (FX17's source): reported by the author: no more interface lag on his busy project ("plus de latence apparemment"), and the effects sound right ("les effets sont bien"). The meter's figure on the unit is not reported. Before, with LF10 (the meter, FX14's code: the delays, FILTERBANK's bands and FREQ WARPER at 24 kHz, the rest at 48 kHz), CHRONO PITCH read 12-13 % and BANK, PATTERN and the encoders lagged 2-5 s as soon as one track sent; with every send at 0, or with a test build whose effect only copied its input (LFBY), they did not.
 - 25 October 2026, LF09 (build FX12): the effect and its controls are kept per kit: the author set kits 3 and 4 (bank B patterns 1-8 and 9-15) to different effects, saved, and they follow the pattern changes. Before (LF07, LF08) the effect was lost or shared by every kit: the kit fields were first kept in the project's +352 object, which is not a kit (they read back but were never saved, and landed in memory stock owns), then in a fixed working-kit address that does not follow a kit change. The kit is now found from the active kit's first sound (stock's accessor), 42 bytes in. Emulator, FX12: DIRT on kit 1 and saved, LOAD KIT 2 shows CHORUS, FLANGER on kit 2 and saved, LOAD KIT 1 shows DIRT; DIRT saved, power off, cold boot: DIRT; BD's send at 90, kit saved, power off, cold boot: 90.
 - LF07 (build FX10): the page's points are written straight into the bitmap (stock's fillrect read for its layout: column-major 32-bit words), not through fillrect: 150 knob turns took 7,500 drawing calls in place of 79,000 (LF06); all sixteen pages captured pixel-identical to FX08's.
@@ -89,8 +90,8 @@ With eight voices, FX13's code read 5 % with no effect and 10 % for CHORUS. Wher
 ## Not tested
 
 - On a unit: every effect but the chorus, this build's pages, levels against the delay and reverb returns, clicks while turning knobs, persistence across kit save, project save and reboot.
-- This build's CPU figure on a unit, and its stock delay and reverb checked on their own while the mod's block runs (both use the EMAC; the block keeps stock's accumulators and mode).
+- The stock delay and reverb checked on their own while the mod's block runs (both use the EMAC; the block keeps stock's accumulators and mode).
 - `fx:audit` (aliasing, clipping, DC, idle): the audit's harness is the Octatrack's, not the Rytm's.
 - Running beside other Rytm mods (Loop Sync was built beside it, above).
 - The delays against a tempo change while playing, and at tempos where a division is halved: not run (the tempo word is read each block).
-- The 8-voice CPU check and a kit save across a reboot on a unit (asked for by the reviewer).
+- The CPU meter's figure on a unit for each effect (7 % was read with eight tracks sending).
