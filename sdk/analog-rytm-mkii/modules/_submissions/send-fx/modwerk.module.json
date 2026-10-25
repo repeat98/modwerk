@@ -120,18 +120,18 @@
     ]
   },
   "resources": {
-    "memoryBytes": 105508,
+    "memoryBytes": 109026,
     "fastBytes": null,
     "load": {
-      "display": "Trimmed to run with all eight voices sending (emulator); near zero idle",
+      "display": "1.1-5.4 % of the audio block with one track sending, at most 5.6 % with all eight (emulator); near zero idle",
       "method": "emulator",
-      "conditions": "rytm-emu, OS 1.74: each of the fifteen effects forced on with every send at 127 while a pattern plays (BITCRUSH also at its costliest, SRR 0 with DROP and FREZ at 127); audio keeps running. Earlier drafts with four Hermite taps a frame or twelve phaser stages a side stopped the audio. rytm-emu's profiler does not sample the mod area, so no percentage; not measured on a unit."
+      "conditions": "rytm-emu, OS 1.74, the mod's CPU meter (each block's time on DMA timer 0 over the time between blocks, the highest of about a second): each of the fifteen effects forced on, track 1's send or every send at 127, the FX page open. On the author's unit, with a busy project, the previous build (CHRONO PITCH at 12-13 % there) left the interface 2-5 s behind; this build (CHRONO PITCH 6.5 -> 3.4 % in the emulator) does not, as the author reports. Its figure on a unit is not reported."
     }
   },
   "evidence": {
     "tier": "emulator",
     "moduleVersion": "0.1.0-experimental",
-    "sourceSha256": "526a3015d9a0fb008a2d87f84bacf758080ddab00961083360d7978547ea1002",
+    "sourceSha256": "c8d1cfad4b74b8fff7691fa373511a900438e723f6075e29a589ef31fbd86951",
     "reports": [
       "TESTING.md"
     ],
@@ -140,7 +140,7 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Emulator (rytm-emu, OS 1.74, build FX08): pages, effect choice and sends as described; each of the fifteen effects on the PRE return, and each running with all eight voices sending. On the author's unit (LF05): all fifteen tried, reported to sound very good; the CPU check and a kit save across a reboot are not reported yet. See TESTING.md.",
+    "summary": "Emulator (rytm-emu, OS 1.74, builds FX08-FX17): pages, effect choice and sends as described; each of the fifteen effects on the PRE return, and each running with all eight voices sending, at 1.1-5.6 % of the audio block. On the author's unit (LF05, LF11): all fifteen tried, reported to sound very good; LF11 removed the interface lag a busy project showed with LF10. The 8-voice CPU check and a kit save across a reboot are not reported yet. See TESTING.md.",
     "documentation": {
       "tutorial": {
         "title": "Quick tutorial",

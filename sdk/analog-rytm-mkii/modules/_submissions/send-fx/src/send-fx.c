@@ -91,6 +91,7 @@ typedef word_t (*text_font_t)(void *ctx);
 #define IDLE_BLOCKS 3000           // 2 s with no send before the effect is left silent
 #define LEV_DEFAULT 71             // as loud as 100 was before LEV went up to 2x
 #define MAX_STAGES 8
+#define N24 16                     // samples a block at 24 kHz
 
 // ---------------------------------------------------------------- effects
 
@@ -173,6 +174,8 @@ static struct {
     unsigned ph2, fw, dw;
 } ns;
 static int g_voice[VOICES], g_lev;
+static int up[2][N24 + 1];                     // the 24 kHz return, a side: the block before's last sample, then this block's
+static int x_last;                             // the 24 kHz input's last sample (the top-end lift)
 static int run_type = -1, idle;
 static int s_base, s_depth, s_fbk;               // chorus and flanger: smoothed delay (Q8) and feedback (Q15)
 static int lp_l, lp_r, hp_l, hp_r, k_lp, k_hp;   // wet filters
@@ -203,19 +206,29 @@ static int lfo(unsigned ph)
     return (tri * (98304 - a)) >> 16;
 }
 
-// 4-point Hermite read of the line, d samples behind the newest (Q8).
-static int tap(unsigned d)
+// 4-point Hermite read of the line, d samples behind the newest (Q8), the
+// newest written at wp - 1. Inlined in each loop, its four points read
+// straight unless the line wraps among them.
+static inline __attribute__((always_inline)) int tap(unsigned wp, unsigned d)
 {
-    unsigned i = wpos - 1 - (d >> 8);
-    int f = (int)(d & 255);
-    int xm1 = mem.line[(i + 1) & (LEN - 1)], x0 = mem.line[i & (LEN - 1)];
-    int x1 = mem.line[(i - 1) & (LEN - 1)], x2 = mem.line[(i - 2) & (LEN - 1)];
-    int c = (x1 - xm1) >> 1, v = x0 - x1, w = c + v;
-    int a = w + v + ((x2 - x0) >> 1), b = w + a;
-    int r = ((a * f) >> 8) - b;
+    unsigned i = (wp - 1 - (d >> 8)) & (LEN - 1);
+    const int *p = &mem.line[i];
+    int f = (int)(d & 255), xm1, x0 = p[0], x1, x2, c, v, w, a, b, r;
+    if (i - 2 <= LEN - 4) {
+        xm1 = p[1]; x1 = p[-1]; x2 = p[-2];
+    } else {
+        xm1 = mem.line[(i + 1) & (LEN - 1)]; x1 = mem.line[(i - 1) & (LEN - 1)]; x2 = mem.line[(i - 2) & (LEN - 1)];
+    }
+    c = (x1 - xm1) >> 1; v = x0 - x1; w = c + v;
+    a = w + v + ((x2 - x0) >> 1); b = w + a;
+    r = ((a * f) >> 8) - b;
     r = ((r * f) >> 8) + c;
     return ((r * f) >> 8) + x0;
 }
+
+// A one-pole coefficient (onepole_k, for 48 kHz) for the same frequency at
+// 24 kHz: 1 - (1 - k)^2.
+static int k24(int k) { return 2 * k - ((k * k) >> 15); }
 
 // The pool is cleared a step a block (send_fx_block), the rest at once.
 static void reset_state(void)
@@ -229,10 +242,12 @@ static void reset_state(void)
     }
     lp_l = lp_r = hp_l = hp_r = 0;
     s_base = s_depth = s_fbk = 0;
+    for (i = 0; i <= N24; i++) up[0][i] = up[1][i] = 0;
+    x_last = 0;
 }
 
 // The wet filters of the chorus and the flanger: one-pole high- and low-pass.
-static void wet_filters(int *l, int *r)
+static inline __attribute__((always_inline)) void wet_filters(int *l, int *r)
 {
     if (k_hp) {
         hp_l += mul15(k_hp, *l - hp_l); hp_r += mul15(k_hp, *r - hp_r);
@@ -242,33 +257,35 @@ static void wet_filters(int *l, int *r)
     *l = lp_l; *r = lp_r;
 }
 
-// CHORUS: two taps swept by one LFO, the right WDTH out of phase. The LFO is
-// worked out at each end of the block and its delays stepped in between.
+// CHORUS, at 24 kHz: two taps swept by one LFO, the right WDTH out of phase.
+// The LFO is worked out at each end of the block and its delays stepped in
+// between.
 static void chorus(const int *x, int *L, int *R)
 {
-    int f, base = (48 + par[2] * 11) << 8, depth = (par[1] * 2) << 8, fb = par[4] * 220;
-    unsigned inc = rate[par[0]] >> 1, wid = (unsigned)par[3] * (0x80000000u / 127);   // 0.01-5 Hz
+    int f, base = (48 + par[2] * 11) << 7, depth = par[1] << 8, fb = par[4] * 220;   // 1-30 ms, DEP up to 5.3 ms
+    unsigned inc = rate[par[0]] >> 1, wid = (unsigned)par[3] * (0x80000000u / 127), wp = wpos;   // 0.01-5 Hz
     int dl, dr, sl, sr, sf;
-    if (depth > base - (24 << 8)) depth = base - (24 << 8);
+    if (depth > base - (12 << 8)) depth = base - (12 << 8);
     if (depth < 0) depth = 0;
     dl = s_base + ((s_depth >> 8) * lfo(phase) >> 7);
     dr = s_base + ((s_depth >> 8) * lfo(phase + wid) >> 7);
     phase += inc * 32;
-    sl = (base + ((depth >> 8) * lfo(phase) >> 7) - dl) / 32;
-    sr = (base + ((depth >> 8) * lfo(phase + wid) >> 7) - dr) / 32;
-    sf = (fb - s_fbk) / 32;
-    k_hp = par[5] ? onepole_k[par[5]] : 0;
-    k_lp = onepole_k[par[6]];
-    for (f = 0; f < 32; f++) {
+    sl = (base + ((depth >> 8) * lfo(phase) >> 7) - dl) / N24;
+    sr = (base + ((depth >> 8) * lfo(phase + wid) >> 7) - dr) / N24;
+    sf = (fb - s_fbk) / N24;
+    k_hp = par[5] ? k24(onepole_k[par[5]]) : 0;
+    k_lp = k24(onepole_k[par[6]]);
+    for (f = 0; f < N24; f++) {
         int l, r;
         dl += sl; dr += sr; s_fbk += sf;
-        l = tap((unsigned)dl);
-        r = tap((unsigned)dr);
-        mem.line[wpos & (LEN - 1)] = clamp(x[f] + mul15(s_fbk, (l + r) >> 1), SIG_MAX);
-        wpos++;
+        l = tap(wp, (unsigned)dl);
+        r = tap(wp, (unsigned)dr);
+        mem.line[wp & (LEN - 1)] = clamp(x[f] + mul15(s_fbk, (l + r) >> 1), SIG_MAX);
+        wp++;
         wet_filters(&l, &r);
         L[f] = l; R[f] = r;
     }
+    wpos = wp;
     s_base = base; s_depth = depth; s_fbk = fb;
 }
 
@@ -283,7 +300,7 @@ static void flanger(const int *x, int *L, int *R)
     int lo = (6 + par[2] * 2) << 8, span = 2 + par[1] * 4;      // 0.1-5.4 ms, up to 10.6 ms
     unsigned inc = d ? rate[(d < 0 ? -d : d) * 2 - 1] >> 1 : 0;   // up to 5 Hz; index 1-127
     int ga, sg, sf = (fb - s_fbk) / 32, sb = (lo - s_base) / 32;
-    unsigned step = d < 0 ? -inc : inc;
+    unsigned step = d < 0 ? -inc : inc, wp = wpos;
     ga = (32768 - lfo(phase)) >> 1;
     sg = (((32768 - lfo(phase + step * 32)) >> 1) - ga) / 32;   // the fade, stepped across the block
     k_lp = onepole_k[par[4]];
@@ -295,17 +312,18 @@ static void flanger(const int *x, int *L, int *R)
         phase += step;
         pa = phase; pb = pa + 0x80000000u;
         gb = 32768 - ga;                         // sin^2 and cos^2
-        ta = tap((unsigned)(s_base + ((span * (int)(pa >> 16)) >> 8)));
-        tb = tap((unsigned)(s_base + ((span * (int)(pb >> 16)) >> 8)));
+        ta = tap(wp, (unsigned)(s_base + ((span * (int)(pa >> 16)) >> 8)));
+        tb = tap(wp, (unsigned)(s_base + ((span * (int)(pb >> 16)) >> 8)));
         // The left fades the taps one way, the right the other: two taps in
         // all, the cost of the chorus.
         out[0] = mul15(ga, ta) + mul15(gb, tb);
         out[1] = mul15(gb, ta) + mul15(ga, tb);
-        mem.line[wpos & (LEN - 1)] = clamp(x[f] + mul15(s_fbk, out[0]), SIG_MAX);
-        wpos++;
+        mem.line[wp & (LEN - 1)] = clamp(x[f] + mul15(s_fbk, out[0]), SIG_MAX);
+        wp++;
         wet_filters(&out[0], &out[1]);
         L[f] = out[0]; R[f] = out[1];
     }
+    wpos = wp;
     s_fbk = fb; s_base = lo;
     ga = (32768 - lfo(phase)) >> 1;              // no drift between blocks
 }
@@ -316,6 +334,8 @@ static void flanger(const int *x, int *L, int *R)
 // return is input plus stages, which digs the notches. The stages run at a
 // quarter of the level (|v| within 2^15), so a stage is one multiply with no
 // clamp: twelve stages a side overran the audio block with every voice sending.
+// It runs at 24 kHz: allpass_a (20 Hz-20 kHz at 48 kHz, 25.6 entries an
+// octave) read 26 entries on, up to 10 kHz.
 static void phaser(const int *x, int *L, int *R)
 {
     int c, f, s, stages = 2 + 2 * (par[6] * 3 / 127), fb = (par[5] - 64) * 440;
@@ -326,14 +346,14 @@ static void phaser(const int *x, int *L, int *R)
         int m = lfo(phase + (c ? wid : 0)), idx;
         m = clamp(m + ((m * par[2]) >> 4), 32767);  // SHP: up to 8x, clipped towards a square
         ph_lag[c] += mul15(lag, m - ph_lag[c]);
-        idx = centre + ((range * ph_lag[c]) >> 15);
+        idx = centre + ((range * ph_lag[c]) >> 15) + 26;
         idx = idx < 0 ? 0 : idx > 255 ? 255 : idx;
-        a_step[c] = (allpass_a[idx] - ap_a[c]) / 32;
+        a_step[c] = (allpass_a[idx] - ap_a[c]) / N24;
     }
     phase += inc * 32;
     for (c = 0; c < 2; c++) {
         int *xs = ap_x[c], *ys = ap_y[c], a = ap_a[c], last = ph_last[c], *out = c ? R : L;
-        for (f = 0; f < 32; f++) {
+        for (f = 0; f < N24; f++) {
             int v = (x[f] >> 2) + mul15(fb, last);
             a += a_step[c];
             for (s = 0; s < stages; s++) {
@@ -360,10 +380,10 @@ static int noise(void)
     return (int)rnd >> 16;
 }
 
-static int peak(const int *x)
+static int peak(const int *x, int n)
 {
     int f, m = 0;
-    for (f = 0; f < 32; f++) {
+    for (f = 0; f < n; f++) {
         int a = x[f] < 0 ? -x[f] : x[f];
         if (a > m) m = a;
     }
@@ -371,9 +391,9 @@ static int peak(const int *x)
 }
 
 // The input's level, at block rate: at once up, down in about 40 ms.
-static void follow(const int *x)
+static void follow(const int *x, int n)
 {
-    int p = peak(x);
+    int p = peak(x, n);
     ns.env = p > ns.env ? p : ns.env - (ns.env >> 6);
 }
 
@@ -415,26 +435,27 @@ static int tempo(void)
 static unsigned sync_inc(int spd) { return (unsigned)(spd * tempo() * 199) >> 10; }
 
 // A hit: the input's peak half again above its level (which then follows it).
-static int onset(const int *x)
+static int onset(const int *x, int n)
 {
-    int p = peak(x), hit = p > 1024 && p > ns.env + (ns.env >> 1);
+    int p = peak(x, n), hit = p > 1024 && p > ns.env + (ns.env >> 1);
     ns.env = p > ns.env ? p : ns.env - (ns.env >> 6);
     return hit;
 }
 
 static int idx127(int i) { return i < 0 ? 0 : i > 127 ? 127 : i; }
 
-// WOW AND FLUTTER: an old tape recorder's warble. Two taps (as the chorus)
-// swept around 6 ms by a wow (SPD; 0 a random speed) DEP deep, with a 6 Hz
-// flutter a quarter as deep; STER sets the right side apart (up to half a
-// cycle). The return is band-limited from BASE up by WDTH; NOIS adds hiss,
+// WOW AND FLUTTER, at 24 kHz: an old tape recorder's warble. Two taps (as the
+// chorus) swept around 6 ms by a wow (SPD; 0 a random speed) DEP deep, with a
+// 6 Hz flutter a quarter as deep; STER sets the right side apart (up to half
+// a cycle). The return is band-limited from BASE up by WDTH; NOIS adds hiss,
 // high-passed by N.HPF, as loud as the input is.
 static void wow(const int *x, int *L, int *R)
 {
-    int f, base = 288 << 8, depth = par[1] * 2, ml, mr, sl, sr, ng, dl = ns.dl, drr = ns.dr;
-    int k_n = onepole_k[par[5]], lo = par[2] * 90 / 127, k_h = lo ? onepole_k[lo] : 0;
-    int k_l = onepole_k[idx127(lo + 37 + par[3] * 90 / 127)];
-    unsigned inc, sep = (unsigned)par[6] << 24;
+    int f, base = 144 << 8, depth = par[1], ml, mr, sl, sr, ng, dl = ns.dl, drr = ns.dr;
+    int k_n = k24(onepole_k[par[5]]), lo = par[2] * 90 / 127, k_h = lo ? k24(onepole_k[lo]) : 0;
+    int k_l = k24(onepole_k[idx127(lo + 37 + par[3] * 90 / 127)]);
+    int hp0 = ns.hp[0], hp1 = ns.hp[1], lp0 = ns.lp[0], lp1 = ns.lp[1], nz = ns.nz;
+    unsigned inc, sep = (unsigned)par[6] << 24, wp = wpos;
     ns.drift += (noise() - ns.drift) >> 5;
     ns.drift2 += (ns.drift - ns.drift2) >> 5;
     inc = rate[par[0] ? par[0] : idx127(64 + (ns.drift2 >> 6))] >> 1;
@@ -445,65 +466,70 @@ static void wow(const int *x, int *L, int *R)
     ml = base + (depth * ml >> 7);
     mr = base + (depth * mr >> 7);
     if (!dl) dl = ml, drr = mr;
-    sl = (ml - dl) / 32;
-    sr = (mr - drr) / 32;
-    follow(x);
+    sl = (ml - dl) / N24;
+    sr = (mr - drr) / N24;
+    follow(x, N24);
     ng = (((par[4] * par[4]) >> 3) * ((ns.env + 4096) >> 8)) >> 6;
-    for (f = 0; f < 32; f++) {
-        int v[2], c, n;
+    for (f = 0; f < N24; f++) {
+        int v0, v1, n;
         dl += sl; drr += sr;
-        v[0] = tap((unsigned)dl);
-        v[1] = tap((unsigned)drr);
-        mem.line[wpos & (LEN - 1)] = x[f];
-        wpos++;
+        v0 = tap(wp, (unsigned)dl);
+        v1 = tap(wp, (unsigned)drr);
+        mem.line[wp & (LEN - 1)] = x[f];
+        wp++;
         n = noise();
-        ns.nz += mul15(k_n, n - ns.nz);
-        n = mul15(ng, n - ns.nz);
-        for (c = 0; c < 2; c++) {
-            if (k_h) { ns.hp[c] += mul15(k_h, clamp(v[c] - ns.hp[c], SIG_MAX)); v[c] -= ns.hp[c]; }
-            ns.lp[c] += mul15(k_l, clamp(v[c] - ns.lp[c], SIG_MAX));
+        nz += mul15(k_n, n - nz);
+        n = mul15(ng, n - nz);
+        if (k_h) {
+            hp0 += mul15(k_h, clamp(v0 - hp0, SIG_MAX)); v0 -= hp0;
+            hp1 += mul15(k_h, clamp(v1 - hp1, SIG_MAX)); v1 -= hp1;
         }
-        L[f] = ns.lp[0] + n; R[f] = ns.lp[1] + n;
+        lp0 += mul15(k_l, clamp(v0 - lp0, SIG_MAX));
+        lp1 += mul15(k_l, clamp(v1 - lp1, SIG_MAX));
+        L[f] = lp0 + n; R[f] = lp1 + n;
     }
+    wpos = wp;
+    ns.hp[0] = hp0; ns.hp[1] = hp1; ns.lp[0] = lp0; ns.lp[1] = lp1; ns.nz = nz;
     ns.dl = ml; ns.dr = mr;
 }
 
-// COMB FILTER: metallic, pitch-tuned resonance. A feedback comb a side, its
-// pitch FREQ (40 Hz-4 kHz) moved by a tempo-synced triangle LFO (SPD, DEP up
-// to half the period) that SPH (0: free) restarts at its phase on each hit;
-// DTUN sets the left lower and the right higher (up to 3 % each). FDBK is
-// signed (+ string-like, - hollow), up to 0.99, through LPF in the loop,
-// which runs through the soft clip so the ringing stays within the line.
+// COMB FILTER, at 24 kHz: metallic, pitch-tuned resonance. A feedback comb a
+// side, its pitch FREQ (40 Hz-4 kHz) moved by a tempo-synced triangle LFO
+// (SPD, DEP up to half the period) that SPH (0: free) restarts at its phase
+// on each hit; DTUN sets the left lower and the right higher (up to 3 % each).
+// FDBK is signed (+ string-like, - hollow), up to 0.99, through LPF in the
+// loop, which runs through the soft clip so the ringing stays within the line.
 static void comb(const int *x, int *L, int *R)
 {
-    int c, f, fb = clamp((par[5] - 64) * 520, 32440), k = onepole_k[par[6]], step[2];
-    if (par[2] && onset(x)) phase = (unsigned)(par[2] - 1) << 25;
+    int c, f, fb = clamp((par[5] - 64) * 520, 32440), k = k24(onepole_k[par[6]]), step[2];
+    if (par[2] && onset(x, N24)) phase = (unsigned)(par[2] - 1) << 25;
     for (c = 0; c < 2; c++) {
-        int p = (int)comb_p[par[4]], m = (lfo(phase) * par[1]) >> 7;
+        int p = (int)(comb_p[par[4]] >> 1), m = (lfo(phase) * par[1]) >> 7;   // comb_p: at 48 kHz
         p += c ? -((p >> 12) * par[3]) : (p >> 12) * par[3];
         p += ((p >> 4) * (m >> 4)) >> 8;
-        if (p < 512) p = 512;
+        if (p < 256) p = 256;
         if (!ns.p[c]) ns.p[c] = p;
-        step[c] = (p - ns.p[c]) / 32;
+        step[c] = (p - ns.p[c]) / N24;
     }
     phase += sync_inc(par[0]) * 32;
     for (c = 0; c < 2; c++) {
         int *buf = mem.comb[c], d = ns.p[c], lp = ns.lp[c], *out = c ? R : L;
-        for (f = 0; f < 32; f++) {
+        unsigned wp = wpos;
+        for (f = 0; f < N24; f++, wp++) {
             unsigned i;
             int a, b, y;
             d += step[c];
-            i = wpos + f - (unsigned)(d >> 8);
+            i = wp - (unsigned)(d >> 8);
             a = buf[i & (LEN - 1)];
             b = buf[(i - 1) & (LEN - 1)];
             lp += mul15(k, clamp(a + (((b - a) * (d & 255)) >> 8) - lp, SIG_MAX));
             y = soft((x[f] + mul15(fb, lp)) >> 1) << 1;
-            buf[(wpos + f) & (LEN - 1)] = y;
+            buf[wp & (LEN - 1)] = y;
             out[f] = y;
         }
         ns.p[c] = d; ns.lp[c] = lp;
     }
-    wpos += 32;
+    wpos += N24;
 }
 
 // BITCRUSH, a degrader: OVER drives a soft clip, BITS takes the bits away
@@ -573,7 +599,7 @@ static void lowpass(const int *x, int *L, int *R)
 {
     int c, f, q = 32767 - par[5] * 250, ig = (q + 24576) * 16384 / 57343, step[2];
     unsigned lag = (unsigned)par[3] << 24;
-    if (par[2] && onset(x)) phase = (unsigned)(par[2] - 1) << 25;
+    if (par[2] && onset(x, 32)) phase = (unsigned)(par[2] - 1) << 25;
     for (c = 0; c < 2; c++) {
         int idx = idx127(par[4] + ((par[1] * lfo(phase + (c ? lag : 0))) >> 16) + (c ? par[6] >> 2 : -(par[6] >> 2)));
         if (!ns.sf[c]) ns.sf[c] = svf_f[idx];
@@ -602,7 +628,7 @@ static void multi(const int *x, int *L, int *R)
 {
     int f, idx, step, q = 32767 - par[5] * 250, t = par[6], ig = (q + 24576) * 16384 / 57343;
     int lo = ns.lo[0], bp = ns.bp[0], fq;
-    if (onset(x)) ns.stage = 1;
+    if (onset(x, 32)) ns.stage = 1;
     if (ns.stage && ns.stage < 3 && ns.env < 1024) ns.stage = 3;
     if (ns.stage == 1) {
         ns.level += 32767 / (1 + par[0] * par[0] / 5);
@@ -654,10 +680,9 @@ static void dirt(const int *x, int *L, int *R)
     }
 }
 
-// The delays run at 24 kHz: a pair of frames in, one sample a side, and back
-// up by a linear step. Their time follows stock's tempo, halved until it
-// fits the line, gliding to a new value (about 10 ms), so a tempo or time
-// change bends the echoes as a tape would.
+// The delays run at 24 kHz (at24). Their time follows stock's tempo, halved
+// until it fits the line, gliding to a new value (about 10 ms), so a tempo or
+// time change bends the echoes as a tape would.
 static int fit(int d)                            // Q8 samples at 24 kHz
 {
     while (d > (DLEN - 64) << 8) d >>= 1;
@@ -697,8 +722,8 @@ static void satdelay(const int *x, int *L, int *R)
     int k_h = par[4] ? onepole_k[par[4]] : 0, k_l = onepole_k[par[5]], t[2], step[2];
     t[0] = t[1] = fit(((par[0] + 1) * 5400000 / tempo()) << 8);
     glide(t, step);
-    for (f = 0; f < 32; f += 2) {
-        int in = (x[f] + x[f + 1]) >> 2, s[2], o[2];
+    for (f = 0; f < N24; f++) {
+        int in = x[f] >> 1, s[2], o[2];
         for (c = 0; c < 2; c++) {
             int v;
             ns.d[c] += step[c];
@@ -719,12 +744,8 @@ static void satdelay(const int *x, int *L, int *R)
             o[1] = mul15(gr, s[0]);
         }
         ns.dw++;
-        for (c = 0; c < 2; c++) {
-            int *out = c ? R : L, v = (o[c] * mk) >> 7;
-            out[f] = (ns.out[c] + v) >> 1;
-            out[f + 1] = v;
-            ns.out[c] = v;
-        }
+        L[f] = (o[0] * mk) >> 7;
+        R[f] = (o[1] * mk) >> 7;
     }
 }
 
@@ -750,8 +771,8 @@ static void stdelay(const int *x, int *L, int *R)
     for (c = 0; c < 2; c++) t[c] = t[c] < 1024 ? 1024 : t[c] > (DLEN - 64) << 8 ? (DLEN - 64) << 8 : t[c];
     phase += (rate[82] >> 1) * 32;
     glide(t, step);
-    for (f = 0; f < 32; f += 2) {
-        int in = sat((x[f] + x[f + 1]) >> 2, g, ig), sv[2], m;
+    for (f = 0; f < N24; f++) {
+        int in = sat(x[f] >> 1, g, ig), sv[2], m;
         for (c = 0; c < 2; c++) {
             int v;
             ns.d[c] += step[c];
@@ -765,29 +786,26 @@ static void stdelay(const int *x, int *L, int *R)
         }
         ns.dw++;
         m = (sv[0] + sv[1]) >> 1;
-        for (c = 0; c < 2; c++) {
-            int *out = c ? R : L, o = ((m + mul15(w, sv[c] - m)) * mk) >> 7;
-            out[f] = (ns.out[c] + o) >> 1;
-            out[f + 1] = o;
-            ns.out[c] = o;
-        }
+        L[f] = ((m + mul15(w, sv[0] - m)) * mk) >> 7;
+        R[f] = ((m + mul15(w, sv[1] - m)) * mk) >> 7;
     }
 }
 
-// CHRONO PITCH: a granular pitch shifter. Two grains read the line, gliding
-// at TUNE's ratio (+-24 semitones) through a WIN window (10-80 ms), half a
-// window apart and faded in and out by triangles that sum to one; DEP adds a
-// vibrato (SPD); FDBK sends the result back into the line; HPF and LPF on the
-// return. Mono.
+// CHRONO PITCH, at 24 kHz: a granular pitch shifter. Two grains read the
+// line, gliding at TUNE's ratio (+-24 semitones) through a WIN window (10-80
+// ms), half a window apart and faded in and out by triangles that sum to one;
+// DEP adds a vibrato (SPD); FDBK sends the result back into the line; HPF and
+// LPF on the return. Mono.
 static void chrono(const int *x, int *L, int *R)
 {
-    int f, w = (480 + par[1] * 27) << 8, lo = 24 << 8, fb = par[2] * 250;
-    int k_h = par[4] ? onepole_k[par[4]] : 0, k_l = onepole_k[par[5]];
+    int f, w = (480 + par[1] * 27) << 7, lo = 12 << 8, fb = par[2] * 250;
+    int k_h = par[4] ? k24(onepole_k[par[4]]) : 0, k_l = k24(onepole_k[par[5]]), hp = ns.hp[0], lp = ns.lp[0];
     int ratio = (int)(pitch_q16[24 + (par[0] - 64) * 24 / 64] >> 8) + ((lfo(phase) * par[3]) >> 19);
     int d = ns.dl, step = 256 - ratio, inv = (1 << 24) / (w >> 8);
+    unsigned wp = wpos;
     phase += (rate[par[6]] >> 1) * 32;
     if (d < lo || d >= lo + w) d = lo + w / 2;
-    for (f = 0; f < 32; f++) {
+    for (f = 0; f < N24; f++) {
         int db, pa, ga, y;
         d += step;
         if (d < lo) d += w;
@@ -796,13 +814,15 @@ static void chrono(const int *x, int *L, int *R)
         if (db >= lo + w) db -= w;
         pa = (((d - lo) >> 8) * inv) >> 8;       // 0..65535 across the window
         ga = 32768 - (pa > 32768 ? pa - 32768 : 32768 - pa);
-        y = mul15(ga, tap((unsigned)d)) + mul15(32768 - ga, tap((unsigned)db));
-        mem.line[wpos & (LEN - 1)] = clamp(x[f] + mul15(fb, y), SIG_MAX);
-        wpos++;
-        if (k_h) { ns.hp[0] += mul15(k_h, clamp(y - ns.hp[0], SIG_MAX)); y -= ns.hp[0]; }
-        ns.lp[0] += mul15(k_l, clamp(y - ns.lp[0], SIG_MAX));
-        L[f] = R[f] = ns.lp[0];
+        y = mul15(ga, tap(wp, (unsigned)d)) + mul15(32768 - ga, tap(wp, (unsigned)db));
+        mem.line[wp & (LEN - 1)] = clamp(x[f] + mul15(fb, y), SIG_MAX);
+        wp++;
+        if (k_h) { hp += mul15(k_h, clamp(y - hp, SIG_MAX)); y -= hp; }
+        lp += mul15(k_l, clamp(y - lp, SIG_MAX));
+        L[f] = R[f] = lp;
     }
+    wpos = wp;
+    ns.hp[0] = hp; ns.lp[0] = lp;
     ns.dl = d;
 }
 
@@ -881,15 +901,15 @@ static void warper(const int *x, int *L, int *R)
 {
     int f, c, s = par[4] - 64, hz = (s < 0 ? -1 : 1) * (s * s * 2000 / 4096), inc[2], sb = par[6] * 258;
     unsigned lag = (unsigned)par[3] << 24;
-    if (par[2] && onset(x)) phase = (unsigned)(par[2] - 1) << 25;
+    if (par[2] && onset(x, N24)) phase = (unsigned)(par[2] - 1) << 25;
     for (c = 0; c < 2; c++) {
         int h = hz + ((par[1] * lfo(phase + (c ? lag : 0))) >> 13) + (c ? par[5] * 4 : 0);
         inc[c] = h * 178957;                     // 2^32 / 24000 a hertz
     }
     phase += (rate[par[0]] >> 1) * 32;
-    for (f = 0; f < 32; f += 2) {
+    for (f = 0; f < N24; f++) {
         int v[2], k;
-        v[0] = v[1] = (x[f] + x[f + 1]) >> 2;
+        v[0] = v[1] = x[f] >> 1;
         for (k = 0; k < 2; k++) {
             int st;
             for (st = 0; st < 4; st++) {
@@ -900,19 +920,29 @@ static void warper(const int *x, int *L, int *R)
         }
         k = ns.apq; ns.apq = v[1]; v[1] = k;     // the second chain a sample later
         for (c = 0; c < 2; c++) {
-            int *out = c ? R : L, co, si, up, dn, o;
+            int co, si, up, dn;
             ns.osc[c] += (unsigned)inc[c];
             co = sine(ns.osc[c] + 0x40000000u);
             si = sine(ns.osc[c]);
             up = mul15(co, v[0]) + mul15(si, v[1]);   // the shifted sideband (host test: 1 kHz + 1938 Hz -> 2.94 kHz)
             dn = mul15(co, v[0]) - mul15(si, v[1]);
-            o = (up + mul15(sb, dn - up)) << 1;
-            out[f] = (ns.out[c] + o) >> 1;
-            out[f + 1] = o;
-            ns.out[c] = o;
+            (c ? R : L)[f] = (up + mul15(sb, dn - up)) << 1;
         }
     }
 }
+
+// The effects that run at 24 kHz, on N24 samples: the block's pairs of
+// frames in, their mean, and out one sample a side, which the return takes
+// back up to 48 kHz by a linear step (the midpoint, then the sample).
+static int at24(int type)
+{
+    return type == FX_CHORUS || type == FX_PHASER || type == FX_WOW || type == FX_COMB || type == FX_SATDLY
+           || type == FX_STDLY || type == FX_CHRONO || type == FX_WARPER;
+}
+
+// gate.s: the input's eight voices and the return, through the EMAC.
+void send_fx_in8(const volatile int *rx, const int *gain, int *x, int pairs);
+void send_fx_out(int *pre, const int *l, const int *r, int g, int step, int half);
 
 static void run_fx(int type, const int *x, int *L, int *R)
 {
@@ -967,20 +997,26 @@ void send_fx_block(int slot)
 }
 
 // The audio block, from the FX returns' hook (gate.s) through send_fx_block.
+// (On the author's unit, with a busy project, the block's time left the UI
+// seconds behind: every loop here is kept short.)
 static void block_body(int slot)
 {
-    int v, f, n = 0, type = fx_type < FX_TYPES ? fx_type : FX_CHORUS;
-    int gain[VOICES], step[VOICES], wordof[VOICES], tlev, slev;
+    int v, f, n = 0, moving = 0, half, type = fx_type < FX_TYPES ? fx_type : FX_CHORUS;
+    int gain[VOICES], step[VOICES], wordof[VOICES], gw[VOICES], tlev;
     int x[32], L[32], R[32];
 
+    for (v = 0; v < VOICES; v++) gw[v] = 0;
     for (v = 0; v < VOICES; v++) {               // the voices that send, or still fade out
         int t = VOICE_TRACK(v), s = t < SOUND_TRACKS ? send[t] : 0, tgt = s * s * 2;   // Q15, squared as stock's sends
+        int w = VOICE_WORD(v) & 7;
         if (tgt || g_voice[v]) {
             gain[n] = g_voice[v];
             step[n] = (tgt - g_voice[v]) / 32;
-            wordof[n] = 2 + (VOICE_WORD(v) & 7);
+            wordof[n] = 2 + w;
+            moving |= tgt != g_voice[v];
             n++;
         }
+        gw[w] += tgt;
         g_voice[v] = tgt;
     }
     if (n) idle = 0;
@@ -1001,27 +1037,53 @@ static void block_body(int slot)
         clear_at += CLEAR_STEP;
         return;
     }
-    for (f = 0; f < 32; f++) {
-        int sum = 0, k;
-        for (k = 0; k < n; k++) {
-            gain[k] += step[k];
-            sum += ((RX(f, wordof[k]) >> 16) * gain[k]) >> 15;   // 16-bit x Q15
+    // The input, x: 32 frames, or for a 24 kHz effect the mean of each pair.
+    // Two voices or more, steady, go through the EMAC, all eight at once;
+    // else voice by voice down the block (a word every 12), the gain stepped
+    // while it moves. One voice needs no clamp: its gain is at most unity.
+    half = at24(type);
+    if (n > 1 && !moving) {
+        send_fx_in8(&RX(0, 2), gw, x, half);
+    } else {
+        int m = half ? N24 : 32;
+        for (f = 0; f < m; f++) x[f] = 0;
+        for (v = 0; v < n; v++) {
+            const volatile int *in = &RX(0, wordof[v]);
+            int g = gain[v], st = step[v];
+            if (half) {
+                st <<= 1;
+                for (f = 0; f < N24; f++, in += 24) { g += st; x[f] += (((in[0] >> 16) + (in[12] >> 16)) * g) >> 16; }
+            } else if (st) {
+                for (f = 0; f < 32; f++, in += 12) { g += st; x[f] += ((*in >> 16) * g) >> 15; }
+            } else {
+                for (f = 0; f < 32; f++, in += 12) x[f] += ((*in >> 16) * g) >> 15;   // 16-bit x Q15
+            }
         }
-        x[f] = clamp(sum, SIG_MAX);
+        if (n > 1)
+            for (f = 0; f < m; f++) x[f] = clamp(x[f], SIG_MAX);
+    }
+    if (half && type != FX_SATDLY && type != FX_STDLY && type != FX_WARPER) {
+        // The pairs' mean and the step back up dull the top (-2 dB at 6 kHz,
+        // -6 dB at 10 kHz): x + (x - the sample before) / 4 lifts it back
+        // (+2 dB at 6 kHz, +3.4 dB at 10 kHz). The delays keep their sound.
+        int p = x_last;
+        for (f = 0; f < N24; f++) {
+            int s = x[f];
+            x[f] = clamp(s + ((s - p) >> 2), SIG_MAX);
+            p = s;
+        }
+        x_last = p;
     }
 
-    run_fx(type, x, L, R);
+    run_fx(type, x, half ? &up[0][1] : L, half ? &up[1][1] : R);
 
-    tlev = (lev * lev * trim[type]) >> 8;        // Q13: LEV 127 is about 2x, 71 about 0.6x
-    slev = (tlev - g_lev) / 32;
-    for (f = 0; f < 32; f++) {
-        volatile int *out = PRE(slot, f);
-        int l, r;
-        g_lev += slev;
-        l = ((g_lev * (clamp(L[f], SIG_MAX) >> 1)) >> 12) << 7;   // 16 bits -> 24, as the chorus was heard
-        r = ((g_lev * (clamp(R[f], SIG_MAX) >> 1)) >> 12) << 7;
-        out[0] = clamp(((out[0] << 8) >> 8) + l, 0x7fffff) & 0xffffff;
-        out[1] = clamp(((out[1] << 8) >> 8) + r, 0x7fffff) & 0xffffff;
+    // LEV, Q13: 127 is about 2x, 71 about 0.6x; 16 bits -> 24, as the chorus
+    // was heard. The gain is stepped across the block.
+    tlev = (lev * lev * trim[type]) >> 8;
+    send_fx_out((int *)PRE(slot, 0), half ? up[0] : L, half ? up[1] : R, g_lev * 4, (tlev - g_lev) / 32 * 4, half);
+    if (half) {
+        up[0][0] = up[0][N24];
+        up[1][0] = up[1][N24];
     }
     g_lev = tlev;
 }
