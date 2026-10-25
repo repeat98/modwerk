@@ -29,6 +29,8 @@ runs short. Everything here was done on the owner's MKII on 11 October 2026. Why
   `a408c505`, twin `8dc7692c`). Before a twin, note the flashed set (`inventory`) and where its packages are; base-bound
   ones (Analog BD, Output Matrix) must be the copies bound to that base, from the commit that built it. Afterwards,
   power-cycle and `try` each again.
+- Verify an Undo's active identity and inventory after the reply; a ready host UI alone is insufficient. On a contributor's MKII (25 October 2026, private base `52c291c2…`), a 12-module timed Undo left recovery/active unknown and standard
+  rollback retries still returned needs-recovery. Stop installing and ask the owner to power-cycle when recovery cannot finish.
 - After a crash restart, or finding the unit on the flashed base with no power cycle you know of, ask for a power
   cycle before the next RAM boot: one such boot hung at the logo (12 October 2026,
   [traps](OCTATRACK_HARDWARE_TRAPS.md#dsp-loader-dynamic-dsp-code)).
@@ -42,6 +44,8 @@ before reporting success.
 
 ## Start the link
 
+Keep emulator socket paths short, including the host path behind a container bind mount. A long host output path can fail with `usb: cannot listen` even when its container alias is short.
+
 ```sh
 export PATH=~/.nvm/versions/node/v24.21.0/bin:$PATH   # Node 24; the default node is 18 and cannot load .ts
 while :; do npm run device -- serve; sleep 1; done
@@ -53,6 +57,10 @@ RAM boot. One process at a time: a second `serve` or a one-shot `npm run device`
 frontend MCP use the unit beside the session, start it with `serve --share /tmp/modwerk-share.sock` and the MCP with
 `--device-socket /tmp/modwerk-share.sock`: each MCP control transfer runs between the session's. Then only one of them
 stages modules at a time (the MCP's sync, or the session's `try`/`remove`); the session reads and presses keys.
+The session’s `try FILE` accepts immediately. For a temporary trial, use the MCP’s review/self-test/Undo flow or
+the one-shot `npm run device -- try FILE` without `--accept`; do not use session `try` as an automatic Undo test.
+A private module-only trial does not inherit the flashed base's kept module set. To test companions, prepare copies bound to the exact temporary base and review/trial the complete set; a Keep on the twin is not an inventory-recovery step. A host client's own trial timer can also remove the set while its USB keepalive is still healthy. State the timeout and distinguish it from a RAM clear or restart.
+
 After an unplug, a crash restart or a RAM boot, the bridge can hold a dead handle; `pkill -f usb_bridge;
 pkill -f '^node scripts/device.mjs serve'` and the loop starts both again. Anchor the pattern: without `^` it also
 matches any shell whose command line contains it (the loop's, or the one running `pkill`), and kills that.
