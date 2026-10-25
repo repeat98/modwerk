@@ -5,15 +5,16 @@
   `35ea2f0` on branch `claude/pad-select`, **not yet pushed**, so `source.revision` is left out of
   the manifest until a public commit exists. 0.2.0-experimental here was that file byte for byte
   (`93d95e91…3863`, fingerprint `10bc355d…aecd`). 0.3.0 changes it in `play_gate`, adds `mark`,
-  `pressure_gate` and `silent_mask`, and adds one site ([0.3.0](#030-auto-trk-switch-and-aftertouch-2026-10-25)):
-  `src/pad-select.s` `31bff294…0b40`. `include/ar2-1.74.inc` (`c57431f7…874b`) is rytm2_mods'
+  `pressure_gate` and `silent_mask`, changes `func_gate` and `drw_invoke`, and adds one site ([0.3.0](#030-auto-trk-switch-and-aftertouch-2026-10-25)):
+  `src/pad-select.s` `e43d005f…6699`. `include/ar2-1.74.inc` (`c57431f7…874b`) is rytm2_mods'
   `include/ar2-1.74.inc`, byte for byte. Source fingerprint (`sha256` of
-  `sha256sum include/ar2-1.74.inc src/pad-select.s`): `22a1075b…a783`.
+  `sha256sum include/ar2-1.74.inc src/pad-select.s`): `4f79fd7c…ff57`.
 - Stock OS 1.74: `.syx` `cb0f99d6…e123`, main OS `34cd0c4d…1f3b`, the owner's file.
 - Core: elekloader core-ar2 0.3 (`core-ar2-v0.3`, `core-ar2-0.3.elemod` `6b97dfb3…3e58`, as vendored).
-- Build PS03 (core-ar2 0.3 + 0.3.0, Modwerk's linker, `--version PS03`): `.syx`
-  `f0ac2210a50d90a6735c7711def5411c918e8a97fde4eb17654759d6757b7a85`, main OS `2884ff5a…5879`.
-  Tested in rytm-emu 2026-10-25. Not run on a unit.
+- Build PS04 (core-ar2 0.3 + 0.3.0 with the review fixes, Modwerk's linker, `--version PS04`):
+  `.syx` `5c95d3861eac5831710446b71b564468f7b4823fab39e04b451f2e2e23d0566f`, main OS
+  `6655ec5e…15a8`. Tested in rytm-emu 2026-10-25. Not run on a unit.
+- Build PS03 (0.3.0 before the review fixes): `.syx` `f0ac2210…7a85`, main OS `2884ff5a…5879`.
 - Build PS74 (core-ar2 0.3 + 0.2.0): `.syx` `4b2e6567…ad21`, main OS `7ea05528…033f`. The
   emulator sections below marked 0.2.0 ran on it.
 
@@ -82,8 +83,9 @@ Two faults found in the 0.2.0 emulator runs below, fixed in 0.3.0:
   reached through a this-adjusting thunk, `0x400c7608`, so the vtable pointer alone is not
   enough): pressure on a pad whose press was silent is answered as handled and goes no further.
 
-Build: 876-byte `.run`, 6 sites, 7 relocations; links with core-ar2 0.3 alone (`2884ff5a…5879`)
-and beside Filter Hz and Loop Sync (`61841bd6…72bf1`); the source-only export links the same.
+Build (PS03): 876-byte `.run`, 6 sites, 7 relocations; links with core-ar2 0.3 alone
+(`2884ff5a…5879`) and beside Filter Hz and Loop Sync (`61841bd6…72bf1`); the source-only export
+links the same.
 
 Retest on PS03 (snapshots made as for 0.2.0: **A3** checked, **B3** unchecked, **S** stock):
 
@@ -97,6 +99,41 @@ Retest on PS03 (snapshots made as for 0.2.0: **A3** checked, **B3** unchecked, *
 Every 0.2.0 mode group below, rerun on PS03: A3 gave the same counts, MIDI out and screens as
 0.2.0's A in all 20 groups, and B3 matched stock in all of them. The four documentation frames
 come out byte-identical on PS03.
+
+### Review fixes (PS04, 2026-10-25)
+
+A code review of 0.3.0 found two more faults, fixed before any hardware test:
+
+- **The silent bit could go stale.** PS03 cleared a pad's bit only on its next press that reached
+  the play routine. Silent SD tap, then LIVE REC, then NO + SD (erase) held with pressure: PS03
+  dropped that pressure, stock sends it. Now `func_gate`, which the pad handler reaches for every
+  press and release past its NO check, clears the pad's bit first, and `play_gate` sets it again
+  for a silent press; the bit lasts from a silent press to its release. PS04: the same test sends
+  the aftertouch exactly as stock (`AD 01 14 … 23`).
+- **The checkbox drawer wrote over its caller's arguments** before tail-calling the stock bitmap
+  routine. It now calls it with a frame of its own. PS04: all 26 frames of the capture run,
+  unchecked and checked, are byte-identical to PS03's.
+
+Build (PS04): 892-byte `.run`, 6 sites, 8 relocations; links with core-ar2 0.3 alone
+(`6655ec5e…15a8`) and beside Filter Hz and Loop Sync (`21cf79ac…2441`); the source-only export
+links the same. On PS04 (**A4** checked, **B4** unchecked, **S** stock, snapshots made as above),
+every group (the 20 mode groups, both AUTO TRK SWITCH groups and the aftertouch group) gave the
+same counts, MIDI out and screens as PS03's A3, and B4 matched stock in all of them except the
+SEQUENCER CONFIG screens, which carry the row. The CY recording with a held, pressed silent pad is
+byte-identical to the run without it, with no MIDI. Persistence and GLOBAL slots were last run on
+0.2.0; the storage code has not changed since.
+
+Release notes for publication (`src/community/module-changelogs/analog-rytm-mkii-pad-select.json`
+cannot exist while the module is in `_submissions/`: the check refuses an ID outside the library):
+
+```json
+[{ "version": "0.3.0-experimental", "date": "2026-10-25", "changes": [
+  "New module for Analog Rytm MKII OS 1.74 on core-ar2 0.3: with PAD+TRIG SEL TRK checked, pads and TRIG keys select their track silently outside live and step recording.",
+  "FUNC + pad plays the track at the pad's own velocity; live and step recording work as stock.",
+  "A pad pressed silently sends no aftertouch, and FUNC + pad follows AUTO TRK SWITCH as stock.",
+  "Known issue: tested in an emulator only, not yet on a unit."
+] }]
+```
 
 FUNC + RTRG toggles the metronome click on stock ("CLICK ON"), so FUNC + RTRG + pad, which 0.2.0's
 design names as the roll gesture outside live recording, also switches the click.
@@ -208,7 +245,7 @@ Captures: the four PNGs in `media/` come from one cold boot whose command line i
 
 ## Hardware
 
-**Not tested.** Pad Select has not run on a unit. To do, on the exact PS03 build (or a later one
+**Not tested.** Pad Select has not run on a unit. To do, on the exact PS04 build (or a later one
 that names its hash):
 
 1. GLOBAL > CONTROL > SEQUENCER CONFIG: PAD+TRIG SEL TRK after AUTO TRK SWITCH; YES and
@@ -228,7 +265,7 @@ that names its hash):
 
 ## Load and memory
 
-876 bytes in the shared DDR area, no `.bss`, no fast SRAM. The sites are in the pad and TRIG key
+892 bytes in the shared DDR area, no `.bss`, no fast SRAM. The sites are in the pad and TRIG key
 handlers and their play routine, the pad-pressure handler, and the SEQUENCER CONFIG menu's
 constructor. Each press reads
 one storage bit through `core_store_get` and the record state; nothing runs in the audio,

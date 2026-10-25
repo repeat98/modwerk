@@ -1,6 +1,7 @@
         | SPDX-License-Identifier: GPL-2.0-only
-        | pad-select - PAD+TRIG SEL TRK: the pads and TRIG keys 1-12 sound only in
-        | LIVE RECORDING; otherwise a press selects its track.
+        | pad-select - PAD+TRIG SEL TRK: the pads and TRIG keys sound only in
+        | LIVE and STEP RECORDING; otherwise a press selects its track, silent,
+        | and FUNC + pad plays it.
         |
         | A new mod, not a port. The setting is core-ar2 0.3's mod storage
         | field pad_select_on (global scope, one bit per globals slot), saved
@@ -22,8 +23,9 @@
         |                           FUNC is held: no voice, no MIDI, no held note
         |   autotrk     0x400c79d2  both handlers' AUTO TRK SWITCH test reads
         |               0x400c7e24  on for a silent press, so it selects its track
-        |   pressure_gate 0x400c7468 (1.74: 0x400c74d4) a held pad whose press
-        |                           was silent sends no aftertouch
+        |   pressure_gate (1.74: 0x400c74d4, read from 1.74 only; no 1.73
+        |                           address) a held pad whose press was
+        |                           silent sends no aftertouch
         |   func_gate   0x400c78e4  the pad handler's FUNC test reads off, so
         |                           FUNC + pad plays at the pad's velocity, not VEL
         | and for the switch, a SEQUENCER CONFIG item after AUTO TRK SWITCH:
@@ -178,15 +180,27 @@ pad_select_autotrk:
         | func_gate: the pad handler's FUNC test, over `pea 0x80; jsr %a3@`
         | (a3 is_key_held), re-emitted. While active(), FUNC reads not held, so
         | the pad's own velocity is taken; play_gate still sees FUNC and plays.
-        | The pea stays pushed for the addql at FUNC_RESUME. a2 is the view;
-        | d1/a0/a1 are not read before they are written.
+        | The pea stays pushed for the addql at FUNC_RESUME. a2 is the view,
+        | d2 the pad (event +20); d1/a0/a1 are not read before they are
+        | written.
+        |
+        | Every pad event the handler gets this far with, a press or a
+        | release, first clears its pad's silent_mask bit; play_gate sets it
+        | again for a silent press. So the bit lasts from a silent press to
+        | its release, and a later press that skips the play routine (NO +
+        | pad in LIVE REC) finds it clear.
         | ------------------------------------------------------------------
         .align  2
         .globl  pad_select_func_gate
 pad_select_func_gate:
         pea     KEY_FUNC                          | displaced
         jsr     (%a3)                             | displaced
-        tst.l   %d0
+        cmpi.l  #12,%d2
+        bcc.s   2f
+        move.l  silent_mask,%d1
+        bclr    %d2,%d1
+        move.l  %d1,silent_mask
+2:      tst.l   %d0
         beq.s   1f
         move.l  %a2,%a0
         bsr.w   active
@@ -456,8 +470,7 @@ set_redraw:                                       | d0 the value, a2 the view, a
 
         | drw_invoke(functor, -, canvas, x, y): the checkbox, as AUTO TRK
         | SWITCH's drawer (0x400ec3e4) draws it: glyph 0 or 1 of the table at
-        | CHECK_GLYPHS, at x + 11, tail-called with the arguments rewritten in
-        | place.
+        | CHECK_GLYPHS, at x + 11, called with a frame of its own.
         .align  2
 drw_invoke:
         bsr.w   flag_get
@@ -470,12 +483,14 @@ drw_invoke:
         move.l  16(%sp),%d1
         add.l   #11,%d1                           | x
         move.l  20(%sp),%a1                       | y
-        move.l  %a0,4(%sp)
-        move.l  %d0,8(%sp)
-        move.l  %d1,12(%sp)
-        move.l  %a1,16(%sp)
-        clr.l   20(%sp)
-        jmp     BITMAP_DRAW
+        clr.l   -(%sp)                            | a frame of its own: the
+        move.l  %a1,-(%sp)                        | caller's arguments stay
+        move.l  %d1,-(%sp)                        | as it pushed them
+        move.l  %d0,-(%sp)
+        move.l  %a0,-(%sp)
+        jsr     BITMAP_DRAW
+        lea     20(%sp),%sp
+        rts
 
 txt_label:
         .asciz  "PAD+TRIG SEL TRK"

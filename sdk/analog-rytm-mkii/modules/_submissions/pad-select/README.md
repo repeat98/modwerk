@@ -115,7 +115,7 @@ while FUNC + pad plays. Unchecked, every screen and every MIDI byte matched stoc
 run. The setting came back after a power-off and cold boot, and each GLOBAL slot keeps its own.
 Every other mode that takes the pads, TRIG keys or FUNC was compared too (see the table in
 TESTING.md), and a silent press left the modelled analog output byte-identical while the
-sequencer played. It has **not** run on a unit. Memory: 876 bytes of the 128 KiB shared mod area, no `.bss`, no
+sequencer played. It has **not** run on a unit. Memory: 892 bytes of the 128 KiB shared mod area, no `.bss`, no
 fast SRAM. Nothing runs in the audio, sequencer or tick paths; each key press costs a few
 compares (static reading, not a measurement).
 
@@ -137,7 +137,7 @@ No Elektron firmware is included.
 
 ## Screens and audio
 
-These captures are rytm-emu frames of PS03, the released core-ar2 0.3 and Pad Select on stock OS
+These captures are rytm-emu frames of PS04, the released core-ar2 0.3 and Pad Select on stock OS
 1.74, from one cold boot. See [capture provenance](media/capture.json) for hashes and inputs. The
 module changes which presses sound, not the sound itself, so there is no audio demonstration.
 
