@@ -2,7 +2,7 @@
   "schemaVersion": 3,
   "id": "pad-select",
   "name": "Pad Select",
-  "version": "0.2.0-experimental",
+  "version": "0.3.0-experimental",
   "machine": "analog-rytm-mkii",
   "category": "system",
   "exclusive": false,
@@ -58,7 +58,7 @@
     {
       "name": "FUNC + pad",
       "default": null,
-      "doc": "While PAD+TRIG SEL TRK applies, plays the pad's track at the pad's own velocity (stock FUNC + pad plays at the TRIG page's VEL). FUNC + TRIG 1-12 stays as stock and plays nothing.",
+      "doc": "While PAD+TRIG SEL TRK applies, plays the pad's track at the strike's velocity (stock FUNC + pad plays at the TRIG page's VEL), with its aftertouch, and selects the track only if AUTO TRK SWITCH is checked, as stock. FUNC + TRIG 1-12 stays as stock and plays nothing.",
       "labels": null
     }
   ],
@@ -72,10 +72,9 @@
       "Built for OS 1.74 only, with core-ar2 0.3.",
       "Tested in rytm-emu only; not yet run on a unit.",
       "FUNC + TRIG 1-12 plays nothing, as on stock: outside live recording, use FUNC + pad to hear a track.",
-      "Known issue: a silently pressed pad still sends aftertouch while held (MIDI poly pressure, and the track's aftertouch modulation).",
       "TRIG 13 (the FX track), the SOUND BROWSER's pad audition and pads with a menu open are silent too; FUNC + pad plays.",
       "PLAY during LIVE RECORDING ends live recording, as on stock; the pads are silent again from then.",
-      "RTRG + pad outside live recording selects silently; FUNC + RTRG + pad plays.",
+      "RTRG + pad outside live recording selects silently; FUNC + RTRG also toggles the metronome click, as on stock, so it is not a clean way to roll.",
       "A GLOBAL slot saved without the setting, or received as Global SysEx, loads unchecked."
     ]
   },
@@ -92,18 +91,18 @@
     ]
   },
   "resources": {
-    "memoryBytes": 764,
+    "memoryBytes": 876,
     "fastBytes": 0,
     "load": {
       "display": "None in the audio path: a few compares per pad or TRIG key press",
       "method": "static",
-      "conditions": "Static: the sites are in KeyboardView's pad and TRIG key handlers, their shared play routine and the SEQUENCER CONFIG menu's constructor; each press reads one storage bit and the record state. Nothing is added to the audio, sequencer or tick paths. Not a measurement."
+      "conditions": "Static: the sites are in KeyboardView's pad and TRIG key handlers, their shared play routine, the pad-pressure handler and the SEQUENCER CONFIG menu's constructor; each press reads one storage bit and the record state. Nothing is added to the audio, sequencer or tick paths. Not a measurement."
     }
   },
   "evidence": {
     "tier": "emulator",
-    "moduleVersion": "0.2.0-experimental",
-    "sourceSha256": "10bc355dc8c3277f7d221fc6ae939358dd5fdb537695216e3b618c777540aecd",
+    "moduleVersion": "0.3.0-experimental",
+    "sourceSha256": "22a1075b83f9604f0e823d3a79a7999289bba0cd81349c3f46536f6f59bca783",
     "reports": [
       "TESTING.md"
     ],
@@ -112,7 +111,7 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Emulator (rytm-emu c5732f0, OS 1.74, build PS74), against stock from matched snapshots: checked, pads and TRIG keys select silently wherever stock would play them (no voice, no MIDI, analog output unchanged), FUNC + pad plays at the pad's velocity, LIVE and STEP REC and every other key mode are as stock; unchecked matches stock exactly; kept through a power cycle, per GLOBAL slot. Known issue: aftertouch still passes. Not run on a unit.",
+    "summary": "Emulator (rytm-emu c5732f0, OS 1.74, build PS03), against stock from matched snapshots: checked, pads and TRIG keys select silently wherever stock would play them (no voice, no MIDI, no aftertouch, analog output unchanged), FUNC + pad plays at the strike's velocity and follows AUTO TRK SWITCH, LIVE and STEP REC and every other key mode are as stock; unchecked matches stock exactly; kept through a power cycle (0.2.0), per GLOBAL slot. Not run on a unit.",
     "documentation": {
       "tutorial": {
         "title": "Quick tutorial",
@@ -157,9 +156,9 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "0.2.0-experimental",
-        "imageSha256": "4b2e6567acce58756bf6aa0119faf77410dbfe00ff2e9f21c6c11db58fbdad21",
-        "setup": "Headless rytm-emu c5732f0 (dtboot) cold-booting PS74: the released core-ar2 0.3 and this folder's Pad Select, linked by Modwerk on the owner's stock OS 1.74. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "moduleVersion": "0.3.0-experimental",
+        "imageSha256": "f0ac2210a50d90a6735c7711def5411c918e8a97fde4eb17654759d6757b7a85",
+        "setup": "Headless rytm-emu c5732f0 (dtboot) cold-booting PS03: the released core-ar2 0.3 and this folder's Pad Select, linked by Modwerk on the owner's stock OS 1.74. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
@@ -173,9 +172,9 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "0.2.0-experimental",
-        "imageSha256": "4b2e6567acce58756bf6aa0119faf77410dbfe00ff2e9f21c6c11db58fbdad21",
-        "setup": "Headless rytm-emu c5732f0 (dtboot) cold-booting PS74: the released core-ar2 0.3 and this folder's Pad Select, linked by Modwerk on the owner's stock OS 1.74. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "moduleVersion": "0.3.0-experimental",
+        "imageSha256": "f0ac2210a50d90a6735c7711def5411c918e8a97fde4eb17654759d6757b7a85",
+        "setup": "Headless rytm-emu c5732f0 (dtboot) cold-booting PS03: the released core-ar2 0.3 and this folder's Pad Select, linked by Modwerk on the owner's stock OS 1.74. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
@@ -189,9 +188,9 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "0.2.0-experimental",
-        "imageSha256": "4b2e6567acce58756bf6aa0119faf77410dbfe00ff2e9f21c6c11db58fbdad21",
-        "setup": "Headless rytm-emu c5732f0 (dtboot) cold-booting PS74: the released core-ar2 0.3 and this folder's Pad Select, linked by Modwerk on the owner's stock OS 1.74. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "moduleVersion": "0.3.0-experimental",
+        "imageSha256": "f0ac2210a50d90a6735c7711def5411c918e8a97fde4eb17654759d6757b7a85",
+        "setup": "Headless rytm-emu c5732f0 (dtboot) cold-booting PS03: the released core-ar2 0.3 and this folder's Pad Select, linked by Modwerk on the owner's stock OS 1.74. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
@@ -205,9 +204,9 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "0.2.0-experimental",
-        "imageSha256": "4b2e6567acce58756bf6aa0119faf77410dbfe00ff2e9f21c6c11db58fbdad21",
-        "setup": "Headless rytm-emu c5732f0 (dtboot) cold-booting PS74: the released core-ar2 0.3 and this folder's Pad Select, linked by Modwerk on the owner's stock OS 1.74. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "moduleVersion": "0.3.0-experimental",
+        "imageSha256": "f0ac2210a50d90a6735c7711def5411c918e8a97fde4eb17654759d6757b7a85",
+        "setup": "Headless rytm-emu c5732f0 (dtboot) cold-booting PS03: the released core-ar2 0.3 and this folder's Pad Select, linked by Modwerk on the owner's stock OS 1.74. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     }
   ]

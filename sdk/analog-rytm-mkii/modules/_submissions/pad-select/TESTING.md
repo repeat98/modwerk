@@ -1,22 +1,27 @@
 # Pad Select — test report
 
-- Module: `pad-select` 0.2.0-experimental, for Analog Rytm MKII OS 1.74 on core-ar2 0.3.
+- Module: `pad-select` 0.3.0-experimental, for Analog Rytm MKII OS 1.74 on core-ar2 0.3.
 - Source: rytm2_mods (`Iced-Cream/rytm2_mods`), `pad-select` 0.2, local commit
   `35ea2f0` on branch `claude/pad-select`, **not yet pushed**, so `source.revision` is left out of
-  the manifest until a public commit exists. `src/pad-select.s` (`93d95e91…3863`) is its
-  `pad-select/os1.74/pad-select.s` and `include/ar2-1.74.inc` (`c57431f7…874b`) its
+  the manifest until a public commit exists. 0.2.0-experimental here was that file byte for byte
+  (`93d95e91…3863`, fingerprint `10bc355d…aecd`). 0.3.0 changes it in `play_gate`, adds `mark`,
+  `pressure_gate` and `silent_mask`, and adds one site ([0.3.0](#030-auto-trk-switch-and-aftertouch-2026-10-25)):
+  `src/pad-select.s` `31bff294…0b40`. `include/ar2-1.74.inc` (`c57431f7…874b`) is rytm2_mods'
   `include/ar2-1.74.inc`, byte for byte. Source fingerprint (`sha256` of
-  `sha256sum include/ar2-1.74.inc src/pad-select.s`): `10bc355d…aecd`.
+  `sha256sum include/ar2-1.74.inc src/pad-select.s`): `22a1075b…a783`.
 - Stock OS 1.74: `.syx` `cb0f99d6…e123`, main OS `34cd0c4d…1f3b`, the owner's file.
 - Core: elekloader core-ar2 0.3 (`core-ar2-v0.3`, `core-ar2-0.3.elemod` `6b97dfb3…3e58`, as vendored).
-- Build PS74 (core-ar2 0.3 + this module, Modwerk's linker, `--version PS74`): `.syx`
-  `4b2e6567acce58756bf6aa0119faf77410dbfe00ff2e9f21c6c11db58fbdad21`, main OS `7ea05528…033f`.
+- Build PS03 (core-ar2 0.3 + 0.3.0, Modwerk's linker, `--version PS03`): `.syx`
+  `f0ac2210a50d90a6735c7711def5411c918e8a97fde4eb17654759d6757b7a85`, main OS `2884ff5a…5879`.
   Tested in rytm-emu 2026-10-25. Not run on a unit.
+- Build PS74 (core-ar2 0.3 + 0.2.0): `.syx` `4b2e6567…ad21`, main OS `7ea05528…033f`. The
+  emulator sections below marked 0.2.0 ran on it.
 
 ## Sites
 
-Five sites, read from stock OS 1.74; each one's stock bytes match rytm2_mods' `mod.json`, and
-each is recorded here as an address, a length and the SHA-256 of those bytes.
+Six sites, read from stock OS 1.74, each recorded as an address, a length and the SHA-256 of
+those bytes. The first five and the menu site are rytm2_mods' and their stock bytes match its
+`mod.json`; `0x400c74d4` is new in 0.3.0.
 
 | Address | Length | Op | Target | What |
 | --- | --- | --- | --- | --- |
@@ -24,13 +29,14 @@ each is recorded here as an address, a length and the SHA-256 of those bytes.
 | `0x400c7a3e` | 6 | jsr | `pad_select_autotrk` | the pad handler's AUTO TRK SWITCH call |
 | `0x400c7e90` | 6 | jsr | `pad_select_autotrk` | the TRIG key handler's AUTO TRK SWITCH call |
 | `0x400c7950` | 6 | jmp | `pad_select_func_gate` | the pad handler's FUNC test |
+| `0x400c74d4` | 8 | jmp | `pad_select_pressure_gate` | KeyboardView's pad-pressure handler, vtable slot 18 (jmp + nop) |
 | `0x400ec184` | 8 | jmp | `pad_select_menu_add` | the SEQUENCER CONFIG menu's constructor (jmp + nop) |
 
 rytm2_mods declares the two AUTO TRK SWITCH sites as `keep2`. The stock instruction there is an
 absolute `jsr`, so `keep2` and `jsr` write the same six bytes; this folder uses `jsr`, which
 Modwerk's source-only export accepts (it refuses `keep2`).
 
-## Source build and link (2026-10-24)
+## Source build and link (0.2.0, 2026-10-24)
 
 ```sh
 node scripts/machine-modules.mjs --drafts
@@ -57,7 +63,45 @@ OS as the local materialisation, `7ea05528…033f`. The builds stayed on the own
 Not compared byte for byte with an elekloader build on core-ar2 0.3: the elekloader build kept
 in rytm2_mods is on core-ar2 0.4, and no elekloader checkout was available here.
 
-## Emulator (2026-10-25)
+## 0.3.0: AUTO TRK SWITCH and aftertouch (2026-10-25)
+
+Two faults found in the 0.2.0 emulator runs below, fixed in 0.3.0:
+
+- **FUNC + pad forced a selection.** 0.2.0's `autotrk` answered "on" whenever the setting
+  applied, so FUNC + pad, the gesture that plays as stock, also selected its track with AUTO TRK
+  SWITCH unchecked; stock does not. 0.3.0 keeps "on" for a silent press only; a press that plays
+  asks stock's getter. Checked first (on stock, counting `0x400c772e`, `0x400c7a3e` and
+  `0x400c7e90` per press): every press that reaches either AUTO TRK SWITCH call has just run the
+  play routine (a pad or TRIG key stopped, in GRID, STEP and LIVE REC, NO + pad, FUNC + TRIG,
+  TRIG 13-16, PERF, SCENE, MUTE, TRK + pad), so `autotrk` never reads a stale answer.
+- **Aftertouch passed through a silent press.** Pad pressure goes to KeyboardView's slot 18,
+  `0x400c74d4` (on stock only in plain pad mode: not in MUTE, PERF, SCENE, TRK + pad or RTRG +
+  pad; CHROMATIC has its own handler), which sends it to the voice (`0x4011f490`) and as MIDI
+  poly pressure (`0x400850f4`) whether or not the press played. 0.3.0 keeps one bit per pad,
+  set by a silent press and cleared by one that plays, and hooks the handler's entry (also
+  reached through a this-adjusting thunk, `0x400c7608`, so the vtable pointer alone is not
+  enough): pressure on a pad whose press was silent is answered as handled and goes no further.
+
+Build: 876-byte `.run`, 6 sites, 7 relocations; links with core-ar2 0.3 alone (`2884ff5a…5879`)
+and beside Filter Hz and Loop Sync (`61841bd6…72bf1`); the source-only export links the same.
+
+Retest on PS03 (snapshots made as for 0.2.0: **A3** checked, **B3** unchecked, **S** stock):
+
+| Test | A3 (checked) | S (stock) |
+| --- | --- | --- |
+| SD held with pressure, FUNC + SD held with pressure, SD held with pressure | only FUNC + SD sends its note and its aftertouch (`AD 01 …`); the two plain holds send nothing | all three: note and aftertouch |
+| AUTO TRK SWITCH unchecked: FUNC + SD | plays at 127, the track stays BD (screens as stock) | plays at 100, stays BD |
+| AUTO TRK SWITCH unchecked: SD, TRIG 5 | silent, each selects its track | play, the track stays BD |
+| CY sequenced, its pad held 0.75 s with a pressure stream | analog recording byte-identical to the run without the press; no MIDI | (0.2.0 run) the press retriggers |
+
+Every 0.2.0 mode group below, rerun on PS03: A3 gave the same counts, MIDI out and screens as
+0.2.0's A in all 20 groups, and B3 matched stock in all of them. The four documentation frames
+come out byte-identical on PS03.
+
+FUNC + RTRG toggles the metronome click on stock ("CLICK ON"), so FUNC + RTRG + pad, which 0.2.0's
+design names as the roll gesture outside live recording, also switches the click.
+
+## Emulator, 0.2.0 (2026-10-25)
 
 [rytm-emu](https://github.com/trigcondition/rytm-emu) `c5732f0`, headless `dtboot`
 (`cargo build --release --bin dtboot`, Homebrew Rust 1.99.1, JIT on), on PS74 and on stock 1.74.
@@ -105,7 +149,7 @@ SEQUENCER CONFIG without the row, and SD plays.
 Its SEQUENCER CONFIG shows the box unchecked (and slot 2's own stock settings), and SD plays.
 LEFT + YES back to slot 1: the box is checked again, and SD is silent.
 
-### Every mode that takes the pads, TRIG keys or FUNC (2026-10-25)
+### Every mode that takes the pads, TRIG keys or FUNC (0.2.0, 2026-10-25)
 
 Three snapshots made with the same key sequence (GLOBAL > CONTROL > SEQUENCER CONFIG, three
 DOWNs, four NOs) from a cold boot: **A** PS74 with YES on the row (checked), **B** PS74 without it
@@ -149,7 +193,7 @@ pad for 0.75 s and releasing it while the cymbal rings gives an analog recording
 the same run without the press: the silent press neither retriggers nor cuts the voice. In S
 the press changes the recording (it retriggers).
 
-**Known issue, aftertouch.** The same held CY pad with a stream of pressure values (raw panel
+**Aftertouch (0.2.0; fixed in 0.3.0, above).** The same held CY pad with a stream of pressure values (raw panel
 `9A xx`): in A no note-on is sent, but the polyphonic aftertouch messages are (`AD 0A xx`), and the
 analog recording differs from the run without the press, so the pressure modulates the sound
 playing on that track. Stock sends the same aftertouch after its note-on. The module gates only
@@ -164,13 +208,15 @@ Captures: the four PNGs in `media/` come from one cold boot whose command line i
 
 ## Hardware
 
-**Not tested.** Pad Select has not run on a unit. To do, on the exact PS74 build (or a later one
+**Not tested.** Pad Select has not run on a unit. To do, on the exact PS03 build (or a later one
 that names its hash):
 
 1. GLOBAL > CONTROL > SEQUENCER CONFIG: PAD+TRIG SEL TRK after AUTO TRK SWITCH; YES and
    LEFT/RIGHT toggle it. Save, power-cycle, reload: kept. Another GLOBAL slot keeps its own.
 2. Stopped and playing: pads and TRIG 1-12 select silently; FUNC + pad plays, soft and hard,
    at the pad's velocity. Holding a pad on a sounding track does not cut its note on release.
+   A silent pad held with pressure sends no aftertouch; FUNC + pad's aftertouch works.
+   AUTO TRK SWITCH unchecked: a silent press selects, FUNC + pad does not.
 3. GRID REC: TRIG keys place trigs; pads select silently; FUNC + pad plays.
 4. LIVE REC and STEP REC: as stock; NO + pad erases in LIVE REC.
 5. CHROMATIC mode, MIDI notes in, TRIG + YES, the SOUND BROWSER: as stock. A track with MIDI
@@ -182,8 +228,9 @@ that names its hash):
 
 ## Load and memory
 
-764 bytes in the shared DDR area, no `.bss`, no fast SRAM. The sites are in the pad and TRIG key
-handlers and their play routine, and in the SEQUENCER CONFIG menu's constructor. Each press reads
+876 bytes in the shared DDR area, no `.bss`, no fast SRAM. The sites are in the pad and TRIG key
+handlers and their play routine, the pad-pressure handler, and the SEQUENCER CONFIG menu's
+constructor. Each press reads
 one storage bit through `core_store_get` and the record state; nothing runs in the audio,
 sequencer or tick paths. Static reading, not a measurement.
 

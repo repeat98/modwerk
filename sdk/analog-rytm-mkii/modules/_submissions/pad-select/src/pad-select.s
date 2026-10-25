@@ -21,7 +21,9 @@
         |   play_gate   0x400c76c2  the play routine returns at once unless
         |                           FUNC is held: no voice, no MIDI, no held note
         |   autotrk     0x400c79d2  both handlers' AUTO TRK SWITCH test reads
-        |               0x400c7e24  on, so the press selects its track
+        |               0x400c7e24  on for a silent press, so it selects its track
+        |   pressure_gate 0x400c7468 (1.74: 0x400c74d4) a held pad whose press
+        |                           was silent sends no aftertouch
         |   func_gate   0x400c78e4  the pad handler's FUNC test reads off, so
         |                           FUNC + pad plays at the pad's velocity, not VEL
         | and for the switch, a SEQUENCER CONFIG item after AUTO TRK SWITCH:
@@ -40,6 +42,7 @@
         .equ    VIEW_SEQ,       0x8c              | KeyboardView: the sequencer state
         .equ    LIVE_GET,       0x40036370        | state: LIVE REC (+0x169, while playing)
         .equ    STEP_GET,       0x400363bc        | state: STEP REC (+0x16a)
+        .equ    PRESSURE_RESUME, 0x400c74dc       | the pressure handler past `lea; moveml`
 
         | core-ar2 0.3's mod storage: the field's descriptor is an absolute
         | symbol elekloader defines; core_store_get(field, item, index) and
@@ -76,34 +79,91 @@
 
         | ------------------------------------------------------------------
         | play_gate: the play routine's entry, over `linkw %fp,#-64; moveq
-        | #127,%d0`, both re-emitted. The arguments are on the stack, the view
-        | at %sp@(4); d0/d1/a0/a1 are free, as at any call. active() is kept
-        | in pl_last for autotrk, which both handlers reach after this call
-        | with nothing branching in between.
+        | #127,%d0`, both re-emitted. The arguments are on the stack: the view
+        | at %sp@(4), src at %sp@(8), the track at %sp@(12); d0/d1/a0/a1 are
+        | free, as at any call. Whether this press is silent is kept in
+        | pl_last for autotrk, which both handlers reach after this call with
+        | nothing branching in between, and, for a pad, in its silent_mask
+        | bit for pressure_gate.
         | ------------------------------------------------------------------
         .align  2
         .globl  pad_select_play_gate
 pad_select_play_gate:
         move.l  4(%sp),%a0
         bsr.w   active
-        move.l  %d0,pl_last
         tst.l   %d0
         beq.s   1f
         pea     KEY_FUNC
         jsr     is_key_held
         addq.l  #4,%sp
         tst.l   %d0
-        bne.s   1f                                | FUNC + pad, FUNC + TRIG: play
+        bne.s   1f                                | FUNC + pad: plays
+        moveq   #1,%d0
+        move.l  %d0,pl_last                       | silent: autotrk selects
+        bsr.s   mark
         rts                                       | silent
-1:      link.w  %fp,#-64                          | displaced
+1:      clr.l   pl_last                           | plays: AUTO TRK SWITCH decides
+        moveq   #0,%d0
+        bsr.s   mark
+        link.w  %fp,#-64                          | displaced
         moveq   #127,%d0                          | displaced
         jmp     PLAY_RESUME
 
+        | mark(d0 = 1 silent, 0 plays): a pad's bit in silent_mask, from
+        | play_gate's arguments (4 bytes up past this call's return
+        | address). TRIG keys (src 0) and tracks past 11 leave it alone.
+        | Clobbers d0/d1.
+mark:
+        move.l  12(%sp),%d1                       | src
+        subq.l  #1,%d1
+        bne.s   9f                                | not a pad
+        move.l  16(%sp),%d1                       | the track, the pad's index
+        cmpi.l  #12,%d1
+        bcc.s   9f
+        tst.l   %d0
+        beq.s   1f
+        move.l  silent_mask,%d0
+        bset    %d1,%d0
+        bra.s   2f
+1:      move.l  silent_mask,%d0
+        bclr    %d1,%d0
+2:      move.l  %d0,silent_mask
+9:      rts
+
+        | ------------------------------------------------------------------
+        | pressure_gate: KeyboardView's pad-pressure handler (slot 18,
+        | 0x400c74d4, also reached through its this-adjusting thunk), over
+        | `lea %sp@(-28),%sp; moveml %d2-%d6/%a2-%a3,%sp@`, both re-emitted.
+        | (view, event): a pressure event (type +16 == 2) for a pad whose last
+        | press was silent is answered as handled, as stock answers one, and
+        | goes no further: no aftertouch to the voice, no MIDI pressure. Any
+        | other event, and pressure on a pad that played, go to stock.
+        | ------------------------------------------------------------------
+        .align  2
+        .globl  pad_select_pressure_gate
+pad_select_pressure_gate:
+        move.l  8(%sp),%a0                        | the event
+        moveq   #2,%d0
+        cmp.l   16(%a0),%d0
+        bne.s   1f                                | not pressure
+        move.l  20(%a0),%d1                       | its pad
+        cmpi.l  #12,%d1
+        bcc.s   1f
+        move.l  silent_mask,%d0
+        btst    %d1,%d0
+        beq.s   1f
+        moveq   #1,%d0                            | handled
+        rts
+1:      lea     -28(%sp),%sp                      | displaced
+        movem.l %d2-%d6/%a2-%a3,(%sp)             | displaced
+        jmp     PRESSURE_RESUME
+
         | ------------------------------------------------------------------
         | autotrk(globals): in place of AUTO TRK SWITCH's getter at both
-        | handlers' calls. On while active() - as play_gate found it for this
-        | press - so the handler selects the pressed track as with AUTO TRK
-        | SWITCH checked; otherwise the getter itself, with the same argument.
+        | handlers' calls. On for a silent press - as play_gate found it for
+        | this press - so the handler selects the pressed track as with AUTO
+        | TRK SWITCH checked; for a press that plays (FUNC + pad, LIVE or STEP
+        | REC, the setting off), the getter itself, with the same argument.
         | ------------------------------------------------------------------
         .align  2
         .globl  pad_select_autotrk
@@ -420,6 +480,8 @@ drw_invoke:
 txt_label:
         .asciz  "PAD+TRIG SEL TRK"
 
-        | Written at run time: play_gate's answer for the press in hand.
+        | Written at run time: whether the press in hand is silent, and one
+        | bit per pad (0..11) for a pad whose last press was silent.
         .align  2
 pl_last: .long  0
+silent_mask: .long 0

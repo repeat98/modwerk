@@ -60,6 +60,13 @@
           "target": "pad_select_func_gate"
         },
         {
+          "addr": "0x400c74d4",
+          "len": 8,
+          "stockSha256": "8f96d172c43d6e9d5f2d435bd2b96f60df07aaf653786f343036ee418a71b004",
+          "op": "jmp",
+          "target": "pad_select_pressure_gate"
+        },
+        {
           "addr": "0x400ec184",
           "len": 8,
           "stockSha256": "b9d637ba37819e52358bd00b1e0fdb85a22551d2d24fb88addf774fec4a17a5b",

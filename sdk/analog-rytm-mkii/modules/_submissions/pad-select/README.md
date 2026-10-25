@@ -15,7 +15,7 @@ Unchecked, everything is stock.
 | TRIG 13 (the FX track) | silent | stock |
 | FUNC + pad | plays, at the pad's own velocity | stock |
 | FUNC + TRIG 1-12 | stock: plays nothing | stock |
-| RTRG + pad | selects, silent; FUNC + RTRG + pad plays | stock |
+| RTRG + pad | selects, silent (FUNC + RTRG toggles the click, as stock) | stock |
 
 This holds wherever stock would play a pressed pad or TRIG key: on any page, with a menu open, in
 the SOUND BROWSER, with the FX track selected, and in CHAIN, SONG, FILL, PERF and SCENE modes
@@ -24,9 +24,11 @@ MIDI note and leaves no held note, so its release cuts nothing the sequencer pla
 mode, MUTE mode, TRK + pad, QPER + pad, NO + pad, BANK + TRIG, MIDI notes in, TRIG + YES and the
 sequencer itself are as stock.
 
-Version **0.2.0-experimental** for Analog Rytm MKII OS **1.74**, with core-ar2 0.3. It is
-Iced-Cream's own mod, `pad-select` 0.2 in [rytm2_mods](https://github.com/Iced-Cream/rytm2_mods),
-not a port of someone else's. It has been tested in rytm-emu, **not yet on a unit**, so it waits
+Version **0.3.0-experimental** for Analog Rytm MKII OS **1.74**, with core-ar2 0.3. It is
+Iced-Cream's own mod, `pad-select` in [rytm2_mods](https://github.com/Iced-Cream/rytm2_mods), not
+a port of someone else's. 0.3.0 changes rytm2_mods' 0.2 in two places, found in emulator tests: a
+silent press no longer passes on its pad's aftertouch, and FUNC + pad selects its track only if
+AUTO TRK SWITCH is checked, as stock. It has been tested in rytm-emu, **not yet on a unit**, so it waits
 in `_submissions/`.
 
 ## Controls
@@ -62,7 +64,10 @@ While PAD+TRIG SEL TRK is checked, and only then:
   for stock.
 - **FUNC + pad** plays at the pad's own velocity. Stock's FUNC + pad plays at the TRIG page's VEL;
   with plain presses silent, FUNC + pad is the way to hear a pad, so it keeps the pad's dynamics.
-- **RTRG + pad** selects silently; FUNC + RTRG + pad plays.
+- **RTRG + pad** selects silently. FUNC + RTRG + pad plays, but FUNC + RTRG also toggles the
+  metronome click, as on stock, so it is not a clean way to roll.
+- **Aftertouch** follows the press: a pad whose press was silent sends no aftertouch while held
+  (no MIDI pressure, no modulation); after FUNC + pad it is sent as stock.
 - **SOUND BROWSER**: stock auditions the highlighted sound with a pad press. Checked, the plain
   press is silent; FUNC + pad auditions.
 - **With a menu open**, a pad or TRIG key no longer plays; FUNC + pad does.
@@ -70,8 +75,8 @@ While PAD+TRIG SEL TRK is checked, and only then:
 - **PLAY during LIVE RECORDING** ends live recording on stock while the sequencer keeps playing;
   from then on the pads are silent again.
 - **With FIX (fixed velocity) on**, FUNC + pad plays at the fixed velocity, as stock pads do.
-- **With AUTO TRK SWITCH unchecked**, a press still selects its track while PAD+TRIG SEL TRK
-  applies.
+- **With AUTO TRK SWITCH unchecked**, a silent press still selects its track while PAD+TRIG SEL
+  TRK applies; FUNC + pad, which plays, follows AUTO TRK SWITCH as stock and does not.
 
 Every mode that takes the pads, TRIG keys or FUNC was compared with stock in rytm-emu, from
 matched snapshots: PERF, SCENE, MUTE, CHROMATIC, CHAIN, SONG, FILL, FIX, QPER, TRK, BANK + TRIG,
@@ -86,9 +91,6 @@ Requires core-ar2 0.3 on OS 1.74. Use your own original stock OS 1.74 file.
 - Built for OS 1.74 only.
 - **Tested in rytm-emu only; not yet run on a unit.** The emulator does not prove sound or timing.
 - FUNC + TRIG 1-12 plays nothing, as on stock.
-- **Known issue:** a silently pressed pad still sends aftertouch while it is held. Its pressure
-  goes out as MIDI polyphonic aftertouch (with no note-on before it) and modulates the sound
-  playing on that track, as stock's aftertouch does after its note-on.
 - LIVE RECORDING counts only while it lasts: PLAY during LIVE RECORDING ends it, as on stock,
   and the pads are silent again from then.
 - A GLOBAL slot saved without the setting, or received as Global SysEx, loads unchecked. In
@@ -97,10 +99,10 @@ Requires core-ar2 0.3 on OS 1.74. Use your own original stock OS 1.74 file.
 - Takes the plain pad and TRIG 1-12 press, FUNC + pad and a SEQUENCER CONFIG row
   (`platform.claims`). Another module that changes what those keys play would clash with it.
 
-The module patches five sites, all in stock code no other library module or the core patches:
+The module patches six sites, all in stock code no other library module or the core patches:
 the play routine both key handlers share (`0x400c772e`), the pad and TRIG key handlers' AUTO TRK
-SWITCH calls (`0x400c7a3e`, `0x400c7e90`), the pad handler's FUNC test (`0x400c7950`) and
-the SEQUENCER CONFIG menu's constructor (`0x400ec184`). The core-ar2 0.3 interface has no event
+SWITCH calls (`0x400c7a3e`, `0x400c7e90`), the pad handler's FUNC test (`0x400c7950`), the pad
+pressure handler (`0x400c74d4`) and the SEQUENCER CONFIG menu's constructor (`0x400ec184`). The core-ar2 0.3 interface has no event
 for the pads, the TRIG keys or the SEQUENCER CONFIG menu.
 
 ## Tests and measurements
@@ -113,7 +115,7 @@ while FUNC + pad plays. Unchecked, every screen and every MIDI byte matched stoc
 run. The setting came back after a power-off and cold boot, and each GLOBAL slot keeps its own.
 Every other mode that takes the pads, TRIG keys or FUNC was compared too (see the table in
 TESTING.md), and a silent press left the modelled analog output byte-identical while the
-sequencer played. It has **not** run on a unit. Memory: 764 bytes of the 128 KiB shared mod area, no `.bss`, no
+sequencer played. It has **not** run on a unit. Memory: 876 bytes of the 128 KiB shared mod area, no `.bss`, no
 fast SRAM. Nothing runs in the audio, sequencer or tick paths; each key press costs a few
 compares (static reading, not a measurement).
 
@@ -125,7 +127,8 @@ ports it). irpina: Elekloader and core-ar2, whose mod storage keeps the setting.
 
 Code: [GPL-2.0-only](LICENSE), as rytm2_mods. `src/pad-select.s` is rytm2_mods'
 `pad-select/os1.74/pad-select.s` at local commit `35ea2f0` (branch `claude/pad-select`, not yet
-public), byte for byte, and `include/ar2-1.74.inc` its `include/ar2-1.74.inc`, the same file
+public) with the 0.3.0 changes (`play_gate`, `autotrk`'s comment, the new `mark` and
+`pressure_gate`, and `silent_mask`), and `include/ar2-1.74.inc` its `include/ar2-1.74.inc`, the same file
 Filter Hz carries. The source's header comment still names the OS 1.73 addresses, as upstream's
 does. The include names firmware routines by address only. The upstream README is in
 [upstream/README.md](upstream/README.md); its menu path leaves out CONTROL, and its FUNC + TRIG
@@ -134,7 +137,7 @@ No Elektron firmware is included.
 
 ## Screens and audio
 
-These captures are rytm-emu frames of PS74, the released core-ar2 0.3 and Pad Select on stock OS
+These captures are rytm-emu frames of PS03, the released core-ar2 0.3 and Pad Select on stock OS
 1.74, from one cold boot. See [capture provenance](media/capture.json) for hashes and inputs. The
 module changes which presses sound, not the sound itself, so there is no audio demonstration.
 
