@@ -1,19 +1,26 @@
-# Pad Select — test report
+# Silent Pad+Trig — test report
 
-- Module: `pad-select` 0.4.0-experimental, for Analog Rytm MKII OS 1.74 on core-ar2 0.3.
+Until 0.4.0 this module was Pad Select (`pad-select`) and its row PAD+TRIG SEL TRK, as in
+rytm2_mods; 0.4.1 renames the module, the row (SILENT PAD+TRIG), the source file, the symbols and
+the storage field (`silent_pad_trig_on`), with no change in behaviour. The sections below use the
+new names, also for the earlier builds.
+
+- Module: `silent-pad-trig` 0.4.1-experimental, for Analog Rytm MKII OS 1.74 on core-ar2 0.3.
 - Source: rytm2_mods (`Iced-Cream/rytm2_mods`), `pad-select` 0.2, local commit
   `35ea2f0` on branch `claude/pad-select`, **not yet pushed**, so `source.revision` is left out of
   the manifest until a public commit exists. 0.2.0-experimental here was that file byte for byte
   (`93d95e91…3863`, fingerprint `10bc355d…aecd`). 0.4.0 changes `play_gate`, `active`,
   `func_gate` and `drw_invoke` ([0.4.0](#040-pads-silent-in-live-rec-aftertouch-as-stock-2026-10-25);
-  0.3.0's aftertouch hook and its site are gone again): `src/pad-select.s` `264cade4…5d65b`. `include/ar2-1.74.inc` (`c57431f7…874b`) is rytm2_mods'
+  0.3.0's aftertouch hook and its site are gone again): `src/silent-pad-trig.s` `c96a146c…6c55` (renamed from `pad-select.s` in 0.4.1). `include/ar2-1.74.inc` (`c57431f7…874b`) is rytm2_mods'
   `include/ar2-1.74.inc`, byte for byte. Source fingerprint (`sha256` of
-  `sha256sum include/ar2-1.74.inc src/pad-select.s`): `afe82d39…6dba`.
+  `sha256sum include/ar2-1.74.inc src/silent-pad-trig.s`): `2e521380…8ea5`.
 - Stock OS 1.74: `.syx` `cb0f99d6…e123`, main OS `34cd0c4d…1f3b`, the owner's file.
 - Core: elekloader core-ar2 0.3 (`core-ar2-v0.3`, `core-ar2-0.3.elemod` `6b97dfb3…3e58`, as vendored).
-- Build PS05 (core-ar2 0.3 + 0.4.0, Modwerk's linker, `--version PS05`): `.syx`
-  `40e2f30a8b53d771a3d74027cf5f61389a4b380f94efa423f983f86c7f302865`, main OS `ed7bcf14…3c4e`.
+- Build PS06 (core-ar2 0.3 + 0.4.1, Modwerk's linker, `--version PS06`): `.syx`
+  `08b4c1a724b25904be6724d9cd0a53ba553242b6d090a7ec1e33b94b9bd25d24`, main OS `168fe5cf…fb56`.
   Tested in rytm-emu 2026-10-25. Not run on a unit.
+- Build PS05 (0.4.0): `.syx` `40e2f30a…2865`, main OS `ed7bcf14…3c4e`. Ran on an Analog Rytm MKII
+  on 2026-10-25 ([Hardware](#hardware)).
 - Build PS04 (0.3.0 with the review fixes): `.syx` `5c95d386…566f`, main OS `6655ec5e…15a8`.
   Ran on an Analog Rytm MKII on 2026-10-25 ([Hardware](#hardware)).
 - Build PS03 (0.3.0 before the review fixes): `.syx` `f0ac2210…7a85`, main OS `2884ff5a…5879`.
@@ -28,11 +35,11 @@ those bytes; all are rytm2_mods' and their stock bytes match its `mod.json`. 0.3
 
 | Address | Length | Op | Target | What |
 | --- | --- | --- | --- | --- |
-| `0x400c772e` | 6 | jmp | `pad_select_play_gate` | the play routine both key handlers call |
-| `0x400c7a3e` | 6 | jsr | `pad_select_autotrk` | the pad handler's AUTO TRK SWITCH call |
-| `0x400c7e90` | 6 | jsr | `pad_select_autotrk` | the TRIG key handler's AUTO TRK SWITCH call |
-| `0x400c7950` | 6 | jmp | `pad_select_func_gate` | the pad handler's FUNC test |
-| `0x400ec184` | 8 | jmp | `pad_select_menu_add` | the SEQUENCER CONFIG menu's constructor (jmp + nop) |
+| `0x400c772e` | 6 | jmp | `silent_pad_trig_play_gate` | the play routine both key handlers call |
+| `0x400c7a3e` | 6 | jsr | `silent_pad_trig_autotrk` | the pad handler's AUTO TRK SWITCH call |
+| `0x400c7e90` | 6 | jsr | `silent_pad_trig_autotrk` | the TRIG key handler's AUTO TRK SWITCH call |
+| `0x400c7950` | 6 | jmp | `silent_pad_trig_func_gate` | the pad handler's FUNC test |
+| `0x400ec184` | 8 | jmp | `silent_pad_trig_menu_add` | the SEQUENCER CONFIG menu's constructor (jmp + nop) |
 
 rytm2_mods declares the two AUTO TRK SWITCH sites as `keep2`. The stock instruction there is an
 absolute `jsr`, so `keep2` and `jsr` write the same six bytes; this folder uses `jsr`, which
@@ -43,8 +50,8 @@ Modwerk's source-only export accepts (it refuses `keep2`).
 ```sh
 node scripts/machine-modules.mjs --drafts
 MODWERK_CROSS=m68k-elf- node scripts/build-elemod-packages.mjs --output OUT \
-  --source-commit <commit> --drafts --module analog-rytm-mkii:pad-select
-node scripts/package-elemod-recipe.mjs OUT/analog-rytm-mkii/pad-select/1.74.json pad.elemod
+  --source-commit <commit> --drafts --module analog-rytm-mkii:silent-pad-trig
+node scripts/package-elemod-recipe.mjs OUT/analog-rytm-mkii/silent-pad-trig/1.74.json pad.elemod
 ```
 
 Compiler: Homebrew `m68k-elf` binutils/GCC on macOS, Node 24.21.0. Modwerk's pinned Docker
@@ -56,14 +63,30 @@ owner's stock OS 1.74 and linked with Modwerk's linker (`linkMods`, no lockfile)
 
 | Selection | Result | Main OS sha256 |
 | --- | --- | --- |
-| core-ar2 0.3 + Pad Select | links; `pad_select_on` global bit 0 | `7ea05528…033f` |
-| core-ar2 0.3 + Filter Hz 1.2.0 + Loop Sync 0.2.0-experimental + Pad Select | links, no overlaps; `pad_select_on` global bit 0, beside Loop Sync's sound and project fields | `970dad34…06e5` |
+| core-ar2 0.3 + Silent Pad+Trig | links; `silent_pad_trig_on` global bit 0 | `7ea05528…033f` |
+| core-ar2 0.3 + Filter Hz 1.2.0 + Loop Sync 0.2.0-experimental + Silent Pad+Trig | links, no overlaps; `silent_pad_trig_on` global bit 0, beside Loop Sync's sound and project fields | `970dad34…06e5` |
 
 The source-only export (`pad.elemod`, not committed) linked with the core gives the same main
 OS as the local materialisation, `7ea05528…033f`. The builds stayed on the owner's computer.
 
 Not compared byte for byte with an elekloader build on core-ar2 0.3: the elekloader build kept
 in rytm2_mods is on core-ar2 0.4, and no elekloader checkout was available here.
+
+## 0.4.1: renamed (2026-10-25)
+
+At the tester's request the module becomes Silent Pad+Trig (`silent-pad-trig`) and its row
+SILENT PAD+TRIG, default unchecked as before; the folder, source file, symbols and storage field
+(`silent_pad_trig_on`) follow. Behaviour is unchanged. A unit that ran an earlier build loses the
+setting once (the field has a new name) and starts unchecked.
+
+Build: 780-byte `.run` (the label is a character shorter), 5 sites, 6 relocations;
+`silent_pad_trig_on` at global bit 0; links with core-ar2 0.3 alone (`168fe5cf…fb56`) and beside
+Filter Hz and Loop Sync (`54174839…d26d`); the source-only export links the same.
+
+PS06 in rytm-emu: every group (the 20 mode groups, both AUTO TRK SWITCH groups, aftertouch, LIVE
+REC) gave the same counts, MIDI out and screens as PS05, except the SEQUENCER CONFIG screens,
+which show the new label; B6 (unchecked) matched stock. On a fresh card: checked, power-off, cold
+boot: still checked, and SD silent. The capture frames changed only where the row shows.
 
 ## 0.4.0: pads silent in LIVE REC, aftertouch as stock (2026-10-25)
 
@@ -95,16 +118,16 @@ MIDI out and screens on PS05 as on PS04, except the LIVE REC pad press in the NO
 which is now silent. B5 matched stock in every group, apart from the SEQUENCER CONFIG screens with
 the row. The 26 frames of the capture run are byte-identical to PS04's.
 
-Release notes for publication (`src/community/module-changelogs/analog-rytm-mkii-pad-select.json`
+Release notes for publication (`src/community/module-changelogs/analog-rytm-mkii-silent-pad-trig.json`
 cannot exist while the module is in `_submissions/`: the check refuses an ID outside the library):
 
 ```json
-[{ "version": "0.4.0-experimental", "date": "2026-10-25", "changes": [
-  "New module for Analog Rytm MKII OS 1.74 on core-ar2 0.3: with PAD+TRIG SEL TRK checked, a pad press selects its track silently, even while live recording.",
+[{ "version": "0.4.1-experimental", "date": "2026-10-25", "changes": [
+  "New module for Analog Rytm MKII OS 1.74 on core-ar2 0.3: with SILENT PAD+TRIG checked, a pad press selects its track silently, even while live recording.",
   "FUNC + pad plays the track at the pad's own velocity, and records it in live recording.",
   "Holding a pad down still sends aftertouch, so it can modulate a sound without playing it.",
   "TRIG keys select silently too, except in live and step recording.",
-  "Known issue: 0.4.0 is tested in an emulator; its predecessor 0.3.0 ran on a unit."
+  "Known issue: MIDI out with the setting on is not yet tested on a unit."
 ] }]
 ```
 
@@ -178,16 +201,16 @@ Each run cold-boots, or resumes a snapshot of a cold boot, and clears the calibr
 four held NO presses. Behaviour is read from three counters (`--count`, visits to a PC) and from
 MIDI out (`--midi-out`):
 
-- `0x400c772e`: the play routine both key handlers call (Pad Select's play gate sits here);
+- `0x400c772e`: the play routine both key handlers call (Silent Pad+Trig's play gate sits here);
 - `0x400c6f18`: the routine past the gate that triggers the voice and sends the MIDI note;
 - `0x40083f40`: the shared voice trigger (also reached by CHRO pads, MIDI in and TRIG + YES).
 
 A silent press is one that reaches the play routine but neither of the other two, and sends no
 MIDI. The analog voices are modelled only approximately, so none of this is a listening test.
 
-| Flow | PS74, PAD+TRIG SEL TRK checked | Stock 1.74 |
+| Flow | PS74, SILENT PAD+TRIG checked | Stock 1.74 |
 | --- | --- | --- |
-| Menu | GLOBAL > CONTROL > SEQUENCER CONFIG shows PAD+TRIG SEL TRK after AUTO TRK SWITCH, unchecked; YES checks, LEFT unchecks, RIGHT checks | no row |
+| Menu | GLOBAL > CONTROL > SEQUENCER CONFIG shows SILENT PAD+TRIG after AUTO TRK SWITCH, unchecked; YES checks, LEFT unchecks, RIGHT checks | no row |
 | Stopped: pad SD | silent, no MIDI; SD track selected | plays, note velocity 127 |
 | Stopped: FUNC + SD | plays, note velocity 127 (the pad's) | plays, velocity 100 (the TRIG page's VEL) |
 | Stopped: TRIG 5 | silent, no MIDI; track 5 (BT) selected | plays, velocity 100 |
@@ -282,7 +305,7 @@ Captures: the four PNGs in `media/` come from one cold boot whose command line i
 The tester flashed PS04 (`.syx` `5c95d386…566f`) with Transfer; the unit booted and showed PS04.
 Reported results, in the tester's words summarised:
 
-- With PAD+TRIG SEL TRK checked, the setting works as they expected: plain pad presses select
+- With SILENT PAD+TRIG checked, the setting works as they expected: plain pad presses select
   without sound, and FUNC + pad plays.
 - LIVE REC: pads still play (0.3.0's design).
 - Aftertouch with an AFTERTOUCH destination set: after a silent tap held down, the destination
@@ -290,25 +313,30 @@ Reported results, in the tester's words summarised:
   continuously (0.3.0's gate). The tester wants aftertouch untouched by the setting, so a held pad
   can modulate the sound without triggering it.
 - Tapping a pad without FUNC does not cut a sequenced note.
-- Power cycle: PS04 still loaded, PAD+TRIG SEL TRK still checked in GLOBAL slot 1.
-- GLOBAL slot 2: PAD+TRIG SEL TRK unchecked, AUTO TRK SWITCH checked.
+- Power cycle: PS04 still loaded, SILENT PAD+TRIG still checked in GLOBAL slot 1.
+- GLOBAL slot 2: SILENT PAD+TRIG unchecked, AUTO TRK SWITCH checked.
 - MIDI out: not tested.
 
 Not reported: GRID and STEP REC, CHROMATIC, MUTE, PERF, SCENE, the sound browser, AUTO TRK SWITCH
 off, a long run.
 
+### PS05 on an Analog Rytm MKII (2026-10-25), as reported
+
+The tester flashed PS05 (0.4.0, `.syx` `40e2f30a…2865`). Reported:
+
+- LIVE REC: plain pad taps silent and not recorded, FUNC + pad plays and records, TRIG keys play
+  and record: passes as expected.
+- Aftertouch: a silently tapped pad held down modulates its AFTERTOUCH destination continuously,
+  with no note: passes as expected.
+- GRID REC works normally. CHROMATIC mode works normally. MUTE mode works normally. PERF and
+  SCENE "still seem fine".
+- MIDI out: not tested (the tester expects no difference).
+
 ### Still to do
 
-On PS05 (or a later build that names its hash), the 0.4.0 changes first:
+Not yet reported on any build:
 
-1. LIVE REC: plain pad taps silent and recorded nowhere; FUNC + pad plays and records; TRIG keys
-   play and record; NO + pad erases.
-2. Aftertouch with an AFTERTOUCH destination: tap a pad silently and keep pressing; the sound is
-   modulated continuously, and no note sounds.
-
-Then the rest, not yet reported on any build:
-
-1. GLOBAL > CONTROL > SEQUENCER CONFIG: PAD+TRIG SEL TRK after AUTO TRK SWITCH; YES and
+1. GLOBAL > CONTROL > SEQUENCER CONFIG: SILENT PAD+TRIG after AUTO TRK SWITCH; YES and
    LEFT/RIGHT toggle it. Save, power-cycle, reload: kept. Another GLOBAL slot keeps its own.
 2. Stopped and playing: pads and TRIG 1-12 select silently; FUNC + pad plays, soft and hard,
    at the pad's velocity. Holding a pad on a sounding track does not cut its note on release.

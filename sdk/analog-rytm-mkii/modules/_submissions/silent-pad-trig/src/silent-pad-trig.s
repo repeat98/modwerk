@@ -1,11 +1,13 @@
         | SPDX-License-Identifier: GPL-2.0-only
-        | pad-select - PAD+TRIG SEL TRK: a pad press selects its track, silent,
+        | silent-pad-trig - SILENT PAD+TRIG: a pad press selects its track, silent,
         | and FUNC + pad plays it, in every state but STEP RECORDING; TRIG keys
         | 1-12 do the same outside LIVE and STEP RECORDING. Aftertouch is
         | untouched, so a held pad modulates its track without sounding.
         |
+        | rytm2_mods' pad-select (PAD+TRIG SEL TRK), renamed in Modwerk 0.4.1.
+        |
         | A new mod, not a port. The setting is core-ar2 0.3's mod storage
-        | field pad_select_on (global scope, one bit per globals slot), saved
+        | field silent_pad_trig_on (global scope, one bit per globals slot), saved
         | with the project's globals; a slot saved without it loads unchecked.
         | The slot lookup follows voice-dac 1.2's DAC SUM (MrScruff's mod, the
         | elemod port's dac_gslot).
@@ -18,7 +20,7 @@
         | calls it: CHRO pads (ChromPadsView), TRIG + YES, MIDI in and the
         | sequencer reach the voice trigger by their own paths.
         |
-        | With PAD+TRIG SEL TRK checked and the view's sequencer state not in
+        | With SILENT PAD+TRIG checked and the view's sequencer state not in
         | STEP REC, nor in LIVE REC for a TRIG key (active()):
         |   play_gate   0x400c76c2  the play routine returns at once unless
         |                           FUNC is held: no voice, no MIDI, no held note
@@ -48,7 +50,7 @@
         | core_store_set(field, item, index, value) clobber d0-d1/a0-a1. A
         | global field's index is the globals slot, 0..3: the live records sit
         | at GLOBAL_LIVE + 228 k (core-ar2's GLOBAL_LIVE, as voice-dac has it).
-        .extern core_store_get, core_store_set, pad_select_on
+        .extern core_store_get, core_store_set, silent_pad_trig_on
         .equ    GLOBAL_LIVE,    0x413192ff
         .equ    GLOBAL_STRIDE,  228
         .equ    PROJ_GLOBALS,   236               | the project's ProjectGlobals
@@ -85,8 +87,8 @@
         | nothing branching in between.
         | ------------------------------------------------------------------
         .align  2
-        .globl  pad_select_play_gate
-pad_select_play_gate:
+        .globl  silent_pad_trig_play_gate
+silent_pad_trig_play_gate:
         move.l  4(%sp),%a0
         move.l  8(%sp),%d1                        | src: a pad stays gated in LIVE REC
         bsr.w   active
@@ -115,8 +117,8 @@ pad_select_play_gate:
         | same argument.
         | ------------------------------------------------------------------
         .align  2
-        .globl  pad_select_autotrk
-pad_select_autotrk:
+        .globl  silent_pad_trig_autotrk
+silent_pad_trig_autotrk:
         tst.l   pl_last
         beq.s   1f
         moveq   #1,%d0
@@ -131,8 +133,8 @@ pad_select_autotrk:
         | a2 is the view; d1/a0/a1 are not read before they are written.
         | ------------------------------------------------------------------
         .align  2
-        .globl  pad_select_func_gate
-pad_select_func_gate:
+        .globl  silent_pad_trig_func_gate
+silent_pad_trig_func_gate:
         pea     KEY_FUNC                          | displaced
         jsr     (%a3)                             | displaced
         tst.l   %d0
@@ -145,7 +147,7 @@ pad_select_func_gate:
 
         | ------------------------------------------------------------------
         | active(a0 = KeyboardView, d1 = 1 a pad, 0 a TRIG key) -> d0 = 1
-        | when PAD+TRIG SEL TRK is checked and the sequencer is not in STEP
+        | when SILENT PAD+TRIG is checked and the sequencer is not in STEP
         | REC, and, for a TRIG key, not in LIVE REC either; else 0. A pad
         | stays gated in LIVE REC: only FUNC + pad plays and records there.
         | Clobbers d1/a0/a1.
@@ -179,7 +181,7 @@ active:
         rts
 
         | ------------------------------------------------------------------
-        | The flag: the active globals slot's pad_select_on.
+        | The flag: the active globals slot's silent_pad_trig_on.
         |   flag_get() -> d0 = 0 or 1; 0 while the project is being built
         |                   (boot), or when the active record is none of the
         |                   four slots
@@ -202,7 +204,7 @@ flag_get:
         bmi.s   8f
         move.l  %d0,-(%sp)                        | index: the slot
         clr.l   -(%sp)                            | item, unused
-        move.l  #pad_select_on,-(%sp)
+        move.l  #silent_pad_trig_on,-(%sp)
         jsr     core_store_get
         lea     12(%sp),%sp
         rts
@@ -222,7 +224,7 @@ flag_set:
         move.l  %d2,-(%sp)                        | value
         move.l  %d0,-(%sp)                        | index: the slot
         clr.l   -(%sp)                            | item, unused
-        move.l  #pad_select_on,-(%sp)
+        move.l  #silent_pad_trig_on,-(%sp)
         jsr     core_store_set
         lea     16(%sp),%sp
         jsr     project_singleton                 | the globals changed, so the
@@ -276,8 +278,8 @@ rec_active:
         | the registers used here live in a frame of their own below.
         | ------------------------------------------------------------------
         .align  2
-        .globl  pad_select_menu_add
-pad_select_menu_add:
+        .globl  silent_pad_trig_menu_add
+silent_pad_trig_menu_add:
         lea     -80(%sp),%sp
         movem.l %d2-%d4/%a2,64(%sp)
         move.l  %sp,%a0
@@ -436,7 +438,7 @@ drw_invoke:
         rts
 
 txt_label:
-        .asciz  "PAD+TRIG SEL TRK"
+        .asciz  "SILENT PAD+TRIG"
 
         | Written at run time: whether the press in hand is silent.
         .align  2

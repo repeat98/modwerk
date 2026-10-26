@@ -1,8 +1,8 @@
 {
   "schemaVersion": 3,
-  "id": "pad-select",
-  "name": "Pad Select",
-  "version": "0.4.0-experimental",
+  "id": "silent-pad-trig",
+  "name": "Silent Pad+Trig",
+  "version": "0.4.1-experimental",
   "machine": "analog-rytm-mkii",
   "category": "system",
   "exclusive": false,
@@ -18,10 +18,10 @@
     "Iced-Cream"
   ],
   "presentation": {
-    "label": "PAD SELECT",
+    "label": "SILENT PAD+TRIG",
     "family": "Workflow",
-    "summary": "With PAD+TRIG SEL TRK checked, a pad press selects its track silently, even in LIVE RECORDING; FUNC + pad plays (and records), and holding a pad down still sends aftertouch.",
-    "overview": "Pad Select adds PAD+TRIG SEL TRK to GLOBAL > CONTROL > SEQUENCER CONFIG, a checkbox after AUTO TRK SWITCH. Checked, a pad press selects its track and stays silent, with no MIDI note and nothing recorded, in every state but STEP RECORDING. Hold FUNC and press the pad to play it at the pad's own velocity; in LIVE RECORDING that also records. TRIG keys 1-12 select silently too, but play and record as stock in LIVE and STEP RECORDING. Aftertouch is untouched, so a held pad modulates its track without sounding it. Unchecked, everything is stock. The setting is kept per GLOBAL slot and saved with the project.",
+    "summary": "With SILENT PAD+TRIG checked, a pad press selects its track silently, even in LIVE RECORDING; FUNC + pad plays (and records), and holding a pad down still sends aftertouch.",
+    "overview": "Silent Pad+Trig adds SILENT PAD+TRIG to GLOBAL > CONTROL > SEQUENCER CONFIG, a checkbox after AUTO TRK SWITCH. Checked, a pad press selects its track and stays silent, with no MIDI note and nothing recorded, in every state but STEP RECORDING. Hold FUNC and press the pad to play it at the pad's own velocity; in LIVE RECORDING that also records. TRIG keys 1-12 select silently too, but play and record as stock in LIVE and STEP RECORDING. Aftertouch is untouched, so a held pad modulates its track without sounding it. Unchecked, everything is stock. The setting is kept per GLOBAL slot and saved with the project.",
     "highlights": [
       "Tap pads to pick tracks without hearing them, even while live recording.",
       "FUNC + pad plays and records, at the pad's own velocity.",
@@ -29,16 +29,16 @@
       "One checkbox per GLOBAL slot, kept through a power cycle; unchecked is stock."
     ],
     "usage": [
-      "Use a build containing Pad Select. Open the GLOBAL menu, then CONTROL > SEQUENCER CONFIG, and check PAD+TRIG SEL TRK, just after AUTO TRK SWITCH, with YES or LEFT/RIGHT.",
+      "Use a build containing Silent Pad+Trig. Open the GLOBAL menu, then CONTROL > SEQUENCER CONFIG, and check SILENT PAD+TRIG, just after AUTO TRK SWITCH, with YES or LEFT/RIGHT.",
       "With the sequencer stopped, tap the SD pad: it makes no sound and the SD track is selected. Hold FUNC and tap SD to hear it at the pad's own velocity. TRIG 5 selects track 5 silently.",
-      "Press RECORD + PLAY for LIVE RECORDING: plain pad taps stay silent and record nothing; hold FUNC and tap a pad to play and record it. Uncheck PAD+TRIG SEL TRK to get stock behaviour everywhere."
+      "Press RECORD + PLAY for LIVE RECORDING: plain pad taps stay silent and record nothing; hold FUNC and tap a pad to play and record it. Uncheck SILENT PAD+TRIG to get stock behaviour everywhere."
     ]
   },
   "access": {
-    "location": "GLOBAL > CONTROL > SEQUENCER CONFIG: PAD+TRIG SEL TRK, after AUTO TRK SWITCH.",
+    "location": "GLOBAL > CONTROL > SEQUENCER CONFIG: SILENT PAD+TRIG, after AUTO TRK SWITCH.",
     "steps": [
       "Open the GLOBAL menu and choose CONTROL, then SEQUENCER CONFIG.",
-      "Move to PAD+TRIG SEL TRK, after AUTO TRK SWITCH, and press YES (or RIGHT) to check it."
+      "Move to SILENT PAD+TRIG, after AUTO TRK SWITCH, and press YES (or RIGHT) to check it."
     ],
     "screenshots": [
       "media/control-menu.png",
@@ -47,7 +47,7 @@
   },
   "controls": [
     {
-      "name": "PAD+TRIG SEL TRK",
+      "name": "SILENT PAD+TRIG",
       "default": 0,
       "doc": "Checkbox in GLOBAL > CONTROL > SEQUENCER CONFIG, after AUTO TRK SWITCH. YES toggles it, RIGHT checks, LEFT unchecks. Checked: pads select their track silently outside STEP RECORDING, TRIG keys 1-12 outside LIVE and STEP RECORDING. Kept per GLOBAL slot.",
       "labels": [
@@ -58,7 +58,7 @@
     {
       "name": "FUNC + pad",
       "default": null,
-      "doc": "While PAD+TRIG SEL TRK applies, plays the pad's track at the strike's velocity, or the fixed velocity with FIX on (stock FUNC + pad uses the TRIG page's VEL); records it in LIVE RECORDING; selects the track only if AUTO TRK SWITCH is checked, as stock.",
+      "doc": "While SILENT PAD+TRIG applies, plays the pad's track at the strike's velocity, or the fixed velocity with FIX on (stock FUNC + pad uses the TRIG page's VEL); records it in LIVE RECORDING; selects the track only if AUTO TRK SWITCH is checked, as stock.",
       "labels": null
     },
     {
@@ -97,7 +97,7 @@
     ]
   },
   "resources": {
-    "memoryBytes": 784,
+    "memoryBytes": 780,
     "fastBytes": 0,
     "load": {
       "display": "None in the audio path: a few compares per pad or TRIG key press",
@@ -107,8 +107,8 @@
   },
   "evidence": {
     "tier": "emulator",
-    "moduleVersion": "0.4.0-experimental",
-    "sourceSha256": "afe82d39297320dc66d1e411b86892f92183c75c8eb775e22406dcff8f406dba",
+    "moduleVersion": "0.4.1-experimental",
+    "sourceSha256": "2e5213805b4afb3dafa1134853774d9dfc14d5d570306f0b8c0007e6c2df8ea5",
     "reports": [
       "TESTING.md"
     ],
@@ -117,21 +117,21 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Emulator (rytm-emu c5732f0, OS 1.74, build PS05), against stock from matched snapshots: checked, pads select silently outside STEP REC (LIVE REC included, recording nothing) and TRIG keys outside LIVE and STEP REC; FUNC + pad plays at the strike's velocity, records in LIVE REC and follows AUTO TRK SWITCH; aftertouch as stock; unchecked matches stock exactly. 0.3.0 (PS04) ran on a unit: silent pads, FUNC + pad, power cycle and GLOBAL slots as reported.",
+    "summary": "Emulator (rytm-emu c5732f0, OS 1.74, build PS06), against stock from matched snapshots: checked, pads select silently outside STEP REC (LIVE REC included, recording nothing) and TRIG keys outside LIVE and STEP REC; FUNC + pad plays at the strike's velocity, records in LIVE REC and follows AUTO TRK SWITCH; aftertouch as stock; unchecked matches stock exactly. 0.3.0 (PS04) ran on a unit: silent pads, FUNC + pad, power cycle and GLOBAL slots as reported.",
     "documentation": {
       "tutorial": {
         "title": "Quick tutorial",
         "steps": [
-          "Use a build containing Pad Select. Open the GLOBAL menu, then CONTROL > SEQUENCER CONFIG, and check PAD+TRIG SEL TRK, just after AUTO TRK SWITCH, with YES or LEFT/RIGHT.",
+          "Use a build containing Silent Pad+Trig. Open the GLOBAL menu, then CONTROL > SEQUENCER CONFIG, and check SILENT PAD+TRIG, just after AUTO TRK SWITCH, with YES or LEFT/RIGHT.",
           "With the sequencer stopped, tap the SD pad: it makes no sound and the SD track is selected. Hold FUNC and tap SD to hear it at the pad's own velocity. TRIG 5 selects track 5 silently.",
-          "Press RECORD + PLAY for LIVE RECORDING: plain pad taps stay silent and record nothing; hold FUNC and tap a pad to play and record it. Uncheck PAD+TRIG SEL TRK to get stock behaviour everywhere."
+          "Press RECORD + PLAY for LIVE RECORDING: plain pad taps stay silent and record nothing; hold FUNC and tap a pad to play and record it. Uncheck SILENT PAD+TRIG to get stock behaviour everywhere."
         ]
       },
       "screenshots": [
         "media/control-menu.png",
         "media/seq-config.png",
         "media/seq-config-checked.png",
-        "media/pad-selects.png"
+        "media/silent-press.png"
       ],
       "captureRecord": "media/capture.json"
     }
@@ -145,7 +145,7 @@
     {
       "path": "media/thumbnail.svg",
       "kind": "thumbnail",
-      "caption": "Pad Select",
+      "caption": "Silent Pad+Trig",
       "alt": "Original illustration of twelve pads: a tapped pad selects its track silently, and FUNC + pad plays it.",
       "credit": "Iced-Cream",
       "license": "GPL-2.0-only",
@@ -162,45 +162,45 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "0.4.0-experimental",
-        "imageSha256": "40e2f30a8b53d771a3d74027cf5f61389a4b380f94efa423f983f86c7f302865",
-        "setup": "Headless rytm-emu c5732f0 (dtboot) cold-booting PS05: the released core-ar2 0.3 and this folder's Pad Select, linked by Modwerk on the owner's stock OS 1.74. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "moduleVersion": "0.4.1-experimental",
+        "imageSha256": "08b4c1a724b25904be6724d9cd0a53ba553242b6d090a7ec1e33b94b9bd25d24",
+        "setup": "Headless rytm-emu c5732f0 (dtboot) cold-booting PS06: the released core-ar2 0.3 and this folder's Silent Pad+Trig, linked by Modwerk on the owner's stock OS 1.74. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
       "path": "media/seq-config.png",
       "kind": "screenshot",
-      "caption": "SEQUENCER CONFIG gains PAD+TRIG SEL TRK just after AUTO TRK SWITCH, unchecked by default.",
-      "alt": "SEQUENCER CONFIG list with the PAD+TRIG SEL TRK row highlighted and its box empty.",
+      "caption": "SEQUENCER CONFIG gains SILENT PAD+TRIG just after AUTO TRK SWITCH, unchecked by default.",
+      "alt": "SEQUENCER CONFIG list with the SILENT PAD+TRIG row highlighted and its box empty.",
       "credit": "Iced-Cream documentation capture; Elektron interface",
       "license": "LicenseRef-Rytm-UI-Documentation",
       "source": "original",
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "0.4.0-experimental",
-        "imageSha256": "40e2f30a8b53d771a3d74027cf5f61389a4b380f94efa423f983f86c7f302865",
-        "setup": "Headless rytm-emu c5732f0 (dtboot) cold-booting PS05: the released core-ar2 0.3 and this folder's Pad Select, linked by Modwerk on the owner's stock OS 1.74. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "moduleVersion": "0.4.1-experimental",
+        "imageSha256": "08b4c1a724b25904be6724d9cd0a53ba553242b6d090a7ec1e33b94b9bd25d24",
+        "setup": "Headless rytm-emu c5732f0 (dtboot) cold-booting PS06: the released core-ar2 0.3 and this folder's Silent Pad+Trig, linked by Modwerk on the owner's stock OS 1.74. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
       "path": "media/seq-config-checked.png",
       "kind": "screenshot",
       "caption": "Press YES (or RIGHT) to check it. The GLOBAL slot keeps it.",
-      "alt": "SEQUENCER CONFIG list with the PAD+TRIG SEL TRK box checked.",
+      "alt": "SEQUENCER CONFIG list with the SILENT PAD+TRIG box checked.",
       "credit": "Iced-Cream documentation capture; Elektron interface",
       "license": "LicenseRef-Rytm-UI-Documentation",
       "source": "original",
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "0.4.0-experimental",
-        "imageSha256": "40e2f30a8b53d771a3d74027cf5f61389a4b380f94efa423f983f86c7f302865",
-        "setup": "Headless rytm-emu c5732f0 (dtboot) cold-booting PS05: the released core-ar2 0.3 and this folder's Pad Select, linked by Modwerk on the owner's stock OS 1.74. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "moduleVersion": "0.4.1-experimental",
+        "imageSha256": "08b4c1a724b25904be6724d9cd0a53ba553242b6d090a7ec1e33b94b9bd25d24",
+        "setup": "Headless rytm-emu c5732f0 (dtboot) cold-booting PS06: the released core-ar2 0.3 and this folder's Silent Pad+Trig, linked by Modwerk on the owner's stock OS 1.74. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
-      "path": "media/pad-selects.png",
+      "path": "media/silent-press.png",
       "kind": "screenshot",
       "caption": "Back on the main screen, tapping the SD pad selects the SD track without a sound; FUNC + SD plays it.",
       "alt": "SD track's SRC page with SNARE as the title, shown after a silent SD pad press.",
@@ -210,9 +210,9 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "0.4.0-experimental",
-        "imageSha256": "40e2f30a8b53d771a3d74027cf5f61389a4b380f94efa423f983f86c7f302865",
-        "setup": "Headless rytm-emu c5732f0 (dtboot) cold-booting PS05: the released core-ar2 0.3 and this folder's Pad Select, linked by Modwerk on the owner's stock OS 1.74. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "moduleVersion": "0.4.1-experimental",
+        "imageSha256": "08b4c1a724b25904be6724d9cd0a53ba553242b6d090a7ec1e33b94b9bd25d24",
+        "setup": "Headless rytm-emu c5732f0 (dtboot) cold-booting PS06: the released core-ar2 0.3 and this folder's Silent Pad+Trig, linked by Modwerk on the owner's stock OS 1.74. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     }
   ]

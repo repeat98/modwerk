@@ -1,8 +1,8 @@
-# Pad Select
+# Silent Pad+Trig
 
 ## Overview
 
-Pad Select adds **PAD+TRIG SEL TRK** to GLOBAL > CONTROL > SEQUENCER CONFIG, a checkbox just
+Silent Pad+Trig adds **SILENT PAD+TRIG** to GLOBAL > CONTROL > SEQUENCER CONFIG, a checkbox just
 after AUTO TRK SWITCH. Checked, a pad press selects its track and stays silent, with no MIDI note
 out and nothing recorded, in every state but STEP RECORDING, LIVE RECORDING included. Hold FUNC
 and press the pad to play it, at the pad's own velocity; in LIVE RECORDING FUNC + pad plays and
@@ -29,7 +29,8 @@ sequencer itself are as stock.
 
 Version **0.4.0-experimental** for Analog Rytm MKII OS **1.74**, with core-ar2 0.3. It is
 Iced-Cream's own mod, `pad-select` in [rytm2_mods](https://github.com/Iced-Cream/rytm2_mods), not
-a port of someone else's. 0.4.0 differs from rytm2_mods' 0.2 in three ways, from emulator tests
+a port of someone else's; there the module is Pad Select and the row PAD+TRIG SEL TRK, renamed
+here in 0.4.1. 0.4.0 differs from rytm2_mods' 0.2 in three ways, from emulator tests
 and a first test on a unit: pads stay silent in LIVE RECORDING too (FUNC + pad plays and records),
 FUNC + pad selects its track only if AUTO TRK SWITCH is checked, as stock, and the checkbox is
 drawn through a call of its own. Its predecessor 0.3.0 ran on a unit; 0.4.0 has run in rytm-emu
@@ -39,11 +40,11 @@ only, so it waits in `_submissions/`.
 
 | Control | Action |
 | --- | --- |
-| PAD+TRIG SEL TRK | Checkbox in GLOBAL > CONTROL > SEQUENCER CONFIG, after AUTO TRK SWITCH. YES toggles it, RIGHT checks, LEFT unchecks. Unchecked by default. |
+| SILENT PAD+TRIG | Checkbox in GLOBAL > CONTROL > SEQUENCER CONFIG, after AUTO TRK SWITCH. YES toggles it, RIGHT checks, LEFT unchecks. Unchecked by default. |
 | FUNC + pad | While the setting applies, plays the pad's track at the pad's own velocity (the fixed velocity with FIX on); in LIVE RECORDING it also records. |
 | Pad held down | Aftertouch, as stock: modulates the track's AFTERTOUCH destinations, also after a silent press. |
 
-The setting is kept per GLOBAL slot, in core-ar2's mod storage (one bit, `pad_select_on`), and is
+The setting is kept per GLOBAL slot, in core-ar2's mod storage (one bit, `silent_pad_trig_on`), and is
 saved with the project's globals. No knob, page or effect slot is added.
 
 ## Usage
@@ -55,13 +56,13 @@ on a sound, tap its pad and keep pressing to modulate the track without playing 
 
 ### Quick tutorial
 
-1. Use a build containing Pad Select. Open the GLOBAL menu, then CONTROL > SEQUENCER CONFIG, and check PAD+TRIG SEL TRK, just after AUTO TRK SWITCH, with YES or LEFT/RIGHT.
+1. Use a build containing Silent Pad+Trig. Open the GLOBAL menu, then CONTROL > SEQUENCER CONFIG, and check SILENT PAD+TRIG, just after AUTO TRK SWITCH, with YES or LEFT/RIGHT.
 2. With the sequencer stopped, tap the SD pad: it makes no sound and the SD track is selected. Hold FUNC and tap SD to hear it at the pad's own velocity. TRIG 5 selects track 5 silently.
-3. Press RECORD + PLAY for LIVE RECORDING: plain pad taps stay silent and record nothing; hold FUNC and tap a pad to play and record it. Uncheck PAD+TRIG SEL TRK to get stock behaviour everywhere.
+3. Press RECORD + PLAY for LIVE RECORDING: plain pad taps stay silent and record nothing; hold FUNC and tap a pad to play and record it. Uncheck SILENT PAD+TRIG to get stock behaviour everywhere.
 
 ### Changes to stock flows
 
-While PAD+TRIG SEL TRK is checked, and only then:
+While SILENT PAD+TRIG is checked, and only then:
 
 - **Pads, in every state but STEP RECORDING**, select silently instead of playing, and in LIVE
   RECORDING record nothing. This is the module's purpose: picking a track to edit, or modulating it
@@ -82,8 +83,8 @@ While PAD+TRIG SEL TRK is checked, and only then:
 - **With a menu open**, a pad or TRIG key no longer plays; FUNC + pad does.
 - **TRIG 13** plays the FX track on stock; checked, it is silent outside LIVE and STEP RECORDING.
 - **With FIX (fixed velocity) on**, FUNC + pad plays at the fixed velocity, as stock pads do.
-- **With AUTO TRK SWITCH unchecked**, a silent press still selects its track while PAD+TRIG SEL
-  TRK applies; FUNC + pad, which plays, follows AUTO TRK SWITCH as stock and does not.
+- **With AUTO TRK SWITCH unchecked**, a silent press still selects its track while SILENT
+  PAD+TRIG applies; FUNC + pad, which plays, follows AUTO TRK SWITCH as stock and does not.
 
 Every mode that takes the pads, TRIG keys or FUNC was compared with stock in rytm-emu, from
 matched snapshots: PERF, SCENE, MUTE, CHROMATIC, CHAIN, SONG, FILL, FIX, QPER, TRK, BANK + TRIG,
@@ -126,7 +127,7 @@ Every other mode that takes the pads, TRIG keys or FUNC was compared too (see th
 TESTING.md), and a silent press left the modelled analog output byte-identical while the
 sequencer played. 0.3.0 (build PS04) ran on an Analog Rytm MKII: silent pads, FUNC + pad, no cut
 sequenced notes, the setting through a power cycle and per GLOBAL slot, as reported. 0.4.0 has not
-run on a unit yet. Memory: 784 bytes of the 128 KiB shared mod area, no `.bss`, no
+run on a unit yet. Memory: 780 bytes of the 128 KiB shared mod area, no `.bss`, no
 fast SRAM. Nothing runs in the audio, sequencer or tick paths; each key press costs a few
 compares (static reading, not a measurement).
 
@@ -136,7 +137,7 @@ Iced-Cream: the mod, its design and code (rytm2_mods `pad-select`), and this mod
 the globals-slot lookup, which follows his voice-dac (rytm-mods `0013-voice-dac`, as rytm2_mods
 ports it). irpina: Elekloader and core-ar2, whose mod storage keeps the setting.
 
-Code: [GPL-2.0-only](LICENSE), as rytm2_mods. `src/pad-select.s` is rytm2_mods'
+Code: [GPL-2.0-only](LICENSE), as rytm2_mods. `src/silent-pad-trig.s` is rytm2_mods'
 `pad-select/os1.74/pad-select.s` at local commit `35ea2f0` (branch `claude/pad-select`, not yet
 public) with the 0.4.0 changes (`play_gate`, `active`, `func_gate`, `autotrk`'s comment and
 `drw_invoke`), and `include/ar2-1.74.inc` its `include/ar2-1.74.inc`, the same file
@@ -148,7 +149,7 @@ No Elektron firmware is included.
 
 ## Screens and audio
 
-These captures are rytm-emu frames of PS05, the released core-ar2 0.3 and Pad Select on stock OS
+These captures are rytm-emu frames of PS06, the released core-ar2 0.3 and Silent Pad+Trig on stock OS
 1.74, from one cold boot. See [capture provenance](media/capture.json) for hashes and inputs. The
 module changes which presses sound, not the sound itself, so there is no audio demonstration.
 
@@ -156,14 +157,14 @@ module changes which presses sound, not the sound itself, so there is no audio d
 
 Open the GLOBAL menu and choose CONTROL: SEQUENCER CONFIG is its third item.
 
-![SEQUENCER CONFIG list with the PAD+TRIG SEL TRK row highlighted and its box empty.](media/seq-config.png)
+![SEQUENCER CONFIG list with the SILENT PAD+TRIG row highlighted and its box empty.](media/seq-config.png)
 
-SEQUENCER CONFIG gains PAD+TRIG SEL TRK just after AUTO TRK SWITCH, unchecked by default.
+SEQUENCER CONFIG gains SILENT PAD+TRIG just after AUTO TRK SWITCH, unchecked by default.
 
-![SEQUENCER CONFIG list with the PAD+TRIG SEL TRK box checked.](media/seq-config-checked.png)
+![SEQUENCER CONFIG list with the SILENT PAD+TRIG box checked.](media/seq-config-checked.png)
 
 Press YES (or RIGHT) to check it. The GLOBAL slot keeps it.
 
-![SD track's SRC page with SNARE as the title, shown after a silent SD pad press.](media/pad-selects.png)
+![SD track's SRC page with SNARE as the title, shown after a silent SD pad press.](media/silent-press.png)
 
 Back on the main screen, tapping the SD pad selects the SD track without a sound; FUNC + SD plays it.
