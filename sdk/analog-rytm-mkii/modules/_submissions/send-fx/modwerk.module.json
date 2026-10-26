@@ -120,18 +120,18 @@
     ]
   },
   "resources": {
-    "memoryBytes": 109026,
+    "memoryBytes": 109602,
     "fastBytes": null,
     "load": {
       "display": "1.1-5.4 % of the audio block with one track sending, at most 5.6 % with all eight (emulator); near zero idle",
       "method": "emulator",
-      "conditions": "rytm-emu, OS 1.74, the mod's CPU meter (each block's time on DMA timer 0 over the time between blocks, the highest of about a second): each of the fifteen effects forced on, track 1's send or every send at 127, the FX page open. On the author's unit, with a busy project, the previous build (CHRONO PITCH at 12-13 % there) left the interface 2-5 s behind; this build (CHRONO PITCH 6.5 -> 3.4 % in the emulator) does not, as the author reports. On the unit, this build's meter read 7 % with eight tracks sending."
+      "conditions": "rytm-emu, OS 1.74, FX17, the mod's CPU meter (each block's time on DMA timer 0 over the time between blocks, then the highest of about a second): each of the fifteen effects forced on, track 1's send or every send at 127, the FX page open. The unit takes more: about the emulator's figure plus 0.013 % per 16-byte cache line the block touches. On the author's busy project (stock and Loop Sync about 77 % of the CPU, the interface lagging past about 83 %), CHRONO PITCH with one track sending took 12-13 % with LF10, 6.7 % with LF13 (lag), 5.7 % with LF14, this source with readouts (the whole interrupt 82.9 %, no lag)."
     }
   },
   "evidence": {
     "tier": "emulator",
     "moduleVersion": "0.1.0-experimental",
-    "sourceSha256": "c8d1cfad4b74b8fff7691fa373511a900438e723f6075e29a589ef31fbd86951",
+    "sourceSha256": "60bfd1b7a89abfbd91ca21761b503ad4ce2aa74fca9a1876ade6f226b80afc91",
     "reports": [
       "TESTING.md"
     ],
@@ -140,7 +140,7 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Emulator (rytm-emu, OS 1.74, builds FX08-FX17): pages, effect choice and sends as described; each of the fifteen effects on the PRE return, and each running with all eight voices sending, at 1.1-5.6 % of the audio block. On the author's unit (LF05, LF11): all fifteen tried, reported to sound very good; LF11 removed the interface lag a busy project showed with LF10, keeps up with eight tracks sending, and keeps a kit save through power off and on. See TESTING.md.",
+    "summary": "Emulator (rytm-emu, OS 1.74, builds FX08-FX19): pages, effect choice and sends as described; each of the fifteen effects on the PRE return, and each running with all eight voices sending, at 1.1-5.6 % of the audio block. On the author's unit (LF05, LF11): all fifteen tried, reported to sound very good; LF11 read 7 % with eight tracks sending and keeps a kit save through power off and on, but a busy project still lagged; LF14 (this source, light blocks) does not lag there with CHRONO PITCH (block 5.7 %, whole interrupt 82.9 %). See TESTING.md.",
     "documentation": {
       "tutorial": {
         "title": "Quick tutorial",
