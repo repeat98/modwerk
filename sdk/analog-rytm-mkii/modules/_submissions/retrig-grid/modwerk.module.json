@@ -6,12 +6,19 @@
   "machine": "analog-rytm-mkii",
   "category": "machines",
   "exclusive": false,
-  "author": { "github": "stigmagit", "credits": ["stigmagit"] },
-  "maintainers": ["stigmagit"],
+  "author": {
+    "github": "stigmagit",
+    "credits": [
+      "stigmagit"
+    ]
+  },
+  "maintainers": [
+    "stigmagit"
+  ],
   "presentation": {
     "label": "RETRIG GRID",
     "family": "Sequencer timing",
-    "summary": "Pad retrigs (RTRG + pad) fall on the sequencer's grid while it plays, instead of counting from the press.",
+    "summary": "Pad retrigs (RTRG + pad) fall on the sequencer's straight grid while it plays, instead of counting from the press; swing is not followed yet.",
     "overview": "Stock plays a retriggered pad at once and repeats it at the RETRIG rate counted from the press, so a roll started between two steps stays between the steps. With Retrig Grid the pad still sounds at the press, and every retrig after it falls on the grid of the rate's note values, in bars from PLAY: 1/16 on the steps, 1/4 on the beats, 1/12 on the triplets. A grid point closer than half a period to the press is skipped. The grid is straight (no swing); with the sequencer stopped, pads retrigger from the press as stock. A GLOBAL row turns it off.",
     "highlights": [
       "Rolls lock to the steps whenever you come in; the first hit stays at the press.",
@@ -32,23 +39,30 @@
       "Press PLAY, hold RTRG and play pads.",
       "Press GLOBAL, go down past SYSTEM to RETRIG GRID ON, and press YES to switch it OFF or back ON."
     ],
-    "screenshots": ["media/settings-on.png"]
+    "screenshots": [
+      "media/settings-on.png"
+    ]
   },
   "controls": [
     {
       "name": "RETRIG GRID",
       "default": 0,
       "doc": "ON puts pad retrigs on the sequencer's grid while it plays; OFF leaves them as stock. GLOBAL menu, after SYSTEM; YES turns it over. Kept with the project.",
-      "labels": ["ON", "OFF"]
+      "labels": [
+        "ON",
+        "OFF"
+      ]
     }
   ],
   "compatibility": {
-    "releases": ["1.74"],
+    "releases": [
+      "1.74"
+    ],
     "requires": [],
     "conflicts": [],
     "limitations": [
-      "Straight grid only: retrigs do not follow the pattern's swing or a trig's micro timing.",
-      "The grid counts bars from PLAY at the pattern's master speed; a track with its own speed or length still gets the master grid.",
+      "No swing yet: the grid is straight, so with swing above 50 % the retrigs miss the swung off-beat 16ths. Micro timing is not followed either.",
+      "The grid counts bars from PLAY in the sequencer's 24 PPQN pulses, through tempo, speed and pattern changes; a track with its own speed or length still gets this grid.",
       "The first gap after the press is half to one and a half periods; at 1/1 the first retrig can come up to a bar and a half later.",
       "With the sequencer stopped, pads retrigger from the press, as stock.",
       "External MIDI clock not tested."
@@ -58,41 +72,37 @@
     "kind": "elemod",
     "core": "0.3",
     "build": "build.json",
-    "events": ["ev_render_out", "ev_settings", "ev_project"],
-    "claims": ["settings:RETRIG GRID"]
+    "events": [
+      "ev_render_out",
+      "ev_settings",
+      "ev_project"
+    ],
+    "claims": [
+      "settings:RETRIG GRID"
+    ]
   },
   "resources": {
-    "memoryBytes": 1205,
+    "memoryBytes": 1333,
     "fastBytes": null,
     "load": {
-      "display": "About 12 instructions an audio block, about 45 after a pad retrig",
+      "display": "About 16 instructions an audio block, about 50 after a pad retrig",
       "method": "static",
-      "conditions": "Counted from the compiled ev_render_out handler: three SRAM reads until a pad has retriggered; then the sum of the twelve retrig deadlines each block, and the per-track pass only when a deadline moves (a retrig tick or a press). Not measured on a unit."
+      "conditions": "Counted from the compiled ev_render_out handler: the sequencer's pulse word and three SRAM reads each block until a pad has retriggered; then the sum of the twelve retrig deadlines each block, and the per-track pass only when a deadline moves (a retrig tick or a press). Not measured on a unit."
     }
   },
   "evidence": {
-    "tier": "author-hardware",
+    "tier": "emulator",
     "moduleVersion": "0.1.0-experimental",
-    "sourceSha256": "e7cf8344d2b054a228395292a0585d2db79827300ca41039722e32a1d87adf3e",
-    "reports": ["TESTING.md"],
-    "hardware": {
-      "model": "Analog Rytm MKII",
-      "release": "1.74",
-      "testedOn": "2026-10-26",
-      "tester": "stigmagit",
-      "durationMinutes": null,
-      "summary": "Build LF18 (core-ar2 0.3 + loop-sync 0.3 + send-fx 0.1 + this module) on the author's unit: after the five checks of its test sheet (RTRG + pad between steps while playing, RETRIG 1/8 and 1/12, RETRIG GRID OFF and back ON, the pattern stopped, his heavy project with Send FX), the author reported the result as \"parfait\".",
-      "limitations": [
-        "Informal listening test: each check's result not reported separately; no timing measured on the unit.",
-        "Duration not recorded; firmware not read back from the device. LF18.syx sha256 7d3b6b88808c20377c1cd9c8d7fdbeda8986b71c5e33dc34fbe6435d1d7bdbc2.",
-        "External MIDI clock, per-step sequencer retrigs and SAVE/LOAD PROJECT of the switch not reported."
-      ]
-    },
+    "sourceSha256": "102f3a46e4de21e7c4ac1fb89d375b9751e5c28420969fe4f098df36feca7aca",
+    "reports": [
+      "TESTING.md"
+    ],
+    "hardware": null,
     "verifiedBy": null
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "rytm-emu 3c4c42c, builds RG04 and LF18, 127 BPM: after the first hit, every pad retrig lands within 2 samples of the grid at 1/16, 1/4, 1/12, 1/3, 1/32 and 1/80, for four press positions, with RTRG and with ALWAYS ON; stopped and OFF behave as stock; OFF survives a power cycle. Unit (author, by ear): LF18 reported good on the five checks of its sheet. See TESTING.md.",
+    "summary": "rytm-emu 3c4c42c, build RG05, 127 BPM: after the first hit, every pad retrig lands within 2 samples of the grid at 1/16, 1/4, 1/12, 1/32 and 1/80, for four press positions, with RTRG and with ALWAYS ON, and after a speed change to 2x or 3/2x while playing; stopped and OFF behave as stock. The earlier build LF18 was reported good by the author on his unit; this source's speed-change fix is not yet heard on a unit. See TESTING.md.",
     "documentation": {
       "tutorial": {
         "title": "Quick tutorial",
@@ -103,11 +113,18 @@
           "To compare with stock, press GLOBAL, go down to RETRIG GRID ON and press YES: it reads RETRIG GRID OFF, and rolls follow the press again."
         ]
       },
-      "screenshots": ["media/settings-on.png", "media/settings-off.png"],
+      "screenshots": [
+        "media/settings-on.png",
+        "media/settings-off.png"
+      ],
       "captureRecord": "media/capture.json"
     }
   },
-  "license": { "spdx": "GPL-3.0-or-later", "file": "LICENSE", "declaration": "Original work by the author, under GPL-3.0-or-later." },
+  "license": {
+    "spdx": "GPL-3.0-or-later",
+    "file": "LICENSE",
+    "declaration": "Original work by the author, under GPL-3.0-or-later."
+  },
   "media": [
     {
       "path": "media/thumbnail.svg",
@@ -130,8 +147,8 @@
         "type": "emulator",
         "release": "1.74",
         "moduleVersion": "0.1.0-experimental",
-        "imageSha256": "313fc74aa0e58e480a79959369bc41aeaf14dc733f202be46751ad11d21e0e7c",
-        "setup": "rytm-emu 3c4c42c headless; RG04 build (core-ar2 0.3 + this module); fresh card, factory project. UI documentation only."
+        "imageSha256": "a39f45ef27e3a70ee3ece06b5950c0890d24ee043aa0a1bba7c7cf6297eabb9e",
+        "setup": "rytm-emu 3c4c42c headless; RG05 build (core-ar2 0.3 + this module); fresh card, factory project. UI documentation only."
       }
     },
     {
@@ -146,8 +163,8 @@
         "type": "emulator",
         "release": "1.74",
         "moduleVersion": "0.1.0-experimental",
-        "imageSha256": "313fc74aa0e58e480a79959369bc41aeaf14dc733f202be46751ad11d21e0e7c",
-        "setup": "rytm-emu 3c4c42c headless; RG04 build (core-ar2 0.3 + this module); fresh card, factory project. UI documentation only."
+        "imageSha256": "a39f45ef27e3a70ee3ece06b5950c0890d24ee043aa0a1bba7c7cf6297eabb9e",
+        "setup": "rytm-emu 3c4c42c headless; RG05 build (core-ar2 0.3 + this module); fresh card, factory project. UI documentation only."
       }
     }
   ]

@@ -1,6 +1,8 @@
 # Retrig Grid
 
-An Analog Rytm MKII mod by @stigmagit. Version 0.1.0-experimental, for OS 1.74 with core-ar2 0.3. Tested in rytm-emu; build LF18 reported good by the author on a unit.
+An Analog Rytm MKII mod by @stigmagit. Version 0.1.0-experimental, for OS 1.74 with core-ar2 0.3. Tested in rytm-emu; an earlier build (LF18) reported good by the author on a unit.
+
+**No swing yet:** the grid is straight. With the pattern's swing above 50 %, the retrigs miss the swung off-beat 16ths.
 
 ## Overview
 
@@ -33,9 +35,9 @@ Play a pattern, hold RTRG and play pads: the rolls stay locked to the steps when
 
 Stock arms a pad's retrig series in the audio block that plays the press. It sets a tick counter to 960 (a whole note, 240 ticks a quarter note), and the next tick's deadline one tick after that block on the musical clock. Retrigs then fire on the ticks where the counter is a multiple of the rate's period. Stock arms the per-step retrigs set in the sequencer from the step itself, so those are already on the grid; only the pad path starts from the press.
 
-Retrig Grid subscribes to core-ar2's `ev_render_out`, which runs at the end of that same audio block. When a pad's series has just been armed, it reads the sequencer's next 24 PPQN pulse and its place since PLAY (master step and pulse). From those it moves the series' deadline to the first grid tick at least half a period after the press, and sets the counter to that tick's place in the bar. Stock does everything else: the rate, LENGTH, VEL.CUR, changing the rate while RTRG is held, and stopping when the pad is released.
+Retrig Grid subscribes to core-ar2's `ev_render_out`, which runs at the end of every audio block. There it follows the sequencer's 24 PPQN pulse: each pulse moves its time on by the same amount whatever the pattern's speed, so the module counts them to know the pulse's place in the bar. It sets that place from the master step and pulse only when the sequencer (re)starts. When a pad's series has just been armed, it moves the series' deadline to the first grid tick at least half a period after the press, and sets the counter to that tick's place in the bar. Stock does everything else: the rate, LENGTH, VEL.CUR, changing the rate while RTRG is held, and stopping when the pad is released.
 
-It patches no stock code and writes no stock record but those two words of the series it re-times. Until a pad has retriggered, the audio block costs it three on-chip reads. After that, it reads the twelve deadlines' sum each block and looks at the tracks only when the sum moves.
+It patches no stock code and writes no stock record but those two words of the series it re-times. Until a pad has retriggered, the audio block costs it the pulse word and three on-chip reads. After that, it reads the twelve deadlines' sum each block and looks at the tracks only when the sum moves.
 
 ## Changes to stock flows
 
@@ -45,17 +47,23 @@ It patches no stock code and writes no stock record but those two words of the s
 ## Compatibility and limitations
 
 - Analog Rytm MKII, OS 1.74, core-ar2 0.3. Events: `ev_render_out`, `ev_settings`, `ev_project`. One project storage bit (`retrig_grid_off`).
-- Straight grid only: retrigs do not follow the pattern's swing or a trig's micro timing.
-- The grid counts bars from PLAY at the pattern's master speed. A track with its own speed or length still gets the master grid.
+- No swing yet: the grid is straight, so with swing above 50 % the retrigs miss the swung off-beat 16ths. A trig's micro timing is not followed either.
+- The grid counts bars from PLAY in the sequencer's 24 PPQN pulses, through tempo, speed and pattern changes. A track with its own speed or length still gets this grid.
 - The first gap after the press is between half a period and one and a half periods. At 1/1 the first retrig can come up to a bar and a half after the press, on a bar line.
 - Per-step retrigs from the sequencer are not changed: they already start on their step.
 - Not tested: external MIDI clock.
 
 ## Tests and measurements
 
-In rytm-emu on build RG04 (core-ar2 0.3 + this module), trig times read from the analog voice frame at 127 BPM. Every retrig after the first lands within 2 samples of the grid (the same 32-sample audio block) at 1/16, 1/4, 1/12, 1/3, 1/32 and 1/80, for four press positions across a step. Stopped and OFF behave as stock, and OFF survives a power cycle. On the author's unit, build LF18 (with Loop Sync and Send FX) was reported good on all five checks of its test sheet. Details and the method are in [TESTING.md](TESTING.md).
+In rytm-emu on build RG05 (core-ar2 0.3 + this module), trig times read from the analog voice frame at 127 BPM. Every retrig after the first lands within 2 samples of the grid (the same 32-sample audio block):
 
-Load: about 12 instructions an audio block until a pad has retriggered, and about 45 after that, counted from the compiled code. The pass over the tracks runs on retrig ticks only. Not measured on a unit.
+- at 1/16, 1/4, 1/12, 1/32 and 1/80;
+- for four press positions across a step;
+- after a speed change to 2x or 3/2x while playing.
+
+Stopped and OFF behave as stock, and OFF survives a power cycle. On the author's unit, the earlier build LF18 (with Loop Sync and Send FX) was reported good on all five checks of its test sheet. Its source did not yet follow speed changes. Details and the method are in [TESTING.md](TESTING.md).
+
+Load: about 16 instructions an audio block until a pad has retriggered, and about 50 after that, counted from the compiled code. The pass over the tracks runs on retrig ticks only. Not measured on a unit.
 
 ## Screens and audio
 

@@ -2,7 +2,21 @@
 
 ## Build
 
-RG04, 26 October 2026: core-ar2 0.3 (`core-0.3.elemod` sha256 90f30adb…9c75, built from elekloader's core-ar2-v0.3 tag) + retrig-grid 0.1.0-experimental, built and linked with that tag's `elekloader.sdk.build`, `lint` and `patch` and Debian's m68k-linux-gnu-gcc 12.2.0, on the owner-supplied OS 1.74 (stock sha256 cb0f99d6…e123). RG04.syx sha256 313fc74aa0e58e480a79959369bc41aeaf14dc733f202be46751ad11d21e0e7c. Module: `.run` 1105 bytes, `.bss` 100 bytes, no sites. Lint: OK.
+RG05, 26 October 2026 (this source): core-ar2 0.3 (`core-0.3.elemod` sha256 90f30adb…9c75, built from elekloader's core-ar2-v0.3 tag) + retrig-grid 0.1.0-experimental (`.elemod` sha256 fdec6df5…), built and linked with that tag's `elekloader.sdk.build`, `lint` and `patch` and Debian's m68k-linux-gnu-gcc 12.2.0, on the owner-supplied OS 1.74 (stock sha256 cb0f99d6…e123). RG05.syx sha256 a39f45ef27e3a70ee3ece06b5950c0890d24ee043aa0a1bba7c7cf6297eabb9e. Module: `.run` 1225 bytes, `.bss` 108 bytes, no sites. Lint: OK.
+
+RG04 (module `.elemod` 01f7e265…, also in the author's LF18) is the first source. It worked out the pulse's place in the bar from the master step times the current speed's pulses per step. RG05 counts the pulses instead (review of #957), and gives the same results as RG04 in every case below where the speed stays constant.
+
+## RG05: a speed change while playing (26 October 2026)
+
+Same method as below, on RG05's snapshot. The pattern was poked to the normal scale mode at 2x (bytes 85689 and 85690 = 0 and 0), or at 3/2x (0 and 1), while playing. Its every-step voice then trigs every 2816 or 2848 samples at 2x. RTRG + BD was pressed about four 1x steps later. Times are in 1x steps (16ths) since PLAY, mod 16.
+
+| Case | RG04 (before) | RG05 |
+| --- | --- | --- |
+| 1/16 at 2x, two press times | 6.497 7.501 8.500 9.500 … (half a 16th off) | 6.999 7.998 8.997 10.002 … |
+| 1/4 at 2x | not run | 7.998 12.000 0.002 3.998 8.000 … |
+| 1/16 at 3/2x | not run | 6.999 7.998 8.997 10.002 … |
+
+Diagnosis (certain, from the code and the RG04 run): RG04 counted the steps played before the change at the new speed's 3 pulses instead of 6, an error of 3 pulses per step played before the change.
 
 ## Stock, before the module (rytm-emu, 26 October 2026)
 
@@ -11,7 +25,9 @@ Factory project RYTMLINJE, 127 BPM, BD with RETRIG 1/16. Each trig was read from
 - Holding RTRG and pressing BD between two steps: the first hit came at the press, then retrigs every 5664 or 5696 samples (177 or 178 blocks of 32; the ideal 1/16 at 127 BPM is 5669.3). They stayed 0.32 of a step after the step grid, about 37 ms, for the whole hold, with no swing.
 - Moving only the series' tick deadline and counter onto the grid, in a snapshot taken just after the press, put the next 14 hits within 2 samples of the steps; stock carried on from there. That is what the module does.
 
-## RG04 in rytm-emu (rytm-emu 3c4c42c, 26 October 2026)
+## RG04, then RG05, in rytm-emu (rytm-emu 3c4c42c, 26 October 2026)
+
+Every case in this table was run on RG04 and again on RG05 with the same hits, except 1/3 and 1/32 (RG01 only) and RETRIG GRID OFF and the power cycle (RG04 only; the switch and its storage did not change in RG05).
 
 Method: boot RG04 on a fresh card, clear the calibration notices with NO, PLAY the factory pattern, and save a snapshot. Each case below resumes the snapshot with keys at fixed clocks and reads the trig times as above. The master step and pulse in the snapshot (0x405c8c94, 0x405c8c96) and the next pulse's time (0x405c8b20) place each hit in the bar since PLAY. Where noted, the pattern's swing byte was set to 50 % by `--poke`, so the step grid is visible in the pattern's own trigs, and BD's RETRIG rate was set by `--poke` on the live kit. Times are master steps, mod 16.
 
@@ -39,7 +55,7 @@ The audio-block handler was counted from the compiled object: three SRAM reads a
 
 ## On a unit (author report, 26 October 2026)
 
-Build LF18: the author's LF17 (core-ar2 0.3 + loop-sync 0.3 + send-fx 0.1, each `.elemod` byte-identical to LF17's) + retrig-grid 0.1.0-experimental (`.elemod` sha256 01f7e265…, the source above; the same module object as RG04). LF18.syx sha256 7d3b6b88808c20377c1cd9c8d7fdbeda8986b71c5e33dc34fbe6435d1d7bdbc2, linked with LF17's storage lockfile. Sent to the author's Analog Rytm MKII on OS 1.74 with Elektron Transfer.
+Build LF18: the author's LF17 (core-ar2 0.3 + loop-sync 0.3 + send-fx 0.1, each `.elemod` byte-identical to LF17's) + retrig-grid 0.1.0-experimental (`.elemod` sha256 01f7e265…, the RG04 source, before the speed-change fix). LF18.syx sha256 7d3b6b88808c20377c1cd9c8d7fdbeda8986b71c5e33dc34fbe6435d1d7bdbc2, linked with LF17's storage lockfile. Sent to the author's Analog Rytm MKII on OS 1.74 with Elektron Transfer.
 
 The author went through the LF18 test sheet and reported the result as "parfait". The sheet's five checks:
 
@@ -53,7 +69,8 @@ Each check's result was not reported separately. Neither the duration nor timing
 
 ## Not tested
 
-- External MIDI clock; a tempo change during a roll; a pattern change during a roll.
+- On a unit: this source (RG05). LF18 carried RG04's.
+- External MIDI clock; a tempo change during a roll; a pattern change to another pattern (only a speed change was run).
 - Per-step retrigs set in the sequencer, with the module installed: the module skips series whose retrig flag (0x8000fe44) stock clears for them, so they should be untouched, but this was not run.
 - CREATE NEW (the row should read ON) and SAVE PROJECT / LOAD PROJECT of the switch.
 - Load on a unit: not measured.

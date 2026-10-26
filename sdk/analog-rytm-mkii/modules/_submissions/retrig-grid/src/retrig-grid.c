@@ -14,8 +14,9 @@
 // is the first grid point at least half a period after the press. Stock does the
 // rest, the RETRIG menu's LENGTH and VEL.CUR included.
 //
-// The audio block calls nothing and reads only on-chip SRAM until a pad's series
-// moves; the storage field is read in the UI (ev_project and the SETTINGS row).
+// Each audio block it follows the sequencer's pulse; until a pad's series moves
+// it reads nothing else but on-chip SRAM. The storage field is read in the UI
+// (ev_project and the SETTINGS row).
 
 #include <stdint.h>
 #include "analog-rytm-mk2/store.h"
@@ -64,28 +65,38 @@ static inline void irq_restore(unsigned short sr)
     __asm__ volatile("move.w %0,%%sr" : : "d"(sr) : "memory");
 }
 
-// The series was armed in this block, with its deadline one tick after the press.
-static void __attribute__((noinline)) rephase(int t, int32_t deadline)
-{
-    int32_t press = deadline - TICK, pulse, a, q, h, ht;
-    unsigned step, n;
-    int rate = RT_RATE(t), speed, pattern;
-    unsigned short sr;
+// The sequencer's pulse as last seen, and its place in the bar from PLAY. The
+// pulse moves on by one pulse's units whatever the pattern's speed, so counting
+// it follows speed and pattern changes; any other jump is a (re)start.
+static int32_t last_pulse;
+static int16_t bar_pulse;
 
-    if (rate < 0 || rate > 16)
-        return;
-    sr = irq_off();
-    pulse = SEQ_PULSE;
-    step = SEQ_STEP;
-    n = SEQ_PULSE_N;
-    pattern = SEQ_PATTERN;
+// On a (re)start: master step x pulses per step + pulse, exact at PLAY.
+static void __attribute__((noinline)) resync(void)
+{
+    unsigned short sr = irq_off();
+    int32_t pulse = SEQ_PULSE;
+    unsigned step = SEQ_STEP, n = SEQ_PULSE_N;
+    int pattern = SEQ_PATTERN, speed;
+
     irq_restore(sr);
     speed = pattern >= 0 && pattern < 128 ? PATTERN_SPEED(pattern) : 2;
     if (speed < 0 || speed > 6)
         speed = 2;
+    bar_pulse = (step * (unsigned)SPEED_PULSES[speed] + n) % WHOLE_PULSES;
+    last_pulse = pulse;
+}
+
+// The series was armed in this block, with its deadline one tick after the press.
+static void __attribute__((noinline)) rephase(int t, int32_t deadline)
+{
+    int32_t press = deadline - TICK, a, q, h, ht;
+    int rate = RT_RATE(t);
+
+    if (rate < 0 || rate > 16)
+        return;
     // the press's place in the whole note (bars from PLAY), in clock units
-    n = (step * (unsigned)SPEED_PULSES[speed] + n) % WHOLE_PULSES;
-    a = (int32_t)n * PULSE_TICKS * TICK - (pulse - press);
+    a = (int32_t)bar_pulse * PULSE_TICKS * TICK - (last_pulse - press);
     a %= WHOLE * TICK;
     if (a < 0)
         a += WHOLE * TICK;
@@ -114,8 +125,9 @@ static void __attribute__((noinline)) moved(int t, int32_t d)
 }
 
 // ev_render_out: after the audio block, stock's retrig state for this block in
-// place. Until a pad has retriggered: three SRAM reads. Then the twelve
-// deadlines' sum, and the tracks only when it moved (a tick or a press).
+// place. Every block: the pulse. Until a pad has retriggered: three SRAM reads.
+// Then the twelve deadlines' sum, and the tracks only when it moved (a tick or
+// a press).
 static int32_t deadline_sum(void)
 {
     const volatile int32_t *p = RT_DEADLINE;
@@ -130,8 +142,18 @@ static int32_t deadline_sum(void)
 void retrig_grid_render(void)
 {
     const volatile uint32_t *active = (const volatile uint32_t *)RT_ACTIVE;
+    int32_t pulse = SEQ_PULSE;
     int t;
 
+    if (pulse != last_pulse) {
+        if (pulse - last_pulse == PULSE_TICKS * TICK) {
+            last_pulse = pulse;
+            if (++bar_pulse == WHOLE_PULSES)
+                bar_pulse = 0;
+        } else {
+            resync();
+        }
+    }
     if (!(active[0] | active[1] | active[2]) || deadline_sum() == seen_sum)
         return;
     for (t = 0; t < TRACKS; t++)
