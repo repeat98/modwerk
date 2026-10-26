@@ -3,19 +3,22 @@
 ## Overview
 
 Pad Select adds **PAD+TRIG SEL TRK** to GLOBAL > CONTROL > SEQUENCER CONFIG, a checkbox just
-after AUTO TRK SWITCH. Checked, the pads and TRIG keys 1-12 make sound only in LIVE or STEP
-RECORDING. Stopped, playing or in GRID RECORDING, a press selects its track and stays silent,
-with no MIDI note out. Hold FUNC and press the pad to play it instead, at the pad's own velocity.
-Unchecked, everything is stock.
+after AUTO TRK SWITCH. Checked, a pad press selects its track and stays silent, with no MIDI note
+out and nothing recorded, in every state but STEP RECORDING, LIVE RECORDING included. Hold FUNC
+and press the pad to play it, at the pad's own velocity; in LIVE RECORDING FUNC + pad plays and
+records. TRIG keys 1-12 select silently too, except in LIVE and STEP RECORDING, where they play and
+record as stock. Aftertouch is untouched: holding a pad down modulates its track without sounding
+it. Unchecked, everything is stock.
 
-| Input | Stopped, playing, or GRID REC | LIVE REC, STEP REC |
-| --- | --- | --- |
-| Pad | selects its track, silent | stock |
-| TRIG 1-12 | selects track n, silent (in GRID REC they place trigs, as stock) | stock |
-| TRIG 13 (the FX track) | silent | stock |
-| FUNC + pad | plays, at the pad's own velocity | stock |
-| FUNC + TRIG 1-12 | stock: plays nothing | stock |
-| RTRG + pad | selects, silent (FUNC + RTRG toggles the click, as stock) | stock |
+| Input | Stopped, playing, or GRID REC | LIVE REC | STEP REC |
+| --- | --- | --- | --- |
+| Pad | selects its track, silent | selects its track, silent, records nothing | stock |
+| FUNC + pad | plays, at the pad's own velocity | plays and records, at the pad's own velocity | stock |
+| Pad held down (aftertouch) | modulates its track, as stock | the same | stock |
+| TRIG 1-12 | selects track n, silent (in GRID REC they place trigs, as stock) | stock: plays and records | stock |
+| TRIG 13 (the FX track) | silent | stock | stock |
+| FUNC + TRIG 1-12 | stock: plays nothing | stock | stock |
+| RTRG + pad | selects, silent (FUNC + RTRG toggles the click, as stock) | the same | stock |
 
 This holds wherever stock would play a pressed pad or TRIG key: on any page, with a menu open, in
 the SOUND BROWSER, with the FX track selected, and in CHAIN, SONG, FILL, PERF and SCENE modes
@@ -24,56 +27,60 @@ MIDI note and leaves no held note, so its release cuts nothing the sequencer pla
 mode, MUTE mode, TRK + pad, QPER + pad, NO + pad, BANK + TRIG, MIDI notes in, TRIG + YES and the
 sequencer itself are as stock.
 
-Version **0.3.0-experimental** for Analog Rytm MKII OS **1.74**, with core-ar2 0.3. It is
+Version **0.4.0-experimental** for Analog Rytm MKII OS **1.74**, with core-ar2 0.3. It is
 Iced-Cream's own mod, `pad-select` in [rytm2_mods](https://github.com/Iced-Cream/rytm2_mods), not
-a port of someone else's. 0.3.0 changes rytm2_mods' 0.2 in two places, found in emulator tests: a
-silent press no longer passes on its pad's aftertouch, and FUNC + pad selects its track only if
-AUTO TRK SWITCH is checked, as stock. It has been tested in rytm-emu, **not yet on a unit**, so it waits
-in `_submissions/`.
+a port of someone else's. 0.4.0 differs from rytm2_mods' 0.2 in three ways, from emulator tests
+and a first test on a unit: pads stay silent in LIVE RECORDING too (FUNC + pad plays and records),
+FUNC + pad selects its track only if AUTO TRK SWITCH is checked, as stock, and the checkbox is
+drawn through a call of its own. Its predecessor 0.3.0 ran on a unit; 0.4.0 has run in rytm-emu
+only, so it waits in `_submissions/`.
 
 ## Controls
 
 | Control | Action |
 | --- | --- |
 | PAD+TRIG SEL TRK | Checkbox in GLOBAL > CONTROL > SEQUENCER CONFIG, after AUTO TRK SWITCH. YES toggles it, RIGHT checks, LEFT unchecks. Unchecked by default. |
-| FUNC + pad | While the setting applies, plays the pad's track at the pad's own velocity. |
+| FUNC + pad | While the setting applies, plays the pad's track at the pad's own velocity (the fixed velocity with FIX on); in LIVE RECORDING it also records. |
+| Pad held down | Aftertouch, as stock: modulates the track's AFTERTOUCH destinations, also after a silent press. |
 
 The setting is kept per GLOBAL slot, in core-ar2's mod storage (one bit, `pad_select_on`), and is
 saved with the project's globals. No knob, page or effect slot is added.
 
 ## Usage
 
-Check the box once per GLOBAL slot you want it in. AUTO TRK SWITCH keeps its own setting: while
-PAD+TRIG SEL TRK applies, a press always selects its track; otherwise AUTO TRK SWITCH decides, as
-stock. To hear a track outside live recording, use FUNC + pad: FUNC + TRIG plays nothing, on
-stock too.
+Check the box once per GLOBAL slot you want it in. AUTO TRK SWITCH keeps its own setting: a silent
+press always selects its track; a press that plays follows AUTO TRK SWITCH, as stock. To hear a
+track, use FUNC + pad: FUNC + TRIG plays nothing, on stock too. With an AFTERTOUCH destination set
+on a sound, tap its pad and keep pressing to modulate the track without playing it.
 
 ### Quick tutorial
 
 1. Use a build containing Pad Select. Open the GLOBAL menu, then CONTROL > SEQUENCER CONFIG, and check PAD+TRIG SEL TRK, just after AUTO TRK SWITCH, with YES or LEFT/RIGHT.
 2. With the sequencer stopped, tap the SD pad: it makes no sound and the SD track is selected. Hold FUNC and tap SD to hear it at the pad's own velocity. TRIG 5 selects track 5 silently.
-3. Press RECORD + PLAY for LIVE RECORDING: pads play and record as stock. Uncheck PAD+TRIG SEL TRK to get stock behaviour everywhere.
+3. Press RECORD + PLAY for LIVE RECORDING: plain pad taps stay silent and record nothing; hold FUNC and tap a pad to play and record it. Uncheck PAD+TRIG SEL TRK to get stock behaviour everywhere.
 
 ### Changes to stock flows
 
 While PAD+TRIG SEL TRK is checked, and only then:
 
-- **Pads and TRIG 1-12, stopped, playing or in GRID RECORDING** select silently instead of
-  playing. This is the module's purpose: picking a track to edit without hearing it. An own page
-  or a new gesture would not change what a plain press does, which is the point. Uncheck the box
-  for stock.
-- **FUNC + pad** plays at the pad's own velocity. Stock's FUNC + pad plays at the TRIG page's VEL;
-  with plain presses silent, FUNC + pad is the way to hear a pad, so it keeps the pad's dynamics.
+- **Pads, in every state but STEP RECORDING**, select silently instead of playing, and in LIVE
+  RECORDING record nothing. This is the module's purpose: picking a track to edit, or modulating it
+  with aftertouch, without hearing it. An own page or a new gesture would not change what a plain
+  press does, which is the point. Uncheck the box for stock.
+- **TRIG 1-12, stopped, playing or in GRID RECORDING**, select silently. In LIVE RECORDING they
+  play and record as stock, since FUNC + TRIG cannot play.
+- **FUNC + pad** plays at the pad's own velocity, and records in LIVE RECORDING. Stock's FUNC + pad
+  plays at the TRIG page's VEL; with plain presses silent, FUNC + pad is the way to hear a pad, so
+  it keeps the pad's dynamics.
 - **RTRG + pad** selects silently. FUNC + RTRG + pad plays, but FUNC + RTRG also toggles the
   metronome click, as on stock, so it is not a clean way to roll.
-- **Aftertouch** follows the press: a pad whose press was silent sends no aftertouch while held
-  (no MIDI pressure, no modulation); after FUNC + pad it is sent as stock.
+- **Aftertouch** is not changed: a held pad sends its pressure to the sound and as MIDI poly
+  pressure, as stock, even when its press was silent (so MIDI out gets poly pressure with no
+  note-on before it).
 - **SOUND BROWSER**: stock auditions the highlighted sound with a pad press. Checked, the plain
   press is silent; FUNC + pad auditions.
 - **With a menu open**, a pad or TRIG key no longer plays; FUNC + pad does.
-- **TRIG 13** plays the FX track on stock; checked, it is silent too.
-- **PLAY during LIVE RECORDING** ends live recording on stock while the sequencer keeps playing;
-  from then on the pads are silent again.
+- **TRIG 13** plays the FX track on stock; checked, it is silent outside LIVE and STEP RECORDING.
 - **With FIX (fixed velocity) on**, FUNC + pad plays at the fixed velocity, as stock pads do.
 - **With AUTO TRK SWITCH unchecked**, a silent press still selects its track while PAD+TRIG SEL
   TRK applies; FUNC + pad, which plays, follows AUTO TRK SWITCH as stock and does not.
@@ -81,7 +88,7 @@ While PAD+TRIG SEL TRK is checked, and only then:
 Every mode that takes the pads, TRIG keys or FUNC was compared with stock in rytm-emu, from
 matched snapshots: PERF, SCENE, MUTE, CHROMATIC, CHAIN, SONG, FILL, FIX, QPER, TRK, BANK + TRIG,
 the FX track, the SOUND BROWSER, an open menu, GRID, LIVE and STEP RECORDING, NO + pad, RTRG,
-AUTO TRK SWITCH off, soft strikes, MIDI notes in, MIDI out and TRIG + YES (table in
+AUTO TRK SWITCH off, soft strikes, aftertouch, MIDI notes in, MIDI out and TRIG + YES (table in
 [TESTING.md](TESTING.md)). Unchecked, every one matched stock exactly.
 
 ## Compatibility and limitations
@@ -89,33 +96,37 @@ AUTO TRK SWITCH off, soft strikes, MIDI notes in, MIDI out and TRIG + YES (table
 Requires core-ar2 0.3 on OS 1.74. Use your own original stock OS 1.74 file.
 
 - Built for OS 1.74 only.
-- **Tested in rytm-emu only; not yet run on a unit.** The emulator does not prove sound or timing.
+- **0.4.0 has run in rytm-emu only.** 0.3.0 ran on a unit (TESTING.md); the emulator does not
+  prove sound or timing.
 - FUNC + TRIG 1-12 plays nothing, as on stock.
-- LIVE RECORDING counts only while it lasts: PLAY during LIVE RECORDING ends it, as on stock,
-  and the pads are silent again from then.
+- A silent press passes its aftertouch on, so MIDI out can carry poly pressure with no note-on
+  before it.
 - A GLOBAL slot saved without the setting, or received as Global SysEx, loads unchecked. In
   rytm-emu, a card last saved by this build boots on stock OS 1.74 with the stock menu and pads
   that play.
 - Takes the plain pad and TRIG 1-12 press, FUNC + pad and a SEQUENCER CONFIG row
   (`platform.claims`). Another module that changes what those keys play would clash with it.
 
-The module patches six sites, all in stock code no other library module or the core patches:
+The module patches five sites, all in stock code no other library module or the core patches:
 the play routine both key handlers share (`0x400c772e`), the pad and TRIG key handlers' AUTO TRK
-SWITCH calls (`0x400c7a3e`, `0x400c7e90`), the pad handler's FUNC test (`0x400c7950`), the pad
-pressure handler (`0x400c74d4`) and the SEQUENCER CONFIG menu's constructor (`0x400ec184`). The core-ar2 0.3 interface has no event
-for the pads, the TRIG keys or the SEQUENCER CONFIG menu.
+SWITCH calls (`0x400c7a3e`, `0x400c7e90`), the pad handler's FUNC test (`0x400c7950`) and the
+SEQUENCER CONFIG menu's constructor (`0x400ec184`). The core-ar2 0.3 interface has no event for
+the pads, the TRIG keys or the SEQUENCER CONFIG menu.
 
 ## Tests and measurements
 
 See [TESTING.md](TESTING.md). In short: Modwerk's compiler builds this folder, and Modwerk's
 linker links it on the owner's stock OS 1.74 with core-ar2 0.3 alone and beside Filter Hz and
-Loop Sync. In rytm-emu the build boots, shows the row, and with it checked a pad or TRIG press
-outside LIVE and STEP RECORDING reaches the play routine but no voice trigger and no MIDI out,
-while FUNC + pad plays. Unchecked, every screen and every MIDI byte matched stock in the same
+Loop Sync. In rytm-emu the build boots, shows the row, and with it checked a pad press outside
+STEP RECORDING (or a TRIG press outside LIVE and STEP RECORDING) reaches the play routine but no
+voice trigger, no MIDI out and no recorded trig, while FUNC + pad plays, and records in LIVE
+RECORDING. Unchecked, every screen and every MIDI byte matched stock in the same
 run. The setting came back after a power-off and cold boot, and each GLOBAL slot keeps its own.
 Every other mode that takes the pads, TRIG keys or FUNC was compared too (see the table in
 TESTING.md), and a silent press left the modelled analog output byte-identical while the
-sequencer played. It has **not** run on a unit. Memory: 892 bytes of the 128 KiB shared mod area, no `.bss`, no
+sequencer played. 0.3.0 (build PS04) ran on an Analog Rytm MKII: silent pads, FUNC + pad, no cut
+sequenced notes, the setting through a power cycle and per GLOBAL slot, as reported. 0.4.0 has not
+run on a unit yet. Memory: 784 bytes of the 128 KiB shared mod area, no `.bss`, no
 fast SRAM. Nothing runs in the audio, sequencer or tick paths; each key press costs a few
 compares (static reading, not a measurement).
 
@@ -127,8 +138,8 @@ ports it). irpina: Elekloader and core-ar2, whose mod storage keeps the setting.
 
 Code: [GPL-2.0-only](LICENSE), as rytm2_mods. `src/pad-select.s` is rytm2_mods'
 `pad-select/os1.74/pad-select.s` at local commit `35ea2f0` (branch `claude/pad-select`, not yet
-public) with the 0.3.0 changes (`play_gate`, `autotrk`'s comment, the new `mark` and
-`pressure_gate`, and `silent_mask`), and `include/ar2-1.74.inc` its `include/ar2-1.74.inc`, the same file
+public) with the 0.4.0 changes (`play_gate`, `active`, `func_gate`, `autotrk`'s comment and
+`drw_invoke`), and `include/ar2-1.74.inc` its `include/ar2-1.74.inc`, the same file
 Filter Hz carries. The source's header comment still names the OS 1.73 addresses, as upstream's
 does. The include names firmware routines by address only. The upstream README is in
 [upstream/README.md](upstream/README.md); its menu path leaves out CONTROL, and its FUNC + TRIG
@@ -137,7 +148,7 @@ No Elektron firmware is included.
 
 ## Screens and audio
 
-These captures are rytm-emu frames of PS04, the released core-ar2 0.3 and Pad Select on stock OS
+These captures are rytm-emu frames of PS05, the released core-ar2 0.3 and Pad Select on stock OS
 1.74, from one cold boot. See [capture provenance](media/capture.json) for hashes and inputs. The
 module changes which presses sound, not the sound itself, so there is no audio demonstration.
 

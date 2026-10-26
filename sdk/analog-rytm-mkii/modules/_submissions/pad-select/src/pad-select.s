@@ -1,7 +1,8 @@
         | SPDX-License-Identifier: GPL-2.0-only
-        | pad-select - PAD+TRIG SEL TRK: the pads and TRIG keys sound only in
-        | LIVE and STEP RECORDING; otherwise a press selects its track, silent,
-        | and FUNC + pad plays it.
+        | pad-select - PAD+TRIG SEL TRK: a pad press selects its track, silent,
+        | and FUNC + pad plays it, in every state but STEP RECORDING; TRIG keys
+        | 1-12 do the same outside LIVE and STEP RECORDING. Aftertouch is
+        | untouched, so a held pad modulates its track without sounding.
         |
         | A new mod, not a port. The setting is core-ar2 0.3's mod storage
         | field pad_select_on (global scope, one bit per globals slot), saved
@@ -17,15 +18,12 @@
         | calls it: CHRO pads (ChromPadsView), TRIG + YES, MIDI in and the
         | sequencer reach the voice trigger by their own paths.
         |
-        | With PAD+TRIG SEL TRK checked and the view's sequencer state in neither
-        | LIVE REC nor STEP REC (active()):
+        | With PAD+TRIG SEL TRK checked and the view's sequencer state not in
+        | STEP REC, nor in LIVE REC for a TRIG key (active()):
         |   play_gate   0x400c76c2  the play routine returns at once unless
         |                           FUNC is held: no voice, no MIDI, no held note
         |   autotrk     0x400c79d2  both handlers' AUTO TRK SWITCH test reads
         |               0x400c7e24  on for a silent press, so it selects its track
-        |   pressure_gate (1.74: 0x400c74d4, read from 1.74 only; no 1.73
-        |                           address) a held pad whose press was
-        |                           silent sends no aftertouch
         |   func_gate   0x400c78e4  the pad handler's FUNC test reads off, so
         |                           FUNC + pad plays at the pad's velocity, not VEL
         | and for the switch, a SEQUENCER CONFIG item after AUTO TRK SWITCH:
@@ -44,7 +42,6 @@
         .equ    VIEW_SEQ,       0x8c              | KeyboardView: the sequencer state
         .equ    LIVE_GET,       0x40036370        | state: LIVE REC (+0x169, while playing)
         .equ    STEP_GET,       0x400363bc        | state: STEP REC (+0x16a)
-        .equ    PRESSURE_RESUME, 0x400c74dc       | the pressure handler past `lea; moveml`
 
         | core-ar2 0.3's mod storage: the field's descriptor is an absolute
         | symbol elekloader defines; core_store_get(field, item, index) and
@@ -82,16 +79,16 @@
         | ------------------------------------------------------------------
         | play_gate: the play routine's entry, over `linkw %fp,#-64; moveq
         | #127,%d0`, both re-emitted. The arguments are on the stack: the view
-        | at %sp@(4), src at %sp@(8), the track at %sp@(12); d0/d1/a0/a1 are
+        | at %sp@(4), src at %sp@(8) (1 a pad, 0 a TRIG key); d0/d1/a0/a1 are
         | free, as at any call. Whether this press is silent is kept in
         | pl_last for autotrk, which both handlers reach after this call with
-        | nothing branching in between, and, for a pad, in its silent_mask
-        | bit for pressure_gate.
+        | nothing branching in between.
         | ------------------------------------------------------------------
         .align  2
         .globl  pad_select_play_gate
 pad_select_play_gate:
         move.l  4(%sp),%a0
+        move.l  8(%sp),%d1                        | src: a pad stays gated in LIVE REC
         bsr.w   active
         tst.l   %d0
         beq.s   1f
@@ -102,70 +99,20 @@ pad_select_play_gate:
         bne.s   1f                                | FUNC + pad: plays
         moveq   #1,%d0
         move.l  %d0,pl_last                       | silent: autotrk selects
-        bsr.s   mark
-        rts                                       | silent
+        rts                                       | silent: no voice, no MIDI, no
+                                                  | held note, nothing recorded
 1:      clr.l   pl_last                           | plays: AUTO TRK SWITCH decides
-        moveq   #0,%d0
-        bsr.s   mark
         link.w  %fp,#-64                          | displaced
         moveq   #127,%d0                          | displaced
         jmp     PLAY_RESUME
-
-        | mark(d0 = 1 silent, 0 plays): a pad's bit in silent_mask, from
-        | play_gate's arguments (4 bytes up past this call's return
-        | address). TRIG keys (src 0) and tracks past 11 leave it alone.
-        | Clobbers d0/d1.
-mark:
-        move.l  12(%sp),%d1                       | src
-        subq.l  #1,%d1
-        bne.s   9f                                | not a pad
-        move.l  16(%sp),%d1                       | the track, the pad's index
-        cmpi.l  #12,%d1
-        bcc.s   9f
-        tst.l   %d0
-        beq.s   1f
-        move.l  silent_mask,%d0
-        bset    %d1,%d0
-        bra.s   2f
-1:      move.l  silent_mask,%d0
-        bclr    %d1,%d0
-2:      move.l  %d0,silent_mask
-9:      rts
-
-        | ------------------------------------------------------------------
-        | pressure_gate: KeyboardView's pad-pressure handler (slot 18,
-        | 0x400c74d4, also reached through its this-adjusting thunk), over
-        | `lea %sp@(-28),%sp; moveml %d2-%d6/%a2-%a3,%sp@`, both re-emitted.
-        | (view, event): a pressure event (type +16 == 2) for a pad whose last
-        | press was silent is answered as handled, as stock answers one, and
-        | goes no further: no aftertouch to the voice, no MIDI pressure. Any
-        | other event, and pressure on a pad that played, go to stock.
-        | ------------------------------------------------------------------
-        .align  2
-        .globl  pad_select_pressure_gate
-pad_select_pressure_gate:
-        move.l  8(%sp),%a0                        | the event
-        moveq   #2,%d0
-        cmp.l   16(%a0),%d0
-        bne.s   1f                                | not pressure
-        move.l  20(%a0),%d1                       | its pad
-        cmpi.l  #12,%d1
-        bcc.s   1f
-        move.l  silent_mask,%d0
-        btst    %d1,%d0
-        beq.s   1f
-        moveq   #1,%d0                            | handled
-        rts
-1:      lea     -28(%sp),%sp                      | displaced
-        movem.l %d2-%d6/%a2-%a3,(%sp)             | displaced
-        jmp     PRESSURE_RESUME
 
         | ------------------------------------------------------------------
         | autotrk(globals): in place of AUTO TRK SWITCH's getter at both
         | handlers' calls. On for a silent press - as play_gate found it for
         | this press - so the handler selects the pressed track as with AUTO
-        | TRK SWITCH checked; for a press that plays (FUNC + pad, LIVE or STEP
-        | REC, the setting off), the getter itself, with the same argument.
+        | TRK SWITCH checked; for a press that plays (FUNC + pad, a TRIG key
+        | in LIVE REC, STEP REC, the setting off), the getter itself, with the
+        | same argument.
         | ------------------------------------------------------------------
         .align  2
         .globl  pad_select_autotrk
@@ -178,61 +125,57 @@ pad_select_autotrk:
 
         | ------------------------------------------------------------------
         | func_gate: the pad handler's FUNC test, over `pea 0x80; jsr %a3@`
-        | (a3 is_key_held), re-emitted. While active(), FUNC reads not held, so
-        | the pad's own velocity is taken; play_gate still sees FUNC and plays.
-        | The pea stays pushed for the addql at FUNC_RESUME. a2 is the view,
-        | d2 the pad (event +20); d1/a0/a1 are not read before they are
-        | written.
-        |
-        | Every pad event the handler gets this far with, a press or a
-        | release, first clears its pad's silent_mask bit; play_gate sets it
-        | again for a silent press. So the bit lasts from a silent press to
-        | its release, and a later press that skips the play routine (NO +
-        | pad in LIVE REC) finds it clear.
+        | (a3 is_key_held), re-emitted. While active() for a pad, FUNC reads
+        | not held, so the pad's own velocity is taken; play_gate still sees
+        | FUNC and plays. The pea stays pushed for the addql at FUNC_RESUME.
+        | a2 is the view; d1/a0/a1 are not read before they are written.
         | ------------------------------------------------------------------
         .align  2
         .globl  pad_select_func_gate
 pad_select_func_gate:
         pea     KEY_FUNC                          | displaced
         jsr     (%a3)                             | displaced
-        cmpi.l  #12,%d2
-        bcc.s   2f
-        move.l  silent_mask,%d1
-        bclr    %d2,%d1
-        move.l  %d1,silent_mask
-2:      tst.l   %d0
+        tst.l   %d0
         beq.s   1f
         move.l  %a2,%a0
+        moveq   #1,%d1                            | a pad
         bsr.w   active
         eori.l  #1,%d0                            | held, and reported only when off
 1:      jmp     FUNC_RESUME
 
         | ------------------------------------------------------------------
-        | active(a0 = KeyboardView) -> d0 = 1 when PAD+TRIG SEL TRK is checked
-        | and the sequencer is in neither LIVE REC nor STEP REC, else 0.
+        | active(a0 = KeyboardView, d1 = 1 a pad, 0 a TRIG key) -> d0 = 1
+        | when PAD+TRIG SEL TRK is checked and the sequencer is not in STEP
+        | REC, and, for a TRIG key, not in LIVE REC either; else 0. A pad
+        | stays gated in LIVE REC: only FUNC + pad plays and records there.
         | Clobbers d1/a0/a1.
         | ------------------------------------------------------------------
         .align  2
 active:
+        move.l  %d2,-(%sp)
         move.l  %a2,-(%sp)
         move.l  %a0,%a2
+        move.l  %d1,%d2
         bsr.w   flag_get
         tst.l   %d0
         beq.s   9f
-        move.l  VIEW_SEQ(%a2),-(%sp)
-        jsr     LIVE_GET
-        addq.l  #4,%sp
-        tst.b   %d0
-        bne.s   8f
         move.l  VIEW_SEQ(%a2),-(%sp)
         jsr     STEP_GET
         addq.l  #4,%sp
         tst.b   %d0
         bne.s   8f
-        moveq   #1,%d0
+        tst.l   %d2
+        bne.s   7f                                | a pad: LIVE REC does not matter
+        move.l  VIEW_SEQ(%a2),-(%sp)
+        jsr     LIVE_GET
+        addq.l  #4,%sp
+        tst.b   %d0
+        bne.s   8f
+7:      moveq   #1,%d0
         bra.s   9f
 8:      moveq   #0,%d0
 9:      move.l  (%sp)+,%a2
+        move.l  (%sp)+,%d2
         rts
 
         | ------------------------------------------------------------------
@@ -495,8 +438,6 @@ drw_invoke:
 txt_label:
         .asciz  "PAD+TRIG SEL TRK"
 
-        | Written at run time: whether the press in hand is silent, and one
-        | bit per pad (0..11) for a pad whose last press was silent.
+        | Written at run time: whether the press in hand is silent.
         .align  2
 pl_last: .long  0
-silent_mask: .long 0

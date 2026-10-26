@@ -1,28 +1,30 @@
 # Pad Select — test report
 
-- Module: `pad-select` 0.3.0-experimental, for Analog Rytm MKII OS 1.74 on core-ar2 0.3.
+- Module: `pad-select` 0.4.0-experimental, for Analog Rytm MKII OS 1.74 on core-ar2 0.3.
 - Source: rytm2_mods (`Iced-Cream/rytm2_mods`), `pad-select` 0.2, local commit
   `35ea2f0` on branch `claude/pad-select`, **not yet pushed**, so `source.revision` is left out of
   the manifest until a public commit exists. 0.2.0-experimental here was that file byte for byte
-  (`93d95e91…3863`, fingerprint `10bc355d…aecd`). 0.3.0 changes it in `play_gate`, adds `mark`,
-  `pressure_gate` and `silent_mask`, changes `func_gate` and `drw_invoke`, and adds one site ([0.3.0](#030-auto-trk-switch-and-aftertouch-2026-10-25)):
-  `src/pad-select.s` `e43d005f…6699`. `include/ar2-1.74.inc` (`c57431f7…874b`) is rytm2_mods'
+  (`93d95e91…3863`, fingerprint `10bc355d…aecd`). 0.4.0 changes `play_gate`, `active`,
+  `func_gate` and `drw_invoke` ([0.4.0](#040-pads-silent-in-live-rec-aftertouch-as-stock-2026-10-25);
+  0.3.0's aftertouch hook and its site are gone again): `src/pad-select.s` `264cade4…5d65b`. `include/ar2-1.74.inc` (`c57431f7…874b`) is rytm2_mods'
   `include/ar2-1.74.inc`, byte for byte. Source fingerprint (`sha256` of
-  `sha256sum include/ar2-1.74.inc src/pad-select.s`): `4f79fd7c…ff57`.
+  `sha256sum include/ar2-1.74.inc src/pad-select.s`): `afe82d39…6dba`.
 - Stock OS 1.74: `.syx` `cb0f99d6…e123`, main OS `34cd0c4d…1f3b`, the owner's file.
 - Core: elekloader core-ar2 0.3 (`core-ar2-v0.3`, `core-ar2-0.3.elemod` `6b97dfb3…3e58`, as vendored).
-- Build PS04 (core-ar2 0.3 + 0.3.0 with the review fixes, Modwerk's linker, `--version PS04`):
-  `.syx` `5c95d3861eac5831710446b71b564468f7b4823fab39e04b451f2e2e23d0566f`, main OS
-  `6655ec5e…15a8`. Tested in rytm-emu 2026-10-25. Not run on a unit.
+- Build PS05 (core-ar2 0.3 + 0.4.0, Modwerk's linker, `--version PS05`): `.syx`
+  `40e2f30a8b53d771a3d74027cf5f61389a4b380f94efa423f983f86c7f302865`, main OS `ed7bcf14…3c4e`.
+  Tested in rytm-emu 2026-10-25. Not run on a unit.
+- Build PS04 (0.3.0 with the review fixes): `.syx` `5c95d386…566f`, main OS `6655ec5e…15a8`.
+  Ran on an Analog Rytm MKII on 2026-10-25 ([Hardware](#hardware)).
 - Build PS03 (0.3.0 before the review fixes): `.syx` `f0ac2210…7a85`, main OS `2884ff5a…5879`.
 - Build PS74 (core-ar2 0.3 + 0.2.0): `.syx` `4b2e6567…ad21`, main OS `7ea05528…033f`. The
   emulator sections below marked 0.2.0 ran on it.
 
 ## Sites
 
-Six sites, read from stock OS 1.74, each recorded as an address, a length and the SHA-256 of
-those bytes. The first five and the menu site are rytm2_mods' and their stock bytes match its
-`mod.json`; `0x400c74d4` is new in 0.3.0.
+Five sites, read from stock OS 1.74, each recorded as an address, a length and the SHA-256 of
+those bytes; all are rytm2_mods' and their stock bytes match its `mod.json`. 0.3.0 had a sixth,
+`0x400c74d4` (the pad-pressure handler), which 0.4.0 drops.
 
 | Address | Length | Op | Target | What |
 | --- | --- | --- | --- | --- |
@@ -30,7 +32,6 @@ those bytes. The first five and the menu site are rytm2_mods' and their stock by
 | `0x400c7a3e` | 6 | jsr | `pad_select_autotrk` | the pad handler's AUTO TRK SWITCH call |
 | `0x400c7e90` | 6 | jsr | `pad_select_autotrk` | the TRIG key handler's AUTO TRK SWITCH call |
 | `0x400c7950` | 6 | jmp | `pad_select_func_gate` | the pad handler's FUNC test |
-| `0x400c74d4` | 8 | jmp | `pad_select_pressure_gate` | KeyboardView's pad-pressure handler, vtable slot 18 (jmp + nop) |
 | `0x400ec184` | 8 | jmp | `pad_select_menu_add` | the SEQUENCER CONFIG menu's constructor (jmp + nop) |
 
 rytm2_mods declares the two AUTO TRK SWITCH sites as `keep2`. The stock instruction there is an
@@ -63,6 +64,49 @@ OS as the local materialisation, `7ea05528…033f`. The builds stayed on the own
 
 Not compared byte for byte with an elekloader build on core-ar2 0.3: the elekloader build kept
 in rytm2_mods is on core-ar2 0.4, and no elekloader checkout was available here.
+
+## 0.4.0: pads silent in LIVE REC, aftertouch as stock (2026-10-25)
+
+After testing PS04 on a unit, the tester asked for two changes:
+
+- **Pads stay silent in LIVE REC.** A plain pad tap there selects only; FUNC + pad plays and
+  records. TRIG keys keep playing and recording in LIVE REC, as stock (FUNC + TRIG cannot play),
+  and STEP REC stays stock. `active()` now takes the key: a pad is gated outside STEP REC, a TRIG
+  key outside LIVE and STEP REC.
+- **Aftertouch untouched,** so a held pad can modulate its sound without playing it. 0.3.0's
+  pressure hook (`pressure_gate`, site `0x400c74d4`), its per-pad bits and their clearing in
+  `func_gate` are removed; pressure goes to stock whatever the press did.
+
+Build: 784-byte `.run`, 5 sites, 6 relocations; links with core-ar2 0.3 alone (`ed7bcf14…3c4e`)
+and beside Filter Hz and Loop Sync (`6f87c449…c0cf`); the source-only export links the same.
+
+PS05 in rytm-emu (**A5** checked, **B5** unchecked, **S** stock, snapshots made as before):
+
+| Test | A5 (checked) | S (stock) |
+| --- | --- | --- |
+| LIVE REC: SD, TRIG 5, FUNC + SD, NO + SD | SD silent; TRIG 5 plays (velocity 100); FUNC + SD plays at 127; NO + SD reaches no play routine | SD and TRIG 5 play; FUNC + SD at 100; NO + SD the same |
+| LIVE REC, then PLAY (ends live recording), analog recording of the next six bars: no tap / plain SD tap / FUNC + SD tap | plain tap: byte-identical to no tap, at the tap and in every later bar (nothing sounded, nothing recorded); FUNC + SD: the hit sounds and comes back once a bar | plain SD tap: the same as A5's FUNC + SD |
+| SD held with pressure, FUNC + SD held, SD held | the plain holds send their poly pressure (`AD 01 …`) with no note-on; FUNC + SD sends note and pressure | all three: note and pressure |
+| CY sequenced, its pad held: without / with a pressure stream | without: analog recording byte-identical to no press; with: the pressure modulates the cymbal (same recording as 0.2.0's) and goes out as poly pressure | |
+| STEP REC: TRIG 3, TRIG 4, SD | as stock | |
+
+All the other groups (the 20 mode groups and both AUTO TRK SWITCH groups) gave the same counts,
+MIDI out and screens on PS05 as on PS04, except the LIVE REC pad press in the NO + pad group,
+which is now silent. B5 matched stock in every group, apart from the SEQUENCER CONFIG screens with
+the row. The 26 frames of the capture run are byte-identical to PS04's.
+
+Release notes for publication (`src/community/module-changelogs/analog-rytm-mkii-pad-select.json`
+cannot exist while the module is in `_submissions/`: the check refuses an ID outside the library):
+
+```json
+[{ "version": "0.4.0-experimental", "date": "2026-10-25", "changes": [
+  "New module for Analog Rytm MKII OS 1.74 on core-ar2 0.3: with PAD+TRIG SEL TRK checked, a pad press selects its track silently, even while live recording.",
+  "FUNC + pad plays the track at the pad's own velocity, and records it in live recording.",
+  "Holding a pad down still sends aftertouch, so it can modulate a sound without playing it.",
+  "TRIG keys select silently too, except in live and step recording.",
+  "Known issue: 0.4.0 is tested in an emulator; its predecessor 0.3.0 ran on a unit."
+] }]
+```
 
 ## 0.3.0: AUTO TRK SWITCH and aftertouch (2026-10-25)
 
@@ -122,18 +166,6 @@ same counts, MIDI out and screens as PS03's A3, and B4 matched stock in all of t
 SEQUENCER CONFIG screens, which carry the row. The CY recording with a held, pressed silent pad is
 byte-identical to the run without it, with no MIDI. Persistence and GLOBAL slots were last run on
 0.2.0; the storage code has not changed since.
-
-Release notes for publication (`src/community/module-changelogs/analog-rytm-mkii-pad-select.json`
-cannot exist while the module is in `_submissions/`: the check refuses an ID outside the library):
-
-```json
-[{ "version": "0.3.0-experimental", "date": "2026-10-25", "changes": [
-  "New module for Analog Rytm MKII OS 1.74 on core-ar2 0.3: with PAD+TRIG SEL TRK checked, pads and TRIG keys select their track silently outside live and step recording.",
-  "FUNC + pad plays the track at the pad's own velocity; live and step recording work as stock.",
-  "A pad pressed silently sends no aftertouch, and FUNC + pad follows AUTO TRK SWITCH as stock.",
-  "Known issue: tested in an emulator only, not yet on a unit."
-] }]
-```
 
 FUNC + RTRG toggles the metronome click on stock ("CLICK ON"), so FUNC + RTRG + pad, which 0.2.0's
 design names as the roll gesture outside live recording, also switches the click.
@@ -245,29 +277,56 @@ Captures: the four PNGs in `media/` come from one cold boot whose command line i
 
 ## Hardware
 
-**Not tested.** Pad Select has not run on a unit. To do, on the exact PS04 build (or a later one
-that names its hash):
+### PS04 on an Analog Rytm MKII (2026-10-25), as reported
+
+The tester flashed PS04 (`.syx` `5c95d386…566f`) with Transfer; the unit booted and showed PS04.
+Reported results, in the tester's words summarised:
+
+- With PAD+TRIG SEL TRK checked, the setting works as they expected: plain pad presses select
+  without sound, and FUNC + pad plays.
+- LIVE REC: pads still play (0.3.0's design).
+- Aftertouch with an AFTERTOUCH destination set: after a silent tap held down, the destination
+  registered only the initial tap, with no continuous aftertouch; with FUNC held it registered
+  continuously (0.3.0's gate). The tester wants aftertouch untouched by the setting, so a held pad
+  can modulate the sound without triggering it.
+- Tapping a pad without FUNC does not cut a sequenced note.
+- Power cycle: PS04 still loaded, PAD+TRIG SEL TRK still checked in GLOBAL slot 1.
+- GLOBAL slot 2: PAD+TRIG SEL TRK unchecked, AUTO TRK SWITCH checked.
+- MIDI out: not tested.
+
+Not reported: GRID and STEP REC, CHROMATIC, MUTE, PERF, SCENE, the sound browser, AUTO TRK SWITCH
+off, a long run.
+
+### Still to do
+
+On PS05 (or a later build that names its hash), the 0.4.0 changes first:
+
+1. LIVE REC: plain pad taps silent and recorded nowhere; FUNC + pad plays and records; TRIG keys
+   play and record; NO + pad erases.
+2. Aftertouch with an AFTERTOUCH destination: tap a pad silently and keep pressing; the sound is
+   modulated continuously, and no note sounds.
+
+Then the rest, not yet reported on any build:
 
 1. GLOBAL > CONTROL > SEQUENCER CONFIG: PAD+TRIG SEL TRK after AUTO TRK SWITCH; YES and
    LEFT/RIGHT toggle it. Save, power-cycle, reload: kept. Another GLOBAL slot keeps its own.
 2. Stopped and playing: pads and TRIG 1-12 select silently; FUNC + pad plays, soft and hard,
    at the pad's velocity. Holding a pad on a sounding track does not cut its note on release.
-   A silent pad held with pressure sends no aftertouch; FUNC + pad's aftertouch works.
    AUTO TRK SWITCH unchecked: a silent press selects, FUNC + pad does not.
 3. GRID REC: TRIG keys place trigs; pads select silently; FUNC + pad plays.
-4. LIVE REC and STEP REC: as stock; NO + pad erases in LIVE REC.
-5. CHROMATIC mode, MIDI notes in, TRIG + YES, the SOUND BROWSER: as stock. A track with MIDI
-   out: a silent press sends nothing, FUNC + pad sends a note.
-6. RTRG + pad: silent and selects; FUNC + RTRG + pad rolls.
+4. STEP REC: as stock.
+5. CHROMATIC mode, MIDI notes in, TRIG + YES: as stock; the SOUND BROWSER auditions with FUNC +
+   pad. A track with MIDI out: a silent press sends no note (its aftertouch still goes out),
+   FUNC + pad sends a note.
+6. RTRG + pad: silent and selects (FUNC + RTRG toggles the click).
 7. MUTE, SCENE, PERF modes and TRK + pad: unchanged.
 8. Unchecked: everything stock, AUTO TRK SWITCH as set.
 9. A project saved with it checked, loaded on stock 1.74 and on a build without the module.
 
 ## Load and memory
 
-892 bytes in the shared DDR area, no `.bss`, no fast SRAM. The sites are in the pad and TRIG key
-handlers and their play routine, the pad-pressure handler, and the SEQUENCER CONFIG menu's
-constructor. Each press reads
+784 bytes in the shared DDR area, no `.bss`, no fast SRAM. The sites are in the pad and TRIG key
+handlers and their play routine, and the SEQUENCER CONFIG menu's constructor. Each press reads
 one storage bit through `core_store_get` and the record state; nothing runs in the audio,
 sequencer or tick paths. Static reading, not a measurement.
 
