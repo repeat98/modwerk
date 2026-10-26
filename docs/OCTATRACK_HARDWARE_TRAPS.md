@@ -536,6 +536,15 @@ PLAY MODES' three project-file seams; it now sits beside them and SCALE
 QUANTIZER's, and the build fails when a base site meets the stock bytes any
 catalogue module patches or keeps (`catalogue_overlaps`).
 
+**Use the SDK's MCF54455 CPU target, not the emulator's MCF5475 target.** On a contributor's MKII
+(24 October 2026, base `cd39c494`, Beat Slicer private USB probe 0.1.52), an override to
+`-mcpu=5475` emitted scale-eight indexed LEA in text drawing; the unit restarted with vector 3
+at that exact instruction. MCF54455 rejects scale-eight and word-sized indexes with address
+errors ([reference manual, 3.3.4.2](https://www.nxp.com/docs/en/reference-manual/MCF54455RM.pdf)).
+The emulator accepted it. Keep the machine SDK's target flags and audit final code; emulator
+execution is not an ISA-compatibility check. Probe qualification history remains
+in [Beat Slicer's testing record](../sdk/drafts/beat-slicer/TESTING.md).
+
 **GCC 16.2 at -O2 can store one byte late.** Its late-combine pass turned
 the controller board's byte copy into `move.b (%a0)+,(0,%a0,%d0.l)`. The
 ColdFire computes the destination from the register it has just
@@ -751,18 +760,10 @@ What `ot_emu` does not show:
   unless given `--card-rw`. Hold remote keys for unit ticks, not wall time:
   under `--dsp` it runs far slower than the clock.
 
-**Keep one link open and drive it by name** (the full how-to: [OCTATRACK_DRIVING.md](OCTATRACK_DRIVING.md)).
-- *The session.* Each `npm run device` call opens the bridge again (one to
-  two seconds) and, after a quiet spell, brings up MODWERK CONNECTED.
-  Instead run `while :; do npm run device -- serve; sleep 1; done` in a
-  terminal. It starts the bridge, keeps the link open, sends a request every
-  4 s so the popup shows once, and comes back after a RAM boot (`boot DIR`).
-- *Sending.* `scripts/device-send.py 'part2 pick:T1:FX2:E-Verb stats'`
-  replies in well under a second: `pick` by name (scrolled with LEVEL, done
-  once the track runs it, about 1.4 s), `part1`-`part4`, `ui` (effects,
-  current track, Part, transport), `stats`, `png:FILE`, `try`/`remove`.
-- *Looking.* A screenshot at `--scale 2` (`png:FILE`) is cheaper to read
-  than the text rendering. Take one only for screens `ui` cannot name.
+**Keep one link open and drive it by name.** [OCTATRACK_DRIVING.md](OCTATRACK_DRIVING.md)
+covers the persistent session, named panel steps, state reads and screenshots.
+A single connection avoids repeated bridge startup and CONNECTED notices; use
+screenshots only for details the state reads cannot show.
 
 Tools that work on this Mac:
 - Development bases (`build_core.py --dev`): `npm run device -- key`,
@@ -773,8 +774,6 @@ Tools that work on this Mac:
   Homebrew's ffmpeg was broken (missing libx265).
 - `dsp_asm` for `--dsp-loader` builds: build `source/dsp_host/dsp_asm` from
   Octabam's vendored `dsp56300` with CMake and set `ELEKLOADER_DSP_ASM`.
-- Read device state in one USB connection when timing matters: separate
-  `npm run device` calls each take most of a second.
 
 ## How to debug on the unit
 

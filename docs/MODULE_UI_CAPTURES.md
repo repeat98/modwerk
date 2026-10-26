@@ -44,6 +44,9 @@ machine/track prerequisites and hardware differences when applicable.
 
 Use hardware LCD photographs/captures or the headless emulator's actual
 framebuffer. Preserve the rendered pixels and use readable integer scaling.
+A working framebuffer can be sampled during a redraw. For pixel comparisons,
+observe completion of the actual renderer before reading it; a fixed delay alone
+does not establish a complete frame. Retain failed comparisons for diagnosis.
 Do not reconstruct labels, redraw the interface, generate mockups or present
 an illustration as an OT capture. A selection cursor alone does not prove that
 the module loaded: confirm it, then capture the resulting controls. Review

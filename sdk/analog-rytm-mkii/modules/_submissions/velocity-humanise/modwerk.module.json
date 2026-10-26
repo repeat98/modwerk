@@ -1,0 +1,200 @@
+{
+  "schemaVersion": 3,
+  "id": "velocity-humanise",
+  "name": "Velocity Humanise",
+  "version": "1.1.0",
+  "machine": "analog-rytm-mkii",
+  "category": "machines",
+  "exclusive": false,
+  "author": {
+    "github": "Iced-Cream",
+    "credits": [
+      "MrScruff — the original mod, 0003-velocity-humanise in rytm-mods, its design and code; published in rytm-mods-src with permission.",
+      "Iced-Cream — the elemod port (rytm2_mods) and this Modwerk module.",
+      "irpina — Elekloader and core-ar2, the core it links with."
+    ]
+  },
+  "maintainers": [
+    "Iced-Cream"
+  ],
+  "source": {
+    "repository": "https://github.com/Iced-Cream/rytm2_mods",
+    "revision": "afd461d4a8ef4306bb2a57d4c61ad35c362b3940",
+    "path": "velocity-humanise"
+  },
+  "presentation": {
+    "label": "VEL HUMANISE",
+    "family": "Sequencer",
+    "summary": "Per track, every trig's velocity gets a random offset of up to ±N, set with FUNC + VEL on the TRIG page.",
+    "overview": "Velocity Humanise gives each track a random velocity offset: every trig's velocity moves by a random amount up to ±N, clamped to 1..127. N is one of sixteen steps from 0 to 64, set by holding FUNC and turning VEL on the TRIG page, where the label reads RND and the knob becomes a sixteen-position selector. N is per pattern track, kept in core-ar2's mod storage and saved with the pattern. It is an elemod port of MrScruff's rytm-mods 0003-velocity-humanise, with his code unchanged apart from the storage port.",
+    "highlights": [
+      "FUNC + VEL sets a per-track random velocity range.",
+      "Sixteen steps from 0 to 64; 0 is stock behaviour.",
+      "Kept in core-ar2 mod storage and saved with the pattern.",
+      "No longer needs Euclid Accents in the same build."
+    ],
+    "usage": [
+      "Use a build containing Velocity Humanise. On the TRIG page, hold FUNC and turn VEL: the label reads RND and the popup shows N.",
+      "Set N to 32 and play a track of equal-velocity trigs: the hits vary in level. Set N to 0: they are equal again.",
+      "Release FUNC: VEL is the trig velocity again, unchanged."
+    ]
+  },
+  "access": {
+    "location": "TRIG page: the VEL knob with FUNC held.",
+    "steps": [
+      "Open the TRIG page.",
+      "Hold FUNC and turn VEL to set N."
+    ],
+    "screenshots": [
+      "media/func-rnd-label.png",
+      "media/rnd-12.png"
+    ]
+  },
+  "controls": [
+    {
+      "name": "FUNC + VEL (TRIG page)",
+      "default": null,
+      "doc": "Sets the track's random velocity range N: sixteen steps from 0 to 64. Each trig's velocity moves by a random amount up to ±N, clamped to 1..127.",
+      "labels": null
+    }
+  ],
+  "compatibility": {
+    "releases": [
+      "1.74"
+    ],
+    "requires": [],
+    "conflicts": [],
+    "limitations": [
+      "Built for OS 1.74 only, with core-ar2 0.3.",
+      "Needs core-ar2 0.3's mod storage: four bits per pattern track (vel_rnd). Earlier cores lose N at a power-off without a project save.",
+      "On stock firmware, or a build without this module, the track plays its plain velocities: N is in mod storage, which stock ignores.",
+      "Patches param_apply_delta and param_value_text next to other gate-chain modules; each has its own site and they link together."
+    ]
+  },
+  "platform": {
+    "kind": "elemod",
+    "core": "0.3",
+    "build": "build.json",
+    "events": [],
+    "claims": [
+      "ui:TRIG page FUNC + VEL",
+      "sequencer:trig velocity offset"
+    ]
+  },
+  "resources": {
+    "memoryBytes": 828,
+    "fastBytes": 0,
+    "load": {
+      "display": "Small: a storage read, a random draw and a clamp on each trig",
+      "method": "static",
+      "conditions": "Static: one detour runs per trig in the sequencer; it reads the track's N through core_store_get, which masks interrupts briefly, then draws and clamps the offset. The others run on UI edits and drawing. Not a measurement."
+    }
+  },
+  "evidence": {
+    "tier": "author-hardware",
+    "moduleVersion": "1.1.0",
+    "sourceSha256": "44ffb066a070bad9666f403937a645e4d3ca219c247615bd9538a88b1177ff55",
+    "reports": [
+      "evidence/hardware-testing.json",
+      "evidence/source-parity.json"
+    ],
+    "hardware": {
+      "model": "Analog Rytm MKII",
+      "release": "1.74",
+      "testedOn": "2026-10-25",
+      "tester": "Iced-Cream",
+      "durationMinutes": null,
+      "summary": "Iced-Cream reports that on an Analog Rytm MKII with OS 1.74, velocity-humanise 1.1 passed test steps 1 to 3 (FUNC + VEL reads RND, N = 32 varies the hits and N = 0 does not, N kept through save and power-cycle) with core-ar2 0.3 and all eleven rytm2_mods ports in C3A4, with N kept through a power-cycle without SAVE PROJECT, and step 4 (the same without euclid-accents) on C3N4 (2026-10-20). On SXH4 (released core-ar2 0.3 with the other five Modwerk 1.74 submissions, 2026-10-24/25) N 10 measurably varied CP's equal-velocity hits where N 0 did not, and N was kept through a power cycle without SAVE PROJECT. Alone on VHH4 (released core-ar2 0.3 and this module only, 2026-10-25) N 64 spread CP's equal-velocity hits by about 3 dB where N 0 did not.",
+      "limitations": [
+        "Duration was not recorded.",
+        "Tested builds: C3A4, .syx 04d987ced36850eef5eb5cd1215d411edf621a5af94f980525ab561c9108f951; C3N4, .syx a74435c28591ec0f2d143b0629a4fd5b6f37ab85e0b3e4618b000698dd5ea9f5. Firmware was not read back from the device.",
+        "SXH4 (the released core-ar2 0.3, 2026-10-24/25, .syx e4d01a6aec250bd2af7743c9f8b0e9c560d805b52564932dddc41d872e1c5000) also carried a remote-control test layer that shares no site with core or the modules. VHH4 (alone with the released core-ar2 0.3, 2026-10-25, .syx 4bebbd5d7ba1860f168ee34c35212f58e67b525628a91b6f7d76fd5e5a101ca8) carried the same test layer."
+      ]
+    },
+    "verifiedBy": null
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "Hardware: velocity-humanise 1.1's test steps pass on an Analog Rytm MKII, OS 1.74, with core-ar2 0.3 (C3A4 and, without euclid-accents, C3N4, 2026-10-20), and N survives a power-cycle without a project save. Modwerk's source build gives a main OS byte-identical to elekloader's build of the rytm2_mods v1.2 release. In rytm-emu, holding FUNC on the TRIG page relabels VEL as RND and turning it shows N, where stock changes VEL.",
+    "documentation": {
+      "tutorial": {
+        "title": "Quick tutorial",
+        "steps": [
+          "Use a build containing Velocity Humanise. On the TRIG page, hold FUNC and turn VEL: the label reads RND and the popup shows N.",
+          "Set N to 32 and play a track of equal-velocity trigs: the hits vary in level. Set N to 0: they are equal again.",
+          "Release FUNC: VEL is the trig velocity again, unchanged."
+        ]
+      },
+      "screenshots": [
+        "media/trig-page.png",
+        "media/func-rnd-label.png",
+        "media/rnd-12.png"
+      ],
+      "captureRecord": "media/capture.json"
+    }
+  },
+  "license": {
+    "spdx": "GPL-2.0-only",
+    "file": "LICENSE",
+    "declaration": "MrScruff's rytm-mods code and Iced-Cream's elemod port, under GPL-2.0-only as rytm-mods-src. include/ar2-1.74.inc, shared/live-track.s and shared/shared.s name firmware routines and RAM by address only; the patch preconditions are addresses, lengths and SHA-256s."
+  },
+  "media": [
+    {
+      "path": "media/thumbnail.svg",
+      "kind": "thumbnail",
+      "caption": "Velocity Humanise",
+      "alt": "Original illustration of sixteen velocity bars scattered around a line",
+      "credit": "Iced-Cream",
+      "license": "GPL-2.0-only",
+      "source": "Original vector illustration; not a device screenshot."
+    },
+    {
+      "path": "media/trig-page.png",
+      "kind": "screenshot",
+      "caption": "Press TRIG on track BD: the TRIG page, with VEL as knob B.",
+      "alt": "TRIG page with NOT, VEL, LEN and PRB above SYN, SMP, ENV and LFO.",
+      "credit": "Iced-Cream documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "1.1.0",
+        "imageSha256": "f4f01cf1003a5e9e5aa401cca1e49e289a2f99007f8f140f36db0846bdbe8b1b",
+        "setup": "Headless rytm-emu c5732f0 (dtboot) running VH74, the released core-ar2 0.3 and velocity-humanise 1.1, built from the owner's stock OS 1.74; firmware-rendered 128x64 screen at 3x. UI documentation only."
+      }
+    },
+    {
+      "path": "media/func-rnd-label.png",
+      "kind": "screenshot",
+      "caption": "Hold FUNC: VEL's label reads RND. Stock keeps VEL.",
+      "alt": "TRIG page with the second knob labelled RND.",
+      "credit": "Iced-Cream documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "1.1.0",
+        "imageSha256": "f4f01cf1003a5e9e5aa401cca1e49e289a2f99007f8f140f36db0846bdbe8b1b",
+        "setup": "Headless rytm-emu c5732f0 (dtboot) running VH74, the released core-ar2 0.3 and velocity-humanise 1.1, built from the owner's stock OS 1.74; firmware-rendered 128x64 screen at 3x. UI documentation only."
+      }
+    },
+    {
+      "path": "media/rnd-12.png",
+      "kind": "screenshot",
+      "caption": "Turn it with FUNC held: the popup shows N, here 12. Stock shows the trig velocity, 100.",
+      "alt": "VELOCITY popup reading 12 over the TRIG page.",
+      "credit": "Iced-Cream documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "1.1.0",
+        "imageSha256": "f4f01cf1003a5e9e5aa401cca1e49e289a2f99007f8f140f36db0846bdbe8b1b",
+        "setup": "Headless rytm-emu c5732f0 (dtboot) running VH74, the released core-ar2 0.3 and velocity-humanise 1.1, built from the owner's stock OS 1.74; firmware-rendered 128x64 screen at 3x. UI documentation only."
+      }
+    }
+  ]
+}
