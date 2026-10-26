@@ -95,6 +95,7 @@
     },
     {
       "id": "ring-sc",
+      "unitName": "SC Ringmod",
       "slots": "both",
       "cycles": 81,
       "cyclesKind": "executed",
@@ -116,10 +117,10 @@
       "requires": 8,
       "claims": 4,
       "version": "0.2.0-experimental",
-      "name": "Ringmod SC",
+      "name": "SC Ringmod",
       "module": "773c84aa",
       "bytes": 2416,
-      "sha256": "2ba32a49c49fbda951ae3658d663e6e8663d7ff6680e27e5b089b163d7e0a187",
+      "sha256": "5c4e7fcfdc2ec212ae2bd551fe959fe2a2c8a798e8ad24baee08b44093c6304a",
       "path": "octatrack-modules/ring-sc/0.2.0-experimental.mwrm"
     },
     {

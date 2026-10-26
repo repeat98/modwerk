@@ -66,6 +66,8 @@ def build(entry, out, upstream, private_stock=None, stock_at=None):
     if entry.get('slots'):
         args += ['--dsp', '%s:%s' % (DSP, entry['id']), '--slots', entry['slots'], '--cycles', str(entry['cycles']),
                  '--cycles-kind', entry['cyclesKind'], '--state', str(entry['state'])]
+    if entry.get('unitName'):  # the name the unit lists (15 characters at most) when the catalogue name is longer
+        args += ['--name', entry['unitName']]
     if entry.get('buffer'):
         args += ['--buffer', str(entry['buffer'])]
     if entry.get('octabam'):
