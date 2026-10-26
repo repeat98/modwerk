@@ -61,7 +61,7 @@ describe('Analog Rytm MKII library', () => {
   it('lists Filter Hz and Loop Sync and leaves the core build preview once a module is in the library', () => {
     expect(DEVICES_BY_ID['analog-rytm-mkii'].status).toBe('preview')
     expect(isCoreBuildPreview('analog-rytm-mkii')).toBe(false)
-    expect(DIGI_MODS.filter(mod => mod.device === 'analog-rytm-mkii').map(mod => [mod.id, mod.version, mod.releases])).toEqual([['filter-hz', '1.2.0', ['1.74']], ['loop-sync', '0.3.0', ['1.74']]])
+    expect(DIGI_MODS.filter(mod => mod.device === 'analog-rytm-mkii').map(mod => [mod.id, mod.version, mod.releases])).toEqual([['filter-hz', '1.2.0', ['1.74']], ['loop-sync', '0.3.1', ['1.74']]])
   })
 })
 

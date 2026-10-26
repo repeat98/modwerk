@@ -1,6 +1,6 @@
 # Loop Sync testing
 
-Evidence tier: **author-hardware** for 0.3.0-experimental, build LS24, source sha256 `4234e987c8dd9a3a95c1278b31c5966f30438c3718dbb4c6884cf2489abb4269` (sha256 over `build.json` then each `src/` file in name order, each as its path, a NUL, its bytes and a NUL). The author tested LS16 and LS17 on a unit (below); LS18 (the review fixes) LS19 (lengths, wider correction, settings per sample) was tried by the author (below); LS20 was tried by the author (below); LS21 was heard by the author on a unit (below), LS23 was tried (below), and LS24 was heard and kept (below).
+Evidence tier: **author-hardware** for 0.3.1-experimental, test build MD04 as reported by the author (below), source sha256 `3d4466c7483de2a1e0fb1e73bb212e3d6dea2f06b3ad1d9bf8527f8efd16073d` (sha256 over `build.json` then each `src/` file in name order, each as its path, a NUL, its bytes and a NUL). 0.3.1 changes only `src/loop-sync.c`'s audio path; its behaviour is 0.3.0's (host test below), whose record follows: 0.3.0-experimental, build LS24, source sha256 `4234e987c8dd9a3a95c1278b31c5966f30438c3718dbb4c6884cf2489abb4269`. The author tested LS16 and LS17 on a unit (below); LS18 (the review fixes) LS19 (lengths, wider correction, settings per sample) was tried by the author (below); LS20 was tried by the author (below); LS21 was heard by the author on a unit (below), LS23 was tried (below), and LS24 was heard and kept (below).
 
 ## Build
 
@@ -167,9 +167,30 @@ Reported by the author on a unit with LS23: the SMP-locked loop was far too fast
 
 On the unit, LS24, by ear (author, 24 October 2026): "c'est bon" for his pattern with SMP locks to loops in other slots and his fast loop with the tempo lowered below 128 BPM. Then, same unit and build, reported by the author: settings kept after SAVE PROJECT and a reboot; loops follow an external MIDI clock; with an LFO on SAMP:Start of a synced track, in FREE mode the loop leaves the grid (each trig starts at another point of the loop, so its beats fall off the steps), and in TRIG mode it stays in time. CPU was not measured.
 
+## 0.3.1: a lighter audio path (26 October 2026)
+
+On the author's busy project the Rytm's interface lagged with Send FX; diagnostic builds showed the audio interrupt at 77.4 % of a block with Loop Sync 0.3.0 (build LF13) and 70.0 % without it (LF13b, a different image). 0.3.1 makes the audio path cheaper without changing what it plays:
+
+- When only the tempo word moves, a track's source tempi (in AUTO, one for each power-of-two length) are reused, and AUTO compares only the two lengths around the tempo: three logarithms and no source divisions, where 0.3.0 took eight logarithms and about nineteen divisions. They are computed again when the sample, region, mode, a trim or the slot's frames or rate change.
+- Each track's inputs, shift and glide sit in one 32-byte record (two cache lines), not in a dozen arrays.
+- The recompute is out of line: the loop the interrupt runs every block is 458 bytes (0.3.0: 984).
+- Nothing runs while no slot has a mode.
+
+| Check | Result |
+| --- | --- |
+| Host equivalence: 0.3.0's and 0.3.1's `loop-sync.c` compiled on a Mac (`-O2 -fwrapv`), driven by the same random blocks (tempo jitter and jumps, SMP locks, STA/END, settings, project reloads, trims, samples replaced in slots with and without the trim scan) | 1.5 million blocks in five series: the same effective TUN word on every track of every block; the 0.3.0 freeze below occurs at the same blocks in both |
+| Host: AUTO's choice, 0.3.0's scan of all lengths against 0.3.1's two neighbours | identical for 41 million cases (random regions and rates, every tempo 1-40,000 in 1/120 BPM, 0 and negative) |
+| rytm-emu, four-loop card, loop120 in AUTO at 127 BPM, diagnostic builds with a meter (LSM1 = 0.3.0, LSM2 = 0.3.1, both with Send FX LF11) | beats 0.472-0.473 s apart in both, every onset at the same millisecond |
+| rytm-emu, the same, Loop Sync's own time per audio block (DMA timer 0, 1,500-block windows; instruction-timed, no cache model) | steady: 0.3 % (0.3.0), 0.2 % (0.3.1); tempo word moving every block: 2.4 %, 0.9 % a track |
+| elekloader lint, loop-sync elemod sha256 `fb1020f6…` | `.run` 6,224, `.bss` 2,884 bytes; links as core 0.3 > loop-sync 0.3; storage fields unchanged |
+
+On a unit, reported by the author on 26 October 2026 through the Send FX session: test build MD04 (this source's elemod `fb1020f6…`, with a core-ar2 0.7 draft and Send FX) "marche parfaitement chez moi". Which loop checks he ran was not reported, and no CPU figure was given. The diagnostic builds LSM1 and LSM2 (the meter, on core-ar2 0.3) were handed to him; their readings are not reported yet.
+
+Found by the host test, in 0.3.0 and 0.3.1 alike (certain in the C code, not seen on a unit): with a fixed length of 3 to 16 BAR on a region shorter than about 0.14 s, the corrected source tempo overflows 32 bits and turns negative, and the logarithm's normalising loop never ends in the audio interrupt, so the unit would freeze. At 127 BPM, 48 kHz, whole sample: 16 BAR freezes between 0.021 and 0.108 s, 8 BAR between 0.028 and 0.054 s, 4 BAR between 0.021 and 0.027 s (more with a + correction). AUTO never picks such a length. The fix is a separate change.
+
 ## Screenshots
 
-`media/sync-auto.png`, `media/sync-percent.png` and `media/sync-mark.png` come from build LS19 in rytm-emu (identical with LS20 to LS24) (all on the SAMPLE page); inputs, image and PNG hashes in `media/capture.json`.
+`media/sync-auto.png`, `media/sync-percent.png` and `media/sync-mark.png` come from build LS19 in rytm-emu (identical with LS20 to LS24, and with LS31, 0.3.1, recaptured on 26 October 2026) (all on the SAMPLE page); inputs, image and PNG hashes in `media/capture.json`.
 
 ## Not tested
 
@@ -178,3 +199,4 @@ On the unit, LS24, by ear (author, 24 October 2026): "c'est bon" for his pattern
 - Swing, track speed and pattern changes (the mod does not act on steps; it only follows the tempo word).
 - Combination with other Rytm mods.
 - Memory and CPU on hardware.
+- The 3-16 BAR freeze on very short samples (0.3.1 section): found in a host test, not reproduced on a unit or in the emulator.

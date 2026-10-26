@@ -128,23 +128,42 @@ static const unsigned char len_beats[LENGTHS] = { 1, 2, 3, 4, 6, 8, 12, 16, 24, 
 // and corrected for it; that correction is gone with the parameter write.
 
 // Written by the idle tick and the handlers, read by the audio interrupt (one
-// word each). gen moves on whenever a slot's trim or correction changes.
-static short cfg_sta[SOUND_TRACKS], cfg_end[SOUND_TRACKS];   // the sound's own STA/END, 8.8
-static short cfg_smp[SOUND_TRACKS];        // the sound's own sample slot, before locks and scenes
+// word each). gen moves on whenever a slot's trim or correction changes;
+// modes_on is never below the number of slots whose mode is not OFF.
 static unsigned char slot_mode[SLOT_LAST + 1];
 static signed char slot_adj[SLOT_LAST + 1];   // 0.2 % steps
 static unsigned trim_frames[SLOT_LAST + 1];   // frames to count, 0 before the scan
 static unsigned trim_data[SLOT_LAST + 1], trim_len[SLOT_LAST + 1];   // what was scanned
 static volatile unsigned gen;
+static volatile int modes_on;
 static int scan_next = 1;
-// The audio interrupt's cache: the inputs of the last shift and the shift.
-static short key_slot[SOUND_TRACKS], key_sta[SOUND_TRACKS], key_end[SOUND_TRACKS];
-static unsigned char key_mode[SOUND_TRACKS];
-static signed char key_adj[SOUND_TRACKS];
-static unsigned key_gen[SOUND_TRACKS];
-static int key_tempo[SOUND_TRACKS];
-static short shift[SOUND_TRACKS];          // the target, in TUN's 8.8, 1/256 semitone
-static int glide[SOUND_TRACKS];            // the shift played, in 1/65536 semitone, gliding to the target
+// Each sound track's state in one 32-byte record: stock empties the caches
+// every block, so a synced track costs the audio interrupt two lines, not a
+// line in each of a dozen arrays. The tick writes cfg_*; the rest is the audio
+// interrupt's cache: the inputs of the last shift and the shift.
+struct track {
+    short cfg_sta, cfg_end;                // the sound's own STA/END, 8.8
+    short cfg_smp;                         // the sound's own sample slot, before locks and scenes
+    short key_slot, key_sta, key_end;
+    unsigned char key_mode;
+    signed char key_adj;
+    short shift;                           // the target, in TUN's 8.8, 1/256 semitone
+    unsigned key_gen;
+    int key_tempo;
+    int glide;                             // the shift played, in 1/65536 semitone, gliding to the target
+    int unused;                            // pads the record to 32 bytes
+};
+static struct track trk[SOUND_TRACKS] __attribute__((aligned(16)));
+// The source tempi of the sample each track plays, over its region, before the
+// correction: in AUTO one for each power-of-two length, 1 to 64 beats; for a
+// fixed length the first alone; with the slot's frames and rate they come
+// from. Read only when the shift is recomputed.
+#define POW2_LENGTHS 7
+struct track_src {
+    unsigned src[POW2_LENGTHS];
+    unsigned frames, rate;
+};
+static struct track_src trk_src[SOUND_TRACKS];
 
 static int ready;                          // set by ev_project: the kit and its sounds exist
 static int on_sample_page;                 // SMPL was the last page key, and no other key moved away since
@@ -204,25 +223,42 @@ static unsigned source_for(int slot, int sta, int end, unsigned beats)
     return (7200u * beats * (rate / 100)) / (region / 100);
 }
 
-// AUTO: the power-of-two length (1/4 to 16 bars), as beats, that puts the
-// source tempo nearest the project tempo; the shorter of two as near. The
-// other lengths are for FUNC + TUN only: among them, a one-bar loop of 100 BPM
-// at 127 would read as 1.5 bars of 150 (rytm-emu, LS19).
+// The source tempi of a slot played from sta to end as 1, 2, 4 ... 64 beats.
+static void pow2_sources(unsigned *src, int slot, int sta, int end)
+{
+    int k;
+    for (k = 0; k < POW2_LENGTHS; k++)
+        src[k] = source_for(slot, sta, end, 1u << k);
+}
+
+// AUTO: the power-of-two length (1/4 to 16 bars) that puts the source tempo
+// nearest the project tempo; the shorter of two as near. The other lengths
+// are for FUNC + TUN only: among them, a one-bar loop of 100 BPM at 127 would
+// read as 1.5 bars of 150 (rytm-emu, LS19). src holds pow2_sources: each twice
+// the one before, so the nearest is one of the two around the tempo and two
+// logarithms decide (0.3 took all seven: the same choice, host-checked).
+// Returns the length's index, 2 (a bar) with no tempo or no source.
+static int auto_pick(const unsigned *src, int tempo)
+{
+    int k = 0, d0, d1;
+    if (tempo <= 0 || !src[0])
+        return 2;
+    while (k < POW2_LENGTHS - 1 && src[k + 1] <= (unsigned)tempo)
+        k++;
+    if (k == POW2_LENGTHS - 1 || src[k] > (unsigned)tempo)
+        return k;                          // the tempo is past either end
+    d0 = log2_ratio(src[k], (unsigned)tempo);
+    d1 = log2_ratio(src[k + 1], (unsigned)tempo);
+    if (d0 < 0) d0 = -d0;
+    if (d1 < 0) d1 = -d1;
+    return d1 < d0 ? k + 1 : k;
+}
+
 static unsigned auto_beats(int slot, int sta, int end, int tempo)
 {
-    unsigned best = 4, src;
-    int i, d, best_d = 0x7fffffff;
-    for (i = 0; i < LENGTHS && tempo > 0; i++) {
-        if (len_beats[i] & (len_beats[i] - 1))
-            continue;
-        src = source_for(slot, sta, end, len_beats[i]);
-        if (!src)
-            break;
-        d = log2_ratio(src, (unsigned)tempo);
-        if (d < 0) d = -d;
-        if (d < best_d) { best_d = d; best = len_beats[i]; }
-    }
-    return best;
+    unsigned src[POW2_LENGTHS];
+    pow2_sources(src, slot, sta, end);
+    return 1u << auto_pick(src, tempo);
 }
 
 // The source tempo for a mode, corrected by adj: a loop with a tail plays
@@ -251,6 +287,39 @@ static int shift_for(int tempo, unsigned src)
     return tenths >= 0 ? (tenths * 256 + 500) / 1000 : -((-tenths * 256 + 500) / 1000);
 }
 
+// A track's shift for its new inputs. The source tempi again when the sample,
+// its region, the mode, a trim or the slot's frames or rate changed; for a
+// tempo or a correction change, only AUTO's choice and the shift. A new
+// sample, region or mode jumps to its shift; a tempo or a correction change
+// glides, as a turntable's speed would. Out of line, so the loop the audio
+// interrupt runs every block stays short.
+static void __attribute__((noinline)) retune(struct track *t, struct track_src *c, int slot, int mode, int adj, int tempo)
+{
+    int sta = t->cfg_sta, end = t->cfg_end, k = 0;
+    int jump = slot != t->key_slot || sta != t->key_sta || end != t->key_end || mode != t->key_mode;
+    unsigned *src = c->src, frames = SLOT_FRAMES(slot), rate = SLOT_RATE(slot);
+    if (jump || gen != t->key_gen || frames != c->frames || rate != c->rate) {
+        c->frames = frames;
+        c->rate = rate;
+        if (mode == MODE_AUTO)
+            pow2_sources(src, slot, sta, end);
+        else
+            src[0] = source_for(slot, sta, end, BEATS_OF(mode));
+    }
+    if (mode == MODE_AUTO)
+        k = auto_pick(src, tempo);
+    t->key_slot = (short)slot;
+    t->key_sta = (short)sta;
+    t->key_end = (short)end;
+    t->key_mode = (unsigned char)mode;
+    t->key_adj = (signed char)adj;
+    t->key_gen = gen;
+    t->key_tempo = tempo;
+    t->shift = (short)shift_for(tempo, (unsigned)(((int)src[k] * (ADJ_UNIT + adj)) / ADJ_UNIT));
+    if (jump)
+        t->glide = t->shift << 8;
+}
+
 // The audio interrupt, once a block, between the LFO and the voices (audio.s).
 // Recomputes a track's shift only when its inputs changed, then adds it to
 // the track's effective TUN. The array is rebuilt every block, so the add does
@@ -258,12 +327,15 @@ static int shift_for(int tempo, unsigned src)
 void loop_sync_audio(void)
 {
     int tempo = TEMPO_WORD, track;
-    for (track = 0; track < SOUND_TRACKS; track++) {
+    struct track *t = trk;
+    if (!modes_on)
+        return;                            // no slot has a mode: nothing plays synced
+    for (track = 0; track < SOUND_TRACKS; track++, t++) {
         // The sample that plays (SMP locks and scenes follow), with its own
         // setting or else one from the sound's own sample (see the top), over
         // the sound's own STA/END: a STA lock that slices the loop, or an LFO
         // on STA/END, must not read as a shorter loop.
-        int slot = EFF(track, IDX_SMP) >> 8, base = cfg_smp[track], mode, adj, sta, end, tun;
+        int slot = EFF(track, IDX_SMP) >> 8, base = t->cfg_smp, mode, adj, tun, d;
         if (slot <= 0 || slot > SLOT_LAST)
             continue;
         mode = slot_mode[slot];
@@ -278,33 +350,14 @@ void loop_sync_audio(void)
         }
         if (mode == MODE_OFF || mode >= MODES)
             continue;
-        sta = cfg_sta[track];
-        end = cfg_end[track];
-        if (slot != key_slot[track] || sta != key_sta[track] || end != key_end[track]
-            || mode != key_mode[track] || adj != key_adj[track] || gen != key_gen[track]
-            || tempo != key_tempo[track]) {
-            // A new sample, region or mode jumps to its shift; a tempo or a
-            // correction change glides, as a turntable's speed would.
-            int jump = slot != key_slot[track] || sta != key_sta[track] || end != key_end[track]
-                       || mode != key_mode[track];
-            key_slot[track] = (short)slot;
-            key_sta[track] = (short)sta;
-            key_end[track] = (short)end;
-            key_mode[track] = (unsigned char)mode;
-            key_adj[track] = (signed char)adj;
-            key_gen[track] = gen;
-            key_tempo[track] = tempo;
-            shift[track] = (short)shift_for(tempo, source_of(mode, adj, slot, sta, end, tempo));
-            if (jump)
-                glide[track] = shift[track] << 8;
-        }
-        {
-            int target = shift[track] << 8, d = target - glide[track];
-            glide[track] += d >= 0 ? (d + (1 << GLIDE_SHIFT) - 1) >> GLIDE_SHIFT : -((-d + (1 << GLIDE_SHIFT) - 1) >> GLIDE_SHIFT);
-        }
-        if (!glide[track])
+        if (slot != t->key_slot || t->cfg_sta != t->key_sta || t->cfg_end != t->key_end
+            || mode != t->key_mode || adj != t->key_adj || gen != t->key_gen || tempo != t->key_tempo)
+            retune(t, &trk_src[track], slot, mode, adj, tempo);
+        d = (t->shift << 8) - t->glide;
+        t->glide += d >= 0 ? (d + (1 << GLIDE_SHIFT) - 1) >> GLIDE_SHIFT : -((-d + (1 << GLIDE_SHIFT) - 1) >> GLIDE_SHIFT);
+        if (!t->glide)
             continue;
-        tun = EFF(track, IDX_TUN) + ((glide[track] + 128) >> 8);
+        tun = EFF(track, IDX_TUN) + ((t->glide + 128) >> 8);
         if (tun < TUN_MIN) tun = TUN_MIN;
         if (tun > TUN_MAX) tun = TUN_MAX;
         EFF(track, IDX_TUN) = (short)tun;
@@ -346,9 +399,9 @@ void loop_sync_tick(char *ctrl)
         void *live = live_sound(accessor(track));
         if (live) {
             volatile short *params = (volatile short *)((char *)live + LIVE_PARAMS);
-            cfg_sta[track] = params[IDX_STA];
-            cfg_end[track] = params[IDX_END];
-            cfg_smp[track] = (short)(params[IDX_SMP] >> 8);
+            trk[track].cfg_sta = params[IDX_STA];
+            trk[track].cfg_end = params[IDX_END];
+            trk[track].cfg_smp = (short)(params[IDX_SMP] >> 8);
         }
     }
     for (n = 0; n < SCAN_PER_TICK; n++) {
@@ -362,7 +415,7 @@ void loop_sync_tick(char *ctrl)
         slot = sel >= 0 && sel < SOUND_TRACKS ? EFF(sel, IDX_SMP) >> 8 : 0;
         // Only on the SAMPLE page: elsewhere the mark would cover stock screens.
         mark = on_sample_page && slot > 0 && slot <= SLOT_LAST
-               && (slot_mode[slot] != MODE_OFF || (cfg_smp[sel] > 0 && cfg_smp[sel] <= SLOT_LAST && slot_mode[cfg_smp[sel]] != MODE_OFF));
+               && (slot_mode[slot] != MODE_OFF || (trk[sel].cfg_smp > 0 && trk[sel].cfg_smp <= SLOT_LAST && slot_mode[trk[sel].cfg_smp] != MODE_OFF));
         if (mark != mark_shown || show_ticks)
             ctrl[0x20] = 1;   // redraw: the box goes away, the SYNC mark follows the track
         mark_shown = mark;
@@ -411,7 +464,7 @@ static void put_bits(unsigned at, int n, unsigned v)
 // when all ENTRIES are taken, and changes nothing then.
 static int keep_slot(int slot, int mode, int adj)
 {
-    int e, free_e = -1, used = mode != MODE_OFF || adj != 0;
+    int e, free_e = -1, used = mode != MODE_OFF || adj != 0, was;
     unsigned at;
     for (e = 0; e < ENTRIES && entry_slot[e] != slot; e++)
         if (free_e < 0 && !entry_slot[e])
@@ -433,8 +486,13 @@ static int keep_slot(int slot, int mode, int adj)
         core_store_set(pack_field[at / 32], 0, 0, words[at / 32]);
         core_store_set(pack_field[(at + ENTRY_BITS - 1) / 32], 0, 0, words[(at + ENTRY_BITS - 1) / 32]);
     }
+    was = slot_mode[slot];
+    if (mode != MODE_OFF && was == MODE_OFF)
+        modes_on++;                // before the mode: the audio interrupt never skips a synced slot
     slot_mode[slot] = (unsigned char)mode;
     slot_adj[slot] = (signed char)adj;
+    if (mode == MODE_OFF && was != MODE_OFF)
+        modes_on--;                // after it
     gen++;
     return 1;
 }
@@ -454,13 +512,13 @@ int loop_sync_enc(void *brain, char *ev)
     track = TRACK_INDEX_OF(project + PROJECT_TRACKSEL);
     if (track < 0 || track >= SOUND_TRACKS)
         return 0;
-    slot = cfg_smp[track];
+    slot = trk[track].cfg_smp;
     if (slot <= 0 || slot > SLOT_LAST)
         slot = 0;                  // no sample: the box shows OFF
     mode = slot ? slot_mode[slot] : MODE_OFF;
     adj = slot ? slot_adj[slot] : 0;
-    sta = cfg_sta[track];
-    end = cfg_end[track];
+    sta = trk[track].cfg_sta;
+    end = trk[track].cfg_end;
     // Accumulate counts: one mode step every MODE_COUNTS, 0.2 % every ADJ_COUNTS.
     if (enc != turn_enc || !show_ticks)
         turn_acc = 0;
@@ -503,11 +561,12 @@ int loop_sync_enc(void *brain, char *ev)
 // tick and the key and encoder handlers do nothing.
 void loop_sync_project(int how, unsigned dropped)
 {
-    int track, e, f;
+    int track, e, f, on = 0;
     (void)how;
     (void)dropped;
+    modes_on = 1;                  // the audio interrupt walks the tracks while the settings change
     for (track = 0; track < SOUND_TRACKS; track++)
-        key_slot[track] = -1;
+        trk[track].key_slot = -1;
     for (track = 1; track <= SLOT_LAST; track++) {
         slot_mode[track] = MODE_OFF;
         slot_adj[track] = 0;
@@ -525,7 +584,9 @@ void loop_sync_project(int how, unsigned dropped)
         entry_slot[e] = (unsigned char)slot;
         slot_mode[slot] = (unsigned char)(mode < MODES ? mode : MODE_OFF);
         slot_adj[slot] = (signed char)(adj < -ADJ_MAX ? -ADJ_MAX : adj > ADJ_MAX ? ADJ_MAX : adj);
+        on += slot_mode[slot] != MODE_OFF;
     }
+    modes_on = on;
     gen++;
     show_ticks = 0;
     ready = 1;

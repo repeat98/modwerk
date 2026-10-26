@@ -1,5 +1,13 @@
 [
   {
+    "version": "0.3.1-experimental",
+    "date": "2026-10-26",
+    "changes": [
+      "Uses less CPU in the audio engine, most of all while the tempo keeps moving, as with an external MIDI clock. Loops play exactly as in 0.3.0.",
+      "Known issue: a length of 3 to 16 BAR on a sample shorter than about 0.14 s can freeze the unit; use AUTO or a shorter length for such samples."
+    ]
+  },
+  {
     "version": "0.3.0-experimental",
     "date": "2026-10-24",
     "changes": [
