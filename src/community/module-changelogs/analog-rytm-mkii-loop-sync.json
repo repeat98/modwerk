@@ -1,5 +1,14 @@
 [
   {
+    "version": "0.3.2-experimental",
+    "date": "2026-10-26",
+    "changes": [
+      "In AUTO each sample keeps the length it picked while the tempo moves: lowering or raising the tempo no longer makes a loop jump an octave.",
+      "AUTO picks the length at the tempo of the moment you set it, and again when the project loads. Leave AUTO and come back to pick again.",
+      "Known issue: a length of 3 to 16 BAR on a sample shorter than about 0.14 s can freeze the unit; use AUTO or a shorter length for such samples."
+    ]
+  },
+  {
     "version": "0.3.1-experimental",
     "date": "2026-10-26",
     "changes": [

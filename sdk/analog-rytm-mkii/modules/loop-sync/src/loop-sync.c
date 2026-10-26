@@ -164,6 +164,14 @@ struct track_src {
     unsigned frames, rate;
 };
 static struct track_src trk_src[SOUND_TRACKS];
+// AUTO's length for each sample, chosen once and kept while only the tempo
+// moves, so a tempo change never flips a loop by an octave: the index of its
+// power-of-two length (AUTO_NONE before the first choice) and the first of
+// pow2_sources it was chosen for, which changes with the region or the sample.
+// Chosen again for a new mode, region or sample, and after a project load.
+#define AUTO_NONE 0xff
+static unsigned char auto_k[SLOT_LAST + 1];
+static unsigned auto_src0[SLOT_LAST + 1];
 
 static int ready;                          // set by ev_project: the kit and its sounds exist
 static int on_sample_page;                 // SMPL was the last page key, and no other key moved away since
@@ -254,11 +262,20 @@ static int auto_pick(const unsigned *src, int tempo)
     return d1 < d0 ? k + 1 : k;
 }
 
+// AUTO's length index for a slot over src: the one the sample keeps, else the
+// one nearest the tempo (what the audio interrupt will keep).
+static int auto_index(int slot, const unsigned *src, int tempo)
+{
+    if (auto_k[slot] < POW2_LENGTHS && auto_src0[slot] == src[0])
+        return auto_k[slot];
+    return auto_pick(src, tempo);
+}
+
 static unsigned auto_beats(int slot, int sta, int end, int tempo)
 {
     unsigned src[POW2_LENGTHS];
     pow2_sources(src, slot, sta, end);
-    return 1u << auto_pick(src, tempo);
+    return 1u << auto_index(slot, src, tempo);
 }
 
 // The source tempo for a mode, corrected by adj: a loop with a tail plays
@@ -289,11 +306,12 @@ static int shift_for(int tempo, unsigned src)
 
 // A track's shift for its new inputs. The source tempi again when the sample,
 // its region, the mode, a trim or the slot's frames or rate changed; for a
-// tempo or a correction change, only AUTO's choice and the shift. A new
-// sample, region or mode jumps to its shift; a tempo or a correction change
-// glides, as a turntable's speed would. Out of line, so the loop the audio
-// interrupt runs every block stays short.
-static void __attribute__((noinline)) retune(struct track *t, struct track_src *c, int slot, int mode, int adj, int tempo)
+// tempo or a correction change, only the shift. In AUTO the length is the one
+// the sample keeps (cs: the sound's sample for a copy of it), chosen nearest
+// the tempo the first time. A new sample, region or mode jumps to its shift; a
+// tempo or a correction change glides, as a turntable's speed would. Out of
+// line, so the loop the audio interrupt runs every block stays short.
+static void __attribute__((noinline)) retune(struct track *t, struct track_src *c, int slot, int cs, int mode, int adj, int tempo)
 {
     int sta = t->cfg_sta, end = t->cfg_end, k = 0;
     int jump = slot != t->key_slot || sta != t->key_sta || end != t->key_end || mode != t->key_mode;
@@ -306,8 +324,13 @@ static void __attribute__((noinline)) retune(struct track *t, struct track_src *
         else
             src[0] = source_for(slot, sta, end, BEATS_OF(mode));
     }
-    if (mode == MODE_AUTO)
-        k = auto_pick(src, tempo);
+    if (mode == MODE_AUTO) {
+        if (auto_k[cs] >= POW2_LENGTHS || auto_src0[cs] != src[0]) {
+            auto_src0[cs] = src[0];
+            auto_k[cs] = (unsigned char)auto_pick(src, tempo);
+        }
+        k = auto_k[cs];
+    }
     t->key_slot = (short)slot;
     t->key_sta = (short)sta;
     t->key_end = (short)end;
@@ -335,7 +358,7 @@ void loop_sync_audio(void)
         // setting or else one from the sound's own sample (see the top), over
         // the sound's own STA/END: a STA lock that slices the loop, or an LFO
         // on STA/END, must not read as a shorter loop.
-        int slot = EFF(track, IDX_SMP) >> 8, base = t->cfg_smp, mode, adj, tun, d;
+        int slot = EFF(track, IDX_SMP) >> 8, base = t->cfg_smp, mode, adj, tun, d, cs = slot;
         if (slot <= 0 || slot > SLOT_LAST)
             continue;
         mode = slot_mode[slot];
@@ -344,6 +367,7 @@ void loop_sync_audio(void)
             if (SLOT_FRAMES(slot) == SLOT_FRAMES(base)) {
                 mode = slot_mode[base];
                 adj = slot_adj[base];
+                cs = base;                 // a copy keeps the sound's sample's AUTO length too
             } else {
                 mode = MODE_AUTO;
             }
@@ -352,7 +376,7 @@ void loop_sync_audio(void)
             continue;
         if (slot != t->key_slot || t->cfg_sta != t->key_sta || t->cfg_end != t->key_end
             || mode != t->key_mode || adj != t->key_adj || gen != t->key_gen || tempo != t->key_tempo)
-            retune(t, &trk_src[track], slot, mode, adj, tempo);
+            retune(t, &trk_src[track], slot, cs, mode, adj, tempo);
         d = (t->shift << 8) - t->glide;
         t->glide += d >= 0 ? (d + (1 << GLIDE_SHIFT) - 1) >> GLIDE_SHIFT : -((-d + (1 << GLIDE_SHIFT) - 1) >> GLIDE_SHIFT);
         if (!t->glide)
@@ -487,6 +511,8 @@ static int keep_slot(int slot, int mode, int adj)
         core_store_set(pack_field[(at + ENTRY_BITS - 1) / 32], 0, 0, words[(at + ENTRY_BITS - 1) / 32]);
     }
     was = slot_mode[slot];
+    if (mode != was)
+        auto_k[slot] = AUTO_NONE;  // a new mode: AUTO chooses its length again, at the tempo then
     if (mode != MODE_OFF && was == MODE_OFF)
         modes_on++;                // before the mode: the audio interrupt never skips a synced slot
     slot_mode[slot] = (unsigned char)mode;
@@ -570,6 +596,7 @@ void loop_sync_project(int how, unsigned dropped)
     for (track = 1; track <= SLOT_LAST; track++) {
         slot_mode[track] = MODE_OFF;
         slot_adj[track] = 0;
+        auto_k[track] = AUTO_NONE;        // AUTO chooses each length again, at the project's tempo
         trim_len[track] = 0xffffffff;     // scan every slot again
     }
     for (f = 0; f < FIELDS; f++)

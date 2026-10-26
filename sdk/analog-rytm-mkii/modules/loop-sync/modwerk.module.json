@@ -2,7 +2,7 @@
   "schemaVersion": 3,
   "id": "loop-sync",
   "name": "Loop Sync",
-  "version": "0.3.1-experimental",
+  "version": "0.3.2-experimental",
   "machine": "analog-rytm-mkii",
   "category": "playback",
   "exclusive": false,
@@ -19,7 +19,7 @@
     "label": "LOOP SYNC",
     "family": "Sample playback",
     "summary": "Keeps sample loops in time with the project tempo by repitching them; AUTO reads each loop's tempo from its length, locks and scenes included.",
-    "overview": "In AUTO the mod works out each loop's source tempo from the length of the sample that plays (between STA and END, 4/4, cut on the bar), picking the bar count (1/4 to 16, powers of two) nearest the project tempo; 3/4, 1.5, 3, 6 and 12 bars are chosen by hand, and adds the matching pitch shift to the track's effective TUN every audio block, after parameter locks, scenes and the LFO. Each sample keeps its own mode and a correction of up to 25 %; a sample played by a SMP lock or a scene without a setting of its own plays like the sound's own sample if it is a copy of it, and in AUTO from its own length otherwise. Pitch follows tempo; no time-stretch.",
+    "overview": "In AUTO the mod works out each loop's source tempo from the length of the sample that plays (between STA and END, 4/4, cut on the bar), picking the bar count (1/4 to 16, powers of two) nearest the project tempo, once per sample: the length is kept while the tempo moves, so a loop never jumps an octave; 3/4, 1.5, 3, 6 and 12 bars are chosen by hand, and adds the matching pitch shift to the track's effective TUN every audio block, after parameter locks, scenes and the LFO. Each sample keeps its own mode and a correction of up to 25 %; a sample played by a SMP lock or a scene without a setting of its own plays like the sound's own sample if it is a copy of it, and in AUTO from its own length otherwise. Pitch follows tempo; no time-stretch.",
     "highlights": [
       "AUTO: no tempo to enter for loops cut on the bar.",
       "SMP locks and scenes stay in time, each sample from its own length.",
@@ -80,6 +80,7 @@
     "requires": [],
     "conflicts": [],
     "limitations": [
+      "AUTO picks each sample's length nearest the tempo when it is set and when the project loads, and keeps it while the tempo moves; the choice is not saved with the project. A length set by hand is.",
       "Pitch follows tempo: no time-stretch.",
       "The shift is clamped to TUN's +-24 semitones (a factor of 4); past it the loop stays as far as TUN goes, out of time.",
       "The silence check sees only digital silence under 5 % of a sample; other mis-cut loops need the per-sample correction.",
@@ -108,18 +109,18 @@
     ]
   },
   "resources": {
-    "memoryBytes": 9108,
+    "memoryBytes": 10044,
     "fastBytes": null,
     "load": {
       "display": "Not measured on a unit",
       "method": "unmeasured",
-      "conditions": "The audio-interrupt hook compares each synced track's inputs every block, in one 32-byte record a track, and recomputes the shift only when one changes; when only the tempo moves it reuses the track's source tempi (three logarithms). rytm-emu, one AUTO track, instruction-timed: 0.2 % of a block, 0.9 % when the tempo word moves every block (0.3.0: 0.3 % and 2.4 %). Worst case to measure on a unit: an external MIDI clock moving the tempo word, several synced tracks."
+      "conditions": "The audio-interrupt hook compares each synced track's inputs every block, in one 32-byte record a track, and recomputes the shift only when one changes; when only the tempo moves it keeps the track's source tempi and, in AUTO, the sample's length (one logarithm). rytm-emu, one AUTO track, instruction-timed: 0.2 % of a block, 0.9 % when the tempo word moves every block (0.3.1; 0.3.2 drops AUTO's two-length comparison there). Worst case to measure on a unit: an external MIDI clock moving the tempo word, several synced tracks."
     }
   },
   "evidence": {
     "tier": "author-hardware",
-    "moduleVersion": "0.3.1-experimental",
-    "sourceSha256": "3d4466c7483de2a1e0fb1e73bb212e3d6dea2f06b3ad1d9bf8527f8efd16073d",
+    "moduleVersion": "0.3.2-experimental",
+    "sourceSha256": "767a80026828e836f92be2eea4100886eaf4120ee587c9ef91cd978c1f3c90f7",
     "reports": [
       "TESTING.md"
     ],
@@ -129,18 +130,17 @@
       "testedOn": "2026-10-26",
       "tester": "stigmagit",
       "durationMinutes": null,
-      "summary": "Test build MD04 on the author's unit: this source (loop-sync elemod fb1020f6, the same as built on core-ar2 0.3) with a core-ar2 0.7 draft and Send FX. Reported by the author: \"MD04 marche parfaitement chez moi\". 0.3.0's results (LS24: SMP locks, a fast loop below 128 BPM, SAVE PROJECT and reboot, external MIDI clock) are for the previous source; a host test gives this source the same TUN as 0.3.0 block for block.",
+      "summary": "Test build MD07 on the author's unit: this source (loop-sync elemod 81cf9a96) with a core-ar2 0.7 draft, Send FX and Retrig Grid. Its sheet asked him to load his project at about 175 BPM with a loop in AUTO, lower the tempo to about 110 and back, and check SMP-locked loops; he reported: \"c'est parfait ça marche très bien\". On LS31 (0.3.1) the same loop had jumped up below 129 BPM.",
       "limitations": [
-        "Informal report; the loop checks run and any CPU figures were not reported.",
-        "MD04 runs a core-ar2 0.7 draft beside Send FX, not core-ar2 0.3 alone.",
-        "No CPU measurement on the unit."
+        "Informal report; which of the sheet's steps he ran was not detailed, and no timing or CPU was measured on the unit.",
+        "MD07 runs a core-ar2 0.7 draft beside Send FX and Retrig Grid, not core-ar2 0.3 alone."
       ]
     },
     "verifiedBy": null
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "0.3.1: a host test runs 0.3.0's and this audio code on 1.5 M random blocks (tempo jitter, SMP locks, STA/END, settings, project reloads, replaced samples): the same TUN every block; rytm-emu: loop onsets identical to 0.3.0's. 0.3.0, emulator (LS19-LS24): a one-bar 120 BPM loop in AUTO and in 1.5 BAR with +1.0 % in time at 127 BPM; a SMP-locked loop of another length with no setting in AUTO from its own length; a loop beyond TUN's range held at its limit. Unit (author): LS24 by ear; MD04 reported working. See TESTING.md.",
+    "summary": "0.3.2: host scenarios on the real code (a loop chosen as one bar at 175 BPM follows down to 100 with no upward step and back; a locked copy keeps the sound's length; a new mode or a project load chooses again) and 900 k random blocks identical to 0.3.1 with a steady tempo or fixed lengths; rytm-emu, tempo 127 -> 172 -> 165 in AUTO: no octave jump (0.3.1 jumps at 169.7), and after a cold boot AUTO chooses at the loaded project's tempo. 0.3.1: the same TUN as 0.3.0 on 1.5 M random blocks. Unit (author): MD07 reported working; LS24 (0.3.0) by ear. See TESTING.md.",
     "documentation": {
       "tutorial": {
         "title": "Quick tutorial",
@@ -185,9 +185,9 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "0.3.1-experimental",
-        "imageSha256": "8f79a99b36a0c832f3a2d104757f8f7a176b111cb716c4ff6f5512e804243247",
-        "setup": "rytm-emu 3c4c42c headless; LS31 build (core-ar2 0.3 + this module; the same PNGs byte for byte as LS24); test loops made for the capture. UI documentation only."
+        "moduleVersion": "0.3.2-experimental",
+        "imageSha256": "a8856bb4dda46a8f217e6ca3ebfd27e1a83a6644f5f7dddd934e492201b3291c",
+        "setup": "rytm-emu 3c4c42c headless; LS32 build (core-ar2 0.3 + this module; the same PNGs byte for byte as LS24 and LS31); test loops made for the capture. UI documentation only."
       }
     },
     {
@@ -201,9 +201,9 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "0.3.1-experimental",
-        "imageSha256": "8f79a99b36a0c832f3a2d104757f8f7a176b111cb716c4ff6f5512e804243247",
-        "setup": "rytm-emu 3c4c42c headless; LS31 build (core-ar2 0.3 + this module; the same PNGs byte for byte as LS24); test loops made for the capture. UI documentation only."
+        "moduleVersion": "0.3.2-experimental",
+        "imageSha256": "a8856bb4dda46a8f217e6ca3ebfd27e1a83a6644f5f7dddd934e492201b3291c",
+        "setup": "rytm-emu 3c4c42c headless; LS32 build (core-ar2 0.3 + this module; the same PNGs byte for byte as LS24 and LS31); test loops made for the capture. UI documentation only."
       }
     },
     {
@@ -217,9 +217,9 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "0.3.1-experimental",
-        "imageSha256": "8f79a99b36a0c832f3a2d104757f8f7a176b111cb716c4ff6f5512e804243247",
-        "setup": "rytm-emu 3c4c42c headless; LS31 build (core-ar2 0.3 + this module; the same PNGs byte for byte as LS24); test loops made for the capture. UI documentation only."
+        "moduleVersion": "0.3.2-experimental",
+        "imageSha256": "a8856bb4dda46a8f217e6ca3ebfd27e1a83a6644f5f7dddd934e492201b3291c",
+        "setup": "rytm-emu 3c4c42c headless; LS32 build (core-ar2 0.3 + this module; the same PNGs byte for byte as LS24 and LS31); test loops made for the capture. UI documentation only."
       }
     }
   ]
