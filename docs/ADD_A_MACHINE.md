@@ -29,7 +29,7 @@ An Erica Synths release lists its version with `"files": []`, and the machine st
 
 ## Never share firmware
 
-Do not put OS files, stock effects, memory dumps, disassembly listings or extracted Elektron or Zoom code in a pull request, issue or forum post. Work from your own download of the stock OS. Share hashes, file structure, addresses, notes and your own code only. Erica Synths' published source is not stock firmware: link and cite it under its GPL-3.0 licence, but never commit a built image.
+Do not put OS files, stock effects, memory dumps, disassembly listings or extracted Elektron or Zoom code in a pull request, issue or forum post, and do not use leaked or decrypted firmware someone else has published. Work from your own download of the stock OS. Where the OS is encrypted or signed, Modwerk does not break that: such a machine is modded here only with its maker's agreement. Before a new maker's machine gets its first public download, tell that maker ([modding guidelines](../MODDING_GUIDELINES.md)). Share hashes, file structure, addresses, notes and your own code only. Erica Synths' published source is not stock firmware: link and cite it under its GPL-3.0 licence, but never commit a built image.
 
 ## Update a machine's progress
 

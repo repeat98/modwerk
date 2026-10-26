@@ -3,6 +3,80 @@
 Symptom → cause (measured, inferred or open) → fix. Add an entry the moment
 a mode is seen on hardware.
 
+## PLOCKS trig-paste undo keeps copied page-two locks
+
+- **Seen:** radiohagen's MKII, EVT871E1 (`f09654ca`), 25 October 2026:
+  continuous-hold paste/undo retained MIX 40 on the destination.
+- **Measured under the port:** stock restores previous page-one locks but
+  retains the trig. The private-hook baseline `ff9c5f84` also fails for page
+  two: PLOCKS did not mirror the native track-lock snapshot/restore copies.
+- **Fix:** EVENTS intercepts those two boundaries; PLOCKS mirrors 64 page-two
+  records using its existing buffers. Stock/page-two regressions cover empty
+  and existing destinations, repeated paste/undo, multiple held steps and
+  clear/undo.
+- **Hardware:** early E2 (`9a752f97`) observations retained MIX 40 after undo,
+  both stopped and playing. Later controlled stopped checks on the same E2
+  implementation restored an explicitly prepared MIX 64 and no-lock state.
+  Those early observations were not reproduced with explicitly prepared
+  destinations; current-source native snapshot/restore gates also pass. The
+  [fixture results](../../remixes/test/events-clients/README.md#hardware-results)
+  identify the image and confirmed scope.
+
+## EVENTS-CLIENTS transport stress reaches silence with healthy frames
+
+- **Seen:** MKII, EVT871E1 (`f09654ca`), 25 October 2026: a ten-minute
+  transport/tempo/program-change sequence stopped on silence at 431.5 seconds.
+  USB fault deltas and DSP bad-record deltas were zero; frames remained healthy.
+  Short suffix replays passed. The original cause was not established.
+- **Later E2 evidence:** 600 seconds of uninterrupted C03 playback and a
+  separate CONTINUE check passed their audio/USB checks. These do not reproduce
+  the mixed-transport sequence. Longest observed ColdFire frame interrupt:
+  424 us; four of 301 retained load samples exceeded 363 us. Downsampled maxima
+  do not count individual overrunning frames or establish total CPU headroom.
+
+- **Current-image verification:** E3 (`d476ab24`) completed the original
+  223-operation sequence over 604 seconds. USB fault and DSP bad-record deltas
+  were zero, no audio samples clipped, and audio remained present around the
+  earlier failure point (MAIN RMS -37.1 dBFS over capture seconds 428–433).
+  The original failure is not reproduced on the current image. The monitor
+  allows a full 64-step pattern at the sequence's minimum 60 BPM before
+  treating silence as a failure.
+
+### E2 CONTINUE monitor stops before the fixture's next trigger
+
+A three-second silence timeout stopped a fixed-C03 test 18 seconds after
+START/STOP/CONTINUE. C03 has only a step-1 sample trig in a 64-step pattern;
+its next trigger was 4.1 seconds after CONTINUE. A corrected capture observed
+that trigger and resumed audio, with zero USB faults or bad DSP records.
+The short timeout was a fixture error, not evidence of a resume failure.
+Transport silence checks must allow for the next programmed trigger.
+
+### Post-restart workload comparison does not isolate an EVENTS regression
+
+Ninety-second BASE / EUCLID FX2 / edited both-slot captures measured longest
+frame interrupts of 363.2 / 398.5 / 417.3 us after a two-second startup
+exclusion. USB faults and DSP bad-record deltas were zero. Edited C03 was
+3.9 dB above BASE and had 14 detector threshold hits, all clustered into one
+stereo transient near 87.26 seconds; no samples clipped. BASE still carried
+both EVENTS subscribers, and the post-restart image was not independently
+identified. This comparison does not attribute the timing or transient to
+EVENTS. Local records: `shared-events-hardware-E2/hardware/`.
+
+### Matched upstream control
+
+On the same MKII, E3 and upstream `ae69a3be` used identical generated
+pattern, Part and sample data. Ninety-second BASE/both-slot captures measured
+mean frame-interrupt shares of 61.00%/71.03% with EVENTS and 61.57%/71.39%
+upstream; longest sampled interrupts were 364.7/417.5 us and 371.9/411.4 us.
+The both-slot level rise was 4.66 dB with EVENTS and 4.56 dB upstream. The
+transient detector counted 3 threshold hits with EVENTS and 134 upstream;
+these are not audible-click counts. Both images had healthy frame rates,
+zero USB faults, zero DSP bad records and no clipping. The level rise and
+detector hits are present without EVENTS, and these captures show no increase
+in mean frame-interrupt load. The
+[fixture results](../../remixes/test/events-clients/README.md#hardware-results)
+identify the builds and test settings.
+
 ## Warm restarts and emulator boots can miss cold-start failures
 
 - **Seen:** on radiohagen's MKII, an early-startup code change passed emulator
@@ -619,6 +693,6 @@ Entries from here to the end of the file (5 Oct 2026) were recorded in other doc
 - **Fix:** dsp_meter.asm wraps the count at 2^23. **Gate:** `verify_load_meter` `wrap` builds with `LM_FRAME0` = 2^23 - 1000 and checks every OTOP slot is sampled and the costs read (0 without the fix).
 - **Fix verified on the unit (25 Oct 2026):** image I4 (the wrap) ran a 56-minute `ot_fuzz.py` `mix` sequence (seed 21, 4,546 operations) with no failure and was healthy at 67.5 minutes after boot (`lm_dsp` seq 11,162,914; the unfixed image stopped at 8,388,607).
 - **Not explained by this:** the 10:40 and 11:03 stops, at 4,189,348 and 7,090,409 frames, after overload and mid-play program changes.
-- **Stop on image J1 after the wrap, 25 Oct 2026, no overload:** Sam's MKII, `octabam-inserts` J1 (the wrap included), project SCJ4 loaded, the DSP's frame count constant at 25,011,824 (2 h 31 min of frames at 2,756.25 a second after boot; `bad` 2 since reset; `lm_stats` seq advancing, the frame interrupt at 2,756 a second with a share of 0.2 % where it had been 28.9 %); MIDI in and out kept working. Last healthy reading: the end of a 604 s `pc` run at 17:55:55 (`load_meter.healthy()`, 0 bad records, DSP busy 48.6 / 41.0 %). First failed reading: 18:55:37, at the start of an `ot_fuzz.py run`. The stop therefore fell between 18:37 (J1 was flashed about 16:06, 9,074 s of frames earlier) and 18:55:37. Between 17:55 and 18:55 the unit received only MIDI (crossfader sweeps at 200, 50 and 20 ms per step with the transport stopped and playing, a replay of the first 25 s of a `xf` sequence, a stop and a program change) and LOAD METER polls (0.5 s, in some sweeps); no layout change, no audio-track effect change. LOAD METER was last read healthy before the stop, so the stop was not observed. Cleared by: not yet (power-cycle pending).
+- **Stop on image J1 after the wrap, 25 Oct 2026, no overload:** Sam's MKII, `octabam-inserts` J1 (the wrap included), project SCJ4 loaded, the DSP's frame count constant at 25,011,824 (2 h 31 min of frames at 2,756.25 a second after boot; `bad` 2 since reset; `lm_stats` seq advancing, the frame interrupt at 2,756 a second with a share of 0.2 % where it had been 28.9 %); MIDI in and out kept working. Last healthy reading: the end of a 604 s `pc` run at 17:55:55 (`load_meter.healthy()`, 0 bad records, DSP busy 48.6 / 41.0 %). First failed reading: 18:55:37, at the start of an `ot_fuzz.py run`. The stop therefore fell between 18:37 (J1 was flashed about 16:06, 9,074 s of frames earlier) and 18:55:37. Between 17:55 and 18:55 the unit received only MIDI (crossfader sweeps at 200, 50 and 20 ms per step with the transport stopped and playing, a replay of the first 25 s of a `xf` sequence, a stop and a program change) and LOAD METER polls (0.5 s, in some sweeps); no layout change, no audio-track effect change. LOAD METER was last read healthy before the stop, so the stop was not observed. Cleared by a power-cycle (about 18:58). Not reproduced afterwards on the same image and project: the unit ran about 12 hours (DSP count 118.8 million at 06:56 on 26 Oct, past 25,011,824 at about 21:30 and past 2^23) with `ot_watch.py` sampling, 480 samples idle (19:21 to 23:21), then four repeats of the 18:46 to 18:55 MIDI activity (sweeps stopped and playing, with LOAD METER polling, audio capture and both, a stop, a program change, scene and crossfader CCs, a replay of the first 25 s of an `xf` sequence; 23:21 to 23:50, `healthy()` true after every step, 600 samples at 10 s to 01:01), then 710 samples idle (01:02 to 06:56): no `STOPPED` and no "no answer" line. The cause is not established.
 - **Cause:** open. **Check:** `load_meter.healthy()` (the frame count advancing at about 2,800 a second) before every layout and transition; `ot_matrix.py` stops when it fails.
 

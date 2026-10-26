@@ -72,6 +72,26 @@ events, table owners, the resident engines on demand, the controllers, module se
 npm run octatrack:base -- --stock /private/OCTATRACK_OS1.40C.bin --beta --write
 ```
 
+Without the reviewed GCC on the host (Linux, 24 October 2026), build the toolchain image once with
+`docker build -f sdk/build/Dockerfile -t modwerk-toolchain:local .` (it compiles binutils and GCC, about half an
+hour) and run the same script in it. The image has `node` but no `npm`, and its home is not yours, so call the
+scripts directly and name the upstream checkout:
+
+```sh
+C=~/.cache/modwerk-upstream
+docker run --rm --user "$(id -u):$(id -g)" -e HOME=/tmp -v "$PWD:$PWD" -v "$C:$C:ro" -w "$PWD" \
+  -e ELEKLOADER_DSP_ASM=/opt/toolchain/vendor/dsp56300/build/source/dsp_host/dsp_asm modwerk-toolchain:local \
+  node scripts/octatrack-base.mjs --stock /private/OCTATRACK_OS1.40C.bin --upstream "$C/elekloader" --beta --write
+```
+
+Mount the stock file's folder and any `--out` folder too. The base-bound relink runs the same way
+(`python3 -B scripts/octatrack-module-packages.py --base-only --upstream "$C/elekloader"`). Run the command without
+`--write` on a clean `main` first: it passes only when this toolchain reproduces the committed base. A fresh worktree
+needs `npm ci`'s generated files first (`npm run prepare`). To boot a built base in the emulator, use the adapted
+`ot_emu` from [scripts/octatrack-emulator](../../../../scripts/octatrack-emulator/README.md) with the `--out` folder's
+`MAIN.raw`: the plain octabam `ot_emu` boots it but never creates the base's status task, so the sequencer sends no
+MIDI. On Linux use `flock` where that README says `lockf -k`.
+
 Analog BD's trust row hashes its reviewed inputs, `machine-ports.json` among them, so an edit there (any machine's
 entry) also needs this regeneration.
 
@@ -121,6 +141,14 @@ Without `--write` it checks the committed files are what this source builds. Bot
 stock-free, that the browser's path builds a `.bin` identical to `build_core.py`'s `NOT_FLASH_CANDIDATE.bin`,
 and `check_flash_safety.py`; `--out NEW-DIR` (outside Git) saves that `.bin` and its `MAIN.raw` for a RAM
 boot. It uses `~/.cache/modwerk-upstream` (`--upstream`, `ELEKLOADER_DSP_ASM`) as the build above does.
+
+### Take events
+
+A take event in `../events.json` has no C prototype: beside its `events` entry it needs a `sites` entry with the
+site's guard and the tail that replays stock when nobody takes the call. `{"stock": n}` copies the site's bytes as
+they are, so a site holding a PC-relative branch needs its tail written as instructions with the branch made absolute
+(`ev_midi_note_key`'s `ble`). `ev_midi_note_key` runs where each sequencer, chord and arp note of a MIDI track is
+about to be corrected to KEY and sent; a taker rewrites or drops the note, and stock keeps every note-off.
 
 ### DSP effects on demand
 

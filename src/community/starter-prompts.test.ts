@@ -91,7 +91,8 @@ describe('starter prompts', () => {
   it('keeps the rules the prompts no longer carry in the files they send the agent to', () => {
     const agents = readFileSync('AGENTS.md', 'utf8'), workflow = readFileSync('docs/DEVELOPER_WORKFLOW.md', 'utf8')
     expect(agents).toContain('instead of building a duplicate')
-    expect(agents).toContain('Refuse a module that copies someone else')
+    expect(agents).toContain('Refuse a module that breaks the [modding guidelines](MODDING_GUIDELINES.md)')
+    expect(readFileSync('MODDING_GUIDELINES.md', 'utf8')).toContain('Port someone\'s module only with their permission')
     expect(workflow).toContain('## Check what already exists')
     expect(workflow).toContain('## Refuse infringing work')
     expect(readFileSync('docs/module-guides/README.md', 'utf8')).toContain('## Cross-compatibility')

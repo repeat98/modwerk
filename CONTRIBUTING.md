@@ -24,7 +24,7 @@ Any change to a module's code needs a strictly higher semantic `version` than on
 
 ## Intellectual property
 
-Submit only original or properly licensed source and media.
+Submit only original or properly licensed source and media, and follow the [modding guidelines](MODDING_GUIDELINES.md).
 
 Platform contributions follow the [component licence scope](LICENSE): backend changes in `server/`, `worker.ts`, `functions/` and `migrations/`, and changes to the pipeline files listed as `pipelineFiles` in `LICENSES/platform.json` (workflows and build, release, device and service tools), are submitted under Elastic-2.0; changes to its shared-helper inventory (`sharedFiles`) are submitted under GPL-3.0-or-later OR Elastic-2.0. Other frontend code remains GPL-3.0-or-later. Contributors retain copyright and must have authority to grant these terms; this does not assign copyright or grant permission for arbitrary future relicensing. SDKs, module source and media keep their own declared licences. See [platform licensing](docs/PLATFORM_LICENSING.md) before adding cross-boundary imports.
 

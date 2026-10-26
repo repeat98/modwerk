@@ -120,4 +120,9 @@ describe('public legal information',()=>{
   expect(report).toContain('No account required');expect(report).toContain('2011/93/EU');expect(CONTENT_REPORT_MAILTO).toContain('mailto:support@modwerk.app')
   expect(privacy).toContain('off by default');expect(privacy).toContain(OPERATOR.complaintsUrl);expect(privacy).toContain('Deutsch');expect(privacy).not.toMatch(/type="checkbox"[^>]*checked/)
  })
+ it('renders the modding guidelines from the one repository file, with links that work on GitHub and the site',()=>{
+  const source=readFileSync(new URL('../../MODDING_GUIDELINES.md',import.meta.url),'utf8'),page=renderToStaticMarkup(createElement(LegalPage,{route:'modding-guidelines'}))
+  expect(page).toContain('<h2>Never share firmware</h2>');expect(page.match(/<h1>/g)).toHaveLength(1)
+  for(const [,href] of source.matchAll(/\]\(([^)]+)\)/g))expect(href).toMatch(/^(https:\/\/|mailto:)/)
+ })
 })

@@ -2135,7 +2135,7 @@ modwerk_retained_end:
     if usb_functions and not usb_profiles:
         usb_reserve_check(json.loads(Path(path).read_text())['symbols'])
     # Every C object of the base, before anything is packaged (sdk/runtime/m68k_codegen.py).
-    if not CODEGEN.check(sorted((out/'package').glob('*.work/*.c.o')), args.cross + 'objdump'):
+    if not CODEGEN.check_mcf54455(sorted((out/'package').glob('*.work/*.c.o')), args.cross + 'objdump'):
         raise ValueError('The base build left no C objects to check.')
     document = json.loads(Path(path).read_text())
     for key in ('idle', 'job', 'transport', 'open', 'read', 'write', 'close'):

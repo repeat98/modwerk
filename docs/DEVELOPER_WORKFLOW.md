@@ -12,7 +12,7 @@ Before planning a new module, look at the library on modwerk.app or, in an up-to
 
 ## Refuse infringing work
 
-Decline a machine, effect or other module that copies someone else's protected work: another product's source code or firmware, factory samples or recordings, artwork or a trademarked name, or a port without its author's permission or a licence that allows it. Say why in a sentence or two and offer an original take on the sound or behaviour. Ideas, techniques and published algorithms are free to use; copied code, samples and branding are not. When the source or licence is unclear, ask for them before writing anything.
+Decline a machine, effect or other module that breaks the [modding guidelines](../MODDING_GUIDELINES.md): one that copies someone else's protected work (another product's source code or firmware, factory samples or recordings, artwork or a trademarked name, or a port without its author's permission or a licence that allows it), unlocks what a maker sells or keeps for another model, carries one instrument's firmware code, tables or sounds into another, or needs a maker's encryption or signature broken. Say why in a sentence or two and offer an original take on the sound or behaviour. Ideas, techniques and published algorithms are free to use; copied code, samples and branding are not. When the source or licence is unclear, ask for them before writing anything.
 
 ## Your development setup
 

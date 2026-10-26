@@ -44,6 +44,11 @@ async function run(name, args = []) {
   })
 }
 
+function skip(name, reason) {
+  console.log(`${name}: skipped (${reason})`)
+  return true
+}
+
 async function build() {
   // A type error must still prevent bundling, as in the original build command.
   return await run('typecheck') && await run('build:bundle')
@@ -53,7 +58,10 @@ const started = performance.now()
 const buildOnly = process.argv.includes('--build')
 const baseIndex = process.argv.indexOf('--base'), base = baseIndex < 0 ? null : process.argv[baseIndex + 1]
 if (baseIndex >= 0 && !base) throw new Error('--base requires a Git commit/ref')
-const documentationOnly = !buildOnly && !!base && readChangeScope({ root, base }).documentation
+const scope = !buildOnly && base ? readChangeScope({ root, base }) : null
+const documentationOnly = !!scope?.documentation
+// The SDK suite takes minutes. Locally, a change it cannot read (site, Worker, release notes) skips it; CI always runs it.
+const sdkSuite = !scope || scope.sdk || !!process.env.CI
 async function changelogs() {
   let passed = true
   try {
@@ -96,7 +104,7 @@ if (passed && documentationOnly) passed = await run('sdk:imports:check') && awai
 if (passed && !documentationOnly) {
   const results = buildOnly
     ? [await build()]
-    : await Promise.all([run('sdk:check'), run('lint'), run('test'), build()])
+    : await Promise.all([sdkSuite ? run('sdk:check') : skip('sdk:check', 'no changed path reaches it; CI runs it'), run('lint'), run('test'), build()])
   passed = results.every(Boolean) && !interrupted
 }
 console.log(`${buildOnly ? 'Build' : documentationOnly ? 'Documentation check' : 'Check'} ${passed ? 'passed' : 'FAILED'} in ${((performance.now() - started) / 1000).toFixed(2)}s`)

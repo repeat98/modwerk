@@ -17,6 +17,7 @@ Every document in `docs/`, one line each. [AGENTS.md](../AGENTS.md) says which t
 
 ## Start here
 
+- [MODDING_GUIDELINES.md](../MODDING_GUIDELINES.md): what Modwerk mods may and may not do, toward makers and other people's work; also published at modwerk.app/#modding-guidelines.
 - [DEVELOPER_WORKFLOW.md](DEVELOPER_WORKFLOW.md): the shared context for Start developing: setup, submissions, reports, a mergeable pull request.
 - [ADD_A_MODULE.md](ADD_A_MODULE.md): add, port or update a module, per machine.
 - [module-guides/](module-guides/README.md): how a module should behave, per category.
