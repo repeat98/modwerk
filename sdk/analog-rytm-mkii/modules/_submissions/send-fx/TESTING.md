@@ -104,7 +104,7 @@ The meter reads 0.1-0.2 % less. Renders through the listen builds against FX19's
 
 ## On the unit (author)
 
-- 26 October 2026, LF16 (FX20's source with LF14's readouts), reported by the author: on the busy project, CHRONO PITCH with one track sending, no lag and the same sound. The readings are not reported.
+- 26 October 2026, LF16 (FX20's source with LF14's readouts), reported by the author: on the busy project, CHRONO PITCH with one track sending, no lag and the same sound. The readings are not reported. RELOAD KIT brings back the newer effects as saved. The levels work (the track's send, and LEV with FUNC + E); the author had not found LEV at first. In the emulator, LEV turned down while a snare rang took CHORUS's, CHRONO PITCH's and FILTERBANK's return to silence, the same to the sample with FX19 and FX20.
 - 26 October 2026, LF14 (FX19's source with LF13's readouts of the block's mean, the whole interrupt and the tick, FUNC + H), reported by the author: on the busy project, CHRONO PITCH with one track sending, the block 5.7 % (LF13: 6.7) and the whole interrupt 82.9 % (LF13: 84.8), no lag; CHORUS on another pattern and kit, 5.7 % and 73.4 %. No difference heard from LF11.
 - 26 October 2026, LF13 and LF13b (diagnostic builds, above), photographed by the author on the busy project.
 - 25 October 2026 evening, LF11 on the busy project, reported by the author: the lag came back (FILTERBANK 8 % with one track sending, FREQ WARPER 8-9 %, the others about 8 %).
