@@ -173,15 +173,32 @@ static struct {
     unsigned osc[2];
     unsigned ph2, fw, dw;
 } ns;
-static int g_voice[VOICES], g_lev;
-static int up[2][N24 + 1];                     // the 24 kHz return, a side: the block before's last sample, then this block's
-static int x_last;                             // the 24 kHz input's last sample (the top-end lift)
-// Light blocks (block_body): every other block only keeps its input (xb) and
+static int g_voice[VOICES];
+// Light blocks (gate.s): every other block only keeps its input (xb) and
 // gives back the return the block before worked out for it (ob); the block
 // after runs the effect on both inputs, the second time with the effect's
-// code and data still in the caches.
-static int xb[32], ob[2][32], pv[2];           // pv: a 24 kHz return's last sample given back, a side
-static int b_state;                            // the next block: 0 full, 1 light (ob holds its return), 2 full with xb kept
+// code and data still in the caches. What a light block touches is kept
+// together, on as few cache lines as it can: gate.s works the light blocks
+// out and reads it at these offsets.
+struct {
+    int ob[2][32];         //   0: the return worked out for the next block, a side (24 kHz: the sample before, then 16)
+    int xb[32];            // 256: the light block's input, kept for the full block after
+    int vl[VOICES][2];     // 384: the voices that send: their word's byte offset in a frame, their gain (Q15)
+    int nv;                // 448: how many
+    int mode;              // 452: 1 a 24 kHz effect, 3 one whose input is lifted (lift)
+    int last;              // 456: the 24 kHz input's last sample (the lift)
+    int pv[2];             // 460: a 24 kHz return's last sample given back, a side
+    int glev;              // 468: LEV's gain as the block before left it
+    int state;             // 472: the next block: 0 full, 1 light (ob holds its return), 2 full with xb kept
+    int rtype;             // 476: the effect the full blocks run (run_type)
+    int ltrim;             // 480: its trim (Q8)
+    const unsigned char *pfx, *plev;   // 484, 488: fx_type and lev
+    int pre0, rx0;         // 492, 496: frame 0 of the PRE words (slot 0) and of the receive buffer
+    unsigned used;         // 500: the CPU meter: the blocks' time (DMA timer 0)
+    int blocks;            // 504: and how many
+} __attribute__((aligned(16))) send_fx_blk;
+#define blk send_fx_blk
+_Static_assert(__builtin_offsetof(__typeof__(blk), nv) == 448 && __builtin_offsetof(__typeof__(blk), blocks) == 504, "gate.s");
 static int run_type = -1, idle;
 static int s_base, s_depth, s_fbk;               // chorus and flanger: smoothed delay (Q8) and feedback (Q15)
 static int lp_l, lp_r, hp_l, hp_r, k_lp, k_hp;   // wet filters
@@ -248,8 +265,11 @@ static void reset_state(void)
     }
     lp_l = lp_r = hp_l = hp_r = 0;
     s_base = s_depth = s_fbk = 0;
-    for (i = 0; i <= N24; i++) up[0][i] = up[1][i] = 0;
-    x_last = pv[0] = pv[1] = b_state = 0;
+    blk.last = blk.pv[0] = blk.pv[1] = blk.state = 0;
+    blk.pfx = &fx_type;
+    blk.plev = &lev;
+    blk.pre0 = (int)PRE(0, 0);
+    blk.rx0 = (int)&RX(0, 0);
 }
 
 // The wet filters of the chorus and the flanger: one-pole high- and low-pass.
@@ -946,9 +966,14 @@ static int at24(int type)
            || type == FX_STDLY || type == FX_CHRONO || type == FX_WARPER;
 }
 
-// gate.s: the input's eight voices and the return, through the EMAC.
+// gate.s: the input's eight voices and the return, through the EMAC; a
+// light block's input (the voices in blk.vl, then the lift) and the return
+// worked out for a block (blk.ob, LEV's gain stepped from blk.glev to tlev);
+// gate.s calls send_fx_block for a full block.
 void send_fx_in8(const volatile int *rx, const int *gain, int *x, int pairs);
 void send_fx_out(int *pre, const int *l, const int *r, int g, int step, int half);
+void send_fx_inl(void *b, const volatile int *rx);
+void send_fx_ret(void *b, volatile int *pre, int tlev);
 
 static void run_fx(int type, const int *x, int *L, int *R)
 {
@@ -976,31 +1001,25 @@ static void run_fx(int type, const int *x, int *L, int *R)
 static const unsigned short trim[FX_TYPES] = { 256, 256, 256, 359, 147, 139, 573, 350, 151, 183, 211, 352, 74, 375, 245 };
 
 // The CPU meter: DMA timer 0's counter, which core-ar2 starts free running
-// at the bus clock (its core.s) and stock reads as a time base. The blocks'
-// time over the time they span, about a second (1500 blocks), in tenths of a
-// percent: shown with FUNC held on the FX page. The mean, not the busiest
-// block: it is the mean that leaves the UI its time, and full and light
-// blocks alternate.
+// at the bus clock (its core.s) and stock reads as a time base. gate.s times
+// each block (blk.used, blk.blocks); every 1500 blocks, about a second, this
+// shows their time over the time they span, in tenths of a percent, with
+// FUNC held on the FX page. The mean, not the busiest block: it is the mean
+// that leaves the UI its time, and full and light blocks alternate.
 #define DTCN0 (*(volatile unsigned *)0xFC07000C)
-#define CPU_BLOCKS 1500
-static unsigned cpu_w0, cpu_used;
-static int cpu_blocks, cpu_shown;
+static unsigned cpu_w0;
+static int cpu_shown;
 
-static void block_body(int slot);
-static void light_block(int slot);
+// The rare paths sit out of the usual block's way (cold: placed after the
+// rest of the code), so that a block touches fewer cache lines.
+#define COLD __attribute__((noinline, cold))
 
-void send_fx_block(int slot)
+void COLD send_fx_meter(void)
 {
-    unsigned t0 = DTCN0;
-    if (b_state == 1 && fx_type == run_type) light_block(slot);
-    else block_body(slot);
-    cpu_used += DTCN0 - t0;
-    if (++cpu_blocks >= CPU_BLOCKS) {
-        unsigned w = (DTCN0 - cpu_w0) / 1000;
-        cpu_shown = cpu_w0 && w ? (int)(cpu_used / w) : 0;
-        cpu_w0 = DTCN0;
-        cpu_used = cpu_blocks = 0;
-    }
+    unsigned w = (DTCN0 - cpu_w0) / 1000;
+    cpu_shown = cpu_w0 && w ? (int)(blk.used / w) : 0;
+    cpu_w0 = DTCN0;
+    blk.used = blk.blocks = 0;
 }
 
 // The pairs' mean and the step back up dull the top of a 24 kHz effect's
@@ -1008,134 +1027,145 @@ void send_fx_block(int slot)
 // lifts it back (+2 dB at 6 kHz, +3.4 dB at 10 kHz). The delays keep their sound.
 static void lift(int *x)
 {
-    int f, p = x_last;
+    int f, p = blk.last;
     for (f = 0; f < N24; f++) {
         int s = x[f];
         x[f] = clamp(s + ((s - p) >> 2), SIG_MAX);
         p = s;
     }
-    x_last = p;
+    blk.last = p;
 }
 
-// The audio block, from the FX returns' hook (gate.s) through send_fx_block.
-// (On the author's unit, with a busy project, the block's time left the UI
-// seconds behind. Its time there goes as much to the cache lines a block
-// touches, refilled every block as stock's own work evicts them, as to its
-// instructions: hence every loop kept short, and the light blocks.)
-static void block_body(int slot)
+// A voice's send, Q15, squared as stock's sends.
+static int target(int v)
 {
-    int v, f, n = 0, moving = 0, half, type = fx_type < FX_TYPES ? fx_type : FX_CHORUS;
-    int gain[VOICES], step[VOICES], wordof[VOICES], gw[VOICES], tlev;
-    int xs[32], L[32], R[32], *x;
+    int t = VOICE_TRACK(v), s = t < SOUND_TRACKS ? send[t] : 0;
+    return s * s * 2;
+}
 
-    for (v = 0; v < VOICES; v++) gw[v] = 0;
-    for (v = 0; v < VOICES; v++) {               // the voices that send, or still fade out
-        int t = VOICE_TRACK(v), s = t < SOUND_TRACKS ? send[t] : 0, tgt = s * s * 2;   // Q15, squared as stock's sends
-        int w = VOICE_WORD(v) & 7;
-        if (tgt || g_voice[v]) {
-            gain[n] = g_voice[v];
-            step[n] = (tgt - g_voice[v]) / 32;
-            wordof[n] = 2 + w;
-            moving |= tgt != g_voice[v];
-            n++;
-        }
-        gw[w] += tgt;
+// Each voice's gain set to its send, and the light block's list of the
+// voices that send.
+static void COLD set_gains(void)
+{
+    int v, nv = 0;
+    for (v = 0; v < VOICES; v++) {
+        int tgt = target(v);
         g_voice[v] = tgt;
+        if (tgt) {
+            blk.vl[nv][0] = 4 * (2 + (VOICE_WORD(v) & 7));
+            blk.vl[nv][1] = tgt;
+            nv++;
+        }
     }
-    if (n) idle = 0;
-    else if (idle < IDLE_BLOCKS) idle++;
-    if (type != run_type) {                      // a new effect starts clean
+    blk.nv = nv;
+}
+
+// The voices that send or still fade out.
+static int COLD active(void)
+{
+    int v, n = 0;
+    for (v = 0; v < VOICES; v++) n += (target(v) | g_voice[v]) != 0;
+    return n;
+}
+
+// A new effect starts clean; after 2 s with no send the effect is left
+// silent (a clean state once); a new effect's pool is cleared a step a
+// block, the effect silent until it is clean. 1: the block stops here, each
+// voice's gain set to its send.
+static int COLD unusual(int type, int moving)
+{
+    int f;
+    if (type != run_type) {
+        int half = at24(type);
         reset_state();
-        run_type = type;
+        run_type = blk.rtype = type;
+        blk.ltrim = trim[type];
+        blk.mode = half ? (type != FX_SATDLY && type != FX_STDLY && type != FX_WARPER ? 3 : 1) : 0;
     }
     if (idle >= IDLE_BLOCKS) {
-        if (idle == IDLE_BLOCKS) {               // once: leave a clean state
+        if (idle == IDLE_BLOCKS) {
             reset_state();
             idle++;
         }
-        return;
-    }
-    if (clear_at < POOL) {                       // the pool clean first, a step a block
+    } else if (clear_at < POOL) {
         for (f = 0; f < CLEAR_STEP; f++) mem.w[clear_at + f] = 0;
         clear_at += CLEAR_STEP;
-        return;
-    }
-    // The input, x: 32 frames, or for a 24 kHz effect the mean of each pair.
-    // Two voices or more, steady, go through the EMAC, all eight at once;
-    // else voice by voice down the block (a word every 12), the gain stepped
-    // while it moves. One voice needs no clamp: its gain is at most unity.
-    half = at24(type);
-    x = xs;
-    if (n > 1 && !moving) {
-        send_fx_in8(&RX(0, 2), gw, x, half);
     } else {
-        int m = half ? N24 : 32;
-        for (f = 0; f < m; f++) x[f] = 0;
-        for (v = 0; v < n; v++) {
-            const volatile int *in = &RX(0, wordof[v]);
-            int g = gain[v], st = step[v];
-            if (half) {
-                st <<= 1;
-                for (f = 0; f < N24; f++, in += 24) { g += st; x[f] += (((in[0] >> 16) + (in[12] >> 16)) * g) >> 16; }
-            } else if (st) {
-                for (f = 0; f < 32; f++, in += 12) { g += st; x[f] += ((*in >> 16) * g) >> 15; }
-            } else {
-                for (f = 0; f < 32; f++, in += 12) x[f] += ((*in >> 16) * g) >> 15;   // 16-bit x Q15
-            }
-        }
-        if (n > 1)
-            for (f = 0; f < m; f++) x[f] = clamp(x[f], SIG_MAX);
+        return 0;
     }
-    if (half && type != FX_SATDLY && type != FX_STDLY && type != FX_WARPER) lift(x);
+    if (moving) set_gains();
+    return 1;
+}
+
+// The input while a send moves: voice by voice down the block (a word every
+// 12), each voice's gain stepped from the block before's to its send.
+static void COLD input_moving(int half)
+{
+    int v, f, n = 0, m = half ? N24 : 32, *x = blk.xb;
+    for (f = 0; f < m; f++) x[f] = 0;
+    for (v = 0; v < VOICES; v++) {
+        const volatile int *in = &RX(0, 2 + (VOICE_WORD(v) & 7));
+        int tgt = target(v), g = g_voice[v], st = (tgt - g) / 32;
+        if (!tgt && !g) continue;
+        n++;
+        if (half)
+            for (f = 0, st <<= 1; f < N24; f++, in += 24) { g += st; x[f] += (((in[0] >> 16) + (in[12] >> 16)) * g) >> 16; }
+        else
+            for (f = 0; f < 32; f++, in += 12) { g += st; x[f] += ((*in >> 16) * g) >> 15; }   // 16-bit x Q15
+    }
+    if (n > 1)
+        for (f = 0; f < m; f++) x[f] = clamp(x[f], SIG_MAX);
+    set_gains();
+    if (blk.mode & 2) lift(x);
+}
+
+// The input of two voices or more, steady: through the EMAC, all eight at
+// once, each word's gain the sum of its voices'.
+static void __attribute__((noinline)) input8(int half)
+{
+    int v, gw[VOICES];
+    for (v = 0; v < VOICES; v++) gw[v] = 0;
+    for (v = 0; v < blk.nv; v++) gw[blk.vl[v][0] / 4 - 2] += blk.vl[v][1];
+    send_fx_in8(&RX(0, 2), gw, blk.xb, half);
+    if (blk.mode & 2) lift(blk.xb);
+}
+
+// A full block, from the FX returns' hook (gate.s).
+// (On the author's unit, with a busy project, the block's time left the UI
+// seconds behind. Its time there goes as much to the cache lines a block
+// touches, refilled every block as stock's own work evicts them, as to its
+// instructions: hence every loop kept short, the light blocks, the rare
+// paths out of the way, and the returns and inputs in blk.)
+void send_fx_block(int slot)
+{
+    int v, n, moving = 0, half, tlev, type = fx_type < FX_TYPES ? fx_type : FX_CHORUS;
+
+    for (v = 0; v < VOICES; v++) moving |= target(v) != g_voice[v];   // a send moved
+    n = moving ? active() : blk.nv;
+    if (n) idle = 0;
+    else if (idle < IDLE_BLOCKS) idle++;
+    if ((type != run_type || idle >= IDLE_BLOCKS || clear_at < POOL) && unusual(type, moving)) return;
 
     // LEV, Q13: 127 is about 2x, 71 about 0.6x; 16 bits -> 24, as the chorus
     // was heard. The gain is stepped across the block. The return goes out a
     // block late: a light block gives back the one worked out for it, a full
-    // block the light block's, then works out its own for the block after.
-    tlev = (lev * lev * trim[type]) >> 8;
-    if (b_state == 2) {
-        run_fx(type, xb, half ? &up[0][1] : L, half ? &up[1][1] : R);
-        up[0][0] = pv[0];
-        up[1][0] = pv[1];
-        send_fx_out((int *)PRE(slot, 0), half ? up[0] : L, half ? up[1] : R, g_lev * 4, (tlev - g_lev) / 32 * 4, half);
-        if (half) {
-            pv[0] = up[0][N24];
-            pv[1] = up[1][N24];
-        }
+    // block the light block's (worked out from its input, xb, now), then
+    // works out its own for the block after.
+    half = blk.mode & 1;
+    tlev = (lev * lev * blk.ltrim) >> 8;
+    if (blk.state == 2) {
+        run_fx(type, blk.xb, half ? &blk.ob[0][1] : blk.ob[0], half ? &blk.ob[1][1] : blk.ob[1]);
+        send_fx_ret(&blk, PRE(slot, 0), tlev);
     }
-    run_fx(type, x, half ? &ob[0][1] : ob[0], half ? &ob[1][1] : ob[1]);
-    b_state = 1;
-    g_lev = tlev;
-}
 
-// A light block: its input into xb, with each voice's gain as the full block
-// before left it, and the return that block worked out for it given back.
-static void light_block(int slot)
-{
-    int v, f, n = 0, half = at24(run_type), m = half ? N24 : 32, tlev = (lev * lev * trim[run_type]) >> 8;
-    for (f = 0; f < m; f++) xb[f] = 0;
-    for (v = 0; v < VOICES; v++) {
-        const volatile int *in = &RX(0, 2 + (VOICE_WORD(v) & 7));
-        int g = g_voice[v];
-        if (!g) continue;
-        n++;
-        if (half) for (f = 0; f < N24; f++, in += 24) xb[f] += (((in[0] >> 16) + (in[12] >> 16)) * g) >> 16;
-        else for (f = 0; f < 32; f++, in += 12) xb[f] += ((*in >> 16) * g) >> 15;
-    }
-    if (n > 1)
-        for (f = 0; f < m; f++) xb[f] = clamp(xb[f], SIG_MAX);
-    if (half && run_type != FX_SATDLY && run_type != FX_STDLY && run_type != FX_WARPER) lift(xb);
-    if (half) {
-        ob[0][0] = pv[0];
-        ob[1][0] = pv[1];
-    }
-    send_fx_out((int *)PRE(slot, 0), ob[0], ob[1], g_lev * 4, (tlev - g_lev) / 32 * 4, half);
-    if (half) {
-        pv[0] = ob[0][N24];
-        pv[1] = ob[1][N24];
-    }
-    g_lev = tlev;
-    b_state = 2;
+    // The input, into xb: 32 frames, or for a 24 kHz effect the mean of each
+    // pair; one voice needs no clamp: its gain is at most unity.
+    if (moving) input_moving(half);
+    else if (blk.nv > 1) input8(half);
+    else send_fx_inl(&blk, &RX(0, 0));
+    run_fx(type, blk.xb, half ? &blk.ob[0][1] : blk.ob[0], half ? &blk.ob[1][1] : blk.ob[1]);
+    blk.state = 1;
+    blk.glev = tlev;
 }
 
 // ---------------------------------------------------------------- storage
