@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "sources": ["src/retrig-grid.c", "src/label.s"],
+  "defsym": {},
+  "cflags": [],
+  "weak": [],
+  "subscribe": [
+    { "event": "ev_render_out", "fn": "retrig_grid_render", "order": 50 },
+    { "event": "ev_settings", "fn": "retrig_grid_settings", "order": 50 },
+    { "event": "ev_project", "fn": "retrig_grid_project", "order": 50 }
+  ],
+  "contribute": [],
+  "collections": {},
+  "copied": [],
+  "regions": [],
+  "storage": [{ "sym": "retrig_grid_off", "scope": "project", "bits": 1 }],
+  "claims": ["settings:RETRIG GRID"],
+  "requires": [],
+  "derive": null,
+  "releases": {
+    "1.74": {
+      "defsym": { "STRING_CTOR": "0x401bcff0" },
+      "cflags": [
+        "-DRT_ACTIVE_AT=0x8000fe44",
+        "-DRT_DEADLINE_AT=0x8000fdec",
+        "-DRT_COUNT_AT=0x42adf5d0",
+        "-DRT_TEMPLATE_AT=0x42ac6b48",
+        "-DSEQ_PULSE_AT=0x405c8b20",
+        "-DSEQ_STEP_AT=0x405c8c94",
+        "-DSEQ_PULSE_N_AT=0x405c8c96",
+        "-DSEQ_PLAYING_AT=0x405c8cf8",
+        "-DSEQ_PATTERN_AT=0x405c8d04",
+        "-DPATTERNS_AT=0x407dd8e3",
+        "-DSPEED_PULSES_AT=0x401db6f8"
+      ],
+      "sites": []
+    }
+  }
+}
