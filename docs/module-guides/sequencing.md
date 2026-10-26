@@ -46,3 +46,17 @@ Do not hard-code one tempo, one speed or zero swing in a test and call the timin
 ## Digitakt and Digitone
 
 The core delivers events to your handler (`ev_tick`, `ev_render_in`, `ev_render_out`: [Digitakt guide](../../sdk/machines/digitakt/README.md)). Take timing from what the core and the OS provide at those events; do not count your own. No sequencer-timing contract is documented for these machines yet, so record what you read and how you tested tempo and swing changes in TESTING.md.
+
+## Analog Rytm MKII (OS 1.74)
+
+The sequencer and the audio engine share a musical clock, not a sample count. Measured in rytm-emu and the disassembly:
+
+| What | Where | Meaning |
+| --- | --- | --- |
+| Musical clock | `0x8000fe54` | Adds twice the tempo word (`0x40287ffc`, 1/120 BPM) every 32-frame audio block: 90,000 units are one tick of 240 PPQN at any tempo, 5,400,000 a 1x step, 86,400,000 a whole note. |
+| Sequencer pulse | `0x405c8b20` | The next 24 PPQN pulse's time on that clock. Straight, the same for every track: the grid. |
+| Its place | `0x405c8c94` (word), `0x405c8c96` (byte) | That pulse's master step since PLAY, and its pulse within the step (0 to pulses per step - 1; 6 pulses at 1x). |
+| Playing | `0x405c8cf8` | Nonzero while the sequencer runs. |
+| Per-track events | `0x8000fd50`, three longs a track | The times the sequencer will process each track's next steps. They include swing and micro timing: not a grid. |
+
+Read the three pulse words with interrupts masked, so they belong to the same pulse. A pad's retrig series is driven by the same clock (`0x8000fd50[39 + t]`, one tick ahead, and a 960-tick counter at `0x42adf5d0[t]`).
