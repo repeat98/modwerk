@@ -1,12 +1,12 @@
 # Send FX testing
 
-Evidence tier: **emulator** for 0.1.0-experimental, build FX19 (LF15 with Loop Sync; LF14 is its source with diagnostic readouts), source sha256 in `modwerk.module.json` (sha256 over `build.json` then each `src/` file in name order, each as its path, a NUL, its bytes and a NUL). The chorus of an earlier build (`stereo-chorus`, same algorithm) was heard by the author on a unit (below); this build awaits that test.
+Evidence tier: **emulator** for 0.1.0-experimental, build FX20 (LF17 with Loop Sync; LF16 is its source with diagnostic readouts), source sha256 in `modwerk.module.json` (sha256 over `build.json` then each `src/` file in name order, each as its path, a NUL, its bytes and a NUL). The chorus of an earlier build (`stereo-chorus`, same algorithm) was heard by the author on a unit (below); this build awaits that test.
 
 ## Build
 
 - Stock: Analog Rytm MKII OS 1.74, the author's own file (sha256 `cb0f99d6…e123`). Not in this repository.
 - elekloader at tag `core-ar2-v0.3`, core-ar2 0.3 built from its source, Debian bookworm `m68k-linux-gnu-gcc` 12.2.0 (amd64 container).
-- `elekloader.sdk.build`, `lint` and `patch`, build FX19: send-fx 1 site (0x4010ee66, 6 bytes), sections .run 42,858 and .bss 66,744 bytes; lint: links as core 0.3 > send-fx 0.1, RAM 116,816 of 131,072 bytes. Image sha256 `48064767…031f`. LF15: core 0.3 + Loop Sync 0.3 + send-fx, the default lockfile, the same storage layout as LF11; lint: links as core 0.3 > loop-sync 0.3 > send-fx 0.1, RAM 125,088 of 131,072 bytes; image sha256 `f0d56a02…524a`.
+- `elekloader.sdk.build`, `lint` and `patch`, build FX20: send-fx 1 site (0x4010ee66, 6 bytes), sections .run 42,182 and .bss 66,708 bytes; lint: links as core 0.3 > send-fx 0.1, RAM 116,116 of 131,072 bytes. Image sha256 `a53e4332…734c`. LF17: core 0.3 + Loop Sync 0.3 + send-fx, the default lockfile, the same storage layout as LF11; lint: links as core 0.3 > loop-sync 0.3 > send-fx 0.1, RAM 124,388 of 131,072 bytes; image sha256 `3a4a5e1f…20a9`.
 - `src/fx-tables.h` is generated (LFO rates, one-pole, all-pass and state-variable coefficients, comb periods, note divisions, dial and icon points) by short Python scripts from formulas; no stock data.
 - The tempo: the word at 0x40287ffc (1/120 BPM), as Loop Sync reads it, verified in `filter-hz`'s 1.74 include.
 
@@ -91,8 +91,20 @@ Without Loop Sync (LF13b, T4) the interrupt read 70.0 %: Loop Sync takes about 7
 
 FX19 makes every other block light: it keeps its input and gives back the return the block before worked out for it; the block after runs the effect on both inputs, the second time with the caches warm. Lines touched per block, the mean of the two (emulator): CHORUS 244 → 185, CHRONO PITCH 235 → 182, FILTERBANK 182 → 148. Renders of five effects through the listen builds, FX19's source against LF11's: the same return, 32 samples later (correlation 1.0000, no difference).
 
+FX20 keeps that arithmetic and touches fewer lines: gate.s works the light blocks out (their input, the lift, the return) and times every block; what they touch sits in one line-aligned structure; a full block reuses its buffers instead of the return and input arrays on the stack, its voice loop only looks for a moving send, and its rare paths are out of the way. Lines touched per block, the mean of full and light (emulator, one voice):
+
+| Effect | FX19 | FX20 |
+| --- | --- | --- |
+| none (the input copied) | 119.5 | 82.5 |
+| 01 CHORUS | 185.2 | 146.1 |
+| 12 CHRONO PITCH | 181.5 | 144.6 |
+| 14 FILTERBANK | 148.0 | 113.0 |
+
+The meter reads 0.1-0.2 % less. Renders through the listen builds against FX19's: the same return (lag 0, no difference) for five effects with one track sending (CHORUS, FLANGER, SAT DELAY, CHRONO PITCH, FILTERBANK), and for CHORUS and FILTERBANK with all eight sending (the EMAC input and the clamp).
+
 ## On the unit (author)
 
+- 26 October 2026, LF16 (FX20's source with LF14's readouts), reported by the author: on the busy project, CHRONO PITCH with one track sending, no lag and the same sound. The readings are not reported.
 - 26 October 2026, LF14 (FX19's source with LF13's readouts of the block's mean, the whole interrupt and the tick, FUNC + H), reported by the author: on the busy project, CHRONO PITCH with one track sending, the block 5.7 % (LF13: 6.7) and the whole interrupt 82.9 % (LF13: 84.8), no lag; CHORUS on another pattern and kit, 5.7 % and 73.4 %. No difference heard from LF11.
 - 26 October 2026, LF13 and LF13b (diagnostic builds, above), photographed by the author on the busy project.
 - 25 October 2026 evening, LF11 on the busy project, reported by the author: the lag came back (FILTERBANK 8 % with one track sending, FREQ WARPER 8-9 %, the others about 8 %).
@@ -116,4 +128,4 @@ FX19 makes every other block light: it keeps its input and gives back the return
 - `fx:audit` (aliasing, clipping, DC, idle): the audit's harness is the Octatrack's, not the Rytm's.
 - Running beside other Rytm mods (Loop Sync was built beside it, above).
 - The delays against a tempo change while playing, and at tempos where a division is halved: not run (the tempo word is read each block).
-- The block's share on a unit for each effect with the light blocks: only CHRONO PITCH and CHORUS were read (LF14), and with one track sending.
+- The block's share on a unit for each effect with the light blocks: only CHRONO PITCH and CHORUS were read (LF14), with one track sending; LF16's readings are not reported.
