@@ -35,6 +35,8 @@ Traps found while writing a C mod for OS 1.74 (rytm-emu `3c4c42c`, October 2026)
 - **Stock returns pointers in d0.** Debian's `m68k-linux-gnu-gcc` expects a pointer result in a0, so a C mod that declares a stock routine as returning a pointer (`project_singleton`, `kit_track_sound`, a vtable getter) reads garbage and can jump to 0 at boot. Declare such routines as returning an integer and cast the result.
 - **`is_key_held` does not cover the BANK keys.** They are not in stock's key-scan list, so it reads them as up; follow a BANK hold through `ev_key`'s press and release events instead, and ignore its repeats.
 - **FUNC + turn never reaches the parameter path.** On a sound page a turn with FUNC held calls neither `param_set_apply_delta` nor `param_set_value`, and stock changes nothing, so a hook there never sees it. Take the gesture in `ev_enc` and test FUNC with `is_key_held(0x80)`.
+- **SETTINGS is the GLOBAL menu.** The rows `ev_settings` adds come after SYSTEM in the menu the GLOBAL key opens. The menu calls a row's label callback again when it redraws the row, so the label can show the row's state: a row whose select callback flips a value and whose label reads it shows the new value at once.
+- **Trig times in rytm-emu.** `DTEMU_FRAME_TRACE=160,162` prints the analog voice frame's trig switches (BD byte 161 bit 4, SD byte 160 bit 0, RS byte 163 bit 4) with their sample number whenever they change: exact trig timing without reading audio. The sequencer's timing words are in [sequencing.md](../../../docs/module-guides/sequencing.md#analog-rytm-mkii-os-174).
 
 ## Mod storage (core 0.3)
 
