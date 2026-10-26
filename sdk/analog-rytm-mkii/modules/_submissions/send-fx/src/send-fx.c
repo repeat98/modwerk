@@ -176,6 +176,12 @@ static struct {
 static int g_voice[VOICES], g_lev;
 static int up[2][N24 + 1];                     // the 24 kHz return, a side: the block before's last sample, then this block's
 static int x_last;                             // the 24 kHz input's last sample (the top-end lift)
+// Light blocks (block_body): every other block only keeps its input (xb) and
+// gives back the return the block before worked out for it (ob); the block
+// after runs the effect on both inputs, the second time with the effect's
+// code and data still in the caches.
+static int xb[32], ob[2][32], pv[2];           // pv: a 24 kHz return's last sample given back, a side
+static int b_state;                            // the next block: 0 full, 1 light (ob holds its return), 2 full with xb kept
 static int run_type = -1, idle;
 static int s_base, s_depth, s_fbk;               // chorus and flanger: smoothed delay (Q8) and feedback (Q15)
 static int lp_l, lp_r, hp_l, hp_r, k_lp, k_hp;   // wet filters
@@ -243,7 +249,7 @@ static void reset_state(void)
     lp_l = lp_r = hp_l = hp_r = 0;
     s_base = s_depth = s_fbk = 0;
     for (i = 0; i <= N24; i++) up[0][i] = up[1][i] = 0;
-    x_last = 0;
+    x_last = pv[0] = pv[1] = b_state = 0;
 }
 
 // The wet filters of the chorus and the flanger: one-pole high- and low-pass.
@@ -970,40 +976,57 @@ static void run_fx(int type, const int *x, int *L, int *R)
 static const unsigned short trim[FX_TYPES] = { 256, 256, 256, 359, 147, 139, 573, 350, 151, 183, 211, 352, 74, 375, 245 };
 
 // The CPU meter: DMA timer 0's counter, which core-ar2 starts free running
-// at the bus clock (its core.s) and stock reads as a time base. Each block's
-// time over the time since the block before, the highest of about a second,
-// in tenths of a percent: shown with FUNC held on the FX page.
+// at the bus clock (its core.s) and stock reads as a time base. The blocks'
+// time over the time they span, about a second (1500 blocks), in tenths of a
+// percent: shown with FUNC held on the FX page. The mean, not the busiest
+// block: it is the mean that leaves the UI its time, and full and light
+// blocks alternate.
 #define DTCN0 (*(volatile unsigned *)0xFC07000C)
 #define CPU_BLOCKS 1500
-static unsigned cpu_last;
-static int cpu_peak, cpu_blocks, cpu_shown;
+static unsigned cpu_w0, cpu_used;
+static int cpu_blocks, cpu_shown;
 
 static void block_body(int slot);
+static void light_block(int slot);
 
 void send_fx_block(int slot)
 {
-    unsigned t0 = DTCN0, period = t0 - cpu_last, used;
-    cpu_last = t0;
-    block_body(slot);
-    used = DTCN0 - t0;
-    if (period > 1000 && period < 10000000 && used < period) {
-        int pm = (int)(used * 1000u / period);
-        if (pm > cpu_peak) cpu_peak = pm;
-    }
+    unsigned t0 = DTCN0;
+    if (b_state == 1 && fx_type == run_type) light_block(slot);
+    else block_body(slot);
+    cpu_used += DTCN0 - t0;
     if (++cpu_blocks >= CPU_BLOCKS) {
-        cpu_shown = cpu_peak;
-        cpu_peak = cpu_blocks = 0;
+        unsigned w = (DTCN0 - cpu_w0) / 1000;
+        cpu_shown = cpu_w0 && w ? (int)(cpu_used / w) : 0;
+        cpu_w0 = DTCN0;
+        cpu_used = cpu_blocks = 0;
     }
+}
+
+// The pairs' mean and the step back up dull the top of a 24 kHz effect's
+// return (-2 dB at 6 kHz, -6 dB at 10 kHz): x + (x - the sample before) / 4
+// lifts it back (+2 dB at 6 kHz, +3.4 dB at 10 kHz). The delays keep their sound.
+static void lift(int *x)
+{
+    int f, p = x_last;
+    for (f = 0; f < N24; f++) {
+        int s = x[f];
+        x[f] = clamp(s + ((s - p) >> 2), SIG_MAX);
+        p = s;
+    }
+    x_last = p;
 }
 
 // The audio block, from the FX returns' hook (gate.s) through send_fx_block.
 // (On the author's unit, with a busy project, the block's time left the UI
-// seconds behind: every loop here is kept short.)
+// seconds behind. Its time there goes as much to the cache lines a block
+// touches, refilled every block as stock's own work evicts them, as to its
+// instructions: hence every loop kept short, and the light blocks.)
 static void block_body(int slot)
 {
     int v, f, n = 0, moving = 0, half, type = fx_type < FX_TYPES ? fx_type : FX_CHORUS;
     int gain[VOICES], step[VOICES], wordof[VOICES], gw[VOICES], tlev;
-    int x[32], L[32], R[32];
+    int xs[32], L[32], R[32], *x;
 
     for (v = 0; v < VOICES; v++) gw[v] = 0;
     for (v = 0; v < VOICES; v++) {               // the voices that send, or still fade out
@@ -1042,6 +1065,7 @@ static void block_body(int slot)
     // else voice by voice down the block (a word every 12), the gain stepped
     // while it moves. One voice needs no clamp: its gain is at most unity.
     half = at24(type);
+    x = xs;
     if (n > 1 && !moving) {
         send_fx_in8(&RX(0, 2), gw, x, half);
     } else {
@@ -1062,30 +1086,56 @@ static void block_body(int slot)
         if (n > 1)
             for (f = 0; f < m; f++) x[f] = clamp(x[f], SIG_MAX);
     }
-    if (half && type != FX_SATDLY && type != FX_STDLY && type != FX_WARPER) {
-        // The pairs' mean and the step back up dull the top (-2 dB at 6 kHz,
-        // -6 dB at 10 kHz): x + (x - the sample before) / 4 lifts it back
-        // (+2 dB at 6 kHz, +3.4 dB at 10 kHz). The delays keep their sound.
-        int p = x_last;
-        for (f = 0; f < N24; f++) {
-            int s = x[f];
-            x[f] = clamp(s + ((s - p) >> 2), SIG_MAX);
-            p = s;
-        }
-        x_last = p;
-    }
-
-    run_fx(type, x, half ? &up[0][1] : L, half ? &up[1][1] : R);
+    if (half && type != FX_SATDLY && type != FX_STDLY && type != FX_WARPER) lift(x);
 
     // LEV, Q13: 127 is about 2x, 71 about 0.6x; 16 bits -> 24, as the chorus
-    // was heard. The gain is stepped across the block.
+    // was heard. The gain is stepped across the block. The return goes out a
+    // block late: a light block gives back the one worked out for it, a full
+    // block the light block's, then works out its own for the block after.
     tlev = (lev * lev * trim[type]) >> 8;
-    send_fx_out((int *)PRE(slot, 0), half ? up[0] : L, half ? up[1] : R, g_lev * 4, (tlev - g_lev) / 32 * 4, half);
+    if (b_state == 2) {
+        run_fx(type, xb, half ? &up[0][1] : L, half ? &up[1][1] : R);
+        up[0][0] = pv[0];
+        up[1][0] = pv[1];
+        send_fx_out((int *)PRE(slot, 0), half ? up[0] : L, half ? up[1] : R, g_lev * 4, (tlev - g_lev) / 32 * 4, half);
+        if (half) {
+            pv[0] = up[0][N24];
+            pv[1] = up[1][N24];
+        }
+    }
+    run_fx(type, x, half ? &ob[0][1] : ob[0], half ? &ob[1][1] : ob[1]);
+    b_state = 1;
+    g_lev = tlev;
+}
+
+// A light block: its input into xb, with each voice's gain as the full block
+// before left it, and the return that block worked out for it given back.
+static void light_block(int slot)
+{
+    int v, f, n = 0, half = at24(run_type), m = half ? N24 : 32, tlev = (lev * lev * trim[run_type]) >> 8;
+    for (f = 0; f < m; f++) xb[f] = 0;
+    for (v = 0; v < VOICES; v++) {
+        const volatile int *in = &RX(0, 2 + (VOICE_WORD(v) & 7));
+        int g = g_voice[v];
+        if (!g) continue;
+        n++;
+        if (half) for (f = 0; f < N24; f++, in += 24) xb[f] += (((in[0] >> 16) + (in[12] >> 16)) * g) >> 16;
+        else for (f = 0; f < 32; f++, in += 12) xb[f] += ((*in >> 16) * g) >> 15;
+    }
+    if (n > 1)
+        for (f = 0; f < m; f++) xb[f] = clamp(xb[f], SIG_MAX);
+    if (half && run_type != FX_SATDLY && run_type != FX_STDLY && run_type != FX_WARPER) lift(xb);
     if (half) {
-        up[0][0] = up[0][N24];
-        up[1][0] = up[1][N24];
+        ob[0][0] = pv[0];
+        ob[1][0] = pv[1];
+    }
+    send_fx_out((int *)PRE(slot, 0), ob[0], ob[1], g_lev * 4, (tlev - g_lev) / 32 * 4, half);
+    if (half) {
+        pv[0] = ob[0][N24];
+        pv[1] = ob[1][N24];
     }
     g_lev = tlev;
+    b_state = 2;
 }
 
 // ---------------------------------------------------------------- storage
