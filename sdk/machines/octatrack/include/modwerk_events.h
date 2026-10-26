@@ -153,4 +153,13 @@ struct modwerk_midi_generator {
 };
 #define MODWERK_MIDI_GENERATOR_ABI 2u
 
+/* ev_midi_note_key (0x4009fb58, take: subscribe a struct modwerk_take): a MIDI track's note, from its trig, chord or arpeggiator, is about to be corrected to the track's KEY (ARP SETUP) and sent (d7 the track). The MIDI sequencer tick 0x400a1e0c (an interrupt, vector 0x60; octabam docs/firmware/MIDI_SCENES.md section 5), once per note: a few microseconds, no firmware call, nothing that waits or allocates. The taker's entry gets every register and the stack as at the site: d7 the track, a2 the note byte (it may rewrite it, 0-127, or store -1 to drop the note), -64(%fp) stock's KEY root offset. It returns to stock by jumping to 0x4009fb80 to send the note as it is now, or by replaying the stock tail below (stock's KEY correction); it must not jump into the site's bytes. Stock keeps the note it sends for that note's note-off. */
+#define MODWERK_EV_MIDI_NOTE_KEY 32
+
+/* ev_arp_setup_knob (0x4007a2ec, take: subscribe a struct modwerk_take): an encoder turns on MIDI ARP SETUP (FUNC+AMP on a MIDI track), before stock edits LEN, KEY or an arp note. The UI task (ARP SETUP's input layer): short, no firmware call that can block. The taker's entry gets every register and the stack as at the site: (%sp) the return address, 4(%sp) the encoder (2 LEN, 5 KEY, 6 the arp note editor), 8(%sp) the delta. It takes the turn by returning to the caller with rts (stock edits nothing), or hands it to stock by replaying the stock tail below; it must not jump into the site's bytes. A taker that stores into the pattern or the Part writes the bank and its battery-backed copy and sets the edited flags as stock's writers do. */
+#define MODWERK_EV_ARP_SETUP_KNOB 33
+
+/* ev_arp_setup_text (0x4007a1ec, take: subscribe a struct modwerk_take): MIDI ARP SETUP is about to draw a setup value (d3 the slot: 2 LEN, 5 KEY). The UI task (the drawer): short, no firmware call that can block. The taker's entry gets every register and the stack as at the site: d3 the slot, d4 the track's value, a3 the slot's descriptor (a3@ the text function f(buffer, value), a3@(48) the drawer or 0 for 0x400479b4), a2 and d2 the place, d6 the surface. It draws the value itself, normally by calling the slot's drawer as stock does with a text function of its own, and goes on at 0x4007a216 with every register but d0-d1/a0-a1 as it found them; or it hands the value to stock by replaying the stock tail below. It must not jump into the site's bytes. */
+#define MODWERK_EV_ARP_SETUP_TEXT 34
+
 #endif
