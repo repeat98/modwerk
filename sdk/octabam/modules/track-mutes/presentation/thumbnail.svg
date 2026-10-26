@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="576" viewBox="0 0 320 192" class="signal-art" fill="none" role="img" aria-labelledby="title description">
+<title id="title">Track Mutes  T mutes, FUNC+T focuses</title>
+<desc id="description">A conceptual diagram: stock T selects a track; TRACK MUTES ON makes T mute and FUNC+T focus. It is not a measured screen.</desc>
+<style>.signal-art{ width: 100%; height: calc(100% - 46px); overflow: visible; stroke-width: 1.3; stroke-linecap: round; stroke-linejoin: round; }
+.signal-grid{ stroke: #ffffff; opacity: .035; stroke-width: .7; }
+.signal-main{ stroke: #b5a0ff; stroke-width: 2.3; }
+.signal-secondary{ stroke: #b5a0ff; opacity: .45; stroke-width: 1.7; }
+.signal-ghost{ stroke: #b5a0ff; opacity: .2; stroke-width: 1.3; }
+.signal-dot, .rhythm-on{ fill: #b5a0ff; }
+.rhythm-off{ stroke: #b5a0ff; fill: #2c2837; opacity: .4; }
+.signal-art text{ fill: #b5a0ff; opacity: .52; font: 8px monospace; letter-spacing: .7px; stroke: none; }
+.signal-art{ height: calc(100% - 55px); }
+.signal-art text{ opacity: .8; font-size: 10px; }
+.signal-main{ stroke-width: 2.7; }
+.signal-secondary{ opacity: .65; }</style>
+<rect width="320" height="192" fill="#1c1c22"/>
+<g class="signal-grid"><path d="M20 52H300"></path><path d="M20 97H300"></path><path d="M20 142H300"></path><path d="M64 33V163"></path><path d="M128 33V163"></path><path d="M192 33V163"></path><path d="M256 33V163"></path></g>
+<g>
+<text x="28" y="44">OFF</text>
+<rect class="rhythm-off" x="28" y="54" width="28" height="22" rx="4"></rect>
+<text x="42" y="69" text-anchor="middle">T1</text>
+<path class="signal-ghost" d="M64 65H108"></path>
+<text x="116" y="69">FOCUS</text>
+<text x="28" y="118">ON</text>
+<rect class="rhythm-on" x="28" y="128" width="28" height="22" rx="4"></rect>
+<text x="42" y="143" text-anchor="middle">T1</text>
+<path class="signal-main" d="M64 139H108M102 134L108 139L102 144"></path>
+<text x="116" y="143">MUTE</text>
+<rect class="rhythm-off" x="168" y="128" width="40" height="22" rx="4"></rect>
+<text x="188" y="143" text-anchor="middle">FUNC</text>
+<text x="214" y="143">+</text>
+<rect class="rhythm-on" x="228" y="128" width="28" height="22" rx="4"></rect>
+<text x="242" y="143" text-anchor="middle">T3</text>
+<text x="264" y="169">FOCUS</text>
+<text x="28" y="177">TRACK MUTES</text>
+</g>
+</svg>

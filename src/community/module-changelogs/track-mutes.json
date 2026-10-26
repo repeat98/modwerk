@@ -1,0 +1,234 @@
+[
+  {
+    "version": "0.1.32-experimental",
+    "date": "2026-10-25",
+    "changes": [
+      "On the 0.1.32 card, FUNC+T with AED open follows the selected track waveform (reported hardware, one tester).",
+      "Stress of that AED follow is not verified. USB Keep/Undo and ot_emu still untested. Card build; not a verified pass."
+    ]
+  },
+  {
+    "version": "0.1.31-experimental",
+    "date": "2026-10-25",
+    "changes": [
+      "Do not treat 0.1.30-experimental as a pass. Same-unit: with AED (waveform editor) open, FUNC+T1-T8 select does not show that track's waveform."
+    ]
+  },
+  {
+    "version": "0.1.30-experimental",
+    "date": "2026-10-25",
+    "changes": [
+      "Do not treat 0.1.29-experimental as a pass."
+    ]
+  },
+  {
+    "version": "0.1.29-experimental",
+    "date": "2026-10-25",
+    "changes": [
+      "Do not treat 0.1.28-experimental as a pass."
+    ]
+  },
+  {
+    "version": "0.1.28-experimental",
+    "date": "2026-10-25",
+    "changes": [
+      "Do not treat 0.1.27-experimental as a pass. Same-unit: TRACK 8 (MASTER) mute/unmute unresponsive from T and QUICK MUTE; FUNC+double-tap T opened the sample list twice then stopped."
+    ]
+  },
+  {
+    "version": "0.1.27-experimental",
+    "date": "2026-10-25",
+    "changes": [
+      "Do not treat 0.1.26-experimental as a pass. Same-unit: mute, QUICK MUTE and FUNC+REC1/2 on MIDI TRACKS recovered, but stock double-tap T1-T8 no longer opens the sample slot list (T mutes)."
+    ]
+  },
+  {
+    "version": "0.1.26-experimental",
+    "date": "2026-10-25",
+    "changes": [
+      "Do not treat 0.1.25-experimental as a pass. Same-unit: FUNC+REC1/REC2 still do not open recorder-buffer submenus on the MIDI TRACKS page."
+    ]
+  },
+  {
+    "version": "0.1.25-experimental",
+    "date": "2026-10-25",
+    "changes": [
+      "Do not treat 0.1.24-experimental as a pass. Same-unit: mute/unmute less stable than 0.1.23; MIDI REC1/REC2 still inaccessible. 0.1.24 applied mute from T-hold inside the held-key walker."
+    ]
+  },
+  {
+    "version": "0.1.24-experimental",
+    "date": "2026-10-25",
+    "changes": [
+      "Do not treat 0.1.23-experimental as a pass."
+    ]
+  },
+  {
+    "version": "0.1.23-experimental",
+    "date": "2026-10-25",
+    "changes": [
+      "Do not treat 0.1.22-experimental as a pass. Same-unit: QUICK MUTE mute still stable, but trig 1-16 red/green LEDs unresponsive; MIDI REC1/REC2 still inaccessible."
+    ]
+  },
+  {
+    "version": "0.1.22-experimental",
+    "date": "2026-10-25",
+    "changes": [
+      "Do not treat 0.1.21-experimental as a pass. Same-unit: QUICK MUTE chords stable, but trig LEDs 5-8 unresponsive and trigs 9-12 (MIDI) crashed EXCEPTION VEC:03 ADDR:00000102."
+    ]
+  },
+  {
+    "version": "0.1.21-experimental",
+    "date": "2026-10-25",
+    "changes": [
+      "Do not treat 0.1.20-experimental as a pass. Same-unit: REC1/REC2 still inaccessible in MIDI mode; QUICK MUTE trigs more responsive but red/green mute LEDs dark."
+    ]
+  },
+  {
+    "version": "0.1.20-experimental",
+    "date": "2026-10-25",
+    "changes": [
+      "Do not treat 0.1.19-experimental as a pass. Same-unit: REC3 accessible in MIDI mode, REC1/REC2 still unresponsive."
+    ]
+  },
+  {
+    "version": "0.1.19-experimental",
+    "date": "2026-10-25",
+    "changes": [
+      "Do not treat 0.1.18-experimental as a pass. Same-unit: TRACK mute stable, but REC1/REC2/REC3 inaccessible in MIDI mode."
+    ]
+  },
+  {
+    "version": "0.1.18-experimental",
+    "date": "2026-10-25",
+    "changes": [
+      "0.1.17 same-unit: almost perfect, occasional missed T in a chord. 0.1.17 only latched T-key press (event 1); the dispatcher often delivers extra keys in a chord as hold (event 2) only."
+    ]
+  },
+  {
+    "version": "0.1.17-experimental",
+    "date": "2026-10-25",
+    "changes": [
+      "Do not treat 0.1.16-experimental as a pass. Same-unit: all tracks muted and unmuted constantly per tick."
+    ]
+  },
+  {
+    "version": "0.1.16-experimental",
+    "date": "2026-10-25",
+    "changes": [
+      "Do not treat 0.1.15-experimental as a pass. Same-unit: simultaneous T1-T8 mute/unmute still temperamental on audio and MIDI pages."
+    ]
+  },
+  {
+    "version": "0.1.15-experimental",
+    "date": "2026-10-24",
+    "changes": [
+      "Do not treat 0.1.14-experimental as a pass. Same-unit: audio and MIDI mute states were forced identical; they are two pages with their own mutes. Simultaneous T1-T8 still temperamental."
+    ]
+  },
+  {
+    "version": "0.1.14-experimental",
+    "date": "2026-10-24",
+    "changes": [
+      "Do not treat 0.1.13-experimental as a pass. Same-unit: MIDI button still dead, TRACK in MIDI mode not the same as audio, REC1/REC2 menu toggle crashed, unit more unstable."
+    ]
+  },
+  {
+    "version": "0.1.13-experimental",
+    "date": "2026-10-24",
+    "changes": [
+      "Do not treat 0.1.12-experimental as a pass. Same-unit: MIDI, REC1 and REC2 unresponsive."
+    ]
+  },
+  {
+    "version": "0.1.12-experimental",
+    "date": "2026-10-24",
+    "changes": [
+      "Do not treat 0.1.11-experimental as a pass. Same-unit: simultaneous mute still temperamental; T5-T8 together crashed (red LED, tempo hang, host saw the Octatrack over USB)."
+    ]
+  },
+  {
+    "version": "0.1.11-experimental",
+    "date": "2026-10-24",
+    "changes": [
+      "Do not treat 0.1.10-experimental as a pass. Same-unit: simultaneous T1-T8 mute is more reliable but still temperamental."
+    ]
+  },
+  {
+    "version": "0.1.10-experimental",
+    "date": "2026-10-24",
+    "changes": [
+      "Do not treat 0.1.9-experimental as a pass. Same-unit: simultaneous T1-T8 mute is more reliable than 0.1.8 but still temperamental."
+    ]
+  },
+  {
+    "version": "0.1.9-experimental",
+    "date": "2026-10-24",
+    "changes": [
+      "Do not treat 0.1.8-experimental as a pass. Same-unit: simultaneous T1-T8 mute is still unreliable, and TRACK MUTES showed X on boot (one YES did not clear it)."
+    ]
+  },
+  {
+    "version": "0.1.8-experimental",
+    "date": "2026-10-24",
+    "changes": [
+      "Do not treat 0.1.7-experimental as a pass. Same-unit: no change \u2014 FUNC+T still does not put the page editor on that track (stuck on T1), and simultaneous T1-T8 mute is still temperamental."
+    ]
+  },
+  {
+    "version": "0.1.7-experimental",
+    "date": "2026-10-24",
+    "changes": [
+      "Do not treat 0.1.6-experimental as a pass. Same-unit: four T keys can mute at once, but unmute is tied to the green focus LED (unmute T8 lights T8; T7 must be unmuted to unfocus T8)."
+    ]
+  },
+  {
+    "version": "0.1.6-experimental",
+    "date": "2026-10-24",
+    "changes": [
+      "Do not treat 0.1.5-experimental as a pass."
+    ]
+  },
+  {
+    "version": "0.1.5-experimental",
+    "date": "2026-10-24",
+    "changes": [
+      "Do not treat 0.1.4-experimental as a pass."
+    ]
+  },
+  {
+    "version": "0.1.4-experimental",
+    "date": "2026-10-24",
+    "changes": [
+      "Do not treat 0.1.3-experimental as a pass. Same-unit: FUNC+T still only lights another track (knobs stay on T1), and T-mute chords stop at two keys."
+    ]
+  },
+  {
+    "version": "0.1.3-experimental",
+    "date": "2026-10-24",
+    "changes": [
+      "Do not treat 0.1.2-experimental as a pass."
+    ]
+  },
+  {
+    "version": "0.1.2-experimental",
+    "date": "2026-10-24",
+    "changes": [
+      "Do not treat 0.1.1-experimental as a pass."
+    ]
+  },
+  {
+    "version": "0.1.1-experimental",
+    "date": "2026-10-24",
+    "changes": [
+      "Do not treat 0.1.0-experimental as a pass."
+    ]
+  },
+  {
+    "version": "0.1.0-experimental",
+    "date": "2026-10-23",
+    "changes": [
+      "First version: PERSONALIZE TRACK MUTES (empty/X, default empty). When ticked, T1-T8 mute and unmute; FUNC+T focuses the track for editing. Conflicts with Mute Modes and Play Start."
+    ]
+  }
+]

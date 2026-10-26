@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "subscribe": [
+    {"event": "module_tick", "fn": "tm_restore_tick"}
+  ]
+}
