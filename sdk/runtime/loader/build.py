@@ -958,11 +958,14 @@ def check_stock(sites, stock, upstream):
 
 
 def build_c(sources, cross, module, dsp=None, subscriptions=()):
+    spec = importlib.util.spec_from_file_location('runtime_c_codegen', HERE.parent / 'm68k_codegen.py')
+    codegen = importlib.util.module_from_spec(spec); spec.loader.exec_module(codegen)
     with tempfile.TemporaryDirectory() as tmp:
         tmp = Path(tmp)
         objects = [tmp / ('%d.o' % i) for i in range(len(sources))]
         for source, obj in zip(sources, objects):
-            subprocess.run([cross + 'gcc', *CFLAGS, '-c', str(source), '-o', str(obj)], check=True)
+            subprocess.run([cross + 'gcc', *CFLAGS, *codegen.FLAGS, '-c', str(source), '-o', str(obj)], check=True)
+        codegen.check_mcf54455(objects, cross + 'objdump')
         image, symbols, bss, offsets = link_units(objects, cross, 0, tmp)
     hooks = [symbols.get(name, NONE) for name in HANDLERS]
     if all(h == NONE for h in hooks) and not subscriptions:

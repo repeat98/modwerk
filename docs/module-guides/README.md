@@ -83,8 +83,8 @@ Every Octatrack module must install beside every other active module and the Mod
 
 The only exceptions are the reviewed entries in `sdk/machines/octatrack/compatibility.json`. Each names both modules, the exact addresses and a reason:
 
-- `group-owned`: one module's reviewed composition owns every listed site. None today: POLY8, VECTOR, FM Synth, Scale Quantizer and Analog BD are independent packages that share the machine chooser, the SEQUENCER page and the chromatic keyboard through the base's tables and take events.
-- `pending-migration`: two modules still patch the site of a planned event and may do so only `until` both subscribe. None today: Repitch, POLY8 and Mute Modes subscribe, and a detour a module's `runtime.json` names in `replaces` is not in its runtime package, so the gate no longer counts it.
+- `group-owned`: one module's reviewed composition owns every listed site. None today: the machine modules are independent packages that share the chooser, the SEQUENCER page and the chromatic keyboard through the base's tables and take events.
+- `pending-migration`: two modules still patch the site of a planned event and may do so only `until` both subscribe. None today: Repitch, POLY8 and Mute Modes subscribe ([replaces](#events)).
 
 An entry fails once a named module is no longer active or nothing meets at a listed site, so the file stays exact. A new entry needs owner review, and is the last resort: propose an event instead. The base's own exceptions are `BASE_OWNS` in `sdk/machines/octatrack/elekloader/build_core.py`.
 
@@ -143,7 +143,7 @@ Machine modules whose native source predates events declare the same subscriptio
 
 Propose an event or a table when the gate says two behaviour hooks meet, when you need a site that another module or the base already patches, or when many modules will plainly need the same site. A site only your module uses needs no event ([choose how a module hooks in](#choose-how-a-module-hooks-in)):
 
-1. Open a pull request that adds one entry at the end of `sdk/machines/octatrack/events.json`, then run `python3 -B sdk/machines/octatrack/events.py --write` to regenerate the base's dispatch, the headers, EVENTS.md and the site's hook list. An event needs its name (`ev_` and what happens), its kind, its stock site (address, length in whole instructions and a SHA-256 guard), or none for a raised event, when it runs, its C prototype and its order rule. A table needs an `ot_` name, its record size and C declaration, its room and the sites its reader owns. Addresses, lengths and hashes only: no stock bytes.
+1. Open a pull request that adds one entry at the end of `sdk/machines/octatrack/events.json`, then regenerate the dispatch, headers, EVENTS.md and hook list with `python3 -B sdk/machines/octatrack/events.py --write`. An event needs its name (`ev_` and what happens), its kind, its stock site (address, length in whole instructions and a SHA-256 guard), or none for a raised event, when it runs, its C prototype and its order rule. A table needs an `ot_` name, its record size and C declaration, its room and the sites its reader owns. Addresses, lengths and hashes only: no stock bytes. A [take event](../../sdk/machines/octatrack/elekloader/README.md#take-events) needs a stock tail, not a prototype. CI has no firmware: rebuild the base with your OS.
 2. Say which modules patch that site today. Until they subscribe, list each such pair in `compatibility.json` as `pending-migration`, with the event and `until`.
 3. The owner reviews the entry. Every later module subscribes or contributes instead of patching.
 
@@ -177,7 +177,7 @@ The more of these the base owns, the more modules combine. Each is an event or a
 | Effect lists (FX1, FX2) | USB: the base has 128 effect ids, 109 of them for modules, and gives each installed effect module its own ([wider ids](../OCTATRACK_MORE_EFFECT_IDS.md)); card: stock's 32, 13 of them for modules, pinned |
 | SEQUENCER rows | Base table `ot_sequencer_rows` |
 | MIDI generators on a MIDI track (MIDI NOTE SETUP's list, the ARP page) | Base table `ot_midi_generators`; on the card, VECTOR's own registry ([midi-usb.md](midi-usb.md#midi-generators-and-midi-effects)) |
-| MIDI effects on a MIDI track's notes | Not built: an event where a MIDI track's note leaves the sequencer, with the base keeping every note-off |
+| MIDI effects on a MIDI track's notes | Pitch: take event `ev_midi_note_key`. Velocity, timing, added notes: not built |
 | Stock DSP effects a module hooks (Sidechain Compressor, Output Matrix) | Not built: DSP-side taps, one owner per stock site |
 | Module settings | Not built: upstream octabam's [OTX settings store proposal](https://github.com/sambanks/octabam/blob/main/docs/proposals/OTX_PROJECT_PROPOSAL.md) |
 

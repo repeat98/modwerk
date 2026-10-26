@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "repository": "https://github.com/sambanks/octabam",
+  "revision": "6328143e5b162a1d30fd4d11346d8c1314cae3a8",
+  "kind": "docs-backport",
+  "modules": [],
+  "files": [
+    {
+      "path": "docs/TRAPS.md",
+      "sourcePath": "docs/contributing/TRAPS.md",
+      "sourceSha256": "2e98b657e7421dbc5340e6e787a990da8b23755fc2b170edd30e64d22347642f",
+      "vendoredSha256": "2e98b657e7421dbc5340e6e787a990da8b23755fc2b170edd30e64d22347642f"
+    },
+    {
+      "path": "docs/FAILURE_MODES.md",
+      "sourcePath": "docs/contributing/FAILURE_MODES.md",
+      "sourceSha256": "5b25f6b72e84cbbdaacdf6c440478bf9c159fe9083bb265db77b804072e50d16",
+      "vendoredSha256": "5b25f6b72e84cbbdaacdf6c440478bf9c159fe9083bb265db77b804072e50d16"
+    }
+  ],
+  "localAdaptations": [
+    "None: both files are upstream byte for byte, replacing the copies the 30fbb8e4 (TRAPS.md) and dcf93d37 (FAILURE_MODES.md) records pinned. HARDWARE_MATRIX.md and MIDI_TRACKS.md are unchanged upstream and stay pinned there. CHIP.md is not taken."
+  ],
+  "review": [
+    "Stock-free scan against the original 1.40C MAIN image (MAIN.raw, sha 164f3122..., local, nothing written): no 8-byte window of any hex string in either file occurs in stock; TRAPS.md has no hex string of 8 bytes or more, FAILURE_MODES.md four, all build hashes.",
+    "No objdump listing; TRAPS.md's one code block is the single assembler line the 30fbb8e4 record already carried. The new entries name addresses and ranges, not stock bytes."
+  ],
+  "limitations": [
+    "Documentation only: no code, build input or module source changes, and the tool pin in sdk/upstream-tools.json stays at dcf93d37. The new TRAPS.md entries come from upstream's demand loader under its emulator port and its per-remix id layout, neither of which Modwerk carries; the FAILURE_MODES.md entries are upstream's units and builds and are not evidence for Modwerk's packages."
+  ]
+}

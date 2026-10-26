@@ -98,7 +98,7 @@ describe('diagnostics pull', () => {
   it('names a restore’s refused package from its set record', () => {
     const set = { seq: 4, boot: 3, second: 5, kind: 'set', a: 1, cpu: 0, dsp1to4: 0, dsp5to8: 0, machines: [0x3c, 0xbe, 0xdc, 0x9c, ...Array(20).fill(0)],
       fx: Array(16).fill(0), keys: Array(16).fill(0), screen: 0x773c84aa, tempo24: 5, playing: false }
-    expect(unitLines([set])[0]).toContain('1 installed: Mini Verb; refused Ringmod SC (busy)')
+    expect(unitLines([set])[0]).toContain('1 installed: Mini Verb; refused SC Ringmod (busy)')
   })
   it('calls a stall found at a start on another base an OS upgrade, and one on the same base nothing', () => {
     const at = (seq, boot, kind, a = 0) => ({ seq, boot, second: 0, kind, a, cpu: 0, dsp1to4: 0, dsp5to8: 0, machines: Array(24).fill(0),

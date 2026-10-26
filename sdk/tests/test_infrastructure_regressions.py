@@ -182,7 +182,7 @@ class ToolSyntax(unittest.TestCase):
 # Builder extensions after the Poly8 record, oldest first. Each proves its own exact before/after transition.
 EXTENSIONS = ['air-chorus-split-builder.json', 'plain-formatter-builder.json', 'floating-cave-overflow-builder.json', 'octabam-emulator-gates-5c71bc8c.json']
 # Documentation-only imports, oldest first: upstream files byte for byte, no build input.
-DOC_IMPORTS = ['octabam-docs-30fbb8e4.json', 'octabam-docs-dcf93d37.json']
+DOC_IMPORTS = ['octabam-docs-30fbb8e4.json', 'octabam-docs-dcf93d37.json', 'octabam-docs-6328143e.json']
 
 class SelectiveImport(unittest.TestCase):
     def assert_current_builder_identity(self, path, historical):

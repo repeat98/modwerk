@@ -519,7 +519,7 @@ Record real device outcomes against the exact source, base, package hashes and v
 
 ## Documentation validation and deployment scope
 
-Run `npm run check -- --base origin/main` before committing. The shared `scripts/change-scope.mjs` compares actual changes, including manifest prose and generated catalogues. Documentation-only edits validate licences, catalogue freshness, module contracts, tutorials and capture provenance, then run the catalogue tests (some check that the guides link to files that exist), without the full application suite, lint, typecheck, bundle or native compilation. Unknown paths and source/behaviour changes retain the full app checks.
+Run `npm run check -- --base origin/main` before committing. `scripts/change-scope.mjs` compares actual changes, manifest prose and generated catalogues included. Documentation-only edits check licences, catalogue freshness, module contracts, tutorials, capture provenance and the catalogue tests, skipping the app suite, lint, typecheck, bundle and native builds. Locally, a change only to site UI, the Worker or release notes also skips the SDK suite (`sdk:check`, minutes); CI always runs it. Other paths keep every check.
 
 PR and Pages firmware builds follow firmware source and build identities rather than broad SDK directory changes. Digi documentation/version labels do not rebuild Octatrack packages. Source pins, build recipes, toolchains, code, linking metadata and package changes retain their native gates. Pages still bundles the site to publish updated documentation. Generated catalogue edits only redeploy the Worker when its consumed module fields change; a manual Worker dispatch still deploys.
 

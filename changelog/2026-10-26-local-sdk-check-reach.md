@@ -1,0 +1,1 @@
+`npm run check` and `npm run pr:ready` skip the SDK suite on your computer when a change touches only site UI, the Worker or release notes, which saves several minutes a run. CI still runs it on every pull request.

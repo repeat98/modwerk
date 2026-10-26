@@ -538,6 +538,27 @@ position 0's advance — one step ahead for good on the unit (images 40–47,
 on X:$213 (stale at proc time), and `dsp_host` places FX2 slots at
 0x6200 + 0x300·pos (`verify_two_core` had 0x200·pos until image 48).
 
+<a name="trap-module-id"></a>
+
+### A module's id is the remix's, not the manifest's: `registry.modules()` reads the preferred one
+
+**A MODULE'S ID IS THE REMIX'S, NOT THE MANIFEST'S.** `MenuEntry.fx2_id` is the
+id a module prefers; `registry.assign_ids` (called by `registry.bound(remix)`)
+settles the id in a remix, and in a 64-id image the FX2 tables are elsewhere
+too (`idspace.fx2_ids(remix)`). A tool, gate or module that reads
+`registry.modules()[k].menu.fx2_id`, a literal id or `0x400d5fdc` is right only
+for the stock layout. On `remixes/test/ids64` (BBD pinned to `0x25`) that cost
+a run of gates one at a time, 22 Oct 2026: `verify_dirty_state` ("not placed on
+either payload": it asked for `0x1b`), `verify_labels` and `verify_mode_names`
+(a vector-4 trap in the emulated formatter call), `verify_menu` (the panel
+printed PHASER for BBD: stock's table read past its 32 entries),
+`verify_replaces` (it read B's dispatch tables at stock's address, which B had
+left). The fix in each is `registry.bound(remix)` for ids and `idspace` for
+addresses (`fx2_ids`, `id2pos`, `layout_of`, `dispatch_word`,
+`payloads`; `dsp_modmap.payloads_of` for the payload locations). Left on the
+preferred ids: `tools/hw/ot_project.py` after the first two functions,
+`ot_spec.py`, `rig_render.py`, `remix/app.py`, `harness/stress_project.py`.
+
 <a name="trap-audio-block"></a>
 
 ### `dsp_host`'s default audio block (X:0x80) sits inside the scratch the stock effects use
@@ -850,6 +871,50 @@ logs `r[:300]` — that truncation is display-only, the returned reply is
 full; a short line in the port log is not a short reply. Rule: a socket
 write loop that breaks on `n <= 0` truncates under load; poll POLLOUT.
 
+<a name="trap-window-zero"></a>
+
+### Window code above `0x37f00` is wiped at boot, and below `0x33da3` DARK REV can write it
+
+**Seen:** 26 Oct 2026, the first demand-loading `octabam` under the port: both DSP cores faulted
+at boot (`PC 0x80000 is outside P memory`, after a slide through zeros from the stub's first
+dispatch) with the reverb guards and LOAD METER's DSP half at `0x3bda3..0x3ff00`.
+
+**Cause:** payload B's boot zero loop clears `Y:0x37f00..0x3ffff` after the pre-boot upload
+(`dsp_ranges.STOCK_PATCHES`), so an uploaded record there is zeros when the frame loop reaches it.
+DARK REV on the slot at `0x30000` writes up to `0x33da2` (`stock.SLOT_EXTENT`), so words below
+`0x33da3` in that block are not safe either.
+
+**Fix and gate:** resident window code goes in `0x33da3..0x37eff` clear of the stock extents; the
+build refuses an uploaded window record above `0x37f00`. The two clear gaps are `0x33da3..0x33fff`
+and `0x37da3..0x37eff`.
+
+<a name="trap-host-mask"></a>
+
+### A host write at the frame interrupt's entry is lost on every other frame
+
+**Seen:** 26 Oct 2026, the demand loader's pump under the port: a block sent 100 halfwords a frame
+arrived in alternate chunks; sent only when `0x800000e0` is 0 it arrived whole.
+
+**Cause (🟡):** payload B's frame loop stores `0x3fff` or `0x5fff` into the host handlers' address
+masks (`p:$371`, `p:$380`) every frame from the bank word (`P:0x5f..0x72`). The lost chunks are
+not at `X:0..0x3fff` of either core. Sending to core A at the entry also stops the stock ping
+words alternating (core A's chain stalls); HC polling and a settle loop did not change it. A
+receives the stock `0x8c` frame command and B does not.
+
+**Fix and gate:** DLPUMP sends to core B on ping-0 frames only (`verify_dlload`). Whether the unit
+loses the same frames is open.
+
+<a name="trap-bra-back"></a>
+
+### `dsp_asm` does not assemble a backward `bra`, or `jmp` to a window address
+
+**Seen:** 26 Oct 2026: `bra proc` to an earlier label failed (`InvalidInstruction -- "bra -$51"`)
+and `jmp proc` at `P:0x33e2b` failed; the sizing pass then drifted.
+
+**Fix:** put trampolines before the code they enter so the branch is forward, or load the address
+into a register and `jmp (rN)`. Dispatch entries must keep `init < proc <= init + 256`
+(`send_probe.entry_points`).
+
 ## Traps on the ColdFire / DRAM side (the platform work, 9–10 Sep 2026)
 
 <a name="trap-watch-alias"></a>
@@ -997,6 +1062,12 @@ the binaries' architecture.
 report (the hints name `tools/harness/send_probe.py`), which refhash
 correctly flagged with every artifact identical. Re-save only after proving
 the artifact lines match.
+
+A module that gains or loses `replaces` moves between the build report's
+"not in this remix, LEFT STOCK" and "not in this remix" lines in every case.
+The cases that exit non-zero (`plain`, `marker`) have the report as their only
+line, so `tools/verify/refhash_compare.py` compares their logs with those two
+lines masked; any other difference in a refusal still fails.
 
 <a name="trap-nm-order"></a>
 
