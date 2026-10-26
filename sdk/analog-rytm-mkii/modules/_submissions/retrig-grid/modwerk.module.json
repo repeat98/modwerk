@@ -71,16 +71,28 @@
     }
   },
   "evidence": {
-    "tier": "emulator",
+    "tier": "author-hardware",
     "moduleVersion": "0.1.0-experimental",
     "sourceSha256": "e7cf8344d2b054a228395292a0585d2db79827300ca41039722e32a1d87adf3e",
     "reports": ["TESTING.md"],
-    "hardware": null,
+    "hardware": {
+      "model": "Analog Rytm MKII",
+      "release": "1.74",
+      "testedOn": "2026-10-26",
+      "tester": "stigmagit",
+      "durationMinutes": null,
+      "summary": "Build LF18 (core-ar2 0.3 + loop-sync 0.3 + send-fx 0.1 + this module) on the author's unit: after the five checks of its test sheet (RTRG + pad between steps while playing, RETRIG 1/8 and 1/12, RETRIG GRID OFF and back ON, the pattern stopped, his heavy project with Send FX), the author reported the result as \"parfait\".",
+      "limitations": [
+        "Informal listening test: each check's result not reported separately; no timing measured on the unit.",
+        "Duration not recorded; firmware not read back from the device. LF18.syx sha256 7d3b6b88808c20377c1cd9c8d7fdbeda8986b71c5e33dc34fbe6435d1d7bdbc2.",
+        "External MIDI clock, per-step sequencer retrigs and SAVE/LOAD PROJECT of the switch not reported."
+      ]
+    },
     "verifiedBy": null
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "rytm-emu 3c4c42c, build RG04, 127 BPM: after the first hit, every pad retrig lands within 2 samples of the grid at 1/16, 1/4, 1/12, 1/3, 1/32 and 1/80, for four press positions, with RTRG and with ALWAYS ON; stopped and OFF behave as stock; OFF survives a power cycle. Not tested on a unit. See TESTING.md.",
+    "summary": "rytm-emu 3c4c42c, builds RG04 and LF18, 127 BPM: after the first hit, every pad retrig lands within 2 samples of the grid at 1/16, 1/4, 1/12, 1/3, 1/32 and 1/80, for four press positions, with RTRG and with ALWAYS ON; stopped and OFF behave as stock; OFF survives a power cycle. Unit (author, by ear): LF18 reported good on the five checks of its sheet. See TESTING.md.",
     "documentation": {
       "tutorial": {
         "title": "Quick tutorial",

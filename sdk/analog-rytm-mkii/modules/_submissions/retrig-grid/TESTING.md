@@ -37,11 +37,23 @@ The GLOBAL menu lists RETRIG GRID ON after SYSTEM, and YES turns the row to RETR
 
 The audio-block handler was counted from the compiled object: three SRAM reads and about 12 instructions until a pad has retriggered, then about 45 an audio block, with the per-track pass only when a deadline moves.
 
+## On a unit (author report, 26 October 2026)
+
+Build LF18: the author's LF17 (core-ar2 0.3 + loop-sync 0.3 + send-fx 0.1, each `.elemod` byte-identical to LF17's) + retrig-grid 0.1.0-experimental (`.elemod` sha256 01f7e265…, the source above; the same module object as RG04). LF18.syx sha256 7d3b6b88808c20377c1cd9c8d7fdbeda8986b71c5e33dc34fbe6435d1d7bdbc2, linked with LF17's storage lockfile. Sent to the author's Analog Rytm MKII on OS 1.74 with Elektron Transfer.
+
+The author went through the LF18 test sheet and reported the result as "parfait". The sheet's five checks:
+
+1. RTRG + BD between two steps while playing: the retrigs fall with the pattern.
+2. RETRIG 1/8, then 1/12.
+3. GLOBAL > RETRIG GRID OFF: free again, then ON.
+4. Pattern stopped: as stock.
+5. His heavy project with Send FX: no added interface lag.
+
+Each check's result was not reported separately. Neither the duration nor timings on the unit were recorded, and the firmware was not read back.
+
 ## Not tested
 
-- On a unit: nothing yet.
 - External MIDI clock; a tempo change during a roll; a pattern change during a roll.
 - Per-step retrigs set in the sequencer, with the module installed: the module skips series whose retrig flag (0x8000fe44) stock clears for them, so they should be untouched, but this was not run.
 - CREATE NEW (the row should read ON) and SAVE PROJECT / LOAD PROJECT of the switch.
 - Load on a unit: not measured.
-- Beside Send FX and Loop Sync: built together for the author's test build (see the pull request), not run in the emulator together.

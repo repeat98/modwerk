@@ -1,6 +1,6 @@
 # Retrig Grid
 
-An Analog Rytm MKII mod by @stigmagit. Version 0.1.0-experimental, for OS 1.74 with core-ar2 0.3. Tested in rytm-emu; not yet on a unit.
+An Analog Rytm MKII mod by @stigmagit. Version 0.1.0-experimental, for OS 1.74 with core-ar2 0.3. Tested in rytm-emu; build LF18 reported good by the author on a unit.
 
 ## Overview
 
@@ -49,11 +49,11 @@ It patches no stock code and writes no stock record but those two words of the s
 - The grid counts bars from PLAY at the pattern's master speed. A track with its own speed or length still gets the master grid.
 - The first gap after the press is between half a period and one and a half periods. At 1/1 the first retrig can come up to a bar and a half after the press, on a bar line.
 - Per-step retrigs from the sequencer are not changed: they already start on their step.
-- Not tested: external MIDI clock, a unit.
+- Not tested: external MIDI clock.
 
 ## Tests and measurements
 
-In rytm-emu on build RG04 (core-ar2 0.3 + this module), trig times read from the analog voice frame at 127 BPM. Every retrig after the first lands within 2 samples of the grid (the same 32-sample audio block) at 1/16, 1/4, 1/12, 1/3, 1/32 and 1/80, for four press positions across a step. Stopped and OFF behave as stock, and OFF survives a power cycle. Details and the method are in [TESTING.md](TESTING.md).
+In rytm-emu on build RG04 (core-ar2 0.3 + this module), trig times read from the analog voice frame at 127 BPM. Every retrig after the first lands within 2 samples of the grid (the same 32-sample audio block) at 1/16, 1/4, 1/12, 1/3, 1/32 and 1/80, for four press positions across a step. Stopped and OFF behave as stock, and OFF survives a power cycle. On the author's unit, build LF18 (with Loop Sync and Send FX) was reported good on all five checks of its test sheet. Details and the method are in [TESTING.md](TESTING.md).
 
 Load: about 12 instructions an audio block until a pad has retriggered, and about 45 after that, counted from the compiled code. The pass over the tracks runs on retrig ticks only. Not measured on a unit.
 
