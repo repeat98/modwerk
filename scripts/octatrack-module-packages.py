@@ -108,6 +108,19 @@ def main():
     builder = importlib.util.module_from_spec(spec)
     sys.modules[spec.name] = builder
     spec.loader.exec_module(builder)
+    # A catalogue name over the unit's 15 characters gets a shorter one on the unit: an entry's "unitName" becomes the
+    # builder's --name. Here, not in the builder, whose source the base pins.
+    build, run_process = builder.build, builder.subprocess.run
+    def named_build(entry, *args, **kwargs):
+        if not entry.get('unitName'):
+            return build(entry, *args, **kwargs)
+        builder.subprocess = type('Subprocess', (), {'run': staticmethod(
+            lambda command, **options: run_process(command + ['--name', entry['unitName']], **options))})
+        try:
+            return build(entry, *args, **kwargs)
+        finally:
+            builder.subprocess = importlib.import_module('subprocess')
+    builder.build = named_build
     # The qualified builder's JSON:KEY syntax predates Windows drive letters.
     # Use its documented relative-path form, without altering any base input.
     builder.DSP = builder.DSP.relative_to(APP)
