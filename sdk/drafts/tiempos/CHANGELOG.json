@@ -1,0 +1,11 @@
+[
+  {
+    "version": "0.1.0-experimental",
+    "date": "2026-10-26",
+    "changes": [
+      "First release: hold CUE and press MIDI to see the time left on all eight tracks.",
+      "The time left follows timestretch, repitch and tempo changes.",
+      "Known issue: not yet tested on a unit."
+    ]
+  }
+]
