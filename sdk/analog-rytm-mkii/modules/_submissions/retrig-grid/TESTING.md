@@ -67,10 +67,21 @@ The author went through the LF18 test sheet and reported the result as "parfait"
 
 Each check's result was not reported separately. Neither the duration nor timings on the unit were recorded, and the firmware was not read back.
 
+### This source on the unit: build MD06 (author report, 26 October 2026)
+
+Build MD06: a core-ar2 0.7 draft (elekloader branch `core-ar2-fx-lockwords`, b062098, not released) + loop-sync 0.3.1 + send-fx (its locks branch) + retrig-grid 0.1.0-experimental (`.elemod` sha256 fdec6df5…, this source, the same object as RG05's). MD06.syx sha256 ea02c82aaed14bac7dd04f1e6a677277507a793569607aeec34f06dfd30e55b8, linked with LF18's storage lockfile. Sent to the author's Analog Rytm MKII on OS 1.74 with Elektron Transfer. This module uses only core-ar2 0.3's events, which the draft keeps.
+
+The author reported, while playing:
+
+- A tempo change: "changement de tempo ok ça suit" (the retrigs follow).
+- The speed (SCALE) changed from 1x to 2x: the retrigs stay on the grid.
+
+Informal listening; no timings measured on the unit; the firmware was not read back.
+
 ## Not tested
 
-- On a unit: this source (RG05). LF18 carried RG04's.
-- External MIDI clock; a tempo change during a roll; a pattern change to another pattern (only a speed change was run).
+- On a unit: this source with the released core-ar2 0.3 alone (MD06 carried a core-ar2 0.7 draft and other modules).
+- External MIDI clock; a pattern change to another pattern while playing (only speed and tempo changes were run).
 - Per-step retrigs set in the sequencer, with the module installed: the module skips series whose retrig flag (0x8000fe44) stock clears for them, so they should be untouched, but this was not run.
 - CREATE NEW (the row should read ON) and SAVE PROJECT / LOAD PROJECT of the switch.
 - Load on a unit: not measured.

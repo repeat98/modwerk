@@ -91,18 +91,30 @@
     }
   },
   "evidence": {
-    "tier": "emulator",
+    "tier": "author-hardware",
     "moduleVersion": "0.1.0-experimental",
     "sourceSha256": "102f3a46e4de21e7c4ac1fb89d375b9751e5c28420969fe4f098df36feca7aca",
     "reports": [
       "TESTING.md"
     ],
-    "hardware": null,
+    "hardware": {
+      "model": "Analog Rytm MKII",
+      "release": "1.74",
+      "testedOn": "2026-10-26",
+      "tester": "stigmagit",
+      "durationMinutes": null,
+      "summary": "Build MD06 (a core-ar2 0.7 draft + loop-sync 0.3.1 + send-fx + this source's retrig-grid object fdec6df5) on the author's unit: while playing, a tempo change and a speed change from 1x to 2x left the pad retrigs on the grid, as the author reported. The earlier source (RG04, in LF18 on core-ar2 0.3) passed the five checks of its sheet.",
+      "limitations": [
+        "Informal listening test; no timing measured on the unit; duration not recorded; firmware not read back. MD06.syx sha256 ea02c82aaed14bac7dd04f1e6a677277507a793569607aeec34f06dfd30e55b8.",
+        "This source was heard with a core-ar2 0.7 draft and other modules, not with the released core-ar2 0.3 alone.",
+        "External MIDI clock, a pattern change while playing, per-step sequencer retrigs and SAVE/LOAD PROJECT of the switch not reported."
+      ]
+    },
     "verifiedBy": null
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "rytm-emu 3c4c42c, build RG05, 127 BPM: after the first hit, every pad retrig lands within 2 samples of the grid at 1/16, 1/4, 1/12, 1/32 and 1/80, for four press positions, with RTRG and with ALWAYS ON, and after a speed change to 2x or 3/2x while playing; stopped and OFF behave as stock. The earlier build LF18 was reported good by the author on his unit; this source's speed-change fix is not yet heard on a unit. See TESTING.md.",
+    "summary": "rytm-emu 3c4c42c, build RG05, 127 BPM: after the first hit, every pad retrig lands within 2 samples of the grid at 1/16, 1/4, 1/12, 1/32 and 1/80, for four press positions, with RTRG and with ALWAYS ON, and after a speed change to 2x or 3/2x while playing; stopped and OFF behave as stock. Unit (author, by ear): LF18 (the earlier source) good on the five checks of its sheet; MD06 (this source) kept the retrigs on the grid through a tempo change and a 1x to 2x speed change while playing. See TESTING.md.",
     "documentation": {
       "tutorial": {
         "title": "Quick tutorial",
