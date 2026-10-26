@@ -9,7 +9,7 @@ const sections = {
   'forum-messages': 'Private messages', 'forum-compose': 'New discussion', 'forum-shoutbox': 'Shoutbox archive',
   account: 'Account', developer: 'Creator settings', 'module-sets': 'Module sets', 'module-set': 'Module set details',
   'community-module': 'Community module details', submit: 'Submit a module', faq: 'FAQ', credits: 'Credits', projects: 'Other projects',
-  privacy: 'Privacy notice', impressum: 'Impressum', 'community-rules': 'Community rules',
+  privacy: 'Privacy notice', impressum: 'Impressum', 'community-rules': 'Community rules', 'modding-guidelines': 'Modding guidelines',
   'report-content': 'Report content', 'page-not-found': 'Page not found',
 }
 /** The same finite catalog validates incoming page keys and supplies readable administrator labels. */

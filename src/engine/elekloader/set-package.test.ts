@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { readFileSync } from 'node:fs'
-import { encodeModuleSet, parseSetIdentity, SET_MAX_ABI } from './set-package'
+import { encodeModuleSet, parseSetIdentity, SET_CHANGES, SET_MAX_ABI } from './set-package'
 
 const base = '31'.repeat(32), baseline = '45'.repeat(32)
 const pkg = (id: number, length = 33) => {
@@ -19,6 +19,11 @@ describe('one module-set offer', () => {
     expect(data.subarray(117, 120)).toEqual(new Uint8Array(3)); expect(view.getUint32(120)).toBe(35)
     first[0] = 0; expect(data[84]).toBe(0x4d) // the caller cannot mutate a staged offer
   })
+  it('takes one change per installed module, up to the base\'s 128', () => {
+    const changes = (n: number) => Array.from({ length: n }, (_, i) => pkg(1000 + i))
+    expect(new DataView(encodeModuleSet(base, baseline, changes(SET_CHANGES)).buffer).getUint16(6)).toBe(128)
+    expect(() => encodeModuleSet(base, baseline, changes(SET_CHANGES + 1))).toThrow(/between 1 and 128/)
+  })
   it('retains ABI 9 requirements alongside legacy packages in the same offer', () => {
     const reader = pkg(11, 80), header = new DataView(reader.buffer)
     header.setUint16(4, 9); header.setUint16(76, 8)
@@ -35,7 +40,7 @@ describe('one module-set offer', () => {
     expect(new DataView(encodeModuleSet(base, baseline, [engine]).buffer).getUint16(6)).toBe(1)
   })
   it('refuses duplicates, malformed packages and capacity exhaustion before any upload', () => {
-    for (const packages of [[], [pkg(0)], [pkg(1), pkg(1)], [new Uint8Array(31)], Array.from({ length: 21 }, (_, i) => pkg(i + 1)), [pkg(1, 2097152)]])
+    for (const packages of [[], [pkg(0)], [pkg(1), pkg(1)], [new Uint8Array(31)], Array.from({ length: SET_CHANGES + 1 }, (_, i) => pkg(i + 1)), [pkg(1, 2097152)]])
       expect(() => encodeModuleSet(base, baseline, packages)).toThrow()
     const bad = pkg(1); bad[5] = SET_MAX_ABI + 1
     expect(() => encodeModuleSet(base, baseline, [bad])).toThrow()
@@ -47,7 +52,8 @@ describe('one module-set offer', () => {
     data.set(Buffer.from(baseline, 'hex'), 8)
     expect(parseSetIdentity(view)).toBe(baseline)
     view.setUint8(5, 0); expect(() => parseSetIdentity(view)).toThrow()
-    view.setUint8(5, 1); view.setUint16(6, 21); expect(() => parseSetIdentity(view)).toThrow()
+    view.setUint8(5, 1); view.setUint16(6, SET_CHANGES); expect(parseSetIdentity(view)).toBe(baseline)
+    view.setUint16(6, SET_CHANGES + 1); expect(() => parseSetIdentity(view)).toThrow()
     expect(() => parseSetIdentity(new DataView(data.buffer, 0, 39))).toThrow()
   })
 })

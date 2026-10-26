@@ -1,0 +1,32 @@
+# SPDX-License-Identifier: Elastic-2.0
+# Copyright (c) 2026 Jannik Aßfalg (repeat98)
+name: Triage pull requests
+# Keeps red and queued pull requests out of the owner's review list (scripts/pr-triage.mjs).
+# Checks out trusted main only and reads PR metadata through the API: no PR code, dependency or cache.
+on:
+  schedule:
+    - cron: '41 * * * *'
+  workflow_dispatch:
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+  checks: read
+concurrency:
+  group: pr-triage
+  cancel-in-progress: false
+jobs:
+  triage:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+      - run: node scripts/pr-triage.mjs
+        env:
+          GITHUB_TOKEN: ${{ github.token }}

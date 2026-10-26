@@ -1,0 +1,35 @@
+{
+  "schema": 1,
+  "kind": "hardware-dsp-timing",
+  "subject": "the base's key bus tap (dsp-sites.json feature 8, resident_dsp.split_sidechain's second part)",
+  "measuredOn": "2026-10-23",
+  "unit": "Octatrack MKII (the contributor's, npp1993), over USB",
+  "base": {
+    "identity": "9d5ad1ea",
+    "note": "A RAM-booted development twin of main 00a6dd9f with resident engines on demand and --dev, plus an unrelated local change to how stock FX slots are charged (admission only; no DSP code). The tap's words are main's."
+  },
+  "reader": {"module": "ring-sc", "version": "0.2.0", "packageSha256Prefix": "2ba32a49c49fbda9", "moduleIdentity": "773c84aa"},
+  "method": "The base's load meter: core 0's main-loop idle passes a frame, the mean of the last 1,024-frame window, as `npm run device -- stats` prints it, read three times 3 s apart per state. One idle pass is 20.0 chip cycles (calibrated with --dsp-burn, docs/OCTATRACK_ELEKLOADER_MIGRATION.md, 'DSP load meter, core 0'). Project: bank B Part 1, every FX slot FILTER or DELAY, sequencer stopped, Sidechain Compressor not installed, RINGMOD SC installed and kept. OFF: no Part names RINGMOD SC, so the base holds no key bus. ON: RINGMOD SC on T1 FX1 with KEY OFF, so the base holds the bus on both cores (MWEV byte 53 = 0x01, both resets complete at 0x80 0x80). T1 runs on core 1, so core 0 (T5-T8) carries the tap and no instance; its difference is the tap alone.",
+  "readings": [
+    {"state": "OFF-1", "core0IdlePassesPerFrame": 2111.7, "core1IdlePassesPerFrame": 3367.6, "mwev52": "00000000"},
+    {"state": "ON-1", "core0IdlePassesPerFrame": 2070.9, "core1IdlePassesPerFrame": 3572.1, "mwev52": "00018080"},
+    {"state": "OFF-2", "core0IdlePassesPerFrame": 2111.7, "core1IdlePassesPerFrame": 3367.6, "mwev52": "00000000"},
+    {"state": "ON-2", "core0IdlePassesPerFrame": 2070.9, "core1IdlePassesPerFrame": 3572.1, "mwev52": "00018080"},
+    {"state": "ON, RINGMOD SC also on T5 FX1 (in place of FILTER)", "core0IdlePassesPerFrame": 2254.7, "core1IdlePassesPerFrame": 3572.0},
+    {"state": "ON, T5 FX1 NONE instead", "core0IdlePassesPerFrame": 2256.0, "core1IdlePassesPerFrame": 3572.1}
+  ],
+  "result": {
+    "core0IdlePassesPerFrame": 40.8,
+    "cyclesPerFrame": 816,
+    "derivation": "(2111.7 - 2070.9) passes x 20 cycles / 16 samples"
+  },
+  "cyclesPerSample": 51,
+  "previousCharge": {"executed": 41, "charged": 72, "rule": "executed x 7/4, rounded up, until timed on a unit"},
+  "limits": [
+    "Core 0 only. Core 1's meter is uncalibrated, and moving T1 from FILTER to RINGMOD SC changed core 1's own load, so core 1's difference does not isolate the tap. Both cores run the same tap code over their own four tracks with the same memory layout; core 1 is charged the same figure.",
+    "Sequencer stopped. The tap's path does not depend on the audio or the transport (two fixed 32-word copies and the generation counter per track a block).",
+    "`meter 0` and `meter 1` stopped answering on this twin (a read stayed waiting), so these are the stats means: no least, most or missed counts.",
+    "The meter counts the frame's waits for the host and DMA as busy, so it is conservative."
+  ],
+  "byTheWay": "One RINGMOD SC 0.2.0 instance with KEY OFF cost about 1.3 idle passes (about 1.6 cycles a sample) on core 0; FILTER at its default knobs about 185 passes (about 231 cycles a sample)."
+}

@@ -93,6 +93,8 @@ int modwerk_dsp_source_claim(unsigned track, uint32_t module, uint32_t voice, ui
     if (used >= room) return 6; /* RUNTIME_CYCLES */
     voices |= (uint8_t)(1u << track); voice_of[track] = module; return 0;
 }
+static unsigned box_calls, box_track = 99; static const char *box_label;
+void modwerk_status_machine_refused(unsigned track, const char *label) { ++box_calls, box_track = track, box_label = label; }
 void modwerk_dsp_source_release(unsigned track) { voices &= (uint8_t)~(1u << track); voice_of[track] = 0; ++releases; }
 void modwerk_dsp_source_engine_off(uint32_t module)
 {
@@ -235,6 +237,8 @@ int main(void)
     CHECK(voice_of[4] == key(&D) && engine_offs == 3 && last_off == key(&E) && mw_source_render_impl(4, 0, 0, 1) < 100);
     room = 0; part0()[60 + 120] = 'E'; part0()[61 + 120] = '2'; mw_ui_tick(); /* its core cannot carry E */
     CHECK(!voices && releases == 3 && engine_offs == 4 && last_off == key(&D));
+    CHECK(box_calls >= 1 && box_track == 4 && box_label == E.label);        /* the refusal reaches the DSP FULL box */
+    { unsigned shown = box_calls; mw_ui_tick(); mw_ui_tick(); CHECK(box_calls == shown); } /* retried every tick, shown once */
     int silent = silent_renders;
     CHECK(mw_source_render_impl(4, 0, 0, 1) == -9 && silent_renders == silent + 1);
     room = 1; mw_ui_tick();

@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "sources": [
+    "src/slice-loop.s"
+  ],
+  "defsym": {},
+  "cflags": [],
+  "weak": [],
+  "subscribe": [],
+  "contribute": [],
+  "collections": {},
+  "copied": [],
+  "regions": [],
+  "claims": [
+    "ui:track menu SLICE LOOP item"
+  ],
+  "requires": [],
+  "derive": null,
+  "releases": {
+    "1.74": {
+      "defsym": {},
+      "cflags": [],
+      "sites": [
+        {
+          "addr": "0x400f9f02",
+          "len": 6,
+          "stockSha256": "10552f30e94896a18c635b43b0f16452187a5e3db5b661ba3255c1ecb054fd50",
+          "op": "jmp",
+          "target": "slice_loop_menu_add"
+        }
+      ]
+    }
+  }
+}

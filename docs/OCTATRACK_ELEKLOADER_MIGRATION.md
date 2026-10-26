@@ -2456,9 +2456,15 @@ Not the loader's doing: on 14 October 2026 (dev twin of base `362fb24d`, `octatr
 
 **The ledger since S19 (owner's choice: a 90% frame ceiling)**, all in chip cycles:
 - **Allowances.** Core 0 3,120 and core 1 3,565, each 90% of the frame less stock's own work.
-- **Stock slots.** Each is charged the dearest stock effect, 342, so a stock pick is never refused.
+- **Stock slots.** Until 24 October 2026 each was charged the dearest stock effect, 342, so a stock pick was never
+  refused. Since then (owner's choice, beta finding 34) each slot is charged at least the dearest stock effect its bank's
+  Parts name there (this table's figures, DELAY and NONE 0), so a Part switch or a RELOAD never needs room it was not
+  given. A stock pick dearer than its bank uses in that slot is refused (DSP FULL) when it would take what runs or
+  another Part of the bank past the allowance. Machine voices and engines, which a bank change keeps, still book 342 a slot.
 - **Modules.** A module carrying an emulator figure is charged 7/4 of it until it carries a hardware figure.
-- **Effect.** One ~665-cycle module fits on core 0 beside anything stock, two on core 1.
+- **Effect.** With 342 a slot, one ~665-cycle module fit on core 0 beside anything stock, two on core 1. In a bank of
+  FILTER and DELAY, three Mini Verbs (720 charged) fit on core 1 and two on core 0 (owner's MKII, 24 October 2026, twin of
+  this base: self-test peaks 73.9 % and 68.8 %).
 
 **Checked.** Qualification v2 on S19 with all six modules refused the second heavy module on each core and peaked at 68% (core 1) and 57% (core 0).
 

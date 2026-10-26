@@ -4,8 +4,9 @@
 // real bytes, and runs the upload session's phases with no device behind them.
 import type { Inventory, InventoryTarget } from '../config/inventory.ts'
 import { sha } from '../../vendor/elekloader/kit/src/bytes.ts'
+import { depackSection } from '../../vendor/elekloader/kit/src/codec/elz.ts'
 import { OctatrackLink, type LinkDevice, type LinkSession, type LinkUsb } from '../engine/elekloader/octatrack-link.ts'
-import { UPLOAD_TIMEOUT_MAX_MS, UploadDeviceError } from '../engine/elekloader/upload-session.ts'
+import { UPLOAD_TIMEOUT_MAX_MS, UploadDeviceError, UploadUnconfirmedError } from '../engine/elekloader/upload-session.ts'
 import { SELFTEST_BYTES, VENDOR_CLASS, VENDOR_PROTOCOL, VENDOR_SUBCLASS } from '../engine/elekloader/upload-usb.ts'
 import type { UploadPhaseName, UploadResultName, UploadStatus } from '../engine/elekloader/upload-wire.ts'
 import baseBinding from '../../sdk/machines/octatrack/base-binding.json' with { type: 'json' }
@@ -55,6 +56,16 @@ export interface FakeUnit {
   /** The running base refuses to write its own container with this reason (flash.h flash_refusal); its record reports
    * 100 + it, as dsp.c does. */
   writeRefusal?: number
+  /** Writes of its own container that fail their verify (flash.h FLASH_WRITE, record 107): NOR is left without a
+   * base ('') and the unit stays up from RAM for another try. */
+  writeFails?: number
+  /** Writes during which USB drops: the write finishes on the unit, the reply is lost, and the replugged unit's
+   * reset rolls the lost session back, which restarts it on NOR (flash.c f_restore). */
+  writeDropouts?: number
+  /** SLOTS (request 39, flash.h): the base's two-slot record; absent, the base stalls it as one before the two slots.
+   * A base that answers it writes another base's container into its spare slot and restarts once onto it, and its own
+   * (after the trial) while it runs on, without a restart (flash.c); one that does not restarts after writing itself. */
+  slots?: Uint8Array
   /** Rollbacks the loader cannot switch yet (an effect's code still being published): the controller stays in recovery. */
   stuck?: number
   /** The runtime ids (hex) of the modules the kept runtime packages installed, as INVENTORY lists them, and each kept
@@ -101,6 +112,7 @@ export function fakeUnit(kind: 'base' | 'stock' | 'none' = 'base'): FakeUnit {
           })
           return { status: 'ok', data: view }
         }
+        if (setup.request === 39 && unit.slots) return { status: 'ok', data: new DataView(unit.slots.slice().buffer) }
         if (setup.request === 27) { // INVENTORY, 13 a page from wValue: no DSP code, no name
           const page = unit.modules.slice(setup.value, setup.value + 13), list = new DataView(new ArrayBuffer(4 + 24 * page.length))
           ;[0x4d, 0x57, 0x49, page.length].forEach((byte, i) => list.setUint8(i, byte))
@@ -114,7 +126,7 @@ export function fakeUnit(kind: 'base' | 'stock' | 'none' = 'base'): FakeUnit {
           ;[380 + wave(0), 520 + wave(2), 640, 260 + wave(4), 410].forEach((value, i) => load.setUint32(28 + 4 * i, value))
           return { status: 'ok', data: load }
         }
-        const refusal = unit.refusal ?? unit.publishRefusal ?? (unit.writeRefusal ? 100 + unit.writeRefusal : undefined)
+        const refusal = unit.refusal ?? unit.publishRefusal ?? (unit.writeRefusal ? 100 + unit.writeRefusal : unit.flashed === '' ? 107 : undefined)
         if (setup.request === 21 && unit.status && refusal === undefined) { // passed, peaks, saved on the card and read back
           const record = new DataView(new ArrayBuffer(SELFTEST_BYTES)), count = unit.installed.moduleIds.length
           ;[[0, 2], [3, count], [7, 410], [8, 655], [9, 470], [14, 47900], [15, 7], [16, count], [17, count]].forEach(([at, value]) => record.setUint32(4 * at, value))
@@ -153,6 +165,8 @@ export function fakeSession(unit: FakeUnit, delay = 0) {
       lastTransaction: unit.orphan ? 7 : 0, currentTransaction: unit.orphan ? 7 : 0, received: 0, capacity: 262144, base: unit.base, session: '00'.repeat(32),
       active: unit.orphan ?? unit.active }
     let staged = unit.active, owned = false, data: Uint8Array | undefined
+    // The base a staged container holds: its section's image. A base before the two slots writes only itself.
+    const written = () => unit.slots ? fakeBaseOf(depackSection(data!.subarray(0x12))) : unit.base
     const step = async (phase: UploadPhaseName, refuse?: UploadResultName) => {
       await wait()
       if (refuse) throw new UploadDeviceError(status = { ...status, result: refuse })
@@ -176,6 +190,13 @@ export function fakeSession(unit: FakeUnit, delay = 0) {
       activate: async () => {
         const container = !!data && String.fromCharCode(...data.subarray(0, 4)) === 'ELEK'
         if (unit.publishRefusal || container && unit.writeRefusal) { await wait(); throw new UploadDeviceError(status = { ...status, phase: 'ready', result: 'backend' }) } // the package dropped
+        if (container && unit.writeFails && unit.writeFails-- > 0) { unit.flashed = ''; await wait(); throw new UploadDeviceError(status = { ...status, phase: 'recovery', result: 'needs-recovery', activeKnown: false }) }
+        if (container && unit.writeDropouts && unit.writeDropouts-- > 0) {
+          const target = written(), restarts = !unit.slots || target !== unit.base
+          unit.flashed = target; unit.unplug()
+          setTimeout(() => { unit.plug('base'); if (restarts) setTimeout(() => { unit.base = unit.active = target; unit.unplug(); unit.plug('base') }, delay + 500) }, delay + 100)
+          throw new UploadUnconfirmedError('The activation reply was lost.', status)
+        }
         const published = await step('pending')
         // A RAM boot image (boot.c): the unit restarts half a second on. Only the flashed base's gate reads the mailbox, so
         // armed from a base running out of RAM it comes back on the flashed one; from that one, on the image's base.
@@ -189,8 +210,11 @@ export function fakeSession(unit: FakeUnit, delay = 0) {
       holdTrial: () => step('pending', unit.playing ? 'unsafe' : undefined),
       accept: async () => {
         await step('ready'); unit.active = status.active!; unit.installed = unit.pending ?? unit.installed; unit.pending = undefined
-        if (data && String.fromCharCode(...data.subarray(0, 4)) === 'ELEK') { // the base wrote its own container to NOR (flash.c): it restarts on it
-          setTimeout(() => { unit.flashed = unit.base; unit.active = unit.base; unit.unplug(); unit.plug('base') }, delay)
+        if (data && String.fromCharCode(...data.subarray(0, 4)) === 'ELEK') { // a base written to NOR (flash.c)
+          const target = written()
+          unit.flashed = target
+          if (unit.slots) { unit.slots = unit.slots.slice(); unit.slots[4] = 1 } // two slots now
+          if (!unit.slots || target !== unit.base) setTimeout(() => { unit.base = unit.active = target; unit.unplug(); unit.plug('base') }, delay)
           return status
         }
         const apply = (pkg: Uint8Array) => {
@@ -237,6 +261,14 @@ export function previewKit() {
   const unit = fakeUnit(kind === 'stock' || kind === 'none' ? kind : 'base')
   unit.installed = { moduleIds: params.get('inventory') === 'empty' ? [] : ['everb', 'airwindows-chorus', 'poly8'], removedStockFx: [] }
   unit.status = params.get('status') !== 'old'
+  // &base=older: a unit on an older base, so the base dialog offers the update over USB; &slots=one|two: what the
+  // base's SLOTS says (one copy: Send, Restart, Save; two slots: Send, Save, Restart), absent for a base before them.
+  if (params.get('base') === 'older') unit.base = unit.flashed = unit.active = 'aa'.repeat(32)
+  const slots = params.get('slots')
+  if (slots === 'one' || slots === 'two') {
+    unit.slots = new Uint8Array(24)
+    unit.slots.set([0x4d, 0x57, 0x53, 0x53, slots === 'two' ? 1 : 0, slots === 'two' ? 0 : 0xff])
+  }
   if (params.get('missing') === 'project') unit.project = [{ id: 'everb', name: 'E-Verb' }, { id: 'euclid', name: 'Euclid' }, { id: 'airwindows-chorus', name: 'Air Chorus' }, { id: 'tapehead', name: 'TapeHead' }]
   Object.assign(window, { modwerkUsbPreview: unit })
   return {

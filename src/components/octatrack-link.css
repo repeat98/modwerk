@@ -223,7 +223,8 @@ button.octatrack-status { width: 100%; border: 0; border-top: 1px solid var(--li
 .hub-cell { min-width: 0; min-height: 0; overflow: auto; padding: 14px 18px; background: var(--surface); }
 .hub-cell-cpu { grid-area: cpu; } .hub-cell-dsp1 { grid-area: dsp1; } .hub-cell-dsp2 { grid-area: dsp2; }
 .hub-cell-chart { grid-area: chart; } .hub-cell-health { grid-area: health; } .hub-cell-unit { grid-area: unit; } .hub-cell-history { grid-area: history; }
-.hub-cell-unit, .hub-cell-history { display: flex; flex-direction: column; }
+/* Size containment: their lists never size the row, so a long history can't stretch the graph; they scroll instead. */
+.hub-cell-unit, .hub-cell-history { display: flex; flex-direction: column; contain: size; }
 /* Modules the unit's project uses but the unit lacks: a yellow-edged note, one band wide where there is room. */
 .usb-missing { padding: 14px 16px; border: 1px solid var(--line); border-left: 3px solid #d4b663; border-radius: 8px; background: var(--surface-raised); }
 .usb-missing h3 { margin: 0; color: var(--text); font-size: 14px; font-weight: 600; line-height: 1.5; }
@@ -429,3 +430,23 @@ button.octatrack-status { width: 100%; border: 0; border-top: 1px solid var(--li
   .base-install-dialog .base-install-footer > .button:first-child { flex: 0 1 auto; }
   .base-install-dialog .base-install-footer > .button:last-child { flex: 1; }
 }
+/* The update over USB: three stages and one restart, one row before, during and after. */
+.base-update-plan { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 20px 0; padding: 0; list-style: none; }
+.base-update-plan li { display: flex; flex-direction: column; gap: 6px; padding: 14px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface-raised); font-size: 13px; line-height: 1.5; color: var(--muted); }
+.base-update-plan strong { color: var(--text); font-size: 15px; }
+.base-update-plan p { margin: 0; }
+.base-update-plan progress { width: 100%; height: 4px; margin-top: 4px; accent-color: var(--accent); }
+.base-update-mark { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border: 1px solid var(--control-border); border-radius: 50%; font-size: 12px; color: var(--text-secondary); }
+.base-update-plan .is-active { border-color: var(--accent); }
+.base-update-plan .is-active .base-update-mark { color: var(--field); background: var(--accent); border-color: var(--accent); }
+.base-update-plan .is-complete .base-update-mark { color: #7fd39b; border-color: #456354; }
+.base-update-plan .is-failed { border-color: #6a4348; }
+.base-update-plan .is-failed .base-update-mark { color: #e4b0b4; border-color: #6a4348; }
+.base-install-stage .base-update-error p { margin: 4px 0 0; }
+.base-update-error strong { color: #f3cfd2; }
+@media (max-width: 600px) {
+  .base-update-plan { grid-template-columns: 1fr; gap: 8px; }
+  .base-update-plan li { display: grid; grid-template-columns: 24px 1fr; column-gap: 12px; row-gap: 2px; align-items: center; padding: 12px; }
+  .base-update-plan li p, .base-update-plan li progress { grid-column: 2; }
+}
+.base-install-warning .status-dot.is-updating { width: 8px; height: 8px; margin-top: 8px; }

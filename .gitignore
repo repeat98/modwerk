@@ -36,10 +36,12 @@ sdk/octabam/vendor/
 sdk/octabam/out/
 
 # Local agent state and internal session notes stay off the public repository.
-# AGENTS.md and CLAUDE.md are public contributor guidance and are tracked.
+# AGENTS.md, CLAUDE.md and the project skills are public contributor guidance and are tracked.
 .codex/
-.agents/
-.claude/
+.agents/*
+!.agents/skills/
+.claude/*
+!.claude/skills/
 AGENTS.local.md
 GEMINI.md
 /GOAL.md

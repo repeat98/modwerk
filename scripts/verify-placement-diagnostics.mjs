@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Elastic-2.0
+// Copyright (c) 2026 Jannik Aßfalg (repeat98)
 // Local-only regression. Read the owner's original firmware; retain no firmware or stock bytes.
 // node scripts/verify-placement-diagnostics.mjs /local/OCTATRACK_OS1.40C.bin
 import assert from 'node:assert/strict'

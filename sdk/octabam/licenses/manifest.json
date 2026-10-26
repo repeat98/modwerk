@@ -318,6 +318,20 @@
       "usedIn": [
         "modules/direct-jump-kyoti"
       ]
+    },
+    {
+      "id": "jankolkmeier-dejavu",
+      "name": "Jan Kolkmeier Deja Vu",
+      "spdx": "MIT",
+      "noticeFile": "jankolkmeier-dejavu.txt",
+      "sources": [
+        {
+          "path": "sdk/octabam/modules/dejavu/LICENSE"
+        }
+      ],
+      "usedIn": [
+        "modules/dejavu"
+      ]
     }
   ],
   "moduleComponents": {
@@ -360,6 +374,9 @@
     ],
     "direct-jump-kyoti": [
       "kyoti-direct-jump"
+    ],
+    "dejavu": [
+      "jankolkmeier-dejavu"
     ]
   }
 }

@@ -29,7 +29,7 @@ An Erica Synths release lists its version with `"files": []`, and the machine st
 
 ## Never share firmware
 
-Do not put OS files, stock effects, memory dumps, disassembly listings or extracted Elektron or Zoom code in a pull request, issue or forum post. Work from your own download of the stock OS. Share hashes, file structure, addresses, notes and your own code only. Erica Synths' published source is not stock firmware: link and cite it under its GPL-3.0 licence, but never commit a built image.
+Do not put OS files, stock effects, memory dumps, disassembly listings or extracted Elektron or Zoom code in a pull request, issue or forum post, and do not use leaked or decrypted firmware someone else has published. Work from your own download of the stock OS. Where the OS is encrypted or signed, Modwerk does not break that: such a machine is modded here only with its maker's agreement. Before a new maker's machine gets its first public download, tell that maker ([modding guidelines](../MODDING_GUIDELINES.md)). Share hashes, file structure, addresses, notes and your own code only. Erica Synths' published source is not stock firmware: link and cite it under its GPL-3.0 licence, but never commit a built image.
 
 ## Update a machine's progress
 
@@ -69,7 +69,7 @@ When steps 1–4 are done:
    - `firmware`: every supported OS release with its stock file names and SHA-256.
    - `flash` and `recovery` text users can follow.
    - `sdk`: platform, module folder, guide, core release and source path, toolchain, and every budget (memory, fast memory, slots) that combinations of mods must fit.
-3. **Add the guide** at `sdk/machines/<id>/README.md`: the core's events and their C prototypes, memory areas, budgets, how to build and how to recover.
+3. **Add the guide** at `sdk/machines/<id>/README.md`: the core's events and their C prototypes, memory areas, budgets, how to build and how to recover. Before the first module, agree with the owner how mods will reach the musician: how several mods add pages, rows and controls behind the stock keys, and which shared sites the core should own. Start from what the upstream core already offers, and add a core event only where many mods will use it ([choose how a module hooks in](module-guides/README.md#choose-how-a-module-hooks-in)).
 4. **Create the module folder** (`sdk/<id>/modules/`) and a first module with `npm run module:new -- <mod> --machine <id> --author <login>`.
 5. **Set the status.** Set `status` to `preview` and every step to `done` when the first module validates. The status becomes `available` once Modwerk's engine builds and verifies firmware for the machine.
 

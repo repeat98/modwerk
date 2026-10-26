@@ -52,7 +52,7 @@ Whole images per module selection would need a native build for every combinatio
 3. Modules on this machine accept only GPL-3.0-compatible licences.
 4. The install route: base plus SD-loaded modules (recommended) or whole images per selection.
 5. Who has a unit for the `boot` step and every later hardware result.
-6. Whether to tell Erica Synths about the page (not required: the page uses the names only as compatibility statements).
+6. When to tell Erica Synths. The page uses the names only as compatibility statements, so it needs no notice; the [modding guidelines](../MODDING_GUIDELINES.md) ask for one before the first public download.
 
 ## Next steps
 

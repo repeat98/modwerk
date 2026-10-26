@@ -37,9 +37,12 @@ TOOLS = {
         ],
         # Any remaining use would still reach the shadowed attribute.
         'absent': 'self._stop.',
-        # Further reviewed sources (Octabam main, 19 Oct 2026: docstrings and messages reworded, the same edits).
+        # Further reviewed sources (Octabam main, 19 Oct 2026: docstrings and messages reworded, the same edits;
+        # 24 Oct 2026: an optional libusb-package backend before the Homebrew lookup, the same edits).
         'revisions': {'86c2b8c55a00cc3f98a631841752b6502a3a84d27b7dad9c692fb4a204e46ff5':
-                      '6b2aa3500ca9283aceb81ef804cd899bfe82622f3f6eaf8233df8fc0261231ab'},
+                      '6b2aa3500ca9283aceb81ef804cd899bfe82622f3f6eaf8233df8fc0261231ab',
+                      '901b003b7ad085c499f7e7b25f27ae1613261cde48afa49335afab01639d4bde':
+                      '3f469ddf306354d64647142a8225e7f79b487f0ea68e4340c8899dd7caa0d2d5'},
     },
     'rec.swift': {
         'source': '9aa5b59ae5104be517abb96e5b644da9ca55f9f0aa0d13bcb61fd796041465db',

@@ -92,6 +92,17 @@ For suspected credential compromise, pause registrations and affected writes thr
 
 Developer OAuth setup and report-consent boundaries are documented in [DEVELOPER_WORKSPACE.md](DEVELOPER_WORKSPACE.md). Rotating the GitHub OAuth client secret invalidates developer sessions; claims are retained for independent revocation/review. GitHub-only identities use the support contact for removal requests rather than a password-based member request.
 
+## Review queue and saved replies
+
+`.github/workflows/pr-triage.yml` keeps red and queued pull requests out of the owner's list (see [Make it mergeable](DEVELOPER_WORKFLOW.md#make-it-mergeable)). The owner's review list is `is:pr is:open draft:false -label:needs-work -label:one-at-a-time`. `PR_TRIAGE_DRY_RUN=1 GITHUB_REPOSITORY=repeat98/modwerk GITHUB_TOKEN=$(gh auth token) node scripts/pr-triage.mjs` prints what the next run would do without writing.
+
+Steps for rude or hostile behaviour are in the community rules: a reminder, hidden content, a temporary suspension, then a permanent one. Threats, harassment and unlawful content can skip steps. These replies keep a rule from sounding like a brush-off; adapt them, keep them short and first-person:
+
+- **Someone else's module:** "Thanks for working on this. Changes to a module go through its author, so please open this as a suggestion on their module, or ask them first and send it with their OK. If you want to take it in another direction, a module of your own is welcome: Start developing walks you through it."
+- **A demand for a fix or feature:** "Thanks for the report. Modules are free and made in spare time, so there is no fix date. The steps and log you gave are exactly what helps whoever picks it up."
+- **Rude message (first step):** "I want to help with this, and I will once we keep it about the module. The community rules ask everyone to criticise the work, not the person."
+- **Duplicate report:** "This is the same problem as #N, so I am closing this one to keep the discussion in one place. Please add anything new there."
+
 ## Administrator role
 
 A verified, unsuspended member whose `users.is_admin` is `1` sees the Admin workspace and passes every `/api/admin/*` check; nobody else sees it, and the page tells other visitors it is for administrators only. The role cannot be set through the API. The owner grants or removes it directly in D1 (`UPDATE users SET is_admin=1 WHERE username='…'`). Migration 0022 adds the column and must be applied **before** the Worker that reads it is deployed. The separate administrator key (`ADMIN_KEY_SHA256`, `POST /api/auth/admin`) still works for API access as break-glass access, but the website no longer offers a key form.

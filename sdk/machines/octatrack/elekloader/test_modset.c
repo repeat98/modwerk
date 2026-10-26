@@ -8,6 +8,11 @@
 #include "modset.c"
 static unsigned set_records;
 void modwerk_diag_set(void) { ++set_records; } /* diag.c: counted here */
+static uint32_t refused_m, refused_c, refuse_id;
+void modwerk_diag_refused(uint32_t module, uint32_t refusal) { refused_m = module, refused_c = refusal; }
+enum runtime_refusal modwerk_runtime_refusal(void) { return RUNTIME_BUSY; }
+static enum runtime_refusal noted = RUNTIME_MALFORMED; /* what modset.c told the loader a refusal was */
+void modwerk_runtime_refused(enum runtime_refusal why) { noted = why; }
 #include <stdio.h>
 #include <string.h>
 
@@ -33,7 +38,7 @@ static uint32_t ids[8];
 static int enter(void *u) { (void)u; ++entered; return 1; }
 static int safe(void *u) { (void)u; return 1; }
 static int leave(void *u) { (void)u; return 1; }
-static int prepare(void *u, const uint8_t *d, uint32_t n) { (void)u; ids[prepared++ % 8] = be32(d + 28); return n > 32u; }
+static int prepare(void *u, const uint8_t *d, uint32_t n) { (void)u; ids[prepared++ % 8] = be32(d + 28); return n > 32u && be32(d + 28) != refuse_id; }
 static int discard(void *u) { (void)u; return 1; }
 static enum mu_publication publish(void *u) { (void)u; return MU_APPLIED; }
 static int restore_backend(void *u) { (void)u; return 1; }
@@ -94,7 +99,12 @@ int main(void)
     pending=0;volatile_busy=0;
     /* After a boot: the newest set, installed through the loader. */
     boot(); modwerk_modset_service();
-    CHECK(modwerk_modset_result == RESTORED && installed == 1 && ids[0] == 0x3cbedc9cu && entered == 1);
+    CHECK(modwerk_modset_result == RESTORED && installed == 1 && ids[0] == 0x3cbedc9cu && entered == 1 && !refused_m);
+    /* One refused: the rest installs, and the log names the refused module and the loader's refusal (finding 69). */
+    refuse_id = 0x3cbedc9cu; written = writes; boot(); modwerk_modset_service();
+    CHECK(modwerk_modset_result == REFUSED && !installed && refused_m == 0x3cbedc9cu && refused_c == RUNTIME_BUSY);
+    CHECK(used() == HEADER && !pending && writes == written); /* set[] names what runs; the card keeps it */
+    refuse_id = 0, refused_m = refused_c = 0;
     /* The newer file damaged: the older one, with both modules. */
     card[0][HEADER + 9] ^= 1; boot(); modwerk_modset_service();
     CHECK(modwerk_modset_result == RESTORED && installed == 2);

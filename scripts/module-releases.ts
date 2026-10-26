@@ -10,10 +10,11 @@ export function moduleReleases(): Plugin {
   return {
     name: 'modwerk-module-release-inventory', apply: 'build',
     async generateBundle() {
+      const authorReleases = new Set((process.env.MODWERK_AUTHOR_RELEASE_MODULES ?? '').split(',').filter(Boolean))
       const manifest: ModuleReleaseManifest = { format: 'modwerk-module-releases-v1', modules: COMMUNITY_MODULES.filter(module => module.machine !== 'octatrack' || !isModulePaused(module.id) || isBetaModule(module.id)).map(({ id, name, version, href }) => {
         const notes = moduleChangelogs[id]?.find(entry => entry.version === version)
         if (!notes) throw new Error('Missing release notes for ' + id + ' v' + version + '. Add them to src/community/module-changelogs/' + id + '.json.')
-        return { id, name, version, href, notes, ...(isBetaModule(id) ? { beta: true } : {}) }
+        return { id, name, version, href, notes, ...(isBetaModule(id) ? { beta: true } : {}), ...(authorReleases.has(id) ? { authorRelease: true } : {}) }
       }) }
       this.emitFile({ type: 'asset', fileName: 'module-releases.json', source: JSON.stringify(manifest) })
       this.emitFile({ type: 'asset', fileName: 'firmware-builder.json', source: JSON.stringify(await readFirmwareBuildManifest(fileURLToPath(new URL('../', import.meta.url)))) })

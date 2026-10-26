@@ -107,7 +107,7 @@ describe('the elekloader update', () => {
     const root = fileURLToPath(new URL('../..', import.meta.url))
     const changes = catalogChanges({ revision: 'a', cores: [], mods: [] }, { revision: 'b', cores: [pin('core', '1.53')], mods: [pin('digichain', '1.53')] })
     expect(followUps(root, changes, { components: [] }, cut.required)).toEqual([
-      'Cores changed (core for digitakt-mk1 OS 1.53: added 1 (core-1.53-digitakt-mk1.elemod)): builds for those OS releases change. Build them and record the identities in docs/VERIFICATION.md.',
+      'Cores changed (core for digitakt-mk1 OS 1.53: added 1 (core-1.53-digitakt-mk1.elemod)): builds for those OS releases change. Build them and record the identities in docs/verification/<YYYY-MM-DD>-<topic>.md.',
       'digitakt/digichain comes with the catalog because a library mod requires it: it needs no library entry.',
     ])
   })

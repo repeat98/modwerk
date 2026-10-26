@@ -44,6 +44,9 @@ machine/track prerequisites and hardware differences when applicable.
 
 Use hardware LCD photographs/captures or the headless emulator's actual
 framebuffer. Preserve the rendered pixels and use readable integer scaling.
+A working framebuffer can be sampled during a redraw. For pixel comparisons,
+observe completion of the actual renderer before reading it; a fixed delay alone
+does not establish a complete frame. Retain failed comparisons for diagnosis.
 Do not reconstruct labels, redraw the interface, generate mockups or present
 an illustration as an OT capture. A selection cursor alone does not prove that
 the module loaded: confirm it, then capture the resulting controls. Review
@@ -106,6 +109,12 @@ An automatic USB module with no OT controls or dedicated OT page must explain
 that fact in `access.noUiReason`, keep `screenshots` empty and document its
 actual host/device access steps. Owner review verifies this narrow exception;
 do not invent a menu or use unrelated stock pages as evidence.
+
+A module that only changes how stock controls behave, with no page and
+nothing drawn (Butter Fingers drops knob turns while a lock is edited), is not
+covered by `access.noUiReason`, which the contract allows only for automatic
+USB modules. Until the owner sets a rule, keep its `screenshots` empty in the
+draft, describe the gesture in `access.steps`, and say so in the pull request.
 
 ## Headless capture workflow
 

@@ -71,6 +71,11 @@ describe('the guides agents read', () => {
     }
   })
 
+  it('lists every document in docs/ in its index', () => {
+    const index = read('docs/README.md')
+    for (const name of readdirSync(resolve(root, 'docs')).filter(name => /\.md$/i.test(name) && name !== 'README.md')) expect(index, 'docs/README.md lists ' + name).toContain('](' + name + ')')
+  })
+
   it('keeps the owner flow out of the contributor context and reachable from it', () => {
     const agents = read('AGENTS.md')
     expect(agents).not.toContain('## Finish the issue-fix flow')

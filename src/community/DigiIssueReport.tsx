@@ -6,7 +6,7 @@ import { FLASH_STATES, type DigiIssueContext, type FlashState } from './issue-co
 import { useWorkspaceReportContext, type WorkspaceReportContext } from './report-context'
 import { communityModule } from './modules'
 import { DEVICES_BY_ID } from '../devices/registry'
-import { BetaReportReminder, BugReportNotice, BugReportSuccess, ExistingIssues } from './BugReportNotice'
+import { AuthorExpectations, BetaReportReminder, BugReportNotice, BugReportSuccess, ExistingIssues } from './BugReportNotice'
 import { ReportNotifications } from './ReportNotifications'
 import { refreshModuleIssues, useIssueTracker, type BugReportResult } from './issue-tracker'
 import { useOpenIssueReport } from './useOpenIssueReport'
@@ -71,6 +71,7 @@ export function DigiIssueReport({ id, openRequest = 0, embedded = false, workspa
       {embedded?<details className="issue-report-more"><summary>Downloaded build <span>{workspace.modules.length} modules attached</span></summary><ReportConfiguration machine={module.machine} moduleId={module.moduleId} workspace={workspace} log={null} value={configuration} onChange={setConfiguration} disabled={busy}/></details>:<ReportConfiguration machine={module.machine} moduleId={module.moduleId} workspace={workspace} log={null} value={configuration} onChange={setConfiguration} disabled={busy}/>}
       </ReportMoreDetails>
       {isPreview?<p className="service-note">Local preview — nothing is sent.</p>:embedded?<p className="service-note">{tracker?.tracker === 'github' ? 'Your report and configuration are public on GitHub and notify the module’s developers.' : 'Your report is public and notifies the module’s developers. The configuration stays private to you, the maintainers and the administrator.'}</p>:<BugReportNotice tracker={tracker} />}
+      {!isPreview && <AuthorExpectations />}
       <ReportNotifications id={id} defaultChecked={kept.follow} />
       <button className="button button-primary" disabled={busy}>{busy ? 'Posting…' : 'Post report'}</button>
     </form>}

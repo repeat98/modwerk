@@ -9,7 +9,7 @@ import { ACTIONS_BOT_ID, AUTHOR_RELEASE_EVIDENCE, AUTHOR_RELEASE_REQUEST } from 
 
 const roots = [], ownerId = 67785539, author = { login: 'devilfish707', id: 86663946, type: 'User' }, repository = 'repeat98/modwerk'
 afterEach(() => { for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true }); vi.unstubAllGlobals() })
-function fixture({ foreign = false, symlink = false, registryChange = false } = {}) {
+function fixture({ foreign = false, symlink = false, registryChange = false, source = 'fixed code\n', files = {} } = {}) {
   const root = mkdtempSync(join(tmpdir(), 'modwerk-author-policy-')); roots.push(root)
   const git = (...args) => execFileSync('git', args, { cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim()
   const write = (path, data) => { mkdirSync(dirname(join(root, path)), { recursive: true }); writeFileSync(join(root, path), typeof data === 'object' ? JSON.stringify(data) + '\n' : data) }
@@ -18,11 +18,12 @@ function fixture({ foreign = false, symlink = false, registryChange = false } = 
   write('.github/module-authors.json', { schemaVersion: 1, accounts: { devilfish707: author.id } })
   write('sdk/catalog.json', { schemaVersion: 1, sourceRevision: 'd'.repeat(40), modules: [{ id: 'playmodes', version: doc.version }] })
   write('sdk/octabam/modules/playmodes/octamod.module.json', doc)
-  write('sdk/octabam/modules/playmodes/source.c', 'original code\n')
+  write('sdk/octabam/modules/playmodes/source.c', 'original code jsr 0x4000D562\n')
   write('sdk/octabam/modules/playmodes/media/location.png', 'fixture only')
   git('add', '.'); git('commit', '-qm', 'trusted base'); const base = git('rev-parse', 'HEAD')
   write('sdk/octabam/modules/playmodes/octamod.module.json', { ...doc, version: '0.1.1-experimental' })
-  write('sdk/octabam/modules/playmodes/source.c', 'fixed code\n')
+  write('sdk/octabam/modules/playmodes/source.c', source)
+  for (const [path, data] of Object.entries(files)) write('sdk/octabam/modules/playmodes/' + path, data)
   if (foreign) write('sdk/octabam/tools/build/build_bus.py', 'malicious compiler')
   if (registryChange) write('.github/module-authors.json', { schemaVersion: 1, accounts: { devilfish707: 1 } })
   git('add', '.')
@@ -52,6 +53,14 @@ describe('trusted Git object inspection', () => {
     writeFileSync(join(f.root, folder, 'source.c'), 'fixed code')
     f.git('add', '.'); f.git('commit', '-qm', 'source-only fix'); const head = f.git('rev-parse', 'HEAD')
     expect(() => inspectAuthorUpdate(f.root, base, head, author)).toThrow('matching authored elekloader packages')
+  })
+  it('keeps addresses the published source already named, in any file or case', () => {
+    const f = fixture({ files: { 'hooks.s': 'jmp 0x4000d562\n' } })
+    expect(inspectAuthorUpdate(f.root, f.base, f.head, author)).toMatchObject({ modules: ['playmodes'] })
+  })
+  it('sends an update that reaches a new firmware or hardware address to owner review', () => {
+    const f = fixture({ source: 'fixed code jsr 0x4000d562\nmove.l d0,0xF0001234\n' })
+    expect(() => inspectAuthorUpdate(f.root, f.base, f.head, author)).toThrow('New addresses in sdk/octabam/modules/playmodes (0xf0001234)')
   })
   it.each([{ foreign: true }, { symlink: true }, { registryChange: true }])('rejects unsafe Git trees: %j', options => {
     const f = fixture(options)

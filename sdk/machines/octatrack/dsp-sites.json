@@ -6,7 +6,7 @@
     {"bit": 2, "name": "matrix", "cores": ["A"], "implies": [], "about": "Output Matrix's mix and phones paths"},
     {"bit": 4, "name": "analog-bd", "cores": ["A", "B"], "implies": [], "packaged": true, "about": "Analog BD's source: its engine and initial X words come from its controller's package (ABI 10), never from the base"},
     {"bit": 8, "name": "keybus", "cores": ["A", "B"], "implies": [], "about": "the base-owned key bus: every track's FX1 input, on each core and in the cross-core window",
-     "executed": 41, "cost": "its tap, charged per core while the base holds it: executed instructions a sample for a core's four tracks, seeded, counted statically from its source (resident_dsp.keybus_executed); not a modeled cycle count or a hardware timing"}
+     "executed": 41, "hardware": 51, "evidence": "evidence/keybus-tap-timing-20261023.json", "cost": "its tap, per core while the base holds it. executed: instructions a sample for a core's four tracks, seeded, counted statically from its source (resident_dsp.keybus_executed). hardware: chip cycles a sample on core 0 of an MKII (load meter, 23 October 2026, the evidence file); the charge"}
   ],
   "sites": [
     {"index": 0, "name": "dsp_fx1_dispatch", "feature": 8, "module": "sidechain-compressor", "label": "sctap",

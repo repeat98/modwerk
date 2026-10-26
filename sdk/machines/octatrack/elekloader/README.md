@@ -72,6 +72,26 @@ events, table owners, the resident engines on demand, the controllers, module se
 npm run octatrack:base -- --stock /private/OCTATRACK_OS1.40C.bin --beta --write
 ```
 
+Without the reviewed GCC on the host (Linux, 24 October 2026), build the toolchain image once with
+`docker build -f sdk/build/Dockerfile -t modwerk-toolchain:local .` (it compiles binutils and GCC, about half an
+hour) and run the same script in it. The image has `node` but no `npm`, and its home is not yours, so call the
+scripts directly and name the upstream checkout:
+
+```sh
+C=~/.cache/modwerk-upstream
+docker run --rm --user "$(id -u):$(id -g)" -e HOME=/tmp -v "$PWD:$PWD" -v "$C:$C:ro" -w "$PWD" \
+  -e ELEKLOADER_DSP_ASM=/opt/toolchain/vendor/dsp56300/build/source/dsp_host/dsp_asm modwerk-toolchain:local \
+  node scripts/octatrack-base.mjs --stock /private/OCTATRACK_OS1.40C.bin --upstream "$C/elekloader" --beta --write
+```
+
+Mount the stock file's folder and any `--out` folder too. The base-bound relink runs the same way
+(`python3 -B scripts/octatrack-module-packages.py --base-only --upstream "$C/elekloader"`). Run the command without
+`--write` on a clean `main` first: it passes only when this toolchain reproduces the committed base. A fresh worktree
+needs `npm ci`'s generated files first (`npm run prepare`). To boot a built base in the emulator, use the adapted
+`ot_emu` from [scripts/octatrack-emulator](../../../../scripts/octatrack-emulator/README.md) with the `--out` folder's
+`MAIN.raw`: the plain octabam `ot_emu` boots it but never creates the base's status task, so the sequencer sends no
+MIDI. On Linux use `flock` where that README says `lockf -k`.
+
 Analog BD's trust row hashes its reviewed inputs, `machine-ports.json` among them, so an edit there (any machine's
 entry) also needs this regeneration.
 
@@ -121,6 +141,14 @@ Without `--write` it checks the committed files are what this source builds. Bot
 stock-free, that the browser's path builds a `.bin` identical to `build_core.py`'s `NOT_FLASH_CANDIDATE.bin`,
 and `check_flash_safety.py`; `--out NEW-DIR` (outside Git) saves that `.bin` and its `MAIN.raw` for a RAM
 boot. It uses `~/.cache/modwerk-upstream` (`--upstream`, `ELEKLOADER_DSP_ASM`) as the build above does.
+
+### Take events
+
+A take event in `../events.json` has no C prototype: beside its `events` entry it needs a `sites` entry with the
+site's guard and the tail that replays stock when nobody takes the call. `{"stock": n}` copies the site's bytes as
+they are, so a site holding a PC-relative branch needs its tail written as instructions with the branch made absolute
+(`ev_midi_note_key`'s `ble`). `ev_midi_note_key` runs where each sequencer, chord and arp note of a MIDI track is
+about to be corrected to KEY and sent; a taker rewrites or drops the note, and stock keeps every note-off.
 
 ### DSP effects on demand
 
@@ -478,21 +506,48 @@ NOR when a host asks, with stock's OS UPGRADE routines (the sector erase and
    Both are compared by SHA-256, never with the running RAM, which stock rewrites
    once started: the copy with stock 1.40C's digest, the stream with the digest
    `.boot` takes right after unpacking it (`modwerk_flash_snapshot`).
-   Then OS UPGRADE's quiesce, the sectors up to the container's end erased, the
-   pages programmed, NOR compared word by word (once more after a second write),
-   and the reply. A container NOR already holds writes nothing.
-3. Accept (or any rollback after the write) restarts the unit half a second on,
-   as a RAM boot does but with no mailbox, so the bootstrap unpacks NOR: the new
-   base. The host sees it come back and checks IDENTIFY.
+   Then the write, into one of **two slots** (below), and the reply. **At most
+   one restart per update:** this base writes itself while it runs on (no
+   quiesce: stock's routines mask only their command writes and the OS runs
+   from RAM), with its own box on the unit (BASE UPDATE, a bar) and BASE SAVED
+   after; the next start is from the new slot.
+3. On a unit already on two slots there is no trial: the running base takes the
+   new base's container for its spare slot (only the checks that keep the
+   bootloader safe: entry, bootstrap version, stock's bootloader copy), writes it
+   under OS UPGRADE's quiesce and stock's upgrade screen, and accept restarts the
+   unit half a second on, as a RAM boot does but with no mailbox: Elektron's
+   bootloader starts our boot stub, which starts the new slot. The host checks
+   IDENTIFY. A base never takes another base's container on a unit with one copy.
+
+**Two slots** ([docs/OCTATRACK_TWO_SLOT_BASE.md](../../../../docs/OCTATRACK_TWO_SLOT_BASE.md),
+`slots.h`): a boot stub at `0x4000` (`stub.s`, `stub.c`, built by `build_stub.py`
+into `stub_body.c`) starts the newest whole slot of A (`0x10000`) and B
+(`0x100000`), or the other one after an unconfirmed slot failed to start twice
+(UPDATE UNDONE on the unit; SLOTS, vendor request 39, tells the site). A base
+confirms its slot 15 s after starting from it (BASE UPDATED); a slot another base
+wrote also waits for a computer's USB contact. A write goes only into the slot
+the unit can lose, its record page last, so a power cut or USB dropout at any
+point leaves a base that starts. A unit with one copy (the card's install) is
+converted on its first update: its base copied to B and confirmed, the stub's
+sector, then the new base into A. That sector is the one moment, once per unit
+and under a second, when a cut still needs the startup menu. Flash with neither
+layout is refused (refusal 108).
 
 A verify that still fails after the second write answers `uncertain` and leaves
 the unit running from RAM for another try (the self-test record's `refusal`
-reads 100 + flash.h's reason); only a power-off then needs the Startup Menu.
-The write itself (some seconds) is the window a power cut can hit, as with
-the card. A base without the capability (feature bit 8 of CAPABILITIES) still
-needs the card once. Host check: `test_flash.c` (NOR modelled as clearing
-bits only, the kit's packer for the fixture); the stock routines, the quiesce
-and the restart are hardware-only.
+reads 100 + flash.h's reason). The site (`OctatrackLink.writeBase`) writes
+again after a failed verify or a lost reply, reopening the unit first so its
+connect rolls the lost session back, until the unit comes back on the new base
+from NOR: a repeat writes nothing when the slot the stub starts next already
+holds it. Two rules keep any update from bricking a unit: nothing writes below
+`0x4000`, where Elektron's bootloader and its FUNC startup menu (MIDI UPGRADE,
+the recovery) live, and once a write may have started, the site never shows an
+error that invites switching the unit off. A base without the capability
+(feature bit 8 of CAPABILITIES) still needs the card once. Host check:
+`test_flash.c` (NOR modelled as clearing bits only, a power cut after every
+operation); `check_stub.py` runs the stub with the bootloader's own code from
+your OS file in Unicorn. Stock's routines, its screen, the quiesce and the
+restart are hardware-only.
 
 `build_ports.py` prepares independent source ports with the same pinned SDK
 and its native source checker. It registers the internal USB MIDI dependency

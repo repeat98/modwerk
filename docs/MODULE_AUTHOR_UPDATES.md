@@ -69,6 +69,14 @@ The privileged `Publish module author updates` workflow handles successful sourc
 
 The publisher independently checks the bot's merge event, both merge parents, the original ownership/registry, current successful CI and exact change scope. Merely merging with another account or inserting approval in a package is insufficient. Compilation, version, licence, documentation, qualification and package reproduction gates remain in place. A failed release keeps the previous published release available.
 
+Three safeguards cover a stolen account or a bad update, because an automatic release reaches instruments without the owner reading it first:
+
+- **New addresses go to owner review.** If your update's source names a 32-bit address (`0x` and eight hex digits) that the published version's source never named, such as a new hook, stock routine, register or flash location, the bot does not merge it and says why on the PR. Bug fixes and tuning inside the code you already have stay automatic; about one in four past updates added hooks and would have waited for the owner. It is a tripwire, not a sandbox: an address computed at run time passes it.
+- **The owner is told about every automatic release.** After the merge the bot comments on the PR, mentioning the owner, with a link to the exact changes.
+- **Followers hear about it 48 hours after it goes live.** The site marks the release, and the community API stores a hold the first time it sees it; the hourly check queues the follower updates once the hold ends, and the daily digest timing still applies. A newer version published during the hold replaces the held one, so followers are only told about the replacement. `/modwerk resolve` works during the hold and reports no queued updates yet.
+
+Keep two-factor authentication on your GitHub account while you are in `.github/module-authors.json`. GitHub cannot show the owner whether it is on, so this is a condition of registration rather than a check.
+
 Because `GITHUB_TOKEN` merges do not trigger push workflows, the author workflow explicitly dispatches both site and community API publication. Dispatch failure is visible in the author workflow; rerun the site's and Worker's normal workflows on main to retry publication. Successful merge alone is not confirmation that deployment finished.
 
 ## Repository setup
@@ -77,4 +85,4 @@ This implementation needs no new personal access token, repository-wide collabor
 
 If main requires an approving review for every PR, GitHub will block automatic author merges until that rule is adjusted. Keep required `module-contract` and relevant source-build checks and require branches to be up to date; do not give the bot a general bypass of branch protections. The scope policy supplies owner review for changes beyond authors' own modules. Review repository-wide consequences before changing a ruleset.
 
-All current published primary authors are registered with numeric IDs from their public GitHub repository owner records. On the first owner-reviewed addition by a new author, register that account ID in the same PR. Handle renames, maintainer appointments and revocations also need owner review of the registry/manifests. Website module claims and developer sign-in do not change this release authority.
+All current published primary authors are registered with numeric IDs from their public GitHub repository owner records. On the first owner-reviewed addition by a new author, register that account ID in the same PR. Release authority grows slowly and stays narrow: a registered author can release only their own modules, and nobody gains wider rights for being the most eager helper. Handle renames, maintainer appointments and revocations also need owner review of the registry/manifests. Website module claims and developer sign-in do not change this release authority.

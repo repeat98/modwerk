@@ -7,7 +7,7 @@
 | (modwerk_stock_<address>_<n>): no stock byte is carried.
         .text
         .global mw_machine_name, mw_main_commit, mw_src_commit, mw_src_commit2, mw_name_a, mw_name_b
-        .global mw_setup_open, mw_chooser_open, mw_setup_row, mw_chooser_row
+        .global mw_setup_open, mw_chooser_open, mw_setup_row, mw_chooser_row, mw_chooser_name
         .global mw_setup_edit6, mw_setup_draw6, mw_tick_hook, mw_resolve_pb, mw_validate_hook, mw_stock_validate
         .global mw_pool_open, mw_pool_title, mw_list_draw, mw_stock_pool_open, mw_stock_list_draw, mw_source_render
         .global mw_seq_draw, mw_seq_none, mw_seq_get_none, mw_seq_set_none
@@ -116,10 +116,23 @@ mw_setup_row:
         lea 24(%sp),%sp
         bsr mw_row_type
         jmp 0x4003c986
+| The machine chooser (double-tap TRACK) draws its six rows from the top of the screen, d2 the
+| row on screen: past six rows (four machines) its list (0x460e7386, top row first) scrolls but
+| the rows did not. Its names and the track's mark read the list's row, top + d2; the cursor's
+| highlight is by screen row already. SRC SETUP's list adds its top itself.
+mw_chooser_name:
+        move.l 4(%sp),%d0
+        add.l 0x460e7386,%d0
+        move.l %d0,-(%sp)
+        jsr mw_machine_name
+        addq.l #4,%sp
+        rts
 mw_chooser_row:
         mvs.b (%a0),%d0
         bsr mw_chooser_row_type
-        cmp.l %d0,%d2
+        move.l %d2,%d1                  | d1 is free: both paths load it again
+        add.l 0x460e7386,%d1
+        cmp.l %d0,%d1
         bne.s 1f
         jmp 0x400786ce
 1:      jmp 0x400786fc

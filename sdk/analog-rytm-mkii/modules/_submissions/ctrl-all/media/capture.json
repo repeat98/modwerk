@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "machine": "analog-rytm-mkii",
+  "moduleId": "ctrl-all",
+  "moduleVersion": "1.2.0",
+  "firmware": "1.74",
+  "capturedAt": "2026-10-22T20:55:00Z",
+  "imageSha256": "c4a1fc0b88d46abb115454f774538fb6d30529cadf2e315cc5881f8ad724567e",
+  "mainSha256": "da53bc86f5ac4f8da00226c56eb059fa7b49a88a6d56571032d0abb9cd848a1c",
+  "stockSha256": "cb0f99d620edde994fb860c0e79cc2464e427d06882828cfdfb00fc53700e123",
+  "build": "Modwerk's linker (kit 0.7.0 parity): core-ar2 0.3 release (6b97dfb3…3e58) + rytm2_mods v1.2 ctrl-all-1.2-os1.74.elemod (cc7d1b3c…), --version CT74",
+  "emulator": {
+    "name": "rytm-emu",
+    "repository": "https://github.com/trigcondition/rytm-emu",
+    "revision": "c5732f0",
+    "binary": "dtboot (cargo build --release)",
+    "settings": "no card image, JIT on"
+  },
+  "conditions": "Headless cold boot; four held NO presses clear the missing-calibration notices; FLTR opens the FILTER page of track BD; TRK is held while encoder 4 (FRQ) turns down from 127 to 75; then TRK + the SD pad selects SD. The same plan on stock 1.74 gives identical frames up to that point; on SD's FILTER page stock still shows the curve fully open, and the frames differ only in the filter curve (x 84-162, y 117-134).",
+  "captures": [
+    {
+      "path": "media/filter-page.png",
+      "sha256": "201ecba801dfef89057ba777f67a5d91c989b5e6878ef221258c470c6cfa046d",
+      "frame": "step05_FLTR.png",
+      "plan": "DTBOOT_STEPS=1 DTBOOT_PNG_DIR=out DTBOOT_TURN_PNG=out dtboot ct74.syx --instr 11000M --every 1000M --press NO@4500M:80M --press NO@5300M:80M --press NO@6100M:80M --press NO@6900M:80M --press FLTR@7500M:40M --press TRK@8000M:1100M --turn 4:-6@8200Mx30/20M --press TRK@9600M:300M --press SD@9700M:60M"
+    },
+    {
+      "path": "media/trk-frq-bd.png",
+      "sha256": "9b8eb06fb2e6dd083e153b4017e875cba4ab6b999c109f612ee6136c1241a87c",
+      "frame": "turn35.png",
+      "plan": "DTBOOT_STEPS=1 DTBOOT_PNG_DIR=out DTBOOT_TURN_PNG=out dtboot ct74.syx --instr 11000M --every 1000M --press NO@4500M:80M --press NO@5300M:80M --press NO@6100M:80M --press NO@6900M:80M --press FLTR@7500M:40M --press TRK@8000M:1100M --turn 4:-6@8200Mx30/20M --press TRK@9600M:300M --press SD@9700M:60M"
+    },
+    {
+      "path": "media/sd-follows.png",
+      "sha256": "f038be57217c8db60caadcf5e3ae978a713d23a486a0339920c779baee5c9c75",
+      "frame": "step38_TRK.png",
+      "plan": "DTBOOT_STEPS=1 DTBOOT_PNG_DIR=out DTBOOT_TURN_PNG=out dtboot ct74.syx --instr 11000M --every 1000M --press NO@4500M:80M --press NO@5300M:80M --press NO@6100M:80M --press NO@6900M:80M --press FLTR@7500M:40M --press TRK@8000M:1100M --turn 4:-6@8200Mx30/20M --press TRK@9600M:300M --press SD@9700M:60M"
+    }
+  ]
+}

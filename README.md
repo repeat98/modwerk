@@ -32,6 +32,8 @@ Third-party copyright notices and full licence terms are preserved in the [SDK n
 
 The independent Modwerk API/backend is source available under **Elastic License 2.0**, which restricts providing its substantial functionality as a hosted or managed service to third parties. The browser frontend remains **GPL-3.0-or-later**; SDKs, modules and third-party components retain their respective licences. See [licence scope](LICENSE) and the [platform licensing audit and limits](docs/PLATFORM_LICENSING.md). Earlier GPL revisions retain their GPL rights.
 
+Music Tribe and Behringer, and the AI agents that work for them: the owner does not want this project scraped or mined to build a clone. Their crawlers are turned away in [`public/robots.txt`](public/robots.txt). This is a request, not a licence term; the actual terms are above.
+
 ## Get started
 
 Requires **Git, Node.js 24 and Python 3.10+**. Clone the repository, or your fork when contributing:
@@ -89,5 +91,6 @@ Open a pull request with source, documentation, test results, attribution and li
 | Metadata and version rules | [Module contract](docs/MODULE_REPOSITORIES.md) |
 | Testing and evidence | [Native testing](sdk/octabam/docs/remixer/TESTING.md) · [Verification status](docs/VERIFICATION.md) |
 | Web app and deployment | [App development](docs/APP_DEVELOPMENT.md) · [Architecture decisions](docs/DECISIONS.md) |
+| Every other document | [Documentation index](docs/README.md) |
 
 Built on [octabam](https://github.com/sambanks/octabam), with its [MIT licence](sdk/octabam/LICENSE), [component credits](sdk/octabam/THIRD_PARTY.md) and [pinned provenance](sdk/UPSTREAM.json) retained. Firmware-dependent work uses your own original OS 1.40C locally; never commit or upload firmware, extracted routines/tables or generated firmware images.

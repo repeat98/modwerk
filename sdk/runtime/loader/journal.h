@@ -4,7 +4,10 @@
 #ifndef MODWERK_RUNTIME_JOURNAL_H
 #define MODWERK_RUNTIME_JOURNAL_H
 #include "loader.h"
-#define RUNTIME_JOURNAL_ROWS 20u
+/* One row per installed module, as many as the loader holds (RUNTIME_MODULES: 128 on the Octatrack). MWS1 and MWMS
+ * count them in one byte. */
+#define RUNTIME_JOURNAL_ROWS RUNTIME_MODULES
+typedef char runtime_journal_rows_fit_a_byte[RUNTIME_JOURNAL_ROWS <= 255u ? 1 : -1];
 /* Separate from mu_publication: pending must never mean MU_UNCHANGED. */
 enum runtime_journal_result { RJ_OK, RJ_PENDING, RJ_REFUSED, RJ_UNCERTAIN, RJ_STALE };
 enum runtime_journal_phase { RJ_IDLE, RJ_RECEIVING, RJ_VERIFIED, RJ_PUBLISHING, RJ_TRIAL, RJ_ROLLBACK, RJ_QUARANTINE };
@@ -75,8 +78,10 @@ int modwerk_runtime_journal_digest(uint8_t[MU_DIGEST_BYTES]);
  * than RUNTIME_JOURNAL_ROWS rows, has no identity (0). */
 static inline int runtime_journal_set_digest(const uint32_t *ids,const uint8_t *sha,unsigned n,uint8_t out[MU_DIGEST_BYTES])
 {
-    uint8_t bytes[8u+36u*RUNTIME_JOURNAL_ROWS]={'M','W','S','1'};
+    /* Static: 36 bytes a row outgrow a stock task's stack. Engine task only, so never entered twice at once. */
+    static uint8_t bytes[8u+36u*RUNTIME_JOURNAL_ROWS];
     if(n>RUNTIME_JOURNAL_ROWS) return 0;
+    bytes[0]='M',bytes[1]='W',bytes[2]='S',bytes[3]='1',bytes[4]=bytes[5]=bytes[6]=0;
     for(unsigned i=0;i<n;++i) {
         unsigned below=0;
         for(unsigned k=0;k<n;++k) { if(k!=i && ids[k]==ids[i]) return 0;below+=ids[k]<ids[i]; }

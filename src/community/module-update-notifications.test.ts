@@ -64,6 +64,23 @@ describe('module update subscriptions', () => {
     expect(await f.publish(release('miniverb', '12.0.0'))).toEqual({ checked: 1, notified: 0 })
   })
 
+  it('holds an author release for 48 hours, then notifies; a newer version replaces a held one', async () => {
+    const f = await fixture(), follower = await f.member('heldfan')
+    await f.publish(release('miniverb', '9.0.0'))
+    await f.call('/modules/miniverb/updates', 'PATCH', { enabled: true }, follower.session)
+    const authored = { ...release('miniverb', '10.0.0'), authorRelease: true }
+    expect(parseModuleReleases(manifest([authored]))[0].authorRelease).toBe(true)
+    expect(await f.publish(authored)).toEqual({ checked: 1, notified: 0, held: 1 })
+    // A later deploy no longer carries the flag; the stored hold still applies.
+    expect(await f.publish(release('miniverb', '10.0.0'))).toEqual({ checked: 1, notified: 0, held: 1 })
+    f.db.prepare("UPDATE module_releases SET notify_after=datetime('now','-1 minute') WHERE module_id='miniverb' AND version='10.0.0'").run()
+    expect(await f.publish(authored)).toEqual({ checked: 1, notified: 1 })
+    expect(await f.publish({ ...release('miniverb', '11.0.0'), authorRelease: true })).toEqual({ checked: 1, notified: 0, held: 1 })
+    // The owner replaces the held version: followers hear about the replacement only.
+    expect(await f.publish(release('miniverb', '12.0.0'))).toEqual({ checked: 1, notified: 1 })
+    expect((await f.items(follower.session)).filter(item => item.kind === 'module_update').map(item => item.module_version).sort()).toEqual(['10.0.0', '12.0.0'])
+  })
+
   it('recovers missed current releases once and consolidates them without changing opt-outs', async () => {
     const f = await fixture(), follower = await f.member('catchupfan'), silent = { id: 'catchupsilent' }, unfollowed = { id: 'catchupunfollowed' }
     // Only the follower needs an HTTP session; seed the other recipients without unrelated password hashing.

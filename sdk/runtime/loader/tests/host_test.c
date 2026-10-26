@@ -567,7 +567,11 @@ int main(void)
      * two): those two are read as they are and put back on removal. */
     stock[68] = 0x99;
     id = 74; begin7(8, 2, 1, 0xeb); site7(STOCK + 64, 6, 0, 4);
-    CHECK(b->prepare(0, p, n) && b->publish(0) == MU_APPLIED && b->retire(0) && stock[64] == 0x4e && stock[68] != 0x99);
+    CHECK(b->prepare(0, p, n) && b->publish(0) == MU_APPLIED && b->retire(0) && stock[64] == 0x4e);
+    /* The jump's target, not stock[68] != 0x99: that byte is the host address's bits 15..8, which ASLR can make 0x99. */
+    const struct runtime_module *guarded = 0;
+    for (unsigned i = 0; i < RUNTIME_MODULES; ++i) if (modwerk_runtime_module(i) && modwerk_runtime_module(i)->id == 74) guarded = modwerk_runtime_module(i);
+    CHECK(guarded && word(STOCK + 66) == (uint32_t)(uintptr_t)guarded->hook[RUNTIME_TICK]);
     begin(0, 0, RUNTIME_NONE, 0, 0, 0, 0);
     CHECK(b->prepare(0, p, n) && b->publish(0) == MU_APPLIED && b->retire(0) && bytes_at(STOCK + 64, original + 64, 4) && stock[68] == 0x99);
     stock[68] = original[68];

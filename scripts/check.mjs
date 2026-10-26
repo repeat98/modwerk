@@ -3,6 +3,7 @@ import { performance } from 'node:perf_hooks'
 import { fileURLToPath } from 'node:url'
 import { readChangeScope } from './change-scope.mjs'
 import { checkChangelog } from './changelog.mjs'
+import { checkDocs } from './docs.mjs'
 import { checkModuleChangelogs } from './module-changelogs.mjs'
 
 const root = fileURLToPath(new URL('../', import.meta.url))
@@ -43,6 +44,11 @@ async function run(name, args = []) {
   })
 }
 
+function skip(name, reason) {
+  console.log(`${name}: skipped (${reason})`)
+  return true
+}
+
 async function build() {
   // A type error must still prevent bundling, as in the original build command.
   return await run('typecheck') && await run('build:bundle')
@@ -52,7 +58,10 @@ const started = performance.now()
 const buildOnly = process.argv.includes('--build')
 const baseIndex = process.argv.indexOf('--base'), base = baseIndex < 0 ? null : process.argv[baseIndex + 1]
 if (baseIndex >= 0 && !base) throw new Error('--base requires a Git commit/ref')
-const documentationOnly = !buildOnly && !!base && readChangeScope({ root, base }).documentation
+const scope = !buildOnly && base ? readChangeScope({ root, base }) : null
+const documentationOnly = !!scope?.documentation
+// The SDK suite takes minutes. Locally, a change it cannot read (site, Worker, release notes) skips it; CI always runs it.
+const sdkSuite = !scope || scope.sdk || !!process.env.CI
 async function changelogs() {
   let passed = true
   try {
@@ -62,6 +71,9 @@ async function changelogs() {
   try {
     console.log(`Application changelog: ${checkChangelog(root, base).entries} entries in changelog/`)
   } catch (error) { console.error(`Application changelog: ${error.message}`); passed = false }
+  try {
+    console.log(`Documents: ${checkDocs(root, base).documents} within the size limit, frozen logs unchanged`)
+  } catch (error) { console.error(`Documents: ${error.message}`); passed = false }
   return passed
 }
 // Run every check of a stage even when one fails, so a pull request sees all its problems in one run.
@@ -84,7 +96,7 @@ if (!buildOnly && passed) {
 if (!buildOnly && !documentationOnly && passed) passed = await all(() => run('elekloader:check'), () => run('modules:compat'), () => run('modules:pairs'))
 // Finish generated notice/catalog/media writes before lint, tests, typecheck or bundling read them.
 if (passed && !documentationOnly) passed = await run('licenses:generate') && await run('machines:generate') && await run('modules:generate')
-// Every path, including documentation-only checks and release builds, requires current-version notes.
+// Every path, including documentation-only checks and release builds, requires current-version notes and documents within their size.
 if (passed) passed = await changelogs()
 // Documentation uses the same import policy as publication without running firmware gates. The catalogue tests read Markdown
 // (the module guides' links, the agent files, the pull request template), so a prose-only change can break them and must run them.
@@ -92,7 +104,7 @@ if (passed && documentationOnly) passed = await run('sdk:imports:check') && awai
 if (passed && !documentationOnly) {
   const results = buildOnly
     ? [await build()]
-    : await Promise.all([run('sdk:check'), run('lint'), run('test'), build()])
+    : await Promise.all([sdkSuite ? run('sdk:check') : skip('sdk:check', 'no changed path reaches it; CI runs it'), run('lint'), run('test'), build()])
   passed = results.every(Boolean) && !interrupted
 }
 console.log(`${buildOnly ? 'Build' : documentationOnly ? 'Documentation check' : 'Check'} ${passed ? 'passed' : 'FAILED'} in ${((performance.now() - started) / 1000).toFixed(2)}s`)

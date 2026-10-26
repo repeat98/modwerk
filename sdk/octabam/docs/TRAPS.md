@@ -538,6 +538,27 @@ position 0's advance — one step ahead for good on the unit (images 40–47,
 on X:$213 (stale at proc time), and `dsp_host` places FX2 slots at
 0x6200 + 0x300·pos (`verify_two_core` had 0x200·pos until image 48).
 
+<a name="trap-module-id"></a>
+
+### A module's id is the remix's, not the manifest's: `registry.modules()` reads the preferred one
+
+**A MODULE'S ID IS THE REMIX'S, NOT THE MANIFEST'S.** `MenuEntry.fx2_id` is the
+id a module prefers; `registry.assign_ids` (called by `registry.bound(remix)`)
+settles the id in a remix, and in a 64-id image the FX2 tables are elsewhere
+too (`idspace.fx2_ids(remix)`). A tool, gate or module that reads
+`registry.modules()[k].menu.fx2_id`, a literal id or `0x400d5fdc` is right only
+for the stock layout. On `remixes/test/ids64` (BBD pinned to `0x25`) that cost
+a run of gates one at a time, 22 Oct 2026: `verify_dirty_state` ("not placed on
+either payload": it asked for `0x1b`), `verify_labels` and `verify_mode_names`
+(a vector-4 trap in the emulated formatter call), `verify_menu` (the panel
+printed PHASER for BBD: stock's table read past its 32 entries),
+`verify_replaces` (it read B's dispatch tables at stock's address, which B had
+left). The fix in each is `registry.bound(remix)` for ids and `idspace` for
+addresses (`fx2_ids`, `id2pos`, `layout_of`, `dispatch_word`,
+`payloads`; `dsp_modmap.payloads_of` for the payload locations). Left on the
+preferred ids: `tools/hw/ot_project.py` after the first two functions,
+`ot_spec.py`, `rig_render.py`, `remix/app.py`, `harness/stress_project.py`.
+
 <a name="trap-audio-block"></a>
 
 ### `dsp_host`'s default audio block (X:0x80) sits inside the scratch the stock effects use
@@ -850,6 +871,50 @@ logs `r[:300]` — that truncation is display-only, the returned reply is
 full; a short line in the port log is not a short reply. Rule: a socket
 write loop that breaks on `n <= 0` truncates under load; poll POLLOUT.
 
+<a name="trap-window-zero"></a>
+
+### Window code above `0x37f00` is wiped at boot, and below `0x33da3` DARK REV can write it
+
+**Seen:** 26 Oct 2026, the first demand-loading `octabam` under the port: both DSP cores faulted
+at boot (`PC 0x80000 is outside P memory`, after a slide through zeros from the stub's first
+dispatch) with the reverb guards and LOAD METER's DSP half at `0x3bda3..0x3ff00`.
+
+**Cause:** payload B's boot zero loop clears `Y:0x37f00..0x3ffff` after the pre-boot upload
+(`dsp_ranges.STOCK_PATCHES`), so an uploaded record there is zeros when the frame loop reaches it.
+DARK REV on the slot at `0x30000` writes up to `0x33da2` (`stock.SLOT_EXTENT`), so words below
+`0x33da3` in that block are not safe either.
+
+**Fix and gate:** resident window code goes in `0x33da3..0x37eff` clear of the stock extents; the
+build refuses an uploaded window record above `0x37f00`. The two clear gaps are `0x33da3..0x33fff`
+and `0x37da3..0x37eff`.
+
+<a name="trap-host-mask"></a>
+
+### A host write at the frame interrupt's entry is lost on every other frame
+
+**Seen:** 26 Oct 2026, the demand loader's pump under the port: a block sent 100 halfwords a frame
+arrived in alternate chunks; sent only when `0x800000e0` is 0 it arrived whole.
+
+**Cause (🟡):** payload B's frame loop stores `0x3fff` or `0x5fff` into the host handlers' address
+masks (`p:$371`, `p:$380`) every frame from the bank word (`P:0x5f..0x72`). The lost chunks are
+not at `X:0..0x3fff` of either core. Sending to core A at the entry also stops the stock ping
+words alternating (core A's chain stalls); HC polling and a settle loop did not change it. A
+receives the stock `0x8c` frame command and B does not.
+
+**Fix and gate:** DLPUMP sends to core B on ping-0 frames only (`verify_dlload`). Whether the unit
+loses the same frames is open.
+
+<a name="trap-bra-back"></a>
+
+### `dsp_asm` does not assemble a backward `bra`, or `jmp` to a window address
+
+**Seen:** 26 Oct 2026: `bra proc` to an earlier label failed (`InvalidInstruction -- "bra -$51"`)
+and `jmp proc` at `P:0x33e2b` failed; the sizing pass then drifted.
+
+**Fix:** put trampolines before the code they enter so the branch is forward, or load the address
+into a register and `jmp (rN)`. Dispatch entries must keep `init < proc <= init + 256`
+(`send_probe.entry_points`).
+
 ## Traps on the ColdFire / DRAM side (the platform work, 9–10 Sep 2026)
 
 <a name="trap-watch-alias"></a>
@@ -998,6 +1063,12 @@ report (the hints name `tools/harness/send_probe.py`), which refhash
 correctly flagged with every artifact identical. Re-save only after proving
 the artifact lines match.
 
+A module that gains or loses `replaces` moves between the build report's
+"not in this remix, LEFT STOCK" and "not in this remix" lines in every case.
+The cases that exit non-zero (`plain`, `marker`) have the report as their only
+line, so `tools/verify/refhash_compare.py` compares their logs with those two
+lines masked; any other difference in a refusal still fails.
+
 <a name="trap-nm-order"></a>
 
 ### Same-named labels across DRAM units resolve by nm table order
@@ -1134,3 +1205,52 @@ reports on a range it never watched. Rule: one comma-joined
 `--watch-mem addr,len;addr,len` argument; when a watch captures nothing,
 check what the command line actually watched before suspecting the
 runtime.
+
+<a name="trap-frame-count"></a>
+
+### A frame count past $7fffff reaches `move a,n1` with A2 stale, and a frame engine that stops after 50.7 minutes
+
+**A COUNT WITH BIT 23 SET, LOADED INTO A AND MASKED, LEAVES A2 AT $FF AND
+`move a,n1` LIMITS.** Core 0's frame count in `dsp_meter.asm` indexed the 16
+OTOP cost cells (`move x:(r1+6),a / and #>$f,a / move a,n1`, then
+`move x:(r1+n1),a`). At 8,388,608 frames the load sign-extends A2 to $FF,
+`and` leaves it (`trap-a2-stale`), and the move limits n1 to $800000: the
+cost read goes to a wild address. The unit's frame interrupt and every
+counter on it stopped 8,388,607 frames after power-up (3,043.6 s at
+2,756.25 a second), on an idle unit, twice (24 Oct 17:23, 25 Oct 07:41). The
+port reads zero at the wild address and goes on; the OTOP costs after the
+crossing are zero. Inferred, not measured: that the read stalls the core on
+the unit (an image with the count preset, Q1, stopped within seconds of boot;
+Q2, with the wrap below, did not).
+- Fix: `and #>$7fffff,a` after the add keeps the count below bit 23 (2^23 is
+  a multiple of 16, so the slot index continues).
+- Located by presetting: the ColdFire seq preset to 8,388,000 (P1) stopped at
+  8,388,607 records from boot, so the stop followed the DSP count and not the
+  ColdFire seq.
+**Gate:** `verify_load_meter` `wrap` (`LM_FRAME0` = 2^23 - 1000; `--wrap-only`
+runs just it): every OTOP slot sampled and the costs read (heaviest slots 1
+and 9, core 0 sum above zero). Without the `and` the sum is 0. A counter
+that must outlive 50 minutes at 2,756 a second needs a preset test.
+
+<a name="trap-ep0-dma"></a>
+
+### An EP0 reply is DMA'd from memory the CPU's cache may not have written, and one of 64 bytes breaks the next request
+
+**A CELL THE CPU STORES RARELY STAYS STALE FOR THE USB DMA, AND A CONTROL REPLY
+OF A MULTIPLE OF 64 BYTES MAKES THE NEXT REQUEST RETURN 0 BYTES.** Both found
+on the first unit run of vendor request `0xc0/0x57` (24 Oct 2026), both clean
+under the port.
+- `lm_stats` is stored once in 0.5 s; the controller reads RAM, not the
+  copyback cache, so the request returned the same window for minutes and then
+  jumped 100 windows at once, while `lm_dsp` and `lm_ot` (stored every frame)
+  looked live. The reply is now copied into `lm_reply` through the uncached
+  alias (`+UNCACHED`) and sent from there, the rule `usbaudio.s` states at the
+  rings.
+- A reply of 64, 128, 192 or 256 bytes left the next control request returning
+  0 bytes once (63, 100, 252, 255 did not): `tools/hw/load_meter.py` alternated
+  success and failure per process. The request now sends a byte short and the
+  host resumes from `wIndex`.
+**Gate:** `verify_usb_load_meter` checks the lengths and the offset; the port
+cannot see the cache or the stale status, so a unit run (`load_meter.py`
+repeated, `--for 10`: `windows` near 20) is the check.
+

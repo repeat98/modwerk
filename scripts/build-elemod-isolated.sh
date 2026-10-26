@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: Elastic-2.0
+# Copyright (c) 2026 Jannik Aßfalg (repeat98)
 set -euo pipefail
 [ "$#" -eq 3 ] || { echo 'usage: build-elemod-isolated.sh clean-checkout new-output image-id' >&2; exit 2; }
 source_dir=$(cd "$1" && pwd -P)

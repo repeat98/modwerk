@@ -12,7 +12,7 @@ const sha = bytes => createHash('sha256').update(bytes).digest('hex'), json = as
 const packages = resolve(one('--packages')), oracle = resolve(one('--oracle')), output = resolve(one('--out')), stock = new Map(), mods = []
 for (const input of values('--firmware')) {
   const colon = input.indexOf(':'), machine = input.slice(0, colon), path = input.slice(colon + 1)
-  if (!['digitakt', 'digitone', 'analog-rytm-mkii'].includes(machine) || !path) throw new Error('Expected machine:path for --firmware')
+  if (!['digitakt', 'digitone', 'analog-rytm-mkii', 'analog-four-mkii'].includes(machine) || !path) throw new Error('Expected machine:path for --firmware')
   const raw = new Uint8Array(await readFile(path)), device = LINK_DEVICES.find(item => item.machine === machine)
   const release = device.releases.find(item => item.syxSha256 === sha(raw))
   if (!release) throw new Error('Unrecognized stock file for ' + machine)
@@ -26,7 +26,7 @@ for (const entry of await readdir(oracle, { withFileTypes: true })) {
 const inventory = await json(resolve(packages, 'elemod-build.json')), cases = []
 if (inventory.schemaVersion !== 1 || !Array.isArray(inventory.artifacts)) throw new Error('Invalid package inventory')
 for (const entry of inventory.artifacts) {
-  if (!/^(digitakt|digitone|analog-rytm-mkii)\/[a-z][a-z0-9-]*\/\d+\.\d+\.json$/.test(entry.path)) throw new Error('Invalid package path')
+  if (!/^(digitakt|digitone|analog-rytm-mkii|analog-four-mkii)\/[a-z][a-z0-9-]*\/\d+\.\d+\.json$/.test(entry.path)) throw new Error('Invalid package path')
   const bytes = await readFile(resolve(packages, entry.path)), plan = JSON.parse(bytes.toString('utf8'))
   if (sha(bytes) !== entry.sha256 || plan.provenance.sourceCommit !== inventory.sourceCommit || plan.machine !== entry.machine || plan.id !== entry.id || plan.version !== entry.version || plan.release !== entry.release) throw new Error('Package inventory identity/hash mismatch')
   const image = stock.get(plan.machine + ':' + plan.release), match = mod => mod.parsed.device.machine === plan.machine && mod.parsed.release.version === plan.release

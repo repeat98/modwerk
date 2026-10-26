@@ -42,6 +42,8 @@ def load(path=REGISTRY):
     for f in reg['features']:
         if not f['cores'] or set(f['cores']) - {'A', 'B'} or any(i not in bits or i == f['bit'] for i in f['implies']) or \
                 ('executed' in f and not (isinstance(f['executed'], int) and 0 < f['executed'] < 65536)) or \
+                ('hardware' in f and not (isinstance(f['hardware'], int) and 0 < f['hardware'] < 65536 and
+                                          isinstance(f.get('evidence'), str))) or \
                 f.get('packaged', False) not in (True, False):
             raise ValueError('dsp-sites.json: feature ' + f['name'] + ' has bad cores or implies')
     for n, s in enumerate(reg['sites']):
@@ -123,7 +125,11 @@ def header(reg):
     for f in reg['features']:
         if 'executed' in f:
             lines.append('#define MW_DSP_%s_EXECUTED %uu  /* its tap: executed instructions a sample for a core\'s four tracks, '
-                         'counted statically; charged at 7/4 until timed on a unit */' % (names[f['bit']], f['executed']))
+                         'counted statically%s */' % (names[f['bit']], f['executed'],
+                                                     '' if 'hardware' in f else '; charged at 7/4 until timed on a unit'))
+        if 'hardware' in f:
+            lines.append('#define MW_DSP_%s_HARDWARE %uu  /* its tap: chip cycles a sample for a core\'s four tracks, timed on '
+                         'a unit (%s); its charge */' % (names[f['bit']], f['hardware'], f['evidence']))
     implies = ' | '.join('((f) & %uu ? %uu : 0u)' % (f['bit'], sum(f['implies'])) for f in reg['features'] if f['implies'])
     lines.append('/* What a held feature holds too. */')
     lines.append('#define MW_DSP_IMPLIED(f) ((f) | %s)' % (implies or '0u'))
@@ -217,6 +223,11 @@ def check(reg):
                 text = text.replace(old, new)
             if f.get('executed') != resident_dsp.keybus_executed(resident_dsp.split_sidechain(text)[1]):
                 problems.append('keybus: its executed figure differs from its tap\'s static count (resident_dsp.keybus_executed)')
+        if 'hardware' in f:
+            # The charge is a timing on a unit: its record must exist and give the same figure.
+            record = HERE / f['evidence']
+            if not record.is_file() or json.loads(record.read_text()).get('cyclesPerSample') != f['hardware']:
+                problems.append('%s: its hardware figure differs from %s\'s cyclesPerSample' % (f['name'], f['evidence']))
     if not HEADER.is_file() or HEADER.read_text() != header(reg):
         problems.append('resident-runtime/dsp_ledger.h is stale: run dsp_sites.py --write')
     return problems

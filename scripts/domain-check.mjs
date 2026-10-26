@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Elastic-2.0
+// Copyright (c) 2026 Jannik Aßfalg (repeat98)
 // Reports whether the DNS, mail and hosting records for a Modwerk domain are ready, stage by stage.
 // It only reads public DNS (through Cloudflare's DNS-over-HTTPS resolver) and public web pages;
 // it needs no credentials and is not part of npm run check. See docs/DOMAIN_AND_MAIL.md.
