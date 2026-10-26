@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "sources": [
+    "src/main-rms.s"
+  ],
+  "defsym": {},
+  "cflags": [],
+  "weak": [],
+  "subscribe": [],
+  "contribute": [],
+  "collections": {},
+  "copied": [],
+  "regions": [],
+  "claims": [
+    "ui:compressor VOL label drawing",
+    "audio:MAIN level read each block"
+  ],
+  "requires": [],
+  "derive": null,
+  "releases": {
+    "1.74": {
+      "defsym": {},
+      "cflags": [],
+      "sites": [
+        {
+          "addr": "0x401213ca",
+          "len": 6,
+          "stockSha256": "678c959ff67f83d38d2b48b568085abddb991a7128c2c6626e6562f16c84d45a",
+          "op": "jmp",
+          "target": "main_rms_rms_scan"
+        },
+        {
+          "addr": "0x401e14ec",
+          "len": 4,
+          "stockSha256": "2fea2f4a481057355dec1a47da9c9b2bcfa67c0d95059f9088448569db17afb0",
+          "op": "ptr",
+          "target": "main_rms_vol_knob_draw"
+        },
+        {
+          "addr": "0x401e14f0",
+          "len": 4,
+          "stockSha256": "652aedd679a23ad02f24f91062816b84720731421e97c74200014eaabda3f291",
+          "op": "ptr",
+          "target": "main_rms_vol_knob_draw_alt"
+        }
+      ]
+    }
+  }
+}
