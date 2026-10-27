@@ -192,7 +192,7 @@ def effective_modules(selected, sdk_root=None, work=None, cross='m68k-elf-'):
                      doc='Internal VECTOR/FM chooser and private parameter-page owner; no POLY engine or member.',
                      linked=(Linked('machine_registry', str(asm), cpu='5475', dram=True, stock_copies=stock_copies),),
                      detours=tuple(d for d in template.detours if d.unit == 'machine_registry' and d.symbol in COMMON),
-                     symbol_refs=tuple(r for r in template.symbol_refs if r.symbol in ('mr_pb_table', 'mr_source_render', 'mr_choice_left', 'mr_pool_left', 'mr_pool_right')),
+                     symbol_refs=tuple(r for r in template.symbol_refs if r.symbol in ('mr_pb_table', 'mr_source_render', 'mr_choice_left', 'mr_pool_left', 'mr_pool_right', 'mr_chooser_name')),
                      pokes=tuple(replace(p, write=p.write[:-1] + bytes([count if len(p.write) == 4 else count - 1]))
                                  for p in template.pokes if p.addr in policy.POLICY['countSites']))
     from vector_runtime import port
