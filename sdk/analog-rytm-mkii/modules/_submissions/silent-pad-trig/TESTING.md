@@ -21,8 +21,9 @@ The sections below use the new names, also for the earlier builds.
 - Core: elekloader core-ar2 0.3 (`core-ar2-v0.3`, `core-ar2-0.3.elemod` `6b97dfb3…3e58`, as vendored).
 - Build PS08 (core-ar2 0.3 + 0.5.1, Modwerk's linker, `--version PS08`): `.syx`
   `ff7c4cf3ca61f3c461a16a416cb4515e0d44727216f688ab965785bdbd5343d4`, main OS `9b9ec176…9132`.
-  Tested in rytm-emu 2026-10-27 ([0.5.1](#051-row-renamed-2026-10-27)). Not run on a unit; PS07's
-  hardware results carry over (the same code apart from the label).
+  Tested in rytm-emu 2026-10-27 ([0.5.1](#051-row-renamed-2026-10-27)). Ran on an Analog Rytm MKII
+  on 2026-10-27 for the label and saving ([Hardware](#ps08-on-an-analog-rytm-mkii-2026-10-27-as-reported));
+  PS07's functional results carry over (the same code apart from the label).
 - Build PS07 (core-ar2 0.3 + 0.5.0, Modwerk's linker, `--version PS07`): `.syx`
   `eae28e8ff6ae9f29a9d608c0fbe3985804779b42fd96d33d1e4c1d97934cae99`, main OS `80a0fbfa…20b5`.
   Tested in rytm-emu 2026-10-27 ([0.5.0](#050-two-settings-2026-10-27)). Ran on an Analog Rytm
@@ -495,8 +496,8 @@ npp1993 flashed PS07 (0.5.0, `.syx` `eae28e8f…ae99`) with Transfer. Reported:
   records; TRIG keys play and record as stock: as intended.
 - Persistence, both rows checked: after a reboot straight from SEQUENCER CONFIG, without leaving
   the menu, neither was kept. After leaving the menu first and then rebooting, both were kept.
-  Whether stock's own SEQUENCER CONFIG settings (AUTO TRK SWITCH) behave the same way was not
-  yet checked; the module saves through the same globals change notice a stock setter sends.
+  The module saves through the same globals change notice a stock setter sends; PS08 confirmed
+  stock's rows behave the same way.
 - MIDI out and STEP REC: not tested.
 
 ### PS08 on an Analog Rytm MKII (2026-10-27), as reported
@@ -511,11 +512,10 @@ npp1993 flashed PS08 (0.5.1, `.syx` `ff7c4cf3…43d4`). Reported:
 
 ### Still to do
 
-Not yet reported on any build:
+Not yet reported on a unit for 0.5.x (PS07 and PS08 covered the two rows, both settings in their
+own modes, the label and saving on leaving the menu):
 
-1. GLOBAL > CONTROL > SEQUENCER CONFIG: SILENT PAD+TRIG and SILENT PAD LIVEREC after AUTO TRK
-   SWITCH; YES and LEFT/RIGHT toggle each on its own. Save, power-cycle, reload: kept. Another
-   GLOBAL slot keeps its own.
+1. Another GLOBAL slot keeps its own settings (seen on PS04 for 0.3.0's one row).
 1b. 0.5.0: with only SILENT PAD LIVEREC checked, pads play outside LIVE REC and are silent and not
    recorded in it (FUNC + pad plays and records); with only SILENT PAD+TRIG, LIVE REC is stock.
 2. Stopped and playing: pads and TRIG 1-12 select silently; FUNC + pad plays, soft and hard,
@@ -540,6 +540,6 @@ sequencer or tick paths. Static reading, not a measurement.
 
 ## Not tested
 
-On a unit (0.5.0): MIDI out, STEP REC, RTRG, the SOUND BROWSER, AUTO TRK SWITCH off, and a
+On a unit (0.5.x): MIDI out, STEP REC, RTRG, the SOUND BROWSER, AUTO TRK SWITCH off, and a
 project saved with the rows checked loaded on stock. In the emulator: sound and timing, the flows listed above as not
 compared, other modules beside it at run time, and loading a saved project.

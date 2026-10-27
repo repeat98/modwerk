@@ -86,7 +86,7 @@
     "conflicts": [],
     "limitations": [
       "Built for OS 1.74 only, with core-ar2 0.3.",
-      "0.5.0 ran on a unit (PS07): both settings worked as intended, as reported; 0.5.1 (PS08) renames SILENT LIVE REC to SILENT PAD LIVEREC and is otherwise the same code. MIDI out and STEP REC not yet tested on a unit.",
+      "0.5.0 (PS07) and 0.5.1 (PS08) ran on a unit: both settings worked as intended and the renamed row fits, as reported. MIDI out and STEP REC not yet tested on a unit.",
       "FUNC + TRIG 1-12 plays nothing, as on stock: use FUNC + pad to hear a track.",
       "A silent press passes its aftertouch on, so MIDI out can carry poly pressure with no note-on before it.",
       "TRIG 13 (the FX track), the SOUND BROWSER's pad audition and pads with a menu open are silent too; FUNC + pad plays.",
@@ -119,13 +119,26 @@
     }
   },
   "evidence": {
-    "tier": "emulator",
+    "tier": "author-hardware",
     "moduleVersion": "0.5.1-experimental",
     "sourceSha256": "5f4c6a7072570a8714afd30c2f68d3a88d0edb381e6bc63cb3b4b04abb3f9cbd",
     "reports": [
       "TESTING.md"
     ],
-    "hardware": null,
+    "hardware": {
+      "model": "Analog Rytm MKII",
+      "release": "1.74",
+      "testedOn": "2026-10-27",
+      "tester": "npp1993",
+      "durationMinutes": null,
+      "summary": "npp1993 (the author) flashed PS07 (0.5.0) and PS08 (0.5.1) on an Analog Rytm MKII, OS 1.74 with core-ar2 0.3, and reports: both rows show in SEQUENCER CONFIG; SILENT PAD+TRIG silences pads unless FUNC is held; SILENT PAD LIVEREC lays down no trigs from plain pad presses in LIVE REC while FUNC + pad plays and records and TRIG keys stay stock; the 0.5.1 label fits; a changed row is saved on leaving the menu, as stock KIT RELOAD ON CHG is.",
+      "limitations": [
+        "Results are as reported by the author, not itemized measurements; duration not recorded.",
+        "PS07 carried the functional tests; PS08 (0.5.1, the same code with the second row relabelled) was checked for the label and saving.",
+        "MIDI out, STEP REC, RTRG + pad, the SOUND BROWSER, AUTO TRK SWITCH off, per-slot settings on 0.5.x and loading a checked project on stock 1.74 were not tested on a unit.",
+        "Tested SysEx: PS07 eae28e8ff6ae9f29a9d608c0fbe3985804779b42fd96d33d1e4c1d97934cae99, PS08 ff7c4cf3ca61f3c461a16a416cb4515e0d44727216f688ab965785bdbd5343d4; firmware was not read back from the device."
+      ]
+    },
     "verifiedBy": null
   },
   "tests": {

@@ -43,7 +43,7 @@ PAD+TRIG SEL TRK) in a local checkout of [rytm2_mods](https://github.com/Iced-Cr
 that was never published there; Modwerk is its home. 0.4.x had one checkbox covering both columns
 above; 0.5.0 splits it in two so silent pads while editing and silent pads while live recording
 can be chosen separately; 0.5.1 renames its second row from SILENT LIVE REC to SILENT PAD LIVEREC
-and changes nothing else. 0.3.0, 0.4.0 and 0.5.0 ran on a unit; 0.5.1 ran in rytm-emu (build PS08).
+and changes nothing else. 0.3.0, 0.4.0, 0.5.0 and 0.5.1 ran on a unit; 0.5.1 also ran in rytm-emu (build PS08).
 It waits in `_submissions/`.
 
 ## Controls
