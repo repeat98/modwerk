@@ -2,7 +2,7 @@
  "schema": 1,
  "device": "octatrack",
  "os": "1.40C",
- "about": "The stock sites the Modwerk base owns and turns into events, and the tables modules contribute to (EVENTS.md). Modules subscribe or contribute; none patches these sites. events.py generates the base's dispatch, the loader's table header, the SDK header and EVENTS.md from this file. Adding an event or a table is one reviewed entry here.",
+ "about": "The stock sites the Modwerk base owns and turns into hooks, and the tables modules contribute to (HOOKS.md). Modules subscribe or contribute; none patches these sites. hooks.py generates the base's dispatch, the loader's table header, the SDK header and HOOKS.md from this file. Adding a hook or a table is one reviewed entry here.",
  "sites": [
   {
    "site": "0x40004100",

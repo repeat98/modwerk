@@ -8,7 +8,7 @@
 //
 //   npm run octatrack:base -- --stock OCTATRACK_OS1.40C.bin [--upstream ELEKLOADER] [--write] [--out NEW-DIR]
 // Private transport candidates may add --usb-midi and --usb-audio "USB AUDIO OUT TRACKS MAIN CUE". --site-events builds the
-// base that owns sdk/machines/octatrack/events.json's sites and tables and dispatches them to subscribed packages;
+// base that owns sdk/machines/octatrack/hooks.json's sites and tables and dispatches them to subscribed packages;
 // --table-owners also fills its table-owner storage from module-adapters/table-owners.json (the reviewed table owners).
 // --cached-modules runs installed module code from the pool's cached alias (cache maintenance on install; part of the
 // beta base: without it every instruction and load of a module goes to SDRAM). --resident-stock-hooks --controllers adds the resident Sidechain, Output Matrix and Analog BD engines and admits their packages

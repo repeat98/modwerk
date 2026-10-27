@@ -15,7 +15,7 @@ Follow `docs/ADD_A_MODULE.md` and the rules in `AGENTS.md`, in this order.
 4. **Plan, then wait for the developer's OK.** The plan covers:
    - its category, by where it acts (`docs/module-guides/README.md#choose-the-category`): an effect processes its slot's audio, a module that makes or replaces a track's sound is a machine, one that makes notes is a MIDI generator. When it is unclear, the developer asks the owner in an issue first;
    - the id, the controls and the exact button steps to reach it;
-   - how it hooks in: the base's existing events and tables first (`docs/module-guides/README.md#choose-how-a-module-hooks-in`);
+   - how it hooks in: the base's existing hooks first (`docs/module-guides/README.md#choose-how-a-module-hooks-in`);
    - its UI claims;
    - on the Octatrack, the base and USB lifecycle (`docs/ADD_A_MODULE.md#octatrack-base-and-usb-lifecycle`);
    - for a new FX, a DSP budget measured against SPRING REV.

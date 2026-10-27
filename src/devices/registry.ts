@@ -41,7 +41,7 @@ export const DEVICE_STEPS: DeviceStep[] = [
   { id: 'format', title: 'Firmware file understood', description: 'The OS file’s container, packing and checksums are documented.' },
   { id: 'rebuild', title: 'Stock file rebuilt exactly', description: 'A writer rebuilds the stock OS file byte for byte from its own contents.' },
   { id: 'boot', title: 'Modified OS boots', description: 'A changed OS starts in an emulator or on a real unit and recovers to stock.' },
-  { id: 'core', title: 'Core with hooks', description: 'A small core reserves memory and gives mods shared events, so several mods can run together.' },
+  { id: 'core', title: 'Core with hooks', description: 'A small core reserves memory and gives mods shared hooks, so several mods can run together.' },
   { id: 'mods', title: 'First mods', description: 'Reviewed mods with documentation, licences and test evidence.' },
 ]
 
@@ -56,7 +56,7 @@ const ZOOM_STEPS: DeviceStep[] = [
 const ERICA_STEPS: DeviceStep[] = [
   { id: 'source', title: 'Firmware source builds', description: 'The published source builds an SD-card update image, reproducibly, with the documented toolchain.' },
   { id: 'boot', title: 'Marked build boots', description: 'A build that shows it is modified starts on a real unit, and the official update restores it from the SD card.' },
-  { id: 'core', title: 'Modwerk base with hooks', description: 'A base built from the source gives mods shared events and budgets, so several mods can run together.' },
+  { id: 'core', title: 'Modwerk base with hooks', description: 'A base built from the source gives mods shared hooks and budgets, so several mods can run together.' },
   { id: 'mods', title: 'First mods', description: 'Reviewed mods with documentation, licences and test evidence.' },
 ]
 

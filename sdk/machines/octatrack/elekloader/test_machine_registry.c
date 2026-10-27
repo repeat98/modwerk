@@ -53,7 +53,7 @@ void mg_tick(void); /* midi_generators.c, checked by test_midi_generators.c */
 void mg_tick(void) {}
 /* The loader's side: the table rows and the machine glue. */
 #include "loader.h"
-#include "modwerk_events.h"
+#include "modwerk_hooks.h"
 static uintptr_t volatile machine_row[5], sequencer_row[9];
 static int masked;
 uint32_t modwerk_machine_mask(void) { CHECK(!masked); masked = 1; return 7; }

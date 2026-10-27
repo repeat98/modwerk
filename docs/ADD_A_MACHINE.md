@@ -7,7 +7,7 @@ An Elektron machine moves through five steps:
 1. **Firmware file understood.** The OS file's container, packing and checksums are documented.
 2. **Stock file rebuilt exactly.** A writer rebuilds the stock OS file byte for byte from its own contents.
 3. **Modified OS boots.** A changed OS starts in an emulator or on a real unit, and the stock file recovers it.
-4. **Core with hooks.** A small core reserves memory and gives mods shared events, so several mods run together.
+4. **Core with hooks.** A small core reserves memory and gives mods shared hooks, so several mods run together.
 5. **First mods.** Reviewed modules with documentation, licences and evidence.
 
 A Zoom MultiStomp pedal (`family: "zoom"`) loads separate effect files on its stock OS, which is never modified, so it has no image to rebuild or core to boot. It moves through three steps, `format`, `load` and `mods`:
@@ -22,7 +22,7 @@ An Erica Synths machine (`family: "erica"`) has published firmware source (the L
 
 1. **Firmware source builds.** The published source builds an SD-card update image, reproducibly, with the documented toolchain.
 2. **Marked build boots.** A build whose start-up screen shows it is modified starts on a real unit, and the official update restores it from the SD card.
-3. **Modwerk base with hooks.** A base built from the source gives mods shared events and budgets, so several mods run together.
+3. **Modwerk base with hooks.** A base built from the source gives mods shared hooks and budgets, so several mods run together.
 4. **First mods.** Reviewed modules with documentation, licences and evidence.
 
 An Erica Synths release lists its version with `"files": []`, and the machine stays locked for modules until an `lxr` module contract exists. The licence, trademark and install terms a build must meet are in [LXR_02.md](LXR_02.md).
@@ -64,12 +64,12 @@ What the Tonverk research turned up applies to every machine that ships a Linux-
 
 When steps 1–4 are done:
 
-1. **Choose the platform.** Reuse `elemod` when the machine's OS can host a core with shared events and linked mods. A new platform needs an owner decision, a contract section in `module-contract-v3.ts` and its own build tooling.
+1. **Choose the platform.** Reuse `elemod` when the machine's OS can host a core with shared hooks and linked mods. A new platform needs an owner decision, a contract section in `module-contract-v3.ts` and its own build tooling.
 2. **Fill in the profile.**
    - `firmware`: every supported OS release with its stock file names and SHA-256.
    - `flash` and `recovery` text users can follow.
    - `sdk`: platform, module folder, guide, core release and source path, toolchain, and every budget (memory, fast memory, slots) that combinations of mods must fit.
-3. **Add the guide** at `sdk/machines/<id>/README.md`: the core's events and their C prototypes, memory areas, budgets, how to build and how to recover. Before the first module, agree with the owner how mods will reach the musician: how several mods add pages, rows and controls behind the stock keys, and which shared sites the core should own. Start from what the upstream core already offers, and add a core event only where many mods will use it ([choose how a module hooks in](module-guides/README.md#choose-how-a-module-hooks-in)).
+3. **Add the guide** at `sdk/machines/<id>/README.md`: the core's hooks and their C prototypes, memory areas, budgets, how to build and how to recover. Before the first module, agree with the owner how mods will reach the musician: how several mods add pages, rows and controls behind the stock keys, and which shared sites the core should own. Start from what the upstream core already offers, and add a core hook only where many mods will use it ([choose how a module hooks in](module-guides/README.md#choose-how-a-module-hooks-in)).
 4. **Create the module folder** (`sdk/<id>/modules/`) and a first module with `npm run module:new -- <mod> --machine <id> --author <login>`.
 5. **Set the status.** Set `status` to `preview` and every step to `done` when the first module validates. The status becomes `available` once Modwerk's engine builds and verifies firmware for the machine.
 
@@ -79,7 +79,7 @@ Run `npm run check` before opening the pull request. A new machine, platform or 
 
 Every machine should end up working the way the Octatrack does now, so a module installs, runs beside the others and is tested the same way everywhere:
 
-- **A Modwerk base on the unit** that owns every stock site several modules need, as events and tables, and admits modules by their declared resources and budgets ([cross-compatibility](module-guides/README.md#cross-compatibility)).
+- **A Modwerk base on the unit** that owns every stock site several modules need, as hooks, and admits modules by their declared resources and budgets ([cross-compatibility](module-guides/README.md#cross-compatibility)).
 - **A USB link** to the base: identify the base, list the installed modules, report status, load and self-test results.
 - **Loading without a reflash** through the [runtime loader](../sdk/runtime/loader/README.md#porting-to-another-machine): review, trial, self-test, Keep and Undo, in RAM, so a power cycle restores the stock state. The loader does not depend on a machine; a ColdFire machine needs only the glue its porting section lists.
 - **The developer MCP's device tools and the site's device hub** on top of that link, so developers and their agents drive the unit as they drive an Octatrack ([MCP guide](FRONTEND_MCP.md)).

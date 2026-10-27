@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: MIT */
 #include "sample_editor_actions.h"
-#include "modwerk_events.h"
+#include "modwerk_hooks.h"
 #include <stdio.h>
 #include <string.h>
 #define CHECK(x) do {if(!(x)){printf("FAIL line %u\n",(unsigned)__LINE__);return 1;}}while(0)

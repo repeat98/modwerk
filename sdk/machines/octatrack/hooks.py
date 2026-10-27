@@ -1,25 +1,25 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""The Octatrack's events at base-owned stock sites, from events.json.
+"""The Octatrack's hooks at base-owned stock sites, from hooks.json.
 
-    python3 -B sdk/machines/octatrack/events.py --check   # generated files are current
-    python3 -B sdk/machines/octatrack/events.py --write   # regenerate them
+    python3 -B sdk/machines/octatrack/hooks.py --check   # generated files are current
+    python3 -B sdk/machines/octatrack/hooks.py --write   # regenerate them
 
-Generates the base's dispatch (elekloader/runtime_events.s), the loader's
-table header (elekloader/runtime_events.h), the SDK header modules include
-(include/modwerk_events.h), the reference table (EVENTS.md) and the hook
-kinds the site checks packages against (site-events.json, read by
+Generates the base's dispatch (elekloader/runtime_hooks.s), the loader's
+table header (elekloader/runtime_hooks.h), the SDK header modules include
+(include/modwerk_hooks.h), the reference table (HOOKS.md) and the hook
+kinds the site checks packages against (site-hooks.json, read by
 src/engine/elekloader/module-set.ts). The base patches each site with a jmp to
 its dispatch; a runtime package subscribes (loader.h's hook words past
-RUNTIME_ENC, build.py) and never patches the site. An event with
+RUNTIME_ENC, build.py) and never patches the site. A hook with
 no site ("site": null) is raised by a module instead: it calls the base's
-modwerk_raise_<event>(), which runs every handler and returns their answers OR'd.
-Its package asks for the entry by the event's hook index (runtime.json "raise"): the
+modwerk_raise_<hook>(), which runs every handler and returns their answers OR'd.
+Its package asks for the entry by the hook's index (runtime.json "raise"): the
 loader writes the address into a zero word of its image at install, so no package is
 bound to one base build.
 
-Three kinds of entry (EVENTS.md): a `call` event (the default) runs C handlers at
-its site; a `take` event gives its site to one subscriber, whose detour-ABI entry
+Three kinds of hook (HOOKS.md): a `call` hook (the default) runs C handlers at
+its site; a `take` hook gives its site to one subscriber, whose detour-ABI entry
 runs with the site's registers (modules whose handlers replay stock themselves);
 a `table` has no site: modules contribute records (Elekloader's `contribute`) and
 base code reads them, in (order, module id) order. A table may own stock sites the
@@ -32,33 +32,33 @@ import re
 import sys
 
 HERE = Path(__file__).resolve().parent
-REGISTRY = HERE / 'events.json'
+REGISTRY = HERE / 'hooks.json'
 FIRST = 4  # loader.h: RUNTIME_TICK, RUNTIME_DRAW, RUNTIME_KEY, RUNTIME_ENC come first
 SAVED = 20  # d0-d1/a0-a2 the dispatch keeps for the stock continuation
 KINDS = ('call', 'take', 'table')
 REGISTERS = {'d0': 0, 'd1': 4, 'a0': 8, 'a1': 12, 'a2': 16}  # in the dispatch's saved frame
-ROOM = 16  # a take event's or table's subscribers, unless it says (call events: every module)
-OUTPUTS = {'elekloader/runtime_events.s': 'asm', 'elekloader/runtime_events.h': 'loader',
-           'include/modwerk_events.h': 'sdk', 'EVENTS.md': 'markdown',
-           'site-events.json': 'browser'}
+ROOM = 16  # a take hook's or table's subscribers, unless it says (call hooks: every module)
+OUTPUTS = {'elekloader/runtime_hooks.s': 'asm', 'elekloader/runtime_hooks.h': 'loader',
+           'include/modwerk_hooks.h': 'sdk', 'HOOKS.md': 'markdown',
+           'site-hooks.json': 'browser'}
 
 
 def load(path=REGISTRY):
     """The validated registry: {'sites': {address: site}, 'events': [event, ...]} with ints for addresses."""
     doc = json.loads(Path(path).read_text())
     if doc.get('schema') != 1 or doc.get('device') != 'octatrack' or doc.get('os') != '1.40C':
-        raise ValueError('events.json: schema 1 for the Octatrack 1.40C')
+        raise ValueError('hooks.json: schema 1 for the Octatrack 1.40C')
     sites = {}
     for s in doc['sites']:
         at = int(s['site'], 16)
         if at in sites or at & 1 or s['length'] < 6 or s['length'] & 1 or not re.fullmatch('[0-9a-f]{64}', s['guard']):
-            raise ValueError('events.json: site %s needs an even length of 6 or more and a SHA-256 guard' % s['site'])
+            raise ValueError('hooks.json: site %s needs an even length of 6 or more and a SHA-256 guard' % s['site'])
         for action in ('head', 'tail', 'done'):
             lines = s[action] or []
             if any(not isinstance(x, str) for x in lines[1:]) or (lines and not isinstance(lines[0], str) and not (
                     action != 'head' and set(lines[0]) == {'stock'} and type(lines[0]['stock']) is int
                     and 2 <= lines[0]['stock'] <= s['length'] and not lines[0]['stock'] & 1)):
-                raise ValueError('events.json: site %s %s is instructions; a tail or done may start with {"stock": n}: '
+                raise ValueError('hooks.json: site %s %s is instructions; a tail or done may start with {"stock": n}: '
                                  'the site\'s first n stock bytes, copied from the user\'s OS at the base build' % (s['site'], action))
         sites[at] = dict(s, site=at)
     events, owned = [], []
@@ -66,13 +66,13 @@ def load(path=REGISTRY):
         kind = e.get('kind', 'call')
         name = e.get('event', '')
         if kind not in KINDS or e.get('index') != FIRST + i:
-            raise ValueError('events.json: %s needs a kind (%s) and the next hook index' % (name, ', '.join(KINDS)))
+            raise ValueError('hooks.json: %s needs a kind (%s) and the next hook index' % (name, ', '.join(KINDS)))
         room = e.get('room', ROOM if kind != 'call' else None)
         if room is not None and (type(room) is not int or not 1 <= room <= 128):
-            raise ValueError('events.json: %s room is 1-128 subscribers' % name)
+            raise ValueError('hooks.json: %s room is 1-128 subscribers' % name)
         if kind == 'call' and e.get('site') is None:  # raised by a module through modwerk_raise_<event>: no stock bytes, no arguments yet
             if e.get('length') or e['args'] or e['results'] != 'or' or not re.fullmatch('ev_[a-z0-9_]+', name) or room is not None:
-                raise ValueError('events.json: raised event %s needs the next hook index, no length, room or arguments, '
+                raise ValueError('hooks.json: raised hook %s needs the next hook index, no length, room or arguments, '
                                  'and results "or"' % name)
             events.append(dict(e, kind=kind, site=None, length=0, room=None))
             continue
@@ -80,43 +80,43 @@ def load(path=REGISTRY):
             if (e.get('site') is not None or not re.fullmatch('ot_[a-z0-9_]+', name) or type(e.get('record')) is not int
                     or e['record'] < 4 or e['record'] & 1 or (e.get('key') is not None and not (type(e['key']) is int and
                                                                                              0 <= e['key'] <= e['record'] - 4))):
-                raise ValueError('events.json: table %s has no site, an ot_ name, a record size and an optional key offset' % name)
+                raise ValueError('hooks.json: table %s has no site, an ot_ name, a record size and an optional key offset' % name)
             for s in e.get('sites', []):
                 at = int(s['site'], 16)
                 if (at & 1 or not 2 <= s['length'] <= 32 or s['length'] & 1 or not re.fullmatch('[0-9a-f]{64}', s['guard'])
                         or s['op'] not in ('jmp', 'ptr', 'lea', 'own') or (s['op'] != 'own') != bool(s.get('target'))
                         or (s['op'] == 'jmp' and s['length'] < 6) or (s['op'] in ('ptr', 'lea') and s['length'] != (4 if s['op'] == 'ptr' else 6))):
-                    raise ValueError('events.json: %s site %s: even address and length, a guard, op jmp/ptr/lea with its '
+                    raise ValueError('hooks.json: %s site %s: even address and length, a guard, op jmp/ptr/lea with its '
                                      'target or own' % (name, s['site']))
                 owned.append(dict(s, site=at, table=name))
             events.append(dict(e, kind=kind, site=None, length=0, room=room))
             continue
         at = int(e['site'], 16)
         if (at not in sites or e['length'] != sites[at]['length'] or not re.fullmatch('ev_[a-z0-9_]+', name)):
-            raise ValueError('events.json: %s needs the next hook index and a declared site' % name)
+            raise ValueError('hooks.json: %s needs the next hook index and a declared site' % name)
         if kind == 'take':
             arg = e.get('arg')
             if (e.get('entry') not in ('jmp', 'jsr') or (arg is not None and arg not in REGISTERS and
                                                           not re.fullmatch(r'd[2-7]|a[3-6]|u8:0x[0-9a-f]{8}', arg))):
-                raise ValueError('events.json: take event %s needs entry jmp or jsr and arg null, a register or u8:0x...' % name)
+                raise ValueError('hooks.json: take hook %s needs entry jmp or jsr and arg null, a register or u8:0x...' % name)
             if any(x['site'] == at for x in events):
-                raise ValueError('events.json: take event %s needs a site of its own' % name)
+                raise ValueError('hooks.json: take hook %s needs a site of its own' % name)
             events.append(dict(e, kind=kind, site=at, room=room))
             continue
         if e['results'] != 'notify' and (e['results'].get('0') != 'next' or e['results'].get('*') not in ('tail', 'done')
                                          or any(v not in ('tail', 'done') for k, v in e['results'].items() if k != '0')):
-            raise ValueError('events.json: %s results map 0 to next and every other value to tail or done' % name)
+            raise ValueError('hooks.json: %s results map 0 to next and every other value to tail or done' % name)
         if any(v == 'done' for v in (e['results'].values() if e['results'] != 'notify' else ())) and not sites[at]['done']:
-            raise ValueError('events.json: %s drops calls at a site with no done code' % name)
+            raise ValueError('hooks.json: %s drops calls at a site with no done code' % name)
         for a in e['args']:
             if a != '&d0' and a not in REGISTERS and not re.fullmatch(r'site\+\d+|d[2-7]|a[3-6]', a):
-                raise ValueError('events.json: %s argument %s is &d0, site+N or a register at the site' % (name, a))
+                raise ValueError('hooks.json: %s argument %s is &d0, site+N or a register at the site' % (name, a))
         events.append(dict(e, kind=kind, site=at, room=room))
     spans = sorted([(at, s['length']) for at, s in sites.items()] + [(s['site'], s['length']) for s in owned])
     if any(a + n > b for (a, n), (b, _) in zip(spans, spans[1:])):
-        raise ValueError('events.json: two base-owned sites overlap')
+        raise ValueError('hooks.json: two base-owned sites overlap')
     if any(e['kind'] == 'take' for e in events for x in events if x['kind'] == 'call' and x['site'] == e['site']):
-        raise ValueError('events.json: a take event shares no site with call events')
+        raise ValueError('hooks.json: a take hook shares no site with call hooks')
     return dict(sites=sites, events=events, owned=owned)
 
 
@@ -125,7 +125,7 @@ def index(name, registry=None):
     for e in (registry or load())['events']:
         if e['event'] == name:
             return e['index']
-    raise ValueError('No event %s in sdk/machines/octatrack/events.json' % name)
+    raise ValueError('No event %s in sdk/machines/octatrack/hooks.json' % name)
 
 
 def raised(registry=None):
@@ -151,7 +151,7 @@ def table(name, registry=None):
     for e in (registry or load())['events']:
         if e['event'] == name and e['kind'] == 'table':
             return e
-    raise ValueError('No table %s in sdk/machines/octatrack/events.json' % name)
+    raise ValueError('No table %s in sdk/machines/octatrack/hooks.json' % name)
 
 
 def _call(out, name, e, k):
@@ -217,7 +217,7 @@ def _line(at, line):
 
 def asm(reg):
     out = ['| SPDX-License-Identifier: GPL-3.0-or-later\n'
-           '| Generated by sdk/machines/octatrack/events.py from events.json: do not edit.\n'
+           '| Generated by sdk/machines/octatrack/hooks.py from hooks.json: do not edit.\n'
            '| The base owns these stock sites: each is a jmp here. Handlers come from the\n'
            '| loader\'s ordered tables (modwerk_runtime_event_row, one per event, 0-ended):\n'
            '| a call event\'s with the C convention, a take event\'s records {claims, entry};\n'
@@ -268,8 +268,8 @@ def loader(reg):
     tables = ', '.join('1' if e['kind'] == 'table' else '0' for e in reg['events'])
     owned = reg['owned']
     return ('/* SPDX-License-Identifier: GPL-3.0-or-later\n'
-            ' * Generated by sdk/machines/octatrack/events.py from events.json: do not edit.\n'
-            ' * The Octatrack\'s events at base-owned stock sites and its tables, as hook\n'
+            ' * Generated by sdk/machines/octatrack/hooks.py from hooks.json: do not edit.\n'
+            ' * The Octatrack\'s hooks at base-owned stock sites and its tables, as hook\n'
             ' * indices after loader.h\'s RUNTIME_ENC: %s. */\n'
             '#ifndef MODWERK_RUNTIME_EVENTS_H\n#define MODWERK_RUNTIME_EVENTS_H\n'
             '#define RUNTIME_SITE_EVENTS %du\n'
@@ -291,17 +291,17 @@ def loader(reg):
 
 def sdk(reg):
     out = ['/* SPDX-License-Identifier: GPL-3.0-or-later\n'
-           ' * Generated by sdk/machines/octatrack/events.py from events.json: do not edit.\n'
-           ' * The Octatrack\'s events at stock sites the Modwerk base owns, and its tables\n'
-           ' * (EVENTS.md). Subscribe or contribute with a module\'s runtime.json; never patch\n'
-           ' * these sites. Call-event handlers use the C convention: arguments on the\n'
+           ' * Generated by sdk/machines/octatrack/hooks.py from hooks.json: do not edit.\n'
+           ' * The Octatrack\'s hooks at stock sites the Modwerk base owns, and its tables\n'
+           ' * (HOOKS.md). Subscribe or contribute with a module\'s runtime.json; never patch\n'
+           ' * these sites. Call-hook handlers use the C convention: arguments on the\n'
            ' * stack, d0-d1/a0-a1 free, everything else kept, the result in d0. */\n'
-           '#ifndef MODWERK_EVENTS_H\n#define MODWERK_EVENTS_H\n#include <stdint.h>\n\n'
+           '#ifndef MODWERK_HOOKS_H\n#define MODWERK_HOOKS_H\n#include <stdint.h>\n\n'
            '#define MODWERK_EV_PASS 0  /* the next handler, then stock */\n'
            '#define MODWERK_EV_DROP 1  /* ev_voice_bind: stock does nothing */\n'
            '#define MODWERK_EV_STOCK 2 /* ev_voice_bind: stock now, no later handler */\n']
     if any(e['kind'] == 'take' for e in reg['events']):
-        out.append('\n/* A take event\'s subscription names one of these. claims (C convention) 0: it takes every call;\n'
+        out.append('\n/* A take hook\'s subscription names one of these. claims (C convention) 0: it takes every call;\n'
                    ' * otherwise it takes the calls it returns nonzero for. entry: the code that gets the site, with every\n'
                    ' * register and the stack as there (it replays what the site held and returns to stock itself; a jsr\n'
                    ' * entry returns with rts); 0: stock runs at once and no later record is asked. */\n'
@@ -327,37 +327,37 @@ def sdk(reg):
 
 
 def markdown(reg):
-    out = ['# Octatrack events at base-owned stock sites\n\n'
-           'Generated by `sdk/machines/octatrack/events.py` from `events.json`: edit the registry, then run\n'
-           '`python3 -B sdk/machines/octatrack/events.py --write`.\n\n'
-           'The Modwerk base owns these stock sites and turns them into events, as Elekloader\'s core does for\n'
+    out = ['# Octatrack hooks at base-owned stock sites\n\n'
+           'Generated by `sdk/machines/octatrack/hooks.py` from `hooks.json`: edit the registry, then run\n'
+           '`python3 -B sdk/machines/octatrack/hooks.py --write`.\n\n'
+           'The Modwerk base owns these stock sites and turns them into hooks, as Elekloader\'s core does for\n'
            '`ev_tick` and the others (rule 4: do not patch the shared sites, subscribe). A runtime package subscribes\n'
-           'with `{"event", "fn", "order"}` (a module\'s `runtime.json`, or `build.py --subscribe EVENT:FN:ORDER`);\n'
-           'the loader keeps each event\'s handlers in (order, module id) order and refuses any package that\n'
+           'with `{"hook", "fn", "order"}` (a module\'s `runtime.json`, or `build.py --subscribe HOOK:FN:ORDER`);\n'
+           'the loader keeps each hook\'s handlers in (order, module id) order and refuses any package that\n'
            'patches one of these sites. Handlers use the C convention: arguments on the stack, d0-d1/a0-a1 free,\n'
-           'everything else kept, the result in d0. C modules include `include/modwerk_events.h`.\n\n'
-           'A **take** event gives its site to one subscriber: its `fn` names a `struct modwerk_take` {claims, entry}.\n'
+           'everything else kept, the result in d0. C modules include `include/modwerk_hooks.h`.\n\n'
+           'A **take** hook gives its site to one subscriber: its `fn` names a `struct modwerk_take` {claims, entry}.\n'
            'The records are asked in order; the first whose `claims` is 0 or returns nonzero for the call gets the site:\n'
            'its `entry` runs with every register and the stack as at the site (code that replays what the site held and\n'
            'returns to stock itself, as a detour does; a `jsr` entry returns with rts past the site), or with `entry` 0\n'
            'stock runs at once. With no taker stock runs. A **table** has no site: modules contribute records\n'
            '(`{"to", "order", "data"}` in runtime.json, `data` a symbol of the record) and base code reads them in\n'
-           '(order, module id) order. Each event and table has a room: the loader refuses a package past it.\n\n'
-           '| event | kind | site | when | prototype or record | result | order | context |\n|---|---|---|---|---|---|---|---|\n']
+           '(order, module id) order. Each take hook and table has a room: the loader refuses a package past it.\n\n'
+           '| hook | kind | site | when | prototype or record | result | order | context |\n|---|---|---|---|---|---|---|---|\n']
     for e in reg['events']:
         site = ('none' if e['kind'] != 'call' else 'none: a module calls the base\'s `modwerk_raise_%s` through a word the loader fills' % e['event']) if e['site'] is None else '%#010x' % e['site']
         proto = e['prototype'] if e['kind'] == 'call' else ('struct modwerk_take, %s entry, claims(%s)' % (e['entry'], e.get('arg') or 'nothing')
                                                             if e['kind'] == 'take' else '%d-byte record' % e['record'])
         out.append('| `%s` | %s | %s | %s | `%s` | %s | %s | %s |\n' % (
             e['event'], e['kind'], site, e['when'], proto, e['contract'], e['order'], e['context']))
-    out.append('\n## Reviewed subscribers\n\n| event | module | handler | order | what it does | evidence |\n|---|---|---|---|---|---|\n')
+    out.append('\n## Reviewed subscribers\n\n| hook | module | handler | order | what it does | evidence |\n|---|---|---|---|---|---|\n')
     for e in reg['events']:
         for s in e['subscribers']:
             out.append('| `%s` | %s | `%s` | %d | %s | %s |\n' % (e['event'], s['module'], s['fn'], s['order'], s['does'], s['evidence']))
     raisers = [(e, r) for e in reg['events'] for r in e.get('raisers', ())]
     if raisers:
-        out.append('\n## Reviewed raisers\n\nA raised event has no stock site: these modules call the base\'s entry and act on the answer.\n\n'
-                   '| event | module | where | what it does with the answer | evidence |\n|---|---|---|---|---|\n')
+        out.append('\n## Reviewed raisers\n\nA raised hook has no stock site: these modules call the base\'s entry and act on the answer.\n\n'
+                   '| hook | module | where | what it does with the answer | evidence |\n|---|---|---|---|---|\n')
         out += ['| `%s` | %s | `%s` | %s | %s |\n' % (e['event'], r['module'], r['fn'], r['does'], r['evidence']) for e, r in raisers]
     out.append('\n## Why this order\n\n')
     out += ['- `%s`: %s\n' % (e['event'], e['orderEvidence']) for e in reg['events']]
@@ -374,7 +374,7 @@ def markdown(reg):
 
 def browser(reg):
     """What the site checks of a package's hook words before it stages one (src/engine/elekloader/module-set.ts):
-    each word's kind by hook index, a take event's or table's room, a table's record size. No sites or guards."""
+    each word's kind by hook index, a take hook's or table's room, a table's record size. No sites or guards."""
     kinds = {'call': lambda e: 'raise' if e['site'] is None else 'call', 'take': lambda e: 'take', 'table': lambda e: 'table'}
     rows = []
     for e in reg['events']:
@@ -384,7 +384,7 @@ def browser(reg):
         if e['kind'] == 'table':
             row['record'] = e['record']
         rows.append(row)
-    return json.dumps(dict(about='Generated by sdk/machines/octatrack/events.py from events.json: do not edit. The hook '
+    return json.dumps(dict(about='Generated by sdk/machines/octatrack/hooks.py from hooks.json: do not edit. The hook '
                                  'words an ABI 8 package may carry after the four core handlers, by hook index.',
                            events=rows), indent=1) + '\n'
 
@@ -409,7 +409,7 @@ def main():
         elif not target.is_file() or target.read_text() != text:
             stale.append(path)
     if stale:
-        sys.exit('Stale generated event files (run events.py --write): ' + ', '.join(stale))
+        sys.exit('Stale generated event files (run hooks.py --write): ' + ', '.join(stale))
 
 
 if __name__ == '__main__':

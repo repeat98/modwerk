@@ -7,7 +7,7 @@
     "sdk/runtime/loader/loader.h": "0e97ec78ed5a25f93d8c2c390542c2c42bd1cdcf677d345095c953781067719b",
     "sdk/runtime/loader/modwerk_module.h": "55f39232ec7eb2fe8a497f946f559a9f4e78f90e637ea5475cca686bc5c56218",
     "sdk/runtime/loader/set_package.h": "bcfd3829af0785cfd15ec801237226c24959d32d44d0c1fb2df4fb08806ac743",
-    "sdk/runtime/loader/tests/events/runtime_events.h": "da56edc53d46a30617ef66d9a230ea2ffeeb011a3e5932ff1168870c99ae955c",
+    "sdk/runtime/loader/tests/events/runtime_hooks.h": "da56edc53d46a30617ef66d9a230ea2ffeeb011a3e5932ff1168870c99ae955c",
     "sdk/runtime/loader/tests/events_test.c": "c813e2eff396e5e8ba670dbbbfed7dafa2a1fc5e15b7b88f95659ca4f5b5da91",
     "sdk/runtime/loader/tests/host_test.c": "bf7460412ca756eb8117888788d3d086e0bf94086d93018d8c462deeb73152c7",
     "sdk/runtime/loader/tests/journal_board_fixture.c": "22f05f4c472eed7d95027b99cc88d67ba76261baa292762e03a3e2a0ec3b0880",

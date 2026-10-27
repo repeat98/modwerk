@@ -307,24 +307,28 @@ OPCODES = {'jmp': b'\x4e\xf9', 'jsr': b'\x4e\xb9', 'lea': b'\0\0'}  # lea keeps 
 
 
 def site_events():
-    """The stock sites the Octatrack base owns as events (sdk/machines/octatrack/events.json): {'sites', 'events'}."""
-    spec = importlib.util.spec_from_file_location('octatrack_events', HERE.parents[1] / 'machines/octatrack/events.py')
+    """The stock sites the Octatrack base owns as events (sdk/machines/octatrack/hooks.json): {'sites', 'events'}."""
+    spec = importlib.util.spec_from_file_location('octatrack_events', HERE.parents[1] / 'machines/octatrack/hooks.py')
     module = importlib.util.module_from_spec(spec); spec.loader.exec_module(module)
     return module.load()
 
 
 def runtime_declaration(folder):
-    """A module's runtime.json, or None: {"schema": 1, "subscribe": [{"event", "fn", "order", "replaces"}],
+    """A module's runtime.json, or None: {"schema": 1, "subscribe": [{"hook", "fn", "order", "replaces"}],
     "contribute": [{"to", "order", "data", "replaces"}], "raise": [event]}. With it the package subscribes or contributes
     (needs a base with those events and tables) and its units assemble with MODWERK_EVENTS defined. `replaces` names what
     its native octabam build patches there instead, which the package leaves out: a detour's symbol, or (a list for a
     take event or a table) detour symbols and 0x addresses of pokes, symbol references and table references. A core
-    event (module_tick, module_draw, module_key, module_enc) takes {"event", "fn"} alone. `raise` names events with no
-    site that the module raises: its zero word raise_<event> receives the base's entry at install (RUNTIME_RAISE)."""
+    hook (module_tick, module_draw, module_key, module_enc) takes {"hook", "fn"} alone. `raise` names hooks with no
+    site that the module raises: its zero word raise_<hook> receives the base's entry at install (RUNTIME_RAISE).
+    A subscription's "hook" is read as "event", the key it had before the rename, which is still accepted."""
     path = Path(folder) / 'runtime.json'
     if not path.is_file():
         return None
     doc = json.loads(path.read_text())
+    for e in doc.get('subscribe', []) if isinstance(doc.get('subscribe'), list) else ():
+        if isinstance(e, dict) and 'hook' in e and 'event' not in e:
+            e['event'] = e.pop('hook')
     replaces = lambda e: 'replaces' not in e or isinstance(e['replaces'], str) or (
         isinstance(e['replaces'], list) and e['replaces'] and all(isinstance(r, str) for r in e['replaces']))
     entry = lambda e: isinstance(e, dict) and (set(e) == {'event', 'fn'} if e.get('event') in HANDLERS else
@@ -339,8 +343,8 @@ def runtime_declaration(folder):
             or not all(contribution(e) for e in doc.get('contribute', []))
             or not isinstance(doc.get('raise', []), list) or not all(isinstance(e, str) for e in doc.get('raise', []))
             or len(set(doc.get('raise', []))) != len(doc.get('raise', []))):
-        raise ValueError('%s: {"schema": 1, "subscribe": [{"event", "fn", "order", "replaces"}], '
-                         '"contribute": [{"to", "order", "data", "replaces"}], "raise": [event]}' % path)
+        raise ValueError('%s: {"schema": 1, "subscribe": [{"hook", "fn", "order", "replaces"}], '
+                         '"contribute": [{"to", "order", "data", "replaces"}], "raise": [hook]}' % path)
     doc.setdefault('subscribe', [])
     return doc
 
@@ -366,7 +370,7 @@ def subscribe(hooks, entries, symbols, registry=None, raises=()):
         e, slot = events.get(name), 'raise_' + name
         if (not e or e['kind'] != 'call' or e['site'] is not None or slot not in symbols or symbols[slot] & 1
                 or words[e['index']] != NONE):
-            raise ValueError('A raise names an event of sdk/machines/octatrack/events.json with no site, once, and the '
+            raise ValueError('A raise names an event of sdk/machines/octatrack/hooks.json with no site, once, and the '
                              'module defines its zero word %s: %r' % (slot, name))
         words[e['index']] = RAISE << 24 | symbols[slot]
     for entry in entries:
@@ -378,7 +382,7 @@ def subscribe(hooks, entries, symbols, registry=None, raises=()):
         e = events.get(entry['event'])
         if (not e or entry['fn'] not in symbols or type(entry['order']) is not int or not 0 <= entry['order'] < RAISE
                 or words[e['index']] != NONE or not 0 <= symbols[entry['fn']] < 0x1000000 or symbols[entry['fn']] & 1):
-            raise ValueError('A subscription names an event or table of sdk/machines/octatrack/events.json, one of the '
+            raise ValueError('A subscription names an event or table of sdk/machines/octatrack/hooks.json, one of the '
                              'module\'s own even symbols and an order 0-254, one per event: %r' % (entry,))
         words[e['index']] = entry['order'] << 24 | symbols[entry['fn']]
     while words and words[-1] == NONE:
@@ -1041,7 +1045,7 @@ def main():
                         'as published: the committed standalone-recipes.json, no firmware; --stock also checks it against the OS')
     parser.add_argument('--pinned', action='store_true', help='its ColdFire code names its effect id (ABI 6 flag 2)')
     parser.add_argument('--subscribe', action='append', default=[], metavar='EVENT:FN:ORDER',
-                        help='C sources: subscribe FN to a site event of sdk/machines/octatrack/events.json (repeatable)')
+                        help='C sources: subscribe FN to a site event of sdk/machines/octatrack/hooks.json (repeatable)')
     args = parser.parse_args()
     if args.private_port and args.standalone:
         parser.error('--private-port prepares privately; --standalone builds the published package. Give one.')

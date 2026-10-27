@@ -189,7 +189,7 @@ class LoaderTests(unittest.TestCase):
 
 
 EVENTS_DIR = ROOT / 'sdk/machines/octatrack'
-spec = importlib.util.spec_from_file_location('octatrack_events', EVENTS_DIR / 'events.py')
+spec = importlib.util.spec_from_file_location('octatrack_events', EVENTS_DIR / 'hooks.py')
 events = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(events)
 
@@ -212,9 +212,9 @@ class SiteEventTests(unittest.TestCase):
 
     def test_generated_files_are_current_and_the_loader_takes_them(self):
         for path, text in events.generate().items():
-            self.assertEqual((EVENTS_DIR / path).read_text(), text, path + ' is stale: run events.py --write')
+            self.assertEqual((EVENTS_DIR / path).read_text(), text, path + ' is stale: run hooks.py --write')
         reg = events.load()
-        header = (EVENTS_DIR / 'elekloader/runtime_events.h').read_text()
+        header = (EVENTS_DIR / 'elekloader/runtime_hooks.h').read_text()
         self.assertIn('#define RUNTIME_SITE_EVENTS %du' % len(reg['events']), header)
         self.assertEqual([e['index'] for e in reg['events']], list(range(4, 4 + len(reg['events']))))
         cc = shutil.which('cc')
@@ -252,11 +252,11 @@ class SiteEventTests(unittest.TestCase):
     def test_call_events_pass_registers_at_the_site(self):
         # ev_tail_kill(record, track): the site's a2 from the dispatch's saved frame, d4 as it stands
         self.assertIn('        move.l  %d4,-(%sp)\n        move.l  20(%sp),-(%sp)\n', events.asm(events.load()))
-        doc = json.loads((EVENTS_DIR / 'events.json').read_text())
+        doc = json.loads((EVENTS_DIR / 'hooks.json').read_text())
         for args in (['a7'], ['d8'], ['sp'], ['d2x']):
             bad = json.loads(json.dumps(doc)); next(e for e in bad['events'] if e['event'] == 'ev_tail_kill')['args'] = args
             with tempfile.TemporaryDirectory() as temp, self.subTest(args), self.assertRaises(ValueError):
-                Path(temp, 'events.json').write_text(json.dumps(bad)); events.load(Path(temp, 'events.json'))
+                Path(temp, 'hooks.json').write_text(json.dumps(bad)); events.load(Path(temp, 'hooks.json'))
 
     def test_raised_events_have_a_base_entry_and_no_site(self):
         reg = events.load()
@@ -275,16 +275,16 @@ class SiteEventTests(unittest.TestCase):
         asm = shutil.which('m68k-elf-as')
         if asm:
             with tempfile.TemporaryDirectory() as temp:
-                subprocess.run([asm, '-mcpu=5475', EVENTS_DIR / 'elekloader/runtime_events.s', '-o', temp + '/e.o'], check=True, capture_output=True)
+                subprocess.run([asm, '-mcpu=5475', EVENTS_DIR / 'elekloader/runtime_hooks.s', '-o', temp + '/e.o'], check=True, capture_output=True)
                 rows = {n.split()[2]: int(n.split()[0], 16) for n in subprocess.check_output(['m68k-elf-nm', temp + '/e.o'], text=True).splitlines()
                         if len(n.split()) == 3}
             for entry in raised.values():
                 self.assertTrue(rows['modwerk_events_code'] <= rows[entry] < rows['modwerk_events_code_end'])
-        doc = json.loads((EVENTS_DIR / 'events.json').read_text())
+        doc = json.loads((EVENTS_DIR / 'hooks.json').read_text())
         for change in (dict(results='notify'), dict(args=['site+4']), dict(length=8)):
             bad = json.loads(json.dumps(doc)); next(e for e in bad['events'] if e['event'] == 'ev_mute_keep').update(change)
             with tempfile.TemporaryDirectory() as temp, self.subTest(change), self.assertRaises(ValueError):
-                Path(temp, 'events.json').write_text(json.dumps(bad)); events.load(Path(temp, 'events.json'))
+                Path(temp, 'hooks.json').write_text(json.dumps(bad)); events.load(Path(temp, 'hooks.json'))
         self.assertEqual(build.subscribe([build.NONE] * 4, [], {'raise_ev_mute_keep': 0x40}, raises=['ev_mute_keep']),
                          [build.NONE] * 7 + [build.RAISE << 24 | 0x40])
         for raises, symbols in ((['ev_voice_bind'], {'raise_ev_voice_bind': 0x40}), (['ev_mute_keep'], {}),
@@ -301,6 +301,11 @@ class SiteEventTests(unittest.TestCase):
                 Path(temp, 'runtime.json').write_text(text)
                 with self.subTest(text), self.assertRaises(ValueError):
                     build.runtime_declaration(temp)
+            Path(temp, 'runtime.json').write_text('{"schema": 1, "subscribe": [{"hook": "module_tick", "fn": "f", "event": "module_tick"}]}')
+            with self.assertRaises(ValueError):  # "hook" or the older "event", not both
+                build.runtime_declaration(temp)
+            Path(temp, 'runtime.json').write_text('{"schema": 1, "subscribe": [{"hook": "module_tick", "fn": "f"}], "raise": ["ev_mute_keep"]}')
+            self.assertEqual(build.runtime_declaration(temp)['subscribe'], [dict(event='module_tick', fn='f')])
             Path(temp, 'runtime.json').write_text('{"schema": 1, "subscribe": [{"event": "module_tick", "fn": "f"}], "raise": ["ev_mute_keep"]}')
             doc = build.runtime_declaration(temp)
         self.assertEqual(build.subscribe([build.NONE] * 4, doc['subscribe'], {'f': 0x12}), [0x12])
@@ -320,7 +325,7 @@ class SiteEventTests(unittest.TestCase):
         if not asm:
             self.skipTest('no ColdFire assembler')
         with tempfile.TemporaryDirectory() as temp:
-            subprocess.run([asm, '-mcpu=5475', EVENTS_DIR / 'elekloader/runtime_events.s', '-o', temp + '/e.o'], check=True, capture_output=True)
+            subprocess.run([asm, '-mcpu=5475', EVENTS_DIR / 'elekloader/runtime_hooks.s', '-o', temp + '/e.o'], check=True, capture_output=True)
             subprocess.run(['m68k-elf-objcopy', '-O', 'binary', '-j', '.text', temp + '/e.o', temp + '/e.bin'], check=True)
             code = Path(temp + '/e.bin').read_bytes()
             names = subprocess.check_output(['m68k-elf-nm', temp + '/e.o'], text=True)
@@ -391,7 +396,7 @@ class SiteEventTests(unittest.TestCase):
                 undefined = ['modwerk_runtime_backend', 'modwerk_runtime_refusal', 'modwerk_runtime_refused_event',
                              'modwerk_runtime_active', 'fixture_image']
                 if defines:
-                    subprocess.run(['m68k-elf-as', '-mcpu=5475', str(glue / 'runtime_events.s'), '-o', str(work / 'dispatch.o')], check=True)
+                    subprocess.run(['m68k-elf-as', '-mcpu=5475', str(glue / 'runtime_hooks.s'), '-o', str(work / 'dispatch.o')], check=True)
                     objects.append(work / 'dispatch.o'); undefined += ['modwerk_site_40004100', 'modwerk_site_40006820']
                 (work / 'link.ld').write_text('SECTIONS { . = 0x47400000; .text : { *(.text) *(.text.*) } .rodata : { *(.rodata*) } '
                                               '.data : { *(.data*) } .bss : { *(.bss*) } /DISCARD/ : { *(.comment) *(.eh_frame*) } }')

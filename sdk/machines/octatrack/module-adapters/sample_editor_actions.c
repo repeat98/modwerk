@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 #include "sample_editor_actions.h"
 #if RUNTIME_SITE_EVENTS
-#include "modwerk_events.h"
+#include "modwerk_hooks.h"
 #endif
 static uint32_t word(const uint8_t *p)
 {return (uint32_t)p[0]<<24 | (uint32_t)p[1]<<16 | (uint32_t)p[2]<<8 | p[3];}

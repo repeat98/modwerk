@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: MIT
- * MIDI generators on the Octatrack's MIDI tracks (events.json ot_midi_generators). The base reads the table. A card
+ * MIDI generators on the Octatrack's MIDI tracks (hooks.json ot_midi_generators). The base reads the table. A card
  * build compiles this file into its one generator module, with MG_FIXED naming that module's record, and patches
  * the same four sites itself (midi_generators.s); every private name here carries mg_ so it can share the module's
  * translation unit. MIDI NOTE SETUP lists OFF and the generators in its empty left half (UP/DOWN, YES); double-tap
@@ -8,7 +8,7 @@
  * it takes (always the ARP page, whose note bytes hold its settings; FUNC+AMP, which would open ARP SETUP, turns that
  * page to its second). NOTE SETUP's two unused slots looked free but its encoders D and F edit them unseen. UI task only. Stock addresses: OS 1.40C (octabam docs/firmware/MIDI_TRACKS.md, PARAM_PAGES.md). */
 #include <stdint.h>
-#include "modwerk_events.h"
+#include "modwerk_hooks.h"
 #ifndef MW_HOST /* test_midi_generators.c maps these onto a model of the unit's memory */
 #define U8(a) (*(volatile uint8_t *)(uintptr_t)(a))
 #define U32(a) (*(volatile uint32_t *)(uintptr_t)(a))

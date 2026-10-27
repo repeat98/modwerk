@@ -78,7 +78,7 @@ class MachineEventTests(unittest.TestCase):
 
     def test_glue_assembles_and_names_only_declared_records(self):
         asm = shutil.which('m68k-elf-as')
-        events = json.loads((OT / 'events.json').read_text())
+        events = json.loads((OT / 'hooks.json').read_text())
         records = {e['event']: e['record'] for e in events['events'] if e.get('kind') == 'table'}
         for name in FIVE:
             entry = machine_ports.port(name)
@@ -97,7 +97,7 @@ class MachineEventTests(unittest.TestCase):
     def test_no_kept_code_returns_into_the_middle_of_a_base_site(self):
         """A taker's entry and every kept unit return to stock past each base-owned site, never into its bytes."""
         from remix import registry
-        reg = json.loads((OT / 'events.json').read_text())
+        reg = json.loads((OT / 'hooks.json').read_text())
         spans = [(int(s['site'], 16), s['length']) for s in reg['sites']]
         spans += [(int(s['site'], 16), s['length']) for e in reg['events'] if e.get('kind') == 'table' for s in e['sites']]
         modules = {m.name: m for m in registry.modules().values()}

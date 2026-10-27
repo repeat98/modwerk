@@ -6,7 +6,7 @@
 #define MODWERK_HOST
 #define MW_NO_DEFAULTS
 #include "machine_contributors.h"
-#include "modwerk_events.h"
+#include "modwerk_hooks.h"
 #include <stdio.h>
 #include <string.h>
 static unsigned failures;

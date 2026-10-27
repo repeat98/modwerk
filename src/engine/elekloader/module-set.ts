@@ -3,7 +3,7 @@
 // publishes as runtime packages (public/octatrack-modules, made from source by `npm run octatrack:module-packages`)
 // are installed from them; anything the set leaves out is removed with an empty package naming its module.
 import manifest from '../assets/octatrack-module-packages.json' with { type: 'json' }
-import siteEvents from '../../../sdk/machines/octatrack/site-events.json' with { type: 'json' }
+import siteEvents from '../../../sdk/machines/octatrack/site-hooks.json' with { type: 'json' }
 import baseBinding from '../../../sdk/machines/octatrack/base-binding.json' with { type: 'json' }
 import dspSites from '../../../sdk/machines/octatrack/dsp-sites.json' with { type: 'json' }
 import { sha } from '../../../vendor/elekloader/kit/src/bytes.ts'
@@ -82,11 +82,11 @@ export async function fetchPackage(entry: RuntimePackage): Promise<Uint8Array> {
 }
 
 const MACHINE_BITS: Record<string, number> = { poly8: 1, vector: 2, synth: 4 }
-/** The Octatrack base's site events and tables (sdk/machines/octatrack/events.json, through events.py): hook words a
+/** The Octatrack base's site events and tables (sdk/machines/octatrack/hooks.json, through hooks.py): hook words a
  * subscriber may carry after the core four, by hook index. */
 export const SITE_EVENTS = siteEvents.events.length
 const SITE_KINDS = siteEvents.events.map((event, i) => {
-  if (event.index !== 4 + i) throw new Error('sdk/machines/octatrack/site-events.json is out of order: run events.py --write')
+  if (event.index !== 4 + i) throw new Error('sdk/machines/octatrack/site-hooks.json is out of order: run hooks.py --write')
   return { kind: event.kind, record: (event as { record?: number }).record ?? 0 }
 })
 /** loader.h RUNTIME_RAISE: a raised event's hook word with this order points at a zero slot for the base's entry. */
@@ -147,7 +147,7 @@ function checkPackage(entry: RuntimePackage, data: Uint8Array, id: string, varia
   if (abi >= 9 && (view.getUint16(76) !== want.requires || data[78] !== want.claims || data[79] !== want.entries)) fail()
   const flags = view.getUint16(6), image = view.getUint32(8), bss = view.getUint32(12), relocations = view.getUint32(16), hooks = view.getUint32(20)
   // Hooks 0-3 are the core handlers; an ABI 8 package that subscribes to the base's site events (feature 128) adds one
-  // word per event of sdk/machines/octatrack/events.json after them: its order in the top byte, its handler below.
+  // word per event of sdk/machines/octatrack/hooks.json after them: its order in the top byte, its handler below.
   const subscriber = abi >= 8 && (want.features & RuntimeFeature.siteEvents) !== 0
   if (flags & ~(abi >= 8 ? 7 : 3) || image + bss > 131072 || relocations > 2048 || hooks > (subscriber ? 4 + SITE_EVENTS : 4) ||
       view.getUint32(32) > 4096 || view.getUint16(36) > 256 || header + 4 * hooks + image + 4 * relocations > data.length) fail()

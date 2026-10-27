@@ -51,7 +51,7 @@ This branch is based on main, not stacked on #857 or another module.
 - Loader changes carry typed table declarations, source-built C descriptor
   alignment and the machine's reviewed MCF54455 target/code-generation guard.
 
-The five proposed stock spans are declared in `events.json`: SLICE opener
+The five proposed stock spans are declared in `hooks.json`: SLICE opener
 `0x40072c30`, opener dispatch `0x40072caa`, popup selection `0x4006d8f4`, selection
 tail `0x4006d91c` and waveform command dispatch `0x400858c0`. Selection entries
 are broader than one row; unchanged stock dispatch and pointer lifetime need

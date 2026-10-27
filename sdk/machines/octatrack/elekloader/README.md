@@ -65,7 +65,7 @@ compile (`dev.c`) or a test there (`test_recipe.py`). `octatrack-base-sources.js
 (`octatrack-base.test.ts`, no firmware) fails when one changed or a file joined those folders. Rebuild and
 commit it with the beta base's options (the committed base is the beta base). `--beta` names every one of them
 (`BETA` in `scripts/octatrack-base.mjs`: USB MIDI, the twenty-channel USB Audio default and its variants, site
-events, table owners, the resident engines on demand, the controllers, module sets and cached module code), and
+hooks, table owners, the resident engines on demand, the controllers, module sets and cached module code), and
 `--write` takes no other:
 
 ```sh
@@ -142,9 +142,9 @@ stock-free, that the browser's path builds a `.bin` identical to `build_core.py`
 and `check_flash_safety.py`; `--out NEW-DIR` (outside Git) saves that `.bin` and its `MAIN.raw` for a RAM
 boot. It uses `~/.cache/modwerk-upstream` (`--upstream`, `ELEKLOADER_DSP_ASM`) as the build above does.
 
-### Take events
+### Take hooks
 
-A take event in `../events.json` has no C prototype: beside its `events` entry it needs a `sites` entry with the
+A take hook in `../hooks.json` has no C prototype: beside its `events` entry it needs a `sites` entry with the
 site's guard and the tail that replays stock when nobody takes the call. `{"stock": n}` copies the site's bytes as
 they are, so a site holding a PC-relative branch needs its tail written as instructions with the branch made absolute
 (`ev_midi_note_key`'s `ble`). `ev_midi_note_key` runs where each sequencer, chord and arp note of a MIDI track is

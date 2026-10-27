@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs'
 import { describe, expect, it, vi } from 'vitest'
 import { sha } from '../../../vendor/elekloader/kit/src/bytes.ts'
 import manifest from '../assets/octatrack-module-packages.json' with { type: 'json' }
-import siteEvents from '../../../sdk/machines/octatrack/site-events.json' with { type: 'json' }
+import siteEvents from '../../../sdk/machines/octatrack/site-hooks.json' with { type: 'json' }
 import baseBinding from '../../../sdk/machines/octatrack/base-binding.json' with { type: 'json' }
 import { removal } from '../../dev/octatrack-usb-lifecycle'
 import { BASE_DSP_FEATURES, BaseUpdateRequired, createRuntimeCatalogue, KEY_BUS_BASES, KeyBusBaseRequired, type MachineVariant, fetchPackage, inventoryFrom, ModuleSetError, prepareModuleSet, removalPackage, runtimeId, SITE_EVENTS, USB_MODULE_IDS } from './module-set'
@@ -28,7 +28,7 @@ describe('the site’s runtime packages', () => {
     }
   })
   it('lets a package subscribe to at most the base’s site events', () => {
-    const events = JSON.parse(readFileSync(new URL('../../../sdk/machines/octatrack/events.json', import.meta.url), 'utf8')).events
+    const events = JSON.parse(readFileSync(new URL('../../../sdk/machines/octatrack/hooks.json', import.meta.url), 'utf8')).events
     expect(SITE_EVENTS).toBe(events.length)
   })
   it('names a module by the first four bytes of the SHA-256 of its catalogue id, and removes it with an empty package', () => {

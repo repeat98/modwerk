@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: MIT
- * Admission of packages that contribute a machine to the base's ot_machines table (events.json): independent
+ * Admission of packages that contribute a machine to the base's ot_machines table (hooks.json): independent
  * modules, no group. Board glue, called from modwerk_machine_metadata_admit with the stable machine lock held.
  *
  * A machine leaves when the outgoing package contributes it and the incoming one contributes no machine with its
@@ -11,7 +11,7 @@
 #include "machine_lifetime.h"
 #include "machine_parts.h"
 #if RUNTIME_SITE_EVENTS
-#include "modwerk_events.h"
+#include "modwerk_hooks.h"
 #endif
 #define RECORD 80u
 #ifndef MW_IMAGE_ADDRESS /* test_machine_contributors.c maps its host images onto unit addresses */

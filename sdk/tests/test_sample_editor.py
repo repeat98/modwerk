@@ -69,7 +69,7 @@ const struct modwerk_sample_action sample_action = {
                             '--subscribe', 'ot_sample_editor_actions:sample_action:50',
                             '-o', str(package)], check=True, capture_output=True)
             data = package.read_bytes()
-        events = json.loads((ROOT / 'sdk/machines/octatrack/events.json').read_text())['events']
+        events = json.loads((ROOT / 'sdk/machines/octatrack/hooks.json').read_text())['events']
         index = next(event['index'] for event in events if event['event'] == 'ot_sample_editor_actions')
         image_bytes, _, _, hooks = struct.unpack_from('>4I', data, 8)
         self.assertEqual(hooks, index + 1)

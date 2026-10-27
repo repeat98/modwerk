@@ -2,7 +2,7 @@
 
 **Platform:** elemod · **OS:** 1.56 · **Core:** elekloader core-a4 0.2 · **Modules:** [`sdk/analog-four-mkii/modules/`](../../analog-four-mkii/modules/) · **Status:** research
 
-The Analog Four MKII runs on the Analog Rytm MKII's platform, a ColdFire MCF5441x: its OS entry, bootstrap loader and UI loop are the Rytm's, instruction for instruction apart from addresses. Its core is elekloader's core-a4, which builds the Digitakt mk1's `core.s`, `settings.s` and `render.s` with the A4's addresses as core-ar2 does for the Rytm, and adds mod storage and parameter pages. The core hooks the shared sites and calls every subscribed mod's handler, in order, from tables the linker builds, so any set of mods that fits the budgets combines. Every event below has run on a unit. Modwerk's linker has an A4 profile (`src/engine/elektron/elemod.ts`): on the owner's stock 1.56 file it links core-a4 0.2 alone, with each of elekloader's five A4 examples and with three of them together to the same main OS image and storage lockfile as `elekloader.patch`. There is no library module yet, and the browser builds nothing for the A4 until one exists.
+The Analog Four MKII runs on the Analog Rytm MKII's platform, a ColdFire MCF5441x: its OS entry, bootstrap loader and UI loop are the Rytm's, instruction for instruction apart from addresses. Its core is elekloader's core-a4, which builds the Digitakt mk1's `core.s`, `settings.s` and `render.s` with the A4's addresses as core-ar2 does for the Rytm, and adds mod storage and parameter pages. The core hooks the shared sites and calls every subscribed mod's handler, in order, from tables the linker builds, so any set of mods that fits the budgets combines. Every hook below has run on a unit. Modwerk's linker has an A4 profile (`src/engine/elektron/elemod.ts`): on the owner's stock 1.56 file it links core-a4 0.2 alone, with each of elekloader's five A4 examples and with three of them together to the same main OS image and storage lockfile as `elekloader.patch`. There is no library module yet, and the browser builds nothing for the A4 until one exists.
 
 ## Create a mod
 
@@ -12,11 +12,11 @@ npm run module:new -- my-mod --machine analog-four-mkii --author your-github-log
 
 This creates `modwerk.module.json` (contract v3), `build.json`, `src/main.c`, README, TESTING, licence and a placeholder thumbnail. See [the SDK guide](../../../docs/SDK.md) for the contract and evidence tiers. The core's contract is [core-profile/interface.json](../../analog-four-mkii/core-profile/interface.json), and `npm run modules:check` rejects modules that use anything it does not provide.
 
-## Core events
+## Core hooks
 
 Handlers use the C calling convention: arguments on the stack, d0–d1/a0–a1 free, the result in d0. Subscribe in `platform.events` and name each handler in `build.json`.
 
-| Event | When | Handler |
+| Hook | When | Handler |
 | --- | --- | --- |
 | `ev_tick` | the UI compose check, about 20 Hz, as on the Rytm | `void f(void *ctrl)`; set `ctrl + 0x20` to 1 to request a redraw. Not an audio-rate clock. |
 | `ev_draw` | after the OS composes the 128 × 64 screen | `void f(void *bmp, void *ctrl)` |
@@ -87,7 +87,7 @@ Send the .syx with Elektron Transfer over USB (MIDI IN and OUT set to the device
 
 ## Status
 
-core-a4 0.1 and 0.2 are in elekloader (irpina/elekloader#154 and #180). On a unit, on OS 1.56: HC56 (core and hooks-check-a4) ran every event; SC56 (store-check-a4) kept every storage field through saves, loads, power cycles and a Transfer round trip; CA56 (ddr-canary-a4) left the mods' area intact; PA56 (core 0.2 and pages-check-a4) passed the parameter page checks; the stock file restored the unit over MIDI DIN. Before a first module enters the library, the A4 needs a pinned core-a4 release (elekloader has none yet) and the browser's build preview.
+core-a4 0.1 and 0.2 are in elekloader (irpina/elekloader#154 and #180). On a unit, on OS 1.56: HC56 (core and hooks-check-a4) ran every hook; SC56 (store-check-a4) kept every storage field through saves, loads, power cycles and a Transfer round trip; CA56 (ddr-canary-a4) left the mods' area intact; PA56 (core 0.2 and pages-check-a4) passed the parameter page checks; the stock file restored the unit over MIDI DIN. Before a first module enters the library, the A4 needs a pinned core-a4 release (elekloader has none yet) and the browser's build preview.
 
 ## Credits
 

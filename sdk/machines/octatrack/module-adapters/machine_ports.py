@@ -3,7 +3,7 @@
 
 POLY8, VECTOR, FM Synth, Scale Quantizer and Analog BD each install alone or beside any other
 module: what more than one of them patched is now the base's (take events and the ot_machines and
-ot_sequencer_rows tables in sdk/machines/octatrack/events.json), and each subscribes or contributes.
+ot_sequencer_rows tables in sdk/machines/octatrack/hooks.json), and each subscribes or contributes.
 machine-ports.json holds each module's runtime.json-equivalent; this file applies it to the module's
 octabam manifest without changing its sources:
 

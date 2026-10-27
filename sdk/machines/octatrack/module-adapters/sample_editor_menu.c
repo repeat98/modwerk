@@ -4,7 +4,7 @@
  * only from a fresh full published owner under the stable loader lock.
  */
 #include "sample_editor_board.h"
-#include "modwerk_events.h"
+#include "modwerk_hooks.h"
 #define ACTIONS 4u
 #define STOCK_ROWS 9u
 #define ROWS (STOCK_ROWS+ACTIONS)

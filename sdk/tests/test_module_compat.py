@@ -68,13 +68,13 @@ class GateTests(unittest.TestCase):
     def test_event_sites_belong_to_the_base_and_name_the_event(self):
         problems = gate.check([module('a', 0x40004100)], events=[EVENT])
         self.assertEqual(self.routes(problems), [(('a',), 'subscribe')])
-        self.assertIn('which is the event ev_test', problems[0]['text'])
+        self.assertIn('which is the hook ev_test', problems[0]['text'])
 
     def test_pending_migration_allows_both_modules_until_they_subscribe(self):
         modules = [module('a', 0x40004100), module('b', 0x40004100)]
         pending = relation(('a', 'b'), 'pending-migration', (0x40004100,), event='ev_test', until='both subscribe')
         self.assertEqual(gate.check(modules, events=[EVENT], relations=[pending]), [])
-        self.assertIn('not in sdk/machines/octatrack/events.json',
+        self.assertIn('not in sdk/machines/octatrack/hooks.json',
                       gate.check(modules, events=[], relations=[pending])[0]['text'])
         third = gate.check(modules + [module('c', 0x40004100)], events=[EVENT], relations=[pending])
         self.assertEqual({p['route'] for p in third}, {'subscribe', 'event'})
@@ -127,7 +127,7 @@ class GateTests(unittest.TestCase):
         self.assertEqual(self.routes(gate.check(modules, events=[EVENT], subscriptions={'a': subs['a']})),
                          [(('b',), 'subscribe')])
         for entry, text in ((dict(subs['a'][0], replaces='nothing'), 'which is not its detour'),
-                            (dict(subs['a'][0], event='ev_unknown'), 'not a site event')):
+                            (dict(subs['a'][0], event='ev_unknown'), 'not a site hook')):
             with self.subTest(text=text):
                 problems = gate.check([module('a', 0x40004100)], events=[EVENT], subscriptions={'a': [entry]})
                 self.assertTrue(any(text in p['text'] for p in problems))

@@ -69,7 +69,7 @@ void mg_stock_note_draw(void) { ++stock_draws; drawn_n = 0; }
 uint32_t mg_list_layer[7], mg_page_layer[7];
 
 #include "loader.h"
-#include "modwerk_events.h"
+#include "modwerk_hooks.h"
 static uintptr_t volatile generator_row[5];
 static int masked;
 uint32_t modwerk_machine_mask(void) { CHECK(!masked); masked = 1; return 7; }

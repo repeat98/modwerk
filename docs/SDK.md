@@ -32,9 +32,9 @@ To add a machine, follow [Add a machine](ADD_A_MACHINE.md).
 | Platform | Machines | How mods combine | Guide |
 | --- | --- | --- | --- |
 | `octabam` | Octatrack MKI/MKII (OS 1.40C) | octabam's platform runtime and stock-loader hooks; DSP effects and ColdFire modules composed by Modwerk's browser engine | [Octatrack](../sdk/machines/octatrack/README.md) |
-| `elemod` | Digitakt mk1 (1.53, 1.54), Digitone mk1 and Keys (1.43, 1.44) | one core per machine with shared events (the hook bus), linked into one image; interoperable with the `.elemod` format | [Digitakt](../sdk/machines/digitakt/README.md), [Digitone](../sdk/machines/digitone/README.md) |
+| `elemod` | Digitakt mk1 (1.53, 1.54), Digitone mk1 and Keys (1.43, 1.44) | one core per machine with shared hooks (the hook bus), linked into one image; interoperable with the `.elemod` format | [Digitakt](../sdk/machines/digitakt/README.md), [Digitone](../sdk/machines/digitone/README.md) |
 
-For the combined launch, Modwerk builds Digitakt and Digitone firmware with elekloader's kit: its TypeScript engine, builder worker and catalog, vendored unchanged with a lock file and run in the owner's browser ([vendor/elekloader](../vendor/elekloader/README.md)). Modwerk's own TypeScript linker, OS writer and core are frozen until work on them resumes; their target is a builder that matches elekloader's online builder. Each core's contract is `sdk/<machine>/core/interface.json`: the events, tables and exports it provides. `npm run modules:check` rejects modules that use anything else, so mods written for an interface link unchanged. The Digitakt II preview builds on toonst's core-dt2 1.0 (`sdk/digitakt-ii/core-profile/interface.json`). On every machine a site the core does not expose is proposed as an event rather than patched ([Octatrack](module-guides/README.md#propose-an-event); [Digitakt, Digitone and Digitakt II](module-guides/README.md#propose-an-event-on-the-digitakt-digitone-or-digitakt-ii)).
+For the combined launch, Modwerk builds Digitakt and Digitone firmware with elekloader's kit: its TypeScript engine, builder worker and catalog, vendored unchanged with a lock file and run in the owner's browser ([vendor/elekloader](../vendor/elekloader/README.md)). Modwerk's own TypeScript linker, OS writer and core are frozen until work on them resumes; their target is a builder that matches elekloader's online builder. Each core's contract is `sdk/<machine>/core/interface.json`: the hooks, tables and exports it provides. `npm run modules:check` rejects modules that use anything else, so mods written for an interface link unchanged. The Digitakt II preview builds on toonst's core-dt2 1.0 (`sdk/digitakt-ii/core-profile/interface.json`). On every machine a site the core does not expose is proposed as a hook rather than patched ([Octatrack](module-guides/README.md#propose-a-hook); [Digitakt, Digitone and Digitakt II](module-guides/README.md#propose-a-hook-on-the-digitakt-digitone-or-digitakt-ii)).
 
 ## Modules
 
@@ -64,7 +64,7 @@ npm run module:new -- my-filter --kind dsp --author your-github-login        # O
 - people: `author` with credits, and `maintainers`, the GitHub logins who update and moderate the module (the author is always included);
 - presentation, access (location, exact steps, screenshots) and controls;
 - compatibility: the OS releases from the machine profile it supports, plus requirements, conflicts and limitations;
-- `platform`: the machine's own section, for example the elemod core release, build spec, subscribed events and claimed resources;
+- `platform`: the machine's own section, for example the elemod core release, build spec, subscribed hooks and claimed resources;
 - resources measured against the machine's budgets: memory, fast memory and load;
 - evidence (below), tests, licence and media.
 
@@ -73,7 +73,7 @@ Categories are shared by every machine, so the library keeps one shape: Effects,
 The elemod build spec (`build.json`) is what Modwerk's toolchain compiles and links ([source-only compilation](ELEMOD_SOURCE_BUILDS.md)):
 
 - the C or assembly sources under `src/`, defines and flags;
-- each subscribed core event with its handler and order;
+- each subscribed core hook with its handler and order;
 - contributions to core tables;
 - reserved memory regions and copied blocks;
 - the claimed resources;

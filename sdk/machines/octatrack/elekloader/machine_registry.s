@@ -1,5 +1,5 @@
 | SPDX-License-Identifier: MIT
-| The base machine registry's stock seams (events.json ot_machines and ot_sequencer_rows
+| The base machine registry's stock seams (hooks.json ot_machines and ot_sequencer_rows
 | sites; machine_registry.c). Adapted from POLY8's shared machine hooks
 | (sdk/octabam/modules/poly8/shared-machine-hooks.s, MIT, Sam Banks / repeat98), whose
 | registration seams derive from octabam's Analog BD machine.s. Displaced stock

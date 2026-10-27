@@ -72,21 +72,21 @@ Most of these need a native toolchain and your own original OS 1.40C kept outsid
 
 ## Cross-compatibility
 
-**No module depends on another, on any machine.** Every module builds, installs and works when it is the only module chosen, on the stock OS, the base and the shared SDK. It never calls, extends or hooks another module's code, engine, rows, tables or files, and it declares no `requires`. No "needs X" selection rule, and no module pull request stacked on another's. When two modules need the same code, put it in the base or the shared SDK first, as an event or a table, in its own owner-reviewed pull request, or ship both features as one module. Review refuses a module that depends on another, and no exception entry covers it.
+**No module depends on another, on any machine.** Every module builds, installs and works when it is the only module chosen, on the stock OS, the base and the shared SDK. It never calls, extends or hooks another module's code, engine, rows, tables or files, and it declares no `requires`. No "needs X" selection rule, and no module pull request stacked on another's. When two modules need the same code, put it in the base or the shared SDK first, as a hook, in its own owner-reviewed pull request, or ship both features as one module. Review refuses a module that depends on another, and no exception entry covers it.
 
 Every Octatrack module must install beside every other active module and the Modwerk base. `npm run modules:compat` checks this on every pull request, as part of `npm run check` and `npm run module:doctor`, so registered authors' automatic updates pass it too. It reads declarations only: your manifest's detours, hooks, pokes, references, caves, grown tables, kept bytes and stock copies, the port recipes, the committed base package and octabam's DSP resource rules. It needs no firmware and runs in under a second. It checks every pair and the whole set.
 
 - **One owner per byte.** No two modules, and no module and the base, may patch overlapping stock bytes or relocate the same stock table (Elekloader's rule 5).
-- **Share behaviour through events and tables.** When two modules need to act at the same stock site, the base owns that site and each module subscribes to its [event](#events) or contributes to its table. Never patch a site the base owns (Elekloader's rule 4).
+- **Share behaviour through hooks.** When two modules need to act at the same stock site, the base owns that site as a [hook](#hooks), and each module subscribes to it or contributes to its table. Never patch a site the base owns (Elekloader's rule 4).
 - **Copy stock bytes only from bytes nobody patches.** A copy taken from bytes that another module or the base patches depends on install order. Take the identical bytes from an unpatched location instead. For example, a Tape Echo runtime port copied 13 bytes from 0x4000230e, under the machine group's Part-validator hook at 0x40002318; its fix takes the same instruction bytes from 0x4003886a.
 - **Pinned effect IDs and chooser rows are exclusive.** Pick a free one.
 
 The only exceptions are the reviewed entries in `sdk/machines/octatrack/compatibility.json`. Each names both modules, the exact addresses and a reason:
 
-- `group-owned`: one module's reviewed composition owns every listed site. None today: the machine modules are independent packages that share the chooser, the SEQUENCER page and the chromatic keyboard through the base's tables and take events.
-- `pending-migration`: two modules still patch the site of a planned event and may do so only `until` both subscribe. None today: Repitch, POLY8 and Mute Modes subscribe ([replaces](#events)).
+- `group-owned`: one module's reviewed composition owns every listed site. None today: the machine modules are independent packages that share the chooser, the SEQUENCER page and the chromatic keyboard through the base's tables and take hooks.
+- `pending-migration`: two modules still patch the site of a planned hook and may do so only `until` both subscribe. None today: Repitch, POLY8 and Mute Modes subscribe ([replaces](#hooks)).
 
-An entry fails once a named module is no longer active or nothing meets at a listed site, so the file stays exact. A new entry needs owner review, and is the last resort: propose an event instead. The base's own exceptions are `BASE_OWNS` in `sdk/machines/octatrack/elekloader/build_core.py`.
+An entry fails once a named module is no longer active or nothing meets at a listed site, so the file stays exact. A new entry needs owner review, and is the last resort: propose a hook instead. The base's own exceptions are `BASE_OWNS` in `sdk/machines/octatrack/elekloader/build_core.py`.
 
 The gate does not prove runtime behaviour, DSP placement, cycles or hardware compatibility. `module:verify` and the qualification steps still cover those.
 
@@ -94,9 +94,9 @@ The gate does not prove runtime behaviour, DSP placement, cycles or hardware com
 
 A module reaches the musician and the instrument through an entry point: a key gesture, a page, a menu row, a stock site. The first module to use one decides how every later module fits beside it, so choose it with the next one in mind, on every machine.
 
-1. **Look at what exists first.** List what the base or core already offers on this machine: its events and tables ([EVENTS.md](../../sdk/machines/octatrack/EVENTS.md) on the Octatrack, the core events in the machine's SDK guide elsewhere), newer upstream core releases not yet pinned, and how the modules already there place their pages and controls. Use what fits.
+1. **Look at what exists first.** List what the base or core already offers on this machine: its hooks ([HOOKS.md](../../sdk/machines/octatrack/HOOKS.md) on the Octatrack, the core hooks in the machine's SDK guide elsewhere), newer upstream core releases not yet pinned, and how the modules already there place their pages and controls. Use what fits.
 2. **Decide it with the developer.** Before you build, set out where a musician would look for the controls, how they get there with stock gestures, and what happens when a second and a third module want the same key, page or site. Bring the options with their trade-offs and let the developer choose, and the owner for a new machine. A gesture only one module can hold, such as a second press on a stock page key, leaves no room for the next one. On a machine just being unlocked the first modules set the pattern every later one copies.
-3. **Add a base or core hook only when many modules will use it.** A hook is code every unit carries, an ABI that is never renumbered, and an owner-reviewed base or upstream core release. It pays off for an entry point or site many modules will share, such as a list of pages behind a stock key. When only your module needs a site, patch it in the module and declare it (`compatibility.uiClaims` on the Octatrack, `platform.claims` on the elemod machines); the module that needs it second proposes the event ([Octatrack](#propose-an-event), [elemod](#propose-an-event-on-the-digitakt-digitone-or-digitakt-ii)).
+3. **Add a base or core hook only when many modules will use it.** A hook is code every unit carries, an ABI that is never renumbered, and an owner-reviewed base or upstream core release. It pays off for an entry point or site many modules will share, such as a list of pages behind a stock key. When only your module needs a site, patch it in the module and declare it (`compatibility.uiClaims` on the Octatrack, `platform.claims` on the elemod machines); the module that needs it second proposes a shared hook ([Octatrack](#propose-a-hook), [elemod](#propose-a-hook-on-the-digitakt-digitone-or-digitakt-ii)).
 
 ### UI claims
 
@@ -108,15 +108,15 @@ Build your module to work with everything else: that is the default. Two modules
 
 New modules must declare it (`module:doctor` checks). If the clash with another module is deliberate, add that module to your `compatibility.conflicts`. The gate then accepts it, and the configurator never lets anyone choose both together.
 
-### Events
+### Hooks
 
-Shared behaviour on the Octatrack follows Elekloader's hook bus ([ADAPTING.md](https://github.com/irpina/elekloader/blob/main/docs/ADAPTING.md), "Do not patch the shared sites: subscribe"). The Modwerk base owns every stock site that more than one module needs and shares it in one of four ways. The registry is `sdk/machines/octatrack/events.json`. `sdk/machines/octatrack/EVENTS.md` lists every entry with its prototype or record, what a result means, its order rule and where it runs. C modules include `sdk/machines/octatrack/include/modwerk_events.h`.
+Shared behaviour on the Octatrack follows Elekloader's hook bus ([ADAPTING.md](https://github.com/irpina/elekloader/blob/main/docs/ADAPTING.md), "Do not patch the shared sites: subscribe"). The Modwerk base owns every stock site that more than one module needs and shares it as a hook of one of four kinds. The registry is `sdk/machines/octatrack/hooks.json`. `sdk/machines/octatrack/HOOKS.md` lists every hook with its prototype or record, what a result means, its order rule and where it runs. C modules include `sdk/machines/octatrack/include/modwerk_hooks.h`. Older `runtime.json` files name the hook with `event`; it is still read.
 
 | Kind | What the base does | What your `runtime.json` declares | Example |
 | --- | --- | --- | --- |
-| Call event | Runs every handler at its stock site, lowest `order` first, then stock. A handler's result passes, takes or drops the call, as the event's contract says. | `subscribe`: `event`, `fn` (a C function) and `order` | `ev_play_increment`: Repitch changes a track's playback increment |
-| Raised event | Has no stock site. A module asks it, and the base runs every handler and returns their answers OR'd. | To ask it: `raise`, and a zero word `raise_<event>` in initialized data, which the loader points at the base's entry at install. To answer it: `subscribe`, as for a call event | `ev_mute_keep`: Mute Modes asks which tracks another module still reads while they are muted |
-| Take event | Gives its site to one subscriber: the first record, in `order`, whose `claims` is 0 or accepts the call. Its `entry` runs with every register as at the site, replays the stock instructions and returns to stock itself. | `subscribe`, with `fn` naming a `struct modwerk_take` {claims, entry} | `ev_octave_key`: POLY8, FM Synth and Scale Quantizer each claim their own tracks |
+| Call hook | Runs every handler at its stock site, lowest `order` first, then stock. A handler's result passes, takes or drops the call, as the hook's contract says. | `subscribe`: `hook`, `fn` (a C function) and `order` | `ev_play_increment`: Repitch changes a track's playback increment |
+| Raised hook | Has no stock site. A module asks it, and the base runs every handler and returns their answers OR'd. | To ask it: `raise`, and a zero word `raise_<hook>` in initialized data, which the loader points at the base's entry at install. To answer it: `subscribe`, as for a call hook | `ev_mute_keep`: Mute Modes asks which tracks another module still reads while they are muted |
+| Take hook | Gives its site to one subscriber: the first record, in `order`, whose `claims` is 0 or accepts the call. Its `entry` runs with every register as at the site, replays the stock instructions and returns to stock itself. | `subscribe`, with `fn` naming a `struct modwerk_take` {claims, entry} | `ev_octave_key`: POLY8, FM Synth and Scale Quantizer each claim their own tracks |
 | Table | Has no site. Modules contribute fixed-size records, and base code reads them in `order`. | `contribute`: `to`, `data` (the record's symbol) and `order` | `ot_machines`: each track machine's chooser row, page and renderer; `ot_midi_generators`: each MIDI generator's list row and pages |
 
 A `runtime.json` needs `schema` and at least one subscription or contribution. The other keys are optional:
@@ -124,34 +124,34 @@ A `runtime.json` needs `schema` and at least one subscription or contribution. T
 ```json
 {
   "schema": 1,
-  "subscribe": [{ "event": "ev_play_increment", "fn": "mymod_rate", "order": 50 }],
+  "subscribe": [{ "hook": "ev_play_increment", "fn": "mymod_rate", "order": 50 }],
   "contribute": [{ "to": "ot_machines", "data": "mymod_machine", "order": 40 }],
   "raise": ["ev_mute_keep"]
 }
 ```
 
 - **Order.** 0-254; equal orders run in module-id order. 255 marks a raise and is never an order. Each entry gives its bands, for example 10-29 for a machine that claims its own tracks.
-- **Replaces.** `replaces` names what your native octabam build patches at that site instead: a detour's symbol, or for a take event or a table a list of detour symbols and `0x` addresses of pokes and references. The runtime package leaves it out, and the gate stops counting it.
-- **Room.** Each take event and table holds a fixed number of subscribers: 8, and 4 for `ot_machines`. The loader refuses a package past it, and `modules:compat` refuses more active modules on one than its room, counting each module once as the loader does. It also lists the ones that are full: a module that needs a full one proposes more room first. Before anything is sent, the site also refuses a raise on anything but a raised event and a take or table record that runs past the package's image.
-- **Context.** Handlers run where the entry says: short, with no firmware call that can block. Call-event handlers use the C convention and keep every register but d0-d1/a0-a1.
-- **Base.** A subscriber needs a base built with site events (loader capability 128). Before it sends anything, the site asks for a base update when the connected base can't take the package.
-- **Hook indices are an ABI.** Released packages carry them. Add new events and tables at the end of the registry, and never renumber a released one.
+- **Replaces.** `replaces` names what your native octabam build patches at that site instead: a detour's symbol, or for a take hook or a table a list of detour symbols and `0x` addresses of pokes and references. The runtime package leaves it out, and the gate stops counting it.
+- **Room.** Each take hook and table holds a fixed number of subscribers: 8, and 4 for `ot_machines`. The loader refuses a package past it, and `modules:compat` refuses more active modules on one than its room, counting each module once as the loader does. It also lists the ones that are full: a module that needs a full one proposes more room first. Before anything is sent, the site also refuses a raise on anything but a raised hook and a take or table record that runs past the package's image.
+- **Context.** Handlers run where the entry says: short, with no firmware call that can block. Call-hook handlers use the C convention and keep every register but d0-d1/a0-a1.
+- **Base.** A subscriber needs a base built with site hooks (loader capability 128). Before it sends anything, the site asks for a base update when the connected base can't take the package.
+- **Hook indices are an ABI.** Released packages carry them. Add new hooks at the end of the registry, and never renumber a released one.
 
-Machine modules whose native source predates events declare the same subscriptions and contributions in `sdk/machines/octatrack/module-adapters/machine-ports.json` instead of a `runtime.json`.
+Machine modules whose native source predates these hooks declare the same subscriptions and contributions in `sdk/machines/octatrack/module-adapters/machine-ports.json` instead of a `runtime.json`.
 
-### Propose an event
+### Propose a hook
 
-Propose an event or a table when the gate says two behaviour hooks meet, when you need a site that another module or the base already patches, or when many modules will plainly need the same site. A site only your module uses needs no event ([choose how a module hooks in](#choose-how-a-module-hooks-in)):
+Propose a hook, or a table, when the gate says two module hooks meet, when you need a site that another module or the base already patches, or when many modules will plainly need the same site. A site only your module uses needs no shared hook ([choose how a module hooks in](#choose-how-a-module-hooks-in)):
 
-1. Open a pull request that adds one entry at the end of `sdk/machines/octatrack/events.json`, then regenerate the dispatch, headers, EVENTS.md and hook list with `python3 -B sdk/machines/octatrack/events.py --write`. An event needs its name (`ev_` and what happens), its kind, its stock site (address, length in whole instructions and a SHA-256 guard), or none for a raised event, when it runs, its C prototype and its order rule. A table needs an `ot_` name, its record size and C declaration, its room and the sites its reader owns. Addresses, lengths and hashes only: no stock bytes. A [take event](../../sdk/machines/octatrack/elekloader/README.md#take-events) needs a stock tail, not a prototype. CI has no firmware: rebuild the base with your OS.
-2. Say which modules patch that site today. Until they subscribe, list each such pair in `compatibility.json` as `pending-migration`, with the event and `until`.
+1. Open a pull request that adds one entry at the end of `sdk/machines/octatrack/hooks.json`, then regenerate the dispatch, headers, HOOKS.md and hook list with `python3 -B sdk/machines/octatrack/hooks.py --write`. A hook needs its name (`ev_` and what happens), its kind, its stock site (address, length in whole instructions and a SHA-256 guard), or none for a raised hook, when it runs, its C prototype and its order rule. A table needs an `ot_` name, its record size and C declaration, its room and the sites its reader owns. Addresses, lengths and hashes only: no stock bytes. A [take hook](../../sdk/machines/octatrack/elekloader/README.md#take-hooks) needs a stock tail, not a prototype. CI has no firmware: rebuild the base with your OS.
+2. Say which modules patch that site today. Until they subscribe, list each such pair in `compatibility.json` as `pending-migration`, with the hook and `until`.
 3. The owner reviews the entry. Every later module subscribes or contributes instead of patching.
 
-### Propose an event on the Digitakt, Digitone or Digitakt II
+### Propose a hook on the Digitakt, Digitone or Digitakt II
 
-On the elemod machines the core owns the shared sites, and the core is pinned from an upstream release: elekloader's core (interface 2.1) for the Digitakt and Digitone, and toonst's digitakt2-perform core 1.0 for the Digitakt II ([sdk/imports/elekloader-digitakt2-perform-v1.0.json](../../sdk/imports/elekloader-digitakt2-perform-v1.0.json)). Its contract is `sdk/<machine>/core/interface.json` (`sdk/digitakt-ii/core-profile/interface.json` for the Digitakt II), and `modules:check` refuses a mod that uses anything else. So when several mods will need a stock site the core does not expose (an LFO or voice path, the render, a page the OS builds, state another mod could want), the mod does not patch it: propose the event, and the mod ships once the core carries it. A site only this mod needs, it patches and claims ([choose how a module hooks in](#choose-how-a-module-hooks-in)).
+On the elemod machines the core owns the shared sites, and the core is pinned from an upstream release: elekloader's core (interface 2.1) for the Digitakt and Digitone, and toonst's digitakt2-perform core 1.0 for the Digitakt II ([sdk/imports/elekloader-digitakt2-perform-v1.0.json](../../sdk/imports/elekloader-digitakt2-perform-v1.0.json)). Its contract is `sdk/<machine>/core/interface.json` (`sdk/digitakt-ii/core-profile/interface.json` for the Digitakt II), and `modules:check` refuses a mod that uses anything else. So when several mods will need a stock site the core does not expose (an LFO or voice path, the render, a page the OS builds, state another mod could want), the mod does not patch it: propose the hook, and the mod ships once the core carries it. A site only this mod needs, it patches and claims ([choose how a module hooks in](#choose-how-a-module-hooks-in)).
 
-1. Write the proposal as one pull request against the core's interface file, before the module. For each event: its name (`ev_` and what happens), the stock site (OS release, address, length in whole instructions and a SHA-256 guard; addresses, lengths and hashes only, no stock bytes), when it runs and in which context (UI tick, key, sequencer, render), its C prototype, what a nonzero result means and its order rule. For shared state: a named table with its record size, room and reader. Add at the end: hook indices are an ABI, and a released one is never renumbered.
+1. Write the proposal as one pull request against the core's interface file, before the module. For each hook: its name (`ev_` and what happens), the stock site (OS release, address, length in whole instructions and a SHA-256 guard; addresses, lengths and hashes only, no stock bytes), when it runs and in which context (UI tick, key, sequencer, render), its C prototype, what a nonzero result means and its order rule. For shared state: a named table with its record size, room and reader. Add at the end: hook indices are an ABI, and a released one is never renumbered.
 2. Say which mods patch that site or hold that state privately today, and what each would subscribe to instead. On the Digitakt mk1 the SRC machines share the SRC page, render and LFO destination sites, so a proposal there covers them together.
 3. The owner reviews the proposal and takes it to the core's upstream. When the new core is released, Modwerk pins it with `npm run elekloader:update`, updates the interface file and records the import under `sdk/imports/`. The module pull request follows, subscribing in `build.json`, and it builds and runs on its own: a mod that shares another mod's state or code is refused ([no module depends on another](#cross-compatibility)).
 
@@ -162,14 +162,14 @@ Build your module to work beside everything else. Machine lists, effect lists an
 Collisions are caught automatically, so nothing ships incompatible without its author deciding:
 
 - **Card builds.** `npm run modules:pairs` runs octabam's ledger on every catalogue module alone and beside every other, in each context POLY8's shared machine list creates, and writes `src/catalog/compatibility-pairs.json`. A pair the ledger refuses that neither module flags fails the check. It also refuses an effect whose declared FX2 buffer reaches a range another module declares in that slot (Sidechain Compressor's key window); over USB the base refuses that buffer per block at run time, so only card builds need that flag. The configurator refuses every refused or flagged pair by itself, so no rule is written by hand. The table grows with the square of the number of modules, and the same check proves with the full ledger that pairs decide every larger selection.
-- **USB sets.** `npm run modules:compat` still refuses every byte collision, flagged or not: beta sets install whatever is chosen, so subscribe to an event or [propose one](#propose-an-event).
+- **USB sets.** `npm run modules:compat` still refuses every byte collision, flagged or not: beta sets install whatever is chosen, so subscribe to a hook or [propose one](#propose-a-hook).
 - **Digitakt and Digitone.** `npm run modules:check` refuses two mods that patch overlapping bytes on a release both support unless one names the other in `compatibility.conflicts`. The website already refused those pairs; the flag makes the author's decision explicit.
 - **Who flags.** The module whose change makes the pair collide flags it in its own manifest: the newer module, or the one being updated, and it fixes the collision instead when that is no big refactor. Nobody edits another author's module to add a flag. A flag names an existing module id of the same machine; the check refuses any other. Changing only `compatibility.conflicts` needs no new module version, but still runs every check and needs a marked note in the module's changelog.
 - **What no gate sees.** A flag can also name a limit the ledger cannot see, such as DSP placement or behaviour. Say why in the README's Compatibility section. `npm run module:doctor -- <id>` lists the collisions the ledger finds, so a flag that no longer applies can go at the next version.
 
 ### Shared sites still to build
 
-The more of these the base owns, the more modules combine. Each is an event or a table to [propose](#propose-an-event), in its own owner-reviewed pull request, before a module uses it:
+The more of these the base owns, the more modules combine. Each is a hook to [propose](#propose-a-hook), in its own owner-reviewed pull request, before a module uses it:
 
 | Site | Today |
 | --- | --- |
@@ -177,7 +177,7 @@ The more of these the base owns, the more modules combine. Each is an event or a
 | Effect lists (FX1, FX2) | USB: the base has 128 effect ids, 109 of them for modules, and gives each installed effect module its own ([wider ids](../OCTATRACK_MORE_EFFECT_IDS.md)); card: stock's 32, 13 of them for modules, pinned |
 | SEQUENCER rows | Base table `ot_sequencer_rows` |
 | MIDI generators on a MIDI track (MIDI NOTE SETUP's list, the ARP page) | Base table `ot_midi_generators`; on the card, VECTOR's own registry ([midi-usb.md](midi-usb.md#midi-generators-and-midi-effects)) |
-| MIDI effects on a MIDI track's notes | Pitch: take event `ev_midi_note_key`. Velocity, timing, added notes: not built |
+| MIDI effects on a MIDI track's notes | Pitch: take hook `ev_midi_note_key`. Velocity, timing, added notes: not built |
 | Stock DSP effects a module hooks (Sidechain Compressor, Output Matrix) | Not built: DSP-side taps, one owner per stock site |
 | Module settings | Not built: upstream octabam's [OTX settings store proposal](https://github.com/sambanks/octabam/blob/main/docs/proposals/OTX_PROJECT_PROPOSAL.md) |
 
@@ -187,11 +187,11 @@ Each problem is one line naming the modules, the byte ranges and what each one p
 
 | The message says | Do this |
 | --- | --- |
-| `X patches A..B (…), which is the event ev_N` | Subscribe to `ev_N` instead of patching |
-| `X (detour …) and Y (detour …) both claim A` | Two behaviour hooks meet: [propose an event](#propose-an-event) |
-| `X (poke …) and Y (…) both claim A` | One owner per byte: patch other bytes, or propose an event |
+| `X patches A..B (…), which is the hook ev_N` | Subscribe to `ev_N` instead of patching |
+| `X (detour …) and Y (detour …) both claim A` | Two module hooks meet: [propose a hook](#propose-a-hook) |
+| `X (poke …) and Y (…) both claim A` | One owner per byte: patch other bytes, or propose a hook |
 | `X copies stock bytes A..B (…), but Y patches C..D` | Copy the identical bytes from an unpatched location |
-| `X (table …)` meets another claim | The table already has an owner: propose an event or a shared table |
+| `X (table …)` meets another claim | The table already has an owner: propose a hook or a shared table |
 | `X (cave …)` or `linked unit` meets another claim | Pick free space, or let the build place the unit |
 | `fx2 id: X and Y both claim 0x…` | Pick another chooser row (a free effect ID) |
 | `core-private Y`, `DSP data range`, `FX2 instance buffers` | Claim free words, or request a base-owned region |
@@ -214,4 +214,4 @@ The limits are audit defaults, a judgement and not a repository rule: `--usable`
 
 ## Digitakt and Digitone
 
-Mods there are linked by one core per machine and built by elekloader's builder in the browser, so there is no native octabam comparison. Each guide has a short section on what applies. Start from [the Digitakt guide](../../sdk/machines/digitakt/README.md) for the core events, budgets and claims, and test a two-mod build, since combinations are the point.
+Mods there are linked by one core per machine and built by elekloader's builder in the browser, so there is no native octabam comparison. Each guide has a short section on what applies. Start from [the Digitakt guide](../../sdk/machines/digitakt/README.md) for the core hooks, budgets and claims, and test a two-mod build, since combinations are the point.

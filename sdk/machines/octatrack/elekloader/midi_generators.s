@@ -1,5 +1,5 @@
 | SPDX-License-Identifier: MIT
-| The sites of the MIDI generator registry (midi_generators.c, events.json ot_midi_generators): the base's, and a
+| The sites of the MIDI generator registry (midi_generators.c, hooks.json ot_midi_generators): the base's, and a
 | card build's generator module patches the same ones. Each replays its own instructions, never stock's bytes.
         .text
         .balign 2

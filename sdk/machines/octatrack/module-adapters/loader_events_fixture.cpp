@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Site events (sdk/machines/octatrack/events.json) executed under the ColdFire
+// Site events (sdk/machines/octatrack/hooks.json) executed under the ColdFire
 // emulator: the actual loader built with and without the events, the generated
 // dispatch, and real encoded packets of the current (raw detour) and migrated
 // (subscriber) Repitch, Mute Modes and POLY8 group. Each subscriber must do what

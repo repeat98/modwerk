@@ -27,4 +27,4 @@ Read [the module guides index](README.md) first. Anything that follows tempo als
 
 ## Digitakt and Digitone
 
-Playback behaviour sits in the core's render events (`ev_render_in`, `ev_render_out`). No playback-specific contract is documented for these machines yet. Read the [Digitakt guide](../../sdk/machines/digitakt/README.md), take what you need from the core's events, and record what you observed in TESTING.md.
+Playback behaviour sits in the core's render hooks (`ev_render_in`, `ev_render_out`). No playback-specific contract is documented for these machines yet. Read the [Digitakt guide](../../sdk/machines/digitakt/README.md), take what you need from the core's hooks, and record what you observed in TESTING.md.

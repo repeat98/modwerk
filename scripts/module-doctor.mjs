@@ -138,7 +138,7 @@ function octatrack(id) {
   else if (!entry || paused) info('cross-compatibility', 'compared with every other module once it is listed and not paused (npm run modules:compat)')
   else if (clashes.length) fail('cross-compatibility', clashes.length + ' clash(es), first: ' + clashes[0].text, clashes[0].fix + ' (' + clashes[0].guide + '); npm run modules:compat -- ' + id + ' lists every one')
   else ok('cross-compatibility', 'installs beside every other active module and the base (npm run modules:compat)')
-  for (const pending of compatResult?.summary.pending.filter(row => row.modules.includes(id)) ?? []) info('event migration', 'still patches the site of ' + pending.event + ', allowed until: ' + pending.until + ' (docs/module-guides/README.md#events)')
+  for (const pending of compatResult?.summary.pending.filter(row => row.modules.includes(id)) ?? []) info('hook migration', 'still patches the site of ' + pending.event + ', allowed until: ' + pending.until + ' (docs/module-guides/README.md#hooks)')
 
   const uiClaims = document.compatibility.uiClaims
   if (uiClaims) ok('ui claims', uiClaims.length ? uiClaims.join(', ') : 'none')

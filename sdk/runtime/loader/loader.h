@@ -36,10 +36,10 @@
 /* Hook order in packages: the events every Elekloader core has. Later events
  * append; a base refuses a package with hooks it does not dispatch. */
 enum runtime_event { RUNTIME_TICK, RUNTIME_DRAW, RUNTIME_KEY, RUNTIME_ENC, RUNTIME_EVENTS };
-/* A machine's events at stock sites its base owns (the Octatrack's: sdk/machines/octatrack/EVENTS.md) follow as hook
- * indices RUNTIME_EVENTS on, from its generated header (runtime_events.h, generated from its events.json). */
+/* A machine's hooks at stock sites its base owns (the Octatrack's: sdk/machines/octatrack/HOOKS.md) follow as hook
+ * indices RUNTIME_EVENTS on, from its generated header (runtime_hooks.h, generated from its hooks.json). */
 #ifdef MODWERK_RUNTIME_EVENTS
-#include "runtime_events.h"
+#include "runtime_hooks.h"
 #else
 #define RUNTIME_SITE_EVENTS 0u
 #endif
@@ -174,7 +174,7 @@ enum runtime_refusal modwerk_runtime_refusal(void);
 void modwerk_runtime_refused(enum runtime_refusal why); /* a machine check that refuses before the loader (Octatrack modset.c) */
 unsigned modwerk_runtime_refused_event(void);         /* after RUNTIME_EVENT: that event's hook index */
 #if RUNTIME_SITE_EVENTS
-/* Each site event's handlers in (order, module id) order, then 0: the base's dispatch (runtime_events.s,
+/* Each site event's handlers in (order, module id) order, then 0: the base's dispatch (runtime_hooks.s,
  * modwerk_events_code up to modwerk_events_code_end) walks them. Rewritten masked, only while no paused
  * task is inside that dispatch. */
 extern uintptr_t volatile *const modwerk_runtime_event_row[RUNTIME_SITE_EVENTS];

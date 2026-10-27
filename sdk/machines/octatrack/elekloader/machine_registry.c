@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: MIT
- * The base's machine registry: the reader of the ot_machines table (events.json). The
+ * The base's machine registry: the reader of the ot_machines table (hooks.json). The
  * machine chooser, SRC SETUP, the page resolver, the Part validator, the UI tick, pool
  * navigation and the FLEX renderer ask the contributed machines (struct modwerk_machine),
  * in row order: chooser rows 5 on. Adapted from POLY8's shared machine controller
@@ -8,7 +8,7 @@
  * FLEX state, defaults, pages and engine. Also the reader of ot_sequencer_rows. */
 #include <stdint.h>
 #include "loader.h"
-#include "modwerk_events.h"
+#include "modwerk_hooks.h"
 #ifndef MW_HOST /* test_machine_registry.c maps these onto a model of the unit's memory */
 #define U8(a) (*(volatile uint8_t *)(uintptr_t)(a))
 #define U32(a) (*(volatile uint32_t *)(uintptr_t)(a))

@@ -2,7 +2,7 @@
  * Host check of site events (loader.h): ordered rows from subscribers' hook
  * words, both install orders, removal, MU and journal rollback, the paused-task
  * fence on the base's dispatch, and refusals of raw sites/copies on an event
- * site. Machine glue is a stub (tests/events/runtime_events.h); module code never runs. */
+ * site. Machine glue is a stub (tests/events/runtime_hooks.h); module code never runs. */
 #define MODWERK_RUNTIME_EVENTS
 #define MODWERK_RUNTIME_METADATA_EXTERNAL
 #define MODWERK_RUNTIME_JOURNAL_EXTERNAL

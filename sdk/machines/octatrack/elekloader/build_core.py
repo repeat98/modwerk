@@ -204,10 +204,10 @@ DYNLOAD_HOOKS = (
 # module page's turned knob before it (a select then steps as stock's do from the first visit). Address, the lea's
 # six stock bytes' SHA-256 and the stepper it names.
 KNOB_STEP = (0x40055140, 'c5e0994d9ad233a5e894f277b48d402278cd74bd878fab0e700f03946b8f2b9d', 0x4003240c)
-# The runtime builder's runtime.json reader and the Octatrack's events at base-owned sites (events.json).
+# The runtime builder's runtime.json reader and the Octatrack's events at base-owned sites (hooks.json).
 _spec = importlib.util.spec_from_file_location('modwerk_runtime_builder', APP / 'sdk/runtime/loader/build.py')
 RUNTIME_BUILDER = importlib.util.module_from_spec(_spec); _spec.loader.exec_module(RUNTIME_BUILDER)
-_spec = importlib.util.spec_from_file_location('modwerk_site_events', APP / 'sdk/machines/octatrack/events.py')
+_spec = importlib.util.spec_from_file_location('modwerk_site_events', APP / 'sdk/machines/octatrack/hooks.py')
 EVENTS = importlib.util.module_from_spec(_spec); _spec.loader.exec_module(EVENTS)
 # GCC 16.2's late-combine miscompile: the base's C compiles turn the pass off, and every C object is checked
 # before packaging (sdk/runtime/m68k_codegen.py).
@@ -1479,7 +1479,7 @@ def main():
     parser.add_argument('--saved-set-export', action='store_true',
                         help='Private fixed-two-file read-only recovery snapshot. No card writes.')
     parser.add_argument('--site-events', action='store_true',
-                        help='own the stock sites of sdk/machines/octatrack/events.json and dispatch their events to subscribed modules')
+                        help='own the stock sites of sdk/machines/octatrack/hooks.json and dispatch their events to subscribed modules')
     parser.add_argument('--sample-editor', action='store_true',
                         help='Private staged AED sample-editor service; needs site events and the ordinary DSP loader. Not a released base capability.')
     parser.add_argument('--table-owners', type=Path,
@@ -1637,7 +1637,7 @@ def main():
                 APP / 'sdk/machines/octatrack/module-adapters/usb-audio-profiles/profiles.py')
             usb_profiles = importlib.util.module_from_spec(spec); spec.loader.exec_module(usb_profiles)
     for name in ('ep0.c', 'fxids.h', 'runtime.c', 'runtime.h', 'boot.c', 'boot.h', 'boot.s', 'flash.c', 'flash.h', 'slots.c', 'slots.h', 'modset.c', 'boot_anim.c', 'boot_anim.s', 'crash.c', 'crash.s', 'run_unpack.s') + (('dev.c',) if args.dev else ()) + (
-            ('runtime_events.h', 'runtime_events.s', 'machine_registry.c', 'machine_registry.s', 'midi_generators.c',
+            ('runtime_hooks.h', 'runtime_hooks.s', 'machine_registry.c', 'machine_registry.s', 'midi_generators.c',
              'midi_generators.s') if args.site_events else ()):
         shutil.copyfile(HERE / name, source / name)
     # The boot stub's sector, which flash.c writes when it converts a unit to two slots (build_stub.py: stub_body.c).
@@ -1649,7 +1649,7 @@ def main():
         import resident_engines as dev_engines
         (source / 'dev.c').write_text(dev_engines.dev((source / 'dev.c').read_text()))
     if args.site_events:  # the tables' records (struct modwerk_machine, struct modwerk_sequencer_rows)
-        shutil.copyfile(APP / 'sdk/machines/octatrack/include/modwerk_events.h', source / 'modwerk_events.h')
+        shutil.copyfile(APP / 'sdk/machines/octatrack/include/modwerk_hooks.h', source / 'modwerk_hooks.h')
     # The startup (boot_anim.c) draws the art the shared startup sources describe, with this base's version.
     spec = importlib.util.spec_from_file_location('modwerk_base_art', APP / 'sdk/runtime/startup/base_art.py')
     base_art = importlib.util.module_from_spec(spec); spec.loader.exec_module(base_art)
@@ -2049,13 +2049,13 @@ modwerk_retained_end:
         recipe['cflags'].append('-DMODWERK_RESIDENT_STOCK_HOOKS')
     if args.resident_on_demand:
         recipe['cflags'].append('-DMODWERK_RESIDENT_ON_DEMAND')
-    if args.site_events:  # the base owns these stock sites; packages subscribe (sdk/machines/octatrack/EVENTS.md)
+    if args.site_events:  # the base owns these stock sites; packages subscribe (sdk/machines/octatrack/HOOKS.md)
         recipe['cflags'].append('-DMODWERK_RUNTIME_EVENTS')
-        recipe['sources'] += ['runtime_events.s', 'machine_registry.s', 'midi_generators.s']
+        recipe['sources'] += ['runtime_hooks.s', 'machine_registry.s', 'midi_generators.s']
         for addr, n, guard, label in EVENTS.base_sites():
             stock = image[addr - device.main_load:addr - device.main_load + n]
             if sha(stock) != guard:
-                raise ValueError('Stock bytes at %#x are not the ones events.json names.' % addr)
+                raise ValueError('Stock bytes at %#x are not the ones hooks.json names.' % addr)
             recipe['sites'].append(dict(addr=hex(addr), stock=stock.hex(), op='jmp', target=label))
         for addr, n, guard, label in FRAME_SITES:
             stock = image[addr - device.main_load:addr - device.main_load + n]
@@ -2070,7 +2070,7 @@ modwerk_retained_end:
             addr, n = s['site'], s['length']
             stock = image[addr - device.main_load:addr - device.main_load + n]
             if sha(stock) != s['guard']:
-                raise ValueError('Stock bytes at %#x are not the ones events.json names for %s.' % (addr, s['table']))
+                raise ValueError('Stock bytes at %#x are not the ones hooks.json names for %s.' % (addr, s['table']))
             if s['op'] == 'jmp':
                 recipe['sites'].append(dict(addr=hex(addr), stock=stock.hex(), op='jmp', target=s['target']))
             elif s['op'] in ('ptr', 'lea'):  # an lea keeps its opcode: its operand is the pointer
@@ -2187,7 +2187,7 @@ modwerk_retained_end:
         document['sections'][section]['parts'] = stock_reference(
             document['sections'][section]['parts'], offset, n, guard['address'])
     # Displaced stock instructions the events' tails and the machine registry replay: modwerk_stock_<address>_<n>
-    # placeholders, filled from the user's own OS (events.py, machine_registry.s).
+    # placeholders, filled from the user's own OS (hooks.py, machine_registry.s).
     for name, (section, offset) in sorted(document['symbols'].items()):
         found = re.fullmatch(r'modwerk_stock_([0-9a-f]{8})_(\d+)', name)
         if found:

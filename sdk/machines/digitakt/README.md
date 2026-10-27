@@ -12,11 +12,11 @@ npm run module:new -- my-mod --machine digitakt --author your-github-login
 
 This creates `modwerk.module.json` (contract v3), `build.json`, `src/main.c`, README, TESTING, licence and a placeholder thumbnail. See [the SDK guide](../../../docs/SDK.md) for the contract and evidence tiers.
 
-## Core events
+## Core hooks
 
 Handlers use the C calling convention: arguments on the stack, d0–d1/a0–a1 free, the result in d0. Subscribe in `platform.events` and name each handler in `build.json`.
 
-| Event | When | Handler |
+| Hook | When | Handler |
 | --- | --- | --- |
 | `ev_tick` | the UI's 30 Hz compose check | `void f(ctrl)`; set `ctrl+0x20` to recompose |
 | `ev_draw` | after the OS draws the screen | `void f(bmp, ctrl)` |
@@ -26,7 +26,7 @@ Handlers use the C calling convention: arguments on the stack, d0–d1/a0–a1 f
 | `ev_render_in` / `ev_render_out` | entry and exit of the audio render | `void f(void)` |
 | SRC machines | the table `core_machines`: new SRC machines in slots 4–7, treated by the OS like the stock machine they stand in for | — |
 
-A site the core does not expose is proposed as an event before the mod, never patched by it ([propose an event](../../../docs/module-guides/README.md#propose-an-event-on-the-digitakt-digitone-or-digitakt-ii)).
+A site the core does not expose is proposed as a core hook before the mod, never patched by it ([propose a hook](../../../docs/module-guides/README.md#propose-a-hook-on-the-digitakt-digitone-or-digitakt-ii)).
 
 ## Budgets
 
