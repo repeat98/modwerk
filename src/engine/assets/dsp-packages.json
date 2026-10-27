@@ -2,13 +2,13 @@
   "schema": 1,
   "revision": "b8deefc88b2c3e5f3c6158e364eb741df1924e1d",
   "license": "/licenses/octabam.txt",
-  "sourceCommit": "6fd9598d05b6eb08f8358b360934c6663076261f",
+  "sourceCommit": "2d2ad290951cfc565ffc61ace649d89e2e230a84",
   "moduleVersions": {
     "spectrum": "0.1.1-experimental",
     "modulation": "0.1.1-experimental",
     "character": "0.1.1-experimental",
     "miniverb": "0.2.3-experimental",
-    "tapeecho": "0.1.5-experimental",
+    "tapeecho": "0.1.6-experimental",
     "euclid": "0.1.4-experimental",
     "repitch": "0.2.0-experimental",
     "tapehead": "0.1.2-experimental",
@@ -29,7 +29,7 @@
     "playmodes": "0.2.0-experimental",
     "mute-modes": "0.2.1-experimental",
     "recorder-loop-fix": "0.1.0-experimental",
-    "poly8": "0.3.2-experimental",
+    "poly8": "0.3.1-experimental",
     "output-matrix": "0.1.1-experimental",
     "quantize-live-rec-toggle": "0.1.1-experimental",
     "apply-scene": "0.2.0-experimental",
@@ -443,12 +443,12 @@
     },
     {
       "id": "tapeecho",
-      "version": "0.1.5-experimental",
+      "version": "0.1.6-experimental",
       "key": "TAPE ECHO",
       "author": "repeat98",
       "sources": {
         "modules/tapeecho/cpu_passthrough.asm": "68ef0beaa213de43e116d2feb367b437ef8c73c7f7b1c07328fde2d72edb3fdc",
-        "modules/tapeecho/manifest.py": "e83c639b3a6d51946b6cb5ae2af72d9376f2ff9cad75502396287c95c751927b"
+        "modules/tapeecho/manifest.py": "8444fc496776df2c719401f6967aba44a5922e15f0906268286663d012dd94b8"
       },
       "fxId": 15,
       "words": 5,

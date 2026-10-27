@@ -553,13 +553,13 @@
       }
     ]
   },
-  "sourceCommit": "6fd9598d05b6eb08f8358b360934c6663076261f",
+  "sourceCommit": "2d2ad290951cfc565ffc61ace649d89e2e230a84",
   "moduleVersions": {
     "spectrum": "0.1.1-experimental",
     "modulation": "0.1.1-experimental",
     "character": "0.1.1-experimental",
     "miniverb": "0.2.3-experimental",
-    "tapeecho": "0.1.5-experimental",
+    "tapeecho": "0.1.6-experimental",
     "euclid": "0.1.4-experimental",
     "repitch": "0.2.0-experimental",
     "tapehead": "0.1.2-experimental",
@@ -580,7 +580,7 @@
     "playmodes": "0.2.0-experimental",
     "mute-modes": "0.2.1-experimental",
     "recorder-loop-fix": "0.1.0-experimental",
-    "poly8": "0.3.2-experimental",
+    "poly8": "0.3.1-experimental",
     "output-matrix": "0.1.1-experimental",
     "quantize-live-rec-toggle": "0.1.1-experimental",
     "apply-scene": "0.2.0-experimental",

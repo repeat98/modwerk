@@ -73,12 +73,41 @@ te_filter_block:
 | The record sum is one saturating accumulator (Q3.29, +/-4 FS):
 | drive*L + drive*R (drive/2 each) + 2 x feedback*wet + hiss*rng. The FIR
 | and curve index run in Q6.26. Settled full wet writes sat(4*wet); other
-| MIX values sat(4*mix*wet + (1-mix)*dry) per channel; MIX=0 writes nothing.
-| Knob ramps (any of dm/df/dn) advance before every sample.
+| MIX values sat(4*g*wet + k*dry) per channel with BBD's law (#969): up to
+| MIX 64 the wet gain g rises to unity over the whole dry signal (k = 1),
+| from 64 to 127 the dry gain k fades out under the unity wet; MIX=0
+| writes nothing. Knob ramps (any of dm/df/dn) advance before every sample,
+| and a ramping MIX forms g and k again for every sample.
 | a0 audio, a1 record, a2 wet, a3 hiss operand (ramp: hiss), a4 curve
-| centre, a5 drive, a6 ONE (full wet) or mix; d0 rng, d1/d2 FIR history
-| (roles swap per sample), d3 wet, d4 record, d5/d6 scratch, d7 feedback.
-| Locals: 44(sp) LCG multiplier, 48(sp) wet end, 52(sp) 1-mix.
+| centre, a5 drive, a6 ONE (full wet), g (settled MIX) or mix (ramp);
+| d0 rng, d1/d2 FIR history (roles swap per sample), d3 wet, d4 record,
+| d5/d6 scratch, d7 feedback.
+| Locals: 44(sp) LCG multiplier, 48(sp) wet end, 52(sp) dry gain k.
+| Both gains from mix = MIX/127 in a6 (cpu.c mix_gains is the oracle):
+| mix <= gain(64): g = 2*mix - mix/64 = mix*127/64, k = 1;
+| above it: g = 1, k = ((full - mix) >> 14) * 33028 = (1-mix)*127/63.
+| Out: d4 = g, 52(sp) = k; d5 scratch. Unsigned, like the oracle.
+        .macro TE_TAPE_GAINS
+        move.l  %a6,%d4
+        cmp.l   #1082196480,%d4
+        bhi     .Lgain_fade\@
+        move.l  %d4,%d5
+        lsr.l   #6,%d5
+        add.l   %d4,%d4
+        sub.l   %d5,%d4
+        move.l  #2147483647,%d5
+        bra     .Lgain_done\@
+.Lgain_fade\@:
+        move.l  #2147483640,%d5
+        sub.l   %d4,%d5
+        lsr.l   #8,%d5
+        lsr.l   #6,%d5
+        mulu.w  #33028,%d5
+        move.l  #2147483647,%d4
+.Lgain_done\@:
+        move.l  %d5,52(%sp)
+        .endm
+
         .balign 4
         .global te_tape_block
 te_tape_block:
@@ -113,9 +142,8 @@ te_tape_block:
         beq     .Ltape_dry
         cmp.l   #2147483640,%d4
         beq     .Ltape_wet
-        move.l  #2147483647,%d5
-        sub.l   %d4,%d5
-        move.l  %d5,52(%sp)
+        TE_TAPE_GAINS
+        move.l  %d4,%a6
         bra     .Ltape_mix
 
         .macro TE_TAPE_RECORD x1,x2,ramp
@@ -173,7 +201,7 @@ te_tape_block:
         move.l  %d5,(%a0)+
         .endm
 
-| Per channel: 4*mix*wet + (1-mix)*dry. d4 holds 1-mix; dry L/R reload
+| Per channel: 4*g*wet + k*dry, g in a6 and k from 52(sp). Dry L/R reload
 | through multiply-with-load while the wet products accumulate.
         .macro TE_TAPE_MIX load
         .if \load
@@ -196,6 +224,25 @@ te_tape_block:
         move.l  %d6,(%a0)+
         .endm
 
+| The same with g in d4 (a6 keeps the ramping mix): the last wet product
+| of the left channel reloads d4 with k for both dry products.
+        .macro TE_TAPE_RAMP_MIX
+        mac.l   %d3,%d4,(%a0),%d5,%acc2
+        mac.l   %d3,%d4,4(%a0),%d6,%acc2
+        mac.l   %d3,%d4,%acc3
+        mac.l   %d3,%d4,%acc3
+        mac.l   %d3,%d4,%acc3
+        mac.l   %d3,%d4,%acc3
+        mac.l   %d3,%d4,%acc2
+        mac.l   %d3,%d4,52(%sp),%d4,%acc2
+        mac.l   %d5,%d4,%acc2
+        mac.l   %d6,%d4,%acc3
+        movclr.l %acc2,%d5
+        move.l  %d5,(%a0)+
+        movclr.l %acc3,%d6
+        move.l  %d6,(%a0)+
+        .endm
+
         .macro TE_TAPE_RAMP x1,x2
         adda.l  76(%sp),%a6
         add.l   80(%sp),%d7
@@ -203,9 +250,8 @@ te_tape_block:
         TE_TAPE_RECORD \x1,\x2,1
         tst.l   %a6
         beq     .Lramp_dry\@
-        move.l  #2147483647,%d4
-        sub.l   %a6,%d4
-        TE_TAPE_MIX 0
+        TE_TAPE_GAINS
+        TE_TAPE_RAMP_MIX
 .Lramp_next\@:
         .subsection 1
 .Lramp_dry\@:

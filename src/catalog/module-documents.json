@@ -743,7 +743,7 @@
       "id": "tapeecho",
       "key": "TAPE ECHO",
       "name": "Tape Echo",
-      "version": "0.1.5-experimental",
+      "version": "0.1.6-experimental",
       "category": "effects",
       "access": {
         "location": "Audio track FX2 SETUP: Tape Echo in the effect chooser.",
@@ -779,7 +779,7 @@
         ],
         "usage": [
           "Choose TAPE ECHO in FX2. SYNC selects FREE timing or BEAT divisions; TIME adjusts the delay.",
-          "FDBK controls repeats, WOW adds pitch movement and flutter, and AGE changes bandwidth and tape noise. MIX controls dry/wet balance.",
+          "FDBK controls repeats, WOW adds pitch movement and flutter, and AGE changes bandwidth and tape noise. MIX sets the balance: up to 64 the echo rises to full level over the whole dry signal, then the dry fades out to the echo alone at 127.",
           "When migrating older projects, former HEADS locks now address AGE. Back up projects and review old effect defaults and parameter locks."
         ]
       },
@@ -824,9 +824,9 @@
         },
         {
           "name": "MIX",
-          "default": 90,
+          "default": 40,
           "count": 128,
-          "doc": "dry/wet crossfade; 0 is exact passthrough",
+          "doc": "0 is exact dry; up to 64 the echo rises to full level over the whole dry signal, then the dry fades out, leaving the echo alone at 127",
           "labels": null
         }
       ],
@@ -840,7 +840,7 @@
         ]
       },
       "resources": {
-        "recorded": "23 Sep 2026",
+        "recorded": "27 Oct 2026",
         "storage": {
           "label": "CPU state / shared arena",
           "display": "200 B per track",
@@ -852,20 +852,20 @@
         },
         "processing": {
           "label": "CPU instruction peak",
-          "display": "21,547 per frame",
+          "display": "22,571 per frame",
           "value": null,
           "unit": "see display",
           "method": "emulator",
-          "conditions": "Eight instances with all controls reversing in BEAT mode. FREE peaked at 18,063. These emulator instruction counts are not hardware cycles or CPU percentages.",
-          "source": "README.md"
+          "conditions": "Eight instances with all controls reversing in BEAT mode. FREE peaked at 19,087. 0.1.6 adds 1,024 to both while MIX, FDBK or AGE is moving. These emulator instruction counts are not hardware cycles or CPU percentages.",
+          "source": "TESTING.md"
         },
         "impact": {
           "conditions": "Audio modules are rated for an active instance, including expensive modes and changing controls; MIDI/USB features are rated while enabled. More tracks or instances increase demand. Shared runtime reservations and reused stock buffers are not added again per module. These rough source-backed tiers do not establish hardware headroom or qualification.",
           "cpu": {
             "level": "high",
             "basis": "measured-comparison",
-            "rationale": "Tape Echo processes audio continuously on ColdFire. Eight modulated instances peak at 21,547 emulator instructions per frame in BEAT mode, versus lower stock-delay comparisons in the same record. High is a relative work estimate, not a CPU percentage.",
-            "source": "README.md"
+            "rationale": "Tape Echo processes audio continuously on ColdFire. Eight modulated instances peak at 22,571 emulator instructions per frame in BEAT mode, versus 7,628 for eight stock DELAY instances in the same record. High is a relative work estimate, not a CPU percentage.",
+            "source": "TESTING.md"
           },
           "dsp": {
             "level": "minimal",
@@ -883,31 +883,12 @@
       },
       "tests": {
         "report": "TESTING.md",
-        "summary": "The pinned hardware record reports six instances running and a seventh freezing the unit; that limit remains open. Recorded gates cover native arithmetic parity, dirty state, eight-instance stress, moving controls and repeat/feedback behavior. Hardware timing and worst-case CPU headroom remain unqualified.",
-        "hardwareStatus": "historical",
+        "summary": "0.1.6 follows BBD's MIX law so turning Tape Echo on no longer turns the track down (issue #969): up to MIX 64 the echo rises over the whole dry signal, above it the dry fades out; the default is MIX 40. The ColdFire kernels match their native oracle bit for bit on the emulator; the echo path, feedback law and self-oscillation headroom are unchanged. The pinned hardware record reports six instances running and a seventh freezing the unit; that limit remains open, and no hardware run, chip timing or listening test exists for 0.1.6. See TESTING.md.",
+        "hardwareStatus": "untested",
         "evidenceRevision": "b8deefc88b2c3e5f3c6158e364eb741df1924e1d",
         "gates": [
           "tools/verify/verify_tapeecho_cpu.py"
-        ],
-        "retainedEvidence": {
-          "commit": "32ac46b0c7e8c11e48ebc41674695e033142b46e",
-          "moduleVersion": "0.1.2-experimental",
-          "documentation": {
-            "tutorial": {
-              "title": "Quick tutorial",
-              "steps": [
-                "In a backed-up test project, select an audio track, hold FUNC and press FX2, then choose Tape Echo with LEVEL and YES.",
-                "Press FX2 to leave SETUP. Set SYNC to BEAT, TIME to 80 (1/8), FDBK to 64, WOW and AGE to 0, and MIX to 64; play a short sound at 120 BPM.",
-                "Listen for clean eighth-note repeats, then raise WOW to 72 and AGE to 100 for drifting, darker repeats. Set MIX to 0 to compare dry audio and stop transport when finished."
-              ]
-            },
-            "screenshots": [
-              "media/ot-setup-mono.png",
-              "media/ot-controls-mono.png"
-            ],
-            "screenshotStyle": "black-and-white"
-          }
-        }
+        ]
       },
       "license": {
         "spdx": "MIT",
@@ -952,7 +933,7 @@
         {
           "path": "media/audio-preview.mp3",
           "captureType": "audio",
-          "caption": "Legowelt Juno 106 chord pluck: dry (0 s), clean 1/8 repeats (0.85 s; FDBK 78, WOW 10, AGE 20), worn dotted-1/8 repeats (3.85 s; FDBK 94, WOW 80, AGE 70). BEAT, 128 BPM, MIX 75. 7.85 s, no added gaps; tails edited short. First-hit RMS matched (20 ms). Offline computer render through Tape Echo 0.1.2's unchanged CPU engine, not recorded on an Octatrack.",
+          "caption": "Legowelt Juno 106 chord pluck: dry (0 s), clean 1/8 repeats (0.85 s; FDBK 78, WOW 10, AGE 20), worn dotted-1/8 repeats (3.85 s; FDBK 94, WOW 80, AGE 70). BEAT, 128 BPM, MIX 75, 7.85 s. Offline render through Tape Echo 0.1.2, before 0.1.6's MIX law (dry and repeats are louder at MIX 75 now); not recorded on an Octatrack.",
           "alt": "A warm Legowelt chord pluck moves from dry to clean eighth-note repeats and worn dotted-eighth echoes.",
           "credit": "Legowelt — 106 Synth Chord Short Blue Synth 2.wav. Modwerk contributors (offline processing).",
           "license": "LicenseRef-Legowelt-Juno106-Sample-Permission",

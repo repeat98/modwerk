@@ -158,16 +158,16 @@
     },
     "tapeecho": {
       "schema": 1,
-      "imageSha256": "438e361505bc28077a8903aaf1f94b9ad05e8640b7008d8dc6f0b34fb81ffa57",
+      "imageSha256": "def1bc39f8bc9e998cf49b7df6ab36725f42f460b1e73c079238ebc4c25caded",
       "sources": {
         "sdk/octabam/modules/tapeecho/cpu_hooks.s": "d1d959af91fbd0759191c5e244b4396613d18c057c8e65281d76cb67beb73e34",
-        "sdk/octabam/modules/tapeecho/cpu.c": "13c8ab1a6934bab2f679c40ad8096d2151326b06d1fcffaf261bde40d82c9814",
+        "sdk/octabam/modules/tapeecho/cpu.c": "bbb50e96305a64f99d72045defa40d09ab3e8fc910e717d8122dd1f070de35a7",
         "sdk/octabam/modules/tapeecho/time_fmt.s": "f50337532bbd802f67bb3c93d975405c2e386ec2a75bf525a814b9f9756f9d15",
         "sdk/octabam/modules/tapeecho/cpu_tables.h": "1d2e3e062651f021ca94fd19339dde824bcf49c4d867da790c20957dd24db9b2",
-        "sdk/octabam/modules/tapeecho/manifest.py": "e83c639b3a6d51946b6cb5ae2af72d9376f2ff9cad75502396287c95c751927b",
-        "sdk/octabam/modules/tapeecho/octamod.module.json": "05cf45c6aff48e09366497b798d9003f20523a14f7c53a01154fac8fbe83b7d8",
-        "sdk/octabam/modules/tapeecho/cpu_kernels.s": "5cd8a759642ee9f59b6fe44f1dbe82928dc1c5ead69f5ee3c92d76d6b5945327",
-        "sdk/octabam/modules/tapeecho/cpu.s": "1da9056c6a175fe91b09a03172e4ef516f085ee659cf7a9f9aff53836c368e64",
+        "sdk/octabam/modules/tapeecho/manifest.py": "8444fc496776df2c719401f6967aba44a5922e15f0906268286663d012dd94b8",
+        "sdk/octabam/modules/tapeecho/octamod.module.json": "9784954380cba4ec5d5f9440eb188dd65ff885d09192ed534a117a1a5f761d58",
+        "sdk/octabam/modules/tapeecho/cpu_kernels.s": "1cb1d400cbf0f0b7a75dc0ea13f6afc70b56221f2d45f424f7f58fa79ce6347f",
+        "sdk/octabam/modules/tapeecho/cpu.s": "783901f817efc5496c9b6178367459cfae1fe036adfd2a5be3a89d62e37906b6",
         "sdk/octabam/modules/tapeecho/cpu_passthrough.asm": "68ef0beaa213de43e116d2feb367b437ef8c73c7f7b1c07328fde2d72edb3fdc",
         "sdk/octabam/modules/tapeecho/cpu.h": "d07d496a62b95f23f8c2cbd893a0125e8a67071e83bf2c642e14251e48e69ff3",
         "sdk/octabam/modules/tapeecho/generate_tables.py": "3461b659e2f22d7da776eb87755610094a4a3e72609c875e82902a8da9a8a69c",
@@ -205,10 +205,10 @@
         "src/engine/coldfire-elf.ts": "319ca0d835d1b0c602c8f4b06990016d0ebfe246cedbfc596cea3cc7adfe3cd2",
         "src/engine/module-build.ts": "8f547a4be722cfe691fa21d0c4b52c724b3353ba2560c2562b56579f0abe5f3b",
         "src/catalog/modules.ts": "e268c6d42e4d5093ab943aed5cf2263a72e6d5e1a7ac0e72efc8a7ec6c62b89b",
-        "src/engine/assets/dsp-packages.json": "42e3d78ee5f00299dfa675f63daa86d5ab60f197489e20dcfec8261a9c2594e6",
-        "src/engine/assets/descriptor-recipes.json": "4285795ae3ba2f1ce135f53ea9b7e5d44475085648187aa36027a3ed351beb3e",
-        "src/engine/assets/menu-recipes.json": "d92a3758238ebd862004b148b3bd2b8a55aacb477728523d3ea769644060b5c0",
-        "src/engine/assets/rom-packages.json": "f11e99e2abe1e520c31ec0f8251f4689085f0eb2975aa2f08f25011ce1868d3b",
+        "src/engine/assets/dsp-packages.json": "ca7eb6981feda64017e286840fef99ec3b2c27a38cdbdaad670cbab7dd7f4b8a",
+        "src/engine/assets/descriptor-recipes.json": "91c7722c4cb18320fcbc8a7b428ee16bcb1e75e5dbae95a34b1451c3acbfc33f",
+        "src/engine/assets/menu-recipes.json": "30673ddc84b17ff427d70780c402631fb7ad98e0e0f9a3767368bb642c5e37d4",
+        "src/engine/assets/rom-packages.json": "d097845d7288125a6fd887e74e1ba3a1c00ad8b5f2553ec3a850f68d36992bea",
         "upstream/elekloader/link.py": "5d31157ccbe62807ff9f05fd47e1e55b54be0475ab53565e6607a56566603ba8",
         "upstream/elekloader/dsp.py": "9486d64eecee023670b716f6ae854996da02ee7c1a0efd5361cd963c756dbc69",
         "upstream/elekloader/patch.py": "77c0a74bf4b0ff8c5525d4c4b1bc42af765314a4601c0510577817a7487d8666",
@@ -319,25 +319,41 @@
             "source": "sdk/octabam/modules/tapeecho/cpu.s",
             "lines": [
               27285,
-              27303
+              27332
             ],
             "symbol": "te_filter_block",
             "method": "native-unit"
           }
         },
         {
-          "offset": 8794,
-          "length": 13,
-          "address": 1073818102,
-          "sha256": "6cefc4d0c358fd185373ac427822ef70772683aeb2023fd71cb7085bc601c0cf",
+          "offset": 8940,
+          "length": 8,
+          "address": 1073897668,
+          "sha256": "8937904adb028ee826e1da6e9593b99222dd3fb141bbaa852b54ef596f94054f",
           "purpose": "Authored te_tape_block instruction span; reconstructed identically from guarded stock coincidence",
           "authored": {
             "source": "sdk/octabam/modules/tapeecho/cpu.s",
             "lines": [
-              27477,
-              27497
+              27523,
+              27524
             ],
             "symbol": "te_tape_block",
+            "method": "native-unit"
+          }
+        },
+        {
+          "offset": 8948,
+          "length": 16,
+          "address": 1073745896,
+          "sha256": "324b9e08fe60e608cbdebbbd690d3efdac6a0fc7a2ec6b9756fc1f64e1ef5281",
+          "purpose": "Authored te_read_linear instruction span; reconstructed identically from guarded stock coincidence",
+          "authored": {
+            "source": "sdk/octabam/modules/tapeecho/cpu.s",
+            "lines": [
+              27525,
+              27545
+            ],
+            "symbol": "te_read_linear",
             "method": "native-unit"
           }
         }
@@ -390,10 +406,10 @@
         "src/engine/coldfire-elf.ts": "319ca0d835d1b0c602c8f4b06990016d0ebfe246cedbfc596cea3cc7adfe3cd2",
         "src/engine/module-build.ts": "8f547a4be722cfe691fa21d0c4b52c724b3353ba2560c2562b56579f0abe5f3b",
         "src/catalog/modules.ts": "e268c6d42e4d5093ab943aed5cf2263a72e6d5e1a7ac0e72efc8a7ec6c62b89b",
-        "src/engine/assets/dsp-packages.json": "42e3d78ee5f00299dfa675f63daa86d5ab60f197489e20dcfec8261a9c2594e6",
-        "src/engine/assets/descriptor-recipes.json": "4285795ae3ba2f1ce135f53ea9b7e5d44475085648187aa36027a3ed351beb3e",
-        "src/engine/assets/menu-recipes.json": "d92a3758238ebd862004b148b3bd2b8a55aacb477728523d3ea769644060b5c0",
-        "src/engine/assets/rom-packages.json": "f11e99e2abe1e520c31ec0f8251f4689085f0eb2975aa2f08f25011ce1868d3b",
+        "src/engine/assets/dsp-packages.json": "ca7eb6981feda64017e286840fef99ec3b2c27a38cdbdaad670cbab7dd7f4b8a",
+        "src/engine/assets/descriptor-recipes.json": "91c7722c4cb18320fcbc8a7b428ee16bcb1e75e5dbae95a34b1451c3acbfc33f",
+        "src/engine/assets/menu-recipes.json": "30673ddc84b17ff427d70780c402631fb7ad98e0e0f9a3767368bb642c5e37d4",
+        "src/engine/assets/rom-packages.json": "d097845d7288125a6fd887e74e1ba3a1c00ad8b5f2553ec3a850f68d36992bea",
         "upstream/elekloader/link.py": "5d31157ccbe62807ff9f05fd47e1e55b54be0475ab53565e6607a56566603ba8",
         "upstream/elekloader/dsp.py": "9486d64eecee023670b716f6ae854996da02ee7c1a0efd5361cd963c756dbc69",
         "upstream/elekloader/patch.py": "77c0a74bf4b0ff8c5525d4c4b1bc42af765314a4601c0510577817a7487d8666",
