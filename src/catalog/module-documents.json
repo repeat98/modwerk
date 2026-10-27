@@ -7327,7 +7327,7 @@
       "id": "poly8",
       "key": "POLY8",
       "name": "POLY8",
-      "version": "0.3.1-experimental",
+      "version": "0.3.2-experimental",
       "category": "machines",
       "source": {
         "repository": "https://github.com/repeat98/octamad",
