@@ -1,5 +1,14 @@
 [
   {
+    "version": "0.1.3-experimental",
+    "date": "2026-10-25",
+    "changes": [
+      "Card builds keep FM Synth's page out of the memory the stock DELAY reads at a slow tempo with a long TIME. With 0.1.2, DELAY could read FM Synth's code there and sound different from a stock unit at those settings.",
+      "The USB package already kept the page elsewhere; it changes only in how one call is encoded.",
+      "Known issue: this version has not been tested on hardware, and the DELAY difference has not been heard on a unit."
+    ]
+  },
+  {
     "version": "0.1.2-experimental",
     "date": "2026-10-08",
     "changes": [

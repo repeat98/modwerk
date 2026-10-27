@@ -1,9 +1,9 @@
 {
-  "version": "0.1.2-experimental",
-  "date": "2026-10-08",
+  "version": "0.1.3-experimental",
+  "date": "2026-10-25",
   "changes": [
-    "correct the MIDI chromatic drawer’s argument stack so changing MIDI trig mode keeps the instrument responsive (#264).",
-    "add 18.06 dB of source headroom before mono output and paraphonic summing, preserving envelopes and relative voice levels (#273). Sounds are quieter at unchanged mixer settings; effect and multi-track mix clipping remains possible.",
-    "Owner-approved experimental release without current hardware validation. Chip timing and complete memory bounds remain unmeasured; the original static symptom is not hardware-confirmed."
+    "link the SRC page into DRAM instead of the ROM cave at 0x400d24d0. At a slow tempo with a long TIME the stock DELAY reads 16 bytes past its 508-entry table, the first bytes of that cave, which are zero on a stock unit; with 0.1.2 they held FM Synth's code in card builds.",
+    "registration calls the page by its symbol, so nothing refers to the old address.",
+    "Owner-approved experimental release without current hardware validation. The DELAY behaviour at those settings has not been heard on a unit; chip timing and complete memory bounds remain unmeasured."
   ]
 }

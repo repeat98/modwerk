@@ -32,7 +32,8 @@ MODULE=dataclasses.replace(_SY,
     requires=(), cf_patches=(),
     symbol_refs=_SY.symbol_refs+(SymbolRef(0x400d6458,0x4000f450,"poly","fm_start",note="Signed FM starts without sample resources; ordinary FLEX keeps stock start"),),
     linked=_SY.linked+_QZ.linked+(
-        Linked('fmpage',_REL('upstream/synth/page.s'),cpu='5475',cave_addr=0x400d24d0),
+        # In DRAM, not the 0x400d24d0 cave: the stock DELAY reads that run's first 16 bytes past its table.
+        Linked('fmpage',_REL('upstream/synth/page.s'),cpu='5475',dram=True),
         Linked('fmmachine',_REL('machine.s'),cpu='5475',dram=True),
         Linked('fmregistration',_REL('registration.s'),cpu='5475',dram=True)),
     detours=tuple(d for d in _SY.detours if d.site not in (0x40079816,0x4005a848))+_QZ.detours+_REG_DETOURS+(

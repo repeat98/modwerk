@@ -43,8 +43,8 @@ def source_variant(name, text, *, composition=False):
         text = replace_exact(text, 'moveal  KIND_FLEX,%a0',
                              'lea     sy_render,%a0', 2, name)
     elif name == 'registration.s':
-        text = replace_exact(text, 'jmp 1074603216', 'jmp fm_descriptor', 1, name)
-        text = replace_exact(text, 'jsr 1074603216', 'jsr fm_descriptor', 1, name)
+        # The absolute form this adapter always emitted: the package image stays the one its recipe binds.
+        text = replace_exact(text, 'jra fm_descriptor', 'jmp fm_descriptor', 1, name)
         if composition:
             # The shared owner resolves descriptors through its private PB table.
             # A pointer written into stock data would survive package removal.

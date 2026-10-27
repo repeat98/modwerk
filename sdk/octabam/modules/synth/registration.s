@@ -90,13 +90,13 @@ fm_type:
 	.globl	fm_track_page
 	.type	fm_track_page, @function
 fm_track_page:
-	jmp 1074603216
+	jra fm_descriptor
 	.size	fm_track_page, .-fm_track_page
 	.align	2
 	.globl	fm_ui_tick
 	.type	fm_ui_tick, @function
 fm_ui_tick:
-	jsr 1074603216
+	jsr fm_descriptor
 	move.l %d0,1074618188
 	rts
 	.size	fm_ui_tick, .-fm_ui_tick

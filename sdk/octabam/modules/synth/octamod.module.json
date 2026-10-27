@@ -3,7 +3,7 @@
   "id": "synth",
   "key": "SYNTH MACHINE",
   "name": "FM Synth",
-  "version": "0.1.2-experimental",
+  "version": "0.1.3-experimental",
   "category": "machines",
   "source": {
     "repository": "https://github.com/sambanks/octabam",
@@ -24,7 +24,7 @@
     "label": "Two-operator FM",
     "family": "Synth machines",
     "summary": "Two-operator FM with a dedicated track machine, one to four voices, chords and glide.",
-    "overview": "FM SYNTH provides one to four paraphonic FM voices through the stock AMP and effects. Version 0.1.2 preserves the MIDI chromatic drawer stack and adds 18.06 dB source headroom. Software regression and native/browser composition checks pass. The owner approved release without current hardware validation; chip timing and complete memory bounds remain unknown. The original static symptom remains unconfirmed on hardware.",
+    "overview": "FM SYNTH provides one to four paraphonic FM voices through the stock AMP and effects. Version 0.1.3 moves its SRC page code out of the free ROM the stock DELAY reads at slow tempos with a long TIME, so those bytes stay zero as on a stock unit. Software, LCD and native/browser composition checks pass. The owner approved release without current hardware validation; chip timing and complete memory bounds remain unknown.",
     "highlights": [
       "Dedicated machine chooser entry; no sample required.",
       "Pitch, ratio, index, fine tuning, feedback and index decay on SRC.",
@@ -250,7 +250,7 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Owner-approved experimental 0.1.2: MIDI selector regression passes; mono and four-voice output have 18.06 dB more headroom. Current hardware remains untested; chip timing and complete memory bounds remain unmeasured. See TESTING.md and evidence/regressions.json.",
+    "summary": "Owner-approved experimental 0.1.3: the SRC page is linked into DRAM instead of the 0x400d24d0 ROM cave the stock DELAY reads past its table; LCD captures and native/browser composition checks pass. Current hardware remains untested; chip timing and complete memory bounds remain unmeasured. See TESTING.md.",
     "hardwareStatus": "untested",
     "evidenceRevision": "73490ef77f36bf523bc28f2b385d62e331ec7c5c",
     "gates": [
@@ -298,8 +298,8 @@
         "page": "SRC SETUP",
         "shows": "location",
         "firmware": "1.40C",
-        "moduleVersion": "0.1.2-experimental",
-        "imageSha256": "d5464195fac0033852546fbbc8f809b64d16646309c21ab25e2f203fbf123157",
+        "moduleVersion": "0.1.3-experimental",
+        "imageSha256": "8a543e5f932f98854c63330d105daee66de708dffda8e80419ac1e55c420df7a",
         "setup": "Headless ot_emu; MKII panel; empty 32 MiB disposable card; stopped transport; actual 128×64 LCD pixels at integer scale 6."
       }
     },
@@ -315,8 +315,8 @@
         "page": "FM SYNTH SRC",
         "shows": "controls",
         "firmware": "1.40C",
-        "moduleVersion": "0.1.2-experimental",
-        "imageSha256": "d5464195fac0033852546fbbc8f809b64d16646309c21ab25e2f203fbf123157",
+        "moduleVersion": "0.1.3-experimental",
+        "imageSha256": "8a543e5f932f98854c63330d105daee66de708dffda8e80419ac1e55c420df7a",
         "setup": "Headless ot_emu; MKII panel; empty 32 MiB disposable card; stopped transport; actual 128×64 LCD pixels at integer scale 6."
       }
     },
@@ -332,8 +332,8 @@
         "page": "FM SYNTH LFO",
         "shows": "controls",
         "firmware": "1.40C",
-        "moduleVersion": "0.1.2-experimental",
-        "imageSha256": "d5464195fac0033852546fbbc8f809b64d16646309c21ab25e2f203fbf123157",
+        "moduleVersion": "0.1.3-experimental",
+        "imageSha256": "8a543e5f932f98854c63330d105daee66de708dffda8e80419ac1e55c420df7a",
         "setup": "Headless ot_emu; MKII panel; empty 32 MiB disposable card; stopped transport; actual 128×64 LCD pixels at integer scale 6."
       }
     },
@@ -349,8 +349,8 @@
         "page": "AMP SETUP",
         "shows": "controls",
         "firmware": "1.40C",
-        "moduleVersion": "0.1.2-experimental",
-        "imageSha256": "d5464195fac0033852546fbbc8f809b64d16646309c21ab25e2f203fbf123157",
+        "moduleVersion": "0.1.3-experimental",
+        "imageSha256": "8a543e5f932f98854c63330d105daee66de708dffda8e80419ac1e55c420df7a",
         "setup": "Headless ot_emu; MKII panel; empty 32 MiB disposable card; stopped transport; actual 128×64 LCD pixels at integer scale 6."
       }
     },
@@ -366,8 +366,8 @@
         "page": "CONTROL SEQUENCER: SCALE",
         "shows": "controls",
         "firmware": "1.40C",
-        "moduleVersion": "0.1.2-experimental",
-        "imageSha256": "d5464195fac0033852546fbbc8f809b64d16646309c21ab25e2f203fbf123157",
+        "moduleVersion": "0.1.3-experimental",
+        "imageSha256": "8a543e5f932f98854c63330d105daee66de708dffda8e80419ac1e55c420df7a",
         "setup": "Headless ot_emu; MKII panel; empty 32 MiB disposable card; stopped transport; actual 128×64 LCD pixels at integer scale 6."
       }
     },
@@ -383,8 +383,8 @@
         "page": "CONTROL SEQUENCER: ROOT",
         "shows": "controls",
         "firmware": "1.40C",
-        "moduleVersion": "0.1.2-experimental",
-        "imageSha256": "d5464195fac0033852546fbbc8f809b64d16646309c21ab25e2f203fbf123157",
+        "moduleVersion": "0.1.3-experimental",
+        "imageSha256": "8a543e5f932f98854c63330d105daee66de708dffda8e80419ac1e55c420df7a",
         "setup": "Headless ot_emu; MKII panel; empty 32 MiB disposable card; stopped transport; actual 128×64 LCD pixels at integer scale 6."
       }
     },
@@ -400,8 +400,8 @@
         "page": "CONTROL SEQUENCER: GLIDE",
         "shows": "controls",
         "firmware": "1.40C",
-        "moduleVersion": "0.1.2-experimental",
-        "imageSha256": "d5464195fac0033852546fbbc8f809b64d16646309c21ab25e2f203fbf123157",
+        "moduleVersion": "0.1.3-experimental",
+        "imageSha256": "8a543e5f932f98854c63330d105daee66de708dffda8e80419ac1e55c420df7a",
         "setup": "Headless ot_emu; MKII panel; empty 32 MiB disposable card; stopped transport; actual 128×64 LCD pixels at integer scale 6."
       }
     },

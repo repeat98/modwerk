@@ -1,7 +1,7 @@
 {
   "firmware": "1.40C",
-  "imageSha256": "d5464195fac0033852546fbbc8f809b64d16646309c21ab25e2f203fbf123157",
-  "emulatorSha256": "f521565f3866947788d7c45507576a4ed386d2e4ef57e9683ab65fa0acc6a166",
+  "imageSha256": "8a543e5f932f98854c63330d105daee66de708dffda8e80419ac1e55c420df7a",
+  "emulatorSha256": "bdbe962c14fc3560fb3196b01566646b80a74fd451883873a77290b4973dbbf1",
   "setup": "Headless ot_emu; MKII panel; stopped transport; 128×64 LCD at integer scale 6.",
   "palette": {
     "on": [
@@ -189,8 +189,8 @@
   },
   "schemaVersion": 1,
   "moduleId": "synth",
-  "moduleVersion": "0.1.2-experimental",
-  "captured": "2026-10-08",
+  "moduleVersion": "0.1.3-experimental",
+  "captured": "2026-10-25",
   "imageProfile": {
     "modules": [
       "SYNTH MACHINE"
@@ -198,6 +198,6 @@
     "keepStockFx2": true,
     "staticStock": true
   },
-  "releaseProvenance": "Fresh 8 October captures from the native Synth 0.1.2 executable. Promotion must reproduce the exact emitted MAIN image fingerprint; existing software captures confer no hardware verification.",
-  "sourceSha256": "8fa263bfcd30dca9aff4f83dbcb001d4ccf06286e31839c8e0afd61100a9315c"
+  "releaseProvenance": "Fresh 25 October captures from the browser-composed Synth 0.1.3 MAIN (composeStaticOs, Synth alone, stock FX2 kept). All seven PNGs are byte-identical to the 0.1.2 captures. Promotion must reproduce the exact emitted MAIN image fingerprint; software captures confer no hardware verification.",
+  "sourceSha256": "a2d318bb91b4c115dd248c9b439250eb28552e2dc70eb83f967a0e24ad8b7f39"
 }

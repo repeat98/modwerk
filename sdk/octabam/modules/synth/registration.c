@@ -23,8 +23,9 @@ unsigned fm_type(unsigned type,const volatile u8 *ptr) {
  volatile u8 *part=part_base();unsigned t=(unsigned)(ptr-(part+0x22));
  return type==1 && t<8 && signed_track(part,t)?5:type;
 }
-/* Fixed page entry calls the engine's runtime clone builder. */
-u32 fm_track_page(const volatile u8 *ptr) { (void)ptr;return ((u32(*)(void))0x400d24d0u)(); }
+/* The page's entry calls the engine's runtime clone builder. */
+extern u32 fm_descriptor(void);
+u32 fm_track_page(const volatile u8 *ptr) { (void)ptr;return fm_descriptor(); }
 void fm_ui_tick(void) { U32(0x400d5f38u+5*4)=fm_track_page((void*)0); }
 extern int fm_stock_validate(void *part);
 int fm_validate_part(u8 *part) {
