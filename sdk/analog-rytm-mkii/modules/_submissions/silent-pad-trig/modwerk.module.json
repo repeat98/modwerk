@@ -86,14 +86,15 @@
     "conflicts": [],
     "limitations": [
       "Built for OS 1.74 only, with core-ar2 0.3.",
-      "0.5.0 (two settings) ran in rytm-emu only, not yet on a unit; 0.4.0, with one setting for both, ran on a unit, MIDI out not tested there.",
+      "0.5.0 ran on a unit (PS07): both settings worked as intended, as reported; MIDI out and STEP REC not yet tested on a unit.",
       "FUNC + TRIG 1-12 plays nothing, as on stock: use FUNC + pad to hear a track.",
       "A silent press passes its aftertouch on, so MIDI out can carry poly pressure with no note-on before it.",
       "TRIG 13 (the FX track), the SOUND BROWSER's pad audition and pads with a menu open are silent too; FUNC + pad plays.",
       "RTRG + pad selects silently; FUNC + RTRG also toggles the metronome click, as on stock, so it is not a clean way to roll.",
       "A unit that ran 0.4.x starts 0.5.0 with both rows unchecked: the storage layout changed, so the old setting is not carried over.",
       "A GLOBAL slot saved without a setting, or received as Global SysEx, loads it unchecked.",
-      "LIVE RECORDING counts only while the sequencer runs; a paused LIVE REC follows SILENT PAD+TRIG."
+      "LIVE RECORDING counts only while the sequencer runs; a paused LIVE REC follows SILENT PAD+TRIG.",
+      "On a unit, a reboot straight from SEQUENCER CONFIG did not keep a changed row; leaving the menu first did. Not yet compared with stock's own rows."
     ]
   },
   "platform": {

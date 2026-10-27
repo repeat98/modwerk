@@ -19,7 +19,8 @@ new names, also for the earlier builds.
 - Core: elekloader core-ar2 0.3 (`core-ar2-v0.3`, `core-ar2-0.3.elemod` `6b97dfb3…3e58`, as vendored).
 - Build PS07 (core-ar2 0.3 + 0.5.0, Modwerk's linker, `--version PS07`): `.syx`
   `eae28e8ff6ae9f29a9d608c0fbe3985804779b42fd96d33d1e4c1d97934cae99`, main OS `80a0fbfa…20b5`.
-  Tested in rytm-emu 2026-10-27 ([0.5.0](#050-two-settings-2026-10-27)). Not run on a unit.
+  Tested in rytm-emu 2026-10-27 ([0.5.0](#050-two-settings-2026-10-27)). Ran on an Analog Rytm
+  MKII on 2026-10-27 ([Hardware](#ps07-on-an-analog-rytm-mkii-2026-10-27-as-reported)).
 - Build PS06 (core-ar2 0.3 + 0.4.1, Modwerk's linker, `--version PS06`): `.syx`
   `08b4c1a724b25904be6724d9cd0a53ba553242b6d090a7ec1e33b94b9bd25d24`, main OS `168fe5cf…fb56`.
   Tested in rytm-emu 2026-10-25. Not run on a unit.
@@ -449,6 +450,20 @@ The tester flashed PS05 (0.4.0, `.syx` `40e2f30a…2865`). Reported:
   SCENE "still seem fine".
 - MIDI out: not tested (the tester expects no difference).
 
+### PS07 on an Analog Rytm MKII (2026-10-27), as reported
+
+npp1993 flashed PS07 (0.5.0, `.syx` `eae28e8f…ae99`) with Transfer. Reported:
+
+- SEQUENCER CONFIG shows the two rows, SILENT PAD+TRIG and SILENT LIVE REC.
+- SILENT PAD+TRIG checked: pads make no sound unless FUNC is held; works as expected.
+- SILENT LIVE REC checked, in LIVE REC: plain pad presses lay down no trigs; FUNC + pad plays and
+  records; TRIG keys play and record as stock: as intended.
+- Persistence, both rows checked: after a reboot straight from SEQUENCER CONFIG, without leaving
+  the menu, neither was kept. After leaving the menu first and then rebooting, both were kept.
+  Whether stock's own SEQUENCER CONFIG settings (AUTO TRK SWITCH) behave the same way was not
+  yet checked; the module saves through the same globals change notice a stock setter sends.
+- MIDI out and STEP REC: not tested.
+
 ### Still to do
 
 Not yet reported on any build:
@@ -480,5 +495,6 @@ sequencer or tick paths. Static reading, not a measurement.
 
 ## Not tested
 
-On a unit: 0.5.0 at all. In the emulator: sound and timing, the flows listed above as not
+On a unit (0.5.0): MIDI out, STEP REC, RTRG, the SOUND BROWSER, AUTO TRK SWITCH off, and a
+project saved with the rows checked loaded on stock. In the emulator: sound and timing, the flows listed above as not
 compared, other modules beside it at run time, and loading a saved project.
