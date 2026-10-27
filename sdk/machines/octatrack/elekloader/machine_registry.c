@@ -268,6 +268,14 @@ static void charge(const Machine *const *m, unsigned n)
         if (who ? charged[t] != who && !claim(t, who) : charged[t] != 0) release(t);
     }
 }
+/* Stock loads a track's live parameters from its Part (0x40001f18: bank, Part, track) where a commit changes the
+ * stored type. A module machine is FLEX underneath, so FLEX <-> machine keeps the type and the live copy would stay on
+ * the old machine's values (the machine silent, FLEX playing its bytes) until SOURCE CLEAR: load it here instead. */
+static unsigned relive(const Part *part, uint32_t offset, unsigned track, unsigned type)
+{
+    if (part[0x22 + track] == type) STOCK(void (*)(unsigned, unsigned, unsigned), 0x40001f18u)(U8(0x100b14ceu), offset / PART_STRIDE, track);
+    return type;
+}
 /* A machine's admission precedes every mutation; -1 refuses. */
 unsigned mw_assign(Part *part, unsigned track, unsigned row)
 {
@@ -295,7 +303,7 @@ unsigned mw_assign(Part *part, unsigned track, unsigned row)
             }
         unsigned sig = SIG + 30 * track;
         part[sig] = mirror[sig] = next->sig[0]; part[sig + 1] = mirror[sig + 1] = next->sig[1]; part[sig + 2] = mirror[sig + 2] = next->sig_lo;
-        return 1;
+        return old != next ? relive(part, offset, track, 1) : 1;
     }
     /* Browser YES keeps the signed owner; ordinary machine selection clears it. */
     if (old && old->assign) {
@@ -303,10 +311,12 @@ unsigned mw_assign(Part *part, unsigned track, unsigned row)
         const Machine *still; owner(m, n, part, track, &still);
         if (still == old) return pool;
         leave(part, mirror, track, old);
+        return relive(part, offset, track, row < 5 ? row : 1);
     } else if (old || absent) {
         if (old) leave(part, mirror, track, old);
         else flex_defaults(part, mirror, track);
         unsigned sig = SIG + 30 * track; for (unsigned k = 0; k < 3; ++k) part[sig + k] = mirror[sig + k] = 0;
+        return relive(part, offset, track, row < 5 ? row : 1);
     }
     return row < 5 ? row : 1;
 }
