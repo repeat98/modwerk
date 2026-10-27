@@ -116,8 +116,9 @@ Requires core-ar2 0.3 on OS 1.74. Use your own original stock OS 1.74 file.
 - A unit that ran 0.4.x starts 0.5.x with both rows unchecked: the storage layout changed (a new
   field), so the old setting is not carried over. Check the rows again once. 0.5.0's settings
   carry over to 0.5.1.
-- On a unit, a reboot straight from SEQUENCER CONFIG did not keep a changed row; leaving the menu
-  first did. Not yet compared with stock's own rows.
+- Like stock's SEQUENCER CONFIG rows, a changed row is saved when you leave the menu: power off
+  straight from SEQUENCER CONFIG and the change is lost. On a unit, KIT RELOAD ON CHG behaved the
+  same.
 - FUNC + TRIG 1-12 plays nothing, as on stock.
 - A silent press passes its aftertouch on, so MIDI out can carry poly pressure with no note-on
   before it.

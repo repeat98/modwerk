@@ -499,6 +499,16 @@ npp1993 flashed PS07 (0.5.0, `.syx` `eae28e8f…ae99`) with Transfer. Reported:
   yet checked; the module saves through the same globals change notice a stock setter sends.
 - MIDI out and STEP REC: not tested.
 
+### PS08 on an Analog Rytm MKII (2026-10-27), as reported
+
+npp1993 flashed PS08 (0.5.1, `.syx` `ff7c4cf3…43d4`). Reported:
+
+- SILENT PAD LIVEREC "barely fits" on the screen, and reads well without the space.
+- Both rows checked, then both unchecked, then a power cycle without leaving SEQUENCER CONFIG:
+  both came back checked. The same test on stock's KIT RELOAD ON CHG: checked, power cycle without
+  leaving the menu, it came back unchecked; checked and leaving the menu, it was kept. So stock's
+  rows are saved on leaving the menu too, and the module's rows behave as stock's.
+
 ### Still to do
 
 Not yet reported on any build:

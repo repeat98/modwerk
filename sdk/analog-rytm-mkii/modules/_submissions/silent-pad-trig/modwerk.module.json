@@ -94,7 +94,7 @@
       "A unit that ran 0.4.x starts 0.5.x with both rows unchecked: the storage layout changed, so the old setting is not carried over. 0.5.0's settings carry over to 0.5.1.",
       "A GLOBAL slot saved without a setting, or received as Global SysEx, loads it unchecked.",
       "LIVE RECORDING counts only while the sequencer runs; a paused LIVE REC follows SILENT PAD+TRIG.",
-      "On a unit, a reboot straight from SEQUENCER CONFIG did not keep a changed row; leaving the menu first did. Not yet compared with stock's own rows."
+      "Like stock's SEQUENCER CONFIG rows, a changed row is saved when you leave the menu: power off straight from SEQUENCER CONFIG and the change is lost (seen on a unit, with KIT RELOAD ON CHG behaving the same)."
     ]
   },
   "platform": {
