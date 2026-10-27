@@ -1,1 +1,1 @@
-Correct Beat Slicer draft test and UI-approval attribution to its author or a contributor. Record the author's deliberate power-off and USB unplug after playback testing; final Undo and subsequent saved-module restoration remain unverified.
+Correct Beat Slicer draft test and UI-approval attribution to its author or a contributor. Record the author's deliberate power-off and USB unplug, then reported next-boot removal of Beat Grid and return of the other modules; final USB Undo remains unverified.
