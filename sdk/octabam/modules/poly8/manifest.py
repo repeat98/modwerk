@@ -4,8 +4,8 @@ from remix.schema import Category, Detour, Kind, Linked, Module, Poke, SymbolRef
 H=bytes.fromhex
 # The machine chooser's five UP/DOWN handlers clamp its cursor to row 5 (moveq #5 at each address, then at +6):
 # past six rows the list scrolled but the cursor stayed on POLY8. The composition sets them to the last row.
-# Card builds only: over USB the base owns the chooser, and Elekloader's port runs this file as octabam_poly8.
-CHOOSER_CLAMPS=() if __name__.startswith("octabam_") else tuple(
+# Over USB the base's ot_machines owns these bytes and the package leaves them out (machine-ports.json replaces).
+CHOOSER_CLAMPS=tuple(
  Poke(at+k, stock_guard(at+k, 2, guard), H(code), 'machine chooser cursor reaches the last row')
  for at in (0x40078c22, 0x40078cb0, 0x40078d2e, 0x40078dee, 0x40078e7c)
  for k,code,guard in ((0,'7205','c55bd639d8c368e737cdc6bb17522f91dbe1f51682d2433f4caa962e6ca77513'),

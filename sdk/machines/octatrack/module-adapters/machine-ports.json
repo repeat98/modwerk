@@ -4,7 +4,7 @@
  "ports": {
   "poly8": {
    "sources": {
-    "sdk/octabam/modules/poly8/manifest.py": "993995fef15766c6b3ac7b97060ce40125d23f47362ce170484292296d56f656",
+    "sdk/octabam/modules/poly8/manifest.py": "f8759dbcbb246b247c195e61f0c0464fd0cdc0dd40b68dd8f74c03b46c584afc",
     "sdk/octabam/modules/poly8/polyphony.s": "c86a3a783c46ecdbb3b44341098f0c094c65b9a8d11716835c2d28c2d2d6ecee",
     "sdk/octabam/modules/poly8/registration.s": "9bd549a03c7008d45e5ffcd647375ed5ea7507845857f68c407bb247edd942ae",
     "sdk/octabam/modules/poly8/shared-machine.s": "3148a219ca0a1cdf5b1a20c64ff4da564b1078f599a2ceb08b15f6c10e908923"
