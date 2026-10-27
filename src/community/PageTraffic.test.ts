@@ -9,6 +9,13 @@ const data: UsageStatistics = { generatedAt: '2026-10-08T12:00:00Z', collectionS
   pagesStarted: '2026-10-05T12:00:00Z', pages: [{day: '2026-10-05', page: 'forum', views: 3}, {day: '2026-10-07', page: 'forum', views: 2}, {day: '2026-10-07', page: 'library:all', views: 10}] }
 const render = (value: UsageStatistics) => renderToStaticMarkup(createElement(PageTraffic, {data: value}))
 describe('page traffic reporting', () => {
+  it('qualifies legacy mixed counts without changing their history', () => {
+    const legacy = {...data, pages: [{day: '2026-10-07', page: 'page-not-found', views: 12}]}
+    expect(pageTraffic(legacy).ranked).toEqual([{page: 'page-not-found', views: 12}])
+    expect(render(legacy)).toContain('Legacy unclassified / missing pages')
+    expect(render(legacy)).toContain('cannot be interpreted as broken links')
+    expect(render(data)).not.toContain('cannot be interpreted as broken links')
+  })
   it('ranks by views, distinguishes unnamed traffic and sums only the selected period', () => {
     const value = pageTraffic({...data, pages: [...data.pages!, {day: '2026-09-30', page: 'faq', views: 100}]})
     expect(value.ranked).toEqual([{page: 'library:all', views: 10}, {page: 'forum', views: 5}])

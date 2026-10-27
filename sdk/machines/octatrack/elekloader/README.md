@@ -269,6 +269,9 @@ export 31-33, volatile journal 34-36, which refuses anything else there): pick a
 
 ### Status page
 
+`status.s` also gates stock's time-stretch helper task (`mw_ts_gate`): it skips a track whose TSTR is OFF, since only
+time-stretch reads its splice search and only BEAT reads its transient markers.
+
 `status.c` measures, all the time, the ColdFire's load (main's idle spin, timed on DTIM3, `status.s`), each
 DSP core's mean and peak load (core 0's own idle count, core 1's counted wait for core 0, `dsp_receiver.asm`),
 each core's code arena, the delay-buffer blocks and the module pool. CUE + PROJ shows it as a dialog (NO closes it),

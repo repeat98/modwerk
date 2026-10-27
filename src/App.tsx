@@ -153,7 +153,6 @@ export default function App() {
   const phoneLayout = useSyncExternalStore(subscribePhoneLayout, getPhoneLayout, () => false)
   const mobileWorkspace = useMobileWorkspace()
   const presence = useMembersOnline(), online = presence?.online ?? null
-  useEffect(()=>trackPageView(route),[route])
   const { session, loading: sessionLoading, developer, catalog } = useCommunity()
   const betaAccess = hasBetaAccess(session), accessibleModules = availableModules(betaAccess)
   const detailModule = moduleRoute.startsWith('module/') ? accessibleModules.find((module) => module.id === moduleRoute.slice(7)) : undefined
@@ -206,6 +205,10 @@ export default function App() {
   const hubRoute = betaUi && (route === 'octatrack' || route.startsWith('octatrack/') || route === 'configuration')
   // The Octatrack page's list: the unit's own pages (#octatrack is Status), and #configuration for the set you edit.
   const hubView: HubView = route === 'configuration' ? 'set' : (['backups', 'samples', 'setup'] as const).find(view => route === 'octatrack/' + view) ?? 'status'
+  useEffect(() => {
+    // Wait for access/catalog resolution; redirecting unit routes do not render a page.
+    if (!sessionLoading && !((route === 'octatrack' || route.startsWith('octatrack/')) && !betaUi)) trackPageView(route, missingRoute && !pausedModule)
+  }, [route, sessionLoading, betaUi, missingRoute, pausedModule])
   const octatrackRoute = hubRoute || route === 'library' || route === 'configuration' || route === 'module-sets' || route.startsWith('module') || LIBRARY_CATEGORIES.includes(route as typeof LIBRARY_CATEGORIES[number])
   // The selected machine follows library routes and is remembered for the rest of the app.
   const remembered = rememberedDevice()

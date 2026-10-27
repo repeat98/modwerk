@@ -1,0 +1,1 @@
+Admin page statistics now recognize the machine overview, FAQ answers, Octatrack pages and every machine configurator. Missing pages and unclassified pages are counted separately. Earlier mixed counts remain visible with an explanation of their limits.
