@@ -1,0 +1,17 @@
+{
+  "firmware": "1.40C",
+  "imageSha256": "275e74e4afcd9eee48b382fa5eb09496d62deca941990f7e93f193c20f3e6558",
+  "setup": "Hardware photographs of the Octatrack LCD, 25 October 2026. Camera JPEGs cropped to the glass, converted to greys 24 and 240, scaled to 768x384 with nearest neighbour. SYSTEM STATUS stamp on the photographed unit reads PS 0.1.9. Packed 0.1.10 card SHA-256 is this imageSha256; MAIN SHA-256 fee9022fee46c16c9de6f6dfe7a48abc949ab7d7866761782cd4feb03f73323e. Firmware is not in git.",
+  "palette": {
+    "on": [240, 240, 240],
+    "off": [24, 24, 24]
+  },
+  "moduleVersion": "0.1.10-experimental",
+  "buildKind": "hardware LCD photograph",
+  "sourceSha256": "91d0a770ce8bf1292f8b03866fe85f017f172081fc9d73607857c9b0fd2104e7",
+  "screenshots": {
+    "ot-system.png": "f1cbf0c6652433b99e13f0cf2b9270e89301802df508d56aefc6d262514c8416",
+    "ot-personalize-empty.png": "32caaa4102432a6f70bef40d6fbb3df7e17a7d2dea052d033419cf7379074e3c",
+    "ot-personalize-ticked.png": "30b7a7d19a52e5c971a88fc1e7dc1e7694994baaa822a962a4a7d042a84b6238"
+  }
+}

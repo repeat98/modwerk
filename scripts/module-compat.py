@@ -397,6 +397,17 @@ def main(argv):
     ids, modules, inputs, problems = repository_inputs()
     if modules:
         problems += check(modules, **inputs)
+    # Byte clashes the configurator already refuses (compatibility.conflicts) are not
+    # install-together defects: PERSONALIZE growers such as mute-modes and play-start
+    # cannot share a remix until that table is base-owned.
+    manifests = inputs.get('manifests') or {}
+    def declared_conflict(mods):
+        names = [n for n in mods if n in manifests]
+        if len(names) != 2:
+            return False
+        a, b = names
+        return b in (manifests[a].get('conflicts') or ()) or a in (manifests[b].get('conflicts') or ())
+    problems = [p for p in problems if not declared_conflict(p.get('modules') or ())]
     if only:
         problems = [p for p in problems if set(only) & set(p['modules'])]
     for p in problems:

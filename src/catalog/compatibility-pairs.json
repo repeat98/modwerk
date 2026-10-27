@@ -17,6 +17,7 @@
   "modulation",
   "mute-modes",
   "output-matrix",
+  "play-start",
   "playmodes",
   "poly8",
   "previewvol",
@@ -101,6 +102,20 @@
     "FX2 buffer meets a declared range: bbd's FX2 buffer (+$0..+$3fff) and sidechain-compressor's the cross-core key window: GSEED, GCNT, 4 tracks x 4 generations x 32 words both claim shared 0x33dfe..0x33fff",
     "FX2 buffer meets a declared range: bbd's FX2 buffer (+$0..+$3fff) and sidechain-compressor's the cross-core key window: GSEED, GCNT, 4 tracks x 4 generations x 32 words both claim shared 0x3bdfe..0x3bfff"
    ],
+   "mute-modes+play-start": [
+    "poke site: mute-modes (table ref PERSONALIZE labels) and play-start (table ref PERSONALIZE labels) both claim 0x40068efe -- both rewrite the same bytes",
+    "poke site: mute-modes (table ref PERSONALIZE getters) and play-start (table ref PERSONALIZE getters) both claim 0x40068f0a -- both rewrite the same bytes",
+    "poke site: mute-modes (table ref PERSONALIZE setters) and play-start (table ref PERSONALIZE setters) both claim 0x40069022 -- both rewrite the same bytes",
+    "poke site: mute-modes (table ref PERSONALIZE setters) and play-start (table ref PERSONALIZE setters) both claim 0x4006903e -- both rewrite the same bytes",
+    "poke site: mute-modes (table ref PERSONALIZE setters) and play-start (table ref PERSONALIZE setters) both claim 0x40069056 -- both rewrite the same bytes",
+    "poke site: mute-modes (poke PERSONALIZE rows 15 -> 16 (MKI), 16 -> 17 (MKII): + MUTE MODE) and play-start (poke PERSONALIZE rows 15 -> 16 (MKI), 16 -> 17 (MKII): + PLAY START) both claim 0x40068fb2 -- both rewrite the same bytes",
+    "poke site: mute-modes (poke ANDY restore pea 0x64 -> 0x70: MUTE MODE (0x800000dc) survives power-off) and play-start (poke ANDY restore pea 0x64 -> 0x70: PLAY START (0x800000dc) survives power-off) both claim 0x4001f322 -- both rewrite the same bytes",
+    "poke site: mute-modes (poke ANDY restore pea 0x64 -> 0x70: MUTE MODE (0x800000dc) survives power-off) and play-start (poke ANDY restore pea 0x64 -> 0x70: PLAY START (0x800000dc) survives power-off) both claim 0x4001f3be -- both rewrite the same bytes",
+    "poke site: mute-modes (poke ANDY restore pea 0x64 -> 0x70: MUTE MODE (0x800000dc) survives power-off) and play-start (poke ANDY restore pea 0x64 -> 0x70: PLAY START (0x800000dc) survives power-off) both claim 0x4001fb24 -- both rewrite the same bytes",
+    "grown table: mute-modes's PERSONALIZE labels and play-start's PERSONALIZE labels both claim stock array 0x400b2a34 -- each would relocate its own copy and repoint different refs",
+    "grown table: mute-modes's PERSONALIZE getters and play-start's PERSONALIZE getters both claim stock array 0x400b2a74 -- each would relocate its own copy and repoint different refs",
+    "grown table: mute-modes's PERSONALIZE setters and play-start's PERSONALIZE setters both claim stock array 0x400b2ac0 -- each would relocate its own copy and repoint different refs"
+   ],
    "quantizer+synth": [
     "ColdFire cave: quantizer's linked unit qzk and synth's linked unit fm_qzk both claim 0x400d2cb0",
     "ColdFire cave: quantizer's linked unit qzs and synth's linked unit fm_qzs both claim 0x400d2ca8",
@@ -166,6 +181,20 @@
    "bbd+sidechain-compressor": [
     "FX2 buffer meets a declared range: bbd's FX2 buffer (+$0..+$3fff) and sidechain-compressor's the cross-core key window: GSEED, GCNT, 4 tracks x 4 generations x 32 words both claim shared 0x33dfe..0x33fff",
     "FX2 buffer meets a declared range: bbd's FX2 buffer (+$0..+$3fff) and sidechain-compressor's the cross-core key window: GSEED, GCNT, 4 tracks x 4 generations x 32 words both claim shared 0x3bdfe..0x3bfff"
+   ],
+   "mute-modes+play-start": [
+    "poke site: mute-modes (table ref PERSONALIZE labels) and play-start (table ref PERSONALIZE labels) both claim 0x40068efe -- both rewrite the same bytes",
+    "poke site: mute-modes (table ref PERSONALIZE getters) and play-start (table ref PERSONALIZE getters) both claim 0x40068f0a -- both rewrite the same bytes",
+    "poke site: mute-modes (table ref PERSONALIZE setters) and play-start (table ref PERSONALIZE setters) both claim 0x40069022 -- both rewrite the same bytes",
+    "poke site: mute-modes (table ref PERSONALIZE setters) and play-start (table ref PERSONALIZE setters) both claim 0x4006903e -- both rewrite the same bytes",
+    "poke site: mute-modes (table ref PERSONALIZE setters) and play-start (table ref PERSONALIZE setters) both claim 0x40069056 -- both rewrite the same bytes",
+    "poke site: mute-modes (poke PERSONALIZE rows 15 -> 16 (MKI), 16 -> 17 (MKII): + MUTE MODE) and play-start (poke PERSONALIZE rows 15 -> 16 (MKI), 16 -> 17 (MKII): + PLAY START) both claim 0x40068fb2 -- both rewrite the same bytes",
+    "poke site: mute-modes (poke ANDY restore pea 0x64 -> 0x70: MUTE MODE (0x800000dc) survives power-off) and play-start (poke ANDY restore pea 0x64 -> 0x70: PLAY START (0x800000dc) survives power-off) both claim 0x4001f322 -- both rewrite the same bytes",
+    "poke site: mute-modes (poke ANDY restore pea 0x64 -> 0x70: MUTE MODE (0x800000dc) survives power-off) and play-start (poke ANDY restore pea 0x64 -> 0x70: PLAY START (0x800000dc) survives power-off) both claim 0x4001f3be -- both rewrite the same bytes",
+    "poke site: mute-modes (poke ANDY restore pea 0x64 -> 0x70: MUTE MODE (0x800000dc) survives power-off) and play-start (poke ANDY restore pea 0x64 -> 0x70: PLAY START (0x800000dc) survives power-off) both claim 0x4001fb24 -- both rewrite the same bytes",
+    "grown table: mute-modes's PERSONALIZE labels and play-start's PERSONALIZE labels both claim stock array 0x400b2a34 -- each would relocate its own copy and repoint different refs",
+    "grown table: mute-modes's PERSONALIZE getters and play-start's PERSONALIZE getters both claim stock array 0x400b2a74 -- each would relocate its own copy and repoint different refs",
+    "grown table: mute-modes's PERSONALIZE setters and play-start's PERSONALIZE setters both claim stock array 0x400b2ac0 -- each would relocate its own copy and repoint different refs"
    ]
   },
   "poly8+synth": {
@@ -176,6 +205,20 @@
    "bbd+sidechain-compressor": [
     "FX2 buffer meets a declared range: bbd's FX2 buffer (+$0..+$3fff) and sidechain-compressor's the cross-core key window: GSEED, GCNT, 4 tracks x 4 generations x 32 words both claim shared 0x33dfe..0x33fff",
     "FX2 buffer meets a declared range: bbd's FX2 buffer (+$0..+$3fff) and sidechain-compressor's the cross-core key window: GSEED, GCNT, 4 tracks x 4 generations x 32 words both claim shared 0x3bdfe..0x3bfff"
+   ],
+   "mute-modes+play-start": [
+    "poke site: mute-modes (table ref PERSONALIZE labels) and play-start (table ref PERSONALIZE labels) both claim 0x40068efe -- both rewrite the same bytes",
+    "poke site: mute-modes (table ref PERSONALIZE getters) and play-start (table ref PERSONALIZE getters) both claim 0x40068f0a -- both rewrite the same bytes",
+    "poke site: mute-modes (table ref PERSONALIZE setters) and play-start (table ref PERSONALIZE setters) both claim 0x40069022 -- both rewrite the same bytes",
+    "poke site: mute-modes (table ref PERSONALIZE setters) and play-start (table ref PERSONALIZE setters) both claim 0x4006903e -- both rewrite the same bytes",
+    "poke site: mute-modes (table ref PERSONALIZE setters) and play-start (table ref PERSONALIZE setters) both claim 0x40069056 -- both rewrite the same bytes",
+    "poke site: mute-modes (poke PERSONALIZE rows 15 -> 16 (MKI), 16 -> 17 (MKII): + MUTE MODE) and play-start (poke PERSONALIZE rows 15 -> 16 (MKI), 16 -> 17 (MKII): + PLAY START) both claim 0x40068fb2 -- both rewrite the same bytes",
+    "poke site: mute-modes (poke ANDY restore pea 0x64 -> 0x70: MUTE MODE (0x800000dc) survives power-off) and play-start (poke ANDY restore pea 0x64 -> 0x70: PLAY START (0x800000dc) survives power-off) both claim 0x4001f322 -- both rewrite the same bytes",
+    "poke site: mute-modes (poke ANDY restore pea 0x64 -> 0x70: MUTE MODE (0x800000dc) survives power-off) and play-start (poke ANDY restore pea 0x64 -> 0x70: PLAY START (0x800000dc) survives power-off) both claim 0x4001f3be -- both rewrite the same bytes",
+    "poke site: mute-modes (poke ANDY restore pea 0x64 -> 0x70: MUTE MODE (0x800000dc) survives power-off) and play-start (poke ANDY restore pea 0x64 -> 0x70: PLAY START (0x800000dc) survives power-off) both claim 0x4001fb24 -- both rewrite the same bytes",
+    "grown table: mute-modes's PERSONALIZE labels and play-start's PERSONALIZE labels both claim stock array 0x400b2a34 -- each would relocate its own copy and repoint different refs",
+    "grown table: mute-modes's PERSONALIZE getters and play-start's PERSONALIZE getters both claim stock array 0x400b2a74 -- each would relocate its own copy and repoint different refs",
+    "grown table: mute-modes's PERSONALIZE setters and play-start's PERSONALIZE setters both claim stock array 0x400b2ac0 -- each would relocate its own copy and repoint different refs"
    ]
   }
  }

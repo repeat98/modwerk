@@ -1,0 +1,259 @@
+{
+  "schemaVersion": 2,
+  "id": "play-start",
+  "key": "PLAY START",
+  "name": "Play Start",
+  "version": "0.1.10-experimental",
+  "category": "system",
+  "author": {
+    "github": "jonathanwardle1992-beep",
+    "credits": [
+      "jonathanwardle1992-beep: PLAY START PERSONALIZE row, the [PLAY] start-from-beginning gate, documentation and thumbnail."
+    ]
+  },
+  "nativeManifest": "manifest.py",
+  "presentation": {
+    "label": "PLAY starts from the beginning",
+    "family": "Transport",
+    "summary": "PERSONALIZE checkbox: when ticked, [PLAY] always starts the sequencer from the beginning and never pauses.",
+    "overview": "A global sequencer setting: [PLAY] always starts from the beginning and never pauses. Tick it in PERSONALIZE. Default empty is stock play/pause, so installing the module changes nothing until you enable it.",
+    "highlights": [
+      "Default empty box: stock [PLAY] pause and continue.",
+      "Ticked: [PLAY] starts from the beginning even if the sequencer is already running or paused. [STOP] still stops.",
+      "PERSONALIZE only: not a Part or project field. Mute Modes cannot be chosen with it until PERSONALIZE is a shared base table."
+    ],
+    "usage": [
+      "Press [PROJ], open SYSTEM, then PERSONALIZE, and scroll to PLAY START.",
+      "Press YES so the box shows X. Cursor up/down must not change it. Close the menu.",
+      "Press [STOP], then [PLAY]: the sequencer starts. Press [PLAY] again while it runs: it starts from the beginning instead of pausing. [STOP] still stops."
+    ]
+  },
+  "access": {
+    "location": "PROJECT > SYSTEM > PERSONALIZE > PLAY START",
+    "steps": [
+      "Press [PROJ], open SYSTEM, then PERSONALIZE, and scroll to PLAY START.",
+      "Press YES so the box shows X. Cursor up/down must not change it. Close the menu.",
+      "Press [STOP], then [PLAY]: the sequencer starts. Press [PLAY] again while it runs: it starts from the beginning instead of pausing. [STOP] still stops."
+    ],
+    "screenshots": [
+      "media/ot-system.png",
+      "media/ot-personalize-empty.png",
+      "media/ot-personalize-ticked.png"
+    ]
+  },
+  "controls": [
+    {
+      "name": "PLAY START",
+      "default": 0,
+      "count": 2,
+      "labels": [
+        "empty",
+        "X"
+      ],
+      "doc": "Empty box is stock play/pause. Ticked (X) makes panel [PLAY] always start from the beginning. Stock checkbox: YES ticks or clears; cursor motion must not change it. Stored in PERSONALIZE, not in the project."
+    }
+  ],
+  "compatibility": {
+    "firmware": "1.40C",
+    "effectId": null,
+    "location": "Project sequencer",
+    "conflicts": [
+      "mute-modes"
+    ],
+    "uiClaims": [
+      "key:PLAY"
+    ],
+    "limitations": [
+      "OS 1.40C. 0.1.9 card: with X, [PLAY] starts from step 1, but PERSONALIZE began ticked (two YES to clear). 0.1.10 packed, not flashed: MAGIC empty/X, one YES. 0.1.0–0.1.8 failed as in TESTING.md. USB Keep/Undo and ot_emu untested.",
+      "Conflicts with Mute Modes: both relocate the PERSONALIZE tables and poke the ANDY restore length.",
+      "MIDI START / CONTINUE / STOP do not follow this setting.",
+      "An OS upgrade resets PERSONALIZE."
+    ]
+  },
+  "resources": {
+    "recorded": "23 October 2026; static source estimate plus same-unit card",
+    "storage": {
+      "label": "ROM unit, detour and PERSONALIZE table growth",
+      "display": "274 bytes authored ColdFire (linked unit)",
+      "value": 274,
+      "unit": "bytes",
+      "method": "static",
+      "conditions": "Instruction-length sum of playstart.s (2/4/6-byte opcodes plus data), rounded up to even. m68k-elf-as was not on this Windows host, so this is not the linker report. Detours and ANDY pokes sit in stock space. No DSP memory.",
+      "source": "TESTING.md"
+    },
+    "processing": {
+      "label": "ColdFire, per [PLAY] press",
+      "display": "76 authored instructions static ceiling",
+      "value": 76,
+      "unit": "instructions/event",
+      "method": "static",
+      "conditions": "Conservative ceiling: every authored opcode in the unit counted once. Stock jsr callees, cache and wait states are not included. Nothing per sample. Chip time unmeasured.",
+      "source": "TESTING.md"
+    },
+    "impact": {
+      "conditions": "Key-press handler; default OFF adds a test and a branch.",
+      "cpu": {
+        "level": "minimal",
+        "basis": "source-estimate",
+        "rationale": "A handful of ColdFire instructions on a [PLAY] press; no per-frame work.",
+        "source": "TESTING.md"
+      },
+      "dsp": {
+        "level": "minimal",
+        "basis": "source-estimate",
+        "rationale": "No DSP code.",
+        "source": "manifest.py"
+      },
+      "memory": {
+        "level": "minimal",
+        "basis": "source-estimate",
+        "rationale": "Small ROM unit and one PERSONALIZE word with its battery shadow.",
+        "source": "TESTING.md"
+      }
+    }
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "0.1.9 same-unit: [PLAY] from step 1 when X, but PERSONALIZE began ticked and needed two YES to clear. 0.1.10 packed (MAGIC empty/X). Hardware LCD photos 25 Oct 2026: PLAY START empty and ticked; SYSTEM STATUS stamp reads PS 0.1.9.",
+    "hardwareStatus": "reported",
+    "evidenceRevision": "ca547781153c2ea03a16592985d3baa7e44e9791",
+    "gates": [
+      "modules/play-start/verify.py"
+    ],
+    "qualification": {
+      "moduleVersion": "0.1.10-experimental",
+      "sourceSha256": "e36e9fd52654f23a6e8b0d4aa3b9aa64bea69d49d8018526f9b98b6384ce302d",
+      "imageSha256": "275e74e4afcd9eee48b382fa5eb09496d62deca941990f7e93f193c20f3e6558",
+      "cycles": [
+        {
+          "processor": "coldfire",
+          "worstCase": 76,
+          "maxConfiguration": 76,
+          "maxInstances": 1,
+          "budget": 26600000,
+          "unit": "cycles/event",
+          "method": "static",
+          "conditions": {
+            "parameterExtremes": "PLAY START empty: [PLAY] takes the stock pause/continue path. Ticked: every [PLAY] SEQSTOP then starts at 0x40061892. Empty vs X, running vs paused vs stopped.",
+            "parameterModulation": "Not applicable: no DSP, no per-sample work, no LFO or p-lock of this setting.",
+            "modeSwitching": "YES toggles the checkbox; cursor motion must not. [STOP] stays stock. MIDI START / CONTINUE / STOP do not follow this setting.",
+            "maxLoad": "One instance. Worst authored event counted as every opcode in playstart.s once (76). Stock jsr bodies, cache and wait states are not included. Budget: 100 ms at 266 MHz (26 600 000), a key-press ceiling, not a measured limit.",
+            "inputConditions": "Independent of audio. Runs in the [PLAY] hooks. Executed authored instructions, not chip cycles. Time on the unit is not measured."
+          },
+          "report": "TESTING.md"
+        }
+      ],
+      "memory": {
+        "regions": [
+          {
+            "name": "ColdFire code and data (one linked unit)",
+            "space": "sdram",
+            "words": 274,
+            "wordBits": 8,
+            "bytes": 274,
+            "scope": "shared"
+          }
+        ],
+        "perInstanceBytes": 0,
+        "sharedBytes": 274,
+        "maxInstances": 1,
+        "totalBytes": 274,
+        "conditions": "Linked unit size reported by the private native compose (playstart 274 B). Detours and ANDY pokes occupy stock bytes. PERSONALIZE word 0x800000dc is stock SRAM, not extra module RAM. No DSP memory.",
+        "report": "TESTING.md"
+      },
+      "hardware": {
+        "kind": "functional",
+        "status": "reported",
+        "model": null,
+        "testedOn": "2026-10-25",
+        "tester": "jonathanwardle1992-beep",
+        "sourceRevision": "ca547781153c2ea03a16592985d3baa7e44e9791",
+        "imageSha256": "275e74e4afcd9eee48b382fa5eb09496d62deca941990f7e93f193c20f3e6558",
+        "summary": "0.1.9 same-unit: with X, every [PLAY] starts from step 1. PERSONALIZE later began ticked and needed two YES to clear. Hardware LCD photos 25 Oct 2026 show PLAY START empty and ticked; SYSTEM STATUS stamp reads PS 0.1.9. 0.1.10 is packed (MAGIC empty/X, card SHA-256 above).",
+        "limitations": [
+          "SYSTEM STATUS on the photographed unit reads PS 0.1.9, not the packed 0.1.10 ELEK stamp.",
+          "USB Keep/Undo, MIDI transport and ot_emu are untested.",
+          "[REC] + [PLAY], pickup machines, chained patterns and an MKI panel are untested.",
+          "PLAY START alone on a card build; Mute Modes cannot share PERSONALIZE with it.",
+          "Cycle and memory figures are static authored bounds, not chip wall-clock or a linker report.",
+          "One tester, one unit, one short session."
+        ],
+        "report": "evidence/hardware.md"
+      },
+      "documentation": {
+        "tutorial": {
+          "title": "Quick tutorial",
+          "steps": [
+            "Press [PROJ], open SYSTEM, then PERSONALIZE, and scroll to PLAY START.",
+            "Press YES so the box shows X. Cursor up/down must not change it. Close the menu.",
+            "Press [STOP], then [PLAY]: the sequencer starts. Press [PLAY] again while it runs: it starts from the beginning instead of pausing. [STOP] still stops."
+          ]
+        },
+        "screenshots": [
+          "media/ot-system.png",
+          "media/ot-personalize-empty.png",
+          "media/ot-personalize-ticked.png"
+        ],
+        "screenshotStyle": "black-and-white"
+      }
+    }
+  },
+  "license": {
+    "spdx": "MIT",
+    "file": "LICENSE",
+    "declaration": "Original module by jonathanwardle1992-beep, MIT. No firmware, extracted stock code or built images are included."
+  },
+  "media": [
+    {
+      "path": "media/ot-system.png",
+      "captureType": "hardware",
+      "caption": "Open PROJECT, then SYSTEM, then STATUS. OS VERSION shows the card stamp. PERSONALIZE is the next SYSTEM row for PLAY START.",
+      "alt": "SYSTEM STATUS on the Octatrack LCD; OS VERSION reads PS 0.1.9.",
+      "credit": "jonathanwardle1992-beep (hardware LCD photograph, 25 October 2026)",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "SYSTEM STATUS",
+        "shows": "location",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.10-experimental",
+        "imageSha256": "275e74e4afcd9eee48b382fa5eb09496d62deca941990f7e93f193c20f3e6558",
+        "setup": "Hardware photograph of the LCD, 25 October 2026. Cropped to the glass, two greys, 768x384 nearest neighbour. Photographed SYSTEM STATUS stamp reads PS 0.1.9. Packed 0.1.10 card SHA-256 is this field; firmware is not in git."
+      }
+    },
+    {
+      "path": "media/ot-personalize-empty.png",
+      "captureType": "hardware",
+      "caption": "Open PERSONALIZE and scroll to PLAY START. The empty box is stock play/pause. Only YES ticks the box; cursor keys must not change it.",
+      "alt": "PERSONAL SETTINGS with PLAY START highlighted and the checkbox empty.",
+      "credit": "jonathanwardle1992-beep (hardware LCD photograph, 25 October 2026)",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "PERSONALIZE",
+        "shows": "location-and-controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.10-experimental",
+        "imageSha256": "275e74e4afcd9eee48b382fa5eb09496d62deca941990f7e93f193c20f3e6558",
+        "setup": "Same hardware session as ot-system.png. PLAY START selected, empty box."
+      }
+    },
+    {
+      "path": "media/ot-personalize-ticked.png",
+      "captureType": "hardware",
+      "caption": "Press YES so PLAY START shows X. Close the menu. Every [PLAY] now starts from step 1 instead of pausing. [STOP] still stops.",
+      "alt": "PERSONAL SETTINGS with PLAY START highlighted and the checkbox showing X.",
+      "credit": "jonathanwardle1992-beep (hardware LCD photograph, 25 October 2026)",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "PERSONALIZE",
+        "shows": "location-and-controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.10-experimental",
+        "imageSha256": "275e74e4afcd9eee48b382fa5eb09496d62deca941990f7e93f193c20f3e6558",
+        "setup": "Same hardware session as ot-system.png. PLAY START selected, ticked."
+      }
+    }
+  ]
+}

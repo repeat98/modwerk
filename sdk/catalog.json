@@ -156,6 +156,11 @@
       "id": "dejavu",
       "version": "0.1.0-experimental",
       "addedAt": "2026-10-24T15:30:00Z"
+    },
+    {
+      "id": "play-start",
+      "version": "0.1.10-experimental",
+      "addedAt": "2026-10-26T03:30:00Z"
     }
   ]
 }

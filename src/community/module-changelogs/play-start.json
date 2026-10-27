@@ -1,0 +1,91 @@
+[
+  {
+    "version": "0.1.10-experimental",
+    "date": "2026-10-25",
+    "changes": [
+      "PLAY START now starts empty. One YES ticks or clears it; cursor keys still do not change it.",
+      "With X, [PLAY] still starts from step 1, as on 0.1.9. Empty box is still stock pause.",
+      "Known issue: USB Keep/Undo and ot_emu are untested. One tester, card build; 0.1.10 packed, not a verified pass."
+    ]
+  },
+  {
+    "version": "0.1.9-experimental",
+    "date": "2026-10-23",
+    "changes": [
+      "With X, every [PLAY] starts from step 1 instead of pausing. Empty box stays stock pause.",
+      "Known issue: the box later began ticked and needed two YES presses to clear. USB Keep/Undo and ot_emu untested."
+    ]
+  },
+  {
+    "version": "0.1.8-experimental",
+    "date": "2026-10-23",
+    "changes": [
+      "Do not treat 0.1.7 as a pass: with X, [PLAY] still paused. 0.1.8 still paused on the same unit.",
+      "Known issue: USB Keep/Undo and ot_emu untested."
+    ]
+  },
+  {
+    "version": "0.1.7-experimental",
+    "date": "2026-10-23",
+    "changes": [
+      "Do not treat 0.1.6 as a pass: that card made no difference. 0.1.7 with X lit [PLAY] but still paused.",
+      "Known issue: USB Keep/Undo and ot_emu untested."
+    ]
+  },
+  {
+    "version": "0.1.6-experimental",
+    "date": "2026-10-23",
+    "changes": [
+      "Do not treat 0.1.5 as a pass: with X, [PLAY] did nothing. 0.1.6 made no difference on the same unit.",
+      "Known issue: USB Keep/Undo and ot_emu untested."
+    ]
+  },
+  {
+    "version": "0.1.5-experimental",
+    "date": "2026-10-23",
+    "changes": [
+      "Do not treat 0.1.4 as a pass: with X, [PLAY] still paused. 0.1.5 made [PLAY] unresponsive when X showed.",
+      "Known issue: USB Keep/Undo and ot_emu untested."
+    ]
+  },
+  {
+    "version": "0.1.4-experimental",
+    "date": "2026-10-23",
+    "changes": [
+      "Do not treat 0.1.3 as a pass: the box was stable but [PLAY] still paused when X showed. 0.1.4 still paused.",
+      "Known issue: USB Keep/Undo and ot_emu untested."
+    ]
+  },
+  {
+    "version": "0.1.3-experimental",
+    "date": "2026-10-23",
+    "changes": [
+      "PLAY START is now a stable checkbox in PERSONALIZE and YES ticks or clears it.",
+      "Do not treat this as a pass: with X, [PLAY] still paused. USB Keep/Undo and ot_emu untested."
+    ]
+  },
+  {
+    "version": "0.1.2-experimental",
+    "date": "2026-10-23",
+    "changes": [
+      "Do not treat 0.1.1 as a pass: YES was unreliable and [PLAY] still paused. 0.1.2 made no difference on the unit.",
+      "Known issue: USB Keep/Undo and ot_emu untested."
+    ]
+  },
+  {
+    "version": "0.1.1-experimental",
+    "date": "2026-10-23",
+    "changes": [
+      "PLAY START is now a checkbox (empty / X) instead of OFF/ON text. Cursor keys should not tick it.",
+      "Do not treat this as a pass: YES was temperamental and [PLAY] still paused when X showed."
+    ]
+  },
+  {
+    "version": "0.1.0-experimental",
+    "date": "2026-10-22",
+    "changes": [
+      "First version: PERSONALIZE PLAY START. When ticked, [PLAY] should start from the beginning instead of pausing.",
+      "Conflicts with Mute Modes. Hardware behaviour on this version was not a pass."
+    ]
+  }
+]

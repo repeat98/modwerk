@@ -240,6 +240,7 @@
     "quantize-live-rec-toggle": "0.1.1-experimental",
     "apply-scene": "0.2.0-experimental",
     "direct-jump-kyoti": "0.1.2-experimental",
-    "dejavu": "0.1.0-experimental"
+    "dejavu": "0.1.0-experimental",
+    "play-start": "0.1.10-experimental"
   }
 }
