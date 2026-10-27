@@ -54,7 +54,7 @@ From 0.4 the core takes the four routines every parameter page goes through, and
 
 Mods built for 0.3 that patch a page's entry or a page key's list themselves (rytm2_mods v1.2's lfo-rnd, voice-dac, euclid-accents, velocity-humanise and comp-preview 1.0) overlap core's page sites and are refused at link with 0.4 and later; their 0.4 versions contribute entries instead. Mods with only events and storage, and mods that hook deeper in those routines (filter-hz's text, ctrl-all's turn), link with 0.7 as with 0.3.
 
-## Mod storage (core 0.3 and later)
+## Mod storage (core 0.3)
 
 Declare each field in `build.json`, then read and write it through the core with elekloader's `analog-rytm-mk2/store.h`. Modwerk's source builder finds it in [`include/`](include/analog-rytm-mk2/store.h), copied unchanged from elekloader's `core-ar2-v0.3` tag (`sdk/imports/core-ar2-store-header-769d9aa.json`); elekloader's own builder uses its SDK's copy:
 
