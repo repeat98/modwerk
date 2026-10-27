@@ -6,9 +6,9 @@ the storage field (`silent_pad_trig_on`), with no change in behaviour. The secti
 new names, also for the earlier builds.
 
 - Module: `silent-pad-trig` 0.4.1-experimental, for Analog Rytm MKII OS 1.74 on core-ar2 0.3.
-- Source: rytm2_mods (`Iced-Cream/rytm2_mods`), `pad-select` 0.2, local commit
-  `35ea2f0` on branch `claude/pad-select`, **not yet pushed**, so `source.revision` is left out of
-  the manifest until a public commit exists. 0.2.0-experimental here was that file byte for byte
+- Source: npp1993's own mod, first written as `pad-select` 0.2 in a local rytm2_mods checkout
+  (commit `35ea2f0`, branch `claude/pad-select`), never published there; this folder is now the
+  source, so the manifest names no upstream revision. 0.2.0-experimental here was that file byte for byte
   (`93d95e91…3863`, fingerprint `10bc355d…aecd`). 0.4.0 changes `play_gate`, `active`,
   `func_gate` and `drw_invoke` ([0.4.0](#040-pads-silent-in-live-rec-aftertouch-as-stock-2026-10-25);
   0.3.0's aftertouch hook and its site are gone again): `src/silent-pad-trig.s` `c96a146c…6c55` (renamed from `pad-select.s` in 0.4.1). `include/ar2-1.74.inc` (`c57431f7…874b`) is rytm2_mods'

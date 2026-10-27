@@ -27,14 +27,15 @@ MIDI note and leaves no held note, so its release cuts nothing the sequencer pla
 mode, MUTE mode, TRK + pad, QPER + pad, NO + pad, BANK + TRIG, MIDI notes in, TRIG + YES and the
 sequencer itself are as stock.
 
-Version **0.4.0-experimental** for Analog Rytm MKII OS **1.74**, with core-ar2 0.3. It is
-Iced-Cream's own mod, `pad-select` in [rytm2_mods](https://github.com/Iced-Cream/rytm2_mods), not
-a port of someone else's; there the module is Pad Select and the row PAD+TRIG SEL TRK, renamed
-here in 0.4.1. 0.4.0 differs from rytm2_mods' 0.2 in three ways, from emulator tests
-and a first test on a unit: pads stay silent in LIVE RECORDING too (FUNC + pad plays and records),
+Version **0.4.1-experimental** for Analog Rytm MKII OS **1.74**, with core-ar2 0.3. It is
+npp1993's own mod, not a port. It was first written as Pad Select (`pad-select` 0.2, row
+PAD+TRIG SEL TRK) in a local checkout of [rytm2_mods](https://github.com/Iced-Cream/rytm2_mods)
+that was never published there; Modwerk is its home, and 0.4.1 renamed it. 0.4.0 differs from
+that 0.2 in three ways, from emulator tests and a first test on a unit: pads stay silent in LIVE RECORDING too (FUNC + pad plays and records),
 FUNC + pad selects its track only if AUTO TRK SWITCH is checked, as stock, and the checkbox is
-drawn through a call of its own. Its predecessor 0.3.0 ran on a unit; 0.4.0 has run in rytm-emu
-only, so it waits in `_submissions/`.
+drawn through a call of its own. 0.3.0 and 0.4.0 ran on a unit; 0.4.1 changes only names and has
+run in rytm-emu. MIDI out and the other flows in TESTING.md's to-do list are not yet tested on a
+unit, so it waits in `_submissions/`.
 
 ## Controls
 
@@ -97,8 +98,8 @@ AUTO TRK SWITCH off, soft strikes, aftertouch, MIDI notes in, MIDI out and TRIG 
 Requires core-ar2 0.3 on OS 1.74. Use your own original stock OS 1.74 file.
 
 - Built for OS 1.74 only.
-- **0.4.0 has run in rytm-emu only.** 0.3.0 ran on a unit (TESTING.md); the emulator does not
-  prove sound or timing.
+- **0.4.1 has run in rytm-emu only.** 0.4.0 and 0.3.0 ran on a unit (TESTING.md); MIDI out,
+  STEP REC and several other flows are not yet tested there.
 - FUNC + TRIG 1-12 plays nothing, as on stock.
 - A silent press passes its aftertouch on, so MIDI out can carry poly pressure with no note-on
   before it.
@@ -126,23 +127,25 @@ run. The setting came back after a power-off and cold boot, and each GLOBAL slot
 Every other mode that takes the pads, TRIG keys or FUNC was compared too (see the table in
 TESTING.md), and a silent press left the modelled analog output byte-identical while the
 sequencer played. 0.3.0 (build PS04) ran on an Analog Rytm MKII: silent pads, FUNC + pad, no cut
-sequenced notes, the setting through a power cycle and per GLOBAL slot, as reported. 0.4.0 has not
-run on a unit yet. Memory: 780 bytes of the 128 KiB shared mod area, no `.bss`, no
+sequenced notes, the setting through a power cycle and per GLOBAL slot, as reported. 0.4.0 (PS05)
+ran on one too: silent LIVE REC pads with FUNC + pad recording, aftertouch on a silent hold, GRID
+REC, CHROMATIC and MUTE, as reported. Memory: 780 bytes of the 128 KiB shared mod area, no `.bss`, no
 fast SRAM. Nothing runs in the audio, sequencer or tick paths; each key press costs a few
 compares (static reading, not a measurement).
 
 ## Authorship and licences
 
-Iced-Cream: the mod, its design and code (rytm2_mods `pad-select`), and this module. MrScruff:
-the globals-slot lookup, which follows his voice-dac (rytm-mods `0013-voice-dac`, as rytm2_mods
-ports it). irpina: Elekloader and core-ar2, whose mod storage keeps the setting.
+npp1993 (Nathaniel Pawelczyk): the mod, its design and code, and this module. Iced-Cream:
+`include/ar2-1.74.inc` and the rytm2_mods voice-dac port. MrScruff: the globals-slot lookup,
+which follows his voice-dac (rytm-mods `0013-voice-dac`, as rytm2_mods ports it). irpina:
+Elekloader and core-ar2, whose mod storage keeps the setting.
 
-Code: [GPL-2.0-only](LICENSE), as rytm2_mods. `src/silent-pad-trig.s` is rytm2_mods'
-`pad-select/os1.74/pad-select.s` at local commit `35ea2f0` (branch `claude/pad-select`, not yet
-public) with the 0.4.0 changes (`play_gate`, `active`, `func_gate`, `autotrk`'s comment and
+Code: [GPL-2.0-only](LICENSE), as rytm2_mods, where it was first written. `src/silent-pad-trig.s`
+is `pad-select/os1.74/pad-select.s` from that unpublished rytm2_mods checkout (local commit
+`35ea2f0`) with the 0.4.0 changes (`play_gate`, `active`, `func_gate`, `autotrk`'s comment and
 `drw_invoke`), and `include/ar2-1.74.inc` its `include/ar2-1.74.inc`, the same file
 Filter Hz carries. The source's header comment still names the OS 1.73 addresses, as upstream's
-does. The include names firmware routines by address only. The upstream README is in
+does. The include names firmware routines by address only. Pad Select 0.2's original README is in
 [upstream/README.md](upstream/README.md); its menu path leaves out CONTROL, and its FUNC + TRIG
 row is corrected here. Screens show Elektron's interface solely to document the modification.
 No Elektron firmware is included.
