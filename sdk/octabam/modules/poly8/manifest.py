@@ -8,8 +8,8 @@ H=bytes.fromhex
 CHOOSER_CLAMPS=() if __name__.startswith("octabam_") else tuple(
  Poke(at+k, stock_guard(at+k, 2, guard), H(code), 'machine chooser cursor reaches the last row')
  for at in (0x40078c22, 0x40078cb0, 0x40078d2e, 0x40078dee, 0x40078e7c)
- for k,code,guard in ((0,'7205','74d01dadcbe6a57ef61bc53a5a65404cd8446c6738ff0ac86b1b1a78d8ae7d41'),
-                      (6,'7005','04cd1c6d463ba6752ff68f9125991b1c4af983ae355b62366122ba2d47eee3b2')))
+ for k,code,guard in ((0,'7205','c55bd639d8c368e737cdc6bb17522f91dbe1f51682d2433f4caa962e6ca77513'),
+                      (6,'7005','63540692485e9982808a3ad2d9eda3ef9f9b6b45ea3d491ee894cc3f0b7579e9')))
 U32=lambda value:value.to_bytes(4,"big")
 MODULE=Module(
  name="poly8", key="POLY8",kind=Kind.CF_PATCH, category=Category.MACHINES,
