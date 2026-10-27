@@ -1,10 +1,10 @@
-# Silent Pad+Trig — test report
+# Silent Pad+Trig Settings — test report
 
 Until 0.4.0 this module was Pad Select (`pad-select`) and its row PAD+TRIG SEL TRK, as in
 rytm2_mods; 0.4.1 renames the module, the row (SILENT PAD+TRIG), the source file, the symbols and
 the storage field (`silent_pad_trig_on`), with no change in behaviour. 0.5.1 renames 0.5.0's
 second row, SILENT LIVE REC, to SILENT PAD LIVEREC (its storage field stays `silent_live_rec_on`).
-The sections below use the new names, also for the earlier builds.
+After 0.5.1 the module's display name becomes Silent Pad+Trig Settings (the id, rows and fields stay). The sections below use the new names, also for the earlier builds.
 
 - Module: `silent-pad-trig` 0.5.1-experimental, for Analog Rytm MKII OS 1.74 on core-ar2 0.3.
 - Source: npp1993's own mod, first written as `pad-select` 0.2 in a local rytm2_mods checkout

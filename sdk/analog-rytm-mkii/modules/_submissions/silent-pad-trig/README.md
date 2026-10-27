@@ -1,8 +1,8 @@
-# Silent Pad+Trig
+# Silent Pad+Trig Settings
 
 ## Overview
 
-Silent Pad+Trig adds two checkboxes to GLOBAL > CONTROL > SEQUENCER CONFIG, just after AUTO TRK
+Silent Pad+Trig Settings adds two checkboxes to GLOBAL > CONTROL > SEQUENCER CONFIG, just after AUTO TRK
 SWITCH, so a pad or TRIG key press can pick a track without sounding it:
 
 - **SILENT PAD+TRIG** covers every state but LIVE and STEP RECORDING: stopped, playing, GRID
@@ -67,7 +67,7 @@ on a sound, tap its pad and keep pressing to modulate the track without playing 
 
 ### Quick tutorial
 
-1. Use a build containing Silent Pad+Trig. Open the GLOBAL menu, then CONTROL > SEQUENCER CONFIG. After AUTO TRK SWITCH are SILENT PAD+TRIG and SILENT PAD LIVEREC; check either with YES or LEFT/RIGHT.
+1. Use a build containing Silent Pad+Trig Settings. Open the GLOBAL menu, then CONTROL > SEQUENCER CONFIG. After AUTO TRK SWITCH are SILENT PAD+TRIG and SILENT PAD LIVEREC; check either with YES or LEFT/RIGHT.
 2. With SILENT PAD+TRIG checked and the sequencer stopped, tap the SD pad: it makes no sound and the SD track is selected. Hold FUNC and tap SD to hear it at the pad's own velocity. TRIG 5 selects track 5 silently.
 3. With SILENT PAD LIVEREC checked, press RECORD + PLAY for LIVE RECORDING: plain pad taps stay silent and record nothing; hold FUNC and tap a pad to play and record it. Uncheck both to get stock behaviour everywhere.
 

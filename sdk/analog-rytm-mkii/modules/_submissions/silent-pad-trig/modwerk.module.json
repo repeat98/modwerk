@@ -1,7 +1,7 @@
 {
   "schemaVersion": 3,
   "id": "silent-pad-trig",
-  "name": "Silent Pad+Trig",
+  "name": "Silent Pad+Trig Settings",
   "version": "0.5.1-experimental",
   "machine": "analog-rytm-mkii",
   "category": "system",
@@ -22,7 +22,7 @@
     "label": "SILENT PAD+TRIG",
     "family": "Workflow",
     "summary": "Two checkboxes: with SILENT PAD+TRIG, pads and TRIG keys select their track silently outside recording; with SILENT PAD LIVEREC, pads stay silent in LIVE RECORDING. FUNC + pad plays (and records), and aftertouch still works.",
-    "overview": "Silent Pad+Trig adds two checkboxes to GLOBAL > CONTROL > SEQUENCER CONFIG, after AUTO TRK SWITCH. SILENT PAD+TRIG covers every state but LIVE and STEP RECORDING: a pad or TRIG key 1-12 press selects its track and stays silent, with no MIDI note. SILENT PAD LIVEREC covers LIVE RECORDING: a pad press selects its track silently and records nothing, while TRIG keys play and record as stock. Either way, hold FUNC and press a pad to play it at the pad's own velocity, which in LIVE RECORDING also records. STEP RECORDING is stock. Aftertouch is untouched, so a held pad modulates its track without sounding it. Both default to unchecked, are kept per GLOBAL slot and are saved with the project.",
+    "overview": "Silent Pad+Trig Settings adds two checkboxes to GLOBAL > CONTROL > SEQUENCER CONFIG, after AUTO TRK SWITCH. SILENT PAD+TRIG covers every state but LIVE and STEP RECORDING: a pad or TRIG key 1-12 press selects its track and stays silent, with no MIDI note. SILENT PAD LIVEREC covers LIVE RECORDING: a pad press selects its track silently and records nothing, while TRIG keys play and record as stock. Either way, hold FUNC and press a pad to play it at the pad's own velocity, which in LIVE RECORDING also records. STEP RECORDING is stock. Aftertouch is untouched, so a held pad modulates its track without sounding it. Both default to unchecked, are kept per GLOBAL slot and are saved with the project.",
     "highlights": [
       "Tap pads to pick tracks without hearing them, while editing or while live recording, each switched on its own.",
       "FUNC + pad plays and records, at the pad's own velocity.",
@@ -30,7 +30,7 @@
       "Two checkboxes per GLOBAL slot, kept through a power cycle; unchecked is stock."
     ],
     "usage": [
-      "Use a build containing Silent Pad+Trig. Open the GLOBAL menu, then CONTROL > SEQUENCER CONFIG. After AUTO TRK SWITCH are SILENT PAD+TRIG and SILENT PAD LIVEREC; check either with YES or LEFT/RIGHT.",
+      "Use a build containing Silent Pad+Trig Settings. Open the GLOBAL menu, then CONTROL > SEQUENCER CONFIG. After AUTO TRK SWITCH are SILENT PAD+TRIG and SILENT PAD LIVEREC; check either with YES or LEFT/RIGHT.",
       "With SILENT PAD+TRIG checked and the sequencer stopped, tap the SD pad: it makes no sound and the SD track is selected. Hold FUNC and tap SD to hear it at the pad's own velocity. TRIG 5 selects track 5 silently.",
       "With SILENT PAD LIVEREC checked, press RECORD + PLAY for LIVE RECORDING: plain pad taps stay silent and record nothing; hold FUNC and tap a pad to play and record it. Uncheck both to get stock behaviour everywhere."
     ]
@@ -148,7 +148,7 @@
       "tutorial": {
         "title": "Quick tutorial",
         "steps": [
-          "Use a build containing Silent Pad+Trig. Open the GLOBAL menu, then CONTROL > SEQUENCER CONFIG. After AUTO TRK SWITCH are SILENT PAD+TRIG and SILENT PAD LIVEREC; check either with YES or LEFT/RIGHT.",
+          "Use a build containing Silent Pad+Trig Settings. Open the GLOBAL menu, then CONTROL > SEQUENCER CONFIG. After AUTO TRK SWITCH are SILENT PAD+TRIG and SILENT PAD LIVEREC; check either with YES or LEFT/RIGHT.",
           "With SILENT PAD+TRIG checked and the sequencer stopped, tap the SD pad: it makes no sound and the SD track is selected. Hold FUNC and tap SD to hear it at the pad's own velocity. TRIG 5 selects track 5 silently.",
           "With SILENT PAD LIVEREC checked, press RECORD + PLAY for LIVE RECORDING: plain pad taps stay silent and record nothing; hold FUNC and tap a pad to play and record it. Uncheck both to get stock behaviour everywhere."
         ]
@@ -171,7 +171,7 @@
     {
       "path": "media/thumbnail.svg",
       "kind": "thumbnail",
-      "caption": "Silent Pad+Trig",
+      "caption": "Silent Pad+Trig Settings",
       "alt": "Original illustration of twelve pads: a tapped pad selects its track silently, and FUNC + pad plays it.",
       "credit": "npp1993",
       "license": "GPL-2.0-only",
