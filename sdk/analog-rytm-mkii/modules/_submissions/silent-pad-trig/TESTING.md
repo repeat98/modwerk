@@ -27,6 +27,30 @@ new names, also for the earlier builds.
 - Build PS74 (core-ar2 0.3 + 0.2.0): `.syx` `4b2e6567…ad21`, main OS `7ea05528…033f`. The
   emulator sections below marked 0.2.0 ran on it.
 
+## 0.5.0: two settings (2026-10-27)
+
+At the tester's request, the one setting becomes two, so silent pads while editing and silent
+pads while live recording can be chosen separately:
+
+- **SILENT PAD+TRIG** (`silent_pad_trig_on`, as before): every state but LIVE and STEP REC; pads
+  and TRIG keys 1-12.
+- **SILENT LIVE REC** (`silent_live_rec_on`, new, global, 1 bit): LIVE REC; pads only. TRIG keys
+  play and record in LIVE REC as before.
+
+`active()` now reads STEP and LIVE REC first, then the setting for that state, so each press calls
+both state getters even with both settings off (0.4 read the setting first). The menu constructor
+appends two items through one `item_add` routine fed by a table of each item's four invokers; the
+label, action, changer and drawer invokers take their text or field through a short entry per item.
+Same five sites. Compiled in the cloud with Ubuntu's `m68k-linux-gnu` binutils 2.42
+(`build-elemod-packages.mjs`, `MODWERK_CROSS=m68k-linux-gnu-`): a 936-byte `.run`, no `.bss`, two
+storage fields. Source fingerprint (`sha256` of `sha256sum include/ar2-1.74.inc
+src/silent-pad-trig.s`): see `evidence.sourceSha256` in the manifest.
+
+**Pending:** the link on stock OS 1.74, the emulator run (both rows drawn and toggled; each
+column of the README table against stock with each setting alone, both, and neither; persistence
+and GLOBAL slots), new screenshots of the two rows, and a hardware run. The screenshots in
+`media/` still show 0.4.1's single row.
+
 ## Sites
 
 Five sites, read from stock OS 1.74, each recorded as an address, a length and the SHA-256 of

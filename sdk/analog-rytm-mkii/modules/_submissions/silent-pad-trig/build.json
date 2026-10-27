@@ -16,6 +16,11 @@
       "sym": "silent_pad_trig_on",
       "scope": "global",
       "bits": 1
+    },
+    {
+      "sym": "silent_live_rec_on",
+      "scope": "global",
+      "bits": 1
     }
   ],
   "claims": [

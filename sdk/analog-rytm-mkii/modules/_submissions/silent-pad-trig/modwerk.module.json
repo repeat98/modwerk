@@ -2,7 +2,7 @@
   "schemaVersion": 3,
   "id": "silent-pad-trig",
   "name": "Silent Pad+Trig",
-  "version": "0.4.1-experimental",
+  "version": "0.5.0-experimental",
   "machine": "analog-rytm-mkii",
   "category": "system",
   "exclusive": false,
@@ -21,25 +21,25 @@
   "presentation": {
     "label": "SILENT PAD+TRIG",
     "family": "Workflow",
-    "summary": "With SILENT PAD+TRIG checked, a pad press selects its track silently, even in LIVE RECORDING; FUNC + pad plays (and records), and holding a pad down still sends aftertouch.",
-    "overview": "Silent Pad+Trig adds SILENT PAD+TRIG to GLOBAL > CONTROL > SEQUENCER CONFIG, a checkbox after AUTO TRK SWITCH. Checked, a pad press selects its track and stays silent, with no MIDI note and nothing recorded, in every state but STEP RECORDING. Hold FUNC and press the pad to play it at the pad's own velocity; in LIVE RECORDING that also records. TRIG keys 1-12 select silently too, but play and record as stock in LIVE and STEP RECORDING. Aftertouch is untouched, so a held pad modulates its track without sounding it. Unchecked, everything is stock. The setting is kept per GLOBAL slot and saved with the project.",
+    "summary": "Two checkboxes: with SILENT PAD+TRIG, pads and TRIG keys select their track silently outside recording; with SILENT LIVE REC, pads stay silent in LIVE RECORDING. FUNC + pad plays (and records), and aftertouch still works.",
+    "overview": "Silent Pad+Trig adds two checkboxes to GLOBAL > CONTROL > SEQUENCER CONFIG, after AUTO TRK SWITCH. SILENT PAD+TRIG covers every state but LIVE and STEP RECORDING: a pad or TRIG key 1-12 press selects its track and stays silent, with no MIDI note. SILENT LIVE REC covers LIVE RECORDING: a pad press selects its track silently and records nothing, while TRIG keys play and record as stock. Either way, hold FUNC and press a pad to play it at the pad's own velocity, which in LIVE RECORDING also records. STEP RECORDING is stock. Aftertouch is untouched, so a held pad modulates its track without sounding it. Both default to unchecked, are kept per GLOBAL slot and are saved with the project.",
     "highlights": [
-      "Tap pads to pick tracks without hearing them, even while live recording.",
+      "Tap pads to pick tracks without hearing them, while editing or while live recording, each switched on its own.",
       "FUNC + pad plays and records, at the pad's own velocity.",
       "Hold a pad down to modulate its sound with aftertouch, silently.",
-      "One checkbox per GLOBAL slot, kept through a power cycle; unchecked is stock."
+      "Two checkboxes per GLOBAL slot, kept through a power cycle; unchecked is stock."
     ],
     "usage": [
-      "Use a build containing Silent Pad+Trig. Open the GLOBAL menu, then CONTROL > SEQUENCER CONFIG, and check SILENT PAD+TRIG, just after AUTO TRK SWITCH, with YES or LEFT/RIGHT.",
-      "With the sequencer stopped, tap the SD pad: it makes no sound and the SD track is selected. Hold FUNC and tap SD to hear it at the pad's own velocity. TRIG 5 selects track 5 silently.",
-      "Press RECORD + PLAY for LIVE RECORDING: plain pad taps stay silent and record nothing; hold FUNC and tap a pad to play and record it. Uncheck SILENT PAD+TRIG to get stock behaviour everywhere."
+      "Use a build containing Silent Pad+Trig. Open the GLOBAL menu, then CONTROL > SEQUENCER CONFIG. After AUTO TRK SWITCH are SILENT PAD+TRIG and SILENT LIVE REC; check either with YES or LEFT/RIGHT.",
+      "With SILENT PAD+TRIG checked and the sequencer stopped, tap the SD pad: it makes no sound and the SD track is selected. Hold FUNC and tap SD to hear it at the pad's own velocity. TRIG 5 selects track 5 silently.",
+      "With SILENT LIVE REC checked, press RECORD + PLAY for LIVE RECORDING: plain pad taps stay silent and record nothing; hold FUNC and tap a pad to play and record it. Uncheck both to get stock behaviour everywhere."
     ]
   },
   "access": {
-    "location": "GLOBAL > CONTROL > SEQUENCER CONFIG: SILENT PAD+TRIG, after AUTO TRK SWITCH.",
+    "location": "GLOBAL > CONTROL > SEQUENCER CONFIG: SILENT PAD+TRIG and SILENT LIVE REC, after AUTO TRK SWITCH.",
     "steps": [
       "Open the GLOBAL menu and choose CONTROL, then SEQUENCER CONFIG.",
-      "Move to SILENT PAD+TRIG, after AUTO TRK SWITCH, and press YES (or RIGHT) to check it."
+      "Move to SILENT PAD+TRIG or SILENT LIVE REC, just after AUTO TRK SWITCH, and press YES (or RIGHT) to check it."
     ],
     "screenshots": [
       "media/control-menu.png",
@@ -50,7 +50,16 @@
     {
       "name": "SILENT PAD+TRIG",
       "default": 0,
-      "doc": "Checkbox in GLOBAL > CONTROL > SEQUENCER CONFIG, after AUTO TRK SWITCH. YES toggles it, RIGHT checks, LEFT unchecks. Checked: pads select their track silently outside STEP RECORDING, TRIG keys 1-12 outside LIVE and STEP RECORDING. Kept per GLOBAL slot.",
+      "doc": "Checkbox in GLOBAL > CONTROL > SEQUENCER CONFIG, after AUTO TRK SWITCH. YES toggles it, RIGHT checks, LEFT unchecks. Checked: outside LIVE and STEP RECORDING, pads and TRIG keys 1-12 select their track silently. Kept per GLOBAL slot.",
+      "labels": [
+        "Unchecked",
+        "Checked"
+      ]
+    },
+    {
+      "name": "SILENT LIVE REC",
+      "default": 0,
+      "doc": "Checkbox after SILENT PAD+TRIG. YES toggles it, RIGHT checks, LEFT unchecks. Checked: in LIVE RECORDING, pads select their track silently and record nothing; TRIG keys still play and record. Kept per GLOBAL slot.",
       "labels": [
         "Unchecked",
         "Checked"
@@ -59,7 +68,7 @@
     {
       "name": "FUNC + pad",
       "default": null,
-      "doc": "While SILENT PAD+TRIG applies, plays the pad's track at the strike's velocity, or the fixed velocity with FIX on (stock FUNC + pad uses the TRIG page's VEL); records it in LIVE RECORDING; selects the track only if AUTO TRK SWITCH is checked, as stock.",
+      "doc": "Where a checked setting applies, plays the pad's track at the strike's velocity, or the fixed velocity with FIX on (stock FUNC + pad uses the TRIG page's VEL); records it in LIVE RECORDING; selects the track only if AUTO TRK SWITCH is checked, as stock.",
       "labels": null
     },
     {
@@ -77,12 +86,13 @@
     "conflicts": [],
     "limitations": [
       "Built for OS 1.74 only, with core-ar2 0.3.",
-      "0.4.1 (a rename of 0.4.0) has run in rytm-emu only; 0.4.0 and 0.3.0 ran on a unit, MIDI out not yet tested there.",
+      "0.5.0 (two settings) has not yet run in the emulator or on a unit; 0.4.0, with one setting for both, ran on a unit, MIDI out not tested there.",
       "FUNC + TRIG 1-12 plays nothing, as on stock: use FUNC + pad to hear a track.",
       "A silent press passes its aftertouch on, so MIDI out can carry poly pressure with no note-on before it.",
       "TRIG 13 (the FX track), the SOUND BROWSER's pad audition and pads with a menu open are silent too; FUNC + pad plays.",
       "RTRG + pad selects silently; FUNC + RTRG also toggles the metronome click, as on stock, so it is not a clean way to roll.",
-      "A GLOBAL slot saved without the setting, or received as Global SysEx, loads unchecked."
+      "A GLOBAL slot saved without a setting, or received as Global SysEx, loads it unchecked.",
+      "LIVE RECORDING counts only while the sequencer runs; a paused LIVE REC follows SILENT PAD+TRIG."
     ]
   },
   "platform": {
@@ -98,18 +108,18 @@
     ]
   },
   "resources": {
-    "memoryBytes": 780,
+    "memoryBytes": 936,
     "fastBytes": 0,
     "load": {
       "display": "None in the audio path: a few compares per pad or TRIG key press",
       "method": "static",
-      "conditions": "Static: the sites are in KeyboardView's pad and TRIG key handlers, their shared play routine and the SEQUENCER CONFIG menu's constructor; each press reads one storage bit and the record state. Nothing is added to the audio, sequencer or tick paths. Not a measurement."
+      "conditions": "Static: the sites are in KeyboardView's pad and TRIG key handlers, their shared play routine and the SEQUENCER CONFIG menu's constructor; each press reads the record state and one storage bit. Nothing is added to the audio, sequencer or tick paths. Not a measurement."
     }
   },
   "evidence": {
-    "tier": "emulator",
-    "moduleVersion": "0.4.1-experimental",
-    "sourceSha256": "2e5213805b4afb3dafa1134853774d9dfc14d5d570306f0b8c0007e6c2df8ea5",
+    "tier": "none",
+    "moduleVersion": "0.5.0-experimental",
+    "sourceSha256": "bf1ed6037b7272c7c624390bd4a28185c231324b6606122dc1c47caef8e2cd2f",
     "reports": [
       "TESTING.md"
     ],
@@ -118,24 +128,7 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Emulator (rytm-emu c5732f0, OS 1.74, build PS06), against stock from matched snapshots: checked, pads select silently outside STEP REC (LIVE REC included, recording nothing) and TRIG keys outside LIVE and STEP REC; FUNC + pad plays at the strike's velocity, records in LIVE REC and follows AUTO TRK SWITCH; aftertouch as stock; unchecked matches stock exactly. 0.3.0 (PS04) ran on a unit: silent pads, FUNC + pad, power cycle and GLOBAL slots as reported. 0.4.0 (PS05) ran on a unit: silent LIVE REC pads with FUNC + pad recording, aftertouch on a silent hold, GRID REC, CHROMATIC and MUTE as reported.",
-    "documentation": {
-      "tutorial": {
-        "title": "Quick tutorial",
-        "steps": [
-          "Use a build containing Silent Pad+Trig. Open the GLOBAL menu, then CONTROL > SEQUENCER CONFIG, and check SILENT PAD+TRIG, just after AUTO TRK SWITCH, with YES or LEFT/RIGHT.",
-          "With the sequencer stopped, tap the SD pad: it makes no sound and the SD track is selected. Hold FUNC and tap SD to hear it at the pad's own velocity. TRIG 5 selects track 5 silently.",
-          "Press RECORD + PLAY for LIVE RECORDING: plain pad taps stay silent and record nothing; hold FUNC and tap a pad to play and record it. Uncheck SILENT PAD+TRIG to get stock behaviour everywhere."
-        ]
-      },
-      "screenshots": [
-        "media/control-menu.png",
-        "media/seq-config.png",
-        "media/seq-config-checked.png",
-        "media/silent-press.png"
-      ],
-      "captureRecord": "media/capture.json"
-    }
+    "summary": "0.5.0 splits the setting in two: SILENT PAD+TRIG (every state but LIVE and STEP REC) and SILENT LIVE REC (pads in LIVE REC). Emulator run of 0.5.0 pending. 0.4.1 (PS06, one setting for both) in rytm-emu matched stock when unchecked. 0.4.0 (PS05) ran on a unit: silent LIVE REC pads with FUNC + pad recording, aftertouch on a silent hold, GRID REC, CHROMATIC and MUTE as reported."
   },
   "license": {
     "spdx": "GPL-2.0-only",
