@@ -2,6 +2,14 @@
 from remix.stock_guard import stock_guard
 from remix.schema import Category, Detour, Kind, Linked, Module, Poke, SymbolRef, StockCopy
 H=bytes.fromhex
+# The machine chooser's five UP/DOWN handlers clamp its cursor to row 5 (moveq #5 at each address, then at +6):
+# past six rows the list scrolled but the cursor stayed on POLY8. The composition sets them to the last row.
+# Card builds only: over USB the base owns the chooser, and Elekloader's port runs this file as octabam_poly8.
+CHOOSER_CLAMPS=() if __name__.startswith("octabam_") else tuple(
+ Poke(at+k, stock_guard(at+k, 2, guard), H(code), 'machine chooser cursor reaches the last row')
+ for at in (0x40078c22, 0x40078cb0, 0x40078d2e, 0x40078dee, 0x40078e7c)
+ for k,code,guard in ((0,'7205','74d01dadcbe6a57ef61bc53a5a65404cd8446c6738ff0ac86b1b1a78d8ae7d41'),
+                      (6,'7005','04cd1c6d463ba6752ff68f9125991b1c4af983ae355b62366122ba2d47eee3b2')))
 U32=lambda value:value.to_bytes(4,"big")
 MODULE=Module(
  name="poly8", key="POLY8",kind=Kind.CF_PATCH, category=Category.MACHINES,
@@ -99,6 +107,7 @@ Poke(0x4003c950, stock_guard(0x4003c950, 2, '74d01dadcbe6a57ef61bc53a5a65404cd84
 Poke(0x40078678, stock_guard(0x40078678, 2, '04cd1c6d463ba6752ff68f9125991b1c4af983ae355b62366122ba2d47eee3b2'), H('7005'), 'POLY is machine chooser row six'),
 Poke(0x400786ce, stock_guard(0x400786ce, 2, '04cd1c6d463ba6752ff68f9125991b1c4af983ae355b62366122ba2d47eee3b2'), H('7005'), 'POLY is machine chooser row six'),
 Poke(0x40079904, stock_guard(0x40079904, 2, '577d7ba37f9786ab02a7dc9eeb612bb55936018179b550b14f4b9f000a89bf20'), H('7605'), 'POLY is machine chooser row six'),
+*CHOOSER_CLAMPS,
 Poke(0x4000244E, stock_guard(0x4000244E, 2, "74d01dadcbe6a57ef61bc53a5a65404cd8446c6738ff0ac86b1b1a78d8ae7d41"), H("7205"),
              "project loader accepts stored machine type 5"),
 Poke(0x40002454, stock_guard(0x40002454, 2, "04cd1c6d463ba6752ff68f9125991b1c4af983ae355b62366122ba2d47eee3b2"), H("7005"),
