@@ -13,14 +13,15 @@ static unsigned failures;
 
 /* Synthetic memory: a few segments at the addresses the registry reads. */
 struct segment { uint32_t base, size; uint8_t *bytes; };
-static uint8_t bank[0x8ed80u + 4u * 6322u + 64u], sram[4u * 6322u], misc[0x100], code[0x40], stocktab[0x80], ui[0x40], stockdef[12];
+static uint8_t bank[0x8ed80u + 4u * 6322u + 64u], sram[4u * 6322u], misc[0x100], code[0x40], stocktab[0x80], ui[0x40], stockdef[12],
+    clamps[0x270];
 static struct segment segments[] = {
     {0x46000000u, sizeof bank, bank}, {0x100a4eceu, sizeof sram, sram}, {0x100b14c0u, 0x40, misc},
     {0x80000000u, 0x40, misc + 0x40}, {0x46c82450u, 0x10, misc + 0x80}, {0x400a78c8u, 20, stocktab},
     {0x400d5f38u, 20, stocktab + 20}, {0x400b27d0u, 12, stocktab + 40}, {0x400b27dcu, 12, stocktab + 52}, {0x400b282cu, 12, stocktab + 64},
     {0x460e7380u, 0x20, ui}, {0x460e70e0u, 4, ui + 0x20}, {0x400d320cu, 12, stockdef},
     {0x40079240u, 0x10, code}, {0x400585f0u, 0x10, code + 0x10}, {0x4003c950u, 4, code + 0x20}, {0x40078678u, 4, code + 0x24},
-    {0x400786ccu, 4, code + 0x28}, {0x40079904u, 4, code + 0x2c}, {0x40065c7cu, 4, code + 0x30},
+    {0x400786ccu, 4, code + 0x28}, {0x40079904u, 4, code + 0x2c}, {0x40065c7cu, 4, code + 0x30}, {0x40078c20u, sizeof clamps, clamps},
 };
 static uint8_t *host_at(uint32_t a)
 {
@@ -160,6 +161,14 @@ static int frame(unsigned track, uint32_t pre, uint32_t tail)
     return r;
 }
 static unsigned counts_now(void) { return (unsigned)code[0x0b] << 24 | (unsigned)code[0x1d] << 16 | (unsigned)code[0x21] << 8 | code[0x33]; }
+/* The chooser's ten UP/DOWN cursor clamps (moveq #k at each handler and 6 bytes on): all k, or 0 if they differ. */
+static unsigned clamp_now(void)
+{
+    static const uint32_t at[] = {0x40078c23u, 0x40078cb1u, 0x40078d2fu, 0x40078defu, 0x40078e7du};
+    unsigned k = clamps[at[0] - 0x40078c20u];
+    for (unsigned i = 0; i < 5; ++i) if (clamps[at[i] - 0x40078c20u] != k || clamps[at[i] + 6u - 0x40078c20u] != k) return 0;
+    return k;
+}
 
 int main(void)
 {
@@ -171,7 +180,7 @@ int main(void)
 
     /* No machine: stock rows, stock counts, stock renders, stock names. */
     rows(0, 0, 0, 0);
-    CHECK(counts_now() == (5u << 24 | 5u << 16 | 4u << 8 | 3u));
+    CHECK(counts_now() == (5u << 24 | 5u << 16 | 4u << 8 | 3u) && clamp_now() == 5);
     CHECK((uintptr_t)mw_name(5) == 0x1001u && mw_type(1, slot(2)) == 1 && mw_assign(part0(), 2, 1) == 1);
     CHECK(mw_source_render_impl(2, 0, 0, 1) == -7 && stock_renders == 1);
 
@@ -179,6 +188,8 @@ int main(void)
     const void *avf[] = {&A, &V, &F};
     rows(avf, 3, 0, 0);
     CHECK(counts_now() == (8u << 24 | 8u << 16 | 7u << 8 | 3u));
+    /* The cursor reaches the last row, 4+n (row 7 with three machines). */
+    CHECK(clamp_now() == 7);
     CHECK(!strcmp(mw_name(5), "ANALOG BD") && !strcmp(mw_name(6), "VECTOR") && !strcmp(mw_name(7), "FM SYNTH") && (uintptr_t)mw_name(8) == 0x1001u);
     /* Assign: admission first, defaults and signature in the Part and its SRAM mirror; a refusal changes nothing. */
     a_admit = 0; CHECK(mw_assign(part0(), 2, 5) == (unsigned)-1 && part0()[60 + 60] == 0);
@@ -203,7 +214,7 @@ int main(void)
      * holds A's bytes, not FLEX's: a known PROTECT signature without its machine renders stock's silent source. */
     const void *vf[] = {&V, &F};
     rows(vf, 2, 0, 0);
-    CHECK(counts_now() == (7u << 24 | 7u << 16 | 6u << 8 | 3u) && part0()[60 + 60] == 'A');
+    CHECK(counts_now() == (7u << 24 | 7u << 16 | 6u << 8 | 3u) && part0()[60 + 60] == 'A' && clamp_now() == 6);
     CHECK(mw_type(1, slot(2)) == 1 && !strcmp(mw_name(5), "VECTOR") && (uintptr_t)mw_name(7) == 0x1001u);
     CHECK(mw_source_render_impl(2, 0, 0, 1) == -9 && silent_renders == 1 && a_renders == 1);
     CHECK(mw_source_render_impl(4, 0, 0, 1) > 100);
@@ -320,6 +331,7 @@ int main(void)
     part0()[60 + 90] = 'A'; part0()[61 + 90] = 'B'; part0()[62 + 90] = 1;
     const void *v_only[] = {&V};
     rows(v_only, 1, 0, 0);
+    CHECK(clamp_now() == 5); /* one machine: row 5, stock's clamp */
     CHECK(mw_assign(part0(), 3, 5) == 1 && part0()[60 + 90] == 'S' && part0()[0x2a + 90 + 6] == 0x40 && part0()[0x1da + 90 + 11] == 0x40);
     CHECK(mw_assign(part0(), 3, 1) == 1 && part0()[60 + 90] == 0);
     /* The type byte is stock's to change (the commit stores the returned row): the registry never writes it. */
@@ -410,10 +422,10 @@ int main(void)
     rows(0, 0, qz, 1);
     CHECK((counts_now() & 0xff) == 6u && mw_seq_getters[3] == (void *)1 && mw_seq_labels[6] == (const void *)mw_seq_none);
     rows(0, 0, 0, 0);
-    CHECK(counts_now() == (5u << 24 | 5u << 16 | 4u << 8 | 3u) && !masked);
+    CHECK(counts_now() == (5u << 24 | 5u << 16 | 4u << 8 | 3u) && !masked && clamp_now() == 5);
     if (failures) { fprintf(stderr, "%u registry checks failed\n", failures); return 1; }
     puts("Machine registry: rows by table order, admission before mutation, signatures and defaults in both copies, absent "
-         "machines as stock, the validator's protection and wrapper chain, render routing, keyed SEQUENCER rows and chooser "
-         "counts, SETUP_PAGE machines' own SRC SETUP and the frame guard passed.");
+         "machines as stock, the validator's protection and wrapper chain, render routing, keyed SEQUENCER rows, chooser "
+         "counts and cursor clamps, SETUP_PAGE machines' own SRC SETUP and the frame guard passed.");
     return 0;
 }

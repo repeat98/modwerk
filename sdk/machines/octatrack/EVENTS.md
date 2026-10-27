@@ -236,6 +236,16 @@ The base patches these for its table readers; no package may patch them: contrib
 | 0x400786c8 | 6 | `ot_machines` | jmp mw_chooser_row | `c611970befafba97f882ab297bd19f0efe0c7d927bfd6110c53f03ad4b7da1c7` | machine chooser row highlight, by the list's row |
 | 0x400786ce | 2 | `ot_machines` | own | `04cd1c6d463ba6752ff68f9125991b1c4af983ae355b62366122ba2d47eee3b2` | machine chooser highlight bound: moveq #4+n |
 | 0x40078886 | 10 | `ot_machines` | jmp mw_chooser_open | `fe6cb52458c7d968dc467c1cd7721d832baf6bc2fac1826c8c10ed07fee2e7f8` | the machine list opens on the track's machine row |
+| 0x40078c22 | 2 | `ot_machines` | own | `c55bd639d8c368e737cdc6bb17522f91dbe1f51682d2433f4caa962e6ca77513` | machine chooser UP/DOWN cursor clamp: moveq #4+n,d1 (at least 5) |
+| 0x40078c28 | 2 | `ot_machines` | own | `63540692485e9982808a3ad2d9eda3ef9f9b6b45ea3d491ee894cc3f0b7579e9` | machine chooser UP/DOWN cursor clamp: moveq #4+n,d0 (at least 5) |
+| 0x40078cb0 | 2 | `ot_machines` | own | `c55bd639d8c368e737cdc6bb17522f91dbe1f51682d2433f4caa962e6ca77513` | machine chooser UP/DOWN cursor clamp: moveq #4+n,d1 (at least 5) |
+| 0x40078cb6 | 2 | `ot_machines` | own | `63540692485e9982808a3ad2d9eda3ef9f9b6b45ea3d491ee894cc3f0b7579e9` | machine chooser UP/DOWN cursor clamp: moveq #4+n,d0 (at least 5) |
+| 0x40078d2e | 2 | `ot_machines` | own | `c55bd639d8c368e737cdc6bb17522f91dbe1f51682d2433f4caa962e6ca77513` | machine chooser UP/DOWN cursor clamp: moveq #4+n,d1 (at least 5) |
+| 0x40078d34 | 2 | `ot_machines` | own | `63540692485e9982808a3ad2d9eda3ef9f9b6b45ea3d491ee894cc3f0b7579e9` | machine chooser UP/DOWN cursor clamp: moveq #4+n,d0 (at least 5) |
+| 0x40078dee | 2 | `ot_machines` | own | `c55bd639d8c368e737cdc6bb17522f91dbe1f51682d2433f4caa962e6ca77513` | machine chooser UP/DOWN cursor clamp: moveq #4+n,d1 (at least 5) |
+| 0x40078df4 | 2 | `ot_machines` | own | `63540692485e9982808a3ad2d9eda3ef9f9b6b45ea3d491ee894cc3f0b7579e9` | machine chooser UP/DOWN cursor clamp: moveq #4+n,d0 (at least 5) |
+| 0x40078e7c | 2 | `ot_machines` | own | `c55bd639d8c368e737cdc6bb17522f91dbe1f51682d2433f4caa962e6ca77513` | machine chooser UP/DOWN cursor clamp: moveq #4+n,d1 (at least 5) |
+| 0x40078e82 | 2 | `ot_machines` | own | `63540692485e9982808a3ad2d9eda3ef9f9b6b45ea3d491ee894cc3f0b7579e9` | machine chooser UP/DOWN cursor clamp: moveq #4+n,d0 (at least 5) |
 | 0x400791e4 | 8 | `ot_machines` | jmp mw_pool_open | `fa7132fac15d6e498fd0e73744e1f94218824f3f54d5b3bad6083b60363e9f14` | double-tap TRACK opens a machine's pool |
 | 0x40079248 | 4 | `ot_machines` | own | `8fbd3190028fe564c11b56e3e73e8eaf36925cbabf94164176eeb4c4f57bc6ac` | machine chooser rows: pea 5+n |
 | 0x4007981c | 6 | `ot_machines` | jmp mw_main_commit | `89c50ac3ca041fdf5647ec5ee2c3580f9a67dd79f0b5cc15ceadda4b9e9bede0` | machine chooser commit: assign/admit |

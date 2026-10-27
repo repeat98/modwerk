@@ -163,15 +163,19 @@ static void tables(const Machine *const *m, unsigned n)
                             x->page ? x->page : FLEX_PAGE;
     }
 }
-/* The chooser's counts are immediates in stock code the table owns: pea 5+n and moveq #4+n (stock: n = 0). */
+/* The chooser's counts are immediates in stock code the table owns: pea 5+n and moveq #4+n (stock: n = 0). Its five
+ * UP/DOWN handlers clamp the cursor with moveq #5 twice each (stock: row 5, one past PICKUP): the last row, 4+n, and
+ * never below stock's 5, or the cursor stops at row 5 with two or more machines installed. */
 static unsigned counted;
 static void put8(uint32_t at, uint8_t v) { modwerk_machine_flush_data(at, 1); *modwerk_machine_code(at) = v; }
 static void counts(unsigned n, unsigned rows)
 {
-    static const uint32_t pea[] = {0x4007924bu, 0x400585fdu}, moveq[] = {0x4003c951u, 0x40078679u, 0x400786cfu, 0x40079905u};
+    static const uint32_t pea[] = {0x4007924bu, 0x400585fdu}, moveq[] = {0x4003c951u, 0x40078679u, 0x400786cfu, 0x40079905u},
+                          clamp[] = {0x40078c23u, 0x40078cb1u, 0x40078d2fu, 0x40078defu, 0x40078e7du};
     if (counted == (n | rows << 8 | 1u << 16)) return;
     for (unsigned i = 0; i < 2; ++i) put8(pea[i], (uint8_t)(5u + n));
     for (unsigned i = 0; i < 4; ++i) put8(moveq[i], (uint8_t)(4u + n));
+    for (unsigned i = 0; i < 5; ++i) put8(clamp[i], (uint8_t)(n > 1 ? 4u + n : 5u)), put8(clamp[i] + 6u, (uint8_t)(n > 1 ? 4u + n : 5u));
     put8(0x40065c7fu, (uint8_t)(3u + rows));
     modwerk_machine_invalidate_code();
     counted = n | rows << 8 | 1u << 16;

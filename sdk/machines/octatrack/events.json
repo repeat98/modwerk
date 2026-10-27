@@ -1463,6 +1463,76 @@
      "op": "ptr",
      "target": "mw_source_render",
      "what": "the FLEX renderer: a machine track's render, unowned tracks to RENDER_FLEX machines"
+    },
+    {
+     "site": "0x40078c22",
+     "length": 2,
+     "guard": "c55bd639d8c368e737cdc6bb17522f91dbe1f51682d2433f4caa962e6ca77513",
+     "op": "own",
+     "what": "machine chooser UP/DOWN cursor clamp: moveq #4+n,d1 (at least 5)"
+    },
+    {
+     "site": "0x40078c28",
+     "length": 2,
+     "guard": "63540692485e9982808a3ad2d9eda3ef9f9b6b45ea3d491ee894cc3f0b7579e9",
+     "op": "own",
+     "what": "machine chooser UP/DOWN cursor clamp: moveq #4+n,d0 (at least 5)"
+    },
+    {
+     "site": "0x40078cb0",
+     "length": 2,
+     "guard": "c55bd639d8c368e737cdc6bb17522f91dbe1f51682d2433f4caa962e6ca77513",
+     "op": "own",
+     "what": "machine chooser UP/DOWN cursor clamp: moveq #4+n,d1 (at least 5)"
+    },
+    {
+     "site": "0x40078cb6",
+     "length": 2,
+     "guard": "63540692485e9982808a3ad2d9eda3ef9f9b6b45ea3d491ee894cc3f0b7579e9",
+     "op": "own",
+     "what": "machine chooser UP/DOWN cursor clamp: moveq #4+n,d0 (at least 5)"
+    },
+    {
+     "site": "0x40078d2e",
+     "length": 2,
+     "guard": "c55bd639d8c368e737cdc6bb17522f91dbe1f51682d2433f4caa962e6ca77513",
+     "op": "own",
+     "what": "machine chooser UP/DOWN cursor clamp: moveq #4+n,d1 (at least 5)"
+    },
+    {
+     "site": "0x40078d34",
+     "length": 2,
+     "guard": "63540692485e9982808a3ad2d9eda3ef9f9b6b45ea3d491ee894cc3f0b7579e9",
+     "op": "own",
+     "what": "machine chooser UP/DOWN cursor clamp: moveq #4+n,d0 (at least 5)"
+    },
+    {
+     "site": "0x40078dee",
+     "length": 2,
+     "guard": "c55bd639d8c368e737cdc6bb17522f91dbe1f51682d2433f4caa962e6ca77513",
+     "op": "own",
+     "what": "machine chooser UP/DOWN cursor clamp: moveq #4+n,d1 (at least 5)"
+    },
+    {
+     "site": "0x40078df4",
+     "length": 2,
+     "guard": "63540692485e9982808a3ad2d9eda3ef9f9b6b45ea3d491ee894cc3f0b7579e9",
+     "op": "own",
+     "what": "machine chooser UP/DOWN cursor clamp: moveq #4+n,d0 (at least 5)"
+    },
+    {
+     "site": "0x40078e7c",
+     "length": 2,
+     "guard": "c55bd639d8c368e737cdc6bb17522f91dbe1f51682d2433f4caa962e6ca77513",
+     "op": "own",
+     "what": "machine chooser UP/DOWN cursor clamp: moveq #4+n,d1 (at least 5)"
+    },
+    {
+     "site": "0x40078e82",
+     "length": 2,
+     "guard": "63540692485e9982808a3ad2d9eda3ef9f9b6b45ea3d491ee894cc3f0b7579e9",
+     "op": "own",
+     "what": "machine chooser UP/DOWN cursor clamp: moveq #4+n,d0 (at least 5)"
     }
    ]
   },
