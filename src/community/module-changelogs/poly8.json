@@ -3,8 +3,8 @@
     "version": "0.3.2-experimental",
     "date": "2026-10-27",
     "changes": [
-      "Fixes the double-tap TRACK machine list on card builds with POLY8 beside VECTOR, FM Synth or Analog BD (#842, #941, #942): every machine now shows, the list scrolls and YES picks the highlighted machine.",
-      "POLY8 alone, and over USB, works as before.",
+      "Fixes the double-tap TRACK machine list on card builds with POLY8 beside VECTOR, FM Synth or Analog BD (#842, #941, #942): every machine now shows, UP and DOWN reach it, and YES picks it.",
+      "POLY8 alone, and POLY8 over USB, work as before.",
       "Known issue: checked in the emulator only, not yet on a unit."
     ]
   },

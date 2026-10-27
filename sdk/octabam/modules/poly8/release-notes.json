@@ -2,9 +2,9 @@
   "version": "0.3.2-experimental",
   "date": "2026-10-27",
   "changes": [
-    "Fixed the double-tap TRACK machine list on card builds with POLY8 beside VECTOR, FM Synth or Analog BD (#842, #941, #942). The list has more than six rows then, and stock's chooser scrolls its list but drew the six rows on screen from the top of the list every time: the seventh machine never showed, DOWN past POLY8 landed on a hidden row, the highlight jumped to PICKUP while the header still named POLY8, and YES picked the hidden machine.",
-    "The chooser now draws each row's name and the track's current-machine mark from the list's scroll offset plus the row on screen (a pointer at 0x4007865e to mr_chooser_name, and mr_chooser_row), as the USB base's machine registry has since #922. The highlight was by screen row already. With six rows or fewer the offset stays zero, so POLY8 alone, and every build with at most one other machine, draws as before.",
-    "Over USB the base owns these sites and drops POLY8's machine_registry unit, so the USB package is unchanged in function.",
+    "Fixed the double-tap TRACK machine list on card builds with POLY8 beside VECTOR, FM Synth or Analog BD (#842, #941, #942). The list has seven to nine rows then. Stock's chooser scrolls its list, but drew the six rows on screen from the top of the list whatever the scroll offset, and its UP/DOWN handlers stop the cursor at row 5: the seventh machine never showed, DOWN past POLY8 scrolled the list but left the cursor on POLY8, so the highlight jumped to PICKUP while the header still named POLY8, and those machines could only be reached with FUNC+SRC.",
+    "The chooser now draws each row's name and the track's current-machine mark from the list's scroll offset plus the row on screen (a pointer at 0x4007865e to mr_chooser_name, and mr_chooser_row), as the USB base's machine registry has since #922; the highlight was by screen row already. The five UP/DOWN cursor clamps (moveq #5 at 0x40078c22, 0x40078cb0, 0x40078d2e, 0x40078dee and 0x40078e7c, and again 6 bytes on) are count sites of POLY8's composition and stop at the last row. POLY8 alone writes the stock value there, so builds with six rows or fewer behave as before.",
+    "Over USB the base owns the chooser and drops POLY8's machine_registry unit; the clamp pokes are card-only. The USB package rebuilds byte-identical and stays published as 0.3.1-experimental.",
     "Limits: checked in the ot_emu emulator only; not tested on a unit, on the MKI, after a project reload or a power cycle."
   ],
   "history": [

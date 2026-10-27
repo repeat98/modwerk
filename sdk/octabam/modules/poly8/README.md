@@ -13,6 +13,16 @@ PTCH tunes the whole chord. Panel and MIDI notes add their own semitone offset
 without moving PTCH or overwriting its live lock. The machine follows the
 instrument's audio frames and sequencer; it has no independent clock.
 
+0.3.2-experimental fixes the double-tap TRACK machine list on card builds that
+combine POLY8 with VECTOR, FM Synth or Analog BD (#842, #941, #942). The list
+then has seven to nine rows, but stock draws its six visible rows from the top
+of the list whatever its scroll offset, and its UP/DOWN keys stop the cursor at
+row six. The seventh machine never showed, DOWN past POLY8 jumped the highlight
+to PICKUP and YES kept POLY8. POLY8's chooser now draws each row's name and the
+track's mark from the list's offset plus the row on screen, and lets the
+cursor reach the last row, so every machine shows, scrolls and can be picked.
+POLY8 alone and over USB (where the base owns the chooser) behave as before.
+
 0.3.1-experimental limits POLY8 by CPU time. Every voice is rendered in the
 audio interrupt, and on the Modwerk beta base, which runs module code uncached,
 four held notes used to take the CPU to 100 %: the panel froze and the notes
