@@ -4439,7 +4439,7 @@
       ]
     }
   ],
-  "sourceCommit": "2d2ad290951cfc565ffc61ace649d89e2e230a84",
+  "sourceCommit": "3e14648725944e32202306af85bbbab2d03b6c7e",
   "moduleVersions": {
     "spectrum": "0.1.1-experimental",
     "modulation": "0.1.1-experimental",
@@ -4466,7 +4466,7 @@
     "playmodes": "0.2.0-experimental",
     "mute-modes": "0.2.1-experimental",
     "recorder-loop-fix": "0.1.0-experimental",
-    "poly8": "0.3.1-experimental",
+    "poly8": "0.3.2-experimental",
     "output-matrix": "0.1.1-experimental",
     "quantize-live-rec-toggle": "0.1.1-experimental",
     "apply-scene": "0.2.0-experimental",
