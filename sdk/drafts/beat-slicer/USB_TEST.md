@@ -6,10 +6,10 @@ restarted; its original base and exact 11-module inventory were verified.
 That package is rejected. The corrected 0.1.53 candidate first failed the CPU self-test at 93.7%; the
 contributor reported the already playing pattern peaked at 92% without the probe.
 That failed result is preserved without attributing the overload to the probe.
-A separately authorized repeat on the owner's empty pattern passed the physical
+A separately authorized repeat on a contributor's empty pattern passed the physical
 self-test (72.4% peak CPU), reported planner PASS and completed Undo with the exact
 original base, active identity and 11-module inventory restored. No new crash
-occurred. The owner was not looking during the trial, so the visible display remains
+occurred. The contributor was not looking during the trial, so the visible display remains
 unconfirmed despite the diagnostic PASS.
 This qualifies the fixed-input USB planner smoke test on the named build/base.
 

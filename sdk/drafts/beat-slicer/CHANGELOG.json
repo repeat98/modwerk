@@ -67,7 +67,7 @@
       "Remove encoder letters; control position identifies its encoder.",
       "Use a nearly full-height popup to cover the distracting AED header and tabs underneath.",
       "Retain the right-side BPM, slice count and CREATE/REPLACE summary, and show version 0.1.60.",
-      "Keep 0.1.59 and the owner-tested 0.1.58 as separate previous versions.",
+      "Keep 0.1.59 and the contributor-tested 0.1.58 as separate previous versions.",
       "Known issue: the earlier USB Undo failure remains unresolved; this UI revision is not yet device-tested."
     ]
   },
@@ -112,7 +112,7 @@
       "Keep a busy YES request pending until a fresh source is ready; NO, changed controls or stale source cancel it.",
       "Show a specific short-trim message; fix busy status that remained after readiness returned.",
       "Module-only staging update for the existing private base. File-backed Flex/Static only; recording buffers are excluded.",
-      "Known issue: owner's 22 MB / 122 BPM failure requires an exact corrected-build device retest; audio and persistence remain unqualified."
+      "Known issue: contributor's 22 MB / 122 BPM failure requires an exact corrected-build device retest; audio and persistence remain unqualified."
     ]
   },
   {

@@ -175,7 +175,7 @@ implemented for this recommendation.
 ### Start with a completed recording
 
 Implement the existing Beat Slicer action for a completed ordinary track-recorder
-buffer while that source is not being recorded. The owner subsequently clarified
+buffer while that source is not being recorded. The module author subsequently clarified
 that pattern playback should continue for file-backed Flex, Static and recorder
 edits, and that unrelated recorders do not block editing. Keep the existing menu
 and rational beat-grid controls. Pending recording into the edited buffer blocks
@@ -247,16 +247,16 @@ instrument's own recording/transport timing; a host timer or independent clock
 cannot provide that guarantee. No new native sites should be added before this
 architecture is agreed.
 
-### Owner-reported stock marker lifetime (25 October 2026)
+### Contributor-reported stock marker lifetime (25 October 2026)
 
 After reviewing the recorder-grid research, the contributor confirmed this behavior
-on their Octatrack. This is owner-reported stock behavior, not an independently
+on their Octatrack. This is contributor-reported stock behavior, not an independently
 executed firmware trace or qualification of recorder support in Beat Slicer:
 
 - Re-recording the same length preserves existing marker positions.
 - A longer recording preserves those positions rather than stretching the grid
   across the longer range.
-- A shorter recording removes the old out-of-range marker positions. The owner
+- A shorter recording removes the old out-of-range marker positions. The contributor
   subsequently clarified that the slice count stays the same.
 - Recording longer again retains the resulting positions, including clamped
   starts. It neither restores old out-of-range positions nor redistributes them.
@@ -282,7 +282,7 @@ explicit replacement; Beat Grid must not add automatic deletion or reslicing.
 
 ### Accepted 0.1.64 private development scope
 
-The owner permits pre-slicing an empty buffer with an empty result, and expects
+The module author permits pre-slicing an empty buffer with an empty result, and expects
 pattern playback to continue for Flex files, Static files and recorder buffers
 when CPU permits. The recording restriction belongs to the edited source.
 An audio track can play a file while its independent recorder captures another
@@ -290,4 +290,4 @@ buffer; that file must remain editable. Buffer A can likewise be edited while
 buffer B records. Only pending/active recording into A blocks editing A.
 
 The implementation and host cases for this extension are in progress. No new
-device build has replaced the owner's ongoing 0.1.63 extended trial.
+device build has replaced a contributor's ongoing 0.1.63 extended trial.

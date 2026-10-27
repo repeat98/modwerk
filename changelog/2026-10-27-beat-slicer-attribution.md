@@ -1,0 +1,1 @@
+Correct Beat Slicer draft test and UI-approval attribution to its author or a contributor. Record the author's deliberate power-off and USB unplug after playback testing; final Undo and subsequent saved-module restoration remain unverified.

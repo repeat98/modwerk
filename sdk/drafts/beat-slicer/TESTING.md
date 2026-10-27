@@ -3026,7 +3026,7 @@ emulator rerun with this exact package passed file-backed Flex and Static
 preview/NO with unchanged metadata, native YES with exact records (three Flex,
 two Static), unchanged attributes/inactive records, stock clearing, USB Undo
 and restoration of the stock menu. These are small authored fixtures, not the
-owner's long file. The exact corrected-build physical retest remains pending.
+contributor's long file. The exact corrected-build physical retest remains pending.
 
 The current upstream-base repository check passes (2,570 app tests and the SDK check; 37 SDK tests, one skipped). The literal `origin/main` comparison still fails only on the inherited stale-fork CHANGELOG.md policy check. No native base rebuild is needed for this module-only correction.
 
@@ -4023,9 +4023,11 @@ The contributor clarified that the bar counts are sample lengths and reported
 source and a full pairing of the file-slot values were not supplied; no
 per-source duration or additional cross-product coverage is inferred.
 
-The private helper later recorded USB loss at 10:41 Taipei time on 27 October
-and stopped; its final Undo was not verified. Whether this was a deliberate
-unplug/restart after testing or an unexpected disconnect awaits clarification.
+The private helper recorded USB loss at 10:41 Taipei time on 27 October.
+The author confirmed they deliberately powered the machine off, then unplugged
+USB after testing. This explains the disconnect; final USB Undo remains
+unverified. Return to the flashed base and saved modules after a subsequent
+power cycle has not been reported or checked.
 No Keep, flash, sample/project save, persistence or final Undo result is claimed. Exact physical short-commit
 timing, complete scheduler/Pickup coverage and extended cancellation remain
 open. These results belong to the event-35 build above; the later merge of
