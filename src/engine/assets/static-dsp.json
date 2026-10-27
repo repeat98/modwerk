@@ -59,6 +59,12 @@
       "priority": 18
     },
     {
+      "id": "grnyv1",
+      "key": "FRACT",
+      "fxId": 7,
+      "priority": 19
+    },
+    {
       "id": "bbd",
       "key": "BBD",
       "fxId": 14,

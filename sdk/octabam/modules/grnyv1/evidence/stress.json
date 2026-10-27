@@ -1,0 +1,510 @@
+{
+ "method": "stress stress_project.py needs an Octatrack template project, so the same load is driven straight into dsp_host, as BBD's record does: FRACT on FX2 of all eight tracks (four per core) behind CHORUS on every FX1; per block three LFOs (sine, triangle, square) on FRACT's POS, SIZE and SPCE, and a new random value on every named slot of both effects each sixteenth at 120 BPM; trig splits on six tracks; eight different stems; dsp_host -guard 15779 -guard-shared -dirty 0x5a (SPACE's claim, +0..+$3DA2 of each FX2 slot).",
+ "imageSha256": "3ae08fe552c97d2a8597f9f6010267c5aa85ef22259d1e7f0ce4126271579370",
+ "payloadSha256": {
+  "grnyv1_A.mem": "78b9eaede914df84d77e4ecf5ce180697e80cf28c6096081956f2f37d2b9f99f",
+  "grnyv1_B.mem": "f15bb25362fcc2087eefdf4b8d2fa540d3cf1bf85b2be2260d3b1fd33611d0e3"
+ },
+ "seconds": 4.0,
+ "tailSeconds": 2.0,
+ "blocks": 16838,
+ "framesPerBlock": 16,
+ "seed": 20261022,
+ "layout": [
+  {
+   "track": 5,
+   "fx": 1,
+   "key": "CHORUS",
+   "core": 0,
+   "alloc": 0,
+   "r7": 1,
+   "locked": 8,
+   "lfos": [
+    {
+     "slot": 0,
+     "shape": "sine",
+     "hz": 4.143,
+     "depth": 44.9
+    },
+    {
+     "slot": 1,
+     "shape": "tri",
+     "hz": 5.153,
+     "depth": 22.1
+    },
+    {
+     "slot": 2,
+     "shape": "square",
+     "hz": 4.977,
+     "depth": 29.9
+    }
+   ]
+  },
+  {
+   "track": 5,
+   "fx": 2,
+   "key": "FRACT",
+   "core": 0,
+   "alloc": 1,
+   "r7": 2,
+   "locked": 10,
+   "lfos": [
+    {
+     "slot": 0,
+     "shape": "sine",
+     "hz": 2.854,
+     "depth": 25.4
+    },
+    {
+     "slot": 1,
+     "shape": "tri",
+     "hz": 3.853,
+     "depth": 40.7
+    },
+    {
+     "slot": 4,
+     "shape": "square",
+     "hz": 1.953,
+     "depth": 58.6
+    }
+   ]
+  },
+  {
+   "track": 6,
+   "fx": 1,
+   "key": "CHORUS",
+   "core": 0,
+   "alloc": 2,
+   "r7": 4,
+   "locked": 8,
+   "lfos": [
+    {
+     "slot": 0,
+     "shape": "sine",
+     "hz": 4.624,
+     "depth": 27.2
+    },
+    {
+     "slot": 1,
+     "shape": "tri",
+     "hz": 5.068,
+     "depth": 49.7
+    },
+    {
+     "slot": 2,
+     "shape": "square",
+     "hz": 2.933,
+     "depth": 27.4
+    }
+   ]
+  },
+  {
+   "track": 6,
+   "fx": 2,
+   "key": "FRACT",
+   "core": 0,
+   "alloc": 3,
+   "r7": 5,
+   "locked": 10,
+   "lfos": [
+    {
+     "slot": 0,
+     "shape": "sine",
+     "hz": 2.128,
+     "depth": 50.9
+    },
+    {
+     "slot": 1,
+     "shape": "tri",
+     "hz": 2.492,
+     "depth": 38.4
+    },
+    {
+     "slot": 4,
+     "shape": "square",
+     "hz": 5.49,
+     "depth": 30.1
+    }
+   ]
+  },
+  {
+   "track": 7,
+   "fx": 1,
+   "key": "CHORUS",
+   "core": 0,
+   "alloc": 4,
+   "r7": 7,
+   "locked": 8,
+   "lfos": [
+    {
+     "slot": 0,
+     "shape": "sine",
+     "hz": 3.891,
+     "depth": 33.6
+    },
+    {
+     "slot": 1,
+     "shape": "tri",
+     "hz": 1.004,
+     "depth": 25.6
+    },
+    {
+     "slot": 2,
+     "shape": "square",
+     "hz": 4.953,
+     "depth": 57.6
+    }
+   ]
+  },
+  {
+   "track": 7,
+   "fx": 2,
+   "key": "FRACT",
+   "core": 0,
+   "alloc": 5,
+   "r7": 8,
+   "locked": 10,
+   "lfos": [
+    {
+     "slot": 0,
+     "shape": "sine",
+     "hz": 2.74,
+     "depth": 47.3
+    },
+    {
+     "slot": 1,
+     "shape": "tri",
+     "hz": 3.604,
+     "depth": 40.3
+    },
+    {
+     "slot": 4,
+     "shape": "square",
+     "hz": 4.214,
+     "depth": 28.2
+    }
+   ]
+  },
+  {
+   "track": 8,
+   "fx": 1,
+   "key": "CHORUS",
+   "core": 0,
+   "alloc": 6,
+   "r7": 10,
+   "locked": 8,
+   "lfos": [
+    {
+     "slot": 0,
+     "shape": "sine",
+     "hz": 0.894,
+     "depth": 46.2
+    },
+    {
+     "slot": 1,
+     "shape": "tri",
+     "hz": 3.842,
+     "depth": 49.0
+    },
+    {
+     "slot": 2,
+     "shape": "square",
+     "hz": 3.47,
+     "depth": 42.5
+    }
+   ]
+  },
+  {
+   "track": 8,
+   "fx": 2,
+   "key": "FRACT",
+   "core": 0,
+   "alloc": 7,
+   "r7": 11,
+   "locked": 10,
+   "lfos": [
+    {
+     "slot": 0,
+     "shape": "sine",
+     "hz": 3.287,
+     "depth": 33.9
+    },
+    {
+     "slot": 1,
+     "shape": "tri",
+     "hz": 1.169,
+     "depth": 29.6
+    },
+    {
+     "slot": 4,
+     "shape": "square",
+     "hz": 2.461,
+     "depth": 58.7
+    }
+   ]
+  },
+  {
+   "track": 1,
+   "fx": 1,
+   "key": "CHORUS",
+   "core": 1,
+   "alloc": 0,
+   "r7": 1,
+   "locked": 8,
+   "lfos": [
+    {
+     "slot": 0,
+     "shape": "sine",
+     "hz": 5.445,
+     "depth": 28.9
+    },
+    {
+     "slot": 1,
+     "shape": "tri",
+     "hz": 3.288,
+     "depth": 54.2
+    },
+    {
+     "slot": 2,
+     "shape": "square",
+     "hz": 1.486,
+     "depth": 61.2
+    }
+   ]
+  },
+  {
+   "track": 1,
+   "fx": 2,
+   "key": "FRACT",
+   "core": 1,
+   "alloc": 1,
+   "r7": 2,
+   "locked": 10,
+   "lfos": [
+    {
+     "slot": 0,
+     "shape": "sine",
+     "hz": 0.351,
+     "depth": 26.0
+    },
+    {
+     "slot": 1,
+     "shape": "tri",
+     "hz": 4.39,
+     "depth": 63.0
+    },
+    {
+     "slot": 4,
+     "shape": "square",
+     "hz": 5.636,
+     "depth": 40.7
+    }
+   ]
+  },
+  {
+   "track": 2,
+   "fx": 1,
+   "key": "CHORUS",
+   "core": 1,
+   "alloc": 2,
+   "r7": 4,
+   "locked": 8,
+   "lfos": [
+    {
+     "slot": 0,
+     "shape": "sine",
+     "hz": 2.381,
+     "depth": 42.0
+    },
+    {
+     "slot": 1,
+     "shape": "tri",
+     "hz": 3.004,
+     "depth": 21.9
+    },
+    {
+     "slot": 2,
+     "shape": "square",
+     "hz": 3.301,
+     "depth": 38.8
+    }
+   ]
+  },
+  {
+   "track": 2,
+   "fx": 2,
+   "key": "FRACT",
+   "core": 1,
+   "alloc": 3,
+   "r7": 5,
+   "locked": 10,
+   "lfos": [
+    {
+     "slot": 0,
+     "shape": "sine",
+     "hz": 3.317,
+     "depth": 56.8
+    },
+    {
+     "slot": 1,
+     "shape": "tri",
+     "hz": 4.734,
+     "depth": 49.6
+    },
+    {
+     "slot": 4,
+     "shape": "square",
+     "hz": 2.875,
+     "depth": 60.4
+    }
+   ]
+  },
+  {
+   "track": 3,
+   "fx": 1,
+   "key": "CHORUS",
+   "core": 1,
+   "alloc": 4,
+   "r7": 7,
+   "locked": 8,
+   "lfos": [
+    {
+     "slot": 0,
+     "shape": "sine",
+     "hz": 2.839,
+     "depth": 28.0
+    },
+    {
+     "slot": 1,
+     "shape": "tri",
+     "hz": 5.236,
+     "depth": 25.9
+    },
+    {
+     "slot": 2,
+     "shape": "square",
+     "hz": 4.814,
+     "depth": 33.8
+    }
+   ]
+  },
+  {
+   "track": 3,
+   "fx": 2,
+   "key": "FRACT",
+   "core": 1,
+   "alloc": 5,
+   "r7": 8,
+   "locked": 10,
+   "lfos": [
+    {
+     "slot": 0,
+     "shape": "sine",
+     "hz": 5.497,
+     "depth": 22.1
+    },
+    {
+     "slot": 1,
+     "shape": "tri",
+     "hz": 2.654,
+     "depth": 57.0
+    },
+    {
+     "slot": 4,
+     "shape": "square",
+     "hz": 0.766,
+     "depth": 58.3
+    }
+   ]
+  },
+  {
+   "track": 4,
+   "fx": 1,
+   "key": "CHORUS",
+   "core": 1,
+   "alloc": 6,
+   "r7": 10,
+   "locked": 8,
+   "lfos": [
+    {
+     "slot": 0,
+     "shape": "sine",
+     "hz": 4.08,
+     "depth": 59.3
+    },
+    {
+     "slot": 1,
+     "shape": "tri",
+     "hz": 5.82,
+     "depth": 21.6
+    },
+    {
+     "slot": 2,
+     "shape": "square",
+     "hz": 2.089,
+     "depth": 42.0
+    }
+   ]
+  },
+  {
+   "track": 4,
+   "fx": 2,
+   "key": "FRACT",
+   "core": 1,
+   "alloc": 7,
+   "r7": 11,
+   "locked": 10,
+   "lfos": [
+    {
+     "slot": 0,
+     "shape": "sine",
+     "hz": 5.728,
+     "depth": 48.4
+    },
+    {
+     "slot": 1,
+     "shape": "tri",
+     "hz": 2.934,
+     "depth": 47.4
+    },
+    {
+     "slot": 4,
+     "shape": "square",
+     "hz": 5.942,
+     "depth": 20.2
+    }
+   ]
+  }
+ ],
+ "fractPerCore": {
+  "0": 4,
+  "1": 4
+ },
+ "splits": {
+  "T1": 0,
+  "T2": 3,
+  "T3": 8,
+  "T4": 15,
+  "T5": 1,
+  "T6": 7,
+  "T7": 12,
+  "T8": 0
+ },
+ "lfosPerTrack": 3,
+ "slotsChangedPerStep": 18,
+ "stepBlocks": 345,
+ "guard": "-guard 15779 -guard-shared",
+ "dirty": "0x5a",
+ "hostExit": 0,
+ "hangs": 0,
+ "fractStrayRegions": 0,
+ "fractClobbers": 0,
+ "allClobbers": 0,
+ "guardedInstances": 16,
+ "stockStrayRegions": 2339107,
+ "peakPerCorePerSample": {
+  "0": 2789.6,
+  "1": 2767.8
+ },
+ "wallSeconds": 140.6
+}

@@ -11,6 +11,10 @@ import { readUsbAudioObjects } from './usb-audio.ts'
 import { USB_AUDIO_MODULE, type UsbAudioConfiguration } from '../config/usb-audio.ts'
 // Native arena.BASE. All accepted selections reserve the platform at its bottom.
 export const PLATFORM_RUNTIME_BASE = 0x40a955e0
+const MODULE_UNITS: Readonly<Record<string, readonly string[]>> = {
+  tapeecho: ['tapeecho'], euclid: ['euclid'], bbd: ['bbd'],
+  grnyv1: ['ogpitch', 'ogcontrol', 'oggrain', 'ogsource', 'ogview'],
+}
 /** Loader-free runtime with the core logger in every configuration. */
 export async function createStaticColdFireRuntime(ids: readonly string[], original?: Uint8Array, base = PLATFORM_RUNTIME_BASE, usbAudio?: UsbAudioConfiguration, betaAccess = false, startupRomAddress = BETA_STARTUP_ACTIVE_ADDRESS - 76) {
   const units = []
@@ -20,7 +24,7 @@ export async function createStaticColdFireRuntime(ids: readonly string[], origin
       if (!original) throw new Error('USB Audio needs verified local firmware.')
       units.push(...await readUsbAudioObjects(usbAudio, original)); continue
     }
-    if (['tapeecho', 'euclid', 'bbd'].includes(module.id)) units.push(await readColdFirePackage(module.id))
+    for (const label of MODULE_UNITS[module.id] ?? []) units.push(await readColdFirePackage(label))
     for (const pkg of requestedFacts.objects.filter(pkg => pkg.moduleId === module.id && requestedObjectDram(pkg, ids) && requestedObjectSelected(pkg, ids) && selected.some(g => g.moduleId === pkg.moduleId))) units.push(await readRequestedObject(pkg.label, original, ids))
   }
   if (usbAudio && !ids.includes(USB_AUDIO_MODULE)) throw new Error('USB Audio settings require the USB Audio module.')
@@ -53,7 +57,7 @@ export async function createColdFireRuntime(cores: readonly StockDspCore[], ids:
   const selection = resolveSelection(ids), catalog = await createDynamicRuntimeCatalog(cores, ids, 0)
   const units = []
   // with_platform appends the loader after the remix's declared modules.
-  for (const module of selection) if (['tapeecho', 'euclid', 'bbd'].includes(module.id)) units.push(await readColdFirePackage(module.id))
+  for (const module of selection) for (const label of MODULE_UNITS[module.id] ?? []) units.push(await readColdFirePackage(label))
   for (const label of PLATFORM_UNITS) units.push(await readColdFirePackage(label))
   units.push({ label: 'dlcatalog', object: runtimeCatalogObject(catalog, units[0].object.flags) })
   const reserveBytes = 1707 * 6144 + LOGGER_RESERVE_BYTES

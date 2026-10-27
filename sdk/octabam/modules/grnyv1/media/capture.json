@@ -1,0 +1,441 @@
+{
+ "moduleId": "grnyv1",
+ "moduleVersion": "0.10.0-experimental",
+ "captured": "2026-10-22",
+ "firmware": "1.40C",
+ "emulator": "octemu",
+ "emulatorRevision": "3adc0a8e59db4342ee105f937dc620a0039d5b58",
+ "emulatorSha256": "d821b5e2a0d97f5c83f46bb41560b8e89abe4f386cef1636fd916ccdace7ed2b",
+ "imageSha256": "b868cb5339b65b6776374272815e06cfa84c9e0197b8e3a6db404b1cb5ae9aa3",
+ "image": "FRACT's UI-probe build: the card build of this source with og_ui and og_draw called from the stock UI tick and LCD flush, standing in for the Modwerk base's module_tick and module_draw (scripts/build.py, GRNYV1_UI_PROBE=1).",
+ "sourceRevision": "57db580c9b880b224a5a8a6b2500272e96299d9e",
+ "packageSha256": "86aaa8dbcd32739ca72252dbc81a51d639b3990a11fd6e1af848929aae0eb442",
+ "setup": "Headless octemu, MKII panel, transport as the walk sets it, on the private demo project of scripts/preview.py: T1 a Flex track playing the project's original synthesized texture (make demo), stored on the card as SINE440.WAV. 128x64 LCD, enlarged six times by nearest-neighbour duplication, lit pixels 240, unlit 24.",
+ "palette": {
+  "on": [
+   240,
+   240,
+   240
+  ],
+  "off": [
+   24,
+   24,
+   24
+  ]
+ },
+ "walk": [
+  {
+   "wait_text": "PTCH",
+   "timeout_ms": 90000
+  },
+  {
+   "wait_guest_ms": 6000
+  },
+  {
+   "wait_gone": "L0ADING FILE5",
+   "timeout_ms": 120000
+  },
+  {
+   "wait_guest_ms": 2000
+  },
+  {
+   "tap": "TRACK1"
+  },
+  {
+   "wait_guest_ms": 800
+  },
+  {
+   "press": "FUNC"
+  },
+  {
+   "wait_guest_ms": 800
+  },
+  {
+   "tap": "FX2",
+   "until": "FX2 5ETUP",
+   "timeout_ms": 30000
+  },
+  {
+   "release": "FUNC"
+  },
+  {
+   "wait_guest_ms": 800
+  },
+  {
+   "tap": "UP"
+  },
+  {
+   "wait_guest_ms": 300
+  },
+  {
+   "tap": "UP"
+  },
+  {
+   "wait_guest_ms": 300
+  },
+  {
+   "tap": "UP"
+  },
+  {
+   "wait_guest_ms": 300
+  },
+  {
+   "tap": "UP"
+  },
+  {
+   "wait_guest_ms": 300
+  },
+  {
+   "tap": "UP"
+  },
+  {
+   "wait_guest_ms": 300
+  },
+  {
+   "tap": "UP"
+  },
+  {
+   "wait_guest_ms": 300
+  },
+  {
+   "tap": "UP"
+  },
+  {
+   "wait_guest_ms": 300
+  },
+  {
+   "tap": "UP"
+  },
+  {
+   "wait_guest_ms": 300
+  },
+  {
+   "tap": "UP"
+  },
+  {
+   "wait_guest_ms": 300
+  },
+  {
+   "tap": "UP"
+  },
+  {
+   "wait_guest_ms": 300
+  },
+  {
+   "tap": "UP"
+  },
+  {
+   "wait_guest_ms": 300
+  },
+  {
+   "tap": "UP"
+  },
+  {
+   "wait_guest_ms": 300
+  },
+  {
+   "tap": "UP"
+  },
+  {
+   "wait_guest_ms": 300
+  },
+  {
+   "tap": "UP"
+  },
+  {
+   "wait_guest_ms": 300
+  },
+  {
+   "tap": "UP"
+  },
+  {
+   "wait_guest_ms": 300
+  },
+  {
+   "tap": "UP"
+  },
+  {
+   "wait_guest_ms": 300
+  },
+  {
+   "tap": "UP"
+  },
+  {
+   "wait_guest_ms": 300
+  },
+  {
+   "tap": "UP"
+  },
+  {
+   "wait_guest_ms": 300
+  },
+  {
+   "tap": "UP"
+  },
+  {
+   "wait_guest_ms": 300
+  },
+  {
+   "tap": "UP"
+  },
+  {
+   "wait_guest_ms": 300
+  },
+  {
+   "tap": "YES"
+  },
+  {
+   "wait_guest_ms": 1200
+  },
+  {
+   "tap": "DOWN"
+  },
+  {
+   "wait_guest_ms": 800
+  },
+  {
+   "tap": "YES"
+  },
+  {
+   "wait_guest_ms": 1500
+  },
+  {
+   "screenshot": "../../out/media-capture/state/ot-location.ppm"
+  },
+  {
+   "encoder": 3,
+   "delta": -32,
+   "over_ms": 400
+  },
+  {
+   "wait_guest_ms": 300
+  },
+  {
+   "screenshot": "../../out/media-capture/state/ot-setup.ppm"
+  },
+  {
+   "encoder": 3,
+   "delta": 32,
+   "over_ms": 400
+  },
+  {
+   "wait_guest_ms": 1500
+  },
+  {
+   "tap": "NO",
+   "until_gone": "FX2 5ETUP",
+   "timeout_ms": 30000
+  },
+  {
+   "wait_guest_ms": 800
+  },
+  {
+   "tap": "FX2",
+   "until": "FRACT",
+   "timeout_ms": 30000
+  },
+  {
+   "tap": "PLAY",
+   "until_lamp": 1,
+   "timeout_ms": 30000
+  },
+  {
+   "wait_guest_ms": 8000
+  },
+  {
+   "screenshot": "../../out/media-capture/state/ot-main.ppm"
+  },
+  {
+   "tap": "TRACK3"
+  },
+  {
+   "wait_guest_ms": 800
+  },
+  {
+   "press": "FUNC"
+  },
+  {
+   "wait_guest_ms": 800
+  },
+  {
+   "tap": "FX2",
+   "until": "FX2 5ETUP",
+   "timeout_ms": 30000
+  },
+  {
+   "release": "FUNC"
+  },
+  {
+   "wait_guest_ms": 800
+  },
+  {
+   "tap": "UP"
+  },
+  {
+   "wait_guest_ms": 300
+  },
+  {
+   "tap": "UP"
+  },
+  {
+   "wait_guest_ms": 300
+  },
+  {
+   "tap": "UP"
+  },
+  {
+   "wait_guest_ms": 300
+  },
+  {
+   "tap": "UP"
+  },
+  {
+   "wait_guest_ms": 300
+  },
+  {
+   "tap": "UP"
+  },
+  {
+   "wait_guest_ms": 300
+  },
+  {
+   "tap": "UP"
+  },
+  {
+   "wait_guest_ms": 300
+  },
+  {
+   "tap": "UP"
+  },
+  {
+   "wait_guest_ms": 300
+  },
+  {
+   "tap": "UP"
+  },
+  {
+   "wait_guest_ms": 300
+  },
+  {
+   "tap": "UP"
+  },
+  {
+   "wait_guest_ms": 300
+  },
+  {
+   "tap": "UP"
+  },
+  {
+   "wait_guest_ms": 300
+  },
+  {
+   "tap": "UP"
+  },
+  {
+   "wait_guest_ms": 300
+  },
+  {
+   "tap": "UP"
+  },
+  {
+   "wait_guest_ms": 300
+  },
+  {
+   "tap": "UP"
+  },
+  {
+   "wait_guest_ms": 300
+  },
+  {
+   "tap": "UP"
+  },
+  {
+   "wait_guest_ms": 300
+  },
+  {
+   "tap": "UP"
+  },
+  {
+   "wait_guest_ms": 300
+  },
+  {
+   "tap": "UP"
+  },
+  {
+   "wait_guest_ms": 300
+  },
+  {
+   "tap": "UP"
+  },
+  {
+   "wait_guest_ms": 300
+  },
+  {
+   "tap": "UP"
+  },
+  {
+   "wait_guest_ms": 300
+  },
+  {
+   "tap": "UP"
+  },
+  {
+   "wait_guest_ms": 300
+  },
+  {
+   "tap": "UP"
+  },
+  {
+   "wait_guest_ms": 300
+  },
+  {
+   "tap": "DOWN"
+  },
+  {
+   "wait_guest_ms": 800
+  },
+  {
+   "tap": "YES"
+  },
+  {
+   "wait_guest_ms": 800
+  },
+  {
+   "tap": "NO",
+   "until_gone": "FX2 5ETUP",
+   "timeout_ms": 30000
+  },
+  {
+   "wait_guest_ms": 800
+  },
+  {
+   "tap": "FX2",
+   "until": "FRACT",
+   "timeout_ms": 30000
+  },
+  {
+   "wait_guest_ms": 1500
+  },
+  {
+   "screenshot": "../../out/media-capture/state/ot-second.ppm"
+  },
+  {
+   "tap": "STOP"
+  },
+  {
+   "wait_guest_ms": 1000
+  },
+  {
+   "mark": "capture-complete"
+  },
+  {
+   "wait_guest_ms": 1000
+  }
+ ],
+ "screenshots": {
+  "ot-location.png": "85088ebc9916ddd12b68af5784b3e421e16c1b5295cdd9871fcf42618a9752da",
+  "ot-setup.png": "e4fb7f1227594b4aed0d33d4b908d85e3ca578b48a3e88c5e1428e2fff7d2d5f",
+  "ot-main.png": "3e405bd3a1c17869d2dc4cef38870931d5d0dd9e20fcbf410cf7c94fd019ba5e",
+  "ot-second.png": "0cc53251f9bf6691346bb7d9f7407e7bcaf62927e0a5c2110777aeb27db0d475"
+ }
+}

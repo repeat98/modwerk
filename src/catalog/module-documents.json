@@ -2497,6 +2497,465 @@
     },
     {
       "schemaVersion": 2,
+      "id": "grnyv1",
+      "key": "FRACT",
+      "name": "FRACT",
+      "version": "0.10.0-experimental",
+      "category": "effects",
+      "access": {
+        "location": "Audio track FX2 SETUP: FRACT in the effect list. Needs a Flex track with TSTR OFF; one track at a time.",
+        "steps": [
+          "Select a Flex track with a sample loaded (its TRACK key).",
+          "Hold FUNC and press SRC (SRC SETUP) and turn encoder E, TSTR, to OFF.",
+          "Hold FUNC and press FX2 to open FX2 SETUP, turn LEVEL to FRACT and press YES; PAN, SCAN, SRNG and DENS appear on the right.",
+          "Press FX2 for the main page: POS, SIZE and REVS above SPRD, SPCE and SHPE, with the waveform. If another track already has FRACT, the page shows FRACT ON T<n> and this track plays dry."
+        ],
+        "screenshots": [
+          "media/ot-location.png",
+          "media/ot-setup.png",
+          "media/ot-main.png",
+          "media/ot-second.png"
+        ]
+      },
+      "author": {
+        "github": "ex1010",
+        "name": "ex1010",
+        "credits": [
+          "FRACT granular engine, controls, overview, tests and documentation: toli (ex1010); see CREDITS.md.",
+          "SPACE reverb adapted from Jannik Aßfalg (repeat98)'s Mini Verb, MIT; its notice credits Sam Banks and Maxolydian (THIRD_PARTY_NOTICES.md)."
+        ]
+      },
+      "nativeManifest": "manifest.py",
+      "presentation": {
+        "label": "FRACT",
+        "family": "Granular FX",
+        "summary": "A three-grain granulator for the Flex sample on its track, with a stereo SPACE reverb. Set the sample's TSTR to OFF; FRACT runs on one track at a time.",
+        "overview": "Set TSTR to OFF on the Flex track (FUNC + SRC, encoder E): with timestretch on, the granulator stays off and FRACT seems to do nothing. FRACT runs on one track at a time: on a second track it plays the sample dry and its page shows FRACT ON T<n>, the track that has it. FRACT reads the Flex sample loaded on its track and plays it as three overlapping grains, born one after another where POS puts them. SIZE sets their length, REVS their direction, SPRD how far their starts scatter, SHPE their window and SPCE a diffused stereo reverb behind them; the SETUP page holds PAN, SCAN, SRNG and DENS. Pitch is the track's own PTCH. The FX2 page shows the sample's waveform, the region POS and SIZE pick and a square for each grain.",
+        "highlights": [
+          "Set TSTR to OFF on the Flex track; FRACT runs on one track at a time",
+          "Three overlapping grains from the loaded Flex sample: position, length, direction, scatter and window shape",
+          "SCAN travels through the sample, DENS thins the grains out, PAN spreads them across the stereo field",
+          "SPACE: a diffused stereo reverb per track, exact dry at 0",
+          "The FX2 page shows the waveform, the POS/SIZE region and every grain as it plays",
+          "No click at trigs on FRACT's track; pitch follows the track's own PTCH"
+        ],
+        "usage": [
+          "On a Flex track with a sample loaded, hold FUNC and press SRC and turn encoder E (TSTR) to OFF. Then hold FUNC and press FX2, turn LEVEL to FRACT and press YES, press FX2 for its page and press PLAY. FRACT works on one track at a time: if another track already has it, this page shows FRACT ON T<n> and the track plays dry.",
+          "Turn POS (A) to move the grains through the sample and SIZE (B) to make them shorter or longer; open SPRD (D) to scatter them and turn REVS (C) down for reversed grains, about half at 64 and all at 0. In SETUP (hold FUNC, press FX2) turn SCAN (B) above 64 to travel forwards, PAN (A) up to spread grains across the stereo field and DENS (D) down for sparser grains.",
+          "Raise SPCE (E) to 64-127 for a long stereo tail, then return it to 0 for the dry grains. To bypass FRACT, choose NONE in the FX2 list; on PLAY the track plays its sample normally, and another track can take FRACT."
+        ]
+      },
+      "controls": [
+        {
+          "name": "POS",
+          "default": 18,
+          "count": 128,
+          "doc": "Main A. Where new grains start, across the whole loaded sample: 0 its beginning, 127 its end. Each grain keeps the start it was born with.",
+          "labels": null
+        },
+        {
+          "name": "SIZE",
+          "default": 86,
+          "count": 128,
+          "doc": "Main B. Grain length from 10 ms (0) to 2 s (127) in 64 steps; 86 is about 372 ms. A change reaches the grains already playing without restarting them.",
+          "labels": null
+        },
+        {
+          "name": "REVS",
+          "default": 127,
+          "count": 128,
+          "doc": "Main C. Grain direction: 127 plays every grain forwards, 0 every grain backwards; in between a grain is reversed by chance, about half at 64. Latched at each grain's birth.",
+          "labels": null
+        },
+        {
+          "name": "SPRD",
+          "default": 0,
+          "count": 128,
+          "doc": "Main D. Scatter of grain starts around POS: 0 exact, higher wider (slowly at first); at 127 the whole sample (SRNG FULL) or about one second either side (LOCAL).",
+          "labels": null
+        },
+        {
+          "name": "SPCE",
+          "default": 0,
+          "count": 128,
+          "doc": "Main E. SPACE: 0 dry, higher adds more reverb with a longer decay. Above 96 the tail darkens, limiter drive falls and linked stereo smoothing reduces repeated pluck swells. At 127 fully wet; individual attacks may remain audible. Returning to 0 glides to exact dry.",
+          "labels": null
+        },
+        {
+          "name": "SHPE",
+          "default": 64,
+          "count": 128,
+          "doc": "Main F. Grain window: 64 a smooth Hann bell; lower a flatter top with short fades (within about 1 dB); higher a fast attack and steep decay, up to about 4 dB quieter. Latched at birth.",
+          "labels": null
+        },
+        {
+          "name": "PAN",
+          "default": 0,
+          "count": 128,
+          "doc": "SETUP A. Random stereo position for each grain: 0 keeps the sample's own stereo image, 127 uses the whole field. Never louder than the source. No locks, LFOs or scenes (SETUP page).",
+          "labels": null
+        },
+        {
+          "name": "SCAN",
+          "default": 64,
+          "count": 128,
+          "doc": "SETUP B. Travel through the sample: 64 holds; above 64 forwards (96 normal speed, 127 about 4x), below backwards (32 normal speed, 0 4x). STOP returns to POS. No locks, LFOs or scenes.",
+          "labels": null
+        },
+        {
+          "name": "SRNG",
+          "default": 0,
+          "count": 2,
+          "doc": "SETUP C. Range of SPRD: FULL lets the scatter reach across the whole sample; LOCAL keeps it within about two seconds around the start point. No locks, LFOs or scenes.",
+          "labels": [
+            "FULL",
+            "LOCAL"
+          ]
+        },
+        {
+          "name": "DENS",
+          "default": 127,
+          "count": 128,
+          "doc": "SETUP D. How often grains are born: 127 three overlapping grains; lower further apart (twice at 95, one at a time from about 76, about 16 times at 0). Sparser is quieter on average. No locks, LFOs or scenes.",
+          "labels": null
+        }
+      ],
+      "compatibility": {
+        "firmware": "1.40C",
+        "effectId": 7,
+        "location": "FX2",
+        "conflicts": [],
+        "uiClaims": [],
+        "limitations": [
+          "TSTR must be OFF on the Flex track (SRC SETUP, encoder E): with timestretch on, the granulator stays off by design and the page shows TSTR OFF as a reminder.",
+          "One track at a time (owner review requested): FRACT has one granulator, three grain readers and one 128-byte state shared by all eight tracks in the single copy of its code the base loads. FRACT on a second track plays that sample dry with SPACE off, and its page shows FRACT ON T<n>. Reason: ColdFire time and that shared state; the stock firmware already takes 48-66 % of the ColdFire on the user's MKII and one granulator at its dearest is predicted at 24.8 more points, so a second would pass 100 %. STOP frees it; on PLAY the lowest track with FRACT takes it.",
+          "Sources: a normal loaded Flex sample, read whole (SRC trim and slices do not limit where grains start), 16-bit precision from 16- and 24-bit, mono or stereo files. On Static tracks, recorder buffers and live input the granulator does not engage; Thru and Neighbor machines are not tested.",
+          "PAN, SCAN, SRNG and DENS are SETUP controls: OS 1.40C gives them no parameter locks, LFOs or scenes. The six main controls take all three.",
+          "Changed stock behaviour, only on the track whose FRACT plays: the stock trig declick (a decaying copy of the last output added at each trig) is cleared there, because FRACT's grains do not restart and that copy clicked. Every other track keeps it.",
+          "Parts saved by earlier FRACT builds load REVS, SCAN and DENS (and from early 0.10.0 builds SHPE) at other values: set REVS 127, SCAN 64, DENS 127 and SHPE 64, or choose FX2 NONE and then FRACT, which writes every default.",
+          "Over USB: one stock-code site, 6 bytes at 0x400041cc, just after the stock fetch call at 0x400041c4 that POLY8 patches; the loader's admission test passes for FRACT beside POLY8 in both install orders (host only). FRACT on a POLY8 track granulates the primary voice's sample, so the chord is lost there.",
+          "SPACE uses +0..+$3DA2 of its FX2 slot buffer (15,779 of 16,384 words, the stock effects' extent), clear of Sidechain Compressor's key window on T3/T7.",
+          "FX2 effect id 7, pinned in the package (its ColdFire code names it): the one module id of the base's 13 no other module claims. Until 0.10.0-experimental FRACT used 9, LOFI2's since Modwerk #749 (2026-10-21). A Part saved with FRACT at 9 does not bring FRACT back: choose FRACT again on that FX2. Over USB, while the loaded project's module map still names FRACT at 9 (a project saved with the earlier build), the base refuses FRACT at 7 (FULL) or takes it out of that project (MISSING FRACT); remove the earlier build and load a project that never had it before installing this one.",
+          "Card-builder comparison with native octabam: 158 selections, 56 images match outside declared platform writes and 102 refusals agree, zero mismatches. Card images are not tested on hardware; the installed USB runtime remains the only exact-build device evidence.",
+          "DSP: 407.38 executed instructions/sample at worst, dearer than every stock effect (DJ EQ 330.9 in the same cases); four instances fit a core's static budget (2,048 of 3,120). Chip timing is unmeasured.",
+          "Exact package fef9db2b was installed on an Octatrack MKII on 2026-10-25 over USB and accepted on base d6bfff70. The user reports softer guitar attacks but still countable grains at SPCE 127 and a can-like effect above 96: partial listening only, not full hardware qualification. Defaults, second-track bypass, SHPE/REVS/DENS, setup controls, T3/T7 with neighbours, CPU, Part/project reload, power cycle and POLY8 alongside remain unverified for this exact build."
+        ]
+      },
+      "resources": {
+        "recorded": "2026-10-25",
+        "storage": {
+          "label": "ColdFire pool / DSP program / per-track DSP",
+          "display": "19,316 B / 593 words / 64 X + 15,779 Y words",
+          "value": null,
+          "unit": "see display",
+          "method": "static",
+          "conditions": "The package's code and data in the Modwerk base's pool (19,316 bytes, no bss, no heap), SPACE's 593 program words on each DSP core, and per FX2 instance 64 declared X state words (32 used) and a 15,779-word ring inside the stock 16,384-word FX2 buffer. Details: evidence/memory.md.",
+          "source": "evidence/memory.md"
+        },
+        "processing": {
+          "label": "ColdFire and DSP load",
+          "display": "24.8 CPU points worst (predicted); DSP 407.38 instr/sample",
+          "value": null,
+          "unit": "see display",
+          "method": "emulator",
+          "conditions": "ColdFire: make cost-check on QEMU priced with the cost metric measured on the user's MKII: 7.3 points a 16-frame block at track pitch 0 and SIZE 86, 24.8 at minimum SIZE and the track's maximum pitch (budget 30); an earlier build read +5 to +22 on the unit. DSP: 512 static cycles/sample, 407.38 executed instructions/sample at worst with a trig split (dsp_host). Not chip timing.",
+          "source": "evidence/cycles.md"
+        },
+        "impact": {
+          "conditions": "One track playing FRACT at its dearest settings (shortest grains at the track's maximum pitch), FRACT on FX2 of the other seven tracks bypassed, SPACE on all eight; the Modwerk base over USB.",
+          "cpu": {
+            "level": "high",
+            "basis": "measured-comparison",
+            "rationale": "The granulator runs on the ColdFire from the base's uncached pool: 7.3 points of the base's CPU meter a block at track pitch 0, up to 24.8 at minimum SIZE and the track's maximum pitch (QEMU priced with the metric measured on the user's MKII). On the unit an earlier build added +5 to +12 points at pitch 0 and up to +22 at minimum SIZE over a project idling at 56; the stock firmware alone takes 48-66 %. The overview adds at most 1.9 points while it fills.",
+            "source": "evidence/cycles.md"
+          },
+          "dsp": {
+            "level": "high",
+            "basis": "measured-comparison",
+            "rationale": "SPACE, a stereo diffused reverb, costs 407.38 executed instructions/sample at worst with a trig split against SPRING REV 314.19, PLATE REV 218.25 and DJ EQ 330.94 (the dearest stock effect) in the same cases; 512 static cycles a sample, so four per core take 2,048 of 3,120. At SPCE 0 it costs one compare and a return.",
+            "source": "evidence/performance.json"
+          },
+          "memory": {
+            "level": "moderate",
+            "basis": "source-estimate",
+            "rationale": "19,316 bytes of code and data in the base's pool (one copy for all tracks), 593 DSP program words per core, 64 X state words and 15,779 of the 16,384 Y words of the stock FX2 buffer per instance; no heap and no copy of the sample.",
+            "source": "evidence/memory.md"
+          }
+        }
+      },
+      "tests": {
+        "report": "TESTING.md",
+        "summary": "Output-envelope implementation at source revision 41e4b9699c7f3e8d611aa6f7cd03633bc272dc76, package fef9db2b (22148 bytes), built with Modwerk 9ec79ed25d9ff4012498215bb80afd8ca4e9f10c and Elekloader c150ac583a4b7e6d64680d5592f4a40f409193f7. make check: 283 PASS lines, including 91 SPACE gates, independent Q23 oracle at all 128 amounts/call patterns, exact SPCE 0..96 stereo/mono, frozen grain-source identities, sabotage and disabled-gain mutants, four synthetic guitar/pad dissolve cases, automation, entry/re-entry, quiet/hot level-pumping and buffer guards. The exact package was installed on an Octatrack MKII on 2026-10-25: the USB trial was accepted, FRACT is active at handle 7, and no modules are missing. Listening was partial: attacks softened, but individual grains remained countable at SPCE 127. See current TESTING.md and evidence reports. Author attribution was corrected to ex1010 on 2026-10-25; the rebuilt runtime package is byte-identical to the installed fef9db2b package. See TESTING.md for source-fingerprint provenance; no hardware or full test rerun is claimed.",
+        "hardwareStatus": "reported",
+        "evidenceRevision": "41e4b9699c7f3e8d611aa6f7cd03633bc272dc76",
+        "gates": [
+          "make check: native build, 283 PASS lines including 91 SPACE gates; exact 0..96 and grain hashes; all 128 Q23 oracle; dissolve/mutants, automation, priming, level/pumping and image guards",
+          "make cost-check: the ColdFire units on QEMU against the host build, the budgets, the 636-byte stack bound, the write and alignment rules (52 + 8)",
+          "make runtime-package and make runtime-package-check: the package through Modwerk's build.py, byte-identical rebuild, loader admission beside every shipped module (24)",
+          "make ui-probe-check and make native-check: the overview, the page and the controls on octemu",
+          "make perf-record: stock DSP comparison and eight-instance stress; python3.12 -B scripts/space_static_cost.py: SDK static word-span model with forward BRA parser extension, marker bytes identical",
+          "make media-capture: the four LCD screenshots on octemu (media/capture.json)",
+          "Hardware report: exact fef9db2b installed on an MKII on 2026-10-25; USB accepted, handle 7, nothing missing; listening partial and remaining controls/checks unverified."
+        ],
+        "documentation": {
+          "tutorial": {
+            "title": "FRACT quick tutorial",
+            "steps": [
+              "On a Flex track with a sample loaded, hold FUNC and press SRC and turn encoder E (TSTR) to OFF. Then hold FUNC and press FX2, turn LEVEL to FRACT and press YES, press FX2 for its page and press PLAY. FRACT works on one track at a time: if another track already has it, this page shows FRACT ON T<n> and the track plays dry.",
+              "Turn POS (A) to move the grains through the sample and SIZE (B) to make them shorter or longer; open SPRD (D) to scatter them and turn REVS (C) down for reversed grains, about half at 64 and all at 0. In SETUP (hold FUNC, press FX2) turn SCAN (B) above 64 to travel forwards, PAN (A) up to spread grains across the stereo field and DENS (D) down for sparser grains.",
+              "Raise SPCE (E) to 64-127 for a long stereo tail, then return it to 0 for the dry grains. To bypass FRACT, choose NONE in the FX2 list; on PLAY the track plays its sample normally, and another track can take FRACT."
+            ]
+          },
+          "screenshots": [
+            "media/ot-location.png",
+            "media/ot-setup.png",
+            "media/ot-main.png",
+            "media/ot-second.png"
+          ],
+          "screenshotStyle": "black-and-white"
+        },
+        "qualification": {
+          "documentation": {
+            "tutorial": {
+              "title": "FRACT quick tutorial",
+              "steps": [
+                "On a Flex track with a sample loaded, hold FUNC and press SRC and turn encoder E (TSTR) to OFF. Then hold FUNC and press FX2, turn LEVEL to FRACT and press YES, press FX2 for its page and press PLAY. FRACT works on one track at a time: if another track already has it, this page shows FRACT ON T<n> and the track plays dry.",
+                "Turn POS (A) to move the grains through the sample and SIZE (B) to make them shorter or longer; open SPRD (D) to scatter them and turn REVS (C) down for reversed grains, about half at 64 and all at 0. In SETUP (hold FUNC, press FX2) turn SCAN (B) above 64 to travel forwards, PAN (A) up to spread grains across the stereo field and DENS (D) down for sparser grains.",
+                "Raise SPCE (E) to 64-127 for a long stereo tail, then return it to 0 for the dry grains. To bypass FRACT, choose NONE in the FX2 list; on PLAY the track plays its sample normally, and another track can take FRACT."
+              ]
+            },
+            "screenshots": [
+              "media/ot-location.png",
+              "media/ot-setup.png",
+              "media/ot-main.png",
+              "media/ot-second.png"
+            ],
+            "screenshotStyle": "black-and-white"
+          },
+          "moduleVersion": "0.10.0-experimental",
+          "sourceSha256": "2fb01eaa8a26b0c3fec74ef41cc947aebbc74693c2f8aac2bdd87a4792f82ad3",
+          "imageSha256": "fef9db2b444dcac1d796f5920ea36448a6a16089a0e5f6801f7fcd4faf23120a",
+          "cycles": [
+            {
+              "processor": "dsp",
+              "worstCase": 8380,
+              "maxConfiguration": 33520,
+              "maxInstances": 8,
+              "budget": 49920,
+              "unit": "cycles/block",
+              "method": "static",
+              "conditions": {
+                "parameterExtremes": "scripts/space_static_cost.py uses the pinned SDK cycle_count.py word-span/BSR model with forward BRA accepted under its existing forward-target checks. Markers assemble byte-identically. Loop458words + two (23word callee +4call/return) surcharges =512cycles/sample. Per-call overhead82 before the sample loop and12 after; the separately charged callee and INIT are excluded. Bound94+512n; no memory-stall model.",
+                "parameterModulation": "Two calls per16-frame block:2*94+16*512=8380. Measured moving-pattern and fixed-amount split cases are in evidence/bench.json. Raw qualification maximum411.6 executed instructions/sample,412 declared within414 admission.",
+                "modeSwitching": "The bounded1984-frame ring clear, state reset, exact-zero return and output-envelope4096-sample entry/re-entry priming are exercised. Clearing is cheaper than the charged full sample loop. A second FRACT publishes SPCE0 and bypasses SPACE.",
+                "maxLoad": "Four instances/core:4*8380=33520 of49920 static cycles/block. The DSP-only stress includes CHORUS on every FX1; evidence/stress.json. Real-chip contention remains unmeasured.",
+                "inputConditions": "Conservative word span counts all forward alternatives once, plus each straight-line hy_output callee at every BSR. Silence/full-scale tones/DC/noise/transients are tested; the linked gain is outside the feedback tank. This is a software bound without memory-contention timing."
+              },
+              "report": "evidence/cycles.md"
+            },
+            {
+              "processor": "coldfire",
+              "worstCase": 23714,
+              "maxConfiguration": 27718,
+              "maxInstances": 8,
+              "budget": 28740,
+              "unit": "cycles/block",
+              "method": "emulator",
+              "conditions": {
+                "parameterExtremes": "make cost-check prices 57 rows on QEMU (each against the host build, 0 mismatches) with the cost metric measured on the user's MKII in M0 (958 measured cycles = 1 CPU point for a 16-frame block). Worst: owner-size-min-63, SIZE 0 (441-frame grains) with a birth in the call and 63 source frames (the track's maximum pitch), 23,714. SIZE 86 at pitch 0 6,952; PCM24 stereo at the maximum pitch 15,568-18,666; SHPE 0/127 and REVS 0 7,147-7,154 and 6,969; DENS 0 3,741.",
+                "parameterModulation": "The engine reads the values the stock publishes once per call (locks, LFOs and scenes already applied); a SIZE drop under live grains (owner-shape-drop-16, 8,419) and the stock splitting a block into two 8-frame calls (owner-steady-8x2, 11,678) are priced. MIDI CC reaches the same published values.",
+                "modeSwitching": "Births, source wrap and join (owner-wrap-16 9,823), the entry ramp (8,420), a new source, STOP (stopped 92), FX2 changes and a second FRACT's bypass (non-owner-fract 173, from the hook 286) are priced. The overview runs in the UI task, not the audio block: its worst tick with a draw is 82,810 of 88,000 cycles a tick (1.9 points).",
+                "maxLoad": "One granulator for all tracks (the one-track limit): the owner's worst call plus seven tracks with FRACT bypassed, each at most two calls a block at 286: 23,714 + 7 x 572 = 27,718 against the 30-point budget (28,740) the design reserves for the owner at the maximum pitch, out of 34 points the user's full project leaves (it idles at 58-66 %). A track without FRACT costs 54 a call. Sample-arena reads are counted, not priced.",
+                "inputConditions": "PCM16 and PCM24, mono and stereo, page crossings, the source's end and join, unmapped pages (owner-holes-1) and the loaded padding; costs depend on the format and pitch, not on sample values. The exact package was installed on the unit on 2026-10-25; no CPU reading was taken. An earlier build read +5 to +16 points and +22 at minimum SIZE (before this build's span kernel)."
+              },
+              "report": "evidence/cycles.md"
+            }
+          ],
+          "memory": {
+            "regions": [
+              {
+                "name": "SPACE program on DSP core A (card build P:0x01000..0x01250)",
+                "space": "dsp-p",
+                "words": 593,
+                "wordBits": 24,
+                "bytes": 1779,
+                "scope": "shared"
+              },
+              {
+                "name": "SPACE program on DSP core B (card build P:0x00dc0..0x01010)",
+                "space": "dsp-p",
+                "words": 593,
+                "wordBits": 24,
+                "bytes": 1779,
+                "scope": "shared"
+              },
+              {
+                "name": "SPACE state, X r7+$20..$3F, initialized and used",
+                "space": "dsp-x",
+                "words": 32,
+                "wordBits": 24,
+                "bytes": 96,
+                "scope": "instance"
+              },
+              {
+                "name": "Declared state not used, X r7+$00..$1F (the package declares 64 state words)",
+                "space": "dsp-x",
+                "words": 32,
+                "wordBits": 24,
+                "bytes": 96,
+                "scope": "instance"
+              },
+              {
+                "name": "SPACE ring, Y +0..+$3DA2 of the stock FX2 buffer",
+                "space": "dsp-y",
+                "words": 15779,
+                "wordBits": 24,
+                "bytes": 47337,
+                "scope": "instance"
+              },
+              {
+                "name": "Rest of the stock FX2 buffer, Y +$3DA3..+$3FFF, never written or read",
+                "space": "dsp-y",
+                "words": 605,
+                "wordBits": 24,
+                "bytes": 1815,
+                "scope": "instance"
+              },
+              {
+                "name": "DSP system stack: dispatcher call, one do loop and one hy_output call, both cores",
+                "space": "dsp-x",
+                "words": 16,
+                "wordBits": 24,
+                "bytes": 48,
+                "scope": "shared"
+              },
+              {
+                "name": "Package image in the base's pool: five units, their data and the FX2 page recipe",
+                "space": "sdram",
+                "words": 19316,
+                "wordBits": 8,
+                "bytes": 19316,
+                "scope": "shared"
+              },
+              {
+                "name": "Audio call's stack peak on the interrupted stock task's stack, from the fetch hook",
+                "space": "cpu-ram",
+                "words": 630,
+                "wordBits": 8,
+                "bytes": 630,
+                "scope": "shared"
+              },
+              {
+                "name": "UI tick or draw stack peak on the UI task's stack",
+                "space": "cpu-ram",
+                "words": 192,
+                "wordBits": 8,
+                "bytes": 192,
+                "scope": "shared"
+              }
+            ],
+            "perInstanceBytes": 49344,
+            "sharedBytes": 23744,
+            "maxInstances": 8,
+            "totalBytes": 418496,
+            "conditions": "Per FX2 instance: the 64 X state words the package declares and the stock 16,384-word FX2 buffer (15,779 used by SPACE). Shared: SPACE's program on both cores, the package's code and data in the base's pool (the 128-byte owner state, peak and overview caches and the 6,240-byte SHPE table included), and two temporary stack peaks on other tasks' stacks (the audio and UI tasks; they do not overlap in FRACT's own memory). No heap, no bss, no copy of the sample; the sample arena is read in place. The base's own per-id page slot (fxpage.c) is reserved by the base for every id and is not counted. Logical 24-bit DSP words; ColdFire memory in bytes. Stack peaks are QEMU high-water marks against a 636-byte bound, not hardware canaries.",
+            "report": "evidence/memory.md"
+          },
+          "hardware": {
+            "kind": "functional",
+            "status": "reported",
+            "model": "MKII",
+            "testedOn": "2026-10-25",
+            "tester": "Project owner (listening); Codex (USB installation)",
+            "sourceRevision": "41e4b9699c7f3e8d611aa6f7cd03633bc272dc76",
+            "imageSha256": "fef9db2b444dcac1d796f5920ea36448a6a16089a0e5f6801f7fcd4faf23120a",
+            "summary": "USB trial accepted on base d6bfff70, FRACT at handle 7, nothing missing. User reports softer guitar attacks but still countable grains at SPCE 127 and a can-like effect above 96: the continuous-cloud goal is not met. Partial observation only, not full hardware qualification.",
+            "limitations": [
+              "Listening controls, TSTR, track and instance count were not reported; no recorded audio was analyzed.",
+              "Project save, level/pumping, clicks/zipper, CPU, self-test, Part/project reload, power cycle and remaining kit checks are unverified."
+            ],
+            "report": "evidence/hardware.md"
+          }
+        }
+      },
+      "license": {
+        "spdx": "MIT",
+        "file": "LICENSE",
+        "declaration": "FRACT's source, documentation and captures are MIT licensed by toli (ex1010). SPACE adapts Jannik Aßfalg (repeat98)'s Mini Verb and keeps its MIT notice (THIRD_PARTY_NOTICES.md). The screenshots' underlying Elektron interface keeps its owners' rights (media/LICENSE.md). No Elektron firmware, extracted stock code, tables, samples or memory dumps are distributed."
+      },
+      "media": [
+        {
+          "path": "media/ot-location.png",
+          "captureType": "emulator",
+          "caption": "Hold FUNC and press FX2, turn LEVEL to FRACT and press YES. The SETUP dials appear on the right at their defaults: PAN 0, SCAN 64, SRNG FULL and DENS 127. First set the Flex track's TSTR to OFF (FUNC + SRC, encoder E).",
+          "alt": "FX2 SETUP with FRACT highlighted second in the effect list; PAN, SCAN and SRNG dials above, DENS below.",
+          "credit": "toli (ex1010), octemu capture",
+          "license": "LicenseRef-OT-UI-Documentation",
+          "source": "original",
+          "otUi": {
+            "page": "FX2 SETUP",
+            "shows": "location-and-controls",
+            "firmware": "1.40C",
+            "moduleVersion": "0.10.0-experimental",
+            "imageSha256": "b868cb5339b65b6776374272815e06cfa84c9e0197b8e3a6db404b1cb5ae9aa3",
+            "setup": "Headless octemu, MKII panel, UI probe build of source 57db580 (the card build with og_ui and og_draw called from the stock UI tick and LCD flush, as the base's module_tick and module_draw call them); T1 a Flex track; 128x64 LCD at integer scale 6. The list order is this build's; the Modwerk base lists FRACT in its own FX2 list."
+          }
+        },
+        {
+          "path": "media/ot-setup.png",
+          "captureType": "emulator",
+          "caption": "Turn encoder D to set DENS: at 95 grains are born twice as far apart as at 127, and lower thins them out further. SETUP controls take no locks, LFOs or scenes; set them per Part.",
+          "alt": "FX2 SETUP with FRACT selected and the DENS dial raised, reading 95.",
+          "credit": "toli (ex1010), octemu capture",
+          "license": "LicenseRef-OT-UI-Documentation",
+          "source": "original",
+          "otUi": {
+            "page": "FX2 SETUP",
+            "shows": "controls",
+            "firmware": "1.40C",
+            "moduleVersion": "0.10.0-experimental",
+            "imageSha256": "b868cb5339b65b6776374272815e06cfa84c9e0197b8e3a6db404b1cb5ae9aa3",
+            "setup": "Headless octemu, MKII panel, UI probe build of source 57db580; DENS turned from 127 to 95 and captured while its value shows; 128x64 LCD at integer scale 6."
+          }
+        },
+        {
+          "path": "media/ot-main.png",
+          "captureType": "emulator",
+          "caption": "Press FX2 for the main page and PLAY. The sample's name and waveform sit above the dials, with the region POS and SIZE pick and a square for each grain. Turn POS, SIZE, REVS, SPRD, SPCE and SHPE (A-F).",
+          "alt": "FRACT's FX2 main page playing: SINE440 above a filled waveform with the POS/SIZE region marked, then dials POS, SIZE, REVS, SPRD, SPCE and SHPE at their defaults.",
+          "credit": "toli (ex1010), octemu capture",
+          "license": "LicenseRef-OT-UI-Documentation",
+          "source": "original",
+          "otUi": {
+            "page": "FX2 main",
+            "shows": "controls",
+            "firmware": "1.40C",
+            "moduleVersion": "0.10.0-experimental",
+            "imageSha256": "b868cb5339b65b6776374272815e06cfa84c9e0197b8e3a6db404b1cb5ae9aa3",
+            "setup": "Headless octemu, MKII panel, UI probe build of source 57db580; T1 playing the demo project's original synthesized texture (stored as SINE440.WAV), every control at its default, 8 s after PLAY; 128x64 LCD at integer scale 6."
+          }
+        },
+        {
+          "path": "media/ot-second.png",
+          "captureType": "emulator",
+          "caption": "FRACT runs on one track at a time. FRACT on another track while T1 has it shows FRACT ON T1, and that track plays its sample dry, without SPACE. Press STOP to free FRACT; on PLAY the lowest track with FRACT takes it.",
+          "alt": "FRACT's FX2 page on T3 showing only FRACT ON T1 above the six dials.",
+          "credit": "toli (ex1010), octemu capture",
+          "license": "LicenseRef-OT-UI-Documentation",
+          "source": "original",
+          "otUi": {
+            "page": "FX2 main",
+            "shows": "controls",
+            "firmware": "1.40C",
+            "moduleVersion": "0.10.0-experimental",
+            "imageSha256": "b868cb5339b65b6776374272815e06cfa84c9e0197b8e3a6db404b1cb5ae9aa3",
+            "setup": "Headless octemu, MKII panel, UI probe build of source 57db580; FRACT chosen on T3 while T1 plays and owns it; 128x64 LCD at integer scale 6."
+          }
+        }
+      ]
+    },
+    {
+      "schemaVersion": 2,
       "id": "bbd",
       "key": "BBD",
       "name": "BBD Delay",

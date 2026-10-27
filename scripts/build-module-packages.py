@@ -8,7 +8,7 @@ from pathlib import Path
 import argparse, hashlib, importlib.util, json, os, re, shutil, struct, subprocess, sys, tempfile
 
 APP = Path(__file__).resolve().parents[1]
-ORDER = ['spectrum', 'modulation', 'character', 'miniverb', 'tapeecho', 'euclid', 'repitch', 'tapehead', 'airwindows-chorus', 'everb', 'bbd', 'lofi2', 'ring-sc']
+ORDER = ['spectrum', 'modulation', 'character', 'miniverb', 'tapeecho', 'euclid', 'repitch', 'tapehead', 'airwindows-chorus', 'everb', 'grnyv1', 'bbd', 'lofi2', 'ring-sc']
 # DSP code that stock code reaches through hooks. Output Matrix has no FX menu entry and is also a requested ColdFire module.
 HOOKED = ['sidechain-compressor', 'output-matrix']
 REQUESTED = ['analog-bassdrum', 'midi-scenes', 'usb-audio-out-tracks-main-cue', 'quantizer', 'synth', 'vector', 'playmodes', 'mute-modes', 'recorder-loop-fix', 'poly8', 'output-matrix', 'quantize-live-rec-toggle', 'apply-scene', 'direct-jump-kyoti', 'dejavu']
@@ -275,6 +275,7 @@ def main():
     standalone = 'midi-scenes' in [module['id'] for module in buildable]
     if standalone and catalog_documents['midi-scenes']['version'] != '0.2.5-experimental': parser.error('Unknown standalone MIDI Scenes release')
     requested_ids = [id for id in REQUESTED if id != 'midi-scenes'] if args.include_requested else approved_requested
+    print(run([sys.executable, '-B', sdk / 'modules/grnyv1/generate.py', '--check'], APP).strip(), flush=True)
     if "poly8" in requested_ids:
         # Local PC16 operands can wrap before ELF relocations exist. Run the
         # compiled-address gate in this isolated source-build environment.
@@ -438,7 +439,7 @@ def main():
         print('Compiled resident Character and four stock-free receiver templates.', flush=True)
 
         compiled_cf = []
-        for key in ['DSP DYNLOAD STOCK', 'EUCLID', 'TAPE ECHO', 'BBD']:
+        for key in ['DSP DYNLOAD STOCK', 'EUCLID', 'TAPE ECHO', 'BBD', 'FRACT']:
             module = known[key]
             manifest = f'platform/{module.name}/manifest.py' if module.name in registry.PLATFORM_NAMES else f'modules/{module.name}/manifest.py'
             for unit in module.linked:
@@ -477,7 +478,7 @@ def main():
         data = obj.read_bytes()
         products['bootstrap-package.json'] = dict(baseline['bootstrap-package.json'], **provenance,
             sourceSha256=sources['tools/remix/loader.S'], bytes=len(data), code=data.hex(), sha256=HASH(data))
-        print('Compiled eleven ColdFire runtime objects, four ROM units and the authored bootstrap.', flush=True)
+        print(f'Compiled {len(compiled_cf)} ColdFire runtime objects, four ROM units and the authored bootstrap.', flush=True)
 
         recipes = []
         for id in ORDER:
@@ -508,6 +509,13 @@ def main():
 
         descriptors = []
         descriptor_guards = list(baseline['descriptor-recipes.json']['recipes'])
+        if not any(row['id'] == 'grnyv1' for row in descriptor_guards):
+            # Locally verified 1.40C: DARK REV donor and stock NONE at FX2 id 7.
+            descriptor_guards.append(dict(id='grnyv1', key='FRACT', author='ex1010',
+                fxId=0x07, donorAddress=0x400d58f0,
+                donorSha256='3b3f9b15f2f6addfea9fc281f5b9fdf054bf305778059b8d43db41d390f0401f',
+                fx2Slot=0x400d5ff8,
+                slotSha256='79bc740214b4d029e385d06d21e224d04e8f91b53fb26ea08ffa4e5d70964b7a'))
         if not any(row['id'] == 'airwindows-chorus' for row in descriptor_guards):
             # Locally verified 1.40C: same donor and unused-slot fingerprint as
             # Character. Only addresses/hashes are retained, never stock bytes.
@@ -591,6 +599,8 @@ def main():
             descriptors.append(dict(old, sourceSha256=sources[f'modules/{module.name}/manifest.py'], integers=integers, strings=strings, **extra))
         products['descriptor-recipes.json'] = dict(baseline['descriptor-recipes.json'], **provenance, recipes=descriptors)
         groups = []
+        if not any(row['moduleId'] == 'grnyv1' for row in baseline['platform-writes.json']['groups']):
+            baseline['platform-writes.json']['groups'].append(dict(moduleId='grnyv1', key='FRACT', author='ex1010'))
         if not any(row['moduleId'] == 'bbd' for row in baseline['platform-writes.json']['groups']):
             baseline['platform-writes.json']['groups'].append(dict(moduleId='bbd', key='BBD', author='JamCones'))  # its stop kill (0.1.1)
         for old in baseline['platform-writes.json']['groups']:

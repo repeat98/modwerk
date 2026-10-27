@@ -1,0 +1,1532 @@
+{
+ "method": "bench benchmark_reverbs.run as the SDK's benchmark_stock_dsp.py runs it (one instance per core at positions 0 and 4, audio at X:0, 4,096 blocks of 16 frames, the null stub's peak subtracted): FRACT on the card build's DSP payloads (out/grnyv1_A.mem, out/grnyv1_B.mem) and SPRING REV, PLATE REV, DARK REV and DJ EQ on the stock image, through the same cases: fixed knobs, the benchmark's moving-knob pattern and a trig split at every position 1..15. Only SPCE reaches FRACT's DSP code (record word 32), so FRACT adds SPCE 1, 32, 64, 96 and 127 held, each also with a split at every position. stress stress_project.py needs an Octatrack template project, so the same load is driven straight into dsp_host, as BBD's record does: FRACT on FX2 of all eight tracks (four per core) behind CHORUS on every FX1; per block three LFOs (sine, triangle, square) on FRACT's POS, SIZE and SPCE, and a new random value on every named slot of both effects each sixteenth at 120 BPM; trig splits on six tracks; eight different stems; dsp_host -guard 15779 -guard-shared -dirty 0x5a (SPACE's claim, +0..+$3DA2 of each FX2 slot).",
+ "imageSha256": "3ae08fe552c97d2a8597f9f6010267c5aa85ef22259d1e7f0ce4126271579370",
+ "payloadSha256": {
+  "grnyv1_A.mem": "78b9eaede914df84d77e4ecf5ce180697e80cf28c6096081956f2f37d2b9f99f",
+  "grnyv1_B.mem": "f15bb25362fcc2087eefdf4b8d2fa540d3cf1bf85b2be2260d3b1fd33611d0e3"
+ },
+ "stockSha256": "164f31224bf61181e3f50e7dec40df9afcae5b16dbf6e4c0d0cc5e986af0a84e",
+ "dspHostSha256": "2be214bebc843c2373d24999babc0b0b5ae9b70154ed47d069a15b51026d327b",
+ "nullPeakBlock": {
+  "fract": 67,
+  "stock": 67
+ },
+ "summary": {
+  "FRACT": {
+   "worstUnsplit": 405.06,
+   "worstWithSplits": 407.38,
+   "worstCase": "spce127_split1"
+  },
+  "SPRING REV": {
+   "worstUnsplit": 257.5,
+   "worstWithSplits": 314.19,
+   "worstCase": "moving_split4",
+   "benchmarkStockDsp": 257.5
+  },
+  "PLATE REV": {
+   "worstUnsplit": 183.94,
+   "worstWithSplits": 218.25,
+   "worstCase": "moving_split1",
+   "benchmarkStockDsp": 183.9375
+  },
+  "DARK REV": {
+   "worstUnsplit": 193.25,
+   "worstWithSplits": 242.38,
+   "worstCase": "moving_split1",
+   "benchmarkStockDsp": 193.25
+  },
+  "DJ EQ": {
+   "worstUnsplit": 293.38,
+   "worstWithSplits": 330.94,
+   "worstCase": "moving_split1",
+   "benchmarkStockDsp": 293.375
+  }
+ },
+ "table": [
+  {
+   "effect": "FRACT",
+   "case": "fixed",
+   "split": 0,
+   "peakBlock": 15,
+   "perSamplePeak": -3.25,
+   "perSampleMean": -3.25,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "FRACT",
+   "case": "moving",
+   "split": 0,
+   "peakBlock": 6535,
+   "perSamplePeak": 404.25,
+   "perSampleMean": 361.73,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "FRACT",
+   "case": "moving_split1",
+   "split": 1,
+   "peakBlock": 6572,
+   "perSamplePeak": 406.56,
+   "perSampleMean": 363.94,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "FRACT",
+   "case": "moving_split2",
+   "split": 2,
+   "peakBlock": 6572,
+   "perSamplePeak": 406.56,
+   "perSampleMean": 363.94,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "FRACT",
+   "case": "moving_split3",
+   "split": 3,
+   "peakBlock": 6572,
+   "perSamplePeak": 406.56,
+   "perSampleMean": 363.94,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "FRACT",
+   "case": "moving_split4",
+   "split": 4,
+   "peakBlock": 6572,
+   "perSamplePeak": 406.56,
+   "perSampleMean": 363.94,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "FRACT",
+   "case": "moving_split5",
+   "split": 5,
+   "peakBlock": 6572,
+   "perSamplePeak": 406.56,
+   "perSampleMean": 363.94,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "FRACT",
+   "case": "moving_split6",
+   "split": 6,
+   "peakBlock": 6572,
+   "perSamplePeak": 406.56,
+   "perSampleMean": 363.94,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "FRACT",
+   "case": "moving_split7",
+   "split": 7,
+   "peakBlock": 6572,
+   "perSamplePeak": 406.56,
+   "perSampleMean": 363.94,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "FRACT",
+   "case": "moving_split8",
+   "split": 8,
+   "peakBlock": 6572,
+   "perSamplePeak": 406.56,
+   "perSampleMean": 363.94,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "FRACT",
+   "case": "moving_split9",
+   "split": 9,
+   "peakBlock": 6572,
+   "perSamplePeak": 406.56,
+   "perSampleMean": 363.94,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "FRACT",
+   "case": "moving_split10",
+   "split": 10,
+   "peakBlock": 6572,
+   "perSamplePeak": 406.56,
+   "perSampleMean": 363.94,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "FRACT",
+   "case": "moving_split11",
+   "split": 11,
+   "peakBlock": 6572,
+   "perSamplePeak": 406.56,
+   "perSampleMean": 363.94,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "FRACT",
+   "case": "moving_split12",
+   "split": 12,
+   "peakBlock": 6572,
+   "perSamplePeak": 406.56,
+   "perSampleMean": 363.94,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "FRACT",
+   "case": "moving_split13",
+   "split": 13,
+   "peakBlock": 6572,
+   "perSamplePeak": 406.56,
+   "perSampleMean": 363.94,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "FRACT",
+   "case": "moving_split14",
+   "split": 14,
+   "peakBlock": 6572,
+   "perSamplePeak": 406.56,
+   "perSampleMean": 363.94,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "FRACT",
+   "case": "moving_split15",
+   "split": 15,
+   "peakBlock": 6572,
+   "perSamplePeak": 406.56,
+   "perSampleMean": 363.94,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "SPRING REV",
+   "case": "fixed",
+   "split": 0,
+   "peakBlock": 4186,
+   "perSamplePeak": 257.44,
+   "perSampleMean": 257.44,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "SPRING REV",
+   "case": "moving",
+   "split": 0,
+   "peakBlock": 4187,
+   "perSamplePeak": 257.5,
+   "perSampleMean": 257.39,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "SPRING REV",
+   "case": "moving_split1",
+   "split": 1,
+   "peakBlock": 4525,
+   "perSamplePeak": 278.62,
+   "perSampleMean": 278.45,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "SPRING REV",
+   "case": "moving_split2",
+   "split": 2,
+   "peakBlock": 4524,
+   "perSamplePeak": 278.56,
+   "perSampleMean": 278.45,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "SPRING REV",
+   "case": "moving_split3",
+   "split": 3,
+   "peakBlock": 4524,
+   "perSamplePeak": 278.56,
+   "perSampleMean": 278.45,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "SPRING REV",
+   "case": "moving_split4",
+   "split": 4,
+   "peakBlock": 5094,
+   "perSamplePeak": 314.19,
+   "perSampleMean": 313.9,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "SPRING REV",
+   "case": "moving_split5",
+   "split": 5,
+   "peakBlock": 5094,
+   "perSamplePeak": 314.19,
+   "perSampleMean": 313.97,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "SPRING REV",
+   "case": "moving_split6",
+   "split": 6,
+   "peakBlock": 5094,
+   "perSamplePeak": 314.19,
+   "perSampleMean": 313.97,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "SPRING REV",
+   "case": "moving_split7",
+   "split": 7,
+   "peakBlock": 5094,
+   "perSamplePeak": 314.19,
+   "perSampleMean": 313.97,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "SPRING REV",
+   "case": "moving_split8",
+   "split": 8,
+   "peakBlock": 4968,
+   "perSamplePeak": 306.31,
+   "perSampleMean": 306.09,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "SPRING REV",
+   "case": "moving_split9",
+   "split": 9,
+   "peakBlock": 4969,
+   "perSamplePeak": 306.38,
+   "perSampleMean": 306.15,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "SPRING REV",
+   "case": "moving_split10",
+   "split": 10,
+   "peakBlock": 4969,
+   "perSamplePeak": 306.38,
+   "perSampleMean": 306.15,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "SPRING REV",
+   "case": "moving_split11",
+   "split": 11,
+   "peakBlock": 4969,
+   "perSamplePeak": 306.38,
+   "perSampleMean": 306.15,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "SPRING REV",
+   "case": "moving_split12",
+   "split": 12,
+   "peakBlock": 5093,
+   "perSamplePeak": 314.12,
+   "perSampleMean": 313.9,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "SPRING REV",
+   "case": "moving_split13",
+   "split": 13,
+   "peakBlock": 5094,
+   "perSamplePeak": 314.19,
+   "perSampleMean": 313.97,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "SPRING REV",
+   "case": "moving_split14",
+   "split": 14,
+   "peakBlock": 5094,
+   "perSamplePeak": 314.19,
+   "perSampleMean": 313.97,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "SPRING REV",
+   "case": "moving_split15",
+   "split": 15,
+   "peakBlock": 5094,
+   "perSamplePeak": 314.19,
+   "perSampleMean": 313.97,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "PLATE REV",
+   "case": "fixed",
+   "split": 0,
+   "peakBlock": 2977,
+   "perSamplePeak": 181.88,
+   "perSampleMean": 181.88,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "PLATE REV",
+   "case": "moving",
+   "split": 0,
+   "peakBlock": 3010,
+   "perSamplePeak": 183.94,
+   "perSampleMean": 183.02,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "PLATE REV",
+   "case": "moving_split1",
+   "split": 1,
+   "peakBlock": 3559,
+   "perSamplePeak": 218.25,
+   "perSampleMean": 217.05,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "PLATE REV",
+   "case": "moving_split2",
+   "split": 2,
+   "peakBlock": 3559,
+   "perSamplePeak": 218.25,
+   "perSampleMean": 217.06,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "PLATE REV",
+   "case": "moving_split3",
+   "split": 3,
+   "peakBlock": 3559,
+   "perSamplePeak": 218.25,
+   "perSampleMean": 217.06,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "PLATE REV",
+   "case": "moving_split4",
+   "split": 4,
+   "peakBlock": 3559,
+   "perSamplePeak": 218.25,
+   "perSampleMean": 217.07,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "PLATE REV",
+   "case": "moving_split5",
+   "split": 5,
+   "peakBlock": 3559,
+   "perSamplePeak": 218.25,
+   "perSampleMean": 217.07,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "PLATE REV",
+   "case": "moving_split6",
+   "split": 6,
+   "peakBlock": 3559,
+   "perSamplePeak": 218.25,
+   "perSampleMean": 217.07,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "PLATE REV",
+   "case": "moving_split7",
+   "split": 7,
+   "peakBlock": 3559,
+   "perSamplePeak": 218.25,
+   "perSampleMean": 217.07,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "PLATE REV",
+   "case": "moving_split8",
+   "split": 8,
+   "peakBlock": 3559,
+   "perSamplePeak": 218.25,
+   "perSampleMean": 217.08,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "PLATE REV",
+   "case": "moving_split9",
+   "split": 9,
+   "peakBlock": 3559,
+   "perSamplePeak": 218.25,
+   "perSampleMean": 217.08,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "PLATE REV",
+   "case": "moving_split10",
+   "split": 10,
+   "peakBlock": 3559,
+   "perSamplePeak": 218.25,
+   "perSampleMean": 217.09,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "PLATE REV",
+   "case": "moving_split11",
+   "split": 11,
+   "peakBlock": 3559,
+   "perSamplePeak": 218.25,
+   "perSampleMean": 217.08,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "PLATE REV",
+   "case": "moving_split12",
+   "split": 12,
+   "peakBlock": 3559,
+   "perSamplePeak": 218.25,
+   "perSampleMean": 217.08,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "PLATE REV",
+   "case": "moving_split13",
+   "split": 13,
+   "peakBlock": 3559,
+   "perSamplePeak": 218.25,
+   "perSampleMean": 217.06,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "PLATE REV",
+   "case": "moving_split14",
+   "split": 14,
+   "peakBlock": 3559,
+   "perSamplePeak": 218.25,
+   "perSampleMean": 217.06,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "PLATE REV",
+   "case": "moving_split15",
+   "split": 15,
+   "peakBlock": 3559,
+   "perSamplePeak": 218.25,
+   "perSampleMean": 217.06,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "DARK REV",
+   "case": "fixed",
+   "split": 0,
+   "peakBlock": 3155,
+   "perSamplePeak": 193.0,
+   "perSampleMean": 193.0,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "DARK REV",
+   "case": "moving",
+   "split": 0,
+   "peakBlock": 3159,
+   "perSamplePeak": 193.25,
+   "perSampleMean": 193.12,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "DARK REV",
+   "case": "moving_split1",
+   "split": 1,
+   "peakBlock": 3945,
+   "perSamplePeak": 242.38,
+   "perSampleMean": 242.12,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "DARK REV",
+   "case": "moving_split2",
+   "split": 2,
+   "peakBlock": 3944,
+   "perSamplePeak": 242.31,
+   "perSampleMean": 242.06,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "DARK REV",
+   "case": "moving_split3",
+   "split": 3,
+   "peakBlock": 3945,
+   "perSamplePeak": 242.38,
+   "perSampleMean": 242.12,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "DARK REV",
+   "case": "moving_split4",
+   "split": 4,
+   "peakBlock": 3944,
+   "perSamplePeak": 242.31,
+   "perSampleMean": 242.06,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "DARK REV",
+   "case": "moving_split5",
+   "split": 5,
+   "peakBlock": 3945,
+   "perSamplePeak": 242.38,
+   "perSampleMean": 242.12,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "DARK REV",
+   "case": "moving_split6",
+   "split": 6,
+   "peakBlock": 3944,
+   "perSamplePeak": 242.31,
+   "perSampleMean": 242.06,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "DARK REV",
+   "case": "moving_split7",
+   "split": 7,
+   "peakBlock": 3945,
+   "perSamplePeak": 242.38,
+   "perSampleMean": 242.12,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "DARK REV",
+   "case": "moving_split8",
+   "split": 8,
+   "peakBlock": 3944,
+   "perSamplePeak": 242.31,
+   "perSampleMean": 242.06,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "DARK REV",
+   "case": "moving_split9",
+   "split": 9,
+   "peakBlock": 3945,
+   "perSamplePeak": 242.38,
+   "perSampleMean": 242.12,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "DARK REV",
+   "case": "moving_split10",
+   "split": 10,
+   "peakBlock": 3944,
+   "perSamplePeak": 242.31,
+   "perSampleMean": 242.06,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "DARK REV",
+   "case": "moving_split11",
+   "split": 11,
+   "peakBlock": 3945,
+   "perSamplePeak": 242.38,
+   "perSampleMean": 242.12,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "DARK REV",
+   "case": "moving_split12",
+   "split": 12,
+   "peakBlock": 3944,
+   "perSamplePeak": 242.31,
+   "perSampleMean": 242.06,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "DARK REV",
+   "case": "moving_split13",
+   "split": 13,
+   "peakBlock": 3945,
+   "perSamplePeak": 242.38,
+   "perSampleMean": 242.12,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "DARK REV",
+   "case": "moving_split14",
+   "split": 14,
+   "peakBlock": 3944,
+   "perSamplePeak": 242.31,
+   "perSampleMean": 242.06,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "DARK REV",
+   "case": "moving_split15",
+   "split": 15,
+   "peakBlock": 3541,
+   "perSamplePeak": 217.12,
+   "perSampleMean": 216.87,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "DJ EQ",
+   "case": "fixed",
+   "split": 0,
+   "peakBlock": 4761,
+   "perSamplePeak": 293.38,
+   "perSampleMean": 293.38,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "DJ EQ",
+   "case": "moving",
+   "split": 0,
+   "peakBlock": 4761,
+   "perSamplePeak": 293.38,
+   "perSampleMean": 293.38,
+   "clippedSamples": 4
+  },
+  {
+   "effect": "DJ EQ",
+   "case": "moving_split1",
+   "split": 1,
+   "peakBlock": 5362,
+   "perSamplePeak": 330.94,
+   "perSampleMean": 330.94,
+   "clippedSamples": 4
+  },
+  {
+   "effect": "DJ EQ",
+   "case": "moving_split2",
+   "split": 2,
+   "peakBlock": 5362,
+   "perSamplePeak": 330.94,
+   "perSampleMean": 330.94,
+   "clippedSamples": 4
+  },
+  {
+   "effect": "DJ EQ",
+   "case": "moving_split3",
+   "split": 3,
+   "peakBlock": 5362,
+   "perSamplePeak": 330.94,
+   "perSampleMean": 330.94,
+   "clippedSamples": 4
+  },
+  {
+   "effect": "DJ EQ",
+   "case": "moving_split4",
+   "split": 4,
+   "peakBlock": 5362,
+   "perSamplePeak": 330.94,
+   "perSampleMean": 330.94,
+   "clippedSamples": 4
+  },
+  {
+   "effect": "DJ EQ",
+   "case": "moving_split5",
+   "split": 5,
+   "peakBlock": 5362,
+   "perSamplePeak": 330.94,
+   "perSampleMean": 330.94,
+   "clippedSamples": 4
+  },
+  {
+   "effect": "DJ EQ",
+   "case": "moving_split6",
+   "split": 6,
+   "peakBlock": 5362,
+   "perSamplePeak": 330.94,
+   "perSampleMean": 330.94,
+   "clippedSamples": 4
+  },
+  {
+   "effect": "DJ EQ",
+   "case": "moving_split7",
+   "split": 7,
+   "peakBlock": 5362,
+   "perSamplePeak": 330.94,
+   "perSampleMean": 330.94,
+   "clippedSamples": 4
+  },
+  {
+   "effect": "DJ EQ",
+   "case": "moving_split8",
+   "split": 8,
+   "peakBlock": 5362,
+   "perSamplePeak": 330.94,
+   "perSampleMean": 330.94,
+   "clippedSamples": 4
+  },
+  {
+   "effect": "DJ EQ",
+   "case": "moving_split9",
+   "split": 9,
+   "peakBlock": 5362,
+   "perSamplePeak": 330.94,
+   "perSampleMean": 330.94,
+   "clippedSamples": 4
+  },
+  {
+   "effect": "DJ EQ",
+   "case": "moving_split10",
+   "split": 10,
+   "peakBlock": 5362,
+   "perSamplePeak": 330.94,
+   "perSampleMean": 330.94,
+   "clippedSamples": 4
+  },
+  {
+   "effect": "DJ EQ",
+   "case": "moving_split11",
+   "split": 11,
+   "peakBlock": 5362,
+   "perSamplePeak": 330.94,
+   "perSampleMean": 330.94,
+   "clippedSamples": 4
+  },
+  {
+   "effect": "DJ EQ",
+   "case": "moving_split12",
+   "split": 12,
+   "peakBlock": 5362,
+   "perSamplePeak": 330.94,
+   "perSampleMean": 330.94,
+   "clippedSamples": 4
+  },
+  {
+   "effect": "DJ EQ",
+   "case": "moving_split13",
+   "split": 13,
+   "peakBlock": 5362,
+   "perSamplePeak": 330.94,
+   "perSampleMean": 330.94,
+   "clippedSamples": 4
+  },
+  {
+   "effect": "DJ EQ",
+   "case": "moving_split14",
+   "split": 14,
+   "peakBlock": 5362,
+   "perSamplePeak": 330.94,
+   "perSampleMean": 330.94,
+   "clippedSamples": 4
+  },
+  {
+   "effect": "DJ EQ",
+   "case": "moving_split15",
+   "split": 15,
+   "peakBlock": 5362,
+   "perSamplePeak": 330.94,
+   "perSampleMean": 330.94,
+   "clippedSamples": 4
+  },
+  {
+   "effect": "FRACT",
+   "case": "spce1",
+   "split": 0,
+   "peakBlock": 6164,
+   "perSamplePeak": 381.06,
+   "perSampleMean": 381.06,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "FRACT",
+   "case": "spce1_split1",
+   "split": 1,
+   "peakBlock": 6200,
+   "perSamplePeak": 383.31,
+   "perSampleMean": 383.31,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "FRACT",
+   "case": "spce1_split2",
+   "split": 2,
+   "peakBlock": 6200,
+   "perSamplePeak": 383.31,
+   "perSampleMean": 383.31,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "FRACT",
+   "case": "spce1_split3",
+   "split": 3,
+   "peakBlock": 6200,
+   "perSamplePeak": 383.31,
+   "perSampleMean": 383.31,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "FRACT",
+   "case": "spce1_split4",
+   "split": 4,
+   "peakBlock": 6200,
+   "perSamplePeak": 383.31,
+   "perSampleMean": 383.31,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "FRACT",
+   "case": "spce1_split5",
+   "split": 5,
+   "peakBlock": 6200,
+   "perSamplePeak": 383.31,
+   "perSampleMean": 383.31,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "FRACT",
+   "case": "spce1_split6",
+   "split": 6,
+   "peakBlock": 6200,
+   "perSamplePeak": 383.31,
+   "perSampleMean": 383.31,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "FRACT",
+   "case": "spce1_split7",
+   "split": 7,
+   "peakBlock": 6200,
+   "perSamplePeak": 383.31,
+   "perSampleMean": 383.31,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "FRACT",
+   "case": "spce1_split8",
+   "split": 8,
+   "peakBlock": 6200,
+   "perSamplePeak": 383.31,
+   "perSampleMean": 383.31,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "FRACT",
+   "case": "spce1_split9",
+   "split": 9,
+   "peakBlock": 6200,
+   "perSamplePeak": 383.31,
+   "perSampleMean": 383.31,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "FRACT",
+   "case": "spce1_split10",
+   "split": 10,
+   "peakBlock": 6200,
+   "perSamplePeak": 383.31,
+   "perSampleMean": 383.31,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "FRACT",
+   "case": "spce1_split11",
+   "split": 11,
+   "peakBlock": 6200,
+   "perSamplePeak": 383.31,
+   "perSampleMean": 383.31,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "FRACT",
+   "case": "spce1_split12",
+   "split": 12,
+   "peakBlock": 6200,
+   "perSamplePeak": 383.31,
+   "perSampleMean": 383.31,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "FRACT",
+   "case": "spce1_split13",
+   "split": 13,
+   "peakBlock": 6200,
+   "perSamplePeak": 383.31,
+   "perSampleMean": 383.31,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "FRACT",
+   "case": "spce1_split14",
+   "split": 14,
+   "peakBlock": 6200,
+   "perSamplePeak": 383.31,
+   "perSampleMean": 383.31,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "FRACT",
+   "case": "spce1_split15",
+   "split": 15,
+   "peakBlock": 6200,
+   "perSamplePeak": 383.31,
+   "perSampleMean": 383.31,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "FRACT",
+   "case": "spce32",
+   "split": 0,
+   "peakBlock": 6164,
+   "perSamplePeak": 381.06,
+   "perSampleMean": 381.06,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "FRACT",
+   "case": "spce32_split1",
+   "split": 1,
+   "peakBlock": 6200,
+   "perSamplePeak": 383.31,
+   "perSampleMean": 383.31,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "FRACT",
+   "case": "spce32_split2",
+   "split": 2,
+   "peakBlock": 6200,
+   "perSamplePeak": 383.31,
+   "perSampleMean": 383.31,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "FRACT",
+   "case": "spce32_split3",
+   "split": 3,
+   "peakBlock": 6200,
+   "perSamplePeak": 383.31,
+   "perSampleMean": 383.31,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "FRACT",
+   "case": "spce32_split4",
+   "split": 4,
+   "peakBlock": 6200,
+   "perSamplePeak": 383.31,
+   "perSampleMean": 383.31,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "FRACT",
+   "case": "spce32_split5",
+   "split": 5,
+   "peakBlock": 6200,
+   "perSamplePeak": 383.31,
+   "perSampleMean": 383.31,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "FRACT",
+   "case": "spce32_split6",
+   "split": 6,
+   "peakBlock": 6200,
+   "perSamplePeak": 383.31,
+   "perSampleMean": 383.31,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "FRACT",
+   "case": "spce32_split7",
+   "split": 7,
+   "peakBlock": 6200,
+   "perSamplePeak": 383.31,
+   "perSampleMean": 383.31,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "FRACT",
+   "case": "spce32_split8",
+   "split": 8,
+   "peakBlock": 6200,
+   "perSamplePeak": 383.31,
+   "perSampleMean": 383.31,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "FRACT",
+   "case": "spce32_split9",
+   "split": 9,
+   "peakBlock": 6200,
+   "perSamplePeak": 383.31,
+   "perSampleMean": 383.31,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "FRACT",
+   "case": "spce32_split10",
+   "split": 10,
+   "peakBlock": 6200,
+   "perSamplePeak": 383.31,
+   "perSampleMean": 383.31,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "FRACT",
+   "case": "spce32_split11",
+   "split": 11,
+   "peakBlock": 6200,
+   "perSamplePeak": 383.31,
+   "perSampleMean": 383.31,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "FRACT",
+   "case": "spce32_split12",
+   "split": 12,
+   "peakBlock": 6200,
+   "perSamplePeak": 383.31,
+   "perSampleMean": 383.31,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "FRACT",
+   "case": "spce32_split13",
+   "split": 13,
+   "peakBlock": 6200,
+   "perSamplePeak": 383.31,
+   "perSampleMean": 383.31,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "FRACT",
+   "case": "spce32_split14",
+   "split": 14,
+   "peakBlock": 6200,
+   "perSamplePeak": 383.31,
+   "perSampleMean": 383.31,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "FRACT",
+   "case": "spce32_split15",
+   "split": 15,
+   "peakBlock": 6200,
+   "perSamplePeak": 383.31,
+   "perSampleMean": 383.31,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "FRACT",
+   "case": "spce64",
+   "split": 0,
+   "peakBlock": 6164,
+   "perSamplePeak": 381.06,
+   "perSampleMean": 381.06,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "FRACT",
+   "case": "spce64_split1",
+   "split": 1,
+   "peakBlock": 6200,
+   "perSamplePeak": 383.31,
+   "perSampleMean": 383.31,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "FRACT",
+   "case": "spce64_split2",
+   "split": 2,
+   "peakBlock": 6200,
+   "perSamplePeak": 383.31,
+   "perSampleMean": 383.31,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "FRACT",
+   "case": "spce64_split3",
+   "split": 3,
+   "peakBlock": 6200,
+   "perSamplePeak": 383.31,
+   "perSampleMean": 383.31,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "FRACT",
+   "case": "spce64_split4",
+   "split": 4,
+   "peakBlock": 6200,
+   "perSamplePeak": 383.31,
+   "perSampleMean": 383.31,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "FRACT",
+   "case": "spce64_split5",
+   "split": 5,
+   "peakBlock": 6200,
+   "perSamplePeak": 383.31,
+   "perSampleMean": 383.31,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "FRACT",
+   "case": "spce64_split6",
+   "split": 6,
+   "peakBlock": 6200,
+   "perSamplePeak": 383.31,
+   "perSampleMean": 383.31,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "FRACT",
+   "case": "spce64_split7",
+   "split": 7,
+   "peakBlock": 6200,
+   "perSamplePeak": 383.31,
+   "perSampleMean": 383.31,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "FRACT",
+   "case": "spce64_split8",
+   "split": 8,
+   "peakBlock": 6200,
+   "perSamplePeak": 383.31,
+   "perSampleMean": 383.31,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "FRACT",
+   "case": "spce64_split9",
+   "split": 9,
+   "peakBlock": 6200,
+   "perSamplePeak": 383.31,
+   "perSampleMean": 383.31,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "FRACT",
+   "case": "spce64_split10",
+   "split": 10,
+   "peakBlock": 6200,
+   "perSamplePeak": 383.31,
+   "perSampleMean": 383.31,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "FRACT",
+   "case": "spce64_split11",
+   "split": 11,
+   "peakBlock": 6200,
+   "perSamplePeak": 383.31,
+   "perSampleMean": 383.31,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "FRACT",
+   "case": "spce64_split12",
+   "split": 12,
+   "peakBlock": 6200,
+   "perSamplePeak": 383.31,
+   "perSampleMean": 383.31,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "FRACT",
+   "case": "spce64_split13",
+   "split": 13,
+   "peakBlock": 6200,
+   "perSamplePeak": 383.31,
+   "perSampleMean": 383.31,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "FRACT",
+   "case": "spce64_split14",
+   "split": 14,
+   "peakBlock": 6200,
+   "perSamplePeak": 383.31,
+   "perSampleMean": 383.31,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "FRACT",
+   "case": "spce64_split15",
+   "split": 15,
+   "peakBlock": 6200,
+   "perSamplePeak": 383.31,
+   "perSampleMean": 383.31,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "FRACT",
+   "case": "spce96",
+   "split": 0,
+   "peakBlock": 6164,
+   "perSamplePeak": 381.06,
+   "perSampleMean": 381.06,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "FRACT",
+   "case": "spce96_split1",
+   "split": 1,
+   "peakBlock": 6200,
+   "perSamplePeak": 383.31,
+   "perSampleMean": 383.31,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "FRACT",
+   "case": "spce96_split2",
+   "split": 2,
+   "peakBlock": 6200,
+   "perSamplePeak": 383.31,
+   "perSampleMean": 383.31,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "FRACT",
+   "case": "spce96_split3",
+   "split": 3,
+   "peakBlock": 6200,
+   "perSamplePeak": 383.31,
+   "perSampleMean": 383.31,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "FRACT",
+   "case": "spce96_split4",
+   "split": 4,
+   "peakBlock": 6200,
+   "perSamplePeak": 383.31,
+   "perSampleMean": 383.31,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "FRACT",
+   "case": "spce96_split5",
+   "split": 5,
+   "peakBlock": 6200,
+   "perSamplePeak": 383.31,
+   "perSampleMean": 383.31,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "FRACT",
+   "case": "spce96_split6",
+   "split": 6,
+   "peakBlock": 6200,
+   "perSamplePeak": 383.31,
+   "perSampleMean": 383.31,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "FRACT",
+   "case": "spce96_split7",
+   "split": 7,
+   "peakBlock": 6200,
+   "perSamplePeak": 383.31,
+   "perSampleMean": 383.31,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "FRACT",
+   "case": "spce96_split8",
+   "split": 8,
+   "peakBlock": 6200,
+   "perSamplePeak": 383.31,
+   "perSampleMean": 383.31,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "FRACT",
+   "case": "spce96_split9",
+   "split": 9,
+   "peakBlock": 6200,
+   "perSamplePeak": 383.31,
+   "perSampleMean": 383.31,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "FRACT",
+   "case": "spce96_split10",
+   "split": 10,
+   "peakBlock": 6200,
+   "perSamplePeak": 383.31,
+   "perSampleMean": 383.31,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "FRACT",
+   "case": "spce96_split11",
+   "split": 11,
+   "peakBlock": 6200,
+   "perSamplePeak": 383.31,
+   "perSampleMean": 383.31,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "FRACT",
+   "case": "spce96_split12",
+   "split": 12,
+   "peakBlock": 6200,
+   "perSamplePeak": 383.31,
+   "perSampleMean": 383.31,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "FRACT",
+   "case": "spce96_split13",
+   "split": 13,
+   "peakBlock": 6200,
+   "perSamplePeak": 383.31,
+   "perSampleMean": 383.31,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "FRACT",
+   "case": "spce96_split14",
+   "split": 14,
+   "peakBlock": 6200,
+   "perSamplePeak": 383.31,
+   "perSampleMean": 383.31,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "FRACT",
+   "case": "spce96_split15",
+   "split": 15,
+   "peakBlock": 6200,
+   "perSamplePeak": 383.31,
+   "perSampleMean": 383.31,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "FRACT",
+   "case": "spce127",
+   "split": 0,
+   "peakBlock": 6548,
+   "perSamplePeak": 405.06,
+   "perSampleMean": 405.03,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "FRACT",
+   "case": "spce127_split1",
+   "split": 1,
+   "peakBlock": 6585,
+   "perSamplePeak": 407.38,
+   "perSampleMean": 407.35,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "FRACT",
+   "case": "spce127_split2",
+   "split": 2,
+   "peakBlock": 6585,
+   "perSamplePeak": 407.38,
+   "perSampleMean": 407.35,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "FRACT",
+   "case": "spce127_split3",
+   "split": 3,
+   "peakBlock": 6585,
+   "perSamplePeak": 407.38,
+   "perSampleMean": 407.35,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "FRACT",
+   "case": "spce127_split4",
+   "split": 4,
+   "peakBlock": 6585,
+   "perSamplePeak": 407.38,
+   "perSampleMean": 407.35,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "FRACT",
+   "case": "spce127_split5",
+   "split": 5,
+   "peakBlock": 6585,
+   "perSamplePeak": 407.38,
+   "perSampleMean": 407.35,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "FRACT",
+   "case": "spce127_split6",
+   "split": 6,
+   "peakBlock": 6585,
+   "perSamplePeak": 407.38,
+   "perSampleMean": 407.35,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "FRACT",
+   "case": "spce127_split7",
+   "split": 7,
+   "peakBlock": 6585,
+   "perSamplePeak": 407.38,
+   "perSampleMean": 407.35,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "FRACT",
+   "case": "spce127_split8",
+   "split": 8,
+   "peakBlock": 6585,
+   "perSamplePeak": 407.38,
+   "perSampleMean": 407.35,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "FRACT",
+   "case": "spce127_split9",
+   "split": 9,
+   "peakBlock": 6585,
+   "perSamplePeak": 407.38,
+   "perSampleMean": 407.35,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "FRACT",
+   "case": "spce127_split10",
+   "split": 10,
+   "peakBlock": 6585,
+   "perSamplePeak": 407.38,
+   "perSampleMean": 407.35,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "FRACT",
+   "case": "spce127_split11",
+   "split": 11,
+   "peakBlock": 6585,
+   "perSamplePeak": 407.38,
+   "perSampleMean": 407.35,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "FRACT",
+   "case": "spce127_split12",
+   "split": 12,
+   "peakBlock": 6585,
+   "perSamplePeak": 407.38,
+   "perSampleMean": 407.35,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "FRACT",
+   "case": "spce127_split13",
+   "split": 13,
+   "peakBlock": 6585,
+   "perSamplePeak": 407.38,
+   "perSampleMean": 407.35,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "FRACT",
+   "case": "spce127_split14",
+   "split": 14,
+   "peakBlock": 6585,
+   "perSamplePeak": 407.38,
+   "perSampleMean": 407.35,
+   "clippedSamples": 0
+  },
+  {
+   "effect": "FRACT",
+   "case": "spce127_split15",
+   "split": 15,
+   "peakBlock": 6585,
+   "perSamplePeak": 407.38,
+   "perSampleMean": 407.35,
+   "clippedSamples": 0
+  }
+ ]
+}

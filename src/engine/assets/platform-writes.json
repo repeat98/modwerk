@@ -449,6 +449,25 @@
           "writeLength": 10
         }
       ]
+    },
+    {
+      "moduleId": "grnyv1",
+      "key": "FRACT",
+      "author": "ex1010",
+      "source": "modules/grnyv1/manifest.py",
+      "sourceSha256": "c5312f627d404c299ddc04e3965a850604f7b4735647f2643b52b134c91307f6",
+      "detours": [
+        {
+          "address": 1073758668,
+          "length": 6,
+          "sha256": "9d17443ba64725f420e698899284ac29015a9a8dc1162a79c3d4c0f392027b59",
+          "note": "Read three grains from existing Flex sample pages",
+          "unit": "ogsource",
+          "symbol": "og_fetch",
+          "kind": "jmp",
+          "writeLength": 6
+        }
+      ]
     }
   ],
   "cases": [
@@ -526,7 +545,7 @@
       "sha256": "09effec7437266b693e358d43f0ba0f3de2b0b35fe4d81e7b76ba90cf388bde8"
     }
   ],
-  "sourceCommit": "cf95656dbc0e386b4fda769e04cc18eb2a5d3364",
+  "sourceCommit": "fbc366baa0315e3f70f7698cbc1af022ac054048",
   "moduleVersions": {
     "spectrum": "0.1.1-experimental",
     "modulation": "0.1.1-experimental",
@@ -538,6 +557,7 @@
     "tapehead": "0.1.2-experimental",
     "airwindows-chorus": "0.1.2-experimental",
     "everb": "0.1.2-experimental",
+    "grnyv1": "0.10.0-experimental",
     "bbd": "0.1.1-experimental",
     "lofi2": "0.1.1-experimental",
     "ring-sc": "0.2.0-experimental",

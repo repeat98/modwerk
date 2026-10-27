@@ -1,0 +1,13 @@
+[
+  {
+    "version": "0.10.0-experimental",
+    "date": "2026-10-25",
+    "changes": [
+      "FRACT plays three overlapping grains from a Flex sample, with position, size, direction, scatter, shape and stereo SPACE controls.",
+      "Use a Flex track with TSTR OFF. One FRACT track can play at a time; other FRACT tracks play dry and show the owner track.",
+      "Above SPCE 96, a darker tail and stereo smoothing soften repeated attacks. SPCE 0–96 and grain rendering keep their sound.",
+      "After updating an earlier development Part, select FRACT again and reset its defaults; see the README migration notes.",
+      "Known issue: grains can remain audible at SPCE 127. SETUP controls take no locks, LFOs or scenes."
+    ]
+  }
+]

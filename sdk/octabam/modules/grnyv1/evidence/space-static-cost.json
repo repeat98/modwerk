@@ -1,0 +1,18 @@
+{
+  "model": "SDK word span, forward BRA parser extension only",
+  "markerByteIdentical": true,
+  "words": 593,
+  "loopWords": 458,
+  "staticCyclesPerSample": 512,
+  "callDetails": "bsr hy_output 23w/call, bsr hy_output 23w/call",
+  "perCallOverhead": 94,
+  "worstSplitBlock": 8380,
+  "fourInstancesPerCore": 33520,
+  "coreBudget": 49920,
+  "symbols": {
+    "proc": 4113,
+    "__cyc_body": 4195,
+    "sp_end": 4653,
+    "hy_output": 4665
+  }
+}
