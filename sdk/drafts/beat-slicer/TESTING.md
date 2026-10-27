@@ -4026,9 +4026,10 @@ per-source duration or additional cross-product coverage is inferred.
 The private helper recorded USB loss at 10:41 Taipei time on 27 October.
 The author confirmed they deliberately powered the machine off, then unplugged
 USB after testing. On the next power-on, they reported Beat Grid was gone and
-the other modules returned. This explains the disconnect and records the
-observed restart result; final USB Undo and independent exact base/inventory
-readback remain unverified.
+the other modules returned. A fresh read-only check before the later Undo test
+verified original flashed base `77226ffcdc7ebc704040c92530dfd40401896ba7567450494a1a917686f7088d`
+and all sixteen saved module IDs/names. The interrupted playback run's final
+USB Undo remains unverified; the separate successful run below does not relabel it.
 No Keep, flash, sample/project save, persistence or final Undo result is claimed. Exact physical short-commit
 timing, complete scheduler/Pickup coverage and extended cancellation remain
 open. These results belong to the event-35 build above; the later merge of
@@ -4041,3 +4042,33 @@ the different complete binary or its physical interrupt timing.
 Documentation update only: the PROJECT BPM time-stretch guidance was added to
 README and presentation usage at the contributor's request. Beat Slicer does
 not change stock time-stretch or sample ATTR BPM. No runtime/version change.
+
+
+### Separate same-build USB Undo verified — 27 October 2026
+
+The author explicitly requested completing the USB Undo test and confirmed
+stopped playback/recording, connected USB and a safe/disposable project.
+At 20:36 Taipei time, a fresh read-only connection verified the original
+flashed `77226ffc…` base, normal/known state and all sixteen saved modules.
+
+The exact playback-test private base `8ffc8ffefe3ecd00ca434fe67ee6e902ea0b359d0f6343a404a5bd3ec4e9c69a`
+was RAM-booted again. A new single-use review bound its empty active baseline
+to the identical Beat Slicer 0.1.66 package
+`5e5e1e41257b0f290110e47ee6881a485661fc1daafa0986a7dd7ae6e6ca1e03`
+(5,776 bytes; provisional event 35). No interrupted session was resumed.
+Actual singleton trial and physical self-test passed: one live/intact module,
+zero failures and no DSP modules. The authorized USB Undo then succeeded.
+
+At 20:37:54 Taipei time, a separate fresh read-only connection independently
+confirmed the same private base, normal phase, known active digest exactly
+`8ffc8ffefe3ecd00ca434fe67ee6e902ea0b359d0f6343a404a5bd3ec4e9c69a`
+and the original empty inventory. This is an observed same-build hardware
+USB trial/self-test/Undo result. No Keep, flash, sample/project save or new
+audio test occurred. Receipts remain private under
+`usb-undo-20261027/hardware1/`; no firmware or raw diagnostics are committed.
+
+The verified Undo restores the empty private RAM baseline. Returning to the
+flashed base and saved sixteen-module set after this new run needs a user
+power cycle; no post-test power-cycle result is claimed here. The earlier
+power-off/interrupted-run outcomes and later event-36 build qualification
+remain separate.

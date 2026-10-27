@@ -35,7 +35,9 @@ contributor reported flawless slicing, re-slicing and playback with Flex file
 slots, Static file slots and a completed recorder buffer, across more than 20
 minutes overall. The exact build, settings and limits are in [TESTING.md](TESTING.md).
 The author later powered off and unplugged USB, then reported Beat Grid absent
-and the other modules restored on the next power-on; final USB Undo is unverified. This does not publish the module:
+and the other modules restored on the next power-on. A subsequent fresh trial
+of the identical private build passed self-test and USB Undo, with the exact
+empty RAM baseline independently verified. The interrupted run remains separate. This does not publish the module:
 the shared base/API proposal [#914](https://github.com/repeat98/modwerk/pull/914)
 and first release still need Modwerk owner review. The draft remains unlisted
 until that integration is accepted.
