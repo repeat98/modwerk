@@ -33,17 +33,17 @@ while the sequencer runs; a paused LIVE REC follows SILENT PAD+TRIG.
 This holds wherever stock would play a pressed pad or TRIG key: on any page, with a menu open, in
 the SOUND BROWSER, with the FX track selected, and in CHAIN, SONG, FILL, PERF and SCENE modes
 (where the pads keep their own jobs and only the TRIG keys stop playing). A silent press sends no
-MIDI note and leaves no held note, so its release cuts nothing the sequencer plays. CHROMATIC
-mode, MUTE mode, TRK + pad, QPER + pad, NO + pad, BANK + TRIG, MIDI notes in, TRIG + YES and the
-sequencer itself are as stock.
+MIDI note and leaves no held note, so its release cuts nothing the sequencer plays. In CHROMATIC
+mode the pads play as stock, and TRIG 1-12 select silently there too. MUTE mode, TRK + pad, QPER +
+pad, NO + pad, BANK + TRIG, MIDI notes in, TRIG + YES and the sequencer itself are as stock.
 
 Version **0.5.0-experimental** for Analog Rytm MKII OS **1.74**, with core-ar2 0.3. It is
 npp1993's own mod, not a port. It was first written as Pad Select (`pad-select` 0.2, row
 PAD+TRIG SEL TRK) in a local checkout of [rytm2_mods](https://github.com/Iced-Cream/rytm2_mods)
 that was never published there; Modwerk is its home. 0.4.x had one checkbox covering both columns
 above; 0.5.0 splits it in two so silent pads while editing and silent pads while live recording
-can be chosen separately. 0.3.0 and 0.4.0 ran on a unit; 0.5.0 has not yet run in the emulator or
-on a unit, so it waits in `_submissions/`.
+can be chosen separately. 0.3.0 and 0.4.0 ran on a unit; 0.5.0 ran in rytm-emu (build PS07) but
+not yet on a unit, so it waits in `_submissions/`.
 
 ## Controls
 
@@ -92,23 +92,28 @@ While a setting is checked, and only where it applies:
   press is silent; FUNC + pad auditions.
 - **With a menu open**, a pad or TRIG key no longer plays; FUNC + pad does.
 - **TRIG 13** plays the FX track on stock; checked, it is silent outside LIVE and STEP RECORDING.
+- **CHROMATIC mode**: the pads play their notes as stock; TRIG 1-12, which play their track there
+  on stock, select silently with SILENT PAD+TRIG, as in every other mode.
 - **With FIX (fixed velocity) on**, FUNC + pad plays at the fixed velocity, as stock pads do.
 - **With AUTO TRK SWITCH unchecked**, a silent press still selects its track; FUNC + pad, which plays, follows AUTO TRK SWITCH as stock and does not.
 
-Up to 0.4.1, with one setting, every mode that takes the pads, TRIG keys or FUNC was compared
-with stock in rytm-emu, from matched snapshots: PERF, SCENE, MUTE, CHROMATIC, CHAIN, SONG, FILL, FIX, QPER, TRK, BANK + TRIG,
-the FX track, the SOUND BROWSER, an open menu, GRID, LIVE and STEP RECORDING, NO + pad, RTRG,
-AUTO TRK SWITCH off, soft strikes, aftertouch, MIDI notes in, MIDI out and TRIG + YES (table in
-[TESTING.md](TESTING.md)). Unchecked, every one matched stock exactly.
+In 0.5.0 every mode that takes the pads, TRIG keys or FUNC was compared with stock in rytm-emu,
+from matched snapshots, with neither setting, each alone and both checked: PERF, SCENE, MUTE,
+CHROMATIC, CHAIN, SONG, FILL, FIX, QPER, TRK, BANK + TRIG, the FX track, the SOUND BROWSER, an open
+menu, GRID, LIVE and STEP RECORDING, NO + pad, RTRG, AUTO TRK SWITCH off, soft strikes, aftertouch,
+MIDI notes in, MIDI out and TRIG + YES (table in [TESTING.md](TESTING.md)). With both unchecked,
+every one matched stock exactly; checked, each setting changed only its own column above.
 
 ## Compatibility and limitations
 
 Requires core-ar2 0.3 on OS 1.74. Use your own original stock OS 1.74 file.
 
 - Built for OS 1.74 only.
-- **0.5.0 has not run yet**, in rytm-emu or on a unit. 0.4.0, with one setting for both
+- **0.5.0 has run only in rytm-emu**, not yet on a unit. 0.4.0, with one setting for both
   columns, ran on a unit (TESTING.md); MIDI out, STEP REC and several other flows are not yet
   tested there.
+- A unit that ran 0.4.x starts 0.5.0 with both rows unchecked: the storage layout changed (a new
+  field), so the old setting is not carried over. Check the rows again once.
 - FUNC + TRIG 1-12 plays nothing, as on stock.
 - A silent press passes its aftertouch on, so MIDI out can carry poly pressure with no note-on
   before it.
@@ -127,20 +132,21 @@ the pads, the TRIG keys or the SEQUENCER CONFIG menu.
 ## Tests and measurements
 
 See [TESTING.md](TESTING.md). In short: Modwerk's compiler builds this folder, and Modwerk's
-linker links it on the owner's stock OS 1.74 with core-ar2 0.3 alone and beside Filter Hz and
-Loop Sync. In rytm-emu the build boots, shows the row, and with it checked a pad press outside
-STEP RECORDING (or a TRIG press outside LIVE and STEP RECORDING) reaches the play routine but no
-voice trigger, no MIDI out and no recorded trig, while FUNC + pad plays, and records in LIVE
-RECORDING. Unchecked, every screen and every MIDI byte matched stock in the same
-run. The setting came back after a power-off and cold boot, and each GLOBAL slot keeps its own.
-Every other mode that takes the pads, TRIG keys or FUNC was compared too (see the table in
-TESTING.md), and a silent press left the modelled analog output byte-identical while the
-sequencer played. 0.3.0 (build PS04) ran on an Analog Rytm MKII: silent pads, FUNC + pad, no cut
-sequenced notes, the setting through a power cycle and per GLOBAL slot, as reported. 0.4.0 (PS05)
-ran on one too: silent LIVE REC pads with FUNC + pad recording, aftertouch on a silent hold, GRID
-REC, CHROMATIC and MUTE, as reported. Memory (0.5.0): a 936-byte `.run` in the 128 KiB shared mod area, no `.bss`, no
-fast SRAM. Nothing runs in the audio, sequencer or tick paths; each key press costs a few
-compares (static reading, not a measurement).
+linker links it on the owner's stock OS 1.74 with core-ar2 0.3 alone (build PS07) and beside
+Filter Hz and Loop Sync. In rytm-emu (emulator results, not hardware), PS07 cold-boots with both
+rows after AUTO TRK SWITCH, unchecked and drawn aligned, and YES, LEFT and RIGHT set each on its
+own. From matched snapshots against stock, with neither, each and both settings checked: both
+unchecked, every count, MIDI byte and screen matched stock in 26 groups; SILENT PAD+TRIG silenced
+pads and TRIG 1-12 outside LIVE and STEP RECORDING and nowhere else; SILENT LIVE REC silenced pads
+in LIVE RECORDING, and the modelled analog output showed a plain tap there neither sounded nor was
+recorded, while FUNC + pad played and recorded. FUNC + pad played at the strike's velocity, STEP
+REC stayed stock, aftertouch on a silent hold went out, and AUTO TRK SWITCH off behaved as designed.
+Both rows came back after a power-off and two cold boots, and GLOBAL slot 2 kept its own; opening
+SEQUENCER CONFIG 30 times caused no trouble. 0.3.0 (build PS04) and 0.4.0 (PS05), with one setting,
+ran on an Analog Rytm MKII, as reported; 0.5.0 has not run on hardware. Memory (0.5.0): a 936-byte
+`.run` in the 128 KiB shared mod area, no `.bss`, no fast SRAM, two storage bits. Nothing runs in
+the audio, sequencer or tick paths; each key press costs a few compares (static reading, not a
+measurement).
 
 ## Authorship and licences
 
@@ -161,22 +167,24 @@ No Elektron firmware is included.
 
 ## Screens and audio
 
-These captures are rytm-emu frames of PS06, the released core-ar2 0.3 and Silent Pad+Trig on stock OS
-1.74, from one cold boot. See [capture provenance](media/capture.json) for hashes and inputs. The
+These captures are rytm-emu frames of PS07, the released core-ar2 0.3 and Silent Pad+Trig 0.5.0 on
+stock OS 1.74, from one cold boot. See [capture provenance](media/capture.json) for hashes and inputs. The
 module changes which presses sound, not the sound itself, so there is no audio demonstration.
 
 ![CONTROL menu listing CONTROL INPUT 1, CONTROL INPUT 2 and SEQUENCER CONFIG.](media/control-menu.png)
 
-Open the GLOBAL menu and choose CONTROL: SEQUENCER CONFIG is its third item.
+Open the GLOBAL menu and choose CONTROL: SEQUENCER CONFIG, which holds both rows, is its third item.
 
-![SEQUENCER CONFIG list with the SILENT PAD+TRIG row highlighted and its box empty.](media/seq-config.png)
+![SEQUENCER CONFIG list with SILENT PAD+TRIG highlighted and SILENT LIVE REC below it, both boxes empty, after AUTO TRK SWITCH.](media/seq-config.png)
 
-SEQUENCER CONFIG gains SILENT PAD+TRIG just after AUTO TRK SWITCH, unchecked by default.
+SEQUENCER CONFIG gains two rows after AUTO TRK SWITCH, SILENT PAD+TRIG and SILENT LIVE REC, both
+unchecked by default.
 
-![SEQUENCER CONFIG list with the SILENT PAD+TRIG box checked.](media/seq-config-checked.png)
+![SEQUENCER CONFIG list with the SILENT PAD+TRIG and SILENT LIVE REC boxes both checked, SILENT LIVE REC highlighted.](media/seq-config-checked.png)
 
-Press YES (or RIGHT) to check it. The GLOBAL slot keeps it.
+Press YES (or RIGHT) on either row to check it; each is set on its own and the GLOBAL slot keeps both.
 
 ![SD track's SRC page with SNARE as the title, shown after a silent SD pad press.](media/silent-press.png)
 
-Back on the main screen, tapping the SD pad selects the SD track without a sound; FUNC + SD plays it.
+Back on the main screen with SILENT PAD+TRIG checked, tapping the SD pad selects the SD track
+without a sound; FUNC + SD plays it.

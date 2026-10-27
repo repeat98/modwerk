@@ -5,7 +5,7 @@ rytm2_mods; 0.4.1 renames the module, the row (SILENT PAD+TRIG), the source file
 the storage field (`silent_pad_trig_on`), with no change in behaviour. The sections below use the
 new names, also for the earlier builds.
 
-- Module: `silent-pad-trig` 0.4.1-experimental, for Analog Rytm MKII OS 1.74 on core-ar2 0.3.
+- Module: `silent-pad-trig` 0.5.0-experimental, for Analog Rytm MKII OS 1.74 on core-ar2 0.3.
 - Source: npp1993's own mod, first written as `pad-select` 0.2 in a local rytm2_mods checkout
   (commit `35ea2f0`, branch `claude/pad-select`), never published there; this folder is now the
   source, so the manifest names no upstream revision. 0.2.0-experimental here was that file byte for byte
@@ -13,9 +13,13 @@ new names, also for the earlier builds.
   `func_gate` and `drw_invoke` ([0.4.0](#040-pads-silent-in-live-rec-aftertouch-as-stock-2026-10-25);
   0.3.0's aftertouch hook and its site are gone again): `src/silent-pad-trig.s` `c96a146c…6c55` (renamed from `pad-select.s` in 0.4.1). `include/ar2-1.74.inc` (`c57431f7…874b`) is rytm2_mods'
   `include/ar2-1.74.inc`, byte for byte. Source fingerprint (`sha256` of
-  `sha256sum include/ar2-1.74.inc src/silent-pad-trig.s`): `2e521380…8ea5`.
+  `sha256sum include/ar2-1.74.inc src/silent-pad-trig.s`): `2e521380…8ea5`. 0.5.0's
+  `src/silent-pad-trig.s` is `22019c7f…53a7`, fingerprint `bf1ed603…cd2f` (`evidence.sourceSha256`).
 - Stock OS 1.74: `.syx` `cb0f99d6…e123`, main OS `34cd0c4d…1f3b`, the owner's file.
 - Core: elekloader core-ar2 0.3 (`core-ar2-v0.3`, `core-ar2-0.3.elemod` `6b97dfb3…3e58`, as vendored).
+- Build PS07 (core-ar2 0.3 + 0.5.0, Modwerk's linker, `--version PS07`): `.syx`
+  `eae28e8ff6ae9f29a9d608c0fbe3985804779b42fd96d33d1e4c1d97934cae99`, main OS `80a0fbfa…20b5`.
+  Tested in rytm-emu 2026-10-27 ([0.5.0](#050-two-settings-2026-10-27)). Not run on a unit.
 - Build PS06 (core-ar2 0.3 + 0.4.1, Modwerk's linker, `--version PS06`): `.syx`
   `08b4c1a724b25904be6724d9cd0a53ba553242b6d090a7ec1e33b94b9bd25d24`, main OS `168fe5cf…fb56`.
   Tested in rytm-emu 2026-10-25. Not run on a unit.
@@ -46,10 +50,99 @@ Same five sites. Compiled in the cloud with Ubuntu's `m68k-linux-gnu` binutils 2
 storage fields. Source fingerprint (`sha256` of `sha256sum include/ar2-1.74.inc
 src/silent-pad-trig.s`): see `evidence.sourceSha256` in the manifest.
 
-**Pending:** the link on stock OS 1.74, the emulator run (both rows drawn and toggled; each
-column of the README table against stock with each setting alone, both, and neither; persistence
-and GLOBAL slots), new screenshots of the two rows, and a hardware run. The screenshots in
-`media/` still show 0.4.1's single row.
+**Build and link** (2026-10-27, on the owner's computer): Homebrew `m68k-elf` binutils/GCC,
+Node 24.21.0, as in [Source build and link](#source-build-and-link-020-2026-10-24). The recipe has
+a 936-byte `.run`, 5 sites (the same five), 20 relocations, no `.bss` and two global storage
+fields; core-ar2 0.3's allocator puts `silent_live_rec_on` at global bit 0 and
+`silent_pad_trig_on` at bit 1 (no lockfile). Linked with Modwerk's linker (`linkMods`):
+
+| Selection | Result | Main OS sha256 |
+| --- | --- | --- |
+| core-ar2 0.3 + Silent Pad+Trig (PS07) | links | `80a0fbfa…20b5` |
+| core-ar2 0.3 + Filter Hz 1.2.0 + Loop Sync 0.2.0-experimental + Silent Pad+Trig | links, no overlaps; both bits beside Loop Sync's sound and project fields | `54123495…f024` |
+
+The source-only export linked the same, alone and beside Filter Hz and Loop Sync. PS07 `.syx`:
+`eae28e8f…ae99`. It stays on the owner's computer.
+
+**Emulator** (emulator results, not hardware): [rytm-emu](https://github.com/trigcondition/rytm-emu)
+`c5732f0`, headless `dtboot` with the JIT, the same method, counters and key timing as the
+[0.2.0 runs](#emulator-020-2026-10-25). Five snapshots from one key sequence at the same clock
+(GLOBAL > CONTROL > SEQUENCER CONFIG, three DOWNs, YES or not, DOWN, YES or not, four NOs):
+**N** PS07 with neither row checked, **P** only SILENT PAD+TRIG, **L** only SILENT LIVE REC,
+**PL** both, and **S** stock 1.74 (no YES).
+
+- **Menu.** A PS07 cold boot shows SILENT PAD+TRIG and SILENT LIVE REC after AUTO TRK SWITCH, both
+  unchecked, their boxes in AUTO TRK SWITCH's column. YES on one row checks it and leaves the
+  other; RIGHT checks and LEFT unchecks only the highlighted row.
+- **Neither checked (N) against stock (S):** in all 26 groups below, the same counts, a
+  byte-identical MIDI out log and pixel-identical screens, apart from SEQUENCER CONFIG, which has
+  the two rows. The modelled analog output of a LIVE REC take is byte-identical between a run with
+  and without live recording when nothing is tapped, as on stock.
+
+| Group | S (stock) | P (SILENT PAD+TRIG) | L (SILENT LIVE REC) | PL (both) |
+| --- | --- | --- | --- | --- |
+| Stopped: SD, FUNC + SD, TRIG 5, FUNC + TRIG 5 | SD 127, FUNC + SD 100, TRIG 5 100, FUNC + TRIG 5 nothing | SD and TRIG 5 silent; FUNC + SD 127 | as S | as P |
+| Playing: SD, FUNC + SD, TRIG 5 | play (127, 100, 100) | SD and TRIG 5 silent; FUNC + SD 127 | as S | as P |
+| GRID REC: TRIG 3, SD, FUNC + SD, TRIG 3 | trigs placed; SD 127, FUNC + SD 100 | trigs placed; SD silent, FUNC + SD 127 | as S | as P |
+| LIVE REC: SD, FUNC + SD, TRIG 5, NO + SD | SD 127, FUNC + SD 100, TRIG 5 100; NO + SD reaches no play routine | as S | SD silent; FUNC + SD 127; TRIG 5 100; NO + SD as S | as L |
+| STEP REC: TRIG 3, TRIG 4, SD | TRIG keys pick steps; SD 127 | as S | as S | as S |
+| PERF, SCENE: SD, FUNC + SD, TRIG 3 | pads drive the mode; TRIG 3 plays | TRIG 3 silent | as S | as P |
+| MUTE: FUNC + SD twice, SD twice | mute CCs, no play routine | as S | as S | as S |
+| TRK + SD, TRK + TRIG 5; QPER + SD, QPER + TRIG 3; BANK A + TRIG 2, + TRIG 1 | no play routine | as S | as S | as S |
+| FIX on: SD, FUNC + SD | both 100 | SD silent, FUNC + SD 100 | as S | as P |
+| FX track: TRIG 3, then SD | play | silent | as S | as P |
+| TRIG 13, FUNC + TRIG 13, TRIG 16 | TRIG 13 plays (note 12) | TRIG 13 silent | as S | as P |
+| GLOBAL menu open: SD, FUNC + SD, TRIG 5 | play (127, 100, 100) | SD, TRIG 5 silent; FUNC + SD 127 | as S | as P |
+| LIVE REC, PLAY (ends it), SD, TRIG 5, PLAY, SD | play | silent | as S | as P |
+| RTRG + SD held; FUNC + RTRG + SD held | one trigger each (127; 100) | RTRG + SD silent; FUNC + RTRG + SD 127 | as S | as P |
+| SOUND BROWSER: SD, FUNC + SD, TRIG 3 | SD and FUNC + SD audition; TRIG 3 picks bank C | SD silent; FUNC + SD auditions at 127 | as S | as P |
+| Soft strikes: plain soft, FUNC + soft, FUNC + hard | 15, 100, 100 | silent, 15, 127 | as S | as P |
+| CHAIN, SONG, FILL: SD, TRIG 3 | play | silent | as S | as P |
+| CHROMATIC: SD, FUNC + SD, TRIG 3 | pads play their notes; TRIG 3 plays track 3 | pads as S; TRIG 3 silent | as S | as P |
+| MIDI note in; TRIG 3 + YES in GRID REC | voice trigger runs | as S | as S | as S |
+| SD held with pressure, then FUNC + SD held | note and poly pressure (`AD 01 …`) for both | plain hold: poly pressure, no note; FUNC + SD: note and pressure | as S | as P |
+| AUTO TRK SWITCH unchecked (LEFT on its row), then stopped SD, TRIG 5, FUNC + SD, then LIVE REC SD, TRIG 5 | all play, the track stays BD | stopped SD and TRIG 5 silent and select SD, then BT; FUNC + SD plays and stays BT; LIVE REC presses play, stay BT | stopped presses as S; LIVE REC SD silent and selects SD; TRIG 5 plays, stays SD | stopped as P; LIVE REC as L |
+
+Screens matched stock in every group and configuration, apart from SEQUENCER CONFIG and the
+selections AUTO TRK SWITCH off changes by design. Velocities are the MIDI note-on values on the
+auto channel.
+
+**Recording in LIVE REC.** The modelled analog output (`--analog-wav`, `DTEMU_ANALOG_SEED=1`) of
+RECORD + PLAY, a tap at 4.0 s, PLAY at 6.5 s (ends live recording; the sequencer plays on) and
+30 s in all. A tap that is recorded makes the take differ from a play-only run with the same tap
+from the recorded step's next pass on; runs from P, L and PL share one baseline (their untapped
+takes are byte-identical), so their takes compare directly:
+
+| Tap | S | P | L | PL |
+| --- | --- | --- | --- | --- |
+| SD | sounds (127) and is recorded: differs from the play-only tap from 5.89 s, one bar on | sounds and is recorded: byte-identical to PL's FUNC + SD | byte-identical to no tap: nothing sounded, nothing recorded | as L |
+| FUNC + SD | sounds (100) and is recorded (differs from the play-only tap from 5.93 s) | sounds (100), as S | byte-identical to PL's | sounds (127) and is recorded: differs from the play-only tap from 5.89 s |
+| TRIG 5 | sounds and is recorded (differs from the play-only tap from 7.78 s) | byte-identical to L's and PL's | sounds and is recorded (differs from the play-only tap from 7.78 s, as S) | byte-identical to L's |
+
+N gave the same results as S.
+
+**Persistence and GLOBAL slots** (fresh card images): one card with only SILENT PAD+TRIG checked,
+one with only SILENT LIVE REC, each followed by `--power-off`. A cold boot of PS07 on each shows
+its own row checked and the other unchecked; on the first, SD and TRIG 5 are silent, on the
+second they play. GLOBAL SLOT 2 shows both rows unchecked (with slot 2's own stock settings), and
+SD plays; RIGHT on SILENT LIVE REC checks it there; back in slot 1 its rows are as set. After a
+second power-off and cold boot, slot 1 and slot 2 still hold their own rows. Stock 1.74 cold-boots
+on the first card with the stock SEQUENCER CONFIG, and SD plays.
+
+**Upgrade from 0.4.1.** A card saved by PS06 with SILENT PAD+TRIG checked: PS07 cold-boots on it
+with both rows unchecked, and pads play. The new field changes core-ar2's storage layout, so the
+old bit is not carried over (README limitation).
+
+**Menu cycling.** From PL, SEQUENCER CONFIG opened and closed 30 times (YES, NO): every frame
+drawn as expected, the rows still checked, and afterwards SD silent and FUNC + SD at 127. The
+menu constructor site is not reached again while cycling: the view is built once.
+
+**Captures.** The four PNGs in `media/` come from one PS07 cold boot (command line in
+`media/capture.json`); a second identical run gave all 28 frames byte for byte.
+
+Not compared in the emulator: a paused LIVE REC, loading a saved project, Global SysEx receive,
+other modules beside it at run time, and sound beyond the modelled analog voices. No fix was
+needed: the source is as committed in 2746321a.
 
 ## Sites
 
@@ -360,8 +453,11 @@ The tester flashed PS05 (0.4.0, `.syx` `40e2f30a…2865`). Reported:
 
 Not yet reported on any build:
 
-1. GLOBAL > CONTROL > SEQUENCER CONFIG: SILENT PAD+TRIG after AUTO TRK SWITCH; YES and
-   LEFT/RIGHT toggle it. Save, power-cycle, reload: kept. Another GLOBAL slot keeps its own.
+1. GLOBAL > CONTROL > SEQUENCER CONFIG: SILENT PAD+TRIG and SILENT LIVE REC after AUTO TRK
+   SWITCH; YES and LEFT/RIGHT toggle each on its own. Save, power-cycle, reload: kept. Another
+   GLOBAL slot keeps its own.
+1b. 0.5.0: with only SILENT LIVE REC checked, pads play outside LIVE REC and are silent and not
+   recorded in it (FUNC + pad plays and records); with only SILENT PAD+TRIG, LIVE REC is stock.
 2. Stopped and playing: pads and TRIG 1-12 select silently; FUNC + pad plays, soft and hard,
    at the pad's velocity. Holding a pad on a sounding track does not cut its note on release.
    AUTO TRK SWITCH unchecked: a silent press selects, FUNC + pad does not.
@@ -377,12 +473,12 @@ Not yet reported on any build:
 
 ## Load and memory
 
-784 bytes in the shared DDR area, no `.bss`, no fast SRAM. The sites are in the pad and TRIG key
+936 bytes (0.5.0) in the shared DDR area, no `.bss`, no fast SRAM, two global storage bits. The sites are in the pad and TRIG key
 handlers and their play routine, and the SEQUENCER CONFIG menu's constructor. Each press reads
-one storage bit through `core_store_get` and the record state; nothing runs in the audio,
+the record state and one storage bit through `core_store_get`; nothing runs in the audio,
 sequencer or tick paths. Static reading, not a measurement.
 
 ## Not tested
 
-On a unit: everything. In the emulator: sound and timing, the flows listed above as not
+On a unit: 0.5.0 at all. In the emulator: sound and timing, the flows listed above as not
 compared, other modules beside it at run time, and loading a saved project.
