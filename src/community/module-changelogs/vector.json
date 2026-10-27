@@ -6,7 +6,7 @@
       "Over USB, a double tap on SRC on a VECTOR track now opens VECTOR's second page (SEED, SPAN, OFST, ROT, RPT, DIR) instead of the stock Flex or Static setup (#972).",
       "Needs the current Modwerk beta base; on an older base SRC SETUP stays as before.",
       "Card builds are unchanged.",
-      "Known issue: not yet tested on hardware."
+      "Known issue: saving and reloading, a power cycle with VECTOR kept and listening are not yet tested on hardware."
     ]
   },
   {
