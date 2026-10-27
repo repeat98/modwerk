@@ -162,13 +162,13 @@ and the pretend unit.
 |---|---|---|---|---|
 | 1.25 | Review | Stays, Adds and Leaves equal the difference to the inventory. Each package's hash matches the manifest, and the forward and Undo packages are verified before anything is sent | S | done for 19 single-module reviews on the tester image (run 1) |
 | 1.26 | Sync while the unit plays | The base refuses, the site waits and says so, and goes on once the transport stops | S, U | open |
-| 1.27 | Sync, self-test, Keep | Removals first, then installs. The self-test record says passed, INVENTORY equals the set, the card set is saved and read back | S | failed on the tester image (run 1): 15 of 19 kept one by one; E-Verb, Sidechain, Output Matrix and Analog BD fail the self-test (findings 3-5) |
+| 1.27 | Sync, Keep | Removals first, then installs, kept at once (no self-test since 27 Oct). INVENTORY equals the set, the card set is saved and read back | S | failed on the tester image (run 1): 15 of 19 kept one by one; E-Verb, Sidechain, Output Matrix and Analog BD fail the self-test (findings 3-5) |
 | 1.28 | Undo | Back to the exact previous inventory, newest change first. A removed module the site does not publish is named as not restorable | S | done once on the tester image (run 1); the MCP refuses Keep over beta3's card set (finding 6) |
-| 1.29 | A failed self-test | Undo by itself, the failing check named, Report a problem offered | S, with E injecting the failure | open |
+| 1.29 | A failed self-test | Dropped (owner, 27 Oct): a sync runs no self-test and undoes nothing | S | dropped |
 | 1.30 | A refusal part way through a set | The trial rolled back, the kept changes undone newest first, the inventory at the baseline, the reason in the site's words | E (T5), S | open |
 | 1.31 | The tab closes, or the cable goes, mid-trial | The base rolls back about 10 s after the last request. Reconnecting shows a consistent inventory, and the next sync sends only the difference | S, U | done once for the CLI on usbtest6; open for the site |
 | 1.32 | Two tabs | The second tab says another tab is using the unit; the Web Lock releases when the first finishes | B | open |
-| 1.33 | The pill | On every other page while a sync runs or waits for Keep or Undo, and for its result | B | open |
+| 1.33 | The pill | On every other page while a sync runs, and for its result | B | open |
 | 1.34 | A reload during the dialog | The state comes back; a pending base install returns to Connect. A trial cannot be dismissed, and closing it undoes | B | open |
 
 ### Status, Backups, MISSING and reports

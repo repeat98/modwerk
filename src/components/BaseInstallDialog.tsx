@@ -56,7 +56,7 @@ const USB_STEPS: Record<BaseUpdateStep, string> = {
 const ALSO_NEW: [IconName, string, string, boolean?][] = [
   ['wave', 'Better DSP memory use', '. Effects load as needed, sharing one copy of their code between tracks on the same DSP core.', true],
   ['check', 'Kept after a restart', ', the Octatrack loads your modules again when it starts'],
-  ['shield', 'A self-test on the Octatrack', ' after every sync, then you keep it or undo it'],
+  ['shield', 'A self-test on the Octatrack', ' for the modules it runs, from Status or PROJ > MODWERK'],
   ['search', 'Missing modules named', ' when a project uses one the Octatrack doesn’t have'],
   ['sliders', 'Stock effects stay', ', none of them get replaced'],
 ]

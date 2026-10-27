@@ -42,11 +42,10 @@ export function missingFromProject(missing: { module: string; name: string }[], 
 /** Whether a module set has exactly the unit's modules, in any order. */
 export const sameModules = (a: readonly string[], b: readonly string[]) => a.length === b.length && a.every(id => b.includes(id))
 
-/** Where the guided load stands: the review, sending, the self-test, the trial (Keep or Undo), or its result. */
-export type LoadStep = 'review' | 'loading' | 'testing' | 'trial' | 'done'
+/** Where the guided load stands: the review, sending, keeping (the base's trial until it is kept), or its result. */
+export type LoadStep = 'review' | 'loading' | 'trial' | 'done'
 export function loadStep(status: string, started: boolean, preparing: boolean): LoadStep {
   if (preparing || status === 'sending') return 'loading'
-  if (status === 'testing') return 'testing'
   if (status === 'trial' || status === 'finishing') return 'trial'
   return started ? 'done' : 'review'
 }

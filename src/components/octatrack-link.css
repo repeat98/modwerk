@@ -353,7 +353,6 @@ button.octatrack-status { width: 100%; border: 0; border-top: 1px solid var(--li
 .load-unchanged { margin-top: 14px; color: var(--muted); font-size: 13px; }
 .load-unchanged summary { cursor: pointer; padding: 8px 0; }
 .load-unchanged ul { margin: 4px 0 0; padding-left: 20px; line-height: 1.7; }
-.load-undo { white-space: normal; overflow-wrap: anywhere; }
 .octatrack-diagnostics { margin: 20px 0; padding: 16px 0; border-top: 1px solid var(--line); font-size: 13px; line-height: 1.6; }
 .octatrack-diagnostics h3 { margin: 0 0 6px; font-size: 15px; }
 .octatrack-diagnostics p { margin: 8px 0; }
@@ -375,13 +374,6 @@ button.octatrack-status { width: 100%; border: 0; border-top: 1px solid var(--li
 .load-blocked p { margin: 0; }
 .load-blocked p + p { display: flex; gap: 16px; margin-top: 6px; }
 .load-blocked .text-button { color: #f4c978; font-size: 13px; }
-.load-steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 18px 0 12px; padding: 0; list-style: none; }
-.load-steps li { display: flex; flex-direction: column; gap: 8px; color: var(--muted); font-size: 12px; }
-.load-steps li::before { content: ''; height: 4px; border-radius: 2px; background: var(--line); }
-.load-steps li.is-complete { color: var(--text-secondary); }
-.load-steps li.is-complete::before { background: #7fd39b; }
-.load-steps li.is-active { color: var(--text); font-weight: 600; }
-.load-steps li.is-active::before { background: var(--accent); }
 .load-progress { display: block; width: 100%; height: 6px; margin: 0 0 4px; accent-color: var(--accent); }
 .load-dialog .link-hint { margin: 0 0 12px; }
 .load-dialog .base-install-footer { flex-wrap: wrap; }

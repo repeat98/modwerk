@@ -156,6 +156,11 @@
       "id": "dejavu",
       "version": "0.1.0-experimental",
       "addedAt": "2026-10-24T15:30:00Z"
+    },
+    {
+      "id": "arp-key-locks",
+      "version": "0.1.0-experimental",
+      "addedAt": "2026-10-26T12:00:00Z"
     }
   ]
 }

@@ -49,7 +49,7 @@ import { issueRepository, setWorkspaceReportContext } from './community/report-c
 import { useMobileWorkspace } from './hooks/useMobileWorkspace'
 import { ConfigurationHandoff } from './components/ConfigurationHandoff'
 import { FirmwareBuildPanel } from './components/FirmwareBuildPanel'
-import type { PrepareUpdate, ReadInventory, StressTest } from './components/OctatrackUpdate'
+import type { PrepareUpdate, ReadInventory } from './components/OctatrackUpdate'
 import type { HubView, SetAction } from './components/OctatrackHub'
 import type { OctatrackLink } from './engine/elekloader/octatrack-link'
 import type { BaseLayout } from './engine/elekloader/base-variants'
@@ -172,11 +172,11 @@ export default function App() {
   const accountRoute = route === 'account' || route.startsWith('account/') || betaInvitationRoute
   const newsEnabled = !accountRoute && !developerRoute && !configuration && machineView !== 'configuration' && !route.startsWith('submit') && !['admin', 'review', 'privacy', 'impressum', 'community-rules', 'modding-guidelines', 'report-content'].includes(route)
   // One link to the unit for the whole site: it connects by itself whenever an allowed Octatrack is plugged in.
-  // Loading a module set sends the site's packages (module-set.ts); the stress test is the base's own self-test.
+  // Loading a module set sends the site's packages (module-set.ts) and keeps them.
   // Beta testers, verified administrators and dev builds get the migration's interface; everyone else gets main's.
   const betaUi = hasBetaUi(session), w = setWords(betaUi)
   const usbAllowed = !mobileWorkspace && hasUsbLinkAccess(session, touchOnly) && !usbLinkPreview && usbPreview !== 'diagnostics'
-  const [unitKit, setUsbKit] = useState<{ link: OctatrackLink; prepareUpdate?: PrepareUpdate; readInventory?: ReadInventory; stressTest?: StressTest } | null>(null)
+  const [unitKit, setUsbKit] = useState<{ link: OctatrackLink; prepareUpdate?: PrepareUpdate; readInventory?: ReadInventory } | null>(null)
   useEffect(() => { if (import.meta.env.DEV && usbLinkPreview) void import('./dev/octatrack-link-fake').then(fake => setUsbKit(fake.previewKit())) }, [])
   useEffect(() => { if (usbAllowed && !unitKit) void beta().then(module => setUsbKit(kit => kit ?? module.createUsbKit())) }, [usbAllowed, unitKit])
   // Beta only: without access every USB view unmounts, and the link lets go of the unit.
@@ -519,7 +519,7 @@ export default function App() {
         const step = (at: number) => { const id = index >= 0 ? order[at] : undefined; return id ? { title: MODULES.find(item => item.id === id)!.name, go: () => setOpenModule(id) } : undefined }
         const state = unitState(openModule, selectedIds, inventory)
         return module && <ModuleDialog title={module.name} index={index >= 0 ? index : undefined} total={order.length} prev={step(index - 1)} next={step(index + 1)} status={state && <StateChip state={state}>{UNIT_STATE[state]}</StateChip>} actions={<ShareModuleButton id={module.id} title={module.name} />} onClose={() => setOpenModule(undefined)}><ModuleDetail key={module.id} modal module={module} selected={selectedIds.includes(module.id)} addBlock={addBlockMap[module.id]} onSwap={removeIds => swapModule(module.id, removeIds)} usbAudio={active?.usbAudio} configurationName={active?.name} configurationId={active?.id} onConfigureUsbAudio={configureUsbAudio} onToggle={() => toggleModule(module.id)} /></ModuleDialog> })()}
-      {usbKit && loadingTarget && !baseInstall && !baseInstallPrompt.open && <LoadDialog key={loadingTarget.id} link={usbKit.link} set={{ name: loadingTarget.name, moduleIds: loadingTarget.moduleIds, removedStockFx: loadingTarget.removedStockFx, usbAudio: loadingTarget.usbAudio }} putBack={putBackId === loadingTarget.id} inventory={inventory} previousName={inventory && configurationsFor('octatrack').find(set => sameModules(set.moduleIds, inventory.moduleIds))?.name} prepareUpdate={usbKit.prepareUpdate} stressTest={usbKit.stressTest} onClose={() => { setLoadingSet(undefined); setPutBackId(undefined) }} onInstallBase={layout => { setBaseLayoutWanted(layout); setBaseInstall('manual') }} onEdit={() => { setLoadingSet(undefined); changeConfiguration(loadingTarget.id) }} onCard={() => { setLoadingSet(undefined); setCardOpen(true); workspace.selectConfiguration(loadingTarget.id); window.location.hash = 'octatrack/setup' }} onReport={() => { setLoadingSet(undefined); setReportingConfiguration({ machine: 'octatrack', id: loadingTarget.id }) }} />}
+      {usbKit && loadingTarget && !baseInstall && !baseInstallPrompt.open && <LoadDialog key={loadingTarget.id} link={usbKit.link} set={{ name: loadingTarget.name, moduleIds: loadingTarget.moduleIds, removedStockFx: loadingTarget.removedStockFx, usbAudio: loadingTarget.usbAudio }} putBack={putBackId === loadingTarget.id} inventory={inventory} prepareUpdate={usbKit.prepareUpdate} onClose={() => { setLoadingSet(undefined); setPutBackId(undefined) }} onInstallBase={layout => { setBaseLayoutWanted(layout); setBaseInstall('manual') }} onEdit={() => { setLoadingSet(undefined); changeConfiguration(loadingTarget.id) }} onCard={() => { setLoadingSet(undefined); setCardOpen(true); workspace.selectConfiguration(loadingTarget.id); window.location.hash = 'octatrack/setup' }} onReport={() => { setLoadingSet(undefined); setReportingConfiguration({ machine: 'octatrack', id: loadingTarget.id }) }} />}
       {usbLink && (baseInstall || baseInstallPrompt.open) && <BaseInstallDialog link={usbLink} returnSetId={loadingSet} launch={baseInstall ? baseInstall === 'preview' : !baseInstallPrompt.update} firmwareReady={!!firmware} firmwareError={fileError} onChooseFirmware={file => void readFile(file)} layout={baseLayoutWanted} buildBase={layout => workspace.firmwareClient.current?.buildBase(layout) ?? Promise.reject(new Error('Reload the page.'))} onClose={() => { setBaseLayoutWanted(undefined); if (baseInstall) setBaseInstall(null); else baseInstallPrompt.close() }} onReady={() => { setBaseLayoutWanted(undefined); setBaseInstall(null); baseInstallPrompt.close(); window.location.hash = 'configuration' }}/>}
       </Suspense>
       {supportOpen && <SupportDialog url={SUPPORT_URL} onClose={() => setSupportOpen(false)} />}

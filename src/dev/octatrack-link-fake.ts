@@ -273,13 +273,12 @@ export function previewKit() {
   Object.assign(window, { modwerkUsbPreview: unit })
   return {
     link: new OctatrackLink(unit.usb, fakeSession(unit, 60)),
-    // A pretend load, stress test and inventory, so the whole flow can be clicked through.
+    // A pretend load and inventory, so the whole flow can be clicked through.
     prepareUpdate: async (target: InventoryTarget) => {
       await wait(400); unit.pending = { moduleIds: target.moduleIds, removedStockFx: target.removedStockFx ?? [] }
       // Each load stages different bytes, so the unit's active digest (and the inventory read after Keep) changes.
       return { name: target.name, changes: [{ module: target.name, data: new TextEncoder().encode(JSON.stringify(unit.pending).padEnd(160 * 1024)) }] }
     },
     readInventory: async () => { await wait(150); return structuredClone(unit.installed) },
-    stressTest: async () => { await wait(2500); return null },
   }
 }

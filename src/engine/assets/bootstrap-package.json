@@ -16,7 +16,7 @@
   "reserveBytes": 10487808,
   "uncachedAlias": 134217728,
   "stageAlignment": 4096,
-  "sourceCommit": "2d2ad290951cfc565ffc61ace649d89e2e230a84",
+  "sourceCommit": "6b786d82b0e2bfa4c15eedebd55f9846f19ae7f7",
   "moduleVersions": {
     "spectrum": "0.1.1-experimental",
     "modulation": "0.1.1-experimental",
@@ -48,6 +48,7 @@
     "quantize-live-rec-toggle": "0.1.1-experimental",
     "apply-scene": "0.2.0-experimental",
     "direct-jump-kyoti": "0.1.2-experimental",
-    "dejavu": "0.1.0-experimental"
+    "dejavu": "0.1.0-experimental",
+    "arp-key-locks": "0.1.0-experimental"
   }
 }

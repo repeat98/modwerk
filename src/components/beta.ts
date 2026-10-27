@@ -14,8 +14,8 @@ export { BetaModuleSets } from './BetaModuleSets'
 export { OctatrackDiagnosticsCollector, OctatrackDiagnosticsSettings } from './OctatrackDiagnostics'
 export { PutBackModules } from './PutBackModules'
 
-/** The site's one link to the unit: module set loads from the site's packages, and the base's own self-test. */
+/** The site's one link to the unit: module set loads from the site's packages. */
 export function createUsbKit() {
   const link = new OctatrackLink()
-  return { link, ...moduleSetKit(link), stressTest: () => link.selftest() }
+  return { link, ...moduleSetKit(link) }
 }

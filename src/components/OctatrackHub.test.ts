@@ -162,12 +162,12 @@ describe('link results outside the sync dialog', () => {
     expect(open().textContent).toContain('only once it runs the Modwerk base')
   })
   it('does not repeat a result the sync dialog already showed, and still shows one that arrives on this page', async () => {
-    let state: LinkState = { ...ready, notice: { tone: 'success', text: 'Kept. Live stays on your Octatrack, also after a restart.' } }
+    let state: LinkState = { ...ready, notice: { tone: 'success', text: 'Synced. Live stays on your Octatrack, also after a restart.' } }
     const listeners = new Set<() => void>(), link = { ...unit(), getState: () => state, subscribe: (listener: () => void) => { listeners.add(listener); return () => { listeners.delete(listener) } } }
     await act(() => root.render(createElement(OctatrackActivity, { link: link as unknown as OctatrackLink })))
     expect(container.querySelector('.octatrack-activity')).toBeNull()
     await act(() => { state = { ...ready, status: 'trial', module: 'Studio' }; listeners.forEach(listener => listener()) })
-    await act(() => { state = { ...ready, notice: { tone: 'success', text: 'Kept. Studio stays on your Octatrack, also after a restart.' } }; listeners.forEach(listener => listener()) })
-    expect(container.querySelector('.octatrack-activity')?.textContent).toContain('Kept. Studio stays')
+    await act(() => { state = { ...ready, notice: { tone: 'success', text: 'Synced. Studio stays on your Octatrack, also after a restart.' } }; listeners.forEach(listener => listener()) })
+    expect(container.querySelector('.octatrack-activity')?.textContent).toContain('Synced. Studio stays')
   })
 })

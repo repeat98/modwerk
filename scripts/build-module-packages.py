@@ -11,7 +11,7 @@ APP = Path(__file__).resolve().parents[1]
 ORDER = ['spectrum', 'modulation', 'character', 'miniverb', 'tapeecho', 'euclid', 'repitch', 'tapehead', 'airwindows-chorus', 'everb', 'bbd', 'lofi2', 'ring-sc']
 # DSP code that stock code reaches through hooks. Output Matrix has no FX menu entry and is also a requested ColdFire module.
 HOOKED = ['sidechain-compressor', 'output-matrix']
-REQUESTED = ['analog-bassdrum', 'midi-scenes', 'usb-audio-out-tracks-main-cue', 'quantizer', 'synth', 'vector', 'playmodes', 'mute-modes', 'recorder-loop-fix', 'poly8', 'output-matrix', 'quantize-live-rec-toggle', 'apply-scene', 'direct-jump-kyoti', 'dejavu']
+REQUESTED = ['analog-bassdrum', 'midi-scenes', 'usb-audio-out-tracks-main-cue', 'quantizer', 'synth', 'vector', 'playmodes', 'mute-modes', 'recorder-loop-fix', 'poly8', 'output-matrix', 'quantize-live-rec-toggle', 'apply-scene', 'direct-jump-kyoti', 'dejavu', 'arp-key-locks']
 UTILITIES = ['previewvol', 'cc-map']
 ASSET_NAMES = ['dsp-packages.json', 'coldfire-packages.json', 'resident-dsp.json', 'rom-packages.json',
                'bootstrap-package.json', 'menu-recipes.json', 'descriptor-recipes.json', 'platform-writes.json', 'requested-packages.json', 'utility-packages.json', 'usb-audio-packages.json']

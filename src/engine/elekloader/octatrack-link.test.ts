@@ -174,7 +174,7 @@ describe('sending a module', () => {
     expect(progress.at(-1)).toBe(1)
     await link.keep()
     expect(link.getState()).toMatchObject({ status: 'ready', notice: { tone: 'success' }, active: sha(data) })
-    expect(link.getState().notice!.text).toMatch(/Kept\. PREVIEW VOL stays on your Octatrack, also after a restart/)
+    expect(link.getState().notice!.text).toMatch(/Synced\. PREVIEW VOL stays on your Octatrack, also after a restart/)
   })
   it('keeps the trial running when playback blocks keep, and finishes once stopped', async () => {
     const { unit, link } = await linked()
@@ -433,7 +433,7 @@ describe('loading a module set', () => {
     expect(unit.kept).toEqual([])
     await link.keep()
     expect(unit.kept).toEqual(['-0000000a', '+0000000b', '+0000000c'])
-    expect(link.getState().notice).toMatchObject({ tone: 'success', text: 'Kept. Live stays on your Octatrack, also after a restart.' })
+    expect(link.getState().notice).toMatchObject({ tone: 'success', text: 'Synced. Live stays on your Octatrack, also after a restart.' })
     expect((await link.inventory())!.map(item => item.module)).toEqual(['0000000b', '0000000c'])
   })
   it('undoes the whole set on the device without sending inverse packages', async () => {

@@ -612,7 +612,7 @@ export class OctatrackLink {
       await this.release()
       this.live(connection) // a reply that arrived after the unit went away confirms nothing
       this.ready(unsaved ? { tone: 'error', text: `Kept, but the Octatrack couldn’t save ${module} to the card. It runs until you switch off; load it again to save it.` }
-        : { tone: 'success', text: keep ? `Kept. ${module} stays on your Octatrack, also after a restart.` : 'Undone. Your Octatrack is back to how it was.' },
+        : { tone: 'success', text: keep ? `Synced. ${module} stays on your Octatrack, also after a restart.` : 'Undone. Your Octatrack is back to how it was.' },
         session.status.active)
       this.diagnostic(keep && !unsaved ? 'kept' : !keep ? 'undone' : 'sync_failed', unsaved ? {error:'save'} : {})
     } catch (error) {

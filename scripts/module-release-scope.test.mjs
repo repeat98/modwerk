@@ -18,7 +18,7 @@ describe('source compilation with standalone MIDISC2.0', () => {
 ids = [m['id'] for m in catalog['modules'] if json.load(open('sdk/octabam/modules/' + m['id'] + '/octamod.module.json')).get('build', {}).get('status') != 'pending']
 print(json.dumps(scope(ids)))
 `)
-    expect(JSON.parse(actual)).toEqual(['analog-bassdrum', 'usb-audio-out-tracks-main-cue', 'quantizer', 'synth', 'vector', 'playmodes', 'mute-modes', 'recorder-loop-fix', 'poly8', 'output-matrix', 'quantize-live-rec-toggle', 'apply-scene', 'direct-jump-kyoti', 'dejavu'])
+    expect(JSON.parse(actual)).toEqual(['analog-bassdrum', 'usb-audio-out-tracks-main-cue', 'quantizer', 'synth', 'vector', 'playmodes', 'mute-modes', 'recorder-loop-fix', 'poly8', 'output-matrix', 'quantize-live-rec-toggle', 'apply-scene', 'direct-jump-kyoti', 'dejavu', 'arp-key-locks'])
   })
   it('removes legacy 8.2 objects and preserves the other authored package inventory', () => {
     expect(metadataCheck(`baseline = json.load(open('src/engine/assets/requested-packages.json'))
