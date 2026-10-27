@@ -24,6 +24,7 @@ Linked("polyui", "modules/poly8/registration.s", cpu="5475", dram=True, stock_co
         SymbolRef(0x400cf6fa, 0x4007893c, "machine_registry", "mr_pool_left", note="LEFT returns from POLY FLEX samples to the machine list"),
         SymbolRef(0x400cf702, 0x4007893c, "machine_registry", "mr_pool_left", note="Repeated LEFT uses the same menu navigation"),
         SymbolRef(0x400cf714, 0x4007909c, "machine_registry", "mr_pool_right", note="RIGHT on POLY opens its FLEX sample pool"),
+        SymbolRef(0x4007865e, 0x400334d8, "machine_registry", "mr_chooser_name", note="Machine chooser names by the list's row: its scroll offset plus the row on screen"),
     ),
  detours=(
 Detour(0x40031e74, stock_guard(0x40031e74,8,"bba32826863751ec568719c202735da1ba8f06560e4d375a80637ae6653caa8f"), "machine_registry", "mr_resolve_pb", "Resolve the signed machine parameter page", pad_to=10),
