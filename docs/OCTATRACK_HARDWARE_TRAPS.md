@@ -434,15 +434,6 @@ record MAIN with SRC3 = MAIN; leaked frames are the muted audio. Sweeping a knob
 through a heavy mode and back flipped the stuck states. The emulator models
 neither contention nor interrupt latency, so neither shows there.
 
-*A module machine is silent until its engine runs.* A trusted controller's DSP engine (Analog BD's) is placed, reset
-and enabled only once a track uses it, after a boot too. On Nathaniel's MKII (27 October 2026, flashed `5afa623e`,
-Analog BD 0.1.6 and 13 other modules) PLAY pressed on MODULES LOADED left Analog BD silent until the transport had
-stopped for a few seconds: that base placed an engine only while stopped and sent its 3,776-word reset one 24-word
-packet a UI tick, about 2.6 s per core. When a module machine stays silent, read the engines' wait reasons
-(`resident_engines.h`, the dev view) before suspecting the module. The fix proposed in
-`docs/OCTATRACK_RESIDENT_ENGINES_ON_DEMAND.md` (27 October update) places while playing when no FX code has to move,
-sends eight packets a job and holds MODULES LOADED until the engines run.
-
 *The data cache and module memory (cached modules):* the pool is cached copy-back, so code written through the
 cached alias sits dirty in the data cache until CPUSHL pushes each line. CPUSHL names a line by set and way, and this
 cache has more sets than address bits 12:4 name: a push that walked `0x2000` bytes of sets "once for the whole cache"
