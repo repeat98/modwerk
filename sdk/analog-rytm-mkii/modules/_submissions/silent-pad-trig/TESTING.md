@@ -2,10 +2,11 @@
 
 Until 0.4.0 this module was Pad Select (`pad-select`) and its row PAD+TRIG SEL TRK, as in
 rytm2_mods; 0.4.1 renames the module, the row (SILENT PAD+TRIG), the source file, the symbols and
-the storage field (`silent_pad_trig_on`), with no change in behaviour. The sections below use the
-new names, also for the earlier builds.
+the storage field (`silent_pad_trig_on`), with no change in behaviour. 0.5.1 renames 0.5.0's
+second row, SILENT LIVE REC, to SILENT PAD LIVEREC (its storage field stays `silent_live_rec_on`).
+The sections below use the new names, also for the earlier builds.
 
-- Module: `silent-pad-trig` 0.5.0-experimental, for Analog Rytm MKII OS 1.74 on core-ar2 0.3.
+- Module: `silent-pad-trig` 0.5.1-experimental, for Analog Rytm MKII OS 1.74 on core-ar2 0.3.
 - Source: npp1993's own mod, first written as `pad-select` 0.2 in a local rytm2_mods checkout
   (commit `35ea2f0`, branch `claude/pad-select`), never published there; this folder is now the
   source, so the manifest names no upstream revision. 0.2.0-experimental here was that file byte for byte
@@ -14,9 +15,14 @@ new names, also for the earlier builds.
   0.3.0's aftertouch hook and its site are gone again): `src/silent-pad-trig.s` `c96a146c…6c55` (renamed from `pad-select.s` in 0.4.1). `include/ar2-1.74.inc` (`c57431f7…874b`) is rytm2_mods'
   `include/ar2-1.74.inc`, byte for byte. Source fingerprint (`sha256` of
   `sha256sum include/ar2-1.74.inc src/silent-pad-trig.s`): `2e521380…8ea5`. 0.5.0's
-  `src/silent-pad-trig.s` is `22019c7f…53a7`, fingerprint `bf1ed603…cd2f` (`evidence.sourceSha256`).
+  `src/silent-pad-trig.s` is `22019c7f…53a7`, fingerprint `bf1ed603…cd2f`. 0.5.1's is
+  `d28cf9a1…40d1`, fingerprint `5f4c6a70…9cbd` (`evidence.sourceSha256`).
 - Stock OS 1.74: `.syx` `cb0f99d6…e123`, main OS `34cd0c4d…1f3b`, the owner's file.
 - Core: elekloader core-ar2 0.3 (`core-ar2-v0.3`, `core-ar2-0.3.elemod` `6b97dfb3…3e58`, as vendored).
+- Build PS08 (core-ar2 0.3 + 0.5.1, Modwerk's linker, `--version PS08`): `.syx`
+  `ff7c4cf3ca61f3c461a16a416cb4515e0d44727216f688ab965785bdbd5343d4`, main OS `9b9ec176…9132`.
+  Tested in rytm-emu 2026-10-27 ([0.5.1](#051-row-renamed-2026-10-27)). Not run on a unit; PS07's
+  hardware results carry over (the same code apart from the label).
 - Build PS07 (core-ar2 0.3 + 0.5.0, Modwerk's linker, `--version PS07`): `.syx`
   `eae28e8ff6ae9f29a9d608c0fbe3985804779b42fd96d33d1e4c1d97934cae99`, main OS `80a0fbfa…20b5`.
   Tested in rytm-emu 2026-10-27 ([0.5.0](#050-two-settings-2026-10-27)). Ran on an Analog Rytm
@@ -32,6 +38,35 @@ new names, also for the earlier builds.
 - Build PS74 (core-ar2 0.3 + 0.2.0): `.syx` `4b2e6567…ad21`, main OS `7ea05528…033f`. The
   emulator sections below marked 0.2.0 ran on it.
 
+## 0.5.1: row renamed (2026-10-27)
+
+At the owner's request the second row, SILENT LIVE REC in 0.5.0, becomes SILENT PAD LIVEREC, the
+longest of three candidates that renders cleanly. Only the `txt_live` string changes; the storage
+field keeps its name (`silent_live_rec_on`), so a unit's settings survive the update. Build as
+0.5.0's: a 940-byte `.run` (the label is three characters longer), the same five sites, 20
+relocations, `silent_live_rec_on` at global bit 0 and `silent_pad_trig_on` at bit 1. Linked with
+core-ar2 0.3 alone (PS08, main OS `9b9ec176…9132`) and beside Filter Hz 1.2.0 and Loop Sync
+0.2.0-experimental (`c7ef5423…bb4b`); the source-only export links the same.
+
+**Rendering** (rytm-emu `c5732f0`, cold boots, the capture plan in `media/capture.json`, the row
+highlighted and then checked, read at 3x and pixel by pixel at 128x64). Every row's box starts at
+x = 112; stock's longest rows, QUANTIZE LIVE REC and KIT RELOAD ON CHG, end 5 and 6 pixels before it.
+
+| Candidate | Result |
+| --- | --- |
+| SILENT PAD LIVE REC (19) | rejected: the C of REC starts at x = 111 and the box draws over it |
+| SILENT PAD LIVEREC (18) | chosen: the whole text shows and ends at x = 110, one clear pixel before the box, highlighted, unhighlighted and checked; the box lines up with the other rows' |
+| SILENT LIVE PADS (16) | fits, with room to spare; not needed |
+
+**Emulator.** PS08's four capture frames come from one cold boot (`media/capture.json`); a second
+identical run gave all 28 frames byte for byte. Against PS07's, `control-menu.png` and
+`silent-press.png` are byte-identical; only the two SEQUENCER CONFIG frames changed, where the
+row's label shows. **Upgrade from 0.5.0:** a fresh card, PS07 cold-booted with only SILENT LIVE
+REC checked, then `--power-off`; PS08 cold-booted on that card shows SILENT PAD LIVEREC checked and
+SILENT PAD+TRIG unchecked. The behaviour tests below were not rerun: the code is 0.5.0's apart
+from the label, and PS07's emulator and [hardware](#ps07-on-an-analog-rytm-mkii-2026-10-27-as-reported)
+results carry over to PS08.
+
 ## 0.5.0: two settings (2026-10-27)
 
 At the tester's request, the one setting becomes two, so silent pads while editing and silent
@@ -39,7 +74,7 @@ pads while live recording can be chosen separately:
 
 - **SILENT PAD+TRIG** (`silent_pad_trig_on`, as before): every state but LIVE and STEP REC; pads
   and TRIG keys 1-12.
-- **SILENT LIVE REC** (`silent_live_rec_on`, new, global, 1 bit): LIVE REC; pads only. TRIG keys
+- **SILENT PAD LIVEREC** (`silent_live_rec_on`, new, global, 1 bit): LIVE REC; pads only. TRIG keys
   play and record in LIVE REC as before.
 
 `active()` now reads STEP and LIVE REC first, then the setting for that state, so each press calls
@@ -69,10 +104,10 @@ The source-only export linked the same, alone and beside Filter Hz and Loop Sync
 `c5732f0`, headless `dtboot` with the JIT, the same method, counters and key timing as the
 [0.2.0 runs](#emulator-020-2026-10-25). Five snapshots from one key sequence at the same clock
 (GLOBAL > CONTROL > SEQUENCER CONFIG, three DOWNs, YES or not, DOWN, YES or not, four NOs):
-**N** PS07 with neither row checked, **P** only SILENT PAD+TRIG, **L** only SILENT LIVE REC,
+**N** PS07 with neither row checked, **P** only SILENT PAD+TRIG, **L** only SILENT PAD LIVEREC,
 **PL** both, and **S** stock 1.74 (no YES).
 
-- **Menu.** A PS07 cold boot shows SILENT PAD+TRIG and SILENT LIVE REC after AUTO TRK SWITCH, both
+- **Menu.** A PS07 cold boot shows SILENT PAD+TRIG and SILENT PAD LIVEREC after AUTO TRK SWITCH, both
   unchecked, their boxes in AUTO TRK SWITCH's column. YES on one row checks it and leaves the
   other; RIGHT checks and LEFT unchecks only the highlighted row.
 - **Neither checked (N) against stock (S):** in all 26 groups below, the same counts, a
@@ -80,7 +115,7 @@ The source-only export linked the same, alone and beside Filter Hz and Loop Sync
   the two rows. The modelled analog output of a LIVE REC take is byte-identical between a run with
   and without live recording when nothing is tapped, as on stock.
 
-| Group | S (stock) | P (SILENT PAD+TRIG) | L (SILENT LIVE REC) | PL (both) |
+| Group | S (stock) | P (SILENT PAD+TRIG) | L (SILENT PAD LIVEREC) | PL (both) |
 | --- | --- | --- | --- | --- |
 | Stopped: SD, FUNC + SD, TRIG 5, FUNC + TRIG 5 | SD 127, FUNC + SD 100, TRIG 5 100, FUNC + TRIG 5 nothing | SD and TRIG 5 silent; FUNC + SD 127 | as S | as P |
 | Playing: SD, FUNC + SD, TRIG 5 | play (127, 100, 100) | SD and TRIG 5 silent; FUNC + SD 127 | as S | as P |
@@ -123,10 +158,10 @@ takes are byte-identical), so their takes compare directly:
 N gave the same results as S.
 
 **Persistence and GLOBAL slots** (fresh card images): one card with only SILENT PAD+TRIG checked,
-one with only SILENT LIVE REC, each followed by `--power-off`. A cold boot of PS07 on each shows
+one with only SILENT PAD LIVEREC, each followed by `--power-off`. A cold boot of PS07 on each shows
 its own row checked and the other unchecked; on the first, SD and TRIG 5 are silent, on the
 second they play. GLOBAL SLOT 2 shows both rows unchecked (with slot 2's own stock settings), and
-SD plays; RIGHT on SILENT LIVE REC checks it there; back in slot 1 its rows are as set. After a
+SD plays; RIGHT on SILENT PAD LIVEREC checks it there; back in slot 1 its rows are as set. After a
 second power-off and cold boot, slot 1 and slot 2 still hold their own rows. Stock 1.74 cold-boots
 on the first card with the stock SEQUENCER CONFIG, and SD plays.
 
@@ -454,9 +489,9 @@ The tester flashed PS05 (0.4.0, `.syx` `40e2f30a…2865`). Reported:
 
 npp1993 flashed PS07 (0.5.0, `.syx` `eae28e8f…ae99`) with Transfer. Reported:
 
-- SEQUENCER CONFIG shows the two rows, SILENT PAD+TRIG and SILENT LIVE REC.
+- SEQUENCER CONFIG shows the two rows, SILENT PAD+TRIG and SILENT PAD LIVEREC.
 - SILENT PAD+TRIG checked: pads make no sound unless FUNC is held; works as expected.
-- SILENT LIVE REC checked, in LIVE REC: plain pad presses lay down no trigs; FUNC + pad plays and
+- SILENT PAD LIVEREC checked, in LIVE REC: plain pad presses lay down no trigs; FUNC + pad plays and
   records; TRIG keys play and record as stock: as intended.
 - Persistence, both rows checked: after a reboot straight from SEQUENCER CONFIG, without leaving
   the menu, neither was kept. After leaving the menu first and then rebooting, both were kept.
@@ -468,10 +503,10 @@ npp1993 flashed PS07 (0.5.0, `.syx` `eae28e8f…ae99`) with Transfer. Reported:
 
 Not yet reported on any build:
 
-1. GLOBAL > CONTROL > SEQUENCER CONFIG: SILENT PAD+TRIG and SILENT LIVE REC after AUTO TRK
+1. GLOBAL > CONTROL > SEQUENCER CONFIG: SILENT PAD+TRIG and SILENT PAD LIVEREC after AUTO TRK
    SWITCH; YES and LEFT/RIGHT toggle each on its own. Save, power-cycle, reload: kept. Another
    GLOBAL slot keeps its own.
-1b. 0.5.0: with only SILENT LIVE REC checked, pads play outside LIVE REC and are silent and not
+1b. 0.5.0: with only SILENT PAD LIVEREC checked, pads play outside LIVE REC and are silent and not
    recorded in it (FUNC + pad plays and records); with only SILENT PAD+TRIG, LIVE REC is stock.
 2. Stopped and playing: pads and TRIG 1-12 select silently; FUNC + pad plays, soft and hard,
    at the pad's velocity. Holding a pad on a sounding track does not cut its note on release.
@@ -488,7 +523,7 @@ Not yet reported on any build:
 
 ## Load and memory
 
-936 bytes (0.5.0) in the shared DDR area, no `.bss`, no fast SRAM, two global storage bits. The sites are in the pad and TRIG key
+940 bytes (0.5.1) in the shared DDR area, no `.bss`, no fast SRAM, two global storage bits. The sites are in the pad and TRIG key
 handlers and their play routine, and the SEQUENCER CONFIG menu's constructor. Each press reads
 the record state and one storage bit through `core_store_get`; nothing runs in the audio,
 sequencer or tick paths. Static reading, not a measurement.

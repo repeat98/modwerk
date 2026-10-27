@@ -2,7 +2,7 @@
   "schemaVersion": 3,
   "id": "silent-pad-trig",
   "name": "Silent Pad+Trig",
-  "version": "0.5.0-experimental",
+  "version": "0.5.1-experimental",
   "machine": "analog-rytm-mkii",
   "category": "system",
   "exclusive": false,
@@ -21,8 +21,8 @@
   "presentation": {
     "label": "SILENT PAD+TRIG",
     "family": "Workflow",
-    "summary": "Two checkboxes: with SILENT PAD+TRIG, pads and TRIG keys select their track silently outside recording; with SILENT LIVE REC, pads stay silent in LIVE RECORDING. FUNC + pad plays (and records), and aftertouch still works.",
-    "overview": "Silent Pad+Trig adds two checkboxes to GLOBAL > CONTROL > SEQUENCER CONFIG, after AUTO TRK SWITCH. SILENT PAD+TRIG covers every state but LIVE and STEP RECORDING: a pad or TRIG key 1-12 press selects its track and stays silent, with no MIDI note. SILENT LIVE REC covers LIVE RECORDING: a pad press selects its track silently and records nothing, while TRIG keys play and record as stock. Either way, hold FUNC and press a pad to play it at the pad's own velocity, which in LIVE RECORDING also records. STEP RECORDING is stock. Aftertouch is untouched, so a held pad modulates its track without sounding it. Both default to unchecked, are kept per GLOBAL slot and are saved with the project.",
+    "summary": "Two checkboxes: with SILENT PAD+TRIG, pads and TRIG keys select their track silently outside recording; with SILENT PAD LIVEREC, pads stay silent in LIVE RECORDING. FUNC + pad plays (and records), and aftertouch still works.",
+    "overview": "Silent Pad+Trig adds two checkboxes to GLOBAL > CONTROL > SEQUENCER CONFIG, after AUTO TRK SWITCH. SILENT PAD+TRIG covers every state but LIVE and STEP RECORDING: a pad or TRIG key 1-12 press selects its track and stays silent, with no MIDI note. SILENT PAD LIVEREC covers LIVE RECORDING: a pad press selects its track silently and records nothing, while TRIG keys play and record as stock. Either way, hold FUNC and press a pad to play it at the pad's own velocity, which in LIVE RECORDING also records. STEP RECORDING is stock. Aftertouch is untouched, so a held pad modulates its track without sounding it. Both default to unchecked, are kept per GLOBAL slot and are saved with the project.",
     "highlights": [
       "Tap pads to pick tracks without hearing them, while editing or while live recording, each switched on its own.",
       "FUNC + pad plays and records, at the pad's own velocity.",
@@ -30,16 +30,16 @@
       "Two checkboxes per GLOBAL slot, kept through a power cycle; unchecked is stock."
     ],
     "usage": [
-      "Use a build containing Silent Pad+Trig. Open the GLOBAL menu, then CONTROL > SEQUENCER CONFIG. After AUTO TRK SWITCH are SILENT PAD+TRIG and SILENT LIVE REC; check either with YES or LEFT/RIGHT.",
+      "Use a build containing Silent Pad+Trig. Open the GLOBAL menu, then CONTROL > SEQUENCER CONFIG. After AUTO TRK SWITCH are SILENT PAD+TRIG and SILENT PAD LIVEREC; check either with YES or LEFT/RIGHT.",
       "With SILENT PAD+TRIG checked and the sequencer stopped, tap the SD pad: it makes no sound and the SD track is selected. Hold FUNC and tap SD to hear it at the pad's own velocity. TRIG 5 selects track 5 silently.",
-      "With SILENT LIVE REC checked, press RECORD + PLAY for LIVE RECORDING: plain pad taps stay silent and record nothing; hold FUNC and tap a pad to play and record it. Uncheck both to get stock behaviour everywhere."
+      "With SILENT PAD LIVEREC checked, press RECORD + PLAY for LIVE RECORDING: plain pad taps stay silent and record nothing; hold FUNC and tap a pad to play and record it. Uncheck both to get stock behaviour everywhere."
     ]
   },
   "access": {
-    "location": "GLOBAL > CONTROL > SEQUENCER CONFIG: SILENT PAD+TRIG and SILENT LIVE REC, after AUTO TRK SWITCH.",
+    "location": "GLOBAL > CONTROL > SEQUENCER CONFIG: SILENT PAD+TRIG and SILENT PAD LIVEREC, after AUTO TRK SWITCH.",
     "steps": [
       "Open the GLOBAL menu and choose CONTROL, then SEQUENCER CONFIG.",
-      "Move to SILENT PAD+TRIG or SILENT LIVE REC, just after AUTO TRK SWITCH, and press YES (or RIGHT) to check it."
+      "Move to SILENT PAD+TRIG or SILENT PAD LIVEREC, just after AUTO TRK SWITCH, and press YES (or RIGHT) to check it."
     ],
     "screenshots": [
       "media/control-menu.png",
@@ -57,7 +57,7 @@
       ]
     },
     {
-      "name": "SILENT LIVE REC",
+      "name": "SILENT PAD LIVEREC",
       "default": 0,
       "doc": "Checkbox after SILENT PAD+TRIG. YES toggles it, RIGHT checks, LEFT unchecks. Checked: in LIVE RECORDING, pads select their track silently and record nothing; TRIG keys still play and record. Kept per GLOBAL slot.",
       "labels": [
@@ -86,12 +86,12 @@
     "conflicts": [],
     "limitations": [
       "Built for OS 1.74 only, with core-ar2 0.3.",
-      "0.5.0 ran on a unit (PS07): both settings worked as intended, as reported; MIDI out and STEP REC not yet tested on a unit.",
+      "0.5.0 ran on a unit (PS07): both settings worked as intended, as reported; 0.5.1 (PS08) renames SILENT LIVE REC to SILENT PAD LIVEREC and is otherwise the same code. MIDI out and STEP REC not yet tested on a unit.",
       "FUNC + TRIG 1-12 plays nothing, as on stock: use FUNC + pad to hear a track.",
       "A silent press passes its aftertouch on, so MIDI out can carry poly pressure with no note-on before it.",
       "TRIG 13 (the FX track), the SOUND BROWSER's pad audition and pads with a menu open are silent too; FUNC + pad plays.",
       "RTRG + pad selects silently; FUNC + RTRG also toggles the metronome click, as on stock, so it is not a clean way to roll.",
-      "A unit that ran 0.4.x starts 0.5.0 with both rows unchecked: the storage layout changed, so the old setting is not carried over.",
+      "A unit that ran 0.4.x starts 0.5.x with both rows unchecked: the storage layout changed, so the old setting is not carried over. 0.5.0's settings carry over to 0.5.1.",
       "A GLOBAL slot saved without a setting, or received as Global SysEx, loads it unchecked.",
       "LIVE RECORDING counts only while the sequencer runs; a paused LIVE REC follows SILENT PAD+TRIG.",
       "On a unit, a reboot straight from SEQUENCER CONFIG did not keep a changed row; leaving the menu first did. Not yet compared with stock's own rows."
@@ -110,7 +110,7 @@
     ]
   },
   "resources": {
-    "memoryBytes": 936,
+    "memoryBytes": 940,
     "fastBytes": 0,
     "load": {
       "display": "None in the audio path: a few compares per pad or TRIG key press",
@@ -120,8 +120,8 @@
   },
   "evidence": {
     "tier": "emulator",
-    "moduleVersion": "0.5.0-experimental",
-    "sourceSha256": "bf1ed6037b7272c7c624390bd4a28185c231324b6606122dc1c47caef8e2cd2f",
+    "moduleVersion": "0.5.1-experimental",
+    "sourceSha256": "5f4c6a7072570a8714afd30c2f68d3a88d0edb381e6bc63cb3b4b04abb3f9cbd",
     "reports": [
       "TESTING.md"
     ],
@@ -130,14 +130,14 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Emulator (rytm-emu c5732f0, OS 1.74, build PS07), against stock from matched snapshots with neither, each and both settings: both unchecked matches stock exactly; SILENT PAD+TRIG silences pads and TRIG 1-12 outside LIVE and STEP REC, SILENT LIVE REC pads in LIVE REC (not recorded); FUNC + pad plays at the strike's velocity and records; aftertouch, STEP REC and AUTO TRK SWITCH as designed; both kept through power-off and per GLOBAL slot. 0.4.0 (PS05) ran on a unit, as reported; 0.5.0 is untested on hardware.",
+    "summary": "Emulator (rytm-emu c5732f0, OS 1.74, builds PS07 and, for the renamed row, PS08), against stock from matched snapshots with neither, each and both settings: both unchecked matches stock exactly; SILENT PAD+TRIG silences pads and TRIG 1-12 outside LIVE and STEP REC, SILENT PAD LIVEREC pads in LIVE REC (not recorded); FUNC + pad plays at the strike's velocity and records; aftertouch, STEP REC and AUTO TRK SWITCH as designed; both kept through power-off and per GLOBAL slot. 0.4.0 (PS05) and 0.5.0 (PS07) ran on a unit, as reported; 0.5.1 differs from 0.5.0 only in the row's label.",
     "documentation": {
       "tutorial": {
         "title": "Quick tutorial",
         "steps": [
-          "Use a build containing Silent Pad+Trig. Open the GLOBAL menu, then CONTROL > SEQUENCER CONFIG. After AUTO TRK SWITCH are SILENT PAD+TRIG and SILENT LIVE REC; check either with YES or LEFT/RIGHT.",
+          "Use a build containing Silent Pad+Trig. Open the GLOBAL menu, then CONTROL > SEQUENCER CONFIG. After AUTO TRK SWITCH are SILENT PAD+TRIG and SILENT PAD LIVEREC; check either with YES or LEFT/RIGHT.",
           "With SILENT PAD+TRIG checked and the sequencer stopped, tap the SD pad: it makes no sound and the SD track is selected. Hold FUNC and tap SD to hear it at the pad's own velocity. TRIG 5 selects track 5 silently.",
-          "With SILENT LIVE REC checked, press RECORD + PLAY for LIVE RECORDING: plain pad taps stay silent and record nothing; hold FUNC and tap a pad to play and record it. Uncheck both to get stock behaviour everywhere."
+          "With SILENT PAD LIVEREC checked, press RECORD + PLAY for LIVE RECORDING: plain pad taps stay silent and record nothing; hold FUNC and tap a pad to play and record it. Uncheck both to get stock behaviour everywhere."
         ]
       },
       "screenshots": [
@@ -175,41 +175,41 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "0.5.0-experimental",
-        "imageSha256": "eae28e8ff6ae9f29a9d608c0fbe3985804779b42fd96d33d1e4c1d97934cae99",
-        "setup": "Headless rytm-emu c5732f0 (dtboot) cold-booting PS07: the released core-ar2 0.3 and this folder's Silent Pad+Trig 0.5.0, linked by Modwerk on the owner's stock OS 1.74. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "moduleVersion": "0.5.1-experimental",
+        "imageSha256": "ff7c4cf3ca61f3c461a16a416cb4515e0d44727216f688ab965785bdbd5343d4",
+        "setup": "Headless rytm-emu c5732f0 (dtboot) cold-booting PS08: the released core-ar2 0.3 and this folder's Silent Pad+Trig 0.5.1, linked by Modwerk on the owner's stock OS 1.74. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
       "path": "media/seq-config.png",
       "kind": "screenshot",
-      "caption": "SEQUENCER CONFIG gains two rows after AUTO TRK SWITCH, SILENT PAD+TRIG and SILENT LIVE REC, both unchecked by default.",
-      "alt": "SEQUENCER CONFIG list with SILENT PAD+TRIG highlighted and SILENT LIVE REC below it, both boxes empty, after AUTO TRK SWITCH.",
+      "caption": "SEQUENCER CONFIG gains two rows after AUTO TRK SWITCH, SILENT PAD+TRIG and SILENT PAD LIVEREC, both unchecked by default.",
+      "alt": "SEQUENCER CONFIG list with SILENT PAD+TRIG highlighted and SILENT PAD LIVEREC below it, both boxes empty, after AUTO TRK SWITCH.",
       "credit": "npp1993 documentation capture; Elektron interface",
       "license": "LicenseRef-Rytm-UI-Documentation",
       "source": "original",
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "0.5.0-experimental",
-        "imageSha256": "eae28e8ff6ae9f29a9d608c0fbe3985804779b42fd96d33d1e4c1d97934cae99",
-        "setup": "Headless rytm-emu c5732f0 (dtboot) cold-booting PS07: the released core-ar2 0.3 and this folder's Silent Pad+Trig 0.5.0, linked by Modwerk on the owner's stock OS 1.74. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "moduleVersion": "0.5.1-experimental",
+        "imageSha256": "ff7c4cf3ca61f3c461a16a416cb4515e0d44727216f688ab965785bdbd5343d4",
+        "setup": "Headless rytm-emu c5732f0 (dtboot) cold-booting PS08: the released core-ar2 0.3 and this folder's Silent Pad+Trig 0.5.1, linked by Modwerk on the owner's stock OS 1.74. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
       "path": "media/seq-config-checked.png",
       "kind": "screenshot",
       "caption": "Press YES (or RIGHT) on either row to check it; each is set on its own and the GLOBAL slot keeps both.",
-      "alt": "SEQUENCER CONFIG list with the SILENT PAD+TRIG and SILENT LIVE REC boxes both checked, SILENT LIVE REC highlighted.",
+      "alt": "SEQUENCER CONFIG list with the SILENT PAD+TRIG and SILENT PAD LIVEREC boxes both checked, SILENT PAD LIVEREC highlighted.",
       "credit": "npp1993 documentation capture; Elektron interface",
       "license": "LicenseRef-Rytm-UI-Documentation",
       "source": "original",
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "0.5.0-experimental",
-        "imageSha256": "eae28e8ff6ae9f29a9d608c0fbe3985804779b42fd96d33d1e4c1d97934cae99",
-        "setup": "Headless rytm-emu c5732f0 (dtboot) cold-booting PS07: the released core-ar2 0.3 and this folder's Silent Pad+Trig 0.5.0, linked by Modwerk on the owner's stock OS 1.74. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "moduleVersion": "0.5.1-experimental",
+        "imageSha256": "ff7c4cf3ca61f3c461a16a416cb4515e0d44727216f688ab965785bdbd5343d4",
+        "setup": "Headless rytm-emu c5732f0 (dtboot) cold-booting PS08: the released core-ar2 0.3 and this folder's Silent Pad+Trig 0.5.1, linked by Modwerk on the owner's stock OS 1.74. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
@@ -223,9 +223,9 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "0.5.0-experimental",
-        "imageSha256": "eae28e8ff6ae9f29a9d608c0fbe3985804779b42fd96d33d1e4c1d97934cae99",
-        "setup": "Headless rytm-emu c5732f0 (dtboot) cold-booting PS07: the released core-ar2 0.3 and this folder's Silent Pad+Trig 0.5.0, linked by Modwerk on the owner's stock OS 1.74. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "moduleVersion": "0.5.1-experimental",
+        "imageSha256": "ff7c4cf3ca61f3c461a16a416cb4515e0d44727216f688ab965785bdbd5343d4",
+        "setup": "Headless rytm-emu c5732f0 (dtboot) cold-booting PS08: the released core-ar2 0.3 and this folder's Silent Pad+Trig 0.5.1, linked by Modwerk on the owner's stock OS 1.74. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     }
   ]

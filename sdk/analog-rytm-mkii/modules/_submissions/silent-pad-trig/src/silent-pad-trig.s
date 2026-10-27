@@ -1,11 +1,11 @@
         | SPDX-License-Identifier: GPL-2.0-only
         | silent-pad-trig - two SEQUENCER CONFIG checkboxes:
-        |   SILENT PAD+TRIG  stopped, playing, GRID REC and every mode but
-        |                    LIVE and STEP REC: a pad or TRIG key 1-12 press
-        |                    selects its track, silent; FUNC + pad plays it
-        |   SILENT LIVE REC  LIVE REC: a pad press selects its track, silent,
-        |                    and records nothing; FUNC + pad plays and records.
-        |                    TRIG keys play and record there, as stock.
+        |   SILENT PAD+TRIG     stopped, playing, GRID REC and every mode but
+        |                       LIVE and STEP REC: a pad or TRIG key 1-12 press
+        |                       selects its track, silent; FUNC + pad plays it
+        |   SILENT PAD LIVEREC  LIVE REC: a pad press selects its track, silent,
+        |                       and records nothing; FUNC + pad plays and records.
+        |                       TRIG keys play and record there, as stock.
         | STEP REC is stock. Aftertouch is untouched, so a held pad modulates
         | its track without sounding.
         |
@@ -151,7 +151,7 @@ silent_pad_trig_func_gate:
         | ------------------------------------------------------------------
         | active(a0 = KeyboardView, d1 = 1 a pad, 0 a TRIG key) -> d0 = 1
         | when the press is gated: in STEP REC never; in LIVE REC a pad while
-        | SILENT LIVE REC is checked, a TRIG key never; otherwise while SILENT
+        | SILENT PAD LIVEREC is checked, a TRIG key never; otherwise while SILENT
         | PAD+TRIG is checked. Else 0. Clobbers d1/a0/a1.
         | ------------------------------------------------------------------
         .align  2
@@ -284,7 +284,7 @@ rec_active:
         | re-emitted after. a3 is the view; a2 (mem_new), d2..d5 and the stack
         | are as SAMPLE POS RES's item expects them, so the registers used
         | here are saved, and each item's four functions live in a frame of
-        | item_add's own. SILENT PAD+TRIG first, then SILENT LIVE REC.
+        | item_add's own. SILENT PAD+TRIG first, then SILENT PAD LIVEREC.
         | ------------------------------------------------------------------
         .align  2
         .globl  silent_pad_trig_menu_add
@@ -500,7 +500,7 @@ drw_invoke:
 txt_main:
         .asciz  "SILENT PAD+TRIG"
 txt_live:
-        .asciz  "SILENT LIVE REC"
+        .asciz  "SILENT PAD LIVEREC"
 
         | Written at run time: whether the press in hand is silent.
         .align  2
