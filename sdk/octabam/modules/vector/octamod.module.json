@@ -221,7 +221,7 @@
       "Two-instance native Part/project save-reload, saved-card fresh load and battery-RAM-only restart",
       "Exact-version owner exception; physical reboot/audio unverified"
     ],
-    "evidenceRevision": "9299b43ab619936598bdfc38f6752307b97835a4",
+    "evidenceRevision": "645d73da3872ce9111f3e3172114fb33a3660b9f",
     "qualification": {
       "moduleVersion": "0.2.5-experimental",
       "sourceSha256": "1255e99133cbd8d6d2587c95f93462ea80fccbd169462a2acb02aedbd346cbd3",
@@ -317,7 +317,7 @@
         "model": "MKII",
         "testedOn": "2026-10-27",
         "tester": "repeat98 (owner's unit, driven over USB by the coordinating session)",
-        "sourceRevision": "9299b43ab619936598bdfc38f6752307b97835a4",
+        "sourceRevision": "645d73da3872ce9111f3e3172114fb33a3660b9f",
         "imageSha256": "a753ddf67b0fe64e3742b4c89ecf141071eb30757b170173215e92b1b4794d24",
         "summary": "Over USB on an Octatrack MKII: a RAM-booted development twin of the release base (identity e6e75d75..., MAIN a753ddf6...; the b1b2ca58 build plus --dev) with POLY8 0.3.1, Analog BD 0.1.5 (rebuilt for the twin) and this VECTOR 0.2.5 package (45c962ca...), all accepted. On a STATIC track SRC SETUP's list scrolls to POLY8, ANALOG BD and VECTOR; with the cursor on VECTOR before YES the stock STATIC setup shows, and on ANALOG BD Analog BD's page. YES on VECTOR opens its STATIC/FLEX choice and the main SRC page shows SRC>VECTOR. SRC SETUP then shows VECTOR's page 2 (SEED 1, SPAN 12, OFST 0, ROT 0, RPT OFF, DIR FWD); encoders A-F change SEED, OFST, ROT, RPT and DIR (SPAN already at its maximum) and back, and SPAN moves within its range. Another STATIC track keeps the stock setup.",
         "limitations": [
