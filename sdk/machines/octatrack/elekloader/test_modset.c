@@ -171,6 +171,17 @@ int main(void)
     modwerk_test_held = 1; boot(); modwerk_modset_service(); modwerk_test_held = 0;
     accept(0, 48); modwerk_modset_service(); CHECK(modwerk_modset_result == SAVED && modwerk_modset_generation == newest + 2);
     boot(); modwerk_modset_service(); CHECK(modwerk_modset_result == RESTORED && installed == 1);
+    /* "MODULES LOADED" waits for the engines the bank uses: half a second at least, ten seconds at most, once. */
+    boot(); modwerk_test_said = 0; modwerk_modset_service(); CHECK(modwerk_modset_result == RESTORED && !modwerk_test_said);
+    modwerk_test_settling = 1;
+    for (unsigned t = 0; t < 600u; ++t, ++modwerk_test_ticks) modwerk_modset_notice_tick();
+    CHECK(!modwerk_test_said);
+    modwerk_modset_notice_tick(); CHECK(modwerk_test_said && !strcmp(modwerk_test_said, "MODULES LOADED"));
+    modwerk_test_said = 0; modwerk_modset_notice_tick(); CHECK(!modwerk_test_said);
+    boot(); modwerk_modset_service(); modwerk_test_settling = 0;
+    for (unsigned t = 0; t < 30u; ++t, ++modwerk_test_ticks) modwerk_modset_notice_tick();
+    CHECK(!modwerk_test_said);
+    modwerk_modset_notice_tick(); CHECK(modwerk_test_said && !strcmp(modwerk_test_said, "MODULES LOADED"));
     if (failures) { fprintf(stderr, "%u module set checks failed\n", failures); return 1; }
     puts("Octatrack module set: saved in turn, removals dropped, the newest whole set restored, damaged and foreign sets and a held FUNC refused, "
          "a Keep joined only as the trial's identity and reported unsaved until saved.");

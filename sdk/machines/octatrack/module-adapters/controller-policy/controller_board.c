@@ -97,7 +97,7 @@ static uint8_t kb_readers;     /* ... and whether a live package requires it (a 
 #ifdef MODWERK_RESIDENT_ON_DEMAND
 static uint8_t kb_priced;      /* the tap's price is charged on both cores (dsp.c): only for readers */
 #endif
-static const uint32_t kb_zeros[24];
+static const uint32_t kb_zeros[MW_CONTROLLER_RESET_CHUNK]; /* the key bus's, Sidechain's and Matrix's reset words */
 /* The key bus cannot come up this boot: the board closed, or a core's state lost (its mask unknown, a lane stuck or its
  * owned channel closed: an uncertain job closed it for the boot, the transport's fail-closed rule). Nothing reopens it,
  * which would act on a DSP whose state nobody knows, so a reader is refused (RUNTIME_FEATURE) rather than admitted to
@@ -252,7 +252,8 @@ static int engine_shape(const struct runtime_dsp *d, unsigned feature)
     }
     return 1;
 }
-/* Its reset on core c from `offset`: the initial words of the claims there, in order, never past one claim. */
+/* Its reset on core c from `offset`: the initial words of the claims there, in order, never past one claim, at most one
+ * job's worth (MW_CONTROLLER_RESET_CHUNK). */
 static int engine_init(const struct runtime_dsp *d, unsigned c, uint32_t offset, const uint32_t **words, unsigned *count)
 {
     uint32_t at = 0, logical = 0;
@@ -262,7 +263,7 @@ static int engine_init(const struct runtime_dsp *d, unsigned c, uint32_t offset,
         if (applies(q, c)) {
             if (offset < logical + q->words) {
                 uint32_t k = logical + q->words - offset;
-                *words = d->initial + at + (offset - logical), *count = k > 24u ? 24u : k;
+                *words = d->initial + at + (offset - logical), *count = k > MW_CONTROLLER_RESET_CHUNK ? MW_CONTROLLER_RESET_CHUNK : k;
                 return 1;
             }
             logical += q->words;
@@ -412,7 +413,6 @@ static int roots_clear(void *u, const struct mw_controller_binding *b)
  * job's release. */
 static int reset_source(void *u, const struct mw_controller_binding *b, unsigned c, uint32_t offset, const uint32_t **words, unsigned *count)
 {
-    static const uint32_t zeros[24];
     (void)u;
     unsigned f = b->identity.feature, n = c < 2u ? total(f, c) : 0u;
     if (!n || offset >= n || !words || !count) return 0;
@@ -420,9 +420,9 @@ static int reset_source(void *u, const struct mw_controller_binding *b, unsigned
         const struct runtime_module *m = module_of(b);
         return m && engine_init(&m->dsp, c, offset, words, count) && *count <= n - offset;
     }
-    unsigned k = n - offset > 24u ? 24u : n - offset;
+    unsigned k = n - offset > MW_CONTROLLER_RESET_CHUNK ? MW_CONTROLLER_RESET_CHUNK : n - offset;
     if (f == 1u && offset < 528u && k > 528u - offset) k = 528u - offset; /* one owned range per chunk */
-    *words = zeros; *count = k; return 1;
+    *words = kb_zeros; *count = k; return 1;
 }
 /* Known from the dormant boot upload and every ACKed owned CAS since; any
  * uncertain job on a core makes it unknown for the rest of the boot. */
@@ -608,7 +608,9 @@ static int keybus_start(unsigned c, unsigned op)
     struct dl_owned_job job;
     int ok;
     if (op == KB_RESET || op == KB_SCRUB) {
-        unsigned offset = op == KB_SCRUB ? 0u : kb_reset[c], n = KEYBUS_WORDS - offset > 24u ? 24u : KEYBUS_WORDS - offset;
+        /* A scrub is one offset-0 packet (the seed and counter); a reset as much as one job carries. */
+        unsigned offset = op == KB_SCRUB ? 0u : kb_reset[c], most = op == KB_SCRUB ? DL_DATA : MW_CONTROLLER_RESET_CHUNK;
+        unsigned n = KEYBUS_WORDS - offset > most ? most : KEYBUS_WORDS - offset;
         if (offset < KEYBUS_SPLIT && n > KEYBUS_SPLIT - offset) n = KEYBUS_SPLIT - offset;
         ok = dl_owned_reset_reserve(c, KEYBUS_GENERATION, KEYBUS, offset, n, kb_zeros, &job);
     } else ok = dl_owned_command_reserve(c, KEYBUS_GENERATION, 10u, mask[c],
@@ -835,6 +837,26 @@ void modwerk_controller_tick(void)
     view();
 #endif
     modwerk_machine_unlock(irq);
+}
+
+int modwerk_controller_settling(void)
+{
+    if (!started || closed) return 0;
+    if (bind_again) return 1; /* a live controller not bound yet, or waiting for its predecessor's disable */
+    for (unsigned at = 0; at < MW_CONTROLLER_SLOTS; ++at) {
+        const struct mw_controller_slot *s = &REGISTRY.slots[at];
+        unsigned need = s->binding.identity.required_cores, stuck = 0;
+        if (!held(s) || s->state == MW_CTL_ACTIVE || s->state >= MW_CTL_DISABLING) continue;
+        for (unsigned c = 0; c < 2u; ++c)
+            if (need >> c & 1u) stuck |= transport.closed[c] || !(mask_known >> c & 1u);
+#ifdef MODWERK_RESIDENT_ON_DEMAND
+        if (!engine_wanted(at)) continue; /* not used by this bank, or no room for its engine */
+        for (unsigned c = 0, k = MW_DSP_INDEX(s->binding.identity.feature); c < 2u && k < MW_ENGINE_FEATURES; ++c)
+            if (need >> c & 1u) stuck |= mw_engines_wait[c][k] == MW_WAIT_STUCK;
+#endif
+        if (!stuck) return 1;
+    }
+    return 0;
 }
 
 int modwerk_controller_admit(const struct runtime_dsp *from, const struct runtime_dsp *to,
