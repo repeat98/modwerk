@@ -191,12 +191,12 @@
       "sites": 2,
       "copies": 8,
       "fills": 0,
-      "version": "0.2.4-experimental",
+      "version": "0.2.5-experimental",
       "name": "VECTOR",
       "module": "b0d51c58",
-      "bytes": 18350,
-      "sha256": "2cf04fd4343aa276271cef9d32025fb94e0da064f5702052acc152c486b1aec0",
-      "path": "octatrack-modules/vector/0.2.4-experimental.mwrm"
+      "bytes": 18354,
+      "sha256": "45c962ca3a202ac697e3d33d97e4b3b94052706a390189e5baf923fa829de577",
+      "path": "octatrack-modules/vector/0.2.5-experimental.mwrm"
     },
     {
       "id": "synth",
@@ -338,7 +338,7 @@
       "bytes": 2636,
       "sha256": "d34737d2d7b804643967788741c23f0d5010a6c14a20967acc6831376c8af95f",
       "path": "octatrack-modules/sidechain-compressor/0.2.0-experimental.mwrm",
-      "requiredBase": "5273cecd1f8e1cd49dcc431c2a6dfd5e88b1272f6df7224bfc5564283dbc7951"
+      "requiredBase": "8c92195a78b6d36fe4883db794b3d9c2008cad0c823dd03588cc1eb8b3906015"
     },
     {
       "id": "output-matrix",
@@ -354,7 +354,7 @@
       "bytes": 3740,
       "sha256": "af1a5742c7544e6b19e81812a1375ed2955691550095661aa86bf4837f49fa91",
       "path": "octatrack-modules/output-matrix/0.1.1-experimental.mwrm",
-      "requiredBase": "5273cecd1f8e1cd49dcc431c2a6dfd5e88b1272f6df7224bfc5564283dbc7951"
+      "requiredBase": "8c92195a78b6d36fe4883db794b3d9c2008cad0c823dd03588cc1eb8b3906015"
     },
     {
       "id": "cc-map",
@@ -370,7 +370,7 @@
       "bytes": 966,
       "sha256": "c7cd39a5f645d69279d3a288c40b8366e6638acdc042cf0fe68dfb9964a68ea2",
       "path": "octatrack-modules/cc-map/0.1.2-experimental.mwrm",
-      "requiredBase": "5273cecd1f8e1cd49dcc431c2a6dfd5e88b1272f6df7224bfc5564283dbc7951"
+      "requiredBase": "8c92195a78b6d36fe4883db794b3d9c2008cad0c823dd03588cc1eb8b3906015"
     },
     {
       "id": "quantize-live-rec-toggle",
@@ -431,7 +431,7 @@
       "bytes": 1818,
       "sha256": "21a8447ccaa058148c9ac075887f22445e80ee49a17014b28681c8cf3aaaccf5",
       "path": "octatrack-modules/recorder-loop-fix/0.1.0-experimental.mwrm",
-      "requiredBase": "5273cecd1f8e1cd49dcc431c2a6dfd5e88b1272f6df7224bfc5564283dbc7951"
+      "requiredBase": "8c92195a78b6d36fe4883db794b3d9c2008cad0c823dd03588cc1eb8b3906015"
     },
     {
       "id": "analog-bassdrum",
@@ -447,7 +447,7 @@
       "bytes": 25822,
       "sha256": "7a1b08e8912d190400fb37cff6c8dbdc85d09bf01ba887cbe99e3ed5d66a5e4b",
       "path": "octatrack-modules/analog-bassdrum/0.1.5-experimental.mwrm",
-      "requiredBase": "5273cecd1f8e1cd49dcc431c2a6dfd5e88b1272f6df7224bfc5564283dbc7951",
+      "requiredBase": "8c92195a78b6d36fe4883db794b3d9c2008cad0c823dd03588cc1eb8b3906015",
       "requires": 0,
       "claims": 1,
       "entries": 1
