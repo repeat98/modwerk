@@ -89,10 +89,22 @@ class MachineEventTests(unittest.TestCase):
                 with tempfile.TemporaryDirectory() as temp:
                     Path(temp, 'g.s').write_text(text)
                     subprocess.run([asm, '-mcpu=54455', temp + '/g.s', '-o', temp + '/g.o'], check=True, capture_output=True)
-                    if entry.get('machine'):  # the descriptor is exactly one ot_machines record
+                    if entry.get('machine'):  # the descriptor is exactly one ot_machines record (a SETUP_PAGE one's
+                        # struct modwerk_machine_setup: the machine and two words)
                         out = subprocess.check_output(['m68k-elf-nm', '-n', temp + '/g.o'], text=True).split('\n')
                         at = {l.split()[2]: int(l.split()[0], 16) for l in out if len(l.split()) == 3}
-                        self.assertEqual(at['mw_machine_label'] - at['mw_machine'], records['ot_machines'], name)
+                        setup = 8 if 'SETUP_PAGE' in entry['machine']['flags'] else 0
+                        self.assertEqual(at['mw_machine_label'] - at['mw_machine'], records['ot_machines'] + setup, name)
+
+    def test_setup_page_words_follow_the_machine_only_with_the_flag(self):
+        entry = {'machine': {'sig': 'XS', 'lo': 1, 'hi': 1, 'label': 'X', 'flags': ['POOL'], 'fields': {'setup_page': 'x_page'}}}
+        with self.assertRaises(ValueError):
+            machine_ports.glue('x', entry)
+        entry['machine']['flags'].append('SETUP_PAGE')
+        entry['machine']['fields']['setup_knob'] = 'x_knob'
+        text = machine_ports.glue('x', entry)
+        self.assertIn('.byte   0, 0, 0, 0\n        .long   x_page\n        .long   x_knob\nmw_machine_label:', text)
+        self.assertIn('.long   mw_machine_label, 66, 0, 0\n', text)
 
     def test_no_kept_code_returns_into_the_middle_of_a_base_site(self):
         """A taker's entry and every kept unit return to stock past each base-owned site, never into its bytes."""

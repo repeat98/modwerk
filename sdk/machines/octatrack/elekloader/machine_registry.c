@@ -2,7 +2,7 @@
  * The base's machine registry: the reader of the ot_machines table (events.json). The
  * machine chooser, SRC SETUP, the page resolver, the Part validator, the UI tick, pool
  * navigation and the FLEX renderer ask the contributed machines (struct modwerk_machine),
- * in row order: chooser rows 5 on. Adapted from POLY8's shared machine controller
+ * in row order: chooser rows 5 on (SRC SETUP's own rows for a SETUP_PAGE machine). Adapted from POLY8's shared machine controller
  * (sdk/octabam/modules/poly8/shared-machine.c, MIT, Sam Banks / repeat98), whose fixed
  * POLY/AB/VECTOR/FM participants become contributions; each machine keeps its own signed
  * FLEX state, defaults, pages and engine. Also the reader of ot_sequencer_rows. */
@@ -435,6 +435,30 @@ unsigned mw_row_has_pool(unsigned row)
 {
     const Machine *m[ROWS - 5u]; unsigned n = machines(m);
     return row >= 5 && row < 5 + n && m[row - 5]->flags & MODWERK_MACHINE_POOL;
+}
+/* SRC SETUP on a module machine's row (stock's cursor, 0x460d5c30, the row its drawer and editor were given) shows and
+ * edits the track's backing pool's setup (mw_pool_kind). A SETUP_PAGE machine owns its rows there while the current
+ * track is its own: its page gives the page the drawer shows instead of the row's stock one, and its knob
+ * takes encoders A-F (0-5) before stock edits the pool's byte. Only a SETUP_PAGE machine's record is a struct
+ * modwerk_machine_setup (88 bytes; every other ABI 1 record ends at 80), so nothing past the machine is read without it. */
+static const Machine *setup_owner(const Machine *const *m, unsigned n, unsigned row)
+{
+    const Machine *who;
+    return row >= 5 && current(m, n, &who) == row && who->flags & MODWERK_MACHINE_SETUP_PAGE ? who : 0;
+}
+uint32_t mw_setup_page(unsigned row, uint32_t stock)
+{
+    const Machine *m[ROWS - 5u]; unsigned n = machines(m);
+    const Machine *who = setup_owner(m, n, row);
+    const struct modwerk_machine_setup *own = (const struct modwerk_machine_setup *)who;
+    return own && own->page ? own->page(stock) : stock;
+}
+unsigned mw_setup_knob(unsigned row, unsigned index, int delta)
+{
+    const Machine *m[ROWS - 5u]; unsigned n = machines(m);
+    const Machine *who = index < 6 ? setup_owner(m, n, row) : 0;
+    const struct modwerk_machine_setup *own = (const struct modwerk_machine_setup *)who;
+    return own && own->knob && own->knob(index, delta) ? 1u : 0u;
 }
 /* The frame guard. The frame interrupt (0x4000aad0, level 5) takes the DSP's frame word at its entry, renders each
  * track's source (each track about twice a frame), then builds the DSP's frame. While it runs, USB (level 4), the UI and

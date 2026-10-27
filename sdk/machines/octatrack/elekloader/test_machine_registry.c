@@ -125,6 +125,16 @@ static const struct modwerk_machine D = {MODWERK_MACHINE_ABI, {'D', 'V'}, 1, 1, 
                                          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, render_a, 0, 411, 3, 1, {0}},
                              E = {MODWERK_MACHINE_ABI, {'E', '2'}, 1, 1, "PRICED 2", MODWERK_MACHINE_PROTECT, 0, a_defaults,
                                          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, render_f, 0, 411, 3, 1, {0}};
+/* A SETUP_PAGE machine (its record 88 bytes) and one that leaves the flag clear: the base reads the two setup words
+ * only with the flag, so the second's are never called. */
+static unsigned setup_pages, setup_knobs, knob_index = 99, knob_takes = 1; static int knob_delta;
+static uint32_t setup_page_s(uint32_t stock) { ++setup_pages; return stock + 0x100u; }
+static unsigned setup_knob_s(unsigned index, int delta) { ++setup_knobs, knob_index = index, knob_delta = delta; return knob_takes; }
+static const struct modwerk_machine_setup S = {{MODWERK_MACHINE_ABI, {'S', '2'}, 1, 2, "VECTOR", MODWERK_MACHINE_POOL | MODWERK_MACHINE_BACKING
+                                               | MODWERK_MACHINE_SETUP_PAGE, 0, 0, assign_v, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, validate_v,
+                                               0, 0, 0, {0}}, setup_page_s, setup_knob_s},
+                                   N = {{MODWERK_MACHINE_ABI, {'N', 'S'}, 1, 1, "NO FLAG", MODWERK_MACHINE_PROTECT, 0, a_defaults,
+                                               0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, {0}}, setup_page_s, setup_knob_s};
 static const struct { uint32_t count; struct modwerk_sequencer_row row[3]; } FMQ = {3, {{"SCALE", 0, 0}, {"ROOT", 0, 0}, {"GLIDE", 0, 0}}},
     QZ = {3, {{"SCALE", (void *)1, 0}, {"ROOT", (void *)1, 0}, {"GLIDE", (void *)1, 0}}}, MORE = {1, {{"SWING", 0, 0}}};
 static void rows(const void *const *m, unsigned n, const void *const *s, unsigned k)
@@ -365,6 +375,31 @@ int main(void)
     CHECK(frame(6, 90000, 10000) == -7 && mw_frame_sheds == sheds);
     rows(0, 0, 0, 0);
 
+    /* SRC SETUP: the SETUP_PAGE machine S (row 6, after A) draws and edits its own rows while the cursor is on its row and
+     * the current track is its own; N (row 7, no flag), A and stock rows keep stock's page and editor. */
+    const void *asn[] = {&A, &S, &N};
+    rows(asn, 3, 0, 0);
+    CHECK(mw_assign(part0(), 2, 6) == 1 && mw_assign(part0(), 4, 7) == 1 && mw_assign(part0(), 5, 5) == 1);
+    misc[0x0c] = 2; /* current track 3: S's */
+    CHECK(mw_setup_page(6, 0x400d31aeu) == 0x400d32aeu && setup_pages == 1);
+    CHECK(mw_setup_knob(6, 4, -3) == 1 && setup_knobs == 1 && knob_index == 4 && knob_delta == -3);
+    knob_takes = 0; CHECK(mw_setup_knob(6, 0, 1) == 0 && setup_knobs == 2); knob_takes = 1;
+    CHECK(mw_setup_knob(6, 6, 1) == 0 && setup_knobs == 2); /* only encoders A-F */
+    /* Another row under the cursor (a stock row, A's, N's) or another track's machine: stock's. */
+    CHECK(mw_setup_page(1, 7) == 7 && mw_setup_page(5, 7) == 7 && mw_setup_page(7, 7) == 7 && mw_setup_knob(5, 0, 1) == 0);
+    misc[0x0c] = 4; CHECK(mw_setup_page(7, 7) == 7 && mw_setup_knob(7, 1, 1) == 0 && mw_setup_page(6, 7) == 7);
+    misc[0x0c] = 3; CHECK(mw_setup_page(6, 7) == 7 && mw_setup_knob(6, 1, 1) == 0);
+    misc[0x0c] = 2; misc[0x55] = 1; CHECK(mw_setup_page(6, 7) == 7 && mw_setup_knob(6, 1, 1) == 0); misc[0x55] = 0;
+    CHECK(setup_pages == 1 && setup_knobs == 2);
+    /* S alone (row 5) and S gone: its track reads as stock and so does its SETUP. */
+    const void *s_only[] = {&S};
+    rows(s_only, 1, 0, 0);
+    CHECK(mw_setup_page(5, 7) == 0x107u && setup_pages == 2);
+    rows(0, 0, 0, 0);
+    CHECK(mw_setup_page(5, 7) == 7 && mw_setup_knob(5, 0, 1) == 0 && setup_pages == 2 && setup_knobs == 2);
+    misc[0x0c] = 0;
+    for (unsigned t = 0; t < 8; ++t) for (unsigned k = 0; k < 3; ++k) part0()[60 + 30 * t + k] = 0;
+
     /* SEQUENCER: FM's quantizer rows, then Scale Quantizer's with the same labels: one set, FM's; QZ alone: QZ's. */
     const void *both[] = {&FMQ, &QZ, &MORE};
     rows(0, 0, both, 3);
@@ -379,6 +414,6 @@ int main(void)
     if (failures) { fprintf(stderr, "%u registry checks failed\n", failures); return 1; }
     puts("Machine registry: rows by table order, admission before mutation, signatures and defaults in both copies, absent "
          "machines as stock, the validator's protection and wrapper chain, render routing, keyed SEQUENCER rows and chooser "
-         "counts and the frame guard passed.");
+         "counts, SETUP_PAGE machines' own SRC SETUP and the frame guard passed.");
     return 0;
 }
