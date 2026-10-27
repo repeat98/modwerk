@@ -135,7 +135,7 @@ compares (static reading, not a measurement).
 
 ## Authorship and licences
 
-npp1993 (Nathaniel Pawelczyk): the mod, its design and code, and this module. Iced-Cream:
+npp1993 (Nathaniel Pavel): the mod, its design and code, and this module. Iced-Cream:
 `include/ar2-1.74.inc` and the rytm2_mods voice-dac port. MrScruff: the globals-slot lookup,
 which follows his voice-dac (rytm-mods `0013-voice-dac`, as rytm2_mods ports it). irpina:
 Elekloader and core-ar2, whose mod storage keeps the setting.

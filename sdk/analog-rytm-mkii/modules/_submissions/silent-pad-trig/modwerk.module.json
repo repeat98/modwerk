@@ -9,7 +9,7 @@
   "author": {
     "github": "npp1993",
     "credits": [
-      "npp1993 (Nathaniel Pawelczyk) — the mod, its design and code, and this Modwerk module.",
+      "npp1993 (Nathaniel Pavel) — the mod, its design and code, and this Modwerk module.",
       "Iced-Cream — include/ar2-1.74.inc, the OS 1.74 address file from rytm2_mods, and the rytm2_mods voice-dac port the globals-slot lookup follows.",
       "MrScruff — the globals-slot lookup, after his voice-dac (rytm-mods 0013-voice-dac, as rytm2_mods ports it).",
       "irpina — Elekloader and core-ar2, the core it links with and whose mod storage keeps its setting."
