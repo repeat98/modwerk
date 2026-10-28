@@ -32,6 +32,10 @@ until those results and owner review are recorded.
 Use Node 24, the reviewed GNU `m68k-elf` toolchain, a clean Elekloader checkout
 at `vendor/elekloader/kit/kit.json`'s commit (`npm run upstream:tools` keeps one
 in `~/.cache/modwerk-upstream/elekloader`) and your original OT OS 1.40C.
+The checkout runs with Modwerk's own firmware codec: a script puts it on `sys.path` only through
+`firmware_codec.use_elekloader()` ([`sdk/firmware_codec`](../../../firmware_codec/__init__.py)), which serves the
+section format, the `.syx` transport and the ColdFire decoder in place of the checkout's `codec/` and `isa/`
+(`sdk/tests/test_firmware_codec.py` checks every script).
 Both output directories below must be new and outside every Git checkout:
 
 ```sh
@@ -122,7 +126,8 @@ checks the remaining published files against their manifest hashes without
 rebuilding or deleting them. Use the full generator for a separately qualified
 module update; existing standalone recipes may name earlier source/tool inputs.
 The cave/table declarations also pin the generator source, and they and the standalone recipes pin the Elekloader
-checkout's files, so a kit update (`vendor/elekloader/kit/kit.json`) needs the same refresh in its own pull request:
+checkout's files the build runs and Modwerk's codec in place of its `codec/` and `isa/` (`firmware_codec.inputs()`),
+so a kit update or a codec edit (`vendor/elekloader/kit/kit.json`) needs the same refresh in its own pull request:
 CI has no firmware and cannot see it, and until then the builds refuse with "does not name the exact source inputs"
 (kit 0.7.0, 22 October 2026). Refresh a generator-only pin only after rebuilding
 the affected packages and proving every published byte unchanged; never replace a pin merely to make a check pass.

@@ -17,6 +17,8 @@ import sys
 
 HERE = Path(__file__).resolve().parent
 APP = HERE.parents[3]
+sys.path.append(str(APP / 'sdk'))  # firmware_codec
+import firmware_codec  # noqa: E402
 _spec = importlib.util.spec_from_file_location('modwerk_usb_post', HERE / 'usb_post.py')
 usb_post = importlib.util.module_from_spec(_spec); _spec.loader.exec_module(usb_post)
 VERSION = '0.3.1-modwerk-dev.1'
@@ -1530,7 +1532,7 @@ def main():
     pin = json.loads((APP / 'vendor/elekloader/kit/kit.json').read_text())['commit']
     if git(upstream, 'rev-parse', 'HEAD') != pin or git(upstream, 'status', '--porcelain', '--untracked-files=no'):
         parser.error('Use the exact clean tracked Elekloader checkout pinned by Modwerk.')
-    sys.path.insert(0, str(upstream))
+    firmware_codec.use_elekloader(upstream)
     from elekloader import dsp, formats, elemod, patch
     from elekloader.sdk import build as sdk
     stock, device, release = formats.load(str(args.stock))
@@ -1838,7 +1840,7 @@ def main():
         (source/'remix.inc').write_text(usb.AUDIO_INC)
     # Identity describes this core-only private base. Later selections need
     # their complete module/version/chooser identities regenerated explicitly.
-    folders = (logger, upload, loader, HERE) + ((DYNLOAD,) if args.dsp_loader else ())
+    folders = (logger, upload, loader, HERE, firmware_codec.HERE) + ((DYNLOAD,) if args.dsp_loader else ())
     inputs = {str(p.relative_to(APP)): sha(p.read_bytes()) for folder in folders
               for p in sorted(folder.iterdir()) if p.is_file() and p.suffix in ('.c', '.h', '.s', '.asm', '.py', '.json')}
     for path, digest in profile_inputs.items():
@@ -2252,7 +2254,7 @@ modwerk_retained_end:
     mapping = manifest.pop('_map')
     # MAIN stores .run packed (run_pack.py): the linked image again without its plain copy, repacked and verified as
     # patch.build does, so the RAM boot bound and every hash below are the packed image's.
-    from elekloader.codec import aplib
+    from firmware_codec import aplib
     spec = importlib.util.spec_from_file_location('modwerk_run_pack', HERE/'run_pack.py')
     run_pack = importlib.util.module_from_spec(spec); spec.loader.exec_module(run_pack)
     parsed = formats.load(str(args.stock))[0]
