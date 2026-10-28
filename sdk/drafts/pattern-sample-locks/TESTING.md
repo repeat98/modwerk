@@ -1,6 +1,6 @@
 # Testing: Pattern Sample Locks 0.1.6-experimental
 
-29 October 2026 · twwwy · private fork prototype. No physical unit has been accessed for this version. No push, upstream PR, release or flash.
+29 October 2026 · twwwy · private fork prototype. A first MKII trial was attempted and undone; functional hardware qualification remains incomplete. No push, upstream PR, release or flash.
 
 ## Exact build
 
@@ -54,9 +54,17 @@ capture_emulator.py --exercise-ui --keep checks UI plus native behavior on dispo
 
 Fixtures inject held-step masks for the unchanged native SAMPLE writer, valid Flex defaults and existing trig/lock data for maximum edits. Part preparation uses the stock Part Save row. Project save/reload use the stock Project menu, with actual native preparation/begin/completion callbacks. No queued job packet or extra scratch region is used. UI/STOP use actual panel reports. Frozen source/package/base hashes bind each receipt.
 
+## First physical MKII trial: partial, self-test failed
+
+29 October 2026 local time; receipt media/v016-mkii-first-trial.json. User confirmed a disposable project and backed-up CF. The unit ran base 9b7e0eb337a92378306a9b837f04adb3b93242a42f6113e418607ad8fe5dd57b, loader ABI 10, features 903, with 18 existing modules. Developer state/MEM/button requests are unavailable on that base; no RAM-base change was made.
+
+The exact package above loaded as the nineteenth module, with the original eighteen still listed. The base self-test reported 19 intact, but failed with bit 32 (track/effect restoration), 4/9 progress, 4 DSP effects exercised, no named culprit and refusal 0. Its combined-set peaks were CPU 52.1%, DSP T1–4 81.7%, T5–8 68.3%; frame-gap counter 55,465. These are whole-set self-test readings, not Sample Locks operation cost. The cause has not been established.
+
+The script stopped before the manual menu phase and requested no Sample Locks action. Undo returned to normal with the original active identity, exact eighteen-module inventory and whole-set identity b6ef21db9e718d147ea1e86cd323d8a9563da0667abbb03f80ccbbc790481967. USB responded and hardware frames advanced afterward. The user reported the unit responsive on its normal screen. Track-setting restoration was not verified: module rollback and project-data restoration are different checks. No Keep, flash or project save was performed. The user declined a baseline test of their eighteen modules and requested Sample Locks alone for ten minutes. A baseline-bound whole-set transaction removing those eighteen and adding Sample Locks was rejected during verification with loader refusal 7 (an effect is in use). Publication did not run; the original inventory, whole-set digest and normal/known active state were verified unchanged. The trial timer has not started. Awaiting a blank stock project before retrying this isolated trial. Do not count this attempt as a passed hardware stress or functional test.
+
 ## Remaining qualification
 
-Physical MKII/MKI, restarts, audible behavior, worst-case CPU/stack and unnamed companion combinations remain untested. Native card-build integration, parity, owner review and live download do not exist. The first hardware session is a bounded RAM trial on a backed-up disposable project; see DEVICE_TEST.md.
+Physical SAMPLE editing on MKII, all MKI behavior, restarts, audible behavior, worst-case operation CPU/stack and unnamed companion combinations remain untested. Native card-build integration, parity, owner review and live download do not exist. The first hardware session is a bounded RAM trial on a backed-up disposable project; see DEVICE_TEST.md.
 
 ## History
 

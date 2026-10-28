@@ -1,0 +1,184 @@
+{
+  "hardware": true,
+  "moduleVersion": "0.1.6-experimental",
+  "packageSha256": "0cd6c725f6be493ea461b7a54231032416cab3cad77bf3327e644db212848961",
+  "moduleId": "4bdbfbf9",
+  "started": "2026-10-28T20:07:46.059Z",
+  "finished": "2026-10-28T20:07:58.733Z",
+  "keep": false,
+  "flash": false,
+  "projectSave": false,
+  "selftest": {
+    "failure": "the test couldn\u2019t put your tracks back as they were",
+    "record": {
+      "state": 3,
+      "failed": 32,
+      "modules": 19,
+      "dsp": 7,
+      "intact": 19,
+      "ran": 4,
+      "peaks": {
+        "tracks1to4": 817,
+        "tracks5to8": 683,
+        "cpu": 521
+      },
+      "done": 4,
+      "total": 9,
+      "frameGap": 55465,
+      "saved": 1,
+      "savedCount": 18,
+      "live": 19,
+      "culprit": 0,
+      "culpritName": "",
+      "refusal": 0
+    }
+  },
+  "undoVerified": true,
+  "sourceRevision": "853dae7d45c868db676b112049036913e74f5790",
+  "model": "MKII",
+  "base": "9b7e0eb337a92378306a9b837f04adb3b93242a42f6113e418607ad8fe5dd57b",
+  "capabilities": {
+    "abi": 10,
+    "features": 903,
+    "maxSites": 128,
+    "maxCopies": 128
+  },
+  "baselineModules": [
+    {
+      "handle": 23,
+      "layout": 1,
+      "module": "3cbedc9c",
+      "name": "Mini Verb"
+    },
+    {
+      "handle": 15,
+      "layout": 1,
+      "module": "9f482bb9",
+      "name": "Tape Echo"
+    },
+    {
+      "handle": 255,
+      "layout": 1,
+      "module": "5c49f0f0",
+      "name": "Repitch"
+    },
+    {
+      "handle": 31,
+      "layout": 1,
+      "module": "bcf0d674",
+      "name": "TapeHead"
+    },
+    {
+      "handle": 30,
+      "layout": 1,
+      "module": "496d848e",
+      "name": "Air Chorus"
+    },
+    {
+      "handle": 27,
+      "layout": 1,
+      "module": "873d83cc",
+      "name": "E-Verb"
+    },
+    {
+      "handle": 14,
+      "layout": 1,
+      "module": "16332a40",
+      "name": "BBD Delay"
+    },
+    {
+      "handle": 9,
+      "layout": 1,
+      "module": "d7bf66ce",
+      "name": "LOFI2"
+    },
+    {
+      "handle": 255,
+      "layout": 1,
+      "module": "abdb1445",
+      "name": "Analog BD"
+    },
+    {
+      "handle": 255,
+      "layout": 1,
+      "module": "8e791a15",
+      "name": "Preview Vol"
+    },
+    {
+      "handle": 255,
+      "layout": 1,
+      "module": "42a1756e",
+      "name": "CC Map"
+    },
+    {
+      "handle": 255,
+      "layout": 1,
+      "module": "95cff696",
+      "name": "SIDECHAIN COMP"
+    },
+    {
+      "handle": 255,
+      "layout": 1,
+      "module": "73bab3b1",
+      "name": "Mute Modes"
+    },
+    {
+      "handle": 255,
+      "layout": 1,
+      "module": "075d79a3",
+      "name": "DirectJmp Kyoti"
+    },
+    {
+      "handle": 255,
+      "layout": 1,
+      "module": "c8d078f2",
+      "name": "beat-slicer"
+    },
+    {
+      "handle": 255,
+      "layout": 1,
+      "module": "103be957",
+      "name": "Apply Scene"
+    },
+    {
+      "handle": 255,
+      "layout": 1,
+      "module": "e8c3e4fa",
+      "name": "FM Synth"
+    },
+    {
+      "handle": 255,
+      "layout": 1,
+      "module": "7d0747d4",
+      "name": "Quant Live Rec"
+    }
+  ],
+  "trialModules": 19,
+  "baselineWholeSet": "b6ef21db9e718d147ea1e86cd323d8a9563da0667abbb03f80ccbbc790481967",
+  "restoredWholeSet": "b6ef21db9e718d147ea1e86cd323d8a9563da0667abbb03f80ccbbc790481967",
+  "baselineUploadActive": "9b7e0eb337a92378306a9b837f04adb3b93242a42f6113e418607ad8fe5dd57b",
+  "restoredUploadActive": "9b7e0eb337a92378306a9b837f04adb3b93242a42f6113e418607ad8fe5dd57b",
+  "baselineInventoryRestored": true,
+  "postUndoFramesAdvanced": true,
+  "manualMenuTrialStarted": false,
+  "moduleActionsRequestedByAutomation": false,
+  "trackStateRestorationVerified": false,
+  "physicalResult": "Partial trial; self-test failed track restoration, cause not established. No functional qualification.",
+  "userReported": {
+    "disposableProjectLoaded": true,
+    "cfBackedUp": true,
+    "afterUndo": "Responsive; back on normal screen"
+  },
+  "privateReceiptSha256": "b85594749cccd14ed21029bbaa9966128504867a542e9667c7cfbe4f72720d77",
+  "subsequentIsolatedAttempt": {
+    "requestedTrialSeconds": 600,
+    "verification": "rejected",
+    "runtimeRefusal": 7,
+    "reason": "A track runs an effect that would be removed",
+    "publicationAttempted": false,
+    "baselineInventoryUnchanged": true,
+    "baselineWholeSetUnchanged": true,
+    "statusPhase": "normal",
+    "activeKnown": true
+  }
+}
