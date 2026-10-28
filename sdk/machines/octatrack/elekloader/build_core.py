@@ -773,7 +773,21 @@ WIDTH_EDITS = {
                   ('        unsigned reader=ids[i]<32 && reads[ids[i]];\n        unsigned same=',
                    '        unsigned reader=ids[i]<MODWERK_FX_IDS && reads[ids[i]];\n        unsigned same='),
                   ('        unsigned reader=ids[i]<32 && reads[ids[i]];\n        if(!reader',
-                   '        unsigned reader=ids[i]<MODWERK_FX_IDS && reads[ids[i]];\n        if(!reader')),
+                   '        unsigned reader=ids[i]<MODWERK_FX_IDS && reads[ids[i]];\n        if(!reader'),
+                  # The top of each core's FX2 block 3 holds the receiver's packet operations (dsp_loader.WINDOW): an
+                  # effect whose buffer reaches past it (reads 2, dsp.c) neither keeps nor takes that block.
+                  ('        if(same && b->live[i]!=DL_BUF_NONE && (reader || !b->known[i])) target[i]=b->live[i];\n    }\n',
+                   '        if(same && b->live[i]!=DL_BUF_NONE && (reader || !b->known[i])) target[i]=b->live[i];\n    }\n'
+                   '    for(unsigned i=8;i<16;++i)\n'
+                   '        if(target[i]==3u && ids[i]<MODWERK_FX_IDS && reads[ids[i]]>1u) target[i]=DL_BUF_NONE;\n'),
+                  # Wide readers first: they fit fewer blocks, so a narrow one planned before them cannot take theirs.
+                  ('    for(unsigned i=0;i<16;++i) {\n        unsigned reader=ids[i]<MODWERK_FX_IDS && reads[ids[i]];\n'
+                   '        if(!reader || target[i]!=DL_BUF_NONE) continue;\n',
+                   '    for(unsigned n=0;n<32;++n) {\n        unsigned i=n&15u;\n'
+                   '        unsigned reader=ids[i]<MODWERK_FX_IDS && reads[ids[i]];\n'
+                   '        if(!reader || target[i]!=DL_BUF_NONE || (n<16u)!=(reads[ids[i]]>1u)) continue;\n'),
+                  ('        if(!free) return DL_BUF_MEMORY;',
+                   '        if(k && reads[ids[i]]>1u) free&=~(1u<<3);\n        if(!free) return DL_BUF_MEMORY;')),
     'manager.c': (
         ('extern struct dl_package dl_catalog[32];', 'extern struct dl_package dl_catalog[DL_PACKAGES];'),
         ('extern struct code dl_codes[2][32];', 'extern struct code dl_codes[2][DL_PACKAGES];'),
