@@ -121,7 +121,7 @@
   "evidence": {
     "tier": "author-hardware",
     "moduleVersion": "0.5.1-experimental",
-    "sourceSha256": "5f4c6a7072570a8714afd30c2f68d3a88d0edb381e6bc63cb3b4b04abb3f9cbd",
+    "sourceSha256": "9cbf3b3fb65049330e91036a53972205ec9840e94d8072a17189558f76912a90",
     "reports": [
       "TESTING.md"
     ],

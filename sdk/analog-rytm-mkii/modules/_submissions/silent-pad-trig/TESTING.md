@@ -16,7 +16,12 @@ After 0.5.1 the module's display name becomes Silent Pad+Trig Settings (the id, 
   `include/ar2-1.74.inc`, byte for byte. Source fingerprint (`sha256` of
   `sha256sum include/ar2-1.74.inc src/silent-pad-trig.s`): `2e521380…8ea5`. 0.5.0's
   `src/silent-pad-trig.s` is `22019c7f…53a7`, fingerprint `bf1ed603…cd2f`. 0.5.1's is
-  `d28cf9a1…40d1`, fingerprint `5f4c6a70…9cbd` (`evidence.sourceSha256`).
+  `d28cf9a1…40d1`, fingerprint `5f4c6a70…9cbd`, the source PS07/PS08 were built and
+  tested from. After review, two comments that cited OS 1.73 addresses now cite 1.74's (AUTO TRK
+  SWITCH's label invoker `0x400eb710` and drawer `0x400ec450`, read from the 1.74 code):
+  `src/silent-pad-trig.s` `ed52848f…5f8b`, fingerprint `9cbf3b3f…2a90` (`evidence.sourceSha256`).
+  Modwerk's builder compiles it to the same module bytes, sites and relocations as before; only
+  the provenance hashes differ, so the PS07/PS08 results stand.
 - Stock OS 1.74: `.syx` `cb0f99d6…e123`, main OS `34cd0c4d…1f3b`, the owner's file.
 - Core: elekloader core-ar2 0.3 (`core-ar2-v0.3`, `core-ar2-0.3.elemod` `6b97dfb3…3e58`, as vendored).
 - Build PS08 (core-ar2 0.3 + 0.5.1, Modwerk's linker, `--version PS08`): `.syx`
