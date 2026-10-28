@@ -38,7 +38,7 @@ A site the core does not expose is proposed as a core hook before the mod, never
 - **Fast SRAM:** 2,304 bytes (0x8000F700–0x80010000) for time-critical code.
 - **SRC machine slots:** 4–7, one per new machine.
 
-Claim named resources (a machine slot, a SETTINGS row, a SysEx id, a +Drive path) in `platform.claims`; two mods may never claim the same one.
+Claim named resources (a machine slot, a SETTINGS row, a SysEx id, a +Drive path) in `platform.claims`; two mods may never claim the same one. Save a mod's state only in a record it owns (a tagged kit tail, pattern padding), never in bytes another mod saves ([a module owns what it saves](../../../docs/module-guides/README.md#cross-compatibility)).
 
 ## Toolchain
 
