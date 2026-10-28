@@ -687,21 +687,15 @@ unsigned modwerk_dsp_flags(unsigned core)
 }
 #endif
 
-/* The sys task watches the frames, outside the frame path. Frames still for half a second while one of our transfers
- * is mid-frame (busy 2: a phase active) is a hang: counted, and the loader shut off until a reboot. With only a job's
- * answer pending (busy 1) stock holds the frames itself for a while right after a power-on: the owner's MKII stopped
- * them for over half a second at a boot's project load and at the first bank change after it, with no phase active,
- * the eDMA DONE and stock's transfer state 7 (28 October 2026), and a job waiting then is no hang; it waits ten
- * seconds. */
+/* Frames stop only when a DSP stops, so the sys task watches them, outside the
+ * frame path: frames still for half a second while the loader has a transfer
+ * in flight is a hang (counted, and the loader shut off until a reboot). */
 #define STALL_TICKS 30u
-#define ANSWER_TICKS 600u
 static uint32_t seen_frames, still;
-static int reported;
 int modwerk_dsp_stalled(uint32_t frames, int busy)
 {
-    if (frames != seen_frames || !busy) { seen_frames = frames; still = 0; reported = 0; return 0; }
-    if (reported || ++still < (busy > 1 ? STALL_TICKS : ANSWER_TICKS)) return 0;
-    return reported = 1;
+    if (frames != seen_frames || !busy) { seen_frames = frames; still = 0; return 0; }
+    return ++still == STALL_TICKS;
 }
 volatile uint32_t modwerk_dsp_stalls, modwerk_dsp_drained; /* hangs seen; words taken back from the DSPs */
 volatile uint32_t modwerk_dsp_edma_errors, modwerk_dsp_edma_es; /* our transfers that eDMA refused; its last ES */
@@ -1438,7 +1432,7 @@ void modwerk_dsp_tick(void)
         probing = -1;
     }
     if ((dl_phase || dl_c1_phase) && EDMA_ES >> 31 && !(EDMA_ES >> 8 & 0xfu)) recover(2); /* eDMA refused our transfer: at once */
-    else if (modwerk_dsp_stalled(dl_frames, dl_phase || dl_c1_phase ? 2 : !dl_job_status(0) || !dl_job_status(1))) recover(1);
+    else if (modwerk_dsp_stalled(dl_frames, dl_phase || !dl_job_status(0) || !dl_job_status(1))) recover(1);
     int following = rebind_tick();
     static char text[24];
     if (modwerk_dsp_missing_tick(following, *(volatile uint8_t *)0x80000000u, text)) { /* the current track */

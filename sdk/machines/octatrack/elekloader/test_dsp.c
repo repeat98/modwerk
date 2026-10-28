@@ -315,25 +315,15 @@ int main(void)
 #endif
     modwerk_machine_dsp_switch(&none, &fx); fx.id = 27; modwerk_machine_dsp_switch(&none, &fx);
     CHECK(!fx_any(modwerk_dsp_dry()));
-    /* The watchdog: frames still for 30 ticks while a transfer is mid-frame, or 600 while only an answer is pending,
-     * reported once; frames moving or nothing in flight, never. */
+    /* The watchdog: frames still for 30 ticks while a transfer is in flight, reported once; frames moving or no transfer, never. */
     unsigned fired = 0;
-    for (unsigned t = 0; t < 100; ++t) fired += modwerk_dsp_stalled(500u + t, 2);   /* frames advance */
+    for (unsigned t = 0; t < 100; ++t) fired += modwerk_dsp_stalled(500u + t, 1);   /* frames advance */
     for (unsigned t = 0; t < 100; ++t) fired += modwerk_dsp_stalled(42857u, 0);     /* nothing in flight */
     CHECK(!fired);
-    for (unsigned t = 1; t <= 29; ++t) CHECK(!modwerk_dsp_stalled(42857u, 2));
-    CHECK(modwerk_dsp_stalled(42857u, 2));                                            /* the 30th still tick */
-    for (unsigned t = 0; t < 100; ++t) CHECK(!modwerk_dsp_stalled(42857u, 2));       /* once */
+    for (unsigned t = 1; t <= 29; ++t) CHECK(!modwerk_dsp_stalled(42857u, 1));
+    CHECK(modwerk_dsp_stalled(42857u, 1));                                            /* the 30th still tick */
+    for (unsigned t = 0; t < 100; ++t) CHECK(!modwerk_dsp_stalled(42857u, 1));       /* once */
     CHECK(!modwerk_dsp_stalled(42858u, 1));
-    /* An answer pending while stock holds the frames (a boot's load): no hang at half a second, a hang at ten. */
-    for (unsigned t = 1; t <= 599; ++t) CHECK(!modwerk_dsp_stalled(42858u, 1));
-    CHECK(modwerk_dsp_stalled(42858u, 1));
-    CHECK(!modwerk_dsp_stalled(42858u, 1));
-    /* A transfer starting while the frames are already still is a hang once its own half second is up. */
-    CHECK(!modwerk_dsp_stalled(42859u, 1));
-    for (unsigned t = 1; t <= 20; ++t) CHECK(!modwerk_dsp_stalled(42859u, 1));
-    for (unsigned t = 21; t <= 29; ++t) CHECK(!modwerk_dsp_stalled(42859u, 2));
-    CHECK(modwerk_dsp_stalled(42859u, 2));
     /* The project's map (fxmap.c): '#MODWERK_FX=' lines in, only module handles, a failed load changes nothing. */
     for (unsigned k = 0; k < MODWERK_FX_IDS; ++k) release(k);
     for (unsigned i = 0; i < 16u; ++i) modwerk_test_live_fx[i] = 0;
