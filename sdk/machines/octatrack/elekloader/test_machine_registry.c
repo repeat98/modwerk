@@ -41,8 +41,13 @@ static int stock_render(unsigned t, unsigned p, unsigned s, unsigned e) { (void)
 static void stock_any() { ++stock_calls; }
 static int silent_renders;
 static int stock_silent(unsigned t, unsigned p, unsigned s, unsigned e) { (void)t; (void)p; (void)s; (void)e; ++silent_renders; return -9; }
+static unsigned relives, relive_args[3];
+static void stock_relive(unsigned bank_index, unsigned part_index, unsigned track) { ++relives, relive_args[0] = bank_index, relive_args[1] = part_index, relive_args[2] = track; }
 static void *host_stock(uint32_t a)
-{ return a == 0x40004008u ? (void *)(uintptr_t)stock_render : a == 0x400047f0u ? (void *)(uintptr_t)stock_silent : (void *)(uintptr_t)stock_any; }
+{
+    return a == 0x40004008u ? (void *)(uintptr_t)stock_render : a == 0x400047f0u ? (void *)(uintptr_t)stock_silent
+         : a == 0x40001f18u ? (void *)(uintptr_t)stock_relive : (void *)(uintptr_t)stock_any;
+}
 #define U8(a) (*(volatile uint8_t *)host_at(a))
 #define U32(a) host_u32(a)
 #define AT(a) ((volatile uint8_t *)host_at(a))
@@ -325,6 +330,20 @@ int main(void)
     CHECK(mw_assign(part0(), 3, 1) == 1 && part0()[60 + 90] == 0);
     /* The type byte is stock's to change (the commit stores the returned row): the registry never writes it. */
     CHECK(part0()[0x22 + 3] == 1);
+    /* FLEX <-> a machine keeps the stored type, so the registry loads the track's live parameters from its Part
+     * (stock's 0x40001f18, which a type change runs); a commit that changes the type, from or to STATIC, is stock's. */
+    const void *a_only[] = {&A};
+    rows(a_only, 1, 0, 0);
+    misc[0x0e] = 3; relives = 0;                                       /* bank 4 */
+    CHECK(mw_assign(part0(), 3, 5) == 1 && relives == 1 && relive_args[0] == 3 && relive_args[1] == 0 && relive_args[2] == 3);
+    CHECK(mw_assign(part0(), 3, 5) == 1 && relives == 1);             /* the same machine again */
+    CHECK(mw_assign(part0(), 3, 1) == 1 && relives == 2 && relive_args[2] == 3); /* back to FLEX */
+    CHECK(mw_assign(part0(), 3, 1) == 1 && relives == 2);             /* FLEX to FLEX */
+    part0()[0x22 + 3] = 0;                                              /* STATIC */
+    CHECK(mw_assign(part0(), 3, 5) == 1 && relives == 2);
+    part0()[0x22 + 3] = 1;                                              /* the commit stores FLEX */
+    CHECK(mw_assign(part0(), 3, 0) == 0 && relives == 2);             /* and STATIC again */
+    misc[0x0e] = 0;
     rows(0, 0, 0, 0);
 
     /* The frame guard (a frame 47,891 counts; each earns 38,312, short ones save up to 23,945; the slack 4,789). F's
