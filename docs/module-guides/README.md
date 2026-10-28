@@ -106,7 +106,7 @@ Build your module to work with everything else: that is the default. Two modules
 
 - `key:HELD+PRESSED`: the keys held, in any order, then the key pressed or the encoder turned, for example `key:UP+TEMPO` or `key:CUE+LEVEL`. Add `@PAGE` when it only works on one page (`key:FUNC+LEFT@CHROMATIC`); without it, the gesture counts on every page. `TRACK` and `TRIG` stand for any track or trig key, `A`-`F` and `LEVEL` for turning an encoder. The contract lists every name.
 - `screen:NAME`: a stock window or page your module draws over or replaces, for example `screen:TEMPO`.
-- `[]` when it takes neither. What it adds through the base's FX list, machine list or menu rows is not a claim: the base shares those.
+- `[]` when it takes neither. Rows, machines and effects it adds through the base's tables are no claim.
 
 New modules must declare it (`module:doctor` checks). If the clash with another module is deliberate, add that module to your `compatibility.conflicts`. The gate then accepts it, and the configurator never lets anyone choose both together.
 
@@ -171,16 +171,16 @@ Collisions are caught automatically, so nothing ships incompatible without its a
 
 ### Shared sites still to build
 
-The more of these the base owns, the more modules combine. Each is a hook to [propose](#propose-a-hook), in its own owner-reviewed pull request, before a module uses it:
+The more the base owns, the more modules combine. Each is a hook to [propose](#propose-a-hook), in its own owner-reviewed pull request, before a module uses it:
 
 | Site | Today |
 | --- | --- |
 | Track machine list (SRC SETUP) | Base table `ot_machines`; on the card, POLY8's shared machine list |
 | Effect lists (FX1, FX2) | USB: the base has 128 effect ids, 109 of them for modules, and gives each installed effect module its own ([wider ids](../OCTATRACK_MORE_EFFECT_IDS.md)); card: stock's 32, 13 of them for modules, pinned |
-| SEQUENCER rows | Base table `ot_sequencer_rows` |
+| SEQUENCER and PERSONALIZE rows | Base tables `ot_sequencer_rows` and `ot_personalize_rows` |
 | MIDI generators on a MIDI track (MIDI NOTE SETUP's list, the ARP page) | Base table `ot_midi_generators`; on the card, VECTOR's own registry ([midi-usb.md](midi-usb.md#midi-generators-and-midi-effects)) |
 | MIDI effects on a MIDI track's notes | Pitch: take hook `ev_midi_note_key`. Velocity, timing, added notes: not built |
-| Stock DSP effects a module hooks (Sidechain Compressor, Output Matrix) | Not built: DSP-side taps, one owner per stock site |
+| Stock DSP effects a module hooks (Sidechain Compressor, Output Matrix) | Not built: DSP taps, one owner per site |
 | Module settings | Not built: upstream octabam's [OTX settings store proposal](https://github.com/sambanks/octabam/blob/main/docs/proposals/OTX_PROJECT_PROPOSAL.md) |
 
 ### Read the gate's message

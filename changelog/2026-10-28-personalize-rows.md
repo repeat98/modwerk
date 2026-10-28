@@ -1,0 +1,1 @@
+Octatrack base: PERSONALIZE rows are a base table, `ot_personalize_rows`. Modules add their rows after stock's (above LED BRIGHTNESS on an MKII) instead of growing stock's PERSONALIZE tables, so several modules with PERSONALIZE settings fit in one build, and a module that adds a row no longer needs a new base for each update.
