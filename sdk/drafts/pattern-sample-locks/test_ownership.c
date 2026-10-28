@@ -1,0 +1,31 @@
+/* SPDX-License-Identifier: MIT */
+#include "ownership.h"
+#include <assert.h>
+#include <stdio.h>
+#include <string.h>
+static uint8_t guarded[PSL_NV_BYTES+32],record[PSL_TRACK_BYTES],identity[PSL_ID_BYTES],owned[64],readback[64];
+int main(void)
+{
+    uint8_t *nv=guarded+16;memset(guarded,0x5a,sizeof guarded);memset(nv,0,PSL_NV_BYTES);
+    memcpy(identity,"BEATLAB/PROJECT",16);memset(record,255,sizeof record);memset(record,0,8);
+    assert(PSL_NV_BASE+PSL_NV_BYTES==0x100fff00u);assert(psl_nv_begin(nv,identity));
+    for(unsigned step=0;step<64;++step){record[PSL_LOCK_OFFSET+32*step]=(uint8_t)(step+1);owned[step]=(uint8_t)(step%3==0);}
+    psl_nv_publish(nv,255,7,record,owned);
+    /* A fresh reader has no session state: only battery bytes and native data. */
+    memset(readback,0x5a,64);assert(psl_nv_matches(nv,identity));psl_nv_read(nv,255,7,record,readback);assert(!memcmp(owned,readback,64));
+    /* A reset during a native edit must lose trust before the first write. */
+    psl_nv_invalidate(nv,255,7);psl_nv_read(nv,255,7,record,readback);for(unsigned i=0;i<64;++i)assert(!readback[i]);
+    psl_nv_publish(nv,255,7,record,owned);record[PSL_LOCK_OFFSET]^=1;
+    psl_nv_read(nv,255,7,record,readback);for(unsigned i=0;i<64;++i)assert(!readback[i]);record[PSL_LOCK_OFFSET]^=1;
+    /* Same-value manual edit explicitly retires origin, preserving the rest. */
+    owned[0]=0;psl_nv_invalidate(nv,255,7);psl_nv_publish(nv,255,7,record,owned);
+    psl_nv_read(nv,255,7,record,readback);assert(!readback[0] && readback[3]);
+    nv[PSL_NV_HEADER+255*8*12+7*12]^=1;psl_nv_read(nv,255,7,record,readback);for(unsigned i=0;i<64;++i)assert(!readback[i]);
+    identity[100]=1;assert(!psl_nv_matches(nv,identity));assert(psl_nv_begin(nv,identity));
+    psl_nv_read(nv,255,7,record,readback);for(unsigned i=0;i<64;++i)assert(!readback[i]);
+    /* A power cut while first allocating our own header is recoverable. */
+    nv[0]=0;assert(psl_nv_begin(nv,identity));assert(psl_nv_matches(nv,identity));
+    nv[0]='X';assert(!psl_nv_begin(nv,identity));assert(nv[0]=='X');
+    for(unsigned i=0;i<16;++i)assert(guarded[i]==0x5a && guarded[16+PSL_NV_BYTES+i]==0x5a);
+    puts("PASS ownership: fresh-reader persistence, torn edit, corruption, same-value manual edit, project identity, foreign storage, bounds");
+}
