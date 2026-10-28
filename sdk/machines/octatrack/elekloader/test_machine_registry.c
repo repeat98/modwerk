@@ -389,6 +389,13 @@ int main(void)
     }
     CHECK(one[0] > 100 && two[0] > 100 && one[1] == -9 && two[1] == -9);
     CHECK(one[2] > 100 && two[2] == -9 && one[3] > 100 && two[3] == -9);
+    /* A FLEX track no machine owns goes to F's RENDER_FLEX render unguarded, however late the frame (#999: the guard
+     * skipped such tracks as it skips F's own). */
+    fresh(); f_cost = 70000;
+    uint32_t unowned_sheds = mw_frame_sheds;
+    for (unsigned i = 0; i < 3u; ++i) CHECK(frame(6, 40000, 10000) > 100);
+    CHECK(mw_frame_sheds == unowned_sheds && !(mw_frame_shed_tracks & 1u << 6));
+    f_cost = 1000;
     /* A track only stock renders always renders, however late the frame. */
     const void *v_only2[] = {&V};
     rows(v_only2, 1, 0, 0);

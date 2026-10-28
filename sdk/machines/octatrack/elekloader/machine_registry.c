@@ -488,9 +488,10 @@ unsigned mw_setup_knob(unsigned row, unsigned index, int delta)
  * mw_frame_exit (machine_registry.s). Each render of a machine's track is timed, and so is the work after it up to the
  * exit; before the next frame's same render the guard predicts the frame's length from those. When it would overdraw,
  * the track renders stock's silent source this time instead: a dropout on that track, never a frozen unit. Tracks only
- * stock renders, and priced machines' (their voice is the DSP's), always render. A skipped render comes back when the
- * budget has room for its last cost, or, every PROBE frames, when it would overdraw by at most SLACK: its cost is
- * measured again. */
+ * stock renders, and priced machines' (their voice is the DSP's), always render, and so does a FLEX track no machine
+ * owns that goes to a RENDER_FLEX machine's render (guarded, FM Synth's render skipped ordinary sample tracks, #999).
+ * A skipped render comes back when the budget has room for its last cost, or, every PROBE frames, when it would
+ * overdraw by at most SLACK: its cost is measured again. */
 #ifndef DTCN3
 #define DTCN3 (*(volatile uint32_t *)0xfc07c00cu) /* the frame timer: 132 MHz, free-running */
 #endif
@@ -552,8 +553,8 @@ int mw_source_render_impl(unsigned track, unsigned ping, unsigned start, unsigne
         return who->source_kind ? f(track, ping, start, end) : guarded(f, track, ping, start, end);
     } else if (valid_bank() && orphan(current_part(), track)) /* its bytes are the absent machine's, not FLEX's */
         return STOCK(Render *, 0x400047f0u)(track, ping, start, end);
-    else
+    else /* unguarded: mostly stock's own FLEX render; FM Synth also plays a legacy FMSYNTH-named sample as FM here (#999) */
         for (unsigned k = 0; k < n; ++k)
-            if (m[k]->flags & MODWERK_MACHINE_RENDER_FLEX && m[k]->render) return guarded(m[k]->render, track, ping, start, end);
+            if (m[k]->flags & MODWERK_MACHINE_RENDER_FLEX && m[k]->render) return m[k]->render(track, ping, start, end);
     return STOCK(Render *, 0x40004008u)(track, ping, start, end);
 }
