@@ -51,12 +51,26 @@ Analog BD silent until the next stop. Three causes, each in the base:
     missed), about the 13th trig in the others. Its engine started loading only at PLAY: the restored track asks for
     the lease only from its first trig, so MODULES LOADED had nothing to wait for. Hence the use-from-Part change.
 
+- **After a power cycle, with the use-from-Part change** (personal base `1db64a78`, 14 modules kept, blank project; 28
+  October): MODULES LOADED, then PLAY: Analog BD sounded on the first step (boot 1 recorded over USB). T1 showed
+  "SRC → ANALOG BD" without a tap on every boot (the SRC label fix, in this change).
+
 **Open.**
-- **After a power cycle with the use-from-Part change:** not yet run.
-- **Ringmod SC refused at every boot restore** of `d4658748` with `RUNTIME_BUSY` (the unit's log, boots 94-97), though it
-  restored on `5afa623e` and installs live; the set had been reinstalled in a new order. Not yet explained.
-- **A restored module-machine track shows SRC → FLEX** until it is selected (stock refreshes the label only on a track
-  select); it plays as its machine.
+- **Early-boot DSP halt, not fixed here.** Within about 10-40 s of a cold boot, at the project load or a bank change
+  while playing, the frame chain stopped: 0.5 s later the watchdog showed DSP STOPPED, revived the frames and turned
+  residency off for the boot (no engine loads or retires until a power cycle). It also happened on a boot with FUNC
+  held (no modules restored), so it is in the base, not in Analog BD, and `dsp.c` and `status.c` are main's. All five
+  stall records agree: stock transfer state 7, our transfer idle (`dl_phase` 0, TCD0 and TCD1 DONE, eDMA ES 0), the
+  frame interrupt unmasked (IMRL bit 1 clear) with nothing pending, EPORT pin 1 high and its edge flag clear, DSP
+  select 0, one job (a status-meter PEEK in four of five) waiting for its answer. So the chain ended state 7 normally
+  and the next frame's edge was lost, which fits the 200 µs hold-off trap in `docs/OCTATRACK_HARDWARE_TRAPS.md`
+  rather than a host-port access of ours. Not reproduced on a RAM-booted development twin. A 10 s watchdog
+  (`37473105`, reverted in `b0d3e493`) made the halt permanent (a drone): keep the 0.5 s recovery.
+- **Ringmod SC refused at boot restore** with `RUNTIME_BUSY` on most cold boots of `d4658748` and `1db64a78`, though
+  it restores on `5afa623e` and installs live. Candidates: the key-bus admission at the restore (`controller_board.c`)
+  or `rebind_tick`. Parked.
+- **First trig after Analog BD → FLEX stutters** (the switch fix); an FM Synth switch and a switch in a full project
+  are untested.
 - **USB drop.** One unprovoked ~2 s USB drop mid-trial (twin, Analog BD placed; possibly the shared hub re-enumerating)
   rolled the trial back and left both cores' engine claims at wait 7 and the key bus closed (`0x80`) until a power cycle.
   A review points at `journal_fail()` returning before `dl_owned_lease_release` in `mw_manager_journal_release`
