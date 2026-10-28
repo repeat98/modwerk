@@ -1,7 +1,8 @@
 # Testing: Pattern Sample Locks 0.1.5-experimental
 
-28 October 2026 · twwwy · local prototype only. No push, PR, release, firmware
-flash or physical-device module install. Every mutation below used disposable
+28 October 2026 · twwwy · prototype in the contributor's fork only. Source
+branches may be backed up there; no upstream PR, release, firmware flash or
+physical-device module install. Every mutation below used disposable
 MKII emulator RAM/card copies. DSP execution was disabled; no audio or physical
 power-retention result is claimed.
 
@@ -147,3 +148,11 @@ hook conflicted with Euclid's stock-byte copy. None touched hardware. The final
 package fixes these cases and was freshly tested. Interrupted Docker runs and
 failed test fixtures are not passing evidence. Historical 0.1.4 and intermediate
 receipts are retained separately; see [PROTOTYPE_HISTORY.md](PROTOTYPE_HISTORY.md).
+
+## Fork backup checkpoint
+
+For the authorized fork-only push, upstream main `d2cb12d6` was merged after
+these exact-build tests. The module's native source and assembly are unchanged.
+The results above remain bound to the listed package/base hashes; the merged
+shared base SDK has not been rebuilt or physically qualified. Both prototype
+branches are kept separate and no upstream PR is opened.

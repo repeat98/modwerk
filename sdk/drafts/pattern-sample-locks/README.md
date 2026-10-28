@@ -6,7 +6,7 @@ Version: 0.1.5-experimental · author: @twwwy · category: system
 
 Two explicit actions in Part Edit: **Lock Samples to Pattern** and **Clear Sample Locks**. The intended edit uses the Octatrack's ordinary SAMPLE locks in the current pattern. It does not create a new project format or change the Part's sample assignment.
 
-**This is a local, emulator-only development prototype. Native editing is enabled. Do not load this build on hardware yet.** Physical reboot behavior, complete edit-history coverage and timing are not qualified. Development stays in the contributor's fork: no push or upstream PR is authorized.
+**This is a local, emulator-only development prototype. Native editing is enabled. Do not load this build on hardware yet.** Physical reboot behavior, complete edit-history coverage and timing are not qualified. Development stays in the contributor's fork; source branches may be pushed there, and no upstream PR or release is authorized.
 
 ## Controls
 
@@ -48,7 +48,7 @@ This prototype requires the separate local `prototype/module-lifecycle-base`
 branch's proposed `ot_module_lifecycle` event (index 37). It is not available
 in the published base. Shared base work stays separate from this module;
 owner review is required before either becomes a release. No PR is being
-prepared and no push is authorized.
+prepared. Only the fork backup is authorized.
 
 ## Ownership and power cycles
 
