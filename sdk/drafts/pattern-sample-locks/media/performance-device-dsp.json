@@ -1,0 +1,529 @@
+{
+  "small": {
+    "changedLocks": 2,
+    "operations": {
+      "lock": {
+        "psl_native_commit": {
+          "instructionSpans": [
+            234302
+          ],
+          "totalInstructions": 234302,
+          "modelMilliseconds": 1.3315715592836967
+        },
+        "psl_prepare": {
+          "instructionSpans": [
+            31552
+          ],
+          "totalInstructions": 31552,
+          "modelMilliseconds": 0.1793144994004285
+        },
+        "module_key": {
+          "instructionSpans": [
+            47,
+            47,
+            25,
+            25,
+            39310,
+            31,
+            42621,
+            31,
+            234570,
+            31
+          ],
+          "totalInstructions": 316738,
+          "modelMilliseconds": 1.8000670610767282
+        },
+        "writeGuards": {
+          "count": 1,
+          "maxInstructions": 57,
+          "maxModelMicroseconds": 0.32393909944930355
+        },
+        "guardTimerMax": 41
+      },
+      "clear": {
+        "psl_native_commit": {
+          "instructionSpans": [
+            90951
+          ],
+          "totalInstructions": 90951,
+          "modelMilliseconds": 0.5168874567370808
+        },
+        "psl_prepare": {
+          "instructionSpans": [
+            3213
+          ],
+          "totalInstructions": 3213,
+          "modelMilliseconds": 0.018259935553168637
+        },
+        "module_key": {
+          "instructionSpans": [
+            47,
+            47,
+            25,
+            25,
+            38976,
+            31,
+            36320,
+            31,
+            91219,
+            31
+          ],
+          "totalInstructions": 166752,
+          "modelMilliseconds": 0.947675310725794
+        },
+        "writeGuards": {
+          "count": 1,
+          "maxInstructions": 57,
+          "maxModelMicroseconds": 0.32393909944930355
+        },
+        "guardTimerMax": 41
+      }
+    }
+  },
+  "closedWithModule": {
+    "readings": [
+      {
+        "cpuPermille": 1000,
+        "dsp0Permille": 0,
+        "dsp1Permille": 1000,
+        "dsp0PeakPermille": 0,
+        "dsp1PeakPermille": 1000,
+        "freshDspReads": 13,
+        "frames": 58648,
+        "idle0": 6579178,
+        "idle1": 1024
+      },
+      {
+        "cpuPermille": 1000,
+        "dsp0Permille": 0,
+        "dsp1Permille": 1000,
+        "dsp0PeakPermille": 0,
+        "dsp1PeakPermille": 1000,
+        "freshDspReads": 13,
+        "frames": 60056,
+        "idle0": 6579178,
+        "idle1": 1024
+      },
+      {
+        "cpuPermille": 1000,
+        "dsp0Permille": 0,
+        "dsp1Permille": 1000,
+        "dsp0PeakPermille": 0,
+        "dsp1PeakPermille": 1000,
+        "freshDspReads": 14,
+        "frames": 61435,
+        "idle0": 6579178,
+        "idle1": 1024
+      },
+      {
+        "cpuPermille": 1000,
+        "dsp0Permille": 0,
+        "dsp1Permille": 1000,
+        "dsp0PeakPermille": 0,
+        "dsp1PeakPermille": 1000,
+        "freshDspReads": 14,
+        "frames": 62842,
+        "idle0": 6579178,
+        "idle1": 1024
+      },
+      {
+        "cpuPermille": 1000,
+        "dsp0Permille": 0,
+        "dsp1Permille": 1000,
+        "dsp0PeakPermille": 0,
+        "dsp1PeakPermille": 1000,
+        "freshDspReads": 14,
+        "frames": 64221,
+        "idle0": 6579178,
+        "idle1": 1024
+      },
+      {
+        "cpuPermille": 1000,
+        "dsp0Permille": 0,
+        "dsp1Permille": 1000,
+        "dsp0PeakPermille": 0,
+        "dsp1PeakPermille": 1000,
+        "freshDspReads": 15,
+        "frames": 65629,
+        "idle0": 6558634,
+        "idle1": 1024
+      },
+      {
+        "cpuPermille": 1000,
+        "dsp0Permille": 0,
+        "dsp1Permille": 1000,
+        "dsp0PeakPermille": 0,
+        "dsp1PeakPermille": 1000,
+        "freshDspReads": 15,
+        "frames": 67009,
+        "idle0": 6558634,
+        "idle1": 1024
+      },
+      {
+        "cpuPermille": 1000,
+        "dsp0Permille": 0,
+        "dsp1Permille": 1000,
+        "dsp0PeakPermille": 0,
+        "dsp1PeakPermille": 1000,
+        "freshDspReads": 15,
+        "frames": 68416,
+        "idle0": 6558634,
+        "idle1": 1024
+      },
+      {
+        "cpuPermille": 1000,
+        "dsp0Permille": 0,
+        "dsp1Permille": 1000,
+        "dsp0PeakPermille": 0,
+        "dsp1PeakPermille": 1000,
+        "freshDspReads": 16,
+        "frames": 69795,
+        "idle0": 6558634,
+        "idle1": 1024
+      },
+      {
+        "cpuPermille": 1000,
+        "dsp0Permille": 0,
+        "dsp1Permille": 1000,
+        "dsp0PeakPermille": 0,
+        "dsp1PeakPermille": 1000,
+        "freshDspReads": 16,
+        "frames": 71202,
+        "idle0": 6558634,
+        "idle1": 1024
+      }
+    ],
+    "mean": {
+      "cpuPermille": 1000,
+      "dsp0Permille": 0,
+      "dsp1Permille": 1000
+    },
+    "dspReadAdvance": 3
+  },
+  "selectionWithModule": {
+    "readings": [
+      {
+        "cpuPermille": 1000,
+        "dsp0Permille": 0,
+        "dsp1Permille": 1000,
+        "dsp0PeakPermille": 0,
+        "dsp1PeakPermille": 1000,
+        "freshDspReads": 18,
+        "frames": 78045,
+        "idle0": 6614918,
+        "idle1": 1024
+      },
+      {
+        "cpuPermille": 1000,
+        "dsp0Permille": 0,
+        "dsp1Permille": 1000,
+        "dsp0PeakPermille": 0,
+        "dsp1PeakPermille": 1000,
+        "freshDspReads": 18,
+        "frames": 79453,
+        "idle0": 6614918,
+        "idle1": 1024
+      },
+      {
+        "cpuPermille": 1000,
+        "dsp0Permille": 0,
+        "dsp1Permille": 1000,
+        "dsp0PeakPermille": 0,
+        "dsp1PeakPermille": 1000,
+        "freshDspReads": 18,
+        "frames": 80832,
+        "idle0": 6614918,
+        "idle1": 1024
+      },
+      {
+        "cpuPermille": 1000,
+        "dsp0Permille": 0,
+        "dsp1Permille": 1000,
+        "dsp0PeakPermille": 0,
+        "dsp1PeakPermille": 1000,
+        "freshDspReads": 19,
+        "frames": 82239,
+        "idle0": 6600406,
+        "idle1": 1024
+      },
+      {
+        "cpuPermille": 1000,
+        "dsp0Permille": 0,
+        "dsp1Permille": 1000,
+        "dsp0PeakPermille": 0,
+        "dsp1PeakPermille": 1000,
+        "freshDspReads": 19,
+        "frames": 83619,
+        "idle0": 6600406,
+        "idle1": 1024
+      },
+      {
+        "cpuPermille": 1000,
+        "dsp0Permille": 0,
+        "dsp1Permille": 1000,
+        "dsp0PeakPermille": 0,
+        "dsp1PeakPermille": 1000,
+        "freshDspReads": 19,
+        "frames": 85026,
+        "idle0": 6600406,
+        "idle1": 1024
+      },
+      {
+        "cpuPermille": 1000,
+        "dsp0Permille": 0,
+        "dsp1Permille": 1000,
+        "dsp0PeakPermille": 0,
+        "dsp1PeakPermille": 1000,
+        "freshDspReads": 20,
+        "frames": 86406,
+        "idle0": 6600406,
+        "idle1": 1024
+      },
+      {
+        "cpuPermille": 1000,
+        "dsp0Permille": 0,
+        "dsp1Permille": 1000,
+        "dsp0PeakPermille": 0,
+        "dsp1PeakPermille": 1000,
+        "freshDspReads": 20,
+        "frames": 87813,
+        "idle0": 6600406,
+        "idle1": 1024
+      },
+      {
+        "cpuPermille": 1000,
+        "dsp0Permille": 0,
+        "dsp1Permille": 1000,
+        "dsp0PeakPermille": 0,
+        "dsp1PeakPermille": 1000,
+        "freshDspReads": 20,
+        "frames": 89192,
+        "idle0": 6600406,
+        "idle1": 1024
+      },
+      {
+        "cpuPermille": 1000,
+        "dsp0Permille": 0,
+        "dsp1Permille": 1000,
+        "dsp0PeakPermille": 0,
+        "dsp1PeakPermille": 1000,
+        "freshDspReads": 21,
+        "frames": 90599,
+        "idle0": 6609368,
+        "idle1": 1024
+      }
+    ],
+    "mean": {
+      "cpuPermille": 1000,
+      "dsp0Permille": 0,
+      "dsp1Permille": 1000
+    },
+    "dspReadAdvance": 3
+  },
+  "maximum": {
+    "changedLocks": 512,
+    "operations": {
+      "lock": {
+        "psl_native_commit": {
+          "instructionSpans": [
+            259963
+          ],
+          "totalInstructions": 259963,
+          "modelMilliseconds": 1.4774066685989349
+        },
+        "psl_prepare": {
+          "instructionSpans": [
+            46530
+          ],
+          "totalInstructions": 46530,
+          "modelMilliseconds": 0.26443660170835254
+        },
+        "module_key": {
+          "instructionSpans": [
+            47,
+            47,
+            25,
+            25,
+            58057,
+            31,
+            76346,
+            31,
+            260231,
+            31
+          ],
+          "totalInstructions": 394871,
+          "modelMilliseconds": 2.2441080024323847
+        },
+        "writeGuards": {
+          "count": 36,
+          "maxInstructions": 203,
+          "maxModelMicroseconds": 1.1536778454071688
+        },
+        "guardTimerMax": 151
+      },
+      "clear": {
+        "psl_native_commit": {
+          "instructionSpans": [
+            435141
+          ],
+          "totalInstructions": 435141,
+          "modelMilliseconds": 2.47296813462227
+        },
+        "psl_prepare": {
+          "instructionSpans": [
+            21449
+          ],
+          "totalInstructions": 21449,
+          "modelMilliseconds": 0.12189771480856336
+        },
+        "module_key": {
+          "instructionSpans": [
+            47,
+            47,
+            25,
+            25,
+            108540,
+            31,
+            122529,
+            31,
+            435409,
+            31
+          ],
+          "totalInstructions": 666715,
+          "modelMilliseconds": 3.789036082269165
+        },
+        "writeGuards": {
+          "count": 36,
+          "maxInstructions": 203,
+          "maxModelMicroseconds": 1.1536778454071688
+        },
+        "guardTimerMax": 151
+      }
+    }
+  },
+  "closedWithoutModule": {
+    "readings": [
+      {
+        "cpuPermille": 1000,
+        "dsp0Permille": 0,
+        "dsp1Permille": 1000,
+        "dsp0PeakPermille": 0,
+        "dsp1PeakPermille": 1000,
+        "freshDspReads": 24,
+        "frames": 104539,
+        "idle0": 6592744,
+        "idle1": 1024
+      },
+      {
+        "cpuPermille": 1000,
+        "dsp0Permille": 0,
+        "dsp1Permille": 1000,
+        "dsp0PeakPermille": 0,
+        "dsp1PeakPermille": 1000,
+        "freshDspReads": 24,
+        "frames": 105946,
+        "idle0": 6592744,
+        "idle1": 1024
+      },
+      {
+        "cpuPermille": 1000,
+        "dsp0Permille": 0,
+        "dsp1Permille": 1000,
+        "dsp0PeakPermille": 0,
+        "dsp1PeakPermille": 1000,
+        "freshDspReads": 25,
+        "frames": 107326,
+        "idle0": 6590098,
+        "idle1": 1024
+      },
+      {
+        "cpuPermille": 1000,
+        "dsp0Permille": 0,
+        "dsp1Permille": 1000,
+        "dsp0PeakPermille": 0,
+        "dsp1PeakPermille": 1000,
+        "freshDspReads": 25,
+        "frames": 108733,
+        "idle0": 6590098,
+        "idle1": 1024
+      },
+      {
+        "cpuPermille": 1000,
+        "dsp0Permille": 0,
+        "dsp1Permille": 1000,
+        "dsp0PeakPermille": 0,
+        "dsp1PeakPermille": 1000,
+        "freshDspReads": 25,
+        "frames": 110112,
+        "idle0": 6590098,
+        "idle1": 1024
+      },
+      {
+        "cpuPermille": 1000,
+        "dsp0Permille": 0,
+        "dsp1Permille": 1000,
+        "dsp0PeakPermille": 0,
+        "dsp1PeakPermille": 1000,
+        "freshDspReads": 26,
+        "frames": 111519,
+        "idle0": 6590098,
+        "idle1": 1024
+      },
+      {
+        "cpuPermille": 1000,
+        "dsp0Permille": 0,
+        "dsp1Permille": 1000,
+        "dsp0PeakPermille": 0,
+        "dsp1PeakPermille": 1000,
+        "freshDspReads": 26,
+        "frames": 112899,
+        "idle0": 6590098,
+        "idle1": 1024
+      },
+      {
+        "cpuPermille": 1000,
+        "dsp0Permille": 0,
+        "dsp1Permille": 1000,
+        "dsp0PeakPermille": 0,
+        "dsp1PeakPermille": 1000,
+        "freshDspReads": 26,
+        "frames": 114306,
+        "idle0": 6590098,
+        "idle1": 1024
+      },
+      {
+        "cpuPermille": 1000,
+        "dsp0Permille": 0,
+        "dsp1Permille": 1000,
+        "dsp0PeakPermille": 0,
+        "dsp1PeakPermille": 1000,
+        "freshDspReads": 27,
+        "frames": 115686,
+        "idle0": 6551731,
+        "idle1": 1024
+      },
+      {
+        "cpuPermille": 1000,
+        "dsp0Permille": 0,
+        "dsp1Permille": 1000,
+        "dsp0PeakPermille": 0,
+        "dsp1PeakPermille": 1000,
+        "freshDspReads": 27,
+        "frames": 117093,
+        "idle0": 6551731,
+        "idle1": 1024
+      }
+    ],
+    "mean": {
+      "cpuPermille": 1000,
+      "dsp0Permille": 0,
+      "dsp1Permille": 1000
+    },
+    "dspReadAdvance": 3
+  },
+  "model": {
+    "instructionsPerMillisecond": 175959.0,
+    "hardware": false,
+    "scope": "Stopped disposable MKII emulator fixture; native panel operations; no audio qualification"
+  }
+}

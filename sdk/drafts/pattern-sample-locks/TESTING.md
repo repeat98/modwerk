@@ -3,8 +3,9 @@
 28 October 2026 · twwwy · prototype in the contributor's fork only. Source
 branches may be backed up there; no upstream PR, release, firmware flash or
 physical-device module install. Every mutation below used disposable
-MKII emulator RAM/card copies. DSP execution was disabled; no audio or physical
-power-retention result is claimed.
+MKII emulator RAM/card copies. The original history receipts used DSP execution
+disabled. The newer device-preparation checks below ran DSP enabled; neither
+set establishes audible output or physical power retention.
 
 ## Exact tested build
 
@@ -24,6 +25,40 @@ These are allocation sizes, not measured CPU/stack use.
 This requires the separate **local** `prototype/module-lifecycle-base` proposal
 (checkpoint `ae20ac58`). It is not a published base capability. The physical
 unit's firmware has not been changed to this base or module.
+
+## Device-test preparation build
+
+The module package above rebuilt byte for byte with the merged SDK. The new
+private development base is described in [DEVICE_TEST.md](DEVICE_TEST.md):
+identity `0c5d5e91d6f1a93974eda2cc3e7535f93aefdc2e5c275a74e21d7ace3177de2e`,
+MAIN SHA-256 `5d8261d050b0f0a756b7b7890081ba2ad74456fa33db61b996dbd0f58cf3ae9e`.
+Its source checkpoint is `79cf179c`; its lifecycle ABI header is now fingerprinted.
+Every frozen base input matched the local source or pinned upstream input.
+The pinned base compile, MCF54455 guard and container round-trip passed.
+The module's generated assembly/object reproduced unchanged, with no undefined
+helpers. Portable sanitizer checks and the loader/lifecycle host checks passed.
+
+These new receipts used **DSP execution enabled**:
+
+- `media/capture-device-ui-dsp.json`: full initialized module image and eleven
+  sites attested; all menus captured, trial Undo and continued execution passed.
+  All popup screenshots match the earlier pixels. The closed stock screen can
+  differ with live DSP state.
+- `media/capture-device-seed-dsp.json`: STOP-before-edit, native Lock, manual
+  retention, same-value manual edit, unrelated-byte/mirror preservation and
+  Preview Vol coexistence/removal passed. DSP frame counter advanced from
+  43,048 to 96,346; errors and stalls remained zero.
+- `media/capture-device-reboot-dsp.json`: fresh process using saved card and
+  battery only, automatic restore and complete package/site attestation.
+  Default Clear removed the created lock and retained the manual one; explicit
+  inclusion then cleared the manual lock. Playback stayed stopped. Both owners
+  were removed in order; DSP frames advanced without new errors or stalls.
+
+The local developer MCP's actual stdio initialization, tool discovery and site
+catalogue call passed without touching USB. Its catalogue excludes this draft;
+use the documented bounded USB session trial, never its immediate-Keep shortcut.
+The Mac's existing bridge Python/libusb dependencies are available.
+No physical unit has been accessed or changed during preparation.
 
 ## Actual software checks
 
@@ -99,6 +134,47 @@ at most sixteen changed entries. Only affected SAMPLE/index bytes and tracks
 are published. Closed-menu work is constant; there is no DSP/audio-frame hook.
 Physical deadlines still require measurement.
 
+### DSP-enabled candidate performance estimates
+
+The new candidate used exact-object PC watches around the native commit and
+planner, on stopped disposable patterns with 2 or 512 changed locks. The
+`ot_emu` default clock is 3,990 ColdFire instructions per sample: 175,959
+instructions per model millisecond. This is a conversion in the emulator's
+instruction-rate model, not a hardware cycle or cache/DDR timing model.
+
+| Changed locks | Lock commit | Clear commit |
+| --- | --- | --- |
+| 2 | 234,302 instructions; 1.33 model ms | 90,951 instructions; 0.52 model ms |
+| 512 (8 × 64) | 259,963 instructions; 1.48 model ms | 435,141 instructions; 2.47 model ms |
+
+The first small Lock includes initial ownership-store setup. Confirmation
+planning for 512 locks was another 46,530 instructions (0.26 model ms) for
+Lock and 21,449 (0.12 model ms) for Clear. The commit watches include source
+revalidation, metadata work, writes, native publication and intervening IRQ
+execution. They exclude waiting for STOP, human input and drawing the menus.
+These are single integration measurements, not a statistical hardware bound.
+
+Both maximum operations used 36 full-mask write batches; the longest was 203
+instructions, approximately 1.15 model µs. The module's raw guard timer maximum
+was 151 counts. The modeled interval is not a measured physical deadline.
+DSP frame count advanced from 43,035 to 117,783; errors and stalls stayed zero.
+No DSP program or audio-frame callback is contributed by this module.
+
+Ten half-second meter readings each were collected with the menu closed,
+track selection open and the module removed. All three states reported CPU
+100%, DSP core 0 0% and core 1 100%, despite fresh DSP window reads. These
+saturated emulator readings cannot estimate absolute or incremental CPU/DSP
+utilization. They are retained as a limitation, not reported as module load.
+Host process CPU use is also not instrument load. Physical load, audible
+continuity and a populated project's DSP cost remain unmeasured.
+
+Receipts: `media/capture-device-performance-dsp.json` and
+`media/performance-device-dsp.json`. Reproduce with `--performance
+--profile-symbols <exact linked function/guard offsets>` and DSP enabled.
+The object SHA-256 is recorded alongside those offsets; no module code was
+patched for measurement. All small/maximum Lock/Clear results and battery
+mirrors were checked; normal USB removal and continued execution passed.
+
 ## Reproduction
 
 Run `python3 -B verify.py`. Compile `translation.c` with the pinned toolchain,
@@ -120,8 +196,9 @@ mid-run. Internal Docker files were used after a shared-folder stall.
 ## Remaining qualification
 
 - Physical MKII/MKI operation, physical power cycles, audio, worst-case CPU/stack
-  and interrupt/task-lock duration remain **not tested**. Hardware use is not
-  ready yet. Emulator results do not satisfy release qualification.
+  and interrupt/task-lock duration remain **not tested**. This candidate is
+  prepared only for the supervised first RAM trial in DEVICE_TEST.md.
+  Emulator results do not satisfy release qualification.
 - Complete native project/load/clear/Undo paths and all companion combinations
   remain unqualified. Native bank reload was tested, not every full-project
   load/reload path. Reboot evidence covers the fixture's current bank/pattern.

@@ -1,0 +1,73 @@
+{
+  "hardware": false,
+  "scope": "Actual MKII emulator, native edits with panel input and a labelled stock-writer test injection",
+  "base": "0c5d5e91d6f1a93974eda2cc3e7535f93aefdc2e5c275a74e21d7ace3177de2e",
+  "packageSha256": "f9f179e0f5536d3c0727f61df5e79106ff211721c75742646c747e9598b35fc9",
+  "emulatorSha256": "b087c97f3031f075551b3336afcd75a407ca4d3476e04a9d5cfaa059b1d40363",
+  "profileSymbols": null,
+  "companionSha256": "9fd95d9a9a5a1c5932892ab1af36b39994650a51161df3903f36fa8afa6cb1c2",
+  "captures": [
+    "native-lock-confirm.png",
+    "native-lock-result.png",
+    "native-clear-owned-confirm.png",
+    "companion-owned-confirm.png",
+    "native-same-value-confirm.png",
+    "removal-open-tracks.png"
+  ],
+  "usbUndo": false,
+  "disposableEmulatorKeep": true,
+  "usbRemoval": true,
+  "sampleLockWritesEnabled": true,
+  "checks": {
+    "stopBeforeEdit": true,
+    "manualLockPreserved": true,
+    "nativeLockWritten": true,
+    "unrelatedAudioBytesPreserved": true,
+    "batteryMirrorMatches": true,
+    "unrelatedCompanionInstalled": true,
+    "cs1Sha256": "e7c7497a328673016ee61f6f01b58fc443551e9e5660ae567bdfc6264fcc82b4",
+    "savedCardSha256": "1e7813290d4ce61453df9d055344e9597536642428fc26fcfddf46f438eef3e0",
+    "sameValueManualLockRetained": true,
+    "baseEffectMapAndLogTagPreserved": true,
+    "runtimeImageMatchesPackage": true,
+    "runtimeSitesMatchPackage": true,
+    "runtimeInitializedBytesCompared": 13980,
+    "runtimeSitesCompared": 11,
+    "companionPreservedOnTargetRemoval": true,
+    "companionRemoved": true
+  },
+  "automaticSavedSetRestore": false,
+  "freshProcessBatteryBoot": false,
+  "dspExecution": true,
+  "dspRuntimeBefore": {
+    "dl_frames": 43048,
+    "dl_errors": 0,
+    "modwerk_dsp_stalls": 0
+  },
+  "dspRuntimeAfter": {
+    "dl_frames": 96346,
+    "dl_errors": 0,
+    "modwerk_dsp_stalls": 0
+  },
+  "captureBuffer": "Final LCD transfer buffer read through the emulator; includes core draw hooks",
+  "sources": {
+    "capture_emulator.py": "d9ef1a6785151ee97da7c3b15c2ed5246197c79fd1da97720e410bcb1135ef03",
+    "attestation_emulator.py": "829413ec6591656d41e7e84df244fba95aca8b4eacc10b40c4a66e38059bc388",
+    "profile_emulator.py": "504c13afecae7434ceeb7431494f003ec9b5c69c40f9909b9ae86fdfd7db23af",
+    "history_emulator.py": "181c7cadc9695cdf2ca19bc5a935c1d83bedc7027eebf50891f078d45e693271",
+    "stress_emulator.py": "d8f3fab87a273c97209572aed1596f004d7a3ef62b0f98d65eca7723d218d04e",
+    "ownership.c": "1bcd58d9bdae2da6db00eea97e8b7d31c07172b29cd96662ed97059ef9e271a3",
+    "ownership.h": "fb25af8219c386adf29592a5315b5f9c9e84ffaf5d31d05085f1005269bf70ae",
+    "exercise_emulator.py": "322a25c7eee98cccb4c6e11c86261d582abeac2a20fc058c15e42517e0e49c58",
+    "unit.s": "d762b94531da4415ebede6566e71d9179700ca018255134847a8f75839512378",
+    "engine.c": "5b74c9834ed3b7d4410f12a57c69f4f8971b806b9373db23ad3feb027c4c3e51",
+    "engine.h": "816badd979c18609d88e955fc06d8a19ff39b4b71faf249c981e015a42b87962",
+    "ui.c": "208df08b917bb0d82ca0040cb38c232d94981d4ff31856228ab27b4a84f060d8",
+    "ui.h": "241606b9ada14d9ee436aa02d1803c95cc2b8a10d53619d033e2aaab435b5a2e",
+    "native.c": "66836ea0021ca97e6138a84588c3949bedd1c38f001588895a5bd75318d5665e",
+    "font.c": "63104792b675f7cce15582b554eaf4b05e008a63c2433db7fecb71210e115079",
+    "font.h": "a94a3103633a0084e11d53fbe46d0590812011062aa01d2c28de35b60ef8ea99",
+    "runtime.json": "e1ef7bb465b91b994b8ac89e89274a46c2aea0970b4707dcd5ec07dd7856497c",
+    "manifest.py": "8256a2396dc23c6a6e1886b5064d80a3b89c570f76d2eb8cfcaac55b483b6e63"
+  }
+}

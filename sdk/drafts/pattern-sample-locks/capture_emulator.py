@@ -60,6 +60,7 @@ def main():
     parser=argparse.ArgumentParser(description=__doc__)
     for name in ('emulator','base','card','package','out'):parser.add_argument('--'+name,type=Path,required=True)
     parser.add_argument('--history',action='store_true',help='Adversarial native edit and absent-owner history on disposable media')
+    parser.add_argument('--performance',action='store_true',help='Matched emulator load and small/maximum edit instruction measurements')
     parser.add_argument('--stress-save',action='store_true',help='Maximum native edits plus native save/reload on the copied card')
     parser.add_argument('--exercise',action='store_true',help='Exercise native edits on disposable emulator media')
     parser.add_argument('--companion',type=Path,help='Install an unrelated package after Lock, on this disposable emulator only')
@@ -69,7 +70,7 @@ def main():
     parser.add_argument('--cs1-in',type=Path,help='Private battery snapshot for a fresh native power-up')
     parser.add_argument('--menu-only',action='store_true',help='Capture only the level-one list, then Undo')
     parser.add_argument('--no-dsp',action='store_true',help='Skip DSP execution; do not claim audio coverage')
-    source_names=('capture_emulator.py','attestation_emulator.py','profile_emulator.py','history_emulator.py','stress_emulator.py','ownership.c','ownership.h','exercise_emulator.py','unit.s','engine.c','engine.h','ui.c','ui.h','native.c','font.c','font.h','runtime.json','manifest.py')
+    source_names=('capture_emulator.py','attestation_emulator.py','performance_emulator.py','profile_emulator.py','history_emulator.py','stress_emulator.py','ownership.c','ownership.h','exercise_emulator.py','unit.s','engine.c','engine.h','ui.c','ui.h','native.c','font.c','font.h','runtime.json','manifest.py')
     source_hashes={name:hashlib.sha256(Path(__file__).with_name(name).read_bytes()).hexdigest() for name in source_names}
     args=parser.parse_args();out=args.out.resolve();out.mkdir(parents=True,exist_ok=False)
     if ROOT==out or ROOT in out.parents:raise ValueError('Use private output outside the repository')
@@ -82,8 +83,8 @@ def main():
         '--mount','--set','BEATLAB','--project','PROJECT 261023','--load-ms','30000','--load-early',
         '--dsp','--frame','--ms','3000','--interactive','--main-level','off','--rtc','host','--mkii',
         '--usb-host',str(sock),'--lcd',str(plane)]
-    if args.stress_save or args.history:args.exercise=True
-    if args.stress_save or args.history or args.keep or args.boot_auto:command.append('--card-rw')
+    if args.stress_save or args.history or args.performance:args.exercise=True
+    if args.stress_save or args.history or args.performance or args.keep or args.boot_auto:command.append('--card-rw')
     if args.boot_auto and not args.cs1_in:raise ValueError('--boot-auto requires battery state')
     if args.no_dsp:command.remove('--dsp')
     if args.cs1_in:
@@ -115,7 +116,7 @@ def main():
             request(4);status=request(5)
             while status['result']==12:time.sleep(.025);status=request(5)
             assert status['phase']==4;status=request(9);assert status['phase']==5
-            if args.stress_save or args.history or args.keep:
+            if args.stress_save or args.history or args.performance or args.keep:
                 # No physical USB surface is available to this process.
                 request(1,transaction=0);request(6);status=request(9)
                 assert status['phase']==0;kept=True
@@ -146,6 +147,12 @@ def main():
             port.install_companion=install_companion
         print('Experimental package installed in emulator; disposable Keep='+str(kept),flush=True)
         port.command('pace off')
+        symbols=json.loads((args.base/'symbols.json').read_text())
+        port.base_symbols=symbols
+        def dsp_metrics():
+            return {name:int.from_bytes(port.peek(symbols[name],4),'big') for name in
+                    ('dl_frames','dl_errors','modwerk_dsp_stalls')}
+        dsp_before=dsp_metrics()
         attestation=load('psl_attestation',Path(__file__).with_name('attestation_emulator.py'))
         live_checks=attestation.verify(port,package,ROOT)
         elapsed=0
@@ -179,7 +186,7 @@ def main():
             lcd.png(lcd.pixels(frame),str(out/name),6);captures.append(name)
         checks={}
         if args.exercise:
-            exercise=load('psl_exercise',Path(__file__).with_name('history_emulator.py' if args.history else 'stress_emulator.py' if args.stress_save else 'exercise_emulator.py'))
+            exercise=load('psl_exercise',Path(__file__).with_name('performance_emulator.py' if args.performance else 'history_emulator.py' if args.history else 'stress_emulator.py' if args.stress_save else 'exercise_emulator.py'))
             key('NO');key('NO')
             checks=exercise.exercise(port,run,tap,key,encoder,capture,out,bool(args.cs1_in))
         else:
@@ -243,10 +250,16 @@ def main():
             checks['companionRemoved']=True
         reply=port.command('run 250')
         assert 'stop=time' in reply, 'runtime failed after Undo'
+        dsp_after=dsp_metrics()
+        if not args.no_dsp:
+            assert dsp_after['dl_frames']!=dsp_before['dl_frames'], 'DSP frames did not advance'
+            for name in ('dl_errors','modwerk_dsp_stalls'):
+                assert dsp_after[name]==dsp_before[name], 'DSP diagnostic increased: '+name
         assert source_hashes=={name:hashlib.sha256(Path(__file__).with_name(name).read_bytes()).hexdigest() for name in source_names}, 'source changed during emulator run'
         (out/'capture.json').write_text(json.dumps({'hardware':False,'scope':'Actual MKII emulator, native edits with panel input and a labelled stock-writer test injection' if args.exercise else 'Actual MKII emulator UI capture',
             'base':base,'packageSha256':package_hash,'emulatorSha256':hashlib.sha256(args.emulator.read_bytes()).hexdigest(),
             'profileSymbols':port.profile_symbols,'companionSha256':hashlib.sha256(companion).hexdigest() if companion else None,'captures':captures,'usbUndo':not kept,'disposableEmulatorKeep':kept,'usbRemoval':kept,'sampleLockWritesEnabled':True,'checks':checks,'automaticSavedSetRestore':args.boot_auto,'freshProcessBatteryBoot':bool(args.cs1_in),'dspExecution':not args.no_dsp,
+            'dspRuntimeBefore':dsp_before,'dspRuntimeAfter':dsp_after,
             'captureBuffer':'Final LCD transfer buffer read through the emulator; includes core draw hooks',
             'sources':source_hashes
             },indent=2)+'\n')
