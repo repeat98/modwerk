@@ -3,7 +3,7 @@ import { execFileSync, spawnSync } from 'node:child_process'
 import { copyFileSync, mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { readiness } from './pr-ready.mjs'
+import { gateEdits, readiness } from './pr-ready.mjs'
 
 describe('pr:ready verdict', () => {
   it('is ready only with a committed, current, regenerated branch whose checks pass', () => {
@@ -33,6 +33,26 @@ describe('pr:ready verdict', () => {
     const listed = readiness({ guideEdits: ['docs/module-guides/effects.md'] }).notes.find(note => note.startsWith('What did the guides lack'))
     expect(listed).toContain('docs/module-guides/effects.md')
     expect(readiness({ guideEdits: ['docs/SDK.md'] }).ok).toBe(true)
+  })
+  it('refuses a module pull request that edits a check which judges modules, and lets a module release carry the rest', () => {
+    // Track Mutes (#931) edited the compatibility gate to turn it green; its test still found every clash.
+    expect(gateEdits(['sdk/octabam/modules/track-mutes/manifest.py', 'scripts/module-compat.py', 'sdk/tests/test_module_compat.py'])).toEqual(['scripts/module-compat.py', 'sdk/tests/test_module_compat.py'])
+    expect(gateEdits(['sdk/drafts/track-mutes/manifest.py', '.github/workflows/module-pr.yml'])).toEqual(['.github/workflows/module-pr.yml'])
+    expect(gateEdits(['sdk/digitakt/modules/digiperform/build.json', 'scripts/modules.mjs', 'sdk/machines/octatrack/compatibility.json'])).toEqual(['scripts/modules.mjs', 'sdk/machines/octatrack/compatibility.json'])
+    // What a module release legitimately carries (ARP KEY LOCKS, #954): the package builder's list, assets, the native comparison, test lists.
+    expect(gateEdits(['sdk/octabam/modules/arp-key-locks/manifest.py', 'scripts/build-module-packages.py', 'src/engine/assets/module-build.json', 'sdk/native-comparisons/arp-key-locks.json', 'scripts/module-release-scope.test.mjs', 'sdk/tests/test_arp_key_locks.py'])).toEqual([])
+    // A Fix: pull request to the gate itself changes no module.
+    expect(gateEdits(['scripts/module-compat.py', 'sdk/tests/test_module_compat.py'])).toEqual([])
+    const verdict = readiness({ gateEdits: ['scripts/module-compat.py'] })
+    expect(verdict.ok).toBe(false)
+    expect(verdict.problems[0]).toContain('scripts/module-compat.py')
+    expect(verdict.problems[0]).toContain('never change the check to pass it')
+  })
+  it('says which packages CI rebuilds and how to reproduce them before the push', () => {
+    expect(readiness({ compiled: { octatrack: true, elemod: false } }).notes.some(note => note.includes('build-modules-isolated.sh'))).toBe(true)
+    expect(readiness({ compiled: { octatrack: false, elemod: true } }).notes.some(note => note.includes('verify-elemod-release-exports.mjs'))).toBe(true)
+    expect(readiness({ compiled: { octatrack: false, elemod: false } }).notes.some(note => note.includes('isolated'))).toBe(false)
+    expect(readiness({ compiled: { octatrack: true, elemod: true } }).ok).toBe(true)
   })
   it('refreshes a narrow clone’s main tracking ref so the suggested merge uses current main', () => {
     const directory = realpathSync(mkdtempSync(join(tmpdir(), 'modwerk-ready-fetch-')))

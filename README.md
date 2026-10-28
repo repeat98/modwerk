@@ -84,6 +84,7 @@ Open a pull request with source, documentation, test results, attribution and li
 
 | Need | Start here |
 | --- | --- |
+| Read Discord bug reports and reply from this repo | [Bugfixing Bot](docs/DISCORD_BOT.md) |
 | Add, port or update a module | [Add or port a module](docs/ADD_A_MODULE.md) |
 | SDK layout and native verifiers | [SDK README](sdk/README.md) |
 | Native module declarations | [Writing modules](sdk/octabam/docs/remixer/MODULES.md) |

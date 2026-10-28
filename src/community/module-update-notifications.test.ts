@@ -340,7 +340,12 @@ describe('module update subscriptions', () => {
     f.db.prepare("UPDATE notifications SET created_at=? WHERE module_version='11.0.0'").run(stamp(25 * 60))
     expect(await f.digests(31 * 60)).toEqual({ sent: 0 })
     expect(f.db.prepare('SELECT last_module_digest_at FROM notification_preferences WHERE user_id=?').get(owner.id)!.last_module_digest_at).toBe(last)
-    expect(await f.digests(48 * 60 + 16)).toEqual({ sent: 1 })
+    // A day after the last digest is not enough: the release collects for its own day first.
+    expect(await f.digests(48 * 60 + 16)).toEqual({ sent: 0 })
+    await f.publish(release('digitakt-digihealth', '11.0.0'))
+    f.db.prepare("UPDATE notifications SET created_at=? WHERE module_id='digitakt-digihealth' AND module_version='11.0.0'").run(stamp(40 * 60))
+    expect(await f.digests(49 * 60 + 15)).toEqual({ sent: 1 })
+    expect(sent[0].subject).toBe('Your daily Modwerk module updates (2)')
     expect(sent[0].text).toContain('Mini Verb 11.0.0')
     expect(sent[0].text).not.toContain('Mini Verb 10.0.0')
   })

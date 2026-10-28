@@ -1145,10 +1145,10 @@
    "record": 80,
    "key": null,
    "room": 4,
-   "declaration": "struct modwerk_machine {\n    uint32_t abi;                       /* MODWERK_MACHINE_ABI */\n    uint8_t sig[2], sig_lo, sig_hi;     /* the Part signature at 60 + 30 * track: two letters and a version range */\n    const char *label;                  /* its chooser and SRC SETUP name */\n    uint32_t flags;                     /* MODWERK_MACHINE_* */\n    uint32_t page;                      /* its parameter page without track_page; 0: stock's FLEX page */\n    const uint8_t *defaults;            /* without assign: the 12 FLEX bytes a track takes when it becomes this machine */\n    unsigned (*assign)(volatile uint8_t *part, unsigned track, unsigned on); /* it signs and unsigns its tracks itself */\n    unsigned (*admit_track)(const volatile uint8_t *part, unsigned track);  /* 0 refuses the track */\n    unsigned (*chooser_type)(unsigned type, const volatile uint8_t *slot);  /* 5: its row is the track's */\n    uint32_t (*track_page)(const volatile uint8_t *slot);\n    void (*ui_tick)(void);\n    void (*leave)(unsigned track);      /* the track becomes another machine */\n    void (*pool_open)(void);            /* RIGHT or double-tap TRACK on its row; 0: stock's sample pool */\n    void (*pool_left)(unsigned key, unsigned edge);\n    void (*choice_left)(unsigned key, unsigned edge);\n    const void *list_draw;              /* its pool list drawer, entered as stock's 0x4006d784 */\n    int (*render)(unsigned track, unsigned ping, unsigned start, unsigned end);\n    int (*validate)(uint8_t *part, int (*next)(uint8_t *part));\n    uint16_t source_voice, source_engine; /* a DSP voice that replaces its track's stock source: its price per voice */\n    uint8_t source_kind, reserved[3];   /* and per core while one runs, of this kind (loader.h runtime_cycles); 0 none */\n};\n#define MODWERK_MACHINE_ABI 1u\n#define MODWERK_MACHINE_PROTECT 1u      /* stock's validator never sees its tracks' 12 FLEX bytes */\n#define MODWERK_MACHINE_POOL 2u         /* its row has a pool or engine list (the title's chevron) */\n#define MODWERK_MACHINE_RENDER_FLEX 4u  /* its render is also offered FLEX tracks no machine owns */\n#define MODWERK_MACHINE_BACKING 8u      /* its page is STATIC's when its track's backing pool is STATIC */",
+   "declaration": "struct modwerk_machine {\n    uint32_t abi;                       /* MODWERK_MACHINE_ABI */\n    uint8_t sig[2], sig_lo, sig_hi;     /* the Part signature at 60 + 30 * track: two letters and a version range */\n    const char *label;                  /* its chooser and SRC SETUP name */\n    uint32_t flags;                     /* MODWERK_MACHINE_* */\n    uint32_t page;                      /* its parameter page without track_page; 0: stock's FLEX page */\n    const uint8_t *defaults;            /* without assign: the 12 FLEX bytes a track takes when it becomes this machine */\n    unsigned (*assign)(volatile uint8_t *part, unsigned track, unsigned on); /* it signs and unsigns its tracks itself */\n    unsigned (*admit_track)(const volatile uint8_t *part, unsigned track);  /* 0 refuses the track */\n    unsigned (*chooser_type)(unsigned type, const volatile uint8_t *slot);  /* 5: its row is the track's */\n    uint32_t (*track_page)(const volatile uint8_t *slot);\n    void (*ui_tick)(void);\n    void (*leave)(unsigned track);      /* the track becomes another machine */\n    void (*pool_open)(void);            /* RIGHT or double-tap TRACK on its row; 0: stock's sample pool */\n    void (*pool_left)(unsigned key, unsigned edge);\n    void (*choice_left)(unsigned key, unsigned edge);\n    const void *list_draw;              /* its pool list drawer, entered as stock's 0x4006d784 */\n    int (*render)(unsigned track, unsigned ping, unsigned start, unsigned end);\n    int (*validate)(uint8_t *part, int (*next)(uint8_t *part));\n    uint16_t source_voice, source_engine; /* a DSP voice that replaces its track's stock source: its price per voice */\n    uint8_t source_kind, reserved[3];   /* and per core while one runs, of this kind (loader.h runtime_cycles); 0 none */\n};\n#define MODWERK_MACHINE_ABI 1u\n#define MODWERK_MACHINE_PROTECT 1u      /* stock's validator never sees its tracks' 12 FLEX bytes */\n#define MODWERK_MACHINE_POOL 2u         /* its row has a pool or engine list (the title's chevron) */\n#define MODWERK_MACHINE_RENDER_FLEX 4u  /* its render is also offered FLEX tracks no machine owns */\n#define MODWERK_MACHINE_BACKING 8u      /* its page is STATIC's when its track's backing pool is STATIC */\n#define MODWERK_MACHINE_SETUP_ALL 16u   /* all six SRC SETUP encoders edit its slots; without it encoder E (slot 10) stays read-only, POLY8's hidden slot */\n#define MODWERK_MACHINE_LIST 32u       /* its track window (TRACK double tap) opens on the machine list, as PICKUP's; for a machine without a pool */\n#define MODWERK_MACHINE_SETUP_PAGE 64u  /* it draws and edits its own SRC SETUP rows: its record is a struct modwerk_machine_setup */\n/* A SETUP_PAGE machine contributes this 88-byte record: SRC SETUP on its row, on a track it owns (0: stock's, the backing\n * pool's setup). A base without the flag reads its first 80 bytes, the machine. */\nstruct modwerk_machine_setup {\n    struct modwerk_machine machine;     /* its flags have MODWERK_MACHINE_SETUP_PAGE */\n    uint32_t (*page)(uint32_t stock);   /* the page the drawer shows instead of stock's */\n    unsigned (*knob)(unsigned index, int delta); /* encoder A-F (0-5) turned: nonzero takes it, 0 lets stock edit the pool's slot */\n};",
    "when": "the machine chooser, SRC SETUP, the page resolver, the Part validator, the UI tick, pool navigation and the FLEX renderer ask the contributed machines, in row order: chooser rows 5 on",
    "context": "the UI task and the audio render (render only): short, no firmware call that can block",
-   "contract": "Contribute one struct modwerk_machine (every field but abi, sig and label optional, 0). A Part keeps its signature when the machine is absent and reads as stock. Leaving a PROTECT machine that has no assign of its own puts stock's FLEX defaults back in both Part copies before the signature goes. A priced machine (source_kind) is charged on its track's core before the track becomes it, and every owned track at each UI tick; a track the core cannot carry renders stock's silent source. Removal is refused while a Part, a UI root or a paused task still holds the machine.",
+   "contract": "Contribute one struct modwerk_machine (every field but abi, sig and label optional, 0). A Part keeps its signature when the machine is absent and reads as stock. Leaving a PROTECT machine that has no assign of its own puts stock's FLEX defaults back in both Part copies before the signature goes. A priced machine (source_kind) is charged on its track's core before the track becomes it, and every owned track at each UI tick; a track the core cannot carry renders stock's silent source. Removal is refused while a Part, a UI root or a paused task still holds the machine. A SETUP_PAGE machine contributes a struct modwerk_machine_setup (88 bytes): while SRC SETUP's cursor is on its row and the current track is its own, the drawer shows the page its page function returns and encoders A-F go to its knob function before stock edits the backing pool's setup; a base without the flag ignores it and reads 80 bytes, so the machine keeps stock's setup there.",
    "order": "lower first, then module id: the chooser's row order. 10 POLY8, 20 Analog BD, 30 VECTOR, 40 FM Synth (the order of POLY8's shared controller); others 50-90.",
    "subscribers": [
     {
@@ -1463,6 +1463,84 @@
      "op": "ptr",
      "target": "mw_source_render",
      "what": "the FLEX renderer: a machine track's render, unowned tracks to RENDER_FLEX machines"
+    },
+    {
+     "site": "0x400788c4",
+     "length": 12,
+     "guard": "2880ce77efc3e2a24682d51444fa9206a903380dc075dfd7e506c4a3a6573507",
+     "op": "jmp",
+     "target": "mw_chooser_column",
+     "what": "the track window's column: a LIST machine opens on the machine list, as PICKUP"
+    },
+    {
+     "site": "0x40078c22",
+     "length": 2,
+     "guard": "c55bd639d8c368e737cdc6bb17522f91dbe1f51682d2433f4caa962e6ca77513",
+     "op": "own",
+     "what": "machine chooser UP/DOWN cursor clamp: moveq #4+n,d1 (at least 5)"
+    },
+    {
+     "site": "0x40078c28",
+     "length": 2,
+     "guard": "63540692485e9982808a3ad2d9eda3ef9f9b6b45ea3d491ee894cc3f0b7579e9",
+     "op": "own",
+     "what": "machine chooser UP/DOWN cursor clamp: moveq #4+n,d0 (at least 5)"
+    },
+    {
+     "site": "0x40078cb0",
+     "length": 2,
+     "guard": "c55bd639d8c368e737cdc6bb17522f91dbe1f51682d2433f4caa962e6ca77513",
+     "op": "own",
+     "what": "machine chooser UP/DOWN cursor clamp: moveq #4+n,d1 (at least 5)"
+    },
+    {
+     "site": "0x40078cb6",
+     "length": 2,
+     "guard": "63540692485e9982808a3ad2d9eda3ef9f9b6b45ea3d491ee894cc3f0b7579e9",
+     "op": "own",
+     "what": "machine chooser UP/DOWN cursor clamp: moveq #4+n,d0 (at least 5)"
+    },
+    {
+     "site": "0x40078d2e",
+     "length": 2,
+     "guard": "c55bd639d8c368e737cdc6bb17522f91dbe1f51682d2433f4caa962e6ca77513",
+     "op": "own",
+     "what": "machine chooser UP/DOWN cursor clamp: moveq #4+n,d1 (at least 5)"
+    },
+    {
+     "site": "0x40078d34",
+     "length": 2,
+     "guard": "63540692485e9982808a3ad2d9eda3ef9f9b6b45ea3d491ee894cc3f0b7579e9",
+     "op": "own",
+     "what": "machine chooser UP/DOWN cursor clamp: moveq #4+n,d0 (at least 5)"
+    },
+    {
+     "site": "0x40078dee",
+     "length": 2,
+     "guard": "c55bd639d8c368e737cdc6bb17522f91dbe1f51682d2433f4caa962e6ca77513",
+     "op": "own",
+     "what": "machine chooser UP/DOWN cursor clamp: moveq #4+n,d1 (at least 5)"
+    },
+    {
+     "site": "0x40078df4",
+     "length": 2,
+     "guard": "63540692485e9982808a3ad2d9eda3ef9f9b6b45ea3d491ee894cc3f0b7579e9",
+     "op": "own",
+     "what": "machine chooser UP/DOWN cursor clamp: moveq #4+n,d0 (at least 5)"
+    },
+    {
+     "site": "0x40078e7c",
+     "length": 2,
+     "guard": "c55bd639d8c368e737cdc6bb17522f91dbe1f51682d2433f4caa962e6ca77513",
+     "op": "own",
+     "what": "machine chooser UP/DOWN cursor clamp: moveq #4+n,d1 (at least 5)"
+    },
+    {
+     "site": "0x40078e82",
+     "length": 2,
+     "guard": "63540692485e9982808a3ad2d9eda3ef9f9b6b45ea3d491ee894cc3f0b7579e9",
+     "op": "own",
+     "what": "machine chooser UP/DOWN cursor clamp: moveq #4+n,d0 (at least 5)"
     }
    ]
   },

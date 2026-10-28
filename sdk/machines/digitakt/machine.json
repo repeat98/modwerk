@@ -66,7 +66,7 @@
         "name": "Shared mod memory",
         "unit": "bytes",
         "value": 131072,
-        "note": "DDR 0x47BE0000–0x47C00000 below the audio DMA ring, shared by the core and every mod (public research: elekloader, digikit)."
+        "note": "DDR 0x47BE0000–0x47C00000 below the audio DMA ring, shared by the core and every mod (public research: elekloader)."
       },
       {
         "name": "Fast SRAM for code",

@@ -4,7 +4,7 @@
         .text
         .global mr_machine_name, mr_src_names, mr_main_commit
         .global mr_src_commit, mr_src_commit2, mr_name_a, mr_name_b
-        .global mr_setup_open, mr_chooser_open, mr_setup_row, mr_chooser_row
+        .global mr_setup_open, mr_chooser_open, mr_setup_row, mr_chooser_row, mr_chooser_name
         .global mr_setup_edit6, mr_setup_draw6, mr_tick_hook
         .equ BANK_PTR, 0x46c82456
         .equ PART_OFF, 0x8ed80
@@ -107,10 +107,24 @@ mr_setup_row:
         lea 24(%sp),%sp
         bsr mr_row_type
         jmp 0x4003c986
+| The machine chooser (double-tap TRACK) draws six rows from the top of the
+| screen, d2 the row on screen. Past six rows (POLY8 beside VECTOR, FM Synth
+| or Analog BD) its list (0x460e7386, top row first) scrolls but the rows did
+| not: names and the track's mark read the list's row, top + d2, as the USB
+| base's mw_chooser_name/mw_chooser_row do. The highlight is by screen row.
+mr_chooser_name:
+        move.l 4(%sp),%d0
+        add.l 0x460e7386,%d0
+        move.l %d0,-(%sp)
+        jsr mr_machine_name
+        addq.l #4,%sp
+        rts
 mr_chooser_row:
         mvs.b (%a0),%d0
         bsr mr_chooser_row_type
-        cmp.l %d0,%d2
+        move.l %d2,%d1                  | d1 is free: both paths load it again
+        add.l 0x460e7386,%d1
+        cmp.l %d0,%d1
         bne.s 1f
         jmp 0x400786ce
 1:      jmp 0x400786fc

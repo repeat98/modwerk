@@ -19,6 +19,8 @@ import sys
 
 import cave_runtime
 _ROOT = Path(__file__).resolve().parents[4]
+sys.path.append(str(_ROOT / 'sdk'))  # firmware_codec
+import firmware_codec  # noqa: E402
 
 
 def controller_sha256(data):
@@ -571,7 +573,7 @@ def controller_sites(name, upstream, symbols, builder):
     The same records `build.py --octabam` makes for detours, pokes and symbol
     references; anything else such a package cannot carry is refused.
     """
-    sys.path.insert(0, str(Path(upstream).expanduser().resolve()))
+    firmware_codec.use_elekloader(Path(upstream).expanduser().resolve())
     from elekloader.sdk import octabam as port
     m = port.Octabam(str(_ROOT / 'sdk/octabam')).modules[name]
     extra = [what for what, there in (('requires', m.requires), ('tables', m.tables), ('keeps', m.keeps),

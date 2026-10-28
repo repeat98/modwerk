@@ -109,7 +109,7 @@
     },
     {
       "id": "vector",
-      "version": "0.2.4-experimental",
+      "version": "0.2.5-experimental",
       "addedAt": "2026-10-06T08:02:00Z"
     },
     {
@@ -129,7 +129,7 @@
     },
     {
       "id": "poly8",
-      "version": "0.3.1-experimental",
+      "version": "0.3.2-experimental",
       "addedAt": "2026-10-08T12:00:00Z"
     },
     {

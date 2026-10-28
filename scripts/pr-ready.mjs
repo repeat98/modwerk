@@ -11,9 +11,19 @@ import { fileURLToPath, pathToFileURL } from 'node:url'
 
 const GENERATORS = [['licenses:generate'], ['machines:generate'], ['modules:generate'], ['modules:pairs', '--', '--write']]
 
+// The checks that judge a module. A module pull request never edits them: a red check names the fix, and a wrong check is its own
+// Fix: pull request (AGENTS.md, "Setup and checks"). A module release still carries its builder list, assets, comparisons and test lists.
+const MODULE_FOLDER = /^sdk\/(?:octabam|digitakt|digitone|analog-rytm-mkii|analog-four-mkii)\/modules\/[^/]+\/|^sdk\/drafts\/[^/]+\//
+const GATE = /^(?:\.github\/workflows\/|sdk\/machines\/octatrack\/compatibility\.json$|sdk\/tests\/test_(?:module_compat|module_pairs|dsp_source_gates)\.py$|scripts\/(?:modules|module-doctor|module-qualification|module-changelogs|perf-audit(?:-analysis)?|check|pr-ready|change-scope|author-update-git|pr-triage)\.mjs$|scripts\/(?:module-compat|module-pairs|dsp-source-gates)\.py$)/
+/** The gate files a change edits while it also adds or changes a module; [] when it changes no module. */
+export function gateEdits(files) {
+  return files.some(file => MODULE_FOLDER.test(file)) ? files.filter(file => GATE.test(file)) : []
+}
+
 /** The verdict from what was found; every problem says what to do. */
-export function readiness({ dirty = [], behind = false, remote = 'upstream', regenerated = [], checkPassed = true, author = null, scope = null, guideEdits = [] }) {
+export function readiness({ dirty = [], behind = false, remote = 'upstream', regenerated = [], checkPassed = true, author = null, scope = null, guideEdits = [], gateEdits = [], compiled = null }) {
   const problems = [], notes = []
+  if (gateEdits.length) problems.push('This pull request changes a module and also ' + gateEdits.join(', ') + ': a check that judges modules. A red check names the fix; never change the check to pass it. If the check itself is wrong, send the correction as its own Fix: pull request for the owner to review, and let the module wait for it.')
   if (dirty.length) problems.push('Commit or discard these changes first; only commits reach the PR: ' + dirty.join(', '))
   if (behind) problems.push(`Your branch does not contain current main. Merge it (git merge ${remote}/main), resolve any conflict, then run this again.`)
   if (regenerated.length) problems.push('The generated files were stale. They are regenerated now; commit them: ' + regenerated.join(', '))
@@ -22,6 +32,9 @@ export function readiness({ dirty = [], behind = false, remote = 'upstream', reg
     if (scope?.error) problems.push(`This is not an automatic author update (${scope.error}). Keep the PR to your own module's folder and its changelog entry, or ask the owner for a review.`)
     else if (scope) notes.push('Automatic merge: the bot can merge this update to ' + scope.modules.join(', ') + ' once both release boxes are ticked and CI is green.')
   } else notes.push('Without --author this is a new module or a shared change: the owner reviews it and merges it with one click once CI is green.')
+  // pr:ready has no toolchain, so it can only say which packages CI rebuilds in Docker and how to reproduce them first (DEVELOPER_WORKFLOW.md, "Compiled packages").
+  if (compiled?.octatrack) notes.push('CI rebuilds the Octatrack packages (octatrack-source) and requires the committed ones to match. pr:ready cannot run that: before you push, reproduce them with bash scripts/build-modules-isolated.sh <clean checkout> <new dir> <image id> from a clean, committed tree ("Compiled packages" in docs/DEVELOPER_WORKFLOW.md).')
+  if (compiled?.elemod) notes.push('CI rebuilds the Digitakt, Digitone, Rytm and Four packages (elemod-source) and requires the committed ones to match. pr:ready cannot run that: before you push, run bash scripts/build-elemod-isolated.sh and node scripts/verify-elemod-release-exports.mjs <dir> from a clean, committed tree ("Compiled packages" in docs/DEVELOPER_WORKFLOW.md).')
   // The guides are the context every later agent reads, so each PR says what they lacked or got wrong (AGENTS.md, "Fold what you learn back").
   notes.push('What did the guides lack or get wrong while you did this? ' + (guideEdits.length
     ? 'Guide edits on this branch: ' + guideEdits.join(', ') + '. Say in the PR what they fix.'
@@ -58,8 +71,15 @@ async function main(argv) {
     if (!regenerated.length) checkPassed = npm('check', '--', '--base', base)
   }
   if (author && !behind) scope = await authorScope(root, git, base, head, author)
-  const guideEdits = git('diff', '--name-only', base + '...' + head, '--', 'AGENTS.md', 'sdk/AGENTS.md', 'docs', 'sdk/machines/*/README.md').split('\n').filter(Boolean)
-  const verdict = readiness({ dirty, behind, remote, regenerated, checkPassed, author, scope, guideEdits })
+  const changed = git('diff', '--name-only', base + '...' + head).split('\n').filter(Boolean)
+  const guideEdits = changed.filter(file => /^(?:AGENTS\.md|sdk\/AGENTS\.md|docs\/|sdk\/machines\/[^/]+\/README\.md$)/.test(file))
+  let compiled = null
+  if (!dirty.length && !behind) {
+    const { readChangeScope } = await import('./change-scope.mjs')
+    const changes = readChangeScope({ root, base, head })
+    compiled = { octatrack: changes.modules, elemod: changes.elemod }
+  }
+  const verdict = readiness({ dirty, behind, remote, regenerated, checkPassed, author, scope, guideEdits, gateEdits: gateEdits(changed), compiled })
   console.log('')
   for (const line of verdict.problems) console.log('✗ ' + line)
   for (const line of verdict.notes) console.log('· ' + line)

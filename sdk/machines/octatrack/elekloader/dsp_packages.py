@@ -16,7 +16,9 @@ from pathlib import Path
 
 APP = Path(__file__).resolve().parents[4]
 SDK = APP / 'sdk/octabam'
-sys.path.insert(0, os.environ.get('ELEKLOADER_UPSTREAM', str(Path.home() / '.cache/modwerk-upstream/elekloader')))
+sys.path.append(str(APP / 'sdk'))  # firmware_codec
+import firmware_codec  # noqa: E402
+firmware_codec.use_elekloader(os.environ.get('ELEKLOADER_UPSTREAM', str(Path.home() / '.cache/modwerk-upstream/elekloader')))
 from elekloader.sdk.octabam import Octabam  # noqa: E402
 
 LITERAL = '$fab1e0'  # the P table's address in a module's source

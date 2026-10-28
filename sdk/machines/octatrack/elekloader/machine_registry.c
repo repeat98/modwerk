@@ -2,7 +2,7 @@
  * The base's machine registry: the reader of the ot_machines table (events.json). The
  * machine chooser, SRC SETUP, the page resolver, the Part validator, the UI tick, pool
  * navigation and the FLEX renderer ask the contributed machines (struct modwerk_machine),
- * in row order: chooser rows 5 on. Adapted from POLY8's shared machine controller
+ * in row order: chooser rows 5 on (SRC SETUP's own rows for a SETUP_PAGE machine). Adapted from POLY8's shared machine controller
  * (sdk/octabam/modules/poly8/shared-machine.c, MIT, Sam Banks / repeat98), whose fixed
  * POLY/AB/VECTOR/FM participants become contributions; each machine keeps its own signed
  * FLEX state, defaults, pages and engine. Also the reader of ot_sequencer_rows. */
@@ -163,15 +163,19 @@ static void tables(const Machine *const *m, unsigned n)
                             x->page ? x->page : FLEX_PAGE;
     }
 }
-/* The chooser's counts are immediates in stock code the table owns: pea 5+n and moveq #4+n (stock: n = 0). */
+/* The chooser's counts are immediates in stock code the table owns: pea 5+n and moveq #4+n (stock: n = 0). Its five
+ * UP/DOWN handlers clamp the cursor with moveq #5 twice each (stock: row 5, one past PICKUP): the last row, 4+n, and
+ * never below stock's 5, or the cursor stops at row 5 with two or more machines installed. */
 static unsigned counted;
 static void put8(uint32_t at, uint8_t v) { modwerk_machine_flush_data(at, 1); *modwerk_machine_code(at) = v; }
 static void counts(unsigned n, unsigned rows)
 {
-    static const uint32_t pea[] = {0x4007924bu, 0x400585fdu}, moveq[] = {0x4003c951u, 0x40078679u, 0x400786cfu, 0x40079905u};
+    static const uint32_t pea[] = {0x4007924bu, 0x400585fdu}, moveq[] = {0x4003c951u, 0x40078679u, 0x400786cfu, 0x40079905u},
+                          clamp[] = {0x40078c23u, 0x40078cb1u, 0x40078d2fu, 0x40078defu, 0x40078e7du};
     if (counted == (n | rows << 8 | 1u << 16)) return;
     for (unsigned i = 0; i < 2; ++i) put8(pea[i], (uint8_t)(5u + n));
     for (unsigned i = 0; i < 4; ++i) put8(moveq[i], (uint8_t)(4u + n));
+    for (unsigned i = 0; i < 5; ++i) put8(clamp[i], (uint8_t)(n > 1 ? 4u + n : 5u)), put8(clamp[i] + 6u, (uint8_t)(n > 1 ? 4u + n : 5u));
     put8(0x40065c7fu, (uint8_t)(3u + rows));
     modwerk_machine_invalidate_code();
     counted = n | rows << 8 | 1u << 16;
@@ -431,10 +435,49 @@ uintptr_t mw_list_target(void)
     current(m, n, &who);
     return who && who->list_draw ? (uintptr_t)who->list_draw : (uintptr_t)mw_stock_list_draw;
 }
+/* The track window's column (0 the machine list, 1 the pool), from the selected track's type byte: stock's rule (STATIC
+ * and FLEX open on their pool), except that a LIST machine (one without a pool) opens on the list, as PICKUP does. */
+unsigned mw_window_column(const Part *type)
+{
+    const Machine *m[ROWS - 5u], *who = 0; unsigned n = machines(m);
+    if (valid_bank()) owner(m, n, current_part(), U8(0x100b14ccu) & 7u, &who);
+    if (who && who->flags & MODWERK_MACHINE_LIST) return 0;
+    return *type <= 1u;
+}
+/* SRC SETUP's editor skips encoder E (slot 10) for module machines, POLY8's hidden slot; a SETUP_ALL machine edits it. */
+unsigned mw_row_setup_all(unsigned row)
+{
+    const Machine *m[ROWS - 5u]; unsigned n = machines(m);
+    return row >= 5 && row < 5 + n && m[row - 5]->flags & MODWERK_MACHINE_SETUP_ALL;
+}
 unsigned mw_row_has_pool(unsigned row)
 {
     const Machine *m[ROWS - 5u]; unsigned n = machines(m);
     return row >= 5 && row < 5 + n && m[row - 5]->flags & MODWERK_MACHINE_POOL;
+}
+/* SRC SETUP on a module machine's row (stock's cursor, 0x460d5c30, the row its drawer and editor were given) shows and
+ * edits the track's backing pool's setup (mw_pool_kind). A SETUP_PAGE machine owns its rows there while the current
+ * track is its own: its page gives the page the drawer shows instead of the row's stock one, and its knob
+ * takes encoders A-F (0-5) before stock edits the pool's byte. Only a SETUP_PAGE machine's record is a struct
+ * modwerk_machine_setup (88 bytes; every other ABI 1 record ends at 80), so nothing past the machine is read without it. */
+static const Machine *setup_owner(const Machine *const *m, unsigned n, unsigned row)
+{
+    const Machine *who;
+    return row >= 5 && current(m, n, &who) == row && who->flags & MODWERK_MACHINE_SETUP_PAGE ? who : 0;
+}
+uint32_t mw_setup_page(unsigned row, uint32_t stock)
+{
+    const Machine *m[ROWS - 5u]; unsigned n = machines(m);
+    const Machine *who = setup_owner(m, n, row);
+    const struct modwerk_machine_setup *own = (const struct modwerk_machine_setup *)who;
+    return own && own->page ? own->page(stock) : stock;
+}
+unsigned mw_setup_knob(unsigned row, unsigned index, int delta)
+{
+    const Machine *m[ROWS - 5u]; unsigned n = machines(m);
+    const Machine *who = index < 6 ? setup_owner(m, n, row) : 0;
+    const struct modwerk_machine_setup *own = (const struct modwerk_machine_setup *)who;
+    return own && own->knob && own->knob(index, delta) ? 1u : 0u;
 }
 /* The frame guard. The frame interrupt (0x4000aad0, level 5) takes the DSP's frame word at its entry, renders each
  * track's source (each track about twice a frame), then builds the DSP's frame. While it runs, USB (level 4), the UI and
@@ -445,9 +488,10 @@ unsigned mw_row_has_pool(unsigned row)
  * mw_frame_exit (machine_registry.s). Each render of a machine's track is timed, and so is the work after it up to the
  * exit; before the next frame's same render the guard predicts the frame's length from those. When it would overdraw,
  * the track renders stock's silent source this time instead: a dropout on that track, never a frozen unit. Tracks only
- * stock renders, and priced machines' (their voice is the DSP's), always render. A skipped render comes back when the
- * budget has room for its last cost, or, every PROBE frames, when it would overdraw by at most SLACK: its cost is
- * measured again. */
+ * stock renders, and priced machines' (their voice is the DSP's), always render, and so does a FLEX track no machine
+ * owns that goes to a RENDER_FLEX machine's render (guarded, FM Synth's render skipped ordinary sample tracks, #999).
+ * A skipped render comes back when the budget has room for its last cost, or, every PROBE frames, when it would
+ * overdraw by at most SLACK: its cost is measured again. */
 #ifndef DTCN3
 #define DTCN3 (*(volatile uint32_t *)0xfc07c00cu) /* the frame timer: 132 MHz, free-running */
 #endif
@@ -509,8 +553,8 @@ int mw_source_render_impl(unsigned track, unsigned ping, unsigned start, unsigne
         return who->source_kind ? f(track, ping, start, end) : guarded(f, track, ping, start, end);
     } else if (valid_bank() && orphan(current_part(), track)) /* its bytes are the absent machine's, not FLEX's */
         return STOCK(Render *, 0x400047f0u)(track, ping, start, end);
-    else
+    else /* unguarded: mostly stock's own FLEX render; FM Synth also plays a legacy FMSYNTH-named sample as FM here (#999) */
         for (unsigned k = 0; k < n; ++k)
-            if (m[k]->flags & MODWERK_MACHINE_RENDER_FLEX && m[k]->render) return guarded(m[k]->render, track, ping, start, end);
+            if (m[k]->flags & MODWERK_MACHINE_RENDER_FLEX && m[k]->render) return m[k]->render(track, ping, start, end);
     return STOCK(Render *, 0x40004008u)(track, ping, start, end);
 }
