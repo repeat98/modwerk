@@ -7,7 +7,6 @@ const struct octamod_log_identity octamod_log_identity = {
  "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
  "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
  "FILTER", "FILTER;DELAY", "", 1 };
-volatile uint32_t olog_frame_sheds, olog_frame_shed_tracks;
 static uint32_t ticks, writes, slots[32];
 static int safe = 1, succeeds = 1, append_during_write = 0, failures;
 static char last[OCTAMOD_LOG_FILE_SIZE + 1];

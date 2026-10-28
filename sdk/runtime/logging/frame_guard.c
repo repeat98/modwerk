@@ -6,6 +6,7 @@
  * Analog BD (its voice is the DSP's) always render. A skipped render comes back when the budget has room for its last
  * cost, or, every PROBE frames, when it would overdraw by at most SLACK. */
 #include <stdint.h>
+#include "octamod_log_port.h"
 #ifndef OLOG_DTCN3
 #define OLOG_DTCN3 (*(volatile uint32_t *)0xfc07c00cu) /* the frame timer: 132 MHz, free-running */
 #define OLOG_RAM(a) ((const volatile uint8_t *)(uintptr_t)(a))
@@ -72,4 +73,14 @@ int olog_render_first(unsigned track, unsigned ping, unsigned start, unsigned en
 int olog_render_second(unsigned track, unsigned ping, unsigned start, unsigned end)
 {
     return guarded(8u + (track & 7u), track, ping, start, end);
+}
+/* GRD 0001: the renders silenced since the last record and their tracks, at most one record per 10 s. Called from
+ * the engine's idle point before the recorder (package.py), never from the interrupt. */
+void olog_frame_report(void)
+{
+    static uint32_t reported = 0, at = 0;
+    uint32_t sheds = olog_frame_sheds, now = octamod_log_ticks();
+    if (sheds == reported || (uint32_t)(now - at) < 600u) return;
+    octamod_log_event(OLOG_W, OLOG_TAG('G', 'R', 'D', 0), 1, sheds - reported, olog_frame_shed_tracks);
+    reported = sheds, at = now, olog_frame_shed_tracks = 0;
 }

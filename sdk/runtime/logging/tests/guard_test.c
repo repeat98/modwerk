@@ -16,6 +16,12 @@ static int silent(unsigned t, unsigned p, unsigned s, unsigned e) { (void)t, (vo
 #define OLOG_RAM(a) host_ram((uint32_t)(a))
 #define OLOG_SILENT silent
 #include "../frame_guard.c"
+static uint32_t ticks, events, event_a, event_b;
+uint32_t octamod_log_ticks(void) { return ticks; }
+void octamod_log_event(enum octamod_log_level level, uint32_t tag, uint16_t code, uint32_t a, uint32_t b)
+{
+    if (level == OLOG_W && tag == OLOG_TAG('G', 'R', 'D', 0) && code == 1) ++events, event_a = a, event_b = b;
+}
 static int failures;
 #define CHECK(x) do { if (!(x)) { fprintf(stderr, "FAIL %d: %s\n", __LINE__, #x); ++failures; } } while (0)
 static uint32_t machine_cost, stock_cost = FRAME / 4u;
@@ -60,6 +66,11 @@ int main(void)
     CHECK(stock_calls == 800u);
     CHECK(olog_frame_sheds > 0u && olog_frame_shed_tracks == 1u);
     CHECK(machine_calls > 0u && machine_calls + silent_calls == 800u);
+    /* One GRD record with the count and the track, then none for 10 s however many more. */
+    ticks = 600; olog_frame_report();
+    CHECK(events == 1u && event_a == olog_frame_sheds && event_b == 1u && olog_frame_shed_tracks == 0u);
+    frames(400); ticks = 1199; olog_frame_report(); CHECK(events == 1u);
+    ticks = 1200; olog_frame_report(); CHECK(events == 2u && event_a > 0u);
     /* A light one never is. */
     reset("PL\1", FRAME / 20u);
     frames(400);

@@ -82,16 +82,9 @@ void octamod_log_engine_begin(uint32_t job)
     octamod_log_event(OLOG_I, OLOG_TAG('J','O','B',0), 1, job_token, job);
     octamod_log_capture_state(job_token);
 }
-extern volatile uint32_t olog_frame_sheds, olog_frame_shed_tracks; /* frame_guard.c */
-static uint32_t sheds_reported = 0, sheds_at = 0;
 void octamod_log_engine_idle(void)
 {
     if (!ready) octamod_log_on_boot();
-    uint32_t sheds = olog_frame_sheds, now = octamod_log_ticks();
-    if (sheds != sheds_reported && (uint32_t)(now - sheds_at) >= 600u) { /* at most one record per 10 s */
-        octamod_log_event(OLOG_W, OLOG_TAG('G','R','D',0), 1, sheds - sheds_reported, olog_frame_shed_tracks);
-        sheds_reported = sheds, sheds_at = now, olog_frame_shed_tracks = 0;
-    }
     unsigned requested = 0;
     if (job_active) {
         octamod_log_event(OLOG_I, OLOG_TAG('J','O','B',0), 2, job_token, job_id);
