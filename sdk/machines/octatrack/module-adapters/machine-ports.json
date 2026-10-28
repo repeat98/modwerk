@@ -4,10 +4,10 @@
  "ports": {
   "poly8": {
    "sources": {
-    "sdk/octabam/modules/poly8/manifest.py": "1b9dfc90a6d5901ee3e453b7c3854363aad82f7267edc090b5f4439a57f12ddb",
+    "sdk/octabam/modules/poly8/manifest.py": "f8759dbcbb246b247c195e61f0c0464fd0cdc0dd40b68dd8f74c03b46c584afc",
     "sdk/octabam/modules/poly8/polyphony.s": "c86a3a783c46ecdbb3b44341098f0c094c65b9a8d11716835c2d28c2d2d6ecee",
     "sdk/octabam/modules/poly8/registration.s": "9bd549a03c7008d45e5ffcd647375ed5ea7507845857f68c407bb247edd942ae",
-    "sdk/octabam/modules/poly8/shared-machine.s": "e49d47ed22aa70a770e5738e69225106219b0337eabe67351d2e09150220ee80"
+    "sdk/octabam/modules/poly8/shared-machine.s": "3148a219ca0a1cdf5b1a20c64ff4da564b1078f599a2ceb08b15f6c10e908923"
    },
    "subscribe": [
     {
@@ -62,8 +62,19 @@
       "0x40079248",
       "0x400585fa",
       "0x4003c950",
+      "0x4007865e",
       "0x40078678",
       "0x400786ce",
+      "0x40078c22",
+      "0x40078c28",
+      "0x40078cb0",
+      "0x40078cb6",
+      "0x40078d2e",
+      "0x40078d34",
+      "0x40078dee",
+      "0x40078df4",
+      "0x40078e7c",
+      "0x40078e82",
       "0x40079904",
       "0x4003a526",
       "0x4003bff4",
@@ -187,7 +198,8 @@
     "label": "VECTOR",
     "flags": [
      "POOL",
-     "BACKING"
+     "BACKING",
+     "SETUP_PAGE"
     ],
     "fields": {
      "assign": "st_assign",
@@ -197,7 +209,9 @@
      "pool_left": "st_pool_left",
      "choice_left": "st_pool_choice_left",
      "list_draw": "st_list_draw",
-     "validate": "vector_validate_part"
+     "validate": "vector_validate_part",
+     "setup_page": "st_setup_page",
+     "setup_knob": "st_setup_knob"
     }
    },
    "dropCopies": [
@@ -206,7 +220,7 @@
     "st_edit_replay",
     "st_draw_replay"
    ],
-   "why": "VECTOR's st_* chooser hooks and their stock replays are unreachable in the package; its registry functions are the descriptor's"
+   "why": "VECTOR's st_* chooser hooks and their stock replays are unreachable in the package; its registry functions are the descriptor's, and its SRC SETUP page 2 (st_setup_page, st_setup_knob, which its card build's st_setup_draw6 and st_setup_edit6 call) the SETUP_PAGE record's"
   },
   "synth": {
    "sources": {

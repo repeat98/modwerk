@@ -2,9 +2,10 @@
 """The base's .run stored packed in MAIN, and run_unpack.s, the boot's decoder, in Python.
 
 MAIN ends with the linked .run, which core-ot.s's boot used to copy word by word. Stored packed, it keeps the RAM
-boot image under its bound. The stream is Elekloader's own section format (codec/aplib.py pack_section, which the
-browser kit runs byte for byte as codec/aplib.ts), so the native and browser builds stay equal. decode() is
-run_unpack.s instruction by instruction, and pack() refuses a stream it does not turn back into .run. No stock bytes.
+boot image under its bound. The stream is the section format of Elektron OS images (Modwerk's own codec,
+sdk/firmware_codec: aplib.py's pack_section, which the browser builder runs byte for byte), so the native and browser
+builds stay equal. decode() is run_unpack.s instruction by instruction, and pack() refuses a stream it does not turn
+back into .run. No stock bytes.
 """
 import hashlib
 from pathlib import Path
@@ -157,7 +158,7 @@ def pack(main, layout, symbols, load, pack_section):
     if decode(section, words, run_load, start + UNCACHED) != plain:
         raise ValueError('The packed .run does not decode to the linked one.')
     return bytes(main[:at]) + section, dict(
-        format='elekloader codec/aplib.py pack_section', decoder='run_unpack.s', decoderSha256=ASM_SHA256,
+        format='section (sdk/firmware_codec aplib.pack_section)', decoder='run_unpack.s', decoderSha256=ASM_SHA256,
         plainBytes=len(plain), plainSha256=hashlib.sha256(plain).hexdigest(),
         packedBytes=len(section), packedSha256=hashlib.sha256(section).hexdigest(), savedBytes=len(plain) - len(section))
 

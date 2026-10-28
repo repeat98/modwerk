@@ -32,6 +32,10 @@ until those results and owner review are recorded.
 Use Node 24, the reviewed GNU `m68k-elf` toolchain, a clean Elekloader checkout
 at `vendor/elekloader/kit/kit.json`'s commit (`npm run upstream:tools` keeps one
 in `~/.cache/modwerk-upstream/elekloader`) and your original OT OS 1.40C.
+The checkout runs with Modwerk's own firmware codec: a script puts it on `sys.path` only through
+`firmware_codec.use_elekloader()` ([`sdk/firmware_codec`](../../../firmware_codec/__init__.py)), which serves the
+section format, the `.syx` transport and the ColdFire decoder in place of the checkout's `codec/` and `isa/`
+(`sdk/tests/test_firmware_codec.py` checks every script).
 Both output directories below must be new and outside every Git checkout:
 
 ```sh
@@ -122,7 +126,8 @@ checks the remaining published files against their manifest hashes without
 rebuilding or deleting them. Use the full generator for a separately qualified
 module update; existing standalone recipes may name earlier source/tool inputs.
 The cave/table declarations also pin the generator source, and they and the standalone recipes pin the Elekloader
-checkout's files, so a kit update (`vendor/elekloader/kit/kit.json`) needs the same refresh in its own pull request:
+checkout's files the build runs and Modwerk's codec in place of its `codec/` and `isa/` (`firmware_codec.inputs()`),
+so a kit update or a codec edit (`vendor/elekloader/kit/kit.json`) needs the same refresh in its own pull request:
 CI has no firmware and cannot see it, and until then the builds refuse with "does not name the exact source inputs"
 (kit 0.7.0, 22 October 2026). Refresh a generator-only pin only after rebuilding
 the affected packages and proving every published byte unchanged; never replace a pin merely to make a check pass.
@@ -159,8 +164,12 @@ it, admitted against each core's arena and cycle allowance first
 ([design and evidence](../../../../docs/OCTATRACK_ELEKLOADER_MIGRATION.md#milestone-2-dsp-effects-on-demand-e-verb-as-the-pilot-10-october-2026)).
 The base takes each core's whole stock effect block
 ([`dsp_loader.py`](dsp_loader.py)): the three stock routines other effects
-call stay resident at its start, then the receiver, then about 5,200 words
-of arena. Each stock effect is a package recovered at build time from your
+call stay resident at its start, then the receiver's frame path, then about
+5,450 words of arena (4,741 / 4,867 on the beta base, whose engines' stubs
+sit above it). The receiver's packet operations run from the top 512 words
+of each core's FX2 block 3 in the shared window, copied there from the
+arena's top at the first frame ([record](../../../../docs/OCTATRACK_DSP_WINDOW.md)).
+Each stock effect is a package recovered at build time from your
 firmware with Modwerk's relocation recipes and checked against their
 hashes; Octabam's DSP DYNLOAD STOCK is the reference for the layout. It
 needs Octabam's patched `dsp_asm` (`ELEKLOADER_DSP_ASM`), with

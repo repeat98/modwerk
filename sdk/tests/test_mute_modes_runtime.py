@@ -18,6 +18,8 @@ import tempfile
 import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.append(str(ROOT / 'sdk'))  # firmware_codec
+import firmware_codec  # noqa: E402
 ADAPTERS, GLUE, LOADER = (ROOT / 'sdk/machines/octatrack/module-adapters', ROOT / 'sdk/machines/octatrack/elekloader',
                           ROOT / 'sdk/runtime/loader')
 sys.path.insert(0, str(ADAPTERS))
@@ -45,7 +47,7 @@ class MuteModesRuntime(unittest.TestCase):
         main = Path(stock).read_bytes()
         stock_at = lambda address, n: main[address - 0x40000400:address - 0x40000400 + n]
         import runtime_units
-        sys.path.insert(0, str(upstream))
+        firmware_codec.use_elekloader(upstream)
         from elekloader.sdk import octabam
         port = octabam.Octabam(str(ROOT / 'sdk/octabam')).modules['mute-modes']
         tables = json.loads((ADAPTERS / 'candidate-recipes.json').read_text())['ports']['mute-modes']['tables']

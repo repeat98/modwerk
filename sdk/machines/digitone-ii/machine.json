@@ -34,11 +34,6 @@
       "note": "OS 1.12: container, seal, staging, reset memory map, free DDR and SRAM, the seven core sites and the emulator checks. Stock-free: hashes and addresses only."
     },
     {
-      "label": "digikit",
-      "url": "https://github.com/m-dwyer/digikit",
-      "note": "Emulator for the control processor that boots the real OS and shows its screen, plus analysis tools for the audio processor and the sealed OS file. Supports Digitone II OS 1.11 and 1.12."
-    },
-    {
       "label": "elekloader DTII core",
       "url": "https://github.com/irpina/elekloader/tree/3acac10/mods/core-dt2",
       "note": "The Digitakt II core whose events, sources and site patterns the Digitone II draft core reuses with OS 1.12's addresses."

@@ -64,9 +64,9 @@ Run this after every edit. It takes about 15 seconds, never reads firmware and n
 ```sh
 npm run modules:generate                      # regenerate the catalog from the module folders
 npm run check -- --base origin/main            # scopes docs to metadata/provenance; code runs the full app suite
-npm run module:doctor -- <id>                 # does the module fit every workflow? lists each gap and the command that fixes it
+npm run module:doctor -- <id>                 # does the module fit every workflow? lists each gap and the command that fixes it (a draft: --draft <id>)
 npm run modules:check -- --base origin/main   # version and publication rules for the folders you changed
-npm run modules:compat -- <id>                # Octatrack: installs beside every other active module and the base? each clash and its fix
+npm run modules:compat -- <id>                # Octatrack: installs beside every other active module and the base? each clash and its fix (unlisted or a draft: --with <id>)
 ```
 
 ## What CI runs
@@ -82,7 +82,7 @@ Once your module is in the reviewed catalog, you can link your own Ko-fi page wi
 
 ## Release notes (required for every fix and module version)
 
-Every module fix includes its changelog entry in the same PR, never after it. Before publishing a new module or version, add an entry to the module's file in `src/community/module-changelogs/`, named by its community ID: the module ID on the Octatrack (`euclid.json`), machine and ID on Digitakt and Digitone (`digitakt-digihealth.json`, `digitone-digihealth.json`). Keep earlier entries: the file is the module's list of releases. `npm ci` and `npm run check` combine these files into the generated, uncommitted `src/community/module-changelogs.json`, and the module folders into `src/catalog/machine-modules.json`, so two module PRs never edit the same file. The module page's Changelog tab shows the notes, also when live version history is unavailable.
+Every module fix includes its changelog entry in the same PR, never after it. Before publishing a new module or version, add an entry to the module's file in `src/community/module-changelogs/`, named by its community ID: the module ID on the Octatrack (`euclid.json`), machine and ID on Digitakt and Digitone (`digitakt-digihealth.json`, `digitone-digihealth.json`). Keep earlier entries: the file is the module's list of releases. `npm ci` and `npm run check` combine these files into the generated, uncommitted `src/community/module-changelogs.json`, and the module folders into `src/catalog/machine-modules.json`, so two module PRs never edit the same file. The module page's Changelog tab shows the notes.
 
 ```json
 {
@@ -92,7 +92,7 @@ Every module fix includes its changelog entry in the same PR, never after it. Be
 }
 ```
 
-Use the exact catalog/manifest version and the source-update date (`YYYY-MM-DD`). An optional `sourceCommit` is a full 40-character repository commit SHA; omit it until the referenced commit exists. Write for the people who play the module: they read these notes on the module page and in the update email. Use at most five lines, each one plain sentence of at most 200 characters about what changed for them: a new feature, a fixed bug with its issue number, a changed control, something to redo after updating. “Updated module” is not enough. Leave out how it was done, measurements, addresses, internal names, test evidence and owner waivers; they belong in the pull request and the verification record. When players need to know a limit, add one line that starts with `Known issue:` in plain words, for example `Known issue: not yet tested on the MKI.` Never imply hardware or audio testing that did not happen. For an imported release, say in a few words whether upstream changed the module or Modwerk only repackaged it.
+Use the exact catalog/manifest version and the source-update date (`YYYY-MM-DD`). An optional `sourceCommit` is a full 40-character repository commit SHA; omit it until the referenced commit exists. Write for the people who play the module: they read these notes on the module page and in the update email. Use at most five lines, each one plain sentence of at most 200 characters about what changed for them: a new feature, a fixed bug with its issue number, a changed control, something to redo after updating. “Updated module” is not enough. A first release lists the version it ships, not the versions players never had; a port keeps upstream's history. Leave out how it was done, measurements, addresses, internal names, test evidence and owner waivers; they belong in the pull request and the verification record. When players need to know a limit, add one line that starts with `Known issue:` in plain words, for example `Known issue: not yet tested on the MKI.` Never imply hardware or audio testing that did not happen. For an imported release, say in a few words whether upstream changed the module or Modwerk only repackaged it.
 
 ```json
 {
@@ -106,7 +106,7 @@ Use the exact catalog/manifest version and the source-update date (`YYYY-MM-DD`)
 }
 ```
 
-`npm run check -- --base origin/main` and `npm run build` reject missing current-version notes, duplicate/invalid versions, malformed dates, unknown module IDs and entries over five lines or with a line over 200 characters. `node scripts/module-changelogs.mjs` runs just this inexpensive metadata check. Regenerate catalogs after a manifest version changes, then validate before committing. Notes live outside module source folders so adding them does not invalidate retained qualification records or trigger native compilation.
+`npm run check -- --base origin/main` and `npm run build` reject missing current-version notes, duplicate/invalid versions, malformed dates, unknown module IDs and entries over five lines or with a line over 200 characters. Notes live outside module source folders so adding them does not invalidate retained qualification records or trigger native compilation.
 
 The published release inventory includes these notes. A published version notifies the module's followers, eligible prior downloaders included, through the daily module digest, on by default; members can unfollow a module or opt out of update email. No opt-in is needed, and legacy `announce` flags do not suppress it. Equal-version media or documentation edits and superseded inventories announce nothing. Before pushing a module update, the coding agent tells the maintainer in chat that publication will notify followers, by email as their preferences say; a push alone sends no mail. The email carries the change list and limitations, in HTML and plain text, and links the Changelog tab.
 

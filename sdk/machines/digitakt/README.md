@@ -4,6 +4,10 @@
 
 Digitakt mods are linkable objects. One core patches the OS once at a few shared sites and calls every subscribed mod's handler, in order, from tables the linker builds. So any set of mods that fits the budgets combines. Modwerk builds them with its own TypeScript linker and OS writer, interoperable with the `.elemod` format. Building firmware in Modwerk is in development, so the machine is in preview.
 
+## Modwerk stack
+
+Today mods reach the unit as a full OS file sent with Transfer. The Digitakt is to get the Octatrack's stack ([recipe](../../../docs/MACHINE_RECIPE.md)): its core grows into a Modwerk base with a hook registry, a USB link, the runtime loader's ColdFire glue, base updates over USB, the MCP's device tools and the machine page. None of it is started. Until it ships this guide's core is what builds, a mod that needs a stock site other mods will want waits for the base's hook, and the full OS file sent with Transfer stays the fallback after it.
+
 ## Create a mod
 
 ```sh
@@ -34,7 +38,7 @@ A site the core does not expose is proposed as a core hook before the mod, never
 - **Fast SRAM:** 2,304 bytes (0x8000F700–0x80010000) for time-critical code.
 - **SRC machine slots:** 4–7, one per new machine.
 
-Claim named resources (a machine slot, a SETTINGS row, a SysEx id, a +Drive path) in `platform.claims`; two mods may never claim the same one.
+Claim named resources (a machine slot, a SETTINGS row, a SysEx id, a +Drive path) in `platform.claims`; two mods may never claim the same one. Save a mod's state only in a record it owns (a tagged kit tail, pattern padding), never in bytes another mod saves ([a module owns what it saves](../../../docs/module-guides/README.md#cross-compatibility)).
 
 ## Toolchain
 
@@ -46,4 +50,4 @@ Send the .syx with Elektron Transfer and confirm on the unit. If a custom OS wil
 
 ## Credits
 
-The file format, memory map, core interface and hook bus were researched and published by [elekloader](https://github.com/irpina/elekloader) (irpina, GPL-2.0-or-later) and [digikit](https://github.com/m-dwyer/digikit) (Em D, GPL-2.0-or-later). The container and SysEx transport were first documented by [elektron-firmware-tool](https://github.com/mischa85/elektron-firmware-tool) (Marcel Bierling, MIT).
+The file format, memory map, core interface and hook bus were researched and published by [elekloader](https://github.com/irpina/elekloader) (irpina, GPL-2.0-or-later). The container and SysEx transport were first documented by [elektron-firmware-tool](https://github.com/mischa85/elektron-firmware-tool) (Marcel Bierling, MIT).

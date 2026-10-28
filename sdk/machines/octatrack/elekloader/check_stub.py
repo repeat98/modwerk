@@ -17,6 +17,8 @@ import sys
 import tempfile
 from pathlib import Path
 
+sys.path.append(str(Path(__file__).resolve().parents[3]))  # sdk/, for firmware_codec
+import firmware_codec  # noqa: E402
 HERE = Path(__file__).resolve().parent
 NOR, NOR_BYTES, SRAM, SDRAM = 0, 0x800000, 0x80000000, 0x40000000
 SLOT_A, SLOT_B, RECORD, TRIES, CONFIRMED = 0x10000, 0x100000, 0x100, 0x80, 0xc0
@@ -125,7 +127,7 @@ def main():
     parser.add_argument('--base', required=True, help='a base .bin: a second OS for slot B')
     parser.add_argument('--upstream', default='~/.cache/modwerk-upstream/elekloader')
     args = parser.parse_args()
-    sys.path.insert(0, str(Path(args.upstream).expanduser()))
+    firmware_codec.use_elekloader(args.upstream)
     sys.path.insert(0, str(HERE))
     from elekloader import formats
     import build_stub

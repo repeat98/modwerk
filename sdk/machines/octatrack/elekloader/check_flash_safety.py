@@ -17,6 +17,8 @@ import json
 from pathlib import Path
 import sys
 
+sys.path.append(str(Path(__file__).resolve().parents[3]))  # sdk/, for firmware_codec
+import firmware_codec  # noqa: E402
 BOOTLOADER = (0x400de1e0, 0x400e21e0)
 
 
@@ -43,7 +45,7 @@ def main():
     parser.add_argument('--build', type=Path, required=True, help="build_core.py's output directory")
     parser.add_argument('--upstream', type=Path, required=True, help='the kit-pinned Elekloader checkout')
     args = parser.parse_args()
-    sys.path.insert(0, str(args.upstream.expanduser()))
+    firmware_codec.use_elekloader(args.upstream)
     from elekloader import formats
     parsed, dev, _ = formats.load(str(args.stock))
     stock = formats.main_image(parsed, dev)
