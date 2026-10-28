@@ -180,7 +180,7 @@ def main():
             elif name.endswith('-result.png'):
                 assert port.ui_phase()==0,'successful Apply left an acknowledgement popup'
             elif name!='popup-closed.png':
-                bottom=63
+                bottom=61
                 marker=1<<(bottom%8)
                 for _ in range(100):
                     if frame[121*8+7-bottom//8]&marker:break # final border pixel

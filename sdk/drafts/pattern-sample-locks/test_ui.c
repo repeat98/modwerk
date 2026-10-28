@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: MIT */
 #include "ui.h"
+#include "font.h"
 #include "modwerk_module.h"
 #include <assert.h>
 #include <stdio.h>
@@ -25,6 +26,11 @@ unsigned psl_native_cursor(void){return native_cursor;}
 void psl_native_set_cursor(unsigned row){assert(row<4);native_cursor=row;}
 void psl_native_close_popup(void){popup=0;}
 void psl_native_redraw(void){++redraws;}
+void psl_native_text(unsigned char *frame,unsigned x,unsigned top,const char *text)
+{
+    /* Host rendering stand-in; native-font rasters are checked in ot_emu. */
+    psl_font_small_text(frame,x,top,text);
+}
 void psl_native_part_menu_draw(unsigned char *frame,unsigned count,unsigned cursor,const char *const *rows)
 {
     assert(frame && count==6 && cursor<count);
@@ -68,12 +74,12 @@ int main(void)
     open_action(0);bounds();
     uint8_t frame[1024]={0};module_draw(frame);
     /* Header background is white, its title glyphs are dark. */
-    for(unsigned x=7;x<121;++x)assert(frame[x*8+7] & 2u);
-    assert(!(frame[10*8+7] & (1u<<2))); /* first letter L at (10,2) */
+    for(unsigned x=7;x<121;++x)assert(frame[x*8+7] & (1u<<4));
+    assert(!(frame[10*8+7] & (1u<<5))); /* first letter L at (10,5) */
     /* Disabled tracks keep their text column alignment but have no bracket
      * pixels; this specifically catches the former disabled-checkbox UI. */
     for(unsigned t=0;t<8;++t)if(!(available&(1u<<t))) {
-        unsigned x=10+56*(t/4),y=10+8*(t%4);
+        unsigned x=10+56*(t/4),y=12+7*(t%4);
         for(unsigned a=x;a<x+16;++a)for(unsigned b=y;b<y+5;++b)
             assert(!(frame[a*8+7-b/8]&(1u<<(b%8))));
     }

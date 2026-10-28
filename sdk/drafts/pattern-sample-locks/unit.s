@@ -34,7 +34,7 @@ psl_write_batch:
 	move.l %d2,-(%sp)
 	move.l 12(%sp),%d1
 #APP
-| 113 "sdk/drafts/pattern-sample-locks/native.c" 1
+| 122 "sdk/drafts/pattern-sample-locks/native.c" 1
 	move.w %sr,%d2
 	move.w #0x2700,%sr
 | 0 "" 2
@@ -51,7 +51,7 @@ psl_write_batch:
 	move.l -66600948,%d0
 	sub.l 4(%sp),%d0
 #APP
-| 118 "sdk/drafts/pattern-sample-locks/native.c" 1
+| 127 "sdk/drafts/pattern-sample-locks/native.c" 1
 	move.w %d2,%sr
 | 0 "" 2
 #NO_APP
@@ -954,8 +954,8 @@ psl_font_small_text:
 	moveq #-5,%d0
 	and.l %d3,%d0
 	tst.l %d0
-	jne .L200
-	moveq #6,%d4
+	jeq .L200
+	moveq #4,%d4
 	jra .L189
 .L186:
 	moveq #93,%d1
@@ -968,7 +968,7 @@ psl_font_small_text:
 	moveq #1,%d4
 	jra .L189
 .L200:
-	moveq #4,%d4
+	moveq #6,%d4
 	jra .L189
 .L201:
 	moveq #3,%d4
@@ -1742,6 +1742,50 @@ psl_native_redraw:
 	rts
 	.size	psl_native_redraw, .-psl_native_redraw
 	.align	2
+	.globl	psl_native_text
+	.type	psl_native_text, @function
+psl_native_text:
+	lea (-28,%sp),%sp
+	move.l %a6,-(%sp)
+	move.l %d2,-(%sp)
+	move.l 48(%sp),%d1
+	move.l 52(%sp),%a6
+	tst.l 40(%sp)
+	jeq .L363
+	tst.l %a6
+	jeq .L363
+	moveq #123,%d0
+	cmp.l 44(%sp),%d0
+	jcs .L363
+	moveq #59,%d2
+	cmp.l %d1,%d2
+	jcs .L363
+	lea (8,%sp),%a1
+	move.l #1074524426,%a0
+	move.l %a1,%d0
+.L365:
+	move.l (%a0)+,(%a1)+
+	cmp.l #1074524454,%a0
+	jne .L365
+	move.l 40(%sp),%a0
+	moveq #59,%d2
+	sub.l %d1,%d2
+	move.l %a0,20(%sp)
+	move.l %a6,-(%sp)
+	pea -1.w
+	move.l %d2,-(%sp)
+	move.l 56(%sp),-(%sp)
+	move.l %d0,-(%sp)
+	move.l #1074505846,-(%sp)
+	jsr 1073818584
+	lea (24,%sp),%sp
+.L363:
+	move.l (%sp)+,%d2
+	move.l (%sp)+,%a6
+	lea (28,%sp),%sp
+	rts
+	.size	psl_native_text, .-psl_native_text
+	.align	2
 	.globl	psl_native_part_menu_draw
 	.type	psl_native_part_menu_draw, @function
 psl_native_part_menu_draw:
@@ -1750,27 +1794,27 @@ psl_native_part_menu_draw:
 	move.l 60(%sp),%d4
 	move.l 72(%sp),%a2
 	tst.l %d4
-	jeq .L363
+	jeq .L373
 	tst.l %a2
-	jeq .L363
+	jeq .L373
 	moveq #6,%d0
 	cmp.l 64(%sp),%d0
-	jne .L363
+	jne .L373
 	moveq #5,%d1
 	cmp.l 68(%sp),%d1
-	jcs .L363
+	jcs .L373
 	lea (28,%sp),%a1
 	move.l #1074524426,%a0
-.L365:
+.L375:
 	move.l (%a0)+,(%a1)+
 	cmp.l #1074524454,%a0
-	jne .L365
+	jne .L375
 	move.w #44,%a6
 	move.l %a2,%d3
 	move.l %a2,%d2
 	move.l %d4,40(%sp)
 	add.l #24,%d3
-.L368:
+.L378:
 	move.l %d2,%a0
 	move.l (%a0)+,-(%sp)
 	pea -1.w
@@ -1779,19 +1823,19 @@ psl_native_part_menu_draw:
 	jsr 1073819440
 	lea (12,%sp),%sp
 	tst.l %d0
-	jle .L366
+	jle .L376
 	addq.l #6,%d0
 	cmp.l %a6,%d0
-	jls .L366
+	jls .L376
 	move.l %d0,%a6
-.L366:
+.L376:
 	cmp.l %d2,%d3
-	jne .L368
+	jne .L378
 	moveq #116,%d0
 	cmp.l %a6,%d0
-	jcc .L369
+	jcc .L379
 	move.w #116,%a6
-.L369:
+.L379:
 	move.l #128,%d3
 	clr.l %d2
 	sub.l %a6,%d3
@@ -1812,7 +1856,7 @@ psl_native_part_menu_draw:
 	addq.l #3,%d1
 	move.l %d1,64(%sp)
 	lea (40,%sp),%sp
-.L371:
+.L381:
 	move.l %d2,%d0
 	move.l %d2,%d1
 	lsl.l #3,%d0
@@ -1828,7 +1872,7 @@ psl_native_part_menu_draw:
 	jsr 1073818584
 	lea (24,%sp),%sp
 	cmp.l 68(%sp),%d2
-	jne .L370
+	jne .L380
 	pea 7.w
 	moveq #11,%d0
 	pea -4(%a6)
@@ -1839,12 +1883,12 @@ psl_native_part_menu_draw:
 	move.l %d4,-(%sp)
 	jsr psl_font_invert
 	lea (20,%sp),%sp
-.L370:
+.L380:
 	addq.l #1,%d2
 	moveq #6,%d0
 	cmp.l %d2,%d0
-	jne .L371
-.L363:
+	jne .L381
+.L373:
 	movem.l (%sp),#17436
 	lea (56,%sp),%sp
 	rts
@@ -1893,73 +1937,74 @@ psl_native_part_menu_draw:
 	.globl	module_draw
 	.type	module_draw, @function
 module_draw:
-	lea (-92,%sp),%sp
+	lea (-80,%sp),%sp
+	move.l phase,%d0
 	movem.l #31996,(%sp)
-	move.l phase,%d2
-	move.l 96(%sp),%a6
-	tst.l %d2
-	jeq .L381
+	move.l 84(%sp),%a6
+	tst.l %d0
+	jeq .L391
 	tst.l %a6
-	jeq .L381
-	moveq #1,%d0
-	cmp.l %d2,%d0
-	jne .L383
+	jeq .L391
+	moveq #1,%d1
+	cmp.l %d0,%d1
+	jne .L393
 	pea part_rows
 	move.l cursor,-(%sp)
 	pea 6.w
 	move.l %a6,-(%sp)
 	jsr psl_native_part_menu_draw
 	lea (16,%sp),%sp
-.L381:
+.L391:
 	movem.l (%sp),#31996
-	lea (92,%sp),%sp
+	lea (80,%sp),%sp
 	rts
-.L383:
-	move.l %d2,%d0
+.L393:
 	subq.l #2,%d0
 	lsr.l #1,%d0
-	jne .L417
-	moveq #64,%d4
-	sub.l %a2,%a2
-	move.l %d4,52(%sp)
-.L384:
-	move.l 52(%sp),-(%sp)
+	jne .L424
+	move.w #2,%a2
+	moveq #60,%d6
+	move.l %d6,48(%sp)
+.L394:
+	lea (3,%a2),%a0
+	move.l %a0,52(%sp)
+	move.l 48(%sp),-(%sp)
 	pea 116.w
 	move.l %a2,-(%sp)
 	pea 6.w
 	move.l %a6,-(%sp)
 	jsr psl_font_clear
-	lea action,%a0
-	move.l (%a0),68(%sp)
 	lea (20,%sp),%sp
-	tst.l 48(%sp)
-	jne .L418
+	tst.l action
+	jne .L425
 	move.l #.LC0,%d0
-.L385:
+.L395:
 	move.l %d0,-(%sp)
-	pea 2(%a2)
+	move.l 56(%sp),-(%sp)
 	pea 10.w
 	move.l %a6,-(%sp)
-	lea psl_font_small_text,%a3
+	lea psl_native_text,%a3
 	jsr (%a3)
 	pea 7.w
 	pea 114.w
-	pea 1(%a2)
+	pea 2(%a2)
 	pea 7.w
 	move.l %a6,-(%sp)
 	jsr psl_font_invert
 	lea (36,%sp),%sp
-	moveq #5,%d0
-	cmp.l %d2,%d0
-	jne .L386
+	move.l %a3,%a4
+	move.l phase,%d0
+	moveq #5,%d1
+	cmp.l %d0,%d1
+	jne .L396
 	pea .LC11
-	pea 18(%a2)
+	pea 17(%a2)
 	pea 10.w
 	move.l %a6,-(%sp)
 	jsr (%a3)
 	pea .LC12
-.L445:
-	pea 26(%a2)
+.L450:
+	pea 24(%a2)
 	pea 10.w
 	move.l %a6,-(%sp)
 	jsr (%a3)
@@ -1967,154 +2012,141 @@ module_draw:
 	pea 58.w
 	pea 116.w
 	pea 3.w
-.L444:
+.L449:
 	pea 6.w
 	move.l %a6,-(%sp)
 	jsr psl_font_box
 	lea (20,%sp),%sp
-	jra .L381
-.L417:
-	moveq #58,%d5
+	jra .L391
+.L424:
+	moveq #58,%d7
 	move.w #3,%a2
-	move.l %d5,52(%sp)
-	jra .L384
-.L418:
+	move.l %d7,48(%sp)
+	jra .L394
+.L425:
 	move.l #.LC1,%d0
-	jra .L385
-.L386:
-	moveq #4,%d1
-	cmp.l %d2,%d1
-	jne .L387
+	jra .L395
+.L396:
+	moveq #4,%d2
+	cmp.l %d0,%d2
+	jne .L397
 	move.l message,-(%sp)
-	pea 18(%a2)
+	pea 17(%a2)
 	pea 10.w
 	move.l %a6,-(%sp)
 	jsr (%a3)
 	pea .LC13
-	jra .L445
-.L387:
-	moveq #3,%d4
-	cmp.l %d2,%d4
-	jne .L388
+	jra .L450
+.L397:
+	subq.l #3,%d0
+	tst.l %d0
+	jne .L398
 	pea .LC14
-	move.l #635712,%d5
-	move.l %sp,%d3
-	add.l #72,%d3
-	move.l %d3,-(%sp)
-	moveq #10,%d7
+	move.l #635712,%d7
+	pea 60(%sp)
+	moveq #10,%d2
 	jsr text
+	clr.b %d6
 	move.l plan,%d0
 	add.l #-1074668000,%d0
-	divu.l %d5,%d0
+	divu.l %d7,%d0
 	add.l #65,%d0
-	move.b %d0,84(%sp)
+	move.b %d0,72(%sp)
 	mvz.b plan+4,%d0
 	addq.l #8,%sp
+	move.b %d6,67(%sp)
 	addq.l #1,%d0
-	remu.l %d7,%d1:%d0
-	divu.l %d7,%d0
+	remu.l %d2,%d1:%d0
+	divu.l %d2,%d0
 	add.l #48,%d0
-	move.b %d0,77(%sp)
-	clr.b %d0
 	add.l #48,%d1
-	move.b %d1,78(%sp)
-	move.b %d0,79(%sp)
-	move.l %d3,-(%sp)
-	pea 10.w
+	move.b %d0,65(%sp)
+	move.b %d1,66(%sp)
+	pea 56(%sp)
+	pea 10(%a2)
 	pea 10.w
 	move.l %a6,-(%sp)
 	jsr (%a3)
 	lea (16,%sp),%sp
-.L388:
-	moveq #3,%d1
-	cmp.l %d2,%d1
-	seq %d0
-	neg.l %d0
-	tst.b %d0
-	jeq .L389
-	moveq #18,%d4
-	move.l %d4,64(%sp)
-.L390:
-	moveq #3,%d7
-	cmp.l %d2,%d7
-	sne %d0
-	neg.l %d0
-	tst.b %d0
-	jeq .L391
-	lea (72,%sp),%a5
-.L392:
-	lea (3,%a5),%a0
-	clr.l %d3
-	move.l %a0,56(%sp)
-	lea plan+91,%a0
-	move.l %a0,60(%sp)
-	lea psl_font_small_text,%a4
-.L412:
-	moveq #3,%d0
-	moveq #3,%d1
-	and.l %d3,%d0
-	move.l %d3,%d4
-	lsr.l #2,%d4
-	move.l eligible,%d5
-	lsr.l %d3,%d5
-	move.l 64(%sp),%a3
-	mulu.w #56,%d4
-	lsl.l #3,%d0
-	move.l %d4,%d6
-	add.l #10,%d6
-	move.l %d4,44(%sp)
-	add.l %d0,%a3
-	moveq #1,%d0
-	and.l %d0,%d5
-	cmp.l %d2,%d1
-	jeq .L393
-	tst.l %d5
-	jeq .L419
-	move.l selected,%d0
-	btst %d3,%d0
-	jeq .L420
-	move.l #.LC3,%d0
-.L394:
-	move.l %d0,-(%sp)
-	pea 72(%sp)
-	jsr text
-	addq.l #8,%sp
-.L393:
-	move.l %d3,%d0
-	add.l #49,%d0
-	moveq #3,%d7
-	moveq #32,%d4
-	move.b #84,(%a5)
-	move.b %d0,1(%a5)
-	move.b %d4,2(%a5)
-	cmp.l %d2,%d7
-	jne .L395
-	tst.l %d5
-	jeq .L396
-	move.l selected,%d0
-	btst %d3,%d0
-	jne .L421
-.L396:
-	pea .LC15
-	move.l 60(%sp),-(%sp)
-	jsr text
-	addq.l #8,%sp
 .L398:
-	pea 68(%sp)
-	move.l %a3,-(%sp)
-	move.l %d6,-(%sp)
-	move.l %a6,-(%sp)
-	jsr psl_font_small_text
-	lea (16,%sp),%sp
-	tst.l %d5
-	jne .L403
-	tst.l 44(%sp)
-	seq %d4
-	neg.l %d4
-	tst.b %d4
-	jeq .L404
-	moveq #58,%d7
+	move.l #plan+91,%d5
+	clr.l %d2
+.L419:
+	move.l %d2,%d3
+	lsr.l #2,%d3
+	move.l phase,%d7
+	moveq #3,%d0
+	mulu.w #56,%d3
+	move.l %d3,%d4
+	add.l #10,%d4
+	cmp.l %d7,%d0
+	jne .L426
+	moveq #14,%d1
+.L399:
+	moveq #3,%d0
+	and.l %d2,%d0
+	move.l eligible,%d6
+	lsr.l %d2,%d6
+	move.l 52(%sp),%a3
+	mulu.w #7,%d0
+	add.l %d0,%a3
+	add.l %d1,%a3
+	moveq #1,%d1
+	moveq #3,%d0
+	and.l %d1,%d6
+	cmp.l %d7,%d0
+	jeq .L427
+	tst.l %d6
+	jeq .L428
+	move.l selected,%d0
+	btst %d2,%d0
+	jeq .L429
+	move.l #.LC3,%d0
+.L401:
+	move.l %d0,-(%sp)
+	pea 60(%sp)
+	jsr text
+	addq.l #8,%sp
+	lea (60,%sp),%a1
+.L400:
+	moveq #32,%d1
+	move.l %d2,%d0
+	add.l #49,%d0
+	move.b #84,(%a1)
+	move.b %d0,1(%a1)
+	subq.l #3,%d7
+	move.b %d1,2(%a1)
+	tst.l %d7
+	jne .L402
+	lea (3,%a1),%a0
+	tst.l %d6
+	jeq .L403
+	move.l selected,%d0
+	btst %d2,%d0
+	jne .L430
+.L403:
+	pea .LC15
+	move.l %a0,-(%sp)
+	jsr text
+	addq.l #8,%sp
 .L405:
+	pea 56(%sp)
+	move.l %a3,-(%sp)
+	move.l %d4,-(%sp)
+	move.l %a6,-(%sp)
+	jsr (%a4)
+	lea (16,%sp),%sp
+	move.l eligible,%d0
+	move.l phase,%d6
+	btst %d2,%d0
+	jne .L410
+	tst.l %d3
+	seq %d3
+	neg.l %d3
+	tst.b %d3
+	jeq .L411
+	moveq #58,%d7
+.L412:
 	move.l %a3,%d1
 	move.l %a3,%d0
 	addq.l #5,%d1
@@ -2123,251 +2155,255 @@ module_draw:
 	scs %d0
 	neg.l %d0
 	tst.b %d0
-	jeq .L406
+	jeq .L413
 	move.w #1,%a0
-.L407:
+.L414:
 	add.l %a3,%a0
-.L408:
-	cmp.l %d6,%d7
-	jls .L411
-	mvz.w %d6,%d1
+.L415:
+	cmp.l %d4,%d7
+	jls .L418
+	mvz.w %d4,%d1
 	move.l %a3,%d0
 	lsl.l #3,%d1
 	addq.l #7,%d1
-.L410:
-	move.w %d0,%d4
-	moveq #3,%d5
-	mulu.w #3,%d4
-	add.l %d6,%d4
-	and.l %d5,%d4
-	tst.l %d4
-	jne .L409
-	moveq #7,%d5
-	and.l %d0,%d5
-	move.l %d0,%d4
-	lsr.l #3,%d4
-	move.l %d1,%a1
-	sub.l %d4,%a1
-	moveq #1,%d4
+	move.l %d1,44(%sp)
+.L417:
+	move.w %d0,%d3
+	moveq #3,%d1
+	mulu.w #3,%d3
+	add.l %d4,%d3
+	and.l %d1,%d3
+	tst.l %d3
+	jne .L416
+	moveq #7,%d1
+	and.l %d0,%d1
+	move.l %d0,%d3
+	lsr.l #3,%d3
+	move.l 44(%sp),%a1
+	sub.l %d3,%a1
+	moveq #1,%d3
 	add.l %a6,%a1
-	lsl.l %d5,%d4
-	move.b (%a1),%d5
-	not.l %d4
-	and.l %d5,%d4
-	move.b %d4,(%a1)
-.L409:
+	lsl.l %d1,%d3
+	move.b (%a1),%d1
+	not.l %d3
+	move.w %d1,%a5
+	move.l %a5,%d1
+	and.l %d1,%d3
+	move.b %d3,(%a1)
+.L416:
 	addq.l #1,%d0
 	cmp.l %d0,%a0
-	jne .L410
-	addq.l #1,%d6
-	jra .L408
-.L389:
-	moveq #10,%d5
-	move.l %d5,64(%sp)
-	jra .L390
-.L391:
-	lea (68,%sp),%a5
-	jra .L392
-.L419:
+	jne .L417
+	addq.l #1,%d4
+	jra .L415
+.L426:
+	moveq #7,%d1
+	jra .L399
+.L428:
 	move.l #.LC2,%d0
-	jra .L394
-.L420:
+	jra .L401
+.L429:
 	move.l #.LC4,%d0
-	jra .L394
-.L421:
-	move.l 60(%sp),%a1
+	jra .L401
+.L427:
+	lea (56,%sp),%a1
+	jra .L400
+.L430:
+	move.l %d5,%a5
 	clr.l %d0
-	sub.l %a0,%a0
-.L397:
-	move.b (%a1)+,%d7
-	addq.l #1,%a0
-	move.b 511(%a1),%d1
+	clr.l %d6
+.L404:
+	move.b (%a5)+,%d7
+	addq.l #1,%d6
+	move.b 511(%a5),%d1
 	eor.l %d7,%d1
 	tst.b %d1
 	sne %d1
 	mvs.b %d1,%d1
 	sub.l %d1,%d0
 	moveq #64,%d1
-	cmp.l %a0,%d1
-	jne .L397
-	moveq #99,%d4
-	cmp.l %d0,%d4
-	jcc .L399
-	moveq #100,%d4
+	cmp.l %d6,%d1
+	jne .L404
+	moveq #99,%d6
+	cmp.l %d0,%d6
+	jcc .L406
+	moveq #100,%d1
 	move.l %d0,%d7
-	divu.l %d4,%d7
-	lea (4,%a5),%a0
-	moveq #10,%d1
-	remu.l %d1,%d4:%d7
-	move.l %d4,%d1
+	divu.l %d1,%d7
+	lea (4,%a1),%a0
+	move.l %d7,%d6
+	moveq #10,%d7
+	remu.l %d7,%d1:%d6
 	add.l #48,%d1
-	move.b %d1,3(%a5)
-.L400:
-	moveq #10,%d4
-	move.l %d0,%d1
-	divu.l %d4,%d1
-	move.l %d1,%d7
-	remu.l %d4,%d1:%d7
+	move.b %d1,3(%a1)
+.L407:
+	moveq #10,%d1
+	move.l %d0,%d7
+	divu.l %d1,%d7
+	move.l %d7,%d6
+	remu.l %d1,%d7:%d6
+	move.l %d7,%d1
 	add.l #48,%d1
 	move.b %d1,(%a0)+
-	jra .L401
-.L399:
-	move.l 56(%sp),%a0
-	moveq #9,%d7
-	cmp.l %d0,%d7
-	jcs .L400
-.L401:
-	moveq #10,%d4
-	remu.l %d4,%d1:%d0
+	jra .L408
+.L406:
+	moveq #9,%d6
+	cmp.l %d0,%d6
+	jcs .L407
+.L408:
+	moveq #10,%d6
+	remu.l %d6,%d1:%d0
 	clr.b %d7
 	add.l #48,%d1
 	move.b %d1,(%a0)
 	move.b %d7,1(%a0)
-	jra .L398
-.L395:
-	tst.l %d5
-	jeq .L423
-	lea captured+7,%a0
-	tst.b (%a0,%d3.l)
-	jeq .L424
-	moveq #70,%d0
-.L402:
-	move.b %d0,3(%a5)
-	clr.b %d0
-	move.b %d0,4(%a5)
-	jra .L398
-.L423:
-	moveq #45,%d0
-	jra .L402
-.L424:
-	moveq #83,%d0
-	jra .L402
-.L404:
-	moveq #114,%d7
 	jra .L405
-.L406:
+.L402:
+	tst.l %d6
+	jeq .L431
+	lea captured+7,%a0
+	tst.b (%a0,%d2.l)
+	jeq .L432
+	moveq #70,%d0
+.L409:
+	move.b %d0,3(%a1)
+	clr.b %d0
+	move.b %d0,4(%a1)
+	jra .L405
+.L431:
+	moveq #45,%d0
+	jra .L409
+.L432:
+	moveq #83,%d0
+	jra .L409
+.L411:
+	moveq #114,%d7
+	jra .L412
+.L413:
 	move.w #5,%a0
-	jra .L407
-.L403:
+	jra .L414
+.L410:
 	moveq #2,%d7
-	cmp.l %d2,%d7
-	jne .L411
-	cmp.l cursor.l,%d3
-	jne .L411
+	cmp.l %d6,%d7
+	jne .L418
+	cmp.l cursor.l,%d2
+	jne .L418
 	pea 7.w
 	pea 50.w
 	pea -1(%a3)
-	move.l 56(%sp),%a0
+	move.l %d3,%a0
 	pea 8(%a0)
 	move.l %a6,-(%sp)
 	jsr psl_font_invert
 	lea (20,%sp),%sp
-.L411:
-	moveq #64,%d0
-	addq.l #1,%d3
-	moveq #8,%d1
-	add.l %d0,60(%sp)
-	cmp.l %d3,%d1
-	jne .L412
-	subq.l #3,%d2
-	tst.l %d2
-	jne .L413
-	moveq #1,%d5
-	cmp.l 48(%sp),%d5
-	jeq .L425
+.L418:
+	addq.l #1,%d2
+	add.l #64,%d5
+	moveq #8,%d0
+	cmp.l %d2,%d0
+	jne .L419
+	move.l %a2,%d3
+	move.l %a2,%d2
+	add.l #45,%d3
+	add.l #52,%d2
+	subq.l #3,%d6
+	tst.l %d6
+	jne .L420
+	moveq #1,%d6
+	cmp.l action.l,%d6
+	jeq .L433
 	tst.l replace
-	jeq .L426
+	jeq .L434
 	move.l #.LC7,%d0
-.L414:
+.L421:
 	move.l %d0,-(%sp)
-	pea 50.w
+	move.l %d3,-(%sp)
 	pea 10.w
 	move.l %a6,-(%sp)
-	lea psl_font_small_text,%a3
-	jsr (%a3)
+	jsr (%a4)
 	pea .LC16
-	pea 58.w
+	move.l %d2,-(%sp)
 	pea 10.w
 	move.l %a6,-(%sp)
-	jsr (%a3)
+	jsr (%a4)
 	lea (32,%sp),%sp
-.L415:
-	move.l 52(%sp),-(%sp)
+.L422:
+	move.l 48(%sp),-(%sp)
 	pea 116.w
 	move.l %a2,-(%sp)
-	jra .L444
-.L425:
+	jra .L449
+.L433:
 	move.l #.LC6,%d0
-	jra .L414
-.L426:
+	jra .L421
+.L434:
 	move.l #.LC5,%d0
-	jra .L414
-.L413:
+	jra .L421
+.L420:
 	move.l message,%d0
 	tst.l %d0
-	jne .L416
+	jne .L423
 	moveq #1,%d7
-	cmp.l 48(%sp),%d7
-	jeq .L427
+	cmp.l action.l,%d7
+	jeq .L435
 	tst.l replace
-	jeq .L428
+	jeq .L436
 	move.l #.LC10,%d0
-.L416:
+.L423:
 	move.l %d0,-(%sp)
-	pea 42.w
+	pea 38(%a2)
 	pea 10.w
 	move.l %a6,-(%sp)
 	jsr (%a4)
 	pea .LC17
-	pea 50.w
+	move.l %d3,-(%sp)
 	pea 10.w
 	move.l %a6,-(%sp)
 	jsr (%a4)
 	lea (28,%sp),%sp
 	move.l #.LC18,(%sp)
-	pea 58.w
+	move.l %d2,-(%sp)
 	pea 10.w
 	move.l %a6,-(%sp)
 	jsr (%a4)
 	lea (16,%sp),%sp
-	jra .L415
-.L427:
+	jra .L422
+.L435:
 	move.l #.LC9,%d0
-	jra .L416
-.L428:
+	jra .L423
+.L436:
 	move.l #.LC8,%d0
-	jra .L416
+	jra .L423
 	.size	module_draw, .-module_draw
 	.align	2
 	.globl	psl_native_transport
 	.type	psl_native_transport, @function
 psl_native_transport:
 	move.l #-2147463394,%a0
-.L448:
+.L453:
 	tst.b (%a0)
-	jne .L451
+	jne .L456
 	lea (84,%a0),%a0
 	cmp.l #-2147462050,%a0
-	jne .L448
+	jne .L453
 	move.l -2147457608,%d0
 	tst.l %d0
-	jeq .L452
-.L450:
+	jeq .L457
+.L455:
 	moveq #1,%d0
-.L446:
+.L451:
 	rts
-.L452:
+.L457:
 	move.l #-2147457792,%a0
-.L449:
+.L454:
 	tst.b (%a0)
-	jne .L450
+	jne .L455
 	addq.l #1,%a0
 	cmp.l #-2147457776,%a0
-	jne .L449
-	jra .L446
-.L451:
+	jne .L454
+	jra .L451
+.L456:
 	moveq #2,%d0
-	jra .L446
+	jra .L451
 	.size	psl_native_transport, .-psl_native_transport
 	.align	2
 	.globl	psl_native_stop
@@ -2377,18 +2413,18 @@ psl_native_stop:
 	movem.l #1036,(%sp)
 	move.b 1175456541,%d0
 	btst #5,%d0
-	jeq .L456
-.L458:
+	jeq .L461
+.L463:
 	clr.l %d0
-.L455:
+.L460:
 	movem.l (%sp),#1036
 	lea (12,%sp),%sp
 	rts
-.L456:
+.L461:
 	tst.w 1175263050.l
-	jne .L458
+	jne .L463
 #APP
-| 90 "sdk/drafts/pattern-sample-locks/native.c" 1
+| 99 "sdk/drafts/pattern-sample-locks/native.c" 1
 	move.w %sr,%d3
 	move.w #0x2700,%sr
 | 0 "" 2
@@ -2409,13 +2445,13 @@ psl_native_stop:
 	move.l %d0,-(%sp)
 	jsr (%a2)
 #APP
-| 93 "sdk/drafts/pattern-sample-locks/native.c" 1
+| 102 "sdk/drafts/pattern-sample-locks/native.c" 1
 	move.w %d3,%sr
 | 0 "" 2
 #NO_APP
 	moveq #1,%d0
 	lea (16,%sp),%sp
-	jra .L455
+	jra .L460
 	.size	psl_native_stop, .-psl_native_stop
 	.align	2
 	.globl	psl_native_commit
@@ -2425,59 +2461,59 @@ psl_native_commit:
 	movem.l #31996,(%sp)
 	move.l 348(%sp),%a6
 #APP
-| 102 "sdk/drafts/pattern-sample-locks/native.c" 1
+| 111 "sdk/drafts/pattern-sample-locks/native.c" 1
 	move.w %sr,%d3
 | 0 "" 2
 #NO_APP
 	move.l %d3,%d0
 	and.l #1792,%d0
 	cmp.l #1023,%d0
-	jhi .L460
+	jhi .L465
 	move.l %d3,%d0
 	and.l #-1793,%d0
 	bset #10,%d0
 #APP
-| 104 "sdk/drafts/pattern-sample-locks/native.c" 1
+| 113 "sdk/drafts/pattern-sample-locks/native.c" 1
 	move.w %d0,%sr
 | 0 "" 2
 #NO_APP
-.L460:
+.L465:
 	tst.l %a6
-	jeq .L464
+	jeq .L469
 	tst.b 10(%a6)
-	jeq .L464
+	jeq .L469
 	jsr psl_native_transport
 	tst.l %d0
-	jne .L464
+	jne .L469
 	move.l %sp,%d4
 	add.l #160,%d4
 	move.l %d4,-(%sp)
 	jsr psl_native_source
 	addq.l #4,%sp
 	tst.l %d0
-	jeq .L464
+	jeq .L469
 	move.l %d4,-(%sp)
 	move.l %a6,-(%sp)
 	jsr psl_validate
 	addq.l #8,%sp
 	move.l %d0,%d2
 	tst.l %d0
-	jne .L465
+	jne .L470
 	tst.w 1116(%a6)
-	jne .L502
+	jne .L507
 	clr.b %d0
 	move.b %d0,10(%a6)
-.L465:
+.L470:
 #APP
-| 176 "sdk/drafts/pattern-sample-locks/native.c" 1
+| 185 "sdk/drafts/pattern-sample-locks/native.c" 1
 	move.w %d3,%sr
 | 0 "" 2
 #NO_APP
-	jra .L459
-.L502:
+	jra .L464
+.L507:
 	clr.l %d0
 	lea (280,%sp),%a0
-.L466:
+.L471:
 	move.l %d0,%a1
 	add.l #1187501196,%a1
 	move.b (%a1),%d1
@@ -2487,7 +2523,7 @@ psl_native_commit:
 	move.b %d1,-1(%a1,%d0.l)
 	moveq #64,%d1
 	cmp.l %d0,%d1
-	jne .L466
+	jne .L471
 	mvz.b 4(%a6),%d5
 	mvz.b 7(%a6),%d6
 	move.l %d4,%a1
@@ -2509,7 +2545,7 @@ psl_native_commit:
 	clr.l 58(%sp)
 	move.l %d0,%a0
 	add.l #268525902,%a0
-.L476:
+.L481:
 	move.l 62(%sp),%a1
 	move.l 50(%sp),%a2
 	move.l 66(%sp),%a4
@@ -2518,20 +2554,20 @@ psl_native_commit:
 	move.l %a0,(%a4)
 	move.l %d0,(%a2)
 	btst %d1,%d5
-	jeq .L468
+	jeq .L473
 	mvz.w %d1,%d5
 	sub.l %a1,%a1
 	lsl.l #3,%d5
 	lea (%a6,%d5.l),%a2
-.L470:
+.L475:
 	mvz.b (%a1,%a0.l),%d6
 	mvz.b 27(%a2,%a1.l),%d5
 	cmp.l %d6,%d5
-	jne .L469
+	jne .L474
 	addq.l #1,%a1
 	moveq #8,%d6
 	cmp.l %a1,%d6
-	jne .L470
+	jne .L475
 	moveq #1,%d6
 	moveq #89,%d5
 	lsl.l %d1,%d6
@@ -2542,7 +2578,7 @@ psl_native_commit:
 	move.l %d6,70(%sp)
 	not.l %d6
 	move.l %d6,92(%sp)
-.L475:
+.L480:
 	move.b (%a3),86(%sp)
 	move.l 88(%sp),%a4
 	add.l %d5,%a4
@@ -2551,14 +2587,14 @@ psl_native_commit:
 	move.l %d6,%a4
 	mvz.b 86(%sp),%d6
 	cmp.l %a4,%d6
-	jne .L469
+	jne .L474
 	move.b 512(%a3),%d6
 	addq.l #1,%a3
 	move.b %d6,87(%sp)
 	mvz.b %d6,%d6
 	move.l %d6,46(%sp)
 	cmp.l %a4,%d6
-	jeq .L471
+	jeq .L476
 	moveq #10,%d6
 	muls.l %d4,%d6
 	move.l %d0,%a2
@@ -2579,31 +2615,31 @@ psl_native_commit:
 	or.l %d6,58(%sp)
 	move.l 46(%sp),%d6
 	cmp.l #255,%d6
-	jne .L472
+	jne .L477
 	sub.l %a2,%a2
-.L473:
+.L478:
 	mvz.b 89(%a2,%d0.l),%d6
 	cmp.l #255,%d6
-	jne .L472
+	jne .L477
 	addq.l #1,%a2
 	moveq #31,%d6
 	cmp.l %a2,%d6
-	jne .L473
+	jne .L478
 	move.b (%a1),%d6
 	and.l 92(%sp),%d6
-	jra .L531
-.L472:
+	jra .L536
+.L477:
 	move.b (%a1),%d6
 	or.l 70(%sp),%d6
-.L531:
+.L536:
 	move.b %d6,(%a1)
-.L471:
+.L476:
 	addq.l #1,%a1
 	add.l #32,%d0
 	add.l #32,%d5
 	cmp.l #2137,%d5
-	jne .L475
-.L468:
+	jne .L480
+.L473:
 	addq.l #4,62(%sp)
 	addq.l #4,50(%sp)
 	addq.l #4,66(%sp)
@@ -2612,11 +2648,11 @@ psl_native_commit:
 	add.l #64,%d7
 	moveq #8,%d0
 	cmp.l %d1,%d0
-	jne .L476
+	jne .L481
 	jsr psl_native_transport
 	move.l %d0,%d5
 	tst.l %d0
-	jne .L469
+	jne .L474
 	mvz.b 5(%a6),%d7
 	move.l (%a6),%d6
 	move.l %d7,-(%sp)
@@ -2625,19 +2661,19 @@ psl_native_commit:
 	jsr psl_native_context
 	lea (12,%sp),%sp
 	tst.l %d0
-	jeq .L469
+	jeq .L474
 	lea (216,%sp),%a1
 	move.l #1187501196,%a0
-.L480:
+.L485:
 	mvz.b (%a0),%d1
 	mvz.b (%a1)+,%d0
 	cmp.l %d1,%d0
-	jeq .L479
+	jeq .L484
 	moveq #3,%d2
-.L479:
+.L484:
 	addq.l #1,%a0
 	cmp.l #1187501260,%a0
-	jne .L480
+	jne .L485
 	mulu.w #6322,%d7
 	move.l %d6,%a1
 	add.l #585088,%a1
@@ -2645,58 +2681,58 @@ psl_native_commit:
 	move.l #714,%d6
 	add.l %d7,%a1
 	lea (34,%a1),%a3
-.L487:
+.L492:
 	move.l 78(%sp),%d7
 	btst %d1,%d7
-	jeq .L481
+	jeq .L486
 	mvz.b (%a3,%d1.l),%d0
 	mvz.b 11(%a6,%d1.l),%d7
 	cmp.l %d0,%d7
-	jne .L505
+	jne .L510
 	move.l %d0,%a0
 	add.l %d6,%a0
 	mvz.b 19(%a6,%d1.l),%d0
 	mvz.b (%a1,%a0.l),%d7
 	cmp.l %d7,%d0
-	jne .L505
-.L482:
+	jne .L510
+.L487:
 	mvz.w %d1,%d0
 	move.l 96(%sp,%d1.l*4),%a2
 	lsl.l #3,%d0
 	lea (%a6,%d0.l),%a4
 	clr.l %d0
-.L484:
+.L489:
 	mvz.b (%a2,%d0.l),%d7
 	move.l %d7,62(%sp)
 	mvz.b 27(%a4,%d0.l),%d7
 	cmp.l 62(%sp),%d7
-	jne .L507
+	jne .L512
 	move.l (%a5),%a0
 	mvz.b (%a0,%d0.l),%d7
 	cmp.l 62(%sp),%d7
-	jne .L507
-.L483:
+	jne .L512
+.L488:
 	addq.l #1,%d0
 	moveq #8,%d7
 	cmp.l %d0,%d7
-	jne .L484
+	jne .L489
 	move.l 54(%sp),%a4
 	moveq #120,%d0
-.L486:
+.L491:
 	mvz.b (%a2,%d0.l),%d7
 	move.l %d7,62(%sp)
 	mvz.b (%a4)+,%d7
 	cmp.l 62(%sp),%d7
-	jne .L509
+	jne .L514
 	move.l (%a5),%a0
 	mvz.b (%a0,%d0.l),%d7
 	cmp.l 62(%sp),%d7
-	jne .L509
-.L485:
+	jne .L514
+.L490:
 	add.l #32,%d0
 	cmp.l #2168,%d0
-	jne .L486
-.L481:
+	jne .L491
+.L486:
 	moveq #64,%d0
 	addq.l #1,%d1
 	addq.l #4,%a5
@@ -2704,19 +2740,19 @@ psl_native_commit:
 	addq.l #5,%d6
 	moveq #8,%d7
 	cmp.l %d1,%d7
-	jne .L487
+	jne .L492
 	tst.l %d2
-	jne .L465
+	jne .L470
 	clr.l %d0
 	lea (280,%sp),%a2
 	lea edits,%a1
-.L490:
+.L495:
 	move.b (%a2,%d0.l),%d6
 	lea (216,%sp),%a0
 	mvz.b (%a0,%d0.l),%d7
 	mvz.b %d6,%d1
 	cmp.l %d7,%d1
-	jeq .L489
+	jeq .L494
 	moveq #10,%d1
 	muls.l %d4,%d1
 	move.l %d0,%a4
@@ -2726,16 +2762,16 @@ psl_native_commit:
 	move.b %d6,9(%a0)
 	move.l %a4,(%a1,%d1.l)
 	clr.l 4(%a0)
-.L489:
+.L494:
 	addq.l #1,%d0
 	moveq #64,%d1
 	cmp.l %d0,%d1
-	jne .L490
+	jne .L495
 	clr.l %d0
 	lea psl_write_batch,%a2
-.L491:
+.L496:
 	cmp.l %d0,%d4
-	jhi .L493
+	jhi .L498
 	clr.b %d7
 	move.l (%a6),%a0
 	moveq #1,%d0
@@ -2745,71 +2781,71 @@ psl_native_commit:
 	move.l %d6,269452696
 	move.b %d7,10(%a6)
 #APP
-| 176 "sdk/drafts/pattern-sample-locks/native.c" 1
+| 185 "sdk/drafts/pattern-sample-locks/native.c" 1
 	move.w %d3,%sr
 | 0 "" 2
 #NO_APP
 	tst.l 58(%sp)
-	jne .L494
-.L459:
+	jne .L499
+.L464:
 	move.l %d2,%d0
 	movem.l (%sp),#31996
 	lea (344,%sp),%sp
 	rts
-.L505:
+.L510:
 	moveq #3,%d2
-	jra .L482
-.L507:
+	jra .L487
+.L512:
 	moveq #3,%d2
-	jra .L483
-.L509:
+	jra .L488
+.L514:
 	moveq #3,%d2
-	jra .L485
-.L493:
+	jra .L490
+.L498:
 	move.l %d0,%d6
 	add.l #16,%d6
 	move.l %d6,%d1
 	cmp.l %d6,%d4
-	jcc .L492
+	jcc .L497
 	move.l %d4,%d1
-.L492:
+.L497:
 	move.l %d1,-(%sp)
 	move.l %d0,-(%sp)
 	jsr (%a2)
 	addq.l #8,%sp
 	move.l %d6,%d0
-	jra .L491
-.L464:
+	jra .L496
+.L469:
 #APP
-| 176 "sdk/drafts/pattern-sample-locks/native.c" 1
+| 185 "sdk/drafts/pattern-sample-locks/native.c" 1
 	move.w %d3,%sr
 | 0 "" 2
 #NO_APP
 	moveq #1,%d2
-	jra .L459
-.L469:
+	jra .L464
+.L474:
 #APP
-| 176 "sdk/drafts/pattern-sample-locks/native.c" 1
+| 185 "sdk/drafts/pattern-sample-locks/native.c" 1
 	move.w %d3,%sr
 | 0 "" 2
 #NO_APP
 	moveq #3,%d2
-	jra .L459
-.L494:
+	jra .L464
+.L499:
 	jsr 1073905152
-.L500:
+.L505:
 	move.l 58(%sp),%d1
 	btst %d5,%d1
-	jeq .L499
+	jeq .L504
 	move.l %d5,-(%sp)
 	jsr 1074387488
 	addq.l #4,%sp
-.L499:
+.L504:
 	addq.l #1,%d5
 	moveq #8,%d6
 	cmp.l %d5,%d6
-	jne .L500
-	jra .L459
+	jne .L505
+	jra .L464
 	.size	psl_native_commit, .-psl_native_commit
 	.section	.rodata.str1.1
 .LC19:
@@ -2824,14 +2860,14 @@ finish_action:
 	jsr psl_native_commit
 	addq.l #4,%sp
 	tst.l %d0
-	jne .L533
+	jne .L538
 	jra close_view
-.L533:
+.L538:
 	subq.l #3,%d0
 	tst.l %d0
-	jne .L535
+	jne .L540
 	move.l #.LC19,%d0
-.L534:
+.L539:
 	move.l %d0,message
 	moveq #4,%d1
 	clr.b %d0
@@ -2840,9 +2876,9 @@ finish_action:
 	moveq #1,%d0
 	move.l %d0,1187497772
 	rts
-.L535:
+.L540:
 	move.l #.LC20,%d0
-	jra .L534
+	jra .L539
 	.size	finish_action, .-finish_action
 	.section	.rodata.str1.1
 .LC21:
@@ -2856,20 +2892,20 @@ finish_action:
 module_tick:
 	moveq #1,%d0
 	cmp.l phase.l,%d0
-	jne .L537
+	jne .L542
 	jsr psl_native_popup
 	subq.l #1,%d0
 	tst.l %d0
-	jeq .L537
+	jeq .L542
 	jsr close_view
-.L537:
+.L542:
 	move.l phase,%d0
 	moveq #1,%d1
 	cmp.l %d0,%d1
-	jcc .L538
+	jcc .L543
 	subq.l #4,%d0
 	tst.l %d0
-	jeq .L538
+	jeq .L543
 	mvz.b captured+5,%d0
 	move.l %d0,-(%sp)
 	mvz.b captured+4,%d0
@@ -2878,18 +2914,18 @@ module_tick:
 	jsr psl_native_context
 	lea (12,%sp),%sp
 	tst.l %d0
-	jne .L539
-.L541:
+	jne .L544
+.L546:
 	jsr close_view
-.L540:
+.L545:
 	moveq #5,%d0
 	cmp.l phase.l,%d0
-	jne .L538
+	jne .L543
 	jsr psl_native_transport
 	tst.l %d0
-	jne .L542
+	jne .L547
 	jsr finish_action
-.L538:
+.L543:
 	move.l phase,%d0
 	moveq #24,%d1
 	move.l 4(%sp),%a0
@@ -2902,23 +2938,23 @@ module_tick:
 	or.l %d1,%d0
 	move.l %d0,(%a0)
 	rts
-.L539:
+.L544:
 	jsr psl_native_popup
 	tst.l %d0
-	jne .L541
-	jra .L540
-.L542:
+	jne .L546
+	jra .L545
+.L547:
 	subq.l #2,%d0
 	tst.l %d0
-	jeq .L545
+	jeq .L550
 	move.l stop_ticks,%d0
 	addq.l #1,%d0
 	move.l %d0,stop_ticks
 	moveq #119,%d1
 	cmp.l %d0,%d1
-	jcc .L544
+	jcc .L549
 	move.l #.LC22,%d0
-.L543:
+.L548:
 	move.l %d0,message
 	moveq #4,%d1
 	move.l %d1,phase
@@ -2926,16 +2962,16 @@ module_tick:
 	move.b %d0,plan+10
 	moveq #1,%d0
 	move.l %d0,1187497772
-	jra .L538
-.L545:
-	move.l #.LC21,%d0
 	jra .L543
-.L544:
+.L550:
+	move.l #.LC21,%d0
+	jra .L548
+.L549:
 	tst.l stop_requested
-	jne .L538
+	jne .L543
 	jsr psl_native_stop
 	move.l %d0,stop_requested
-	jra .L538
+	jra .L543
 	.size	module_tick, .-module_tick
 	.section	.rodata.str1.1
 .LC23:
@@ -2955,7 +2991,7 @@ module_key:
 	move.l 92(%sp),%d0
 	moveq #63,%d2
 	cmp.l %d1,%d2
-	jcs .L553
+	jcs .L558
 	moveq #31,%d3
 	moveq #1,%d2
 	and.l %d1,%d3
@@ -2968,104 +3004,104 @@ module_key:
 	and.l %d3,%d5
 	move.l %d5,%a6
 	tst.l %d0
-	jne .L554
+	jne .L559
 	tst.l %d5
-	jeq .L555
+	jeq .L560
 	not.l %d2
 	and.l %d3,%d2
 	move.l %d2,(%a0,%d4.l*4)
-.L556:
+.L561:
 	moveq #1,%d0
-	jra .L555
-.L554:
+	jra .L560
+.L559:
 	tst.l %d5
-	jne .L556
+	jne .L561
 	move.l phase,%d0
 	tst.l %d0
-	jeq .L553
+	jeq .L558
 	moveq #5,%d5
 	cmp.l %d0,%d5
-	jne .L557
+	jne .L562
 	moveq #39,%d0
 	cmp.l %d1,%d0
-	jeq .L553
+	jeq .L558
 	or.l %d3,%d2
 	move.l %d2,(%a0,%d4.l*4)
 	moveq #50,%d2
 	cmp.l %d1,%d2
-	jne .L556
-.L563:
+	jne .L561
+.L568:
 	jsr close_view
-	jra .L556
-.L557:
+	jra .L561
+.L562:
 	move.l %d1,%a0
 	moveq #3,%d4
 	lea (-49,%a0),%a0
 	cmp.l %a0,%d4
-	jcc .L558
+	jcc .L563
 	lea (17,%a0),%a0
 	moveq #1,%d5
 	cmp.l %a0,%d5
-	jcc .L558
-.L561:
+	jcc .L563
+.L566:
 	jsr close_view
-.L553:
+.L558:
 	clr.l %d0
-.L555:
+.L560:
 	movem.l (%sp),#17468
 	lea (84,%sp),%sp
 	rts
-.L558:
+.L563:
 	moveq #1,%d4
 	cmp.l %d0,%d4
-	jne .L559
+	jne .L564
 	moveq #49,%d5
 	cmp.l %d1,%d5
-	jne .L560
+	jne .L565
 	moveq #3,%d4
 	cmp.l cursor.l,%d4
-	jcc .L561
-.L559:
+	jcc .L566
+.L564:
 	or.l %d3,%d2
 	move.l %d2,consumed+4
 	moveq #50,%d2
 	cmp.l %d1,%d2
-	jne .L562
+	jne .L567
 	subq.l #3,%d0
 	tst.l %d0
-	jne .L563
+	jne .L568
 	moveq #2,%d5
 	clr.b %d0
 	move.l %d5,phase
 	clr.l message
 	move.b %d0,plan+10
-.L578:
+.L583:
 	moveq #1,%d1
 	move.l %d1,1187497772
-	jra .L556
-.L560:
+	jra .L561
+.L565:
 	moveq #50,%d5
 	cmp.l %d1,%d5
-	jne .L559
-	jra .L561
-.L562:
+	jne .L564
+	jra .L566
+.L567:
 	move.l %d1,%a0
 	moveq #1,%d2
 	lea (-51,%a0),%a0
 	cmp.l %a0,%d2
-	jcc .L564
+	jcc .L569
 	lea (19,%a0),%a0
 	cmp.l %a0,%d2
-	jcs .L565
-.L564:
+	jcs .L570
+.L569:
 	move.l %d1,-(%sp)
 	jsr move
 	addq.l #4,%sp
-	jra .L556
-.L565:
+	jra .L561
+.L570:
 	moveq #1,%d4
 	cmp.l %d0,%d4
-	jne .L566
+	jne .L571
 	moveq #4,%d5
 	cmp.l cursor.l,%d5
 	sne %d0
@@ -3077,14 +3113,14 @@ module_key:
 	jsr psl_native_source
 	addq.l #4,%sp
 	tst.l %d0
-	jne .L567
+	jne .L572
 	lea .LC23,%a2
 	move.l %a2,message
 	move.l %d5,phase
-.L603:
+.L608:
 	move.l %d4,1187497772
-	jra .L556
-.L567:
+	jra .L561
+.L572:
 	clr.b %d4
 	mvz.b captured+6,%d1
 	moveq #2,%d2
@@ -3096,29 +3132,29 @@ module_key:
 	clr.l message
 	move.b %d4,plan+10
 	tst.l %d1
-	jeq .L568
+	jeq .L573
 	clr.b %d2
-.L569:
+.L574:
 	move.l %a6,%d5
 	move.l %d1,%d3
 	lsr.l %d5,%d3
 	addq.l #1,%a6
 	btst #0,%d3
-	jeq .L580
+	jeq .L585
 	tst.b %d2
-	jeq .L568
+	jeq .L573
 	move.l %d5,cursor
-.L568:
+.L573:
 	moveq #1,%d1
 	move.l %d1,1187497772
-	jra .L555
-.L580:
+	jra .L560
+.L585:
 	moveq #1,%d2
-	jra .L569
-.L566:
+	jra .L574
+.L571:
 	moveq #2,%d2
 	cmp.l %d0,%d2
-	jne .L570
+	jne .L575
 	move.l %sp,%d4
 	add.l #28,%d4
 	move.l %d4,-(%sp)
@@ -3126,27 +3162,27 @@ module_key:
 	jsr psl_native_source
 	addq.l #4,%sp
 	tst.l %d0
-	jeq .L571
+	jeq .L576
 	move.l 28(%sp),%d3
 	cmp.l captured.l,%d3
-	jne .L571
+	jne .L576
 	mvz.w 32(%sp),%d1
 	mvz.w captured+4,%d0
 	cmp.l %d1,%d0
-	jne .L571
+	jne .L576
 	move.b 34(%sp),%d2
 	mvz.b %d2,%d0
 	cmp.l eligible.l,%d0
-	jeq .L572
-.L571:
+	jeq .L577
+.L576:
 	move.l #.LC19,%d4
 	moveq #4,%d5
 	move.l %d4,message
 	move.l %d5,phase
-.L573:
+.L578:
 	moveq #1,%d4
-	jra .L603
-.L572:
+	jra .L608
+.L577:
 	move.w 32(%sp),%a2
 	move.w %a2,26(%sp)
 	move.l replace,-(%sp)
@@ -3158,17 +3194,17 @@ module_key:
 	lea (20,%sp),%sp
 	moveq #2,%d1
 	cmp.l %d0,%d1
-	jne .L574
+	jne .L579
 	move.l #.LC24,%d2
 	move.l %d2,message
-	jra .L573
-.L574:
+	jra .L578
+.L579:
 	tst.l %d0
-	jeq .L575
+	jeq .L580
 	move.l #.LC25,%d4
 	move.l %d4,message
-	jra .L573
-.L575:
+	jra .L578
+.L580:
 	move.w 26(%sp),%d5
 	move.b %d2,captured+6
 	move.l %d3,captured
@@ -3176,7 +3212,7 @@ module_key:
 	lea (35,%sp),%a1
 	lea captured+7,%a0
 	move.w %d5,captured+4
-.L576:
+.L581:
 	move.b (%a1)+,(%a0)+
 	lea 52(%a6,%sp.l),%a2
 	moveq #32,%d1
@@ -3184,37 +3220,37 @@ module_key:
 	move.l (%a2),(%a6,%d0.l)
 	addq.l #4,%a6
 	cmp.l %a6,%d1
-	jne .L576
+	jne .L581
 	moveq #3,%d2
 	move.l %d2,phase
-	jra .L573
-.L570:
+	jra .L578
+.L575:
 	subq.l #3,%d0
 	tst.l %d0
-	jne .L563
+	jne .L568
 	jsr psl_native_transport
 	moveq #2,%d1
 	cmp.l %d0,%d1
-	jne .L577
+	jne .L582
 	clr.b %d4
 	move.l #.LC21,%d2
 	moveq #4,%d5
 	move.l %d2,message
 	move.l %d5,phase
 	move.b %d4,plan+10
-	jra .L578
-.L577:
+	jra .L583
+.L582:
 	tst.l %d0
-	jne .L579
+	jne .L584
 	jsr finish_action
-	jra .L578
-.L579:
+	jra .L583
+.L584:
 	moveq #5,%d0
 	move.l %d0,phase
 	clr.l stop_ticks
 	jsr psl_native_stop
 	move.l %d0,stop_requested
-	jra .L578
+	jra .L583
 	.size	module_key, .-module_key
 	.align	2
 	.globl	psl_open
@@ -3235,21 +3271,21 @@ psl_open:
 	lea (20,%sp),%sp
 	subq.l #4,%d5
 	tst.l %d5
-	jne .L604
+	jne .L609
 	cmp.l #1175261212,%d4
-	jne .L604
+	jne .L609
 	cmp.l #1074502420,%d3
-	jne .L604
+	jne .L609
 	cmp.l #1074502404,%d2
-	jne .L604
+	jne .L609
 	jsr psl_native_popup
 	subq.l #1,%d0
 	tst.l %d0
-	jne .L604
+	jne .L609
 	movem.l (%sp),#60
 	lea (16,%sp),%sp
 	jra psl_ui_open
-.L604:
+.L609:
 	movem.l (%sp),#60
 	lea (16,%sp),%sp
 	rts

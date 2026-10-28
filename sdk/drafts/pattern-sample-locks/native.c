@@ -49,6 +49,15 @@ unsigned psl_native_cursor(void){return U32(0x460e5e40u);}
 void psl_native_set_cursor(unsigned row){if(row<4u)U32(0x460e5e40u)=row;}
 void psl_native_close_popup(void){((void (*)(void))0x4006d754u)();}
 void psl_native_redraw(void){U32(0x46c7c72cu)=1;}
+void psl_native_text(unsigned char *frame,unsigned x,unsigned top,const char *text)
+{
+    if(!frame || !text || x>=124u || top>59u)return;
+    uint32_t surface[7];
+    for(unsigned i=0;i<7u;++i)surface[i]=U32(0x400bf10au+4u*i);
+    surface[3]=(uint32_t)(uintptr_t)frame;
+    ((void (*)(uint32_t,void *,int,int,int,const char *))0x40012bd8u)
+        (0x400ba876u,surface,(int)x,59-(int)top,-1,text);
+}
 /* Use the existing stock UI font directly; no glyph data is copied into the
  * module. The surface descriptor is local and never retained by stock UI. */
 void psl_native_part_menu_draw(unsigned char *frame,unsigned count,unsigned cursor,const char *const *rows)

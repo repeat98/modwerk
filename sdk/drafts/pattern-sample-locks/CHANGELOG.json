@@ -3,7 +3,7 @@
     "version": "0.1.7-experimental",
     "date": "2026-10-29",
     "changes": [
-      "Use the stock Part Edit font and seven-pixel row spacing for the six-row action menu.",
+      "Use the stock font and seven-pixel row spacing throughout all three menu levels.",
       "Close the menu directly after successful Lock or Clear; keep refusal and error messages.",
       "Known limits: this UI revision has not been tested on physical hardware."
     ]

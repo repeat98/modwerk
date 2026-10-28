@@ -203,34 +203,35 @@ void module_draw(unsigned char *frame)
         psl_native_part_menu_draw(frame,6u,cursor,part_rows);return;
     }
     unsigned expanded=phase==TRACKS || phase==CONFIRM;
-    unsigned top=expanded?0u:3u,height=expanded?64u:58u;
+    unsigned top=expanded?2u:3u,height=expanded?60u:58u;
+    unsigned title_y=top+3u;
     psl_font_clear(frame,6,top,116,height);
     const char *title=action==PSL_LOCK?"LOCK SAMPLES TO PATTERN":"CLEAR SAMPLE LOCKS";
-    /* Every text baseline uses the same eight-pixel row grid. */
-    psl_font_small_text(frame,10,top+2u,title);
-    psl_font_invert(frame,7,top+1u,114,7);
-    if(phase==STOPPING){psl_font_small_text(frame,10,top+18u,"STOPPING PLAYBACK...");psl_font_small_text(frame,10,top+26u,"NO:CANCEL");psl_font_box(frame,6,3,116,58);return;}
-    if(phase==RESULT){psl_font_small_text(frame,10,top+18u,message);psl_font_small_text(frame,10,top+26u,"YES/NO:CLOSE");psl_font_box(frame,6,3,116,58);return;}
+    /* The stock font's five-pixel capitals sit on a seven-pixel row grid. */
+    psl_native_text(frame,10,title_y,title);
+    psl_font_invert(frame,7,title_y-1u,114,7);
+    if(phase==STOPPING){psl_native_text(frame,10,title_y+14u,"STOPPING PLAYBACK...");psl_native_text(frame,10,title_y+21u,"NO:CANCEL");psl_font_box(frame,6,3,116,58);return;}
+    if(phase==RESULT){psl_native_text(frame,10,title_y+14u,message);psl_native_text(frame,10,title_y+21u,"YES/NO:CLOSE");psl_font_box(frame,6,3,116,58);return;}
     if(phase==CONFIRM) {
         char line[24];text(line,"PATTERN ");
         unsigned bank_number=(plan.bank-0x400e21e0u)/0x9b340u;
         line[8]=(char)('A'+bank_number);line[9]=(char)('0'+(plan.pattern+1u)/10u);
         line[10]=(char)('0'+(plan.pattern+1u)%10u);line[11]=0;
-        psl_font_small_text(frame,10,10,line);
+        psl_native_text(frame,10,title_y+7u,line);
     }
     for(unsigned t=0;t<8;++t) {
-        unsigned x=10u+56u*(t/4u),y=(phase==CONFIRM?18u:10u)+(t%4u)*8u;
-        char label[24];track_label(label,t,phase==CONFIRM);psl_font_small_text(frame,x,y,label);
+        unsigned x=10u+56u*(t/4u),y=title_y+(phase==CONFIRM?14u:7u)+(t%4u)*7u;
+        char label[24];track_label(label,t,phase==CONFIRM);psl_native_text(frame,x,y,label);
         if(!(eligible&(1u<<t)))dim(frame,x,y,48,5);
         else if(phase==TRACKS && cursor==t)psl_font_invert(frame,x-2u,y-1u,50,7);
     }
     if(phase==CONFIRM) {
-        psl_font_small_text(frame,10,50,action==PSL_CLEAR?"INCLUDES MANUAL LOCKS":replace?"REPLACE EXISTING: YES":"EXISTING LOCKS: KEEP");
-        psl_font_small_text(frame,10,58,"YES:APPLY NO:BACK");
+        psl_native_text(frame,10,title_y+42u,action==PSL_CLEAR?"INCLUDES MANUAL LOCKS":replace?"REPLACE EXISTING: YES":"EXISTING LOCKS: KEEP");
+        psl_native_text(frame,10,title_y+49u,"YES:APPLY NO:BACK");
     } else {
-        psl_font_small_text(frame,10,42,message?message:action==PSL_CLEAR?"ALL SAMPLE LOCKS":replace?"C:REPLACE EXISTING ON":"C:REPLACE EXISTING OFF");
-        psl_font_small_text(frame,10,50,"A:ALL B:TRACK");
-        psl_font_small_text(frame,10,58,"YES:NEXT NO:CLOSE");
+        psl_native_text(frame,10,title_y+35u,message?message:action==PSL_CLEAR?"ALL SAMPLE LOCKS":replace?"C:REPLACE EXISTING ON":"C:REPLACE EXISTING OFF");
+        psl_native_text(frame,10,title_y+42u,"A:ALL B:TRACK");
+        psl_native_text(frame,10,title_y+49u,"YES:NEXT NO:CLOSE");
     }
     /* Last pixel is a completion marker for paused emulator captures. */
     psl_font_box(frame,6,top,116,height);
