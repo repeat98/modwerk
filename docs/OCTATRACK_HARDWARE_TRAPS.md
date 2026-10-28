@@ -231,6 +231,14 @@ backend's "not stopped") and the host retries.
 
 ## DSP loader (dynamic DSP code)
 
+**Code fetched from the shared window costs twice as much.** The window `0x30000..0x3ffff` runs code on both cores, but
+a fetch from it takes a wait state (data reads do not). The same 2,000-cycle loop cost core 0 100.4 idle passes from
+private P and 203.5 from `P:0x36000` (owner's MKII, 28 October 2026, `--dsp-burn-window`). So the base runs only the
+receiver's packet operations there, which run on frames with a packet: `P:0x37e00` and `P:0x3fe00`, the top 512 words
+of each core's FX2 block 3, copied from the arena's top at the first frame because both boot loops zero the window.
+Nothing else may claim those words, and an FX2 buffer that reaches past offset `0x3e00` (Air Chorus, BBD) never gets
+block 3 (`buffers.c`'s block-3 rule in `build_core.py`).
+
 **eDMA source buffers must match the inherited transfer size.** The loader
 reuses stock's TCD0 and inherits its 16-byte bursts. Its packet buffer sat
 4 bytes off a 16-byte boundary: the chip raised a source address error
@@ -741,7 +749,7 @@ Octabam's trap register left `AGENTS.md` for `docs/contributing/TRAPS.md` on 14 
 - **`moveml %sp@` stores at sp and leaves sp unchanged** (same file): a ColdFire push needs the predecrement form; the port does not catch it.
 - **A card-write completion that runs before its bookkeeping** (same file) is the race under "Cold starts and card writes"; octabam's ATA WRITE GUARD keeps the first sector and its pointer update atomic, and a hook that writes to the card holds the mask the same way.
 - **A persistent slot that init does not clear holds the previous effect's words** ([TRAPS.md](../sdk/octabam/docs/TRAPS.md), "A persistent slot"): init zeroes every slot the sample loop reads before it writes. `dsp_host -dirty` reproduces it locally, `-pword` a knob under an LFO (companion bits 8-15 set).
-- **Window code above `0x37f00` is wiped at boot** ([TRAPS.md](../sdk/octabam/docs/TRAPS.md#trap-window-zero)): payload B's boot loop clears `Y:0x37f00..0x3ffff` after the pre-boot upload, and DARK REV on the `0x30000` slot writes up to `0x33da2`. Resident DSP code goes in `0x33da3..0x37eff`.
+- **Window code above `0x37f00` is wiped at boot** ([TRAPS.md](../sdk/octabam/docs/TRAPS.md#trap-window-zero)): in octabam's images payload B's boot loop clears `Y:0x37f00..0x3ffff` after the pre-boot upload, and DARK REV on the `0x30000` slot writes up to `0x33da2`. Modwerk's base keeps stock's loops, which clear the whole window (A `0x30000..0x37fff`, B `0x38000..0x3ffff`): nothing uploaded there survives boot, so the receiver copies its window half at the first frame (above).
 - **A host write at the frame interrupt's entry is lost on every other frame** ([TRAPS.md](../sdk/octabam/docs/TRAPS.md#trap-host-mask); under the port, open on a unit): payload B rewrites the host handlers' address masks each frame. Stream words to core B on ping-0 frames only, or check that every word arrived.
 - **`dsp_asm` does not assemble a backward `bra`, or a `jmp` to a window address** ([TRAPS.md](../sdk/octabam/docs/TRAPS.md#trap-bra-back)): put a trampoline before the code it enters, or `jmp (rN)`; dispatch entries keep `init < proc <= init + 256`.
 - **A module's id is the remix's, not the manifest's** ([TRAPS.md](../sdk/octabam/docs/TRAPS.md#trap-module-id)): a tool that reads the preferred `fx2_id`, a literal id or `0x400d5fdc` is right only for the stock layout; it matters once [more than 32 effect ids](OCTATRACK_MORE_EFFECT_IDS.md) move them.

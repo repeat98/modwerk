@@ -159,8 +159,12 @@ it, admitted against each core's arena and cycle allowance first
 ([design and evidence](../../../../docs/OCTATRACK_ELEKLOADER_MIGRATION.md#milestone-2-dsp-effects-on-demand-e-verb-as-the-pilot-10-october-2026)).
 The base takes each core's whole stock effect block
 ([`dsp_loader.py`](dsp_loader.py)): the three stock routines other effects
-call stay resident at its start, then the receiver, then about 5,200 words
-of arena. Each stock effect is a package recovered at build time from your
+call stay resident at its start, then the receiver's frame path, then about
+5,450 words of arena (4,741 / 4,867 on the beta base, whose engines' stubs
+sit above it). The receiver's packet operations run from the top 512 words
+of each core's FX2 block 3 in the shared window, copied there from the
+arena's top at the first frame ([hardware traps](../../../../docs/OCTATRACK_HARDWARE_TRAPS.md#dsp-loader-dynamic-dsp-code)).
+Each stock effect is a package recovered at build time from your
 firmware with Modwerk's relocation recipes and checked against their
 hashes; Octabam's DSP DYNLOAD STOCK is the reference for the layout. It
 needs Octabam's patched `dsp_asm` (`ELEKLOADER_DSP_ASM`), with

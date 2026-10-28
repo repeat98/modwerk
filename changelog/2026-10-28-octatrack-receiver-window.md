@@ -1,0 +1,3 @@
+Octatrack base (beta): each DSP core has about 450 more words of room for effect code (4,741 and 4,867 words with nothing placed, were 4,292 and 4,418). The loader's packet handling, which runs only when code is being sent, now runs from the DSPs' shared memory instead of the effect area. Code there runs at half speed, so only that part moved; effects still run from the faster memory. One new limit: Air Chorus and BBD use a whole FX2 buffer, so the FX2 slots of tracks 1-4 (or 5-8) run at most three of them at once, two while Sidechain Compressor's key bus is in use (were four and three). Stock effects, E-Verb and Mini Verb are not affected.
+
+Developer tools: `npm run device -- meter 0|1` reads the DSP load meter again (it asked for a report length current bases refuse).
