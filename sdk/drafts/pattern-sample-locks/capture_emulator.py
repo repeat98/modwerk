@@ -118,8 +118,10 @@ def main():
             request(4);status=request(5)
             while status['result']==12:time.sleep(.025);status=request(5)
             assert status['phase']==4;status=request(9);assert status['phase']==5
-            if args.stress_save or args.prepare_fixture or args.performance or args.keep:
+            if args.stress_save or args.prepare_fixture or args.performance or args.live_playback or args.keep:
                 # No physical USB surface is available to this process.
+                # Save/reload coverage exceeds a bounded trial's timeout.
+                # Keep is confined to the copied disposable emulator card.
                 request(1,transaction=0);request(6);status=request(9)
                 assert status['phase']==0;kept=True
         def upload_kept(data,transaction):
@@ -260,6 +262,7 @@ def main():
             status=request(7)
             while status['result']==11:time.sleep(.025);status=request(7)
             assert status['result']==0 and status['known']==1
+            assert request(9)['phase']==0
         port.expected_upload_phase=0
         if args.exercise and hasattr(exercise,'after_undo'):
             port.command('pace off');checks.update(exercise.after_undo(port,out))
