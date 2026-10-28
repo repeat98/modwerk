@@ -56,10 +56,12 @@ One stock gesture changes:
 
 ## Compatibility and limitations
 
-- Octatrack MKI and MKII, OS 1.40C, with the Modwerk base over USB. It uses the base's tick, draw, key and encoder events, so card firmware cannot include it.
+- USB only. Tiempos runs only on the Modwerk base, loaded over USB, on an Octatrack MKI or MKII with OS 1.40C. It uses the base's tick, draw, key and encoder events, and card firmware has no base, so card firmware cannot include it: take it out of a set before building card firmware.
+- Changes one stock gesture: CUE + MIDI opens Tiempos instead of switching to the MIDI tracks (see [What changes in a stock flow](#what-changes-in-a-stock-flow)).
 - Declares one UI claim, the gesture CUE + MIDI on every page (`key:CUE+MIDI`). LEFT, RIGHT and NO act on its own screen only while it shows, which no other module draws, so they are not declared.
 - No effect slot, no DSP code, no stock-code sites.
-- Not yet tested on a unit. It reads each voice's play position (voice record + 0x44) and its trim start and end (+ 0x28, + 0x2c). The emulator showed those values on a playing Static track; they must be confirmed on hardware.
+- It reads each voice's play position (voice record + 0x44) and its trim start and end (+ 0x28, + 0x2c). On one MKI the totals of a whole Static, a trimmed Static and a Flex track matched the expected times, and followed a tempo change (reported by the author, see TESTING.md); the fields were not read directly on hardware.
+- The voice copies the trim only when it starts, so a track that has not played since the project loaded shows as empty (dotted, `--:--`) until it plays.
 - The time played and the total length count from the sample's trim start, so a trimmed sample shows its trimmed length.
 - A looping track shows the time to the end of the sample, not to the end of the loop.
 - Until a track has played for half a second, its time is shown at the sample's original speed.

@@ -69,6 +69,50 @@ Every figure is within one second of the expected value (the display truncates t
 
 The draft first read the sample end at voice +0x30, which the emulator shows is 0 on a playing Static voice; it now reads the trim start (+0x28) and end (+0x2c) and measures time played and total from the trim start.
 
+## Base on the unit
+
+Hardware results below come from the developer's Octatrack MKI, OS 1.40C, running a Modwerk base built and installed from a local `npm run dev` checkout of this branch (owner, #953). Not installed yet; fill in before the first hardware result:
+
+| What | Value |
+| --- | --- |
+| Unit | Octatrack MKI |
+| OS the base was built from | 1.40C (developer's own `OCTATRACK_OS1.40C.bin`, SHA-256 `34695b60…99e1ad`, the file the site requires) |
+| Checkout | branch `tiempos`, commit `976c6caf` (`npm run dev`, Vite 8.3.1, Node 24.22.1) |
+| Base file | `Modwerk-octatrack-base-739c9d.bin`, 766,404 bytes, SHA-256 `739c9d4f…42259c89`, built in Chrome from the site's Setup page, 28 October 2026 |
+| Base identity (as the unit reports it) | `24a0ed5729add7c3…` over USB (`npm run device -- status`), equal to `sdk/machines/octatrack/base-binding.json`; state normal, generation 0, no modules, no trial. A released base: it does not answer development requests (`mem`, `ui`, keys) |
+| Installed | 28 October 2026, from the card (PROJECT → SYSTEM → OS UPGRADE). Reported by the developer: it starts, PROJECT shows MODWERK, the project loads and plays normally |
+
+## First session on the MKI (28 October 2026, base `24a0ed57…`, reported by the developer unless marked read)
+
+| What | Result |
+| --- | --- |
+| Base over USB | read: `OCTATRACK 1.40C`, base `24a0ed5729add7c3…`, normal, no modules |
+| Trial of package `225a0170…` (`npm run device -- try … --seconds 1200`, not accepted) | read: running, UI ticks about 60 a second; ended after about 7.5 minutes with SIGINT, rolled back (generation 2, bare base) |
+| CUE + MIDI, transport stopped | Tiempos opens; the unit does not switch to MIDI tracks (photo) |
+| Rows with tracks 1-3 loaded (Static `T120.WAV`, Static `T120.WAV` trimmed 720,000-4,004,800, Flex `T100.WAV`), never played | all eight rows dotted with `--:--`; the active-track mark beside 2. Expected from the code: the voice's trim fields are filled only when a voice starts |
+| PLAY | the sequencer stays on step 1, nothing sounds, with Tiempos open, closed, and after its rollback; with the USB session closed too. Not a Tiempos fault, cause not found; no project has played on this base on this unit |
+
+Not tested: playback, the voice fields, LEFT/RIGHT, NO, timing, Flex.
+
+The unit's own log (`npm run device -- do diaglog`, read after the trial), all in boot 1, so no power cycle since the install: at +431 s a `hot` incident, CPU 100 % with the transport stopped, tempo 120; then **stall record 1, reason 1 (DSP frames stopped) at UI tick 33,032**, about 550 s after the start. From the tick count at the first USB read, that is about 20:49, when the developer was in USB DISK MODE copying the test samples, before the Tiempos trial (about 20:57). The later five-minute records show 0-18 of 600 frames playing. The stall, not Tiempos, is the likely reason PLAY stays on step 1; whether USB DISK MODE caused it is not shown. After a power cycle (no USB DISK MODE since), PLAY runs the sequencer again (reported). The developer reports that this unit hangs after leaving USB DISK MODE; the developer reports it did so on the stock OS too, before the base. Also run by mistake that evening: `npm run device -- lifecycle`, which keeps and removes the base's test modules; the unit was left with no module (active identity `1030e7c9…`, the empty set).
+
+## Second trial on the MKI (28 October 2026, 22:01, base `24a0ed57…`, package `225a0170…`, not accepted; reported by the developer)
+
+After the power cycle, project `tiempos` at 120 BPM, trigs with condition 1ST on step 1 of tracks 1-3, a phone stopwatch started with PLAY.
+
+| What | Expected | Reported |
+| --- | --- | --- |
+| Track 1, Static `T120.WAV`, whole | total 2:08 | matches ("cuadra"), plays and sounds |
+| Track 2, Static `T120.WAV` trimmed 720,000-4,004,800 (74.5 s) | total 1:14 | matches |
+| Track 3, Flex `T100.WAV`, timestretch | total 2:08 (2:33 without) | matches |
+| Last 30 seconds | time left flashes inverted | flashes |
+| RIGHT, LEFT | ELAPSED and TOTAL notices, right column switches | works |
+| NO | closes; the page underneath comes back | closes, the normal page comes back |
+| T1, T3 with the screen open | the active-track mark moves to that row | moves |
+| Tempo raised to 140 BPM while playing | totals 1:49, 1:03, 1:49 within about 2 s | changes correctly |
+
+Exact stopwatch figures at each track's end were not written down; "matches" is the developer's word. Not tested: minutes-long accuracy beyond one play of each sample, timestretch modes, Part changes and project reloads, a Keep and persistence across a power cycle, performance. The voice fields (+0x28, +0x2c, +0x44) were not read directly (released base, no `mem`): the totals of the whole, trimmed and Flex tracks are the indirect check.
+
 ## Hardware and audio quality
 
 Not tested. Tiempos makes no sound. To run on a unit, in this order:
