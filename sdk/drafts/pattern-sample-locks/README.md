@@ -1,6 +1,6 @@
 # Pattern Sample Locks
 
-Version: 0.1.7-experimental · author: @twwwy · category: system
+Version: 0.1.8-experimental · author: @twwwy · category: system
 
 ## Overview
 
@@ -26,7 +26,9 @@ Level 2 always lists eight tracks in two columns: T1–T4 left, T5–T8 right. S
 
 Level 3 identifies the pattern and shows a count for each selected track; unselected/disabled tracks show a dash. YES applies and closes the popup on success; there is no extra success acknowledgement. NO returns to level 2 with selection/policy retained. Errors remain visible. Confirmation accepts no selection or policy changes.
 
-Final YES stops playback and waits for transport and independent tracks to stop. Playback stays stopped. An active recorder refuses; STOP timeout makes no edit. NO cancels a pending stop; PLAY is consumed until completion/cancellation.
+Final YES keeps playback as it was: playing continues and stopped stays stopped. Active live recording or a sampler recorder refuses the operation without changing transport. Transport, recorder and project gestures close an armed menu before reaching stock controls.
+
+After a successful operation, each action remembers its own selected tracks and highlighted cursor; Lock also remembers Replace existing. Level one highlights the last successfully used action. Selecting All with A remembers that intention for the next pattern’s eligible tracks; a custom selection is intersected with currently eligible tracks. Cancelled and refused operations keep the previous saved settings. Preferences live only in module RAM: they survive pattern/bank changes and project reload while the module stays loaded, and reset on module reload or power cycling. First-use selection is empty and Replace existing is OFF.
 
 ## Usage
 
@@ -54,9 +56,9 @@ There is **no ownership bookkeeping**: no battery-RAM reservation, CF metadata, 
 - Three guarded Part Edit opener sites and four standard UI hooks. No lifecycle-table contribution or custom base extension.
 - No effect slot, DSP code, audio-frame callback, private retained storage or module dependency.
 - Stock keeps its own popup labels, callbacks and selection pointers. No module pointer is retained in a stock popup.
-- Source, Part assignments, SAMPLE bytes, trig masks, canonical battery mirror and lock-index bytes are revalidated under the native level-four task lock, leaving frame/DMA interrupts enabled.
-- SAMPLE/index writes use batches of at most sixteen under full interrupt masking. Only selected SAMPLE bytes, their canonical mirror, affected index bits and native dirty/publication state change.
-- Compiled allocation: 8,956 bytes initialized code/data and 6,992 bytes BSS. These are build sizes, not measured physical CPU/stack use.
+- Source, Part assignments, SAMPLE bytes, trig masks, canonical battery mirror and lock-index bytes are revalidated under the native level-two task guard, leaving sequencer, USB, audio-frame and DMA interrupts enabled.
+- Each changed step publishes at most eight SAMPLE/mirror pairs and one lock-index byte under a brief full interrupt guard; interrupts resume between steps. Only selected SAMPLE bytes, their canonical mirror, affected index bits and native dirty/publication state change.
+- Compiled allocation: 8,748 bytes initialized code/data and 1,328 bytes BSS. These are build sizes, not measured physical CPU/stack use.
 - Current results belong in [TESTING.md](TESTING.md); historical ownership-prototype timings do not qualify this version.
 
 All three levels use the instrument’s own font and seven-pixel row spacing. Level one stays headerless; levels two and three keep white headers and two-column track grids. The popups fit all their rows without clipping.
@@ -73,8 +75,10 @@ Original source and UI by twwwy, MIT. Small lettering is reused from twwwy's ori
 
 ## Screens and audio
 
-Screens are actual emulator LCD captures. Current UI results are in [TESTING.md](TESTING.md). The 0.1.6 emulator/hardware/CPU results are historical in [TESTING-v016.md](TESTING-v016.md); ownership results are archived in [TESTING-v015.md](TESTING-v015.md).
+Screens are actual emulator LCD captures. Current UI results are in [TESTING.md](TESTING.md). The 0.1.7 UI results are archived in [TESTING-v017.md](TESTING-v017.md). The 0.1.6 emulator/hardware/CPU results are historical in [TESTING-v016.md](TESTING-v016.md); ownership results are archived in [TESTING-v015.md](TESTING-v015.md).
 
 ![Part Edit actions](media/v017-part-menu.png)
 ![Lock selection](media/v017-lock-tracks.png)
 ![Clear all selected SAMPLE locks](media/v017-clear-all-selected.png)
+
+![Live 512-lock confirmation, 0.1.8 emulator](media/v018-live-512-lock-confirm.png)

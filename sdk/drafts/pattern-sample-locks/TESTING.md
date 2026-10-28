@@ -1,31 +1,66 @@
-# Testing: Pattern Sample Locks 0.1.7-experimental
+# Testing: Pattern Sample Locks 0.1.8-experimental
 
-29 October 2026 · twwwy · local UI revision. No push, PR, device install or release for this version.
+29 October 2026 · twwwy · local prototype. No push, upstream PR or release.
 
-## Scope and exact build
+## Current scope
 
-All three menu levels now use the stock UI font with seven-pixel text rows. Level one is a centered headerless six-item popup; levels two and three retain white headers, two columns and all eight tracks. Successful Apply closes the overlay directly; refusal and stale-source messages remain. The sample writer and STOP-before-edit behavior are unchanged. The separate live-playback and session-preference design remains a proposal.
+Apply leaves playback in its current state. The native writer validates its source under a level-two task guard and atomically publishes each changed sequencer step (at most eight SAMPLE/mirror pairs plus one index byte), allowing interrupts between steps. It refuses live/sampler recording. Separate session-RAM profiles remember successful Lock/Clear selections and cursors, Lock replacement policy, and the last action. Cancellation/refusal preserves prior preferences; module reload resets them.
 
-- Native source checkpoint: 4c565528dab2dba6736079cd406b78ec57b2a0b7.
-- Package SHA-256: 372746e634f67590c6b93af832e65c47f2267493cf8aa52753e7ddfb92250bb0.
-- Object SHA-256: 0ca260c318a779cdac2f6ef76f03f72e66bfc755cdcf6d862e6ec9c99268cd7c.
-- Code/data 8,956 bytes; BSS 6,992; 161 relocations; four standard UI hooks and the same three declared opener sites.
-- Emulator/base identities are unchanged from TESTING-v016.md. Native stock-font calls use the existing SDK surface/text interface; no font bytes or firmware tables are committed.
+Portable planner, UI and production native-writer sanitizer tests pass. The full exact-build DSP-enabled emulator run passed, including CPU monitoring, native save/reload, live edits and preference reset on module reload. Hardware and audible results are not recorded for this version.
 
-## Actual checks
+Historical UI evidence remains in TESTING-v017.md. Earlier MKII results and the 54.0% whole-instrument reading belong to 0.1.6 in TESTING-v016.md and do not qualify this revision.
 
-- Portable planner/UI/native-commit tests passed with strict warnings, ASan/UBSan and fail-fast sanitizers. New flow checks cover both successful actions, zero-change success, success after the asynchronous STOP wait, no leftover modal/drawing/key interception, and retained stale/refusal messages.
-- Pinned GCC 16.2.0 freestanding MCF54455 compile passed, assembly regenerated, undefined-symbol check empty, late-combine and indexed-addressing guards passed.
-- Private runtime package built from the regenerated assembly. The combined native UI/edit/removal emulator run passed with DSP disabled (media/v017-ui.json), including all three menu levels, disabled tracks, confirmation, direct closing after success and removal. The entire 8,956-byte relocated initialized image and all three sites matched the exact package; source hashes stayed frozen throughout the run.
-- Successful Lock, repeated Lock, Clear and explicit replacement returned directly to phase CLOSED, with no acknowledgement key between operations. Existing/manual-lock behavior, unrelated audio bytes, unselected tracks and the native mirror passed the existing small native fixture checks. Removal with track selection open restored all three original opener sites and execution continued.
-- Registered 39-by-7-pixel comparisons of the four stock rows showed zero differing pixels per row after normalizing selected-row contrast. Their row interval is seven pixels. The six-row popup remains headerless and all labels fit. See media/v017-stock-font-comparison.json and media/v017-part-menu.png.
-- DSP was explicitly disabled in this current-version emulator run; they provide no audio execution or current hardware performance evidence.
-- Original stock FUNC+PART reference was captured from original 1.40C in the emulator. It uses the stock font and a seven-pixel row interval.
+## Exact local build
 
-- Draft module:doctor passes manifest parsing, category, thumbnail, UI claims and all-active-module/base cross-compatibility. Publication gates remain red for catalogue/package import, native parity and hardware qualification; none was bypassed.
+- Source checkpoint: 42525aa0064bd228b3ad8d0aa1a3dae7f9413622 (module implementation 481e78b6; later checkpoint changes the emulator harness only).
+- Package SHA-256: 28766a017005e664d00620d3831fc81af7449c95e1896a17121ca8fc2d306d8d.
+- Object SHA-256: b8733f98963fcd1e8e1b85a49f4cff1f196c73ade9a3c9ee7be982bc9a9bffb2.
+- Initialized code/data 8,748 bytes; BSS 1,328; 167 relocations; four standard UI hooks; the same three guarded opener sites. No DSP code, effect slot, frame callback, ownership ledger or private retained storage.
+- GCC 16.2.0, freestanding MCF54455, strict warnings and late-combine disabled. Regenerated assembly reproduced byte-for-byte; undefined-symbol and ColdFire instruction guards passed. The profile linker independently reproduced the exact package image.
+- Compiler stack-usage output reports 344 bytes for the native commit frame, 104 for its module-key caller and eight for the per-step helper. This does not bound stock callees, interrupts, or total hardware stack use.
 
-## Qualification limits
+Draft module:doctor passes category, thumbnail, manifest parsing, UI claims and declared compatibility with the base and all active modules. Catalogue/package import, native parity and hardware publication gates remain red for this unqualified draft; none is bypassed.
 
-This version has no hardware or audible evidence. Earlier 0.1.6 MKII results, user-reported Lock/Clear/STOP checks and the 54.0% sampled whole-instrument CPU reading are historical, not qualification of this build. The completed CPU trial verified restoration of the original eighteen-module inventory and exact whole-set identity. See TESTING-v016.md and media/v016-mkii-cpu-trial.json.
+## DSP-enabled native emulator results
 
-Project save/reload and maximum-512-edit results are historical 0.1.6 evidence; the writer source is unchanged. Current native/browser parity, card integration, worst-case timing, owner review and publication remain incomplete.
+The complete run passed on a copied private card, with source hashes frozen throughout. Receipts: [capture](media/v018-live-capture.json), [CPU and operation measurements](media/v018-live-performance.json). The entire relocated initialized image and all three live sites matched the exact package. The long test kept the module only on the disposable emulator card; no physical USB surface was available to the container.
+
+- Lock preserved the manual SAMPLE lock with replacement OFF; repeated Lock made zero writes. Clear removed all selected SAMPLE locks while preserving other locks, unselected bytes, trig data and native mirrors.
+- Live maximum Lock and Clear each changed 512 SAMPLE fields, with playback continuing. A second pattern passed the same operations; the other pattern remained unchanged. Pattern selection retired an armed confirmation before stock processed it.
+- Independent successful Lock/Clear profiles, last action, cursor, cancellation/refusal preservation, first-session empty selection and replacement OFF passed. Native project reload retained the RAM preferences. Removal/reinstallation reset both profiles to safe defaults. Portable UI cases additionally cover changed eligibility and remembering All versus a custom subset.
+- A real panel REC+PLAY gesture enabled live recording; Apply refused without changing recording, transport or pattern data. Stopped Lock/Clear remained stopped. No implicit transport commands are emitted by the module.
+- Native Save Project and both Reload Project stages completed through the stock UI. The entire saved pattern and its canonical mirror matched after reload, including all 512 SAMPLE locks. Clear then removed those locks without unrelated pattern changes.
+- Removal with track selection open restored all three original sites; playback and execution continued. Reinstallation and a second Undo/removal also passed.
+- DSP execution advanced 232,521 frame interrupts overall (42,852 to 275,373); errors stayed 0 and stalls stayed 0. The dedicated native playback interval advanced 82,891 frames (over 30 model seconds). This is emulator execution evidence; no audio capture or listening verdict was recorded.
+
+## CPU / DSP observations
+
+Five windows each contain ten cached readings, spaced by 50 model milliseconds. Each Apply also records before/during/after readings. CPU read 1,000 per mille in every window, including matched playback after removing the module. The cached DSP fields likewise showed T1–4 at 1,000 and T5–8 at zero with and without the module. These saturated/asymmetric emulator values cannot resolve added CPU or DSP load or short spikes. They are not evidence of zero added cost.
+
+| State | Cached CPU | Cached DSP T1–4 / T5–8 |
+| --- | --- | --- |
+| Closed, with module, before edits | 100% | 100% / 0% |
+| Lock confirmation | 100% | 100% / 0% |
+| Closed after live edits | 100% | 100% / 0% |
+| Closed with module after all checks | 100% | 100% / 0% |
+| Matched playback without module | 100% | 100% / 0% |
+
+Exact-object PC watches measured elapsed emulator instruction intervals. Commit intervals include any intervening interrupt work; they are neither ColdFire cycles nor physical CPU percentages. The saved task mask was observed as level two in its saved register; the level-seven publication mask and restoration instructions were verified in the exact assembly. Hit records do not expose the current SR directly.
+
+| Operation | SAMPLE changes | Commit interval, emulator instructions | Guards | Longest guard, emulator instructions |
+| --- | ---: | ---: | ---: | ---: |
+| Live T1 Lock | 63 | 13,638 | 63 | 23 |
+| Live T1 Clear | 64 | 55,185 | 64 | 23 |
+| Live maximum Lock | 512 | 73,255 | 64 | 86 |
+| Live maximum Clear | 512 | 308,108 | 64 | 86 |
+| Stopped maximum Clear | 512 | 314,791 | 64 | 86 |
+
+No changed step publishes more than eight SAMPLE/mirror pairs plus its index byte. Maximum-size operations used 64 guards; the longest guard across all measured operations was 86 emulator instructions. No-change success and stale/recording refusals used zero publication guards. Sequencer-entry watches recorded zero ticks inside the measured commit intervals; instruction-mask analysis establishes which interrupts remain enabled, rather than treating those short observations as an interrupt stress test.
+
+The module adds no DSP program or audio-frame callback. Its new CPU work is bounded, explicit editing and UI work. Ordinary SAMPLE locks still use the instrument's existing playback path; these observations do not establish a physical utilization tier or worst-case streaming/voice budget.
+
+## Remaining qualification
+
+Current-version MKII testing is pending the developer's readiness confirmation. The exact private ten-minute, target-only RAM trial and CPU logger are prepared; they have not been executed. The original eighteen modules have not been re-tested or altered by this work. No Keep, flash, project save, push, PR or release has occurred on the physical unit for 0.1.8.
+
+Audible continuity, MKI, heavy streaming/USB/MIDI loads, tempo/speed extremes, companion runtime combinations, stock-only card integration, hardware stack/timing and physical restart remain unqualified. A real module reload was tested in the emulator; no power-cycle persistence is claimed for the session preferences. Hardware qualification and owner review remain required before publication.

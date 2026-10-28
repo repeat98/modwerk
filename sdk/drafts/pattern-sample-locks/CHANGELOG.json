@@ -1,5 +1,16 @@
 [
   {
+    "version": "0.1.8-experimental",
+    "date": "2026-10-29",
+    "changes": [
+      "Keep playback running or stopped as it was when applying Lock or Clear.",
+      "Remember separate Lock/Clear track choices and the Lock replacement setting while the module stays loaded.",
+      "Keep remembered settings unchanged when cancelling or refusing an operation; reset on module reload.",
+      "Refuse edits during live or sampler recording.",
+      "Known limits: native DSP-enabled emulator checks passed; physical timing and audible continuity remain unqualified."
+    ]
+  },
+  {
     "version": "0.1.7-experimental",
     "date": "2026-10-29",
     "changes": [

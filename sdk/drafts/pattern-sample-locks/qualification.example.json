@@ -1,5 +1,5 @@
 {
-  "moduleVersion": "0.1.7-experimental",
+  "moduleVersion": "0.1.8-experimental",
   "sourceSha256": "REPLACE_WITH_NATIVE_SOURCE_SHA256",
   "imageSha256": "REPLACE_WITH_LOCAL_TESTED_IMAGE_SHA256",
   "cycles": [

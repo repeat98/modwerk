@@ -3,7 +3,7 @@
   "id": "pattern-sample-locks",
   "key": "PATTERN SAMPLE LOCKS",
   "name": "Pattern Sample Locks",
-  "version": "0.1.7-experimental",
+  "version": "0.1.8-experimental",
   "category": "system",
   "author": {
     "github": "twwwy",
@@ -16,12 +16,13 @@
     "label": "SAMPLE LOCKS",
     "family": "Pattern editing",
     "summary": "Lock Part sample choices into pattern trigs, or clear SAMPLE locks.",
-    "overview": "Two explicit native SAMPLE-lock actions in Part Edit. Lock preserves existing SAMPLE locks by default. Clear removes every SAMPLE lock on selected tracks. Playback stops before editing; no ownership bookkeeping is used.",
+    "overview": "Two explicit native SAMPLE-lock actions in Part Edit. Lock preserves existing SAMPLE locks by default. Clear removes every SAMPLE lock on selected tracks. Playback keeps its current state; successful settings are remembered while the module stays loaded.",
     "highlights": [
       "All eight tracks appear; only Flex and Static tracks are selectable.",
       "Select all eligible tracks or a subset.",
       "Keep existing sample locks by default.",
-      "Clear removes every SAMPLE lock on selected tracks, including manual locks."
+      "Clear removes every SAMPLE lock on selected tracks, including manual locks.",
+      "Recall separate Lock/Clear selections and Lock replacement policy during the current module session."
     ],
     "usage": [
       "MKII: FUNC + PART, then choose either sample-lock action.",
@@ -51,8 +52,8 @@
     "recorded": "Exact linked allocation; hardware load unmeasured",
     "storage": {
       "label": "Storage",
-      "display": "8,956 bytes code/data; 6,992 bytes BSS",
-      "value": 15948,
+      "display": "8,748 bytes code/data; 1,328 bytes BSS",
+      "value": 10076,
       "unit": "bytes",
       "method": "static",
       "conditions": "Linked emulator package; no ownership metadata storage. See exact-build hashes in TESTING.md.",
@@ -60,24 +61,24 @@
     },
     "processing": {
       "label": "CPU / DSP load",
-      "display": "Not measured",
+      "display": "Hardware unmeasured",
       "value": null,
       "unit": "unknown",
       "method": "unmeasured",
-      "conditions": "No current-version hardware CPU/DSP measurement. Historical 0.1.6 readings describe the whole instrument, not exact module cost; see TESTING-v016.md.",
+      "conditions": "Cached emulator CPU and DSP fields did not resolve added load on a matched unloaded baseline. Exact instruction intervals and guard lengths are recorded in TESTING.md; hardware CPU/DSP and audible continuity remain unqualified.",
       "source": "TESTING.md"
     }
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "0.1.7 uses the stock font and seven-pixel rows at all three levels and closes directly after successful Apply. Portable planner/UI/native-commit checks, MCF54455 compile/guard and the combined native UI/edit/removal emulator run passed with exact image/site attestation. Emulator DSP was disabled; no current-version physical or audible qualification.",
+    "summary": "0.1.8 preserves playback and remembers successful Lock/Clear settings in module RAM. Portable sanitizers, exact MCF54455 build/guards and DSP-enabled native emulator tests passed: 512 live edits, separate profiles, recording/stale refusal, native save/reload and reset on reinstall. CPU/DSP cached emulator meters did not resolve added load; exact instruction intervals are recorded. Physical and audible qualification remain pending.",
     "hardwareStatus": "untested",
-    "evidenceRevision": "4c565528dab2dba6736079cd406b78ec57b2a0b7",
     "gates": [
       "Worst-case cycles under parameter modulation and maximum load",
       "Exact memory region and maximum-instance totals",
       "Owner-reviewed real-hardware evidence with actual coverage and limitations"
-    ]
+    ],
+    "evidenceRevision": "42525aa0064bd228b3ad8d0aa1a3dae7f9413622"
   },
   "license": {
     "spdx": "MIT",
@@ -85,6 +86,23 @@
     "declaration": "Original MIT source by twwwy. Original small lettering reused from twwwy\u2019s Beat Slicer under MIT. No stock firmware or extracted tables are included."
   },
   "media": [
+    {
+      "path": "media/v018-live-512-lock-confirm.png",
+      "captureType": "emulator",
+      "caption": "Live-playback prototype: 64 changes on each of eight tracks, using the native font and seven-pixel rows. Explicit replacement is ON.",
+      "alt": "Lock confirmation for pattern A01: T1 through T8 each show 64 changes; Replace existing YES.",
+      "credit": "twwwy; Elektron Octatrack UI",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "Live maximum Lock confirmation",
+        "shows": "controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.8-experimental",
+        "imageSha256": "32e2480b5658c5b559884358b9925e8dbba92581b27a581745f232cb9b57ab43",
+        "setup": "Actual MKII emulator with DSP execution; private copied card and all-step fixture. Exact package 28766a017005e664d00620d3831fc81af7449c95e1896a17121ca8fc2d306d8d. Hardware and audible continuity unqualified."
+      }
+    },
     {
       "path": "media/v017-part-menu.png",
       "captureType": "emulator",
@@ -112,23 +130,6 @@
       "source": "original",
       "otUi": {
         "page": "Lock track selection",
-        "shows": "controls",
-        "firmware": "1.40C",
-        "moduleVersion": "0.1.7-experimental",
-        "imageSha256": "32e2480b5658c5b559884358b9925e8dbba92581b27a581745f232cb9b57ab43",
-        "setup": "Actual MKII emulator, DSP disabled; exact 0.1.7 package 372746e634f67590c6b93af832e65c47f2267493cf8aa52753e7ddfb92250bb0. Receipt media/v017-ui.json. No hardware or audible result."
-      }
-    },
-    {
-      "path": "media/v017-lock-confirm.png",
-      "captureType": "emulator",
-      "caption": "Native font and seven-pixel rows for the pattern, per-track counts and Apply/Back controls. Layout fixture with zero changes.",
-      "alt": "Native font and seven-pixel rows for the pattern, per-track counts and Apply/Back controls. Layout fixture with zero changes.",
-      "credit": "twwwy; Elektron Octatrack UI",
-      "license": "LicenseRef-OT-UI-Documentation",
-      "source": "original",
-      "otUi": {
-        "page": "Lock confirmation",
         "shows": "controls",
         "firmware": "1.40C",
         "moduleVersion": "0.1.7-experimental",
@@ -230,12 +231,13 @@
       "Turn A clockwise to select all eligible tracks or counterclockwise to clear selection. B sets the highlighted track in the same way.",
       "For Lock, C sets Replace existing; OFF preserves every existing SAMPLE lock. Clear always includes all SAMPLE locks.",
       "YES opens level 3. Review per-track change counts; YES applies and closes on success, NO returns to level 2. Errors remain visible.",
-      "NO in level 2 closes the popup. Apply stops playback first and leaves it stopped; a recorder in use refuses the edit."
+      "NO in level 2 closes the popup. Apply keeps playback as it was; active live or sampler recording refuses the edit.",
+      "Successful operations remember each action\u2019s tracks and cursor, plus Lock replacement policy. Cancelling keeps the previous settings. Module reload or power cycling resets them."
     ],
     "screenshots": [
+      "media/v018-live-512-lock-confirm.png",
       "media/v017-part-menu.png",
       "media/v017-lock-tracks.png",
-      "media/v017-lock-confirm.png",
       "media/v017-clear-tracks.png",
       "media/v017-clear-confirm.png",
       "media/v017-after-apply.png",
