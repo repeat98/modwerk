@@ -47,6 +47,7 @@ static uint32_t packaged_generation[MW_ENGINE_FEATURES];
  * rule), so nothing more is placed or unplaced there. Placed engines stay placed, free spans stay free. */
 static uint8_t closed[2];
 static unsigned wanted_now; /* mw_engines_want */
+static unsigned deferred[2] = {~0u, ~0u}; /* a play-time claim had to move or retire code: what it needed, until quiet */
 void mw_engines_want(unsigned features) { wanted_now = features; }
 int mw_engines_settled(void) { return QUIET() && SETTLED(); }
 
@@ -248,7 +249,11 @@ int mw_engines_place(unsigned feature, unsigned cores, uint32_t generation, cons
              * pattern's Parts are not the ones it checks). While playing it takes free words only (commit 1): live FX
              * code is retired (a trim) or moved (an evacuation) only while quiet and settled. */
             if (need > dl_engine_reserved(c) && QUEUED()) { *why = MW_WAIT_PLAYING; continue; }
+            /* Free words only fall while playing (code goes only when quiet), so a claim that had to move or retire
+             * code waits for the stop instead of planning again on every tick. */
+            if (!QUIET() && need >= deferred[c]) { *why = MW_WAIT_EVACUATION; continue; }
             int claim = dl_engine_claim(c, need, QUIET() && SETTLED() ? 2 : 1);
+            deferred[c] = claim == 0 && dl_engine_why[c] == 7u && !QUIET() ? need : ~0u;
             if (claim <= 0) {
                 if (claim < 0) mw_engines_refused = mw_engines_refused + 1;
                 *why = claim < 0 ? MW_WAIT_CLAIM_REFUSED : dl_engine_why[c] >= 6u ? MW_WAIT_EVACUATION : MW_WAIT_CLAIM_BUSY;

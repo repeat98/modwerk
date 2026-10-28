@@ -77,9 +77,9 @@ static const uint8_t *candidate; /* the package the host staged, until it is acc
 static uint32_t candidate_bytes;
 static unsigned pending, restored, slot;
 static uint32_t retry_at;
-/* The restore's notice waits until the trusted controllers the bank's tracks use run their engines (Analog BD's,
- * placed, reset and enabled), so PLAY on "MODULES LOADED" sounds them (owner's MKII, 27 October 2026: Analog BD stayed
- * silent). Half a second at least, for the board to bind them and see them used; ten seconds at most. */
+/* "MODULES LOADED" waits until the trusted controllers the bank's tracks use run their engines (Analog BD's, placed,
+ * reset and enabled), so PLAY on it sounds them (owner's MKII, 27 October 2026: Analog BD stayed silent). Half a second
+ * at least, for the board to bind them and see them used; ten seconds at most; dropped if the host changes the set. */
 #define NOTICE_FIRST 30u
 #define NOTICE_LAST 600u
 static const char *volatile notice;
@@ -107,7 +107,7 @@ static void seal(uint32_t count, uint32_t bytes)
 
 /* boot.c, at prepare and accept: what the host staged, and that it stays. */
 void modwerk_modset_candidate(const uint8_t *package, uint32_t bytes)
-{ if (!JOURNAL_BLOCKED()) candidate = package, candidate_bytes = bytes; }
+{ notice = 0; /* the set changes: a held notice would describe the old one */ if (!JOURNAL_BLOCKED()) candidate = package, candidate_bytes = bytes; }
 #ifdef MODWERK_RUNTIME_SETS
 /* Pure preflight over the old saved set and the complete incoming change set.
  * No intermediate accepted package reaches set[] or the card. With a null
@@ -201,7 +201,7 @@ int modwerk_modset_keep(const uint8_t *const package[], const uint32_t bytes[], 
 {
     static uint32_t ids[RUNTIME_JOURNAL_ROWS];static uint8_t sha[MU_DIGEST_BYTES * RUNTIME_JOURNAL_ROWS];
     uint32_t end = used(), count = 0;uint8_t got[MU_DIGEST_BYTES];
-    keep_bytes = 0;
+    keep_bytes = 0, notice = 0;
     if (!restored) return 0;
     for (unsigned i = 0; i < n; ++i) {
         uint32_t step = 8u + ((bytes[i] + 3u) & ~3u);
@@ -320,8 +320,8 @@ static void restore(void)
     if (installed != count) seal(installed, end);
     modwerk_modset_generation = be32(set + 8), modwerk_modset_count = installed;
     modwerk_modset_result = installed == count ? RESTORED : REFUSED;
-    if (installed) notice_at = TICKS, notice = installed == count ? "MODULES LOADED" : "SOME MODULES FAILED";
-    else SAY("MODULES NOT LOADED");
+    if (installed && installed == count) notice_at = TICKS, notice = "MODULES LOADED";
+    else SAY(installed ? "SOME MODULES FAILED" : "MODULES NOT LOADED"); /* no engine changes what these say */
     modwerk_diag_set(); /* diag.c: the set this boot runs, in the unit's log */
 }
 /* ep0.c's tick (sys task, as the board's): the restore's notice, once its engines run or its time is up. */

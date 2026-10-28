@@ -16,25 +16,22 @@ Update, 22 October 2026: Analog BD's engine and tables are no longer base data. 
 (docs/OCTATRACK_PACKAGE_DSP_HOOKS.md, "Phase 1 as built"). Every resident build is now on demand: the permanent-engine
 build (`--resident-stock-hooks` alone) is retired. Below, Analog BD's figures are its engine's, which are unchanged.
 
-Update, 27 October 2026 (proposed: it relaxes the stopped-only rule below, so it needs the owner's OK; host-tested, not
-yet on a unit): an engine that fits in free words is placed while the sequencer plays. On a flashed base (`5afa623e`,
-Analog BD 0.1.6, 14 modules) PLAY pressed on MODULES LOADED left Analog BD silent until the next stop: the engine waited
-for a stop, and its 3,776-word reset went out one 24-word packet a board tick, about 2.6 s per core. Now:
+Update, 27 October 2026: an engine that fits in free words is placed while the sequencer plays, and MODULES LOADED
+waits for the engines the bank uses (record: docs/verification/2026-10-27-engines-play-after-boot.md):
 
 - **While playing** the claim takes free words only (`dl_engine_claim` commit 1); WRITE, PLACE, RESET and ENABLE then run
-  as when stopped. The WRITE goes to arena words no slot runs, as a pick's upload does while playing (bit-exact on the
-  unit, "Artifact checks" below); PLACE sets only the dormant feature's base word; the track is heard from its ENABLE on.
-  Live FX code is still retired (a trim) or moved (an evacuation) only while stopped and settled, and an engine is still
-  unplaced only while stopped. Nothing is placed while a pattern change is queued: the next pattern's Parts are not the
-  ones the claim checks.
+  as when stopped. The WRITE goes to arena words no slot runs, as a pick's upload does while playing; PLACE sets only the
+  dormant feature's base word; the track is heard from its ENABLE on. Live FX code is still retired (a trim) or moved (an
+  evacuation) only while stopped and settled, and an engine is still unplaced only while stopped. A claim told its code
+  must move (why 7) waits for the stop without planning again each tick: free words only fall while playing. Nothing is
+  placed while a pattern change is queued: the next pattern's Parts are not the ones the claim checks.
 - **A RESET job carries up to eight packets** (`DL_RESET_DATA`, 192 words, one packet a frame: about 3 ms), never past
   one owned range, so Analog BD's reset is 20 board ticks instead of 158. Each packet is the one the receiver took
   before, at its own offset. A Part switch's upload waits behind one such job at most.
-- **MODULES LOADED waits** until every trusted controller the bank's tracks use is ACTIVE (`modwerk_controller_settling`,
-  read from ep0.c's tick): at least half a second, so the board has bound them and seen them used, at most ten. In the
-  host model Analog BD runs about half a second after it is first used (`test_resident_engines_board.py` mode 64).
-- **Still to check on a unit:** that nothing is heard on other tracks while an engine lands during playback, the time
-  from boot to MODULES LOADED, and how the notice and the MISSING MODULES page now fall together.
+- **MODULES LOADED waits** until every trusted controller the bank's tracks use is ACTIVE or stuck for the boot
+  (`modwerk_controller_settling`, read from ep0.c's tick): at least half a second, so the board has bound them and seen
+  them used, at most ten; dropped if the host changes the set meanwhile. SOME MODULES FAILED and MODULES NOT LOADED are
+  said at once.
 
 ## Goal
 
@@ -43,9 +40,8 @@ Analog BD engines into the top of each core's program memory for good. The
 owner's decision is to load an engine's DSP code only while a track uses its feature (22 October 2026; from 15 October
 until then, while its module was installed). The hard rules are:
 
-- No placement or code move at a Part switch, pattern or bank change, Part reload or project load, or while playing.
-  Proposed 27 October 2026 (above): an engine that fits in free words is placed while playing; code still never moves
-  then.
+- No code move at a Part switch, pattern or bank change, Part reload or project load, or while playing. An engine is
+  placed while playing only into free words, and never while a pattern change is queued (27 October 2026, above).
 - No extra flash or card writes.
 - Negligible runtime overhead.
 
@@ -125,7 +121,7 @@ What uses each engine's feature (`controller_board.c` `use_tick`, once a board t
 - **The self-test charges no new machine voice** (dsp.c, beta finding 63). Its emptied-core attempts would let a machine's voice in (Analog BD's track on T1 took 726 cycles of core 1), after which the Part's own effects on that core no longer fit back and every later set was refused for DSP time. While it runs, a voice not charged when it started waits for its end (the track renders stock meanwhile); one charged before keeps its claim. On the owner's MKII (`a898fd46`, dev twin of `d6bfff70`) bank A's self-test then passed 7/7 with all 19 modules.
 - **Back when used again.** `mw_controller_restore`, then placed, reset from offset 0 and enabled as at install (Analog BD's package unit is offered again on the way).
 - **Removal.** A parked module goes at once (RETIRING, its UI clear); one never used is cancelled while BOUND.
-- **What this costs.** A track that first uses a feature while the unit plays stays dry (Sidechain: the stock compressor, no KEY page) until its engine runs: about half a second when it fits in free words (27 October 2026, above), otherwise until the transport stops and live FX code can make room, about two seconds after that. Within a bank a Part switch never waits: Sidechain and readers read all four Parts, and Analog BD keeps its mark for the bank. A bank change while playing to a bank that first uses Analog BD places it while playing when it fits in free words.
+- **What this costs.** A track that first uses a feature while the unit plays stays dry (Sidechain: the stock compressor, no KEY page) until its engine runs: 1.5 to 1.8 s on the unit when it fits in free words (27 October 2026, above; about 1 s of it core 0 waiting behind core 1's jobs), otherwise until the transport stops and live FX code can make room, about two seconds after that. Within a bank a Part switch never waits: Sidechain and readers read all four Parts, and Analog BD keeps its mark for the bank. A bank change while playing to a bank that first uses Analog BD places it while playing when it fits in free words.
 - **Why.** On the owner's MKII (22 October 2026, development twin of `a408c505`), a tester's 19-module set (#791) installed 17 modules and was refused Analog BD and Sidechain with refusal 2 ("not enough module memory"): the loaded bank played Mini Verb, E-Verb, Tape Echo and BBD, whose code filled core 1, and admission dry-ran the engines' claims against it. With every track on a stock effect the same 19 installed and the self-test passed (19/19 intact, 7 DSP effects together, CPU peak 57 %).
 - **Checked in software.** `test_resident_engines_board.py` modes 2, 3, 15 and 21 (admitted without room, the engine waiting) and 54-58 (never placed without use; placed on Analog BD's lease; parked in a new bank only when quiet and settled, feature off before unplace; back again; removal of a parked and of a never-used module; Sidechain on and off with stock COMPRESSOR, off before the key bus; a reader's key bus on and off with its effect). `test_dsp.c` covers `modwerk_dsp_bank_names`.
 - **On the unit** (owner's MKII, 22 October 2026, `df19fdca`, the development twin of `a849d17e`; beta finding 62): the same 19 modules installed in the state that refused two of them before, with Analog BD and Sidechain left BOUND and nothing placed, and Output Matrix placed at install. COMPRESSOR picked on a track brought Sidechain and the key bus in within seconds; FILTER back put both away (unplaced on both cores), twice. A bank without an Analog BD track put Analog BD away; a bank with one brought it back. Not yet: the release image, a power cycle, an Analog BD track first set while playing, audio around a placement.

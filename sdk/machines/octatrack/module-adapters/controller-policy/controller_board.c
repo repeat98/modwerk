@@ -690,28 +690,28 @@ static void bind_live(void)
 {
     uint32_t epoch = modwerk_runtime_owner_epoch();
     if (epoch == bound_epoch && !bind_again) return;
-    bound_epoch = epoch; bind_again = 0;
+    unsigned again = 0; /* set once, after the pass: a later module's bind must not clear an earlier one's wait */
+    bound_epoch = epoch;
     for (unsigned i = 0; i < RUNTIME_MODULES; ++i) {
         const struct runtime_module *m = modwerk_runtime_module(i);
         struct runtime_owner o; struct mw_controller_binding b;
         const struct mw_controller_write_policy *p;
         if (!m) continue;
-        if (modwerk_runtime_owner_snapshot(m->dsp.image, &o) != 1) { bind_again = 1; continue; }
+        if (modwerk_runtime_owner_snapshot(m->dsp.image, &o) != 1) { again = 1; continue; }
         if (!(p = row_for(o.controller_sha256, o.module, o.image_bytes)) || !binding_of(&o, p, &b) || slot_of(&b) < MW_CONTROLLER_SLOTS) continue;
         const struct mw_controller_slot *previous = 0; unsigned others = 0;
         for (unsigned k = 0; k < MW_CONTROLLER_SLOTS; ++k) {
             const struct mw_controller_slot *s = &REGISTRY.slots[k];
             if (held(s) && s->binding.identity.feature == p->identity.feature) { ++others; previous = s; }
         }
-        bind_again = 1; /* until it is bound, or gone */
-        if (others > 1u || (previous && previous->state != MW_CTL_RETIRING)) continue; /* wait for its disable */
+        if (others > 1u || (previous && previous->state != MW_CTL_RETIRING)) { again = 1; continue; } /* wait for its disable */
         struct mw_controller_declaration d = {p->identity, {total(p->identity.feature, 0), total(p->identity.feature, 1)}};
         unsigned at;
-        if (mw_controller_reserve(&REGISTRY, &d, &d.identity, previous ? &previous->binding : 0, &at) != MW_CTL_OK) continue;
-        if (mw_controller_bind(&REGISTRY, at, &b) != MW_CTL_OK) { (void)mw_controller_cancel(&REGISTRY, &REGISTRY.slots[at].binding); continue; }
+        if (mw_controller_reserve(&REGISTRY, &d, &d.identity, previous ? &previous->binding : 0, &at) != MW_CTL_OK) { again = 1; continue; }
+        if (mw_controller_bind(&REGISTRY, at, &b) != MW_CTL_OK) { (void)mw_controller_cancel(&REGISTRY, &REGISTRY.slots[at].binding); again = 1; continue; }
         want[at].generation = b.generation; want[at].since = ticks; want[at].quiesce = 0; verified[at] = 0;
-        bind_again = 0;
     }
+    bind_again = again;
 }
 static void advance(unsigned at)
 {
@@ -847,10 +847,15 @@ int modwerk_controller_settling(void)
         const struct mw_controller_slot *s = &REGISTRY.slots[at];
         unsigned need = s->binding.identity.required_cores, stuck = 0;
         if (!held(s) || s->state == MW_CTL_ACTIVE || s->state >= MW_CTL_DISABLING) continue;
+        /* Stuck for this boot: its core closed (the board's transport or the owned channel) or its state lost, or the
+         * key bus it rides on cannot come up. */
         for (unsigned c = 0; c < 2u; ++c)
-            if (need >> c & 1u) stuck |= transport.closed[c] || !(mask_known >> c & 1u);
+            if (need >> c & 1u) stuck |= transport.closed[c] || dl_owned_closed(c) || !(mask_known >> c & 1u);
 #ifdef MODWERK_RESIDENT_ON_DEMAND
-        if (!engine_wanted(at)) continue; /* not used by this bank, or no room for its engine */
+        /* Only what this bank uses: a slot past BOUND that the bank no longer uses parks only when stopped and settled. */
+        if (!(used & s->binding.identity.feature) && !s->touched) continue;
+        if (roomless[at] && s->state <= MW_CTL_BOUND) continue; /* no room for its engine */
+        stuck |= KEYBUS_IMPLIED(s->binding.identity.feature) && keybus_down();
         for (unsigned c = 0, k = MW_DSP_INDEX(s->binding.identity.feature); c < 2u && k < MW_ENGINE_FEATURES; ++c)
             if (need >> c & 1u) stuck |= mw_engines_wait[c][k] == MW_WAIT_STUCK;
 #endif

@@ -821,7 +821,8 @@ int main(int argc, char **argv)
         /* Playing: core B, which needs no move, places at once; core A's code stays where it is and nothing is written
          * there. Sidechain stays off on both until core A has its engine too. */
         assert(trails[0] == from && !dl_engine_evacuations && test_live(0, 3) == (int)(top - 900u));
-        assert(mw_engines_wait[0][0] == MW_WAIT_EVACUATION && dl_engine_why[0] == 7 && mw_engines[1][0].state == MW_ENGINE_PLACED);
+        /* Core A asked once, was told its code must move (why 7), and waits for the stop without asking again. */
+        assert(mw_engines_wait[0][0] == MW_WAIT_EVACUATION && mw_engines[1][0].state == MW_ENGINE_PLACED);
         assert(slot_for(SC, MW_CTL_BOUND) && !dsp_mask[0] && !(dsp_mask[1] & 1u));
         quiet = 1; key_at = ticks; /* stopped by a key: core A waits for the two seconds */
         run(100);

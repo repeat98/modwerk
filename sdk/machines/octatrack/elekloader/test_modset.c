@@ -182,6 +182,17 @@ int main(void)
     for (unsigned t = 0; t < 30u; ++t, ++modwerk_test_ticks) modwerk_modset_notice_tick();
     CHECK(!modwerk_test_said);
     modwerk_modset_notice_tick(); CHECK(modwerk_test_said && !strcmp(modwerk_test_said, "MODULES LOADED"));
+    /* The host changing the set drops a held notice; a partial restore says so at once (no engine changes that). */
+    modwerk_test_said = 0; boot(); modwerk_modset_service(); modwerk_test_settling = 1;
+    modwerk_modset_candidate(0, 0);
+    for (unsigned t = 0; t < 700u; ++t, ++modwerk_test_ticks) modwerk_modset_notice_tick();
+    CHECK(!modwerk_test_said); modwerk_test_settling = 0;
+    accept(1, 48); modwerk_modset_service(); CHECK(modwerk_modset_result == SAVED && modwerk_modset_count == 2);
+    refuse_id = be32(package[1] + 28); boot(); modwerk_modset_service(); refuse_id = 0;
+    CHECK(modwerk_modset_result == REFUSED && installed == 1 && modwerk_test_said && !strcmp(modwerk_test_said, "SOME MODULES FAILED"));
+    modwerk_test_said = 0;
+    for (unsigned t = 0; t < 700u; ++t, ++modwerk_test_ticks) modwerk_modset_notice_tick();
+    CHECK(!modwerk_test_said);
     if (failures) { fprintf(stderr, "%u module set checks failed\n", failures); return 1; }
     puts("Octatrack module set: saved in turn, removals dropped, the newest whole set restored, damaged and foreign sets and a held FUNC refused, "
          "a Keep joined only as the trial's identity and reported unsaved until saved.");
