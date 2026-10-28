@@ -3,7 +3,7 @@
   "id": "pattern-sample-locks",
   "key": "PATTERN SAMPLE LOCKS",
   "name": "Pattern Sample Locks",
-  "version": "0.1.6-experimental",
+  "version": "0.1.7-experimental",
   "category": "system",
   "author": {
     "github": "twwwy",
@@ -51,8 +51,8 @@
     "recorded": "Exact linked allocation; hardware load unmeasured",
     "storage": {
       "label": "Storage",
-      "display": "8,620 bytes code/data; 6,992 bytes BSS",
-      "value": 15612,
+      "display": "8,956 bytes code/data; 6,992 bytes BSS",
+      "value": 15948,
       "unit": "bytes",
       "method": "static",
       "conditions": "Linked emulator package; no ownership metadata storage. See exact-build hashes in TESTING.md.",
@@ -64,15 +64,15 @@
       "value": null,
       "unit": "unknown",
       "method": "unmeasured",
-      "conditions": "Emulator instruction counts are recorded in TESTING.md; physical CPU/DSP utilization has not been measured.",
+      "conditions": "No current-version hardware CPU/DSP measurement. Historical 0.1.6 readings describe the whole instrument, not exact module cost; see TESTING-v016.md.",
       "source": "TESTING.md"
     }
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Emulator checks are recorded in TESTING.md. A combined MKII self-test failed track restoration. An isolated MKII self-test and timed Undo passed with original inventory and whole-set identity restored. The user reported expected Lock/Clear changes and STOP-before-edit. CPU capture recorded a sampled whole-instrument peak of 54.0%; exact operation timing and full hardware qualification remain incomplete.",
-    "hardwareStatus": "reported",
-    "evidenceRevision": "853dae7d45c868db676b112049036913e74f5790",
+    "summary": "0.1.7 uses the stock font and seven-pixel rows at all three levels and closes directly after successful Apply. Portable planner/UI/native-commit checks, MCF54455 compile/guard and the combined native UI/edit/removal emulator run passed with exact image/site attestation. Emulator DSP was disabled; no current-version physical or audible qualification.",
+    "hardwareStatus": "untested",
+    "evidenceRevision": "4c565528dab2dba6736079cd406b78ec57b2a0b7",
     "gates": [
       "Worst-case cycles under parameter modulation and maximum load",
       "Exact memory region and maximum-instance totals",
@@ -86,10 +86,10 @@
   },
   "media": [
     {
-      "path": "media/both-menu-actions.png",
+      "path": "media/v017-part-menu.png",
       "captureType": "emulator",
-      "caption": "Level 1: FUNC + PART opens the headerless list. The four stock actions are followed by Lock Samples to Pattern and Clear Sample Locks.",
-      "alt": "Headerless Part Edit list with the four stock actions and both appended sample-lock actions.",
+      "caption": "Native Part Edit font and seven-pixel rows; four stock actions followed by the two sample-lock actions, without a header.",
+      "alt": "Native Part Edit font and seven-pixel rows; four stock actions followed by the two sample-lock actions, without a header.",
       "credit": "twwwy; Elektron Octatrack UI",
       "license": "LicenseRef-OT-UI-Documentation",
       "source": "original",
@@ -97,16 +97,16 @@
         "page": "Part Edit",
         "shows": "location",
         "firmware": "1.40C",
-        "moduleVersion": "0.1.6-experimental",
+        "moduleVersion": "0.1.7-experimental",
         "imageSha256": "32e2480b5658c5b559884358b9925e8dbba92581b27a581745f232cb9b57ab43",
-        "setup": "Actual MKII emulator, DSP enabled; package 0cd6c725f6be493ea461b7a54231032416cab3cad77bf3327e644db212848961. Receipt media/v016-native-ui.json; no hardware result."
+        "setup": "Actual MKII emulator, DSP disabled; exact 0.1.7 package 372746e634f67590c6b93af832e65c47f2267493cf8aa52753e7ddfb92250bb0. Receipt media/v017-ui.json. No hardware or audible result."
       }
     },
     {
-      "path": "media/lock-tracks.png",
+      "path": "media/v017-lock-tracks.png",
       "captureType": "emulator",
-      "caption": "Level 2: arrows navigate S/F tracks. A selects all, B selects the highlighted track. Turn clockwise ON, counterclockwise OFF. Greyed-out T3 and T7 are skipped.",
-      "alt": "Eight-track grid with S/F labels, T1-4 left and T5-8 right.",
+      "caption": "Native font, white header and seven-pixel rows; all eight tracks in two columns with disabled tracks greyed and no brackets.",
+      "alt": "Native font, white header and seven-pixel rows; all eight tracks in two columns with disabled tracks greyed and no brackets.",
       "credit": "twwwy; Elektron Octatrack UI",
       "license": "LicenseRef-OT-UI-Documentation",
       "source": "original",
@@ -114,16 +114,16 @@
         "page": "Lock track selection",
         "shows": "controls",
         "firmware": "1.40C",
-        "moduleVersion": "0.1.6-experimental",
+        "moduleVersion": "0.1.7-experimental",
         "imageSha256": "32e2480b5658c5b559884358b9925e8dbba92581b27a581745f232cb9b57ab43",
-        "setup": "Actual MKII emulator, DSP enabled; package 0cd6c725f6be493ea461b7a54231032416cab3cad77bf3327e644db212848961. Receipt media/v016-native-ui.json; no hardware result."
+        "setup": "Actual MKII emulator, DSP disabled; exact 0.1.7 package 372746e634f67590c6b93af832e65c47f2267493cf8aa52753e7ddfb92250bb0. Receipt media/v017-ui.json. No hardware or audible result."
       }
     },
     {
-      "path": "media/lock-confirm.png",
+      "path": "media/v017-lock-confirm.png",
       "captureType": "emulator",
-      "caption": "Level 3 shows the SAMPLE-lock changes for each selected track. This layout fixture has no affected trigs; functional and maximum-count screenshots follow.",
-      "alt": "Two-column confirmation with per-track change counts and dashes for excluded tracks.",
+      "caption": "Native font and seven-pixel rows for the pattern, per-track counts and Apply/Back controls. Layout fixture with zero changes.",
+      "alt": "Native font and seven-pixel rows for the pattern, per-track counts and Apply/Back controls. Layout fixture with zero changes.",
       "credit": "twwwy; Elektron Octatrack UI",
       "license": "LicenseRef-OT-UI-Documentation",
       "source": "original",
@@ -131,16 +131,16 @@
         "page": "Lock confirmation",
         "shows": "controls",
         "firmware": "1.40C",
-        "moduleVersion": "0.1.6-experimental",
+        "moduleVersion": "0.1.7-experimental",
         "imageSha256": "32e2480b5658c5b559884358b9925e8dbba92581b27a581745f232cb9b57ab43",
-        "setup": "Actual MKII emulator, DSP enabled; package 0cd6c725f6be493ea461b7a54231032416cab3cad77bf3327e644db212848961. Receipt media/v016-native-ui.json; no hardware result."
+        "setup": "Actual MKII emulator, DSP disabled; exact 0.1.7 package 372746e634f67590c6b93af832e65c47f2267493cf8aa52753e7ddfb92250bb0. Receipt media/v017-ui.json. No hardware or audible result."
       }
     },
     {
-      "path": "media/clear-tracks.png",
+      "path": "media/v017-clear-tracks.png",
       "captureType": "emulator",
-      "caption": "Clear removes all SAMPLE locks on selected tracks, including manual locks. YES opens confirmation; NO closes the popup. Encoder C has no action.",
-      "alt": "Clear track grid with ALL SAMPLE LOCKS notice.",
+      "caption": "Native-font Clear grid; Clear always includes all selected SAMPLE locks and encoder C is inert.",
+      "alt": "Native-font Clear grid; Clear always includes all selected SAMPLE locks and encoder C is inert.",
       "credit": "twwwy; Elektron Octatrack UI",
       "license": "LicenseRef-OT-UI-Documentation",
       "source": "original",
@@ -148,16 +148,16 @@
         "page": "Clear track selection",
         "shows": "controls",
         "firmware": "1.40C",
-        "moduleVersion": "0.1.6-experimental",
+        "moduleVersion": "0.1.7-experimental",
         "imageSha256": "32e2480b5658c5b559884358b9925e8dbba92581b27a581745f232cb9b57ab43",
-        "setup": "Actual MKII emulator, DSP enabled; package 0cd6c725f6be493ea461b7a54231032416cab3cad77bf3327e644db212848961. Receipt media/v016-native-ui.json; no hardware result."
+        "setup": "Actual MKII emulator, DSP disabled; exact 0.1.7 package 372746e634f67590c6b93af832e65c47f2267493cf8aa52753e7ddfb92250bb0. Receipt media/v017-ui.json. No hardware or audible result."
       }
     },
     {
-      "path": "media/clear-confirm.png",
+      "path": "media/v017-clear-confirm.png",
       "captureType": "emulator",
-      "caption": "Review per-track counts and INCLUDES MANUAL LOCKS. NO returns to level 2 with the selections preserved.",
-      "alt": "Per-track Clear confirmation stating that manual locks are included.",
+      "caption": "Native-font confirmation with per-track counts and INCLUDES MANUAL LOCKS.",
+      "alt": "Native-font confirmation with per-track counts and INCLUDES MANUAL LOCKS.",
       "credit": "twwwy; Elektron Octatrack UI",
       "license": "LicenseRef-OT-UI-Documentation",
       "source": "original",
@@ -165,60 +165,60 @@
         "page": "Clear confirmation",
         "shows": "controls",
         "firmware": "1.40C",
-        "moduleVersion": "0.1.6-experimental",
+        "moduleVersion": "0.1.7-experimental",
         "imageSha256": "32e2480b5658c5b559884358b9925e8dbba92581b27a581745f232cb9b57ab43",
-        "setup": "Actual MKII emulator, DSP enabled; package 0cd6c725f6be493ea461b7a54231032416cab3cad77bf3327e644db212848961. Receipt media/v016-native-ui.json; no hardware result."
+        "setup": "Actual MKII emulator, DSP disabled; exact 0.1.7 package 372746e634f67590c6b93af832e65c47f2267493cf8aa52753e7ddfb92250bb0. Receipt media/v017-ui.json. No hardware or audible result."
       }
     },
     {
-      "path": "media/native-lock-result.png",
+      "path": "media/v017-after-apply.png",
       "captureType": "emulator",
-      "caption": "Native Lock completed with playback stopped; the project is not implicitly saved.",
-      "alt": "Completed SAMPLE-lock operation with a reminder that the project is not saved.",
+      "caption": "Successful Apply closes straight to the normal page, without an acknowledgement popup.",
+      "alt": "Successful Apply closes straight to the normal page, without an acknowledgement popup.",
       "credit": "twwwy; Elektron Octatrack UI",
       "license": "LicenseRef-OT-UI-Documentation",
       "source": "original",
       "otUi": {
-        "page": "Native operation result",
+        "page": "After successful Apply",
         "shows": "controls",
         "firmware": "1.40C",
-        "moduleVersion": "0.1.6-experimental",
+        "moduleVersion": "0.1.7-experimental",
         "imageSha256": "32e2480b5658c5b559884358b9925e8dbba92581b27a581745f232cb9b57ab43",
-        "setup": "Actual MKII emulator, DSP enabled; package 0cd6c725f6be493ea461b7a54231032416cab3cad77bf3327e644db212848961. Receipt media/v016-native-ui.json; no hardware result."
+        "setup": "Actual MKII emulator, DSP disabled; exact 0.1.7 package 372746e634f67590c6b93af832e65c47f2267493cf8aa52753e7ddfb92250bb0. Receipt media/v017-ui.json. No hardware or audible result."
       }
     },
     {
-      "path": "media/v016-maximum-lock-confirm.png",
+      "path": "media/v017-replace-confirm.png",
       "captureType": "emulator",
-      "caption": "Maximum Lock confirmation: 64 changes on each of eight Flex/Static tracks (512 total).",
-      "alt": "Maximum Lock confirmation: 64 changes on each of eight Flex/Static tracks (512 total).",
+      "caption": "Native-font confirmation makes explicit replacement of existing SAMPLE locks visible.",
+      "alt": "Native-font confirmation makes explicit replacement of existing SAMPLE locks visible.",
       "credit": "twwwy; Elektron Octatrack UI",
       "license": "LicenseRef-OT-UI-Documentation",
       "source": "original",
       "otUi": {
-        "page": "Lock confirmation",
+        "page": "Explicit replacement confirmation",
         "shows": "controls",
         "firmware": "1.40C",
-        "moduleVersion": "0.1.6-experimental",
+        "moduleVersion": "0.1.7-experimental",
         "imageSha256": "32e2480b5658c5b559884358b9925e8dbba92581b27a581745f232cb9b57ab43",
-        "setup": "Actual MKII emulator, DSP disabled; exact package 0cd6c725f6be493ea461b7a54231032416cab3cad77bf3327e644db212848961. Complete maximum-edit/native save-reload/removal receipt media/v016-native-stress.json; no hardware or audible result."
+        "setup": "Actual MKII emulator, DSP disabled; exact 0.1.7 package 372746e634f67590c6b93af832e65c47f2267493cf8aa52753e7ddfb92250bb0. Receipt media/v017-ui.json. No hardware or audible result."
       }
     },
     {
-      "path": "media/v016-maximum-clear-confirm.png",
+      "path": "media/v017-clear-all-selected.png",
       "captureType": "emulator",
-      "caption": "Maximum Clear confirmation: 64 SAMPLE locks on each of eight tracks (512 total), including manual locks.",
-      "alt": "Maximum Clear confirmation: 64 SAMPLE locks on each of eight tracks (512 total), including manual locks.",
+      "caption": "All eligible tracks selected in the native-font Clear grid; non-Flex/Static tracks stay disabled.",
+      "alt": "All eligible tracks selected in the native-font Clear grid; non-Flex/Static tracks stay disabled.",
       "credit": "twwwy; Elektron Octatrack UI",
       "license": "LicenseRef-OT-UI-Documentation",
       "source": "original",
       "otUi": {
-        "page": "Clear confirmation",
+        "page": "Clear all eligible tracks",
         "shows": "controls",
         "firmware": "1.40C",
-        "moduleVersion": "0.1.6-experimental",
+        "moduleVersion": "0.1.7-experimental",
         "imageSha256": "32e2480b5658c5b559884358b9925e8dbba92581b27a581745f232cb9b57ab43",
-        "setup": "Actual MKII emulator, DSP disabled; exact package 0cd6c725f6be493ea461b7a54231032416cab3cad77bf3327e644db212848961. Complete maximum-edit/native save-reload/removal receipt media/v016-native-stress.json; no hardware or audible result."
+        "setup": "Actual MKII emulator, DSP disabled; exact 0.1.7 package 372746e634f67590c6b93af832e65c47f2267493cf8aa52753e7ddfb92250bb0. Receipt media/v017-ui.json. No hardware or audible result."
       }
     }
   ],
@@ -229,18 +229,18 @@
       "Level 2 always shows T1-4 left and T5-8 right. Arrows skip greyed-out non-Flex/Static tracks.",
       "Turn A clockwise to select all eligible tracks or counterclockwise to clear selection. B sets the highlighted track in the same way.",
       "For Lock, C sets Replace existing; OFF preserves every existing SAMPLE lock. Clear always includes all SAMPLE locks.",
-      "YES opens level 3. Review per-track change counts; YES applies, NO returns to level 2.",
+      "YES opens level 3. Review per-track change counts; YES applies and closes on success, NO returns to level 2. Errors remain visible.",
       "NO in level 2 closes the popup. Apply stops playback first and leaves it stopped; a recorder in use refuses the edit."
     ],
     "screenshots": [
-      "media/both-menu-actions.png",
-      "media/lock-tracks.png",
-      "media/lock-confirm.png",
-      "media/clear-tracks.png",
-      "media/clear-confirm.png",
-      "media/native-lock-result.png",
-      "media/v016-maximum-lock-confirm.png",
-      "media/v016-maximum-clear-confirm.png"
+      "media/v017-part-menu.png",
+      "media/v017-lock-tracks.png",
+      "media/v017-lock-confirm.png",
+      "media/v017-clear-tracks.png",
+      "media/v017-clear-confirm.png",
+      "media/v017-after-apply.png",
+      "media/v017-replace-confirm.png",
+      "media/v017-clear-all-selected.png"
     ]
   }
 }

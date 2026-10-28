@@ -1,8 +1,8 @@
-# Private MKII trial: 0.1.6-experimental
+# Private MKII trial: 0.1.7-experimental
 
 Lock preserves existing SAMPLE locks by default. Clear removes **all selected SAMPLE locks**, including manual locks. There is no ownership storage or special persistence requirement.
 
-Package SHA-256: 0cd6c725f6be493ea461b7a54231032416cab3cad77bf3327e644db212848961.
+Package SHA-256: 372746e634f67590c6b93af832e65c47f2267493cf8aa52753e7ddfb92250bb0.
 
 ## Before loading
 
@@ -13,11 +13,12 @@ Package SHA-256: 0cd6c725f6be493ea461b7a54231032416cab3cad77bf3327e644db21284896
 
 ## Check on the disposable project
 
-- FUNC+PART keeps four stock rows, then Lock and Clear.
-- Eight tracks appear in two columns; only S/F tracks are selectable. Arrows navigate; A toggles all and B the highlighted track.
+- FUNC+PART keeps four stock rows, then Lock and Clear, with the stock font and seven-pixel row spacing.
+- Levels two and three use the same stock font and seven-pixel row spacing, with white headers. Eight tracks appear in two columns; only S/F tracks are selectable. Arrows navigate; A toggles all and B the highlighted track.
 - Lock defaults to Replace existing OFF. Existing locks stay; empty SAMPLE fields on sample trigs receive the Part assignment. Repeating Lock keeps both manual and earlier generated locks.
 - Clear has no Retain manual option; C is inert. Confirmation says INCLUDES MANUAL LOCKS and gives per-track counts.
 - Start playback before a small edit. STOP must precede mutation; playback stays stopped. Clear removes all selected SAMPLE locks, preserving other parameter locks, unselected tracks and Part assignments.
+- Successful Apply closes directly to the normal screen; no success acknowledgement is required. Refusal/error messages still appear.
 - Capture actual diagnostics/screen. Emulator instruction times are not hardware timing.
 - Undo the module trial; verify baseline active digest/inventory, stock popup and response. Undo removes code, not SAMPLE edits.
 

@@ -1,6 +1,6 @@
 # Pattern Sample Locks
 
-Version: 0.1.6-experimental · author: @twwwy · category: system
+Version: 0.1.7-experimental · author: @twwwy · category: system
 
 ## Overview
 
@@ -12,7 +12,7 @@ Two Part Edit actions: **Lock Samples to Pattern** writes the Part's assigned sa
 
 Level 1 is **FUNC + PART**. The headerless stock list keeps RENAME, RELOAD, SAVE and SAVE ALL, then appends the two actions.
 
-Level 2 always lists eight tracks in two columns: T1–T4 left, T5–T8 right. S means Static and F means Flex. Other machines are greyed out, have no brackets, cannot be selected and are skipped by arrows. Levels 2 and 3 use full-height popups, white headers and equal eight-pixel text spacing.
+Level 2 always lists eight tracks in two columns: T1–T4 left, T5–T8 right. S means Static and F means Flex. Other machines are greyed out, have no brackets, cannot be selected and are skipped by arrows. Levels 2 and 3 use tall popups, white headers and equal seven-pixel text spacing.
 
 | Control | Level 2 behavior |
 | --- | --- |
@@ -24,7 +24,7 @@ Level 2 always lists eight tracks in two columns: T1–T4 left, T5–T8 right. S
 | YES | Open level 3 with per-track change counts. |
 | NO | Close the entire module popup. |
 
-Level 3 identifies the pattern and shows a count for each selected track; unselected/disabled tracks show a dash. YES applies, NO returns to level 2 with selection/policy retained. Confirmation accepts no selection or policy changes.
+Level 3 identifies the pattern and shows a count for each selected track; unselected/disabled tracks show a dash. YES applies and closes the popup on success; there is no extra success acknowledgement. NO returns to level 2 with selection/policy retained. Errors remain visible. Confirmation accepts no selection or policy changes.
 
 Final YES stops playback and waits for transport and independent tracks to stop. Playback stays stopped. An active recorder refuses; STOP timeout makes no edit. NO cancels a pending stop; PLAY is consumed until completion/cancellation.
 
@@ -56,8 +56,10 @@ There is **no ownership bookkeeping**: no battery-RAM reservation, CF metadata, 
 - Stock keeps its own popup labels, callbacks and selection pointers. No module pointer is retained in a stock popup.
 - Source, Part assignments, SAMPLE bytes, trig masks, canonical battery mirror and lock-index bytes are revalidated under the native level-four task lock, leaving frame/DMA interrupts enabled.
 - SAMPLE/index writes use batches of at most sixteen under full interrupt masking. Only selected SAMPLE bytes, their canonical mirror, affected index bits and native dirty/publication state change.
-- Compiled allocation: 8,620 bytes initialized code/data and 6,992 bytes BSS. These are build sizes, not measured physical CPU/stack use.
+- Compiled allocation: 8,956 bytes initialized code/data and 6,992 bytes BSS. These are build sizes, not measured physical CPU/stack use.
 - Current results belong in [TESTING.md](TESTING.md); historical ownership-prototype timings do not qualify this version.
+
+All three levels use the instrument’s own font and seven-pixel row spacing. Level one stays headerless; levels two and three keep white headers and two-column track grids. The popups fit all their rows without clipping.
 
 ## Tests and measurements
 
@@ -71,8 +73,8 @@ Original source and UI by twwwy, MIT. Small lettering is reused from twwwy's ori
 
 ## Screens and audio
 
-Screens are actual emulator LCD captures. The DSP-enabled 0.1.6 UI/native run and fresh stock-project reload passed. Maximum-edit evidence and its DSP execution limits are detailed in [TESTING.md](TESTING.md); older ownership results are archived in [TESTING-v015.md](TESTING-v015.md).
+Screens are actual emulator LCD captures. Current UI results are in [TESTING.md](TESTING.md). The 0.1.6 emulator/hardware/CPU results are historical in [TESTING-v016.md](TESTING-v016.md); ownership results are archived in [TESTING-v015.md](TESTING-v015.md).
 
-![Part Edit actions](media/both-menu-actions.png)
-![Lock selection](media/lock-tracks.png)
-![Clear all selected SAMPLE locks](media/clear-all-selected.png)
+![Part Edit actions](media/v017-part-menu.png)
+![Lock selection](media/v017-lock-tracks.png)
+![Clear all selected SAMPLE locks](media/v017-clear-all-selected.png)

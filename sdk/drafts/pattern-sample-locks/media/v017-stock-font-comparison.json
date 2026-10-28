@@ -1,0 +1,35 @@
+{
+  "hardware": false,
+  "reference": "Original stock 1.40C Part Edit, no module",
+  "moduleVersion": "0.1.7-experimental",
+  "packageSha256": "372746e634f67590c6b93af832e65c47f2267493cf8aa52753e7ddfb92250bb0",
+  "referencePngSha256": "477f45b96ad2065aa8323c9835fe0dbb36f8462a6edd2fa0cd58b992c43221b5",
+  "modulePngSha256": "bdaae1cfcb3e4a3b6c5a8cba608ea12d9157382285da8f3a66a364efb1ecf1ce",
+  "stockRowStart": [
+    45,
+    18
+  ],
+  "moduleRowStart": [
+    19,
+    11
+  ],
+  "rowStridePixels": 7,
+  "comparedRegionPerRow": [
+    39,
+    7
+  ],
+  "stockSelectionContrastNormalized": true,
+  "rows": [
+    "RENAME",
+    "RELOAD",
+    "SAVE",
+    "SAVE ALL"
+  ],
+  "differentPixelsPerRow": [
+    0,
+    0,
+    0,
+    0
+  ],
+  "scope": "Registered comparisons of all four stock row regions, normalizing the selected-row contrast. This verifies the rendered font and row grid; the module popup is larger to include two additional labels."
+}
