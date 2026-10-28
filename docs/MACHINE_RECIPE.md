@@ -35,7 +35,7 @@ Read this before you plan a core, a base or the first modules for any machine ot
 | --- | --- | --- | --- | --- | --- |
 | Octatrack | available | Modwerk base (beta) | done | `ot_emu` | the reference |
 | Digitakt, Digitone | preview | Modwerk cores, interfaces 2.1 and 2.2 (in development, frozen) | not started | digiemu | grow the core into the base, then the loader glue (the Octatrack's ColdFire family) |
-| Analog Rytm MKII | preview | elekloader core-ar2 0.3 | planned: a Modwerk base from core-ar2 0.3's source, with the send bus and an FX list first (27 October 2026) | rytm-emu | the base plan, for owner review |
+| Analog Rytm MKII | preview | elekloader core-ar2 0.7 | planned: a Modwerk base from core-ar2 0.3's source, with the send bus and an FX list first (27 October 2026) | rytm-emu | the base plan, for owner review |
 | Analog Four MKII | research | elekloader core-a4 0.2 | not started | none known | as the Rytm: same platform |
 | Digitakt II | research | digitakt2-perform 1.0 | not started | none known | a base from the core source |
 | Syntakt | research | Modwerk boot probe | not started | none known | the core stage, planned as the base |
