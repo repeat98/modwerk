@@ -6,7 +6,7 @@
 #include <string.h>
 #include "buffers.h"
 
-enum { NARROW = 10, WIDE = 11 };
+enum { NARROW = 10, WIDE = 11, OTHER = 12 };
 static uint8_t reads[MODWERK_FX_IDS];
 
 /* Core 1's FX2 slots (tracks 1-4) run `ids` from a fresh plan: -> the planner's result, blocks in `blocks`. */
@@ -26,7 +26,7 @@ int main(void)
 {
     static const uint8_t idle[4] = {0, 0, 0, 0};
     uint8_t blocks[4];
-    reads[NARROW] = 1, reads[WIDE] = 2;
+    reads[NARROW] = 1, reads[WIDE] = 2, reads[OTHER] = 1;
     { /* four wide buffers on one core: only three blocks are clear of the window half */
         const uint8_t ids[4] = {WIDE, WIDE, WIDE, WIDE};
         assert(plan(ids, idle, blocks) == DL_BUF_MEMORY);
@@ -49,6 +49,19 @@ int main(void)
     { /* a narrow one there keeps its block */
         const uint8_t ids[4] = {0, 0, 0, NARROW};
         assert(plan(ids, ids, blocks) == DL_BUF_OK && blocks[3] == 3);
+    }
+    { /* all four blocks in use, and track 4 swaps its effect for another: it takes over its own block, as stock does */
+        const uint8_t running[4] = {NARROW, NARROW, NARROW, NARROW}, ids[4] = {NARROW, NARROW, NARROW, OTHER};
+        assert(plan(ids, running, blocks) == DL_BUF_OK);
+        assert(blocks[0] == 0 && blocks[1] == 1 && blocks[2] == 2 && blocks[3] == 3);
+    }
+    { /* the same swap to a wide effect: track 4's own block is block 3, so it has nowhere to go */
+        const uint8_t running[4] = {NARROW, NARROW, NARROW, NARROW}, ids[4] = {NARROW, NARROW, NARROW, WIDE};
+        assert(plan(ids, running, blocks) == DL_BUF_MEMORY);
+    }
+    { /* but a wide effect swapping in on track 1 keeps track 1's block 0 */
+        const uint8_t running[4] = {NARROW, NARROW, NARROW, NARROW}, ids[4] = {WIDE, NARROW, NARROW, NARROW};
+        assert(plan(ids, running, blocks) == DL_BUF_OK && blocks[0] == 0);
     }
     return 0;
 }

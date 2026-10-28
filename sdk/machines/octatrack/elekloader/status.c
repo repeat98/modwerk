@@ -641,23 +641,22 @@ static void refused_box(unsigned char *frame)
     unsigned slot = refused[1], c = refused_core;
     char where[8] = {'T', (char)('1' + (slot & 7u)), ' ', 'F', 'X', (char)(slot < 8u ? '1' : '2'), 0};
     if (refused_machine) where[3] = 'S', where[4] = 'R', where[5] = 'C'; /* a machine's voice, not an effect slot */
-    const char *title = refused_reason == 3u ? "DSP FULL" : "DSP MEMORY FULL";
+    const char *title = refused[0] == 3u ? "NO ROOM" : refused_reason == 3u ? "DSP FULL" : "DSP MEMORY FULL";
     if (TEXT_WIDTH(FONT, -1, title) + TEXT_WIDTH(FONT, -1, where) + 6 > 82) title += 4; /* "MEMORY FULL": clear of the slot */
     label(23u, 15u, title), label((unsigned)(105 - TEXT_WIDTH(FONT, -1, where)), 15u, where);
     fill(frame, 18u, 22u, 109u, 22u, 1);
     char need[32], *e = need;
     for (const char *t = refused_name[0] ? refused_name : "THIS EFFECT"; *t && e < need + 16; ) *e++ = *t++;
     const uint32_t allowance = c ? MODWERK_DSP_ALLOWANCE1 : MODWERK_DSP_ALLOWANCE0;
-    if (refused[0] == 3u) { /* a Y buffer: the blocks this slot kind has on the core, all taken */
-        const char *t = " NEEDS A BUFFER";
-        while (*t) *e++ = *t++;
+    if (refused[0] == 3u) { /* a Y buffer: the slot kind's blocks on the core that this effect may take, all taken */
+        /* In the player's words: the other FX on these four tracks hold the delay memory (refused[6] of refused[7]
+         * blocks; fewer than all when this effect may not take the free one: Air Chorus and BBD stay off block 3). */
         *e = 0, label(23u, 26u, need);
-        char line[24] = "FX1 BUFFERS T1-4", count[8], *n = count;
+        char line[24] = "FX2 ON T1-4 FULL";
         line[2] = slot < 8u ? '1' : '2';
-        if (!c) line[13] = '5', line[15] = '8';
-        label(23u, 36u, line);
-        n = number(n, refused[6]), *n++ = '/', n = number(n, refused[7]), *n = 0;
-        label((unsigned)(105 - TEXT_WIDTH(FONT, -1, count)), 36u, count);
+        if (!c) line[8] = '5', line[10] = '8';
+        label(23u, 34u, line);
+        label(23u, 42u, "CHANGE ONE FIRST");
         return;
     }
     /* DSP: what admission books on the core now, and what the effect adds (its cycles less the slot's old effect's);

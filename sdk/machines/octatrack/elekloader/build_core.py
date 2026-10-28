@@ -787,7 +787,16 @@ WIDTH_EDITS = {
                    '        unsigned reader=ids[i]<MODWERK_FX_IDS && reads[ids[i]];\n'
                    '        if(!reader || target[i]!=DL_BUF_NONE || (n<16u)!=(reads[ids[i]]>1u)) continue;\n'),
                   ('        if(!free) return DL_BUF_MEMORY;',
-                   '        if(k && reads[ids[i]]>1u) free&=~(1u<<3);\n        if(!free) return DL_BUF_MEMORY;')),
+                   '        if(k && reads[ids[i]]>1u) free&=~(1u<<3);\n        if(!free) return DL_BUF_MEMORY;'),
+                  # A slot whose effect changes keeps its own block, as stock's fixed blocks do: in the switch frame the
+                  # outgoing effect runs its last sub-block before the incoming one's init. Reserving it for the outgoing
+                  # effect refused every swap on a core whose four blocks were in use (owner's MKII, 28 October 2026).
+                  ('            if(target[j]!=DL_BUF_NONE && dl_buffers_core(j)==c && kind_of(j)==k) taken|=1u<<target[j];\n',
+                   '            if(target[j]!=DL_BUF_NONE && dl_buffers_core(j)==c && kind_of(j)==k) taken|=1u<<target[j];\n'
+                   '        if(b->live[i]!=DL_BUF_NONE) taken&=~(1u<<b->live[i]);\n'),
+                  ('        while(!((free>>n)&1u)) ++n;\n',
+                   '        if(b->live[i]!=DL_BUF_NONE && (free>>b->live[i]&1u)) n=b->live[i];\n'
+                   '        else while(!((free>>n)&1u)) ++n;\n')),
     'manager.c': (
         ('extern struct dl_package dl_catalog[32];', 'extern struct dl_package dl_catalog[DL_PACKAGES];'),
         ('extern struct code dl_codes[2][32];', 'extern struct code dl_codes[2][DL_PACKAGES];'),
