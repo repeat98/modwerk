@@ -13,7 +13,7 @@ static unsigned failures;
 
 /* Synthetic memory: a few segments at the addresses the registry reads. */
 struct segment { uint32_t base, size; uint8_t *bytes; };
-static uint8_t bank[0x8ed80u + 4u * 6322u + 64u], sram[4u * 6322u], misc[0x100], code[0x40], stocktab[0x80], ui[0x40], stockdef[12];
+static uint8_t bank[0x9504au + 4u * 6322u + 64u], sram[4u * 6322u], misc[0x100], code[0x40], stocktab[0x80], ui[0x40], stockdef[12];
 static struct segment segments[] = {
     {0x46000000u, sizeof bank, bank}, {0x100a4eceu, sizeof sram, sram}, {0x100b14c0u, 0x40, misc},
     {0x80000000u, 0x40, misc + 0x40}, {0x46c82450u, 0x10, misc + 0x80}, {0x400a78c8u, 20, stocktab},
@@ -54,6 +54,9 @@ void mg_tick(void) {}
 /* The loader's side: the table rows and the machine glue. */
 #include "loader.h"
 #include "modwerk_events.h"
+/* The loader's owner of an address: here the module id is the machine's first letter. */
+int modwerk_runtime_owner_at(uintptr_t address, struct runtime_owner *o)
+{ const struct modwerk_machine *m = (const void *)address; memset(o, 0, sizeof *o); o->module = m->sig[0]; return 1; }
 static uintptr_t volatile machine_row[5], sequencer_row[9];
 static int masked;
 uint32_t modwerk_machine_mask(void) { CHECK(!masked); masked = 1; return 7; }
@@ -172,7 +175,15 @@ int main(void)
     CHECK(!strcmp(mw_name(5), "ANALOG BD") && !strcmp(mw_name(6), "VECTOR") && !strcmp(mw_name(7), "FM SYNTH") && (uintptr_t)mw_name(8) == 0x1001u);
     /* Assign: admission first, defaults and signature in the Part and its SRAM mirror; a refusal changes nothing. */
     a_admit = 0; CHECK(mw_assign(part0(), 2, 5) == (unsigned)-1 && part0()[60 + 60] == 0);
+    uint32_t mods[4];
+    CHECK(modwerk_machine_bank_modules(mods, 4) == 0);
     a_admit = 1; CHECK(mw_assign(part0(), 2, 5) == 1);
+    /* The bank's Parts sign a track for A: its module's engine is used (controller_board.c), a saved Part's too. */
+    CHECK(modwerk_machine_bank_modules(mods, 4) == 1 && mods[0] == 'A');
+    memcpy(host_at(0x46000000u + 0x9504au + 2u * 6322u + SIG + 30u * 5u), "FM\1", 3);
+    bank[0x9504au + 2u * 6322u + 0x22 + 5] = 1;
+    CHECK(modwerk_machine_bank_modules(mods, 4) == 2 && mods[0] == 'A' && mods[1] == 'F');
+    memset(host_at(0x46000000u + 0x9504au + 2u * 6322u + SIG + 30u * 5u), 0, 3);
     CHECK(part0()[60 + 60] == 'A' && part0()[61 + 60] == 'B' && part0()[62 + 60] == 1 && sram[60 + 60] == 'A');
     CHECK(part0()[0x2a + 60 + 6] == 1 && part0()[0x1da + 60 + 11] == 12 && sram[0x1da + 60 + 11] == 12);
     CHECK(mw_type(1, slot(2)) == 5 && mw_type(3, slot(2)) == 3 && mw_type(1, slot(3)) == 1);

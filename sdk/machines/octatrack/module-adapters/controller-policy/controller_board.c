@@ -19,6 +19,7 @@ int modwerk_dsp_keybus_charge(int on);       /* dsp.c (resident_engines.dsp): th
 uint32_t modwerk_dsp_keybus_price(unsigned c); /* ... on core c while it is not charged there, 0 once it is */
 int modwerk_dsp_bank_names(unsigned id);     /* dsp.c: a track runs this FX id, or one of the bank's Parts names it */
 extern volatile uint8_t modwerk_controller_lease_seen; /* controller_write_lease.c: features a trusted controller asked to write */
+unsigned modwerk_machine_bank_modules(uint32_t *module, unsigned max); /* machine_registry.c: machines the bank's Parts sign */
 #endif
 unsigned modwerk_controller_policy_entries(void);
 
@@ -65,9 +66,9 @@ static struct { uint32_t generation, since; uint8_t quiesce; } want[MW_CONTROLLE
 static uint8_t started, closed, mask[2], mask_known;
 /* Engines load when a track uses them, not when their module is installed (owner, 22 October 2026). Sidechain is used
  * while a track runs stock COMPRESSOR or one of the bank's Parts names it. Analog BD (any packaged feature) is used once
- * its controller asked for the write lease in this bank: its renderer does, every frame, for each track that carries its
- * machine, which only the current Part shows, so the bank keeps it until it changes and a Part switch never waits for
- * a placement. Output Matrix counts as used while installed: with CUE CFG on MATRIX its routing codes are cue levels to
+ * a track of the bank's Parts is signed for its machine, or its controller asked for the write lease in this bank (its
+ * renderer does, every frame, for each track that carries its machine, but only from the first trig), so the bank keeps
+ * it until it changes and a Part switch never waits for a placement. Output Matrix counts as used while installed: with CUE CFG on MATRIX its routing codes are cue levels to
  * stock, so its engine must already run when MATRIX is chosen. A held slot whose feature is unused is parked: never
  * placed, or, once placed, disabled (its page reverted) and left RETIRING, so the engines collect its words; used again,
  * it is restored and placed, reset and enabled as at install. */
@@ -508,6 +509,19 @@ static void use_tick(void)
     uint32_t bank = BANK_NOW();
     if (bank != seen_bank) seen_bank = bank, seen = 0;
     seen |= modwerk_controller_lease_seen & MW_DSP_PACKAGED; modwerk_controller_lease_seen = 0;
+    /* A packaged feature's machine signed on a track of the bank's Parts: used before its first trig asks for the lease,
+     * so after a boot it runs by MODULES LOADED. Only while one held is not seen yet: a few loads a tick. */
+    unsigned unseen = 0;
+    for (unsigned k = 0; k < MW_CONTROLLER_SLOTS; ++k)
+        if (held(&REGISTRY.slots[k])) unseen |= REGISTRY.slots[k].binding.identity.feature & MW_DSP_PACKAGED & ~seen;
+    if (unseen) {
+        uint32_t module[4]; unsigned n = modwerk_machine_bank_modules(module, 4u);
+        for (unsigned k = 0; k < MW_CONTROLLER_SLOTS; ++k) {
+            const struct mw_controller_slot *s = &REGISTRY.slots[k];
+            for (unsigned i = 0; i < n && held(s); ++i)
+                if (s->binding.identity.module == module[i]) seen |= s->binding.identity.feature & unseen;
+        }
+    }
     used = (uint8_t)(seen | 2u | (modwerk_dsp_bank_names(COMPRESSOR) ? 1u : 0u));
 }
 /* Slot `at` needs its engine: held and used, or on its way out of use (its DISABLE not yet complete, so Sidechain goes
@@ -839,6 +853,10 @@ void modwerk_controller_tick(void)
     modwerk_machine_unlock(irq);
 }
 
+#ifdef MODWERK_RESIDENT_ON_DEMAND
+/* A base without the machine registry (the host fixtures): no machine signs a track. */
+__attribute__((weak)) unsigned modwerk_machine_bank_modules(uint32_t *module, unsigned max) { (void)module; (void)max; return 0; }
+#endif
 int modwerk_controller_settling(void)
 {
     if (!started || closed) return 0;

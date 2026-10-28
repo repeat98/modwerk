@@ -19,6 +19,9 @@ Analog BD silent until the next stop. Three causes, each in the base:
   0.5 s at least, 10 s at most. A slot waits only while the bank uses its feature; a closed core (board transport or
   owned channel), a lost core state, a key bus that cannot come up, or a stuck engine ends its wait. The notice is
   dropped if the host changes the set during the wait. SOME MODULES FAILED and MODULES NOT LOADED are said at once.
+- **Used from the Part.** A packaged feature counts as used once a track of the bank's Parts, working or saved, is
+  signed for its module's machine (`machine_registry.c` `modwerk_machine_bank_modules`, read by `use_tick`), not only
+  once its renderer asks for the write lease, which it does only from a track's first trig.
 - **`bind_live`** keeps a module's retry when a later module in the same pass binds (`bind_again` was cleared by any
   successful bind, so an earlier refused reservation waited for the next owner epoch, and the notice could come early).
 
@@ -43,8 +46,17 @@ Analog BD silent until the next stop. Three causes, each in the base:
 - **Code review** of the change: reset offsets, the last partial packet, range ends and ack counts checked against the
   receiver; the 10 s cap always ends the wait. Its findings on the settling wait are fixed above.
 
+  - *After a power cycle, before the use-from-Part change* (personal base `d4658748` flashed, 14 modules kept; three
+    cold boots, PLAY on the notice): Analog BD came in 1.50 s after PLAY (boot 1 recorded: the first 6 of its trigs
+    missed), about the 13th trig in the others. Its engine started loading only at PLAY: the restored track asks for
+    the lease only from its first trig, so MODULES LOADED had nothing to wait for. Hence the use-from-Part change.
+
 **Open.**
-- **After a power cycle on a flashed base:** time from power-on to MODULES LOADED, and PLAY on it, not yet run.
+- **After a power cycle with the use-from-Part change:** not yet run.
+- **Ringmod SC refused at every boot restore** of `d4658748` with `RUNTIME_BUSY` (the unit's log, boots 94-97), though it
+  restored on `5afa623e` and installs live; the set had been reinstalled in a new order. Not yet explained.
+- **A restored module-machine track shows SRC → FLEX** until it is selected (stock refreshes the label only on a track
+  select); it plays as its machine.
 - **USB drop.** One unprovoked ~2 s USB drop mid-trial (twin, Analog BD placed; possibly the shared hub re-enumerating)
   rolled the trial back and left both cores' engine claims at wait 7 and the key bus closed (`0x80`) until a power cycle.
   A review points at `journal_fail()` returning before `dl_owned_lease_release` in `mw_manager_journal_release`

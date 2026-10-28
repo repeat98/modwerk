@@ -273,6 +273,10 @@ volatile uint8_t modwerk_controller_lease_seen;
 uint32_t mw_controller_board_test_bank(void) { return board_bank; }
 int mw_controller_board_test_handle(uint32_t module) { (void)module; return 63; }
 int modwerk_dsp_bank_names(unsigned id) { return id == 24u ? (int)names_compressor : id == 63u ? (int)names_reader : 0; }
+/* The module whose machine a track of the bank's Parts is signed for (machine_registry.c), or none. */
+static uint32_t bank_module;
+unsigned modwerk_machine_bank_modules(uint32_t *module, unsigned max)
+{ if (!bank_module || !max) return 0; module[0] = bank_module; return 1; }
 static unsigned refuse_write[2], refuse_place[2]; /* table offsets at which a WRITE chunk, a PLACE is refused */
 static unsigned refuse_bind[2], drop_bind[2], refuse_once[2]; /* a BIND to this table offset refused; applied but never
                                                                  * answered (once); refused once */
@@ -1767,6 +1771,26 @@ int main(int argc, char **argv)
             assert(resets == 158u); /* every packet still 24 words or fewer, at its own offset (the receiver's check) */
         }
         assert(ticks - start <= 30u && !dl_engine_evacuations && !test_trims()); /* half a second */
+    } else if (mode == 65) {
+        /* After a boot (owner's MKII, 28 October 2026): the restored Part's track is signed for Analog BD's machine, but
+         * its renderer asks for the lease only from the first trig, so the engine waited for PLAY and missed the first
+         * trigs. The Part's signature counts as use: placed while stopped, before any lease, and the notice waits. */
+        leasing = 0; ++board_bank;
+        assert(install(pkg_ab, sizeof pkg_ab) == MU_APPLIED);
+        run(400);
+        assert(slot_for(AB, MW_CTL_BOUND) && !mw_engines_jobs && !modwerk_controller_settling());
+        bank_module = AB;
+        unsigned start = ticks;
+        while (!slot_for(AB, MW_CTL_ACTIVE) && ticks - start < 600u) {
+            run(1);
+            assert(slot_for(AB, MW_CTL_ACTIVE) || modwerk_controller_settling());
+        }
+        assert(slot_for(AB, MW_CTL_ACTIVE) && dsp_mask[0] == 4 && dsp_mask[1] == 4 && !modwerk_controller_settling());
+        placed_at(0, 4, top - 998u); placed_at(1, 4, top - 998u);
+        /* A bank whose Parts sign no Analog BD track parks it again once stopped and settled. */
+        bank_module = 0; ++board_bank;
+        run(400);
+        assert(slot_for(AB, MW_CTL_RETIRING)); unplaced(0, 4); unplaced(1, 4);
     } else assert(0);
     return 0;
 }
@@ -1877,7 +1901,7 @@ def build(work):
 
 @unittest.skipUnless(shutil.which('cc'), 'host C compiler unavailable')
 class ResidentEnginesBoard(unittest.TestCase):
-    MODES = 65
+    MODES = 66
 
     def test_place_switch_run_disable_unswitch_free_and_their_refusals(self):
         with tempfile.TemporaryDirectory() as temp:

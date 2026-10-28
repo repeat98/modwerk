@@ -19,6 +19,7 @@
 #define BANK 0x46c82456u
 #define PART_OFF 0x8ed80u
 #define PART_STRIDE 6322u
+#define SAVED_OFF 0x9504au                  /* the saved Parts, as dsp.c reads them */
 #define SRAM_PART 0x100a4eceu
 #define SIG 60u
 #define FLEX_PAGE 0x400d31aeu
@@ -137,6 +138,24 @@ static unsigned orphan(const Part *part, unsigned t)
     for (unsigned k = 0; k < sizeof known / sizeof *known; ++k)
         if (s[0] == known[k].sig[0] && s[1] == known[k].sig[1] && s[2] >= known[k].lo && s[2] <= known[k].hi) return 1;
     return 0;
+}
+/* controller_board.c: the modules whose machines a track of the current bank's Parts, working or saved, is signed for,
+ * up to max. A machine's engine is used from then on, as Sidechain's is once a Part names COMPRESSOR: after a boot its
+ * renderer first asks for the write lease at the first trig, too late for it (owner's MKII, 28 October 2026). */
+unsigned modwerk_machine_bank_modules(uint32_t *module, unsigned max)
+{
+    const Machine *m[ROWS - 5u], *who; unsigned n = machines(m), found = 0;
+    if (!valid_bank()) return 0;
+    for (unsigned k = 0; k < n && found < max; ++k) {
+        unsigned hit = 0;
+        for (unsigned i = 0; i < 8u * 8u && !hit; ++i) {
+            unsigned p = i >> 3; /* Parts 1-4 working, then saved */
+            hit = owner(&m[k], 1, AT(U32(BANK) + (p < 4u ? PART_OFF : SAVED_OFF - 4u * PART_STRIDE) + p * PART_STRIDE), i & 7u, &who) != 0;
+        }
+        struct runtime_owner o;
+        if (hit && modwerk_runtime_owner_at((uintptr_t)m[k], &o) == 1) module[found++] = o.module;
+    }
+    return found;
 }
 static unsigned current(const Machine *const *m, unsigned n, const Machine **who)
 {

@@ -109,7 +109,7 @@ What uses each engine's feature (`controller_board.c` `use_tick`, once a board t
 
 | Feature | Used while | Read from |
 | --- | --- | --- |
-| Analog BD (any packaged feature) | its controller asked for the write lease since the current bank was entered | `controller_write_lease.c` marks every request it resolves to a trusted controller, granted or refused; Analog BD's renderer asks every frame for each track carrying its machine, which only the current Part shows, so the bank keeps the mark until it changes |
+| Analog BD (any packaged feature) | a track of the current bank's Parts, working or saved, is signed for its module's machine, or its controller asked for the write lease since the bank was entered | `machine_registry.c` `modwerk_machine_bank_modules` (28 October 2026: the renderer asks only from a track's first trig, so after a boot the engine waited for PLAY); `controller_write_lease.c` marks every request it resolves to a trusted controller, granted or refused. The bank keeps the mark until it changes |
 | Sidechain | a track runs stock COMPRESSOR (FX id 24), or one of the bank's four Parts, working or saved, names it | `modwerk_dsp_bank_names` (dsp.c) |
 | Key bus | Sidechain is used, or a reader's effect is named the same way | the reader's handle (`modwerk_dsp_catalogue_handle`) |
 | Output Matrix | always, while installed | with CUE CFG on MATRIX its routing codes are cue levels to stock, so its engine must already run when MATRIX is chosen; moving it to use needs Matrix to handle MATRIX without its engine first |
