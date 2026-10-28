@@ -50,6 +50,7 @@ Every document in `docs/`, one line each. [AGENTS.md](../AGENTS.md) says which t
 - [OCTATRACK_MORE_EFFECT_IDS.md](OCTATRACK_MORE_EFFECT_IDS.md): more than 32 effect ids.
 - [OCTATRACK_PACKAGE_DSP_HOOKS.md](OCTATRACK_PACKAGE_DSP_HOOKS.md): design: stock-DSP hooks and DSP memory claims that packages carry.
 - [OCTATRACK_RESIDENT_ENGINES_ON_DEMAND.md](OCTATRACK_RESIDENT_ENGINES_ON_DEMAND.md): design: resident engines loaded on demand.
+- [OCTATRACK_DSP_WINDOW.md](OCTATRACK_DSP_WINDOW.md): record: the DSP receiver's packet operations in the shared window, FX2 swaps keeping their block (28 October 2026).
 - [OCTATRACK_ELEKLOADER_MIGRATION.md](OCTATRACK_ELEKLOADER_MIGRATION.md): the move to one Elekloader builder and USB loading, as dated plans and checkpoints from 9 October.
 - [OCTATRACK_BETA_TEST_PLAN.md](OCTATRACK_BETA_TEST_PLAN.md): the beta test plan and its findings log.
 - [STARTUP_ANIMATION.md](STARTUP_ANIMATION.md): the docking startup animation.

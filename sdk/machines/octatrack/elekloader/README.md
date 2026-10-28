@@ -168,7 +168,7 @@ call stay resident at its start, then the receiver's frame path, then about
 5,450 words of arena (4,741 / 4,867 on the beta base, whose engines' stubs
 sit above it). The receiver's packet operations run from the top 512 words
 of each core's FX2 block 3 in the shared window, copied there from the
-arena's top at the first frame ([hardware traps](../../../../docs/OCTATRACK_HARDWARE_TRAPS.md#dsp-loader-dynamic-dsp-code)).
+arena's top at the first frame ([record](../../../../docs/OCTATRACK_DSP_WINDOW.md)).
 Each stock effect is a package recovered at build time from your
 firmware with Modwerk's relocation recipes and checked against their
 hashes; Octabam's DSP DYNLOAD STOCK is the reference for the layout. It

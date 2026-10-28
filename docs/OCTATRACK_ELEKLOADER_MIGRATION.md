@@ -1544,39 +1544,6 @@ on its own. Stock-first for memory, like cycles, would need modules to fit
 beside the worst stock set, which leaves about 500 words for modules; this
 base does not do that.
 
-### The receiver's packet operations in the shared window (28 October 2026)
-
-Octabam's demand loader (sambanks/octabam, 26-28 October 2026) runs effect code from the DSPs' shared window
-(`0x30000..0x3ffff`), which both cores execute. Measured on the owner's MKII before taking anything from it (core 0,
-stopped, dev builds of this base with `--dsp-burn 2000`, `--dsp-burn-window 0x36000`): idle passes a frame 2,119.2
-with no burn, 2,018.8 with the loop in private P (100.4 passes, about 2,000 cycles), 1,915.7 with the same loop at
-`P:0x36000` (203.5 passes, about 4,070 cycles). A fetch from the window takes a wait state; data reads do not.
-
-- Effects stay in private P: module DSP time is already the tighter limit (findings 26, 33, 42).
-- No code cache in the window: an upload is already under about 40 ms (above, 11 October), Part-switch time is the
-  manager's, not the transfer's, and a cache's copy routine would cost arena words on both cores.
-- What moved: the receiver's packet operations (WRITE and its read-back, SUM, BIND/UNBIND/BYPASS, BASE, PEEK, the
-  refusal records), which run only on a frame with a packet. 489 words a core, at `P:0x37e00` (core 0) and `P:0x3fe00`
-  (core 1), the top 512 words of each core's FX2 block 3: past every stock effect's extent (`0x3da3`, which the base
-  already relied on for Sidechain's key window at `0x3dfe`) and E-Verb's and Mini Verb's 15,870 words. Both payloads'
-  boot loops zero the window, so the payload record leaves the words at the arena's top and the frame path copies them
-  out at the first frame, before any packet is read. The frame path, PROBE, the reply and the engines' ops 10 and 11
-  stay in private P (the engines' code names private labels).
-- The buffer planner (`build_core.py`'s block-3 rule): a buffer past `0x3e00` (catalog byte 2, `dsp.c`
-  `BUFFER_READS`: Air Chorus and BBD declare 16,384) never takes or keeps FX2 block 3, and wide buffers are planned
-  first. The resident build already keeps every buffered module out of FX2 block 2 (`mw_hook_buffer_permitted_held`:
-  stock's staging and mailbox at its head), so a core's FX2 slots now hold two of them at once (were three); E-Verb,
-  Mini Verb and every stock effect keep all their blocks. Owner's call, 28 October 2026: accepted for the room.
-- Arena, nothing placed: 5,021 / 5,017 → 5,470 / 5,466 words (plain loader); 4,292 / 4,418 → 4,741 / 4,867 (beta
-  flags). Finding 53's heavy stock Part needs 4,665 on core 0.
-- On the owner's MKII (RAM boots, 28 October 2026): every build's boot uploads went through the window half on both
-  cores, 0 rejected, 0 errors, 0 stalls. Beta base `ccc21bc8`: self-test passed; the bound Keep/Undo run passed 9 of
-  10 steps (Sidechain, Output Matrix, Analog BD, CC Map, Recorder Loop Fix, TapeHead, VECTOR, POLY8, FM Synth, Scale
-  Quantizer, Repitch, each self-tested); the tenth was refused because the project's T1 and T5 FX2 named module ids a
-  synced module took (the project was then moved to DELAY there and synced to card). Its development twin `8d346525`:
-  finding 53's Part loaded whole on core 0 (4,665 words, 8 effects, 0 rollbacks); Air Chorus ran on T1 and T2 FX2, a
-  third on T3 was refused MEMORY FULL ("needs a buffer", 2/4), and E-Verb then took T3 (block 3).
-
 ### Milestone 3, first steps: waiting picks and the union of Parts (11 October 2026)
 
 **Waiting picks.** Before, a pick that met another slot's transaction was
