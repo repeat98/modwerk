@@ -8,6 +8,7 @@
     "node": ">=24"
   },
   "scripts": {
+    "discord": "node --env-file-if-exists=.env.discord scripts/discord-bot.mjs",
     "dev": "vite --host 127.0.0.1",
     "build": "node scripts/check.mjs --build",
     "changelog": "node scripts/changelog.mjs",
@@ -65,6 +66,7 @@
     "@tiptap/react": "3.31.4",
     "@tiptap/starter-kit": "3.31.4",
     "better-auth": "1.7.7",
+    "discord.js": "14.27.0",
     "jose": "6.2.12",
     "react": "19.3.0",
     "react-dom": "19.3.0",
