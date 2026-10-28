@@ -52,4 +52,4 @@ Send the .syx with Elektron Transfer and confirm on the unit. If a custom OS wil
 
 ## Credits
 
-The file format, memory map, core interface and hook bus were researched and published by [elekloader](https://github.com/irpina/elekloader) (irpina, GPL-2.0-or-later) and [digikit](https://github.com/m-dwyer/digikit) (Em D, GPL-2.0-or-later). The container and SysEx transport were first documented by [elektron-firmware-tool](https://github.com/mischa85/elektron-firmware-tool) (Marcel Bierling, MIT).
+The file format, memory map, core interface and hook bus were researched and published by [elekloader](https://github.com/irpina/elekloader) (irpina, GPL-2.0-or-later). The container and SysEx transport were first documented by [elektron-firmware-tool](https://github.com/mischa85/elektron-firmware-tool) (Marcel Bierling, MIT).

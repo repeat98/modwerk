@@ -3,8 +3,7 @@ import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
 import { SubmissionPage } from './SubmissionPage'
-import { cloneCommands, STARTER_MACHINES, starterPrompt, starterReading, startersFor, updatePrompt } from './starter-prompts'
-import { RELEASE_STEPS } from './developer-guidance'
+import { cloneCommands, skillHandoff, STARTER_MACHINES, starterPrompt, starterReading, startersFor, updatePrompt } from './starter-prompts'
 import { DEVICES } from '../devices/registry'
 
 const all = STARTER_MACHINES.flatMap(machine => startersFor(machine.id).map(starter => ({ machine: machine.id, starter })))
@@ -44,49 +43,43 @@ describe('starter prompts', () => {
     expect(cloneCommands('https://github.com/repeat98/modwerk', 'octo-dev')).toBe('git clone https://github.com/octo-dev/modwerk.git\ncd modwerk\ngit remote add upstream https://github.com/repeat98/modwerk.git\nnvm use && npm ci')
   })
 
-  it('names the displayed workflow stages in every prompt and leaves their rules to the repository', () => {
+  it('hands every module prompt to the skill committed with the fork', () => {
     for (const machine of STARTER_MACHINES.filter(item => DEVICES.find(device => device.id === item.id)?.sdk)) {
       const prompts = {
-        create: starterPrompt(machine.id, startersFor(machine.id)[0]),
-        update: updatePrompt(machine.id),
+        'modwerk-new-module': startersFor(machine.id).map(starter => starterPrompt(machine.id, starter)),
+        'modwerk-update-module': [updatePrompt(machine.id)],
       }
-      for (const task of ['create', 'update'] as const) {
-        const prompt = prompts[task]
-        for (const step of RELEASE_STEPS[task]) expect(prompt).toContain(step.summary)
-        expect(prompt).toContain('AGENTS.md first')
-        expect(prompt).toContain('docs/DEVELOPER_WORKFLOW.md')
-        expect(prompt).toContain('record only results I actually report')
-        expect(prompt).toContain('tell me in chat that publication will notify followers, including by email unless they opted out')
-        expect(prompt).toContain('never commit firmware')
+      for (const [skill, list] of Object.entries(prompts)) for (const prompt of list) {
+        expect(prompt).toContain(skillHandoff(skill as keyof typeof prompts))
+        expect(prompt).toContain('.agents/skills/' + skill + '/SKILL.md')
+        expect(prompt).toContain('Sync fork')
         expect(prompt).not.toMatch(/Jannik|Assfalg/i)
-        // The prompt carries the order of work; the rules live in files every agent reads.
-        expect(prompt.length, machine.id + ' ' + task).toBeLessThan(6000)
+        // The skill carries the order of work and AGENTS.md the rules, so the prompt stays short.
+        expect(prompt.length, machine.id + ' ' + skill).toBeLessThan(4500)
       }
-      for (const starter of startersFor(machine.id)) expect(starterPrompt(machine.id, starter).length, machine.id + ' ' + starter.id).toBeLessThan(6000)
     }
+    for (const skill of ['modwerk-new-module', 'modwerk-update-module']) expect(readFileSync('.agents/skills/' + skill + '/SKILL.md', 'utf8')).toBe(readFileSync('.claude/skills/' + skill + '/SKILL.md', 'utf8'))
   })
 
-  it('asks the agent to share findings as a separate docs-only PR', () => {
-    for (const prompt of [starterPrompt('octatrack', startersFor('octatrack')[0]), updatePrompt('digitakt')]) {
-      expect(prompt).toContain('Fixes and improvements')
-      expect(prompt).toContain('"Fix: …", "Improvement: …" or "Docs: …"')
-      expect(prompt).toContain('Never put it in the module PR')
-    }
-    expect(readFileSync('AGENTS.md', 'utf8')).toContain('Leave `sdk/octabam/AGENTS.md` unchanged')
-  })
-
-  it('has the agent check the catalogue for duplicates before it plans a new module', () => {
-    for (const { machine, starter } of all.filter(item => DEVICES.find(device => device.id === item.machine)?.sdk)) {
-      const prompt = starterPrompt(machine, starter)
-      expect(prompt).toContain('look at what Modwerk already has')
-      expect(prompt).toContain('instead of building a duplicate')
-      expect(prompt.indexOf('look at what Modwerk already has')).toBeLessThan(prompt.indexOf('Before you write code, read'))
-      expect(prompt).toContain('never patch a site another module or the base patches')
-      expect(prompt).toContain('on my unit (recommended')
-    }
-    for (const file of ['sdk/catalog.json', 'src/catalog/machine-modules.json', 'sdk/drafts']) expect(existsSync(file), file).toBe(true)
+  it('keeps the order of work and the contributor-protecting rules in the skills', () => {
+    const create = readFileSync('.claude/skills/modwerk-new-module/SKILL.md', 'utf8'), update = readFileSync('.claude/skills/modwerk-update-module/SKILL.md', 'utf8')
+    expect(create.indexOf('Check what exists')).toBeLessThan(create.indexOf('Plan, then wait for the developer\'s OK'))
+    expect(create.indexOf('Plan, then wait for the developer\'s OK')).toBeLessThan(create.indexOf('Scaffold and build'))
+    expect(create).toContain('suggest extending it')
+    expect(create).toContain('never patches a stock site another module or the base patches')
+    expect(create).toContain('on their unit (recommended')
+    expect(create).toContain('#your-development-setup')
+    expect(create).toContain('the owner reviews its first release')
+    expect(create).toContain('verify the live version and a saved download')
+    for (const skill of [create, update]) expect(skill).toMatch(/Record only (what was observed|the results they report)/)
+    expect(update).toContain('ask-the-author-first')
+    expect(update).toContain('never check them for them')
+    expect(update).toContain('Missing, failed or untested required checks block automatic publication')
+    expect(update).toContain('`Related to #<number>`, never a closing keyword')
+    expect(update).toContain('A push or merge alone never resolves a report')
+    expect(update).toContain('notifies the module\'s followers, by email too unless they opted out')
+    expect(readFileSync('.claude/skills/modwerk-pr-ready/SKILL.md', 'utf8')).toContain('npm run pr:ready -- --author <login>')
     expect(updatePrompt('digitakt')).not.toContain('look at what Modwerk already has')
-    expect(updatePrompt('digitakt')).toContain('Ask the author first')
   })
 
   it('keeps the rules the prompts no longer carry in the files they send the agent to', () => {
@@ -103,12 +96,13 @@ describe('starter prompts', () => {
     expect(readFileSync('.github/workflows/pr-flags.yml', 'utf8')).toContain('Improvement:*) label=enhancement')
     expect(readFileSync('.github/pull_request_template.md', 'utf8')).toContain('**What was wrong or hard:**')
     expect(agents).toContain('npm run pr:ready')
-    expect(updatePrompt('digitakt')).toContain('npm run pr:ready -- --author <my login>')
+    expect(agents).toContain('what the guides lacked or got wrong')
+    expect(agents).toContain('Never commit firmware')
     expect(readFileSync('docs/ADD_A_MACHINE.md', 'utf8')).toContain("## Aim for the Octatrack's interface")
     expect(workflow).toContain('--device-socket')
     expect(workflow).toContain('Building a USB interface for the machine is recommended')
     expect(agents).toContain('Emulators (')
-    expect(updatePrompt('digitakt')).toContain('"Your development setup" in docs/DEVELOPER_WORKFLOW.md')
+    expect(agents).toContain('[Fixes and improvements](docs/DEVELOPER_WORKFLOW.md#fixes-and-improvements)')
     expect(readFileSync('docs/MODULE_AUTHOR_UPDATES.md', 'utf8')).toContain('Automatically merge and publish my module update after checks pass.')
   })
 
@@ -146,17 +140,15 @@ describe('starter prompts', () => {
     expect(starterPrompt('octatrack', startersFor('octatrack')[0])).not.toContain('Modwerk stack section')
   })
 
-  it('keeps author verification and live-download checks in the update prompt', () => {
+  it('names the module, the change, the report and the login in the update prompt', () => {
     const prompt = updatePrompt('digitakt', 'sdk/digitakt/modules/digi-eq', 'Fix a filter click', 'https://github.com/repeat98/modwerk/issues/123')
     expect(prompt).toContain('Fix issue https://github.com/repeat98/modwerk/issues/123')
     expect(prompt).toContain('Digitakt mk1')
     expect(prompt).toContain('Fix a filter click')
     expect(prompt).not.toContain('module:new')
-    expect(prompt).toContain('never check them for me')
-    expect(prompt).toContain('docs/MODULE_AUTHOR_UPDATES.md')
-    expect(prompt).toContain('A push or merge alone never closes a Modwerk report')
-    expect(prompt).toContain('Missing, failed or untested required checks block automatic publication')
-    expect(prompt).toContain('"Related to #<number>", not closing keywords')
+    expect(prompt).toContain('My GitHub login is <your-github-login>.')
+    expect(updatePrompt('digitakt', 'digi-eq', '', '', undefined, '@octo-dev')).toContain('My GitHub login is octo-dev.')
+    expect(prompt).toContain('/modwerk-update-module')
   })
 })
 

@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { sha } from '../../../vendor/elekloader/kit/src/bytes.ts'
 import { FAKE_BASE, fakeBaseOf, fakeSession, fakeUnit } from '../../dev/octatrack-link-fake'
-import { packSection } from '../../../vendor/elekloader/kit/src/codec/aplib.ts'
+import { packSection } from '../elektron/codec/pack.ts'
 import { encodeBin } from '../../../vendor/elekloader/kit/src/elek.ts'
 import { removalPackage } from './module-set'
 import { LinkBusyError, OctatrackLink, openFailure, tabLocks } from './octatrack-link'

@@ -17,6 +17,8 @@ import sys
 
 HERE = Path(__file__).resolve().parent
 APP = HERE.parents[3]
+sys.path.append(str(APP / 'sdk'))  # firmware_codec
+import firmware_codec  # noqa: E402
 _spec = importlib.util.spec_from_file_location('modwerk_usb_post', HERE / 'usb_post.py')
 usb_post = importlib.util.module_from_spec(_spec); _spec.loader.exec_module(usb_post)
 VERSION = '0.3.1-modwerk-dev.1'
@@ -773,7 +775,30 @@ WIDTH_EDITS = {
                   ('        unsigned reader=ids[i]<32 && reads[ids[i]];\n        unsigned same=',
                    '        unsigned reader=ids[i]<MODWERK_FX_IDS && reads[ids[i]];\n        unsigned same='),
                   ('        unsigned reader=ids[i]<32 && reads[ids[i]];\n        if(!reader',
-                   '        unsigned reader=ids[i]<MODWERK_FX_IDS && reads[ids[i]];\n        if(!reader')),
+                   '        unsigned reader=ids[i]<MODWERK_FX_IDS && reads[ids[i]];\n        if(!reader'),
+                  # The top of each core's FX2 block 3 holds the receiver's packet operations (dsp_loader.WINDOW): an
+                  # effect whose buffer reaches past it (reads 2, dsp.c) neither keeps nor takes that block.
+                  ('        if(same && b->live[i]!=DL_BUF_NONE && (reader || !b->known[i])) target[i]=b->live[i];\n    }\n',
+                   '        if(same && b->live[i]!=DL_BUF_NONE && (reader || !b->known[i])) target[i]=b->live[i];\n    }\n'
+                   '    for(unsigned i=8;i<16;++i)\n'
+                   '        if(target[i]==3u && ids[i]<MODWERK_FX_IDS && reads[ids[i]]>1u) target[i]=DL_BUF_NONE;\n'),
+                  # Wide readers first: they fit fewer blocks, so a narrow one planned before them cannot take theirs.
+                  ('    for(unsigned i=0;i<16;++i) {\n        unsigned reader=ids[i]<MODWERK_FX_IDS && reads[ids[i]];\n'
+                   '        if(!reader || target[i]!=DL_BUF_NONE) continue;\n',
+                   '    for(unsigned n=0;n<32;++n) {\n        unsigned i=n&15u;\n'
+                   '        unsigned reader=ids[i]<MODWERK_FX_IDS && reads[ids[i]];\n'
+                   '        if(!reader || target[i]!=DL_BUF_NONE || (n<16u)!=(reads[ids[i]]>1u)) continue;\n'),
+                  ('        if(!free) return DL_BUF_MEMORY;',
+                   '        if(k && reads[ids[i]]>1u) free&=~(1u<<3);\n        if(!free) return DL_BUF_MEMORY;'),
+                  # A slot whose effect changes keeps its own block, as stock's fixed blocks do: in the switch frame the
+                  # outgoing effect runs its last sub-block before the incoming one's init. Reserving it for the outgoing
+                  # effect refused every swap on a core whose four blocks were in use (owner's MKII, 28 October 2026).
+                  ('            if(target[j]!=DL_BUF_NONE && dl_buffers_core(j)==c && kind_of(j)==k) taken|=1u<<target[j];\n',
+                   '            if(target[j]!=DL_BUF_NONE && dl_buffers_core(j)==c && kind_of(j)==k) taken|=1u<<target[j];\n'
+                   '        if(b->live[i]!=DL_BUF_NONE) taken&=~(1u<<b->live[i]);\n'),
+                  ('        while(!((free>>n)&1u)) ++n;\n',
+                   '        if(b->live[i]!=DL_BUF_NONE && (free>>b->live[i]&1u)) n=b->live[i];\n'
+                   '        else while(!((free>>n)&1u)) ++n;\n')),
     'manager.c': (
         ('extern struct dl_package dl_catalog[32];', 'extern struct dl_package dl_catalog[DL_PACKAGES];'),
         ('extern struct code dl_codes[2][32];', 'extern struct code dl_codes[2][DL_PACKAGES];'),
@@ -1500,6 +1525,8 @@ def main():
                         help='Load every DSP effect, stock and module, on demand (needs ELEKLOADER_DSP_ASM, Node 24).')
     parser.add_argument('--dsp-burn', type=int, default=0,
                         help='with --dsp-loader, calibration only: core 0\'s receiver spends this many more cycles (2-4094, even) every frame; negative, core 1\'s.')
+    parser.add_argument('--dsp-burn-window', type=lambda s: int(s, 0), default=0,
+                        help='with --dsp-burn: run the burn from this shared-window P address (0x30000-0x37ef7) instead of private P.')
     parser.add_argument('--cached-modules', action='store_true',
                         help='Prototype, for a development twin: runtime modules run from the pool\'s cached alias, '
                              'not the uncached one (sdk/runtime/loader/README.md, "Cached modules"). Off by default.')
@@ -1530,7 +1557,7 @@ def main():
     pin = json.loads((APP / 'vendor/elekloader/kit/kit.json').read_text())['commit']
     if git(upstream, 'rev-parse', 'HEAD') != pin or git(upstream, 'status', '--porcelain', '--untracked-files=no'):
         parser.error('Use the exact clean tracked Elekloader checkout pinned by Modwerk.')
-    sys.path.insert(0, str(upstream))
+    firmware_codec.use_elekloader(upstream)
     from elekloader import dsp, formats, elemod, patch
     from elekloader.sdk import build as sdk
     stock, device, release = formats.load(str(args.stock))
@@ -1776,6 +1803,7 @@ def main():
                 raise ValueError('An FX selector no longer reads its chooser list at %#x.' % lea)
         dsp_sites, dsp_layout = loader_dsp.recipe(image, device, dsp, lambda path: sdk.dsp_assemble(path, str(source)), str(source),
                                                   args.dsp_probe if args.dsp_probe in ('A', 'B', 'X') else None, args.dsp_burn, FX_IDS,
+                                                  burn_window=args.dsp_burn_window,
                                                   **({'resident': resident_factory} if args.resident_stock_hooks else {}))
         if args.resident_stock_hooks:
             resident_boot_prepared = resident_boot_helper.prepare(image, device, dsp, dsp_layout)
@@ -1838,7 +1866,7 @@ def main():
         (source/'remix.inc').write_text(usb.AUDIO_INC)
     # Identity describes this core-only private base. Later selections need
     # their complete module/version/chooser identities regenerated explicitly.
-    folders = (logger, upload, loader, HERE) + ((DYNLOAD,) if args.dsp_loader else ())
+    folders = (logger, upload, loader, HERE, firmware_codec.HERE) + ((DYNLOAD,) if args.dsp_loader else ())
     inputs = {str(p.relative_to(APP)): sha(p.read_bytes()) for folder in folders
               for p in sorted(folder.iterdir()) if p.is_file() and p.suffix in ('.c', '.h', '.s', '.asm', '.py', '.json')}
     for path, digest in profile_inputs.items():
@@ -1920,7 +1948,7 @@ def main():
         configuration['usb']['moduleSets'] = 'mwms-1'
     if args.dsp_loader:
         configuration.update(dsp=dict(loader='dsp-dynload-3', stock='on-demand', rows='runtime',
-                                      allowance=DSP_ALLOWANCE, reserve=DSP_RESERVE, probe=args.dsp_probe, burn=args.dsp_burn, hook=args.dsp_hook, arena=[dsp_layout[t]['tableWords'] - loader_dsp.SAVED for t in 'AB']))
+                                      allowance=DSP_ALLOWANCE, reserve=DSP_RESERVE, probe=args.dsp_probe, burn=args.dsp_burn, **({'burnWindow': args.dsp_burn_window} if args.dsp_burn_window else {}), hook=args.dsp_hook, arena=[dsp_layout[t]['tableWords'] - loader_dsp.SAVED for t in 'AB']))
     if usb_functions:
         configuration['usb'].update(interfaces=['msc', 'modwerk-vendor', 'midi-control', 'midi-streaming'] +
             (['audio-control', 'audio-streaming'] if args.usb_audio else []),
@@ -2252,7 +2280,7 @@ modwerk_retained_end:
     mapping = manifest.pop('_map')
     # MAIN stores .run packed (run_pack.py): the linked image again without its plain copy, repacked and verified as
     # patch.build does, so the RAM boot bound and every hash below are the packed image's.
-    from elekloader.codec import aplib
+    from firmware_codec import aplib
     spec = importlib.util.spec_from_file_location('modwerk_run_pack', HERE/'run_pack.py')
     run_pack = importlib.util.module_from_spec(spec); spec.loader.exec_module(run_pack)
     parsed = formats.load(str(args.stock))[0]

@@ -13,14 +13,15 @@ static unsigned failures;
 
 /* Synthetic memory: a few segments at the addresses the registry reads. */
 struct segment { uint32_t base, size; uint8_t *bytes; };
-static uint8_t bank[0x8ed80u + 4u * 6322u + 64u], sram[4u * 6322u], misc[0x100], code[0x40], stocktab[0x80], ui[0x40], stockdef[12];
+static uint8_t bank[0x8ed80u + 4u * 6322u + 64u], sram[4u * 6322u], misc[0x100], code[0x40], stocktab[0x80], ui[0x40], stockdef[12],
+    clamps[0x270];
 static struct segment segments[] = {
     {0x46000000u, sizeof bank, bank}, {0x100a4eceu, sizeof sram, sram}, {0x100b14c0u, 0x40, misc},
     {0x80000000u, 0x40, misc + 0x40}, {0x46c82450u, 0x10, misc + 0x80}, {0x400a78c8u, 20, stocktab},
     {0x400d5f38u, 20, stocktab + 20}, {0x400b27d0u, 12, stocktab + 40}, {0x400b27dcu, 12, stocktab + 52}, {0x400b282cu, 12, stocktab + 64},
     {0x460e7380u, 0x20, ui}, {0x460e70e0u, 4, ui + 0x20}, {0x400d320cu, 12, stockdef},
     {0x40079240u, 0x10, code}, {0x400585f0u, 0x10, code + 0x10}, {0x4003c950u, 4, code + 0x20}, {0x40078678u, 4, code + 0x24},
-    {0x400786ccu, 4, code + 0x28}, {0x40079904u, 4, code + 0x2c}, {0x40065c7cu, 4, code + 0x30},
+    {0x400786ccu, 4, code + 0x28}, {0x40079904u, 4, code + 0x2c}, {0x40065c7cu, 4, code + 0x30}, {0x40078c20u, sizeof clamps, clamps},
 };
 static uint8_t *host_at(uint32_t a)
 {
@@ -114,17 +115,27 @@ static void leave_a(unsigned t) { left = (int)t + 1; }
 static unsigned assign_v(volatile uint8_t *part, unsigned t, unsigned on)
 { unsigned s = 60 + 30 * t; part[s] = on ? 'S' : 0; part[s + 1] = on ? '2' : 0; part[s + 2] = on ? 2 : 0; return on ? 1 : 0; }
 static int validate_v(uint8_t *part, int (*next)(uint8_t *)) { ++v_wraps; return next(part) + 1; }
-static const struct modwerk_machine A = {MODWERK_MACHINE_ABI, {'A', 'B'}, 1, 1, "ANALOG BD", MODWERK_MACHINE_PROTECT | MODWERK_MACHINE_POOL, 0, a_defaults,
+static const struct modwerk_machine A = {MODWERK_MACHINE_ABI, {'A', 'B'}, 1, 1, "ANALOG BD", MODWERK_MACHINE_PROTECT | MODWERK_MACHINE_POOL | MODWERK_MACHINE_SETUP_ALL, 0, a_defaults,
                                          0, admit_a, 0, page_a, 0, leave_a, 0, 0, 0, 0, render_a, 0, 0, 0, 0, {0}};
 static const struct modwerk_machine V = {MODWERK_MACHINE_ABI, {'S', '2'}, 1, 2, "VECTOR", MODWERK_MACHINE_POOL | MODWERK_MACHINE_BACKING, 0, 0,
                                          assign_v, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, validate_v, 0, 0, 0, {0}};
-static const struct modwerk_machine F = {MODWERK_MACHINE_ABI, {'F', 'M'}, 1, 1, "FM SYNTH", MODWERK_MACHINE_PROTECT | MODWERK_MACHINE_RENDER_FLEX, 0, a_defaults,
+static const struct modwerk_machine F = {MODWERK_MACHINE_ABI, {'F', 'M'}, 1, 1, "FM SYNTH", MODWERK_MACHINE_PROTECT | MODWERK_MACHINE_RENDER_FLEX | MODWERK_MACHINE_LIST, 0, a_defaults,
                                          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, render_f, 0, 0, 0, 0, {0}};
 static const struct modwerk_machine X = {2u, {'X', 'X'}, 1, 1, "FUTURE", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, {0}};
 static const struct modwerk_machine D = {MODWERK_MACHINE_ABI, {'D', 'V'}, 1, 1, "PRICED", MODWERK_MACHINE_PROTECT, 0, a_defaults,
                                          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, render_a, 0, 411, 3, 1, {0}},
                              E = {MODWERK_MACHINE_ABI, {'E', '2'}, 1, 1, "PRICED 2", MODWERK_MACHINE_PROTECT, 0, a_defaults,
                                          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, render_f, 0, 411, 3, 1, {0}};
+/* A SETUP_PAGE machine (its record 88 bytes) and one that leaves the flag clear: the base reads the two setup words
+ * only with the flag, so the second's are never called. */
+static unsigned setup_pages, setup_knobs, knob_index = 99, knob_takes = 1; static int knob_delta;
+static uint32_t setup_page_s(uint32_t stock) { ++setup_pages; return stock + 0x100u; }
+static unsigned setup_knob_s(unsigned index, int delta) { ++setup_knobs, knob_index = index, knob_delta = delta; return knob_takes; }
+static const struct modwerk_machine_setup S = {{MODWERK_MACHINE_ABI, {'S', '2'}, 1, 2, "VECTOR", MODWERK_MACHINE_POOL | MODWERK_MACHINE_BACKING
+                                               | MODWERK_MACHINE_SETUP_PAGE, 0, 0, assign_v, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, validate_v,
+                                               0, 0, 0, {0}}, setup_page_s, setup_knob_s},
+                                   N = {{MODWERK_MACHINE_ABI, {'N', 'S'}, 1, 1, "NO FLAG", MODWERK_MACHINE_PROTECT, 0, a_defaults,
+                                               0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, {0}}, setup_page_s, setup_knob_s};
 static const struct { uint32_t count; struct modwerk_sequencer_row row[3]; } FMQ = {3, {{"SCALE", 0, 0}, {"ROOT", 0, 0}, {"GLIDE", 0, 0}}},
     QZ = {3, {{"SCALE", (void *)1, 0}, {"ROOT", (void *)1, 0}, {"GLIDE", (void *)1, 0}}}, MORE = {1, {{"SWING", 0, 0}}};
 static void rows(const void *const *m, unsigned n, const void *const *s, unsigned k)
@@ -150,6 +161,14 @@ static int frame(unsigned track, uint32_t pre, uint32_t tail)
     return r;
 }
 static unsigned counts_now(void) { return (unsigned)code[0x0b] << 24 | (unsigned)code[0x1d] << 16 | (unsigned)code[0x21] << 8 | code[0x33]; }
+/* The chooser's ten UP/DOWN cursor clamps (moveq #k at each handler and 6 bytes on): all k, or 0 if they differ. */
+static unsigned clamp_now(void)
+{
+    static const uint32_t at[] = {0x40078c23u, 0x40078cb1u, 0x40078d2fu, 0x40078defu, 0x40078e7du};
+    unsigned k = clamps[at[0] - 0x40078c20u];
+    for (unsigned i = 0; i < 5; ++i) if (clamps[at[i] - 0x40078c20u] != k || clamps[at[i] + 6u - 0x40078c20u] != k) return 0;
+    return k;
+}
 
 int main(void)
 {
@@ -161,7 +180,7 @@ int main(void)
 
     /* No machine: stock rows, stock counts, stock renders, stock names. */
     rows(0, 0, 0, 0);
-    CHECK(counts_now() == (5u << 24 | 5u << 16 | 4u << 8 | 3u));
+    CHECK(counts_now() == (5u << 24 | 5u << 16 | 4u << 8 | 3u) && clamp_now() == 5);
     CHECK((uintptr_t)mw_name(5) == 0x1001u && mw_type(1, slot(2)) == 1 && mw_assign(part0(), 2, 1) == 1);
     CHECK(mw_source_render_impl(2, 0, 0, 1) == -7 && stock_renders == 1);
 
@@ -169,6 +188,8 @@ int main(void)
     const void *avf[] = {&A, &V, &F};
     rows(avf, 3, 0, 0);
     CHECK(counts_now() == (8u << 24 | 8u << 16 | 7u << 8 | 3u));
+    /* The cursor reaches the last row, 4+n (row 7 with three machines). */
+    CHECK(clamp_now() == 7);
     CHECK(!strcmp(mw_name(5), "ANALOG BD") && !strcmp(mw_name(6), "VECTOR") && !strcmp(mw_name(7), "FM SYNTH") && (uintptr_t)mw_name(8) == 0x1001u);
     /* Assign: admission first, defaults and signature in the Part and its SRAM mirror; a refusal changes nothing. */
     a_admit = 0; CHECK(mw_assign(part0(), 2, 5) == (unsigned)-1 && part0()[60 + 60] == 0);
@@ -178,12 +199,21 @@ int main(void)
     CHECK(mw_type(1, slot(2)) == 5 && mw_type(3, slot(2)) == 3 && mw_type(1, slot(3)) == 1);
     misc[0x0c] = 2; /* current track 3 */
     CHECK(mw_page(slot(2)) == 0x1234u && mw_page(slot(3)) == 0);
+    /* SRC SETUP encoder E edits only a SETUP_ALL machine's slot (Analog BD at row 5, not VECTOR at 6 or a stock row). */
+    CHECK(mw_row_setup_all(5) && !mw_row_setup_all(6) && !mw_row_setup_all(4));
     /* Its own assign signs and unsigns the track; leaving A tells A. */
     CHECK(mw_assign(part0(), 2, 6) == 1 && part0()[60 + 60] == 'S' && left == 3 && mw_type(1, slot(2)) == 6);
     CHECK(mw_assign(part0(), 2, 1) == 1 && part0()[60 + 60] == 0 && mw_type(1, slot(2)) == 1);
     /* F on track 3 and A on track 2: renders route to their machine; an unowned track goes to RENDER_FLEX F. */
     CHECK(mw_assign(part0(), 3, 7) == 1 && mw_assign(part0(), 2, 5) == 1);
     CHECK(mw_source_render_impl(2, 0, 0, 1) == 1 && mw_source_render_impl(3, 0, 0, 1) == 101 && mw_source_render_impl(4, 0, 0, 1) == 102);
+    /* The track window's column: F (LIST in this fixture) opens on the machine list, A and a stock FLEX track on the pool,
+     * a stock non-sample type on the list. */
+    *(uint8_t *)host_at(0x100b14ccu) = 3; CHECK(mw_window_column(slot(3)) == 0);
+    *(uint8_t *)host_at(0x100b14ccu) = 2; CHECK(mw_window_column(slot(2)) == 1);
+    *(uint8_t *)host_at(0x100b14ccu) = 4; CHECK(mw_window_column(slot(4)) == 1);
+    { const Part thru = 2; CHECK(mw_window_column(&thru) == 0); }
+    *(uint8_t *)host_at(0x100b14ccu) = 0;
     /* The validator: F's and A's tracks keep their 12 bytes away from stock's; V wraps it once; all restored. */
     unsigned before = part0()[0x2a + 90 + 6];
     int result = mw_validate(part0());
@@ -193,7 +223,7 @@ int main(void)
      * holds A's bytes, not FLEX's: a known PROTECT signature without its machine renders stock's silent source. */
     const void *vf[] = {&V, &F};
     rows(vf, 2, 0, 0);
-    CHECK(counts_now() == (7u << 24 | 7u << 16 | 6u << 8 | 3u) && part0()[60 + 60] == 'A');
+    CHECK(counts_now() == (7u << 24 | 7u << 16 | 6u << 8 | 3u) && part0()[60 + 60] == 'A' && clamp_now() == 6);
     CHECK(mw_type(1, slot(2)) == 1 && !strcmp(mw_name(5), "VECTOR") && (uintptr_t)mw_name(7) == 0x1001u);
     CHECK(mw_source_render_impl(2, 0, 0, 1) == -9 && silent_renders == 1 && a_renders == 1);
     CHECK(mw_source_render_impl(4, 0, 0, 1) > 100);
@@ -310,6 +340,7 @@ int main(void)
     part0()[60 + 90] = 'A'; part0()[61 + 90] = 'B'; part0()[62 + 90] = 1;
     const void *v_only[] = {&V};
     rows(v_only, 1, 0, 0);
+    CHECK(clamp_now() == 5); /* one machine: row 5, stock's clamp */
     CHECK(mw_assign(part0(), 3, 5) == 1 && part0()[60 + 90] == 'S' && part0()[0x2a + 90 + 6] == 0x40 && part0()[0x1da + 90 + 11] == 0x40);
     CHECK(mw_assign(part0(), 3, 1) == 1 && part0()[60 + 90] == 0);
     /* The type byte is stock's to change (the commit stores the returned row): the registry never writes it. */
@@ -358,12 +389,44 @@ int main(void)
     }
     CHECK(one[0] > 100 && two[0] > 100 && one[1] == -9 && two[1] == -9);
     CHECK(one[2] > 100 && two[2] == -9 && one[3] > 100 && two[3] == -9);
+    /* A FLEX track no machine owns goes to F's RENDER_FLEX render unguarded, however late the frame (#999: the guard
+     * skipped such tracks as it skips F's own). */
+    fresh(); f_cost = 70000;
+    uint32_t unowned_sheds = mw_frame_sheds;
+    for (unsigned i = 0; i < 3u; ++i) CHECK(frame(6, 40000, 10000) > 100);
+    CHECK(mw_frame_sheds == unowned_sheds && !(mw_frame_shed_tracks & 1u << 6));
+    f_cost = 1000;
     /* A track only stock renders always renders, however late the frame. */
     const void *v_only2[] = {&V};
     rows(v_only2, 1, 0, 0);
     uint32_t sheds = mw_frame_sheds;
     CHECK(frame(6, 90000, 10000) == -7 && mw_frame_sheds == sheds);
     rows(0, 0, 0, 0);
+
+    /* SRC SETUP: the SETUP_PAGE machine S (row 6, after A) draws and edits its own rows while the cursor is on its row and
+     * the current track is its own; N (row 7, no flag), A and stock rows keep stock's page and editor. */
+    const void *asn[] = {&A, &S, &N};
+    rows(asn, 3, 0, 0);
+    CHECK(mw_assign(part0(), 2, 6) == 1 && mw_assign(part0(), 4, 7) == 1 && mw_assign(part0(), 5, 5) == 1);
+    misc[0x0c] = 2; /* current track 3: S's */
+    CHECK(mw_setup_page(6, 0x400d31aeu) == 0x400d32aeu && setup_pages == 1);
+    CHECK(mw_setup_knob(6, 4, -3) == 1 && setup_knobs == 1 && knob_index == 4 && knob_delta == -3);
+    knob_takes = 0; CHECK(mw_setup_knob(6, 0, 1) == 0 && setup_knobs == 2); knob_takes = 1;
+    CHECK(mw_setup_knob(6, 6, 1) == 0 && setup_knobs == 2); /* only encoders A-F */
+    /* Another row under the cursor (a stock row, A's, N's) or another track's machine: stock's. */
+    CHECK(mw_setup_page(1, 7) == 7 && mw_setup_page(5, 7) == 7 && mw_setup_page(7, 7) == 7 && mw_setup_knob(5, 0, 1) == 0);
+    misc[0x0c] = 4; CHECK(mw_setup_page(7, 7) == 7 && mw_setup_knob(7, 1, 1) == 0 && mw_setup_page(6, 7) == 7);
+    misc[0x0c] = 3; CHECK(mw_setup_page(6, 7) == 7 && mw_setup_knob(6, 1, 1) == 0);
+    misc[0x0c] = 2; misc[0x55] = 1; CHECK(mw_setup_page(6, 7) == 7 && mw_setup_knob(6, 1, 1) == 0); misc[0x55] = 0;
+    CHECK(setup_pages == 1 && setup_knobs == 2);
+    /* S alone (row 5) and S gone: its track reads as stock and so does its SETUP. */
+    const void *s_only[] = {&S};
+    rows(s_only, 1, 0, 0);
+    CHECK(mw_setup_page(5, 7) == 0x107u && setup_pages == 2);
+    rows(0, 0, 0, 0);
+    CHECK(mw_setup_page(5, 7) == 7 && mw_setup_knob(5, 0, 1) == 0 && setup_pages == 2 && setup_knobs == 2);
+    misc[0x0c] = 0;
+    for (unsigned t = 0; t < 8; ++t) for (unsigned k = 0; k < 3; ++k) part0()[60 + 30 * t + k] = 0;
 
     /* SEQUENCER: FM's quantizer rows, then Scale Quantizer's with the same labels: one set, FM's; QZ alone: QZ's. */
     const void *both[] = {&FMQ, &QZ, &MORE};
@@ -375,10 +438,10 @@ int main(void)
     rows(0, 0, qz, 1);
     CHECK((counts_now() & 0xff) == 6u && mw_seq_getters[3] == (void *)1 && mw_seq_labels[6] == (const void *)mw_seq_none);
     rows(0, 0, 0, 0);
-    CHECK(counts_now() == (5u << 24 | 5u << 16 | 4u << 8 | 3u) && !masked);
+    CHECK(counts_now() == (5u << 24 | 5u << 16 | 4u << 8 | 3u) && !masked && clamp_now() == 5);
     if (failures) { fprintf(stderr, "%u registry checks failed\n", failures); return 1; }
     puts("Machine registry: rows by table order, admission before mutation, signatures and defaults in both copies, absent "
-         "machines as stock, the validator's protection and wrapper chain, render routing, keyed SEQUENCER rows and chooser "
-         "counts and the frame guard passed.");
+         "machines as stock, the validator's protection and wrapper chain, render routing, keyed SEQUENCER rows, chooser "
+         "counts and cursor clamps, SETUP_PAGE machines' own SRC SETUP and the frame guard passed.");
     return 0;
 }
