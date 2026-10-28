@@ -278,6 +278,12 @@ RECEIPT_PINNED = {
 }
 
 
+# Files that name the checkout's codec files as text and never run them. Each says why; the other rules still apply.
+NAMES_ONLY = {
+    'scripts/elekloader-vendor.ts',  # the vendored TypeScript kit's NOTICE drops the credits of the files Modwerk replaced (#1016)
+}
+
+
 class EveryScript(unittest.TestCase):
     def test_every_script_that_imports_elekloader_runs_it_with_this_codec(self):
         """The rule the fresh-interpreter tests above prove for one: no Modwerk build or check imports Elekloader
@@ -299,7 +305,8 @@ class EveryScript(unittest.TestCase):
                     if 'use_elekloader(' not in text:
                         problems.append(name + ': imports elekloader without firmware_codec.use_elekloader()')
                 problems += ['%s:%d: %s' % (name, text.count('\n', 0, m.start()) + 1, why)
-                             for why, pattern in AROUND.items() for m in pattern.finditer(text)]
+                             for why, pattern in AROUND.items() for m in pattern.finditer(text)
+                             if not (name in NAMES_ONLY and why == 'names the checkout\'s codec or decoder files')]
         self.assertEqual(problems, [])
         self.assertIn('sdk/machines/octatrack/elekloader/build_core.py', users)  # the scan sees the builders
         self.assertIn('scripts/verify-octatrack-elemods.mjs', users)  # and Python inside Node scripts
