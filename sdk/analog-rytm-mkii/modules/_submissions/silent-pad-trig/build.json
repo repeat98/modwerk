@@ -1,0 +1,77 @@
+{
+  "schemaVersion": 1,
+  "sources": [
+    "src/silent-pad-trig.s"
+  ],
+  "defsym": {},
+  "cflags": [],
+  "weak": [],
+  "subscribe": [],
+  "contribute": [],
+  "collections": {},
+  "copied": [],
+  "regions": [],
+  "storage": [
+    {
+      "sym": "silent_pad_trig_on",
+      "scope": "global",
+      "bits": 1
+    },
+    {
+      "sym": "silent_live_rec_on",
+      "scope": "global",
+      "bits": 1
+    }
+  ],
+  "claims": [
+    "ui:pad press outside CHROMATIC mode",
+    "ui:TRIG 1-12 press",
+    "ui:FUNC + pad",
+    "ui:GLOBAL > CONTROL > SEQUENCER CONFIG row after AUTO TRK SWITCH"
+  ],
+  "requires": [],
+  "derive": null,
+  "releases": {
+    "1.74": {
+      "defsym": {},
+      "cflags": [],
+      "sites": [
+        {
+          "addr": "0x400c772e",
+          "len": 6,
+          "stockSha256": "3d4d98cfb585cd6fc209a68ee1922e09e95773aae59e619492939df4f6570404",
+          "op": "jmp",
+          "target": "silent_pad_trig_play_gate"
+        },
+        {
+          "addr": "0x400c7a3e",
+          "len": 6,
+          "stockSha256": "900a7f45ba2079ab99c0187a4985055412a62b92dbc1e00e54306f25c60a0002",
+          "op": "jsr",
+          "target": "silent_pad_trig_autotrk"
+        },
+        {
+          "addr": "0x400c7e90",
+          "len": 6,
+          "stockSha256": "900a7f45ba2079ab99c0187a4985055412a62b92dbc1e00e54306f25c60a0002",
+          "op": "jsr",
+          "target": "silent_pad_trig_autotrk"
+        },
+        {
+          "addr": "0x400c7950",
+          "len": 6,
+          "stockSha256": "3159335e2f50174cdc7c9d9b3500c090f7310ce7875aaf74c04760a58644790d",
+          "op": "jmp",
+          "target": "silent_pad_trig_func_gate"
+        },
+        {
+          "addr": "0x400ec184",
+          "len": 8,
+          "stockSha256": "b9d637ba37819e52358bd00b1e0fdb85a22551d2d24fb88addf774fec4a17a5b",
+          "op": "jmp",
+          "target": "silent_pad_trig_menu_add"
+        }
+      ]
+    }
+  }
+}

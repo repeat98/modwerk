@@ -95,7 +95,7 @@ typedef unsigned modwerk_ev_mute_keep(void);
 /* ev_project_write (0x400888aa, take: subscribe a struct modwerk_take): the project writer writes the settings lines. A task (UI, MIDI or project file): short, no firmware call that can block. The taker's entry gets every register and the stack as at the site and replays what the site held (the stock tail below) before it returns to stock; it must not jump into the site's bytes. */
 #define MODWERK_EV_PROJECT_WRITE 27
 
-/* ot_machines (table, contribute {"to": "ot_machines", "order", "data"}): the machine chooser, SRC SETUP, the page resolver, the Part validator, the UI tick, pool navigation and the FLEX renderer ask the contributed machines, in row order: chooser rows 5 on. The UI task and the audio render (render only): short, no firmware call that can block. Contribute one struct modwerk_machine (every field but abi, sig and label optional, 0). A Part keeps its signature when the machine is absent and reads as stock. Leaving a PROTECT machine that has no assign of its own puts stock's FLEX defaults back in both Part copies before the signature goes. A priced machine (source_kind) is charged on its track's core before the track becomes it, and every owned track at each UI tick; a track the core cannot carry renders stock's silent source. Removal is refused while a Part, a UI root or a paused task still holds the machine. */
+/* ot_machines (table, contribute {"to": "ot_machines", "order", "data"}): the machine chooser, SRC SETUP, the page resolver, the Part validator, the UI tick, pool navigation and the FLEX renderer ask the contributed machines, in row order: chooser rows 5 on. The UI task and the audio render (render only): short, no firmware call that can block. Contribute one struct modwerk_machine (every field but abi, sig and label optional, 0). A Part keeps its signature when the machine is absent and reads as stock. Leaving a PROTECT machine that has no assign of its own puts stock's FLEX defaults back in both Part copies before the signature goes. A priced machine (source_kind) is charged on its track's core before the track becomes it, and every owned track at each UI tick; a track the core cannot carry renders stock's silent source. Removal is refused while a Part, a UI root or a paused task still holds the machine. A SETUP_PAGE machine contributes a struct modwerk_machine_setup (88 bytes): while SRC SETUP's cursor is on its row and the current track is its own, the drawer shows the page its page function returns and encoders A-F go to its knob function before stock edits the backing pool's setup; a base without the flag ignores it and reads 80 bytes, so the machine keeps stock's setup there. */
 #define MODWERK_OT_MACHINES 28
 struct modwerk_machine {
     uint32_t abi;                       /* MODWERK_MACHINE_ABI */
@@ -124,6 +124,16 @@ struct modwerk_machine {
 #define MODWERK_MACHINE_POOL 2u         /* its row has a pool or engine list (the title's chevron) */
 #define MODWERK_MACHINE_RENDER_FLEX 4u  /* its render is also offered FLEX tracks no machine owns */
 #define MODWERK_MACHINE_BACKING 8u      /* its page is STATIC's when its track's backing pool is STATIC */
+#define MODWERK_MACHINE_SETUP_ALL 16u   /* all six SRC SETUP encoders edit its slots; without it encoder E (slot 10) stays read-only, POLY8's hidden slot */
+#define MODWERK_MACHINE_LIST 32u       /* its track window (TRACK double tap) opens on the machine list, as PICKUP's; for a machine without a pool */
+#define MODWERK_MACHINE_SETUP_PAGE 64u  /* it draws and edits its own SRC SETUP rows: its record is a struct modwerk_machine_setup */
+/* A SETUP_PAGE machine contributes this 88-byte record: SRC SETUP on its row, on a track it owns (0: stock's, the backing
+ * pool's setup). A base without the flag reads its first 80 bytes, the machine. */
+struct modwerk_machine_setup {
+    struct modwerk_machine machine;     /* its flags have MODWERK_MACHINE_SETUP_PAGE */
+    uint32_t (*page)(uint32_t stock);   /* the page the drawer shows instead of stock's */
+    unsigned (*knob)(unsigned index, int delta); /* encoder A-F (0-5) turned: nonzero takes it, 0 lets stock edit the pool's slot */
+};
 
 /* ot_sequencer_rows (table, contribute {"to": "ot_sequencer_rows", "order", "data"}): PROJECT > CONTROL > SEQUENCER lists stock's three rows, then one per contributed label. The UI task. Contribute one struct modwerk_sequencer_rows: its rows, in order. The window shows stock's three rows and up to eight more; a row with a label an earlier row has is not shown; the getter and setter follow stock's rows' convention (CHAIN AFTER's 0x400659ec). */
 #define MODWERK_OT_SEQUENCER_ROWS 29

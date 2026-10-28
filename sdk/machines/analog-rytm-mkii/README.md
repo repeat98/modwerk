@@ -1,6 +1,6 @@
 # Analog Rytm MKII SDK
 
-**Platform:** elemod · **OS:** 1.74 · **Core:** elekloader core-ar2 0.3 · **Modules:** [`sdk/analog-rytm-mkii/modules/`](../../analog-rytm-mkii/modules/) · **Status:** preview
+**Platform:** elemod · **OS:** 1.74 · **Core:** elekloader core-ar2 0.7 · **Modules:** [`sdk/analog-rytm-mkii/modules/`](../../analog-rytm-mkii/modules/) · **Status:** preview
 
 The Analog Rytm MKII runs on the same ColdFire platform as the Digitakt mk1, and its OS entry and bootstrap loader match the Digitakt's instruction for instruction. Its core is elekloader's Digitakt mk1 core (`core.s`, `settings.s`, `render.s`) built with the Rytm's addresses. The core hooks eight shared sites and calls every subscribed mod's handler, in order, from tables the linker builds, so any set of mods that fits the budgets combines. From 0.2 it also keeps mod storage: fields a mod declares, saved with sounds, kits, global slots and projects (below). Core 0.3 is for OS 1.74 only; new core versions drop old OS support, so Modwerk supports the Rytm on OS 1.74 alone. Every hook below has run on a unit. Modwerk's linker builds Rytm modules. Filter Hz is the first library module, so the machine is in preview: the browser builds the core with library modules on OS 1.74, with downloads off until the owner turns them on.
 
@@ -52,6 +52,12 @@ What follows was read and measured for Send FX on OS 1.74 (`src/gate.s` on branc
 - **Measure it on the unit's own clock.** core-ar2 starts DMA timer 0 free running. Read its counter (0xFC07000C) as the mod's block starts and ends, and divide by the time since the previous block, as Send FX's CPU meter does. In the emulator one instruction executed per 48 kHz frame cost about 0.023 % of the block period.
 - **rytm-emu's profiler does not see mod code.** `dtboot --profile-after N` (revision `3c4c42c`) samples only the blocks it runs from its code window, the stock code from 0x40000400. A mod's code, high in RAM (0x47BE0000 on), runs on the stepped path and is never sampled. Measuring Send FX needed a local change to `src/cpu.rs` that samples the stepped branch too, at a jittered interval (33 to 96 instructions) so a loop's period does not alias with it, and a dump of every sampled PC in an address range. Propose such a change to [rytm-emu](https://github.com/trigcondition/rytm-emu) upstream; do not commit emulator code here.
 
+## Parameter pages (core 0.4 and later)
+
+From 0.4 the core takes the four routines every parameter page goes through, and the page keys' lists. A mod adds its own page behind a stock page key, or answers a stock page's parameters, by contributing entries to `core_pages`, `core_params` and `core_view_pages` (0.6 adds `core_page_fns`, a page's own info function). Several mods share one key: the key steps through stock's pages, then each mod's, in `core_view_pages`' order. The structures and the view numbers (`CORE_VIEW_AMP`, `CORE_VIEW_DELAY`…) are in [`include/analog-rytm-mk2/pages.h`](include/analog-rytm-mk2/pages.h); elekloader's ADAPTING.md, "Parameter pages (core-ar2 0.4)", has the full contract. Prefer these lists to a page key gesture of a mod's own: a second press only one mod can hold is a dead end ([Choose how a module hooks in](../../../docs/module-guides/README.md#choose-how-a-module-hooks-in)). 0.5 adds mod machines in the hidden machine slots ([`machines.h`](include/analog-rytm-mk2/machines.h)), 0.4 the audio block's load in `core_audio_load` ([`load.h`](include/analog-rytm-mk2/load.h)).
+
+Mods built for 0.3 that patch a page's entry or a page key's list themselves (rytm2_mods v1.2's lfo-rnd, voice-dac, euclid-accents, velocity-humanise and comp-preview 1.0) overlap core's page sites and are refused at link with 0.4 and later; their 0.4 versions contribute entries instead. Mods with only events and storage, and mods that hook deeper in those routines (filter-hz's text, ctrl-all's turn), link with 0.7 as with 0.3.
+
 ## Mod storage (core 0.3)
 
 Declare each field in `build.json`, then read and write it through the core with elekloader's `analog-rytm-mk2/store.h`. Modwerk's source builder finds it in [`include/`](include/analog-rytm-mk2/store.h), copied unchanged from elekloader's `core-ar2-v0.3` tag (`sdk/imports/core-ar2-store-header-769d9aa.json`); elekloader's own builder uses its SDK's copy:
@@ -74,7 +80,7 @@ On modwerk.app each configuration keeps the lockfile of its last build. The next
 ## Memory and budgets
 
 - **Shared mod memory:** 128 KiB of DDR (`0x47BE0000–0x47C00000`) for the core and every mod's code and data. A boot-time fill of the whole area was read back intact on a unit.
-- **Core image:** core 0.3 is 7,540 bytes `.run` plus 36 bytes `.bss` in the shared area, and an 88-byte `.boot` copier. The linker remains authoritative for combined sizes and overlap.
+- **Core image:** core 0.7 is 10,692 bytes `.run` plus 1,368 bytes `.bss` in the shared area, and a 94-byte `.boot` copier (core 0.3: 7,540, 36 and 88). The linker remains authoritative for combined sizes and overlap.
 - **Fast SRAM:** none. The core has no `.fast` copy table on this machine.
 - **Protected ranges:** none on OS 1.74.
 - **Flash:** the main OS must end below `0x300000`; the OS keeps its own stores at `0x300000–0x380000` and `0x380000–0x400000`.
@@ -83,18 +89,18 @@ Claim named resources (a SETTINGS row, a SysEx id, a timer) in `platform.claims`
 
 ## Toolchain and build
 
-Debian's `m68k-linux-gnu` GCC and binutils for ColdFire (elekloader's default for this machine; set `ELEKLOADER_CROSS` for another prefix such as `m68k-elf-`), and elekloader's builder. Use the exact owner-supplied `Analog-Rytm_MKII_OS1.74.syx`; the builder recognises firmware by hash and changes only the main OS section. From an elekloader checkout, with `core-ar2-0.3.elemod` from the [core-ar2-v0.3](https://github.com/irpina/elekloader/releases/tag/core-ar2-v0.3) pre-release (elekloader's `main` builds core 0.4, which is not the core this SDK targets):
+Debian's `m68k-linux-gnu` GCC and binutils for ColdFire (elekloader's default for this machine; set `ELEKLOADER_CROSS` for another prefix such as `m68k-elf-`), and elekloader's builder. Use the exact owner-supplied `Analog-Rytm_MKII_OS1.74.syx`; the builder recognises firmware by hash and changes only the main OS section. From an elekloader checkout, with `core-ar2-0.7.elemod` from the [core-ar2-v0.7](https://github.com/irpina/elekloader/releases/tag/core-ar2-v0.7) pre-release:
 
 ```sh
 python -m elekloader.sdk.build <module-folder> --stock Analog-Rytm_MKII_OS1.74.syx
 python -m elekloader.lint <module-folder>/out/<mod>-<version>-os1.74.elemod \
-    --stock Analog-Rytm_MKII_OS1.74.syx --with core-ar2-0.3.elemod
+    --stock Analog-Rytm_MKII_OS1.74.syx --with core-ar2-0.7.elemod
 python -m elekloader.patch --stock Analog-Rytm_MKII_OS1.74.syx \
-    --mod core-ar2-0.3.elemod --mod <module-folder>/out/<mod>-<version>-os1.74.elemod \
+    --mod core-ar2-0.7.elemod --mod <module-folder>/out/<mod>-<version>-os1.74.elemod \
     --out my-build.syx --version XX01
 ```
 
-Modwerk's linker covers OS 1.74 (`src/engine/elektron/elemod.ts`), mod storage included. On the owner's stock 1.74 file it links core-ar2 0.3 with each of rytm2_mods v1.2's eleven mods, with the storage mods together, with all eleven, and again from a kept lockfile, byte for byte as elekloader kit 0.7.0 does. In the browser, the Rytm's configuration page checks and builds core-ar2 0.3 and the selected library modules from the owner's stock OS 1.74, with elekloader's kit, the core pinned in `sdk/imports/elekloader-core-ar2-v0.3.json` and each module's source-only package pinned in its own record (`sdk/imports/elekloader-filter-hz-2026-10-23.json`). Downloads stay off until the owner turns them on. Each configuration keeps the storage lockfile of its last build (Mod storage, above), so a module with storage can enter the library.
+Modwerk's linker covers OS 1.74 (`src/engine/elektron/elemod.ts`), mod storage included. On the owner's stock 1.74 file it links core-ar2 0.3 with each of rytm2_mods v1.2's eleven mods, with the storage mods together, with all eleven, and again from a kept lockfile, byte for byte as elekloader kit 0.7.0 does, and links core-ar2 0.7 alone, with Filter Hz, and with Loop Sync and Retrig Grid from one lockfile as kit 0.7.0 and elekloader at the core's commit do ([verification record](../../../docs/verification/2026-10-27-rytm-core-ar2-pages.md)). In the browser, the Rytm's configuration page checks and builds the newest pinned core, core-ar2 0.7, and the selected library modules from the owner's stock OS 1.74, with elekloader's kit, the core pinned in `sdk/imports/elekloader-core-ar2-v0.7.json` (0.3's record stays) and each module's source-only package pinned in its own record (`sdk/imports/elekloader-filter-hz-2026-10-23.json`). Downloads stay off until the owner turns them on. Each configuration keeps the storage lockfile of its last build (Mod storage, above), so a module with storage can enter the library.
 
 ## Flash and recover
 
@@ -102,7 +108,7 @@ Send the .syx with Elektron Transfer over USB (MIDI IN and OUT set to the device
 
 ## Status
 
-The first port, core-ar2 0.1 for OS 1.73, is in elekloader (merged in irpina/elekloader#89); Modwerk no longer supports OS 1.73. Builds HM01 (core and hello-marker) and HC01 (core and hooks-check) ran every hook on a unit on OS 1.73, and the stock .syx restored it each time ([core report](https://github.com/Iced-Cream/rytm-mods-boot-report/blob/main/CORE_REPORT.md)). Core-ar2 0.3 (OS 1.74, with mod storage) is on elekloader's [core-ar2-v0.3](https://github.com/irpina/elekloader/releases/tag/core-ar2-v0.3) pre-release and in kit 0.7.0's catalog. Filter Hz is the first library module ([folder](../../analog-rytm-mkii/modules/filter-hz/)).
+The first port, core-ar2 0.1 for OS 1.73, is in elekloader (merged in irpina/elekloader#89); Modwerk no longer supports OS 1.73. Builds HM01 (core and hello-marker) and HC01 (core and hooks-check) ran every hook on a unit on OS 1.73, and the stock .syx restored it each time ([core report](https://github.com/Iced-Cream/rytm-mods-boot-report/blob/main/CORE_REPORT.md)). Core-ar2 0.3 (OS 1.74, with mod storage) is on elekloader's [core-ar2-v0.3](https://github.com/irpina/elekloader/releases/tag/core-ar2-v0.3) pre-release and in kit 0.7.0's catalog; core-ar2 0.7 (parameter pages, machines, page functions, write-through) is on the [core-ar2-v0.7](https://github.com/irpina/elekloader/releases/tag/core-ar2-v0.7) pre-release (irpina/elekloader#199). Filter Hz is the first library module ([folder](../../analog-rytm-mkii/modules/filter-hz/)).
 
 ## Credits
 

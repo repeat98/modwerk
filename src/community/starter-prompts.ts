@@ -51,10 +51,28 @@ const DIGI: Starter[] = [
   { id: 'midi', title: 'MIDI & USB', summary: 'Map or filter MIDI.', guides: ['midi-usb.md'], example: '',
     task: 'Build a MIDI module: {idea}\nSay exactly which messages it consumes, passes through, maps or sends, and claim any SysEx id it uses.' },
   { id: 'workflow', title: 'A workflow tweak', summary: 'Playback, screens, keys and SETTINGS rows that make the unit nicer to use.', guides: ['playback.md', 'system.md'], example: 'Digitakt: Digi Utils, Digi Matrix; Digitone: digitables',
-    task: 'Build a workflow module using the key, encoder, draw or SETTINGS events: {idea}\nPick the category (playback or system) whose guide fits best and tell me which one you chose. Only take the key or encoder events it needs and leave everything else to the OS.' },
+    task: 'Build a workflow module using the key, encoder, draw or SETTINGS events: {idea}\nPick the category (playback or system) whose guide fits best and tell me which. Only take the key or encoder events it needs and leave everything else to the OS.' },
   { id: 'port', title: 'Port an elekloader mod', summary: 'Bring a released .elemod mod to Modwerk with its author\'s credit.', guides: [], port: true, example: '',
     task: 'Port this elekloader mod to Modwerk: {idea}\nImport it with `npm run elekloader:update`, pin `source` to the author\'s commit, keep their credit, licence and README under upstream/, and record the import in sdk/imports/.' },
 ]
+
+/** The Analog Rytm MKII and the Analog Four MKII: analog voices, so no SRC machine to add, and a digital path (the effects and the inputs) at the render hooks. */
+function analogStarters(example: Partial<Record<string, string>>): Starter[] {
+  const shared = (id: string) => DIGI.find(starter => starter.id === id)!
+  return [
+    { id: 'effect', title: 'An effect on the digital path', summary: 'Process the effects and the inputs at the audio interrupt, or add a return of your own. The analog voices stay as they are.', guides: ['effects.md'], example: example.effect ?? '',
+      task: 'Build an effect on the render hooks (ev_render_in / ev_render_out): {idea}\nThey cover the digital path only (the effects and the inputs): a mod cannot change an analog voice\'s own sound. Say how much of the shared mod memory it uses.' },
+    { id: 'sequencer', title: 'A sequencer tool', summary: 'Retrigs, accents, humanising or anything else that acts in time.', guides: ['sequencing.md'], example: example.sequencer ?? '',
+      task: 'Build a module that acts on the sequencer: {idea}\nFollow the instrument\'s own transport, tempo, track speed and swing. Never keep a clock of your own.' },
+    shared('midi-fx'),
+    shared('midi'),
+    { id: 'workflow', title: 'A workflow tweak', summary: 'Playback, screens, keys and rows in the GLOBAL menu that make the unit nicer to use.', guides: ['playback.md', 'system.md'], example: example.workflow ?? '',
+      task: 'Build a workflow module using the key, encoder, draw or settings events: {idea}\nPick the category (playback or system) whose guide fits best and tell me which. Only take the key and encoder events it needs; leave the rest to the OS.' },
+    shared('port'),
+  ]
+}
+const RYTM = analogStarters({ workflow: 'Loop Sync, Filter Hz' })
+const FOUR = analogStarters({})
 
 const INTEGRATION: Starter[] = [{
   id: 'integration', title: 'Instrument integration', summary: 'Research and qualify SDK/builder support before writing a module.', guides: [], example: '',
@@ -62,7 +80,7 @@ const INTEGRATION: Starter[] = [{
 }]
 
 export function startersFor(machine: StarterMachine) {
-  return machine === 'octatrack' ? OCTATRACK : DEVICES_BY_ID[machine]?.sdk ? DIGI : INTEGRATION
+  return machine === 'octatrack' ? OCTATRACK : machine === 'analog-rytm-mkii' ? RYTM : machine === 'analog-four-mkii' ? FOUR : DEVICES_BY_ID[machine]?.sdk ? DIGI : INTEGRATION
 }
 
 const REPOSITORY = 'https://github.com/repeat98/modwerk'
@@ -113,7 +131,8 @@ export function starterPrompt(machine: StarterMachine, starter: Starter, idea = 
   const name = STARTER_MACHINES.find(item => item.id === machine)!.name
   const author = login.trim().replace(/^@/, '') || '<your-github-login>'
   const description = idea.trim() || (starter.port ? PORT_PLACEHOLDER : IDEA_PLACEHOLDER)
-  const reading = starterReading(machine, starter).map(file => '- ' + file + (file === 'sdk/octabam/AGENTS.md' ? ' (the DSP and ColdFire traps)' : file === 'docs/ADD_A_MODULE.md' ? ' (the "' + (machine === 'octatrack' ? 'Octatrack' : 'Digitakt and Digitone') + '" section)' : ''))
+  // A machine still getting the Octatrack's stack: its guide's stack section says what the base will own, which no module builds (docs/MACHINE_RECIPE.md).
+  const reading = starterReading(machine, starter).map(file => '- ' + file + (file === 'sdk/octabam/AGENTS.md' ? ' (the DSP and ColdFire traps)' : file === 'docs/ADD_A_MODULE.md' ? ' (the "' + (machine === 'octatrack' ? 'Octatrack' : 'Digitakt and Digitone') + '" section)' : file === DEVICES_BY_ID[machine]?.sdk ? ' (its Modwerk stack section first)' : ''))
   const scaffold = machine === 'octatrack' ? 'npm run module:new -- <id> --kind dsp|coldfire --author ' + author : 'npm run module:new -- <id> --machine ' + machine + ' --author ' + author
   const create = starter.port ? 'Create the module folder as the guide describes for a port.' : 'Scaffold it with `' + scaffold + '`.'
   return withSetup([

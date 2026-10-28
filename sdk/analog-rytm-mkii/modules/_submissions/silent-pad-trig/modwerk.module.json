@@ -1,0 +1,245 @@
+{
+  "schemaVersion": 3,
+  "id": "silent-pad-trig",
+  "name": "Silent Pad+Trig Settings",
+  "version": "0.5.1-experimental",
+  "machine": "analog-rytm-mkii",
+  "category": "system",
+  "exclusive": false,
+  "author": {
+    "github": "npp1993",
+    "credits": [
+      "npp1993 (Nathaniel Pavel) — the mod, its design and code, and this Modwerk module.",
+      "Iced-Cream — include/ar2-1.74.inc, the OS 1.74 address file from rytm2_mods, and the rytm2_mods voice-dac port the globals-slot lookup follows.",
+      "MrScruff — the globals-slot lookup, after his voice-dac (rytm-mods 0013-voice-dac, as rytm2_mods ports it).",
+      "irpina — Elekloader and core-ar2, the core it links with and whose mod storage keeps its setting."
+    ]
+  },
+  "maintainers": [
+    "npp1993"
+  ],
+  "presentation": {
+    "label": "SILENT PAD+TRIG",
+    "family": "Workflow",
+    "summary": "Two checkboxes: with SILENT PAD+TRIG, pads and TRIG keys select their track silently outside recording; with SILENT PAD LIVEREC, pads stay silent in LIVE RECORDING. FUNC + pad plays (and records), and aftertouch still works.",
+    "overview": "Silent Pad+Trig Settings adds two checkboxes to GLOBAL > CONTROL > SEQUENCER CONFIG, after AUTO TRK SWITCH. SILENT PAD+TRIG covers every state but LIVE and STEP RECORDING: a pad or TRIG key 1-12 press selects its track and stays silent, with no MIDI note. SILENT PAD LIVEREC covers LIVE RECORDING: a pad press selects its track silently and records nothing, while TRIG keys play and record as stock. Either way, hold FUNC and press a pad to play it at the pad's own velocity, which in LIVE RECORDING also records. STEP RECORDING is stock. Aftertouch is untouched, so a held pad modulates its track without sounding it. Both default to unchecked, are kept per GLOBAL slot and are saved with the project.",
+    "highlights": [
+      "Tap pads to pick tracks without hearing them, while editing or while live recording, each switched on its own.",
+      "FUNC + pad plays and records, at the pad's own velocity.",
+      "Hold a pad down to modulate its sound with aftertouch, silently.",
+      "Two checkboxes per GLOBAL slot, kept through a power cycle; unchecked is stock."
+    ],
+    "usage": [
+      "Use a build containing Silent Pad+Trig Settings. Open the GLOBAL menu, then CONTROL > SEQUENCER CONFIG. After AUTO TRK SWITCH are SILENT PAD+TRIG and SILENT PAD LIVEREC; check either with YES or LEFT/RIGHT.",
+      "With SILENT PAD+TRIG checked and the sequencer stopped, tap the SD pad: it makes no sound and the SD track is selected. Hold FUNC and tap SD to hear it at the pad's own velocity. TRIG 5 selects track 5 silently.",
+      "With SILENT PAD LIVEREC checked, press RECORD + PLAY for LIVE RECORDING: plain pad taps stay silent and record nothing; hold FUNC and tap a pad to play and record it. Uncheck both to get stock behaviour everywhere."
+    ]
+  },
+  "access": {
+    "location": "GLOBAL > CONTROL > SEQUENCER CONFIG: SILENT PAD+TRIG and SILENT PAD LIVEREC, after AUTO TRK SWITCH.",
+    "steps": [
+      "Open the GLOBAL menu and choose CONTROL, then SEQUENCER CONFIG.",
+      "Move to SILENT PAD+TRIG or SILENT PAD LIVEREC, just after AUTO TRK SWITCH, and press YES (or RIGHT) to check it."
+    ],
+    "screenshots": [
+      "media/control-menu.png",
+      "media/seq-config-checked.png"
+    ]
+  },
+  "controls": [
+    {
+      "name": "SILENT PAD+TRIG",
+      "default": 0,
+      "doc": "Checkbox in GLOBAL > CONTROL > SEQUENCER CONFIG, after AUTO TRK SWITCH. YES toggles it, RIGHT checks, LEFT unchecks. Checked: outside LIVE and STEP RECORDING, pads and TRIG keys 1-12 select their track silently. Kept per GLOBAL slot.",
+      "labels": [
+        "Unchecked",
+        "Checked"
+      ]
+    },
+    {
+      "name": "SILENT PAD LIVEREC",
+      "default": 0,
+      "doc": "Checkbox after SILENT PAD+TRIG. YES toggles it, RIGHT checks, LEFT unchecks. Checked: in LIVE RECORDING, pads select their track silently and record nothing; TRIG keys still play and record. Kept per GLOBAL slot.",
+      "labels": [
+        "Unchecked",
+        "Checked"
+      ]
+    },
+    {
+      "name": "FUNC + pad",
+      "default": null,
+      "doc": "Where a checked setting applies, plays the pad's track at the strike's velocity, or the fixed velocity with FIX on (stock FUNC + pad uses the TRIG page's VEL); records it in LIVE RECORDING; selects the track only if AUTO TRK SWITCH is checked, as stock.",
+      "labels": null
+    },
+    {
+      "name": "Pad held down",
+      "default": null,
+      "doc": "Aftertouch, as stock: modulates the track's AFTERTOUCH destinations and sends MIDI poly pressure, also after a silent press.",
+      "labels": null
+    }
+  ],
+  "compatibility": {
+    "releases": [
+      "1.74"
+    ],
+    "requires": [],
+    "conflicts": [],
+    "limitations": [
+      "Built for OS 1.74 only, with core-ar2 0.3.",
+      "0.5.0 (PS07) and 0.5.1 (PS08) ran on a unit: both settings worked as intended and the renamed row fits, as reported. MIDI out and STEP REC not yet tested on a unit.",
+      "FUNC + TRIG 1-12 plays nothing, as on stock: use FUNC + pad to hear a track.",
+      "A silent press passes its aftertouch on, so MIDI out can carry poly pressure with no note-on before it.",
+      "TRIG 13 (the FX track), the SOUND BROWSER's pad audition and pads with a menu open are silent too; FUNC + pad plays.",
+      "RTRG + pad selects silently; FUNC + RTRG also toggles the metronome click, as on stock, so it is not a clean way to roll.",
+      "A unit that ran 0.4.x starts 0.5.x with both rows unchecked: the storage layout changed, so the old setting is not carried over. 0.5.0's settings carry over to 0.5.1.",
+      "A GLOBAL slot saved without a setting, or received as Global SysEx, loads it unchecked.",
+      "LIVE RECORDING counts only while the sequencer runs; a paused LIVE REC follows SILENT PAD+TRIG.",
+      "Like stock's SEQUENCER CONFIG rows, a changed row is saved when you leave the menu: power off straight from SEQUENCER CONFIG and the change is lost (seen on a unit, with KIT RELOAD ON CHG behaving the same)."
+    ]
+  },
+  "platform": {
+    "kind": "elemod",
+    "core": "0.3",
+    "build": "build.json",
+    "events": [],
+    "claims": [
+      "ui:pad press outside CHROMATIC mode",
+      "ui:TRIG 1-12 press",
+      "ui:FUNC + pad",
+      "ui:GLOBAL > CONTROL > SEQUENCER CONFIG row after AUTO TRK SWITCH"
+    ]
+  },
+  "resources": {
+    "memoryBytes": 940,
+    "fastBytes": 0,
+    "load": {
+      "display": "None in the audio path: a few compares per pad or TRIG key press",
+      "method": "static",
+      "conditions": "Static: the sites are in KeyboardView's pad and TRIG key handlers, their shared play routine and the SEQUENCER CONFIG menu's constructor; each press reads the record state and one storage bit. Nothing is added to the audio, sequencer or tick paths. Not a measurement."
+    }
+  },
+  "evidence": {
+    "tier": "author-hardware",
+    "moduleVersion": "0.5.1-experimental",
+    "sourceSha256": "5f4c6a7072570a8714afd30c2f68d3a88d0edb381e6bc63cb3b4b04abb3f9cbd",
+    "reports": [
+      "TESTING.md"
+    ],
+    "hardware": {
+      "model": "Analog Rytm MKII",
+      "release": "1.74",
+      "testedOn": "2026-10-27",
+      "tester": "npp1993",
+      "durationMinutes": null,
+      "summary": "npp1993 (the author) flashed PS07 (0.5.0) and PS08 (0.5.1) on an Analog Rytm MKII, OS 1.74 with core-ar2 0.3, and reports: both rows show in SEQUENCER CONFIG; SILENT PAD+TRIG silences pads unless FUNC is held; SILENT PAD LIVEREC lays down no trigs from plain pad presses in LIVE REC while FUNC + pad plays and records and TRIG keys stay stock; the 0.5.1 label fits; a changed row is saved on leaving the menu, as stock KIT RELOAD ON CHG is.",
+      "limitations": [
+        "Results are as reported by the author, not itemized measurements; duration not recorded.",
+        "PS07 carried the functional tests; PS08 (0.5.1, the same code with the second row relabelled) was checked for the label and saving.",
+        "MIDI out, STEP REC, RTRG + pad, the SOUND BROWSER, AUTO TRK SWITCH off, per-slot settings on 0.5.x and loading a checked project on stock 1.74 were not tested on a unit.",
+        "Tested SysEx: PS07 eae28e8ff6ae9f29a9d608c0fbe3985804779b42fd96d33d1e4c1d97934cae99, PS08 ff7c4cf3ca61f3c461a16a416cb4515e0d44727216f688ab965785bdbd5343d4; firmware was not read back from the device."
+      ]
+    },
+    "verifiedBy": null
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "Emulator (rytm-emu c5732f0, OS 1.74, builds PS07 and, for the renamed row, PS08), against stock from matched snapshots with neither, each and both settings: both unchecked matches stock exactly; SILENT PAD+TRIG silences pads and TRIG 1-12 outside LIVE and STEP REC, SILENT PAD LIVEREC pads in LIVE REC (not recorded); FUNC + pad plays at the strike's velocity and records; aftertouch, STEP REC and AUTO TRK SWITCH as designed; both kept through power-off and per GLOBAL slot. 0.4.0 (PS05) and 0.5.0 (PS07) ran on a unit, as reported; 0.5.1 differs from 0.5.0 only in the row's label.",
+    "documentation": {
+      "tutorial": {
+        "title": "Quick tutorial",
+        "steps": [
+          "Use a build containing Silent Pad+Trig Settings. Open the GLOBAL menu, then CONTROL > SEQUENCER CONFIG. After AUTO TRK SWITCH are SILENT PAD+TRIG and SILENT PAD LIVEREC; check either with YES or LEFT/RIGHT.",
+          "With SILENT PAD+TRIG checked and the sequencer stopped, tap the SD pad: it makes no sound and the SD track is selected. Hold FUNC and tap SD to hear it at the pad's own velocity. TRIG 5 selects track 5 silently.",
+          "With SILENT PAD LIVEREC checked, press RECORD + PLAY for LIVE RECORDING: plain pad taps stay silent and record nothing; hold FUNC and tap a pad to play and record it. Uncheck both to get stock behaviour everywhere."
+        ]
+      },
+      "screenshots": [
+        "media/control-menu.png",
+        "media/seq-config.png",
+        "media/seq-config-checked.png",
+        "media/silent-press.png"
+      ],
+      "captureRecord": "media/capture.json"
+    }
+  },
+  "license": {
+    "spdx": "GPL-2.0-only",
+    "file": "LICENSE",
+    "declaration": "npp1993's original code, under GPL-2.0-only, the licence of rytm2_mods where it was first written; the globals-slot lookup follows MrScruff's voice-dac, and include/ar2-1.74.inc is rytm2_mods' own, both under the same licence. include/ar2-1.74.inc names firmware routines by address only; each patch precondition is an address, a length and a SHA-256."
+  },
+  "media": [
+    {
+      "path": "media/thumbnail.svg",
+      "kind": "thumbnail",
+      "caption": "Silent Pad+Trig Settings",
+      "alt": "Original illustration of twelve pads: a tapped pad selects its track silently, and FUNC + pad plays it.",
+      "credit": "npp1993",
+      "license": "GPL-2.0-only",
+      "source": "Original conceptual illustration in the shared signal-art style; not a device screenshot."
+    },
+    {
+      "path": "media/control-menu.png",
+      "kind": "screenshot",
+      "caption": "Open the GLOBAL menu and choose CONTROL: SEQUENCER CONFIG, which holds both rows, is its third item.",
+      "alt": "CONTROL menu listing CONTROL INPUT 1, CONTROL INPUT 2 and SEQUENCER CONFIG.",
+      "credit": "npp1993 documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "0.5.1-experimental",
+        "imageSha256": "ff7c4cf3ca61f3c461a16a416cb4515e0d44727216f688ab965785bdbd5343d4",
+        "setup": "Headless rytm-emu c5732f0 (dtboot) cold-booting PS08: the released core-ar2 0.3 and this folder's Silent Pad+Trig 0.5.1, linked by Modwerk on the owner's stock OS 1.74. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+      }
+    },
+    {
+      "path": "media/seq-config.png",
+      "kind": "screenshot",
+      "caption": "SEQUENCER CONFIG gains two rows after AUTO TRK SWITCH, SILENT PAD+TRIG and SILENT PAD LIVEREC, both unchecked by default.",
+      "alt": "SEQUENCER CONFIG list with SILENT PAD+TRIG highlighted and SILENT PAD LIVEREC below it, both boxes empty, after AUTO TRK SWITCH.",
+      "credit": "npp1993 documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "0.5.1-experimental",
+        "imageSha256": "ff7c4cf3ca61f3c461a16a416cb4515e0d44727216f688ab965785bdbd5343d4",
+        "setup": "Headless rytm-emu c5732f0 (dtboot) cold-booting PS08: the released core-ar2 0.3 and this folder's Silent Pad+Trig 0.5.1, linked by Modwerk on the owner's stock OS 1.74. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+      }
+    },
+    {
+      "path": "media/seq-config-checked.png",
+      "kind": "screenshot",
+      "caption": "Press YES (or RIGHT) on either row to check it; each is set on its own and the GLOBAL slot keeps both.",
+      "alt": "SEQUENCER CONFIG list with the SILENT PAD+TRIG and SILENT PAD LIVEREC boxes both checked, SILENT PAD LIVEREC highlighted.",
+      "credit": "npp1993 documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "0.5.1-experimental",
+        "imageSha256": "ff7c4cf3ca61f3c461a16a416cb4515e0d44727216f688ab965785bdbd5343d4",
+        "setup": "Headless rytm-emu c5732f0 (dtboot) cold-booting PS08: the released core-ar2 0.3 and this folder's Silent Pad+Trig 0.5.1, linked by Modwerk on the owner's stock OS 1.74. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+      }
+    },
+    {
+      "path": "media/silent-press.png",
+      "kind": "screenshot",
+      "caption": "Back on the main screen with SILENT PAD+TRIG checked, tapping the SD pad selects the SD track without a sound; FUNC + SD plays it.",
+      "alt": "SD track's SRC page with SNARE as the title, shown after a silent SD pad press.",
+      "credit": "npp1993 documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "0.5.1-experimental",
+        "imageSha256": "ff7c4cf3ca61f3c461a16a416cb4515e0d44727216f688ab965785bdbd5343d4",
+        "setup": "Headless rytm-emu c5732f0 (dtboot) cold-booting PS08: the released core-ar2 0.3 and this folder's Silent Pad+Trig 0.5.1, linked by Modwerk on the owner's stock OS 1.74. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+      }
+    }
+  ]
+}
