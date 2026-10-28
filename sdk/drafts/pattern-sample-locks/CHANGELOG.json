@@ -1,0 +1,51 @@
+[
+  {
+    "version": "0.1.4-experimental",
+    "date": "2026-10-28",
+    "changes": [
+      "Keep prototype ownership records separate from the base diagnostics and saved effect map.",
+      "Retain manual locks after a fresh startup, with checksummed sparse ownership records.",
+      "Refuse new locks before editing if the bounded ownership store is full; never evict known records.",
+      "Known limits: hardware timing, missing-module history and complete edit-path coverage remain unqualified."
+    ]
+  },
+  {
+    "version": "0.1.3-experimental",
+    "date": "2026-10-28",
+    "changes": [
+      "Enable the local emulator prototype to write and clear ordinary pattern SAMPLE locks.",
+      "Stop playback before applying and leave it stopped; refuse while a recorder is active.",
+      "Keep manual locks by default and track created locks in guarded battery-backed storage.",
+      "Recognize same-value manual SAMPLE edits; retain locks when stored ownership cannot be verified.",
+      "Known limits: hardware, missing-module history, complete save/reload coverage and performance remain unqualified."
+    ]
+  },
+  {
+    "version": "0.1.2-experimental",
+    "date": "2026-10-28",
+    "changes": [
+      "Show eight tracks in two columns, using S and F for sample machines.",
+      "Use arrows to navigate eligible tracks; A selects all and B selects the highlighted track.",
+      "Show per-track sample-lock counts on confirmation; NO returns to track selection.",
+      "Keep Part Edit headerless; use white title bars and evenly spaced text on editing pages.",
+      "Known issue: native sample editing and persistent ownership remain unimplemented."
+    ]
+  },
+  {
+    "version": "0.1.1-experimental",
+    "date": "2026-10-28",
+    "changes": [
+      "Retain manual sample locks by default when clearing.",
+      "Allow clearing manual locks only after turning off Retain manual locks.",
+      "Known issue: ownership persistence and native sample editing remain unimplemented."
+    ]
+  },
+  {
+    "version": "0.1.0-experimental",
+    "date": "2026-10-28",
+    "changes": [
+      "Preview the Part Edit sample-lock actions and track selection.",
+      "Known issue: this UI review build cannot change sample locks."
+    ]
+  }
+]

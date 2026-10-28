@@ -1,0 +1,246 @@
+{
+  "schemaVersion": 2,
+  "id": "pattern-sample-locks",
+  "key": "PATTERN SAMPLE LOCKS",
+  "name": "Pattern Sample Locks",
+  "version": "0.1.4-experimental",
+  "category": "system",
+  "author": {
+    "github": "twwwy",
+    "credits": [
+      "twwwy"
+    ]
+  },
+  "nativeManifest": "manifest.py",
+  "presentation": {
+    "label": "SAMPLE LOCKS",
+    "family": "Pattern editing",
+    "summary": "Lock Part sample choices into pattern trigs, or clear SAMPLE locks.",
+    "overview": "Two explicit native SAMPLE-lock actions in Part Edit. The local emulator prototype stops playback before editing and defaults to retaining manual or unknown locks. Hardware and release qualification remain incomplete.",
+    "highlights": [
+      "All eight tracks appear; only Flex and Static tracks are selectable.",
+      "Select all eligible tracks or a subset.",
+      "Keep existing sample locks by default.",
+      "Clear retains manual and unknown-origin locks by default."
+    ],
+    "usage": [
+      "MKII: FUNC + PART, then choose either sample-lock action.",
+      "Level 2: arrows navigate eligible tracks; A selects all, B selects the highlighted track. Turn clockwise ON, counterclockwise OFF.",
+      "C sets Replace existing for Lock, or Retain manual locks for Clear.",
+      "YES opens level 3 with per-track change counts. NO returns to level 2; NO in level 2 closes."
+    ]
+  },
+  "controls": [],
+  "compatibility": {
+    "firmware": "1.40C",
+    "location": "Flex / Static",
+    "conflicts": [],
+    "uiClaims": [
+      "screen:PART EDIT"
+    ],
+    "limitations": [
+      "Local emulator prototype only; physical power cycles, performance and full companion runtime behavior are not qualified.",
+      "Ownership material uses a tagged private battery-RAM region, bound to one project identity. It is not included when a project is copied to another instrument.",
+      "Same-value edits through the native SAMPLE editor retire ownership. Missing-module edit history, all reload/copy paths and removal/reinstall invalidation still need qualification; do not use on hardware yet.",
+      "Unknown or mismatched ownership is retained by default. Native card-build integration is not implemented.",
+      "Sparse battery store holds 704 active track/pattern combinations. A full store refuses new locking before any sample edit; it never evicts known ownership."
+    ],
+    "effectId": null
+  },
+  "resources": {
+    "recorded": "Not measured",
+    "storage": {
+      "label": "Storage",
+      "display": "Not measured",
+      "value": null,
+      "unit": "unknown",
+      "method": "unmeasured",
+      "conditions": "No measurements exist yet. Add exact conditions and source evidence when available.",
+      "source": "TESTING.md"
+    },
+    "processing": {
+      "label": "CPU / DSP load",
+      "display": "Not measured",
+      "value": null,
+      "unit": "unknown",
+      "method": "unmeasured",
+      "conditions": "No measurements exist yet. Add exact conditions and source evidence when available.",
+      "source": "TESTING.md"
+    }
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "Corrected exact emulator build passes: base-memory preservation, STOP, same-value manual protection, fresh startup, 512-lock editing, native save/reload and removal. Physical timing and complete ownership-history coverage remain open.",
+    "hardwareStatus": "untested",
+    "evidenceRevision": "4f1eb8cb4eb4a2646fcb551f9b13a2c5be85975c",
+    "gates": [
+      "Worst-case cycles under parameter modulation and maximum load",
+      "Exact memory region and maximum-instance totals",
+      "Owner-reviewed real-hardware evidence with actual coverage and limitations"
+    ]
+  },
+  "license": {
+    "spdx": "MIT",
+    "file": "LICENSE",
+    "declaration": "Original MIT source by twwwy. Original small lettering reused from twwwy\u2019s Beat Slicer under MIT. No stock firmware or extracted tables are included."
+  },
+  "media": [
+    {
+      "path": "media/both-menu-actions.png",
+      "captureType": "emulator",
+      "caption": "Level 1: FUNC + PART opens the headerless list. The four stock actions are followed by Lock Samples to Pattern and Clear Sample Locks.",
+      "alt": "Headerless Part Edit list with the four stock actions and both appended sample-lock actions.",
+      "credit": "twwwy; Elektron Octatrack UI",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "Part Edit",
+        "shows": "location",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.4-experimental",
+        "imageSha256": "025af1b78e27be20bb888427ab7462d352e8d7dbca5cf5c183244509aed94aec",
+        "setup": "Actual final LCD transfer buffer from the current native prototype in a fresh isolated MKII emulator USB trial. T3 THRU/T7 NEIGHBOR fixture demonstrates disabled cells. Layout capture without final Apply; DSP disabled, no physical unit. Exact package, base, emulator and frozen source hashes in media/capture.json."
+      }
+    },
+    {
+      "path": "media/lock-tracks.png",
+      "captureType": "emulator",
+      "caption": "Level 2: arrows navigate S/F tracks. A selects all, B selects the highlighted track. Turn clockwise ON, counterclockwise OFF. Greyed-out T3 and T7 are skipped.",
+      "alt": "Eight-track grid with S/F labels, T1-4 left and T5-8 right.",
+      "credit": "twwwy; Elektron Octatrack UI",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "Lock track selection",
+        "shows": "controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.4-experimental",
+        "imageSha256": "025af1b78e27be20bb888427ab7462d352e8d7dbca5cf5c183244509aed94aec",
+        "setup": "Actual final LCD transfer buffer from the current native prototype in a fresh isolated MKII emulator USB trial. T3 THRU/T7 NEIGHBOR fixture demonstrates disabled cells. Layout capture without final Apply; DSP disabled, no physical unit. Exact package, base, emulator and frozen source hashes in media/capture.json."
+      }
+    },
+    {
+      "path": "media/lock-confirm.png",
+      "captureType": "emulator",
+      "caption": "Level 3 shows the SAMPLE-lock changes for each selected track. This layout fixture has no affected trigs; functional and maximum-count screenshots follow.",
+      "alt": "Two-column confirmation with per-track change counts and dashes for excluded tracks.",
+      "credit": "twwwy; Elektron Octatrack UI",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "Lock confirmation",
+        "shows": "controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.4-experimental",
+        "imageSha256": "025af1b78e27be20bb888427ab7462d352e8d7dbca5cf5c183244509aed94aec",
+        "setup": "Actual final LCD transfer buffer from the current native prototype in a fresh isolated MKII emulator USB trial. T3 THRU/T7 NEIGHBOR fixture demonstrates disabled cells. Layout capture without final Apply; DSP disabled, no physical unit. Exact package, base, emulator and frozen source hashes in media/capture.json."
+      }
+    },
+    {
+      "path": "media/clear-tracks.png",
+      "captureType": "emulator",
+      "caption": "Clear keeps manual locks by default. Encoder C sets Retain manual; YES opens confirmation, NO closes the popup.",
+      "alt": "Clear grid showing C:RETAIN MANUAL ON.",
+      "credit": "twwwy; Elektron Octatrack UI",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "Clear track selection",
+        "shows": "controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.4-experimental",
+        "imageSha256": "025af1b78e27be20bb888427ab7462d352e8d7dbca5cf5c183244509aed94aec",
+        "setup": "Actual final LCD transfer buffer from the current native prototype in a fresh isolated MKII emulator USB trial. T3 THRU/T7 NEIGHBOR fixture demonstrates disabled cells. Layout capture without final Apply; DSP disabled, no physical unit. Exact package, base, emulator and frozen source hashes in media/capture.json."
+      }
+    },
+    {
+      "path": "media/clear-confirm.png",
+      "captureType": "emulator",
+      "caption": "Review per-track counts and MANUAL LOCKS: KEEP. NO returns to level 2 with the selections preserved.",
+      "alt": "Per-track Clear confirmation protecting manual locks.",
+      "credit": "twwwy; Elektron Octatrack UI",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "Clear confirmation",
+        "shows": "controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.4-experimental",
+        "imageSha256": "025af1b78e27be20bb888427ab7462d352e8d7dbca5cf5c183244509aed94aec",
+        "setup": "Actual final LCD transfer buffer from the current native prototype in a fresh isolated MKII emulator USB trial. T3 THRU/T7 NEIGHBOR fixture demonstrates disabled cells. Layout capture without final Apply; DSP disabled, no physical unit. Exact package, base, emulator and frozen source hashes in media/capture.json."
+      }
+    },
+    {
+      "path": "media/reboot-retain-manual.png",
+      "captureType": "emulator",
+      "caption": "Fresh emulator startup: T1 has one verified created lock to clear; the manual lock is retained.",
+      "alt": "A Clear confirmation counting one owned lock on T1 while retaining manual locks.",
+      "credit": "twwwy; Elektron Octatrack UI",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "Clear after fresh battery-backed startup",
+        "shows": "controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.4-experimental",
+        "imageSha256": "025af1b78e27be20bb888427ab7462d352e8d7dbca5cf5c183244509aed94aec",
+        "setup": "Actual final LCD transfer buffer from the native MKII emulator test. Native memory/transport assertions recorded in media/capture-reboot.json. DSP disabled; no physical hardware result."
+      }
+    },
+    {
+      "path": "media/maximum-lock-confirm.png",
+      "captureType": "emulator",
+      "caption": "Maximum native operation: 64 changes per track, 512 in total. Playback stops before final Apply.",
+      "alt": "Lock confirmation with 64 SAMPLE-lock changes on each of eight tracks.",
+      "credit": "twwwy; Elektron Octatrack UI",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "Maximum Lock confirmation",
+        "shows": "controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.4-experimental",
+        "imageSha256": "025af1b78e27be20bb888427ab7462d352e8d7dbca5cf5c183244509aed94aec",
+        "setup": "Actual final LCD transfer buffer from the native MKII emulator test. Native memory/transport assertions recorded in media/capture-native.json. DSP disabled; no physical hardware result."
+      }
+    },
+    {
+      "path": "media/native-apply-stopped.png",
+      "captureType": "emulator",
+      "caption": "The 512-lock native operation completed, leaving playback stopped. No implicit project save.",
+      "alt": "Completed SAMPLE-lock operation with a reminder that the project is not saved.",
+      "credit": "twwwy; Elektron Octatrack UI",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "Native operation result",
+        "shows": "controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.4-experimental",
+        "imageSha256": "025af1b78e27be20bb888427ab7462d352e8d7dbca5cf5c183244509aed94aec",
+        "setup": "Actual final LCD transfer buffer from the native MKII emulator test. Native memory/transport assertions recorded in media/capture-native.json. DSP disabled; no physical hardware result."
+      }
+    }
+  ],
+  "access": {
+    "location": "MKII: Part Edit",
+    "steps": [
+      "FUNC + PART opens level 1; select an action with YES.",
+      "Level 2 always shows T1-4 left and T5-8 right. Arrows skip greyed-out non-Flex/Static tracks.",
+      "Turn A clockwise to select all eligible tracks or counterclockwise to clear selection. B sets the highlighted track in the same way.",
+      "Use C for the existing-lock policy. Clear retains manual locks by default.",
+      "YES opens level 3. Review per-track change counts; YES applies, NO returns to level 2.",
+      "NO in level 2 closes the popup. Apply stops playback first and leaves it stopped; a recorder in use refuses the edit."
+    ],
+    "screenshots": [
+      "media/both-menu-actions.png",
+      "media/lock-tracks.png",
+      "media/lock-confirm.png",
+      "media/clear-tracks.png",
+      "media/clear-confirm.png",
+      "media/reboot-retain-manual.png",
+      "media/maximum-lock-confirm.png",
+      "media/native-apply-stopped.png"
+    ]
+  }
+}
