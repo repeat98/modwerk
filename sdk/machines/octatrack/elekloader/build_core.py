@@ -1601,8 +1601,8 @@ def main():
         raise ValueError('Pinned core_up seam changed; review flash.c\'s boot snapshot before porting.')
     bootstrap = bootstrap.replace(BOOT_FLASH_SEAM, BOOT_FLASH_SNAPSHOT)
     (source / 'core-ot.s').write_text(bootstrap)
-    for p in logger.iterdir():
-        if p.suffix in ('.c', '.h') and p.name != 'identity.c':
+    for p in logger.iterdir():  # frame_guard.c is card builds' (the base's own is machine_registry.c's)
+        if p.suffix in ('.c', '.h') and p.name not in ('identity.c', 'frame_guard.c'):
             shutil.copyfile(p, source / p.name)
     adapter = (source/'stock_140c.c').read_text()
     io_macro = '#define io octamod_log_io'
@@ -2025,7 +2025,7 @@ def main():
     # Only authored zero placeholders: stock is recovered by format-2 parts.
     spec = importlib.util.spec_from_file_location('modwerk_logger_package', logger/'package.py')
     package = importlib.util.module_from_spec(spec); spec.loader.exec_module(package)
-    hook_source = package.hooks(guards)
+    hook_source = package.hooks(guards, frame_guard=False)
     if args.sample_editor:
         idle_seam = 'jsr octamod_log_engine_idle\n'
         job_seam = 'jsr octamod_log_engine_begin\naddq.l #4,%sp\n'
