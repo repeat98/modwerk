@@ -17,4 +17,5 @@ unsigned psl_native_transport(void);
 int psl_native_stop(void);
 void psl_ui_open(void);
 unsigned psl_ui_phase(void);
+void psl_native_part_menu_draw(unsigned char *,unsigned,unsigned,const char *const *);
 #endif

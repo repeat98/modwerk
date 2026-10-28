@@ -142,6 +142,7 @@ def main():
         port.command('pace off')
         symbols=json.loads((args.base/'symbols.json').read_text())
         port.base_symbols=symbols
+        port.ui_phase=lambda:int.from_bytes(port.peek(symbols['modwerk_runtime_api'],4),'big')>>24
         def dsp_metrics():
             return {name:int.from_bytes(port.peek(symbols[name],4),'big') for name in
                     ('dl_frames','dl_errors','modwerk_dsp_stalls')}
@@ -174,8 +175,12 @@ def main():
             # the actual final LCD transfer buffer, including module UI.
             address=int.from_bytes(port.peek(0x400b9710,4),'big')
             frame=port.peek(address,1024)
-            if name!='popup-closed.png':
-                bottom=60 if name.endswith('-result.png') or name in ('part-edit.png','lock-menu-row.png','both-menu-actions.png') else 63
+            if name in ('part-edit.png','lock-menu-row.png','both-menu-actions.png'):
+                assert port.ui_phase()==1,'native-font Part Edit overlay is not open'
+            elif name.endswith('-result.png'):
+                assert port.ui_phase()==0,'successful Apply left an acknowledgement popup'
+            elif name!='popup-closed.png':
+                bottom=63
                 marker=1<<(bottom%8)
                 for _ in range(100):
                     if frame[121*8+7-bottom//8]&marker:break # final border pixel

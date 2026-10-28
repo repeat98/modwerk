@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 /* OS 1.40C adapter. Experimental native edits; no implicit project save. */
 #include "ui.h"
+#include "font.h"
 #define U16(a) (*(volatile uint16_t *)(uintptr_t)(a))
 #define U8(a) (*(volatile uint8_t *)(uintptr_t)(a))
 #define U32(a) (*(volatile uint32_t *)(uintptr_t)(a))
@@ -48,6 +49,30 @@ unsigned psl_native_cursor(void){return U32(0x460e5e40u);}
 void psl_native_set_cursor(unsigned row){if(row<4u)U32(0x460e5e40u)=row;}
 void psl_native_close_popup(void){((void (*)(void))0x4006d754u)();}
 void psl_native_redraw(void){U32(0x46c7c72cu)=1;}
+/* Use the existing stock UI font directly; no glyph data is copied into the
+ * module. The surface descriptor is local and never retained by stock UI. */
+void psl_native_part_menu_draw(unsigned char *frame,unsigned count,unsigned cursor,const char *const *rows)
+{
+    if(!frame || !rows || count!=6u || cursor>=count)return;
+    uint32_t surface[7];
+    for(unsigned i=0;i<7u;++i)surface[i]=U32(0x400bf10au+4u*i);
+    surface[3]=(uint32_t)(uintptr_t)frame;
+    unsigned width=44u;
+    for(unsigned i=0;i<count;++i) {
+        int text=((int (*)(uint32_t,int,const char *))0x40012f30u)(0x400ba876u,-1,rows[i]);
+        if(text>0 && (unsigned)text+6u>width)width=(unsigned)text+6u;
+    }
+    if(width>116u)width=116u;
+    unsigned height=count*7u+4u,left=(128u-width)/2u,top=(64u-height)/2u;
+    psl_font_clear(frame,left,top,width,height);
+    psl_font_box(frame,left,top,width,height);
+    for(unsigned i=0;i<count;++i) {
+        unsigned y=top+3u+7u*i;
+        ((void (*)(uint32_t,void *,int,int,int,const char *))0x40012bd8u)
+            (0x400ba876u,surface,(int)left+3,59-(int)y,-1,rows[i]);
+        if(i==cursor)psl_font_invert(frame,left+2u,y-1u,width-4u,7u);
+    }
+}
 unsigned psl_native_transport(void)
 {
     for(unsigned i=0;i<16;++i)if(U8(0x80004f1eu+i*84u))return 2;

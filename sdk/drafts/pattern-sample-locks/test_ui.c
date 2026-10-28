@@ -6,8 +6,10 @@
 #include <string.h>
 static uint8_t record[8][PSL_TRACK_BYTES];
 static unsigned native_cursor,popup=1,context_ok=1,commits,redraws;
+static unsigned native_menu_draws;
 static unsigned last_include,last_counts[8];
 static unsigned available=0xa5,transport,stop_requests,stop_safe=1;
+static int commit_result=PSL_INVALID;
 unsigned psl_native_transport(void){return transport;}
 int psl_native_stop(void){++stop_requests;return (int)stop_safe;}
 static uint32_t bank=0x400e21e0;
@@ -23,9 +25,16 @@ unsigned psl_native_cursor(void){return native_cursor;}
 void psl_native_set_cursor(unsigned row){assert(row<4);native_cursor=row;}
 void psl_native_close_popup(void){popup=0;}
 void psl_native_redraw(void){++redraws;}
+void psl_native_part_menu_draw(unsigned char *frame,unsigned count,unsigned cursor,const char *const *rows)
+{
+    assert(frame && count==6 && cursor<count);
+    assert(!strcmp(rows[0],"RENAME") && !strcmp(rows[3],"SAVE ALL"));
+    assert(!strcmp(rows[4],"LOCK SAMPLES TO PATTERN") && !strcmp(rows[5],"CLEAR SAMPLE LOCKS"));
+    ++native_menu_draws;
+}
 int psl_native_commit(struct psl_plan *p){assert(p->ready);last_include=p->replace;
 for(unsigned t=0;t<8;++t){last_counts[t]=0;if(p->selected&(1u<<t))for(unsigned step=0;step<64;++step)last_counts[t]+=p->before[t][step]!=p->after[t][step];}
-++commits;return PSL_INVALID;}
+++commits;return commit_result;}
 static int tap(int code){int answer=module_key(code,1);assert(module_key(code,0)==answer);return answer;}
 static void open_action(unsigned clear)
 {
@@ -51,6 +60,7 @@ int main(void)
     struct modwerk_runtime_api api={0};
     psl_ui_open();
     uint8_t menu_frame[1024]={0};module_draw(menu_frame);
+    assert(native_menu_draws==1); /* level one delegates to the stock-font adapter */
     /* Level 1 has no title bar; its first item starts below this plain band. */
     for(unsigned x=7;x<121;++x)assert(!(menu_frame[x*8+7]&(1u<<4)));
     assert(!tap(0x31) && !psl_ui_phase()); /* native RENAME */
@@ -107,6 +117,24 @@ int main(void)
     transport=0;open_action(0);module_enc(0,1);tap(0x31);transport=1;tap(0x31);
     for(unsigned i=0;i<120;++i)module_tick(&api);
     assert(psl_ui_phase()==4 && commits==previous+1);tap(0x32);transport=0;
+    /* Successful Apply closes directly, including an unchanged pattern. No
+     * acknowledgement press or leftover drawing may intercept stock UI. */
+    commit_result=PSL_OK;
+    for(unsigned clear=0;clear<2;++clear) {
+        previous=commits;open_action(clear);module_enc(0,1);tap(0x31);tap(0x31);
+        assert(!psl_ui_phase() && commits==previous+1 && !popup);
+        uint8_t closed[1024],expected[1024];memset(closed,0x5a,sizeof closed);memcpy(expected,closed,sizeof closed);
+        module_draw(closed);assert(!memcmp(closed,expected,sizeof closed));
+        assert(!tap(0x31) && commits==previous+1);
+    }
+    available=0x20;open_action(1);module_enc(0,1);tap(0x31);tap(0x31);
+    assert(!psl_ui_phase() && last_counts[5]==0);
+    available=0xa5;previous=commits;
+    open_action(0);module_enc(0,1);tap(0x31);transport=1;tap(0x31);
+    assert(psl_ui_phase()==5 && commits==previous);
+    transport=0;module_tick(&api);assert(!psl_ui_phase() && commits==previous+1);
+    commit_result=PSL_STALE;open_action(0);module_enc(0,1);tap(0x31);tap(0x31);
+    assert(psl_ui_phase()==4);bounds();tap(0x32);
     assert(redraws>0);
     puts("PASS popup UI: native pass-through, eligible-only selection, explicit confirmation, cancellation, changed context, foreign popup and framebuffer bounds");
 }

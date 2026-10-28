@@ -93,7 +93,8 @@ static void choose(void)
 static void finish_action(void)
 {
     int result=psl_native_commit(&plan);
-    message=result==PSL_OK?"DONE - PROJECT NOT SAVED":result==PSL_STALE?"SOURCE CHANGED - REOPEN":"REFUSED - NO CHANGES";
+    if(result==PSL_OK){close_view();return;}
+    message=result==PSL_STALE?"SOURCE CHANGED - REOPEN":"REFUSED - NO CHANGES";
     plan.ready=0;phase=RESULT;psl_native_redraw();
 }
 void module_tick(struct modwerk_runtime_api *api)
@@ -198,18 +199,12 @@ static void dim(unsigned char *frame,unsigned x,unsigned y,unsigned w,unsigned h
 void module_draw(unsigned char *frame)
 {
     if(!phase || !frame)return;
+    if(phase==PART_MENU) {
+        psl_native_part_menu_draw(frame,6u,cursor,part_rows);return;
+    }
     unsigned expanded=phase==TRACKS || phase==CONFIRM;
     unsigned top=expanded?0u:3u,height=expanded?64u:58u;
     psl_font_clear(frame,6,top,116,height);
-    if(phase==PART_MENU) {
-        /* Stock Part Edit is a plain list. Retain its four rows, append the
-         * two actions, and use the former title space to show all six. */
-        for(unsigned i=0;i<6u;++i) {
-            psl_font_small_text(frame,10,top+5u+i*8u,part_rows[i]);
-            if(i==cursor)psl_font_invert(frame,8,top+4u+i*8u,112,7);
-        }
-        psl_font_box(frame,6,3,116,58);return;
-    }
     const char *title=action==PSL_LOCK?"LOCK SAMPLES TO PATTERN":"CLEAR SAMPLE LOCKS";
     /* Every text baseline uses the same eight-pixel row grid. */
     psl_font_small_text(frame,10,top+2u,title);
