@@ -40,7 +40,7 @@ Read this before you plan a core, a base or the first modules for any machine ot
 | Digitakt II | research | digitakt2-perform 1.0 | not started | none known | a base from the core source |
 | Syntakt | research | Modwerk boot probe | not started | none known | the core stage, planned as the base |
 | Digitone II, Analog Keys, Model:Cycles | research | none | not started | none known | the machine steps first ([add a machine](ADD_A_MACHINE.md)) |
-| Zoom MultiStomp | research | MIDISTOMP | the base builds in the browser; flashing it, a SysEx hello and loading without a reboot are not built | none | [plan](ZOOM_MULTISTOMP.md#the-base-midistomp) |
+| Zoom MultiStomp | research | MIDISTOMP | the base builds in the browser; flashing it, a SysEx hello and loading without a reboot are not built | none | [plan](ZOOM_MULTISTOMP.md#plan) |
 | LXR-02 | research | published source | planned: SD-card base, USB-MIDI SysEx link | none | [plan](LXR_02.md) |
 | Tonverk | research | none | closed: signed, encrypted updates | none | nothing without Elektron's agreement |
 
