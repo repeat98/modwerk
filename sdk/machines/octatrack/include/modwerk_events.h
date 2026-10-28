@@ -181,4 +181,13 @@ typedef unsigned modwerk_ev_trig_muted(void);
 #define MODWERK_OT_SAMPLE_EDITOR_ACTIONS 36
 #include "modwerk_sample_editor.h"
 
+/* ot_personalize_rows (table, contribute {"to": "ot_personalize_rows", "order", "data"}): PROJECT > SYSTEM > PERSONALIZE lists stock's rows, then one per contributed row, then LED BRIGHTNESS on an MKII. The UI task. Contribute one struct modwerk_personalize_rows: its rows, in order. The window shows stock's fifteen rows, up to eight contributed rows, then stock's LED BRIGHTNESS where the unit has it (MKII); the getter and setter follow stock's rows' convention (LED BRIGHTNESS's 0x40068c80 and 0x4006907c). A row keeps its own setting: the window's position of a row is not stable and never names it. */
+#define MODWERK_OT_PERSONALIZE_ROWS 37
+struct modwerk_personalize_row {
+    const char *label;                  /* its row's label */
+    const void *get;                    /* as stock's rows: returns the value's string in d0; 0 shows no value */
+    const void *set;                    /* as stock's rows: (delta, wrap) on the stack */
+};
+struct modwerk_personalize_rows { uint32_t count; struct modwerk_personalize_row row[]; };
+
 #endif

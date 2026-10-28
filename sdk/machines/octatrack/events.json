@@ -1839,6 +1839,80 @@
      "what": "actual command-16 display dispatch confirms a possible read-only job; source access stays closed until idle and complete metadata revalidation"
     }
    ]
+  },
+  {
+   "event": "ot_personalize_rows",
+   "index": 37,
+   "kind": "table",
+   "site": null,
+   "length": 0,
+   "record": 4,
+   "key": null,
+   "room": 8,
+   "declaration": "struct modwerk_personalize_row {\n    const char *label;                  /* its row's label */\n    const void *get;                    /* as stock's rows: returns the value's string in d0; 0 shows no value */\n    const void *set;                    /* as stock's rows: (delta, wrap) on the stack */\n};\nstruct modwerk_personalize_rows { uint32_t count; struct modwerk_personalize_row row[]; };",
+   "when": "PROJECT > SYSTEM > PERSONALIZE lists stock's rows, then one per contributed row, then LED BRIGHTNESS on an MKII",
+   "context": "the UI task",
+   "contract": "Contribute one struct modwerk_personalize_rows: its rows, in order. The window shows stock's fifteen rows, up to eight contributed rows, then stock's LED BRIGHTNESS where the unit has it (MKII); the getter and setter follow stock's rows' convention (LED BRIGHTNESS's 0x40068c80 and 0x4006907c). A row keeps its own setting: the window's position of a row is not stable and never names it.",
+   "order": "lower first, then module id: the rows' order. 50 Mute Modes; others 40-90.",
+   "subscribers": [
+    {
+     "module": "mute-modes",
+     "fn": "mw_personalize_rows",
+     "order": 50,
+     "does": "MUTE MODE",
+     "evidence": "sdk/octabam/modules/mute-modes/patch_mutemode.s lbl_mutemode, get_mutemode, set_mutemode"
+    }
+   ],
+   "orderEvidence": "One row per contribution today; the order only decides where several modules' rows appear.",
+   "sites": [
+    {
+     "site": "0x40068efe",
+     "length": 4,
+     "guard": "c77b20dd83b0ee0156d4532bffabd595acc6ad02e338be1a5cc23d51644ae13d",
+     "op": "ptr",
+     "target": "mw_pers_labels",
+     "what": "PERSONALIZE labels (the renderer)"
+    },
+    {
+     "site": "0x40068f0a",
+     "length": 4,
+     "guard": "a57b44b8b104dff5581b02dfecf83275ecc94d5687b6dabf81c0d6369f13b77a",
+     "op": "ptr",
+     "target": "mw_pers_getters",
+     "what": "PERSONALIZE getters (the renderer)"
+    },
+    {
+     "site": "0x40068fb2",
+     "length": 2,
+     "guard": "5dd82fd23ac20130aebe3391a4c9a9fda6ca01bd143223a558ec253b65083dfd",
+     "op": "own",
+     "what": "PERSONALIZE rows: moveq #15+n (stock adds LED BRIGHTNESS on an MKII)"
+    },
+    {
+     "site": "0x40069022",
+     "length": 4,
+     "guard": "f166ec09f06b1cded632207a3eea74b392f6239f04762d010058765b239f785b",
+     "op": "ptr",
+     "target": "mw_pers_setters",
+     "what": "PERSONALIZE setters (the key handler)"
+    },
+    {
+     "site": "0x4006903e",
+     "length": 4,
+     "guard": "f166ec09f06b1cded632207a3eea74b392f6239f04762d010058765b239f785b",
+     "op": "ptr",
+     "target": "mw_pers_setters",
+     "what": "PERSONALIZE setters (the key handler)"
+    },
+    {
+     "site": "0x40069056",
+     "length": 4,
+     "guard": "f166ec09f06b1cded632207a3eea74b392f6239f04762d010058765b239f785b",
+     "op": "ptr",
+     "target": "mw_pers_setters",
+     "what": "PERSONALIZE setters (the key handler)"
+    }
+   ]
   }
  ]
 }
