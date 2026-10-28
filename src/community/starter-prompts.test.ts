@@ -62,6 +62,7 @@ describe('starter prompts', () => {
         // The prompt carries the order of work; the rules live in files every agent reads.
         expect(prompt.length, machine.id + ' ' + task).toBeLessThan(6000)
       }
+      for (const starter of startersFor(machine.id)) expect(starterPrompt(machine.id, starter).length, machine.id + ' ' + starter.id).toBeLessThan(6000)
     }
   })
 
@@ -129,6 +130,20 @@ describe('starter prompts', () => {
       expect(prompt).not.toMatch(/Jannik|Assfalg/i)
     }
     expect(starterPrompt('octatrack', startersFor('octatrack')[0])).toContain('git clone https://github.com/<your-github-login>/modwerk.git')
+  })
+
+  it('gives the Rytm and the Four their own starters: the digital path, no SRC machine slot, and the machine’s stack section first', () => {
+    for (const machine of ['analog-rytm-mkii', 'analog-four-mkii'] as const) {
+      const starters = startersFor(machine)
+      expect(starters.map(starter => starter.id)).not.toContain('machine')
+      const prompt = starterPrompt(machine, starters[0])
+      expect(prompt).toContain('digital path only')
+      expect(prompt).not.toContain('core_machines, slots 4–7')
+      expect(prompt).not.toContain('fast SRAM')
+      expect(prompt).toContain('- sdk/machines/' + machine + '/README.md (its Modwerk stack section first)')
+    }
+    expect(starterPrompt('digitakt', startersFor('digitakt')[0])).toContain('- sdk/machines/digitakt/README.md (its Modwerk stack section first)')
+    expect(starterPrompt('octatrack', startersFor('octatrack')[0])).not.toContain('Modwerk stack section')
   })
 
   it('keeps author verification and live-download checks in the update prompt', () => {

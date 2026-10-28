@@ -4,6 +4,10 @@
 
 The Analog Four MKII runs on the Analog Rytm MKII's platform, a ColdFire MCF5441x: its OS entry, bootstrap loader and UI loop are the Rytm's, instruction for instruction apart from addresses. Its core is elekloader's core-a4, which builds the Digitakt mk1's `core.s`, `settings.s` and `render.s` with the A4's addresses as core-ar2 does for the Rytm, and adds mod storage and parameter pages. The core hooks the shared sites and calls every subscribed mod's handler, in order, from tables the linker builds, so any set of mods that fits the budgets combines. Every hook below has run on a unit. Modwerk's linker has an A4 profile (`src/engine/elektron/elemod.ts`): on the owner's stock 1.56 file it links core-a4 0.2 alone, with each of elekloader's five A4 examples and with three of them together to the same main OS image and storage lockfile as `elekloader.patch`. There is no library module yet, and the browser builds nothing for the A4 until one exists.
 
+## Modwerk stack
+
+Today the core is elekloader's core-a4 0.2, and nothing builds for the A4 yet. It is to get the Octatrack's stack ([recipe](../../../docs/MACHINE_RECIPE.md)). It shares the Rytm's platform, so its base is planned as the Rytm's Modwerk base built with the A4's addresses, as core-a4 is core-ar2 built with them, not as a second design. None of it is started.
+
 ## Create a mod
 
 ```sh

@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
   "machine": "analog-rytm-mkii",
-  "interface": "0.3",
-  "status": "Upstream elekloader core-ar2 0.3 for Analog Rytm MKII OS 1.74 (the core-ar2-v0.3 pre-release): the Digitakt mk1 core with the Rytm's addresses, plus mod storage. 0.3 is for OS 1.74 only.",
+  "interface": "0.7",
+  "status": "Upstream elekloader core-ar2 0.7 for Analog Rytm MKII OS 1.74 (the core-ar2-v0.7 pre-release): the Digitakt mk1 core with the Rytm's addresses, mod storage (0.3), parameter pages and the page keys' lists (0.4), mod machines (0.5), page functions (0.6), and write-through and the OS upgrade's restart (0.7). OS 1.74 only. Mods built for 0.3 that patch a parameter page's entry or a page key's list themselves (rytm2_mods v1.2's lfo-rnd, voice-dac, euclid-accents, velocity-humanise and comp-preview 1.0) overlap core's page sites and are refused at link; their 0.4 versions contribute entries instead.",
   "events": [
     {
       "name": "ev_tick",
@@ -45,7 +45,33 @@
       "handler": "void f(int how, unsigned dropped); dropped flags the global, track, pattern and project scopes that loaded as zeros; keep it short, and start no load or save from it"
     }
   ],
-  "tables": [],
+  "tables": [
+    {
+      "name": "core_pages",
+      "entry": 4,
+      "purpose": "Pointers to struct core_page {page, name, ids[8]} (analog-rytm-mk2/pages.h): a mod's own parameter page, or a stock page's entry answered again (0.4)."
+    },
+    {
+      "name": "core_params",
+      "entry": 4,
+      "purpose": "Pointers to struct core_param {first, last, get, delta, text}: how a range of parameter ids reads, turns and prints; asked in order, the first that answers wins, then stock (0.4)."
+    },
+    {
+      "name": "core_view_pages",
+      "entry": 4,
+      "purpose": "Pointers to struct core_view_page {view, page, shown}: a page added to a stock page key's list (CORE_VIEW_*), after stock's pages; the key steps over it while shown answers 0 (0.4)."
+    },
+    {
+      "name": "core_page_fns",
+      "entry": 4,
+      "purpose": "Pointers to struct core_page_fn {page, info}: a page's own info function, asked before core_pages and stock; 0 passes (0.6)."
+    },
+    {
+      "name": "core_machines",
+      "entry": 4,
+      "purpose": "Pointers to struct core_machine {slot, engine, home, voices, name, label, knobs[8]} (analog-rytm-mk2/machines.h): a mod's machine in a hidden machine slot, 34 to 43 (0.5)."
+    }
+  ],
   "exports": [
     {
       "name": "core_additem",
@@ -61,6 +87,11 @@
       "name": "core_store_set",
       "prototype": "void core_store_set(unsigned field, void *item, int index, unsigned value)",
       "purpose": "Write a mod storage field; interrupts are masked while it writes."
+    },
+    {
+      "name": "core_audio_load",
+      "prototype": "extern volatile uint32_t core_audio_load",
+      "purpose": "The audio block's load, 0-255 of a block, as core measures it (analog-rytm-mk2/load.h, 0.4)."
     }
   ],
   "claims": [
