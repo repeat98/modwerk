@@ -3272,6 +3272,8 @@ Notice source: vendor/elekloader/kit/NOTICE
 Notice source: vendor/elekloader/kit/LICENSE
 Notice source: https://github.com/irpina/elekloader/tree/3b31ef3c0e43c810e3acd0be6257e2484b20fc40/js
 
+Modwerk ships this kit with src/codec/aplib.ts, src/codec/elz.ts, src/codec/transport.ts, src/isa/coldfire.ts replaced by Modwerk's own implementation (vendor/elekloader/README.md).
+
 elekloader
 Copyright (C) 2026 irpina and contributors
 
@@ -3284,18 +3286,6 @@ elekloader is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
 FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
 more details.
-
-Code from other projects
-------------------------
-These files come from digikit (https://github.com/m-dwyer/digikit),
-under the GNU GPL version 2 or (at your option) any later version. Each file names its origin in its header.
-
-  elekloader/codec/elz.py        dt2/elz.py, by Em D
-  elekloader/codec/aplib.py      dt2/aplib.py, by Em D; the match-finder and
-                                 compressed output by irpina
-  elekloader/codec/transport.py  the transport encoders and checksums from
-                                 dt2/build.py, by Em D; changes by irpina
-  elekloader/isa/coldfire.py     emu/cfisa.py, by irpina
 
 The TypeScript engine
 ---------------------

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { sha } from '../../../vendor/elekloader/kit/src/bytes.ts'
-import { packSection } from '../../../vendor/elekloader/kit/src/codec/aplib.ts'
-import { depackSection } from '../../../vendor/elekloader/kit/src/codec/elz.ts'
+import { packSection } from '../elektron/codec/pack.ts'
+import { depackSection } from '../elektron/codec/depack.ts'
 import { packRun } from './run-pack.ts'
 
 const load = 0x40000400, runLoad = 0x40000500, start = 0x40a955e0

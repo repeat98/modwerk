@@ -88,8 +88,8 @@ export const CREDIT_SECTIONS: readonly CreditSection[] = [
       },
       {
         name: 'digikit', author: 'Em D (@m-dwyer) and contributors',
-        description: 'Elektron firmware research, memory maps and tools. Its codecs and transport encoders are credited in the elekloader builder used here.',
-        links: [repo('m-dwyer/digikit')],
+        description: 'Elektron firmware research, memory maps and tools.',
+        links: [repo('ElekLabs/digikit')],
       },
     ],
   },
