@@ -43,7 +43,7 @@ const QUICK_TESTS: Record<string, { version: string; steps: Step[] }> = {
     { title: 'Enlarge the signal.', text: 'Press YES for fullscreen. Change a track’s level on its usual page and compare the plot.' },
     { title: 'Close the view.', text: 'Press NO and stop playback. Outside the utility, a short SONG press opens the normal popup.' },
   ] },
-  vector: { version: '0.2.4-experimental', steps: [
+  vector: { version: '0.2.5-experimental', steps: [
     { title: 'Choose VECTOR.', text: 'Select an audio track, double-tap SRC, choose VECTOR and press YES.' },
     { title: 'Assign a sample.', text: 'Choose STATIC or FLEX with UP/DOWN or LEVEL, then press RIGHT. Select a loaded, tuned sample and press YES to assign it.' },
     { title: 'Shape a phrase.', text: 'Press SRC. Change TYPE, DENS or ROOT to generate a phrase; each edit commits immediately, even during playback.' },

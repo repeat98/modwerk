@@ -198,7 +198,8 @@
     "label": "VECTOR",
     "flags": [
      "POOL",
-     "BACKING"
+     "BACKING",
+     "SETUP_PAGE"
     ],
     "fields": {
      "assign": "st_assign",
@@ -208,7 +209,9 @@
      "pool_left": "st_pool_left",
      "choice_left": "st_pool_choice_left",
      "list_draw": "st_list_draw",
-     "validate": "vector_validate_part"
+     "validate": "vector_validate_part",
+     "setup_page": "st_setup_page",
+     "setup_knob": "st_setup_knob"
     }
    },
    "dropCopies": [
@@ -217,7 +220,7 @@
     "st_edit_replay",
     "st_draw_replay"
    ],
-   "why": "VECTOR's st_* chooser hooks and their stock replays are unreachable in the package; its registry functions are the descriptor's"
+   "why": "VECTOR's st_* chooser hooks and their stock replays are unreachable in the package; its registry functions are the descriptor's, and its SRC SETUP page 2 (st_setup_page, st_setup_knob, which its card build's st_setup_draw6 and st_setup_edit6 call) the SETUP_PAGE record's"
   },
   "synth": {
    "sources": {
