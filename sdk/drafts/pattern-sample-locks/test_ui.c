@@ -10,12 +10,11 @@ static unsigned last_include,last_counts[8];
 static unsigned available=0xa5,transport,stop_requests,stop_safe=1;
 unsigned psl_native_transport(void){return transport;}
 int psl_native_stop(void){++stop_requests;return (int)stop_safe;}
-void psl_native_observe_key(int code,int pressed){(void)code;(void)pressed;}
 static uint32_t bank=0x400e21e0;
 int psl_native_source(struct psl_source *s)
 {
-    s->bank=bank;s->part=0;s->pattern=0;s->eligible=(uint8_t)available;s->ownership_epoch=0;
-    for(unsigned t=0;t<8;++t){s->machine[t]=(uint8_t)(t&1);s->sample[t]=12;s->track[t]=record[t];s->owned[t]=0;}
+    s->bank=bank;s->part=0;s->pattern=0;s->eligible=(uint8_t)available;
+    for(unsigned t=0;t<8;++t){s->machine[t]=(uint8_t)(t&1);s->sample[t]=12;s->track[t]=record[t];}
     return 1;
 }
 int psl_native_context(uint32_t b,unsigned p,unsigned part){return context_ok && b==bank && p==0 && part==0;}
@@ -81,8 +80,10 @@ int main(void)
     module_enc(0,1);module_tick(&api);assert(((api.value>>16)&255)==0xa0); /* confirmation inert */
     tap(0x32);assert(psl_ui_phase()==2 && !commits);
     tap(0x31);tap(0x31);assert(psl_ui_phase()==4 && commits==1);assert(last_counts[5]==6 && last_counts[7]==8 && last_counts[2]==0);bounds();tap(0x32);
-    open_action(1);module_enc(0,1);tap(0x31);tap(0x31);assert(last_include==0);tap(0x32);
-    open_action(1);module_enc(0,1);module_enc(2,-1);tap(0x31);tap(0x31);assert(last_include==1);tap(0x32);
+    record[0][PSL_LOCK_OFFSET]=33;record[2][PSL_LOCK_OFFSET+63*32]=12;
+    open_action(1);module_enc(0,1);tap(0x31);tap(0x31);
+    assert(last_include==0 && last_counts[0]==1 && last_counts[2]==1);tap(0x32);
+    open_action(1);module_enc(0,1);module_enc(2,-1);module_enc(2,1);tap(0x31);tap(0x31);assert(last_include==0 && last_counts[0]==1 && last_counts[2]==1);tap(0x32);
     open_action(1);module_enc(0,1);tap(0x31);tap(0x31);assert(last_include==0);tap(0x32);
     open_action(1);module_enc(0,1);tap(0x31);assert(psl_ui_phase()==3);
     tap(0x32);assert(psl_ui_phase()==2);tap(0x32);assert(!psl_ui_phase());

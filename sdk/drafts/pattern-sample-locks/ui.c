@@ -20,7 +20,6 @@ static const char *const part_rows[] = {"RENAME", "RELOAD", "SAVE", "SAVE ALL",
     "LOCK SAMPLES TO PATTERN", "CLEAR SAMPLE LOCKS"};
 static void close_view(void)
 { phase=CLOSED; plan.ready=0; encoder_residual=0; psl_native_redraw(); }
-void psl_ui_retire(void){phase=CLOSED;plan.ready=0;selected=0;consumed[0]=consumed[1]=0;}
 unsigned psl_ui_phase(void) { return phase; }
 void psl_ui_open(void)
 {
@@ -84,9 +83,8 @@ static void choose(void)
             else {
                 captured.bank=now.bank;captured.pattern=now.pattern;captured.part=now.part;captured.eligible=now.eligible;
                 for(unsigned t=0;t<8;++t) {
-                    captured.machine[t]=now.machine[t];captured.sample[t]=now.sample[t];captured.track[t]=now.track[t];captured.owned[t]=now.owned[t];
+                    captured.machine[t]=now.machine[t];captured.sample[t]=now.sample[t];captured.track[t]=now.track[t];
                 }
-                captured.ownership_epoch=now.ownership_epoch;
                 phase=CONFIRM;message=0;
             }
         }
@@ -95,7 +93,7 @@ static void choose(void)
 static void finish_action(void)
 {
     int result=psl_native_commit(&plan);
-    message=result==PSL_OK?"DONE - PROJECT NOT SAVED":result==PSL_STALE?"SOURCE CHANGED - REOPEN":result==PSL_FULL?"OWNERSHIP STORE FULL":"REFUSED - NO CHANGES";
+    message=result==PSL_OK?"DONE - PROJECT NOT SAVED":result==PSL_STALE?"SOURCE CHANGED - REOPEN":"REFUSED - NO CHANGES";
     plan.ready=0;phase=RESULT;psl_native_redraw();
 }
 void module_tick(struct modwerk_runtime_api *api)
@@ -119,7 +117,6 @@ int module_key(int code,int pressed)
     unsigned group=(unsigned)code/32u;uint32_t bit=1u<<((unsigned)code%32u);
     if(!pressed){if(!(consumed[group]&bit))return 0;consumed[group]&=~bit;return 1;}
     if(consumed[group]&bit)return 1;
-    if(phase!=STOPPING)psl_native_observe_key(code,pressed);
     if(!phase)return 0;
     if(phase==STOPPING) {
         if(code==0x27)return 0; /* Let the native STOP report reach stock. */
@@ -157,7 +154,7 @@ int module_enc(int encoder,int delta)
         if(delta && encoder==1 && (eligible&(1u<<cursor))) {
             if(delta>0)selected|=1u<<cursor;else selected&=~(1u<<cursor);
         }
-        if(delta && encoder==2)replace=action==PSL_CLEAR?(delta<0):(delta>0);
+        if(delta && encoder==2 && action==PSL_LOCK)replace=delta>0;
         message=0;psl_native_redraw();return 1;
     }
     if(phase!=PART_MENU || encoder!=6)return 1;
@@ -233,10 +230,10 @@ void module_draw(unsigned char *frame)
         else if(phase==TRACKS && cursor==t)psl_font_invert(frame,x-2u,y-1u,50,7);
     }
     if(phase==CONFIRM) {
-        psl_font_small_text(frame,10,50,action==PSL_CLEAR?(replace?"INCLUDES MANUAL LOCKS":"MANUAL LOCKS: KEEP"):replace?"REPLACE EXISTING: YES":"EXISTING LOCKS: KEEP");
+        psl_font_small_text(frame,10,50,action==PSL_CLEAR?"INCLUDES MANUAL LOCKS":replace?"REPLACE EXISTING: YES":"EXISTING LOCKS: KEEP");
         psl_font_small_text(frame,10,58,"YES:APPLY NO:BACK");
     } else {
-        psl_font_small_text(frame,10,42,message?message:action==PSL_CLEAR?(replace?"C:RETAIN MANUAL OFF":"C:RETAIN MANUAL ON"):replace?"C:REPLACE EXISTING ON":"C:REPLACE EXISTING OFF");
+        psl_font_small_text(frame,10,42,message?message:action==PSL_CLEAR?"ALL SAMPLE LOCKS":replace?"C:REPLACE EXISTING ON":"C:REPLACE EXISTING OFF");
         psl_font_small_text(frame,10,50,"A:ALL B:TRACK");
         psl_font_small_text(frame,10,58,"YES:NEXT NO:CLOSE");
     }

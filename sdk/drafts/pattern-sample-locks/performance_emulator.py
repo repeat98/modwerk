@@ -17,7 +17,7 @@ def exercise(port,run,tap,key,encoder,capture,out,reboot):
     assert not reboot
     exact=port.profile_symbols
     assert exact and exact['packageSha256']
-    base=int.from_bytes(port.peek(0x40040ee2,4),'big')-exact['psl_manual_sample']
+    base=int.from_bytes(port.peek(0x4002dc6a,4),'big')-exact['psl_open']
     symbols=port.base_symbols
     def u32(at):return int.from_bytes(port.peek(at,4),'big')
     def meter():

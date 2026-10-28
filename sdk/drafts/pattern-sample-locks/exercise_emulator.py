@@ -1,101 +1,89 @@
 # SPDX-License-Identifier: MIT
-"""Native editing checks for capture_emulator --exercise, on disposable media.
+"""Native simplified edits on disposable emulator RAM/card copies.
 
-The single stock SAMPLE writer call is a labelled test injection with an injected held-step
-mask; edits/selection/confirmation/transport use panel input.
-Memory snapshots stay private and are never submitted as module artifacts.
+Manual SAMPLE writes use the unchanged native writer with a labelled held-step
+fixture. Utility selection, confirmation and STOP use actual panel reports.
 """
-from pathlib import Path
 import hashlib
-import shutil
+import stress_emulator as fixture
+
+STOCK_SITES=(
+ (0x40040ee0,'14607b32e7a5a2eae6fcb2e63e1770b2f2387c64c63e6289faf0eb8e75f9aa40'),
+ (0x4002c89c,'507353099d0165038c68974b2f57dbdec61e24a2758e47418233ccbcb59b8d96'),
+ (0x4002b65c,'ad0bb7f528727c8a2e3fde76c7f1aa5b2bd895933e1e818f75f3f0cd16ddee28'),
+ (0x4002b9b0,'efa23c0a55aebcd8ffb29c8ba97d3970d8e88ed9c16272d7b5ea0b4e8309ecf5'),
+ (0x4002b3b4,'efa23c0a55aebcd8ffb29c8ba97d3970d8e88ed9c16272d7b5ea0b4e8309ecf5'),
+ (0x40039df4,'0c6d3f0bfd198ddc78800e6503eccdc6cbc5c442209d882244584eda864e93ca'),
+ (0x400905d4,'604756f90fe2564cd1c75b712a1c239b10ef2db438579e307632b3382bacd165'),
+ (0x4008ded0,'f7fddeefeac300af619b7028a954dc595076d9d098da7090973c1cbc1f649ec0'),
+)
+
+def unchanged_writers(port):
+    for at,digest in STOCK_SITES:
+        assert hashlib.sha256(port.peek(at,8)).hexdigest()==digest, 'native writer unexpectedly patched'
 
 def exercise(port,run,tap,key,encoder,capture,out,reboot):
-    def read(address,n):
-        return b''.join(port.peek(address+at,min(4096,n-at)) for at in range(0,n,4096))
-    def u32(address):return int.from_bytes(port.peek(address,4),'big')
-    def tracks():return read(u32(0x46c82456)+port.peek(0x100b14d0,1)[0]*0x8ed8,8*0x91a)
+    assert not reboot,'use independent stock-load verification for saved projects'
+    def read(at,n):return fixture.read(port,at,n)
+    def u32(at):return fixture.u32(port,at)
     def samples(blob):return [blob[0x78+32*i] for i in range(64)]
-    def menu(clear):
-        port.command('key 0x25 32');run(80);tap(0x23,32);port.command('key 0x25 0');run(80)
-        # The stock remembered cursor can be any of its four rows.
-        for _ in range(6):key('UP')
-        for _ in range(4+clear):key('DOWN')
-        key('YES');encoder(0,4);key('YES')
+    def tracks():return read(u32(0x46c82456),8*0x91a)
+    def menu(clear,replace=False):
+        port.command('key 0x25 32');run(80);tap(0x23,32)
+        port.command('key 0x25 0');run(80)
+        encoder(6,-24);encoder(6,20 if clear else 16);key('YES')
+        encoder(0,-4);encoder(1,4) # T1 only
+        if replace:encoder(2,4)
+        key('YES')
     def manual(slot,step):
-        # Labelled fixture injection: the native writer gets a held-step
-        # mask without pressing/removing an existing GRID REC trig. This also
-        # exercises the module's same-value invalidation wrapper.
-        assert port.peek(0x100b14cc,1)==b'\0', 'fixture is not on T1'
-        port.command('poke 0x460d174a '+(1<<step).to_bytes(2,'big').hex())
-        for _ in range(200):
-            try:port.command(f'call 0x40040ee0 {slot}');break
-            except RuntimeError as error:
-                # Explicit preflight refusal: nothing was called. Never retry
-                # an entered writer that failed or exceeded its call budget.
-                if "not main's spin" not in str(error):raise
-                run(1)
-        else:raise RuntimeError('Emulator never reached idle for fixture writer')
-        port.command('poke 0x460d174a 0000');run(80)
-    checks={}
-    base_map=read(0x100fe000,0x1800);base_log_tag=port.peek(0x100fc000,4)
-    tap(0x22,1) # T1
-    if not reboot:
-        # Normal GRID REC gestures create two sample trigs.
-        tap(0x25,2);tap(0x20,1);tap(0x20,2)
-        assert port.peek(u32(0x46c82456)+7,1)[0]&3==3,'fixture has no two sample trigs'
-        manual(1,0)
-        assert samples(tracks())[:2]==[1,255]
-        # Exit GRID REC before the utility/transport test.
-        tap(0x25,2)
-        before=tracks();tap(0x25,1) # PLAY code 0x28
-        assert u32(0x800065b8)!=0,'PLAY did not start'
-        menu(False);capture('native-lock-confirm.png');key('YES');run(300)
-        capture('native-lock-result.png')
-        after=tracks();assert u32(0x800065b8)==0,'operation did not stop playback'
-        assert samples(after)[:2]==[1,0],f'native Lock refused or damaged locks: {samples(after)[:2]}'
-        allowed={0x78+32};assert all(a==b or i in allowed for i,(a,b) in enumerate(zip(before,after))), 'unrelated track bytes changed'
-        mirror=read(0x1001614e,8*0x91a);assert mirror==after,'battery mirror mismatch'
-        checks.update(stopBeforeEdit=True,manualLockPreserved=True,nativeLockWritten=True,unrelatedAudioBytesPreserved=True,batteryMirrorMatches=True)
-        key('NO');menu(True);capture('native-clear-owned-confirm.png');key('NO');key('NO')
-        if hasattr(port,'install_companion'):
-            port.install_companion();run(1500)
-            menu(True);capture('companion-owned-confirm.png');key('NO');key('NO')
-            # The owned bitmap must remain valid after another owner changes.
-            nv=read(0x100f9000,0x3000)
-            assert nv[0:8]==b'PSLOWN\x03\x00'
-            checks['unrelatedCompanionInstalled']=True
-        # Save exact pre-manual state for a new-process, battery-backed boot.
-        snapshot=read(0x10000000,0x100000);(out/'powercycle.private.cs1').write_bytes(snapshot)
-        checks['cs1Sha256']=hashlib.sha256(snapshot).hexdigest()
-        flush=port.command('card flush',b'card ');assert 'rw=1' in flush and 'errors=0' in flush
-        shutil.copyfile(out/'card.private.img',out/'powercycle.private.card.img')
-        checks['savedCardSha256']=hashlib.sha256((out/'powercycle.private.card.img').read_bytes()).hexdigest()
-        # Same-value manual overwrite must retire ownership even though the
-        # SAMPLE byte itself does not change.
-        tap(0x25,2);manual(0,1);tap(0x25,2)
-        menu(True);capture('native-same-value-confirm.png');key('YES');run(160)
-        assert samples(tracks())[:2]==[1,0],'same-value manual lock was cleared'
-        checks['sameValueManualLockRetained']=True
-        key('NO')
-    else:
-        before=tracks();assert samples(before)[:2]==[1,0],'native locks did not survive fresh boot'
-        tap(0x25,1);assert u32(0x800065b8)!=0
-        menu(True);capture('reboot-clear-confirm.png');key('YES');run(300)
-        capture('reboot-clear-result.png')
-        after=tracks();assert samples(after)[:2]==[1,255],f'ownership not recovered after fresh boot: {samples(after)[:2]}'
-        assert u32(0x800065b8)==0
-        allowed={0x78+32};assert all(a==b or i in allowed for i,(a,b) in enumerate(zip(before,after)))
-        checks.update(freshBootNativeLocksPresent=True,freshBootOwnedLockCleared=True,freshBootManualLockRetained=True,playbackLeftStopped=True,unrelatedAudioBytesPreserved=True)
-        key('NO')
-        # Default clear is idempotent. Explicitly disabling Retain clears the
-        # remaining manual lock, through level-two encoder C.
-        menu(True);key('NO');encoder(2,-4);key('YES');capture('reboot-include-manual-confirm.png');key('YES');run(200)
-        assert samples(tracks())[:2]==[255,255];checks['explicitIncludeManualClearsManual']=True
-        key('NO')
-    # Remove while level two owns its overlay. No module pointer was installed
-    # in stock popup state; the caller executes USB Undo now.
+        assert port.peek(0x100b14cc,1)==b'\0'
+        fixture.put(port,0x460d174a,(1<<step).to_bytes(2,'big'))
+        fixture.call_idle(port,0x40040ee0,slot)
+        fixture.put(port,0x460d174a,b'\0\0');run(80)
+    unchanged_writers(port)
+    private_before=read(0x100f9000,0x3000)
+    map_before=read(0x100fe000,0x1800)
+    log_tag=port.peek(0x100fc000,4)
+    tap(0x22,1)
+    # One unselected-track lock is a labelled preservation fixture.
+    bank=u32(0x46c82456)
+    fixture.put(port,bank+0x91a+0x78,b'\x2a')
+    fixture.put(port,0x1001614e+0x91a+0x78,b'\x2a')
+    fixture.call_idle(port,0x400339d8)
+    tap(0x25,2);tap(0x20,1);tap(0x20,2);manual(1,0);tap(0x25,2)
+    before=tracks();assert samples(before)[:2]==[1,255]
+    tap(0x25,1);assert u32(0x800065b8)!=0
+    menu(False);capture('native-lock-confirm.png');key('YES');run(200)
+    capture('native-lock-result.png')
+    after=tracks();assert samples(after)[:2]==[1,0] and u32(0x800065b8)==0
+    assert all(a==b or i==0x98 for i,(a,b) in enumerate(zip(before,after)))
+    assert read(0x1001614e,len(after))==after
+    key('NO');menu(False);key('YES');run(160)
+    assert tracks()==after,'default Lock replaced an existing lock on repetition'
+    key('NO')
+    # A same-value manual edit needs no origin observer; Clear includes it.
+    tap(0x25,2);manual(0,1);tap(0x25,2)
+    menu(True);capture('native-clear-all-confirm.png');key('YES');run(200)
+    capture('native-clear-all-result.png')
+    cleared=tracks();assert samples(cleared)[:2]==[255,255]
+    assert all(a==b or i in (0x78,0x98) for i,(a,b) in enumerate(zip(after,cleared)))
+    assert cleared[0x91a+0x78]==42 and read(0x1001614e,len(cleared))==cleared
+    key('NO');tap(0x25,2);manual(1,0);tap(0x25,2)
+    menu(False,True);capture('native-replace-confirm.png');key('YES');run(160)
+    assert samples(tracks())[:2]==[0,0], 'explicit replacement failed'
+    key('NO');menu(True);key('YES');run(160);key('NO')
+    assert samples(tracks())[:2]==[255,255]
+    if hasattr(port,'install_companion'):port.install_companion();run(1000)
+    unchanged_writers(port)
+    assert read(0x100f9000,0x3000)==private_before,'former ownership region changed'
+    assert read(0x100fe000,0x1800)==map_before and port.peek(0x100fc000,4)==log_tag
     menu(True);key('NO');capture('removal-open-tracks.png')
-    assert read(0x100fe000,0x1800)==base_map, 'base effect map changed'
-    assert port.peek(0x100fc000,4)==base_log_tag, 'base diagnostic log tag changed'
-    checks['baseEffectMapAndLogTagPreserved']=True
-    return checks
+    return dict(stopBeforeEdit=True,playbackLeftStopped=True,existingManualLockPreservedByLock=True,
+        repeatedLockPreservesEveryExistingLock=True,clearIncludesManualAndSameValueLocks=True,
+        explicitReplacementWorks=True,unselectedTracksPreserved=True,unrelatedAudioBytesPreserved=True,
+        batteryMirrorMatches=True,noPrivateOwnershipWrites=True,nativeHistoryWritersRemainStock=True,
+        baseEffectMapAndLogTagPreserved=True)
+
+def after_undo(port,out):
+    unchanged_writers(port)
+    return fixture.after_undo(port,out)

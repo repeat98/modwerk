@@ -46,31 +46,22 @@ int main(void)
     assert(psl_prepare(&plan,&source,0x80,PSL_CLEAR,1)==PSL_OK && plan.changed==2);
     assert(psl_apply(&plan,&source,w,m)==PSL_OK);
     assert(working[7][PSL_LOCK_OFFSET]==255 && working[7][PSL_LOCK_OFFSET+32]==255);preserved(0x80);
-    /* Equality with the Part default is not proof of module ownership. */
-    fixture();working[7][PSL_LOCK_OFFSET]=source.sample[7];
-    mirror[7][PSL_LOCK_OFFSET]=source.sample[7];
-    assert(psl_prepare(&plan,&source,0x80,PSL_CLEAR,0)==PSL_OK);
-    assert(plan.changed==0 && plan.preserved==1);
-    uint8_t ownership[64]={0};source.owned[7]=ownership;source.ownership_epoch=9;
-    ownership[0]=1;
+    /* Clear includes every SAMPLE lock, even one equal to the Part default
+     * and one on a step without a sample trig. The policy argument is Lock-only. */
+    for(unsigned policy=0;policy<2;++policy) {
+        fixture();working[7][PSL_LOCK_OFFSET]=source.sample[7];
+        working[7][PSL_LOCK_OFFSET+32]=41;
+        memcpy(mirror,working,sizeof working);memcpy(baseline,working,sizeof working);
+        assert(psl_prepare(&plan,&source,0x80,PSL_CLEAR,policy)==PSL_OK);
+        assert(plan.changed==2 && plan.preserved==0 && plan.replace==0);
+        assert(psl_apply(&plan,&source,w,m)==PSL_OK);
+        assert(working[7][PSL_LOCK_OFFSET]==255 && working[7][PSL_LOCK_OFFSET+32]==255);
+        preserved(0x80);
+    }
+    /* Clear needs no assigned source sample. */
+    fixture();source.sample[7]=255;
     assert(psl_prepare(&plan,&source,0x80,PSL_CLEAR,0)==PSL_OK && plan.changed==1);
-    /* A manual write of the SAME slot invalidates its ownership too. */
-    ownership[0]=0;
-    assert(psl_apply(&plan,&source,w,m)==PSL_STALE);
-    assert(working[7][PSL_LOCK_OFFSET]==source.sample[7]);
-    ownership[0]=1;
-    assert(psl_prepare(&plan,&source,0x80,PSL_CLEAR,0)==PSL_OK);
-    ++source.ownership_epoch;assert(psl_apply(&plan,&source,w,m)==PSL_STALE);
-    assert(psl_prepare(&plan,&source,0x80,PSL_CLEAR,0)==PSL_OK);
-    assert(psl_apply(&plan,&source,w,m)==PSL_OK && working[7][PSL_LOCK_OFFSET]==255);
-    fixture();
-    assert(psl_prepare(&plan,&source,0x80,PSL_CLEAR,0)==PSL_OK && plan.changed==0 && plan.preserved==1);
     assert(psl_apply(&plan,&source,w,m)==PSL_OK);preserved(0x80);
-    fixture();ownership[0]=1;source.owned[7]=ownership;source.ownership_epoch=1;
-    working[7][PSL_LOCK_OFFSET+32]=mirror[7][PSL_LOCK_OFFSET+32]=42;
-    assert(psl_prepare(&plan,&source,0x80,PSL_CLEAR,0)==PSL_OK && plan.changed==1 && plan.preserved==1);
-    assert(psl_apply(&plan,&source,w,m)==PSL_OK);
-    assert(working[7][PSL_LOCK_OFFSET]==255 && working[7][PSL_LOCK_OFFSET+32]==42);
     for(unsigned stale=0;stale<8;++stale) {
         fixture();assert(psl_prepare(&plan,&source,0x81,PSL_LOCK,0)==PSL_OK);
         if(stale==0)++source.bank;

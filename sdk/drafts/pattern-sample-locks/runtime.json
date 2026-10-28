@@ -17,12 +17,5 @@
       "event": "module_enc",
       "fn": "module_enc"
     }
-  ],
-  "contribute": [
-    {
-      "to": "ot_module_lifecycle",
-      "order": 50,
-      "data": "psl_lifecycle"
-    }
   ]
 }

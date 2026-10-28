@@ -23,9 +23,8 @@ int psl_prepare(struct psl_plan *p, const struct psl_source *s,
             return PSL_INVALID; /* No assigned sample: refuse the entire selection. */
     p->bank = s->bank; p->pattern = s->pattern; p->part = s->part;
     p->eligible = s->eligible; p->selected = (uint8_t)selected;
-    p->action = (uint8_t)action; p->replace = (uint8_t)replace;
+    p->action = (uint8_t)action; p->replace = (uint8_t)(action == PSL_LOCK && replace);
     p->changed = p->preserved = 0;
-    p->ownership_epoch = s->ownership_epoch;
     for (unsigned t = 0; t < PSL_TRACKS; ++t) {
         p->machine[t] = s->machine[t]; p->sample[t] = s->sample[t];
         if (!(selected & (1u << t))) continue;
@@ -34,11 +33,8 @@ int psl_prepare(struct psl_plan *p, const struct psl_source *s,
         for (unsigned step = 0; step < PSL_STEPS; ++step) {
             uint8_t old = r[PSL_LOCK_OFFSET + 32u * step], next = old;
             unsigned trig = (r[7u - step / 8u] >> (step % 8u)) & 1u;
-            unsigned owned = s->owned[t] && s->owned[t][step] == 1u;
-            p->owned[t][step] = (uint8_t)owned;
             if (action == PSL_CLEAR) {
-                if (replace || owned) next = PSL_NO_LOCK;
-                else if (old != PSL_NO_LOCK) ++p->preserved;
+                next = PSL_NO_LOCK;
             }
             else if (trig) {
                 if (old == PSL_NO_LOCK || replace) next = s->sample[t];
@@ -55,15 +51,13 @@ int psl_validate(const struct psl_plan *p, const struct psl_source *s)
 {
     if (!p || !p->ready || !source_valid(s)) return PSL_INVALID;
     if (s->bank != p->bank || s->pattern != p->pattern || s->part != p->part ||
-        s->eligible != p->eligible || s->ownership_epoch != p->ownership_epoch) return PSL_STALE;
+        s->eligible != p->eligible) return PSL_STALE;
     for (unsigned t = 0; t < PSL_TRACKS; ++t) {
         if (!(p->selected & (1u << t))) continue;
         if (s->machine[t] != p->machine[t] || s->sample[t] != p->sample[t]) return PSL_STALE;
         for (unsigned k = 0; k < 8; ++k) if (s->track[t][k] != p->trigs[t][k]) return PSL_STALE;
         for (unsigned step = 0; step < PSL_STEPS; ++step) {
-            unsigned owned = s->owned[t] && s->owned[t][step] == 1u;
-            if (s->track[t][PSL_LOCK_OFFSET + 32u * step] != p->before[t][step] ||
-                owned != p->owned[t][step]) return PSL_STALE;
+            if (s->track[t][PSL_LOCK_OFFSET + 32u * step] != p->before[t][step]) return PSL_STALE;
         }
     }
     return PSL_OK;

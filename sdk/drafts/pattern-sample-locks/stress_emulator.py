@@ -24,9 +24,12 @@ def call_idle(port,address,*args):
             reply=port.command('run 1');assert 'stop=time' in reply
     raise RuntimeError('No idle preflight for native engine message')
 def job(port,number,entry):
-    # Our header's unused private tail: 0x220..0x330, after its checksum and
-    # before its first origin record. Never borrow stock scratch/queue data.
-    address=0x100f9220;packet=bytearray(0x110);packet[0]=number
+    # Labelled emulator fixture: reuse this idle module's write-list BSS.
+    # No native operation is armed while the queued job owns these bytes.
+    assert port.profile_symbols, 'exact linked offsets required for native-job fixture'
+    base=u32(port,0x4002dc6a)-port.profile_symbols['psl_open']
+    address=base+port.profile_symbols['symbols']['edits']
+    packet=bytearray(0x110);packet[0]=number
     if number==6:packet[0x106:0x108]=b'\0\1' # current fixture is bank A
     put(port,address,packet);port.command(f'watch {entry:#x},0x40084110')
     call_idle(port,0x40000c3c,0x460d17ce,address)
@@ -70,8 +73,9 @@ def exercise(port,run,tap,key,encoder,capture,out,reboot):
     assert locked==expected,'512-lock write changed the wrong bytes'
     assert read(port,0x1001614e,len(source))==locked
     key('NO')
-    menu(True);capture('stress-512-owned-clear-confirm.png');key('YES');run(300)
-    assert read(port,bank,len(source))==source,'default Clear did not clear 512 owned locks'
+    menu(True);capture('stress-512-all-clear-confirm.png');measurement=profile_emulator.start(port)
+    key('YES');run(300);clear_profile=profile_emulator.finish(port,measurement)
+    assert read(port,bank,len(source))==source,'Clear did not clear all 512 locks'
     key('NO');menu(False);key('YES');run(300);key('NO')
     assert read(port,bank,len(source))==locked
     # Native SAVE PROJECT writes .work then .strd; no module-specific format.
@@ -85,7 +89,7 @@ def exercise(port,run,tap,key,encoder,capture,out,reboot):
     assert read(port,bank,len(source))==locked,'native save/reload changed audio track records'
     assert read(port,bank+0x8ed80,0xc5b0)==before_reload[0x8ed80:0x9b330], 'native save/reload changed Parts'
     menu(True);capture('stress-512-clear-confirm.png');key('YES');run(300)
-    cleared=read(port,bank,len(source));assert cleared==locked,'reload history must be unknown and retained'
+    cleared=read(port,bank,len(source));assert cleared==source,'Clear must remove all reloaded SAMPLE locks'
     key('NO')
     # Saved project still has 512 locks. Undo removes only the module; stock
     # reload below must recover that project without any module installed.
@@ -93,15 +97,14 @@ def exercise(port,run,tap,key,encoder,capture,out,reboot):
     assert port.peek(0x100fc000,4)==base_log_tag, 'base diagnostic log tag changed'
     state.update(bank=bank,locked=locked)
     menu(True);key('NO');capture('removal-open-tracks.png')
-    return dict(**profile,maximumNativeLocksWritten=512,maximumNativeLocksCleared=512,reloadedUnknownLocksRetained=True,unrelatedAudioBytesPreserved=True,
+    return dict(**profile,clearProfile=clear_profile,maximumNativeLocksWritten=512,maximumNativeLocksCleared=512,reloadedSampleLocksCleared=True,unrelatedAudioBytesPreserved=True,
         playbackLeftStopped=True,baseEffectMapAndLogTagPreserved=True,nativeSaveProjectCompleted=True,nativeBankReloadCompleted=True,
         nativePartBytesPreserved=True,savedAudioSha256=hashlib.sha256(locked).hexdigest())
 def after_undo(port,out):
+    # No allocation belonging to the removed module is used after removal.
+    # Ordinary project files are independently loaded by a fresh stock session.
     manifest=Path(__file__).with_name('manifest.py').read_text()
-    for address,length,guard in re.findall(r'stock_guard\((0x[0-9a-f]+),(\d+),"([0-9a-f]+)"',manifest):
-        assert hashlib.sha256(port.peek(int(address,16),int(length))).hexdigest()==guard,'stock writer detour not removed'
-    for address in (0x4002dc68,0x4002dc90,0x4002dcc4):
-        assert hashlib.sha256(port.peek(address,6)).hexdigest()=='d35bfe797abb5bb27e98ec6d4cb422e20c44f307e5d6597af674380832f8dbdf'
-    job(port,6,0x40085418)
-    assert read(port,state['bank'],len(state['locked']))==state['locked']
-    return dict(stockWithoutModuleReloadsSavedLocks=True,allStockSitesRestored=True)
+    addresses=(0x4002dc68,0x4002dc90,0x4002dcc4)
+    guard="d35bfe797abb5bb27e98ec6d4cb422e20c44f307e5d6597af674380832f8dbdf"
+    assert all(hashlib.sha256(port.peek(at,6)).hexdigest()==guard for at in addresses)
+    return dict(allDeclaredSitesRestored=True,onlyThreePartOpenersPatched=True)

@@ -13,7 +13,7 @@
 #define PSL_NO_LOCK 255u
 
 enum psl_action { PSL_LOCK, PSL_CLEAR };
-enum psl_result { PSL_OK, PSL_INVALID, PSL_NO_TRACKS, PSL_STALE, PSL_FULL };
+enum psl_result { PSL_OK, PSL_INVALID, PSL_NO_TRACKS, PSL_STALE };
 struct psl_source {
     uint32_t bank;
     uint8_t pattern, part;
@@ -21,20 +21,12 @@ struct psl_source {
     uint8_t eligible;
     uint8_t machine[PSL_TRACKS], sample[PSL_TRACKS];
     const uint8_t *track[PSL_TRACKS];
-    /* Optional trusted provenance, never inferred from the sample value.
-     * 1 means this exact current lock is module-owned. NULL/other values mean
-     * manual or unknown. Adapter must invalidate on ANY manual write (even
-     * same value), copy/paste, reload or lost history until revalidated. */
-    const uint8_t *owned[PSL_TRACKS];
-    uint32_t ownership_epoch;
 };
 struct psl_plan {
     uint32_t bank;
     uint8_t pattern, part, eligible, selected, action, replace, ready;
     uint8_t machine[PSL_TRACKS], sample[PSL_TRACKS];
     uint8_t trigs[PSL_TRACKS][8];
-    uint8_t owned[PSL_TRACKS][PSL_STEPS];
-    uint32_t ownership_epoch;
     uint8_t before[PSL_TRACKS][PSL_STEPS];
     uint8_t after[PSL_TRACKS][PSL_STEPS];
     uint16_t changed, preserved;
@@ -43,9 +35,9 @@ struct psl_plan {
  * including those beyond the current playback length. */
 int psl_prepare(struct psl_plan *, const struct psl_source *,
                 unsigned selected, enum psl_action, unsigned include_existing);
-/* include_existing is OFF by default: LOCK keeps existing locks; CLEAR
- * retains manual/unknown locks and removes only verified module-owned ones.
- * ON explicitly permits replacing/clearing manual locks. */
+/* include_existing is OFF by default: LOCK keeps every existing SAMPLE lock.
+ * ON permits replacing those locks. CLEAR always removes all SAMPLE locks on
+ * the selected tracks; no origin information is stored or consulted. */
 int psl_validate(const struct psl_plan *, const struct psl_source *);
 /* Caller owns the instrument's writer boundary, including source identity.
  * Every target is validated before the first write; writes touch SAMPLE only.

@@ -15,8 +15,6 @@ int psl_native_commit(struct psl_plan *);
 /* 0 stopped, 1 playing/independent tracks, 2 recorder active. */
 unsigned psl_native_transport(void);
 int psl_native_stop(void);
-void psl_native_observe_key(int code,int pressed);
-void psl_ui_retire(void); /* lifecycle: no firmware calls from the engine task */
 void psl_ui_open(void);
 unsigned psl_ui_phase(void);
 #endif
