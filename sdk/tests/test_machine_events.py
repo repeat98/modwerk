@@ -54,7 +54,7 @@ class MachineEventTests(unittest.TestCase):
         ports = json.loads((ADAPTERS / 'machine-ports.json').read_text())['ports']
         protect = {(p['machine']['sig'], p['machine']['lo'], p['machine']['hi']) for p in ports.values()
                    if 'PROTECT' in p.get('machine', {}).get('flags', [])}
-        native = {('WV', 1, 3)}  # WAVE (sdk/drafts/wave/machine.c): the model is the version byte, 1-3
+        native = {('WV', 1, 15)}  # WAVE (sdk/drafts/wave/machine.c): the model is the version byte, 1-6 used, up to 15 kept
         self.assertEqual(known, protect | native)
         self.assertIn(('AB', 1, 1), known)
 

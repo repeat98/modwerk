@@ -131,7 +131,7 @@ static unsigned owner(const Machine *const *m, unsigned n, const Part *part, uns
  * (beta finding 24). An absent machine's track renders stock's silent source, never stock FLEX reading its bytes.
  * A native machine module (not a port) is listed by name, never by a pattern: a FLEX track whose NEIGHBOR bytes
  * merely looked like a signature would go silent. WV 1-3: WAVE (sdk/drafts/wave), its model in the version byte. */
-static const struct { uint8_t sig[2], lo, hi; } known[] = {{{'A', 'B'}, 1, 1}, {{'F', 'M'}, 1, 1}, {{'W', 'V'}, 1, 3}};
+static const struct { uint8_t sig[2], lo, hi; } known[] = {{{'A', 'B'}, 1, 1}, {{'F', 'M'}, 1, 1}, {{'W', 'V'}, 1, 15}};
 static unsigned orphan(const Part *part, unsigned t)
 {
     if (t >= 8 || part[0x22 + t] > 1) return 0;
