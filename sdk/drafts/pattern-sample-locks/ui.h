@@ -14,7 +14,6 @@ void psl_native_redraw(void);
 int psl_native_commit(struct psl_plan *);
 /* 0 stopped, 1 playing/independent tracks, 2 recorder active. */
 unsigned psl_native_transport(void);
-int psl_native_stop(void);
 void psl_ui_open(void);
 unsigned psl_ui_phase(void);
 void psl_native_part_menu_draw(unsigned char *,unsigned,unsigned,const char *const *);

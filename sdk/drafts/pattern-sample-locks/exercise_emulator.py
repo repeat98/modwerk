@@ -2,7 +2,7 @@
 """Native simplified edits on disposable emulator RAM/card copies.
 
 Manual SAMPLE writes use the unchanged native writer with a labelled held-step
-fixture. Utility selection, confirmation and STOP use actual panel reports.
+fixture. Utility selection, confirmation and transport use actual panel reports.
 """
 import hashlib
 import stress_emulator as fixture
@@ -56,7 +56,7 @@ def exercise(port,run,tap,key,encoder,capture,out,reboot):
     menu(False);capture('native-lock-confirm.png');key('YES');run(200)
     capture('native-lock-result.png')
     assert port.ui_phase()==0
-    after=tracks();assert samples(after)[:2]==[1,0] and u32(0x800065b8)==0
+    after=tracks();assert samples(after)[:2]==[1,0] and u32(0x800065b8)!=0
     assert all(a==b or i==0x98 for i,(a,b) in enumerate(zip(before,after)))
     assert read(0x1001614e,len(after))==after
     menu(False);key('YES');run(160)
@@ -77,12 +77,14 @@ def exercise(port,run,tap,key,encoder,capture,out,reboot):
     menu(True);key('YES');run(160)
     assert port.ui_phase()==0
     assert samples(tracks())[:2]==[255,255]
+    assert u32(0x800065b8)!=0,'operation changed playback'
+    tap(0x24,128) # explicit test cleanup, not part of an operation
     if hasattr(port,'install_companion'):port.install_companion();run(1000)
     unchanged_writers(port)
     assert read(0x100f9000,0x3000)==private_before,'former ownership region changed'
     assert read(0x100fe000,0x1800)==map_before and port.peek(0x100fc000,4)==log_tag
     menu(True);key('NO');capture('removal-open-tracks.png')
-    return dict(stopBeforeEdit=True,playbackLeftStopped=True,existingManualLockPreservedByLock=True,
+    return dict(playbackPreserved=True,explicitStopOnlyForCleanup=True,existingManualLockPreservedByLock=True,
         repeatedLockPreservesEveryExistingLock=True,clearIncludesManualAndSameValueLocks=True,successfulApplyClosesWithoutAcknowledgement=True,
         explicitReplacementWorks=True,unselectedTracksPreserved=True,unrelatedAudioBytesPreserved=True,
         batteryMirrorMatches=True,noPrivateOwnershipWrites=True,nativeHistoryWritersRemainStock=True,

@@ -2,7 +2,6 @@
 /* OS 1.40C adapter. Experimental native edits; no implicit project save. */
 #include "ui.h"
 #include "font.h"
-#define U16(a) (*(volatile uint16_t *)(uintptr_t)(a))
 #define U8(a) (*(volatile uint8_t *)(uintptr_t)(a))
 #define U32(a) (*(volatile uint32_t *)(uintptr_t)(a))
 #define BANK 0x46c82456u
@@ -10,8 +9,8 @@
 #define PART 0x100b14cfu
 #define PART_OFFSET 0x8ed80u
 /* Prepared outside the interrupt guard; fixed native destinations only. */
-struct psl_native_write {volatile uint8_t *working,*mirror;uint8_t before,after;};
-static struct psl_native_write edits[PSL_TRACKS*PSL_STEPS+PSL_STEPS];
+struct psl_native_write {volatile uint8_t *working,*mirror;uint8_t after;};
+static struct psl_native_write edits[PSL_TRACKS];
 static int bank_valid(uint32_t b)
 { return b>=0x400e21e0u && b<=0x400e21e0u+15u*0x9b340u && (b-0x400e21e0u)%0x9b340u==0; }
 /* These are the shared machine-registry signatures and versions, not calls
@@ -84,45 +83,36 @@ void psl_native_part_menu_draw(unsigned char *frame,unsigned count,unsigned curs
 }
 unsigned psl_native_transport(void)
 {
+    if(U32(0x460d172au))return 2;
     for(unsigned i=0;i<16;++i)if(U8(0x80004f1eu+i*84u))return 2;
     if(U32(0x800065b8u))return 1;
     for(unsigned i=0;i<16;++i)if(U8(0x80006500u+i))return 1;
     return 0;
 }
-int psl_native_stop(void)
-{
-    /* A held FUNC/trig turns STOP into paste. Wait for their release.
-     * Feed actual panel reports, never fabricated OS event records. */
-    if(U8(0x46100b18u+5u)&32u || U16(0x460d174au))return 0;
-    void (*ring)(uint32_t)=(void (*)(uint32_t))0x40092254u;
-    uint16_t sr;
-    __asm__ volatile("move.w %%sr,%0\n\tmove.w #0x2700,%%sr":"=d"(sr)::"memory");
-    uint8_t held=U8(0x46100b18u+4u);
-    ring(0x24);ring(held|128u);ring(0x24);ring(held&127u);
-    __asm__ volatile("move.w %0,%%sr"::"d"(sr):"memory");
-    return 1;
-}
-/* Serialize with stock UI/storage writers at level four. DSP/frame interrupts
- * (five/six) remain enabled during validation and preparation.
- * No firmware entry is called while this task lock is held. */
+/* Native bank/Part/UI edits and storage publication run in tasks. Level two
+ * excludes the level-one scheduler while allowing the native sequencer (three),
+ * USB (four), audio (five) and DMA/UART (six). No clock or transport is changed.
+ * Live recording is refused before publication; MIDI input queues its pattern
+ * writes to the system task. */
 static uint16_t psl_task_lock(void)
 {
     uint16_t sr;
     __asm__ volatile("move.w %%sr,%0":"=d"(sr)::"memory");
-    if((sr&0x700u)<0x400u){uint16_t locked=(uint16_t)((sr&~0x700u)|0x400u);
+    if((sr&0x700u)<0x200u){uint16_t locked=(uint16_t)((sr&~0x700u)|0x200u);
         __asm__ volatile("move.w %0,%%sr"::"d"(locked):"memory");}
     return sr;
 }
 volatile uint32_t psl_guard_max,psl_guard_spans;
-/* At most sixteen changed entries per full interrupt guard, independent of
- * the number of selected tracks. The index entries have no mirror pointer. */
-__attribute__((noinline)) static void psl_write_batch(unsigned from,unsigned end)
+/* One step, at most eight SAMPLE/mirror pairs plus its lock-index byte.
+ * A reader sees that step wholly before or wholly after publication. Interrupts
+ * resume between steps, so the sequencer can consume other steps normally. */
+__attribute__((noinline)) static void psl_write_step(unsigned count,unsigned step,unsigned set,unsigned clear)
 {
     uint16_t sr;uint32_t at,elapsed;
     __asm__ volatile("move.w %%sr,%0\n\tmove.w #0x2700,%%sr":"=d"(sr)::"memory");
     at=U32(0xfc07c00cu);
-    for(unsigned i=from;i<end;++i){*edits[i].working=edits[i].after;
-        if(edits[i].mirror)*edits[i].mirror=edits[i].after;}
+    for(unsigned i=0;i<count;++i){*edits[i].working=edits[i].after;*edits[i].mirror=edits[i].after;}
+    U8(0x46c7d48cu+step)=(uint8_t)((U8(0x46c7d48cu+step)|set)&~clear);
     elapsed=U32(0xfc07c00cu)-at;
     __asm__ volatile("move.w %0,%%sr"::"d"(sr):"memory");
     ++psl_guard_spans;if(elapsed>psl_guard_max)psl_guard_max=elapsed;
@@ -130,11 +120,11 @@ __attribute__((noinline)) static void psl_write_batch(unsigned from,unsigned end
 static int psl_commit_locked(struct psl_plan *p,unsigned *published)
 {
     struct psl_source now;uint8_t *working[8],*mirror[8];
-    uint8_t index_before[64],index_after[64];unsigned tracks_changed=0,edit_count=0;
-    if(!p || !p->ready || psl_native_transport() || !psl_native_source(&now))return PSL_INVALID;
+    uint8_t index_set[64],index_clear[64];unsigned tracks_changed=0;
+    if(!p || !p->ready || psl_native_transport()==2u || !psl_native_source(&now))return PSL_INVALID;
     int result=psl_validate(p,&now);if(result!=PSL_OK)return result;
     if(!p->changed){p->ready=0;return PSL_OK;}
-    for(unsigned i=0;i<64;++i)index_before[i]=index_after[i]=U8(0x46c7d48cu+i);
+    for(unsigned i=0;i<64;++i)index_set[i]=index_clear[i]=0;
     for(unsigned t=0;t<8;++t) {
         working[t]=(uint8_t *)(uintptr_t)now.track[t];
         mirror[t]=(uint8_t *)(uintptr_t)(0x1001614eu+p->pattern*PSL_PATTERN_BYTES+t*PSL_TRACK_BYTES);
@@ -143,22 +133,19 @@ static int psl_commit_locked(struct psl_plan *p,unsigned *published)
         for(unsigned step=0;step<64;++step) {
             if(mirror[t][PSL_LOCK_OFFSET+32u*step]!=p->before[t][step])return PSL_STALE;
             if(p->before[t][step]==p->after[t][step])continue;
-            edits[edit_count].working=working[t]+PSL_LOCK_OFFSET+32u*step;
-            edits[edit_count].mirror=mirror[t]+PSL_LOCK_OFFSET+32u*step;
-            edits[edit_count].before=p->before[t][step];edits[edit_count].after=p->after[t][step];++edit_count;
             tracks_changed|=1u<<t;
             unsigned locked=p->after[t][step]!=PSL_NO_LOCK;
             if(!locked)for(unsigned slot=0;slot<31;++slot)
                 if(working[t][0x59u+32u*step+slot]!=PSL_NO_LOCK){locked=1;break;}
-            if(locked)index_after[step]|=(uint8_t)(1u<<t);
-            else index_after[step]&=(uint8_t)~(1u<<t);
+            if(locked)index_set[step]|=(uint8_t)(1u<<t);
+            else index_clear[step]|=(uint8_t)(1u<<t);
         }
     }
-    /* All source validation precedes publication under the task lock. The
-     * stopped sequencer cannot consume a partially published lock index. */
-    if(psl_native_transport() || !psl_native_context(p->bank,p->pattern,p->part))result=PSL_STALE;
+    /* Validate the complete plan before the first write. The task guard keeps
+     * the UI bank/pattern/Part and metadata writers stable; the sequencer and
+     * frame readers may still run, with each step published atomically below. */
+    if(psl_native_transport()==2u || !psl_native_context(p->bank,p->pattern,p->part))result=PSL_STALE;
     else {
-        for(unsigned i=0;i<64;++i)if(U8(0x46c7d48cu+i)!=index_before[i])result=PSL_STALE;
         const volatile uint8_t *part=(const volatile uint8_t *)(uintptr_t)(p->bank+PART_OFFSET+p->part*PSL_PART_BYTES);
         for(unsigned t=0;t<8;++t)if(p->selected&(1u<<t)) {
             if(part[0x22u+t]!=p->machine[t] || part[0x2cau+5u*t+p->machine[t]]!=p->sample[t])result=PSL_STALE;
@@ -166,11 +153,15 @@ static int psl_commit_locked(struct psl_plan *p,unsigned *published)
             for(unsigned i=0;i<64;++i)if(working[t][PSL_LOCK_OFFSET+32u*i]!=p->before[t][i] || mirror[t][PSL_LOCK_OFFSET+32u*i]!=p->before[t][i])result=PSL_STALE;
         }
         if(result==PSL_OK) {
-            for(unsigned i=0;i<64;++i)if(index_before[i]!=index_after[i]){
-                edits[edit_count].working=(volatile uint8_t *)(uintptr_t)(0x46c7d48cu+i);
-                edits[edit_count].mirror=0;edits[edit_count].after=index_after[i];++edit_count;
+            for(unsigned step=0;step<64;++step) {
+                unsigned count=0;
+                for(unsigned t=0;t<8;++t)if((p->selected&(1u<<t)) && p->before[t][step]!=p->after[t][step]) {
+                    edits[count].working=working[t]+PSL_LOCK_OFFSET+32u*step;
+                    edits[count].mirror=mirror[t]+PSL_LOCK_OFFSET+32u*step;
+                    edits[count].after=p->after[t][step];++count;
+                }
+                if(count)psl_write_step(count,step,index_set[step],index_clear[step]);
             }
-            for(unsigned i=0;i<edit_count;i+=16u)psl_write_batch(i,i+16u<edit_count?i+16u:edit_count);
             U32(p->bank+0x9b332u)=1;U32(0x100f8598u)=1;p->ready=0;
         }
     }
@@ -182,11 +173,11 @@ int psl_native_commit(struct psl_plan *p)
 {
     unsigned published=0;uint16_t sr=psl_task_lock();
     int result=psl_commit_locked(p,&published);
-    __asm__ volatile("move.w %0,%%sr"::"d"(sr):"memory");
     if(result==PSL_OK && published){
         ((void (*)(void))0x40027e00u)();
         for(unsigned t=0;t<8;++t)if(published&(1u<<t))((void (*)(unsigned))0x4009da20u)(t);
     }
+    __asm__ volatile("move.w %0,%%sr"::"d"(sr):"memory");
     return result;
 }
 

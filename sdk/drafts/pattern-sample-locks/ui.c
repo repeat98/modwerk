@@ -8,8 +8,10 @@
 #define DOWN 0x20
 #define LEFT 0x34
 #define RIGHT 0x21
-enum { CLOSED, PART_MENU, TRACKS, CONFIRM, RESULT, STOPPING };
-static unsigned stop_ticks,stop_requested;
+enum { CLOSED, PART_MENU, TRACKS, CONFIRM, RESULT };
+struct psl_preferences {uint8_t valid,selected,cursor,replace,all;};
+static struct psl_preferences preferences[2];
+static unsigned last_action,remembered,select_all;
 static unsigned phase, cursor, selected, replace, action, eligible;
 static struct psl_plan plan;
 static struct psl_source captured;
@@ -23,8 +25,8 @@ static void close_view(void)
 unsigned psl_ui_phase(void) { return phase; }
 void psl_ui_open(void)
 {
-    phase=PART_MENU; cursor=psl_native_cursor();
-    if(cursor>3)cursor=0;
+    phase=PART_MENU; cursor=remembered?last_action+4u:psl_native_cursor();
+    if(cursor>5u)cursor=0;
     selected=replace=0;plan.ready=0;encoder_residual=0;psl_native_redraw();
 }
 /* Track numbers remain spatial: 1-4 left, 5-8 right. Disabled
@@ -66,8 +68,15 @@ static void start_action(void)
         message="ACTIVE PATTERN ONLY";phase=RESULT;psl_native_redraw();return;
     }
     eligible=captured.eligible;
-    selected=replace=cursor=0;phase=TRACKS;plan.ready=0;message=0;
-    if(eligible)while(!(eligible&(1u<<cursor)))++cursor;
+    const struct psl_preferences *saved=&preferences[action];
+    select_all=saved->valid && saved->all;
+    selected=saved->valid?(select_all?eligible:saved->selected&eligible):0;
+    replace=action==PSL_LOCK && saved->valid?saved->replace:0;
+    cursor=saved->valid?saved->cursor:0;
+    if(cursor>=8u || !(eligible&(1u<<cursor))) {
+        cursor=0;if(eligible)while(!(eligible&(1u<<cursor)))++cursor;
+    }
+    phase=TRACKS;plan.ready=0;message=0;
     psl_native_redraw();
 }
 static void choose(void)
@@ -93,7 +102,12 @@ static void choose(void)
 static void finish_action(void)
 {
     int result=psl_native_commit(&plan);
-    if(result==PSL_OK){close_view();return;}
+    if(result==PSL_OK){
+        struct psl_preferences *saved=&preferences[action];
+        saved->valid=1;saved->selected=(uint8_t)selected;saved->cursor=(uint8_t)cursor;
+        saved->replace=(uint8_t)(action==PSL_LOCK && replace);saved->all=(uint8_t)select_all;
+        last_action=action;remembered=1;close_view();return;
+    }
     message=result==PSL_STALE?"SOURCE CHANGED - REOPEN":"REFUSED - NO CHANGES";
     plan.ready=0;phase=RESULT;psl_native_redraw();
 }
@@ -102,14 +116,6 @@ void module_tick(struct modwerk_runtime_api *api)
     if(phase==PART_MENU && psl_native_popup()!=1)close_view();
     if(phase>=TRACKS && phase!=RESULT &&
        (!psl_native_context(captured.bank,captured.pattern,captured.part) || psl_native_popup()))close_view();
-    if(phase==STOPPING) {
-        unsigned transport=psl_native_transport();
-        if(!transport)finish_action();
-        else if(transport==2 || ++stop_ticks>=120u) {
-            message=transport==2?"RECORDER ACTIVE - REFUSED":"STOP TIMED OUT - REFUSED";
-            plan.ready=0;phase=RESULT;psl_native_redraw();
-        } else if(!stop_requested)stop_requested=(unsigned)psl_native_stop();
-    }
     api->value=(uint32_t)phase<<24 | (uint32_t)selected<<16 | plan.changed;
 }
 int module_key(int code,int pressed)
@@ -119,12 +125,6 @@ int module_key(int code,int pressed)
     if(!pressed){if(!(consumed[group]&bit))return 0;consumed[group]&=~bit;return 1;}
     if(consumed[group]&bit)return 1;
     if(!phase)return 0;
-    if(phase==STOPPING) {
-        if(code==0x27)return 0; /* Let the native STOP report reach stock. */
-        consumed[group]|=bit;
-        if(code==NO)close_view();
-        return 1; /* In particular, PLAY cannot restart a pending edit. */
-    }
     /* Retire before letting transport, recorder and project gestures through.
      * No modal remains armed when those stock actions can change its source. */
     if(code!=YES && code!=NO && code!=UP && code!=DOWN && code!=LEFT && code!=RIGHT){close_view();return 0;}
@@ -141,8 +141,7 @@ int module_key(int code,int pressed)
     else if(phase==CONFIRM) {
         unsigned transport=psl_native_transport();
         if(transport==2){message="RECORDER ACTIVE - REFUSED";plan.ready=0;phase=RESULT;}
-        else if(!transport)finish_action();
-        else {phase=STOPPING;stop_ticks=0;stop_requested=(unsigned)psl_native_stop();}
+        else finish_action();
         psl_native_redraw();
     } else close_view();
     return 1;
@@ -151,8 +150,9 @@ int module_enc(int encoder,int delta)
 {
     if(!phase)return 0;
     if(phase==TRACKS) {
-        if(delta && encoder==0)selected=delta>0?eligible:0;
+        if(delta && encoder==0){selected=delta>0?eligible:0;select_all=delta>0;}
         if(delta && encoder==1 && (eligible&(1u<<cursor))) {
+            select_all=0;
             if(delta>0)selected|=1u<<cursor;else selected&=~(1u<<cursor);
         }
         if(delta && encoder==2 && action==PSL_LOCK)replace=delta>0;
@@ -210,7 +210,6 @@ void module_draw(unsigned char *frame)
     /* The stock font's five-pixel capitals sit on a seven-pixel row grid. */
     psl_native_text(frame,10,title_y,title);
     psl_font_invert(frame,7,title_y-1u,114,7);
-    if(phase==STOPPING){psl_native_text(frame,10,title_y+14u,"STOPPING PLAYBACK...");psl_native_text(frame,10,title_y+21u,"NO:CANCEL");psl_font_box(frame,6,3,116,58);return;}
     if(phase==RESULT){psl_native_text(frame,10,title_y+14u,message);psl_native_text(frame,10,title_y+21u,"YES/NO:CLOSE");psl_font_box(frame,6,3,116,58);return;}
     if(phase==CONFIRM) {
         char line[24];text(line,"PATTERN ");

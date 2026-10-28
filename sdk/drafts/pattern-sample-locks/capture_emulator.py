@@ -60,6 +60,7 @@ def main():
     parser=argparse.ArgumentParser(description=__doc__)
     for name in ('emulator','base','card','package','out'):parser.add_argument('--'+name,type=Path,required=True)
     parser.add_argument('--prepare-fixture',action='store_true',help='Save a consistent disposable fixture before persistence tests')
+    parser.add_argument('--live-playback',action='store_true',help='Live editing, RAM preferences and matched CPU monitor')
     parser.add_argument('--performance',action='store_true',help='Matched emulator load and small/maximum edit instruction measurements')
     parser.add_argument('--stress-save',action='store_true',help='Maximum native edits plus native save/reload on the copied card')
     parser.add_argument('--exercise',action='store_true',help='Exercise native edits on disposable emulator media')
@@ -71,7 +72,7 @@ def main():
     parser.add_argument('--cs1-in',type=Path,help='Private battery snapshot for a fresh native power-up')
     parser.add_argument('--menu-only',action='store_true',help='Capture only the level-one list, then Undo')
     parser.add_argument('--no-dsp',action='store_true',help='Skip DSP execution; do not claim audio coverage')
-    source_names=('capture_emulator.py','attestation_emulator.py','prepare_fixture_emulator.py','performance_emulator.py','profile_emulator.py','stress_emulator.py','exercise_emulator.py','unit.s','engine.c','engine.h','ui.c','ui.h','native.c','font.c','font.h','runtime.json','manifest.py')
+    source_names=('capture_emulator.py','attestation_emulator.py','prepare_fixture_emulator.py','profile_symbols.py','live_emulator.py','performance_emulator.py','profile_emulator.py','stress_emulator.py','exercise_emulator.py','unit.s','engine.c','engine.h','ui.c','ui.h','native.c','font.c','font.h','runtime.json','manifest.py')
     source_hashes={name:hashlib.sha256(Path(__file__).with_name(name).read_bytes()).hexdigest() for name in source_names}
     args=parser.parse_args();out=args.out.resolve();out.mkdir(parents=True,exist_ok=False)
     if ROOT==out or ROOT in out.parents:raise ValueError('Use private output outside the repository')
@@ -84,8 +85,8 @@ def main():
         '--mount','--set','BEATLAB','--project','PROJECT 261023','--load-ms','30000','--load-early',
         '--dsp','--frame','--ips','3990','--ms','3000','--interactive','--main-level','off','--rtc','host','--mkii',
         '--usb-host',str(sock),'--lcd',str(plane)]
-    if args.stress_save or args.prepare_fixture or args.performance or args.exercise_ui:args.exercise=True
-    if args.stress_save or args.prepare_fixture or args.performance or args.keep or args.boot_auto:command.append('--card-rw')
+    if args.stress_save or args.prepare_fixture or args.performance or args.exercise_ui or args.live_playback:args.exercise=True
+    if args.stress_save or args.prepare_fixture or args.performance or args.live_playback or args.keep or args.boot_auto:command.append('--card-rw')
     if args.boot_auto and not args.cs1_in:raise ValueError('--boot-auto requires battery state')
     if args.no_dsp:command.remove('--dsp')
     if args.cs1_in:
@@ -142,7 +143,25 @@ def main():
         port.command('pace off')
         symbols=json.loads((args.base/'symbols.json').read_text())
         port.base_symbols=symbols
+        port.expected_upload_phase=0 if kept else 5
         port.ui_phase=lambda:int.from_bytes(port.peek(symbols['modwerk_runtime_api'],4),'big')>>24
+        if args.live_playback:
+            def reinstall_trial():
+                port.command('pace on');request(1,transaction=0);now=request(0,transaction=0)
+                digest=hashlib.sha256(package).digest()
+                request(2,bytes.fromhex(base)+digest+struct.pack('>II',now['generation'],len(package)),transaction=22)
+                for at in range(0,len(package),4096):request(3,struct.pack('>I',at)+package[at:at+4096],transaction=22)
+                request(4,transaction=22);done=request(5,transaction=22)
+                while done['result']==12:done=request(5,transaction=22)
+                assert done['phase']==4 and request(9,transaction=22)['phase']==5
+                port.expected_upload_phase=5;port.command('pace off')
+            def undo_reinstalled():
+                port.command('pace on');request(1,transaction=0);done=request(7,transaction=22)
+                while done['result']==11:done=request(7,transaction=22)
+                assert done['result']==0 and done['known']==1
+                assert request(9,transaction=22)['phase']==0
+                port.expected_upload_phase=0;port.command('pace off')
+            port.reinstall_trial=reinstall_trial;port.undo_reinstalled=undo_reinstalled
         def dsp_metrics():
             return {name:int.from_bytes(port.peek(symbols[name],4),'big') for name in
                     ('dl_frames','dl_errors','modwerk_dsp_stalls')}
@@ -160,7 +179,7 @@ def main():
                     'crashHeader':port.peek(0x100ff800,40).hex()},indent=2)+'\n')
                 raise RuntimeError('Emulator stopped unexpectedly: '+reply+'; '+cpu)
             if elapsed>=600 and not getattr(port,'native_menu',False):
-                port.command('pace on');assert request(0,transaction=0)['phase']==(0 if kept else 5)
+                port.command('pace on');assert request(0,transaction=0)['phase']==port.expected_upload_phase
                 port.command('pace off');elapsed=0
         def tap(row,mask):
             port.command(f'key {row:#x} {mask}');run(80)
@@ -221,7 +240,7 @@ def main():
                 capture('clear-all-selected.png');key('YES');capture('clear-confirm.png');key('NO');key('NO')
             else:key('NO')
         if args.exercise:
-            exercise=load('psl_exercise',Path(__file__).with_name('prepare_fixture_emulator.py' if args.prepare_fixture else 'performance_emulator.py' if args.performance else 'stress_emulator.py' if args.stress_save else 'exercise_emulator.py'))
+            exercise=load('psl_exercise',Path(__file__).with_name('live_emulator.py' if args.live_playback else 'prepare_fixture_emulator.py' if args.prepare_fixture else 'performance_emulator.py' if args.performance else 'stress_emulator.py' if args.stress_save else 'exercise_emulator.py'))
             key('NO');key('NO')
             checks=exercise.exercise(port,run,tap,key,encoder,capture,out,bool(args.cs1_in))
         checks.update(live_checks)
@@ -241,6 +260,7 @@ def main():
             status=request(7)
             while status['result']==11:time.sleep(.025);status=request(7)
             assert status['result']==0 and status['known']==1
+        port.expected_upload_phase=0
         if args.exercise and hasattr(exercise,'after_undo'):
             port.command('pace off');checks.update(exercise.after_undo(port,out))
         if companion:

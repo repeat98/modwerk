@@ -7,12 +7,16 @@ import tempfile
 
 HERE=Path(__file__).resolve().parent
 source=(HERE/'native.c').read_text()
+worker_start=source.index('__attribute__((noinline)) static void psl_write_step(')
 start=source.index('static int psl_commit_locked(')
+worker=source[worker_start:start]
+worker=worker.replace('__asm__ volatile("move.w %%sr,%0\\n\\tmove.w #0x2700,%%sr":"=d"(sr)::"memory");','sr=0;before_guard(count,step);')
+worker=worker.replace('__asm__ volatile("move.w %0,%%sr"::"d"(sr):"memory");','(void)sr;after_guard();')
+assert '__asm__' not in worker
 body=source[start:source.index('\nint psl_native_commit(',start)]
 # Translate only target addresses; retain the production validation/index logic.
 translations={
  '(uint8_t *)(uintptr_t)(0x1001614eu+p->pattern*PSL_PATTERN_BYTES+t*PSL_TRACK_BYTES)':'mirrors[t]',
- '(volatile uint8_t *)(uintptr_t)(0x46c7d48cu+i)':'&index_bytes[i]',
  '(const volatile uint8_t *)(uintptr_t)(p->bank+PART_OFFSET+p->part*PSL_PART_BYTES)':'part_bytes',
 }
 for old,new in translations.items():
@@ -28,10 +32,13 @@ static uint8_t before[8][PSL_TRACK_BYTES],index_bytes[64],part_bytes[PSL_PART_BY
 static uint32_t dirty_bank,dirty_project;
 static struct psl_source context;
 static unsigned transport,max_batch,batches;
-struct psl_native_write {volatile uint8_t *working,*mirror;uint8_t before,after;};
-static struct psl_native_write edits[PSL_TRACKS*PSL_STEPS+PSL_STEPS];
+static uint32_t guard_clock;
+volatile uint32_t psl_guard_max,psl_guard_spans;
+struct psl_native_write {volatile uint8_t *working,*mirror;uint8_t after;};
+static struct psl_native_write edits[PSL_TRACKS];
 static uint8_t *mmio8(uint32_t at){assert(at>=0x46c7d48cu && at<0x46c7d4ccu);return index_bytes+(at-0x46c7d48cu);}
 static uint32_t *mmio32(uint32_t at){
+ if(at==0xfc07c00cu)return &guard_clock;
  if(at==0x100f8598u)return &dirty_project;
  assert(at==context.bank+0x9b332u);return &dirty_bank;
 }
@@ -40,16 +47,21 @@ static uint32_t *mmio32(uint32_t at){
 static unsigned psl_native_transport(void){return transport;}
 static int psl_native_source(struct psl_source *s){*s=context;return 1;}
 static int psl_native_context(uint32_t b,unsigned p,unsigned part){return b==context.bank && p==context.pattern && part==context.part;}
-static void psl_write_batch(unsigned from,unsigned end){
- assert(end>=from && end-from<=16);if(end-from>max_batch)max_batch=end-from;++batches;
- for(unsigned i=from;i<end;++i){*edits[i].working=edits[i].after;if(edits[i].mirror)*edits[i].mirror=edits[i].after;}
+static void observe(void);
+static void before_guard(unsigned count,unsigned step){
+ assert(count && count<=8 && step<64);if(count>max_batch)max_batch=count;++batches;observe();
 }
-''' + body + r'''
+static void after_guard(void){observe();}
+''' + worker + body + r'''
 static uint8_t expected_index(unsigned step){
  unsigned result=0;
  for(unsigned t=0;t<8;++t)for(unsigned slot=0;slot<32;++slot)
   if(tracks[t][0x59+32*step+slot]!=255)result|=1u<<t;
  return (uint8_t)result;
+}
+static void observe(void){
+ assert(!memcmp(tracks,mirrors,sizeof tracks));
+ for(unsigned i=0;i<64;++i)assert(index_bytes[i]==expected_index(i));
 }
 static void setup(void){
  memset(tracks,255,sizeof tracks);memset(part_bytes,0,sizeof part_bytes);
@@ -78,14 +90,24 @@ int main(void){
   if(!((t==0 && (i==0x78 || i==0x98)) || (t==2 && i==0x78+63*32)))assert(tracks[t][i]==before[t][i]);
  for(unsigned i=0;i<64;++i)assert(index_bytes[i]==expected_index(i));
  assert(index_bytes[0]&1);assert(!(index_bytes[1]&1));assert(index_bytes[1]&2);
- assert(dirty_bank==1 && dirty_project==1 && batches && max_batch<=16);
+ assert(dirty_bank==1 && dirty_project==1 && batches && max_batch<=8);
  setup();assert(psl_prepare(&plan,&context,5,PSL_CLEAR,0)==PSL_OK);
  ++mirrors[0][0x78];assert(psl_commit_locked(&plan,&published)==PSL_STALE);
  assert(!memcmp(tracks,before,sizeof tracks) && !dirty_bank && !dirty_project && !batches);
  setup();assert(psl_prepare(&plan,&context,5,PSL_CLEAR,0)==PSL_OK);
- transport=1;assert(psl_commit_locked(&plan,&published)==PSL_INVALID);
+ transport=2;assert(psl_commit_locked(&plan,&published)==PSL_INVALID);
  assert(!memcmp(tracks,before,sizeof tracks) && !dirty_bank && !dirty_project && !batches);
- puts("PASS production native commit: other p-locks/index bits, selected tracks, mirror and refusal");
+ setup();assert(psl_prepare(&plan,&context,5,PSL_CLEAR,0)==PSL_OK);
+ transport=1;assert(psl_commit_locked(&plan,&published)==PSL_OK && transport==1);observe();
+ setup();
+ for(unsigned t=0;t<8;++t){memset(tracks[t],255,sizeof tracks[t]);memset(tracks[t],255,8);}
+ memcpy(mirrors,tracks,sizeof tracks);memset(index_bytes,0,sizeof index_bytes);
+ assert(psl_prepare(&plan,&context,255,PSL_LOCK,0)==PSL_OK && plan.changed==512);
+ transport=1;assert(psl_commit_locked(&plan,&published)==PSL_OK && published==255 && transport==1);
+ assert(batches==64 && max_batch==8);observe();
+ assert(psl_prepare(&plan,&context,255,PSL_CLEAR,0)==PSL_OK && plan.changed==512);
+ assert(psl_commit_locked(&plan,&published)==PSL_OK && transport==1);observe();
+ puts("PASS production native commit: live playback, coherent per-step publication, 512 edits, preserved non-SAMPLE locks/mirrors and pre-write refusal");
 }
 '''
 with tempfile.TemporaryDirectory(prefix='psl-native-commit-') as tmp:

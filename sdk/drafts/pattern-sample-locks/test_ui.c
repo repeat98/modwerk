@@ -8,11 +8,10 @@
 static uint8_t record[8][PSL_TRACK_BYTES];
 static unsigned native_cursor,popup=1,context_ok=1,commits,redraws;
 static unsigned native_menu_draws;
-static unsigned last_include,last_counts[8];
-static unsigned available=0xa5,transport,stop_requests,stop_safe=1;
+static unsigned last_include,last_counts[8],last_action,last_selection;
+static unsigned available=0xa5,transport;
 static int commit_result=PSL_INVALID;
 unsigned psl_native_transport(void){return transport;}
-int psl_native_stop(void){++stop_requests;return (int)stop_safe;}
 static uint32_t bank=0x400e21e0;
 int psl_native_source(struct psl_source *s)
 {
@@ -38,13 +37,14 @@ void psl_native_part_menu_draw(unsigned char *frame,unsigned count,unsigned curs
     assert(!strcmp(rows[4],"LOCK SAMPLES TO PATTERN") && !strcmp(rows[5],"CLEAR SAMPLE LOCKS"));
     ++native_menu_draws;
 }
-int psl_native_commit(struct psl_plan *p){assert(p->ready);last_include=p->replace;
+int psl_native_commit(struct psl_plan *p){assert(p->ready);last_include=p->replace;last_action=p->action;last_selection=p->selected;
 for(unsigned t=0;t<8;++t){last_counts[t]=0;if(p->selected&(1u<<t))for(unsigned step=0;step<64;++step)last_counts[t]+=p->before[t][step]!=p->after[t][step];}
 ++commits;return commit_result;}
 static int tap(int code){int answer=module_key(code,1);assert(module_key(code,0)==answer);return answer;}
 static void open_action(unsigned clear)
 {
     popup=1;native_cursor=0;psl_ui_open();
+    for(unsigned i=0;i<6;++i)assert(tap(0x33));
     for(unsigned i=0;i<4+clear;++i)assert(tap(0x20));
     assert(tap(0x31));assert(psl_ui_phase()==2 && !popup);
 }
@@ -111,36 +111,51 @@ int main(void)
     tap(0x20);tap(0x21);module_enc(0,1);module_enc(1,1);module_tick(&api);
     assert(((api.value>>16)&255)==0);tap(0x31);assert(psl_ui_phase()==2);tap(0x32);
     available=0xa5;open_action(0);module_enc(0,2147483647);bounds();tap(0x32);
-    /* Running transport is stopped asynchronously, never committed early. */
-    open_action(0);module_enc(0,1);tap(0x31);transport=1;
-    unsigned previous=commits;tap(0x31);assert(psl_ui_phase()==5 && stop_requests && commits==previous);bounds();
-    assert(tap(0x28));assert(psl_ui_phase()==5 && commits==previous); /* PLAY swallowed */
-    assert(!tap(0x27)); /* native STOP passed through */
-    transport=0;module_tick(&api);assert(psl_ui_phase()==4 && commits==previous+1);tap(0x32);
-    open_action(0);module_enc(0,1);tap(0x31);transport=1;tap(0x31);tap(0x32);transport=0;
-    module_tick(&api);assert(!psl_ui_phase() && commits==previous+1); /* cancel */
-    open_action(0);module_enc(0,1);tap(0x31);transport=2;tap(0x31);assert(psl_ui_phase()==4 && commits==previous+1);tap(0x32);
-    transport=0;open_action(0);module_enc(0,1);tap(0x31);transport=1;tap(0x31);
-    for(unsigned i=0;i<120;++i)module_tick(&api);
-    assert(psl_ui_phase()==4 && commits==previous+1);tap(0x32);transport=0;
-    /* Successful Apply closes directly, including an unchanged pattern. No
-     * acknowledgement press or leftover drawing may intercept stock UI. */
+    /* Both stopped and playing calls apply directly, never modifying the
+     * transport; active recording refuses before calling the writer. */
+    for(unsigned playing=0;playing<2;++playing) {
+        transport=playing;unsigned previous=commits;
+        open_action(0);module_enc(0,1);tap(0x31);tap(0x31);
+        assert(psl_ui_phase()==4 && commits==previous+1 && transport==playing);tap(0x32);
+    }
+    unsigned previous=commits;
+    open_action(0);module_enc(0,1);tap(0x31);transport=2;tap(0x31);
+    assert(psl_ui_phase()==4 && commits==previous && transport==2);tap(0x32);transport=0;
     commit_result=PSL_OK;
     for(unsigned clear=0;clear<2;++clear) {
-        previous=commits;open_action(clear);module_enc(0,1);tap(0x31);tap(0x31);
-        assert(!psl_ui_phase() && commits==previous+1 && !popup);
+        previous=commits;open_action(clear);module_enc(0,1);tap(0x31);transport=1;tap(0x31);
+        assert(!psl_ui_phase() && commits==previous+1 && !popup && transport==1);
         uint8_t closed[1024],expected[1024];memset(closed,0x5a,sizeof closed);memcpy(expected,closed,sizeof closed);
         module_draw(closed);assert(!memcmp(closed,expected,sizeof closed));
         assert(!tap(0x31) && commits==previous+1);
     }
-    available=0x20;open_action(1);module_enc(0,1);tap(0x31);tap(0x31);
+    transport=0;available=0x20;open_action(1);module_enc(0,1);tap(0x31);tap(0x31);
     assert(!psl_ui_phase() && last_counts[5]==0);
-    available=0xa5;previous=commits;
-    open_action(0);module_enc(0,1);tap(0x31);transport=1;tap(0x31);
-    assert(psl_ui_phase()==5 && commits==previous);
-    transport=0;module_tick(&api);assert(!psl_ui_phase() && commits==previous+1);
-    commit_result=PSL_STALE;open_action(0);module_enc(0,1);tap(0x31);tap(0x31);
-    assert(psl_ui_phase()==4);bounds();tap(0x32);
+    /* Save Lock's ALL intent, replacement ON and cursor at T8. */
+    available=0xa5;open_action(0);module_enc(0,1);module_enc(2,1);
+    tap(0x21);tap(0x20);tap(0x20);tap(0x31);tap(0x31);
+    assert(!psl_ui_phase() && last_action==PSL_LOCK && last_include==1 && last_selection==0xa5);
+    /* Reopening highlights the last successful action. ALL adapts to the new
+     * eligible set; B still targets remembered T8. Cancel preserves prefs. */
+    available=255;popup=1;psl_ui_open();tap(0x31);assert(psl_ui_phase()==2);
+    module_tick(&api);assert(((api.value>>16)&255)==255);
+    module_enc(1,-1);module_tick(&api);assert(((api.value>>16)&255)==127);tap(0x32);
+    open_action(0);tap(0x31);tap(0x31);assert(last_include==1 && last_selection==255);
+    /* Clear keeps its own custom T3 profile, independent of Lock. */
+    available=0xa5;open_action(1);module_enc(0,-1);tap(0x34);for(unsigned i=0;i<4;++i)tap(0x33);tap(0x20);module_enc(1,1);
+    tap(0x31);tap(0x31);assert(last_action==PSL_CLEAR && last_selection==4 && last_include==0);
+    popup=1;psl_ui_open();tap(0x31);module_tick(&api);assert(((api.value>>16)&255)==4);
+    module_enc(2,1);tap(0x31);tap(0x31);assert(last_action==PSL_CLEAR && last_include==0);
+    /* Disabled saved tracks are filtered without selecting a substitute. */
+    available=0xa1;open_action(1);module_tick(&api);assert(((api.value>>16)&255)==0);tap(0x32);
+    available=0xa5;open_action(1);module_tick(&api);assert(((api.value>>16)&255)==4);tap(0x32);
+    /* Refused/stale operations and drafts must not overwrite either profile
+     * or the remembered level-one action. */
+    commit_result=PSL_STALE;open_action(0);module_enc(0,-1);module_enc(1,1);module_enc(2,-1);
+    tap(0x31);tap(0x31);assert(psl_ui_phase()==4);bounds();tap(0x32);
+    popup=1;psl_ui_open();tap(0x31);module_tick(&api);assert(((api.value>>16)&255)==4);tap(0x32);
+    commit_result=PSL_OK;open_action(0);tap(0x31);tap(0x31);
+    assert(last_action==PSL_LOCK && last_include==1 && last_selection==0xa5);
     assert(redraws>0);
-    puts("PASS popup UI: native pass-through, eligible-only selection, explicit confirmation, cancellation, changed context, foreign popup and framebuffer bounds");
+    puts("PASS popup UI: playback unchanged, recording refusal, direct close, successful-operation RAM profiles, eligible filtering and native-font layout");
 }
