@@ -3,7 +3,7 @@
   "kind": "authored-utility-packages",
   "stockRead": false,
   "revision": "b8deefc88b2c3e5f3c6158e364eb741df1924e1d",
-  "sourceCommit": "ee2c4e2ec778ccbf823c5e532f79a521a1209970",
+  "sourceCommit": "f1a250041d65c104644623fc2842eee14a59308d",
   "moduleVersions": {
     "spectrum": "0.1.1-experimental",
     "modulation": "0.1.1-experimental",
@@ -30,13 +30,12 @@
     "playmodes": "0.2.0-experimental",
     "mute-modes": "0.2.1-experimental",
     "recorder-loop-fix": "0.1.0-experimental",
-    "poly8": "0.3.1-experimental",
+    "poly8": "0.3.2-experimental",
     "output-matrix": "0.1.1-experimental",
     "quantize-live-rec-toggle": "0.1.1-experimental",
     "apply-scene": "0.2.0-experimental",
     "direct-jump-kyoti": "0.1.2-experimental",
-    "dejavu": "0.1.0-experimental",
-    "arp-key-locks": "0.1.0-experimental"
+    "dejavu": "0.1.0-experimental"
   },
   "compilerSha256": "ba4cfc6b0c5948f8b0a2809d5b73bea85633eb32f82ffc761a6373d9c4d48c5f",
   "qualification": "Source assembly and relocation only. Hardware and release approval are not supplied by this artifact.",
