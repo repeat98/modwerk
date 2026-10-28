@@ -7,7 +7,7 @@
       "Clear all SAMPLE locks on selected Flex/Static tracks, including manual locks.",
       "Remove ownership bookkeeping, battery storage and native edit-history hooks.",
       "Keep track selection, confirmation counts and STOP-before-edit.",
-      "Known limits: first MKII trial failed the base self-test track-restoration check; functional and audible behavior remain unqualified."
+      "Known limits: isolated MKII load/self-test/Undo passed; functional, timing and audible qualification remain incomplete."
     ]
   },
   {

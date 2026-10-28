@@ -70,7 +70,7 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Emulator checks are recorded in TESTING.md. First physical MKII trial loaded beside 18 modules, then the base self-test failed track restoration (bit 32). Undo restored the exact original inventory and whole-set identity. Cause unknown; manual UI and SAMPLE editing were not reached. Hardware qualification is incomplete.",
+    "summary": "Emulator checks are recorded in TESTING.md. A combined MKII self-test failed track restoration. An isolated MKII self-test and timed Undo passed with original inventory and whole-set identity restored. The user reported expected Lock/Clear changes and STOP-before-edit. CPU capture recorded a sampled whole-instrument peak of 54.0%; exact operation timing and full hardware qualification remain incomplete.",
     "hardwareStatus": "reported",
     "evidenceRevision": "853dae7d45c868db676b112049036913e74f5790",
     "gates": [

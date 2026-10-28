@@ -1,0 +1,55 @@
+{
+  "hardware": true,
+  "moduleVersion": "0.1.6-experimental",
+  "packageSha256": "0cd6c725f6be493ea461b7a54231032416cab3cad77bf3327e644db212848961",
+  "moduleId": "4bdbfbf9",
+  "started": "2026-10-28T20:13:52.337Z",
+  "finished": "2026-10-28T20:23:57.488Z",
+  "keep": false,
+  "flash": false,
+  "projectSave": false,
+  "onlyTarget": true,
+  "setPackageSha256": "9b6c2df7b972251b71fa0f811fc34791ece955b62ad6f3417e102881e69fa107",
+  "selftest": {
+    "failure": null,
+    "record": {
+      "state": 2,
+      "failed": 0,
+      "modules": 1,
+      "dsp": 0,
+      "intact": 1,
+      "ran": 0,
+      "peaks": {
+        "tracks1to4": 0,
+        "tracks5to8": 0,
+        "cpu": 0
+      },
+      "done": 0,
+      "total": 2,
+      "frameGap": 49262,
+      "saved": 1,
+      "savedCount": 18,
+      "live": 1,
+      "culprit": 0,
+      "culpritName": "",
+      "refusal": 0
+    }
+  },
+  "undoVerified": true,
+  "model": "MKII",
+  "base": "9b7e0eb337a92378306a9b837f04adb3b93242a42f6113e418607ad8fe5dd57b",
+  "trialSeconds": 600,
+  "trialInventory": [
+    {
+      "module": "4bdbfbf9",
+      "name": "SAMPLE LOCKS"
+    }
+  ],
+  "restoredModules": 18,
+  "baselineWholeSet": "b6ef21db9e718d147ea1e86cd323d8a9563da0667abbb03f80ccbbc790481967",
+  "restoredWholeSet": "b6ef21db9e718d147ea1e86cd323d8a9563da0667abbb03f80ccbbc790481967",
+  "baselineActive": "9b7e0eb337a92378306a9b837f04adb3b93242a42f6113e418607ad8fe5dd57b",
+  "restoredActive": "9b7e0eb337a92378306a9b837f04adb3b93242a42f6113e418607ad8fe5dd57b",
+  "receiptSha256": "8681230541c8137b66d00bdbef487ff317976ef5f1c85ef2ac0feecfc024276b",
+  "scope": "Isolated module loaded, base self-test passed and timed Undo verified; no explicit user report of functional correctness."
+}

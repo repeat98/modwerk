@@ -1,0 +1,91 @@
+{
+  "hardware": true,
+  "model": "MKII",
+  "moduleVersion": "0.1.6-experimental",
+  "packageSha256": "0cd6c725f6be493ea461b7a54231032416cab3cad77bf3327e644db212848961",
+  "base": "9b7e0eb337a92378306a9b837f04adb3b93242a42f6113e418607ad8fe5dd57b",
+  "setPackageSha256": "9b6c2df7b972251b71fa0f811fc34791ece955b62ad6f3417e102881e69fa107",
+  "onlyTarget": true,
+  "activeModulesAtTrialStart": 1,
+  "selftest": {
+    "failure": null,
+    "record": {
+      "state": 2,
+      "failed": 0,
+      "modules": 1,
+      "dsp": 0,
+      "intact": 1,
+      "ran": 0,
+      "peaks": {
+        "tracks1to4": 0,
+        "tracks5to8": 0,
+        "cpu": 0
+      },
+      "done": 0,
+      "total": 2,
+      "frameGap": 52187,
+      "saved": 1,
+      "savedCount": 18,
+      "live": 1,
+      "culprit": 0,
+      "culpritName": "",
+      "refusal": 0
+    }
+  },
+  "sampleCount": 579,
+  "windowStartUtc": "2026-10-28T20:24:05.679Z",
+  "windowEndUtc": "2026-10-28T20:26:03.384Z",
+  "requestedPollMilliseconds": 200,
+  "actualMeanPollMilliseconds": 203.64186879260316,
+  "metrics": {
+    "cpu": {
+      "validSamples": 579,
+      "minPercent": 43.1,
+      "maxPercent": 54.0,
+      "meanPercent": 47.012,
+      "peakAtUtc": "2026-10-28T20:25:25.456Z"
+    },
+    "tracks1to4": {
+      "validSamples": 579,
+      "minPercent": 35.9,
+      "maxPercent": 36.7,
+      "meanPercent": 36.631,
+      "peakAtUtc": "2026-10-28T20:24:05.679Z"
+    },
+    "tracks5to8": {
+      "validSamples": 579,
+      "minPercent": 41.8,
+      "maxPercent": 41.8,
+      "meanPercent": 41.8,
+      "peakAtUtc": "2026-10-28T20:24:05.679Z"
+    },
+    "peak1to4": {
+      "validSamples": 579,
+      "minPercent": 37.5,
+      "maxPercent": 37.8,
+      "meanPercent": 37.644,
+      "peakAtUtc": "2026-10-28T20:24:29.952Z"
+    },
+    "peak5to8": {
+      "validSamples": 579,
+      "minPercent": 41.9,
+      "maxPercent": 42.8,
+      "meanPercent": 42.107,
+      "peakAtUtc": "2026-10-28T20:24:22.470Z"
+    }
+  },
+  "recordingSha256": "5eaca42fd140b28959268a8e43b66cc5fbb574aaff8da790dd56a5333c618d6d",
+  "scope": "Cached whole-instrument CPU/DSP meters during a manual test; repeated cached windows are retained. No operation timestamps or matched unloaded baseline. Short operation spikes may be missed. Not exact module CPU/DSP cost.",
+  "userReport": "User confirmed both Lock and Clear produced the expected sample-lock changes and playback stopped before each operation.",
+  "keep": false,
+  "flash": false,
+  "trialAtSnapshot": "active; scheduled automatic Undo, not yet verified for this capture",
+  "functionalChecks": {
+    "lockExpectedChanges": "user-reported passed",
+    "clearExpectedChanges": "user-reported passed",
+    "stopBeforeEachOperation": "user-reported passed",
+    "manualLockPreservation": "not explicitly checked",
+    "unrelatedBytesPreserved": "not independently verified",
+    "audibleContinuity": "not reported"
+  }
+}
