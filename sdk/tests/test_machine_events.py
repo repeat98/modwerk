@@ -46,14 +46,16 @@ class MachineEventTests(unittest.TestCase):
 
     def test_registry_knows_every_protect_port_signature(self):
         # The validator keeps a known PROTECT machine's 12 bytes while it is absent (the boot's battery restore runs
-        # before the saved set reinstalls it: beta finding 24). The list must be exactly the PROTECT ports.
+        # before the saved set reinstalls it: beta finding 24). The list must be exactly the PROTECT ports and the
+        # native PROTECT machine modules named here, each with its signature and version range.
         text = (OT / 'elekloader/machine_registry.c').read_text()
         listed = re.search(r'\} known\[\] = \{(.*?)\};', text).group(1)
         known = {(a + b, int(lo), int(hi)) for a, b, lo, hi in re.findall(r"\{\{'(.)', '(.)'\}, (\d+), (\d+)\}", listed)}
         ports = json.loads((ADAPTERS / 'machine-ports.json').read_text())['ports']
         protect = {(p['machine']['sig'], p['machine']['lo'], p['machine']['hi']) for p in ports.values()
                    if 'PROTECT' in p.get('machine', {}).get('flags', [])}
-        self.assertEqual(known, protect)
+        native = {('WV', 1, 3)}  # WAVE (sdk/drafts/wave/machine.c): the model is the version byte, 1-3
+        self.assertEqual(known, protect | native)
         self.assertIn(('AB', 1, 1), known)
 
     def test_contributor_admission_on_the_host(self):
