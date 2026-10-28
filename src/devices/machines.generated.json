@@ -133,7 +133,7 @@
           "name": "Shared mod memory",
           "unit": "bytes",
           "value": 131072,
-          "note": "DDR 0x47BE0000–0x47C00000 below the audio DMA ring, shared by the core and every mod (public research: elekloader, digikit)."
+          "note": "DDR 0x47BE0000–0x47C00000 below the audio DMA ring, shared by the core and every mod (public research: elekloader)."
         },
         {
           "name": "Fast SRAM for code",
@@ -220,7 +220,7 @@
           "name": "Shared mod memory",
           "unit": "bytes",
           "value": 131072,
-          "note": "DDR 0x47BE0000–0x47C00000 below the audio DMA ring, shared by the core and every mod (public research: elekloader, digikit)."
+          "note": "DDR 0x47BE0000–0x47C00000 below the audio DMA ring, shared by the core and every mod (public research: elekloader)."
         },
         {
           "name": "Parameter slots",
@@ -274,14 +274,9 @@
     },
     "research": [
       {
-        "label": "digikit",
-        "url": "https://github.com/m-dwyer/digikit",
-        "note": "Emulator for the control processor that boots the real OS and shows its screen, plus analysis tools for the audio processor and the sealed OS file."
-      },
-      {
         "label": "elekloader DTII core and OS 1.17 tests",
         "url": "https://github.com/irpina/elekloader/tree/3acac10/mods/core-dt2",
-        "note": "Experimental OS 1.17 profile, sealed firmware writer and shared-event core. Its DTII tests verify byte-exact stock rebuilding, seal checks and linked builds. Core builds boot in Digikit; this is not Modwerk hardware qualification."
+        "note": "Experimental OS 1.17 profile, sealed firmware writer and shared-event core. Its DTII tests verify byte-exact stock rebuilding, seal checks and linked builds. Core builds boot in an emulator; this is not Modwerk hardware qualification."
       },
       {
         "label": "toonst's Digitakt II perform mods 1.0",
@@ -367,11 +362,6 @@
         "label": "Digitone II OS research",
         "url": "https://github.com/repeat98/modwerk/blob/main/docs/DIGITONE_II_OS_RESEARCH.md",
         "note": "OS 1.12: container, seal, staging, reset memory map, free DDR and SRAM, the seven core sites and the emulator checks. Stock-free: hashes and addresses only."
-      },
-      {
-        "label": "digikit",
-        "url": "https://github.com/m-dwyer/digikit",
-        "note": "Emulator for the control processor that boots the real OS and shows its screen, plus analysis tools for the audio processor and the sealed OS file. Supports Digitone II OS 1.11 and 1.12."
       },
       {
         "label": "elekloader DTII core",
@@ -592,10 +582,10 @@
       "catalog": null,
       "guide": "sdk/machines/analog-rytm-mkii/README.md",
       "core": {
-        "version": "0.3",
+        "version": "0.7",
         "path": "sdk/analog-rytm-mkii/core-profile"
       },
-      "toolchain": "m68k-linux-gnu (or m68k-elf) GCC and binutils for ColdFire, and elekloader's builder: core-ar2 0.3 from the owner's exact OS 1.74 .syx.",
+      "toolchain": "m68k-linux-gnu (or m68k-elf) GCC and binutils for ColdFire, and elekloader's builder: core-ar2 0.7 from the owner's exact OS 1.74 .syx.",
       "budgets": [
         {
           "name": "Shared mod memory",
@@ -606,8 +596,8 @@
         {
           "name": "Core image",
           "unit": "bytes",
-          "value": 7576,
-          "note": "Core 0.3 build (core-ar2-v0.3 pre-release): 7,540 bytes .run plus 36 bytes .bss in the shared area, and an 88-byte .boot copier; the link check measures each selected module set."
+          "value": 12060,
+          "note": "Core 0.7 build (core-ar2-v0.7 pre-release): 10,692 bytes .run plus 1,368 bytes .bss in the shared area, and a 94-byte .boot copier (core 0.3: 7,540, 36 and 88); the link check measures each selected module set."
         }
       ]
     }

@@ -181,7 +181,9 @@
       "module": "9fa85eef",
       "bytes": 59308,
       "sha256": "dc2ce372af73b93ef9e34a1c05c8ad18269631e0f20ed4f94e461310990466b9",
-      "path": "octatrack-modules/poly8/0.3.1-experimental.mwrm"
+      "path": "octatrack-modules/poly8/0.3.1-experimental.mwrm",
+      "lagsBehind": "0.3.2-experimental",
+      "lagReason": "0.3.2 changes only the card build's machine chooser (#842, #941, #942); over USB the base owns the chooser, and the package rebuilds byte-identical from 0.3.2's source"
     },
     {
       "id": "vector",
@@ -191,12 +193,12 @@
       "sites": 2,
       "copies": 8,
       "fills": 0,
-      "version": "0.2.4-experimental",
+      "version": "0.2.5-experimental",
       "name": "VECTOR",
       "module": "b0d51c58",
-      "bytes": 18350,
-      "sha256": "2cf04fd4343aa276271cef9d32025fb94e0da064f5702052acc152c486b1aec0",
-      "path": "octatrack-modules/vector/0.2.4-experimental.mwrm"
+      "bytes": 18354,
+      "sha256": "45c962ca3a202ac697e3d33d97e4b3b94052706a390189e5baf923fa829de577",
+      "path": "octatrack-modules/vector/0.2.5-experimental.mwrm"
     },
     {
       "id": "synth",
@@ -336,9 +338,9 @@
       "name": "SIDECHAIN COMP",
       "module": "95cff696",
       "bytes": 2636,
-      "sha256": "d34737d2d7b804643967788741c23f0d5010a6c14a20967acc6831376c8af95f",
+      "sha256": "147caf1d9264cf1970e694f682d732655d9ffb20a799c56250176f8123b751a7",
       "path": "octatrack-modules/sidechain-compressor/0.2.0-experimental.mwrm",
-      "requiredBase": "903f8ed633dd4c72f5e0d68b4091904b981a2f42c021170ebf68e652b85bd362"
+      "requiredBase": "6541d7e9d14c584726a1eb71c296dd97d98e5309dfa67b51ef65c931e2b4f4b0"
     },
     {
       "id": "output-matrix",
@@ -352,9 +354,9 @@
       "name": "OUTPUT MATRIX",
       "module": "caf158b5",
       "bytes": 3740,
-      "sha256": "af1a5742c7544e6b19e81812a1375ed2955691550095661aa86bf4837f49fa91",
+      "sha256": "79cfcb12e627ab77cda2863a9a6b05d78e96bc511e2fb0e37830621c87addf9e",
       "path": "octatrack-modules/output-matrix/0.1.1-experimental.mwrm",
-      "requiredBase": "903f8ed633dd4c72f5e0d68b4091904b981a2f42c021170ebf68e652b85bd362"
+      "requiredBase": "6541d7e9d14c584726a1eb71c296dd97d98e5309dfa67b51ef65c931e2b4f4b0"
     },
     {
       "id": "cc-map",
@@ -370,7 +372,7 @@
       "bytes": 966,
       "sha256": "c7cd39a5f645d69279d3a288c40b8366e6638acdc042cf0fe68dfb9964a68ea2",
       "path": "octatrack-modules/cc-map/0.1.2-experimental.mwrm",
-      "requiredBase": "903f8ed633dd4c72f5e0d68b4091904b981a2f42c021170ebf68e652b85bd362"
+      "requiredBase": "6541d7e9d14c584726a1eb71c296dd97d98e5309dfa67b51ef65c931e2b4f4b0"
     },
     {
       "id": "quantize-live-rec-toggle",
@@ -446,7 +448,7 @@
       "bytes": 1818,
       "sha256": "819375b9f82f7f372062cd7e591b412c70635a54597ff7bc832da9a1270d52dc",
       "path": "octatrack-modules/recorder-loop-fix/0.1.0-experimental.mwrm",
-      "requiredBase": "903f8ed633dd4c72f5e0d68b4091904b981a2f42c021170ebf68e652b85bd362"
+      "requiredBase": "6541d7e9d14c584726a1eb71c296dd97d98e5309dfa67b51ef65c931e2b4f4b0"
     },
     {
       "id": "analog-bassdrum",
@@ -460,9 +462,9 @@
       "name": "Analog BD",
       "module": "abdb1445",
       "bytes": 25822,
-      "sha256": "7a1b08e8912d190400fb37cff6c8dbdc85d09bf01ba887cbe99e3ed5d66a5e4b",
+      "sha256": "626d6f646ea48c996a924c82669bdfa6ad38a58e0c4bd0c72c4737db0e25d80b",
       "path": "octatrack-modules/analog-bassdrum/0.1.5-experimental.mwrm",
-      "requiredBase": "903f8ed633dd4c72f5e0d68b4091904b981a2f42c021170ebf68e652b85bd362",
+      "requiredBase": "6541d7e9d14c584726a1eb71c296dd97d98e5309dfa67b51ef65c931e2b4f4b0",
       "requires": 0,
       "claims": 1,
       "entries": 1

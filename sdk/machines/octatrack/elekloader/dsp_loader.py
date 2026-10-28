@@ -32,6 +32,11 @@ INIT, PROC = 0x215, 0x235  # stock's dispatch table: init[32], then proc[32]
 TABLE_HOME, TABLE_END = 0x7a92, 0x8000
 TABLE_READ = 0x0a71d2      # the opcode word before each read's operand ($215 or $235), six per payload
 SAVED = 64                 # the receiver keeps each id's original entries at the head of its table
+# The receiver's packet operations run from the top of each core's FX2 block 3 in the shared window (dsp_receiver.asm,
+# between its window and private markers): past every stock effect's extent ($3da3) and E-Verb's and Mini Verb's
+# (15,870 words), so only an FX2 buffer that reaches past $3e00 is kept out of that block (buffers.c, build_core.py).
+WINDOW = {'A': 0x37e00, 'B': 0x3fe00}
+WINDOW_TAIL, WINDOW_WORDS = 0x3e00, 0x200
 
 
 def payload_words(image, device, dsp, tag):
@@ -143,10 +148,12 @@ CORE1_WAIT = (0x57, (0x0cd341, 0x000000))  # payload B: brclr #1,y:<<$ffffd3,* (
 CORE1_METER = ('        move    b1,x0\n', '        move    x:>$2840,x0\n        clr     a\n        move    a1,x:>$2840\n')
 
 
-def receiver_source(text, null, table_words, probe=None, burn=0, tag='A', ids=32):
+def receiver_source(text, null, table_words, probe=None, burn=0, tag='A', ids=32, burn_at=None, cold=None):
     """The receiver with its table's size and stock's null stub (dry ids) filled in, its idle count
     core 1's counted wait on payload B; `burn` (calibration builds) spends that many more cycles every
-    frame, so the load meter's idle count falls by a known amount."""
+    frame, so the load meter's idle count falls by a known amount. `burn_at` (address, words): the burn
+    runs as a routine the receiver writes into the shared window every frame and calls there, to
+    compare code fetched from the window with code in private P. `cold`: COLD_FIELDS' addresses."""
     if tag == 'B':
         if text.count(CORE1_METER[0]) != 1:
             raise ValueError('The DSP receiver changed; review core 1\'s idle count.')
@@ -160,7 +167,14 @@ def receiver_source(text, null, table_words, probe=None, burn=0, tag='A', ids=32
         if text.count(old) != 1 or not 0 < burn < 4096 or burn % 2:
             raise ValueError('The DSP receiver changed, or a burn not even and within 2-4094 cycles.')
         # A DO loop, not rep: rep holds off interrupts while it repeats.
-        text = text.replace(old, old + '        do      #%d,burnt\n        nop\n        nop\nburnt:\n' % (burn // 2))
+        loop = '        do      #%d,burnt\n        nop\n        nop\nburnt:\n' % (burn // 2)
+        if burn_at:
+            # r0, r1 and x0 are free here: the packet check below sets them again.
+            address, words = burn_at
+            loop = '        move    #>$%x,r1\n' % address + ''.join(
+                '        move    #>$%x,x0\n        move    x0,p:(r1)+\n' % w for w in words) + (
+                '        move    #>$%x,r0\n        jsr     (r0)\n' % address)
+        text = text.replace(old, old + loop)
     if not 32 <= ids <= 128 or TABLE_HOME + 2 * ids > TABLE_END:
         raise ValueError('The dispatch tables hold 32 to 128 ids.')
     fill = lambda value, label: ('        move    #>$%x,x0\n        do      #%d,%s\n        move    x0,x:(r1)+\n%s:\n' % (
@@ -172,11 +186,26 @@ def receiver_source(text, null, table_words, probe=None, burn=0, tag='A', ids=32
                             ('@INITTABLE@', '$%x' % TABLE_HOME, 3), ('@IDS@', str(ids), 7), ('@IDMAX@', str(ids - 1), 1),
                             ('@XWSTART@', '$%x' % (TABLE_HOME + 2 * ids), 4 if probe == 'X' else 0),
                             ('@XWCHUNK@', str(chunk), 1 if probe == 'X' else 0),
-                            ('@DLWORDS@', str(table_words), 4)):
+                            ('@DLWORDS@', str(table_words), 4)) + tuple(
+                                ('@%s@' % key, '$%x' % (cold or {}).get(key, 1), count) for key, count in COLD_FIELDS):
         if text.count(old) != count:
             raise ValueError('The DSP receiver changed (%s); review the port.' % old)
         text = text.replace(old, new)
     return text
+
+
+# The addresses each half of the receiver names of the other (receiver_source's `cold`), and how often.
+COLD_FIELDS = (('STAGE', 1), ('WINDOW', 1), ('COLDWORDS', 1), ('COLDSUM', 1), ('COLDOPS', 1), ('TABLE', 7),
+               ('MISSOFFSET', 1), ('MISSEXPECTED', 1), ('MISSACTUAL', 1), ('NULLENTRY', 1))
+
+
+def split_receiver(text):
+    """-> (the half in private P, the half run from the window): dsp_receiver.asm's =window= and =private= markers."""
+    if text.count(';=window=\n') != 1 or text.count(';=private=\n') != 1:
+        raise ValueError('The DSP receiver no longer marks its window half; review the port.')
+    hot, rest = text.split(';=window=\n')
+    cold, tail = rest.split(';=private=\n')
+    return hot + tail, cold
 
 
 def words_sha(words):
@@ -229,7 +258,49 @@ def reads_buffer(words, base, init, work):
     return 1  # no rts reached: assume it reads, the side that reserves a block
 
 
-def recipe(image, device, dsp, assemble, work, probe=None, burn=0, ids=32):
+def window_burn(assemble, work, burn, address):
+    """The burn as a routine for P:`address` in the shared window (`receiver_source`'s `burn_at`)."""
+    if not 0x30000 <= address <= WINDOW['A'] - 8:  # below core 0's window half of the receiver
+        raise ValueError('A window burn goes in 0x30000..%#x.' % (WINDOW['A'] - 8))
+    path = Path(work) / 'window-burn.asm'
+    path.write_text('        do      #%d,wburnt\n        nop\n        nop\nwburnt:\n        rts\n' % (burn // 2))
+    words, _, relocations = assemble(str(path))
+    for at, target in relocations:
+        words[at] = address + target
+    return address, words
+
+
+def place_receiver(assemble, work, tag, source, origin, top):
+    """-> (the private half's words at `origin`, its labels, the table's words up to `top`, the window half's words):
+    the window half assembled for WINDOW[tag] and staged in the table's top words, the private half copying it there
+    at the first frame. `source(table_words, cold)`: the receiver's text (receiver_source)."""
+    private, window = Path(work) / ('receiver-%s.asm' % tag), Path(work) / ('receiver-%s-window.asm' % tag)
+    # Every operand either half names of the other is a long one, so neither half's size depends on the addresses.
+    window.write_text(split_receiver(source(0, None))[1])
+    cold_words, cold_labels, _ = assemble(str(window))
+    private.write_text(split_receiver(source(0, None))[0])
+    size = len(assemble(str(private))[0])
+    table = top - origin - size
+    cold = dict(STAGE=origin + size + table - len(cold_words), WINDOW=WINDOW[tag], COLDWORDS=len(cold_words),
+                COLDSUM=WINDOW[tag] + cold_labels['badsum'], COLDOPS=WINDOW[tag] + cold_labels['coldops'])
+    private.write_text(split_receiver(source(table, cold))[0])
+    code, labels, relocations = assemble(str(private))
+    cold.update(TABLE=origin + labels['dltable'], MISSOFFSET=origin + labels['missoffset'], NULLENTRY=origin + labels['nullentry'],
+                MISSEXPECTED=origin + labels['missexpected'], MISSACTUAL=origin + labels['missactual'])
+    window.write_text(split_receiver(source(table, cold))[1])
+    staged, staged_labels, staged_relocations = assemble(str(window))
+    if len(code) != size or labels['dltable'] != size or staged_labels != cold_labels or len(staged) != len(cold_words):
+        raise ValueError('Payload %s: the receiver\'s halves changed size with their addresses.' % tag)
+    if len(staged) > WINDOW_WORDS or table < SAVED + len(staged):
+        raise ValueError('Payload %s: the receiver\'s window half (%d words) does not fit its tail or the table.' % (tag, len(staged)))
+    for index, offset in relocations:
+        code[index] = origin + offset
+    for index, offset in staged_relocations:
+        staged[index] = WINDOW[tag] + offset
+    return code, labels, table, staged
+
+
+def recipe(image, device, dsp, assemble, work, probe=None, burn=0, ids=32, burn_window=0):
     """-> (sites, layout) for both payloads. `assemble(path)` is Elekloader's
     sdk.build.dsp_assemble (octabam's dsp_asm at two origins)."""
     metadata = json.loads(METADATA.read_text())
@@ -288,24 +359,20 @@ def recipe(image, device, dsp, assemble, work, probe=None, burn=0, ids=32):
         if hook != list(FRAME_WORDS):
             raise ValueError('Payload %s: the frame head is not the stock instruction the receiver replays.' % tag)
         # The receiver's size does not depend on its table's: every operand it moves is a long one.
-        path = Path(work) / ('receiver-%s.asm' % tag)
         # One core at a time: with 2,000 more cycles a frame on both cores the unit hung at its logo (10 October 2026).
         burned = abs(burn) if (tag == 'B') == (burn < 0) else 0  # a negative burn is core 1's
-        path.write_text(receiver_source(RECEIVER.read_text(), null, 0, probe, burned, tag, ids))
-        size = len(assemble(str(path))[0])
-        table = hi - origin - size
-        path.write_text(receiver_source(RECEIVER.read_text(), null, table, probe, burned, tag, ids))
-        code, labels, relocations = assemble(str(path))
+        burn_at = window_burn(assemble, work, burned, burn_window) if burned and burn_window else None
+        code, labels, table, staged = place_receiver(assemble, work, tag, lambda words, cold: receiver_source(
+            RECEIVER.read_text(), null, words, probe, burned, tag, ids, burn_at, cold), origin, hi)
         # The least arena that still runs every stock effect on its own: the largest, DARK REV.
-        if len(code) != size or labels['dltable'] != size or table < SAVED + max(len(s['words']) for s in stock.values()):
+        if table < SAVED + max(len(s['words']) for s in stock.values()):
             raise ValueError('Payload %s: the receiver and the largest stock effect do not fit the block.' % tag)
         # dsp.c reads the first wrong word back from three consecutive receiver words, after
         # tablebase's operand (the table address, a known word) and its rts.
         if [labels[k] - labels['missoffset'] for k in ('tablebase', 'missexpected', 'missactual')] != [-3, 1, 2]:
             raise ValueError('Payload %s: the receiver\'s mismatch record is not three consecutive words.' % tag)
-        for index, offset in relocations:
-            code[index] = origin + offset
-        words, covered, fills = shared + code + [0] * table, 0, []  # the saved entries must start empty
+        # The saved entries must start empty; the window half waits in the table's top words until the first frame.
+        words, covered, fills = shared + code + [0] * (table - len(staged)) + staged, 0, []
         for space, start, count, first in records:  # one site per payload record
             a, b = max(lo, start), min(hi, start + count)
             if space or a >= b:
@@ -345,7 +412,8 @@ def recipe(image, device, dsp, assemble, work, probe=None, burn=0, ids=32):
                 first = at(1, table_at + fx) - device.main_load
                 sites.append(dict(addr=hex(at(1, table_at + fx)), stock=image[first:first + 3].hex(), op='bytes',
                                   kind='data', new=value.to_bytes(3, 'little').hex()))
-        layout[tag] = dict(core=payload['core'], receiver=origin, frame=frame, table=origin + size, tableWords=table,
+        layout[tag] = dict(core=payload['core'], receiver=origin, frame=frame, table=origin + len(code), tableWords=table,
+                           window=WINDOW[tag], windowWords=len(staged),
                            dispatch=TABLE_HOME, ids=ids,
                            miss=origin + labels['missoffset'], meter=origin + labels['idlepub'], null=null, free=free,
                            stock={fx: {k: v for k, v in s.items() if k != 'words'} for fx, s in stock.items()},

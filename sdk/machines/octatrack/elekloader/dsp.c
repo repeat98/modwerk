@@ -107,6 +107,10 @@ void dl_residency_nudge(void);
  * words at the head of the FX2 block (Octabam dsp_ranges.py); a module there shares them as stock's reverbs do. */
 #define FX1_BUFFER 3072u
 #define FX2_BUFFER 16384u
+/* The receiver's packet operations sit at the top of each core's FX2 block 3 (dsp_loader.py WINDOW): a buffer that
+ * reaches past this many words is "wide" (catalog byte 2) and buffers.c keeps it out of that block. */
+#define WINDOW_TAIL 0x3e00u
+#define BUFFER_READS(d) ((d)->buffer ? ((d)->buffer > WINDOW_TAIL ? 2u : 1u) : 0u)
 
 #ifdef MODWERK_HOST
 uint8_t modwerk_test_live_fx[16], *modwerk_test_bank;
@@ -302,7 +306,7 @@ static void catalogue_stamp(const struct runtime_dsp *d,uint8_t *out)
 /* Shared scalar publication, without a page, map write or manager nudge. */
 static void __attribute__((noinline)) catalogue_install(const struct runtime_dsp *to,uint32_t generation)
 {
-    dl_catalog[to->id] = (struct dl_package){(uint16_t)to->count, 1, chip_cycles(to), to->slots, 0, 1, to->buffer != 0};
+    dl_catalog[to->id] = (struct dl_package){(uint16_t)to->count, 1, chip_cycles(to), to->slots, 0, 1, BUFFER_READS(to)};
     dl_codes[0][to->id] = dl_codes[1][to->id] =
         (struct code){to->words, to->relocations, (uint16_t)to->count, to->init, to->proc, to->relocation_count};
     owner[to->id] = to->module, owner_layout[to->id] = to->layout, owner_pinned[to->id] = to->pinned;
@@ -398,7 +402,7 @@ static int checked_catalogue(const struct runtime_owner *o,const struct runtime_
        owner_cycles[id]!=cycles || owner_measured[id]!=(d->kind==RUNTIME_HARDWARE) ||
        !same_bytes((const uint8_t *)owner_name[id],(const uint8_t *)d->name,16u) || owner_page[id]!=d->page || owner_page_bytes[id]!=d->page_bytes ||
        p->words!=d->count || p->alignment!=1u || p->cycles!=cycles ||
-       p->slots!=d->slots || p->resident || !p->qualified || p->buffer!=(d->buffer!=0)) return 0;
+       p->slots!=d->slots || p->resident || !p->qualified || p->buffer!=BUFFER_READS(d)) return 0;
     for(unsigned c=0;c<2u;++c) { const struct code *k=&dl_codes[c][id];
         if(k->words!=d->words || k->relocations!=d->relocations || k->count!=d->count || k->init!=d->init || k->proc!=d->proc || k->relocation_count!=d->relocation_count) return 0; }
     return modwerk_fxpage_current((unsigned)id,d->page,d->page_bytes,d->slots) && modwerk_fxmap_current((unsigned)id,module,d->layout,d->name);

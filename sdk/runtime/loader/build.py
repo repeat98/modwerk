@@ -51,6 +51,8 @@ import sys
 import tempfile
 import types
 
+sys.path.append(str(Path(__file__).resolve().parents[2]))  # sdk/, for firmware_codec
+import firmware_codec  # noqa: E402
 HERE = Path(__file__).resolve().parent
 HANDLERS = ('module_tick', 'module_draw', 'module_key', 'module_enc')  # loader.h's event order
 NONE = 0xffffffff
@@ -475,7 +477,7 @@ def octabam_units(name, origin, cross, upstream, dsp=False, hooks=None):
     references; every stock span named by the SHA-256 its manifest gives (no firmware is read). Anything else a
     runtime package cannot carry is refused. A module with a runtime.json subscribes: pass a `hooks` list to receive
     its hook words."""
-    sys.path.insert(0, str(upstream))
+    firmware_codec.use_elekloader(upstream)
     from elekloader.sdk import octabam as port
     root = Path(__file__).resolve().parents[2] / 'octabam'
     ob = port.Octabam(str(root))
@@ -560,7 +562,7 @@ def private_standalone(args, public=False):
         raise ValueError('Private standalone output must be new and outside Git.')
     if not args.stock:  # public, from the committed recipe: the base checks each copy against its running stock
         return standalone_runtime, standalone_runtime.sources(root, args.upstream, args.octabam), None, None
-    sys.path.insert(0, str(args.upstream.expanduser().resolve()))
+    firmware_codec.use_elekloader(args.upstream.expanduser().resolve())
     from elekloader import formats
     parsed, device, release = formats.load(str(args.stock))
     main = formats.main_image(parsed, device)
@@ -597,7 +599,7 @@ def octabam_group(args):
     proves the same input at two origins, and leaves inherited stock table words
     as checked-copy placeholders. Public inventory still needs retirement proof.
     """
-    sys.path.insert(0, str(args.upstream.expanduser().resolve()))
+    firmware_codec.use_elekloader(args.upstream.expanduser().resolve())
     from elekloader.sdk import octabam as port
     sdk = Path(__file__).resolve().parents[2] / 'octabam'
     adapters = Path(__file__).resolve().parents[2] / 'machines/octatrack/module-adapters'
@@ -730,7 +732,7 @@ def octabam_machine(args):
     """One catalogue machine module as an independent ABI 8 package: what it shares with other modules goes through
     the base's events and tables (its runtime.json, or its machine port in module-adapters/machine-ports.json), so it
     installs alone or beside any other module. No group metadata, no composition, no other member."""
-    sys.path.insert(0, str(args.upstream.expanduser().resolve()))
+    firmware_codec.use_elekloader(args.upstream.expanduser().resolve())
     from elekloader.sdk import octabam as port
     sdk = Path(__file__).resolve().parents[2] / 'octabam'
     adapters = Path(__file__).resolve().parents[2] / 'machines/octatrack/module-adapters'
@@ -834,7 +836,7 @@ def octabam_tables(args):
     if args.octabam_tables != 'mute-modes':
         raise ValueError('Only Mute Modes has a reviewed table port.')
     upstream = args.upstream.expanduser().resolve()
-    sys.path.insert(0, str(upstream))
+    firmware_codec.use_elekloader(upstream)
     from elekloader.sdk import octabam as port
     sdk = root / 'sdk/octabam'
     module = port.Octabam(str(sdk)).modules[args.octabam_tables]
@@ -947,7 +949,7 @@ def capture_machine_recipe(name, image, relocations, inputs, args):
 
 def check_stock(sites, stock, upstream):
     """Each ABI 7 site's hash against the stock OS: a manifest that names the wrong bytes fails here, not on a unit."""
-    sys.path.insert(0, str(upstream.expanduser().resolve()))
+    firmware_codec.use_elekloader(upstream.expanduser().resolve())
     from elekloader import formats
     parsed, device, _ = formats.load(str(stock))
     main_image = formats.main_image(parsed, device)
@@ -979,7 +981,7 @@ def build_c(sources, cross, module, dsp=None, subscriptions=()):
 def build_elemod(args):
     if not (args.stock and args.upstream):
         sys.exit('--elemod needs --stock and --upstream.')
-    sys.path.insert(0, str(args.upstream.expanduser().resolve()))
+    firmware_codec.use_elekloader(args.upstream.expanduser().resolve())
     from elekloader import formats
     parsed, device, _ = formats.load(str(args.stock))
     main = formats.main_image(parsed, device)

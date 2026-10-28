@@ -6,7 +6,7 @@
 // the module's next version, which must drop them.
 export const LEGACY_UNKNOWN_CONFLICTS = {
   'octatrack/analog-bassdrum@0.1.5-experimental': ['machinedrum', 'poly'],
-  'octatrack/poly8@0.3.1-experimental': ['octakit'],
+  'octatrack/poly8@0.3.2-experimental': ['octakit'],
   'octatrack/usb-audio-out-tracks-main-cue@0.2.0-experimental': ['usb-audio-out-main', 'usb-audio-out-main-cue', 'usb-audio-out-master', 'usb-audio-out-tracks'],
 }
 

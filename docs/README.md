@@ -22,6 +22,7 @@ Every document in `docs/`, one line each. [AGENTS.md](../AGENTS.md) says which t
 - [ADD_A_MODULE.md](ADD_A_MODULE.md): add, port or update a module, per machine.
 - [module-guides/](module-guides/README.md): how a module should behave, per category.
 - [ADD_A_MACHINE.md](ADD_A_MACHINE.md): bring a machine up before it gets modules.
+- [MACHINE_RECIPE.md](MACHINE_RECIPE.md): the Octatrack's stack (base, hooks, USB link, loader, MCP, page) every machine gets, and where each one stands.
 - [MODULE_AUTHOR_UPDATES.md](MODULE_AUTHOR_UPDATES.md): registered authors publishing their own updates.
 - [OWNER_OPERATIONS.md](OWNER_OPERATIONS.md): the owner's issue-fix and release flow, mail sendouts, locks and disk rules.
 - [MAINTENANCE.md](MAINTENANCE.md): the daily pass the owner starts with "maintain": pull request, issue, beta and upstream workers, one briefing.
@@ -49,6 +50,7 @@ Every document in `docs/`, one line each. [AGENTS.md](../AGENTS.md) says which t
 - [OCTATRACK_MORE_EFFECT_IDS.md](OCTATRACK_MORE_EFFECT_IDS.md): more than 32 effect ids.
 - [OCTATRACK_PACKAGE_DSP_HOOKS.md](OCTATRACK_PACKAGE_DSP_HOOKS.md): design: stock-DSP hooks and DSP memory claims that packages carry.
 - [OCTATRACK_RESIDENT_ENGINES_ON_DEMAND.md](OCTATRACK_RESIDENT_ENGINES_ON_DEMAND.md): design: resident engines loaded on demand.
+- [OCTATRACK_DSP_WINDOW.md](OCTATRACK_DSP_WINDOW.md): record: the DSP receiver's packet operations in the shared window, FX2 swaps keeping their block (28 October 2026).
 - [OCTATRACK_ELEKLOADER_MIGRATION.md](OCTATRACK_ELEKLOADER_MIGRATION.md): the move to one Elekloader builder and USB loading, as dated plans and checkpoints from 9 October.
 - [OCTATRACK_BETA_TEST_PLAN.md](OCTATRACK_BETA_TEST_PLAN.md): the beta test plan and its findings log.
 - [STARTUP_ANIMATION.md](STARTUP_ANIMATION.md): the docking startup animation.
@@ -64,6 +66,8 @@ Every document in `docs/`, one line each. [AGENTS.md](../AGENTS.md) says which t
 
 ## Site and backend
 
+- [DISCORD_BOT.md](DISCORD_BOT.md): read server-wide Discord bug reports and reply from the repository.
+- [DISCORD_VOICE.md](DISCORD_VOICE.md): the bot's conversational voice and owner-approved drafts.
 - [APP_DEVELOPMENT.md](APP_DEVELOPMENT.md): the web app and API: running, testing, deploying.
 - [FORUM.md](FORUM.md): the forum, accounts and transactional email.
 - [SINGLE_SIGN_ON.md](SINGLE_SIGN_ON.md): accounts and single sign-on.

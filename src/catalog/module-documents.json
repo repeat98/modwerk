@@ -6160,7 +6160,7 @@
       "id": "vector",
       "key": "VECTOR",
       "name": "VECTOR",
-      "version": "0.2.4-experimental",
+      "version": "0.2.5-experimental",
       "category": "machines",
       "source": {
         "repository": "https://github.com/repeat98/modwerk",
@@ -6393,8 +6393,8 @@
       "tests": {
         "report": "TESTING.md",
         "summary": "Firmware-free generator/writer and all 256 VECTOR-instance masks pass ASan/UBSan; authored assembly reproduces. Exact-image ColdFire emulator tests reproduce the previous reset/stuck transport and pass two-instance Part/project save-reload, saved-card fresh load and battery-only restart. Twelve SRC controls, ordinary stock validation, both pool menus and advancing transport are checked. Physical reboot/audio remain untested under the exact-version owner exception.",
-        "hardwareStatus": "untested",
-        "evidenceRevision": "16c04ae4d713376bd6bb119951899c33fa2e0ae9",
+        "hardwareStatus": "reported",
+        "evidenceRevision": "645d73da3872ce9111f3e3172114fb33a3660b9f",
         "gates": [
           "Firmware-free sanitizer generator, writer and packed-settings checks",
           "Authored C/hooks to assembly reproducibility without firmware",
@@ -6430,9 +6430,9 @@
             ],
             "screenshotStyle": "black-and-white"
           },
-          "moduleVersion": "0.2.4-experimental",
+          "moduleVersion": "0.2.5-experimental",
           "sourceSha256": "1255e99133cbd8d6d2587c95f93462ea80fccbd169462a2acb02aedbd346cbd3",
-          "imageSha256": "cabcc2967a23a0ef719a38de444aec1b68662c12bb9057093d475b89424d0026",
+          "imageSha256": "a753ddf67b0fe64e3742b4c89ecf141071eb30757b170173215e92b1b4794d24",
           "cycles": [
             {
               "processor": "coldfire",
@@ -6519,11 +6519,20 @@
             "report": "evidence/software.json"
           },
           "hardware": {
-            "kind": "owner-waived",
-            "status": "waived",
-            "approvedBy": "repeat98",
-            "approvedOn": "2026-10-09",
-            "reason": "Owner explicitly approved release and closure with hardware reboot/audio unverified on 9 October 2026: \"Approve release and closure with hardware reboot/audio unverified\". This exception binds VECTOR 0.2.4-experimental to its tested native source and image. Physical reboot, audible playback and hardware stress remain untested; software checks remain required.",
+            "kind": "functional",
+            "status": "reported",
+            "model": "MKII",
+            "testedOn": "2026-10-27",
+            "tester": "repeat98 (owner's unit, driven over USB by the coordinating session)",
+            "sourceRevision": "645d73da3872ce9111f3e3172114fb33a3660b9f",
+            "imageSha256": "a753ddf67b0fe64e3742b4c89ecf141071eb30757b170173215e92b1b4794d24",
+            "summary": "Over USB on an Octatrack MKII: a RAM-booted development twin of the release base (identity e6e75d75..., MAIN a753ddf6...; the b1b2ca58 build plus --dev) with POLY8 0.3.1, Analog BD 0.1.5 (rebuilt for the twin) and this VECTOR 0.2.5 package (45c962ca...), all accepted. On a STATIC track SRC SETUP's list scrolls to POLY8, ANALOG BD and VECTOR; with the cursor on VECTOR before YES the stock STATIC setup shows, and on ANALOG BD Analog BD's page. YES on VECTOR opens its STATIC/FLEX choice and the main SRC page shows SRC>VECTOR. SRC SETUP then shows VECTOR's page 2 (SEED 1, SPAN 12, OFST 0, ROT 0, RPT OFF, DIR FWD); encoders A-F change SEED, OFST, ROT, RPT and DIR (SPAN already at its maximum) and back, and SPAN moves within its range. Another STATIC track keeps the stock setup.",
+            "limitations": [
+              "The base was the development twin of the release base, not the b1b2ca58 build itself, nor the base this release commits.",
+              "Not tested: the FLEX, THRU and PICKUP setups; a POLY8 or Analog BD track's SRC SETUP; VECTOR 0.2.4 on the new base; whether the SRC main page regenerates the phrase.",
+              "Not tested: saving and reloading, a power cycle with VECTOR kept, and listening; no chip timing or stress.",
+              "One MKII; no MKI. The card build is 0.2.4's and was not run for this version."
+            ],
             "report": "TESTING.md"
           }
         }
@@ -6546,7 +6555,7 @@
             "page": "SRC SETUP machine chooser",
             "shows": "location",
             "firmware": "1.40C",
-            "moduleVersion": "0.2.4-experimental",
+            "moduleVersion": "0.2.5-experimental",
             "imageSha256": "cabcc2967a23a0ef719a38de444aec1b68662c12bb9057093d475b89424d0026",
             "setup": "Native ColdFire port, MKII panel mapping; original 1.40C, reported five-module composition, disposable RIG card, T1/T5 Flex with distinct VECTOR settings, Part ONE, A01, 120 BPM. Actual LCD plane plus visible stock windows rendered at 6x nearest-neighbor in monochrome. Stand-in DSP; no physical hardware or audio qualification."
           }
@@ -6563,7 +6572,7 @@
             "page": "SRC generator",
             "shows": "controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.2.4-experimental",
+            "moduleVersion": "0.2.5-experimental",
             "imageSha256": "cabcc2967a23a0ef719a38de444aec1b68662c12bb9057093d475b89424d0026",
             "setup": "Native ColdFire port, MKII panel mapping; original 1.40C, reported five-module composition, disposable RIG card, T1/T5 Flex with distinct VECTOR settings, Part ONE, A01, 120 BPM. Actual LCD plane plus visible stock windows rendered at 6x nearest-neighbor in monochrome. Stand-in DSP; no physical hardware or audio qualification."
           }
@@ -6580,7 +6589,7 @@
             "page": "SRC after Generate",
             "shows": "controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.2.4-experimental",
+            "moduleVersion": "0.2.5-experimental",
             "imageSha256": "cabcc2967a23a0ef719a38de444aec1b68662c12bb9057093d475b89424d0026",
             "setup": "Native ColdFire port, MKII panel mapping; original 1.40C, reported five-module composition, disposable RIG card, T1/T5 Flex with distinct VECTOR settings, Part ONE, A01, 120 BPM. Actual LCD plane plus visible stock windows rendered at 6x nearest-neighbor in monochrome. Stand-in DSP; no physical hardware or audio qualification."
           }
@@ -6597,7 +6606,7 @@
             "page": "SRC sample editor",
             "shows": "controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.2.4-experimental",
+            "moduleVersion": "0.2.5-experimental",
             "imageSha256": "cabcc2967a23a0ef719a38de444aec1b68662c12bb9057093d475b89424d0026",
             "setup": "Native ColdFire port, MKII panel mapping; original 1.40C, reported five-module composition, disposable RIG card, T1/T5 Flex with distinct VECTOR settings, Part ONE, A01, 120 BPM. Actual LCD plane plus visible stock windows rendered at 6x nearest-neighbor in monochrome. Stand-in DSP; no physical hardware or audio qualification."
           }
@@ -6614,7 +6623,7 @@
             "page": "SRC SETUP",
             "shows": "controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.2.4-experimental",
+            "moduleVersion": "0.2.5-experimental",
             "imageSha256": "cabcc2967a23a0ef719a38de444aec1b68662c12bb9057093d475b89424d0026",
             "setup": "Native ColdFire port, MKII panel mapping; original 1.40C, reported five-module composition, disposable RIG card, T1/T5 Flex with distinct VECTOR settings, Part ONE, A01, 120 BPM. Actual LCD plane plus visible stock windows rendered at 6x nearest-neighbor in monochrome. Stand-in DSP; no physical hardware or audio qualification."
           }
@@ -6631,7 +6640,7 @@
             "page": "Backing-pool choice",
             "shows": "controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.2.4-experimental",
+            "moduleVersion": "0.2.5-experimental",
             "imageSha256": "cabcc2967a23a0ef719a38de444aec1b68662c12bb9057093d475b89424d0026",
             "setup": "Native ColdFire port, MKII panel mapping; original 1.40C, reported five-module composition, disposable RIG card, T1/T5 Flex with distinct VECTOR settings, Part ONE, A01, 120 BPM. Actual LCD plane plus visible stock windows rendered at 6x nearest-neighbor in monochrome. Stand-in DSP; no physical hardware or audio qualification."
           }
@@ -6648,7 +6657,7 @@
             "page": "Static sample pool",
             "shows": "controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.2.4-experimental",
+            "moduleVersion": "0.2.5-experimental",
             "imageSha256": "cabcc2967a23a0ef719a38de444aec1b68662c12bb9057093d475b89424d0026",
             "setup": "Native ColdFire port, MKII panel mapping; original 1.40C, reported five-module composition, disposable RIG card, T1/T5 Flex with distinct VECTOR settings, Part ONE, A01, 120 BPM. Actual LCD plane plus visible stock windows rendered at 6x nearest-neighbor in monochrome. Stand-in DSP; no physical hardware or audio qualification."
           }
@@ -6665,7 +6674,7 @@
             "page": "Flex sample pool",
             "shows": "controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.2.4-experimental",
+            "moduleVersion": "0.2.5-experimental",
             "imageSha256": "cabcc2967a23a0ef719a38de444aec1b68662c12bb9057093d475b89424d0026",
             "setup": "Native ColdFire port, MKII panel mapping; original 1.40C, reported five-module composition, disposable RIG card, T1/T5 Flex with distinct VECTOR settings, Part ONE, A01, 120 BPM. Actual LCD plane plus visible stock windows rendered at 6x nearest-neighbor in monochrome. Stand-in DSP; no physical hardware or audio qualification."
           }
@@ -7308,7 +7317,7 @@
       "id": "poly8",
       "key": "POLY8",
       "name": "POLY8",
-      "version": "0.3.1-experimental",
+      "version": "0.3.2-experimental",
       "category": "machines",
       "source": {
         "repository": "https://github.com/repeat98/octamad",
@@ -7454,7 +7463,7 @@
       },
       "tests": {
         "report": "TESTING.md",
-        "summary": "0.3.1 adds a self-timed voice limit and runs the render through cached memory. On the owner's MKII (RAM-booted development twins of the current beta base, cached and uncached module code): eight held keys, chords over the playing sequencer and 40 rapid presses never froze the panel or stopped the frames; the published 0.3.0 froze the same unit at three to four voices and, with the limit off, six voices stopped the frames. Recordings from PLAY match 0.3.0 to the recorder floor on both bases. Host tests cover the limit (pool-test.c); verify-addressing.py proves the cached render reads POLY8 data only through the uncached alias. Not run: the card build on a unit, Part/project reload and power cycles with this version, MKI; chip worst-case cycles and complete memory bounds stay waived for this exact version.",
+        "summary": "0.3.2 fixes the card build's double-tap TRACK machine list beside VECTOR, FM Synth or Analog BD (names and mark by the list's row, cursor clamps at the last row); checked in ot_emu only, see TESTING.md. 0.3.1 adds a self-timed voice limit and runs the render through cached memory. On the owner's MKII (RAM-booted development twins of the current beta base, cached and uncached module code): eight held keys, chords over the playing sequencer and 40 rapid presses never froze the panel or stopped the frames; the published 0.3.0 froze the same unit at three to four voices and, with the limit off, six voices stopped the frames. Recordings from PLAY match 0.3.0 to the recorder floor on both bases. Host tests cover the limit (pool-test.c); verify-addressing.py proves the cached render reads POLY8 data only through the uncached alias. Not run: the card build on a unit, Part/project reload and power cycles with this version, MKI; chip worst-case cycles and complete memory bounds stay waived for this exact version.",
         "hardwareStatus": "untested",
         "evidenceRevision": "9e853271be169d242bdf00b79147707e86ee12cb",
         "gates": [

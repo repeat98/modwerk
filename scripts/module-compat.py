@@ -5,6 +5,7 @@
     npm run modules:compat                 # every active module, every pair and the whole set
     npm run modules:compat -- <id>         # only what involves <id>
     npm run modules:compat -- --json       # the same, machine-readable (module:doctor reads it)
+    npm run modules:compat -- --with <id>  # also a folder under sdk/octabam/modules/ the catalogue does not list (module:doctor passes it)
 
 Reads declarations only, through octabam's claim model (manifests, the loader integration's port recipes
 when present, the committed base package): no firmware, no emulator. Shared behaviour goes through hooks,
@@ -339,10 +340,13 @@ def ported(modules):
     return out, problems
 
 
-def repository_inputs():
-    """Everything check() needs, read from this checkout. Problems loading a manifest are returned, not raised."""
+def repository_inputs(extra=()):
+    """Everything check() needs, read from this checkout. Problems loading a manifest are returned, not raised.
+    `extra` names folders under sdk/octabam/modules/ to compare as if listed: an unlisted module, or the draft copy
+    module:doctor --draft makes, so a clash shows before the catalogue entry exists (Track Mutes found its 23 in CI, #931)."""
     from remix import registry
     ids, load = active_ids(), []
+    ids += [i for i in extra if i not in ids]
     try:
         known = registry.modules()
     except (ValueError, SystemExit) as error:  # the registry refuses duplicate keys and FX ids by name
@@ -353,8 +357,8 @@ def repository_inputs():
     platform = {m.key: m for m in known.values() if m.name in registry.PLATFORM_NAMES}
     for i in ids:
         if i not in by_name:
-            load.append(dict(modules=[i], text=f'{i} is in the catalogue but has no sdk/octabam/modules/{i}/manifest.py',
-                             route='other'))
+            load.append(dict(modules=[i], text=(f'{i} has' if i in extra else f'{i} is in the catalogue but has')
+                             + f' no sdk/octabam/modules/{i}/manifest.py', route='other'))
     base = json.loads((APP / 'src/engine/assets/octatrack-base.elemod').read_text(encoding='utf-8'))
     copies = {}
     for path in RECIPES:  # the loader integration's runtime ports; absent on branches without them
@@ -394,7 +398,8 @@ def main(argv):
     started = time.perf_counter()
     sys.stdout.reconfigure(encoding='utf-8')  # the report prints '✗'; a Windows pipe defaults to the ANSI code page
     as_json, only = '--json' in argv, [a for a in argv if not a.startswith('--')]
-    ids, modules, inputs, problems = repository_inputs()
+    extra = [argv[i + 1] for i, a in enumerate(argv[:-1]) if a == '--with']
+    ids, modules, inputs, problems = repository_inputs(extra)
     if modules:
         problems += check(modules, **inputs)
     if only:

@@ -9,6 +9,10 @@ Octatrack modules build on [octabam](https://github.com/sambanks/octabam) (MIT, 
 - Octatrack modules use contract v2 (`octamod.module.json`) with the qualification gates in [MODULE_QUALIFICATION.md](../../../docs/MODULE_QUALIFICATION.md) and the frozen eleven-module baseline. They move to contract v3 (see [the SDK guide](../../../docs/SDK.md)) at their next version.
 - OT UI captures follow [MODULE_UI_CAPTURES.md](../../../docs/MODULE_UI_CAPTURES.md).
 
+## Modwerk stack
+
+The Octatrack is the reference for [the recipe every machine follows](../../../docs/MACHINE_RECIPE.md): the Modwerk base in [`elekloader/`](elekloader/README.md), its hooks in [HOOKS.md](HOOKS.md), the USB link, loading without a reflash, base updates over USB, the MCP's device tools and the Octatrack page. Other machines copy these pieces, so when one moves, keep the recipe's links current.
+
 Recovery: hold FUNC while powering on, choose MIDI UPGRADE and send the stock .syx over 5-pin DIN MIDI.
 
 

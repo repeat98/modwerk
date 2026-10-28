@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "machine": "analog-rytm-mkii",
+  "moduleId": "silent-pad-trig",
+  "moduleVersion": "0.5.1-experimental",
+  "firmware": "1.74",
+  "capturedAt": "2026-10-27T19:30:00Z",
+  "imageSha256": "ff7c4cf3ca61f3c461a16a416cb4515e0d44727216f688ab965785bdbd5343d4",
+  "mainSha256": "9b9ec1764f180db22156bd25bc0d0ee04e6955ba2c379d2344a72b1369659132",
+  "stockSha256": "cb0f99d620edde994fb860c0e79cc2464e427d06882828cfdfb00fc53700e123",
+  "build": "Modwerk's linker: the released core-ar2 0.3 (6b97dfb3…3e58) + this folder's compiled Silent Pad+Trig 0.5.1-experimental, materialised against the owner's stock OS 1.74, --version PS08",
+  "emulator": {
+    "name": "rytm-emu",
+    "repository": "https://github.com/trigcondition/rytm-emu",
+    "revision": "c5732f0",
+    "binary": "dtboot (cargo build --release --bin dtboot)",
+    "settings": "no card image, JIT on"
+  },
+  "conditions": "Headless cold boot; four held NO presses clear the missing-calibration notices; GLOBAL, six DOWNs and YES open CONTROL; two DOWNs and YES open SEQUENCER CONFIG; three DOWNs move to SILENT PAD+TRIG (both rows unchecked) and YES checks it; DOWN moves to SILENT PAD LIVEREC and YES checks it; four NOs leave the menus; pad SD is pressed (silent: the play routine returns before the trigger, no MIDI out), then FUNC + SD (plays, MIDI note velocity 127). Frames are dtboot's firmware-rendered 128x64 screen at 3x, unmodified. A second identical run gave all 28 frames byte for byte. control-menu.png and silent-press.png are byte-identical to PS07's (and PS06's); the two SEQUENCER CONFIG frames differ from PS07's only where the renamed row shows.",
+  "captures": [
+    {
+      "path": "media/control-menu.png",
+      "sha256": "2db762a87400f764c69f8b2c3737f61aca19d855fa674771bf9b8ba1f2595b8e",
+      "frame": "step12_YES.png",
+      "plan": "DTBOOT_STEPS=1 DTBOOT_PNG_DIR=out dtboot ps08.syx --instr 16500M --every 1000M --press NO@4500M:80M --press NO@5300M:80M --press NO@6100M:80M --press NO@6900M:80M --press GLOBAL@8000M:40M --press DOWN@8400M:30M --press DOWN@8700M:30M --press DOWN@9000M:30M --press DOWN@9300M:30M --press DOWN@9600M:30M --press DOWN@9900M:30M --press YES@10200M:30M --press DOWN@10600M:30M --press DOWN@10900M:30M --press YES@11300M:30M --press DOWN@11600M:30M --press DOWN@11900M:30M --press DOWN@12200M:30M --press YES@12600M:30M --press DOWN@12900M:30M --press YES@13200M:30M --press NO@13600M:30M --press NO@14000M:30M --press NO@14400M:30M --press NO@14800M:30M --press SD@15300M:40M --press FUNC@15700M:400M --press SD@15850M:40M"
+    },
+    {
+      "path": "media/seq-config.png",
+      "sha256": "a03bb51fc09b6d32b8ed847a1fa18de733076e2c5a9f3d577c37319a8a5b96fd",
+      "frame": "step18_DOWN.png",
+      "plan": "DTBOOT_STEPS=1 DTBOOT_PNG_DIR=out dtboot ps08.syx --instr 16500M --every 1000M --press NO@4500M:80M --press NO@5300M:80M --press NO@6100M:80M --press NO@6900M:80M --press GLOBAL@8000M:40M --press DOWN@8400M:30M --press DOWN@8700M:30M --press DOWN@9000M:30M --press DOWN@9300M:30M --press DOWN@9600M:30M --press DOWN@9900M:30M --press YES@10200M:30M --press DOWN@10600M:30M --press DOWN@10900M:30M --press YES@11300M:30M --press DOWN@11600M:30M --press DOWN@11900M:30M --press DOWN@12200M:30M --press YES@12600M:30M --press DOWN@12900M:30M --press YES@13200M:30M --press NO@13600M:30M --press NO@14000M:30M --press NO@14400M:30M --press NO@14800M:30M --press SD@15300M:40M --press FUNC@15700M:400M --press SD@15850M:40M"
+    },
+    {
+      "path": "media/seq-config-checked.png",
+      "sha256": "4a123a1da2042d3787ec09eb3663ebcc51bc5931a067e60ff471b73c28f2a5cf",
+      "frame": "step21_YES.png",
+      "plan": "DTBOOT_STEPS=1 DTBOOT_PNG_DIR=out dtboot ps08.syx --instr 16500M --every 1000M --press NO@4500M:80M --press NO@5300M:80M --press NO@6100M:80M --press NO@6900M:80M --press GLOBAL@8000M:40M --press DOWN@8400M:30M --press DOWN@8700M:30M --press DOWN@9000M:30M --press DOWN@9300M:30M --press DOWN@9600M:30M --press DOWN@9900M:30M --press YES@10200M:30M --press DOWN@10600M:30M --press DOWN@10900M:30M --press YES@11300M:30M --press DOWN@11600M:30M --press DOWN@11900M:30M --press DOWN@12200M:30M --press YES@12600M:30M --press DOWN@12900M:30M --press YES@13200M:30M --press NO@13600M:30M --press NO@14000M:30M --press NO@14400M:30M --press NO@14800M:30M --press SD@15300M:40M --press FUNC@15700M:400M --press SD@15850M:40M"
+    },
+    {
+      "path": "media/silent-press.png",
+      "sha256": "b5a2e7ca604f43e3351ea999e93cb1955991e36dc4ec0c17f0e369570f22daa4",
+      "frame": "step26_SD.png",
+      "plan": "DTBOOT_STEPS=1 DTBOOT_PNG_DIR=out dtboot ps08.syx --instr 16500M --every 1000M --press NO@4500M:80M --press NO@5300M:80M --press NO@6100M:80M --press NO@6900M:80M --press GLOBAL@8000M:40M --press DOWN@8400M:30M --press DOWN@8700M:30M --press DOWN@9000M:30M --press DOWN@9300M:30M --press DOWN@9600M:30M --press DOWN@9900M:30M --press YES@10200M:30M --press DOWN@10600M:30M --press DOWN@10900M:30M --press YES@11300M:30M --press DOWN@11600M:30M --press DOWN@11900M:30M --press DOWN@12200M:30M --press YES@12600M:30M --press DOWN@12900M:30M --press YES@13200M:30M --press NO@13600M:30M --press NO@14000M:30M --press NO@14400M:30M --press NO@14800M:30M --press SD@15300M:40M --press FUNC@15700M:400M --press SD@15850M:40M"
+    }
+  ]
+}

@@ -29,14 +29,9 @@
   },
   "research": [
     {
-      "label": "digikit",
-      "url": "https://github.com/m-dwyer/digikit",
-      "note": "Emulator for the control processor that boots the real OS and shows its screen, plus analysis tools for the audio processor and the sealed OS file."
-    },
-    {
       "label": "elekloader DTII core and OS 1.17 tests",
       "url": "https://github.com/irpina/elekloader/tree/3acac10/mods/core-dt2",
-      "note": "Experimental OS 1.17 profile, sealed firmware writer and shared-event core. Its DTII tests verify byte-exact stock rebuilding, seal checks and linked builds. Core builds boot in Digikit; this is not Modwerk hardware qualification."
+      "note": "Experimental OS 1.17 profile, sealed firmware writer and shared-event core. Its DTII tests verify byte-exact stock rebuilding, seal checks and linked builds. Core builds boot in an emulator; this is not Modwerk hardware qualification."
     },
     {
       "label": "toonst's Digitakt II perform mods 1.0",
