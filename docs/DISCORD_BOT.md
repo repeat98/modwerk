@@ -5,6 +5,23 @@ repo-side coding agent reads reports, investigates the code, prepares a reply, a
 sends it back to the original channel or thread. There is no model service in the
 bot and incoming messages never trigger replies or execute repository commands.
 
+## Live support sessions
+
+Start `/modwerk-discord` in a dedicated repo-side agent chat, optionally with a
+channel or message link. It follows tester replies, investigates the source and
+prepares drafts in the [Discord voice](DISCORD_VOICE.md). Every outgoing message
+waits for the owner's approval. After sending, the agent keeps the conversation
+open while testers try things and answer, saving its cursors and case notes in
+the ignored `.discord-bot/sessions/` directory. Code fixes and maintenance stay
+in their separate sessions; this command does not start those workflows.
+
+The listener collects messages while this chat waits or is closed. Continuing an
+investigation needs an active agent session; `/modwerk-discord` resumes its local
+notes when reopened. User-level skill installs can bundle the two Discord guides
+and a `local.json` containing the configured checkout/runtime paths, so a stale
+primary checkout does not hide the running bot. Credentials remain in the bot's
+own `.env.discord`, and the local configuration carries no token.
+
 ## Set up once
 
 1. Use Node 24 and run `npm ci`.

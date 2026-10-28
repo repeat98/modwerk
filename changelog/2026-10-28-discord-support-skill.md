@@ -1,0 +1,1 @@
+Development: `/modwerk-discord` opens a dedicated live support session, following tester replies and preparing messages for the owner's approval. It keeps the conversation and previous tests in local notes between replies and handoffs. The bot's voice is direct, relaxed and a little mischievous; issue fixes and maintenance remain separate workflows.
