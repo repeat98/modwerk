@@ -1,6 +1,8 @@
 # Earlier prototype evidence
 
-Historical results below do not qualify 0.1.5. Original 0.1.4 receipts are retained as `media/v014-capture*.json`; older screenshots and raw private artifacts remain in the local cache. No physical result is claimed.
+The complete 0.1.5 report is archived in [TESTING-v015.md](TESTING-v015.md). Version 0.1.6 removes ownership and the associated hooks; current results belong in TESTING.md. Replaced 0.1.5 layout images are preserved in media/v015-ui/.
+
+Historical results below do not qualify 0.1.6. Original 0.1.4 receipts are retained as `media/v014-capture*.json`; older screenshots and raw private artifacts remain in the local cache. No physical result is claimed.
 
 # Historical 0.1.4 evidence (before lifecycle safety work)
 

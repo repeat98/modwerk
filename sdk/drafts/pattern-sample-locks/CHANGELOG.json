@@ -1,5 +1,16 @@
 [
   {
+    "version": "0.1.6-experimental",
+    "date": "2026-10-29",
+    "changes": [
+      "Keep existing SAMPLE locks by default when locking Part sample choices into the pattern.",
+      "Clear all SAMPLE locks on selected Flex/Static tracks, including manual locks.",
+      "Remove ownership bookkeeping, battery storage and native edit-history hooks.",
+      "Keep track selection, confirmation counts and STOP-before-edit.",
+      "Known limits: emulator checks passed; physical hardware and audible behavior remain unqualified."
+    ]
+  },
+  {
     "version": "0.1.5-experimental",
     "date": "2026-10-28",
     "changes": [

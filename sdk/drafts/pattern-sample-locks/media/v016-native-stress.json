@@ -1,0 +1,203 @@
+{
+  "hardware": false,
+  "scope": "Actual MKII emulator, native edits with panel input and labelled disposable fixtures",
+  "base": "4ed92776e72c414298662fff20354848b833b161bdc47cb0363ed4ad634b77a7",
+  "packageSha256": "0cd6c725f6be493ea461b7a54231032416cab3cad77bf3327e644db212848961",
+  "emulatorSha256": "b087c97f3031f075551b3336afcd75a407ca4d3476e04a9d5cfaa059b1d40363",
+  "cardInputSha256": "be0b309d9eabdef1a385fde3b05837a7232db3f17bcacf0b9e0a0f0761998e82",
+  "cardOutputSha256": "52b38f767304f22ab743cc844e6007feaafb43d66c5aa1a7f3f46baa6861243d",
+  "profileSymbols": {
+    "psl_open": 7550,
+    "symbols": {
+      "psl_open": 7550,
+      "psl_guard_max": 8624,
+      "psl_guard_spans": 8620,
+      "edits": 8628,
+      "__image_end": 8620,
+      "__bss_end": 15612
+    },
+    "performanceFunctions": {
+      "psl_native_commit": {
+        "begin": 5414,
+        "ends": [
+          6350
+        ]
+      },
+      "psl_prepare": {
+        "begin": 338,
+        "ends": [
+          724
+        ]
+      },
+      "module_key": {
+        "begin": 6764,
+        "ends": [
+          6914
+        ]
+      }
+    },
+    "objectSha256": "451978369121d0dd7a7339ac835769dd5c356a4599a7a968e4b2c46965bdc77d",
+    "packageSha256": "0cd6c725f6be493ea461b7a54231032416cab3cad77bf3327e644db212848961",
+    "begin": 62,
+    "ends": [
+      106
+    ]
+  },
+  "companionSha256": null,
+  "captures": [
+    "stress-512-confirm.png",
+    "stress-512-result.png",
+    "stress-512-all-clear-confirm.png",
+    "stress-512-clear-confirm.png",
+    "removal-open-tracks.png"
+  ],
+  "usbUndo": false,
+  "disposableEmulatorKeep": true,
+  "usbRemoval": true,
+  "sampleLockWritesEnabled": true,
+  "checks": {
+    "publicationGuardSpans": 36,
+    "publicationGuardMaxEmulatorInstructions": 203,
+    "publicationGuardTotalEmulatorInstructions": 7244,
+    "publicationGuardInstructionSpans": [
+      203,
+      203,
+      203,
+      203,
+      203,
+      203,
+      203,
+      203,
+      203,
+      203,
+      203,
+      203,
+      203,
+      203,
+      203,
+      203,
+      203,
+      203,
+      203,
+      203,
+      203,
+      203,
+      203,
+      203,
+      203,
+      203,
+      203,
+      203,
+      203,
+      203,
+      203,
+      203,
+      187,
+      187,
+      187,
+      187
+    ],
+    "commitEmulatorInstructions": 121616,
+    "commitModelMilliseconds": 0.6911610090987105,
+    "clearProfile": {
+      "publicationGuardSpans": 36,
+      "publicationGuardMaxEmulatorInstructions": 203,
+      "publicationGuardTotalEmulatorInstructions": 7244,
+      "publicationGuardInstructionSpans": [
+        203,
+        203,
+        203,
+        203,
+        203,
+        203,
+        203,
+        203,
+        203,
+        203,
+        203,
+        203,
+        203,
+        203,
+        203,
+        203,
+        203,
+        203,
+        203,
+        203,
+        203,
+        203,
+        203,
+        203,
+        203,
+        203,
+        203,
+        203,
+        203,
+        203,
+        203,
+        203,
+        187,
+        187,
+        187,
+        187
+      ],
+      "commitEmulatorInstructions": 280627,
+      "commitModelMilliseconds": 1.5948431168624508
+    },
+    "maximumNativeLocksWritten": 512,
+    "maximumNativeLocksCleared": 512,
+    "reloadedSampleLocksCleared": true,
+    "unrelatedAudioBytesPreserved": true,
+    "playbackLeftStopped": true,
+    "baseMapUntouchedByModuleOperations": true,
+    "baseEffectMappingsPreserved": true,
+    "baseMapGenerationAdvancedOnProjectReload": true,
+    "baseLogTagPreserved": true,
+    "nativeSaveProjectCompleted": true,
+    "nativeProjectReloadCompleted": true,
+    "nativeReloadRestoreAndLoadStagesCompleted": true,
+    "nativePartBytesPreserved": true,
+    "fixturePartSavedNatively": true,
+    "fixturePartsNativelyValidated": true,
+    "savedAudioSha256": "29746cc52b11ecc5dfc041dbe552473e63729f24c38786f5a5bc160a1adfd76e",
+    "runtimeImageMatchesPackage": true,
+    "runtimeSitesMatchPackage": true,
+    "runtimeInitializedBytesCompared": 8620,
+    "runtimeSitesCompared": 3,
+    "allDeclaredSitesRestored": true,
+    "onlyThreePartOpenersPatched": true
+  },
+  "automaticSavedSetRestore": false,
+  "freshProcessBatteryBoot": false,
+  "dspExecution": false,
+  "dspRuntimeBefore": {
+    "dl_frames": 43506,
+    "dl_errors": 300,
+    "modwerk_dsp_stalls": 0
+  },
+  "dspRuntimeAfter": {
+    "dl_frames": 206353,
+    "dl_errors": 1482,
+    "modwerk_dsp_stalls": 0
+  },
+  "captureBuffer": "Final LCD transfer buffer read through the emulator; includes core draw hooks",
+  "sources": {
+    "capture_emulator.py": "413aca633fa351e006763ecf17379d774c7aa5f5019b66da954d830104e6d5af",
+    "attestation_emulator.py": "24856c4ca80551313dd78fa4d7ef7d342aa39d2a27c71e6ea78c3952525f34d5",
+    "prepare_fixture_emulator.py": "7cc2bfd126fc9ed2380f21653e0b96c34e4104afe1783184c1934a8abc04dd72",
+    "performance_emulator.py": "a49e527b86adb27a05c98e355b6910563c6e545784684974346384f2e0880de8",
+    "profile_emulator.py": "8d2e75c9a1e1c7bd4e3e6129233ad9c882e36050128607fc5ad31ce39f552e10",
+    "stress_emulator.py": "65ad5a1d951cfba71513468855d9e79ea602c8a74226eeea5c52e90cbc693aad",
+    "exercise_emulator.py": "5e09bf741e6d4a3f8da9709dfc1fbec73db1a6befa669f927c9f61fa010bdf92",
+    "unit.s": "c41a7a0a0576cf106e59f21881c8d03768213d28ab52a1c843962159feda1316",
+    "engine.c": "a41ace651c2ff9f72d43e783d6121c64f51fe6d21e49bc60cf3b26a97ebdaa38",
+    "engine.h": "d1c067250f8bc555944303fb526cd9ec22c281c0f4773c95ed6fbdd332925ca1",
+    "ui.c": "89cea8d555c54efa0129c01e9d4ca8ee96436d84df59f193c97bb5049e1dad85",
+    "ui.h": "743fd085ba999fa6d5c2add5155741f6383bec6e973322abcd9b53dd13415f39",
+    "native.c": "1de07475244f1731317128f1290cc8c5467f6d02889b2154e3f46fe065346ecd",
+    "font.c": "63104792b675f7cce15582b554eaf4b05e008a63c2433db7fecb71210e115079",
+    "font.h": "a94a3103633a0084e11d53fbe46d0590812011062aa01d2c28de35b60ef8ea99",
+    "runtime.json": "710371710bd6c2522067c62f36c6ffbf211232b88c75a71a3dab2ac913e9742e",
+    "manifest.py": "ff0d9749fa181a8dabadddc711295a987d58c0d7f3516556aadbae97b6e7d7ab"
+  }
+}

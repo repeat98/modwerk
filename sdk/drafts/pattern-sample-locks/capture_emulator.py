@@ -59,6 +59,7 @@ class Port:
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
     for name in ('emulator','base','card','package','out'):parser.add_argument('--'+name,type=Path,required=True)
+    parser.add_argument('--prepare-fixture',action='store_true',help='Save a consistent disposable fixture before persistence tests')
     parser.add_argument('--performance',action='store_true',help='Matched emulator load and small/maximum edit instruction measurements')
     parser.add_argument('--stress-save',action='store_true',help='Maximum native edits plus native save/reload on the copied card')
     parser.add_argument('--exercise',action='store_true',help='Exercise native edits on disposable emulator media')
@@ -70,7 +71,7 @@ def main():
     parser.add_argument('--cs1-in',type=Path,help='Private battery snapshot for a fresh native power-up')
     parser.add_argument('--menu-only',action='store_true',help='Capture only the level-one list, then Undo')
     parser.add_argument('--no-dsp',action='store_true',help='Skip DSP execution; do not claim audio coverage')
-    source_names=('capture_emulator.py','attestation_emulator.py','performance_emulator.py','profile_emulator.py','stress_emulator.py','exercise_emulator.py','unit.s','engine.c','engine.h','ui.c','ui.h','native.c','font.c','font.h','runtime.json','manifest.py')
+    source_names=('capture_emulator.py','attestation_emulator.py','prepare_fixture_emulator.py','performance_emulator.py','profile_emulator.py','stress_emulator.py','exercise_emulator.py','unit.s','engine.c','engine.h','ui.c','ui.h','native.c','font.c','font.h','runtime.json','manifest.py')
     source_hashes={name:hashlib.sha256(Path(__file__).with_name(name).read_bytes()).hexdigest() for name in source_names}
     args=parser.parse_args();out=args.out.resolve();out.mkdir(parents=True,exist_ok=False)
     if ROOT==out or ROOT in out.parents:raise ValueError('Use private output outside the repository')
@@ -83,8 +84,8 @@ def main():
         '--mount','--set','BEATLAB','--project','PROJECT 261023','--load-ms','30000','--load-early',
         '--dsp','--frame','--ips','3990','--ms','3000','--interactive','--main-level','off','--rtc','host','--mkii',
         '--usb-host',str(sock),'--lcd',str(plane)]
-    if args.stress_save or args.performance or args.exercise_ui:args.exercise=True
-    if args.stress_save or args.performance or args.keep or args.boot_auto:command.append('--card-rw')
+    if args.stress_save or args.prepare_fixture or args.performance or args.exercise_ui:args.exercise=True
+    if args.stress_save or args.prepare_fixture or args.performance or args.keep or args.boot_auto:command.append('--card-rw')
     if args.boot_auto and not args.cs1_in:raise ValueError('--boot-auto requires battery state')
     if args.no_dsp:command.remove('--dsp')
     if args.cs1_in:
@@ -116,7 +117,7 @@ def main():
             request(4);status=request(5)
             while status['result']==12:time.sleep(.025);status=request(5)
             assert status['phase']==4;status=request(9);assert status['phase']==5
-            if args.stress_save or args.performance or args.keep:
+            if args.stress_save or args.prepare_fixture or args.performance or args.keep:
                 # No physical USB surface is available to this process.
                 request(1,transaction=0);request(6);status=request(9)
                 assert status['phase']==0;kept=True
@@ -146,13 +147,18 @@ def main():
                     ('dl_frames','dl_errors','modwerk_dsp_stalls')}
         dsp_before=dsp_metrics()
         attestation=load('psl_attestation',Path(__file__).with_name('attestation_emulator.py'))
-        live_checks=attestation.verify(port,package,ROOT)
+        port.attest=lambda:attestation.verify(port,package,ROOT)
+        live_checks=port.attest()
         elapsed=0
         def run(ms):
             nonlocal elapsed
             reply=port.command('run '+str(ms));elapsed+=ms
-            if 'stop=time' not in reply:raise RuntimeError('Emulator stopped unexpectedly: '+reply)
-            if elapsed>=600:
+            if 'stop=time' not in reply:
+                cpu=port.command('cfstatus',b'cfstatus ')
+                (out/'failure-cpu.private.json').write_text(json.dumps({'run':reply,'cpu':cpu,
+                    'crashHeader':port.peek(0x100ff800,40).hex()},indent=2)+'\n')
+                raise RuntimeError('Emulator stopped unexpectedly: '+reply+'; '+cpu)
+            if elapsed>=600 and not getattr(port,'native_menu',False):
                 port.command('pace on');assert request(0,transaction=0)['phase']==(0 if kept else 5)
                 port.command('pace off');elapsed=0
         def tap(row,mask):
@@ -210,7 +216,7 @@ def main():
                 capture('clear-all-selected.png');key('YES');capture('clear-confirm.png');key('NO');key('NO')
             else:key('NO')
         if args.exercise:
-            exercise=load('psl_exercise',Path(__file__).with_name('performance_emulator.py' if args.performance else 'stress_emulator.py' if args.stress_save else 'exercise_emulator.py'))
+            exercise=load('psl_exercise',Path(__file__).with_name('prepare_fixture_emulator.py' if args.prepare_fixture else 'performance_emulator.py' if args.performance else 'stress_emulator.py' if args.stress_save else 'exercise_emulator.py'))
             key('NO');key('NO')
             checks=exercise.exercise(port,run,tap,key,encoder,capture,out,bool(args.cs1_in))
         checks.update(live_checks)
@@ -253,6 +259,7 @@ def main():
         assert source_hashes=={name:hashlib.sha256(Path(__file__).with_name(name).read_bytes()).hexdigest() for name in source_names}, 'source changed during emulator run'
         (out/'capture.json').write_text(json.dumps({'hardware':False,'scope':'Actual MKII emulator, native edits with panel input and labelled disposable fixtures' if args.exercise else 'Actual MKII emulator UI capture',
             'base':base,'packageSha256':package_hash,'emulatorSha256':hashlib.sha256(args.emulator.read_bytes()).hexdigest(),
+            'cardInputSha256':hashlib.sha256(args.card.read_bytes()).hexdigest(),'cardOutputSha256':hashlib.sha256(card.read_bytes()).hexdigest(),
             'profileSymbols':port.profile_symbols,'companionSha256':hashlib.sha256(companion).hexdigest() if companion else None,'captures':captures,'usbUndo':not kept,'disposableEmulatorKeep':kept,'usbRemoval':kept,'sampleLockWritesEnabled':True,'checks':checks,'automaticSavedSetRestore':args.boot_auto,'freshProcessBatteryBoot':bool(args.cs1_in),'dspExecution':not args.no_dsp,
             'dspRuntimeBefore':dsp_before,'dspRuntimeAfter':dsp_after,
             'captureBuffer':'Final LCD transfer buffer read through the emulator; includes core draw hooks',
