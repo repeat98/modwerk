@@ -54,6 +54,10 @@ Analog BD silent until the next stop. Three causes, each in the base:
 - **After a power cycle, with the use-from-Part change** (personal base `1db64a78`, 14 modules kept, blank project; 28
   October): MODULES LOADED, then PLAY: Analog BD sounded on the first step (boot 1 recorded over USB). T1 showed
   "SRC → ANALOG BD" without a tap on every boot (the SRC label fix, in this change).
+- **Flashed `ccc53692`** (this branch at `9c9ff6bd` plus Analog BD 0.1.6, 14 modules, the owner's own project; 28
+  October, Nathaniel): SRC label, first trig after MODULES LOADED and the FLEX ↔ Analog BD switch all pass. On one of
+  four cold boots the early-boot halt below struck 16 s in, at a bank change while playing (stall record 21, the same
+  signature); the next boot played Analog BD on its first trig.
 
 **Open.**
 - **Early-boot DSP halt, not fixed here.** Within about 10-40 s of a cold boot, at the project load or a bank change
@@ -64,7 +68,7 @@ Analog BD silent until the next stop. Three causes, each in the base:
   frame interrupt unmasked (IMRL bit 1 clear) with nothing pending, EPORT pin 1 high and its edge flag clear, DSP
   select 0, one job (a status-meter PEEK in four of five) waiting for its answer. So the chain ended state 7 normally
   and the next frame's edge was lost, which fits the 200 µs hold-off trap in `docs/OCTATRACK_HARDWARE_TRAPS.md`
-  rather than a host-port access of ours. Not reproduced on a RAM-booted development twin. A 10 s watchdog
+  rather than a host-port access of ours. Not reproduced on a RAM-booted development twin; seen again on `ccc53692` (above). A 10 s watchdog
   (`37473105`, reverted in `b0d3e493`) made the halt permanent (a drone): keep the 0.5 s recovery.
 - **Ringmod SC refused at boot restore** with `RUNTIME_BUSY` on most cold boots of `d4658748` and `1db64a78`, though
   it restores on `5afa623e` and installs live. Candidates: the key-bus admission at the restore (`controller_board.c`)
