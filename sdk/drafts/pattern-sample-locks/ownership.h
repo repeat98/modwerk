@@ -14,6 +14,10 @@ int psl_nv_matches(const volatile uint8_t *,const uint8_t identity[PSL_ID_BYTES]
 int psl_nv_begin(volatile uint8_t *,const uint8_t identity[PSL_ID_BYTES]);
 /* Reserve every needed track before any native mutation; no eviction. */
 int psl_nv_reserve(volatile uint8_t *,unsigned row,unsigned tracks);
+void psl_nv_forget(volatile uint8_t *);
+void psl_nv_forget_scope(volatile uint8_t *,unsigned banks,unsigned patterns,unsigned tracks);
+int psl_nv_boot(volatile uint8_t *,uint32_t nonce,uint32_t boot,unsigned resume);
+int psl_nv_boot_matches(const volatile uint8_t *,uint32_t nonce,uint32_t boot);
 void psl_nv_read(const volatile uint8_t *,unsigned row,unsigned track,
                  const uint8_t *record,uint8_t owned[PSL_STEPS]);
 void psl_nv_invalidate(volatile uint8_t *,unsigned row,unsigned track);

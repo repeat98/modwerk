@@ -7,6 +7,7 @@ Memory snapshots stay private and are never submitted as module artifacts.
 """
 from pathlib import Path
 import hashlib
+import shutil
 
 def exercise(port,run,tap,key,encoder,capture,out,reboot):
     def read(address,n):
@@ -56,9 +57,19 @@ def exercise(port,run,tap,key,encoder,capture,out,reboot):
         mirror=read(0x1001614e,8*0x91a);assert mirror==after,'battery mirror mismatch'
         checks.update(stopBeforeEdit=True,manualLockPreserved=True,nativeLockWritten=True,unrelatedAudioBytesPreserved=True,batteryMirrorMatches=True)
         key('NO');menu(True);capture('native-clear-owned-confirm.png');key('NO');key('NO')
+        if hasattr(port,'install_companion'):
+            port.install_companion();run(1500)
+            menu(True);capture('companion-owned-confirm.png');key('NO');key('NO')
+            # The owned bitmap must remain valid after another owner changes.
+            nv=read(0x100f9000,0x3000)
+            assert nv[0:8]==b'PSLOWN\x03\x00'
+            checks['unrelatedCompanionInstalled']=True
         # Save exact pre-manual state for a new-process, battery-backed boot.
         snapshot=read(0x10000000,0x100000);(out/'powercycle.private.cs1').write_bytes(snapshot)
         checks['cs1Sha256']=hashlib.sha256(snapshot).hexdigest()
+        flush=port.command('card flush',b'card ');assert 'rw=1' in flush and 'errors=0' in flush
+        shutil.copyfile(out/'card.private.img',out/'powercycle.private.card.img')
+        checks['savedCardSha256']=hashlib.sha256((out/'powercycle.private.card.img').read_bytes()).hexdigest()
         # Same-value manual overwrite must retire ownership even though the
         # SAMPLE byte itself does not change.
         tap(0x25,2);manual(0,1);tap(0x25,2)

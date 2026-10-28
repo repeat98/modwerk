@@ -20,6 +20,7 @@ static const char *const part_rows[] = {"RENAME", "RELOAD", "SAVE", "SAVE ALL",
     "LOCK SAMPLES TO PATTERN", "CLEAR SAMPLE LOCKS"};
 static void close_view(void)
 { phase=CLOSED; plan.ready=0; encoder_residual=0; psl_native_redraw(); }
+void psl_ui_retire(void){phase=CLOSED;plan.ready=0;selected=0;consumed[0]=consumed[1]=0;}
 unsigned psl_ui_phase(void) { return phase; }
 void psl_ui_open(void)
 {

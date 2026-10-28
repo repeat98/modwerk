@@ -1,5 +1,16 @@
 [
   {
+    "version": "0.1.5-experimental",
+    "date": "2026-10-28",
+    "changes": [
+      "Keep verified ownership across witnessed automatic module restoration after a restart.",
+      "Retain manual or unknown locks after paste, Undo, reload, removal and reinstall.",
+      "Keep ownership during read-only startup checks and track copies; share patch sites safely with Euclid.",
+      "Use short edit batches and a compact CRC table, with playback stopped before applying.",
+      "Known limits: requires a local base prototype; physical timing, hardware persistence and native card integration remain unqualified."
+    ]
+  },
+  {
     "version": "0.1.4-experimental",
     "date": "2026-10-28",
     "changes": [

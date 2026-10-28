@@ -8,6 +8,7 @@ engine messages posted with null UI callbacks, on the firmware's own task.
 import hashlib
 from pathlib import Path
 import re
+import profile_emulator
 state={}
 
 def read(port,address,n):
@@ -58,7 +59,8 @@ def exercise(port,run,tap,key,encoder,capture,out,reboot):
         for _ in range(4+clear):key('DOWN')
         key('YES');encoder(0,4);key('YES')
     tap(0x25,1);assert u32(port,0x800065b8)!=0
-    menu(False);capture('stress-512-confirm.png');key('YES');run(300);capture('stress-512-result.png')
+    menu(False);capture('stress-512-confirm.png');measurement=profile_emulator.start(port)
+    key('YES');run(300);profile=profile_emulator.finish(port,measurement);capture('stress-512-result.png')
     locked=read(port,bank,len(source));assert u32(port,0x800065b8)==0
     expected=bytearray(source);part=bank+0x8ed80
     for track in range(8):
@@ -68,6 +70,10 @@ def exercise(port,run,tap,key,encoder,capture,out,reboot):
     assert locked==expected,'512-lock write changed the wrong bytes'
     assert read(port,0x1001614e,len(source))==locked
     key('NO')
+    menu(True);capture('stress-512-owned-clear-confirm.png');key('YES');run(300)
+    assert read(port,bank,len(source))==source,'default Clear did not clear 512 owned locks'
+    key('NO');menu(False);key('YES');run(300);key('NO')
+    assert read(port,bank,len(source))==locked
     # Native SAVE PROJECT writes .work then .strd; no module-specific format.
     job(port,17,0x40085736)
     status=port.command('card flush',b'card ');assert 'rw=1' in status and 'errors=0' in status
@@ -79,7 +85,7 @@ def exercise(port,run,tap,key,encoder,capture,out,reboot):
     assert read(port,bank,len(source))==locked,'native save/reload changed audio track records'
     assert read(port,bank+0x8ed80,0xc5b0)==before_reload[0x8ed80:0x9b330], 'native save/reload changed Parts'
     menu(True);capture('stress-512-clear-confirm.png');key('YES');run(300)
-    cleared=read(port,bank,len(source));assert cleared==source,'retained ownership did not clear all 512 locks'
+    cleared=read(port,bank,len(source));assert cleared==locked,'reload history must be unknown and retained'
     key('NO')
     # Saved project still has 512 locks. Undo removes only the module; stock
     # reload below must recover that project without any module installed.
@@ -87,13 +93,13 @@ def exercise(port,run,tap,key,encoder,capture,out,reboot):
     assert port.peek(0x100fc000,4)==base_log_tag, 'base diagnostic log tag changed'
     state.update(bank=bank,locked=locked)
     menu(True);key('NO');capture('removal-open-tracks.png')
-    return dict(maximumNativeLocksWritten=512,maximumNativeLocksCleared=512,unrelatedAudioBytesPreserved=True,
+    return dict(**profile,maximumNativeLocksWritten=512,maximumNativeLocksCleared=512,reloadedUnknownLocksRetained=True,unrelatedAudioBytesPreserved=True,
         playbackLeftStopped=True,baseEffectMapAndLogTagPreserved=True,nativeSaveProjectCompleted=True,nativeBankReloadCompleted=True,
         nativePartBytesPreserved=True,savedAudioSha256=hashlib.sha256(locked).hexdigest())
 def after_undo(port,out):
     manifest=Path(__file__).with_name('manifest.py').read_text()
-    guard=re.search(r'0x40040ee0,8,"([0-9a-f]+)"',manifest).group(1)
-    assert hashlib.sha256(port.peek(0x40040ee0,8)).hexdigest()==guard, 'SAMPLE editor detour was not removed'
+    for address,length,guard in re.findall(r'stock_guard\((0x[0-9a-f]+),(\d+),"([0-9a-f]+)"',manifest):
+        assert hashlib.sha256(port.peek(int(address,16),int(length))).hexdigest()==guard,'stock writer detour not removed'
     for address in (0x4002dc68,0x4002dc90,0x4002dcc4):
         assert hashlib.sha256(port.peek(address,6)).hexdigest()=='d35bfe797abb5bb27e98ec6d4cb422e20c44f307e5d6597af674380832f8dbdf'
     job(port,6,0x40085418)

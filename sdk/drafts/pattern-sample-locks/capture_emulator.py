@@ -59,12 +59,17 @@ class Port:
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
     for name in ('emulator','base','card','package','out'):parser.add_argument('--'+name,type=Path,required=True)
+    parser.add_argument('--history',action='store_true',help='Adversarial native edit and absent-owner history on disposable media')
     parser.add_argument('--stress-save',action='store_true',help='Maximum native edits plus native save/reload on the copied card')
     parser.add_argument('--exercise',action='store_true',help='Exercise native edits on disposable emulator media')
+    parser.add_argument('--companion',type=Path,help='Install an unrelated package after Lock, on this disposable emulator only')
+    parser.add_argument('--profile-symbols',type=Path,help='Private exact-object offsets for publication guard instruction measurements')
+    parser.add_argument('--keep',action='store_true',help='Keep only on the disposable emulator card for automatic restart testing')
+    parser.add_argument('--boot-auto',action='store_true',help='Use the saved module set restored by native startup; never re-upload')
     parser.add_argument('--cs1-in',type=Path,help='Private battery snapshot for a fresh native power-up')
     parser.add_argument('--menu-only',action='store_true',help='Capture only the level-one list, then Undo')
     parser.add_argument('--no-dsp',action='store_true',help='Skip DSP execution; do not claim audio coverage')
-    source_names=('capture_emulator.py','stress_emulator.py','ownership.c','ownership.h','exercise_emulator.py','unit.s','engine.c','engine.h','ui.c','ui.h','native.c','font.c','font.h','runtime.json','manifest.py')
+    source_names=('capture_emulator.py','profile_emulator.py','history_emulator.py','stress_emulator.py','ownership.c','ownership.h','exercise_emulator.py','unit.s','engine.c','engine.h','ui.c','ui.h','native.c','font.c','font.h','runtime.json','manifest.py')
     source_hashes={name:hashlib.sha256(Path(__file__).with_name(name).read_bytes()).hexdigest() for name in source_names}
     args=parser.parse_args();out=args.out.resolve();out.mkdir(parents=True,exist_ok=False)
     if ROOT==out or ROOT in out.parents:raise ValueError('Use private output outside the repository')
@@ -77,13 +82,16 @@ def main():
         '--mount','--set','BEATLAB','--project','PROJECT 261023','--load-ms','30000','--load-early',
         '--dsp','--frame','--ms','3000','--interactive','--main-level','off','--rtc','host','--mkii',
         '--usb-host',str(sock),'--lcd',str(plane)]
-    if args.stress_save:
-        args.exercise=True;command.append('--card-rw')
+    if args.stress_save or args.history:args.exercise=True
+    if args.stress_save or args.history or args.keep or args.boot_auto:command.append('--card-rw')
+    if args.boot_auto and not args.cs1_in:raise ValueError('--boot-auto requires battery state')
     if args.no_dsp:command.remove('--dsp')
     if args.cs1_in:
         command.remove('--load-early');command.extend(['--cs1-in',str(args.cs1_in),'--boot-load'])
+    profile_symbols=json.loads(args.profile_symbols.read_text()) if args.profile_symbols else None
     port=Port(command,out)
     bench=None
+    port.profile_symbols=profile_symbols
     try:
         port.reply(b'ready ',timeout=300);print('Emulator booted',flush=True)
         port.command('pace on');bench=usb.bench.Bench(str(sock),timeout=60)
@@ -94,18 +102,48 @@ def main():
             reply=usb.status(submit.exchange(raw))
             if reply['result'] not in (0,11,12):raise RuntimeError('USB refusal: '+str(reply['result']))
             return reply
-        request(1,transaction=0);package=args.package.read_bytes();package_hash=hashlib.sha256(package).hexdigest()
-        request(2,bytes.fromhex(base)+bytes.fromhex(package_hash)+struct.pack('>II',status['generation'],len(package)))
-        for at in range(0,len(package),4096):request(3,struct.pack('>I',at)+package[at:at+4096])
-        request(4);status=request(5)
-        while status['result']==12:time.sleep(.025);status=request(5)
-        assert status['phase']==4;status=request(9);assert status['phase']==5
-        kept=False
-        if args.stress_save:
-            # A native save can occupy the engine beyond the trial timeout.
-            # Keep ONLY in this disposable emulator/card, then explicitly
-            # remove the package at the end. No physical USB is reachable.
-            request(1,transaction=0);request(6);status=request(9);assert status['phase']==0;kept=True
+        package=args.package.read_bytes();package_hash=hashlib.sha256(package).hexdigest()
+        kept=bool(args.boot_auto)
+        if args.boot_auto:
+            assert status['phase']==0, 'saved-set startup not normal'
+            # An upload here would forget history, hiding a broken boot test.
+            assert port.peek(0x40040ee0,2)==b'\x4e\xf9', 'automatic module restore absent'
+        else:
+            request(1,transaction=0)
+            request(2,bytes.fromhex(base)+bytes.fromhex(package_hash)+struct.pack('>II',status['generation'],len(package)))
+            for at in range(0,len(package),4096):request(3,struct.pack('>I',at)+package[at:at+4096])
+            request(4);status=request(5)
+            while status['result']==12:time.sleep(.025);status=request(5)
+            assert status['phase']==4;status=request(9);assert status['phase']==5
+            if args.stress_save or args.history or args.keep:
+                # No physical USB surface is available to this process.
+                request(1,transaction=0);request(6);status=request(9)
+                assert status['phase']==0;kept=True
+        def upload_kept(data,transaction):
+            request(1,transaction=0);now=request(0,transaction=0)
+            digest=hashlib.sha256(data).digest()
+            request(2,bytes.fromhex(base)+digest+struct.pack('>II',now['generation'],len(data)),transaction=transaction)
+            for at in range(0,len(data),4096):request(3,struct.pack('>I',at)+data[at:at+4096],transaction=transaction)
+            request(4,transaction=transaction);done=request(5,transaction=transaction)
+            while done['result']==12:time.sleep(.025);done=request(5,transaction=transaction)
+            assert done['phase']==4;done=request(9,transaction=transaction);assert done['phase']==5
+            request(1,transaction=0);request(6,transaction=transaction)
+            assert request(9,transaction=transaction)['phase']==0
+        if args.history:
+            target_id=int.from_bytes(package[28:32],'big')
+            removal=struct.pack('>4sHH6I',b'MWRM',4,0,0,0,0,0,0,target_id)
+            def detach_target():
+                port.command('pace on');upload_kept(removal,5);port.command('pace off')
+            def attach_target():
+                port.command('pace on');upload_kept(package,6);port.command('pace off')
+            port.detach_target=detach_target;port.attach_target=attach_target
+        companion=None
+        if args.companion:
+            if not kept:raise ValueError('--companion requires disposable Keep')
+            companion=args.companion.read_bytes()
+            def install_companion():
+                port.command('pace on');upload_kept(companion,3);port.command('pace off')
+            port.install_companion=install_companion
         print('Experimental package installed in emulator; disposable Keep='+str(kept),flush=True)
         port.command('pace off')
         elapsed=0
@@ -139,7 +177,7 @@ def main():
             lcd.png(lcd.pixels(frame),str(out/name),6);captures.append(name)
         checks={}
         if args.exercise:
-            exercise=load('psl_exercise',Path(__file__).with_name('stress_emulator.py' if args.stress_save else 'exercise_emulator.py'))
+            exercise=load('psl_exercise',Path(__file__).with_name('history_emulator.py' if args.history else 'stress_emulator.py' if args.stress_save else 'exercise_emulator.py'))
             key('NO');key('NO')
             checks=exercise.exercise(port,run,tap,key,encoder,capture,out,bool(args.cs1_in))
         else:
@@ -181,10 +219,10 @@ def main():
             module_id=int.from_bytes(package[28:32],'big')
             removal=struct.pack('>4sHH6I',b'MWRM',4,0,0,0,0,0,0,module_id)
             remove_hash=hashlib.sha256(removal).digest();now=request(0,transaction=0)
-            request(2,bytes.fromhex(base)+remove_hash+struct.pack('>II',now['generation'],len(removal)),transaction=2)
-            request(3,struct.pack('>I',0)+removal,transaction=2);request(4,transaction=2);status=request(5,transaction=2)
-            while status['result']==12:time.sleep(.025);status=request(5,transaction=2)
-            assert status['phase']==4;request(6,transaction=2);status=request(9,transaction=2)
+            request(2,bytes.fromhex(base)+remove_hash+struct.pack('>II',now['generation'],len(removal)),transaction=10)
+            request(3,struct.pack('>I',0)+removal,transaction=10);request(4,transaction=10);status=request(5,transaction=10)
+            while status['result']==12:time.sleep(.025);status=request(5,transaction=10)
+            assert status['phase']==4;request(6,transaction=10);status=request(9,transaction=10)
             assert status['phase']==0 and status['known']==1
         else:
             status=request(7)
@@ -192,12 +230,20 @@ def main():
             assert status['result']==0 and status['known']==1
         if args.exercise and hasattr(exercise,'after_undo'):
             port.command('pace off');checks.update(exercise.after_undo(port,out))
+        if companion:
+            for address in (0x40094296,0x40096eb2):
+                assert port.peek(address,2)==b'\x4e\xf9','companion patch lost on target removal'
+            module_id=int.from_bytes(companion[28:32],'big')
+            removal=struct.pack('>4sHH6I',b'MWRM',4,0,0,0,0,0,0,module_id)
+            port.command('pace on');upload_kept(removal,11);port.command('pace off')
+            checks['companionPreservedOnTargetRemoval']=True
+            checks['companionRemoved']=True
         reply=port.command('run 250')
         assert 'stop=time' in reply, 'runtime failed after Undo'
         assert source_hashes=={name:hashlib.sha256(Path(__file__).with_name(name).read_bytes()).hexdigest() for name in source_names}, 'source changed during emulator run'
         (out/'capture.json').write_text(json.dumps({'hardware':False,'scope':'Actual MKII emulator, native edits with panel input and a labelled stock-writer test injection' if args.exercise else 'Actual MKII emulator UI capture',
             'base':base,'packageSha256':package_hash,'emulatorSha256':hashlib.sha256(args.emulator.read_bytes()).hexdigest(),
-            'captures':captures,'usbUndo':not kept,'disposableEmulatorKeep':kept,'usbRemoval':kept,'sampleLockWritesEnabled':True,'checks':checks,'freshProcessBatteryBoot':bool(args.cs1_in),'dspExecution':not args.no_dsp,
+            'profileSymbols':port.profile_symbols,'companionSha256':hashlib.sha256(companion).hexdigest() if companion else None,'captures':captures,'usbUndo':not kept,'disposableEmulatorKeep':kept,'usbRemoval':kept,'sampleLockWritesEnabled':True,'checks':checks,'automaticSavedSetRestore':args.boot_auto,'freshProcessBatteryBoot':bool(args.cs1_in),'dspExecution':not args.no_dsp,
             'captureBuffer':'Final LCD transfer buffer read through the emulator; includes core draw hooks',
             'sources':source_hashes
             },indent=2)+'\n')

@@ -2,6 +2,7 @@
 """Portable planner and popup regressions; never opens firmware or a device."""
 from pathlib import Path
 import subprocess
+import sys
 import re
 import tempfile
 HERE=Path(__file__).resolve().parent
@@ -28,4 +29,5 @@ with tempfile.TemporaryDirectory(prefix='psl-tests-') as folder:
         subprocess.run(['cc','-std=c99','-Wall','-Wextra','-Werror','-fsanitize=address,undefined',
             '-I',str(ROOT/'sdk/runtime/loader'),*[str(HERE/s) for s in sources],'-o',output],check=True)
         subprocess.run([output],check=True)
+subprocess.run([sys.executable,'-B',str(HERE/'test_native_scope.py')],check=True)
 print('PASS portable tests; emulator, native writer and hardware results remain separate')
