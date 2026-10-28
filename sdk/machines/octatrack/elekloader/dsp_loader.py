@@ -143,10 +143,12 @@ CORE1_WAIT = (0x57, (0x0cd341, 0x000000))  # payload B: brclr #1,y:<<$ffffd3,* (
 CORE1_METER = ('        move    b1,x0\n', '        move    x:>$2840,x0\n        clr     a\n        move    a1,x:>$2840\n')
 
 
-def receiver_source(text, null, table_words, probe=None, burn=0, tag='A', ids=32):
+def receiver_source(text, null, table_words, probe=None, burn=0, tag='A', ids=32, window=None):
     """The receiver with its table's size and stock's null stub (dry ids) filled in, its idle count
     core 1's counted wait on payload B; `burn` (calibration builds) spends that many more cycles every
-    frame, so the load meter's idle count falls by a known amount."""
+    frame, so the load meter's idle count falls by a known amount. `window` (address, words): the burn
+    runs as a routine the receiver writes into the shared window every frame and calls there, to
+    compare code fetched from the window with code in private P."""
     if tag == 'B':
         if text.count(CORE1_METER[0]) != 1:
             raise ValueError('The DSP receiver changed; review core 1\'s idle count.')
@@ -160,7 +162,14 @@ def receiver_source(text, null, table_words, probe=None, burn=0, tag='A', ids=32
         if text.count(old) != 1 or not 0 < burn < 4096 or burn % 2:
             raise ValueError('The DSP receiver changed, or a burn not even and within 2-4094 cycles.')
         # A DO loop, not rep: rep holds off interrupts while it repeats.
-        text = text.replace(old, old + '        do      #%d,burnt\n        nop\n        nop\nburnt:\n' % (burn // 2))
+        loop = '        do      #%d,burnt\n        nop\n        nop\nburnt:\n' % (burn // 2)
+        if window:
+            # r0, r1 and x0 are free here: the packet check below sets them again.
+            address, words = window
+            loop = '        move    #>$%x,r1\n' % address + ''.join(
+                '        move    #>$%x,x0\n        move    x0,p:(r1)+\n' % w for w in words) + (
+                '        move    #>$%x,r0\n        jsr     (r0)\n' % address)
+        text = text.replace(old, old + loop)
     if not 32 <= ids <= 128 or TABLE_HOME + 2 * ids > TABLE_END:
         raise ValueError('The dispatch tables hold 32 to 128 ids.')
     fill = lambda value, label: ('        move    #>$%x,x0\n        do      #%d,%s\n        move    x0,x:(r1)+\n%s:\n' % (
@@ -229,7 +238,19 @@ def reads_buffer(words, base, init, work):
     return 1  # no rts reached: assume it reads, the side that reserves a block
 
 
-def recipe(image, device, dsp, assemble, work, probe=None, burn=0, ids=32):
+def window_burn(assemble, work, burn, address):
+    """The burn as a routine for P:`address` in the shared window (`receiver_source`'s `window`)."""
+    if not 0x30000 <= address <= 0x37eff - 8:  # payload B's boot zero clears 0x37f00 up
+        raise ValueError('A window burn goes in 0x30000..0x37ef7.')
+    path = Path(work) / 'window-burn.asm'
+    path.write_text('        do      #%d,wburnt\n        nop\n        nop\nwburnt:\n        rts\n' % (burn // 2))
+    words, _, relocations = assemble(str(path))
+    for at, target in relocations:
+        words[at] = address + target
+    return address, words
+
+
+def recipe(image, device, dsp, assemble, work, probe=None, burn=0, ids=32, burn_window=0):
     """-> (sites, layout) for both payloads. `assemble(path)` is Elekloader's
     sdk.build.dsp_assemble (octabam's dsp_asm at two origins)."""
     metadata = json.loads(METADATA.read_text())
@@ -291,10 +312,11 @@ def recipe(image, device, dsp, assemble, work, probe=None, burn=0, ids=32):
         path = Path(work) / ('receiver-%s.asm' % tag)
         # One core at a time: with 2,000 more cycles a frame on both cores the unit hung at its logo (10 October 2026).
         burned = abs(burn) if (tag == 'B') == (burn < 0) else 0  # a negative burn is core 1's
-        path.write_text(receiver_source(RECEIVER.read_text(), null, 0, probe, burned, tag, ids))
+        window = window_burn(assemble, work, burned, burn_window) if burned and burn_window else None
+        path.write_text(receiver_source(RECEIVER.read_text(), null, 0, probe, burned, tag, ids, window))
         size = len(assemble(str(path))[0])
         table = hi - origin - size
-        path.write_text(receiver_source(RECEIVER.read_text(), null, table, probe, burned, tag, ids))
+        path.write_text(receiver_source(RECEIVER.read_text(), null, table, probe, burned, tag, ids, window))
         code, labels, relocations = assemble(str(path))
         # The least arena that still runs every stock effect on its own: the largest, DARK REV.
         if len(code) != size or labels['dltable'] != size or table < SAVED + max(len(s['words']) for s in stock.values()):

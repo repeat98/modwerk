@@ -617,11 +617,11 @@ if (command === 'serve') {
     process.exit(0)
   }
   if (command === 'missing') { console.log(await missing()); process.exit(0) }
-  if (command === 'meter') { // dsp_receiver.asm's load meter, read back a bit a frame (66 report words, version 10)
+  if (command === 'meter') { // dsp_receiver.asm's load meter, read back a bit a frame (report words 53-59)
     if (!['0', '1'].includes(file)) throw new Error('Use meter 0 or meter 1.')
     if (!(await devIn(13, Number(file), 1))[0]) throw new Error('A meter read is already waiting.')
     for (const until = Date.now() + 15000; Date.now() < until; await new Promise(r => setTimeout(r, 200))) {
-      const bytes = await devIn(11, 0, 4 * 66), view = new DataView(bytes.buffer, bytes.byteOffset, 4 * 66), w = i => view.getUint32(4 * i)
+      const view = await reportView(), w = i => view.getUint32(4 * i)
       if (view.getInt32(4 * 53) !== Number(file) || w(54) !== 120) continue
       console.log({ core: Number(file), window: w(55), idleLeast: w(56), idleMost: w(57), idleMean: +(w(58) / 1024).toFixed(1), missed: w(59) })
       process.exit(0)

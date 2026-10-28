@@ -1500,6 +1500,8 @@ def main():
                         help='Load every DSP effect, stock and module, on demand (needs ELEKLOADER_DSP_ASM, Node 24).')
     parser.add_argument('--dsp-burn', type=int, default=0,
                         help='with --dsp-loader, calibration only: core 0\'s receiver spends this many more cycles (2-4094, even) every frame; negative, core 1\'s.')
+    parser.add_argument('--dsp-burn-window', type=lambda s: int(s, 0), default=0,
+                        help='with --dsp-burn: run the burn from this shared-window P address (0x30000-0x37ef7) instead of private P.')
     parser.add_argument('--cached-modules', action='store_true',
                         help='Prototype, for a development twin: runtime modules run from the pool\'s cached alias, '
                              'not the uncached one (sdk/runtime/loader/README.md, "Cached modules"). Off by default.')
@@ -1776,6 +1778,7 @@ def main():
                 raise ValueError('An FX selector no longer reads its chooser list at %#x.' % lea)
         dsp_sites, dsp_layout = loader_dsp.recipe(image, device, dsp, lambda path: sdk.dsp_assemble(path, str(source)), str(source),
                                                   args.dsp_probe if args.dsp_probe in ('A', 'B', 'X') else None, args.dsp_burn, FX_IDS,
+                                                  burn_window=args.dsp_burn_window,
                                                   **({'resident': resident_factory} if args.resident_stock_hooks else {}))
         if args.resident_stock_hooks:
             resident_boot_prepared = resident_boot_helper.prepare(image, device, dsp, dsp_layout)
@@ -1920,7 +1923,7 @@ def main():
         configuration['usb']['moduleSets'] = 'mwms-1'
     if args.dsp_loader:
         configuration.update(dsp=dict(loader='dsp-dynload-3', stock='on-demand', rows='runtime',
-                                      allowance=DSP_ALLOWANCE, reserve=DSP_RESERVE, probe=args.dsp_probe, burn=args.dsp_burn, hook=args.dsp_hook, arena=[dsp_layout[t]['tableWords'] - loader_dsp.SAVED for t in 'AB']))
+                                      allowance=DSP_ALLOWANCE, reserve=DSP_RESERVE, probe=args.dsp_probe, burn=args.dsp_burn, **({'burnWindow': args.dsp_burn_window} if args.dsp_burn_window else {}), hook=args.dsp_hook, arena=[dsp_layout[t]['tableWords'] - loader_dsp.SAVED for t in 'AB']))
     if usb_functions:
         configuration['usb'].update(interfaces=['msc', 'modwerk-vendor', 'midi-control', 'midi-streaming'] +
             (['audio-control', 'audio-streaming'] if args.usb_audio else []),
