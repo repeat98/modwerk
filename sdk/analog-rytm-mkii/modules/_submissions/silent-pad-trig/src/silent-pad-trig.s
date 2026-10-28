@@ -398,7 +398,7 @@ items_live:
         .long   lbl_live, act_live, drw_live, chg_live
 
         | lbl_*(a0 = the std::string to construct) -> d0 = a0, as stock's
-        | label invokers (AUTO TRK SWITCH's, OS 1.73 0x400eb6a4).
+        | label invokers (AUTO TRK SWITCH's, OS 1.74 0x400eb710).
         .align  2
 lbl_main:
         lea     txt_main,%a1
@@ -469,7 +469,7 @@ set_redraw:                                       | d0 the value, a2 the view;
         rts
 
         | drw_*(functor, -, canvas, x, y): the checkbox, as AUTO TRK SWITCH's
-        | drawer (OS 1.73 0x400ec3e4) draws it: glyph 0 or 1 of the table at
+        | drawer (OS 1.74 0x400ec450) draws it: glyph 0 or 1 of the table at
         | CHECK_GLYPHS, at x + 11, called with a frame of its own.
         .align  2
 drw_main:
