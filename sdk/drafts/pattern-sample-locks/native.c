@@ -165,4 +165,3 @@ void psl_open(unsigned count,unsigned selected,unsigned *cursor,
        (uintptr_t)labels==0x400b9b14u && (uintptr_t)callbacks==0x400b9b04u && psl_native_popup()==1)
         psl_ui_open();
 }
-
