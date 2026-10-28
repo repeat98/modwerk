@@ -3,7 +3,7 @@
   "id": "pattern-sample-locks",
   "key": "PATTERN SAMPLE LOCKS",
   "name": "Pattern Sample Locks",
-  "version": "0.1.4-experimental",
+  "version": "0.1.5-experimental",
   "category": "system",
   "author": {
     "github": "twwwy",
@@ -39,11 +39,12 @@
       "screen:PART EDIT"
     ],
     "limitations": [
+      "Local prototype requires the separate proposed lifecycle base event; it is not available in the published base.",
       "Local emulator prototype only; physical power cycles, performance and full companion runtime behavior are not qualified.",
       "Ownership material uses a tagged private battery-RAM region, bound to one project identity. It is not included when a project is copied to another instrument.",
-      "Same-value edits through the native SAMPLE editor retire ownership. Missing-module edit history, all reload/copy paths and removal/reinstall invalidation still need qualification; do not use on hardware yet.",
+      "Same-value native edits, paste, Undo and remove/reinstall history were checked in the emulator; complete native paths and physical behavior still need qualification.",
       "Unknown or mismatched ownership is retained by default. Native card-build integration is not implemented.",
-      "Sparse battery store holds 704 active track/pattern combinations. A full store refuses new locking before any sample edit; it never evicts known ownership."
+      "Sparse battery store holds 704 reserved track/pattern combinations. A full store refuses new locking before any sample edit; it never evicts known ownership."
     ],
     "effectId": null
   },
@@ -70,9 +71,9 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Corrected exact emulator build passes: base-memory preservation, STOP, same-value manual protection, fresh startup, 512-lock editing, native save/reload and removal. Physical timing and complete ownership-history coverage remain open.",
+    "summary": "Exact emulator package: STOP, manual retention, witnessed automatic restart, native paste/Undo/reinstall history, 512-lock editing, save/reload, companion load/removal and stock-site restoration. Hardware and publication remain unqualified.",
     "hardwareStatus": "untested",
-    "evidenceRevision": "4f1eb8cb4eb4a2646fcb551f9b13a2c5be85975c",
+    "evidenceRevision": "105efaf13cdd7ffc40bc18155ccbdd875f2307be",
     "gates": [
       "Worst-case cycles under parameter modulation and maximum load",
       "Exact memory region and maximum-instance totals",
@@ -97,9 +98,9 @@
         "page": "Part Edit",
         "shows": "location",
         "firmware": "1.40C",
-        "moduleVersion": "0.1.4-experimental",
-        "imageSha256": "025af1b78e27be20bb888427ab7462d352e8d7dbca5cf5c183244509aed94aec",
-        "setup": "Actual final LCD transfer buffer from the current native prototype in a fresh isolated MKII emulator USB trial. T3 THRU/T7 NEIGHBOR fixture demonstrates disabled cells. Layout capture without final Apply; DSP disabled, no physical unit. Exact package, base, emulator and frozen source hashes in media/capture.json."
+        "moduleVersion": "0.1.5-experimental",
+        "imageSha256": "da5a9d93eaed2270af824e6c4b524f122865d01a2d1d168303e962651cb3e029",
+        "setup": "Actual final LCD transfer buffer from the MKII emulator, package f9f179e0f5536d3c0727f61df5e79106ff211721c75742646c747e9598b35fc9. Receipt: media/capture.json. DSP disabled; no hardware result."
       }
     },
     {
@@ -114,9 +115,9 @@
         "page": "Lock track selection",
         "shows": "controls",
         "firmware": "1.40C",
-        "moduleVersion": "0.1.4-experimental",
-        "imageSha256": "025af1b78e27be20bb888427ab7462d352e8d7dbca5cf5c183244509aed94aec",
-        "setup": "Actual final LCD transfer buffer from the current native prototype in a fresh isolated MKII emulator USB trial. T3 THRU/T7 NEIGHBOR fixture demonstrates disabled cells. Layout capture without final Apply; DSP disabled, no physical unit. Exact package, base, emulator and frozen source hashes in media/capture.json."
+        "moduleVersion": "0.1.5-experimental",
+        "imageSha256": "da5a9d93eaed2270af824e6c4b524f122865d01a2d1d168303e962651cb3e029",
+        "setup": "Actual final LCD transfer buffer from the MKII emulator, package f9f179e0f5536d3c0727f61df5e79106ff211721c75742646c747e9598b35fc9. Receipt: media/capture.json. DSP disabled; no hardware result."
       }
     },
     {
@@ -131,9 +132,9 @@
         "page": "Lock confirmation",
         "shows": "controls",
         "firmware": "1.40C",
-        "moduleVersion": "0.1.4-experimental",
-        "imageSha256": "025af1b78e27be20bb888427ab7462d352e8d7dbca5cf5c183244509aed94aec",
-        "setup": "Actual final LCD transfer buffer from the current native prototype in a fresh isolated MKII emulator USB trial. T3 THRU/T7 NEIGHBOR fixture demonstrates disabled cells. Layout capture without final Apply; DSP disabled, no physical unit. Exact package, base, emulator and frozen source hashes in media/capture.json."
+        "moduleVersion": "0.1.5-experimental",
+        "imageSha256": "da5a9d93eaed2270af824e6c4b524f122865d01a2d1d168303e962651cb3e029",
+        "setup": "Actual final LCD transfer buffer from the MKII emulator, package f9f179e0f5536d3c0727f61df5e79106ff211721c75742646c747e9598b35fc9. Receipt: media/capture.json. DSP disabled; no hardware result."
       }
     },
     {
@@ -148,9 +149,9 @@
         "page": "Clear track selection",
         "shows": "controls",
         "firmware": "1.40C",
-        "moduleVersion": "0.1.4-experimental",
-        "imageSha256": "025af1b78e27be20bb888427ab7462d352e8d7dbca5cf5c183244509aed94aec",
-        "setup": "Actual final LCD transfer buffer from the current native prototype in a fresh isolated MKII emulator USB trial. T3 THRU/T7 NEIGHBOR fixture demonstrates disabled cells. Layout capture without final Apply; DSP disabled, no physical unit. Exact package, base, emulator and frozen source hashes in media/capture.json."
+        "moduleVersion": "0.1.5-experimental",
+        "imageSha256": "da5a9d93eaed2270af824e6c4b524f122865d01a2d1d168303e962651cb3e029",
+        "setup": "Actual final LCD transfer buffer from the MKII emulator, package f9f179e0f5536d3c0727f61df5e79106ff211721c75742646c747e9598b35fc9. Receipt: media/capture.json. DSP disabled; no hardware result."
       }
     },
     {
@@ -165,9 +166,9 @@
         "page": "Clear confirmation",
         "shows": "controls",
         "firmware": "1.40C",
-        "moduleVersion": "0.1.4-experimental",
-        "imageSha256": "025af1b78e27be20bb888427ab7462d352e8d7dbca5cf5c183244509aed94aec",
-        "setup": "Actual final LCD transfer buffer from the current native prototype in a fresh isolated MKII emulator USB trial. T3 THRU/T7 NEIGHBOR fixture demonstrates disabled cells. Layout capture without final Apply; DSP disabled, no physical unit. Exact package, base, emulator and frozen source hashes in media/capture.json."
+        "moduleVersion": "0.1.5-experimental",
+        "imageSha256": "da5a9d93eaed2270af824e6c4b524f122865d01a2d1d168303e962651cb3e029",
+        "setup": "Actual final LCD transfer buffer from the MKII emulator, package f9f179e0f5536d3c0727f61df5e79106ff211721c75742646c747e9598b35fc9. Receipt: media/capture.json. DSP disabled; no hardware result."
       }
     },
     {
@@ -182,9 +183,9 @@
         "page": "Clear after fresh battery-backed startup",
         "shows": "controls",
         "firmware": "1.40C",
-        "moduleVersion": "0.1.4-experimental",
-        "imageSha256": "025af1b78e27be20bb888427ab7462d352e8d7dbca5cf5c183244509aed94aec",
-        "setup": "Actual final LCD transfer buffer from the native MKII emulator test. Native memory/transport assertions recorded in media/capture-reboot.json. DSP disabled; no physical hardware result."
+        "moduleVersion": "0.1.5-experimental",
+        "imageSha256": "da5a9d93eaed2270af824e6c4b524f122865d01a2d1d168303e962651cb3e029",
+        "setup": "Actual final LCD transfer buffer from the MKII emulator, package f9f179e0f5536d3c0727f61df5e79106ff211721c75742646c747e9598b35fc9. Receipt: media/capture-reboot.json. DSP disabled; no hardware result."
       }
     },
     {
@@ -199,9 +200,9 @@
         "page": "Maximum Lock confirmation",
         "shows": "controls",
         "firmware": "1.40C",
-        "moduleVersion": "0.1.4-experimental",
-        "imageSha256": "025af1b78e27be20bb888427ab7462d352e8d7dbca5cf5c183244509aed94aec",
-        "setup": "Actual final LCD transfer buffer from the native MKII emulator test. Native memory/transport assertions recorded in media/capture-native.json. DSP disabled; no physical hardware result."
+        "moduleVersion": "0.1.5-experimental",
+        "imageSha256": "da5a9d93eaed2270af824e6c4b524f122865d01a2d1d168303e962651cb3e029",
+        "setup": "Actual final LCD transfer buffer from the MKII emulator, package f9f179e0f5536d3c0727f61df5e79106ff211721c75742646c747e9598b35fc9. Receipt: media/capture-native.json. DSP disabled; no hardware result."
       }
     },
     {
@@ -216,9 +217,9 @@
         "page": "Native operation result",
         "shows": "controls",
         "firmware": "1.40C",
-        "moduleVersion": "0.1.4-experimental",
-        "imageSha256": "025af1b78e27be20bb888427ab7462d352e8d7dbca5cf5c183244509aed94aec",
-        "setup": "Actual final LCD transfer buffer from the native MKII emulator test. Native memory/transport assertions recorded in media/capture-native.json. DSP disabled; no physical hardware result."
+        "moduleVersion": "0.1.5-experimental",
+        "imageSha256": "da5a9d93eaed2270af824e6c4b524f122865d01a2d1d168303e962651cb3e029",
+        "setup": "Actual final LCD transfer buffer from the MKII emulator, package f9f179e0f5536d3c0727f61df5e79106ff211721c75742646c747e9598b35fc9. Receipt: media/capture-native.json. DSP disabled; no hardware result."
       }
     }
   ],

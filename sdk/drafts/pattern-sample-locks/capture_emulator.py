@@ -69,7 +69,7 @@ def main():
     parser.add_argument('--cs1-in',type=Path,help='Private battery snapshot for a fresh native power-up')
     parser.add_argument('--menu-only',action='store_true',help='Capture only the level-one list, then Undo')
     parser.add_argument('--no-dsp',action='store_true',help='Skip DSP execution; do not claim audio coverage')
-    source_names=('capture_emulator.py','profile_emulator.py','history_emulator.py','stress_emulator.py','ownership.c','ownership.h','exercise_emulator.py','unit.s','engine.c','engine.h','ui.c','ui.h','native.c','font.c','font.h','runtime.json','manifest.py')
+    source_names=('capture_emulator.py','attestation_emulator.py','profile_emulator.py','history_emulator.py','stress_emulator.py','ownership.c','ownership.h','exercise_emulator.py','unit.s','engine.c','engine.h','ui.c','ui.h','native.c','font.c','font.h','runtime.json','manifest.py')
     source_hashes={name:hashlib.sha256(Path(__file__).with_name(name).read_bytes()).hexdigest() for name in source_names}
     args=parser.parse_args();out=args.out.resolve();out.mkdir(parents=True,exist_ok=False)
     if ROOT==out or ROOT in out.parents:raise ValueError('Use private output outside the repository')
@@ -146,6 +146,8 @@ def main():
             port.install_companion=install_companion
         print('Experimental package installed in emulator; disposable Keep='+str(kept),flush=True)
         port.command('pace off')
+        attestation=load('psl_attestation',Path(__file__).with_name('attestation_emulator.py'))
+        live_checks=attestation.verify(port,package,ROOT)
         elapsed=0
         def run(ms):
             nonlocal elapsed
@@ -212,6 +214,7 @@ def main():
                 key('YES');capture('clear-tracks.png');encoder(0,4)
                 capture('clear-retain-default.png');key('YES');capture('clear-confirm.png');key('NO');key('NO')
             else:key('NO')
+        checks.update(live_checks)
         port.command('pace on');request(1,transaction=0)
         if kept:
             # ABI 4 empty package with the exact live id: normal native

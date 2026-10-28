@@ -1,0 +1,46 @@
+{
+  "hardware": false,
+  "scope": "Actual MKII emulator, native edits with panel input and a labelled stock-writer test injection",
+  "base": "8ffc8ffefe3ecd00ca434fe67ee6e902ea0b359d0f6343a404a5bd3ec4e9c69a",
+  "packageSha256": "d831f8c1f6469cd972d5c3d2d3860f067e55d149c2dca315fc34399ef4ef007c",
+  "emulatorSha256": "b087c97f3031f075551b3336afcd75a407ca4d3476e04a9d5cfaa059b1d40363",
+  "captures": [
+    "reboot-clear-confirm.png",
+    "reboot-clear-result.png",
+    "reboot-include-manual-confirm.png",
+    "removal-open-tracks.png"
+  ],
+  "usbUndo": true,
+  "disposableEmulatorKeep": false,
+  "usbRemoval": false,
+  "sampleLockWritesEnabled": true,
+  "checks": {
+    "freshBootNativeLocksPresent": true,
+    "freshBootOwnedLockCleared": true,
+    "freshBootManualLockRetained": true,
+    "playbackLeftStopped": true,
+    "unrelatedAudioBytesPreserved": true,
+    "explicitIncludeManualClearsManual": true,
+    "baseEffectMapAndLogTagPreserved": true
+  },
+  "freshProcessBatteryBoot": true,
+  "dspExecution": false,
+  "captureBuffer": "Final LCD transfer buffer read through the emulator; includes core draw hooks",
+  "sources": {
+    "capture_emulator.py": "e3ca844f5a57093d616209e1fa13ad5d40a7e28fac0d05e5ff58c89631d0e19f",
+    "stress_emulator.py": "86b50a4b148716989c55782beb1b71b0b64c09b9ad6927bf15ef82a0f4f2fcf5",
+    "ownership.c": "9a6c4ce91546a98d9f3e09bef2c29eb4cc38b08e79e1e7ea489beb90754704e7",
+    "ownership.h": "64c0e68597320bcceeee412a8f690dc3dfe791554e27243c7bdbb077e9ab4816",
+    "exercise_emulator.py": "3cd78de44487b5a46a135c50e651069ce3e0712a28b5334fd25cea9c2b42da87",
+    "unit.s": "06336b8c74e3fdcaf3f3fbcc4c3c658ba14ee98801cc72d9930af393db31523e",
+    "engine.c": "5b74c9834ed3b7d4410f12a57c69f4f8971b806b9373db23ad3feb027c4c3e51",
+    "engine.h": "816badd979c18609d88e955fc06d8a19ff39b4b71faf249c981e015a42b87962",
+    "ui.c": "56be50891ed9791923016d958af5757da951a5e5ff45c57c6042d91d635a6cf5",
+    "ui.h": "216143ed712019973c97d440fff826c6fc574fa5aad693f95769435d8933c292",
+    "native.c": "e76fbd393ca3c3ebdbf7a0b70bdc268b86d757b399d17b593e150866b990d89a",
+    "font.c": "63104792b675f7cce15582b554eaf4b05e008a63c2433db7fecb71210e115079",
+    "font.h": "a94a3103633a0084e11d53fbe46d0590812011062aa01d2c28de35b60ef8ea99",
+    "runtime.json": "3e19c309b57be8b30a90f821ace7515a434b1349bc9f4bb6b4466edcebfcb1f4",
+    "manifest.py": "a0a280ef64ec7025b683a775f280d761cea4a4d112a816ba52973c90f23d35d3"
+  }
+}

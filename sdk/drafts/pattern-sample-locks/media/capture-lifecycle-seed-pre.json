@@ -1,0 +1,51 @@
+{
+  "hardware": false,
+  "scope": "Actual MKII emulator, native edits with panel input and a labelled stock-writer test injection",
+  "base": "2e1a612832625e268492a06623c3cac5ebfb0ea324889d9e8f30509bbbffc248",
+  "packageSha256": "df1630971ab060d00c06423104a4b4734028c6ff6804b8b0bcd8974427c47e79",
+  "emulatorSha256": "b087c97f3031f075551b3336afcd75a407ca4d3476e04a9d5cfaa059b1d40363",
+  "captures": [
+    "native-lock-confirm.png",
+    "native-lock-result.png",
+    "native-clear-owned-confirm.png",
+    "native-same-value-confirm.png",
+    "removal-open-tracks.png"
+  ],
+  "usbUndo": false,
+  "disposableEmulatorKeep": true,
+  "usbRemoval": true,
+  "sampleLockWritesEnabled": true,
+  "checks": {
+    "stopBeforeEdit": true,
+    "manualLockPreserved": true,
+    "nativeLockWritten": true,
+    "unrelatedAudioBytesPreserved": true,
+    "batteryMirrorMatches": true,
+    "cs1Sha256": "06a58da9e7ba2e682dfc04270439bcd4a84b777448de8665f4748bbfc5693c59",
+    "savedCardSha256": "0b9e92355ddb5955a08e2708c1a874621a0bb77bb850323ad42c0cf545510515",
+    "sameValueManualLockRetained": true,
+    "baseEffectMapAndLogTagPreserved": true
+  },
+  "automaticSavedSetRestore": false,
+  "freshProcessBatteryBoot": false,
+  "dspExecution": false,
+  "captureBuffer": "Final LCD transfer buffer read through the emulator; includes core draw hooks",
+  "sources": {
+    "capture_emulator.py": "1d376c10115c8101f3460dcdc7bcbc9c1549ffcdc90727aa6811ec99fe00ba93",
+    "stress_emulator.py": "d0fa1f9aa11fd6cc8d45611b43ea885287b59612b3b8ae8677ba70758dc6e8c0",
+    "ownership.c": "4ee7fb2d3ce6ba9b608ccf9175e41d6944de3beb55ff361be26bff1346fa1096",
+    "ownership.h": "fb25af8219c386adf29592a5315b5f9c9e84ffaf5d31d05085f1005269bf70ae",
+    "exercise_emulator.py": "65d9575c3643f0ccc3244c48106a1c0969ec0ec048f23a55277ef426e697271c",
+    "unit.s": "1d80921844388259575f27b3e20d8ec90c5ab69c6a84e5ad1c11548f39265111",
+    "engine.c": "5b74c9834ed3b7d4410f12a57c69f4f8971b806b9373db23ad3feb027c4c3e51",
+    "engine.h": "816badd979c18609d88e955fc06d8a19ff39b4b71faf249c981e015a42b87962",
+    "ui.c": "208df08b917bb0d82ca0040cb38c232d94981d4ff31856228ab27b4a84f060d8",
+    "ui.h": "241606b9ada14d9ee436aa02d1803c95cc2b8a10d53619d033e2aaab435b5a2e",
+    "native.c": "4f8fd50082bc1328d6383ddc299d1129359617bf65474f10c529b5a9d7cf7066",
+    "font.c": "63104792b675f7cce15582b554eaf4b05e008a63c2433db7fecb71210e115079",
+    "font.h": "a94a3103633a0084e11d53fbe46d0590812011062aa01d2c28de35b60ef8ea99",
+    "runtime.json": "e1ef7bb465b91b994b8ac89e89274a46c2aea0970b4707dcd5ec07dd7856497c",
+    "manifest.py": "9dafdaa9ce4c477efac431433781300abbb5021e49a7d14410d5d67a288f781f"
+  },
+  "qualification": "Intermediate 0.1.5 candidate before interrupt batching/CRC optimization; does not qualify the current source."
+}

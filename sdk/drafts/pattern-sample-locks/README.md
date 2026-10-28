@@ -1,6 +1,6 @@
 # Pattern Sample Locks
 
-Version: 0.1.4-experimental · author: @twwwy · category: system
+Version: 0.1.5-experimental · author: @twwwy · category: system
 
 ## Overview
 
@@ -41,26 +41,56 @@ MKI access is not tested. The adapter recognizes the current shared registry's P
 2. Turn A clockwise to select all, then use arrows and turn B counterclockwise to exclude one track. Leave Replace existing OFF to protect existing SAMPLE locks.
 3. Press YES to review the individual track counts. NO returns to level 2; another NO closes. For Clear, Retain manual locks starts ON. Final YES applies to the pattern's working data; use the stock save workflow when you want to save it.
 
+## Local prototype setup
+
+The exact local package and test receipts are listed in [TESTING.md](TESTING.md).
+This prototype requires the separate local `prototype/module-lifecycle-base`
+branch's proposed `ot_module_lifecycle` event (index 37). It is not available
+in the published base. Shared base work stays separate from this module;
+owner review is required before either becomes a release. No PR is being
+prepared and no push is authorized.
+
 ## Ownership and power cycles
 
 Clear defaults to **Retain manual locks ON every time it opens**, including after a reboot. Existing locks are not adopted simply because they match the Part's sample slot. A newly written lock is tagged as module-created; an existing same-value lock keeps its previous origin. Turning Retain manual OFF explicitly permits clearing all SAMPLE locks on the selected tracks.
 
-Origin material has its own tagged, checksummed battery-RAM region, `0x100f9000..0x100fc000` (end exclusive). It is separate from stock patterns, Parts, sample data and the regions used by current catalog modules. It holds up to 704 active track/pattern combinations across one project identity. A full store refuses new locking before editing; it never evicts known ownership. Clearing the last owned lock on a track frees its record. After a fresh boot, a small RAM index is rebuilt from these keyed records for constant-time lookup. Each track's bitmap is checked against its SAMPLE bytes and trig mask before use. Ownership is invalidated before the first pattern store and published after both native copies agree. A damaged, interrupted, missing or mismatched record defaults to retaining the locks. Foreign tagged storage is refused.
+Origin material has its own tagged, checksummed battery-RAM region, `0x100f9000..0x100fc000` (end exclusive). It is separate from stock patterns, Parts, sample data and the regions used by current catalog modules. It holds up to 704 reserved track/pattern combinations across one project identity. A full store refuses new locking before editing; it never evicts known ownership. Clearing the last owned lock on a track frees its record. After a fresh boot, a small RAM index is rebuilt from these keyed records for constant-time lookup. Each track's bitmap is checked against its SAMPLE bytes and trig mask before use. Ownership is invalidated before the first pattern store and published after both native copies agree. A damaged, interrupted, missing or mismatched record defaults to retaining the locks. Foreign tagged storage is refused.
 
-The dedicated native SAMPLE editor retires ownership even for a same-value manual overwrite. Native paste/clear gestures conservatively retire the target pattern's ownership. Unrecognized changes to a track's SAMPLE bytes or trig mask make its record unknown, so other previously created locks on that track can also be retained. Clear is not Undo.
+The dedicated SAMPLE editor retires the entire target track's ownership,
+including same-value writes. Native trig/track/pattern paste, undo and bank
+load/deserialize are fenced before entering firmware. Affected locks become
+unknown and are retained by default, even if their bytes still match. This
+can also retain other previously created locks on that track. Clear is not Undo.
 
-A fresh emulator process restored from battery memory has recovered the distinction between created and manual locks; see the exact build receipts in TESTING.md. This is **emulated battery-backed startup, not a physical power-cycle result**. The module package was reloaded over emulated USB; automatic module-set restore was not tested.
+A boot witness in private battery metadata preserves ownership only when the
+base automatically restores this module on the immediately following Modwerk
+boot, with the same witness nonce. USB removal, replacement, reinstall and Undo
+restoration forget ownership. A skipped or failed intervening restore causes
+a boot gap and forgets ownership. Interrupted or corrupt records never grant
+ownership. Native project files remain unchanged: the origin ledger is local
+battery material, not portable project-file metadata. Reloaded locks are unknown.
 
-The battery record belongs to one instrument and one project identity. It does not travel with a project copied to another instrument, and changing projects forgets prior ownership at the next mutating operation. All sample choices remain ordinary native SAMPLE locks. **History made while the module is absent, same-value edits through every other path, complete copy/undo/reload handling, and unload/reinstall invalidation remain qualification blockers.** Do not assume such history is protected by the current prototype.
+The current exact build recovered the created/manual distinction in a fresh
+emulator process using only its saved card and battery snapshot, with automatic
+module-set restore and no USB re-upload. Same-value trig/track/pattern paste,
+native Undo and manual edits made while the module was removed were checked
+on disposable emulator data. Preview Vol was installed alongside it. This is
+emulator evidence, not a physical reboot or audible qualification. Complete
+native edit paths and companion combinations still require qualification.
+
+Edits made while running external, non-Modwerk firmware cannot be witnessed by
+this base. Such history is unsupported; a boot counter is not evidence about
+another OS. Changing projects forgets prior ownership at the next mutating
+operation. Every sample choice remains an ordinary native SAMPLE lock.
 
 ## Compatibility and CPU cost
 
-- Four guarded, currently unshared sites: three Part Edit openers and the dedicated SAMPLE editor. UI events come from the base's existing `module_tick`, `module_draw`, `module_key` and `module_enc` hooks. The declaration compatibility check passes beside every active catalog module and the base. This does not prove companion runtime behavior.
+- Eleven guarded, currently unshared sites: three Part Edit openers, the SAMPLE editor and seven native history writers. UI events come from the base's existing `module_tick`, `module_draw`, `module_key` and `module_enc` hooks. The declaration compatibility check passes beside every active catalog module and the base. The track-paste hook starts after the prologue bytes Euclid copies; it unwinds the untouched save frame before entering its C wrapper. Preview Vol load/removal was exercised; full companion runtime behavior remains unqualified.
 - The private 12 KiB battery region is declared as a resource and checked against the actual base diagnostics, effect-map and crash/stall definitions by the module regression gate. It does not overlap Play Modes or stock settings. Upstream PLOCKS P2, which is outside this catalog, uses an overlapping region and is not supported by this prototype.
 - Stock retains its callback array, label array, selection destination and input layers. No module callback/label pointer is stored in a stock popup.
 - No DSP code or audio-frame hook. Closed-menu work is constant and does not scan patterns. Source/ownership checks occur on explicit UI intent or native SAMPLE edits.
 - Only changed SAMPLE bytes are written, in working RAM and its battery mirror. The lock-index update changes only the affected track bits; it avoids stock's full 16-track lock-index rebuild. Only affected tracks are republished.
-- A bounded publication guard rechecks the source and stopped state before the first edit. Hashing, preparing edits and searching other parameter locks happen outside it. Its worst-case interrupt delay and total CPU cost still require hardware measurement.
+- The current source serializes validation and metadata with native UI/storage writers at interrupt level four, leaving DSP/frame interrupts enabled. Changed SAMPLE/index entries use batches of at most sixteen under full interrupt masking. A 64-byte CRC nibble table replaces eight bit iterations per byte. The 512-lock test observed 36 write guards, with a maximum of 203 emulator instructions between mask/restore watches. These are not hardware cycles; total CPU/stack and interrupt timing still need physical measurements.
 - No PCM edits, implicit project save, flash or physical testing. Locks pin sample **slots**; replacing the file in a slot changes the sound. New trigs need another explicit Lock action.
 - USB prototype only. Stock-only card integration and future contributed-machine signatures remain unqualified. Published PL/AB/FM/S2 machine signatures are excluded from selection.
 
@@ -74,7 +104,7 @@ Original source and UI by twwwy, MIT. Small lettering is reused from twwwy's ori
 
 ## Screens and audio
 
-UI screenshots come from the actual MKII emulator framebuffer after native panel gestures and USB module loading. Their receipt names the base, module package and emulator hashes. A screenshot alone establishes no hardware, persistence or audio result. Current layout images use `media/capture.json`; separate native-operation and fresh-start receipts record the functional checks. No audio preview is required for this editing utility.
+UI screenshots come from the actual MKII emulator framebuffer after native panel gestures and USB module loading. Their receipt names the base, module package and emulator hashes. A screenshot alone establishes no hardware, persistence or audio result. Current layout images use `media/capture.json`; separate native-operation, history and fresh-start receipts record the functional checks. No audio preview is required for this editing utility.
 
 ![Part Edit actions](media/both-menu-actions.png)
 
