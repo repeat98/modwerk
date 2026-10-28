@@ -11,7 +11,7 @@
     "release-documentation"
   ],
   "retainedUiVersion": "0.2.7-experimental",
-  "sourceSha256": "e94b1ce1f991d488c39d0c04287dcf275839b12cf226977ebbeebf754dcfcd75",
-  "ownerStatement": "Approved by repeat98 on 27 Oct 2026 in the issue-fix session (\"approved\"): release POLY8 0.3.2-experimental so its machine list scrolls on card builds (#842, #941, #942).",
+  "sourceSha256": "8f357e753e2679112e2c0b6f3355cfdec4f3ac6fe8a9478cc99d76229337f861",
+  "ownerStatement": "Approved by repeat98 on 27 Oct 2026 in the issue-fix session (\"approved\"): release POLY8 0.3.2-experimental so its machine list scrolls on card builds (#842, #941, #942). Re-approved by repeat98 on 28 Oct 2026 (in the session that combined fix/base-oct28 into one pull request) for the later source of commit f1a25004: the chooser's cursor-clamp bytes in both manifest forms, the USB package unchanged.",
   "reason": "0.3.2 changes only POLY8's card-build machine chooser: with POLY8 beside VECTOR, FM Synth or Analog BD the double-tap TRACK list has seven to nine rows, but stock drew the six visible rows from the top of the list whatever its scroll offset and its UP/DOWN handlers clamp the cursor to row 5, so the seventh machine never showed and could not be picked. Names (a pointer at 0x4007865e to mr_chooser_name) and the track's mark (mr_chooser_row) now read top + screen row, as the USB base's registry does since #922, and the five cursor clamps are composition count sites (card only; POLY8 alone writes stock's value). The render, the voice limit and the pages are 0.3.1's, so the 0.2.7 captures are retained; the USB package rebuilds byte-identical and stays at 0.3.1 (lagsBehind). Checked in ot_emu with card builds of POLY8 + VECTOR + FM Synth (+ Analog BD), POLY8 alone and VECTOR alone. Waived for this exact source: the card build on a unit, Part/project reload and power cycles, chip worst-case cycles and complete memory bounds."
 }
