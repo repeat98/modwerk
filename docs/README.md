@@ -22,6 +22,7 @@ Every document in `docs/`, one line each. [AGENTS.md](../AGENTS.md) says which t
 - [ADD_A_MODULE.md](ADD_A_MODULE.md): add, port or update a module, per machine.
 - [module-guides/](module-guides/README.md): how a module should behave, per category.
 - [ADD_A_MACHINE.md](ADD_A_MACHINE.md): bring a machine up before it gets modules.
+- [MACHINE_RECIPE.md](MACHINE_RECIPE.md): the Octatrack's stack (base, hooks, USB link, loader, MCP, page) every machine gets, and where each one stands.
 - [MODULE_AUTHOR_UPDATES.md](MODULE_AUTHOR_UPDATES.md): registered authors publishing their own updates.
 - [OWNER_OPERATIONS.md](OWNER_OPERATIONS.md): the owner's issue-fix and release flow, mail sendouts, locks and disk rules.
 - [MAINTENANCE.md](MAINTENANCE.md): the daily pass the owner starts with "maintain": pull request, issue, beta and upstream workers, one briefing.

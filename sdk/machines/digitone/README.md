@@ -4,6 +4,10 @@
 
 Digitone mods are linkable objects. One core patches the OS once at a few shared sites and calls every subscribed mod's handler, in order, from tables the linker builds. So any set of mods that fits the budgets combines. Modwerk builds them with its own TypeScript linker and OS writer, interoperable with the `.elemod` format. Building firmware in Modwerk is in development, so the machine is in preview.
 
+## Modwerk stack
+
+Today mods reach the unit as a full OS file sent with Transfer. The Digitone is to get the Octatrack's stack ([recipe](../../../docs/MACHINE_RECIPE.md)): its core grows into a Modwerk base with a hook registry, a USB link, the runtime loader's ColdFire glue, base updates over USB, the MCP's device tools and the machine page. None of it is started. Until it ships this guide's core is what builds, a mod that needs a stock site other mods will want waits for the base's hook, and the full OS file sent with Transfer stays the fallback after it.
+
 ## Create a mod
 
 ```sh

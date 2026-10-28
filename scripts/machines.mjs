@@ -15,6 +15,10 @@ for (const entry of await readdir(folder, { withFileTypes: true })) {
   if (profile.id !== entry.name) throw new Error('sdk/machines/' + entry.name + ': id must match its folder')
   if (profile.sdk) for (const path of [profile.sdk.modules, profile.sdk.guide, ...(profile.sdk.catalog ? [profile.sdk.catalog] : []), ...(profile.sdk.core?.path ? [profile.sdk.core.path] : [])])
     if (!await exists(path)) throw new Error(profile.id + ': SDK path does not exist: ' + path)
+  // An agent on a machine reads its guide first, so every guide points at the stack every machine gets.
+  const guide = 'sdk/machines/' + entry.name + '/README.md'
+  if (await exists(guide) && !(await readFile(resolve(root, guide), 'utf8')).includes('docs/MACHINE_RECIPE.md'))
+    throw new Error(guide + ': link docs/MACHINE_RECIPE.md in a "Modwerk stack" section saying where this machine stands')
   profiles.push(profile)
 }
 profiles.sort((a, b) => a.order - b.order)
