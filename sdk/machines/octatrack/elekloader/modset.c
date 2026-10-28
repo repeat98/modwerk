@@ -261,6 +261,56 @@ static int whole(int n)
     for (unsigned i = 0; i < MU_DIGEST_BYTES; ++i) if (digest[i] != set[52 + i]) return 0;
     return 1;
 }
+/* A package the loader refuses BUSY (it names every switch it could not make so) is tried again every half second,
+ * ten seconds at most, before it is left out: at power-on Ring SC, the key bus reader, was refused BUSY while a sync
+ * later in that boot installed the same package (beta finding 69). A loader that cannot be entered (playing) waits
+ * the same way. ep0.c holds the host until the restore is done. */
+#define RESTORE_RETRY 30u
+#define RESTORE_TRIES 20u
+static uint8_t restore_outcome[RUNTIME_MODULES]; /* per package of set[]: 0 to try, 1 installed, 2 left out */
+static unsigned restore_tries;
+static uint32_t left_out, left_why; /* the first package left out and the loader's refusal, for the log */
+static void restore_pass(void)
+{
+    const struct mu_backend *b6 = &modwerk_runtime_backend;
+    int open = b6->enter(b6->user), last = ++restore_tries >= RESTORE_TRIES;
+    uint32_t n = used(), count = 0, installed = 0, waiting = 0, end = HEADER;
+    for (uint32_t at = HEADER; at < n; at += 8u + ((be32(set + at + 4) + 3u) & ~3u), ++count) {
+        if (count >= RUNTIME_MODULES || restore_outcome[count]) continue; /* past the loader's rows: never live */
+        uint32_t length = be32(set + at + 4);
+        if (open && b6->prepare(b6->user, set + at + 8, length) && b6->publish(b6->user) == MU_APPLIED && b6->retire(b6->user)) {
+            restore_outcome[count] = 1;
+            continue;
+        }
+        /* Read before the next install overwrites the loader's refusal. */
+        uint32_t why = open ? (uint32_t)modwerk_runtime_refusal() : (uint32_t)RUNTIME_BUSY;
+        if (open) (void)b6->discard(b6->user);
+        if (why == RUNTIME_BUSY && !last) { ++waiting; continue; }
+        restore_outcome[count] = 2;
+        if (!left_out) left_out = module_of(set + at + 8, length), left_why = why;
+    }
+    if (open) (void)b6->leave(b6->user);
+    if (waiting) { retry_at = TICKS + RESTORE_RETRY; return; }
+    restored = 1, restore_tries = 0;
+    /* What did not install leaves set[], which must name exactly what runs: a sync's baseline is the live set
+     * (modwerk_modset_check_set refused every one after a partial restore, beta finding 69). The card keeps its
+     * copy until the next change, so the next boot tries the refused ones again. */
+    for (uint32_t at = HEADER, k = 0; at < n; ++k) {
+        uint32_t step = 8u + ((be32(set + at + 4) + 3u) & ~3u);
+        if (k < RUNTIME_MODULES && restore_outcome[k] == 1) {
+            for (uint32_t i = 0; end != at && i < step; ++i) set[end + i] = set[at + i]; /* the loader keeps its own copy */
+            end += step, ++installed;
+        }
+        at += step;
+    }
+    if (left_out) modwerk_diag_refused(left_out, left_why);
+    if (installed != count) seal(installed, end);
+    modwerk_modset_generation = be32(set + 8), modwerk_modset_count = installed;
+    modwerk_modset_result = installed == count ? RESTORED : REFUSED;
+    if (installed) SAY(installed == count ? "MODULES LOADED" : "SOME MODULES FAILED");
+    else SAY("MODULES NOT LOADED");
+    modwerk_diag_set(); /* diag.c: the set this boot runs, in the unit's log */
+}
 /* After a boot: the newest whole set, each package installed as a USB install would be. */
 static void restore(void)
 {
@@ -285,32 +335,9 @@ static void restore(void)
     }
     slot = wb && (!wa || gb > ga) ? 1u : 0u; /* the newer one; the next save goes to the other */
     if (!slot && (int)load(0) != a) { modwerk_modset_result = DAMAGED; return; }
-    const struct mu_backend *b6 = &modwerk_runtime_backend;
-    uint32_t n = used(), count = 0, installed = 0, refused = 0, refusal = 0, end = HEADER;
-    /* What did not install leaves set[], which must name exactly what runs: a sync's baseline is the live set
-     * (modwerk_modset_check_set refused every one after a partial restore, beta finding 69). The card keeps its
-     * copy until the next change, so the next boot tries the refused ones again. */
-    if (!b6->enter(b6->user)) { seal(0, HEADER); modwerk_modset_result = REFUSED; return; }
-    for (uint32_t at = HEADER; at < n; ++count) {
-        uint32_t length = be32(set + at + 4), step = 8u + ((length + 3u) & ~3u);
-        if (b6->prepare(b6->user, set + at + 8, length) && b6->publish(b6->user) == MU_APPLIED && b6->retire(b6->user)) {
-            for (uint32_t k = 0; end != at && k < step; ++k) set[end + k] = set[at + k]; /* the loader keeps its own copy */
-            end += step, ++installed;
-        } else {
-            /* The first one the log names: later installs overwrite the loader's refusal (beta finding 69). */
-            if (!refused) refused = module_of(set + at + 8, length), refusal = (uint32_t)modwerk_runtime_refusal();
-            (void)b6->discard(b6->user);
-        }
-        at += step;
-    }
-    if (refused) modwerk_diag_refused(refused, refusal);
-    (void)b6->leave(b6->user);
-    if (installed != count) seal(installed, end);
-    modwerk_modset_generation = be32(set + 8), modwerk_modset_count = installed;
-    modwerk_modset_result = installed == count ? RESTORED : REFUSED;
-    if (installed) SAY(installed == count ? "MODULES LOADED" : "SOME MODULES FAILED");
-    else SAY("MODULES NOT LOADED");
-    modwerk_diag_set(); /* diag.c: the set this boot runs, in the unit's log */
+    for (unsigned i = 0; i < RUNTIME_MODULES; ++i) restore_outcome[i] = 0;
+    restored = 0, left_out = left_why = 0;
+    restore_pass();
 }
 /* ep0.c holds host frames until the restore has run: an install before it would race it, and the restore would undo it. */
 int modwerk_modset_restored(void) { return (int)restored; }
@@ -335,7 +362,11 @@ void modwerk_modset_service(void)
     if (modwerk_saved_set_busy()) return;
 #endif
     if (VOLATILE_BLOCKED() || !GATE()) return;
-    if (!restored) { if (TICKS > 180u) restore(); return; } /* three seconds in: the project and the card are up */
+    if (!restored) { /* three seconds in: the project and the card are up; then the restore's retries */
+        if (!restore_tries) { if (TICKS > 180u) restore(); }
+        else if (TICKS >= retry_at) restore_pass();
+        return;
+    }
     if (!pending || TICKS < retry_at) return;
     slot ^= 1u;
     if (store(slot)) pending = 0, modwerk_modset_result = SAVED, modwerk_diag_set(); /* the set as the card holds it, in the unit's log */

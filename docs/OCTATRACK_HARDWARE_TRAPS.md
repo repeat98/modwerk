@@ -289,8 +289,8 @@ its exit `0x4000d9a6`), in a bank of eight tracks trigged on every step:
 - **The guard.** The base gives the interrupt 80 % of each frame, saving up to half a frame from short ones, and
   renders stock's silent source for a machine track whose render would overdraw it (`machine_registry.c`). The same
   load and recording then ran with the interrupt at 79.7 % and a clean recording, with POLY8 skipped on about half its
-  renders; POLY8 alone, sparse or on every step, was never skipped (the interrupt at 66 % and 70 %). Card builds have
-  no guard. On a development base `npm run device -- guard` reads the interrupt's share, its longest frame and the
+  renders; POLY8 alone, sparse or on every step, was never skipped (66 % and 70 %). Card builds' logger has
+  the same guard. On a development base `npm run device -- guard` reads the interrupt's share, its longest frame and the
   skips, and `guard:MILLE` sets the share.
 
 **Walk the module list once, not once per question.** A lookup that reads module headers from the pool (uncached) inside a loop over every module is quadratic in what is installed. The controller tick did that once per held controller and check, and with 26 modules (Sidechain, Output Matrix, Analog BD among them) it cost 0.8 ms of every UI tick (owner's MKII, 24 October 2026). Find an owner by its record in base RAM, read the pool only for that one, and keep results while `modwerk_runtime_owner_epoch()` stands even and unchanged (`loader.h`), checking the header with `modwerk_runtime_owner_held`. `npm run device -- do 'mem:ADDR:112'` on `modwerk_cost` (development bases) shows each tick hook's µs, and the frame guard's `guard` step shows what the frame interrupt takes.

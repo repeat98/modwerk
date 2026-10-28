@@ -9,8 +9,10 @@
 static unsigned set_records;
 void modwerk_diag_set(void) { ++set_records; } /* diag.c: counted here */
 static uint32_t refused_m, refused_c, refuse_id;
+static unsigned busy_left; /* refuse_id's next refusals; then it installs (0: refused every time) */
+static enum runtime_refusal refusal_now = RUNTIME_BUSY;
 void modwerk_diag_refused(uint32_t module, uint32_t refusal) { refused_m = module, refused_c = refusal; }
-enum runtime_refusal modwerk_runtime_refusal(void) { return RUNTIME_BUSY; }
+enum runtime_refusal modwerk_runtime_refusal(void) { return refusal_now; }
 static enum runtime_refusal noted = RUNTIME_MALFORMED; /* what modset.c told the loader a refusal was */
 void modwerk_runtime_refused(enum runtime_refusal why) { noted = why; }
 #include <stdio.h>
@@ -38,7 +40,13 @@ static uint32_t ids[8];
 static int enter(void *u) { (void)u; ++entered; return 1; }
 static int safe(void *u) { (void)u; return 1; }
 static int leave(void *u) { (void)u; return 1; }
-static int prepare(void *u, const uint8_t *d, uint32_t n) { (void)u; ids[prepared++ % 8] = be32(d + 28); return n > 32u && be32(d + 28) != refuse_id; }
+static int prepare(void *u, const uint8_t *d, uint32_t n)
+{
+    (void)u; ids[prepared++ % 8] = be32(d + 28);
+    int ok = n > 32u && be32(d + 28) != refuse_id;
+    if (!ok && busy_left && !--busy_left) refuse_id = 0; /* the last refusal: it installs next */
+    return ok;
+}
 static int discard(void *u) { (void)u; return 1; }
 static enum mu_publication publish(void *u) { (void)u; return MU_APPLIED; }
 static int restore_backend(void *u) { (void)u; return 1; }
@@ -100,11 +108,25 @@ int main(void)
     /* After a boot: the newest set, installed through the loader. */
     boot(); modwerk_modset_service();
     CHECK(modwerk_modset_result == RESTORED && installed == 1 && ids[0] == 0x3cbedc9cu && entered == 1 && !refused_m);
-    /* One refused: the rest installs, and the log names the refused module and the loader's refusal (finding 69). */
+    /* One refused BUSY (finding 69): tried again every half second, the host held meanwhile, and left out after ten
+     * seconds; the log names the refused module and the loader's refusal. */
     refuse_id = 0x3cbedc9cu; written = writes; boot(); modwerk_modset_service();
+    CHECK(!restored && prepared == 1 && !modwerk_modset_result);
+    modwerk_test_ticks += RESTORE_RETRY - 1; modwerk_modset_service(); CHECK(prepared == 1); /* not before its time */
+    for (unsigned t = 0; t < 40u && !restored; ++t) modwerk_test_ticks += RESTORE_RETRY, modwerk_modset_service();
+    CHECK(restored && prepared == RESTORE_TRIES);
     CHECK(modwerk_modset_result == REFUSED && !installed && refused_m == 0x3cbedc9cu && refused_c == RUNTIME_BUSY);
     CHECK(used() == HEADER && !pending && writes == written); /* set[] names what runs; the card keeps it */
     refuse_id = 0, refused_m = refused_c = 0;
+    /* BUSY twice, then it installs: the whole set, as the card has it, with nothing sealed or written. */
+    refuse_id = 0x3cbedc9cu, busy_left = 2; boot(); modwerk_modset_service();
+    for (unsigned t = 0; t < 40u && !restored; ++t) modwerk_test_ticks += RESTORE_RETRY, modwerk_modset_service();
+    CHECK(modwerk_modset_result == RESTORED && installed == 1 && prepared == 3 && !refused_m);
+    CHECK(!memcmp(set, card[slot], (size_t)card_bytes[slot]) && !pending && writes == written);
+    /* Any other refusal is left out at once. */
+    refuse_id = 0x3cbedc9cu, refusal_now = RUNTIME_CONFLICT; boot(); modwerk_modset_service();
+    CHECK(restored && prepared == 1 && modwerk_modset_result == REFUSED && refused_c == RUNTIME_CONFLICT);
+    refuse_id = 0, refused_m = refused_c = 0, refusal_now = RUNTIME_BUSY;
     /* The newer file damaged: the older one, with both modules. */
     card[0][HEADER + 9] ^= 1; boot(); modwerk_modset_service();
     CHECK(modwerk_modset_result == RESTORED && installed == 2);
