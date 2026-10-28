@@ -13,7 +13,7 @@ MODULE = Module(
     category=Category.FIXES, author="twwwy", author_url="https://github.com/twwwy",
     proof=Proof.UNTESTED, proof_note="Experimental native writer; emulator checks in TESTING.md; no hardware qualification.",
     linked=(Linked("psl", "modules/pattern-sample-locks/unit.s", cpu="5475", dram=True),),
-    claims=Claims(sram=((0x100f9b00,0x6400,"PSL tagged ownership material; ends before stock settings"),)),
+    claims=Claims(sram=((0x100f9000,0x3000,"PSL sparse ownership; ends before base diagnostics"),)),
     detours=(Detour(0x40040ee0,stock_guard(0x40040ee0,8,"14607b32e7a5a2eae6fcb2e63e1770b2f2387c64c63e6289faf0eb8e75f9aa40"),
         "psl","psl_manual_sample","manual SAMPLE edit retires ownership, including same-value writes",kind="jmp",pad_to=8),)+tuple(Detour(address, stock_guard(address, 6,
         "d35bfe797abb5bb27e98ec6d4cb422e20c44f307e5d6597af674380832f8dbdf"),

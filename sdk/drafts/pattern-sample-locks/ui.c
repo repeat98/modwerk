@@ -94,7 +94,7 @@ static void choose(void)
 static void finish_action(void)
 {
     int result=psl_native_commit(&plan);
-    message=result==PSL_OK?"DONE - PROJECT NOT SAVED":result==PSL_STALE?"SOURCE CHANGED - REOPEN":"REFUSED - NO CHANGES";
+    message=result==PSL_OK?"DONE - PROJECT NOT SAVED":result==PSL_STALE?"SOURCE CHANGED - REOPEN":result==PSL_FULL?"OWNERSHIP STORE FULL":"REFUSED - NO CHANGES";
     plan.ready=0;phase=RESULT;psl_native_redraw();
 }
 void module_tick(struct modwerk_runtime_api *api)

@@ -25,7 +25,7 @@ def call_idle(port,address,*args):
 def job(port,number,entry):
     # Our header's unused private tail: 0x220..0x330, after its checksum and
     # before its first origin record. Never borrow stock scratch/queue data.
-    address=0x100f9d20;packet=bytearray(0x110);packet[0]=number
+    address=0x100f9220;packet=bytearray(0x110);packet[0]=number
     if number==6:packet[0x106:0x108]=b'\0\1' # current fixture is bank A
     put(port,address,packet);port.command(f'watch {entry:#x},0x40084110')
     call_idle(port,0x40000c3c,0x460d17ce,address)
@@ -44,6 +44,7 @@ def exercise(port,run,tap,key,encoder,capture,out,reboot):
     assert not reboot
     tap(0x22,1);bank=u32(port,0x46c82456);assert bank==0x400e21e0
     assert port.peek(0x100b14d0,1)==b'\0'
+    base_map=read(port,0x100fe000,0x1800);base_log_tag=port.peek(0x100fc000,4)
     source=bytearray(read(port,bank,8*0x91a))
     for track in range(8):
         at=track*0x91a;source[at:at+8]=bytes([255])*8
@@ -82,10 +83,12 @@ def exercise(port,run,tap,key,encoder,capture,out,reboot):
     key('NO')
     # Saved project still has 512 locks. Undo removes only the module; stock
     # reload below must recover that project without any module installed.
+    assert read(port,0x100fe000,0x1800)==base_map, 'base effect map changed'
+    assert port.peek(0x100fc000,4)==base_log_tag, 'base diagnostic log tag changed'
     state.update(bank=bank,locked=locked)
     menu(True);key('NO');capture('removal-open-tracks.png')
     return dict(maximumNativeLocksWritten=512,maximumNativeLocksCleared=512,unrelatedAudioBytesPreserved=True,
-        playbackLeftStopped=True,nativeSaveProjectCompleted=True,nativeBankReloadCompleted=True,
+        playbackLeftStopped=True,baseEffectMapAndLogTagPreserved=True,nativeSaveProjectCompleted=True,nativeBankReloadCompleted=True,
         nativePartBytesPreserved=True,savedAudioSha256=hashlib.sha256(locked).hexdigest())
 def after_undo(port,out):
     manifest=Path(__file__).with_name('manifest.py').read_text()

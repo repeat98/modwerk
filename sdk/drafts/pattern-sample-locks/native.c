@@ -147,6 +147,7 @@ int psl_native_commit(struct psl_plan *p)
             else index_after[step]&=(uint8_t)~(1u<<t);
         }
     }
+    if(p->action==PSL_LOCK && !psl_nv_reserve(NV,source_row,tracks_changed))return PSL_FULL;
     /* All hashing/scanning is outside the bounded publication guard. Native
      * STOP/record state and exact source are rechecked before the first store.
      * Maximum guard duration is still a hardware qualification requirement. */

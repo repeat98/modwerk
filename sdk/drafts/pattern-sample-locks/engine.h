@@ -13,7 +13,7 @@
 #define PSL_NO_LOCK 255u
 
 enum psl_action { PSL_LOCK, PSL_CLEAR };
-enum psl_result { PSL_OK, PSL_INVALID, PSL_NO_TRACKS, PSL_STALE };
+enum psl_result { PSL_OK, PSL_INVALID, PSL_NO_TRACKS, PSL_STALE, PSL_FULL };
 struct psl_source {
     uint32_t bank;
     uint8_t pattern, part;

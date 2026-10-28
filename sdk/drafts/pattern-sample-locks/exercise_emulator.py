@@ -36,6 +36,7 @@ def exercise(port,run,tap,key,encoder,capture,out,reboot):
         else:raise RuntimeError('Emulator never reached idle for fixture writer')
         port.command('poke 0x460d174a 0000');run(80)
     checks={}
+    base_map=read(0x100fe000,0x1800);base_log_tag=port.peek(0x100fc000,4)
     tap(0x22,1) # T1
     if not reboot:
         # Normal GRID REC gestures create two sample trigs.
@@ -83,4 +84,7 @@ def exercise(port,run,tap,key,encoder,capture,out,reboot):
     # Remove while level two owns its overlay. No module pointer was installed
     # in stock popup state; the caller executes USB Undo now.
     menu(True);key('NO');capture('removal-open-tracks.png')
+    assert read(0x100fe000,0x1800)==base_map, 'base effect map changed'
+    assert port.peek(0x100fc000,4)==base_log_tag, 'base diagnostic log tag changed'
+    checks['baseEffectMapAndLogTagPreserved']=True
     return checks
