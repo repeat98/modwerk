@@ -25,7 +25,9 @@ unsigned table_metadata_family(const uint8_t table[TABLE_DECLARATION_BYTES],cons
     /* Scale Quantizer's runtime package contributes its rows to the base's ot_sequencer_rows table instead of
      * relocating the SEQUENCER tables: no table family. */
     if(d->module==0x7e9d5687u) return d->contributes?TABLE_NONE:TABLE_QUANTIZER; /* SHA256("quantizer")[:4] */
-    if(d->module==0x73bab3b1u) return TABLE_MUTES; /* SHA256("mute-modes")[:4] */
+    /* Mute Modes contributes its row to the base's ot_personalize_rows table instead of relocating the PERSONALIZE
+     * tables: no table family, so no record in the base names its package. */
+    if(d->module==0x73bab3b1u) return d->contributes?TABLE_NONE:TABLE_MUTES; /* SHA256("mute-modes")[:4] */
     if(d->flags&RUNTIME_GROUP_METADATA && d->image && d->image_bytes>=16u &&
        equal(d->image,(const uint8_t *)"MWMG",4) && d->image[4]==1 && (d->image[5]&4u)) return TABLE_QUANTIZER;
     if(d->flags&RUNTIME_GROUP_METADATA) {
