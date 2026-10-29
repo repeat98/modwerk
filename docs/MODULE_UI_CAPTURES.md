@@ -136,6 +136,7 @@ The supported UI keys also include `SCENE B`, `TRIG1`–`TRIG16`, MKII `AED`,
 `MIXER` opens the MIXER page.
 Kit/pattern workflows also support `CUE`, `PTN`, `BANK`, `REC` (copy),
 `PLAY` (clear) and `STOP` (paste); hold FUNC for clipboard actions.
+Stock clears a message box (TEMP SAVED, ARM ALL) when FUNC is released: for a FUNC gesture, `hold` FUNC, `press` the key, capture within about 20 ms and `release` after it.
 
 Example effect plan:
 
