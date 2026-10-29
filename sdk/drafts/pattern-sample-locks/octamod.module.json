@@ -71,7 +71,7 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Exact 0.1.8 MKII live 512-field edits, manual-lock/refusal/profile/native reload checks and Undo passed. The 19-module addition trial preserved 18 companions; all were intact and all seven DSP modules ran, with a 90.2% CPU advisory and no hard faults. The author chose Undo. Keep, kept restart, full cost bounds and publication qualification remain incomplete.",
+    "summary": "Exact 0.1.8 MKII live 512-field edits and native reload passed. Explicit Keep saved 19 modules; reboot readback restored all 19, preserving 18 companions. Defaults reset was author-reported; removal/Undo restored the kept set. Companion self-test had a 90.3% CPU advisory, no hard faults. Full publication/cost qualification remains incomplete.",
     "hardwareStatus": "untested",
     "gates": [
       "Worst-case cycles under parameter modulation and maximum load",
