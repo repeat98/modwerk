@@ -505,7 +505,7 @@ static unsigned slot_features(void)
     return features;
 }
 #ifdef MODWERK_RESIDENT_ON_DEMAND
-__attribute__((weak)) volatile uint32_t modwerk_machine_assigned; /* machine_registry.c: counts every machine assignment */
+volatile uint32_t modwerk_machine_assigned; /* machine_registry.c's mw_assign counts every machine assignment here */
 /* Once a tick: what is used (above). A new bank starts from nothing. */
 static void use_tick(void)
 {

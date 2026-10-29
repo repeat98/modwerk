@@ -59,6 +59,7 @@ void mg_tick(void); /* midi_generators.c, checked by test_midi_generators.c */
 void mg_tick(void) {}
 /* The loader's side: the table rows and the machine glue. */
 #include "loader.h"
+volatile uint32_t modwerk_machine_assigned; /* controller_board.c's, not linked here */
 #include "modwerk_events.h"
 /* The loader's owner of an address: here the module id is the machine's first letter. */
 int modwerk_runtime_owner_at(uintptr_t address, struct runtime_owner *o)

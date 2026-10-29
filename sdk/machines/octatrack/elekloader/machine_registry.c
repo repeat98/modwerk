@@ -300,7 +300,7 @@ static unsigned relive(const Part *part, uint32_t offset, unsigned track, unsign
     return type;
 }
 /* A machine's admission precedes every mutation; -1 refuses. */
-volatile uint32_t modwerk_machine_assigned; /* every assignment: controller_board.c reads the bank's machines again then */
+extern volatile uint32_t modwerk_machine_assigned; /* controller_board.c: it reads the bank's machines again after an assignment */
 unsigned mw_assign(Part *part, unsigned track, unsigned row)
 {
     modwerk_machine_assigned = modwerk_machine_assigned + 1u;
