@@ -1,0 +1,149 @@
+{
+  "schemaVersion": 3,
+  "id": "midi-mute",
+  "name": "MIDI Mute",
+  "version": "0.1.0-experimental",
+  "machine": "analog-rytm-mkii",
+  "category": "midi-usb",
+  "exclusive": false,
+  "author": {
+    "github": "michaelkollmann",
+    "credits": [
+      "michaelkollmann"
+    ]
+  },
+  "maintainers": [
+    "michaelkollmann"
+  ],
+  "presentation": {
+    "label": "MIDI MUTE",
+    "family": "MIDI effect",
+    "summary": "Muted tracks also ignore MIDI notes coming in over USB and DIN, and a held note stops when its track is muted.",
+    "overview": "On stock OS 1.74 a mute stops the sequencer only: a note from a keyboard or DAW still plays the muted track. With MUTE MIDI IN on, a Note On for a muted track is dropped, on its track channel and on the AUTO channel, from USB and DIN MIDI alike. When a track is muted while it holds a note that came in over MIDI, that note is released as its Note Off would release it, so nothing hangs. Unmuting plays nothing; the next Note On plays again.",
+    "highlights": [
+      "Mutes silence incoming MIDI notes as well as the sequencer.",
+      "A note held over MIDI is released when its track is muted, so nothing sticks.",
+      "USB and DIN MIDI, track channels and the AUTO channel alike.",
+      "Off by default: one checkbox in GLOBAL > MIDI CONFIG > PORT CONFIG, kept with the project."
+    ],
+    "usage": [
+      "Play a kit from a keyboard or DAW and use MUTE mode to drop tracks out of what you play live, as you would drop them out of the pattern."
+    ]
+  },
+  "access": {
+    "location": "GLOBAL > MIDI CONFIG > PORT CONFIG, the last row: MUTE MIDI IN, after RECEIVE CC/NRPN.",
+    "steps": [
+      "Press GLOBAL, choose MIDI CONFIG, then PORT CONFIG, and go down to the last row, MUTE MIDI IN.",
+      "Press YES (or RIGHT) to check it; LEFT unchecks it. Press NO to leave the menus.",
+      "Press MUTE and press a pad to mute its track: notes for that track from USB or DIN MIDI no longer play it."
+    ],
+    "screenshots": [
+      "media/port-config-on.png"
+    ]
+  },
+  "controls": [
+    {
+      "name": "MUTE MIDI IN",
+      "default": 0,
+      "doc": "Checked, incoming MIDI Note Ons for muted tracks are dropped and notes MIDI holds on a track are released when it is muted; unchecked, MIDI is stock. GLOBAL > MIDI CONFIG > PORT CONFIG, the last row; YES toggles, RIGHT checks, LEFT unchecks. Kept with the project.",
+      "labels": [
+        "OFF",
+        "ON"
+      ]
+    }
+  ],
+  "compatibility": {
+    "releases": [
+      "1.74"
+    ],
+    "requires": [],
+    "conflicts": [],
+    "limitations": [
+      "A track counts as muted when its project mute is set: MUTE mode pads, FUNC + pads in MUTE mode, and MIDI CC 94. OS 1.74 keeps no separate pattern mute.",
+      "Solo is not followed: a track that is only soloed out still plays incoming notes.",
+      "A note held when its track is muted is released within one UI tick, about 50 ms.",
+      "Only notes are affected. CC, NRPN, aftertouch, pitch bend, program change, clock, transport and SysEx pass as stock, also for muted tracks."
+    ]
+  },
+  "platform": {
+    "kind": "elemod",
+    "core": "0.7",
+    "build": "build.json",
+    "events": [
+      "ev_tick",
+      "ev_project"
+    ],
+    "claims": [
+      "ui:GLOBAL > MIDI CONFIG > PORT CONFIG row after RECEIVE CC/NRPN"
+    ]
+  },
+  "resources": {
+    "memoryBytes": null,
+    "fastBytes": null,
+    "load": {
+      "display": "Not measured yet",
+      "method": "unmeasured",
+      "conditions": "Measure with every track playing, parameters modulated and the mod at its heaviest setting."
+    }
+  },
+  "evidence": {
+    "tier": "none",
+    "moduleVersion": "0.1.0-experimental",
+    "sourceSha256": null,
+    "reports": [],
+    "hardware": null,
+    "verifiedBy": null
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "Unit (author, MM02): the first test worked as intended, as reported. rytm-emu 3c4c42c, build MM02: with MUTE MIDI IN checked, Note Ons for a muted track (AUTO and track channels, DIN and USB) are not played and their Note Offs are consumed; notes held when their track is muted are released; unmuted tracks and the unchecked setting behave as stock; the setting survives a power cycle. See TESTING.md."
+  },
+  "license": {
+    "spdx": "GPL-3.0-or-later",
+    "file": "LICENSE",
+    "declaration": "Original work by the author."
+  },
+  "media": [
+    {
+      "path": "media/thumbnail.svg",
+      "kind": "thumbnail",
+      "caption": "Midi Mute thumbnail",
+      "alt": "Placeholder thumbnail for Midi Mute",
+      "credit": "michaelkollmann",
+      "license": "GPL-3.0-or-later",
+      "source": "Original placeholder from the Modwerk SDK template; replace with your own artwork."
+    },
+    {
+      "path": "media/port-config-off.png",
+      "kind": "screenshot",
+      "caption": "PORT CONFIG: MUTE MIDI IN, unchecked, the row after RECEIVE CC/NRPN.",
+      "alt": "Rytm PORT CONFIG menu with the MUTE MIDI IN row selected and unchecked",
+      "credit": "michaelkollmann documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "08f8ad28f852573d0f065cff52c63bba420d1d304e944c684bd6190c00f6f080",
+        "setup": "rytm-emu 3c4c42c headless; MM02 build (core-ar2 0.7 + this module); fresh card, factory project. UI documentation only."
+      }
+    },
+    {
+      "path": "media/port-config-on.png",
+      "kind": "screenshot",
+      "caption": "After YES: MUTE MIDI IN checked.",
+      "alt": "Rytm PORT CONFIG menu with the MUTE MIDI IN row selected and checked",
+      "credit": "michaelkollmann documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "08f8ad28f852573d0f065cff52c63bba420d1d304e944c684bd6190c00f6f080",
+        "setup": "rytm-emu 3c4c42c headless; MM02 build (core-ar2 0.7 + this module); fresh card, factory project. UI documentation only."
+      }
+    }
+  ]
+}

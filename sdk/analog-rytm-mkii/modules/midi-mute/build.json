@@ -1,0 +1,78 @@
+{
+  "schemaVersion": 1,
+  "sources": [
+    "src/main.c",
+    "src/sites.s",
+    "src/label.s"
+  ],
+  "defsym": {},
+  "cflags": [],
+  "weak": [],
+  "subscribe": [
+    {
+      "event": "ev_tick",
+      "fn": "midi_mute_tick",
+      "order": 50
+    },
+    {
+      "event": "ev_project",
+      "fn": "midi_mute_project",
+      "order": 50
+    }
+  ],
+  "contribute": [],
+  "collections": {},
+  "copied": [],
+  "regions": [],
+  "storage": [
+    {
+      "sym": "midi_mute_on",
+      "scope": "project",
+      "bits": 1
+    }
+  ],
+  "claims": [
+    "ui:GLOBAL > MIDI CONFIG > PORT CONFIG row after RECEIVE CC/NRPN"
+  ],
+  "requires": [],
+  "derive": null,
+  "releases": {
+    "1.74": {
+      "defsym": {
+        "STRING_CTOR": "0x401bcff0"
+      },
+      "cflags": [
+        "-DMUTE_MASK_AT=0x41318997",
+        "-DHELD_COUNT_AT=0x418f1820",
+        "-DPLAY_AT=0x40083f40",
+        "-DRELEASE_AT=0x4008420a",
+        "-DBITMAP_DRAW_AT=0x400716e0",
+        "-DCHECK_GLYPHS_AT=0x419f0910",
+        "-DVIEW_INVALIDATE_AT=0x40078580"
+      ],
+      "sites": [
+        {
+          "addr": "0x400845e4",
+          "len": 26,
+          "stockSha256": "7ae153bd807d8e02f129f85bac341dde7ffdffdbcd6964f6e6733bb0e80d61e4",
+          "op": "jsr",
+          "target": "midi_mute_on_site"
+        },
+        {
+          "addr": "0x400844a4",
+          "len": 14,
+          "stockSha256": "3379a95d14acac84b0cc0ff044c8795041fce860dd5ea7e48c28808c9e6eae29",
+          "op": "jsr",
+          "target": "midi_mute_off_site"
+        },
+        {
+          "addr": "0x40048486",
+          "len": 6,
+          "stockSha256": "10552f30e94896a18c635b43b0f16452187a5e3db5b661ba3255c1ecb054fd50",
+          "op": "jmp",
+          "target": "midi_mute_port_rows_site"
+        }
+      ]
+    }
+  }
+}
