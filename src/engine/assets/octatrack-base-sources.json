@@ -137,7 +137,7 @@
   "sdk/machines/octatrack/module-adapters/machine_parts.h": "b0d2787a84072bd395a67647ac696380d90330d8df2597ef79c593deb3290a18",
   "sdk/machines/octatrack/module-adapters/resident-runtime/cue_cfg.s": "fe6197ca311e29890fffa1b8f252fa250cb7e55e9ec3ced307b1329c4c21f2ae",
   "sdk/machines/octatrack/module-adapters/resident-runtime/dsp_ledger.h": "4b25ee7a43a40ab8e6181373810731a6f90e3bd84c351575d215bd35089b9c6d",
-  "sdk/machines/octatrack/module-adapters/resident-runtime/resident_engines.c": "90da5e56fa8514432a064180edb352625a8c8427f5abb4db9d0c6d37037dc1a5",
+  "sdk/machines/octatrack/module-adapters/resident-runtime/resident_engines.c": "47cc14b43cd13a33ce9806ef742d8a89b5f15deec33d18c1dbb0f2e3dffe05ca",
   "sdk/machines/octatrack/module-adapters/resident-runtime/resident_engines.h": "1c966c6a50107347523ed4840e8afe8f843e1d42c9acccc5b6151ad2f809b70a",
   "sdk/machines/octatrack/module-adapters/resident-runtime/stock_hook_driver.c": "aaa2815e73ace2b0c72df21ce10df7fe7bf8d6f5a447275c66ffd856b7c03e71",
   "sdk/machines/octatrack/module-adapters/resident-runtime/stock_hook_driver.h": "91554cb0ff7f6d00b3e04eb0fd8f950dd74ad5674d01a1b95a9cf8c774562143",
