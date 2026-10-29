@@ -275,6 +275,7 @@ int mw_controller_board_test_handle(uint32_t module) { (void)module; return 63; 
 int modwerk_dsp_bank_names(unsigned id) { return id == 24u ? (int)names_compressor : id == 63u ? (int)names_reader : 0; }
 /* The module whose machine a track of the bank's Parts is signed for (machine_registry.c), or none. */
 static uint32_t bank_module;
+extern volatile uint32_t modwerk_machine_assigned; /* controller_board.c: a Part signed outside the fixture's bank change */
 unsigned modwerk_machine_bank_modules(uint32_t *module, unsigned max)
 { if (!bank_module || !max) return 0; module[0] = bank_module; return 1; }
 static unsigned refuse_write[2], refuse_place[2]; /* table offsets at which a WRITE chunk, a PLACE is refused */
@@ -1779,7 +1780,7 @@ int main(int argc, char **argv)
         assert(install(pkg_ab, sizeof pkg_ab) == MU_APPLIED);
         run(400);
         assert(slot_for(AB, MW_CTL_BOUND) && !mw_engines_jobs && !modwerk_controller_settling());
-        bank_module = AB;
+        bank_module = AB; ++modwerk_machine_assigned; /* the track signed, as mw_assign counts it */
         unsigned start = ticks;
         while (!slot_for(AB, MW_CTL_ACTIVE) && ticks - start < 600u) {
             run(1);

@@ -521,6 +521,9 @@ static void use_tick(void)
     unsigned unseen = 0;
     for (unsigned k = 0; k < MW_CONTROLLER_SLOTS; ++k)
         if (held(&REGISTRY.slots[k])) unseen |= REGISTRY.slots[k].binding.identity.feature & MW_DSP_PACKAGED & ~seen;
+    static unsigned last_unseen;
+    if (unseen & ~last_unseen) changed = 1; /* a feature newly held (the boot's restore): looked for at once */
+    last_unseen = unseen;
     /* The bank's Parts (8 x 8 tracks, uncached) are read again only when the bank, the Part or a track's machine changed,
      * and every 64th tick for an edit that is none of those (a Part copy or reload): a packaged machine installed but
      * unused by the bank stays unseen all session, and the scan ran every tick inside the lock (owner, 29 October 2026). */
