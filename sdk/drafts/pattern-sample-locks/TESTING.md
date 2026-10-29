@@ -1,12 +1,12 @@
 # Testing: Pattern Sample Locks 0.1.8-experimental
 
-29 October 2026 · twwwy · prototype prepared for upstream owner review. No release approval.
+30 October 2026 (Taipei) · twwwy · prototype hardware follow-up; no release approval.
 
 ## Current scope
 
 Apply leaves playback in its current state. The native writer validates its source under a level-two task guard and atomically publishes each changed sequencer step (at most eight SAMPLE/mirror pairs plus one index byte), allowing interrupts between steps. It refuses live/sampler recording. Separate session-RAM profiles remember successful Lock/Clear selections and cursors, Lock replacement policy, and the last action. Cancellation/refusal preserves prior preferences; module reload resets them.
 
-Portable planner, UI and production native-writer sanitizer tests pass. The full exact-build DSP-enabled emulator run passed, including CPU monitoring, native save/reload, live edits and preference reset on module reload. Hardware and audible results are not recorded for this version.
+Portable planner, UI and production native-writer sanitizer tests pass. The full exact-build DSP-enabled emulator run passed, including CPU monitoring, native save/reload, live edits and preference reset on module reload. Current MKII results and the author’s listening report are recorded below; full lifecycle and cost qualification remain incomplete.
 
 Historical UI evidence remains in TESTING-v017.md. Earlier MKII results and the 54.0% whole-instrument reading belong to 0.1.6 in TESTING-v016.md and do not qualify this revision.
 
@@ -65,9 +65,9 @@ On 29 October the author confirmed the MKII connected, outside disk mode, on the
 
 The author-requested untimed trial is active at the recorded observation; it has no host deadline or scheduled Undo. Continuous cached CPU/DSP and sampled UI-phase logging is running over the same serialized USB owner. No competing MCP/device client is connected. The original eighteen modules were not stress-tested, and their kept files were not replaced. This start snapshot was followed by the author-requested verified Undo recorded below. No Keep, flash, project save, push, PR or release occurred. See [start receipt](media/v018-mkii-untimed-start.json); its active-state snapshot is not evidence of a later Undo or ongoing liveness.
 
-Manual functional/audio results are not reported yet. The hardware meter is a cached whole-instrument measurement; this trial has no matched unloaded hardware baseline or exact per-operation hardware timing.
+That earlier trial recorded no manual functional/audio verdict. The 30 October follow-up below adds byte-checked operations, host completion bounds and an author listening report; it does not add a matched unloaded cost baseline.
 
-Audible continuity, MKI, heavy streaming/USB/MIDI loads, tempo/speed extremes, companion runtime combinations, stock-only card integration, hardware stack/timing and physical restart remain unqualified. A real module reload was tested in the emulator; no power-cycle persistence is claimed for the session preferences. Hardware qualification and owner review remain required before publication.
+At the end of that earlier trial, audible continuity, MKI, heavy streaming/USB/MIDI loads, tempo/speed extremes, companion runtime combinations, stock-only card integration, hardware stack/timing and physical restart remained unqualified. A real module reload was tested in the emulator; no power-cycle persistence is claimed for the session preferences. Hardware qualification and owner review remain required before publication.
 
 ## Physical CPU test 1: baseline — 29 October 2026
 
@@ -92,4 +92,35 @@ See [Clear receipt](media/v018-mkii-cpu-test02-clear.json). The logger’s frame
 
 At the author’s request, the existing serialized USB owner held and rolled back the trial, then left upload mode normally. Readback verified all eighteen original module records exactly, the original known active identity and the original whole-set identity b6ef21db9e718d147ea1e86cd323d8a9563da0667abbb03f80ccbbc790481967. No other modules were stress-tested. No Keep, flash or explicit project save was commanded. Undo restores module code and does not revert SAMPLE edits made by the author.
 
-The untimed session and CPU logger have ended. See [final lifecycle receipt](media/v018-mkii-untimed-undo.json). The global CPU maximum includes unmarked actions and is not the labelled Clear-operation peak. Physical upload/self-test/Undo passed on the exact 0.1.8 package; manual functional/audio acceptance, hardware worst-case timing and publication qualification remain incomplete. This is a prototype submitted for owner review, not release approval.
+The untimed session and CPU logger have ended. See [final lifecycle receipt](media/v018-mkii-untimed-undo.json). The global CPU maximum includes unmarked actions and is not the labelled Clear-operation peak. Physical upload/self-test/Undo passed on the exact 0.1.8 package. The following run adds functional evidence; complete hardware worst-case and publication qualification remain incomplete. This is a prototype submitted for owner review, not release approval.
+
+## MKII functional and maximum-size trial — 30 October 2026 (Taipei)
+
+The author authorized this USB session and named a disposable project. A reported fresh physical power cycle preceded the RAM boot. The flashed base `a542a515c1955b9264712073bb40c81a492f1a993bfa991640d111eb03aaa130`, eighteen module records, active identity and whole-set identity were recorded first. The base has no development controls, so the agent RAM-booted development base `9056dbbd2a84c80051eee33f97d6407ecf079c51f27bd682243d44c9344777d2`. This cached-module prototype is a named test environment, not qualification of the current public base or card build.
+
+The exact 0.1.8 package above was installed alone and passed device self-test (one intact module, zero failures). Native panel controls prepared A03 at 120 BPM with 64 sample trigs on each of eight Flex/Static tracks. The disposable Part was saved natively; temporary changes made by native track paste were restored with Part Reload, and complete working/saved Part equality was verified before the tests. Original firmware, project snapshots, raw memory and packages stay private.
+
+### Observed results
+
+- Twenty alternating live maximum-size operations passed: ten Lock and ten Clear, each changing 512 SAMPLE fields. Every complete eight-track record matched the expected result: only selected SAMPLE bytes changed, trigs and other bytes stayed intact, both Part copies stayed intact, and playback remained running before/after each Apply.
+- Stopped Lock/Clear stayed stopped; repeated Lock with replacement OFF made zero changes. A T1-only operation preserved the other seven tracks. Separate successful Lock/Clear selections were recalled; cancelling a selection or replacement-policy change preserved the previous successful profile. Replacement ON was visually recalled after cancellation.
+- A SAMPLE lock created through stock controls (slot 0 versus Part slot 3) survived Lock with replacement OFF. Replacement ON replaced it; Clear removed it. A native pitch lock at the same step and every non-SAMPLE track byte survived these operations.
+- Live recording was verified through its actual native flag, then Apply refused without changing that flag, playback or track bytes. The development STATE reply’s recording byte covers sampler recording and was not suitable for the first harness assertion. Switching to A04 cancelled an armed confirmation; returning to A03 found its data unchanged.
+- Native Save Project, Clear and Reload Project restored the exact saved track records with all 512 SAMPLE locks. The first fixed two-second comparison was premature; later complete comparisons, repeated after 250 ms, matched the settled saved result. No premature comparison is recorded as a pass.
+- During the live test the author reported **“Playback sounds continuous.”** This remains an author listening report; no independent audio recording or sample-level dropout analysis was made.
+- Undo was performed with track selection open. Readback matched the temporary base’s empty inventory, active/whole-set identities and all three original opener-site hashes. Saved SAMPLE edits remained. After the author’s final physical power cycle, readback verified the original flashed base, all eighteen original module records and the original active/whole-set identities. Those companions were not stress-tested.
+
+### Timing method and limits
+
+The host used a monotonic clock from sending the final YES press until DIAG first reported CLOSED. Completion was then checked against all track bytes and transport state. This gives an observed upper bound including USB transfers, UI scheduling, publication and telemetry latency, rather than isolated execution cycles.
+
+| Operation | Repetitions | SAMPLE changes each | Largest observed host completion bound |
+| --- | ---: | ---: | ---: |
+| Live Lock | 10 | 512 | 18.433 ms |
+| Live Clear | 10 | 512 | 18.304 ms |
+
+The frame-gap read covering this repeat run and intervening menu/host work was 413.03 µs. Cached whole-instrument CPU readings taken after these operations ranged 70.1–72.7%; these do not isolate module cost or instantaneous spikes. Later project save/reload activity reached a cached 100% window, outside this timing run. No per-step hardware interrupt bound, full stock-callee/interrupt stack bound or universal worst-case guarantee is inferred.
+
+An initial run completed seven verified operations before a separate status query interleaved with a MEM high/low read. The read was refused and the runner stopped playback; no failed firmware edit was observed. The twenty-operation run above used one memory reader. Its receipt retains the interruption and harness corrections rather than treating them as module failures or hiding them.
+
+See the stock-free [hardware receipt](media/v018-mkii-qualification.json) and [actual MKII confirmation](media/v018-mkii-live512-confirm.png). Source/package/base identities, individual timing samples and exact observed scope are recorded there. **No Keep or flash occurred.** Kept restart lifecycle, module-reload preference reset on hardware, MKI, heavy streaming/USB/MIDI loads, tempo/speed extremes, companion runtime combinations, native stock-only card/browser parity and full cost bounds remain unqualified. The RAM base sees the flashed saved set as foreign; this trial makes no saved-set recovery or Keep attestation. Keep this PR in draft.

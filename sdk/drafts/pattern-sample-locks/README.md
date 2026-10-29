@@ -6,7 +6,7 @@ Version: 0.1.8-experimental · author: @twwwy · category: system
 
 Two Part Edit actions: **Lock Samples to Pattern** writes the Part's assigned sample into existing sample trigs; **Clear Sample Locks** removes every SAMPLE lock on selected tracks, including manual locks.
 
-**Private development prototype; physical qualification is incomplete.** Use a backed-up disposable project for the supervised RAM trial in [DEVICE_TEST.md](DEVICE_TEST.md). Source prototype prepared for upstream owner review; publication remains unapproved.
+**Private development prototype; full physical qualification is incomplete.** Use a backed-up disposable project for the supervised RAM trial in [DEVICE_TEST.md](DEVICE_TEST.md). Source prototype prepared for upstream owner review; publication remains unapproved.
 
 ## Controls
 
@@ -59,7 +59,7 @@ There is **no ownership bookkeeping**: no battery-RAM reservation, CF metadata, 
 - Source, Part assignments, SAMPLE bytes, trig masks, canonical battery mirror and lock-index bytes are revalidated under the native level-two task guard, leaving sequencer, USB, audio-frame and DMA interrupts enabled.
 - Each changed step publishes at most eight SAMPLE/mirror pairs and one lock-index byte under a brief full interrupt guard; interrupts resume between steps. Only selected SAMPLE bytes, their canonical mirror, affected index bits and native dirty/publication state change.
 - Compiled allocation: 8,748 bytes initialized code/data and 1,328 bytes BSS. These are build sizes, not measured physical CPU/stack use.
-- Current results belong in [TESTING.md](TESTING.md); historical ownership-prototype timings do not qualify this version.
+- Current MKII checks include live 512-field edits, native project reload and verified Undo. Observed host completion bounds are below 18.44 ms; they include USB/UI latency. Keep and full cost qualification remain incomplete. See [TESTING.md](TESTING.md).
 
 All three levels use the instrument’s own font and seven-pixel row spacing. Level one stays headerless; levels two and three keep white headers and two-column track grids. The popups fit all their rows without clipping.
 
@@ -75,10 +75,10 @@ Original source and UI by twwwy, MIT. Small lettering is reused from twwwy's ori
 
 ## Screens and audio
 
-Screens are actual emulator LCD captures. Current UI results are in [TESTING.md](TESTING.md). The 0.1.7 UI results are archived in [TESTING-v017.md](TESTING-v017.md). The 0.1.6 emulator/hardware/CPU results are historical in [TESTING-v016.md](TESTING-v016.md); ownership results are archived in [TESTING-v015.md](TESTING-v015.md).
+Screens are labelled hardware or emulator LCD captures. Current MKII results are in [TESTING.md](TESTING.md). The 0.1.7 UI results are archived in [TESTING-v017.md](TESTING-v017.md). The 0.1.6 emulator/hardware/CPU results are historical in [TESTING-v016.md](TESTING-v016.md); ownership results are archived in [TESTING-v015.md](TESTING-v015.md).
 
 ![Part Edit actions](media/v017-part-menu.png)
 ![Lock selection](media/v017-lock-tracks.png)
 ![Clear all selected SAMPLE locks](media/v017-clear-all-selected.png)
 
-![Live 512-lock confirmation, 0.1.8 emulator](media/v018-live-512-lock-confirm.png)
+![Live 512-lock confirmation, actual MKII 0.1.8](media/v018-mkii-live512-confirm.png)

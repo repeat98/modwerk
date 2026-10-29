@@ -40,7 +40,7 @@
       "screen:PART EDIT"
     ],
     "limitations": [
-      "Experimental prototype; hardware timing and audible continuity remain unqualified.",
+      "Experimental prototype; MKII live edits passed, but full lifecycle and worst-case hardware qualification remain incomplete.",
       "Clear removes all SAMPLE locks on selected tracks, including manual locks.",
       "Lock preserves all existing SAMPLE locks by default, including those written by a previous Lock action.",
       "No ownership storage, origin tracking or custom lifecycle event is used.",
@@ -49,7 +49,7 @@
     "effectId": null
   },
   "resources": {
-    "recorded": "Exact linked allocation; hardware load unmeasured",
+    "recorded": "Exact linked allocation; isolated hardware cost unqualified",
     "storage": {
       "label": "Storage",
       "display": "8,748 bytes code/data; 1,328 bytes BSS",
@@ -65,13 +65,13 @@
       "value": null,
       "unit": "unknown",
       "method": "unmeasured",
-      "conditions": "Cached whole-instrument MKII CPU/DSP windows were recorded during the target-only trial; exact baseline and Clear results are in TESTING.md. No matched unloaded hardware baseline or exact operation/interrupt timing is available. The trial ended with verified Undo; hardware cost remains unqualified.",
+      "conditions": "MKII live 64-step x 8-track operations have observed host completion upper bounds of 18.433 ms for Lock and 18.304 ms for Clear, including USB/UI latency. Cached whole-instrument load is not isolated module cost. See TESTING.md; no universal worst-case execution, per-step interrupt or complete stack bound is qualified.",
       "source": "TESTING.md"
     }
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "0.1.8 portable and DSP-enabled native emulator checks passed. Exact-package singleton MKII upload/self-test/Undo passed; all eighteen original module records and both active/whole-set identities were restored. Baseline and reported Clear-operation cached CPU windows are recorded. Physical functional/audio acceptance and worst-case hardware timing remain incomplete; prototype review only.",
+    "summary": "Exact 0.1.8 singleton MKII install/self-test/Undo passed. Twenty live 512-field operations preserved other track bytes and Part data; stopped/manual-lock/refusal/profile/native project reload checks passed. Author reported continuous playback. All 18 original modules restored after a physical power cycle. Keep, kept reboot lifecycle and complete hardware cost qualification remain incomplete.",
     "hardwareStatus": "untested",
     "gates": [
       "Worst-case cycles under parameter modulation and maximum load",
@@ -87,10 +87,10 @@
   },
   "media": [
     {
-      "path": "media/v018-live-512-lock-confirm.png",
-      "captureType": "emulator",
-      "caption": "Live-playback prototype: 64 changes on each of eight tracks, using the native font and seven-pixel rows. Explicit replacement is ON.",
-      "alt": "Lock confirmation for pattern A01: T1 through T8 each show 64 changes; Replace existing YES.",
+      "path": "media/v018-mkii-live512-confirm.png",
+      "captureType": "hardware",
+      "caption": "Actual MKII during playback: 64 planned changes on each of eight tracks; existing locks are kept.",
+      "alt": "Physical Octatrack Lock confirmation with 64 planned changes on each of eight tracks and existing locks kept.",
       "credit": "twwwy; Elektron Octatrack UI",
       "license": "LicenseRef-OT-UI-Documentation",
       "source": "original",
@@ -99,8 +99,8 @@
         "shows": "controls",
         "firmware": "1.40C",
         "moduleVersion": "0.1.8-experimental",
-        "imageSha256": "32e2480b5658c5b559884358b9925e8dbba92581b27a581745f232cb9b57ab43",
-        "setup": "Actual MKII emulator with DSP execution; private copied card and all-step fixture. Exact package 28766a017005e664d00620d3831fc81af7449c95e1896a17121ca8fc2d306d8d. Hardware and audible continuity unqualified."
+        "imageSha256": "c0b988cbff0050b19961590d1203f5263b0a3d298216e234361bf0fdc3c1c28c",
+        "setup": "Actual MKII LCD read over the development USB interface on temporary RAM base 9056dbbd2a84c80051eee33f97d6407ecf079c51f27bd682243d44c9344777d2. Exact package 28766a017005e664d00620d3831fc81af7449c95e1896a17121ca8fc2d306d8d. Disposable A03, 120 BPM, 64 trigs on each of eight tracks. Receipt media/v018-mkii-qualification.json; no Keep or flash."
       }
     },
     {
@@ -235,7 +235,7 @@
       "Successful operations remember each action\u2019s tracks and cursor, plus Lock replacement policy. Cancelling keeps the previous settings. Module reload or power cycling resets them."
     ],
     "screenshots": [
-      "media/v018-live-512-lock-confirm.png",
+      "media/v018-mkii-live512-confirm.png",
       "media/v017-part-menu.png",
       "media/v017-lock-tracks.png",
       "media/v017-clear-tracks.png",
