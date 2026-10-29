@@ -46,6 +46,10 @@ static uint32_t packaged_generation[MW_ENGINE_FEATURES];
 /* A job of ours failed or is uncertain on this core: the owned transport closed it for the boot (its fail-closed
  * rule), so nothing more is placed or unplaced there. Placed engines stay placed, free spans stay free. */
 static uint8_t closed[2];
+/* Ours, or closed from outside the engines (a legacy packet aged out, the stall watchdog's abort, a failed key-bus
+ * job, a sequence wrap): either way no owned job reaches this core again this boot, so its engines read STUCK and a
+ * new reader is refused at admission rather than waiting on the transport for good. */
+static int shut(unsigned c) { return closed[c] || dl_owned_closed(c); }
 static unsigned wanted_now; /* mw_engines_want */
 static unsigned deferred[2] = {~0u, ~0u}; /* a play-time claim had to move or retire code: what it needed, until quiet */
 void mw_engines_want(unsigned features) { wanted_now = features; }
@@ -217,7 +221,7 @@ int mw_engines_place(unsigned feature, unsigned cores, uint32_t generation, cons
         volatile uint8_t *why = &mw_engines_wait[c][k];
         int other = is_packaged(k) && e->state != MW_ENGINE_FREE && e->generation != generation;
         if (e->state == MW_ENGINE_PLACED && !other) { *why = MW_WAIT_NONE; continue; }
-        if (!own || !u->count || e->state == MW_ENGINE_STUCK || closed[c]) { stuck = 1, *why = MW_WAIT_STUCK; continue; }
+        if (!own || !u->count || e->state == MW_ENGINE_STUCK || shut(c)) { stuck = 1, *why = MW_WAIT_STUCK; continue; }
         placed = 0;
         /* One job per core; the board's own job, a playing sequencer or a queued pattern change defer the rest. */
         if (lane[c].op != LANE_IDLE) { *why = MW_WAIT_LANE; continue; }
@@ -288,7 +292,7 @@ static int admit(unsigned feature, unsigned wanted, unsigned words)
     if (k >= MW_ENGINE_FEATURES) return MW_ENGINE_STUCK_BOOT;
     for (unsigned c = 0; c < 2u; ++c)
         if (runs(c, k) && (mw_engines[c][k].state == MW_ENGINE_STUCK ||
-                           (closed[c] && mw_engines[c][k].state != MW_ENGINE_PLACED))) return MW_ENGINE_STUCK_BOOT;
+                           (shut(c) && mw_engines[c][k].state != MW_ENGINE_PLACED))) return MW_ENGINE_STUCK_BOOT;
     wanted = MW_DSP_IMPLIED(wanted | feature); /* a Sidechain's engine comes with the key bus's */
     for (unsigned c = 0; c < 2u; ++c) {
         struct spans s;

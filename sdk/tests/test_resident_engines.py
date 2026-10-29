@@ -122,6 +122,7 @@ int dl_owned_cancel(const struct dl_owned_job *v) { (void)v;return 0; }
 int dl_owned_job_poll(const struct dl_owned_job *v,struct dl_owned_progress *p) { (void)v;(void)p;return 0; }
 int dl_owned_job_release(const struct dl_owned_job *v) { (void)v;return 0; }
 void dl_owned_fail_closed(unsigned c) { (void)c; }
+int dl_owned_closed(unsigned c) { (void)c;return 0; }
 int dl_engine_claim(unsigned c,unsigned r,int k) { (void)c;(void)r;(void)k;return 0; }
 void dl_engine_release(unsigned c,unsigned r) { (void)c;(void)r; }
 unsigned dl_engine_reserved(unsigned c) { (void)c;return 0; }

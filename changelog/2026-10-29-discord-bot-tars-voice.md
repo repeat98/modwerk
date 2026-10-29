@@ -1,0 +1,1 @@
+Development: the Discord bot is now called TARS and its voice guide describes a deadpan, plainly honest machine with a rare "honesty setting" joke, never at the tester and never when work or a unit is at risk.

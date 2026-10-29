@@ -26,6 +26,7 @@ engine has no room and let it wait; modes 54-58 place an engine only once its fe
 COMPRESSOR for Sidechain, a reader's effect for the key bus), park it when a new bank does not use it, and remove a
 parked or never-used module. Mode 59: an engine is placed on all its cores or none. Mode 61 (owner, 24 October 2026):
 a reader goes in whatever room the Part leaves; the pick that brings its effect pays the key bus's price, or is DSP FULL.
+Mode 64: a core's owned channel closed from outside the engines (MKII, 27 October 2026) refuses at admission.
 """
 import importlib.util
 import hashlib
@@ -1422,10 +1423,11 @@ int main(int argc, char **argv)
         second[31] ^= 1u;
         assert(refused(second, sizeof second) == RUNTIME_FEATURE);
         assert(mw_engines_view.keybus & 0x80u); /* the view says the bus cannot come up this boot */
-        if (install(pkg_sc, sizeof pkg_sc) == MU_APPLIED) {
-            run(300);
-            assert(!(dsp_mask[0] & 8u) && !(dsp_mask[0] & 1u)); /* core 0 waits for an unknown core 1 */
-        }
+        /* The uncertain DISABLE closed core 1's owned channel: Sidechain could never place there, so it is refused at
+         * admission (STUCK_BOOT), and nothing enables core 0's bus or Sidechain meanwhile. */
+        assert(dl_owned_closed(1) && refused(pkg_sc, sizeof pkg_sc) == RUNTIME_CONFLICT);
+        run(300);
+        assert(!(dsp_mask[0] & 8u) && !(dsp_mask[0] & 1u));
     } else if (mode == 48) {
         /* The scrub waits while a slot buffer covers the window: the bus is off there, its seed live, the window held,
          * and a reader is told to retry (the third BUSY reason: a live seed with the bus off and an idle lane). */
@@ -1749,6 +1751,22 @@ int main(int argc, char **argv)
         assert(test_select(ids, pump) == DL_SELECT_MEMORY && test_unloads() == unloads + 1 && test_idle());
         assert(test_live(0, 6) < 0 && test_live(0, 11) < 0 && !test_observed_valid());
     } else if (mode == 64) {
+        /* Core B's owned channel closed from outside the engines (as a legacy packet aging out or the stall watchdog's
+         * abort closes it; MKII, 27 Oct 2026): no engine job can reach it this boot. Sidechain is refused at admission
+         * (STUCK_BOOT), a reader too (the key bus is down), and a placement there reads STUCK, never a wait for the
+         * transport that lasts until a power cycle. Core A stays open. */
+        dl_owned_fail_closed(1);
+        run(20);
+        assert(dl_owned_closed(1) && !dl_owned_closed(0));
+        assert(refused(pkg_sc, sizeof pkg_sc) == RUNTIME_CONFLICT && mw_engines_admitted[0] == MW_ENGINE_STUCK_BOOT + 1u);
+        assert(refused(pkg_reader, sizeof pkg_reader) == RUNTIME_FEATURE);
+        static const uint8_t idle[2], none[2];
+        assert(mw_engines_place(1u, 2u, 7u, idle, none, 3u) == -1 && mw_engines_wait[1][0] == MW_WAIT_STUCK);
+        assert(mw_engines_place(8u, 2u, 7u, idle, none, 3u) == -1 && mw_engines_wait[1][3] == MW_WAIT_STUCK);
+        run(20);
+        assert(!mw_engines_jobs && !dl_engine_reserved(1) && mw_engines[1][0].state == MW_ENGINE_FREE && !trails[1]);
+        assert(mw_engines_admit(1u, 0u, 0u) == MW_ENGINE_STUCK_BOOT);
+    } else if (mode == 65) {
         /* PLAY right after a boot (owner's MKII, 27 October 2026, Analog BD silent until the next stop): used while the
          * sequencer plays, Analog BD is placed, reset from its package and enabled without a stop, and nothing moves.
          * Its 3,776-word reset goes eight packets a job, so the whole thing takes about 30 board ticks (half a second);
@@ -1772,7 +1790,7 @@ int main(int argc, char **argv)
             assert(resets == 158u); /* every packet still 24 words or fewer, at its own offset (the receiver's check) */
         }
         assert(ticks - start <= 30u && !dl_engine_evacuations && !test_trims()); /* half a second */
-    } else if (mode == 65) {
+    } else if (mode == 66) {
         /* After a boot (owner's MKII, 28 October 2026): the restored Part's track is signed for Analog BD's machine, but
          * its renderer asks for the lease only from the first trig, so the engine waited for PLAY and missed the first
          * trigs. The Part's signature counts as use: placed while stopped, before any lease, and the notice waits. */
@@ -1902,7 +1920,7 @@ def build(work):
 
 @unittest.skipUnless(shutil.which('cc'), 'host C compiler unavailable')
 class ResidentEnginesBoard(unittest.TestCase):
-    MODES = 66
+    MODES = 67
 
     def test_place_switch_run_disable_unswitch_free_and_their_refusals(self):
         with tempfile.TemporaryDirectory() as temp:
@@ -1951,6 +1969,7 @@ int dl_owned_cancel(const struct dl_owned_job *v) { (void)v;return 0; }
 int dl_owned_job_poll(const struct dl_owned_job *v,struct dl_owned_progress *p) { (void)v;(void)p;return 0; }
 int dl_owned_job_release(const struct dl_owned_job *v) { (void)v;return 0; }
 void dl_owned_fail_closed(unsigned c) { (void)c; }
+int dl_owned_closed(unsigned c) { (void)c;return 0; }
 int dl_engine_claim(unsigned c,unsigned r,int k) { (void)c;(void)r;(void)k;return 0; }
 void dl_engine_release(unsigned c,unsigned r) { (void)c;(void)r; }
 unsigned dl_engine_reserved(unsigned c) { (void)c;return 0; }
