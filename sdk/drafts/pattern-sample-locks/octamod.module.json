@@ -61,17 +61,17 @@
     },
     "processing": {
       "label": "CPU / DSP load",
-      "display": "Hardware unmeasured",
+      "display": "Hardware cost unqualified",
       "value": null,
       "unit": "unknown",
       "method": "unmeasured",
-      "conditions": "Cached emulator CPU and DSP fields did not resolve added load on a matched unloaded baseline. Exact instruction intervals and guard lengths are recorded in TESTING.md; hardware CPU/DSP and audible continuity remain unqualified.",
+      "conditions": "Cached whole-instrument MKII CPU/DSP readings are being recorded during the target-only trial. No matched unloaded hardware baseline or exact operation/interrupt timing is available. Emulator instruction intervals and qualification limits are in TESTING.md.",
       "source": "TESTING.md"
     }
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "0.1.8 preserves playback and remembers successful Lock/Clear settings in module RAM. Portable sanitizers, exact MCF54455 build/guards and DSP-enabled native emulator tests passed: 512 live edits, separate profiles, recording/stale refusal, native save/reload and reset on reinstall. CPU/DSP cached emulator meters did not resolve added load; exact instruction intervals are recorded. Physical and audible qualification remain pending.",
+    "summary": "0.1.8 portable and DSP-enabled native emulator checks passed. Exact-package target-only MKII upload/self-test passed with one live/intact module and zero failures; untimed CPU/DSP logging trial is active at the recorded observation. Physical functional/audio reports and verified Undo are pending. Cached readings do not establish isolated hardware cost.",
     "hardwareStatus": "untested",
     "gates": [
       "Worst-case cycles under parameter modulation and maximum load",
