@@ -181,13 +181,35 @@ typedef unsigned modwerk_ev_trig_muted(void);
 #define MODWERK_OT_SAMPLE_EDITOR_ACTIONS 36
 #include "modwerk_sample_editor.h"
 
-/* ot_personalize_rows (table, contribute {"to": "ot_personalize_rows", "order", "data"}): PROJECT > SYSTEM > PERSONALIZE lists stock's rows, then one per contributed row, then LED BRIGHTNESS on an MKII. The UI task. Contribute one struct modwerk_personalize_rows: its rows, in order. The window shows stock's fifteen rows, up to eight contributed rows, then stock's LED BRIGHTNESS where the unit has it (MKII); the getter and setter follow stock's rows' convention (LED BRIGHTNESS's 0x40068c80 and 0x4006907c). A row keeps its own setting: the window's position of a row is not stable and never names it. */
-#define MODWERK_OT_PERSONALIZE_ROWS 37
+/* Hook index 37 is reserved for ot_machine_starts, the machines' versioned START records (pull request #1029): no module subscribes or contributes to it. */
+
+/* ot_personalize_rows (table, contribute {"to": "ot_personalize_rows", "order", "data"}): PROJECT > SYSTEM > PERSONALIZE lists stock's rows with each contributed row after the stock row it names, the unanchored rows after stock's fifteenth, then LED BRIGHTNESS on an MKII. The UI task. Contribute one struct modwerk_personalize_rows: its rows, in order, each naming the stock row it goes after (after, 1-15 as stock lists them: MUTE MODE's MODWERK_PERSONALIZE_AFTER_PREVIEW_WITHOUT_FX) or none (MODWERK_PERSONALIZE_END: the end). The window shows stock's fifteen rows, each followed by the rows anchored after it, then the unanchored rows, then stock's LED BRIGHTNESS where the unit has it (MKII), always last; at most eight contributed rows, the first eight in table order. An anchor past 15 (LED BRIGHTNESS or a row stock does not have) refuses the whole contribution: none of its rows is shown. Only the window's code (0x40068e00-0x40069074: renderer, row count and key handler) reads the three tables and the list's cursor, so a stock row's place is not its identity. The getter and setter follow stock's rows' convention (LED BRIGHTNESS's 0x40068c80 and 0x4006907c). A row keeps its own setting: the window's position of a row is not stable and never names it. */
+#define MODWERK_OT_PERSONALIZE_ROWS 38
 struct modwerk_personalize_row {
     const char *label;                  /* its row's label */
     const void *get;                    /* as stock's rows: returns the value's string in d0; 0 shows no value */
     const void *set;                    /* as stock's rows: (delta, wrap) on the stack */
+    uint32_t after;                     /* the stock row it goes after (MODWERK_PERSONALIZE_AFTER_*), or MODWERK_PERSONALIZE_END */
 };
 struct modwerk_personalize_rows { uint32_t count; struct modwerk_personalize_row row[]; };
+/* A row's anchor: the stock row it goes after, numbered as stock lists them (1.40C). LED BRIGHTNESS (16) is no
+ * anchor: it stays last. Any other value refuses the contribution. */
+#define MODWERK_PERSONALIZE_END 0u     /* no anchor: after stock's fifteenth row and the rows anchored there */
+#define MODWERK_PERSONALIZE_AFTER_QUANTIZE_LIVE_REC 1u
+#define MODWERK_PERSONALIZE_AFTER_PREVIEW_WITHOUT_FX 2u
+#define MODWERK_PERSONALIZE_AFTER_MUTE_FOCUSES_TRK 3u
+#define MODWERK_PERSONALIZE_AFTER_CUE_FOCUSES_TRK 4u
+#define MODWERK_PERSONALIZE_AFTER_CUE_MUTES_TRK 5u
+#define MODWERK_PERSONALIZE_AFTER_DISABLE_FUNC_ENC 6u
+#define MODWERK_PERSONALIZE_AFTER_DISABLE_YES_NO_ARM 7u
+#define MODWERK_PERSONALIZE_AFTER_DIS_STOP_STOP_ARM 8u
+#define MODWERK_PERSONALIZE_AFTER_DIS_PAGE_AUTOCOPY 9u
+#define MODWERK_PERSONALIZE_AFTER_DEFAULT_TRIG_MODE 10u
+#define MODWERK_PERSONALIZE_AFTER_DEFAULT_REC_MODE 11u
+#define MODWERK_PERSONALIZE_AFTER_SAVE_SAMPLES_TO 12u
+#define MODWERK_PERSONALIZE_AFTER_SHORT_SAMPLE_NAME 13u
+#define MODWERK_PERSONALIZE_AFTER_RECORD_QUICK_MODE 14u
+#define MODWERK_PERSONALIZE_AFTER_EXT_LEN_GRID_REC 15u
+#define MODWERK_PERSONALIZE_ROOM 8u     /* contributed rows the window shows, in table order */
 
 #endif

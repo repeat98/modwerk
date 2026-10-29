@@ -223,6 +223,30 @@ class SiteEventTests(unittest.TestCase):
                             '-I', EVENTS_DIR / 'elekloader', '-I', LOADER, '-I', ROOT / 'sdk/runtime/upload', LOADER / 'loader.c'],
                            check=True, capture_output=True)
 
+    def test_a_reserved_index_holds_its_place_and_takes_no_word(self):
+        # 37 is held for ot_machine_starts (#1029) whichever merges first, so ot_personalize_rows keeps 38 (#1023).
+        reg = events.load()
+        self.assertEqual([(e['index'], e['kind']) for e in reg['events'] if e['event'] in ('reserved_37', 'ot_personalize_rows')],
+                         [(37, 'reserved'), (38, 'table')])
+        self.assertEqual(events.index('ot_personalize_rows', reg), 38)  # released hook indices never move
+        with self.assertRaises(ValueError):
+            events.index('reserved_37', reg)
+        header = events.loader(reg)
+        room = re.search(r'#define RUNTIME_SITE_EVENT_ROOM \{ (.*) \}', header).group(1).split(', ')
+        tables = re.search(r'#define RUNTIME_SITE_EVENT_TABLES \{ (.*) \}', header).group(1).split(', ')
+        spans = re.findall(r'\{0x[0-9a-f]{8}u, \d+u\}', re.search(r'#define RUNTIME_SITE_EVENT_SPANS \{ (.*) \}', header).group(1))
+        # room 0: the loader's roomless() refuses any package word there; no span, no table, no subscriber
+        self.assertEqual((room[37 - 4], tables[37 - 4], spans[37 - 4]), ('0u', '0', '{0x00000000u, 0u}'))
+        self.assertIn('Hook index 37 is reserved for ot_machine_starts', events.sdk(reg))
+        self.assertNotIn('MODWERK_RESERVED_37', events.sdk(reg))
+        self.assertIn({'index': 37, 'event': 'reserved_37', 'kind': 'reserved', 'room': 0},
+                      json.loads(events.browser(reg))['events'])
+        doc = json.loads((EVENTS_DIR / 'events.json').read_text())
+        for change in (dict(event='reserved_36'), dict(subscribers=[]), dict(why=''), dict(room=4)):
+            bad = json.loads(json.dumps(doc)); next(e for e in bad['events'] if e['event'] == 'reserved_37').update(change)
+            with tempfile.TemporaryDirectory() as temp, self.subTest(change), self.assertRaises(ValueError):
+                Path(temp, 'events.json').write_text(json.dumps(bad)); events.load(Path(temp, 'events.json'))
+
     def test_registry_guards_are_the_ones_modules_name(self):
         """Every catalogue detour on an event's site sits exactly on it with the registry's length and stock hash."""
         sys.path.insert(0, str(ROOT / 'sdk/octabam/tools'))

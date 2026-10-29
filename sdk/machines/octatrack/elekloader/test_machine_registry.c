@@ -140,9 +140,20 @@ static const struct modwerk_machine_setup S = {{MODWERK_MACHINE_ABI, {'S', '2'},
                                                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, {0}}, setup_page_s, setup_knob_s};
 static const struct { uint32_t count; struct modwerk_sequencer_row row[3]; } FMQ = {3, {{"SCALE", 0, 0}, {"ROOT", 0, 0}, {"GLIDE", 0, 0}}},
     QZ = {3, {{"SCALE", (void *)1, 0}, {"ROOT", (void *)1, 0}, {"GLIDE", (void *)1, 0}}}, MORE = {1, {{"SWING", 0, 0}}};
-static const struct { uint32_t count; struct modwerk_personalize_row row[2]; } MM = {1, {{"MUTE MODE", (void *)2, (void *)3}}},
-    PS = {2, {{"PLAY START", (void *)4, (void *)5}, {"TRACK MUTES", (void *)6, (void *)7}}},
-    FULL = {2, {{"A", 0, 0}, {"B", 0, 0}}};
+/* Synthetic PERSONALIZE contributions: MUTE MODE after PREVIEW WITHOUT FX (stock row 2), as in the card build; a
+ * second module with an unanchored row and one on the same anchor; rows anchored after the last stock row; anchors
+ * that name no stock row (LED BRIGHTNESS, 16, or past it). */
+static const struct { uint32_t count; struct modwerk_personalize_row row[2]; } MM = {1, {{"MUTE MODE", (void *)2, (void *)3, MODWERK_PERSONALIZE_AFTER_PREVIEW_WITHOUT_FX}}},
+    PS = {2, {{"PLAY START", (void *)4, (void *)5, MODWERK_PERSONALIZE_END}, {"TRACK MUTES", (void *)6, (void *)7, MODWERK_PERSONALIZE_AFTER_PREVIEW_WITHOUT_FX}}},
+    LAST = {2, {{"END", 0, 0, MODWERK_PERSONALIZE_END}, {"AFTER EXT", 0, 0, MODWERK_PERSONALIZE_AFTER_EXT_LEN_GRID_REC}}},
+    LED = {1, {{"AFTER LED", 0, 0, 16u}}}, FAR = {2, {{"OK", 0, 0, MODWERK_PERSONALIZE_END}, {"FAR", 0, 0, 99u}}},
+    FULL = {2, {{"A", 0, 0, MODWERK_PERSONALIZE_END}, {"B", 0, 0, MODWERK_PERSONALIZE_END}}};
+/* The window's labels as stock's numbers (0x4000 + r) or a contributed row's label. */
+static int pers_is(unsigned at, unsigned stock_row) { return mw_pers_labels[at] == (const void *)(uintptr_t)(0x4000u + stock_row); }
+static int pers_named(unsigned at, const char *label)
+{
+    return (uintptr_t)mw_pers_labels[at] > 0xffffu && mw_pers_labels[at] != (const void *)mw_seq_none && !strcmp(mw_pers_labels[at], label);
+}
 static void personal(const void *const *p, unsigned k)
 {
     for (unsigned i = 0; i < 9; ++i) personalize_row[i] = i < k ? (uintptr_t)p[i] : 0;
@@ -453,26 +464,46 @@ int main(void)
     rows(0, 0, 0, 0);
     CHECK(counts_now() == (5u << 24 | 5u << 16 | 4u << 8 | 3u) && !masked && clamp_now() == 5);
 
-    /* PERSONALIZE: stock's fifteen rows, the contributed rows in table order, then LED BRIGHTNESS (stock's sixteenth,
-     * MKII only: stock counts 15 + MKII), so it stays last on both models; unused slots show nothing and do nothing. */
-    CHECK(perscount[1] == 15u && mw_pers_labels[0] == (const void *)0x4000u && mw_pers_labels[15] == (const void *)0x400fu);
+    /* PERSONALIZE: stock's fifteen rows, each followed by the rows anchored after it, then the unanchored rows, then
+     * LED BRIGHTNESS (stock's sixteenth, MKII only: stock counts 15 + MKII), so it stays last on both models; unused
+     * slots show nothing and do nothing. */
+    CHECK(perscount[1] == 15u && pers_is(0, 0) && pers_is(15, 15));
     CHECK(mw_pers_getters[14] == (const void *)0x500eu && mw_pers_setters[15] == (const void *)0x600fu);
     CHECK(mw_pers_labels[16] == (const void *)mw_seq_none && mw_pers_getters[16] == 0 && mw_pers_setters[23] == (const void *)mw_seq_set_none);
-    const void *mm[] = {&MM}, *ps_mm[] = {&PS, &MM};
+    /* MUTE MODE after PREVIEW WITHOUT FX: the window's third row, where the card build and octabam put it; MUTE
+     * FOCUSES TRK and every later stock row move down one with their getters and setters. */
+    const void *mm[] = {&MM}, *ps_mm[] = {&PS, &MM}, *mm_ps[] = {&MM, &PS};
     personal(mm, 1);
-    CHECK(perscount[0] == 0x72u && perscount[1] == 16u && !strcmp(mw_pers_labels[15], "MUTE MODE") && mw_pers_getters[15] == (void *)2);
-    CHECK(mw_pers_setters[15] == (void *)3 && mw_pers_labels[16] == (const void *)0x400fu && mw_pers_setters[16] == (const void *)0x600fu);
-    CHECK(mw_pers_labels[14] == (const void *)0x400eu && mw_pers_labels[17] == (const void *)mw_seq_none);
+    CHECK(perscount[0] == 0x72u && perscount[1] == 16u && pers_is(0, 0) && pers_is(1, 1) && pers_named(2, "MUTE MODE"));
+    CHECK(mw_pers_getters[2] == (void *)2 && mw_pers_setters[2] == (void *)3 && pers_is(3, 2) && mw_pers_getters[3] == (const void *)0x5002u);
+    CHECK(mw_pers_setters[3] == (const void *)0x6002u && pers_is(15, 14) && pers_is(16, 15) && mw_pers_setters[16] == (const void *)0x600fu);
+    CHECK(mw_pers_labels[17] == (const void *)mw_seq_none);
+    /* Two modules on the same anchor: the table's order (order, then module id) breaks the tie; an unanchored row goes
+     * after stock's fifteenth, LED BRIGHTNESS still last. */
     personal(ps_mm, 2);
-    CHECK(perscount[1] == 18u && !strcmp(mw_pers_labels[15], "PLAY START") && !strcmp(mw_pers_labels[16], "TRACK MUTES"));
-    CHECK(!strcmp(mw_pers_labels[17], "MUTE MODE") && mw_pers_labels[18] == (const void *)0x400fu && mw_pers_getters[18] == (const void *)0x500fu);
+    CHECK(perscount[1] == 18u && pers_named(2, "TRACK MUTES") && pers_named(3, "MUTE MODE") && pers_is(4, 2));
+    CHECK(pers_is(16, 14) && pers_named(17, "PLAY START") && mw_pers_getters[17] == (void *)4 && pers_is(18, 15));
+    CHECK(mw_pers_getters[18] == (const void *)0x500fu && mw_pers_labels[19] == (const void *)mw_seq_none);
+    personal(mm_ps, 2);
+    CHECK(perscount[1] == 18u && pers_named(2, "MUTE MODE") && pers_named(3, "TRACK MUTES") && pers_named(17, "PLAY START") && pers_is(18, 15));
+    /* After the last stock row comes before the unanchored rows; both before LED BRIGHTNESS. */
+    const void *last[] = {&LAST};
+    personal(last, 1);
+    CHECK(perscount[1] == 17u && pers_is(14, 14) && pers_named(15, "AFTER EXT") && pers_named(16, "END") && pers_is(17, 15));
+    /* An anchor that names no stock row refuses its whole contribution (LED BRIGHTNESS is no anchor: it stays last);
+     * the other contributions keep their places. */
+    const void *led[] = {&LED, &MM}, *far[] = {&FAR};
+    personal(led, 2);
+    CHECK(perscount[1] == 16u && pers_named(2, "MUTE MODE") && pers_is(16, 15) && mw_pers_labels[17] == (const void *)mw_seq_none);
+    personal(far, 1);
+    CHECK(perscount[1] == 15u && pers_is(14, 14) && pers_is(15, 15) && mw_pers_labels[16] == (const void *)mw_seq_none);
     personal(mm, 1);
-    CHECK(perscount[1] == 16u && mw_pers_labels[16] == (const void *)0x400fu && mw_pers_labels[17] == (const void *)mw_seq_none);
+    CHECK(perscount[1] == 16u && pers_is(16, 15) && mw_pers_labels[17] == (const void *)mw_seq_none);
     CHECK(mw_pers_setters[18] == (const void *)mw_seq_set_none && mw_pers_getters[18] == 0);
-    /* Past the window's room: eight contributed rows, then LED BRIGHTNESS last. */
-    const void *many[] = {&FULL, &FULL, &FULL, &FULL, &FULL};
+    /* Past the window's room: the first eight contributed rows in table order, then LED BRIGHTNESS last. */
+    const void *many[] = {&MM, &FULL, &FULL, &FULL, &FULL};
     personal(many, 5);
-    CHECK(perscount[1] == 23u && !strcmp(mw_pers_labels[22], "B") && mw_pers_labels[23] == (const void *)0x400fu);
+    CHECK(perscount[1] == 23u && pers_named(2, "MUTE MODE") && pers_named(16, "A") && pers_named(22, "A") && pers_is(23, 15));
     personal(0, 0);
     CHECK(perscount[1] == 15u && mw_pers_labels[15] == (const void *)0x400fu && mw_pers_labels[16] == (const void *)mw_seq_none && !masked);
     CHECK(counts_now() == (5u << 24 | 5u << 16 | 4u << 8 | 3u));

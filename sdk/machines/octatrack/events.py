@@ -23,7 +23,10 @@ its site; a `take` hook gives its site to one subscriber, whose detour-ABI entry
 runs with the site's registers (modules whose handlers replay stock themselves);
 a `table` has no site: modules contribute records (Elekloader's `contribute`) and
 base code reads them, in (order, module id) order. A table may own stock sites the
-base patches for its reader (the machine registry's chooser seams).
+base patches for its reader (the machine registry's chooser seams). A `reserved`
+entry ("reserved_<index>") holds a hook index for a hook still in review, so a later
+hook's index does not move when that one merges: room 0, no site, so the loader and
+the site refuse any package word there.
 
 The registry and this file keep their names (events.json, events.py, runtime_events.*,
 modwerk_events.h) until the next base build: the base's build_core.py and the loader's
@@ -69,6 +72,13 @@ def load(path=REGISTRY):
     for i, e in enumerate(doc['events']):
         kind = e.get('kind', 'call')
         name = e.get('event', '')
+        if kind == 'reserved':  # an index held for a hook in review: no site, no subscriber, room 0
+            if (name != 'reserved_%d' % (FIRST + i) or e.get('index') != FIRST + i or set(e) != {'event', 'index', 'kind', 'for', 'why'}
+                    or not all(isinstance(e[k], str) and e[k] for k in ('for', 'why'))):
+                raise ValueError('events.json: a reserved index is {"event": "reserved_<index>", "index", "kind": "reserved", '
+                                 '"for", "why"} at the next hook index')
+            events.append(dict(e, site=None, length=0, room=0, subscribers=[]))
+            continue
         if kind not in KINDS or e.get('index') != FIRST + i:
             raise ValueError('events.json: %s needs a kind (%s) and the next hook index' % (name, ', '.join(KINDS)))
         room = e.get('room', ROOM if kind != 'call' else None)
@@ -127,7 +137,7 @@ def load(path=REGISTRY):
 def index(name, registry=None):
     """The hook index a package carries for an event."""
     for e in (registry or load())['events']:
-        if e['event'] == name:
+        if e['event'] == name and e['kind'] != 'reserved':
             return e['index']
     raise ValueError('No event %s in sdk/machines/octatrack/events.json' % name)
 
@@ -311,6 +321,9 @@ def sdk(reg):
                    ' * entry returns with rts); 0: stock runs at once and no later record is asked. */\n'
                    'struct modwerk_take { int (*claims)(unsigned arg); const void *entry; };\n')
     for e in reg['events']:
+        if e['kind'] == 'reserved':
+            out.append('\n/* Hook index %d is reserved for %s: no module subscribes or contributes to it. */\n' % (e['index'], e['for']))
+            continue
         if e['kind'] == 'table':
             out.append('\n/* %s (table, contribute {"to": "%s", "order", "data"}): %s. %s. %s */\n#define MODWERK_%s %d\n%s\n' % (
                 e['event'], e['event'], e['when'], e['context'][0].upper() + e['context'][1:], e['contract'],
@@ -347,10 +360,18 @@ def markdown(reg):
            'stock runs at once. With no taker stock runs. A **table** has no site: modules contribute records\n'
            '(`{"to", "order", "data"}` in runtime.json, `data` a symbol of the record) and base code reads them in\n'
            '(order, module id) order. Each take hook and table has a room: the loader refuses a package past it.\n\n'
+           'Hook indices are an ABI and never move once released. When two hook proposals are open at once, the later\n'
+           'one holds the earlier one\'s index with a **reserved** entry (`reserved_<index>`, `"kind": "reserved"`, `for`\n'
+           'and `why`): room 0, so the loader and the site refuse any package word there, and the earlier proposal\n'
+           'replaces it when it merges.\n\n'
            'The names `events.json`, `events.py`, `modwerk_events.h` and runtime.json\'s `"event"` key stay until the\n'
            'next base build, which renames them; the base loads them by those paths.\n\n'
            '| hook | kind | site | when | prototype or record | result | order | context |\n|---|---|---|---|---|---|---|---|\n']
     for e in reg['events']:
+        if e['kind'] == 'reserved':
+            out.append('| `%s` | reserved | none | hook index %d, held for %s | none | %s | none | none |\n' % (
+                e['event'], e['index'], e['for'], e['why']))
+            continue
         site = ('none' if e['kind'] != 'call' else 'none: a module calls the base\'s `modwerk_raise_%s` through a word the loader fills' % e['event']) if e['site'] is None else '%#010x' % e['site']
         proto = e['prototype'] if e['kind'] == 'call' else ('struct modwerk_take, %s entry, claims(%s)' % (e['entry'], e.get('arg') or 'nothing')
                                                             if e['kind'] == 'take' else '%d-byte record' % e['record'])
@@ -366,7 +387,7 @@ def markdown(reg):
                    '| hook | module | where | what it does with the answer | evidence |\n|---|---|---|---|---|\n')
         out += ['| `%s` | %s | `%s` | %s | %s |\n' % (e['event'], r['module'], r['fn'], r['does'], r['evidence']) for e, r in raisers]
     out.append('\n## Why this order\n\n')
-    out += ['- `%s`: %s\n' % (e['event'], e['orderEvidence']) for e in reg['events']]
+    out += ['- `%s`: %s\n' % (e['event'], e['orderEvidence']) for e in reg['events'] if e['kind'] != 'reserved']
     out.append('\n## The sites\n\n| site | bytes | stock SHA-256 | routine |\n|---|---|---|---|\n')
     out += ['| %#010x | %d | `%s` | %s |\n' % (at, s['length'], s['guard'], s['routine']) for at, s in sorted(reg['sites'].items())]
     if reg['owned']:
@@ -380,8 +401,10 @@ def markdown(reg):
 
 def browser(reg):
     """What the site checks of a package's hook words before it stages one (src/engine/elekloader/module-set.ts):
-    each word's kind by hook index, a take hook's or table's room, a table's record size. No sites or guards."""
-    kinds = {'call': lambda e: 'raise' if e['site'] is None else 'call', 'take': lambda e: 'take', 'table': lambda e: 'table'}
+    each word's kind by hook index (reserved: no word may name it), a take hook's or table's room, a table's record
+    size. No sites or guards."""
+    kinds = {'call': lambda e: 'raise' if e['site'] is None else 'call', 'take': lambda e: 'take', 'table': lambda e: 'table',
+             'reserved': lambda e: 'reserved'}
     rows = []
     for e in reg['events']:
         row = dict(index=e['index'], event=e['event'], kind=kinds[e['kind']](e))

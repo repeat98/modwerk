@@ -209,26 +209,43 @@ static unsigned sequencer(void)
     return n - 3u;
 }
 
-/* PERSONALIZE: stock's fifteen rows, the contributed rows, then stock's LED BRIGHTNESS, the row stock adds on an
- * MKII (its count is 15, plus 1 on an MKII), so it stays last on both models. */
-#define PERS_ROWS 24u
+/* PERSONALIZE: stock's fifteen rows, each followed by the contributed rows anchored after it (struct
+ * modwerk_personalize_row's after, 1-15), then the unanchored rows, then stock's LED BRIGHTNESS, the row stock adds on
+ * an MKII (its count is 15, plus 1 on an MKII), so it stays last on both models. Rows on the same anchor keep the
+ * table's order. The first eight contributed rows in table order are shown; a contribution with an anchor past 15
+ * shows none. Only the window's code (0x40068e00-0x40069074) reads the three tables and its list's cursor, so a
+ * stock row's place is not its identity. */
+#define PERS_STOCK 15u
+#define PERS_ROWS (PERS_STOCK + MODWERK_PERSONALIZE_ROOM + 1u)
 const void *mw_pers_labels[PERS_ROWS], *mw_pers_getters[PERS_ROWS], *mw_pers_setters[PERS_ROWS];
+static void pers_put(unsigned at, const void *label, const void *get, const void *set)
+{
+    mw_pers_labels[at] = label, mw_pers_getters[at] = get, mw_pers_setters[at] = set;
+}
+static void pers_stock(unsigned at, unsigned r)
+{
+    pers_put(at, (const void *)(uintptr_t)U32(0x400b2a34u + 4 * r), (const void *)(uintptr_t)U32(0x400b2a74u + 4 * r),
+             (const void *)(uintptr_t)U32(0x400b2ac0u + 4 * r));
+}
 static unsigned personalize(void)
 {
-    unsigned n = 15;
+    const struct modwerk_personalize_row *more[MODWERK_PERSONALIZE_ROOM];
+    unsigned m = 0, n = 0;
     for (uintptr_t volatile *row = modwerk_runtime_event_row[PERSONALIZE]; *row; ++row) {
         const struct modwerk_personalize_rows *c = (const struct modwerk_personalize_rows *)*row;
-        for (uint32_t i = 0; i < c->count && n < PERS_ROWS - 1u; ++i)
-            mw_pers_labels[n] = c->row[i].label, mw_pers_getters[n] = c->row[i].get, mw_pers_setters[n] = c->row[i].set, ++n;
+        uint32_t i = 0, rows = c->count < MODWERK_PERSONALIZE_ROOM ? c->count : MODWERK_PERSONALIZE_ROOM;
+        while (i < rows && c->row[i].after <= PERS_STOCK) ++i;
+        if (i < rows) continue; /* an anchor that names no stock row (or LED BRIGHTNESS): the contribution is refused */
+        for (i = 0; i < rows && m < MODWERK_PERSONALIZE_ROOM; ++i) more[m++] = &c->row[i];
     }
-    for (unsigned r = 0; r < 16; ++r) {
-        unsigned at = r < 15 ? r : n;
-        mw_pers_labels[at] = (const void *)(uintptr_t)U32(0x400b2a34u + 4 * r), mw_pers_getters[at] = (const void *)(uintptr_t)U32(0x400b2a74u + 4 * r),
-        mw_pers_setters[at] = (const void *)(uintptr_t)U32(0x400b2ac0u + 4 * r);
+    for (unsigned a = 1; a <= PERS_STOCK + 1u; ++a) {
+        if (a <= PERS_STOCK) pers_stock(n++, a - 1u);
+        for (unsigned k = 0; k < m; ++k)
+            if (more[k]->after == (a <= PERS_STOCK ? a : MODWERK_PERSONALIZE_END)) pers_put(n++, more[k]->label, more[k]->get, more[k]->set);
     }
-    for (unsigned k = n + 1; k < PERS_ROWS; ++k) mw_pers_labels[k] = mw_seq_none, mw_pers_getters[k] = 0,
-                                                 mw_pers_setters[k] = (const void *)mw_seq_set_none;
-    return n - 15u;
+    pers_stock(n, PERS_STOCK);
+    for (unsigned k = n + 1; k < PERS_ROWS; ++k) pers_put(k, mw_seq_none, 0, (const void *)mw_seq_set_none);
+    return m;
 }
 
 /* Masked, right after the loader rewrote the rows (loader.h): nothing stock reads may still name a module that left. */
