@@ -4,7 +4,7 @@ Version `0.1.0-experimental`. The results below are from the host and the ColdFi
 
 ## What ran it
 
-- Stock OS 1.40C (`OCTATRACK_OS1.40C_dist.zip`, SHA-256 `370c55a3…`, the repository's reference), kept outside the repository.
+- Stock OS 1.40C (`OCTATRACK_OS1.40C.bin`, SHA-256 `34695b60…`, the repository's reference, from the zip then at `370c55a3…`), kept outside the repository.
 - Emulator: octabam's `ot_emu` from `npm run upstream:tools` (octabam `8250be0`) for card builds; Modwerk's adapted `ot_emu` (`scripts/octatrack-emulator/build.py`) for the base. Neither runs a unit's timing.
 - Compiler: GCC 16.2 and binutils 2.47 in the repository's toolchain image (`sdk/build/Dockerfile`).
 - Base: the beta base with `ev_midi_note_key`, `ev_arp_setup_knob` and `ev_arp_setup_text` (pull request #857), `2b032fd9…`.
