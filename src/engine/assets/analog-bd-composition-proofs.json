@@ -4,11 +4,11 @@
   "sourceSha256": "164f31224bf61181e3f50e7dec40df9afcae5b16dbf6e4c0d0cc5e986af0a84e",
   "staticStock": true,
   "builderSources": {
-    "tools/build/build_bus.py": "e9b63f90f186284d523913f131573118c1eb0bddb253d13f685245b7f98be29c",
+    "tools/build/build_bus.py": "b03ff9659f1e75211aaf2c6aafc6eb2739f03e2ff43cce8a2bfce7a24f59916a",
     "tools/build/ab_image.py": "c4573d4e0715961f7081dc1d5a0639d42ac63313ccc9e50a0737ac0685e2fc14",
     "tools/remix/loader.S": "32e09fd813ddc65511390faaebc3b86d963b2700f304b35cdb1ec48f90449287"
   },
-  "moduleSourceTreeSha256": "8eb8d48fd934714926d115a309c597c58589d91267be1795af43e3a5dc57a772",
+  "moduleSourceTreeSha256": "0071db753a4678c879963316fb8483f7d2f54aaa1bc9bccc1380f2ea50fb7df5",
   "packing": null,
   "proofs": [
     {
@@ -5688,9 +5688,9 @@
         "hidden": []
       },
       "bytes": 1370772,
-      "sha256": "427190839a4ee3f7c6090c36ce3b088c54e584ce264c7619f61e3deb209bb5b0",
-      "osSha256": "9bbe840d196927454a90daa46679617cbcf56ce4c833a43c01bb3ff2e7931850",
-      "maskedOsSha256": "8fd78daf95d279c80a4c497333f6a8c3b3d59c13a4f04144f666394ec6619f83",
+      "sha256": "0f16f8c1374554efd5bddb428269822096e21fdc716333bc704ae3bd7ea66c6c",
+      "osSha256": "de83fe5856bdb822083e2862c940bf3aba6def81b8a7ea2988c7b72d907a4513",
+      "maskedOsSha256": "e7cde7e2fc67654de622920c6af6f09acacff63d7c7ffa047bddfdbebe91e7d6",
       "appendSha256": "83e64a12e560faf5596ee94621e8be3c2b37ed40f8dc1bb8641ffc24495ea230"
     },
     {
@@ -5723,9 +5723,9 @@
         "hidden": []
       },
       "bytes": 1370772,
-      "sha256": "ee362cad11d29d3fd2dd0b7d774bc6b4d8210a1d9038e001be25b2e0a40beba4",
-      "osSha256": "517c36a6aa437d2b7c089bf99fe107f3c9e0b9d3b7017f80e94f0b7dd49faafb",
-      "maskedOsSha256": "b8af339e46f8f984397a1c856800002e7eb48433822a57213db290520a69ca6a",
+      "sha256": "266bd0bc0e1d7f227496a4c562a3136a95dbbfe5cff1fe2e1dd972b341efab63",
+      "osSha256": "11a84e5a54832d983bbb9321229a8597c101a3c972c5c6ffecdebece080c72de",
+      "maskedOsSha256": "de6b8c1f267977a4b118770abbe11615ad979e782b394896c54a6dd6c936d6e8",
       "appendSha256": "83e64a12e560faf5596ee94621e8be3c2b37ed40f8dc1bb8641ffc24495ea230"
     },
     {
