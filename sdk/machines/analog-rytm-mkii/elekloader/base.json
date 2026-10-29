@@ -1,0 +1,13 @@
+{
+  "schema": 1,
+  "about": "Modwerk's Analog Rytm MKII base, built by npm run machine:base -- analog-rytm-mkii. Today it is core-ar2 0.7's source unchanged (sdk/imports/core-ar2-source-fb58292.json); the send bus and the FX list come next.",
+  "core": "core-ar2",
+  "include": "sdk/machines/analog-rytm-mkii/include",
+  "os": "1.74",
+  "toolchain": { "cross": "m68k-elf-", "gcc": "16.2.0", "binutils": "2.47" },
+  "reference": {
+    "file": "vendor/elekloader/catalog/core-ar2-0.7.elemod",
+    "sha256": "f1e9cb2c39eb52af15e7cf8ad25596e46f550e4f748bc9dd60d63a44da2dd9c1",
+    "same": ["id", "version", "build", "sites", "exports", "imports", "weak", "contribute", "collections", "requires", "conflicts"]
+  }
+}

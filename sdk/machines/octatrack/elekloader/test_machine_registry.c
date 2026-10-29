@@ -10,6 +10,7 @@
 #include <string.h>
 static unsigned failures;
 #define CHECK(x) do { if (!(x)) { failures++; fprintf(stderr, "%s:%d: %s\n", __FILE__, __LINE__, #x); } } while (0)
+static uint8_t stock_voices[8 * 168]; /* stock's voice records (0x800049d8 + 168 * track): byte 0 is "playing" */
 
 /* Synthetic memory: a few segments at the addresses the registry reads. */
 struct segment { uint32_t base, size; uint8_t *bytes; };
@@ -22,6 +23,7 @@ static struct segment segments[] = {
     {0x460e7380u, 0x20, ui}, {0x460e70e0u, 4, ui + 0x20}, {0x400d320cu, 12, stockdef},
     {0x40079240u, 0x10, code}, {0x400585f0u, 0x10, code + 0x10}, {0x4003c950u, 4, code + 0x20}, {0x40078678u, 4, code + 0x24},
     {0x400786ccu, 4, code + 0x28}, {0x40079904u, 4, code + 0x2c}, {0x40065c7cu, 4, code + 0x30}, {0x40078c20u, sizeof clamps, clamps},
+    {0x800049d8u, sizeof stock_voices, stock_voices},
 };
 static uint8_t *host_at(uint32_t a)
 {
@@ -377,6 +379,41 @@ int main(void)
     CHECK(mw_assign(part0(), 3, 0) == 0 && relives == 2);             /* and STATIC again */
     misc[0x0e] = 0;
     rows(0, 0, 0, 0);
+
+    /* A switch that keeps the stored type stops the track's stock voice (byte 0 of its record) before its parameters
+     * change: every trig on a machine track also started stock's FLEX voice, which the machine's render never
+     * advances, and it would play a short wrong burst after a switch to FLEX. Only that track's, only of the playing
+     * Part; a type change (from or to STATIC) is stock's. */
+    {
+        const void *a_only[] = {&A};
+        rows(a_only, 1, 0, 0);
+        uint8_t *t3 = stock_voices + 168u * 3u, *t2 = stock_voices + 168u * 2u;
+        CHECK(mw_assign(part0(), 3, 5) == 1 && part0()[60 + 90] == 'A');
+        *t3 = 1; *t2 = 1; t3[1] = 7;
+        CHECK(mw_assign(part0(), 3, 1) == 1 && part0()[60 + 90] == 0);      /* ANALOG BD -> FLEX */
+        CHECK(*t3 == 0 && t3[1] == 7 && *t2 == 1);
+        *t3 = 1;
+        CHECK(mw_assign(part0(), 3, 1) == 1 && *t3 == 1);                    /* FLEX -> FLEX */
+        CHECK(mw_assign(part0(), 3, 5) == 1 && *t3 == 0 && *t2 == 1);        /* FLEX -> ANALOG BD */
+        *t3 = 1;
+        CHECK(mw_assign(part0(), 3, 5) == 1 && *t3 == 1);                    /* the same machine again */
+        CHECK(mw_assign(part0(), 3, 0) == 0 && *t3 == 1);                    /* ANALOG BD -> STATIC: stock's */
+        part0()[0x22 + 3] = 0;                                               /* the commit stored STATIC */
+        CHECK(mw_assign(part0(), 3, 5) == 1 && *t3 == 1);                    /* STATIC -> ANALOG BD: stock's */
+        part0()[0x22 + 3] = 1;
+        CHECK(mw_assign(part0(), 3, 1) == 1 && *t3 == 0);
+        /* An absent machine's track is left as a present one is. */
+        rows(0, 0, 0, 0);
+        part0()[60 + 90] = 'A'; part0()[61 + 90] = 'B'; part0()[62 + 90] = 1; *t3 = 1;
+        CHECK(mw_assign(part0(), 3, 1) == 1 && part0()[60 + 90] == 0 && *t3 == 0);
+        /* Another Part than the playing one: its tracks' voices are not playing it. */
+        rows(a_only, 1, 0, 0);
+        part0()[PART_STRIDE + 0x22 + 3] = 1; *t3 = 1;                          /* Part 2's T4 is FLEX */
+        CHECK(mw_assign(part0() + PART_STRIDE, 3, 5) == 1 && part0()[PART_STRIDE + 60 + 90] == 'A' && *t3 == 1);
+        CHECK(mw_assign(part0() + PART_STRIDE, 3, 1) == 1 && part0()[PART_STRIDE + 60 + 90] == 0 && *t3 == 1);
+        memset(stock_voices, 0, sizeof stock_voices);
+        rows(0, 0, 0, 0);
+    }
 
     /* The frame guard (a frame 47,891 counts; each earns 38,312, short ones save up to 23,945; the slack 4,789). F's
      * render on track 3 runs while the frame it predicts from the last frame's times stays within the budget, and

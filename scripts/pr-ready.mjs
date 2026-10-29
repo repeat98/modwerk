@@ -4,8 +4,9 @@
 //   npm run pr:ready -- --author <login>    # a registered author's update: also the bot's merge scope
 //   npm run pr:ready -- --remote upstream   # the remote that holds Modwerk's main (default: upstream, else origin)
 //
-// It reads and writes only this checkout: no push, no GitHub API. CI repeats the same checks against
-// the PR's base, and the author-update bot runs the same scope inspection (scripts/author-update-git.mjs).
+// It reads and writes only this checkout, plus the agent board's claims (docs/AGENT_BOARD.md): no push, no GitHub API.
+// CI repeats the same checks against the PR's base, and the author-update bot runs the same scope inspection
+// (scripts/author-update-git.mjs).
 import { execFileSync, spawnSync } from 'node:child_process'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
@@ -21,8 +22,8 @@ export function gateEdits(files) {
 }
 
 /** The verdict from what was found; every problem says what to do. */
-export function readiness({ dirty = [], behind = false, remote = 'upstream', regenerated = [], checkPassed = true, author = null, scope = null, guideEdits = [], gateEdits = [], compiled = null }) {
-  const problems = [], notes = []
+export function readiness({ dirty = [], behind = false, remote = 'upstream', regenerated = [], checkPassed = true, author = null, scope = null, guideEdits = [], gateEdits = [], compiled = null, board = null }) {
+  const problems = [...board?.problems ?? []], notes = [...board?.notes ?? []]
   if (gateEdits.length) problems.push('This pull request changes a module and also ' + gateEdits.join(', ') + ': a check that judges modules. A red check names the fix; never change the check to pass it. If the check itself is wrong, send the correction as its own Fix: pull request for the owner to review, and let the module wait for it.')
   if (dirty.length) problems.push('Commit or discard these changes first; only commits reach the PR: ' + dirty.join(', '))
   if (behind) problems.push(`Your branch does not contain current main. Merge it (git merge ${remote}/main), resolve any conflict, then run this again.`)
@@ -41,6 +42,32 @@ export function readiness({ dirty = [], behind = false, remote = 'upstream', reg
     : 'No guide edit is on this branch: fix it where a reader would look (docs/, AGENTS.md, the machine guide; for a module release, a separate Docs: PR), or write "nothing" in the PR.'))
   notes.push('Then push, open or update the PR, and watch it: gh pr checks <number> --watch. If main moves before the merge, run this again and push.')
   return { ok: problems.length === 0, problems, notes }
+}
+
+/** Claim on the agent board what this branch adds (a module, a hook or table index, a migration), so two developers never
+ * take the same one. Someone else's claim stops Ready; an unreachable board is a note, never a stop. */
+export async function boardClaims(root, base, board) {
+  const needed = board.neededClaims({ root, base })
+  if (!needed.length) return null
+  const problems = [], notes = []
+  let login, compared
+  try { login = await board.whoami(); compared = await board.compareClaims(needed, login) } catch (error) {
+    if (error instanceof board.BoardUnavailable) return { problems, notes: ['Board: claims not checked. ' + error.message + ' Run this again before you push once it answers.'] }
+    throw error
+  }
+  for (const item of compared.others) problems.push(`${item.kind} ${item.key} (${item.why}) is claimed by ${board.describeClaim(item.claim)} on the agent board. Never work around a claim: ask them, or renumber or rename yours (docs/AGENT_BOARD.md).`)
+  const open = [...compared.free, ...compared.unknown, ...compared.mine]
+  if (!login && open.length) problems.push('This branch adds ' + open.map(item => item.kind + ' ' + item.key).join(', ') + ', which need your claim on the agent board. Sign in once with npm run board -- login, then run this again.')
+  else for (const item of open) {
+    try {
+      const result = await board.claim({ kind: item.kind, key: item.key, branch: board.currentBranch(root) })
+      notes.push((result.renewed ? 'Board: renewed your claim on ' : 'Board: claimed ') + item.kind + ' ' + item.key + ' for @' + login + '.')
+    } catch (error) {
+      if (error instanceof board.BoardUnavailable) { notes.push('Board: could not claim ' + item.kind + ' ' + item.key + '. ' + error.message); continue }
+      problems.push('Board: ' + item.kind + ' ' + item.key + ': ' + error.message)
+    }
+  }
+  return { problems, notes }
 }
 
 async function main(argv) {
@@ -79,7 +106,8 @@ async function main(argv) {
     const changes = readChangeScope({ root, base, head })
     compiled = { octatrack: changes.modules, elemod: changes.elemod }
   }
-  const verdict = readiness({ dirty, behind, remote, regenerated, checkPassed, author, scope, guideEdits, gateEdits: gateEdits(changed), compiled })
+  const board = !dirty.length && !behind ? await boardClaims(root, base, await import('./agent-board.mjs')) : null
+  const verdict = readiness({ dirty, behind, remote, regenerated, checkPassed, author, scope, guideEdits, gateEdits: gateEdits(changed), compiled, board })
   console.log('')
   for (const line of verdict.problems) console.log('✗ ' + line)
   for (const line of verdict.notes) console.log('· ' + line)

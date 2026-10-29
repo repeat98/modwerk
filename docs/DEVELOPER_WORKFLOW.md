@@ -8,7 +8,7 @@ The instrument dropdown lists every profile in `sdk/machines/<id>/machine.json`,
 
 ## Check what already exists
 
-Before planning a new module, look at the library on modwerk.app or, in an up-to-date checkout (`git fetch upstream`), `sdk/catalog.json` (Octatrack), `sdk/digitakt/modules/` and `sdk/digitone/modules/` (Digitakt, Digitone) and `sdk/drafts/`, plus the open pull requests (`gh pr list`). If a module already does the job, or a port is already listed, extend it through [the update workflow](#update-or-fix-an-approved-module), with [its author's OK](#ask-the-author-first), instead of building a duplicate. A new module goes ahead only when it is clearly different, and the proposal says how.
+Before planning a new module, look at the library on modwerk.app or, in an up-to-date checkout (`git fetch upstream`), `sdk/catalog.json` (Octatrack), `sdk/digitakt/modules/` and `sdk/digitone/modules/` (Digitakt, Digitone) and `sdk/drafts/`, plus the open pull requests (`gh pr list`) and the [agent board](AGENT_BOARD.md)'s claims (`npm run board -- list module`). If a module already does the job, a port is already listed or someone has claimed it, extend it through [the update workflow](#update-or-fix-an-approved-module), with [its author's OK](#ask-the-author-first), instead of building a duplicate. A new module goes ahead only when it is clearly different, and the proposal says how.
 
 ## Refuse infringing work
 
