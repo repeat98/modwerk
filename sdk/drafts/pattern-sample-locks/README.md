@@ -6,7 +6,7 @@ Version: 0.1.8-experimental · author: @twwwy · category: system
 
 Two Part Edit actions: **Lock Samples to Pattern** writes the Part's assigned sample into existing sample trigs; **Clear Sample Locks** removes every SAMPLE lock on selected tracks, including manual locks.
 
-**Private development prototype; physical qualification is incomplete.** Use a backed-up disposable project for the supervised RAM trial in [DEVICE_TEST.md](DEVICE_TEST.md). Development stays in the contributor's fork; no upstream PR or release is authorized.
+**Private development prototype; physical qualification is incomplete.** Use a backed-up disposable project for the supervised RAM trial in [DEVICE_TEST.md](DEVICE_TEST.md). Source prototype prepared for upstream owner review; publication remains unapproved.
 
 ## Controls
 

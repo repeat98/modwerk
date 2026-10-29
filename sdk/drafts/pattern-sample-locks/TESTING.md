@@ -1,6 +1,6 @@
 # Testing: Pattern Sample Locks 0.1.8-experimental
 
-29 October 2026 · twwwy · local prototype. No push, upstream PR or release.
+29 October 2026 · twwwy · prototype prepared for upstream owner review. No release approval.
 
 ## Current scope
 
