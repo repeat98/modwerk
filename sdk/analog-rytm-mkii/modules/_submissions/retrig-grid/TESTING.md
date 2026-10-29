@@ -55,6 +55,7 @@ The GLOBAL screens (`media/`) were captured again on RG08 with the same plans: b
 Build MB04 (`OS-MB04-groupe-1.syx`, sha256 3ad6fd307df28d1fd23e5b9090fe4ba8718480b7ea5cae79073abaeb9cba1202): the Modwerk base with the send bus and the effects clock, CHORUS, FLANGER, PHASER, MULTIBAND DRIVE, BITCRUSHER, ARP FILTER and MULTITAP DELAY, loop-sync 0.3.2 (81cf9a96…) and this retrig-grid object (fdfcd4a8…), storage record 0x3a9157b2.
 
 - The author: "le swing Suit sur rtrg grid" (the retrigs follow the swing).
+- Later that evening, after also playing MB05 and MB06 (same object), the author: "Swing Validé" (swing validated).
 
 That is the whole report: the sheet's other checks (1/4 on the beats, 1/32 and 1/12 at 66 %, micro timing, OFF) were not reported one by one. Informal listening; the swing values used were not recorded; no timings measured on the unit; the firmware was not read back. The same object is in MB07-MB09.
 
