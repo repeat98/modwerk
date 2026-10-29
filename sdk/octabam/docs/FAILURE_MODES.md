@@ -696,3 +696,63 @@ Entries from here to the end of the file (5 Oct 2026) were recorded in other doc
 - **Stop on image J1 after the wrap, 25 Oct 2026, no overload:** Sam's MKII, `octabam-inserts` J1 (the wrap included), project SCJ4 loaded, the DSP's frame count constant at 25,011,824 (2 h 31 min of frames at 2,756.25 a second after boot; `bad` 2 since reset; `lm_stats` seq advancing, the frame interrupt at 2,756 a second with a share of 0.2 % where it had been 28.9 %); MIDI in and out kept working. Last healthy reading: the end of a 604 s `pc` run at 17:55:55 (`load_meter.healthy()`, 0 bad records, DSP busy 48.6 / 41.0 %). First failed reading: 18:55:37, at the start of an `ot_fuzz.py run`. The stop therefore fell between 18:37 (J1 was flashed about 16:06, 9,074 s of frames earlier) and 18:55:37. Between 17:55 and 18:55 the unit received only MIDI (crossfader sweeps at 200, 50 and 20 ms per step with the transport stopped and playing, a replay of the first 25 s of a `xf` sequence, a stop and a program change) and LOAD METER polls (0.5 s, in some sweeps); no layout change, no audio-track effect change. LOAD METER was last read healthy before the stop, so the stop was not observed. Cleared by a power-cycle (about 18:58). Not reproduced afterwards on the same image and project: the unit ran about 12 hours (DSP count 118.8 million at 06:56 on 26 Oct, past 25,011,824 at about 21:30 and past 2^23) with `ot_watch.py` sampling, 480 samples idle (19:21 to 23:21), then four repeats of the 18:46 to 18:55 MIDI activity (sweeps stopped and playing, with LOAD METER polling, audio capture and both, a stop, a program change, scene and crossfader CCs, a replay of the first 25 s of an `xf` sequence; 23:21 to 23:50, `healthy()` true after every step, 600 samples at 10 s to 01:01), then 710 samples idle (01:02 to 06:56): no `STOPPED` and no "no answer" line. The cause is not established.
 - **Cause:** open. **Check:** `load_meter.healthy()` (the frame count advancing at about 2,800 a second) before every layout and transition; `ot_matrix.py` stops when it fails.
 
+
+## A generated test project plays a sample wrongly: collapsed trim view, jumpy playhead, a probe's output corrupted by one effect ✅ measured, fixed in the project builder
+
+- **Seen:** Sam's MKII, 26 Oct 2026, `test/ext-probe` image X1, projects built from the `EMPTY` template with a sample on T8: the SRC TRIM view showed the start and end markers together at the left edge and the playhead jumped. After a note trig, with FLANGER on T8's FX2, the probe track's output (EXTPROBE on T1's FX1) stopped decoding (all samples positive, 0 frames; one capture read 8,522,308 differing words in a 15,779-word region). SPATIALIZER, CHORUS and COMB FILTER did not do this with the same trig.
+- **Cause (measured by changing one thing at a time):** the T8 slot was a STATIC slot (14) copied from a song project, with no trim record in `markers.work` and `TSMODE=2`. Stamping the projects for the remix and setting `TSMODE=0` did not clear it (`MXSG2_*`). A FLEX slot with `TSMODE=0`, `LOOPMODE=1`, a `BPMx24` and a markers record of (0, frames, 0) did (`MXSG4_*`: trim view looked right, FLANGER ran with signal, the probe decoded 27,501 frames). Why only FLANGER corrupted the probe on the bad setup is open.
+- **Also found:** the template's `MIDI_TRANSPORT_RECEIVE` is 0, so MIDI Start does nothing until it is set to 1 in `project.work` and `project.strd`. `ot_matrix._stim_text` removes every following `[SAMPLE]` block when the project's blocks have no blank line between them, as in a cloned project.
+- **Fix:** write the sample as a FLEX slot with its trim record (a `[SAMPLE]` block with `TSMODE=0`, `LOOPMODE=1`, `BPMx24`, and a `markers.work` record of `>III` (0, frames, 0) at `0x16 + (slot - 1) * 784`, checksum refreshed), set transport receive, and write the `.strd` twins. `tools/hw/ot_sampleslot.py` writes all of this.
+
+## A flashed image boots into an old image: the card remembers the last REMIX SWITCH choice ✅ measured, cleared from the panel
+
+- **Seen:** Sam's MKII, 28 Oct 2026. A card used for several test images booted through MAIN MENU > BRAIN > REMIXES; then `OCTABAM H1` was flashed and loaded. The unit did a double boot and ran `COST-H CH`: LOAD METER answered, the DLPUMP block (the pump diagnostics) was refused, and a MODULATION track read a dry slot. The pane showed `FLASHED` as `OCTABAM H1` and the running image as `COST-H CH`. Two rounds of unit tests were run on the wrong image before this was noticed.
+- **Cause (the module's README, read, and the symptom):** REMIX SWITCH saves the last image picked in a card blob (`octabam.remix-switch` in `BRAIN/card.work`); the flashed image reads it at power-on and switches before the project loads. It follows the card, not the project, and not the name length (`COST-H CH` is 9 of 15 characters).
+- **Fix:** select the name under `FLASHED` in BRAIN > REMIXES (clears the choice), or hold FUNC at power-on and choose EXIT in the STARTUP MENU for one boot. After flashing, check the running name against the flashed one before trusting a measurement; `tools/hw/dl_state.py` and the logo's name both show it.
+
+
+
+## DARK REV picked on T4's FX2 while a demand effect's code is in T4's block stops the DSP frame loop ✅ measured, fixed (the guard's cells moved off `x:$3f7f..$3fbf`)
+
+- **Seen:** Sam's MKII, 28 Oct 2026, images `octabam` H1 to H3 (H1 = `main` after #926). Project `MXHOME_A`: MODULATION on T1's FX1, T3 and T4's FX2 on the stock DELAY, a noise loop on T1. Sequence: T3's FX2 to DARK REV (the pump moves MODULATION from T3's block to T4's), T3's FX2 to DELAY, T4's FX2 to DARK REV from the chooser. Within about 4 ms of the pick the DSP frame loop stops (the ColdFire frame-interrupt count, the DSP meter sequence and the pump's call counter stay constant; USB and the panel answer). 3 of 3 runs. The unit needs a power cycle.
+- **Cause:** payload B's frame routine writes `x:$3f7f..$3fbf` every frame; the guard kept its per-instance buffer bases at `x:$3f90 + idx` (T3 idx 40, T4 idx 43). The late resume of a dry reverb ran DARK REV's init and proc on a scratch value as the base. Payload A does not write there: T7 and T8 were unaffected. [The trap](TRAPS.md#trap-stock-x-scratch) has the evidence.
+- **Diagnostic builds, one run each on the same sequence (the tags are image names):**
+
+| build | after the code leaves T4's block | result |
+|---|---|---|
+| H1 to H3 | late stock init, then the stock proc in the same call | stop |
+| H4: guard always reports an overlap | the stock reverb never runs | no stop |
+| H5: a dry instance stays dry | the stock reverb never resumes | no stop |
+| H6: late init, then dry for good | init only | no stop |
+| H7: late init, stock proc on the next frame | proc runs | stop |
+| H8: stock proc for one frame, then dry | proc runs once | stop |
+| H9: stock proc 100 frames after the late init | proc runs | stop |
+| HA: buffer words from base + `$3800` to the extent zeroed before the late init | proc runs | stop |
+| P1, P2: probe images, guard as in H1 | proc runs | stop |
+| P4: guard cells at `x:$3dc0 + idx` and `x:$3e00 + idx` | proc runs | no stop, 3 sequences |
+
+- **Probe readings (DLPROBE on T2's FX1, recorded over USB, [`modules/dlprobe`](../../modules/dlprobe/README.md)):** on P2 no guard instance other than T3's held a state of 1 to 3 in the last 0.33 s before the stop. On P3 (T3's pick only) the base cell `x:$3fb8` read `$ffb754` after a reboot and again after the guard's init; the allocator entry `$25a` held `$38000`. On P4 T3's base read `$038000` and T4's (entry `$25c`) `$03c000`; T4's state read 2, then 1 after the pump's move.
+- **What does not stop (all on the unit, before the fix):** DARK REV on T3 over MODULATION's code in T3's block (the first move); DARK REV on T7, then T8, over SPECTRUM's code (core A); DARK REV on T4 with no code in T4's block; PLATE REV on T4 with code in T4's block; DARK REV on T4 by project load.
+- **Not established:** what `func_00034f` computes, and whether another writer touches `x:$3dc0..$3e3f`. The stub's flags at `x:$3f00..$3f3f` are that routine's input.
+- **Recipe:** `tools/hw/ot_project.py` `set_fx` on a copy of a fresh project (MODULATION on T1's FX1, DELAY on T3 and T4's FX2, `octabam`), `tools/hw/ot_sampleslot.py` for the noise loop with `--trig-every 4 --transport-receive`. Pump state: `tools/hw/dl_state.py` (`effects loaded (bits)`, `blocks holding code (bits)`: bit 2 is T3's block, bit 3 T4's).
+- **Traps while testing:** the unit rewrites the project it loads (restore from a clean copy on the card each time); REMIX SWITCH boots the card's last saved choice (check the running name against the flashed one); a project load and a runtime pick are different paths.
+
+## Sequencer stuck at play with a stock fallback: id 0 ran FILTER on every empty FX1 slot 🟡 cause inferred, refused at selection
+
+- **Seen:** the owner's unit, 27 Oct 2026, a 50-module selection with
+  `fallback="FILTER"` built with an unmerged build change that pointed id 0's
+  DSP init and proc at the stock effect's entries: PLAY lit one step and held
+  it (sometimes 2, then 1), no audio. The same selection with
+  `fallback="NONE"` (id 0 left on the null stub) played, with the same project
+  and no `stamp-defaults` between the two: the image was the only change
+  (owner report).
+- **Cause (🟡 inferred):** FX1 NONE is id 0 (see "Sequencer stuck on step 1
+  with every effect turned off: id 0 is SEND"), so the image ran FILTER on
+  every empty FX1 slot as well as every unassigned FX2 slot. Which part wedged
+  the frame (an init that never ran on those slots, a page byte the last effect
+  left, the cycles of up to eight extra instances per core) was not measured.
+- **Fix:** `registry.remix` refuses a stock effect as the fallback: `NONE`,
+  `SEND` or a module the remix carries. Before this the build also crashed on
+  a stock fallback (`fb_init` unbound) as soon as a registry module was left
+  out, so no image with one had reached a unit.
+- **Check:** `tools/remix/selftest.py` probes the refusal.

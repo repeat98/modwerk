@@ -1,0 +1,440 @@
+{
+ "elemod": 2,
+ "id": "cc-recall",
+ "version": "0.1.0-experimental",
+ "title": "CC Recall",
+ "description": "After a pattern reload, pattern change, project load or STOP, the MIDI tracks send their pattern’s CC values at once instead of waiting for each track’s next trig.",
+ "category": "midi-usb",
+ "author": "draadpiraat",
+ "license": "GPL-3.0-or-later",
+ "target": {
+  "device": "digitakt-mk1",
+  "product": "Digitakt mk1",
+  "os": "1.54",
+  "syx_sha256": "f78ba80fa7b1da5fb0e1ff61ad61e9e71aafe79f4364fc49679f3651353e3cf6",
+  "section3_sha256": "5c58bf9e3949ef09977c5fc007a61e8d026931f67f1621238379dfb8ee4d31a2",
+  "section3_len": 2479680
+ },
+ "sections": {
+  ".run": {
+   "align": 4,
+   "len": 576,
+   "parts": [
+    [
+     "hex",
+     "52b90000000023d0421c91444e7552b90000000023c3421c91444e7552b90000000023c0421c91444e754a390000000067000112203900000000b0b900000000671023c00000000042b900000000600000f47008b0b900000000630000e84fefffc448d77fff24390000000052b90000000045f9421c91482c322c0072704c021000d2b9421c914406810000059a2f022f014eb9400e0918508f2f024eb9400e09d8588f26006b0000847e6a4c02700047f9421c9188d7c778122f042f024eb9400e0966508f2a040485000000124a8066147202b28565442f042f034eb9400e10d6508f60362204d281737318007002b08565122f012f042f034eb9400e10864fef000c6016487800012f012f042f032f024eb9400e0ddc4fef001452847021b0846600ff9625862c00601025862c007008b0b9000000006200ff2c4cd77fff4fef003c4ab94020c6684e75487a00d62f2f00084eb900000000508f4e754e56fffc2f02486effff487a00ca24082f084eb94017af204fef000c2002242efff84e5e4e752f02206f000824104a3900000000661e20390000000023c000000000700823c000000000700113c0000000006006423900000000204241e80038241f2f4800044ef9400c9a3a202f000c670000182f02206f000824104a806bd44a390000000067ae60d04e7570004a39000000006702701cd0b9421f8a3c222f000c2f4100042f400008222f00102f41000c222f00142f41001042af00144ef9400c2b88000000000000000000000000000000000000434320524543414c4c000000"
+    ]
+   ]
+  },
+  ".bss": {
+   "align": 4,
+   "size": 14
+  }
+ },
+ "symbols": {
+  "STR_CTOR": [
+   "abs",
+   1075293984
+  ],
+  "INVALIDATE": [
+   "abs",
+   1074567738
+  ],
+  "BLIT": [
+   "abs",
+   1074539400
+  ],
+  "CHECKBOXES": [
+   "abs",
+   1109363260
+  ],
+  "PATTERN": [
+   "abs",
+   1109168452
+  ],
+  "LOADED": [
+   "abs",
+   1109168456
+  ],
+  "PARAMS": [
+   "abs",
+   1109168520
+  ],
+  "CLOCK_FLAG": [
+   "abs",
+   1075889768
+  ],
+  "LOAD": [
+   "abs",
+   1074661656
+  ],
+  "ENABLED": [
+   "abs",
+   1074661734
+  ],
+  "CHANNEL": [
+   "abs",
+   1074661848
+  ],
+  "STORE": [
+   "abs",
+   1074663558
+  ],
+  "FORGET": [
+   "abs",
+   1074663638
+  ],
+  "SEND": [
+   "abs",
+   1074662876
+  ],
+  "FIRST_ID": [
+   "abs",
+   18
+  ],
+  "END_ID": [
+   "abs",
+   33
+  ],
+  "ccr_gen": [
+   ".bss",
+   0
+  ],
+  "ccr_on": [
+   ".bss",
+   12
+  ],
+  "ccr_seen": [
+   ".bss",
+   4
+  ],
+  "ccr_next": [
+   ".bss",
+   8
+  ],
+  "ccr_row": [
+   ".run",
+   548
+  ],
+  "ccr_label": [
+   ".run",
+   350
+  ],
+  "ccr_name": [
+   ".run",
+   564
+  ],
+  "ccr_select": [
+   ".run",
+   388
+  ],
+  "ccr_change": [
+   ".run",
+   458
+  ],
+  "ccr_draw": [
+   ".run",
+   490
+  ],
+  "ccr_settings": [
+   ".run",
+   332
+  ],
+  "ccr_mark_loaded": [
+   ".run",
+   14
+  ],
+  "ccr_mark_record": [
+   ".run",
+   28
+  ],
+  "ccr_mark": [
+   ".run",
+   0
+  ],
+  "ccr_tick": [
+   ".run",
+   42
+  ]
+ },
+ "exports": [
+  "ccr_mark",
+  "ccr_mark_loaded",
+  "ccr_mark_record",
+  "ccr_settings",
+  "ccr_tick"
+ ],
+ "imports": [
+  "core_additem"
+ ],
+ "weak": [],
+ "relocs": [
+  [
+   ".run",
+   2,
+   "abs32",
+   "sec:.bss",
+   0
+  ],
+  [
+   ".run",
+   16,
+   "abs32",
+   "sec:.bss",
+   0
+  ],
+  [
+   ".run",
+   30,
+   "abs32",
+   "sec:.bss",
+   0
+  ],
+  [
+   ".run",
+   44,
+   "abs32",
+   "sec:.bss",
+   12
+  ],
+  [
+   ".run",
+   54,
+   "abs32",
+   "sec:.bss",
+   0
+  ],
+  [
+   ".run",
+   60,
+   "abs32",
+   "sec:.bss",
+   4
+  ],
+  [
+   ".run",
+   68,
+   "abs32",
+   "sec:.bss",
+   4
+  ],
+  [
+   ".run",
+   74,
+   "abs32",
+   "sec:.bss",
+   8
+  ],
+  [
+   ".run",
+   86,
+   "abs32",
+   "sec:.bss",
+   8
+  ],
+  [
+   ".run",
+   104,
+   "abs32",
+   "sec:.bss",
+   8
+  ],
+  [
+   ".run",
+   110,
+   "abs32",
+   "sec:.bss",
+   8
+  ],
+  [
+   ".run",
+   308,
+   "abs32",
+   "sec:.bss",
+   8
+  ],
+  [
+   ".run",
+   342,
+   "abs32",
+   "sym:core_additem",
+   0
+  ],
+  [
+   ".run",
+   398,
+   "abs32",
+   "sec:.bss",
+   12
+  ],
+  [
+   ".run",
+   406,
+   "abs32",
+   "sec:.bss",
+   0
+  ],
+  [
+   ".run",
+   412,
+   "abs32",
+   "sec:.bss",
+   4
+  ],
+  [
+   ".run",
+   420,
+   "abs32",
+   "sec:.bss",
+   8
+  ],
+  [
+   ".run",
+   428,
+   "abs32",
+   "sec:.bss",
+   12
+  ],
+  [
+   ".run",
+   436,
+   "abs32",
+   "sec:.bss",
+   12
+  ],
+  [
+   ".run",
+   480,
+   "abs32",
+   "sec:.bss",
+   12
+  ],
+  [
+   ".run",
+   494,
+   "abs32",
+   "sec:.bss",
+   12
+  ],
+  [
+   ".run",
+   548,
+   "abs32",
+   "sec:.run",
+   350
+  ],
+  [
+   ".run",
+   552,
+   "abs32",
+   "sec:.run",
+   388
+  ],
+  [
+   ".run",
+   556,
+   "abs32",
+   "sec:.run",
+   490
+  ],
+  [
+   ".run",
+   560,
+   "abs32",
+   "sec:.run",
+   458
+  ]
+ ],
+ "sites": [
+  {
+   "addr": "0x400e0b08",
+   "len": 6,
+   "stock_sha256": "c1a5515bc7df1186c78dd690fbc21317521ad881f6ae96c3d948bfa03d72daa6",
+   "new": "4eb900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:ccr_mark",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x400e0b56",
+   "len": 6,
+   "stock_sha256": "db95bdd485b71eb751710ab94ca7ec879cc9b1be178330ed54320e456315b38f",
+   "new": "4eb900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:ccr_mark_loaded",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x400e128c",
+   "len": 6,
+   "stock_sha256": "56fca10588c62176d9eab23c3dc78dd2a1fe8a38fe27b171216004346be0194a",
+   "new": "4eb900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:ccr_tick",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x400e126c",
+   "len": 6,
+   "stock_sha256": "4387672943b0571c966279ee8837ea786aa581d89b70b1b0444e743d0c2459f0",
+   "new": "4eb900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:ccr_mark_record",
+     0
+    ]
+   ]
+  }
+ ],
+ "collections": {},
+ "contribute": [
+  {
+   "to": "ev_settings",
+   "order": 50,
+   "data": "00000000",
+   "relocs": [
+    [
+     0,
+     "abs32",
+     "sym:ccr_settings",
+     0
+    ]
+   ],
+   "claims": []
+  }
+ ],
+ "copied": [],
+ "resources": {
+  "regions": [],
+  "names": [
+   "settings:CC RECALL"
+  ],
+  "core": "2.1"
+ },
+ "requires": [
+  "core"
+ ],
+ "conflicts": [],
+ "signature": null
+}

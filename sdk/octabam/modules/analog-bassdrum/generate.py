@@ -16,7 +16,7 @@ def tables():
     lpf=[0]+[500*(nominal/500)**((i-1)/63) if i<=64 else
               nominal*(18000/nominal)**((i-64)/63) for i in range(1,128)]
     return ('/* Generated LPF display frequencies; synthesis tables live in dsp808/dsp909. */\n'
-            +table('ab_lpf_freq',[round(f) for f in lpf]))
+            +table('ab_lpf_freq',[round(f) for f in lpf[1:]+lpf[:1]]))  # 0.1.6: OFF at 127
 FLAGS=['-mcpu=5407','-msoft-float','-O2','-ffreestanding','-fno-builtin','-fno-common','-fno-jump-tables','-fno-asynchronous-unwind-tables','-fno-ident','-fomit-frame-pointer','-fno-zero-initialized-in-bss','-Wall','-Wextra','-Werror']
 def main():
     check='--check' in sys.argv

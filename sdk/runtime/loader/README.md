@@ -32,6 +32,10 @@ is module 0.
   any other loads beside the live ones, and one with no image, hooks or
   sites removes that module. `build.py` takes the first four bytes of the
   SHA-256 of the module's name (the elemod's id, or the output file's stem).
+  A C package that subscribes to events also takes its title, the name the
+  unit's inventory shows, from that stem (15 characters); `--name` applies
+  to DSP and octabam packages only, so a C package's title and id change
+  together.
 
 - Hooks, in this order: `module_tick`, `module_draw`, `module_key`,
   `module_enc`. Later hooks append. A base refuses a package with more hooks

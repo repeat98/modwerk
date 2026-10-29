@@ -687,6 +687,32 @@ describe('updating the base over USB', () => {
     expect(unit.flashed).toBe(expected); expect(unit.base).toBe(expected); expect(restarts()).toBe(1)
     expect(link.getState()).toMatchObject({ status: 'ready', baseUpdate: undefined, slots: { layout: 'two' } })
   })
+  // The write publishes the container, so the unit's active digest is the container's now; without a restart, no HELLO
+  // reads it again. The first sync then failed as changed by another tab, and only its retry went through.
+  it('syncs straight after a base update that saved itself without a restart, not as changed by another tab', async () => {
+    const unit = fakeUnit(), { link } = await counting(unit, 0), { bin, expected } = fakeBin()
+    await link.updateBase(bin, expected)
+    expect(link.getState().active).toBe(unit.active)
+    await link.update('Set', [{ module: 'M', data: new Uint8Array(4000).fill(3) }])
+    expect(link.getState()).toMatchObject({ status: 'trial', module: 'Set' })
+    expect(link.getState().notice).toBeUndefined()
+    await link.keep()
+    expect(unit.active).toBe(sha(new Uint8Array(4000).fill(3)))
+  })
+  it('still refuses a sync planned before another tab loaded, after a base update', async () => {
+    const unit = fakeUnit(), locks = tabLocks()
+    unit.slots = record(0, 0xff, 0, [0, 0, 0], [0, 0, 0])
+    const a = new OctatrackLink(unit.usb, fakeSession(unit), 300, locks), b = new OctatrackLink(unit.usb, fakeSession(unit), 300, locks)
+    a.start(); b.start()
+    await vi.waitFor(() => expect([a.getState().status, b.getState().status]).toEqual(['ready', 'ready']))
+    const { bin, expected } = fakeBin()
+    await a.updateBase(bin, expected)
+    await a.update('Set A', [{ module: 'A', data: new Uint8Array(4000).fill(1) }])
+    const waiting = b.update('Set B', [{ module: 'B', data: new Uint8Array(4000).fill(2) }])
+    await a.keep()
+    await waiting
+    expect(b.getState().notice?.text).toBe('Another tab changed your Octatrack meanwhile, so nothing was synced. Review the sync again.')
+  })
   it('stops at once when flash holds neither layout: nothing was written (refusal 108)', async () => {
     const { unit, link } = await linked(), { bin, expected } = fakeBin(), steps: string[] = []
     unit.writeRefusal = 8 // flash.h FLASH_LAYOUT
