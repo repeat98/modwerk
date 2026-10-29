@@ -104,6 +104,15 @@ python -m elekloader.patch --stock Analog-Rytm_MKII_OS1.74.syx \
     --out my-build.syx --version XX01
 ```
 
+A module folder with `build.json` and `modwerk.module.json`, as under `sdk/analog-rytm-mkii/modules/` (`_submissions/` too), has no `mod.json`, so those commands do not take it. Build it with Modwerk's own route instead, which compiles the module with `scripts/build-elemod-packages.mjs`, materializes its recipe against your stock main OS, links it with the core and writes the stock file again with the new main OS section, as the site's browser builder does (the cross toolchain is `MODWERK_CROSS`, default `m68k-elf-`):
+
+```sh
+node scripts/link-image.mjs --stock Analog-Rytm_MKII_OS1.74.syx --version XX01 --out my-build.syx \
+    --elemod vendor/elekloader/catalog/core-ar2-0.7.elemod --module analog-rytm-mkii:<module-id>
+```
+
+Repeat `--module` for several modules, and `--elemod` for a prebuilt package. On the owner's stock 1.74 it reproduces Silent Pad+Trig's PS08 (core-ar2 0.3) byte for byte. It is a local test image: only a unit shows it is safe.
+
 Modwerk's linker covers OS 1.74 (`src/engine/elektron/elemod.ts`), mod storage included. On the owner's stock 1.74 file it links core-ar2 0.3 with each of rytm2_mods v1.2's eleven mods, with the storage mods together, with all eleven, and again from a kept lockfile, byte for byte as elekloader kit 0.7.0 does, and links core-ar2 0.7 alone, with Filter Hz, and with Loop Sync and Retrig Grid from one lockfile as kit 0.7.0 and elekloader at the core's commit do ([verification record](../../../docs/verification/2026-10-27-rytm-core-ar2-pages.md)). In the browser, the Rytm's configuration page checks and builds the newest pinned core, core-ar2 0.7, and the selected library modules from the owner's stock OS 1.74, with elekloader's kit, the core pinned in `sdk/imports/elekloader-core-ar2-v0.7.json` (0.3's record stays) and each module's source-only package pinned in its own record (`sdk/imports/elekloader-filter-hz-2026-10-23.json`). Downloads stay off until the owner turns them on. Each configuration keeps the storage lockfile of its last build (Mod storage, above), so a module with storage can enter the library.
 
 ## Flash and recover
