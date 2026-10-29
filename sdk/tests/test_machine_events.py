@@ -46,15 +46,23 @@ class MachineEventTests(unittest.TestCase):
 
     def test_registry_knows_every_protect_port_signature(self):
         # The validator keeps a known PROTECT machine's 12 bytes while it is absent (the boot's battery restore runs
-        # before the saved set reinstalls it: beta finding 24). The list must be exactly the PROTECT ports.
+        # before the saved set reinstalls it: beta finding 24). The list must be exactly the PROTECT ports and the
+        # native PROTECT machine modules named here, each with its signature and version range.
         text = (OT / 'elekloader/machine_registry.c').read_text()
         listed = re.search(r'\} known\[\] = \{(.*?)\};', text).group(1)
         known = {(a + b, int(lo), int(hi)) for a, b, lo, hi in re.findall(r"\{\{'(.)', '(.)'\}, (\d+), (\d+)\}", listed)}
         ports = json.loads((ADAPTERS / 'machine-ports.json').read_text())['ports']
         protect = {(p['machine']['sig'], p['machine']['lo'], p['machine']['hi']) for p in ports.values()
                    if 'PROTECT' in p.get('machine', {}).get('flags', [])}
-        self.assertEqual(known, protect)
+        native = {('WV', 1, 15)}  # SYNTIZ (sdk/drafts/syntiz/machine.c): the model is the version byte, 1-6 used, up to 15 kept
+        self.assertEqual(known, protect | native)
         self.assertIn(('AB', 1, 1), known)
+
+    def test_chooser_rows_match_the_tables_room(self):
+        # The registry reads as many machines as the loader admits to ot_machines: five stock rows and its room.
+        rows = int(re.search(r'#define ROWS (\d+)u', (OT / 'elekloader/machine_registry.c').read_text()).group(1))
+        room = next(e['room'] for e in json.loads((OT / 'events.json').read_text())['events'] if e['event'] == 'ot_machines')
+        self.assertEqual(rows, 5 + room)
 
     def test_contributor_admission_on_the_host(self):
         result = host(self, ADAPTERS / 'test_machine_contributors.c', ADAPTERS / 'machine_lifetime.c', ADAPTERS / 'machine_parts.c')
