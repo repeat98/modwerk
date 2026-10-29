@@ -58,6 +58,18 @@ own pipelines.
 | Resource rules | Effect ID unique per pedal (the project reserves 403-499, 500-699 NAM, 700-899 cab, 900-957), file name 8 characters unique, file size cap (~32 KB proven) | A per-family ID ledger, like Stomphacks' author ranges for ZD2 |
 | Evidence | Owner hardware tests per release, user reports, emulator/host parity | Same evidence rules apply |
 
+## The pedal page (beta)
+
+`#zoom-ms-70cdr/pedal` (and the MS-50G's and MS-60B's) is the Octatrack page for a Zoom pedal, beta only
+(`hasBetaUi`): [`ZoomHub.tsx`](../src/components/ZoomHub.tsx), copied from `OctatrackHub.tsx` as the owner
+asked, over its own Web MIDI link ([`zoom-link.ts`](../src/engine/zoom/zoom-link.ts),
+[`zoom-protocol.ts`](../src/engine/zoom/zoom-protocol.ts)). It identifies the pedal (model, firmware), lists
+its files and backs every file up into a zip; it writes nothing yet. Status, Backups and Setup are its unit
+pages; NAM / Cab (in the Samples slot), Patches and module sets with a USB install follow. Tests run against
+a fake pedal (`src/dev/zoom-pedal-fake.ts`) in the pedal's reply formats. On an MS-70CDR 2.10 (27 October
+2026) it identified the pedal, listed its 162 files and backed them up: every file byte-identical to the
+project's Patch Editor backup, the effect list apart (changed on the pedal in between).
+
 ## Contract changes
 
 Done (22 October 2026):

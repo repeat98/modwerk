@@ -100,6 +100,7 @@ no stock files). ZoomMultistompZDL already reserves 403-499 for its effects,
 500-699 for NAM slots, 700-899 for cab slots and 900-957 for templates; other
 authors ask for a range in a pull request. One clash is already known
 (Matujuice Sweep and stock ANA234Cho, both 496); its author will move it.
+Matujuice GRDLOOP, MIDISTOMP 2.0's looper, is 497 in group 8.
 
 ## Combinations
 
@@ -142,8 +143,9 @@ his to submit.
 1. Binary from a Modwerk build (A) or a pinned release file (B)?
 2. One module for the whole family with per-pedal status, as proposed, or one
    per pedal?
-3. The exception to the Octatrack interface: stock firmware has no RAM load,
-   trial, Keep or Undo, so a guided Effect Manager install is the install
-   path. Agreed?
+3. ~~The exception to the Octatrack interface.~~ Answered (owner, 27 October
+   2026): no exception. MIDISTOMP becomes the base and the effects its modules;
+   Zoom's firmware with effect files is the route without a base, like the
+   Octatrack's card build.
 4. Who holds the effect-ID ledger: Modwerk, or the project with Modwerk
    checking it?

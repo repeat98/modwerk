@@ -79,7 +79,7 @@ int main(void)
     write_fail=0;boot();modwerk_modset_service();
     CHECK(installed==2 && ids[0]==11 && ids[1]==22);
     /* A module refused at boot (beta finding 69): a sync from what runs is accepted, and the card keeps both. */
-    refuse_id=22;written=writes;boot();modwerk_modset_service();refuse_id=0;
+    refuse_id=22;refusal_now=RUNTIME_MEMORY;written=writes;boot();modwerk_modset_service();refuse_id=0;refusal_now=RUNTIME_BUSY;
     CHECK(modwerk_modset_result==REFUSED && installed==1 && modwerk_modset_count==1 && !pending && writes==written);
     const uint8_t *runs[]={package[0]};
     memset(offer,0,sizeof offer);memcpy(offer,"MWMS",4);offer[5]=1;offer[7]=1;offer_bytes=80;

@@ -51,7 +51,9 @@ export PATH=~/.nvm/versions/node/v24.21.0/bin:$PATH   # Node 24; the default nod
 while :; do npm run device -- serve; sleep 1; done
 ```
 
-Run it in a terminal of the owner's, or in a background task: those stop after two hours. It starts the USB
+Run it in a terminal of the owner's, or in a background task: those stop after two hours. Start it from a checkout
+that stays, not a pull request's worktree: once that is removed, the next restart (after a `boot` hands over) fails
+with `process.cwd failed`, so the link is gone and the loop fails every second (28 October 2026). It starts the USB
 bridge, keeps one connection open, pings every 4 s (so MODWERK CONNECTED shows once) and comes back after a
 RAM boot. One process at a time: a second `serve` or a one-shot `npm run device` fights it for the bridge. To let the
 frontend MCP use the unit beside the session, start it with `serve --share /tmp/modwerk-share.sock` and the MCP with
