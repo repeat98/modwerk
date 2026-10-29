@@ -959,7 +959,7 @@ def check_stock(sites, stock, upstream):
             raise ValueError('The stock bytes at %#x are not the ones the module names.' % address)
 
 
-def build_c(sources, cross, module, dsp=None, subscriptions=()):
+def build_c(sources, cross, module, dsp=None, subscriptions=(), raises=()):
     spec = importlib.util.spec_from_file_location('runtime_c_codegen', HERE.parent / 'm68k_codegen.py')
     codegen = importlib.util.module_from_spec(spec); spec.loader.exec_module(codegen)
     with tempfile.TemporaryDirectory() as tmp:
@@ -972,10 +972,11 @@ def build_c(sources, cross, module, dsp=None, subscriptions=()):
     hooks = [symbols.get(name, NONE) for name in HANDLERS]
     if all(h == NONE for h in hooks) and not subscriptions:
         raise ValueError('Define at least one of ' + ', '.join(HANDLERS) + ', or subscribe to a site event.')
-    if subscriptions:
-        hooks = subscribe(hooks, subscriptions, symbols)
-    return package(image, bss, hooks, offsets, name=module, dsp=dsp, abi=8 if subscriptions else None, hashed=bool(subscriptions),
-                   title=module[:15] if subscriptions else '')
+    sited = bool(subscriptions or raises)  # site events or raised events: an ABI 8 package named by its stem
+    if sited:
+        hooks = subscribe(hooks, subscriptions, symbols, raises=raises)
+    return package(image, bss, hooks, offsets, name=module, dsp=dsp, abi=8 if sited else None, hashed=sited,
+                   title=module[:15] if sited else '')
 
 
 def build_elemod(args):
@@ -1044,12 +1045,15 @@ def main():
     parser.add_argument('--pinned', action='store_true', help='its ColdFire code names its effect id (ABI 6 flag 2)')
     parser.add_argument('--subscribe', action='append', default=[], metavar='EVENT:FN:ORDER',
                         help='C sources: subscribe FN to a site event of sdk/machines/octatrack/events.json (repeatable)')
+    parser.add_argument('--raise', action='append', default=[], dest='raises', metavar='EVENT',
+                        help='C sources: raise EVENT, an event of sdk/machines/octatrack/events.json with no site; the module '
+                        'defines its zero word raise_EVENT in initialized data, which the loader points at the base\'s entry (repeatable)')
     args = parser.parse_args()
     if args.private_port and args.standalone:
         parser.error('--private-port prepares privately; --standalone builds the published package. Give one.')
     private = private_standalone(args, public=args.standalone) if args.private_port or args.standalone else None
-    if args.subscribe and not args.sources:
-        parser.error('--subscribe is for C sources; an octabam module subscribes in its runtime.json, an elemod in its "subscribe".')
+    if (args.subscribe or args.raises) and not args.sources:
+        parser.error('--subscribe and --raise are for C sources; an octabam module declares them in its runtime.json, an elemod in its "subscribe".')
     native = args.octabam or args.octabam_group or args.octabam_machine or args.octabam_tables
     if (bool(args.sources) + bool(args.elemod) + bool(args.octabam) + bool(args.octabam_group) + bool(args.octabam_machine)
             + bool(args.octabam_tables) > 1 or not (args.sources or args.elemod or args.dsp) and not native
@@ -1079,7 +1083,7 @@ def main():
             subscriptions = [dict(event=e, fn=f, order=int(o)) for e, f, o in (s.split(':') for s in args.subscribe)]
         except ValueError:
             parser.error('--subscribe takes EVENT:FN:ORDER')
-        data = build_c(args.sources, args.cross, args.output.stem, dsp, subscriptions)
+        data = build_c(args.sources, args.cross, args.output.stem, dsp, subscriptions, args.raises)
     else:
         image, relocations = page_section(args.page_from or pkg['id']) if 'id' in pkg and not args.no_page else (b'', [])
         bss, sites, copies, flags, hooks = 0, [], [], (1 if image else 0) | (2 if args.pinned else 0), []

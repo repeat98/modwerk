@@ -258,6 +258,29 @@ class SiteEventTests(unittest.TestCase):
             with tempfile.TemporaryDirectory() as temp, self.subTest(args), self.assertRaises(ValueError):
                 Path(temp, 'events.json').write_text(json.dumps(bad)); events.load(Path(temp, 'events.json'))
 
+    @unittest.skipUnless(shutil.which('m68k-elf-gcc'), 'ColdFire compiler unavailable')
+    def test_c_sources_raise_an_event_as_a_runtime_json_does(self):
+        # A C runtime package raises a site-less event with --raise, as an octabam module lists it under "raise" in its
+        # runtime.json: its zero word raise_<event> (initialized data) takes RAISE and its offset in the event's word.
+        reg = events.load()
+        with tempfile.TemporaryDirectory() as folder:
+            source, package = Path(folder) / 'raiser.c', Path(folder) / 'raiser.mwrm'
+            source.write_text('#include "%s"\n' % (EVENTS_DIR / 'include/modwerk_events.h') +
+                              'modwerk_ev_trig_muted *raise_ev_trig_muted __attribute__((section(".data"))) = 0;\n'
+                              'unsigned muted;\nvoid module_tick(void) { muted = raise_ev_trig_muted ? raise_ev_trig_muted() : 0; }\n')
+            run = lambda *extra: subprocess.run([sys.executable, '-B', str(LOADER / 'build.py'), str(source), *extra,
+                                                 '-o', str(package)], capture_output=True, text=True)
+            self.assertEqual(run('--raise', 'ev_trig_muted').returncode, 0)
+            data = package.read_bytes()
+            self.assertNotEqual(run('--raise', 'ev_voice_bind').returncode, 0)  # a site event is subscribed, never raised
+        index = events.index('ev_trig_muted', reg)
+        image_bytes, _, _, hooks = struct.unpack_from('>4I', data, 8)
+        self.assertEqual(hooks, index + 1)
+        word = struct.unpack_from('>I', data, 76 + index * 4)[0]
+        self.assertEqual(word >> 24, build.RAISE)
+        image = data[76 + hooks * 4:76 + hooks * 4 + image_bytes]
+        self.assertEqual(image[word & 0xffffff:(word & 0xffffff) + 4], bytes(4))
+
     def test_raised_events_have_a_base_entry_and_no_site(self):
         reg = events.load()
         raised = events.raised(reg)
