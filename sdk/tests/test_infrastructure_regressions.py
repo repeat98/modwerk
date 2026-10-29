@@ -205,7 +205,7 @@ class ToolSyntax(unittest.TestCase):
 
 # Builder extensions after the Poly8 record, oldest first. Each proves its own exact before/after transition.
 EXTENSIONS = ['air-chorus-split-builder.json', 'plain-formatter-builder.json', 'floating-cave-overflow-builder.json', 'octabam-emulator-gates-5c71bc8c.json',
-              'ptable2-builder.json']
+              'ptable2-builder.json', 'delay-table-tail-builder.json']
 # Documentation-only imports, oldest first: upstream files byte for byte, no build input.
 DOC_IMPORTS = ['octabam-docs-30fbb8e4.json', 'octabam-docs-dcf93d37.json', 'octabam-docs-6328143e.json']
 
@@ -289,6 +289,40 @@ class SelectiveImport(unittest.TestCase):
         for row in record['selections']:
             self.assertIsNotNone(row['after'])
             self.assertEqual(row['before'], row['after'])
+
+    def test_delay_table_tail_builder_moves_only_images_that_wrote_the_tail(self):
+        import json
+        record = json.loads((ROOT.parent / 'infrastructure-verification/delay-table-tail-builder.json').read_text())
+        self.assertEqual(record['kind'], 'delay-table-tail-builder-regression')
+        self.assertEqual(set(record['builderAdaptations']), {'tools/build/build_bus.py'})
+        for path, change in record['builderAdaptations'].items():
+            self.assert_extension_holds('delay-table-tail-builder.json', path, change['after'])
+        self.assertGreaterEqual(len(record['selections']), 128)
+        moved = refused = 0
+        for row in record['selections']:
+            before, after = row['before'], row['after']
+            with self.subTest(modules=row['moduleIds'], keep=row['keepStockFx2']):
+                if 'refused' in before:
+                    # Every earlier refusal holds; with FM Synth 0.1.2 the build may now stop earlier, at its page.
+                    self.assertIn('refused', after)
+                    if after != before:
+                        self.assertIn('synth', row['moduleIds'])
+                        self.assertIn('which the stock DELAY reads past its table', after['refused'])
+                elif 'refused' in after:
+                    # Newly refused: only FM Synth 0.1.2, whose SRC page is pinned at 0x400d24d0.
+                    refused += 1
+                    self.assertIn('synth', row['moduleIds'])
+                    self.assertEqual(before['delayTableTail'], 'written')
+                    self.assertIn('which the stock DELAY reads past its table', after['refused'])
+                else:
+                    self.assertEqual(after['delayTableTail'], 'stock')   # no image writes the 16 bytes now
+                    if before['delayTableTail'] == 'stock':
+                        self.assertEqual(after, before)                  # nothing else moves
+                    else:
+                        moved += 1
+                        self.assertNotEqual(after['osSha256'], before['osSha256'])
+        self.assertGreater(moved, 0)
+        self.assertGreater(refused, 0)
 
     def test_poly8_builder_preserves_current_main_without_poly8(self):
         import json
