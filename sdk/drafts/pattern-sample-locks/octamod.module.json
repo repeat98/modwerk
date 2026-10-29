@@ -65,13 +65,13 @@
       "value": null,
       "unit": "unknown",
       "method": "unmeasured",
-      "conditions": "Cached whole-instrument MKII CPU/DSP readings are being recorded during the target-only trial. No matched unloaded hardware baseline or exact operation/interrupt timing is available. Emulator instruction intervals and qualification limits are in TESTING.md.",
+      "conditions": "Cached whole-instrument MKII CPU/DSP windows were recorded during the target-only trial; exact baseline and Clear results are in TESTING.md. No matched unloaded hardware baseline or exact operation/interrupt timing is available. The trial ended with verified Undo; hardware cost remains unqualified.",
       "source": "TESTING.md"
     }
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "0.1.8 portable and DSP-enabled native emulator checks passed. Exact-package target-only MKII upload/self-test passed with one live/intact module and zero failures; untimed CPU/DSP logging trial is active at the recorded observation. Physical functional/audio reports and verified Undo are pending. Cached readings do not establish isolated hardware cost.",
+    "summary": "0.1.8 portable and DSP-enabled native emulator checks passed. Exact-package singleton MKII upload/self-test/Undo passed; all eighteen original module records and both active/whole-set identities were restored. Baseline and reported Clear-operation cached CPU windows are recorded. Physical functional/audio acceptance and worst-case hardware timing remain incomplete; prototype review only.",
     "hardwareStatus": "untested",
     "gates": [
       "Worst-case cycles under parameter modulation and maximum load",

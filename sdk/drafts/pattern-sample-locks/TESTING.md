@@ -63,7 +63,7 @@ The module adds no DSP program or audio-frame callback. Its new CPU work is boun
 
 On 29 October the author confirmed the MKII connected, outside disk mode, on the disposable test project with playback stopped. Fresh read-only preflight verified base 9b7e0eb337a92378306a9b837f04adb3b93242a42f6113e418607ad8fe5dd57b, ABI 10/features 903, normal/known state and the original eighteen-module inventory/whole-set identity. The reviewed whole-set RAM transaction retained that exact baseline and loaded only SAMPLE LOCKS 0.1.8 (module 4bdbfbf9). Physical self-test passed: state 2, zero failures, one live/intact module and no DSP modules. It did not exercise the Lock/Clear functions or qualify audible behavior.
 
-The author-requested untimed trial is active at the recorded observation; it has no host deadline or scheduled Undo. Continuous cached CPU/DSP and sampled UI-phase logging is running over the same serialized USB owner. No competing MCP/device client is connected. The original eighteen modules were not stress-tested, and their kept files were not replaced. Undo/restoration is pending the author's request and must be verified afterward. No Keep, flash, project save, push, PR or release occurred. See [start receipt](media/v018-mkii-untimed-start.json); its active-state snapshot is not evidence of a later Undo or ongoing liveness.
+The author-requested untimed trial is active at the recorded observation; it has no host deadline or scheduled Undo. Continuous cached CPU/DSP and sampled UI-phase logging is running over the same serialized USB owner. No competing MCP/device client is connected. The original eighteen modules were not stress-tested, and their kept files were not replaced. This start snapshot was followed by the author-requested verified Undo recorded below. No Keep, flash, project save, push, PR or release occurred. See [start receipt](media/v018-mkii-untimed-start.json); its active-state snapshot is not evidence of a later Undo or ongoing liveness.
 
 Manual functional/audio results are not reported yet. The hardware meter is a cached whole-instrument measurement; this trial has no matched unloaded hardware baseline or exact per-operation hardware timing.
 
@@ -75,7 +75,7 @@ The author labelled the current state baseline and was asked to leave the screen
 
 Across 148 cached meter requests, CPU averaged **52.84%**, range **51.6–55.1%**. DSP current means were **34.49%** on T1–4 and **47.04%** on T5–8. Fifteen readings selected at two-second offsets gave CPU mean 52.50%, range 52.3–52.7%; this spaced subset does not include the whole capture’s 55.1% maximum. Requests repeat approximately half-second meter windows and are not instantaneous independent samples.
 
-This is a baseline of the whole instrument with the module loaded, not an unloaded comparison or isolated module cost. No functional/audio result or exact operation timestamp is inferred. The untimed trial and logging continue; no Undo or Keep was requested. See [baseline receipt](media/v018-mkii-cpu-test01-baseline.json).
+This is a baseline of the whole instrument with the module loaded, not an unloaded comparison or isolated module cost. No functional/audio result or exact operation timestamp is inferred. At the end of this window the untimed trial and logging continued; no Undo or Keep had been requested yet. The later verified Undo is recorded below. See [baseline receipt](media/v018-mkii-cpu-test01-baseline.json).
 
 ## Physical CPU test 2: Clear operation — 29 October 2026
 
@@ -86,4 +86,10 @@ The author was cued after logging was confirmed live, then reported Done. The cu
 - Five seconds after the Done acknowledgement: 24 cached requests, closed throughout; CPU mean **50.88%**, range **49.8–52.3%**. DSP current means were **34.60%** (T1–4) and **47.19%** (T5–8).
 - Test 1 baseline CPU mean was 52.84%. Transport/project state was requested unchanged but not independently verified; UI states differ, and the operation can change which samples play. These values cannot be subtracted to establish module-only utilization.
 
-See [Clear receipt](media/v018-mkii-cpu-test02-clear.json). The logger’s frames field is the DIAG counter rather than the native load-frame field; CPU/DSP fields are unaffected, and no frame-progress conclusion uses it. The author reported completion only; playback continuity, audible behavior and exact lock-memory changes remain unreported. The untimed trial/logging remain active with no Undo or Keep.
+See [Clear receipt](media/v018-mkii-cpu-test02-clear.json). The logger’s frames field is the DIAG counter rather than the native load-frame field; CPU/DSP fields are unaffected, and no frame-progress conclusion uses it. The author reported completion only; playback continuity, audible behavior and exact lock-memory changes remain unreported. At the end of this window the untimed trial/logging remained active with no Undo or Keep. The later verified Undo is recorded below.
+
+## Physical trial ended: verified Undo — 29 October 2026
+
+At the author’s request, the existing serialized USB owner held and rolled back the trial, then left upload mode normally. Readback verified all eighteen original module records exactly, the original known active identity and the original whole-set identity b6ef21db9e718d147ea1e86cd323d8a9563da0667abbb03f80ccbbc790481967. No other modules were stress-tested. No Keep, flash or explicit project save was commanded. Undo restores module code and does not revert SAMPLE edits made by the author.
+
+The untimed session and CPU logger have ended. See [final lifecycle receipt](media/v018-mkii-untimed-undo.json). The global CPU maximum includes unmarked actions and is not the labelled Clear-operation peak. Physical upload/self-test/Undo passed on the exact 0.1.8 package; manual functional/audio acceptance, hardware worst-case timing and publication qualification remain incomplete. This is a prototype submitted for owner review, not release approval.
