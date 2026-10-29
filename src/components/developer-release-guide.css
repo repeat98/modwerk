@@ -76,3 +76,13 @@
   .developer-ecosystem-grid span { text-align: right; }
   .developer-builder-path { flex-wrap: wrap; gap: 8px 14px; }
 }
+.agent-board-intro { color: var(--muted); font-size: 13px; line-height: 1.65; margin-bottom: 14px; max-width: 72ch; }
+.agent-board-intro code { font-size: 12px; }
+.agent-board-list { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
+.agent-board-list li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 16px; padding: 11px 0; border-bottom: 1px solid var(--line); }
+.agent-board-claim { display: flex; align-items: baseline; gap: 10px; min-width: 0; }
+.agent-board-claim strong { font-size: 14px; font-weight: 600; overflow-wrap: anywhere; }
+.agent-board-kind { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .04em; flex-shrink: 0; }
+.agent-board-meta { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: flex-end; gap: 4px 14px; color: var(--muted); font-size: 12px; }
+.agent-board-note { grid-column: 1 / -1; color: var(--muted); font-size: 12px; line-height: 1.5; margin: 0; }
+@media (max-width: 600px) { .agent-board-list li { grid-template-columns: 1fr; } .agent-board-meta { justify-content: flex-start; } }

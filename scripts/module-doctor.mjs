@@ -215,6 +215,9 @@ function report(title, lines) {
   return lines.every(line => line.state !== 'fail')
 }
 
+// The agent board (docs/AGENT_BOARD.md): one read per run; a new module needs your claim, and someone else's claim stops it.
+const board = await import('./agent-board.mjs'), boardView = await board.boardSnapshot({ kind: 'module' })
+const boardLine = (machine, id, folder) => board.moduleClaimLine({ root, machine, id, folder, ...boardView })
 let green = true
 const octatrackIds = all ? catalog.modules.map(item => item.id) : ids.filter(id => exists('sdk/octabam/modules/' + id))
 for (const id of octatrackIds) {
@@ -226,10 +229,11 @@ const fingerprintOk = !octatrackIds.length || (await moduleSourceFingerprint(roo
 for (const id of octatrackIds) {
   const lines = octatrack(id)
   if (!fingerprintOk) lines.push({ state: 'fail', name: 'package fingerprint', detail: 'the committed packages were built from different module code', fix: 'rebuild and import the packages (docs/ADD_A_MODULE.md, step 4)' })
+  lines.push(boardLine('octatrack', id, draft ? 'sdk/drafts/' + id : 'sdk/octabam/modules/' + id))
   green = report(id + ' (Octatrack)', lines) && green
 }
 const machineIds = all ? machineModules : machineModules.filter(item => ids.includes(item.id))
-for (const item of machineIds) green = report(item.id + ' (' + item.machine + ')', machineModule(item)) && green
+for (const item of machineIds) green = report(item.id + ' (' + item.machine + ')', [...machineModule(item), boardLine(item.machine, item.id, 'sdk/' + item.machine + '/modules/' + item.id)]) && green
 if (!all && !octatrackIds.length && !machineIds.length) { console.error('No module named ' + ids[0] + ' under sdk/octabam/modules, sdk/digitakt/modules, sdk/digitone/modules, sdk/analog-rytm-mkii/modules or sdk/analog-four-mkii/modules.'); process.exit(2) }
 console.log(green ? '\nEvery integration point is green. Now walk the category checklist in docs/module-guides/.' : '\nFix the lines marked ✗, then run this again.')
 process.exitCode = green ? 0 : 1

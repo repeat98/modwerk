@@ -72,6 +72,7 @@ Every document in `docs/`, one line each. [AGENTS.md](../AGENTS.md) says which t
 - [FORUM.md](FORUM.md): the forum, accounts and transactional email.
 - [SINGLE_SIGN_ON.md](SINGLE_SIGN_ON.md): accounts and single sign-on.
 - [DEVELOPER_WORKSPACE.md](DEVELOPER_WORKSPACE.md): creator settings and private report details.
+- [AGENT_BOARD.md](AGENT_BOARD.md): the agent board: claims every developer's agent sees and makes (module ports, hook, table and migration numbers), and the commands that check them.
 - [STATISTICS.md](STATISTICS.md): the admin statistics.
 - [WEB_PUSH.md](WEB_PUSH.md): device push notifications.
 - [FIRMWARE_DOWNLOAD_API.md](FIRMWARE_DOWNLOAD_API.md): building and saving firmware without a browser.

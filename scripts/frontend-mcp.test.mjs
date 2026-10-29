@@ -91,6 +91,12 @@ describe('frontend MCP protocol and isolated site workflows', () => {
     // Without the beta interface there is no USB sync, so the public catalogue offers no USB-only module.
     expect((await service.call('site_catalogue', { machine: 'octatrack' })).modules.filter(module => module.card === false)).toEqual([])
   })
+  it('offers the agent board, refuses claims without --allow-api-writes and never reaches the live board in tests', async () => {
+    expect((await service.call('site_features')).tools).toEqual(expect.arrayContaining(['board_claims', 'board_claim', 'board_release']))
+    await expect(service.call('board_claim', { kind: 'migration', key: '0085' })).rejects.toThrow('--allow-api-writes')
+    await expect(service.call('board_release', { id: '00000000-0000-0000-0000-000000000000' })).rejects.toThrow('--allow-api-writes')
+    await expect(service.call('board_claims', { kind: 'module' })).rejects.toThrow('turned off')
+  })
   it('round trips sets through frontend validation without including private firmware', async () => {
     const created = await service.call('set_save', { name: 'MCP test', moduleIds: ['miniverb'] })
     const updated = await service.call('set_save', { id: created.id, name: 'Edited', moduleIds: ['everb', 'miniverb'] })

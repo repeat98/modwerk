@@ -11,7 +11,7 @@ description: Review Modwerk's open pull requests, answer their authors where som
    - read the code it touches, not only the diff;
    - judge it against `MODDING_GUIDELINES.md` and the whole stack: the base, the USB lifecycle, module splits, cross-compatibility and, for a machine, the recipe (the checklist names each);
    - the rules contributions most often break;
-   - claims that cut across pull requests;
+   - claims that cut across pull requests, and the agent board's: a module, hook index or migration it adds that someone else holds, or that nobody claimed;
    - red checks, and whose fault they are;
    - what the triage bot's next run would do.
 2. **Talk back where needed**, at most one comment per pull request: a change it must make, a question only its author can answer, or a refresh it needs.

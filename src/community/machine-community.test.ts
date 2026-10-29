@@ -108,7 +108,7 @@ describe('GitHub developer claims and private report access',()=>{
     const {call,githubLogin,db}=await fixture(),login=await githubLogin('IRPINA')
     expect((await(await call('/developer/auth/session','GET',undefined,'',login.token)).json()).user).toEqual({login:'irpina'})
     const user=String(db.prepare('SELECT id FROM users WHERE github_id IS NOT NULL').get()!.id),code='c'.repeat(64)
-    db.prepare('INSERT INTO developer_auth_codes VALUES(?,?,?,?)').run(await digest(code),user,await digest(login.verifier),Math.floor(Date.now()/1000)+60)
+    db.prepare('INSERT INTO developer_auth_codes(code_hash,user_id,browser_challenge,expires) VALUES(?,?,?,?)').run(await digest(code),user,await digest(login.verifier),Math.floor(Date.now()/1000)+60)
     const modules=COMMUNITY_MODULES.filter(module=>module.maintainers.includes('irpina'))
     const saved=modules.map(module=>[...module.maintainers])
     try {
@@ -153,10 +153,10 @@ describe('GitHub developer claims and private report access',()=>{
   it('rejects a wrong browser proof and expired handoffs, and permanently revokes sessions on suspension',async()=>{
     const {call,githubLogin,db}=await fixture(),login=await githubLogin()
     const user=String(db.prepare('SELECT id FROM users WHERE github_id IS NOT NULL').get()!.id),code='c'.repeat(64)
-    db.prepare('INSERT INTO developer_auth_codes VALUES(?,?,?,?)').run(await digest(code),user,await digest(login.verifier),Math.floor(Date.now()/1000)+60)
+    db.prepare('INSERT INTO developer_auth_codes(code_hash,user_id,browser_challenge,expires) VALUES(?,?,?,?)').run(await digest(code),user,await digest(login.verifier),Math.floor(Date.now()/1000)+60)
     expect((await call('/developer/auth/complete','POST',{code,verifier:'b'.repeat(64)})).status).toBe(400)
     expect((await call('/developer/auth/complete','POST',{code,verifier:login.verifier})).status).toBe(200)
-    db.prepare('INSERT INTO developer_auth_codes VALUES(?,?,?,0)').run(await digest(code),user,await digest(login.verifier))
+    db.prepare('INSERT INTO developer_auth_codes(code_hash,user_id,browser_challenge,expires) VALUES(?,?,?,0)').run(await digest(code),user,await digest(login.verifier))
     expect((await call('/developer/auth/complete','POST',{code,verifier:login.verifier})).status).toBe(400)
     const admin=(await(await call('/auth/admin','POST',{key:'e'.repeat(64)})).json()).token
     for(const value of [true,false])expect((await call('/admin/forum/users/'+user,'PATCH',{action:'suspended',value,reason:'Synthetic moderation'},'','',admin)).status).toBe(200)
