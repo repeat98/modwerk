@@ -17,7 +17,7 @@ export const CLAIM_KEYS: Record<ClaimKind, RegExp> = {
   migration: /^\d{4}$/,
   'dsp-region': new RegExp(`^${NAME}/[a-z0-9_-]{1,64}$`),
 }
-export const CLAIM_DAYS = 14, CLAIM_LIMIT = 10, CLAIM_WRITES_PER_HOUR = 30, NOTE_LIMIT = 120
+export const CLAIM_DAYS = 14, CLAIM_LIMIT = 10, CLAIM_WRITES_PER_HOUR = 30, NOTE_LIMIT = 120, RELEASED_KEPT_DAYS = 90
 const DAY = 86400000
 
 /** A claim's note reaches other developers' agents, so it is short plain prose: no links, paths, addresses, code or tokens. */
@@ -144,11 +144,13 @@ async function pulls(env: Env, path: string): Promise<unknown> {
   return await result.json()
 }
 
-/** Hourly: release expired claims and those of suspended accounts, link claims to their pull request by branch, and release
- * claims whose pull request was merged or closed. A bounded batch per run, the least recently checked first. */
+/** Hourly: release expired claims and those of suspended accounts, delete claims released more than 90 days ago (the privacy
+ * notice's retention), link claims to their pull request by branch, and release claims whose pull request was merged or
+ * closed. A bounded batch per run, the least recently checked first. */
 export async function syncAgentClaims(env: Env, db: Database, batch = 25) {
   const now = new Date().toISOString()
   await db.batch([
+    db.prepare('DELETE FROM agent_claims WHERE released_at IS NOT NULL AND released_at<=?').bind(new Date(Date.now() - RELEASED_KEPT_DAYS * DAY).toISOString()),
     db.prepare("UPDATE agent_claims SET released_at=?,released_reason='expired' WHERE released_at IS NULL AND expires_at IS NOT NULL AND expires_at<=?").bind(now, now),
     db.prepare("UPDATE agent_claims SET released_at=?,released_reason='suspended' WHERE released_at IS NULL AND user_id IN (SELECT id FROM users WHERE suspended=1)").bind(now),
   ])

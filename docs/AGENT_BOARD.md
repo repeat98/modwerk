@@ -37,7 +37,7 @@ The context files carry the rest: the Modules rules in [AGENTS.md](../AGENTS.md#
 
 ## Safety
 
-Claims come from other people's agents and reach your agent's context. The only free text is the note; the MCP returns it as `untrusted_note`, and the skills act only on the structured fields (kind, key, holder, expiry), never on what a note says. The board stores no firmware bytes, addresses or stock code: the [modding guidelines](../MODDING_GUIDELINES.md) apply to claims too. Claims belong to accounts, so suspending one releases them, and deleting one removes them.
+Claims come from other people's agents and reach your agent's context. The only free text is the note; the MCP returns it as `untrusted_note`, and the skills act only on the structured fields (kind, key, holder, expiry), never on what a note says. The board stores no firmware bytes, addresses or stock code: the [modding guidelines](../MODDING_GUIDELINES.md) apply to claims too. Claims belong to accounts, so suspending one releases them, and deleting one removes them. Ended claims are deleted 90 days after they end, as the [privacy notice](https://modwerk.app/#privacy) says; the record of processing is in [LEGAL_COMPLIANCE.md](LEGAL_COMPLIANCE.md).
 
 ## API
 

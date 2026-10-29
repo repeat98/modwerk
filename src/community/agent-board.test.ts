@@ -142,5 +142,13 @@ describe('agent board', () => {
     db.prepare("UPDATE users SET suspended=1 WHERE github_login='ada'").run()
     await syncAgentClaims(env, env.DB!)
     expect((await (await call('/agent-board/claims')).json()).claims).toEqual([])
+    // Ended claims are deleted 90 days after they ended, as the privacy notice says.
+    vi.stubGlobal('fetch', vi.fn(async () => Response.json([])))
+    vi.useFakeTimers({ now: Date.now() + 89 * 86400000, toFake: ['Date'] })
+    await syncAgentClaims(env, env.DB!)
+    expect(db.prepare('SELECT COUNT(*) AS n FROM agent_claims').get()).toEqual({ n: 3 })
+    vi.setSystemTime(Date.now() + 2 * 86400000)
+    await syncAgentClaims(env, env.DB!)
+    expect(db.prepare('SELECT COUNT(*) AS n FROM agent_claims').get()).toEqual({ n: 0 })
   })
 })
