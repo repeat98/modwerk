@@ -40,11 +40,13 @@ uint8_t *mw_controller_board_test_donor(uint32_t);
 uint32_t mw_controller_board_test_bank(void);
 int mw_controller_board_test_handle(uint32_t module);
 #define BANK_NOW() mw_controller_board_test_bank()
+#define PART_NOW() 0u
 #define HANDLE(module) mw_controller_board_test_handle(module)
 #else
 #define READ8(a) (*(volatile const uint8_t *)(uintptr_t)(a))
 #define DONOR(a) ((uint8_t *)(uintptr_t)(a))
 #define BANK_NOW() (*(volatile const uint32_t *)0x46c82456u) /* the current bank (selection.c), 0 before a project */
+#define PART_NOW() READ8(0x80000003u)                          /* the current Part */
 int modwerk_dsp_catalogue_handle(uint32_t module); /* dsp.c: the effect id a module holds this session, <0 none */
 #define HANDLE(module) modwerk_dsp_catalogue_handle(module)
 static int board_read(void *context, uint32_t address, void *out, uint32_t length)
@@ -503,18 +505,26 @@ static unsigned slot_features(void)
     return features;
 }
 #ifdef MODWERK_RESIDENT_ON_DEMAND
+__attribute__((weak)) volatile uint32_t modwerk_machine_assigned; /* machine_registry.c: counts every machine assignment */
 /* Once a tick: what is used (above). A new bank starts from nothing. */
 static void use_tick(void)
 {
     uint32_t bank = BANK_NOW();
+    static unsigned seen_part, scan_tick; static uint32_t seen_assigned;
+    unsigned part = PART_NOW();
+    int changed = bank != seen_bank || part != seen_part || modwerk_machine_assigned != seen_assigned;
     if (bank != seen_bank) seen_bank = bank, seen = 0;
+    seen_part = part, seen_assigned = modwerk_machine_assigned;
     seen |= modwerk_controller_lease_seen & MW_DSP_PACKAGED; modwerk_controller_lease_seen = 0;
     /* A packaged feature's machine signed on a track of the bank's Parts: used before its first trig asks for the lease,
      * so after a boot it runs by MODULES LOADED. Only while one held is not seen yet: a few loads a tick. */
     unsigned unseen = 0;
     for (unsigned k = 0; k < MW_CONTROLLER_SLOTS; ++k)
         if (held(&REGISTRY.slots[k])) unseen |= REGISTRY.slots[k].binding.identity.feature & MW_DSP_PACKAGED & ~seen;
-    if (unseen) {
+    /* The bank's Parts (8 x 8 tracks, uncached) are read again only when the bank, the Part or a track's machine changed,
+     * and every 64th tick for an edit that is none of those (a Part copy or reload): a packaged machine installed but
+     * unused by the bank stays unseen all session, and the scan ran every tick inside the lock (owner, 29 October 2026). */
+    if (unseen && (changed || (++scan_tick & 63u) == 0u)) {
         uint32_t module[4]; unsigned n = modwerk_machine_bank_modules(module, 4u);
         for (unsigned k = 0; k < MW_CONTROLLER_SLOTS; ++k) {
             const struct mw_controller_slot *s = &REGISTRY.slots[k];
