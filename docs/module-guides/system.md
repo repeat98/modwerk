@@ -7,6 +7,7 @@ Read [the module guides index](README.md) first.
 ## Behave like the instrument
 
 - [ ] **Put the setting in the stock menu where it belongs.** Scale Quantizer's SCALE, ROOT and GLIDE rows sit under PROJ → CONTROL → SEQUENCER. Do not add a top-level screen.
+- [ ] **Add menu rows through the base's tables:** contribute to `ot_sequencer_rows` or `ot_personalize_rows` ([HOOKS.md](../../sdk/machines/octatrack/HOOKS.md)); never grow stock's PERSONALIZE or SEQUENCER tables. A PERSONALIZE row names the stock row it goes after (`after`, for example MUTE MODE after PREVIEW WITHOUT FX), so it sits with the settings it belongs to and in the same place as in the card build. A contributed row's position still changes as modules come and go, so its value lives in the module's own state, never at a row index.
 - [ ] **A way to turn it off that restores stock behaviour exactly.** Test OFF against an unmodified build.
 - [ ] **Defaults are stock behaviour,** so adding the module changes nothing until the musician changes a setting. Say so.
 - [ ] **Persistence is honest.** Settings storage today is "nowhere, or a private file", and the proposed shared project store is not implemented ([MODULES.md, Settings on the card](../../sdk/octabam/docs/remixer/MODULES.md#settings-on-the-card)). Do not invent a format. State whether your setting survives Part Save, project save and load and power cycles, and test it.

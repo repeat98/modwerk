@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: MIT
  * Host check of the base machine registry (machine_registry.c) over a synthetic model of
  * the unit's memory: rows by table order, assign/admit/leave, absent machines read as stock,
- * the validator's PROTECT and wrapper chain, render routing, keyed SEQUENCER rows and the
+ * the validator's PROTECT and wrapper chain, render routing, keyed SEQUENCER rows, PERSONALIZE rows and the
  * chooser counts, through installs and removals in either order. No stock byte is used. */
 #define MW_HOST
 #include <stdint.h>
@@ -14,7 +14,7 @@ static unsigned failures;
 /* Synthetic memory: a few segments at the addresses the registry reads. */
 struct segment { uint32_t base, size; uint8_t *bytes; };
 static uint8_t bank[0x8ed80u + 4u * 6322u + 64u], sram[4u * 6322u], misc[0x100], code[0x40], stocktab[0x80], ui[0x40], stockdef[12],
-    clamps[0x270];
+    clamps[0x270], perstab[3 * 64], perscount[4];
 static struct segment segments[] = {
     {0x46000000u, sizeof bank, bank}, {0x100a4eceu, sizeof sram, sram}, {0x100b14c0u, 0x40, misc},
     {0x80000000u, 0x40, misc + 0x40}, {0x46c82450u, 0x10, misc + 0x80}, {0x400a78c8u, 20, stocktab},
@@ -22,6 +22,7 @@ static struct segment segments[] = {
     {0x460e7380u, 0x20, ui}, {0x460e70e0u, 4, ui + 0x20}, {0x400d320cu, 12, stockdef},
     {0x40079240u, 0x10, code}, {0x400585f0u, 0x10, code + 0x10}, {0x4003c950u, 4, code + 0x20}, {0x40078678u, 4, code + 0x24},
     {0x400786ccu, 4, code + 0x28}, {0x40079904u, 4, code + 0x2c}, {0x40065c7cu, 4, code + 0x30}, {0x40078c20u, sizeof clamps, clamps},
+    {0x400b2a34u, 64, perstab}, {0x400b2a74u, 64, perstab + 64}, {0x400b2ac0u, 64, perstab + 128}, {0x40068fb2u, 4, perscount},
 };
 static uint8_t *host_at(uint32_t a)
 {
@@ -55,7 +56,7 @@ void mg_tick(void) {}
 /* The loader's side: the table rows and the machine glue. */
 #include "loader.h"
 #include "modwerk_events.h"
-static uintptr_t volatile machine_row[5], sequencer_row[9];
+static uintptr_t volatile machine_row[5], sequencer_row[9], personalize_row[9];
 static int masked;
 uint32_t modwerk_machine_mask(void) { CHECK(!masked); masked = 1; return 7; }
 void modwerk_machine_unmask(uint32_t s) { CHECK(masked && s == 7); masked = 0; }
@@ -78,7 +79,8 @@ void mw_seq_get_none(void) {}
 void mw_seq_set_none(void) {}
 #define modwerk_runtime_event_row host_rows
 static uintptr_t volatile *const host_rows[RUNTIME_SITE_EVENTS] = {
-    [MODWERK_OT_MACHINES - RUNTIME_EVENTS] = machine_row, [MODWERK_OT_SEQUENCER_ROWS - RUNTIME_EVENTS] = sequencer_row};
+    [MODWERK_OT_MACHINES - RUNTIME_EVENTS] = machine_row, [MODWERK_OT_SEQUENCER_ROWS - RUNTIME_EVENTS] = sequencer_row,
+    [MODWERK_OT_PERSONALIZE_ROWS - RUNTIME_EVENTS] = personalize_row};
 static volatile uint32_t host_timer; /* the frame timer (DTCN3): the synthetic renders advance it */
 #define DTCN3 host_timer
 #include "machine_registry.c"
@@ -138,6 +140,25 @@ static const struct modwerk_machine_setup S = {{MODWERK_MACHINE_ABI, {'S', '2'},
                                                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, {0}}, setup_page_s, setup_knob_s};
 static const struct { uint32_t count; struct modwerk_sequencer_row row[3]; } FMQ = {3, {{"SCALE", 0, 0}, {"ROOT", 0, 0}, {"GLIDE", 0, 0}}},
     QZ = {3, {{"SCALE", (void *)1, 0}, {"ROOT", (void *)1, 0}, {"GLIDE", (void *)1, 0}}}, MORE = {1, {{"SWING", 0, 0}}};
+/* Synthetic PERSONALIZE contributions: MUTE MODE after PREVIEW WITHOUT FX (stock row 2), as in the card build; a
+ * second module with an unanchored row and one on the same anchor; rows anchored after the last stock row; anchors
+ * that name no stock row (LED BRIGHTNESS, 16, or past it). */
+static const struct { uint32_t count; struct modwerk_personalize_row row[2]; } MM = {1, {{"MUTE MODE", (void *)2, (void *)3, MODWERK_PERSONALIZE_AFTER_PREVIEW_WITHOUT_FX}}},
+    PS = {2, {{"PLAY START", (void *)4, (void *)5, MODWERK_PERSONALIZE_END}, {"TRACK MUTES", (void *)6, (void *)7, MODWERK_PERSONALIZE_AFTER_PREVIEW_WITHOUT_FX}}},
+    LAST = {2, {{"END", 0, 0, MODWERK_PERSONALIZE_END}, {"AFTER EXT", 0, 0, MODWERK_PERSONALIZE_AFTER_EXT_LEN_GRID_REC}}},
+    LED = {1, {{"AFTER LED", 0, 0, 16u}}}, FAR = {2, {{"OK", 0, 0, MODWERK_PERSONALIZE_END}, {"FAR", 0, 0, 99u}}},
+    FULL = {2, {{"A", 0, 0, MODWERK_PERSONALIZE_END}, {"B", 0, 0, MODWERK_PERSONALIZE_END}}};
+/* The window's labels as stock's numbers (0x4000 + r) or a contributed row's label. */
+static int pers_is(unsigned at, unsigned stock_row) { return mw_pers_labels[at] == (const void *)(uintptr_t)(0x4000u + stock_row); }
+static int pers_named(unsigned at, const char *label)
+{
+    return (uintptr_t)mw_pers_labels[at] > 0xffffu && mw_pers_labels[at] != (const void *)mw_seq_none && !strcmp(mw_pers_labels[at], label);
+}
+static void personal(const void *const *p, unsigned k)
+{
+    for (unsigned i = 0; i < 9; ++i) personalize_row[i] = i < k ? (uintptr_t)p[i] : 0;
+    masked = 1; modwerk_machine_tables_changed(); masked = 0;
+}
 static void rows(const void *const *m, unsigned n, const void *const *s, unsigned k)
 {
     for (unsigned i = 0; i < 5; ++i) machine_row[i] = i < n ? (uintptr_t)m[i] : 0;
@@ -175,6 +196,9 @@ int main(void)
     put_u32(0x46c82456u, 0x46000000u);
     for (unsigned r = 0; r < 5; ++r) put_u32(0x400a78c8u + 4 * r, 0x1000u + r), put_u32(0x400d5f38u + 4 * r, 0x2000u + r);
     for (unsigned r = 0; r < 3; ++r) put_u32(0x400b27d0u + 4 * r, 0x3000u + r);
+    for (unsigned r = 0; r < 16; ++r) put_u32(0x400b2a34u + 4 * r, 0x4000u + r), put_u32(0x400b2a74u + 4 * r, 0x5000u + r),
+                                      put_u32(0x400b2ac0u + 4 * r, 0x6000u + r);
+    perscount[0] = 0x72u, perscount[1] = 15u;
     memset(stockdef, 0x40, sizeof stockdef);
     for (unsigned t = 0; t < 8; ++t) part0()[0x22 + t] = 1; /* FLEX */
 
@@ -439,9 +463,53 @@ int main(void)
     CHECK((counts_now() & 0xff) == 6u && mw_seq_getters[3] == (void *)1 && mw_seq_labels[6] == (const void *)mw_seq_none);
     rows(0, 0, 0, 0);
     CHECK(counts_now() == (5u << 24 | 5u << 16 | 4u << 8 | 3u) && !masked && clamp_now() == 5);
+
+    /* PERSONALIZE: stock's fifteen rows, each followed by the rows anchored after it, then the unanchored rows, then
+     * LED BRIGHTNESS (stock's sixteenth, MKII only: stock counts 15 + MKII), so it stays last on both models; unused
+     * slots show nothing and do nothing. */
+    CHECK(perscount[1] == 15u && pers_is(0, 0) && pers_is(15, 15));
+    CHECK(mw_pers_getters[14] == (const void *)0x500eu && mw_pers_setters[15] == (const void *)0x600fu);
+    CHECK(mw_pers_labels[16] == (const void *)mw_seq_none && mw_pers_getters[16] == 0 && mw_pers_setters[23] == (const void *)mw_seq_set_none);
+    /* MUTE MODE after PREVIEW WITHOUT FX: the window's third row, where the card build and octabam put it; MUTE
+     * FOCUSES TRK and every later stock row move down one with their getters and setters. */
+    const void *mm[] = {&MM}, *ps_mm[] = {&PS, &MM}, *mm_ps[] = {&MM, &PS};
+    personal(mm, 1);
+    CHECK(perscount[0] == 0x72u && perscount[1] == 16u && pers_is(0, 0) && pers_is(1, 1) && pers_named(2, "MUTE MODE"));
+    CHECK(mw_pers_getters[2] == (void *)2 && mw_pers_setters[2] == (void *)3 && pers_is(3, 2) && mw_pers_getters[3] == (const void *)0x5002u);
+    CHECK(mw_pers_setters[3] == (const void *)0x6002u && pers_is(15, 14) && pers_is(16, 15) && mw_pers_setters[16] == (const void *)0x600fu);
+    CHECK(mw_pers_labels[17] == (const void *)mw_seq_none);
+    /* Two modules on the same anchor: the table's order (order, then module id) breaks the tie; an unanchored row goes
+     * after stock's fifteenth, LED BRIGHTNESS still last. */
+    personal(ps_mm, 2);
+    CHECK(perscount[1] == 18u && pers_named(2, "TRACK MUTES") && pers_named(3, "MUTE MODE") && pers_is(4, 2));
+    CHECK(pers_is(16, 14) && pers_named(17, "PLAY START") && mw_pers_getters[17] == (void *)4 && pers_is(18, 15));
+    CHECK(mw_pers_getters[18] == (const void *)0x500fu && mw_pers_labels[19] == (const void *)mw_seq_none);
+    personal(mm_ps, 2);
+    CHECK(perscount[1] == 18u && pers_named(2, "MUTE MODE") && pers_named(3, "TRACK MUTES") && pers_named(17, "PLAY START") && pers_is(18, 15));
+    /* After the last stock row comes before the unanchored rows; both before LED BRIGHTNESS. */
+    const void *last[] = {&LAST};
+    personal(last, 1);
+    CHECK(perscount[1] == 17u && pers_is(14, 14) && pers_named(15, "AFTER EXT") && pers_named(16, "END") && pers_is(17, 15));
+    /* An anchor that names no stock row refuses its whole contribution (LED BRIGHTNESS is no anchor: it stays last);
+     * the other contributions keep their places. */
+    const void *led[] = {&LED, &MM}, *far[] = {&FAR};
+    personal(led, 2);
+    CHECK(perscount[1] == 16u && pers_named(2, "MUTE MODE") && pers_is(16, 15) && mw_pers_labels[17] == (const void *)mw_seq_none);
+    personal(far, 1);
+    CHECK(perscount[1] == 15u && pers_is(14, 14) && pers_is(15, 15) && mw_pers_labels[16] == (const void *)mw_seq_none);
+    personal(mm, 1);
+    CHECK(perscount[1] == 16u && pers_is(16, 15) && mw_pers_labels[17] == (const void *)mw_seq_none);
+    CHECK(mw_pers_setters[18] == (const void *)mw_seq_set_none && mw_pers_getters[18] == 0);
+    /* Past the window's room: the first eight contributed rows in table order, then LED BRIGHTNESS last. */
+    const void *many[] = {&MM, &FULL, &FULL, &FULL, &FULL};
+    personal(many, 5);
+    CHECK(perscount[1] == 23u && pers_named(2, "MUTE MODE") && pers_named(16, "A") && pers_named(22, "A") && pers_is(23, 15));
+    personal(0, 0);
+    CHECK(perscount[1] == 15u && mw_pers_labels[15] == (const void *)0x400fu && mw_pers_labels[16] == (const void *)mw_seq_none && !masked);
+    CHECK(counts_now() == (5u << 24 | 5u << 16 | 4u << 8 | 3u));
     if (failures) { fprintf(stderr, "%u registry checks failed\n", failures); return 1; }
     puts("Machine registry: rows by table order, admission before mutation, signatures and defaults in both copies, absent "
-         "machines as stock, the validator's protection and wrapper chain, render routing, keyed SEQUENCER rows, chooser "
+         "machines as stock, the validator's protection and wrapper chain, render routing, keyed SEQUENCER rows, PERSONALIZE rows, chooser "
          "counts and cursor clamps, SETUP_PAGE machines' own SRC SETUP and the frame guard passed.");
     return 0;
 }

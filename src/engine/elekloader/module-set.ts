@@ -166,8 +166,10 @@ function checkPackage(entry: RuntimePackage, data: Uint8Array, id: string, varia
     subscribed ||= i >= 4 && hook !== 0xffffffff
     if (i < 4 || hook === 0xffffffff) continue
     // As the loader: a raise asks for the base's entry in a zero 4-byte slot of the image, only on a raised event; a
-    // take event's word points at a whole {claims, entry} record, a table's at a whole record of the table's size.
+    // take event's word points at a whole {claims, entry} record, a table's at a whole record of the table's size. A
+    // reserved index (a hook still in review, room 0) takes no word.
     const { kind, record } = SITE_KINDS[i - 4] ?? fail(), at = header + 4 * hooks + handler
+    if (kind === 'reserved') fail()
     if (hook >>> 24 === RAISE ? kind !== 'raise' || handler + 4 > image || data.subarray(at, at + 4).some(byte => byte !== 0) :
       handler + (kind === 'take' ? TAKE_RECORD : kind === 'table' ? record : 0) > image) fail()
   }

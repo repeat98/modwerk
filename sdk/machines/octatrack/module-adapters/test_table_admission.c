@@ -148,5 +148,16 @@ int main(void)
         assert(admit(&empty,&staged,TABLE_PREPARE,1)==RUNTIME_MALFORMED);
         setup(f);staged.module=0x5c49f0f0u;assert(table_metadata_family(declarations,&staged)==TABLE_NONE);
     }
+    /* A Mute Modes package that contributes its row to the base's ot_personalize_rows table owns no table: an empty
+     * base admits it, and an update in place needs no record (a new package hash changes nothing here). */
+    setup(TABLE_MUTES);
+    {
+        struct runtime_dsp row=package(TABLE_MUTES,0),next=package(TABLE_MUTES,0);row.contributes=next.contributes=1;
+        memset(next.package_sha256,0x5a,32);
+        assert(table_metadata_family(modwerk_table_declarations,&row)==TABLE_NONE);
+        assert(table_metadata_admission(modwerk_table_declarations,&empty,&row,TABLE_PREPARE,read_memory,0,0,0)==RUNTIME_OK);
+        assert(table_metadata_admission(modwerk_table_declarations,&row,&next,TABLE_SWITCH,read_memory,0,0,0)==RUNTIME_OK);
+        assert(table_metadata_admission(modwerk_table_declarations,&row,&empty,TABLE_SWITCH,read_memory,0,0,0)==RUNTIME_OK);
+    }
     return 0;
 }

@@ -196,6 +196,19 @@
    "kind": "table",
    "room": 4,
    "record": 64
+  },
+  {
+   "index": 37,
+   "event": "reserved_37",
+   "kind": "reserved",
+   "room": 0
+  },
+  {
+   "index": 38,
+   "event": "ot_personalize_rows",
+   "kind": "table",
+   "room": 8,
+   "record": 4
   }
  ]
 }

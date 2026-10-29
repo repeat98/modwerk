@@ -125,6 +125,10 @@ describe('preparing a module set', () => {
     await expect(subscriber({ [index('ot_machines')]: order(16) })).resolves.toBeDefined()
     await expect(subscriber({ [index('ot_machines')]: order(20) })).rejects.toThrow('inconsistent') // an 80-byte record past the image
     await expect(subscriber({ [4 + SITE_EVENTS]: order(8) })).rejects.toThrow('inconsistent') // past the base's events
+    for (const reserved of siteEvents.events.filter(event => event.kind === 'reserved')) // an index held for a hook in review
+      await expect(subscriber({ [reserved.index]: order(8) })).rejects.toThrow('inconsistent')
+    expect(index('ot_personalize_rows')).toBe(38) // released hook indices never move: 37 is held for ot_machine_starts
+    await expect(subscriber({ [index('ot_personalize_rows')]: order(8) })).resolves.toBeDefined()
   })
   it('fetches the site’s copy and refuses one that did not arrive intact', async () => {
     const entry = manifest.packages[0], data = file(entry.path)

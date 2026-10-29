@@ -5,7 +5,7 @@
  * in row order: chooser rows 5 on (SRC SETUP's own rows for a SETUP_PAGE machine). Adapted from POLY8's shared machine controller
  * (sdk/octabam/modules/poly8/shared-machine.c, MIT, Sam Banks / repeat98), whose fixed
  * POLY/AB/VECTOR/FM participants become contributions; each machine keeps its own signed
- * FLEX state, defaults, pages and engine. Also the reader of ot_sequencer_rows. */
+ * FLEX state, defaults, pages and engine. Also the reader of ot_sequencer_rows and ot_personalize_rows. */
 #include <stdint.h>
 #include "loader.h"
 #include "modwerk_events.h"
@@ -28,6 +28,7 @@ typedef volatile uint8_t Part;
 typedef struct modwerk_machine Machine;
 #define MACHINES (MODWERK_OT_MACHINES - RUNTIME_EVENTS)
 #define SEQUENCER (MODWERK_OT_SEQUENCER_ROWS - RUNTIME_EVENTS)
+#define PERSONALIZE (MODWERK_OT_PERSONALIZE_ROWS - RUNTIME_EVENTS)
 #ifdef MODWERK_DEV
 void modwerk_cost_stamp(unsigned k); /* diag.c: the development profile of the base's hooks */
 #define MW_STAMP(k) modwerk_cost_stamp(k)
@@ -168,17 +169,18 @@ static void tables(const Machine *const *m, unsigned n)
  * never below stock's 5, or the cursor stops at row 5 with two or more machines installed. */
 static unsigned counted;
 static void put8(uint32_t at, uint8_t v) { modwerk_machine_flush_data(at, 1); *modwerk_machine_code(at) = v; }
-static void counts(unsigned n, unsigned rows)
+static void counts(unsigned n, unsigned rows, unsigned personal)
 {
     static const uint32_t pea[] = {0x4007924bu, 0x400585fdu}, moveq[] = {0x4003c951u, 0x40078679u, 0x400786cfu, 0x40079905u},
                           clamp[] = {0x40078c23u, 0x40078cb1u, 0x40078d2fu, 0x40078defu, 0x40078e7du};
-    if (counted == (n | rows << 8 | 1u << 16)) return;
+    if (counted == (n | rows << 8 | personal << 12 | 1u << 16)) return;
     for (unsigned i = 0; i < 2; ++i) put8(pea[i], (uint8_t)(5u + n));
     for (unsigned i = 0; i < 4; ++i) put8(moveq[i], (uint8_t)(4u + n));
     for (unsigned i = 0; i < 5; ++i) put8(clamp[i], (uint8_t)(n > 1 ? 4u + n : 5u)), put8(clamp[i] + 6u, (uint8_t)(n > 1 ? 4u + n : 5u));
     put8(0x40065c7fu, (uint8_t)(3u + rows));
+    put8(0x40068fb3u, (uint8_t)(15u + personal));
     modwerk_machine_invalidate_code();
-    counted = n | rows << 8 | 1u << 16;
+    counted = n | rows << 8 | personal << 12 | 1u << 16;
 }
 
 /* SEQUENCER: stock's three rows, then each contributed label once (the first contribution's). */
@@ -207,6 +209,45 @@ static unsigned sequencer(void)
     return n - 3u;
 }
 
+/* PERSONALIZE: stock's fifteen rows, each followed by the contributed rows anchored after it (struct
+ * modwerk_personalize_row's after, 1-15), then the unanchored rows, then stock's LED BRIGHTNESS, the row stock adds on
+ * an MKII (its count is 15, plus 1 on an MKII), so it stays last on both models. Rows on the same anchor keep the
+ * table's order. The first eight contributed rows in table order are shown; a contribution with an anchor past 15
+ * shows none. Only the window's code (0x40068e00-0x40069074) reads the three tables and its list's cursor, so a
+ * stock row's place is not its identity. */
+#define PERS_STOCK 15u
+#define PERS_ROWS (PERS_STOCK + MODWERK_PERSONALIZE_ROOM + 1u)
+const void *mw_pers_labels[PERS_ROWS], *mw_pers_getters[PERS_ROWS], *mw_pers_setters[PERS_ROWS];
+static void pers_put(unsigned at, const void *label, const void *get, const void *set)
+{
+    mw_pers_labels[at] = label, mw_pers_getters[at] = get, mw_pers_setters[at] = set;
+}
+static void pers_stock(unsigned at, unsigned r)
+{
+    pers_put(at, (const void *)(uintptr_t)U32(0x400b2a34u + 4 * r), (const void *)(uintptr_t)U32(0x400b2a74u + 4 * r),
+             (const void *)(uintptr_t)U32(0x400b2ac0u + 4 * r));
+}
+static unsigned personalize(void)
+{
+    const struct modwerk_personalize_row *more[MODWERK_PERSONALIZE_ROOM];
+    unsigned m = 0, n = 0;
+    for (uintptr_t volatile *row = modwerk_runtime_event_row[PERSONALIZE]; *row; ++row) {
+        const struct modwerk_personalize_rows *c = (const struct modwerk_personalize_rows *)*row;
+        uint32_t i = 0, rows = c->count < MODWERK_PERSONALIZE_ROOM ? c->count : MODWERK_PERSONALIZE_ROOM;
+        while (i < rows && c->row[i].after <= PERS_STOCK) ++i;
+        if (i < rows) continue; /* an anchor that names no stock row (or LED BRIGHTNESS): the contribution is refused */
+        for (i = 0; i < rows && m < MODWERK_PERSONALIZE_ROOM; ++i) more[m++] = &c->row[i];
+    }
+    for (unsigned a = 1; a <= PERS_STOCK + 1u; ++a) {
+        if (a <= PERS_STOCK) pers_stock(n++, a - 1u);
+        for (unsigned k = 0; k < m; ++k)
+            if (more[k]->after == (a <= PERS_STOCK ? a : MODWERK_PERSONALIZE_END)) pers_put(n++, more[k]->label, more[k]->get, more[k]->set);
+    }
+    pers_stock(n, PERS_STOCK);
+    for (unsigned k = n + 1; k < PERS_ROWS; ++k) pers_put(k, mw_seq_none, 0, (const void *)mw_seq_set_none);
+    return m;
+}
+
 /* Masked, right after the loader rewrote the rows (loader.h): nothing stock reads may still name a module that left. */
 void modwerk_machine_tables_changed(void)
 {
@@ -219,7 +260,7 @@ void modwerk_machine_tables_changed(void)
         if (charged[t] && !kept) release(t);
     }
     for (unsigned k = 5; k < ROWS; ++k) mw_src_names[k] = (const char *)(uintptr_t)U32(0x400a78c8u + 4), mw_pb_table[k] = FLEX_PAGE;
-    counts(n, sequencer());
+    counts(n, sequencer(), personalize());
 }
 
 const char *mw_name(unsigned row)
@@ -327,7 +368,7 @@ static void ui_tick(void)
     charge(m, n);
     tables(m, n);
     uint32_t mask = modwerk_machine_mask();
-    counts(n, sequencer());
+    counts(n, sequencer(), personalize());
     modwerk_machine_unmask(mask);
 }
 uint32_t mw_page(const Part *ptr)

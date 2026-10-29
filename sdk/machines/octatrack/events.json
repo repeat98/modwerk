@@ -1839,6 +1839,87 @@
      "what": "actual command-16 display dispatch confirms a possible read-only job; source access stays closed until idle and complete metadata revalidation"
     }
    ]
+  },
+  {
+   "event": "reserved_37",
+   "index": 37,
+   "kind": "reserved",
+   "for": "ot_machine_starts, the machines' versioned START records (pull request #1029)",
+   "why": "Hook indices are a package's ABI and never move once released: 37 belongs to ot_machine_starts whichever pull request merges first, so ot_personalize_rows takes 38. A package word at a reserved index is refused (its room is 0); the entry becomes the hook when its pull request merges."
+  },
+  {
+   "event": "ot_personalize_rows",
+   "index": 38,
+   "kind": "table",
+   "site": null,
+   "length": 0,
+   "record": 4,
+   "key": null,
+   "room": 8,
+   "declaration": "struct modwerk_personalize_row {\n    const char *label;                  /* its row's label */\n    const void *get;                    /* as stock's rows: returns the value's string in d0; 0 shows no value */\n    const void *set;                    /* as stock's rows: (delta, wrap) on the stack */\n    uint32_t after;                     /* the stock row it goes after (MODWERK_PERSONALIZE_AFTER_*), or MODWERK_PERSONALIZE_END */\n};\nstruct modwerk_personalize_rows { uint32_t count; struct modwerk_personalize_row row[]; };\n/* A row's anchor: the stock row it goes after, numbered as stock lists them (1.40C). LED BRIGHTNESS (16) is no\n * anchor: it stays last. Any other value refuses the contribution. */\n#define MODWERK_PERSONALIZE_END 0u     /* no anchor: after stock's fifteenth row and the rows anchored there */\n#define MODWERK_PERSONALIZE_AFTER_QUANTIZE_LIVE_REC 1u\n#define MODWERK_PERSONALIZE_AFTER_PREVIEW_WITHOUT_FX 2u\n#define MODWERK_PERSONALIZE_AFTER_MUTE_FOCUSES_TRK 3u\n#define MODWERK_PERSONALIZE_AFTER_CUE_FOCUSES_TRK 4u\n#define MODWERK_PERSONALIZE_AFTER_CUE_MUTES_TRK 5u\n#define MODWERK_PERSONALIZE_AFTER_DISABLE_FUNC_ENC 6u\n#define MODWERK_PERSONALIZE_AFTER_DISABLE_YES_NO_ARM 7u\n#define MODWERK_PERSONALIZE_AFTER_DIS_STOP_STOP_ARM 8u\n#define MODWERK_PERSONALIZE_AFTER_DIS_PAGE_AUTOCOPY 9u\n#define MODWERK_PERSONALIZE_AFTER_DEFAULT_TRIG_MODE 10u\n#define MODWERK_PERSONALIZE_AFTER_DEFAULT_REC_MODE 11u\n#define MODWERK_PERSONALIZE_AFTER_SAVE_SAMPLES_TO 12u\n#define MODWERK_PERSONALIZE_AFTER_SHORT_SAMPLE_NAME 13u\n#define MODWERK_PERSONALIZE_AFTER_RECORD_QUICK_MODE 14u\n#define MODWERK_PERSONALIZE_AFTER_EXT_LEN_GRID_REC 15u\n#define MODWERK_PERSONALIZE_ROOM 8u     /* contributed rows the window shows, in table order */",
+   "when": "PROJECT > SYSTEM > PERSONALIZE lists stock's rows with each contributed row after the stock row it names, the unanchored rows after stock's fifteenth, then LED BRIGHTNESS on an MKII",
+   "context": "the UI task",
+   "contract": "Contribute one struct modwerk_personalize_rows: its rows, in order, each naming the stock row it goes after (after, 1-15 as stock lists them: MUTE MODE's MODWERK_PERSONALIZE_AFTER_PREVIEW_WITHOUT_FX) or none (MODWERK_PERSONALIZE_END: the end). The window shows stock's fifteen rows, each followed by the rows anchored after it, then the unanchored rows, then stock's LED BRIGHTNESS where the unit has it (MKII), always last; at most eight contributed rows, the first eight in table order. An anchor past 15 (LED BRIGHTNESS or a row stock does not have) refuses the whole contribution: none of its rows is shown. Only the window's code (0x40068e00-0x40069074: renderer, row count and key handler) reads the three tables and the list's cursor, so a stock row's place is not its identity. The getter and setter follow stock's rows' convention (LED BRIGHTNESS's 0x40068c80 and 0x4006907c). A row keeps its own setting: the window's position of a row is not stable and never names it.",
+   "order": "lower first, then module id (the catalogue's reviewed order): it breaks a tie between rows on the same anchor and decides which eight rows show; one contribution's rows keep their record order. 50 Mute Modes; others 40-90.",
+   "subscribers": [
+    {
+     "module": "mute-modes",
+     "fn": "mw_personalize_rows",
+     "order": 50,
+     "does": "MUTE MODE, after PREVIEW WITHOUT FX (stock row 2, where the card build and octabam put it)",
+     "evidence": "sdk/octabam/modules/mute-modes/patch_mutemode.s lbl_mutemode, get_mutemode, set_mutemode"
+    }
+   ],
+   "orderEvidence": "Each row names its own place (an anchor); the table's order only orders rows on the same anchor, and the unanchored rows.",
+   "sites": [
+    {
+     "site": "0x40068efe",
+     "length": 4,
+     "guard": "c77b20dd83b0ee0156d4532bffabd595acc6ad02e338be1a5cc23d51644ae13d",
+     "op": "ptr",
+     "target": "mw_pers_labels",
+     "what": "PERSONALIZE labels (the renderer)"
+    },
+    {
+     "site": "0x40068f0a",
+     "length": 4,
+     "guard": "a57b44b8b104dff5581b02dfecf83275ecc94d5687b6dabf81c0d6369f13b77a",
+     "op": "ptr",
+     "target": "mw_pers_getters",
+     "what": "PERSONALIZE getters (the renderer)"
+    },
+    {
+     "site": "0x40068fb2",
+     "length": 2,
+     "guard": "5dd82fd23ac20130aebe3391a4c9a9fda6ca01bd143223a558ec253b65083dfd",
+     "op": "own",
+     "what": "PERSONALIZE rows: moveq #15+n (stock adds LED BRIGHTNESS on an MKII)"
+    },
+    {
+     "site": "0x40069022",
+     "length": 4,
+     "guard": "f166ec09f06b1cded632207a3eea74b392f6239f04762d010058765b239f785b",
+     "op": "ptr",
+     "target": "mw_pers_setters",
+     "what": "PERSONALIZE setters (the key handler)"
+    },
+    {
+     "site": "0x4006903e",
+     "length": 4,
+     "guard": "f166ec09f06b1cded632207a3eea74b392f6239f04762d010058765b239f785b",
+     "op": "ptr",
+     "target": "mw_pers_setters",
+     "what": "PERSONALIZE setters (the key handler)"
+    },
+    {
+     "site": "0x40069056",
+     "length": 4,
+     "guard": "f166ec09f06b1cded632207a3eea74b392f6239f04762d010058765b239f785b",
+     "op": "ptr",
+     "target": "mw_pers_setters",
+     "what": "PERSONALIZE setters (the key handler)"
+    }
+   ]
   }
  ]
 }
