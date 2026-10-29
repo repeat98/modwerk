@@ -9,7 +9,7 @@ Package SHA-256: 28766a017005e664d00620d3831fc81af7449c95e1896a17121ca8fc2d306d8
 1. Back up the CF card. Prepare a disposable project with Flex/Static tracks, trigs, a manual SAMPLE lock and a non-SAMPLE parameter lock. Save the disposable Part first (FUNC+PART > SAVE), so its working and saved copies match before project reload comparisons.
 2. Connect the powered MKII outside USB disk mode. Use one client. Read base identity, capabilities, active digest, inventory and diagnostics before changes.
 3. Review compatibility and confirm that base supports the three-site, four-standard-hook package. A custom lifecycle extension is unnecessary; consider a RAM base change only if actual capabilities require it.
-4. Use the author-requested untimed USB RAM trial with only this module active; do not repeat the original modules’ stress tests. Read a fresh baseline, bind the complete current inventory and whole-set identity, and verify their exact restoration at Undo. The host has no trial deadline or scheduled Undo; the serialized USB owner stays connected and logs CPU/DSP until the author requests Undo. Stop playback before ending the trial. Connection loss remains a recovery condition, not an intentional timed ending. The frontend MCP catalogue excludes this unpublished draft. Never use the serving session's immediate-Keep shortcut.
+4. Review the exact package, current set and intended change before each trial. The tested singleton path and an addition-only companion trial have separate receipts in TESTING.md. Keep one serialized USB owner and state any host deadline; no Keep is automatic. Use the acknowledged offer identity during a retained trial: the base deliberately withholds whole-set identity until Keep or Undo ends its journal. Stop playback before ending a trial, then verify inventory and identities. The frontend MCP catalogue excludes this unpublished draft; never use the serving session’s immediate-Keep shortcut.
 
 ## Check on the disposable project
 
@@ -26,4 +26,4 @@ Package SHA-256: 28766a017005e664d00620d3831fc81af7449c95e1896a17121ca8fc2d306d8
 - Capture actual diagnostics/screen. Emulator instruction times are not hardware timing.
 - Undo the module trial; verify baseline active digest/inventory, stock popup and response. Undo removes code, not SAMPLE edits.
 
-The first trial does not Keep or flash. Later native save/reload may save only the disposable project. Record only observed/reported results on the exact build. If recovery is ambiguous, stop installations and ask for a power cycle.
+The author chose Undo on the latest companion trial; no Keep or flash occurred. A future persistence test needs a fresh review and explicit Keep for the exact version and module set. Never Keep over foreign saved files. Native save/reload may save only the disposable project. Record only observed/reported results on the named build. If recovery is ambiguous, stop installations and ask for a power cycle.

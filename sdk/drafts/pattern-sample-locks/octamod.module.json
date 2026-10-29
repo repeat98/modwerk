@@ -71,7 +71,7 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Exact 0.1.8 singleton MKII install/self-test/Undo passed. Twenty live 512-field operations preserved other track bytes and Part data; stopped/manual-lock/refusal/profile/native project reload checks passed. Author reported continuous playback. All 18 original modules restored after a physical power cycle. Keep, kept reboot lifecycle and complete hardware cost qualification remain incomplete.",
+    "summary": "Exact 0.1.8 MKII live 512-field edits, manual-lock/refusal/profile/native reload checks and Undo passed. The 19-module addition trial preserved 18 companions; all were intact and all seven DSP modules ran, with a 90.2% CPU advisory and no hard faults. The author chose Undo. Keep, kept restart, full cost bounds and publication qualification remain incomplete.",
     "hardwareStatus": "untested",
     "gates": [
       "Worst-case cycles under parameter modulation and maximum load",
@@ -104,10 +104,10 @@
       }
     },
     {
-      "path": "media/v017-part-menu.png",
-      "captureType": "emulator",
-      "caption": "Native Part Edit font and seven-pixel rows; four stock actions followed by the two sample-lock actions, without a header.",
-      "alt": "Native Part Edit font and seven-pixel rows; four stock actions followed by the two sample-lock actions, without a header.",
+      "path": "media/mkii-part-menu.png",
+      "captureType": "hardware",
+      "caption": "Actual MKII Part Edit: four stock rows followed by Lock and Clear.",
+      "alt": "Physical Octatrack Part Edit menu with Lock Samples to Pattern and Clear Sample Locks.",
       "credit": "twwwy; Elektron Octatrack UI",
       "license": "LicenseRef-OT-UI-Documentation",
       "source": "original",
@@ -115,111 +115,111 @@
         "page": "Part Edit",
         "shows": "location",
         "firmware": "1.40C",
-        "moduleVersion": "0.1.7-experimental",
-        "imageSha256": "32e2480b5658c5b559884358b9925e8dbba92581b27a581745f232cb9b57ab43",
-        "setup": "Actual MKII emulator, DSP disabled; exact 0.1.7 package 372746e634f67590c6b93af832e65c47f2267493cf8aa52753e7ddfb92250bb0. Receipt media/v017-ui.json. No hardware or audible result."
+        "moduleVersion": "0.1.8-experimental",
+        "imageSha256": "c0b988cbff0050b19961590d1203f5263b0a3d298216e234361bf0fdc3c1c28c",
+        "setup": "Actual MKII on RAM development base 9056dbbd; hardware receipt media/v018-mkii-qualification.json. Exact package 28766a017005e664d00620d3831fc81af7449c95e1896a17121ca8fc2d306d8d."
       }
     },
     {
-      "path": "media/v017-lock-tracks.png",
-      "captureType": "emulator",
-      "caption": "Native font, white header and seven-pixel rows; all eight tracks in two columns with disabled tracks greyed and no brackets.",
-      "alt": "Native font, white header and seven-pixel rows; all eight tracks in two columns with disabled tracks greyed and no brackets.",
+      "path": "media/mkii-lock-replace-on.png",
+      "captureType": "hardware",
+      "caption": "Actual MKII: T1 selected and Replace existing ON recalled after cancellation.",
+      "alt": "Lock track selector with T1 selected and C: Replace existing ON.",
       "credit": "twwwy; Elektron Octatrack UI",
       "license": "LicenseRef-OT-UI-Documentation",
       "source": "original",
       "otUi": {
-        "page": "Lock track selection",
+        "page": "Lock selection",
         "shows": "controls",
         "firmware": "1.40C",
-        "moduleVersion": "0.1.7-experimental",
-        "imageSha256": "32e2480b5658c5b559884358b9925e8dbba92581b27a581745f232cb9b57ab43",
-        "setup": "Actual MKII emulator, DSP disabled; exact 0.1.7 package 372746e634f67590c6b93af832e65c47f2267493cf8aa52753e7ddfb92250bb0. Receipt media/v017-ui.json. No hardware or audible result."
+        "moduleVersion": "0.1.8-experimental",
+        "imageSha256": "c0b988cbff0050b19961590d1203f5263b0a3d298216e234361bf0fdc3c1c28c",
+        "setup": "Actual MKII on RAM development base 9056dbbd; hardware receipt media/v018-mkii-qualification.json. Exact package 28766a017005e664d00620d3831fc81af7449c95e1896a17121ca8fc2d306d8d."
       }
     },
     {
-      "path": "media/v017-clear-tracks.png",
+      "path": "media/live-removal-open-tracks.png",
       "captureType": "emulator",
-      "caption": "Native-font Clear grid; Clear always includes all selected SAMPLE locks and encoder C is inert.",
-      "alt": "Native-font Clear grid; Clear always includes all selected SAMPLE locks and encoder C is inert.",
+      "caption": "Exact 0.1.8 emulator: all eight eligible tracks selected; Clear has no replacement control.",
+      "alt": "Clear track selector, all eight tracks selected, A: All and B: Track.",
       "credit": "twwwy; Elektron Octatrack UI",
       "license": "LicenseRef-OT-UI-Documentation",
       "source": "original",
       "otUi": {
-        "page": "Clear track selection",
+        "page": "Clear selection",
         "shows": "controls",
         "firmware": "1.40C",
-        "moduleVersion": "0.1.7-experimental",
+        "moduleVersion": "0.1.8-experimental",
         "imageSha256": "32e2480b5658c5b559884358b9925e8dbba92581b27a581745f232cb9b57ab43",
-        "setup": "Actual MKII emulator, DSP disabled; exact 0.1.7 package 372746e634f67590c6b93af832e65c47f2267493cf8aa52753e7ddfb92250bb0. Receipt media/v017-ui.json. No hardware or audible result."
+        "setup": "Actual DSP-enabled MKII emulator on base 4ed92776; receipt media/emulator-0.1.8.json. Emulator evidence does not qualify hardware or audio. Exact package 28766a017005e664d00620d3831fc81af7449c95e1896a17121ca8fc2d306d8d."
       }
     },
     {
-      "path": "media/v017-clear-confirm.png",
+      "path": "media/live-lock-confirm.png",
       "captureType": "emulator",
-      "caption": "Native-font confirmation with per-track counts and INCLUDES MANUAL LOCKS.",
-      "alt": "Native-font confirmation with per-track counts and INCLUDES MANUAL LOCKS.",
+      "caption": "Exact 0.1.8 emulator: T1 has 63 planned changes with existing locks kept.",
+      "alt": "Lock confirmation with 63 changes on T1 and Existing locks: Keep.",
       "credit": "twwwy; Elektron Octatrack UI",
       "license": "LicenseRef-OT-UI-Documentation",
       "source": "original",
       "otUi": {
-        "page": "Clear confirmation",
+        "page": "Lock confirmation, T1",
         "shows": "controls",
         "firmware": "1.40C",
-        "moduleVersion": "0.1.7-experimental",
+        "moduleVersion": "0.1.8-experimental",
         "imageSha256": "32e2480b5658c5b559884358b9925e8dbba92581b27a581745f232cb9b57ab43",
-        "setup": "Actual MKII emulator, DSP disabled; exact 0.1.7 package 372746e634f67590c6b93af832e65c47f2267493cf8aa52753e7ddfb92250bb0. Receipt media/v017-ui.json. No hardware or audible result."
+        "setup": "Actual DSP-enabled MKII emulator on base 4ed92776; receipt media/emulator-0.1.8.json. Emulator evidence does not qualify hardware or audio. Exact package 28766a017005e664d00620d3831fc81af7449c95e1896a17121ca8fc2d306d8d."
       }
     },
     {
-      "path": "media/v017-after-apply.png",
+      "path": "media/live-clear-confirm.png",
       "captureType": "emulator",
-      "caption": "Successful Apply closes straight to the normal page, without an acknowledgement popup.",
-      "alt": "Successful Apply closes straight to the normal page, without an acknowledgement popup.",
+      "caption": "Exact 0.1.8 emulator: Clear confirms all 64 T1 locks, including manual locks.",
+      "alt": "Clear confirmation with 64 changes on T1 and Includes manual locks.",
       "credit": "twwwy; Elektron Octatrack UI",
       "license": "LicenseRef-OT-UI-Documentation",
       "source": "original",
       "otUi": {
-        "page": "After successful Apply",
+        "page": "Clear confirmation, T1",
         "shows": "controls",
         "firmware": "1.40C",
-        "moduleVersion": "0.1.7-experimental",
+        "moduleVersion": "0.1.8-experimental",
         "imageSha256": "32e2480b5658c5b559884358b9925e8dbba92581b27a581745f232cb9b57ab43",
-        "setup": "Actual MKII emulator, DSP disabled; exact 0.1.7 package 372746e634f67590c6b93af832e65c47f2267493cf8aa52753e7ddfb92250bb0. Receipt media/v017-ui.json. No hardware or audible result."
+        "setup": "Actual DSP-enabled MKII emulator on base 4ed92776; receipt media/emulator-0.1.8.json. Emulator evidence does not qualify hardware or audio. Exact package 28766a017005e664d00620d3831fc81af7449c95e1896a17121ca8fc2d306d8d."
       }
     },
     {
-      "path": "media/v017-replace-confirm.png",
+      "path": "media/live-512-lock-confirm.png",
       "captureType": "emulator",
-      "caption": "Native-font confirmation makes explicit replacement of existing SAMPLE locks visible.",
-      "alt": "Native-font confirmation makes explicit replacement of existing SAMPLE locks visible.",
+      "caption": "Exact 0.1.8 emulator: 64 planned changes on each of eight tracks with explicit replacement.",
+      "alt": "Lock confirmation with 64 changes on each track and Replace existing: Yes.",
       "credit": "twwwy; Elektron Octatrack UI",
       "license": "LicenseRef-OT-UI-Documentation",
       "source": "original",
       "otUi": {
-        "page": "Explicit replacement confirmation",
+        "page": "Lock confirmation, all tracks",
         "shows": "controls",
         "firmware": "1.40C",
-        "moduleVersion": "0.1.7-experimental",
+        "moduleVersion": "0.1.8-experimental",
         "imageSha256": "32e2480b5658c5b559884358b9925e8dbba92581b27a581745f232cb9b57ab43",
-        "setup": "Actual MKII emulator, DSP disabled; exact 0.1.7 package 372746e634f67590c6b93af832e65c47f2267493cf8aa52753e7ddfb92250bb0. Receipt media/v017-ui.json. No hardware or audible result."
+        "setup": "Actual DSP-enabled MKII emulator on base 4ed92776; receipt media/emulator-0.1.8.json. Emulator evidence does not qualify hardware or audio. Exact package 28766a017005e664d00620d3831fc81af7449c95e1896a17121ca8fc2d306d8d."
       }
     },
     {
-      "path": "media/v017-clear-all-selected.png",
+      "path": "media/live-512-clear-confirm.png",
       "captureType": "emulator",
-      "caption": "All eligible tracks selected in the native-font Clear grid; non-Flex/Static tracks stay disabled.",
-      "alt": "All eligible tracks selected in the native-font Clear grid; non-Flex/Static tracks stay disabled.",
+      "caption": "Exact 0.1.8 emulator: 64 planned removals on each of eight tracks, including manual locks.",
+      "alt": "Clear confirmation with 64 removals on each track and Includes manual locks.",
       "credit": "twwwy; Elektron Octatrack UI",
       "license": "LicenseRef-OT-UI-Documentation",
       "source": "original",
       "otUi": {
-        "page": "Clear all eligible tracks",
+        "page": "Clear confirmation, all tracks",
         "shows": "controls",
         "firmware": "1.40C",
-        "moduleVersion": "0.1.7-experimental",
+        "moduleVersion": "0.1.8-experimental",
         "imageSha256": "32e2480b5658c5b559884358b9925e8dbba92581b27a581745f232cb9b57ab43",
-        "setup": "Actual MKII emulator, DSP disabled; exact 0.1.7 package 372746e634f67590c6b93af832e65c47f2267493cf8aa52753e7ddfb92250bb0. Receipt media/v017-ui.json. No hardware or audible result."
+        "setup": "Actual DSP-enabled MKII emulator on base 4ed92776; receipt media/emulator-0.1.8.json. Emulator evidence does not qualify hardware or audio. Exact package 28766a017005e664d00620d3831fc81af7449c95e1896a17121ca8fc2d306d8d."
       }
     }
   ],
@@ -236,13 +236,13 @@
     ],
     "screenshots": [
       "media/v018-mkii-live512-confirm.png",
-      "media/v017-part-menu.png",
-      "media/v017-lock-tracks.png",
-      "media/v017-clear-tracks.png",
-      "media/v017-clear-confirm.png",
-      "media/v017-after-apply.png",
-      "media/v017-replace-confirm.png",
-      "media/v017-clear-all-selected.png"
+      "media/mkii-part-menu.png",
+      "media/mkii-lock-replace-on.png",
+      "media/live-removal-open-tracks.png",
+      "media/live-lock-confirm.png",
+      "media/live-clear-confirm.png",
+      "media/live-512-lock-confirm.png",
+      "media/live-512-clear-confirm.png"
     ]
   }
 }

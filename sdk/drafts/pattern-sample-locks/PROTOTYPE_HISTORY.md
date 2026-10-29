@@ -1,83 +1,43 @@
-# Earlier prototype evidence
+# Prototype history
 
-The complete 0.1.5 report is archived in [TESTING-v015.md](TESTING-v015.md). Version 0.1.6 removes ownership and the associated hooks; current results belong in TESTING.md. Replaced 0.1.5 layout images are preserved in media/v015-ui/.
+This record consolidates retired prototype reports and captures. Current 0.1.8 evidence is in [TESTING.md](TESTING.md). Earlier versions and withdrawn designs do not qualify the version being prepared for release.
 
-Historical results below do not qualify 0.1.6. Original 0.1.4 receipts are retained as `media/v014-capture*.json`; older screenshots and raw private artifacts remain in the local cache. No physical result is claimed.
+Complete prior reports, receipts and images remain in [Git at the pre-cleanup checkpoint](https://github.com/twwwy/modwerk-beat_slicer/blob/5205cefe8528dbe8a6009de1251423122ab486d6/sdk/drafts/pattern-sample-locks/). Private source/card/image caches were also retained before cleanup. No firmware, project/card image or memory snapshot is added to this history.
 
-# Historical 0.1.4 evidence (before lifecycle safety work)
+## 0.1.0–0.1.3: UI and ownership experiments
 
-28 October 2026. Author: twwwy. Local prototype only; no push, PR, release, firmware flash or physical-device module install. The earlier MKII connection was read-only and was closed when the developer chose emulator-only work. All writes below used disposable emulator RAM/card copies.
+The initial versions established FUNC+PART access, the eight-track two-column selector, per-track confirmation counts and manual-lock controls. 0.1.3 first wrote ordinary native SAMPLE locks in disposable emulator fixtures and stopped playback before editing. It attempted retained ownership metadata; its battery reservation overlapped the base diagnostics/effect map and was withdrawn. It never qualified physical hardware. The old compatibility claim must not be reused.
 
-## Exact native builds
+## 0.1.4: sparse ownership prototype
 
-Current private runtime package SHA-256:
-`d831f8c1f6469cd972d5c3d2d3860f067e55d149c2dca315fc34399ef4ef007c`.
+Package `d831f8c1f6469cd972d5c3d2d3860f067e55d149c2dca315fc34399ef4ef007c` used checksummed sparse ownership records, 11,824 bytes code/data, 12,032 bytes BSS and a 12,288-byte private battery reservation. Planner/UI/storage sanitizer tests and native emulator Lock/Clear, manual-lock retention, emulated fresh-process startup, maximum-size edits, save/reload and removal passed on the named private build. DSP-disabled captures did not prove audio or hardware timing; emulator Keep applied only to a disposable card copy.
 
-Pinned ColdFire build: 11,824 code/data bytes, 12,032 BSS bytes, 192 relocations, four core UI hooks and four guarded stock-code sites. The private battery ownership reservation is 12,288 bytes, `0x100f9000..0x100fc000` (end exclusive). These are allocation sizes, **not measured CPU or stack use**.
+Unknown edits while the module was absent, full ownership lifetime, native card integration and physical recovery remained unresolved. The sparse store held 704 track/pattern records and refused when full rather than evicting ownership. The complete earlier record is the [former PROTOTYPE_HISTORY.md](https://github.com/twwwy/modwerk-beat_slicer/blob/5205cefe8528dbe8a6009de1251423122ab486d6/sdk/drafts/pattern-sample-locks/PROTOTYPE_HISTORY.md). None of this ownership code or storage is used by 0.1.8.
 
-Emulator base identity:
-`8ffc8ffefe3ecd00ca434fe67ee6e902ea0b359d0f6343a404a5bd3ec4e9c69a`.
-Its local MAIN SHA-256 is
-`025af1b78e27be20bb888427ab7462d352e8d7dbca5cf5c183244509aed94aec`.
+## 0.1.5: lifecycle-dependent ownership, retired
 
-The emulator SHA-256 and exact compiler-output/C/harness fingerprints are in the capture receipts. Native source is checkpointed locally at `4f1eb8cb4eb4a2646fcb551f9b13a2c5be85975c`; no commit has been pushed. This base is a private development base, not the user's currently flashed base. No result below qualifies their physical firmware or audible behavior. DSP execution was disabled in these metadata/UI checks.
+Source `105efaf13cdd7ffc40bc18155ccbdd875f2307be`; package `f9f179e0f5536d3c0727f61df5e79106ff211721c75742646c747e9598b35fc9`. Code/data was 13,980 bytes and BSS 12,692 bytes, with eleven guarded sites plus a private lifecycle contribution. It required a separate unpublished lifecycle base, so it does not satisfy today's independent-module rule.
 
-## Actual software checks
+Host and emulator checks covered retained ownership, same-value manual edits and restoration witnesses. Some old raw-engine save/reload fixtures bypassed native menu callbacks and are not accepted as native user-flow evidence. Later DSP-enabled preparation remained emulator evidence, not physical Keep, audio or reboot evidence. Full details remain in [the retired 0.1.5 report](https://github.com/twwwy/modwerk-beat_slicer/blob/5205cefe8528dbe8a6009de1251423122ab486d6/sdk/drafts/pattern-sample-locks/TESTING-v015.md).
 
-- Node 24.22.1 and `npm ci`: passed in the isolated worktree.
-- `python3 -B verify.py`: passed with `-Wall -Wextra -Werror` and ASan/UBSan.
-- Planner: all 64 stored steps, selected-track isolation, non-SAMPLE preservation, manual protection/replacement, clear on trigless steps, Static/Flex/recorder slot bounds, stale source/origin rejection, mirror mismatch, disjoint targets and single-use confirmation.
-- Ownership storage: fresh-reader recovery, interrupted allocation/edit, CRC corruption, same-value manual invalidation, project identity, foreign-storage refusal, a full 704-record store refusing without mutation, record reuse and guard bounds. A separate regression reads the actual base definitions and checks separation from its log, effect map, crash/stall records and stock settings. A value matching the Part assignment grants no ownership.
-- UI: eight cells/two columns, disabled-track navigation and absent brackets, A/B controls, safe C defaults, per-track counts, YES/NO behavior, white headers/equal spacing, framebuffer bounds and context changes. Running transport cannot commit early; STOP passes through, pending PLAY is consumed, cancellation works, active recorders refuse and STOP times out without editing.
-- Pinned freestanding `m68k-elf-gcc -mcpu=54455` compilation/linking: passed. The object passed `sdk/runtime/m68k_codegen.py`; `m68k-elf-nm -u` found no unresolved helpers.
-- Draft doctor: category, UI claim and declaration cross-compatibility pass. Catalog/publication, package import, native parity and qualification gates remain red. No gates/catalogs were weakened or edited to publish this draft.
+## 0.1.6: remove ownership and the dependency
 
-## Actual native emulator checks
+Package `0cd6c725f6be493ea461b7a54231032416cab3cad77bf3327e644db212848961` removed retained metadata, ownership/history hooks and the lifecycle-base dependency. Lock kept existing SAMPLE locks by default; Clear removed all selected SAMPLE locks, including manual ones. It still stopped playback before editing. Allocation was 8,620 bytes code/data and 6,992 bytes BSS; it used four standard UI hooks and three Part Edit opener sites.
 
-The initial functional candidate (`d831f8c1f6469cd972d5c3d2d3860f067e55d149c2dca315fc34399ef4ef007c`) used normal panel gestures for the utility and transport, and one explicitly labelled native-writer fixture injection for manual locks. It stopped PLAY, wrote the previously unlocked trig, preserved a manual lock, matched the battery mirror and changed no unrelated audio-track bytes. The base effect map and diagnostic-log tag were preserved. A same-value manual SAMPLE writer call retired ownership and default Clear retained that lock. Trial Undo succeeded. `media/capture-origin-seed.json` records this run and the private battery snapshot's digest.
+Portable/native emulator checks covered exact SAMPLE-only writes, mirrors, native Project save/reload, maximum edits and module removal. A fresh stock-only DSP-enabled emulator Project Reload also passed. Actual MKII singleton install/self-test/Undo and the author's reported Lock/Clear/STOP behavior were recorded on base `9b7e0eb3…`. A cached whole-instrument CPU trial peaked at 54.0%; it did not isolate module cost or qualify short spikes. No physical Keep, flash or saved-module reboot lifecycle was tested. Full details remain in [the retired 0.1.6 report](https://github.com/twwwy/modwerk-beat_slicer/blob/5205cefe8528dbe8a6009de1251423122ab486d6/sdk/drafts/pattern-sample-locks/TESTING-v016.md).
 
-The current package passed a fresh-process battery-backed startup test (`media/capture-reboot.json`). It loaded the functional run's battery snapshot, with no retained module BSS, then reloaded the current package through emulated USB. The two native SAMPLE bytes were present. Default Clear removed the owned lock and retained the manual lock; it left playback stopped and preserved unrelated track data. Explicitly disabling Retain manual then cleared the remaining manual lock. Trial Undo succeeded, and the emulator continued running afterward.
+## 0.1.7: native font and direct close
 
-This proves an **emulated battery-backed startup of the same exact build with fresh module BSS**, not physical power retention or automatic module-set restoration. The snapshot SHA-256 is `3e9d707d329f86eecc0ec795c3bbd78ab142537cd4f0b1b624643f181e3a3267`. The snapshot itself stays private.
+Source `4c565528dab2dba6736079cd406b78ec57b2a0b7`; package `372746e634f67590c6b93af832e65c47f2267493cf8aa52753e7ddfb92250bb0`. All three levels switched to the stock font and seven-pixel rows, and successful Apply closed directly. Allocation was 8,956 bytes code/data and 6,992 bytes BSS. The stopped writer and three opener sites were unchanged.
 
-The current package also passed the 512-lock/native-storage run (`media/capture-native.json`):
+Portable sanitizer checks, pinned compilation and exact-image/site attestation passed. DSP-disabled emulator UI/edit/removal tests passed, and registered comparisons of the four stock menu rows found zero differing pixels after contrast normalization. No physical/audible result was claimed. Full details remain in [the retired 0.1.7 report](https://github.com/twwwy/modwerk-beat_slicer/blob/5205cefe8528dbe8a6009de1251423122ab486d6/sdk/drafts/pattern-sample-locks/TESTING-v017.md).
 
-- Injected fixture: all 64 existing sample trigs on each of eight Flex/Static tracks, empty SAMPLE bytes, matching working/battery copies. Injection is explicitly separate from testing the utility UI.
-- Lock through the real menu wrote 512 expected SAMPLE bytes, left playback stopped and preserved every other audio-track byte. The base effect map and diagnostic-log tag were unchanged.
-- Native SAVE PROJECT ran on the stock engine task and completed; the copied card flushed with zero write errors. Native bank reload recovered the saved tracks after a deliberate private fixture change, preserving the compared Part region.
-- Default Clear recovered ownership after that reload and removed all 512 created locks without changing unrelated audio-track bytes.
-- The module was removed while its track-selection overlay was open. All four stock-code sites matched their original guard hashes afterward; native stock bank reload recovered the saved 512 locks with the module absent. The emulator continued running.
+## Early 0.1.8 observations superseded by current evidence
 
-The storage run used **Keep only on the disposable emulator/card copy**, then an accepted empty package with the exact module id to remove it. A long native save can exceed the USB trial's host timeout, so this run is not labelled Undo. Earlier attempts that timed out or used an unready fixture call are not passing evidence. No physical Keep occurred.
+Package `28766a017005e664d00620d3831fc81af7449c95e1896a17121ca8fc2d306d8d` introduced live edits and separate successful-operation RAM profiles. The current DSP-enabled emulator run remains retained because it tests this exact package; it is clearly labelled in TESTING.md.
 
-The declaration compatibility result does not establish audible or runtime coexistence with companion modules.
+The earlier MKII target-only trial on `9b7e0eb3…` passed install/self-test/Undo and restored all eighteen original module records and active/whole-set identities. Its labelled cached baseline averaged 52.84% CPU (51.6–55.1%). A reported 15-change Clear operation had a 56.2% cached maximum near Apply/close. Those windows were not exact operation timing or independent byte/audio checks. No Keep or flash occurred. The [pre-cleanup TESTING.md](https://github.com/twwwy/modwerk-beat_slicer/blob/5205cefe8528dbe8a6009de1251423122ab486d6/sdk/drafts/pattern-sample-locks/TESTING.md) retains all timestamps, scope and links to its earlier raw receipts. Current byte-checked hardware results and finite host completion bounds supersede those averages for the release discussion.
 
-## Reproduction
+## Current design boundary
 
-`translation.c` is freestanding original C. Compile with the pinned toolchain and flags from `sdk/runtime/m68k_codegen.py`, inspect undefined symbols and run the ColdFire object guard before building. `unit.s` is compiler output, not extracted stock code.
-
-Temporarily stage this draft under `sdk/octabam/modules/pattern-sample-locks/`, use `sdk/runtime/loader/build.py --octabam pattern-sample-locks --name 'SAMPLE LOCKS' --upstream <verified elekloader> -o <private output>.mwrm`, and remove the staging copy. Do not put firmware or packages in Git.
-
-`capture_emulator.py` requires an emulator Unix socket and always copies the input card into an output directory outside the repository. Ordinary mode captures the UI and requests trial Undo. `--exercise` runs the manual/created-lock and STOP checks; `--cs1-in <private snapshot>` runs the fresh-start variant. `--stress-save` creates the maximum fixture, keeps the module only on the disposable copy, checks stock engine save/reload and explicitly removes it. `--no-dsp` provides no audio evidence. Do not run hardware/device-bridge tools for these checks.
-
-Receipts contain hashes and observed booleans/counts, never raw project, firmware, card or battery-memory contents. The harness refuses to bind a receipt if its recorded source files change during a run.
-
-## Remaining qualification blockers
-
-- Physical MKII/MKI behavior, physical power cycles, audio continuity, worst-case CPU/stack use and publication-guard interrupt delay are **not tested**. The publication guard masks interrupts; maximum mutation count passing in an emulator does not establish a hardware deadline.
-- Do not use this prototype on hardware yet. Same-value edits made while the module is absent, replacement/reinstall history, every native copy/undo/reload path and other modules' writers still need explicit ownership-lifetime protection. The current record alone cannot establish an unobserved history.
-- The sparse store admits 704 active track/pattern combinations (88 complete eight-track patterns). It never evicts known ownership. Full-capacity refusal is host-tested; new locking refuses before the publication guard. Clearing the last owned lock on a track frees its record.
-- Ownership is local battery material for one project identity, not portable project-file metadata. A different project identity forgets earlier ownership at the next operation. An otherwise changed SAMPLE vector/trig mask conservatively retains the track's unknown locks.
-- Automatic USB module-set boot restore, interrupted real card writes and full companion runtime combinations remain unqualified. Native stock-only card integration is not implemented.
-- Published custom-machine signatures PL/AB/FM/S2 are excluded. Future contributed machines require review. Upstream PLOCKS P2 (outside this catalog) overlaps the battery region and is unsupported.
-- No catalog entry, imported public package, first-release owner review or published download exists. No release qualification is claimed.
-
-## UI capture history
-
-The earlier 0.1.2 layout captures established the agreed headerless six-item Part Edit list, eight visible two-column tracks, greyed-out unsupported machines without brackets, equal eight-pixel spacing and white headers on levels two and three. Those earlier outputs remain in the private capture cache. Current declared layout images were refreshed through a fresh trial of the current package, visually inspected and bound by `media/capture.json`; Undo and continued emulator execution passed. T3 THRU/T7 NEIGHBOR are disabled. A screenshot establishes its actual pixels, not save, audio or reboot behavior.
-
-## Withdrawn candidate and separate checker finding
-
-The local 0.1.3 prototype wrongly reserved stock-unreferenced battery RAM that the Modwerk base already uses for diagnostics and its effect map. It never touched physical hardware. Its compatibility claim is withdrawn; its emulator results do not qualify the corrected build. The 0.1.4 sparse store fits below the base log, has an explicit actual-base regression, and was freshly retested through all runs above. Only corrected-build receipts and images are retained here.
-
-The shared declaration checker did not catch that base battery overlap. A future separate change, **Fix: include base battery reservations in compatibility checks**, would close that gap. No shared checker change or PR is included in this module prototype.
+0.1.8 uses no ownership store, special battery region, custom lifecycle extension or dependency on another module. The three Part Edit opener sites remain its own declared patch while it is the only module using them; a second contributor needs a shared base table first. Keep, complete cost/stack bounds and public card/browser parity remain separate qualification gates. The retired designs grant no exemption and no first-release approval.

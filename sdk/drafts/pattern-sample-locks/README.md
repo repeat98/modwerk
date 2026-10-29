@@ -75,10 +75,13 @@ Original source and UI by twwwy, MIT. Small lettering is reused from twwwy's ori
 
 ## Screens and audio
 
-Screens are labelled hardware or emulator LCD captures. Current MKII results are in [TESTING.md](TESTING.md). The 0.1.7 UI results are archived in [TESTING-v017.md](TESTING-v017.md). The 0.1.6 emulator/hardware/CPU results are historical in [TESTING-v016.md](TESTING-v016.md); ownership results are archived in [TESTING-v015.md](TESTING-v015.md).
+All images below capture exact version 0.1.8. Physical MKII and DSP-enabled emulator captures are labelled separately in the manifest. [TESTING.md](TESTING.md) records their build identities and limits; [PROTOTYPE_HISTORY.md](PROTOTYPE_HISTORY.md) consolidates retired versions. No audio recording is supplied.
 
-![Part Edit actions](media/v017-part-menu.png)
-![Lock selection](media/v017-lock-tracks.png)
-![Clear all selected SAMPLE locks](media/v017-clear-all-selected.png)
-
-![Live 512-lock confirmation, actual MKII 0.1.8](media/v018-mkii-live512-confirm.png)
+![Part Edit, actual MKII](media/mkii-part-menu.png)
+![Lock selection and replacement, actual MKII](media/mkii-lock-replace-on.png)
+![Clear selection, 0.1.8 emulator](media/live-removal-open-tracks.png)
+![T1 Lock confirmation, 0.1.8 emulator](media/live-lock-confirm.png)
+![T1 Clear confirmation, 0.1.8 emulator](media/live-clear-confirm.png)
+![Maximum Lock confirmation, actual MKII](media/v018-mkii-live512-confirm.png)
+![Maximum replacement confirmation, 0.1.8 emulator](media/live-512-lock-confirm.png)
+![Maximum Clear confirmation, 0.1.8 emulator](media/live-512-clear-confirm.png)
