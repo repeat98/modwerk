@@ -55,6 +55,12 @@ for(const machine of machineProfiles.filter(profile=>profile.sdk?.platform==='el
   if(core){const events=new Set(core.events.map(event=>event.name)),tables=new Set([...core.tables.map(table=>table.name),...dependencyCollections(document,build,dependencies)])
    for(const entry of build.subscribe)if(!events.has(entry.event)&&!tables.has(entry.event))throw new Error(label+': '+entry.event+' is not an event of the '+machine.name+' core interface '+core.interface)
    for(const entry of build.contribute)if(!events.has(entry.to)&&!tables.has(entry.to))throw new Error(label+': '+entry.to+' is not a table of the '+machine.name+' core interface '+core.interface)}
+  // A send effect on the Rytm base takes one id from the machine's registry, and its record carries that id.
+  if(build.contribute.some(entry=>entry.to==='mw_fx')){
+   const ids=Object.entries((await json(resolve(root,'sdk/machines',machine.id,'fx-ids.json'))).ids).filter(([,id])=>id===document.id).map(([n])=>Number(n))
+   const said=(await Promise.all(build.sources.map(async path=>readFile(await file(folder,path),'utf8')))).join('\n').match(/MW_FX_ABI,\s*\d+/g)?.map(text=>Number(text.split(',')[1]))??[]
+   if(ids.length!==1||!(ids[0]>=1&&ids[0]<=63)||said.length!==1||said[0]!==ids[0])throw new Error(label+': a send effect takes one id, 1 to 63, from sdk/machines/'+machine.id+'/fx-ids.json, and its record (MW_FX_ABI, id, ...) carries it')
+  }
   const media=document.media.map(item=>item.path),reports=document.evidence.reports
   for(const path of ['README.md',document.tests.report,document.license.file,...build.sources,...media,...reports])await readFile(await file(folder,path)).catch(()=>{throw new Error(label+': missing '+path)})
   await requireModwerkDocumentation(folder,document)

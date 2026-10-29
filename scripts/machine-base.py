@@ -10,8 +10,10 @@ sdk/machines/<id>/elekloader/base.json names the core folder beside it (mod.json
 headers, the OS and the reviewed toolchain (sdk/build/Dockerfile's GCC and binutils for m68k-elf). The SDK is the
 kit-pinned Elekloader checkout (npm run upstream:tools), run with Modwerk's codec (firmware_codec.use_elekloader), so
 this build and the browser's kit cannot drift apart.
-The base is built in a temporary tree outside Git and compared with the upstream release it started from: the
-fields base.json lists under reference.same must match. It is identified by the SHA-256 of its package, recorded
+Modwerk's own sources, sites and tables are base.json's add, merged into the staged mod.json, so the imported files
+stay exact; a site names its stock bytes by length and SHA-256, filled from the user's OS. The base is built in a
+temporary tree outside Git and checked against the upstream release it started from: it must keep every item of
+the fields base.json lists under reference.keeps. It is identified by the SHA-256 of its package, recorded
 in sdk/machines/<id>/base-binding.json; without --write a different identity fails. The stock OS is read where it
 lies and never copied into the repository.
 """
@@ -84,9 +86,48 @@ def check_toolchain(toolchain):
                          % (cross, toolchain['binutils'], (asm.stdout.splitlines() or ['none'])[0]))
 
 
-def stage(machine, config, root):
+LISTS = ('sources', 'cflags', 'sites', 'subscribe', 'contribute', 'storage', 'weak', 'copied', 'requires', 'conflicts')
+DICTS = ('defsym', 'collections')
+
+
+def merge(mod, add, sites):
+    """mod.json with Modwerk's additions (base.json's add) after the imported recipe's own: lists extended,
+    names added but never redefined. `sites` are add's sites with their stock bytes resolved."""
+    for key, value in add.items():
+        if key in LISTS:
+            mod[key] = list(mod.get(key, [])) + list(sites if key == 'sites' else value)
+        elif key in DICTS:
+            merged = dict(mod.get(key, {}))
+            for name, item in value.items():
+                if name in merged and merged[name] != item:
+                    raise ValueError('base.json add: %s %s is already defined by the core.' % (key, name))
+                merged[name] = item
+            mod[key] = merged
+        else:
+            raise ValueError('base.json add: %s is not something a base adds.' % key)
+    return mod
+
+
+def stock_sites(sites, stock):
+    """Modwerk's sites name the stock bytes they replace by length and SHA-256, as Modwerk's modules do, so the
+    repository holds none; the user's OS supplies them, checked against the hash."""
+    from elekloader import formats
+    parsed, dev, _ = formats.load(str(stock))
+    image = formats.main_image(parsed, dev)
+    resolved = []
+    for site in sites:
+        at = int(site['addr'], 16) - dev.main_load
+        data = bytes(image[at:at + site['len']])
+        if len(data) != site['len'] or sha(data) != site['stockSha256']:
+            raise ValueError('Site %s: your OS does not hold the bytes base.json guards.' % site['addr'])
+        resolved.append(dict({k: v for k, v in site.items() if k not in ('len', 'stockSha256')}, stock=data.hex()))
+    return resolved
+
+
+def stage(machine, config, root, sites=None):
     """The core folder and its sibling sources as mod.json expects them, with the SDK headers beside mod.json
-    (the SDK compiles with -I on the mod's own folder first)."""
+    (the SDK compiles with -I on the mod's own folder first), and base.json's additions merged into the staged
+    mod.json, so the imported files stay exact. Without `sites` (no stock OS at hand) the sites are left out."""
     source = APP / 'sdk/machines' / machine / 'elekloader'
     mods = root / 'mods'
     for item in source.iterdir():
@@ -95,12 +136,34 @@ def stage(machine, config, root):
     core = mods / config['core']
     for item in (APP / config['include']).iterdir():
         shutil.copytree(item, core / item.name)
+    add = dict(config.get('add', {}))
+    if sites is None:
+        add.pop('sites', None)
+    if add:
+        recipe = core / 'mod.json'
+        recipe.write_text(json.dumps(merge(json.loads(recipe.read_text()), add, sites or []), indent=1) + '\n')
     return core
 
 
-def compare(built, reference, same):
-    """The reference fields that differ between the built package and the release it started from."""
-    return [key for key in same if json.dumps(built.get(key), sort_keys=True) != json.dumps(reference.get(key), sort_keys=True)]
+def keeps(built, reference, keys):
+    """The reference fields the built package does not keep: a list must still hold every item of the release it
+    started from, a mapping every name with its value (the build record's sources among them), anything else must
+    be equal. Modwerk's additions come on top."""
+    missing = []
+    for key in keys:
+        have, want = built.get(key), reference.get(key)
+        if isinstance(want, list):
+            held = {json.dumps(item, sort_keys=True) for item in have or []}
+            ok = all(json.dumps(item, sort_keys=True) in held for item in want)
+        elif isinstance(want, dict):
+            ok = isinstance(have, dict) and all(
+                keeps(have, want, [name]) == [] if isinstance(value, (dict, list)) else have.get(name) == value
+                for name, value in want.items())
+        else:
+            ok = have == want
+        if not ok:
+            missing.append(key)
+    return missing
 
 
 def sizes(package):
@@ -120,9 +183,10 @@ def build(machine, stock, upstream, out):
     firmware_codec.use_elekloader(upstream)
     from elekloader.sdk import build as sdk
     os.environ['ELEKLOADER_CROSS'] = config['toolchain']['cross']
+    sites = stock_sites(config.get('add', {}).get('sites', []), stock)
     with tempfile.TemporaryDirectory(prefix='modwerk-base-') as work:
         root = Path(work)
-        core = stage(machine, config, root)
+        core = stage(machine, config, root, sites)
         try:
             sdk.build(str(core), str(stock), str(root / 'out'))
         except sdk.BuildError as error:
@@ -135,10 +199,10 @@ def build(machine, stock, upstream, out):
             out.mkdir(parents=True)
             shutil.copyfile(packages[0], out / packages[0].name)
     package = json.loads(data)
-    differ = compare(package, json.loads(reference_bytes), reference['same'])
-    if differ:
-        raise ValueError('The base differs from %s in %s, which base.json says must match.'
-                         % (reference['file'], ', '.join(differ)))
+    missing = keeps(package, json.loads(reference_bytes), reference['keeps'])
+    if missing:
+        raise ValueError('The base no longer keeps all of %s in %s, as base.json says it must.'
+                         % (reference['file'], ', '.join(missing)))
     return {
         'schema': 1,
         'identity': sha(data),

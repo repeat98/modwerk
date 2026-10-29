@@ -24,7 +24,7 @@
 #define SIG 60u
 #define FLEX_PAGE 0x400d31aeu
 #define STATIC_PAGE 0x400d301cu
-#define ROWS 9u                              /* five stock machines and up to four contributed */
+#define ROWS 13u                             /* five stock machines and up to eight contributed (ot_machines' room) */
 typedef volatile uint8_t Part;
 typedef struct modwerk_machine Machine;
 #define MACHINES (MODWERK_OT_MACHINES - RUNTIME_EVENTS)
@@ -129,8 +129,11 @@ static unsigned owner(const Machine *const *m, unsigned n, const Part *part, uns
  * restore (0x40025770) validates the battery-backed Part copies seconds before the saved set reinstalls the machines
  * (modset.c), and refuses the whole restore at the first value it has to fix. The bank is then never filled nor
  * applied (0x40009094): every Part reads STATIC with stock defaults, no track is ever bound and the unit is silent
- * (beta finding 24). An absent machine's track renders stock's silent source, never stock FLEX reading its bytes. */
-static const struct { uint8_t sig[2], lo, hi; } known[] = {{{'A', 'B'}, 1, 1}, {{'F', 'M'}, 1, 1}};
+ * (beta finding 24). An absent machine's track renders stock's silent source, never stock FLEX reading its bytes.
+ * A native machine module (not a port) is listed by name, never by a pattern: a FLEX track whose NEIGHBOR bytes
+ * merely looked like a signature would go silent. WV 1-15: SYNTIZ (sdk/drafts/syntiz), its model in the version
+ * byte (six used, the rest kept for more). */
+static const struct { uint8_t sig[2], lo, hi; } known[] = {{{'A', 'B'}, 1, 1}, {{'F', 'M'}, 1, 1}, {{'W', 'V'}, 1, 15}};
 static unsigned orphan(const Part *part, unsigned t)
 {
     if (t >= 8 || part[0x22 + t] > 1) return 0;

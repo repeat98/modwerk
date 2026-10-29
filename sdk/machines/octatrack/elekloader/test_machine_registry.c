@@ -66,7 +66,7 @@ volatile uint32_t modwerk_machine_assigned; /* controller_board.c's, not linked 
 /* The loader's owner of an address: here the module id is the machine's first letter. */
 int modwerk_runtime_owner_at(uintptr_t address, struct runtime_owner *o)
 { const struct modwerk_machine *m = (const void *)address; memset(o, 0, sizeof *o); o->module = m->sig[0]; return 1; }
-static uintptr_t volatile machine_row[5], sequencer_row[9];
+static uintptr_t volatile machine_row[10], sequencer_row[9];
 static int masked;
 uint32_t modwerk_machine_mask(void) { CHECK(!masked); masked = 1; return 7; }
 void modwerk_machine_unmask(uint32_t s) { CHECK(masked && s == 7); masked = 0; }
@@ -151,7 +151,7 @@ static const struct { uint32_t count; struct modwerk_sequencer_row row[3]; } FMQ
     QZ = {3, {{"SCALE", (void *)1, 0}, {"ROOT", (void *)1, 0}, {"GLIDE", (void *)1, 0}}}, MORE = {1, {{"SWING", 0, 0}}};
 static void rows(const void *const *m, unsigned n, const void *const *s, unsigned k)
 {
-    for (unsigned i = 0; i < 5; ++i) machine_row[i] = i < n ? (uintptr_t)m[i] : 0;
+    for (unsigned i = 0; i < 10; ++i) machine_row[i] = i < n ? (uintptr_t)m[i] : 0;
     for (unsigned i = 0; i < 9; ++i) sequencer_row[i] = i < k ? (uintptr_t)s[i] : 0;
     masked = 1; modwerk_machine_tables_changed(); masked = 0;
 }
@@ -194,6 +194,16 @@ int main(void)
     CHECK(counts_now() == (5u << 24 | 5u << 16 | 4u << 8 | 3u) && clamp_now() == 5);
     CHECK((uintptr_t)mw_name(5) == 0x1001u && mw_type(1, slot(2)) == 1 && mw_assign(part0(), 2, 1) == 1);
     CHECK(mw_source_render_impl(2, 0, 0, 1) == -7 && stock_renders == 1);
+
+    /* Eight machines fill rows 5-12, the last row the cursor reaches; a ninth in the table is not read (ROWS 13). */
+    static const char *const many_names[9] = {"M1", "M2", "M3", "M4", "M5", "M6", "M7", "M8", "M9"};
+    static struct modwerk_machine many[9]; const void *many_rows[9];
+    for (unsigned i = 0; i < 9; ++i)
+        many[i] = (struct modwerk_machine){.abi = MODWERK_MACHINE_ABI, .sig = {'M', (uint8_t)('1' + i)}, .sig_lo = 1, .sig_hi = 1,
+                                           .label = many_names[i]}, many_rows[i] = &many[i];
+    rows(many_rows, 9, 0, 0);
+    CHECK(counts_now() == (13u << 24 | 13u << 16 | 12u << 8 | 3u) && clamp_now() == 12);
+    CHECK(!strcmp(mw_name(5), "M1") && !strcmp(mw_name(12), "M8") && (uintptr_t)mw_name(13) == 0x1001u);
 
     /* A, V, F in row order 5, 6, 7: counts follow, names and pages by row. */
     const void *avf[] = {&A, &V, &F};
