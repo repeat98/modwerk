@@ -9,6 +9,7 @@ description: Review Modwerk's open pull requests, answer their authors where som
 
 1. **Review** each by the pull request worker's checklist in `docs/MAINTENANCE.md#pull-request-worker`:
    - read the code it touches, not only the diff;
+   - judge it against `MODDING_GUIDELINES.md` and the whole stack: the base, the USB lifecycle, module splits, cross-compatibility and, for a machine, the recipe (the checklist names each);
    - the rules contributions most often break;
    - claims that cut across pull requests;
    - red checks, and whose fault they are;

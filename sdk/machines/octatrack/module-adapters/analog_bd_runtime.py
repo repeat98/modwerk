@@ -12,11 +12,11 @@ import subprocess
 
 PINS = {
     'manifest.py': '20fa1f744630354b3986a3ad82ac6a41744345796dc783891a4c9f0bd81c787e',
-    'control.c': '29f392c7e007aaa695076eff0c897729a941676ff582e4bb17957074d56ceac5',
-    'control.s': '644f10fbc534d8351424e55ee96c2d0ff2f39a1b691ad8a695422d1c05e37a3f',
+    'control.c': '56e96e79f7f279d17b1919ea2f50af0a3d8c4a052df919fc20ecd05f094cfb38',
+    'control.s': '463dacf528e4996c7f21e97533391583329a2e3aabda95c87b7cd020dee7adb6',
     'engine.h': '61bc45ef955db23b8f25eb5b0c6bd3dd01d9f71df7933d466845bb30e7c67a2b',
-    'engine.s': 'c86a6ac24326fb52f71dd766b1ccc25e5dfd8511028b162459447c279da48425',
-    'machine.s': '90f9ddb5c2a4cee47e0334c3cd35a7e92d42b0ee37eb3bbc8062cc7821e6aeb4',
+    'engine.s': 'a6ff5f2fe90dbe5570512bbe54dede4c8c8f86c4ef4656fce4c57a9b600c4805',
+    'machine.s': 'a33e4d36da6a14e7e856c7c7088be2820a40c7fb7014917983c729931eed55a3',
 }
 
 
@@ -27,6 +27,8 @@ def control_source(original):
         ('U32(0x400d5f38u+5*4)=page_for(0); return;', '(void)page_for(0); return;'),
         ('U32(0x400d5f38u+5*4)=ab_track_page(part+0x22+(U8(0x100b14ccu)&7));',
          '(void)ab_track_page(part+0x22+(U8(0x100b14ccu)&7));'),
+        # The base opens a pool-less machine's track window on its machine list (mw_chooser_column).
+        ('#define AB_CARD_WINDOW 1', '#define AB_CARD_WINDOW 0'),
     )
     for before, after in seams:
         if original.count(before) != 1:

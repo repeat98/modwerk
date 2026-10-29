@@ -68,7 +68,7 @@ describe('reviewed imports with verified loader-free composition', () => {
     expect(parseSelection(JSON.stringify(selection)).moduleIds).toEqual(imported)
     expect(selection.modules.find(module => module.id === 'midi-scenes')?.version).toBe('0.2.5-experimental')
     for (const id of verified) {
-      expect(selection.modules.find(module => module.id === id)?.version).toBe(id === 'usb-audio-out-tracks-main-cue' ? '0.2.0-experimental' : id === 'analog-bassdrum' ? '0.1.5-experimental' : id === 'quantizer' ? '0.1.3-experimental' : '0.1.2-experimental')
+      expect(selection.modules.find(module => module.id === id)?.version).toBe(id === 'usb-audio-out-tracks-main-cue' ? '0.2.0-experimental' : id === 'analog-bassdrum' ? '0.1.6-experimental' : id === 'quantizer' ? '0.1.3-experimental' : '0.1.2-experimental')
     }
   })
 

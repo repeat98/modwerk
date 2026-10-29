@@ -23,7 +23,9 @@ and keep the official firmware and backups available.
 ## 0. What you need
 
 - An Octatrack on OS 1.40C. Elektron's MKI and MKII download pages serve
-  the byte-identical file (SHA256 `370c55a3…`, compared 19 Aug 2026).
+  the byte-identical firmware (compared 19 Aug 2026; `OCTATRACK_OS1.40C.bin`
+  SHA256 `34695b60…`, `.syx` `0a8d2d2b…`). The zip's own hash changed when Elektron added an
+  EULA to it on 28 Oct 2026 (before: `370c55a3…`); the files inside did not.
   octabam's own effects have only been tested on an MKII; the DRAM platform
   has run on an MKI (octalab, 11 Sep 2026) and on midisc's author's unit
   (`ok-ms`, 14 Sep 2026). The updater's error −5 "MK1 not allowed" compares

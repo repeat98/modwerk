@@ -575,6 +575,10 @@ export class OctatrackLink {
         this.live(connection)
         await this.whenStopped(() => session.stage({ base, data, sha256: sha(data) }, { signal, progress: (done, total) => progress(done / total) }))
         await then(session)
+        // A publication makes what it sent the unit's active digest (upload.c mu_publish), a base's container as well.
+        // A base that saves itself runs on without the restart whose HELLO would read it again, so take it from this
+        // session: else the first sync after the update, planned against the old digest, is refused as another tab's.
+        if (connection === this.connection && session.status.activeKnown && session.status.active !== this.state.active) this.set({ ...this.state, active: session.status.active })
       } finally { await this.release() }
     })
   }

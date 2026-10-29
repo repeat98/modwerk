@@ -136,6 +136,7 @@ The supported UI keys also include `SCENE B`, `TRIG1`–`TRIG16`, MKII `AED`,
 `MIXER` opens the MIXER page.
 Kit/pattern workflows also support `CUE`, `PTN`, `BANK`, `REC` (copy),
 `PLAY` (clear) and `STOP` (paste); hold FUNC for clipboard actions.
+Stock clears a message box (TEMP SAVED, ARM ALL) when FUNC is released: for a FUNC gesture, `hold` FUNC, `press` the key, capture within about 20 ms and `release` after it.
 
 Example effect plan:
 
@@ -202,6 +203,19 @@ build/capture commands, configuration and limitations in TESTING.md. Capture
 records must contain no firmware bytes, raw LCD/RAM dumps, card images, samples,
 personal project names, credentials or private emulator logs. Temporary card
 and framebuffer data are removed by the script.
+
+### Driving ot_emu by hand
+
+`ot_emu --interactive` answers one line a command on stdin; a session script (WAVE's draft,
+`sdk/drafts/wave/tools/emu_session.py`) can then install a USB package over `--usb-host` with
+`npm run device -- try FILE --emulator --socket SOCK`. What it takes:
+- `key ROW MASK` pushes the panel link's two bytes as they are, so ROW is the frame's header `0x20 | row`
+  (key code `row * 8 + bit`), and `knob` takes `0x30 | encoder` (A-F = 0-5). A bare row number does nothing.
+- `--frame` is needed for a machine to render; `--mkii` opens SET DATE/TIME on a never-set clock (YES clears it).
+- `peek` answers `peek HEX`, not `ok`. `audio start tracks` adds each track's stem to the capture (T1 L is the
+  ninth of 24 words a frame).
+- Without `--dsp` a session runs about ten times faster, for screens only (the firmware then shows DSP LOAD
+  FAILED). Card samples do not play faithfully under the port, so compare levels against a sample on a unit.
 
 ## Rights and release review
 

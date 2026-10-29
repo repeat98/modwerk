@@ -1,3 +1,50 @@
+# Analog BD 0.1.6 — TYPE and FIXD switches
+
+Current as of 28 October 2026. This pull request now publishes package `f83c7f81` on beta base `6483508a`, rebuilt after `main` took #943 and new bases (#1017, #1026, #1030); the module source is the one tested on 27 October as package `a2def725` on base `64ce4825` (below), and only the base link differs. This rebuild is not yet tested on hardware; every result below names the build it ran on.
+
+## What changed and how it was checked (software)
+
+- **SETUP layout.** TYPE (slot 6), FIXD (7), ACNT (8) above LOW (9), HIGH (10), LPF (11). TYPE and FIXD reuse stock's AMP SETUP SYNC mechanism, read from the local OS's descriptor: count 2, switch widget `0x40046f10`, no handler of their own. FIXD also takes SYNC's own OFF/ON words; TYPE has its own 808/909 formatter. Slot 6 is the model byte the engine browser edited, so the 808/909 choice and the default (808) are kept. The page follows the model each UI tick.
+- **LPF.** Its tables are rotated so 0..126 run 500 Hz to 18 kHz (ORIG at 63) and 127, the default, is OFF (0.1.5's default was 18 kHz). `dsp_host` renders of the 52 scenarios with each old setting moved to its new slot (LPF value v -> v-1, 0 -> 127) are identical to 0.1.5's.
+- **FIXD, both models.** 909 (`bd909.asm` zq06, at each trig): ON fixes the click strength at `KPBASE` (0.96) and restarts the noise LCG from `SEED`; OFF runs the 0.1.5 instructions behind one test and branch. With FIXD ON the four hits of a render differ by at most 0.0006 of full scale over the first 3000 samples (filter histories carry over; about -64 dB), against 0.008-0.033 with FIXD OFF. 808: FIXD OFF is new, one LCG step per hit scales the trigger transient (PC, PS, DC) by 1 + 0.04 * white; FIXD ON is bit-identical to the 0.1.5 808. The float models match the DSP at -75.7 dB (909 OFF), -75.2 dB (909 ON) and -100 dB (808).
+- **FIXD's stored byte.** The ColdFire record sends FIXD as ON only when the byte is 1. A 0.1.5 track holds its ACCNT (0-127) in this slot, so until FIXD is set again it plays OFF, on every track; any nonzero accent no longer reads as ON. On the selected track the UI tick also puts TYPE or FIXD bytes outside 0/1 back in range (TYPE to 909, as the DSP played any nonzero byte; FIXD to OFF) in both Part copies, the live controls and the stock editor's dirty flags.
+- **0.1.5 projects are not converted.** ACNT, LPF and FIXD moved slots, and there is no signature change or rewrite: a 0.1.5 track loads its old LPF byte as ACNT (127 by default), the old hidden slot's 0 as LPF (500 Hz) and FIXD OFF. README says to set them again.
+- **HIGH.** The base's SRC SETUP editor hook (`machine_registry.s`) left encoder E read-only for every module machine, which is Analog BD's HIGH since the base took over the machine hooks (#585). Analog BD sets the base flag `SETUP_ALL` (repeat98/modwerk#943). The card build edits every slot.
+- **Double tap.** Analog BD has no pool and sets the base flag `LIST`, so over USB the base opens the track's window on the machine list (`mw_chooser_column`, 0x400788c4), as for PICKUP. Card builds keep the module's own handling: it opens the window about 200 ms (12 UI ticks) after the double tap and keeps it on the machine column, because a key release reaching an open window returns stock to the (empty) pool column of the FLEX track underneath. RIGHT on the Analog BD row does nothing. `ot_emu` (card build): the double tap shows SELECT MACHINE TYPE with ANALOG BD highlighted; T2's double tap then T1 shows the machine list; FLEX + RIGHT still opens FLEX's pool.
+- **The engine browser** is not opened any more. Its code stays compiled, unreachable after `if(1) return;` in `ab_engine_open` (commented there), because the card build's list hooks and the CF verifier still name its symbols.
+- **SRC SETUP preview.** While the track is still FLEX, TYPE's slot holds FLEX's LOOP byte; the preview always uses the 808 page (the default after assignment). In the preview the TYPE switch can still read 909 until YES.
+- **DSP efficiency, bit-identical.** Both engines are rescheduled without changing a result: the desk skips its three SAT table interpolations once SAT has settled, immediate loads ride in the parallel-move slot of the ALU instruction before them, `tfr` with a parallel immediate replaces a register copy plus a load, and the VCO phase, the pulse HP and the biquad histories stay in registers. `dsp_host`, 52 scenarios (26 per engine, 1.2 s each: defaults, every control at both extremes, FIXD ON, SAT steps, ramps and random jitter, random automation, retriggers at random offsets): every output sample identical to the previous build. Executed instructions per 16-sample block (emulator count, not chip cycles): 909 peak 6534 -> 5999 (about -8 %), mean 6488 -> 5519 (about -15 %); 808 peak 4260 -> 4034 (about -5 %), mean 3979 -> 3345 (about -16 %). The declared DSP price (411 per voice) is unchanged: it comes from 0.1.5's full-chain emulator measurement, which was not repeated, so it now over-states the cost and gives no voice more room.
+- **P words.** Resident engine 1009 per core (998 in 0.1.5): -26 from the rescheduling, +37 for the FIXD tests and the 808's per-hit variation (one LCG state word in the 808 voice block, which had it free). The card build's combined glue and engines: 1008 (997 in 0.1.5).
+- **Exact render.** `exact-render.json` holds 0.1.6's 16 audio and state hashes (`verify_analog_bd_exact.py` passes). The pins it replaced were already stale on `main`; 0.1.6's own changes are the 808's per-hit variation (FIXD OFF in the default, minimum and automation cases) and the new slot meanings (the `maximum` case now has FIXD ON and LPF OFF). `tools/harness/bd909.py` is a pinned infrastructure import and stays byte-identical, so its patches keep the 0.1.5 slot order.
+
+## Hardware (MKII, reported by npp1993)
+
+- 27 October, this build: base `64ce4825` RAM-booted over USB, Analog BD `a2def725` kept, self-test passed (1/1). Then flashed as part of a personal base `5afa623e` (this branch plus a separate base fix for FLEX switching, not in this pull request) with 13 other modules: self-test passed (14/14 intact, 9 DSP effects together, cores 77 % / 80 %), and after a power cycle the unit started from that slot and reloaded all 14. Observed: SRC SETUP reads TYPE FIXD ACNT / LOW HIGH LPF with 4-letter labels; TYPE flips 808/909 live; FIXD shows and switches on both models; encoder E moves HIGH; LOW and LPF move, LPF reads OFF fully clockwise; the double tap opens the machine list at once with no flicker. On the flashed personal base, later the same evening: T2's window switched to T1 shows the machine list, and a double tap on a FLEX and on a STATIC track opens their pools.
+- Known base limits seen in the same run, not caused by this module: switching a track FLEX → Analog BD → FLEX left the old machine's live parameters until SOURCE CLEAR (a base fix on its own branch); right after a boot, Analog BD stays silent if PLAY is pressed before its engine is placed, which happens only while stopped (`docs/OCTATRACK_RESIDENT_ENGINES_ON_DEMAND.md`, "What this costs"; a base fix is planned separately).
+
+- 25 October, RAM-booted base `7346a1f5`, Analog BD `fbc09d07`: the SETUP order, LPF direction and default, 4-letter labels, TYPE flipping live, save/reload of every value and SOURCE CLEAR (LPF back to OFF) work. HIGH did not move; the double tap flickered from the main page and showed an empty page when the window was switched to the Analog BD track from another track. Both were fixed afterwards (HIGH and Double tap, above).
+- Later RAM boots: base `1e022103` (FIXD shows at once, T2 -> T1 shows the machine list, the direct double tap still flickered); base `89b8226d` (no flicker, but the window came up a little later than on stock machines).
+- 26 October, flashed base `9976a5e8`, Analog BD `dfcb89a1`, 13 other modules kept: the layout and labels, TYPE flips live, FIXD shows on both models, HIGH moves, LPF OFF fully clockwise and at SOURCE CLEAR, save/reload keeps every SETUP value, the double tap opens the machine list at once with no flicker, T2 -> T1 shows the list, and the 14-module set survives a power cycle.
+
+## DSP load on the chip (MKII, 27 October)
+
+Development twins of the two bases (`--dev`, identical but for Analog BD's trust row: #944's with 0.1.6 `462af6b8`, #943's with 0.1.5 `c03c9a5b`), RAM-booted. A blank project, one Analog BD voice on T1 (core 1), a trig on all 16 steps at 120 BPM, playing; the same settings on both (ACNT 64, LOW/HIGH 64, LPF 18 kHz, FIXD OFF). Twelve readings of the base's per-core meter (`stats`, per mille of core 1, idle-pass based) one second apart after 3 s of play; medians. One voice because the base refused a second (DSP FULL, +23 %).
+
+| | 0.1.5 | 0.1.6 | change |
+|---|---|---|---|
+| 909, mean | 545 (+141 over the empty track's 404) | 508 (+104) | -26 % |
+| 808, mean | 495 (+91) | 476 (+72) | -21 % |
+| 909, peak | 554 (+142 over 412) | 529 (+117) | -18 % |
+| 808, peak | 506 (+94) | 487 (+75) | -20 % |
+
+So one voice loads its core about a fifth to a quarter less than in 0.1.5 on the chip, more than the emulator count (about 15 % fewer executed instructions on average). Limits: one voice on one core, knobs still, the base's idle-pass meter rather than a cycle counter; the 0.1.6 808 includes its per-hit variation. The declared price (411 per voice) is unchanged.
+
+## Not tested
+
+- Loading a project saved with 0.1.5 on the unit (808/909 kept, FIXD OFF before a track is selected, ACNT/LPF as README says, save and reload): no such project was at hand. There is no migration; this would check the documented behaviour.
+- A null test of FIXD OFF (909) or FIXD ON (808) against 0.1.5 on the unit.
+- Chip cycles per instruction and full-chain loads with several voices.
+
 # Analog BD 0.1.5 — FLEX restore regression
 
 Date: 9 October 2026. Tester and approving owner: repeat98 (Jannik Aßfalg).
