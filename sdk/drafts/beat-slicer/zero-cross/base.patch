@@ -2,51 +2,24 @@ diff --git a/sdk/machines/octatrack/elekloader/build_core.py b/sdk/machines/octa
 index 17538f73..eadb7ff5 100644
 --- a/sdk/machines/octatrack/elekloader/build_core.py
 +++ b/sdk/machines/octatrack/elekloader/build_core.py
-@@ -41,7 +41,7 @@ MACHINE_TRUST_SOURCES = ('machine_admission.c', 'machine_admission.h',
-     'table_admission.c', 'table_admission.h', 'table_declarations.c', 'table_declarations.h',
-     'machine_contributors.c', 'machine_contributors.h',
-     'sample_editor_actions.c', 'sample_editor_actions.h')
+@@ -44 +44 @@ MACHINE_TRUST_SOURCES = ('machine_admission.c', 'machine_admission.h',
 -SAMPLE_EDITOR_SOURCES = ('sample_editor_service.c', 'sample_editor_service.h',
 +SAMPLE_EDITOR_SOURCES = ('sample_editor_service.c', 'sample_editor_service.h', 'sample_editor_snap.h',
-     'sample_editor_board.c', 'sample_editor_board.h', 'sample_editor_menu.c', 'sample_editor_hooks.s')
- RETIREMENT_SOURCES = tuple('analog-bd-parts/' + n for n in ('analog_bd_part_restore.c', 'analog_bd_part_restore.h',
-                                                           'analog_bd_part_board.c', 'analog_bd_part_board.h'))
-@@ -2151,7 +2151,8 @@ modwerk_retained_end:
-         recipe['cflags'].append('-DMODWERK_SAMPLE_EDITOR')
-         recipe['sources'].append('sample_editor_hooks.s')
-         recipe['subscribe'] += [dict(event='ev_tick', fn='mw_sample_ui_tick', order=89),
+@@ -2154 +2154,2 @@ modwerk_retained_end:
 -                                dict(event='ev_key', fn='mw_sample_ui_key', order=87)]
 +                                dict(event='ev_key', fn='mw_sample_ui_key', order=87),
 +                                dict(event='ev_enc', fn='mw_sample_ui_enc', order=87)]
-     recipe['subscribe'].append(dict(event='ev_draw', fn='modwerk_boot_draw', order=10))  # boot_anim.c, while it runs
-     # The host time limit counts on the same tick (ep0.c).
-     recipe['subscribe'].append(dict(event='ev_tick', fn='modwerk_ep0_tick', order=91))
 diff --git a/sdk/machines/octatrack/include/modwerk_sample_editor.h b/sdk/machines/octatrack/include/modwerk_sample_editor.h
 index c5f4b76a..12de0307 100644
 --- a/sdk/machines/octatrack/include/modwerk_sample_editor.h
 +++ b/sdk/machines/octatrack/include/modwerk_sample_editor.h
-@@ -6,6 +6,7 @@
- #ifndef MODWERK_SAMPLE_EDITOR_H
- #define MODWERK_SAMPLE_EDITOR_H
- #include <stdint.h>
+@@ -8,0 +9 @@
 +#include <stddef.h>
- #define MODWERK_SAMPLE_EDITOR_ABI 1u
- #define MODWERK_SAMPLE_EDITOR_SLICES 64u
- #define MODWERK_SAMPLE_ACTION_BYTES 64u
-@@ -15,7 +16,8 @@ enum modwerk_sample_reply {
-     MODWERK_SAMPLE_OK, MODWERK_SAMPLE_BUSY, MODWERK_SAMPLE_STALE,
-     MODWERK_SAMPLE_UNSUPPORTED, MODWERK_SAMPLE_INVALID,
-     MODWERK_SAMPLE_PRESERVATION, MODWERK_SAMPLE_CONFIRMING,
+@@ -18 +19,2 @@ enum modwerk_sample_reply {
 -    MODWERK_SAMPLE_APPLIED, MODWERK_SAMPLE_NO_CHANGE, MODWERK_SAMPLE_FAULT
 +    MODWERK_SAMPLE_APPLIED, MODWERK_SAMPLE_NO_CHANGE, MODWERK_SAMPLE_FAULT,
 +    MODWERK_SAMPLE_ANALYZING, MODWERK_SAMPLE_ANALYSIS_FAILED, MODWERK_SAMPLE_ANALYSIS_LIMIT
- };
- struct modwerk_slice_record { uint32_t start, end, loop; };
- struct modwerk_sample_view {
-@@ -49,6 +51,21 @@ struct modwerk_sample_editor_api {
-      * confirm() above offers preservation-only edits. */
-     unsigned (*replace)(uint32_t token, const struct modwerk_sample_grid *);
- };
+@@ -51,0 +54,15 @@ struct modwerk_sample_editor_api {
 +/* Keep the ABI-1 prefix type and sizeof unchanged for existing source builds. */
 +struct modwerk_sample_editor_options_api {
 +    struct modwerk_sample_editor_api base;
@@ -62,56 +35,26 @@ index c5f4b76a..12de0307 100644
 +#define MODWERK_SAMPLE_EDITOR_V1_BYTES sizeof(struct modwerk_sample_editor_api)
 +#define MODWERK_SAMPLE_SNAP_ZERO 1u
 +#define MODWERK_SAMPLE_EDITOR_HAS_OPTIONS 1
- /* One typed contribution to the proposed base-owned action table. The record
-  * is 64 bytes and four-byte aligned on ColdFire; label is inline, printable,
-  * NUL + zero padding. ColdFire C otherwise permits two-byte struct alignment.
 diff --git a/sdk/machines/octatrack/module-adapters/sample_editor_board.c b/sdk/machines/octatrack/module-adapters/sample_editor_board.c
 index 4f6caed0..efd7b068 100644
 --- a/sdk/machines/octatrack/module-adapters/sample_editor_board.c
 +++ b/sdk/machines/octatrack/module-adapters/sample_editor_board.c
-@@ -1,7 +1,8 @@
- /* SPDX-License-Identifier: MIT
-  * Native 1.40C base adapter. The source build checks every owned seam against
-  * the private stock image. Enabled only by the private sample-editor option.
+@@ -4 +4,2 @@
 - * Flex/Static and inactive recorder metadata only; no PCM access.
 + * Flex/Static and inactive recorder metadata; bounded native PCM pair reads
 + * run only on the engine for a confirmed SNAP request.
-  */
- #include "sample_editor_board.h"
- #ifdef MW_SAMPLE_BOARD_HOST
-@@ -32,6 +33,10 @@ static uint32_t idle_seen,job_active,refresh_pending,position_hint;
- static uint32_t waveform_candidate,waveform_seen;
- static const void *job_message;
- static unsigned owner_hint;
+@@ -34,0 +36,4 @@ static unsigned owner_hint;
 +/* Stock's unknown-command path drains this resident no-op record. The engine
 + * observer owns the work; there is no stock completion or package callback. */
 +static const unsigned char scan_message[40] __attribute__((aligned(4)))={255};
 +static uint32_t scan_queued,scan_running,scan_more;
- struct mw_sample_editor mw_sample_editor;
- /* File-backed settings are written by UI/engine/storage tasks, excluded by
-  * the level-4 lock. Recording into the edited buffer and audition are excluded.
-@@ -116,7 +121,7 @@ static int source_stable(const struct mw_sample_capture *before,uint32_t setting
- static int ready(void *unused)
- {
-     (void)unused;
+@@ -119 +124 @@ static int ready(void *unused)
 -    return audio_preemptible() && idle_seen && !job_active && !READ_PACKED(0x460d17d2u) && !READ(0x460e6bccu) &&
 +    return audio_preemptible() && idle_seen && (!job_active || scan_running) && !READ_PACKED(0x460d17d2u) && !READ(0x460e6bccu) &&
-         READ(0x460d1cb8u)==1u && !READ(0x460e76a0u) &&
-         mw_sample_transport_ready() && mw_sample_storage_ready();
- }
-@@ -133,6 +138,8 @@ static unsigned capture(void *unused,struct mw_sample_capture *out)
-     uint32_t controls=(kind?0x46c922c4u:0x46c90a78u)+44u*slot;
-     uint32_t settings=(kind?0x100b14f0u:0x100d5b30u)+1096u*slot;
-     for(uint32_t i=0;i<11u;++i)out->controls[i]=READ(controls+4u*i);
+@@ -135,0 +141,2 @@ static unsigned capture(void *unused,struct mw_sample_capture *out)
 +    uint32_t selected=READ(0x400ceb38u);
 +    out->channels=selected<=2u?selected+1u:0u;
-     if(out->controls[0]>3u || out->controls[2] || (!recorder && !out->controls[4]) ||
-        out->controls[4]>0x7fffffffu || (!kind && out->controls[9]==UINT32_MAX))return MODWERK_SAMPLE_UNSUPPORTED;
-     struct modwerk_sample_view *v=&out->view;
-@@ -220,7 +227,22 @@ static unsigned publish(void *unused,const struct mw_sample_capture *before,cons
-     return matches(settings,v->count,v->records) && READ(0x400ceb3cu)==selected?
-         (stale?MODWERK_SAMPLE_STALE:MODWERK_SAMPLE_NO_CHANGE):MODWERK_SAMPLE_FAULT;
- }
+@@ -223 +230,16 @@ static unsigned publish(void *unused,const struct mw_sample_capture *before,cons
 -static const struct mw_sample_backend backend={0,lock,unlock,ready,owner,capture,publish};
 +static int read_pair(void *unused,const struct mw_sample_capture *before,uint32_t position,
 +                     int32_t *left,int32_t *right)
@@ -129,13 +72,7 @@ index 4f6caed0..efd7b068 100644
 +#endif
 +}
 +static const struct mw_sample_backend backend={0,lock,unlock,ready,owner,capture,publish,read_pair};
- void mw_sample_editor_bootstrap(void)
- {
-     if(!mw_sample_editor.initialized)(void)mw_sample_editor_init(&mw_sample_editor,&backend);
-@@ -262,9 +284,38 @@ static unsigned api_replace(uint32_t token,const struct modwerk_sample_grid *gri
-     unsigned why=buffer(grid,sizeof *grid,0)?mw_sample_editor_replace(&mw_sample_editor,token,grid):MODWERK_SAMPLE_INVALID;
-     modwerk_machine_unlock(saved);return why;
- }
+@@ -264,0 +287,7 @@ static unsigned api_replace(uint32_t token,const struct modwerk_sample_grid *gri
 +static unsigned api_replace_options(uint32_t token,const struct modwerk_sample_grid *grid,uint32_t options)
 +{
 +    uint32_t saved=modwerk_machine_lock();
@@ -143,9 +80,7 @@ index 4f6caed0..efd7b068 100644
 +        mw_sample_editor_replace_options(&mw_sample_editor,token,grid,options):MODWERK_SAMPLE_INVALID;
 +    modwerk_machine_unlock(saved);return why;
 +}
- const struct modwerk_sample_editor_api mw_sample_editor_api={
-     MODWERK_SAMPLE_EDITOR_ABI,sizeof(struct modwerk_sample_editor_api),api_copy,api_confirm,api_cancel,api_replace
- };
+@@ -267,0 +297,22 @@ const struct modwerk_sample_editor_api mw_sample_editor_api={
 +static const struct modwerk_sample_editor_options_api options_api={
 +    {MODWERK_SAMPLE_EDITOR_ABI,sizeof(struct modwerk_sample_editor_options_api),
 +     api_copy,api_confirm,api_cancel,api_replace},api_replace_options
@@ -168,100 +103,47 @@ index 4f6caed0..efd7b068 100644
 +    }
 +    modwerk_machine_unmask(saved);
 +}
- void mw_sample_owner_changing(const struct runtime_dsp *from)
- {
-     uint32_t saved=modwerk_machine_mask();
-@@ -287,12 +338,19 @@ void mw_sample_engine_job(const void *message)
-      * Its byte alone never makes it read-only: the separately guarded native
-      * dispatcher branch must confirm what actually ran. A mutated/unknown
-      * dispatch retires the token at idle before access can reopen. */
+@@ -290 +341,3 @@ void mw_sample_engine_job(const void *message)
 -    if(!mw_sample_ep0_wake(message)) {
 +    unsigned ours=message==scan_message && scan_queued;
 +    if(ours){scan_queued=0;scan_running=1;}
 +    else if(!mw_sample_ep0_wake(message)) {
-         if(message && *(const volatile uint8_t *)message==16u) {
-             waveform_candidate=1;job_message=message;
-         } else mw_sample_editor_changed_locked(&mw_sample_editor);
-     }
-     modwerk_machine_unmask(saved);
+@@ -295,0 +349,5 @@ void mw_sample_engine_job(const void *message)
 +    if(ours) {
 +        unsigned why=mw_sample_editor_analyze_step(&mw_sample_editor);
 +        scan_more=why==MODWERK_SAMPLE_ANALYZING;
 +        scan_running=0;
 +    }
- }
- void mw_sample_waveform_job(const void *message)
- {
-@@ -316,6 +374,9 @@ void mw_sample_engine_idle(void)
-     if(waveform_candidate && !waveform_seen)mw_sample_editor_changed_locked(&mw_sample_editor);
-     waveform_candidate=waveform_seen=0;job_message=0;job_active=0;idle_seen=1;
-     modwerk_machine_unmask(saved);
+@@ -318,0 +377,3 @@ void mw_sample_engine_idle(void)
 +    /* A transient BUSY pauses until the next UI tick. Never keep the engine
 +     * spinning on no-op records while USB/storage owns the source boundary. */
 +    if(scan_more){scan_more=0;mw_sample_analysis_queue();}
- }
- void mw_sample_refresh_ui(void)
- {
 diff --git a/sdk/machines/octatrack/module-adapters/sample_editor_board.h b/sdk/machines/octatrack/module-adapters/sample_editor_board.h
 index c8c7a8ed..9ef07639 100644
 --- a/sdk/machines/octatrack/module-adapters/sample_editor_board.h
 +++ b/sdk/machines/octatrack/module-adapters/sample_editor_board.h
-@@ -5,6 +5,7 @@
- #include "sample_editor_actions.h"
- extern struct mw_sample_editor mw_sample_editor;
- extern const struct modwerk_sample_editor_api mw_sample_editor_api;
+@@ -7,0 +8 @@ extern const struct modwerk_sample_editor_api mw_sample_editor_api;
 +const struct modwerk_sample_editor_api *mw_sample_editor_public_api(void);
- void mw_sample_editor_bootstrap(void);
- int mw_sample_owner_current_locked(const struct runtime_owner *);
- void mw_sample_owner_changing(const struct runtime_dsp *);
-@@ -14,8 +15,10 @@ void mw_sample_engine_job(const void *);
-  * from a reusable queue record's opcode. Access remains closed until idle. */
- void mw_sample_waveform_job(const void *);
- void mw_sample_refresh_ui(void);
+@@ -16,0 +18 @@ void mw_sample_refresh_ui(void);
 +void mw_sample_analysis_queue(void);
- /* The UI task's base-owned menu/confirmation adapter. */
- void mw_sample_ui_tick(void);
- int mw_sample_ui_key(int,int);
+@@ -19,0 +22 @@ int mw_sample_ui_key(int,int);
 +int mw_sample_ui_enc(int,int);
- void mw_sample_menu_retire_locked(const struct runtime_dsp *);
- #endif
 diff --git a/sdk/machines/octatrack/module-adapters/sample_editor_menu.c b/sdk/machines/octatrack/module-adapters/sample_editor_menu.c
 index 0d53764f..42ea375a 100644
 --- a/sdk/machines/octatrack/module-adapters/sample_editor_menu.c
 +++ b/sdk/machines/octatrack/module-adapters/sample_editor_menu.c
-@@ -15,6 +15,7 @@ static struct binding bindings[ACTIONS],pending;
- static uint32_t binding_count,stock_count,action_at,serial,root_task,root_kind,root_slot;
- static uint32_t pending_at,pending_kind,pending_slot,pending_generation;
- static uint32_t question_token,question_active,question_pending,yes_down;
+@@ -17,0 +18 @@ static uint32_t question_token,question_active,question_pending,yes_down;
 +static uint32_t analysis_token;
- static uint32_t initial;
- static int32_t *remembered;
- static char text[ROWS][32];
-@@ -220,7 +221,8 @@ static void answer(uint32_t yes)
-         question_pending=1;return;
-     }
-     question_active=question_pending=question_token=0;
+@@ -223 +224,2 @@ static void answer(uint32_t yes)
 -    if(why==MODWERK_SAMPLE_APPLIED)mw_sample_refresh_ui();
 +    if(why==MODWERK_SAMPLE_ANALYZING){analysis_token=token;say("ALIGNING GRID");mw_sample_analysis_queue();}
 +    else if(why==MODWERK_SAMPLE_APPLIED)mw_sample_refresh_ui();
-     else if(yes && why!=MODWERK_SAMPLE_NO_CHANGE)say("SOURCE CHANGED");
- }
- static void reconcile_question(void)
-@@ -242,6 +244,10 @@ int mw_sample_ui_key(int code,int pressed)
- {
-     reconcile_question();
-     if(code==YES)yes_down=pressed!=0;
+@@ -244,0 +247,4 @@ int mw_sample_ui_key(int code,int pressed)
 +    if(analysis_token && pressed) {
 +        mw_sample_editor_cancel(&mw_sample_editor,analysis_token);analysis_token=0;
 +        if(code==0x32 || code==YES)return 1;
 +    }
-     if(pending.live && pressed && code!=YES)pending.live=0;
-     if(question_pending && pressed && code!=YES) {
-         answer(0); /* cancel before passing another stock gesture */
-@@ -249,10 +255,31 @@ int mw_sample_ui_key(int code,int pressed)
-     }
-     return 0;
- }
+@@ -251,0 +258,8 @@ int mw_sample_ui_key(int code,int pressed)
 +int mw_sample_ui_enc(int encoder,int delta)
 +{
 +    (void)encoder;
@@ -270,10 +152,7 @@ index 0d53764f..42ea375a 100644
 +    }
 +    return 0;
 +}
- void mw_sample_ui_tick(void)
- {
-     mw_sample_editor_bootstrap();
-     reconcile_question();
+@@ -255,0 +270,13 @@ void mw_sample_ui_tick(void)
 +    if(analysis_token) {
 +        if(mw_sample_editor.state==MW_SAMPLE_ANALYZE &&
 +           mw_sample_editor.serial==analysis_token && !(read32(0x460d1e34u)&32u))
@@ -287,90 +166,46 @@ index 0d53764f..42ea375a 100644
 +            else if(why!=MODWERK_SAMPLE_NO_CHANGE)say("SOURCE CHANGED");
 +        }
 +    }
-     if(question_pending)answer(1);
-     if(pending.live && !select_active && !question_active && !read32(0x460e5e30u)) {
-         uint32_t saved=modwerk_machine_lock(),token=0;
-@@ -268,11 +295,11 @@ void mw_sample_ui_tick(void)
-         uintptr_t base;
-         if(why==MODWERK_SAMPLE_OK && image(&pending.owner,&base) && mw_sample_owner_current_locked(&pending.owner)) {
- #ifdef MW_SAMPLE_MENU_HOST
+@@ -271 +298 @@ void mw_sample_ui_tick(void)
 -            mw_sample_menu_host_open_action(base+pending.action.entry_offset,token,&mw_sample_editor_api);
 +            mw_sample_menu_host_open_action(base+pending.action.entry_offset,token,mw_sample_editor_public_api());
- #else
-             void (*open)(uint32_t,const struct modwerk_sample_editor_api *)=
-                 (void (*)(uint32_t,const struct modwerk_sample_editor_api *))(base+pending.action.entry_offset);
+@@ -275 +302 @@ void mw_sample_ui_tick(void)
 -            open(token,&mw_sample_editor_api);
 +            open(token,mw_sample_editor_public_api());
- #endif
-             modwerk_machine_unlock(saved);return;
-         }
 diff --git a/sdk/machines/octatrack/module-adapters/sample_editor_service.c b/sdk/machines/octatrack/module-adapters/sample_editor_service.c
 index 49703539..9c8f8ae0 100644
 --- a/sdk/machines/octatrack/module-adapters/sample_editor_service.c
 +++ b/sdk/machines/octatrack/module-adapters/sample_editor_service.c
-@@ -96,13 +96,14 @@ void mw_sample_editor_changed_locked(struct mw_sample_editor *e)
- {
-     if(!e || !e->initialized)return;
-     e->state=MW_SAMPLE_CLOSED;
+@@ -98,0 +99 @@ void mw_sample_editor_changed_locked(struct mw_sample_editor *e)
 +    e->completion=MODWERK_SAMPLE_STALE;
-     if(e->revision==UINT32_MAX)e->poisoned=1;
-     else ++e->revision;
- }
- void mw_sample_editor_retire_locked(struct mw_sample_editor *e,const struct runtime_owner *owner)
- {
-     if(binding(e) && owner && e->state!=MW_SAMPLE_CLOSED &&
+@@ -105 +106 @@ void mw_sample_editor_retire_locked(struct mw_sample_editor *e,const struct runt
 -       owner_equal(&e->owner,owner))e->state=MW_SAMPLE_CLOSED;
 +       owner_equal(&e->owner,owner)){e->state=MW_SAMPLE_CLOSED;e->completion=MODWERK_SAMPLE_STALE;}
- }
- static unsigned current(struct mw_sample_editor *e,uint32_t token)
- {
-@@ -113,7 +114,9 @@ static unsigned current(struct mw_sample_editor *e,uint32_t token)
-     if(!b->ready(b->context))return MODWERK_SAMPLE_BUSY;
-     unsigned why=b->capture(b->context,&e->observed);
-     if(why!=MODWERK_SAMPLE_OK)return why;
+@@ -116 +117,3 @@ static unsigned current(struct mw_sample_editor *e,uint32_t token)
 -    return capture_equal(&e->before,&e->observed)?MODWERK_SAMPLE_OK:MODWERK_SAMPLE_STALE;
 +    return capture_equal(&e->before,&e->observed) &&
 +        (!(e->options&MODWERK_SAMPLE_SNAP_ZERO) || e->before.channels==e->observed.channels)?
 +        MODWERK_SAMPLE_OK:MODWERK_SAMPLE_STALE;
- }
- unsigned mw_sample_editor_begin(struct mw_sample_editor *e,const struct runtime_owner *owner,uint32_t *token)
- {
-@@ -132,6 +135,7 @@ unsigned mw_sample_editor_begin(struct mw_sample_editor *e,const struct runtime_
-         if(why==MODWERK_SAMPLE_OK) {
-             owner_copy(&e->owner,owner);view_copy(&e->before.view,&e->observed.view);
-             for(unsigned i=0;i<11u;++i)e->before.controls[i]=e->observed.controls[i];
+@@ -134,0 +138 @@ unsigned mw_sample_editor_begin(struct mw_sample_editor *e,const struct runtime_
 +            e->before.channels=e->observed.channels;e->options=0;e->completion=MODWERK_SAMPLE_NO_CHANGE;
-             e->opened_revision=e->revision;++e->serial;e->state=MW_SAMPLE_OPEN;*token=e->serial;
-         }
-     }
-@@ -185,22 +189,41 @@ static unsigned prepare(struct mw_sample_editor *e,const struct modwerk_sample_g
-     }
-     return MODWERK_SAMPLE_OK;
- }
+@@ -188 +192 @@ static unsigned prepare(struct mw_sample_editor *e,const struct modwerk_sample_g
 -static unsigned confirm(struct mw_sample_editor *e,uint32_t token,const struct modwerk_sample_grid *g,unsigned replacing)
 +static unsigned confirm(struct mw_sample_editor *e,uint32_t token,const struct modwerk_sample_grid *g,unsigned replacing,uint32_t options)
- {
+@@ -190 +194,2 @@ static unsigned confirm(struct mw_sample_editor *e,uint32_t token,const struct m
 -    if(!binding(e) || !g)return MODWERK_SAMPLE_INVALID;
 +    if(!binding(e) || !g || (options&~MODWERK_SAMPLE_SNAP_ZERO))return MODWERK_SAMPLE_INVALID;
 +    if(options && !e->backend->read_pair)return MODWERK_SAMPLE_UNSUPPORTED;
-     const struct mw_sample_backend *b=e->backend;uint32_t saved=b->lock(b->context);
-     unsigned why=current(e,token);
-     if(why==MODWERK_SAMPLE_OK && e->state!=MW_SAMPLE_OPEN)why=MODWERK_SAMPLE_BUSY;
-     if(why==MODWERK_SAMPLE_OK) {
-         why=prepare(e,g,replacing);
+@@ -196 +201,5 @@ static unsigned confirm(struct mw_sample_editor *e,uint32_t token,const struct m
 -        if(why==MODWERK_SAMPLE_OK){e->replacing=replacing;e->state=MW_SAMPLE_PROMPT;why=MODWERK_SAMPLE_CONFIRMING;}
 +        if(why==MODWERK_SAMPLE_OK && options && g->count &&
 +           mw_snap_init(&e->snap,g->starts,g->count,e->before.view.trim_end,e->before.view.frames,
 +                        e->before.channels,e->before.controls[0]&1u)!=MW_SNAP_WORKING)
 +            why=MODWERK_SAMPLE_INVALID;
 +        if(why==MODWERK_SAMPLE_OK){e->options=options;e->replacing=replacing;e->state=MW_SAMPLE_PROMPT;why=MODWERK_SAMPLE_CONFIRMING;}
-     } else if(token==e->serial && why!=MODWERK_SAMPLE_BUSY)e->state=MW_SAMPLE_CLOSED;
-     b->unlock(b->context,saved);return why;
- }
- unsigned mw_sample_editor_confirm(struct mw_sample_editor *e,uint32_t token,const struct modwerk_sample_grid *g)
+@@ -201 +210 @@ unsigned mw_sample_editor_confirm(struct mw_sample_editor *e,uint32_t token,cons
 -{return confirm(e,token,g,0);}
 +{return confirm(e,token,g,0,0);}
- unsigned mw_sample_editor_replace(struct mw_sample_editor *e,uint32_t token,const struct modwerk_sample_grid *g)
+@@ -203 +212,15 @@ unsigned mw_sample_editor_replace(struct mw_sample_editor *e,uint32_t token,cons
 -{return confirm(e,token,g,1);}
 +{return confirm(e,token,g,1,0);}
 +unsigned mw_sample_editor_replace_options(struct mw_sample_editor *e,uint32_t token,
@@ -387,16 +222,10 @@ index 49703539..9c8f8ae0 100644
 +    if(e->revision==UINT32_MAX)e->poisoned=1;else ++e->revision;
 +    e->completion=why;return why;
 +}
- unsigned mw_sample_editor_answer(struct mw_sample_editor *e,uint32_t token,unsigned yes)
- {
-     if(!binding(e))return MODWERK_SAMPLE_UNSUPPORTED;
-@@ -213,13 +236,11 @@ unsigned mw_sample_editor_answer(struct mw_sample_editor *e,uint32_t token,unsig
-         if(why==MODWERK_SAMPLE_BUSY){b->unlock(b->context,saved);return why;}
-         /* Consume before calling the publisher. No duplicate YES/reentrant
-          * prompt, uncertain retry or later owner restoration can apply twice. */
+@@ -216 +239 @@ unsigned mw_sample_editor_answer(struct mw_sample_editor *e,uint32_t token,unsig
 -        e->state=MW_SAMPLE_CLOSED;
 +        e->state=MW_SAMPLE_CLOSED;e->completion=why;
-         if(why==MODWERK_SAMPLE_OK) {
+@@ -218,5 +241,3 @@ unsigned mw_sample_editor_answer(struct mw_sample_editor *e,uint32_t token,unsig
 -            why=b->publish(b->context,&e->before,&e->edit);
 -            if(why!=MODWERK_SAMPLE_APPLIED && why!=MODWERK_SAMPLE_NO_CHANGE && why!=MODWERK_SAMPLE_STALE) {
 -                why=MODWERK_SAMPLE_FAULT;e->poisoned=1;
@@ -405,17 +234,10 @@ index 49703539..9c8f8ae0 100644
 +            if((e->options&MODWERK_SAMPLE_SNAP_ZERO) && e->edit.count) {
 +                e->state=MW_SAMPLE_ANALYZE;why=MODWERK_SAMPLE_ANALYZING;e->completion=why;
 +            } else why=publish_edit(e);
-         }
-     }
-     b->unlock(b->context,saved);return why;
-@@ -228,6 +249,39 @@ void mw_sample_editor_cancel(struct mw_sample_editor *e,uint32_t token)
- {
-     if(!binding(e))return;
-     const struct mw_sample_backend *b=e->backend;uint32_t saved=b->lock(b->context);
+@@ -231 +252 @@ void mw_sample_editor_cancel(struct mw_sample_editor *e,uint32_t token)
 -    if(token && token==e->serial)e->state=MW_SAMPLE_CLOSED;
 +    if(token && token==e->serial){e->state=MW_SAMPLE_CLOSED;e->completion=MODWERK_SAMPLE_NO_CHANGE;}
-     b->unlock(b->context,saved);
- }
+@@ -233,0 +255,33 @@ void mw_sample_editor_cancel(struct mw_sample_editor *e,uint32_t token)
 +static int read_pair(void *context,uint32_t position,int32_t *left,int32_t *right)
 +{
 +    struct mw_sample_editor *e=context;
@@ -453,54 +275,25 @@ diff --git a/sdk/machines/octatrack/module-adapters/sample_editor_service.h b/sd
 index b3862a85..a377507e 100644
 --- a/sdk/machines/octatrack/module-adapters/sample_editor_service.h
 +++ b/sdk/machines/octatrack/module-adapters/sample_editor_service.h
-@@ -3,6 +3,7 @@
- #define MODWERK_SAMPLE_EDITOR_SERVICE_H
- #include "modwerk_sample_editor.h"
- #include "loader.h"
+@@ -5,0 +6 @@
 +#include "sample_editor_snap.h"
- #define MW_SAMPLE_FILE_SLOTS 128u
- #define MW_SAMPLE_RECORDER_COUNT 8u
- 
-@@ -15,6 +16,7 @@
- struct mw_sample_capture {
-     struct modwerk_sample_view view;
-     uint32_t controls[11];
+@@ -17,0 +19 @@ struct mw_sample_capture {
 +    uint32_t channels;
- };
- struct mw_sample_edit {
-     uint32_t count;
-@@ -35,14 +37,19 @@ struct mw_sample_backend {
-      * Recorder extent/trim/PCM changes must never be rolled back. No disk save,
-      * PCM mutation, normalizing old rows or user history is permitted. */
-     unsigned (*publish)(void *, const struct mw_sample_capture *, const struct mw_sample_edit *);
+@@ -37,0 +40,3 @@ struct mw_sample_backend {
 +    /* Engine task only, metadata-writer lock held, frame/DMA preemptible.
 +     * Copy two real signed frames into base-owned buffers; no PCM lease. */
 +    int (*read_pair)(void *,const struct mw_sample_capture *,uint32_t,int32_t *,int32_t *);
- };
+@@ -39 +44 @@ struct mw_sample_backend {
 -enum mw_sample_state { MW_SAMPLE_CLOSED, MW_SAMPLE_OPEN, MW_SAMPLE_PROMPT };
 +enum mw_sample_state { MW_SAMPLE_CLOSED, MW_SAMPLE_OPEN, MW_SAMPLE_PROMPT, MW_SAMPLE_ANALYZE };
- struct mw_sample_editor {
-     const struct mw_sample_backend *backend;
-     uint32_t initialized, revision, serial, opened_revision, state, poisoned, replacing;
-     struct runtime_owner owner;
-     struct mw_sample_capture before, observed;
-     struct mw_sample_edit edit;
+@@ -45,0 +51,2 @@ struct mw_sample_editor {
 +    uint32_t options,completion;
 +    struct mw_sample_snap snap;
- };
- /* Init ONCE at cold boot, before native writers start. Zero storage required.
-  * Never reset for project/module/source changes or restore an old serial. */
-@@ -51,6 +58,10 @@ unsigned mw_sample_editor_begin(struct mw_sample_editor *, const struct runtime_
- unsigned mw_sample_editor_copy(struct mw_sample_editor *, uint32_t token, struct modwerk_sample_view *);
- unsigned mw_sample_editor_confirm(struct mw_sample_editor *, uint32_t token, const struct modwerk_sample_grid *);
- unsigned mw_sample_editor_replace(struct mw_sample_editor *, uint32_t token, const struct modwerk_sample_grid *);
+@@ -53,0 +61,4 @@ unsigned mw_sample_editor_replace(struct mw_sample_editor *, uint32_t token, con
 +unsigned mw_sample_editor_replace_options(struct mw_sample_editor *,uint32_t,const struct modwerk_sample_grid *,uint32_t);
 +/* Engine task only. One bounded chunk; recapture before/after and before
 + * publication. The copied pending edit stays in the base after module removal. */
 +unsigned mw_sample_editor_analyze_step(struct mw_sample_editor *);
- /* Invoked only by the base's verified stock confirmation dispatch, with the
-  * token captured when THAT prompt was shown. Revalidate source/owner on YES.
-  * NO just cancels. BUSY retains the prompt for a later revalidated attempt;
 diff --git a/sdk/machines/octatrack/module-adapters/sample_editor_snap.h b/sdk/machines/octatrack/module-adapters/sample_editor_snap.h
 new file mode 100644
 index 00000000..22bf118f
@@ -609,19 +402,10 @@ diff --git a/sdk/machines/octatrack/module-adapters/test_sample_editor_board.c b
 index 941aac3c..0f932729 100644
 --- a/sdk/machines/octatrack/module-adapters/test_sample_editor_board.c
 +++ b/sdk/machines/octatrack/module-adapters/test_sample_editor_board.c
-@@ -17,6 +17,8 @@ static uint32_t force_slot;
- static int stopped,transport,storage;
- static uint32_t extent[2048];
- static struct runtime_owner owner;
+@@ -19,0 +20,2 @@ static struct runtime_owner owner;
 +static const void *scan_posted;
 +static uint32_t scan_reads;
- static uint32_t get(uint32_t address)
- {for(unsigned i=0;i<used;++i)if(memory[i].address==address)return memory[i].value;return 0;}
- static void put(uint32_t address,uint32_t value)
-@@ -112,8 +114,16 @@ void mw_sample_menu_retire_locked(const struct runtime_dsp *from)
- {(void)from;if(!masked)bad=1;++retired;}
- void mw_sample_host_refresh(void)
- {if(!locked || masked)bad=1;++refreshes;}
+@@ -114,0 +117,7 @@ void mw_sample_host_refresh(void)
 +void mw_sample_host_post(const void *message)
 +{if(!masked || scan_posted)bad=1;scan_posted=message;put(0x460d17d2u,1);}
 +int mw_sample_host_read_pair(const struct mw_sample_capture *before,uint32_t position,int32_t *left,int32_t *right)
@@ -629,24 +413,11 @@ index 941aac3c..0f932729 100644
 +    if(!locked || masked || position+1u>=before->view.frames)bad=1;
 +    ++scan_reads;left[0]=left[1]=right[0]=right[1]=0;return 1;
 +}
- static uint32_t setup(unsigned kind,unsigned slot)
- {
+@@ -116,0 +126 @@ static uint32_t setup(unsigned kind,unsigned slot)
 +    scan_posted=0;scan_reads=0;
-     used=masked=locked=bad=writes=refreshes=retired=metadata_reads=frame_services=0;live=1;
-     fail_address=fail_mode=inject_writer=queued_writer=engine_writes=row_writes=0;stopped=transport=storage=1;
-     commit_mask=commit_reads=commit_writes=commit_max_reads=commit_spans=0;
-@@ -125,6 +135,7 @@ static uint32_t setup(unsigned kind,unsigned slot)
-     owner.package_sha256[31]=33;owner.controller_sha256[31]=44;
-     put(0x46c8d1a0,kind);put(0x46c8d19c,slot);put(0x46105408,1);
-     put(0x460d1cb8,1);put(0x80001814,2880);put(0x400ceb3c,9);
+@@ -127,0 +138 @@ static uint32_t setup(unsigned kind,unsigned slot)
 +    put(0x460d17deu,7);
-     uint32_t controls=(kind?0x46c922c4u:0x46c90a78u)+44u*slot;
-     uint32_t settings=(kind?0x100b14f0u:0x100d5b30u)+1096u*slot;
-     active_settings=settings;
-@@ -521,6 +532,33 @@ int main(void)
-         if(cancel)for(unsigned i=0;i<192;++i)CHECK(old[i]==get(settings+312u+4u*i));
-         else CHECK(get(settings+312u+12u*63u)==1389150u && get(settings+316u+12u*63u)==1411200u);
-     }
+@@ -523,0 +535,27 @@ int main(void)
 +    for(unsigned action=0;action<5;++action) {
 +        uint32_t settings=setup(1,0);
 +        const struct modwerk_sample_editor_api *public_api=mw_sample_editor_public_api();
@@ -674,34 +445,16 @@ index 941aac3c..0f932729 100644
 +            get(settings+1092u)==4 && get(settings+316u)==22049u && get(settings+352u)==88200u);
 +        else CHECK(!scan_reads && !writes && !get(settings+1092u));
 +    }
-     setup(0,0);CHECK(mw_sample_editor_begin(&mw_sample_editor,&owner,&token)==MODWERK_SAMPLE_OK);
-     struct runtime_dsp from={0};from.present=1;from.module=owner.module;
-     from.image=(const uint8_t *)(owner.owned_extent+owner.image_offset);
 diff --git a/sdk/machines/octatrack/module-adapters/test_sample_editor_menu.c b/sdk/machines/octatrack/module-adapters/test_sample_editor_menu.c
 index a5afb17c..40f002ac 100644
 --- a/sdk/machines/octatrack/module-adapters/test_sample_editor_menu.c
 +++ b/sdk/machines/octatrack/module-adapters/test_sample_editor_menu.c
-@@ -16,6 +16,7 @@ static struct runtime_owner fixture_owner;
- static struct mw_sample_capture source;
- static unsigned held,bad,available,live,opens,prompts,writes,refreshes,menu_rows,menu_selected;
- static unsigned stale_publish;
+@@ -18,0 +19 @@ static unsigned stale_publish;
 +static unsigned analysis_reads,analysis_posts,analysis_failure;
- static uint32_t menu_active,menu_names,menu_actions,cursor,window_flags,window_callback;
- static uint32_t task,kind,slot,generation,opened_token;
- static void (*native_answer)(uint32_t);
-@@ -93,7 +94,7 @@ static unsigned publish(void *p,const struct mw_sample_capture *before,const str
-     ++writes;source.view.count=edit->count;memcpy(source.view.records,edit->records,sizeof edit->records);
-     return MODWERK_SAMPLE_APPLIED;
- }
+@@ -96 +97 @@ static unsigned publish(void *p,const struct mw_sample_capture *before,const str
 -static const struct mw_sample_backend backend={0,lock,unlock,ready,owner,capture,publish};
 +static const struct mw_sample_backend backend={0,lock,unlock,ready,owner,capture,publish,0};
- void mw_sample_editor_bootstrap(void)
- {if(!mw_sample_editor.initialized && !mw_sample_editor_init(&mw_sample_editor,&backend))bad=1;}
- static unsigned api_copy(uint32_t t,struct modwerk_sample_view *v){return mw_sample_editor_copy(&mw_sample_editor,t,v);}
-@@ -102,6 +103,14 @@ static unsigned api_replace(uint32_t t,const struct modwerk_sample_grid *g){retu
- static void api_cancel(uint32_t t){mw_sample_editor_cancel(&mw_sample_editor,t);}
- const struct modwerk_sample_editor_api mw_sample_editor_api={MODWERK_SAMPLE_EDITOR_ABI,sizeof mw_sample_editor_api,
-     api_copy,api_confirm,api_cancel,api_replace};
+@@ -104,0 +106,8 @@ const struct modwerk_sample_editor_api mw_sample_editor_api={MODWERK_SAMPLE_EDIT
 +const struct modwerk_sample_editor_api *mw_sample_editor_public_api(void){return &mw_sample_editor_api;}
 +void mw_sample_analysis_queue(void){++analysis_posts;}
 +static int read_pair(void *unused,const struct mw_sample_capture *before,uint32_t at,int32_t *left,int32_t *right)
@@ -710,21 +463,9 @@ index a5afb17c..40f002ac 100644
 +    left[0]=left[1]=right[0]=right[1]=0;return !analysis_failure;
 +}
 +static const struct mw_sample_backend analysis_backend={0,lock,unlock,ready,owner,capture,publish,read_pair};
- static void reset(void)
- {
-     memset(&mw_sample_editor,0,sizeof mw_sample_editor);memset(&source,0,sizeof source);
-@@ -109,6 +118,7 @@ static void reset(void)
-     binding_count=stock_count=action_at=serial=root_task=root_kind=root_slot=0;
-     pending_at=pending_kind=pending_slot=pending_generation=0;
-     question_token=question_active=question_pending=yes_down=0;
+@@ -111,0 +121 @@ static void reset(void)
 +    analysis_token=analysis_reads=analysis_posts=analysis_failure=0;
-     select_active=select_armed=select_serial=select_row=select_task=select_sp=select_return=0;select_callback=0;
-     held=bad=opens=prompts=writes=refreshes=stale_publish=0;available=live=1;
-     menu_active=menu_names=menu_actions=cursor=window_flags=window_callback=0;
-@@ -201,6 +211,26 @@ int main(void)
-         available=1;mw_sample_ui_tick();CHECK(!opens && !bad);
-         open_menu(6);CHECK(menu_rows==7);
-     }
+@@ -204 +214,21 @@ int main(void)
 -    puts("PASS: actual menu selection, prompt ownership, busy confirmation, cancellation and orphan cleanup");
 +    for(unsigned action=0;action<7;++action) {
 +        reset();source.channels=3;open_menu(6);CHECK(!select_grid());
@@ -747,21 +488,13 @@ index a5afb17c..40f002ac 100644
 +        if(action==6)CHECK(!strcmp(notice,"SNAP FAILED"));
 +    }
 +    puts("PASS: actual menu selection, prompt ownership, busy confirmation, cancellation, bounded analysis UI and orphan cleanup");
-     return 0;
- }
 diff --git a/sdk/machines/octatrack/module-adapters/test_sample_editor_service.c b/sdk/machines/octatrack/module-adapters/test_sample_editor_service.c
 index 51257226..007cce23 100644
 --- a/sdk/machines/octatrack/module-adapters/test_sample_editor_service.c
 +++ b/sdk/machines/octatrack/module-adapters/test_sample_editor_service.c
-@@ -37,7 +37,7 @@ static unsigned publish(void *context,const struct mw_sample_capture *before,con
-     }
-     return publish_reply;
- }
+@@ -40 +40 @@ static unsigned publish(void *context,const struct mw_sample_capture *before,con
 -static const struct mw_sample_backend backend={&editor,lock,unlock,available,published,capture,publish};
 +static const struct mw_sample_backend backend={&editor,lock,unlock,available,published,capture,publish,0};
- static void reset(uint32_t kind,uint32_t slot,uint32_t count)
- {
-     uint8_t *p=(uint8_t *)&editor;
 diff --git a/sdk/machines/octatrack/module-adapters/test_sample_editor_snap.c b/sdk/machines/octatrack/module-adapters/test_sample_editor_snap.c
 new file mode 100644
 index 00000000..6a917c7b

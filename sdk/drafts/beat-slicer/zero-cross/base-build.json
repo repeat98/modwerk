@@ -10,5 +10,6 @@
   "flashSafetyScan": "passed; not permission to flash",
   "nativeModuleSetAndEditorTests": "passed",
   "hardware": "not tested",
-  "basePatchSha256": "6b191e28c2c49aefceac68cfa2c1889103ea28c074a6c0e5e4eee68833b0dfd7"
+  "basePatchSha256": "d57b32ac9eae32e16f1549cf83f467f791f12876a38104871546a337aa7e1369",
+  "preparedInputsMatchCompiledCandidate": true
 }

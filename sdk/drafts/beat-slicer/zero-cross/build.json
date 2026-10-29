@@ -20,7 +20,7 @@
     "planner.h": "1a10ce9e6b34dfd35eb138690e2134550621c3bf91b2178fb50f95b9def6b7ae",
     "sample_options.h": "bf445bb2ba7849fa4f3eba3f4a9ef9a7eda5207448ee3488bc209f75b66865e2"
   },
-  "basePatchSha256": "6b191e28c2c49aefceac68cfa2c1889103ea28c074a6c0e5e4eee68833b0dfd7",
+  "basePatchSha256": "d57b32ac9eae32e16f1549cf83f467f791f12876a38104871546a337aa7e1369",
   "sharedApi": "optional ABI-1 tail; legacy prefix and sizeof unchanged",
   "hardware": "not tested; private base required for SNAP ON"
 }

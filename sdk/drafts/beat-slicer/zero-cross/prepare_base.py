@@ -22,7 +22,7 @@ def digest(path):
 
 def prepare(source, output, full=False):
     source, output = Path(source).resolve(), Path(output).resolve()
-    if source == output or source in output.parents:
+    if any(parent == output or parent in output.parents for parent in (source, HERE.parents[3])):
         raise ValueError('Keep private preparation output outside the checkout.')
     if output.exists():
         raise ValueError('The private output directory must be new.')
@@ -51,9 +51,12 @@ def prepare(source, output, full=False):
     # source proposal, never ignored firmware, outputs or the developer cache.
     shutil.copytree(HERE, output / RELATIVE, dirs_exist_ok=True,
                     ignore=shutil.ignore_patterns('__pycache__', '*.pyc'))
+    for name, expected in manifest['preimages'].items():
+        if digest(output / name) != expected:
+            raise ValueError('Prepared base differs from its strict preimage: ' + name)
     patch = output / RELATIVE / 'base.patch'
-    subprocess.run(['git', 'apply', '--check', str(patch)], cwd=output, check=True, capture_output=True)
-    subprocess.run(['git', 'apply', str(patch)], cwd=output, check=True)
+    subprocess.run(['git', 'apply', '--unidiff-zero', '--check', str(patch)], cwd=output, check=True, capture_output=True)
+    subprocess.run(['git', 'apply', '--unidiff-zero', str(patch)], cwd=output, check=True)
     (output / 'private-snap-staging.json').write_text(json.dumps({
         'status': 'private proposal; no publication or hardware qualification',
         'upstreamCommit': manifest['upstreamCommit'],
