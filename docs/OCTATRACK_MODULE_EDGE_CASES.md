@@ -59,6 +59,7 @@ A module that takes a stock key gesture (FUNC + YES, a SCENE chord) decides wher
 - Every window, and the message box (`0x4005a2b8`), is the same popup record (`0x460d175c`, flags `0x21` while open). Test the message by its handle (`0x460d1e70`): a "window open" check that does not, sends a quick second press to stock while the message still shows.
 - Stock's window table (`0x460d1188` close routine, `0x460d119c` kind, entry 0) names the open window, but entries stay after a close: read it only while the popup is open. A yes/no dialog is `0x460e5cd0` (its window, cleared on close), wherever it opens.
 
+## The effect list
 
 | # | Case | Today | Status |
 |---|---|---|---|
