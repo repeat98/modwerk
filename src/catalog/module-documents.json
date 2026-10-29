@@ -3680,7 +3680,7 @@
       "id": "analog-bassdrum",
       "key": "ANALOG BD",
       "name": "Analog BD",
-      "version": "0.1.5-experimental",
+      "version": "0.1.6-experimental",
       "category": "machines",
       "source": {
         "repository": "https://github.com/sambanks/octabam",
@@ -3688,17 +3688,16 @@
         "path": "modules/analog-bassdrum"
       },
       "access": {
-        "location": "Audio track SRC SETUP: ANALOG BD; double-tap the track key for its 808 / 909 engine browser.",
+        "location": "Audio track SRC SETUP: ANALOG BD; its TYPE switch (808 / 909) is the top-left control.",
         "steps": [
           "Select an audio track with its TRACK key.",
           "Hold FUNC and press SRC to open SRC SETUP. Use DOWN to reach ANALOG BD, then press YES to assign it.",
-          "Press SRC to close SETUP and edit the main controls. The 808 model uses PITCH, DECAY, TONE, ATK, SWEEP and SAT; the 909 uses TUNE and TDEP in place of TONE and SWEEP.",
-          "Double-tap the assigned track’s TRACK key to open the engine browser. Choose 808 or 909 with UP/DOWN or LEVEL, then press YES. Selecting a model retains the existing knob settings.",
-          "Hold FUNC and press SRC for the shared ACCNT, LPF, LOW and HIGH controls. AMP and the track FX pages remain available."
+          "Press SRC to close SETUP and edit the main controls. The 808 model uses PTCH, DCAY, TONE, ATK, SWEP and SAT; the 909 uses TUNE and TDEP in place of TONE and SWEP.",
+          "In SRC SETUP, turn the top-left TYPE switch left for the 808 or right for the 909. Selecting a model retains the existing knob settings. FIXD (top middle) ON makes every hit identical; LPF (bottom right) is OFF fully clockwise.",
+          "Hold FUNC and press SRC for the shared ACNT, LPF, LOW and HIGH controls. AMP and the track FX pages remain available."
         ],
         "screenshots": [
           "media/ot-setup.png",
-          "media/ot-engines.png",
           "media/ot-909.png",
           "media/ot-808.png"
         ]
@@ -3716,31 +3715,32 @@
         "label": "808 / 909",
         "family": "Drum synthesis",
         "summary": "808 and 909 bassdrum engines; 909 body and transient fitted more closely to private TR-909 direct-out recordings.",
-        "overview": "Analog BD synthesizes 808 and 909 bassdrums in the Octatrack DSP. Version 0.1.5 restores valid playback and SETUP defaults when leaving Analog BD, preventing retained-bank rejection at power-up. Its 808/909 sound is unchanged from 0.1.4.",
+        "overview": "Analog BD synthesizes 808 and 909 bassdrums in the Octatrack DSP. Version 0.1.6 rearranges SRC SETUP to TYPE, FIXD, ACNT above LOW, HIGH, LPF: TYPE picks 808 or 909 and replaces the engine browser, FIXD ON makes every hit identical (OFF, the default, varies each hit slightly, now on the 808 too), and LPF is OFF fully clockwise. HIGH edits over USB, and a double tap on TRACK opens the machine list.",
         "highlights": [
+          "TYPE and FIXD switches in SRC SETUP; the engine browser is gone",
           "Restore valid stock SRC defaults when leaving Analog BD",
           "909 harmonic phase/asymmetry and complete-hit envelope/DC fit",
           "Minimum/maximum Attack and final-hit Tune endpoints refined",
-          "Direct-out reference comparison at LPF bypass",
-          "808, saved controls and existing TDEP/SAT smoothing retained"
+          "Existing TDEP/SAT smoothing retained; SETUP reordered and LPF OFF moved to fully clockwise",
+          "0.1.5 projects keep their 808/909 choice; set ACNT, LPF and FIXD again"
         ],
         "usage": [
-          "Assign ANALOG BD in the track machine chooser or SRC SETUP. Double-tap the track to open its engine browser; choose 808 or 909 with UP/DOWN or LEVEL and confirm with YES.",
-          "Shape the drum on SRC. The 808 has TONE and SWEEP; the 909 has TUNE and TDEP. Set accent, LPF and desk bands in SRC SETUP; AMP controls track volume.",
+          "Assign ANALOG BD in the track machine chooser or SRC SETUP. Then use the TYPE switch at the top left of SRC SETUP to choose 808 (left) or 909 (right).",
+          "Shape the drum on SRC. The 808 has TONE and SWEP; the 909 has TUNE and TDEP. SRC SETUP holds TYPE, FIXD and ACNT above LOW, HIGH and LPF; LPF fully clockwise is OFF. FIXD ON makes every hit identical. AMP controls track volume.",
           "Switching from Analog BD restores stock SRC playback and SETUP defaults automatically. Select your sample and review existing SRC parameter locks, scenes and LFO destinations, which retain their parameter-slot assignments.",
           "Keep a separate project copy for stock firmware: saving an Analog BD project without this module can clamp its controls. Eight voices do not guarantee enough processing room for every effect combination."
         ]
       },
       "controls": [
         {
-          "name": "PITCH",
+          "name": "PTCH",
           "default": 64,
           "count": 128,
           "doc": "808 body pitch; 909 body frequency spans approximately 30–100 Hz.",
           "labels": null
         },
         {
-          "name": "DECAY",
+          "name": "DCAY",
           "default": 80,
           "count": 128,
           "doc": "Body decay, with a different response for each model.",
@@ -3761,7 +3761,7 @@
           "labels": null
         },
         {
-          "name": "SWEEP / TDEP",
+          "name": "SWEP / TDEP",
           "default": 64,
           "count": 128,
           "doc": "808 pitch excursion; 909 pitch-envelope amount with sample-wise smoothing.",
@@ -3775,17 +3775,20 @@
           "labels": null
         },
         {
-          "name": "ACCNT",
-          "default": 64,
-          "count": 128,
-          "doc": "Accent in SRC SETUP.",
-          "labels": null
+          "name": "FIXD",
+          "default": 0,
+          "count": 2,
+          "doc": "SRC SETUP top middle, OFF/ON switch on both models. OFF varies every hit slightly (909: click strength and noise; 808: trigger transient strength); ON makes every hit open identically. On the 808, ON is the 0.1.5 sound.",
+          "labels": [
+            "OFF",
+            "ON"
+          ]
         },
         {
-          "name": "LPF",
-          "default": 127,
+          "name": "ACNT",
+          "default": 64,
           "count": 128,
-          "doc": "Output low-pass: OFF at 0, ORIG around 6.57 kHz at 64, 18 kHz at the assignment default 127.",
+          "doc": "Accent, SETUP top right.",
           "labels": null
         },
         {
@@ -3801,6 +3804,13 @@
           "count": 128,
           "doc": "Desk high band; 64 is neutral.",
           "labels": null
+        },
+        {
+          "name": "LPF",
+          "default": 127,
+          "count": 128,
+          "doc": "SETUP bottom right. Output low-pass: 500 Hz at 0, ORIG around 6.57 kHz at 63, 18 kHz at 126, OFF at 127 (fully clockwise, the default).",
+          "labels": null
         }
       ],
       "compatibility": {
@@ -3808,16 +3818,14 @@
         "effectId": null,
         "location": "Track machine",
         "conflicts": [
-          "synth",
-          "machinedrum",
-          "poly"
+          "synth"
         ],
         "limitations": [
           "SPRING REV is excluded from the upstream standalone remix; its shared DARK helper must be restored from local firmware.",
           "Owner reports stable MKII 0.1.3 operation with distinct 808/909 instances and physical persistence. Maximum eight-voice FX load, worst-case chip timing and full memory bounds remain unqualified.",
           "Saving this project on stock firmware can overwrite synth settings.",
           "909 reference uses a decay-modified TR-909 at one recorded decay setting; the full modified range and exact intermediate knob positions are not reproduced.",
-          "The direct-out reference excludes the 909 main-out LPF: use LPF 0 for reference comparison; assignment default remains 127.",
+          "The direct-out reference excludes the 909 main-out LPF: LPF OFF (127, the assignment default) is the reference comparison.",
           "Neighboring transient shapes remain more consistent than the reference. Owner reports FLEX reboot persistence for AB015FIX01; current-source audio, broader persistence/instance checks, maximum FX load, chip timing and complete memory bounds remain unverified. Output Matrix sequencer halt remains unverified."
         ]
       },
@@ -3825,20 +3833,20 @@
         "recorded": "9 Oct 2026 (native/emulator regression; owner reports FLEX reboot persistence)",
         "storage": {
           "label": "DSP code",
-          "display": "997 P words",
-          "value": 997,
+          "display": "1008 P words",
+          "value": 1008,
           "unit": "P words",
           "method": "static",
-          "conditions": "Combined 808/909 glue and engines use 997 P words plus the separate 35-word stock helper. Existing X upload remains 3776 words/core with four 64-word voices; Y/ColdFire allocation unchanged. Complete stack/lifetime bounds remain unmeasured.",
+          "conditions": "Combined 808/909 glue and engines use 1008 P words (0.1.5: 997; 0.1.6 saves 26 by rescheduling and adds 37 for the FIXD tests and the 808's per-hit variation) plus the separate 35-word stock helper. Existing X upload remains 3776 words/core with four 64-word voices; Y/ColdFire allocation unchanged. Complete stack/lifetime bounds remain unmeasured.",
           "source": "TESTING.md"
         },
         "processing": {
           "label": "DSP execution",
-          "display": "808: 268.38 · 909: 410.19",
+          "display": "808: 252.13 · 909: 374.94",
           "value": null,
           "unit": "instructions/sample",
           "method": "emulator",
-          "conditions": "Peak 4294/6563 executed instructions per 16-sample block in matched moving-control/min/max/trigger-split tests. 909 mean cost is 6.22% higher than 0.1.3, maximum matched-block increase 6.27%; not chip cycles or full-chain utilization.",
+          "conditions": "Peak 4034/5999 executed instructions per 16-sample block in the 0.1.6 dsp_host comparison (52 scenarios: control extremes, SAT steps, ramps and jitter, random automation, retriggers); 0.1.5 measured 4260/6534 in the same set. Mean 3345/5519: about 15% fewer executed instructions on average than 0.1.5 (emulator count), peaks about 5% (808) and 8% (909) lower, with bit-identical audio and state. Not chip cycles or full-chain utilization; the declared DSP price (411 per voice) is unchanged, so no voice gains room. On a MKII (dev base meter, one voice, 16 trigs a bar) one voice loads its core 26 % (909) and 21 % (808) less than 0.1.5 (TESTING.md).",
           "source": "TESTING.md"
         },
         "impact": {
@@ -3852,13 +3860,13 @@
           "dsp": {
             "level": "high",
             "basis": "measured-comparison",
-            "rationale": "Matched native 909 mean instruction cost rises 6.22% versus 0.1.3, maximum matched block 6.27%, peak 410.1875 instructions/sample. 808 remains bit-identical with unchanged peak 268.375. These are executed instructions, not chip timing.",
+            "rationale": "0.1.6 schedules both engines tighter with bit-identical audio and state (dsp_host, 52 scenarios plus the exact-render cases): the SAT interpolation is skipped once SAT has settled, immediate loads ride in parallel-move slots and filter histories stay in registers. Peak 909 374.94 and 808 252.13 executed instructions/sample (was 408.4 and 266.3 in the same set): peaks about 8% and 5% lower, about 15% fewer executed instructions on average (emulator count). Executed instructions, not chip timing; the declared price of 411 per voice is unchanged.",
             "source": "CPU.md"
           },
           "memory": {
             "level": "low",
             "basis": "source-estimate",
-            "rationale": "DSP code and uploads are byte-identical to 0.1.4. ColdFire runtime grows by 36 bytes to 14052; no new state allocation. Complete memory/stack bounds remain unmeasured.",
+            "rationale": "The engines grow by 11 DSP P words over 0.1.5 (1009 per core resident, was 998): the FIXD tests and the 808's per-hit variation (one LCG state word in the 808 voice block, which had it free) outweigh the scheduling savings. FIXD reuses an existing control byte. Complete memory/stack bounds remain unmeasured.",
             "source": "TESTING.md"
           }
         }
@@ -3882,14 +3890,13 @@
           "tutorial": {
             "title": "Compare the 909 direct-out response",
             "steps": [
-              "In a disposable project, hold FUNC and press SRC for SRC SETUP, choose ANALOG BD and press YES. Double-tap the TRACK key, choose 909 and confirm with YES. Set LOW/HIGH to 64 and SAT to 0.",
-              "For the direct-out reference, set PITCH 49, DECAY 100, TUNE 0, TDEP 64, ACCNT 72 and LPF 0. Trigger repeated hits at 70 BPM and sweep ATK alone through 0–127, then hold it at one value to hear the small strength/noise differences.",
-              "Hold ATK at 0 and sweep TUNE through its endpoints separately. Return SAT to 0 and TDEP to 64, then press STOP and let the tail finish. Choose 808 in the engine browser to compare; its saved knob values remain intact."
+              "In a disposable project, hold FUNC and press SRC for SRC SETUP, choose ANALOG BD and press YES. Turn the top-left TYPE switch to the right for the 909. Set LOW/HIGH to 64 and SAT to 0.",
+              "For the direct-out reference, set PTCH 49, DCAY 100, TUNE 0, TDEP 64, ACNT 72 and LPF 127 (OFF). Trigger repeated hits at 70 BPM and sweep ATK alone through 0–127, then hold it at one value to hear the small strength/noise differences.",
+              "Hold ATK at 0 and sweep TUNE through its endpoints separately. Return SAT to 0 and TDEP to 64, then press STOP and let the tail finish. Turn TYPE to the left to compare the 808; its saved knob values remain intact."
             ]
           },
           "screenshots": [
             "media/ot-setup.png",
-            "media/ot-engines.png",
             "media/ot-909.png",
             "media/ot-808.png"
           ],
@@ -3905,42 +3912,25 @@
         {
           "path": "media/ot-setup.png",
           "captureType": "emulator",
-          "caption": "Hold FUNC and press SRC, choose ANALOG BD and confirm with YES. Set LOW/HIGH to 64 for a neutral desk; for the direct-out reference, set LPF to 0 before comparing Attack.",
-          "alt": "SRC SETUP with ANALOG BD selected and ACCNT, LPF, LOW and HIGH controls.",
+          "caption": "Select a track, hold FUNC and press SRC, move down to ANALOG BD and press YES. SRC SETUP reads TYPE, FIXD and ACNT above LOW, HIGH and LPF. Turn A (TYPE) right for the 909, B (FIXD) right for identical hits; set LOW/HIGH to 64 for a neutral desk.",
+          "alt": "SRC SETUP with ANALOG BD selected: TYPE switch at 808, FIXD switch OFF, ACNT, LOW, HIGH and LPF knobs.",
           "credit": "Octamod contributors (headless capture)",
           "license": "LicenseRef-OT-UI-Documentation",
           "source": "original",
           "otUi": {
             "page": "SRC SETUP",
-            "shows": "controls",
+            "shows": "location-and-controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.1.5-experimental",
-            "imageSha256": "137580f326b6adc3b0d58f2183d530507f1b370c48911b38d5d0cf94d9e96898",
-            "setup": "Headless ot_emu; MKII panel, stopped transport; actual DSP-enabled AB015FIX01 image and disposable project; 128×64 LCD at integer scale 6."
-          }
-        },
-        {
-          "path": "media/ot-engines.png",
-          "captureType": "emulator",
-          "caption": "Double-tap the assigned TRACK key to open the engine browser. Choose 909 with UP/DOWN or LEVEL and press YES; NO closes it without changing the engine. Model changes retain the control bytes.",
-          "alt": "Analog BD engine browser with 909 highlighted below 808.",
-          "credit": "Octamod contributors (headless capture)",
-          "license": "LicenseRef-OT-UI-Documentation",
-          "source": "original",
-          "otUi": {
-            "page": "Analog BD engine browser",
-            "shows": "location",
-            "firmware": "1.40C",
-            "moduleVersion": "0.1.5-experimental",
-            "imageSha256": "137580f326b6adc3b0d58f2183d530507f1b370c48911b38d5d0cf94d9e96898",
-            "setup": "Headless ot_emu; MKII panel, stopped transport; actual DSP-enabled AB015FIX01 image and disposable project; 128×64 LCD at integer scale 6."
+            "moduleVersion": "0.1.6-experimental",
+            "imageSha256": "9a52d642e1280c704789dfcca11876a7086cd170424aa8417988ceff442895f7",
+            "setup": "Headless ot_emu; MKII panel, stopped transport; native card build of this 0.1.6 source with Analog BD alone, empty scratch card; 128×64 LCD at integer scale 6."
           }
         },
         {
           "path": "media/ot-909.png",
           "captureType": "emulator",
-          "caption": "Press SRC, hold TUNE at 0 and try ATK through 0–127 to compare the transient. Then hold ATK at 0 and sweep TUNE separately; press STOP and let the tail finish. E (TDEP) and F (SAT) keep the existing smoothing. The shared third label reads TONE in this capture; it operates 909 TUNE.",
-          "alt": "909 SRC main controls with PITCH, DECAY, TONE, ATK, TDEP and SAT; the TONE-labelled control operates 909 TUNE.",
+          "caption": "With TYPE on 909, press SRC. Hold TUNE at 0 and try ATK through 0–127 to compare the transient, then hold ATK at 0 and sweep TUNE separately. E (TDEP) and F (SAT) keep the existing smoothing; press STOP and let the tail finish.",
+          "alt": "909 SRC page with PTCH, DCAY, TUNE, ATK, TDEP and SAT knobs.",
           "credit": "Octamod contributors (headless capture)",
           "license": "LicenseRef-OT-UI-Documentation",
           "source": "original",
@@ -3948,16 +3938,16 @@
             "page": "909 SRC main",
             "shows": "controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.1.5-experimental",
-            "imageSha256": "137580f326b6adc3b0d58f2183d530507f1b370c48911b38d5d0cf94d9e96898",
-            "setup": "Headless ot_emu; MKII panel, stopped transport; actual DSP-enabled AB015FIX01 image and disposable project; 128×64 LCD at integer scale 6."
+            "moduleVersion": "0.1.6-experimental",
+            "imageSha256": "9a52d642e1280c704789dfcca11876a7086cd170424aa8417988ceff442895f7",
+            "setup": "Headless ot_emu; MKII panel, stopped transport; native card build of this 0.1.6 source with Analog BD alone, empty scratch card; 128×64 LCD at integer scale 6."
           }
         },
         {
           "path": "media/ot-808.png",
           "captureType": "emulator",
-          "caption": "Choose 808 in the same browser to compare its unchanged engine and SAT behavior. E controls SWEEP; the third encoder controls its TONE response, labelled TONE in this capture. Finish with STOP and let the tail decay.",
-          "alt": "808 SRC main page with PITCH, DECAY, TONE, ATK, SWEEP and SAT labels.",
+          "caption": "With TYPE on 808 (the default), press SRC for PTCH, DCAY and TONE above ATK, SWEP and SAT. E sets the sweep; with FIXD OFF each hit varies slightly, with FIXD ON every hit is the 0.1.5 808. Finish with STOP and let the tail decay.",
+          "alt": "808 SRC page with PTCH, DCAY, TONE, ATK, SWEP and SAT knobs.",
           "credit": "Octamod contributors (headless capture)",
           "license": "LicenseRef-OT-UI-Documentation",
           "source": "original",
@@ -3965,9 +3955,9 @@
             "page": "808 SRC main",
             "shows": "controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.1.5-experimental",
-            "imageSha256": "137580f326b6adc3b0d58f2183d530507f1b370c48911b38d5d0cf94d9e96898",
-            "setup": "Headless ot_emu; MKII panel, stopped transport; actual DSP-enabled AB015FIX01 image and disposable project; 128×64 LCD at integer scale 6."
+            "moduleVersion": "0.1.6-experimental",
+            "imageSha256": "9a52d642e1280c704789dfcca11876a7086cd170424aa8417988ceff442895f7",
+            "setup": "Headless ot_emu; MKII panel, stopped transport; native card build of this 0.1.6 source with Analog BD alone, empty scratch card; 128×64 LCD at integer scale 6."
           }
         },
         {

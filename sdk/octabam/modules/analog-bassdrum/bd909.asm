@@ -13,7 +13,7 @@
 ;   PULSE negative exponential discharge, HP + resonant LP + output pole;
 ;         subtle hit variation samples the existing free-running noise state
 ;   NOISE free-running LCG, HP 230 Hz and two LP 2.37 kHz, gated by ENV2
-;   LPF   the service notes' output network (knob 8; 0 passes through)
+;   LPF   the service notes' output network (knob 11; 0 passes through)
 ;   DESK  SAT (knob 5), LOW (9), HIGH (10): a Mackie-desk stage after it,
 ;         airwindows MackEQ as the reference
 ;
@@ -29,8 +29,8 @@
 ;       only X is free)
 ;   r6  knob block: x:(r6+k) = knob k, 0..127, k = 0..11; x:(r6+$c) = the
 ;       trig's frame offset, or negative for none
-;   knobs: 0 PITCH  1 DECAY  2 TUNE  3 ATK  4 TDEP  5 SAT  7 ACCNT  8 LPF
-;          9 LOW  10 HIGH
+;   knobs: 0 PITCH  1 DECAY  2 TUNE  3 ATK  4 TDEP  5 SAT  6 TYPE  7 FIXD
+;          8 ACNT  9 LOW  10 HIGH  11 LPF (SETUP: TYPE FIXD ACNT / LOW HIGH LPF)
 ; zq02, init: clears the state block at r5 and seeds the noise.
 ; m0, m1 and m4 are left linear; r5, r6 and n7 are preserved.
 ;
@@ -86,7 +86,7 @@ zq01:
         move    #>@T_DKD@,r1
         move    x:(r1+n1),y1
         move    y1,x:(r5+@DKD@)
-        move    x:(r6+$7),a             ; ACCNT
+        move    x:(r6+$8),a             ; ACNT (SETUP top right)
         move    a1,n1
         move    #>@T_VB@,r1
         move    x:(r1+n1),y0            ; body level, velocity law
@@ -117,7 +117,7 @@ zq01:
         move    x:(r1+n1),x0
         mpyr    x0,y1,a
         move    a,x:(r5+@GN@)
-        move    x:(r6+$8),a             ; LPF
+        move    x:(r6+$b),a             ; LPF (SETUP bottom right)
         move    a1,n1
         move    #>@T_LPF@,r1
         move    x:(r1+n1),x0
@@ -221,18 +221,17 @@ zq04:
         cmp     #>@NREL@,b
         tlt     y0,a                    ; before the release: u stays
         move    a1,x:(r5+@U@)           ; a1 is not limited: wraps mod 2
-; (3) triangle x = 1 - 2|u|
-        move    a1,x0
-        move    x0,a
+; (3) triangle x = 1 - 2|u|; x1 keeps u for the quadrature (inc is consumed)
+        move    a1,x1
+        move    x1,a
         abs     a                       #>$400000,y0
         sub     y0,a
         asl     a
-        neg     a
+        neg     a                       #>@CPOLY@,r1
         move    a,x0                    ; x0 = x (1.0 limits to $7fffff)
 ; (4) The transient is a decaying trigger pulse, independent of VCO phase.
 ; (5) S/16 = c0/16 + x*(c1/16 + x*( ... + x*c11/16)), Horner; the degree-11
 ;     partial sums need the 1/16 (dsp909.horner_ok), two asl give S/4
-        move    #>@CPOLY@,r1
         move    x:(r1)+,y0
         move    x:(r1)+,a
         mac     y0,x0,a         x:(r1)+,b
@@ -255,11 +254,10 @@ zq04:
         move    a,y0
         mac     y0,x0,b         x:(r1)+,a
         move    b,y0
-        mac     y0,x0,a
+        mac     y0,x0,a         #>@CQUAD@,r1
  ; Quadrature Q(x)/16, then u*(1+x)*Q(x)/16. The endpoint factor gives
  ; continuous joins at the triangle's crests; no oscillator/history is added.
         move    a,y1
-        move    #>@CQUAD@,r1
         move    x:(r1)+,y0
         move    x:(r1)+,a
         mac     y0,x0,a         x:(r1)+,b
@@ -270,7 +268,6 @@ zq04:
         move    a,y0
         mac     y0,x0,b
         move    b,y0
-        move    x:(r5+@U@),x1
         mpy     x1,y0,b
         move    b,y0
         move    b,a
@@ -281,8 +278,7 @@ zq04:
         move    a,y1                    ; y1 = S/4
 ; (6) the VCA opens: o += ka*(1 - o)
         move    x:(r5+@O@),x0
-        move    #>@KA@,y0
-        move    x0,a
+        tfr     x0,a            #>@KA@,y0
         add     y0,a
         mac     -y0,x0,a
         move    a,x:(r5+@O@)
@@ -307,29 +303,26 @@ zq04:
         mpy     y1,x1,a
         move    a,x0
         move    x:(r5+@GBODY@),y0
-        mpy     y0,x0,a
+        mpy     y0,x0,a         #>@KTH@,y0
         move    x:(r5+@THH@),b          ; th, 48-bit as two X words
         move    x:(r5+@THL@),b0
         move    b1,x0
-        move    #>@KTH@,y0
         mac     x1,y0,b
         mac     -y0,x0,b
         move    b,x:(r5+@THH@)
         move    b0,x:(r5+@THL@)
         move    b,x0
         move    x:(r5+@SGDC@),y0
-        mac     -y0,x0,a
+        mac     -y0,x0,a        #>@KPR@,y1
         move    a,x:(r5+@ACC@)          ; the body
  ; (9) Two Attack-controlled negative discharges.
 ; The sample-domain envelope follows the native trigger offset; no extra clock.
         move    x:(r5+@PULSE@),x0
-        move    #>@KPR@,y1
         mpy     x0,y1,b
         move    b,x:(r5+@PULSE@)
         move    x:(r5+@GP@),y0
-        mpy     y0,x0,a                 ; longer discharge follows ATK
+        mpy     y0,x0,a         #>@KFAST@,y1 ; longer discharge follows ATK
         move    x:(r5+@FAST@),x0
-        move    #>@KFAST@,y1
         mpy     x0,y1,b
         move    b,x:(r5+@FAST@)
         move    x:(r5+@GS@),y0
@@ -339,96 +332,80 @@ zq04:
         asr     a                       ; quarter-scale mixed input for headroom
         move    a,x1
         move    x:(r5+@LPU@),x0         ; lpu += ku*(up - lpu)
-        move    x0,a
-        move    #>@KU@,y0
+        tfr     x0,a            #>@KU@,y0
         mac     x1,y0,a
-        mac     -y0,x0,a
+        mac     -y0,x0,a        #>@BHP@,y0
         move    a,x:(r5+@LPU@)
         move    x:(r5+@UPPREV@),x0      ; hp = ahp*hp + bhp*(up - prev)
         move    x1,x:(r5+@UPPREV@)
-        move    #>@BHP@,y0
         mpy     x1,y0,b
-        mac     -y0,x0,b
+        mac     -y0,x0,b        #>@AHP@,y0
         move    x:(r5+@HP@),x0
-        move    #>@AHP@,y0
-        mac     y0,x0,b
+        mac     y0,x0,b         #>@CBIQ@,r1
         move    b,x:(r5+@HP@)
-        move    b,x0                    ; x0 = hp, the biquad's input
-        move    #>@CBIQ@,r1             ; b0 b1 b2 -a1/2 -a2
+        move    b,y1                    ; y1 = hp, the biquad's input
+                                        ; CBIQ: b0 b1 b2 -a1/2 -a2
         move    x:(r1)+,y0
-        mpy     y0,x0,b         x:(r1)+,y0
-        move    x:(r5+@BX1@),x0
-        mac     y0,x0,b         x:(r1)+,y0
+        mpy     y1,y0,b         x:(r1)+,y0
+        move    x:(r5+@BX1@),x1
+        move    y1,x:(r5+@BX1@)
+        mac     x1,y0,b         x:(r1)+,y0
         move    x:(r5+@BX2@),x0
         mac     y0,x0,b         x:(r1)+,y0
+        move    x1,x:(r5+@BX2@)         ; the histories move while their values are in registers
         move    x:(r5+@BY1@),x0
         mac     y0,x0,b
         mac     y0,x0,b         x:(r1)+,y0
-        move    x:(r5+@BY2@),x0
-        mac     y0,x0,b
-        move    x:(r5+@BX1@),x0
-        move    x0,x:(r5+@BX2@)
-        move    x:(r5+@HP@),x0
-        move    x0,x:(r5+@BX1@)
-        move    x:(r5+@BY1@),x0
+        move    x:(r5+@BY2@),x1
+        mac     x1,y0,b         #>@KW16@,y1
         move    x0,x:(r5+@BY2@)
         move    b,x:(r5+@BY1@)
         move    b,x0                    ; x0 = w8
-        move    #>@KW16@,y1
-        mpy     x0,y1,b                 ; pls/16 = kw16*w8 + ku16*lpu8
+        mpy     x0,y1,b         #>@KU16@,x1 ; pls/16 = kw16*w8 + ku16*lpu8
         move    x:(r5+@LPU@),y0
-        move    #>@KU16@,x1
         mac     x1,y0,b
 ; The pulse's own output pole. R8 is reused; it is filter history now and
 ; survives triggers, like the HP/biquad/LP histories. No state words are added.
         move    b,x1
         move    x:(r5+@R8@),x0
-        move    x0,b
-        move    #>@KPLP@,y0
+        tfr     x0,b            #>@KPLP@,y0
         mac     x1,y0,b
-        mac     -y0,x0,b
+        mac     -y0,x0,b        #>@LCGK@,y0
         move    b,x:(r5+@R8@)
         move    b,x:(r5+@PT@)           ; the pulse term / 16
 ; (10) noise: 24-bit LCG, HP, two LP, times ENV2 = e2 - e3. The chain runs
 ;      at half scale (BNH carries the 1/2): the HP swings w - prev, up to 2
         move    x:(r5+@LCG@),x0
-        move    #>@LCGK@,y0
         mpy     y0,x0,b                 #0,x1 ; b0 = x*(M-1) mod 2^24
         add     x,b                     #>@LCGC@,y0 ; + x, then load c
         move    #0,y1
-        add     y,b                     ; + c
+        add     y,b                     #>@BNH@,y0 ; + c
         move    b0,x0
         move    x0,x:(r5+@LCG@)         ; x0 = white
         move    x:(r5+@NPREV@),y1
         move    x0,x:(r5+@NPREV@)
-        move    #>@BNH@,y0
         mpy     y0,x0,b
-        mac     -y1,y0,b
+        mac     -y1,y0,b        #>@ANH@,y0
         move    x:(r5+@NH@),x0
-        move    #>@ANH@,y0
         mac     y0,x0,b
         move    b,x:(r5+@NH@)
         move    b,x1                    ; x1 = nh
         move    x:(r5+@N1@),x0          ; n1 += kl*(nh - n1)
-        move    x0,b
-        move    #>@KL1@,y0
+        tfr     x0,b            #>@KL1@,y0
         mac     x1,y0,b
         mac     -y0,x0,b
         move    b,x:(r5+@N1@)
         move    b,x1
         move    x:(r5+@N2@),x0
-        move    x0,b
-        move    #>@KL2@,y0
+        tfr     x0,b            #>@KL2@,y0
         mac     x1,y0,b
-        mac     -y0,x0,b
+        mac     -y0,x0,b        #>@K2@,y0
         move    b,x:(r5+@N2@)
         move    b,y1                    ; y1 = n2
         move    x:(r5+@E2@),x0
-        move    #>@K2@,y0
-        mpy     y0,x0,a
+        mpy     y0,x0,a         #>@K3@,y0
         move    a,x:(r5+@E2@)
         move    x:(r5+@E3@),x0
-        move    #>@K3@,y0
         mpy     y0,x0,b
         move    b,x:(r5+@E3@)
         move    b,x0
@@ -466,8 +443,11 @@ zq04:
         asl     #$10,a,a
         move    x:(r5+@SSAT@),x0
         sub     x0,a
+; Settled (SSAT = SAT << 16): drive, make-up and coupling already hold the
+; table entries the decode wrote or the last interpolation gave; skip them.
+        beq     zd04
         asr     #$6,a,a
-        add     x0,a
+        add     x0,a            #>@T_TIN@,r1
         move    a,x:(r5+@SSAT@)
         move    a,b
         asr     #$10,a,a
@@ -475,43 +455,37 @@ zq04:
         and     #>$ffff,b
         asl     #$7,b,b
         move    b,y0
-        move    #>@T_TIN@,r1
         lua     (r1)+n1,r1
-        move    x:(r1)+,b
-        move    b,y1
+        move    x:(r1)+,y1
         move    x:(r1),a
         sub     y1,a
         move    a,x0
         move    y1,a
-        mac     y0,x0,a
+        mac     y0,x0,a         #>@T_PAD@,r1
         move    a,x:(r5+@TIN@)
-        move    #>@T_PAD@,r1
         lua     (r1)+n1,r1
-        move    x:(r1)+,b
-        move    b,y1
+        move    x:(r1)+,y1
         move    x:(r1),a
         sub     y1,a
         move    a,x0
         move    y1,a
-        mac     y0,x0,a
+        mac     y0,x0,a         #>@T_KHP@,r1
         move    a,x:(r5+@PAD@)
-        move    #>@T_KHP@,r1
         lua     (r1)+n1,r1
-        move    x:(r1)+,b
-        move    b,y1
+        move    x:(r1)+,y1
         move    x:(r1),a
         sub     y1,a
         move    a,x0
         move    y1,a
         mac     y0,x0,a
         move    a,x:(r5+@KHP@)
-        move    x1,a
-        move    a,x0                    ; the desk's input coupling, 48-bit (a
+zd04:
+        move    x1,a                    ; the desk's input coupling, 48-bit (a
         move    x:(r5+@HPH@),b          ; 24-bit state stalls short of the input
         move    x:(r5+@HPL@),b0         ; and SAT's drive makes that a DC floor):
         move    b1,y1                   ; hps += khp*(y - hps), y -= hps
         move    x:(r5+@KHP@),y0         ; (khp is 0 at SAT 0: DC-coupled)
-        mac     y0,x0,b
+        mac     x1,y0,b
         mac     -y1,y0,b
         move    b,x:(r5+@HPH@)
         move    b0,x:(r5+@HPL@)
@@ -535,8 +509,7 @@ zq04:
         mac     -y1,y0,a
         move    a,x1                    ; x1 = x
         move    x:(r5+@LB@),x0          ; lb += KB*(x - lb): the bass band
-        move    x0,a
-        move    #>@KB@,y0
+        tfr     x0,a            #>@KB@,y0
         mac     x1,y0,a
         mac     -y0,x0,a
         move    a,x:(r5+@LB@)
@@ -546,8 +519,7 @@ zq04:
         asr     b
         move    b,x1                    ; x1 = rest/2
         move    x:(r5+@M2@),x0          ; m2 += KM*(rest/2 - m2): mid/2
-        move    x0,a
-        move    #>@KM@,y0
+        tfr     x0,a            #>@KM@,y0
         mac     x1,y0,a
         mac     -y0,x0,a
         move    a,x:(r5+@M2@)
@@ -585,9 +557,8 @@ zq04:
         mac     -y1,y0,a
         move    a,x0
         move    x:(r5+@OH@),y0
-        mac     y0,x0,b
+        mac     y0,x0,b         #>@KMS@,y0
         move    x:(r5+@M2@),x0          ; + mid
-        move    #>@KMS@,y0
         mac     y0,x0,b
         asl     b
         asl     b
@@ -628,10 +599,21 @@ zq06:
         move    x0,x:(r5+@E3@)
 ; Sample the existing free-running noise state once per hit. Only pulse
 ; strength moves (+/- 6.4%); pitch, trigger timing and the body stay fixed.
+; Knob 7 (FIXD, SETUP) set: the strength is the constant and the noise
+; restarts from its seed, so every hit opens the same way.
+        move    x:(r6+$7),a             ; FIXD (SETUP top middle)
+        tst     a
+        bne     zq0a
         move    x:(r5+@LCG@),x0
         move    #>@KPJIT@,y1
         move    #>@KPBASE@,a
         mac     x0,y1,a
+        bra     zq0b
+zq0a:
+        move    #>@SEED@,x0
+        move    x0,x:(r5+@LCG@)
+        move    #>@KPBASE@,a
+zq0b:
         move    a,x:(r5+@PULSE@)
         move    a,x:(r5+@FAST@)
         clr     a

@@ -6,6 +6,7 @@ description: Change, fix or update a Modwerk module the developer wrote or maint
 # /modwerk-update-module
 
 1. **Whose module?** Read its manifest. If the developer is neither its author nor a listed maintainer, they need the author's OK first (`docs/DEVELOPER_WORKFLOW.md#ask-the-author-first`). Stop until they have it.
+   - Read its claim on the agent board (`npm run board -- list module <machine>/<id>`). If someone else holds it, they are changing it already: stop and tell the developer who. Otherwise claim it: `npm run board -- claim module <machine>/<id>`.
 2. **Read** `docs/MODULE_AUTHOR_UPDATES.md`, then the module's README, TESTING, manifest and category guide.
 3. **Change it.** Pick the next semantic version and write that version's own release notes in `src/community/module-changelogs/<id>.json`, keeping the earlier entries.
 4. **Build and test.** Build the exact private image and give the developer concrete steps for it on their unit (`/modwerk-try-on-unit`).

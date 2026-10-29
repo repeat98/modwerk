@@ -1,26 +1,26 @@
 {
  "schema": 1,
- "identity": "9b7e0eb337a92378306a9b837f04adb3b93242a42f6113e418607ad8fe5dd57b",
- "arena": 1089502688,
- "pool": 1087542656,
+ "identity": "4ad38ae4a7e68ccafad88dd927f9c62a49fb7153896f68880bb75b94ff25b407",
+ "arena": 1089508832,
+ "pool": 1087543168,
  "symbols": {
   "modwerk_controller_write_begin": 1084871420,
   "modwerk_controller_write_end": 1084871448,
-  "modwerk_cue_cfg_clamp": 1085072240,
-  "modwerk_raise_ev_mute_keep": 1085074594
+  "modwerk_cue_cfg_clamp": 1085072700,
+  "modwerk_raise_ev_mute_keep": 1085075054
  },
  "controllers": {
   "sidechain-compressor": "bc005d3dc5f4a961bc23068b28ab20314f492b12609e087f8d2d4d47caf68d81",
   "output-matrix": "8e4c2be24be544ef9abfbb3bef89e017f5a3994c991e5d59ccae7cad0675271b",
-  "analog-bassdrum": "0698b719508ac2bf22277fa7885e305385293bd98f084b1b627014e79b77f7a2"
+  "analog-bassdrum": "5ef60dd9313bbe9bdf0b0fc7a013cc47e186225278008ddda0361bde53475b8b"
  },
  "variants": {
-  "tracks-main-cue": "9b7e0eb337a92378306a9b837f04adb3b93242a42f6113e418607ad8fe5dd57b",
-  "tracks": "f6b2d985ade061dea6d4e8982965bd7b0f091aa7c21b095b3c03882837d2bc3c",
-  "tracks-post": "b4180dc4ce7ee40a16099e7795052f80d814855a134efe8e5515161c44533889",
-  "main-cue": "ff8f82d8b246fc582e7a9d51016c474fb7cb883eb3d12f5be2546e2c5583f8c0",
-  "main": "372ce19f9edb41ad14ee82220fbb767dd4857ce6cd6caf5d058fc71564685e88",
-  "master": "d42769b9d726d35ca9f66845e411c3d7bc98592c7f667ae3600db64882f2c6e0",
-  "off": "9c10bd4e3fab9ea1c6f5331d0ebadb5b7dcc43669a6965cc7025e23bd35fa04a"
+  "tracks-main-cue": "4ad38ae4a7e68ccafad88dd927f9c62a49fb7153896f68880bb75b94ff25b407",
+  "tracks": "34e721559d7e90c7959118ffe1641219c4ea403832aacf48834163eb1a802863",
+  "tracks-post": "8e5c8b84f83ce9264ce84453cffde38737aa01fc049ae243e0e8a1ca7ede447a",
+  "main-cue": "5640fd31a4bc428cff406540b1a37d29270bb150e073236a1a3c6db83a561972",
+  "main": "8e10d9f943a002b29237ec132284893b93aa492f4af2984f67503bb0ba03bafb",
+  "master": "161dfc8996dbd641546bffb1277e624be28ae580c5f6cfe79c3e45376e5879b2",
+  "off": "f614c9f550be5f13fac2819acc159f9adbb4c583c7f94c342df3535ff7d88eb8"
  }
 }

@@ -6,6 +6,7 @@ import { assetUrl, sourceRepository } from '../hosting'
 import { communityModule } from './modules'
 import { DEVELOPMENT_DISCORD_URL } from '../config/development-discord'
 import { DeveloperReleaseGuide } from './DeveloperReleaseGuide'
+import { AgentBoard } from './AgentBoard'
 import type { DeveloperTask } from './developer-guidance'
 import '../components/developer-release-guide.css'
 import './develop-intro.css'
@@ -56,6 +57,7 @@ export function SubmissionPage({ moduleId = '', machine: initialMachine }: { mod
     </section>
 
     <DeveloperReleaseGuide repository={repository} task={task} machine={machine} />
+    <AgentBoard repository={repository} />
   </div>
 }
 

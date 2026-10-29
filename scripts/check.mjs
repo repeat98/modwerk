@@ -98,6 +98,9 @@ if (!buildOnly && !documentationOnly && passed) passed = await all(() => run('el
 if (passed && !documentationOnly) passed = await run('licenses:generate') && await run('machines:generate') && await run('modules:generate')
 // Every path, including documentation-only checks and release builds, requires current-version notes and documents within their size.
 if (passed) passed = await changelogs()
+// The agent board's claims (docs/AGENT_BOARD.md): a module, hook or migration this branch adds that someone else holds fails it;
+// an unreachable board only warns, so an outage never blocks a pull request.
+if (passed && base) passed = await run('board', ['check', '--base', base])
 // Documentation uses the same import policy as publication without running firmware gates. The catalogue tests read Markdown
 // (the module guides' links, the agent files, the pull request template), so a prose-only change can break them and must run them.
 if (passed && documentationOnly) passed = await run('sdk:imports:check') && await run('test', ['src/catalog'])

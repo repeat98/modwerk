@@ -68,7 +68,7 @@ class RequestedImports(unittest.TestCase):
             else:
                 self.assertNotIn('build', doc)
                 # USB Audio 0.2 retains the classic lifecycle and MIDI clock sources beside selectable layouts.
-                self.assertEqual(doc['version'], '0.2.0-experimental' if id == 'usb-audio-out-tracks-main-cue' else '0.1.5-experimental' if id == 'analog-bassdrum' else '0.1.3-experimental' if id == 'quantizer' else '0.1.2-experimental')
+                self.assertEqual(doc['version'], '0.2.0-experimental' if id == 'usb-audio-out-tracks-main-cue' else '0.1.6-experimental' if id == 'analog-bassdrum' else '0.1.3-experimental' if id == 'quantizer' else '0.1.2-experimental')
         for id, pin in REPORT['authorPins'].items():
             sources = [item for item in REPORT['files'] if item['path'].startswith('modules/' + id + '/upstream/')]
             self.assertTrue(sources)

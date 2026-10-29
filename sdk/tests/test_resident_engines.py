@@ -66,7 +66,7 @@ ACTIVE = {resident_dsp.SIDECHAIN: ('X 1056 3', 'X %d %d' % (0x628d, 0x30000), 'Y
 LIMIT = {('A', resident_dsp.ANALOG_BD): 160}
 # Each on-demand unit's words. Sidechain 0.2.0's 710 before the key bus split: its detector, MON commit, init and table
 # now, and the one-pass tap (with #640's phase rule) as the key bus's own unit.
-UNIT_WORDS = {1: 613, 2: 675, 4: 998, 8: 97}  # 613 + 97 = 710: no word added or lost
+UNIT_WORDS = {1: 613, 2: 675, 4: 1009, 8: 97}  # 613 + 97 = 710: no word added or lost
 
 
 def read(name, path):
@@ -122,6 +122,7 @@ int dl_owned_cancel(const struct dl_owned_job *v) { (void)v;return 0; }
 int dl_owned_job_poll(const struct dl_owned_job *v,struct dl_owned_progress *p) { (void)v;(void)p;return 0; }
 int dl_owned_job_release(const struct dl_owned_job *v) { (void)v;return 0; }
 void dl_owned_fail_closed(unsigned c) { (void)c; }
+int dl_owned_closed(unsigned c) { (void)c;return 0; }
 int dl_engine_claim(unsigned c,unsigned r,int k) { (void)c;(void)r;(void)k;return 0; }
 void dl_engine_release(unsigned c,unsigned r) { (void)c;(void)r; }
 unsigned dl_engine_reserved(unsigned c) { (void)c;return 0; }

@@ -197,7 +197,8 @@ export function fakeSession(unit: FakeUnit, delay = 0) {
           setTimeout(() => { unit.plug('base'); if (restarts) setTimeout(() => { unit.base = unit.active = target; unit.unplug(); unit.plug('base') }, delay + 500) }, delay + 100)
           throw new UploadUnconfirmedError('The activation reply was lost.', status)
         }
-        const published = await step('pending')
+        // Publication makes the staged package the active one (upload.c mu_publish), a base's container as well.
+        const published = status = { ...await step('pending'), active: staged }
         // A RAM boot image (boot.c): the unit restarts half a second on. Only the flashed base's gate reads the mailbox, so
         // armed from a base running out of RAM it comes back on the flashed one; from that one, on the image's base.
         if (data && data.length >= 4 && new DataView(data.buffer, data.byteOffset).getUint32(0) === 0x4fefffe4) {

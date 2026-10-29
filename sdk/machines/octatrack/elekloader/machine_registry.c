@@ -244,6 +244,21 @@ unsigned mw_chooser_type(unsigned type, const Part *ptr)
     if (who && who->chooser_type && who->chooser_type(type, ptr) != 5) return type;
     return mw_type(type, ptr);
 }
+/* Stock's per-track voice records (0x800049d8 + 168 * track): byte 0 is "playing", which the trig start (0x4000f450)
+ * sets and the sample fetch (0x40007960) reads silence while it is 0. A module machine is FLEX underneath, so each of
+ * its trigs also starts stock's FLEX voice from the machine's bytes read as FLEX settings, and its own render never
+ * advances that voice. Nothing stops it when the track changes machine: stock's parameter load (0x40001f18) never
+ * touches the record, and voice bind (0x40006820) runs only where a commit changes the type. A switch that keeps the
+ * stored type (FLEX <-> machine, of the playing Part) stops it here, before the track's parameters change: the track
+ * is silent until its next trig, never a short burst of the old voice that the first trig cuts or plays over.
+ * It runs from the UI task with interrupts on: a trig the frame interrupt starts in the same moment could be cleared
+ * with it. That is one byte, one trig, at the moment the player changes the machine, and acceptable (owner, 29 Oct 2026). */
+#define VOICE 0x800049d8u
+#define VOICE_STRIDE 168u
+static void hush(const Part *part, unsigned track, unsigned type)
+{
+    if (part == current_part() && part[0x22 + track] == type) U8(VOICE + VOICE_STRIDE * track) = 0;
+}
 /* A track leaves `old`: its own leave, stock's FLEX defaults back in both Part copies for a PROTECT machine that
  * signs its tracks through the registry (the 12 bytes held its parameters), and its DSP charge released. */
 static void flex_defaults(Part *part, Part *mirror, unsigned track)
@@ -292,6 +307,7 @@ unsigned mw_assign(Part *part, unsigned track, unsigned row)
         if (old && old != next) leave(part, mirror, track, old);
         if (absent) flex_defaults(part, mirror, track);
         if (next->assign) return next->assign(part, track, 1);
+        if (old != next) hush(part, track, 1);
         if (old != next && next->defaults)
             for (unsigned k = 0; k < 12; ++k) {
                 unsigned at = (k < 6 ? 0x2a : 0x1da) + 30 * track + 6 + k % 6;
@@ -306,8 +322,10 @@ unsigned mw_assign(Part *part, unsigned track, unsigned row)
         unsigned pool = old->assign(part, track, 0);
         const Machine *still; owner(m, n, part, track, &still);
         if (still == old) return pool;
+        hush(part, track, row < 5 ? row : 1);
         leave(part, mirror, track, old);
     } else if (old || absent) {
+        hush(part, track, row < 5 ? row : 1);
         if (old) leave(part, mirror, track, old);
         else flex_defaults(part, mirror, track);
         unsigned sig = SIG + 30 * track; for (unsigned k = 0; k < 3; ++k) part[sig + k] = mirror[sig + k] = 0;

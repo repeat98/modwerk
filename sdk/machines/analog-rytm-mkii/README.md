@@ -6,7 +6,11 @@ The Analog Rytm MKII runs on the same ColdFire platform as the Digitakt mk1, and
 
 ## Modwerk stack
 
-Today the core is elekloader's core-ar2 0.7, and mods reach the unit as a full OS file sent with Transfer. The Rytm is to get the Octatrack's stack ([recipe](../../../docs/MACHINE_RECIPE.md)) on a Modwerk base started from core-ar2 0.3's source (owner, 27 October 2026). The first shared site the base owns is the send bus: per-track sends, the SEND and SEND FX pages, per-kit state and p-locks, and an FX list each send effect joins as its own module. The USB link, the loader, base updates over USB, the MCP's device tools and the machine page follow. The plan goes to the owner before any code. Until the base ships, core-ar2 0.7 is what builds, and the full OS file sent with Transfer stays the fallback after it.
+Today the core is elekloader's core-ar2 0.7, and mods reach the unit as a full OS file sent with Transfer. The Rytm is to get the Octatrack's stack ([recipe](../../../docs/MACHINE_RECIPE.md)) on a Modwerk base (owner, 27 October 2026). The base starts from core-ar2 0.7's source, copied unchanged into [elekloader/](elekloader/README.md), where `npm run machine:base -- analog-rytm-mkii` builds it with the reviewed toolchain and checks its identity (29 October 2026). The plan was agreed with the owner on [#878](https://github.com/repeat98/modwerk/pull/878).
+
+The first shared site the base will own is the send bus: per-track sends, the SEND and SEND FX pages, per-kit state and p-locks, and an FX list each send effect joins as its own module. The USB link (SysEx over USB MIDI first), the loader, base installs and updates from the site, the MCP's device tools and the machine page follow.
+
+Until the base ships, irpina's core-ar2 0.7 release is what builds. The full OS file sent with Transfer stays the fallback after that.
 
 ## Create a mod
 

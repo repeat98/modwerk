@@ -194,7 +194,7 @@ def tables():
         T_ATP=[OUT * (B['k0'] + u_of(i)) * VAS / PU['gain_scale'] for i in range(128)],
         # the noise chain runs at half scale: its HP swings (w - prev), up to 2
         T_ATN=[2 * OUT * (NZ['attack_floor'] + (1-NZ['attack_floor'])*u_of(i)) * NZ['g'] / NOISE_RMS * VAS / SHIFT for i in range(128)],
-        T_LPF=[1 - 2 ** -23] + [1 - k_pole(f) for f in LPF_HZ[1:]],
+        T_LPF=[1 - k_pole(f) for f in LPF_HZ[1:]] + [1 - 2 ** -23],  # 0.1.6: 0..126 = 500 Hz..18 kHz, 127 = OFF
         # SAT: drive / stage / 32 (five asl) and the make-up / 2 (one asl)
         T_TIN=[mk_drive(i) / MK['stage'] / 32 for i in range(128)],
         T_PAD=[mk_pad(i) / 2 for i in range(128)],
@@ -439,14 +439,14 @@ class Voice:
         q = rnd24(rnd24(t['T_AP'][k[0]] * t['T_GT'][k[2]]) * t['T_GD'][k[4]])
         inc_a = rnd24(q * c['KA_INC'])
         dkp, dkd = t['T_DKP'][k[2]], t['T_DKD'][k[1]]
-        vb = t['T_VB'][k[7]]
+        vb = t['T_VB'][k[8]]
         gdc = vb * t['T_THS'][min(127, int(q * 128))]
         gbody = vb * c['K_BODY']
-        va = t['T_VA'][k[7]]
+        va = t['T_VA'][k[8]]
         gp = va * t['T_ATP'][k[3]]
         gs = va * c['KGS'] + 4*gp*c['KFDR']
         gn = va * t['T_ATN'][k[3]]
-        klpf = t['T_LPF'][k[8]]
+        klpf = t['T_LPF'][k[11]]
         targets = (inc_a, rnd24(gdc))
         if self.depth_values is None:
             self.depth_values = targets
@@ -457,8 +457,12 @@ class Voice:
         for i in range(frames):
             if trig is not None and i == trig:
                 self.ep = self.e2 = self.e3 = 1 - 2 ** -23
-                white = (self.lcg - (1 << 24) if self.lcg & 0x800000 else self.lcg) / 8388608
-                self.pulse = rnd24(c['KPBASE'] + c['KPJIT'] * white)
+                if k[7]:
+                    self.lcg = SEED
+                    self.pulse = rnd24(c['KPBASE'])
+                else:
+                    white = (self.lcg - (1 << 24) if self.lcg & 0x800000 else self.lcg) / 8388608
+                    self.pulse = rnd24(c['KPBASE'] + c['KPJIT'] * white)
                 self.fast = self.pulse
                 self.o = 0.0
                 self.cnt = 0
