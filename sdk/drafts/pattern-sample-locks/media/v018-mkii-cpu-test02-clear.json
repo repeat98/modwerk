@@ -1,0 +1,280 @@
+{
+  "schema": 1,
+  "hardware": true,
+  "label": "CPU test 2: Clear operation",
+  "moduleVersion": "0.1.8-experimental",
+  "packageSha256": "28766a017005e664d00620d3831fc81af7449c95e1896a17121ca8fc2d306d8d",
+  "base": "9b7e0eb337a92378306a9b837f04adb3b93242a42f6113e418607ad8fe5dd57b",
+  "cueAt": "2026-10-29T04:08:49.759677+00:00",
+  "operatorDoneAcknowledgedAt": "2026-10-29T04:09:51.866787+00:00",
+  "postEnd": "2026-10-29T04:09:56.866787+00:00",
+  "operatorReport": "Done",
+  "context": "Continuous hardware CPU/DSP log remains active. Operator controls tracks and transport; no exact hardware key timestamp is independently available. UI phases are sampled observations.",
+  "preCue": {
+    "readRequests": 25,
+    "firstAt": "2026-10-29T04:08:44.779Z",
+    "lastAt": "2026-10-29T04:08:49.649Z",
+    "cpu": {
+      "meanPercent": 54.42,
+      "minPercent": 53.4,
+      "maxPercent": 56.0
+    },
+    "dsp1to4": {
+      "meanPercent": 34.54,
+      "minPercent": 34.3,
+      "maxPercent": 34.6
+    },
+    "dsp5to8": {
+      "meanPercent": 46.724,
+      "minPercent": 46.1,
+      "maxPercent": 47.3
+    },
+    "uiPhases": [
+      1
+    ],
+    "cpuPeakFirstAt": "2026-10-29T04:08:47.823Z"
+  },
+  "cueThroughReportedDone": {
+    "readRequests": 305,
+    "firstAt": "2026-10-29T04:08:49.852Z",
+    "lastAt": "2026-10-29T04:09:51.854Z",
+    "cpu": {
+      "meanPercent": 53.90819672131148,
+      "minPercent": 49.8,
+      "maxPercent": 56.8
+    },
+    "dsp1to4": {
+      "meanPercent": 34.578032786885245,
+      "minPercent": 33.8,
+      "maxPercent": 35.9
+    },
+    "dsp5to8": {
+      "meanPercent": 47.06295081967213,
+      "minPercent": 46.1,
+      "maxPercent": 47.3
+    },
+    "uiPhases": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "cpuPeakFirstAt": "2026-10-29T04:09:37.826Z"
+  },
+  "postReportedDone": {
+    "readRequests": 24,
+    "firstAt": "2026-10-29T04:09:52.057Z",
+    "lastAt": "2026-10-29T04:09:56.726Z",
+    "cpu": {
+      "meanPercent": 50.875,
+      "minPercent": 49.8,
+      "maxPercent": 52.3
+    },
+    "dsp1to4": {
+      "meanPercent": 34.6,
+      "minPercent": 34.6,
+      "maxPercent": 34.6
+    },
+    "dsp5to8": {
+      "meanPercent": 47.1875,
+      "minPercent": 46.4,
+      "maxPercent": 47.3
+    },
+    "uiPhases": [
+      0
+    ],
+    "cpuPeakFirstAt": "2026-10-29T04:09:55.305Z"
+  },
+  "observedUiTransitions": [
+    {
+      "at": "2026-10-29T04:08:47.823Z",
+      "phase": 1,
+      "plannedChangeCount": 7,
+      "selectedMask": 0,
+      "meaning": "Sampled module API state, not an exact button timestamp or independent edit verification"
+    },
+    {
+      "at": "2026-10-29T04:09:35.358Z",
+      "phase": 2,
+      "plannedChangeCount": 7,
+      "selectedMask": 0,
+      "meaning": "Sampled module API state, not an exact button timestamp or independent edit verification"
+    },
+    {
+      "at": "2026-10-29T04:09:36.592Z",
+      "phase": 2,
+      "plannedChangeCount": 7,
+      "selectedMask": 255,
+      "meaning": "Sampled module API state, not an exact button timestamp or independent edit verification"
+    },
+    {
+      "at": "2026-10-29T04:09:38.029Z",
+      "phase": 3,
+      "plannedChangeCount": 15,
+      "selectedMask": 255,
+      "meaning": "Sampled module API state, not an exact button timestamp or independent edit verification"
+    },
+    {
+      "at": "2026-10-29T04:09:39.657Z",
+      "phase": 0,
+      "plannedChangeCount": 15,
+      "selectedMask": 255,
+      "meaning": "Sampled module API state, not an exact button timestamp or independent edit verification"
+    }
+  ],
+  "baseline": {
+    "count": 148,
+    "firstAt": "2026-10-29T04:06:19.089Z",
+    "lastAt": "2026-10-29T04:06:48.929Z",
+    "cpu": {
+      "meanPercent": 52.83851351351351,
+      "minPercent": 51.6,
+      "maxPercent": 55.1
+    },
+    "dsp1to4": {
+      "meanPercent": 34.494594594594595,
+      "minPercent": 33.6,
+      "maxPercent": 34.6
+    },
+    "dsp5to8": {
+      "meanPercent": 47.03648648648648,
+      "minPercent": 46.1,
+      "maxPercent": 47.3
+    }
+  },
+  "baselineComparison": "Test 1 closed-module-menu window; transport and project state requested unchanged, not independently verified. Operation window includes popup interaction and chat delay.",
+  "limits": [
+    "Cached approximately half-second CPU windows; nominal 200-ms requests repeat readings.",
+    "Sampled UI phase transitions and completion-message timestamps do not establish exact hardware execution timing.",
+    "Whole-instrument CPU/DSP; no isolated function cost or instantaneous short-spike measurement.",
+    "User reported completion; no independent pattern-memory or audible result.",
+    "The logger frames field is the DIAG frame counter, which overwrote the MWLD load-frame field; CPU/DSP meter fields are unaffected. No DSP-frame-progress result is inferred."
+  ],
+  "trialRemainsActiveAtObservation": true,
+  "keep": false,
+  "undo": false,
+  "confirmationToClosedObservation": {
+    "lastConfirmationAt": "2026-10-29T04:09:39.453Z",
+    "firstClosedAt": "2026-10-29T04:09:39.657Z",
+    "plannedChanges": 15,
+    "selectedMask": 255,
+    "note": "Sampled interval containing the reported Apply/close; not an exact hardware execution timestamp"
+  },
+  "aroundObservedClose": {
+    "window": "one second before through one second after first observed closed phase",
+    "samples": [
+      {
+        "at": "2026-10-29T04:09:38.842Z",
+        "ticks": 39759,
+        "frames": 28,
+        "cpu": 545,
+        "tracks5to8": 473,
+        "peak5to8": 484,
+        "tracks1to4": 340,
+        "peak1to4": 357,
+        "uiPhase": 3,
+        "uiValue": 67043343
+      },
+      {
+        "at": "2026-10-29T04:09:39.046Z",
+        "ticks": 39771,
+        "frames": 28,
+        "cpu": 545,
+        "tracks5to8": 473,
+        "peak5to8": 484,
+        "tracks1to4": 340,
+        "peak1to4": 357,
+        "uiPhase": 3,
+        "uiValue": 67043343
+      },
+      {
+        "at": "2026-10-29T04:09:39.250Z",
+        "ticks": 39783,
+        "frames": 28,
+        "cpu": 561,
+        "tracks5to8": 473,
+        "peak5to8": 484,
+        "tracks1to4": 340,
+        "peak1to4": 357,
+        "uiPhase": 3,
+        "uiValue": 67043343
+      },
+      {
+        "at": "2026-10-29T04:09:39.453Z",
+        "ticks": 39795,
+        "frames": 28,
+        "cpu": 561,
+        "tracks5to8": 473,
+        "peak5to8": 484,
+        "tracks1to4": 340,
+        "peak1to4": 357,
+        "uiPhase": 3,
+        "uiValue": 67043343
+      },
+      {
+        "at": "2026-10-29T04:09:39.657Z",
+        "ticks": 39808,
+        "frames": 28,
+        "cpu": 561,
+        "tracks5to8": 473,
+        "peak5to8": 484,
+        "tracks1to4": 340,
+        "peak1to4": 357,
+        "uiPhase": 0,
+        "uiValue": 16711695
+      },
+      {
+        "at": "2026-10-29T04:09:39.868Z",
+        "ticks": 39820,
+        "frames": 28,
+        "cpu": 562,
+        "tracks5to8": 473,
+        "peak5to8": 484,
+        "tracks1to4": 346,
+        "peak1to4": 357,
+        "uiPhase": 0,
+        "uiValue": 16711695
+      },
+      {
+        "at": "2026-10-29T04:09:40.073Z",
+        "ticks": 39833,
+        "frames": 28,
+        "cpu": 562,
+        "tracks5to8": 473,
+        "peak5to8": 484,
+        "tracks1to4": 346,
+        "peak1to4": 357,
+        "uiPhase": 0,
+        "uiValue": 16711695
+      },
+      {
+        "at": "2026-10-29T04:09:40.275Z",
+        "ticks": 39845,
+        "frames": 28,
+        "cpu": 516,
+        "tracks5to8": 473,
+        "peak5to8": 484,
+        "tracks1to4": 346,
+        "peak1to4": 357,
+        "uiPhase": 0,
+        "uiValue": 16711695
+      },
+      {
+        "at": "2026-10-29T04:09:40.478Z",
+        "ticks": 39857,
+        "frames": 28,
+        "cpu": 516,
+        "tracks5to8": 473,
+        "peak5to8": 484,
+        "tracks1to4": 346,
+        "peak1to4": 357,
+        "uiPhase": 0,
+        "uiValue": 16711695
+      }
+    ],
+    "cpuMeanPercent": 54.766666666666666,
+    "cpuMinPercent": 51.6,
+    "cpuMaxPercent": 56.2
+  },
+  "peakInterpretation": "The whole-capture 56.8% peak was observed before the first confirmation-phase sample; it is not attributed to Clear execution. Cached readings cannot resolve a short per-operation spike."
+}

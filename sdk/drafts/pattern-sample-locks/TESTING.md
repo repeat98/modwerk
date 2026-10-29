@@ -76,3 +76,14 @@ The author labelled the current state baseline and was asked to leave the screen
 Across 148 cached meter requests, CPU averaged **52.84%**, range **51.6–55.1%**. DSP current means were **34.49%** on T1–4 and **47.04%** on T5–8. Fifteen readings selected at two-second offsets gave CPU mean 52.50%, range 52.3–52.7%; this spaced subset does not include the whole capture’s 55.1% maximum. Requests repeat approximately half-second meter windows and are not instantaneous independent samples.
 
 This is a baseline of the whole instrument with the module loaded, not an unloaded comparison or isolated module cost. No functional/audio result or exact operation timestamp is inferred. The untimed trial and logging continue; no Undo or Keep was requested. See [baseline receipt](media/v018-mkii-cpu-test01-baseline.json).
+
+## Physical CPU test 2: Clear operation — 29 October 2026
+
+The author was cued after logging was confirmed live, then reported Done. The cue-to-acknowledgement interval was 04:08:49.760–04:09:51.867 UTC. Sampled module telemetry showed track selection, confirmation with **15 planned changes** and all eight tracks selected, then CLOSED. The last confirmation sample was 04:09:39.453 and first closed sample 04:09:39.657. This associates the capture with the reported Clear operation; it is not an exact button timestamp or independent pattern-memory check.
+
+- Entire menu/operation interval: 305 cached requests; CPU mean **53.91%**, range **49.8–56.8%**. The 56.8% maximum occurred at 04:09:37.826, before the first confirmation sample, so it is not attributed to execution.
+- One second before through one second after the first closed sample: CPU mean **54.77%**, maximum **56.2%**. This vicinity includes confirmation, the reported Apply/close and the next cached windows; no isolated Clear cost or instantaneous spike is inferred.
+- Five seconds after the Done acknowledgement: 24 cached requests, closed throughout; CPU mean **50.88%**, range **49.8–52.3%**. DSP current means were **34.60%** (T1–4) and **47.19%** (T5–8).
+- Test 1 baseline CPU mean was 52.84%. Transport/project state was requested unchanged but not independently verified; UI states differ, and the operation can change which samples play. These values cannot be subtracted to establish module-only utilization.
+
+See [Clear receipt](media/v018-mkii-cpu-test02-clear.json). The logger’s frames field is the DIAG counter rather than the native load-frame field; CPU/DSP fields are unaffected, and no frame-progress conclusion uses it. The author reported completion only; playback continuity, audible behavior and exact lock-memory changes remain unreported. The untimed trial/logging remain active with no Undo or Keep.
