@@ -25,6 +25,8 @@ const CLASSES = [
   ['menu space', /label formatters do not fit|wide dial hook|chooser list of|not free|past the stock zero run|fits neither the clone window|does not fit|do not fit/, /module menu cave exceeds|choosers need more space|does not fit|do not fit/],
   ['Analog BD', /stock effects only|cannot share DSP memory/, /stock effects only|cannot share DSP memory/],
   ['Analog BD boot memory', /pre-boot analog bd payload A dst overlaps runtime stage:/, /^Analog BD boot payloads overlap or exceed reserved memory\.$/],
+  // 0x400d24d0..0x400d24df, which the stock DELAY reads past its table (build_bus.py delay_tail_clash, os-patches.ts).
+  ['stock DELAY table tail', /which the stock DELAY reads past its table/, /the stock DELAY reads 0x400d24d0\.\.0x400d24df past its table/],
 ]
 export const refusalClass = (text, side) => CLASSES.find(row => row[side === 'native' ? 1 : 2].test(text))?.[0] ?? 'unclassified'
 
