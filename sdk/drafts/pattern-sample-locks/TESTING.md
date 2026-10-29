@@ -68,3 +68,11 @@ The author-requested untimed trial is active at the recorded observation; it has
 Manual functional/audio results are not reported yet. The hardware meter is a cached whole-instrument measurement; this trial has no matched unloaded hardware baseline or exact per-operation hardware timing.
 
 Audible continuity, MKI, heavy streaming/USB/MIDI loads, tempo/speed extremes, companion runtime combinations, stock-only card integration, hardware stack/timing and physical restart remain unqualified. A real module reload was tested in the emulator; no power-cycle persistence is claimed for the session preferences. Hardware qualification and owner review remain required before publication.
+
+## Physical CPU test 1: baseline — 29 October 2026
+
+The author labelled the current state baseline and was asked to leave the screen and playback unchanged for 30 seconds, 04:06:18.952–04:06:48.952 UTC. The module reported phase CLOSED throughout; transport was not independently readable. Only Sample Locks 0.1.8 was active.
+
+Across 148 cached meter requests, CPU averaged **52.84%**, range **51.6–55.1%**. DSP current means were **34.49%** on T1–4 and **47.04%** on T5–8. Fifteen readings selected at two-second offsets gave CPU mean 52.50%, range 52.3–52.7%; this spaced subset does not include the whole capture’s 55.1% maximum. Requests repeat approximately half-second meter windows and are not instantaneous independent samples.
+
+This is a baseline of the whole instrument with the module loaded, not an unloaded comparison or isolated module cost. No functional/audio result or exact operation timestamp is inferred. The untimed trial and logging continue; no Undo or Keep was requested. See [baseline receipt](media/v018-mkii-cpu-test01-baseline.json).
