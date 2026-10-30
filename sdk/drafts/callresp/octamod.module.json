@@ -1,0 +1,284 @@
+{
+  "schemaVersion": 2,
+  "id": "callresp",
+  "key": "CALLRESP",
+  "name": "CALL & RESPONSE",
+  "version": "0.1.0-experimental",
+  "category": "machines",
+  "author": {
+    "github": "semierendonmez-commits",
+    "name": "Semi Erendönmez",
+    "credits": [
+      "Octatrack module by Semi Erendönmez",
+      "Call / Response Generator: Nordl3 (MIT), Nordl3/Call-Response-Generator",
+      "Machine shape: VECTOR by Jannik Aßfalg (MIT)"
+    ]
+  },
+  "nativeManifest": "manifest.py",
+  "presentation": {
+    "label": "CALL AND RESPONSE",
+    "family": "Sequencing",
+    "summary": "A call phrase on one audio track and its answer on another: Nordl3's call and response generator as PTCH-locked trigs.",
+    "overview": "CALL & RESPONSE writes a phrase pair across two audio tracks, the way Nordl3's Call / Response Generator does for two MIDI channels. On the call track a motif of two to four steps is repeated and varied along the phrase by DENS and REPT, in the chosen scale. On an answer track (ROLE ANS1-ANS8) the same call is rebuilt from the call track's settings and answered by one of 31 strategies: echo it, answer upward, invert its contour, keep its rhythm and change its notes, resolve to the root, and more; TGHT pulls the answer toward the call, END closes it, MUT mutates it and TRNS transposes it. PHRS lays the pair out: the call in the first half and the response in the second, call and response in alternating quarters with the second answer mutated, or both at once. Notes are trigs with PTCH locks, accents VOL locks; the stock sequencer plays them at the pattern's tempo, speed, length and swing, each track with its own sample and sound.",
+    "highlights": [
+      "A call on one track, its answer on another: each track writes only its own trigs",
+      "31 answer strategies and 11 endings from the generator",
+      "C|R, alternating quarters or layered phrases, in eight scales",
+      "Real trigs and PTCH locks: edit any step as usual; no clock of its own"
+    ],
+    "usage": [
+      "Load a pitched sample on two audio tracks, say a bass on T1 and a stab on T2.",
+      "Choose CALLRESP in SRC SETUP's machine list on T1 (it becomes the call), then on T2 (it answers T1). The call track's SRC page holds MOTF, DENS, REPT, SCAL, PHRS and ROLE; the answer track's ANSW, TGHT, END, MUT, TRNS and ROLE.",
+      "Turn the call's controls and both tracks rewrite; turn the answer's and only it does. YES draws a new call on the call track and a new answer on the answer track."
+    ]
+  },
+  "controls": [
+    {
+      "name": "MOTF",
+      "default": 0,
+      "count": 16,
+      "doc": "Call track: the motif type, its rhythm and contour (the generator's motif types)",
+      "labels": [
+        "ACID",
+        "PULS",
+        "OFFB",
+        "SYNC",
+        "SPRS",
+        "ROLL",
+        "STAB",
+        "RPT",
+        "RISE",
+        "FALL",
+        "R>D",
+        "D>R",
+        "LEAP",
+        "PIVT",
+        "HOOK",
+        "ARP"
+      ]
+    },
+    {
+      "name": "DENS",
+      "default": 66,
+      "count": 128,
+      "doc": "Call track: density, how many steps of the phrase sound",
+      "labels": null
+    },
+    {
+      "name": "REPT",
+      "default": 90,
+      "count": 128,
+      "doc": "Call track: repetition, how closely the phrase repeats its motif",
+      "labels": null
+    },
+    {
+      "name": "SCAL",
+      "default": 0,
+      "count": 8,
+      "doc": "Call track: the scale of the pair",
+      "labels": [
+        "MINP",
+        "MAJP",
+        "MINR",
+        "DORI",
+        "PHRY",
+        "HMIN",
+        "MAJR",
+        "BLUS"
+      ]
+    },
+    {
+      "name": "PHRS",
+      "default": 0,
+      "count": 3,
+      "doc": "Call track: how the pair shares the track length: C|R halves, C R C R' quarters, LAYR both at once",
+      "labels": [
+        "C|R",
+        "CRCR",
+        "LAYR"
+      ]
+    },
+    {
+      "name": "ANSW",
+      "default": 0,
+      "count": 31,
+      "doc": "Answer track: the answer strategy (31 of the generator's)",
+      "labels": [
+        "SR+R",
+        "SR+C",
+        "SIMP",
+        "EXTD",
+        "TRNC",
+        "ECHO",
+        "DLAY",
+        "UP",
+        "DOWN",
+        "INVR",
+        "RHY=",
+        "NOT=",
+        "TRN+",
+        "TRN-",
+        ">RT",
+        ">5TH",
+        ">LOW",
+        "HARD",
+        "RPBR",
+        "SPRS",
+        "BUSY",
+        "ACNT",
+        "HALF",
+        "FRAG",
+        "TAIL",
+        "OPPO",
+        "DARK",
+        "BRIT",
+        "Q>C",
+        "HOOK",
+        "V>I"
+      ]
+    },
+    {
+      "name": "TGHT",
+      "default": 64,
+      "count": 128,
+      "doc": "Answer track: how close the response stays to the call",
+      "labels": null
+    },
+    {
+      "name": "END",
+      "default": 8,
+      "count": 11,
+      "doc": "Answer track: the response's ending",
+      "labels": [
+        "ROOT",
+        "5TH",
+        "RISE",
+        "FALL",
+        "FADE",
+        "STRG",
+        "WEAK",
+        "AMBG",
+        "MORE",
+        "SAME",
+        "TENS"
+      ]
+    },
+    {
+      "name": "MUT",
+      "default": 0,
+      "count": 128,
+      "doc": "Answer track: mutation of the response (of the second one in CRCR)",
+      "labels": null
+    },
+    {
+      "name": "TRNS",
+      "default": 12,
+      "count": 25,
+      "doc": "Answer track: the response transposed -12..+12 semitones (12 none)",
+      "labels": null
+    },
+    {
+      "name": "ROLE",
+      "default": 0,
+      "count": 9,
+      "doc": "CALL, or ANS1-ANS8: the answer to the call on track 1-8",
+      "labels": [
+        "CALL",
+        "ANS1",
+        "ANS2",
+        "ANS3",
+        "ANS4",
+        "ANS5",
+        "ANS6",
+        "ANS7",
+        "ANS8"
+      ]
+    }
+  ],
+  "compatibility": {
+    "firmware": "1.40C",
+    "location": "Track machine",
+    "conflicts": [],
+    "uiClaims": [],
+    "limitations": [
+      "Needs the Modwerk base loaded over USB (beta) with the machine table (ot_machines). Card firmware cannot include it.",
+      "A pair takes two tracks of the same Part; give both the same length (the pattern's normal length mode does). An answer track whose call track is not a CALL & RESPONSE call writes nothing.",
+      "Pitch is a PTCH lock, -12..+12 semitones around the sample's own pitch: phrases above an octave fold back into it.",
+      "CALL & RESPONSE owns the trigs and the PTCH and VOL locks of the steps inside the track's length; other locks, trig conditions, micro-timing and swing stay.",
+      "The generator's styles, gate, tie and slide are not ported: its neutral style, medium register and motif accents are used, and the track's AMP envelope shapes the notes. The seed is kept but not shown on a page; YES advances it and shows it.",
+      "Not yet run on hardware or in the emulator."
+    ],
+    "effectId": null
+  },
+  "resources": {
+    "recorded": "Package header, 30 Oct 2026 (host build)",
+    "storage": {
+      "label": "Storage",
+      "display": "15,116 bytes",
+      "value": 15116,
+      "unit": "bytes",
+      "method": "static",
+      "conditions": "From the USB package build.py makes from the sources (m68k-elf-gcc 16.2, -Os): 13,960 bytes of ColdFire code and data and 1,156 of bss (two phrases, a 64-step line and the page), one instance, 281 relocations, no stock-code sites. No DSP memory, no heap.",
+      "source": "TESTING.md"
+    },
+    "processing": {
+      "label": "CPU load",
+      "display": "Not measured",
+      "value": null,
+      "unit": "unknown",
+      "method": "unmeasured",
+      "conditions": "Work happens on the UI task once per knob turn or YES: a phrase pair of up to 64 steps and an in-place rewrite of the track record, for the call track and each of its answer tracks. Nothing runs while the pattern plays.",
+      "source": "TESTING.md"
+    },
+    "impact": {
+      "conditions": "A knob turn or YES on a CALL & RESPONSE track; idle otherwise.",
+      "cpu": {
+        "level": "low",
+        "basis": "source-estimate",
+        "rationale": "At most eight phrase pairs of 64 steps and record rewrites per edit on the UI task; nothing at interrupt level and nothing while playing.",
+        "source": "TESTING.md"
+      },
+      "dsp": {
+        "level": "minimal",
+        "basis": "source-estimate",
+        "rationale": "No DSP code and no change to the DSP programs.",
+        "source": "manifest.py"
+      },
+      "memory": {
+        "level": "minimal",
+        "basis": "source-estimate",
+        "rationale": "15,116 bytes of ColdFire code, data and state in DRAM (13,960 + 1,156 from the package header); the lines it writes are the tracks' own records.",
+        "source": "TESTING.md"
+      }
+    }
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "Host checks only: calls and responses are deterministic, inside their phrase slots and scale, and close on a sounding step; an answer track rebuilds exactly the call its call track plays; the 31 strategies differ, endings close as the generator's, TGHT and MUT act as described; the semitone fold, the track-record writer and the settings packing are checked under the sanitizers; the package's machine record sits at the registry's index (test_engine.py). Not run on a unit or in the emulator.",
+    "hardwareStatus": "untested",
+    "evidenceRevision": "1bbc8b46cb3c5d09e1ce25e020cc460367769f33",
+    "gates": [
+      "modules/callresp/verify.py"
+    ]
+  },
+  "license": {
+    "spdx": "GPL-3.0-or-later",
+    "file": "LICENSE",
+    "declaration": "The phrase rules follow Nordl3's Call / Response Generator (MIT, Copyright (c) 2026 Nordl3, Nordl3/Call-Response-Generator dbd1f0c35ecd37dd4d64747808fff7ea3629c1b6, index.html), ported to C. The Octatrack glue is original, in the shape of VECTOR's MIT native.c. No Elektron firmware, extracted routines, tables, samples or dumps are included."
+  },
+  "media": [],
+  "access": {
+    "location": "Audio track: SRC SETUP's machine list (double-tap SRC), CALLRESP after the stock machines",
+    "steps": [
+      "Double-tap SRC on the call track, scroll to CALLRESP and press YES; do the same on a second track, which answers the first. The SRC page holds the call's controls on the call track and the response's on the answer track; SRC SETUP keeps the sample's own setup.",
+      "Push LEVEL on the SRC page for the stock sample controls and again to return; hold a trig for stock's page and its locks.",
+      "Double-tap the track key for the stock sample pool, as on any Flex or Static track."
+    ],
+    "screenshots": []
+  },
+  "source": {
+    "repository": "https://github.com/Nordl3/Call-Response-Generator",
+    "revision": "dbd1f0c35ecd37dd4d64747808fff7ea3629c1b6",
+    "path": "index.html"
+  }
+}

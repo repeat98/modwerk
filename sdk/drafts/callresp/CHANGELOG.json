@@ -1,0 +1,13 @@
+[
+  {
+    "version": "0.1.0-experimental",
+    "date": "2026-10-30",
+    "changes": [
+      "New: CALL & RESPONSE, a call phrase on one audio track and its answer on another (SRC SETUP, like VECTOR).",
+      "The call track sets the motif, density, repetition, scale and layout; the answer track picks one of 31 answer strategies, an ending, tightness, mutation and transposition.",
+      "Writes real trigs with PTCH locks (VOL on accents); the sequencer plays them. YES draws a new call or a new answer.",
+      "Needs the Modwerk base loaded over USB (beta). Card firmware cannot include it.",
+      "Not yet tested on a unit or in the emulator."
+    ]
+  }
+]
