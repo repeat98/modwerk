@@ -80,6 +80,9 @@ future supervised MKII checklist. The candidate remains private and unqualified.
 [Private reconstruction](RECONSTRUCTION.md) packages the identical runtime with
 hash-guarded copies and records scanner, source-boundary and loader checks.
 
+[Sample-inclusive playback fixture](AUDIO_FIXTURE.md) prepares original WAVs,
+saved maximum-size patterns and native emulator PCM checks before hardware timing tests.
+
 Standard Modwerk runtime loading is used. Read the device's actual base, capabilities and inventory before a trial. Keep is separate. Firmware/packages stay private.
 
 ## Authorship and licences
@@ -88,7 +91,7 @@ Original source and UI by twwwy, MIT. Small lettering is reused from twwwy's ori
 
 ## Screens and audio
 
-All images below capture exact version 0.1.8. Physical MKII and DSP-enabled emulator captures are labelled separately in the manifest. [TESTING.md](TESTING.md) records their build identities and limits; [PROTOTYPE_HISTORY.md](PROTOTYPE_HISTORY.md) consolidates retired versions. No audio recording is supplied.
+All images below capture exact version 0.1.8. Physical MKII and DSP-enabled emulator captures are labelled separately in the manifest. [TESTING.md](TESTING.md) records their build identities and limits; [PROTOTYPE_HISTORY.md](PROTOTYPE_HISTORY.md) consolidates retired versions. Generated test tones and emulator audio captures remain private fixture artifacts; no physical audio recording is supplied.
 
 ![Part Edit, actual MKII](media/mkii-part-menu.png)
 ![Lock selection and replacement, actual MKII](media/mkii-lock-replace-on.png)

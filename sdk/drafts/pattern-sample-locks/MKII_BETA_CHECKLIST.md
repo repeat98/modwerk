@@ -20,6 +20,10 @@ inventory and recovery checks. The author chooses a disposable project and
 checks what the hardware sounds and feels like. A device load, save, Keep or
 flash needs its own applicable authorization; this checklist performs none.
 
+Use the [sample-inclusive fixture](AUDIO_FIXTURE.md), including its AUDIO folder.
+Before measurements, check the loaded slots/trim, every track's output and the
+main level on the unit. Emulator PCM does not replace that physical preflight.
+
 1. Record the observed MKII base identity, package SHA-256, project/pattern,
    selected tracks, tempo/speeds, streaming/recording state and companion set.
    Read the existing inventory before making a reversible RAM trial.

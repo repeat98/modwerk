@@ -62,3 +62,8 @@ No cached load-meter difference establishes an isolated module cost.
 
 New physical hardware results: **not tested**. Completed emulator results and
 their identities are in TESTING.md and evidence/apply-profile-20261030.json.
+
+The older capture harness uses `--main-level off`; these phase/DSP-counter
+results do not establish audible main output. The later
+[sample-inclusive fixture](AUDIO_FIXTURE.md) explicitly enables output and
+requires native PCM from the main mix and each of eight expected track tones.

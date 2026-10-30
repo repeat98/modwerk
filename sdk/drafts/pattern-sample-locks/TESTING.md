@@ -10,6 +10,28 @@ Portable planner, UI and production native-writer sanitizer tests pass. The full
 
 Retired reports and obsolete captures are consolidated in [PROTOTYPE_HISTORY.md](PROTOTYPE_HISTORY.md); they do not qualify this version.
 
+## Sample-inclusive audio fixture — 31 October 2026
+
+The private fixture now contains eight original generated stereo WAVs, four
+Flex/four Static assignments and four saved 512-trig patterns. All sample files
+are explicitly staged in its FAT image and verified by hash, with valid trim
+markers and saved bank checksums. Fresh repeated generation is byte-identical.
+
+An independent emulator process/card/socket ran package `3e13c46f…` on named base
+`2e1a6128…`, with main level explicitly set to 64. Ten PCM windows passed the
+main-mix and eight per-track expected-tone checks: with the module closed,
+through maximum Lock/Clear on A01, before/through Clear on A02–A04, and after
+native removal. Working/mirror records, lock-index flags and playback state
+matched expectations. All 80 track-tone checks passed; native DSP errors/stalls
+stayed zero. See [method, results and limits](AUDIO_FIXTURE.md) and the
+[stock-free receipt](evidence/audio-fixture-20261031.json).
+
+The older harness's `--main-level off` means its phase/DSP-counter runs establish
+no main-output audio result. This follow-up supplies native emulator PCM evidence;
+no physical listening, continuity/dropout, CPU or complete stack qualification
+is inferred. One incomplete audio run hit the loader's stopped-transport rule
+during teardown; it remains recorded separately from the completed run.
+
 ## Normal public package builder — 31 October 2026
 
 The local host-wrapper integration builds and checks the reconstructed candidate
