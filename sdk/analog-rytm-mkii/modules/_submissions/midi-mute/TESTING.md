@@ -44,6 +44,11 @@ All 8 steps reported PASS; drop-auto does not count (above). A first attempt sto
 
 **Flood with solo (MM04, box checked).** The bench's flood gained CC 93 solo toggles on channels 1-4, about one every 1.3 s, all cleared at the end. Over USB: 9,435 Note On/Off pairs, 32,997 CCs, 5,760 clocks, 119 mute and 46 solo toggles in 60 s (about 870 messages a second); over DIN through the AF16Rig: 9,494 pairs, 33,108 CCs, 5,760 clocks, 119 mute and 46 solo toggles. Both times BD was silent once everything was released, unmuted and unsoloed, and a new BD note was heard.
 
+**Pattern changes and the unchecked baseline over DIN (MM04, the author's own project, AUTO channel 15, PROG CH RECEIVE on).** The flood also sent MIDI Start, a Program Change on channel 15 every 4 s (14 in all, patterns A01-A04 at random) and Stop at the end. The author saw the unit on A03 afterwards, so the changes arrived; whether each one switched pattern and kit was not observed.
+
+- Unchecked, over DIN, all 15 steps behaved as stock: the muted BD heard on the AUTO channel and on channel 1 (notes 12, 36, 48, 59), held notes ringing on after a mute and after another track's solo, BD heard while SD was soloed; after the flood (9,473 pairs, 32,869 CCs, 119 mute and 46 solo toggles, 14 pattern changes) silent, then a new note heard.
+- Checked, the same flood over USB (9,482 pairs, 32,965 CCs) and over DIN (9,473 pairs, 32,871 CCs), each with 119 mute and 46 solo toggles and 14 pattern changes: BD silent afterwards and a new note heard, both times. The test note peaked at -30 and -33 dBFS here, against -8 before: after the pattern changes the unit played a different kit.
+
 ## Build MM03 on a unit (author's Rytm MKII, 30 October 2026)
 
 - **Image:** MM03 (SHA-256 `b460740b…bf7d`) on the author's Analog Rytm MKII, OS 1.74, sent with Elektron Transfer.
@@ -155,7 +160,7 @@ PORT CONFIG shows MUTE MIDI IN as its last row, after RECEIVE CC/NRPN, unchecked
 
 ## Not tested
 
-- **The unit, still open.** A full live performance, a pattern or kit change during a flood, and the unchecked baseline over DIN.
+- **The unit, still open.** A full live performance.
 - **On the unit's clock.** CPU time per event and under the flood, measured with DTIM0; a flood at 240 BPM; a pattern or kit change during the flood.
 - **USB timing.** A real USB host; the emulator's USB MIDI input is its own model.
 - **Silent Pad+Trig and Retrig Grid** (core-ar2 0.3 submissions) were not built beside it.
