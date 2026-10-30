@@ -1,0 +1,166 @@
+{
+  "schemaVersion": 2,
+  "id": "scenegen",
+  "key": "SCENEGEN",
+  "name": "SCENE GEN",
+  "version": "0.1.0-experimental",
+  "category": "scenes",
+  "author": {
+    "github": "semierendonmez-commits",
+    "name": "Semi Erendönmez",
+    "credits": [
+      "Octatrack module by Semi Erendönmez",
+      "Scene layout as read by Apply Scene (Nathaniel Pavel, MIT)"
+    ]
+  },
+  "nativeManifest": "manifest.py",
+  "presentation": {
+    "label": "SCENE GENERATOR",
+    "family": "Performance",
+    "summary": "Scenes generated around the Part's values: one scene, all sixteen, or a walk through them for the crossfader.",
+    "overview": "SCENE GEN writes scene locks for you. Choose which page-1 parameters (SRC, LFO, AMP, FX1, FX2, both FX or all, on the active track or every audio track) and how far they may move from the Part's own values; YES on the SCENE GEN row locks them in scene A, scene B, all sixteen scenes on their own draws, or a walk where each scene is a step from the one before, so the crossfader between neighbouring scenes is a short move and between distant ones a long journey. Every lock stays inside its parameter's range, other locks stay as they were, and LEVEL to the left on the row restores the scenes as they were before. The rows sit in PROJECT > CONTROL > SEQUENCER; the scenes are the Part's own and save with it.",
+    "highlights": [
+      "Scene A, scene B, sixteen scenes, or a sixteen-scene walk",
+      "Page-1 parameters of one track or all eight, inside each parameter's range",
+      "One-step undo of the last generation",
+      "Ordinary scene locks: edit, copy, mute and save them as usual"
+    ],
+    "usage": [
+      "Press PROJECT, go to CONTROL > SEQUENCER: SCN TARGET, SCN PARAMS, SCN SPREAD and SCENE GEN follow stock's rows.",
+      "Choose a target and the parameters, set SCN SPREAD, and press YES on SCENE GEN. Leave the menu and move the crossfader.",
+      "Press YES again for another draw; turn LEVEL to the left on SCENE GEN to restore the scenes as they were."
+    ]
+  },
+  "controls": [
+    {
+      "name": "SCN TARGET",
+      "default": 1,
+      "count": 4,
+      "doc": "Where the generated locks go: SCENE A or SCENE B (the scene selected on that side), 16 RAND (all sixteen scenes, each on its own) or 16 PATH (a walk from scene 1 to 16)",
+      "labels": [
+        "SCENE A",
+        "SCENE B",
+        "16 RAND",
+        "16 PATH"
+      ]
+    },
+    {
+      "name": "SCN PARAMS",
+      "default": 5,
+      "count": 14,
+      "doc": "Which parameters: page 1 of SRC, LFO, AMP (without XVOL), FX1, FX2, both FX or all of them, on the active track (TRK) or every audio track (ALL)",
+      "labels": [
+        "TRK SRC",
+        "TRK LFO",
+        "TRK AMP",
+        "TRK FX1",
+        "TRK FX2",
+        "TRK FX1+FX2",
+        "TRK ALL",
+        "ALL SRC",
+        "ALL LFO",
+        "ALL AMP",
+        "ALL FX1",
+        "ALL FX2",
+        "ALL FX1+FX2",
+        "ALL ALL"
+      ]
+    },
+    {
+      "name": "SCN SPREAD",
+      "default": 32,
+      "count": 128,
+      "doc": "How far a lock may move from the Part's value, as a share of the parameter's range: 1-127 (16 PATH: half of it per scene)",
+      "labels": null
+    },
+    {
+      "name": "SCENE GEN",
+      "default": 0,
+      "count": 1,
+      "doc": "YES generates with a new seed; LEVEL to the left restores the scenes as they were before the last generation",
+      "labels": [
+        "YES"
+      ]
+    }
+  ],
+  "compatibility": {
+    "firmware": "1.40C",
+    "location": "Project sequencer",
+    "conflicts": [],
+    "uiClaims": [],
+    "limitations": [
+      "Needs the Modwerk base loaded over USB (beta) with the SEQUENCER rows table (ot_sequencer_rows). Card firmware cannot include it.",
+      "Its settings live in the module, not in the project: they return to SCENE B, TRK FX1+FX2 and SPREAD 32 after a restart. The scenes it writes are the Part's own and save with it.",
+      "Generating replaces the chosen parameters' locks in the target scenes; other locks stay. One step of undo, while the same bank and Part are active.",
+      "Page 1 only (stock cannot scene-lock page 2); AMP's XVOL is never generated. With MASTER TRACK on, track 8's pages are generated like the others'.",
+      "A shortcut on the scene keys waits for a shared scene-key hook in the base.",
+      "Not yet run on hardware or in the emulator."
+    ],
+    "effectId": null
+  },
+  "resources": {
+    "recorded": "Package header, 30 Oct 2026 (host build)",
+    "storage": {
+      "label": "Storage",
+      "display": "7,492 bytes",
+      "value": 7492,
+      "unit": "bytes",
+      "method": "static",
+      "conditions": "From the USB package build.py makes from the sources (m68k-elf-gcc 16.2, -Os): 2,640 bytes of ColdFire code and data and 4,852 of bss (a 4,096-byte undo copy of the scenes and the Part's values and ranges), one instance, 80 relocations, no stock-code sites. No DSP memory, no heap.",
+      "source": "TESTING.md"
+    },
+    "processing": {
+      "label": "CPU load",
+      "display": "Not measured",
+      "value": null,
+      "unit": "unknown",
+      "method": "unmeasured",
+      "conditions": "Work happens on the UI task once per YES on SCENE GEN: 40 page descriptors read, at most 16 x 8 x 30 locks drawn and the 4 KB scene block copied twice. Nothing runs while the pattern plays.",
+      "source": "TESTING.md"
+    },
+    "impact": {
+      "conditions": "YES or LEVEL on the SCENE GEN row; idle otherwise.",
+      "cpu": {
+        "level": "low",
+        "basis": "source-estimate",
+        "rationale": "At most 3,840 locks drawn and two 4 KB copies per YES on the UI task; nothing at interrupt level and nothing while playing.",
+        "source": "TESTING.md"
+      },
+      "dsp": {
+        "level": "minimal",
+        "basis": "source-estimate",
+        "rationale": "No DSP code and no change to the DSP programs.",
+        "source": "manifest.py"
+      },
+      "memory": {
+        "level": "minimal",
+        "basis": "source-estimate",
+        "rationale": "7,492 bytes of ColdFire code, data and state in DRAM (2,640 + 4,852 from the package header); the scenes it writes are the Part's own.",
+        "source": "TESTING.md"
+      }
+    }
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "Host checks only: over 4,000 random Parts, targets, pages, scopes and spreads the engine is deterministic, changes only the chosen parameters of the target scenes on the chosen tracks, never AMP's XVOL, and keeps every lock inside its range and within SPREAD of the Part's value or of the scene before (test_engine.py, under the sanitizers); the package's SEQUENCER rows record sits at the registry's index. Not run on a unit or in the emulator.",
+    "hardwareStatus": "untested",
+    "evidenceRevision": "1bbc8b46cb3c5d09e1ce25e020cc460367769f33",
+    "gates": [
+      "modules/scenegen/verify.py"
+    ]
+  },
+  "license": {
+    "spdx": "GPL-3.0-or-later",
+    "file": "LICENSE",
+    "declaration": "Original work. The scene and descriptor layout follows what Apply Scene (Nathaniel Pavel, MIT) documents; no code of it is used. No Elektron firmware, extracted routines, tables, samples or dumps are included."
+  },
+  "media": [],
+  "access": {
+    "location": "PROJECT > CONTROL > SEQUENCER: SCN TARGET, SCN PARAMS, SCN SPREAD and SCENE GEN after stock's three rows",
+    "steps": [
+      "Press PROJECT, select CONTROL and open SEQUENCER. The four SCENE GEN rows follow CHAIN AFTER and stock's other rows; LEVEL changes the selected row.",
+      "On SCENE GEN, YES generates and LEVEL to the left restores the scenes as they were. Press NO to leave the menu."
+    ],
+    "screenshots": []
+  }
+}
