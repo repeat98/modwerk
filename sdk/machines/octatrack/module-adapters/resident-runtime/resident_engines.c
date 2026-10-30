@@ -8,14 +8,18 @@
 
 #ifdef MW_ENGINES_TEST
 int mw_engines_test_quiet(void);
+int mw_engines_test_queued(void);
 int mw_engines_test_settled(void);
 #define QUIET() mw_engines_test_quiet()
+#define QUEUED() mw_engines_test_queued()
 #define SETTLED() mw_engines_test_settled()
 #else
 int modwerk_machine_stopped(void);
-/* Stopped (no track or recorder running), and no pattern change queued (dsp.c's compaction reads the same bytes). */
-#define QUIET() (modwerk_machine_stopped() && *(volatile uint8_t *)0x800065bfu == *(volatile uint8_t *)0x800065bdu && \
-                 *(volatile uint8_t *)0x800065c0u == *(volatile uint8_t *)0x800065beu)
+/* A pattern change is queued (dsp.c's compaction reads the same bytes). */
+#define QUEUED() (*(volatile uint8_t *)0x800065bfu != *(volatile uint8_t *)0x800065bdu || \
+                  *(volatile uint8_t *)0x800065c0u != *(volatile uint8_t *)0x800065beu)
+/* Stopped (no track or recorder running), and no pattern change queued. */
+#define QUIET() (modwerk_machine_stopped() && !QUEUED())
 extern volatile uint32_t modwerk_runtime_ticks, modwerk_status_key_at; /* runtime.c, status.c: UI ticks (60 Hz), the last key */
 int modwerk_dsp_moves_idle(void);                                       /* dsp.c: no self-test, rebind or waiting pick */
 /* Live FX code may move for an engine (an evacuation, beside QUIET): two seconds after the last key or knob and no pick
@@ -47,6 +51,7 @@ static uint8_t closed[2];
  * new reader is refused at admission rather than waiting on the transport for good. */
 static int shut(unsigned c) { return closed[c] || dl_owned_closed(c); }
 static unsigned wanted_now; /* mw_engines_want */
+static unsigned deferred[2] = {~0u, ~0u}; /* a play-time claim had to move or retire code: what it needed, until quiet */
 void mw_engines_want(unsigned features) { wanted_now = features; }
 int mw_engines_settled(void) { return QUIET() && SETTLED(); }
 
@@ -244,9 +249,15 @@ int mw_engines_place(unsigned feature, unsigned cores, uint32_t generation, cons
                 if (j != k && (wanted_now >> j & 1u) && s.at[j] < 0 && unit_of(c, j)->count) (void)add_span(c, &s, j, unit_of(c, j)->count);
             unsigned need = reserve_of(c, &s);
             /* A claim the reserve already covers (an evacuation lowered the capacity for it) is bookkeeping only, taken
-             * at once so the reserve never waits unowned; a new claim, and any code move, only while quiet. */
-            if (need > dl_engine_reserved(c) && !QUIET()) { *why = MW_WAIT_PLAYING; continue; }
-            int claim = dl_engine_claim(c, need, SETTLED() ? 2 : 1);
+             * at once so the reserve never waits unowned. A new claim waits while a pattern change is queued (the next
+             * pattern's Parts are not the ones it checks). While playing it takes free words only (commit 1): live FX
+             * code is retired (a trim) or moved (an evacuation) only while quiet and settled. */
+            if (need > dl_engine_reserved(c) && QUEUED()) { *why = MW_WAIT_PLAYING; continue; }
+            /* Free words only fall while playing (code goes only when quiet), so a claim that had to move or retire
+             * code waits for the stop instead of planning again on every tick. */
+            if (!QUIET() && need >= deferred[c]) { *why = MW_WAIT_EVACUATION; continue; }
+            int claim = dl_engine_claim(c, need, QUIET() && SETTLED() ? 2 : 1);
+            deferred[c] = claim == 0 && dl_engine_why[c] == 7u && !QUIET() ? need : ~0u;
             if (claim <= 0) {
                 if (claim < 0) mw_engines_refused = mw_engines_refused + 1;
                 *why = claim < 0 ? MW_WAIT_CLAIM_REFUSED : dl_engine_why[c] >= 6u ? MW_WAIT_EVACUATION : MW_WAIT_CLAIM_BUSY;
@@ -254,7 +265,10 @@ int mw_engines_place(unsigned feature, unsigned cores, uint32_t generation, cons
             }
             e->offset = (uint16_t)s.at[k], e->count = (uint16_t)u->count, e->generation = generation, e->state = MW_ENGINE_CLAIMED;
         }
-        if (!QUIET()) { *why = MW_WAIT_PLAYING; continue; }
+        /* Written and placed while playing too (owner's MKII, 27 October 2026: PLAY right after a boot left Analog BD
+         * silent until the next stop). The words go to free arena no slot runs, as a pick's upload does while playing,
+         * and PLACE only sets the dormant feature's base word: no track sounds different until its ENABLE. */
+        if (QUEUED()) { *why = MW_WAIT_PLAYING; continue; }
         int r = e->state == MW_ENGINE_CLAIMED ? reserve(c, LANE_WRITE, k, generation) :
                 e->state == MW_ENGINE_WRITTEN ? reserve(c, LANE_PLACE, k, generation) : 0;
         if (r > 0) e->state = e->state == MW_ENGINE_CLAIMED ? MW_ENGINE_WRITING : MW_ENGINE_PLACING, *why = MW_WAIT_NONE;

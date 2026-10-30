@@ -67,7 +67,14 @@ def dispose_device(dev):
 
 def open_unit():
     """(device, vendor interface), claimed; None while no unit runs the test base."""
-    dev = usb.core.find(idVendor=0x1935)
+    # The first Elektron device on the bus may be another instrument (an Analog Rytm on Overbridge): take the one
+    # that offers the Modwerk vendor interface.
+    def modwerk(d):
+        try:
+            return any((i.bInterfaceClass, i.bInterfaceSubClass, i.bInterfaceProtocol) == (0xff, 0x4d, 1) for c in d for i in c)
+        except usb.core.USBError:
+            return False
+    dev = usb.core.find(idVendor=0x1935, custom_match=modwerk)
     if dev is None:
         return None
     claimed = False
