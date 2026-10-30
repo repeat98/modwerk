@@ -2,23 +2,25 @@
 
 ## Commands and exact revision
 
-Source: `sdk/drafts/tiempos/` on branch `tiempos`, draft of 26 October 2026, on Modwerk `main` at `d2d517a8` (with #949's ColdFire checks for C runtime modules). Built in `modwerk-source-tools` image `sha256:aa3916ed6ae4…`.
+Source: `sdk/octabam/modules/tiempos/` on branch `tiempos`, on Modwerk `main` at `886098f5` (merged 30 October 2026). Packages built with m68k-elf-gcc 16.2.0 (Homebrew), the same compiler as the pinned `modwerk-source-tools` image, which rebuilt the 26 October package byte for byte.
 
 ```sh
-# ColdFire package, in the pinned toolchain image (m68k-elf-gcc 16.2.0), with #949's late-combine and MCF54455 index checks
-docker run --rm --network none -v "$PWD":/src:ro -v ~/.cache/tiempos-build:/out modwerk-source-tools \
-  sh -c 'cd /src && python3 -B sdk/runtime/loader/build.py sdk/drafts/tiempos/tiempos.c -o /out/tiempos.mwrm --cross m68k-elf-'
-#  -> module 31282ae5, 2156 bytes of code and data, 268 of bss, 33 relocations, 4 hooks, 0 stock-code sites
-#     SHA-256 225a0170382915f749315e26f4dbf97d4e0c4a047bf85bd347fb0e1bbe35d53e
-
-# Host tests (simulated OS memory, simulated 132 MHz timer, 60 ticks a second)
-cc -Wall -Wextra -DDECK_HOST -I sdk/drafts/tiempos -I sdk/runtime/loader -o tiempos_host \
-  sdk/drafts/tiempos/tiempos_host.c sdk/drafts/tiempos/tiempos.c -lm && ./tiempos_host OUT_DIR
+# ColdFire package (ABI 4: the four core hooks, no site events, no stock-code sites)
+python3 -B sdk/runtime/loader/build.py sdk/octabam/modules/tiempos/tiempos.c -o tiempos.mwrm
+# Host tests and the package check (simulated OS memory, simulated 132 MHz timer, 60 ticks a second)
+python3 -B sdk/octabam/modules/tiempos/verify.py
 ```
+
+| Package | Source | Bytes | SHA-256 | Where it ran |
+| --- | --- | --- | --- | --- |
+| `225a0170…` | before the double press | 2,336 (2,156 code and data, 268 BSS, 33 relocations) | `225a0170382915f749315e26f4dbf97d4e0c4a047bf85bd347fb0e1bbe35d53e` | emulator 26 October; MKI 28 and 30 October |
+| `0506a245…` | with the double press on a track key (current) | 2,444 (2,240 code and data, 272 BSS, 39 relocations) | `0506a24500c2aa175aede07bcf1cc1a4c5f215b23852b26518acad6ac9444aa7` | MKI 30 October (fourth trial, USB lifecycle, load trial) |
+
+Hook words of `0506a245…`: `module_tick` 0x1ca, `module_draw` 0x2d0, `module_key` 0x6e6, `module_enc` 0x81e; none after the core four.
 
 ## Host results
 
-13 of 13 pass, no compiler warnings:
+16 of 16 pass on `0506a245…`, no compiler warnings (`-Werror`):
 
 | Check | Result |
 | --- | --- |
@@ -35,6 +37,9 @@ cc -Wall -Wextra -DDECK_HOST -I sdk/drafts/tiempos -I sdk/runtime/loader -o tiem
 | Flex loop retriggered five times: times still shown | pass |
 | PLAY reaches the unit | pass |
 | SRC closes the screen and the unit redraws its page | pass |
+| Track key T3 twice, 500 ms apart: both reach the unit, the screen stays | pass |
+| T4, then T3 200 ms later: both reach the unit, the screen stays | pass |
+| T3 twice within 250 ms: both reach the unit, the screen closes and the unit redraws | pass |
 
 ## Emulator results
 
@@ -71,7 +76,7 @@ The draft first read the sample end at voice +0x30, which the emulator shows is 
 
 ## Base on the unit
 
-Hardware results below come from the developer's Octatrack MKI, OS 1.40C, running a Modwerk base built and installed from a local `npm run dev` checkout of this branch (owner, #953). Not installed yet; fill in before the first hardware result:
+Hardware results below come from the developer's Octatrack MKI, OS 1.40C, running a Modwerk base built and installed from a local `npm run dev` checkout of this branch (owner, #953).
 
 | What | Value |
 | --- | --- |
@@ -113,31 +118,68 @@ After the power cycle, project `tiempos` at 120 BPM, trigs with condition 1ST on
 
 Exact stopwatch figures at each track's end were not written down; "matches" is the developer's word. Not tested: minutes-long accuracy beyond one play of each sample, timestretch modes, Part changes and project reloads, a Keep and persistence across a power cycle, performance. The voice fields (+0x28, +0x2c, +0x44) were not read directly (released base, no `mem`): the totals of the whole, trimmed and Flex tracks are the indirect check.
 
+## Third trial on the MKI (30 October 2026, 19:29-19:59, base `24a0ed57…`, package `225a0170…`, not accepted; reported by the developer, photos checked)
+
+Project `tiempos`, samples as the developer later confirmed them: track 1 `T100.WAV`, track 2 `T120.WAV` **without** the trim this time (the trim was checked on 28 October), track 3 `T140.WAV`. Tiempos' own reading of track 1's speed agrees: 61,742 frames a second at 140 BPM (read over USB as the module's test value, 0xf12e), which is 44,100 × 140/100. The earlier sessions' notes named the samples differently (track 1 `T120.WAV`, track 3 Flex `T100.WAV`); the 28 October reading of 52,922 frames a second at 120 BPM (0xceba) is also 44,100 × 120/100, so track 1 most likely held `T100.WAV` then too. All three tones are 64 bars, so the expected totals are the same either way. The trial ended by its own timer and rolled back (read: generation 2, bare base). Photos are kept outside Git.
+
+| What | Expected | Reported |
+| --- | --- | --- |
+| 120 BPM, all three tracks | total 2:08, all three end together | the three lasted the same and matched 2:08; stopwatch time not written down |
+| 140 BPM, tempo set while stopped, then PLAY | totals 1:49 | 1:49 on all three (photo) |
+| 140 BPM, stopwatch 0:24.28 (lap 0:24.25) | time left about 1:24-1:25, elapsed about 0:24-0:25 | 1:25 left and 0:24 ELAPSED on all three (photo). The stopwatch started 1-2 s after PLAY: at 0:00 the screen already showed 1:48 left (photo) |
+| Last 30 seconds | flashes | tracks 2 and 3 inverted at stopwatch 1:22 (photo) |
+| Track 1 retriggered by hand with a trig at about 0:48 | counts again from the start | 1:15 left at stopwatch 1:22 (photo), as expected from a restart about 34 s earlier |
+| Track 3 (Flex, LOOP on) reaching its end | starts again | restarted by itself; what Tiempos showed at that moment was not noted |
+
+At 0:24 the screen's elapsed time (0:24, left 1:25 of 1:49) trails the stopwatch-based estimate (0:25-0:26) by up to about a second; the start of the stopwatch is only known to 1-2 s, and the display truncates to whole seconds.
+
+## Fourth trial on the MKI (30 October 2026, from 20:07, base `24a0ed57…`, package `0506a245…`, not accepted; reported by the developer, one photo)
+
+| What | Expected | Reported |
+| --- | --- | --- |
+| STOP, tempo 140, PLAY | stock: playback resumes where it stopped until a trig restarts the track | as stock |
+| T2 once, screen open | the track is selected, the screen stays | selected, the screen stays |
+| T3 twice quickly | the screen closes; both presses reach the unit | Tiempos closes and stock's QUICK ASSIGN opens on track 3's Flex slot list (photo): the stock double press, which both presses reach. Kept on purpose (the developer's choice): no stock gesture changes |
+| T1, about a second, T1 | the screen stays | stays |
+
+Not reported in this trial: the totals at 140 BPM after PLAY.
+
+## USB lifecycle on the MKI (30 October 2026, base `24a0ed57…`, package `0506a245…`)
+
+| Step | Result |
+| --- | --- |
+| Install with Keep (`npm run device -- try … --seconds 10 --accept`) | read: 10 s trial, accepted; generation 5, active `0506a24500c2aa17…` |
+| Power cycle (the developer) | read: the boot's log records the saved set restored with one module, `31282ae5` (Tiempos), 5 s after the start (`set a=1 [31282ae5]`); `status` then reports the bare base identity, as the base does after a restore until the next sync. Reported: the project plays and CUE + MIDI opens Tiempos |
+| Undo (`npm run device -- remove … --accept`) | read: accepted, slot empty; generation 1, active `75b95b9e…` (the empty set) |
+
+Not tested: a power cycle after the Undo, the site's guided sync, a set with other modules beside Tiempos.
+
+## Load on the MKI (30 October 2026, the base's MODWERK > LOAD page, reported by the developer, one photo)
+
+| Condition | Working now: CPU | Working now: tracks 1-4 | Working now: tracks 5-8 | DSP space used: tracks 1-4 / 5-8 |
+| --- | --- | --- | --- | --- |
+| Tiempos installed, closed, stopped | 45 % | 33 % | 42 % | 32 % / 37 % |
+| Tiempos installed, just closed after being open, playing (photo) | 52 % | 33 % | 42 % | 32 % / 37 % |
+| Tiempos removed, stopped | 45 % | 33 % | 42 % | 32 % / 37 % |
+| Tiempos removed, playing | 53 % | 33 % | 42 % | 32 % / 37 % |
+| No Tiempos, three tracks playing (peak) | 64 % | 33 % | 42 % | 32 % / 37 % |
+| Tiempos in trial (`0506a245…`), three tracks playing, open for about a minute, read on LOAD just after closing | 62 % | 33 % | 42 % | 32 % / 37 % |
+
+Closed, Tiempos adds no load the page shows. The base's five-minute record for the first minutes after the power cycle (Tiempos installed, including the boot and the set's restore) reads CPU 45.5 % mean, 94.9 % peak and a UI tick gap of 1,901 frames; the boot is the likely cause, not separated here. Open, it stays within the stock range: 62 % read just after closing against a 64 % peak without Tiempos, with three tracks playing (LOAD cannot be shown while Tiempos holds the screen). During that trial the base's tick count grew 60 per second without gaps and Tiempos measured T1 at 0xf12c–0xf136 frames per second, as on 30 October. The base's five-minute records agree: minutes 15–20 (no Tiempos, three tracks) CPU 51.3 % mean / 64.7 % peak, tick gap 69 frames, playing 261/600; minutes 20–25 (mostly the trial, Tiempos opened and closed) 51.1 % / 62.7 %, tick gap 63 frames, playing 228/600; tracks 1-4 and 5-8 unchanged at 32.7–32.8 % and 41.9 %. The trial rolled back by itself after 420 s (generation 3, active `75b95b9e…`); no new stall record. The 28 October records near 1.5 % CPU were taken while the DSPs were stalled and are no baseline.
+
 ## Hardware and audio quality
 
-Not tested. Tiempos makes no sound. To run on a unit, in this order:
+Tiempos makes no sound. On the MKI with the released base `24a0ed57…` (above): CUE + MIDI, LEFT, RIGHT, NO, track keys and the double press as described; totals, time left, the last-30-seconds flash, a hand retrigger, trimmed and Flex tracks and tempo changes against the stopwatch and the expected 64-bar times. The voice fields were not read directly (a released base answers no `mem` request): the totals are the indirect check.
 
-1. Confirm the key codes: with Tiempos installed, CUE + MIDI opens it, LEFT and RIGHT switch the column, NO closes it, and SRC, AMP, LFO, FX1, FX2, BANK and PATTERN close it.
-2. Read voice record + 0x44 twice, one second apart, while track 1 plays at its original tempo: it must grow by about 44,100.
-3. Compare voice record + 0x28 and + 0x2c with the sample's trim start and end (frames), with and without a trim in the audio editor.
-4. Play three long Static tracks at different tempos and compare each time left with a stopwatch over five minutes.
-5. Change tempo, switch timestretch modes, retrigger a Flex loop, change Part and reload the project with the screen open and closed.
+Not tested: an MKII; timestretch modes other than NORMAL; Part changes and project reloads with the screen open; minutes-long accuracy beyond one play of each 64-bar sample; SRC, AMP, LFO, FX1, FX2, BANK and PATTERN closing the screen on a unit (emulator only); a set with other modules beside Tiempos.
 
 ## Stock flows
 
-Compared in the emulator with and without Tiempos (above): CUE + MIDI switches to MIDI tracks on stock and opens Tiempos with it installed. With the screen open, LEFT, RIGHT and NO act on the screen. Not compared: every other key while the screen is open, on a unit.
+On the unit, with Tiempos installed: PLAY, STOP, TEMPO and track keys behave as stock with the screen open; a double press of a track key closes Tiempos and the unit opens its own QUICK ASSIGN, as on stock. In the emulator: CUE + MIDI switches to MIDI tracks on stock and opens Tiempos with it installed, and again after removal. Not compared on a unit: every other key while the screen is open.
 
-## Performance
+## Performance and resources
 
-Not measured. Closed, each tick reads three words and a byte per track; open, each composition clears and redraws the 1 KB frame pixel by pixel. To measure with the development base's profile (`modwerk_cost`), stopped and playing, open and closed.
-
-## Resources
-
-Unmeasured. Package: 2,156 bytes of code and data and 268 bytes of BSS (pinned toolchain build above). No DSP code, no effect slot, no DSP memory.
-
-## Hardware
-
-Not tested.
+Package `0506a245…`: 2,240 bytes of code and data, 272 bytes of BSS. No DSP code, no effect slot, no DSP memory; the DSP load and space on LOAD are the same with and without it (above). ColdFire load: no change the LOAD page or the base's five-minute records show, closed or open (above). Cycles per tick not measured: the released base has no `modwerk_cost` profile.
 
 ## OT UI capture evidence
 

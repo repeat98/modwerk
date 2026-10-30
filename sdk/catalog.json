@@ -166,6 +166,11 @@
       "id": "beat-slicer",
       "version": "0.1.66-experimental",
       "addedAt": "2026-10-27T20:00:00Z"
+    },
+    {
+      "id": "tiempos",
+      "version": "0.1.0-experimental",
+      "addedAt": "2026-10-30T12:00:00Z"
     }
   ]
 }

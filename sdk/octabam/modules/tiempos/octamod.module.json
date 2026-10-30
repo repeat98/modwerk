@@ -1,0 +1,174 @@
+{
+  "schemaVersion": 2,
+  "id": "tiempos",
+  "key": "TIEMPOS",
+  "name": "Tiempos",
+  "version": "0.1.0-experimental",
+  "category": "system",
+  "author": {
+    "github": "imdantelo",
+    "credits": [
+      "Diego Antelo Barba (design and specification)"
+    ]
+  },
+  "nativeManifest": "manifest.py",
+  "presentation": {
+    "label": "TIME LEFT",
+    "family": "Display",
+    "summary": "One screen with the time left on all eight tracks, for playing long samples like a DJ.",
+    "overview": "Hold CUE and press MIDI to show every track on one screen: a bar of what is left to play, the real time left and the total length. The time left is measured from how fast each voice really plays, so it follows timestretch, repitch and tempo changes. It only reads and draws: no effect slot, no knob, and nothing in the project changes.",
+    "highlights": [
+      "Time left for all eight tracks at once",
+      "Follows timestretch, repitch and tempo changes",
+      "The time left flashes in the last 30 seconds",
+      "Playback keys, track keys, encoders and the crossfader keep working while it shows"
+    ],
+    "usage": [
+      "Hold CUE and press MIDI from any screen; do the same, or press NO, to close it.",
+      "LEFT or RIGHT switches the right column between total length and time played."
+    ]
+  },
+  "controls": [],
+  "compatibility": {
+    "firmware": "1.40C",
+    "location": "Audio tracks",
+    "conflicts": [],
+    "uiClaims": [
+      "key:CUE+MIDI"
+    ],
+    "limitations": [
+      "Needs the Modwerk base over USB: it uses the base's draw and key events.",
+      "Not yet tested on a unit. The voice position (+0x44) and trim start and end (+0x28, +0x2c) were read in the emulator and must be confirmed on hardware.",
+      "Key codes for CUE, MIDI, LEFT and RIGHT follow Modwerk's status page and octabam's panel notes and worked in the emulator; to be confirmed on an MKI.",
+      "CUE + MIDI no longer switches to MIDI tracks while Tiempos is installed; MIDI alone still does.",
+      "A track that loops shows the time left to the end of the sample, not to the end of the loop.",
+      "Until a track has played for half a second, its time is shown at the sample's original speed.",
+      "Thru, Neighbor and Pickup tracks show no time."
+    ],
+    "effectId": null
+  },
+  "resources": {
+    "recorded": "Not measured",
+    "storage": {
+      "label": "Storage",
+      "display": "Not measured",
+      "value": null,
+      "unit": "unknown",
+      "method": "unmeasured",
+      "conditions": "No measurements exist yet. Add exact conditions and source evidence when available.",
+      "source": "TESTING.md"
+    },
+    "processing": {
+      "label": "CPU / DSP load",
+      "display": "Not measured",
+      "value": null,
+      "unit": "unknown",
+      "method": "unmeasured",
+      "conditions": "No measurements exist yet. Add exact conditions and source evidence when available.",
+      "source": "TESTING.md"
+    }
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "On the developer's MKI (OS 1.40C, released base 24a0ed57) over USB, 28-30 Oct 2026: timed trials of the exact package 0506a245 and its predecessor showed the time left, totals and elapsed time of whole, trimmed and Flex tracks against a stopwatch at 120 and 140 BPM, the last-30-seconds flash, a retrigger, tempo changes and the double press that closes it; a Keep survived a power cycle and Undo removed it; LOAD showed no CPU or DSP change. Host tests 16/16. Not run: an MKII, Part changes and reloads with the screen open, other modules beside it, a static cycle bound.",
+    "hardwareStatus": "reported",
+    "gates": [
+      "modules/tiempos/verify.py"
+    ],
+    "qualification": {
+      "moduleVersion": "0.1.0-experimental",
+      "sourceSha256": "fa47d8783bcb42b636514d6e256fad6ce2022e8e66d7ebd18a9236ed28f03b85",
+      "imageSha256": "0506a24500c2aa175aede07bcf1cc1a4c5f215b23852b26518acad6ac9444aa7",
+      "cycles": [
+        {
+          "processor": "coldfire",
+          "worstCase": 1133300,
+          "maxConfiguration": 1133300,
+          "maxInstances": 1,
+          "budget": 4330000,
+          "unit": "cycles/event",
+          "method": "emulator",
+          "conditions": {
+            "parameterExtremes": "Not applicable: no parameters. The dearest layout, eight playing rows in their last 30 s, is estimated from the host build's pixel count (4,653 writes against 341 for eight empty rows).",
+            "parameterModulation": "Not applicable: LEFT and RIGHT switch the right column; the draw cost does not depend on it.",
+            "modeSwitching": "Closed and open, stopped and playing, in the emulator; opened and closed while three tracks played on the MKI.",
+            "maxLoad": "One instance. The cost is the screen's draw on the UI task, once per composed frame while open; closed it draws nothing. Budget: one UI tick, 16.4 ms at 61 ticks a second, 4,330,000 cycles at 264 MHz.",
+            "inputConditions": "ot_emu with development base 6a44c813: modwerk_cost[22] (runtime module draw) 314.6 us a tick open and playing with eight empty rows, scaled by the pixel count to 4,293 us (1,133,300 cycles at 264 MHz), an overstatement. No static bound; not measured on hardware."
+          },
+          "report": "evidence/performance.json"
+        }
+      ],
+      "memory": {
+        "regions": [
+          {
+            "name": "ColdFire code and data (tiempos.c, deck_font.h, DRAM)",
+            "space": "sdram",
+            "words": 2240,
+            "wordBits": 8,
+            "bytes": 2240,
+            "scope": "shared"
+          },
+          {
+            "name": "State (bss): eight track records, screen and key state",
+            "space": "sdram",
+            "words": 272,
+            "wordBits": 8,
+            "bytes": 272,
+            "scope": "shared"
+          }
+        ],
+        "perInstanceBytes": 0,
+        "sharedBytes": 2512,
+        "maxInstances": 1,
+        "totalBytes": 2512,
+        "conditions": "From the USB package header (2,240 bytes of code and data, 272 of bss, 39 relocations). Reads OS memory only; writes no stock code or data. No DSP memory, no heap. Stack use is the UI task's and was not measured.",
+        "report": "TESTING.md"
+      },
+      "hardware": {
+        "kind": "functional",
+        "status": "reported",
+        "model": "MKI",
+        "testedOn": "2026-10-30",
+        "tester": "imdantelo",
+        "sourceRevision": "",
+        "imageSha256": "0506a24500c2aa175aede07bcf1cc1a4c5f215b23852b26518acad6ac9444aa7",
+        "summary": "The developer's MKI, OS 1.40C, released Modwerk base 24a0ed57 built from a local checkout, driven over USB by Claude Code. With package 0506a245: a timed trial (single and double presses of track keys, the stock QUICK ASSIGN after a double press), an install with Keep that survived a power cycle and opened with CUE + MIDI, an Undo back to the empty set, and a seven-minute trial with three tracks playing (CPU 62 % just after a minute open against a 64 % peak without it; DSP load and space unchanged; no stall). With the previous package 225a0170 (same timing code): totals 2:08 at 120 BPM and 1:49 at 140 BPM on three 64-bar tones at 100, 120 and 140 BPM, a trimmed Static and a Flex track, 1:25 left and 0:24 elapsed at stopwatch 0:24.28, the flash under 30 s and a hand retrigger.",
+        "limitations": [
+          "One MKI; no MKII.",
+          "The stopwatch figures come from the developer's photos and readings; the voice fields were not read directly (a released base answers no mem request).",
+          "Part changes, project reloads, timestretch modes other than NORMAL and other modules beside Tiempos were not run.",
+          "Draw cost estimated in the emulator, not measured on the unit; no static bound and no MIDI flood."
+        ],
+        "report": "TESTING.md"
+      },
+      "documentation": {
+        "tutorial": {
+          "title": "Quick tutorial: see how long every track has left",
+          "steps": [
+            "Load long samples on audio tracks and press PLAY.",
+            "Hold CUE and press MIDI: Tiempos shows all eight tracks, with the time left in the middle column.",
+            "Press LEFT or RIGHT to switch the right column between total length and time elapsed.",
+            "Press NO, CUE + MIDI, or the same track key twice to go back to the page you were on."
+          ]
+        },
+        "screenshots": [],
+        "screenshotStyle": "black-and-white"
+      }
+    }
+  },
+  "license": {
+    "spdx": "GPL-3.0-or-later",
+    "file": "LICENSE",
+    "declaration": "Original code by the author, GPL-3.0-or-later. The 3x5 font is original. No Elektron firmware, extracted routines or tables."
+  },
+  "media": [],
+  "access": {
+    "location": "Any screen: hold CUE and press MIDI.",
+    "steps": [
+      "Install Tiempos with the Modwerk base over USB.",
+      "Load samples on some tracks and press PLAY.",
+      "Hold CUE and press MIDI. Hold CUE and press MIDI again, or press NO, to return to the page you were on."
+    ],
+    "screenshots": []
+  }
+}

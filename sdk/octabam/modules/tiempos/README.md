@@ -30,13 +30,15 @@ Tiempos has no knobs. While its screen shows:
 | NO | Close the screen. |
 | LEFT or RIGHT | Switch the right column between total length and time played. A notice names the column (TOTAL or ELAPSED) for one second. |
 | SRC, AMP, LFO, FX1, FX2, BANK, PATTERN | Close the screen and reach the unit as usual. |
-| Everything else | Reaches the unit as usual: PLAY, STOP, REC, track and trig keys, encoders, the crossfader. The screen stays. |
+| A track key | Selects the track as usual; the screen stays. |
+| The same track key twice within 0.4 s | Closes the screen. Both presses reach the unit, so it opens QUICK ASSIGN for that track, as a double press does on stock. |
+| Everything else | Reaches the unit as usual: PLAY, STOP, REC, trig keys, encoders, the crossfader. The screen stays. |
 
 Closing the screen redraws the page that was underneath.
 
 ## Usage
 
-Load whole tracks into Static slots on tracks 1 to 8 and start playback. Hold CUE and press MIDI from any page. Mix with the crossfader and the track keys as usual while the screen shows the time left. Close it with NO or CUE + MIDI when you need to edit.
+Load whole tracks into Static slots on tracks 1 to 8 and start playback. Hold CUE and press MIDI from any page. Mix with the crossfader and the track keys as usual while the screen shows the time left. Close it with NO or CUE + MIDI when you need to edit, or press a track key twice to close it and open that track's QUICK ASSIGN.
 
 ## Quick tutorial
 

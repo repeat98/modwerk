@@ -16,7 +16,8 @@
  *
  * Teclas (deck_keys.h): CUE + MIDI abre y cierra · NO cierra · LEFT / RIGHT cambian
  * la columna derecha (duración total / tiempo transcurrido) · páginas, BANK y
- * PATTERN cierran y llegan al OS · todo lo demás sigue yendo al OS.
+ * PATTERN cierran y llegan al OS · dos pulsaciones de la misma tecla de pista en
+ * menos de 400 ms cierran y llegan al OS · todo lo demás sigue yendo al OS.
  *
  * Fila de cada pista (8 px de alto, 8 filas):
  *   x 0-8    número: relleno = suena; contorno = cargada y parada; punteado = vacía
@@ -39,6 +40,7 @@
 #define RIGHT_END 127
 #define WINDOW_MS 500u      /* ventana de medida de la velocidad */
 #define BLINK_SECS 30u
+#define DOUBLE_MS 400u      /* dos pulsaciones de la misma pista: cierra */
 
 /* ---------------------------------------------------------------- dibujo */
 static unsigned char *fb;
@@ -98,6 +100,8 @@ struct track {
 
 static struct track tr[TRACKS];
 static int open, show_elapsed, cue_held, taken_key = -1;
+static int last_track_key = -1;  /* última tecla de pista pulsada con la pantalla abierta */
+static uint32_t last_track_at;   /* su instante, en cuentas del temporizador de 132 MHz */
 static uint32_t ticks;
 static uint8_t cur_track;
 static uint32_t toast_until;
@@ -233,10 +237,24 @@ int module_key(int code, int pressed)
     }
     if (code == K_OPEN && cue_held) {
         if (open) close_view(); else open = 1;
+        last_track_key = -1;
         taken_key = code;
         return 1;
     }
     if (!open) return 0;
+    /* Pista: una pulsación la selecciona y la pantalla sigue; la segunda de la misma
+     * pista en menos de DOUBLE_MS cierra. Las dos llegan al OS. */
+    if (code >= K_TRACK1 && code <= K_TRACK8) {
+        uint32_t now = RD32(OT_DTCN3);
+        if (code == last_track_key && now - last_track_at < DOUBLE_MS * OT_DTCN3_PER_MS) {
+            last_track_key = -1;
+            close_view();
+            return 0;
+        }
+        last_track_key = code, last_track_at = now;
+        return 0;
+    }
+    last_track_key = -1;
     if (code == K_NO) { close_view(); taken_key = code; return 1; }
     if (code == K_LEFT || code == K_RIGHT) { show_elapsed = !show_elapsed, toast_until = ticks + 75u; taken_key = code; return 1; }
     if ((code >= K_SRC && code <= K_FX2) || code == K_BANK || code == K_PATTERN) { close_view(); return 0; }

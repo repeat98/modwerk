@@ -153,6 +153,25 @@ int main(int argc, char **argv)
     check(module_key(K_SRC, 1) == 0 && redraws == r0 + 1, "SRC cierra y el OS redibuja");
     module_key(K_SRC, 0);
 
+    /* Teclas de pista con la pantalla abierta: llegan siempre al OS; una sola deja la
+     * pantalla, dos de la misma pista en menos de 400 ms la cierran. */
+    key(K_CUE, 1); key(K_MIDI, 1); key(K_MIDI, 0); key(K_CUE, 0);
+    int pass = module_key(K_TRACK1 + 2, 1) == 0; module_key(K_TRACK1 + 2, 0);
+    run(0.5);
+    pass &= module_key(K_TRACK1 + 2, 1) == 0; module_key(K_TRACK1 + 2, 0);
+    draw();
+    check(pass && frame[0] != 0xA5, "T3 dos veces con 500 ms entre medias: llega al OS y la pantalla sigue");
+    pass = module_key(K_TRACK1 + 3, 1) == 0; module_key(K_TRACK1 + 3, 0);
+    run(0.2);
+    pass &= module_key(K_TRACK1 + 2, 1) == 0; module_key(K_TRACK1 + 2, 0);
+    draw();
+    check(pass && frame[0] != 0xA5, "T4 y luego T3 en 200 ms: llegan al OS y la pantalla sigue");
+    r0 = redraws;
+    run(0.25);
+    pass = module_key(K_TRACK1 + 2, 1) == 0; module_key(K_TRACK1 + 2, 0);
+    draw();
+    check(pass && frame[0] == 0xA5 && redraws == r0 + 1, "T3 dos veces en 250 ms: llega al OS, cierra y el OS redibuja");
+
     printf("\n%d fallo(s)\n", fails);
     return fails != 0;
 }
