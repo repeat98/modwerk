@@ -78,25 +78,13 @@ describe('the base dialog for a unit on an older base', () => {
     expect(container.querySelectorAll('.base-update-plan .is-complete')).toHaveLength(3)
     expect(buttonNamed('Continue')).toBeDefined()
   })
-  it('on two slots, names Send, Save, Restart, and says the container’s upload as the send', async () => {
+  // A base writing another base's container quiesces stock, and a stall then hung units (30 October 2026): on two slots
+  // the new base also starts from RAM and saves itself.
+  it('on two slots, names Send, Restart, Save as with one copy', async () => {
     const twoSlots = Uint8Array.from([0x4d, 0x57, 0x53, 0x53, 1, 0, 2, ...new Array(17).fill(0)]) // SLOTS: "MWSS", two slots, running A, confirmed
-    const { link, update } = await older(true, twoSlots)
+    const { link } = await older(true, twoSlots)
     await vi.waitFor(() => expect(link.getState().slots?.layout).toBe('two'))
-    expect([...container.querySelectorAll('.base-update-plan strong')].map(item => item.textContent)).toEqual(['Send', 'Save', 'Restart'])
-    const steps: (() => void)[] = []
-    update.mockImplementation(async (_bin, _base, report) => {
-      for (const [step, fraction] of [['writing', 0.3], ['writing', 1], ['restarting'], ['done']] as const) { report?.(step, fraction); await new Promise<void>(resolve => steps.push(resolve)) }
-    })
-    const active = () => container.querySelector('.base-update-plan .is-active strong')?.textContent
-    click(container.querySelector('.risk-accept input')!); click(buttonNamed('Update over USB')!)
-    await vi.waitFor(() => expect(container.textContent).toContain('Sending the new base to your Octatrack'))
-    expect(active()).toBe('Send'); expect(container.querySelector('progress')).not.toBeNull()
-    await act(async () => steps.shift()!()); expect(active()).toBe('Save')
-    expect(container.querySelector('[role="status"]')!.className).toBe('base-install-warning')
-    await act(async () => steps.shift()!()); expect(active()).toBe('Restart')
-    expect(container.querySelectorAll('.base-update-plan .is-complete')).toHaveLength(2)
-    await act(async () => steps.shift()!()); await settle()
-    expect(container.textContent).toContain('Done. Your Octatrack runs the new base.')
+    expect([...container.querySelectorAll('.base-update-plan strong')].map(item => item.textContent)).toEqual(['Send', 'Restart', 'Save'])
   })
   it('offers the USB update from any older base, and the card steps after a failure', async () => {
     const { update } = await older(false)

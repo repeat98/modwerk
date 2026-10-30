@@ -679,21 +679,23 @@ describe('updating the base over USB', () => {
     link.start(); await vi.waitFor(() => expect(link.getState().status).toBe('ready'))
     return { link, restarts: () => starts }
   }
-  it('updates a unit on two slots with one restart: the running base writes the new one into its spare slot', async () => {
+  // The running base writing another's container quiesced stock, and the DSP stall that followed hung units (30 October
+  // 2026): on two slots the new base starts from RAM too and saves itself into the spare slot while it runs on.
+  it('updates a unit on two slots with one restart: the trial, then the new base saves itself into the spare slot', async () => {
     const unit = fakeUnit(), { link, restarts } = await counting(unit, 1), { bin, expected } = fakeBin(), steps: string[] = []
     expect(link.getState().slots).toMatchObject({ layout: 'two' })
     await link.updateBase(bin, expected, step => steps.push(step))
-    expect(dedupe(steps)).toEqual(['writing', 'restarting', 'done'])
+    expect(dedupe(steps)).toEqual(['staging', 'starting', 'started', 'writing', 'done'])
     expect(unit.flashed).toBe(expected); expect(unit.base).toBe(expected); expect(restarts()).toBe(1)
   })
-  // A tester's unit on two slots saved the new base, then hung at the logo on the restart (a DSP stalled while the base
-  // was sent): the site said "reconnecting", wrote again and ended on the one-slot text about MIDI recovery.
-  it('ends a two-slot update whose restart hangs at the restart, with the two-slot advice, without writing again', async () => {
-    const unit = fakeUnit(), { link } = await counting(unit, 1), { bin, expected } = fakeBin(), steps: string[] = []
+  // A tester's unit saved the new base, then hung at the logo on the restart: the site said "reconnecting", wrote again
+  // and ended on the text about MIDI recovery. A verified save is not written again; the restart's failure ends it.
+  it('ends an update whose restart after the saved write never comes back, without writing again', async () => {
+    const { unit, link } = await linked(), { bin, expected } = fakeBin(), steps: string[] = []
     unit.restartHangs = true
     vi.useFakeTimers({ toFake: ['setTimeout'] })
-    await expect(run(link.updateBase(bin, expected, step => steps.push(step)))).rejects.toThrow('after two starts that fail, it goes back to its previous base')
-    expect(dedupe(steps)).toEqual(['writing', 'restarting'])
+    await expect(run(link.updateBase(bin, expected, step => steps.push(step)))).rejects.toThrow('Keep it switched on')
+    expect(dedupe(steps)).toEqual(['staging', 'starting', 'started', 'writing', 'restarting'])
     expect(unit.flashed).toBe(expected)
   })
   it('converts a unit with one copy with one restart: the trial, then the new base saves itself and runs on', async () => {
