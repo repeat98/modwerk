@@ -65,7 +65,7 @@
     "limitations": [
       "A track counts as muted when its project mute is set: MUTE mode pads, FUNC + pads in MUTE mode, and MIDI CC 94. OS 1.74 keeps no separate pattern mute.",
       "Solo is not followed: a track that is only soloed out still plays incoming notes.",
-      "A note held when its track is muted is released within one UI tick, about 50 ms.",
+      "A note held when its track is muted is released on the next UI tick; on a unit the sound had stopped 50 and 130 ms after a CC 94 mute, its own fade included.",
       "Only notes are affected. CC, NRPN, aftertouch, pitch bend, program change, clock, transport and SysEx pass as stock, also for muted tracks."
     ]
   },
