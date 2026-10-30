@@ -112,9 +112,9 @@ def main():
         if module == 'mute-modes':
             cases = [
                 ('patch_softmute.s', 0x400d7400, False,
-                 'd56d848e51e96f9561028741a46e509872981fdce6b2e17ee55831d47db5d356'),
+                 'ca7792be6239c6c3c1d4882ef3c8fdd718a05d7e90f36d8eae0c1971cb9a9689'),
                 ('patch_softmute.s', 0x400d74e4, True,
-                 '8814aa2ca49df775371b17c6c14116494bca7c40febd2dca94c7e90fec7e2009'),
+                 '9be6df774dda7c6996a94c6138a002b26e667fb458abaccd4388ebf97f3ae43d'),
                 ('patch_mutemode.s', 0x400d7800, False,
                  '4c6702aaae1840d9a95a274bd97e252b4bd1e39338c0e50c5257e96060bd4220')]
             for name, origin, sidechain, expected in cases:

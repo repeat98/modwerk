@@ -1,0 +1,139 @@
+{
+  "schemaVersion": 1,
+  "repository": "https://github.com/sambanks/octabam",
+  "revision": "08bffd529c0f301708bcb2d48759e54e11f59858",
+  "moduleVersion": "0.2.2-experimental",
+  "root": "sdk/octabam/modules/mute-modes",
+  "modules": [
+    "mute-modes"
+  ],
+  "files": [
+    {
+      "path": "patch_softmute.s",
+      "repository": "https://github.com/Zac-Kyoti/octatrack-kyoti-fw",
+      "revision": "c5b24d0763698c6775757cce15b6971af952bfb3",
+      "sourcePath": "modwerk-modules/mute-modes/patch_softmute.s",
+      "sourceBytes": 86307,
+      "sourceGitBlob": "142a3d1ecf3524a3f68fc7391216442223d68c89",
+      "sourceSha256": "20740580d6eb0917a22e13d91475b6ca32eefe451e24f8936befd5476e50a87a",
+      "vendoredSha256": "20740580d6eb0917a22e13d91475b6ca32eefe451e24f8936befd5476e50a87a"
+    },
+    {
+      "path": "patch_mutemode.s",
+      "repository": "https://github.com/Zac-Kyoti/octatrack-kyoti-fw",
+      "revision": "c5b24d0763698c6775757cce15b6971af952bfb3",
+      "sourcePath": "modwerk-modules/mute-modes/patch_mutemode.s",
+      "sourceBytes": 10222,
+      "sourceGitBlob": "132712bf4a68879c6a0433ad08a44703523885a2",
+      "sourceSha256": "85b0be45d2ec5540a89d97d8e87884590cc1feb1b6719087acff686e83aba100",
+      "vendoredSha256": "85b0be45d2ec5540a89d97d8e87884590cc1feb1b6719087acff686e83aba100"
+    },
+    {
+      "path": "manifest.py",
+      "repository": "https://github.com/Zac-Kyoti/octatrack-kyoti-fw",
+      "revision": "c5b24d0763698c6775757cce15b6971af952bfb3",
+      "sourcePath": "modwerk-modules/mute-modes/manifest.py",
+      "sourceBytes": 6953,
+      "sourceGitBlob": "98e397b5553df0f7ea93a19a559236f6c226daed",
+      "sourceSha256": "0f27ffcd12e02384db82e7899e8165fb326d3b21a27a0d6a7568b104a8796f6a",
+      "vendoredSha256": "0f27ffcd12e02384db82e7899e8165fb326d3b21a27a0d6a7568b104a8796f6a"
+    },
+    {
+      "path": "runtime.json",
+      "repository": "https://github.com/Zac-Kyoti/octatrack-kyoti-fw",
+      "revision": "c5b24d0763698c6775757cce15b6971af952bfb3",
+      "sourcePath": "modwerk-modules/mute-modes/runtime.json",
+      "sourceBytes": 204,
+      "sourceGitBlob": "56c66cc1f50412b2c2397737a8801a859efa6f34",
+      "sourceSha256": "848cf42bed75ec3fd101f4d5869185ffb33967a29e1e55eae737c829a9d83a86",
+      "vendoredSha256": "848cf42bed75ec3fd101f4d5869185ffb33967a29e1e55eae737c829a9d83a86"
+    },
+    {
+      "path": "upstream/README.md",
+      "repository": "https://github.com/Zac-Kyoti/octatrack-kyoti-fw",
+      "revision": "d3e0801a5f666abc04bc05fc1cb37969d7fb38d0",
+      "sourcePath": "octabam-modules/mute-modes/README.md",
+      "sourceBytes": 3390,
+      "sourceGitBlob": "a575ed3a5ca04f647bdbf6f23cead2447d577fc2",
+      "sourceSha256": "1b6cdac7e69b416026b995b73fc48ccec9b5a05c7e097ade87dd3a7e7ee5d54a",
+      "vendoredSha256": "1b6cdac7e69b416026b995b73fc48ccec9b5a05c7e097ade87dd3a7e7ee5d54a"
+    },
+    {
+      "path": "LICENSE",
+      "repository": "https://github.com/Zac-Kyoti/octatrack-kyoti-fw",
+      "revision": "d3e0801a5f666abc04bc05fc1cb37969d7fb38d0",
+      "sourcePath": "LICENSE",
+      "sourceBytes": 4451,
+      "sourceGitBlob": "3e76489f7da43570add4342b27fd9e1aff949672",
+      "sourceSha256": "0d3f46fdaa57dcf513b0d62975eb019334f4eb9cc8ea0b973ce191dd661741f5",
+      "vendoredSha256": "0d3f46fdaa57dcf513b0d62975eb019334f4eb9cc8ea0b973ce191dd661741f5"
+    },
+    {
+      "path": "upstream/OCTABAM_LICENSE",
+      "repository": "https://github.com/sambanks/octabam",
+      "revision": "6f9e5bc9db0ae9fa99fa2f2a0f4de1fdb8e9a136",
+      "sourcePath": "LICENSE",
+      "sourceBytes": 2112,
+      "sourceGitBlob": "112114d5d319dc4a789dacf1e84b867420a03614",
+      "sourceSha256": "f91a43799d9e31ccc3540f385f68c4d6ff5a096f93ae933be2ce98f6b3f7f113",
+      "vendoredSha256": "f91a43799d9e31ccc3540f385f68c4d6ff5a096f93ae933be2ce98f6b3f7f113"
+    }
+  ],
+  "stockGuards": [
+    {
+      "address": "0x40004dc6",
+      "bytes": 6,
+      "sha256": "0759b4a7055beab59cdc9d7b8f51bcc27fc8e6b07d38842260ceef916dc33d53"
+    },
+    {
+      "address": "0x40006844",
+      "bytes": 6,
+      "sha256": "27f17790db914b0847a6bd64cfef8523d1910193c6c550577e389ea506a68b94"
+    },
+    {
+      "address": "0x4000f4dc",
+      "bytes": 8,
+      "sha256": "c605d386cc7bbf132d9a1bc10d655c3f8f550c75e0cf51715ac2966015b40068"
+    },
+    {
+      "address": "0x4000d498",
+      "bytes": 6,
+      "sha256": "00dfac25f63401293b216e5ec256e32776a875e1f4d10cf27f31694e95f70308"
+    },
+    {
+      "address": "0x40006820",
+      "bytes": 8,
+      "sha256": "87faf47c9893d1a9506259f68551bf06eb1ce723ac12cfae49a5b10b8b169fb6"
+    },
+    {
+      "address": "0x40004c72",
+      "bytes": 6,
+      "sha256": "6314eb6bf2fc2b8a735ece556af833c4937e3c2added6668f6015e33455866d0"
+    },
+    {
+      "address": "COUNT_AT",
+      "bytes": 2,
+      "sha256": "5dd82fd23ac20130aebe3391a4c9a9fda6ca01bd143223a558ec253b65083dfd"
+    },
+    {
+      "address": "site",
+      "bytes": 4,
+      "sha256": "8c4c50dbddad08d1ae644a694665e608f2bbdb90d7a321fc640e844ae4c149fa"
+    }
+  ],
+  "excluded": [
+    "Firmware and stock expectation bytes",
+    "Generated firmware, runtime images and memory dumps",
+    "Unrelated modules and author repository tooling"
+  ],
+  "notes": [
+    "patch_softmute.s, patch_mutemode.s, manifest.py and runtime.json are the author's files byte for byte at the pinned commit, from modwerk-modules/mute-modes/, the author's own Modwerk copy (the 0.2.1 sources with Modwerk's MODWERK_EVENTS blocks, plus this version's change). upstream/README.md, LICENSE and upstream/OCTABAM_LICENSE are unchanged from 0.1.0's record.",
+    "0.2.2 moves SHADOW, hook 1's per-frame silenced set, from SRAM 0x80006c66 into the unit after KEYMASK; sambanks/octabam pins the same change at a1e0288 (PR #928, merged as the revision above). The octabam-form units equal the author's references (plain 970 B, SC_KEY 1086 B).",
+    "The stock guard digests are 0.1.0's; no hook site changed."
+  ],
+  "status": "Listed; author update. Hardware: see TESTING.md.",
+  "authorPin": {
+    "repository": "https://github.com/Zac-Kyoti/octatrack-kyoti-fw",
+    "revision": "c5b24d0763698c6775757cce15b6971af952bfb3"
+  }
+}

@@ -1,8 +1,8 @@
 {
   "firmware": "1.40C",
-  "imageSha256": "601ba3bd042129aacecbeeee0b0e1ab928cee1f5cf9fe7577b060b81b044fb37",
-  "emulatorSha256": "f521565f3866947788d7c45507576a4ed386d2e4ef57e9683ab65fa0acc6a166",
-  "setup": "Headless ot_emu; MKII panel; stopped transport; 128×64 LCD at integer scale 6. ColdFire UI execution with DSP host stub; no audio claim. Local standalone composition, not shared-builder parity. Empty private OCTAMOD/MEASURE SET was requested; missing-project prompts dismissed with three NO presses. Native initialized UI state, no valid saved project or recorder-slot assignment claimed.",
+  "imageSha256": "446ece69c1fcf7d19a2c726d8fa1029f218e01780e3ac4c194d4c9a61e527573",
+  "emulatorSha256": "870b66f73749a41d042484e47c248f4c53e42ce0481a4c38b95cffac98dc17db",
+  "setup": "Headless ot_emu (octabam port); MKII panel; stopped transport; 128×64 LCD at integer scale 6. Native card image of this module alone (scripts/export-composition-proofs.py --select mute-modes:true), the image flashed for the hardware report. Empty scratch card; missing-project prompts dismissed with three NO presses; no project loaded.",
   "palette": {
     "on": [
       240,
@@ -117,16 +117,15 @@
     }
   ],
   "screenshots": {
-    "ot-system.png": "0346e9c05a5601fe39a63be8ca665e8710d7a7daf173b7acc27682afb10ee271",
-    "ot-mute-ot.png": "5afcce2872e9e2287194fa75d8f5421342f7f60b50d319e3ae19d5438b00a5a5",
-    "ot-mute-otfx.png": "5734f9a7ef7fdd2125ce812fee4390471296a92f268a9149694a8a04c91096ec",
-    "ot-mute-otfx-t.png": "5440a65f53bebe1d9f2e71a8c466c15710d0a9be3b9a949f25220da483041c08",
-    "ot-mute-dt-t.png": "37b1fe2ebceca8cc7a010df283e270f65bc531d35f454643ea22bcf477350254"
+    "ot-system.png": "c5974f5b5e462b3abb757cfa4f49b91848cb411841b9b255c201f4dc2c866aee",
+    "ot-mute-ot.png": "f1b49fe1a69443f64e28013e89cd95ffa7533568b2d21a58c208b45a4f214f00",
+    "ot-mute-otfx.png": "497d97df83e7bde1c160e9b9f9955fd146a77c3bd441644280e1d03b09390e4c",
+    "ot-mute-otfx-t.png": "6aaef48eaf3715d9da16d0e9c04b9e08c7f3209288d4b229f94e63cadf9ed04b",
+    "ot-mute-dt-t.png": "4f2117386d263e7d41ec8f9fc41e18a5179abb2e2f0d39a2122324ab71fef03b"
   },
-  "cardSha256": "4a72108e11d2974141a024fdc555744abb1c13b22d58b4052e34c7df9c60e0f6",
-  "moduleVersion": "0.1.0-experimental",
-  "buildKind": "manual guarded standalone composition",
+  "moduleVersion": "0.2.2-experimental",
+  "buildKind": "native card image of this module alone, every stock effect kept",
   "projectLoadStatus": "missing-project prompts dismissed; no valid project loaded",
-  "harness": "reviewed capture-module-ui.py derivative: REC1/2/3 key names, mount scratch SET, DSP disabled; listed panel actions only",
-  "sourceSha256": "e3a1355c88e7864210dd47d1c35a51c8467c9a743ef50db6a9ade6b803ce935a"
+  "harness": "scripts/capture-module-ui.py, unmodified; the plan of 0.1.0's captures",
+  "sourceSha256": "c440da5241d5106e5736bc070a7ad98a26ee5ae5377beef542e7043ba962b708"
 }

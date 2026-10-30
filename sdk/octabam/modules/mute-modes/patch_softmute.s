@@ -119,7 +119,8 @@
     .equ REL_STATE,   0x8000184a     | byte: voice t in RELEASE when bit t set
     .equ PROBE_LO,    0x800000d4     | OTFX_PROBE only: free, battery-restored PERSONALIZE
     .equ PROBE_HI,    0x800000d5     | bytes, poked by the harness to bisect the block
-    .equ SHADOW,      0x80006c66     | patch RAM: last frame's "silenced" set (8 bits)
+| SHADOW (last frame's "silenced" set, 8 bits) is a byte at the end of this unit -- see the
+| note there. It used to be SRAM 0x80006c66, inside the stock timestretch task's work area.
     .equ F_NOTEOFF,   0x40008f84     | FUN_40008f84(t) -- per-track note-off
     .equ BACK,        0x40004dcc     | FUN_40004dbc, after the displaced `move.l 0x80000008,D5`
 
@@ -144,7 +145,7 @@ pre:
                                          | `cmpi #3 / beq` here (two per frame) was on its own
                                          | enough to break OT's bit-identity.
     .endif
-    clr.b   SHADOW                      | OT (or unknown): stock; keep the shadow clean for later
+    clr.b   (SHADOW).l                      | OT (or unknown): stock; keep the shadow clean for later
     bra     p1_done
 p1_active:
     .endif
@@ -319,7 +320,7 @@ p1_edge:
 |      did NOT catch it -- an innocent explanation (the one extra instruction) was already to
 |      hand, and it also explains v4's DT-T divergence, which this session first wrote off as
 |      alignment sensitivity.  Measure the BEHAVIOUR, not just the equality.
-    clr.b   SHADOW                      | DT-T: no note-off state to carry
+    clr.b   (SHADOW).l                      | DT-T: no note-off state to carry
     bra     p1_done
                                          | ⚠ THIS IS THE ONE INSTRUCTION THAT IS NOT FREE.
                                          | DT-T executes it (not taken) once per frame, and
@@ -422,7 +423,7 @@ p1_otfx:
 | counter, which kept advancing while the DSP-side voice did not.  Measure the PROPERTY, not
 | a proxy for it.
 |
-    clr.b   SHADOW                      | like DT-T: no note-off state to carry
+    clr.b   (SHADOW).l                      | like DT-T: no note-off state to carry
     tst.l   %d2
     beq     p1_done
     .ifdef OTFX_PROBE
@@ -488,8 +489,8 @@ p1_edge_ot:
     .endif
 | ---- shadow edge (always update the shadow) ----
     moveq   #0,%d1
-    move.b  SHADOW,%d1                  | D1 = last frame's silenced set
-    move.b  %d2,SHADOW
+    move.b  (SHADOW).l,%d1                  | D1 = last frame's silenced set
+    move.b  %d2,(SHADOW).l
 
 | ---- maintain REL_STATE |= silenced ----
     tst.l   %d2
@@ -808,7 +809,7 @@ relstate_shadow:
     sub.l   #0x80000110,%d3
     lsr.l   #6,%d3
     and.l   #7,%d3
-    btst    %d3,SHADOW                  | Z := this track's SHADOW bit is clear (not muted)?
+    btst    %d3,(SHADOW).l                  | Z := this track's SHADOW bit is clear (not muted)?
     beq     rs_not_muted                | branch WHILE Z is still live -- see the flag-
                                          | clobber warning above; do not restore %d3 first
     move.l  (%sp)+,%d3
@@ -1251,7 +1252,7 @@ relstate_or:
     mvzb    0x8000184a,%d0            | displaced instruction, replayed
     move.l  %d3,-(%sp)
     moveq   #0,%d3
-    move.b  SHADOW,%d3                | this frame's silenced set, from `pre`
+    move.b  (SHADOW).l,%d3                | this frame's silenced set, from `pre`
     or.l    %d3,%d0                   | force those tracks' bits back to 1 -- ADD only,
                                        | never remove a bit the loaded byte itself carried
     move.l  (%sp)+,%d3
@@ -1415,8 +1416,16 @@ tf_sil:
 
 | Session 116: SIDE-CHAIN KEY tracks, rebuilt every frame by p1_key (RAM: the cave is loaded to
 | SDRAM with the image, like DIRECT JUMP's DJ_MODE). 0 until the first active-mode frame.
+|
+| SHADOW: `pre`'s per-frame "silenced" set, here in the unit (RAM, like KEYMASK) since
+| 25 Oct 2026. Its old home, SRAM 0x80006c66, lies inside the work area of a stock
+| timestretch task, which refills that area with audio on every grain while tracks play:
+| OTFX could read back an audio byte and skip a mute's note-off, and this hook's
+| per-frame write landed in the task's splice-search window. It takes KEYMASK's
+| alignment pad, as in the octabam form.
     .balign 2
 KEYMASK: .byte 0
+SHADOW: .byte 0
     .ifdef MODWERK_EVENTS
     .balign 4
     .global raise_ev_mute_keep
@@ -1426,4 +1435,6 @@ raise_ev_mute_keep:
     .balign 2
     .else
     .set    tf_sil, tf_skip             | no SIDE-CHAIN: the silenced branches are stock's skip, as before
+SHADOW: .byte 0                         | see the note above KEYMASK
+    .balign 2
     .endif

@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
   "kind": "source-packages",
-  "sourceCommit": "b18d1776b0d982081c2c69ef5796154fff0efbf9",
+  "sourceCommit": "aea53c9bc98f8d95ac424f303f3599cb34eacbc8",
   "nativeRevision": "b8deefc88b2c3e5f3c6158e364eb741df1924e1d",
-  "sourceTreeSha256": "567e4164b411efa282e4a485e44f46574da8011cfc4d12cecd9098eec858ed7c",
+  "sourceTreeSha256": "d81fd9e0e3fab40c9f954ed8f6c7ad2899bf26d78838a08f8b59e6676f2c876b",
   "compilerSha256": "6af1ca0e10e9f9ba64862600343675465a0f6cff40dac6a73501333647bca79a",
   "moduleVersions": {
     "spectrum": "0.1.1-experimental",
@@ -29,7 +29,7 @@
     "sidechain-compressor": "0.2.0-experimental",
     "vector": "0.2.5-experimental",
     "playmodes": "0.2.0-experimental",
-    "mute-modes": "0.2.1-experimental",
+    "mute-modes": "0.2.2-experimental",
     "recorder-loop-fix": "0.1.0-experimental",
     "poly8": "0.3.2-experimental",
     "output-matrix": "0.1.1-experimental",
@@ -42,47 +42,47 @@
   "files": {
     "dsp-packages.json": {
       "bytes": 91853,
-      "sha256": "301bab722f975f6edb85642f53c1d05928ec232defb90b5cd8b02785c08b73cc"
+      "sha256": "dc07a627bf7aed6d86bccb8f12127aeae359a470943c2e69130b6ab190606f3d"
     },
     "resident-dsp.json": {
       "bytes": 25258,
-      "sha256": "ae04b8b6ce5bc77f235022bec77943c1e72a2b8c4c0bf6323490863744dcb35b"
+      "sha256": "d3a51a29ae8ddd6ff7c0777f9b7068f25c6e60b3cef51f673cf3973c84455f67"
     },
     "coldfire-packages.json": {
       "bytes": 353789,
-      "sha256": "ece5235851fee2d23f685a94d9739f1555dcdf0821c57a94fb82d76dc05571d0"
+      "sha256": "e519a3ecf9520a2a5a0b3e41e0bb70e605289bca4664e71e488c46ed4d8e767f"
     },
     "rom-packages.json": {
       "bytes": 33409,
-      "sha256": "0569b717bdfa5b8c2915781406d81512d8d6aa7ad61ef40048f42a6a4323c44e"
+      "sha256": "748b02d53939a88681d30473f60d0a313b0cb39d046c7eb2b8b38b457aff980c"
     },
     "bootstrap-package.json": {
       "bytes": 3992,
-      "sha256": "37d19d72368ec8e2f1eeec9f90dbc90585bb0a93ce7306616bc1ac5edea32308"
+      "sha256": "b44bc9d7dacccfe0cfc1a94ad69f18e8292bf892fd46415b21bbdf2da2b0bebb"
     },
     "menu-recipes.json": {
       "bytes": 37651,
-      "sha256": "ca1eaf307ee09c95a984fe8080779a347d326a546e45aed70ce64bc3584c725c"
+      "sha256": "8f786d7785544e12a72a9222a92bef9a5dad4ab36926988a0c573de46e901587"
     },
     "descriptor-recipes.json": {
       "bytes": 85276,
-      "sha256": "f8006d06e3b7c5df2d950dba3364797e16b86e65c39fefc40b5cbef7570407cd"
+      "sha256": "14abdb6a4337358b931409043238db8c6c7f1b1ff3506c0016d4eb87f049bc2b"
     },
     "platform-writes.json": {
       "bytes": 17735,
-      "sha256": "772a86e82549a928718814fcac99b016c7d08fe3d9d73c16913dc827df88af99"
+      "sha256": "4245a6fd39cbc50838f89acdecde382f620c373bba77aa4f7734eb3ea5f3d37a"
     },
     "requested-packages.json": {
-      "bytes": 1145826,
-      "sha256": "b9ce385797fd446031d3a488d3f767abba7cfb3f475eea3f134dc1394680fa57"
+      "bytes": 1146706,
+      "sha256": "4d44cf04fca2188e17cf9ce6fa039c3a7388df1c4bf358b783526fa51d4d76d1"
     },
     "utility-packages.json": {
       "bytes": 13120,
-      "sha256": "4ce6455258aa59e2a474c0f0a4807e5a84d558d54b18be32c48aa6772f1a0701"
+      "sha256": "7c41eeaaa7441575264dce950ec9120d4882494a74d1278bb570b5431a760941"
     },
     "usb-audio-packages.json": {
       "bytes": 737762,
-      "sha256": "dba17acaa21b5fa451fe5f1900ea8fddfebb9b94d53fb6b0dff00588fd88af4c"
+      "sha256": "2094289ae7229b79068f0f1996ed0d21c39a35c5808308bb496cafbb892b85b6"
     }
   },
   "approval": null,

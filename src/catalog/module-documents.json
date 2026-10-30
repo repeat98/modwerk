@@ -6881,11 +6881,11 @@
       "id": "mute-modes",
       "key": "MUTE_MODES",
       "name": "Mute Modes",
-      "version": "0.2.1-experimental",
+      "version": "0.2.2-experimental",
       "category": "system",
       "source": {
         "repository": "https://github.com/sambanks/octabam",
-        "revision": "6f9e5bc9db0ae9fa99fa2f2a0f4de1fdb8e9a136",
+        "revision": "08bffd529c0f301708bcb2d48759e54e11f59858",
         "path": "modules/mute-modes"
       },
       "access": {
@@ -6957,14 +6957,14 @@
         ]
       },
       "resources": {
-        "recorded": "7 October 2026; authored-source assembly and isolated native-code probes",
+        "recorded": "27 October 2026; authored-source assembly and isolated native-code probes of 0.2.2",
         "storage": {
           "label": "Authored code and relocated menu tables",
-          "display": "1380 bytes before placement padding",
-          "value": 1380,
+          "display": "1382 bytes before placement padding",
+          "value": 1382,
           "unit": "bytes",
           "method": "static",
-          "conditions": "Program bytes 1176, tables 204. This is a standalone source footprint, not a complete common-builder or stock memory inventory. Actual probe stack peaks and model timing are recorded separately.",
+          "conditions": "Program bytes 1178 (mm_softmute 970, mm_menu 208; mm_softmute is 1086 beside Sidechain Compressor), tables 204. SHADOW and KEYMASK live inside mm_softmute. This is a standalone source footprint, not a complete common-builder or stock memory inventory. Actual probe stack peaks and model timing are recorded separately.",
           "source": "evidence/source-identity.json"
         },
         "processing": {
@@ -7000,9 +7000,9 @@
       },
       "tests": {
         "report": "TESTING.md",
-        "summary": "All three author SHA-256 references match. Native mask/mode/menu/sidechain probes passed with measured instruction counts, model cycles and stack peaks. Actual LCD menu/mode captures were reviewed. Full audio, complete callback timing and current-image hardware remain pending. Published with owner approval for missing hardware evidence; historical author reports are retained. Software integration is checked separately.",
-        "hardwareStatus": "historical",
-        "evidenceRevision": "6f9e5bc9db0ae9fa99fa2f2a0f4de1fdb8e9a136",
+        "summary": "All three author references match (plain 970 B, SC_KEY 1086 B, menu 208 B). The native probe of this version passes 3,170,412 cases with the same instruction counts and stack peaks as 0.2.1. On his MKI (27 October 2026) the author flashed the native card image of this module alone and reported every mode, Part and project reload, the timestretch mute check and a power cycle working.",
+        "hardwareStatus": "reported",
+        "evidenceRevision": "0d0566ff5d060a7f1272a2b0bdf7ee81a53f9ebb",
         "gates": [
           "qualification/probe.cpp"
         ],
@@ -7024,6 +7024,124 @@
             "media/ot-mute-dt-t.png"
           ],
           "screenshotStyle": "black-and-white"
+        },
+        "qualification": {
+          "documentation": {
+            "tutorial": {
+              "title": "Quick tutorial: keep FX tails when muting",
+              "steps": [
+                "Open PROJECT > SYSTEM > PERSONALIZE and select MUTE MODE.",
+                "Choose OTFX to cut the dry signal while delay and reverb tails continue; trigs keep firing underneath.",
+                "Mute and unmute an audio track with a long delay or reverb tail, then try OTFX-T to suppress new trigs.",
+                "Choose DT-T to let the current voice finish its amp envelope, or OT to restore the stock cut."
+              ]
+            },
+            "screenshots": [
+              "media/ot-system.png",
+              "media/ot-mute-ot.png",
+              "media/ot-mute-otfx.png",
+              "media/ot-mute-otfx-t.png",
+              "media/ot-mute-dt-t.png"
+            ],
+            "screenshotStyle": "black-and-white"
+          },
+          "moduleVersion": "0.2.2-experimental",
+          "sourceSha256": "c440da5241d5106e5736bc070a7ad98a26ee5ae5377beef542e7043ba962b708",
+          "imageSha256": "446ece69c1fcf7d19a2c726d8fa1029f218e01780e3ac4c194d4c9a61e527573",
+          "cycles": [
+            {
+              "processor": "coldfire",
+              "worstCase": 3344,
+              "maxConfiguration": 16528,
+              "maxInstances": 1,
+              "budget": 95778,
+              "unit": "cycles/block",
+              "method": "emulator",
+              "conditions": {
+                "parameterExtremes": "All four MUTE MODE values and every eight-bit mute and solo mask with SOLO_FLAG set and clear, plain and SC_KEY variants (evidence/probes.json, 3,170,412 executed cases).",
+                "parameterModulation": "Not applicable: MUTE MODE is one global PERSONALIZE setting; mute and solo change from the panel or MIDI and are read once per frame.",
+                "modeSwitching": "MUTE MODE changed between frames in every order; mutes and solos set and cleared between frames, including the 0->1 edge that issues each track's note-off.",
+                "maxLoad": "One instance (a global setting). Per 16-sample block: the frame hook once (at most 3,344, SC_KEY variant in OTFX-T; 2,032 plain) plus the per-trig hooks for all eight tracks in the same block, 8 x (336 + 336 + 352 + 320 + 304) = 13,184.",
+                "inputConditions": "Independent of audio content. Conservative V4 core-path bounds from the actual assembled instructions of this version (16 cycles per ordinary instruction), not chip wall-clock timing; stock callbacks (the note-off and voice routines) are stock cost and excluded."
+              },
+              "report": "TESTING.md"
+            }
+          ],
+          "memory": {
+            "regions": [
+              {
+                "name": "Authored ColdFire code and its RAM bytes, unit mm_softmute (plain; 1,086 bytes beside Sidechain Compressor)",
+                "space": "cpu-flash",
+                "words": 970,
+                "wordBits": 8,
+                "bytes": 970,
+                "scope": "shared"
+              },
+              {
+                "name": "PERSONALIZE menu row code, unit mm_menu",
+                "space": "cpu-flash",
+                "words": 208,
+                "wordBits": 8,
+                "bytes": 208,
+                "scope": "shared"
+              },
+              {
+                "name": "Three PERSONALIZE pointer tables grown from 16 to 17 entries",
+                "space": "cpu-flash",
+                "words": 204,
+                "wordBits": 8,
+                "bytes": 204,
+                "scope": "shared"
+              },
+              {
+                "name": "Six jmp detours written over stock instructions in place",
+                "space": "cpu-flash",
+                "words": 40,
+                "wordBits": 8,
+                "bytes": 40,
+                "scope": "shared"
+              },
+              {
+                "name": "Row-count poke and three ANDY restore length pokes",
+                "space": "cpu-flash",
+                "words": 14,
+                "wordBits": 8,
+                "bytes": 14,
+                "scope": "shared"
+              },
+              {
+                "name": "MUTE MODE setting word (a free PERSONALIZE word) and its battery copy",
+                "space": "cpu-ram",
+                "words": 8,
+                "wordBits": 8,
+                "bytes": 8,
+                "scope": "shared"
+              }
+            ],
+            "perInstanceBytes": 0,
+            "sharedBytes": 1444,
+            "maxInstances": 1,
+            "totalBytes": 1444,
+            "conditions": "From the linked units and the manifest's detours, tables and pokes. SHADOW and KEYMASK are bytes inside mm_softmute (counted there); since 0.2.2 the module keeps no state in stock-owned SRAM. No heap; at most 24 bytes of stack beyond the stock frame routine (evidence/probes.json).",
+            "report": "TESTING.md"
+          },
+          "hardware": {
+            "kind": "functional",
+            "status": "reported",
+            "model": "MKI",
+            "testedOn": "2026-10-27",
+            "tester": "Zac Kyoti",
+            "sourceRevision": "0d0566ff5d060a7f1272a2b0bdf7ee81a53f9ebb",
+            "imageSha256": "446ece69c1fcf7d19a2c726d8fa1029f218e01780e3ac4c194d4c9a61e527573",
+            "summary": "The author flashed the native card image of this module alone (MAIN OS 446ece69, OS VERSION MW_MM022) on his MKI and ran it for about ten minutes. All passed: MUTE MODE sits after PREVIEW WITHOUT FX and cycles OT, OTFX, OTFX-T and DT-T; each mode mutes and unmutes as described; solo in OTFX; 20 to 30 mutes in OTFX of a looping track with timestretch on all took; Part save and reload and project save, load and reload keep the behaviour and the setting; MUTE MODE survives a power cycle.",
+            "limitations": [
+              "MKI only; not run on an MKII.",
+              "The card image only; the USB package was not run on a unit.",
+              "A functional check of about ten minutes; no stress run, frame-interrupt load or chip timing capture.",
+              "Not run beside Sidechain Compressor or other modules in this version."
+            ],
+            "report": "TESTING.md"
+          }
         }
       },
       "license": {
@@ -7044,9 +7162,9 @@
             "page": "PROJECT / SYSTEM",
             "shows": "location",
             "firmware": "1.40C",
-            "moduleVersion": "0.1.0-experimental",
-            "imageSha256": "601ba3bd042129aacecbeeee0b0e1ab928cee1f5cf9fe7577b060b81b044fb37",
-            "setup": "Headless ot_emu; MKII panel; stopped transport; 128×64 LCD at integer scale 6. ColdFire UI execution with DSP host stub; no audio claim. Local standalone composition, not shared-builder parity. Empty private OCTAMOD/MEASURE SET was requested; missing-project prompts dismissed with three NO presses. Native initialized UI state, no valid saved project or recorder-slot assignment claimed."
+            "moduleVersion": "0.2.2-experimental",
+            "imageSha256": "446ece69c1fcf7d19a2c726d8fa1029f218e01780e3ac4c194d4c9a61e527573",
+            "setup": "Headless ot_emu (octabam port); MKII panel; stopped transport; 128×64 LCD at integer scale 6. Native card image of this module alone (scripts/export-composition-proofs.py --select mute-modes:true), the image flashed for the hardware report. Empty scratch card; missing-project prompts dismissed with three NO presses; no project loaded."
           }
         },
         {
@@ -7061,9 +7179,9 @@
             "page": "PERSONALIZE",
             "shows": "location-and-controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.1.0-experimental",
-            "imageSha256": "601ba3bd042129aacecbeeee0b0e1ab928cee1f5cf9fe7577b060b81b044fb37",
-            "setup": "Headless ot_emu; MKII panel; stopped transport; 128×64 LCD at integer scale 6. ColdFire UI execution with DSP host stub; no audio claim. Local standalone composition, not shared-builder parity. Empty private OCTAMOD/MEASURE SET was requested; missing-project prompts dismissed with three NO presses. Native initialized UI state, no valid saved project or recorder-slot assignment claimed."
+            "moduleVersion": "0.2.2-experimental",
+            "imageSha256": "446ece69c1fcf7d19a2c726d8fa1029f218e01780e3ac4c194d4c9a61e527573",
+            "setup": "Headless ot_emu (octabam port); MKII panel; stopped transport; 128×64 LCD at integer scale 6. Native card image of this module alone (scripts/export-composition-proofs.py --select mute-modes:true), the image flashed for the hardware report. Empty scratch card; missing-project prompts dismissed with three NO presses; no project loaded."
           }
         },
         {
@@ -7078,9 +7196,9 @@
             "page": "PERSONALIZE",
             "shows": "location-and-controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.1.0-experimental",
-            "imageSha256": "601ba3bd042129aacecbeeee0b0e1ab928cee1f5cf9fe7577b060b81b044fb37",
-            "setup": "Headless ot_emu; MKII panel; stopped transport; 128×64 LCD at integer scale 6. ColdFire UI execution with DSP host stub; no audio claim. Local standalone composition, not shared-builder parity. Empty private OCTAMOD/MEASURE SET was requested; missing-project prompts dismissed with three NO presses. Native initialized UI state, no valid saved project or recorder-slot assignment claimed."
+            "moduleVersion": "0.2.2-experimental",
+            "imageSha256": "446ece69c1fcf7d19a2c726d8fa1029f218e01780e3ac4c194d4c9a61e527573",
+            "setup": "Headless ot_emu (octabam port); MKII panel; stopped transport; 128×64 LCD at integer scale 6. Native card image of this module alone (scripts/export-composition-proofs.py --select mute-modes:true), the image flashed for the hardware report. Empty scratch card; missing-project prompts dismissed with three NO presses; no project loaded."
           }
         },
         {
@@ -7095,9 +7213,9 @@
             "page": "PERSONALIZE",
             "shows": "location-and-controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.1.0-experimental",
-            "imageSha256": "601ba3bd042129aacecbeeee0b0e1ab928cee1f5cf9fe7577b060b81b044fb37",
-            "setup": "Headless ot_emu; MKII panel; stopped transport; 128×64 LCD at integer scale 6. ColdFire UI execution with DSP host stub; no audio claim. Local standalone composition, not shared-builder parity. Empty private OCTAMOD/MEASURE SET was requested; missing-project prompts dismissed with three NO presses. Native initialized UI state, no valid saved project or recorder-slot assignment claimed."
+            "moduleVersion": "0.2.2-experimental",
+            "imageSha256": "446ece69c1fcf7d19a2c726d8fa1029f218e01780e3ac4c194d4c9a61e527573",
+            "setup": "Headless ot_emu (octabam port); MKII panel; stopped transport; 128×64 LCD at integer scale 6. Native card image of this module alone (scripts/export-composition-proofs.py --select mute-modes:true), the image flashed for the hardware report. Empty scratch card; missing-project prompts dismissed with three NO presses; no project loaded."
           }
         },
         {
@@ -7112,9 +7230,9 @@
             "page": "PERSONALIZE",
             "shows": "location-and-controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.1.0-experimental",
-            "imageSha256": "601ba3bd042129aacecbeeee0b0e1ab928cee1f5cf9fe7577b060b81b044fb37",
-            "setup": "Headless ot_emu; MKII panel; stopped transport; 128×64 LCD at integer scale 6. ColdFire UI execution with DSP host stub; no audio claim. Local standalone composition, not shared-builder parity. Empty private OCTAMOD/MEASURE SET was requested; missing-project prompts dismissed with three NO presses. Native initialized UI state, no valid saved project or recorder-slot assignment claimed."
+            "moduleVersion": "0.2.2-experimental",
+            "imageSha256": "446ece69c1fcf7d19a2c726d8fa1029f218e01780e3ac4c194d4c9a61e527573",
+            "setup": "Headless ot_emu (octabam port); MKII panel; stopped transport; 128×64 LCD at integer scale 6. Native card image of this module alone (scripts/export-composition-proofs.py --select mute-modes:true), the image flashed for the hardware report. Empty scratch card; missing-project prompts dismissed with three NO presses; no project loaded."
           }
         }
       ]

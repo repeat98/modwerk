@@ -47,14 +47,14 @@ void mute(ot::Machine&m,string root){
  // Frame mode handling: all mute/solo masks, both stock SOLO_FLAG states.
  m.write16(0x40008f84,0x4e75);
  for(uint32_t mode=0;mode<4;mode++)for(uint32_t mask=0;mask<256;mask++)for(uint32_t s=0;s<256;s++)for(int flag=0;flag<2;flag++){
- m.write32(0x800000dc,mode);m.write32(0x80000008,0x005a0000|(mask<<8)|s);m.write8(0x80000037,flag);m.write8(0x80006c66,0);m.write8(0x8000184a,0);for(int bank=0;bank<2;bank++)for(int t=0;t<8;t++){m.write16(0x80000110+bank*512+t*64+6,0x1234);m.write16(0x80000110+bank*512+t*64+10,0x5678);}start(m,0x400d7400);run(m,"frame-mode-"+to_string(mode),{0x40004dcc});check(get(m,M68K_REG_D5)==(mode?0x005a0000u:(0x005a0000u|(mask<<8)|s)),"preserve cue and stock level mask");check(get(m,M68K_REG_SP)==SP,"frame stack");uint32_t silence=mask|(s?((~s)&255):0);for(int bank=0;bank<2;bank++)for(int t=0;t<8;t++){bool cut=mode==3&&(silence>>t&1);check(m.read16(0x80000110+bank*512+t*64+6)==(cut?0:0x1234)&&m.read16(0x80000110+bank*512+t*64+10)==(cut?0:0x5678),"dry gain mode handling");}for(int j=M68K_REG_D0;j<=M68K_REG_D3;j++)check(get(m,j)==0x12340000u+j,"frame preserves d0-d3");
+ m.write32(0x800000dc,mode);m.write32(0x80000008,0x005a0000|(mask<<8)|s);m.write8(0x80000037,flag);m.write8(1074624456,0);m.write8(0x8000184a,0);for(int bank=0;bank<2;bank++)for(int t=0;t<8;t++){m.write16(0x80000110+bank*512+t*64+6,0x1234);m.write16(0x80000110+bank*512+t*64+10,0x5678);}start(m,0x400d7400);run(m,"frame-mode-"+to_string(mode),{0x40004dcc});check(get(m,M68K_REG_D5)==(mode?0x005a0000u:(0x005a0000u|(mask<<8)|s)),"preserve cue and stock level mask");check(get(m,M68K_REG_SP)==SP,"frame stack");uint32_t silence=mask|(s?((~s)&255):0);for(int bank=0;bank<2;bank++)for(int t=0;t<8;t++){bool cut=mode==3&&(silence>>t&1);check(m.read16(0x80000110+bank*512+t*64+6)==(cut?0:0x1234)&&m.read16(0x80000110+bank*512+t*64+10)==(cut?0:0x5678),"dry gain mode handling");}for(int j=M68K_REG_D0;j<=M68K_REG_D3;j++)check(get(m,j)==0x12340000u+j,"frame preserves d0-d3");
  }
 }
 
 void sidechain(ot::Machine&m,string root){
  put(m,1074623716,bytes(root+"/mute-sidechain.raw"));m.write16(0x40008f84,0x4e75);
  for(uint32_t mode=0;mode<4;mode++)for(uint32_t mask=0;mask<256;mask++)for(uint32_t keyMask=0;keyMask<256;keyMask++){
- m.write32(0x800000dc,mode);m.write32(0x80000008,mask<<8);m.write8(0x80000037,0);m.write8(0x80006c66,0);m.write8(0x8000184a,0);
+ m.write32(0x800000dc,mode);m.write32(0x80000008,mask<<8);m.write8(0x80000037,0);m.write8(1074624801,0);m.write8(0x8000184a,0);
  for(int t=0;t<8;t++){uint32_t lane=0x80000110+t*64;m.write8(lane+55,(keyMask>>t&1)?0x18:0);m.write8(lane+38,t+1);m.write8(lane+57,0);}
  start(m,1074623716);run(m,"sidechain-frame-mode-"+to_string(mode),{0x40004dcc});check(get(m,M68K_REG_D5)==(mode?((mask&keyMask)<<8):(mask<<8)),"sidechain keys keep stock mute word");if(mode)check(m.read8(1074624800)==keyMask,"sidechain key scan");
  for(uint32_t t=0;t<8;t++){start(m,1074624580);m.write32(SP+4,t);auto d3=get(m,M68K_REG_D3);auto pc=run(m,"sidechain-fresh-bind",{0x40006888,0x40006828});bool blocked=(mode==1||mode==2)&&(mask>>t&1)&&!(keyMask>>t&1);check(pc==(blocked?0x40006888:0x40006828),"sidechain key bind exception");check(get(m,M68K_REG_D3)==d3,"sidechain caller register preservation");}

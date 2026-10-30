@@ -1,14 +1,14 @@
 {
   "schema": 1,
   "module": "mute-modes",
-  "version": "0.2.1-experimental",
+  "version": "0.2.2-experimental",
   "kind": "coldfire",
   "cycles": {
     "unit": "cycles/event",
-    "static": null,
-    "measured": null,
-    "budget": null,
-    "method": "No chip-cycle bound or measured event cost for 0.2.1. The 0.1.0 record modelled 3344 static and 382 measured cycles/event (original instructions, MCF5206E zero-wait model); that describes the earlier code and is not substituted. The owner waived chip worst-case cycles for this exact source (sdk/mute-modes-build-approval.json)."
+    "static": 3344,
+    "measured": 382,
+    "budget": 95778,
+    "method": "Conservative V4 core-path bounds (16 cycles per ordinary instruction) from the native probe of the 0.2.2 source (evidence/probes.json, 3,170,412 executed cases, the same counts as 0.2.1). Event: one pass of the frame hook, once per 16-sample block; at most 3,344 (SC_KEY variant, OTFX-T; 2,032 plain). The per-trig hooks are separate events of at most 352 each (fresh bind); all eight tracks triggering in one block add at most 13,184, which tests.qualification counts per block (16,528). 382 is the largest measured MCF5206E model path. Budget: one 362.8 us frame at 264 MHz. Not chip wall-clock timing."
   },
   "load": {
     "frameUs": 362.8,
@@ -16,7 +16,7 @@
     "moduleLongestUs": null,
     "stockIdlePercent": null,
     "moduleIdlePercent": null,
-    "method": "No physical cfmeter.py stock/module interrupt and idle capture for 0.2.1; no model values substituted."
+    "method": "No physical cfmeter.py stock/module interrupt and idle capture for 0.2.2; no model values substituted."
   },
   "stress": {
     "floodMessagesPerSecond": null,
@@ -25,11 +25,10 @@
     "stuckNotes": null,
     "hangs": null,
     "dropped": null,
-    "droppedExplanation": "No physical flood/audio stress run of 0.2.1. Host and native fixtures for its runtime package (ev_voice_bind, ev_mute_keep, the MUTE MODE restore) are recorded in TESTING.md; they are not a stress run."
+    "droppedExplanation": "No physical flood/audio stress run of 0.2.2. The author's 10-minute functional hardware run of the tested image is in TESTING.md; it is not a stress run."
   },
   "hardwareEvidence": {
-    "status": "owner-waived-where-missing",
-    "approval": "sdk/mute-modes-build-approval.json",
+    "status": "reported",
     "existingReport": "TESTING.md"
   }
 }

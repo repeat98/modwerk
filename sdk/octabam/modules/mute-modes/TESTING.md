@@ -1,6 +1,31 @@
 # Mute Modes measurements
 
-Recorded 7 October 2026 for `0.1.0-experimental`; 0.2.0 and 0.2.1 below, upstream `6f9e5bc9db0ae9fa99fa2f2a0f4de1fdb8e9a136`.
+Recorded 7 October 2026 for `0.1.0-experimental`; 0.2.0, 0.2.1 and 0.2.2 below, upstream `6f9e5bc9db0ae9fa99fa2f2a0f4de1fdb8e9a136` (0.2.2: sambanks/octabam `08bffd529c0f301708bcb2d48759e54e11f59858`).
+
+## 0.2.2: SHADOW out of the stock timestretch task's SRAM (27 October 2026)
+
+- **The change.** Hook 1 (`pre`) keeps a one-byte silenced set, SHADOW. Until 0.2.1 it was SRAM `0x80006c66`, inside the work area of a stock ColdFire task that runs the timestretch splice search and transient detection while tracks play, and refills that area with audio on every grain. In OTFX an audio byte read back as the previous frame's silenced set could swallow a newly muted track's note-off, so the mute did not take; and `pre`'s per-frame write landed in the task's search window. SHADOW is now a byte inside `mm_softmute`, right after KEYMASK (it takes KEYMASK's alignment pad, so the SC_KEY unit stays 1086 bytes). Every SHADOW operand is absolute long, so only those seven operands and, in the plain unit, the new byte and its pad (968 to 970 bytes) differ from 0.2.1. sambanks/octabam pins the same change at `a1e0288` (PR #928).
+- **Source.** `patch_softmute.s`, `patch_mutemode.s`, `manifest.py` and `runtime.json` are the author's files byte for byte at Zac-Kyoti/octatrack-kyoti-fw `c5b24d0763698c6775757cce15b6971af952bfb3` (`modwerk-modules/mute-modes/`, the author's Modwerk copy: 0.2.1's sources with Modwerk's `MODWERK_EVENTS` blocks, plus this change). `sdk/imports/mute-modes-c5b24d0.json` records their Git blobs and SHA-256s. Assembled without `MODWERK_EVENTS`: plain softmute `ca7792be…` (970 bytes at 0x400d7400), SC_KEY softmute `9be6df77…` (1086 bytes at 0x400d74e4), menu `4c6702aa…` (unchanged), the `reference` hashes in `manifest.py`.
+- **Native probe.** `qualification/run.py` with this version's references; `probe.cpp` now clears the unit's SHADOW byte before each frame case instead of the SRAM address. 3,170,412 cases pass, with the same instruction counts, model cycles, core-cycle bounds and stack peaks as 0.2.1 on every path (`evidence/probes.json` is unchanged; `evidence/source-identity.json` names the new references). Emulator build: this checkout's `sdk/octabam/tools/emu/ot_emu`, mc68k `4a6d0d17a1f2b30077ab726c27fe9bb770fa0456`, in the reviewed container.
+- **Tested image.** A static native octabam build of this module alone with every stock effect kept (`scripts/export-composition-proofs.py --select mute-modes:true --image-dir`, in the `modwerk-source-tools` container, from Modwerk commit `0d0566ff5d060a7f1272a2b0bdf7ee81a53f9ebb`): MAIN OS SHA-256 `446ece69c1fcf7d19a2c726d8fa1029f218e01780e3ac4c194d4c9a61e527573`, `mm_softmute` placed at 0x400d6b80 with SHADOW at 0x400d6f48, and no word of the image points into the stock task's area. Wrapped for the card with Elektron's firmware tool, OS VERSION `MW_MM022`: card file SHA-256 `ebc5c3e3bd95f15f13928338258cb4e5e511736507f54ea2a41c5bacebdcbbb4`. The captures and the hardware report below are on this image. Under the octabam port (route A, OT DEMO project) the author's logic check passes on it: OT keeps SHADOW at 0 and never writes the old address; OTFX with T2 muted gives one note-off for T2; with `0xff` poked into the old address (what the timestretch task can leave) a following mute of T3 still gets its note-off.
+- **Screenshots.** Re-captured on the tested image with `scripts/capture-module-ui.py` and 0.1.0's plan (`media/capture.json`); the pages are unchanged.
+
+### Hardware report (MKI, 27 October 2026)
+
+The author flashed the card image above on his Octatrack MKI and used it for about ten minutes. He reported every step passing:
+
+- PROJECT > SYSTEM > PERSONALIZE: MUTE MODE sits after PREVIEW WITHOUT FX and cycles OT, OTFX, OTFX-T and DT-T.
+- In each mode, muting and unmuting audio tracks while a pattern plays behaves as described: OT the stock cut; OTFX the dry cut with FX tails; OTFX-T the same with new trigs suppressed; DT-T the sounding note playing out on its amp envelope.
+- Solo in OTFX silences the other tracks the OTFX way.
+- With timestretched loops (TSTR AUTO or NORM) on several tracks, 20 to 30 mutes and unmutes in OTFX of one of them all took.
+- Part save and reload, and project save, load and reload, keep the behaviour and the MUTE MODE setting.
+- MUTE MODE survives a power cycle.
+
+### Not tested in 0.2.2
+
+- An MKII; the USB package on a unit; Mute Modes beside Sidechain Compressor or other modules on a unit.
+- Chip timing, frame-interrupt load or a stress run. The cycle figures in `tests.qualification` are conservative V4 core-path bounds from the probe, not wall-clock measurements.
+- `sdk/machines/octatrack/module-adapters/loader_mute_keep_fixture.cpp` still seeds and reads SHADOW at `0x80006c66`; its test runs only with a private stock image and the native emulator archives, and was not run for this version.
 
 ## 0.2.1: ev_mute_keep and the install-time MUTE MODE restore (prepared 14 October 2026, not released)
 
