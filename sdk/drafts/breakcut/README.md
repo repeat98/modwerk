@@ -71,7 +71,7 @@ and ROLL at 0 it plays the break straight; raise them for cuts. For a two-bar br
   LEN, AMP, LFO and FX locks, swing and steps past the length stay.
 - One trig a step: where a cut continues and another starts in the same step, the new cut wins. An accelerating
   roll becomes even retrigs within each step.
-- No conflicts are declared. Not yet run on a unit or in the emulator; nothing below is hardware evidence.
+- No conflicts are declared. The developer reports it runs on their own Octatrack MKI from a card build (31 Oct 2026; the exact revision was not recorded); it has not run in the emulator, and nothing below is measured hardware evidence.
 
 ## Implementation
 
