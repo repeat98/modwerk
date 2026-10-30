@@ -68,9 +68,8 @@ const BASE_WRITE_ATTEMPTS = 4
 const RECONNECT_MS = 120000
 /** Connected this long without going away again: any restart the reconnect set off has happened. */
 const STEADY_MS = 2000
-/** Two slots: the old base stays in the other slot, so nothing is at risk; a new base that hangs at its start is left
- * after two. */
-const NEW_BASE_LATE = 'The Octatrack didn’t come back on the new base. If it hangs while starting, switch it off and on again: after two starts that fail, it goes back to its previous base by itself.'
+/** Two slots: the save goes into the spare slot, so the current base stays whole whatever happens to it. */
+const UNCONFIRMED_TWO = 'The Octatrack hasn’t confirmed that the new base is saved. Keep it switched on, check the USB cable and press Try again. Switched off, it starts its current base, which the update leaves in place.'
 const UNCONFIRMED = 'The Octatrack hasn’t confirmed that the new base is saved. Keep it switched on, check the USB cable and press Try again. Switched off before the save is confirmed, it may need the startup menu’s MIDI recovery to start again.'
 /** The running base refused the container before writing anything (flash.c's checks). */
 class NothingWritten extends Error {}
@@ -466,26 +465,25 @@ export class OctatrackLink {
   private async writeBase(bin: Uint8Array, expected: string, report: (step: BaseUpdateStep, fraction?: number) => void, signal?: AbortSignal) {
     const file = formats.parse(bin, OCTATRACK) as ElekFile, container = file.container, image = file.section(3)
     if (this.state.status !== 'ready' || !this.state.identity?.canSubmit) throw new Error('Connect the Octatrack first.')
-    // On two slots the running base writes the new one into its spare slot and the unit restarts once (owner, 25
-    // October 2026); a new base that does not start is left by the boot stub after two starts. Otherwise the new base
-    // starts from RAM first (the trial) and writes itself, which converts a unit with one copy to the two slots.
-    const direct = this.slotsRead?.layout === 'two' && this.canUpdateBase(), late = direct ? NEW_BASE_LATE : UNCONFIRMED
-    if (!direct) {
-      let current = this.state.identity.base
-      const armedFrom: string[] = []
-      // Only the flashed base's gate reads the mailbox: armed from a RAM-booted base, the unit comes back on the flashed one, which arms it properly.
-      while (current !== expected) {
-        if (armedFrom.includes(current)) throw new Error(`The Octatrack came back on base ${current.slice(0, 8)}, not the new one. A power cycle returns to the flashed base.`)
-        armedFrom.push(current)
-        report('staging', 0)
-        const connection = this.connection
-        await this.sendBase(current, image, 60000, fraction => report('staging', fraction), signal, session => session.activate().then(() => {}))
-        report('starting')
-        current = await this.returned(connection, signal)
-      }
-      report('started')
-      if (!this.canUpdateBase()) throw new Error('The new base can’t write itself over USB, so install it from the card. A power cycle returns the Octatrack to its current base.')
+    // The new base starts from RAM first (the trial, the update's one restart: owner, 25 October 2026) and writes itself
+    // while it runs on, on two slots into the spare one; a unit with one copy is converted to the two slots. Never the
+    // running base writing the new one: that write quiesces stock, and the DSP stall that followed hung units at the
+    // restart (30 October 2026).
+    const late = this.slotsRead?.layout === 'two' ? UNCONFIRMED_TWO : UNCONFIRMED
+    let current = this.state.identity.base
+    const armedFrom: string[] = []
+    // Only the flashed base's gate reads the mailbox: armed from a RAM-booted base, the unit comes back on the flashed one, which arms it properly.
+    while (current !== expected) {
+      if (armedFrom.includes(current)) throw new Error(`The Octatrack came back on base ${current.slice(0, 8)}, not the new one. A power cycle returns to the flashed base.`)
+      armedFrom.push(current)
+      report('staging', 0)
+      const connection = this.connection
+      await this.sendBase(current, image, 60000, fraction => report('staging', fraction), signal, session => session.activate().then(() => {}))
+      report('starting')
+      current = await this.returned(connection, signal)
     }
+    report('started')
+    if (!this.canUpdateBase()) throw new Error('The new base can’t write itself over USB, so install it from the card. A power cycle returns the Octatrack to its current base.')
     // Once a write may have started, an error is no verdict: a power-off then can leave NOR without a base. The
     // write runs on the unit whatever USB does and a repeat is harmless (flash.c compares NOR first), so the unit is
     // reopened, which rolls back what the lost session left (a verified write then restarts it on NOR), and written again.
@@ -508,7 +506,7 @@ export class OctatrackLink {
         })
         saved = true
         // A base that answers SLOTS saved itself while it runs on: the trial was the update's one restart.
-        if (!direct && this.slotsRead !== undefined) {
+        if (this.slotsRead !== undefined) {
           const slots = await this.read('base slots', transport => transport.slots()).catch(() => undefined)
           if (slots !== undefined) { this.slotsRead = slots; this.set(this.state) }
           return report('done')
@@ -518,17 +516,16 @@ export class OctatrackLink {
         if (back !== expected) throw new Error(`After the write the Octatrack came back on base ${back.slice(0, 8)}, not the new one.`)
         return report('done')
       } catch (error) {
-        // Saved and checked, then not back from the restart: nothing is left to write. A unit whose DSP stalled while
-        // the base was sent hangs at the logo on that restart until it is switched off (30 October 2026).
+        // Saved and checked, then not back from the restart (a base before the two slots restarts on NOR): nothing is
+        // left to write.
         if (!wrote || saved || signal?.aborted) throw error
         console.warn('Base write not confirmed, attempt ' + attempt, error)
         if (attempt >= BASE_WRITE_ATTEMPTS) throw new Error(late, { cause: error })
         report('reconnecting')
         const back = await this.steady(connection, late, signal)
-        if (direct && back === expected) return report('done') // it restarted on the new base: the write landed
         // After the trial, back on another base means the unit booted NOR, which still holds that base whole: the
-        // write never landed. On two slots it is the base that writes: write again.
-        if (!direct && back !== expected) throw new Error(`The Octatrack restarted on its current base (${back.slice(0, 8)}) before the new one was saved, so nothing changed. Try again.`, { cause: error })
+        // write never landed.
+        if (back !== expected) throw new Error(`The Octatrack restarted on its current base (${back.slice(0, 8)}) before the new one was saved, so nothing changed. Try again.`, { cause: error })
       }
     }
   }
