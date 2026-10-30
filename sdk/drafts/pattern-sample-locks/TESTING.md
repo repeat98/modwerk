@@ -32,6 +32,34 @@ no physical listening, continuity/dropout, CPU or complete stack qualification
 is inferred. One incomplete audio run hit the loader's stopped-transport rule
 during teardown; it remains recorded separately from the completed run.
 
+## Physical fixture preparation — 31 October 2026
+
+On the author’s MKII, public base `2aa35c39…`, the new disposable set
+`PSLTEST_261031` / project `PSL AUDIO TEST` was copied to the mounted card:
+60 files / 23,780,482 bytes, including eight samples, all read back by SHA-256.
+Existing module-set files were preserved and the card was safely ejected.
+The author confirmed the fixture loaded on A01. No module was installed,
+no Keep or flash was performed, and no owner project was saved.
+
+Initially the author reported stalled playback and silent previews. Read-only
+load queries confirmed frozen DSP frames while UI ticks advanced. After an
+author-performed power cycle, DSP frames advanced on the same base. The initial
+“Playing and audible” reply was later corrected: PLAY had not been pressed for
+the first post-restart captures. Those recordings contain constant values via
+both Swift HAL and FFmpeg AVFoundation, but do not establish a USB audio fault
+or playback result. The author subsequently explicitly pressed PLAY and
+confirmed advancing, audible playback. A new three-second USB capture then
+passed: all eight expected tones were verified in the track stems and all
+eight were present in Main. Expected-frequency energy fractions were
+99.83–99.99% in the analysed one-second window. The earlier USB-fault inference
+was retracted; the unconfirmed-transport captures remain in the receipt.
+
+Four synthetic analyser checks accepted PCM16/PCM32 tones and rejected loud
+constant channels, muted Main with active stems, and swapped tracks. This
+validates the measurement path, not edit continuity. No Apply/Clear, dropout,
+CPU or stack qualification is claimed. Inventory remained empty. See the
+[stock-free preparation receipt](evidence/device-fixture-20261031.json).
+
 ## Normal public package builder — 31 October 2026
 
 The local host-wrapper integration builds and checks the reconstructed candidate

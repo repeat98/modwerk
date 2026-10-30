@@ -75,3 +75,22 @@ This checks native emulator output. Non-silence and tone identity do not prove
 absence of edit-related glitches, physical continuity, CPU cost or total stack
 safety. Captured PCM needs separate continuity analysis and physical playback
 qualification. A prepared project alone is not a playback pass.
+
+## Physical preflight — 31 October 2026
+
+The sample-inclusive project is installed as `PSLTEST_261031` / `PSL AUDIO TEST`
+on the author’s card, with all 60 files verified after transfer. On the MKII’s
+public base `2aa35c39…`, DSP execution recovered after an author-performed
+restart. The initial post-restart recordings had unconfirmed playback; the
+author clarified that PLAY had not been pressed. Their constant values do not
+establish a USB audio fault. A repeat with explicitly confirmed advancing,
+audible playback passed: all eight expected track tones and all eight tones
+in Main were verified in a new three-second USB recording. No test module was
+installed. This preflight does not qualify edit continuity, CPU or stack use.
+See [physical preparation results](TESTING.md#physical-fixture-preparation--31-october-2026).
+
+`device_audio_preflight.py CAPTURE.wav --out RESULT.json` checks the eight
+expected track tones and their presence in Main in a 20-channel, 44.1 kHz
+PCM16/PCM32 WAV. It refuses silent output and missing/wrong tones. It reads
+host recordings only; provenance and device identity belong in a separate
+receipt. A passing tone check alone does not prove glitch-free edits.

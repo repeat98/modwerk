@@ -1,6 +1,8 @@
 # MKII candidate check
 
-Prepared locally; **not performed**. Resolve the software qualification blockers
+Module trial prepared locally; **not performed**. The sample-inclusive fixture
+was transferred to the MKII and its A01 track/Main tone preflight passed. See
+[physical preparation results](TESTING.md#physical-fixture-preparation--31-october-2026). Resolve the software qualification blockers
 in [BETA_PREPARATION.md](BETA_PREPARATION.md), freeze the candidate and review
 the exact base/package before arranging a supervised physical run. Existing
 0.1.8 results stay bound to their previously recorded bases.
