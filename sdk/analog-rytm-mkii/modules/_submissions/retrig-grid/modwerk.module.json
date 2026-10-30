@@ -2,7 +2,7 @@
   "schemaVersion": 3,
   "id": "retrig-grid",
   "name": "Retrig Grid",
-  "version": "0.1.0-experimental",
+  "version": "0.2.0-experimental",
   "machine": "analog-rytm-mkii",
   "category": "machines",
   "exclusive": false,
@@ -18,18 +18,20 @@
   "presentation": {
     "label": "RETRIG GRID",
     "family": "Sequencer timing",
-    "summary": "Pad retrigs (RTRG + pad) fall on the sequencer's straight grid while it plays, instead of counting from the press; swing is not followed yet.",
-    "overview": "Stock plays a retriggered pad at once and repeats it at the RETRIG rate counted from the press, so a roll started between two steps stays between the steps. With Retrig Grid the pad still sounds at the press, and every retrig after it falls on the grid of the rate's note values, in bars from PLAY: 1/16 on the steps, 1/4 on the beats, 1/12 on the triplets. A grid point closer than half a period to the press is skipped. The grid is straight (no swing); with the sequencer stopped, pads retrigger from the press as stock. A GLOBAL row turns it off.",
+    "summary": "Pad retrigs (RTRG + pad) fall on the sequencer's grid while it plays, swung as the pattern's own trigs, instead of counting from the press.",
+    "overview": "Stock plays a retriggered pad at once and repeats it at the RETRIG rate counted from the press, so a roll started between two steps stays between the steps. With Retrig Grid the pad still sounds at the press, and every retrig after it falls on the grid of the rate's note values, in bars from PLAY: 1/16 on the steps, 1/4 on the beats, 1/12 on the triplets. The grid swings as the pad's own track does: a step with its swing trig on comes late by the pattern's SWING, and a trig's micro timing moves its step. A grid point closer than half a period to the press is skipped. With the sequencer stopped, pads retrigger from the press as stock. A GLOBAL row turns it off.",
     "highlights": [
       "Rolls lock to the steps whenever you come in; the first hit stays at the press.",
-      "Every RETRIG rate, triplets and 1/5 included, lines up with the bar from PLAY.",
+      "With swing above 50 %, the retrigs swing with the pattern: in rytm-emu a 1/16 roll lands on the same frames as the track's own trigs.",
+      "Every RETRIG rate, triplets and 1/5 included, lines up with the bar from PLAY; finer rates are spaced between the swung steps.",
       "LENGTH, VEL.CUR, ALWAYS ON and rate changes while RTRG is held work as stock.",
-      "No stock code patched: it re-times the series on core-ar2's audio-block event."
+      "No stock code patched: it times the series on core-ar2's audio-block event."
     ],
     "usage": [
       "Press PLAY with any pattern.",
       "Hold RTRG and press the BD pad between two steps, then keep it held: BD sounds at once, and the retrigs after it fall on the steps.",
       "Still holding RTRG, set RETRIG to 1/4, then to 1/12, and play the pad again: the roll lands on the beats, then on the triplets of the bar.",
+      "Set the pattern's SWING to 66 % and roll at 1/16 again: the retrigs on the off-beat 16ths come late, as the pattern's own trigs do.",
       "To compare with stock, press GLOBAL, go down to RETRIG GRID ON and press YES: it reads RETRIG GRID OFF, and rolls follow the press again."
     ]
   },
@@ -47,7 +49,7 @@
     {
       "name": "RETRIG GRID",
       "default": 0,
-      "doc": "ON puts pad retrigs on the sequencer's grid while it plays; OFF leaves them as stock. GLOBAL menu, after SYSTEM; YES turns it over. Kept with the project.",
+      "doc": "ON puts pad retrigs on the sequencer's swung grid while it plays; OFF leaves them as stock. GLOBAL menu, after SYSTEM; YES turns it over. Kept with the project.",
       "labels": [
         "ON",
         "OFF"
@@ -61,11 +63,11 @@
     "requires": [],
     "conflicts": [],
     "limitations": [
-      "No swing yet: the grid is straight, so with swing above 50 % the retrigs miss the swung off-beat 16ths. Micro timing is not followed either.",
-      "The grid counts bars from PLAY in the sequencer's 24 PPQN pulses, through tempo, speed and pattern changes; a track with its own speed or length still gets this grid.",
+      "The swing follows the pad's own track (its swing trigs, speed and length) and the pattern's SWING; micro timing moves only steps that hold a trig on that track.",
+      "The grid counts bars from PLAY in the sequencer's 24 PPQN pulses, through tempo, speed and pattern changes. A track whose speed changed while playing can have its steps off the bar's grid.",
       "The first gap after the press is half to one and a half periods; at 1/1 the first retrig can come up to a bar and a half later.",
       "With the sequencer stopped, pads retrigger from the press, as stock.",
-      "External MIDI clock not tested."
+      "External MIDI clock and pattern changes while a roll plays not tested."
     ]
   },
   "platform": {
@@ -82,12 +84,12 @@
     ]
   },
   "resources": {
-    "memoryBytes": 1333,
+    "memoryBytes": 2533,
     "fastBytes": null,
     "load": {
-      "display": "About 16 instructions an audio block, about 50 after a pad retrig",
+      "display": "About 16 instructions an audio block, about 35 while a pad retriggers, and about 350 once per retrig",
       "method": "static",
-      "conditions": "Counted from the compiled ev_render_out handler: the sequencer's pulse word and three SRAM reads each block until a pad has retriggered; then the sum of the twelve retrig deadlines each block, and the per-track pass only when a deadline moves (a retrig tick or a press). Not measured on a unit."
+      "conditions": "Counted from the compiled ev_render_out handler (RG08): the sequencer's pulse word and three SRAM reads each block until a pad has retriggered; then the sum of the twelve retrig deadlines each block; once per retrig (or press), the pass over the tracks and the swung time of the next retrig, which reads the track's step counter and the pattern's swing, swing trigs and micro timing. Not measured on a unit."
     }
   },
   "evidence": {
@@ -114,7 +116,7 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "rytm-emu 3c4c42c, build RG05, 127 BPM: after the first hit, every pad retrig lands within 2 samples of the grid at 1/16, 1/4, 1/12, 1/32 and 1/80, for four press positions, with RTRG and with ALWAYS ON, and after a speed change to 2x or 3/2x while playing; stopped and OFF behave as stock. Unit (author, by ear): LF18 (the earlier source) good on the five checks of its sheet; MD06 (this source) kept the retrigs on the grid through a tempo change and a 1x to 2x speed change while playing. See TESTING.md.",
+    "summary": "rytm-emu 3c4c42c, build RG08, 127 BPM, factory project: with BD trigs poked on every step, a 1/16 roll on BD falls on the same audio frames as the pattern's own BD trigs at swing 50, 58 and 66 %, and at 66 % with micro timing on four trigs, in NORMAL scale and at 100 BPM; also 1/32 with the track at 2x, 1/12 at 3/4x from PLAY, and 1/4 on BD trigs on the beats. On an empty BD track, every retrig is within 19 samples of the swung grid at 1/16, 1/32, 1/12, 1/4 and 1/80, four press positions, swing 50/58/66 %. Stopped and OFF behave as stock. 0.1.0 put 1/8 and slower rates one step early (fixed). The same set with the author's MD07 modules (RGS1) checked at 66 %. Unit: 0.1.0 reported good by ear; with 0.2.0 in build MB04, the author reports that the retrigs follow the swing (other checks not reported). See TESTING.md.",
     "documentation": {
       "tutorial": {
         "title": "Quick tutorial",
@@ -122,6 +124,7 @@
           "Press PLAY with any pattern.",
           "Hold RTRG and press the BD pad between two steps, then keep it held: BD sounds at once, and the retrigs after it fall on the steps.",
           "Still holding RTRG, set RETRIG to 1/4, then to 1/12, and play the pad again: the roll lands on the beats, then on the triplets of the bar.",
+          "Set the pattern's SWING to 66 % and roll at 1/16 again: the retrigs on the off-beat 16ths come late, as the pattern's own trigs do.",
           "To compare with stock, press GLOBAL, go down to RETRIG GRID ON and press YES: it reads RETRIG GRID OFF, and rolls follow the press again."
         ]
       },
@@ -158,9 +161,9 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "0.1.0-experimental",
-        "imageSha256": "a39f45ef27e3a70ee3ece06b5950c0890d24ee043aa0a1bba7c7cf6297eabb9e",
-        "setup": "rytm-emu 3c4c42c headless; RG05 build (core-ar2 0.3 + this module); fresh card, factory project. UI documentation only."
+        "moduleVersion": "0.2.0-experimental",
+        "imageSha256": "ad3b361f050bf987b9e15ccd5df39ed14503ea6e695d7f253d02dfa00b2a6bb0",
+        "setup": "rytm-emu 3c4c42c headless; RG08 build (core-ar2 0.3 + this module); fresh card, factory project. UI documentation only."
       }
     },
     {
@@ -174,9 +177,9 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "0.1.0-experimental",
-        "imageSha256": "a39f45ef27e3a70ee3ece06b5950c0890d24ee043aa0a1bba7c7cf6297eabb9e",
-        "setup": "rytm-emu 3c4c42c headless; RG05 build (core-ar2 0.3 + this module); fresh card, factory project. UI documentation only."
+        "moduleVersion": "0.2.0-experimental",
+        "imageSha256": "ad3b361f050bf987b9e15ccd5df39ed14503ea6e695d7f253d02dfa00b2a6bb0",
+        "setup": "rytm-emu 3c4c42c headless; RG08 build (core-ar2 0.3 + this module); fresh card, factory project. UI documentation only."
       }
     }
   ]

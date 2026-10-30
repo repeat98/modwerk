@@ -43,7 +43,7 @@ Whole images per module selection would need a native build for every combinatio
 
 1. **One base per version**, built in CI from the pinned upstream commit plus Modwerk's own changes, installed once with the SD-card updater. Its source is this repository.
 2. **Modules as position-independent code** that the base loads from a folder on the SD card into RAM at boot, built in CI per module version. Installing a module set means writing files to the card: no reflash, and the official update still restores everything.
-3. **A USB-MIDI SysEx link** that the [runtime loader](../sdk/runtime/loader/README.md#porting-to-another-machine) and the MCP's device tools drive, for review, trial in RAM, self-test, Keep (written to the SD card) and Undo, like the Octatrack. The Cortex-M7 glue needs its own port: cleaning the data cache and invalidating the instruction cache after a load, and pausing audio DMA.
+3. **A USB-MIDI SysEx link** that the [runtime loader](../sdk/runtime/loader/README.md#porting-to-another-machine) and the MCP's device tools drive, for review, trial in RAM, Keep (written to the SD card) and Undo, like the Octatrack. The Cortex-M7 glue needs its own port: cleaning the data cache and invalidating the instruction cache after a load, and pausing audio DMA.
 
 ## Decisions for the owner
 

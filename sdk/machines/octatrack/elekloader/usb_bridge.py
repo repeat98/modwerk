@@ -59,13 +59,15 @@ def reply_for(dev, held, line):
 
 def open_unit():
     """(device, vendor interface), claimed; None while no unit runs the test base."""
-    for dev in usb.core.find(find_all=True, idVendor=0x1935):  # another Elektron instrument can come first
-        vendor = [i.bInterfaceNumber for i in dev.get_active_configuration()
-                  if (i.bInterfaceClass, i.bInterfaceSubClass, i.bInterfaceProtocol) == (0xff, 0x4d, 1)]
-        if len(vendor) == 1:
-            usb.util.claim_interface(dev, vendor[0])
-            return dev, vendor[0]
-    return None
+    dev = usb.core.find(idVendor=0x1935)
+    if dev is None:
+        return None
+    vendor = [i.bInterfaceNumber for i in dev.get_active_configuration()
+              if (i.bInterfaceClass, i.bInterfaceSubClass, i.bInterfaceProtocol) == (0xff, 0x4d, 1)]
+    if len(vendor) != 1:
+        return None
+    usb.util.claim_interface(dev, vendor[0])
+    return dev, vendor[0]
 
 
 def main():

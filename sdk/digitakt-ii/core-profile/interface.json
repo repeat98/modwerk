@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
   "machine": "digitakt-ii",
-  "interface": "1.0",
-  "status": "Upstream elekloader core-dt2 1.0 for Digitakt II OS 1.17. Modwerk integration and publication qualification are in progress.",
+  "interface": "1.1",
+  "status": "Upstream elekloader core-dt2 1.0 for Digitakt II OS 1.17 is what the site builds with. The entries marked since 1.1 are proposed for Modwerk's Digitakt II base (core-dt2 1.1's source, sdk/machines/digitakt-ii/elekloader/); a module that needs one waits for the base, and the machine's core version stays 1.0 until it ships.",
   "events": [
     {
       "name": "ev_tick",
@@ -33,6 +33,32 @@
       "name": "ev_personalize",
       "when": "building the PERSONALIZE menu",
       "handler": "void f(void *menu)"
+    },
+    {
+      "name": "ev_frame_params",
+      "since": "1.1",
+      "when": "once a frame, in the frame interrupt, before the stock modulators add their values",
+      "handler": "void f(int16_t *values, int stride); track t's value j at values[stride * t + j], stride 71; add to it, held in the parameter's range; the kit and the pages are untouched",
+      "site": {
+        "os": "1.17",
+        "address": "0x4002e90c",
+        "instructions": 1,
+        "sha256": "6aaa49c08344ed1f4b9376627d69ea1d9e6e172d8480922c384edd9ac46ea302"
+      },
+      "order": "lower order first (shipped mods use 10-90); every handler sees the values the earlier ones left"
+    },
+    {
+      "name": "ev_key_leds",
+      "since": "1.1",
+      "when": "every UI frame, after the frame clears the key LEDs and before the stock views set theirs (UI task)",
+      "handler": "void f(void *mgr); set an LED with fw_led_set(mgr, logical, 2, value); the first setter of an LED wins, so a handler's LED stays over the stock view's",
+      "site": {
+        "os": "1.17",
+        "address": "0x400311a2",
+        "instructions": 2,
+        "sha256": "cea65d5607761da9df8c0c7d7017d3552f7d8fa860ee8a93172c993bb01290d2"
+      },
+      "order": "lower order first (shipped mods use 10-90); the first handler to set an LED keeps it"
     }
   ],
   "tables": [
@@ -40,6 +66,59 @@
       "name": "core_fast",
       "entry": 4,
       "purpose": "Copy-table entries used to move linked .fast code into the Digitakt II SRAM tail on the first UI tick."
+    },
+    {
+      "name": "core_projdata",
+      "since": "1.1",
+      "entry": 4,
+      "room": 4,
+      "purpose": "Pointers to core_projdata_t descriptors {tag[4], size, data, loaded}: each mod's block in the project file's header gap (+0x1c to +0x200), saved with every project save and loaded back. Reader: core's store (project save and load sites). A mod claims projdata:<tag>.",
+      "sites": [
+        {
+          "os": "1.17",
+          "address": "0x400df932",
+          "instructions": 1,
+          "sha256": "be28bf581aa32f87a3306f04738f1dbdb4b28489865cd0d88145466f2740333c",
+          "role": "project save"
+        },
+        {
+          "os": "1.17",
+          "address": "0x400df99c",
+          "instructions": 1,
+          "sha256": "39d8feaa0cf09fbdc868baea4e44be238666cbfcbf350883559c99085034a789",
+          "role": "project load"
+        }
+      ]
+    },
+    {
+      "name": "core_kitdata",
+      "since": "1.1",
+      "entry": 4,
+      "room": 4,
+      "purpose": "Pointers to core_kitdata_t descriptors {tag[4], size, data, changed}: each mod's block per kit (128 kits), after each kit record's end mark, saved with the project and SAVE KIT, loaded back and copied with the firmware's kit copies. All mods share 191 bytes a kit record (core_kitdata_room()); a block that does not fit is left out. Reader: core's store. A mod claims kitdata:<tag>.",
+      "sites": [
+        {
+          "os": "1.17",
+          "address": "0x400dbee4",
+          "instructions": 1,
+          "sha256": "1a4f590b6150643d45e52f347f5e32771feeeb47a764c2337fc4d6faefdfeb8f",
+          "role": "kit save"
+        },
+        {
+          "os": "1.17",
+          "address": "0x400db8be",
+          "instructions": 1,
+          "sha256": "1a4f590b6150643d45e52f347f5e32771feeeb47a764c2337fc4d6faefdfeb8f",
+          "role": "kit load"
+        },
+        {
+          "os": "1.17",
+          "address": "0x40136388",
+          "instructions": 3,
+          "sha256": "a48eab821488cf202e892b5cad063488c972824e57c3d851ab402463dc0f5657",
+          "role": "memcpy: follows kit copies in RAM (pattern copy and paste, PASTE KIT, undo)"
+        }
+      ]
     }
   ],
   "exports": [
@@ -47,6 +126,54 @@
       "name": "core_additem",
       "prototype": "void core_additem(menu, row)",
       "purpose": "Add a SETTINGS or PERSONALIZE row from the corresponding event handler."
+    },
+    {
+      "name": "core_addvalue",
+      "since": "1.1",
+      "prototype": "void core_addvalue(void *menu, const core_value_t *row)",
+      "purpose": "Add a PERSONALIZE or SETTINGS row that shows a label and, on the right as LED INTENSITY does, values[get()]; from ev_personalize or ev_settings."
+    },
+    {
+      "name": "core_notice",
+      "since": "1.1",
+      "prototype": "void core_notice(const char *msg)",
+      "purpose": "Show a message in the header, as a page's title (UI task)."
+    },
+    {
+      "name": "core_view_top",
+      "since": "1.1",
+      "prototype": "uint32_t core_view_top(void)",
+      "purpose": "The vtable of the view on top of the stack."
+    },
+    {
+      "name": "core_kit_on",
+      "since": "1.1",
+      "prototype": "int core_kit_on(void)",
+      "purpose": "The kit on (the pattern on's), -1 for none."
+    },
+    {
+      "name": "core_kit_index",
+      "since": "1.1",
+      "prototype": "int core_kit_index(const void *kit)",
+      "purpose": "A kit in RAM's number, -1 when it is not one of the project's."
+    },
+    {
+      "name": "core_kitdata_room",
+      "since": "1.1",
+      "prototype": "uint32_t core_kitdata_room(void)",
+      "purpose": "Bytes a kit record holds for the mods' blocks (191)."
+    },
+    {
+      "name": "core_store_conflicts",
+      "since": "1.1",
+      "prototype": "volatile uint32_t core_store_conflicts",
+      "purpose": "How many times a save or a load met bytes in the mods' areas that are not core's; core left them as they were."
+    },
+    {
+      "name": "fw_*",
+      "since": "1.1",
+      "prototype": "mk2/core.h: fw_fillrect, fw_textf, fw_led_set, fw_key_down, fw_toast and the other firmware routines and data",
+      "purpose": "Firmware locations as exports, by address and without stock bytes, so a mod calls the OS's drawing, keys, LEDs, card and strings without its own copy of each address."
     }
   ],
   "claims": [],

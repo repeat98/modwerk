@@ -42,7 +42,10 @@ uint32_t modwerk_test_ticks;
 #define HELD_FUNC (modwerk_test_held)
 #define GATE() (modwerk_test_gate)
 #define TICKS (modwerk_test_ticks)
-#define SAY(text) ((void)(text))
+const char *modwerk_test_said; /* the last notice */
+int modwerk_test_settling;
+#define SAY(text) (modwerk_test_said = (text))
+#define SETTLING() (modwerk_test_settling)
 #ifdef MODWERK_HOST_CARD
 extern uint8_t modwerk_test_card_io[512]; /* the fixture's stock file calls under the real store and load below */
 #define octamod_log_io modwerk_test_card_io
@@ -59,6 +62,8 @@ extern volatile uint32_t modwerk_runtime_ticks;
 #define GATE() octamod_log_can_flush()
 #define TICKS modwerk_runtime_ticks
 #define SAY(text) ((void (*)(const char *, unsigned))0x4005a2b8u)(text, 0xa0)
+__attribute__((weak)) int modwerk_controller_settling(void) { return 0; } /* controller_board.c, on a resident base */
+#define SETTLING() modwerk_controller_settling()
 #endif
 #if !defined MODWERK_HOST || defined MODWERK_HOST_CARD
 extern int olog_stock_open(struct file_object *, const char *, const char *, void *, unsigned);
@@ -72,6 +77,13 @@ static const uint8_t *candidate; /* the package the host staged, until it is acc
 static uint32_t candidate_bytes;
 static unsigned pending, restored, slot;
 static uint32_t retry_at;
+/* "MODULES LOADED" waits until the trusted controllers the bank's tracks use run their engines (Analog BD's, placed,
+ * reset and enabled), so PLAY on it sounds them (owner's MKII, 27 October 2026: Analog BD stayed silent). Half a second
+ * at least, for the board to bind them and see them used; ten seconds at most; dropped if the host changes the set. */
+#define NOTICE_FIRST 30u
+#define NOTICE_LAST 600u
+static const char *volatile notice;
+static volatile uint32_t notice_at;
 volatile uint32_t modwerk_modset_generation, modwerk_modset_count, modwerk_modset_result; /* for the report */
 enum { RESTORED = 1, NONE_SAVED, SKIPPED, FOREIGN, DAMAGED, REFUSED, SAVED, SAVE_FAILED, TOO_BIG };
 
@@ -95,7 +107,7 @@ static void seal(uint32_t count, uint32_t bytes)
 
 /* boot.c, at prepare and accept: what the host staged, and that it stays. */
 void modwerk_modset_candidate(const uint8_t *package, uint32_t bytes)
-{ if (!JOURNAL_BLOCKED()) candidate = package, candidate_bytes = bytes; }
+{ notice = 0; /* the set changes: a held notice would describe the old one */ if (!JOURNAL_BLOCKED()) candidate = package, candidate_bytes = bytes; }
 #ifdef MODWERK_RUNTIME_SETS
 /* Pure preflight over the old saved set and the complete incoming change set.
  * No intermediate accepted package reaches set[] or the card. With a null
@@ -189,7 +201,7 @@ int modwerk_modset_keep(const uint8_t *const package[], const uint32_t bytes[], 
 {
     static uint32_t ids[RUNTIME_JOURNAL_ROWS];static uint8_t sha[MU_DIGEST_BYTES * RUNTIME_JOURNAL_ROWS];
     uint32_t end = used(), count = 0;uint8_t got[MU_DIGEST_BYTES];
-    keep_bytes = 0;
+    keep_bytes = 0, notice = 0;
     if (!restored) return 0;
     for (unsigned i = 0; i < n; ++i) {
         uint32_t step = 8u + ((bytes[i] + 3u) & ~3u);
@@ -307,8 +319,8 @@ static void restore_pass(void)
     if (installed != count) seal(installed, end);
     modwerk_modset_generation = be32(set + 8), modwerk_modset_count = installed;
     modwerk_modset_result = installed == count ? RESTORED : REFUSED;
-    if (installed) SAY(installed == count ? "MODULES LOADED" : "SOME MODULES FAILED");
-    else SAY("MODULES NOT LOADED");
+    if (installed && installed == count) notice_at = TICKS, notice = "MODULES LOADED";
+    else SAY(installed ? "SOME MODULES FAILED" : "MODULES NOT LOADED"); /* no engine changes what these say */
     modwerk_diag_set(); /* diag.c: the set this boot runs, in the unit's log */
 }
 /* After a boot: the newest whole set, each package installed as a USB install would be. */
@@ -338,6 +350,15 @@ static void restore(void)
     for (unsigned i = 0; i < RUNTIME_MODULES; ++i) restore_outcome[i] = 0;
     restored = 0, left_out = left_why = 0;
     restore_pass();
+}
+/* ep0.c's tick (sys task, as the board's): the restore's notice, once its engines run or its time is up. */
+void modwerk_modset_notice_tick(void)
+{
+    const char *text = notice;
+    uint32_t waited = TICKS - notice_at;
+    if (!text || waited < NOTICE_FIRST || (waited < NOTICE_LAST && SETTLING())) return;
+    notice = 0;
+    SAY(text);
 }
 /* ep0.c holds host frames until the restore has run: an install before it would race it, and the restore would undo it. */
 int modwerk_modset_restored(void) { return (int)restored; }

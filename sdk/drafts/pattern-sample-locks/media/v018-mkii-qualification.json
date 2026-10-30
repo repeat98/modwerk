@@ -1,0 +1,708 @@
+{
+  "schemaVersion": 1,
+  "moduleVersion": "0.1.8-experimental",
+  "author": "twwwy",
+  "hardware": "Octatrack MKII, OS 1.40C",
+  "dateLocal": "2026-10-30",
+  "timezone": "Asia/Taipei",
+  "utcInterval": [
+    "2026-10-29T18:05:48.533Z",
+    "2026-10-29T18:18:29.418Z"
+  ],
+  "packageSha256": "28766a017005e664d00620d3831fc81af7449c95e1896a17121ca8fc2d306d8d",
+  "temporaryBase": "9056dbbd2a84c80051eee33f97d6407ecf079c51f27bd682243d44c9344777d2",
+  "temporaryMainSha256": "c0b988cbff0050b19961590d1203f5263b0a3d298216e234361bf0fdc3c1c28c",
+  "originalBase": "a542a515c1955b9264712073bb40c81a492f1a993bfa991640d111eb03aaa130",
+  "sourceSha256": {
+    "engine.c": "a41ace651c2ff9f72d43e783d6121c64f51fe6d21e49bc60cf3b26a97ebdaa38",
+    "engine.h": "d1c067250f8bc555944303fb526cd9ec22c281c0f4773c95ed6fbdd332925ca1",
+    "ui.c": "3d452769338be043c327ab6bf0a8db9b09c0c7504f62710c46d32d205a75f4c7",
+    "ui.h": "514cbdcfd88777769e4883d020d7fe6a2b5301a5d04c136eb67f7b7bb54f45bd",
+    "native.c": "a5d11e7320a91b00457fbe1f89453e8a432e65877e92af0aa64705f6b2a6050e",
+    "font.c": "63104792b675f7cce15582b554eaf4b05e008a63c2433db7fecb71210e115079",
+    "font.h": "a94a3103633a0084e11d53fbe46d0590812011062aa01d2c28de35b60ef8ea99",
+    "unit.s": "837e44f48fa137444e14755d96011731c8fde29a73fa877ffc35edac3510473f",
+    "runtime.json": "710371710bd6c2522067c62f36c6ffbf211232b88c75a71a3dab2ac913e9742e"
+  },
+  "fixture": {
+    "pattern": "A03",
+    "tempoBpm": 120,
+    "storedSteps": 64,
+    "tracks": 8,
+    "trigsPerTrack": 64,
+    "sampleChangesPerOperation": 512,
+    "partWorkingAndSavedEqual": true
+  },
+  "measurement": {
+    "method": "Host monotonic time from sending the YES press to observing module CLOSED in DIAG; includes USB, scheduling, publication and telemetry latency. Observed upper bounds, not isolated CPU execution times or a universal worst-case bound.",
+    "operations": [
+      {
+        "at": "2026-10-29T18:10:10.349Z",
+        "kind": "clear",
+        "changes": 512,
+        "upperBoundMs": 18.303750000000008,
+        "playingBefore": true,
+        "playingAfter": true,
+        "exactTrackBytesVerified": true,
+        "partWorkingAndSavedPreserved": true,
+        "nonSampleBytesPreserved": true,
+        "load": {
+          "ticks": 20155,
+          "frames": 934906,
+          "cpu": 701,
+          "tracks5to8": 420,
+          "peak5to8": 421,
+          "tracks1to4": 404,
+          "peak1to4": 339
+        }
+      },
+      {
+        "at": "2026-10-29T18:10:12.668Z",
+        "kind": "lock",
+        "changes": 512,
+        "upperBoundMs": 15.180457999999817,
+        "playingBefore": true,
+        "playingAfter": true,
+        "exactTrackBytesVerified": true,
+        "partWorkingAndSavedPreserved": true,
+        "nonSampleBytesPreserved": true,
+        "load": {
+          "ticks": 20294,
+          "frames": 941797,
+          "cpu": 726,
+          "tracks5to8": 467,
+          "peak5to8": 499,
+          "tracks1to4": 403,
+          "peak1to4": 413
+        }
+      },
+      {
+        "at": "2026-10-29T18:10:15.110Z",
+        "kind": "clear",
+        "changes": 512,
+        "upperBoundMs": 6.142417000000023,
+        "playingBefore": true,
+        "playingAfter": true,
+        "exactTrackBytesVerified": true,
+        "partWorkingAndSavedPreserved": true,
+        "nonSampleBytesPreserved": true,
+        "load": {
+          "ticks": 20440,
+          "frames": 948687,
+          "cpu": 723,
+          "tracks5to8": 491,
+          "peak5to8": 499,
+          "tracks1to4": 403,
+          "peak1to4": 413
+        }
+      },
+      {
+        "at": "2026-10-29T18:10:17.431Z",
+        "kind": "lock",
+        "changes": 512,
+        "upperBoundMs": 18.43224999999984,
+        "playingBefore": true,
+        "playingAfter": true,
+        "exactTrackBytesVerified": true,
+        "partWorkingAndSavedPreserved": true,
+        "nonSampleBytesPreserved": true,
+        "load": {
+          "ticks": 20580,
+          "frames": 955578,
+          "cpu": 725,
+          "tracks5to8": 467,
+          "peak5to8": 499,
+          "tracks1to4": 403,
+          "peak1to4": 413
+        }
+      },
+      {
+        "at": "2026-10-29T18:10:19.877Z",
+        "kind": "clear",
+        "changes": 512,
+        "upperBoundMs": 8.127666000000318,
+        "playingBefore": true,
+        "playingAfter": true,
+        "exactTrackBytesVerified": true,
+        "partWorkingAndSavedPreserved": true,
+        "nonSampleBytesPreserved": true,
+        "load": {
+          "ticks": 20726,
+          "frames": 961090,
+          "cpu": 711,
+          "tracks5to8": 491,
+          "peak5to8": 499,
+          "tracks1to4": 403,
+          "peak1to4": 413
+        }
+      },
+      {
+        "at": "2026-10-29T18:10:22.195Z",
+        "kind": "lock",
+        "changes": 512,
+        "upperBoundMs": 4.027082999999038,
+        "playingBefore": true,
+        "playingAfter": true,
+        "exactTrackBytesVerified": true,
+        "partWorkingAndSavedPreserved": true,
+        "nonSampleBytesPreserved": true,
+        "load": {
+          "ticks": 20866,
+          "frames": 967982,
+          "cpu": 713,
+          "tracks5to8": 491,
+          "peak5to8": 499,
+          "tracks1to4": 403,
+          "peak1to4": 413
+        }
+      },
+      {
+        "at": "2026-10-29T18:10:24.644Z",
+        "kind": "clear",
+        "changes": 512,
+        "upperBoundMs": 6.237541999998939,
+        "playingBefore": true,
+        "playingAfter": true,
+        "exactTrackBytesVerified": true,
+        "partWorkingAndSavedPreserved": true,
+        "nonSampleBytesPreserved": true,
+        "load": {
+          "ticks": 21012,
+          "frames": 974872,
+          "cpu": 725,
+          "tracks5to8": 487,
+          "peak5to8": 499,
+          "tracks1to4": 403,
+          "peak1to4": 413
+        }
+      },
+      {
+        "at": "2026-10-29T18:10:26.963Z",
+        "kind": "lock",
+        "changes": 512,
+        "upperBoundMs": 3.9987079999991693,
+        "playingBefore": true,
+        "playingAfter": true,
+        "exactTrackBytesVerified": true,
+        "partWorkingAndSavedPreserved": true,
+        "nonSampleBytesPreserved": true,
+        "load": {
+          "ticks": 21152,
+          "frames": 981762,
+          "cpu": 722,
+          "tracks5to8": 491,
+          "peak5to8": 499,
+          "tracks1to4": 400,
+          "peak1to4": 401
+        }
+      },
+      {
+        "at": "2026-10-29T18:10:29.404Z",
+        "kind": "clear",
+        "changes": 512,
+        "upperBoundMs": 10.110458999999537,
+        "playingBefore": true,
+        "playingAfter": true,
+        "exactTrackBytesVerified": true,
+        "partWorkingAndSavedPreserved": true,
+        "nonSampleBytesPreserved": true,
+        "load": {
+          "ticks": 21298,
+          "frames": 987275,
+          "cpu": 712,
+          "tracks5to8": 473,
+          "peak5to8": 499,
+          "tracks1to4": 400,
+          "peak1to4": 401
+        }
+      },
+      {
+        "at": "2026-10-29T18:10:31.718Z",
+        "kind": "lock",
+        "changes": 512,
+        "upperBoundMs": 15.278499999996711,
+        "playingBefore": true,
+        "playingAfter": true,
+        "exactTrackBytesVerified": true,
+        "partWorkingAndSavedPreserved": true,
+        "nonSampleBytesPreserved": true,
+        "load": {
+          "ticks": 21437,
+          "frames": 994166,
+          "cpu": 720,
+          "tracks5to8": 491,
+          "peak5to8": 501,
+          "tracks1to4": 403,
+          "peak1to4": 410
+        }
+      },
+      {
+        "at": "2026-10-29T18:10:34.162Z",
+        "kind": "clear",
+        "changes": 512,
+        "upperBoundMs": 5.872167000001355,
+        "playingBefore": true,
+        "playingAfter": true,
+        "exactTrackBytesVerified": true,
+        "partWorkingAndSavedPreserved": true,
+        "nonSampleBytesPreserved": true,
+        "load": {
+          "ticks": 21583,
+          "frames": 1001056,
+          "cpu": 714,
+          "tracks5to8": 491,
+          "peak5to8": 501,
+          "tracks1to4": 403,
+          "peak1to4": 414
+        }
+      },
+      {
+        "at": "2026-10-29T18:10:36.478Z",
+        "kind": "lock",
+        "changes": 512,
+        "upperBoundMs": 4.158792000001995,
+        "playingBefore": true,
+        "playingAfter": true,
+        "exactTrackBytesVerified": true,
+        "partWorkingAndSavedPreserved": true,
+        "nonSampleBytesPreserved": true,
+        "load": {
+          "ticks": 21723,
+          "frames": 1007948,
+          "cpu": 723,
+          "tracks5to8": 491,
+          "peak5to8": 502,
+          "tracks1to4": 403,
+          "peak1to4": 413
+        }
+      },
+      {
+        "at": "2026-10-29T18:10:38.923Z",
+        "kind": "clear",
+        "changes": 512,
+        "upperBoundMs": 8.064834000000701,
+        "playingBefore": true,
+        "playingAfter": true,
+        "exactTrackBytesVerified": true,
+        "partWorkingAndSavedPreserved": true,
+        "nonSampleBytesPreserved": true,
+        "load": {
+          "ticks": 21869,
+          "frames": 1013460,
+          "cpu": 712,
+          "tracks5to8": 491,
+          "peak5to8": 499,
+          "tracks1to4": 403,
+          "peak1to4": 413
+        }
+      },
+      {
+        "at": "2026-10-29T18:10:41.234Z",
+        "kind": "lock",
+        "changes": 512,
+        "upperBoundMs": 14.1127919999999,
+        "playingBefore": true,
+        "playingAfter": true,
+        "exactTrackBytesVerified": true,
+        "partWorkingAndSavedPreserved": true,
+        "nonSampleBytesPreserved": true,
+        "load": {
+          "ticks": 22008,
+          "frames": 1020351,
+          "cpu": 720,
+          "tracks5to8": 456,
+          "peak5to8": 499,
+          "tracks1to4": 429,
+          "peak1to4": 413
+        }
+      },
+      {
+        "at": "2026-10-29T18:10:43.671Z",
+        "kind": "clear",
+        "changes": 512,
+        "upperBoundMs": 9.816542000000481,
+        "playingBefore": true,
+        "playingAfter": true,
+        "exactTrackBytesVerified": true,
+        "partWorkingAndSavedPreserved": true,
+        "nonSampleBytesPreserved": true,
+        "load": {
+          "ticks": 22154,
+          "frames": 1027241,
+          "cpu": 727,
+          "tracks5to8": 491,
+          "peak5to8": 499,
+          "tracks1to4": 403,
+          "peak1to4": 413
+        }
+      },
+      {
+        "at": "2026-10-29T18:10:45.983Z",
+        "kind": "lock",
+        "changes": 512,
+        "upperBoundMs": 15.531583000003593,
+        "playingBefore": true,
+        "playingAfter": true,
+        "exactTrackBytesVerified": true,
+        "partWorkingAndSavedPreserved": true,
+        "nonSampleBytesPreserved": true,
+        "load": {
+          "ticks": 22293,
+          "frames": 1034132,
+          "cpu": 712,
+          "tracks5to8": 491,
+          "peak5to8": 499,
+          "tracks1to4": 404,
+          "peak1to4": 413
+        }
+      },
+      {
+        "at": "2026-10-29T18:10:48.423Z",
+        "kind": "clear",
+        "changes": 512,
+        "upperBoundMs": 8.122415999998339,
+        "playingBefore": true,
+        "playingAfter": true,
+        "exactTrackBytesVerified": true,
+        "partWorkingAndSavedPreserved": true,
+        "nonSampleBytesPreserved": true,
+        "load": {
+          "ticks": 22439,
+          "frames": 1039644,
+          "cpu": 704,
+          "tracks5to8": 469,
+          "peak5to8": 499,
+          "tracks1to4": 403,
+          "peak1to4": 413
+        }
+      },
+      {
+        "at": "2026-10-29T18:10:50.740Z",
+        "kind": "lock",
+        "changes": 512,
+        "upperBoundMs": 8.419375000004948,
+        "playingBefore": true,
+        "playingAfter": true,
+        "exactTrackBytesVerified": true,
+        "partWorkingAndSavedPreserved": true,
+        "nonSampleBytesPreserved": true,
+        "load": {
+          "ticks": 22579,
+          "frames": 1046536,
+          "cpu": 720,
+          "tracks5to8": 491,
+          "peak5to8": 499,
+          "tracks1to4": 403,
+          "peak1to4": 413
+        }
+      },
+      {
+        "at": "2026-10-29T18:10:53.185Z",
+        "kind": "clear",
+        "changes": 512,
+        "upperBoundMs": 11.927333999999973,
+        "playingBefore": true,
+        "playingAfter": true,
+        "exactTrackBytesVerified": true,
+        "partWorkingAndSavedPreserved": true,
+        "nonSampleBytesPreserved": true,
+        "load": {
+          "ticks": 22725,
+          "frames": 1053426,
+          "cpu": 727,
+          "tracks5to8": 467,
+          "peak5to8": 499,
+          "tracks1to4": 403,
+          "peak1to4": 413
+        }
+      },
+      {
+        "at": "2026-10-29T18:10:55.500Z",
+        "kind": "lock",
+        "changes": 512,
+        "upperBoundMs": 13.773833999999624,
+        "playingBefore": true,
+        "playingAfter": true,
+        "exactTrackBytesVerified": true,
+        "partWorkingAndSavedPreserved": true,
+        "nonSampleBytesPreserved": true,
+        "load": {
+          "ticks": 22864,
+          "frames": 1060317,
+          "cpu": 721,
+          "tracks5to8": 491,
+          "peak5to8": 499,
+          "tracks1to4": 403,
+          "peak1to4": 413
+        }
+      }
+    ],
+    "initialInterruptedRun": {
+      "verifiedOperations": 7,
+      "reason": "A concurrent status query interleaved a MEM high/low read; the read was refused and the runner stopped playback. Repeated with a single memory reader; no firmware edit failure was observed."
+    },
+    "maximumFrameGapUs": 413.030303030303,
+    "frameGapScope": "Since the preceding frame-gap read, covering the second 20-operation run and intervening menu/host work; not an isolated Apply interrupt measurement."
+  },
+  "functionalChecks": [
+    {
+      "name": "maximum frame gap",
+      "at": "2026-10-29T18:11:51.234Z",
+      "microseconds": 413.030303030303,
+      "note": "Since previous reset; includes idle/menu/host work, not isolated Apply"
+    },
+    {
+      "name": "lock",
+      "at": "2026-10-29T18:11:53.647Z",
+      "planned": 0,
+      "mask": 255,
+      "replace": false,
+      "playing": false,
+      "recording": false,
+      "exactTrackBytesVerified": true,
+      "partPreserved": true
+    },
+    {
+      "name": "clear",
+      "at": "2026-10-29T18:11:56.125Z",
+      "planned": 512,
+      "mask": 255,
+      "replace": false,
+      "playing": false,
+      "recording": false,
+      "exactTrackBytesVerified": true,
+      "partPreserved": true
+    },
+    {
+      "name": "lock",
+      "at": "2026-10-29T18:11:58.547Z",
+      "planned": 512,
+      "mask": 255,
+      "replace": false,
+      "playing": false,
+      "recording": false,
+      "exactTrackBytesVerified": true,
+      "partPreserved": true
+    },
+    {
+      "name": "clear",
+      "at": "2026-10-29T18:12:00.999Z",
+      "planned": 512,
+      "mask": 255,
+      "replace": false,
+      "playing": false,
+      "recording": false,
+      "exactTrackBytesVerified": true,
+      "partPreserved": true
+    },
+    {
+      "name": "lock",
+      "at": "2026-10-29T18:12:03.478Z",
+      "planned": 64,
+      "mask": 1,
+      "replace": false,
+      "playing": false,
+      "recording": false,
+      "exactTrackBytesVerified": true,
+      "partPreserved": true
+    },
+    {
+      "name": "clear",
+      "at": "2026-10-29T18:12:05.934Z",
+      "planned": 64,
+      "mask": 255,
+      "replace": false,
+      "playing": false,
+      "recording": false,
+      "exactTrackBytesVerified": true,
+      "partPreserved": true
+    },
+    {
+      "name": "independent Lock selection",
+      "at": "2026-10-29T18:12:07.770Z",
+      "mask": 1,
+      "clearMask": 255
+    },
+    {
+      "name": "cancelled selection preserves successful Clear profile",
+      "at": "2026-10-29T18:12:11.783Z",
+      "mask": 255
+    },
+    {
+      "name": "lock",
+      "at": "2026-10-29T18:12:14.249Z",
+      "planned": 64,
+      "mask": 1,
+      "replace": true,
+      "playing": false,
+      "recording": false,
+      "exactTrackBytesVerified": true,
+      "partPreserved": true
+    },
+    {
+      "name": "replacement policy screenshots captured",
+      "at": "2026-10-29T18:12:18.105Z",
+      "note": "Images require visual inspection before claiming policy recall"
+    },
+    {
+      "name": "clear",
+      "at": "2026-10-29T18:12:20.564Z",
+      "planned": 64,
+      "mask": 255,
+      "replace": false,
+      "playing": false,
+      "recording": false,
+      "exactTrackBytesVerified": true,
+      "partPreserved": true
+    }
+  ],
+  "functionalHarnessCorrection": "The STATE reply records sampler recording, not the live-recording flag. The initial live-record assertion used that unsuitable field; the following dedicated check reads the actual live-recording flag.",
+  "refusalChecks": [
+    {
+      "at": "2026-10-29T18:13:08.912Z",
+      "name": "live recording refusal",
+      "passed": true,
+      "liveRecordingPreserved": true,
+      "playbackPreserved": true,
+      "trackBytesUnchanged": true,
+      "planned": 64
+    },
+    {
+      "at": "2026-10-29T18:13:12.208Z",
+      "name": "pattern switch cancels confirmation",
+      "passed": true,
+      "from": 2,
+      "to": 3,
+      "returned": 2,
+      "sourceUnchanged": true
+    }
+  ],
+  "manualLocks": [
+    {
+      "at": "2026-10-29T18:14:16.974Z",
+      "name": "manual seed",
+      "sampleSlot": 0,
+      "partDefault": 3,
+      "nonSampleChangedOffsets": [
+        89
+      ]
+    },
+    {
+      "at": "2026-10-29T18:14:19.477Z",
+      "name": "lock",
+      "replace": false,
+      "changes": 63,
+      "exactByteComparison": true,
+      "otherTracksPreserved": true,
+      "partPreserved": true
+    },
+    {
+      "at": "2026-10-29T18:14:22.014Z",
+      "name": "clear",
+      "replace": false,
+      "changes": 64,
+      "exactByteComparison": true,
+      "otherTracksPreserved": true,
+      "partPreserved": true
+    },
+    {
+      "at": "2026-10-29T18:14:26.000Z",
+      "name": "lock",
+      "replace": true,
+      "changes": 64,
+      "exactByteComparison": true,
+      "otherTracksPreserved": true,
+      "partPreserved": true
+    },
+    {
+      "at": "2026-10-29T18:14:28.545Z",
+      "name": "clear",
+      "replace": false,
+      "changes": 64,
+      "exactByteComparison": true,
+      "otherTracksPreserved": true,
+      "partPreserved": true
+    }
+  ],
+  "policyImagesVisuallyInspected": true,
+  "nativeSaveClearReload": {
+    "exactSavedTrackBytesRestored": true,
+    "locksRestored": 512,
+    "partWorkingAndSavedEqual": true,
+    "note": "The first fixed two-second read preceded reload completion. Later complete byte comparisons, repeated after 250 ms, matched the saved track snapshot; only the settled result is passed."
+  },
+  "listening": {
+    "reportedBy": "twwwy",
+    "result": "Playback sounds continuous",
+    "context": "Reported during the live maximum-size test session; no independent audio recording or sample-level dropout analysis."
+  },
+  "usb": {
+    "installSelftest": {
+      "failure": null,
+      "record": {
+        "state": 2,
+        "failed": 0,
+        "modules": 1,
+        "dsp": 0,
+        "intact": 1,
+        "ran": 0,
+        "peaks": {
+          "tracks1to4": 0,
+          "tracks5to8": 0,
+          "cpu": 0
+        },
+        "done": 0,
+        "total": 2,
+        "frameGap": 49206,
+        "saved": 4,
+        "savedCount": 0,
+        "live": 1,
+        "culprit": 0,
+        "culpritName": "",
+        "refusal": 0
+      }
+    },
+    "undoVerified": true,
+    "undoWhileTrackSelectionOpen": true,
+    "stockOpenerSitesRestored": [
+      {
+        "address": 1073929320,
+        "checked": 6,
+        "sha256": "d35bfe797abb5bb27e98ec6d4cb422e20c44f307e5d6597af674380832f8dbdf",
+        "restored": true
+      },
+      {
+        "address": 1073929360,
+        "checked": 6,
+        "sha256": "d35bfe797abb5bb27e98ec6d4cb422e20c44f307e5d6597af674380832f8dbdf",
+        "restored": true
+      },
+      {
+        "address": 1073929412,
+        "checked": 6,
+        "sha256": "d35bfe797abb5bb27e98ec6d4cb422e20c44f307e5d6597af674380832f8dbdf",
+        "restored": true
+      }
+    ],
+    "savedPatternRetainedAfterUndo": true,
+    "keepPerformed": false,
+    "flashPerformed": false,
+    "physicalPowerCycleReported": true,
+    "original18ModuleRecordsRestored": true,
+    "originalActiveIdentityRestored": true,
+    "originalWholeSetIdentityRestored": true
+  },
+  "capture": {
+    "path": "v018-mkii-live512-confirm.png",
+    "sha256": "47c148f655fc2d4494fbd67dd39b8bfadf93819bdbdef130a40a275181725224",
+    "captureType": "hardware",
+    "credit": "twwwy; Elektron Octatrack UI",
+    "license": "LicenseRef-OT-UI-Documentation"
+  },
+  "limitations": [
+    "No Keep or kept power-cycle lifecycle was performed; the RAM base sees the flashed base saved set as foreign.",
+    "Observed host completion upper bounds are not isolated CPU cycles, per-step interrupt timing, full stack bounds or a universal worst-case guarantee.",
+    "No matched unloaded cost baseline, MKI, heavy streaming/USB/MIDI stress, tempo/speed extremes, companion runtime combinations or native stock-only card/browser parity.",
+    "The original 18-module inventory was restored and compared, not stress-tested."
+  ]
+}

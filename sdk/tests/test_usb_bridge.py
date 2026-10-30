@@ -31,10 +31,20 @@ class BridgeTests(unittest.TestCase):
         self.device = Mock()
         self.device.get_active_configuration.return_value = [SimpleNamespace(bInterfaceNumber=1,
             bInterfaceClass=0xff, bInterfaceSubClass=0x4d, bInterfaceProtocol=1)]
-        self.core.find.side_effect = lambda **_: iter([self.device])
+        self.core.find.return_value = self.device
 
     def setup(self, request=21, direction=0xc1, length=32):
         return 'setup ' + struct.pack('<BBHHH', direction, request, 0, 1, length).hex()
+
+    def test_another_elektron_device_is_not_taken_for_the_unit(self):
+        # An Analog Rytm on Overbridge beside the Octatrack: only the device offering the Modwerk interface matches.
+        self.bridge.open_unit()
+        match = self.core.find.call_args.kwargs['custom_match']
+        interface = lambda c, s, p: SimpleNamespace(bInterfaceClass=c, bInterfaceSubClass=s, bInterfaceProtocol=p)
+        rytm = [[interface(0xff, 0, 0), interface(1, 1, 0), interface(1, 3, 0)]]
+        octatrack = [[interface(8, 6, 80), interface(0xff, 0x4d, 1), interface(1, 1, 0)]]
+        self.assertFalse(match(rytm)); self.assertTrue(match(octatrack))
+        self.assertEqual(self.core.find.call_args.kwargs['idVendor'], 0x1935)
 
     def test_descriptor_or_claim_error_disposes_partial_handle(self):
         for stage in ('descriptor', 'claim'):
@@ -90,15 +100,6 @@ class BridgeTests(unittest.TestCase):
         unit, held, reply = self.bridge.serve_request(None, [('stale',), False], self.setup())
         self.assertIsNone(unit); self.assertIsNone(held); self.assertEqual(reply, 'err the unit is away')
         self.util.dispose_resources.assert_called_once_with(self.device); self.util.claim_interface.assert_not_called()
-
-    def test_another_elektron_instrument_enumerated_first_is_skipped(self):
-        rytm = Mock()  # same vendor id, no Modwerk vendor interface (MIDI and audio only)
-        rytm.get_active_configuration.return_value = [SimpleNamespace(bInterfaceNumber=0,
-            bInterfaceClass=1, bInterfaceSubClass=1, bInterfaceProtocol=0)]
-        self.core.find.side_effect = lambda **_: iter([rytm, self.device])
-        self.assertEqual(self.bridge.open_unit(), (self.device, 1))
-        self.util.claim_interface.assert_called_once_with(self.device, 1)
-        self.util.dispose_resources.assert_called_once_with(rytm)
 
     def test_prohibited_setup_and_stall_do_not_reset_or_reconfigure_usb(self):
         for request in (5, 9):

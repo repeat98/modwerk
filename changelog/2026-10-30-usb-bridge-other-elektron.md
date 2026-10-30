@@ -1,1 +1,0 @@
-USB link: the bridge to an Octatrack running the Modwerk base (`scripts/octatrack-usb-bridge.py`) now finds the unit when another Elektron instrument, such as an Analog Rytm, is plugged in too. It used to take whichever Elektron device came first and report that no unit was running the test base.

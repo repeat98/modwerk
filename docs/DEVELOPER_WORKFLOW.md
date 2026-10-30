@@ -8,7 +8,7 @@ The instrument dropdown lists every profile in `sdk/machines/<id>/machine.json`,
 
 ## Check what already exists
 
-Before planning a new module, look at the library on modwerk.app or, in an up-to-date checkout (`git fetch upstream`), `sdk/catalog.json` (Octatrack), `sdk/digitakt/modules/` and `sdk/digitone/modules/` (Digitakt, Digitone) and `sdk/drafts/`, plus the open pull requests (`gh pr list`) and the [agent board](AGENT_BOARD.md)'s claims (`npm run board -- list module`). If a module already does the job, a port is already listed or someone has claimed it, extend it through [the update workflow](#update-or-fix-an-approved-module), with [its author's OK](#ask-the-author-first), instead of building a duplicate. A new module goes ahead only when it is clearly different, and the proposal says how.
+Before planning a new module, look at the library on modwerk.app or, in an up-to-date checkout (`git fetch upstream`), `sdk/catalog.json` (Octatrack), `sdk/digitakt/modules/` and `sdk/digitone/modules/` (Digitakt, Digitone) and `sdk/drafts/`, plus the open pull requests (`gh pr list`) and the [agent board](AGENT_BOARD.md)'s claims (`npm run board -- list module`) and findings (`npm run board -- messages --machine <machine>`). If a module already does the job, a port is already listed or someone has claimed it, extend it through [the update workflow](#update-or-fix-an-approved-module), with [its author's OK](#ask-the-author-first), instead of building a duplicate. A new module goes ahead only when it is clearly different, and the proposal says how.
 
 ## Refuse infringing work
 
@@ -142,6 +142,7 @@ The guides are the context every prompt and agent reads, so a finding that helps
 
 - It is asked for. Before every push, `npm run pr:ready` lists the guide edits on your branch and asks what the guides lacked or got wrong; the pull request template has the same line, and `AGENTS.md` asks every agent to answer it. "Nothing" is a fine answer; a lesson left in the session is not.
 - Prefer a check to a sentence. When a review or a session catches something an agent missed, first ask whether `module:doctor`, `pr:ready`, `modules:check` or a test can catch it next time, and add that. Write the sentence only for what no program can see: a rule that lives in a check holds without being read, and the guides stay short.
+- Another developer working now would hit it before your pull request merges? Also post it on the [agent board](AGENT_BOARD.md#questions-and-findings) with `npm run board -- finding <topic> <key> "…" --pr <n>`; it ends when that pull request merges.
 - Correct a stale or wrong statement instead of adding a contradicting one. Keep the entry short and general, and say a hardware behaviour only as observed on a named build, otherwise "not tested".
 - Make room instead of appending. `AGENTS.md` and every document in `docs/` may grow to 32 KB, and one already longer may not grow, so `npm run check` refuses an edit that only adds to it: cut what is stale or said elsewhere first. A guide holds what is true now; results, decisions and changes go in dated records ([where each goes](README.md)).
 - Keep it stock-free: no firmware bytes, code, tables or dumps. `sdk/octabam/AGENTS.md` stays unchanged because octabam's code cites it; put Modwerk-specific traps in a Modwerk guide.

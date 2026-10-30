@@ -183,7 +183,7 @@ standalone package that links is not completion.
 
 Release evidence must cover the exact source-built browser/runtime packages,
 regeneration and stock-free scan, base compatibility and truthful inventory,
-installation and self-test, Keep/Undo, replacement/removal, missing-module
+installation, the self-test of the running set, Keep/Undo, replacement/removal, missing-module
 fallback and distinct instances through Part/project reload and physical
 reboot where applicable. Give hardware steps and record actual results;
 emulator/host tests do not fill missing hardware qualification. Preserve the

@@ -50,6 +50,8 @@ before reporting success.
 
 ## Start the link
 
+**One Elektron device on the Mac's USB.** The bridge opens the first device with Elektron's vendor id that offers the Modwerk interface; before 27 October 2026 it opened the first Elektron device of any kind, so an Analog Rytm on Overbridge plugged in beside the Octatrack made every request fail ("unit went away", "no unit running the test base"). Unplug other Elektron devices before a RAM boot or a flash all the same: on that day a RAM boot staged with a Rytm attached failed part-way and hung at the logo, and the retry with the Rytm unplugged came back.
+
 Keep emulator socket paths short, including the host path behind a container bind mount. A long host output path can fail with `usb: cannot listen` even when its container alias is short.
 
 ```sh
@@ -65,7 +67,7 @@ RAM boot. One process at a time: a second `serve` or a one-shot `npm run device`
 frontend MCP use the unit beside the session, start it with `serve --share /tmp/modwerk-share.sock` and the MCP with
 `--device-socket /tmp/modwerk-share.sock`: each MCP control transfer runs between the session's. Then only one of them
 stages modules at a time (the MCP's sync, or the session's `try`/`remove`); the session reads and presses keys.
-The session’s `try FILE` accepts immediately. For a temporary trial, use the MCP’s review/self-test/Undo flow or
+The session’s `try FILE` accepts immediately. For a temporary trial, use the MCP’s review/trial/Undo flow or
 the one-shot `npm run device -- try FILE` without `--accept`; do not use session `try` as an automatic Undo test.
 A private module-only trial does not inherit the flashed base's kept module set. To test companions, prepare copies bound to the exact temporary base and review/trial the complete set; a Keep on the twin is not an inventory-recovery step. A host client's own trial timer can also remove the set while its USB keepalive is still healthy. State the timeout and distinguish it from a RAM clear or restart.
 
