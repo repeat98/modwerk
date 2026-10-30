@@ -67,6 +67,8 @@ All three levels use the instrument’s own font and seven-pixel row spacing. Le
 
 Run python3 -B verify.py for planner/UI sanitizer regressions. The pinned MCF54455 compile/link and instruction guard must pass before packaging. Emulator results never establish hardware, audible output or physical reboot qualification.
 
+[Apply profiling](APPLY_PROFILING.md) measures the unchanged runtime in phases before choosing a CPU optimization.
+
 Standard Modwerk runtime loading is used. Read the device's actual base, capabilities and inventory before a trial. Keep is separate. Firmware/packages stay private.
 
 ## Authorship and licences

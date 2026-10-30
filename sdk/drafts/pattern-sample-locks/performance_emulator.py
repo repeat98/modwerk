@@ -45,6 +45,7 @@ def exercise(port,run,tap,key,encoder,capture,out,reboot):
         functions=exact['performanceFunctions']
         points={base+offset for fn in functions.values() for offset in [fn['begin'],*fn['ends']]}
         points.update(base+n for n in [exact['begin'],*exact['ends']])
+        points.update(base+n for n in exact.get('applyPhases',{}).values())
         port.command('watch '+','.join(hex(n) for n in sorted(points)))
         port.command('hits',b'hits ')
     def finish_watch():
@@ -67,19 +68,41 @@ def exercise(port,run,tap,key,encoder,capture,out,reboot):
         assert start is None and guards
         result['writeGuards']=dict(count=len(guards),maxInstructions=max(guards),
                                   maxModelMicroseconds=max(guards)*1000/INSTRUCTIONS_PER_MS)
+        if exact.get('applyPhases'):
+            order=['index','revalidate','publish','followup','restore']
+            fn=exact['performanceFunctions']['psl_native_commit']
+            boundaries=[fn['begin'],*[exact['applyPhases'][n] for n in order],*fn['ends']]
+            rows=[(count,pc-base) for count,pc,*_ in hits if pc-base in boundaries]
+            assert [pc for _,pc in rows]==boundaries, 'Incomplete or repeated Apply phase trace'
+            names=['preflightAndValidation','indexPlanning','finalRevalidation','publication','nativeFollowup','epilogue']
+            result['applyPhaseInstructions']={name:(rows[i+1][0]-rows[i][0])&0xffffffff
+                                              for i,name in enumerate(names)}
+            assert sum(result['applyPhaseInstructions'].values())+1==result['psl_native_commit']['totalInstructions']
         return result
     tap(0x22,1)
     assert u32(0x800065b8)==0
     bank=u32(0x46c82456);assert bank==0x400e21e0
     reports={};initial=fixture.read(port,bank,8*0x91a)
-    for label,track_count,step_count in (('small',1,2),('maximum',8,64)):
+    cases=[('small',1,2,None),('maximum',8,64,None)]
+    if exact.get('applyPhases'):
+        cases=[('smallEmpty',1,2,None),('oneTrackEmpty',1,64,None),('maximumEmpty',8,64,None),
+               ('maximumFirstOtherLock',8,64,0),('maximumLastOtherLock',8,64,30)]
+    for label,track_count,step_count,other_slot in cases:
         source=bytearray(initial)
         for track in range(8):
             at=track*0x91a
             source[at:at+8]=((1<<step_count)-1 if track<track_count else 0).to_bytes(8,'big')
             for step in range(64):source[at+0x78+32*step]=255
+            if exact.get('applyPhases'):
+                for step in range(64):
+                    source[at+0x59+32*step:at+0x59+32*step+32]=bytes([255])*32
+                    if other_slot is not None and track<track_count:
+                        source[at+0x59+32*step+other_slot]=33
         fixture.put(port,bank,source);fixture.put(port,0x1001614e,source)
         fixture.call_idle(port,0x400339d8)
+        if exact.get('applyPhases'):
+            tap(0x25,1)
+            assert u32(0x800065b8)!=0
         if label=='maximum':
             reports['closedWithModule']=sample('closed, module installed')
             menu(False,True,False)
@@ -89,7 +112,7 @@ def exercise(port,run,tap,key,encoder,capture,out,reboot):
         for clear in (False,True):
             watch();menu(clear,track_count==8)
             key('YES');run(200);measurement=finish_watch()
-            assert u32(0x800065b8)==0
+            assert bool(u32(0x800065b8))==bool(exact.get('applyPhases'))
             blob=fixture.read(port,bank,len(source))
             for track in range(8):
                 kind=port.peek(bank+0x8ed80+0x22+track,1)[0]
@@ -98,17 +121,31 @@ def exercise(port,run,tap,key,encoder,capture,out,reboot):
                     value=expected if track<track_count and step<step_count else 255
                     assert blob[track*0x91a+0x78+32*step]==value
             assert fixture.read(port,0x1001614e,len(source))==blob
+            expected_blob=bytearray(source)
+            for track in range(track_count):
+                for step in range(step_count):
+                    expected_blob[track*0x91a+0x78+32*step]=blob[track*0x91a+0x78+32*step]
+            assert blob==expected_blob, 'Non-SAMPLE data changed'
+            for step in range(64):
+                expected_index=sum(1<<track for track in range(8)
+                                   if any(v!=255 for v in blob[track*0x91a+0x59+32*step:track*0x91a+0x59+32*step+32]))
+                assert port.peek(0x46c7d48c+step,1)==bytes([expected_index]), 'Lock index differs'
             measurement['guardTimerMax']=u32(base+exact['symbols']['psl_guard_max'])
             operations['clear' if clear else 'lock']=measurement
             key('NO')
         reports[label]=dict(changedLocks=track_count*step_count,operations=operations)
+        if exact.get('applyPhases'):
+            tap(0x24,128)
+            assert u32(0x800065b8)==0
         print('Profiled '+label,flush=True)
-    state.update(sample=sample,reports=reports,out=out)
+    state.update(sample=sample,reports=reports,out=out,phases=bool(exact.get('applyPhases')))
     return {'performanceOperationsVerified':True,'performanceHelperSha256':hashlib.sha256(Path(__file__).read_bytes()).hexdigest()}
 
 def after_undo(port,out):
-    reports=state['reports'];reports['closedWithoutModule']=state['sample']('closed, module removed')
+    reports=state['reports']
+    if not state['phases']:reports['closedWithoutModule']=state['sample']('closed, module removed')
     reports['model']=dict(instructionsPerMillisecond=INSTRUCTIONS_PER_MS,
-        hardware=False,scope='Stopped disposable MKII emulator fixture; native panel operations; no audio qualification')
+        hardware=False,scope=('Playing' if state['phases'] else 'Stopped')+
+        ' disposable MKII emulator fixture; elapsed instructions include interrupts; no hardware cycle or audio qualification')
     (out/'performance.json').write_text(json.dumps(reports,indent=2)+'\n')
     return {'performanceBaselineAfterRemoval':True}
