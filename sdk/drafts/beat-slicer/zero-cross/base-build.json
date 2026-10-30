@@ -12,5 +12,5 @@
   "hardware": "not tested",
   "basePatchSha256": "d57b32ac9eae32e16f1549cf83f467f791f12876a38104871546a337aa7e1369",
   "preparedInputsMatchCompiledCandidate": true,
-  "sourceScope": "Build receipt predates the local completion-preservation fix; current base.patch needs rebuilding"
+  "sourceScope": "Historical uninstrumented build predates completion fix; corrected measurement build was rebuilt and hardware-tested (hardware/full-set-build.json), while a corrected uninstrumented build remains pending."
 }

@@ -4,9 +4,12 @@ Module SHA-256: `195d2b46e2620bd15118478aa02d626d6d803692e02c40db4f45a67f6927b64
 Private base identity: `852856cdb93a672cfd9060a120edd15fc17da4269d3bd119228881ab9c0adcc6`.
 MAIN SHA-256: `848f9860e71914f08d206156d261c1b15aa79348bda78c31bcfa11fab2155add`.
 Uninstrumented hardware and full-OS emulator boot: **not tested**.
-The separate measurement base has partial MKII evidence in
-[the 30 October hardware record](hardware/HARDWARE_2026-10-30.md). The subsequent
-local completion-status fix is software-tested only; its base is not yet built.
+Separate measurement bases have partial MKII evidence in
+[the first hardware record](hardware/HARDWARE_2026-10-30.md) and the subsequent
+[full-set trial](hardware/FULL_SET_2026-10-30.md). The completion-status fix was
+rebuilt and passed the limit/status check on the second base with all 19
+modules. That RAM trial was left running at the owner's request, without a host
+deadline; it has not yet been Undone or reboot-restored.
 
 ## Observed software checks
 

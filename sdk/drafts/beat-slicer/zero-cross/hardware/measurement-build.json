@@ -33,5 +33,5 @@
   "deviceOperations": "RAM boot and two module-only trials; Undo verified, original base/set/19 modules restored after owner power cycle; no Keep/flash/save",
   "firmwareCommitted": false,
   "hardwareEvidence": "HARDWARE_2026-10-30.md",
-  "sourceScope": "This immutable tested build predates the local completion-preservation fix; current base.patch is not rebuilt or device-tested"
+  "sourceScope": "This historical tested build predates the completion fix; the corrected full-set build and hardware retests are recorded in full-set-build.json."
 }

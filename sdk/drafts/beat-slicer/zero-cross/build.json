@@ -22,6 +22,6 @@
   },
   "basePatchSha256": "d57b32ac9eae32e16f1549cf83f467f791f12876a38104871546a337aa7e1369",
   "sharedApi": "optional ABI-1 tail; legacy prefix and sizeof unchanged",
-  "hardware": "Partial measurement-base trial; hardware/HARDWARE_2026-10-30.md. Current base completion fix is not rebuilt or device-tested.",
-  "basePatchScope": "Recorded compilation used basePatchSha256 below; current base.patch contains a later service-only completion fix requiring a new base build."
+  "hardware": "Partial MKII full-set evidence on corrected measurement base 36b8c51f\u2026; hardware/FULL_SET_2026-10-30.md. Uninstrumented qualification remains pending.",
+  "basePatchScope": "The original compilation receipt below predates the service-only completion fix; hardware/full-set-build.json pins the rebuilt and hardware-tested corrected measurement base."
 }
