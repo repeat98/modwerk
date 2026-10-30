@@ -86,8 +86,9 @@ remain emulator observations, not physical CPU bounds.
 
 Completed results and the exact emulator/base identities are retained in the
 [combined receipt](evidence/reconstruction-local-20261030.json). Hardware audio,
-physical timing, full stack qualification, stock-only card UI and first-release
-owner approval remain separate work.
+physical timing, full stack qualification and first-release owner approval
+remain separate work. Card UI was subsequently deferred for the author's
+[USB-only first-beta scope](USB_BETA.md).
 
 The completed run passed on emulator base `2e1a6128…`: all six malformed
 packages were refused before publication, then the valid candidate installed in
@@ -176,4 +177,5 @@ python3 -B sdk/drafts/pattern-sample-locks/verify_public_package.py \
 ```
 
 This local integration grants no publication approval and adds no physical
-qualification. Card UI, physical timing/stack bounds and release review remain.
+qualification. Physical timing/stack bounds and release review remain; card UI
+is deferred under the author's USB-only first-beta scope.

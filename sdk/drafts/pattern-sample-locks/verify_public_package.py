@@ -39,7 +39,7 @@ def main():
     catalog_path.write_text(json.dumps(catalog))
     manifest = stage / 'src/engine/assets/octatrack-module-packages.json'
     manifest.write_text(json.dumps(dict(schema=1, packages=[dict(id='pattern-sample-locks', version='0.1.8-experimental',
-        name='Pattern Sample Locks', octabam=True, unitName='SAMPLE LOCKS', reconstruction=True)])))
+        name='Pattern Sample Locks', octabam=True, unitName='SAMPLE LOCKS', reconstruction=True, usbOnly=True)])))
     command = [sys.executable, '-B', str(stage / 'scripts/octatrack-module-packages.py'), '--upstream', str(a.upstream), '--stock', str(a.stock)]
     logs = []
     def run(extra=()):
@@ -91,7 +91,7 @@ def main():
     assert source.read_bytes() == source_before and recipe_path.read_bytes() == recipe_before
     assert (stage / 'public' / entry['path']).read_bytes() == package
     report = dict(hardware=False, published=False, privateCatalogueFixtureOnly=True,
-                  normalPublicBuildPassed=True, normalPublicCheckPassed=True, bothStockScansPassed=True,
+                  normalPublicBuildPassed=True, normalPublicCheckPassed=True, bothStockScansPassed=True, usbOnly=entry['usbOnly'],
                   packageSha256=HASH(package), bytes=len(package), byteIdenticalToEmulatorTestedPackage=True,
                   negativeCliChecks=negatives, nativeInputsRestoredAfterNegativeProbes=True,
                   helperSha256=HASH(Path(__file__).read_bytes()),

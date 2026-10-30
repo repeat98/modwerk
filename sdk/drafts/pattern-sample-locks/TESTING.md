@@ -20,6 +20,16 @@ the initialized runtime, BSS, relocations, callbacks and sites. The real
 catalogue remains unchanged; no physical device was accessed. See
 [method and reproduction](RECONSTRUCTION.md#normal-package-path--31-october-2026).
 
+The author then selected a USB-only first beta. The candidate declares
+`usbOnly: true`; production components refuse card downloads, block classic
+library additions without USB access and permit beta USB selection. Card
+compiler source/version scope stays unchanged. Normal USB build/check and five
+rejection probes pass with the exact emulator-tested package; add/removal Undo
+preflight passes on all seven public base identities and preflight accepts all
+29 packages. These are private fixtures, not publication or concurrent runtime
+qualification. See [scope and method](USB_BETA.md) and the
+[stock-free receipt](evidence/usb-beta-scope-20261031.json).
+
 ## Apply phase profiling — 30 October 2026
 
 An independent DSP-enabled MKII emulator process used its own copied card and

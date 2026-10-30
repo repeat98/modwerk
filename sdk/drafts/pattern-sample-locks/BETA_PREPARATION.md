@@ -86,13 +86,15 @@ The initial audit established these packaging/integration gaps:
    normal CLI in a private catalogue fixture, with five rejection probes. See
    [the current method and results](RECONSTRUCTION.md#normal-package-path--31-october-2026).
    Real catalogue admission and release review remain pending.
-2. **Stock-only card UI integration is unfinished.** `runtime.json` supplies
+2. **Stock-only card UI integration is unfinished and deferred.** `runtime.json` supplies
    four core callbacks through the USB base. The native manifest declares only
    the three menu openers; the card package compiler does not consume those
    runtime subscriptions. GNU/browser object-link agreement alone cannot prove
    a working card UI. No complete card composition or card hardware pass is
-   claimed. A working native integration or an explicitly reviewed distribution
-   scope is needed before publication.
+   claimed. On 31 October the author selected a USB-only first beta. The private
+   candidate now declares `usbOnly: true`; production library/card refusal and
+   compiler inventory checks exercise that scope. First-release review must
+   approve it; no card qualification is implied. See [USB beta scope](USB_BETA.md).
 
 The production USB preflight accepts standalone add and removal/Undo on all
 seven current base identities. It also preflights all 29 packages (the 28

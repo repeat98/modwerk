@@ -44,7 +44,7 @@
       "Clear removes all SAMPLE locks on selected tracks, including manual locks.",
       "Lock preserves all existing SAMPLE locks by default, including those written by a previous Lock action.",
       "No ownership storage, origin tracking or custom lifecycle event is used.",
-      "Stock-only card integration and contributed-machine combinations remain unqualified."
+      "First-beta scope is USB-only through the Modwerk base; card firmware is unsupported. Contributed-machine combinations remain unqualified."
     ],
     "effectId": null
   },

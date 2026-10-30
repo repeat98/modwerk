@@ -39,3 +39,18 @@ through the native loader, and verify source availability on every claimed base
 and companion composition. Card integration and exact-build physical
 qualification remain separate requirements. A declaration in `sdk/drafts/`
 does not add the module to the catalogue or grant release admission.
+
+## USB-only distribution
+
+An assembly-backed module whose callbacks need the Modwerk base can explicitly
+set `usbOnly: true` on its USB package entry. This uses the same library and
+card-download refusal path as C source runtimes. The card compiler and source
+importer exclude that module from their native inventory and compiled-version
+list; USB build, preflight and install still use its ordinary package route.
+Omitting the flag or setting it to false retains the existing card scope.
+
+Document this distribution limit in the module's README and manifest. A private
+fixture can verify the refusal and USB path before publication. USB-only scope
+does not qualify the physical runtime or grant first-release approval, and it
+does not claim a working card form. Card support needs its own integration and
+qualification later.

@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 // Private catalogue fixture: exercise production components without publication.
 import assert from 'node:assert/strict'
+import process from 'node:process'
+import console from 'node:console'
 import { readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'

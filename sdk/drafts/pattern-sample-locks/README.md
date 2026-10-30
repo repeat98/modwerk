@@ -8,6 +8,10 @@ Two Part Edit actions: **Lock Samples to Pattern** writes the Part's assigned sa
 
 **Private development prototype; full physical qualification is incomplete.** Use a backed-up disposable project for the supervised RAM trial in [DEVICE_TEST.md](DEVICE_TEST.md). Source prototype prepared for upstream owner review; publication remains unapproved.
 
+**The first beta is scoped to USB loading through the Modwerk base.** Card
+firmware is unsupported and must refuse this module. Card support is deferred;
+this scope was selected by the author and still needs first-release review.
+
 ## Controls
 
 Level 1 is **FUNC + PART**. The headerless stock list keeps RENAME, RELOAD, SAVE and SAVE ALL, then appends the two actions.

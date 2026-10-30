@@ -5,6 +5,10 @@ in [BETA_PREPARATION.md](BETA_PREPARATION.md), freeze the candidate and review
 the exact base/package before arranging a supervised physical run. Existing
 0.1.8 results stay bound to their previously recorded bases.
 
+The author's chosen first-beta scope is USB-only through the Modwerk base.
+Card support is deferred and card builds must refuse it; this checklist does
+not qualify a card build. See [USB beta scope](USB_BETA.md).
+
 The latest private reconstruction candidate is `3e13c46f…` (10,048 bytes,
 nine stock-copy records). Its image matches the earlier prototype, but its
 changed package has only local/emulator lifecycle evidence. Review its

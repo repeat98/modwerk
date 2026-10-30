@@ -13,7 +13,7 @@ vi.mock('./compose-os', () => ({ composeSelection: vi.fn(async (original: Uint8A
 })) }))
 vi.mock('../catalog/usb-only', async importOriginal => {
   const real = await importOriginal<typeof import('../catalog/usb-only')>()
-  const published = { packages: [{ id: 'repitch', requires: 8 }] }
+  const published = { packages: [{ id: 'repitch', requires: 8 }, { id: 'everb', usbOnly: true }] }
   return { ...real, cardBuildError: (ids: readonly string[], usb?: boolean) => real.cardBuildError(ids, usb, published) }
 })
 
@@ -24,14 +24,14 @@ const synthetic = (): DecodedFirmware => ({
 })
 
 describe('card firmware and modules that need the Modwerk base', () => {
-  it('refuses to validate or build a USB-only module before composing, for the page and local downloads alike', async () => {
+  it.each([['repitch', 'Repitch'], ['everb', 'E-Verb']])('refuses %s before composing, for the page and local downloads alike', async (moduleId, name) => {
     const firmware = synthetic(), replies: EngineResponse[] = []
     const handle = createEngineSession(response => { if (response.type !== 'progress') replies.push(response) })
     await handle({ id: 1, type: 'inspect', name: 'synthetic.bin', buffer: new Uint8Array(encodeFirmware(firmware, firmware.mainOs, 'STOCK')).buffer })
     const compose = vi.mocked(composeSelection), before = compose.mock.calls.length
     for (const [id, type] of [[2, 'validate'], [3, 'build']] as const) {
-      await handle({ id, type, moduleIds: ['tapehead', 'repitch'], keepStockFx2: false })
-      expect(replies.at(-1)).toMatchObject({ type: 'error', message: expect.stringMatching(/^Repitch needs the Modwerk base, so card firmware cannot include it\./) })
+      await handle({ id, type, moduleIds: ['tapehead', moduleId], keepStockFx2: false })
+      expect(replies.at(-1)).toMatchObject({ type: 'error', message: expect.stringContaining(name + ' needs the Modwerk base, so card firmware cannot include it.') })
     }
     expect(compose.mock.calls.length).toBe(before)
     await handle({ id: 4, type: 'validate', moduleIds: ['tapehead'], keepStockFx2: false })
