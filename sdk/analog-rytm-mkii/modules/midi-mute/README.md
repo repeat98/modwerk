@@ -18,13 +18,15 @@ A track counts as muted when its mute is set: MUTE mode's pads, FUNC + pads in M
 
 ## Usage
 
+Play the Rytm's tracks from a keyboard, a sequencer or a DAW, and use MUTE mode (or CC 94 from the DAW) to take tracks out of what you play live, as you take them out of the pattern.
+
 ### Quick tutorial
 
-1. Press GLOBAL, choose MIDI CONFIG, then PORT CONFIG, and go down to the last row, **MUTE MIDI IN**. Press YES to check it, then NO to leave the menus.
-2. Play BD from a keyboard or DAW on the AUTO channel (note C0, or the track's note), over USB or DIN.
-3. Press MUTE, then the BD pad: BD is muted. The same notes no longer play it; the other tracks still play.
-4. Hold a note for BD and mute BD while you hold it: the note stops at once instead of hanging.
-5. Unmute BD (BD pad again in MUTE mode) and play: BD plays again.
+1. Press GLOBAL, choose MIDI CONFIG, then PORT CONFIG, and go down to the last row, MUTE MIDI IN. Press YES to check it, then NO to leave the menus.
+2. Play BD from a keyboard or DAW: on the AUTO channel (note 0), or on BD's own channel (notes 12-59), over USB or DIN.
+3. Press MUTE, then the BD pad: BD is muted, and the same notes no longer play it. The other tracks still play.
+4. Hold a note for BD and mute BD while you hold it: the note stops instead of hanging.
+5. Unmute BD (the BD pad again in MUTE mode) and play: BD plays again.
 
 ## Message map
 
@@ -55,6 +57,24 @@ The DIN and USB MIDI ports feed one MIDI task, which passes a Note On to stock's
 - Its row is added by a third site, the end of PORT CONFIG's constructor (6 bytes), through the core's `core_additem`; a later module that wants a row there would share it through a core hook.
 - No other module patches these sites today. A second module that wants to change incoming MIDI notes would share them through a core hook.
 
-## Credits
+## Changes to stock flows
 
-Original work by @michaelkollmann. Stock addresses were found by reading the owner's own OS 1.74 with GNU binutils and running it in [rytm-emu](https://github.com/trigcondition/rytm-emu); no stock code is included.
+- **Incoming MIDI notes for a muted track** (only while MUTE MIDI IN is checked): stock plays them; the module drops them, and releases a note MIDI holds on a track when that track is muted. This is the module's purpose, so there is no other way to do it; it is off until checked, and unchecking it gives stock's behaviour back at once. Checked beside it on a unit and in the emulator: unmuted tracks, other channels, pads and TRIG keys on muted tracks, the sequencer's own trigs, RECEIVE NOTES off, CC and clock.
+- **PORT CONFIG**: one checkbox row, MUTE MIDI IN, after RECEIVE CC/NRPN. The other rows, their order and their behaviour are unchanged.
+
+## Tests and measurements
+
+See [TESTING.md](TESTING.md). In short:
+
+- **On the author's Rytm MKII** (OS 1.74, build MM03, MIDI over USB, judged from the Rytm's USB audio of BD's voice): checked, notes for a muted BD stayed silent on the AUTO and track channels, a held note stopped 50 and 130 ms after a CC 94 mute, and a 60 s flood of about 870 messages a second left nothing sounding; unchecked, the same tests heard the muted BD and the held note rang on, as stock. By hand: the setting survives a project reload and a power cycle, CREATE NEW starts unchecked, and pad mutes drop notes and release a held one.
+- **In rytm-emu 3c4c42c:** DIN and USB, CC 94 and pad mutes, toggling the box mid-note, the sequencer's trigs on the same frames with and without the module, a 60 s wire-rate flood on DIN with no note left held, and a build beside Filter Hz and Loop Sync.
+- **Cost:** about 55 instructions per incoming note that plays and 35 per dropped note, counted from the compiled code, and nothing per audio block. Unchecked, the emulator's idle time under the flood stayed within 0.004 % of the core alone. Not timed on a unit.
+- **Not tested:** DIN MIDI on a unit, a pattern or kit change during a flood.
+
+## Screens and audio
+
+The PORT CONFIG row unchecked ([port-config-off.png](media/port-config-off.png)) and checked ([port-config-on.png](media/port-config-on.png)), captured in rytm-emu `3c4c42c` from the firmware's own framebuffer; [media/capture.json](media/capture.json) records the build and the key presses. No audio is included.
+
+## Authorship and licences
+
+Original work by @michaelkollmann, GPL-3.0-or-later ([LICENSE](LICENSE)). Stock addresses were found by reading the owner's own OS 1.74 with GNU binutils and running it in [rytm-emu](https://github.com/trigcondition/rytm-emu); the module refers to OS 1.74 by addresses and hashes only, and no stock code or table is included. The PORT CONFIG row is added through core-ar2's `core_additem` (elekloader, irpina, GPL-2.0-or-later). Screenshots: see [media/LICENSE.md](media/LICENSE.md).

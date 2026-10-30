@@ -27,7 +27,11 @@
       "Off by default: one checkbox in GLOBAL > MIDI CONFIG > PORT CONFIG, kept with the project."
     ],
     "usage": [
-      "Play a kit from a keyboard or DAW and use MUTE mode to drop tracks out of what you play live, as you would drop them out of the pattern."
+      "Press GLOBAL, choose MIDI CONFIG, then PORT CONFIG, and go down to the last row, MUTE MIDI IN. Press YES to check it, then NO to leave the menus.",
+      "Play BD from a keyboard or DAW: on the AUTO channel (note 0), or on BD's own channel (notes 12-59), over USB or DIN.",
+      "Press MUTE, then the BD pad: BD is muted, and the same notes no longer play it. The other tracks still play.",
+      "Hold a note for BD and mute BD while you hold it: the note stops instead of hanging.",
+      "Unmute BD (the BD pad again in MUTE mode) and play: BD plays again."
     ]
   },
   "access": {
@@ -96,7 +100,24 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Unit (author, MM03, OS 1.74, over USB, judged from the Rytm's USB audio): with MUTE MIDI IN checked, notes for a muted BD stayed silent on the AUTO and track channels, a held note stopped 50-130 ms after a CC 94 mute, and a 60 s flood at about 870 messages a second left nothing sounding; unchecked, the same tests heard the muted BD and the held note rang on, as stock. rytm-emu 3c4c42c (MM02, MM03): DIN and USB, CC 94 and pad mutes, the active-track switch, toggling the box mid-note, sequencer timing, a wire-rate flood, Filter Hz and Loop Sync beside it. See TESTING.md."
+    "summary": "Unit (author, MM03, OS 1.74, over USB, judged from the Rytm's USB audio): with MUTE MIDI IN checked, notes for a muted BD stayed silent on the AUTO and track channels, a held note stopped 50-130 ms after a CC 94 mute, and a 60 s flood at about 870 messages a second left nothing sounding; unchecked, the same tests heard the muted BD and the held note rang on, as stock. rytm-emu 3c4c42c (MM02, MM03): DIN and USB, CC 94 and pad mutes, the active-track switch, toggling the box mid-note, sequencer timing, a wire-rate flood, Filter Hz and Loop Sync beside it. See TESTING.md.",
+    "documentation": {
+      "tutorial": {
+        "title": "Quick tutorial",
+        "steps": [
+          "Press GLOBAL, choose MIDI CONFIG, then PORT CONFIG, and go down to the last row, MUTE MIDI IN. Press YES to check it, then NO to leave the menus.",
+          "Play BD from a keyboard or DAW: on the AUTO channel (note 0), or on BD's own channel (notes 12-59), over USB or DIN.",
+          "Press MUTE, then the BD pad: BD is muted, and the same notes no longer play it. The other tracks still play.",
+          "Hold a note for BD and mute BD while you hold it: the note stops instead of hanging.",
+          "Unmute BD (the BD pad again in MUTE mode) and play: BD plays again."
+        ]
+      },
+      "screenshots": [
+        "media/port-config-on.png",
+        "media/port-config-off.png"
+      ],
+      "captureRecord": "media/capture.json"
+    }
   },
   "license": {
     "spdx": "GPL-3.0-or-later",
