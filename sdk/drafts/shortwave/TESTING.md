@@ -83,6 +83,10 @@ idle                    after the input stops: digital silence  OK
 
 At full drive a loud tone is clipped hard, and the clip's harmonics alias (down to -18 dBc for a full-scale 5.3 kHz tone). The clip is worked at twice the rate (the midpoint and the sample, averaged), which took 5-8 dB off these figures, and a one-pole of the receiver's bandwidth follows it. DRIV is an overload control and this is intended; at -12 dBFS the overload stays under -60 dBc but for the 9.1 kHz tone. DC stays under -122 dBFS and nothing reaches the rails. After the input stops the output is digital silence.
 
+## Independent review
+
+A second agent, without the author's reasoning, read the source against octabam's trap list (30 Oct 2026): no condition-code, extension-byte, a0-remainder, Tcc-source, multiply-order, `lua`, label or init-clear defect, no write outside the state block, the audio block and the declared buffer, and the table literal once. Forms that carry hardware risk because no module proven on hardware uses them yet (their only precedents are RENDER-proven modules): the one-word displaced load into a0 and b0 (`move x:(r7+$nn),b0`, the error-feedback words; airwindows-chorus has the b0 form, lofi2 the a0 one on hardware). Every other form has a site in a module that has run on a unit. To be cleared on hardware or against the stock payload's disassembly.
+
 ## Stock flows
 
 Not tested: nothing has run in a built image or on a unit. The module adds an effect to the chooser through the base's effect list and claims no key gesture or screen.
