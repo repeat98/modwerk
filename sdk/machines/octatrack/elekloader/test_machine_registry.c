@@ -14,7 +14,7 @@ static uint8_t stock_voices[8 * 168]; /* stock's voice records (0x800049d8 + 168
 
 /* Synthetic memory: a few segments at the addresses the registry reads. */
 struct segment { uint32_t base, size; uint8_t *bytes; };
-static uint8_t bank[0x8ed80u + 4u * 6322u + 64u], sram[4u * 6322u], misc[0x100], code[0x40], stocktab[0x80], ui[0x40], stockdef[12],
+static uint8_t bank[0x9504au + 4u * 6322u + 64u], sram[4u * 6322u], misc[0x100], code[0x40], stocktab[0x80], ui[0x40], stockdef[12],
     clamps[0x270];
 static struct segment segments[] = {
     {0x46000000u, sizeof bank, bank}, {0x100a4eceu, sizeof sram, sram}, {0x100b14c0u, 0x40, misc},
@@ -44,8 +44,13 @@ static int stock_render(unsigned t, unsigned p, unsigned s, unsigned e) { (void)
 static void stock_any() { ++stock_calls; }
 static int silent_renders;
 static int stock_silent(unsigned t, unsigned p, unsigned s, unsigned e) { (void)t; (void)p; (void)s; (void)e; ++silent_renders; return -9; }
+static unsigned relives, relive_args[3];
+static void stock_relive(unsigned bank_index, unsigned part_index, unsigned track) { ++relives, relive_args[0] = bank_index, relive_args[1] = part_index, relive_args[2] = track; }
 static void *host_stock(uint32_t a)
-{ return a == 0x40004008u ? (void *)(uintptr_t)stock_render : a == 0x400047f0u ? (void *)(uintptr_t)stock_silent : (void *)(uintptr_t)stock_any; }
+{
+    return a == 0x40004008u ? (void *)(uintptr_t)stock_render : a == 0x400047f0u ? (void *)(uintptr_t)stock_silent
+         : a == 0x40001f18u ? (void *)(uintptr_t)stock_relive : (void *)(uintptr_t)stock_any;
+}
 #define U8(a) (*(volatile uint8_t *)host_at(a))
 #define U32(a) host_u32(a)
 #define AT(a) ((volatile uint8_t *)host_at(a))
@@ -56,7 +61,11 @@ void mg_tick(void); /* midi_generators.c, checked by test_midi_generators.c */
 void mg_tick(void) {}
 /* The loader's side: the table rows and the machine glue. */
 #include "loader.h"
+volatile uint32_t modwerk_machine_assigned; /* controller_board.c's, not linked here */
 #include "modwerk_events.h"
+/* The loader's owner of an address: here the module id is the machine's first letter. */
+int modwerk_runtime_owner_at(uintptr_t address, struct runtime_owner *o)
+{ const struct modwerk_machine *m = (const void *)address; memset(o, 0, sizeof *o); o->module = m->sig[0]; return 1; }
 static uintptr_t volatile machine_row[10], sequencer_row[9];
 static int masked;
 uint32_t modwerk_machine_mask(void) { CHECK(!masked); masked = 1; return 7; }
@@ -205,7 +214,15 @@ int main(void)
     CHECK(!strcmp(mw_name(5), "ANALOG BD") && !strcmp(mw_name(6), "VECTOR") && !strcmp(mw_name(7), "FM SYNTH") && (uintptr_t)mw_name(8) == 0x1001u);
     /* Assign: admission first, defaults and signature in the Part and its SRAM mirror; a refusal changes nothing. */
     a_admit = 0; CHECK(mw_assign(part0(), 2, 5) == (unsigned)-1 && part0()[60 + 60] == 0);
+    uint32_t mods[4];
+    CHECK(modwerk_machine_bank_modules(mods, 4) == 0);
     a_admit = 1; CHECK(mw_assign(part0(), 2, 5) == 1);
+    /* The bank's Parts sign a track for A: its module's engine is used (controller_board.c), a saved Part's too. */
+    CHECK(modwerk_machine_bank_modules(mods, 4) == 1 && mods[0] == 'A');
+    memcpy(host_at(0x46000000u + 0x9504au + 2u * 6322u + SIG + 30u * 5u), "FM\1", 3);
+    bank[0x9504au + 2u * 6322u + 0x22 + 5] = 1;
+    CHECK(modwerk_machine_bank_modules(mods, 4) == 2 && mods[0] == 'A' && mods[1] == 'F');
+    memset(host_at(0x46000000u + 0x9504au + 2u * 6322u + SIG + 30u * 5u), 0, 3);
     CHECK(part0()[60 + 60] == 'A' && part0()[61 + 60] == 'B' && part0()[62 + 60] == 1 && sram[60 + 60] == 'A');
     CHECK(part0()[0x2a + 60 + 6] == 1 && part0()[0x1da + 60 + 11] == 12 && sram[0x1da + 60 + 11] == 12);
     CHECK(mw_type(1, slot(2)) == 5 && mw_type(3, slot(2)) == 3 && mw_type(1, slot(3)) == 1);
@@ -357,6 +374,20 @@ int main(void)
     CHECK(mw_assign(part0(), 3, 1) == 1 && part0()[60 + 90] == 0);
     /* The type byte is stock's to change (the commit stores the returned row): the registry never writes it. */
     CHECK(part0()[0x22 + 3] == 1);
+    /* FLEX <-> a machine keeps the stored type, so the registry loads the track's live parameters from its Part
+     * (stock's 0x40001f18, which a type change runs); a commit that changes the type, from or to STATIC, is stock's. */
+    const void *a_only[] = {&A};
+    rows(a_only, 1, 0, 0);
+    misc[0x0e] = 3; relives = 0;                                       /* bank 4 */
+    CHECK(mw_assign(part0(), 3, 5) == 1 && relives == 1 && relive_args[0] == 3 && relive_args[1] == 0 && relive_args[2] == 3);
+    CHECK(mw_assign(part0(), 3, 5) == 1 && relives == 1);             /* the same machine again */
+    CHECK(mw_assign(part0(), 3, 1) == 1 && relives == 2 && relive_args[2] == 3); /* back to FLEX */
+    CHECK(mw_assign(part0(), 3, 1) == 1 && relives == 2);             /* FLEX to FLEX */
+    part0()[0x22 + 3] = 0;                                              /* STATIC */
+    CHECK(mw_assign(part0(), 3, 5) == 1 && relives == 2);
+    part0()[0x22 + 3] = 1;                                              /* the commit stores FLEX */
+    CHECK(mw_assign(part0(), 3, 0) == 0 && relives == 2);             /* and STATIC again */
+    misc[0x0e] = 0;
     rows(0, 0, 0, 0);
 
     /* A switch that keeps the stored type stops the track's stock voice (byte 0 of its record) before its parameters

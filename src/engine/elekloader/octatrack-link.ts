@@ -89,8 +89,6 @@ export interface LinkState {
   readonly module?: string
   /** 0–1 while sending. */
   readonly progress?: number
-  /** The trial passed the stress test. */
-  readonly tested?: boolean
   readonly notice?: { tone: 'success' | 'error'; text: string }
   /** A base update over USB is running (updateBase), through its restarts: the cable must stay in. */
   readonly baseUpdate?: BaseUpdateStep
@@ -122,15 +120,12 @@ const UNPLUG = 'Unplug the USB cable to undo anything unfinished, then plug it b
 const FELL_BACK = 'The last base update didn’t start, so your Octatrack went back to its previous base. Nothing was lost. Try the update again, and report it in #beta-testers on Discord.'
 const RECOVERED = 'The Octatrack missed a reply, so nothing changed. Try again.'
 
-/** A stress test found a problem; its reason is shown to the user. */
-export class StressTestFailure extends Error {}
 /** The unit changed between planning a load and sending it (another tab loaded first). */
 export class StaleLoadError extends Error {}
 class WholeSetBaseRequired extends Error {}
 
 /** What a failed step means for the user, in their words. */
 export function explainLinkError(error: unknown): string {
-  if (error instanceof StressTestFailure) return `The self-test failed: ${error.message}. Nothing was kept.`
   if (error instanceof StaleLoadError) return 'Another tab changed your Octatrack meanwhile, so nothing was synced. Review the sync again.'
   if (error instanceof WholeSetBaseRequired) return 'Install the latest Modwerk base before syncing several module changes together. Nothing was sent.'
   if (error instanceof DOMException && error.name === 'AbortError') return 'Cancelled. Nothing changed on the Octatrack.'
@@ -335,10 +330,10 @@ export class OctatrackLink {
   /** Stage a whole set on capable bases, then trial it once. Older bases
    * accept a single change; several changes require an updated base. No
    * intermediate acceptance or browser-supplied rollback packages. */
-  update(module: string, changes: readonly SetChange[], stressTest?: () => Promise<string | null>) {
+  update(module: string, changes: readonly SetChange[]) {
     const planned = this.state.active, connection = this.connection // what the changes were prepared against
     // Resolves once the trial runs (or the load failed); the lock stays held until it is kept or undone.
-    return new Promise<void>(loaded => { void this.serial(async () => { try { if (connection === this.connection) await this.load(module, changes, stressTest, planned) } finally { loaded() } await this.settled() }) })
+    return new Promise<void>(loaded => { void this.serial(async () => { try { if (connection === this.connection) await this.load(module, changes, planned) } finally { loaded() } await this.settled() }) })
   }
   /** Resolves once a load is over (kept, undone, failed or unplugged): until then its tab keeps the lock, so other tabs wait. */
   private settled() {
@@ -348,7 +343,7 @@ export class OctatrackLink {
       check()
     })
   }
-  private async load(module: string, changes: readonly SetChange[], stressTest?: () => Promise<string | null>, planned?: string | null) {
+  private async load(module: string, changes: readonly SetChange[], planned?: string | null) {
     const base = this.state.identity?.base, connection = this.connection
     if (!changes.length || this.state.status !== 'ready' || !this.state.identity?.canSubmit || !base || !await this.claim()) return
     const abort = this.abort = new AbortController(), total = changes.reduce((sum, change) => sum + change.data.length, 0)
@@ -374,13 +369,7 @@ export class OctatrackLink {
       await session.startTrial()
       this.live(connection)
       this.startKeepalive()
-      if (stressTest) {
-        this.set({ status: 'testing', identity: this.state.identity, active: session.status.active, module })
-        const failure = await stressTest()
-        this.live(connection)
-        if (failure) throw new StressTestFailure(failure)
-      }
-      this.set({ status: 'trial', identity: this.state.identity, active: session.status.active, module, tested: !!stressTest })
+      this.set({ status: 'trial', identity: this.state.identity, active: session.status.active, module })
     } catch (error) {
       if (connection === this.connection) await this.failed(error, session)
     }
@@ -400,7 +389,7 @@ export class OctatrackLink {
     this.live(connection); signal?.throwIfAborted()
   }
   cancel() { this.abort?.abort() }
-  /** The base's self-test, as an update's stress test: null when it passed, else why not; progress while it runs. */
+  /** The base's self-test (test(), never an install): null when it passed, else why not; progress while it runs. */
   selftest(onRecord?: (record: SelftestRecord) => void): Promise<string | null> {
     if (!this.transport) return Promise.resolve('the Octatrack isn’t connected')
     return runSelftest(this.transport, { signal: this.abort?.signal, startMs: this.stopWaitMs, progress: (done, total) => this.set({ ...this.state, progress: total ? done / total : 0 }), record: record => { onRecord?.(record); this.diagnostic('selftest', {reading:diagnosticReading(record)}) } })
@@ -635,7 +624,7 @@ export class OctatrackLink {
    * too does the user get the unplug advice. */
   private async failed(error: unknown, session?: LinkSession) {
     const connection = this.connection
-    if (!(error instanceof UploadDeviceError) && !(error instanceof DOMException) && !(error instanceof StressTestFailure) && !(error instanceof StaleLoadError) && !(error instanceof WholeSetBaseRequired)) console.error(error)
+    if (!(error instanceof UploadDeviceError) && !(error instanceof DOMException) && !(error instanceof StaleLoadError) && !(error instanceof WholeSetBaseRequired)) console.error(error)
     this.stopKeepalive()
     let clean = !session, settled = session?.connectionTrusted ? session : undefined, recovered = false
     if (session && !session.connectionTrusted && error instanceof UploadUnconfirmedError && this.transport && this.state.identity?.base) {
@@ -648,7 +637,7 @@ export class OctatrackLink {
     const why = error instanceof UploadDeviceError && ['rejected', 'backend'].includes(error.status.result) ?
       (await this.transport?.selftest(false).catch(() => undefined))?.refusal : undefined
     if (connection !== this.connection) return
-    const label = error instanceof UploadDeviceError ? 'device' : error instanceof StressTestFailure ? 'selftest' : error instanceof UploadUnconfirmedError ? 'transport' : error instanceof StaleLoadError ? 'stale' : error instanceof DOMException && error.name === 'AbortError' ? 'cancelled' : 'unknown'
+    const label = error instanceof UploadDeviceError ? 'device' : error instanceof UploadUnconfirmedError ? 'transport' : error instanceof StaleLoadError ? 'stale' : error instanceof DOMException && error.name === 'AbortError' ? 'cancelled' : 'unknown'
     // An unclassified failure names its error type (never the message), so the diagnostics can tell a bug from a refusal.
     this.diagnostic('sync_failed', {error: label, ...(label === 'unknown' ? {kind: diagnosticErrorKind(error)} : {}), ...(error instanceof UploadDeviceError && error.status.result !== 'progress' ? {result:error.status.result} : {}), ...(why !== undefined ? {refusal:why} : {})})
     this.session = undefined

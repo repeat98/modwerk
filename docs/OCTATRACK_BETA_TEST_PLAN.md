@@ -344,9 +344,9 @@ image RAM-booted for the S cases, then the owner flashes it once. Part 1 end to 
 
 Pick up here. In order; **O** needs the owner at the unit.
 
-1. **Finish the engines-on-demand pull request** (branch `claude/octatrack-engines-integration`; steps in `docs/OCTATRACK_RESIDENT_ENGINES_ON_DEMAND.md`, "Where this stands"): changelog notes for the five rebuilt base-bound packages, docs, every CI check run serially on the WSL test PC, a development twin of the committed beta base `acf91e0a…` (on demand, merged with main after #619) checked on the unit, then the pull request.
+1. **Finish the engines-on-demand pull request** (branch `claude/octatrack-engines-integration`; steps in `verification/2026-10-15-resident-engines-integration-build.md`): changelog notes for the five rebuilt base-bound packages, docs, every CI check run serially on the WSL test PC, a development twin of the committed beta base `acf91e0a…` (on demand, merged with main after #619) checked on the unit, then the pull request.
 2. **Flash the release base** (O) and check that a kept set survives a power cycle (case 1.18); until now the new bases ran from RAM only.
-3. **FUNC held at boot skips the module restore** (O, edge case 15): the testers' escape hatch if a module breaks a unit at startup. Built, never run. Also run absent-module case (c) of finding 24 with it.
+3. **The boot guard**: LEFT OUT and MODULES HELD seen on twins ([record](verification/2026-10-30-boot-guard.md)). Open: a real crash restart and a stall's power cycle in the restore (O).
 4. **Finding 6, a base update versus the testers' saved sets:** every beta3 tester's card holds a set for another base and the site refuses Keep there. This release changes the base again, so every tester hits it: give it a migration path.
 5. **On the release base:** E-Verb kept beside a stock reverb on core 0 (findings 3 and 35; engines on demand raise core 0's arena from 2,396 to 4,418 words), a deliberate Analog BD first-note run (finding 15), VECTOR's removal (finding 29).
 6. **The tester flow on the site** (section 1: sign-up, beta grant, phones and Firefox/Safari, building, copying and flashing the base, connecting on Windows/macOS/Linux, sync, failed sync, reports), through the frontend MCP with the unit at hand.

@@ -54,4 +54,4 @@ A ColdFire emulator of the control processor, without the DSP:
 ## Still open
 
 - No run with the DSP, no hardware run, and recovery with the stock file has not been tried on a Digitone II.
-- `core-dn2` and the device profile live in a local elekloader checkout; they belong upstream in elekloader before Modwerk can list an SDK.
+- `core-dn2` and the device profile were in a local elekloader checkout. toonst's elekloader fork now has `core-dn2` 0.3 (commit `3d7c2e3`): the six events above plus an input bridge, SysEx observers and a SHARC bridge from earlier cores, and the Digitakt II 1.1 additions (`ev_frame_params`, `ev_key_leds`, project and kit data) at this unit's addresses, which its author has run in an emulator only. Modwerk has not copied it. The Digitone II's SDK and base follow the Digitakt II's ([recipe](MACHINE_RECIPE.md)), once the machine's steps are done and the owner has agreed the core.

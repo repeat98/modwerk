@@ -4,7 +4,7 @@
 //   npm run pr:ready -- --author <login>    # a registered author's update: also the bot's merge scope
 //   npm run pr:ready -- --remote upstream   # the remote that holds Modwerk's main (default: upstream, else origin)
 //
-// It reads and writes only this checkout, plus the agent board's claims (docs/AGENT_BOARD.md): no push, no GitHub API.
+// It reads and writes only this checkout, plus the agent board's claims and inbox (docs/AGENT_BOARD.md): no push, no GitHub API.
 // CI repeats the same checks against the PR's base, and the author-update bot runs the same scope inspection
 // (scripts/author-update-git.mjs).
 import { execFileSync, spawnSync } from 'node:child_process'
@@ -38,7 +38,7 @@ export function readiness({ dirty = [], behind = false, remote = 'upstream', reg
   if (compiled?.elemod) notes.push('CI rebuilds the Digitakt, Digitone, Rytm and Four packages (elemod-source) and requires the committed ones to match. pr:ready cannot run that: before you push, run bash scripts/build-elemod-isolated.sh and node scripts/verify-elemod-release-exports.mjs <dir> from a clean, committed tree ("Compiled packages" in docs/DEVELOPER_WORKFLOW.md).')
   // The guides are the context every later agent reads, so each PR says what they lacked or got wrong (AGENTS.md, "Fold what you learn back").
   notes.push('What did the guides lack or get wrong while you did this? ' + (guideEdits.length
-    ? 'Guide edits on this branch: ' + guideEdits.join(', ') + '. Say in the PR what they fix.'
+    ? 'Guide edits on this branch: ' + guideEdits.join(', ') + '. Say in the PR what they fix. If a developer working now could hit it before this merges, post it on the agent board too: npm run board -- finding <topic> <key> "…" --pr <n>.'
     : 'No guide edit is on this branch: fix it where a reader would look (docs/, AGENTS.md, the machine guide; for a module release, a separate Docs: PR), or write "nothing" in the PR.'))
   notes.push('Then push, open or update the PR, and watch it: gh pr checks <number> --watch. If main moves before the merge, run this again and push.')
   return { ok: problems.length === 0, problems, notes }
@@ -106,7 +106,10 @@ async function main(argv) {
     const changes = readChangeScope({ root, base, head })
     compiled = { octatrack: changes.modules, elemod: changes.elemod }
   }
-  const board = !dirty.length && !behind ? await boardClaims(root, base, await import('./agent-board.mjs')) : null
+  // The agent board: claim what the branch adds, and say what waits in the developer's board inbox.
+  const boardModule = !dirty.length && !behind ? await import('./agent-board.mjs') : null
+  const claimed = boardModule && await boardClaims(root, base, boardModule), waiting = boardModule ? await boardModule.inboxNotes() : []
+  const board = claimed || waiting.length ? { problems: claimed?.problems ?? [], notes: [...claimed?.notes ?? [], ...waiting] } : null
   const verdict = readiness({ dirty, behind, remote, regenerated, checkPassed, author, scope, guideEdits, gateEdits: gateEdits(changed), compiled, board })
   console.log('')
   for (const line of verdict.problems) console.log('✗ ' + line)
