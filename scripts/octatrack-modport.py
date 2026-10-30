@@ -34,8 +34,8 @@ consecutive positions whose patterns are identical folded into one row's repeat 
 is named after the song. Mute, tempo, scenes, offset and MIDI transpose keep the values the unit writes for a new row
 (none, no tempo change, no scenes, 0, none); a row's length is its pattern's length. The template must have an
 arr01.work: it is edited in place (its header, version and checksum are checked first), and project.work is left as
-it is (a note is printed when the template has another arrangement selected). Off by default: no arrangement written
-this way has been loaded on a unit yet.
+it is (a note is printed when the template has another arrangement selected). Off by default. The developer reports
+MODPORT's projects run on their Octatrack MKI (31 Oct 2026); which options and revision were tried was not recorded.
 
 Not converted: arpeggio, portamento, vibrato, tremolo, retrig, note cut and delay, fine volume and pitch slides, later
 speed and tempo changes, and without --arranger the song order (chain the patterns on the unit). They are counted in
