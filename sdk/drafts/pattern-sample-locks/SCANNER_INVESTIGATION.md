@@ -69,7 +69,9 @@ the exact authored image. Both strict scans remain authoritative. The recipe
 validator checks source provenance, bounds, overlaps and relocation words.
 
 Pattern Sample Locks has no declaration in that adapter's reviewed module set.
-This investigation does not add one. The next packaging experiment should:
+This investigation does not add one. The subsequent
+[private reconstruction experiment](RECONSTRUCTION.md) evaluates this route;
+its source-bound declaration remains outside public admission. Its required checks are:
 
 1. Prepare a hash-only declaration bound to this source and compiled image,
    describing each span and its authored source. Resolve the overlapping label

@@ -73,6 +73,9 @@ Run python3 -B verify.py for planner/UI sanitizer regressions. The pinned MCF544
 stack and browser-component checks, the remaining publication blockers and a
 future supervised MKII checklist. The candidate remains private and unqualified.
 
+[Private reconstruction](RECONSTRUCTION.md) packages the identical runtime with
+hash-guarded copies and records scanner, source-boundary and loader checks.
+
 Standard Modwerk runtime loading is used. Read the device's actual base, capabilities and inventory before a trial. Keep is separate. Firmware/packages stay private.
 
 ## Authorship and licences

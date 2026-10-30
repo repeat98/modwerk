@@ -1,0 +1,170 @@
+{
+  "schema": 1,
+  "imageSha256": "54efd2166b30b836401d02f8d0d785e12aebc5b40196deb1a9b6e4530e6f95d5",
+  "sources": {
+    "sdk/drafts/pattern-sample-locks/translation.c": "307d7f0d95a8eef8746c069472123555eebd40635e9401c3946e7d51e69113a5",
+    "sdk/drafts/pattern-sample-locks/native.c": "a5d11e7320a91b00457fbe1f89453e8a432e65877e92af0aa64705f6b2a6050e",
+    "sdk/drafts/pattern-sample-locks/engine.c": "a41ace651c2ff9f72d43e783d6121c64f51fe6d21e49bc60cf3b26a97ebdaa38",
+    "sdk/drafts/pattern-sample-locks/engine.h": "d1c067250f8bc555944303fb526cd9ec22c281c0f4773c95ed6fbdd332925ca1",
+    "sdk/drafts/pattern-sample-locks/ui.c": "3d452769338be043c327ab6bf0a8db9b09c0c7504f62710c46d32d205a75f4c7",
+    "sdk/drafts/pattern-sample-locks/ui.h": "514cbdcfd88777769e4883d020d7fe6a2b5301a5d04c136eb67f7b7bb54f45bd",
+    "sdk/drafts/pattern-sample-locks/font.c": "63104792b675f7cce15582b554eaf4b05e008a63c2433db7fecb71210e115079",
+    "sdk/drafts/pattern-sample-locks/font.h": "a94a3103633a0084e11d53fbe46d0590812011062aa01d2c28de35b60ef8ea99",
+    "sdk/drafts/pattern-sample-locks/unit.s": "837e44f48fa137444e14755d96011731c8fde29a73fa877ffc35edac3510473f",
+    "sdk/drafts/pattern-sample-locks/manifest.py": "ff0d9749fa181a8dabadddc711295a987d58c0d7f3516556aadbae97b6e7d7ab",
+    "sdk/drafts/pattern-sample-locks/runtime.json": "710371710bd6c2522067c62f36c6ffbf211232b88c75a71a3dab2ac913e9742e",
+    "sdk/runtime/loader/build.py": "e8d2b83d2da6964fd5c48ff5b58fbcf2edd67d377404a1d96c497586b51a6c43",
+    "sdk/runtime/loader/modwerk_module.h": "55f39232ec7eb2fe8a497f946f559a9f4e78f90e637ea5475cca686bc5c56218",
+    "sdk/runtime/m68k_codegen.py": "2ba57326583cbb0f9ada1d7c2b09fe4577a1ce35693b78dffaa4af7617dedfab",
+    "sdk/machines/octatrack/module-adapters/standalone_runtime.py": "3a7559a330ae4f031c7c47b7cb67f679cd7fb4e4f2aa69f2e3971940be4c46ae",
+    "sdk/machines/octatrack/module-adapters/stock_recipe.py": "662b79d9dc612845cf85e5051fa2d711cad4f98244194357fdaaabca092d5ca5",
+    "sdk/machines/octatrack/elekloader/runtime.c": "78c66d9de28701274d38f83dccedad5ea75c8dd0cb5fc8068c5dc3a550ab64eb"
+  },
+  "copies": [
+    {
+      "offset": 762,
+      "length": 13,
+      "address": 1073981916,
+      "sha256": "1cabfbc69aec7078ffc8254a02c02c15bd3091daa54885ae07da3f4b9b770def",
+      "purpose": "Independently compiled authored coincidence; reconstruct the unchanged runtime image",
+      "authored": {
+        "source": "sdk/drafts/pattern-sample-locks/engine.c",
+        "lines": [
+          51,
+          52
+        ],
+        "symbol": "psl_validate",
+        "method": "native-unit"
+      }
+    },
+    {
+      "offset": 3736,
+      "length": 8,
+      "address": 1073748760,
+      "sha256": "d43e64e0210fdd98e9dd8476d7cea57c93492ec611d50eddcbf6fd90ea80cef7",
+      "purpose": "Independently compiled authored coincidence; reconstruct the unchanged runtime image",
+      "authored": {
+        "source": "sdk/drafts/pattern-sample-locks/ui.c",
+        "lines": [
+          149,
+          150
+        ],
+        "symbol": "module_enc",
+        "method": "native-unit"
+      }
+    },
+    {
+      "offset": 3744,
+      "length": 8,
+      "address": 1073901520,
+      "sha256": "386cc26cb99461f1d6b7888c8f2a06bfb145d81ae69099f938dae2f11e049fca",
+      "purpose": "Independently compiled authored coincidence; reconstruct the unchanged runtime image",
+      "authored": {
+        "source": "sdk/drafts/pattern-sample-locks/ui.c",
+        "lines": [
+          149,
+          150
+        ],
+        "symbol": "module_enc",
+        "method": "native-unit"
+      }
+    },
+    {
+      "offset": 3988,
+      "length": 12,
+      "address": 1074235846,
+      "sha256": "c258d55f4212b4fce1144db5bc2e214c30425f18615dc1d4f6bac15580272474",
+      "purpose": "Independently compiled authored coincidence; reconstruct the unchanged runtime image",
+      "authored": {
+        "source": "sdk/drafts/pattern-sample-locks/ui.c",
+        "lines": [
+          164,
+          164
+        ],
+        "symbol": "module_enc",
+        "method": "native-unit"
+      }
+    },
+    {
+      "offset": 4212,
+      "length": 14,
+      "address": 1073891806,
+      "sha256": "9ab1352d0db73135666df56f15bbb786c0bd1a01acf77e961e826948e9604b1a",
+      "purpose": "Independently compiled authored coincidence; reconstruct the unchanged runtime image",
+      "authored": {
+        "source": "sdk/drafts/pattern-sample-locks/native.c",
+        "lines": [
+          57,
+          58
+        ],
+        "symbol": "psl_native_text",
+        "method": "native-unit"
+      }
+    },
+    {
+      "offset": 4470,
+      "length": 15,
+      "address": 1073891806,
+      "sha256": "58563be8957699691cf842a73efaca5ef2006eb179cee47cf836e653af55c1fa",
+      "purpose": "Independently compiled authored coincidence; reconstruct the unchanged runtime image",
+      "authored": {
+        "source": "sdk/drafts/pattern-sample-locks/native.c",
+        "lines": [
+          79,
+          79
+        ],
+        "symbol": "psl_native_part_menu_draw",
+        "method": "native-unit"
+      }
+    },
+    {
+      "offset": 5956,
+      "length": 12,
+      "address": 1074333742,
+      "sha256": "72e96cd22c99313b831382155a0c9a40aea99ccc4612eead7e9451a89cf62a6d",
+      "purpose": "Independently compiled authored coincidence; reconstruct the unchanged runtime image",
+      "authored": {
+        "source": "sdk/drafts/pattern-sample-locks/native.c",
+        "lines": [
+          180,
+          182
+        ],
+        "symbol": "psl_native_commit",
+        "method": "native-unit"
+      }
+    },
+    {
+      "offset": 7873,
+      "length": 10,
+      "address": 1074478285,
+      "sha256": "62887a00e974663331509d54b48e0cb3514ca21937955079b8432ade1b965158",
+      "purpose": "Independently compiled authored coincidence; reconstruct the unchanged runtime image",
+      "authored": {
+        "source": "sdk/drafts/pattern-sample-locks/ui.c",
+        "lines": [
+          21,
+          22
+        ],
+        "symbol": "part_rows",
+        "method": "native-unit"
+      }
+    },
+    {
+      "offset": 7883,
+      "length": 15,
+      "address": 1074482314,
+      "sha256": "db6cf654e734b2645668cc626f5b8d08ea285f3a87ec1ca77221de6150c2f22c",
+      "purpose": "Independently compiled authored coincidence; reconstruct the unchanged runtime image",
+      "authored": {
+        "source": "sdk/drafts/pattern-sample-locks/ui.c",
+        "lines": [
+          21,
+          22
+        ],
+        "symbol": "part_rows",
+        "method": "native-unit"
+      }
+    }
+  ],
+  "fills": []
+}

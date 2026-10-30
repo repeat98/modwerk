@@ -201,15 +201,14 @@ replays instructions a detour displaced, and refuses table copies at import.
 Elekloader's port runs a manifest as `octabam_<name>`, so a manifest can
 pick the form by `__name__` (`sdk/octabam/modules/dejavu/manifest.py`).
 
-**The strict stock-free scan can match original data.** Regular data
-(an icon bitmap, a full-cell mask, a C unit's per-access relocation list)
-can equal stock bytes over the minimum run.
-Find it with `module_packages.runs` and `check_stock_free.stock_runs`; vary
-bits the reader ignores (an icon column's low bits) or reach state through
-one pointer word per function (`sdk/drafts/butter-fingers`). A detour padded with `nop`s (`pad_to`) carries them in
-the package, and six in a row already match stock. When the stub jumps back
-past the displaced span, guard the whole span (an `expect` longer than the
-write) and write only the six-byte jump (Direct Jump Kyoti's `TS_HOOK`).
+**Strict stock scans can match original output.** Locate runs with
+`module_packages.runs` and `check_stock_free.stock_runs`. Vary ignored bitmap
+bits or use one state pointer per function (`sdk/drafts/butter-fingers`). Six
+padded `nop`s already match stock: guard the displaced span with `expect` and
+write only the jump (Direct Jump Kyoti's `TS_HOOK`). Stock-copy sources must also
+pass the machine glue's `modwerk_machine_patchable` bounds; an identical span in
+protected bootloader storage is refused even for copying. Verify source access
+in the real loader, alongside byte equality and final scans.
 
 A new module version rebuilds its USB package in the same pull request:
 `npm run octatrack:module-packages` with the m68k-elf toolchain and the

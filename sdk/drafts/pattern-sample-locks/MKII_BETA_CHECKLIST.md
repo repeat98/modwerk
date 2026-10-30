@@ -5,6 +5,12 @@ in [BETA_PREPARATION.md](BETA_PREPARATION.md), freeze the candidate and review
 the exact base/package before arranging a supervised physical run. Existing
 0.1.8 results stay bound to their previously recorded bases.
 
+The latest private reconstruction candidate is `3e13c46f…` (10,048 bytes,
+nine stock-copy records). Its image matches the earlier prototype, but its
+changed package has only local/emulator lifecycle evidence. Review its
+[exact receipt](evidence/reconstruction-local-20261030.json) and the observed
+base's copy capability before a physical trial.
+
 The agent handles fixture setup, USB measurements, byte/mirror/index comparisons,
 inventory and recovery checks. The author chooses a disposable project and
 checks what the hardware sounds and feels like. A device load, save, Keep or

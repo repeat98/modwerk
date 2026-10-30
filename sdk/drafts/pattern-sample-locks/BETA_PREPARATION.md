@@ -79,7 +79,10 @@ Two release blockers are already established:
    the prologue and remainder matches and classifies all hits, including menu
    text. No scanner bug is established. The existing reviewed reconstruction
    mechanism is the packaging route to evaluate; this module has no declaration
-   there yet. The checks and their rejecting verdicts are unchanged.
+   there yet. A subsequent [private reconstruction candidate](RECONSTRUCTION.md)
+   preserves the exact runtime and passes both unchanged scans. The ordinary
+   public wrapper still builds the rejecting reference; public admission of the
+   new declaration remains pending.
 2. **Stock-only card UI integration is unfinished.** `runtime.json` supplies
    four core callbacks through the USB base. The native manifest declares only
    the three menu openers; the card package compiler does not consume those

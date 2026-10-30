@@ -1,4 +1,4 @@
-Draft SDK tools reproduce Pattern Sample Locks' private candidate and check USB
-preflight and GNU linker agreement. A separate C probe explains stock-scan
-collisions without firmware inputs. The local report records stack limits and
-remaining integration work. The module runtime and publication status are unchanged.
+Draft SDK tools build a private Sample Locks reconstruction candidate that keeps
+the original runtime and passes strict stock scans. Checks cover source guards,
+public-base compatibility and USB loader behavior. Protected copy-source bounds
+are checked and documented. The module remains unpublished and unqualified.

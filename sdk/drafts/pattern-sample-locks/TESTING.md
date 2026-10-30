@@ -89,9 +89,40 @@ the encoder prologue and signed-remainder matches with a 60-byte independent
 compiler probe. A separate compilation container had no private stock or
 reference package mounted. All 15 rejecting seed starts are classified into
 eight groups of compiler output, font calls and authored action labels. The
-unchanged scans still reject the candidate; their existing reviewed guarded
-reconstruction mechanism is the next packaging route to evaluate. No scanner,
-runtime, recipe or public package changed during this investigation.
+unchanged scans still reject the original reference; the subsequent private
+reconstruction candidate below evaluates the existing guarded packaging route.
+No scanner, runtime or public package changed during that investigation.
+
+## Private reconstruction candidate — 30 October 2026
+
+Candidate `3e13c46f…` is 10,048 bytes, with nine hash-guarded copies restoring
+107 bytes. Both unchanged strict stock scans pass. Fresh C/assembly and complete
+reconstruction preserve the original 8,748-byte image, 1,328-byte BSS allocation
+and 167 relocations. Twelve malformed recipe cases are refused. All copy source
+hashes match in seven actual public-base builds; production browser preflight
+and source comparisons against 541 declared patch spans pass.
+
+On named emulator base `2e1a6128…`, the real loader refused six malformed
+packages without changing active identity/generation or the opener sites, then
+installed the valid package in the same session. Four complete live-image/site
+attestations passed, including all nine source guards. Live 512-field Lock/Clear,
+non-SAMPLE bytes and canonical mirrors, pattern switching, recording refusal,
+stopped-state preservation, native project save/reload, RAM preference retention,
+removal, reinstallation/default reset and Undo passed. DSP frames advanced
+44,149 → 276,660; errors and stalls stayed zero. The unloaded baseline's cached
+CPU meter also saturated, so it provides no isolated CPU estimate.
+
+An initial eight-copy package was refused for a source in protected bootloader
+storage. Splitting that source into two permitted eight-byte copies corrected
+the candidate without changing loader rules or runtime bytes. Two intermediate
+attempts stopped on harness transaction-number errors; only the final complete
+run qualifies this local lifecycle result. No physical device was accessed.
+
+See [reproduction and limitations](RECONSTRUCTION.md), the
+[candidate declaration](evidence/reconstruction-candidate-recipe-20261030.json)
+and [combined receipt](evidence/reconstruction-local-20261030.json). Public adapter
+admission/short-title support, card UI integration, physical cost/complete stack
+bounds and first-release qualification remain pending. Nothing has been pushed.
 
 ## Exact local build
 
