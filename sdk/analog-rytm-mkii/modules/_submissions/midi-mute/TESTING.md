@@ -9,6 +9,8 @@ To check that the unchecked runs really show stock behaviour, the author flashed
 
 Every result matches MM04 with MUTE MIDI IN unchecked, step for step: unchecked, the module changes nothing the bench can see.
 
+**Back on MM04, reported by the author:** after flashing MM04 again and reloading the project, MUTE MIDI IN was still checked: the project kept the module's bit through the stock OS. A live session followed, sequencing from an external sequencer and from the Rytm's own sequencer; the author reported that everything behaved as expected.
+
 ## Build MM04: solo (rytm-emu, 30 October 2026)
 
 MM04 adds solo: a track is now silenced as the sequencer silences it, every track but the soloed ones while any is soloed, otherwise the muted ones. Image SHA-256 `98089be3…4ae9`, built and run as MM03 below; MM03's hardware results above and below were taken before this change and have not been repeated on MM04.
@@ -169,7 +171,7 @@ PORT CONFIG shows MUTE MIDI IN as its last row, after RECEIVE CC/NRPN, unchecked
 
 ## Not tested
 
-- **The unit, still open.** A full live performance.
+- **The unit, still open.** CPU time per event on the unit's own clock (the emulator's count and the floods suggest it is small).
 - **On the unit's clock.** CPU time per event and under the flood, measured with DTIM0; a flood at 240 BPM; a pattern or kit change during the flood.
 - **USB timing.** A real USB host; the emulator's USB MIDI input is its own model.
 - **Silent Pad+Trig and Retrig Grid** (core-ar2 0.3 submissions) were not built beside it.
