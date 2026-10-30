@@ -177,7 +177,7 @@ static uint32_t generator_page(uint32_t stock, unsigned p, unsigned second)
     if (page_built != stock + v + 1u) {
         const volatile uint8_t *source = (const volatile uint8_t *)(uintptr_t)stock;
         for (unsigned i = 0; i < sizeof page; ++i) page[i] = source[i];
-        label(page + 4, "3PO");
+        label(page + 4, "ACID");               /* the page's short name, four characters */
         for (unsigned i = 0; i < 13; ++i) page[9 + i] = (uint8_t)titles[v][i];
         for (unsigned i = 0; i < 6; ++i) {
             label(page + 0x16 + 6 * i, names[layout[v][i]]);
