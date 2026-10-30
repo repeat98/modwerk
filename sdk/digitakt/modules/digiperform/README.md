@@ -1,6 +1,6 @@
 # Digi Perform
 
-Modwerk metadata version: `0.1.0-experimental`.
+Modwerk metadata version: `0.1.1-experimental`.
 
 ## Overview
 

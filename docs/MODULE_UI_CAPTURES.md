@@ -215,7 +215,7 @@ and framebuffer data are removed by the script.
 - `peek` answers `peek HEX`, not `ok`. `audio start tracks` adds each track's stem to the capture (T1 L is the
   ninth of 24 words a frame).
 - Without `--dsp` a session runs about ten times faster, for screens only (the firmware then shows DSP LOAD
-  FAILED). Card samples do not play faithfully under the port, so compare levels against a sample on a unit.
+  FAILED), and a package that carries a DSP engine (Analog BD) is refused at verify with loader refusal 3. Card samples do not play faithfully under the port, so compare levels against a sample on a unit.
 
 ## Rights and release review
 
@@ -266,9 +266,15 @@ hardware timing or save/reboot persistence.
 
 For local emulator captures, use digiemu revision
 `c1b5735835923e328f8b4950d6ba927875e5b669` with its six pinned Unicorn patches.
-Build the author's pinned catalog release with the unchanged vendored elekloader
-kit and your own supported stock OS file, then run the capture script in an
-isolated sandbox with network and user credentials denied:
+Install them with digiemu's `tools/install-patched-unicorn.sh`, then run
+`.venv/bin/python -m emu.unicorn_compat` from the digiemu folder; the script's
+own final check fails when started from elsewhere. Run the capture with that
+`.venv/bin/python`. Build the author's pinned catalog release with the unchanged
+vendored elekloader kit and your own supported stock OS file: the site's builder,
+or `build(stock, mods, 'D001')` from `vendor/elekloader/kit/src/patch.ts` with the
+core and module packages in `vendor/elekloader/catalog/`, under Node 24. Then run the
+capture script in an isolated sandbox with network and user credentials denied
+(on macOS, `sandbox-exec` with a `(deny network*)` profile):
 
 ```sh
 python3 scripts/capture-digi-module-ui.py \

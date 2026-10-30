@@ -136,6 +136,8 @@ static int slot_id(int s)
         return s + 5;                        /* filter envelope */
     if (s <= 28)
         return s == 25 ? 33 : s == 26 ? 30 : s == 27 ? 32 : 38;   /* type, frequency, resonance, depth */
+    if (s <= 35)
+        return s == 33 ? 40 : s == 34 ? 41 : 39;   /* the second page's slots run base, width, delay (not the ids' order delay, base, width) */
     return s + 6;                            /* the rest of the filter, then AMP */
 }
 static int pmin(int p) { return PTABLE[slot_id(p) * 13 + 2] >> 8; }
@@ -342,7 +344,7 @@ static const char *const dnames[DEST_LAST + 1] = {
     "L2.SPD", "L2.MUL", "L2.FADE", "L2.DEST", "L2.WAVE", "L2.PHAS", "L2.MODE", "L2.DEP",
     "SRC.TUNE", "SRC.PLAY", "SRC.BITR", "SRC.SAMP", "SRC.STRT", "SRC.LEN", "SRC.LOOP", "SRC.LVL",
     "FLT.TYPE", "FLT.FREQ", "FLT.RESO", "FLT.ENV", "FLT.ATK", "FLT.DEC", "FLT.SUS", "FLT.REL",
-    "FLT.DEL", "FLT.BASE", "FLT.WDTH", "FLT.SRR", "FLT.ROUT",
+    "FLT.BASE", "FLT.WDTH", "FLT.DEL", "FLT.SRR", "FLT.ROUT",
     "AMP.ATK", "AMP.HOLD", "AMP.DEC", "AMP.OVER", "AMP.DEL", "AMP.REV", "AMP.PAN", "AMP.VOL"
 };
 #define DEFAULT_PARAM 17                    /* SRC.TUNE */
@@ -600,7 +602,7 @@ static const char names4[DEST_LAST + 1][7] = {
     "L2.SP", "L2.MU", "L2.FD", "L2.DS", "L2.WV", "L2.PH", "L2.MD", "L2.DP",
     "TUNE", "PLAY", "BR", "SAMP", "STRT", "LEN", "LOOP", "LEV",
     "F.TYP", "F.FRQ", "F.RES", "F.ENV", "F.ATK", "F.DEC", "F.SUS", "F.REL",
-    "F.DEL", "F.BAS", "F.WID", "F.SRR", "F.ROU",
+    "F.BAS", "F.WID", "F.DEL", "F.SRR", "F.ROU",
     "A.ATK", "A.HLD", "A.DEC", "A.OVR", "A.DEL", "A.REV", "A.PAN", "A.VOL"
 };
 
