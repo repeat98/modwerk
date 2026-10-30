@@ -1,5 +1,15 @@
 [
   {
+    "version": "0.2.0-experimental",
+    "date": "2026-10-30",
+    "changes": [
+      "New MODE on the SETUP page: AM, USB or LSB.",
+      "In USB and LSB, TUNE mistunes a single-sideband receiver: the whole station moves up or down by 0 to 500 Hz, the 'Donald Duck' voice. No whistle there; DRFT makes the shift wander.",
+      "DRIV moved to the SETUP slot beside MODE: set DRIV again in a project saved with 0.1.0.",
+      "Not yet tested on a unit or in the emulator."
+    ]
+  },
+  {
     "version": "0.1.0-experimental",
     "date": "2026-10-30",
     "changes": [
