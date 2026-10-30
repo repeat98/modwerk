@@ -4,7 +4,7 @@
 //   npm run pr:ready -- --author <login>    # a registered author's update: also the bot's merge scope
 //   npm run pr:ready -- --remote upstream   # the remote that holds Modwerk's main (default: upstream, else origin)
 //
-// It reads and writes only this checkout, plus the agent board's claims (docs/AGENT_BOARD.md): no push, no GitHub API.
+// It reads and writes only this checkout, plus the agent board's claims and inbox (docs/AGENT_BOARD.md): no push, no GitHub API.
 // CI repeats the same checks against the PR's base, and the author-update bot runs the same scope inspection
 // (scripts/author-update-git.mjs).
 import { execFileSync, spawnSync } from 'node:child_process'
@@ -106,7 +106,10 @@ async function main(argv) {
     const changes = readChangeScope({ root, base, head })
     compiled = { octatrack: changes.modules, elemod: changes.elemod }
   }
-  const board = !dirty.length && !behind ? await boardClaims(root, base, await import('./agent-board.mjs')) : null
+  // The agent board: claim what the branch adds, and say what waits in the developer's board inbox.
+  const boardModule = !dirty.length && !behind ? await import('./agent-board.mjs') : null
+  const claimed = boardModule && await boardClaims(root, base, boardModule), waiting = boardModule ? await boardModule.inboxNotes() : []
+  const board = claimed || waiting.length ? { problems: claimed?.problems ?? [], notes: [...claimed?.notes ?? [], ...waiting] } : null
   const verdict = readiness({ dirty, behind, remote, regenerated, checkPassed, author, scope, guideEdits, gateEdits: gateEdits(changed), compiled, board })
   console.log('')
   for (const line of verdict.problems) console.log('✗ ' + line)
