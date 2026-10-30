@@ -27,7 +27,9 @@ unsigned probe(const int32_t *input,uint32_t nch,uint32_t frames,
  struct mw_sample_snap s;pcm=input;channels=nch;
  unsigned result=mw_snap_init(&s,points,count,points[count],frames,selection,nch==2);
  while(result==MW_SNAP_WORKING)result=mw_snap_step(&s,reader,0,MW_SNAP_STEP_PAIRS);
- for(unsigned i=0;i<=count;++i)output[i]=s.points[i];*reads=s.reads;return result;
+ for(unsigned i=0;i<=count;++i){output[i]=s.points[i];}
+ *reads=s.reads;
+ return result;
 }
 ''')
         subprocess.run(['cc', '-std=c99', '-Wall', '-Wextra', '-Werror', '-shared', '-fPIC',
