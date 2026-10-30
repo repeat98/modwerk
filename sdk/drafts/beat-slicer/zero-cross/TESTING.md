@@ -79,6 +79,12 @@ this source proposal; the draft doctor correctly refuses a duplicate listed ID.
 
 ## Offline hardware preparation
 
+After merging upstream `af0125c1`, the timing preparation's exact `dev.c`
+preimage was reviewed and refreshed for the added GUARD TEST dispatcher. The
+read-only `ram()` seam and permitted sample-settings ranges are unchanged.
+This source refresh does not rebuild or requalify any named hardware image;
+the historical build receipts and device results retain their original scope.
+
 The original WAV pack contains 58 files: mono/stereo 16/24-bit cases, split and
 tied stereo crossings, exact/anchor zeros, antiphase, silence/DC, distant/edge
 cases, work/minimum limits, fractional trim/BPM, 64 slices and synthesized drums.

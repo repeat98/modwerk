@@ -10,7 +10,9 @@ HERE = Path(__file__).resolve().parent
 BOARD = 'sdk/machines/octatrack/module-adapters/sample_editor_board.c'
 DEV = 'sdk/machines/octatrack/elekloader/dev.c'
 PREIMAGES = {BOARD: '11f0874b47ff792fa236fd7799e1ceab57763da777bab927b013920eacbc2c17',
-             DEV: 'd272d09ae9a86ed7547901166afdb95e67fee74975af0dcd98b5428fdb91f5be'}
+             # Reviewed upstream af0125c1: adds the GUARD TEST dispatcher;
+             # the read-only ram() seam and overlay access ranges are unchanged.
+             DEV: '5f7c9b93580831fe1bdccdc0b581014d8c8330d06853d68ff8168f44f5142049'}
 
 TIMING = '''/* Private hardware measurement overlay, not release code.
  * DTCN3 is the existing free-running 132 MHz timer; subtraction wraps modulo
