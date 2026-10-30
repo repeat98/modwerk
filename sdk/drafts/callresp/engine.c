@@ -9,13 +9,14 @@
  * Integers only. Firmware-free. */
 #include "engine.h"
 
-/* MOTF ACID, DENS 66 (the generator's Medium 0.52), REPT 90 (Repetitive 0.72), SCAL MINP, PHRS C|R, ROLE CALL;
- * ANSW SR+R ("Same rhythm + resolve"), TGHT 64, END MORE ("Response more resolved than call"), MUT 0, TRNS 0. */
-const CrParams cr_defaults = {0, 66, 90, 0, CR_SPLIT, 1, 0, 0, 64, CR_END_MORE, 0, 12};
+/* MOTF ACID, DENS 16 (the generator's Medium 0.52), REPT 23 (Repetitive 0.72), SCAL MINP, PHRS C|R, ROLE C+R, VAR 0;
+ * ANSW SR+R ("Same rhythm + resolve"), TGHT 16 (its neutral 0.5), END MORE ("Response more resolved than call"),
+ * MUT 0, TRNS 0. */
+const CrParams cr_defaults = {0, 16, 23, 0, CR_SPLIT, 1, CR_SELF, 0, 0, 16, CR_END_MORE, 0, 12};
 const char *const cr_motif_names[CR_MOTIFS] = {"ACID", "PULS", "OFFB", "SYNC", "SPRS", "ROLL", "STAB", "RPT",
                                                "RISE", "FALL", "R>D", "D>R", "LEAP", "PIVT", "HOOK", "ARP"};
 const char *const cr_scale_names[CR_SCALES] = {"MINP", "MAJP", "MINR", "DORI", "PHRY", "HMIN", "MAJR", "BLUS"};
-const char *const cr_mode_names[CR_MODES] = {"C|R", "CRCR", "LAYR"};
+const char *const cr_mode_names[CR_MODES] = {"C|R", "CRCR", "CCCR", "CCRR", "LAYR"};
 const char *const cr_answer_names[CR_ANSWERS] = {
     "SR+R", "SR+C", "SIMP", "EXTD", "TRNC", "ECHO", "DLAY", "UP", "DOWN", "INVR", "RHY=", "NOT=", "TRN+", "TRN-", ">RT",
     ">5TH", ">LOW", "HARD", "RPBR", "SPRS", "BUSY", "ACNT", "HALF", "FRAG", "TAIL", "OPPO", "DARK", "BRIT", "Q>C", "HOOK",
@@ -59,7 +60,7 @@ static int pick_below(Rng *r, const int8_t *values, unsigned n, int limit, int f
 #define PICK_BELOW(r, a, limit, fallback) pick_below((r), (a), sizeof(a) / sizeof((a)[0]), (limit), (fallback))
 static int clampi(int v, int lo, int hi) { return v < lo ? lo : v > hi ? hi : v; }
 static int floordiv(int a, int b) { return a >= 0 ? a / b : -((-a + b - 1) / b); }
-static unsigned knob(unsigned v) { return v >= 127u ? 1000u : v * 1000u / 127u; } /* 0-127 as thousandths */
+static unsigned knob(unsigned v) { return v >= CR_KNOB ? 1000u : v * 1000u / CR_KNOB; } /* 0-31 as thousandths */
 
 static const int8_t PM1[] = {-1, 0, 1}, PM1_ZERO[] = {-1, 0, 0, 1}, START[] = {0, 0, 1, -1}, ROOTISH[] = {0, 0, 1, 2},
                     LEAPS[] = {-3, 3}, SPREAD[] = {-2, -1, 0, 1, 2}, SPREAD_WIDE[] = {-3, -2, -1, 0, 1, 2, 3},
@@ -197,9 +198,9 @@ int cr_call(CrPhrase *out, const CrParams *p, unsigned steps)
         copy_note(&out->n[i], &s);
     }
     unsigned clone = m.len < steps / 2u ? m.len : steps / 2u;
-    if (rep >= 720u && clone) /* "Repetitive" and "Very repetitive": the motif cloned along the phrase */
+    if (rep >= 700u && clone) /* "Repetitive" (0.72) and "Very repetitive" (0.88): the motif cloned along the phrase */
         for (unsigned i = clone; i < steps; ++i)
-            if (chance(r, rep >= 880u ? 900u : 720u)) {
+            if (chance(r, rep >= 860u ? 900u : 720u)) {
                 copy_note(&out->n[i], &out->n[i % clone]);
                 out->n[i].accent = (uint8_t)(out->n[i].active && motif_accent(r, i % m.len));
             }
@@ -372,12 +373,13 @@ int cr_response(CrPhrase *out, const CrPhrase *call, const CrParams *cp, const C
     return 1;
 }
 
-/* mutatePhrase, "Response only": MUT steps drawn, each flipped (0.7) and, sounding, moved by up to two degrees. */
-static void mutate(CrPhrase *ph, const CrParams *call, const CrParams *a, unsigned salt)
+/* mutatePhrase ("Response only", "Call only"): `amount` (0-31) steps drawn, each flipped (0.7) and, sounding, moved by up
+ * to two degrees; at 31 up to 70% of the phrase, as "Brutal". */
+static void mutate(CrPhrase *ph, uint32_t seed, unsigned amount_knob, unsigned salt)
 {
-    if (!a->mut) return;
-    Rng rng = {answer_seed(call, a) ^ (0x3779b97fu * (salt + 1u))};
-    unsigned n = ph->len, most = n * 7u / 10u > 4u ? n * 7u / 10u : 4u, amount = 1u + ((unsigned)a->mut * (most - 1u) + 63u) / 127u;
+    if (!amount_knob) return;
+    Rng rng = {seed ^ (0x3779b97fu * (salt + 1u))};
+    unsigned n = ph->len, most = n * 7u / 10u > 4u ? n * 7u / 10u : 4u, amount = 1u + (amount_knob * (most - 1u) + CR_KNOB / 2u) / CR_KNOB;
     uint8_t order[CR_STEPS];
     if (amount > n) amount = n;
     for (unsigned i = 0; i < n; ++i) order[i] = (uint8_t)i;
@@ -391,11 +393,16 @@ static void mutate(CrPhrase *ph, const CrParams *call, const CrParams *a, unsign
     }
 }
 
-unsigned cr_phrase_steps(unsigned mode, unsigned length)
+unsigned cr_layout(unsigned mode, unsigned length, unsigned both, char kinds[4], unsigned *steps)
 {
-    if (mode == CR_LAYER) return length;
-    if (mode == CR_ALTERNATE && length >= 4u) return length / 4u;
-    return length / 2u;
+    static const char *const layouts[CR_MODES] = {"CR", "CRCR", "CCCR", "CCRR", "CR"};
+    const char *k = layouts[mode < CR_MODES ? mode : 0u];
+    unsigned n = 0;
+    if (mode == CR_LAYER && !both) { kinds[0] = 'C'; kinds[1] = 'R'; *steps = length; return 2; } /* both from step 0 */
+    if (mode != CR_SPLIT && mode != CR_LAYER && length < 4u) k = layouts[0];
+    while (k[n]) { kinds[n] = k[n]; ++n; }
+    *steps = length / n;
+    return *steps ? n : 0u;
 }
 int cr_semis(unsigned scale, int degree, int trns)
 {
@@ -416,28 +423,40 @@ static void lay(CrLine *out, const CrPhrase *ph, unsigned at, unsigned scale, in
         s->semis = (int8_t)(s->trig ? cr_semis(scale, ph->n[i].degree, trns) : 0);
     }
 }
-int cr_generate(CrLine *out, const CrParams *call, const CrParams *answer, unsigned length)
+int cr_generate(CrLine *out, const CrParams *call, const CrParams *answer, unsigned length, unsigned parts)
 {
-    static CrPhrase c, r; /* 400 bytes: kept off the UI task's stack */
-    if (!out || !call || !length || length > CR_STEPS || call->phrs >= CR_MODES || call->trns > 24u
+    static CrPhrase c, r, v; /* 600 bytes: kept off the UI task's stack */
+    if (!out || !call || !length || length > CR_STEPS || call->phrs >= CR_MODES || (parts & CR_RESPONSES && !answer)
         || (answer && answer->trns > 24u)) return 0;
     for (unsigned i = 0; i < CR_STEPS; ++i) { out->steps[i].trig = out->steps[i].accent = 0; out->steps[i].semis = 0; }
     out->length = (uint8_t)length;
-    unsigned mode = call->phrs, steps = cr_phrase_steps(mode, length);
-    if (mode == CR_ALTERNATE && length < 4u) mode = CR_SPLIT;
-    if (!steps) return 1; /* a one-step track: nothing fits a pair */
+    char kinds[4];
+    unsigned steps, n = cr_layout(call->phrs, length, parts == (CR_CALLS | CR_RESPONSES), kinds, &steps), calls = 0, responses = 0;
+    if (!n) return 1; /* a one-step track: nothing fits a pair */
     if (!cr_call(&c, call, steps)) return 0;
-    if (!answer) {
-        lay(out, &c, 0, call->scale, 0);
-        if (mode == CR_ALTERNATE) lay(out, &c, 2u * steps, call->scale, 0);
-        return 1;
+    if (answer && !cr_response(&r, &c, call, answer, steps)) return 0;
+    for (unsigned k = 0; k < n; ++k) responses += kinds[k] == 'R';
+    unsigned layered = call->phrs == CR_LAYER && parts != (CR_CALLS | CR_RESPONSES);
+    for (unsigned k = 0, done = 0; k < n; ++k) {
+        unsigned at = layered ? 0u : k * steps;
+        if (kinds[k] == 'C') { /* the first call as it is, the repeats varied by VAR */
+            if (parts & CR_CALLS) {
+                for (unsigned i = 0; i < steps; ++i) copy_note(&v.n[i], &c.n[i]);
+                v.len = c.len;
+                if (calls) mutate(&v, call_seed(call), call->var, calls);
+                lay(out, &v, at, call->scale, 0);
+            }
+            ++calls;
+        } else { /* one response mutated by MUT; of two, the second */
+            if (parts & CR_RESPONSES) {
+                for (unsigned i = 0; i < steps; ++i) copy_note(&v.n[i], &r.n[i]);
+                v.len = r.len;
+                if (responses == 1u || done) mutate(&v, answer_seed(call, answer), answer->mut, done);
+                lay(out, &v, at, call->scale, (int)answer->trns - 12);
+            }
+            ++done;
+        }
     }
-    if (!cr_response(&r, &c, call, answer, steps)) return 0;
-    int trns = (int)answer->trns - 12;
-    unsigned at = mode == CR_LAYER ? 0u : steps;
-    if (mode != CR_ALTERNATE) mutate(&r, call, answer, 0);
-    lay(out, &r, at, call->scale, trns);
-    if (mode == CR_ALTERNATE) { mutate(&r, call, answer, 1); lay(out, &r, 3u * steps, call->scale, trns); }
     return 1;
 }
 
@@ -495,22 +514,22 @@ static void set_field(uint8_t *out, unsigned at, unsigned bits, unsigned v)
         out[at / 7u] = (uint8_t)(v >> b & 1u ? out[at / 7u] | m : out[at / 7u] & (uint8_t)~m);
     }
 }
-/* ROLE MOTF DENS REPT SCAL PHRS SEED ANSW TGHT END MUT TRNS: 62 of the 63 bits */
-static const uint8_t widths[12] = {4, 4, 7, 7, 3, 2, 7, 5, 7, 4, 7, 5};
+/* ROLE MOTF DENS REPT SCAL PHRS SEED VAR ANSW TGHT END MUT TRNS: 60 of the 63 bits */
+static const uint8_t widths[13] = {4, 4, 5, 5, 3, 3, 7, 5, 5, 5, 4, 5, 5};
 void cr_pack(uint8_t out[CR_PACKED], const CrParams *p)
 {
-    unsigned v[12] = {p->role, p->motif, p->dens, p->rept, p->scale, p->phrs, p->seed, p->answ, p->tght, p->end, p->mut, p->trns};
+    unsigned v[13] = {p->role, p->motif, p->dens, p->rept, p->scale, p->phrs, p->seed, p->var, p->answ, p->tght, p->end, p->mut, p->trns};
     for (unsigned k = 0; k < CR_PACKED; ++k) out[k] = 0;
-    for (unsigned k = 0, at = 0; k < 12; at += widths[k++]) set_field(out, at, widths[k], v[k] & ((1u << widths[k]) - 1u));
+    for (unsigned k = 0, at = 0; k < 13; at += widths[k++]) set_field(out, at, widths[k], v[k] & ((1u << widths[k]) - 1u));
 }
 void cr_unpack(CrParams *p, const uint8_t in[CR_PACKED])
 {
-    unsigned v[12];
-    for (unsigned k = 0, at = 0; k < 12; at += widths[k++]) v[k] = field(in, at, widths[k]);
-    p->role = (uint8_t)(v[0] <= 8u ? v[0] : 0u); p->motif = (uint8_t)v[1]; p->dens = (uint8_t)v[2]; p->rept = (uint8_t)v[3];
-    p->scale = (uint8_t)v[4]; p->phrs = (uint8_t)(v[5] < CR_MODES ? v[5] : 0u); p->seed = (uint8_t)v[6];
-    p->answ = (uint8_t)(v[7] < CR_ANSWERS ? v[7] : 0u); p->tght = (uint8_t)v[8];
-    p->end = (uint8_t)(v[9] < CR_ENDINGS ? v[9] : CR_END_MORE); p->mut = (uint8_t)v[10]; p->trns = (uint8_t)(v[11] <= 24u ? v[11] : 12u);
+    unsigned v[13];
+    for (unsigned k = 0, at = 0; k < 13; at += widths[k++]) v[k] = field(in, at, widths[k]);
+    p->role = (uint8_t)(v[0] <= CR_ANSWER + 7u ? v[0] : CR_SELF); p->motif = (uint8_t)v[1]; p->dens = (uint8_t)v[2];
+    p->rept = (uint8_t)v[3]; p->scale = (uint8_t)v[4]; p->phrs = (uint8_t)(v[5] < CR_MODES ? v[5] : 0u); p->seed = (uint8_t)v[6];
+    p->var = (uint8_t)v[7]; p->answ = (uint8_t)(v[8] < CR_ANSWERS ? v[8] : 0u); p->tght = (uint8_t)v[9];
+    p->end = (uint8_t)(v[10] < CR_ENDINGS ? v[10] : CR_END_MORE); p->mut = (uint8_t)v[11]; p->trns = (uint8_t)(v[12] <= 24u ? v[12] : 12u);
 }
 void cr_copy(CrParams *to, const CrParams *from)
 {

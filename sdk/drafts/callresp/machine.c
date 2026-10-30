@@ -1,12 +1,13 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later
  * CALL & RESPONSE on the Octatrack's audio tracks: a track machine (sdk/machines/octatrack/events.json ot_machines),
  * the shape of VECTOR's native.c over the Modwerk base. A BACKING machine: the track's sample plays as stock, and
- * CALL & RESPONSE writes a phrase as the track's trigs with PTCH locks (and VOL locks on accents); the stock
- * sequencer plays them. A pair takes two tracks: the call track (ROLE CALL) writes the call; an answer track (ROLE
- * ANSn) rebuilds the same call from track n's settings and writes its response. Each track writes only its own
- * record; a change on the call track rewrites its answer tracks too. Its six controls take the SRC page, by role;
- * SRC SETUP stays the backing pool's own; a push on LEVEL shows stock's sample controls; holding a trig or a scene
- * shows stock's page. Its settings live in the Part's unused NEIGHBOR slots (0x3c + 30 t: 'C', 'R', version, three
+ * CALL & RESPONSE writes phrases as the track's trigs with PTCH locks (and VOL locks on accents); the stock
+ * sequencer plays them. ROLE C+R plays calls and responses on the one track (the generator's same output); a pair of
+ * tracks splits them: the call track (ROLE CALL) writes the calls, an answer track (ROLE ANSn) rebuilds the same call
+ * from track n's settings and writes the responses. Each track writes only its own record; a change on a call or
+ * C+R track rewrites the tracks answering it. Its controls take the SRC page and, on C+R and call tracks, SRC SETUP
+ * (a SETUP_PAGE machine; an answer track keeps the backing pool's own setup there); a push on LEVEL shows stock's
+ * sample controls; holding a trig or a scene shows stock's page. Its settings live in the Part's unused NEIGHBOR slots (0x3c + 30 t: 'C', 'R', version, three
  * bytes; 0x1ec + 30 t: six bytes), seven bits a byte. The UI task only. Stock addresses: OS 1.40C, as VECTOR's
  * native.c and the base's machine_registry.c name them. */
 #include "engine.h"
@@ -39,15 +40,18 @@
 #define MACHINE_VERSION 1u
 #define AMP_VOL(t) (0x123u + 24u * (t))   /* the Part's AMP VOL of track t (VECTOR) */
 
-/* The page by role: the call's controls on a call track, the response's on an answer track; ROLE on both. */
-enum { C_MOTF, C_DENS, C_REPT, C_SCAL, C_PHRS, C_ANSW, C_TGHT, C_END, C_MUT, C_TRNS, C_ROLE, C_COUNT };
-static const char *const names[C_COUNT] = {"MOTF", "DENS", "REPT", "SCAL", "PHRS", "ANSW", "TGHT", "END", "MUT", "TRNS", "ROLE"};
-static const uint8_t control_max[C_COUNT] = {CR_MOTIFS - 1u, 127, 127, CR_SCALES - 1u, CR_MODES - 1u, CR_ANSWERS - 1u, 127,
-                                             CR_ENDINGS - 1u, 127, 24, 8};
-static const uint8_t layout[2][6] = {
-    {C_MOTF, C_DENS, C_REPT, C_SCAL, C_PHRS, C_ROLE},
-    {C_ANSW, C_TGHT, C_END, C_MUT, C_TRNS, C_ROLE},
+/* The controls by role: SRC A-F, then SRC SETUP A-F. A C+R track has the call's on SRC and the response's on SRC
+ * SETUP, a call track the call's and VAR, an answer track the response's on SRC and stock's setup. */
+enum { C_MOTF, C_DENS, C_REPT, C_SCAL, C_PHRS, C_ANSW, C_TGHT, C_END, C_MUT, C_TRNS, C_ROLE, C_VAR, C_NONE, C_COUNT };
+static const char *const names[C_COUNT] = {"MOTF", "DENS", "REPT", "SCAL", "PHRS", "ANSW", "TGHT", "END", "MUT", "TRNS", "ROLE", "VAR", ""};
+static const uint8_t control_max[C_COUNT] = {CR_MOTIFS - 1u, CR_KNOB, CR_KNOB, CR_SCALES - 1u, CR_MODES - 1u, CR_ANSWERS - 1u,
+                                             CR_KNOB, CR_ENDINGS - 1u, CR_KNOB, 24, CR_ANSWER + 7u, CR_KNOB, 1};
+static const uint8_t layout[3][12] = {
+    {C_MOTF, C_DENS, C_REPT, C_SCAL, C_PHRS, C_ROLE, C_ANSW, C_TGHT, C_END, C_MUT, C_TRNS, C_VAR},
+    {C_MOTF, C_DENS, C_REPT, C_SCAL, C_PHRS, C_ROLE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_VAR},
+    {C_ANSW, C_TGHT, C_END, C_MUT, C_TRNS, C_ROLE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE, C_NONE},
 };
+static unsigned role_class(unsigned role) { return role <= CR_CALL ? role : 2u; }
 
 static unsigned valid_bank(void) { uint32_t b = U32(BANK_PTR); return b >= 0x40000000u && b < 0x47f00000u; }
 static volatile uint8_t *current_part(void) { return (volatile uint8_t *)(uintptr_t)(U32(BANK_PTR) + PART_OFF + (U8(PART_IDX) & 3u) * PART_STRIDE); }
@@ -89,7 +93,8 @@ static unsigned control(const CrParams *p, unsigned c)
     switch (c) {
     case C_MOTF: return p->motif; case C_DENS: return p->dens; case C_REPT: return p->rept; case C_SCAL: return p->scale;
     case C_PHRS: return p->phrs; case C_ANSW: return p->answ; case C_TGHT: return p->tght; case C_END: return p->end;
-    case C_MUT: return p->mut; case C_TRNS: return p->trns; default: return p->role;
+    case C_MUT: return p->mut; case C_TRNS: return p->trns; case C_ROLE: return p->role; case C_VAR: return p->var;
+    default: return 0;
     }
 }
 static void set_control(CrParams *p, unsigned c, unsigned v)
@@ -98,26 +103,28 @@ static void set_control(CrParams *p, unsigned c, unsigned v)
     switch (c) {
     case C_MOTF: p->motif = b; break; case C_DENS: p->dens = b; break; case C_REPT: p->rept = b; break; case C_SCAL: p->scale = b; break;
     case C_PHRS: p->phrs = b; break; case C_ANSW: p->answ = b; break; case C_TGHT: p->tght = b; break; case C_END: p->end = b; break;
-    case C_MUT: p->mut = b; break; case C_TRNS: p->trns = b; break; default: p->role = b; break;
+    case C_MUT: p->mut = b; break; case C_TRNS: p->trns = b; break; case C_ROLE: p->role = b; break; case C_VAR: p->var = b; break;
+    default: break;
     }
 }
 static unsigned role_of(unsigned t) { CrParams p; settings(t, &p); return p.role; }
-/* The call a track plays or answers: its own settings, or its call track's; 0 when an answer track has no call. */
-static int pair(unsigned t, CrParams *call, CrParams *own)
+/* What a track writes (CR_CALLS, CR_RESPONSES or both) and the call it plays or answers: its own settings, or its call
+ * track's; 0 when an answer track's call track is not a CALL & RESPONSE call or C+R track. */
+static unsigned pair(unsigned t, CrParams *call, CrParams *own)
 {
     settings(t, own);
-    if (!own->role) { cr_copy(call, own); return 1; }
-    unsigned link = own->role - 1u;
-    if (link == t || !signed_track(current_part(), link) || role_of(link)) return 0;
+    if (own->role <= CR_CALL) { cr_copy(call, own); return own->role == CR_SELF ? CR_CALLS | CR_RESPONSES : CR_CALLS; }
+    unsigned link = own->role - CR_ANSWER;
+    if (link == t || !signed_track(current_part(), link) || role_of(link) > CR_CALL) return 0;
     settings(link, call);
-    return 1;
+    return CR_RESPONSES;
 }
 
 static CrLine line;
 /* On the UI task, into the current pattern's record and its battery-backed copy; only this track's bit of stock's
  * lock index, then stock's track update, as VECTOR 0.3.0. A fresh seed is kept only once its pattern is written.
- * 1 written, 0 not, -1 an answer track whose call track is not a CALL & RESPONSE call. A call track rewrites its
- * answer tracks after itself. */
+ * 1 written, 0 not, -1 an answer track whose call track is not a CALL & RESPONSE call. A call or C+R track rewrites
+ * the tracks answering it after itself. */
 static int write_track(unsigned t, int replace, int fresh)
 {
     unsigned p = U8(PATTERN_IDX);
@@ -128,9 +135,10 @@ static int write_track(unsigned t, int replace, int fresh)
     const volatile uint8_t *pat = (const volatile uint8_t *)(uintptr_t)(bank + p * PATTERN_STRIDE);
     unsigned length = pat[0x8e55u] ? r[0x50u] : pat[0x8e53u], vol = current_part()[AMP_VOL(t)];
     CrParams call, own;
-    if (!pair(t, &call, &own)) return -1;
-    if (fresh) { own.seed = (uint8_t)cr_next_seed(own.seed); if (!own.role) call.seed = own.seed; }
-    if (!length || length > CR_STEPS || vol > 127u || !cr_generate(&line, &call, own.role ? &own : 0, length)) return 0;
+    unsigned parts = pair(t, &call, &own);
+    if (!parts) return -1;
+    if (fresh) { own.seed = (uint8_t)cr_next_seed(own.seed); if (own.role <= CR_CALL) call.seed = own.seed; }
+    if (!length || length > CR_STEPS || vol > 127u || !cr_generate(&line, &call, parts & CR_RESPONSES ? &own : 0, length, parts)) return 0;
     static uint8_t locked[CR_STEPS];
     cr_write(r, mirror, &line, vol, locked);
     if (fresh) save_settings(t, &own);
@@ -143,14 +151,14 @@ static int write_track(unsigned t, int replace, int fresh)
 static int generate(unsigned t, int replace, int fresh)
 {
     int done = write_track(t, replace, fresh);
-    if (done > 0 && !role_of(t))
+    if (done > 0 && role_of(t) <= CR_CALL)
         for (unsigned u = 0; u < 8u; ++u)
-            if (u != t && signed_track(current_part(), u) && role_of(u) == t + 1u) (void)write_track(u, 1, 0);
+            if (u != t && signed_track(current_part(), u) && role_of(u) == t + CR_ANSWER) (void)write_track(u, 1, 0);
     return done;
 }
 
-/* The page: stock's FLEX or STATIC descriptor with CALL & RESPONSE's six controls (by role) in the SRC cells (stock's dial renderer,
- * our angle and formatter), as VECTOR's generator page; SRC SETUP's cells stay stock's. */
+/* The page: stock's FLEX or STATIC descriptor with CALL & RESPONSE's controls (by role) in its twelve cells, SRC and SRC
+ * SETUP (stock's dial renderer, our angle and formatter), as VECTOR's generator page and TB-3PO's. */
 static uint8_t page[0x192];
 static uint32_t page_source;
 static uint32_t edit_view, active, layer_gen, shown_bank, shown_part, shown_track, mine;
@@ -164,18 +172,23 @@ static unsigned put_number(char *out, unsigned v)
     out[i++] = (char)('0' + v % 10); out[i] = 0;
     return i;
 }
-static unsigned answering(void) { return role_of(U8(TRACK_IDX)) != 0u; }
+static unsigned current_class(void) { return role_class(role_of(U8(TRACK_IDX))); }
 static void format_control(char *out, unsigned cell)
 {
     CrParams p; settings(U8(TRACK_IDX), &p);
-    unsigned c = layout[p.role != 0u][cell], v = control(&p, c);
+    unsigned c = layout[role_class(p.role)][cell], v = control(&p, c);
     switch (c) {
+    case C_NONE: out[0] = 0; return;
     case C_MOTF: copy_text(out, cr_motif_names[v % CR_MOTIFS]); return;
     case C_SCAL: copy_text(out, cr_scale_names[v % CR_SCALES]); return;
     case C_PHRS: copy_text(out, cr_mode_names[v % CR_MODES]); return;
     case C_ANSW: copy_text(out, cr_answer_names[v % CR_ANSWERS]); return;
     case C_END: copy_text(out, cr_ending_names[v % CR_ENDINGS]); return;
-    case C_ROLE: if (!v) copy_text(out, "CALL"); else { copy_text(out, "ANS"); out[3] = (char)('0' + v); out[4] = 0; } return;
+    case C_ROLE:
+        if (v == CR_SELF) copy_text(out, "C+R");
+        else if (v == CR_CALL) copy_text(out, "CALL");
+        else { copy_text(out, "ANS"); out[3] = (char)('1' + v - CR_ANSWER); out[4] = 0; }
+        return;
     case C_TRNS: /* -12..+12 semitones */
         if (v == 12u) { copy_text(out, "0"); return; }
         out[0] = v < 12u ? '-' : '+';
@@ -186,32 +199,40 @@ static void format_control(char *out, unsigned cell)
 }
 #define FORMATTER(n) static void format_##n(char *out, int value) { (void)value; format_control(out, n); }
 FORMATTER(0) FORMATTER(1) FORMATTER(2) FORMATTER(3) FORMATTER(4) FORMATTER(5)
-static void main_widget(int x, int y, unsigned slot, int value, unsigned flags, void (*format)(char *, int), uint32_t canvas)
+FORMATTER(6) FORMATTER(7) FORMATTER(8) FORMATTER(9) FORMATTER(10) FORMATTER(11)
+/* Stock's dial and value renderer in the cell: the control's range sets the angle, its formatter the text; an empty
+ * cell draws nothing. */
+static void draw_widget(int x, int y, unsigned slot, unsigned cell, unsigned flags, void (*format)(char *, int), uint32_t canvas)
 {
-    (void)value;
     CrParams p; settings(U8(TRACK_IDX), &p);
-    unsigned c = layout[p.role != 0u][slot % 6u], raw = control(&p, c), max = control_max[c];
+    unsigned c = layout[role_class(p.role)][cell], raw = control(&p, c), max = control_max[c];
+    if (c == C_NONE) return;
     if (raw > max) raw = max;
     ((void (*)(int, int, unsigned, int, unsigned, void (*)(char *, int), uint32_t))0x400479b4u)
         (x, y, slot, (int)(raw * 127u / max), flags & ~1u, format, canvas);
 }
+static void main_widget(int x, int y, unsigned slot, int value, unsigned flags, void (*format)(char *, int), uint32_t canvas)
+{ (void)value; draw_widget(x, y, slot, slot % 6u, flags, format, canvas); }
+static void setup_widget(int x, int y, unsigned slot, int value, unsigned flags, void (*format)(char *, int), uint32_t canvas)
+{ (void)value; draw_widget(x, y, slot, 6u + slot % 6u, flags, format, canvas); }
 static void put32(uint8_t *d, uint32_t value) { d[0] = (uint8_t)(value >> 24); d[1] = (uint8_t)(value >> 16); d[2] = (uint8_t)(value >> 8); d[3] = (uint8_t)value; }
 static void label(uint8_t *out, const char *text) { unsigned i = 0; for (; i < 5 && text[i]; ++i) out[i] = (uint8_t)text[i]; for (; i < 6; ++i) out[i] = 0; }
-static uint32_t page_role;
+static uint32_t page_class = 9;
 static uint32_t generator_page(uint32_t stock)
 {
-    unsigned role = answering();
-    if (role != page_role) { page_source = 0; page_role = role; }
-    static void (*const formats[6])(char *, int) = {format_0, format_1, format_2, format_3, format_4, format_5};
+    static void (*const formats[12])(char *, int) = {format_0, format_1, format_2, format_3, format_4, format_5,
+                                                     format_6, format_7, format_8, format_9, format_10, format_11};
+    unsigned role = current_class();
+    if (role != page_class) { page_source = 0; page_class = role; }
     if (page_source != stock) {
         const volatile uint8_t *source = (const volatile uint8_t *)(uintptr_t)stock;
         for (unsigned i = 0; i < sizeof page; ++i) page[i] = source[i];
-        for (unsigned i = 0; i < 6; ++i) {
+        for (unsigned i = 0; i < 12; ++i) {
             label(page + 0x16 + 6 * i, names[layout[role][i]]);
             put32(page + 0xca + 4 * i, (uint32_t)(uintptr_t)formats[i]);
-            put32(page + 0xfa + 4 * i, (uint32_t)(uintptr_t)main_widget);
+            put32(page + 0xfa + 4 * i, (uint32_t)(uintptr_t)(i < 6 ? main_widget : setup_widget));
         }
-        put32(page + 0x18a, 0x00005555u); /* every cell drawn, as VECTOR's page */
+        put32(page + 0x18a, 0x00005555u); /* every cell drawn, both pages, as TB-3PO's */
         put32(page + 0x18e, 0x55555555u);
         page_source = stock;
     }
@@ -226,30 +247,40 @@ static uint32_t machine_track_page(const volatile uint8_t *slot)
     if (t >= 8u || !valid_bank()) return FLEX_PAGE;
     return t == U8(TRACK_IDX) && generator_view() ? generator_page(stock_page(t)) : stock_page(t);
 }
+/* SRC SETUP on its row: the response's controls (C+R) or VAR (call); an answer track keeps stock's setup. */
+static unsigned own_setup(void) { return selected() && !edit_view && current_class() != 2u; }
+static uint32_t machine_setup_page(uint32_t stock) { return own_setup() ? generator_page(stock) : stock; }
 
 /* ROLE steps over the track itself (a track never answers itself). Choosing a call that is not there keeps the
  * setting and says so; any other edit that writes nothing is undone. */
 static void change_control(unsigned cell, int delta)
 {
     static char text[24];
-    unsigned t = U8(TRACK_IDX);
+    unsigned t = U8(TRACK_IDX), self = t + CR_ANSWER;
     CrParams p, before;
     settings(t, &p); cr_copy(&before, &p);
-    unsigned c = layout[p.role != 0u][cell], old = control(&p, c);
+    unsigned c = layout[role_class(p.role)][cell], old = control(&p, c);
+    if (c == C_NONE) return;
     int value = (int)old + delta;
-    if (c == C_ROLE && value == (int)t + 1) value += delta > 0 ? 1 : -1;
+    if (c == C_ROLE && value == (int)self) value += delta > 0 ? 1 : -1;
     if (value < 0) value = 0;
-    if (value > (int)control_max[c]) value = c == C_ROLE && control_max[c] == t + 1u ? (int)old : control_max[c];
+    if (value > (int)control_max[c]) value = c == C_ROLE && control_max[c] == self ? (int)old : control_max[c];
     if ((unsigned)value == old) return;
     set_control(&p, c, (unsigned)value);
     save_settings(t, &p);
     int done = generate(t, 1, 0);
     if (!done) save_settings(t, &before);
     if (done < 0) {
-        copy_text(text, "NO CALL ON T"); text[12] = (char)('0' + p.role); text[13] = 0;
+        copy_text(text, "NO CALL ON T"); text[12] = (char)('1' + p.role - CR_ANSWER); text[13] = 0;
         notice(text);
     }
     redraw();
+}
+static unsigned machine_setup_knob(unsigned index, int delta)
+{
+    if (index >= 6u || !own_setup()) return 0;
+    change_control(index + 6u, delta);
+    return 1;
 }
 
 /* The input layer, as TB-3PO's: encoders A-F on the generator view, YES (a new seed) and the LEVEL push (the
@@ -290,8 +321,9 @@ static void machine_key(unsigned code, unsigned edge)
             mine |= mask;
             if (generate(t, 1, 1) > 0) {
                 CrParams p; settings(t, &p);
-                copy_text(text, p.role ? "ANSWER SEED " : "CALL SEED ");
-                put_number(text + (p.role ? 12 : 10), p.seed);
+                unsigned answer = p.role >= CR_ANSWER;
+                copy_text(text, answer ? "ANSWER SEED " : "CALL SEED ");
+                put_number(text + (answer ? 12 : 10), p.seed);
                 notice(text);
             } else notice("NO CHANGE");
             redraw(); return;
@@ -333,8 +365,8 @@ static void machine_ui_tick(void)
         redraw();
     }
 }
-/* The track becomes CALL & RESPONSE (on) with the defaults, answering the first call in the Part that has no answer
- * yet (else a call itself), and a first line on an empty track; or leaves it (off). Returns the backing pool stock
+/* The track becomes CALL & RESPONSE (on) with the defaults, answering the first call track (ROLE CALL) in the Part that
+ * has no answer yet, else C+R, and a first line on an empty track; or leaves it (off). Returns the backing pool stock
  * commits. */
 static unsigned signed_in(const volatile uint8_t *part, unsigned t)
 {
@@ -352,12 +384,12 @@ static unsigned role_in(const volatile uint8_t *part, unsigned t)
 static unsigned first_unanswered(const volatile uint8_t *part, unsigned t)
 {
     for (unsigned u = 0; u < 8u; ++u) {
-        if (u == t || !signed_in(part, u) || role_in(part, u)) continue;
+        if (u == t || !signed_in(part, u) || role_in(part, u) != CR_CALL) continue;
         unsigned answered = 0;
-        for (unsigned w = 0; w < 8u; ++w) answered |= w != t && w != u && signed_in(part, w) && role_in(part, w) == u + 1u;
-        if (!answered) return u + 1u;
+        for (unsigned w = 0; w < 8u; ++w) answered |= w != t && w != u && signed_in(part, w) && role_in(part, w) == u + CR_ANSWER;
+        if (!answered) return u + CR_ANSWER;
     }
-    return 0;
+    return CR_SELF;
 }
 static unsigned machine_assign(volatile uint8_t *part, unsigned t, unsigned on)
 {
@@ -382,8 +414,9 @@ static unsigned machine_assign(volatile uint8_t *part, unsigned t, unsigned on)
     if (on && part == current_part()) (void)generate(t, 0, 0);
     return pool;
 }
-const struct modwerk_machine __attribute__((aligned(4))) callresp_machine = {
-    MODWERK_MACHINE_ABI, {'C', 'R'}, MACHINE_VERSION, MACHINE_VERSION, "CALLRESP",
-    MODWERK_MACHINE_BACKING, /* as VECTOR: the sample plays as stock and stock checks its FLEX or STATIC bytes */
-    0, 0, machine_assign, 0, 0, machine_track_page, machine_ui_tick, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, {0, 0, 0},
+const struct modwerk_machine_setup __attribute__((aligned(4))) callresp_machine = {
+    {MODWERK_MACHINE_ABI, {'C', 'R'}, MACHINE_VERSION, MACHINE_VERSION, "CALLRESP",
+     MODWERK_MACHINE_BACKING | MODWERK_MACHINE_SETUP_PAGE, /* as VECTOR: the sample plays as stock and stock checks its FLEX or STATIC bytes */
+     0, 0, machine_assign, 0, 0, machine_track_page, machine_ui_tick, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, {0, 0, 0}},
+    machine_setup_page, machine_setup_knob,
 };

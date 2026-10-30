@@ -55,21 +55,23 @@ class Engine(unittest.TestCase):
         at = word & 0xffffff
         self.assertEqual(word >> 24, 80)
         self.assertEqual(at % 4, 0)
-        self.assertLessEqual(at + 80, len(image))
-        # struct modwerk_machine (80 bytes): abi, sig, label, flags, page, defaults, assign, admit, chooser_type,
-        # track_page, ui_tick, leave, pool_open, pool_left, choice_left, list_draw, render, validate, the source price.
-        fields = struct.unpack_from('>I2sBB' + '16I' + 'HHB3x', image, at)
+        self.assertLessEqual(at + 88, len(image))
+        # struct modwerk_machine_setup: the 80-byte machine (abi, sig, label, flags, page, defaults, assign, admit,
+        # chooser_type, track_page, ui_tick, leave, pool_open, pool_left, choice_left, list_draw, render, validate,
+        # the source price) and its setup page and knob.
+        fields = struct.unpack_from('>I2sBB' + '16I' + 'HHB3x' + '2I', image, at)
         abi, sig, lo, hi = fields[:4]
         label, flags, page, defaults, assign, admit, chooser, track_page, ui_tick = fields[4:13]
         rest = fields[13:20]
+        setup_page, setup_knob = fields[23:25]
         self.assertEqual((abi, sig, lo, hi), (1, b'CR', 1, 1))
         self.assertEqual(image[label:label + 9], b'CALLRESP\0')
-        self.assertEqual(flags, 8)  # BACKING, as VECTOR's sample-playing machine
+        self.assertEqual(flags, 8 | 64)  # BACKING and SETUP_PAGE, as TB-3PO's sample-track machine
         self.assertEqual((page, defaults, admit, chooser) + rest + fields[20:23], (0,) * 14)
-        for entry in (assign, track_page, ui_tick):
+        for entry in (assign, track_page, ui_tick, setup_page, setup_knob):
             self.assertEqual(entry % 2, 0)
             self.assertLess(entry + 1, len(image))
-            self.assertFalse(at <= entry < at + 80)
+            self.assertFalse(at <= entry < at + 88)
 
 
 if __name__ == '__main__':

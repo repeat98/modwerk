@@ -1,11 +1,12 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """CALL & RESPONSE: the engine, the machine glue and the USB package.
 
-1. test_engine.py: every call and response is deterministic, inside its phrase slots and its scale, and ends on a
-   sounding step; an answer track rebuilds exactly the call its call track plays; the 31 answer strategies are
+1. test_engine.py: the PHRS layouts; every call and response is deterministic, inside its phrase slots and its scale,
+   and ends on a sounding step; a C+R track is exactly its call track's calls and its answer track's responses; VAR
+   varies only the repeated calls; the 31 answer strategies are
    pairwise distinct, the endings close where the generator closes, TGHT pulls the response toward the call and MUT
    changes only the mutated response; the semitone fold, the track-record writer and the settings packing; the
-   ColdFire package's ot_machines record (ABI 1, 80 bytes, CR, BACKING, order 80) at the registry's index.
+   ColdFire package's ot_machines record (ABI 1, 88 bytes, CR, BACKING and SETUP_PAGE, order 80) at the registry's index.
 2. The package build.py makes from the sources is byte for byte the published one
    (src/engine/assets/octatrack-module-packages.json).
 Needs m68k-elf-gcc for the package; host-only checks still run without it.
