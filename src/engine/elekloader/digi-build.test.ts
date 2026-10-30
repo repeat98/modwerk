@@ -30,7 +30,7 @@ describe('the vendored elekloader catalog', () => {
     expect(planBuild('digitakt-ii', '1.16', ['perform-direct']).missing).toEqual(['perform-direct'])
   })
   it('reports modules without a file for the chosen release', () => {
-    expect(planBuild('digitakt', '1.54', ['digisophie', 'digihealth'])).toMatchObject({ missing: ['digisophie'], mods: [{ id: 'digihealth', os: '1.54' }] })
+    expect(planBuild('digitakt', '1.53', ['fx-track', 'digihealth'])).toMatchObject({ missing: ['fx-track'], mods: [{ id: 'digihealth', os: '1.53' }] })
   })
   it('plans Digitakt II OS 1.17 using its own core and mod pins', () => {
     const catalog: Catalog = {
@@ -120,7 +120,7 @@ describe('preparing a build', () => {
     const otherOs = fakeClient()
     expect(await prepareBuild(otherOs.client, { machine: 'digitakt', release: '1.54', stock, moduleIds: [] })).toMatchObject({ ok: false, error: 'This OS file is Digitakt mk1 1.53, not the digitakt-mk1 OS 1.54 chosen.' })
     const missing = fakeClient()
-    expect(await prepareBuild(missing.client, { machine: 'digitakt', release: '1.54', stock, moduleIds: ['digisophie'] })).toMatchObject({ ok: false })
+    expect(await prepareBuild(missing.client, { machine: 'digitakt', release: '1.53', stock, moduleIds: ['fx-track'] })).toMatchObject({ ok: false })
     expect(missing.raw.load).not.toHaveBeenCalled()
   })
 })

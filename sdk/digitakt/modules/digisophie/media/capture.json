@@ -2,37 +2,37 @@
   "schemaVersion": 1,
   "machine": "digitakt",
   "moduleId": "digisophie",
-  "moduleVersion": "1.1.13-experimental.2",
-  "capturedAt": "2026-10-07",
-  "firmware": "1.53",
-  "imageSha256": "54799123bedb06852bc925340e4edbb0dd8496070b188df4c0d3cc900e5040a1",
-  "stockSha256": "9bdd44bb6102fb25c143cfab97bc92b7a89c463f795d3112dce89771e29bcc92",
+  "moduleVersion": "1.1.13-experimental.3",
+  "capturedAt": "2026-10-30",
+  "firmware": "1.54",
+  "imageSha256": "7c71c84a8937f639090b0849b72d7972d89eb28c2be9f97acecfd91600fdd1d4",
+  "stockSha256": "f78ba80fa7b1da5fb0e1ff61ad61e9e71aafe79f4364fc49679f3651353e3cf6",
   "source": {
     "repository": "https://github.com/soejrd/digisophie",
-    "revision": "961c39cec699e8f8940391634aaba9fad7120792",
+    "revision": "ce17b9e4868027bafe8684054b45f28ea368bd7c",
     "path": "."
   },
   "kit": {
-    "version": "0.4.0",
-    "lockSha256": "b9bc224eee31d1fda75841ce78fe5a28d5cbfee79071385329ca2517a247c04c"
+    "version": "0.7.0",
+    "lockSha256": "b8b330328071092fe6e64fab5f55ddc25dd027e41ac8c9f0584dab95814a8e85"
   },
   "catalog": {
-    "revision": "a1be3ce0c006ea0c46fa82c6f254c11a05d42beb",
-    "sha256": "e207c3ff58fc7f5608d1fced67115406408a4b6202076824cf82cb043dc2d2c1",
-    "cores": 5,
-    "mods": 21
+    "revision": "5112c9ed3112fb95df06b3b3f04837d10e557089289d7e373bc18c7f1da43bcb",
+    "sha256": "680b6f8b590a8df8d46d836d34cd13301058bf49c83fe9dd1db556c99ea331e7",
+    "cores": 8,
+    "mods": 49
   },
   "build": {
     "modules": [
       {
         "id": "core",
         "version": "2.1",
-        "sha256": "f38b0c193677a060b3fdb28fe71b9332be8a5e7d36ecaf91a3c86a61bab558eb"
+        "sha256": "8c1fe78ccd1427d6a93f181eaad9f064efb65cf6dd683192dbcc33e83dc548b9"
       },
       {
         "id": "digisophie",
         "version": "1.1.13",
-        "sha256": "6eadc29d581b24ff84fe3fe32399b998a91375ee06182631ab499109b4a003a5"
+        "sha256": "51cd3aca3652e1926b6be0213269ac0b54b3c44655f06af4a79270db371b58fa"
       }
     ],
     "outputVersion": "D001",
@@ -52,7 +52,7 @@
         "unicorn-2.1.4-m68k-fast-mem.patch": "7f79332f318352cbd8055386dbf5149efc801d0663ae2450e33f9f39fed53374",
         "unicorn-2.1.4-m68k-hook-ccr-sync.patch": "56de71acf2adbd5ca2f448095478e65e49fd79d378aeb5b5e4217d2c90f52f4e"
       },
-      "librarySha256": "a83b0d8a588cba2087c08712183df5106b3d2f1670af6024991eb85005e0f184"
+      "librarySha256": "b7ba43300ede6c4bb19c3355418095e2ec24aedc4b328b7d6f2128f8c04a0501"
     },
     "python": "3.12.13",
     "platform": "macOS arm64",
@@ -61,7 +61,7 @@
     "cycleTiming": false,
     "framebuffer": "firmware front LCD buffer at panel_diff flush",
     "scale": 6,
-    "frameSelection": "Most populated unmodified frame since the latest panel action."
+    "frameSelection": "Most populated actual LCD frame within the final 250 ms after the latest panel action; 6x integer scaling."
   },
   "setup": {
     "project": "Disposable first-boot A01, stock initial track state; no owner projects or samples.",
@@ -70,115 +70,115 @@
   },
   "inputs": [
     [
-      1000.642,
+      1000.0,
       "press 1"
     ],
     [
-      1100.643,
+      1100.001,
       "press 20"
     ],
     [
-      1208.493,
+      1200.001,
       "release 20"
     ],
     [
-      1508.502,
+      1514.237,
       "release 1"
     ],
     [
-      1608.505,
+      1614.24,
       "press 15"
     ],
     [
-      1708.508,
+      1714.243,
       "release 15"
     ],
     [
-      2008.517,
+      2014.252,
       "press 15"
     ],
     [
-      2108.519,
+      2114.255,
       "release 15"
     ],
     [
-      2408.528,
+      2414.264,
       "press 15"
     ],
     [
-      2508.531,
+      2514.266,
       "release 15"
     ],
     [
-      2808.54,
+      2814.275,
       "press 15"
     ],
     [
-      2908.543,
+      2914.279,
       "release 15"
     ],
     [
-      3208.551,
+      3214.287,
       "press 12"
     ],
     [
-      3308.555,
+      3314.29,
       "release 12"
     ],
     [
-      3608.563,
+      3614.299,
       "press 12"
     ],
     [
-      3708.566,
+      3714.302,
       "release 12"
     ],
     [
-      5008.604,
+      5014.34,
       "turn 2 -127"
     ],
     [
-      5008.604,
+      5014.34,
       "turn 2 -127"
     ],
     [
-      5008.604,
+      5014.34,
       "turn 2 -127"
     ],
     [
-      5008.604,
+      5014.34,
       "turn 2 -127"
     ],
     [
-      5608.621,
+      5614.357,
       "turn 2 +127"
     ],
     [
-      5608.621,
+      5614.357,
       "turn 2 +1"
     ],
     [
-      6208.639,
+      6214.375,
       "turn 2 +127"
     ],
     [
-      6208.639,
+      6214.375,
       "turn 2 +1"
     ],
     [
-      6808.656,
+      6814.392,
       "turn 2 +127"
     ],
     [
-      6808.656,
+      6814.392,
       "turn 2 +1"
     ],
     [
-      7408.674,
+      7414.409,
       "press 22"
     ],
     [
-      7508.677,
+      7514.412,
       "release 22"
     ]
   ],
@@ -187,29 +187,29 @@
       "path": "media/chooser.png",
       "sha256": "91a6092cd61218e596a7669f900317ec2dc5945b137ae88e47b563f26871d572",
       "plan": "wait 1000\npress FUNC\ntap SRC\nrelease FUNC\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\nsnap chooser\ntap YES\ntap YES\nwait 1000\nturn B -127 600\nsnap fuse\nturn B 32 600\nsnap boom\nturn B 32 600\nsnap pipe\nturn B 32 600\nsnap shard\ntap AMP\nsnap amp\n",
-      "atMs": 2841.8741452991453,
-      "requestedAtMs": 3208.551282051282
+      "atMs": 3214.2871794871794,
+      "requestedAtMs": 3214.2871794871794
     },
     {
       "path": "media/fuse.png",
       "sha256": "d97e8afb6452c23cda9dd79443224bce7aac5a8f7736c416d5e4b7b6f308840e",
       "plan": "wait 1000\npress FUNC\ntap SRC\nrelease FUNC\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\nsnap chooser\ntap YES\ntap YES\nwait 1000\nturn B -127 600\nsnap fuse\nturn B 32 600\nsnap boom\nturn B 32 600\nsnap pipe\nturn B 32 600\nsnap shard\ntap AMP\nsnap amp\n",
-      "atMs": 5241.944444444444,
-      "requestedAtMs": 5608.62094017094
+      "atMs": 5447.685042735043,
+      "requestedAtMs": 5614.356837606838
     },
     {
       "path": "media/boom.png",
-      "sha256": "cec8979b6d50badce874cc8efcb44a1aa3759b9de1f85bb48a02ae23655699d4",
+      "sha256": "e8dd552ebabea8784f98cbdfbdeb32bcc3fecd5035d2ec1b72b92f75ea09a9f9",
       "plan": "wait 1000\npress FUNC\ntap SRC\nrelease FUNC\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\nsnap chooser\ntap YES\ntap YES\nwait 1000\nturn B -127 600\nsnap fuse\nturn B 32 600\nsnap boom\nturn B 32 600\nsnap pipe\nturn B 32 600\nsnap shard\ntap AMP\nsnap amp\n",
-      "atMs": 5641.955341880342,
-      "requestedAtMs": 6208.638675213675
+      "atMs": 6047.70235042735,
+      "requestedAtMs": 6214.374572649573
     },
     {
       "path": "media/amp.png",
       "sha256": "5b46758d7f4afe900fb625ef8afe7a08905e06cbc66f02c167a76bb167370e72",
       "plan": "wait 1000\npress FUNC\ntap SRC\nrelease FUNC\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\nsnap chooser\ntap YES\ntap YES\nwait 1000\nturn B -127 600\nsnap fuse\nturn B 32 600\nsnap boom\nturn B 32 600\nsnap pipe\nturn B 32 600\nsnap shard\ntap AMP\nsnap amp\n",
-      "atMs": 7642.013675213675,
-      "requestedAtMs": 7808.68547008547
+      "atMs": 7640.0,
+      "requestedAtMs": 7814.42094017094
     }
   ],
   "limitations": [
