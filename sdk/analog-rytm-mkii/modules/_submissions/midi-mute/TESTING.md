@@ -9,7 +9,7 @@ To check that the unchecked runs really show stock behaviour, the author flashed
 
 Every result matches MM04 with MUTE MIDI IN unchecked, step for step: unchecked, the module changes nothing the bench can see.
 
-**Back on MM04, reported by the author:** after flashing MM04 again and reloading the project, MUTE MIDI IN was still checked: the project kept the module's bit through the stock OS. A live session followed, sequencing from an external sequencer and from the Rytm's own sequencer; the author reported that everything behaved as expected.
+**Back on MM04, reported by the author:** after flashing MM04 again and reloading the project, MUTE MIDI IN was still checked: the project kept the module's bit through the stock OS. A live session followed, sequencing from an external sequencer and from the Rytm's own sequencer, using both mutes and solos; the author reported that everything behaved as expected.
 
 ## Build MM04: solo (rytm-emu, 30 October 2026)
 
