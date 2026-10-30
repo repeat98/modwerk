@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="192" viewBox="0 0 320 192" role="img" aria-labelledby="title desc">
+ <title id="title">DRUMMAP — Grids drum patterns</title>
+ <desc id="desc">A five by five map of drum patterns with an X and Y position, feeding three lanes of hits: bass drum, snare and hi-hat, with accents filled. Original illustration, not an Octatrack LCD capture.</desc>
+ <rect width="320" height="192" rx="8" fill="#111218"/>
+ <g stroke="#fff" opacity=".035" stroke-width=".7"><path d="M20 52H300M20 97H300M20 142H300M64 33V163M128 33V163M192 33V163M256 33V163"/></g>
+ <g stroke="#f0a35e" stroke-width="1" opacity=".35" fill="none"><path d="M26 34h80v80H26zM46 34v80M66 34v80M86 34v80M26 54h80M26 74h80M26 94h80"/></g>
+ <g fill="#f0a35e"><circle cx="72" cy="61" r="4"/></g>
+ <g stroke="#f0a35e" stroke-width="1.2" opacity=".6" fill="none"><path d="M72 61h-46M72 61v53"/><path d="M106 74c18 0 18-30 36-30M106 74h36M106 74c18 0 18 30 36 30" opacity=".7"/></g>
+ <g font-family="monospace" font-size="7.5" fill="#9b9fb5" letter-spacing=".6"><text x="70" y="126">X</text><text x="16" y="64">Y</text><text x="148" y="47">BD</text><text x="148" y="77">SD</text><text x="148" y="107">HH</text></g>
+ <g fill="#f0a35e">
+  <rect x="166" y="40" width="7" height="7"/><rect x="214" y="40" width="7" height="7" opacity=".45"/><rect x="238" y="40" width="7" height="7"/><rect x="274" y="40" width="7" height="7" opacity=".45"/>
+  <rect x="190" y="70" width="7" height="7"/><rect x="262" y="70" width="7" height="7"/><rect x="286" y="70" width="7" height="7" opacity=".45"/>
+  <rect x="166" y="100" width="7" height="7" opacity=".45"/><rect x="178" y="100" width="7" height="7"/><rect x="190" y="100" width="7" height="7" opacity=".45"/><rect x="202" y="100" width="7" height="7" opacity=".45"/><rect x="214" y="100" width="7" height="7"/><rect x="226" y="100" width="7" height="7" opacity=".45"/><rect x="238" y="100" width="7" height="7" opacity=".45"/><rect x="250" y="100" width="7" height="7"/><rect x="262" y="100" width="7" height="7" opacity=".45"/><rect x="274" y="100" width="7" height="7" opacity=".45"/><rect x="286" y="100" width="7" height="7"/>
+ </g>
+ <g stroke="#f0a35e" stroke-width="1.2" fill="none" opacity=".5"><path d="M293 120v10H166v-8m-5 5 5-5 5 5"/></g>
+ <text x="25" y="22" font-family="Arial,sans-serif" font-size="10" fill="#c5c7da" letter-spacing="1.1">DRUMMAP</text>
+ <text x="25" y="176" font-family="Arial,sans-serif" font-size="9" fill="#9b9fb5" letter-spacing=".4">X · Y · FILL → 32 STEPS</text>
+ <text x="232" y="176" font-family="Arial,sans-serif" font-size="9" fill="#f0a35e">ACCENT ▪</text>
+</svg>

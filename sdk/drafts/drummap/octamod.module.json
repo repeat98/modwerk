@@ -1,0 +1,170 @@
+{
+  "schemaVersion": 2,
+  "id": "drummap",
+  "key": "DRUMMAP",
+  "name": "DRUMMAP",
+  "version": "0.1.0-experimental",
+  "category": "machines",
+  "author": {
+    "github": "semierendonmez-commits",
+    "name": "Semi Erendönmez",
+    "credits": [
+      "Octatrack module by Semi Erendönmez",
+      "Grids drum map and pattern generator: Émilie Gillet, Mutable Instruments (GPL-3.0)",
+      "DrumMap applet: Benjamin Rosenbach (MIT), in djphazer/O_C-Phazerville",
+      "Machine shape: VECTOR by Jannik Aßfalg (MIT)"
+    ]
+  },
+  "nativeManifest": "manifest.py",
+  "presentation": {
+    "label": "DRUM MAP",
+    "family": "Sequencing",
+    "summary": "Mutable Instruments Grids on the sample tracks: pick a part, move through the drum map, set the fill.",
+    "overview": "DRUMMAP writes a drum line from Mutable Instruments Grids' 5 x 5 map of drum patterns into a sample track's own sequencer. Each DRUMMAP track plays one part (BD, SD or HH) of the map at its X and Y; FILL sets how many of the map's levels become hits, CHAO lifts the levels by a fresh random amount on every 32-step pass, and accents (levels above 192) keep the Part's VOL while plain hits sit AVEL below it. The stock sequencer plays the trigs, at the pattern's tempo, speed, length and swing. Three tracks at the same X and Y with BD, SD and HH play Grids' full kit.",
+    "highlights": [
+      "Grids' 25 drum patterns, morphing between neighbours as X and Y move",
+      "FILL sets the density, CHAO varies each 32-step pass",
+      "Accents as VOL locks; the trigs and locks are ordinary sequencer data",
+      "Follows the track's tempo, speed, length and swing: no clock of its own"
+    ],
+    "usage": [
+      "Choose DRUMMAP in SRC SETUP on a track with a one-shot drum sample; its part follows the track number (1 and 5 BD, 2 and 6 SD, others HH) and can be changed with PART.",
+      "Turn X and Y to move through the map and FILL for density; each turn rewrites the track at once, also while playing.",
+      "CHAO varies every 32-step pass; YES draws a new chaos variation. AVEL sets how far plain hits sit below the accents.",
+      "Set the same X and Y on a BD, an SD and an HH track for Grids' whole kit."
+    ]
+  },
+  "controls": [
+    {
+      "name": "PART",
+      "default": 0,
+      "count": 3,
+      "doc": "The map part this track plays",
+      "labels": [
+        "BD",
+        "SD",
+        "HH"
+      ]
+    },
+    {
+      "name": "X",
+      "default": 0,
+      "count": 128,
+      "doc": "Map position X (Grids' 0-255, halved)",
+      "labels": null
+    },
+    {
+      "name": "Y",
+      "default": 0,
+      "count": 128,
+      "doc": "Map position Y (Grids' 0-255, halved)",
+      "labels": null
+    },
+    {
+      "name": "FILL",
+      "default": 64,
+      "count": 128,
+      "doc": "Density: a step plays when its level clears 255 - 2 x FILL",
+      "labels": null
+    },
+    {
+      "name": "CHAO",
+      "default": 0,
+      "count": 128,
+      "doc": "A random lift of every level, drawn afresh for each 32-step pass",
+      "labels": null
+    },
+    {
+      "name": "AVEL",
+      "default": 12,
+      "count": 32,
+      "doc": "Plain hits get a VOL lock 4 x this below the Part's AMP VOL; accents keep it. OFF writes no VOL locks",
+      "labels": null
+    }
+  ],
+  "compatibility": {
+    "firmware": "1.40C",
+    "location": "Track machine",
+    "conflicts": [],
+    "uiClaims": [],
+    "limitations": [
+      "Needs the Modwerk base loaded over USB (beta) with the machine table (ot_machines). Card firmware cannot include it.",
+      "Each track keeps its own X, Y and FILL: set them alike on three tracks for Grids' linked kit. Grids' 32 steps repeat along longer tracks; each 32-step pass gets its own chaos.",
+      "Its settings live in the Part's spare NEIGHBOR slots (seven bits a byte). The chaos seed is kept but not shown on a page; YES advances it and shows it.",
+      "With the base's machine list of eight rows, DRUMMAP takes one beside POLY8, Analog BD, VECTOR and FM Synth.",
+      "Not yet run on hardware or in the emulator."
+    ],
+    "effectId": null
+  },
+  "resources": {
+    "recorded": "Package header, 30 Oct 2026 (host build)",
+    "storage": {
+      "label": "Storage",
+      "display": "8,480 bytes",
+      "value": 8480,
+      "unit": "bytes",
+      "method": "static",
+      "conditions": "From the USB package build.py makes from the sources (m68k-elf-gcc 16.2, -Os): 7,804 bytes of ColdFire code and data, including Grids' 2,400-byte map, and 676 of bss, one instance, 130 relocations, no stock-code sites. No DSP memory, no heap.",
+      "source": "TESTING.md"
+    },
+    "processing": {
+      "label": "CPU load",
+      "display": "Not measured",
+      "value": null,
+      "unit": "unknown",
+      "method": "unmeasured",
+      "conditions": "Work happens on the UI task once per knob turn or YES: one 64-step map read and an in-place rewrite of the track record. Nothing runs while the pattern plays.",
+      "source": "TESTING.md"
+    },
+    "impact": {
+      "conditions": "A knob turn or YES on a DRUMMAP track; idle otherwise.",
+      "cpu": {
+        "level": "low",
+        "basis": "source-estimate",
+        "rationale": "One 64-step map read and in-place record rewrite per edit on the UI task, the shape VECTOR 0.3.0 measured at 0.5 ms for 64 steps on the owner's MKII; nothing at interrupt level and nothing while playing.",
+        "source": "TESTING.md"
+      },
+      "dsp": {
+        "level": "minimal",
+        "basis": "source-estimate",
+        "rationale": "No DSP code and no change to the DSP programs.",
+        "source": "manifest.py"
+      },
+      "memory": {
+        "level": "minimal",
+        "basis": "source-estimate",
+        "rationale": "8,480 bytes of ColdFire code, data and state in DRAM (7,804 + 676 from the package header); the pattern it writes is the track's own record.",
+        "source": "TESTING.md"
+      }
+    }
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "Host checks only: the map read reproduces DrumMap's ReadDrumMap over 2,113,536 cases; the hit, accent and chaos rules, the track-record writer and the settings packing are checked under the sanitizers; the package's machine record sits at the registry's index (test_engine.py). Not run on a unit or in the emulator.",
+    "hardwareStatus": "untested",
+    "evidenceRevision": "1bbc8b46cb3c5d09e1ce25e020cc460367769f33",
+    "gates": [
+      "modules/drummap/verify.py"
+    ]
+  },
+  "license": {
+    "spdx": "GPL-3.0-or-later",
+    "file": "LICENSE",
+    "declaration": "The drum map (grids.c) is Mutable Instruments Grids' by Émilie Gillet, GPL-3.0-or-later, as djphazer/O_C-Phazerville 92740448 carries it in software/src/grids_resources.h; the read and the hit rules follow the DrumMap applet by Benjamin Rosenbach (MIT) in the same repository. The Octatrack glue is original, in the shape of VECTOR's MIT native.c. No Elektron firmware, extracted routines, tables, samples or dumps are included."
+  },
+  "media": [],
+  "access": {
+    "location": "Sample track: SRC SETUP's machine list (double-tap SRC), DRUMMAP after the stock machines",
+    "steps": [
+      "Select an audio track with a one-shot drum sample. Double-tap SRC for SRC SETUP, scroll to DRUMMAP and press YES. The SRC page now holds PART, X, Y, FILL, CHAO and AVEL; SRC SETUP keeps the sample's own Flex or Static setup.",
+      "Push LEVEL on the SRC page for the stock sample controls and again to return; hold a trig for stock's page and its locks.",
+      "Double-tap the track key for the stock sample pool, as on any Flex or Static track."
+    ],
+    "screenshots": []
+  },
+  "source": {
+    "repository": "https://github.com/djphazer/O_C-Phazerville",
+    "revision": "92740448e525e6451676a3ff8eb4403cddcaeca7",
+    "path": "software/src/applets/DrumMap.h"
+  }
+}
