@@ -206,6 +206,12 @@ owner throughout a retained trial. This is recovered restoration, not a clean
 first-attempt Undo. Final flashed-base restart status is recorded in
 the [rerun receipt](evidence/mkii-usb-recording-rerun-20261031.json).
 
+After the author reported power-cycling, fresh readback verified original flashed
+base `2aa35c39…`, normal loader state, empty inventory, the original set identity
+and advancing DSP frames. USB was released. Transport after restart was not
+independently read on the public base; the last device read was stopped before
+the power cycle. No Keep, flash, project Save or push occurred.
+
 ## Limits
 
 This does not establish safe operation at arbitrary CPU saturation, complete

@@ -2,7 +2,7 @@
   "schema": 1,
   "date": "2026-10-31",
   "hardware": true,
-  "status": "Stationary-panel edit/input/audio checks PASSED; cleanup protocol fault recovered and Undo verified. Author power cycle and original flashed-base verification pending.",
+  "status": "Stationary-panel edit/input/audio checks PASSED; cleanup protocol fault recovered and Undo verified. Original flashed base restored after author power cycle.",
   "developmentBase": "20ed79108facb38d72b1e21105a3fd598bc45b76da39e667d6ad1c9b9a67410e",
   "candidateSha256": "3e13c46fb0054d05f228b045746453e0c50dbbe52fb53b3c229d598ddd7fed79",
   "wholeSetSha256": "8ff2effb1c839ea2016eb6cf13fa6973321f75cf96e6667fc52ed06f070670f7",
@@ -1024,13 +1024,18 @@
       0,
       0
     ],
-    "publicBaseRestored": false,
+    "publicBaseRestored": true,
     "usbReleased": true,
     "keep": false,
     "flash": false,
     "projectSave": false,
     "push": false,
     "cleanupFaultCause": "The helper sent a second loader HELLO while the CLI retained a cached sequence. A host-side model of duplicate-sequence refusal plus cached RESULT reproduces the stale HELLO reply on the CLI next ENTER. This strongly explains the mismatch; the hardware wire sequence was not captured.",
+    "publicBaseAfterRestart": "2aa35c3965d13087e7b83ff6f29d17bd6e6b7a59c7ed443e8720684b2b6d157b",
+    "publicInventory": [],
+    "publicFramesAdvancing": true,
+    "authorReportedPowerCycle": true,
+    "transportAfterRestart": "Not independently read on public base; last confirmed stopped before power cycle.",
     "harnessCorrection": "Keep one uploader/HELLO owner throughout a retained trial; observers must not SUBMIT upload frames."
   },
   "limitations": [

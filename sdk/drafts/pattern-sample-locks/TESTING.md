@@ -19,6 +19,9 @@ checks; sampled main CPU reached 93.7%, with no DSP errors/stalls or frame shedd
 STOP worked. Initial Undo hit a protocol fault; subsequent recovery and complete
 restoration were verified. See the separate
 [rerun receipt](evidence/mkii-usb-recording-rerun-20261031.json) for final restart status.
+Following the author's power cycle, the original flashed base, normal state,
+empty inventory, original set identity and advancing DSP frames were verified;
+USB was released. Nothing was pushed.
 
 The unchanged candidate ran beside TapeHead, E-Verb and Air Chorus with real FX
 assignments. The initial 32 maximum edits passed data, transport and USB-audio
