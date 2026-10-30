@@ -3,7 +3,7 @@
     "version": "0.1.0-experimental",
     "date": "2026-10-30",
     "changes": [
-      "New: TB-3PO, a generative 303-style acid-line generator, a port of the Phazerville TB_3PO applet through the Schwung tb3po port. As a track machine on Flex and Static samples (SRC SETUP, like VECTOR) it writes note trigs with PTCH, HOLD, VOL and FILTER DEPTH locks and real slides; as a MIDI generator (MIDI NOTE SETUP) it writes NOTE, VEL and LEN locks.",
+      "New: LOGACID, a generative 303-style acid-line generator, a port of the Phazerville TB_3PO applet through the Schwung logacid port. As a track machine on Flex and Static samples (SRC SETUP, like VECTOR) it writes note trigs with PTCH, HOLD, VOL and FILTER DEPTH locks and real slides; as a MIDI generator (MIDI NOTE SETUP) it writes NOTE, VEL and LEN locks.",
       "DENS, ACNT, SLID, ROOT, SCAL and GATE on the SRC page; SEED, VAR, AVEL, AFLT, DIR and MOTF on SRC SETUP. A knob turn redraws the line, YES rolls a new seed, LEVEL push shows the stock sample controls.",
       "Slides on a sample track hold the sample through the next step and glide its pitch there without a retrigger; on a MIDI track they overlap the next note so a 303-type synth slides.",
       "Needs the Modwerk base loaded over USB (beta). Card firmware cannot include it.",

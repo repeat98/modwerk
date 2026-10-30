@@ -1,11 +1,11 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later
- * TB-3PO on the Octatrack's sample tracks: a track machine (sdk/machines/octatrack/events.json ot_machines), the
+ * LOGACID on the Octatrack's sample tracks: a track machine (sdk/machines/octatrack/events.json ot_machines), the
  * shape of VECTOR's native.c over the Modwerk base. A BACKING machine: it makes no sound of its own, the track's
- * Flex or Static sample plays as stock, and TB-3PO writes the line as the track's trigs and PTCH, HOLD, VOL and
+ * Flex or Static sample plays as stock, and LOGACID writes the line as the track's trigs and PTCH, HOLD, VOL and
  * FILTER DEPTH locks; the stock sequencer plays them (tempo, speed, length, swing, conditions and slides stock's).
  * Its controls take the track's SRC page (twelve cells: six there, six on SRC SETUP, a double tap on SRC); a push
  * on LEVEL shows stock's sample controls; holding a trig or a scene shows stock's page, so locks stay stock's. Its
- * settings live in the Part's unused NEIGHBOR slots (0x3c + 30 t: 'T', '3', version, three bytes; 0x1ec + 30 t: six
+ * settings live in the Part's unused NEIGHBOR slots (0x3c + 30 t: 'L', 'A', version, three bytes; 0x1ec + 30 t: six
  * bytes), as VECTOR keeps its own, seven bits a byte. The UI task only. Stock addresses: OS 1.40C, as VECTOR's
  * native.c and the base's machine_registry.c name them. */
 #include "engine.h"
@@ -66,22 +66,22 @@ static unsigned key_held(unsigned key) { return (U8(0x46100b18u + (key >> 3)) >>
 
 /* The nine settings bytes: sig + 3..5, then SETTINGS2 + 0..5, in the Part and its battery-backed copy. */
 static unsigned setting_at(unsigned t, unsigned k) { return (k < 3u ? SIGNATURE + 3u + k : SETTINGS2 + k - 3u) + 30u * t; }
-static void settings(unsigned t, Tb3poAudioSettings *s)
+static void settings(unsigned t, LogacidAudioSettings *s)
 {
-    uint8_t packed[TB3PO_PACKED];
+    uint8_t packed[LOGACID_PACKED];
     const volatile uint8_t *part = current_part();
-    for (unsigned k = 0; k < TB3PO_PACKED; ++k) packed[k] = part[setting_at(t, k)];
-    tb3po_unpack(s, packed);
+    for (unsigned k = 0; k < LOGACID_PACKED; ++k) packed[k] = part[setting_at(t, k)];
+    logacid_unpack(s, packed);
 }
-static void save_settings(unsigned t, const Tb3poAudioSettings *s)
+static void save_settings(unsigned t, const LogacidAudioSettings *s)
 {
-    uint8_t packed[TB3PO_PACKED];
+    uint8_t packed[LOGACID_PACKED];
     volatile uint8_t *part = current_part();
     unsigned mirror = SRAM_PART + (U8(PART_IDX) & 3u) * PART_STRIDE;
-    tb3po_pack(packed, s);
-    for (unsigned k = 0; k < TB3PO_PACKED; ++k) { unsigned at = setting_at(t, k); part[at] = packed[k]; U8(mirror + at) = packed[k]; }
+    logacid_pack(packed, s);
+    for (unsigned k = 0; k < LOGACID_PACKED; ++k) { unsigned at = setting_at(t, k); part[at] = packed[k]; U8(mirror + at) = packed[k]; }
 }
-static unsigned control(const Tb3poAudioSettings *s, unsigned c)
+static unsigned control(const LogacidAudioSettings *s, unsigned c)
 {
     switch (c) {
     case C_DENS: return s->p.density; case C_ACNT: return s->p.accent; case C_SLID: return s->p.slide;
@@ -90,7 +90,7 @@ static unsigned control(const Tb3poAudioSettings *s, unsigned c)
     case C_AFLT: return s->a.aflt; case C_DIR: return s->p.dir; default: return s->p.motif;
     }
 }
-static void set_control(Tb3poAudioSettings *s, unsigned c, unsigned v)
+static void set_control(LogacidAudioSettings *s, unsigned c, unsigned v)
 {
     switch (c) {
     case C_DENS: s->p.density = (uint8_t)v; break; case C_ACNT: s->p.accent = (uint8_t)v; break; case C_SLID: s->p.slide = (uint8_t)v; break;
@@ -100,37 +100,37 @@ static void set_control(Tb3poAudioSettings *s, unsigned c, unsigned v)
     }
 }
 
-static Tb3poPattern pattern;
+static LogacidPattern pattern;
 /* On the UI task, into the current pattern's record and its battery-backed copy; only this track's bit of stock's
  * lock index, then stock's track update, as VECTOR 0.3.0. A fresh seed is kept only once its line is written. */
 static int generate(unsigned t, int replace, int fresh)
 {
     unsigned p = U8(PATTERN_IDX);
     if (!valid_bank() || t >= 8u || p >= 16u || !signed_track(current_part(), t)) return 0;
-    uint32_t bank = U32(BANK_PTR), off = p * PATTERN_STRIDE + t * TB3PO_AUDIO_TRACK_BYTES;
+    uint32_t bank = U32(BANK_PTR), off = p * PATTERN_STRIDE + t * LOGACID_AUDIO_TRACK_BYTES;
     uint8_t *r = (uint8_t *)(uintptr_t)(bank + off), *mirror = (uint8_t *)(uintptr_t)(SRAM_PATTERNS + off);
-    if (!replace && !tb3po_audio_empty(r)) return 0;
+    if (!replace && !logacid_audio_empty(r)) return 0;
     const volatile uint8_t *pat = (const volatile uint8_t *)(uintptr_t)(bank + p * PATTERN_STRIDE);
     unsigned length = pat[0x8e55u] ? r[0x50u] : pat[0x8e53u];
-    Tb3poAudioSettings s;
+    LogacidAudioSettings s;
     settings(t, &s);
-    if (fresh) s.p.seed = (uint8_t)tb3po_next_seed(s.p.seed);
+    if (fresh) s.p.seed = (uint8_t)logacid_next_seed(s.p.seed);
     s.p.octs = 2; /* two octaves: stock's PTCH range */
     s.a.base_vol = current_part()[AMP_VOL(t)];
-    s.a.filter = current_part()[FX1_ID(t)] == TB3PO_FILTER_ID;
+    s.a.filter = current_part()[FX1_ID(t)] == LOGACID_FILTER_ID;
     s.a.slide_mask = SLIDE_MASK;
-    if (!length || length > TB3PO_STEPS || s.a.base_vol > 127u || !tb3po_generate(&pattern, &s.p, length)) return 0;
-    static uint8_t locked[TB3PO_STEPS];
-    tb3po_write_audio(r, mirror, &pattern, &s.p, &s.a, locked);
+    if (!length || length > LOGACID_STEPS || s.a.base_vol > 127u || !logacid_generate(&pattern, &s.p, length)) return 0;
+    static uint8_t locked[LOGACID_STEPS];
+    logacid_write_audio(r, mirror, &pattern, &s.p, &s.a, locked);
     if (fresh) save_settings(t, &s);
     dirty_part();
-    for (unsigned i = 0; i < TB3PO_STEPS; ++i)
+    for (unsigned i = 0; i < LOGACID_STEPS; ++i)
         U8(LOCK_INDEX + i) = (uint8_t)((U8(LOCK_INDEX + i) & ~(1u << t)) | (unsigned)locked[i] << t);
     ((void (*)(unsigned))0x4009da20u)(t);
     return 1;
 }
 
-/* The page: stock's FLEX or STATIC descriptor with TB-3PO's twelve controls as dial cells (stock's dial renderer,
+/* The page: stock's FLEX or STATIC descriptor with LOGACID's twelve controls as dial cells (stock's dial renderer,
  * our angle and formatter), as VECTOR's generator page. Built once per source page. */
 static uint8_t page[0x192];
 static uint32_t page_source;
@@ -141,10 +141,10 @@ static void format_control(char *out, unsigned c)
 {
     static const char *const roots[12] = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
     static const char *const dirs[4] = {"FWD", "REV", "PING", "RND"};
-    Tb3poAudioSettings s; settings(U8(TRACK_IDX), &s);
+    LogacidAudioSettings s; settings(U8(TRACK_IDX), &s);
     unsigned v = control(&s, c), i = 0;
     if (c == C_ROOT) { copy_text(out, roots[v % 12u]); return; }
-    if (c == C_SCAL) { copy_text(out, tb3po_scale_names[v % TB3PO_SCALES]); return; }
+    if (c == C_SCAL) { copy_text(out, logacid_scale_names[v % LOGACID_SCALES]); return; }
     if (c == C_DIR) { copy_text(out, dirs[v & 3u]); return; }
     if ((c == C_VAR || c == C_MOTF || c == C_AFLT || c == C_AVEL) && !v) { copy_text(out, "OFF"); return; }
     if (c == C_GATE) v *= 2u; /* shown in stock's HOLD units */
@@ -158,7 +158,7 @@ FORMATTER(6) FORMATTER(7) FORMATTER(8) FORMATTER(9) FORMATTER(10) FORMATTER(11)
 /* Stock's dial and value renderer in the cell: the control's range sets the angle, its formatter the text. */
 static void draw_widget(int x, int y, unsigned slot, unsigned c, unsigned flags, void (*format)(char *, int), uint32_t canvas)
 {
-    Tb3poAudioSettings s; settings(U8(TRACK_IDX), &s);
+    LogacidAudioSettings s; settings(U8(TRACK_IDX), &s);
     unsigned raw = control(&s, c), max = control_max[c];
     if (raw > max) raw = max;
     ((void (*)(int, int, unsigned, int, unsigned, void (*)(char *, int), uint32_t))0x400479b4u)
@@ -205,8 +205,8 @@ static uint32_t machine_setup_page(uint32_t stock) { return selected() && !edit_
 static void change_control(unsigned c, int delta)
 {
     unsigned t = U8(TRACK_IDX);
-    Tb3poAudioSettings s, before;
-    settings(t, &s); tb3po_copy_settings(&before, &s);
+    LogacidAudioSettings s, before;
+    settings(t, &s); logacid_copy_settings(&before, &s);
     unsigned old = control(&s, c);
     int value = (int)old + delta;
     if (c == C_MOTF && value == 1) value = delta > 0 ? 2 : 0; /* OFF, then 2-32 */
@@ -261,7 +261,7 @@ static void machine_key(unsigned code, unsigned edge)
         if (code == 0x3e && U8(PAGE_KIND) == 0) { mine |= mask; edit_view = !edit_view; page_source = 0; redraw(); return; }
         if (code == 0x31 && generator_view()) {
             mine |= mask;
-            notice(generate(U8(TRACK_IDX), 1, 1) ? "TB-3PO GENERATED" : "NO CHANGE");
+            notice(generate(U8(TRACK_IDX), 1, 1) ? "LOGACID GENERATED" : "NO CHANGE");
             redraw(); return;
         }
     }
@@ -302,7 +302,7 @@ static void machine_ui_tick(void)
         redraw();
     }
 }
-/* The track becomes TB-3PO (on) with the defaults and a first line on an empty track, or leaves it (off). Returns the
+/* The track becomes LOGACID (on) with the defaults and a first line on an empty track, or leaves it (off). Returns the
  * backing pool stock commits (0 STATIC, 1 FLEX), as VECTOR's assign. */
 static unsigned machine_assign(volatile uint8_t *part, unsigned t, unsigned on)
 {
@@ -312,13 +312,13 @@ static unsigned machine_assign(volatile uint8_t *part, unsigned t, unsigned on)
     volatile uint8_t *mirror = (volatile uint8_t *)(uintptr_t)(SRAM_PART + offset);
     unsigned pool = part[0x22u + t] < 2u ? part[0x22u + t] : 1u, sig = SIGNATURE + 30u * t, setup = SETTINGS2 + 30u * t;
     if (on && !signed_track(part, t)) {
-        uint8_t packed[TB3PO_PACKED];
-        Tb3poAudioSettings s;
-        tb3po_copy_settings(&s, &tb3po_audio_defaults);
+        uint8_t packed[LOGACID_PACKED];
+        LogacidAudioSettings s;
+        logacid_copy_settings(&s, &logacid_audio_defaults);
         s.p.seed = (uint8_t)(t + 1u);
-        tb3po_pack(packed, &s);
+        logacid_pack(packed, &s);
         part[sig] = 'T'; part[sig + 1] = '3'; part[sig + 2] = MACHINE_VERSION;
-        for (unsigned k = 0; k < TB3PO_PACKED; ++k) part[k < 3 ? sig + 3 + k : setup + k - 3] = packed[k];
+        for (unsigned k = 0; k < LOGACID_PACKED; ++k) part[k < 3 ? sig + 3 + k : setup + k - 3] = packed[k];
     } else if (!on && signed_track(part, t)) {
         part[sig] = part[sig + 1] = part[sig + 2] = 0;
     }
@@ -326,8 +326,8 @@ static unsigned machine_assign(volatile uint8_t *part, unsigned t, unsigned on)
     if (on && part == current_part()) (void)generate(t, 0, 0);
     return pool;
 }
-const struct modwerk_machine_setup __attribute__((aligned(4))) tb3po_machine = {
-    {MODWERK_MACHINE_ABI, {'T', '3'}, MACHINE_VERSION, MACHINE_VERSION, "TB-3PO",
+const struct modwerk_machine_setup __attribute__((aligned(4))) logacid_machine = {
+    {MODWERK_MACHINE_ABI, {'L', 'A'}, MACHINE_VERSION, MACHINE_VERSION, "LOGACID",
      MODWERK_MACHINE_BACKING | MODWERK_MACHINE_SETUP_PAGE, /* as VECTOR: stock checks the backing FLEX or STATIC bytes */
      0, 0, machine_assign, 0, 0, machine_track_page, machine_ui_tick, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, {0, 0, 0}},
     machine_setup_page, machine_setup_knob,

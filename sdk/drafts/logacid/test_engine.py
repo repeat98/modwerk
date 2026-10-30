@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""TB-3PO: the firmware-free engine on the host, and the ColdFire package's generator record."""
+"""LOGACID: the firmware-free engine on the host, and the ColdFire package's generator record."""
 from pathlib import Path
 import json
 import shutil
@@ -15,12 +15,12 @@ sys.path.insert(0, str(ROOT / 'sdk/tests'))
 from host_flags import SANITIZE  # noqa: E402
 
 SOURCES = ('engine.c', 'generator.c', 'machine.c')
-SUBSCRIBE = ('ot_midi_generators:tb3po_midi:40', 'ot_machines:tb3po_machine:50')
+SUBSCRIBE = ('ot_midi_generators:logacid_midi:40', 'ot_machines:logacid_machine:50')
 
 
 class Engine(unittest.TestCase):
     @unittest.skipUnless(shutil.which('cc'), 'host C compiler unavailable')
-    def test_engine_matches_tb3po_c_and_writes_the_record(self):
+    def test_engine_matches_logacid_c_and_writes_the_record(self):
         with tempfile.TemporaryDirectory() as folder:
             executable = Path(folder) / 'engine'
             result = subprocess.run([shutil.which('cc'), '-std=c99', '-Wall', '-Wextra', '-Werror', *SANITIZE,
@@ -42,7 +42,7 @@ class Engine(unittest.TestCase):
     @unittest.skipUnless(shutil.which('m68k-elf-gcc'), 'ColdFire compiler unavailable')
     def test_package_records(self):
         with tempfile.TemporaryDirectory() as folder:
-            package = Path(folder) / 'tb3po.mwrm'
+            package = Path(folder) / 'logacid.mwrm'
             subprocess.run([sys.executable, '-B', str(ROOT / 'sdk/runtime/loader/build.py'),
                             *[str(HERE / name) for name in SOURCES], *[arg for hook in SUBSCRIBE for arg in ('--subscribe', hook)],
                             '-o', str(package)], check=True, capture_output=True)
@@ -70,8 +70,8 @@ class Engine(unittest.TestCase):
         # struct modwerk_midi_generator: abi, label, id, pages, assign, page, knob, yes, ui_tick (modwerk_events.h).
         at = record('ot_midi_generators', 40, 36)
         abi, label, ident, pages, assign, page, knob, yes, ui_tick = struct.unpack_from('>9I', image, at)
-        self.assertEqual((abi, ident, pages, ui_tick), (2, ord('T'), 1, 0))
-        self.assertEqual(image[label:label + 7], b'TB-3PO\0')
+        self.assertEqual((abi, ident, pages, ui_tick), (2, ord('L'), 1, 0))
+        self.assertEqual(image[label:label + 8], b'LOGACID\0')
         inside(at, 36, (assign, page, knob, yes))
         # struct modwerk_machine_setup: the 80-byte machine (abi, sig, label, flags, page, defaults, assign, admit,
         # chooser_type, track_page, ui_tick, leave, pool_open, pool_left, choice_left, list_draw, render, validate,
@@ -82,8 +82,8 @@ class Engine(unittest.TestCase):
         label, flags, page, defaults, assign, admit, chooser, track_page, ui_tick = fields[4:13]
         leave, pool_open, pool_left, choice_left, list_draw, render, validate = fields[13:20]
         source_voice, source_engine, source_kind, setup_page, setup_knob = fields[20:25]
-        self.assertEqual((abi, sig, lo, hi), (1, b'T3', 1, 1))
-        self.assertEqual(image[label:label + 7], b'TB-3PO\0')
+        self.assertEqual((abi, sig, lo, hi), (1, b'LA', 1, 1))
+        self.assertEqual(image[label:label + 8], b'LOGACID\0')
         self.assertEqual(flags, 8 | 64)  # BACKING, SETUP_PAGE, as VECTOR without its pool
         self.assertEqual((page, defaults, admit, chooser, leave, pool_open, pool_left, choice_left, list_draw, render, validate), (0,) * 11)
         self.assertEqual((source_voice, source_engine, source_kind), (0, 0, 0))

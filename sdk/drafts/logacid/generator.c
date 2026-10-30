@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later
- * TB-3PO on the Octatrack's MIDI tracks: a MIDI generator (sdk/machines/octatrack/events.json ot_midi_generators),
+ * LOGACID on the Octatrack's MIDI tracks: a MIDI generator (sdk/machines/octatrack/events.json ot_midi_generators),
  * the shape of VECTOR 0.3.0's midi.c. The engine's line becomes the track's note trigs and NOTE, VEL and LEN locks;
  * the stock MIDI sequencer plays them, so tempo, track speed, length, swing, conditions and every note-off are
  * stock's, and nothing here runs while the pattern plays. Its controls take the SRC page (stock's NOTE page) and the
@@ -30,10 +30,10 @@
 #define MIDI_TRACKS 0x48d0u
 #define MIDI_PAGE1(t) (0x3e2u + 32u * (t))  /* the NOTE page's values: NOTE, VEL, LEN, NOT2-4 */
 #define MIDI_NOTES(t) (0x1832u + 16u * (t)) /* the arp note bytes: the generator's settings */
-#define MIDI_MARK 12u                       /* a thirteenth byte: 'T' once TB-3PO wrote its settings there */
+#define MIDI_MARK 12u                       /* a thirteenth byte: 'L' once LOGACID wrote its settings there */
 #define MIDI_NOTE_FORMAT (0x400d3e3eu + 0xcau) /* the NOTE page descriptor's formatters: NOTE's, VEL's, LEN's */
 #define LOCK_INDEX 0x46c7d2e4u              /* stock's per-step lock index of the MIDI tracks: bit t */
-#define GENERATOR_ID 'T'
+#define GENERATOR_ID 'L'
 
 /* Controls: 0-10 live in the arp note bytes (engine order, then SLEN, AVEL); the rest are the track's own. */
 enum { C_DENS, C_ACNT, C_SLID, C_SCAL, C_SEED, C_VAR, C_OCTS, C_DIR, C_MOTF, C_SLEN, C_AVEL, C_OCT, C_ROOT, C_GATE, C_VEL, C_NONE };
@@ -101,14 +101,14 @@ static void set_control(unsigned t, unsigned c, unsigned v)
     }
     put_setting(t, c, v);
 }
-static void params(unsigned t, Tb3poParams *p)
+static void params(unsigned t, LogacidParams *p)
 {
     p->density = (uint8_t)control(t, C_DENS); p->accent = (uint8_t)control(t, C_ACNT); p->slide = (uint8_t)control(t, C_SLID);
     p->scale = (uint8_t)control(t, C_SCAL); p->seed = (uint8_t)control(t, C_SEED); p->var = (uint8_t)control(t, C_VAR);
     p->octs = (uint8_t)control(t, C_OCTS); p->dir = (uint8_t)control(t, C_DIR); p->motif = (uint8_t)control(t, C_MOTF);
 }
 
-static Tb3poPattern pattern;
+static LogacidPattern pattern;
 /* On the UI task, into the current pattern's record and its battery-backed copy, then published through stock's
  * track update (MIDI tracks are 8-15 there). Only this track's bit of stock's lock index changes (bit t of each
  * step's byte), as VECTOR 0.3.0 does instead of stock's 3 ms rescan. A fresh seed is kept only once its line is
@@ -117,26 +117,26 @@ static int generate(unsigned t, int replace, int fresh)
 {
     unsigned p = U8(PATTERN_IDX);
     if (!valid_bank() || t >= 8u || p >= 16u) return 0;
-    uint32_t bank = U32(BANK_PTR), off = p * PATTERN_STRIDE + MIDI_TRACKS + t * TB3PO_TRACK_BYTES;
+    uint32_t bank = U32(BANK_PTR), off = p * PATTERN_STRIDE + MIDI_TRACKS + t * LOGACID_TRACK_BYTES;
     uint8_t *r = (uint8_t *)(uintptr_t)(bank + off), *mirror = (uint8_t *)(uintptr_t)(SRAM_PATTERNS + off);
-    if (!replace && !tb3po_track_empty(r)) return 0;
+    if (!replace && !logacid_track_empty(r)) return 0;
     const volatile uint8_t *pat = (const volatile uint8_t *)(uintptr_t)(bank + p * PATTERN_STRIDE);
     unsigned length = pat[0x8e55u] ? r[0x28u] : pat[0x8e53u];
-    Tb3poParams params_;
+    LogacidParams params_;
     params(t, &params_);
-    if (fresh) params_.seed = (uint8_t)tb3po_next_seed(params_.seed);
-    if (!length || length > TB3PO_STEPS || !tb3po_generate(&pattern, &params_, length)) return 0;
-    static uint8_t locked[TB3PO_STEPS];
-    tb3po_write(r, mirror, &pattern, &params_, current_part()[MIDI_PAGE1(t)], control(t, C_AVEL), control(t, C_SLEN), locked);
+    if (fresh) params_.seed = (uint8_t)logacid_next_seed(params_.seed);
+    if (!length || length > LOGACID_STEPS || !logacid_generate(&pattern, &params_, length)) return 0;
+    static uint8_t locked[LOGACID_STEPS];
+    logacid_write(r, mirror, &pattern, &params_, current_part()[MIDI_PAGE1(t)], control(t, C_AVEL), control(t, C_SLEN), locked);
     if (fresh) set_control(t, C_SEED, params_.seed);
     dirty_part();
-    for (unsigned i = 0; i < TB3PO_STEPS; ++i)
+    for (unsigned i = 0; i < LOGACID_STEPS; ++i)
         U8(LOCK_INDEX + i) = (uint8_t)((U8(LOCK_INDEX + i) & ~(1u << t)) | (unsigned)locked[i] << t);
     ((void (*)(unsigned))0x4009da20u)(t + 8u);
     return 1;
 }
 
-/* The pages: stock's NOTE or ARP descriptor with TB-3PO's names and formatters in value-text cells. */
+/* The pages: stock's NOTE or ARP descriptor with LOGACID's names and formatters in value-text cells. */
 static uint8_t page[0x192];
 static uint32_t page_built;
 static unsigned view;
@@ -157,7 +157,7 @@ static void format(char *out, unsigned c)
     if (c == C_GATE || c == C_SLEN) { ((Format)(uintptr_t)*(const uint32_t *)(uintptr_t)(MIDI_NOTE_FORMAT + 8u))(out, (int)v); return; }
     if (c == C_OCT) { ((Format)(uintptr_t)*(const uint32_t *)(uintptr_t)MIDI_NOTE_FORMAT)(out, (int)(12u * v + control(t, C_ROOT))); return; }
     if (c == C_ROOT) { copy_text(out, roots[v % 12u]); return; }
-    if (c == C_SCAL) { copy_text(out, tb3po_scale_names[v % TB3PO_SCALES]); return; }
+    if (c == C_SCAL) { copy_text(out, logacid_scale_names[v % LOGACID_SCALES]); return; }
     if (c == C_DIR) { copy_text(out, dirs[v & 3u]); return; }
     if ((c == C_VAR || c == C_MOTF) && !v) { copy_text(out, "OFF"); return; }
     if (c == C_NONE) { out[0] = 0; return; }
@@ -171,7 +171,7 @@ static void label(uint8_t *out, const char *text) { unsigned i = 0; for (; i < 5
 static uint32_t generator_page(uint32_t stock, unsigned p, unsigned second)
 {
     static void (*const formats[6])(char *, int) = {format_0, format_1, format_2, format_3, format_4, format_5};
-    static const char titles[3][13] = {"TB-3PO SRC", "TB-3PO AMP 1", "TB-3PO AMP 2"}; /* 12 characters and a NUL */
+    static const char titles[3][13] = {"LOGACID SRC", "LOGACID AMP1", "LOGACID AMP2"}; /* 12 characters and a NUL */
     unsigned v = view_of(p, second);
     view = v;
     if (page_built != stock + v + 1u) {
@@ -206,7 +206,7 @@ static void generator_knob(unsigned p, unsigned index, int delta, unsigned secon
 static void generator_yes(unsigned p)
 {
     (void)p;
-    notice(generate(U8(TRACK_IDX), 1, 1) ? "TB-3PO GENERATED" : "NO CHANGE");
+    notice(generate(U8(TRACK_IDX), 1, 1) ? "LOGACID GENERATED" : "NO CHANGE");
 }
 /* Chosen: tb3po.c's defaults, the track's NOTE on A1 (tb3po.c's base note with root A), its chord notes off (NOT2-4
  * have no place on the SRC page), VEL 72 (its plain-note velocity), and a first line on an empty track; a track
@@ -221,6 +221,6 @@ static void generator_assign(unsigned t, unsigned on)
     dirty_part();
     (void)generate(t, 0, 0);
 }
-const struct modwerk_midi_generator __attribute__((aligned(4))) tb3po_midi = { /* four-byte aligned, as the base reads it */
-    MODWERK_MIDI_GENERATOR_ABI, "TB-3PO", GENERATOR_ID, 1u, generator_assign, generator_page, generator_knob, generator_yes, 0,
+const struct modwerk_midi_generator __attribute__((aligned(4))) logacid_midi = { /* four-byte aligned, as the base reads it */
+    MODWERK_MIDI_GENERATOR_ABI, "LOGACID", GENERATOR_ID, 1u, generator_assign, generator_page, generator_knob, generator_yes, 0,
 };

@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""TB-3PO: the engine, the generator glue and the USB package.
+"""LOGACID: the engine, the generator glue and the USB package.
 
 1. test_engine.py: the integer engine against tb3po.c's generator (floats, as written) over 50,688 seed, scale,
    octave-range and length cases, step for step; determinism, scale membership, the slide and at-least-one-note
@@ -25,11 +25,11 @@ subprocess.run([sys.executable, '-B', str(HERE / 'test_engine.py')], check=True)
 if not shutil.which('m68k-elf-gcc'):
     sys.exit('[SKIP] package: no m68k-elf-gcc here; the host checks passed.')
 row = next((r for r in json.loads((ROOT / 'src/engine/assets/octatrack-module-packages.json').read_text())['packages']
-            if r['id'] == 'tb3po'), None)
+            if r['id'] == 'logacid'), None)
 if not row or not row.get('sha256'):
-    sys.exit('[SKIP] package: tb3po is not published in src/engine/assets/octatrack-module-packages.json yet; the host checks passed.')
+    sys.exit('[SKIP] package: logacid is not published in src/engine/assets/octatrack-module-packages.json yet; the host checks passed.')
 with tempfile.TemporaryDirectory() as folder:
-    out = Path(folder) / 'tb3po.mwrm'
+    out = Path(folder) / 'logacid.mwrm'
     subprocess.run([sys.executable, '-B', str(ROOT / 'sdk/runtime/loader/build.py'), *[str(ROOT / s) for s in row['sources']],
                     *[arg for hook in row['subscribe'] for arg in ('--subscribe', hook)], '-o', str(out)],
                    check=True, capture_output=True, cwd=ROOT)
@@ -37,5 +37,5 @@ with tempfile.TemporaryDirectory() as folder:
 digest = hashlib.sha256(data).hexdigest()
 if digest != row['sha256'] or (ROOT / 'public' / row['path']).read_bytes() != data:
     sys.exit('[FAIL] the package built from source (%s) is not the published one (%s)' % (digest[:16], row['sha256'][:16]))
-print('[PASS] TB-3PO %s: engine and record checks, machine and generator records at the registry indices, package %s identical to the published one'
+print('[PASS] LOGACID %s: engine and record checks, machine and generator records at the registry indices, package %s identical to the published one'
       % (row['version'], digest[:16]))
