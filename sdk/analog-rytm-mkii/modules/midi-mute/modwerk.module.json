@@ -96,7 +96,7 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Unit (author, MM02): the first test worked as intended, as reported. rytm-emu 3c4c42c, builds MM02 and MM03: with MUTE MIDI IN checked, Note Ons for a muted track (AUTO and track channels, DIN and USB, pad or CC 94 mutes) are not played and their Note Offs are consumed; held notes are released when their track is muted or the box is checked; unchecked, pads, TRIG keys and the sequencer behave as stock; a 60 s wire-rate flood left no note held; it links and runs beside Filter Hz and Loop Sync; the setting survives a power cycle. See TESTING.md."
+    "summary": "Unit (author, MM03, OS 1.74, over USB, judged from the Rytm's USB audio): with MUTE MIDI IN checked, notes for a muted BD stayed silent on the AUTO and track channels, a held note stopped 50-130 ms after a CC 94 mute, and a 60 s flood at about 870 messages a second left nothing sounding; unchecked, the same tests heard the muted BD and the held note rang on, as stock. rytm-emu 3c4c42c (MM02, MM03): DIN and USB, CC 94 and pad mutes, the active-track switch, toggling the box mid-note, sequencer timing, a wire-rate flood, Filter Hz and Loop Sync beside it. See TESTING.md."
   },
   "license": {
     "spdx": "GPL-3.0-or-later",

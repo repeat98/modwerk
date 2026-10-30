@@ -5,7 +5,7 @@
     "changes": [
       "First release: with MUTE MIDI IN checked (GLOBAL > MIDI CONFIG > PORT CONFIG), muted tracks ignore MIDI notes from USB and DIN, on track channels and the AUTO channel.",
       "A note held over MIDI stops when its track is muted, so nothing hangs.",
-      "Known issue: tested on one unit so far; reloading a saved project with the setting is not yet checked."
+      "Known issue: reloading a saved project with the setting is not yet checked on a unit."
     ]
   }
 ]

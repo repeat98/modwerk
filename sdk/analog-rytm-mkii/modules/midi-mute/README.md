@@ -50,7 +50,7 @@ The DIN and USB MIDI ports feed one MIDI task, which passes a Note On to stock's
 
 - OS 1.74 with core-ar2 0.7, Analog Rytm MKII only.
 - Solo is not followed: a track that is only soloed out still plays incoming notes.
-- A note held when its track is muted is released within one UI tick, up to about 50 ms after the mute. Checking MUTE MIDI IN also releases the notes MIDI holds on tracks that are already muted.
+- A note held when its track is muted is released on the module's next UI tick (nominally every 50 ms). On a unit the sound had stopped 50 and 130 ms after a CC 94 mute was sent, the sound's own fade included. Checking MUTE MIDI IN also releases the notes MIDI holds on tracks that are already muted.
 - Up to 128 held notes per track are tracked (one per MIDI note number); a note held more than eight times on one track is released at most eight times.
 - Its row is added by a third site, the end of PORT CONFIG's constructor (6 bytes), through the core's `core_additem`; a later module that wants a row there would share it through a core hook.
 - No other module patches these sites today. A second module that wants to change incoming MIDI notes would share them through a core hook.

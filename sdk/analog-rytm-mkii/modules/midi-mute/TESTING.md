@@ -1,5 +1,26 @@
 # MIDI Mute testing
 
+## Build MM03 on a unit (author's Rytm MKII, 30 October 2026)
+
+- **Image:** MM03 (SHA-256 `b460740b…bf7d`) on the author's Analog Rytm MKII, OS 1.74, sent with Elektron Transfer.
+- **Setup:** PORT CONFIG with INPUT FROM including USB, RECEIVE NOTES, RECEIVE CC/NRPN and MUTE MIDI IN checked; BD on track channel 1, AUTO channel 15; BD given a sound that rings while its note is held. Sequencer stopped.
+- **Bench:** a script on the author's Mac (Python, mido and sounddevice) sent MIDI to the Rytm's USB MIDI port and recorded the Rytm's USB audio, channel 2 (BD's own voice; MAIN and the other voices stayed below -79 dBFS when only BD played). It muted and unmuted BD with CC 94 on channel 1, the project mute the pads set, and judged each step from the recording: sound is above -60 dBFS (the noise floor was -86 dBFS).
+
+| Step | Input | Expected with the box checked | Result |
+| --- | --- | --- | --- |
+| calibrate | BD unmuted, channel 1 note 48 | heard | heard, -9 dBFS: PASS |
+| drop-auto | BD muted, AUTO channel note 0 | silent | silent: PASS |
+| drop-track | BD muted, channel 1 note 48 | silent | silent: PASS |
+| channel notes | BD muted, channel 1 notes 12, 36, 59 | silent | silent, each: PASS |
+| other muted | SD muted, BD note | heard | heard: PASS |
+| held baseline | BD note held 2 s, then its Note Off | rings while held, stops at the Note Off | both: PASS |
+| held mute | BD note held, BD muted 0.7 s in | stops within 150 ms | stopped 50 ms after the mute: PASS |
+| flood | 60 s over USB: 9,511 Note On/Off pairs (AUTO channel notes 0-3, channels 1-4 notes 36-59, 30 % of releases as velocity-0 Note On), 32,975 CCs on channels 1-4, 5,760 clocks (240 BPM), 119 CC 94 mute toggles; about 870 messages a second; then every note released and channels 1-4 unmuted | silent 1 s later; a new BD note heard | silent, then heard: PASS |
+
+**Stock baseline, box unchecked** (same setup, right after): calibrate heard BD; drop-auto, drop-track and channel notes 12, 36 and 59 all heard the muted BD, as stock plays it; another track muted, BD heard; after the flood (9,496 pairs, 33,131 CCs, 5,760 clocks, 119 mute toggles, about 870 messages a second) silent, then a new note heard. The held steps were inconclusive there: the checked run's flood had changed BD's sound with CC 16-23, and it no longer rang while held. After the author restored a ringing BD sound, the held steps ran again, still unchecked: the note rang while held and stopped at its Note Off (baseline), and with BD muted 0.7 s into a held note it kept ringing to the end of the take, as stock leaves it. Then, with the box checked again and the same sound, the held note stopped 130 ms after the CC 94 mute was sent (PASS). With this sound a plain Note Off fades below -60 dBFS 25-35 ms after it, from a quieter point late in the note; the rest is the wait for the module's UI tick and the trip over USB, so the release after a mute measured 50 and 130 ms on two runs.
+
+All 11 checked steps passed. The first two attempts failed for setup reasons, not the module: BD had been muted by hand before calibration, and then RECEIVE CC/NRPN was unchecked, so the Rytm ignored CC 94 and BD was never muted (every drop step heard BD, as stock does). With RECEIVE CC/NRPN checked, the run above passed.
+
 ## Build MM02 on a unit (author, 29 October 2026)
 
 - **Image:** MM02 (SHA-256 `08f8ad28…f080`), the build the emulator runs below, sent with Elektron Transfer to the author's Analog Rytm MKII on OS 1.74.
@@ -83,7 +104,7 @@ PORT CONFIG shows MUTE MIDI IN as its last row, after RECEIVE CC/NRPN, unchecked
 
 ## Not tested
 
-- **The unit, case by case.** Beyond the author's report on MM02 above, no hardware case was recorded: the track channels, a note held while muting, USB against DIN, saving on the unit. MM03 has not run on a unit.
+- **The unit, still open.** DIN MIDI (MM03 ran over USB only), muting with the pads instead of CC 94, saving and reloading the setting with a project, CREATE NEW, and a pattern or kit change during a flood.
 - **LOAD PROJECT and CREATE NEW.** That the setting comes back with a saved project, and that a new project starts unchecked (the emulator hangs on a project load, stock included, and in the save before CREATE NEW).
 - **On the unit's clock.** CPU time per event and under the flood, measured with DTIM0; a flood at 240 BPM; a pattern or kit change during the flood.
 - **USB timing.** A real USB host; the emulator's USB MIDI input is its own model.
