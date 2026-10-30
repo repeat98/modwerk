@@ -74,10 +74,12 @@ Two release blockers are already established:
    Its weighted scan finds matches up to 14 nonzero bytes (limit 12); its other
    scan finds one 16-byte match at package offset `0xef4`. That offset lies in
    the authored encoder routine, six bytes after its entry. Fresh compilation
-   of the existing MIT C reproduces the bytes; this supports a compiler-pattern
-   collision, but does not grant a scanner exception. The checks are unchanged.
-   Classification and any correction to a genuinely wrong check need a separate
-   reviewed change, as the repository rules require.
+   of the existing MIT C reproduces the bytes. The subsequent
+   [scanner investigation](SCANNER_INVESTIGATION.md) independently reproduces
+   the prologue and remainder matches and classifies all hits, including menu
+   text. No scanner bug is established. The existing reviewed reconstruction
+   mechanism is the packaging route to evaluate; this module has no declaration
+   there yet. The checks and their rejecting verdicts are unchanged.
 2. **Stock-only card UI integration is unfinished.** `runtime.json` supplies
    four core callbacks through the USB base. The native manifest declares only
    the three menu openers; the card package compiler does not consume those

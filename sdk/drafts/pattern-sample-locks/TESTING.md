@@ -84,6 +84,15 @@ See [methods, limits and blockers](BETA_PREPARATION.md), the
 [future supervised MKII checklist](MKII_BETA_CHECKLIST.md). Publication gates
 remain active and this module stays a draft.
 
+The [stock-scan investigation](SCANNER_INVESTIGATION.md) subsequently reproduced
+the encoder prologue and signed-remainder matches with a 60-byte independent
+compiler probe. A separate compilation container had no private stock or
+reference package mounted. All 15 rejecting seed starts are classified into
+eight groups of compiler output, font calls and authored action labels. The
+unchanged scans still reject the candidate; their existing reviewed guarded
+reconstruction mechanism is the next packaging route to evaluate. No scanner,
+runtime, recipe or public package changed during this investigation.
+
 ## Exact local build
 
 - Source checkpoint: 42525aa0064bd228b3ad8d0aa1a3dae7f9413622 (module implementation 481e78b6; later checkpoint changes the emulator harness only).
