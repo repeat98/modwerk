@@ -94,3 +94,8 @@ expected track tones and their presence in Main in a 20-channel, 44.1 kHz
 PCM16/PCM32 WAV. It refuses silent output and missing/wrong tones. It reads
 host recordings only; provenance and device identity belong in a separate
 receipt. A passing tone check alone does not prove glitch-free edits.
+
+The subsequent [physical automated follow-up](MKII_AUDIO_TIMING.md) exercised
+Lock/Clear at 120/300 BPM, with complete pattern/index comparisons, recorded
+PCM, separate timing probes and verified Undo. Its remaining qualification gaps
+are listed explicitly.

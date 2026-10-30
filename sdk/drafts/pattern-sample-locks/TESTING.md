@@ -1,6 +1,6 @@
 # Testing: Pattern Sample Locks 0.1.8-experimental
 
-30 October 2026 (Taipei) · twwwy · prototype hardware follow-up; no release approval.
+31 October 2026 (Taipei) · twwwy · prototype hardware follow-up; no release approval.
 
 ## Current scope
 
@@ -9,6 +9,39 @@ Apply leaves playback in its current state. The native writer validates its sour
 Portable planner, UI and production native-writer sanitizer tests pass. The full exact-build DSP-enabled emulator run passed, including CPU monitoring, native save/reload, live edits and preference reset on module reload. Current MKII results include a verified kept restart and removal/Undo on the named flashed base. Full publication and cost qualification remain incomplete; reported physical/UI/listening results are labelled below.
 
 Retired reports and obsolete captures are consolidated in [PROTOTYPE_HISTORY.md](PROTOTYPE_HISTORY.md); they do not qualify this version.
+
+## MKII automated audio/timing follow-up — 31 October 2026
+
+Unchanged candidate `3e13c46f…` passed 43 native operations on RAM development
+base `20ed7910…`: forty maximum 512-field edits, two selected-track 64-field
+edits and one preserve-existing no-op, including ten maximum Lock/Clear pairs
+and 300 BPM checks. Complete pattern bytes, working Parts and active lock-index
+flags matched; transport stayed as it was. Live-sequencer recording refusal,
+cancellation and armed pattern-change cancellation passed in a separate edge run.
+Direct battery-mirror readback, sampler recording and broader stress remain open.
+
+A separately identified timing probe `7ecf9700…` ran 46 operations. Five A01
+pairs without USB recording gave Clear median/maximum 4.43/4.80 ms; with recording,
+7.66/8.36 ms. These are elapsed instrumented native commit-body intervals including
+interrupts and probe overhead, not unchanged-package or universal CPU bounds.
+The unchanged candidate's inner publication timer peaked at 573 counts (about
+4.34 microseconds), excluding interrupt-mask boundary instructions.
+
+Forty USB captures covered about 232 seconds. All 188 complete 120 BPM one-second
+windows verified eight track tones plus Main; 300 BPM captures matched their own
+unloaded spectral baseline. Whole-capture held/zero/repeated-block and adjacent
+sample-change checks matched the baselines. DSP errors/stalls stayed zero; some
+frame lateness occurred both with edits and in unloaded recording baselines.
+Sampled probe stack use was 612 of 8,192 bytes; stock/interrupt minima and full
+stack qualification are not established.
+
+All four automated trials verified Undo, original sites and empty inventory.
+The fixture's four patterns and 120 BPM were restored. The author power-cycled;
+original public base `2aa35c39…`, empty inventory and advancing DSP frames were
+verified. No project Save, Keep, flash or push occurred. The initial runner's
+recording assertion used the wrong status field; its Undo passed and the native
+live-flag follow-up passed. See [full method, corrections and limits](MKII_AUDIO_TIMING.md)
+and the [stock-free receipt](evidence/mkii-audio-timing-20261031.json).
 
 ## Sample-inclusive audio fixture — 31 October 2026
 

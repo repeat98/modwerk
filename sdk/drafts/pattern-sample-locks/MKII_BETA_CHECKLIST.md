@@ -1,11 +1,11 @@
 # MKII candidate check
 
-Module trial prepared locally; **not performed**. The sample-inclusive fixture
-was transferred to the MKII and its A01 track/Main tone preflight passed. See
-[physical preparation results](TESTING.md#physical-fixture-preparation--31-october-2026). Resolve the software qualification blockers
-in [BETA_PREPARATION.md](BETA_PREPARATION.md), freeze the candidate and review
-the exact base/package before arranging a supervised physical run. Existing
-0.1.8 results stay bound to their previously recorded bases.
+Partially performed on 31 October 2026: unchanged candidate `3e13c46f…`
+ran 43 native operations on RAM development base `20ed7910…`; a separate probe
+ran 46 timing operations. Audio, data and Undo checks passed within their stated
+scope. Full stack, mirror readback, open-selector removal and broader stress
+remain open. Read the [actual method/results](MKII_AUDIO_TIMING.md) before
+continuing this checklist; it is not a completed qualification certificate.
 
 The author's chosen first-beta scope is USB-only through the Modwerk base.
 Card support is deferred and card builds must refuse it; this checklist does
@@ -13,7 +13,7 @@ not qualify a card build. See [USB beta scope](USB_BETA.md).
 
 The latest private reconstruction candidate is `3e13c46f…` (10,048 bytes,
 nine stock-copy records). Its image matches the earlier prototype, but its
-changed package has only local/emulator lifecycle evidence. Review its
+changed package now has scoped MKII lifecycle/audio evidence. Review its
 [exact receipt](evidence/reconstruction-local-20261030.json) and the observed
 base's copy capability before a physical trial.
 

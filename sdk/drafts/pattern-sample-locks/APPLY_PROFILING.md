@@ -60,8 +60,10 @@ the complete masked duration. A follow-up hardware run needs verified timer
 configuration, measured overhead, matched load and the exact tested base/package.
 No cached load-meter difference establishes an isolated module cost.
 
-New physical hardware results: **not tested**. Completed emulator results and
-their identities are in TESTING.md and evidence/apply-profile-20261030.json.
+The later [physical MKII follow-up](MKII_AUDIO_TIMING.md) records separate
+instrumented native-body timings, unchanged-candidate audio/data checks and their
+limits. These emulator phase watches remain emulator-only evidence. Completed
+emulator results are in TESTING.md and evidence/apply-profile-20261030.json.
 
 The older capture harness uses `--main-level off`; these phase/DSP-counter
 results do not establish audible main output. The later

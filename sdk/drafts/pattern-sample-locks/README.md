@@ -63,7 +63,7 @@ There is **no ownership bookkeeping**: no battery-RAM reservation, CF metadata, 
 - Source, Part assignments, SAMPLE bytes, trig masks, canonical battery mirror and lock-index bytes are revalidated under the native level-two task guard, leaving sequencer, USB, audio-frame and DMA interrupts enabled.
 - Each changed step publishes at most eight SAMPLE/mirror pairs and one lock-index byte under a brief full interrupt guard; interrupts resume between steps. Only selected SAMPLE bytes, their canonical mirror, affected index bits and native dirty/publication state change.
 - Compiled allocation: 8,748 bytes initialized code/data and 1,328 bytes BSS. These are build sizes, not measured physical CPU/stack use.
-- Current MKII checks include live 512-field edits, native project reload, a kept nineteen-module restart and removal/Undo on the named flashed base. Observed host completion bounds are below 18.44 ms, including USB/UI latency. Full publication and cost qualification remain incomplete. See [TESTING.md](TESTING.md).
+- Current candidate MKII checks include 120/300 BPM edits, complete pattern/index comparisons, USB audio and verified Undo on a named RAM development base. A separate timing probe measured elapsed commit bodies; it does not establish unchanged-package CPU or total stack bounds. Earlier kept restart evidence remains bound to its earlier package/base. See [TESTING.md](TESTING.md) and [physical audio/timing method](MKII_AUDIO_TIMING.md).
 
 All three levels use the instrument’s own font and seven-pixel row spacing. Level one stays headerless; levels two and three keep white headers and two-column track grids. The popups fit all their rows without clipping.
 
