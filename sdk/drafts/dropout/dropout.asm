@@ -36,7 +36,7 @@
 ;   $0f frozen (a HOLD loop plays)   $10 the read frame   $11 the loop's start
 ;   $12 CRSH's countdown   $13/$14 CRSH's held L/R   $15/$16 TONE's low-pass L/R
 ;   $17 the table's base   $18/$19 dry L/R   $1a/$1b m L/R   $1c DPTH e
-;   $1d TONE e   $1e frames written since init, up to 1,024
+;   $1d TONE e   $1e frames written since init or the last dropout, up to 1,024
 ;
 ; Multiplies use only the encodable operand orders; no rep; no tfr between
 ; accumulators. Labels are dp + two digits, none a prefix of another.
@@ -191,8 +191,7 @@ dp12:
         move    x:(r7+$4),x1
         cmp     x1,b
         bge     dp14
-; it lasts L x (1/2 .. 3/2), from the noise's low 16 bits (taken as 0..1/2; no
-; logical shift, whose top bit would follow the stale extension byte)
+; it lasts L x (1/2 .. 3/2), from the noise's low 16 bits, taken as 0..1/2
         move    x0,a
         and     #>$00ffff,a
         asl     #6,a,a
@@ -240,7 +239,11 @@ dp16:
         move    a,x:(r7+$2)
         tst     a
         bne     dp18
-        move    a,x:(r7+$f)             ; faded out: a HOLD loop lets go
+        move    x:(r7+$f),b
+        tst     b
+        beq     dp18
+        move    a,x:(r7+$f)             ; faded out: a HOLD loop lets go,
+        move    a,x:(r7+$1e)            ; and the next one reaches back no further than this
 dp18:
         move    x:(r7+$2),y0
         move    x:(r7+$6),x1

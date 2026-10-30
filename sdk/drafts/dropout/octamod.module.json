@@ -95,7 +95,7 @@
     "limitations": [
       "Needs the Modwerk base loaded over USB (beta) with an effect id of its own; the card builds' non-stock ids are all claimed but 0x07, which the draft holds as a placeholder.",
       "Dropouts fall at random moments, not on steps: the effect follows no clock, tempo or trig. The random sequence starts from the same seed whenever the effect is loaded.",
-      "HOLD uses 2,048 words of the slot's buffer (an FX1 slot holds it); a loop never reaches back past what it recorded since it was loaded.",
+      "HOLD uses 2,048 words of the slot's buffer (an FX1 slot holds it); a loop never reaches back past what it recorded since it was loaded or since the last dropout ended.",
       "HOLD's loop seam, EDGE 0's hard cut and CRSH's aliasing are deliberate glitches.",
       "Not yet run in a built image, the ColdFire port or on a unit: only in fxhost (the vendored DSP56300 emulator alone)."
     ]
@@ -104,20 +104,20 @@
     "recorded": "fxhost, 30 Oct 2026",
     "storage": {
       "label": "DSP program / table / buffer",
-      "display": "363 words + 387-word table; 2,048-word buffer",
-      "value": 750,
+      "display": "368 words + 387-word table; 2,048-word buffer",
+      "value": 755,
       "unit": "words",
       "method": "static",
-      "conditions": "dsp_asm: 363 program words and one 387-word P table per core. 31 state words in each instance's own r7 block. 2,048 words of the allocator's Y buffer per instance (HOLD's 1,024 stereo frames).",
+      "conditions": "dsp_asm: 368 program words and one 387-word P table per core. 31 state words in each instance's own r7 block. 2,048 words of the allocator's Y buffer per instance (HOLD's 1,024 stereo frames).",
       "source": "TESTING.md"
     },
     "processing": {
       "label": "DSP instruction peak",
-      "display": "154 instructions/sample",
-      "value": 154,
+      "display": "156 instructions/sample",
+      "value": 156,
       "unit": "instructions/sample",
       "method": "emulator",
-      "conditions": "fxhost (dsp56kEmu alone), one instance, 16-frame calls at the dearest settings (HOLD, dropouts back to back, TONE 127): 2,466 instructions a call. Executed instructions, not chip cycles; not yet measured beside stock SPRING REV in dsp_host.",
+      "conditions": "fxhost (dsp56kEmu alone), one instance, 16-frame calls at the dearest settings (HOLD, dropouts back to back, TONE 127): 2,494 instructions a call. Executed instructions, not chip cycles; not yet measured beside stock SPRING REV in dsp_host.",
       "source": "TESTING.md"
     },
     "impact": {
@@ -131,20 +131,20 @@
       "dsp": {
         "level": "low",
         "basis": "source-estimate",
-        "rationale": "154 executed instructions a sample in fxhost, about half the 314 octabam's benchmark reports for stock SPRING REV; not measured under the same benchmark.",
+        "rationale": "156 executed instructions a sample in fxhost, about half the 314 octabam's benchmark reports for stock SPRING REV; not measured under the same benchmark.",
         "source": "TESTING.md"
       },
       "memory": {
         "level": "moderate",
         "basis": "source-estimate",
-        "rationale": "750 program-memory words on each DSP core (363 code, 387 table); 31 state words and 2,048 buffer words per instance.",
+        "rationale": "755 program-memory words on each DSP core (368 code, 387 table); 31 state words and 2,048 buffer words per instance.",
         "source": "TESTING.md"
       }
     }
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "fxhost only (the vendored dsp56kEmu with the module alone, no firmware): with CHNC 0, or DPTH and TONE 0, the output is the input bit for bit from garbage state and buffer and with trig splits; the dropouts' length and spacing follow LEN and CHNC; GAP's depth, HOLD's loop period, CRSH's 6-bit grid and hold, TONE and EDGE act as documented; HOLD never plays unrecorded memory; idle in every mode; nothing outside the audio, state, parameter and buffer words is written; 154 instructions a sample at the dearest settings. Not run in a built image, under the ColdFire port or on a unit.",
+    "summary": "fxhost only (the vendored dsp56kEmu with the module alone, no firmware): with CHNC 0, or DPTH and TONE 0, the output is the input bit for bit from garbage state and buffer and with trig splits; the dropouts' length and spacing follow LEN and CHNC; GAP's depth, HOLD's loop period, CRSH's 6-bit grid and hold, TONE and EDGE act as documented; HOLD never plays unrecorded memory; idle in every mode; nothing outside the audio, state, parameter and buffer words is written; 156 instructions a sample at the dearest settings. Not run in a built image, under the ColdFire port or on a unit.",
     "hardwareStatus": "untested",
     "evidenceRevision": "6bc8fe9c7df7311ab85ff35ef4ed03933491fc96",
     "gates": [

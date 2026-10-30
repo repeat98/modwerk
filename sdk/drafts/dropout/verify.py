@@ -109,7 +109,10 @@ def main(argv=None):
         y, yi, r = run(noise, knobs(CHNC=100, LEN=80, DPTH=127, EDGE=0, MODE=1, SIZE=size))
         viol += r['violations']
         x4 = F.to_raw(noise)[:len(yi)]
-        held = [(s, e) for s, e in segments(yi[:, 0] != x4[:, 0]) if e - s > 3 * period]
+        segs = segments(yi[:, 0] != x4[:, 0])
+        # a loop reaches back no further than the last dropout's end: judge the ones that had a whole loop to take
+        held = [(s, e) for i, (s, e) in enumerate(segs)
+                if e - s > 3 * period and (i == 0 or s - segs[i - 1][1] > period + 16)]
         errs = [np.abs(yi[s + period + 8:e - 8, 0] - yi[s + 8:e - period - 8, 0]).max() for s, e in held]
         ok = len(held) > 2 and max(errs) <= 8         # DPTH 127 is 1 - 2^-23: a few LSB of the dry remain
         gate('HOLD loops %d frames (SIZE %d)' % (period, size), ok, '%d held dropouts, largest repeat error %d LSB' % (

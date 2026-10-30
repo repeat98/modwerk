@@ -48,7 +48,7 @@ Drums show it best: GAP with a short EDGE cuts hits out like a dropout on tape; 
 ## Compatibility and limitations
 
 - **Needs the Modwerk base loaded over USB (beta)** with an effect id of its own. The card builds' thirteen non-stock ids are all claimed but 0x07, which this draft holds as a placeholder in `manifest.py`.
-- **Buffer.** HOLD keeps the last 1,024 frames in the first 2,048 words of the slot's buffer (`Claims(buffer_words=2048)`); an FX1 slot holds 3,072, so it runs on FX1 and FX2. A loop never reaches back past what it recorded since it was loaded.
+- **Buffer.** HOLD keeps the last 1,024 frames in the first 2,048 words of the slot's buffer (`Claims(buffer_words=2048)`); an FX1 slot holds 3,072, so it runs on FX1 and FX2. A loop never reaches back past what it recorded since it was loaded or since the last dropout ended, so it holds no jump in time.
 - **Random, not in time.** Dropouts fall at random moments, not on steps: this effect follows no clock, the tempo or the track's trigs. The random sequence starts from the same seed whenever the effect is loaded.
 - **HOLD and CRSH are deliberate glitches.** A HOLD loop jumps at its seam and CRSH aliases on purpose; EDGE softens the way in and out, not the loop.
 - **DPTH 127** leaves the dry at 2^-23 (a few LSB, about -130 dBFS) under MODE's sound.
@@ -56,7 +56,7 @@ Drums show it best: GAP with a short EDGE cuts hits out like a dropout on tape; 
 
 ## Tests and measurements
 
-See [TESTING.md](TESTING.md). `python3 -B sdk/drafts/dropout/verify.py` runs the gates on the vendored DSP56300 emulator: bit-exact output with no dropout and with DPTH and TONE at 0, from garbage state and buffer and with trig splits; the dropouts' rate and length against CHNC and LEN; GAP's depth; HOLD's loop period and that it never plays unrecorded memory; CRSH's grid and hold; TONE; EDGE's ramp; idle in every mode; a memory guard on every run (an FX1 slot not aligned to 2K, and an FX2 slot); the cost. 363 program words, a 387-word table, 31 state words and a 2,048-word buffer; 154 executed instructions a sample at the dearest settings.
+See [TESTING.md](TESTING.md). `python3 -B sdk/drafts/dropout/verify.py` runs the gates on the vendored DSP56300 emulator: bit-exact output with no dropout and with DPTH and TONE at 0, from garbage state and buffer and with trig splits; the dropouts' rate and length against CHNC and LEN; GAP's depth; HOLD's loop period and that it never plays unrecorded memory; CRSH's grid and hold; TONE; EDGE's ramp; idle in every mode; a memory guard on every run (an FX1 slot not aligned to 2K, and an FX2 slot); the cost. 368 program words, a 387-word table, 31 state words and a 2,048-word buffer; 156 executed instructions a sample at the dearest settings.
 
 ## Authorship and licences
 

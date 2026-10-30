@@ -18,7 +18,7 @@ What fxhost cannot see: the dispatcher's real register state, the panel and its 
 ## Gates (fxhost, 30 Oct 2026)
 
 ```
-PASS  assembles, no mpysu, no rep          363 program words + 387 table words
+PASS  assembles, no mpysu, no rep          368 program words + 387 table words
 PASS  CHNC 0 is the dry, bit for bit       largest difference 0 LSB
 PASS  DPTH 0 and TONE 0 change nothing     largest difference 0 LSB
 PASS  CHNC 100, LEN 40                     23 dropouts, 26 ms long (want 27), 228 ms apart (want 208)
@@ -26,7 +26,7 @@ PASS  CHNC 120, LEN 70                     33 dropouts, 88 ms long (want 93), 89
 PASS  GAP at DPTH 64 halves the level      level 0.5000 of the dry
 PASS  HOLD loops 64 frames (SIZE 0)        11 held dropouts, largest repeat error 4 LSB
 PASS  HOLD loops 400 frames (SIZE 48)      11 held dropouts, largest repeat error 5 LSB
-PASS  HOLD loops 953 frames (SIZE 127)     11 held dropouts, largest repeat error 5 LSB
+PASS  HOLD loops 953 frames (SIZE 127)     10 held dropouts, largest repeat error 5 LSB
 PASS  HOLD plays only what it recorded     peak -40.0 dBFS from a -40 dBFS input over a garbage buffer
 PASS  CRSH holds 2 samples on 6 bits       122 dropouts, median hold 2, on the grid: True
 PASS  CRSH holds 18 samples on 6 bits      46 dropouts, median hold 18, on the grid: True
@@ -37,11 +37,11 @@ PASS  idle settles (MODE 0)                tail peak -118.5 dBFS
 PASS  idle settles (MODE 1)                tail peak -118.5 dBFS
 PASS  idle settles (MODE 2)                tail peak -118.5 dBFS
 PASS  memory guard, every run              0 words written outside the state, audio and buffer
-PASS  instructions per frame               2466 a 16-frame call, 154 a frame
+PASS  instructions per frame               2494 a 16-frame call, 156 a frame
 all passed
 ```
 
-What they pin: with CHNC 0 the output is the input bit for bit in every MODE, from a garbage state block and buffer, with and without a trig split; with DPTH 0 and TONE 0 dropouts come and go and change nothing; the dropouts' mean length against LEN's table (within 20 %) and their mean spacing against CHNC's chance (within 35 %, a random process over 6 s); GAP at DPTH 64 halves the level; HOLD's output inside a dropout repeats with the loop's period at SIZE 0, 48 and 127 (within 8 LSB: DPTH 127 is 1 - 2^-23, so a few LSB of the dry ride on the loop); HOLD over a garbage buffer never plays more than the quiet input it recorded; CRSH's values inside a dropout sit on the 6-bit grid and change every 2 + SIZE/4 samples; TONE 127 takes a 5 kHz tone 15.8 dB down inside dropouts; EDGE's ramp takes 4 samples at 0 and about 2,205 at 127 (measured 90 % to 2 %); after a burst, the last half second of three is under -90 dBFS in every MODE with dropouts running; the memory guard over every run.
+What they pin: with CHNC 0 the output is the input bit for bit in every MODE, from a garbage state block and buffer, with and without a trig split; with DPTH 0 and TONE 0 dropouts come and go and change nothing; the dropouts' mean length against LEN's table (within 20 %) and their mean spacing against CHNC's chance (within 35 %, a random process over 6 s); GAP at DPTH 64 halves the level; HOLD's output inside a dropout repeats with the loop's period at SIZE 0, 48 and 127 (judged on dropouts that came at least a loop after the last one ended: a loop reaches back no further than that) (within 8 LSB: DPTH 127 is 1 - 2^-23, so a few LSB of the dry ride on the loop); HOLD over a garbage buffer never plays more than the quiet input it recorded; CRSH's values inside a dropout sit on the 6-bit grid and change every 2 + SIZE/4 samples; TONE 127 takes a 5 kHz tone 15.8 dB down inside dropouts; EDGE's ramp takes 4 samples at 0 and about 2,205 at 127 (measured 90 % to 2 %); after a burst, the last half second of three is under -90 dBFS in every MODE with dropouts running; the memory guard over every run.
 
 ## Sound quality
 
@@ -62,17 +62,21 @@ idle                    after the input stops: digital silence  OK
 
 That is the intended sound of CRSH (aliasing -28 to -44 dBc, the residual is the dropouts switching). DC stays under -91 dBFS, nothing reaches the rails, and after the input stops the output is digital silence. GAP and HOLD add no harmonics of their own; HOLD's loop seam and EDGE 0's 0.1 ms ramp are audible clicks by design.
 
+## Independent review
+
+A second agent, without the author's reasoning, read the source against octabam's trap list (30 Oct 2026): no condition-code, extension-byte, a0-remainder, Tcc-source, multiply-order, `lua`, label or init-clear defect, no write outside the state block, the audio block and the declared buffer, and the table literal once. Forms that carry hardware risk because no module proven on hardware uses them yet (their only precedents are RENDER-proven modules): short-immediate `add`/`sub #<n` and `tle` (ring-sc only). The review also caught that a HOLD loop could reach back past an earlier dropout and hold a jump in time; fixed (the frame count restarts when a loop lets go) before this record. Every other form has a site in a module that has run on a unit. To be cleared on hardware or against the stock payload's disassembly.
+
 ## Stock flows
 
 Not tested: nothing has run in a built image or on a unit. The module adds an effect to the chooser through the base's effect list and claims no key gesture or screen.
 
 ## Performance
 
-`evidence/performance.json` is not written: its static count (`cycle_count.py`), the benchmark against stock (`benchmark_stock_dsp.py`, which reads the user's own OS 1.40C) and the stress run (`dsp_host -guard -dirty`) all need a built image. Measured instead in fxhost: 2,466 executed instructions for a 16-frame call at the dearest settings (HOLD, dropouts back to back, TONE 127), 154 a frame including the per-call setup. octabam's benchmark reports 314 instructions a sample for stock SPRING REV under its own cases; the two figures come from different harnesses and are not yet a comparison.
+`evidence/performance.json` is not written: its static count (`cycle_count.py`), the benchmark against stock (`benchmark_stock_dsp.py`, which reads the user's own OS 1.40C) and the stress run (`dsp_host -guard -dirty`) all need a built image. Measured instead in fxhost: 2,494 executed instructions for a 16-frame call at the dearest settings (HOLD, dropouts back to back, TONE 127), 156 a frame including the per-call setup. octabam's benchmark reports 314 instructions a sample for stock SPRING REV under its own cases; the two figures come from different harnesses and are not yet a comparison.
 
 ## Resources
 
-363 program words and one 387-word P table (P, L and E, 129 words each) per DSP core, from `dsp_asm`. 31 state words per instance in the instance's own r7 block (`$00`-`$1e`), all cleared by `init`. 2,048 words of the allocator's Y buffer (`Claims(stock_instance_buffer=True, buffer_words=2048)`), which fits an FX1 slot (3,072 words); no stock table, no absolute address but `X:$213`.
+368 program words and one 387-word P table (P, L and E, 129 words each) per DSP core, from `dsp_asm`. 31 state words per instance in the instance's own r7 block (`$00`-`$1e`), all cleared by `init`. 2,048 words of the allocator's Y buffer (`Claims(stock_instance_buffer=True, buffer_words=2048)`), which fits an FX1 slot (3,072 words); no stock table, no absolute address but `X:$213`.
 
 ## Hardware
 
