@@ -146,7 +146,7 @@
     "report": "TESTING.md",
     "summary": "fxhost only (the vendored dsp56kEmu with the module alone, no firmware): with CHNC 0, or DPTH and TONE 0, the output is the input bit for bit from garbage state and buffer and with trig splits; the dropouts' length and spacing follow LEN and CHNC; GAP's depth, HOLD's loop period, CRSH's 6-bit grid and hold, TONE and EDGE act as documented; HOLD never plays unrecorded memory; idle in every mode; nothing outside the audio, state, parameter and buffer words is written; 156 instructions a sample at the dearest settings. Not run in a built image, under the ColdFire port or on a unit.",
     "hardwareStatus": "untested",
-    "evidenceRevision": "6bc8fe9c7df7311ab85ff35ef4ed03933491fc96",
+    "evidenceRevision": "bb419ff5ff27481610e72468c3973726bbdf4d6a",
     "gates": [
       "modules/dropout/verify.py"
     ]
@@ -169,7 +169,7 @@
   },
   "source": {
     "repository": "https://github.com/semierendonmez-commits/modwerk-semi",
-    "revision": "6bc8fe9c7df7311ab85ff35ef4ed03933491fc96",
+    "revision": "bb419ff5ff27481610e72468c3973726bbdf4d6a",
     "path": "sdk/drafts/dropout"
   }
 }
