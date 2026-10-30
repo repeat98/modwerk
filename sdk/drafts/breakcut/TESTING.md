@@ -23,11 +23,15 @@ python3 -B sdk/drafts/breakcut/verify.py        # the same, then the package reb
 
 ## Read off the unit or the emulator first
 
-Three values in `engine.h` are assumptions until a stock project is inspected (`ot_spec.py` / `ot_bank.py` on a saved
-bank, or the emulator's RAM): `BC_STRT_PER_SLICE` (the STRT lock of slice n with SLIC on, taken as n: lock STRT on a
-sliced track to slice 2 and read the lock byte); `BC_RATE_REVERSE` (RATE's full-speed reverse, taken as 0 with 127 the
-stock forward default: lock RATE to −128 and read it); and `bc_rtim`'s scale (16 values an octave with stock's default
-79 at 1/16: lock RTIM to 1/32 and 1/64 and read the bytes, expecting 95 and 111). Each is one line to correct.
+Three values in `engine.h` are calibrations a stock project settles (`ot_spec.py` / `ot_bank.py` on a saved bank, or
+the emulator's RAM). `BC_STRT_PER_SLICE` is 2 since 0.1.0's review: ot-tools-io's Python port octapy (MIT) writes a
+slice lock as raw STRT = slice index x 2 (`api/core/audio/step.py`, 64 slices over 0..126); still to confirm on a
+sliced track by locking STRT to slice 2 and reading the lock byte (expect 4). `BC_RATE_REVERSE` (RATE's full-speed
+reverse, taken as 0 with 127 the stock forward default: lock RATE to −128 and read it). And `bc_rtim`'s scale (16
+values an octave with stock's default 79 at 1/16: lock RTIM to 1/32 and 1/64 and read the bytes, expecting 95 and 111).
+octapy names RTIM 79 "HALF" (its machine default) and 67 "QUARTER" (`api/enums.py`, `RetrigTime`), twelve values
+apart and the other way round from the scale assumed here; it gives no source for the names, so the unit decides.
+Each is one line to correct.
 
 ## Hardware and audio quality
 

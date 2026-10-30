@@ -38,10 +38,11 @@ extern const char *const bc_algo_names[4];
 int bc_generate(BcLine *out, const BcParams *p, unsigned length);
 unsigned bc_next_seed(unsigned seed);
 
-/* Calibration read off the unit (TESTING.md): the STRT lock of slice n in slice mode, RATE's reverse lock, and RTIM's
- * value for a retrig period of `ticks` (1/24 step). RTIM is taken as 16 values an octave with 79 at one step (stock's
- * default 1/16, octabam ot_spec.py), so 95 is half a step. */
-#define BC_STRT_PER_SLICE 1u
+/* Calibration (TESTING.md): the STRT lock of slice n in slice mode is 2n, as ot-tools-io's octapy port writes it
+ * (raw STRT = slice index x 2, 64 slices over 0..126); RATE's reverse lock, and RTIM's value for a retrig period of
+ * `ticks` (1/24 step), remain to be read off the unit. RTIM is taken as 16 values an octave with 79 at one step
+ * (stock's default 1/16, octabam ot_spec.py), so 95 is half a step. */
+#define BC_STRT_PER_SLICE 2u
 #define BC_RATE_REVERSE 0u
 unsigned bc_rtim(unsigned ticks);
 

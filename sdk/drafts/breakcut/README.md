@@ -65,7 +65,7 @@ and ROLL at 0 it plays the break straight; raise them for cuts. For a two-bar br
 
 - Octatrack MKI or MKII, OS 1.40C, the Modwerk base loaded over USB (beta) with the machine table. Card firmware cannot include it.
 - Needs a sliced Flex sample, one slice a step, SLIC on. Three values are read from the unit and are unverified here
-  (TESTING.md): the STRT value of slice n in slice mode (taken as n), RATE's full-speed reverse (taken as 0, stock's
+  (TESTING.md): the STRT value of slice n in slice mode (2n, as octapy writes it), RATE's full-speed reverse (taken as 0, stock's
   default 127 being forward) and RTIM's scale (taken as 16 values an octave with stock's default 79 at one step).
 - BREAKCUT owns the trigs, trig words and PTCH, STRT, RATE, RTRG and RTIM locks of the steps inside the track's length;
   LEN, AMP, LFO and FX locks, swing and steps past the length stay.
