@@ -1,0 +1,55 @@
+This week on Modwerk · 23–30 October
+
+Hey guys,
+here’s what happened on Modwerk this week. Nine new modules landed, including the first two for the Analog Rytm.
+
+NEW MODULES
+
+- STRING (https://modwerk.app/digitakt/module/digistring/) Digitakt · by Alez22
+  A plucked-string machine: bowed, hit, noise or plucked strings through the Digitakt’s own filter and effects.
+- Deja Vu (https://modwerk.app/#module/dejavu/) Octatrack · by Jan Kolkmeier
+  Three new LFO waves: a loop of random values you can lock, mutate, snap to root and fifth, or glide.
+- Loop Sync (https://modwerk.app/#analog-rytm-mkii/module/loop-sync) Analog Rytm · by stigmagit
+  Sample loops stay in time with the project tempo. AUTO reads each loop’s tempo from its length and repitches it.
+- Arp Key Locks (https://modwerk.app/#module/arp-key-locks/) Octatrack · by jopolokk1
+  Lock the arpeggiator’s key on single steps of a MIDI track, in seven modes and twelve roots.
+- Digi Perform (https://modwerk.app/digitakt/module/digiperform/) Digitakt · by ROMsets
+  Eight performance macros on knobs A–H, per pattern.
+- Direct Jump Kyoti (https://modwerk.app/#module/direct-jump-kyoti/) Octatrack · by Zac Kyoti
+  A cued pattern takes over on the next step, right where it would be had it played since START.
+- CC Recall (https://modwerk.app/digitakt/module/cc-recall/) Digitakt · by draadpiraat
+  MIDI tracks send their pattern’s CC values right away after a pattern change, project load or STOP.
+- Filter Hz (https://modwerk.app/#analog-rytm-mkii/module/filter-hz) Analog Rytm · by Iced-Cream
+  The filter’s FRQ popup shows the cutoff in hertz instead of 0–127.
+- Beat Slicer (https://modwerk.app/#module/beat-slicer/) Octatrack · by twwwy
+  Record freely, set the original BPM and cut the sample into beat-spaced slices. Needs the USB base from the beta.
+
+UPDATED
+
+- POLY8 (https://modwerk.app/#module/poly8/) Octatrack · 0.3.2
+  Back in the library. It no longer freezes the Octatrack: when the CPU runs short, it drops voices, release tails first.
+- Sidechain Compressor (https://modwerk.app/#module/sidechain-compressor/) Octatrack · 0.2.0
+  A new key filter, KBAS and KWID, narrows the key to a kick’s fundamental. Projects saved with 0.1.x need KGN, KBAS and KWID set again.
+- Analog BD (https://modwerk.app/#module/analog-bassdrum/) Octatrack · 0.1.6
+  TYPE on SRC SETUP switches between 808 and 909, and every hit now varies slightly unless FIXD is on.
+- Tape Echo (https://modwerk.app/#module/tapeecho/) Octatrack · 0.1.6
+  No longer turns the track down. MIX now works like BBD Delay’s.
+- VECTOR (https://modwerk.app/#module/vector/) Octatrack · 0.2.5
+  Over USB, a double tap on SRC opens VECTOR’s second page.
+
+ON THE OCTATRACK BETA
+
+- Up to 128 modules can be installed at once, up from 20.
+- Syncs keep at once. A synced module set is kept as soon as it’s sent, without waiting for a self-test.
+- A crash at power-on stays a one-off. If the Octatrack freezes while it loads your modules, the next start leaves that module out and loads the rest.
+
+You’ll find everything at modwerk.app (https://modwerk.app/#all). Let me know what you think in the development Discord (https://discord.gg/vzfAdMBtn5)!
+
+Thank you,
+Jannik
+
+You’re receiving this because you opted in to Modwerk news. You can turn news emails off in your account settings at any time.
+https://modwerk.app/#account/notifications
+
+Modwerk · https://modwerk.app/
+Need help? support@modwerk.app

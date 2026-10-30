@@ -157,6 +157,135 @@
           "target": "ds_inject_s"
         }
       ]
+    },
+    "1.54": {
+      "defsym": {
+        "OS154": "1"
+      },
+      "cflags": [
+        "-DOS154"
+      ],
+      "sites": [
+        {
+          "addr": "0x400657cc",
+          "len": 6,
+          "stockSha256": "3b618e4eaaafbc05f3a3649b08bde56616971a07cc578ed13570b010e70bf072",
+          "op": "jmp",
+          "target": "ds_layout"
+        },
+        {
+          "addr": "0x4000fe8a",
+          "len": 10,
+          "stockSha256": "5a18bd3f39db0448ad3452128af8f9e63d1e9c011cafecfc54210fba10c19677",
+          "op": "jmp",
+          "target": "ds_lab_short"
+        },
+        {
+          "addr": "0x4000feac",
+          "len": 10,
+          "stockSha256": "5a18bd3f39db0448ad3452128af8f9e63d1e9c011cafecfc54210fba10c19677",
+          "op": "jmp",
+          "target": "ds_lab_long"
+        },
+        {
+          "addr": "0x40060b8e",
+          "len": 6,
+          "stockSha256": "348bda2f007e286fe03335905a468d107ca5b515969d4cd3adabcd24a09dd485",
+          "op": "jmp",
+          "target": "ds_lfo_label"
+        },
+        {
+          "addr": "0x400a44d0",
+          "len": 6,
+          "stockSha256": "81ec6bd4f514d9f1ac3300455338b01169f581a9eba9bcbdb8c5d68c865084fa",
+          "op": "jmp",
+          "target": "ds_lfo_popup_name"
+        },
+        {
+          "addr": "0x400a454c",
+          "len": 6,
+          "stockSha256": "3900fb0c2d68aa3c036b14b69338b9c4498b92b1a090707f96375c14607b45ed",
+          "op": "jmp",
+          "target": "ds_lfo_popup_fallback"
+        },
+        {
+          "addr": "0x40065de6",
+          "len": 6,
+          "stockSha256": "752240e3f074673bf7d0e6dba45d264fa097aba6578c196030eeeada3d7b5fd5",
+          "op": "jmp",
+          "target": "ds_lfo_overview_group"
+        },
+        {
+          "addr": "0x40065e5e",
+          "len": 6,
+          "stockSha256": "3052d36541b3f875a8fa1549052bd7ec72a4c292a68a49a3c57df6f06cc218e1",
+          "op": "jmp",
+          "target": "ds_lfo_overview_name"
+        },
+        {
+          "addr": "0x4000f324",
+          "len": 8,
+          "stockSha256": "a04973fb79ed0896aa768e97902a85f61a10ad9d106955b3fe7a112c76d0e51f",
+          "op": "jmp",
+          "target": "ds_val_text"
+        },
+        {
+          "addr": "0x4000f2bc",
+          "len": 8,
+          "stockSha256": "7357d174dda33b71e4d29ed8e6d02a3b96a76167a0a44ebe35f2a439406880f4",
+          "op": "jmp",
+          "target": "ds_knob_gfx"
+        },
+        {
+          "addr": "0x40065794",
+          "len": 10,
+          "stockSha256": "6fac3f4794a986259c5b1076561f1b40f68fd968c6940bb6c785ee20e1334617",
+          "op": "jmp",
+          "target": "ds_ui_rec"
+        },
+        {
+          "addr": "0x400657ee",
+          "len": 10,
+          "stockSha256": "6fac3f4794a986259c5b1076561f1b40f68fd968c6940bb6c785ee20e1334617",
+          "op": "jmp",
+          "target": "ds_pop_text"
+        },
+        {
+          "addr": "0x4000ff20",
+          "len": 6,
+          "stockSha256": "37ace07d53dc6aa9eba5ede1b616b09eb19800992fd652169e5fd1051c3ffde3",
+          "op": "keep2",
+          "target": "ds_prange"
+        },
+        {
+          "addr": "0x400100c4",
+          "len": 6,
+          "stockSha256": "37ace07d53dc6aa9eba5ede1b616b09eb19800992fd652169e5fd1051c3ffde3",
+          "op": "keep2",
+          "target": "ds_prange"
+        },
+        {
+          "addr": "0x4000f534",
+          "len": 6,
+          "stockSha256": "37ace07d53dc6aa9eba5ede1b616b09eb19800992fd652169e5fd1051c3ffde3",
+          "op": "keep2",
+          "target": "ds_prange"
+        },
+        {
+          "addr": "0x4000f5fc",
+          "len": 6,
+          "stockSha256": "d3c6f631568fb7f26a844c1e364989f7ebc04db477e5d6bf13b33bda9b26878e",
+          "op": "keep2",
+          "target": "ds_prange_f"
+        },
+        {
+          "addr": "0x40077fba",
+          "len": 6,
+          "stockSha256": "039364694af129be95aaf0f68e65e99e67c0a24eb30fb60a70981bff367fb4a6",
+          "op": "jsr",
+          "target": "ds_inject_s"
+        }
+      ]
     }
   }
 }
