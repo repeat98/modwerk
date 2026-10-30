@@ -26,7 +26,7 @@ All 11 checked steps passed. The first two attempts failed for setup reasons, no
 - **Saving and reloading:** with MUTE MIDI IN checked, the project saved and reloaded with the box still checked, and it was still checked after a power cycle. Reported as working as expected.
 - **CREATE NEW:** a new project opened with MUTE MIDI IN unchecked.
 - **Pad mutes:** muting a track with its pad in MUTE mode silenced incoming notes for it, a note held while the pad muted the track stopped, and after unmuting the next note played. Reported as working.
-- **Live use** (a pattern playing while tracks are muted and unmuted and notes come in over MIDI): in progress, not reported yet.
+- **Live use:** with notes coming from an external sequencer, muting and unmuting tracks with the pads in MUTE mode worked as intended. A full live performance has not been played with it yet.
 
 ## Build MM02 on a unit (author, 29 October 2026)
 
@@ -111,7 +111,7 @@ PORT CONFIG shows MUTE MIDI IN as its last row, after RECEIVE CC/NRPN, unchecked
 
 ## Not tested
 
-- **The unit, still open.** DIN MIDI (MM03 ran over USB only), live use with a pattern playing (in progress), and a pattern or kit change during a flood.
+- **The unit, still open.** DIN MIDI (MM03 ran over USB only), a full live performance, and a pattern or kit change during a flood.
 - **On the unit's clock.** CPU time per event and under the flood, measured with DTIM0; a flood at 240 BPM; a pattern or kit change during the flood.
 - **USB timing.** A real USB host; the emulator's USB MIDI input is its own model.
 - **Silent Pad+Trig and Retrig Grid** (core-ar2 0.3 submissions) were not built beside it.
