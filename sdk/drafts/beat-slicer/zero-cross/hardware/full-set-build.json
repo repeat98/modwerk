@@ -176,5 +176,6 @@
   "qualification": "Incomplete: full-set Undo failed; uninstrumented build, 24-bit, concurrency and broader audio/stress cases remain pending.",
   "record": "FULL_SET_2026-10-30.md",
   "firmwareCommitted": false,
-  "subsequentEnd": "Bounded 45-second Undo failed with 10 modules remaining; active identity unknown; client stopped and owner power cycle requested before any further install."
+  "subsequentEnd": "Bounded 45-second Undo failed with 10 modules remaining; active identity unknown; client stopped and owner power cycle requested before any further install.",
+  "recoveryAfterSubsequentEnd": "Owner power-cycled; original base/active set and all 19 module IDs/layouts/names verified before cumulative trial. Failed Undo remains failed."
 }

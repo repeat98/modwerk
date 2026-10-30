@@ -8,8 +8,9 @@ Separate measurement bases have partial MKII evidence in
 [the first hardware record](hardware/HARDWARE_2026-10-30.md) and the subsequent
 [full-set trial](hardware/FULL_SET_2026-10-30.md). The completion-status fix was
 rebuilt and passed the limit/status check on the second base with all 19
-modules. That RAM trial was left running at the owner's request, without a host
-deadline; it has not yet been Undone or reboot-restored.
+modules. Its subsequent bounded full-set Undo failed. An owner power cycle then
+restored the original base and exact 19-module set, verified before loading the
+cumulative build described below. The failed Undo remains unqualified.
 
 ## Cumulative 0.1.67 inheritance correction
 
@@ -17,8 +18,13 @@ The earlier 0.1.68 measurement builds omitted the separately staged FUNC + AED
 cycle. The private source proposal now includes it alongside SNAP and the
 completion-status fix. [The cumulative build receipt](hardware/cumulative-build.json)
 pins base `20ed7910…`, MAIN `8ede9cf9…` (1,306,295 bytes) and the unchanged
-5,332-byte module. Hardware loading/retesting is pending; earlier hardware
-evidence does not qualify this combination.
+5,332-byte module. [The cumulative hardware record](hardware/CUMULATIVE_2026-10-30.md)
+observes the stock-first cycle, both switching directions, held FUNC/repeated
+AED, retained SNAP ON and unchanged source/markers/Parts, plus a passed 19-module
+self-test. The trial was left running without a host deadline. No new alignment
+was applied in this control check; earlier alignment evidence remains scoped to
+its own base. The previous build's full-set Undo failed and required an owner
+power cycle; the cumulative build's Undo is untested.
 
 All five shared font/frame, preview and planner sources match the approved
 0.1.67 native-UI candidate byte-for-byte. The actual combined menu/service

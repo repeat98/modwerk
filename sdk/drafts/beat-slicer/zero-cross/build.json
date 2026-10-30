@@ -22,6 +22,6 @@
   },
   "basePatchSha256": "55eed466a26d1a78997d40d9282f5598b2adbe86e24227643ddc3eacb9b86295",
   "sharedApi": "optional ABI-1 tail; legacy prefix and sizeof unchanged",
-  "hardware": "Partial MKII full-set evidence on corrected measurement base 36b8c51f\u2026; hardware/FULL_SET_2026-10-30.md. Uninstrumented qualification remains pending.",
-  "basePatchScope": "Current cumulative source proposal includes 0.1.67 FUNC+AED cycle and 0.1.68 SNAP/completion fixes. Exact combined build and hardware evidence are recorded separately when built."
+  "hardware": "Partial cumulative MKII full-set evidence on measurement base 20ed7910\u2026; hardware/CUMULATIVE_2026-10-30.md. Uninstrumented and broader alignment/audio qualifications remain pending.",
+  "basePatchScope": "Current cumulative source proposal includes 0.1.67 FUNC+AED/UI/cache and 0.1.68 SNAP/completion. Exact combined build, inherited asset audit and hardware control evidence are recorded in hardware/cumulative-build.json."
 }
