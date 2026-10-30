@@ -141,7 +141,7 @@ record at the registry's index.
 ## Authorship and licences
 
 The phrase rules follow Nordl3's [Call / Response Generator](https://github.com/Nordl3/Call-Response-Generator)
-(MIT, Copyright (c) 2026 Nordl3), `index.html` at `dbd1f0c35ecd37dd4d64747808fff7ea3629c1b6`. The Octatrack glue is
+(MIT, Copyright (c) 2026 Nordl3; its notice is in [NOTICE](NOTICE)), `index.html` at `dbd1f0c35ecd37dd4d64747808fff7ea3629c1b6`. The Octatrack glue is
 original, in the shape of VECTOR's `native.c` by Jannik Aßfalg (MIT, Modwerk). The module is
 [GPL-3.0-or-later](LICENSE); the thumbnail is an original illustration ([presentation/LICENSE](presentation/LICENSE)).
 No Elektron firmware, extracted routines, tables, samples or dumps are included; underlying Elektron interface rights
