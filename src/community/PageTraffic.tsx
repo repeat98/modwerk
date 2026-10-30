@@ -17,6 +17,7 @@ export function PageTraffic({ data }: { data: UsageStatistics }) {
       : <>
         <p className="service-note">{format(summary.total)} named page views · {data.from} – {data.to} UTC. Counting began {data.pagesStarted.slice(0, 10)}; the first day and today are partial. Views include repeat visits, not unique people.</p>
         {summary.unattributed > 0 && <p className="service-note">{format(summary.unattributed)} other page views have no page name, from earlier counts or older browsers. They are excluded from the shares and chart below.</p>}
+        {summary.ranked.some(row => row.page === 'page-not-found') && <p className="service-note">Legacy unclassified / missing pages includes valid pages such as the machine overview introduced on 21 October 2026. Older browsers may still add to this group. It cannot be interpreted as broken links or reassigned to individual pages. New counts distinguish Page not found from Unclassified page.</p>}
         {summary.ranked.length ? <div className="statistics-table" role="region" aria-label="Most visited pages" tabIndex={0}><table>
           <caption>Most visited pages · share of named page views in the selected period. Select a page to see its daily views.</caption>
           <thead><tr><th scope="col">Page</th><th scope="col">Views</th><th scope="col">Share</th></tr></thead>

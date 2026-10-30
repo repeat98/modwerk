@@ -2902,6 +2902,7 @@ hostquit:
         # once and compare them.
         LFO01_MARK = "LFO lines 0-1: ROLLED TOO"
         PTABLE_MARK = "$fab1e0"          # schema.DspSection.ptable's literal
+        PTABLE2_MARK = "$fab2e0"         # schema.DspSection.ptable2's, straight after the ptable
 
         # ---- XTABLE: the P tables go to the stock curve bank ------------
         _xt_base, _xt_words = stock_mod.CURVE_BANK
@@ -2948,7 +2949,7 @@ hostquit:
                 # first, and each literal is rewritten to its own start.
                 _n = ((len(LFO01 + LFOTAB) if LFO01_MARK in _t else len(LFOTAB))
                       if "$facade" in _t else 0) \
-                    + (len(_MODS[_k].dsp.ptable) if PTABLE_MARK in _t else 0)
+                    + (len(_MODS[_k].dsp.ptable) + len(_MODS[_k].dsp.ptable2) if PTABLE_MARK in _t else 0)
                 _xt_layout[_k] = (_xa, _n)
                 _xa += _n
             if _xa > _xt_base + _xt_words:
@@ -2990,6 +2991,17 @@ hostquit:
                 sys.exit(f"payload {tag}: {name} has multiple $facade "
                          f"LFOTAB literals -- expected exactly one")
             _ptab = list(remix_modules()[name].dsp.ptable) if name in remix_modules() else []
+            _ptab2 = list(remix_modules()[name].dsp.ptable2) if name in remix_modules() else []
+            if bool(_ptab2) != (PTABLE2_MARK in src) or src.count(PTABLE2_MARK) > 1:
+                sys.exit(f"payload {tag}: {name}: a DspSection.ptable2 and exactly one "
+                         f"{PTABLE2_MARK} literal in the source go together "
+                         f"(table {len(_ptab2)} words, literal x{src.count(PTABLE2_MARK)})")
+
+            def _ptsub(text, at, _n=len(_ptab), _two=bool(_ptab2)):
+                # The ptable at `at`; the ptable2, when there is one, straight after it.
+                text = text.replace(PTABLE_MARK, f"${at:x}")
+                return text.replace(PTABLE2_MARK, f"${at + _n:x}") if _two else text
+            _ptab = _ptab + _ptab2
             _arena = remix_modules()[name].dsp.arena if name in remix_modules() else ""
             if _arena:
                 # Placed last, it takes the rest of the first run that holds
@@ -3002,7 +3014,7 @@ hostquit:
                                        for _v in _rc.MODULE_PACKAGES.values()])
                 for _r in runs:
                     _c, _end = _r["cursor"], _r["base"] + _r["words"]
-                    _probe = src.replace(f"@{_arena}@", "0").replace(PTABLE_MARK, f"${_c:x}")
+                    _probe = _ptsub(src.replace(f"@{_arena}@", "0"), _c)
                     _n = _end - _c - len(assemble_syms(_probe, _c, label=name)[0])
                     if _n >= max(_amin, 1):
                         break
@@ -3055,7 +3067,7 @@ hostquit:
                 _xa, _at, _lead = _xt_layout.get(name), DEV_DELAY_P, []
                 if _ptab and _xa is not None:
                     src, _xt_sites[name] = _p2x(
-                        src.replace(PTABLE_MARK, f"${_xa[0]:x}"), name)
+                        _ptsub(src, _xa[0]), name)
                     if len(_ptab) != _xa[1]:
                         sys.exit(f"payload {tag}: {name}'s table is "
                                  f"{len(_ptab)} words, its X slot {_xa[1]}")
@@ -3064,7 +3076,7 @@ hostquit:
                           f"({len(_ptab):4d} words)  {name}'s table  in the stock "
                           f"curve bank, {_xt_sites[name]} p:( reads -> x:(")
                 elif _ptab:
-                    src = src.replace(PTABLE_MARK, f"${DEV_DELAY_P:x}")
+                    src = _ptsub(src, DEV_DELAY_P)
                     _at, _lead = DEV_DELAY_P + len(_ptab), list(_ptab)
                     print(f"  {'PTABLE':13} P:0x{DEV_DELAY_P:05x}..0x{_at:05x} "
                           f"({len(_ptab):4d} words)  {name}'s table  (DEV: leads "
@@ -3113,7 +3125,7 @@ hostquit:
                     if _lfo:
                         _s2 = _s2.replace("$facade", f"${_at:x}")
                     if _ptab:
-                        _s2 = _s2.replace(PTABLE_MARK, f"${_at + len(_ltab):x}")
+                        _s2 = _ptsub(_s2, _at + len(_ltab))
                     if _xa is not None:
                         _s2, _xt_sites[name] = _p2x(_s2, name)
                     else:
@@ -3136,7 +3148,7 @@ hostquit:
                     _code_runs = sorted(runs, key=lambda r: (r["base"] + r["words"] - r["cursor"] - (len(_ptab) if r is _tr else 0), r["base"])) if "ANALOG BD" in REMIX.modules and not DYNAMIC else runs
                     for _cr in _code_runs:
                         _ca = _cr["cursor"] + (len(_ptab) if _cr is _tr else 0)
-                        _s2 = src.replace(PTABLE_MARK, f"${_ta:x}")
+                        _s2 = _ptsub(src, _ta)
                         _w, _syms = assemble_syms(_s2, _ca, label=name)
                         if _ca + len(_w) <= _cr["base"] + _cr["words"]:
                             _split_table = (_tr, _ta, list(_ptab))

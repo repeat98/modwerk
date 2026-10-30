@@ -1,0 +1,14 @@
+{
+  "kind": "owner-approved-update",
+  "id": "beat-slicer",
+  "version": "0.1.66-experimental",
+  "approvedBy": "repeat98",
+  "approvedOn": "2026-10-27",
+  "ownerStatement": "Bring Beat Slicer live. I waive the static cycle bound and the MIDI flood for this version.",
+  "reason": "The popup's draw cost was measured on the owner's MKII (about 1 ms a UI tick, 6 % of the CPU, only while it is open) and stands as the bound on record; no static count was made. Beat Slicer has no MIDI path, so no flood ran. Every other qualification stays required.",
+  "waived": [
+    "chip-worst-case-cycles",
+    "current-build-hardware"
+  ],
+  "sourceSha256": "d693fde956c33af96ac8a377978b5e29e12e106b4f52512df3f7a812d9a5ee8b"
+}

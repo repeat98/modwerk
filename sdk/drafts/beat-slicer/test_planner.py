@@ -74,10 +74,10 @@ class PlannerTests(unittest.TestCase):
         self.assertEqual(p.bpm24, 2160)
 
     def test_fractional_grid_all_spacings_no_cumulative_drift(self):
-        # Independent Fraction oracle: 250 tempo/rate/source/spacing cases.
+        # Independent Fraction oracle: 300 tempo/rate/source/spacing cases.
         for sr in (8000, 44100, 48000, 96000, 192000):
             for bpm in (720, 721, 197 * 24, 2881, 7200):
-                for beats in (1, 4, 16, 32, 64):
+                for beats in (1, 2, 4, 16, 32, 64):
                     for source in (0, 1):
                         r = self.request(sample_rate=sr, trim_start=123,
                                          trim_end=123 + sr * 7,
@@ -152,7 +152,7 @@ class PlannerTests(unittest.TestCase):
         self.assertEqual(list(p.starts)[:p.count], [0, 22055])
 
     def test_invalid_inputs_fail_without_writing_output(self):
-        cases = [dict(beats=2), dict(tempo_source=2), dict(snap=2),
+        cases = [dict(beats=3), dict(tempo_source=2), dict(snap=2),
                  dict(sample_bpm24=0), dict(project_bpm24=0, tempo_source=1),
                  dict(sample_rate=0), dict(trim_start=100, trim_end=100)]
         requests = [self.request(**kw) for kw in cases]

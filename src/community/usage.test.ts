@@ -122,6 +122,13 @@ describe('optional usage reporting',()=>{
 })
 
 describe('page traffic privacy and navigation', () => {
+ it.each([false, true])('separates missing and unclassified pages without sending paths, opt-in=%s', optedIn => {
+  if (optedIn) usage.setUsageAllowed(true)
+  usage.trackPageView('new-screen/private-id?token=secret')
+  usage.trackPageView('missing/private-id?token=secret', true)
+  expect(request.mock.calls.map(([, options]) => JSON.parse(options.body).page)).toEqual(['unclassified', 'missing-page'])
+  for (const [, options] of request.mock.calls) expect(options.body).not.toMatch(/private|secret|token/)
+ })
  it.each([false, true])('sends only fixed page names with opt-in=%s', optedIn => {
   if (optedIn) usage.setUsageAllowed(true)
   for (const route of ['account/reset/private-token?email=private@example.test', 'forum/messages/private_username', 'forum/thread/private-id?search=secret', 'forum/profile/private_username', 'developer/private-report']) usage.trackPageView(route)

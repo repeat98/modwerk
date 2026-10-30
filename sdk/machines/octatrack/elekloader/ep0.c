@@ -157,6 +157,23 @@ int modwerk_upload_busy(void) {
 #endif
     return controller_started && controller.phase != MU_NORMAL;
 }
+#ifdef MODWERK_SAMPLE_EDITOR
+/* UI observations only. A complete trial may run its module, while receiving,
+ * partial publication, uncertain rollback and a disconnect may not edit. */
+int mw_sample_ep0_wake(const void *message) { return message==wake_message; }
+int mw_sample_transport_ready(void)
+{
+    if(receiving || held)return 0;
+#ifdef MODWERK_RUNTIME_VOLATILE_JOURNAL
+    if(modwerk_runtime_volatile_busy() || modwerk_volatile_busy(VOLATILE_SERVICE))return 0;
+#endif
+#ifdef MODWERK_SAVED_SET_EXPORT
+    if(modwerk_saved_set_busy())return 0;
+#endif
+    return !controller_started || (controller.initialized && controller.active_known && !controller.disconnecting &&
+        (controller.phase==MU_NORMAL || controller.phase==MU_TRIAL));
+}
+#endif
 
 static void wake(void)
 {
@@ -486,6 +503,7 @@ void modwerk_ep0_bus_reset(void)
  * or trial is open is handled as unplugged (mv_tick). */
 #define HOST_TIMEOUT_TICKS 600u
 int modwerk_modset_due(void); /* modset.c: a kept set waits for its save */
+void modwerk_modset_notice_tick(void); /* modset.c: "MODULES LOADED" once the restored engines run */
 void modwerk_ep0_tick(void);
 static void ep0_tick(void);
 void modwerk_ep0_tick(void)
@@ -494,6 +512,7 @@ void modwerk_ep0_tick(void)
 }
 static void ep0_tick(void)
 {
+    modwerk_modset_notice_tick();
 #ifdef MODWERK_RUNTIME_VOLATILE_JOURNAL
     if(volatile_started && modwerk_volatile_tick(VOLATILE_SERVICE,modwerk_runtime_ticks)) wake();
 #endif

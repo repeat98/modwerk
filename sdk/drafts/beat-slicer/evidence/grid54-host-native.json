@@ -1,0 +1,58 @@
+{
+  "scope": "Geometry-only preview oracle, complete exact-audio-planner comparison, capacity/tempo/trim/input refusals and unchanged failure outputs; no live source or device access",
+  "sourceSha256": {
+    "grid_preview.c": "25cbf249af9128655482cdf775cc594a7bcffaab94c5b521993ebe1ac8abff1c",
+    "grid_preview.h": "80dd553543bb02ac7cb016331b3a0ce3c95b51dce0e75d4b86f2a1a1698aac8c",
+    "planner.c": "01c9c25efa363679a591969931dd376a3b694a949dd8b9f89eda4bf77a88cee4",
+    "planner.h": "1a10ce9e6b34dfd35eb138690e2134550621c3bf91b2178fb50f95b9def6b7ae",
+    "test_grid_preview.py": "80258c900a3cbba8ad65db5906a645f641150536742d3fda32db67224c6bc6aa",
+    "build_usb_probe.py": "aea0171bbb2dc2ad3238486880ef4279f43b7cd1c393159097b6d180df02e081",
+    "stock_probe/job_probe.cpp": "eba70897030ec3b8804de5641d533955455761df75c19db278438006bc8b4e1a"
+  },
+  "vectors": 193,
+  "hostSanitizers": "address,undefined",
+  "hostExitCode": 0,
+  "fixtureSha256": "14e62b28ae2c6f300647d30f13058e3e4b868ad7a29984804e3b3652bb610db9",
+  "hardware": "not tested",
+  "nativeSourceAccess": "not implemented",
+  "boundaryAmplitude": "unknown; no PCM analysis",
+  "sdkRevision": "49bf9296a1a0c1b95848c373b5ce5b93f770c218",
+  "sdkDependencySha256": {
+    "sdk/runtime/loader/build.py": "1bc1a0e66f9b93871f429c53c8adebb39d21b5da7b7b101bf0f1f7c558313407",
+    "sdk/runtime/m68k_codegen.py": "861da4bf86f662362055f1082147b2c14824075724f7c7a2b77acca3e0c973c0"
+  },
+  "nativeFlags": [
+    "-mcpu=54455",
+    "-Os",
+    "-std=c99",
+    "-ffreestanding",
+    "-fno-builtin",
+    "-fno-common",
+    "-fno-tree-loop-distribute-patterns",
+    "-fno-asynchronous-unwind-tables",
+    "-fno-unwind-tables",
+    "-Wall",
+    "-Wextra",
+    "-Werror",
+    "-I",
+    "/source/sdk/runtime/loader",
+    "-fno-late-combine-instructions",
+    "-I",
+    "/source/sdk/drafts/beat-slicer"
+  ],
+  "nativeExitCode": 0,
+  "nativeStdout": [
+    "SOURCE_SHA256: eba70897030ec3b8804de5641d533955455761df75c19db278438006bc8b4e1a",
+    "PASS: cooperative preview target selftest and preserved registers"
+  ],
+  "runnerSha256": "fa8c5f47aab4d97bff73d8afaea9b69701c1a1df095062460f2c3bbeb9969103",
+  "objectSha256": {
+    "native-0.o": "2e7dacdaf3b801e07fa2a6fa7b9568c96bd006d9f65c5de6c7bca82135c85c57",
+    "native-1.o": "508e05320cc6bfd96419dd96a84853e2a6081e72fc04fb6f2fb31f38ed99a33a",
+    "native-2.o": "1cf6b85252ec530ef730e26ff8ef22952aa61e57ee9f93d61870d9a81e683337"
+  },
+  "addressingGuard": "passed",
+  "compiler": "m68k-elf-gcc (GCC) 16.2.0",
+  "buildImage": "sha256:da70d46e10b243277fa3ae2e015f7258d56b3ee08ca4be47e61899958872e792",
+  "buildEnvironmentObservation": "Compiler version and immutable local image ID checked after the run; no image rebuild or pull performed in this task."
+}

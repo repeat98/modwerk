@@ -197,7 +197,7 @@ int main(void)
     CHECK(modwerk_flash_slots[4] == 1);
     /* Written by this base itself, from RAM after its trial (the update's one restart): not quiesced, so the base's
      * own box showed it, not stock's screen; it runs on, says BASE SAVED, and starts from A next time. */
-    CHECK(modwerk_test_screens == 0 && modwerk_flash_progress == 1001u);
+    CHECK(modwerk_test_screens == 0 && modwerk_flash_progress == 1001u && !modwerk_flash_quiesced);
     CHECK(b->retire(0) == 1 && restarted() == 0);
     modwerk_test_popup = 0; modwerk_flash_tick();
     CHECK(modwerk_test_popup && !strcmp(modwerk_test_popup, "BASE SAVED") && !modwerk_flash_progress);
@@ -268,7 +268,7 @@ int main(void)
     modwerk_test_screens = 0;
     CHECK(offered() == 1 && b->publish(0) == MU_APPLIED && holds(SLOT_B + SLOT_RECORD, container, container_len));
     slot_read(SLOT_B, s + 1); CHECK(s[1].whole && !s[1].confirmed && s[1].generation == 3u && !s[1].identity[0]);
-    CHECK(modwerk_test_screens > 0); /* quiesced: stock's own upgrade screen */
+    CHECK(modwerk_test_screens > 0 && modwerk_flash_quiesced); /* quiesced: stock's own upgrade screen, dsp.c's watchdog out */
     CHECK(b->retire(0) == 1 && restarted() == 1 && started_is(power_on(), container)); /* the one restart */
     ticks = 0; asked = 0; modwerk_flash_host = 0;
     for (unsigned t = 0; t < 2u * SLOTS_CONFIRM_TICKS; ++t) if (modwerk_flash_tick()) modwerk_flash_service();

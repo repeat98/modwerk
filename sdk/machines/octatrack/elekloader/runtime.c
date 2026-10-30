@@ -236,16 +236,37 @@ static uintptr_t hook(unsigned position, enum runtime_event e)
  * for the UI loop's flush). Here, in the UI task, where stock's key handlers draw; never on the engine task that
  * installs, nor in an interrupt: the drawer writes the screen's plane and its globals, which only the UI task does.
  * The live set is read only when the loader's owner epoch moved and is even (no change under way), and kept as a
- * 32-bit mix of each live position's module, id and position (0 with none, as at the first draw). */
+ * 32-bit mix of each live position's module, id and position (0 with none, as at the first draw).
+ * The controller board asks for the same redraw when it writes a stock effect's page or puts it back
+ * (controller_board.c): since effects load at the pick (#796), Sidechain's KEY page lands on COMPRESSOR while FX1
+ * SETUP is already drawn from the stock page (#882). That drawer leaves an open FX SETUP window alone, so once the
+ * shared popup slot (0x460d175c) is that window, open, in SETUP's geometry, its own draw callback runs too, as
+ * octabam's PLOCKS P2 refreshes it (plk_refresh_setup).
+ * The header (the bottom-left SRC label and the track's numbers) is stock's 0x4004d780, which the track screen's drawer
+ * does not call: a track select and SRC SETUP's commit (0x4005a900) do. A restored module machine's track kept stock's
+ * "SRC > FLEX" (a module machine is FLEX underneath) until the track was tapped (Nathaniel's MKII, 28 October 2026,
+ * Analog BD on T1 after a cold boot), so the header is drawn again here too. */
+volatile uint8_t modwerk_runtime_redraw_wanted;
 #ifdef MODWERK_HOST
-unsigned modwerk_test_redraws;
-#define REDRAW() (++modwerk_test_redraws)
+unsigned modwerk_test_redraws, modwerk_test_headers;
+#define REDRAW() (++modwerk_test_redraws, ++modwerk_test_headers)
 #else
-#define REDRAW() ((void (*)(int))0x4004d948u)(-1)
+static void REDRAW(void)
+{
+    ((void (*)(int))0x4004d948u)(-1);
+    ((void (*)(void))0x4004d780u)(); /* the header: SRC's machine name, as a track select draws it */
+    uint32_t page = U32(0x460d1684u), setup = page == 3u ? 0x400bc25au : 0x400bc484u, w; /* FX1, FX2 SETUP */
+    if (U32(0x80000012u) || (page != 3u && page != 4u)) return; /* a MIDI track, or another page */
+    w = U32(setup + 8u);
+    if (w && w == U32(0x460d175cu) && (U32(w + 32u) & 0x20u) && U32(w + 8u) == 7u && !U32(w + 12u) &&
+        U32(w + 24u) == 0xf4u && U32(w + 40u) == 0x40u && U32(setup + 44u))
+        ((void (*)(void))U32(setup + 44u))();
+}
 #endif
 static uint32_t drawn_epoch, drawn_set;
 static void redraw_after_change(void)
 {
+    if (modwerk_runtime_redraw_wanted) modwerk_runtime_redraw_wanted = 0, REDRAW();
     uint32_t epoch = modwerk_runtime_owner_epoch(), set = 0; /* none live: 0, as the screen was first drawn */
     if (epoch == drawn_epoch || (epoch & 1u)) return;
     for (unsigned i = 0; i < RUNTIME_MODULES; ++i) {

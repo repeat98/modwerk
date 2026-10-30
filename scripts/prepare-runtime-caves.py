@@ -17,6 +17,8 @@ import subprocess
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.append(str(ROOT / 'sdk'))  # firmware_codec
+import firmware_codec  # noqa: E402
 TRUSTED_BUILDER = 'e86283a61338a85634089ad68b01117355dda65a'
 STOCK_MAIN_SHA = '164f31224bf61181e3f50e7dec40df9afcae5b16dbf6e4c0d0cc5e986af0a84e'
 
@@ -92,7 +94,7 @@ def main():
         raise ValueError('Stock input is not the pinned original Octatrack 1.40C MAIN.')
     base = args.base_image.read_bytes(); mapping = json.loads(args.base_symbols.read_text())
     arena, origins = base_binding(mapping, base)
-    sys.path.insert(0, str(args.upstream.expanduser().resolve()))
+    firmware_codec.use_elekloader(args.upstream.expanduser().resolve())
     from elekloader.sdk import octabam
     sdk = root / 'sdk/octabam'
     builder = load('runtime_cave_builder', root / 'sdk/runtime/loader/build.py')

@@ -67,7 +67,6 @@ describe('the Octatrack hub', () => {
     expect(loadStep('ready', false, false)).toBe('review')
     expect(loadStep('ready', true, true)).toBe('loading') // preparing the packages
     expect(loadStep('sending', true, false)).toBe('loading')
-    expect(loadStep('testing', true, false)).toBe('testing')
     expect(loadStep('trial', true, false)).toBe('trial')
     expect(loadStep('finishing', true, false)).toBe('trial')
     expect(loadStep('ready', true, false)).toBe('done') // kept, undone or failed: the link's notice says which

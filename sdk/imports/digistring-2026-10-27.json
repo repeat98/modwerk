@@ -1,0 +1,105 @@
+{
+  "schemaVersion": 1,
+  "module": "digitakt/digistring",
+  "version": "0.9.0",
+  "date": "2026-10-28",
+  "upstream": {
+    "repository": "https://github.com/Alez22/digistring",
+    "revision": "69ab74811956a69a1d6349f30b23f747343f8257",
+    "path": ".",
+    "license": "MIT"
+  },
+  "changes": [
+    "STRING 0.9.0, a Karplus-Strong plucked string SRC machine in slot 8, imported unchanged from the author's sources at commit 69ab748 (digitakt.c, karplus.c, ui.c, cm_ui.h and their headers), with the generators of its two tables (scripts/gen_tables.py, scripts/gen_icons.py).",
+    "STRING requires Machine Pages and patches no firmware bytes: it contributes its machine to core_machines, Machine Pages draws its SRC page from its cm_ui descriptor, and its render subscribes to ev_render_voices at order 20. build.json is the author's mod.json; the 1.54 release adds only the -DDIGISTRING_OS154 cflag. Source-only export compiled in the pinned GCC 16.2 Docker toolchain; STRING-fast is not imported."
+  ],
+  "runtimeSourceSha256": "9a96a39d964ef0d5168b21f0d21a2499d28613f2c6f0ab8561cd0e2464d40ec7",
+  "files": [
+    {
+      "from": "cm_ui.h",
+      "to": "src/cm_ui.h",
+      "sha256": "f3b992a185536727033afd823a378812086d148b6b69a80e23b62bf6313dd062"
+    },
+    {
+      "from": "digitakt.c",
+      "to": "src/digitakt.c",
+      "sha256": "ca7df91e94a1105e6ca7fba903dce1b517c476c66b6ab5978c2f12d8437ec8a2"
+    },
+    {
+      "from": "karplus.c",
+      "to": "src/karplus.c",
+      "sha256": "ba49107a461bd1bd1830535cf89359e3ce4f704010efcdd79367445c994a09f4"
+    },
+    {
+      "from": "karplus.h",
+      "to": "src/karplus.h",
+      "sha256": "efc7f22273877758338871c123910513a0025edc80ac3c7f5a3141db9ff6f70f"
+    },
+    {
+      "from": "ks_icons.inc",
+      "to": "src/ks_icons.inc",
+      "sha256": "ae1bd659112dde4489c0e9f8bd33d5fba370098cbf94427866d2a9b7362b84bf"
+    },
+    {
+      "from": "ks_loop.inc",
+      "to": "src/ks_loop.inc",
+      "sha256": "46d63a7e0a91aaf043174c58ae26300db320fbc7ca5ec74e886f5893140048b3"
+    },
+    {
+      "from": "ks_tables.inc",
+      "to": "src/ks_tables.inc",
+      "sha256": "4ae85753416038d7cd2f3255a50c29134004142744072032ce6a274253792633"
+    },
+    {
+      "from": "ui.c",
+      "to": "src/ui.c",
+      "sha256": "2612f53519a80ca4ce4aba97e00b5ac6aff51c07f6d3dda6f6bc2b623d40fdb0"
+    },
+    {
+      "from": "scripts/gen_icons.py",
+      "to": "scripts/gen_icons.py",
+      "sha256": "a70899f8bdc21b1897f20b42da22be29addeaf172b70149e35808cabd1c89b96"
+    },
+    {
+      "from": "scripts/gen_tables.py",
+      "to": "scripts/gen_tables.py",
+      "sha256": "a2eba388efe3da4c75bda3b6fcbd2b806d8abd176957dd7cbe065f360c4bcb6d"
+    },
+    {
+      "from": "LICENSE",
+      "to": "LICENSE",
+      "sha256": "cb324e38c1f7aeeba913686315f37f538f0fc4288a66d245905006807e52bd37"
+    },
+    {
+      "from": "README.md",
+      "to": "upstream/README.md",
+      "sha256": "267746b862e508899d1a48907f7fc24a3b802905ad42be57aeca0df7839a66ef"
+    }
+  ],
+  "excluded": [
+    "mod.json",
+    "variants/fast",
+    "Makefile",
+    "tests",
+    "site",
+    "release",
+    "out"
+  ],
+  "packages": [
+    {
+      "os": "1.53",
+      "path": "sdk/imports/packages/digistring/digistring-0.9.0-os1.53.elemod",
+      "sha256": "9e3ca5570ec7e3521e2e2c3df576db08287f3329624dee9373808fa7fe63bc8f"
+    },
+    {
+      "os": "1.54",
+      "path": "sdk/imports/packages/digistring/digistring-0.9.0-os1.54.elemod",
+      "sha256": "247aba7f6d56f1081a94677b2c665322e5e3754a1b420bf12760f4762f4ccf0b"
+    }
+  ],
+  "stockPolicy": "No firmware or stock-derived code/tables are present. Addresses, lengths and SHA-256 guards are metadata; exported instructions and sections are authored module code. Local materialized recipes and firmware are never committed.",
+  "evidence": "sdk/digitakt/modules/digistring/TESTING.md",
+  "requires": [
+    "machine-pages"
+  ]
+}

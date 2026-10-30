@@ -1,0 +1,21 @@
+# MS-50G per-model build config.
+name: MS-50G
+kind: guitar
+# Zoom SysEx model id. Community-reported; confirm with "zoomms identify".
+sysex_model_id: 0x58
+max_effects_in_chain: 6
+patches: 50
+effect_format: zdl
+# Latest official firmware; confirm the pedal runs it (shown at power-up).
+firmware_version: "3.10"
+stock_updater: "MS-50G_v3.10_Win_E/ZOOM MS-50G System v3.10 Updater.exe"  # relative to firmware/, never committed
+stock_updater_sha256: 8f8e054841de62219c00cd4cc45953e4d10059a2fee06259f9ceb48d33fe57e4
+# Mac updater (MS-50G_v3.10_Mac_E): sha256 of Contents/MacOS/EFX Updater. Its .bin
+# resources are byte-identical to the Windows BIN/129, 133, 136, 137 (see zoomms/macapp.py).
+stock_mac_updater: "MS-50G_v3.10_Mac_E/ZOOM MS-50G v3.10 Updater.app"
+stock_mac_updater_sha256: d4a05c664e6e73ec87da35b182343087e9514ac6942e0afcab2f48e036deb992
+# Measured from the stock updater with `zoomms updater-info`.
+stock_effects: 101
+stock_free_blocks: 300  # 4090 bytes each; a typical effect needs 4-6
+# ZDL file names to place on this pedal. Empty means "stock list unchanged".
+effects: []

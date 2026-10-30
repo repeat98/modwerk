@@ -915,4 +915,24 @@ modwerk_raise_ev_mute_keep:
         movem.l (%sp),%d2/%a2
         lea     8(%sp),%sp
         rts
+
+| ---- raised by a module: ev_trig_muted: unsigned f(void); every handler runs, the answers OR'd
+        .globl  modwerk_raise_ev_trig_muted
+modwerk_raise_ev_trig_muted:
+        lea     -8(%sp),%sp
+        movem.l %d2/%a2,(%sp)
+        moveq   #0,%d2
+        movea.l modwerk_runtime_event_row+124,%a2
+.Lraise_ev_trig_muted:
+        move.l  (%a2)+,%d0
+        beq     .Lraise_ev_trig_muted_end
+        movea.l %d0,%a0
+        jsr     (%a0)
+        or.l    %d0,%d2
+        bra     .Lraise_ev_trig_muted
+.Lraise_ev_trig_muted_end:
+        move.l  %d2,%d0
+        movem.l (%sp),%d2/%a2
+        lea     8(%sp),%sp
+        rts
 modwerk_events_code_end:

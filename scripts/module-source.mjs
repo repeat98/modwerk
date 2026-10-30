@@ -22,7 +22,13 @@ export function manifestBuildFields(text) {
   return JSON.stringify([document.id, document.version, document.key, document.author?.github ?? null, source ? [source.repository, source.revision, source.path] : null, document.compatibility?.effectId ?? null, document.build?.status ?? null])
 }
 /** Relative paths of every SDK file that can change a compiled package. */
-export async function moduleSourcePaths(root) { const native=resolve(root,'sdk/octabam'),files=[];for(const group of SOURCE_GROUPS)files.push(...await inventory(resolve(native,group),group));return files.filter(path=>!isDocumentationPath(path)).sort() }
+/** A C runtime module (its USB package row has "sources") has no card form: no card compiler reads its folder. Mirrors build-module-packages.py. */
+async function cardlessModules(root) {
+  let text
+  try { text=await readFile(resolve(root,'src/engine/assets/octatrack-module-packages.json'),'utf8') } catch(error) { if(error.code==='ENOENT') return new Set(); throw error } // a source tree without the USB package list
+  return new Set(JSON.parse(text).packages.filter(row=>row.sources).map(row=>row.id))
+}
+export async function moduleSourcePaths(root) { const native=resolve(root,'sdk/octabam'),cardless=await cardlessModules(root),files=[];for(const group of SOURCE_GROUPS)files.push(...await inventory(resolve(native,group),group));return files.filter(path=>!isDocumentationPath(path)&&!(path.startsWith('modules/')&&cardless.has(path.split('/')[1]))).sort() }
 /** The SHA-256 the compiler records for one source path: the file's bytes, or for a module manifest its build fields. */
 export async function sourceEntryHash(root, path) {
   const bytes = await readFile(resolve(root,'sdk/octabam',path))
@@ -45,5 +51,6 @@ export async function compiledModuleVersions(root, catalog) {
     if (document.id !== module.id || document.version !== module.version) throw new Error('Stale catalog module version: ' + module.id)
     if (document.build?.status !== 'pending') versions[module.id] = module.version
   }
+  for (const id of await cardlessModules(root)) delete versions[id]
   return versions
 }

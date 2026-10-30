@@ -1,0 +1,28 @@
+{
+  "scope": "Bounded ASCII tempo and slice-count labels; no native UI/source access",
+  "sourceSha256": {
+    "ui_text.c": "9f147e08dd16fe2fdc8714114a59850acddabd27bed0d24123a5dd172ffb780b",
+    "ui_text.h": "bedfdd20498c3e7593e815a42f6be011e5326000b02a4e82bbd2f234a5f2b130",
+    "test_ui_text.c": "e09ae24a0e5fc4800687758e8e9669a9f4d6baffabbb5c517edf43e4080733ce",
+    "test_ui_text.py": "938fc421fa7fa34040ddcc7c335d170c240278fde7f82c27c49451d2e6bef8be"
+  },
+  "compiler": "Apple clang version 17.0.0 (clang-1700.6.4.2)",
+  "flags": [
+    "-std=c99",
+    "-O1",
+    "-g",
+    "-Wall",
+    "-Wextra",
+    "-Werror",
+    "-pedantic",
+    "-fsanitize=address,undefined",
+    "-fno-omit-frame-pointer"
+  ],
+  "exitCode": 0,
+  "stdout": [
+    "PASS: 12962 tempo labels, 2145 slice counts, capacity/canary and invalid-input checks"
+  ],
+  "hardware": "not tested",
+  "audio": "not tested",
+  "nativeSourceAccess": "not implemented"
+}

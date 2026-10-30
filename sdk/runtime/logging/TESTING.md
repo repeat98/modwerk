@@ -17,6 +17,21 @@ Verified locally on 3 October 2026. Machine-readable fingerprints and numerical 
 
 The emulator/native checks were explicitly authorized logger-only exceptions to the ordinary firmware test restriction. They ran without network or credentials, with private-file reads restricted and writes confined to a disposable directory. Stock, linked runtime/loader images, emulator/card files and intermediate inherited USB descriptors must remain local and temporary.
 
+## 0.3.0: the frame guard (28 October 2026)
+
+Local runs on the stock input above (hashes only). None of this is hardware evidence.
+
+| Check | Result and scope |
+| --- | --- |
+| `sh sdk/runtime/logging/tests/run_host.sh` | Pass, with the new `guard_test.c`: a POLY8 track rendering half a frame twice a frame is silenced on some renders while the stock track beside it renders every time; a light one never is; `FM` and `S2` are guarded, `AB`, an unsigned slot, a THRU track with stale bytes and an unloaded bank pointer are not. |
+| `package.py` | Main's 0.2.0 sources rebuild byte-identical to the committed package (`09ff4b32…`) with the same toolchain; 0.3.0 compiles from original source, replay spans zero. |
+| `node scripts/verify-core-logger-native.mjs` | 12 native link cases match GNU bytes and symbols. |
+| `composeStaticOs`, ten selections | Core only, POLY8, FM Synth, VECTOR, the three together, USB Audio + POLY8, Mute Modes + FM Synth, Analog BD, Analog BD + POLY8 + FM Synth, and #1015's eight modules: every image composes with all four sites patched. Standalone MIDI Scenes too; the loader path still refuses POLY8 + FM Synth as before. |
+| USB beta base (`npm run octatrack:base -- --beta --write`) | The base keeps its own guard: `build_core.py` skips `frame_guard.c` and the guard's hooks. Its code and data rebuild unchanged; only the identity strings move with the logger folder's hashes (`88c68eed` to `9b7e0eb3`); the browser `.bin` equals `build_core.py`'s; the five base-bound packages rebuild byte-identical (`test_base_bound`), only `requiredBase` moves. |
+| `ot_emu --mkii --dsp --frame --interactive`, #1015's eight modules, no card | Frames run at 44.1 kHz / 16 through all four hooks (entry and first render hit every frame, the frame start advancing); idle after 4.9 s 21,978 against 21,979 for main's image of the same set. With `PL`,1 and FLEX poked into T1's Part slot, the mask read 1 and the guard's render ran every frame for 2 s with no fault; nothing was silenced (the render there is stock's silent source). |
+
+Not tested: any unit, so no overload, dropout or recovery has been seen with this guard on hardware; an MKI; a card project with POLY8, FM Synth or VECTOR voices in the emulator; the `GRD` record on a card.
+
 ## Release gates still open
 
 On 3 October 2026 the owner explicitly approved the current modules and logger for release, lifted this logger addition’s qualification restrictions, authorized local firmware/DSP tests and waived hardware testing. `DOWNLOADS_ENABLED` is true with the logger installed. This owner exception does not turn older module/full-image proofs into logger verification or supply missing measurements.

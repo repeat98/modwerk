@@ -1,0 +1,34 @@
+{
+  "schema": 1,
+  "kind": "elekloader-catalog",
+  "revision": "cc-recall-2026-10-28",
+  "about": "Modwerk source-only cc-recall package for Digitakt I OS 1.54, compiled from sdk/digitakt/modules/cc-recall.",
+  "cores": [],
+  "mods": [
+    {
+      "file": "cc-recall-0.1.0-experimental-os1.54.elemod",
+      "sha256": "bde67ff2d8b1eaa966fa9fcb64ef242bc02e11e37a9ab1701e4b695d65db029c",
+      "id": "cc-recall",
+      "version": "0.1.0-experimental",
+      "device": "digitakt-mk1",
+      "os": "1.54",
+      "license": "GPL-3.0-or-later",
+      "source": {
+        "repo": "repeat98/modwerk",
+        "commit": "5c6be8031e680469d608da24cbd580ca57014fd5",
+        "path": "sdk/imports/packages/cc-recall/cc-recall-0.1.0-experimental-os1.54.elemod"
+      },
+      "title": "CC Recall",
+      "requires": [
+        "core"
+      ],
+      "conflicts": [],
+      "summary": "After a pattern reload, pattern change, project load or STOP, the MIDI tracks send their pattern’s CC values at once instead of waiting for each track’s next trig.",
+      "description": "After a pattern reload, pattern change, project load or STOP, the MIDI tracks send their pattern’s CC values at once instead of waiting for each track’s next trig.",
+      "category": "MIDI",
+      "author": "draadpiraat",
+      "needs_core": "2.1",
+      "on_unit": "Tested on a Digitakt I by the author, alone and with FX Track."
+    }
+  ]
+}

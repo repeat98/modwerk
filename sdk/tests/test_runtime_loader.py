@@ -6,6 +6,7 @@ import hashlib
 import importlib.util
 import json
 import os
+import re
 from pathlib import Path
 import shutil
 import struct
@@ -260,20 +261,25 @@ class SiteEventTests(unittest.TestCase):
     def test_raised_events_have_a_base_entry_and_no_site(self):
         reg = events.load()
         raised = events.raised(reg)
-        self.assertEqual(raised, {'ev_mute_keep': 'modwerk_raise_ev_mute_keep'})
+        self.assertEqual(raised, {'ev_mute_keep': 'modwerk_raise_ev_mute_keep', 'ev_trig_muted': 'modwerk_raise_ev_trig_muted'})
+        self.assertEqual(events.index('ev_trig_muted', reg), 35)  # released hook indices never move
         self.assertNotIn(None, reg['sites'])
         header = events.loader(reg)
         self.assertIn('{0x00000000u, 0u}', header)  # no span: the loader's site checks never meet it
-        self.assertIn('#define RUNTIME_SITE_EVENT_RAISES { 0, 0, 0, (uintptr_t)modwerk_raise_ev_mute_keep%s }'
-                      % (', 0' * (len(reg['events']) - 4)), header)
-        self.assertIn('modwerk_ev_mute_keep *raise_ev_mute_keep', events.sdk(reg))
+        words = re.search(r'#define RUNTIME_SITE_EVENT_RAISES \{ (.*) \}', header).group(1).split(', ')
+        self.assertEqual(len(words), len(reg['events']))  # by hook index: the base's entry on a raised event, else 0
+        self.assertEqual({i + 4: w for i, w in enumerate(words) if w != '0'},
+                         {7: '(uintptr_t)modwerk_raise_ev_mute_keep', 35: '(uintptr_t)modwerk_raise_ev_trig_muted'})
+        for name in raised:
+            self.assertIn('modwerk_%s *raise_%s' % (name, name), events.sdk(reg))
         asm = shutil.which('m68k-elf-as')
         if asm:
             with tempfile.TemporaryDirectory() as temp:
                 subprocess.run([asm, '-mcpu=5475', EVENTS_DIR / 'elekloader/runtime_events.s', '-o', temp + '/e.o'], check=True, capture_output=True)
                 rows = {n.split()[2]: int(n.split()[0], 16) for n in subprocess.check_output(['m68k-elf-nm', temp + '/e.o'], text=True).splitlines()
                         if len(n.split()) == 3}
-            self.assertTrue(rows['modwerk_events_code'] <= rows['modwerk_raise_ev_mute_keep'] < rows['modwerk_events_code_end'])
+            for entry in raised.values():
+                self.assertTrue(rows['modwerk_events_code'] <= rows[entry] < rows['modwerk_events_code_end'])
         doc = json.loads((EVENTS_DIR / 'events.json').read_text())
         for change in (dict(results='notify'), dict(args=['site+4']), dict(length=8)):
             bad = json.loads(json.dumps(doc)); next(e for e in bad['events'] if e['event'] == 'ev_mute_keep').update(change)

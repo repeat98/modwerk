@@ -20,7 +20,7 @@ export function digiDownloadsEnabled(machine: string): boolean {
   return Object.hasOwn(DIGI_DOWNLOADS_ENABLED, machine) && DIGI_DOWNLOADS_ENABLED[machine as BuilderMachine] === true
 }
 
-// Research machines whose page offers a local core build before any module is published; their builds stay out of
-// download and usage counts.
+// Research machines whose page offers a local core build before any module is published. Build outcomes count
+// by machine; download availability remains governed independently above.
 export const CORE_BUILD_PREVIEWS: readonly BuilderMachine[] = ['digitakt-ii']
 export function isCoreBuildPreview(machine: string): boolean { return (CORE_BUILD_PREVIEWS as readonly string[]).includes(machine) }

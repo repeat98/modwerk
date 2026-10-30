@@ -43,7 +43,7 @@ const QUICK_TESTS: Record<string, { version: string; steps: Step[] }> = {
     { title: 'Enlarge the signal.', text: 'Press YES for fullscreen. Change a track’s level on its usual page and compare the plot.' },
     { title: 'Close the view.', text: 'Press NO and stop playback. Outside the utility, a short SONG press opens the normal popup.' },
   ] },
-  vector: { version: '0.2.4-experimental', steps: [
+  vector: { version: '0.2.5-experimental', steps: [
     { title: 'Choose VECTOR.', text: 'Select an audio track, double-tap SRC, choose VECTOR and press YES.' },
     { title: 'Assign a sample.', text: 'Choose STATIC or FLEX with UP/DOWN or LEVEL, then press RIGHT. Select a loaded, tuned sample and press YES to assign it.' },
     { title: 'Shape a phrase.', text: 'Press SRC. Change TYPE, DENS or ROOT to generate a phrase; each edit commits immediately, even during playback.' },
@@ -63,7 +63,7 @@ const QUICK_TESTS: Record<string, { version: string; steps: Step[] }> = {
     { title: 'Hear the processing.', text: 'Play the pattern and adjust T2’s filter. Lower T1 AMP VOL to hear only T2; the source tap is before T1’s volume.' },
     { title: 'Reset the route.', text: 'Stop playback, restore T1 AMP VOL and set T2 SLOT to 0. Keep TUNE 0 and GAIN 0 dB for a neutral start.' },
   ] },
-  'digitakt-digisophie': { version: '1.1.13-experimental.2', steps: [
+  'digitakt-digisophie': { version: '1.1.13-experimental.3', steps: [
     { title: 'Choose FUSE.', text: 'Select SOPHIE in FUNC + SRC and choose FUSE with MODEL. No sample is needed.' },
     { title: 'Give notes an end.', text: 'Set SWEEP and FOLD to 0. On AMP, set HOLD to NOTE and choose a finite DEC; avoid INF. TRIG LEN sets when release begins.' },
     { title: 'Shape the clang.', text: 'Add trigs and press PLAY. Adjust TUNE, then raise METAL and turn COLOR. Add FBK gradually.' },

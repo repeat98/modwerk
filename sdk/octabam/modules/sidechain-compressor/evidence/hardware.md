@@ -1,5 +1,45 @@
 # Sidechain Compressor author-reported hardware operation
 
+## 0.2.0-experimental
+
+Tester: **Zac Kyoti** (the module's author), 26 October 2026, on an
+**Octatrack MKI**. Image: Modwerk's native build of this source, the module
+alone with the stock FX2 effects kept (`sidechain-compressor:true` in the
+coverage set), MAIN OS SHA-256
+`131142e1839bf1a62b48929dee396cc23b1f2f27f33595a9e6f39bf57f7be22e`, flashed
+from a `.bin` card update wrapped from that MAIN OS (version field
+`MW_SC021`, `.bin` SHA-256
+`6a02a0672a7888390667af1bab0b4920652b5ca26cd820a6b9cbc9e450468aa4`; the
+wrapper changes no MAIN OS byte). Author pin: Zac-Kyoti/octatrack-kyoti-fw
+`b0d49bf32d3fcc2e3ce7e9cec67f4fbb2619e511`.
+
+The author was given this checklist with the image:
+
+1. KBAS and KWID across their whole range, with MON on and off.
+2. MON shows OFF on the left and ON on the right; a project saved with an
+   earlier version comes up with MON OFF.
+3. KEY turned with the encoder pressed moves one position per detent.
+4. Switching MON, and changing KEY with MON on, fades without a click.
+5. A project saved with MON ON comes back ON after a power cycle and reload.
+
+and reported: "MW_SC021, OCTABAM33, and KYOTI v1.6 all flashed, working
+fine. All good."
+
+The first 0.2.0 image (`MW_SC020`, 24 October 2026) ducked correctly but
+broke KBAS and KWID (silence, level jumps and squeals): the key-filter
+table's address came from a register the gain store had already moved. That
+image is superseded; this source loads the table by its own literal.
+
+### Limits
+
+- A functional report: duration, project, material and tempo were not
+  reported, and the checklist items were confirmed together, not one by one.
+- No measured chip timing, memory canary, recording, recovery or stress test;
+  cross-core key latency was not measured.
+- The flashed image is the module alone; the Modwerk download (with the core
+  logger), the USB beta base and selections with other modules were not
+  flashed.
+
 ## 0.1.2-experimental
 
 Tester: **Zac-Kyoti** (the module's author), 10 October 2026, on an

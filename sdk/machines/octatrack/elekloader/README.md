@@ -32,6 +32,10 @@ until those results and owner review are recorded.
 Use Node 24, the reviewed GNU `m68k-elf` toolchain, a clean Elekloader checkout
 at `vendor/elekloader/kit/kit.json`'s commit (`npm run upstream:tools` keeps one
 in `~/.cache/modwerk-upstream/elekloader`) and your original OT OS 1.40C.
+The checkout runs with Modwerk's own firmware codec: a script puts it on `sys.path` only through
+`firmware_codec.use_elekloader()` ([`sdk/firmware_codec`](../../../firmware_codec/__init__.py)), which serves the
+section format, the `.syx` transport and the ColdFire decoder in place of the checkout's `codec/` and `isa/`
+(`sdk/tests/test_firmware_codec.py` checks every script).
 Both output directories below must be new and outside every Git checkout:
 
 ```sh
@@ -65,7 +69,7 @@ compile (`dev.c`) or a test there (`test_recipe.py`). `octatrack-base-sources.js
 (`octatrack-base.test.ts`, no firmware) fails when one changed or a file joined those folders. Rebuild and
 commit it with the beta base's options (the committed base is the beta base). `--beta` names every one of them
 (`BETA` in `scripts/octatrack-base.mjs`: USB MIDI, the twenty-channel USB Audio default and its variants, site
-events, table owners, the resident engines on demand, the controllers, module sets and cached module code), and
+hooks, table owners, the resident engines on demand, the controllers, module sets and cached module code), and
 `--write` takes no other:
 
 ```sh
@@ -122,7 +126,8 @@ checks the remaining published files against their manifest hashes without
 rebuilding or deleting them. Use the full generator for a separately qualified
 module update; existing standalone recipes may name earlier source/tool inputs.
 The cave/table declarations also pin the generator source, and they and the standalone recipes pin the Elekloader
-checkout's files, so a kit update (`vendor/elekloader/kit/kit.json`) needs the same refresh in its own pull request:
+checkout's files the build runs and Modwerk's codec in place of its `codec/` and `isa/` (`firmware_codec.inputs()`),
+so a kit update or a codec edit (`vendor/elekloader/kit/kit.json`) needs the same refresh in its own pull request:
 CI has no firmware and cannot see it, and until then the builds refuse with "does not name the exact source inputs"
 (kit 0.7.0, 22 October 2026). Refresh a generator-only pin only after rebuilding
 the affected packages and proving every published byte unchanged; never replace a pin merely to make a check pass.
@@ -142,9 +147,9 @@ stock-free, that the browser's path builds a `.bin` identical to `build_core.py`
 and `check_flash_safety.py`; `--out NEW-DIR` (outside Git) saves that `.bin` and its `MAIN.raw` for a RAM
 boot. It uses `~/.cache/modwerk-upstream` (`--upstream`, `ELEKLOADER_DSP_ASM`) as the build above does.
 
-### Take events
+### Take hooks
 
-A take event in `../events.json` has no C prototype: beside its `events` entry it needs a `sites` entry with the
+A take hook in `../events.json` has no C prototype: beside its `events` entry it needs a `sites` entry with the
 site's guard and the tail that replays stock when nobody takes the call. `{"stock": n}` copies the site's bytes as
 they are, so a site holding a PC-relative branch needs its tail written as instructions with the branch made absolute
 (`ev_midi_note_key`'s `ble`). `ev_midi_note_key` runs where each sequencer, chord and arp note of a MIDI track is
@@ -159,8 +164,12 @@ it, admitted against each core's arena and cycle allowance first
 ([design and evidence](../../../../docs/OCTATRACK_ELEKLOADER_MIGRATION.md#milestone-2-dsp-effects-on-demand-e-verb-as-the-pilot-10-october-2026)).
 The base takes each core's whole stock effect block
 ([`dsp_loader.py`](dsp_loader.py)): the three stock routines other effects
-call stay resident at its start, then the receiver, then about 5,200 words
-of arena. Each stock effect is a package recovered at build time from your
+call stay resident at its start, then the receiver's frame path, then about
+5,450 words of arena (4,741 / 4,867 on the beta base, whose engines' stubs
+sit above it). The receiver's packet operations run from the top 512 words
+of each core's FX2 block 3 in the shared window, copied there from the
+arena's top at the first frame ([record](../../../../docs/OCTATRACK_DSP_WINDOW.md)).
+Each stock effect is a package recovered at build time from your
 firmware with Modwerk's relocation recipes and checked against their
 hashes; Octabam's DSP DYNLOAD STOCK is the reference for the layout. It
 needs Octabam's patched `dsp_asm` (`ELEKLOADER_DSP_ASM`), with
@@ -267,7 +276,21 @@ wValue the page, 244 bytes) reads it; the site uploads it only with diagnostics 
 `freezetest:N` holds the UI tick N seconds (1-10) to try a freeze. Vendor request numbers 31-36 are taken (saved-set
 export 31-33, volatile journal 34-36, which refuses anything else there): pick a new one above 37 and check `ep0.c`.
 
+### Boot guard
+
+`modset.c` keeps a small record in battery RAM (0x100ffb00, after the stall record) from the power-on restore's first
+install until it has run ten seconds with frames moving and no crash or stall recorded. A crash (`crash.c` restarts at
+once) or a DSP stall in that time leaves the record armed, and the next start leaves out the package it was installing,
+at every start until the card's set changes (result 10 in the self-test record's `saved`, popup `<NAME> LEFT OUT`,
+refusal 0x100 in the log's set record). With no package to blame, or on the second start in a row that never settled
+with nothing recorded, that start installs nothing (result 11, MODULES HELD, 0x101) and the next tries the whole set.
+Another base ignores the record. On development bases `npm run device -- guardtest` (or `guardtest:0`) arms it as a
+crash in the restore would, blaming the set's first module (or none), so a RAM boot shows what a tester's next start would.
+
 ### Status page
+
+`status.s` also gates stock's time-stretch helper task (`mw_ts_gate`): it skips a track whose TSTR is OFF, since only
+time-stretch reads its splice search and only BEAT reads its transient markers.
 
 `status.c` measures, all the time, the ColdFire's load (main's idle spin, timed on DTIM3, `status.s`), each
 DSP core's mean and peak load (core 0's own idle count, core 1's counted wait for core 0, `dsp_receiver.asm`),

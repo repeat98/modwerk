@@ -9,8 +9,8 @@ import unittest
 ROOT=Path(__file__).resolve().parents[2]
 SOURCE=ROOT/'sdk/machines/octatrack/module-adapters/analog-bd-parts'
 PINS={
-    'sdk/octabam/modules/analog-bassdrum/machine.s':'90f9ddb5c2a4cee47e0334c3cd35a7e92d42b0ee37eb3bbc8062cc7821e6aeb4',
-    'sdk/octabam/modules/analog-bassdrum/control.c':'29f392c7e007aaa695076eff0c897729a941676ff582e4bb17957074d56ceac5',
+    'sdk/octabam/modules/analog-bassdrum/machine.s':'a33e4d36da6a14e7e856c7c7088be2820a40c7fb7014917983c729931eed55a3',
+    'sdk/octabam/modules/analog-bassdrum/control.c':'56e96e79f7f279d17b1919ea2f50af0a3d8c4a052df919fc20ecd05f094cfb38',
     'sdk/octabam/modules/output-matrix/matrix.s':'a4b9f74062520437ed0db2f8b497d6af89661621ab3deef5078158514194b287',
 }
 class AnalogBdPartFence(unittest.TestCase):

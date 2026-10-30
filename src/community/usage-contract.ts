@@ -6,7 +6,7 @@ export type UsageEvent = typeof USAGE_EVENTS[number]
 export const ANNOUNCEMENT_COUNTS = { announcement_shown: 'shown', announcement_opened: 'opened', announcement_dismissed: 'dismissed' } as const
 export type AnnouncementCountEvent = keyof typeof ANNOUNCEMENT_COUNTS
 /** Machines that build firmware here. Builds, failed builds and download requests may name one; nothing else does. */
-export const USAGE_DEVICES = ['octatrack', 'digitakt', 'digitone'] as const
+export const USAGE_DEVICES = ['octatrack', 'digitakt', 'digitone', 'digitakt-ii', 'analog-rytm-mkii'] as const
 export type UsageDevice = typeof USAGE_DEVICES[number]
 export const DEVICE_EVENTS: readonly UsageEvent[] = ['build_succeeded', 'build_failed', 'firmware_download_requested']
 export type DiscordInviteCounts = { discord_member_shown: number; discord_member_joins: number; discord_member_dismissals: number; discord_visitor_shown: number; discord_visitor_signups: number; discord_visitor_joins: number; discord_visitor_dismissals: number; discord_welcome_joins: number }
@@ -21,6 +21,8 @@ export type UsagePageDay = { day: string; page: string; views: number }
 export type UsageStatistics = { generatedAt: string; collectionStarted: string | null; from: string; to: string; days: number; rows: UsageDay[]; comparison?: UsageComparison
   /** When failed builds and the machine split began to be counted; earlier days have neither. */
   breakdownsStarted?: string | null
+  /** Migration boundary for Digitakt II and Analog Rytm MKII attribution; earlier events stay unattributed. */
+  machineCoverageExpanded?: string | null
   /** When support dialog opens, Ko-fi clicks and hourly totals began to be counted; earlier days have none. */
   hourlyStarted?: string | null
   /** Beginning of invitation counts; clicks measure the chosen action. */

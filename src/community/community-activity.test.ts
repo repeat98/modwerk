@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs'
 import type { DatabaseSync } from 'node:sqlite'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { testDatabase } from './test-server'
-import { adminActivity, median } from '../../server/admin-activity'
+import { adminActivity, median, unansweredThreads } from '../../server/admin-activity'
 import { issueStatusStatements } from '../../server/issue-notifications'
 import { CommunityActivityReport } from './CommunityActivity'
 import type { AdminActivity } from './admin-activity-contract'
@@ -61,11 +61,41 @@ describe('forum and issue activity statistics', () => {
     expect(data.firstReplies).toEqual({ threads: 5, answered: 2, within48h: 1, medianHours: 36 })
     // Waiting for a reply: waiting (its only reply is hidden) and old. Fresh is under 48 h; resolved and hidden threads are excluded.
     expect(data.unanswered.total).toBe(2)
-    expect(data.unanswered.threads.map(thread => thread.id)).toEqual(['waiting', 'old'])
+    expect(data.unanswered.threads.map(thread => thread.id)).toEqual(['old', 'waiting'])
     expect(data.issueTurnaround).toEqual({ closed: 2, medianDays: (1 + 10) / 2, within7Days: 1 })
     expect(data.unknownCloseTimes).toBe(1)
     expect(JSON.stringify(data)).not.toMatch(/alpha|bravo|Opening|Reply|Body/)
     await expect(adminActivity(f.adapter, now, 12)).rejects.toThrow('Choose 7, 30 or 90 days.')
+  })
+
+  it('paginates the whole first-reply backlog, filters categories and clamps shrinking pages', async () => {
+    const f = fixture()
+    for (let i = 0; i < 25; i++) f.thread('queue-' + String(i).padStart(2, '0'), 'alpha', 50 + i)
+    f.db.exec("UPDATE forum_threads SET section='requests' WHERE id IN ('queue-00','queue-01','queue-02')")
+    f.thread('hidden-queue', 'alpha', 100, { hidden: 1 })
+    f.thread('locked-queue', 'alpha', 100, { locked: 1 })
+    f.thread('closed-queue', 'alpha', 100, { status: 'resolved' })
+    f.thread('fresh-queue', 'alpha', 10)
+    f.thread('answered-queue', 'alpha', 100); f.reply('other', 'answered-queue', 'bravo', 70)
+    f.thread('seeded-queue', 'modwerk', 100)
+    f.reply('self-only', 'queue-24', 'alpha', 20)
+    f.reply('hidden-answer', 'queue-23', 'bravo', 20, 1)
+    const pages = []
+    for (const page of [1, 2, 3]) pages.push(await unansweredThreads(f.adapter, now, new URLSearchParams({ page: String(page) })))
+    expect(pages.map(value => value.threads.length)).toEqual([10, 10, 5])
+    expect(pages[0].total).toBe(25)
+    expect(pages[0].threads[0].id).toBe('queue-24')
+    expect(new Set(pages.flatMap(value => value.threads.map(thread => thread.id))).size).toBe(25)
+    expect(JSON.stringify(pages)).not.toMatch(/alpha|bravo|Opening|Reply|Body/)
+    const newest = await unansweredThreads(f.adapter, now, new URLSearchParams('order=newest&category=requests&page=99'))
+    expect(newest).toMatchObject({ total: 3, page: 1, category: 'requests', order: 'newest' })
+    expect(newest.threads.map(thread => thread.id)).toEqual(['queue-00', 'queue-01', 'queue-02'])
+    expect((await unansweredThreads(f.adapter, now, new URLSearchParams('category=general'))).total).toBe(22)
+    f.db.exec("UPDATE forum_threads SET hidden=1 WHERE section='requests'")
+    expect(await unansweredThreads(f.adapter, now, new URLSearchParams('category=requests&page=2'))).toMatchObject({ total: 0, page: 1, threads: [] })
+    for (const query of ['page=0', 'page=-1', 'page=1.5', 'page=1000000', 'category=unknown', 'category=__proto__', 'order=title']) {
+      await expect(unansweredThreads(f.adapter, now, new URLSearchParams(query))).rejects.toThrow()
+    }
   })
 
   it('records when an issue closes, keeps the first closing on repeats and clears it on reopening', async () => {
@@ -118,7 +148,7 @@ describe('forum activity report', () => {
     expect(html).toContain('Issues opened / closed</dt><dd>2 / 1</dd>')
     expect(html).toContain('Median time to close</dt><dd>3 days</dd><small>3 of 4 closed issues within 7 days')
     expect(html).toContain('<a href="/forum/thread/t-1/">Help with &lt;tags&gt;</a><small>3 days old</small>')
-    expect(html).toContain('Showing the newest 1 of 12.')
+    expect(html).toContain('Showing 1–1 of 12 · page 1 of 2.')
     expect(html).toContain('2 earlier closed issues closed before closing times were recorded')
     expect(html).toContain('Replies and comments per UTC day · scale 0–5')
     expect(html).not.toMatch(/NaN|undefined|Infinity/)

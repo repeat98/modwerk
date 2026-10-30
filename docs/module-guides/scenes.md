@@ -29,4 +29,4 @@ Read [the module guides index](README.md) first.
 
 ## Digitakt and Digitone
 
-No scene contract is documented for these machines yet. Start from the [Digitakt guide](../../sdk/machines/digitakt/README.md), use the core's events, and record how you tested recall and morphing.
+No scene contract is documented for these machines yet. Start from the [Digitakt guide](../../sdk/machines/digitakt/README.md), use the core's hooks, and record how you tested recall and morphing.

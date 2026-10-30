@@ -56,5 +56,31 @@
     "address": 1073768756,
     "length": 48,
     "sha256": "5e34bdde4cb6724f1cfd6521806b7a6d8e9f60852fb25a8be52c388021eafdbf"
+  },
+  "frame_entry": {
+    "name": "frame-interrupt-entry",
+    "address": 1073785552,
+    "length": 8,
+    "sha256": "5f02b18d204af6e4a0177ad6e41c779a698018b6f25b5d83850926c8a9d44fa2"
+  },
+  "frame_exit": {
+    "name": "frame-interrupt-exit",
+    "address": 1073797542,
+    "length": 10,
+    "sha256": "60acbd38c2859ac73a63948d6c58796591fdbddd654799e50e88b0940be9a37a"
+  },
+  "render_first": {
+    "name": "packer-render-first",
+    "address": 1073796154,
+    "length": 6,
+    "sha256": "1ddb019f0a6891c79e321bcd6dffe94db6c91dfd67b95b8f2a7ee836c6ad7d8b",
+    "replay": 4
+  },
+  "render_second": {
+    "name": "packer-render-second",
+    "address": 1073796388,
+    "length": 10,
+    "sha256": "799187a64ea7b4ca6a4daab595f1410167e23cee066576861e09ff844587fe34",
+    "replay": 8
   }
 }

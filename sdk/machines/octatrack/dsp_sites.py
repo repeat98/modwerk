@@ -218,7 +218,7 @@ def check(reg):
                 problems.append('payload %s: feature %d\'s regions are not in resident_dsp.resource_ranges\'s order' % (tag, f))
     for f in reg['features']:
         if f['name'] == 'keybus':
-            text = (SDK / 'modules/sidechain-compressor/upstream/tools/patch_sc_dsp3.asm').read_text()
+            text = (SDK / 'modules/sidechain-compressor/patch_sc_dsp3.asm').read_text()
             for old, new in resident_dsp.REVIEWED['sidechain-compressor'][1]:
                 text = text.replace(old, new)
             if f.get('executed') != resident_dsp.keybus_executed(resident_dsp.split_sidechain(text)[1]):

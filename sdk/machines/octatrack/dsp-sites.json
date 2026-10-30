@@ -6,7 +6,7 @@
     {"bit": 2, "name": "matrix", "cores": ["A"], "implies": [], "about": "Output Matrix's mix and phones paths"},
     {"bit": 4, "name": "analog-bd", "cores": ["A", "B"], "implies": [], "packaged": true, "about": "Analog BD's source: its engine and initial X words come from its controller's package (ABI 10), never from the base"},
     {"bit": 8, "name": "keybus", "cores": ["A", "B"], "implies": [], "about": "the base-owned key bus: every track's FX1 input, on each core and in the cross-core window",
-     "executed": 41, "hardware": 51, "evidence": "evidence/keybus-tap-timing-20261023.json", "cost": "its tap, per core while the base holds it. executed: instructions a sample for a core's four tracks, seeded, counted statically from its source (resident_dsp.keybus_executed). hardware: chip cycles a sample on core 0 of an MKII (load meter, 23 October 2026, the evidence file); the charge"}
+     "executed": 25, "hardware": 51, "evidence": "evidence/keybus-tap-timing-20261023.json", "cost": "its tap, per core while the base holds it. executed: instructions a sample for a core's four tracks, seeded, counted statically from its source (resident_dsp.keybus_executed; 25 since Sidechain Compressor 0.2.0's one-pass tap, 41 before). hardware: chip cycles a sample on core 0 of an MKII (load meter, 23 October 2026, the evidence file), measured on the 41-instruction tap and kept as the charge until the one-pass tap is measured"}
   ],
   "sites": [
     {"index": 0, "name": "dsp_fx1_dispatch", "feature": 8, "module": "sidechain-compressor", "label": "sctap",
@@ -30,7 +30,10 @@
      "exit": {"A": "0x00426", "B": "0x00221"},
      "when": "per track per block, just before its source: X:$209 is the track's source record, X:$418 the track within its core",
      "clobbers": ["b", "r4", "x0"], "kind": "exclusive",
-     "contract": "entered by a jump with the stock return on the stack; the entry replays the displaced instruction (move a,x:>$20e) and returns to run the stock source, or drops that return (move ssh,x0) and leaves through the exit with one long branch whose displacement the base writes, skipping the stock source"}
+     "contract": "entered by a jump with the stock return on the stack; the entry replays the displaced instruction (move a,x:>$20e) and returns to run the stock source, or drops that return (move ssh,x0) and leaves through the exit with one long branch whose displacement the base writes, skipping the stock source"},
+    {"index": 6, "name": "dsp_compressor_init", "feature": 1, "module": "sidechain-compressor", "label": "scinit",
+     "A": "0x01aa4", "B": "0x01864", "words": 2, "guardSha256": "9eb96aa9abbf3d522e54911d6fa634dbcfc8820ad32d593e405bacc87193f305",
+     "when": "stock COMPRESSOR's init, at its first instruction (an instance is (re)assigned the effect)", "clobbers": [], "kind": "exclusive"}
   ],
   "regions": [
     {"feature": 1, "space": "y", "cores": ["A", "B"], "start": "0x7f0", "words": "0x210", "about": "MON words and the LISTEN stash (each bus slot's second half)"},

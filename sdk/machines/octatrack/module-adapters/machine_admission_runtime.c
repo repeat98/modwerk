@@ -4,6 +4,7 @@
 #include "machine_admission.h"
 #include "table_admission.h"
 #include "machine_contributors.h"
+#include "sample_editor_actions.h"
 static int board_read(void *context,uint32_t address,void *out,uint32_t length)
 {
     (void)context;
@@ -30,6 +31,10 @@ int modwerk_machine_metadata_admit(const struct runtime_dsp *from,struct runtime
         if(why) return why;
     }
 #endif
+    {
+        int why=mw_sample_action_admission(from,to,operation);
+        if(why) return why;
+    }
     /* No root reads for ordinary modules, including the default empty base. */
     unsigned family=table_metadata_family(modwerk_table_declarations,from)|table_metadata_family(modwerk_table_declarations,to);
     /* A machine contributed to the base's ot_machines table: an independent package, never a group. */

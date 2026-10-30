@@ -225,7 +225,7 @@ if (mode === 'dumps') {
       const now = await page()
       if (!live) return assert.deepEqual(now, stockPage, 'COMPRESSOR\'s page is stock again')
       const at = await imageAt(sc), formatter = now.readUInt32BE(24 + 4 + 16)
-      assert.equal(now.toString('latin1', 0, 24).replace(/\0+/g, ' ').trim(), 'KEY KFLT KGN MON', 'the KEY page names')
+      assert.equal(now.toString('latin1', 0, 24).replace(/\0+/g, ' ').trim(), 'KEY KGN KBAS KWID', 'the KEY page names')
       assert(formatter >= at && formatter < at + sc.image.length, 'the KEY formatter is the package\'s own')
     }
     const install = async (p, name) => {

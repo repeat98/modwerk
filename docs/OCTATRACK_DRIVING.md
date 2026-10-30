@@ -44,20 +44,24 @@ before reporting success.
 
 ## Start the link
 
+**One Elektron device on the Mac's USB.** The bridge opens the first device with Elektron's vendor id that offers the Modwerk interface; before 27 October 2026 it opened the first Elektron device of any kind, so an Analog Rytm on Overbridge plugged in beside the Octatrack made every request fail ("unit went away", "no unit running the test base"). Unplug other Elektron devices before a RAM boot or a flash all the same: on that day a RAM boot staged with a Rytm attached failed part-way and hung at the logo, and the retry with the Rytm unplugged came back.
+
 Keep emulator socket paths short, including the host path behind a container bind mount. A long host output path can fail with `usb: cannot listen` even when its container alias is short.
 
 ```sh
 export PATH=~/.nvm/versions/node/v24.21.0/bin:$PATH   # Node 24; the default node is 18 and cannot load .ts
-while :; do npm run device -- serve; sleep 1; done
+while [ -f scripts/device.mjs ]; do npm run device -- serve; sleep 1; done
 ```
 
-Run it in a terminal of the owner's, or in a background task: those stop after two hours. It starts the USB
+Run it in a terminal of the owner's, or in a background task: those stop after two hours. Start it from a checkout
+that stays, not a pull request's worktree: once that is removed, the link is gone and the loop ends (a `while :` loop
+failed every second instead and held the unit, 28 October 2026). It starts the USB
 bridge, keeps one connection open, pings every 4 s (so MODWERK CONNECTED shows once) and comes back after a
 RAM boot. One process at a time: a second `serve` or a one-shot `npm run device` fights it for the bridge. To let the
 frontend MCP use the unit beside the session, start it with `serve --share /tmp/modwerk-share.sock` and the MCP with
 `--device-socket /tmp/modwerk-share.sock`: each MCP control transfer runs between the session's. Then only one of them
 stages modules at a time (the MCP's sync, or the session's `try`/`remove`); the session reads and presses keys.
-The session’s `try FILE` accepts immediately. For a temporary trial, use the MCP’s review/self-test/Undo flow or
+The session’s `try FILE` accepts immediately. For a temporary trial, use the MCP’s review/trial/Undo flow or
 the one-shot `npm run device -- try FILE` without `--accept`; do not use session `try` as an automatic Undo test.
 A private module-only trial does not inherit the flashed base's kept module set. To test companions, prepare copies bound to the exact temporary base and review/trial the complete set; a Keep on the twin is not an inventory-recovery step. A host client's own trial timer can also remove the set while its USB keepalive is still healthy. State the timeout and distinguish it from a RAM clear or restart.
 
@@ -77,7 +81,7 @@ bridge runs in Windows Python and serves TCP; with WSL's mirrored networking (`n
 # characters cannot be passed from WSL). Then, each time:
 #   "%LOCALAPPDATA%\modwerk-usb\venv\Scripts\python.exe" -B octatrack-usb-bridge.py 47811
 # WSL:
-while :; do node scripts/device.mjs serve --socket 47811; sleep 1; done
+while [ -f scripts/device.mjs ]; do node scripts/device.mjs serve --socket 47811; sleep 1; done
 ```
 
 The bridge runs from a copy of `octatrack-usb-bridge.py` on the Windows side. Stop it with PowerShell's `Stop-Process` (find
@@ -99,12 +103,12 @@ error and moves on. macOS `nc -U` hangs up before the reply, so use the script.
 |---|---|
 | `KEY`, `KEY+KEY`, `KEY*N` | press (holding all but the last); `T1`-`T8`, `TRIG1`-`TRIG16`, `FX1`, `FX2`, `SRC`, `AMP`, `LFO`, `FUNC`, `YES`, `NO`, `UP`, `DOWN`, `LEFT`, `RIGHT`, `PLAY`, `STOP`, `REC`, `CUE`, `PATTERN`, `BANK`, `PAGE`, `PROJ`, `PART`, `AED`, `ARR`, `MIDI`, `SCENEA`, `SCENEB`, `PUSHA`-`PUSHF` (`FUNC+PAGE`: PATTERN SCALE, where LEVEL sets the length) |
 | `+KEY`, `-KEY` | hold, let go |
-| `encA+3`, `encLEVEL-2`, `fader128` | encoders A-F, LEVEL, the crossfader. Some setup values take several detents a step: MIDI NOTE SETUP's CHAN, BANK and PROG did not move on `encA+3`, and `encA+20` moved CHAN by 6 (21 October 2026); LFO SETUP's WAVE takes about four detents a step. A step is one signed byte: keep it within ±127, as `encB+200` turned WAVE backwards (24 October 2026) |
+| `encA+3`, `encLEVEL-2`, `fader128` | encoders A-F, LEVEL, the crossfader. Some setup values take several detents a step: MIDI NOTE SETUP's CHAN, BANK and PROG did not move on `encA+3`, and `encA+20` moved CHAN by 6 (21 October 2026); LFO SETUP's WAVE takes about four detents a step; SRC SETUP's TSTR (encoder E) moved only on a large turn (`encE+40` went OFF to BEAT after seven `encE+2` did nothing, 27 October 2026). A step is one signed byte: keep it within ±127, as `encB+200` turned WAVE backwards (24 October 2026) |
 | `w300` | wait 300 ms (rarely needed: the steps below wait for their own result) |
 | `pick:T1:FX2:SPRING_REV` | pick an effect by name (spaces as `_`), FX1 or FX2: the chooser opens, LEVEL scrolls the exact rows, YES; done once the track runs it (about 120 ms after YES); fails at once if the loader refuses. A notice on screen eats its first keys and it times out after 5 s: after removing a module the bank names (MISSING MODULES) send `YES` first |
 | `part1`-`part4` | switch Parts (PART + an arrow), done once the Part changed |
 | `ui` | each track's FX1/FX2 as they run, the current track, Part, transport |
-| `stats` | CPU, each core's mean/peak per mille, idle passes |
+| `stats` | CPU, each core's mean/peak per mille, idle passes. One reading is not a measurement: on 27 October 2026 (MKII, a dev twin, stopped, nothing changing) it swung between 41 % and 60 % within ten seconds. Take ten readings in each state, or time the hook itself with `modwerk_cost` (`profile`) |
 | `loader` | packets accepted, rejected, errors, jobs, selections, commits, rollbacks, code words per core |
 | `mem:0x80000ec4:16` | RAM in hex, read-only, any length, within 0x40000400-0x40cfffff (short of the pool's end and the loader's statics), 0x46000000-0x46ffffff, 0x80000000-0x8000ffff and the battery RAM's records 0x100f0000-0x100fffff (`dev.c`); the battery-RAM Part copies are outside it |
 | (any sequence) | answers within 20 s beyond its own `w` waits, else an error, and the next request runs |
@@ -118,6 +122,7 @@ error and moves on. macOS `nc -U` hangs up before the reply, so use the script.
 | `stall` | the last DSP stall record: why, the loader's whole report, each core's last packet header, the live FX ids, as they stood when the stall was seen (it survives the power cycle); `stalltest` writes one now |
 | `guard`, `guard:MILLE` | the frame guard since the last read: the frame interrupt's longest frame, latest start and share of the CPU, the machine renders it skipped and on which tracks, and its share; `guard:MILLE` sets the share (per mille of a frame, `guard:65535` turns it off) |
 | `try FILE`, `remove FILE` | install or remove a module package, accepted and kept at once: each one writes the card's set, so on a twin they replace the owner's kept modules (25 October 2026). For a trial that rolls back by itself, use `npm run device -- try FILE --seconds N --socket /tmp/modwerk-share.sock` |
+| one-shot `npm run device -- lifecycle` | not a read-out: the single-slot loader test. It stages and accepts test modules, and on a base with module sets it stops at "removal empties the slot" and leaves an unnamed module 0 kept on the card, which a power cycle keeps (26 October 2026, MKII, flashed `92a13ff0`). `npm run device -- remove --seconds 3 --accept` takes it out. For the module list: `npm run device -- do inventory` |
 | `flash DIR` | after `boot DIR`: that base writes its own container (`DIR/NOT_FLASH_CANDIDATE.bin` deciphered) to NOR with stock's routines, verifies it and restarts on it; refuses any other base's. Not yet run on a unit; the owner's call ([traps](OCTATRACK_HARDWARE_TRAPS.md#writing-nor-over-usb)) |
 | `boot DIR`, `boot DIR 4096` | RAM boot a `build_core.py` output; the session restarts on the new base. From the flashed `usbtest9` on macOS add 4096 (bytes a frame): it times out on the default 4,095-byte frames ([traps](OCTATRACK_HARDWARE_TRAPS.md#usb-and-ep0)) |
 

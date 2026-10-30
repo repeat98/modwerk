@@ -1,8 +1,75 @@
 # Sidechain Compressor verification
 
-Version **0.1.2-experimental**, recorded **10 October 2026**. Built by Modwerk's shared firmware builder, beside any other module that fits. The author flashed the exact image this source builds on an MKI and reported a functional pass; no chip wall-clock timing or stress run is claimed. The 0.1.1 record follows unchanged below as history; where 0.1.2 did not change something (the DSP code, the descriptor, the controls), its measurements still describe 0.1.2 and the section says so.
+Version **0.2.0-experimental**, recorded **25 October 2026**. Built by Modwerk's shared firmware builder, beside any other module that fits, and over USB part of the beta base. The DSP figures are emulator measurements, not chip timing; the hardware record is below. The 0.1.2 and 0.1.1 records follow as history.
 
-## 0.1.2-experimental
+## 0.2.0-experimental
+
+### What changed
+
+The author's final SIDECHAIN_COMPRESSOR: a base-width key filter (KBAS, an 18 dB/oct Butterworth high-pass in Hz; KWID, a 12 dB/oct Butterworth low-pass 0.5-9.9 octaves above it, both OFF-able) in place of KFLT; KEY on a 9-position rotary switch; KWID's link clip; MON and KEY changes crossfaded over 256 samples. Page 2 moves from RMS · (blank) · KEY · KFLT · KGN · MON to RMS · MON · KEY · KGN · KBAS · KWID. MON stores 2 = OFF (left) and 3 = ON (right) with its own step handler, and `sc_norm` turns any other value OFF, so a COMPRESSOR saved with an earlier version comes up with MON OFF. KEY has its own step handler, so a turn with the encoder pressed moves one position as a plain turn does (stock's generic handler moves 7). The key-filter table is a second table (`ptable2`) loaded by its own literal: 0.2.0's first build (MW_SC020, 24 October 2026) took its address from a register the gain store had already moved, which broke KBAS and KWID on hardware. A 0.1.x COMPRESSOR keeps KEY; KGN takes the old KFLT, KBAS the old KGN, KWID the old MON, and MON comes up OFF.
+
+The beta base changes with it (owner review): the resident engine takes the new DSP text (Jannik's key-phase change re-anchored on `sctap:`, its two MON changes dropped because the source now consumes MON_ON itself, `kph2` writes `clr a` for `move #0,a` so every instruction form is one the source already uses), a seventh site `dsp_compressor_init` (COMPRESSOR init, A `0x01aa4` / B `0x01864`) bridged inside the normalized stock COMPRESSOR package like the proc, the controller links `sc_ui` beside `sc_cf` and ships its stock-equal spans as stock copies, and `machine_registry.c`'s power-up check recognises the new page 2 (#712). The key bus tap is now one pass: 25 executed instructions a sample for a core's four tracks (was 41).
+
+### Source and identities
+
+- Author pin: Zac-Kyoti/octatrack-kyoti-fw `b0d49bf32d3fcc2e3ce7e9cec67f4fbb2619e511`, `modwerk-modules/sidechain-compressor/` (`sdk/imports/sidechain-compressor-b0d49bf.json`): every source and `manifest.py` byte for byte.
+- Native image of this module alone, stock FX2 kept (`export-composition-proofs.py --select sidechain-compressor:true --image-dir`, modwerk-source-tools): MAIN OS `131142e1839bf1a62b48929dee396cc23b1f2f27f33595a9e6f39bf57f7be22e`. `sc_cf` 698 B and `sc_ui` 616 B equal the author's references (`976f9f95…` at 0x400d7000, `b2c45834…` at 0x400d7300); 612 code words and 16 + 49 table words on each core, four hooks; the key-filter table loads at `$1262` (A) and `$1022` (B), straight after the KEY GAIN table.
+- Card file for the hardware test (OS VERSION `MW_SC021`): `6a02a0672a7888390667af1bab0b4920652b5ca26cd820a6b9cbc9e450468aa4`.
+- Beta base: browser `.bin` = build_core `.bin` `eef42677eca067ae27228e309a41e82c1ab87b11db85d1fcbb0f7edacc261128`; the SC controller package carries two stock-code sites and eight stock copies, and both strict stock-free scans pass (longest shared run 11 non-zero bytes; no 16-byte run).
+
+### Building it with other modules
+
+Native octabam (the toolchain image, without network) and the Modwerk composer: the module alone builds in both menu modes, and beside each other module. The suites, regenerated in the toolchain image (`export-composition-proofs.py --vendored-sdk --static-stock`, 4 shards each):
+
+| Suite | Selections | Built with 0.2.0 | Built with 0.1.2 |
+| --- | ---: | ---: | ---: |
+| `sidechain` (original eight modules) | 512 | 169 | 200 |
+| `sidechain-visible` (nine visible modules) | 1,024 | 618 | 786 |
+| `analog-bd` (Analog BD companions) | 212 | 146 | 162 |
+
+No selection that 0.1.2 refused builds now. The newly refused, by cause:
+
+- `sidechain-visible`, 168: the effect-menu clone window and the cave (Euclid's label formatters 94, CC Map's page-2 cave 32, the FX1 chooser window 16, the wide-dial hook 10, Scale Quantizer's getters and setters 10, Tape Echo's TIME formatter 6), now that the module's two ColdFire units take 1,314 B instead of 338; the smallest is Euclid + Scale Quantizer + this module (2 selections of 3 modules, 10 of 4, the rest larger).
+- `analog-bd`, 16: core A's DSP code space ("does not fit any harvested region"); the smallest is Analog BD + Airwindows Chorus + this module.
+- `sidechain`, 31: all with the paused Spectrum, Modulation or Character (core A's DSP region 20, Euclid's formatters 8, the wide dial 2, the FX1 chooser window 1); the smallest is MiniVerb + Modulation + this module.
+
+`sidechain-analog-bd-proofs.json` stays the 0.1.1 record it is (its test calls it historical); the current Analog BD layout is the `analog-bd` suite above.
+
+Linking `sc_ui` in DRAM (octabam's PLACE=DRAM) instead of the cave would likely give the ColdFire-space selections back; this version keeps the cave, the placement the hardware test ran.
+
+### DSP
+
+Emulator, not hardware: our load meter (`tools/load_audit/la_run.py` in the author's repository) runs ot_emu on the OT DEMO project with core 1's four-track loop (B P:17a..333) on a stopwatch, in datasheet cycles (opcodecycles, no memory stalls), transport playing, 400 frames. Every FX1 and FX2 slot holds COMPRESSOR, each keyed from a track on the other core (T1-T4 from T5-T8 and the reverse), KGN 64, KBAS 40, KWID 30, MON ON, set at frame 3 so the filters' glides and the MON fade-in fall inside the window.
+
+| Configuration (core 1, 8 COMPRESSORs) | Mean | Peak |
+| --- | ---: | ---: |
+| Stock firmware, stock COMPRESSOR | 1,271.3 | 1,298.3 |
+| 0.2.0, keyed, filters on, MON ON | 1,527.8 | 1,742.9 |
+| 0.2.0, keyed, filters on, MON OFF | 1,525.0 | 1,706.3 |
+| 0.2.0, keyed, filters OFF, MON OFF | 1,509.1 | 1,616.2 |
+
+Modelled cycles per sample for the whole loop (stock dispatcher, every effect and this module). The peak is 1,742.9 × 16 = **27,887 cycles/block** against the 72,560-cycle budget (4,535 a sample). A read-back of the DSP state at the end of the MON-ON run shows most instances keyed and their filters set up (r7+$2a set, the key's window address and key in use as poked); the T1 FX1 instance read as not set up, so the meter may not exercise every instance. Allowing every instance the filter cost measured during development (about 44 modelled cycles a sample, 4 keyed compressors per core) on top gives about 2,100 a sample, still under half the budget. Development measurements on the same meter (OT DEMO, 4 keyed COMPRESSORs and 4 DJ EQs per core): 2,652.1 a sample with the filters on, 2,691.2 with MON ON, 2,475.4 with both filters OFF (core 1 mean).
+
+The 0.1.x static model (every branch, a 2× allowance, the 22,640-cycle stock reserve) was run in a private measurement host that is not part of this repository; it was not rerun for 0.2.0.
+
+### ColdFire
+
+`sc_norm`'s reset still writes five bytes (MON OFF, KEY OFF, KGN 64, KBAS OFF, KWID OFF); a compressor with KEY 0..8 now also has its MON checked, four instructions and at most one store more than 0.1.2's path. The 0.1.2 frame bound (2,800 cycles for one stale compressor, 8,192 for sixteen, against 9,577) was not re-derived for those instructions; they add at most a few cycles per COMPRESSOR slot a frame. The UI callbacks run in the UI task at the 30 Hz redraw: `sc_cf`'s formatters (86 instructions) and `sc_ui`'s widgets (88) have no loops, so one call executes at most 174 authored instructions plus the stock widget, knob, blit and sprintf it calls. The KEY switch lends one entry of stock's switch glyph table (0x400bde2a) for the duration of the stock widget call and gives it back before returning.
+
+### Memory
+
+Sixteen instances: **768 B/instance + 14,000 B shared = 26,288 logical bytes** (0.1.2: 23,520). Changed from 0.1.2: two DSP code blocks of 612 words (were 340), two tables of 65 words (16 KEY GAIN + 49 key-filter; were 48), ColdFire code 698 + 616 B (was 340 B with alignment), 48 B more UI-task stack for the KEY switch's two wrapper frames and 12 B for the MON and KEY step handlers. The key filters' state (r7+$1c..$2d) sits inside stock COMPRESSOR's 256-word instance block, which another effect in the slot may also use: scinit starts it over whenever the slot is assigned COMPRESSOR. Y ranges, windows and every other region are 0.1.2's.
+
+### Hardware
+
+Reported by the author on an Octatrack MKI, 26 October 2026: Modwerk's native image of the module alone (MAIN OS `131142e1…`, card file `MW_SC021`) works: KBAS and KWID across their range with MON on and off, MON's OFF/ON switch and its OFF on a project saved with an earlier version, KEY's pressed turn, the MON and KEY fades, and a MON ON project across a power cycle. The checklist and the report are in [evidence/hardware.md](evidence/hardware.md). The first 0.2.0 image (`MW_SC020`, 24 October 2026) broke KBAS and KWID; this source fixes it.
+
+### Not tested
+
+- Over USB on a unit (the owner flashes the base); the base's power-up check is covered by `test_machine_registry.c`.
+- Sixteen instances on a unit; chip timing; a stress run.
+
+## 0.1.2-experimental (history)
 
 ### What changed
 

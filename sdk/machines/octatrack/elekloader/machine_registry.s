@@ -8,9 +8,10 @@
         .text
         .global mw_machine_name, mw_main_commit, mw_src_commit, mw_src_commit2, mw_name_a, mw_name_b
         .global mw_setup_open, mw_chooser_open, mw_setup_row, mw_chooser_row, mw_chooser_name
+        .global mw_chooser_column
         .global mw_setup_edit6, mw_setup_draw6, mw_tick_hook, mw_resolve_pb, mw_validate_hook, mw_stock_validate
         .global mw_pool_open, mw_pool_title, mw_list_draw, mw_stock_pool_open, mw_stock_list_draw, mw_source_render
-        .global mw_seq_draw, mw_seq_none, mw_seq_get_none, mw_seq_set_none
+        .global mw_seq_draw, mw_seq_none, mw_seq_get_none, mw_seq_set_none, mw_lfo_pb
         .equ BANK_PTR, 0x46c82456
         .equ PART_OFF, 0x8ed80
 | The machine name by chooser row (the whole stock routine: its argument at 4(sp)).
@@ -100,6 +101,18 @@ mw_chooser_open:
         move.l %d0,-(%sp)
         pea 0x460e7386
         jmp 0x40078890
+| The track window's column (0x40078850): stock opens STATIC and FLEX tracks on their pool and the rest
+| on the machine list; a LIST module machine (machine_registry.c) opens on the list too.
+mw_chooser_column:
+        lea -12(%sp),%sp
+        movem.l %d1/%a0-%a1,(%sp)
+        move.l %a0,-(%sp)               | the track's type byte
+        jsr mw_window_column
+        addq.l #4,%sp
+        movem.l (%sp),%d1/%a0-%a1
+        lea 12(%sp),%sp
+        moveq #1,%d2                    | as the displaced moveq left it
+        jmp 0x400788d0
 mw_name_a:
         bsr mw_name_pick
         jmp 0x4003d722
@@ -159,11 +172,34 @@ mw_pool_kind:
         move.l (%sp)+,%d1
         move.l (%sp)+,%a0
         rts
+| SRC SETUP's editor (d2 the cursor's row, a3 the encoder 0-5, d3 the delta): a SETUP_PAGE machine takes its own
+| encoders first (machine_registry.c mw_setup_knob); otherwise a machine row edits its backing pool's setup.
 mw_setup_edit6:
         cmpi.l #5,%d2
         bcs.s 1f
-        move.l %a3,%d0
+        lea -12(%sp),%sp
+        movem.l %d1/%a0-%a1,(%sp)
+        move.l %d3,-(%sp)
+        move.l %a3,-(%sp)
+        move.l %d2,-(%sp)
+        jsr mw_setup_knob
+        lea 12(%sp),%sp
+        movem.l (%sp),%d1/%a0-%a1
+        lea 12(%sp),%sp
+        tst.l %d0
+        beq.s 3f
+        jmp 0x4003a624
+3:      move.l %a3,%d0
         cmpi.l #4,%d0
+        bne.s 2f
+        lea -12(%sp),%sp                | encoder E: read-only unless the row's machine is SETUP_ALL
+        movem.l %d1/%a0-%a1,(%sp)
+        move.l %d2,-(%sp)
+        jsr mw_row_setup_all
+        addq.l #4,%sp
+        movem.l (%sp),%d1/%a0-%a1
+        lea 12(%sp),%sp
+        tst.l %d0
         bne.s 2f
         jmp 0x4003a624
 2:      bsr mw_pool_kind
@@ -173,9 +209,19 @@ mw_setup_edit6:
 modwerk_stock_4003a52e_8:
         .space 8
         jmp 0x4003a536
+| SRC SETUP's drawer (d6 the cursor's row, 72(sp) the page it shows): a SETUP_PAGE machine's own page
+| (mw_setup_page), then its backing pool's setup bytes.
 mw_setup_draw6:
         cmpi.l #5,%d6
         bcs.s 1f
+        lea -24(%sp),%sp
+        movem.l %d0-%d1/%a0-%a1,8(%sp)
+        move.l %d6,(%sp)
+        move.l 96(%sp),4(%sp)
+        jsr mw_setup_page
+        move.l %d0,96(%sp)
+        movem.l 8(%sp),%d0-%d1/%a0-%a1
+        lea 24(%sp),%sp
         move.l %d0,-(%sp)
         bsr mw_pool_kind
         move.l %d0,%d6
@@ -200,6 +246,23 @@ mw_resolve_pb:
         lea mw_pb_table,%a0
         jmp 0x40031ece
 1:      jmp 0x40031ed6
+| LFO SETUP's PMTR names (#589): stock picks the PLAYBACK page by the track's raw machine byte, which a machine's track
+| keeps at FLEX or STATIC. a0 is that byte and d0 its value; d1 (the track) and a1 stay live past 0x4003c054.
+mw_lfo_pb:
+        lea -12(%sp),%sp
+        movem.l %d1/%a0-%a1,(%sp)
+        move.l %a0,-(%sp)
+        jsr mw_page
+        addq.l #4,%sp
+        movem.l (%sp),%d1/%a0-%a1
+        lea 12(%sp),%sp
+        tst.l %d0
+        beq.s 1f
+        move.l %d0,%a2                  | the machine's own page
+        jmp 0x4003c058
+1:      mvs.b (%a0),%d0
+        lea mw_pb_table,%a0
+        jmp 0x4003c054
 mw_validate_hook:
         jmp mw_validate
 mw_stock_validate:

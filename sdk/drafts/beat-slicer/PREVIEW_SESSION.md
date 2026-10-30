@@ -19,8 +19,14 @@ active marker records. Flex/Static slots are admitted by shape only; recorder
 slots are refused. The backend remains responsible for actual source readiness
 and stable ownership. Unsupported encodings, identities or extents are refused.
 
-The session validates that snapshot before each bounded transition, after each
-copy and before publishing a finished plan. It compares all active marker
+The session validates that snapshot before each bounded work call, after each
+copy and before publishing a finished plan. Initialization, planner transitions
+and decoding copied PCM run outside the source lock, using session-owned data.
+A step needing PCM reacquires the lock and validates again before copying: the
+first validation cannot authorize access after an unlocked interval. A failed
+reacquisition returns WAITING with the request intact. A source change after
+copy release invalidates subsequent step/result access; decoding the already
+owned bytes does not read the changed source. It compares all active marker
 start/end/loop fields, not just starts or the stock slot counter. Only the
 selected tempo value participates in comparison; a guard invalidation still
 retires everything conservatively. A changed guard or metadata snapshot ends
@@ -44,7 +50,10 @@ Host sanitizers and the same selftest compiled for ColdFire cover 32 full
 previews (16/24-bit, mono/stereo, both byte orders, both tempo sources and both
 boundary modes), 22 metadata/guard invalidations, chosen-tempo behavior, lock
 and source waiting, cancellation/restart, mutation during copy, malformed
-replies and unsupported-source cases. See [TESTING.md](TESTING.md).
+replies and unsupported-source cases. Nine added lock-release interleavings
+cover guard/metadata/extent/format changes, blocked reacquisition, pending
+revalidation and an unselected tempo change. Compiled instruction observation
+checks that reader begin/step/supply execute unlocked. See [TESTING.md](TESTING.md).
 
 Missing native writer coverage, shared lock/callback implementation, Static
 streaming, scheduling and hardware timing keep this prototype disabled for live
@@ -55,3 +64,13 @@ Flex page lookup, gain and release. Eight plans match the reference while
 keeping PCM/settings unchanged; edits, metadata changes and released slots
 retire previews. Identity, lock, rate and tempo remain synthetic. This tests
 the proposed callback boundary, not an installed or compiled native backend.
+
+
+`bs_session_work` accepts a private-transition budget of 1–32. It captures and
+validates once, releases source ownership and performs at most that many owned
+reader transitions. The first live-read request ends the batch: reacquire,
+revalidate, copy at most one block, validate again, release and decode. It never
+batches live reads under a stale validation. `bs_session_step` remains exactly a
+one-transition wrapper. Invalid budgets return failure without changing the
+session. Ready and pending behavior retain the same result-validation contract.
+Counters must identify work calls separately from private reader transitions.

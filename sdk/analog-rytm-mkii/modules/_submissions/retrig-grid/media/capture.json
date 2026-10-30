@@ -1,0 +1,27 @@
+{
+ "schemaVersion": 1,
+ "machine": "analog-rytm-mkii",
+ "moduleId": "retrig-grid",
+ "moduleVersion": "0.2.0-experimental",
+ "imageSha256": "ad3b361f050bf987b9e15ccd5df39ed14503ea6e695d7f253d02dfa00b2a6bb0",
+ "firmware": "1.74",
+ "stockSha256": "cb0f99d620edde994fb860c0e79cc2464e427d06882828cfdfb00fc53700e123",
+ "build": "RG08: core-ar2 0.3 (elekloader tag core-ar2-v0.3, built from source) + retrig-grid 0.2.0-experimental, elekloader.sdk.build / lint / patch, m68k-linux-gnu-gcc 12.2.0",
+ "emulator": "rytm-emu 3c4c42c, dtboot headless, 3x PNG without interpolation",
+ "capturedAt": "2026-10-29",
+ "setup": "A fresh card (the factory project, RYTMLINJE); the startup calibration notices cleared with NO.",
+ "captures": [
+  {
+   "path": "media/settings-on.png",
+   "sha256": "42cacd76aac35018779f3b60c2e92b0336c4d0bfeca1b5307b8d78ab01e4aeb3",
+   "plan": "dtboot RG08.syx --instr 8600M --card <fresh card> --press NO@4503M:80M --press NO@5303M:80M --press NO@6103M:80M --press NO@6903M:80M --press GLOBAL@7543M:40M --press DOWN@7703M:20M --press DOWN@7783M:20M --press DOWN@7863M:20M --press DOWN@7943M:20M --press DOWN@8023M:20M --press DOWN@8103M:20M --press DOWN@8183M:20M --press DOWN@8263M:20M",
+   "frame": "DTBOOT_END_PNG at 8600M, after GLOBAL and eight DOWN"
+  },
+  {
+   "path": "media/settings-off.png",
+   "sha256": "7134fd6186d27d3b4db0f1d9db81cb045ad68f6635e8b7e8cfe2190c971f3c88",
+   "plan": "dtboot RG08.syx --instr 8900M --card <fresh card> --press NO@4503M:80M --press NO@5303M:80M --press NO@6103M:80M --press NO@6903M:80M --press GLOBAL@7543M:40M --press DOWN@7703M:20M --press DOWN@7783M:20M --press DOWN@7863M:20M --press DOWN@7943M:20M --press DOWN@8023M:20M --press DOWN@8103M:20M --press DOWN@8183M:20M --press DOWN@8263M:20M --press YES@8403M:20M",
+   "frame": "DTBOOT_END_PNG at 8900M, after YES on the row"
+  }
+ ]
+}

@@ -6,7 +6,7 @@ import './octatrack-link.css'
 
 const ACTIVE: LinkState['status'][] = ['sending', 'testing', 'trial', 'finishing']
 const activity = ({ status, progress = 0 }: LinkState) => status === 'sending' ? `Syncing ${Math.round(progress * 100)}%`
-  : status === 'testing' ? 'Self-test' : status === 'trial' ? 'Waiting for Keep or Undo' : 'Finishing'
+  : status === 'testing' ? 'Self-test' : 'Saving'
 
 /** The beta Octatrack card's next step (connect, install, retry); nothing once connected or syncing, which the card shows. */
 export function OctatrackSidebarStatus({ link, onInstall }: { link: OctatrackLink; onInstall: () => void }) {
@@ -27,7 +27,7 @@ export function OctatrackStatus({ link }: { link: OctatrackLink }) {
   return <span className="octatrack-status-bar"><span className={'status-dot' + (busy ? ' is-live' : identity?.canSubmit ? ' verified' : '')} />{busy ? (state.module ? 'Syncing to Octatrack · ' : 'Octatrack · ') + activity(state) : status === 'busy' ? 'Octatrack in use' : 'Octatrack connected'}</span>
 }
 
-/** A pill while an update runs or waits for Keep or Undo, and for its result, on every page but the configuration page. */
+/** A pill while an update runs, and for its result, on every page but the configuration page. */
 export function OctatrackActivity({ link }: { link: OctatrackLink }) {
   const state = useOctatrackLink(link), { status, module, notice } = state
   // A result already there when the pill appears was shown where it happened (the sync dialog, the Octatrack page).
@@ -37,7 +37,6 @@ export function OctatrackActivity({ link }: { link: OctatrackLink }) {
   return <aside className={'octatrack-activity' + (result?.tone === 'error' ? ' is-error' : '')} aria-label="Octatrack update" role="status">
     {result ? <><span>{result.text}</span><button type="button" className="icon-button" aria-label="Dismiss" onClick={() => setDismissed(notice)}><Icon name="close" size={15} /></button></>
       : <><span className="status-dot is-live" /><span><strong>{module}</strong> · {activity(state)}</span>
-        {(status === 'trial' || status === 'finishing') && <><button type="button" className="button button-primary" disabled={status === 'finishing'} onClick={() => void link.keep()}>Keep</button><button type="button" className="button button-quiet" disabled={status === 'finishing'} onClick={() => void link.undo()}>Undo</button></>}
         <a className="text-button" href="#configuration">Open</a></>}
   </aside>
 }

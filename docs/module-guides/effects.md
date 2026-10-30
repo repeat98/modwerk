@@ -6,6 +6,14 @@ Read [the module guides index](README.md) first. If your effect does anything in
 
 **Already follow it:** [Mini Verb](../../sdk/octabam/modules/miniverb/README.md), [Tape Echo](../../sdk/octabam/modules/tapeecho/README.md), [Euclid](../../sdk/octabam/modules/euclid/README.md), [TapeHead](../../sdk/octabam/modules/tapehead/README.md), [Sidechain Compressor](../../sdk/octabam/modules/sidechain-compressor/README.md), Spectrum, Modulation, Character. Copy the shape of the one closest to yours.
 
+## One effect per module
+
+On every machine, a module is one effect. A MODE select may switch between ways of doing the same job, as Modulation's JUNO, DIM, FLNG, COMB and PHSR and Spectrum's filter models do. A set of different effects in one module, picked with a type select (a send rack with a chorus, a filter bank, a drive and two delays, say), is sent back: split it into one module per effect.
+
+The base shares the effect slots so that effects from different authors sit side by side: on the Octatrack it gives each installed effect module its own effect id in the FX lists. One effect per module lets a musician choose, combine, update and remove exactly the effects they want, lets the gates judge each effect's cost and conflicts on its own, and keeps a fix to one effect from shipping as an update to all. Where the effects need the same stock site, such as a send return the machine's core has no hook for yet, that site becomes a shared hook first, in its own owner-reviewed pull request ([propose a hook](README.md#propose-a-hook); [on the elemod machines](README.md#propose-a-hook-on-the-digitakt-digitone-or-digitakt-ii)), and each effect subscribes to it.
+
+Design the effect yourself. One modelled on another current product of the same maker waits for the owner, even in your own DSP and under new names ([refuse infringing work](../DEVELOPER_WORKFLOW.md#refuse-infringing-work)).
+
 ## Plan the DSP budget first
 
 New FX should aim for DSP cost in the same ballpark as stock SPRING REV at its worst settings. Choose the algorithm, filter order, interpolation and feedback topology with that target in mind, then measure and optimize as features are added. Benchmark Spring's expensive types/settings, moving controls and trigger splits under matched conditions on both cores. This is a design target without a fixed ratio or hard per-effect ceiling. Substantially higher cost needs optimization and review of the remaining headroom. See [Performance](README.md#performance) for the evidence and audit.

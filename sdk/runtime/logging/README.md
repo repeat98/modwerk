@@ -2,7 +2,7 @@
 
 A bounded device event recorder and a guarded 1.40C adapter. It records module configuration and correlated system events in RAM, then checkpoints them to the CF card. The website accepts and previews the checkpoints before submitting an author-directed GitHub issue.
 
-**Always included by the Octamod browser composer; never a module.** There is no catalog entry, discovery manifest or toggle. This core version is 0.2.0; the eleven-module baseline is unchanged. Original C is compiled into a firmware-free object package, and guarded stock instructions are supplied only from the user's verified local file. The native core probe and the browser runtime/loader agree byte for byte. Broader qualification remains incomplete. The owner explicitly approved this logger addition and current module versions for release on 3 October 2026, lifted its qualification restrictions, authorized local firmware/DSP tests and waived hardware testing; downloads include the logger. See [TESTING.md](TESTING.md).
+**Always included by the Octamod browser composer; never a module.** There is no catalog entry, discovery manifest or toggle. This core version is 0.3.0: it also carries the frame guard (below); the eleven-module baseline is unchanged. Original C is compiled into a firmware-free object package, and guarded stock instructions are supplied only from the user's verified local file. The native core probe and the browser runtime/loader agree byte for byte. Broader qualification remains incomplete. The owner explicitly approved this logger addition and current module versions for release on 3 October 2026, lifted its qualification restrictions, authorized local firmware/DSP tests and waived hardware testing; downloads include the logger. See [TESTING.md](TESTING.md).
 
 ## CPU and card budget
 
@@ -14,6 +14,14 @@ A bounded device event recorder and a guarded 1.40C adapter. It records module c
 - Two files, `/OCTAMOD.LOG` and `/OCTAMOD1.LOG`, at **32 KiB each**. Slots alternate after a successful close and full readback. A sole existing checkpoint is preserved at the first write after boot. With both files present, the peer survives a failed rewrite; it can be older than the newest checkpoint.
 - First use of a slot initializes/rewrites all 64 sectors. Later writes cover only the sector-aligned prefix containing new text or old text that must become LF padding. A failed/uncertain extent requires a full rewrite. Full readback is still 32 KiB; file open/close and FAT metadata add I/O. Fixed file size is **not** a promise of zero FAT writes or atomic power-loss safety.
 - Read-only/absent cards defer or fail safely, failed attempts are throttled, and foreign or wrong-size files are refused. The writer never deletes a file. A short file left by failed creation is deliberately refused until the user removes that damaged logger file.
+
+## Frame guard
+
+`frame_guard.c` is the USB base's frame guard (`machine_registry.c`) for loader-free builds, which have no base. Without it a busy project with POLY8, FM Synth or VECTOR voices kept the frame interrupt near a whole frame and the DSP stopped until a power cycle (#844, #1015). The interrupt gets 80 % of each frame, saving up to half a frame from short ones; a module machine track's render that would overdraw it renders stock's silent source instead, a dropout on that track. Stock tracks and Analog BD always render.
+
+- Four guarded stock sites: the frame interrupt's entry (`0x4000aad0`, stamps DTCN3 after stock's register save) and exit (`0x4000d9a6`, the budget before stock's restore and `rte`), and the record packer's two renderer calls (`0x4000d43a`, `0x4000d524`), whose replay keeps stock's argument pushes and drops the `jsr`. USB Audio's frame site ends where the exit begins; FM Synth's packer site (`0x4000d514`) rejoins before the second call.
+- A machine track is a STATIC or FLEX track whose Part slot carries `PL`, `FM` or `S2` (the card machine registry's and FM Synth's own test), read once a frame at the exit into an 8-bit mask. Any other render costs four instructions in the hook.
+- `GRD 0001` (W) records the dropouts, at most one record per 10 s from the engine's idle point, never from the interrupt.
 
 ## Configuration and privacy
 
@@ -33,6 +41,7 @@ A reserved region is excluded from the mod loader's initialized data. If its rin
 
 - `octamod_log.c/.h`: ring, bounded snapshots, strict formatter, CRC32 completion marker.
 - `octamod_log_firmware.c`, `octamod_log_port.h`: batching, backoff, correlation and lifecycle.
+- `frame_guard.c`: the frame guard; `tests/guard_test.c` drives it with a simulated frame timer and Part.
 - `stock_140c.c`: original adapter for the stock file ABI and numeric state; uncached aligned I/O buffer.
 - `stock-guards.json`: hashes/addresses only. Stock instructions are replayed from the owner's verified local image at build time, never copied into source.
 - `build_local.py`: private native-composer probe builder. Refuses output inside the repository and rejects any image other than verified original 1.40C.

@@ -1445,6 +1445,28 @@ h1 { font-size: 28px; }
 .legal-page li + li { margin-top:8px; }
 .legal-page a { overflow-wrap:anywhere; }
 .legal-language { display:flex; gap:10px; margin-bottom:24px; }
+/* Modding guidelines: one row per rule group, its name beside its rules; one column in a narrow pane. */
+.legal-page.guidelines-page { max-width:820px; }
+.guidelines-card { container-type:inline-size; padding-top:26px; padding-bottom:26px; }
+.modding-guidelines { display:grid; grid-template-columns:10.5rem minmax(0,1fr); color:#bdbdcb; font-size:14px; line-height:1.75; }
+.modding-guidelines > * { grid-column:1 / -1; }
+.modding-guidelines > p { max-width:68ch; }
+.modding-guidelines > p:first-child { color:var(--text-secondary); font-size:15px; }
+.modding-guidelines > p + p { margin-top:12px; }
+.modding-guidelines > h2 { grid-column:1; margin-top:28px; padding:22px 24px 0 0; border-top:1px solid var(--line); color:var(--text); font-size:14px; line-height:1.75; text-wrap:balance; }
+.modding-guidelines > h2 + ul { grid-column:2; margin:28px 0 0; padding:22px 0 0 18px; border-top:1px solid var(--line); }
+.modding-guidelines li::marker { color:var(--faint); }
+.legal-page .modding-guidelines li + li { margin-top:10px; }
+.legal-page .modding-guidelines li, .legal-page .modding-guidelines p { line-height:inherit; }
+.modding-guidelines strong { color:#dddde7; font-weight:600; }
+.modding-guidelines a { color:var(--accent); text-decoration:underline; text-decoration-thickness:1px; text-underline-offset:3px; }
+.modding-guidelines a:hover { color:var(--accent-hover); }
+.modding-guidelines > ul + p { margin-top:28px; padding-top:20px; border-top:1px solid var(--line); max-width:none; color:var(--muted); font-size:13px; }
+@container (max-width:600px) {
+ .modding-guidelines { grid-template-columns:minmax(0,1fr); }
+ .modding-guidelines > h2 { padding-right:0; }
+ .modding-guidelines > h2 + ul { grid-column:1; margin-top:8px; padding-top:0; border-top:0; }
+}
 @media (max-width:600px) {
  .status-bar { height:auto; min-height:60px; flex-wrap:wrap; padding:8px 13px; }
  .status-bar .legal-links { flex:1 0 100%; justify-content:space-between; }

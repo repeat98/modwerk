@@ -30,7 +30,7 @@ describe('the vendored elekloader catalog', () => {
     expect(planBuild('digitakt-ii', '1.16', ['perform-direct']).missing).toEqual(['perform-direct'])
   })
   it('reports modules without a file for the chosen release', () => {
-    expect(planBuild('digitakt', '1.54', ['digisophie', 'digihealth'])).toMatchObject({ missing: ['digisophie'], mods: [{ id: 'digihealth', os: '1.54' }] })
+    expect(planBuild('digitakt', '1.53', ['fx-track', 'digihealth'])).toMatchObject({ missing: ['fx-track'], mods: [{ id: 'digihealth', os: '1.53' }] })
   })
   it('plans Digitakt II OS 1.17 using its own core and mod pins', () => {
     const catalog: Catalog = {
@@ -52,23 +52,23 @@ describe('the vendored elekloader catalog', () => {
     })
     expect(builderReleases('digitakt-ii', 'perform-direct', catalog)).toEqual(['1.17'])
   })
-  it('plans the Analog Rytm MKII core build preview from the pinned core-ar2 0.3', () => {
+  it('plans the Analog Rytm MKII core build preview from the newest pinned core, core-ar2 0.7', () => {
     expect(planBuild('analog-rytm-mkii', '1.74', [])).toMatchObject({
-      core: { file: 'core-ar2-0.3.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.3' },
+      core: { file: 'core-ar2-0.7.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.7' },
       mods: [], missing: [],
     })
     expect(planBuild('analog-rytm-mkii', '1.73', []).core).toBeUndefined()
   })
-  it('plans Filter Hz from its pinned source-only package with core-ar2 0.3', () => {
+  it('plans Filter Hz from its pinned source-only package with core-ar2 0.7', () => {
     expect(planBuild('analog-rytm-mkii', '1.74', ['filter-hz'])).toMatchObject({
-      core: { file: 'core-ar2-0.3.elemod', version: '0.3' },
+      core: { file: 'core-ar2-0.7.elemod', version: '0.7' },
       mods: [{ id: 'filter-hz', file: 'filter-hz-1.2.0-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '1.2.0' }],
       missing: [],
     })
   })
-  it('plans Loop Sync, a storage mod, from its pinned source-only package with core-ar2 0.3', () => {
+  it('plans Loop Sync, a storage mod, from its pinned source-only package with core-ar2 0.7', () => {
     expect(planBuild('analog-rytm-mkii', '1.74', ['loop-sync'])).toMatchObject({
-      core: { file: 'core-ar2-0.3.elemod', version: '0.3' },
+      core: { file: 'core-ar2-0.7.elemod', version: '0.7' },
       mods: [{ id: 'loop-sync', file: 'loop-sync-0.2.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.2.0-experimental' }],
       missing: [],
     })
@@ -120,7 +120,7 @@ describe('preparing a build', () => {
     const otherOs = fakeClient()
     expect(await prepareBuild(otherOs.client, { machine: 'digitakt', release: '1.54', stock, moduleIds: [] })).toMatchObject({ ok: false, error: 'This OS file is Digitakt mk1 1.53, not the digitakt-mk1 OS 1.54 chosen.' })
     const missing = fakeClient()
-    expect(await prepareBuild(missing.client, { machine: 'digitakt', release: '1.54', stock, moduleIds: ['digisophie'] })).toMatchObject({ ok: false })
+    expect(await prepareBuild(missing.client, { machine: 'digitakt', release: '1.53', stock, moduleIds: ['fx-track'] })).toMatchObject({ ok: false })
     expect(missing.raw.load).not.toHaveBeenCalled()
   })
 })

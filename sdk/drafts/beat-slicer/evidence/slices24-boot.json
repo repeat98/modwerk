@@ -1,0 +1,477 @@
+{
+  "scope": "compiled previews across normal stock slice deletion, clearing and grid creation in a private full boot; synthetic lifetimes and partial ownership",
+  "sourceSha256": {
+    "boot_source_slices.py": "6cfc001ec6e25902f7bec6580c8dc71e0cf72965cc2ceaf2001d443ce72d746a",
+    "boot_source_native.py": "75b883784c2ba2fb78982ab4b00e24eea721ca6e6661e8dec57a5d2d12257525",
+    "boot_slices.py": "9a73c01d50cd6c28ed2cbecd0185a14ada1a5c30abe2eaccf3c75ec4516ee2d5",
+    "boot_writer.py": "cd6eef19a79dd15ba376c8d53d6656cf1c765c11561b496acf664de7a6a10c7a",
+    "boot_static.py": "0c8765d150fa6a3a0fa075449f6d38423b3b85a8b20eea02bfc2ffebd289c1b9",
+    "boot_worker_native.py": "ee502efcc357f08f5dcd5dd38da41e401c49ab788502e35697152546e0573f95",
+    "boot_formats.py": "914577a9a60fa98921d52d750b8fcc21357ab0fdf34d409e88f65084672966be",
+    "boot_observe.py": "63a617ac48532b69707c86b29d9fe92e0fc8db789b73eb55d85511966dd08499",
+    "inspect_stock.py": "3df8e0019c7c1b095132a16da21a40c739b233548b9030a6dd8befadceb59190",
+    "test_planner.py": "d39a96c4ac4e7cc35c65323249dbe076b4bf73ae88c2a2a5b27963b97253bf16",
+    "planner.c": "01c9c25efa363679a591969931dd376a3b694a949dd8b9f89eda4bf77a88cee4",
+    "planner.h": "1a10ce9e6b34dfd35eb138690e2134550621c3bf91b2178fb50f95b9def6b7ae",
+    "planner_job.c": "767d82cc375677a115e9457af35e26fddd9de66a0dc80aa2af0fe3b5adaf0581",
+    "planner_job.h": "c4dd3faa8b3320194b54ab4d7bec6541d9e936f544b0e6236efa4fa5518d6547",
+    "pcm_reader.c": "8762e389a39b7407a7d987dc6e3e36d7d75aa6c408b1d3232d8672a380226088",
+    "pcm_reader.h": "462f495a86f32730b79a56177f99929f685d82729e4646e7b391df475d929821",
+    "preview_guard.c": "da1299674cf2ae967c58231ee9c16891afa94e27254407b5d09df6b73cc4343e",
+    "preview_guard.h": "abcaff39ef1b9a21cb238f0021344ffb5b812ea1740a354cbc1d1f2ace4ddf36",
+    "preview_session.c": "f87a51c77c6fda24159dcdc137cfa3b895224b0c17605c3612558e37b5a049f5",
+    "preview_session.h": "1dfe1f9ea8fb6785edc48020609c51f6b88e75381043504c011dc4bfedc8ca9d",
+    "marker_edit.h": "cd8c16a7771bf5a6d251b20e3a02fd0887d68cf4f8e5900e0c6a7fdecc0d4f05",
+    "flex_copy.c": "b069d6b3ac5d8922281811a8eaa5c93d8ab33267ec89fb9f1c99305f35d80b2c",
+    "flex_copy.h": "1bb469187ef75be2d25b671622f79ec2a5e199d877a418e8d9885c70781ee513",
+    "flex_metadata.c": "7dd96a7d94ceb81bbd20fd49995d1c5e64c1077f97ad15b623a14c32607f732b",
+    "flex_metadata.h": "8a5e2da2cb447380883209942ee2654956cd50aae4e68abfe7f2d270d97eab6f",
+    "flex_source.c": "83ca4c3330ba147ea1d9f4248095ef0350210e6451eb5b0f65572ac31432c208",
+    "flex_source.h": "8dce26364e7f270eafbd7f40f12021aaa0b966edf577305477efd7aaa9a19021",
+    "worker_boundary.c": "3ed8a447076bda230939b112b53602c5acd2af4254b14971ef9fe7f929f306d7",
+    "worker_boundary.h": "13f826c6ffdce8e773879bc91c92ff9150a49edee1c27606210932adcdc0ac46",
+    "test_worker_stock.c": "6381b6ed64765e66329fb29a8149169d7c90b033050da7fbae52d923f414fef6",
+    "test_source_boot.c": "a1c69fa32a5612fb6898b8126903b573ee16674a41389b38e86bd40e7a630d9a",
+    "test_flex_source.py": "a8fd662fcbbd0d20770a01e8eab99163ee070322e55152114592fd10d91de4fe",
+    "source_boot_native.py": "401564782ec8ff00b07ab0e3946564b76dfd816a4af9ac29bcc808c79fb36829",
+    "flex_lookup.S": "baeb9375129d44fe2db0bcb8d845ced29cd755ac126c3ab2afd696aebbca2487"
+  },
+  "mainSha256": "164f31224bf61181e3f50e7dec40df9afcae5b16dbf6e4c0d0cc5e986af0a84e",
+  "reservedMainSha256": "4587538f77fd6b93c844218f1bb70e257979d0300b7f5a316c0b3d79b6b69a72",
+  "nativeReceiptSha256": "4f7af17c7903c45279a526945874cd2f771be3c98e522bfafe541e91eacc6c61",
+  "nativeBinarySha256": "987069e96cf383c9bc979abb47ca4b51d18f958065b324fe87367ff8f89a98f2",
+  "arenaToolSha256": "23c89015c010ce9d4e6e7957f9325b7da78b7ba75144de10d56cb22149f21e61",
+  "reservedPages": 8,
+  "physicalUsablePages": 14594,
+  "observedMapEnd": 10914,
+  "nativeAddress": 1174511088,
+  "emulatorSha256": "6be15470567961d8113d16a547c29f294c8f786bff8daaedd66ee5e1386f0eeb",
+  "cardSha256": "be0b309d9eabdef1a385fde3b05837a7232db3f17bcacf0b9e0a0f0761998e82",
+  "wavSha256": "47d530968847cf7970970b0dc7cd33be7cdc001bfeda27ac263b6732dc9c90b1",
+  "previews": [
+    {
+      "tempoSource": 0,
+      "snap": 0,
+      "beats": 1,
+      "steps": 37,
+      "queries": 7,
+      "sampleBpm24": 2886,
+      "projectBpm24": 2880,
+      "markerCount": 6,
+      "starts": [
+        0,
+        11024,
+        22004,
+        22049,
+        33074,
+        44008
+      ],
+      "wholePlanMatchesHostOracle": true,
+      "balancedLocks": true
+    },
+    {
+      "tempoSource": 0,
+      "snap": 1,
+      "beats": 1,
+      "steps": 569,
+      "queries": 12,
+      "sampleBpm24": 2886,
+      "projectBpm24": 2880,
+      "markerCount": 5,
+      "starts": [
+        0,
+        11024,
+        22049,
+        33074,
+        44008
+      ],
+      "wholePlanMatchesHostOracle": true,
+      "balancedLocks": true
+    },
+    {
+      "tempoSource": 1,
+      "snap": 0,
+      "beats": 1,
+      "steps": 30,
+      "queries": 5,
+      "sampleBpm24": 2886,
+      "projectBpm24": 2880,
+      "markerCount": 5,
+      "starts": [
+        0,
+        11024,
+        22049,
+        22050,
+        33074
+      ],
+      "wholePlanMatchesHostOracle": true,
+      "balancedLocks": true
+    },
+    {
+      "tempoSource": 1,
+      "snap": 1,
+      "beats": 1,
+      "steps": 26,
+      "queries": 5,
+      "sampleBpm24": 2886,
+      "projectBpm24": 2880,
+      "markerCount": 4,
+      "starts": [
+        0,
+        11024,
+        22049,
+        33074
+      ],
+      "wholePlanMatchesHostOracle": true,
+      "balancedLocks": true
+    },
+    {
+      "tempoSource": 0,
+      "snap": 0,
+      "beats": 1,
+      "steps": 37,
+      "queries": 7,
+      "sampleBpm24": 2886,
+      "projectBpm24": 2880,
+      "markerCount": 6,
+      "starts": [
+        0,
+        11024,
+        22004,
+        22049,
+        33074,
+        44008
+      ],
+      "wholePlanMatchesHostOracle": true,
+      "balancedLocks": true
+    },
+    {
+      "tempoSource": 0,
+      "snap": 1,
+      "beats": 1,
+      "steps": 569,
+      "queries": 12,
+      "sampleBpm24": 2886,
+      "projectBpm24": 2880,
+      "markerCount": 5,
+      "starts": [
+        0,
+        11024,
+        22049,
+        33074,
+        44008
+      ],
+      "wholePlanMatchesHostOracle": true,
+      "balancedLocks": true
+    },
+    {
+      "tempoSource": 1,
+      "snap": 0,
+      "beats": 1,
+      "steps": 30,
+      "queries": 5,
+      "sampleBpm24": 2886,
+      "projectBpm24": 2880,
+      "markerCount": 5,
+      "starts": [
+        0,
+        11024,
+        22049,
+        22050,
+        33074
+      ],
+      "wholePlanMatchesHostOracle": true,
+      "balancedLocks": true
+    },
+    {
+      "tempoSource": 1,
+      "snap": 1,
+      "beats": 1,
+      "steps": 26,
+      "queries": 5,
+      "sampleBpm24": 2886,
+      "projectBpm24": 2880,
+      "markerCount": 4,
+      "starts": [
+        0,
+        11024,
+        22049,
+        33074
+      ],
+      "wholePlanMatchesHostOracle": true,
+      "balancedLocks": true
+    },
+    {
+      "tempoSource": 0,
+      "snap": 0,
+      "beats": 1,
+      "steps": 22,
+      "queries": 4,
+      "sampleBpm24": 2886,
+      "projectBpm24": 2880,
+      "markerCount": 3,
+      "starts": [
+        0,
+        22004,
+        44008
+      ],
+      "wholePlanMatchesHostOracle": true,
+      "balancedLocks": true
+    },
+    {
+      "tempoSource": 0,
+      "snap": 1,
+      "beats": 1,
+      "steps": 1096,
+      "queries": 16,
+      "sampleBpm24": 2886,
+      "projectBpm24": 2880,
+      "markerCount": 3,
+      "starts": [
+        0,
+        22004,
+        44008
+      ],
+      "wholePlanMatchesHostOracle": true,
+      "balancedLocks": true
+    },
+    {
+      "tempoSource": 1,
+      "snap": 0,
+      "beats": 1,
+      "steps": 16,
+      "queries": 3,
+      "sampleBpm24": 2886,
+      "projectBpm24": 2880,
+      "markerCount": 2,
+      "starts": [
+        0,
+        22050
+      ],
+      "wholePlanMatchesHostOracle": true,
+      "balancedLocks": true
+    },
+    {
+      "tempoSource": 1,
+      "snap": 1,
+      "beats": 1,
+      "steps": 553,
+      "queries": 9,
+      "sampleBpm24": 2886,
+      "projectBpm24": 2880,
+      "markerCount": 2,
+      "starts": [
+        0,
+        22050
+      ],
+      "wholePlanMatchesHostOracle": true,
+      "balancedLocks": true
+    },
+    {
+      "tempoSource": 0,
+      "snap": 0,
+      "beats": 1,
+      "steps": 37,
+      "queries": 7,
+      "sampleBpm24": 2886,
+      "projectBpm24": 2880,
+      "markerCount": 6,
+      "starts": [
+        0,
+        11025,
+        22004,
+        22050,
+        33075,
+        44008
+      ],
+      "wholePlanMatchesHostOracle": true,
+      "balancedLocks": true
+    },
+    {
+      "tempoSource": 0,
+      "snap": 1,
+      "beats": 1,
+      "steps": 569,
+      "queries": 12,
+      "sampleBpm24": 2886,
+      "projectBpm24": 2880,
+      "markerCount": 5,
+      "starts": [
+        0,
+        11025,
+        22050,
+        33075,
+        44008
+      ],
+      "wholePlanMatchesHostOracle": true,
+      "balancedLocks": true
+    },
+    {
+      "tempoSource": 1,
+      "snap": 0,
+      "beats": 1,
+      "steps": 26,
+      "queries": 5,
+      "sampleBpm24": 2886,
+      "projectBpm24": 2880,
+      "markerCount": 4,
+      "starts": [
+        0,
+        11025,
+        22050,
+        33075
+      ],
+      "wholePlanMatchesHostOracle": true,
+      "balancedLocks": true
+    },
+    {
+      "tempoSource": 1,
+      "snap": 1,
+      "beats": 1,
+      "steps": 26,
+      "queries": 5,
+      "sampleBpm24": 2886,
+      "projectBpm24": 2880,
+      "markerCount": 4,
+      "starts": [
+        0,
+        11025,
+        22050,
+        33075
+      ],
+      "wholePlanMatchesHostOracle": true,
+      "balancedLocks": true
+    },
+    {
+      "tempoSource": 0,
+      "snap": 0,
+      "beats": 1,
+      "steps": 37,
+      "queries": 7,
+      "sampleBpm24": 2886,
+      "projectBpm24": 2880,
+      "markerCount": 6,
+      "starts": [
+        0,
+        11024,
+        22004,
+        22049,
+        33074,
+        44008
+      ],
+      "wholePlanMatchesHostOracle": true,
+      "balancedLocks": true
+    },
+    {
+      "tempoSource": 0,
+      "snap": 1,
+      "beats": 1,
+      "steps": 569,
+      "queries": 12,
+      "sampleBpm24": 2886,
+      "projectBpm24": 2880,
+      "markerCount": 5,
+      "starts": [
+        0,
+        11024,
+        22049,
+        33074,
+        44008
+      ],
+      "wholePlanMatchesHostOracle": true,
+      "balancedLocks": true
+    },
+    {
+      "tempoSource": 1,
+      "snap": 0,
+      "beats": 1,
+      "steps": 30,
+      "queries": 5,
+      "sampleBpm24": 2886,
+      "projectBpm24": 2880,
+      "markerCount": 5,
+      "starts": [
+        0,
+        11024,
+        22049,
+        22050,
+        33074
+      ],
+      "wholePlanMatchesHostOracle": true,
+      "balancedLocks": true
+    },
+    {
+      "tempoSource": 1,
+      "snap": 1,
+      "beats": 1,
+      "steps": 26,
+      "queries": 5,
+      "sampleBpm24": 2886,
+      "projectBpm24": 2880,
+      "markerCount": 4,
+      "starts": [
+        0,
+        11024,
+        22049,
+        33074
+      ],
+      "wholePlanMatchesHostOracle": true,
+      "balancedLocks": true
+    }
+  ],
+  "invalidations": [
+    {
+      "action": "DELETE SLICE",
+      "priorState": "RUNNING",
+      "newMarkerCount": 3,
+      "staleBeforeFurtherCopy": true,
+      "resultOutputUntouched": true,
+      "guardRevisionAdvanced": true,
+      "completeMarkerStateChanged": true,
+      "otherSourceSettingsUnchanged": true,
+      "nonMarkerAttributesAndPcmUnchanged": true
+    },
+    {
+      "action": "DELETE ALL SLICES",
+      "priorState": "READY",
+      "newMarkerCount": 0,
+      "staleBeforeFurtherCopy": true,
+      "resultOutputUntouched": true,
+      "guardRevisionAdvanced": true,
+      "completeMarkerStateChanged": true,
+      "otherSourceSettingsUnchanged": true,
+      "nonMarkerAttributesAndPcmUnchanged": true
+    },
+    {
+      "action": "CREATE UNALIGNED GRID",
+      "priorState": "RUNNING",
+      "newMarkerCount": 4,
+      "staleBeforeFurtherCopy": true,
+      "resultOutputUntouched": true,
+      "guardRevisionAdvanced": true,
+      "completeMarkerStateChanged": true,
+      "otherSourceSettingsUnchanged": true,
+      "nonMarkerAttributesAndPcmUnchanged": true
+    },
+    {
+      "action": "CREATE ALIGNED GRID",
+      "priorState": "READY",
+      "newMarkerCount": 4,
+      "staleBeforeFurtherCopy": true,
+      "resultOutputUntouched": true,
+      "guardRevisionAdvanced": true,
+      "completeMarkerStateChanged": true,
+      "otherSourceSettingsUnchanged": true,
+      "nonMarkerAttributesAndPcmUnchanged": true
+    }
+  ],
+  "sourceUnchangedByPreviews": true,
+  "pcmUnchangedByStockSliceActions": true,
+  "cardUnchanged": true,
+  "exitCode": 0,
+  "hardware": "not tested",
+  "audio": "not qualified",
+  "nativeOwnership": "test-owned identities, full interrupt mask and partial command observer; live admission, recorder/UI coverage, cache and physical timing unqualified",
+  "tempoLimit": "reads observed runtime tempo only; pattern multiplier and external clock not qualified",
+  "scheduling": "individual bounded native calls from emulator driver, with stock frame runs between groups; no installed idle service"
+}

@@ -40,13 +40,16 @@ def transport(text):
     change('opcode==DL_BASE || opcode==DL_PEEK || opcode==DL_SUM) {',
            'opcode==DL_BASE || opcode==DL_PEEK || opcode==DL_SUM || opcode==10u) {')
     change('        if(opcode==DL_WRITE) {', '        if(opcode==DL_WRITE || opcode==11u) {')
+    # A reset job carries up to DL_RESET_DATA words, one packet a frame, each packet's offset its own (as a WRITE's).
+    change('                    else if(jobs[c].opcode==DL_WRITE) {',
+           '                    else if(jobs[c].opcode==DL_WRITE || jobs[c].opcode==11u) {')
     change('            t[7]=(uint16_t)j->expected; t[56]=(uint16_t)(j->expected>>16);',
            '            t[7]=(uint16_t)(opcode==11u ? j->id:j->expected); t[56]=(uint16_t)(j->expected>>16);')
     change('int dl_job_status(unsigned c) {', '''/* Fixed feature/logical-offset upload; the DSP maps its owned ranges independently. */
 int dl_hook_reset_start(unsigned c,unsigned feature,unsigned offset,unsigned count,const uint32_t *words) {
     unsigned total=@TOTAL@;
     unsigned split=@SPLIT@; /* one owned range per chunk */
-    if(c>1 || jobs[c].state || !total || (c && feature==2u) || !words || !count || count>DL_DATA ||
+    if(c>1 || jobs[c].state || !total || (c && feature==2u) || !words || !count || count>DL_RESET_DATA ||
        offset>=total || count>total-offset || (split && offset<split && count>split-offset)) return 0;
     for(unsigned i=0;i<count;++i) if(words[i]>0xffffffu) return 0;
     jobs[c].upload.words=words; jobs[c].upload.relocations=0; jobs[c].upload.relocation_count=0;
@@ -93,6 +96,9 @@ int dl_owned_command_reserve(unsigned core,uint32_t generation,unsigned opcode,
 int dl_owned_upload_reserve(unsigned core,uint32_t generation,const struct dl_upload *,struct dl_owned_job *);
 int dl_owned_reset_reserve(unsigned core,uint32_t generation,unsigned feature,unsigned offset,
     unsigned count,const uint32_t *words,struct dl_owned_job *);
+/* The words one reset job carries: up to eight packets, one a frame (about 3 ms), never past one owned range. A
+ * controller's 3,776-word reset is 20 board ticks, not 158 (2.6 s) at one packet a tick. */
+#define DL_RESET_DATA (8u*DL_DATA)
 /* Reserve consumes ticket/sequence and holds the sole core slot without any
  * transmission. Submit is the registry backend's exact start callback.
  * Cancel is valid only before submit; consumed identities are never reused. */
@@ -285,7 +291,7 @@ int dl_owned_job_poll(const struct dl_owned_job *v,struct dl_owned_progress *out
     publish();
     if(out) {
         out->sent_sequence=owned_sent[c] ? (uint16_t)(v->first_sequence+owned_sent[c]-1u) : 0;
-        unsigned n=jobs[c].opcode==DL_WRITE ? (jobs[c].position+DL_DATA-1u)/DL_DATA : 0;
+        unsigned n=jobs[c].opcode==DL_WRITE || jobs[c].opcode==11u ? (jobs[c].position+DL_DATA-1u)/DL_DATA : 0;
         out->acknowledged_sequence=state==3 ? v->last_sequence : n ? (uint16_t)(v->first_sequence+n-1u) : 0;
     }
     if(state==4 || !state) { owned_close(c,OWNED_WHY_POLL); return -1; }

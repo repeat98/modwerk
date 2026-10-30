@@ -6,7 +6,7 @@ data, hooks on the machine's hook bus, and patches to stock code. It is the back
 [upload controller](../upload/README.md) and does not depend on a machine:
 every instrument Elekloader supports (Octatrack, Digitakt mk1 and mk2,
 Digitone) has a ColdFire V4 CPU and a hook bus with tick, draw, key and
-encoder events. Development only; the Octatrack is the first machine with
+encoder hooks. Development only; the Octatrack is the first machine with
 glue.
 
 | File | What it is |
@@ -32,9 +32,13 @@ is module 0.
   any other loads beside the live ones, and one with no image, hooks or
   sites removes that module. `build.py` takes the first four bytes of the
   SHA-256 of the module's name (the elemod's id, or the output file's stem).
+  A C package that subscribes to events also takes its title, the name the
+  unit's inventory shows, from that stem (15 characters); `--name` applies
+  to DSP and octabam packages only, so a C package's title and id change
+  together.
 
 - Hooks, in this order: `module_tick`, `module_draw`, `module_key`,
-  `module_enc`. Later events append. A base refuses a package with more hooks
+  `module_enc`. Later hooks append. A base refuses a package with more hooks
   than it dispatches; hooks a package does not list are empty.
 - A relocation names a 32-bit word (of the image or of a site's new bytes)
   that holds an offset into the module. The loader adds the module's address.
@@ -126,7 +130,7 @@ index, exact length 12) returns `MWCP`, version u8 = 1, maximum ABI u8 (10 since
 features u16, maximum sites u16 and maximum copies u16, all big-endian.
 Features currently equal 7: ColdFire sites (1), hash-backed copies (2)
 and authored fills (4). Table composition (8), machine groups (16) and
-resident Sidechain support (32) are disabled. 64 is the volatile journal service (closed). Site events (128) are set only by a base built with them. A client must check the
+resident Sidechain support (32) are disabled. 64 is the volatile journal service (closed). Site hooks (128) are set only by a base built with them. A client must check the
 current base before submitting a newer package, including Undo.
 
 ABI 8 flag 4 identifies a pure ColdFire group with an `MWMG` v1 image
@@ -141,32 +145,32 @@ package and member versions, and old variants must remain available for
 Undo. The private `--octabam-group` builder and source-pinned stock recipes
 produce candidates, not qualified public modules.
 
-## Events at stock sites (ABI 8)
+## Hooks at stock sites (ABI 8)
 
-A base may own stock sites that several modules need, and turn each into an event, as
+A base may own stock sites that several modules need, and turn each into a hook, as
 Elekloader's core does for `ev_tick` and the others (its rule 4: do not patch the shared sites,
 subscribe). The Octatrack's are one reviewed registry, `sdk/machines/octatrack/events.json`;
 `events.py` generates the base's dispatch (`runtime_events.s`), the loader's table header
 (`runtime_events.h`, built in with `MODWERK_RUNTIME_EVENTS`), the SDK header and
-`sdk/machines/octatrack/EVENTS.md`, which states each event's prototype, context, results and
+`sdk/machines/octatrack/HOOKS.md`, which states each hook's prototype, context, results and
 the reviewed order of its current subscribers.
 
-A package subscribes with hook words after the four core events: the word at hook index
-`RUNTIME_EVENTS + k` holds event k's order in its top byte and the handler's image offset below
-(`0xffffffff`: none). Only ABI 8 carries them; a base without events refuses a package with more
+A package subscribes with hook words after the four core hooks: the word at hook index
+`RUNTIME_EVENTS + k` holds hook k's order in its top byte and the handler's image offset below
+(`0xffffffff`: none). Only ABI 8 carries them; a base without site hooks refuses a package with more
 than four hook words. `build.py` writes them from a module's `runtime.json`
 (`{"schema": 1, "subscribe": [{"event", "fn", "order", "replaces"}]}`; `replaces` names the
 detour its native octabam build keeps at that site, and its units assemble with
-`MODWERK_EVENTS`), from an elemod's `subscribe`, or from `--subscribe EVENT:FN:ORDER` for C
+`MODWERK_EVENTS`), from an elemod's `subscribe`, or from `--subscribe HOOK:FN:ORDER` for C
 sources. `contribute` is refused.
 
-The loader keeps one row per event: every live module's handler, by (order, module id), then 0.
+The loader keeps one row per hook: every live module's handler, by (order, module id), then 0.
 A switch that changes a row builds it under the stable lock and writes it masked with the
 switch's sites, and waits (`RUNTIME_BUSY`) while any paused task is inside the base's dispatch,
 so no task resumes part way through a row. Removal and rollback rebuild the rows from the live
-set, so they come back exactly and install order never matters. A site or stock copy on an
-event's bytes is refused as `RUNTIME_EVENT`; `modwerk_runtime_refused_event()` gives the event's
-hook index. MWCP feature 128 says the base has events.
+set, so they come back exactly and install order never matters. A site or stock copy on a
+hook's bytes is refused as `RUNTIME_EVENT`; `modwerk_runtime_refused_event()` gives the hook's
+index. MWCP feature 128 says the base has site hooks.
 
 ## Base features and DSP claims (ABI 9)
 
@@ -247,7 +251,7 @@ active identity and no generation change. Only completion starts trial.
 Keep seals the saved set once; nothing saves a prefix. Undo and abandoned
 session recovery restore the actual retained images, including packages the
 website no longer has. Both generations must fit concurrently; site ownership,
-event capacity and the production DSP/controller safety checks can refuse or
+hook capacity and the production DSP/controller safety checks can refuse or
 delay a change. This does not enable the separate experimental volatile DSP
 journal or relax its trust and reclamation gates.
 
@@ -268,7 +272,7 @@ torn writes. Exact-build hardware, audio and reboot persistence remain open.
 - **One position each.** A module keeps its dispatch position for life;
   replacement takes the same one, a new module the first free one. Tick
   and draw hooks all run, in position order; the first key or encoder hook
-  that returns nonzero takes the event. Two modules wanting the same key is
+  that returns nonzero takes the key or turn. Two modules wanting the same key is
   not detected (Elekloader's `resources.names` claims are not carried yet).
 - **Memory is reclaimed.** Each module has one pool extent (its record,
   sites, code, data and bss), written and read only through the uncached

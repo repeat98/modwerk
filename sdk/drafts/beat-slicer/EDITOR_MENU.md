@@ -31,9 +31,15 @@ The existing runtime ledger supplies unique per-boot owner generations and
 refuses exhaustion (`sdk/runtime/loader/loader.c`). A native admission row must
 retain its complete `runtime_owner`; under `modwerk_machine_lock`, resolve the
 menu's id/generation and validate that full record with
-`modwerk_runtime_owner_valid` before resolving an admitted handler offset.
-Matching two integers alone omits the ledger's extent/header/digest checks.
-This describes the required adapter; none is installed by this prototype.
+`modwerk_runtime_owner_valid` and verify that the exact owner still occupies a
+current published position before resolving an admitted handler offset.
+Matching two integers omits extent/header/digest checks; ledger validity alone
+also admits staged candidates and retained rollback predecessors. The proposed
+[owner helper](MENU_OWNER.md) exercises this distinction against the real loader
+with synthetic host machine glue. Its fixed-lifetime lease retires permanently;
+a production registry must retire it before transitions so a replace-and-restore
+interval cannot be missed between queries. Typed admission, module-set readiness
+and native retirement hooks are still separate requirements, not installed here.
 The loader's stable lock deliberately leaves real-time interrupts running.
 It can protect loader ownership, but cannot by itself exclude recorder/PCM
 writers or serve as the preview backend's coherent-source lock.
@@ -76,3 +82,10 @@ its tail-dispatch overwrites that slot with the chosen callback. Calling it as
 menu assertions passed. The corrected fixture passes callee-saved register and
 stack checks, including each observed stock menu call. This is a test-call ABI
 constraint, not a newly assigned native hook signature.
+
+
+The proposed [full-owner backend](MENU_OWNER_BACKEND.md) connects short menu
+identities to admitted full runtime-owner leases. It copies allowed action IDs,
+checks current publication at dispatch, and forwards only to trusted base code.
+This supplies an adapter between prototypes, not typed package registration,
+native callback retirement or an installed USB service.

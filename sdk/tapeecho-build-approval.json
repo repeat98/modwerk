@@ -1,0 +1,17 @@
+{
+  "kind": "owner-approved-update",
+  "id": "tapeecho",
+  "version": "0.1.6-experimental",
+  "sourceSha256": "3c3f70d7f2cc5a44d0bab31db964b3eed7e756bc314bc5286b99ce35bb84e861",
+  "approvedBy": "repeat98",
+  "approvedOn": "2026-10-27",
+  "waived": [
+    "current-build-hardware",
+    "chip-worst-case-cycles",
+    "complete-memory-bounds",
+    "release-documentation"
+  ],
+  "ownerStatement": "Approved by repeat98 on 27 Oct 2026 in the issue-fix session (\"approved\"): release Tape Echo 0.1.6-experimental with BBD's MIX law and default MIX 40 (#969).",
+  "reason": "Owner released the Tape Echo MIX law change for issue #969 after software verification: the ColdFire kernels match the native oracle bit for bit and every Tape Echo gate passes on the emulator. No chip-cycle or complete memory measurement exists for this version and the earlier freeze at seven instances remains open. This binds only this exact version and native source; on 27 Oct 2026 the USB package was measured on a unit (levels at MIX 0/40/64/90/127, MIX sweeps without clicks; TESTING.md), while the card build, a seventh instance and listening stay untested.",
+  "retainedUiVersion": "0.1.2-experimental"
+}

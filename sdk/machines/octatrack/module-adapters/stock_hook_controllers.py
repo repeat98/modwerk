@@ -19,6 +19,8 @@ import sys
 
 import cave_runtime
 _ROOT = Path(__file__).resolve().parents[4]
+sys.path.append(str(_ROOT / 'sdk'))  # firmware_codec
+import firmware_codec  # noqa: E402
 
 
 def controller_sha256(data):
@@ -30,14 +32,18 @@ _spec = importlib.util.spec_from_file_location('stock_hook_private_paths', _ROOT
 _private = importlib.util.module_from_spec(_spec); _spec.loader.exec_module(_private)
 
 SOURCE_PINS = {
-    'modules/sidechain-compressor/manifest.py': '3bba6ac8ba315e10d6d7f2cb6342fb5ce6564e1ba6cd6ec362787d685c5e0cd7',
-    'modules/sidechain-compressor/upstream/tools/patch_sidechain.s': 'e47f44a7685f0ea82d908897d222c04a6c3729c87dc6443d8d18d2af914b0d20',
+    'modules/sidechain-compressor/manifest.py': '62f004df8eb3e727da05430b18785142f6f3de6c1418b42de49b9073d6f17e44',
+    'modules/sidechain-compressor/patch_sidechain.s': '0cbd52f14497253f067f91f54e9bbeb96176e73bb8a438edb89aaf3d09abd325',
+    'modules/sidechain-compressor/ui_switch.s': '643c8e68a6f914896740406599369c5d6e0112f1b2f388233a2bfcda10b7b4ab',
     'modules/output-matrix/manifest.py': '65d1ae009dc1c956ce2036181667434e31b361179ca138e5c8f1091227b55619',
     'modules/output-matrix/matrix.s': 'a4b9f74062520437ed0db2f8b497d6af89661621ab3deef5078158514194b287',
 }
+# module -> (its sources: the adapted unit first, then any linked unchanged beside it; feature; leased entries).
+# Sidechain's second unit is ui_switch.s (sc_ui): the KEY switch and KWID's clip widgets, which its page names.
 UNITS = {
-    'sidechain-compressor': ('modules/sidechain-compressor/upstream/tools/patch_sidechain.s', 1, ('sc_norm',)),
-    'output-matrix': ('modules/output-matrix/matrix.s', 2, ('page_levels', 'matrix_leave', 'matrix_enter')),
+    'sidechain-compressor': (('modules/sidechain-compressor/patch_sidechain.s', 'modules/sidechain-compressor/ui_switch.s'),
+                             1, ('sc_norm',)),
+    'output-matrix': (('modules/output-matrix/matrix.s',), 2, ('page_levels', 'matrix_leave', 'matrix_enter')),
 }
 # Leased entries a base trusts once the package is reviewed.
 DEFAULT_ENTRIES = {'sidechain-compressor': ('sc_norm',), 'output-matrix': ('page_levels', 'matrix_leave', 'matrix_enter')}
@@ -59,8 +65,19 @@ STOCK_COPIES = {'output-matrix': (
     ('part_cue', 0, 0x4000eab0, 16, '76615980349044858d2d9013919133c736ea96190fad78cc59e5e55748ca263b'),
     ('part_cue', 22, 0x4004eb96, 13, 'f6bb5520b783d035828391c47f07f2457e9bf7f6cb785f9518abf6829d44f3da'),
     ('lev_box_cue', 38, 0x4003ffd8, 14, 'e3d21ed07e823ecac61ec2b4dd20ebf1eac251c1886b5381ce9c33a9d1783e48'),
-    ('lev_box_lev', 38, 0x4003ffd8, 14, 'e3d21ed07e823ecac61ec2b4dd20ebf1eac251c1886b5381ce9c33a9d1783e48'))}
-# Sidechain's KEY/KFLT/KGN/MON on COMPRESSOR's own page: the catalogue's
+    ('lev_box_lev', 38, 0x4003ffd8, 14, 'e3d21ed07e823ecac61ec2b4dd20ebf1eac251c1886b5381ce9c33a9d1783e48')),
+    # Sidechain 0.2.0: three formatter/widget call sequences equal to stock code, and rows of the KEY switch's own
+    # glyphs and masks equal to stock's glyph and mask tables (ui_switch.s draws them through stock's widget).
+    'sidechain-compressor': (
+    ('hz_print2', 2, 0x4003b462, 16, '7425b4b7d8aeda891ab0becbeb97996196e62fac07344c487f8f55f458b69650'),
+    ('sw_fmt', 18, 0x4003c178, 26, '37a3364699ca07219e4cfe34019092eb342bb1f4bc105f2cb4aa886dbd03f329'),
+    ('clip_knob', 58, 0x4004e43a, 16, 'f161e9b55f26ec5abda4bdbbd82bed573f1cd547a6e54daa2b63c185f3e9df01'),
+    ('sw_g1', 16, 0x400bddae, 16, 'd910ce9383b969c768cec683309b1d5ec139733c52612a2d2aaed3c58c3e7463'),
+    ('sw_g1', 36, 0x400bddae, 16, 'd910ce9383b969c768cec683309b1d5ec139733c52612a2d2aaed3c58c3e7463'),
+    ('sw_g1', 56, 0x400bddae, 16, 'd910ce9383b969c768cec683309b1d5ec139733c52612a2d2aaed3c58c3e7463'),
+    ('sw_px1', 45, 0x400c7bbf, 23, '7909466014926ba5aebed4321fa990152867ec0d147a6b5c53e82479253f7e49'),
+    ('sw_px3', 45, 0x400c7bbf, 23, '7909466014926ba5aebed4321fa990152867ec0d147a6b5c53e82479253f7e49'))}
+# Sidechain's MON/KEY/KGN/KBAS/KWID on COMPRESSOR's own page: the catalogue's
 # descriptor recipe, carried at the head of the image as an MWPP record the
 # board applies in place while the controller is ACTIVE (controller_board.c).
 PAGE_RECIPES = {'sidechain-compressor': 'src/engine/assets/descriptor-recipes.json'}
@@ -105,7 +122,11 @@ sk_next:
         andi.l  #0xff,%d0               | the contract's bits 0..7
         rts
 '''
-SC_REFERENCE = (0x400d7000, 338, '76a4badcef6024b7de8bd6f05930146bdb6a47ffd577da340a6c252c316ff854')
+# Sidechain's units as the author built them (manifest.py's references): source, origin, bytes, SHA-256.
+SC_REFERENCES = (('modules/sidechain-compressor/patch_sidechain.s', 0x400d7000, 698,
+                  '976f9f958bf378f54d92f66719f9f59388aec7170efbe78c80b74d7ac7771a35'),
+                 ('modules/sidechain-compressor/ui_switch.s', 0x400d7300, 616,
+                  'b2c45834b780a1e8b361c1104fca7a875ad25fdcc89a578b6d13d2ec9d2d6978'))
 
 
 def sha(data):
@@ -117,12 +138,24 @@ def sources(name, sdk):
         raise ValueError('No reviewed controller source port: ' + str(name))
     sdk = Path(sdk).resolve()
     result = {}
-    for relative in ('modules/' + name + '/manifest.py', UNITS[name][0]):
+    for relative in ('modules/' + name + '/manifest.py', *UNITS[name][0]):
         path = (sdk / relative).resolve()
         if not path.is_relative_to(sdk) or not path.is_file() or sha(path.read_bytes()) != SOURCE_PINS[relative]:
             raise ValueError('Controller source changed; review its source/ownership contract: ' + relative)
         result[relative] = path.read_text()
     return result
+
+
+def linked_objects(name, sdk, work, cross):
+    """The module's other units, assembled unchanged from their pinned sources (sources() checks the pins)."""
+    texts, objects = sources(name, sdk), []
+    for index, relative in enumerate(UNITS[name][0][1:]):
+        path = Path(work) / ('beside%d.s' % index)
+        path.write_text(texts[relative])
+        obj = Path(work) / ('beside%d.o' % index)
+        cave_runtime.run([cross + 'as', '-mcpu=54455', path, '-o', obj])
+        objects.append(obj)
+    return objects
 
 
 def write_wrapper(entry, feature, body, denied='', before='', capture='', after='', precheck=''):
@@ -374,7 +407,7 @@ def page_record(name):
     masks = {offset: sum(0xf << (slot % 8) * 4 for slot in inherited if (slot < 8) == (offset == 0x18e))
              for offset in (0x18e, 0x18a)}  # the enable words: slots 0-7, then 8-11 (descriptors.ts)
     inherits = [dict(offset=offset, mask=mask) for offset, mask in masks.items() if mask]
-    if (len(ints) + len(inherits) > 64 or len(texts) > 16 or len(pointers) > 8 or
+    if (len(ints) + len(inherits) > 64 or len(texts) > 16 or len(pointers) > 16 or
             any(i['width'] not in (1, 2, 4) or i['offset'] + i['width'] > PAGE_BYTES for i in ints) or
             any(len(s['value'].encode('latin-1')) >= s['width'] or s['offset'] + s['width'] > PAGE_BYTES for s in texts) or
             any(p['offset'] + 4 > PAGE_BYTES for p in pointers)):
@@ -404,7 +437,7 @@ def adapted_source(name, sdk):
     mode flag substitutes for the lease, and Matrix retirement still refuses
     while MATRIX is selected (controller_board.c).
     """
-    source = sources(name, sdk)[UNITS[name][0]]
+    source = sources(name, sdk)[UNITS[name][0][0]]
     if name == 'sidechain-compressor':
         source = _replace_once(source, '    .text\n', '    .text\n' + page_record(name), )
         source = _replace_once(source, 'sc_norm:\n', 'mw_sc_norm_body:\n')
@@ -459,7 +492,7 @@ def compile_original(name, sdk, builder, work, cross='m68k-elf-', pool_origins=(
         raise ValueError('Use a new empty private controller compilation directory.')
     if subprocess.run(['git', '-C', str(work), 'rev-parse', '--show-toplevel'], capture_output=True).returncode == 0:
         raise ValueError('Controller images must stay outside Git.')
-    source = Path(sdk).resolve() / UNITS[name][0]
+    source = Path(sdk).resolve() / UNITS[name][0][0]
     objects = []
     if fixture_imports is not None:
         if (set(fixture_imports) != {'modwerk_controller_write_begin', 'modwerk_controller_write_end'}
@@ -477,6 +510,8 @@ def compile_original(name, sdk, builder, work, cross='m68k-elf-', pool_origins=(
     obj = work / 'authored.o'
     cave_runtime.run([cross + 'as', '-mcpu=54455', source, '-o', obj])
     objects.insert(0, obj)
+    beside = linked_objects(name, sdk, work, cross)
+    objects[1:1] = beside
     low, symbols, bss = cave_runtime.link_objects(builder, objects, cross, 0, work / 'low')
     high, _, high_bss = cave_runtime.link_objects(builder, objects, cross, builder.SHIFT, work / 'high')
     if bss != high_bss:
@@ -484,12 +519,14 @@ def compile_original(name, sdk, builder, work, cross='m68k-elf-', pool_origins=(
     offsets = builder.relocations(low, high, len(low) + bss)
     cave_runtime.validate_relocations(low, offsets, len(low) + bss)
     if name == 'sidechain-compressor' and fixture_imports is None:
-        reference, _, reference_bss = cave_runtime.link_objects(builder, [obj], cross, SC_REFERENCE[0], work / 'reference')
-        # The authored .text is338 bytes; the trusted runtime image has its
-        # normal two-byte alignment padding. No source byte may be trimmed.
-        if (len(reference)!=340 or sha(reference[:SC_REFERENCE[1]])!=SC_REFERENCE[2]
-                or any(reference[SC_REFERENCE[1]:]) or reference_bss):
-            raise ValueError('Sidechain authored native reference changed.')
+        # Each authored unit alone at the author's own origin is the author's bytes (its image may carry the
+        # runtime's normal alignment padding after them, zero). No source byte may be trimmed.
+        for unit, (relative, origin, length, digest) in zip([obj, *beside], SC_REFERENCES):
+            reference, _, reference_bss = cave_runtime.link_objects(builder, [unit], cross, origin,
+                                                                    work / ('reference-' + Path(relative).stem))
+            if (len(reference) < length or sha(reference[:length]) != digest or any(reference[length:])
+                    or reference_bss):
+                raise ValueError('Sidechain authored native reference changed: ' + relative)
     placed = []
     for index, origin in enumerate(pool_origins):
         if type(origin) is not int or origin < 0x40000000 or origin & 15 or origin & 0x08000000 or origin + len(low) + bss > 0x48000000:
@@ -536,14 +573,14 @@ def controller_sites(name, upstream, symbols, builder):
     The same records `build.py --octabam` makes for detours, pokes and symbol
     references; anything else such a package cannot carry is refused.
     """
-    sys.path.insert(0, str(Path(upstream).expanduser().resolve()))
+    firmware_codec.use_elekloader(Path(upstream).expanduser().resolve())
     from elekloader.sdk import octabam as port
     m = port.Octabam(str(_ROOT / 'sdk/octabam')).modules[name]
     extra = [what for what, there in (('requires', m.requires), ('tables', m.tables), ('keeps', m.keeps),
                                       ('DRAM regions', m.dram_regions), ('overrides', m.overrides),
                                       ('caves', m.cf_patches)) if there]
     extra += ['stock copies'] if any(getattr(u, 'stock_copies', ()) for u in m.linked) else []
-    if extra or len(m.linked) != 1:
+    if extra or len(m.linked) != len(UNITS[name][0]):
         raise ValueError(name + ' carries what a controller package cannot: ' + ', '.join(extra or ['units']))
 
     def symbol(label, addend=0):
@@ -586,9 +623,10 @@ def encode(name, sdk, builder, work, base_symbols, upstream, cross='m68k-elf-', 
     source.write_text(adapted_source(name, sdk))
     obj = work / 'authored.o'
     cave_runtime.run([cross + 'as', '-mcpu=54455', source, '-o', obj])
+    objects = [obj, *linked_objects(name, sdk, work, cross)]
     defsyms = sorted(imports.items())
-    low, symbols, bss = cave_runtime.link_objects(builder, [obj], cross, 0, work / 'low', defsyms)
-    high, _, high_bss = cave_runtime.link_objects(builder, [obj], cross, builder.SHIFT, work / 'high', defsyms)
+    low, symbols, bss = cave_runtime.link_objects(builder, objects, cross, 0, work / 'low', defsyms)
+    high, _, high_bss = cave_runtime.link_objects(builder, objects, cross, builder.SHIFT, work / 'high', defsyms)
     if bss != high_bss:
         raise ValueError('Controller BSS changes between fresh native origins.')
     offsets = builder.relocations(low, high, len(low) + bss)

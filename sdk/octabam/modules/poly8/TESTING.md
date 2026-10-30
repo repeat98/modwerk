@@ -2,6 +2,28 @@
 
 Status: experimental release preparation, **not hardware-qualified**.
 
+## 0.3.2: the card build's machine list scrolls (27 October 2026)
+
+Reports #842 (VECTOR), #941 and #942 (FM Synth): on card builds with POLY8 and another signed machine, the double-tap TRACK machine list ended at POLY8, DOWN past it put the highlight on PICKUP while the header still said POLY8, and the other machine was reachable only through FUNC+SRC.
+
+**Cause, from the stock chooser and an emulator trace.** With POLY8 and one to three more machines the list (0x460e7386: top row, row on screen, cursor, visible rows, count) holds seven to nine rows and six are visible. Two things were wrong. The draw loop names each visible row and marks the track's machine by the row on screen, never adding the list's top, so a scrolled list still showed rows 0-5. And each of stock's five UP/DOWN handlers clamps the cursor to row 5 after moving it (`moveq #5`, at 0x40078c22, 0x40078cb0, 0x40078d2e, 0x40078dee and 0x40078e7c, and 6 bytes on): DOWN from POLY8 scrolled the list to top 1 and moved the cursor to 6, then the clamp put it back to 5, so the highlight (by screen row, 5 - 1) sat on PICKUP. A `watch` on the cursor setter caught the DOWN handler's clamp call.
+
+**Fix.** Names come from `mr_chooser_name` (POLY8's name lookup at top + screen row, through the pointer at 0x4007865e) and the mark from `mr_chooser_row` (top + screen row), as the USB base's registry does since #922. The ten clamp bytes are count sites of POLY8's composition, written as the last row (`count - 1`); POLY8 alone writes stock's 5. Over USB the base's `ot_machines` owns 0x4007865e and, from the base that also fixes the cursor over USB (`fix/machine-setup-pages`), the ten clamp bytes; `machine-ports.json` replaces all eleven, so the USB package leaves them out and rebuilds byte-identical. A base without the clamp sites refuses that declaration (`not a site ot_machines owns`), so 0.3.2 needs that base on main.
+
+**Emulator results** (`ot_emu` from the lane-sidechain-matrix build, MKII panel, DSP on, scratch project MODWERK/DRUMS with T1 STATIC, images composed by the site's builder from this tree, `scripts/capture-module-ui.py` plans with 50 ms key presses; T1 double-tap, LEFT, then UP/DOWN/YES):
+
+| Image | Result |
+| --- | --- |
+| main (0.3.1), POLY8 + VECTOR + FM Synth | reproduces the reports: after DOWN past POLY8 the list still shows STATIC-POLY8, the highlight is on PICKUP, the header says POLY8; VECTOR and FM SYNTH never show |
+| 0.3.2, POLY8 + VECTOR + FM Synth | all eight rows show; DOWN scrolls to VECTOR, then FM SYNTH, with matching header; YES on FM SYNTH assigns it (FM pages, SRC header FM SYNTH); reopening shows the list scrolled with FM SYNTH marked |
+| 0.3.2, POLY8 + Analog BD + VECTOR + FM Synth | all nine rows show and scroll; UP from FM SYNTH reaches VECTOR and ANALOG BD; YES on VECTOR (scrolled, mid-list) assigns VECTOR; reopening opens VECTOR's pool choice, LEFT shows the list with VECTOR marked; UP scrolls back to STATIC |
+| 0.3.2, POLY8 alone | every screen of the plan identical to 0.3.1's (PNG hashes), YES on POLY8 assigns it |
+| 0.3.2, VECTOR alone | six rows, YES on VECTOR assigns it; the patched OS extent is byte-identical to main's |
+
+Not tested: a unit (no hardware result for 0.3.2), MKI, SRC SETUP's machine selector beside other machines, Part/project reload and power cycles, an FM Synth track's double-tap (it opens a FLEX slot view titled FM SYNTH, unchanged code from 0.3.1, seen in passing).
+
+**Build checks.** Card packages compiled in the isolated toolchain and imported; `module:verify poly8`: 193 native images match outside the platform writes, 87 matching refusals, 0 mismatches of 280 selections (no selection shared with the 0.3.1 record changed between building and refused). The USB package rebuilds byte-identical (`dc2ce372…`) and stays published as 0.3.1-experimental (`lagsBehind`); VECTOR, FM Synth, Scale Quantizer and Analog BD rebuild byte-identical after their recipes' pin of `machine-ports.json` moved.
+
 ## 0.3.1: voice limit and cached render (23 October 2026)
 
 All hardware results are from the owner's MKII (OS 1.40C), RAM-booted development twins of main's beta base built with `build_core.py --dsp-loader --usb-midi --usb-audio 'USB AUDIO OUT TRACKS MAIN CUE' --site-events --table-owners --resident-stock-hooks --resident-on-demand --module-sets --dev`: `4b5c309c…` (module code uncached, as the beta base main ships) and `8ab61614…` (the same with `--cached-modules`). Project `261019`, T1 POLY8 with a 6.9 s sample in FLEX slot 1, AMP HOLD INF, REL 60 (REL INF where noted), the other tracks stock. Packages were installed with `try`; times are DTIM3 counts (132 MHz; a frame is about 47,900).

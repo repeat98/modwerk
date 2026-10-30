@@ -11,6 +11,9 @@ from pathlib import Path
 import runpy
 import sys
 
+sys.path.append(str(Path(__file__).resolve().parents[3]))  # sdk/, for firmware_codec
+import firmware_codec  # noqa: E402
+
 from build_core import APP, git, private_output, sha
 
 
@@ -70,7 +73,7 @@ def main():
     pin = json.loads((APP / 'vendor/elekloader/kit/kit.json').read_text())['commit']
     if git(upstream, 'rev-parse', 'HEAD') != pin or git(upstream, 'status', '--porcelain', '--untracked-files=no'):
         parser.error('Use the exact clean tracked Elekloader checkout pinned by Modwerk.')
-    sys.path.insert(0, str(upstream))
+    firmware_codec.use_elekloader(upstream)
     from elekloader import elemod, formats
     from elekloader.sdk import build, octabam as port
     stock, device, release = formats.load(str(args.stock))

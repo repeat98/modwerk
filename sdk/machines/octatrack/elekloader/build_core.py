@@ -17,6 +17,8 @@ import sys
 
 HERE = Path(__file__).resolve().parent
 APP = HERE.parents[3]
+sys.path.append(str(APP / 'sdk'))  # firmware_codec
+import firmware_codec  # noqa: E402
 _spec = importlib.util.spec_from_file_location('modwerk_usb_post', HERE / 'usb_post.py')
 usb_post = importlib.util.module_from_spec(_spec); _spec.loader.exec_module(usb_post)
 VERSION = '0.3.1-modwerk-dev.1'
@@ -37,7 +39,10 @@ MACHINE_TRUST_SOURCES = ('machine_admission.c', 'machine_admission.h',
     'machine_admission_runtime.c', 'machine_declarations.c',
     'machine_lifetime.c', 'machine_lifetime.h', 'machine_parts.c', 'machine_parts.h',
     'table_admission.c', 'table_admission.h', 'table_declarations.c', 'table_declarations.h',
-    'machine_contributors.c', 'machine_contributors.h')
+    'machine_contributors.c', 'machine_contributors.h',
+    'sample_editor_actions.c', 'sample_editor_actions.h')
+SAMPLE_EDITOR_SOURCES = ('sample_editor_service.c', 'sample_editor_service.h',
+    'sample_editor_board.c', 'sample_editor_board.h', 'sample_editor_menu.c', 'sample_editor_hooks.s')
 RETIREMENT_SOURCES = tuple('analog-bd-parts/' + n for n in ('analog_bd_part_restore.c', 'analog_bd_part_restore.h',
                                                           'analog_bd_part_board.c', 'analog_bd_part_board.h'))
 
@@ -193,7 +198,9 @@ DYNLOAD_HOOKS = (
     (0x40047a3c, 6, '9b2c003ba4d776237ad71bef15451bfea4447f2acca77ef6922dcea6ac52ca78', 'mw_wide_dial'),
     # Modwerk's: main's idle spin counts the ColdFire's idle time (status.s, status.c). Its last init call only:
     # stock's spin stays, where ot_emu parks main again after a bench call.
-    (0x4001fc96, 6, '2edb8c17ea73bf5ecd097ec929f3bfd6f8a74c81b11080d0d74efd55bec6b416', 'mw_idle'))
+    (0x4001fc96, 6, '2edb8c17ea73bf5ecd097ec929f3bfd6f8a74c81b11080d0d74efd55bec6b416', 'mw_idle'),
+    # Modwerk's: the time-stretch helper task skips a track whose TSTR is OFF (status.s).
+    (0x40098b2c, 8, 'e3b2889593533c76e33bdee43526078d47b0b1c53b99a6d93d9ff1118e752203', 'mw_ts_gate'))
 # --dsp-loader: the knob routine of an audio track's main pages (0x40055008) names the default stepper 0x4003240c by
 # `lea 0x4003240c,%aN` for a live turn; the base repoints that operand at fxpage.s's mw_knob_step, which restages a
 # module page's turned knob before it (a select then steps as stock's do from the first visit). Address, the lea's
@@ -768,7 +775,30 @@ WIDTH_EDITS = {
                   ('        unsigned reader=ids[i]<32 && reads[ids[i]];\n        unsigned same=',
                    '        unsigned reader=ids[i]<MODWERK_FX_IDS && reads[ids[i]];\n        unsigned same='),
                   ('        unsigned reader=ids[i]<32 && reads[ids[i]];\n        if(!reader',
-                   '        unsigned reader=ids[i]<MODWERK_FX_IDS && reads[ids[i]];\n        if(!reader')),
+                   '        unsigned reader=ids[i]<MODWERK_FX_IDS && reads[ids[i]];\n        if(!reader'),
+                  # The top of each core's FX2 block 3 holds the receiver's packet operations (dsp_loader.WINDOW): an
+                  # effect whose buffer reaches past it (reads 2, dsp.c) neither keeps nor takes that block.
+                  ('        if(same && b->live[i]!=DL_BUF_NONE && (reader || !b->known[i])) target[i]=b->live[i];\n    }\n',
+                   '        if(same && b->live[i]!=DL_BUF_NONE && (reader || !b->known[i])) target[i]=b->live[i];\n    }\n'
+                   '    for(unsigned i=8;i<16;++i)\n'
+                   '        if(target[i]==3u && ids[i]<MODWERK_FX_IDS && reads[ids[i]]>1u) target[i]=DL_BUF_NONE;\n'),
+                  # Wide readers first: they fit fewer blocks, so a narrow one planned before them cannot take theirs.
+                  ('    for(unsigned i=0;i<16;++i) {\n        unsigned reader=ids[i]<MODWERK_FX_IDS && reads[ids[i]];\n'
+                   '        if(!reader || target[i]!=DL_BUF_NONE) continue;\n',
+                   '    for(unsigned n=0;n<32;++n) {\n        unsigned i=n&15u;\n'
+                   '        unsigned reader=ids[i]<MODWERK_FX_IDS && reads[ids[i]];\n'
+                   '        if(!reader || target[i]!=DL_BUF_NONE || (n<16u)!=(reads[ids[i]]>1u)) continue;\n'),
+                  ('        if(!free) return DL_BUF_MEMORY;',
+                   '        if(k && reads[ids[i]]>1u) free&=~(1u<<3);\n        if(!free) return DL_BUF_MEMORY;'),
+                  # A slot whose effect changes keeps its own block, as stock's fixed blocks do: in the switch frame the
+                  # outgoing effect runs its last sub-block before the incoming one's init. Reserving it for the outgoing
+                  # effect refused every swap on a core whose four blocks were in use (owner's MKII, 28 October 2026).
+                  ('            if(target[j]!=DL_BUF_NONE && dl_buffers_core(j)==c && kind_of(j)==k) taken|=1u<<target[j];\n',
+                   '            if(target[j]!=DL_BUF_NONE && dl_buffers_core(j)==c && kind_of(j)==k) taken|=1u<<target[j];\n'
+                   '        if(b->live[i]!=DL_BUF_NONE) taken&=~(1u<<b->live[i]);\n'),
+                  ('        while(!((free>>n)&1u)) ++n;\n',
+                   '        if(b->live[i]!=DL_BUF_NONE && (free>>b->live[i]&1u)) n=b->live[i];\n'
+                   '        else while(!((free>>n)&1u)) ++n;\n')),
     'manager.c': (
         ('extern struct dl_package dl_catalog[32];', 'extern struct dl_package dl_catalog[DL_PACKAGES];'),
         ('extern struct code dl_codes[2][32];', 'extern struct code dl_codes[2][DL_PACKAGES];'),
@@ -1284,11 +1314,11 @@ def fill_table_owners(document, owners, stock_at):
 
 
 def resident_effect_fills(tag, fx, words, section, offset, effect, original, hooks):
-    """Copy original stock words around the exact authored COMP proc bridge.
+    """Copy original stock words around the exact authored COMP bridges (its proc and its init).
 
-    The recipe already guards and lowers this complete two-word long JSR. It
-    must stay literal in the stock-free package: recovering it as original stock
-    silently removes the resident hook on the browser path. No other changed
+    The recipe already guards and lowers each complete two-word long JSR. They
+    must stay literal in the stock-free package: recovering them as original stock
+    silently removes the resident hooks on the browser path. No other changed
     word, arbitrary excluded span or caller-authored fill is accepted here.
     """
     if (tag not in ('A', 'B') or type(fx) is not int or not 0 <= fx < 32 or
@@ -1300,17 +1330,25 @@ def resident_effect_fills(tag, fx, words, section, offset, effect, original, hoo
         if words != original:
             raise ValueError('An unreviewed stock effect changed outside the COMP bridge.')
         return [dict(tag=tag, fx=fx, first=first, count=count, section=section, offset=offset)]
-    guards = [row for row in hooks['guards'] if row.get('relocated') is True]
-    at = effect['proc']
-    if (len(guards) != 1 or type(at) is not int or not 0 <= at <= len(words) - 2 or
-            type(hooks['origin']) is not int or type(guards[0].get('entry')) is not int or
-            not hooks['origin'] <= guards[0]['entry'] <= 0xffffff or
-            hashlib.sha256(b''.join(w.to_bytes(3, 'big') for w in original[at:at+2])).hexdigest() != guards[0]['expectedSha256'] or
-            words[at:at+2] != [0x0bf080, guards[0]['entry']] or
-            words[:at] != original[:at] or words[at+2:] != original[at+2:]):
+    guards = [row for row in hooks['guards'] if row.get('relocated') in ('proc', 'init')]
+    spans, expected = [], list(original)
+    if (sorted(row['relocated'] for row in guards) != ['init', 'proc'] or type(hooks['origin']) is not int):
         raise ValueError('Resident COMP fill does not preserve its exact guarded authored bridge.')
+    for guard in guards:
+        at = effect[guard['relocated']]
+        if (type(at) is not int or not 0 <= at <= len(words) - 2 or type(guard.get('entry')) is not int or
+                not hooks['origin'] <= guard['entry'] <= 0xffffff or
+                hashlib.sha256(b''.join(w.to_bytes(3, 'big') for w in original[at:at+2])).hexdigest() != guard['expectedSha256'] or
+                words[at:at+2] != [0x0bf080, guard['entry']]):
+            raise ValueError('Resident COMP fill does not preserve its exact guarded authored bridge.')
+        expected[at:at+2] = words[at:at+2]
+        spans.append(at)
+    spans.sort()
+    if expected != words or any(b - a < 2 for a, b in zip(spans, spans[1:])):
+        raise ValueError('Resident COMP fill does not preserve its exact guarded authored bridge.')
+    cuts = [0] + [x for at in spans for x in (at, at + 2)] + [len(words)]
     return [dict(tag=tag, fx=fx, first=start, count=end-start, section=section, offset=offset+3*start)
-            for start, end in ((0, at), (at+2, len(words))) if start < end]
+            for start, end in zip(cuts[::2], cuts[1::2]) if start < end]
 
 
 def share_equal_stock_catalog(text, layout):
@@ -1467,6 +1505,8 @@ def main():
                         help='Private fixed-two-file read-only recovery snapshot. No card writes.')
     parser.add_argument('--site-events', action='store_true',
                         help='own the stock sites of sdk/machines/octatrack/events.json and dispatch their events to subscribed modules')
+    parser.add_argument('--sample-editor', action='store_true',
+                        help='Private staged AED sample-editor service; needs site events and the ordinary DSP loader. Not a released base capability.')
     parser.add_argument('--table-owners', type=Path,
                         help='reviewed table owners (module-adapters/table-owners.json): their records go into the base\'s '
                              'table-owner storage, so it admits those exact packages')
@@ -1485,6 +1525,8 @@ def main():
                         help='Load every DSP effect, stock and module, on demand (needs ELEKLOADER_DSP_ASM, Node 24).')
     parser.add_argument('--dsp-burn', type=int, default=0,
                         help='with --dsp-loader, calibration only: core 0\'s receiver spends this many more cycles (2-4094, even) every frame; negative, core 1\'s.')
+    parser.add_argument('--dsp-burn-window', type=lambda s: int(s, 0), default=0,
+                        help='with --dsp-burn: run the burn from this shared-window P address (0x30000-0x37ef7) instead of private P.')
     parser.add_argument('--cached-modules', action='store_true',
                         help='Prototype, for a development twin: runtime modules run from the pool\'s cached alias, '
                              'not the uncached one (sdk/runtime/loader/README.md, "Cached modules"). Off by default.')
@@ -1494,6 +1536,8 @@ def main():
                         help='with --dsp-loader: the base\'s effect ids (fxids.h, the dispatch and chooser tables; '
                              'docs/OCTATRACK_MORE_EFFECT_IDS.md). 32, the old width, only to bisect a fault.')
     args = parser.parse_args()
+    if args.sample_editor and (not args.site_events or not args.dsp_loader or args.dsp_probe or args.dsp_burn):
+        parser.error('--sample-editor needs --site-events and the ordinary --dsp-loader, without probes/burn.')
     if args.usb_audio_profiles and (not args.usb_midi or not args.usb_audio or not args.dsp_loader or args.dev or args.controller_policies):
         parser.error('--usb-audio-profiles needs --usb-midi, an explicit --usb-audio and --dsp-loader; development mode and controller admission are not qualified.')
     if args.saved_set_export and (not args.dsp_loader or args.dsp_probe or args.dsp_burn):
@@ -1513,7 +1557,7 @@ def main():
     pin = json.loads((APP / 'vendor/elekloader/kit/kit.json').read_text())['commit']
     if git(upstream, 'rev-parse', 'HEAD') != pin or git(upstream, 'status', '--porcelain', '--untracked-files=no'):
         parser.error('Use the exact clean tracked Elekloader checkout pinned by Modwerk.')
-    sys.path.insert(0, str(upstream))
+    firmware_codec.use_elekloader(upstream)
     from elekloader import dsp, formats, elemod, patch
     from elekloader.sdk import build as sdk
     stock, device, release = formats.load(str(args.stock))
@@ -1557,8 +1601,8 @@ def main():
         raise ValueError('Pinned core_up seam changed; review flash.c\'s boot snapshot before porting.')
     bootstrap = bootstrap.replace(BOOT_FLASH_SEAM, BOOT_FLASH_SNAPSHOT)
     (source / 'core-ot.s').write_text(bootstrap)
-    for p in logger.iterdir():
-        if p.suffix in ('.c', '.h') and p.name != 'identity.c':
+    for p in logger.iterdir():  # frame_guard.c is card builds' (the base's own is machine_registry.c's)
+        if p.suffix in ('.c', '.h') and p.name not in ('identity.c', 'frame_guard.c'):
             shutil.copyfile(p, source / p.name)
     adapter = (source/'stock_140c.c').read_text()
     io_macro = '#define io octamod_log_io'
@@ -1595,6 +1639,10 @@ def main():
     machine_trust = APP / 'sdk/machines/octatrack/module-adapters'
     for name in MACHINE_TRUST_SOURCES:
         shutil.copyfile(machine_trust / name, source / name)
+    shutil.copyfile(APP / 'sdk/machines/octatrack/include/modwerk_sample_editor.h', source / 'modwerk_sample_editor.h')
+    if args.sample_editor:
+        for name in SAMPLE_EDITOR_SOURCES:
+            shutil.copyfile(machine_trust / name, source / name)
     # Retirements the base carries for contributed machines (machine_contributors.c): Analog BD's Part conversion,
     # when the analog-bd lane's files are present (-O2: it runs with the machine lock held).
     for name in RETIREMENT_SOURCES:
@@ -1755,6 +1803,7 @@ def main():
                 raise ValueError('An FX selector no longer reads its chooser list at %#x.' % lea)
         dsp_sites, dsp_layout = loader_dsp.recipe(image, device, dsp, lambda path: sdk.dsp_assemble(path, str(source)), str(source),
                                                   args.dsp_probe if args.dsp_probe in ('A', 'B', 'X') else None, args.dsp_burn, FX_IDS,
+                                                  burn_window=args.dsp_burn_window,
                                                   **({'resident': resident_factory} if args.resident_stock_hooks else {}))
         if args.resident_stock_hooks:
             resident_boot_prepared = resident_boot_helper.prepare(image, device, dsp, dsp_layout)
@@ -1817,7 +1866,7 @@ def main():
         (source/'remix.inc').write_text(usb.AUDIO_INC)
     # Identity describes this core-only private base. Later selections need
     # their complete module/version/chooser identities regenerated explicitly.
-    folders = (logger, upload, loader, HERE) + ((DYNLOAD,) if args.dsp_loader else ())
+    folders = (logger, upload, loader, HERE, firmware_codec.HERE) + ((DYNLOAD,) if args.dsp_loader else ())
     inputs = {str(p.relative_to(APP)): sha(p.read_bytes()) for folder in folders
               for p in sorted(folder.iterdir()) if p.is_file() and p.suffix in ('.c', '.h', '.s', '.asm', '.py', '.json')}
     for path, digest in profile_inputs.items():
@@ -1828,6 +1877,12 @@ def main():
     for name in MACHINE_TRUST_SOURCES:
         path = machine_trust / name
         inputs[str(path.relative_to(APP))] = sha(path.read_bytes())
+    path = APP / 'sdk/machines/octatrack/include/modwerk_sample_editor.h'
+    inputs[str(path.relative_to(APP))] = sha(path.read_bytes())
+    if args.sample_editor:
+        for name in SAMPLE_EDITOR_SOURCES:
+            path = machine_trust / name
+            inputs[str(path.relative_to(APP))] = sha(path.read_bytes())
     for name in RETIREMENT_SOURCES:
         path = machine_trust / name
         if path.is_file():
@@ -1893,7 +1948,7 @@ def main():
         configuration['usb']['moduleSets'] = 'mwms-1'
     if args.dsp_loader:
         configuration.update(dsp=dict(loader='dsp-dynload-3', stock='on-demand', rows='runtime',
-                                      allowance=DSP_ALLOWANCE, reserve=DSP_RESERVE, probe=args.dsp_probe, burn=args.dsp_burn, hook=args.dsp_hook, arena=[dsp_layout[t]['tableWords'] - loader_dsp.SAVED for t in 'AB']))
+                                      allowance=DSP_ALLOWANCE, reserve=DSP_RESERVE, probe=args.dsp_probe, burn=args.dsp_burn, **({'burnWindow': args.dsp_burn_window} if args.dsp_burn_window else {}), hook=args.dsp_hook, arena=[dsp_layout[t]['tableWords'] - loader_dsp.SAVED for t in 'AB']))
     if usb_functions:
         configuration['usb'].update(interfaces=['msc', 'modwerk-vendor', 'midi-control', 'midi-streaming'] +
             (['audio-control', 'audio-streaming'] if args.usb_audio else []),
@@ -1970,7 +2025,16 @@ def main():
     # Only authored zero placeholders: stock is recovered by format-2 parts.
     spec = importlib.util.spec_from_file_location('modwerk_logger_package', logger/'package.py')
     package = importlib.util.module_from_spec(spec); spec.loader.exec_module(package)
-    (source/'hooks.s').write_text(package.hooks(guards))
+    hook_source = package.hooks(guards, frame_guard=False)
+    if args.sample_editor:
+        idle_seam = 'jsr octamod_log_engine_idle\n'
+        job_seam = 'jsr octamod_log_engine_begin\naddq.l #4,%sp\n'
+        if hook_source.count(idle_seam)!=1 or hook_source.count(job_seam)!=1:
+            raise ValueError('The logger engine boundary changed; review the sample-editor composition.')
+        hook_source = hook_source.replace(idle_seam, 'jsr mw_sample_engine_idle\n' + idle_seam)
+        hook_source = hook_source.replace(job_seam, job_seam +
+            'move.l %a2,-(%sp)\njsr mw_sample_engine_job\naddq.l #4,%sp\n')
+    (source/'hooks.s').write_text(hook_source)
     (source/'retained.s').write_text('''.section .bss
 .balign 512
 .globl modwerk_retained_start, modwerk_retained_end, octamod_log_retained
@@ -2029,6 +2093,8 @@ modwerk_retained_end:
         # The tables' sites: the machine registry's and the SEQUENCER rows' (machine_registry.c/.s). 'own' sites keep
         # their stock bytes; the registry rewrites their immediates while the table changes.
         for s in EVENTS.owned_sites():
+            if s['table']=='ot_sample_editor_actions' and not args.sample_editor:
+                continue  # knowing the staged registry entry does not enable its stock sites
             addr, n = s['site'], s['length']
             stock = image[addr - device.main_load:addr - device.main_load + n]
             if sha(stock) != s['guard']:
@@ -2081,6 +2147,11 @@ modwerk_retained_end:
     # The machine-neutral loader's events (sdk/runtime/loader/loader.h), from core-ot's bus.
     recipe.setdefault('subscribe', []).extend(dict(event='ev_' + e, fn='modwerk_runtime_' + e, order=90)
                                               for e in ('tick', 'draw', 'key', 'enc'))
+    if args.sample_editor:
+        recipe['cflags'].append('-DMODWERK_SAMPLE_EDITOR')
+        recipe['sources'].append('sample_editor_hooks.s')
+        recipe['subscribe'] += [dict(event='ev_tick', fn='mw_sample_ui_tick', order=89),
+                                dict(event='ev_key', fn='mw_sample_ui_key', order=87)]
     recipe['subscribe'].append(dict(event='ev_draw', fn='modwerk_boot_draw', order=10))  # boot_anim.c, while it runs
     # The host time limit counts on the same tick (ep0.c).
     recipe['subscribe'].append(dict(event='ev_tick', fn='modwerk_ep0_tick', order=91))
@@ -2209,7 +2280,7 @@ modwerk_retained_end:
     mapping = manifest.pop('_map')
     # MAIN stores .run packed (run_pack.py): the linked image again without its plain copy, repacked and verified as
     # patch.build does, so the RAM boot bound and every hash below are the packed image's.
-    from elekloader.codec import aplib
+    from firmware_codec import aplib
     spec = importlib.util.spec_from_file_location('modwerk_run_pack', HERE/'run_pack.py')
     run_pack = importlib.util.module_from_spec(spec); spec.loader.exec_module(run_pack)
     parsed = formats.load(str(args.stock))[0]

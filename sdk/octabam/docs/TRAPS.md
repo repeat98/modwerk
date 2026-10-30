@@ -904,6 +904,38 @@ receives the stock `0x8c` frame command and B does not.
 **Fix and gate:** DLPUMP sends to core B on ping-0 frames only (`verify_dlload`). Whether the unit
 loses the same frames is open.
 
+<a name="trap-stock-x-scratch"></a>
+
+### Payload B's frame routine writes `x:$3f7f..$3fbf` every frame, and the guard's base cells were there
+
+**Seen:** October 2026, a unit (MKII). DARK REV picked on T4's FX2 while MODULATION's code was in T4's
+block stopped the DSP frame loop within about 4 ms of the pump's withdrawal: 3 of 3 on the first
+three images, and on every later build in which the guard resumed a dry reverb and the stock proc
+ran. The port did not reproduce it.
+
+**Cause:** payload B's frame routine calls `func_00034f` at `P:0x7a` every frame with `r0 = $3f80`,
+`r1 = $3f00`. It reads `x:$3f00..$3f20` and writes 65 words at `x:$3f7f..$3fbf` (`mpy`/`mac`
+results split over `a1`, `a0` and `b0`). The guard kept each instance's buffer base at
+`x:$3f90 + idx` (T3 idx 40 = `x:$3fb8`, T4 idx 43 = `x:$3fbb`), so the stock overwrote it every
+frame, and the resume ran DARK REV's init and proc with that scratch value as the base. Payload A
+writes only `x:$3f80` and `x:$3f81`: T7 and T8 were unaffected.
+
+**Measured on the unit:** with a probe on a core B track, `x:$3fb8` read `$ffb754` after a reboot and
+again after the guard's init stored the allocator entry's contents there; the entry (`$25a`)
+held `$38000`. With the state words at `x:$3dc0 + idx` and the base cells at `x:$3e00 + idx`, the
+probe read T3's base `$038000` and T4's `$03c000` (entry `$25c`), and the sequence that stopped the
+DSP on every earlier build ran three times with no stop.
+
+**Fix and gate:** `dlwrap.asm` keeps the state words at `x:$3dc0 + idx` and the base cells at
+`x:$3e00 + idx`. `verify_dlwrap` seeds those cells (200 checks). The port cannot show this trap:
+`dsp_host` does not run the stock frame routine.
+
+**Not established:** what `func_00034f` computes. The stub's flags at `x:$3f00..$3f3f` are its
+input. No search for other writers of `x:$3dc0..$3e3f` beyond the unit runs.
+
+Rule: before putting per-instance state in X, read what the stock frame code writes there, and read
+the cells back on a unit.
+
 <a name="trap-bra-back"></a>
 
 ### `dsp_asm` does not assemble a backward `bra`, or `jmp` to a window address
@@ -1069,6 +1101,21 @@ The cases that exit non-zero (`plain`, `marker`) have the report as their only
 line, so `tools/verify/refhash_compare.py` compares their logs with those two
 lines masked; any other difference in a refusal still fails.
 
+<a name="trap-stock-fallback"></a>
+
+### Id 0 is FX1 NONE too: a stock fallback ran on every empty FX1 slot
+
+**ALIASING ID 0 TO AN EFFECT RUNS IT ON EVERY EMPTY FX1 SLOT, NOT ONLY ON A
+FRESH FX2.** `fallback="FILTER"` passed the schema, then crashed the build
+(`fb_init` unbound) once a registry module was left out. A fix that pointed id
+0 and the omitted ids at FILTER's stock entries built, and on the unit the
+sequencer held its first step at play (27 Oct 2026); the same selection with
+`fallback="NONE"` played. SEND had the same exposure and needed its FX1
+guard (`FAILURE_MODES.md`, "id 0 is SEND"); a stock effect has none. Rule:
+the fallback is `NONE`, `SEND` or a module written for an FX1 r7;
+`registry.remix` refuses a stock effect. Gate: `selftest.py` probes the
+refusal.
+
 <a name="trap-nm-order"></a>
 
 ### Same-named labels across DRAM units resolve by nm table order
@@ -1118,6 +1165,30 @@ interrupt-mask restore that precedes the data it protects is a window;
 before blaming names or parsers, ask what the IRQ handler reads while the
 producer is mid-update.
 
+
+<a name="trap-id-clamp"></a>
+
+### The stock Part validator clamps a stored FX2 id to 31
+
+**THE STOCK PART VALIDATOR CLAMPS A STORED FX2 ID TO 31.** The 64-id layout
+moved the dispatch tables and the ColdFire id and position tables, and the port
+passed with an id of `0x25` poked into the live slot (`make check REMIX=ids64`).
+A project that stored `0x25` for BBD loaded on an MKII (image `ids64-usb`, 27 Oct
+2026) with nothing on FX2. The Part validator at `0x40002318` runs as the project
+loads and clamps each track's FX1 and FX2 id byte with `moveq #31`: FX1's at
+`0x400023b6` and `0x400023bc`, FX2's at `0x400023de` and `0x400023e4`. `0x25` became
+`0x1f`, an id no module holds, which shows as an empty slot. A poke goes
+straight to the live id and never meets the validator; the same project under the
+port read `0x1f` too, so the port would have shown it from the start with a
+project and not a poke. Cost: two image builds and two flashes. Fix:
+`idspace.convert` rewrites the two FX2 immediates to 63 (the table lookup the
+validator does next, `0x40002406`, was already one of the repointed `lea` sites);
+FX1's stay at 31 because FX1's tables keep 32 entries. `verify_ids64_load` loads a
+project file that stores `0x25` under the port and reads the live id (it skips
+when there is no project, as `verify_dlload` does). Measured on the unit after
+the fix: BBD shows on FX2 and runs on core A and core B. Rule: an id or any index
+that a layout change makes legal must be run through the project load, not
+poked, because the load validates every stored byte.
 
 <a id="trap-popup-redraw"></a>
 ### A nonzero popup pointer is not an open FX SETUP window
@@ -1254,3 +1325,72 @@ under the port.
 cannot see the cache or the stale status, so a unit run (`load_meter.py`
 repeated, `--for 10`: `windows` near 20) is the check.
 
+
+<a name="trap-cave-round"></a>
+
+### A floating cave rounded past the clone window landed on the chooser list
+
+**THE OVERFLOW FALLBACK ASKED WHETHER THE CAVE STARTED INSIDE THE WINDOW, AND
+THE ROUNDING HAD ALREADY MOVED IT OUT.** A floating cave starts at the clone
+window's cursor rounded up to 128 bytes. `build_bus` sent one that ran past
+`cave_limit` to the overflow run at `0x400d24d0`, but only if its rounded start
+was still inside the window. A 57-module selection (26 Oct 2026) left the
+cursor at `0x400d7b9e` with the long chooser list at `0x400d7bbc`; the round
+put BATCH_BUGFIXES' 402-byte `PART_CHANGE_CARRYOVER_FIX` at `0x400d7c00`, on
+the list, so it was neither moved nor bounds-checked and the build stopped at
+`PART_CHANGE_CARRYOVER_FIX not free`, which names the victim and not the
+cause. Fix: a floating cave goes to the overflow run when it ends past the
+limit, wherever it starts, and one that fits neither region is refused with
+both regions' ends. Past `0x400d7c3c` the stock image is data (the first byte
+is nonzero), so no image that built before should move (inferred; `refhash`
+is the measurement, and a 64-id build is the case to watch: its
+`idspace.CAVE` limit sits below zero bytes the id tables fill only at the
+end). Gate: none of its own; the refusal names both regions.
+
+The run's own first bytes are not free either: the stock DELAY reads the 16
+past its coefficient table (`stock.DELAY_TABLE_END`, issue #771), and the
+first form of this fix put the cave on them in a selection listing DELAY (the
+kept-bytes check refused it: `DELAY keeps 0x400d24d0`). The overflow cursor
+now starts past every byte a selected module keeps stock in the run.
+
+<a name="trap-dram-clone-stage"></a>
+
+### A DRAM clone's `CLONE_<key>` export is its staging address
+
+**WITH A DRAM RUNTIME, `_exports["CLONE_<key>"]` IS WHERE THE CLONE IS BUILT,
+NOT WHERE IT LIVES.** The clones are written at a staging address past the
+image and every staged pointer is repointed to the runtime's `CLONE_<key>` at
+the end (`_rt_patch`). The MODE-renames formatters are DRAM units linked
+against the runtime's symbol, but the check that each equals its `emit()`
+resolved the descriptor from `_exports`: STUTTR's `lea` was `0x40ae6f4e` in
+the runtime and `0x40130836` in the emit, and the build refused with `the
+linked label formatter ... differs`. No committed remix carries MODE renames
+with DRAM clones; a selection with STUTTR, SPECTRUM and CHARACTER TXTR beside
+MEMORY and KITS (26 Oct 2026) was the first. Fix: the check resolves a
+module's own clone from `_psyms`, the runtime link. Rule: before comparing an
+address from `_exports` with one from the runtime, ask whether the staging
+repoint has run yet. Gate: the comparison itself, now that both sides are the
+runtime's.
+
+<a name="trap-machine-clamp"></a>
+
+### The machine list's key handlers clamp the cursor to 5
+
+**A SIXTH MACHINE ROW FITS BY ACCIDENT; A SEVENTH NEEDS TEN MORE POKES.** The
+track's machine list (`0x460e7386`) has a row count (`pea 5` at
+`0x40079248`), a draw bound, a highlight bound and a commit bound, and ANALOG
+BD, OCTA303 and BLACKPYRAMIDS_303 each poke those four from 5 rows to 6. With
+seven rows (HOOKS `machine_rows`, ANALOG BD and OCTA303 together, 28 Oct
+2026) the list drew and scrolled, but the cursor stopped on row 5: each of
+the list's five key handlers (`0x40078c22`, `0x40078cb0`, `0x40078d2e`,
+`0x40078dee`, `0x40078e7c`) clamps the cursor to 0..5 after moving
+(`moveq #5,%d1 ; cmp.l %d0,%d1 ; bge.s ; moveq #5,%d0`), one past stock's
+last row, so a single added machine never met it. The search was confused
+by a second effect: a port script's key held for 0.25 s auto-repeats, so a
+single UP moved two rows and landed on PICKUP. Fix: HOOKS pokes both
+`moveq`s in each handler to 6; the gate presses UP for 0.06 s. Rule: when a
+list grows, find every constant near its old size in the code that touches
+the list (a byte search for the clamp found all five), and in a port script
+hold a key only as long as you mean it to repeat. Gate: `verify_hooks`
+(installed: the ten pokes) and `verify_analog_bassdrum_ui` on
+`hooks-machines` (row 5 reached from the bottom of seven).

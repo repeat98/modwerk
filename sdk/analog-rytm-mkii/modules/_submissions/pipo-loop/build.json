@@ -1,0 +1,155 @@
+{
+  "schemaVersion": 1,
+  "sources": [
+    "src/pipo.c",
+    "src/snap.c",
+    "src/marks.c",
+    "src/audio.s"
+  ],
+  "defsym": {},
+  "cflags": [],
+  "weak": [],
+  "subscribe": [],
+  "contribute": [],
+  "collections": {},
+  "copied": [],
+  "regions": [],
+  "storage": [],
+  "claims": [
+    "ui:SAMPLE page LOP value PIPO and its three-position switch",
+    "param:LOP range OFF/ON/PIPO, its value text and icon",
+    "ui:FUNC + SAMPLE STA turn",
+    "ui:FUNC + SAMPLE END turn",
+    "ui:FUNC + SAMPLE STA/END turn with a trig held",
+    "ui:SMPL WAVEFORM S and E labels on the STA and END lines"
+  ],
+  "requires": [],
+  "derive": null,
+  "releases": {
+    "1.74": {
+      "defsym": {
+        "pipo_loop_prefetch": "0x4011c1e0",
+        "pipo_loop_text_resume": "0x400fb572",
+        "pipo_loop_sprintf": "0x4009866e",
+        "pipo_loop_lop_ctx": "0x419a5760",
+        "pipo_loop_icon_ctx": "0x419a5770",
+        "pipo_loop_icon3": "0x400fef4a",
+        "pipo_loop_icon_frames": "0x419f03cc",
+        "pipo_loop_icon_resume": "0x400fedfa",
+        "pipo_loop_func_resume": "0x4003a246",
+        "pipo_loop_lock_resume": "0x4003a1a2",
+        "pipo_loop_trig_resume": "0x40037f72",
+        "pipo_loop_prof_resume": "0x4003a0e4",
+        "pipo_loop_lop_rec": "0x419a574c",
+        "pipo_loop_marks_resume": "0x4006ce78"
+      },
+      "cflags": [
+        "-DPARAMS_EFF_AT=0x8000f7a8",
+        "-DVOICE_REC_AT=0x80005b30",
+        "-DVOICE_OWNER_AT=0x40291138",
+        "-DTRIG_NEXT_AT=0x8000586c",
+        "-DSAMPLE_SLOTS_AT=0x41329e70",
+        "-DLOCK_EDITOR_AT=0x40036636",
+        "-DTRACK_INDEX_OF_AT=0x400b693e",
+        "-DLOCK_SLOT_AT=0x40006ea8",
+        "-DIS_KEY_HELD_AT=0x40081c28",
+        "-DLOP_REC_AT=0x419a574c",
+        "-DFILLRECT_AT=0x40070726"
+      ],
+      "sites": [
+        {
+          "addr": "0x40121134",
+          "len": 6,
+          "stockSha256": "2e4c18b189c0e55cfb3beeff96e48aa0adee0e73e340c16018c19cc16416b7c8",
+          "op": "jsr",
+          "target": "pipo_loop_gate"
+        },
+        {
+          "addr": "0x400fb56c",
+          "len": 6,
+          "stockSha256": "26c0ee9154cd0bf0cd340066a9b5799a2b7ecdf768354c05d3439f1044ea7581",
+          "op": "jmp",
+          "target": "pipo_loop_text_gate"
+        },
+        {
+          "addr": "0x401c04f8",
+          "len": 4,
+          "stockSha256": "6b1e73a0094b7b812d3b9e22cffb4f8239319847522c4fa103753b6950020f93",
+          "op": "bytes",
+          "new": "00000200",
+          "kind": "data"
+        },
+        {
+          "addr": "0x400fedf4",
+          "len": 6,
+          "stockSha256": "0528305f5347b3808effa560c49adb196e58354efe1c9c8ea8566757ad4ffac3",
+          "op": "jmp",
+          "target": "pipo_loop_icon_gate"
+        },
+        {
+          "addr": "0x4003a0de",
+          "len": 6,
+          "stockSha256": "e88c5d87b784c48d23213d41bd40e3f156f01c147327ad4ba43b3e58d0f848e0",
+          "op": "jmp",
+          "target": "pipo_loop_prof_gate"
+        },
+        {
+          "addr": "0x4003a240",
+          "len": 6,
+          "stockSha256": "8737736787699bee24f07b0561eb3dcb4786d83c7e79ff2d664e8bc838f23e20",
+          "op": "jmp",
+          "target": "pipo_loop_func_gate"
+        },
+        {
+          "addr": "0x4003a19c",
+          "len": 6,
+          "stockSha256": "8b2ff1313c2715f1820d66eaf627a9cd77d6fa05e71bf755e169b313c3e91acf",
+          "op": "jmp",
+          "target": "pipo_loop_lock_gate"
+        },
+        {
+          "addr": "0x40037f6c",
+          "len": 6,
+          "stockSha256": "6bec112e4ad8dc436d8a56fe7dd56a0ebb067ae3ba9c4ab0b3b5009bd36d370e",
+          "op": "jmp",
+          "target": "pipo_loop_trig_gate"
+        },
+        {
+          "addr": "0x4011c58a",
+          "len": 6,
+          "stockSha256": "e3fa31891726e01c1336b2349b39bbfd8b834fa09bc0a03b3d1d74432ce7d2ff",
+          "op": "jsr",
+          "target": "pipo_loop_v0w_gate"
+        },
+        {
+          "addr": "0x4011c5e6",
+          "len": 8,
+          "stockSha256": "196d0dda111b1ae37f88dd571c335bbfd9eb3b527ba8e423e2d1129c21cd7948",
+          "op": "jsr",
+          "target": "pipo_loop_v0m_gate"
+        },
+        {
+          "addr": "0x4011cb2e",
+          "len": 10,
+          "stockSha256": "cea8a71b90dd8a6b4b9ac741ae5acf4dbe46eb367e81086d6aef10c4ea1e5e63",
+          "op": "jsr",
+          "target": "pipo_loop_vnw_gate"
+        },
+        {
+          "addr": "0x4011cb98",
+          "len": 8,
+          "stockSha256": "ddb2c3a57a21875cf6d54c6613cf769cf0ebeada1969bec8020fb662392a2c28",
+          "op": "jsr",
+          "target": "pipo_loop_vnm_gate"
+        },
+        {
+          "addr": "0x4006ce72",
+          "len": 6,
+          "stockSha256": "fd3a7a09db3edb60215e850f1b0a8745b625058384b8deee552f26e1511cb4f0",
+          "op": "jmp",
+          "target": "pipo_loop_marks_gate"
+        }
+      ]
+    }
+  }
+}

@@ -23,12 +23,16 @@ def packed(words):
 class ResidentStockFills(unittest.TestCase):
     def setUp(self):
         self.original = [0x110011+i for i in range(9)]
-        self.at = 3
-        self.effect = dict(key='COMPRESSOR', proc=self.at)
-        self.hooks = dict(origin=0x2000, guards=[dict(relocated=True, entry=0x2100,
-            expectedSha256=hashlib.sha256(packed(self.original[self.at:self.at+2])).hexdigest())])
+        self.at, self.init = 3, 6
+        self.effect = dict(key='COMPRESSOR', proc=self.at, init=self.init)
+        self.hooks = dict(origin=0x2000, guards=[
+            dict(relocated='proc', entry=0x2100,
+                 expectedSha256=hashlib.sha256(packed(self.original[self.at:self.at+2])).hexdigest()),
+            dict(relocated='init', entry=0x2140,
+                 expectedSha256=hashlib.sha256(packed(self.original[self.init:self.init+2])).hexdigest())])
         self.words = list(self.original)
         self.words[self.at:self.at+2] = [0x0bf080, 0x2100]
+        self.words[self.init:self.init+2] = [0x0bf080, 0x2140]
 
     def fills(self, words=None, effect=None, original=None, hooks=None):
         return core.resident_effect_fills('A', 24, self.words if words is None else words,
@@ -37,13 +41,13 @@ class ResidentStockFills(unittest.TestCase):
 
     def test_stock_reinsertion_keeps_the_complete_authored_jsr(self):
         fills = self.fills()
-        self.assertEqual([(f['first'], f['count'], f['offset']) for f in fills], [(0, 3, 6), (5, 4, 21)])
+        self.assertEqual([(f['first'], f['count'], f['offset']) for f in fills], [(0, 3, 6), (5, 1, 21), (8, 1, 30)])
         before, after = b'prefix', b'suffix'
         document = dict(sections={'.run': dict(parts=[['hex', (before+packed(self.words)+after).hex()]])}, sites=[])
         stripped = core.strip(document, fills,
             lambda f: self.original[f['first']:f['first']+f['count']], b'', 0)
         literal = b''.join(bytes.fromhex(part[1]) for part in stripped['sections']['.run']['parts'])
-        self.assertEqual(literal, before+packed([0x0bf080, 0x2100])+after)
+        self.assertEqual(literal, before+packed([0x0bf080, 0x2100, 0x0bf080, 0x2140])+after)
         for fill in sorted(fills, key=lambda f: f['offset']):
             at = fill['offset']
             words = packed(self.original[fill['first']:fill['first']+fill['count']])
@@ -52,19 +56,23 @@ class ResidentStockFills(unittest.TestCase):
         self.assertNotEqual(literal, before+packed(self.original)+after)
 
     def test_unknown_changes_and_drifted_guard_or_entry_refuse(self):
-        for where in (0, self.at, self.at+1, len(self.words)-1):
+        for where in (0, self.at, self.at+1, self.at+2, self.init, self.init+1, len(self.words)-1):
             words = list(self.words); words[where] ^= 1
             with self.subTest(word=where), self.assertRaises(ValueError):
                 self.fills(words=words)
-        for mutate in ('guard', 'entry', 'duplicate', 'origin'):
+        for mutate in ('guard', 'entry', 'init guard', 'init entry', 'duplicate', 'missing init', 'origin'):
             hooks = copy.deepcopy(self.hooks)
             if mutate == 'guard': hooks['guards'][0]['expectedSha256'] = '0'*64
             elif mutate == 'entry': hooks['guards'][0]['entry'] += 1
+            elif mutate == 'init guard': hooks['guards'][1]['expectedSha256'] = '0'*64
+            elif mutate == 'init entry': hooks['guards'][1]['entry'] += 1
             elif mutate == 'duplicate': hooks['guards'].append(copy.deepcopy(hooks['guards'][0]))
+            elif mutate == 'missing init': hooks['guards'].pop()
             else: hooks['origin'] = 0x2200
             with self.subTest(mutate=mutate), self.assertRaises(ValueError):
                 self.fills(hooks=hooks)
-        with self.assertRaises(ValueError): self.fills(effect=dict(key='COMPRESSOR', proc=True))
+        with self.assertRaises(ValueError): self.fills(effect=dict(key='COMPRESSOR', proc=True, init=self.init))
+        with self.assertRaises(ValueError): self.fills(effect=dict(key='COMPRESSOR', proc=self.at, init=self.at + 1))
         with self.assertRaises(ValueError): self.fills(original=self.original[:-1])
 
     def test_unchanged_other_stock_effects_remain_complete_fills(self):

@@ -1,8 +1,27 @@
 # Analog Rytm MKII SDK
 
-**Platform:** elemod · **OS:** 1.74 · **Core:** elekloader core-ar2 0.3 · **Modules:** [`sdk/analog-rytm-mkii/modules/`](../../analog-rytm-mkii/modules/) · **Status:** preview
+**Platform:** elemod · **OS:** 1.74 · **Core:** elekloader core-ar2 0.7 · **Modules:** [`sdk/analog-rytm-mkii/modules/`](../../analog-rytm-mkii/modules/) · **Status:** preview
 
-The Analog Rytm MKII runs on the same ColdFire platform as the Digitakt mk1, and its OS entry and bootstrap loader match the Digitakt's instruction for instruction. Its core is elekloader's Digitakt mk1 core (`core.s`, `settings.s`, `render.s`) built with the Rytm's addresses. The core hooks eight shared sites and calls every subscribed mod's handler, in order, from tables the linker builds, so any set of mods that fits the budgets combines. From 0.2 it also keeps mod storage: fields a mod declares, saved with sounds, kits, global slots and projects (below). Core 0.3 is for OS 1.74 only; new core versions drop old OS support, so Modwerk supports the Rytm on OS 1.74 alone. Every event below has run on a unit. Modwerk's linker builds Rytm modules. Filter Hz is the first library module, so the machine is in preview: the browser builds the core with library modules on OS 1.74, with downloads off until the owner turns them on.
+The Analog Rytm MKII runs on the same ColdFire platform as the Digitakt mk1, and its OS entry and bootstrap loader match the Digitakt's instruction for instruction. Its core is elekloader's Digitakt mk1 core (`core.s`, `settings.s`, `render.s`) built with the Rytm's addresses. The core hooks eight shared sites and calls every subscribed mod's handler, in order, from tables the linker builds, so any set of mods that fits the budgets combines. From 0.2 it also keeps mod storage: fields a mod declares, saved with sounds, kits, global slots and projects (below). Cores from 0.3 on are for OS 1.74 only; new core versions drop old OS support, so Modwerk supports the Rytm on OS 1.74 alone. Every core 0.3 hook below has run on a unit; core 0.7 has not yet run on one from Modwerk's builder, so its parameter pages are not tested on hardware here. Modwerk's linker builds Rytm modules. Filter Hz is the first library module, so the machine is in preview: the browser builds the core with library modules on OS 1.74, with downloads off until the owner turns them on.
+
+## Modwerk stack
+
+Today the core is elekloader's core-ar2 0.7, and mods reach the unit as a full OS file sent with Transfer. The Rytm is to get the Octatrack's stack ([recipe](../../../docs/MACHINE_RECIPE.md)) on a Modwerk base (owner, 27 October 2026). The base starts from core-ar2 0.7's source, copied unchanged into [elekloader/](elekloader/README.md), where `npm run machine:base -- analog-rytm-mkii` builds it with the reviewed toolchain and checks its identity (29 October 2026). The plan was agreed with the owner on [#878](https://github.com/repeat98/modwerk/pull/878).
+
+The base carries the send bus (29 October 2026): per-track sends, the return to the mixer, the SEND and SEND FX pages, the effect chooser, per-kit state and the FX track's p-locks, and an FX list each send effect joins as its own module ([Send effects](#send-effects)). The USB link (SysEx over USB MIDI first), the loader, base installs and updates from the site, the MCP's device tools and the machine page follow.
+
+Until the site moves to this base (studied on [#878](https://github.com/repeat98/modwerk/pull/878)), irpina's core-ar2 0.7 release is what the site builds, and send effects cannot link there. The full OS file sent with Transfer stays the fallback after that.
+
+## Send effects
+
+A send effect is a module that adds one record to the base's FX list; the base owns everything around it. The record, `struct mw_fx` in [`include/modwerk/fx.h`](include/modwerk/fx.h), gives the effect's id, its name, eight controls (label, icon, default, bipolar), `reset` and `render`. The module's `build.json` contributes a pointer to it: `{"to": "mw_fx", "order": 10, "data": "00000000", "relocs": [[0, "abs32", "sym:my_fx", 0]]}`, with no subscriptions and no sites.
+
+- **Its id** comes from [`fx-ids.json`](fx-ids.json): take the next free number, 1 to 63, and never reuse or renumber one, because a kit saves the chosen effect by its id. `npm run modules:check` refuses a record whose id is not its entry there.
+- **`render`** runs once per audio block (32 frames at 48 kHz, or 16 at 24 kHz with `MW_FX_24K`) with the sum of the sends, the eight values after p-locks, and a work area the base lends, `work` words at most (16,384). `reset` clears the effect's state when it is chosen and when a project loads. Use `mw_fx_rate`, `mw_fx_onepole` and `mw_fx_tempo` rather than tables of your own.
+- **What the base keeps:** the sends, the return and LEV, the pages, the chooser (FUNC + A on SEND FX), the CPU reading, p-locks, and the kit's effect and values (62 of the kit's 64 storage bits; the sends take 7 sound bits, LEV 7 project bits). A kit whose effect is not installed shows MISSING, keeps its values and plays no return. With no effect installed, AMP and DELAY step over both pages, as on stock.
+- **Budget:** the base with the bus takes 26,987 bytes of `.run` and 68,164 of `.bss`, the 64 KB work area included, leaving about 36 KB of the 128 KiB area for modules. Keep an effect's CPU at or below CHORUS's, and say in TESTING.md what you measured with the base's CPU reading.
+
+CHORUS, FLANGER and PHASER (ids 1-3) are the first, taken from Send FX with the same samples on the host.
 
 ## Create a mod
 
@@ -12,11 +31,11 @@ npm run module:new -- my-mod --machine analog-rytm-mkii --author your-github-log
 
 This creates `modwerk.module.json` (contract v3), `build.json`, `src/main.c`, README, TESTING, licence and a placeholder thumbnail. See [the SDK guide](../../../docs/SDK.md) for the contract and evidence tiers. The core's contract is [core-profile/interface.json](../../analog-rytm-mkii/core-profile/interface.json), and `npm run modules:check` rejects modules that use anything it does not provide.
 
-## Core events
+## Core hooks
 
 Handlers use the C calling convention: arguments on the stack, d0–d1/a0–a1 free, the result in d0. Subscribe in `platform.events` and name each handler in `build.json`.
 
-| Event | When | Handler |
+| Hook | When | Handler |
 | --- | --- | --- |
 | `ev_tick` | the UI compose check, about 20 Hz (the Digitakt's runs at 30) | `void f(void *ctrl)`; set `ctrl + 0x20` to 1 to request a redraw. Not an audio-rate clock. |
 | `ev_draw` | after the OS composes the 128 × 64 screen | `void f(void *bmp, void *ctrl)`; y counts up from the bottom row (0) to the top (63), x runs left to right |
@@ -28,13 +47,31 @@ Handlers use the C calling convention: arguments on the stack, d0–d1/a0–a1 f
 
 On the Rytm, y = 0 is the bottom row of the screen: a rectangle at y 48–63 lands at the top, as hardware photos and rytm-emu both show. Drawing code written with y = 0 as the top row, such as the hooks-check example ported from the Digitakt, needs y flipped (63 − y).
 
-The render events cover the digital path only: this block renders the delay and reverb and mixes their returns. The analog voices are not rendered by this code, so a render handler cannot process the drum voices themselves. Like the Digitakt mk1 core, the core uses DTIM0 and claims `timer:DTIM0`.
+The render hooks cover the digital path only: this block renders the delay and reverb and mixes their returns. The analog voices are not rendered by this code, so a mod cannot change a voice's own sound; it can read each voice from the codec's receive buffer and add a return of its own ([The audio block](#the-audio-block)). Like the Digitakt mk1 core, the core uses DTIM0 and claims `timer:DTIM0`.
 
 Traps found while writing a C mod for OS 1.74 (rytm-emu `3c4c42c`, October 2026):
 
 - **Stock returns pointers in d0.** Debian's `m68k-linux-gnu-gcc` expects a pointer result in a0, so a C mod that declares a stock routine as returning a pointer (`project_singleton`, `kit_track_sound`, a vtable getter) reads garbage and can jump to 0 at boot. Declare such routines as returning an integer and cast the result.
 - **`is_key_held` does not cover the BANK keys.** They are not in stock's key-scan list, so it reads them as up; follow a BANK hold through `ev_key`'s press and release events instead, and ignore its repeats.
 - **FUNC + turn never reaches the parameter path.** On a sound page a turn with FUNC held calls neither `param_set_apply_delta` nor `param_set_value`, and stock changes nothing, so a hook there never sees it. Take the gesture in `ev_enc` and test FUNC with `is_key_held(0x80)`.
+- **SETTINGS is the GLOBAL menu.** The rows `ev_settings` adds come after SYSTEM in the menu the GLOBAL key opens. The menu calls a row's label callback again when it redraws the row, so the label can show the row's state: a row whose select callback flips a value and whose label reads it shows the new value at once.
+- **Trig times in rytm-emu.** `DTEMU_FRAME_TRACE=160,162` prints the analog voice frame's trig switches (BD byte 161 bit 4, SD byte 160 bit 0, RS byte 163 bit 4) with their sample number whenever they change: exact trig timing without reading audio. The sequencer's timing words are in [sequencing.md](../../../docs/module-guides/sequencing.md#analog-rytm-mkii-os-174).
+
+## The audio block
+
+What follows was read and measured for Send FX on OS 1.74 (`src/gate.s` on branch `module/rytm-chorus`, commit `bf62ba19`, [repeat98/modwerk#878](https://github.com/repeat98/modwerk/pull/878)).
+
+- **Where the returns are.** The FX returns routine takes the output slot in d2, runs the PRE return mixer (delay and reverb into the analog mixer, before distortion and the compressor), then the POST one, and ends with `move.l #32,%macsr` at 0x4010ee66 (6 bytes) before it returns. Every send effect needs this site, so it is shared: the Rytm's Modwerk base owns it as the send bus, and a send effect adds a record to its FX list rather than detouring the instruction itself ([Send effects](#send-effects)). The PRE words sit at `0x80000030 + slot × 2048`, left and right on a 64-byte stride, 24-bit values in the low bits. The codec's receive buffer at 0x80007440 holds MAIN, the eight voices and AUDIO IN, 12 words a frame.
+- **The EMAC.** Stock's mixers use the EMAC, and `#32` is its fractional mode, so a mod hooked there can use the EMAC too if it leaves it as stock had it. Read the accumulators it will use (Send FX: ACC0, ACC1 and ACCEXT01) into registers while MACSR still holds 0x20, which neither rounds nor saturates the reads. Then set its own mode, for example 0x80 (signed integer, saturating). Before returning, set `#32` again, then write the accumulators back, ACCEXT01 last.
+- **What it buys.** `mac.w` with a parallel load sums the eight voice words in one instruction each: each multiplies a word's upper half by its gain while it loads the next word. To add a 16-bit return to a 24-bit PRE word with 24-bit saturation, shift the word up 8 bits, `move.l` it into an accumulator, `mac.l` the sample by the gain, read it back with `movclr.l` and shift it down 8. In the emulator Send FX's output loop fell from about 40 to about 20 instructions a frame, and the eight voices from about 60 to about 16.
+- **Measure it on the unit's own clock.** core-ar2 starts DMA timer 0 free running. Read its counter (0xFC07000C) as the mod's block starts and ends, and divide by the time since the previous block, as Send FX's CPU meter does. In the emulator one instruction executed per 48 kHz frame cost about 0.023 % of the block period.
+- **rytm-emu's profiler does not see mod code.** `dtboot --profile-after N` (revision `3c4c42c`) samples only the blocks it runs from its code window, the stock code from 0x40000400. A mod's code, high in RAM (0x47BE0000 on), runs on the stepped path and is never sampled. Measuring Send FX needed a local change to `src/cpu.rs` that samples the stepped branch too, at a jittered interval (33 to 96 instructions) so a loop's period does not alias with it, and a dump of every sampled PC in an address range. Propose such a change to [rytm-emu](https://github.com/trigcondition/rytm-emu) upstream; do not commit emulator code here.
+
+## Parameter pages (core 0.4 and later)
+
+From 0.4 the core takes the four routines every parameter page goes through, and the page keys' lists. A mod adds its own page behind a stock page key, or answers a stock page's parameters, by contributing entries to `core_pages`, `core_params` and `core_view_pages` (0.6 adds `core_page_fns`, a page's own info function). Several mods share one key: the key steps through stock's pages, then each mod's, in `core_view_pages`' order. The structures and the view numbers (`CORE_VIEW_AMP`, `CORE_VIEW_DELAY`…) are in [`include/analog-rytm-mk2/pages.h`](include/analog-rytm-mk2/pages.h); elekloader's ADAPTING.md, "Parameter pages (core-ar2 0.4)", has the full contract. Prefer these lists to a page key gesture of a mod's own: a second press only one mod can hold is a dead end ([Choose how a module hooks in](../../../docs/module-guides/README.md#choose-how-a-module-hooks-in)). 0.5 adds mod machines in the hidden machine slots ([`machines.h`](include/analog-rytm-mk2/machines.h)), 0.4 the audio block's load in `core_audio_load` ([`load.h`](include/analog-rytm-mk2/load.h)).
+
+Mods built for 0.3 that patch a page's entry or a page key's list themselves (rytm2_mods v1.2's lfo-rnd, voice-dac, euclid-accents, velocity-humanise and comp-preview 1.0) overlap core's page sites and are refused at link with 0.4 and later; their 0.4 versions contribute entries instead. Mods with only events and storage, and mods that hook deeper in those routines (filter-hz's text, ctrl-all's turn), link with 0.7 as with 0.3.
 
 ## Mod storage (core 0.3)
 
@@ -58,7 +95,7 @@ On modwerk.app each configuration keeps the lockfile of its last build. The next
 ## Memory and budgets
 
 - **Shared mod memory:** 128 KiB of DDR (`0x47BE0000–0x47C00000`) for the core and every mod's code and data. A boot-time fill of the whole area was read back intact on a unit.
-- **Core image:** core 0.3 is 7,540 bytes `.run` plus 36 bytes `.bss` in the shared area, and an 88-byte `.boot` copier. The linker remains authoritative for combined sizes and overlap.
+- **Core image:** core 0.7 is 10,692 bytes `.run` plus 1,368 bytes `.bss` in the shared area, and a 94-byte `.boot` copier (core 0.3: 7,540, 36 and 88). The linker remains authoritative for combined sizes and overlap.
 - **Fast SRAM:** none. The core has no `.fast` copy table on this machine.
 - **Protected ranges:** none on OS 1.74.
 - **Flash:** the main OS must end below `0x300000`; the OS keeps its own stores at `0x300000–0x380000` and `0x380000–0x400000`.
@@ -67,18 +104,27 @@ Claim named resources (a SETTINGS row, a SysEx id, a timer) in `platform.claims`
 
 ## Toolchain and build
 
-Debian's `m68k-linux-gnu` GCC and binutils for ColdFire (elekloader's default for this machine; set `ELEKLOADER_CROSS` for another prefix such as `m68k-elf-`), and elekloader's builder. Use the exact owner-supplied `Analog-Rytm_MKII_OS1.74.syx`; the builder recognises firmware by hash and changes only the main OS section. From an elekloader checkout, with `core-ar2-0.3.elemod` from the [core-ar2-v0.3](https://github.com/irpina/elekloader/releases/tag/core-ar2-v0.3) pre-release (elekloader's `main` builds core 0.4, which is not the core this SDK targets):
+Debian's `m68k-linux-gnu` GCC and binutils for ColdFire (elekloader's default for this machine; set `ELEKLOADER_CROSS` for another prefix such as `m68k-elf-`), and elekloader's builder. Use the exact owner-supplied `Analog-Rytm_MKII_OS1.74.syx`; the builder recognises firmware by hash and changes only the main OS section. From an elekloader checkout, with `core-ar2-0.7.elemod` from the [core-ar2-v0.7](https://github.com/irpina/elekloader/releases/tag/core-ar2-v0.7) pre-release:
 
 ```sh
 python -m elekloader.sdk.build <module-folder> --stock Analog-Rytm_MKII_OS1.74.syx
 python -m elekloader.lint <module-folder>/out/<mod>-<version>-os1.74.elemod \
-    --stock Analog-Rytm_MKII_OS1.74.syx --with core-ar2-0.3.elemod
+    --stock Analog-Rytm_MKII_OS1.74.syx --with core-ar2-0.7.elemod
 python -m elekloader.patch --stock Analog-Rytm_MKII_OS1.74.syx \
-    --mod core-ar2-0.3.elemod --mod <module-folder>/out/<mod>-<version>-os1.74.elemod \
+    --mod core-ar2-0.7.elemod --mod <module-folder>/out/<mod>-<version>-os1.74.elemod \
     --out my-build.syx --version XX01
 ```
 
-Modwerk's linker covers OS 1.74 (`src/engine/elektron/elemod.ts`), mod storage included. On the owner's stock 1.74 file it links core-ar2 0.3 with each of rytm2_mods v1.2's eleven mods, with the storage mods together, with all eleven, and again from a kept lockfile, byte for byte as elekloader kit 0.7.0 does. In the browser, the Rytm's configuration page checks and builds core-ar2 0.3 and the selected library modules from the owner's stock OS 1.74, with elekloader's kit, the core pinned in `sdk/imports/elekloader-core-ar2-v0.3.json` and each module's source-only package pinned in its own record (`sdk/imports/elekloader-filter-hz-2026-10-23.json`). Downloads stay off until the owner turns them on. Each configuration keeps the storage lockfile of its last build (Mod storage, above), so a module with storage can enter the library.
+A module folder with `build.json` and `modwerk.module.json`, as under `sdk/analog-rytm-mkii/modules/` (`_submissions/` too), has no `mod.json`, so those commands do not take it. Build it with Modwerk's own route instead, which compiles the module with `scripts/build-elemod-packages.mjs`, materializes its recipe against your stock main OS, links it with the core and writes the stock file again with the new main OS section, as the site's browser builder does (the cross toolchain is `MODWERK_CROSS`, default `m68k-elf-`):
+
+```sh
+node scripts/link-image.mjs --stock Analog-Rytm_MKII_OS1.74.syx --version XX01 --out my-build.syx \
+    --elemod vendor/elekloader/catalog/core-ar2-0.7.elemod --module analog-rytm-mkii:<module-id>
+```
+
+Repeat `--module` for several modules, and `--elemod` for a prebuilt package. On the owner's stock 1.74 it reproduces Silent Pad+Trig's PS08 (core-ar2 0.3) byte for byte. It is a local test image: only a unit shows it is safe.
+
+Modwerk's linker covers OS 1.74 (`src/engine/elektron/elemod.ts`), mod storage included. On the owner's stock 1.74 file it links core-ar2 0.3 with each of rytm2_mods v1.2's eleven mods, with the storage mods together, with all eleven, and again from a kept lockfile, byte for byte as elekloader kit 0.7.0 does, and links core-ar2 0.7 alone, with Filter Hz, and with Loop Sync and Retrig Grid from one lockfile as kit 0.7.0 and elekloader at the core's commit do ([verification record](../../../docs/verification/2026-10-27-rytm-core-ar2-pages.md)). In the browser, the Rytm's configuration page checks and builds the newest pinned core, core-ar2 0.7, and the selected library modules from the owner's stock OS 1.74, with elekloader's kit, the core pinned in `sdk/imports/elekloader-core-ar2-v0.7.json` (0.3's record stays) and each module's source-only package pinned in its own record (`sdk/imports/elekloader-filter-hz-2026-10-23.json`). Downloads stay off until the owner turns them on. Each configuration keeps the storage lockfile of its last build (Mod storage, above), so a module with storage can enter the library.
 
 ## Flash and recover
 
@@ -86,8 +132,8 @@ Send the .syx with Elektron Transfer over USB (MIDI IN and OUT set to the device
 
 ## Status
 
-The first port, core-ar2 0.1 for OS 1.73, is in elekloader (merged in irpina/elekloader#89); Modwerk no longer supports OS 1.73. Builds HM01 (core and hello-marker) and HC01 (core and hooks-check) ran every event on a unit on OS 1.73, and the stock .syx restored it each time ([core report](https://github.com/Iced-Cream/rytm-mods-boot-report/blob/main/CORE_REPORT.md)). Core-ar2 0.3 (OS 1.74, with mod storage) is on elekloader's [core-ar2-v0.3](https://github.com/irpina/elekloader/releases/tag/core-ar2-v0.3) pre-release and in kit 0.7.0's catalog. Filter Hz is the first library module ([folder](../../analog-rytm-mkii/modules/filter-hz/)).
+The first port, core-ar2 0.1 for OS 1.73, is in elekloader (merged in irpina/elekloader#89); Modwerk no longer supports OS 1.73. Builds HM01 (core and hello-marker) and HC01 (core and hooks-check) ran every hook on a unit on OS 1.73, and the stock .syx restored it each time ([core report](https://github.com/Iced-Cream/rytm-mods-boot-report/blob/main/CORE_REPORT.md)). Core-ar2 0.3 (OS 1.74, with mod storage) is on elekloader's [core-ar2-v0.3](https://github.com/irpina/elekloader/releases/tag/core-ar2-v0.3) pre-release and in kit 0.7.0's catalog; core-ar2 0.7 (parameter pages, machines, page functions, write-through) is on the [core-ar2-v0.7](https://github.com/irpina/elekloader/releases/tag/core-ar2-v0.7) pre-release (irpina/elekloader#199). Filter Hz is the first library module ([folder](../../analog-rytm-mkii/modules/filter-hz/)).
 
 ## Credits
 
-The device profile, memory map and core port build on [elekloader](https://github.com/irpina/elekloader) (irpina, GPL-2.0-or-later) and [digikit](https://github.com/m-dwyer/digikit) (Em D, GPL-2.0-or-later). The container and SysEx transport were first documented by [elektron-firmware-tool](https://github.com/mischa85/elektron-firmware-tool) (Marcel Bierling, MIT); the Rytm's OS 1.74 boot contract and recovery path by [rytm-fw-re](https://github.com/ethernet8023/rytm-fw-re). [rytm-emu](https://github.com/trigcondition/rytm-emu) (MIT, a fork of [rouletrro](https://github.com/Ondrysak/rouletrro)) runs stock and patched OS 1.73 builds in an emulator, for checks and screenshots before flashing.
+The device profile, memory map and core port build on [elekloader](https://github.com/irpina/elekloader) (irpina, GPL-2.0-or-later). The container and SysEx transport were first documented by [elektron-firmware-tool](https://github.com/mischa85/elektron-firmware-tool) (Marcel Bierling, MIT); the Rytm's OS 1.74 boot contract and recovery path by [rytm-fw-re](https://github.com/ethernet8023/rytm-fw-re). [rytm-emu](https://github.com/trigcondition/rytm-emu) (MIT, a fork of [rouletrro](https://github.com/Ondrysak/rouletrro)) runs stock and patched OS 1.73 builds in an emulator, for checks and screenshots before flashing.

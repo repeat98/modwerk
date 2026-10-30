@@ -88,7 +88,7 @@ int mw_controller_start(struct mw_controller_registry *r,const struct mw_control
     unsigned next=s->state,feature=b->identity.feature,c=j->core;
     if(j->operation==MW_CTL_RESET) {
         if((s->state!=MW_CTL_BOUND && s->state!=MW_CTL_INITIALIZING) || j->offset!=s->acknowledged_words[c] ||
-           !j->count || j->count>24u || j->offset>s->reset_words[c] || j->count>s->reset_words[c]-j->offset ||
+           !j->count || j->count>MW_CONTROLLER_RESET_CHUNK || j->offset>s->reset_words[c] || j->count>s->reset_words[c]-j->offset ||
            j->expected || j->desired || !r->backend->resources_idle || r->backend->resources_idle(r->context,b)!=1) return MW_CTL_CLOSED;
         struct mw_controller_slot *old=previous(r,s);
         if(old && old->state!=MW_CTL_RETIRING && old->state!=MW_CTL_RELEASED) return MW_CTL_CLOSED;

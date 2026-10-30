@@ -2,7 +2,7 @@
  * The base's machine registry: the reader of the ot_machines table (events.json). The
  * machine chooser, SRC SETUP, the page resolver, the Part validator, the UI tick, pool
  * navigation and the FLEX renderer ask the contributed machines (struct modwerk_machine),
- * in row order: chooser rows 5 on. Adapted from POLY8's shared machine controller
+ * in row order: chooser rows 5 on (SRC SETUP's own rows for a SETUP_PAGE machine). Adapted from POLY8's shared machine controller
  * (sdk/octabam/modules/poly8/shared-machine.c, MIT, Sam Banks / repeat98), whose fixed
  * POLY/AB/VECTOR/FM participants become contributions; each machine keeps its own signed
  * FLEX state, defaults, pages and engine. Also the reader of ot_sequencer_rows. */
@@ -19,11 +19,12 @@
 #define BANK 0x46c82456u
 #define PART_OFF 0x8ed80u
 #define PART_STRIDE 6322u
+#define SAVED_OFF 0x9504au                  /* the saved Parts, as dsp.c reads them */
 #define SRAM_PART 0x100a4eceu
 #define SIG 60u
 #define FLEX_PAGE 0x400d31aeu
 #define STATIC_PAGE 0x400d301cu
-#define ROWS 9u                              /* five stock machines and up to four contributed */
+#define ROWS 13u                             /* five stock machines and up to eight contributed (ot_machines' room) */
 typedef volatile uint8_t Part;
 typedef struct modwerk_machine Machine;
 #define MACHINES (MODWERK_OT_MACHINES - RUNTIME_EVENTS)
@@ -128,8 +129,11 @@ static unsigned owner(const Machine *const *m, unsigned n, const Part *part, uns
  * restore (0x40025770) validates the battery-backed Part copies seconds before the saved set reinstalls the machines
  * (modset.c), and refuses the whole restore at the first value it has to fix. The bank is then never filled nor
  * applied (0x40009094): every Part reads STATIC with stock defaults, no track is ever bound and the unit is silent
- * (beta finding 24). An absent machine's track renders stock's silent source, never stock FLEX reading its bytes. */
-static const struct { uint8_t sig[2], lo, hi; } known[] = {{{'A', 'B'}, 1, 1}, {{'F', 'M'}, 1, 1}};
+ * (beta finding 24). An absent machine's track renders stock's silent source, never stock FLEX reading its bytes.
+ * A native machine module (not a port) is listed by name, never by a pattern: a FLEX track whose NEIGHBOR bytes
+ * merely looked like a signature would go silent. WV 1-15: SYNTIZ (sdk/drafts/syntiz), its model in the version
+ * byte (six used, the rest kept for more). */
+static const struct { uint8_t sig[2], lo, hi; } known[] = {{{'A', 'B'}, 1, 1}, {{'F', 'M'}, 1, 1}, {{'W', 'V'}, 1, 15}};
 static unsigned orphan(const Part *part, unsigned t)
 {
     if (t >= 8 || part[0x22 + t] > 1) return 0;
@@ -137,6 +141,24 @@ static unsigned orphan(const Part *part, unsigned t)
     for (unsigned k = 0; k < sizeof known / sizeof *known; ++k)
         if (s[0] == known[k].sig[0] && s[1] == known[k].sig[1] && s[2] >= known[k].lo && s[2] <= known[k].hi) return 1;
     return 0;
+}
+/* controller_board.c: the modules whose machines a track of the current bank's Parts, working or saved, is signed for,
+ * up to max. A machine's engine is used from then on, as Sidechain's is once a Part names COMPRESSOR: after a boot its
+ * renderer first asks for the write lease at the first trig, too late for it (owner's MKII, 28 October 2026). */
+unsigned modwerk_machine_bank_modules(uint32_t *module, unsigned max)
+{
+    const Machine *m[ROWS - 5u], *who; unsigned n = machines(m), found = 0;
+    if (!valid_bank()) return 0;
+    for (unsigned k = 0; k < n && found < max; ++k) {
+        unsigned hit = 0;
+        for (unsigned i = 0; i < 8u * 8u && !hit; ++i) {
+            unsigned p = i >> 3; /* Parts 1-4 working, then saved */
+            hit = owner(&m[k], 1, AT(U32(BANK) + (p < 4u ? PART_OFF : SAVED_OFF - 4u * PART_STRIDE) + p * PART_STRIDE), i & 7u, &who) != 0;
+        }
+        struct runtime_owner o;
+        if (hit && modwerk_runtime_owner_at((uintptr_t)m[k], &o) == 1) module[found++] = o.module;
+    }
+    return found;
 }
 static unsigned current(const Machine *const *m, unsigned n, const Machine **who)
 {
@@ -163,15 +185,19 @@ static void tables(const Machine *const *m, unsigned n)
                             x->page ? x->page : FLEX_PAGE;
     }
 }
-/* The chooser's counts are immediates in stock code the table owns: pea 5+n and moveq #4+n (stock: n = 0). */
+/* The chooser's counts are immediates in stock code the table owns: pea 5+n and moveq #4+n (stock: n = 0). Its five
+ * UP/DOWN handlers clamp the cursor with moveq #5 twice each (stock: row 5, one past PICKUP): the last row, 4+n, and
+ * never below stock's 5, or the cursor stops at row 5 with two or more machines installed. */
 static unsigned counted;
 static void put8(uint32_t at, uint8_t v) { modwerk_machine_flush_data(at, 1); *modwerk_machine_code(at) = v; }
 static void counts(unsigned n, unsigned rows)
 {
-    static const uint32_t pea[] = {0x4007924bu, 0x400585fdu}, moveq[] = {0x4003c951u, 0x40078679u, 0x400786cfu, 0x40079905u};
+    static const uint32_t pea[] = {0x4007924bu, 0x400585fdu}, moveq[] = {0x4003c951u, 0x40078679u, 0x400786cfu, 0x40079905u},
+                          clamp[] = {0x40078c23u, 0x40078cb1u, 0x40078d2fu, 0x40078defu, 0x40078e7du};
     if (counted == (n | rows << 8 | 1u << 16)) return;
     for (unsigned i = 0; i < 2; ++i) put8(pea[i], (uint8_t)(5u + n));
     for (unsigned i = 0; i < 4; ++i) put8(moveq[i], (uint8_t)(4u + n));
+    for (unsigned i = 0; i < 5; ++i) put8(clamp[i], (uint8_t)(n > 1 ? 4u + n : 5u)), put8(clamp[i] + 6u, (uint8_t)(n > 1 ? 4u + n : 5u));
     put8(0x40065c7fu, (uint8_t)(3u + rows));
     modwerk_machine_invalidate_code();
     counted = n | rows << 8 | 1u << 16;
@@ -240,6 +266,22 @@ unsigned mw_chooser_type(unsigned type, const Part *ptr)
     if (who && who->chooser_type && who->chooser_type(type, ptr) != 5) return type;
     return mw_type(type, ptr);
 }
+/* Stock's per-track voice records (0x800049d8 + 168 * track): byte 0 is "playing", which the trig start (0x4000f450)
+ * sets and the sample fetch (0x40007960) reads silence while it is 0. A module machine is FLEX underneath, so each of
+ * its trigs also starts stock's FLEX voice from the machine's bytes read as FLEX settings, and its own render never
+ * advances that voice. Stock doesn't stop it when the track changes machine (machines with a render of their own are
+ * stopped at every render, mw_source_render_impl): stock's parameter load (0x40001f18) never
+ * touches the record, and voice bind (0x40006820) runs only where a commit changes the type. A switch that keeps the
+ * stored type (FLEX <-> machine, of the playing Part) stops it here, before the track's parameters change: the track
+ * is silent until its next trig, never a short burst of the old voice that the first trig cuts or plays over.
+ * It runs from the UI task with interrupts on: a trig the frame interrupt starts in the same moment could be cleared
+ * with it. That is one byte, one trig, at the moment the player changes the machine, and acceptable (owner, 29 Oct 2026). */
+#define VOICE 0x800049d8u
+#define VOICE_STRIDE 168u
+static void hush(const Part *part, unsigned track, unsigned type)
+{
+    if (part == current_part() && part[0x22 + track] == type) U8(VOICE + VOICE_STRIDE * track) = 0;
+}
 /* A track leaves `old`: its own leave, stock's FLEX defaults back in both Part copies for a PROTECT machine that
  * signs its tracks through the registry (the 12 bytes held its parameters), and its DSP charge released. */
 static void flex_defaults(Part *part, Part *mirror, unsigned track)
@@ -268,9 +310,19 @@ static void charge(const Machine *const *m, unsigned n)
         if (who ? charged[t] != who && !claim(t, who) : charged[t] != 0) release(t);
     }
 }
+/* Stock loads a track's live parameters from its Part (0x40001f18: bank, Part, track) where a commit changes the
+ * stored type. A module machine is FLEX underneath, so FLEX <-> machine keeps the type and the live copy would stay on
+ * the old machine's values (the machine silent, FLEX playing its bytes) until SOURCE CLEAR: load it here instead. */
+static unsigned relive(const Part *part, uint32_t offset, unsigned track, unsigned type)
+{
+    if (part[0x22 + track] == type) STOCK(void (*)(unsigned, unsigned, unsigned), 0x40001f18u)(U8(0x100b14ceu), offset / PART_STRIDE, track);
+    return type;
+}
 /* A machine's admission precedes every mutation; -1 refuses. */
+extern volatile uint32_t modwerk_machine_assigned; /* controller_board.c: it reads the bank's machines again after an assignment */
 unsigned mw_assign(Part *part, unsigned track, unsigned row)
 {
+    modwerk_machine_assigned = modwerk_machine_assigned + 1u;
     if (!valid_bank() || track >= 8) return row < 5 ? row : 1;
     uint32_t offset = ADDR(part) - U32(BANK) - PART_OFF;
     if (offset % PART_STRIDE || offset / PART_STRIDE >= 4) return (unsigned)-1;
@@ -288,6 +340,7 @@ unsigned mw_assign(Part *part, unsigned track, unsigned row)
         if (old && old != next) leave(part, mirror, track, old);
         if (absent) flex_defaults(part, mirror, track);
         if (next->assign) return next->assign(part, track, 1);
+        if (old != next) hush(part, track, 1);
         if (old != next && next->defaults)
             for (unsigned k = 0; k < 12; ++k) {
                 unsigned at = (k < 6 ? 0x2a : 0x1da) + 30 * track + 6 + k % 6;
@@ -295,18 +348,22 @@ unsigned mw_assign(Part *part, unsigned track, unsigned row)
             }
         unsigned sig = SIG + 30 * track;
         part[sig] = mirror[sig] = next->sig[0]; part[sig + 1] = mirror[sig + 1] = next->sig[1]; part[sig + 2] = mirror[sig + 2] = next->sig_lo;
-        return 1;
+        return old != next ? relive(part, offset, track, 1) : 1;
     }
     /* Browser YES keeps the signed owner; ordinary machine selection clears it. */
     if (old && old->assign) {
         unsigned pool = old->assign(part, track, 0);
         const Machine *still; owner(m, n, part, track, &still);
         if (still == old) return pool;
+        hush(part, track, row < 5 ? row : 1);
         leave(part, mirror, track, old);
+        return relive(part, offset, track, row < 5 ? row : 1);
     } else if (old || absent) {
+        hush(part, track, row < 5 ? row : 1);
         if (old) leave(part, mirror, track, old);
         else flex_defaults(part, mirror, track);
         unsigned sig = SIG + 30 * track; for (unsigned k = 0; k < 3; ++k) part[sig + k] = mirror[sig + k] = 0;
+        return relive(part, offset, track, row < 5 ? row : 1);
     }
     return row < 5 ? row : 1;
 }
@@ -335,18 +392,23 @@ uint32_t mw_page(const Part *ptr)
     if (t < 8) owner(m, n, current_part(), (unsigned)t, &who); else who = 0;
     return who && who->track_page ? who->track_page(ptr) : 0;
 }
-/* Sidechain Compressor keeps KEY, KFLT, KGN and MON in stock COMPRESSOR's page-2 slots 8-11 (Part 0x2fe + 30 t + 6 fx
- * + 2..5), which stock's descriptor declares with its own ranges and defaults 0x7f/0/0/0. Before the saved set is
- * back, the boot's battery restore judged a set-up side-chain (KEY OFF..T8, KFLT and KGN 64) by those ranges and
- * refused the whole bank (beta finding 47, as finding 24 above). Stock judges its own defaults there instead, and the
- * side-chain's bytes come back; a KEY above T8 is stock's own value and goes to stock as it is. */
+/* Sidechain Compressor keeps MON, KEY, KGN, KBAS and KWID in stock COMPRESSOR's page-2 slots 7-11 (Part 0x2fe + 30 t
+ * + 6 fx + 1..5). Stock's descriptor declares slot 7 with 2 values (default 1) and slots 8-11 with 128, 2, 128 and 128
+ * (defaults 0x7f/0/0/0). Before the saved set is back, the boot's battery restore judged a set-up side-chain by those
+ * ranges, refused KGN (slot 9) above 1 and with it the whole bank (beta finding 47, as finding 24 above; #712). Stock
+ * judges its own defaults in slots 7-11 instead, and the side-chain's bytes come back. A side-chain is: MON 0..3
+ * (0.2.0 stores 2 = OFF, 3 = ON, its page declares 4 values; 0 and 1 are a set saved before, which the module turns
+ * OFF; stock's count of 2 would refuse 2 and 3, so slot 7 is shown stock's default 1 too), KEY OFF..T8, KGN, KBAS and
+ * KWID 0..127. Since 0.2.0 slot 11 is KWID (127 = OFF), where 0.1.x kept MON (0/1); a set saved with 0.1.x (slot 7
+ * still stock's 1) matches too. A KEY above T8 is stock's own value and goes to stock as it is. */
 #define COMPRESSOR 24u
 #define FX_SETUP 0x2feu
-static const uint8_t compressor_slots[4] = {0x7f, 0, 0, 0};
+static const uint8_t compressor_slots[5] = {1, 0x7f, 0, 0, 0};  /* slots 7-11 */
 static unsigned sidechain(const Part *part, unsigned t, unsigned fx)
 {
-    unsigned at = FX_SETUP + 30 * t + 6 * fx + 2;
-    return part[8 * fx + t] == COMPRESSOR && part[at] <= 8 && part[at + 1] < 0x80 && part[at + 2] < 0x80 && part[at + 3] <= 1 ? at : 0;
+    unsigned at = FX_SETUP + 30 * t + 6 * fx + 1;  /* slot 7, MON */
+    return part[8 * fx + t] == COMPRESSOR && part[at] <= 3 && part[at + 1] <= 8 && part[at + 2] < 0x80 && part[at + 3] < 0x80
+        && part[at + 4] < 0x80 ? at : 0;
 }
 /* The stock validator never sees a PROTECT machine's 12 FLEX bytes, nor a known absent one's (the boot's battery
  * restore, above), nor a side-chain's four; machines' validate wrap it in row order. */
@@ -360,7 +422,7 @@ static int next_validator(uint8_t *part)
 int mw_validate(Part *part)
 {
     const Machine *m[ROWS - 5u], *who; unsigned n = machines(m), mask = 0;
-    uint8_t saved[8][12], keys[8][2][4];
+    uint8_t saved[8][12], keys[8][2][5];
     unsigned key_at[8][2];
     const Part *stock = AT(0x400d320cu);
     for (unsigned t = 0; t < 8; ++t) {
@@ -371,7 +433,7 @@ int mw_validate(Part *part)
         }
         for (unsigned fx = 0; fx < 2; ++fx)
             if ((key_at[t][fx] = sidechain(part, t, fx)))
-                for (unsigned k = 0; k < 4; ++k) keys[t][fx][k] = part[key_at[t][fx] + k], part[key_at[t][fx] + k] = compressor_slots[k];
+                for (unsigned k = 0; k < 5; ++k) keys[t][fx][k] = part[key_at[t][fx] + k], part[key_at[t][fx] + k] = compressor_slots[k];
     }
     for (unsigned k = 0; k < n; ++k) wrapping[k] = m[k];
     wraps = n; depth = 0;
@@ -381,7 +443,7 @@ int mw_validate(Part *part)
         if (mask & 1u << t)
             for (unsigned k = 0; k < 12; ++k) { unsigned at = (k < 6 ? 0x2a : 0x1da) + 30 * t + 6 + k % 6; part[at] = saved[t][k]; }
         for (unsigned fx = 0; fx < 2; ++fx)
-            if (key_at[t][fx]) for (unsigned k = 0; k < 4; ++k) part[key_at[t][fx] + k] = keys[t][fx][k];
+            if (key_at[t][fx]) for (unsigned k = 0; k < 5; ++k) part[key_at[t][fx] + k] = keys[t][fx][k];
     }
     return result;
 }
@@ -426,10 +488,49 @@ uintptr_t mw_list_target(void)
     current(m, n, &who);
     return who && who->list_draw ? (uintptr_t)who->list_draw : (uintptr_t)mw_stock_list_draw;
 }
+/* The track window's column (0 the machine list, 1 the pool), from the selected track's type byte: stock's rule (STATIC
+ * and FLEX open on their pool), except that a LIST machine (one without a pool) opens on the list, as PICKUP does. */
+unsigned mw_window_column(const Part *type)
+{
+    const Machine *m[ROWS - 5u], *who = 0; unsigned n = machines(m);
+    if (valid_bank()) owner(m, n, current_part(), U8(0x100b14ccu) & 7u, &who);
+    if (who && who->flags & MODWERK_MACHINE_LIST) return 0;
+    return *type <= 1u;
+}
+/* SRC SETUP's editor skips encoder E (slot 10) for module machines, POLY8's hidden slot; a SETUP_ALL machine edits it. */
+unsigned mw_row_setup_all(unsigned row)
+{
+    const Machine *m[ROWS - 5u]; unsigned n = machines(m);
+    return row >= 5 && row < 5 + n && m[row - 5]->flags & MODWERK_MACHINE_SETUP_ALL;
+}
 unsigned mw_row_has_pool(unsigned row)
 {
     const Machine *m[ROWS - 5u]; unsigned n = machines(m);
     return row >= 5 && row < 5 + n && m[row - 5]->flags & MODWERK_MACHINE_POOL;
+}
+/* SRC SETUP on a module machine's row (stock's cursor, 0x460d5c30, the row its drawer and editor were given) shows and
+ * edits the track's backing pool's setup (mw_pool_kind). A SETUP_PAGE machine owns its rows there while the current
+ * track is its own: its page gives the page the drawer shows instead of the row's stock one, and its knob
+ * takes encoders A-F (0-5) before stock edits the pool's byte. Only a SETUP_PAGE machine's record is a struct
+ * modwerk_machine_setup (88 bytes; every other ABI 1 record ends at 80), so nothing past the machine is read without it. */
+static const Machine *setup_owner(const Machine *const *m, unsigned n, unsigned row)
+{
+    const Machine *who;
+    return row >= 5 && current(m, n, &who) == row && who->flags & MODWERK_MACHINE_SETUP_PAGE ? who : 0;
+}
+uint32_t mw_setup_page(unsigned row, uint32_t stock)
+{
+    const Machine *m[ROWS - 5u]; unsigned n = machines(m);
+    const Machine *who = setup_owner(m, n, row);
+    const struct modwerk_machine_setup *own = (const struct modwerk_machine_setup *)who;
+    return own && own->page ? own->page(stock) : stock;
+}
+unsigned mw_setup_knob(unsigned row, unsigned index, int delta)
+{
+    const Machine *m[ROWS - 5u]; unsigned n = machines(m);
+    const Machine *who = index < 6 ? setup_owner(m, n, row) : 0;
+    const struct modwerk_machine_setup *own = (const struct modwerk_machine_setup *)who;
+    return own && own->knob && own->knob(index, delta) ? 1u : 0u;
 }
 /* The frame guard. The frame interrupt (0x4000aad0, level 5) takes the DSP's frame word at its entry, renders each
  * track's source (each track about twice a frame), then builds the DSP's frame. While it runs, USB (level 4), the UI and
@@ -440,9 +541,10 @@ unsigned mw_row_has_pool(unsigned row)
  * mw_frame_exit (machine_registry.s). Each render of a machine's track is timed, and so is the work after it up to the
  * exit; before the next frame's same render the guard predicts the frame's length from those. When it would overdraw,
  * the track renders stock's silent source this time instead: a dropout on that track, never a frozen unit. Tracks only
- * stock renders, and priced machines' (their voice is the DSP's), always render. A skipped render comes back when the
- * budget has room for its last cost, or, every PROBE frames, when it would overdraw by at most SLACK: its cost is
- * measured again. */
+ * stock renders, and priced machines' (their voice is the DSP's), always render, and so does a FLEX track no machine
+ * owns that goes to a RENDER_FLEX machine's render (guarded, FM Synth's render skipped ordinary sample tracks, #999).
+ * A skipped render comes back when the budget has room for its last cost, or, every PROBE frames, when it would
+ * overdraw by at most SLACK: its cost is measured again. */
 #ifndef DTCN3
 #define DTCN3 (*(volatile uint32_t *)0xfc07c00cu) /* the frame timer: 132 MHz, free-running */
 #endif
@@ -489,7 +591,26 @@ static int guarded(Render *f, unsigned track, unsigned ping, unsigned start, uns
     return r;
 }
 /* The FLEX renderer, in the audio render: no mask. The row is read once, a word at a time; a module that left
- * stays in memory while the render holds it (the paused-task scan). */
+ * stays in memory while the render holds it (the paused-task scan).
+ * A track a machine renders itself (or that renders stock's silent source in its place) keeps stock's FLEX retrig and
+ * voice stopped, every render. A module machine is FLEX underneath: on each of its trigs the frame builder starts
+ * stock's FLEX voice (byte 0 of 0x800049d8 + 168 * track, see hush()) and latches the track's RTRG into its render
+ * state (0x80004898 + 40 * track, +4), both from the machine's bytes read as FLEX settings, and nothing advances them.
+ * When the track renders as FLEX again without passing mw_assign (a bank, pattern or Part change, a project load),
+ * stock rendered them. On a track that was the machine since power-on the retrig interval was never computed (0), so
+ * the first FLEX segment restarted the voice on every sample: more sections than the record's header can name, which
+ * stock's DSP source misread and overran X memory with, and DSP core 1 jumped to P:0 for good (an MKII and
+ * ot_emu, 29 October 2026: Analog BD on T1 in bank B, FLEX in bank C, cold boot, PLAY, B -> C; #1051). FM Synth's own
+ * render already clears the RTRG count; this does it for every machine with a render of its own. Stopped, nothing
+ * overruns: stock's render restarts the voice at most once, and the next trig as FLEX starts both from FLEX's own
+ * settings. */
+#define RENDER_STATE 0x80004898u
+#define RENDER_STATE_STRIDE 40u
+static void stop_stock(unsigned track)
+{
+    U8(VOICE + VOICE_STRIDE * track) = 0;
+    *(volatile uint32_t *)AT(RENDER_STATE + RENDER_STATE_STRIDE * track + 4u) = 0; /* the RTRG count: no run of retrigs */
+}
 int mw_source_render_impl(unsigned track, unsigned ping, unsigned start, unsigned end)
 {
     const Machine *m[ROWS - 5u], *who = 0; unsigned n = 0;
@@ -498,14 +619,17 @@ int mw_source_render_impl(unsigned track, unsigned ping, unsigned start, unsigne
         if (((const Machine *)v)->abi == MODWERK_MACHINE_ABI) m[n++] = (const Machine *)v;
     }
     if (valid_bank() && owner(m, n, current_part(), track, &who)) {
+        if (who->render) stop_stock(track); /* POLY8's voices (no render of its own) are stock's */
         if (who->source_kind && charged[track] != who) /* uncharged: stock's silent source, never an unpaid voice */
             return STOCK(Render *, 0x400047f0u)(track, ping, start, end);
         Render *f = who->render ? who->render : STOCK(Render *, 0x40004008u); /* POLY8's voices render inside stock's */
         return who->source_kind ? f(track, ping, start, end) : guarded(f, track, ping, start, end);
-    } else if (valid_bank() && orphan(current_part(), track)) /* its bytes are the absent machine's, not FLEX's */
+    } else if (valid_bank() && orphan(current_part(), track)) { /* its bytes are the absent machine's, not FLEX's */
+        stop_stock(track);
         return STOCK(Render *, 0x400047f0u)(track, ping, start, end);
-    else
+    }
+    else /* unguarded: mostly stock's own FLEX render; FM Synth also plays a legacy FMSYNTH-named sample as FM here (#999) */
         for (unsigned k = 0; k < n; ++k)
-            if (m[k]->flags & MODWERK_MACHINE_RENDER_FLEX && m[k]->render) return guarded(m[k]->render, track, ping, start, end);
+            if (m[k]->flags & MODWERK_MACHINE_RENDER_FLEX && m[k]->render) return m[k]->render(track, ping, start, end);
     return STOCK(Render *, 0x40004008u)(track, ping, start, end);
 }

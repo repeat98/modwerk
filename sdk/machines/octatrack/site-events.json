@@ -145,7 +145,7 @@
    "index": 28,
    "event": "ot_machines",
    "kind": "table",
-   "room": 4,
+   "room": 8,
    "record": 80
   },
   {
@@ -184,6 +184,18 @@
    "event": "ev_arp_setup_text",
    "kind": "take",
    "room": 8
+  },
+  {
+   "index": 35,
+   "event": "ev_trig_muted",
+   "kind": "raise"
+  },
+  {
+   "index": 36,
+   "event": "ot_sample_editor_actions",
+   "kind": "table",
+   "room": 4,
+   "record": 64
   }
  ]
 }

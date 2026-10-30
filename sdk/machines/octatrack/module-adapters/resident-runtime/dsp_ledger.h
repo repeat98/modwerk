@@ -12,7 +12,7 @@
 #define MW_DSP_FEATURES 15u  /* every feature bit */
 /* Features whose engine and initial words come from their controller's package (ABI 10), never from the base. */
 #define MW_DSP_PACKAGED 4u
-#define MW_DSP_KEYBUS_EXECUTED 41u  /* its tap: executed instructions a sample for a core's four tracks, counted statically */
+#define MW_DSP_KEYBUS_EXECUTED 25u  /* its tap: executed instructions a sample for a core's four tracks, counted statically */
 #define MW_DSP_KEYBUS_HARDWARE 51u  /* its tap: chip cycles a sample for a core's four tracks, timed on a unit (evidence/keybus-tap-timing-20261023.json); its charge */
 /* What a held feature holds too. */
 #define MW_DSP_IMPLIED(f) ((f) | ((f) & 1u ? 8u : 0u))
@@ -52,6 +52,7 @@ static const struct mw_dsp_site mw_dsp_sites[] = {
     {2u, 0, {0x0u, 0x0u}}, /* 3 dsp_core0_mixdown */
     {2u, 0, {0x0u, 0x0u}}, /* 4 dsp_core0_phones */
     {4u, 0, {0x426u, 0x221u}}, /* 5 dsp_track_source */
+    {1u, 0, {0x0u, 0x0u}}, /* 6 dsp_compressor_init */
 };
 #define MW_DSP_SITES (sizeof mw_dsp_sites / sizeof mw_dsp_sites[0])
 
