@@ -18,3 +18,8 @@ Raw device data stays private.
 A no-module emulator follow-up reproduces held trigs and lost FUNC release when
 remote USB input splits a physical fader report. This isolates a development
 input-path bug; its fix and a fresh hardware qualification run remain outstanding.
+
+A fresh stationary-panel rerun passes 32 maximum edits and four minutes of USB
+audio checks, reaching 93.7% sampled CPU. STOP works; a cleanup protocol fault
+recovers and complete restoration is verified. Concurrent-input qualification
+and full system cost bounds remain open; module runtime is unchanged.

@@ -6,6 +6,12 @@ public-beta qualification. The [receipt](evidence/mkii-companion-load-20261031.j
 records exact package identities, observations, interrupted attempts and recovery.
 No module runtime changed for this test.
 
+The later **stationary-panel USB-recording rerun passed 32 maximum edits and
+the stated audio checks**. Its cleanup protocol fault recovered and restoration
+was independently verified. See the rerun below and its separate
+[receipt](evidence/mkii-usb-recording-rerun-20261031.json); the earlier interrupted
+attempts remain recorded.
+
 ## Method
 
 One retained RAM trial held Sample Locks, TapeHead, E-Verb and Air Chorus.
@@ -99,13 +105,13 @@ maximum held run three samples. The second recording also had zero repeated
 16-sample blocks per measured channel. These output checks do not override the
 input/data failure or establish correct panel behavior.
 
-## Recovery and outcome
+## Recovery from the interrupted attempts
 
-**Higher-load qualification failed.** Advancing audio/UI counters and zero DSP
+**Those higher-load attempts failed.** Advancing audio/UI counters and zero DSP
 errors were insufficient to establish responsive physical controls. The later
-no-module comparison below confirms an independent input-path bug. Safe input
-serialization and a fresh hardware run are required before further qualification;
-the failed trial remains recorded.
+no-module comparison below confirms an independent input-path bug. Concurrent
+physical/remote input needs safe serialization; the stationary-panel rerun below
+tests a separate constrained scenario.
 
 Undo restored the original empty module inventory, normal active/set identities
 and all three original opener sites. Working/saved Part hashes were preserved.
@@ -145,10 +151,60 @@ firmware code was patched. A single-byte arrival was constructed in the paused
 UART model by dropping a dummy prefix before the firmware received it.
 
 See the [isolation receipt](evidence/input-isolation-emulator-20261031.json).
-The next required change is safe serialization of remote input at complete
-physical report boundaries, with these cases as regressions. A fresh hardware
-run is still required; this finding does not turn the earlier failed trial into
+Concurrent-input qualification still needs safe serialization of remote input
+at complete physical report boundaries, with these cases as regressions and a
+fresh hardware check. This finding does not turn the earlier failed trial into
 a clean pass. Sample Locks runtime remains unchanged.
+
+## Fresh stationary-panel USB-recording rerun
+
+At the author's request, the same four packages ran from a fresh RAM boot with
+the physical panel held still and no injected fader events. All four fixture
+patterns matched their original bytes before testing. The complete working Part
+configuration matched the earlier higher-load setup byte-for-byte, including
+the author's persisted FX/LFO settings; individual LFO enable flags were not
+independently decoded. Initial held-key rows and stock FUNC state were clear.
+
+The revised host driver acknowledged held-row transitions and stock FUNC
+press/release, checked clear input state between gestures, and checked for fader
+drift throughout load windows. It did not fix the device input-framing bug.
+Ten A01 maximum Lock/Clear pairs and two Clear/restore pairs each on A02–A04
+passed: **32 operations, 512 changed SAMPLE fields each**. Every complete pattern,
+active lock-index array and working/saved Part block matched expectations.
+Playback stayed running during edits; all four original patterns were restored.
+
+One continuous 20-channel recording covered 240.013 seconds. Across the 18
+track/Main channels, whole-stream and per-channel checks found zero adjacent
+repeated 16-sample blocks, maximum exact-zero run one sample and maximum held run
+three samples. No clipping was measured. Main's minimum 100 ms RMS was about
+0.00879/0.00889. These are descriptive processed-output checks; no new author
+listening report, analog capture or proof against every click is claimed.
+
+Closed-screen cached main CPU median rose from 70.4% without USB recording to
+84.1% with recording. The largest sampled reading across windows and edits was
+93.7%; DSP peaks reached 79.9% on T1–4 and 78.2% on T5–8. This was not a 100%
+saturation test. Errors/stalls stayed zero and no frame shedding was observed.
+The fresh cumulative inner publication maximum was 617 counts, about 4.67
+microseconds, excluding interrupt-mask boundary instructions. Largest operation
+window frame gap/lateness was about 459.1/90.1 microseconds; idle windows also
+had lateness, reaching about 121.3 microseconds. Different window lengths do not
+isolate an added lateness rate. Host completion timings include input checks,
+USB/UI scheduling and polling, and are not native exclusive CPU time.
+
+Remote STOP worked at the end, with clear held rows/FUNC state. The CLI's initial
+Undo ENTER acknowledgement was not confirmed, and the client stopped. A fresh
+trusted connection adopted only the pinned trial; rollback returned
+`needs-recovery`. A subsequent connection found normal state, original active/set
+identities and empty inventory. Readback verified all three original sites,
+all four patterns, both Part blocks and stopped/clear-input state. The cause of
+the cleanup protocol fault was investigated separately: the test helper opened
+a second loader HELLO while the CLI retained a cached submission sequence. A
+host-side reproduction using the native duplicate-sequence refusal/cached-RESULT
+rule returns the cached HELLO for the first client's next ENTER. This strongly
+explains the mismatch; no hardware wire trace was captured. Keep one uploader
+owner throughout a retained trial. This is recovered restoration, not a clean
+first-attempt Undo. Final flashed-base restart status is recorded in
+the [rerun receipt](evidence/mkii-usb-recording-rerun-20261031.json).
 
 ## Limits
 

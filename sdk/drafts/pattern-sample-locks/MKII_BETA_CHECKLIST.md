@@ -1,11 +1,11 @@
 # MKII candidate check
 
-**Higher-load qualification failed on 31 October 2026.** A companion/USB trial
-exposed an unresolved input/modifier fault and unintended SAMPLE changes.
-Recovery, Undo and return to the original flashed base were verified. Isolate
-the fault before continuing beta qualification; see [MKII_HIGH_LOAD.md](MKII_HIGH_LOAD.md).
-The follow-up reproduced an independent USB input-framing bug with no modules
-installed. Input serialization and a fresh hardware rerun remain outstanding.
+The latest stationary-panel USB rerun on 31 October 2026 passed 32 maximum edits
+and four minutes of audio checks, reaching 93.7% sampled main CPU. STOP worked;
+cleanup needed protocol recovery, then restoration was independently verified.
+An earlier concurrent physical/remote-input trial failed, and a no-module emulator
+reproduced the independent input-framing bug. Its serialization fix and concurrent
+input qualification remain outstanding. See [MKII_HIGH_LOAD.md](MKII_HIGH_LOAD.md).
 
 Partially performed on 31 October 2026: unchanged candidate `3e13c46f…`
 ran 43 native operations on RAM development base `20ed7910…`; a separate probe

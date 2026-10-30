@@ -12,9 +12,17 @@ Retired reports and obsolete captures are consolidated in [PROTOTYPE_HISTORY.md]
 
 ## MKII companion-load follow-up — 31 October 2026
 
+The latest fresh-boot rerun held the physical panel still and used USB recording
+for added load. All 32 maximum 512-field edits, full pattern/index/Part comparisons
+and input-state checks passed. Four minutes of USB PCM passed the stated continuity
+checks; sampled main CPU reached 93.7%, with no DSP errors/stalls or frame shedding.
+STOP worked. Initial Undo hit a protocol fault; subsequent recovery and complete
+restoration were verified. See the separate
+[rerun receipt](evidence/mkii-usb-recording-rerun-20261031.json) for final restart status.
+
 The unchanged candidate ran beside TapeHead, E-Verb and Air Chorus with real FX
 assignments. The initial 32 maximum edits passed data, transport and USB-audio
-checks; sampler recording refused Apply without writes. Higher-load qualification
+checks; sampler recording refused Apply without writes. Earlier higher-load qualification
 **failed**: after 24 individually verified USB-recorded edits across interrupted
 attempts, physical STOP behaved as a paste gesture and A02 had six missing SAMPLE
 fields. The input/modifier fault and unintended edits remain unattributed. Recovery

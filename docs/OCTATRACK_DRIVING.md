@@ -65,6 +65,13 @@ The session’s `try FILE` accepts immediately. For a temporary trial, use the M
 the one-shot `npm run device -- try FILE` without `--accept`; do not use session `try` as an automatic Undo test.
 A private module-only trial does not inherit the flashed base's kept module set. To test companions, prepare copies bound to the exact temporary base and review/trial the complete set; a Keep on the twin is not an inventory-recovery step. A host client's own trial timer can also remove the set while its USB keepalive is still healthy. State the timeout and distinguish it from a RAM clear or restart.
 
+Keep one uploader owner throughout a retained trial. A second
+`UploadSession.connect` sends HELLO and advances the vendor sequence, while the
+first transport retains its cached counter. That can make its next ENTER reuse
+the second client's sequence and receive a stale HELLO result. Shared observers
+may read identity, inventory and load or drive panel requests; do not SUBMIT
+another upload frame while the first client retains ownership.
+
 After an unplug, a crash restart or a RAM boot, the bridge can hold a dead handle; `pkill -f usb_bridge;
 pkill -f '^node scripts/device.mjs serve'` and the loop starts both again. Anchor the pattern: without `^` it also
 matches any shell whose command line contains it (the loop's, or the one running `pkill`), and kills that.
