@@ -11,6 +11,7 @@
 static unsigned failures;
 #define CHECK(x) do { if (!(x)) { failures++; fprintf(stderr, "%s:%d: %s\n", __FILE__, __LINE__, #x); } } while (0)
 static uint8_t stock_voices[8 * 168]; /* stock's voice records (0x800049d8 + 168 * track): byte 0 is "playing" */
+static uint32_t render_states[8 * 10]; /* stock's render states (0x80004898 + 40 * track): +4 the RTRG count */
 
 /* Synthetic memory: a few segments at the addresses the registry reads. */
 struct segment { uint32_t base, size; uint8_t *bytes; };
@@ -23,7 +24,7 @@ static struct segment segments[] = {
     {0x460e7380u, 0x20, ui}, {0x460e70e0u, 4, ui + 0x20}, {0x400d320cu, 12, stockdef},
     {0x40079240u, 0x10, code}, {0x400585f0u, 0x10, code + 0x10}, {0x4003c950u, 4, code + 0x20}, {0x40078678u, 4, code + 0x24},
     {0x400786ccu, 4, code + 0x28}, {0x40079904u, 4, code + 0x2c}, {0x40065c7cu, 4, code + 0x30}, {0x40078c20u, sizeof clamps, clamps},
-    {0x800049d8u, sizeof stock_voices, stock_voices},
+    {0x800049d8u, sizeof stock_voices, stock_voices}, {0x80004898u, sizeof render_states, (uint8_t *)render_states},
 };
 static uint8_t *host_at(uint32_t a)
 {
@@ -423,6 +424,40 @@ int main(void)
         CHECK(mw_assign(part0() + PART_STRIDE, 3, 1) == 1 && part0()[PART_STRIDE + 60 + 90] == 0 && *t3 == 1);
         memset(stock_voices, 0, sizeof stock_voices);
         rows(0, 0, 0, 0);
+    }
+
+    /* A track a machine renders keeps stock's FLEX voice and retrig stopped, every render: its trigs start that voice
+     * and latch RTRG (render state +4) from the machine's bytes, and a bank or Part change that makes the track FLEX
+     * again never passes mw_assign (#1051). A FLEX track's, and those of a machine without its own render (VECTOR,
+     * POLY8), are stock's. */
+    {
+        const void *a_v[] = {&A, &V};
+        rows(a_v, 2, 0, 0);
+        uint8_t *t3 = stock_voices + 168u * 3u, *t2 = stock_voices + 168u * 2u, *t4 = stock_voices + 168u * 4u;
+        uint32_t *r3 = render_states + 10u * 3u, *r2 = render_states + 10u * 2u, *r4 = render_states + 10u * 4u;
+        CHECK(mw_assign(part0(), 2, 1) == 1 && mw_assign(part0(), 3, 5) == 1 && mw_assign(part0(), 4, 6) == 1);
+        *t3 = 1; *t2 = 1; *t4 = 1; t3[1] = 7; r3[1] = r2[1] = r4[1] = 0x4000; r3[6] = 9;
+        int a_before = a_renders;
+        CHECK(mw_source_render_impl(3, 0, 0, 1) == a_renders && a_renders == a_before + 1);
+        CHECK(*t3 == 0 && t3[1] == 7 && r3[1] == 0 && r3[6] == 9 && *t2 == 1 && r2[1] == 0x4000); /* A's track only */
+        *t3 = 1; r3[1] = 0x4000;                                             /* a trig between the two renders */
+        CHECK(mw_source_render_impl(3, 0, 0, 16) > 0 && *t3 == 0 && r3[1] == 0);
+        int flex = stock_renders;
+        CHECK(mw_source_render_impl(2, 0, 0, 1) == -7 && stock_renders == flex + 1 && *t2 == 1 && r2[1] == 0x4000); /* FLEX */
+        CHECK(mw_source_render_impl(4, 0, 0, 1) == -7 && *t4 == 1 && r4[1] == 0x4000); /* VECTOR renders inside stock's */
+        /* The Part changes under the track (no mw_assign): FLEX again, its voice and retrig as the machine left them. */
+        part0()[60 + 90] = 0; part0()[61 + 90] = 0; part0()[62 + 90] = 0;
+        CHECK(mw_source_render_impl(3, 0, 0, 1) == -7 && *t3 == 0 && r3[1] == 0);
+        *t3 = 1; r3[1] = 3; CHECK(mw_source_render_impl(3, 0, 0, 1) == -7 && *t3 == 1 && r3[1] == 3); /* its FLEX trig */
+        /* An absent machine's track renders stock's silent source and keeps both stopped, too. */
+        rows(0, 0, 0, 0);
+        part0()[60 + 90] = 'A'; part0()[61 + 90] = 'B'; part0()[62 + 90] = 1;
+        int silent = silent_renders;
+        CHECK(mw_source_render_impl(3, 0, 0, 1) == -9 && silent_renders == silent + 1 && *t3 == 0 && r3[1] == 0);
+        part0()[60 + 90] = 0; part0()[61 + 90] = 0; part0()[62 + 90] = 0;
+        part0()[60 + 120] = 0; part0()[61 + 120] = 0; part0()[62 + 120] = 0;
+        memset(render_states, 0, sizeof render_states);
+        memset(stock_voices, 0, sizeof stock_voices);
     }
 
     /* The frame guard (a frame 47,891 counts; each earns 38,312, short ones save up to 23,945; the slack 4,789). F's
