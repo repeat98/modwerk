@@ -40,6 +40,10 @@ All 8 steps reported PASS; drop-auto does not count (above). A first attempt sto
 
 **Rerun on AUTO channel 14 (MM04, same project):** unchecked first: drop-auto and drop-track heard the muted BD, SD soloed left BD heard, BD soloed and muted heard (stock everywhere). Then checked: the bench's new AUTO-channel check heard the AUTO note before the tests; drop-auto and drop-track silent; held note stopped 80 ms after the CC 94 mute; SD soloed, BD silent; BD soloed and muted, heard; held BD note stopped 60 ms after SD was soloed. All 9 checked steps passed, and with the void steps above replaced, every MM04 step on the unit now has a valid result.
 
+**DIN MIDI (MM04, same project, box checked).** The bench sent everything through the author's AF16Rig, its DIN 2 output cabled to the Rytm's MIDI IN, and recorded the Rytm's USB audio as before. All 15 steps passed: the AUTO-channel check heard the AUTO note; drop-auto, drop-track and track-channel notes 12, 36 and 59 silent for a muted BD; another track muted, BD heard; held note stopped 70 ms after the CC 94 mute; SD soloed, BD silent; BD soloed and muted, heard; held BD note stopped 75 ms after SD was soloed; the 60 s flood (9,469 Note On/Off pairs, 33,065 CCs, 5,760 clocks, 119 mute toggles, about 870 messages a second handed to the interface) left BD silent afterwards and a new note heard. How much of the flood the interface delivered at DIN's wire rate was not measured.
+
+**Flood with solo (MM04, box checked).** The bench's flood gained CC 93 solo toggles on channels 1-4, about one every 1.3 s, all cleared at the end. Over USB: 9,435 Note On/Off pairs, 32,997 CCs, 5,760 clocks, 119 mute and 46 solo toggles in 60 s (about 870 messages a second); over DIN through the AF16Rig: 9,494 pairs, 33,108 CCs, 5,760 clocks, 119 mute and 46 solo toggles. Both times BD was silent once everything was released, unmuted and unsoloed, and a new BD note was heard.
+
 ## Build MM03 on a unit (author's Rytm MKII, 30 October 2026)
 
 - **Image:** MM03 (SHA-256 `b460740b…bf7d`) on the author's Analog Rytm MKII, OS 1.74, sent with Elektron Transfer.
@@ -151,7 +155,7 @@ PORT CONFIG shows MUTE MIDI IN as its last row, after RECEIVE CC/NRPN, unchecked
 
 ## Not tested
 
-- **The unit, still open.** The unchecked solo baseline, DIN MIDI (MM03 ran over USB only), a full live performance, and a pattern or kit change during a flood.
+- **The unit, still open.** A full live performance, a pattern or kit change during a flood, and the unchecked baseline over DIN.
 - **On the unit's clock.** CPU time per event and under the flood, measured with DTIM0; a flood at 240 BPM; a pattern or kit change during the flood.
 - **USB timing.** A real USB host; the emulator's USB MIDI input is its own model.
 - **Silent Pad+Trig and Retrig Grid** (core-ar2 0.3 submissions) were not built beside it.
