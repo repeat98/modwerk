@@ -78,4 +78,10 @@ Design, specification and screen layout by Diego Antelo Barba. Code written with
 
 ## Screens and audio
 
-No captures yet: they must come from the headless emulator or the unit's LCD (docs/MODULE_UI_CAPTURES.md). Tiempos makes no sound, so it has no audio preview.
+Photographs of the developer's MKI LCD, cropped and turned to greyscale (30 October 2026, project at 140 BPM, three 64-bar tones on tracks 1-3).
+
+![Tiempos open just after PLAY](media/ot-tiempos-open.png)
+
+![The last 30 seconds flash; track 1 was retriggered](media/ot-tiempos-last-30s.png)
+
+Tiempos makes no sound, so it has no audio preview.
