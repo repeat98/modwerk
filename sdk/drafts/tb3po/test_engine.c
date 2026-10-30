@@ -149,12 +149,106 @@ static void writes_the_record(void)
     tb3po_write(r, NULL, &a, &p, 33, 200, 300, locked);
     for (unsigned i = 0; i < 32; ++i) { const uint8_t *l = r + TB3PO_LOCKS + 32 * i; assert(l[1] == 255 || l[1] == 127); assert(l[2] == 255 || l[2] == 127); }
 }
+
+static void audio_record(uint8_t *r) { memset(r, 0, TB3PO_AUDIO_TRACK_BYTES); memset(r + TB3PO_AUDIO_LOCKS, 255, 64 * 32); memset(r + 0x40, 0xaa, 8); r[0x50] = 16; r[0x51] = 1; }
+static void writes_the_audio_record(void)
+{
+    static uint8_t r[TB3PO_AUDIO_TRACK_BYTES], mirror[TB3PO_AUDIO_TRACK_BYTES], before[TB3PO_AUDIO_TRACK_BYTES];
+    uint8_t locked[TB3PO_STEPS]; Tb3poPattern a; Tb3poParams p = tb3po_defaults;
+    Tb3poAudio au = {9, 16, 100, 8, 5, 1, 3};
+    audio_record(r);
+    assert(tb3po_audio_empty(r));
+    r[TB3PO_AUDIO_LOCKS + 32 * 3 + 7] = 9; /* a user's LFO lock on step 3 stays */
+    r[TB3PO_AUDIO_LOCKS + 32 * 60 + 24] = 4; /* an FX2 lock past the length stays */
+    memcpy(mirror, r, sizeof r);
+    assert(!tb3po_audio_empty(r));
+    p.seed = 3; p.slide = 127; p.accent = 60; /* every note slides: the record is a chain of lock-only glides */
+    assert(tb3po_generate(&a, &p, 32));
+    unsigned trigs = tb3po_write_audio(r, mirror, &a, &p, &au, locked), count = 0, lock_only = 0, slides = 0;
+    assert(!memcmp(r, mirror, sizeof r));
+    for (unsigned i = 0; i < TB3PO_STEPS; ++i) {
+        const Tb3poStep *s = &a.steps[i]; const uint8_t *l = r + TB3PO_AUDIO_LOCKS + 32 * i;
+        unsigned note = i < 32 && s->kind != TB3PO_REST, slid = i < 32 && a.steps[(i + 31) % 32].kind == TB3PO_SLIDE && note;
+        unsigned trig = note && !slid, accent = note && s->kind == TB3PO_ACCENT;
+        count += trig; lock_only += note && !trig; slides += on(r, 3, i);
+        assert(on(r, 0, i) == trig && on(r, 3, i) == slid);
+        if (i >= 32) { assert(!on(r, 0, i) && !on(r, 2, i)); continue; }
+        assert(l[0] == (note ? tb3po_ptch(&p, s, 9) : 255));
+        if (note) { assert(l[0] >= 4 && l[0] <= 119 && (l[0] - 4) % 5 == 0); }
+        assert((l[13] != 255) == trig);
+        if (trig) { assert(l[13] >= 32 && l[13] <= 126); if (s->kind == TB3PO_SLIDE) assert(l[13] > 32); else assert(l[13] == 32); }
+        assert(l[15] == (note && !accent ? 100 - 32 : 255));
+        assert(l[21] == (accent ? 90 : 255));
+        assert(!on(r, 1, i) && !on(r, 9, i));
+        assert(r[TB3PO_AUDIO_TIMING + 2 * i] == 0 && r[TB3PO_AUDIO_TIMING + 2 * i + 1] == 0);
+        unsigned any = note || i == 3;
+        assert(locked[i] == any && on(r, 2, i) == (!trig && any));
+    }
+    assert(trigs == count && lock_only > 0 && slides == lock_only);
+    assert(r[TB3PO_AUDIO_LOCKS + 32 * 3 + 7] == 9 && r[TB3PO_AUDIO_LOCKS + 32 * 60 + 24] == 4 && locked[60] == 1);
+    for (unsigned k = 0x40; k < 0x48; ++k) assert(r[k] == 0xaa); /* swing untouched */
+    /* No slides, no accents, AVEL and AFLT off: trigs with PTCH and HOLD alone. */
+    memcpy(before, r, sizeof r);
+    p.slide = 0; p.accent = 0; au.avel = 0; au.aflt = 0;
+    assert(tb3po_generate(&a, &p, 32));
+    tb3po_write_audio(r, NULL, &a, &p, &au, locked);
+    for (unsigned i = 0; i < 32; ++i) {
+        const uint8_t *l = r + TB3PO_AUDIO_LOCKS + 32 * i; unsigned note = a.steps[i].kind != TB3PO_REST;
+        assert(on(r, 0, i) == note && !on(r, 3, i) && l[15] == 255 && l[21] == 255 && (l[13] == 32) == note);
+    }
+    for (unsigned i = 32; i < TB3PO_STEPS; ++i) assert(!memcmp(r + TB3PO_AUDIO_LOCKS + 32 * i, before + TB3PO_AUDIO_LOCKS + 32 * i, 32));
+    /* Without the stock FILTER on FX1 no DEPTH lock is written. */
+    au.aflt = 7; au.filter = 0; p.accent = 127;
+    assert(tb3po_generate(&a, &p, 16));
+    tb3po_write_audio(r, NULL, &a, &p, &au, locked);
+    for (unsigned i = 0; i < 16; ++i) assert(r[TB3PO_AUDIO_LOCKS + 32 * i + 21] == 255);
+    /* The same line again changes nothing. */
+    memcpy(before, r, sizeof r);
+    tb3po_write_audio(r, NULL, &a, &p, &au, locked);
+    assert(!memcmp(r, before, sizeof r));
+}
+static void pitch_fits_two_octaves(void)
+{
+    for (unsigned scale = 0; scale < TB3PO_SCALES; ++scale) for (unsigned root = 0; root < 12; ++root)
+    for (unsigned degree = 0; degree < tb3po_scale_length[scale]; ++degree) for (unsigned octave = 0; octave < 2; ++octave) {
+        Tb3poParams p = tb3po_defaults; p.scale = (uint8_t)scale;
+        Tb3poStep s = {TB3PO_NOTE, (uint8_t)degree, (uint8_t)octave};
+        unsigned v = tb3po_ptch(&p, &s, root);
+        assert(v >= 4 && v <= 119 && (v - 4) % 5 == 0);
+        int semitone = ((int)v - 64) / 5;
+        assert((semitone + 24 - (int)root) % 12 == tb3po_scale_degrees[scale][degree] % 12);
+    }
+}
+static void settings_round_trip(void)
+{
+    uint8_t packed[TB3PO_PACKED];
+    for (unsigned n = 0; n < 4000; ++n) {
+        Tb3poAudioSettings s = tb3po_audio_defaults, back;
+        uint32_t x = 0x9e3779b9u * (n + 1u);
+        s.p.density = (uint8_t)(x & 127); s.p.accent = (uint8_t)(x >> 7 & 127); s.p.slide = (uint8_t)(x >> 14 & 127); s.p.seed = (uint8_t)(x >> 21 & 127);
+        s.p.var = (uint8_t)(n % 32); s.a.gate = (uint8_t)(n % 64); s.a.avel = (uint8_t)(n / 3 % 32); s.p.scale = (uint8_t)(n % 6);
+        s.p.dir = (uint8_t)(n % 4); s.p.motif = (uint8_t)(n % 32 ? n % 32 + 1 : 0); s.a.root = (uint8_t)(n % 12); s.a.aflt = (uint8_t)(n % 8);
+        tb3po_pack(packed, &s);
+        for (unsigned k = 0; k < TB3PO_PACKED; ++k) assert(packed[k] < 128); /* stock's validator may see them */
+        tb3po_unpack(&back, packed);
+        assert(back.p.density == s.p.density && back.p.accent == s.p.accent && back.p.slide == s.p.slide && back.p.seed == s.p.seed);
+        assert(back.p.var == s.p.var && back.a.gate == s.a.gate && back.a.avel == s.a.avel && back.p.scale == s.p.scale);
+        assert(back.p.dir == s.p.dir && back.p.motif == s.p.motif && back.a.root == s.a.root && back.a.aflt == s.a.aflt);
+        assert(back.p.octs == 2); /* two octaves on a sample track */
+    }
+    memset(packed, 0x7f, sizeof packed); /* a stray all-ones record still unpacks inside every range */
+    Tb3poAudioSettings s; tb3po_unpack(&s, packed);
+    assert(s.p.scale < TB3PO_SCALES && s.a.root < 12 && s.p.motif <= 32 && s.p.dir <= 3);
+}
 int main(void)
 {
     same_as_reference();
     deterministic_in_scale();
     knobs_change_it();
     writes_the_record();
+    writes_the_audio_record();
+    pitch_fits_two_octaves();
+    settings_round_trip();
     puts("[PASS] tb3po engine");
     return 0;
 }

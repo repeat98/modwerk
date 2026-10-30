@@ -3,8 +3,9 @@
 
 1. test_engine.py: the integer engine against tb3po.c's generator (floats, as written) over 50,688 seed, scale,
    octave-range and length cases, step for step; determinism, scale membership, the slide and at-least-one-note
-   rules, every direction and motif; the track-record writer (locks, masks, trig words, what it leaves alone); the
-   ColdFire package's ot_midi_generators record at the registry's index (ABI 2, 36 bytes, aligned, order 40).
+   rules, every direction and motif; both track-record writers (locks, masks, slide chains, trig words, what they
+   leave alone), the PTCH range and the settings packing; the ColdFire package's ot_machines (ABI 1, 88 bytes, order
+   50) and ot_midi_generators (ABI 2, 36 bytes, order 40) records at the registry's indices.
 2. The package build.py makes from the sources is byte for byte the published one
    (src/engine/assets/octatrack-module-packages.json).
 Needs m68k-elf-gcc for the package; host-only checks still run without it.
@@ -36,5 +37,5 @@ with tempfile.TemporaryDirectory() as folder:
 digest = hashlib.sha256(data).hexdigest()
 if digest != row['sha256'] or (ROOT / 'public' / row['path']).read_bytes() != data:
     sys.exit('[FAIL] the package built from source (%s) is not the published one (%s)' % (digest[:16], row['sha256'][:16]))
-print('[PASS] TB-3PO %s: engine and record checks, generator record at the registry index, package %s identical to the published one'
+print('[PASS] TB-3PO %s: engine and record checks, machine and generator records at the registry indices, package %s identical to the published one'
       % (row['version'], digest[:16]))

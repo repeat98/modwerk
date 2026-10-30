@@ -168,3 +168,121 @@ unsigned tb3po_write(uint8_t *r, uint8_t *mirror, const Tb3poPattern *pattern, c
     for (unsigned k = 0; k < 40; ++k) put(r, mirror, k, masks[k]);
     return trigs;
 }
+
+/* ---- the sample tracks ---- */
+const Tb3poAudioSettings tb3po_audio_defaults = {{89, 51, 32, 0, 1, 0, 2, TB3PO_FWD, 0}, {9, 16, 0, 12, 0, 0, 0}};
+
+void tb3po_copy_settings(Tb3poAudioSettings *to, const Tb3poAudioSettings *from)
+{
+    const uint8_t *f = (const uint8_t *)from; uint8_t *t = (uint8_t *)to;
+    for (unsigned k = 0; k < sizeof *to; ++k) t[k] = f[k];
+}
+unsigned tb3po_ptch(const Tb3poParams *p, const Tb3poStep *s, unsigned root)
+{
+    unsigned scale = p->scale < TB3PO_SCALES ? p->scale : 0u, degree = s->degree < 7u ? s->degree : 0u;
+    /* Two octaves on stock's -12..+12: the root rotates the pitch classes inside them. */
+    int semitone = -12 + (int)((root + tb3po_scale_degrees[scale][degree]) % 12u) + 12 * (int)(s->octave & 1u);
+    return (unsigned)(64 + 5 * semitone);
+}
+static unsigned abit(const uint8_t *r, unsigned mask, unsigned step) { return (r[mask * 8u + 7u - step / 8u] >> (step % 8u)) & 1u; }
+static void asetbit(uint8_t *r, unsigned mask, unsigned step, unsigned on)
+{
+    uint8_t *byte = r + mask * 8u + 7u - step / 8u, b = (uint8_t)(1u << (step % 8u));
+    *byte = on ? (uint8_t)(*byte | b) : (uint8_t)(*byte & (uint8_t)~b);
+}
+/* As VECTOR's: no trigs, marks or recorder events (masks 0-7 and 9; 8 is swing, a default) and no lock at all. */
+int tb3po_audio_empty(const uint8_t *r)
+{
+    for (unsigned i = 0; i < 64; ++i) if (r[i]) return 0;
+    for (unsigned i = 72; i < 80; ++i) if (r[i]) return 0;
+    for (unsigned i = 0; i < TB3PO_STEPS * 32u; ++i) if (r[TB3PO_AUDIO_LOCKS + i] != TB3PO_NO_LOCK) return 0;
+    return 1;
+}
+static void aput(uint8_t *r, uint8_t *mirror, unsigned at, uint8_t v)
+{
+    if (r[at] == v) return;
+    r[at] = v;
+    if (mirror) mirror[at] = v;
+}
+/* In place, only the bytes that change, as the MIDI writer. Step i of the line: a rest clears the trig and its PTCH,
+ * HOLD, VOL and DEPTH locks; a note is a trig with PTCH, HOLD (GATE, or longer when it slides) and, by kind, VOL and
+ * DEPTH locks; the step after a slide keeps no trig: it is a lock-only step with the PTCH lock and the slide trig, so
+ * the held sample glides to it. Old and new notes lose stale marks and get a straight trig word. `locked` gets
+ * whether each step keeps any lock. Returns the number of trigs. */
+unsigned tb3po_write_audio(uint8_t *r, uint8_t *mirror, const Tb3poPattern *pattern, const Tb3poParams *p,
+                           const Tb3poAudio *a, uint8_t locked[TB3PO_STEPS])
+{
+    uint8_t masks[80], slid[TB3PO_STEPS];
+    unsigned trigs = 0, length = pattern->length > TB3PO_STEPS ? TB3PO_STEPS : pattern->length, slide_mask = a->slide_mask;
+    for (unsigned k = 0; k < 80; ++k) masks[k] = r[k];
+    /* A step is slid into when the step before it (the last, into the first) slides: the line's cleanup promises a
+     * note there. */
+    for (unsigned i = 0; i < length; ++i) slid[i] = (uint8_t)(pattern->steps[(i + length - 1u) % length].kind == TB3PO_SLIDE && pattern->steps[i].kind != TB3PO_REST);
+    for (unsigned i = 0; i < TB3PO_STEPS; ++i) {
+        const Tb3poStep *s = &pattern->steps[i];
+        unsigned at = TB3PO_AUDIO_LOCKS + 32u * i, old = abit(masks, TB3PO_MASK_TRIGS, i), note = i < length && s->kind != TB3PO_REST;
+        if (i >= length) {
+            unsigned any = 0;
+            for (unsigned k = 0; !any && k < 32; ++k) any = r[at + k] != TB3PO_NO_LOCK;
+            locked[i] = (uint8_t)any;
+            continue;
+        }
+        unsigned trig = note && !slid[i], accent = note && s->kind == TB3PO_ACCENT;
+        unsigned hold = 2u * a->gate;
+        if (trig && s->kind == TB3PO_SLIDE) { /* hold through every step slid into after this one */
+            for (unsigned j = (i + 1u) % length; j != i && slid[j]; j = (j + 1u) % length) hold += TB3PO_HOLD_STEP;
+            if (hold > 126u) hold = 126u;
+        }
+        aput(r, mirror, at + TB3PO_LOCK_PTCH, note ? (uint8_t)tb3po_ptch(p, s, a->root) : (uint8_t)TB3PO_NO_LOCK);
+        aput(r, mirror, at + TB3PO_LOCK_HOLD, trig ? (uint8_t)hold : (uint8_t)TB3PO_NO_LOCK);
+        aput(r, mirror, at + TB3PO_LOCK_VOL, note && a->avel && !accent ? (uint8_t)(a->base_vol > 4u * a->avel ? a->base_vol - 4u * a->avel : 0u) : (uint8_t)TB3PO_NO_LOCK);
+        aput(r, mirror, at + TB3PO_LOCK_FX1_DEPTH, accent && a->filter && a->aflt ? (uint8_t)(18u * a->aflt) : (uint8_t)TB3PO_NO_LOCK);
+        asetbit(masks, TB3PO_MASK_TRIGS, i, trig);
+        if (slide_mask < 10u) asetbit(masks, slide_mask, i, slid[i]);
+        if (old || note) { /* a straight trig word; no stale one-shot or condition marks (as VECTOR, masks 1, 3 and 9) */
+            aput(r, mirror, TB3PO_AUDIO_TIMING + 2u * i, 0);
+            aput(r, mirror, TB3PO_AUDIO_TIMING + 2u * i + 1u, 0);
+            for (unsigned m = 1; m < 10u; m += (m == 1u ? 2u : 6u)) if (m != slide_mask) asetbit(masks, m, i, 0);
+        }
+        unsigned any = note;
+        for (unsigned k = 1; !any && k < 32; ++k) any = k != TB3PO_LOCK_HOLD && k != TB3PO_LOCK_VOL && k != TB3PO_LOCK_FX1_DEPTH && r[at + k] != TB3PO_NO_LOCK;
+        locked[i] = (uint8_t)any;
+        asetbit(masks, TB3PO_MASK_LOCK_ONLY, i, !trig && any);
+        trigs += trig;
+    }
+    for (unsigned k = 0; k < 80; ++k) aput(r, mirror, k, masks[k]);
+    return trigs;
+}
+
+/* Seven bits a byte: a field of `bits` at bit offset `at` across the nine bytes. */
+static unsigned field(const uint8_t *in, unsigned at, unsigned bits)
+{
+    unsigned v = 0;
+    for (unsigned b = 0; b < bits; ++b, ++at) v |= (unsigned)((in[at / 7u] >> (at % 7u)) & 1u) << b;
+    return v;
+}
+static void set_field(uint8_t *out, unsigned at, unsigned bits, unsigned v)
+{
+    for (unsigned b = 0; b < bits; ++b, ++at) {
+        uint8_t m = (uint8_t)(1u << (at % 7u));
+        out[at / 7u] = (uint8_t)(v >> b & 1u ? out[at / 7u] | m : out[at / 7u] & (uint8_t)~m);
+    }
+}
+static const uint8_t widths[12] = {7, 7, 7, 7, 5, 6, 5, 3, 2, 5, 4, 3}; /* DENS ACNT SLID SEED VAR GATE AVEL SCAL DIR MOTF ROOT AFLT */
+void tb3po_pack(uint8_t out[TB3PO_PACKED], const Tb3poAudioSettings *s)
+{
+    unsigned v[12] = {s->p.density, s->p.accent, s->p.slide, s->p.seed, s->p.var, s->a.gate, s->a.avel, s->p.scale, s->p.dir,
+                      s->p.motif ? s->p.motif - 1u : 0u, s->a.root, s->a.aflt};
+    for (unsigned k = 0; k < TB3PO_PACKED; ++k) out[k] = 0;
+    for (unsigned k = 0, at = 0; k < 12; at += widths[k++]) set_field(out, at, widths[k], v[k] & ((1u << widths[k]) - 1u));
+}
+void tb3po_unpack(Tb3poAudioSettings *s, const uint8_t in[TB3PO_PACKED])
+{
+    unsigned v[12];
+    for (unsigned k = 0, at = 0; k < 12; at += widths[k++]) v[k] = field(in, at, widths[k]);
+    tb3po_copy_settings(s, &tb3po_audio_defaults);
+    s->p.density = (uint8_t)v[0]; s->p.accent = (uint8_t)v[1]; s->p.slide = (uint8_t)v[2]; s->p.seed = (uint8_t)v[3];
+    s->p.var = (uint8_t)v[4]; s->a.gate = (uint8_t)v[5]; s->a.avel = (uint8_t)v[6];
+    s->p.scale = (uint8_t)(v[7] < TB3PO_SCALES ? v[7] : 0u); s->p.dir = (uint8_t)v[8];
+    s->p.motif = (uint8_t)(v[9] ? v[9] + 1u : 0u); s->a.root = (uint8_t)(v[10] < 12u ? v[10] : 0u); s->a.aflt = (uint8_t)v[11];
+}

@@ -3,11 +3,11 @@
     "version": "0.1.0-experimental",
     "date": "2026-10-30",
     "changes": [
-      "New: TB-3PO, a generative 303-style acid-line generator on the MIDI tracks, a port of the Phazerville TB_3PO applet through the Schwung tb3po port. Choose it in MIDI NOTE SETUP; it writes note trigs and NOTE, VEL and LEN locks that the stock sequencer plays.",
-      "SRC: DENS, ACNT, SLID, OCT, ROOT, SCAL. AMP: SEED, VAR, GATE, SLEN, AVEL, DIR; FUNC+AMP: VEL, OCTS, MOTF. A knob turn redraws the line, YES rolls a new seed.",
-      "Accents are VEL locks; slides are LEN locks reaching into the next note, so a 303-type synth slides on the overlap. Set SLEN past one step.",
-      "Needs the Modwerk base loaded over USB with MIDI generators (beta). Card firmware cannot include it.",
-      "Not yet tested on a unit or in the emulator; SLEN's default is unverified against stock's LEN table."
+      "New: TB-3PO, a generative 303-style acid-line generator, a port of the Phazerville TB_3PO applet through the Schwung tb3po port. As a track machine on Flex and Static samples (SRC SETUP, like VECTOR) it writes note trigs with PTCH, HOLD, VOL and FILTER DEPTH locks and real slides; as a MIDI generator (MIDI NOTE SETUP) it writes NOTE, VEL and LEN locks.",
+      "DENS, ACNT, SLID, ROOT, SCAL and GATE on the SRC page; SEED, VAR, AVEL, AFLT, DIR and MOTF on SRC SETUP. A knob turn redraws the line, YES rolls a new seed, LEVEL push shows the stock sample controls.",
+      "Slides on a sample track hold the sample through the next step and glide its pitch there without a retrigger; on a MIDI track they overlap the next note so a 303-type synth slides.",
+      "Needs the Modwerk base loaded over USB (beta). Card firmware cannot include it.",
+      "Not yet tested on a unit or in the emulator; the slide-trig mask, the HOLD units per step and the MIDI LEN table are to be read off the unit."
     ]
   }
 ]

@@ -4,7 +4,7 @@
   "key": "TB3PO",
   "name": "TB-3PO",
   "version": "0.1.0-experimental",
-  "category": "midi-usb",
+  "category": "machines",
   "author": {
     "github": "semierendonmez-commits",
     "name": "Semi Erendönmez",
@@ -12,27 +12,27 @@
       "Octatrack module by Semi Erendönmez",
       "TB_3PO applet: djphazer and the Hemisphere Suite contributors (O_C-Phazerville, GPL-3.0)",
       "Schwung port tb3po.c (charlesvestal/schwung-tb3po f49d81d0): Charles Vestal, GPL-3.0",
-      "MIDI generator shape: VECTOR 0.3.0's midi.c by Jannik Aßfalg (MIT)"
+      "Machine and MIDI generator shapes: VECTOR and VECTOR 0.3.0's midi.c by Jannik Aßfalg (MIT)"
     ]
   },
   "nativeManifest": "manifest.py",
   "presentation": {
     "label": "ACID LINES",
     "family": "Sequencing",
-    "summary": "Generative 303-style acid lines on the MIDI tracks: density, accent, slide, scale and octaves from a seed.",
-    "overview": "TB-3PO writes a 303-style line into a MIDI track's own sequencer: note trigs with NOTE locks, accents as VEL locks and slides as LEN locks that reach into the next note, so a TB-303-type synth plays them as slides. The stock MIDI sequencer plays what it wrote, at the pattern's tempo, track speed, length and swing, with the track's conditions and note-offs. Every knob turn redraws the line from the seed and the controls; YES rolls a new seed; VAR mutates a quarter of the steps. The line is the Phazerville Hemisphere Suite TB_3PO applet's, as the Schwung port runs it.",
+    "summary": "Generative 303-style acid lines: a track machine for Flex and Static samples, and a MIDI generator for the MIDI tracks.",
+    "overview": "TB-3PO writes a 303-style line into the track's own sequencer. On a sample track it is a machine like VECTOR: note trigs with PTCH locks over two octaves, accents as VOL (and FILTER DEPTH) locks, and slides as real slides: the sample holds through the next step, which becomes a lock-only step with a PTCH lock and a slide trig, so the pitch glides without a retrigger. On a MIDI track it writes note trigs with NOTE, VEL and LEN locks, slides as notes overlapping the next. The stock sequencer plays what it wrote, at the pattern's tempo, track speed, length and swing. Every knob turn redraws the line from the seed and the controls; YES rolls a new seed; VAR mutates a quarter of the steps. The line is the Phazerville Hemisphere Suite TB_3PO applet's, as the Schwung port runs it.",
     "highlights": [
-      "Density, accent and slide probabilities, six scales, one to three octaves",
-      "Writes real trigs and NOTE, VEL and LEN locks: the stock sequencer plays them",
-      "Seed and VAR for variations; FWD, REV, PING and RND orders; motifs of 2-32 steps",
+      "Density, accent and slide probabilities, six scales, a root; seed and VAR for variations",
+      "Sample tracks: real trigs, PTCH, HOLD, VOL and FILTER DEPTH locks, true slides without a retrigger",
+      "MIDI tracks: NOTE, VEL and LEN locks, slides as overlapping notes for 303-type synths",
       "Follows the track's tempo, speed, length, swing and conditions: no clock of its own"
     ],
     "usage": [
-      "In MIDI mode, double-tap SRC (or the track key) to open MIDI NOTE SETUP; UP/DOWN to TB-3PO and YES. The track's SRC and AMP pages are now the generator's.",
-      "SRC: DENS, ACNT and SLID set how many steps play, how many are accented and how many slide; OCT and ROOT set the track's NOTE (the root); SCAL picks the scale.",
-      "AMP: SEED and VAR choose the variation, GATE the track's note length, SLEN the length of a slid note (longer than a step), AVEL the accent velocity and DIR the order. FUNC+AMP: VEL (plain notes), OCTS and MOTF.",
-      "Turning a control rewrites the track's trigs and NOTE, VEL and LEN locks at once; YES rolls a new seed. Edit single steps as on any MIDI track: hold a trig for stock's pages.",
-      "Point the track's channel at a 303-type synth whose overlapping notes slide (TB-03, TD-3, x0xb0x, Open303, Schwung 303) and press PLAY."
+      "Sample track: open SRC page 2 (double-tap SRC), choose TB-3PO and press YES; load a sample tuned to C through the stock pool. The SRC page shows DENS, ACNT, SLID, ROOT, SCAL and GATE; SRC SETUP shows SEED, VAR, AVEL, AFLT, DIR and MOTF.",
+      "Turn a control to rewrite the line at once, also while playing; press YES for a new seed. Push LEVEL for the stock sample controls; hold a trig for stock's page and its locks.",
+      "With the stock FILTER on FX1, AFLT gives accents a DEPTH lock; AVEL sets how far below the Part's VOL plain notes sit.",
+      "MIDI track: double-tap SRC in MIDI mode, choose TB-3PO in the list on the left and press YES. SRC: DENS, ACNT, SLID, OCT, ROOT, SCAL; AMP: SEED, VAR, GATE, SLEN, AVEL, DIR; FUNC+AMP: VEL, OCTS, MOTF. Point the track at a synth that slides on overlapping notes.",
+      "Choose FLEX or STATIC (sample track) or OFF (MIDI track) to leave the generator; the trigs and locks it wrote stay."
     ]
   },
   "controls": [
@@ -40,35 +40,28 @@
       "name": "DENS",
       "default": 89,
       "count": 128,
-      "doc": "The chance a step plays (tb3po.c density 0.0-1.0)",
+      "doc": "Sample track SRC A. The chance a step plays (tb3po.c density 0.0-1.0)",
       "labels": null
     },
     {
       "name": "ACNT",
       "default": 51,
       "count": 128,
-      "doc": "The chance a note is accented: a VEL lock of AVEL",
+      "doc": "SRC B. The chance a note is accented: the Part's VOL (plain notes sit AVEL below) and, with the stock FILTER on FX1, a DEPTH lock of AFLT",
       "labels": null
     },
     {
       "name": "SLID",
       "default": 32,
       "count": 128,
-      "doc": "The chance a note slides into the next: a LEN lock of SLEN; a slide into a rest is a plain note",
-      "labels": null
-    },
-    {
-      "name": "OCT",
-      "default": 2,
-      "count": 10,
-      "doc": "The track's NOTE octave (NOTE = 12 OCT + ROOT); shown as the note",
+      "doc": "SRC C. The chance a note slides into the next: the sample holds through it, and it becomes a lock-only step with a PTCH lock and a slide trig",
       "labels": null
     },
     {
       "name": "ROOT",
       "default": 9,
       "count": 12,
-      "doc": "The root note",
+      "doc": "SRC D. The pitch class of the scale's root; the line spans stock's -12..+12 semitones (the sample tuned to C)",
       "labels": [
         "C",
         "C#",
@@ -88,7 +81,7 @@
       "name": "SCAL",
       "default": 0,
       "count": 6,
-      "doc": "The scale the degrees are drawn from",
+      "doc": "SRC E. The scale the degrees are drawn from",
       "labels": [
         "MINR",
         "PHRY",
@@ -99,45 +92,45 @@
       ]
     },
     {
+      "name": "GATE",
+      "default": 16,
+      "count": 64,
+      "doc": "SRC F. A note's HOLD lock, 2 x this in stock's AMP HOLD units; a slid note holds longer",
+      "labels": null
+    },
+    {
       "name": "SEED",
       "default": 1,
       "count": 128,
-      "doc": "The variation; YES advances it",
+      "doc": "SRC SETUP A. The variation; YES advances it",
       "labels": null
     },
     {
       "name": "VAR",
       "default": 0,
-      "count": 128,
-      "doc": "OFF: the seed's line; else a mutation pass over about a quarter of its steps, salted with this value",
-      "labels": null
-    },
-    {
-      "name": "GATE",
-      "default": 0,
-      "count": 128,
-      "doc": "The track's own LEN: the length of plain notes, in stock's units",
-      "labels": null
-    },
-    {
-      "name": "SLEN",
-      "default": 72,
-      "count": 128,
-      "doc": "The LEN lock of a slid note, in stock's units: set it past one step so the note overlaps the next",
+      "count": 32,
+      "doc": "SRC SETUP B. OFF: the seed's line; else a mutation pass over about a quarter of its steps, salted with this value",
       "labels": null
     },
     {
       "name": "AVEL",
-      "default": 118,
-      "count": 128,
-      "doc": "The VEL lock of an accented note",
+      "default": 12,
+      "count": 32,
+      "doc": "SRC SETUP C. Plain notes get a VOL lock 4 x this below the Part's AMP VOL; accents keep it. OFF writes no VOL locks",
+      "labels": null
+    },
+    {
+      "name": "AFLT",
+      "default": 0,
+      "count": 8,
+      "doc": "SRC SETUP D. With the stock FILTER on FX1, an accent's DEPTH lock, 18 x this; OFF writes none",
       "labels": null
     },
     {
       "name": "DIR",
       "default": 0,
       "count": 4,
-      "doc": "The order the generated steps take on the track",
+      "doc": "SRC SETUP E. The order the generated steps take on the track",
       "labels": [
         "FWD",
         "REV",
@@ -146,38 +139,155 @@
       ]
     },
     {
-      "name": "VEL",
-      "default": 72,
-      "count": 128,
-      "doc": "The track's own VEL: the velocity of plain notes",
-      "labels": null
-    },
-    {
-      "name": "OCTS",
-      "default": 2,
-      "count": 4,
-      "doc": "Octaves above the root the notes may take, 1-3",
-      "labels": null
-    },
-    {
       "name": "MOTF",
       "default": 0,
       "count": 33,
-      "doc": "OFF: one line over the track's length; 2-32: a motif of that many steps repeated along it",
+      "doc": "SRC SETUP F. OFF: one line over the track's length; 2-32: a motif of that many steps repeated along it",
+      "labels": null
+    },
+    {
+      "name": "DENS (MIDI)",
+      "default": 89,
+      "count": 128,
+      "doc": "MIDI track. The chance a step plays (tb3po.c density 0.0-1.0)",
+      "labels": null
+    },
+    {
+      "name": "ACNT (MIDI)",
+      "default": 51,
+      "count": 128,
+      "doc": "MIDI track. The chance a note is accented: a VEL lock of AVEL",
+      "labels": null
+    },
+    {
+      "name": "SLID (MIDI)",
+      "default": 32,
+      "count": 128,
+      "doc": "MIDI track. The chance a note slides into the next: a LEN lock of SLEN; a slide into a rest is a plain note",
+      "labels": null
+    },
+    {
+      "name": "OCT (MIDI)",
+      "default": 2,
+      "count": 10,
+      "doc": "MIDI track. The track's NOTE octave (NOTE = 12 OCT + ROOT); shown as the note",
+      "labels": null
+    },
+    {
+      "name": "ROOT (MIDI)",
+      "default": 9,
+      "count": 12,
+      "doc": "MIDI track. The root note",
+      "labels": [
+        "C",
+        "C#",
+        "D",
+        "D#",
+        "E",
+        "F",
+        "F#",
+        "G",
+        "G#",
+        "A",
+        "A#",
+        "B"
+      ]
+    },
+    {
+      "name": "SCAL (MIDI)",
+      "default": 0,
+      "count": 6,
+      "doc": "MIDI track. The scale the degrees are drawn from",
+      "labels": [
+        "MINR",
+        "PHRY",
+        "HMIN",
+        "MPNT",
+        "DORI",
+        "MAJR"
+      ]
+    },
+    {
+      "name": "SEED (MIDI)",
+      "default": 1,
+      "count": 128,
+      "doc": "MIDI track. The variation; YES advances it",
+      "labels": null
+    },
+    {
+      "name": "VAR (MIDI)",
+      "default": 0,
+      "count": 128,
+      "doc": "MIDI track. OFF: the seed's line; else a mutation pass over about a quarter of its steps, salted with this value",
+      "labels": null
+    },
+    {
+      "name": "GATE (MIDI)",
+      "default": 0,
+      "count": 128,
+      "doc": "MIDI track. The track's own LEN: the length of plain notes, in stock's units",
+      "labels": null
+    },
+    {
+      "name": "SLEN (MIDI)",
+      "default": 72,
+      "count": 128,
+      "doc": "MIDI track. The LEN lock of a slid note, in stock's units: set it past one step so the note overlaps the next",
+      "labels": null
+    },
+    {
+      "name": "AVEL (MIDI)",
+      "default": 118,
+      "count": 128,
+      "doc": "MIDI track. The VEL lock of an accented note",
+      "labels": null
+    },
+    {
+      "name": "DIR (MIDI)",
+      "default": 0,
+      "count": 4,
+      "doc": "MIDI track. The order the generated steps take on the track",
+      "labels": [
+        "FWD",
+        "REV",
+        "PING",
+        "RND"
+      ]
+    },
+    {
+      "name": "VEL (MIDI)",
+      "default": 72,
+      "count": 128,
+      "doc": "MIDI track. The track's own VEL: the velocity of plain notes",
+      "labels": null
+    },
+    {
+      "name": "OCTS (MIDI)",
+      "default": 2,
+      "count": 4,
+      "doc": "MIDI track. Octaves above the root the notes may take, 1-3",
+      "labels": null
+    },
+    {
+      "name": "MOTF (MIDI)",
+      "default": 0,
+      "count": 33,
+      "doc": "MIDI track. OFF: one line over the track's length; 2-32: a motif of that many steps repeated along it",
       "labels": null
     }
   ],
   "compatibility": {
     "firmware": "1.40C",
-    "location": "MIDI tracks",
+    "location": "Track machine",
     "conflicts": [],
     "uiClaims": [],
     "limitations": [
-      "Needs the Modwerk base loaded over USB (beta) with MIDI generators (ot_midi_generators). Card firmware cannot include it.",
-      "Slides are overlapping notes (a LEN lock past the next step): a synth that does not slide on legato plays two overlapping notes. No portamento CC is sent.",
-      "One generator per MIDI track; the generator takes the track's SRC and AMP pages and keeps its arpeggiator off. LFO, FX1 and FX2 stay the track's own.",
-      "Its settings live in the track's arpeggiator note bytes; leaving the generator resets them with the base's arp reset. The line itself is the pattern's trigs and locks and stays.",
-      "Not yet run on hardware or in the emulator: the stock LEN value above one step, and so SLEN's default, is unverified."
+      "Needs the Modwerk base loaded over USB (beta) with the machine table (ot_machines) and MIDI generators (ot_midi_generators). Card firmware cannot include it.",
+      "Sample tracks: the line spans stock's -12..+12 semitones (two octaves) around a sample tuned to C; the root rotates the pitch classes inside them. AVEL, VAR and GATE have coarser ranges than on the Move (31, 31 and 64 values) so the settings fit the Part's nine spare bytes.",
+      "Sample tracks: the slide-trig mask's index and the number of AMP HOLD units in one step are read from the unit and unverified here; a slid note that does not reach the next step retriggers instead of gliding. AFLT writes a FILTER DEPTH lock only when the track's FX1 is the stock FILTER.",
+      "MIDI tracks: slides are overlapping notes (a LEN lock past the next step): a synth that does not slide on legato plays two overlapping notes. No portamento CC is sent. SLEN's default is unverified against stock's LEN table.",
+      "One generator a track; it takes the sample track's SRC page (both pages) or the MIDI track's SRC and AMP pages and keeps the arpeggiator off there. Choosing TB-3PO on a MIDI track sets NOTE to A1, VEL to 72 and NOT2-4 off.",
+      "Not yet run on hardware or in the emulator."
     ],
     "effectId": null
   },
@@ -185,11 +295,11 @@
     "recorded": "Package header, 30 Oct 2026 (host build)",
     "storage": {
       "label": "Storage",
-      "display": "5,700 bytes",
-      "value": 5700,
+      "display": "12,192 bytes",
+      "value": 12192,
       "unit": "bytes",
       "method": "static",
-      "conditions": "From the USB package build.py makes from the sources (m68k-elf-gcc 16.2, -Os): 5,032 bytes of ColdFire code and data and 668 of bss, one instance, 102 relocations, no stock-code sites. No DSP memory, no heap; the line it writes is the pattern's own record.",
+      "conditions": "From the USB package build.py makes from the sources (m68k-elf-gcc 16.2, -Os): 10,808 bytes of ColdFire code and data and 1,384 of bss, one instance, 239 relocations, no stock-code sites. No DSP memory, no heap; the lines it writes are the patterns' own records.",
       "source": "TESTING.md"
     },
     "processing": {
@@ -206,7 +316,7 @@
       "cpu": {
         "level": "low",
         "basis": "source-estimate",
-        "rationale": "One generation and in-place record rewrite per edit on the UI task, the shape VECTOR 0.3.0 measured at 0.5 ms for 64 steps on the owner's MKII; nothing at interrupt level and nothing while playing.",
+        "rationale": "One generation and in-place record rewrite per edit on the UI task, the shape VECTOR 0.3.0 measured at 0.5 ms for 64 steps on the owner's MKII; a few bytes read per UI tick for the sample track's input layer; nothing at interrupt level and nothing while playing.",
         "source": "TESTING.md"
       },
       "dsp": {
@@ -218,14 +328,14 @@
       "memory": {
         "level": "minimal",
         "basis": "source-estimate",
-        "rationale": "5,700 bytes of ColdFire code, data and state in DRAM (5,032 + 668 from the package header); the line it writes is the pattern's own record.",
+        "rationale": "12,192 bytes of ColdFire code, data and state in DRAM (10,808 + 1,384 from the package header); the lines it writes are the patterns' own records.",
         "source": "TESTING.md"
       }
     }
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Host checks only: the integer engine reproduces tb3po.c's float generator step for step over 50,688 cases, and the record writer is checked under the sanitizers (test_engine.py). Not run on a unit or in the emulator.",
+    "summary": "Host checks only: the integer engine reproduces tb3po.c's float generator step for step over 50,688 cases; the sample-track and MIDI-track record writers and the nine-byte settings packing are checked under the sanitizers; the package's machine and MIDI generator records sit at the registry's indices (test_engine.py). Not run on a unit or in the emulator.",
     "hardwareStatus": "untested",
     "gates": [
       "modules/tb3po/verify.py"
@@ -239,11 +349,11 @@
   },
   "media": [],
   "access": {
-    "location": "MIDI mode: MIDI NOTE SETUP (double-tap SRC, or double-tap the track key), TB-3PO in the list on the left",
+    "location": "Sample track: SRC SETUP's machine list (double-tap SRC), TB-3PO after the stock machines. MIDI track: MIDI NOTE SETUP (double-tap SRC), TB-3PO in the list on the left",
     "steps": [
-      "Press MIDI and select a MIDI track with its track key.",
-      "Double-tap SRC (or the track key) to open MIDI NOTE SETUP. The list on its left shows OFF and the installed generators.",
-      "UP/DOWN to TB-3PO and press YES. The track's SRC and AMP pages now hold the generator's controls; FUNC+AMP turns the AMP page to its second."
+      "Select an audio track. Double-tap SRC for SRC SETUP, scroll to TB-3PO and press YES; load a sample tuned to C through the stock pool. The SRC page now holds DENS, ACNT, SLID, ROOT, SCAL and GATE; SRC SETUP holds SEED, VAR, AVEL, AFLT, DIR and MOTF.",
+      "Push LEVEL on the SRC page for the stock sample controls (PTCH, STRT, LEN, RATE, RTRG, RTIM) and again to return. Hold a trig for stock's page and its locks.",
+      "MIDI track: press MIDI, select the track, double-tap SRC, UP/DOWN to TB-3PO in the list on the left and press YES. SRC and AMP (FUNC+AMP: its second page) hold the generator's controls."
     ],
     "screenshots": []
   },

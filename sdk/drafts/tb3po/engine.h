@@ -66,4 +66,45 @@ int tb3po_track_empty(const uint8_t *record);
  * when it is not NULL. `locked` (64 bytes) gets whether each step keeps any lock. Returns the number of trigs. */
 unsigned tb3po_write(uint8_t *record, uint8_t *mirror, const Tb3poPattern *pattern, const Tb3poParams *p,
                      unsigned base_note, unsigned accent_vel, unsigned slide_len, uint8_t locked[TB3PO_STEPS]);
+
+/* The Octatrack's audio track record (0x91a bytes a track, 16 a pattern; octabam tools/hw/ot_bank.py, VECTOR's
+ * engine.c): eight 64-bit step masks at +0 (0 trigs, 2 lock-only steps), swing at +0x40, the track's own length at
+ * +0x50, 32 lock bytes a step at +0x59 (PLAYBACK 0-5: PTCH 0; AMP 12-17: HOLD 13, VOL 15; FX1 18-23; 255 no lock) and
+ * a two-byte trig word a step at +0x89a. The slide-trig mask's index is read from the unit (TESTING.md). */
+#define TB3PO_AUDIO_TRACK_BYTES 0x91au
+#define TB3PO_AUDIO_LOCKS 0x59u
+#define TB3PO_AUDIO_TIMING 0x89au
+#define TB3PO_LOCK_PTCH 0u
+#define TB3PO_LOCK_HOLD 13u
+#define TB3PO_LOCK_VOL 15u
+#define TB3PO_LOCK_FX1_DEPTH 21u   /* FX1 knob D: the stock FILTER's envelope DEPTH */
+#define TB3PO_MASK_TRIGS 0u
+#define TB3PO_MASK_LOCK_ONLY 2u
+#define TB3PO_FILTER_ID 4u         /* the stock FILTER's effect id */
+#define TB3PO_HOLD_STEP 16u        /* AMP HOLD units in one sequencer step: to confirm on the unit (TESTING.md) */
+/* How the line lands on a sample track: PTCH locks over two octaves (stock's -12..+12 semitones; 64 + 5 st), the
+ * root rotating the pitch classes inside them; an accent is the Part's AMP VOL while plain notes are attenuated,
+ * and, with the stock FILTER on FX1, a DEPTH lock; a slide holds the sample through the next step, which becomes a
+ * lock-only step with a PTCH lock and a slide trig, so the pitch glides without a retrigger. */
+typedef struct {
+    uint8_t root;        /* 0-11: the pitch class of degree 0 */
+    uint8_t gate;        /* 0-63: a note's HOLD lock is 2 x this, in stock's AMP HOLD units */
+    uint8_t base_vol;    /* the Part's AMP VOL: an accent's level */
+    uint8_t avel;        /* 0-31: plain notes sit 4 x this below base_vol; 0 writes no VOL locks */
+    uint8_t aflt;        /* 0-7: an accent's FILTER DEPTH lock, 18 x this; 0 writes none */
+    uint8_t filter;      /* 1 when the track's FX1 is the stock FILTER (else no DEPTH locks) */
+    uint8_t slide_mask;  /* the slide-trig mask's index in the record */
+} Tb3poAudio;
+unsigned tb3po_ptch(const Tb3poParams *p, const Tb3poStep *s, unsigned root); /* the PTCH lock value, 4..119 */
+int tb3po_audio_empty(const uint8_t *record); /* no trigs, marks, recorder events or locks at all (VECTOR's rule) */
+unsigned tb3po_write_audio(uint8_t *record, uint8_t *mirror, const Tb3poPattern *pattern, const Tb3poParams *p,
+                           const Tb3poAudio *a, uint8_t locked[TB3PO_STEPS]);
+/* The sample track's nine settings bytes, seven bits each (stock's validator may see them when the module is absent):
+ * DENS 7, ACNT 7, SLID 7, SEED 7, VAR 5, GATE 6, AVEL 5, SCAL 3, DIR 2, MOTF 5, ROOT 4, AFLT 3 = 61 bits. */
+typedef struct { Tb3poParams p; Tb3poAudio a; } Tb3poAudioSettings;
+#define TB3PO_PACKED 9u
+void tb3po_pack(uint8_t out[TB3PO_PACKED], const Tb3poAudioSettings *s);
+void tb3po_unpack(Tb3poAudioSettings *s, const uint8_t in[TB3PO_PACKED]);
+extern const Tb3poAudioSettings tb3po_audio_defaults;
+void tb3po_copy_settings(Tb3poAudioSettings *to, const Tb3poAudioSettings *from); /* no C library on the unit */
 #endif
