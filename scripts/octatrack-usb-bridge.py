@@ -66,22 +66,28 @@ def dispose_device(dev):
 
 
 def open_unit():
-    """(device, vendor interface), claimed; None while no unit runs the test base."""
-    dev = usb.core.find(idVendor=0x1935)
-    if dev is None:
-        return None
-    claimed = False
-    try:
-        vendor = [i.bInterfaceNumber for i in dev.get_active_configuration()
-                  if (i.bInterfaceClass, i.bInterfaceSubClass, i.bInterfaceProtocol) == (0xff, 0x4d, 1)]
-        if len(vendor) != 1:
-            return None
-        usb.util.claim_interface(dev, vendor[0])
-        claimed = True
-        return dev, vendor[0]
-    finally:
-        if not claimed:
-            dispose_device(dev)  # enumeration/claim failures may already hold a handle
+    """(device, vendor interface), claimed; None while no unit runs the test base. Every Elektron
+    instrument has vendor id 0x1935: a Rytm or a Digitakt on the same bus can enumerate first, so the
+    unit is the one with the Modwerk vendor interface. A USB error is raised once no instrument has it."""
+    failure = None
+    for dev in usb.core.find(find_all=True, idVendor=0x1935):
+        claimed = False
+        try:
+            vendor = [i.bInterfaceNumber for i in dev.get_active_configuration()
+                      if (i.bInterfaceClass, i.bInterfaceSubClass, i.bInterfaceProtocol) == (0xff, 0x4d, 1)]
+            if len(vendor) != 1:
+                continue
+            usb.util.claim_interface(dev, vendor[0])
+            claimed = True
+            return dev, vendor[0]
+        except usb.core.USBError as error:
+            failure = failure or error  # the unit mid re-enumeration, or another instrument's driver
+        finally:
+            if not claimed:
+                dispose_device(dev)  # enumeration/claim failures may already hold a handle
+    if failure:
+        raise failure
+    return None
 
 
 def serve_request(unit, held, line):

@@ -29,6 +29,11 @@ runs short. Everything here was done on the owner's MKII on 11 October 2026. Why
   `a408c505`, twin `8dc7692c`). Before a twin, note the flashed set (`inventory`) and where its packages are; base-bound
   ones (Analog BD, Output Matrix) must be the copies bound to that base, from the commit that built it. Afterwards,
   power-cycle and `try` each again.
+  A trial with no Keep can cost the set too: a `try --seconds 900` on a twin that ended "Device refused rollback:
+  needs-recovery", the unit left on the twin about an hour, then a power cycle: the flashed base loaded only the
+  modules of its previous Keep (30 October 2026, MKII, flashed `b30d9b09`, twin `04e94075`), and two `try --accept`
+  of the missing module were refused at submission ("The device kept refusing the submission"). Check `inventory`
+  after any twin, not only after a Keep.
 - Verify an Undo's active identity and inventory after the reply; a ready host UI alone is insufficient. On a contributor's MKII (25 October 2026, private base `52c291c2…`), a 12-module timed Undo left recovery/active unknown and standard
   rollback retries still returned needs-recovery. Stop installing and ask the owner to power-cycle when recovery cannot finish.
 - After a crash restart, or finding the unit on the flashed base with no power cycle you know of, ask for a power
