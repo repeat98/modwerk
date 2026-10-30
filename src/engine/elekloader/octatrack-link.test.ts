@@ -686,6 +686,16 @@ describe('updating the base over USB', () => {
     expect(dedupe(steps)).toEqual(['writing', 'restarting', 'done'])
     expect(unit.flashed).toBe(expected); expect(unit.base).toBe(expected); expect(restarts()).toBe(1)
   })
+  // A tester's unit on two slots saved the new base, then hung at the logo on the restart (a DSP stalled while the base
+  // was sent): the site said "reconnecting", wrote again and ended on the one-slot text about MIDI recovery.
+  it('ends a two-slot update whose restart hangs at the restart, with the two-slot advice, without writing again', async () => {
+    const unit = fakeUnit(), { link } = await counting(unit, 1), { bin, expected } = fakeBin(), steps: string[] = []
+    unit.restartHangs = true
+    vi.useFakeTimers({ toFake: ['setTimeout'] })
+    await expect(run(link.updateBase(bin, expected, step => steps.push(step)))).rejects.toThrow('after two starts that fail, it goes back to its previous base')
+    expect(dedupe(steps)).toEqual(['writing', 'restarting'])
+    expect(unit.flashed).toBe(expected)
+  })
   it('converts a unit with one copy with one restart: the trial, then the new base saves itself and runs on', async () => {
     const unit = fakeUnit(), { link, restarts } = await counting(unit, 0), { bin, expected } = fakeBin(), steps: string[] = []
     await link.updateBase(bin, expected, step => steps.push(step))
