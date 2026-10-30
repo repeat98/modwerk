@@ -32,6 +32,8 @@ describe('pr:ready verdict', () => {
     expect(asked).toContain('write "nothing" in the PR')
     const listed = readiness({ guideEdits: ['docs/module-guides/effects.md'] }).notes.find(note => note.startsWith('What did the guides lack'))
     expect(listed).toContain('docs/module-guides/effects.md')
+    expect(listed).toContain('npm run board -- finding')
+    expect(asked).not.toContain('npm run board -- finding')
     expect(readiness({ guideEdits: ['docs/SDK.md'] }).ok).toBe(true)
   })
   it('refuses a module pull request that edits a check which judges modules, and lets a module release carry the rest', () => {

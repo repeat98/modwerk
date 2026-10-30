@@ -279,7 +279,7 @@ allowance, or a missing `rts`.
 
 ### 4. The lifecycle (the on-demand engine path, generalised)
 
-Install, trial, self-test, Keep and Undo as for any package. The engine part follows today's on-demand order, with a
+Install, trial, Keep and Undo as for any package. The engine part follows today's on-demand order, with a
 **hook slot** in place of a feature bit:
 
 1. admission: ledger (sites, claims), P room (`mw_engines_admit`'s dry run, the bank's Part union), cycles;

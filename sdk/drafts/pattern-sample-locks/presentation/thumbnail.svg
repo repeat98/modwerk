@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 192">
+<rect width="320" height="192" fill="#111719"/>
+<path d="M0 52H320M0 97H320M0 142H320M64 0V192M128 0V192M192 0V192M256 0V192" fill="none" stroke="#263638" stroke-width=".6"/>
+<g fill="none" stroke="#8dd3c7" stroke-width="1.4">
+<rect x="24" y="70" width="48" height="48" rx="3"/><path d="M72 94H104M104 62V126M104 62H140M104 94H140M104 126H140"/>
+<path d="M146 63H291M146 95H291M146 127H291" opacity=".3"/>
+<g fill="#8dd3c7"><circle cx="156" cy="63" r="3"/><circle cx="188" cy="63" r="3"/><circle cx="252" cy="63" r="3"/><circle cx="172" cy="95" r="3"/><circle cx="220" cy="95" r="3"/><circle cx="284" cy="95" r="3"/><circle cx="156" cy="127" r="3"/><circle cx="236" cy="127" r="3"/></g>
+<path d="M44 90V85A4 4 0 0 1 52 85V90M42 90H54V102H42Z"/>
+</g><g fill="#a5b8b7" font-family="monospace" font-size="9"><text x="24" y="143">PART SLOT</text><text x="146" y="153">PATTERN SAMPLE LOCKS</text></g>
+</svg>
