@@ -1,5 +1,28 @@
 # MIDI Mute testing
 
+## Build MM04: solo (rytm-emu, 30 October 2026)
+
+MM04 adds solo: a track is now silenced as the sequencer silences it, every track but the soloed ones while any is soloed, otherwise the muted ones. Image SHA-256 `98089be3…4ae9`, built and run as MM03 below; MM03's hardware results above and below were taken before this change and have not been repeated on MM04.
+
+**Stock's rule, observed first** (core-ar2 0.7 + the module, the factory pattern playing, voice trigs from `DTEMU_FRAME_TRACE=160,162`): MIDI CC 93 on a track's channel writes the project's solo mask (0x4131899b), as CC 94 writes the mute mask. With SD soloed only SD's trigs remained; with SD soloed and muted SD still played; with SD and RS soloed both played. No MUTE-mode gesture tried (pads held with MUTE, FUNC or TRK, a long pad hold) wrote the solo mask, so the panel gesture is not known here.
+
+**Regression.** All 20 cases of the MM03 matrix gave the same counts on MM04.
+
+| Case | MUTE MIDI IN | Input | Play | Release | Result |
+| --- | --- | --- | --- | --- | --- |
+| S0 | unchecked | SD soloed (`B1 5D 01`), BD note | 1 | 1 | stock: BD plays |
+| S1 | checked | SD soloed, BD note | 0 | 0 | dropped |
+| S2 | checked | SD soloed, SD note on channel 2 | 1 | 1 | the soloed track plays |
+| S3 | checked | BD soloed and muted, BD note | 1 | 1 | plays: solo wins, as in the sequencer |
+| S4 | checked | BD note held, then SD soloed | 1 | 1 | released on the solo |
+| S5 | checked | SD soloed then unsoloed, BD note | 1 | 1 | plays again |
+| S6 | checked | BD muted, SD soloed then unsoloed, BD note | 0 | 0 | BD is still muted |
+| S7 | checked | BD and SD soloed, BD note | 1 | 1 | plays |
+| S8 | checked | BD and SD soloed, RS note (AUTO note 2) | 0 | 0 | dropped |
+| S9 | checked | BD held, BD muted, SD soloed, unsoloed | 1 | 1 | released once, on the mute |
+
+**Hardware bench.** The bench (`rytm_mute_test.py`) gained three solo steps (another track soloed; this track soloed and muted; a held note, then another track soloed). Against its simulated unit they passed for the module checked and unchecked and failed for stock behaviour where they should. They have not run on a unit.
+
 ## Build MM03 on a unit (author's Rytm MKII, 30 October 2026)
 
 - **Image:** MM03 (SHA-256 `b460740b…bf7d`) on the author's Analog Rytm MKII, OS 1.74, sent with Elektron Transfer.
@@ -111,7 +134,7 @@ PORT CONFIG shows MUTE MIDI IN as its last row, after RECEIVE CC/NRPN, unchecked
 
 ## Not tested
 
-- **The unit, still open.** DIN MIDI (MM03 ran over USB only), a full live performance, and a pattern or kit change during a flood.
+- **The unit, still open.** Solo on a unit (MM04), DIN MIDI (MM03 ran over USB only), a full live performance, and a pattern or kit change during a flood.
 - **On the unit's clock.** CPU time per event and under the flood, measured with DTIM0; a flood at 240 BPM; a pattern or kit change during the flood.
 - **USB timing.** A real USB host; the emulator's USB MIDI input is its own model.
 - **Silent Pad+Trig and Retrig Grid** (core-ar2 0.3 submissions) were not built beside it.

@@ -19,9 +19,9 @@
     "label": "MIDI MUTE",
     "family": "MIDI effect",
     "summary": "Muted tracks also ignore MIDI notes coming in over USB and DIN, and a held note stops when its track is muted.",
-    "overview": "On stock OS 1.74 a mute stops the sequencer only: a note from a keyboard or DAW still plays the muted track. With MUTE MIDI IN on, a Note On for a muted track is dropped, on its track channel and on the AUTO channel, from USB and DIN MIDI alike. When a track is muted while it holds a note that came in over MIDI, that note is released as its Note Off would release it, so nothing hangs. Unmuting plays nothing; the next Note On plays again.",
+    "overview": "On stock OS 1.74 a mute stops the sequencer only: a note from a keyboard or DAW still plays the muted track. With MUTE MIDI IN on, a Note On for a muted track, or for one left out of a solo, is dropped, on its track channel and on the AUTO channel, from USB and DIN MIDI alike. When a track is muted while it holds a note that came in over MIDI, that note is released as its Note Off would release it, so nothing hangs. Unmuting plays nothing; the next Note On plays again.",
     "highlights": [
-      "Mutes silence incoming MIDI notes as well as the sequencer.",
+      "Mutes and solo silence incoming MIDI notes as they silence the sequencer.",
       "A note held over MIDI is released when its track is muted, so nothing sticks.",
       "USB and DIN MIDI, track channels and the AUTO channel alike.",
       "Off by default: one checkbox in GLOBAL > MIDI CONFIG > PORT CONFIG, kept with the project."
@@ -49,7 +49,7 @@
     {
       "name": "MUTE MIDI IN",
       "default": 0,
-      "doc": "Checked, incoming MIDI Note Ons for muted tracks are dropped and notes MIDI holds on a track are released when it is muted; unchecked, MIDI is stock. GLOBAL > MIDI CONFIG > PORT CONFIG, the last row; YES toggles, RIGHT checks, LEFT unchecks. Kept with the project.",
+      "doc": "Checked, incoming MIDI Note Ons for muted tracks, and for tracks left out of a solo, are dropped, and notes MIDI holds on a track are released when it is silenced; unchecked, MIDI is stock. GLOBAL > MIDI CONFIG > PORT CONFIG, the last row; YES toggles, RIGHT checks, LEFT unchecks. Kept with the project.",
       "labels": [
         "OFF",
         "ON"
@@ -63,8 +63,7 @@
     "requires": [],
     "conflicts": [],
     "limitations": [
-      "A track counts as muted when its project mute is set: MUTE mode pads, FUNC + pads in MUTE mode, and MIDI CC 94. OS 1.74 keeps no separate pattern mute.",
-      "Solo is not followed: a track that is only soloed out still plays incoming notes.",
+      "A track is silenced as the sequencer silences it: while any track is soloed (MIDI CC 93), every track but the soloed ones, even a soloed track that is muted; otherwise the muted ones (MUTE mode pads, FUNC + pads in MUTE mode, MIDI CC 94). OS 1.74 keeps no separate pattern mute.",
       "A note held when its track is muted is released on the next UI tick; on a unit the sound had stopped 50 and 130 ms after a CC 94 mute, its own fade included.",
       "Only notes are affected. CC, NRPN, aftertouch, pitch bend, program change, clock, transport and SysEx pass as stock, also for muted tracks."
     ]
@@ -100,7 +99,7 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Unit (author, MM03, OS 1.74, over USB, judged from the Rytm's USB audio): with MUTE MIDI IN checked, notes for a muted BD stayed silent on the AUTO and track channels, a held note stopped 50-130 ms after a CC 94 mute, and a 60 s flood at about 870 messages a second left nothing sounding; unchecked, the same tests heard the muted BD and the held note rang on, as stock. rytm-emu 3c4c42c (MM02, MM03): DIN and USB, CC 94 and pad mutes, the active-track switch, toggling the box mid-note, sequencer timing, a wire-rate flood, Filter Hz and Loop Sync beside it. See TESTING.md.",
+    "summary": "Unit (author, MM03, OS 1.74, over USB, judged from the Rytm's USB audio): with MUTE MIDI IN checked, notes for a muted BD stayed silent on the AUTO and track channels, a held note stopped 50-130 ms after a CC 94 mute, and a 60 s flood at about 870 messages a second left nothing sounding; unchecked, the same tests heard the muted BD and the held note rang on, as stock. rytm-emu 3c4c42c (MM02-MM04): solo (CC 93) as the sequencer follows it, not yet on a unit; DIN and USB, CC 94 and pad mutes, the active-track switch, toggling the box mid-note, sequencer timing, a wire-rate flood, Filter Hz and Loop Sync beside it. See TESTING.md.",
     "documentation": {
       "tutorial": {
         "title": "Quick tutorial",

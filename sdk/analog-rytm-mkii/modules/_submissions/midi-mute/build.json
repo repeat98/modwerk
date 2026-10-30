@@ -43,6 +43,7 @@
       },
       "cflags": [
         "-DMUTE_MASK_AT=0x41318997",
+        "-DSOLO_MASK_AT=0x4131899b",
         "-DHELD_COUNT_AT=0x418f1820",
         "-DPLAY_AT=0x40083f40",
         "-DRELEASE_AT=0x4008420a",

@@ -13,8 +13,10 @@
 // calls inside the MIDI routines only (sites.s); pads, TRIG keys and the
 // sequencer reach the same play routine from elsewhere and stay stock.
 //
-// A track is muted when its bit is set in the project's mute mask, the one
-// MUTE mode's pads (and FUNC + pads), and MIDI CC 94 set.
+// A track is silenced as the sequencer silences it: while any track is
+// soloed (the project's solo mask, MIDI CC 93), every track but the soloed
+// ones, whatever their mutes; otherwise the muted ones (the project's mute
+// mask: MUTE mode's pads, FUNC + pads, MIDI CC 94).
 
 #include <stdint.h>
 #include "analog-rytm-mk2/store.h"
@@ -29,6 +31,7 @@ extern void midi_mute_label(void);
 
 // OS 1.74 locations (build.json release cflags)
 #define MUTE_MASK (*(volatile uint32_t *)MUTE_MASK_AT)     // bit t: track t muted
+#define SOLO_MASK (*(volatile uint32_t *)SOLO_MASK_AT)     // bit t: track t soloed
 #define HELD(t, p) (((volatile int32_t *)HELD_COUNT_AT)[(t) * PITCHES + (p)])  // stock's held count
 typedef void (*play_fn)(int track, int pitch, int vel, int iface, int a, int b, int c);
 typedef void (*release_fn)(int track, int pitch, int iface);
@@ -36,7 +39,7 @@ typedef void (*release_fn)(int track, int pitch, int iface);
 #define STOCK_RELEASE ((release_fn)RELEASE_AT)
 
 static int enabled;             // MUTE MIDI IN, read from the project
-static uint32_t seen_mask;      // the mute mask at the last tick
+static uint32_t seen_mask;      // the silenced tracks at the last tick
 static int last_iface[TRACKS];  // the interface of a track's last MIDI note
 static uint32_t held[TRACKS][PITCHES / 32];     // notes MIDI played on a track
 static uint32_t swallow[TRACKS][PITCHES / 32];  // Note Offs with nothing to release
@@ -45,9 +48,18 @@ static uint32_t swallow[TRACKS][PITCHES / 32];  // Note Offs with nothing to rel
 #define SET(map, t, p) ((map)[t][(p) >> 5] |= 1u << ((p) & 31))
 #define CLR(map, t, p) ((map)[t][(p) >> 5] &= ~(1u << ((p) & 31)))
 
+#define ALL_TRACKS ((1u << TRACKS) - 1)
+
+// bit t: track t is silenced, by its mute or by another track's solo
+static uint32_t silenced(void)
+{
+    uint32_t solo = SOLO_MASK & ALL_TRACKS;
+    return solo ? ~solo & ALL_TRACKS : MUTE_MASK & ALL_TRACKS;
+}
+
 static int muted(int track)
 {
-    return (MUTE_MASK >> track) & 1;
+    return (silenced() >> track) & 1;
 }
 
 // The MIDI note-on routine's per-track call (sites.s): play it, or drop it
@@ -102,7 +114,7 @@ static void release_track(int track)
 void midi_mute_tick(void *ctrl)
 {
     (void)ctrl;
-    uint32_t mask = MUTE_MASK;
+    uint32_t mask = silenced();
     uint32_t newly = mask & ~seen_mask;
     seen_mask = mask;
     if (!enabled || !newly)
@@ -117,7 +129,7 @@ static void forget(void)
     for (int t = 0; t < TRACKS; t++)
         for (int w = 0; w < PITCHES / 32; w++)
             held[t][w] = swallow[t][w] = 0;
-    seen_mask = MUTE_MASK;
+    seen_mask = silenced();
 }
 
 // ev_project: after a project load (at boot too) or CREATE NEW
@@ -150,7 +162,7 @@ static void set_enabled(void **payload, int on)
 {
     enabled = on;
     core_store_set(STORE(midi_mute_on), 0, 0, enabled);
-    seen_mask = on ? 0 : MUTE_MASK;     // checked: the next tick releases what muted tracks hold
+    seen_mask = on ? 0 : silenced();    // checked: the next tick releases what silenced tracks hold
     VIEW_INVALIDATE((char *)*payload + 56);     // redraw the menu, as stock's rows do
 }
 
