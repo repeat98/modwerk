@@ -70,6 +70,33 @@ def fake_project(folder: pathlib.Path):
                                            + '############################\r\n\r\n').encode('latin1'))
 
 
+def closed(data: bytearray) -> bytes:
+    data[-2:] = (sum(data[0x10:-2]) & 0xffff).to_bytes(2, 'big')
+    return bytes(data)
+
+
+def add_markers(folder: pathlib.Path, strd=True):
+    """A synthetic empty markers file of the documented layout: header, version 4, 264 zeroed slots, checksum."""
+    data = bytearray(modport.MARKERS_SIZE)
+    data[0:16] = b'FORM\0\0\0\0DPS1SAMP'
+    data[21] = 4
+    for suffix in ('work', 'strd') if strd else ('work',):
+        (folder / ('markers.' + suffix)).write_bytes(closed(data))
+
+
+def add_arrangement(folder: pathlib.Path, strd=True, junk_row=True):
+    """A synthetic arrangement file of the documented layout, with an old row past the count in both states."""
+    data = bytearray(modport.ARR_SIZE)
+    data[0:21] = modport.ARR_HEADER
+    data[21] = 6
+    for at in modport.ARR_STATES:
+        data[at:at + 8] = b'OLDNAME\0'
+        if junk_row:
+            data[at + 18 + 40 * 22:at + 18 + 41 * 22] = bytes(range(1, 23))
+    for suffix in ('work', 'strd') if strd else ('work',):
+        (folder / ('arr01.' + suffix)).write_bytes(closed(data))
+
+
 SINE = bytes((int(100 * __import__('math').sin(i / 4)) & 0xff) for i in range(512))
 
 
@@ -220,6 +247,18 @@ class Write(unittest.TestCase):
             with redirect_stdout(io.StringIO()), self.assertRaises(SystemExit):
                 modport.main([str(tmp / 'song.mod'), str(tmp / 'TEMPLATE'), str(out)])
 
+    def test_default_leaves_markers_and_arrangement(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp = pathlib.Path(tmp)
+            fake_project(tmp / 'TEMPLATE')
+            add_markers(tmp / 'TEMPLATE')
+            add_arrangement(tmp / 'TEMPLATE')
+            (tmp / 'song.mod').write_bytes(song())
+            with redirect_stdout(io.StringIO()):
+                modport.main([str(tmp / 'song.mod'), str(tmp / 'TEMPLATE'), str(tmp / 'OUT')])
+            for f in ('markers.work', 'markers.strd', 'arr01.work', 'arr01.strd'):
+                self.assertEqual((tmp / 'OUT' / f).read_bytes(), (tmp / 'TEMPLATE' / f).read_bytes())
+
     def test_report_writes_nothing(self):
         with tempfile.TemporaryDirectory() as tmp:
             (pathlib.Path(tmp) / 'song.mod').write_bytes(song())
@@ -229,6 +268,143 @@ class Write(unittest.TestCase):
             self.assertIn('2 samples used, 2 song positions -> 2 patterns, tempo 280.00', buf.getvalue())
             self.assertIn('effects not converted: vibrato (4) x1', buf.getvalue())
             self.assertEqual(len(list(pathlib.Path(tmp).iterdir())), 1)
+            buf = io.StringIO()
+            with redirect_stdout(buf):
+                modport.main([str(pathlib.Path(tmp) / 'song.mod'), '--report', '--sliced', '--arranger'])
+            for line in ('sliced: one FLEX slot (1), 2 slices, slice mode on', 'slice  2: PAD',
+                         'arranger: 2 rows (0 repeats folded)', '1 sample offsets (9xx) not converted'):
+                self.assertIn(line, buf.getvalue())
+            self.assertEqual(len(list(pathlib.Path(tmp).iterdir())), 1)
+
+
+class Sliced(unittest.TestCase):
+    def setUp(self):
+        self.mod = modport.parse(song())
+        self.plan = modport.plan(self.mod, modport.play(self.mod), 1, sliced=True)
+
+    def test_plan(self):
+        self.assertEqual((self.plan['slots'], self.plan['slices'], self.plan['offsets']), ({1: 1, 2: 1}, {1: 0, 2: 1}, 1))
+        self.assertEqual(self.plan['track_slot'], {0: 1, 1: 1, 2: 1, 3: 1})
+        pb = self.plan['patterns'][0]['tracks']['1']['locks']['playback']
+        self.assertEqual((pb['1'], pb['5']), ({'STRT': 0, 'PTCH': 64 - 30}, {'STRT': 0, 'PTCH': 64 - 5}))
+        self.assertEqual(pb['9'], {'STRT': 0, 'PTCH': 64 + 5 * modport.fold(-18)})     # 9xx: no offset lock
+        self.assertEqual(self.plan['patterns'][0]['tracks']['2']['locks']['playback']['1'], {'STRT': 2, 'PTCH': 64})
+        default = modport.plan(self.mod, modport.play(self.mod), 1)
+        self.assertEqual((default['slices'], default['offsets']), (None, 0))
+
+    def test_project(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp = pathlib.Path(tmp)
+            fake_project(tmp / 'TEMPLATE')
+            add_markers(tmp / 'TEMPLATE')
+            (tmp / 'song.mod').write_bytes(song())
+            before = {f.name: f.read_bytes() for f in (tmp / 'TEMPLATE').iterdir()}
+            with redirect_stdout(io.StringIO()):
+                self.assertEqual(modport.main([str(tmp / 'song.mod'), str(tmp / 'TEMPLATE'), str(tmp / 'MY SONG'), '--sliced']), 0)
+            out = tmp / 'MY SONG'
+            self.assertEqual(sorted(p.name for p in out.glob('*.wav')), ['MYSONG01.wav'])
+            kick = len(modport.render(self.mod.samples[0], 18))
+            pad = len(modport.render(self.mod.samples[1], 24))
+            self.assertEqual(len((out / 'MYSONG01.wav').read_bytes()), 44 + 2 * (kick + pad))
+            text = (out / 'project.work').read_bytes().decode('latin1')
+            self.assertIn('SLOT=001\r\nPATH=MYSONG01.wav', text)
+            self.assertNotIn('SLOT=002', text)
+            for f in ('markers.work', 'markers.strd'):
+                data = (out / f).read_bytes()
+                self.assertIsNone(modport.markers_problem(data))
+                self.assertEqual(modport.read_slices(data, 1), (0, kick + pad, 0, [(0, kick, 0xFFFFFFFF), (kick, kick + pad, 0xFFFFFFFF)]))
+                self.assertEqual(data[modport.flex_marker(data, 2):-2], bytes(len(data) - 2 - modport.flex_marker(data, 2)))
+            for f in ('bank01.work',):
+                data = (out / f).read_bytes()
+                self.assertEqual(int.from_bytes(data[-2:], 'big'), sum(data[0x10:-2]) & 0xffff)
+                for part in range(op.NPARTS_ALL):
+                    base = op.PART_BASE + part * op.PART_STRIDE
+                    slic = [data[base + modport.SETUP_OFF + t * 30 + 6 + 1] for t in range(8)]
+                    self.assertEqual(slic, [1, 1, 1, 1, 0, 0, 0, 0])
+                    self.assertEqual([data[base + op.SLOT_OFF + t * 5 + op.SLOT_KIND['flex']] for t in range(4)], [0] * 4)
+                self.assertEqual(ob.locks(data, 0, 0)[0], {0: 34, 1: 0})            # PTCH, STRT slice 0; no slot lock
+                self.assertEqual(ob.locks(data, 0, 1)[0][1], 2)                     # slice 1
+            self.assertEqual({f.name: f.read_bytes() for f in (tmp / 'TEMPLATE').iterdir()}, before)
+
+    def test_refuses_without_a_markers_file(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp = pathlib.Path(tmp)
+            fake_project(tmp / 'TEMPLATE')
+            (tmp / 'song.mod').write_bytes(song())
+            with redirect_stdout(io.StringIO()), self.assertRaises(SystemExit):
+                modport.main([str(tmp / 'song.mod'), str(tmp / 'TEMPLATE'), str(tmp / 'OUT'), '--sliced'])
+            self.assertFalse((tmp / 'OUT').exists())
+            add_markers(tmp / 'TEMPLATE')
+            f = tmp / 'TEMPLATE' / 'markers.strd'
+            f.write_bytes(f.read_bytes()[:-1] + b'\x99')                    # a checksum that does not match
+            with redirect_stdout(io.StringIO()), self.assertRaises(SystemExit):
+                modport.main([str(tmp / 'song.mod'), str(tmp / 'TEMPLATE'), str(tmp / 'OUT'), '--sliced'])
+            self.assertFalse((tmp / 'OUT').exists())
+
+
+class Arranger(unittest.TestCase):
+    def test_rows_and_repeats(self):
+        mod = modport.parse(song())
+        self.assertEqual(modport.plan(mod, modport.play(mod), 1)['rows'], [[0, 1, 16], [1, 1, 24]])
+        beat = {(0, 0): cell(period(12), 1), (32, 1): cell(period(12), 1)}
+        mod = modport.parse(make_mod([beat, {}], [0, 0, 0, 1, 0], [('A', SINE, 0, 64, 0, 2)]))
+        self.assertEqual(modport.plan(mod, modport.play(mod), 2)['rows'],
+                         [[16, 3, 64], [19, 1, 64], [20, 1, 64]])
+        same = [{'bank': 1 + k // 16, 'pattern': k % 16 + 1, 'length': 16, 'tracks': {}} for k in range(70)]
+        self.assertEqual(modport.arranger_rows(same), [[0, 64, 16], [64, 6, 16]])
+
+    def test_project(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp = pathlib.Path(tmp)
+            fake_project(tmp / 'TEMPLATE')
+            add_arrangement(tmp / 'TEMPLATE')
+            (tmp / 'song.mod').write_bytes(song())
+            before = {f.name: f.read_bytes() for f in (tmp / 'TEMPLATE').iterdir()}
+            with redirect_stdout(io.StringIO()):
+                self.assertEqual(modport.main([str(tmp / 'song.mod'), str(tmp / 'TEMPLATE'), str(tmp / 'OUT'), '--arranger']), 0)
+            for f in ('arr01.work', 'arr01.strd'):
+                data = (tmp / 'OUT' / f).read_bytes()
+                self.assertIsNone(modport.arrangement_problem(data))
+                for state in (0, 1):
+                    self.assertEqual(modport.read_arrangement(data, state), ('TEST SONG', [[0, 1, 16], [1, 1, 24]]))
+                at = modport.ARR_STATES[0]
+                self.assertEqual(list(data[at + 18:at + 40]), [0, 0, 0, 0, 0, 0, 0, 0, 255, 255, 0, 0, 0, 16] + [0] * 8)
+                self.assertEqual(data[at + 18 + 22], 0)                            # row 2: type 0, pattern A02
+                self.assertEqual(data[at + 18 + 22 + 1], 1)
+                self.assertEqual(list(data[at + 18 + 40 * 22:at + 18 + 41 * 22]), list(range(1, 23)))  # past the count
+                self.assertEqual(data[:24], (tmp / 'TEMPLATE' / f).read_bytes()[:24])
+            self.assertEqual({f.name: f.read_bytes() for f in (tmp / 'TEMPLATE').iterdir()}, before)
+
+    def test_refuses_without_an_arrangement(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp = pathlib.Path(tmp)
+            fake_project(tmp / 'TEMPLATE')
+            (tmp / 'song.mod').write_bytes(song())
+            with redirect_stdout(io.StringIO()), self.assertRaises(SystemExit):
+                modport.main([str(tmp / 'song.mod'), str(tmp / 'TEMPLATE'), str(tmp / 'OUT'), '--arranger'])
+            self.assertFalse((tmp / 'OUT').exists())
+            add_arrangement(tmp / 'TEMPLATE', strd=False)
+            f = tmp / 'TEMPLATE' / 'arr01.work'
+            data = bytearray(f.read_bytes())
+            data[21] = 5                                                    # an older version
+            f.write_bytes(closed(data))
+            with redirect_stdout(io.StringIO()), self.assertRaises(SystemExit):
+                modport.main([str(tmp / 'song.mod'), str(tmp / 'TEMPLATE'), str(tmp / 'OUT'), '--arranger'])
+            self.assertFalse((tmp / 'OUT').exists())
+
+    def test_both_options_together(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp = pathlib.Path(tmp)
+            fake_project(tmp / 'TEMPLATE')
+            add_markers(tmp / 'TEMPLATE', strd=False)
+            add_arrangement(tmp / 'TEMPLATE', strd=False)
+            (tmp / 'song.mod').write_bytes(song())
+            buf = io.StringIO()
+            with redirect_stdout(buf):
+                modport.main([str(tmp / 'song.mod'), str(tmp / 'TEMPLATE'), str(tmp / 'OUT'), '--sliced', '--arranger'])
+            self.assertIn('2 slices in slot 1, 2 patterns from bank A, arrangement 1: 2 rows', buf.getvalue())
+            self.assertFalse((tmp / 'OUT' / 'arr01.strd').exists())
+            self.assertIsNone(modport.markers_problem((tmp / 'OUT' / 'markers.work').read_bytes()))
 
 
 if __name__ == '__main__':

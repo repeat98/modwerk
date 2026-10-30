@@ -2,7 +2,8 @@
 """MODPORT: a ProTracker module (.mod) as an Octatrack project.
 
     python3 -B scripts/octatrack-modport.py SONG.mod TEMPLATE_PROJECT OUT_PROJECT [--bank A] [--name NAME]
-    python3 -B scripts/octatrack-modport.py SONG.mod --report          # what would be converted, nothing written
+                                            [--sliced] [--arranger]
+    python3 -B scripts/octatrack-modport.py SONG.mod --report [--sliced] [--arranger]   # nothing written
 
 TEMPLATE_PROJECT is an empty project the unit made (PROJECT > CHANGE > CREATE NEW, then copied from the card), so its
 Parts and pages are the running OS's defaults; OUT_PROJECT is written beside it as a copy and must not exist. Copy
@@ -20,11 +21,47 @@ What it writes:
   pattern and starts the next one at its row; Bxx ends the song when it jumps back;
 - the tempo from the song's first speed and BPM (rows as sixteenth notes: tempo = BPM x 6 / speed).
 
-Not converted: arpeggio, portamento, vibrato, tremolo, retrig, note cut and delay, fine volume and pitch slides, later
-speed and tempo changes, the arranger (chain the patterns on the unit). They are counted in the report.
+--sliced: instead of one FLEX slot per sample, every sample the song plays goes into one WAV, one after the other
+(each still rendered at its own middle note), in FLEX slot 1; the slot's entry in markers.work (and .strd) gets its
+trim (the whole file), loop point 0 and one slice per sample (no slice loop); every track's FLEX SRC SETUP has slice
+mode (SLIC) on in every Part; and each trig locks STRT = slice index x 2 instead of the slot. PTCH stays per sample. A
+sample offset (9xx) cannot be locked then (STRT picks the slice) and is counted in the report. The template must have
+a markers.work: it is edited in place.
 
-The project files are written with sdk/octabam/tools/hw's ot_project and ot_spec, which checksum and read back every
-bank. Nothing of the template is touched.
+--arranger: the song order also goes into arrangement 1 (arr01.work, and arr01.strd when the template has one), both
+its working and stored copies: one pattern row per song position, pointing at that position's pattern, with
+consecutive positions whose patterns are identical folded into one row's repeat count (up to 64x). The arrangement
+is named after the song. Mute, tempo, scenes, offset and MIDI transpose keep the values the unit writes for a new row
+(none, no tempo change, no scenes, 0, none); a row's length is its pattern's length. The template must have an
+arr01.work: it is edited in place (its header, version and checksum are checked first), and project.work is left as
+it is (a note is printed when the template has another arrangement selected). Off by default: no arrangement written
+this way has been loaded on a unit yet.
+
+Not converted: arpeggio, portamento, vibrato, tremolo, retrig, note cut and delay, fine volume and pitch slides, later
+speed and tempo changes, and without --arranger the song order (chain the patterns on the unit). They are counted in
+the report.
+
+The bank files are written with sdk/octabam/tools/hw's ot_project and ot_spec, which checksum and read back every
+bank. markers.work and arr01.work are written here, with their checksums, and read back. Nothing of the template is
+touched.
+
+Sources for the two formats this script writes itself (facts only: offsets, sizes and checksum rules, no code copied):
+- markers.work: octapy's octapy/_io/markers.py (https://github.com/jhw/octapy, MIT), a Python port of ot-tools-io;
+  checked against ot-tools-io's src/markers.rs and its unit-saved fixtures (test-data/markers: a sliced slot holds
+  trim 0..frames, loop 0, slices end to end with loop 0xffffffff, and its slice count; the checksum is the 16-bit sum
+  of bytes 0x10..end-2, big-endian, true for all eleven fixtures). STRT = slice index x 2 and the SRC SETUP layout
+  (Part + 483 + track x 30, FLEX at +6, SLIC its second byte) are octapy's (api/core/audio/step.py, _io/bank.py),
+  and the SETUP offset was checked on ot-tools-io's unit-saved blank bank (FLEX's bytes read 1 0 0 0 1 64).
+- arrNN.work: ot-tools-io's src/arrangements (https://gitlab.com/ot-tools/ot-tools-io, by Mike Robeson
+  (dijksterhuis), AGPL-3.0-or-later): 11,336 bytes = 21-byte header, version 6, two unknown bytes, the working state
+  (5,650 bytes: 15-byte name, two unknown bytes, the row count, 256 rows of 22 bytes), an unknown byte, the saved flag,
+  the stored state, eight saved flags, a 16-bit big-endian checksum = the sum of bytes 16..end-2. A pattern row is
+  type 0, the pattern (0 = A01 .. 255 = P16), repeats - 1, ..., the length. The header, version and checksum rule
+  hold for its nineteen unit-saved fixtures (test-data/arrange, blank-project), and set_arrangement reproduces the
+  unit's bytes for a one-row arrangement; that the pattern byte counts from A01 and the repeat byte from 1x is the
+  crate's reading, not checked here. octapy does not cover arrangements.
+- Writing four slices into the crate's unit-saved unsliced markers fixture reproduces its unit-saved four-slice
+  fixture byte for byte, checksum included.
 """
 from __future__ import annotations
 
@@ -54,6 +91,21 @@ EFFECTS = {'0': 'arpeggio', '1': 'slide up', '2': 'slide down', '3': 'tone porta
            'E4': 'vibrato waveform', 'E5': 'finetune', 'E6': 'pattern loop', 'E7': 'tremolo waveform', 'E8': 'panning',
            'E9': 'retrigger', 'EA': 'fine volume up', 'EB': 'fine volume down', 'EC': 'note cut', 'ED': 'note delay',
            'EE': 'pattern delay', 'EF': 'invert loop'}
+
+# Part-relative SRC SETUP: 30 bytes per track (STATIC, FLEX, THRU, NEIGHBOR, PICKUP x 6), FLEX's are LOOP SLIC LEN
+# RATE TSTR TSNS (octapy _io/bank.py; checked on a unit-saved bank, see the module docstring)
+SETUP_OFF, SETUP_STRIDE, FLEX_SETUP, SLIC = 483, 30, 6, 1
+MAX_SLICES = 64
+# markers.work: 21-byte header, version 4, 136 FLEX slots (128 + 8 recorders) then 128 STATIC, 784 bytes each (trim
+# start, trim end, loop point, 64 slices of start/end/loop, slice count; all u32 big-endian), checksum
+MARKERS_SIZE, MARKERS_VERSION, MARKERS_SLOT, MARKERS_FIRST = 207000, 4, 784, 22
+SLICE_NO_LOOP = 0xFFFFFFFF
+# arrNN.work: header, version 6, 2 bytes, working state, 2 bytes, stored state, 8 bytes, checksum
+ARR_HEADER = b'FORM\0\0\0\0DPS1ARRA\0\0\0\0\0'
+ARR_SIZE, ARR_VERSION, ARR_STATES, ARR_ROW, MAX_ROWS = 11336, 6, (24, 24 + 5650 + 2), 22, 255
+# a new pattern row as the unit saves it (ot-tools-io test-data/arrange): type 0, pattern, repeats - 1, mutes 0,
+# tempo 0 (none), scenes A and B 255 (none), offset 0, length 16, eight MIDI transposes 0
+NEW_ROW = bytes([0, 0, 0, 0, 0, 0, 0, 0, 255, 255, 0, 0, 0, 16]) + bytes(8)
 
 
 @dataclass
@@ -266,13 +318,17 @@ def volume_lock(volume: int) -> int | None:
     return None if volume >= 64 else max(0, volume)
 
 
-def plan(mod: Module, song: Song, bank: int) -> dict:
-    """Everything the writer needs: tempo, the slots, and per pattern per track the trigs and locks."""
+def plan(mod: Module, song: Song, bank: int, sliced: bool = False) -> dict:
+    """Everything the writer needs: tempo, the slots (or, sliced, slot 1's slices), per pattern per track the trigs
+    and locks, and the arrangement rows."""
     used = sorted(song.notes)
-    slots = {s: i + 1 for i, s in enumerate(used)}
+    if sliced and len(used) > MAX_SLICES:
+        raise ValueError('%d samples: a slot holds %d slices' % (len(used), MAX_SLICES))
+    slices = {s: i for i, s in enumerate(used)} if sliced else None
+    slots = {s: 1 if sliced else i + 1 for i, s in enumerate(used)}
     centres = {s: middle(song.notes[s]) for s in used}
     tempo = max(30.0, min(300.0, song.bpm * 6 / song.speed))
-    patterns, dropped, folded = [], max(0, len(song.positions) - 16 * (17 - bank)), 0
+    patterns, dropped, folded, offsets = [], max(0, len(song.positions) - 16 * (17 - bank)), 0, 0
     for k, p in enumerate(song.positions[:16 * (17 - bank)]):
         tracks = {}
         for c in range(mod.channels):
@@ -284,8 +340,12 @@ def plan(mod: Module, song: Song, bank: int) -> dict:
                 folded += abs(semis) > 12
                 step = str(e.step + 1)
                 trigs.append(e.step)
-                lk = {'S31': slots[e.sample] - 1, 'PTCH': 64 + 5 * fold(semis)}
-                if e.offset:
+                if sliced:                           # STRT picks the slice (raw = index x 2), slice mode on
+                    lk = {'STRT': 2 * slices[e.sample], 'PTCH': 64 + 5 * fold(semis)}
+                    offsets += bool(e.offset)
+                else:
+                    lk = {'S31': slots[e.sample] - 1, 'PTCH': 64 + 5 * fold(semis)}
+                if e.offset and not sliced:
                     length = len(body(mod.samples[e.sample - 1], centres[e.sample]))
                     lk['STRT'] = min(127, int(round(128 * e.offset / max(1, length))))
                 locks.setdefault('playback', {})[step] = lk
@@ -296,19 +356,44 @@ def plan(mod: Module, song: Song, bank: int) -> dict:
         patterns.append({'bank': bank + k // 16, 'pattern': k % 16 + 1, 'length': p.length, 'tracks': tracks,
                          'source': (p.pattern, p.first_row)})
     first = {c: next((e.sample for p in song.positions for e in p.tracks[c]), used[0] if used else None) for c in range(mod.channels)}
-    return {'tempo': tempo, 'slots': slots, 'centres': centres, 'patterns': patterns, 'dropped': dropped, 'folded': folded,
+    return {'tempo': tempo, 'slots': slots, 'slices': slices, 'centres': centres, 'patterns': patterns,
+            'dropped': dropped, 'folded': folded, 'offsets': offsets, 'rows': arranger_rows(patterns),
             'track_slot': {c: slots[s] for c, s in first.items() if s}}
 
 
-def report(mod: Module, song: Song, p: dict) -> str:
+def arranger_rows(patterns: list) -> list:
+    """The arrangement: one row per song position, [pattern id (0 = A01), repeats (1-64), length]. A position whose
+    pattern is identical to the one before (same length, trigs and locks) adds a repeat to that row instead."""
+    rows, last = [], None
+    for q in patterns:
+        key = json.dumps([q['length'], q['tracks']], sort_keys=True)
+        if rows and key == last and rows[-1][1] < 64:
+            rows[-1][1] += 1
+            continue
+        rows.append([(q['bank'] - 1) * 16 + q['pattern'] - 1, 1, q['length']])
+        last = key
+    return rows
+
+
+def report(mod: Module, song: Song, p: dict, arranger: bool = False) -> str:
     lines = ['%s: %d channels, %d samples used, %d song positions -> %d patterns, tempo %.2f'
              % (mod.title or 'untitled', mod.channels, len(p['slots']), len(song.positions), len(p['patterns']), p['tempo'])]
+    if p['slices'] is not None:
+        lines.append('  sliced: one FLEX slot (1), %d slices, slice mode on' % len(p['slices']))
     for s, slot in p['slots'].items():
         n = song.notes[s]
         c = p['centres'][s]
-        lines.append('  slot %3d: %-22s notes %s%d..%s%d, rendered at %s%d'
-                     % (slot, mod.samples[s - 1].name or 'sample %d' % s, NOTE_NAMES[min(n) % 12], min(n) // 12 + 1,
+        lines.append('  %s: %-22s notes %s%d..%s%d, rendered at %s%d'
+                     % ('slice %2d' % (p['slices'][s] + 1) if p['slices'] is not None else 'slot %3d' % slot,
+                        mod.samples[s - 1].name or 'sample %d' % s, NOTE_NAMES[min(n) % 12], min(n) // 12 + 1,
                         NOTE_NAMES[max(n) % 12], max(n) // 12 + 1, NOTE_NAMES[c % 12], c // 12 + 1))
+    if arranger:
+        rows = p['rows'][:MAX_ROWS]
+        lines.append('  arranger: %d rows (%d repeats folded)' % (len(rows), sum(r[1] - 1 for r in rows)))
+        if len(p['rows']) > MAX_ROWS:
+            lines.append('  %d arrangement rows past %d dropped' % (len(p['rows']) - MAX_ROWS, MAX_ROWS))
+    if p['offsets']:
+        lines.append('  %d sample offsets (9xx) not converted: STRT picks the slice' % p['offsets'])
     if p['folded']:
         lines.append('  %d notes beyond +-12 semitones of their sample\'s middle folded by octaves' % p['folded'])
     if p['dropped']:
@@ -349,7 +434,108 @@ def with_samples(text: str, files: dict, tempo: float) -> str:
     return text[:header.end()] + body + text[header.end():]
 
 
-def write(mod: Module, p: dict, template: pathlib.Path, out: pathlib.Path, name: str) -> None:
+def checksum16(data) -> int:
+    """The additive 16-bit sum over bytes 0x10..end-2 that markers, arrangement and bank files close with."""
+    return sum(data[0x10:-2]) & 0xFFFF
+
+
+def markers_problem(data: bytes) -> str | None:
+    if len(data) != MARKERS_SIZE:
+        return '%d bytes, not %d' % (len(data), MARKERS_SIZE)
+    if data[0:4] != b'FORM' or data[8:16] != b'DPS1SAMP' or data[MARKERS_FIRST - 1] != MARKERS_VERSION:
+        return 'not a version %d markers file' % MARKERS_VERSION
+    if int.from_bytes(data[-2:], 'big') != checksum16(data):
+        return 'its checksum does not match'
+    return None
+
+
+def arrangement_problem(data: bytes) -> str | None:
+    if len(data) != ARR_SIZE:
+        return '%d bytes, not %d' % (len(data), ARR_SIZE)
+    if data[0:21] != ARR_HEADER or data[21] != ARR_VERSION:
+        return 'not a version %d arrangement file' % ARR_VERSION
+    if int.from_bytes(data[-2:], 'big') != checksum16(data):
+        return 'its checksum does not match'
+    return None
+
+
+def flex_marker(data, slot: int) -> int:
+    return MARKERS_FIRST + (slot - 1) * MARKERS_SLOT
+
+
+def set_slices(data: bytearray, slot: int, frames: int, cuts: list) -> None:
+    """FLEX `slot`'s markers: trim 0..frames, loop point 0, one slice (start, end, no loop) per cut, the count."""
+    at = flex_marker(data, slot)
+    rec = bytearray(MARKERS_SLOT)
+    rec[0:12] = struct.pack('>III', 0, frames, 0)
+    for i, (a, b) in enumerate(cuts):
+        rec[12 + 12 * i:24 + 12 * i] = struct.pack('>III', a, b, SLICE_NO_LOOP)
+    rec[780:784] = struct.pack('>I', len(cuts))
+    data[at:at + MARKERS_SLOT] = rec
+    data[-2:] = checksum16(data).to_bytes(2, 'big')
+
+
+def read_slices(data: bytes, slot: int) -> tuple:
+    """-> (trim start, trim end, loop point, [(start, end, loop)] for the slice count) of FLEX `slot`."""
+    at = flex_marker(data, slot)
+    head = struct.unpack('>III', data[at:at + 12])
+    n = struct.unpack('>I', data[at + 780:at + 784])[0]
+    return head + ([struct.unpack('>III', data[at + 12 + 12 * i:at + 24 + 12 * i]) for i in range(n)],)
+
+
+def set_arrangement(data: bytearray, rows: list, name: str) -> None:
+    """Both arrangement states (working and stored): the name, the row count and a pattern row per [pattern id,
+    repeats, length]; rows past the count are left as they are (the unit leaves old bytes there too)."""
+    label = ''.join(ch for ch in name.upper() if 32 <= ord(ch) <= 126)[:15] or 'MODPORT'
+    for at in ARR_STATES:
+        data[at:at + 15] = label.encode('ascii').ljust(15, b'\0')
+        data[at + 17] = len(rows)
+        for i, (pattern, repeats, length) in enumerate(rows):
+            row = bytearray(NEW_ROW)
+            row[1], row[2], row[13] = pattern, repeats - 1, length
+            data[at + 18 + i * ARR_ROW:at + 18 + (i + 1) * ARR_ROW] = row
+    data[-2:] = checksum16(data).to_bytes(2, 'big')
+
+
+def read_arrangement(data: bytes, state: int = 0) -> tuple:
+    """-> (name, [[pattern id, repeats, length]]) of one state (0 working, 1 stored)."""
+    at = ARR_STATES[state]
+    rows = [data[at + 18 + i * ARR_ROW:at + 18 + (i + 1) * ARR_ROW] for i in range(data[at + 17])]
+    return data[at:at + 15].split(b'\0')[0].decode('ascii'), [[r[1], r[2] + 1, r[13]] for r in rows]
+
+
+def twins(folder: pathlib.Path, stem: str) -> list:
+    return [f for f in (folder / (stem + '.work'), folder / (stem + '.strd')) if f.is_file()]
+
+
+def edit_in_place(folder: pathlib.Path, stem: str, mutate, problem, expect) -> None:
+    """Edit `stem`.work and its .strd twin: mutate (which closes the checksum), then read back each file and check
+    it has no problem and holds what was asked for."""
+    for f in twins(folder, stem):
+        data = bytearray(f.read_bytes())
+        mutate(data)
+        f.write_bytes(bytes(data))
+        back = f.read_bytes()
+        why = problem(back) or (None if expect(back) else 'the read-back disagrees')
+        if why:
+            sys.exit('%s: %s -- do NOT use this project' % (f, why))
+
+
+def check_template(template: pathlib.Path, sliced: bool, arranger: bool) -> None:
+    """Refuse before anything is copied when a file --sliced or --arranger edits is missing or not one this tool knows."""
+    for on, stem, problem in ((sliced, 'markers', markers_problem), (arranger, 'arr01', arrangement_problem)):
+        if not on:
+            continue
+        if not (template / (stem + '.work')).is_file():
+            sys.exit('%s has no %s.work to edit: make the template on the unit (PROJECT > CHANGE > CREATE NEW)'
+                     % (template, stem))
+        for f in twins(template, stem):
+            why = problem(f.read_bytes())
+            if why:
+                sys.exit('%s: %s; refusing to edit it' % (f, why))
+
+
+def write(mod: Module, p: dict, template: pathlib.Path, out: pathlib.Path, name: str, arranger: bool = False) -> None:
     sys.path.insert(0, str(HW))
     sys.path.insert(0, str(HW.parent)); import toolpath  # noqa: F401
     import ot_project as op
@@ -358,11 +544,33 @@ def write(mod: Module, p: dict, template: pathlib.Path, out: pathlib.Path, name:
         sys.exit('%s exists: refusing to overwrite' % out)
     if not (template / 'project.work').is_file():
         sys.exit('%s is not an Octatrack project folder' % template)
+    sliced = p['slices'] is not None
+    check_template(template, sliced, arranger)
     shutil.copytree(template, out)
     files = {}
-    for s, slot in p['slots'].items():
-        files[slot] = '%s%02d.wav' % (name[:6], slot)
-        (out / files[slot]).write_bytes(wav(render(mod.samples[s - 1], p['centres'][s])))
+    if sliced:
+        files[1] = '%s%02d.wav' % (name[:6], 1)
+        pcm, cuts = [], []
+        for s in sorted(p['slices'], key=p['slices'].get):
+            part = render(mod.samples[s - 1], p['centres'][s]) or [0]
+            cuts.append((len(pcm), len(pcm) + len(part)))
+            pcm += part
+        (out / files[1]).write_bytes(wav(pcm))
+        edit_in_place(out, 'markers', lambda d: set_slices(d, 1, len(pcm), cuts), markers_problem,
+                      lambda d: read_slices(d, 1) == (0, len(pcm), 0, [(a, b, SLICE_NO_LOOP) for a, b in cuts]))
+    else:
+        for s, slot in p['slots'].items():
+            files[slot] = '%s%02d.wav' % (name[:6], slot)
+            (out / files[slot]).write_bytes(wav(render(mod.samples[s - 1], p['centres'][s])))
+    if arranger:
+        rows = p['rows'][:MAX_ROWS]
+        label = mod.title or name
+        edit_in_place(out, 'arr01', lambda d: set_arrangement(d, rows, label), arrangement_problem,
+                      lambda d: all(read_arrangement(d, k)[1] == rows for k in (0, 1)))
+        m = re.search(rb'\nARRANGEMENT=(\d+)', (out / 'project.work').read_bytes())
+        if m and m.group(1) != b'0':
+            print('note: the template\'s project.work has ARRANGEMENT=%s (a fresh project has 0); the song is in '
+                  'arr01: choose arrangement 1 on the unit' % m.group(1).decode())
     for suffix in ('work', 'strd'):
         f = out / ('project.' + suffix)
         if f.is_file():
@@ -374,17 +582,29 @@ def write(mod: Module, p: dict, template: pathlib.Path, out: pathlib.Path, name:
                 'patterns': {str(q['pattern']): {'tracks': q['tracks']} for q in p['patterns'] if q['bank'] == b}}
         ot_spec.apply(out, spec)
 
+        want = {}                                   # offset -> byte, for the read-back
+
         def mut(data, b=b):
             for part in range(op.NPARTS_ALL):
                 base = op.PART_BASE + part * op.PART_STRIDE + op.SLOT_OFF
                 for c, slot in p['track_slot'].items():
-                    data[base + c * 5 + op.SLOT_KIND['flex']] = slot - 1
+                    want[base + c * 5 + op.SLOT_KIND['flex']] = slot - 1
+                if sliced:                           # FLEX SRC SETUP's SLIC on every track
+                    setup = op.PART_BASE + part * op.PART_STRIDE + SETUP_OFF + FLEX_SETUP + SLIC
+                    for c in range(mod.channels):
+                        want[setup + c * SETUP_STRIDE] = 1
             for q in p['patterns']:
                 if q['bank'] == b:
                     tail = op.PTRN0 + (q['pattern'] - 1) * op.PTRN_FSTRIDE + op.PTRN_FSTRIDE - 11
-                    data[tail + 2] = q['length']
-                    data[tail + 3] = op.SCALE_NAMES.index('1X')
+                    want[tail + 2] = q['length']
+                    want[tail + 3] = op.SCALE_NAMES.index('1X')
+            for a, v in want.items():
+                data[a] = v
         op._bank_write(out, b, mut, guard=False)
+        for f in twins(out, 'bank%02d' % b):
+            data = f.read_bytes()
+            if int.from_bytes(data[-2:], 'big') != checksum16(data) or any(data[a] != v for a, v in want.items()):
+                sys.exit('%s: the read-back disagrees -- do NOT use this project' % f)
 
 
 def main(argv=None) -> int:
@@ -395,21 +615,25 @@ def main(argv=None) -> int:
     ap.add_argument('--bank', default='A', help='the first bank, A-P (default A)')
     ap.add_argument('--name', help='the sample file prefix (default: from the output folder)')
     ap.add_argument('--report', action='store_true', help='print what would be converted and write nothing')
+    ap.add_argument('--sliced', action='store_true', help='all samples in one FLEX slot, one slice each, STRT locks')
+    ap.add_argument('--arranger', action='store_true', help='also write the song order into arrangement 1 (arr01)')
     a = ap.parse_args(argv)
     mod = parse(a.mod.read_bytes())
     song = play(mod)
     bank = ord(a.bank.upper()) - 64
     if not 1 <= bank <= 16:
         sys.exit('--bank: A-P')
-    p = plan(mod, song, bank)
-    print(report(mod, song, p))
+    p = plan(mod, song, bank, sliced=a.sliced)
+    print(report(mod, song, p, arranger=a.arranger))
     if a.report:
         return 0
     if not a.template or not a.out:
         sys.exit('TEMPLATE_PROJECT and OUT_PROJECT are needed to write (or --report)')
     name = re.sub(r'[^A-Z0-9]', '', (a.name or a.out.name).upper()) or 'MOD'
-    write(mod, p, a.template, a.out, name)
-    print('%s: %d samples, %d patterns from bank %s' % (a.out, len(p['slots']), len(p['patterns']), a.bank.upper()))
+    write(mod, p, a.template, a.out, name, arranger=a.arranger)
+    print('%s: %s, %d patterns from bank %s%s'
+          % (a.out, '%d slices in slot 1' % len(p['slices']) if a.sliced else '%d samples' % len(p['slots']),
+             len(p['patterns']), a.bank.upper(), ', arrangement 1: %d rows' % len(p['rows'][:MAX_ROWS]) if a.arranger else ''))
     return 0
 
 
