@@ -127,8 +127,8 @@
     {
       "path": "media/thumbnail.svg",
       "kind": "thumbnail",
-      "caption": "MIDI Mute: incoming notes stop at a muted track, and a held note ends at the mute.",
-      "alt": "MIDI notes fanning out to BD, SD and CH; BD is muted and stops them, SD and CH play; a held note ends at the mute instead of ringing on as stock.",
+      "caption": "MIDI Mute: incoming notes stop at a muted track while the other tracks play.",
+      "alt": "MIDI notes fanning out to BD, SD and CH; BD is muted and stops them, SD and CH play.",
       "credit": "michaelkollmann",
       "license": "GPL-3.0-or-later",
       "source": "Original conceptual illustration in the shared signal-art style; not an instrument screen or a measured result."
