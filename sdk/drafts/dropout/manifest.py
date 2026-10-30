@@ -1,61 +1,58 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""DROPOUT -- the track drops out now and then, like a failing tape or stream.
+"""DROPOUT -- codec and link failures, on the project's tempo.
 
-A per-track INSERT. Dropouts start at random (CHNC) and last around LEN; each fades in and out by EDGE. MODE says
-what the track drops to: GAP (silence), HOLD (the last few milliseconds, looped: a stuck buffer) or CRSH (the track
-held and reduced to 6 bits); DPTH sets how far, TONE darkens it. Three ways of doing one job -- the track dropping
-out -- so one module with a MODE select (docs/module-guides/effects.md, one effect per module).
+A per-track INSERT: the cheap part of the developer's FRAMELOSS on the DSP. An ADPCM coder at 5 down to 2 bits a
+sample (BITS: G.726's 40 to 16 kbit/s depths), transmission errors at RATE events a step (MODE: HOLD the last good
+sample held, PCKT a lost packet replaced by the one before it, fading, CIRC a CD's concealment of a few bad samples
+or the mute of a long burst; SIZE sets how long), and a frame freeze on the step grid (FRZ: a frozen step plays its
+first FRM samples and loops them to the step's end). STEP is the step those count in, from the project's tempo
+(stock's tempo24 at r6+$13, as octabam's BusDelay reads it; 120 BPM when the word reads 0). One job -- the track
+passing a failing codec and link -- so one module (docs/module-guides/effects.md, one effect per module). GSM, MP3
+and ATRAC are too heavy for the budget and stay out.
 
-Outside a dropout the output is the input bit for bit, so the defaults leave the track untouched between dropouts.
-HOLD keeps the last 1,024 frames in the first 2,048 words of the allocator's buffer, which an FX1 slot (3,072
-words) holds, so it runs on FX1 and FX2. A loop is never longer than the frames written since init: the buffer's
-old contents are never heard.
+DEFAULTS ARE A PASSTHROUGH: with RATE 0, BITS off and FRZ 0 the output is the input bit for bit, and MIX 0 returns
+the dry bit for bit whatever the rest. The buffer is 3,072 words, so it fits FX1 and FX2: a ring of the last 512
+coded frames (PCKT), cleared over the first 8 calls, which pass the dry, and the frozen frame (up to 1,024 frames),
+written before it is read.
 
 Draft: the code has run only in fxhost (tools/fxhost.cpp, the vendored dsp56kEmu with no firmware); nothing has
 run under the ColdFire port, in a built image or on a unit. The effect id is a placeholder for the base's USB id
 allocation.
 """
 
-import math
-
 from remix.schema import (BusRole, Category, Claims, DspSection, Formatter, Gate, Harness, Kind, MenuEntry, Module,
                           Param, Proof, YBase)
 
-FS = 44100.0
+# The ADPCM's 89 step sizes, IMA's progression (7 x 1.1^k of 32,768), as fractions of full scale (S), and their
+# reciprocals over 8,192 (W = 1 / (8192 S)), which the quantiser multiplies by instead of dividing (CODEC ECHO's).
+_STEPS = tuple(min(32767, round(7 * 1.1 ** k)) / 32768.0 for k in range(89))
+S_TABLE = tuple(max(1, min(0x7fffff, round(s * 0x800000))) for s in _STEPS)
+W_TABLE = tuple(min(0x7fffff, round(0x800000 / (8192.0 * s))) for s in _STEPS)
+# Per depth (BITS' zones 1 to 4: 5, 4, 3, 2 bits): the quantiser's shift 12 - bits, the largest code
+# 2^(bits-1) - 1, the dequantiser's shift 25 - bits, and half the codes 2^(bits-2).
+DEPTHS = tuple(v for bits in (5, 4, 3, 2) for v in (12 - bits, 2 ** (bits - 1) - 1, 25 - bits, 2 ** (bits - 2)))
 
 
-def _frac(v):
-    return max(0, min(0x7fffff, round(v * 0x800000)))
+def events_a_step(k):
+    """RATE k's mean error events a step: none at 0, 1/16 (one a bar of 1/16 steps) at 1 to 16 at 127."""
+    return 0.0 if k == 0 else 16.0 * 256.0 ** ((k - 127) / 126.0)
 
 
-def _chance(k):
-    """The chance a sample that a dropout starts: none at 0, once in 20 s on average at 1, every 60 ms at 127."""
-    if k == 0:
-        return 0
-    return _frac(1.0 / (20.0 * FS * (0.06 / 20.0) ** ((k - 1) / 126.0)))
+# The chance an error starts a frame is R t / 2^STEP, t the tempo word as a fraction (tempo24 / 32,768). A 1/32
+# step lasts 7,938,000 / tempo24 samples, so R = events_a_step x 32,768 / 7,938,000 in Q23.
+R_TABLE = tuple(min(0x7fffff, round(events_a_step(min(k, 127)) * 32768.0 / 7938000.0 * 0x800000)) for k in range(129))
 
+TABLE = W_TABLE + S_TABLE + DEPTHS + R_TABLE          # W at +0, S at +89, the depths at +178, R at +194
+assert len(W_TABLE) == 89 and len(TABLE) - len(R_TABLE) == 0xc2
 
-def _length(k):
-    """A dropout's mean length in samples: 5 ms at 0 to 1 s at 127."""
-    return round(0.005 * FS * 200.0 ** (k / 127.0))
-
-
-def _step(k):
-    """The depth's ramp step a sample: a ramp of 0.1 ms at 0 to 50 ms at 127."""
-    return _frac(1.0 / (4.0 * (2205.0 / 4.0) ** (k / 127.0)))
-
-
-P_TABLE = tuple(_chance(min(k, 127)) for k in range(129))
-L_TABLE = tuple(_length(min(k, 127)) for k in range(129))
-E_TABLE = tuple(_step(min(k, 127)) for k in range(129))
-
+STEP_LABELS = ("1/32", "1/16", "1/8", "1/4")
 _PLAIN = Formatter.PLAIN
 
 MODULE = Module(
     name="dropout",
     key="DROPOUT",
     kind=Kind.DSP_EFFECT,
-    doc="Random dropouts: the track drops to silence, a stuck loop or a crushed copy, and comes back.",
+    doc="Codec and link failures on the tempo: ADPCM bits, held samples, lost packets, CD errors, frozen steps.",
     category=Category.TRACK, author="semierendonmez-commits", author_url="https://github.com/semierendonmez-commits",
     proof=Proof.UNTESTED, proof_note="draft: rendered only in fxhost (dsp56kEmu alone, no firmware)",
     menu=MenuEntry(
@@ -66,38 +63,37 @@ MODULE = Module(
         build_tag=False,
     ),
     params=(
-        Param(b"CHNC", 40, active=True, formatter=_PLAIN,
-              doc="how often dropouts start: once in 20 s at 1 to every 60 ms at 127; 0 = never"),
-        Param(b"LEN", 48, active=True, formatter=_PLAIN,
-              doc="how long a dropout lasts, about 5 ms to 1 s (each one varies)"),
-        Param(b"DPTH", 127, active=True, formatter=_PLAIN,
-              doc="how far the track drops; 127 = all the way"),
-        Param(b"EDGE", 24, active=True, formatter=_PLAIN,
-              doc="how fast a dropout fades in and out, 0.1 ms to 50 ms"),
-        Param(b"TONE", 0, active=True, formatter=_PLAIN,
-              doc="darkens the track while it drops out"),
+        Param(b"RATE", 0, active=True, formatter=_PLAIN,
+              doc="error events a step: none at 0, one in 16 steps at 1, 16 a step at 127"),
+        Param(b"SIZE", 7, active=True, formatter=_PLAIN,
+              doc="an error's length: HOLD 4-512, PCKT 64/128/256, CIRC 1-8 hidden, 16-1024 muted"),
+        Param(b"BITS", 0, active=True, formatter=_PLAIN,
+              doc="the ADPCM codec: off, then 5, 4, 3 and 2 bits a sample"),
+        Param(b"FRZ", 0, active=True, formatter=_PLAIN,
+              doc="the chance a step freezes on its first frame; 127 = every step"),
+        Param(b"FRM", 40, active=True, formatter=_PLAIN,
+              doc="the frozen frame: 64 to 1016 samples (1.5 to 23 ms)"),
+        Param(b"MIX", 127, active=True, formatter=_PLAIN,
+              doc="the failures over the dry; 0 = the dry, bit for bit"),
+        Param(b"MODE", 0, 3, active=True, formatter=Formatter.STEPPED, labels=("HOLD", "PCKT", "CIRC"),
+              doc="the error: a held sample, a lost packet replayed, CD concealment"),
         Param(),
-        Param(b"MODE", 0, 3, active=True, formatter=Formatter.STEPPED,
-              labels=("GAP", "HOLD", "CRSH"),
-              doc="what the track drops to: silence, a stuck loop, a crushed copy"),
-        Param(),
-        Param(b"SIZE", 48, active=True, formatter=_PLAIN,
-              doc="HOLD: the loop, 1.5 to 21 ms; CRSH: the hold, 2 to 33 samples"),
-        Param(),
-        Param(),
-        Param(),
+        Param(b"STEP", 1, 4, active=True, formatter=Formatter.STEPPED, labels=STEP_LABELS,
+              doc="the step RATE and FRZ count in, at the project's tempo"),
+        Param(), Param(), Param(),
     ),
     dsp=DspSection(
         asm="modules/dropout/dropout.asm",
         priority=25,
         bus_role=BusRole.NONE,
         ybase=YBase.NEVER,
-        # P at +0, L at +129, E at +258, read through the build's base literal.
-        ptable=P_TABLE + L_TABLE + E_TABLE,
+        # W at +0, S at +89, the depths at +178, R at +194, read through the build's base literal.
+        ptable=TABLE,
     ),
-    claims=Claims(stock_instance_buffer=True, buffer_words=2048),
+    # A 512-frame ring (1,024 words) and the frozen frame (2,048): an FX1 slot holds 3,072.
+    claims=Claims(stock_instance_buffer=True, buffer_words=3072),
     harness=Harness(layout_char=None, is_server=False),
     gates=(Gate("modules/dropout/verify.py", remix_arg=False),),
-    # Dearest: HOLD's loop read and buffer write, the darkening, dropouts back to back.
-    dear={"CHNC": 127, "LEN": 127, "DPTH": 127, "EDGE": 127, "TONE": 127, "MODE": 1, "SIZE": 127},
+    # Dearest: both coders, lost packets back to back, a frozen step on every 1/32, MIX gliding.
+    dear={"RATE": 127, "SIZE": 127, "BITS": 127, "FRZ": 127, "FRM": 127, "MIX": 64, "MODE": 1, "STEP": 0},
 )

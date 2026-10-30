@@ -9,81 +9,93 @@
     "github": "semierendonmez-commits",
     "name": "Semi Erendönmez",
     "credits": [
-      "Octatrack module and DSP56300 code by Semi Erendönmez",
-      "Effect ABI, schema and harness conventions: octabam (Sam Banks, MIT); the noise generator follows Analog BD's LCG idiom"
+      "Octatrack module and DSP56300 code by Semi Erendönmez, after his FRAMELOSS plugin's error modes",
+      "Effect ABI, schema, harness conventions and the tempo idiom: octabam (Sam Banks, MIT); the noise generator follows Analog BD's LCG idiom"
     ]
   },
   "nativeManifest": "manifest.py",
   "presentation": {
-    "label": "RANDOM DROPOUTS",
+    "label": "CODEC + LINK FAILURES",
     "family": "Lo-fi",
-    "summary": "The track drops out now and then, like a worn tape or a failing stream: to silence, a stuck loop or a crushed copy, and comes back.",
-    "overview": "DROPOUT makes the track drop out at random moments (CHNC) for around LEN, each dropout fading in and out over EDGE. MODE says what it drops to: GAP silence, HOLD the last 1.5 to 21 ms looped like a stuck buffer, or CRSH the track held and reduced to 6 bits. DPTH sets how far it drops and TONE darkens it while it is out. Between dropouts the output is the input, bit for bit; CHNC 0 turns the dropouts off.",
+    "summary": "Codec and link failures on the project's tempo: ADPCM down to 2 bits, held samples, lost packets replayed, CD errors and frozen steps.",
+    "overview": "DROPOUT sends the track through a failing codec and link. BITS codes it with ADPCM at 5, 4, 3 or 2 bits a sample. Errors arrive at random, RATE of them a step: HOLD holds the last good sample, PCKT replays the packet before a lost one, fading, and CIRC conceals a few bad samples as a CD player does or mutes a long burst; SIZE sets how long. FRZ freezes whole steps: a frozen step plays its first FRM samples and loops them to its end. STEP (1/32 to 1/4) follows the project's tempo. At the defaults, or with MIX at 0, the output is the input, bit for bit.",
     "highlights": [
-      "Random dropouts: how often (CHNC), how long (LEN), how hard they cut (EDGE)",
-      "Drops to silence, a stuck loop or a 6-bit crushed copy",
-      "TONE darkens the track while it is out",
-      "Untouched between dropouts, bit for bit"
+      "ADPCM codec at 5, 4, 3 or 2 bits a sample (BITS)",
+      "Link errors on the tempo: held samples, lost packets replayed, CD concealment and muted bursts",
+      "Steps frozen on their first frame, 1/32 to 1/4 at the project's tempo",
+      "Untouched at the defaults or MIX 0, bit for bit"
     ],
     "usage": [
       "On an audio track, hold FUNC and press FX1 (or FX2), turn LEVEL to DROPOUT and press YES.",
-      "On the main page CHNC sets how often the track drops out and LEN for how long; EDGE softens the cut. TONE darkens it.",
-      "FX1 SETUP holds MODE (GAP, HOLD, CRSH) and SIZE (the HOLD loop or the CRSH hold). Turn CHNC to 0 to stop the dropouts."
+      "On the main page RATE sets how many errors a step and SIZE how long; BITS brings in the codec, FRZ freezes steps on their first FRM samples, MIX blends it all over the dry.",
+      "FX1 SETUP holds MODE (HOLD, PCKT, CIRC) and STEP (1/32 to 1/4). Turn RATE, BITS and FRZ to 0, or MIX to 0, for the untouched track."
     ]
   },
   "controls": [
     {
-      "name": "CHNC",
-      "default": 40,
-      "count": 128,
-      "doc": "How often dropouts start: once in 20 s at 1 to every 60 ms at 127; 0 = never",
-      "labels": null
-    },
-    {
-      "name": "LEN",
-      "default": 48,
-      "count": 128,
-      "doc": "How long a dropout lasts, about 5 ms to 1 s (each one varies)",
-      "labels": null
-    },
-    {
-      "name": "DPTH",
-      "default": 127,
-      "count": 128,
-      "doc": "How far the track drops; 127 = all the way",
-      "labels": null
-    },
-    {
-      "name": "EDGE",
-      "default": 24,
-      "count": 128,
-      "doc": "How fast a dropout fades in and out, 0.1 ms to 50 ms",
-      "labels": null
-    },
-    {
-      "name": "TONE",
+      "name": "RATE",
       "default": 0,
       "count": 128,
-      "doc": "Darkens the track while it drops out",
+      "doc": "Error events a step: none at 0, one in 16 steps at 1, 16 a step at 127",
+      "labels": null
+    },
+    {
+      "name": "SIZE",
+      "default": 7,
+      "count": 128,
+      "doc": "An error's length: HOLD 4-512, PCKT 64/128/256, CIRC 1-8 hidden, 16-1024 muted",
+      "labels": null
+    },
+    {
+      "name": "BITS",
+      "default": 0,
+      "count": 128,
+      "doc": "The ADPCM codec: off, then 5, 4, 3 and 2 bits a sample",
+      "labels": null
+    },
+    {
+      "name": "FRZ",
+      "default": 0,
+      "count": 128,
+      "doc": "The chance a step freezes on its first frame; 127 = every step",
+      "labels": null
+    },
+    {
+      "name": "FRM",
+      "default": 40,
+      "count": 128,
+      "doc": "The frozen frame: 64 to 1016 samples (1.5 to 23 ms)",
+      "labels": null
+    },
+    {
+      "name": "MIX",
+      "default": 127,
+      "count": 128,
+      "doc": "The failures over the dry; 0 = the dry, bit for bit",
       "labels": null
     },
     {
       "name": "MODE",
       "default": 0,
       "count": 3,
-      "doc": "What the track drops to: silence, a stuck loop, a crushed copy",
+      "doc": "The error: a held sample, a lost packet replayed, CD concealment",
       "labels": [
-        "GAP",
         "HOLD",
-        "CRSH"
+        "PCKT",
+        "CIRC"
       ]
     },
     {
-      "name": "SIZE",
-      "default": 48,
-      "count": 128,
-      "doc": "HOLD: the loop, 1.5 to 21 ms; CRSH: the hold, 2 to 33 samples",
-      "labels": null
+      "name": "STEP",
+      "default": 1,
+      "count": 4,
+      "doc": "The step RATE and FRZ count in, at the project's tempo",
+      "labels": [
+        "1/32",
+        "1/16",
+        "1/8",
+        "1/4"
+      ]
     }
   ],
   "compatibility": {
@@ -94,9 +106,10 @@
     "conflicts": [],
     "limitations": [
       "Needs the Modwerk base loaded over USB (beta) with an effect id of its own; the card builds' non-stock ids are all claimed but 0x07, which the draft holds as a placeholder.",
-      "Dropouts fall at random moments, not on steps: the effect follows no clock, tempo or trig. The random sequence starts from the same seed whenever the effect is loaded.",
-      "HOLD uses 2,048 words of the slot's buffer (an FX1 slot holds it); a loop never reaches back past what it recorded since it was loaded or since the last dropout ended.",
-      "HOLD's loop seam, EDGE 0's hard cut and CRSH's aliasing are deliberate glitches.",
+      "Follows the project's tempo (stock's tempo24 word), not the sequencer's step phase, transport, swing or track speed: its step clock runs free from the moment the effect is chosen.",
+      "On FX1 the tempo may not be available (not verified); without the tempo word the steps are counted at 120 BPM.",
+      "Uses 3,072 words of the slot's buffer, which an FX1 slot holds; the first 128 frames after it is chosen pass the dry while it clears.",
+      "The codec's aliasing, the hard edges of errors and the frozen frame's seam are deliberate glitches; GSM, MP3 and ATRAC are not included.",
       "Not yet run in a built image, the ColdFire port or on a unit: only in fxhost (the vendored DSP56300 emulator alone)."
     ]
   },
@@ -104,20 +117,20 @@
     "recorded": "fxhost, 30 Oct 2026",
     "storage": {
       "label": "DSP program / table / buffer",
-      "display": "368 words + 387-word table; 2,048-word buffer",
-      "value": 755,
+      "display": "587 words + 323-word table; 3,072-word buffer",
+      "value": 910,
       "unit": "words",
       "method": "static",
-      "conditions": "dsp_asm: 368 program words and one 387-word P table per core. 31 state words in each instance's own r7 block. 2,048 words of the allocator's Y buffer per instance (HOLD's 1,024 stereo frames).",
+      "conditions": "dsp_asm: 587 program words and one 323-word P table per core. 58 state words in each instance's own r7 block. 3,072 words of the allocator's Y buffer per instance (a 512-frame ring and the frozen frame).",
       "source": "TESTING.md"
     },
     "processing": {
       "label": "DSP instruction peak",
-      "display": "156 instructions/sample",
-      "value": 156,
+      "display": "272 instructions/sample",
+      "value": 272,
       "unit": "instructions/sample",
       "method": "emulator",
-      "conditions": "fxhost (dsp56kEmu alone), one instance, 16-frame calls at the dearest settings (HOLD, dropouts back to back, TONE 127): 2,494 instructions a call. Executed instructions, not chip cycles; not yet measured beside stock SPRING REV in dsp_host.",
+      "conditions": "fxhost (dsp56kEmu alone), one instance, 16-frame calls at the dearest settings (both 2-bit coders, PCKT 256 at RATE 127, every 1/32 step frozen, MIX gliding, with and without a trig split): 4,354 instructions a call. Executed instructions, not chip cycles; not yet measured beside stock SPRING REV in dsp_host.",
       "source": "TESTING.md"
     },
     "impact": {
@@ -129,22 +142,22 @@
         "source": "manifest.py"
       },
       "dsp": {
-        "level": "low",
+        "level": "moderate",
         "basis": "source-estimate",
-        "rationale": "156 executed instructions a sample in fxhost, about half the 314 octabam's benchmark reports for stock SPRING REV; not measured under the same benchmark.",
+        "rationale": "272 executed instructions a sample in fxhost, below the 314 octabam's benchmark reports for stock SPRING REV; not measured under the same benchmark.",
         "source": "TESTING.md"
       },
       "memory": {
         "level": "moderate",
         "basis": "source-estimate",
-        "rationale": "755 program-memory words on each DSP core (368 code, 387 table); 31 state words and 2,048 buffer words per instance.",
+        "rationale": "910 program-memory words on each DSP core (587 code, 323 table); 58 state words and 3,072 buffer words per instance.",
         "source": "TESTING.md"
       }
     }
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "fxhost only (the vendored dsp56kEmu with the module alone, no firmware): with CHNC 0, or DPTH and TONE 0, the output is the input bit for bit from garbage state and buffer and with trig splits; the dropouts' length and spacing follow LEN and CHNC; GAP's depth, HOLD's loop period, CRSH's 6-bit grid and hold, TONE and EDGE act as documented; HOLD never plays unrecorded memory; idle in every mode; nothing outside the audio, state, parameter and buffer words is written; 156 instructions a sample at the dearest settings. Not run in a built image, under the ColdFire port or on a unit.",
+    "summary": "fxhost only (the vendored dsp56kEmu with the module alone, no firmware): at the defaults and at MIX 0 the output is the input bit for bit from garbage state and buffer and with trig splits; HOLD, PCKT and CIRC match their arithmetic; the ADPCM's SNR falls with the bits (51/45/37/25 dB); the step's length follows the tempo word at 120, 96.5 and 174 BPM and falls back to 120 BPM without it; RATE's errors follow the tempo; a garbage buffer is never heard; idle reaches digital silence in every mode; nothing outside the audio, state, parameter and buffer words is written; 272 instructions a sample at the dearest settings. Not run in a built image, under the ColdFire port or on a unit.",
     "hardwareStatus": "untested",
     "evidenceRevision": "bb419ff5ff27481610e72468c3973726bbdf4d6a",
     "gates": [
@@ -162,8 +175,8 @@
     "steps": [
       "Select an audio track with its TRACK key.",
       "Hold FUNC and press FX1 (or FX2) to open its SETUP page.",
-      "Turn LEVEL to DROPOUT and press YES; MODE and SIZE appear on the SETUP page.",
-      "Press FX1 (or FX2) for the main page: CHNC, LEN, DPTH, EDGE and TONE."
+      "Turn LEVEL to DROPOUT and press YES; MODE and STEP appear on the SETUP page.",
+      "Press FX1 (or FX2) for the main page: RATE, SIZE, BITS, FRZ, FRM and MIX."
     ],
     "screenshots": []
   },

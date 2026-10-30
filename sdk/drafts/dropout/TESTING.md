@@ -2,7 +2,7 @@
 
 ## Commands and exact revision
 
-Source: this folder at the commit that adds it (branch `module/dropout`). Toolchain: octabam's vendored `dsp56300` at its pinned commit 8b731966 with `tools/patches/dsp56300.patch` (`npm run upstream:tools`, then octabam's `scripts/setup.sh` step 4), `dsp_asm` checked to emit the one-word displaced move (`0257de`).
+Source: this folder at the commit named in `octamod.module.json` (`source.revision`, branch `module/dropout`). Toolchain: octabam's vendored `dsp56300` at its pinned commit 8b731966 with `tools/patches/dsp56300.patch` (`npm run upstream:tools`, then octabam's `scripts/setup.sh` step 4), `dsp_asm` checked to emit the one-word displaced move (`0257de`).
 
 ```sh
 python3 -B sdk/drafts/dropout/verify.py                     # the gates
@@ -11,60 +11,95 @@ python3 -B sdk/drafts/dropout/verify.py --fx out/fx         # renders out/fx-ren
 npm run fx:audit -- check out/fx out/fx-renders
 ```
 
-`verify.py` assembles `dropout.asm` with `dsp_asm`, refuses a `rep`, a label that prefixes another, a second table literal and any multiply operand order outside the eight the chip encodes, disassembles the result and refuses an unsigned multiply, then runs the module in **fxhost** (`tools/fxhost.cpp`): the vendored dsp56kEmu with only this module's words and table loaded, called through octabam's recovered effect ABI (audio at X:0, `n7` frames, `r6` the parameter record, `r7` the state block, `X:$213` pointing at the allocator's buffer base, 16-frame blocks, trig splits on request). The buffer sits at Y:$1c00 (an FX1 slot, not 2K-aligned) or Y:$4000 (an FX2 slot), 2,048 words. Every X and Y word outside the audio block, the state block, the parameter record and that buffer holds a marker checked after every call; `init` is entered with `r1` set and must return it unchanged.
+`verify.py` assembles `dropout.asm` with `dsp_asm`, refuses a `rep`, a label that prefixes another, a second table literal and any multiply operand order outside the eight the chip encodes, disassembles the result and refuses an unsigned multiply, then runs the module in **fxhost** (`tools/fxhost.cpp`): the vendored dsp56kEmu with only this module's words and table loaded, called through octabam's recovered effect ABI (audio at X:0, `n7` frames, `r6` the parameter record with tempo24 << 8 at `r6+$13`, `r7` the state block, `X:$213` pointing at the allocator's buffer base, 16-frame blocks, trig splits on request). The buffer sits at Y:$1c00 (an FX1 slot, not 2K-aligned) or Y:$4000 (an FX2 slot), 3,072 words. Every X and Y word outside the audio block, the state block, the parameter record and that buffer holds a marker checked after every call; `init` is entered with `r1` set and must return it unchanged.
 
-What fxhost cannot see: the dispatcher's real register state, the panel and its descriptor, the base's loader, the other tenants of the DSP, the chip's timing and anything audible on a unit. Nothing below is hardware evidence.
+What fxhost cannot see: the dispatcher's real register state, the frame builder's real tempo word (in particular whether an FX1 instance gets one), the panel and its descriptor, LFO and scene modulation as the firmware applies it, the base's loader, the other tenants of the DSP, the chip's timing and anything audible on a unit. Nothing below is hardware evidence.
 
 ## Gates (fxhost, 30 Oct 2026)
 
 ```
-PASS  assembles, no mpysu, no rep          368 program words + 387 table words
-PASS  CHNC 0 is the dry, bit for bit       largest difference 0 LSB
-PASS  DPTH 0 and TONE 0 change nothing     largest difference 0 LSB
-PASS  CHNC 100, LEN 40                     23 dropouts, 26 ms long (want 27), 228 ms apart (want 208)
-PASS  CHNC 120, LEN 70                     33 dropouts, 88 ms long (want 93), 89 ms apart (want 83)
-PASS  GAP at DPTH 64 halves the level      level 0.5000 of the dry
-PASS  HOLD loops 64 frames (SIZE 0)        11 held dropouts, largest repeat error 4 LSB
-PASS  HOLD loops 400 frames (SIZE 48)      11 held dropouts, largest repeat error 5 LSB
-PASS  HOLD loops 953 frames (SIZE 127)     10 held dropouts, largest repeat error 5 LSB
-PASS  HOLD plays only what it recorded     peak -40.0 dBFS from a -40 dBFS input over a garbage buffer
-PASS  CRSH holds 2 samples on 6 bits       122 dropouts, median hold 2, on the grid: True
-PASS  CRSH holds 18 samples on 6 bits      46 dropouts, median hold 18, on the grid: True
-PASS  TONE darkens a dropout               5 kHz -15.8 dB inside 11 dropouts
-PASS  EDGE 0 ramps in 4 samples            median 4 samples from 90 % to 2 %
-PASS  EDGE 127 ramps in 2205 samples       median 1942 samples from 90 % to 2 %
-PASS  idle settles (MODE 0)                tail peak -118.5 dBFS
-PASS  idle settles (MODE 1)                tail peak -118.5 dBFS
-PASS  idle settles (MODE 2)                tail peak -118.5 dBFS
+PASS  assembles, no mpysu, no rep          587 program words + 323 table words
+PASS  neutral is the dry, bit for bit      defaults and MIX 0 (all else at 127), every MODE: largest difference 0 LSB
+PASS  HOLD holds 32 samples (SIZE 7)       23 errors, 100% exactly 32 long, held at the last good: True
+PASS  HOLD holds 256 samples (SIZE 63)     22 errors, 100% exactly 256 long, held at the last good: True
+PASS  PCKT replays 64 samples, fading      23 lost packets, 23 exactly 64 long, largest model error 2 LSB
+PASS  PCKT replays 256 samples, fading     22 lost packets, 22 exactly 256 long, largest model error 2 LSB
+PASS  CIRC conceals 4 samples              23 bursts, 23 exactly 4 long, largest model error 2 LSB
+PASS  CIRC conceals 8 samples              23 bursts, 23 exactly 8 long, largest model error 2 LSB
+PASS  CIRC mutes bursts of 16              23 bursts, 100% exactly 16 long
+PASS  CIRC mutes bursts of 1024            9 bursts, 100% exactly 1024 long
+PASS  BITS: ADPCM at 5, 4, 3, 2 bits       SNR 51/45/37/25 dB (-8 dBFS tone), 51/45/38/25 dB (-40 dBFS)
+PASS  FRZ steps of 5512 at 120.0 BPM       step starts 5512,5512,5512 apart; the frame loops within 3 LSB
+PASS  FRZ steps of 6854 at 96.5 BPM        step starts 6854,6854,6854 apart; the frame loops within 3 LSB
+PASS  FRZ steps of 1900 at 174.0 BPM       step starts 1900,1900,1900 apart; the frame loops within 3 LSB
+PASS  FRZ steps of 5512 at tempo 0 (120)   step starts 5512,5512,5512 apart; the frame loops within 3 LSB
+PASS  FRZ 64 freezes about half the steps  35 of 64 steps
+PASS  RATE follows the tempo               62 errors in 2 s at 87 BPM (want 56), 112 at 174 (want 113)
+PASS  a garbage buffer is never heard      peak -40.0 dBFS from a -40.0 dBFS input over a garbage buffer
+PASS  idle is digital silence (HOLD)       last 0.5 s peak 0 LSB
+PASS  idle is digital silence (PCKT)       last 0.5 s peak 0 LSB
+PASS  idle is digital silence (CIRC)       last 0.5 s peak 0 LSB
 PASS  memory guard, every run              0 words written outside the state, audio and buffer
-PASS  instructions per frame               2494 a 16-frame call, 156 a frame
+PASS  instructions per frame               4354 a 16-frame call, 272 a frame (stock SPRING REV: 314)
 all passed
 ```
 
-What they pin: with CHNC 0 the output is the input bit for bit in every MODE, from a garbage state block and buffer, with and without a trig split; with DPTH 0 and TONE 0 dropouts come and go and change nothing; the dropouts' mean length against LEN's table (within 20 %) and their mean spacing against CHNC's chance (within 35 %, a random process over 6 s); GAP at DPTH 64 halves the level; HOLD's output inside a dropout repeats with the loop's period at SIZE 0, 48 and 127 (judged on dropouts that came at least a loop after the last one ended: a loop reaches back no further than that) (within 8 LSB: DPTH 127 is 1 - 2^-23, so a few LSB of the dry ride on the loop); HOLD over a garbage buffer never plays more than the quiet input it recorded; CRSH's values inside a dropout sit on the 6-bit grid and change every 2 + SIZE/4 samples; TONE 127 takes a 5 kHz tone 15.8 dB down inside dropouts; EDGE's ramp takes 4 samples at 0 and about 2,205 at 127 (measured 90 % to 2 %); after a burst, the last half second of three is under -90 dBFS in every MODE with dropouts running; the memory guard over every run.
+What they pin:
+
+- **Passthrough.** At the defaults (RATE 0, BITS off, FRZ 0, MIX 127) and at MIX 0 with every other knob at 127, in every MODE, the output is the input bit for bit, from a garbage state block and buffer, with and without a trig split (5 frames), on an FX1 and an FX2 buffer.
+- **HOLD.** On a 997 Hz tone, each error is a run of exactly 4 + 4 SIZE equal samples (32 at SIZE 7, 256 at 63), at the value of the sample before it.
+- **PCKT.** Each lost packet is exactly P samples long (64 at SIZE 0, 256 at 127), and sample k of it is the input P samples earlier times (1 − 2^-23 − k/P), within 2 LSB of that arithmetic.
+- **CIRC.** On a 3 kHz tone, each concealed burst is exactly 1 + SIZE/8 samples long (4 and 8) and continues the last good sample by the last slope, within 2 LSB; from SIZE 64 each burst is a run of exactly 16 (SIZE − 63) samples within 2 LSB of zero (16 and 1,024).
+- **BITS.** A 440 Hz tone's signal-to-noise ratio after the coder falls with each depth, 51/45/37/25 dB at 5/4/3/2 bits, the same at −8 and −40 dBFS (the step adapts).
+- **Tempo lock.** With every step frozen and a 64-sample frame, the runs where the input passes start exactly one step apart and last exactly 64 samples, and the output then repeats with a period of 64 within 3 LSB: 5,512 samples a 1/16 step at 120 BPM, 6,854 at 96.5 BPM, 1,900 a 1/32 step at 174 BPM, each equal to `3 q 2^STEP / 16` with `q = 42,336,000 // tempo24`, and 5,512 again when the tempo word reads 0 (the 120 BPM fallback). FRZ 64 froze 35 of 64 steps. RATE 100 made 62 errors in 2 s at 87 BPM and 112 at 174 against 56 and 113 from its chance a frame (within 25 %, and the ratio within 20 % of 2).
+- **Buffer.** Over a garbage buffer, with PCKT and CIRC errors and every 1/32 step frozen on its longest frame, the output never exceeds a −40 dBFS input.
+- **Idle.** After a 0.3 s burst, with the 2-bit coder, errors at RATE 100 and FRZ 64, the last 0.5 s of 3 s of silence is exactly 0 in every MODE.
+- **Memory guard** over every run, and the **cost** below.
 
 ## Sound quality
 
-Between dropouts the effect is the identity, so fx:audit has nothing to measure there. Its nonlinear part is CRSH, a deliberate 6-bit sample-and-hold, and the dropouts themselves are deliberate discontinuities that the audit reads as residual. Rendered with CRSH dropouts as long and as close as they go (CHNC 127, LEN 127, DPTH 127, EDGE 0, SIZE 0), the audit reports what a bit crusher does:
+The errors and the freezes are deliberate discontinuities, which the audit reads as residual, so it was rendered with them off and the codec at its coarsest (BITS 127: 2 bits; RATE 0, FRZ 0, MIX 127), the module's one nonlinearity:
 
 ```
 signal                  out dBFS  harmonics  aliasing  residual   DC dBFS   rails  verdict
-tone-1100hz-12db           -12.0      -43.0     -30.2     -21.3    -115.1       0  FAIL
-tone-1100hz-1db             -1.0      -55.4     -44.0     -22.0     -98.8       0  FAIL
-tone-2701hz-12db           -12.1      -50.3     -29.7     -14.1     -91.6       0  FAIL
-tone-2701hz-1db             -1.2      -59.6     -42.3     -14.2    -101.4       0  FAIL
-tone-5301hz-12db           -12.6      -53.6     -28.9      -8.0    -138.9       0  FAIL
-tone-5301hz-1db             -1.6      -59.5     -40.3      -8.0    -106.7       0  FAIL
-tone-9102hz-12db           -13.9      -72.3     -28.2      -2.4    -115.9       0  FAIL
-tone-9102hz-1db             -3.0      -78.5     -38.2      -2.4    -107.7       0  FAIL
+tone-1100hz-12db           -12.0      -23.9     -25.8     -19.4     -78.8       0  FAIL
+tone-1100hz-1db             -1.0      -24.9     -26.1     -19.2     -79.5     425  FAIL
+tone-2701hz-12db           -11.8      -16.8     -20.7     -10.1     -84.8       0  FAIL
+tone-2701hz-1db             -1.3      -19.6     -21.8     -10.8     -79.0    1652  FAIL
+tone-5301hz-12db           -12.9      -14.6     -14.0      -3.3     -95.9       0  FAIL
+tone-5301hz-1db             -0.4      -26.7     -12.0     -14.5    -108.2       0  FAIL
+tone-9102hz-12db            -5.8      -58.2      -8.2      -8.6    -108.2       0  FAIL
+tone-9102hz-1db             -0.6      -84.0      -7.6     -24.6    -130.0    3622  FAIL
 idle                    after the input stops: digital silence  OK
 ```
 
-That is the intended sound of CRSH (aliasing -28 to -44 dBc, the residual is the dropouts switching). DC stays under -91 dBFS, nothing reaches the rails, and after the input stops the output is digital silence. GAP and HOLD add no harmonics of their own; HOLD's loop seam and EDGE 0's 0.1 ms ramp are audible clicks by design.
+And at 5 bits (BITS 26), rendered the same way:
+
+```
+signal                  out dBFS  harmonics  aliasing  residual   DC dBFS   rails  verdict
+tone-1100hz-12db           -12.0      -59.6     -54.5     -44.2     <-140       0  FAIL
+tone-1100hz-1db             -1.0      -59.3     -55.0     -43.7    -108.7       0  FAIL
+tone-2701hz-12db           -12.0      -53.9     -44.4     -35.0    -111.5       0  FAIL
+tone-2701hz-1db             -1.0      -52.2     -46.0     -34.7     -87.1       0  FAIL
+tone-5301hz-12db           -12.0      -55.5     -36.7     -28.8     -99.1       0  FAIL
+tone-5301hz-1db             -1.0      -46.9     -33.3     -29.6    -106.9       0  FAIL
+tone-9102hz-12db           -12.0      -62.5     -28.3     -25.3     -98.3       0  FAIL
+tone-9102hz-1db             -1.2      -69.9     -24.2     -27.5     -90.4       0  FAIL
+idle                    after the input stops: digital silence  OK
+```
+
+The verdicts are the audit's −60 dBc aliasing limit, which a 2-to-5-bit coder is not meant to meet: its coding noise is the sound, and it is reported here rather than the limit moved. The 2-bit coder's step lags a full-scale tone and its prediction overshoots onto the store's limit (425 to 3,622 samples at −1 dBFS): that is the coder's own `p` limited on purpose (its update is a limited add), not a wrap; at 5 bits nothing reaches the rails. DC stays under −78 dBFS. After the input stops the output is digital silence at both depths (the prediction leaks to exactly 0). HOLD, PCKT, CIRC and FRZ were not audited: they add no harmonics of their own beyond the steps at their edges, which are the effect.
+
+## Not tested
+
+- Anything in a built image, under the ColdFire port or on a unit: the chooser, the pages, the labels, parameter locks, LFO and scene modulation as the firmware applies them (fxhost feeds whole knob values; the LFO fraction path of RATE, FRZ and MIX is not exercised), stock flows, instances on both cores, `verify_knob_clicks.py`.
+- Whether the frame builder publishes the tempo word to an FX1 instance. fxhost always supplies it, and the fallback is tested only by feeding a word of 0.
+- A tempo change mid-render (the step countdown is clamped to the new step length; not gated).
+- `dsp_host`'s stress run, `cycle_count.py` and `benchmark_stock_dsp.py`: they need a built image (Performance).
 
 ## Independent review
 
-A second agent, without the author's reasoning, read the source against octabam's trap list (30 Oct 2026): no condition-code, extension-byte, a0-remainder, Tcc-source, multiply-order, `lua`, label or init-clear defect, no write outside the state block, the audio block and the declared buffer, and the table literal once. Forms that carry hardware risk because no module proven on hardware uses them yet (their only precedents are RENDER-proven modules): short-immediate `add`/`sub #<n` and `tle` (ring-sc only). The review also caught that a HOLD loop could reach back past an earlier dropout and hold a jump in time; fixed (the frame count restarts when a loop lets go) before this record. Every other form has a site in a module that has run on a unit. To be cleared on hardware or against the stock payload's disassembly.
+Not yet repeated for this rewrite. The ADPCM routine is CODEC ECHO's, reviewed there and copied with only its table offsets and state slots changed; the HOLD ring, noise, glide and init discipline come from the earlier DROPOUT draft, reviewed 30 Oct 2026. New forms in this source, each with a precedent in octabam: `lua (r7+8),r7` and `lua (r7-8),r7` (Output Matrix), `asl`/`asr` by a register count (the ADPCM routine), short-immediate `add`/`sub`/`cmp #<n` (RENDER-proven modules only, as the earlier review noted).
 
 ## Stock flows
 
@@ -72,11 +107,11 @@ Not tested: nothing has run in a built image or on a unit. The module adds an ef
 
 ## Performance
 
-`evidence/performance.json` is not written: its static count (`cycle_count.py`), the benchmark against stock (`benchmark_stock_dsp.py`, which reads the user's own OS 1.40C) and the stress run (`dsp_host -guard -dirty`) all need a built image. Measured instead in fxhost: 2,494 executed instructions for a 16-frame call at the dearest settings (HOLD, dropouts back to back, TONE 127), 156 a frame including the per-call setup. octabam's benchmark reports 314 instructions a sample for stock SPRING REV under its own cases; the two figures come from different harnesses and are not yet a comparison.
+`evidence/performance.json` is not written: its static count (`cycle_count.py`), the benchmark against stock (`benchmark_stock_dsp.py`, which reads the user's own OS 1.40C) and the stress run (`dsp_host -guard -dirty`) all need a built image. Measured instead in fxhost: 4,354 executed instructions for the dearest 16-frame call (both coders at 2 bits, PCKT 256 with RATE 127, every 1/32 step frozen on the longest frame, MIX gliding, with and without a trig split), 272 a frame including the per-call setup. octabam's benchmark reports 314 instructions a sample for stock SPRING REV under its own cases; the two figures come from different harnesses and are not yet a comparison. The coders are about half the cost: with BITS off the same call takes 2,278 instructions, 142 a frame.
 
 ## Resources
 
-368 program words and one 387-word P table (P, L and E, 129 words each) per DSP core, from `dsp_asm`. 31 state words per instance in the instance's own r7 block (`$00`-`$1e`), all cleared by `init`. 2,048 words of the allocator's Y buffer (`Claims(stock_instance_buffer=True, buffer_words=2048)`), which fits an FX1 slot (3,072 words); no stock table, no absolute address but `X:$213`.
+587 program words and one 323-word P table (W and S, 89 words each, four depths of four words, RATE's 129 points) per DSP core, from `dsp_asm`. 58 state words per instance in the instance's own r7 block (`$00`-`$39`), all cleared by `init`. 3,072 words of the allocator's Y buffer (`Claims(stock_instance_buffer=True, buffer_words=3072)`), which fits an FX1 slot; no stock table, no absolute address but `X:$213`.
 
 ## Hardware
 
