@@ -7,9 +7,11 @@ const option=(name,fallback)=>{const i=args.indexOf(name);return i<0?fallback:ar
 const kind=option('--kind','dsp'),author=option('--author',''),output=option('--output',null)
 const machine=option('--machine','octatrack')
 // The agent board (docs/AGENT_BOARD.md): stop before writing anything when someone else has claimed this module; claim it once it exists.
-const board=await import('./agent-board.mjs'),boardKey=machine+'/'+id,{claims,login,unavailable}=id?await board.boardSnapshot({kind:'module',key:boardKey}):{claims:[]}
+// Questions and findings on the module or its machine are printed for the developer to read before planning.
+const board=await import('./agent-board.mjs'),boardKey=machine+'/'+id,{claims,login,unavailable,messages}=id?await board.boardSnapshot({kind:'module',key:boardKey},{messages:{machine}}):{claims:[]}
 if(claims[0]&&claims[0].holder!==login?.toLowerCase())throw new Error('Module '+boardKey+' is claimed by '+board.describeClaim(claims[0])+' on the agent board. Ask them before you start, or pick another module (docs/AGENT_BOARD.md).'+(login?'':' If that is you, run npm run board -- login first.'))
 async function claimModule(){
+  const said=board.moduleMessagesLine({machine,id,messages,login});if(said)console.log('Board: '+said.detail+'. Read them before you plan.')
   if(unavailable)return console.log('Board: not claimed. '+unavailable+' Once it answers: npm run board -- claim module '+boardKey)
   if(!login)return console.log('Board: sign in once with npm run board -- login, then claim it so nobody else starts the same module: npm run board -- claim module '+boardKey)
   try{const result=await board.claim({kind:'module',key:boardKey,branch:board.currentBranch(root)});console.log('Board: '+(result.renewed?'renewed your claim on':'claimed')+' module '+boardKey+' for @'+login+'.')}catch(error){console.log('Board: could not claim module '+boardKey+': '+error.message)}

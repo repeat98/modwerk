@@ -1,0 +1,248 @@
+{
+  "schemaVersion": 2,
+  "id": "pattern-sample-locks",
+  "key": "PATTERN SAMPLE LOCKS",
+  "name": "Pattern Sample Locks",
+  "version": "0.1.8-experimental",
+  "category": "system",
+  "author": {
+    "github": "twwwy",
+    "credits": [
+      "twwwy"
+    ]
+  },
+  "nativeManifest": "manifest.py",
+  "presentation": {
+    "label": "SAMPLE LOCKS",
+    "family": "Pattern editing",
+    "summary": "Lock Part sample choices into pattern trigs, or clear SAMPLE locks.",
+    "overview": "Two explicit native SAMPLE-lock actions in Part Edit. Lock preserves existing SAMPLE locks by default. Clear removes every SAMPLE lock on selected tracks. Playback keeps its current state; successful settings are remembered while the module stays loaded.",
+    "highlights": [
+      "All eight tracks appear; only Flex and Static tracks are selectable.",
+      "Select all eligible tracks or a subset.",
+      "Keep existing sample locks by default.",
+      "Clear removes every SAMPLE lock on selected tracks, including manual locks.",
+      "Recall separate Lock/Clear selections and Lock replacement policy during the current module session."
+    ],
+    "usage": [
+      "MKII: FUNC + PART, then choose either sample-lock action.",
+      "Level 2: arrows navigate eligible tracks; A selects all, B selects the highlighted track. Turn clockwise ON, counterclockwise OFF.",
+      "C sets Replace existing for Lock; Clear always includes every SAMPLE lock.",
+      "YES opens level 3 with per-track change counts. NO returns to level 2; NO in level 2 closes."
+    ]
+  },
+  "controls": [],
+  "compatibility": {
+    "firmware": "1.40C",
+    "location": "Flex / Static",
+    "conflicts": [],
+    "uiClaims": [
+      "screen:PART EDIT"
+    ],
+    "limitations": [
+      "Experimental prototype; MKII live edits passed, but full lifecycle and worst-case hardware qualification remain incomplete.",
+      "Clear removes all SAMPLE locks on selected tracks, including manual locks.",
+      "Lock preserves all existing SAMPLE locks by default, including those written by a previous Lock action.",
+      "No ownership storage, origin tracking or custom lifecycle event is used.",
+      "Stock-only card integration and contributed-machine combinations remain unqualified."
+    ],
+    "effectId": null
+  },
+  "resources": {
+    "recorded": "Exact linked allocation; isolated hardware cost unqualified",
+    "storage": {
+      "label": "Storage",
+      "display": "8,748 bytes code/data; 1,328 bytes BSS",
+      "value": 10076,
+      "unit": "bytes",
+      "method": "static",
+      "conditions": "Linked emulator package; no ownership metadata storage. See exact-build hashes in TESTING.md.",
+      "source": "TESTING.md"
+    },
+    "processing": {
+      "label": "CPU / DSP load",
+      "display": "Hardware cost unqualified",
+      "value": null,
+      "unit": "unknown",
+      "method": "unmeasured",
+      "conditions": "MKII live 64-step x 8-track operations have observed host completion upper bounds of 18.433 ms for Lock and 18.304 ms for Clear, including USB/UI latency. Cached whole-instrument load is not isolated module cost. See TESTING.md; no universal worst-case execution, per-step interrupt or complete stack bound is qualified.",
+      "source": "TESTING.md"
+    }
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "Exact 0.1.8 MKII live 512-field edits and native reload passed. Explicit Keep saved 19 modules; reboot readback restored all 19, preserving 18 companions. Defaults reset was author-reported; removal/Undo restored the kept set. Companion self-test had a 90.3% CPU advisory, no hard faults. Full publication/cost qualification remains incomplete.",
+    "hardwareStatus": "untested",
+    "gates": [
+      "Worst-case cycles under parameter modulation and maximum load",
+      "Exact memory region and maximum-instance totals",
+      "Owner-reviewed real-hardware evidence with actual coverage and limitations"
+    ],
+    "evidenceRevision": "42525aa0064bd228b3ad8d0aa1a3dae7f9413622"
+  },
+  "license": {
+    "spdx": "MIT",
+    "file": "LICENSE",
+    "declaration": "Original MIT source by twwwy. Original small lettering reused from twwwy\u2019s Beat Slicer under MIT. No stock firmware or extracted tables are included."
+  },
+  "media": [
+    {
+      "path": "media/v018-mkii-live512-confirm.png",
+      "captureType": "hardware",
+      "caption": "Actual MKII during playback: 64 planned changes on each of eight tracks; existing locks are kept.",
+      "alt": "Physical Octatrack Lock confirmation with 64 planned changes on each of eight tracks and existing locks kept.",
+      "credit": "twwwy; Elektron Octatrack UI",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "Live maximum Lock confirmation",
+        "shows": "controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.8-experimental",
+        "imageSha256": "c0b988cbff0050b19961590d1203f5263b0a3d298216e234361bf0fdc3c1c28c",
+        "setup": "Actual MKII LCD read over the development USB interface on temporary RAM base 9056dbbd2a84c80051eee33f97d6407ecf079c51f27bd682243d44c9344777d2. Exact package 28766a017005e664d00620d3831fc81af7449c95e1896a17121ca8fc2d306d8d. Disposable A03, 120 BPM, 64 trigs on each of eight tracks. Receipt media/v018-mkii-qualification.json; no Keep or flash."
+      }
+    },
+    {
+      "path": "media/mkii-part-menu.png",
+      "captureType": "hardware",
+      "caption": "Actual MKII Part Edit: four stock rows followed by Lock and Clear.",
+      "alt": "Physical Octatrack Part Edit menu with Lock Samples to Pattern and Clear Sample Locks.",
+      "credit": "twwwy; Elektron Octatrack UI",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "Part Edit",
+        "shows": "location",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.8-experimental",
+        "imageSha256": "c0b988cbff0050b19961590d1203f5263b0a3d298216e234361bf0fdc3c1c28c",
+        "setup": "Actual MKII on RAM development base 9056dbbd; hardware receipt media/v018-mkii-qualification.json. Exact package 28766a017005e664d00620d3831fc81af7449c95e1896a17121ca8fc2d306d8d."
+      }
+    },
+    {
+      "path": "media/mkii-lock-replace-on.png",
+      "captureType": "hardware",
+      "caption": "Actual MKII: T1 selected and Replace existing ON recalled after cancellation.",
+      "alt": "Lock track selector with T1 selected and C: Replace existing ON.",
+      "credit": "twwwy; Elektron Octatrack UI",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "Lock selection",
+        "shows": "controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.8-experimental",
+        "imageSha256": "c0b988cbff0050b19961590d1203f5263b0a3d298216e234361bf0fdc3c1c28c",
+        "setup": "Actual MKII on RAM development base 9056dbbd; hardware receipt media/v018-mkii-qualification.json. Exact package 28766a017005e664d00620d3831fc81af7449c95e1896a17121ca8fc2d306d8d."
+      }
+    },
+    {
+      "path": "media/live-removal-open-tracks.png",
+      "captureType": "emulator",
+      "caption": "Exact 0.1.8 emulator: all eight eligible tracks selected; Clear has no replacement control.",
+      "alt": "Clear track selector, all eight tracks selected, A: All and B: Track.",
+      "credit": "twwwy; Elektron Octatrack UI",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "Clear selection",
+        "shows": "controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.8-experimental",
+        "imageSha256": "32e2480b5658c5b559884358b9925e8dbba92581b27a581745f232cb9b57ab43",
+        "setup": "Actual DSP-enabled MKII emulator on base 4ed92776; receipt media/emulator-0.1.8.json. Emulator evidence does not qualify hardware or audio. Exact package 28766a017005e664d00620d3831fc81af7449c95e1896a17121ca8fc2d306d8d."
+      }
+    },
+    {
+      "path": "media/live-lock-confirm.png",
+      "captureType": "emulator",
+      "caption": "Exact 0.1.8 emulator: T1 has 63 planned changes with existing locks kept.",
+      "alt": "Lock confirmation with 63 changes on T1 and Existing locks: Keep.",
+      "credit": "twwwy; Elektron Octatrack UI",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "Lock confirmation, T1",
+        "shows": "controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.8-experimental",
+        "imageSha256": "32e2480b5658c5b559884358b9925e8dbba92581b27a581745f232cb9b57ab43",
+        "setup": "Actual DSP-enabled MKII emulator on base 4ed92776; receipt media/emulator-0.1.8.json. Emulator evidence does not qualify hardware or audio. Exact package 28766a017005e664d00620d3831fc81af7449c95e1896a17121ca8fc2d306d8d."
+      }
+    },
+    {
+      "path": "media/live-clear-confirm.png",
+      "captureType": "emulator",
+      "caption": "Exact 0.1.8 emulator: Clear confirms all 64 T1 locks, including manual locks.",
+      "alt": "Clear confirmation with 64 changes on T1 and Includes manual locks.",
+      "credit": "twwwy; Elektron Octatrack UI",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "Clear confirmation, T1",
+        "shows": "controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.8-experimental",
+        "imageSha256": "32e2480b5658c5b559884358b9925e8dbba92581b27a581745f232cb9b57ab43",
+        "setup": "Actual DSP-enabled MKII emulator on base 4ed92776; receipt media/emulator-0.1.8.json. Emulator evidence does not qualify hardware or audio. Exact package 28766a017005e664d00620d3831fc81af7449c95e1896a17121ca8fc2d306d8d."
+      }
+    },
+    {
+      "path": "media/live-512-lock-confirm.png",
+      "captureType": "emulator",
+      "caption": "Exact 0.1.8 emulator: 64 planned changes on each of eight tracks with explicit replacement.",
+      "alt": "Lock confirmation with 64 changes on each track and Replace existing: Yes.",
+      "credit": "twwwy; Elektron Octatrack UI",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "Lock confirmation, all tracks",
+        "shows": "controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.8-experimental",
+        "imageSha256": "32e2480b5658c5b559884358b9925e8dbba92581b27a581745f232cb9b57ab43",
+        "setup": "Actual DSP-enabled MKII emulator on base 4ed92776; receipt media/emulator-0.1.8.json. Emulator evidence does not qualify hardware or audio. Exact package 28766a017005e664d00620d3831fc81af7449c95e1896a17121ca8fc2d306d8d."
+      }
+    },
+    {
+      "path": "media/live-512-clear-confirm.png",
+      "captureType": "emulator",
+      "caption": "Exact 0.1.8 emulator: 64 planned removals on each of eight tracks, including manual locks.",
+      "alt": "Clear confirmation with 64 removals on each track and Includes manual locks.",
+      "credit": "twwwy; Elektron Octatrack UI",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "Clear confirmation, all tracks",
+        "shows": "controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.8-experimental",
+        "imageSha256": "32e2480b5658c5b559884358b9925e8dbba92581b27a581745f232cb9b57ab43",
+        "setup": "Actual DSP-enabled MKII emulator on base 4ed92776; receipt media/emulator-0.1.8.json. Emulator evidence does not qualify hardware or audio. Exact package 28766a017005e664d00620d3831fc81af7449c95e1896a17121ca8fc2d306d8d."
+      }
+    }
+  ],
+  "access": {
+    "location": "MKII: Part Edit",
+    "steps": [
+      "FUNC + PART opens level 1; select an action with YES.",
+      "Level 2 always shows T1-4 left and T5-8 right. Arrows skip greyed-out non-Flex/Static tracks.",
+      "Turn A clockwise to select all eligible tracks or counterclockwise to clear selection. B sets the highlighted track in the same way.",
+      "For Lock, C sets Replace existing; OFF preserves every existing SAMPLE lock. Clear always includes all SAMPLE locks.",
+      "YES opens level 3. Review per-track change counts; YES applies and closes on success, NO returns to level 2. Errors remain visible.",
+      "NO in level 2 closes the popup. Apply keeps playback as it was; active live or sampler recording refuses the edit.",
+      "Successful operations remember each action\u2019s tracks and cursor, plus Lock replacement policy. Cancelling keeps the previous settings. Module reload or power cycling resets them."
+    ],
+    "screenshots": [
+      "media/v018-mkii-live512-confirm.png",
+      "media/mkii-part-menu.png",
+      "media/mkii-lock-replace-on.png",
+      "media/live-removal-open-tracks.png",
+      "media/live-lock-confirm.png",
+      "media/live-clear-confirm.png",
+      "media/live-512-lock-confirm.png",
+      "media/live-512-clear-confirm.png"
+    ]
+  }
+}

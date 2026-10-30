@@ -32,6 +32,34 @@ class MachineBases(unittest.TestCase):
         imported = {pathlib.Path(item["from"]).name: item["sha256"] for item in record["files"]}
         self.assertEqual({name: imported[name] for name in release["build"]["sources"]}, release["build"]["sources"])
 
+    def test_digitakt_ii_base_source_is_core_dt2_1_1_unchanged(self):
+        record = json.loads((APP / "sdk/imports/core-dt2-source-3d7c2e3.json").read_text())
+        self.assertRegex(record["revision"], r"^[0-9a-f]{40}$")
+        for item in record["files"]:
+            self.assertEqual(sha(APP / item["to"]), item["sha256"], item["to"])
+        # Every source mod.json builds, and its header, is in the record.
+        imported = {item["to"] for item in record["files"]}
+        folder = APP / "sdk/machines/digitakt-ii/elekloader/core-dt2"
+        mod = json.loads((folder / "mod.json").read_text())
+        for source in mod["sources"]:
+            self.assertIn((folder / source).resolve().relative_to(APP).as_posix(), imported, source)
+        self.assertIn("sdk/machines/digitakt-ii/include/mk2/core.h", imported)
+
+    def test_digitakt_ii_proposed_hooks_name_the_sites_the_source_patches(self):
+        interface = json.loads((APP / "sdk/digitakt-ii/core-profile/interface.json").read_text())
+        mod = json.loads((APP / "sdk/machines/digitakt-ii/elekloader/core-dt2/mod.json").read_text())
+        stock = {site["addr"]: bytes.fromhex(site["stock"]) for site in mod["sites"]}
+        proposed = [entry for key in ("events", "tables") for entry in interface[key] if entry.get("since")]
+        self.assertTrue(proposed)
+        for entry in proposed:
+            for site in [entry["site"]] if "site" in entry else entry.get("sites", []):
+                self.assertIn(site["address"], stock, entry["name"])
+                self.assertEqual(site["sha256"], hashlib.sha256(stock[site["address"]]).hexdigest(), entry["name"])
+                self.assertIn(site["os"], mod["os"], entry["name"])
+        for name in ("ev_frame_params", "ev_key_leds", "core_projdata", "core_kitdata"):
+            self.assertIn(name, mod["collections"])
+            self.assertIn(name, {entry["name"] for entry in proposed})
+
     def test_bases_use_the_reviewed_toolchain(self):
         dockerfile = (APP / "sdk/build/Dockerfile").read_text()
         reviewed = {key: re.search(r"^ARG %s_VERSION=(\S+)$" % key.upper(), dockerfile, re.M).group(1) for key in ("gcc", "binutils")}

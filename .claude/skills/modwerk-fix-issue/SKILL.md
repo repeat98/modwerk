@@ -14,6 +14,7 @@ Who is asking decides the flow:
 
 Then, in every flow:
 1. **Read the report in full** (`gh issue view <n> --json body,comments`). Reproduce it where possible, and keep a confirmed fix apart from a mitigation.
-2. **Ship the fix with its changelog entry** in the same pull request: a file in `changelog/`, or the module's own file in `src/community/module-changelogs/`. Name the limits that remain.
-3. **Close only after the live version is verified.** Keep closing keywords out of the pull request.
-4. **Handle reports and diagnostics** as `docs/DEVELOPER_WORKFLOW.md#manage-reports-on-github` describes. Quote nothing from private diagnostics on GitHub.
+2. **Read the module's claim on the agent board** before changing it: `npm run board -- list module <machine>/<id>`. Someone else holding it is changing it now: stop, tell the developer who, and settle it with them first (`npm run board -- ask module <machine>/<id> "…"`).
+3. **Ship the fix with its changelog entry** in the same pull request: a file in `changelog/`, or the module's own file in `src/community/module-changelogs/`. Name the limits that remain.
+4. **Close only after the live version is verified.** Keep closing keywords out of the pull request.
+5. **Handle reports and diagnostics** as `docs/DEVELOPER_WORKFLOW.md#manage-reports-on-github` describes. Quote nothing from private diagnostics on GitHub.

@@ -288,6 +288,10 @@ volatile uint32_t modwerk_status_key_at; /* modwerk_runtime_ticks at the last ke
 #define STOP 0x27
 #define PLAY 0x28
 #define REC 0x29
+/* modset.c: the restore's notice waits while one of these shows, since it would show beneath it (owner's MKII, 30 October
+ * 2026: MISSING hid MINI VERB LEFT OUT until it timed out). */
+int modwerk_status_dialog(void);
+int modwerk_status_dialog(void) { return open != CLOSED; }
 int modwerk_status_key(int code, int pressed)
 {
     static int cue;

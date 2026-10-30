@@ -19,6 +19,7 @@
 #define BANK 0x46c82456u
 #define PART_OFF 0x8ed80u
 #define PART_STRIDE 6322u
+#define SAVED_OFF 0x9504au                  /* the saved Parts, as dsp.c reads them */
 #define SRAM_PART 0x100a4eceu
 #define SIG 60u
 #define FLEX_PAGE 0x400d31aeu
@@ -140,6 +141,24 @@ static unsigned orphan(const Part *part, unsigned t)
     for (unsigned k = 0; k < sizeof known / sizeof *known; ++k)
         if (s[0] == known[k].sig[0] && s[1] == known[k].sig[1] && s[2] >= known[k].lo && s[2] <= known[k].hi) return 1;
     return 0;
+}
+/* controller_board.c: the modules whose machines a track of the current bank's Parts, working or saved, is signed for,
+ * up to max. A machine's engine is used from then on, as Sidechain's is once a Part names COMPRESSOR: after a boot its
+ * renderer first asks for the write lease at the first trig, too late for it (owner's MKII, 28 October 2026). */
+unsigned modwerk_machine_bank_modules(uint32_t *module, unsigned max)
+{
+    const Machine *m[ROWS - 5u], *who; unsigned n = machines(m), found = 0;
+    if (!valid_bank()) return 0;
+    for (unsigned k = 0; k < n && found < max; ++k) {
+        unsigned hit = 0;
+        for (unsigned i = 0; i < 8u * 8u && !hit; ++i) {
+            unsigned p = i >> 3; /* Parts 1-4 working, then saved */
+            hit = owner(&m[k], 1, AT(U32(BANK) + (p < 4u ? PART_OFF : SAVED_OFF - 4u * PART_STRIDE) + p * PART_STRIDE), i & 7u, &who) != 0;
+        }
+        struct runtime_owner o;
+        if (hit && modwerk_runtime_owner_at((uintptr_t)m[k], &o) == 1) module[found++] = o.module;
+    }
+    return found;
 }
 static unsigned current(const Machine *const *m, unsigned n, const Machine **who)
 {
@@ -290,9 +309,19 @@ static void charge(const Machine *const *m, unsigned n)
         if (who ? charged[t] != who && !claim(t, who) : charged[t] != 0) release(t);
     }
 }
+/* Stock loads a track's live parameters from its Part (0x40001f18: bank, Part, track) where a commit changes the
+ * stored type. A module machine is FLEX underneath, so FLEX <-> machine keeps the type and the live copy would stay on
+ * the old machine's values (the machine silent, FLEX playing its bytes) until SOURCE CLEAR: load it here instead. */
+static unsigned relive(const Part *part, uint32_t offset, unsigned track, unsigned type)
+{
+    if (part[0x22 + track] == type) STOCK(void (*)(unsigned, unsigned, unsigned), 0x40001f18u)(U8(0x100b14ceu), offset / PART_STRIDE, track);
+    return type;
+}
 /* A machine's admission precedes every mutation; -1 refuses. */
+extern volatile uint32_t modwerk_machine_assigned; /* controller_board.c: it reads the bank's machines again after an assignment */
 unsigned mw_assign(Part *part, unsigned track, unsigned row)
 {
+    modwerk_machine_assigned = modwerk_machine_assigned + 1u;
     if (!valid_bank() || track >= 8) return row < 5 ? row : 1;
     uint32_t offset = ADDR(part) - U32(BANK) - PART_OFF;
     if (offset % PART_STRIDE || offset / PART_STRIDE >= 4) return (unsigned)-1;
@@ -318,7 +347,7 @@ unsigned mw_assign(Part *part, unsigned track, unsigned row)
             }
         unsigned sig = SIG + 30 * track;
         part[sig] = mirror[sig] = next->sig[0]; part[sig + 1] = mirror[sig + 1] = next->sig[1]; part[sig + 2] = mirror[sig + 2] = next->sig_lo;
-        return 1;
+        return old != next ? relive(part, offset, track, 1) : 1;
     }
     /* Browser YES keeps the signed owner; ordinary machine selection clears it. */
     if (old && old->assign) {
@@ -327,11 +356,13 @@ unsigned mw_assign(Part *part, unsigned track, unsigned row)
         if (still == old) return pool;
         hush(part, track, row < 5 ? row : 1);
         leave(part, mirror, track, old);
+        return relive(part, offset, track, row < 5 ? row : 1);
     } else if (old || absent) {
         hush(part, track, row < 5 ? row : 1);
         if (old) leave(part, mirror, track, old);
         else flex_defaults(part, mirror, track);
         unsigned sig = SIG + 30 * track; for (unsigned k = 0; k < 3; ++k) part[sig + k] = mirror[sig + k] = 0;
+        return relive(part, offset, track, row < 5 ? row : 1);
     }
     return row < 5 ? row : 1;
 }
