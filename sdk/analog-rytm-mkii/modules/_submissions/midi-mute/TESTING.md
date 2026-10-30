@@ -21,7 +21,21 @@ MM04 adds solo: a track is now silenced as the sequencer silences it, every trac
 | S8 | checked | BD and SD soloed, RS note (AUTO note 2) | 0 | 0 | dropped |
 | S9 | checked | BD held, BD muted, SD soloed, unsoloed | 1 | 1 | released once, on the mute |
 
-**Hardware bench.** The bench (`rytm_mute_test.py`) gained three solo steps (another track soloed; this track soloed and muted; a held note, then another track soloed). Against its simulated unit they passed for the module checked and unchecked and failed for stock behaviour where they should. They have not run on a unit.
+**Hardware bench.** The bench (`rytm_mute_test.py`) gained three solo steps (another track soloed; this track soloed and muted; a held note, then another track soloed). Against its simulated unit they passed for the module checked and unchecked and failed for stock behaviour where they should.
+
+**On the author's unit (MM04, 30 October 2026).** Same setup as MM03 below (USB MIDI, the Rytm's USB audio channel 2, BD on channel 1, AUTO channel 15, a ringing BD sound, MUTE MIDI IN and RECEIVE CC/NRPN checked), with the box checked:
+
+| Step | Result |
+| --- | --- |
+| calibrate | BD heard, -16 dBFS over a -86 dBFS floor |
+| drop-auto, drop-track | BD muted: silent on the AUTO channel and on channel 1 |
+| held-baseline | rings while held, stops at its Note Off |
+| held-mute | stopped 60 ms after the CC 94 mute |
+| solo-other | SD soloed with CC 93: BD silent |
+| solo-self-muted | BD soloed and muted: BD heard |
+| solo-held | BD held, then SD soloed: stopped 65 ms after the solo |
+
+All 8 passed. A first attempt stopped at calibrate: BD's channel read -15 dBFS during the silence check, just after flashing; a second later every channel was below -80 dBFS and the run above followed. The unchecked solo baseline was not run on the unit.
 
 ## Build MM03 on a unit (author's Rytm MKII, 30 October 2026)
 
@@ -134,7 +148,7 @@ PORT CONFIG shows MUTE MIDI IN as its last row, after RECEIVE CC/NRPN, unchecked
 
 ## Not tested
 
-- **The unit, still open.** Solo on a unit (MM04), DIN MIDI (MM03 ran over USB only), a full live performance, and a pattern or kit change during a flood.
+- **The unit, still open.** The unchecked solo baseline, DIN MIDI (MM03 ran over USB only), a full live performance, and a pattern or kit change during a flood.
 - **On the unit's clock.** CPU time per event and under the flood, measured with DTIM0; a flood at 240 BPM; a pattern or kit change during the flood.
 - **USB timing.** A real USB host; the emulator's USB MIDI input is its own model.
 - **Silent Pad+Trig and Retrig Grid** (core-ar2 0.3 submissions) were not built beside it.
