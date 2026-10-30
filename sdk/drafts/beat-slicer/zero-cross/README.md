@@ -80,3 +80,10 @@ No heap, DSP, PCM reader or stock patch is in the module.
 See [RESEARCH.md](RESEARCH.md), [TESTING.md](TESTING.md), `build.json` and
 `base-build.json`. Private images, native probes and logs stay in the
 developer's `zero-cross-20261030` cache. **Hardware: not tested.**
+
+Private WAV generation, decoded-PCM verification, measurement-base preparation,
+read-only snapshots and complete-record comparison are in
+[hardware/README.md](hardware/README.md). The pack is shown to the owner before
+any unit trial. Measurement images have separate identities; their results do
+not qualify the uninstrumented base. Original WAVs, ZIPs, plots, card backups
+and device captures stay outside Git.

@@ -15,6 +15,11 @@ HERE = ROOT / 'sdk/drafts/beat-slicer/zero-cross'
 
 @unittest.skipUnless(shutil.which('cc'), 'host C compiler unavailable')
 class ZeroCrossCandidate(unittest.TestCase):
+    def test_hardware_preparation_offline(self):
+        result = subprocess.run([sys.executable, '-B', str(HERE / 'hardware/test_preparation.py')],
+                                cwd=ROOT, capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
     def test_source_proposal_and_real_service_controller_regressions(self):
         spec = importlib.util.spec_from_file_location('snap_source_preparation', HERE / 'prepare_base.py')
         stage = importlib.util.module_from_spec(spec)
