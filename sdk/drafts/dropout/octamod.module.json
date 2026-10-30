@@ -110,7 +110,7 @@
       "On FX1 the tempo word is read six words further into the record than on FX2, a place derived from octabam's measurements, not yet measured; a word outside 30-300 BPM counts the steps at 120 BPM.",
       "Uses 3,072 words of the slot's buffer, which an FX1 slot holds; the first 128 frames after it is chosen pass the dry while it clears.",
       "The codec's aliasing, the hard edges of errors and the frozen frame's seam are deliberate glitches; GSM, MP3 and ATRAC are not included.",
-      "Not yet run in a built image, the ColdFire port or on a unit: only in fxhost (the vendored DSP56300 emulator alone)."
+      "Only reported by the developer to run on their own Octatrack MKI from a card build (31 Oct 2026; the exact revision was not recorded); otherwise run only in fxhost (the vendored DSP56300 emulator alone), not under the ColdFire port."
     ]
   },
   "resources": {
@@ -157,8 +157,8 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "fxhost only (the vendored dsp56kEmu with the module alone, no firmware): at the defaults and at MIX 0 the output is the input bit for bit from garbage state and buffer and with trig splits; HOLD, PCKT and CIRC match their arithmetic; the ADPCM's SNR falls with the bits (51/45/37/25 dB); the step's length follows the tempo word at 120, 96.5 and 174 BPM and falls back to 120 BPM outside 30-300 BPM, on FX1's and FX2's record; RATE's errors follow the tempo; a garbage buffer is never heard; idle reaches digital silence in every mode; nothing outside the audio, state, parameter and buffer words is written; 274 instructions a sample at the dearest settings. Not run in a built image, under the ColdFire port or on a unit.",
-    "hardwareStatus": "untested",
+    "summary": "fxhost only (the vendored dsp56kEmu with the module alone, no firmware): at the defaults and at MIX 0 the output is the input bit for bit from garbage state and buffer and with trig splits; HOLD, PCKT and CIRC match their arithmetic; the ADPCM's SNR falls with the bits (51/45/37/25 dB); the step's length follows the tempo word at 120, 96.5 and 174 BPM and falls back to 120 BPM outside 30-300 BPM, on FX1's and FX2's record; RATE's errors follow the tempo; a garbage buffer is never heard; idle reaches digital silence in every mode; nothing outside the audio, state, parameter and buffer words is written; 274 instructions a sample at the dearest settings. Not run under the ColdFire port; reported by the developer to run on their own Octatrack MKI from a card build (31 Oct 2026; the exact revision was not recorded).",
+    "hardwareStatus": "reported",
     "evidenceRevision": "c7bda927ec38e1c7a17dd97c7b53535c912a12b6",
     "gates": [
       "modules/dropout/verify.py"
