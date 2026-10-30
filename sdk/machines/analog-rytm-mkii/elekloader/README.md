@@ -5,11 +5,15 @@ source of elekloader's core-ar2 0.7, copied unchanged: `core-ar2/` (its `mod.jso
 Digitakt mk1 core's `core.s`, `settings.s` and `render.s`, which `mod.json` builds with the Rytm's addresses). Their
 provenance and hashes are in
 [sdk/imports/core-ar2-source-fb58292.json](../../../imports/core-ar2-source-fb58292.json). They are
-GPL-2.0-or-later, by irpina and Iced-Cream, and keep their SPDX lines. The send bus, the FX list and the USB stack come
-next, each in its own pull request; Modwerk's own sources go beside these, so the imported files stay exact.
+GPL-2.0-or-later, by irpina and Iced-Cream, and keep their SPDX lines.
 
-Until this base ships, the site builds with irpina's released `core-ar2-0.7.elemod`. The full OS file sent with
-Transfer stays the fallback afterwards.
+Modwerk's own sources sit beside them in `base/`, and `base.json`'s `add` merges them into the imported recipe when the
+build stages it, so the imported files stay exact: the FX track's lock words (`locks.c`, `locks.s`) and the send bus
+(`sendbus.c`, `sendbus.s`, `fx-tables.h`; [send effects](../README.md#send-effects)). A site `add` names gives the stock
+bytes it replaces by length and SHA-256 only; the build fills them from your OS. The USB stack comes next.
+
+Until the site moves to this base (studied on [#878](https://github.com/repeat98/modwerk/pull/878)), it builds with
+irpina's released `core-ar2-0.7.elemod`. The full OS file sent with Transfer stays the fallback afterwards.
 
 ## Build it
 
@@ -25,7 +29,7 @@ npm run machine:base -- analog-rytm-mkii --stock /private/Analog-Rytm_MKII_OS1.7
 It builds in a temporary folder outside Git, so neither this checkout nor the upstream one changes. It then checks two
 things:
 
-- **Against the release it started from:** the same ten sources, 57 sites, exports, imports and tables.
+- **Against the release it started from:** every source, site, export, import and table it has (`reference.keeps`), with Modwerk's additions on top.
 - **Against [base-binding.json](../base-binding.json):** the SHA-256 of the package.
 
 `--out NEW-DIR` (outside Git) keeps the `.elemod`. `--write` records a new identity: use it only for a deliberate
@@ -54,8 +58,8 @@ docker run --rm --user "$(id -u):$(id -g)" -e HOME=/tmp -v "$PWD:$PWD" -w "$PWD"
 
 The release records its sources but not its compiler, and none of these reproduces its compiled code byte for byte.
 The 22 functions that change size are all compiled C: 21 from `store.c`, 1 from `machines.c`. The sites, the
-exports, the imports and the tables are the same. This base is therefore identified by its own hash, built with the reviewed toolchain. Before
-the site takes it, it needs a run on a unit (29 October 2026).
+exports, the imports and the tables are the same. This base is therefore identified by its own hash, built with the reviewed toolchain. With
+the lock words and the send bus it ran on a unit in test build MB02, as the author reported (29 October 2026).
 
 The kit-pinned SDK (3b31ef3) and the SDK at the release's commit (fb58292) give the same package from these sources
 and headers.
