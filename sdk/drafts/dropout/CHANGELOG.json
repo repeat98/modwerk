@@ -1,0 +1,12 @@
+[
+  {
+    "version": "0.1.0-experimental",
+    "date": "2026-10-30",
+    "changes": [
+      "New: DROPOUT, random dropouts on FX1 or FX2, like a worn tape or a failing stream.",
+      "CHNC sets how often they come, LEN how long they last, EDGE how hard they cut; between them the track is untouched.",
+      "MODE drops to silence (GAP), a stuck loop (HOLD) or a crushed copy (CRSH); TONE darkens the dropout.",
+      "Needs the Modwerk base loaded over USB (beta). Not yet tested on a unit or in the emulator."
+    ]
+  }
+]
