@@ -87,6 +87,7 @@ def exercise(port,run,tap,key,encoder,capture,out,reboot):
     if exact.get('applyPhases'):
         cases=[('smallEmpty',1,2,None),('oneTrackEmpty',1,64,None),('maximumEmpty',8,64,None),
                ('maximumFirstOtherLock',8,64,0),('maximumLastOtherLock',8,64,30)]
+    cases=getattr(port,'performance_cases',cases)
     for label,track_count,step_count,other_slot in cases:
         source=bytearray(initial)
         for track in range(8):
