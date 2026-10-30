@@ -15,7 +15,7 @@
 <rect class="signal-main" x="196" y="53" width="18" height="18" rx="2"/>
 <path class="signal-secondary" d="M200 57L210 67M210 57L200 67"/>
 <path class="signal-ghost" d="M214 62H272" stroke-dasharray="3 5"/>
-<text x="234" y="54">MUTED</text>
+<text x="292" y="54" text-anchor="end">MUTED</text>
 <circle class="signal-dot" cx="276" cy="97" r="4"/><circle class="signal-dot" cx="276" cy="132" r="4"/>
 <text x="292" y="89" text-anchor="end">PLAY</text>
 <text x="28" y="176">USB + DIN</text>
