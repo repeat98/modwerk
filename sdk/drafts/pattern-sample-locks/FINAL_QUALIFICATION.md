@@ -1,7 +1,10 @@
 # Final qualification attempt — 31 October 2026
 
-The USB-only MKII candidate remains **unqualified for public release**. This
-record separates completed preparation from the two unfinished lifecycle tests.
+The USB-only MKII candidate remains **unqualified for public release**. The later
+[public-base lifecycle run](MKII_PUBLIC_LIFECYCLE.md) passed scoped selector
+Undo, exact-package Keep/reboot, removal/reboot and original-file restoration.
+This record retains the preceding failed remote-input attempt and software audit.
+Complete system stack qualification and first-release approval remain open.
 The module runtime and version remain unchanged.
 
 ## Completed software checks
@@ -66,7 +69,7 @@ attempt contains no Apply, project Save, Keep or flash.
 
 ## Exact-package persistence
 
-The original public base reports saved state 4 (FOREIGN), despite its empty
+The original preflight reported saved state 4 (FOREIGN), despite its empty
 live inventory. It lacks the read-only saved-set export request. Keep would
 replace card files belonging to another base, so it was not attempted.
 The existing rule in [DEVICE_TEST.md](DEVICE_TEST.md) is explicit: never Keep
@@ -78,11 +81,14 @@ for indexed addressing in `dsp.c.o`; it was never loaded. The fallback is a
 physical restart and USB Disk Mode to copy and hash both saved files. No guard
 was weakened and no unrelated firmware fix is included here.
 
-After a reviewed card setup, the remaining persistence test must use this exact
-candidate on a named public base, explicitly Keep it, verify an author power
-cycle, then remove it and verify the resulting saved/live set. The earlier
-nineteen-module persistence pass used the earlier literal package wrapper and
-does not replace this exact-package check.
+The later run backed up and validated both files, temporarily preserved them
+in a separate card folder, then tested the exact singleton on public base
+`2aa35c39…`. Keep/reboot and removal/reboot passed. Card readback verified the
+exact candidate package and newer empty set; all 60 fixture files were unchanged.
+Both original saved files were restored byte-for-byte. A final author restart
+verified the original public base and empty live inventory before USB release.
+See [the later method and limits](MKII_PUBLIC_LIFECYCLE.md); the older
+nineteen-module literal-wrapper result is no longer the only persistence evidence.
 
 The [stock-free receipt](evidence/final-qualification-20261031.json) pins the
 private raw records and distinguishes pass, failed attempt and not performed.

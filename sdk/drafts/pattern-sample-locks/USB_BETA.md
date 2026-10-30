@@ -42,11 +42,12 @@ no release approval. Four provenance-only asset hashes were refreshed in the
 existing Tape Echo/Euclid reconstruction declarations; their spans and image
 pins stay unchanged.
 
-Remaining work is exact-package physical qualification on a named base,
-including practical playback/load tests and complete stack/timing assessment,
-then release review and green pre-push checks. The first-release reviewer must
-approve the USB-only scope. Card UI and card hardware results are not claimed.
-No push, publication or physical device access occurred in this follow-up.
+Subsequent [MKII playback/load tests](MKII_HIGH_LOAD.md) and the
+[exact-package public-base lifecycle](MKII_PUBLIC_LIFECYCLE.md) add scoped
+hardware evidence. Complete system stack/cost qualification and release review
+remain open. The first-release reviewer must approve the USB-only scope. Card UI
+and card hardware results are not claimed. The distribution-metadata checks
+themselves accessed no physical device; the later runs retain their named builds.
 
 The [stock-free receipt](evidence/usb-beta-scope-20261031.json) records source
 hashes and the completed checks: 340 frontend test files (2,766 tests passed,

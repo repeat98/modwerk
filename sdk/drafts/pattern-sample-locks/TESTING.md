@@ -10,6 +10,25 @@ Portable planner, UI and production native-writer sanitizer tests pass. The full
 
 Retired reports and obsolete captures are consolidated in [PROTOTYPE_HISTORY.md](PROTOTYPE_HISTORY.md); they do not qualify this version.
 
+## MKII exact-package public-base lifecycle — 31 October 2026
+
+Candidate `3e13c46f…` passed scoped native-selector Undo, explicit Keep/reboot,
+removal/reboot and original-file restoration on public base `2aa35c39…`.
+The author opened the selector physically; no remote panel events were sent.
+Undo restored the prior active/set identities and empty inventory. The kept
+singleton restored after power cycle with the same whole-set identity; removal
+also survived reboot. Card readback independently verified the exact package
+and a newer empty set. All 60 fixture files and both original saved-set files
+were preserved byte-for-byte. A final restart verified the original public
+base, normal empty inventory and advancing DSP frames; USB was released.
+
+Selector opening and the normal screen after the sequence were author-reported.
+The public base supplied no direct selector-phase-after-ENTER or site/BSS/held-key
+readback. This was a stopped lifecycle test, not a new audio/load test or total
+stack qualification. The earlier failed remote-key attempt remains a failure;
+its helper is unfixed. See [method and limits](MKII_PUBLIC_LIFECYCLE.md) and the
+[stock-free receipt](evidence/mkii-public-lifecycle-20261031.json).
+
 ## MKII companion-load follow-up — 31 October 2026
 
 The later [final qualification attempt](FINAL_QUALIFICATION.md) reproduces the
@@ -17,8 +36,9 @@ exact public package and authored stack audit after merging current upstream.
 Repository checks pass. The open-selector lifecycle test stopped before reaching
 its selector when a remote key was not acknowledged; rollback was confirmed.
 A no-module input probe also failed. This attempt supplies no open-selector
-removal pass. Exact-package Keep/reboot/removal remains pending because the card
-contains foreign saved-set files. No Keep or flash occurred in that attempt.
+removal pass. At that point, exact-package Keep/reboot/removal was deferred for foreign saved
+files; the later run above preserved those files and completed the scoped test.
+No Keep or flash occurred in the failed remote-key attempt.
 
 The latest fresh-boot rerun held the physical panel still and used USB recording
 for added load. All 32 maximum 512-field edits, full pattern/index/Part comparisons

@@ -13,7 +13,9 @@ The latest [stationary-panel USB rerun](MKII_HIGH_LOAD.md) passed 32 maximum edi
 The subsequent [final qualification attempt](FINAL_QUALIFICATION.md) confirms
 public-package parity and the authored stack audit. Remote input also failed
 with no modules in the later fresh-boot test, so lifecycle automation is stopped;
-the exact package's Keep/reboot/removal and complete stack qualification remain open.
+the later [public-base lifecycle run](MKII_PUBLIC_LIFECYCLE.md) passed scoped
+selector Undo and exact-package Keep/reboot/removal. Complete stack qualification
+and first-release approval remain open.
 
 **The first beta is scoped to USB loading through the Modwerk base.** Card
 firmware is unsupported and must refuse this module. Card support is deferred;

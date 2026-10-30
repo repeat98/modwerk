@@ -27,3 +27,7 @@ and full system cost bounds remain open; module runtime is unchanged.
 Final checks reproduce the exact public package and authored stack audit after
 merging upstream. A later no-module input failure stops lifecycle automation;
 foreign saved sets defer the exact-package persistence test. No release is approved.
+
+A later public-base run passes scoped selector Undo and exact-package Keep/reboot
+and removal/reboot. Card readback verifies the exact package; original saved sets
+and all fixture files are preserved. Complete stack qualification stays open.

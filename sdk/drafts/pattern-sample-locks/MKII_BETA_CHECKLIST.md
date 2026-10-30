@@ -1,13 +1,12 @@
 # MKII candidate check
 
-The final lifecycle attempt on 31 October did not reach the open selector:
-the first remote key failed its held-row acknowledgement. The same upload owner
-confirmed rollback; a fresh read confirmed normal state and empty inventory.
-A subsequent no-module FUNC probe also misdelivered input. Remote panel tests
-are stopped pending reset and input-path investigation. The exact candidate's
-Keep/reboot/removal test is also pending: the public base reports foreign saved
-files, which must be backed up and reviewed before Keep. See the
-[final qualification record](FINAL_QUALIFICATION.md).
+The later public-base run passed scoped selector Undo, exact-package Keep/reboot,
+removal/reboot and original-file restoration. The author opened the native menu;
+no remote panel events were sent. Public readback cannot resolve the selector's
+phase after ENTER or directly inspect restored site bytes. See the
+[method and limits](MKII_PUBLIC_LIFECYCLE.md). The earlier failed remote-key
+attempt remains recorded in [FINAL_QUALIFICATION.md](FINAL_QUALIFICATION.md);
+the development input helper remains unfixed.
 
 The latest stationary-panel USB rerun on 31 October 2026 passed 32 maximum edits
 and four minutes of audio checks, reaching 93.7% sampled main CPU. STOP worked;
@@ -19,8 +18,8 @@ input qualification remain outstanding. See [MKII_HIGH_LOAD.md](MKII_HIGH_LOAD.m
 Partially performed on 31 October 2026: unchanged candidate `3e13c46f…`
 ran 43 native operations on RAM development base `20ed7910…`; a separate probe
 ran 46 timing operations. Audio, data and Undo checks passed within their stated
-scope. Full stack, mirror readback, open-selector removal and broader stress
-remain open. Read the [actual method/results](MKII_AUDIO_TIMING.md) before
+scope. Full stack, direct mirror readback and broader stress remain open.
+The later public-base lifecycle run above adds scoped selector Undo and persistence. Read the [actual method/results](MKII_AUDIO_TIMING.md) before
 continuing this checklist; it is not a completed qualification certificate.
 
 The author's chosen first-beta scope is USB-only through the Modwerk base.
