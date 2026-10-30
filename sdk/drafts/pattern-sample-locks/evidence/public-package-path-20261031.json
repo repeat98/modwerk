@@ -1,0 +1,198 @@
+{
+  "hardware": false,
+  "published": false,
+  "privateCatalogueFixtureOnly": true,
+  "normalPublicBuildPassed": true,
+  "normalPublicCheckPassed": true,
+  "bothStockScansPassed": true,
+  "packageSha256": "3e13c46fb0054d05f228b045746453e0c50dbbe52fb53b3c229d598ddd7fed79",
+  "bytes": 10048,
+  "byteIdenticalToEmulatorTestedPackage": true,
+  "negativeCliChecks": [
+    {
+      "case": "changed native source, unchanged assembled instructions",
+      "refused": true,
+      "exitCode": 1
+    },
+    {
+      "case": "protected bootloader source",
+      "refused": true,
+      "exitCode": 1
+    },
+    {
+      "case": "changed final package pin",
+      "refused": true,
+      "exitCode": 1
+    },
+    {
+      "case": "foreign source provenance",
+      "refused": true,
+      "exitCode": 1
+    },
+    {
+      "case": "missing reconstruction opt-in exposes original strict-scan rejection",
+      "refused": true,
+      "exitCode": 1
+    }
+  ],
+  "nativeInputsRestoredAfterNegativeProbes": true,
+  "helperSha256": "13ba53fbcbab013fb6d9f9fc00c22b95c5512d267de9cb38eb0f261c70272c8c",
+  "inputs": {
+    "scripts/octatrack-module-packages.py": "bbcedd32ac5397d806791772b8679174f80c72a041e111653ab583af85f9b903",
+    "scripts/octatrack-reconstruction.py": "c21e23f4d973bc8ed0534addbfb40a3932acac0a8d568541fd24fe326eb9c85f",
+    "sdk/drafts/pattern-sample-locks/runtime-reconstruction.json": "b9778adbed2313ccf186e0286e7c2a4cbd09117941edc388751fc660331abb25"
+  },
+  "limitations": "Private catalogue fixture only; real catalogue and qualification remain unchanged. No device or new runtime claim.",
+  "date": "2026-10-31",
+  "toolchainImage": "sha256:da70d46e10b243277fa3ae2e015f7258d56b3ee08ca4be47e61899958872e792",
+  "existingPackages": {
+    "checkExitCode": 0,
+    "rebuiltIdentical": [
+      {
+        "id": "everb",
+        "sha256Prefix": "5f81e72fbba43ea8"
+      },
+      {
+        "id": "miniverb",
+        "sha256Prefix": "eea25e6cf8ac0a39"
+      },
+      {
+        "id": "tapehead",
+        "sha256Prefix": "980fb1ceda23837b"
+      },
+      {
+        "id": "airwindows-chorus",
+        "sha256Prefix": "e0f05d53b4259e0c"
+      },
+      {
+        "id": "lofi2",
+        "sha256Prefix": "a2ab27325404c061"
+      },
+      {
+        "id": "ring-sc",
+        "sha256Prefix": "5c4e7fcfdc2ec212"
+      },
+      {
+        "id": "previewvol",
+        "sha256Prefix": "9fd95d9a9a5a1c59"
+      },
+      {
+        "id": "apply-scene",
+        "sha256Prefix": "236231aaaf2914ed"
+      },
+      {
+        "id": "repitch",
+        "sha256Prefix": "052d27edf6cfac09"
+      },
+      {
+        "id": "vector",
+        "sha256Prefix": "45c962ca3a202ac6"
+      },
+      {
+        "id": "synth",
+        "sha256Prefix": "6e5716540d78b652"
+      },
+      {
+        "id": "quantizer",
+        "sha256Prefix": "4bd0e586aa5c2d47"
+      },
+      {
+        "id": "tapeecho",
+        "sha256Prefix": "921e7a60c3418e7e"
+      },
+      {
+        "id": "euclid",
+        "sha256Prefix": "649f26704bda30f0"
+      },
+      {
+        "id": "bbd",
+        "sha256Prefix": "614bf23b7d8e6811"
+      },
+      {
+        "id": "mute-modes",
+        "sha256Prefix": "c35b154d7a6ff4d9"
+      },
+      {
+        "id": "sidechain-compressor",
+        "sha256Prefix": "eadf2382bc71fc75"
+      },
+      {
+        "id": "output-matrix",
+        "sha256Prefix": "65a311c38c64652e"
+      },
+      {
+        "id": "cc-map",
+        "sha256Prefix": "c7cd39a5f645d692"
+      },
+      {
+        "id": "quantize-live-rec-toggle",
+        "sha256Prefix": "297f79efa4259486"
+      },
+      {
+        "id": "direct-jump-kyoti",
+        "sha256Prefix": "89a38e18728bb203"
+      },
+      {
+        "id": "dejavu",
+        "sha256Prefix": "95079643d3e11914"
+      },
+      {
+        "id": "arp-key-locks",
+        "sha256Prefix": "907a03cf980996b3"
+      },
+      {
+        "id": "recorder-loop-fix",
+        "sha256Prefix": "180b52c68018f34a"
+      },
+      {
+        "id": "analog-bassdrum",
+        "sha256Prefix": "6272600408466c3e"
+      },
+      {
+        "id": "beat-slicer",
+        "sha256Prefix": "6650ef77a837a61a"
+      }
+    ],
+    "declaredLagsPreserved": [
+      {
+        "id": "poly8",
+        "reason": "0.3.1-experimental, catalogue 0.3.2-experimental: 0.3.2 changes only the card build's machine chooser (#842, #941, #942); over USB the base owns the chooser, and the package rebuilds byte-identical from 0.3.2's source"
+      },
+      {
+        "id": "playmodes",
+        "reason": "0.1.1-experimental, catalogue 0.2.0-experimental: 0.2.0 needs a new reviewed standalone recipe and hardware results or an owner decision (#764)"
+      }
+    ],
+    "actualManifestAndPublishedFilesUnchanged": true
+  },
+  "sdkTests": {
+    "exitCode": 0,
+    "total": 498,
+    "skipped": 69,
+    "newHostReconstructionGroups": 4
+  },
+  "uploadHostTests": {
+    "exitCode": 0,
+    "node": "24.22.1",
+    "malformedChunksRefused": 20000,
+    "sha256ReferenceVectors": 115,
+    "ep0Scenarios": 9
+  },
+  "nativeRecipeHostTests": {
+    "exitCode": 0,
+    "total": 39,
+    "skipped": 2
+  },
+  "corrections": [
+    "First CLI fixture stopped because an appended source comment was invalid after GNU assembler NO_APP; changed-source probe now appends blank lines and completes. Module implementation unchanged.",
+    "Initial existing-package run lacked ELEKLOADER_DSP_ASM; complete rerun uses the assembler already in the pinned image.",
+    "First upload-host invocation used the system Node and stopped on TypeScript import; complete rerun uses Node 24.22.1."
+  ],
+  "privateLogHashes": {
+    "run2/public-cli.private.log": "a6ef1c6512a2ac4afe24e202d138408805c81e16bb4f87860b83846e90cbe6d8",
+    "existing-packages-check.log": "096fc15d292b1f4bc823cd5139455e41fe97628ac53af385bc9612c4975bfca0",
+    "sdk-tests.log": "9c4c9bf66f7cf55580a48772ff7aa438561a2fc35e3e4c60db20cfaba465d135",
+    "upload-host-tests.log": "b18eca9c2fcb05bc61d2007eee4680b71f21b3913ab31255e94a23cea17945ef"
+  },
+  "guideCorrection": "Documented the module-owned host-wrapper route and linked it from ADD_A_MODULE; SDK/base-pinned inputs and validators unchanged."
+}

@@ -6,7 +6,7 @@ from this follow-up has been pushed or loaded onto a physical instrument.
 
 ## Exact candidate
 
-The unchanged public package wrapper builds and rebuilds the tested package:
+The initial audit's public package wrapper built and rebuilt the literal package:
 `28766a017005e664d00620d3831fc81af7449c95e1896a17121ca8fc2d306d8d`.
 It is 9,652 bytes on disk, with 8,748 initialized bytes, 1,328 BSS bytes,
 167 relocations, four UI callbacks and three guarded Part Edit openers. Its
@@ -67,10 +67,10 @@ ColdFire object/linker code. It changes only an in-memory catalogue fixture.
 The machine-readable receipt distinguishes those component checks from a full
 native stock-only card comparison.
 
-Two release blockers are already established:
+The initial audit established these packaging/integration gaps:
 
-1. **The public stock-byte scans reject the candidate.** The public wrapper's
-   build and `--check` both exit 1 although the rebuilt package is identical.
+1. **The original literal package failed the stock-byte scans.** The initial
+   build and `--check` both exited 1 although the rebuilt package was identical.
    Its weighted scan finds matches up to 14 nonzero bytes (limit 12); its other
    scan finds one 16-byte match at package offset `0xef4`. That offset lies in
    the authored encoder routine, six bytes after its entry. Fresh compilation
@@ -78,11 +78,14 @@ Two release blockers are already established:
    [scanner investigation](SCANNER_INVESTIGATION.md) independently reproduces
    the prologue and remainder matches and classifies all hits, including menu
    text. No scanner bug is established. The existing reviewed reconstruction
-   mechanism is the packaging route to evaluate; this module has no declaration
-   there yet. A subsequent [private reconstruction candidate](RECONSTRUCTION.md)
+   mechanism supplied the packaging route. A subsequent
+   [private reconstruction candidate](RECONSTRUCTION.md)
    preserves the exact runtime and passes both unchanged scans. The ordinary
-   public wrapper still builds the rejecting reference; public admission of the
-   new declaration remains pending.
+   public wrapper initially built the rejecting reference. The subsequent local
+   host integration now builds and checks the exact passing package through the
+   normal CLI in a private catalogue fixture, with five rejection probes. See
+   [the current method and results](RECONSTRUCTION.md#normal-package-path--31-october-2026).
+   Real catalogue admission and release review remain pending.
 2. **Stock-only card UI integration is unfinished.** `runtime.json` supplies
    four core callbacks through the USB base. The native manifest declares only
    the three menu openers; the card package compiler does not consume those

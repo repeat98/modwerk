@@ -1,9 +1,10 @@
 # Private reconstruction candidate — 30 October 2026
 
 This experiment packages the unchanged 0.1.8 runtime using the SDK's existing
-hash-guarded reconstruction mechanism. It remains a draft candidate: no public
-adapter admission, catalogue publication or physical hardware qualification.
-No scanner or loader acceptance rule was changed.
+hash-guarded reconstruction mechanism. It remains a draft candidate without
+catalogue publication or physical hardware qualification. The subsequent local
+host-wrapper integration below supports its declaration; no scanner or loader
+acceptance rule was changed.
 
 ## Candidate and exact-image proof
 
@@ -139,7 +140,40 @@ arguments, plus `--reference-package` and `--negative-packages` from preparation
 Use a short output mount for its Unix socket. Keep cards, firmware, objects,
 packages and raw logs outside Git.
 
-The normal public CLI still accepts only its existing reviewed standalone
-declarations. This experiment uses unchanged lower-level adapter/package APIs
-directly. Public integration needs a reviewed declaration and support for this
-module's short unit title; this private result grants no admission or exception.
+## Normal package path — 31 October 2026
+
+The host wrapper now supports an ordinary ColdFire package's module-owned
+`runtime-reconstruction.json` with an explicit `reconstruction: true` manifest
+entry. The declaration pins native and shared source inputs, the original image
+and the complete tested package. Existing standalone admission and all
+base-pinned SDK files remain unchanged. See the
+[builder contract](../../../docs/OCTATRACK_RECONSTRUCTION.md).
+
+`verify_public_package.py` stages a disposable SDK/catalogue fixture outside Git
+and calls the normal public CLI, rather than the lower-level preparation API.
+Build and `--check` both pass the unchanged stock scans and produce the exact
+10,048-byte `3e13c46f…` package already exercised by the emulator lifecycle above.
+Five CLI probes refuse changed native source, a protected bootloader source,
+a changed final-package pin, foreign provenance and removal of the explicit
+opt-in (which exposes the original strict-scan failure). All fixture inputs are
+restored afterward. The real catalogue remains untouched.
+
+The existing public-package `--check` rebuilt all 26 non-lagged packages
+byte-identically and preserved the two declared version lags. The full SDK
+suite completed 498 tests with 69 skips, including four new reconstruction
+groups. Upload/transport host checks and the native recipe suite also passed
+(39 tests, two skips). The stock-free
+[combined receipt](evidence/public-package-path-20261031.json) records exact
+inputs, outcomes and harness corrections. These are software checks only.
+
+Reproduce with private stock and the already tested candidate:
+
+```sh
+python3 -B sdk/drafts/pattern-sample-locks/verify_public_package.py \
+  --out /out/new-public-path --stock /out/stock/original-1.40C.bin \
+  --upstream /upstream \
+  --tested-package /out/reconstruction-20261030/candidate3/pattern-sample-locks-0.1.8-candidate.mwrm
+```
+
+This local integration grants no publication approval and adds no physical
+qualification. Card UI, physical timing/stack bounds and release review remain.

@@ -10,6 +10,16 @@ Portable planner, UI and production native-writer sanitizer tests pass. The full
 
 Retired reports and obsolete captures are consolidated in [PROTOTYPE_HISTORY.md](PROTOTYPE_HISTORY.md); they do not qualify this version.
 
+## Normal public package builder — 31 October 2026
+
+The local host-wrapper integration builds and checks the reconstructed candidate
+through the normal CLI in a disposable catalogue fixture. Both strict scanners
+pass; its complete package equals the emulator-tested `3e13c46f…` candidate.
+Five negative CLI probes are refused. This changes packaging only, preserving
+the initialized runtime, BSS, relocations, callbacks and sites. The real
+catalogue remains unchanged; no physical device was accessed. See
+[method and reproduction](RECONSTRUCTION.md#normal-package-path--31-october-2026).
+
 ## Apply phase profiling — 30 October 2026
 
 An independent DSP-enabled MKII emulator process used its own copied card and
