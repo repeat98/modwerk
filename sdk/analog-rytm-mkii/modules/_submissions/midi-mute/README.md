@@ -67,7 +67,7 @@ See [TESTING.md](TESTING.md). In short:
 
 - **On the author's Rytm MKII** (OS 1.74, build MM03, MIDI over USB, judged from the Rytm's USB audio of BD's voice): checked, notes for a muted BD stayed silent on the AUTO and track channels, a held note stopped 50 and 130 ms after a CC 94 mute, and a 60 s flood of about 870 messages a second left nothing sounding; unchecked, the same tests heard the muted BD and the held note rang on, as stock. By hand: the setting survives a project reload and a power cycle, CREATE NEW starts unchecked, and pad mutes drop notes and release a held one.
 - **In rytm-emu 3c4c42c:** DIN and USB, CC 94 and pad mutes, toggling the box mid-note, the sequencer's trigs on the same frames with and without the module, a 60 s wire-rate flood on DIN with no note left held, and a build beside Filter Hz and Loop Sync.
-- **Cost:** about 55 instructions per incoming note that plays and 35 per dropped note, counted from the compiled code, and nothing per audio block. Unchecked, the emulator's idle time under the flood stayed within 0.004 % of the core alone. Not timed on a unit.
+- **Cost:** measured on the unit with a timing build, about 3 µs of module work per incoming note on average, and nothing per audio block. The worst cases under a flood (588 µs per note, 2 ms for the UI tick after a mute or solo change) include interruptions and stock's own release calls. Unchecked, the emulator's idle time under the flood stayed within 0.004 % of the core alone.
 - **Not tested:** DIN MIDI on a unit, a pattern or kit change during a flood.
 
 ## Screens and audio

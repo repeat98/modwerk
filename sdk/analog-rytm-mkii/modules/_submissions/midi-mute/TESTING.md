@@ -1,5 +1,17 @@
 # MIDI Mute testing
 
+## Timing on the author's unit (measurement build MP02, 30 October 2026)
+
+MP02 is MM04 with timing added, built only for this measurement and not part of the module: each handler reads DMA timer 0 (free running at the 132 MHz bus clock, as core-ar2 starts it) on entry and exit, and the PORT CONFIG row shows `N<average>/<worst> T<worst>` in microseconds in place of MUTE MIDI IN. The note figure covers the module's own work in the note-on and note-off handlers, up to the call into stock's play or release; the tick figure covers the whole UI tick handler, stock's release calls for newly silenced tracks included. Both are wall-clock times: anything that interrupts the task between the two reads counts too.
+
+In rytm-emu 3c4c42c a 5 s flood read N0.2/0.3 T3.9. On the unit, with MUTE MIDI IN checked, after the bench's two 60 s floods (USB, then DIN through the AF16Rig; about 9,500 Note On/Off pairs, 33,000 CCs, 119 mute and 46 solo toggles each), the author read **N3.3/587.8 T1986.1**:
+
+- **3.3 µs per incoming note on average:** the module's cost per Note On or Note Off on the unit, about 0.3 % of the 1 ms between notes at DIN's wire rate.
+- **587.8 µs worst note:** dominated by interruptions of the MIDI task between the two reads (the handler is about 55 instructions with no loop).
+- **1986.1 µs worst UI tick:** the tick after a mute or solo change calls stock's release once per note MIDI holds on the newly silenced track, and the UI task is interrupted by everything above it; how this splits between the module, stock's release and interruptions was not measured.
+
+The first flood's after-flood silence check failed on a decaying tail: the kit had reverb and delay on, and the flood's CCs had given BD a long decay; its level fell steadily from -40 to -90 dBFS over 1.5 s, which a stuck note would not. The bench now judges the last second of four.
+
 ## Stock OS 1.74 on the author's unit: the baseline (30 October 2026)
 
 To check that the unchecked runs really show stock behaviour, the author flashed Elektron's stock OS 1.74 (no module, no core) and the bench ran its full set as a stock baseline, in the author's own project (AUTO channel 15, PROG CH RECEIVE on), over USB and then over DIN through the AF16Rig, the flood with solo toggles, Start/Stop and 14 pattern changes.
@@ -171,7 +183,7 @@ PORT CONFIG shows MUTE MIDI IN as its last row, after RECEIVE CC/NRPN, unchecked
 
 ## Not tested
 
-- **The unit, still open.** CPU time per event on the unit's own clock (the emulator's count and the floods suggest it is small).
+- **The unit, still open.** How the worst UI tick (about 2 ms) splits between the module, stock's release calls and interruptions.
 - **On the unit's clock.** CPU time per event and under the flood, measured with DTIM0; a flood at 240 BPM; a pattern or kit change during the flood.
 - **USB timing.** A real USB host; the emulator's USB MIDI input is its own model.
 - **Silent Pad+Trig and Retrig Grid** (core-ar2 0.3 submissions) were not built beside it.
