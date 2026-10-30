@@ -1,0 +1,13 @@
+[
+  {
+    "version": "0.1.0-experimental",
+    "date": "2026-10-30",
+    "changes": [
+      "New: DATAMATIC, data read as rhythm on a MIDI track (MIDI NOTE SETUP's generator list).",
+      "Nine streams (pi, e, phi, the square root of two, the Fibonacci word, the primes, Thue-Morse, a cellular automaton, an LFSR) read through a sliding bit window.",
+      "Octave, fifth, tritone, whole-tone or semitone jumps; velocity and micro-timing from the data; YES reads the next byte.",
+      "Needs the Modwerk base loaded over USB (beta). Card firmware cannot include it.",
+      "Not yet tested on a unit or in the emulator."
+    ]
+  }
+]
