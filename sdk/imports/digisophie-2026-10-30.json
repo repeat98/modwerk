@@ -1,0 +1,99 @@
+{
+  "schemaVersion": 1,
+  "module": "digitakt/digisophie",
+  "version": "1.1.13-experimental.3",
+  "date": "2026-10-30",
+  "upstream": {
+    "repository": "https://github.com/soejrd/digisophie",
+    "revision": "ce17b9e4868027bafe8684054b45f28ea368bd7c",
+    "path": ".",
+    "license": "MIT"
+  },
+  "changes": [
+    "SOPHIE 1.1.13 with its OS 1.54 port (irpina's soejrd/digisophie#1, merged by the author at ce17b9e), imported unchanged: glue.s and digitakt.c take every OS address from os153.inc/os153.h or os154.inc/os154.h, and the 1.54 release adds -DOS154 and defsym OS154. sophie.c and the other sources are unchanged from v1.1.13.",
+    "build.json gains the 1.54 release: the author's seventeen 1.54 sites from mod.json's ports, each stock byte run turned into an address, length and SHA-256 guard as for 1.53.",
+    "Modwerk serves the author's own release/digisophie-1.1.13-os1.54.elemod, pinned in sdk/imports/elekloader-digisophie-2026-10-30.json; the 1.53 package stays elekloader's pin of v1.1.13. That package records a digitakt.c hash (93052df4...) other than the committed file's (69ab5551...); glue.s and sophie.c match."
+  ],
+  "files": [
+    {
+      "from": "glue.s",
+      "to": "src/glue.s",
+      "sha256": "39943cf748876f9b9a8ceeb7ed86cb1367e9e9483d67793711afeacaaff66c59"
+    },
+    {
+      "from": "digitakt.c",
+      "to": "src/digitakt.c",
+      "sha256": "69ab5551697bbe9ca802f8fdbb9f8c23b2e309675d9a8c804fec5d8a5613efec"
+    },
+    {
+      "from": "sophie.c",
+      "to": "src/sophie.c",
+      "sha256": "c0ad0111f4f427cf49bfdbf11f05c0712baacb6bed6ce59d88b43b5760ffd3cd"
+    },
+    {
+      "from": "sophie.h",
+      "to": "src/sophie.h",
+      "sha256": "8d1ead56862ae1830da4ce6e5ac470f9d754bc54d2572bfb93e476284cf9423b"
+    },
+    {
+      "from": "sophie_sin_table.inc",
+      "to": "src/sophie_sin_table.inc",
+      "sha256": "76eaf1116bdca14a78ee073252903679776305e7e94a8456a56ca171716fd60a"
+    },
+    {
+      "from": "os153.h",
+      "to": "src/os153.h",
+      "sha256": "9d66b3dec27e7c65a06ce1e0f8fc915b02a1e0ac4360f798b446707b13685ca6"
+    },
+    {
+      "from": "os153.inc",
+      "to": "src/os153.inc",
+      "sha256": "555b9cbfcb3b35c261765d261d948dfaef9a7031052705f5f0feb54d3eff7770"
+    },
+    {
+      "from": "os154.h",
+      "to": "src/os154.h",
+      "sha256": "0c22cd5380f22ca135b8fa75d3e7768dec1abf3b47b3b299ec35e554b18013cf"
+    },
+    {
+      "from": "os154.inc",
+      "to": "src/os154.inc",
+      "sha256": "18a3dab3292da5f45571519651a0c3632168ca9621146fd21f2f5cdf7b8bb8a2"
+    },
+    {
+      "from": "THIRD_PARTY.md",
+      "to": "upstream/THIRD_PARTY.md",
+      "sha256": "70026b0ed5919154e5b623304dd8496729d9ff6dd841f43754c54ff631d800a9"
+    },
+    {
+      "from": "DSP.md",
+      "to": "upstream/DSP.md",
+      "sha256": "ae5068c9096e52b620492fe539543051a88773f31f863c2a142822aff8aa12f4"
+    },
+    {
+      "from": "LICENSE",
+      "to": "LICENSE",
+      "sha256": "79549b46606e11237732cb7c5c5827f263df63f6d00d5275616160af11cf2b4b"
+    },
+    {
+      "from": "README.md",
+      "to": "upstream/README.md",
+      "sha256": "addc125963d8a776b10e4fe484161bcf5725b50dcbced6e4e0ab4921216155d9"
+    }
+  ],
+  "excluded": [
+    "mod.json",
+    "Makefile",
+    "diagnostics",
+    "release",
+    "scripts",
+    "tests",
+    "tools-elekloader-mod.ld",
+    ".gitignore"
+  ],
+  "transformations": [
+    "Each stock byte run in the upstream build manifest became an address, length and SHA-256 guard in build.json."
+  ],
+  "stockPolicy": "No firmware or stock-derived code/tables are present. Addresses, lengths and SHA-256 guards are metadata.",
+  "evidence": "sdk/digitakt/modules/digisophie/TESTING.md"
+}

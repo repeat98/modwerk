@@ -62,6 +62,9 @@ export interface FakeUnit {
   /** Writes during which USB drops: the write finishes on the unit, the reply is lost, and the replugged unit's
    * reset rolls the lost session back, which restarts it on NOR (flash.c f_restore). */
   writeDropouts?: number
+  /** The restart after a saved write hangs at the logo (a DSP stalled while the base was sent does not park): the unit
+   * goes away and comes back only when plugged again, as after a power cycle. */
+  restartHangs?: boolean
   /** SLOTS (request 39, flash.h): the base's two-slot record; absent, the base stalls it as one before the two slots.
    * A base that answers it writes another base's container into its spare slot and restarts once onto it, and its own
    * (after the trial) while it runs on, without a restart (flash.c); one that does not restarts after writing itself. */
@@ -215,7 +218,8 @@ export function fakeSession(unit: FakeUnit, delay = 0) {
           const target = written()
           unit.flashed = target
           if (unit.slots) { unit.slots = unit.slots.slice(); unit.slots[4] = 1 } // two slots now
-          if (!unit.slots || target !== unit.base) setTimeout(() => { unit.base = unit.active = target; unit.unplug(); unit.plug('base') }, delay)
+          if (unit.restartHangs) setTimeout(() => { unit.base = unit.active = target; unit.unplug() }, delay)
+          else if (!unit.slots || target !== unit.base) setTimeout(() => { unit.base = unit.active = target; unit.unplug(); unit.plug('base') }, delay)
           return status
         }
         const apply = (pkg: Uint8Array) => {
