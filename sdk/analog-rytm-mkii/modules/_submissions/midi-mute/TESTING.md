@@ -28,14 +28,17 @@ MM04 adds solo: a track is now silenced as the sequencer silences it, every trac
 | Step | Result |
 | --- | --- |
 | calibrate | BD heard, -16 dBFS over a -86 dBFS floor |
-| drop-auto, drop-track | BD muted: silent on the AUTO channel and on channel 1 |
+| drop-track | BD muted: silent on channel 1 |
+| drop-auto | silent, but not a valid result: the unchecked run right after showed AUTO-channel notes (channel 15) playing nothing even with BD unmuted, so the unit's AUTO channel was no longer 15 |
 | held-baseline | rings while held, stops at its Note Off |
 | held-mute | stopped 60 ms after the CC 94 mute |
 | solo-other | SD soloed with CC 93: BD silent |
 | solo-self-muted | BD soloed and muted: BD heard |
 | solo-held | BD held, then SD soloed: stopped 65 ms after the solo |
 
-All 8 passed. A first attempt stopped at calibrate: BD's channel read -15 dBFS during the silence check, just after flashing; a second later every channel was below -80 dBFS and the run above followed. The unchecked solo baseline was not run on the unit.
+All 8 steps reported PASS; drop-auto does not count (above). A first attempt stopped at calibrate: BD's channel read -15 dBFS during the silence check, just after flashing; a second later every channel was below -80 dBFS and the run above followed. **Unchecked baseline (MM04, right after):** drop-track heard the muted BD (stock); the held note kept ringing after the CC 94 mute (stock); with SD soloed BD was heard (stock); BD soloed and muted was heard; a held BD note kept ringing after SD was soloed (stock). drop-auto was silent, against stock's expectation, three times in a row; a probe then showed AUTO-channel 15 notes 0 and 1 silent with BD unmuted too, while channel 1 played, so the unit was not receiving the AUTO channel on 15 and the AUTO steps of both MM04 runs are void. The cause: the author was still in the new project made for the CREATE NEW check, whose MIDI channels are the defaults (AUTO 14, PERF 15), not the author's own (AUTO 15, PERF 14).
+
+**Rerun on AUTO channel 14 (MM04, same project):** unchecked first: drop-auto and drop-track heard the muted BD, SD soloed left BD heard, BD soloed and muted heard (stock everywhere). Then checked: the bench's new AUTO-channel check heard the AUTO note before the tests; drop-auto and drop-track silent; held note stopped 80 ms after the CC 94 mute; SD soloed, BD silent; BD soloed and muted, heard; held BD note stopped 60 ms after SD was soloed. All 9 checked steps passed, and with the void steps above replaced, every MM04 step on the unit now has a valid result.
 
 ## Build MM03 on a unit (author's Rytm MKII, 30 October 2026)
 
