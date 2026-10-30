@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="192" viewBox="0 0 320 192" class="signal-art" fill="none" stroke-linecap="round" stroke-linejoin="round" role="img" aria-labelledby="title description">
+<title id="title">PIPO LOOP</title>
+<desc id="description">A sample's play position between STA and END: with LOP ON it runs forward and jumps back to STA each time; with LOP PIPO it runs forward, then backward, then forward again. Original conceptual illustration, not an instrument screen or a measured result.</desc>
+<style>.signal-grid{stroke:#fff;opacity:.035;stroke-width:.7}.signal-main{stroke:#9eb4ed;stroke-width:2.7}.signal-secondary{stroke:#9eb4ed;opacity:.65;stroke-width:1.7}.signal-ghost{stroke:#9eb4ed;opacity:.2;stroke-width:1.3}.signal-art text{fill:#9eb4ed;opacity:.8;font:10px monospace;letter-spacing:.7px;stroke:none}</style>
+<rect width="320" height="192" fill="#232328"/>
+<g class="signal-grid"><path d="M20 52H300"/><path d="M20 97H300"/><path d="M20 142H300"/><path d="M64 33V163"/><path d="M128 33V163"/><path d="M192 33V163"/><path d="M256 33V163"/></g>
+<g>
+<path class="signal-ghost" d="M40 58H280M40 88H280"/>
+<path class="signal-secondary" d="M40 88L100 58M100 88L160 58M160 88L220 58M220 88L280 58"/>
+<path class="signal-ghost" d="M100 58V88M160 58V88M220 58V88" stroke-dasharray="3 5"/>
+<path class="signal-ghost" d="M40 112H280M40 142H280"/>
+<path class="signal-main" d="M40 142L100 112L160 142L220 112L280 142"/>
+<text x="40" y="44">LOP ON</text><text x="280" y="44" text-anchor="end">JUMPS TO STA</text>
+<text x="40" y="164">LOP PIPO</text><text x="280" y="164" text-anchor="end">PLAYS BACK</text>
+<text x="290" y="62" text-anchor="end">E</text><text x="290" y="92" text-anchor="end">S</text>
+<text x="290" y="116" text-anchor="end">E</text><text x="290" y="146" text-anchor="end">S</text>
+</g>
+</svg>

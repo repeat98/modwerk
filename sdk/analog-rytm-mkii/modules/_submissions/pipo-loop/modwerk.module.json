@@ -1,0 +1,338 @@
+{
+  "schemaVersion": 3,
+  "id": "pipo-loop",
+  "name": "Pipo Loop",
+  "version": "0.1.0-experimental",
+  "machine": "analog-rytm-mkii",
+  "category": "playback",
+  "exclusive": false,
+  "author": {
+    "github": "npp1993",
+    "credits": [
+      "npp1993 (Nathaniel Pavel) — the mod, its design and code, and this Modwerk module."
+    ]
+  },
+  "maintainers": [
+    "npp1993"
+  ],
+  "presentation": {
+    "label": "PIPO LOOP",
+    "family": "Sample playback",
+    "summary": "LOP gets a third value, PIPO: the sample's loop plays forward, then backward (ping-pong). FUNC + turn on STA or END steps to the next zero crossing.",
+    "overview": "Pipo Loop adds PIPO to the SAMPLE page's LOP parameter, after OFF and ON. A sample whose LOP is PIPO plays from STA to END, then back to STA, then forward again, for as long as the note lasts, with no jump at the turns. LOP's switch becomes a three-position switch like BD CLASSIC's WAV: OFF on the left, ON in the middle, PIPO on the right. PIPO is an ordinary LOP value: it saves with the sound and kit, takes parameter locks and scene locks, and comes back after a power cycle. A sound saved with PIPO plays as a normal forward loop (ON) on an OS without the mod. Each turn lands exactly on STA or END, at every pitch. On the SAMPLE page, FUNC + turn on STA or END now moves that point to the next zero crossing of the sample in the direction you turn, stepping as LOP steps through its values, instead of stock's whole-number step; plain turns stay stock.",
+    "highlights": [
+      "Ping-pong loops for any sample, from the SAMPLE page's own LOP knob.",
+      "Lock PIPO on a step, or put it in a scene, like any LOP value.",
+      "No jump at the turns; ON and OFF stay stock.",
+      "Saved with the sound; plays as a forward loop on stock OS.",
+      "FUNC + STA or END steps through the sample's zero crossings, as LOP steps through its values, for click-free start and loop points."
+    ],
+    "usage": [
+      "On the SAMPLE page, turn LOP past ON to PIPO and play the sound: the loop between STA and END goes back and forth.",
+      "Set STA and END around a sustained part of the sample (a pad, a vowel, a held note) for a seamless back-and-forth drone.",
+      "Hold a trig in GRID RECORDING and turn LOP to PIPO to ping-pong only on that step; the other steps keep the sound's ON or OFF.",
+      "Hold FUNC and turn STA (or END): the point steps from zero crossing to zero crossing, as LOP steps through its values, so the loop starts and ends where the waveform crosses zero."
+    ]
+  },
+  "access": {
+    "location": "SAMPLE page: LOP (encoder G) OFF, ON, PIPO; FUNC + STA (E) or END (F) for zero crossings.",
+    "steps": [
+      "Select a track whose sound plays a sample, and press SAMPLE.",
+      "Turn LOP (encoder G) clockwise past ON: the value reads PIPO.",
+      "Hold FUNC and turn STA (encoder E) or END (encoder F): the point steps from zero crossing to zero crossing."
+    ],
+    "screenshots": [
+      "media/lop-pipo.png",
+      "media/snap-markers.png"
+    ]
+  },
+  "controls": [
+    {
+      "name": "LOP",
+      "default": 0,
+      "doc": "SAMPLE page, encoder G. OFF and ON as stock; PIPO plays the loop between STA and END forward, then backward, and so on. Locks per step and per scene. Drawn as stock's three-position switch, as BD CLASSIC's WAV: OFF left, ON middle, PIPO right.",
+      "labels": [
+        "OFF",
+        "ON",
+        "PIPO"
+      ]
+    },
+    {
+      "name": "FUNC + STA / END",
+      "default": null,
+      "doc": "SAMPLE page, FUNC held, encoder E or F: STA or END steps to the next zero crossing the way you turn, as often as LOP would step a value (more on a fast turn), the frame stock plays from; with none further it holds. STA and END may pass each other or share a crossing. With LOP ON only crossings of the other point's direction. With a trig held in GRID RECORDING it steps that trig's lock. Exact up to 30,720 frames (0.64 s); longer samples take the nearest step. Plain turns are stock.",
+      "labels": null
+    }
+  ],
+  "compatibility": {
+    "releases": [
+      "1.74"
+    ],
+    "requires": [],
+    "conflicts": [],
+    "limitations": [
+      "Zero snap is exact only on samples up to 30,720 frames (0.64 s at 48 kHz): STA and END are steps of 1/30,720 of the sample, so on longer samples the point lands on the nearest step, up to frames / 61,440 frames from the crossing (1 frame at 1 s, about 8 at 10 s, 47 at 60 s).",
+      "Built for OS 1.74 only, with core-ar2 0.7.",
+      "Run on a unit by the author as test builds (PC03, PD01-PD05) and as PP14, this code alone on core-ar2 0.7; several voices in PIPO, LOP locks and scenes on a unit, MIDI CC 30 and samples over 0.64 s are not yet tested there (TESTING.md).",
+      "MIDI CC 30 (LOP) writes its value unchanged, as on stock: CC value 2 now gives PIPO, every other nonzero value ON. Other OFF/ON parameters still read ON for 2.",
+      "On stock OS, or a build without this mod, PIPO plays as ON; LOP reads ERROR for it until the knob is turned, which steps between OFF and ON.",
+      "LOP's switch is drawn with the knob in the middle for ON, where stock draws it on the right; the value text still reads ON.",
+      "FUNC + turn on STA or END no longer gives stock's whole-number steps; use a plain turn for fine moves.",
+      "With END on the sample's very last frame, a turn can land up to 7 frames off (rytm-emu: the first turn after a hit); set END a little before the end for exact turns.",
+      "Exact turns depend on DMA reading frames the module writes (every cache way is pushed first); rytm-emu does not model the cache; PIPO played on the author's unit, and a dedicated click check of the turns on a unit is still open.",
+      "While a FUNC turn settles (stock glides STA and END over a fraction of a second), a loop wrap or PIPO turn can click; settled points are clean.",
+      "A very slow turn registers no change, as on LOP and stock's stepped controls.",
+      "On SMPL WAVEFORM a line can sit one column left of its crossing (stock spaces the lines over 123 columns and the waveform over 124); the frame played is the crossing."
+    ]
+  },
+  "platform": {
+    "kind": "elemod",
+    "core": "0.7",
+    "build": "build.json",
+    "events": [],
+    "claims": [
+      "ui:SAMPLE page LOP value PIPO and its three-position switch",
+      "param:LOP range OFF/ON/PIPO, its value text and icon",
+      "ui:FUNC + SAMPLE STA turn",
+      "ui:FUNC + SAMPLE END turn",
+      "ui:FUNC + SAMPLE STA/END turn with a trig held",
+      "ui:SMPL WAVEFORM S and E labels on the STA and END lines"
+    ]
+  },
+  "resources": {
+    "memoryBytes": 7221,
+    "fastBytes": 0,
+    "load": {
+      "display": "About 0.1 % of a block idle, 0.6 % with eight voices in PIPO (static estimate)",
+      "method": "static",
+      "conditions": "Static count of the compiled audio handler, run once a block before the sample engine: about 15 instructions for a voice with LOP OFF, 70 looping with ON, 105 in PIPO; at the Rytm guide's 0.023 % of a block per instruction a frame, about 0.1 % with nothing looping and 0.6 % with eight voices in PIPO. A turn adds one copy of up to 160 frames on its block. Zero snap and the icon gate run in the UI task only. Not measured on a unit."
+    }
+  },
+  "evidence": {
+    "tier": "author-hardware",
+    "moduleVersion": "0.1.0-experimental",
+    "sourceSha256": "1a344049f5887be29169977153b40204b2c99caa63370fd2a2ce8d0968e596b7",
+    "reports": [
+      "TESTING.md"
+    ],
+    "hardware": {
+      "model": "Analog Rytm MKII",
+      "release": "1.74",
+      "testedOn": "2026-10-29",
+      "tester": "npp1993",
+      "durationMinutes": null,
+      "summary": "npp1993 (the author) flashed PP14 (Pipo Loop 0.1.0 alone on core-ar2 0.7) on an Analog Rytm MKII, OS 1.74, and reports: the LOP switch, FUNC zero snap on the sample markers and PIPO turns work; a kit with PIPO saved and reloaded; the unit booted after a power cycle; on stock 1.74 a PIPO kit loaded without a crash, LOP read ERROR, the sound looped as ON, and turning the knob stepped between OFF and ON. Earlier, npp1993 flashed test builds on core-ar2 0.3 with Silent Pad+Trig 0.5.1, and reported: LOP shows OFF, ON and PIPO on a three-position switch; PIPO ping-pongs; FUNC + STA/END lands on zero crossings, steps like LOP, holds at the first and last crossings, and lets STA and END pass or share a crossing; snapped LOP ON loops are clean where unsnapped ones click; a lock set with a trig held lands on a crossing and shows when the trig is held; the S and E labels show at the sample's ends, sharing a crossing and reversed.",
+      "limitations": [
+        "Results are as reported by the author, not itemized measurements; duration not recorded.",
+        "Tested builds were diagnostics with an on-screen readout (PD01, PD03, PD04, PD05; PD05 is PC11's code plus the readout) and PC03; PC11 and PP13 themselves were not flashed; PP14 (this code on core-ar2 0.7) was, and its checks are reported, not itemized.",
+        "Not tested on a unit: several voices in PIPO, LOP locks and scenes, MIDI CC 30, Silent Pad+Trig used together, samples over 0.64 s.",
+        "Tested SysEx: PP14 94bb114986d71e23760cdfec3d0de1f055637c5417bd9b40a29febcbc474e2ac, PD05 c0ea404ef4aac79334f1513a4a81953997a405f7811f45426bd6d484efc3ccb4; firmware was not read back from the device."
+      ]
+    },
+    "verifiedBy": null
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "rytm-emu c5732f0, OS 1.74, build PP13: LOP OFF/ON/PIPO on a three-position switch; PIPO turns exactly at STA and END (period 2x the loop at TUN -24, 0, +24); p-lock, scene, two voices, retrig, power-off; stock plays a saved PIPO as a loop; zero snap stepping like LOP onto stock's own frames, on the sound and on locks, holding at the sample's edges, STA and END passing or sharing a crossing. Hardware, as reported: PC03; diagnostics PD01-PD05 (snap holds at edges, clean LOP ON loops when snapped, S/E labels, locks).",
+    "documentation": {
+      "tutorial": {
+        "title": "Quick tutorial",
+        "steps": [
+          "On the SAMPLE page, turn LOP past ON to PIPO and play the sound: the loop between STA and END goes back and forth.",
+          "Set STA and END around a sustained part of the sample (a pad, a vowel, a held note) for a seamless back-and-forth drone.",
+          "Hold a trig in GRID RECORDING and turn LOP to PIPO to ping-pong only on that step; the other steps keep the sound's ON or OFF.",
+          "Hold FUNC and turn STA (or END): the point steps from zero crossing to zero crossing, as LOP steps through its values, so the loop starts and ends where the waveform crosses zero."
+        ]
+      },
+      "screenshots": [
+        "media/lop-off.png",
+        "media/lop-on.png",
+        "media/lop-pipo.png",
+        "media/plock-pipo.png",
+        "media/scene-pipo.png",
+        "media/snap-markers.png",
+        "media/snap-lock.png",
+        "media/markers-shared.png",
+        "media/markers-reversed.png",
+        "media/markers-playing.png"
+      ],
+      "captureRecord": "media/capture.json"
+    }
+  },
+  "license": {
+    "spdx": "GPL-3.0-or-later",
+    "file": "LICENSE",
+    "declaration": "npp1993's original code under GPL-3.0-or-later. Each patch precondition is an address, a length and a SHA-256; no stock bytes are included."
+  },
+  "media": [
+    {
+      "path": "media/thumbnail.svg",
+      "kind": "thumbnail",
+      "caption": "Pipo Loop",
+      "alt": "Two traces between S and E: with LOP ON the position climbs and jumps back to S; with LOP PIPO it climbs and comes back down, a triangle.",
+      "credit": "npp1993",
+      "license": "GPL-3.0-or-later",
+      "source": "Original conceptual illustration in the shared signal-art style; not a device screenshot."
+    },
+    {
+      "path": "media/lop-off.png",
+      "kind": "screenshot",
+      "caption": "LOP OFF: the switch's knob sits on the left, as stock.",
+      "alt": "SAMPLE page with LOP's three-position switch at the left and the value shown as OFF.",
+      "credit": "npp1993 documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "ae15d8b52b4485e0216a4416dd809334b07cdfde0529ca69e8fcd9b59ca58147",
+        "setup": "Headless rytm-emu c5732f0 (dtboot) running PP13: the released core-ar2 0.3 and this folder's Pipo Loop 0.1.0, linked by Modwerk on the owner's stock OS 1.74, BD playing a generated ramp sample. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+      }
+    },
+    {
+      "path": "media/lop-on.png",
+      "kind": "screenshot",
+      "caption": "LOP ON: the switch's knob sits in the middle; the loop plays forward as stock.",
+      "alt": "SAMPLE page with LOP's three-position switch in the middle, LOP label shown.",
+      "credit": "npp1993 documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "ae15d8b52b4485e0216a4416dd809334b07cdfde0529ca69e8fcd9b59ca58147",
+        "setup": "Headless rytm-emu c5732f0 (dtboot) running PP13: the released core-ar2 0.3 and this folder's Pipo Loop 0.1.0, linked by Modwerk on the owner's stock OS 1.74, BD playing a generated ramp sample. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+      }
+    },
+    {
+      "path": "media/lop-pipo.png",
+      "kind": "screenshot",
+      "caption": "Turn LOP to PIPO: the switch moves right and the value reads PIPO; the sample's loop plays back and forth.",
+      "alt": "SAMPLE page with LOP's three-position switch at the right and the value shown as PIPO.",
+      "credit": "npp1993 documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "ae15d8b52b4485e0216a4416dd809334b07cdfde0529ca69e8fcd9b59ca58147",
+        "setup": "Headless rytm-emu c5732f0 (dtboot) running PP13: the released core-ar2 0.3 and this folder's Pipo Loop 0.1.0, linked by Modwerk on the owner's stock OS 1.74, BD playing a generated ramp sample. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+      }
+    },
+    {
+      "path": "media/plock-pipo.png",
+      "kind": "screenshot",
+      "caption": "In GRID RECORDING, hold a trig and turn LOP to PIPO to lock it on that step.",
+      "alt": "SAMPLE page in GRID RECORDING with the LOP knob highlighted as a lock reading PIPO.",
+      "credit": "npp1993 documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "ae15d8b52b4485e0216a4416dd809334b07cdfde0529ca69e8fcd9b59ca58147",
+        "setup": "Headless rytm-emu c5732f0 (dtboot) running PP13: the released core-ar2 0.3 and this folder's Pipo Loop 0.1.0, linked by Modwerk on the owner's stock OS 1.74, BD playing a generated ramp sample. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+      }
+    },
+    {
+      "path": "media/scene-pipo.png",
+      "kind": "screenshot",
+      "caption": "In SCENE mode, hold a pad and turn LOP to PIPO to put it in that scene.",
+      "alt": "SAMPLE page with LOP locked to PIPO and the footer reading SCENE: 1 and LOCKS.",
+      "credit": "npp1993 documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "ae15d8b52b4485e0216a4416dd809334b07cdfde0529ca69e8fcd9b59ca58147",
+        "setup": "Headless rytm-emu c5732f0 (dtboot) running PP13: the released core-ar2 0.3 and this folder's Pipo Loop 0.1.0, linked by Modwerk on the owner's stock OS 1.74, BD playing a generated ramp sample. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+      }
+    },
+    {
+      "path": "media/snap-markers.png",
+      "kind": "screenshot",
+      "caption": "FUNC + STA and END step to zero crossings; on SMPL WAVEFORM a boxed S marks STA's line and a boxed E END's.",
+      "alt": "SMPL WAVEFORM view of a slow sine with the STA line on a zero crossing labelled S at its bottom and the END line on a later crossing labelled E at its top.",
+      "credit": "npp1993 documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "ae15d8b52b4485e0216a4416dd809334b07cdfde0529ca69e8fcd9b59ca58147",
+        "setup": "Headless rytm-emu c5732f0 (dtboot) running PP13: the released core-ar2 0.3 and this folder's Pipo Loop 0.1.0, linked by Modwerk on the owner's stock OS 1.74, BD on a generated slow sine (PIPO_SLOW), SMPL WAVEFORM view. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+      }
+    },
+    {
+      "path": "media/snap-lock.png",
+      "kind": "screenshot",
+      "caption": "Hold a trig and FUNC + turn STA: the trig's lock steps to a zero crossing and its value shows while the trig is held.",
+      "alt": "SMPL WAVEFORM view with a trig held: STA highlighted at 9.08 below the waveform and its line, labelled S, on the first zero crossing.",
+      "credit": "npp1993 documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "ae15d8b52b4485e0216a4416dd809334b07cdfde0529ca69e8fcd9b59ca58147",
+        "setup": "Headless rytm-emu c5732f0 (dtboot) running PP13: the released core-ar2 0.3 and this folder's Pipo Loop 0.1.0, linked by Modwerk on the owner's stock OS 1.74, BD on a generated slow sine (PIPO_SLOW), SMPL WAVEFORM view. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+      }
+    },
+    {
+      "path": "media/markers-shared.png",
+      "kind": "screenshot",
+      "caption": "STA and END can share a crossing: stock draws one line, and both labels show.",
+      "alt": "SMPL WAVEFORM view with one dotted line carrying an S box at its bottom and an E box at its top.",
+      "credit": "npp1993 documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "ae15d8b52b4485e0216a4416dd809334b07cdfde0529ca69e8fcd9b59ca58147",
+        "setup": "Headless rytm-emu c5732f0 (dtboot) running PP13: the released core-ar2 0.3 and this folder's Pipo Loop 0.1.0, linked by Modwerk on the owner's stock OS 1.74, BD on a generated slow sine (PIPO_SLOW), SMPL WAVEFORM view. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+      }
+    },
+    {
+      "path": "media/markers-reversed.png",
+      "kind": "screenshot",
+      "caption": "END can sit before STA (the sample plays backward between them, as stock).",
+      "alt": "SMPL WAVEFORM view with the E-labelled line to the left of the S-labelled line.",
+      "credit": "npp1993 documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "ae15d8b52b4485e0216a4416dd809334b07cdfde0529ca69e8fcd9b59ca58147",
+        "setup": "Headless rytm-emu c5732f0 (dtboot) running PP13: the released core-ar2 0.3 and this folder's Pipo Loop 0.1.0, linked by Modwerk on the owner's stock OS 1.74, BD on a generated slow sine (PIPO_SLOW), SMPL WAVEFORM view. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+      }
+    },
+    {
+      "path": "media/markers-playing.png",
+      "kind": "screenshot",
+      "caption": "While the sound plays, the playhead runs under the labels.",
+      "alt": "SMPL WAVEFORM view with the S and E labelled lines and a solid playhead line between them.",
+      "credit": "npp1993 documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "ae15d8b52b4485e0216a4416dd809334b07cdfde0529ca69e8fcd9b59ca58147",
+        "setup": "Headless rytm-emu c5732f0 (dtboot) running PP13: the released core-ar2 0.3 and this folder's Pipo Loop 0.1.0, linked by Modwerk on the owner's stock OS 1.74, BD on a generated slow sine (PIPO_SLOW), SMPL WAVEFORM view. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+      }
+    }
+  ]
+}

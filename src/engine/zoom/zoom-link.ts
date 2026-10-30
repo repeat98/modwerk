@@ -1,9 +1,10 @@
-// The site's link to a Zoom MultiStomp over Web MIDI: identify the pedal, list its files, read them (the backup).
-// Read-only: nothing here writes to the pedal. The commands are in zoom-protocol.ts.
-import { FILE, IDENTITY_REQUEST, effectInfo, isFileReply, parseBlock, parseIdentity, parseListEntry, parseUsage, zoomSysex, type ZoomIdentity } from './zoom-protocol'
+// The site's link to a Zoom MultiStomp over Web MIDI: identify the pedal, list its files, read them (the backup),
+// and install or remove one effect file the way the project's editor proved safe on the MS-70CDR 2.10.
+// The commands are in zoom-protocol.ts.
+import { EFFECT_LIST, EFFECT_LIST_SIZE, FILE, IDENTITY_REQUEST, WRITE_BLOCK, effectInfo, installRefusal, isAddedEffect, isFileReply, listRecords, listWith, listWithout, parseBlock, parseIdentity, parseListEntry, parseUsage, zoomSysex, type ZoomIdentity } from './zoom-protocol'
 import { storedZip } from './zip'
 
-export type ZoomLinkStatus = 'unsupported' | 'idle' | 'connecting' | 'ready' | 'reading'
+export type ZoomLinkStatus = 'unsupported' | 'idle' | 'connecting' | 'ready' | 'reading' | 'writing'
 export type ZoomFile = { name: string; size: number; effect?: { gid: number; fxid: number; version: string } }
 export type ZoomLinkState = {
   readonly status: ZoomLinkStatus
@@ -33,6 +34,8 @@ export class ZoomLink {
   private waitFile?: (m: number[]) => void
   private waitIdentity?: (m: number[]) => void
   private op: Promise<unknown> = Promise.resolve()
+  /** Effect headers already read (upper-case name -> size and header); a write or delete forgets that file. */
+  private readonly heads = new Map<string, { size: number; effect?: ZoomFile['effect'] }>()
   /** A reply timed out: one may still arrive, so the next operation first waits for the line to go quiet. */
   private stale = false
   private readonly requestAccess: (() => Promise<MidiAccessLike>) | null
@@ -137,12 +140,12 @@ export class ZoomLink {
   }
 
   /** One file operation at a time, shown as reading while it runs. */
-  private exclusive<T>(label: string, work: () => Promise<T>): Promise<T> {
+  private exclusive<T>(label: string, work: () => Promise<T>, status: 'reading' | 'writing' = 'reading'): Promise<T> {
     const run = this.op.then(async () => {
       if (this.state.status !== 'ready') throw new Error('Connect the pedal first.')
       const identity = this.state.identity
-      this.set({ status: 'reading', identity, progress: { label, done: 0, total: 0 } })
-      try { await this.drain(); return await work() } finally { if (this.getState().status === 'reading') this.set({ status: 'ready', identity }) }
+      this.set({ status, identity, progress: { label, done: 0, total: 0 } })
+      try { await this.drain(); return await work() } finally { if (this.getState().status === status) this.set({ status: 'ready', identity }) }
     })
     this.op = run.catch(() => undefined)
     return run
@@ -178,13 +181,100 @@ export class ZoomLink {
     return out
   }
 
+  private async head(file: ZoomFile) {
+    const key = file.name.toUpperCase(), known = this.heads.get(key)
+    if (known && known.size === file.size) return known.effect
+    const effect = effectInfo(await this.read(file.name, 1))
+    this.heads.set(key, { size: file.size, effect })
+    return effect
+  }
+  // Delete any old file of that name, write it in blocks, close, then read it back.
+  private async write(name: string, data: number[]) {
+    this.heads.delete(name.toUpperCase())
+    for (const body of FILE.writeOpen(name)) if (!await this.ask(body)) { await this.close(); throw new Error('No reply from the pedal before writing ' + name + '; nothing was written.') }
+    for (let at = 0; at < data.length; at += WRITE_BLOCK) {
+      if (!await this.ask(FILE.writeBlock(data.slice(at, at + WRITE_BLOCK))) || !await this.ask(FILE.readBlock[0])) { await this.close(); throw new Error('The pedal stopped answering while writing ' + name + '.') }
+    }
+    await this.close()
+    const back = await this.read(name)
+    if (back.length !== data.length || back.some((b, i) => b !== data[i])) throw new Error(name + ' read back different from what was written.')
+  }
+  // Delete a file, then list again: the pedal's reply alone doesn't show it went.
+  private async remove(name: string) {
+    this.heads.delete(name.toUpperCase())
+    let answered = true
+    for (const body of FILE.remove(name)) if (!await this.ask(body)) answered = false
+    await this.close()
+    await this.drain()
+    if ((await this.list()).some(f => f.name.toUpperCase() === name.toUpperCase())) throw new Error(name + ' is still on the pedal' + (answered ? '' : ', which stopped answering') + '. The effect list no longer names it: remove it again before power-cycling.')
+  }
+  private async effectList() {
+    const list = await this.read(EFFECT_LIST)
+    if (list.length !== EFFECT_LIST_SIZE) throw new Error('Could not read the effect list; nothing was changed.')
+    return list
+  }
+
+  /**
+   * Install one added effect file (installRefusal: never Zoom's own, nor a known ID clash). A new one: its ID must be free, there must be room, and the file is written before
+   * it goes into the effect list (whose original is written back if that fails). An installed one of the same
+   * name: only the same effect (group and ID), and only when the bytes differ. Every write is read back.
+   * Returns the effect list from before, for the caller to offer for saving. Power-cycle the pedal to load it.
+   */
+  readonly installFile = (name: string, data: ArrayLike<number>) => this.exclusive('Installing ' + name, async () => {
+    const file = name.toUpperCase(), bytes = Array.from(data), refused = installRefusal(name, bytes)
+    if (refused) throw new Error(refused)
+    const info = effectInfo(bytes)!
+    const files = await this.list(), existing = files.find(f => f.name.toUpperCase() === file)
+    if (existing) {
+      const head = await this.head(existing)
+      if (!head || head.gid !== info.gid || head.fxid !== info.fxid) throw new Error('The pedal’s ' + existing.name + ' is a different effect; not replacing it.')
+      const current = await this.read(existing.name)
+      if (current.length === bytes.length && current.every((b, i) => b === bytes[i])) return { previousList: undefined, unchanged: true }
+      this.progress('Writing ' + existing.name, 0, 0)
+      await this.write(existing.name, bytes)
+      return { previousList: undefined, unchanged: false }
+    }
+    const effects = files.filter(f => /\.zdl$/i.test(f.name))
+    for (const [i, f] of effects.entries()) {
+      this.progress('Checking effect IDs on the pedal', i + 1, effects.length)
+      const head = await this.head(f)
+      if (head && head.gid === info.gid && head.fxid === info.fxid) throw new Error(f.name + ' on the pedal already uses this effect ID (' + info.gid + '/' + info.fxid + '); not installing.')
+    }
+    const free = parseUsage(await this.ask(FILE.usage()))
+    if (free !== undefined && free < bytes.length + 8192) throw new Error('Not enough space on the pedal (' + Math.round(free / 1024) + ' KB free).')
+    const list = await this.effectList()
+    if (listRecords(list).some(r => r.name.toUpperCase() === file)) throw new Error('The effect list already names ' + file + ' although the file is missing. Nothing was changed.')
+    const updated = listWith(list, info.gid, file)
+    this.progress('Writing ' + file, 0, 0)
+    await this.write(file, bytes)
+    this.progress('Adding ' + file + ' to the effect list', 0, 0)
+    try { await this.write(EFFECT_LIST, updated) } catch (error) {
+      await this.drain()   // a late reply to the failed write must not answer the rollback's requests
+      try { await this.write(EFFECT_LIST, list) } catch (again) { throw new Error((error as Error).message + ' Writing the original effect list back also failed (' + (again as Error).message + '): restore it from your backup before power-cycling.', { cause: again }) }
+      throw new Error((error as Error).message + ' The original effect list was written back.', { cause: error })
+    }
+    return { previousList: list, unchanged: false }
+  }, 'writing')
+
+  /** Remove one added effect file: out of the effect list first, then the file, then list to check it went. Returns the effect list from before. */
+  readonly removeFile = (name: string) => this.exclusive('Removing ' + name, async () => {
+    const files = await this.list(), file = files.find(f => f.name.toUpperCase() === name.toUpperCase())
+    if (!file || !/\.zdl$/i.test(file.name)) throw new Error(name + ' is not an effect on the pedal.')
+    const head = await this.head(file)
+    if (!isAddedEffect(head)) throw new Error(file.name + (head ? ' has effect ID ' + head.gid + '/' + head.fxid : ' has no effect header') + ': only added effects (group 8, IDs 403 to 957) are removed. Zoom’s own effects stay as they are.')
+    const list = await this.effectList(), updated = listWithout(list, file.name)
+    if (updated) await this.write(EFFECT_LIST, updated)
+    await this.remove(file.name)
+    return { previousList: list }
+  }, 'writing')
+
   /** Every file on the pedal; with versions, effect files also get their group, effect id and version (slower). */
   readonly listFiles = ({ versions = false } = {}) => this.exclusive('Reading the file list', async () => {
     const files = await this.list()
     const effects = versions ? files.filter(f => /\.zdl$/i.test(f.name)) : []
     for (const [i, file] of effects.entries()) {
       this.progress('Reading effect versions', i + 1, effects.length)
-      file.effect = effectInfo(await this.read(file.name, 1))
+      file.effect = await this.head(file)
     }
     return files
   })
