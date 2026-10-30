@@ -21,6 +21,13 @@
 
 All 11 checked steps passed. The first two attempts failed for setup reasons, not the module: BD had been muted by hand before calibration, and then RECEIVE CC/NRPN was unchecked, so the Rytm ignored CC 94 and BD was never muted (every drop step heard BD, as stock does). With RECEIVE CC/NRPN checked, the run above passed.
 
+**By hand, reported by the author (MM03):**
+
+- **Saving and reloading:** with MUTE MIDI IN checked, the project saved and reloaded with the box still checked, and it was still checked after a power cycle. Reported as working as expected.
+- **CREATE NEW:** a new project opened with MUTE MIDI IN unchecked.
+- **Pad mutes:** muting a track with its pad in MUTE mode silenced incoming notes for it, a note held while the pad muted the track stopped, and after unmuting the next note played. Reported as working.
+- **Live use** (a pattern playing while tracks are muted and unmuted and notes come in over MIDI): in progress, not reported yet.
+
 ## Build MM02 on a unit (author, 29 October 2026)
 
 - **Image:** MM02 (SHA-256 `08f8ad28…f080`), the build the emulator runs below, sent with Elektron Transfer to the author's Analog Rytm MKII on OS 1.74.
@@ -64,7 +71,7 @@ No hang or fault in any run. Checked, 6,774 Note Ons for muted tracks were dropp
 
 **Beside other modules.** MM03's source linked with core-ar2 0.7 and Filter Hz 1.2.0 (pinned package), with Loop Sync 0.2.0 (pinned package), and with Filter Hz and Loop Sync 0.3.2 compiled from this checkout, all three together (MA03, `edec45ed…f746`). MA03 booted; cases A, B and C1 gave the same counts as on MM03; PORT CONFIG showed the row; Filter Hz's FRQ label read 21.1kHz on the FILTER page as on the same build without MIDI Mute. Loop Sync's own behaviour was not exercised.
 
-**CREATE NEW.** LOAD PROJECT > CREATE NEW first saves the current project; the emulator hung in that save (SAVING 'PRESETS', the progress bar stopped), like the project load below. Stock was not run through this path, and that a new project starts unchecked is not tested.
+**CREATE NEW.** LOAD PROJECT > CREATE NEW first saves the current project; the emulator hung in that save (SAVING 'PRESETS', the progress bar stopped), like the project load below. Stock was not run through this path here; that a new project starts unchecked was checked on the unit instead (above).
 
 ## Build MM02 (rytm-emu, 29 October 2026)
 
@@ -104,8 +111,7 @@ PORT CONFIG shows MUTE MIDI IN as its last row, after RECEIVE CC/NRPN, unchecked
 
 ## Not tested
 
-- **The unit, still open.** DIN MIDI (MM03 ran over USB only), muting with the pads instead of CC 94, saving and reloading the setting with a project, CREATE NEW, and a pattern or kit change during a flood.
-- **LOAD PROJECT and CREATE NEW.** That the setting comes back with a saved project, and that a new project starts unchecked (the emulator hangs on a project load, stock included, and in the save before CREATE NEW).
+- **The unit, still open.** DIN MIDI (MM03 ran over USB only), live use with a pattern playing (in progress), and a pattern or kit change during a flood.
 - **On the unit's clock.** CPU time per event and under the flood, measured with DTIM0; a flood at 240 BPM; a pattern or kit change during the flood.
 - **USB timing.** A real USB host; the emulator's USB MIDI input is its own model.
 - **Silent Pad+Trig and Retrig Grid** (core-ar2 0.3 submissions) were not built beside it.
