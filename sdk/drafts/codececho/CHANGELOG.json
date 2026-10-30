@@ -4,8 +4,8 @@
     "date": "2026-10-30",
     "changes": [
       "New: CODEC ECHO, an echo on the tempo (1/32 to 1/2) whose repeats pass through a lossy codec, on FX2.",
-      "LOSS darkens and coarsens every repeat; DROP and PKT lose packets, concealed by silence or a repeat (PLC).",
-      "A 1.44 s line at half the rate in 12 bits; MIX 0 is the dry, untouched.",
+      "LOSS codes every repeat with ADPCM at 5, 4, 3 or 2 bits and darkens it; DROP and PKT lose packets, concealed by silence or a repeat (PLC).",
+      "A 1.44 s line at half the rate; MIX 0 is the dry, untouched.",
       "Needs the Modwerk base loaded over USB (beta). Not yet tested on a unit or in the emulator."
     ]
   }

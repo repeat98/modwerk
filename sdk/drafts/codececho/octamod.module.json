@@ -18,10 +18,10 @@
     "label": "LOSSY TEMPO ECHO",
     "family": "Delay",
     "summary": "An echo on the tempo whose repeats pass through a lossy codec every time: darker, coarser and more broken as they fade, with packets lost and concealed.",
-    "overview": "CODEC ECHO is a tempo-synced echo (1/32 to 1/2, with triplets and dotted values) on a 1.44 s line that runs at half the rate in 12 bits. Every repeat passes through the codec again: LOSS darkens it and cuts its bits (12 down to 8), and DROP loses packets of PKT's length, concealed by silence or by repeating the packet before (PLC). FDBK sets how much comes back, up to 0.95. MIX 0 returns the dry bit for bit.",
+    "overview": "CODEC ECHO is a tempo-synced echo (1/32 to 1/2, with triplets and dotted values) on a 1.44 s line that runs at half the rate in 12 bits. Every repeat passes through the codec again: LOSS codes it with ADPCM at 5, 4, 3 or 2 bits a sample (G.726's depths) and darkens it, and DROP loses packets of PKT's length, concealed by silence or by repeating the packet before (PLC). FDBK sets how much comes back, up to 0.95. MIX 0 returns the dry bit for bit.",
     "highlights": [
       "Tempo-synced echo, 1/32 to 1/2 with triplets and dotted values",
-      "Each repeat darker and coarser: a low-pass and 12 down to 8 bits",
+      "Every repeat through ADPCM again, 5 down to 2 bits a sample, and darker",
       "Lost packets concealed by silence or a repeat",
       "TIME and tempo changes move the echo without a click"
     ],
@@ -63,7 +63,7 @@
       "name": "LOSS",
       "default": 48,
       "count": 128,
-      "doc": "The codec: darker and coarser each pass, 12 bits down to 8",
+      "doc": "The codec: ADPCM at 5, 4, 3 or 2 bits, and darker, every pass",
       "labels": null
     },
     {
@@ -108,7 +108,7 @@
       "FX2 only, and needs the Modwerk base loaded over USB (beta) with an effect id of its own; the card builds' non-stock ids are all claimed but 0x07, which the draft holds as a placeholder.",
       "The line takes 15,870 words of the FX2 slot's buffer and stops short of Sidechain Compressor's key window. For about 0.05 s after the effect is chosen it clears the line and passes the dry.",
       "TIME follows the tempo word octabam's BusDelay reads at r6+$13; a division longer than 1.44 s halves until it fits. Swing and track speed do not change the echo.",
-      "The echo is mono, mixed over the stereo dry. The codec is lossy on purpose: images of the half rate and the bit cut show in fx:audit (TESTING.md).",
+      "The echo is mono, mixed over the stereo dry. The codec is lossy at every setting, on purpose: its noise and, at 2 bits, its failure on high tones show in fx:audit (TESTING.md).",
       "Not yet run in a built image, the ColdFire port or on a unit: only in fxhost (the vendored DSP56300 emulator alone)."
     ]
   },
@@ -116,20 +116,20 @@
     "recorded": "fxhost, 30 Oct 2026",
     "storage": {
       "label": "DSP program / table / buffer",
-      "display": "436 words + 12-word table; 15,870-word line",
-      "value": 448,
+      "display": "533 words + 206-word table; 15,870-word line",
+      "value": 739,
       "unit": "words",
       "method": "static",
-      "conditions": "dsp_asm: the program words and one 12-word P table per core (TESTING.md). 32 state words in each instance's own r7 block. 15,870 words of the allocator's FX2 Y buffer per instance.",
+      "conditions": "dsp_asm: the program words and one 12-word P table per core (TESTING.md). 41 state words in each instance's own r7 block. 15,870 words of the allocator's FX2 Y buffer per instance.",
       "source": "TESTING.md"
     },
     "processing": {
       "label": "DSP instruction peak",
-      "display": "157 instructions/sample",
-      "value": 157,
+      "display": "196 instructions/sample",
+      "value": 196,
       "unit": "instructions/sample",
       "method": "emulator",
-      "conditions": "fxhost (dsp56kEmu alone), one instance, 16-frame calls at the dearest settings: 2,517 instructions a call. Executed instructions, not chip cycles; not yet measured beside stock SPRING REV in dsp_host.",
+      "conditions": "fxhost (dsp56kEmu alone), one instance, 16-frame calls at the dearest settings: 3,130 instructions a call. Executed instructions, not chip cycles; not yet measured beside stock SPRING REV in dsp_host.",
       "source": "TESTING.md"
     },
     "impact": {
@@ -143,22 +143,22 @@
       "dsp": {
         "level": "low",
         "basis": "source-estimate",
-        "rationale": "About half the 314 instructions a sample octabam's benchmark reports for stock SPRING REV, in fxhost; not measured under the same benchmark.",
+        "rationale": "About two thirds of the 314 instructions a sample octabam's benchmark reports for stock SPRING REV, in fxhost; not measured under the same benchmark.",
         "source": "TESTING.md"
       },
       "memory": {
         "level": "high",
         "basis": "source-estimate",
-        "rationale": "A whole FX2 slot's buffer (15,870 of 16,384 words) per instance, as stock's reverbs; a small program and a 12-word table.",
+        "rationale": "A whole FX2 slot's buffer (15,870 of 16,384 words) per instance, as stock's reverbs; 533 program words and a 206-word table.",
         "source": "TESTING.md"
       }
     }
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "fxhost only (the vendored dsp56kEmu with the module alone, no firmware): MIX 0 is the dry bit for bit from garbage state with trig splits; a garbage line is never heard; the echo lands within 2 samples of its division at four tempos; repeats decay with FDBK and reach digital silence; LOSS darkens; DROP leaves holes of PKT's length and RPT none; a TIME change makes no click; nothing outside the audio, state, parameter and line words is written. Not run in a built image, under the ColdFire port or on a unit.",
+    "summary": "fxhost only (the vendored dsp56kEmu with the module alone, no firmware): MIX 0 is the dry bit for bit from garbage state with trig splits; a garbage line is never heard; the echo starts 10 samples after its division at four tempos; repeats decay with FDBK and reach digital silence; the ADPCM's signal-to-noise ratio falls from 49 to 24 dB from 5 to 2 bits and adapts to the level; LOSS darkens; DROP leaves holes of PKT's length and RPT none; a TIME change makes no click; nothing outside the audio, state, parameter and line words is written. Not run in a built image, under the ColdFire port or on a unit.",
     "hardwareStatus": "untested",
-    "evidenceRevision": "2dae75cbc70db04fe7d630f48443668fd29903d0",
+    "evidenceRevision": "555eea028af3443ddef4aa17d726e317852be2b3",
     "gates": [
       "modules/codececho/verify.py"
     ]
@@ -181,7 +181,7 @@
   },
   "source": {
     "repository": "https://github.com/semierendonmez-commits/modwerk-semi",
-    "revision": "2dae75cbc70db04fe7d630f48443668fd29903d0",
+    "revision": "555eea028af3443ddef4aa17d726e317852be2b3",
     "path": "sdk/drafts/codececho"
   }
 }

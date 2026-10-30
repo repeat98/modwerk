@@ -3,7 +3,7 @@
 
 A per-track FX2 effect with its own delay line in the allocator's buffer. The line runs at half the rate and
 stores 12-bit samples two to a word, so 15,870 words hold 1.44 s; every repeat goes through the codec again --
-a low-pass and a bit-depth cut, 12 bits down to 8 (LOSS), packets lost at random (DROP, PKT) and concealed by silence or by the
+an ADPCM coder at 5 down to 2 bits a sample (G.726's 40 to 16 kbit/s depths) and a low-pass (LOSS), packets lost at random (DROP, PKT) and concealed by silence or by the
 packet before (PLC) -- so the echoes grow darker, coarser and more broken as they repeat.
 
 TIME is a note division of the project's tempo, read from stock's tempo24 at r6+$13 as octabam's BusDelay reads
@@ -25,6 +25,14 @@ from remix.schema import (BusRole, Category, Claims, DspSection, Formatter, Gate
 # MIDI clocks (24 a quarter note) per TIME step: 1/32, 1/16T, 1/16, 1/8T, 1/16D, 1/8, 1/4T, 1/8D, 1/4, 1/2T,
 # 1/4D, 1/2.
 CLOCKS = (3, 4, 6, 8, 9, 12, 16, 18, 24, 32, 36, 48)
+# The ADPCM's 89 step sizes, IMA's progression (7 x 1.1^k of 32,768), as fractions of full scale (S), and their
+# reciprocals over 8,192 (W = 1 / (8192 S)), which the quantiser multiplies by instead of dividing.
+_STEPS = tuple(min(32767, round(7 * 1.1 ** k)) / 32768.0 for k in range(89))
+S_TABLE = tuple(max(1, min(0x7fffff, round(s * 0x800000))) for s in _STEPS)
+W_TABLE = tuple(min(0x7fffff, round(0x800000 / (8192.0 * s))) for s in _STEPS)
+# Per depth (LOSS / 32: 5, 4, 3, 2 bits): the quantiser's shift 12 - bits, the largest code 2^(bits-1) - 1, the
+# dequantiser's shift 25 - bits, and half the codes 2^(bits-2).
+DEPTHS = tuple(v for bits in (5, 4, 3, 2) for v in (12 - bits, 2 ** (bits - 1) - 1, 25 - bits, 2 ** (bits - 2)))
 TIME_LABELS = ("1/32", "1/16T", "1/16", "1/8T", "1/16D", "1/8", "1/4T", "1/8D", "1/4", "1/2T", "1/4D", "1/2")
 
 _PLAIN = Formatter.PLAIN
@@ -49,7 +57,7 @@ MODULE = Module(
         Param(b"FDBK", 64, active=True, formatter=_PLAIN,
               doc="how much of each echo comes back, up to 0.95"),
         Param(b"LOSS", 48, active=True, formatter=_PLAIN,
-              doc="the codec: darker and coarser each pass, 12 bits down to 8"),
+              doc="the codec: ADPCM at 5, 4, 3 or 2 bits, and darker, every pass"),
         Param(b"DROP", 16, active=True, formatter=_PLAIN,
               doc="the chance a packet is lost, up to one in two"),
         Param(b"PKT", 40, active=True, formatter=_PLAIN,
@@ -65,8 +73,8 @@ MODULE = Module(
         priority=26,
         bus_role=BusRole.NONE,
         ybase=YBase.NEVER,
-        # The divisions' clocks, read through the build's base literal.
-        ptable=CLOCKS,
+        # The divisions' clocks at +0, W at +12, S at +101, the depths at +190, through the build's base literal.
+        ptable=CLOCKS + W_TABLE + S_TABLE + DEPTHS,
     ),
     # 15,870 words from the base: the slot's last $202 words stay Sidechain Compressor's key window.
     claims=Claims(stock_instance_buffer=True, buffer_words=15870),

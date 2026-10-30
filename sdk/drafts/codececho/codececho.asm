@@ -8,7 +8,8 @@
 ; codec again:
 ;   s = the mono input, two frames averaged (the half rate's decimation)
 ;   u = lowpass(LOSS, s + FDBK * d)       d = the line's output, D samples back
-;   u = u truncated toward zero to 12 - 5 LOSS/128 bits (12 down to 8)
+;   u = ADPCM(u): coded at 5, 4, 3 or 2 bits a sample by LOSS (G.726's 40, 32, 24
+;       and 16 kbit/s depths, at this rate) and decoded, then kept to 12 bits
 ;   a packet of PKT samples is lost at DROP's chance: its samples are written as
 ;   silence (PLC MUTE) or as the packet before it again (PLC RPT, a codec's
 ;   packet-loss concealment)
@@ -35,11 +36,13 @@
 ; $202 words, Sidechain Compressor's key window on T3 and T7, are never touched);
 ; the dry passes untouched until the line is clear.
 ;
-; r7 block ($00..$1f, all cleared by init):
+; r7 block ($00..$28, all cleared by init):
 ;   $00 noise (24-bit LCG)  $01 the half-rate phase  $02 the frame held for it
 ;   $03 the write sample w (0 .. 31,739)  $04 the delay D in use  $05 D's target
 ;   $06 the read head's fade g  $07/$08 FDBK cur/target  $09/$0a MIX cur/target
-;   $0b/$0c LOSS's low-pass k cur/target  $0d LOSS's mask  $0e the low-pass
+;   $0b/$0c LOSS's low-pass k cur/target  $0d the line's 12-bit mask  $0e the low-pass
+;   $20 the ADPCM's prediction p  $21 its step index  $22..$26 its depth (from the table) and
+;   the last code  $27 the loop's DC blocker
 ;   $0f/$10 the line's output, previous/latest  $11 the packet's samples left
 ;   $12 the packet is lost  $13 PKT, samples  $14 DROP's chance  $15 PLC
 ;   $16 the buffer's base  $17 the table's base  $18 calls left to clear
@@ -53,7 +56,7 @@ init:
         move    #>$ffffff,m5
         move    r7,r5                   ; r1 is the dispatcher's across init
         clr     a
-        do      #<$20,>ce00
+        do      #<$29,>ce00
         move    a,x:(r5)+
 ce00:
         move    #>$2b7e15,x0            ; the noise's seed
@@ -142,7 +145,7 @@ ce05:
         move    #>$79999a,y0
         mpy     y0,x0,a
         move    a,x:(r7+$8)
-; ---- LOSS: the low-pass's k = 1 - 3/4 LOSS, and the mask of 12 - 5 LOSS/128 bits
+; ---- LOSS: the loop's low-pass k = 1 - 3/4 LOSS, and the ADPCM's bits: 5, 4, 3 or 2 --
         move    x:(r6+$2),a
         and     #>$7f0000,a
         move    a1,x0
@@ -151,12 +154,25 @@ ce05:
         move    #>$7fffff,a
         sub     b,a
         move    a,x:(r7+$c)
-        move    #>$5,y0
-        mpy     y0,x0,a                 ; LOSS x 5 / 128: 0 .. 4 whole bits
-        move    a1,y0
-        move    #>$fff000,a
-        asl     y0,a,a
-        move    a1,x:(r7+$d)
+        move    #>$fff000,x1            ; the line keeps 12 bits
+        move    x1,x:(r7+$d)
+        move    #>$4,y0
+        mpy     y0,x0,a                 ; LOSS x 4 / 128: 0 .. 3, so 5 - that bits
+        move    a1,b                    ; the whole part only (a0 holds the fraction)
+        asl     #2,b,b
+        add     #>$be,b                 ; four words a depth, after the clocks and two tables
+        move    b1,n5
+        move    x:(r7+$17),r5
+        move    (r5)+n5
+        lua     (r7+$22),r4
+        move    p:(r5)+,x0
+        move    x0,x:(r4)+              ; $22: the quantiser's shift, 12 - bits
+        move    p:(r5)+,x0
+        move    x0,x:(r4)+              ; $23: the largest code, 2^(bits-1) - 1
+        move    p:(r5)+,x0
+        move    x0,x:(r7+$25)           ; the dequantiser's shift, 25 - bits
+        move    p:(r5),x0
+        move    x0,x:(r7+$26)           ; half the codes, 2^(bits-2)
 ; ---- DROP: a packet's chance, up to 1/2 ---------------------------------------
         move    x:(r6+$3),a
         and     #>$7f0000,a
@@ -276,6 +292,17 @@ ce13:
         move    x:(r7+$7),y0
         mac     y0,x0,a
         move    a,x0                    ; u
+; a DC blocker in the loop (a one-pole of 2^-7 subtracted, about 27 Hz): the coder's
+; small biases never pile up through the feedback
+        move    x:(r7+$27),b
+        move    x0,a
+        sub     b,a
+        asr     #7,a,a
+        add     a,b
+        move    b,x:(r7+$27)
+        move    x0,a
+        sub     b,a
+        move    a,x0
         move    x:(r7+$b),y0            ; k
         mpy     y0,x0,a
         move    #>$7fffff,b
@@ -284,7 +311,9 @@ ce13:
         move    x:(r7+$e),x1
         mac     y1,x1,a
         move    a,x:(r7+$e)
-; then truncated toward zero to LOSS's bits, so a fading repeat reaches 0
+; through the ADPCM, then truncated toward zero to the line's 12 bits
+        move    a,x1
+        bsr     ce70
         move    a,x0                    ; u
         move    x0,a
         abs     a
@@ -413,6 +442,82 @@ ce30:
         add     x0,a
         move    a,x:(r0)+
 ce40:
+        rts
+
+; ---- the ADPCM: an adaptive quantiser on the error from a leaky prediction ----------------
+; In: x1 = the sample. Out: a = the decoded sample, which is also the next prediction p.
+; G.726-like in its rates (2 to 5 bits a sample) and IMA-like in its 89 step sizes, each
+; 1.1 times the last. The code m is |x - p| in units of step / 2^(bits-2), rounded (a
+; mid-tread quantiser: a small error codes as 0 and changes nothing), up to 2^(bits-1) - 1;
+; p moves by m of those units, signed. The step index falls by 1 on the lower half of the
+; codes and rises by 2, 4, 6 ... on the upper half (IMA's rule, for any depth). p leaks
+; 1/64 a sample toward 0 and is 0 under 64 LSB, so silence decodes to exact silence.
+; Uses a, b, x0, x1, y0, y1, r5, n5; reads the tables through $17.
+ce70:
+        move    x:(r7+$20),a
+        move    a,b
+        asr     #6,b,b
+        sub     b,a                     ; p - p/64
+        move    a,b
+        abs     b
+        move    #0,y1
+        cmp     #>$40,b
+        tlt     y1,a
+        move    a,x:(r7+$20)
+        move    x1,b
+        sub     a,b                     ; d = x - p
+        move    b,y1                    ; d's sign
+        abs     b
+        move    b,x0                    ; |d|, limited below 1
+        move    x:(r7+$21),a
+        add     #>$c,a                  ; W[i] = 1 / (8192 step[i]), after the clocks
+        move    a1,n5
+        move    x:(r7+$17),r5
+        move    (r5)+n5
+        move    p:(r5),y0
+        mpy     y0,x0,a                 ; |d| / (8192 step)
+        move    x:(r7+$22),y0
+        asr     y0,a,a                  ; a1.a0 = |d| / step x 2^(bits-2)
+        rnd     a
+        move    x:(r7+$23),x0
+        cmp     x0,a
+        tgt     x0,a                    ; m
+        move    a1,x:(r7+$24)
+        move    a1,x0
+        move    #>$59,n5
+        move    (r5)+n5
+        move    p:(r5),y0               ; step[i]
+        mpy     y0,x0,a                 ; m step / 2^23
+        move    x:(r7+$25),y0
+        asl     y0,a,a                  ; m step / 2^(bits-2)
+        move    a,x0                    ; limited
+        neg     a
+        move    a,y0
+        move    y1,b
+        tst     b
+        move    x0,a
+        tmi     y0,a                    ; signed as d
+        move    x:(r7+$20),b
+        add     a,b
+        move    b,x:(r7+$20)            ; p, limited
+; the step index: -1 below half the codes, 2 (m - half + 1) from there, kept in 0 .. 88
+        move    x:(r7+$24),a
+        move    x:(r7+$26),x0
+        sub     x0,a
+        asl     a
+        add     #<2,a
+        move    #>$ffffff,y0
+        tle     y0,a
+        move    x:(r7+$21),x0
+        add     x0,a
+        move    #0,x0
+        tst     a
+        tlt     x0,a
+        move    #>$58,x0
+        cmp     x0,a
+        tgt     x0,a
+        move    a1,x:(r7+$21)
+        move    x:(r7+$20),a
         rts
 
 ; ---- read the line's sample at index a1 (0 .. 31,739): out a; uses b, x0, r4 ---------

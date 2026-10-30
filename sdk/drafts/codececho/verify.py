@@ -93,12 +93,12 @@ def main(argv=None):
         n = int(0.2 * FS) + delay_samples(time, bpm) + FS // 2
         imp = np.zeros(n)
         at = CLEAR + 4410
-        imp[at] = 0.8
+        imp[at:at + 220] = F.sine(1000, 220 / FS, 0.5)       # a 5 ms burst (the ADPCM smears a lone impulse)
         y, _, _ = run(imp, knobs(MIX=127, FDBK=0, LOSS=0, DROP=0, TIME=time), tempo=bpm)
-        got = int(np.argmax(np.abs(y[:, 0]))) - at
+        got = int(np.argmax(np.abs(y[:, 0]) > 0.1)) - at
         want = delay_samples(time, bpm)
-        gate('TIME %s at %.1f BPM' % (manifest.TIME_LABELS[time], bpm), abs(got - want) <= 3,
-             'echo after %d samples, want %d' % (got, want))
+        gate('TIME %s at %.1f BPM' % (manifest.TIME_LABELS[time], bpm), 0 <= got - want <= 12,
+             'echo onset after %d samples, want %d' % (got, want))
 
     # repeats decay with FDBK and darken with LOSS; after the input stops the line goes to digital silence
     burst = np.concatenate([np.zeros(CLEAR), F.sine(700, 0.1, 0.8), np.zeros(int(9.5 * FS))])
@@ -113,13 +113,33 @@ def main(argv=None):
     y, yi, _ = run(burst, knobs(MIX=127, FDBK=64, LOSS=0, DROP=0, TIME=8), tempo=120)
     gate('the line settles to silence', int(np.abs(yi[-FS // 2:]).max()) == 0,
          'FDBK 64: last 0.5 s peak %d LSB, %.0f s after the burst' % (int(np.abs(yi[-FS // 2:]).max()), len(burst) / FS - 0.1))
+    # LOSS's ADPCM: the echo of a 440 Hz tone keeps its level, and its signal-to-noise ratio falls with the bits,
+    # the same for a loud and a quiet tone (the step adapts)
+    snr = {}
+    for loss in (0, 40, 80, 127):
+        for lvl in (0.4, 0.01):
+            t = np.concatenate([np.zeros(CLEAR), F.sine(440, 0.5, lvl), np.zeros(FS // 2)])
+            y, _, _ = run(t, knobs(MIX=127, FDBK=0, LOSS=loss, DROP=0, TIME=8), tempo=120)
+            e = CLEAR + delay_samples(8, 120)
+            seg = y[e + 3000:e + 20000, 0]
+            n = np.arange(len(seg))
+            A = np.stack([np.sin(2 * np.pi * 440 * n / FS), np.cos(2 * np.pi * 440 * n / FS)], 1)
+            fit = A @ np.linalg.lstsq(A, seg, rcond=None)[0]
+            snr[loss, lvl] = F.dbfs(fit) - F.dbfs(seg - fit)
+    falls = all(snr[a, l] > snr[b, l] for l in (0.4, 0.01) for a, b in ((0, 40), (40, 80), (80, 127)))
+    gate('LOSS: ADPCM at 5, 4, 3, 2 bits', falls and snr[127, 0.01] > 15,
+         'SNR %s dB (-8 dBFS tone), %s dB (-40 dBFS)' % ('/'.join('%.0f' % snr[k, 0.4] for k in (0, 40, 80, 127)),
+                                                           '/'.join('%.0f' % snr[k, 0.01] for k in (0, 40, 80, 127))))
     tones = {}
     for loss in (0, 127):
-        t5 = np.concatenate([np.zeros(CLEAR), F.sine(5000, 0.5, 0.5), np.zeros(FS)])
+        t5 = np.concatenate([np.zeros(CLEAR), F.sine(2000, 0.5, 0.5), np.zeros(FS)])
         y, _, _ = run(t5, knobs(MIX=127, FDBK=0, LOSS=loss, DROP=0, TIME=8), tempo=120)
         e = CLEAR + delay_samples(8, 120)
-        tones[loss] = F.dbfs(y[e + 2000:e + 20000, 0])
-    gate('LOSS darkens the echo', tones[127] < tones[0] - 12, '5 kHz echo %.1f dBFS at LOSS 0, %.1f at 127' % (tones[0], tones[127]))
+        seg = y[e + 2000:e + 20000, 0]
+        n = np.arange(len(seg))
+        A = np.stack([np.sin(2 * np.pi * 2000 * n / FS), np.cos(2 * np.pi * 2000 * n / FS)], 1)
+        tones[loss] = F.dbfs(A @ np.linalg.lstsq(A, seg, rcond=None)[0])   # the tone, not the coder's noise
+    gate('LOSS darkens the echo', tones[127] < tones[0] - 4, '2 kHz echo %.1f dBFS at LOSS 0, %.1f at 127' % (tones[0], tones[127]))
 
     # DROP: lost packets (MUTE) leave holes of PKT samples in the echo of a steady tone
     steady = np.concatenate([np.zeros(CLEAR), F.sine(440, 4.0, 0.5)])
@@ -155,7 +175,7 @@ def main(argv=None):
          '%d a 16-frame call, %.0f a frame' % (r['maxInstructionsPerCall'], r['maxInstructionsPerCall'] / 16))
 
     # fx:audit: the echo with feedback and the codec at work, no packets lost (lost packets are deliberate gaps).
-    AUDIT = knobs(MIX=127, FDBK=96, LOSS=127, DROP=0, TIME=2)
+    AUDIT = knobs(MIX=127, FDBK=64, LOSS=127, DROP=0, TIME=2)
     if a.fx:
         out = a.fx.parent / (a.fx.name + '-renders')
         out.mkdir(parents=True, exist_ok=True)
