@@ -1,10 +1,12 @@
 # SPDX-License-Identifier: MIT
 """Check saved WAVs against their manifest and the actual proposed C search."""
 import argparse
+from contextlib import ExitStack
 import ctypes
 import json
 from pathlib import Path
 import subprocess
+import sys
 import tempfile
 import prepare_pack as pack
 
@@ -13,7 +15,7 @@ def verify(folder, header):
     folder, header = Path(folder).resolve(), Path(header).resolve()
     manifest = json.loads((folder / 'manifest.json').read_text())
     checks = 0
-    with tempfile.TemporaryDirectory() as temporary:
+    with tempfile.TemporaryDirectory() as temporary, ExitStack() as cleanup:
         source, library = Path(temporary) / 'probe.c', Path(temporary) / 'probe.so'
         source.write_text('''#include "sample_editor_snap.h"
 static const int32_t *pcm;
@@ -34,7 +36,13 @@ unsigned probe(const int32_t *input,uint32_t nch,uint32_t frames,
 ''')
         subprocess.run(['cc', '-std=c99', '-Wall', '-Wextra', '-Werror', '-shared', '-fPIC',
                         '-I', str(header.parent), str(source), '-o', str(library)], check=True)
-        probe = ctypes.CDLL(str(library)).probe
+        native = ctypes.CDLL(str(library))
+        if sys.platform == 'win32':
+            # Windows cannot delete the temporary DLL until it is unloaded,
+            # including when a comparison raises before the normal return.
+            from _ctypes import FreeLibrary
+            cleanup.callback(FreeLibrary, native._handle)
+        probe = native.probe
         u32, i32 = ctypes.c_uint32, ctypes.c_int32
         probe.argtypes = [ctypes.POINTER(i32), u32, u32, ctypes.POINTER(u32), u32, u32,
                           ctypes.POINTER(u32), ctypes.POINTER(u32)]

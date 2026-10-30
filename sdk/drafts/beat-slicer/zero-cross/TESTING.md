@@ -48,6 +48,10 @@ and every site/copy guard matches the exact new base.
   preparation still refused each mismatch. A malformed candidate build receipt
   remained an error rather than a skip. This admission change affects no named
   package or hardware evidence.
+- Windows CI exposed temporary probe-library cleanup and private staging line
+  ending bugs. The helpers now unload the probe before cleanup and disable Git
+  autocrlf during patch application. An offline regression compares every
+  prepared file byte with normal configuration and `core.autocrlf=true`.
 - Existing service/menu/board/action tests pass with sanitizers. New tests use
   the actual proposed service and board against authored pair/metadata models.
   They cover confirmation-only admission, 32-pair chunks, no pre-YES PCM,

@@ -3,11 +3,13 @@
 import copy
 import importlib.util
 import json
+import os
 from pathlib import Path
 import struct
 import subprocess
 import tempfile
 import unittest
+from unittest.mock import patch
 import compare_records
 import capture
 import prepare_pack
@@ -26,6 +28,7 @@ class Preparation(unittest.TestCase):
         spec = importlib.util.spec_from_file_location('prepare_snap_source', HERE.parent / 'prepare_base.py')
         stage = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(stage)
+        cls.stage = stage
         cls.source = stage.prepare(ROOT, cls.directory / 'source')
         cls.folder = cls.directory / 'pack'
         cls.manifest = prepare_pack.generate(cls.folder)
@@ -38,6 +41,17 @@ class Preparation(unittest.TestCase):
         receipt = verify_pack.verify(self.folder, self.source / 'sdk/machines/octatrack/module-adapters/sample_editor_snap.h')
         self.assertEqual(receipt['files'], 58)
         self.assertEqual(receipt['comparisons'], 174)
+
+    def test_preparation_preserves_bytes_with_autocrlf(self):
+        baseline = self.stage.prepare(ROOT, self.directory / 'normal-endings')
+        with patch.dict(os.environ, {'GIT_CONFIG_COUNT': '1',
+                                    'GIT_CONFIG_KEY_0': 'core.autocrlf',
+                                    'GIT_CONFIG_VALUE_0': 'true'}):
+            converted = self.stage.prepare(ROOT, self.directory / 'autocrlf-endings')
+        def files(root):
+            return {path.relative_to(root): path.read_bytes()
+                    for path in root.rglob('*') if path.is_file()}
+        self.assertEqual(files(baseline), files(converted))
 
     def captures(self):
         entry = next(f for f in self.manifest['files'] if f['kind'] == 'split-stereo' and f['bits'] == 24)

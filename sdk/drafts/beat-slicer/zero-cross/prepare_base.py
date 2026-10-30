@@ -59,8 +59,11 @@ def prepare(source, output, full=False):
         if digest(output / name) != expected:
             raise ValueError('Prepared base differs from its strict preimage: ' + name)
     patch = output / RELATIVE / 'base.patch'
-    subprocess.run(['git', 'apply', '--unidiff-zero', '--check', str(patch)], cwd=output, check=True, capture_output=True)
-    subprocess.run(['git', 'apply', '--unidiff-zero', str(patch)], cwd=output, check=True)
+    # Minimal staging has no root attributes file. Do not let a developer's
+    # Windows autocrlf setting change the reviewed patch's source bytes.
+    apply = ['git', '-c', 'core.autocrlf=false', 'apply', '--unidiff-zero']
+    subprocess.run(apply + ['--check', str(patch)], cwd=output, check=True, capture_output=True)
+    subprocess.run(apply + [str(patch)], cwd=output, check=True)
     (output / 'private-snap-staging.json').write_text(json.dumps({
         'status': 'private proposal; no publication or hardware qualification',
         'upstreamCommit': manifest['upstreamCommit'],
