@@ -90,7 +90,7 @@ settings packing. With `m68k-elf-gcc` it builds the package and checks the machi
 The drum map is Mutable Instruments Grids' by Émilie Gillet (GPL-3.0-or-later), as
 [djphazer/O_C-Phazerville](https://github.com/djphazer/O_C-Phazerville) `software/src/grids_resources.h` carries it at
 `92740448e525e6451676a3ff8eb4403cddcaeca7`; the read and the hit, accent and chaos rules follow that repository's
-DrumMap applet by Benjamin Rosenbach (MIT). The Octatrack glue is original, in the shape of VECTOR's `native.c` by
+DrumMap applet by Benjamin Rosenbach (MIT, Copyright (c) 2021 Benjamin Rosenbach; its notice is in [NOTICE](NOTICE)). The Octatrack glue is original, in the shape of VECTOR's `native.c` by
 Jannik Aßfalg (MIT, Modwerk). The module is [GPL-3.0-or-later](LICENSE); the thumbnail is an original illustration
 ([presentation/LICENSE](presentation/LICENSE)). No Elektron firmware, extracted routines, tables, samples or dumps are
 included; underlying Elektron interface rights remain reserved.
