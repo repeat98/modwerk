@@ -1,0 +1,12 @@
+[
+  {
+    "version": "0.1.0-experimental",
+    "date": "2026-10-30",
+    "changes": [
+      "New: SHORTWAVE, the track as a distant station on a shortwave receiver, on FX1 or FX2.",
+      "Random fading with static that rises as it fades, crackle bursts and a beat whistle (TUNE) that can drift.",
+      "BAND sets the receiver's bandwidth (300 Hz to 4 kHz) and DRIV overloads it; MIX 0 is the dry, untouched.",
+      "Needs the Modwerk base loaded over USB (beta). Not yet tested on a unit or in the emulator."
+    ]
+  }
+]
