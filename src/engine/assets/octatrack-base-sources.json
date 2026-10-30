@@ -100,7 +100,7 @@
   "sdk/machines/octatrack/elekloader/test_status.c": "1964990c587573197506383e94d23f4dc74fc7875ed502a3998b1a500a19c1c1",
   "sdk/machines/octatrack/elekloader/test_window_buffers.c": "f6314f43943b935deb1ee3d5f81f2e39cb1f10c748b6b27a8c19b389c567f6e6",
   "sdk/machines/octatrack/elekloader/usb_base.py": "4b933f2fe77e7806752bf3979b7ec3a22c749550a53e8a2874fc7d3079fc3746",
-  "sdk/machines/octatrack/elekloader/usb_bridge.py": "9271b7b0140b4c0bca50cf31cc64d0300308b77bd43c4329a7c3125e07609798",
+  "sdk/machines/octatrack/elekloader/usb_bridge.py": "48dfae3a01813e485d3db7ddbb70e4483d6b3d1b90ec26e6cbde3c8333295e97",
   "sdk/machines/octatrack/elekloader/usb_post.py": "4ce8dc204fbdbbbf77d4f2f104af7045ed337f37f17ba1d7a9253e9463516d4c",
   "sdk/machines/octatrack/elekloader/usbmidi_rx.s": "609b7dba1bb08677acc90501805001216a0d1aa6e927a3f24ce3a67eac35b11e",
   "sdk/machines/octatrack/elekloader/verify_vendor_usb.py": "51c8751638d44f5290a8b37501bd01e5e79e57caca80acecab7fe00485fbbac2",
