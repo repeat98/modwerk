@@ -15,6 +15,18 @@ HERE = ROOT / 'sdk/drafts/beat-slicer/zero-cross'
 
 @unittest.skipUnless(shutil.which('cc'), 'host C compiler unavailable')
 class ZeroCrossCandidate(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        # Both checks prepare this pinned draft. Base changes should ask its
+        # author to refresh it, without blocking unrelated SDK work in CI.
+        spec = importlib.util.spec_from_file_location('snap_source_preflight', HERE / 'prepare_base.py')
+        stage = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(stage)
+        manifest = json.loads((HERE / 'base-preimages.json').read_text())
+        for name, expected in manifest['preimages'].items():
+            if stage.digest(ROOT / name) != expected:
+                raise unittest.SkipTest('Base source changed; review and refresh the proposal: ' + name)
+
     def test_hardware_preparation_offline(self):
         result = subprocess.run([sys.executable, '-B', str(HERE / 'hardware/test_preparation.py')],
                                 cwd=ROOT, capture_output=True, text=True)

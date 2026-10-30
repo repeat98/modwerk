@@ -71,6 +71,12 @@ python3 -B sdk/drafts/beat-slicer/zero-cross/prepare_base.py \
 python3 -B sdk/tests/test_beat_slicer_zero_cross.py
 ```
 
+The SDK test skips both preparation checks with `Base source changed` when a
+pinned base preimage no longer matches, so this draft cannot block other base
+work. Matching preimages still run the full checks; other failures remain
+errors. Direct `prepare_base.py` use stays strict and refuses changed preimages
+until the proposal is reviewed and refreshed.
+
 Run the existing `sdk/runtime/loader/build.py` on `device_module.c`,
 `device_font.c` and `grid_preview.c`, subscribing
 `ot_sample_editor_actions:bs_sample_action:50`, with output named

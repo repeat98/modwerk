@@ -42,6 +42,12 @@ and every site/copy guard matches the exact new base.
 
 ## Observed software checks
 
+- The SDK entry point passed both preparation checks on matching preimages.
+  Offline mutation of each of the 13 pinned paths (including the three required
+  absent paths) skipped the candidate class with `Base source changed`; direct
+  preparation still refused each mismatch. A malformed candidate build receipt
+  remained an error rather than a skip. This admission change affects no named
+  package or hardware evidence.
 - Existing service/menu/board/action tests pass with sanitizers. New tests use
   the actual proposed service and board against authored pair/metadata models.
   They cover confirmation-only admission, 32-pair chunks, no pre-YES PCM,
