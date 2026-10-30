@@ -23,3 +23,7 @@ A fresh stationary-panel rerun passes 32 maximum edits and four minutes of USB
 audio checks, reaching 93.7% sampled CPU. STOP works; a cleanup protocol fault
 recovers and complete restoration is verified. Concurrent-input qualification
 and full system cost bounds remain open; module runtime is unchanged.
+
+Final checks reproduce the exact public package and authored stack audit after
+merging upstream. A later no-module input failure stops lifecycle automation;
+foreign saved sets defer the exact-package persistence test. No release is approved.

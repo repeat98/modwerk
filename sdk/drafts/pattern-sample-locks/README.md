@@ -10,6 +10,11 @@ Two Part Edit actions: **Lock Samples to Pattern** writes the Part's assigned sa
 
 The latest [stationary-panel USB rerun](MKII_HIGH_LOAD.md) passed 32 maximum edits and four minutes of audio checks, reaching 93.7% sampled main CPU. Cleanup needed recovery and restoration was verified. The independent development USB input-framing bug under concurrent physical/remote input remains unfixed; full beta qualification is still incomplete.
 
+The subsequent [final qualification attempt](FINAL_QUALIFICATION.md) confirms
+public-package parity and the authored stack audit. Remote input also failed
+with no modules in the later fresh-boot test, so lifecycle automation is stopped;
+the exact package's Keep/reboot/removal and complete stack qualification remain open.
+
 **The first beta is scoped to USB loading through the Modwerk base.** Card
 firmware is unsupported and must refuse this module. Card support is deferred;
 this scope was selected by the author and still needs first-release review.

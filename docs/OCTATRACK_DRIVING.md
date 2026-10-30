@@ -152,7 +152,10 @@ panel's byte stream. A no-module emulator on base `20ed7910…` reproduced held
 TRIG5–7 and a lost FUNC release when a USB KEY arrived between a fader report's
 two bytes. Serialize input at complete physical-report boundaries before using
 concurrent physical movement and remote injection for qualification; a still
-slider does not clear a fault left by an earlier attempt.
+slider does not clear a fault left by an earlier attempt. A later fresh-RAM-boot,
+empty-inventory hardware probe also misdelivered FUNC. Initial released rows and
+a fresh boot do not establish input delivery: verify each held-row transition
+and stock modifier release, and stop on a mismatch.
 
 - **Effects.** FUNC+FX1/FX2 opens the chooser (the left list; its right side are the effect's setup knobs).
   Moving the cursor does not pick; YES does. NO closes. LEVEL scrolls. `pick:` does all of it.

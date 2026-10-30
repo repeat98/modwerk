@@ -12,6 +12,14 @@ Retired reports and obsolete captures are consolidated in [PROTOTYPE_HISTORY.md]
 
 ## MKII companion-load follow-up — 31 October 2026
 
+The later [final qualification attempt](FINAL_QUALIFICATION.md) reproduces the
+exact public package and authored stack audit after merging current upstream.
+Repository checks pass. The open-selector lifecycle test stopped before reaching
+its selector when a remote key was not acknowledged; rollback was confirmed.
+A no-module input probe also failed. This attempt supplies no open-selector
+removal pass. Exact-package Keep/reboot/removal remains pending because the card
+contains foreign saved-set files. No Keep or flash occurred in that attempt.
+
 The latest fresh-boot rerun held the physical panel still and used USB recording
 for added load. All 32 maximum 512-field edits, full pattern/index/Part comparisons
 and input-state checks passed. Four minutes of USB PCM passed the stated continuity

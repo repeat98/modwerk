@@ -1,5 +1,14 @@
 # MKII candidate check
 
+The final lifecycle attempt on 31 October did not reach the open selector:
+the first remote key failed its held-row acknowledgement. The same upload owner
+confirmed rollback; a fresh read confirmed normal state and empty inventory.
+A subsequent no-module FUNC probe also misdelivered input. Remote panel tests
+are stopped pending reset and input-path investigation. The exact candidate's
+Keep/reboot/removal test is also pending: the public base reports foreign saved
+files, which must be backed up and reviewed before Keep. See the
+[final qualification record](FINAL_QUALIFICATION.md).
+
 The latest stationary-panel USB rerun on 31 October 2026 passed 32 maximum edits
 and four minutes of audio checks, reaching 93.7% sampled main CPU. STOP worked;
 cleanup needed protocol recovery, then restoration was independently verified.
