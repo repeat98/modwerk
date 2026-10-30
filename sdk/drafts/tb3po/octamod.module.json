@@ -1,0 +1,255 @@
+{
+  "schemaVersion": 2,
+  "id": "tb3po",
+  "key": "TB3PO",
+  "name": "TB-3PO",
+  "version": "0.1.0-experimental",
+  "category": "midi-usb",
+  "author": {
+    "github": "semierendonmez-commits",
+    "name": "Semi Erendönmez",
+    "credits": [
+      "Octatrack module by Semi Erendönmez",
+      "TB_3PO applet: djphazer and the Hemisphere Suite contributors (O_C-Phazerville, GPL-3.0)",
+      "Schwung port tb3po.c (charlesvestal/schwung-tb3po f49d81d0): Charles Vestal, GPL-3.0",
+      "MIDI generator shape: VECTOR 0.3.0's midi.c by Jannik Aßfalg (MIT)"
+    ]
+  },
+  "nativeManifest": "manifest.py",
+  "presentation": {
+    "label": "ACID LINES",
+    "family": "Sequencing",
+    "summary": "Generative 303-style acid lines on the MIDI tracks: density, accent, slide, scale and octaves from a seed.",
+    "overview": "TB-3PO writes a 303-style line into a MIDI track's own sequencer: note trigs with NOTE locks, accents as VEL locks and slides as LEN locks that reach into the next note, so a TB-303-type synth plays them as slides. The stock MIDI sequencer plays what it wrote, at the pattern's tempo, track speed, length and swing, with the track's conditions and note-offs. Every knob turn redraws the line from the seed and the controls; YES rolls a new seed; VAR mutates a quarter of the steps. The line is the Phazerville Hemisphere Suite TB_3PO applet's, as the Schwung port runs it.",
+    "highlights": [
+      "Density, accent and slide probabilities, six scales, one to three octaves",
+      "Writes real trigs and NOTE, VEL and LEN locks: the stock sequencer plays them",
+      "Seed and VAR for variations; FWD, REV, PING and RND orders; motifs of 2-32 steps",
+      "Follows the track's tempo, speed, length, swing and conditions: no clock of its own"
+    ],
+    "usage": [
+      "In MIDI mode, double-tap SRC (or the track key) to open MIDI NOTE SETUP; UP/DOWN to TB-3PO and YES. The track's SRC and AMP pages are now the generator's.",
+      "SRC: DENS, ACNT and SLID set how many steps play, how many are accented and how many slide; OCT and ROOT set the track's NOTE (the root); SCAL picks the scale.",
+      "AMP: SEED and VAR choose the variation, GATE the track's note length, SLEN the length of a slid note (longer than a step), AVEL the accent velocity and DIR the order. FUNC+AMP: VEL (plain notes), OCTS and MOTF.",
+      "Turning a control rewrites the track's trigs and NOTE, VEL and LEN locks at once; YES rolls a new seed. Edit single steps as on any MIDI track: hold a trig for stock's pages.",
+      "Point the track's channel at a 303-type synth whose overlapping notes slide (TB-03, TD-3, x0xb0x, Open303, Schwung 303) and press PLAY."
+    ]
+  },
+  "controls": [
+    {
+      "name": "DENS",
+      "default": 89,
+      "count": 128,
+      "doc": "The chance a step plays (tb3po.c density 0.0-1.0)",
+      "labels": null
+    },
+    {
+      "name": "ACNT",
+      "default": 51,
+      "count": 128,
+      "doc": "The chance a note is accented: a VEL lock of AVEL",
+      "labels": null
+    },
+    {
+      "name": "SLID",
+      "default": 32,
+      "count": 128,
+      "doc": "The chance a note slides into the next: a LEN lock of SLEN; a slide into a rest is a plain note",
+      "labels": null
+    },
+    {
+      "name": "OCT",
+      "default": 2,
+      "count": 10,
+      "doc": "The track's NOTE octave (NOTE = 12 OCT + ROOT); shown as the note",
+      "labels": null
+    },
+    {
+      "name": "ROOT",
+      "default": 9,
+      "count": 12,
+      "doc": "The root note",
+      "labels": [
+        "C",
+        "C#",
+        "D",
+        "D#",
+        "E",
+        "F",
+        "F#",
+        "G",
+        "G#",
+        "A",
+        "A#",
+        "B"
+      ]
+    },
+    {
+      "name": "SCAL",
+      "default": 0,
+      "count": 6,
+      "doc": "The scale the degrees are drawn from",
+      "labels": [
+        "MINR",
+        "PHRY",
+        "HMIN",
+        "MPNT",
+        "DORI",
+        "MAJR"
+      ]
+    },
+    {
+      "name": "SEED",
+      "default": 1,
+      "count": 128,
+      "doc": "The variation; YES advances it",
+      "labels": null
+    },
+    {
+      "name": "VAR",
+      "default": 0,
+      "count": 128,
+      "doc": "OFF: the seed's line; else a mutation pass over about a quarter of its steps, salted with this value",
+      "labels": null
+    },
+    {
+      "name": "GATE",
+      "default": 0,
+      "count": 128,
+      "doc": "The track's own LEN: the length of plain notes, in stock's units",
+      "labels": null
+    },
+    {
+      "name": "SLEN",
+      "default": 72,
+      "count": 128,
+      "doc": "The LEN lock of a slid note, in stock's units: set it past one step so the note overlaps the next",
+      "labels": null
+    },
+    {
+      "name": "AVEL",
+      "default": 118,
+      "count": 128,
+      "doc": "The VEL lock of an accented note",
+      "labels": null
+    },
+    {
+      "name": "DIR",
+      "default": 0,
+      "count": 4,
+      "doc": "The order the generated steps take on the track",
+      "labels": [
+        "FWD",
+        "REV",
+        "PING",
+        "RND"
+      ]
+    },
+    {
+      "name": "VEL",
+      "default": 72,
+      "count": 128,
+      "doc": "The track's own VEL: the velocity of plain notes",
+      "labels": null
+    },
+    {
+      "name": "OCTS",
+      "default": 2,
+      "count": 4,
+      "doc": "Octaves above the root the notes may take, 1-3",
+      "labels": null
+    },
+    {
+      "name": "MOTF",
+      "default": 0,
+      "count": 33,
+      "doc": "OFF: one line over the track's length; 2-32: a motif of that many steps repeated along it",
+      "labels": null
+    }
+  ],
+  "compatibility": {
+    "firmware": "1.40C",
+    "location": "MIDI tracks",
+    "conflicts": [],
+    "uiClaims": [],
+    "limitations": [
+      "Needs the Modwerk base loaded over USB (beta) with MIDI generators (ot_midi_generators). Card firmware cannot include it.",
+      "Slides are overlapping notes (a LEN lock past the next step): a synth that does not slide on legato plays two overlapping notes. No portamento CC is sent.",
+      "One generator per MIDI track; the generator takes the track's SRC and AMP pages and keeps its arpeggiator off. LFO, FX1 and FX2 stay the track's own.",
+      "Its settings live in the track's arpeggiator note bytes; leaving the generator resets them with the base's arp reset. The line itself is the pattern's trigs and locks and stays.",
+      "Not yet run on hardware or in the emulator: the stock LEN value above one step, and so SLEN's default, is unverified."
+    ],
+    "effectId": null
+  },
+  "resources": {
+    "recorded": "Package header, 30 Oct 2026 (host build)",
+    "storage": {
+      "label": "Storage",
+      "display": "5,700 bytes",
+      "value": 5700,
+      "unit": "bytes",
+      "method": "static",
+      "conditions": "From the USB package build.py makes from the sources (m68k-elf-gcc 16.2, -Os): 5,032 bytes of ColdFire code and data and 668 of bss, one instance, 102 relocations, no stock-code sites. No DSP memory, no heap; the line it writes is the pattern's own record.",
+      "source": "TESTING.md"
+    },
+    "processing": {
+      "label": "CPU load",
+      "display": "Not measured",
+      "value": null,
+      "unit": "unknown",
+      "method": "unmeasured",
+      "conditions": "Work happens on the UI task once per knob turn or YES: one 64-step line and an in-place rewrite of the track record. Nothing runs while the pattern plays.",
+      "source": "TESTING.md"
+    },
+    "impact": {
+      "conditions": "A knob turn or YES on a TB-3PO MIDI track; idle otherwise.",
+      "cpu": {
+        "level": "low",
+        "basis": "source-estimate",
+        "rationale": "One generation and in-place record rewrite per edit on the UI task, the shape VECTOR 0.3.0 measured at 0.5 ms for 64 steps on the owner's MKII; nothing at interrupt level and nothing while playing.",
+        "source": "TESTING.md"
+      },
+      "dsp": {
+        "level": "minimal",
+        "basis": "source-estimate",
+        "rationale": "No DSP code and no change to the DSP programs.",
+        "source": "manifest.py"
+      },
+      "memory": {
+        "level": "minimal",
+        "basis": "source-estimate",
+        "rationale": "5,700 bytes of ColdFire code, data and state in DRAM (5,032 + 668 from the package header); the line it writes is the pattern's own record.",
+        "source": "TESTING.md"
+      }
+    }
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "Host checks only: the integer engine reproduces tb3po.c's float generator step for step over 50,688 cases, and the record writer is checked under the sanitizers (test_engine.py). Not run on a unit or in the emulator.",
+    "hardwareStatus": "untested",
+    "gates": [
+      "modules/tb3po/verify.py"
+    ],
+    "evidenceRevision": "1bbc8b46cb3c5d09e1ce25e020cc460367769f33"
+  },
+  "license": {
+    "spdx": "GPL-3.0-or-later",
+    "file": "LICENSE",
+    "declaration": "The generator is a port of the Phazerville Hemisphere Suite TB_3PO applet (djphazer and contributors, GPL-3.0) through Charles Vestal's Schwung port tb3po.c (charlesvestal/schwung-tb3po f49d81d05d1e29ae37728a08e30f193892be3bc9, GPL-3.0); their credit and licence are kept and the source is pinned. The Octatrack glue is original, in the shape of VECTOR 0.3.0's MIT midi.c. No Elektron firmware, extracted routines, tables, samples or dumps are included."
+  },
+  "media": [],
+  "access": {
+    "location": "MIDI mode: MIDI NOTE SETUP (double-tap SRC, or double-tap the track key), TB-3PO in the list on the left",
+    "steps": [
+      "Press MIDI and select a MIDI track with its track key.",
+      "Double-tap SRC (or the track key) to open MIDI NOTE SETUP. The list on its left shows OFF and the installed generators.",
+      "UP/DOWN to TB-3PO and press YES. The track's SRC and AMP pages now hold the generator's controls; FUNC+AMP turns the AMP page to its second."
+    ],
+    "screenshots": []
+  },
+  "source": {
+    "repository": "https://github.com/charlesvestal/schwung-tb3po",
+    "revision": "f49d81d05d1e29ae37728a08e30f193892be3bc9",
+    "path": "src/dsp/tb3po.c"
+  }
+}

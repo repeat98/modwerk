@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="192" viewBox="0 0 320 192" role="img" aria-labelledby="title desc">
+ <title id="title">TB-3PO — acid lines from a seed</title>
+ <desc id="desc">Density, accent and slide controls feed a sixteen-step 303-style line: notes at different pitches, filled accents, and ties where a note slides into the next. Original illustration, not an Octatrack LCD capture.</desc>
+ <rect width="320" height="192" rx="8" fill="#111218"/>
+ <g stroke="#fff" opacity=".035" stroke-width=".7"><path d="M20 52H300M20 97H300M20 142H300M64 33V163M128 33V163M192 33V163M256 33V163"/></g>
+ <g fill="none" stroke="#c7e37a" stroke-width="1.7" opacity=".55">
+  <circle cx="54" cy="42" r="9"/><circle cx="110" cy="42" r="9"/><circle cx="166" cy="42" r="9"/>
+  <path d="M54 43l6-4M110 43v-7M166 43l-4-6M54 59v8h112v-8M110 67v10"/>
+ </g>
+ <g font-family="monospace" font-size="7.5" fill="#9b9fb5" letter-spacing=".6">
+  <text x="41" y="30">DENS</text><text x="97" y="30">ACNT</text><text x="152" y="30">SLID</text>
+ </g>
+ <g stroke="#c7e37a" stroke-width="2.3" fill="none" stroke-linecap="round">
+  <path d="M26 128h12M43 118h12M77 128h12M94 110h12M111 110h12M128 123h12M162 100h12M179 100h12M196 118h12M213 128h12M247 113h12M264 92h12M281 92h12"/>
+  <path d="M106 108q8-6 16 0M174 98q8-6 16 0M276 90q8-6 16 0" opacity=".65" stroke-width="1.4"/>
+ </g>
+ <g fill="#c7e37a">
+  <rect x="26" y="134" width="12" height="4"/><rect x="94" y="134" width="12" height="4"/><rect x="162" y="134" width="12" height="4"/><rect x="264" y="134" width="12" height="4"/>
+  <rect x="43" y="134" width="12" height="4" opacity=".35"/><rect x="77" y="134" width="12" height="4" opacity=".35"/><rect x="111" y="134" width="12" height="4" opacity=".35"/><rect x="128" y="134" width="12" height="4" opacity=".35"/><rect x="179" y="134" width="12" height="4" opacity=".35"/><rect x="196" y="134" width="12" height="4" opacity=".35"/><rect x="213" y="134" width="12" height="4" opacity=".35"/><rect x="247" y="134" width="12" height="4" opacity=".35"/><rect x="281" y="134" width="12" height="4" opacity=".35"/>
+ </g>
+ <g stroke="#c7e37a" stroke-width="1.2" fill="none" opacity=".5"><path d="M293 147v10H26v-8m-5 5 5-5 5 5"/></g>
+ <text x="25" y="22" font-family="Arial,sans-serif" font-size="10" fill="#c5c7da" letter-spacing="1.1">TB-3PO</text>
+ <text x="25" y="176" font-family="Arial,sans-serif" font-size="9" fill="#9b9fb5" letter-spacing=".4">SEED → LINE → MIDI TRACK</text>
+ <text x="226" y="176" font-family="Arial,sans-serif" font-size="9" fill="#c7e37a">ACCENT ▪ SLIDE</text>
+ <path d="M295 175q5-5 10 0" fill="none" stroke="#c7e37a" stroke-width="1.4" opacity=".8"/>
+</svg>
