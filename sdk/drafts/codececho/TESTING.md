@@ -78,6 +78,10 @@ idle                    after the input stops: digital silence  OK
 
 At 2 bits the coder cannot follow a high tone: the step oscillates and a 5 or 9 kHz tone comes back as noise and harmonics louder than the tone itself (a 2 kHz tone loses 5.7 dB to the loop's low-pass instead, as the gate shows). That is G.726 at 16 kbit/s on material it was never meant for, which is the sound LOSS 127 is for. DC stays under -57 dBFS (the loop's DC blocker keeps the coder's biases from piling up through the feedback); after the input stops the output is digital silence.
 
+## Independent review
+
+A second agent, without the author's reasoning, read the source against octabam's trap list (30 Oct 2026): no condition-code, extension-byte, a0-remainder, Tcc-source, multiply-order, `lua`, label or init-clear defect, no write outside the state block, the audio block and the declared buffer, and the table literal once. Forms that carry hardware risk because no module proven on hardware uses them yet (their only precedents are RENDER-proven modules): the one-word displaced load into b0 (`move x:(r7+$19),b0`), short-immediate `add`/`sub #<n` and `tle` (ring-sc only). Every other form has a site in a module that has run on a unit. To be cleared on hardware or against the stock payload's disassembly.
+
 ## Stock flows
 
 Not tested: nothing has run in a built image or on a unit. The module adds an effect to the FX2 chooser through the base's effect list and claims no key gesture or screen.
