@@ -64,7 +64,7 @@ YES: the B side now holds a fresh take on the same parameters. Keep what you lik
   pages are generated like any other track's.
 - The SEQUENCER window shows stock's three rows and up to eight more, shared with other modules' rows.
 - No conflicts are declared. Apply Scene and SCENE GEN work together (SCENE GEN writes scenes; Apply Scene stamps them
-  onto the Part). Not yet run on a unit or in the emulator; nothing below is hardware evidence.
+  onto the Part). The developer reports it runs on their own Octatrack MKI from a card build (31 Oct 2026; the exact revision was not recorded); it has not run in the emulator, and nothing below is measured hardware evidence.
 
 ## Implementation
 
