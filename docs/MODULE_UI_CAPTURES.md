@@ -215,7 +215,7 @@ and framebuffer data are removed by the script.
 - `peek` answers `peek HEX`, not `ok`. `audio start tracks` adds each track's stem to the capture (T1 L is the
   ninth of 24 words a frame).
 - Without `--dsp` a session runs about ten times faster, for screens only (the firmware then shows DSP LOAD
-  FAILED). Card samples do not play faithfully under the port, so compare levels against a sample on a unit.
+  FAILED), and a package that carries a DSP engine (Analog BD) is refused at verify with loader refusal 3. Card samples do not play faithfully under the port, so compare levels against a sample on a unit.
 
 ## Rights and release review
 
