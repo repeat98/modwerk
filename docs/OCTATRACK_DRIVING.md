@@ -29,11 +29,12 @@ runs short. Everything here was done on the owner's MKII on 11 October 2026. Why
   `a408c505`, twin `8dc7692c`). Before a twin, note the flashed set (`inventory`) and where its packages are; base-bound
   ones (Analog BD, Output Matrix) must be the copies bound to that base, from the commit that built it. Afterwards,
   power-cycle and `try` each again.
-  A trial with no Keep can cost the set too: a `try --seconds 900` on a twin that ended "Device refused rollback:
-  needs-recovery", the unit left on the twin about an hour, then a power cycle: the flashed base loaded only the
-  modules of its previous Keep (30 October 2026, MKII, flashed `b30d9b09`, twin `04e94075`), and two `try --accept`
-  of the missing module were refused at submission ("The device kept refusing the submission"). Check `inventory`
-  after any twin, not only after a Keep.
+  The flashed base can also come back short of a machine with no Keep at all (30 October 2026, MKII, flashed
+  `b30d9b09`, after a twin `04e94075` whose `try` ended needs-recovery): the boot's restore loaded FM Synth but refused
+  SYNTIZ as busy while the project played (`diaglog`'s set record names the refused module; code 5), and every later
+  submission was refused ("The device kept refusing the submission"; `recover` found nothing). A RAM boot of the
+  flashed base's own image, transport stopped, restored both. Check `inventory` after any twin and any power cycle,
+  and leave the transport stopped for the first seconds after a boot.
 - Verify an Undo's active identity and inventory after the reply; a ready host UI alone is insufficient. On a contributor's MKII (25 October 2026, private base `52c291c2…`), a 12-module timed Undo left recovery/active unknown and standard
   rollback retries still returned needs-recovery. Stop installing and ask the owner to power-cycle when recovery cannot finish.
 - After a crash restart, or finding the unit on the flashed base with no power cycle you know of, ask for a power
