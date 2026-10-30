@@ -158,7 +158,7 @@
     "report": "TESTING.md",
     "summary": "fxhost only (the vendored dsp56kEmu with the module alone, no firmware): MIX 0 is the dry bit for bit from garbage state with trig splits; a garbage line is never heard; the echo lands within 2 samples of its division at four tempos; repeats decay with FDBK and reach digital silence; LOSS darkens; DROP leaves holes of PKT's length and RPT none; a TIME change makes no click; nothing outside the audio, state, parameter and line words is written. Not run in a built image, under the ColdFire port or on a unit.",
     "hardwareStatus": "untested",
-    "evidenceRevision": "f099ec2ddb8421e492fed7e744157fc6aaae2d2e",
+    "evidenceRevision": "2dae75cbc70db04fe7d630f48443668fd29903d0",
     "gates": [
       "modules/codececho/verify.py"
     ]
@@ -181,7 +181,7 @@
   },
   "source": {
     "repository": "https://github.com/semierendonmez-commits/modwerk-semi",
-    "revision": "f099ec2ddb8421e492fed7e744157fc6aaae2d2e",
+    "revision": "2dae75cbc70db04fe7d630f48443668fd29903d0",
     "path": "sdk/drafts/codececho"
   }
 }
