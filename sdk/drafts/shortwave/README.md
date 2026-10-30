@@ -1,6 +1,6 @@
 # SHORTWAVE
 
-Version: 0.2.0-experimental · author: @semierendonmez-commits · draft, not yet run on a unit
+Version: 0.2.0-experimental · author: @semierendonmez-commits · draft; the developer reports it runs on their Octatrack MKI (card build)
 
 ## Overview
 
@@ -62,7 +62,7 @@ A drum loop or a vocal works well: the fading and the narrow band read clearly o
 - **DRIV overloads on purpose.** At DRIV 0, every fx:audit tone but a full-scale 9.1 kHz one stays under -60 dBc of aliasing; at DRIV 127 a loud tone aliases (up to -24 dBc for a full-scale 5.3 kHz or 9.1 kHz tone): that is the receiver overloading, the sound the control is for. The SSB detector adds no aliasing of its own (audited in tune). Figures in TESTING.md.
 - **Deterministic noises.** The static, crackle and fading start from the same seed whenever the effect is loaded, so a project sounds the same after a reload.
 - **Scenes and locks.** Every knob is a continuous 0-127 knob; locks and scenes move them like any stock knob. Not yet tried on a unit.
-- **Not yet run on a unit, under the ColdFire port or in a built image.** The DSP code has run only in fxhost, the vendored DSP56300 emulator with the module alone (TESTING.md).
+- **One unit, by report.** The developer reports it runs on their own Octatrack MKI from a card build (31 Oct 2026; the exact revision was not recorded). Otherwise the DSP code has run only in fxhost, the vendored DSP56300 emulator with the module alone (TESTING.md).
 
 ## Tests and measurements
 
