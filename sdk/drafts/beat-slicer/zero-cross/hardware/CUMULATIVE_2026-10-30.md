@@ -99,3 +99,11 @@ Exact cumulative-build alignment, 24-bit formats, broader boundary/BPM/grid
 cases, recorder/concurrent writers, extended audio/listening/persistence, the
 uninstrumented candidate and MKI remain pending. Software and UI tests do not
 qualify these unobserved behaviors. No public release is authorized.
+
+## Author follow-up
+
+On 30 October, twwwy reported that the on-device test was good so far and asked
+to keep this exact trial loaded while pushing the update. This is reported
+general trial feedback, not completion of the remaining qualification cases.
+Preparing or submitting the update does not authorize a replacement RAM load,
+Keep, flash, automatic publication or a claim that the failed Undo passed.
