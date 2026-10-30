@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "machine": "analog-rytm-mkii",
   "interface": "0.7",
-  "status": "Upstream elekloader core-ar2 0.7 for Analog Rytm MKII OS 1.74 (the core-ar2-v0.7 pre-release): the Digitakt mk1 core with the Rytm's addresses, mod storage (0.3), parameter pages and the page keys' lists (0.4), mod machines (0.5), page functions (0.6), and write-through and the OS upgrade's restart (0.7). OS 1.74 only. Mods built for 0.3 that patch a parameter page's entry or a page key's list themselves (rytm2_mods v1.2's lfo-rnd, voice-dac, euclid-accents, velocity-humanise and comp-preview 1.0) overlap core's page sites and are refused at link; their 0.4 versions contribute entries instead.",
+  "status": "Modwerk's Analog Rytm MKII base for OS 1.74 (sdk/machines/analog-rytm-mkii/base-binding.json), built from elekloader core-ar2 0.7's source (the core-ar2-v0.7 pre-release), which gives the Digitakt mk1 core with the Rytm's addresses, mod storage (0.3), parameter pages and the page keys' lists (0.4), mod machines (0.5), page functions (0.6), and write-through and the OS upgrade's restart (0.7). Its send-bus variant adds the FX list mw_fx and the mw_fx_ exports, and the site builds a set holding a send effect on it; any other set builds on the plain variant, core-ar2 0.7's source alone. OS 1.74 only. Mods built for 0.3 that patch a parameter page's entry or a page key's list themselves (rytm2_mods v1.2's lfo-rnd, voice-dac, euclid-accents, velocity-humanise and comp-preview 1.0) overlap core's page sites and are refused at link; their 0.4 versions contribute entries instead.",
   "events": [
     {
       "name": "ev_tick",

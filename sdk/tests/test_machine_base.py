@@ -95,6 +95,23 @@ class MachineBases(unittest.TestCase):
                     self.assertIn(source, mod["sources"])
             self.assertEqual((APP / "sdk/machines" / machine / "elekloader" / config["core"] / "mod.json").read_bytes(), imported)
 
+    def test_variants_stage_with_or_without_add_and_bindings_record_each(self):
+        for machine, config in bases():
+            names = [name for name, _ in machine_base.variants(config)]
+            binding = json.loads((APP / "sdk/machines" / machine / "base-binding.json").read_text())
+            if "variants" in config:
+                self.assertEqual(list(binding["variants"]), names, machine)
+                self.assertEqual(binding["identity"], binding["variants"][names[0]], machine)
+            for name, add in machine_base.variants(config):
+                with tempfile.TemporaryDirectory() as work:
+                    core = machine_base.stage(machine, config, pathlib.Path(work), add=add)
+                    staged = (core / "mod.json").read_bytes()
+                imported = (APP / "sdk/machines" / machine / "elekloader" / config["core"] / "mod.json").read_bytes()
+                if add:
+                    self.assertNotEqual(staged, imported, name)
+                else:
+                    self.assertEqual(staged, imported, name)
+
     def test_every_added_site_is_guarded_by_a_hash_not_stock_bytes(self):
         for machine, config in bases():
             for site in config.get("add", {}).get("sites", []):

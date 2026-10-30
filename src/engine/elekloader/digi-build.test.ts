@@ -4,6 +4,11 @@ import MACHINES from '../../devices/machines.generated.json'
 import { BUILDER_CATALOG, BUILDER_SOURCE, buildLogText, buildStep, builderReleases, planBuild, prepareBuild, type Builder } from './digi-build'
 import type { Catalog } from '../../../vendor/elekloader/kit/src/kit/catalog'
 import { DIGI_DOWNLOADS_ENABLED, digiDownloadsEnabled } from './protocol'
+import { baseVariant } from './machine-build'
+import RYTM_BASE from '../../../sdk/machines/analog-rytm-mkii/base-binding.json'
+
+const PLAIN = 'modwerk-base-analog-rytm-mkii-' + RYTM_BASE.variants.plain.slice(0, 8) + '.elemod'
+const SEND_BUS = 'modwerk-base-analog-rytm-mkii-' + RYTM_BASE.variants['send-bus'].slice(0, 8) + '.elemod'
 
 describe('the vendored elekloader catalog', () => {
   it('pins a core for every supported Digitakt and Digitone release', () => {
@@ -52,26 +57,48 @@ describe('the vendored elekloader catalog', () => {
     })
     expect(builderReleases('digitakt-ii', 'perform-direct', catalog)).toEqual(['1.17'])
   })
-  it('plans the Analog Rytm MKII core build preview from the newest pinned core, core-ar2 0.7', () => {
+  it('plans the Analog Rytm MKII on Modwerk\'s plain base when the set holds no send effect', () => {
     expect(planBuild('analog-rytm-mkii', '1.74', [])).toMatchObject({
-      core: { file: 'core-ar2-0.7.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.7' },
+      core: { file: PLAIN, sha256: RYTM_BASE.variants.plain, device: 'analog-rytm-mk2', os: '1.74', version: '0.7' },
       mods: [], missing: [],
     })
     expect(planBuild('analog-rytm-mkii', '1.73', []).core).toBeUndefined()
   })
-  it('plans Filter Hz from its pinned source-only package with core-ar2 0.7', () => {
+  it('plans Filter Hz from its pinned source-only package on the plain base', () => {
     expect(planBuild('analog-rytm-mkii', '1.74', ['filter-hz'])).toMatchObject({
-      core: { file: 'core-ar2-0.7.elemod', version: '0.7' },
+      core: { file: PLAIN, version: '0.7' },
       mods: [{ id: 'filter-hz', file: 'filter-hz-1.2.0-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '1.2.0' }],
       missing: [],
     })
   })
-  it('plans Loop Sync, a storage mod, from its pinned source-only package with core-ar2 0.7', () => {
+  it('plans Loop Sync, a storage mod, from its pinned source-only package on the plain base', () => {
     expect(planBuild('analog-rytm-mkii', '1.74', ['loop-sync'])).toMatchObject({
-      core: { file: 'core-ar2-0.7.elemod', version: '0.7' },
+      core: { file: PLAIN, version: '0.7' },
       mods: [{ id: 'loop-sync', file: 'loop-sync-0.2.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.2.0-experimental' }],
       missing: [],
     })
+  })
+  it('plans a set with a send effect on the send-bus base, and only then', () => {
+    const chorus = {
+      file: 'chorus-0.1.0-experimental-os1.74.elemod', sha256: 'c'.repeat(64), id: 'chorus', version: '0.1.0-experimental', device: 'analog-rytm-mk2', os: '1.74',
+      license: 'GPL-3.0-or-later', source: { repo: 'repeat98/modwerk', commit: 'c'.repeat(40), path: 'sdk/imports/packages/chorus/chorus-0.1.0-experimental-os1.74.elemod' },
+      title: 'CHORUS', requires: ['core'], conflicts: [], needs_core: '0.7',
+    }
+    const catalog: Catalog = { ...BUILDER_CATALOG, mods: [...BUILDER_CATALOG.mods, chorus] }
+    expect(planBuild('analog-rytm-mkii', '1.74', ['loop-sync', 'chorus'], catalog)).toMatchObject({
+      core: { file: SEND_BUS, sha256: RYTM_BASE.variants['send-bus'], version: '0.7' },
+      mods: [{ id: 'loop-sync' }, { id: 'chorus' }], missing: [],
+    })
+    expect(planBuild('analog-rytm-mkii', '1.74', ['loop-sync'], catalog).core?.file).toBe(PLAIN)
+    // irpina's core-ar2 0.7 stays in the catalogue as the release machine:base checks the base against, never built on
+    expect(BUILDER_CATALOG.cores.some(core => core.file === 'core-ar2-0.7.elemod')).toBe(true)
+    expect(baseVariant('analog-rytm-mkii', ['chorus'])).toBe('send-bus')
+    expect(baseVariant('digitakt', ['chorus'])).toBeUndefined()
+  })
+  it('fails closed when the catalogue does not serve the variant a set needs', () => {
+    const catalog: Catalog = { ...BUILDER_CATALOG, cores: BUILDER_CATALOG.cores.filter(core => core.sha256 !== RYTM_BASE.variants['send-bus']) }
+    expect(planBuild('analog-rytm-mkii', '1.74', ['chorus'], catalog).core).toBeUndefined()
+    expect(planBuild('analog-rytm-mkii', '1.74', [], catalog).core?.file).toBe(PLAIN)
   })
   it('keeps download approval specific to each device', () => {
     expect(DIGI_DOWNLOADS_ENABLED).toEqual({ digitakt: true, 'digitakt-ii': false, digitone: true, 'analog-rytm-mkii': false })

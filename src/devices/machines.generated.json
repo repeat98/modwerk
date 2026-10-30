@@ -595,7 +595,7 @@
         "version": "0.7",
         "path": "sdk/analog-rytm-mkii/core-profile"
       },
-      "toolchain": "m68k-linux-gnu (or m68k-elf) GCC and binutils for ColdFire, and elekloader's builder: core-ar2 0.7 from the owner's exact OS 1.74 .syx.",
+      "toolchain": "m68k-linux-gnu (or m68k-elf) GCC and binutils for ColdFire, and elekloader's builder: Modwerk's base, from core-ar2 0.7's source, and the owner's exact OS 1.74 .syx.",
       "budgets": [
         {
           "name": "Shared mod memory",
@@ -606,8 +606,14 @@
         {
           "name": "Core image",
           "unit": "bytes",
-          "value": 12060,
-          "note": "Core 0.7 build (core-ar2-v0.7 pre-release): 10,692 bytes .run plus 1,368 bytes .bss in the shared area, and a 94-byte .boot copier (core 0.3: 7,540, 36 and 88); the link check measures each selected module set."
+          "value": 11716,
+          "note": "Modwerk's base, plain variant (e558ad22), for a set with no send effect: 10,348 bytes .run plus 1,368 bytes .bss in the shared area, and a 94-byte .boot copier. The link check measures each selected module set."
+        },
+        {
+          "name": "Core image with the send bus",
+          "unit": "bytes",
+          "value": 95171,
+          "note": "The base's send-bus variant (0c92aa45), for a set with a send effect: 27,007 bytes .run plus 68,164 bytes .bss, 65,536 of them the effects' work area, leaving about 36 KB of the shared area for modules."
         }
       ]
     }
