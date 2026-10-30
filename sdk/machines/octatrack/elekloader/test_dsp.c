@@ -4,7 +4,7 @@
  * admission against the arena, the instance block, cycles, free ids and
  * effects in use, and the catalog the DSP manager reads. */
 #include "sha256.c"
-volatile uint32_t modwerk_flash_refusal; /* flash.c, not linked here */
+volatile uint32_t modwerk_flash_refusal, modwerk_flash_quiesced; /* flash.c, not linked here */
 #include "dsp.c"
 #include "fxmap.c"
 #include <stdio.h>
@@ -324,6 +324,10 @@ int main(void)
     CHECK(modwerk_dsp_stalled(42857u, 1));                                            /* the 30th still tick */
     for (unsigned t = 0; t < 100; ++t) CHECK(!modwerk_dsp_stalled(42857u, 1));       /* once */
     CHECK(!modwerk_dsp_stalled(42858u, 1));
+    /* A base write under OS UPGRADE's quiesce stops the frames on purpose (flash.c): never a stall, its recovery stays out. */
+    modwerk_flash_quiesced = 1;
+    for (unsigned t = 0; t < 100; ++t) CHECK(!modwerk_dsp_stalled(42900u, 1));
+    modwerk_flash_quiesced = 0;
     /* The project's map (fxmap.c): '#MODWERK_FX=' lines in, only module handles, a failed load changes nothing. */
     for (unsigned k = 0; k < MODWERK_FX_IDS; ++k) release(k);
     for (unsigned i = 0; i < 16u; ++i) modwerk_test_live_fx[i] = 0;
