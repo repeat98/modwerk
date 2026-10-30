@@ -22,7 +22,7 @@ description: Review Modwerk's open pull requests, answer their authors where som
 2. **Talk back where needed**, at most one comment per pull request: a change it must make, a question only its author can answer, or a refresh it needs.
    - Ask for everything it still needs in that one comment, so the next pass can finish it.
    - Write plainly and friendly, in the invoker's voice, and post from a file.
-   - Post nothing when nothing is needed, and never repeat a request already on the thread.
+   - Read our earlier comments on it first. Post nothing when nothing is needed, and never repeat a request or suggestion already on the thread; a follow-up adds something new or asks someone not yet asked.
    - Name no tester and quote no diagnostics.
    - Comments only, until the invoker picks: no labels, pushes, approvals, ready marks or closes.
 3. **Present the options** in chat, one line per pull request: its verdict and why, then the choices that fit, your pick first. List first the ones that can merge now.
