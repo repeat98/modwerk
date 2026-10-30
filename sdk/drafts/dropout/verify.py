@@ -30,6 +30,7 @@ SLOT = {p.name.decode(): i for i, p in enumerate(MODULE.params) if p.name}
 FS = 44100
 BUFFER = 3072                        # Claims(buffer_words=3072)
 FX1_BASE, FX2_BASE = 0x1c00, 0x4000  # an FX1 slot (not 2K-aligned) and an FX2 slot
+FX1_WORD = (64 << 16) | (1 << 8)      # what an FX1 instance reads at r6+$13: FX2's page-2 slots 8 and 9
 CLEAR = 8 * 16                       # the frames the first 8 calls take to clear the ring
 FULL = 0x800000
 
@@ -50,15 +51,17 @@ def segments(mask):
 
 def step_samples(bpm, step):
     """A step in samples, as the code derives it: q = 42,336,000 // tempo24 (16 x a MIDI clock), then
-    3 q 2^STEP / 16; a tempo word of 0 is 120 BPM."""
-    t24 = round(bpm * 24) or 2880
+    3 q 2^STEP / 16; a tempo word outside 30-300 BPM (0 among them) is 120 BPM."""
+    t24 = round(bpm * 24)
+    t24 = t24 if 720 <= t24 <= 7200 else 2880
     q = 42336000 // t24
     return (3 * q << step) >> 4
 
 
 def chance(rate, bpm, step):
     """The chance an error starts in a frame, as the code derives it (RATE's table point, no LFO fraction)."""
-    t24 = round(bpm * 24) or 2880
+    t24 = round(bpm * 24)
+    t24 = t24 if 720 <= t24 <= 7200 else 2880
     return ((manifest.R_TABLE[rate] * (t24 << 8)) >> 23 >> step) / FULL
 
 
@@ -83,6 +86,8 @@ def main(argv=None):
         nonlocal viol
         kw.setdefault('ywords', BUFFER)
         kw.setdefault('ybase', FX1_BASE)
+        # an FX1 buffer runs with an FX1 record: tempo24 at r6+$19, FX2's page-2 slots 8/9 (64, 1) at r6+$13
+        kw.setdefault('fx1', FX1_WORD if kw['ybase'] < 0x4000 else None)
         y, yi, r = F.run(build, x, p, **kw)
         viol += r['violations']
         return y, yi, r
@@ -175,17 +180,20 @@ def main(argv=None):
 
     # the step follows the tempo: every step frozen, its first 64 frames pass, so the passing runs start a step apart
     noise = 0.3 * np.random.default_rng(2).standard_normal(int(0.75 * FS))
-    for bpm, step in ((120.0, 1), (96.5, 1), (174.0, 0), (0.0, 1)):
+    for bpm, step, base in ((120.0, 1, FX1_BASE), (96.5, 1, FX1_BASE), (174.0, 0, FX1_BASE), (0.0, 1, FX1_BASE),
+                            (174.0, 0, FX2_BASE), (20.0, 1, FX2_BASE), (400.0, 1, FX2_BASE)):
         want = step_samples(bpm, step)
         sig = noise[:CLEAR + 4 * want + 200]
-        _, yi, _ = run(sig, knobs(FRZ=127, FRM=0, STEP=step), tempo=bpm)
+        _, yi, _ = run(sig, knobs(FRZ=127, FRM=0, STEP=step), tempo=bpm, ybase=base)
         x0 = F.to_raw(sig)[:len(yi), 0]
         live = segments(yi[:, 0] == x0)[1:]                          # after the clearing calls' dry
         starts = np.array([s for s, e in live if e - s >= 32])
         gaps = np.diff(starts)
         loops = [int(np.abs(yi[s + 64:s + want - 64, 0] - yi[s:s + want - 128, 0]).max()) for s in starts[:-1]]
         ok = len(gaps) >= 2 and (gaps == want).all() and all(e - s == 64 for s, e in live if e - s >= 32) and max(loops) <= 4
-        gate('FRZ steps of %d at %s' % (want, ('%.1f BPM' % bpm) if bpm else 'tempo 0 (120)'), ok,
+        where = ('FX1', 'FX2')[base >= 0x4000]
+        tag = ('%.1f BPM' % bpm) if 30 <= bpm <= 300 else 'tempo %g (120)' % bpm
+        gate('FRZ steps of %d, %s %s' % (want, where, tag), ok,
              'step starts %s apart; the frame loops within %d LSB' % (','.join(str(g) for g in gaps), max(loops) if loops else -1))
     # FRZ 64: about half the steps freeze
     want = step_samples(174.0, 0)

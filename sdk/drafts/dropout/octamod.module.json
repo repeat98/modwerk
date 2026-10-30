@@ -107,7 +107,7 @@
     "limitations": [
       "Needs the Modwerk base loaded over USB (beta) with an effect id of its own; the card builds' non-stock ids are all claimed but 0x07, which the draft holds as a placeholder.",
       "Follows the project's tempo (stock's tempo24 word), not the sequencer's step phase, transport, swing or track speed: its step clock runs free from the moment the effect is chosen.",
-      "On FX1 the tempo may not be available (not verified); without the tempo word the steps are counted at 120 BPM.",
+      "On FX1 the tempo word is read six words further into the record than on FX2, a place derived from octabam's measurements, not yet measured; a word outside 30-300 BPM counts the steps at 120 BPM.",
       "Uses 3,072 words of the slot's buffer, which an FX1 slot holds; the first 128 frames after it is chosen pass the dry while it clears.",
       "The codec's aliasing, the hard edges of errors and the frozen frame's seam are deliberate glitches; GSM, MP3 and ATRAC are not included.",
       "Not yet run in a built image, the ColdFire port or on a unit: only in fxhost (the vendored DSP56300 emulator alone)."
@@ -117,17 +117,17 @@
     "recorded": "fxhost, 30 Oct 2026",
     "storage": {
       "label": "DSP program / table / buffer",
-      "display": "587 words + 323-word table; 3,072-word buffer",
-      "value": 910,
+      "display": "617 words + 323-word table; 3,072-word buffer",
+      "value": 940,
       "unit": "words",
       "method": "static",
-      "conditions": "dsp_asm: 587 program words and one 323-word P table per core. 58 state words in each instance's own r7 block. 3,072 words of the allocator's Y buffer per instance (a 512-frame ring and the frozen frame).",
+      "conditions": "dsp_asm: 617 program words and one 323-word P table per core. 59 state words in each instance's own r7 block. 3,072 words of the allocator's Y buffer per instance (a 512-frame ring and the frozen frame).",
       "source": "TESTING.md"
     },
     "processing": {
       "label": "DSP instruction peak",
-      "display": "272 instructions/sample",
-      "value": 272,
+      "display": "274 instructions/sample",
+      "value": 274,
       "unit": "instructions/sample",
       "method": "emulator",
       "conditions": "fxhost (dsp56kEmu alone), one instance, 16-frame calls at the dearest settings (both 2-bit coders, PCKT 256 at RATE 127, every 1/32 step frozen, MIX gliding, with and without a trig split): 4,354 instructions a call. Executed instructions, not chip cycles; not yet measured beside stock SPRING REV in dsp_host.",
@@ -144,20 +144,20 @@
       "dsp": {
         "level": "moderate",
         "basis": "source-estimate",
-        "rationale": "272 executed instructions a sample in fxhost, below the 314 octabam's benchmark reports for stock SPRING REV; not measured under the same benchmark.",
+        "rationale": "274 executed instructions a sample in fxhost, below the 314 octabam's benchmark reports for stock SPRING REV; not measured under the same benchmark.",
         "source": "TESTING.md"
       },
       "memory": {
         "level": "moderate",
         "basis": "source-estimate",
-        "rationale": "910 program-memory words on each DSP core (587 code, 323 table); 58 state words and 3,072 buffer words per instance.",
+        "rationale": "940 program-memory words on each DSP core (617 code, 323 table); 59 state words and 3,072 buffer words per instance.",
         "source": "TESTING.md"
       }
     }
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "fxhost only (the vendored dsp56kEmu with the module alone, no firmware): at the defaults and at MIX 0 the output is the input bit for bit from garbage state and buffer and with trig splits; HOLD, PCKT and CIRC match their arithmetic; the ADPCM's SNR falls with the bits (51/45/37/25 dB); the step's length follows the tempo word at 120, 96.5 and 174 BPM and falls back to 120 BPM without it; RATE's errors follow the tempo; a garbage buffer is never heard; idle reaches digital silence in every mode; nothing outside the audio, state, parameter and buffer words is written; 272 instructions a sample at the dearest settings. Not run in a built image, under the ColdFire port or on a unit.",
+    "summary": "fxhost only (the vendored dsp56kEmu with the module alone, no firmware): at the defaults and at MIX 0 the output is the input bit for bit from garbage state and buffer and with trig splits; HOLD, PCKT and CIRC match their arithmetic; the ADPCM's SNR falls with the bits (51/45/37/25 dB); the step's length follows the tempo word at 120, 96.5 and 174 BPM and falls back to 120 BPM outside 30-300 BPM, on FX1's and FX2's record; RATE's errors follow the tempo; a garbage buffer is never heard; idle reaches digital silence in every mode; nothing outside the audio, state, parameter and buffer words is written; 274 instructions a sample at the dearest settings. Not run in a built image, under the ColdFire port or on a unit.",
     "hardwareStatus": "untested",
     "evidenceRevision": "2b21970ecbd189c295fd577b4d080925013fe75d",
     "gates": [

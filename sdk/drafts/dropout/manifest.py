@@ -6,7 +6,8 @@ sample (BITS: G.726's 40 to 16 kbit/s depths), transmission errors at RATE event
 sample held, PCKT a lost packet replaced by the one before it, fading, CIRC a CD's concealment of a few bad samples
 or the mute of a long burst; SIZE sets how long), and a frame freeze on the step grid (FRZ: a frozen step plays its
 first FRM samples and loops them to the step's end). STEP is the step those count in, from the project's tempo
-(stock's tempo24 at r6+$13, as octabam's BusDelay reads it; 120 BPM when the word reads 0). One job -- the track
+(stock's tempo24, record halfword 31: r6+$13 on FX2 as octabam's BusDelay reads it, r6+$19 on FX1, whose r6 is six
+words lower; 120 BPM outside 30-300). One job -- the track
 passing a failing codec and link -- so one module (docs/module-guides/effects.md, one effect per module). GSM, MP3
 and ATRAC are too heavy for the budget and stay out.
 

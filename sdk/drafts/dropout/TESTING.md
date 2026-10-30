@@ -18,7 +18,7 @@ What fxhost cannot see: the dispatcher's real register state, the frame builder'
 ## Gates (fxhost, 30 Oct 2026)
 
 ```
-PASS  assembles, no mpysu, no rep          587 program words + 323 table words
+PASS  assembles, no mpysu, no rep          617 program words + 323 table words
 PASS  neutral is the dry, bit for bit      defaults and MIX 0 (all else at 127), every MODE: largest difference 0 LSB
 PASS  HOLD holds 32 samples (SIZE 7)       23 errors, 100% exactly 32 long, held at the last good: True
 PASS  HOLD holds 256 samples (SIZE 63)     22 errors, 100% exactly 256 long, held at the last good: True
@@ -29,18 +29,21 @@ PASS  CIRC conceals 8 samples              23 bursts, 23 exactly 8 long, largest
 PASS  CIRC mutes bursts of 16              23 bursts, 100% exactly 16 long
 PASS  CIRC mutes bursts of 1024            9 bursts, 100% exactly 1024 long
 PASS  BITS: ADPCM at 5, 4, 3, 2 bits       SNR 51/45/37/25 dB (-8 dBFS tone), 51/45/38/25 dB (-40 dBFS)
-PASS  FRZ steps of 5512 at 120.0 BPM       step starts 5512,5512,5512 apart; the frame loops within 3 LSB
-PASS  FRZ steps of 6854 at 96.5 BPM        step starts 6854,6854,6854 apart; the frame loops within 3 LSB
-PASS  FRZ steps of 1900 at 174.0 BPM       step starts 1900,1900,1900 apart; the frame loops within 3 LSB
-PASS  FRZ steps of 5512 at tempo 0 (120)   step starts 5512,5512,5512 apart; the frame loops within 3 LSB
-PASS  FRZ 64 freezes about half the steps  35 of 64 steps
+PASS  FRZ steps of 5512, FX1 120.0 BPM     step starts 5512,5512,5512 apart; the frame loops within 3 LSB
+PASS  FRZ steps of 6854, FX1 96.5 BPM      step starts 6854,6854,6854 apart; the frame loops within 3 LSB
+PASS  FRZ steps of 1900, FX1 174.0 BPM     step starts 1900,1900,1900 apart; the frame loops within 3 LSB
+PASS  FRZ steps of 5512, FX1 tempo 0 (120) step starts 5512,5512,5512 apart; the frame loops within 3 LSB
+PASS  FRZ steps of 1900, FX2 174.0 BPM     step starts 1900,1900,1900 apart; the frame loops within 3 LSB
+PASS  FRZ steps of 5512, FX2 tempo 20 (120) step starts 5512,5512,5512 apart; the frame loops within 3 LSB
+PASS  FRZ steps of 5512, FX2 tempo 400 (120) step starts 5512,5512,5512 apart; the frame loops within 3 LSB
+PASS  FRZ 64 freezes about half the steps  37 of 64 steps
 PASS  RATE follows the tempo               62 errors in 2 s at 87 BPM (want 56), 112 at 174 (want 113)
 PASS  a garbage buffer is never heard      peak -40.0 dBFS from a -40.0 dBFS input over a garbage buffer
 PASS  idle is digital silence (HOLD)       last 0.5 s peak 0 LSB
 PASS  idle is digital silence (PCKT)       last 0.5 s peak 0 LSB
 PASS  idle is digital silence (CIRC)       last 0.5 s peak 0 LSB
 PASS  memory guard, every run              0 words written outside the state, audio and buffer
-PASS  instructions per frame               4354 a 16-frame call, 272 a frame (stock SPRING REV: 314)
+PASS  instructions per frame               4378 a 16-frame call, 274 a frame (stock SPRING REV: 314)
 all passed
 ```
 
@@ -51,7 +54,7 @@ What they pin:
 - **PCKT.** Each lost packet is exactly P samples long (64 at SIZE 0, 256 at 127), and sample k of it is the input P samples earlier times (1 − 2^-23 − k/P), within 2 LSB of that arithmetic.
 - **CIRC.** On a 3 kHz tone, each concealed burst is exactly 1 + SIZE/8 samples long (4 and 8) and continues the last good sample by the last slope, within 2 LSB; from SIZE 64 each burst is a run of exactly 16 (SIZE − 63) samples within 2 LSB of zero (16 and 1,024).
 - **BITS.** A 440 Hz tone's signal-to-noise ratio after the coder falls with each depth, 51/45/37/25 dB at 5/4/3/2 bits, the same at −8 and −40 dBFS (the step adapts).
-- **Tempo lock.** With every step frozen and a 64-sample frame, the runs where the input passes start exactly one step apart and last exactly 64 samples, and the output then repeats with a period of 64 within 3 LSB: 5,512 samples a 1/16 step at 120 BPM, 6,854 at 96.5 BPM, 1,900 a 1/32 step at 174 BPM, each equal to `3 q 2^STEP / 16` with `q = 42,336,000 // tempo24`, and 5,512 again when the tempo word reads 0 (the 120 BPM fallback). FRZ 64 froze 35 of 64 steps. RATE 100 made 62 errors in 2 s at 87 BPM and 112 at 174 against 56 and 113 from its chance a frame (within 25 %, and the ratio within 20 % of 2).
+- **Tempo lock.** With every step frozen and a 64-sample frame, the runs where the input passes start exactly one step apart and last exactly 64 samples, and the output then repeats with a period of 64 within 3 LSB: 5,512 samples a 1/16 step at 120 BPM, 6,854 at 96.5 BPM, 1,900 a 1/32 step at 174 BPM, each equal to `3 q 2^STEP / 16` with `q = 42,336,000 // tempo24`, and 5,512 again when the tempo word reads 0, 20 or 400 BPM (the 120 BPM fallback outside 30-300). The FX1 runs put tempo24 at r6+$19 and FX2's page-2 slots 8/9 (64, 1) at r6+$13; the FX2 runs put it at r6+$13. FRZ 64 froze 37 of 64 steps. RATE 100 made 62 errors in 2 s at 87 BPM and 112 at 174 against 56 and 113 from its chance a frame (within 25 %, and the ratio within 20 % of 2).
 - **Buffer.** Over a garbage buffer, with PCKT and CIRC errors and every 1/32 step frozen on its longest frame, the output never exceeds a −40 dBFS input.
 - **Idle.** After a 0.3 s burst, with the 2-bit coder, errors at RATE 100 and FRZ 64, the last 0.5 s of 3 s of silence is exactly 0 in every MODE.
 - **Memory guard** over every run, and the **cost** below.
@@ -93,13 +96,13 @@ The verdicts are the audit's −60 dBc aliasing limit, which a 2-to-5-bit coder 
 ## Not tested
 
 - Anything in a built image, under the ColdFire port or on a unit: the chooser, the pages, the labels, parameter locks, LFO and scene modulation as the firmware applies them (fxhost feeds whole knob values; the LFO fraction path of RATE, FRZ and MIX is not exercised), stock flows, instances on both cores, `verify_knob_clicks.py`.
-- Whether the frame builder publishes the tempo word to an FX1 instance. fxhost always supplies it, and the fallback is tested only by feeding a word of 0.
+- Where an FX1 instance finds the tempo word. The code reads r6+$19 on FX1 (r6 six words below FX2's in the same record, from octabam's measurement of the page-2 bytes) and r6+$13 on FX2; fxhost models exactly that (`-fx1`: tempo24 at r6+$19, FX2's page-2 slots 8/9 at r6+$13), so the gates prove the code follows the model, not the model. The 30-300 BPM fallback is gated with words of 0, 20 and 400 BPM.
 - A tempo change mid-render (the step countdown is clamped to the new step length; not gated).
 - `dsp_host`'s stress run, `cycle_count.py` and `benchmark_stock_dsp.py`: they need a built image (Performance).
 
 ## Independent review
 
-Not yet repeated for this rewrite. The ADPCM routine is CODEC ECHO's, reviewed there and copied with only its table offsets and state slots changed; the HOLD ring, noise, glide and init discipline come from the earlier DROPOUT draft, reviewed 30 Oct 2026. New forms in this source, each with a precedent in octabam: `lua (r7+8),r7` and `lua (r7-8),r7` (Output Matrix), `asl`/`asr` by a register count (the ADPCM routine), short-immediate `add`/`sub`/`cmp #<n` (RENDER-proven modules only, as the earlier review noted).
+A second agent reviewed this rewrite's source, read-only, on 30 Oct 2026, without the authors' reasoning. It found one defect: on FX1 the code read the tempo at r6+$13, which on an FX1 record is FX2's page-2 slots 8/9 (knob << 16 | companion << 8), so the step and RATE followed FX2's knobs and some values overflowed the 24-step `div`. Fixed: init tells FX1 from FX2 by the buffer's base (below $4000, Character's idiom), FX1 reads r6+$19, and any word outside 30-300 BPM falls back to 120 BPM; fxhost's `-fx1` now models the FX1 record and three gates were added. Its two nits were also fixed: FRZ's draw masks the sign instead of `abs` (a word of $800000 made 1.0, so FRZ 127 missed one step in 2^24), and the error test draws a fresh word after FRZ's, so a frozen step no longer forces errors on its first frame. It checked the ring clear, the ring wrap, the frozen frame's bounds, the state slots, the coder's offsets and every compare and Tcc. It flagged `move x1,a0` and `move x0,a1` as forms without a module precedent (ordinary register moves). The ADPCM routine is CODEC ECHO's, reviewed there and copied with only its table offsets and state slots changed; the HOLD ring, noise, glide and init discipline come from the earlier DROPOUT draft, reviewed 30 Oct 2026. New forms in this source, each with a precedent in octabam: `lua (r7+8),r7` and `lua (r7-8),r7` (Output Matrix), `asl`/`asr` by a register count (the ADPCM routine), short-immediate `add`/`sub`/`cmp #<n` (RENDER-proven modules only, as the earlier review noted).
 
 ## Stock flows
 
@@ -111,7 +114,7 @@ Not tested: nothing has run in a built image or on a unit. The module adds an ef
 
 ## Resources
 
-587 program words and one 323-word P table (W and S, 89 words each, four depths of four words, RATE's 129 points) per DSP core, from `dsp_asm`. 58 state words per instance in the instance's own r7 block (`$00`-`$39`), all cleared by `init`. 3,072 words of the allocator's Y buffer (`Claims(stock_instance_buffer=True, buffer_words=3072)`), which fits an FX1 slot; no stock table, no absolute address but `X:$213`.
+617 program words and one 323-word P table (W and S, 89 words each, four depths of four words, RATE's 129 points) per DSP core, from `dsp_asm`. 59 state words per instance in the instance's own r7 block (`$00`-`$3a`), all cleared by `init`. 3,072 words of the allocator's Y buffer (`Claims(stock_instance_buffer=True, buffer_words=3072)`), which fits an FX1 slot; no stock table, no absolute address but `X:$213`.
 
 ## Hardware
 

@@ -9,6 +9,7 @@ dispatcher, the panel, the base or the hardware decides.
 The toolchain is octabam's (npm run upstream:tools, then its scripts/setup.sh builds vendor/dsp56300): set
 DSP56300 to that vendor/dsp56300 folder if it is not at ~/.cache/modwerk-upstream/octabam/vendor/dsp56300.
 """
+import hashlib
 import os
 import pathlib
 import re
@@ -23,7 +24,9 @@ HERE = pathlib.Path(__file__).resolve().parent
 VENDOR = pathlib.Path(os.environ.get('DSP56300', pathlib.Path.home() / '.cache/modwerk-upstream/octabam/vendor/dsp56300'))
 DSP_ASM = VENDOR / 'build/source/dsp_host/dsp_asm'
 DISASM = VENDOR / 'build/source/disassemble/dsp56kDisassemble'
-BUILD = pathlib.Path(os.environ.get('FXHOST_BUILD', pathlib.Path(tempfile.gettempdir()) / 'fxhost-build'))
+# keyed by the host's source, so drafts with different copies of fxhost.cpp never share a stale binary
+BUILD = pathlib.Path(os.environ.get('FXHOST_BUILD', pathlib.Path(tempfile.gettempdir()) / (
+    'fxhost-build-' + hashlib.sha256((HERE / 'fxhost.cpp').read_bytes()).hexdigest()[:12])))
 FXHOST = BUILD / 'fxhost'
 ORG, PTBASE = 0x2000, 0x3000
 LITERAL = '$fab1e0'
@@ -112,8 +115,9 @@ def to_raw(x):
     return np.clip(np.round(x * 0x800000), -0x800000, 0x7fffff).astype('<i4')
 
 
-def run(build, audio, params, events=(), tempo=120.0, ybase=0x4000, ywords=0, dirty=0, split=0, guard=True):
-    """Render `audio` (float, mono or stereo) through the effect; returns (float stereo out, int stereo out, report)."""
+def run(build, audio, params, events=(), tempo=120.0, ybase=0x4000, ywords=0, dirty=0, split=0, guard=True, fx1=None):
+    """Render `audio` (float, mono or stereo) through the effect; returns (float stereo out, int stereo out, report).
+    fx1: None for an FX2 record, else the word an FX1 instance finds at r6+$13 (tempo24 then sits at r6+$19)."""
     work = build['dir']
     pin, pout = work / 'in.raw', work / 'out.raw'
     to_raw(audio).tofile(pin)
@@ -121,6 +125,8 @@ def run(build, audio, params, events=(), tempo=120.0, ybase=0x4000, ywords=0, di
            '-proc', '%x' % build['syms']['proc'], '-in', str(pin), '-out', str(pout),
            '-p', ','.join(str(int(v)) for v in params), '-tempo', str(tempo), '-ybase', '%x' % ybase, '-ywords', '%x' % ywords,
            '-dirty', str(dirty), '-split', str(split)]
+    if fx1 is not None:
+        cmd += ['-fx1', '%x' % fx1]
     if build['table']:
         cmd += ['-ptable', str(work / 'm.tab'), '-ptbase', '%x' % PTBASE]
     if guard:

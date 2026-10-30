@@ -7,13 +7,15 @@
 //   n7 = frames, r6 = the parameter record, r7 = the instance's state block
 //   x:(r6+0..5) page 1 as value << 16; r6+$c/$d/$e page 2, even slots in bits 16-23, odd in 8-15;
 //   tempo24 << 8 at r6+$13; X:$213 points at the word holding the allocator's Y buffer base.
+//   -fx1 models an FX1 instance's record instead: r6 six words lower in the same record, so tempo24 is at r6+$19 and
+//   r6+$13 holds FX2's page-2 slots 8/9 (-fx1 HEX gives that word; docs/remixer/FAILURE_MODES.md).
 // A trig split (-split K) makes two calls of a block, K frames at r0 = 0 then the rest at r0 = 2K.
 // Every word outside the audio block, the state block ($84 words), the parameter record and the declared Y buffer
 // is filled with a marker and checked after every call (-guard); -dirty fills the state block and the buffer with
 // garbage first, as the hardware never zeroes them. It reports the most instructions and cycles one call took.
 //
 //   fxhost -code m.bin -org 2000 -init 2000 -proc 2008 [-ptable t.bin -ptbase 3000] -in in.raw -out out.raw
-//          [-p 0,64,...] [-events ev.txt] [-tempo 120] [-ybase 4000 -ywords 3dfe] [-dirty 1] [-split 5] [-guard]
+//          [-p 0,64,...] [-events ev.txt] [-tempo 120] [-fx1 400100] [-ybase 4000 -ywords 3dfe] [-dirty 1] [-split 5] [-guard]
 // in.raw / out.raw: interleaved stereo int32 holding 24-bit samples. ev.txt: "block slot value" per line.
 #include <cstdio>
 #include <cstdlib>
@@ -87,6 +89,8 @@ int main(int argc, char** argv) {
     bool guard = false, mono = false;
     int dump = 0;
     double tempo = 120.0;
+    bool fx1 = false;
+    TWord fx1word = 0;
     std::vector<int> p(12, 0);
     for (int i = 1; i < argc; ++i) {
         std::string k = argv[i];
@@ -102,6 +106,7 @@ int main(int argc, char** argv) {
         else if (k == "-out") out = v();
         else if (k == "-events") events = v();
         else if (k == "-tempo") tempo = atof(argv[++i]);
+        else if (k == "-fx1") { fx1 = true; fx1word = hex(); }
         else if (k == "-ybase") ybase = hex();
         else if (k == "-ywords") ywords = hex();
         else if (k == "-frames") frames = atoi(argv[++i]);
@@ -147,7 +152,9 @@ int main(int argc, char** argv) {
         for (int j = 0; j < 6; ++j) mem.set(MemArea_X, PARAMS + j, (p[j] & 0x7f) << 16);
         for (int j = 0; j < 3; ++j)
             mem.set(MemArea_X, PARAMS + 0xc + j, ((p[6 + 2 * j] & 0xff) << 16) | ((p[7 + 2 * j] & 0xff) << 8));
-        mem.set(MemArea_X, PARAMS + 0x13, (static_cast<TWord>(tempo * 24 + 0.5) & 0xffff) << 8);
+        const TWord t24 = (static_cast<TWord>(tempo * 24 + 0.5) & 0xffff) << 8;
+        mem.set(MemArea_X, PARAMS + 0x13, fx1 ? fx1word : t24);
+        mem.set(MemArea_X, PARAMS + 0x19, fx1 ? t24 : 0);
     };
     auto watched = [&](EMemArea area, TWord a) {
         if (area == MemArea_X) {

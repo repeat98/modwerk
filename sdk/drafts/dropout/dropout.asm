@@ -19,9 +19,10 @@
 ;   out = x + MIX (f - x): MIX 0 returns the dry bit for bit, and so does any
 ;       setting with RATE 0, BITS off and FRZ 0 (f is then x).
 ; STEP sets the step (1/32 to 1/4 note) that RATE and FRZ count in. Its length in
-; samples comes from stock's tempo24 (BPM x 24) at r6+$13, with a 24-step div, as
-; octabam's BusDelay does it; the frame builder publishes that word for an FX2
-; instance, so a word of 0 (FX1, perhaps) falls back to 120 BPM. The step clock
+; samples comes from stock's tempo24 (BPM x 24), with a 24-step div, as octabam's
+; BusDelay does it: record halfword 31, at r6+$13 for an FX2 instance and r6+$19 for
+; an FX1 one (its r6 is six words lower); a word outside 30-300 BPM falls back to
+; 120 BPM. The step clock
 ; is tempo-locked but free-running from the moment the effect is chosen: a DSP
 ; insert sees no step phase, transport, swing or track speed.
 ;
@@ -31,7 +32,7 @@
 ;   x:(r6+$0) RATE  x:(r6+$1) SIZE  x:(r6+$2) BITS  x:(r6+$3) FRZ  x:(r6+$4) FRM
 ;   x:(r6+$5) MIX   page 1, value << 16 with an LFO's fraction in bits 15-8 (RATE,
 ;   FRZ and MIX use it); x:(r6+$c) MODE, x:(r6+$d) STEP: page 2 slots 6 and 8, the
-;   knob field (bits 23-16); x:(r6+$13) tempo24 << 8
+;   knob field (bits 23-16); x:(r6+$13) tempo24 << 8 (FX2; x:(r6+$19) on FX1)
 ; Table: the module's own P table (manifest.py): the ADPCM's W at +0 and S at +89,
 ; its four depths at +178 (four words each), RATE's events a step at +194 (129
 ; words). The base is placed by the build.
@@ -40,7 +41,7 @@
 ; before), cleared over the first 8 calls, which pass the dry untouched; the
 ; frozen frame, up to 1,024 frames, in the other 2,048, written before it is read.
 ;
-; r7 block ($00..$39, all cleared by init):
+; r7 block ($00..$3a, all cleared by init):
 ;   $00 noise (24-bit LCG)  $01 calls left to clear the ring  $02 the buffer's base
 ;   $03 the table's base  $04 the ring's write frame w  $05 the error's frames left
 ;   $06 its kind (0 HOLD, 1 PCKT, 2 CIRC concealed, 3 CIRC muted)  $07 PCKT's read
@@ -54,7 +55,7 @@
 ;   quantiser shift, largest code, last code, dequantiser shift, half the codes,
 ;   the table's base (the codec runs on r7 + 8 for the right channel)
 ;   $30/$31 the last good sample L/R  $32/$33 the one before  $34/$35 CIRC's slope
-;   $36/$37 CIRC's running value  $38 STEP 0..3  $39 the tempo word
+;   $36/$37 CIRC's running value  $38 STEP 0..3  $39 the tempo word  $3a 1 on FX1
 ;
 ; Multiplies use only the encodable operand orders; no rep; no tfr between
 ; accumulators. Labels are dr + two digits, none a prefix of another.
@@ -63,7 +64,7 @@ init:
         move    #>$ffffff,m5
         move    r7,r5                   ; r1 is the dispatcher's across init
         clr     a
-        do      #<$3a,>dr00
+        do      #<$3b,>dr00
         move    a,x:(r5)+
 dr00:
         move    #>$3c6ef3,x0            ; the noise's seed
@@ -71,6 +72,16 @@ dr00:
         move    x:>$213,r5              ; the allocator's entry
         move    x:(r5),x0
         move    x0,x:(r7+$2)            ; the Y buffer's base
+; FX1 or FX2, from the base (Modulation's idiom, as Character reads it): X:$213
+; points at THIS instance's entry only during init. FX1 slots sit below $4000.
+        move    x0,a
+        move    #>$4000,x1
+        sub     x1,a                    ; base - $4000
+        clr     b                       ; b = 0 before the tst
+        move    #>$1,x1
+        tst     a
+        tmi     x1,b                    ; an FX1 slot
+        move    b,x:(r7+$3a)
         move    #>$8,x0                 ; 8 calls of 128 words clear the ring
         move    x0,x:(r7+$1)
         rts
@@ -99,12 +110,25 @@ dr02:
         move    r5,x:(r7+$3)
         move    r5,x:(r7+$27)
         move    r5,x:(r7+$2f)
-; ---- the tempo word (120 BPM without one) --------------------------------------
-        move    x:(r6+$13),a
+; ---- the tempo word: stock's record halfword 31 (120 BPM outside 30-300) -------
+; An FX2 instance finds it at r6+$13, as BusDelay does. An FX1 instance's r6 sits
+; six words lower in the same record (its page 2 at r6+$c..$e is FX2's r6+$6..$8:
+; docs/remixer/FAILURE_MODES.md), so its r6+$13 is FX2's page-2 slots 8/9 and the
+; word is at r6+$19. Anything outside the Octatrack's 30-300 BPM falls back.
+        move    x:(r7+$3a),b
+        tst     b
+        move    x:(r6+$13),a            ; FX2
+        beq     dr12
+        move    x:(r6+$19),a            ; FX1
+dr12:
         and     #>$ffff00,a
-        move    #>$0b4000,x1            ; 2,880 << 8: 120 BPM
-        tst     a
-        teq     x1,a
+        move    #>$0b4000,y1            ; 2,880 << 8: 120 BPM
+        move    #>$02d000,x1            ; 720 << 8: 30 BPM
+        cmp     x1,a
+        tlt     y1,a
+        move    #>$1c2000,x1            ; 7,200 << 8: 300 BPM
+        cmp     x1,a
+        tgt     y1,a
         move    a1,x:(r7+$39)           ; t = tempo24 / 32,768 as a fraction
 ; ---- STEP: 0 .. 3 for 1/32, 1/16, 1/8, 1/4 -------------------------------------
         move    x:(r6+$d),a
@@ -319,12 +343,18 @@ dr11:
         beq     dr13                    ; FRZ 0: never (a is 0)
         move    x:(r7+$0),x0
         bsr     dr80                    ; a draw of its own
-        move    x0,b
-        abs     b
+        clr     b
+        move    x0,b1
+        and     #>$7fffff,b             ; 0 .. 1 - 2^-23 (abs would make $800000 1.0)
         move    x:(r7+$13),x1
         clr     a
+        move    #>$1,y1
         cmp     x1,b
-        bgt     dr13
+        tle     y1,a                    ; a = 1: frozen
+        move    x:(r7+$0),x0
+        bsr     dr80                    ; a fresh word, so the error test below
+        tst     a                       ; does not reuse the freeze's
+        beq     dr13
         move    #>$1,a                  ; frozen: its first FRM frames, then looped
         move    x:(r7+$14),x1
         move    x1,x:(r7+$e)
