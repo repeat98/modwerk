@@ -34,12 +34,12 @@ List them with `gh pr list --state open --json number,title,author,isDraft,label
 
 ## Issue worker
 
-List what is new or changed since the last briefing: `gh issue list --state open --limit 200 --search "updated:>=<date>" --json number,title,labels,author,updatedAt`. Read each one in full with `gh issue view <n> --json body,comments` (`--comments` alone leaves out the body).
+Aim to close as many issues as you can each pass. List what is new or changed since the last briefing, and what has gone quiet since your last question: `gh issue list --state open --limit 200 --search "updated:>=<date>" --json number,title,labels,author,updatedAt`. Read each one in full with `gh issue view <n> --json body,comments` (`--comments` alone leaves out the body).
 
 - **Sort** each: fixed or answered, duplicate, needs details, confirmed, question or feature, stale. Look for a fix in open pull requests and recent releases, and for a known cause in the [beta findings](OCTATRACK_BETA_TEST_PLAN.md).
 - A USB beta report has no device log: look its reporter up in the beta worker's diagnostics pull, and quote nothing from it on GitHub ([reports](DEVELOPER_WORKFLOW.md#manage-reports-on-github)).
 - **Ask** for missing details yourself, with `/modwerk needs-info …` or a plain reply. `/modwerk` commands from `repeat98` work only on modules that list repeat98 as a maintainer, and HTTP 200 with `command: denied` means nothing happened. Elsewhere reply plainly and close with `gh issue close <n> --reason completed|"not planned" --comment …`; the signed webhook updates the Modwerk report.
-- **Propose closures** as one list, a reason for each. A code fix follows [the issue-fix flow](OWNER_OPERATIONS.md#finish-the-issue-fix-flow) once the owner asks for it.
+- **Propose closures** as one list, a reason for each: fixed and live, answered, duplicate, superseded, a week without an answer to your question, or not planned. A code fix follows [the issue-fix flow](OWNER_OPERATIONS.md#finish-the-issue-fix-flow) once the owner asks for it.
 
 ## Beta worker
 
