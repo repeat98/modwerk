@@ -30,6 +30,7 @@
     "sources": [
       "../base/locks.c",
       "../base/locks.s",
+      "../base/clock.c",
       "../base/sendbus.c",
       "../base/sendbus.s"
     ],
@@ -108,7 +109,15 @@
       "-DLOCK_GUARD_AT=0x4018a6da",
       "-DUNLOCK_GUARD_AT=0x4017f536",
       "-DFOOTER_DRAW_AT=0x4003f59e",
-      "-DTITLE_DRAW_AT=0x40037300"
+      "-DTITLE_DRAW_AT=0x40037300",
+      "-DMCLOCK_AT=0x8000fe54",
+      "-DSEQ_PULSE_AT=0x405c8b20",
+      "-DSEQ_STEP_AT=0x405c8c94",
+      "-DSEQ_PULSE_N_AT=0x405c8c96",
+      "-DSEQ_PLAYING_AT=0x405c8cf8",
+      "-DSEQ_PATTERN_AT=0x405c8d04",
+      "-DPATTERNS_AT=0x407dd8e3",
+      "-DSPEED_PULSES_AT=0x401db6f8"
     ],
     "defsym": {
       "mw_send_resume": "0x4010ee6c"
