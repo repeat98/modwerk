@@ -1,0 +1,257 @@
+{
+  "schemaVersion": 1,
+  "machine": "digitakt",
+  "moduleId": "digiperform",
+  "moduleVersion": "0.1.0-experimental",
+  "capturedAt": "2026-10-28",
+  "firmware": "1.54",
+  "imageSha256": "5e8d5fc7bfee3ec9d8d8280d106fbabd42be1abd0d793f1224fac831998d8785",
+  "stockSha256": "f78ba80fa7b1da5fb0e1ff61ad61e9e71aafe79f4364fc49679f3651353e3cf6",
+  "source": {
+    "repository": "https://github.com/repeat98/modwerk",
+    "revision": "ef0a333cf01282ecd0ae896abb878cf71b38bf9a",
+    "path": "sdk/digitakt/modules/digiperform"
+  },
+  "kit": {
+    "version": "0.6.0",
+    "lockSha256": "2e1453b609d568674fd546e909cbe67095f35713e1a1596ba523848dd2ea0bc6"
+  },
+  "catalog": {
+    "revision": "0da420d6532225851c0fb0ae7da58638054406c134bd34889a00c624e4a17687",
+    "sha256": "551e50618333e06875df838b0981b591eedbfa87cc7e500cd37985ba53665881",
+    "cores": 5,
+    "mods": 21
+  },
+  "build": {
+    "modules": [
+      {
+        "id": "core",
+        "version": "2.1",
+        "sha256": "8c1fe78ccd1427d6a93f181eaad9f064efb65cf6dd683192dbcc33e83dc548b9"
+      },
+      {
+        "id": "digiperform",
+        "version": "0.1.0-experimental",
+        "sha256": "f055fe24fb1e68ac392c51ee9da141a1a9006d1c1255643cf01f603f6b3dab47"
+      }
+    ],
+    "outputVersion": "3.0a",
+    "verified": true
+  },
+  "emulator": {
+    "repository": "https://github.com/irpina/digiemu",
+    "revision": "c1b5735835923e328f8b4950d6ba927875e5b669",
+    "unicorn": {
+      "version": "2.1.4",
+      "sourceRevision": "8028ec436f2d9376525352dd38ed9ed6b9f6be10",
+      "patches": {
+        "unicorn-2.1.4-m68k-digikit-accel.patch": "7048704a068cb074b93b751df4b1a73fd8972c1c0cc27e30774c4c2771ec2b5c",
+        "unicorn-2.1.4-m68k-digikit-speed.patch": "9560613223502656e82adc1ecc36d5d8486995bed13ea8ddad168f8c4558a799",
+        "unicorn-2.1.4-m68k-emac-mac-load.patch": "ac128dd6836997de55e0d2ad70d7a2978639168090f552c5634da50fddc70bfe",
+        "unicorn-2.1.4-m68k-emac-modes.patch": "5fc44429ea913c5256c34a6e9c93ab90f727f120b4f12922a8f35a952fd1dace",
+        "unicorn-2.1.4-m68k-fast-mem.patch": "7f79332f318352cbd8055386dbf5149efc801d0663ae2450e33f9f39fed53374",
+        "unicorn-2.1.4-m68k-hook-ccr-sync.patch": "56de71acf2adbd5ca2f448095478e65e49fd79d378aeb5b5e4217d2c90f52f4e"
+      },
+      "librarySha256": "a83b0d8a588cba2087c08712183df5106b3d2f1670af6024991eb85005e0f184"
+    },
+    "python": "3.12.13",
+    "platform": "macOS arm64",
+    "hle": false,
+    "audioRecording": false,
+    "cycleTiming": false,
+    "framebuffer": "firmware front LCD buffer at panel_diff flush",
+    "scale": 6,
+    "frameSelection": "Most populated unmodified frame within the final 250 ms after the latest panel action."
+  },
+  "setup": {
+    "project": "Disposable first-boot A01, stock initial track state; no owner projects or samples.",
+    "fixture": "No sample fixture required for the documented UI pages.",
+    "sandbox": "No network; user files denied; private temporary output only."
+  },
+  "inputs": [
+    [
+      1000.0,
+      "press 19"
+    ],
+    [
+      1100.0,
+      "release 19"
+    ],
+    [
+      1414.234,
+      "press 19"
+    ],
+    [
+      1514.238,
+      "release 19"
+    ],
+    [
+      2314.261,
+      "press 1"
+    ],
+    [
+      2414.264,
+      "press 40"
+    ],
+    [
+      2514.266,
+      "release 40"
+    ],
+    [
+      2614.269,
+      "release 1"
+    ],
+    [
+      3014.281,
+      "press 40"
+    ],
+    [
+      3114.284,
+      "release 40"
+    ],
+    [
+      3714.302,
+      "press 40"
+    ],
+    [
+      3814.304,
+      "release 40"
+    ],
+    [
+      6614.386,
+      "press 6"
+    ],
+    [
+      6714.388,
+      "release 6"
+    ],
+    [
+      7514.412,
+      "press 15"
+    ],
+    [
+      7614.415,
+      "release 15"
+    ],
+    [
+      7914.423,
+      "press 15"
+    ],
+    [
+      8014.426,
+      "release 15"
+    ],
+    [
+      8314.435,
+      "press 15"
+    ],
+    [
+      8414.438,
+      "release 15"
+    ],
+    [
+      8714.446,
+      "press 15"
+    ],
+    [
+      8814.45,
+      "release 15"
+    ],
+    [
+      9114.458,
+      "press 15"
+    ],
+    [
+      9214.461,
+      "release 15"
+    ],
+    [
+      9514.47,
+      "press 15"
+    ],
+    [
+      9614.473,
+      "release 15"
+    ],
+    [
+      9914.482,
+      "press 15"
+    ],
+    [
+      10014.485,
+      "release 15"
+    ],
+    [
+      10314.494,
+      "press 15"
+    ],
+    [
+      10414.496,
+      "release 15"
+    ],
+    [
+      10714.505,
+      "press 15"
+    ],
+    [
+      10814.508,
+      "release 15"
+    ],
+    [
+      11114.517,
+      "press 15"
+    ],
+    [
+      11214.52,
+      "release 15"
+    ],
+    [
+      11514.528,
+      "press 12"
+    ],
+    [
+      11614.531,
+      "release 12"
+    ]
+  ],
+  "captures": [
+    {
+      "path": "media/perform-page.png",
+      "sha256": "5f155f08ba73af7b64a8bfe743ad14235b60d0c6a0d75f23dcc13c9f330690c4",
+      "plan": "wait 1000\ntap TRIG\ntap TRIG\nwait 500\nsnap perform-page\npress FUNC\npress #40\nrelease #40\nrelease FUNC\nwait 300\nsnap assign-track\ntap #40\nwait 300\ntap #40\nwait 2500\nsnap assigned\ntap GLOBAL\nwait 500\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\nsnap settings\ntap YES\nwait 500\nsnap perform-edit\n",
+      "atMs": 2099.9997863247863,
+      "requestedAtMs": 2314.2608974358973
+    },
+    {
+      "path": "media/assign-track.png",
+      "sha256": "a62fe4fbb94a716c40f58460e27aeb97336ff98e4166c3cf7be65a7d93aba6c3",
+      "plan": "wait 1000\ntap TRIG\ntap TRIG\nwait 500\nsnap perform-page\npress FUNC\npress #40\nrelease #40\nrelease FUNC\nwait 300\nsnap assign-track\ntap #40\nwait 300\ntap #40\nwait 2500\nsnap assigned\ntap GLOBAL\nwait 500\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\nsnap settings\ntap YES\nwait 500\nsnap perform-edit\n",
+      "atMs": 2780.940811965812,
+      "requestedAtMs": 3014.2805555555556
+    },
+    {
+      "path": "media/assigned.png",
+      "sha256": "f8fa69dccbbc1b288f82882d58907fcd6201c6ed3932f82e7b28a552c0ae75cb",
+      "plan": "wait 1000\ntap TRIG\ntap TRIG\nwait 500\nsnap perform-page\npress FUNC\npress #40\nrelease #40\nrelease FUNC\nwait 300\nsnap assign-track\ntap #40\nwait 300\ntap #40\nwait 2500\nsnap assigned\ntap GLOBAL\nwait 500\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\nsnap settings\ntap YES\nwait 500\nsnap perform-edit\n",
+      "atMs": 6400.0,
+      "requestedAtMs": 6614.385683760684
+    },
+    {
+      "path": "media/settings.png",
+      "sha256": "7cfb7f7622ff1ca7c35b9356d1e81793529d680d7834eeab619770df89c94a5a",
+      "plan": "wait 1000\ntap TRIG\ntap TRIG\nwait 500\nsnap perform-page\npress FUNC\npress #40\nrelease #40\nrelease FUNC\nwait 300\nsnap assign-track\ntap #40\nwait 300\ntap #40\nwait 2500\nsnap assigned\ntap GLOBAL\nwait 500\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\nsnap settings\ntap YES\nwait 500\nsnap perform-edit\n",
+      "atMs": 11514.528205128205,
+      "requestedAtMs": 11514.528205128205
+    },
+    {
+      "path": "media/perform-edit.png",
+      "sha256": "21a7d8976b98c282be5662c3a64156402de8960ff5d1726a7bee9d9d5b480c96",
+      "plan": "wait 1000\ntap TRIG\ntap TRIG\nwait 500\nsnap perform-page\npress FUNC\npress #40\nrelease #40\nrelease FUNC\nwait 300\nsnap assign-track\ntap #40\nwait 300\ntap #40\nwait 2500\nsnap assigned\ntap GLOBAL\nwait 500\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\nsnap settings\ntap YES\nwait 500\nsnap perform-edit\n",
+      "atMs": 12199.999786324786,
+      "requestedAtMs": 12414.554059829059
+    }
+  ],
+  "limitations": [
+    "UI-only documentation; the audio engine is not run (audio=False), so the knobs show their assignment but not live values. No hardware, audio, timing, persistence or stress qualification."
+  ]
+}

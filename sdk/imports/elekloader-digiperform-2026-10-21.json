@@ -1,0 +1,63 @@
+{
+  "schema": 1,
+  "kind": "elekloader-catalog",
+  "revision": "digiperform-2026-10-21",
+  "about": "Modwerk source-only digiperform packages for Digitakt I OS 1.53 and 1.54, compiled from sdk/digitakt/modules/digiperform.",
+  "cores": [],
+  "mods": [
+    {
+      "file": "digiperform-0.1.0-experimental-os1.53.elemod",
+      "sha256": "c613fe68041206d6faf615e1228822d3b662f85e7de274c741eecc7c429c6901",
+      "id": "digiperform",
+      "version": "0.1.0-experimental",
+      "device": "digitakt-mk1",
+      "os": "1.53",
+      "license": "GPL-3.0-or-later",
+      "source": {
+        "repo": "repeat98/modwerk",
+        "commit": "d0009216bdca3cbb1537f6921aab25f59a00eb6d",
+        "path": "sdk/imports/packages/digiperform/digiperform-0.1.0-experimental-os1.53.elemod"
+      },
+      "title": "Digi Perform",
+      "requires": [
+        "core"
+      ],
+      "conflicts": [
+        "digimatrix"
+      ],
+      "summary": "Eight performance macros on knobs A-H: each moves one track parameter, or the same parameter of every track, per pattern.",
+      "description": "Eight performance macros on knobs A-H, each adding an offset to one track parameter or to the same parameter of every track. The Perform page is the second page of the TRIG page; assignments are made on the page (FUNC and a knob's push) or in SETTINGS > PERFORM EDIT, kept per pattern in the sound records' spare bytes.",
+      "category": "System",
+      "author": "ROMsets",
+      "needs_core": "2.1",
+      "on_unit": "Observed by its author on a unit and in an emulator; no filed hardware report yet (see TESTING.md)."
+    },
+    {
+      "file": "digiperform-0.1.0-experimental-os1.54.elemod",
+      "sha256": "82382250e512e8da09ec11c925dd42299cf65efc8e238b56b24568826c1f353a",
+      "id": "digiperform",
+      "version": "0.1.0-experimental",
+      "device": "digitakt-mk1",
+      "os": "1.54",
+      "license": "GPL-3.0-or-later",
+      "source": {
+        "repo": "repeat98/modwerk",
+        "commit": "d0009216bdca3cbb1537f6921aab25f59a00eb6d",
+        "path": "sdk/imports/packages/digiperform/digiperform-0.1.0-experimental-os1.54.elemod"
+      },
+      "title": "Digi Perform",
+      "requires": [
+        "core"
+      ],
+      "conflicts": [
+        "digimatrix"
+      ],
+      "summary": "Eight performance macros on knobs A-H: each moves one track parameter, or the same parameter of every track, per pattern.",
+      "description": "Eight performance macros on knobs A-H, each adding an offset to one track parameter or to the same parameter of every track. The Perform page is the second page of the TRIG page; assignments are made on the page (FUNC and a knob's push) or in SETTINGS > PERFORM EDIT, kept per pattern in the sound records' spare bytes.",
+      "category": "System",
+      "author": "ROMsets",
+      "needs_core": "2.1",
+      "on_unit": "Observed by its author on a unit and in an emulator; no filed hardware report yet (see TESTING.md)."
+    }
+  ]
+}

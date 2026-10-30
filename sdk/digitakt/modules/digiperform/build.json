@@ -1,0 +1,110 @@
+{
+  "schemaVersion": 1,
+  "sources": [
+    "src/perf_glue.s",
+    "src/perf.c"
+  ],
+  "defsym": {},
+  "cflags": [],
+  "weak": [],
+  "subscribe": [
+    {
+      "event": "ev_settings",
+      "fn": "digiperform_settings",
+      "order": 50
+    },
+    {
+      "event": "ev_draw",
+      "fn": "digiperform_draw",
+      "order": 50
+    },
+    {
+      "event": "ev_tick",
+      "fn": "digiperform_tick",
+      "order": 50
+    },
+    {
+      "event": "ev_key",
+      "fn": "digiperform_key",
+      "order": 50
+    },
+    {
+      "event": "ev_enc",
+      "fn": "digiperform_enc",
+      "order": 50
+    }
+  ],
+  "contribute": [],
+  "collections": {},
+  "copied": [],
+  "regions": [],
+  "claims": [
+    "settings:PERFORM EDIT",
+    "sound:slot 49 of tracks 5-8 (marker)",
+    "sound:spare bytes 3 (bits 0-6), 4 and 5 of tracks 5-8 (macro pool)",
+    "ui:PERFORM page:TRIG+REC/PLAY/STOP, FUNC+push, NO",
+    "ui:TRIG page:second page, TRIG pressed again"
+  ],
+  "requires": [],
+  "derive": null,
+  "releases": {
+    "1.53": {
+      "defsym": {},
+      "cflags": [],
+      "sites": [
+        {
+          "addr": "0x40077eb2",
+          "len": 6,
+          "stockSha256": "2d05c64ee29edd19335107f8d8b31d5aba44809f6456a2203a037b33ebe692ca",
+          "op": "jsr",
+          "target": "digiperform_posthook"
+        },
+        {
+          "addr": "0x40184010",
+          "op": "ptr",
+          "target": "digiperform_trigview_audio",
+          "len": 4,
+          "stockSha256": "f38300152eb12b503dfec27fbe4261d9eded2db8eea2c703f131f210d0de464a"
+        },
+        {
+          "addr": "0x40184054",
+          "op": "ptr",
+          "target": "digiperform_title_view",
+          "len": 4,
+          "stockSha256": "4138926d6f0e852526fb5fdef5e8fe79e8b0b9e3d17faa2977cc8a8f04a50190"
+        }
+      ]
+    },
+    "1.54": {
+      "defsym": {
+        "OS154": "1"
+      },
+      "cflags": [
+        "-DOS154"
+      ],
+      "sites": [
+        {
+          "addr": "0x40077eb2",
+          "len": 6,
+          "stockSha256": "2d05c64ee29edd19335107f8d8b31d5aba44809f6456a2203a037b33ebe692ca",
+          "op": "jsr",
+          "target": "digiperform_posthook"
+        },
+        {
+          "addr": "0x40184310",
+          "op": "ptr",
+          "target": "digiperform_trigview_audio",
+          "len": 4,
+          "stockSha256": "f38300152eb12b503dfec27fbe4261d9eded2db8eea2c703f131f210d0de464a"
+        },
+        {
+          "addr": "0x40184354",
+          "op": "ptr",
+          "target": "digiperform_title_view",
+          "len": 4,
+          "stockSha256": "4138926d6f0e852526fb5fdef5e8fe79e8b0b9e3d17faa2977cc8a8f04a50190"
+        }
+      ]
+    }
+  }
+}

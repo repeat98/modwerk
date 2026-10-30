@@ -1,0 +1,13 @@
+[
+  {
+    "version": "0.1.0-experimental",
+    "date": "2026-10-26",
+    "changes": [
+      "First release: a Perform page, the second page of TRIG (tap TRIG again), with eight macro knobs A-H.",
+      "Each knob moves one track parameter, or the same parameter of every track, with the stock knob feel and FUNC-and-turn snaps.",
+      "Assign on the page (FUNC and a knob's push) or in SETTINGS > PERFORM EDIT. Assignments are saved per pattern with the project.",
+      "Hold TRIG and press REC, STOP or PLAY to copy, paste or clear the page. The offsets let go when a new pattern starts.",
+      "Not compatible with Digi Matrix. For OS 1.53 and 1.54; experimental, hardware-tested by its author only."
+    ]
+  }
+]
