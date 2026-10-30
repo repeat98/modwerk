@@ -4,7 +4,7 @@ import { FAKE_BASE, fakeBaseOf, fakeSession, fakeUnit } from '../../dev/octatrac
 import { packSection } from '../elektron/codec/pack.ts'
 import { encodeBin } from '../../../vendor/elekloader/kit/src/elek.ts'
 import { removalPackage } from './module-set'
-import { LinkBusyError, OctatrackLink, openFailure, tabLocks } from './octatrack-link'
+import { LinkBusyError, OctatrackLink, StaleLoadError, openFailure, tabLocks } from './octatrack-link'
 import { UploadUnconfirmedError } from './upload-session'
 import { UsbVendorTransport, parseBaseSlots } from './upload-usb'
 
@@ -195,15 +195,16 @@ describe('sending a module', () => {
     unit.playing = true; await link.update('PREVIEW VOL', one)
     expect(link.getState()).toMatchObject({ status: 'ready', notice: { tone: 'error', text: 'Stop playback or finish recording on the Octatrack to continue.' } })
   })
-  it('stress-tests an update before it can be kept, and undoes it when the test fails', async () => {
+  it('installs an update without running a self-test', async () => {
     const { link } = await linked(), seen: string[] = []
     link.subscribe(() => { seen.push(link.getState().status) })
-    await link.update('My set', one, async () => null)
-    expect(seen).toContain('testing')
-    expect(link.getState()).toMatchObject({ status: 'trial', tested: true })
+    const selftest = vi.spyOn(UsbVendorTransport.prototype, 'selftest')
+    await link.update('My set', one)
+    expect(seen).not.toContain('testing')
+    expect(link.getState()).toMatchObject({ status: 'trial', module: 'My set' })
     await link.keep()
-    await link.update('My set', one, async () => 'CPU over budget on track 3')
-    expect(link.getState()).toMatchObject({ status: 'ready', notice: { tone: 'error', text: 'The self-test failed: CPU over budget on track 3. Nothing was kept.' } })
+    expect(selftest.mock.calls.filter(([start]) => start)).toEqual([])
+    selftest.mockRestore()
   })
   it('refuses a module bigger than the base can stage', async () => {
     const { link } = await linked()
@@ -293,12 +294,19 @@ describe('sending a module', () => {
     expect(link.getState().status).toBe('idle')
     stop()
   })
-  it('does not resurrect a trial when the self-test finishes after a disconnect', async () => {
-    const { unit, link } = await linked(), gate = deferred(), entered = deferred()
-    const loading = link.update('PREVIEW VOL', one, async () => { entered.resolve(); await gate.promise; return null })
+  it('does not resurrect a trial when its start finishes after a disconnect', async () => {
+    const unit = fakeUnit(), base = fakeSession(unit), gate = deferred(), entered = deferred()
+    const connect: typeof base = async (...args) => {
+      const session = await base(...args)
+      return Object.create(session, { startTrial: { value: async () => { await session.startTrial(); entered.resolve(); await gate.promise } } })
+    }
+    const link = new OctatrackLink(unit.usb, connect), stop = link.start()
+    await settle(); await settle()
+    const loading = link.update('PREVIEW VOL', one)
     await entered.promise; unit.unplug(); gate.resolve(); await loading
     expect(link.getState().status).toBe('idle')
-    expect(link.getState().notice?.text).toMatch(/undoes PREVIEW VOL/)
+    expect(link.getState().notice?.text).toMatch(/undoes the unfinished load/)
+    stop()
   })
   it('does not confirm Keep from a reply received after disconnecting', async () => {
     const unit = fakeUnit(), base = fakeSession(unit), gate = deferred(), entered = deferred()
@@ -318,11 +326,14 @@ describe('sending a module', () => {
     const unit = fakeUnit(), base = fakeSession(unit), gate = deferred(), entered = deferred()
     const connect: typeof base = async (...args) => {
       const session = await base(...args)
-      return Object.create(session, { rollback: { value: async () => { entered.resolve(); await gate.promise; return session.rollback() } } })
+      return Object.create(session, {
+        startTrial: { value: async () => { await session.startTrial(); throw new StaleLoadError() } }, // a load that fails once trialled
+        rollback: { value: async () => { entered.resolve(); await gate.promise; return session.rollback() } },
+      })
     }
     const link = new OctatrackLink(unit.usb, connect, 300), stop = link.start()
     await settle(); await settle()
-    const loading = link.update('PREVIEW VOL', one, async () => 'CPU over budget')
+    const loading = link.update('PREVIEW VOL', one)
     await entered.promise; stop(); gate.resolve(); await loading
     expect(link.getState().status).toBe('idle')
     const restart = link.start()
@@ -422,14 +433,14 @@ describe('loading a module set', () => {
   const install = (id: string) => { const data = new Uint8Array(36); data.set([0x4d, 0x57, 0x52, 0x4d, 0, 4]); const view = new DataView(data.buffer); view.setUint32(8, 4); view.setUint32(28, Number.parseInt(id, 16)); return data }
   const change = (id: string, removes = false) => ({ module: 'M' + id.slice(-1), data: removes ? removalPackage(id) : install(id), undo: removes ? install(id) : removalPackage(id) })
   const set = [change('0000000a', true), change('0000000b'), change('0000000c')]
-  async function loaded(stressTest?: () => Promise<string | null>) {
+  async function loaded() {
     const result = await linked('base', true); result.unit.modules = ['0000000a']
-    await result.link.update('Live', set, stressTest)
+    await result.link.update('Live', set)
     return result
   }
   it('trials the complete set without accepting any change before Keep', async () => {
-    const { unit, link } = await loaded(async () => null)
-    expect(link.getState()).toMatchObject({ status: 'trial', module: 'Live', tested: true })
+    const { unit, link } = await loaded()
+    expect(link.getState()).toMatchObject({ status: 'trial', module: 'Live' })
     expect(unit.kept).toEqual([])
     await link.keep()
     expect(unit.kept).toEqual(['-0000000a', '+0000000b', '+0000000c'])
@@ -472,11 +483,6 @@ describe('loading a module set', () => {
       expect(unit.modules).toEqual([])
       expect(link.getState()).toMatchObject({ status: 'ready', active: FAKE_BASE, notice: { tone: 'success', text: 'Undone. Your Octatrack is back to how it was.' } })
     } finally { stop() }
-  })
-  it('undoes the set when the self-test fails', async () => {
-    const { unit, link } = await loaded(async () => 'the Octatrack’s DSP stopped')
-    expect(unit.kept).toEqual([])
-    expect(link.getState().notice?.text).toBe('The self-test failed: the Octatrack’s DSP stopped. Nothing was kept.')
   })
   it('keeps the baseline when the device refuses a complete set', async () => {
     const unit = fakeUnit(), base = fakeSession(unit)

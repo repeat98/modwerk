@@ -14,11 +14,11 @@ A worker may, without asking: read anything, run `diagnostics:pull`, build and t
 
 ## Pull request worker
 
-List them with `gh pr list --state open --json number,title,author,isDraft,labels,mergeStateStatus,updatedAt`. The owner's review list is `is:pr is:open draft:false -label:needs-work -label:one-at-a-time`; `pr-triage.yml` labels the rest ([review queue](COMMUNITY_OPERATIONS.md#review-queue-and-saved-replies)). Give every pull request one verdict: ready to merge, needs a refresh, red, waiting on its author, or needs the owner's call, and why.
+List them with `gh pr list --state open --json number,title,author,isDraft,labels,mergeStateStatus,updatedAt`. The owner's review list is `is:pr is:open draft:false -label:needs-work -label:one-at-a-time`; `pr-triage.yml` labels the rest ([review queue](COMMUNITY_OPERATIONS.md#review-queue-and-saved-replies)). Review contributors' drafts too: many authors open one without knowing it, and the bot skips drafts. Give every pull request one verdict: ready to merge, needs a refresh, red, waiting on its author, or needs the owner's call, and why.
 
 - **Review** new and changed pull requests. Read the code they touch, not only the diff, and judge each against the [modding guidelines](../MODDING_GUIDELINES.md) and the whole stack:
   - **The base:** its hooks, events and tables, and the order open pull requests regenerate it in.
-  - **The USB lifecycle:** package, self-test, Keep/Undo, removal, base-bound packages.
+  - **The USB lifecycle:** package, Keep/Undo, removal, base-bound packages.
   - **Module splits:** one job per module, no dependency on another module, shared code in the base or SDK first, no gesture only one module can hold.
   - **Cross-compatibility:** its `uiClaims` and conflicts against every other module.
   - **A new machine:** the [machine recipe](MACHINE_RECIPE.md).
@@ -26,7 +26,7 @@ List them with `gh pr list --state open --json number,title,author,isDraft,label
   Give each a stack verdict, not only a code verdict. Then check the rules a contribution most often breaks: a dependency on another module or a pull request stacked on one, an update to someone else's module without its author's yes ([Ask the author first](DEVELOPER_WORKFLOW.md#ask-the-author-first)), someone else's protected work, a module modelled on another current product of the same maker, a set of different effects in one module ([one effect per module](module-guides/effects.md#one-effect-per-module)), a fix without its changelog entry, a new Octatrack module without the USB lifecycle, a category that does not match where it acts (an effect that makes its track's sound is a machine), state saved in another module's bytes, a check edited to pass, unrelated changes in a module release, hand-edited generated files. A first-time contributor's runs wait for the owner's approval (`action_required`), so the pull request shows no checks until then: list those for the owner, or its review never starts. Draft the review as comments for the briefing.
 - **Refresh** a pull request that is behind or conflicting in its own worktree: merge `origin/main` into it, never rebase (catalogue rows pin the pull request's own commit). Regenerate generated files instead of resolving them by hand: `modules:generate`, `modules:pairs -- --write`, `licenses:generate`, `machines:generate`, and an Elekloader row with `elekloader:update -- --overlay <record>`, never `--library`. Run `npm run pr:ready` until it says Ready. Push it only to the owner's own branch; offer a contributor's refresh in the briefing.
 - **Across pull requests:** base hook indices (the loader refuses a gap, so whichever merges later renumbers and rebuilds), one module version claimed by two pull requests, and additions to a document over its [size limit](README.md).
-- **The agent board** (`npm run board -- list`, [AGENT_BOARD.md](AGENT_BOARD.md)): a pull request that adds a module, hook index or migration with no claim, or with someone else's, and claims that lapsed without a pull request. Count both in the briefing; release a stale claim only with the owner's yes.
+- **The agent board** (`npm run board -- list`, `messages`, `activity`, [AGENT_BOARD.md](AGENT_BOARD.md)): a pull request that adds a module, hook index or migration with no claim, or with someone else's; claims that lapsed without a pull request; questions unanswered for a week; findings older than 30 days with no pull request folding them into a guide; open `Board: …` issues and board `Improvement:` pull requests ([Improve the board](AGENT_BOARD.md#improve-the-board)), with a recommendation for each. Count each in the briefing with the activity line; release a stale claim or close a thread only with the owner's yes.
 - **The triage bot** runs at minute 41 of every hour. Preview it with `PR_TRIAGE_DRY_RUN=1 GITHUB_REPOSITORY=repeat98/modwerk GITHUB_TOKEN=$(gh auth token) node scripts/pr-triage.mjs` and say what it would label, comment or close, above all on a pull request whose author the owner asked to wait.
 - **Red checks:** read the failing job (`gh run view <id> --log-failed`) and say whether the pull request, `main` or a flaky test is at fault.
 - **Follow up** on a pull request quiet since its last request with one short draft; `pr-triage.yml` closes `needs-work` after 14 days.
@@ -34,12 +34,12 @@ List them with `gh pr list --state open --json number,title,author,isDraft,label
 
 ## Issue worker
 
-List what is new or changed since the last briefing: `gh issue list --state open --limit 200 --search "updated:>=<date>" --json number,title,labels,author,updatedAt`. Read each one in full with `gh issue view <n> --json body,comments` (`--comments` alone leaves out the body).
+Aim to close as many issues as you can each pass. List what is new or changed since the last briefing, and what has gone quiet since your last question: `gh issue list --state open --limit 200 --search "updated:>=<date>" --json number,title,labels,author,updatedAt`. Read each one in full with `gh issue view <n> --json body,comments` (`--comments` alone leaves out the body).
 
 - **Sort** each: fixed or answered, duplicate, needs details, confirmed, question or feature, stale. Look for a fix in open pull requests and recent releases, and for a known cause in the [beta findings](OCTATRACK_BETA_TEST_PLAN.md).
 - A USB beta report has no device log: look its reporter up in the beta worker's diagnostics pull, and quote nothing from it on GitHub ([reports](DEVELOPER_WORKFLOW.md#manage-reports-on-github)).
 - **Ask** for missing details yourself, with `/modwerk needs-info …` or a plain reply. `/modwerk` commands from `repeat98` work only on modules that list repeat98 as a maintainer, and HTTP 200 with `command: denied` means nothing happened. Elsewhere reply plainly and close with `gh issue close <n> --reason completed|"not planned" --comment …`; the signed webhook updates the Modwerk report.
-- **Propose closures** as one list, a reason for each. A code fix follows [the issue-fix flow](OWNER_OPERATIONS.md#finish-the-issue-fix-flow) once the owner asks for it.
+- **Propose closures** as one list, a reason for each: fixed and live, answered, duplicate, superseded, a week without an answer to your question, or not planned. A code fix follows [the issue-fix flow](OWNER_OPERATIONS.md#finish-the-issue-fix-flow) once the owner asks for it.
 
 ## Beta worker
 

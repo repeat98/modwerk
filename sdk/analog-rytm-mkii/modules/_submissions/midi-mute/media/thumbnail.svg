@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="192" viewBox="0 0 320 192" class="signal-art" fill="none" stroke-linecap="round" stroke-linejoin="round" role="img" aria-labelledby="title description">
+<title id="title">MIDI MUTE</title>
+<desc id="description">MIDI notes arrive over USB and DIN and fan out to three tracks. The muted track BD stops them at its mute; SD and CH play. Original conceptual illustration, not an instrument screen or a measured result.</desc>
+<style>.signal-grid{stroke:#fff;opacity:.035;stroke-width:.7}.signal-main{stroke:#9eb4ed;stroke-width:2.7}.signal-secondary{stroke:#9eb4ed;opacity:.65;stroke-width:1.7}.signal-ghost{stroke:#9eb4ed;opacity:.2;stroke-width:1.3}.signal-dot{fill:#9eb4ed;stroke:none}.signal-art text{fill:#9eb4ed;opacity:.8;font:10px monospace;letter-spacing:.7px;stroke:none}</style>
+<rect width="320" height="192" fill="#232328"/>
+<g class="signal-grid"><path d="M20 52H300"/><path d="M20 97H300"/><path d="M20 142H300"/><path d="M64 33V163"/><path d="M128 33V163"/><path d="M192 33V163"/><path d="M256 33V163"/></g>
+<g>
+<text x="28" y="44">MIDI IN</text>
+<circle class="signal-dot" cx="32" cy="97" r="3.5"/><circle class="signal-dot" cx="46" cy="97" r="3.5"/><circle class="signal-dot" cx="60" cy="97" r="3.5"/>
+<path class="signal-main" d="M70 97H96"/>
+<path class="signal-main" d="M96 97C112 97 112 62 128 62H196"/>
+<path class="signal-main" d="M96 97H272"/>
+<path class="signal-main" d="M96 97C112 97 112 132 128 132H272"/>
+<text x="132" y="54">BD</text><text x="132" y="89">SD</text><text x="132" y="124">CH</text>
+<rect class="signal-main" x="196" y="53" width="18" height="18" rx="2"/>
+<path class="signal-secondary" d="M200 57L210 67M210 57L200 67"/>
+<path class="signal-ghost" d="M214 62H272" stroke-dasharray="3 5"/>
+<text x="292" y="54" text-anchor="end">MUTED</text>
+<circle class="signal-dot" cx="276" cy="97" r="4"/><circle class="signal-dot" cx="276" cy="132" r="4"/>
+<text x="292" y="89" text-anchor="end">PLAY</text>
+<text x="28" y="176">USB + DIN</text>
+</g>
+</svg>
