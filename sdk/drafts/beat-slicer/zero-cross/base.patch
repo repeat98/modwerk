@@ -236,7 +236,7 @@ index 49703539..9c8f8ae0 100644
 +            } else why=publish_edit(e);
 @@ -231 +252 @@ void mw_sample_editor_cancel(struct mw_sample_editor *e,uint32_t token)
 -    if(token && token==e->serial)e->state=MW_SAMPLE_CLOSED;
-+    if(token && token==e->serial){e->state=MW_SAMPLE_CLOSED;e->completion=MODWERK_SAMPLE_NO_CHANGE;}
++    if(token && token==e->serial && e->state!=MW_SAMPLE_CLOSED){e->state=MW_SAMPLE_CLOSED;e->completion=MODWERK_SAMPLE_NO_CHANGE;}
 @@ -233,0 +255,33 @@ void mw_sample_editor_cancel(struct mw_sample_editor *e,uint32_t token)
 +static int read_pair(void *context,uint32_t position,int32_t *left,int32_t *right)
 +{
@@ -465,9 +465,9 @@ index a5afb17c..40f002ac 100644
 +static const struct mw_sample_backend analysis_backend={0,lock,unlock,ready,owner,capture,publish,read_pair};
 @@ -111,0 +121 @@ static void reset(void)
 +    analysis_token=analysis_reads=analysis_posts=analysis_failure=0;
-@@ -204 +214,21 @@ int main(void)
+@@ -204 +214,23 @@ int main(void)
 -    puts("PASS: actual menu selection, prompt ownership, busy confirmation, cancellation and orphan cleanup");
-+    for(unsigned action=0;action<7;++action) {
++    for(unsigned action=0;action<8;++action) {
 +        reset();source.channels=3;open_menu(6);CHECK(!select_grid());
 +        mw_sample_editor.backend=&analysis_backend;
 +        struct modwerk_sample_grid grid={2,{0,22050}};
@@ -481,11 +481,13 @@ index a5afb17c..40f002ac 100644
 +        if(action==4){window_flags=32;window_callback=0x12345678;}
 +        if(action==5)mw_sample_editor_changed_locked(&mw_sample_editor);
 +        if(action==6)analysis_failure=1;
-+        if(!action || action==6)(void)mw_sample_editor_analyze_step(&mw_sample_editor);
++        if(action==7)mw_sample_editor.snap.reads=MW_SNAP_READ_LIMIT;
++        if(!action || action==6 || action==7)(void)mw_sample_editor_analyze_step(&mw_sample_editor);
 +        mw_sample_ui_tick();CHECK(!analysis_token && !question_active && !bad && !held);
-+        if(!action)CHECK(writes==1 && refreshes==1 && analysis_reads==2);
++        if(!action)CHECK(writes==1 && refreshes==1 && analysis_reads==2 && mw_sample_editor.completion==MODWERK_SAMPLE_APPLIED);
 +        else CHECK(!writes && (action!=4 || (window_flags==32 && window_callback==0x12345678)));
-+        if(action==6)CHECK(!strcmp(notice,"SNAP FAILED"));
++        if(action==6)CHECK(!strcmp(notice,"SNAP FAILED") && mw_sample_editor.completion==MODWERK_SAMPLE_ANALYSIS_FAILED);
++        if(action==7)CHECK(!strcmp(notice,"SNAP LIMIT") && mw_sample_editor.completion==MODWERK_SAMPLE_ANALYSIS_LIMIT);
 +    }
 +    puts("PASS: actual menu selection, prompt ownership, busy confirmation, cancellation, bounded analysis UI and orphan cleanup");
 diff --git a/sdk/machines/octatrack/module-adapters/test_sample_editor_service.c b/sdk/machines/octatrack/module-adapters/test_sample_editor_service.c
@@ -500,7 +502,7 @@ new file mode 100644
 index 00000000..6a917c7b
 --- /dev/null
 +++ b/sdk/machines/octatrack/module-adapters/test_sample_editor_snap.c
-@@ -0,0 +1,114 @@
+@@ -0,0 +1,116 @@
 +/* SPDX-License-Identifier: MIT
 + * Exercises the actual service and search state machine, with an authored
 + * pair reader. Native reader/stock parity is qualified separately.
@@ -608,6 +610,8 @@ index 00000000..6a917c7b
 +    CHECK(mw_sample_editor_replace_options(&editor,token,&grid,1)==MODWERK_SAMPLE_CONFIRMING);
 +    CHECK(mw_sample_editor_answer(&editor,token,1)==MODWERK_SAMPLE_ANALYZING);
 +    CHECK(drain()==MODWERK_SAMPLE_ANALYSIS_LIMIT && reads==MW_SNAP_READ_LIMIT && !publishes && !bad);
++    mw_sample_editor_cancel(&editor,token);
++    CHECK(editor.completion==MODWERK_SAMPLE_ANALYSIS_LIMIT && editor.state==MW_SAMPLE_CLOSED);
 +    return 0;
 +}
 +int main(void)

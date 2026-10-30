@@ -85,6 +85,7 @@ def snapshot(session, symbols, expected_identity):
     editor = session.memory(symbols['mw_sample_editor'], offsets[4])
     editor_fields = [struct.unpack_from('>I', editor, offset)[0] for offset in offsets[:4]]
     return {'schema': 1, 'capturedAtUnix': time.time(), 'baseIdentity': base, 'kind': kind, 'slot': slot,
+            'arenaBase': symbols['arena_base'],
             'frames': c[4], 'format': c[0], 'trimStart': s[75], 'trimEnd': s[76], 'loop': s[77],
             'sampleBpm24': s[69], 'projectBpm24': session.word(0x80001814), 'selection': selection_before,
             'count': s[273], 'records': records, 'controls': list(c),
@@ -110,6 +111,9 @@ def verify_flex_pcm(session, result, folder, case_id):
     if result['kind'] != 1 or result['slot'] >= 128:
         raise RuntimeError('Full PCM verification supports file-backed Flex only')
     slot, controls = result['slot'], result['controls']
+    arena = result['arenaBase']
+    if not isinstance(arena, int) or not 0x40a955e0 <= arena < 0x46000000:
+        raise RuntimeError('Invalid running-base sample arena binding')
     bits = 16 if controls[0] & 2 else 24
     channels = 2 if controls[0] & 1 else 1
     if (bits, channels, result['frames']) != (entry['bits'], entry['channels'], entry['frames']):
@@ -126,13 +130,16 @@ def verify_flex_pcm(session, result, folder, case_id):
         raise RuntimeError('Invalid owned Flex page extent')
     raw_pages = session.memory(pages_at + 2 * offset, 2 * needed)
     pages = struct.unpack('>' + 'H' * needed, raw_pages)
-    if len(set(pages)) != needed or any(p >= 14602 for p in pages):
+    if len(set(pages)) != needed or any(p >= total for p in pages):
         raise RuntimeError('Invalid/aliased physical Flex pages')
     digest = hashlib.sha256()
     remaining = entry['frames'] * width
     for page in pages:
         count = min(6144, remaining)
-        digest.update(session.memory(0x40a955e0 + page * 6144, count))
+        at = arena + page * 6144
+        if at + count > 0x46c2e580:
+            raise RuntimeError('Physical Flex page exceeds the sample-pool bound')
+        digest.update(session.memory(at, count))
         remaining -= count
     decoded, _, _ = prepare_pack.read_wav(path)
     expected = hashlib.sha256()

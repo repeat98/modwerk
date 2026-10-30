@@ -1,7 +1,7 @@
 {
   "module": "beat-slicer",
   "version": "0.1.68-experimental",
-  "status": "private zero-crossing candidate; hardware not tested",
+  "status": "Private unchanged module; partial MKII evidence on the measurement base only",
   "toolchainImage": "sha256:da70d46e10b243277fa3ae2e015f7258d56b3ee08ca4be47e61899958872e792",
   "packageSha256": "195d2b46e2620bd15118478aa02d626d6d803692e02c40db4f45a67f6927b643",
   "packageBytes": 5332,
@@ -22,5 +22,6 @@
   },
   "basePatchSha256": "d57b32ac9eae32e16f1549cf83f467f791f12876a38104871546a337aa7e1369",
   "sharedApi": "optional ABI-1 tail; legacy prefix and sizeof unchanged",
-  "hardware": "not tested; private base required for SNAP ON"
+  "hardware": "Partial measurement-base trial; hardware/HARDWARE_2026-10-30.md. Current base completion fix is not rebuilt or device-tested.",
+  "basePatchScope": "Recorded compilation used basePatchSha256 below; current base.patch contains a later service-only completion fix requiring a new base build."
 }

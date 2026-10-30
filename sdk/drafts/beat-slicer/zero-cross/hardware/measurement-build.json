@@ -15,7 +15,7 @@
     ],
     "imageSha256": "b3026b173ed64aa22e1414a38e322ee79a7a3fafc5b7e81b74f323573f46a212"
   },
-  "status": "Private measurement build; hardware and full-OS boot not tested",
+  "status": "Private measurement build; partial MKII trial recorded in HARDWARE_2026-10-30.md; not release qualification",
   "sourceCommit": "499182241b7c490a00dc7acada7944b0bdbf7f93",
   "upstreamMain": "1bbc8b46",
   "toolchainImage": "sha256:da70d46e10b243277fa3ae2e015f7258d56b3ee08ca4be47e61899958872e792",
@@ -30,6 +30,8 @@
   "baseEditorAndModuleSetTests": "passed",
   "moduleReproduction": "passed; unchanged 0.1.68 package",
   "offlinePcmComparisons": 174,
-  "deviceOperations": "none",
-  "firmwareCommitted": false
+  "deviceOperations": "RAM boot and two module-only trials; Undo verified, original base/set/19 modules restored after owner power cycle; no Keep/flash/save",
+  "firmwareCommitted": false,
+  "hardwareEvidence": "HARDWARE_2026-10-30.md",
+  "sourceScope": "This immutable tested build predates the local completion-preservation fix; current base.patch is not rebuilt or device-tested"
 }

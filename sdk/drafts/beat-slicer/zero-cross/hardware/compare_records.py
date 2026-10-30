@@ -29,8 +29,8 @@ def compare(folder, before, after, case_id, snap, selection, cancelled=False):
     expected = entry['snapOn'][selection] if snap == 'ON' else {'outcome': 'APPLIED', 'records': entry['recordsOff']}
     if cancelled:
         expected = {'outcome': 'CANCELLED', 'records': None}
-    if after['editorState'] == 3:
-        raise ValueError('Analysis is still running; unchanged markers are not a completed result')
+    if after['editorState'] != 0:
+        raise ValueError('Editor is still open, prompting or analyzing; this is not a completed result')
     if not cancelled:
         replies = {'APPLIED': (7, 8), 'ANALYSIS_LIMIT': (12,), 'ANALYSIS_FAILED': (11,)}
         if after['completion'] not in replies[expected['outcome']]:

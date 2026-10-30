@@ -3,7 +3,10 @@
 Module SHA-256: `195d2b46e2620bd15118478aa02d626d6d803692e02c40db4f45a67f6927b643`.
 Private base identity: `852856cdb93a672cfd9060a120edd15fc17da4269d3bd119228881ab9c0adcc6`.
 MAIN SHA-256: `848f9860e71914f08d206156d261c1b15aa79348bda78c31bcfa11fab2155add`.
-Hardware and full-OS emulator boot: **not tested**.
+Uninstrumented hardware and full-OS emulator boot: **not tested**.
+The separate measurement base has partial MKII evidence in
+[the 30 October hardware record](hardware/HARDWARE_2026-10-30.md). The subsequent
+local completion-status fix is software-tested only; its base is not yet built.
 
 ## Observed software checks
 
@@ -71,9 +74,11 @@ Results on it do not qualify the uninstrumented candidate named above.
 
 [hardware/README.md](hardware/README.md) describes the WAVs, baseline/export,
 guarded captures, full Flex PCM verification, exact record comparison and
-recovery. The review matrix's 696 rows remain **not tested**. No unit or
-emulator was opened; readiness, verified file staging, fresh original-set
-baseline and recovery checks remain prerequisites to the later RAM trial.
+recovery. A focused subset was tested on the MKII after verified file staging
+and a fresh original-set baseline; the review matrix's 696 rows were not
+completed. The hardware record distinguishes passing marker comparisons from
+the failed limit-status check and documents restoration of the original base
+and 19 modules. No whole-OS emulator boot was performed.
 
 ## Exact-build hardware plan
 
@@ -110,5 +115,6 @@ verified rollback, and use RAM only. Do not save the owner's current project.
    after RAM boot, recover by power cycle before another attempt. MKI
    qualification and publication remain pending unless separately observed.
 
-No device connection, RAM boot, Keep, flash, project/sample save or modification
-of the original module set was performed in this implementation session.
+The original implementation/preparation made no device changes. The subsequent
+hardware batch used a RAM boot and temporary module trials, then Undo and an
+owner power cycle; no Keep, flash or project/sample save was performed.

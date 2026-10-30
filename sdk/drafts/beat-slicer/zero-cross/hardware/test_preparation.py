@@ -61,7 +61,7 @@ class Preparation(unittest.TestCase):
             wrong['records'][1][field] ^= 1
             with self.assertRaises(ValueError):
                 compare_records.compare(self.folder, before, wrong, entry['id'], 'ON', 'BOTH')
-        for field, value in (('editorState', 3), ('completion', 12), ('pairReads', 0), ('slot', 2), ('format', 3)):
+        for field, value in (('editorState', 1), ('editorState', 2), ('editorState', 3), ('completion', 12), ('pairReads', 0), ('slot', 2), ('format', 3)):
             wrong = copy.deepcopy(after)
             wrong[field] = value
             with self.assertRaises(ValueError):
@@ -100,7 +100,7 @@ class Preparation(unittest.TestCase):
         session = Fixture()
         symbols = {'modwerk_base_digest': 0x40001000, 'mw_sample_test_offsets': 0x40002000,
                    'mw_sample_editor': 0x40003000, 'mw_sample_scan_cost': 0x40004000,
-                   'mw_sample_writer_cost': 0x40005000}
+                   'mw_sample_writer_cost': 0x40005000, 'arena_base': 0x41002000}
         session.ranges[symbols['modwerk_base_digest']] = bytes(range(32))
         session.ranges[0x46c8d19c] = struct.pack('>2I', 0, 1)
         session.ranges[0x400ceb38] = struct.pack('>I', 2)
@@ -136,12 +136,13 @@ class Preparation(unittest.TestCase):
         decoded, _, _ = prepare_pack.read_wav(path)
         raw = b''.join(v.to_bytes(3, 'big', signed=True) for frame in zip(*decoded) for v in frame)
         controls = [1, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0]
-        result = {'kind': 1, 'slot': 0, 'frames': 4, 'controls': controls}
+        arena = 0x41002000  # A relocated base: a stock-address read must fail.
+        result = {'kind': 1, 'slot': 0, 'frames': 4, 'controls': controls, 'arenaBase': arena}
         class Fixture(capture.Session):
             def __init__(self):
                 self.ranges = {0x80006914: struct.pack('>4I', 0x46c2e9c0, 0x46c2e580, 1, 14602),
                                0x46c2e580: struct.pack('>I', 0), 0x46c75e88: struct.pack('>H', 1),
-                               0x46c2e9c0: struct.pack('>H', 5), 0x40a955e0 + 5 * 6144: raw,
+                               0x46c2e9c0: struct.pack('>H', 5), arena + 5 * 6144: raw,
                                0x46c922c4: struct.pack('>11I', *controls), 0x46c8d19c: struct.pack('>2I', 0, 1)}
             def memory(self, at, length):
                 for begin, data in self.ranges.items():
@@ -150,7 +151,7 @@ class Preparation(unittest.TestCase):
                 raise ValueError('Unexpected test read')
         session = Fixture()
         self.assertTrue(capture.verify_flex_pcm(session, result, folder, 'tiny')['fileIdentity']['fullDecodedPcmMatches'])
-        session.ranges[0x40a955e0 + 5 * 6144] = b'\0' * len(raw)
+        session.ranges[arena + 5 * 6144] = b'\0' * len(raw)
         with self.assertRaises(RuntimeError):
             capture.verify_flex_pcm(session, result, folder, 'tiny')
 
