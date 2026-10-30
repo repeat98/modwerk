@@ -17,28 +17,18 @@ export interface BaseImage { buffer: ArrayBuffer; sha256: string; base: string }
 /** The release prompt holds this long before it can be put off. */
 const LAUNCH_HOLD_SECONDS = 10
 /** The update over USB in three stages and one restart (owner, 25 October 2026), told before it starts and tracked
- * while it runs. With one copy of the base the unit starts the new one from RAM, which saves itself and keeps the old
- * one as the fallback; on two slots the running base saves the new one into its spare slot, then the unit restarts. */
-const USB_STAGES = {
-  one: [
-    ['Send', 'The new base goes over USB.'],
-    ['Restart', 'The Octatrack starts the new base. Nothing is saved yet.'],
-    ['Save', 'It saves the new base and keeps your current one as a fallback.'],
-  ],
-  two: [
-    ['Send', 'The new base goes over USB.'],
-    ['Save', 'It saves the new base next to your current one, which stays as a fallback.'],
-    ['Restart', 'The Octatrack restarts on the new base.'],
-  ],
-} as const
+ * while it runs: the unit starts the new base from RAM, which saves itself and keeps the old one as the fallback, on
+ * two slots as well (octatrack-link.ts updateBase). */
+const USB_STAGES = [
+  ['Send', 'The new base goes over USB.'],
+  ['Restart', 'The Octatrack starts the new base. Nothing is saved yet.'],
+  ['Save', 'It saves the new base and keeps your current one as a fallback.'],
+] as const
 /** Folded away below the update: what to do when it goes wrong, the beta's recovery notice included. */
 const USB_RECOVERY = 'If the Octatrack doesn’t start after the update, switch it off and on: after two starts that fail, it goes back to your current base by itself. A save cut off by a power cut or the cable leaves your current base in place. As a last resort, Elektron’s startup menu installs the original OS: hold FUNC while switching on, choose MIDI UPGRADE and send the original OS 1.40C .syx through a MIDI interface.'
-type UsbOrder = keyof typeof USB_STAGES
-/** Which of the stages a step the link reports (updateBase) belongs to; 3 once done. On two slots the container is
- * sent while 'writing' (its fraction), then written. */
-function stageOf(order: UsbOrder, step: BaseUpdateStep, fraction?: number): number {
+/** Which of the stages a step the link reports (updateBase) belongs to; 3 once done. */
+function stageOf(step: BaseUpdateStep): number {
   if (step === 'done') return 3
-  if (order === 'two') return step === 'restarting' ? 2 : step === 'staging' || step === 'writing' && fraction !== undefined && fraction < 1 ? 0 : 1
   return step === 'staging' ? 0 : step === 'starting' ? 1 : 2
 }
 /** What is happening, as the link reports it. */
@@ -103,9 +93,9 @@ export function BaseInstallDialog({ link, launch = false, layout, firmwareReady,
   // The current base in another USB Audio layout: the same update over USB, to the variant the module set needs.
   // Both are read from the unit until an update over USB starts, then kept: mid-update the unit runs the new base,
   // which would turn the dialog into the first install's.
-  const live = { older: !pending && unitForPrompt(state) === 'older', switching: !pending && layout !== undefined && isPublishedBase(state.identity?.base) && baseLayout(state.identity?.base) !== layout, from: state.identity?.base, order: (state.slots?.layout === 'two' ? 'two' : 'one') as UsbOrder }
+  const live = { older: !pending && unitForPrompt(state) === 'older', switching: !pending && layout !== undefined && isPublishedBase(state.identity?.base) && baseLayout(state.identity?.base) !== layout, from: state.identity?.base }
   const [began, setBegan] = useState(live)
-  const { older, switching, from, order } = usb ? began : live, running = baseLayout(from), usbStages = USB_STAGES[order]
+  const { older, switching, from } = usb ? began : live, running = baseLayout(from), usbStages = USB_STAGES
   // Over USB from any older base (every base RAM-boots the new one, which writes itself: flash.c); the card stays for
   // the first install and as the fallback after an error.
   const overUsb = stage === 'download' && !card && (usb !== null || older || switching)
@@ -140,7 +130,7 @@ export function BaseInstallDialog({ link, launch = false, layout, firmwareReady,
     let at = 0
     try {
       const image = await buildBase!(layout)
-      await link.updateBase(new Uint8Array(image.buffer), image.base, (step, fraction) => { at = stageOf(live.order, step, fraction); setUsb({ step, fraction }) })
+      await link.updateBase(new Uint8Array(image.buffer), image.base, (step, fraction) => { at = stageOf(step); setUsb({ step, fraction }) })
       setUsb({ step: 'done' }) // the user closes it with Continue, so the end of the update is seen
     } catch (error) {
       console.error(error)
@@ -179,11 +169,9 @@ export function BaseInstallDialog({ link, launch = false, layout, firmwareReady,
       // One row of the three stages, the same before, during and after, so the window never changes its layout: what
       // will happen, then where it is, then where it stopped.
       const step = usb && 'step' in usb ? usb : undefined, failed = usb && 'error' in usb ? usb : undefined
-      const at = step ? stageOf(order, step.step, step.fraction) : failed ? failed.at : -1
+      const at = step ? stageOf(step.step) : failed ? failed.at : -1
       const sending = step?.fraction !== undefined && step.fraction < 1
       const save = usbStages.findIndex(([title]) => title === 'Save')
-      // On two slots the container goes over while 'writing': it is said as the send it is.
-      const said = step && (order === 'two' && step.step === 'writing' && sending ? 'staging' : step.step)
       return <>
         <h3 id="base-stage-title" data-stage-title tabIndex={-1}>Update over USB</h3>
         {!usb && <p>It takes a minute or two{layout ? <>, with {layoutName(layout)}</> : ''}. Your Octatrack restarts once.</p>}
@@ -198,7 +186,7 @@ export function BaseInstallDialog({ link, launch = false, layout, firmwareReady,
         })}</ol>
         {step && <>
           {/* While it saves, the line is the warning itself. */}
-          <p className={usbStages[at]?.[0] === 'Save' ? 'base-install-warning' : step.step === 'done' ? 'success-note' : 'base-install-note'} role="status">{updating && <span className="status-dot is-updating" />}{USB_STEPS[said!]}{sending ? ` (${Math.round(100 * step.fraction!)} %)` : ''}{step.step === 'done' ? '' : '…'}</p>
+          <p className={usbStages[at]?.[0] === 'Save' ? 'base-install-warning' : step.step === 'done' ? 'success-note' : 'base-install-note'} role="status">{updating && <span className="status-dot is-updating" />}{USB_STEPS[step.step]}{sending ? ` (${Math.round(100 * step.fraction!)} %)` : ''}{step.step === 'done' ? '' : '…'}</p>
           {updating && <p className="link-hint">Keep this page open until it says Done.</p>}
         </>}
         {failed && <div className="file-error base-update-error" role="alert">
