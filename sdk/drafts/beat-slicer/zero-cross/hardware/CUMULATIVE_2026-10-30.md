@@ -90,7 +90,8 @@ clients retain the trial without a host deadline; the Mac and USB connection
 must remain available. No Keep, flash, explicit Part/project/sample save or
 upstream push was performed.
 
-This trial has not been Undone or reboot-restored. Its full-set Undo is
+At the initial handoff this trial had not been Undone or reboot-restored.
+It was later ended by owner power cycle, as recorded below. Its full-set Undo is
 untested; the previous build's failed Undo is not resolved by this feature
 carry-forward. Ending by owner power cycle returns to the original flashed
 base and saved modules, which should then be verified again before another load.
@@ -107,3 +108,22 @@ to keep this exact trial loaded while pushing the update. This is reported
 general trial feedback, not completion of the remaining qualification cases.
 Preparing or submitting the update does not authorize a replacement RAM load,
 Keep, flash, automatic publication or a claim that the failed Undo passed.
+
+## End of test
+
+The owner ended the trial on 30 October and reported that everything worked as
+intended. This is the owner's general on-device report; it does not establish
+results for individually unspecified qualification cases. Before shutdown, USB
+still confirmed the cumulative base and all 19 modules, with transport stopped.
+
+Because the prior full-set Undo stalled, this trial was ended by owner power
+cycle without starting another Undo. The monitoring client was stopped, while
+the owned USB link remained available for restoration checks. After the owner's
+restart, the original flashed base, exact active-set identity and all 19 module
+IDs/layouts/names matched the original baseline. The owned USB supervisor, server
+and bridge then exited and released the connection. The private end receipt is
+`test-end.json`, with `end-restored-original/baseline.json` in the trial folder.
+
+No Keep, flash or explicit Part/project/sample save was issued by the agent.
+The test is ended and the device is back on its original saved module set.
+Restoration by restart passed; cumulative-build full-set Undo remains untested.

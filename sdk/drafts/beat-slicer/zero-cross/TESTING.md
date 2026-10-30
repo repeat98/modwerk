@@ -21,7 +21,10 @@ pins base `20ed7910…`, MAIN `8ede9cf9…` (1,306,295 bytes) and the unchanged
 5,332-byte module. [The cumulative hardware record](hardware/CUMULATIVE_2026-10-30.md)
 observes the stock-first cycle, both switching directions, held FUNC/repeated
 AED, retained SNAP ON and unchanged source/markers/Parts, plus a passed 19-module
-self-test. The trial was left running without a host deadline. No new alignment
+self-test. The trial was left running without a host deadline, then ended at the
+owner’s request by power cycle. Original-base/set/all-19 restoration was verified
+and the owned USB link released; the owner reported everything worked as
+intended. This remains general reported feedback. No new alignment
 was applied in this control check; earlier alignment evidence remains scoped to
 its own base. The previous build's full-set Undo failed and required an owner
 power cycle; the cumulative build's Undo is untested.

@@ -43,5 +43,10 @@
   "shortcutHardware": "Passed: first stock, repeated stock/Beat cycles, held FUNC/AED retaps, NO then stock-first; SNAP ON retained",
   "nonMutatingCheck": "All source/settings/64 marker rows unchanged; zero PCM search reads; both Part copies unchanged from post-RAM baseline",
   "selftest": "Passed: 19/19 intact; 7/7 DSP effects ran together; longest observed frame 388 us",
-  "qualification": "Partial: no alignment applied in this cumulative-build control test; full-set Undo, exact-build alignment, broader audio/concurrency/24-bit and uninstrumented/MKI qualification remain pending"
+  "qualification": "Partial: no alignment applied in this cumulative-build control test; full-set Undo, exact-build alignment, broader audio/concurrency/24-bit and uninstrumented/MKI qualification remain pending",
+  "testEndedAt": "2026-10-30T11:00:22.430593+00:00",
+  "endMethod": "Owner power cycle; full-set Undo not exercised",
+  "restorationAtEnd": "Verified original base, exact active set and all 19 module IDs/layouts/names against baseline",
+  "usbReleasedAtEnd": true,
+  "ownerReportedOutcome": "everything works as intended; general reported manual-test feedback only"
 }
