@@ -168,7 +168,7 @@
     "report": "TESTING.md",
     "summary": "fxhost only (the vendored dsp56kEmu with the module alone, no firmware): MIX 0 returns the dry bit for bit from garbage state and with trig splits in every MODE; nothing outside the audio, state and parameter words is written; init keeps r1; silence stays silent and a burst decays to digital silence in AM, USB and LSB; the whistle sits within 0.3 % of its pitch and holds its level; the SSB shift lands within 0.03 % of 500 (k/127)^2 Hz, up in USB and down in LSB, with the other sideband at least 50.5 dB down over 300 Hz-3 kHz, unity gain and a renormalised oscillator; FADE, NOIS, CRAK and BAND act; MIX and MODE glide; 307 instructions a sample at the dearest settings. fx:audit at DRIV 0 passes but for a full-scale 9.1 kHz tone (-50 dBc) in AM and in USB in tune; at DRIV 127 the overload aliases (TESTING.md). Not run in a built image, under the ColdFire port or on a unit.",
     "hardwareStatus": "untested",
-    "evidenceRevision": "69b18fb607234ab5bcfac85b4066994bb1a6813f",
+    "evidenceRevision": "a5ebcba49d91a327dc45678232c366c1b02b83ad",
     "gates": [
       "modules/shortwave/verify.py"
     ]
@@ -191,7 +191,7 @@
   },
   "source": {
     "repository": "https://github.com/semierendonmez-commits/modwerk-semi",
-    "revision": "69b18fb607234ab5bcfac85b4066994bb1a6813f",
+    "revision": "a5ebcba49d91a327dc45678232c366c1b02b83ad",
     "path": "sdk/drafts/shortwave"
   }
 }
