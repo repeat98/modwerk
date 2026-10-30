@@ -140,6 +140,13 @@ After a navigation timeout, stop sending test gestures and inspect held-key rows
 was observed with FUNC absent from those rows; row readback alone does not
 establish that stock's modifier state is clear.
 
+The development input helper currently splices remote packets into the physical
+panel's byte stream. A no-module emulator on base `20ed7910…` reproduced held
+TRIG5–7 and a lost FUNC release when a USB KEY arrived between a fader report's
+two bytes. Serialize input at complete physical-report boundaries before using
+concurrent physical movement and remote injection for qualification; a still
+slider does not clear a fault left by an earlier attempt.
+
 - **Effects.** FUNC+FX1/FX2 opens the chooser (the left list; its right side are the effect's setup knobs).
   Moving the cursor does not pick; YES does. NO closes. LEVEL scrolls. `pick:` does all of it.
 - **Parts.** Holding PART shows the selector: UP Part 1, RIGHT 2, DOWN 3, LEFT 4. A switch also assigns that Part to the

@@ -4,6 +4,8 @@
 exposed an unresolved input/modifier fault and unintended SAMPLE changes.
 Recovery, Undo and return to the original flashed base were verified. Isolate
 the fault before continuing beta qualification; see [MKII_HIGH_LOAD.md](MKII_HIGH_LOAD.md).
+The follow-up reproduced an independent USB input-framing bug with no modules
+installed. Input serialization and a fresh hardware rerun remain outstanding.
 
 Partially performed on 31 October 2026: unchanged candidate `3e13c46f…`
 ran 43 native operations on RAM development base `20ed7910…`; a separate probe

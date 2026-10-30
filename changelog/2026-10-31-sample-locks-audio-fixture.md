@@ -14,3 +14,7 @@ sampler-recording refusal and additional maximum edits under USB recording.
 Higher-load qualification failed after an unresolved input/modifier fault and
 unintended SAMPLE changes; recovery and return to the original base were verified.
 Raw device data stays private.
+
+A no-module emulator follow-up reproduces held trigs and lost FUNC release when
+remote USB input splits a physical fader report. This isolates a development
+input-path bug; its fix and a fresh hardware qualification run remain outstanding.

@@ -102,10 +102,10 @@ input/data failure or establish correct panel behavior.
 ## Recovery and outcome
 
 **Higher-load qualification failed.** Advancing audio/UI counters and zero DSP
-errors were insufficient to establish responsive physical controls. Before
-another qualification run, isolate the input/modifier fault using controlled
-inputs and a baseline without Sample Locks; do not attribute it to the module
-or dismiss it as a harness problem without that comparison.
+errors were insufficient to establish responsive physical controls. The later
+no-module comparison below confirms an independent input-path bug. Safe input
+serialization and a fresh hardware run are required before further qualification;
+the failed trial remains recorded.
 
 Undo restored the original empty module inventory, normal active/set identities
 and all three original opener sites. Working/saved Part hashes were preserved.
@@ -113,6 +113,42 @@ The author power-cycled without saving; readback verified original flashed
 public base `2aa35c39…`, empty inventory, the original set identity and advancing
 DSP frames. Stopped fixture state after restart is author-reported. USB was
 released. No project Save, Keep, flash or push occurred.
+
+## Input-path isolation follow-up
+
+A separate emulator ran the **same development base with an empty module
+inventory verified over USB**. DSP execution was disabled for this UI/input
+experiment. Complete physical fader reports followed by remote FUNC press/release
+left all held rows and stock's FUNC state clear.
+
+Splitting a physical fader report around an actual USB development KEY request
+reproduced two failures without Sample Locks:
+
+- Inserting FUNC down between the fader header and value 112 left TRIG5–7 held,
+  exactly matching the hardware's held-row readback. Releasing FUNC did not clear
+  those unintended trigs.
+- Starting with FUNC held normally, inserting its release between the fader
+  report's bytes lost that release: both the held row and stock key state kept
+  FUNC down.
+
+The development helper inserts a complete remote packet into the same byte
+stream that receives physical reports, without ensuring a physical packet has
+finished. Masking interrupts around its two writes does not repair a report
+whose first byte has already arrived. This is a confirmed input-path bug
+independent of any installed module, and a strong explanation for the hardware
+signature. Attribution of every unintended hardware edit remains unproven.
+
+The deliberate split establishes the mechanism, not its physical occurrence
+rate. The model did not advance transport with DSP disabled, so this experiment
+does not claim a successful STOP or reproduce the exact paste message. No
+firmware code was patched. A single-byte arrival was constructed in the paused
+UART model by dropping a dummy prefix before the firmware received it.
+
+See the [isolation receipt](evidence/input-isolation-emulator-20261031.json).
+The next required change is safe serialization of remote input at complete
+physical report boundaries, with these cases as regressions. A fresh hardware
+run is still required; this finding does not turn the earlier failed trial into
+a clean pass. Sample Locks runtime remains unchanged.
 
 ## Limits
 

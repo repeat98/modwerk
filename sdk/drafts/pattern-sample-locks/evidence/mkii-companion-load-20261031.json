@@ -1494,7 +1494,17 @@
       "allFourPatternsComparedAndRestored": true,
       "workingAndSavedPartsHashesPreserved": true
     },
-    "qualificationConsequence": "Higher-load run failed. Successful individual edits and continuous audio do not qualify responsive controls or CPU saturation."
+    "qualificationConsequence": "Higher-load run failed. Successful individual edits and continuous audio do not qualify responsive controls or CPU saturation.",
+    "isolationFollowup": {
+      "hardware": false,
+      "moduleInventory": [],
+      "sameDevelopmentBase": true,
+      "dspEnabled": false,
+      "confirmed": "USB development KEY interleaving with a split physical fader report reproduced TRIG5-7 held and lost FUNC release.",
+      "scope": "Independent input-path bug confirmed. Strong explanation for hardware signature; every unintended hardware edit remains unattributed.",
+      "fixAndFreshHardwareRerun": "Outstanding",
+      "receipt": "input-isolation-emulator-20261031.json"
+    }
   },
   "fixedSliderAudio": {
     "run4-usb": {

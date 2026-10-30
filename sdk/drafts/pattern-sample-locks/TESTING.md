@@ -23,6 +23,12 @@ After the author's restart, the original public base and empty inventory were
 verified and USB released. See [method and limits](MKII_HIGH_LOAD.md) and the
 [receipt](evidence/mkii-companion-load-20261031.json). No push occurred.
 
+The subsequent no-module emulator baseline reproduced TRIG5–7 held and lost
+FUNC release by interleaving a USB development key with a split physical fader
+report. This confirms an independent development input-path bug and strongly
+explains the hardware signature; it does not qualify a fix or attribute every
+unintended edit. See the [isolation receipt](evidence/input-isolation-emulator-20261031.json).
+
 ## MKII automated audio/timing follow-up — 31 October 2026
 
 Unchanged candidate `3e13c46f…` passed 43 native operations on RAM development
