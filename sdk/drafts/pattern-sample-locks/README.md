@@ -8,6 +8,8 @@ Two Part Edit actions: **Lock Samples to Pattern** writes the Part's assigned sa
 
 **Private development prototype; full physical qualification is incomplete.** Use a backed-up disposable project for the supervised RAM trial in [DEVICE_TEST.md](DEVICE_TEST.md). Source prototype prepared for upstream owner review; publication remains unapproved.
 
+The latest [higher-load trial failed](MKII_HIGH_LOAD.md) with an unresolved input/modifier fault and unintended SAMPLE changes. Recovery and return to the original base were verified; this must be isolated before beta qualification continues.
+
 **The first beta is scoped to USB loading through the Modwerk base.** Card
 firmware is unsupported and must refuse this module. Card support is deferred;
 this scope was selected by the author and still needs first-release review.

@@ -10,6 +10,19 @@ Portable planner, UI and production native-writer sanitizer tests pass. The full
 
 Retired reports and obsolete captures are consolidated in [PROTOTYPE_HISTORY.md](PROTOTYPE_HISTORY.md); they do not qualify this version.
 
+## MKII companion-load follow-up — 31 October 2026
+
+The unchanged candidate ran beside TapeHead, E-Verb and Air Chorus with real FX
+assignments. The initial 32 maximum edits passed data, transport and USB-audio
+checks; sampler recording refused Apply without writes. Higher-load qualification
+**failed**: after 24 individually verified USB-recorded edits across interrupted
+attempts, physical STOP behaved as a paste gesture and A02 had six missing SAMPLE
+fields. The input/modifier fault and unintended edits remain unattributed. Recovery
+restored all four patterns, cleared held keys, stopped playback and verified Undo.
+After the author's restart, the original public base and empty inventory were
+verified and USB released. See [method and limits](MKII_HIGH_LOAD.md) and the
+[receipt](evidence/mkii-companion-load-20261031.json). No push occurred.
+
 ## MKII automated audio/timing follow-up — 31 October 2026
 
 Unchanged candidate `3e13c46f…` passed 43 native operations on RAM development

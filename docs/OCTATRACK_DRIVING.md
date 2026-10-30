@@ -132,6 +132,14 @@ establish whether live recording started or stopped.
 
 ## The panel, as it behaves
 
+For automated panel tests, a KEY reply confirms posted bytes, not the resulting
+stock action. Check the observed menu/transport transition and key release;
+advancing UI/DSP counters and zero DSP errors do not prove responsive controls.
+After a navigation timeout, stop sending test gestures and inspect held-key rows
+(`boot.c`'s `modwerk_post_key`) before retrying. A physical STOP acting as paste
+was observed with FUNC absent from those rows; row readback alone does not
+establish that stock's modifier state is clear.
+
 - **Effects.** FUNC+FX1/FX2 opens the chooser (the left list; its right side are the effect's setup knobs).
   Moving the cursor does not pick; YES does. NO closes. LEVEL scrolls. `pick:` does all of it.
 - **Parts.** Holding PART shows the selector: UP Part 1, RIGHT 2, DOWN 3, LEFT 4. A switch also assigns that Part to the

@@ -1,5 +1,10 @@
 # MKII candidate check
 
+**Higher-load qualification failed on 31 October 2026.** A companion/USB trial
+exposed an unresolved input/modifier fault and unintended SAMPLE changes.
+Recovery, Undo and return to the original flashed base were verified. Isolate
+the fault before continuing beta qualification; see [MKII_HIGH_LOAD.md](MKII_HIGH_LOAD.md).
+
 Partially performed on 31 October 2026: unchanged candidate `3e13c46f…`
 ran 43 native operations on RAM development base `20ed7910…`; a separate probe
 ran 46 timing operations. Audio, data and Undo checks passed within their stated
