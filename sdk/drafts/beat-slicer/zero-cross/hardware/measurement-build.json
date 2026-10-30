@@ -1,0 +1,35 @@
+{
+  "measurementBaseIdentity": "7fe69c80f6c04a0092fd82076c22865e2a52bf9fcab567f77cbca547e55f614a",
+  "measurementMainSha256": "b3026b173ed64aa22e1414a38e322ee79a7a3fafc5b7e81b74f323573f46a212",
+  "measurementMainBytes": 1305223,
+  "moduleSha256": "195d2b46e2620bd15118478aa02d626d6d803692e02c40db4f45a67f6927b643",
+  "manifestSha256": "133335d4e92961e3470f380e82c35853227331deaa466c2e40a524f67207dc05",
+  "wavCount": 58,
+  "nativeBinding": {
+    "identity": "7fe69c80f6c04a0092fd82076c22865e2a52bf9fcab567f77cbca547e55f614a",
+    "arena": 1089514976,
+    "pool": 1087554464,
+    "poolOrigins": [
+      1221776288,
+      1221788576
+    ],
+    "imageSha256": "b3026b173ed64aa22e1414a38e322ee79a7a3fafc5b7e81b74f323573f46a212"
+  },
+  "status": "Private measurement build; hardware and full-OS boot not tested",
+  "sourceCommit": "499182241b7c490a00dc7acada7944b0bdbf7f93",
+  "upstreamMain": "1bbc8b46",
+  "toolchainImage": "sha256:da70d46e10b243277fa3ae2e015f7258d56b3ee08ca4be47e61899958872e792",
+  "overlayScriptSha256": "721b372a6f35de61b6c05b67a3e822f4e592fcc62a19636e4a8e8ce01ede04fb",
+  "overlaySourceSha256": {
+    "sdk/machines/octatrack/module-adapters/sample_editor_board.c": "6d4625457b3cedb61e7653064a7ea63905779274e635f71180ac2c2ddfffdb07",
+    "sdk/machines/octatrack/elekloader/dev.c": "8a4bdcf685b6a36c8bea195846679ca045c524d3d06915c37dbf1d252e66bc02"
+  },
+  "ramBootLimit": 1310720,
+  "stockFreeScan": "passed",
+  "flashSafetyScan": "passed; never permission to flash",
+  "baseEditorAndModuleSetTests": "passed",
+  "moduleReproduction": "passed; unchanged 0.1.68 package",
+  "offlinePcmComparisons": 174,
+  "deviceOperations": "none",
+  "firmwareCommitted": false
+}

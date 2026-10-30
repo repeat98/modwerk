@@ -106,7 +106,12 @@ another one. No hardware command is run merely by preparing this pack.
 5. `capture.py --socket COMMAND_SOCKET --build BUILD --output NEW_JSON` reads
    the actual selected sample controls, complete settings, all 64 marker rows,
    editor completion and counters. It requires the matching measurement base.
-   It rejects changing reads. Two identical settled reads are not an atomic
+   Add `--pack PACK --case ID --verify-flex-pcm` before and after each ordinary
+   Flex fixture operation: the full decoded pool PCM must match the reviewed
+   WAV, including 24-bit low bits, with unchanged page/source bindings. This
+   supports normal file-backed Flex only; Static file identity uses the
+   verified card file and checked browser/source selection. It rejects changing
+   reads. Two identical settled reads are not an atomic
    snapshot or proof against arbitrary simultaneous writers; run race tests
    separately and inspect settled original tables after the race.
 6. `compare_records.py --pack PACK --before BEFORE --after AFTER --case ID
@@ -115,7 +120,7 @@ another one. No hardware command is run merely by preparing this pack.
    `--cancelled` requires the entire old table unchanged. Source-change tests
    must inspect the original source again after cancellation, not compare
    different selected sources as if they were one sample. Matching metadata
-   alone never proves which card file was loaded; keep the verified file/load
+   alone never proves which card file was loaded; keep the PCM/file/load
    log and source-binding checks with each result.
 7. Run additional BPM/spacing, recorder/concurrency, BUSY/read-failure, audible
    and disposable-save procedures from `../TESTING.md`; a WAV cannot create all

@@ -2,6 +2,7 @@
 """Offline preparation checks. No unit, bridge or emulator is opened."""
 import copy
 import importlib.util
+import json
 from pathlib import Path
 import struct
 import subprocess
@@ -122,6 +123,36 @@ class Preparation(unittest.TestCase):
         session.ranges[symbols['mw_sample_scan_cost']] = struct.pack('>6I', 3, 1, 132, 132, 132, 0)
         with self.assertRaises(RuntimeError):
             capture.snapshot(session, symbols, bytes(range(32)).hex())
+
+    def test_full_flex_pcm_check_rejects_wrong_samples(self):
+        folder = self.directory / 'tiny'
+        folder.mkdir()
+        pcm = [[-3072, 0, 3072, -3072], [3072, -3072, 0, 3072]]
+        path = folder / 'tiny.wav'
+        prepare_pack.write_wav(path, pcm, 24)
+        entry = {'id': 'tiny', 'file': 'tiny.wav', 'sha256': prepare_pack.sha(path),
+                 'frames': 4, 'channels': 2, 'bits': 24}
+        (folder / 'manifest.json').write_text(json.dumps({'files': [entry]}))
+        decoded, _, _ = prepare_pack.read_wav(path)
+        raw = b''.join(v.to_bytes(3, 'big', signed=True) for frame in zip(*decoded) for v in frame)
+        controls = [1, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0]
+        result = {'kind': 1, 'slot': 0, 'frames': 4, 'controls': controls}
+        class Fixture(capture.Session):
+            def __init__(self):
+                self.ranges = {0x80006914: struct.pack('>4I', 0x46c2e9c0, 0x46c2e580, 1, 14602),
+                               0x46c2e580: struct.pack('>I', 0), 0x46c75e88: struct.pack('>H', 1),
+                               0x46c2e9c0: struct.pack('>H', 5), 0x40a955e0 + 5 * 6144: raw,
+                               0x46c922c4: struct.pack('>11I', *controls), 0x46c8d19c: struct.pack('>2I', 0, 1)}
+            def memory(self, at, length):
+                for begin, data in self.ranges.items():
+                    if begin <= at and at + length <= begin + len(data):
+                        return data[at - begin:at - begin + length]
+                raise ValueError('Unexpected test read')
+        session = Fixture()
+        self.assertTrue(capture.verify_flex_pcm(session, result, folder, 'tiny')['fileIdentity']['fullDecodedPcmMatches'])
+        session.ranges[0x40a955e0 + 5 * 6144] = b'\0' * len(raw)
+        with self.assertRaises(RuntimeError):
+            capture.verify_flex_pcm(session, result, folder, 'tiny')
 
     def test_timing_overlay_and_counter_wrap(self):
         receipt = prepare_timing.overlay(self.source)

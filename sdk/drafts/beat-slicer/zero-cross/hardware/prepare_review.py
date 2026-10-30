@@ -2,6 +2,7 @@
 """Bind the reviewed WAV pack, unchanged module and measurement base; offline only."""
 import argparse
 import hashlib
+import importlib.util
 import json
 from pathlib import Path
 import zipfile
@@ -37,6 +38,11 @@ def prepare(pack, module, base, output):
     main = base / 'MAIN.raw'
     if main.stat().st_size > 1310720:
         raise ValueError('Image exceeds the RAM boot packing limit')
+    spec = importlib.util.spec_from_file_location('review_native_binding',
+        HERE.parents[4] / 'sdk/machines/octatrack/module-adapters/runtime_candidate.py')
+    native_binding = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(native_binding)
+    bound = native_binding.bind_base(main.read_bytes(), symbols, proof)
     matrix = []
     for f in manifest['files']:
         for source in ('Flex', 'Static'):
@@ -51,6 +57,7 @@ def prepare(pack, module, base, output):
               'module': str(module), 'moduleSha256': sha(module),
               'measurementBase': str(base), 'measurementBaseIdentity': proof['configurationHash'],
               'measurementMainSha256': sha(main), 'measurementMainBytes': main.stat().st_size,
+              'nativeBinding': bound,
               'symbolsSha256': sha(base / 'symbols.json'), 'proofsSha256': sha(base / 'proofs.json'),
               'pack': str(pack), 'manifestSha256': sha(pack / 'manifest.json'), 'wavCount': len(manifest['files']),
               'toolsSha256': {p.name: sha(p) for p in sorted(HERE.glob('*.py'))},

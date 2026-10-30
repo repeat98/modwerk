@@ -45,8 +45,12 @@ def compare(folder, before, after, case_id, snap, selection, cancelled=False):
         raise ValueError('Inactive records changed')
     if expected['records'] is None and after['records'] != before['records']:
         raise ValueError('Failed/cancelled analysis changed the old table')
+    pcm_verified = isinstance(before.get('fileIdentity'), dict) and before['fileIdentity'].get('fullDecodedPcmMatches')
+    if pcm_verified and before['fileIdentity'] != after.get('fileIdentity'):
+        raise ValueError('Full loaded PCM identity changed or was not verified afterward')
     result = {'case': case_id, 'snap': snap, 'selection': selection, 'expectedOutcome': expected['outcome'],
             'markerComparison': 'passed', 'baseIdentity': after['baseIdentity'],
+            'fullFlexPcmVerifiedBeforeAndAfter': bool(pcm_verified),
             'scope': 'Observed supplied captures only; does not establish source file identity or audible behavior'}
     if 'costs' in before and 'costs' in after:
         result['timing'] = {}

@@ -12,6 +12,7 @@ import re
 import socket
 import struct
 import time
+import prepare_pack
 
 
 class Session:
@@ -95,15 +96,78 @@ def snapshot(session, symbols, expected_identity):
             'deviceOperations': 'Read-only; no keys/boot/install/save/Keep/Undo'}
 
 
+def verify_flex_pcm(session, result, folder, case_id):
+    """Read the settled normal file-backed Flex pool; reject changed bindings.
+
+    No native function is called and no arbitrary pointer is accepted. Recorder
+    and non-normal maps need their separate procedures, not this file checker.
+    """
+    manifest = json.loads((Path(folder) / 'manifest.json').read_text())
+    entry = next(f for f in manifest['files'] if f['id'] == case_id)
+    path = Path(folder) / entry['file']
+    if prepare_pack.sha(path) != entry['sha256']:
+        raise RuntimeError('Reviewed WAV has changed')
+    if result['kind'] != 1 or result['slot'] >= 128:
+        raise RuntimeError('Full PCM verification supports file-backed Flex only')
+    slot, controls = result['slot'], result['controls']
+    bits = 16 if controls[0] & 2 else 24
+    channels = 2 if controls[0] & 1 else 1
+    if (bits, channels, result['frames']) != (entry['bits'], entry['channels'], entry['frames']):
+        raise RuntimeError('Loaded Flex resolution/geometry differs from WAV')
+    binding = session.memory(0x80006914, 16)
+    pages_at, offsets_at, used, total = struct.unpack('>4I', binding)
+    if (pages_at, offsets_at) != (0x46c2e9c0, 0x46c2e580) or not 0 < used <= total <= 14602:
+        raise RuntimeError('Non-normal or invalid Flex map; do not dereference it')
+    offset = session.word(offsets_at + slot * 4)
+    owned = struct.unpack('>H', session.memory(0x46c75e88 + slot * 2, 2))[0]
+    width = channels * (bits // 8)
+    needed = (entry['frames'] * width + 6143) // 6144
+    if not needed <= owned <= 1024 or offset + owned > used:
+        raise RuntimeError('Invalid owned Flex page extent')
+    raw_pages = session.memory(pages_at + 2 * offset, 2 * needed)
+    pages = struct.unpack('>' + 'H' * needed, raw_pages)
+    if len(set(pages)) != needed or any(p >= 14602 for p in pages):
+        raise RuntimeError('Invalid/aliased physical Flex pages')
+    digest = hashlib.sha256()
+    remaining = entry['frames'] * width
+    for page in pages:
+        count = min(6144, remaining)
+        digest.update(session.memory(0x40a955e0 + page * 6144, count))
+        remaining -= count
+    decoded, _, _ = prepare_pack.read_wav(path)
+    expected = hashlib.sha256()
+    for frame in zip(*decoded):
+        for sample in frame:
+            expected.update(sample.to_bytes(bits // 8, 'big', signed=True))
+    if digest.digest() != expected.digest():
+        raise RuntimeError('Actual loaded Flex PCM differs from the reviewed WAV')
+    if (binding != session.memory(0x80006914, 16)
+            or offset != session.word(offsets_at + slot * 4)
+            or raw_pages != session.memory(pages_at + 2 * offset, 2 * needed)
+            or owned != struct.unpack('>H', session.memory(0x46c75e88 + slot * 2, 2))[0]
+            or tuple(controls) != struct.unpack('>11I', session.memory(0x46c922c4 + slot * 44, 44))
+            or (slot, 1) != struct.unpack('>2I', session.memory(0x46c8d19c, 8))):
+        raise RuntimeError('Flex source/page binding changed during PCM verification')
+    result['fileIdentity'] = {'case': case_id, 'wavSha256': entry['sha256'],
+                              'loadedPcmSha256': digest.hexdigest(), 'fullDecodedPcmMatches': True,
+                              'scope': 'Settled file-backed Flex; no arbitrary concurrent-writer proof'}
+    return result
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--socket', type=Path, required=True, help='Existing serve command socket, not the EP0 share socket')
     parser.add_argument('--build', type=Path, required=True)
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--baseline', action='store_true', help='Read base, full module inventory and UI only; no settings')
+    parser.add_argument('--pack', type=Path)
+    parser.add_argument('--case')
+    parser.add_argument('--verify-flex-pcm', action='store_true')
     args = parser.parse_args()
     if args.output.exists():
         parser.error('Use a new private output file')
+    if args.verify_flex_pcm and (not args.pack or not args.case or args.baseline):
+        parser.error('Full Flex PCM verification needs --pack and --case, without --baseline')
     symbols = json.loads((args.build / 'symbols.json').read_text())
     identity = json.loads((args.build / 'proofs.json').read_text())['configurationHash']
     session = Session(args.socket)
@@ -115,5 +179,7 @@ if __name__ == '__main__':
                   'ui': session.request('ui'), 'deviceOperations': 'read-only', 'capturedAtUnix': time.time()}
     else:
         result = snapshot(session, symbols, identity)
+        if args.verify_flex_pcm:
+            verify_flex_pcm(session, result, args.pack, args.case)
     args.output.write_text(json.dumps(result, indent=2) + '\n')
     print('Read-only snapshot saved:', args.output)

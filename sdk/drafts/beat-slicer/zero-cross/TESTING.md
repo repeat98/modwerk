@@ -42,6 +42,36 @@ toolchain in `build.json`. No software observation above is hardware evidence.
 The listed-module doctor is green for published 0.1.66, not qualification of
 this source proposal; the draft doctor correctly refuses a duplicate listed ID.
 
+## Offline hardware preparation
+
+The original WAV pack contains 58 files: mono/stereo 16/24-bit cases, split and
+tied stereo crossings, exact/anchor zeros, antiphase, silence/DC, distant/edge
+cases, work/minimum limits, fractional trim/BPM, 64 slices and synthesized drums.
+All 174 decoded-PCM channel expectations match the actual proposed C search,
+including complete points, result and pair-read count. This is offline evidence.
+
+Preparation tests cover rejection of wrong starts/ends/loops, inactive rows,
+formats, source identity, incomplete analysis and completion status; complete
+table preservation on cancellation; stock-comparison admission; target-offset
+snapshot decoding; full Flex PCM mismatch; timing carry/wrap and the narrow
+read-only sample-settings access. Actual overlaid board/service regressions
+pass. The immutable MCF54455 compiler reproduces the unchanged module package.
+
+A separate private measurement base, rebuilt after merging upstream main
+`1bbc8b46`, is recorded in [hardware/measurement-build.json](hardware/measurement-build.json):
+identity `7fe69c80f6c04a0092fd82076c22865e2a52bf9fcab567f77cbca547e55f614a`,
+MAIN SHA-256 `b3026b173ed64aa22e1414a38e322ee79a7a3fafc5b7e81b74f323573f46a212`,
+1,305,223 bytes. Normal source/codegen/layout, stock-free and flash-safety
+scans, module-set and base/editor tests pass. It adds scan/metadata-writer
+wall-time counters and read-only observation, not a new stock hook or save.
+Results on it do not qualify the uninstrumented candidate named above.
+
+[hardware/README.md](hardware/README.md) describes the WAVs, baseline/export,
+guarded captures, full Flex PCM verification, exact record comparison and
+recovery. The review matrix's 696 rows remain **not tested**. No unit or
+emulator was opened; readiness, verified file staging, fresh original-set
+baseline and recovery checks remain prerequisites to the later RAM trial.
+
 ## Exact-build hardware plan
 
 Use the normal USB trial workflow, a stopped disposable project and authored
