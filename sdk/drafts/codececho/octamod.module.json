@@ -109,7 +109,7 @@
       "The line takes 15,870 words of the FX2 slot's buffer and stops short of Sidechain Compressor's key window. For about 0.05 s after the effect is chosen it clears the line and passes the dry.",
       "TIME follows the tempo word octabam's BusDelay reads at r6+$13; a division longer than 1.44 s halves until it fits. Swing and track speed do not change the echo.",
       "The echo is mono, mixed over the stereo dry. The codec is lossy at every setting, on purpose: its noise and, at 2 bits, its failure on high tones show in fx:audit (TESTING.md).",
-      "Not yet run in a built image, the ColdFire port or on a unit: only in fxhost (the vendored DSP56300 emulator alone)."
+      "Only reported by the developer to run on their own Octatrack MKI from a card build (31 Oct 2026; the exact revision was not recorded); otherwise run only in fxhost (the vendored DSP56300 emulator alone), not under the ColdFire port."
     ]
   },
   "resources": {
@@ -156,8 +156,8 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "fxhost only (the vendored dsp56kEmu with the module alone, no firmware): MIX 0 is the dry bit for bit from garbage state with trig splits; a garbage line is never heard; the echo starts 10 samples after its division at four tempos; repeats decay with FDBK and reach digital silence; the ADPCM's signal-to-noise ratio falls from 49 to 24 dB from 5 to 2 bits and adapts to the level; LOSS darkens; DROP leaves holes of PKT's length and RPT none; a TIME change makes no click; nothing outside the audio, state, parameter and line words is written. Not run in a built image, under the ColdFire port or on a unit.",
-    "hardwareStatus": "untested",
+    "summary": "fxhost only (the vendored dsp56kEmu with the module alone, no firmware): MIX 0 is the dry bit for bit from garbage state with trig splits; a garbage line is never heard; the echo starts 10 samples after its division at four tempos; repeats decay with FDBK and reach digital silence; the ADPCM's signal-to-noise ratio falls from 49 to 24 dB from 5 to 2 bits and adapts to the level; LOSS darkens; DROP leaves holes of PKT's length and RPT none; a TIME change makes no click; nothing outside the audio, state, parameter and line words is written. Not run under the ColdFire port; reported by the developer to run on their own Octatrack MKI from a card build (31 Oct 2026; the exact revision was not recorded).",
+    "hardwareStatus": "reported",
     "evidenceRevision": "20b7fe83f5d0f7778784b56d3495b81b534ab11e",
     "gates": [
       "modules/codececho/verify.py"

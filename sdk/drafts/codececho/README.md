@@ -1,6 +1,6 @@
 # CODEC ECHO
 
-Version: 0.1.0-experimental · author: @semierendonmez-commits · draft, not yet run on a unit
+Version: 0.1.0-experimental · author: @semierendonmez-commits · draft; the developer reports it runs on their Octatrack MKI (card build)
 
 ## Overview
 
@@ -53,7 +53,7 @@ Short percussive material shows the codec best: each repeat of a hi-hat or a cli
 - **Mono echo.** The echoes are the same on both channels; MIX blends them over the stereo dry.
 - **Time.** TIME follows the tempo and halves a division the 1.44 s line cannot hold. Swing and track speed do not change the echo, as a delay pedal's tap tempo would not.
 - **Deterministic losses.** Lost packets come from a noise generator seeded the same way whenever the effect is loaded.
-- **Not yet run on a unit, under the ColdFire port or in a built image.** The DSP code has run only in fxhost, the vendored DSP56300 emulator with the module alone (TESTING.md). The tempo word's position is octabam's measurement for BusDelay, not checked here.
+- **One unit, by report.** The developer reports it runs on their own Octatrack MKI from a card build (31 Oct 2026; the exact revision was not recorded). Otherwise the DSP code has run only in fxhost, the vendored DSP56300 emulator with the module alone (TESTING.md). The tempo word's position is octabam's measurement for BusDelay, not checked here.
 
 ## Tests and measurements
 
