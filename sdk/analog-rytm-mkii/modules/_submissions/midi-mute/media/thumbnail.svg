@@ -8,7 +8,7 @@
 <text x="28" y="44">MIDI IN</text>
 <circle class="signal-dot" cx="32" cy="97" r="3.5"/><circle class="signal-dot" cx="46" cy="97" r="3.5"/><circle class="signal-dot" cx="60" cy="97" r="3.5"/>
 <path class="signal-main" d="M70 97H96"/>
-<path class="signal-secondary" d="M96 97C112 97 112 62 128 62H196"/>
+<path class="signal-main" d="M96 97C112 97 112 62 128 62H196"/>
 <path class="signal-main" d="M96 97H272"/>
 <path class="signal-main" d="M96 97C112 97 112 132 128 132H272"/>
 <text x="132" y="54">BD</text><text x="132" y="89">SD</text><text x="132" y="124">CH</text>
