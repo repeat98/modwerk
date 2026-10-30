@@ -37,7 +37,11 @@ def prepare(source, output, full=False):
             archive.seek(0)
             subprocess.run(['tar', '-xf', '-', '-C', str(output)], stdin=archive, check=True)
     else:
-        names = subprocess.check_output(['git', '-C', str(source), 'ls-files', '-z', '--', 'sdk/'])
+        # The normal C package builder reads the generated title catalogue,
+        # even for a source-only descriptor fixture. Copy its exact tracked
+        # bytes too, so minimal preparation works with ColdFire tools present.
+        names = subprocess.check_output(['git', '-C', str(source), 'ls-files', '-z', '--',
+                                         'sdk/', 'src/catalog/module-documents.json'])
         for raw in names.split(b'\0'):
             if not raw:
                 continue

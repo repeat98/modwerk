@@ -56,6 +56,9 @@ table preservation on cancellation; stock-comparison admission; target-offset
 snapshot decoding; full Flex PCM mismatch; timing carry/wrap and the narrow
 read-only sample-settings access. Actual overlaid board/service regressions
 pass. The immutable MCF54455 compiler reproduces the unchanged module package.
+The preparation driver also passes under Linux/GCC with the ColdFire compiler
+available: minimal staging retains the normal C builder's exact generated title
+catalogue, and both real package descriptor builds run instead of being skipped.
 
 A separate private measurement base, rebuilt after merging upstream main
 `1bbc8b46`, is recorded in [hardware/measurement-build.json](hardware/measurement-build.json):
