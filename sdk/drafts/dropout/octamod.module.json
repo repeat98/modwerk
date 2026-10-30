@@ -159,7 +159,7 @@
     "report": "TESTING.md",
     "summary": "fxhost only (the vendored dsp56kEmu with the module alone, no firmware): at the defaults and at MIX 0 the output is the input bit for bit from garbage state and buffer and with trig splits; HOLD, PCKT and CIRC match their arithmetic; the ADPCM's SNR falls with the bits (51/45/37/25 dB); the step's length follows the tempo word at 120, 96.5 and 174 BPM and falls back to 120 BPM outside 30-300 BPM, on FX1's and FX2's record; RATE's errors follow the tempo; a garbage buffer is never heard; idle reaches digital silence in every mode; nothing outside the audio, state, parameter and buffer words is written; 274 instructions a sample at the dearest settings. Not run in a built image, under the ColdFire port or on a unit.",
     "hardwareStatus": "untested",
-    "evidenceRevision": "2b21970ecbd189c295fd577b4d080925013fe75d",
+    "evidenceRevision": "c7bda927ec38e1c7a17dd97c7b53535c912a12b6",
     "gates": [
       "modules/dropout/verify.py"
     ]
@@ -182,7 +182,7 @@
   },
   "source": {
     "repository": "https://github.com/semierendonmez-commits/modwerk-semi",
-    "revision": "2b21970ecbd189c295fd577b4d080925013fe75d",
+    "revision": "c7bda927ec38e1c7a17dd97c7b53535c912a12b6",
     "path": "sdk/drafts/dropout"
   }
 }
