@@ -295,11 +295,11 @@
     "recorded": "Package header, 30 Oct 2026 (host build)",
     "storage": {
       "label": "Storage",
-      "display": "12,192 bytes",
-      "value": 12192,
+      "display": "12,164 bytes",
+      "value": 12164,
       "unit": "bytes",
       "method": "static",
-      "conditions": "From the USB package build.py makes from the sources (m68k-elf-gcc 16.2, -Os): 10,808 bytes of ColdFire code and data and 1,384 of bss, one instance, 239 relocations, no stock-code sites. No DSP memory, no heap; the lines it writes are the patterns' own records.",
+      "conditions": "From the USB package build.py makes from the sources (m68k-elf-gcc 16.2, -Os): 10,780 bytes of ColdFire code and data and 1,384 of bss, one instance, 239 relocations, no stock-code sites. No DSP memory, no heap; the lines it writes are the patterns' own records.",
       "source": "TESTING.md"
     },
     "processing": {
@@ -328,7 +328,7 @@
       "memory": {
         "level": "minimal",
         "basis": "source-estimate",
-        "rationale": "12,192 bytes of ColdFire code, data and state in DRAM (10,808 + 1,384 from the package header); the lines it writes are the patterns' own records.",
+        "rationale": "12,164 bytes of ColdFire code, data and state in DRAM (10,780 + 1,384 from the package header); the lines it writes are the patterns' own records.",
         "source": "TESTING.md"
       }
     }

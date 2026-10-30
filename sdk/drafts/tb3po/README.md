@@ -141,7 +141,7 @@ guaranteed note. `tb3po_write_audio` puts a line into a sample track record in p
 trig words, mirrored into the battery-backed copy); `tb3po_write` does the same for a MIDI track record;
 `tb3po_pack`/`tb3po_unpack` keep the sample track's settings in nine seven-bit bytes. `machine.c` is the machine glue in
 the shape of VECTOR's `native.c` over the base: the `struct modwerk_machine_setup` record (`tb3po_machine`, signature
-`T3`, flags PROTECT, BACKING, SETUP_ALL and SETUP_PAGE, order 50), the page descriptor built from stock's FLEX or STATIC
+`T3`, flags BACKING and SETUP_PAGE, order 50), the page descriptor built from stock's FLEX or STATIC
 page with TB-3PO's names, formatters and stock's dial renderer, the input layer for encoders A–F, YES and the LEVEL
 push, and generation into the current pattern's record with only this track's bit of stock's lock index set.
 `generator.c` is the MIDI generator in the shape of VECTOR 0.3.0's `midi.c` (`tb3po_midi`, id `'T'`, order 40).

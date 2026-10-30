@@ -84,7 +84,7 @@ class Engine(unittest.TestCase):
         source_voice, source_engine, source_kind, setup_page, setup_knob = fields[20:25]
         self.assertEqual((abi, sig, lo, hi), (1, b'T3', 1, 1))
         self.assertEqual(image[label:label + 7], b'TB-3PO\0')
-        self.assertEqual(flags, 1 | 8 | 16 | 64)  # PROTECT, BACKING, SETUP_ALL, SETUP_PAGE
+        self.assertEqual(flags, 8 | 64)  # BACKING, SETUP_PAGE, as VECTOR without its pool
         self.assertEqual((page, defaults, admit, chooser, leave, pool_open, pool_left, choice_left, list_draw, render, validate), (0,) * 11)
         self.assertEqual((source_voice, source_engine, source_kind), (0, 0, 0))
         inside(at, 88, (assign, track_page, ui_tick, setup_page, setup_knob))

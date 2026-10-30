@@ -328,7 +328,7 @@ static unsigned machine_assign(volatile uint8_t *part, unsigned t, unsigned on)
 }
 const struct modwerk_machine_setup __attribute__((aligned(4))) tb3po_machine = {
     {MODWERK_MACHINE_ABI, {'T', '3'}, MACHINE_VERSION, MACHINE_VERSION, "TB-3PO",
-     MODWERK_MACHINE_PROTECT | MODWERK_MACHINE_BACKING | MODWERK_MACHINE_SETUP_ALL | MODWERK_MACHINE_SETUP_PAGE,
+     MODWERK_MACHINE_BACKING | MODWERK_MACHINE_SETUP_PAGE, /* as VECTOR: stock checks the backing FLEX or STATIC bytes */
      0, 0, machine_assign, 0, 0, machine_track_page, machine_ui_tick, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, {0, 0, 0}},
     machine_setup_page, machine_setup_knob,
 };

@@ -20,7 +20,7 @@ python3 -B sdk/octabam/modules/tb3po/verify.py        # the same, then the packa
 | PTCH values inside 4..119 in steps of 5 for every scale, root, degree and octave; the pitch class is the root's plus the degree's | pass |
 | Nine-byte settings packing: 4,000 random settings round-trip, every byte below 128, an all-ones record unpacks inside every range | pass |
 | `generator.c` and `machine.c` compile freestanding with `-Wall -Wextra -Werror` | pass |
-| ColdFire package (m68k-elf-gcc 16.2.0, binutils 2.47, the toolchain image's versions): the `ot_midi_generators` record (ABI 2, 36 bytes, id `'T'`, pages SRC+ARP, order 40) and the `ot_machines` record (ABI 1, 88 bytes, `T3` 1-1, flags PROTECT, BACKING, SETUP_ALL, SETUP_PAGE, order 50) at the registry's indices, four-byte aligned, every entry even and inside the image | pass; module id 08001c36, 10,808 bytes of code and data, 1,384 of bss, 239 relocations, 2 hooks, 0 stock-code sites |
+| ColdFire package (m68k-elf-gcc 16.2.0, binutils 2.47, the toolchain image's versions): the `ot_midi_generators` record (ABI 2, 36 bytes, id `'T'`, pages SRC+ARP, order 40) and the `ot_machines` record (ABI 1, 88 bytes, `T3` 1-1, flags BACKING, SETUP_PAGE, order 50) at the registry's indices, four-byte aligned, every entry even and inside the image | pass; module id 7f85b2fd, 10,780 bytes of code and data, 1,384 of bss, 239 relocations, 2 hooks, 0 stock-code sites |
 
 ## Hardware and audio quality
 
@@ -75,7 +75,7 @@ task; nothing runs at interrupt level or while playing, and no MIDI path of its 
 
 ## Resources
 
-From the package header: 10,808 bytes of ColdFire code and data, 1,384 of bss (two 402-byte page descriptors, two
+From the package header: 10,780 bytes of ColdFire code and data, 1,384 of bss (two 402-byte page descriptors, two
 193-byte patterns, two 64-byte lock tables, the view and layer state), one instance, in the base's module DRAM. No
 DSP memory, no heap. Stack use is the UI task's and was not measured.
 
