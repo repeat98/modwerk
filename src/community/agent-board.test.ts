@@ -183,10 +183,10 @@ describe('agent board questions and findings', () => {
     const after = await (await call('/agent-board/messages?key=octatrack/tape-echo&ended=1')).json()
     expect([after.messages, after.ended.map((item: { id: string }) => item.id)]).toEqual([[], [question.id]])
     expect((await inbox(bo)).replies).toEqual([])
-    // A question can name someone else, never its asker; one nobody holds goes to nobody.
+    // A question can name someone else, never its asker, and always reaches someone's inbox.
     expect((await post(bo, { kind: 'question', topic: 'module', key: 'octatrack/tape-echo', to: '@Bo', body: 'Me?' })).status).toBe(400)
-    const open = await (await post(bo, { kind: 'question', topic: 'module', key: 'digitakt/swarm', body: 'Is anyone porting swarm?' })).json()
-    expect(open.message.to).toBeNull()
+    for (const about of [{ topic: 'module', key: 'digitakt/swarm' }, { topic: 'machine', key: 'digitakt' }]) expect(await (await post(bo, { kind: 'question', ...about, body: 'Is anyone porting swarm?' })).json()).toEqual({ error: expect.stringContaining('--to <login>') })
+    expect((await post(ada, { kind: 'question', topic: 'module', key: 'octatrack/tape-echo', body: 'My own?' })).status).toBe(400)
     const named = await (await post(ada, { kind: 'question', topic: 'machine', key: 'digitakt', to: 'Bo', body: 'Which core release do you build against?' })).json()
     expect((await inbox(bo)).waiting.map((item: { id: string }) => item.id)).toEqual([named.message.id])
   })
@@ -224,7 +224,7 @@ describe('agent board questions and findings', () => {
   it('lets a question lapse 30 days after its last post and a finding after 90, then deletes them', async () => {
     const { env, db, call, boardLogin, post, reply } = await fixture()
     const ada = await boardLogin('ada'), bo = await boardLogin('bo')
-    const { message: question } = await (await post(ada, { kind: 'question', topic: 'migration', key: '0090', body: 'Do you still need migration 0090?' })).json()
+    const { message: question } = await (await post(ada, { kind: 'question', topic: 'migration', key: '0090', to: 'bo', body: 'Do you still need migration 0090?' })).json()
     const { message: finding } = await (await post(ada, { kind: 'finding', topic: 'machine', key: 'digitone', body: 'The core profile lags the release by a day.' })).json()
     vi.useFakeTimers({ now: Date.now() + 20 * 86400000, toFake: ['Date'] })
     expect((await reply(bo, question.id, 'Not any more, take it.')).status).toBe(201)
@@ -300,6 +300,10 @@ describe('the terminal client against the Worker', () => {
     await expect(client.messageAction(message.id, 'close', {}, { ...options, token: ada })).rejects.toThrow('You wrote no open board thread')
     expect((await client.messageAction(message.id, 'close', {}, { ...options, token: bo })).message.endedReason).toBe('author')
     expect((await client.activity(options)).questions.open).toBe(0)
+    // Nobody holds Tape Echo itself, so a question goes to the author in its manifest; its author has to name someone.
+    const author = String(client.moduleAuthor('octatrack/tapeecho'))
+    expect((await client.post({ kind: 'question', topic: 'module', key: 'octatrack/tapeecho', body: 'Room for a wow control?' }, { ...options, token: bo })).message.to).toBe(author.toLowerCase())
+    await expect(client.post({ kind: 'question', topic: 'module', key: 'octatrack/tapeecho', body: 'Mine?' }, { ...options, token: await boardLogin(author) })).rejects.toThrow('--to <login>')
     vi.unstubAllEnvs()
   })
 })

@@ -38,7 +38,7 @@ export function readiness({ dirty = [], behind = false, remote = 'upstream', reg
   if (compiled?.elemod) notes.push('CI rebuilds the Digitakt, Digitone, Rytm and Four packages (elemod-source) and requires the committed ones to match. pr:ready cannot run that: before you push, run bash scripts/build-elemod-isolated.sh and node scripts/verify-elemod-release-exports.mjs <dir> from a clean, committed tree ("Compiled packages" in docs/DEVELOPER_WORKFLOW.md).')
   // The guides are the context every later agent reads, so each PR says what they lacked or got wrong (AGENTS.md, "Fold what you learn back").
   notes.push('What did the guides lack or get wrong while you did this? ' + (guideEdits.length
-    ? 'Guide edits on this branch: ' + guideEdits.join(', ') + '. Say in the PR what they fix.'
+    ? 'Guide edits on this branch: ' + guideEdits.join(', ') + '. Say in the PR what they fix. If a developer working now could hit it before this merges, post it on the agent board too: npm run board -- finding <topic> <key> "…" --pr <n>.'
     : 'No guide edit is on this branch: fix it where a reader would look (docs/, AGENTS.md, the machine guide; for a module release, a separate Docs: PR), or write "nothing" in the PR.'))
   notes.push('Then push, open or update the PR, and watch it: gh pr checks <number> --watch. If main moves before the merge, run this again and push.')
   return { ok: problems.length === 0, problems, notes }

@@ -66,6 +66,14 @@ describe('the board client', () => {
     expect(line([claimRow('module', 'octatrack/tape-echo', 'bo')], 'ada')).toMatchObject({ state: 'fail', detail: expect.stringContaining('@bo') })
     expect(board.moduleClaimLine({ root, machine: 'octatrack', id: 'x', folder: 'x', claims: [], login: null, unavailable: 'down' }).state).toBe('info')
   })
+  it('finds a module\'s author in the catalogue or its manifest, for a question nobody holds', () => {
+    const { root } = repository({
+      'src/catalog/module-documents.json': JSON.stringify({ modules: [{ id: 'tape-echo', author: { github: 'Ada' } }] }),
+      'sdk/digitakt/modules/swarm/modwerk.module.json': JSON.stringify({ author: { github: 'bo' } }),
+      'sdk/analog-rytm-mkii/modules/_submissions/chorus/modwerk.module.json': JSON.stringify({ author: { github: 'cy' } }),
+    })
+    expect(['octatrack/tape-echo', 'digitakt/swarm', 'analog-rytm-mkii/chorus', 'octatrack/swarm', 'digitakt/../swarm', undefined].map(key => board.moduleAuthor(key, root))).toEqual(['Ada', 'bo', 'cy', null, null, null])
+  })
 })
 
 describe('questions and findings in the commands', () => {

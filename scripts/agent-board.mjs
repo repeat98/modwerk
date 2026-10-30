@@ -10,7 +10,7 @@
 //   npm run board -- release <id>
 //   npm run board -- check [--base <ref>]        # the claims this branch needs (CI runs it)
 //   npm run board -- messages [topic] [key] [--machine <m>] [--kind question|finding] [--to <login>] [--ended]
-//   npm run board -- ask <topic> <key> "question" [--to <login>]   # goes to the topic's holder unless --to names someone
+//   npm run board -- ask <topic> <key> "question" [--to <login>]   # goes to the topic's holder, else a module's author, unless --to names someone
 //   npm run board -- finding <topic> <key> "what you found" [--pr <n>]   # --pr: the pull request that folds it into a guide
 //   npm run board -- reply <id> "answer"  |  close <id>  |  fold <id> --pr <n>  |  delete <id>
 //   npm run board -- inbox                       # questions waiting for you, replies to what you wrote
@@ -18,6 +18,7 @@
 //
 // Kinds: module (machine/id), hook (octatrack/39, digitakt/events/7), migration (0085), dsp-region (machine/name).
 // Topics: the kinds, and machine (octatrack) for what holds across a whole machine.
+// The board gets in your way or lacks something? Improve it: docs/AGENT_BOARD.md#improve-the-board
 import { execFileSync } from 'node:child_process'
 import { createHash, randomBytes } from 'node:crypto'
 import { createServer } from 'node:http'
@@ -87,11 +88,26 @@ export async function inbox(options = {}) {
   if (!token) return null
   try { return await boardRequest('/agent-board/inbox', { ...options, token }) } catch (error) { if (error instanceof BoardError && error.status === 401) return null; throw error }
 }
-/** Ask a question or leave a finding: {kind, topic, key, body, to?, pullRequest?}. */
+/** Ask a question or leave a finding: {kind, topic, key, body, to?, pullRequest?}. A question about a module nobody holds goes
+ * to the author in its manifest: claims end when their pull request merges, and the board only knows holders. */
 export async function post(item, options = {}) {
   const token = options.token ?? await readToken()
   if (!token) throw new BoardError('Sign in for the board first: npm run board -- login', 401)
+  if (item.kind === 'question' && item.topic === 'module' && !item.to && !(await listClaims({ kind: 'module', key: item.key }, options)).length) {
+    const author = moduleAuthor(item.key)
+    if (author && author.toLowerCase() !== (await whoami({ ...options, token }))?.toLowerCase()) item = { ...item, to: author }
+  }
   return await boardRequest('/agent-board/messages', { ...options, method: 'POST', token, body: item })
+}
+/** The GitHub login of a module's author (key machine/id) in this checkout: the catalogue for the Octatrack, the module's
+ * modwerk.module.json on the other machines. Null when there is none. */
+export function moduleAuthor(key, root = fileURLToPath(new URL('../', import.meta.url))) {
+  const [machine, id] = /^([a-z0-9-]+)\/([a-z0-9-]+)$/.exec(key ?? '')?.slice(1) ?? []
+  const read = path => { try { return JSON.parse(readFileSync(join(root, path), 'utf8')) } catch { return null } }
+  if (!id) return null
+  const document = machine === 'octatrack' ? read('src/catalog/module-documents.json')?.modules.find(item => item.id === id)
+    : read(`sdk/${machine}/modules/${id}/modwerk.module.json`) ?? read(`sdk/${machine}/modules/_submissions/${id}/modwerk.module.json`)
+  return document?.author?.github ?? null
 }
 /** reply (body), close, fold (pullRequest) or delete one thread or post by id. */
 export async function messageAction(id, action, body = {}, options = {}) {
@@ -325,7 +341,7 @@ async function main(argv) {
     const [topic, key, text] = rest
     if (!TOPICS.includes(topic) || !key || !text) throw new Error('Usage: npm run board -- ' + command + ' <' + TOPICS.join('|') + '> <key> "' + (command === 'ask' ? 'question' : 'what you found') + '"' + (command === 'ask' ? ' [--to <login>]' : ' [--pr <n>]'))
     const pr = option('--pr'), result = await post({ kind: command === 'ask' ? 'question' : 'finding', topic, key, body: text, ...(option('--to') ? { to: option('--to') } : {}), ...(pr ? { pullRequest: Number(pr) } : {}) })
-    console.log(command === 'ask' ? 'Asked' + (result.message.to ? ' @' + result.message.to : ' (nobody holds it, so anyone may answer)') + ':' : 'Left the finding:'); console.log(describeThread(result.message).join('\n')); return 0
+    console.log(command === 'ask' ? 'Asked @' + result.message.to + ':' : 'Left the finding:'); console.log(describeThread(result.message).join('\n')); return 0
   }
   if (['reply', 'close', 'fold', 'delete'].includes(command)) {
     const [id, text] = rest, pr = option('--pr')

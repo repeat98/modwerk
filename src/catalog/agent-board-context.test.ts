@@ -18,12 +18,16 @@ describe('the agent board stays in the context agents read and the commands they
       expect(read(folder + '/modwerk-start/SKILL.md')).toContain('npm run board -- login')
       expect(read(folder + '/modwerk-update-module/SKILL.md')).toContain('npm run board -- claim module')
       expect(read(folder + '/modwerk-review-prs/SKILL.md')).toContain('the agent board')
+      expect(read(folder + '/modwerk-fix-issue/SKILL.md')).toContain('npm run board -- list module')
+      expect(read(folder + '/modwerk-triage-issues/SKILL.md')).toContain('npm run board -- list module')
     }
     expect(read('docs/DEVELOPER_WORKFLOW.md')).toContain('npm run board -- list module')
     expect(read('docs/DEVELOPER_WORKFLOW.md')).toContain('npm run board -- finding')
     const hooks = read('docs/module-guides/README.md').split('### Propose a hook').slice(1)
     expect(hooks.slice(0, 2).every(section => section.split('\n### ')[0].includes('[agent board](../AGENT_BOARD.md)'))).toBe(true)
     expect(read('docs/MAINTENANCE.md')).toContain('**The agent board**')
+    expect(read('docs/MAINTENANCE.md')).toContain('AGENT_BOARD.md#improve-the-board')
+    expect(read('scripts/agent-board.mjs')).toContain('docs/AGENT_BOARD.md#improve-the-board')
     expect(read('docs/FRONTEND_MCP.md')).toContain('## The agent board')
   })
   it('is read and written by module:new, module:doctor, pr:ready, check and the MCP', () => {

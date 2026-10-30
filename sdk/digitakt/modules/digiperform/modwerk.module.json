@@ -2,7 +2,7 @@
   "schemaVersion": 3,
   "id": "digiperform",
   "name": "Digi Perform",
-  "version": "0.1.0-experimental",
+  "version": "0.1.1-experimental",
   "machine": "digitakt",
   "category": "system",
   "exclusive": false,
@@ -185,7 +185,7 @@
   },
   "evidence": {
     "tier": "none",
-    "moduleVersion": "0.1.0-experimental",
+    "moduleVersion": "0.1.1-experimental",
     "sourceSha256": null,
     "reports": [],
     "hardware": null,
@@ -240,8 +240,8 @@
       "capture": {
         "type": "emulator",
         "release": "1.54",
-        "moduleVersion": "0.1.0-experimental",
-        "imageSha256": "5e8d5fc7bfee3ec9d8d8280d106fbabd42be1abd0d793f1224fac831998d8785",
+        "moduleVersion": "0.1.1-experimental",
+        "imageSha256": "be8ff932982d5b137f8e4b160a87c532108e1162b6938055c1c0f35710502da4",
         "setup": "Pinned digiemu, firmware-native drawing, disposable first-boot project. No audio or cycle-timing qualification."
       }
     },
@@ -256,8 +256,8 @@
       "capture": {
         "type": "emulator",
         "release": "1.54",
-        "moduleVersion": "0.1.0-experimental",
-        "imageSha256": "5e8d5fc7bfee3ec9d8d8280d106fbabd42be1abd0d793f1224fac831998d8785",
+        "moduleVersion": "0.1.1-experimental",
+        "imageSha256": "be8ff932982d5b137f8e4b160a87c532108e1162b6938055c1c0f35710502da4",
         "setup": "Pinned digiemu, firmware-native drawing, disposable first-boot project. No audio or cycle-timing qualification."
       }
     },
@@ -272,8 +272,8 @@
       "capture": {
         "type": "emulator",
         "release": "1.54",
-        "moduleVersion": "0.1.0-experimental",
-        "imageSha256": "5e8d5fc7bfee3ec9d8d8280d106fbabd42be1abd0d793f1224fac831998d8785",
+        "moduleVersion": "0.1.1-experimental",
+        "imageSha256": "be8ff932982d5b137f8e4b160a87c532108e1162b6938055c1c0f35710502da4",
         "setup": "Pinned digiemu, firmware-native drawing, disposable first-boot project. No audio or cycle-timing qualification."
       }
     },
@@ -288,8 +288,8 @@
       "capture": {
         "type": "emulator",
         "release": "1.54",
-        "moduleVersion": "0.1.0-experimental",
-        "imageSha256": "5e8d5fc7bfee3ec9d8d8280d106fbabd42be1abd0d793f1224fac831998d8785",
+        "moduleVersion": "0.1.1-experimental",
+        "imageSha256": "be8ff932982d5b137f8e4b160a87c532108e1162b6938055c1c0f35710502da4",
         "setup": "Pinned digiemu, firmware-native drawing, disposable first-boot project. No audio or cycle-timing qualification."
       }
     },
@@ -304,8 +304,8 @@
       "capture": {
         "type": "emulator",
         "release": "1.54",
-        "moduleVersion": "0.1.0-experimental",
-        "imageSha256": "5e8d5fc7bfee3ec9d8d8280d106fbabd42be1abd0d793f1224fac831998d8785",
+        "moduleVersion": "0.1.1-experimental",
+        "imageSha256": "be8ff932982d5b137f8e4b160a87c532108e1162b6938055c1c0f35710502da4",
         "setup": "Pinned digiemu, firmware-native drawing, disposable first-boot project. No audio or cycle-timing qualification."
       }
     }

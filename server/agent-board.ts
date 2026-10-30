@@ -167,6 +167,8 @@ async function messageRoutes(request: Request, url: URL, env: Env, db: Database,
       const holder = await db.prepare(SELECT + ' WHERE c.kind=? AND c.claim_key=? AND c.released_at IS NULL').bind(about.kind, about.key).first<ClaimRow>()
       if (holder && holder.user_id !== user.id) to = holder.github_login
     }
+    // The client fills in a module's author from its manifest; a question still to nobody would wait in no inbox.
+    if (kind === 'question' && !to) throw new HttpError(400, 'Name who should answer (--to <login>): nobody else holds this, so the question would reach no inbox.')
     const open = await db.prepare('SELECT COUNT(*) AS n FROM agent_messages m WHERE m.user_id=? AND m.parent_id IS NULL AND ' + LIVE).bind(user.id, ...live).first<{ n: number }>()
     if ((open?.n ?? 0) >= OPEN_THREADS) throw new HttpError(409, `You have ${OPEN_THREADS} open questions and findings. Close one you no longer need first (npm run board -- close <id>).`)
     const id = crypto.randomUUID()

@@ -1,5 +1,14 @@
 [
   {
+    "version": "1.1.13-experimental.3",
+    "date": "2026-10-30",
+    "changes": [
+      "SOPHIE now builds for Digitakt OS 1.54 as well as 1.53 (#806).",
+      "The 1.54 build is the author’s own OS 1.54 file of the same 1.1.13; the sound and controls are unchanged. Modwerk only added it.",
+      "Known issue: the OS 1.54 build has not been tested on a unit yet."
+    ]
+  },
+  {
     "version": "1.1.13-experimental.2",
     "date": "2026-10-07",
     "changes": [

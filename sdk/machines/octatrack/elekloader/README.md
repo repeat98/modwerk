@@ -276,6 +276,17 @@ wValue the page, 244 bytes) reads it; the site uploads it only with diagnostics 
 `freezetest:N` holds the UI tick N seconds (1-10) to try a freeze. Vendor request numbers 31-36 are taken (saved-set
 export 31-33, volatile journal 34-36, which refuses anything else there): pick a new one above 37 and check `ep0.c`.
 
+### Boot guard
+
+`modset.c` keeps a small record in battery RAM (0x100ffb00, after the stall record) from the power-on restore's first
+install until it has run ten seconds with frames moving and no crash or stall recorded. A crash (`crash.c` restarts at
+once) or a DSP stall in that time leaves the record armed, and the next start leaves out the package it was installing,
+at every start until the card's set changes (result 10 in the self-test record's `saved`, popup `<NAME> LEFT OUT`,
+refusal 0x100 in the log's set record). With no package to blame, or on the second start in a row that never settled
+with nothing recorded, that start installs nothing (result 11, MODULES HELD, 0x101) and the next tries the whole set.
+Another base ignores the record. On development bases `npm run device -- guardtest` (or `guardtest:0`) arms it as a
+crash in the restore would, blaming the set's first module (or none), so a RAM boot shows what a tester's next start would.
+
 ### Status page
 
 `status.s` also gates stock's time-stretch helper task (`mw_ts_gate`): it skips a track whose TSTR is OFF, since only

@@ -1,5 +1,13 @@
 [
   {
+    "version": "0.1.1-experimental",
+    "date": "2026-10-30",
+    "changes": [
+      "Fixed the second Filter page: FLT.BASE now moves the filter base, FLT.WDTH the width and FLT.DEL the envelope delay. They were shifted by one place.",
+      "Saved assignments keep playing as before; one that played as width and was named BASE now shows as WDTH."
+    ]
+  },
+  {
     "version": "0.1.0-experimental",
     "date": "2026-10-26",
     "changes": [

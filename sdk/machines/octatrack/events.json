@@ -1223,12 +1223,12 @@
      "what": "SETUP's editor addresses a machine row as its pool"
     },
     {
-     "site": "0x4003bff4",
-     "length": 4,
-     "guard": "76ce29042319b4438a2dfcb9964200138834c3f569c7ff914a10161182b4615c",
-     "op": "ptr",
-     "target": "mw_pb_table",
-     "what": "the PB table by machine row"
+     "site": "0x4003bff2",
+     "length": 8,
+     "guard": "646fea5c7ac7852156feed7591534de986df92af53074c25ecf54e4295d072ae",
+     "op": "jmp",
+     "target": "mw_lfo_pb",
+     "what": "LFO SETUP's PMTR names: a machine track's own page (mw_page), else the PB table by machine byte"
     },
     {
      "site": "0x4003c8cc",

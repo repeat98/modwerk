@@ -6,17 +6,17 @@
   "cores": [],
   "mods": [
     {
-      "file": "digiperform-0.1.0-experimental-os1.53.elemod",
-      "sha256": "c613fe68041206d6faf615e1228822d3b662f85e7de274c741eecc7c429c6901",
+      "file": "digiperform-0.1.1-experimental-os1.53.elemod",
+      "sha256": "5875ae39ba103a97c6e3baa7d962bb7d1dcf9163633b63fd0d2dc6c594c16e4c",
       "id": "digiperform",
-      "version": "0.1.0-experimental",
+      "version": "0.1.1-experimental",
       "device": "digitakt-mk1",
       "os": "1.53",
       "license": "GPL-3.0-or-later",
       "source": {
         "repo": "repeat98/modwerk",
-        "commit": "d0009216bdca3cbb1537f6921aab25f59a00eb6d",
-        "path": "sdk/imports/packages/digiperform/digiperform-0.1.0-experimental-os1.53.elemod"
+        "commit": "dc6b94d7d41e6cb6d64c43d55ec66d0d97a1e97f",
+        "path": "sdk/imports/packages/digiperform/digiperform-0.1.1-experimental-os1.53.elemod"
       },
       "title": "Digi Perform",
       "requires": [
@@ -33,17 +33,17 @@
       "on_unit": "Observed by its author on a unit and in an emulator; no filed hardware report yet (see TESTING.md)."
     },
     {
-      "file": "digiperform-0.1.0-experimental-os1.54.elemod",
-      "sha256": "82382250e512e8da09ec11c925dd42299cf65efc8e238b56b24568826c1f353a",
+      "file": "digiperform-0.1.1-experimental-os1.54.elemod",
+      "sha256": "dc9652bd879ce40a0f200f80423278c82aa83654c5dd46cc8b737708c3a9fa9e",
       "id": "digiperform",
-      "version": "0.1.0-experimental",
+      "version": "0.1.1-experimental",
       "device": "digitakt-mk1",
       "os": "1.54",
       "license": "GPL-3.0-or-later",
       "source": {
         "repo": "repeat98/modwerk",
-        "commit": "d0009216bdca3cbb1537f6921aab25f59a00eb6d",
-        "path": "sdk/imports/packages/digiperform/digiperform-0.1.0-experimental-os1.54.elemod"
+        "commit": "dc6b94d7d41e6cb6d64c43d55ec66d0d97a1e97f",
+        "path": "sdk/imports/packages/digiperform/digiperform-0.1.1-experimental-os1.54.elemod"
       },
       "title": "Digi Perform",
       "requires": [

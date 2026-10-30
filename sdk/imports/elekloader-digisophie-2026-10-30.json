@@ -1,0 +1,34 @@
+{
+  "schema": 1,
+  "kind": "elekloader-catalog",
+  "revision": "digisophie-2026-10-30",
+  "about": "The author's own SOPHIE 1.1.13 package for Digitakt I OS 1.54, from soejrd/digisophie at ce17b9e (its OS 1.54 port). The OS 1.53 package stays in elekloader's catalog.",
+  "cores": [],
+  "mods": [
+    {
+      "file": "digisophie-1.1.13-os1.54.elemod",
+      "sha256": "51cd3aca3652e1926b6be0213269ac0b54b3c44655f06af4a79270db371b58fa",
+      "id": "digisophie",
+      "version": "1.1.13",
+      "device": "digitakt-mk1",
+      "os": "1.54",
+      "license": "MIT",
+      "source": {
+        "repo": "soejrd/digisophie",
+        "commit": "ce17b9e4868027bafe8684054b45f28ea368bd7c",
+        "path": "release/digisophie-1.1.13-os1.54.elemod"
+      },
+      "title": "SOPHIE",
+      "requires": [
+        "core"
+      ],
+      "conflicts": [],
+      "summary": "A metallic percussion machine with four models: FUSE, BOOM, PIPE and SHARD.",
+      "description": "Two-operator metallic percussion adaptation of Sophie with four distinct models. Its audio enters the normal Digitakt AMP, filter, mixer and sends; the source filter and drive are intentionally not ported.",
+      "category": "Synthesis",
+      "author": "digisophie contributors",
+      "needs_core": "2.1",
+      "on_unit": "The OS 1.54 port (irpina, merged by the author at ce17b9e) builds the same SOPHIE 1.1.13 for 1.54. Not tested on a unit for 1.54 yet; the author tested 1.1.13 on OS 1.53: one track runs without FAST AUDIO, two ran with it on; eight tracks are not claimed."
+    }
+  ]
+}

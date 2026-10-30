@@ -204,7 +204,7 @@ The base patches these for its table readers; no package may patch them: contrib
 | 0x40036548 | 8 | `ot_midi_generators` | jmp mg_note_setup_draw | `e7935464f6aea76650f55814efc9b45785485164937f3bd5ed6f2a4d384b8d4b` | MIDI NOTE SETUP's drawer (its window's and its writers' calls): stock's, then the generator list in its empty left half |
 | 0x4003a526 | 4 | `ot_machines` | ptr mw_pb_table | `76ce29042319b4438a2dfcb9964200138834c3f569c7ff914a10161182b4615c` | the PB table by machine row |
 | 0x4003a52e | 8 | `ot_machines` | jmp mw_setup_edit6 | `cae34bf50383462ed4f92d8044e3021247edb8bf69c17a9c7ead62f6edf79510` | SETUP's editor addresses a machine row as its pool |
-| 0x4003bff4 | 4 | `ot_machines` | ptr mw_pb_table | `76ce29042319b4438a2dfcb9964200138834c3f569c7ff914a10161182b4615c` | the PB table by machine row |
+| 0x4003bff2 | 8 | `ot_machines` | jmp mw_lfo_pb | `646fea5c7ac7852156feed7591534de986df92af53074c25ecf54e4295d072ae` | LFO SETUP's PMTR names: a machine track's own page (mw_page), else the PB table by machine byte |
 | 0x4003c8cc | 4 | `ot_machines` | ptr mw_pb_table | `76ce29042319b4438a2dfcb9964200138834c3f569c7ff914a10161182b4615c` | the PB table by machine row |
 | 0x4003c928 | 6 | `ot_machines` | lea mw_src_names | `237cd1acd4da7acb61dc7fda7c88e648a5186b36732f433b4dd91966c5a669af` | SRC SETUP's machine names |
 | 0x4003c950 | 2 | `ot_machines` | own | `74d01dadcbe6a57ef61bc53a5a65404cd8446c6738ff0ac86b1b1a78d8ae7d41` | SRC SETUP name lookup: moveq #4+n |

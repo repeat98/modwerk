@@ -4,12 +4,12 @@
 
 Evidence tier: `none`. Nothing here is a filed hardware report; the author's own observations on a unit are listed below as they were reported.
 
-Source: `sdk/digitakt/modules/digiperform/src` at commit `59242a13c568a8220c51ca7a935701eab0d7f537`. Modwerk's pinned toolchain compiled the source twice and produced the source-only packages in `sdk/imports/packages/digiperform/` (no stock bytes: addresses, lengths and SHA-256 guards only). The vendored elekloader builder (kit 0.6.0) then linked core 2.1 and Digi Perform into a local image on each release, with the owner's stock OS files, which stay on the author's computer:
+Source: `sdk/digitakt/modules/digiperform/src` at commit `2c7acf00242ae3cecfe4a095cb3712b7ef6051cf`. Modwerk's pinned toolchain compiled the source twice and produced the source-only packages in `sdk/imports/packages/digiperform/` (no stock bytes: addresses, lengths and SHA-256 guards only). The vendored elekloader builder (kit 0.6.0) then linked core 2.1 and Digi Perform into a local image on each release, with the owner's stock OS files, which stay on the author's computer:
 
-- OS 1.54: core 2.1 and Digi Perform 0.1.0-experimental, built and verified; image SHA-256 `d3b41d1df3588abf8599b8a13801e6883781804dec5d12f32b00f8798a156962`. Digi Perform package SHA-256 `82382250e512e8da09ec11c925dd42299cf65efc8e238b56b24568826c1f353a`.
-- OS 1.53: core 2.1 and Digi Perform 0.1.0-experimental, built and verified; image SHA-256 `7892733c56fa05700f3fef0b94afb79362550ed4eaf0c6982514887275254989`. Digi Perform package SHA-256 `c613fe68041206d6faf615e1228822d3b662f85e7de274c741eecc7c429c6901`.
+- OS 1.54: core 2.1 and Digi Perform 0.1.1-experimental, built and verified; Digi Perform package SHA-256 `dc9652bd879ce40a0f200f80423278c82aa83654c5dd46cc8b737708c3a9fa9e`. The image the author tested on a unit (build `3.0h`, SHA-256 `f9e9ffdba779f04cc2f68592088387adebd506f8d1571bd1b09b7100f2c4d2cb`) was linked from the same source with a package that differs from this one only in the version number (one byte).
+- OS 1.53: core 2.1 and Digi Perform 0.1.1-experimental, built and verified; Digi Perform package SHA-256 `5875ae39ba103a97c6e3baa7d962bb7d1dcf9163633b63fd0d2dc6c594c16e4c`. The image the author tested on a unit (build `3.0h`, SHA-256 `bd6f8e8e738430c3b0be515141c76be1f330de3387dc99fd22f5b36380bb973d`) was linked from the same source with a package that differs from this one only in the version number (one byte).
 
-The local images carry the build label `3.0g`. Both are build checks; the author's hardware observations are listed below.
+The local images carry the build label `3.0h`. Both are build checks; the author's hardware observations are listed below.
 
 ## Resources
 
@@ -57,6 +57,12 @@ Known limitation, reported by the author: the knob labels on the Perform page ar
 
 Known limitation, reported by the author: when a new pattern starts to play, the value indicators briefly show the previous pattern's value and then update to the new pattern's. The cause is not confirmed; the engine's smoothed parameter words probably still run from the old sound to the new one when the knobs pick them up. A build that read the new sound's stored value instead (3.0e) made, in the author's words, "not much difference", and was dropped. The flash could not be reproduced in the emulator.
 
+## Filter page 2 slot order (0.1.1)
+
+Found by the author on a unit: FLT.BASE moved the filter width and FLT.WDTH moved nothing. Emulator (digiemu, OS 1.54, build 3.0g; never hardware evidence): turning each knob of the stock Filter 2/2 page and watching the smoothed parameter words showed the sound's slots 33 to 37 are BASE, WDTH, DEL, SRR and ROUT; the module had DEL, BASE, WDTH. The same check on LFO 1, LFO 2, SRC, Filter 1/2 and AMP found their slots in the module's order. Fixed in 0.1.1; a saved assignment keeps its slot number, so one that played as width and was named BASE now shows as WDTH.
+
+Reported by the author (ROMsets): build `3.0h` tested on a unit on OS 1.54 and on OS 1.53, and the fix works ("good to roll out"). The reports give no further step-by-step detail, so the pass is recorded only as that.
+
 ## Author's hardware observations
 
 Reported by the author (ROMsets) while testing local builds on a unit, build labels in brackets. These builds (2.x) kept the assignments in other bytes of the kit than the current layout (tracks 5 to 8's spare bits, build 3.0a), so none of this, except the first item (3.0a), covers the storage as it now is. Recorded as reported. The author says most of this testing was on OS 1.54; the per-item OS release was not recorded, and none of it is a version-matched hardware report.
@@ -80,9 +86,9 @@ Not tested on a unit, or not reported step by step: the current storage layout's
 - A project with assignments loaded without the module: not tested.
 - Affected: the original Digitakt on OS 1.53 and 1.54, audio tracks 1–8; existing projects are unchanged until an assignment is made.
 
-## Documentation capture — 28 October 2026
+## Documentation capture — 30 October 2026
 
-Documentation version: `0.1.0-experimental`. Source revision: `ef0a333cf01282ecd0ae896abb878cf71b38bf9a` (`sdk/digitakt/modules/digiperform`). The OS 1.54 image above was captured through real panel inputs in the pinned digiemu with firmware-native drawing (`hle=False`) and a disposable first-boot project. The capture script runs without the audio engine, so the knobs show their assignment but not live values. Only complete, unmodified LCD frames were kept at 6× integer scale, and every image was opened for review. The record is [capture.json](media/capture.json); the plan is [capture-plan.txt](media/capture-plan.txt).
+Documentation version: `0.1.1-experimental`. Source revision: `2c7acf00242ae3cecfe4a095cb3712b7ef6051cf` (`sdk/digitakt/modules/digiperform`). The OS 1.54 image above was captured through real panel inputs in the pinned digiemu with firmware-native drawing (`hle=False`) and a disposable first-boot project. The capture script runs without the audio engine, so the knobs show their assignment but not live values. Only complete, unmodified LCD frames were kept at 6× integer scale, and every image was opened for review. The record is [capture.json](media/capture.json); the plan is [capture-plan.txt](media/capture-plan.txt).
 
 - The Perform page with eight empty knobs.
 - Perform Quick Assign: choosing the track for knob A.
