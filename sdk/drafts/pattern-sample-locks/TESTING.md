@@ -57,8 +57,32 @@ startup was stopped before measurements to freeze the helper revision; it is
 not a module failure or a completed timing run.
 
 No native C/assembly or transaction behavior changed. Deferred flag cleanup and
-cooperative batches remain unimplemented. Physical phase timing, scheduler
-blocking, full stack bounds and release qualification remain **not tested**.
+cooperative batches remain unimplemented. A subsequent local
+[scheduling test](SCHEDULING_TEST.md) observed task exclusion and resumption on
+the unchanged emulator package. Physical phase timing, complete interrupt/stack
+bounds and release qualification remain unqualified.
+
+## Local beta preparation — 30 October 2026
+
+Fresh C compilation matches the committed assembly and exact tested package.
+The unchanged public wrapper also builds and rebuilds that package byte-for-byte,
+but both stock-byte scans reject it; this remains a publication blocker.
+Authored stack paths sum to at most 500 bytes, excluding stock callees, the caller
+and interrupts. Full system stack safety and physical worst-case cycles remain
+unqualified.
+
+The production browser USB preflight passes standalone addition/removal/Undo
+for all seven current base identities, all 29 candidate-plus-published packages,
+and corruption/capability rejection. GNU/browser object-link bytes, exports and
+BSS end match at three addresses. These private component fixtures do not prove
+full card integration: its native UI subscriptions remain unfinished. Portable
+and production native-writer sanitizer tests pass; 91 existing package/linker
+tests pass. No physical device was accessed and no new work was pushed.
+
+See [methods, limits and blockers](BETA_PREPARATION.md), the
+[stock-free receipt](evidence/beta-preparation-local-20261030.json) and the
+[future supervised MKII checklist](MKII_BETA_CHECKLIST.md). Publication gates
+remain active and this module stays a draft.
 
 ## Exact local build
 
