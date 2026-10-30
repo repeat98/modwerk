@@ -103,6 +103,10 @@ the container, nothing is written (the site's repeat after a lost reply).
 - After it: BASE SAVED (it ran on), or, at the start from the new slot, BASE UPDATED; UPDATE UNDONE when the stub
   went back to the previous base.
 - Not built: anything on the unit while the base is sent and while the new base starts from RAM.
+- A restart onto the new slot hangs at the logo when a DSP stalled before it (the soft reset cannot park a hung
+  core); a power cycle then starts the new base. A tester's diagnostics (30 October 2026, not reproduced) show the
+  stall during the send itself: the CPU at 99 % with 14 modules running beside the ~800 KB container. The site
+  then ends at Restart with the switch-off advice (`octatrack-link.ts`), never with the one-slot recovery text.
 
 ## Tests before any unit
 

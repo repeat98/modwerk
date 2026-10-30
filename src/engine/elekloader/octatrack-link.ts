@@ -489,7 +489,7 @@ export class OctatrackLink {
     // Once a write may have started, an error is no verdict: a power-off then can leave NOR without a base. The
     // write runs on the unit whatever USB does and a repeat is harmless (flash.c compares NOR first), so the unit is
     // reopened, which rolls back what the lost session left (a verified write then restarts it on NOR), and written again.
-    let wrote = false // an activation was sent that may have written NOR
+    let wrote = false, saved = false // an activation was sent that may have written NOR; the unit confirmed it saved
     for (let attempt = 1; ; attempt++) {
       report('writing', 0)
       const connection = this.connection, writer = this.state.identity?.base ?? expected
@@ -506,6 +506,7 @@ export class OctatrackLink {
           })
           await session.accept()
         })
+        saved = true
         // A base that answers SLOTS saved itself while it runs on: the trial was the update's one restart.
         if (!direct && this.slotsRead !== undefined) {
           const slots = await this.read('base slots', transport => transport.slots()).catch(() => undefined)
@@ -517,11 +518,13 @@ export class OctatrackLink {
         if (back !== expected) throw new Error(`After the write the Octatrack came back on base ${back.slice(0, 8)}, not the new one.`)
         return report('done')
       } catch (error) {
-        if (!wrote || signal?.aborted) throw error
+        // Saved and checked, then not back from the restart: nothing is left to write. A unit whose DSP stalled while
+        // the base was sent hangs at the logo on that restart until it is switched off (30 October 2026).
+        if (!wrote || saved || signal?.aborted) throw error
         console.warn('Base write not confirmed, attempt ' + attempt, error)
         if (attempt >= BASE_WRITE_ATTEMPTS) throw new Error(late, { cause: error })
         report('reconnecting')
-        const back = await this.steady(connection, signal)
+        const back = await this.steady(connection, late, signal)
         if (direct && back === expected) return report('done') // it restarted on the new base: the write landed
         // After the trial, back on another base means the unit booted NOR, which still holds that base whole: the
         // write never landed. On two slots it is the base that writes: write again.
@@ -541,11 +544,11 @@ export class OctatrackLink {
   }
   /** The unit reopened after a write step ended without a verdict, once it has stayed connected for a moment: its
    * connect undoes the lost session (cleanUp), which restarts it half a second on when its write had verified. */
-  private async steady(connection: number, signal?: AbortSignal) {
+  private async steady(connection: number, late: string, signal?: AbortSignal) {
     const device = this.device
     if (connection === this.connection && device) { this.connection++; this.set({ status: 'connecting' }); void this.open(device) }
     for (let since = connection; ; ) {
-      const base = await this.returned(since, signal, RECONNECT_MS, UNCONFIRMED)
+      const base = await this.returned(since, signal, RECONNECT_MS, late)
       since = this.connection
       await wait(STEADY_MS)
       signal?.throwIfAborted()
