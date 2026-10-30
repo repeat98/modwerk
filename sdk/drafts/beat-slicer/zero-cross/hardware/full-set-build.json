@@ -173,7 +173,8 @@
   "selftest": "Passed: 19/19 intact; 7/7 DSP effects ran together; longest observed frame 417 us",
   "limitStatusRetest": "Passed: 65536 reads, completion 12, full table and PCM preserved",
   "splitStereoBothRetest": "Passed: completion 7, 56 reads, right-channel -5-frame boundaries, inactive rows and PCM preserved",
-  "qualification": "Incomplete; uninstrumented build, 24-bit, concurrency and broader audio/stress cases remain pending",
+  "qualification": "Incomplete: full-set Undo failed; uninstrumented build, 24-bit, concurrency and broader audio/stress cases remain pending.",
   "record": "FULL_SET_2026-10-30.md",
-  "firmwareCommitted": false
+  "firmwareCommitted": false,
+  "subsequentEnd": "Bounded 45-second Undo failed with 10 modules remaining; active identity unknown; client stopped and owner power cycle requested before any further install."
 }

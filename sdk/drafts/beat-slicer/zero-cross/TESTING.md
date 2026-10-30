@@ -11,6 +11,26 @@ rebuilt and passed the limit/status check on the second base with all 19
 modules. That RAM trial was left running at the owner's request, without a host
 deadline; it has not yet been Undone or reboot-restored.
 
+## Cumulative 0.1.67 inheritance correction
+
+The earlier 0.1.68 measurement builds omitted the separately staged FUNC + AED
+cycle. The private source proposal now includes it alongside SNAP and the
+completion-status fix. [The cumulative build receipt](hardware/cumulative-build.json)
+pins base `20ed7910…`, MAIN `8ede9cf9…` (1,306,295 bytes) and the unchanged
+5,332-byte module. Hardware loading/retesting is pending; earlier hardware
+evidence does not qualify this combination.
+
+All five shared font/frame, preview and planner sources match the approved
+0.1.67 native-UI candidate byte-for-byte. The actual combined menu/service
+regressions cover stock-first cycling, both directions, held FUNC/repeated AED,
+duplicate key-downs, foreign dialogs, busy/stale/retired sources, multiple
+contributors, and FUNC/AED cancellation during SNAP analysis. The controller
+and cache tests and all 174 decoded-PCM comparisons pass. The immutable native
+build, descriptor compile, codegen/layout, module-set/service/menu/SNAP,
+stock-free and bootloader-safety checks pass. Three base-bound companions were
+rebuilt; the reviewed 19-package set has 72 non-overlapping guarded stock sites
+and every site/copy guard matches the exact new base.
+
 ## Observed software checks
 
 - Existing service/menu/board/action tests pass with sanitizers. New tests use

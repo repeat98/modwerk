@@ -3,7 +3,11 @@
 twwwy's next update adds **C: SNAP OFF/ON** to the approved three-by-two
 encoder layout. A remains BPM source and B remains beat spacing. D–F are
 inert. Native font/frame, Mixer height, live eight-track backdrop and cached
-drawing are retained from the separate 0.1.67 candidate.
+drawing are retained from 0.1.67, together with its base-owned FUNC + AED cycle.
+The first chord opens stock CREATE SLICE GRID; repeated chords switch between
+that chooser and CREATE BEAT GRID. Switching cancels the preview without
+creating slices. Both the early observer and late key consumer are included in
+this cumulative private base proposal; the module alone cannot add the cycle.
 
 OFF keeps mathematical beat positions and uses the existing replacement API.
 ON requests boundary alignment through the private base extension below.
@@ -55,9 +59,9 @@ use the native Flex/Static readers in the engine, outside the full interrupt
 mask. The number of reads is bounded; Static IO wall time is not established.
 
 The base extension needs separate owner review and qualification before a
-module release can use it. This proposal changes no published package, base,
-catalogue or release entry. Published Beat Slicer remains 0.1.66; PR #1054's
-0.1.67 UI candidate remains separate. No automatic publication is requested.
+module release can use it. This cumulative 0.1.68 proposal includes the 0.1.67
+UI, cached drawing and shortcut changes, and adds SNAP. It changes no published
+package, base, catalogue or release entry. No automatic publication is requested.
 
 ## Build and checks
 
@@ -79,7 +83,9 @@ No heap, DSP, PCM reader or stock patch is in the module.
 
 See [RESEARCH.md](RESEARCH.md), [TESTING.md](TESTING.md), `build.json` and
 `base-build.json`. Private images, native probes and logs stay in the
-developer's `zero-cross-20261030` cache. **Hardware: not tested.**
+developer's `zero-cross-20261030` cache. Hardware evidence is build-specific in
+[TESTING.md](TESTING.md); earlier SNAP builds omitted the shortcut and cannot
+qualify the cumulative build.
 
 Private WAV generation, decoded-PCM verification, measurement-base preparation,
 read-only snapshots and complete-record comparison are in

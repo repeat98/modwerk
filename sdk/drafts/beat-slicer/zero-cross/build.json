@@ -20,8 +20,8 @@
     "planner.h": "1a10ce9e6b34dfd35eb138690e2134550621c3bf91b2178fb50f95b9def6b7ae",
     "sample_options.h": "bf445bb2ba7849fa4f3eba3f4a9ef9a7eda5207448ee3488bc209f75b66865e2"
   },
-  "basePatchSha256": "d57b32ac9eae32e16f1549cf83f467f791f12876a38104871546a337aa7e1369",
+  "basePatchSha256": "55eed466a26d1a78997d40d9282f5598b2adbe86e24227643ddc3eacb9b86295",
   "sharedApi": "optional ABI-1 tail; legacy prefix and sizeof unchanged",
   "hardware": "Partial MKII full-set evidence on corrected measurement base 36b8c51f\u2026; hardware/FULL_SET_2026-10-30.md. Uninstrumented qualification remains pending.",
-  "basePatchScope": "The original compilation receipt below predates the service-only completion fix; hardware/full-set-build.json pins the rebuilt and hardware-tested corrected measurement base."
+  "basePatchScope": "Current cumulative source proposal includes 0.1.67 FUNC+AED cycle and 0.1.68 SNAP/completion fixes. Exact combined build and hardware evidence are recorded separately when built."
 }

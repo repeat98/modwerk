@@ -1,0 +1,38 @@
+{
+  "scope": "Cumulative private 0.1.68 measurement build; includes 0.1.67 UI/cache/shortcut and 0.1.68 SNAP/completion fixes",
+  "baseIdentity": "20ed79108facb38d72b1e21105a3fd598bc45b76da39e667d6ad1c9b9a67410e",
+  "mainSha256": "8ede9cf9d702f93acbbfede4ade157c11abf7a18d6ddab0000ab68b48a84fb3f",
+  "mainBytes": 1306295,
+  "basePatchSha256": "55eed466a26d1a78997d40d9282f5598b2adbe86e24227643ddc3eacb9b86295",
+  "moduleSha256": "195d2b46e2620bd15118478aa02d626d6d803692e02c40db4f45a67f6927b643",
+  "moduleBytes": 5332,
+  "toolchainImage": "sha256:da70d46e10b243277fa3ae2e015f7258d56b3ee08ca4be47e61899958872e792",
+  "inheritedUiSourceAudit": {
+    "referenceVersion": "0.1.67-experimental",
+    "referencePackage": "20ce427629de295c373e69965c12d2ea370c217a22dde0ecf76d76789a169291",
+    "identicalApprovedSources": {
+      "device_font.c": true,
+      "device_font.h": true,
+      "grid_preview.c": true,
+      "grid_preview.h": true,
+      "planner.h": true
+    },
+    "shortcutReference": "private grid-shortcut source and tests from 2026-10-29",
+    "modulePackageUnchanged": "195d2b46e2620bd15118478aa02d626d6d803692e02c40db4f45a67f6927b643",
+    "sourceRegressions": "actual shortcut/SNAP/controller/cache tests pass; full preparation suite passed"
+  },
+  "shortcut": "Stock chooser first; repeat cycles admitted actions then stock; switching cancels preview without writes",
+  "moduleCount": 19,
+  "stockSites": 72,
+  "stockGuards": "all match exact compiled base; no cross-package overlaps",
+  "sourceControllerAndPreparationTests": "passed",
+  "pinnedBaseModuleSetServiceMenuSnapTests": "passed; including descriptor compile",
+  "stockFreeScan": "passed",
+  "bootloaderSafetyScan": "passed; no flash authorized",
+  "ramBootLimit": 1310720,
+  "hardware": "Not loaded yet; previous full-set Undo did not finish, so physical power cycle and original-set verification are required before loading.",
+  "hostTrialDeadline": null,
+  "keep": false,
+  "flash": false,
+  "upstreamPush": false
+}
