@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="192" viewBox="0 0 320 192" role="img" aria-labelledby="title desc">
+ <title id="title">BREAKCUT — Livecut on a sliced break</title>
+ <desc id="desc">A break's sixteen slices in order, then the same break cut into blocks: repeated slices, a fast roll at the end of the phrase and a reversed block. Original illustration, not an Octatrack LCD capture.</desc>
+ <rect width="320" height="192" rx="8" fill="#111218"/>
+ <g stroke="#fff" opacity=".035" stroke-width=".7"><path d="M20 52H300M20 97H300M20 142H300M64 33V163M128 33V163M192 33V163M256 33V163"/></g>
+ <g fill="#6fd3c1" opacity=".35">
+  <rect x="26" y="40" width="14" height="12"/><rect x="42" y="44" width="14" height="8"/><rect x="58" y="38" width="14" height="14"/><rect x="74" y="46" width="14" height="6"/><rect x="90" y="40" width="14" height="12"/><rect x="106" y="44" width="14" height="8"/><rect x="122" y="38" width="14" height="14"/><rect x="138" y="46" width="14" height="6"/><rect x="154" y="40" width="14" height="12"/><rect x="170" y="44" width="14" height="8"/><rect x="186" y="38" width="14" height="14"/><rect x="202" y="46" width="14" height="6"/><rect x="218" y="40" width="14" height="12"/><rect x="234" y="44" width="14" height="8"/><rect x="250" y="38" width="14" height="14"/><rect x="266" y="46" width="14" height="6"/>
+ </g>
+ <g font-family="monospace" font-size="7.5" fill="#9b9fb5" letter-spacing=".6"><text x="286" y="50">IN</text><text x="282" y="120">OUT</text></g>
+ <g fill="#6fd3c1">
+  <rect x="26" y="106" width="14" height="12"/><rect x="42" y="110" width="14" height="8"/><rect x="58" y="106" width="14" height="12"/><rect x="74" y="110" width="14" height="8"/>
+  <rect x="90" y="104" width="14" height="14"/><rect x="106" y="112" width="14" height="6"/><rect x="122" y="104" width="14" height="14"/><rect x="138" y="112" width="14" height="6"/>
+  <rect x="154" y="106" width="14" height="12" opacity=".6"/><rect x="170" y="110" width="14" height="8" opacity=".6"/>
+  <rect x="186" y="104" width="6" height="14"/><rect x="194" y="104" width="6" height="14"/><rect x="202" y="104" width="6" height="14"/><rect x="210" y="104" width="6" height="14"/>
+  <rect x="218" y="100" width="3" height="18"/><rect x="223" y="98" width="3" height="20"/><rect x="228" y="96" width="3" height="22"/><rect x="233" y="94" width="3" height="24"/><rect x="238" y="92" width="3" height="26"/><rect x="243" y="90" width="3" height="28"/>
+ </g>
+ <g stroke="#6fd3c1" stroke-width="1.2" fill="none" opacity=".6"><path d="M58 60v34M122 60v34"/><path d="M168 122h-12m3-3-3 3 3 3"/><path d="M186 124h60"/></g>
+ <g font-family="monospace" font-size="7.5" fill="#9b9fb5" letter-spacing=".6"><text x="40" y="136">REPEAT</text><text x="152" y="136">REV</text><text x="200" y="136">ROLL ↗</text></g>
+ <text x="25" y="22" font-family="Arial,sans-serif" font-size="10" fill="#c5c7da" letter-spacing="1.1">BREAKCUT</text>
+ <text x="25" y="176" font-family="Arial,sans-serif" font-size="9" fill="#9b9fb5" letter-spacing=".4">CUT · WARP · SQP → SLICES</text>
+ <text x="236" y="176" font-family="Arial,sans-serif" font-size="9" fill="#6fd3c1">16 STEPS</text>
+</svg>

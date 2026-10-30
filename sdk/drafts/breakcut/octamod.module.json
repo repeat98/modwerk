@@ -1,0 +1,171 @@
+{
+  "schemaVersion": 2,
+  "id": "breakcut",
+  "key": "BREAKCUT",
+  "name": "BREAKCUT",
+  "version": "0.1.0-experimental",
+  "category": "machines",
+  "author": {
+    "github": "semierendonmez-commits",
+    "name": "Semi Erendönmez",
+    "credits": [
+      "Octatrack module by Semi Erendönmez",
+      "Livecut cut procedures: Remy Muller (GPL-2.0-or-later), mdsp/Livecut",
+      "BBCut, the BreakBeat Cutting library: Nick Collins",
+      "Machine shape: VECTOR by Jannik Aßfalg (MIT)"
+    ]
+  },
+  "nativeManifest": "manifest.py",
+  "presentation": {
+    "label": "BREAK CUTTER",
+    "family": "Sequencing",
+    "summary": "Livecut's jungle break cutting on a sliced Flex track: repeats, stutters, warps, pushes and fills.",
+    "overview": "BREAKCUT turns a sliced break on a Flex track into a cut-up, the way Livecut and Nick Collins' BBCut do: the break is cut into phrases of one to four bars, each phrase into blocks, each block into cuts that replay the block's start. CutProc11 repeats odd-length cuts and stutters at the end of a phrase; WarpCut plays blocks straight, as fast even rolls, or accelerating and ritardando; SQPusher pushes quavers and semiquavers by their place in the bar and ends a phrase with one of its thirteen fills. BREAKCUT writes the result as the track's trigs with STRT locks for the slices, RTRG and RTIM for cuts shorter than a step, micro-timing for cuts off the grid, PTCH for pitch ramps and RATE for reversed blocks. The stock sequencer plays it at the pattern's tempo, speed, length and swing.",
+    "highlights": [
+      "Livecut's three cut procedures, and MIX to draw one per phrase",
+      "Rolls and stutters as retrigs, off-grid cuts as micro-timing",
+      "Pitch ramps on rolls, reversed blocks",
+      "Real trigs and locks: edit any step as usual; no clock of its own"
+    ],
+    "usage": [
+      "Load a break on a Flex track, slice it into a grid of one slice a step (16 slices for a one-bar break) and set SLIC ON in SRC SETUP.",
+      "Choose BREAKCUT in SRC SETUP's machine list. Set SLCS to the number of slices.",
+      "ALGO picks the procedure; ACTV sets how much it cuts, ROLL how often phrases end in a roll or fill; RAMP pitches the rolls, REV reverses blocks. Each turn rewrites the track; YES draws a new variation."
+    ]
+  },
+  "controls": [
+    {
+      "name": "ALGO",
+      "default": 0,
+      "count": 4,
+      "doc": "The cut procedure: Livecut's CutProc11, WarpCut and SQPusher, or MIX, one drawn per phrase",
+      "labels": [
+        "CUT",
+        "WARP",
+        "SQP",
+        "MIX"
+      ]
+    },
+    {
+      "name": "SLCS",
+      "default": 16,
+      "count": 64,
+      "doc": "Slices in the break, one a step: 1-64 (stored as slices - 1)",
+      "labels": null
+    },
+    {
+      "name": "ACTV",
+      "default": 64,
+      "count": 128,
+      "doc": "How much it cuts: CutProc11's repeats (0-4), WarpCut's 1 - straight chance, SQPusher's activity",
+      "labels": null
+    },
+    {
+      "name": "ROLL",
+      "default": 100,
+      "count": 128,
+      "doc": "CutProc11's end-of-phrase stutter chance, WarpCut's accelerating share, SQPusher's fill chance",
+      "labels": null
+    },
+    {
+      "name": "RAMP",
+      "default": 12,
+      "count": 25,
+      "doc": "A roll's pitch at its end, -12..+12 semitones (12 none), as PTCH locks",
+      "labels": null
+    },
+    {
+      "name": "REV",
+      "default": 0,
+      "count": 128,
+      "doc": "The chance a block plays reversed (RATE locks)",
+      "labels": null
+    }
+  ],
+  "compatibility": {
+    "firmware": "1.40C",
+    "location": "Track machine",
+    "conflicts": [],
+    "uiClaims": [],
+    "limitations": [
+      "Needs the Modwerk base loaded over USB (beta) with the machine table (ot_machines). Card firmware cannot include it.",
+      "Needs a Flex sample sliced one slice a step with SRC SETUP's SLIC on. The STRT value of a slice, RATE's reverse value and RTIM's scale are read from the unit and unverified here (TESTING.md).",
+      "BREAKCUT owns the PTCH, STRT, RATE, RTRG and RTIM locks, the trigs and the trig words of the steps inside the track's length; LEN, AMP, LFO and FX locks stay.",
+      "A step holds one trig: where a cut continues and another starts in the same step, the new cut wins. Accelerating rolls become even retrigs within each step.",
+      "Livecut's amplitude, pan, duty-cycle and effects are not ported. The seed is kept but not shown on a page; YES advances it and shows it.",
+      "Not yet run on hardware or in the emulator."
+    ],
+    "effectId": null
+  },
+  "resources": {
+    "recorded": "Package header, 30 Oct 2026 (host build)",
+    "storage": {
+      "label": "Storage",
+      "display": "9,480 bytes",
+      "value": 9480,
+      "unit": "bytes",
+      "method": "static",
+      "conditions": "From the USB package build.py makes from the sources (m68k-elf-gcc 16.2, -Os): 7,696 bytes of ColdFire code and data and 1,784 of bss (the generator's state and a 64-step line), one instance, 139 relocations, no stock-code sites. No DSP memory, no heap.",
+      "source": "TESTING.md"
+    },
+    "processing": {
+      "label": "CPU load",
+      "display": "Not measured",
+      "value": null,
+      "unit": "unknown",
+      "method": "unmeasured",
+      "conditions": "Work happens on the UI task once per knob turn or YES: one line of up to 64 steps and an in-place rewrite of the track record. Nothing runs while the pattern plays.",
+      "source": "TESTING.md"
+    },
+    "impact": {
+      "conditions": "A knob turn or YES on a BREAKCUT track; idle otherwise.",
+      "cpu": {
+        "level": "low",
+        "basis": "source-estimate",
+        "rationale": "One line of at most 64 steps (at most 128 cuts a block) and an in-place record rewrite per edit on the UI task; nothing at interrupt level and nothing while playing.",
+        "source": "TESTING.md"
+      },
+      "dsp": {
+        "level": "minimal",
+        "basis": "source-estimate",
+        "rationale": "No DSP code and no change to the DSP programs.",
+        "source": "manifest.py"
+      },
+      "memory": {
+        "level": "minimal",
+        "basis": "source-estimate",
+        "rationale": "9,480 bytes of ColdFire code, data and state in DRAM (7,696 + 1,784 from the package header); the line it writes is the track's own record.",
+        "source": "TESTING.md"
+      }
+    }
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "Host checks only: the cut procedures play the break straight when nothing cuts, produce well-formed, deterministic lines with stutters, fills, retrigs, micro-timing, pitch ramps and reverses; the RTIM scale, the track-record writer and the settings packing are checked under the sanitizers; the package's machine record sits at the registry's index (test_engine.py). Not run on a unit or in the emulator.",
+    "hardwareStatus": "untested",
+    "evidenceRevision": "1bbc8b46cb3c5d09e1ce25e020cc460367769f33",
+    "gates": [
+      "modules/breakcut/verify.py"
+    ]
+  },
+  "license": {
+    "spdx": "GPL-3.0-or-later",
+    "file": "LICENSE",
+    "declaration": "The cut procedures follow Livecut's BBCutter.cpp by Remy Muller (GPL-2.0-or-later, mdsp/Livecut 2695d386ebb23b13ceeb1a4aa76b6851ce9ea050), after Nick Collins' BBCut; SQPusher's fill table is carried over. The Octatrack glue is original, in the shape of VECTOR's MIT native.c. No Elektron firmware, extracted routines, tables, samples or dumps are included."
+  },
+  "media": [],
+  "access": {
+    "location": "Flex track: SRC SETUP's machine list (double-tap SRC), BREAKCUT after the stock machines",
+    "steps": [
+      "Load a break on a Flex track, slice it one slice a step and set SLIC ON in SRC SETUP. Double-tap SRC, scroll to BREAKCUT and press YES. The SRC page now holds ALGO, SLCS, ACTV, ROLL, RAMP and REV; SRC SETUP keeps the sample's own setup.",
+      "Push LEVEL on the SRC page for the stock sample controls and again to return; hold a trig for stock's page and its locks.",
+      "Double-tap the track key for the stock sample pool, as on any Flex track."
+    ],
+    "screenshots": []
+  },
+  "source": {
+    "repository": "https://github.com/mdsp/Livecut",
+    "revision": "2695d386ebb23b13ceeb1a4aa76b6851ce9ea050",
+    "path": "Source/BBCutter.cpp"
+  }
+}
