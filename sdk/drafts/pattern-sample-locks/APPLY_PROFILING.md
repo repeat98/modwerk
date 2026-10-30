@@ -55,10 +55,10 @@ instruction span independently.
 Instruction intervals include intervening interrupt execution. Neither these
 counts nor model milliseconds are ColdFire wall-clock cycles, physical CPU
 utilization or a complete scheduler/interrupt bound. The existing hardware-timer
-guard counters exclude some entry/exit instructions and must not be presented as
+guard maximum is cumulative across the run, excludes some entry/exit instructions and must not be presented as
 the complete masked duration. A follow-up hardware run needs verified timer
 configuration, measured overhead, matched load and the exact tested base/package.
 No cached load-meter difference establishes an isolated module cost.
 
-New physical hardware results: **not tested**. Record completed emulator results
-and their identities in TESTING.md; retain explicit failures and incomplete runs.
+New physical hardware results: **not tested**. Completed emulator results and
+their identities are in TESTING.md and evidence/apply-profile-20261030.json.

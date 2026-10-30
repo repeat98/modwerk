@@ -148,4 +148,4 @@ def after_undo(port,out):
         hardware=False,scope=('Playing' if state['phases'] else 'Stopped')+
         ' disposable MKII emulator fixture; elapsed instructions include interrupts; no hardware cycle or audio qualification')
     (out/'performance.json').write_text(json.dumps(reports,indent=2)+'\n')
-    return {'performanceBaselineAfterRemoval':True}
+    return {'performanceRemovalCompleted':True} if state['phases'] else {'performanceBaselineAfterRemoval':True}

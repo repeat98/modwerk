@@ -10,6 +10,56 @@ Portable planner, UI and production native-writer sanitizer tests pass. The full
 
 Retired reports and obsolete captures are consolidated in [PROTOTYPE_HISTORY.md](PROTOTYPE_HISTORY.md); they do not qualify this version.
 
+## Apply phase profiling — 30 October 2026
+
+An independent DSP-enabled MKII emulator process used its own copied card and
+socket, with shared inputs mounted read-only. The unchanged package
+`28766a01…` ran on base `2e1a6128…`; this is a separate named emulator base,
+not qualification of current public main. Symbol-only assembly annotations
+reproduced the linked package image byte-for-byte. See
+[reproduction and phase definitions](APPLY_PROFILING.md) and the
+[stock-free receipt](evidence/apply-profile-20261030.json).
+
+All ten native panel operations passed (Lock and Clear for five fixtures).
+Complete track-byte comparisons preserved every non-SAMPLE byte; canonical
+battery mirrors and every audio lock-index byte matched. Transport remained
+running during Apply. Removal restored the declared stock sites and image
+attestation matched all 8,748 initialized bytes and three opener sites. DSP
+frames advanced from 42,798 to 97,219; errors and stalls stayed zero. No listening
+or physical hardware result is inferred.
+
+| Clear fixture | Changed fields | Total elapsed emulator instructions | Index-planning interval |
+| --- | ---: | ---: | ---: |
+| Two steps, no other locks | 2 | 10,483 | 2,228 |
+| One full track, no other locks | 64 | 29,890 | 18,286 |
+| Eight full tracks, no other locks | 512 | 307,630 | 246,660 |
+| Eight full tracks, other lock in first slot | 512 | 77,046 | 16,116 |
+| Eight full tracks, other lock in last other slot | 512 | 278,686 | 244,004 |
+
+Each row is one operation. Index planning includes mirror checks and mask
+preparation, not only scanning. All phase intervals include any intervening
+interrupt execution: the first-slot case includes 32,989 instructions in final
+revalidation, versus 6,741 in the other maximum Clear cases. These observations
+are not isolated chip cycles, repeat-run maxima or universal bounds. The
+no-other-lock maximum spent 80.2% of its observed interval in index planning;
+the first/last-slot comparison supports investigating the scan before changing
+transaction semantics. Full-pattern Lock totals ranged from 72,748 to 98,996
+elapsed instructions. Maximum publication-mask spans were 86 instructions,
+with 64 short guards per full operation; guard timer maxima are cumulative and
+exclude some boundary instructions.
+
+The phase run deliberately omitted the legacy cached-meter baseline experiment.
+Its raw completion metadata inherited a `performanceBaselineAfterRemoval` label;
+that label does not establish a measured unloaded baseline. The helper now
+reports removal completion instead. The receipt preserves the actual executed
+helper hash and explains this metadata-only correction. An earlier private
+startup was stopped before measurements to freeze the helper revision; it is
+not a module failure or a completed timing run.
+
+No native C/assembly or transaction behavior changed. Deferred flag cleanup and
+cooperative batches remain unimplemented. Physical phase timing, scheduler
+blocking, full stack bounds and release qualification remain **not tested**.
+
 ## Exact local build
 
 - Source checkpoint: 42525aa0064bd228b3ad8d0aa1a3dae7f9413622 (module implementation 481e78b6; later checkpoint changes the emulator harness only).
