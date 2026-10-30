@@ -1,5 +1,14 @@
 # MIDI Mute testing
 
+## Stock OS 1.74 on the author's unit: the baseline (30 October 2026)
+
+To check that the unchecked runs really show stock behaviour, the author flashed Elektron's stock OS 1.74 (no module, no core) and the bench ran its full set as a stock baseline, in the author's own project (AUTO channel 15, PROG CH RECEIVE on), over USB and then over DIN through the AF16Rig, the flood with solo toggles, Start/Stop and 14 pattern changes.
+
+- **USB, all 15 steps stock:** the muted BD heard on the AUTO channel and on channel 1 (notes 12, 36, 48, 59); another track muted, BD heard; a held BD note rang on after the CC 94 mute and after SD was soloed; with SD soloed BD heard; BD soloed and muted heard; after the flood (9,446 pairs, 32,905 CCs, 119 mute and 46 solo toggles) silent, then a new note heard.
+- **DIN, 12 steps stock, 3 inconclusive:** the same results for every drop, solo and flood step (9,482 pairs, 32,965 CCs). The three held-note steps were inconclusive: the USB flood before them had changed BD's sound with CC 16-23, and it no longer rang while held. The bench now runs every port's floods last.
+
+Every result matches MM04 with MUTE MIDI IN unchecked, step for step: unchecked, the module changes nothing the bench can see.
+
 ## Build MM04: solo (rytm-emu, 30 October 2026)
 
 MM04 adds solo: a track is now silenced as the sequencer silences it, every track but the soloed ones while any is soloed, otherwise the muted ones. Image SHA-256 `98089be3…4ae9`, built and run as MM03 below; MM03's hardware results above and below were taken before this change and have not been repeated on MM04.
