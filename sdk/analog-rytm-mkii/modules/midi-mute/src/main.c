@@ -150,7 +150,7 @@ static void set_enabled(void **payload, int on)
 {
     enabled = on;
     core_store_set(STORE(midi_mute_on), 0, 0, enabled);
-    seen_mask = MUTE_MASK;
+    seen_mask = on ? 0 : MUTE_MASK;     // checked: the next tick releases what muted tracks hold
     VIEW_INVALIDATE((char *)*payload + 56);     // redraw the menu, as stock's rows do
 }
 
