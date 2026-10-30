@@ -287,7 +287,7 @@
       "Sample tracks: the slide-trig mask's index and the number of AMP HOLD units in one step are read from the unit and unverified here; a slid note that does not reach the next step retriggers instead of gliding. AFLT writes a FILTER DEPTH lock only when the track's FX1 is the stock FILTER.",
       "MIDI tracks: slides are overlapping notes (a LEN lock past the next step): a synth that does not slide on legato plays two overlapping notes. No portamento CC is sent. SLEN's default is unverified against stock's LEN table.",
       "One generator a track; it takes the sample track's SRC page (both pages) or the MIDI track's SRC and AMP pages and keeps the arpeggiator off there. Choosing LOGACID on a MIDI track sets NOTE to A1, VEL to 72 and NOT2-4 off.",
-      "Not yet run on hardware or in the emulator."
+      "Only reported by the developer to run on their own Octatrack MKI from a card build (31 Oct 2026; the exact revision was not recorded); not run in the emulator."
     ],
     "effectId": null
   },
@@ -335,8 +335,8 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Host checks only: the integer engine reproduces tb3po.c's float generator step for step over 50,688 cases; the sample-track and MIDI-track record writers and the nine-byte settings packing are checked under the sanitizers; the package's machine and MIDI generator records sit at the registry's indices (test_engine.py). Not run on a unit or in the emulator.",
-    "hardwareStatus": "untested",
+    "summary": "Host checks only: the integer engine reproduces tb3po.c's float generator step for step over 50,688 cases; the sample-track and MIDI-track record writers and the nine-byte settings packing are checked under the sanitizers; the package's machine and MIDI generator records sit at the registry's indices (test_engine.py). Not run in the emulator; reported by the developer to run on their own Octatrack MKI from a card build (31 Oct 2026; the exact revision was not recorded).",
+    "hardwareStatus": "reported",
     "gates": [
       "modules/logacid/verify.py"
     ],
