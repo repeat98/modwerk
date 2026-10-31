@@ -697,8 +697,8 @@ unsigned modwerk_dsp_flags(unsigned core)
 #define STALL_TICKS 30u
 static uint32_t seen_frames, still;
 int modwerk_dsp_stalled(uint32_t frames, int busy)
-{
-    if (frames != seen_frames || !busy) { seen_frames = frames; still = 0; return 0; }
+{   /* not under a base write's OS UPGRADE quiesce, which stops the frames on purpose (flash.c) */
+    extern volatile uint32_t modwerk_flash_quiesced; if (frames != seen_frames || !busy || modwerk_flash_quiesced) { seen_frames = frames; still = 0; return 0; }
     return ++still == STALL_TICKS;
 }
 volatile uint32_t modwerk_dsp_stalls, modwerk_dsp_drained; /* hangs seen; words taken back from the DSPs */

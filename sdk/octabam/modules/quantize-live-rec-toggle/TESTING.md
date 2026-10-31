@@ -1,4 +1,4 @@
-# Quantize Live Recording: tests and measurements
+# Quantize Live Rec Toggle: tests and measurements
 
 Recorded 23 October 2026. Version `0.1.1-experimental`.
 
