@@ -1,6 +1,6 @@
 # DROPOUT
 
-Version: 0.1.0-experimental · author: @semierendonmez-commits · draft; the developer reports it runs on their Octatrack MKI (card build)
+Version: 0.1.0-experimental · author: @semierendonmez-commits · draft, not yet run on a unit
 
 ## Overview
 
@@ -57,7 +57,7 @@ On a break, PCKT with RATE around 60 and SIZE at 256 replays and fades scraps of
 - **Buffer.** 3,072 words of the slot's buffer (`Claims(buffer_words=3072)`), which an FX1 slot holds: a ring of the last 512 coded frames for PCKT, cleared over the first 8 calls (128 frames, about 3 ms, during which the dry passes untouched), and the frozen frame, which is always recorded before it is played. Nothing left in the buffer by another effect is heard.
 - **Deliberate glitches.** HOLD and PCKT end with a step back to the track, a frozen frame jumps at its seam, a muted CIRC burst cuts hard, and the codec aliases and, near full scale, limits (fx:audit in TESTING.md). There are no fades but PCKT's own.
 - **MIX 127** leaves the dry at 2^-23 (about 1 LSB) under the failures.
-- **One unit, by report.** The developer reports it runs on their own Octatrack MKI from a card build (31 Oct 2026; the exact revision was not recorded). Otherwise the DSP code has run only in fxhost, the vendored DSP56300 emulator with the module alone (TESTING.md).
+- **Not yet run on a unit, under the ColdFire port or in a built image.** The DSP code has run only in fxhost, the vendored DSP56300 emulator with the module alone (TESTING.md).
 
 ## Tests and measurements
 
