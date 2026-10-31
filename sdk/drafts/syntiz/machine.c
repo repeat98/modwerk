@@ -137,10 +137,23 @@ uint32_t wave_track_page(const volatile uint8_t *slot)
     return page_of(t < 8u ? model_of(part, (unsigned)t) : WAVE_SAW);
 }
 
+/* At most three SYNTIZ tracks in a Part: on the MK2 a fourth track holding a long note overruns the frame interrupt's
+ * share, and the base's guard drops renders, a crackle (TESTING.md, 30 October 2026). Choosing SYNTIZ for a fourth
+ * track is refused, and that track stays what it was. A track that is SYNTIZ already is admitted (a model change),
+ * and a Part that has more (a project saved before, a copied Part) plays on: the base asks only when a track is picked. */
+#define WAVE_MAX_TRACKS 3u
+static unsigned is_wave(const volatile uint8_t *part, unsigned t)
+{
+    const volatile uint8_t *s = part + SIG + 30u * t;
+    return part[0x22u + t] == 1u && s[0] == 'W' && s[1] == 'V' && s[2] >= 1u && s[2] <= WAVE_MODELS;
+}
 unsigned wave_admit_track(const volatile uint8_t *part, unsigned track)
 {
-    (void)part;
-    return track < 8u;
+    if (track >= 8u) return 0;
+    if (is_wave(part, track)) return 1;
+    unsigned n = 0;
+    for (unsigned t = 0; t < 8u; ++t) n += is_wave(part, t);
+    return n < WAVE_MAX_TRACKS;
 }
 
 /* ---- the render --------------------------------------------------------------------------------------- */
