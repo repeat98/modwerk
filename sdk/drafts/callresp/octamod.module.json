@@ -266,7 +266,7 @@
     "report": "TESTING.md",
     "summary": "Host checks only: the PHRS layouts; calls and responses are deterministic, inside their phrase slots and scale, and close on a sounding step; a C+R track is exactly its call track's calls and its answer track's responses; VAR varies only the repeated calls, MUT only the mutated response; the 31 strategies differ, endings close as the generator's, TGHT pulls the response toward the call; the semitone fold, the track-record writer and the settings packing are checked under the sanitizers; the package's machine record sits at the registry's index (test_engine.py). Not run on a unit or in the emulator.",
     "hardwareStatus": "untested",
-    "evidenceRevision": "1bbc8b46cb3c5d09e1ce25e020cc460367769f33",
+    "evidenceRevision": "90a0435007704f59dbfd521346fc918763f2c2ca",
     "gates": [
       "modules/callresp/verify.py"
     ]
