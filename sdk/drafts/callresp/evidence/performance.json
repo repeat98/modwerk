@@ -1,0 +1,30 @@
+{
+  "schema": 1,
+  "module": "callresp",
+  "version": "0.1.0-experimental",
+  "kind": "coldfire",
+  "cycles": {
+    "unit": "cycles/event",
+    "static": null,
+    "measured": null,
+    "budget": 4330000,
+    "method": "Not measured. An event is one knob turn or YES on a CALL & RESPONSE track: one phrase pair of up to 64 steps (cr_generate) and an in-place rewrite of the track record (cr_write), plus the same for each answer track when the call track changes, on the UI task, never in an interrupt and never while the pattern plays. Each UI tick also reads a few bytes for the input layer. To measure on a unit: the base's development cost stamps around the knob. Budget: one UI tick, 16.4 ms at 61 ticks a second, 4,330,000 cycles at 264 MHz."
+  },
+  "load": {
+    "frameUs": 362.8,
+    "stockLongestUs": null,
+    "moduleLongestUs": null,
+    "stockIdlePercent": null,
+    "moduleIdlePercent": null,
+    "method": "Not measured. The module adds nothing to the frame interrupt and has no MIDI path; its only work is the knob turn above. Its notes are stock trigs, played by the sequencer."
+  },
+  "stress": {
+    "floodMessagesPerSecond": null,
+    "clockBpm": null,
+    "seconds": null,
+    "stuckNotes": null,
+    "hangs": null,
+    "dropped": null,
+    "droppedExplanation": "No flood ran: CALL & RESPONSE sends and receives no MIDI. To run: four call tracks and four answer tracks at the densest settings (DENS 127, PHRS CRCR) at 240 BPM for 60 s, turning call controls (each rewrites its answers) and changing Part, checking playback, the panel and USB."
+  }
+}

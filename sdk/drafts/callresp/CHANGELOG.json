@@ -1,0 +1,13 @@
+[
+  {
+    "version": "0.1.0-experimental",
+    "date": "2026-10-30",
+    "changes": [
+      "New: CALL & RESPONSE, Nordl3's call and response phrase generator as a track machine for the audio tracks (SRC SETUP, like VECTOR).",
+      "One track plays call and response (C+R), or a call track and an answer track split them, each with its own sample.",
+      "PHRS lays out C|R, CRCR, CCCR (three calls and an answer) or CCRR; VAR varies the repeated calls, MUT the response.",
+      "31 answer strategies and 11 endings; writes real trigs with PTCH locks (VOL on accents). Needs the Modwerk base loaded over USB (beta).",
+      "Not yet tested on a unit or in the emulator."
+    ]
+  }
+]
