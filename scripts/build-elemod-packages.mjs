@@ -78,6 +78,8 @@ for (const machine of machines.filter(item => item.sdk?.platform === 'elemod')) 
   for (const moduleRoot of roots) for (const entry of (await listing(moduleRoot)).sort((a, b) => a.name.localeCompare(b.name))) {
     if (!entry.isDirectory() || entry.name.startsWith('_')) continue
     if (inputs.some(input => input.document.id === entry.name)) throw new Error('Module duplicates a dependency: ' + entry.name)
+    // A chosen build needs only the chosen modules: another's manifest must not stop it.
+    if (selection.length && !selection.includes(machine.id + ':' + entry.name)) continue
     const folder = resolve(moduleRoot, entry.name)
     const document = parseModwerkModule(await json(await resolveModuleFile(folder, 'modwerk.module.json')), machines)
     if (document.machine !== machine.id || document.id !== entry.name || document.exclusive) throw new Error('Expected a linkable module in its machine folder')

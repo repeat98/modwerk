@@ -7966,7 +7966,7 @@
       "schemaVersion": 2,
       "id": "quantize-live-rec-toggle",
       "key": "QUANTIZE_LIVE_REC_TOGGLE",
-      "name": "Quantize Live Recording",
+      "name": "Quantize Live Rec Toggle",
       "version": "0.1.1-experimental",
       "category": "system",
       "source": {
