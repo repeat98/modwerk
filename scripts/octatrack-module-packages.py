@@ -42,11 +42,32 @@ def lag_guard(builder, check):
 
 def run(builder):
     try:
-        builder.main()
+        if '--check' in sys.argv[1:] or '--prepare-ports' in sys.argv[1:]:
+            builder.main()
+        else:
+            keep_published(builder, builder.main)
     except subprocess.CalledProcessError as error:
         print(error.stdout or '', end='', file=sys.stderr)
         print(error.stderr or '', end='', file=sys.stderr)
         raise SystemExit(error.returncode) from error
+
+
+def keep_published(builder, action):
+    """Run a write, then put back every published package it did not rewrite.
+
+    The builder clears public/octatrack-modules before its first write, so a rebuild dropped every earlier
+    version's .mwrm that main still publishes, and a run that stopped part way left the folder half empty.
+    A file the run writes stays as written; one it removed comes back byte for byte, whether the run
+    finished or not. Kept here, not in the builder, whose source the base pins."""
+    folder = Path(builder.PUBLIC) / 'octatrack-modules'
+    before = {path: path.read_bytes() for path in sorted(folder.rglob('*.mwrm'))} if folder.is_dir() else {}
+    try:
+        return action()
+    finally:
+        for path, data in before.items():
+            if not path.exists():
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_bytes(data)
 
 
 def only_key_bus(capabilities):

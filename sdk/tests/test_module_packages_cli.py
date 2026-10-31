@@ -75,6 +75,34 @@ def main():
                     _, got, code = cli.lag_guard(types.SimpleNamespace(MANIFEST=manifest), check)
                     self.assertEqual((set(got), code), (held, failed))
 
+    def test_a_write_keeps_every_package_it_did_not_rewrite(self):
+        spec = importlib.util.spec_from_file_location('module_packages_keep', ROOT / 'scripts/octatrack-module-packages.py')
+        cli = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(cli)
+        with tempfile.TemporaryDirectory() as temp:
+            public = Path(temp)
+            folder = public / 'octatrack-modules'
+            old, current = folder / 'mod/0.1.0-experimental.mwrm', folder / 'mod/0.2.0-experimental.mwrm'
+            def seed():
+                shutil.rmtree(folder, ignore_errors=True)
+                old.parent.mkdir(parents=True)
+                old.write_bytes(b'old'); current.write_bytes(b'stale')
+            def rebuild(fail):
+                def action():
+                    shutil.rmtree(folder)  # as the builder does before its first write
+                    current.parent.mkdir(parents=True)
+                    current.write_bytes(b'new')
+                    if fail:
+                        raise SystemExit(1)
+                return action
+            builder = types.SimpleNamespace(PUBLIC=public)
+            seed()
+            cli.keep_published(builder, rebuild(False))
+            self.assertEqual((old.read_bytes(), current.read_bytes()), (b'old', b'new'))
+            seed()
+            with self.assertRaises(SystemExit):
+                cli.keep_published(builder, rebuild(True))
+            self.assertEqual((old.read_bytes(), current.read_bytes()), (b'old', b'new'))
 
 if __name__ == '__main__':
     unittest.main()
