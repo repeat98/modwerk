@@ -119,7 +119,7 @@
       "MODE sits on SETUP slot 6 and DRIV moved to slot 7 in 0.2.0: a project saved with the 0.1.0 draft reads its DRIV as MODE.",
       "DRIV overloads the receiver on purpose: at its top a full-scale tone aliases (fx:audit, TESTING.md); at DRIV 0 every audit tone but a full-scale 9.1 kHz one passes -60 dBc.",
       "The noises are deterministic from project load: the same render sounds the same after a reload.",
-      "Only reported by the developer to run on their own Octatrack MKI from a card build (31 Oct 2026; the exact revision was not recorded); otherwise run only in fxhost (the vendored DSP56300 emulator alone), not under the ColdFire port."
+      "Not yet run in a built image, the ColdFire port or on a unit: only in fxhost (the vendored DSP56300 emulator alone)."
     ]
   },
   "resources": {
@@ -166,8 +166,8 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "fxhost only (the vendored dsp56kEmu with the module alone, no firmware): MIX 0 returns the dry bit for bit from garbage state and with trig splits in every MODE; nothing outside the audio, state and parameter words is written; init keeps r1; silence stays silent and a burst decays to digital silence in AM, USB and LSB; the whistle sits within 0.3 % of its pitch and holds its level; the SSB shift lands within 0.03 % of 500 (k/127)^2 Hz, up in USB and down in LSB, with the other sideband at least 50.5 dB down over 300 Hz-3 kHz, unity gain and a renormalised oscillator; FADE, NOIS, CRAK and BAND act; MIX and MODE glide; 307 instructions a sample at the dearest settings. fx:audit at DRIV 0 passes but for a full-scale 9.1 kHz tone (-50 dBc) in AM and in USB in tune; at DRIV 127 the overload aliases (TESTING.md). Not run under the ColdFire port; reported by the developer to run on their own Octatrack MKI from a card build (31 Oct 2026; the exact revision was not recorded).",
-    "hardwareStatus": "reported",
+    "summary": "fxhost only (the vendored dsp56kEmu with the module alone, no firmware): MIX 0 returns the dry bit for bit from garbage state and with trig splits in every MODE; nothing outside the audio, state and parameter words is written; init keeps r1; silence stays silent and a burst decays to digital silence in AM, USB and LSB; the whistle sits within 0.3 % of its pitch and holds its level; the SSB shift lands within 0.03 % of 500 (k/127)^2 Hz, up in USB and down in LSB, with the other sideband at least 50.5 dB down over 300 Hz-3 kHz, unity gain and a renormalised oscillator; FADE, NOIS, CRAK and BAND act; MIX and MODE glide; 307 instructions a sample at the dearest settings. fx:audit at DRIV 0 passes but for a full-scale 9.1 kHz tone (-50 dBc) in AM and in USB in tune; at DRIV 127 the overload aliases (TESTING.md). Not run in a built image, under the ColdFire port or on a unit.",
+    "hardwareStatus": "untested",
     "evidenceRevision": "a5ebcba49d91a327dc45678232c366c1b02b83ad",
     "gates": [
       "modules/shortwave/verify.py"

@@ -169,7 +169,7 @@ What the audit does not cover: the detector with a shift (by design, above), the
 
 ## Stock flows
 
-Not tested: the developer's report (Hardware) does not say which stock flows were compared. The module adds an effect to the chooser through the base's effect list and claims no key gesture or screen.
+Not tested: nothing has run in a built image or on a unit. The module adds an effect to the chooser through the base's effect list and claims no key gesture or screen.
 
 ## Performance
 
@@ -181,9 +181,7 @@ Not tested: the developer's report (Hardware) does not say which stock flows wer
 
 ## Hardware
 
-Reported by the developer, not observed by the reviewer. On 31 Oct 2026 @semierendonmez-commits reported that SHORTWAVE runs on their own Octatrack MKI from a card build: "Hepsi benim kendi octatrackimde çalışıyor" ("they all run on my own Octatrack"), covering this module with the rest of the set. This branch changed late on 30 Oct (0.2.0: MODE, the SSB detector, DRIV moved to slot 7), so the report may cover 0.1.0.
-
-Not recorded, so not claimed: the exact source revision and the image's SHA-256 (the developer was not sure which push they built), how long it ran, how many tracks and instances, which controls, modes and settings were tried, both DSP cores, the stock flows, an MKII and the USB base. To turn this into the functional hardware report docs/MODULE_QUALIFICATION.md describes: build the pinned `evidenceRevision`, record the image's SHA-256, and write down what was played and for how long.
+Untested.
 
 ## OT UI capture evidence
 
