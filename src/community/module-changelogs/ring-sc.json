@@ -3,7 +3,8 @@
     "version": "0.2.1-experimental",
     "date": "2026-10-30",
     "changes": [
-      "Reads the key bus at its new address, which the next beta base moves so a DSP machine can run beside it. No change to how it sounds or works."
+      "Reads the key bus at its new address, which the next beta base moves so a DSP machine can run beside it.",
+      "While it is in use, an FX2 effect on T1 or T5 that fills its whole delay buffer cannot run there. Every stock effect, Mini Verb, E-Verb and BBD Delay still fit."
     ]
   },
   {

@@ -106,9 +106,7 @@
   "compatibility": {
     "firmware": "1.40C",
     "location": "FX2",
-    "conflicts": [
-      "sidechain-compressor"
-    ],
+    "conflicts": [],
     "uiClaims": [],
     "limitations": [
       "Hardware: on the owner's MKII over USB (15 October 2026): install, both cores, two instances on core 1, Part switches, removal and reinstall, the stop kill and its release, chip load. MKI, MIDI load, project save and reload and a power cycle on this version, and the card build's stop-kill hook on hardware are untested.",

@@ -78,7 +78,7 @@ Put it on a track that plays something with transients or a melody, then:
 
 ## Compatibility and limitations
 
-Not offered beside Sidechain Compressor. BBD declares its whole 16K FX2 slot. On T3 and T7 the last 514 words of that slot are Sidechain Compressor's cross-core key window. BBD's measured writes end well before the window, so a BBD version that declares its real extent can drop this. Flag added by the owner, repeat98.
+Runs beside Sidechain Compressor since 0.1.2: BBD declares only the 8,250 words of its FX2 buffer it uses (+$0..+$2039), so it stays clear of Sidechain Compressor's cross-core key window (the last 514 words of the T3 and T7 slots) and of the base's key bus (the last 512 words of the T1 and T5 slots). 0.1.1 declared the whole 16K slot and was not offered beside it.
 
 - Octatrack OS 1.40C, FX2 only: the line needs the 16,384-word delay buffer
   the OS gives every FX2 instance. An FX1 slot (3,072 words) is too small.
