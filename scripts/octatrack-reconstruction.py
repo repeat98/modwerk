@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Module-owned, source-bound reconstruction for ordinary ColdFire USB packages.
+"""SDK-owned, source-bound reconstruction for ordinary ColdFire USB packages.
 
 Called by the host package wrapper. Uses unchanged SDK validation/encoding;
 neither the base's pinned inputs nor its reviewed standalone port set changes.
@@ -16,7 +16,7 @@ import re
 import struct
 import sys
 
-RECIPE = 'runtime-reconstruction.json'
+RECIPES = 'sdk/machines/octatrack/module-adapters/reconstruction-recipes.json'
 SHARED = (
     'sdk/runtime/loader/build.py', 'sdk/runtime/loader/verify_static.py',
     'sdk/runtime/loader/modwerk_module.h', 'sdk/runtime/m68k_codegen.py',
@@ -49,32 +49,56 @@ def module_folder(root, entry):
     return folder
 
 
-def native_inputs(folder):
-    paths = [path for path in folder.rglob('*') if path.is_file()
-             and path.relative_to(folder).parts[0] not in ('media', 'evidence', 'presentation')
-             and (path.suffix in NATIVE_SUFFIXES or path.name in ('manifest.py', 'runtime.json'))]
-    if not any(path.suffix in ('.s', '.S') for path in paths) or not (folder / 'manifest.py').is_file():
+def native_inputs(folder, names):
+    """Hash the reviewed build/provenance inputs, not tests or diagnostics.
+
+    The manifest and exact image/package pins independently bind what was built;
+    adding a test file cannot silently expand the reconstruction contract.
+    """
+    paths = []
+    for name in names:
+        if (not isinstance(name, str) or not name or '\\' in name
+                or any(part in ('', '.', '..') for part in name.split('/'))
+                or Path(name).is_absolute()):
+            raise ValueError('Reconstruction inputs must be module-relative native source paths.')
+        path = folder / name
+        if (not path.is_file() or path.suffix not in NATIVE_SUFFIXES
+                and name not in ('manifest.py', 'runtime.json')):
+            raise ValueError('Reconstruction inputs must name existing native source files.')
+        paths.append(path)
+    if not any(path.suffix in ('.s', '.S') for path in paths) or folder / 'manifest.py' not in paths:
         raise ValueError('Reconstruction needs its native assembly and manifest.')
-    if any(path.is_symlink() or not path.resolve().is_relative_to(folder.resolve()) for path in paths):
+    if any(path.is_symlink() or not path.resolve().is_relative_to(folder.resolve())
+           or any((folder / parent).is_symlink() for parent in path.relative_to(folder).parents if parent != Path('.'))
+           for path in paths):
         raise ValueError('Reconstruction source symlinks are not allowed.')
     return {path.relative_to(folder).as_posix(): HASH(path.read_bytes()) for path in sorted(paths)}
+
+
+def reviewed(root, module):
+    path = root / RECIPES
+    if path.is_symlink() or not path.resolve().is_relative_to(root):
+        raise ValueError('Reconstruction recipes must be regular SDK-owned files.')
+    document = json.loads(path.read_text())
+    if (set(document) != {'schema', 'modules'} or document['schema'] != 1
+            or not isinstance(document['modules'], dict) or module not in document['modules']):
+        raise ValueError('No SDK reconstruction declaration for ' + module)
+    return document['modules'][module]
 
 
 def reconstruct(root, entry, data, stock_at=None):
     root = Path(root).resolve()
     folder = module_folder(root, entry)
-    path = folder / RECIPE
-    if path.is_symlink():
-        raise ValueError('A reconstruction declaration must be a regular module-owned file.')
-    recipe = json.loads(path.read_text())
-    if (set(recipe) != {'schema', 'imageSha256', 'packageSha256', 'moduleSources', 'sharedSources', 'copies', 'fills'}
+    recipe = reviewed(root, entry['id'])
+    if (not isinstance(recipe, dict)
+            or set(recipe) != {'schema', 'imageSha256', 'packageSha256', 'moduleSources', 'sharedSources', 'copies', 'fills'}
             or recipe['schema'] != 1 or not isinstance(recipe['moduleSources'], dict)
             or not isinstance(recipe['sharedSources'], dict) or set(recipe['sharedSources']) != set(SHARED)
             or not isinstance(recipe['copies'], list) or not recipe['copies'] or recipe['fills'] != []
             or any(not isinstance(recipe[key], str) or not re.fullmatch('[0-9a-f]{64}', recipe[key])
                    for key in ('imageSha256', 'packageSha256'))):
         raise ValueError('A reconstruction declaration needs exact source/image/package hashes and copies, without fills.')
-    module_inputs = native_inputs(folder)
+    module_inputs = native_inputs(folder, recipe['moduleSources'])
     shared_inputs = {name: HASH((root / name).read_bytes()) for name in SHARED}
     if recipe['moduleSources'] != module_inputs or recipe['sharedSources'] != shared_inputs:
         raise ValueError('Reconstruction native or shared source inputs changed.')

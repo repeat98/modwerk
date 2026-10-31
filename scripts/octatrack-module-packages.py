@@ -140,9 +140,10 @@ def main():
     if sourced and tools:
         builder.build = c_build
         builder.tools = lambda entry, upstream: bool(shutil.which('m68k-elf-gcc')) if entry.get('sources') else tools(entry, upstream)
-    # A module-owned recipe preserves an ordinary CF runtime's exact tested
+    # An SDK-owned recipe preserves an ordinary CF runtime's exact tested
     # image while shipping guarded stock copies. This host layer keeps the
-    # base's pinned builder and existing standalone declarations unchanged.
+    # base's pinned builder and existing standalone declarations unchanged;
+    # shared-input refreshes belong to the SDK change, outside module folders.
     ordinary = getattr(builder, 'build', None)
     def reconstructed_build(entry, out, *args, **kwargs):
         if 'reconstruction' not in entry:

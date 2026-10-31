@@ -59,9 +59,21 @@ def main():
     assert checked.returncode == 0 and 'identical' in checked.stdout, checked.stdout + checked.stderr
     assert manifest.read_bytes() == written
     shutil.copy2(stage / 'public' / entry['path'], out / 'pattern-sample-locks-0.1.8-public-path.mwrm')
+    # Diagnostics and test sources are not reconstruction inputs. Exercise a
+    # real public build after editing them, not just a source-list assertion.
+    diagnostic_sources = [folder / name for name in ('scanner_probe.c', 'test_engine.c', 'test_ui.c')]
+    diagnostic_before = {path: path.read_bytes() for path in diagnostic_sources}
+    try:
+        for path, before in diagnostic_before.items():
+            path.write_bytes(before + b'\n/* Reconstruction regression: test-only edit. */\n')
+        checked_tests = run(['--check'])
+        assert checked_tests.returncode == 0 and 'identical' in checked_tests.stdout, checked_tests.stdout + checked_tests.stderr
+    finally:
+        for path, before in diagnostic_before.items():
+            path.write_bytes(before)
     source = folder / 'unit.s'
     source_before = source.read_bytes()
-    recipe_path = folder / 'runtime-reconstruction.json'
+    recipe_path = stage / 'sdk/machines/octatrack/module-adapters/reconstruction-recipes.json'
     recipe_before = recipe_path.read_bytes()
     negatives = []
     def expect_refusal(name, marker):
@@ -79,7 +91,9 @@ def main():
         ('foreign source provenance', lambda r: r['copies'][0]['authored'].update(source='../foreign.s'), 'this module'),
     ):
         try:
-            recipe = json.loads(recipe_before); mutate(recipe); recipe_path.write_text(json.dumps(recipe))
+            document = json.loads(recipe_before)
+            mutate(document['modules']['pattern-sample-locks'])
+            recipe_path.write_text(json.dumps(document))
             expect_refusal(name, marker)
         finally:
             recipe_path.write_bytes(recipe_before)
@@ -93,10 +107,11 @@ def main():
     report = dict(hardware=False, published=False, privateCatalogueFixtureOnly=True,
                   normalPublicBuildPassed=True, normalPublicCheckPassed=True, bothStockScansPassed=True, usbOnly=entry['usbOnly'],
                   packageSha256=HASH(package), bytes=len(package), byteIdenticalToEmulatorTestedPackage=True,
-                  negativeCliChecks=negatives, nativeInputsRestoredAfterNegativeProbes=True,
+                  negativeCliChecks=negatives, testAndDiagnosticEditsRemainIdentical=True,
+                  nativeInputsRestoredAfterNegativeProbes=True,
                   helperSha256=HASH(Path(__file__).read_bytes()),
                   inputs={str(path.relative_to(ROOT)): HASH(path.read_bytes()) for path in
-                          (ROOT / 'scripts/octatrack-module-packages.py', ROOT / 'scripts/octatrack-reconstruction.py', HERE / 'runtime-reconstruction.json')},
+                          (ROOT / 'scripts/octatrack-module-packages.py', ROOT / 'scripts/octatrack-reconstruction.py', ROOT / 'sdk/machines/octatrack/module-adapters/reconstruction-recipes.json')},
                   limitations='Private catalogue fixture only; real catalogue and qualification remain unchanged. No device or new runtime claim.')
     (out / 'public-path.json').write_text(json.dumps(report, indent=2) + '\n')
     print(json.dumps({key: report[key] for key in ('packageSha256', 'bytes', 'normalPublicBuildPassed', 'normalPublicCheckPassed', 'byteIdenticalToEmulatorTestedPackage')}, indent=2))

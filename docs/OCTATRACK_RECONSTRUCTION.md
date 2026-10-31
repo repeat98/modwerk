@@ -6,25 +6,37 @@ the authored runtime while avoiding shipping those literal spans. It is not a
 scanner exemption or evidence that publication is approved.
 
 The normal `scripts/octatrack-module-packages.py` host wrapper accepts
-`reconstruction: true` on an ordinary `octabam: true` package entry. The module
-provides `runtime-reconstruction.json` beside its native sources. This route
-uses the existing SDK recipe validator and encoder; it changes neither the
-base's pinned SDK inputs nor the reviewed standalone-port list. DSP, tables,
+`reconstruction: true` on an ordinary `octabam: true` package entry. Its recipe
+lives in the SDK's
+`sdk/machines/octatrack/module-adapters/reconstruction-recipes.json`, keyed by
+module id under `modules` in a schema-1 document. This route uses the existing
+recipe validator and encoder, without changing standalone-port admission. DSP,
+tables,
 pinned groups and alternate build modes cannot use it.
 
 The declaration has exactly these fields:
 
 - `schema: 1`, `imageSha256` for the original compiled image, and
   `packageSha256` for the complete, tested reconstructed package.
-- `moduleSources`: SHA-256 hashes of all native source files, `manifest.py` and
-  `runtime.json`, with paths relative to the module folder. Media, evidence and
-  presentation folders are excluded; source symlinks are refused.
+- `moduleSources`: SHA-256 hashes of the explicitly reviewed build and authored
+  provenance inputs, including assembly, `manifest.py` and applicable
+  `runtime.json`/C/header inputs, relative to the module folder. Tests and
+  diagnostic probes are not build inputs. Traversal and source symlinks are refused.
 - `sharedSources`: hashes of the seven SDK inputs listed in `SHARED` in
   `scripts/octatrack-reconstruction.py`.
 - `copies`: existing stock-recipe records, including destination, length,
   guarded source address/hash and authored file, line, symbol and method
   provenance. Authored file paths must name this module's native inputs.
 - `fills: []`; this route admits no initializer fills.
+
+Shared-source changes refresh the affected SDK recipes in the same SDK/base PR,
+without editing module folders. Never refresh pins alone: rebuild and compare
+the exact image/package, rerun stock guards/scans and negative checks. Changed
+output needs a new reviewed recipe and qualification for the changed package.
+Module build/provenance edits still invalidate their pins, even if instructions
+stay identical; test-only edits do not. Host regressions cover these cases and
+check committed shared pins, including pending draft recipes, so SDK changes
+cannot leave this registry stale unnoticed.
 
 Each source must satisfy the machine's patchable OS bounds and avoid base-owned
 sites. Existing recipe checks reject overlaps, relocation collisions, changed

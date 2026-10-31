@@ -150,7 +150,8 @@ establish that stock's modifier state is clear.
 The development input helper currently splices remote packets into the physical
 panel's byte stream. A no-module emulator on base `20ed7910…` reproduced held
 TRIG5–7 and a lost FUNC release when a USB KEY arrived between a fader report's
-two bytes. Serialize input at complete physical-report boundaries before using
+two bytes ([base issue #1110](https://github.com/repeat98/modwerk/issues/1110)).
+Serialize input at complete physical-report boundaries before using
 concurrent physical movement and remote injection for qualification; a still
 slider does not clear a fault left by an earlier attempt. A later fresh-RAM-boot,
 empty-inventory hardware probe also misdelivered FUNC. Initial released rows and

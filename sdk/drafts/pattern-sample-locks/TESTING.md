@@ -66,7 +66,8 @@ The subsequent no-module emulator baseline reproduced TRIG5–7 held and lost
 FUNC release by interleaving a USB development key with a split physical fader
 report. This confirms an independent development input-path bug and strongly
 explains the hardware signature; it does not qualify a fix or attribute every
-unintended edit. See the [isolation receipt](evidence/input-isolation-emulator-20261031.json).
+unintended edit. See the [isolation receipt](evidence/input-isolation-emulator-20261031.json) and
+[base issue #1110](https://github.com/repeat98/modwerk/issues/1110).
 
 ## MKII automated audio/timing follow-up — 31 October 2026
 

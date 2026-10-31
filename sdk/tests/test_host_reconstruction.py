@@ -41,7 +41,7 @@ class HostReconstructionTests(unittest.TestCase):
                                        copies=[(8, 0x40001000, 16, bytes.fromhex(host.HASH(self.span)))])
         self.expected = expected
         self.recipe = dict(schema=1, imageSha256=host.HASH(self.image), packageSha256=host.HASH(expected),
-                           moduleSources=host.native_inputs(self.folder),
+                           moduleSources=host.native_inputs(self.folder, ['manifest.py', 'unit.s']),
                            sharedSources={name: host.HASH((self.root / name).read_bytes()) for name in host.SHARED},
                            copies=[dict(offset=8, length=16, address=0x40001000, sha256=host.HASH(self.span),
                                         purpose='Synthetic independently authored code',
@@ -49,7 +49,8 @@ class HostReconstructionTests(unittest.TestCase):
         self.write(self.recipe)
 
     def write(self, recipe):
-        (self.folder / host.RECIPE).write_text(json.dumps(recipe))
+        path = self.root / host.RECIPES
+        path.write_text(json.dumps(dict(schema=1, modules={'probe-module': recipe})))
 
     def test_real_sdk_roundtrip_and_exact_package_pin(self):
         data = host.reconstruct(self.root, self.entry, self.literal,
@@ -65,7 +66,7 @@ class HostReconstructionTests(unittest.TestCase):
         # CI builds without private firmware; install still checks each guard.
         self.assertEqual(host.reconstruct(self.root, self.entry, self.literal), data)
 
-    def test_changed_code_shared_inputs_image_or_final_metadata_fail(self):
+    def test_changed_build_inputs_image_or_final_metadata_fail(self):
         for field in ('imageSha256', 'packageSha256'):
             with self.subTest(field=field):
                 changed = copy.deepcopy(self.recipe); changed[field] = '0' * 64; self.write(changed)
@@ -79,6 +80,37 @@ class HostReconstructionTests(unittest.TestCase):
         (self.folder / 'unit.s').write_text('# Source changed, even when an image could remain identical\n')
         with self.assertRaisesRegex(ValueError, 'source inputs changed'):
             host.reconstruct(self.root, self.entry, self.literal)
+
+    def test_test_and_diagnostic_edits_do_not_invalidate_build(self):
+        for name in ('scanner_probe.c', 'test_engine.c', 'test_ui.c'):
+            source = self.folder / name
+            for text in ('/* New test or diagnostic */\n', '/* Edited test or diagnostic */\n'):
+                source.write_text(text)
+                self.assertEqual(host.reconstruct(self.root, self.entry, self.literal), self.expected)
+
+    def test_sdk_update_refreshes_shared_pins_without_editing_module(self):
+        module_before = {p.name: p.read_bytes() for p in self.folder.iterdir()}
+        source = self.root / host.SHARED[0]
+        source.write_bytes(source.read_bytes() + b'\n# SDK-only comment change\n')
+        with self.assertRaisesRegex(ValueError, 'source inputs changed'):
+            host.reconstruct(self.root, self.entry, self.literal)
+        changed = copy.deepcopy(self.recipe)
+        changed['sharedSources'][host.SHARED[0]] = host.HASH(source.read_bytes())
+        self.write(changed)
+        self.assertEqual(host.reconstruct(self.root, self.entry, self.literal), self.expected)
+        self.assertEqual({p.name: p.read_bytes() for p in self.folder.iterdir()}, module_before)
+
+    def test_unregistered_module_and_unsafe_input_paths_are_refused(self):
+        path = self.root / host.RECIPES
+        path.write_text(json.dumps(dict(schema=1, modules={})))
+        with self.assertRaisesRegex(ValueError, 'No SDK reconstruction'):
+            host.reconstruct(self.root, self.entry, self.literal)
+        for name in ('../outside.c', '/outside.c', 'nested/../unit.s', 'nested//unit.s'):
+            with self.subTest(name=name), self.assertRaisesRegex(ValueError, 'module-relative'):
+                host.native_inputs(self.folder, ['manifest.py', 'unit.s', name])
+        (self.folder / 'alias.s').symlink_to(self.folder / 'unit.s')
+        with self.assertRaisesRegex(ValueError, 'symlinks'):
+            host.native_inputs(self.folder, ['manifest.py', 'alias.s'])
 
     def test_stock_mismatch_protected_sources_and_owned_events_fail(self):
         with self.assertRaisesRegex(ValueError, 'original-stock spans differ'):
@@ -102,6 +134,22 @@ class HostReconstructionTests(unittest.TestCase):
         changed = copy.deepcopy(self.recipe); changed['copies'][0]['authored']['source'] = '../foreign.s'; self.write(changed)
         with self.assertRaisesRegex(ValueError, 'this module'):
             host.reconstruct(self.root, self.entry, self.literal)
+
+
+class CommittedReconstructionInputsTests(unittest.TestCase):
+    def test_sdk_changes_cannot_leave_committed_recipe_pins_stale(self):
+        document = json.loads((ROOT / host.RECIPES).read_text())
+        for module in document['modules']:
+            with self.subTest(module=module):
+                recipe = host.reviewed(ROOT, module)
+                self.assertEqual(recipe['sharedSources'],
+                                 {name: host.HASH((ROOT / name).read_bytes()) for name in host.SHARED})
+                # Pending recipes may describe a draft, without admitting it
+                # through the production module_folder/package route.
+                folder = ROOT / 'sdk/octabam/modules' / module
+                if not folder.is_dir():
+                    folder = ROOT / 'sdk/drafts' / module
+                self.assertEqual(host.native_inputs(folder, recipe['moduleSources']), recipe['moduleSources'])
 
 
 if __name__ == '__main__':
