@@ -664,8 +664,8 @@ static int guarded(Render *f, unsigned track, unsigned ping, unsigned start, uns
 }
 /* The FLEX renderer, in the audio render: no mask. The row is read once, a word at a time; a module that left
  * stays in memory while the render holds it (the paused-task scan).
- * A track a machine renders itself (or that renders stock's silent source in its place) keeps stock's FLEX retrig and
- * voice stopped, every render. A module machine is FLEX underneath: on each of its trigs the frame builder starts
+ * By default a track a machine renders itself keeps stock's FLEX retrig and voice stopped every render. A module
+ * machine is FLEX underneath: on each of its trigs the frame builder starts
  * stock's FLEX voice (byte 0 of 0x800049d8 + 168 * track, see hush()) and latches the track's RTRG into its render
  * state (0x80004898 + 40 * track, +4), both from the machine's bytes read as FLEX settings, and nothing advances them.
  * When the track renders as FLEX again without passing mw_assign (a bank, pattern or Part change, a project load),
@@ -675,7 +675,8 @@ static int guarded(Render *f, unsigned track, unsigned ping, unsigned start, uns
  * ot_emu, 29 October 2026: Analog BD on T1 in bank B, FLEX in bank C, cold boot, PLAY, B -> C; #1051). FM Synth's own
  * render already clears the RTRG count; this does it for every machine with a render of its own. Stopped, nothing
  * overruns: stock's render restarts the voice at most once, and the next trig as FLEX starts both from FLEX's own
- * settings. */
+ * settings. A NATIVE_FLEX machine explicitly consumes that native voice with translating START/render callbacks:
+ * keep the voice, still clear retrigs, and stop both if START or DSP admission refuses it. */
 #define RENDER_STATE 0x80004898u
 #define RENDER_STATE_STRIDE 40u
 static void stop_stock(unsigned track)
@@ -691,11 +692,22 @@ int mw_source_render_impl(unsigned track, unsigned ping, unsigned start, unsigne
         if (((const Machine *)v)->abi == MODWERK_MACHINE_ABI) m[n++] = (const Machine *)v;
     }
     if (valid_bank() && owner(m, n, current_part(), track, &who)) {
-        if (who->render) stop_stock(track); /* POLY8's voices (no render of its own) are stock's */
-        if (start_refused[track] == who)
+        int native_flex = who->render &&
+            (who->flags & (MODWERK_MACHINE_NATIVE_FLEX | MODWERK_MACHINE_START)) ==
+            (MODWERK_MACHINE_NATIVE_FLEX | MODWERK_MACHINE_START);
+        if (who->render) {
+            if (native_flex) /* translated native reader: keep its voice, never stale RTRG */
+                *(volatile uint32_t *)AT(RENDER_STATE + RENDER_STATE_STRIDE * track + 4u) = 0;
+            else stop_stock(track); /* independent voices keep the existing stale-voice protection */
+        }
+        if (start_refused[track] == who) {
+            if (native_flex) stop_stock(track);
             return STOCK(Render *, 0x400047f0u)(track, ping, start, end);
-        if (who->source_kind && charged[track] != who) /* uncharged: stock's silent source, never an unpaid voice */
+        }
+        if (who->source_kind && charged[track] != who) { /* never an unpaid voice */
+            if (native_flex) stop_stock(track);
             return STOCK(Render *, 0x400047f0u)(track, ping, start, end);
+        }
         Render *f = who->render ? who->render : STOCK(Render *, 0x40004008u); /* POLY8's voices render inside stock's */
         return who->source_kind ? f(track, ping, start, end) : guarded(f, track, ping, start, end);
     } else if (valid_bank() && orphan(current_part(), track)) { /* its bytes are the absent machine's, not FLEX's */

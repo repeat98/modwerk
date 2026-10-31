@@ -60,6 +60,7 @@ int machine_contributor_validate(const struct runtime_dsp *d, unsigned operation
     uint32_t bytes = RECORD + ((flags & MODWERK_MACHINE_SETUP_PAGE) ? 8u : 0u);
     if (!machine_extent(d, m, bytes)) return RUNTIME_MALFORMED;
     int needs_start = !!(flags & MODWERK_MACHINE_START);
+    if ((flags & MODWERK_MACHINE_NATIVE_FLEX) && !needs_start) return RUNTIME_MALFORMED;
     if (!needs_start) return s == RUNTIME_NONE ? RUNTIME_OK : RUNTIME_MALFORMED;
     if (s == RUNTIME_NONE || !machine_extent(d, s, 16u) || (m < s + 16u && s < m + bytes))
         return RUNTIME_MALFORMED;
@@ -70,6 +71,12 @@ int machine_contributor_validate(const struct runtime_dsp *d, unsigned operation
      * missing/wrong relocation refuses before publication, even if PREPARE admitted the encoded offsets. */
     uint32_t base = operation == RUNTIME_METADATA_PREPARE ? 0u : MW_IMAGE_ADDRESS(d->image);
     if (operation != RUNTIME_METADATA_PREPARE && operation != RUNTIME_METADATA_SWITCH) return RUNTIME_MALFORMED;
+    if (flags & MODWERK_MACHINE_NATIVE_FLEX) {
+        uint32_t render = machine_word(record + 64);
+        /* Offset zero can be a function entry at PREPARE; at SWITCH only a
+         * relocated same-image callback qualifies, never a null stock fallback. */
+        if (render < base || (render & 1u) || render - base >= d->image_bytes) return RUNTIME_MALFORMED;
+    }
     uint32_t owner = machine_word(start + 8), call = machine_word(start + 12);
     if (m > UINT32_MAX - base || owner != base + m || call < base || (call & 1u) || call - base >= d->image_bytes)
         return RUNTIME_MALFORMED;

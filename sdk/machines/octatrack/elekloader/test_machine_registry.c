@@ -312,6 +312,76 @@ static void check_source_starts(void)
     for (unsigned t = 0; t < 8u; ++t) memset((void *)(part0() + SIG + 30u * t), 0, 3);
 }
 
+/* A synthetic native sample reader, using the exact voice byte stop_stock writes.
+ * An inactive voice emits no PCM; a second fake voice array would hide this regression. */
+static unsigned native_reads, native_pcm;
+static int render_native(unsigned t, unsigned p, unsigned s, unsigned e)
+{
+    (void)p; ++native_reads;
+    if (!U8(VOICE + VOICE_STRIDE * t)) return 0;
+    native_pcm += e - s;
+    return (int)(e - s);
+}
+static int start_native(unsigned t, unsigned sample, unsigned flags)
+{
+    (void)sample; (void)flags;
+    U8(VOICE + VOICE_STRIDE * t) = 255;
+    return 1;
+}
+static void check_native_flex_voice(void)
+{
+    struct modwerk_machine native = A;
+    native.flags |= MODWERK_MACHINE_NATIVE_FLEX | MODWERK_MACHINE_START;
+    native.render = render_native;
+    const struct modwerk_machine_start entry = {MODWERK_MACHINE_START_ABI, sizeof entry, &native, start_native};
+    const void *one[] = {&native};
+    rows(one, 1, 0, 0); start_row[0] = (uintptr_t)&entry; start_row[1] = 0;
+    for (unsigned t = 0; t < 8u; ++t) {
+        part0()[0x22u + t] = 1;
+        memcpy((void *)(part0() + SIG + 30u * t), "AB\1", 3);
+        stock_voices[168u * t] = 0;
+        CHECK(selected_start(t, 0, 0, fallback_start) == 1);
+        CHECK(stock_voices[168u * t] == 255);
+        /* Both segments of a frame consume the active native voice. */
+        fresh(); mw_frame_t0 = host_timer;
+        unsigned before = native_pcm;
+        for (unsigned segment = 0; segment < 2; ++segment) {
+            render_states[10u * t + 1u] = 77;
+            CHECK(mw_source_render_impl(t, 0, segment * 8u, segment * 8u + 8u) == 8);
+            CHECK(stock_voices[168u * t] == 255 && !render_states[10u * t + 1u]);
+        }
+        CHECK(native_pcm == before + 16u);
+
+        start_refused[t] = &native;
+        stock_voices[168u * t] = 255; render_states[10u * t + 1u] = 77;
+        before = native_reads;
+        CHECK(mw_source_render_impl(t, 0, 0, 1) == -9 && native_reads == before);
+        CHECK(!stock_voices[168u * t] && !render_states[10u * t + 1u]);
+        CHECK(selected_start(t, 0, 0, fallback_start) == 1); /* accepted START releases the refusal */
+        CHECK(!start_refused[t]);
+
+        native.source_kind = 1; native.source_voice = 411; charged[t] = 0;
+        stock_voices[168u * t] = 255; render_states[10u * t + 1u] = 77;
+        CHECK(mw_source_render_impl(t, 0, 0, 1) == -9 && native_reads == before);
+        CHECK(!stock_voices[168u * t] && !render_states[10u * t + 1u]);
+        native.source_kind = 0; native.source_voice = 0;
+
+        /* Default own-render machines, and malformed direct tables without
+         * START, still stop the native voice before their renderer is called. */
+        native.flags &= ~MODWERK_MACHINE_NATIVE_FLEX;
+        for (unsigned invalid = 0; invalid < 2; ++invalid) {
+            stock_voices[168u * t] = 255; render_states[10u * t + 1u] = 77;
+            fresh(); mw_frame_t0 = host_timer;
+            CHECK(mw_source_render_impl(t, 0, 0, 1) == 0);
+            CHECK(!stock_voices[168u * t] && !render_states[10u * t + 1u]);
+            native.flags |= MODWERK_MACHINE_NATIVE_FLEX;
+            native.flags &= ~MODWERK_MACHINE_START;
+        }
+        native.flags |= MODWERK_MACHINE_START;
+    }
+    start_row[0] = 0; rows(0, 0, 0, 0);
+}
+
 int main(void)
 {
     put_u32(0x46c82456u, 0x46000000u);
@@ -683,6 +753,7 @@ int main(void)
     rows(0, 0, 0, 0);
     CHECK(counts_now() == (5u << 24 | 5u << 16 | 4u << 8 | 3u) && !masked && clamp_now() == 5);
     check_source_starts();
+    check_native_flex_voice();
     if (failures) { fprintf(stderr, "%u registry checks failed\n", failures); return 1; }
     puts("Machine registry: rows by table order, admission before mutation, signatures and defaults in both copies, absent "
          "machines as stock, the validator's protection and wrapper chain, render routing, keyed SEQUENCER rows, chooser "
