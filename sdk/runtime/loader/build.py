@@ -68,7 +68,7 @@ SCRIPT = '''ENTRY(__image_start)
 SECTIONS {
   . = %#x;
   __image_start = .;
-  .image : { *(.text .text.*) *(.rodata .rodata.*) *(.data .data.*) . = ALIGN(4); }
+  .image : { *(.text .text.*) __runtime_text_end = .; *(.rodata .rodata.*) *(.data .data.*) . = ALIGN(4); }
   __image_end = .;
   .bss (NOLOAD) : { *(.bss .bss.*) . = ALIGN(4); }
   __bss_end = .;
@@ -285,9 +285,13 @@ def link_elemod(doc, stock_at, base_symbols):
     return bytes(image), offsets, sites
 
 
+class LinkedSymbols(dict):
+    """Linked addresses plus build-only ELF function provenance; none of this changes the wire format."""
+
+
 def link_units(objects, cross, origin, tmp, anywhere=False):
     """Objects linked at `origin` and origin + SHIFT: (image, its symbols, bss bytes, self-reference offsets)."""
-    images, symbols = [], {}
+    images, symbols = [], LinkedSymbols()
     for base in (origin, origin + SHIFT):
         (tmp / 'link.ld').write_text(SCRIPT % base)
         elf = tmp / ('%x.elf' % base)
@@ -302,7 +306,19 @@ def link_units(objects, cross, origin, tmp, anywhere=False):
     image, length, end = images[0], symbols['__image_end'] - origin, symbols['__bss_end']
     if len(image) != length:
         raise ValueError('The module image is not contiguous.')
-    return image, symbols, end - symbols['__image_end'], relocations(image, images[1], end, anywhere)
+    # .image also contains read-only/writable data, so its final ELF section flags alone cannot prove code.
+    # Keep typed function entries whose complete extent is inside the input .text region, before data is merged.
+    functions = set()
+    for line in subprocess.check_output([cross + 'readelf', '--symbols', '--wide', str(tmp / ('%x.elf' % origin))],
+                                        text=True).splitlines():
+        fields = line.split()
+        if len(fields) >= 8 and fields[0].endswith(':') and fields[3] == 'FUNC' and fields[6].isdigit():
+            value, size = int(fields[1], 16), int(fields[2], 0)
+            if not value & 1 and origin <= value < symbols['__runtime_text_end'] and 2 <= size <= symbols['__runtime_text_end'] - value:
+                functions.add(value)
+    offsets = relocations(image, images[1], end, anywhere)
+    symbols.image, symbols.function_entries, symbols.self_relocations = image, frozenset(functions), frozenset(offsets)
+    return image, symbols, end - symbols['__image_end'], offsets
 
 
 OPCODES = {'jmp': b'\x4e\xf9', 'jsr': b'\x4e\xb9', 'lea': b'\0\0'}  # lea keeps its stock opcode (its register)
@@ -357,6 +373,18 @@ def entries(declared):
 RAISE = 255  # loader.h RUNTIME_RAISE: on a raised event's word, the offset of the zero slot for the base's entry
 
 
+def _check_start_callback(symbols, record):
+    """Reject accidental data/interior targets while the linked ELF still distinguishes typed code from data."""
+    if not isinstance(symbols, LinkedSymbols):
+        raise ValueError('A START record needs linked ELF function metadata; a flat symbol map cannot prove code.')
+    at = symbols[record] - symbols['__image_start']
+    if at < 0 or at + 16 > len(symbols.image):
+        raise ValueError('The START record must contain its complete callback function pointer.')
+    callback = struct.unpack_from('>I', symbols.image, at + 12)[0]
+    if callback not in symbols.function_entries or at + 12 not in symbols.self_relocations:
+        raise ValueError('The START callback must name the entry of a typed ELF function in .text (assembly: .type/.size).')
+
+
 def subscribe(hooks, entries, symbols, registry=None, raises=()):
     """`hooks` (the core events' words) with each subscription's word after them, by the event's hook index: its order
     (0-254) in the top byte and the handler's (a take event's record's, a table's record's) image offset below
@@ -382,6 +410,8 @@ def subscribe(hooks, entries, symbols, registry=None, raises=()):
                 or words[e['index']] != NONE or not 0 <= symbols[entry['fn']] < 0x1000000 or symbols[entry['fn']] & 1):
             raise ValueError('A subscription names an event or table of sdk/machines/octatrack/events.json, one of the '
                              'module\'s own even symbols and an order 0-254, one per event: %r' % (entry,))
+        if entry['event'] == 'ot_machine_starts':
+            _check_start_callback(symbols, entry['fn'])
         words[e['index']] = entry['order'] << 24 | symbols[entry['fn']]
     while words and words[-1] == NONE:
         words.pop()

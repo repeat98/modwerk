@@ -174,6 +174,22 @@ set, so they come back exactly and install order never matters. A site or stock 
 hook's bytes is refused as `RUNTIME_EVENT`; `modwerk_runtime_refused_event()` gives the hook's
 index. MWCP feature 128 says the base has site hooks.
 
+For Octatrack `ot_machine_starts`, the linked C/assembly builder also verifies the
+record's callback while ELF metadata is still available. Its pointer word must
+relocate to the entry of a sized `STT_FUNC` wholly inside `.text`, before merged
+read-only/writable data. C provides this metadata; assembly callbacks must use
+`.type name,@function` and `.size name,.-name`. A plain symbol map, a data address
+or an address inside a function is refused. The package ABI and START record
+remain unchanged. This is a build correctness check: installation receives a flat
+image without ELF section/type information and retains its initialized-image
+bounds check. It does not prove that authored code is safe to execute.
+
+Reviewed reconstruction recipes also pin this builder's source. After a builder
+change, retain existing recipe spans only if their original `imageSha256` and
+the byte-for-byte package rebuild still pass. Refresh just the changed source
+binding in that case; a changed image needs recapture and review. Frozen historical
+recipes keep their original bindings.
+
 ## Base features and DSP claims (ABI 9)
 
 ABI 9 extends the ABI 8 header to 80 bytes: `requires` u16 at 76 (the base feature bits the DSP code needs), the
