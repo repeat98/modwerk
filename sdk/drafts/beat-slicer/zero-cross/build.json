@@ -1,0 +1,27 @@
+{
+  "module": "beat-slicer",
+  "version": "0.1.68-experimental",
+  "status": "Private unchanged module; partial MKII evidence on the measurement base only",
+  "toolchainImage": "sha256:da70d46e10b243277fa3ae2e015f7258d56b3ee08ca4be47e61899958872e792",
+  "packageSha256": "195d2b46e2620bd15118478aa02d626d6d803692e02c40db4f45a67f6927b643",
+  "packageBytes": 5332,
+  "moduleId": "c8d078f2",
+  "imageBytes": 4392,
+  "bssBytes": 3488,
+  "relocations": 179,
+  "hookTableLength": 37,
+  "stockCodeSites": 0,
+  "sourceSha256": {
+    "device_module.c": "82969121207154b53653ae1c0819196a433f2199f17294486a843aba2913964c",
+    "device_font.c": "b0b0bdc6e9e867b2e89c3207d6b9f2457882054238f3e6fe00164cd7a510492b",
+    "device_font.h": "1fc38c208c4347a8c0f2ea898c31057b8efdfffb23280f49c722bbbceec844f2",
+    "grid_preview.c": "cea670467d371fd79a5d330c80ff2687deb61e2e7d457ae239e88dc5856c49a9",
+    "grid_preview.h": "80dd553543bb02ac7cb016331b3a0ce3c95b51dce0e75d4b86f2a1a1698aac8c",
+    "planner.h": "1a10ce9e6b34dfd35eb138690e2134550621c3bf91b2178fb50f95b9def6b7ae",
+    "sample_options.h": "bf445bb2ba7849fa4f3eba3f4a9ef9a7eda5207448ee3488bc209f75b66865e2"
+  },
+  "basePatchSha256": "55eed466a26d1a78997d40d9282f5598b2adbe86e24227643ddc3eacb9b86295",
+  "sharedApi": "optional ABI-1 tail; legacy prefix and sizeof unchanged",
+  "hardware": "Partial cumulative MKII full-set evidence on measurement base 20ed7910\u2026; hardware/CUMULATIVE_2026-10-30.md. Uninstrumented and broader alignment/audio qualifications remain pending.",
+  "basePatchScope": "Current cumulative source proposal includes 0.1.67 FUNC+AED/UI/cache and 0.1.68 SNAP/completion. Exact combined build, inherited asset audit and hardware control evidence are recorded in hardware/cumulative-build.json."
+}
