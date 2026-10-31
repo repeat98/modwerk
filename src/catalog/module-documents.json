@@ -10007,8 +10007,7 @@
         ],
         "limitations": [
           "Needs the Modwerk base over USB: it uses the base's draw and key events.",
-          "Not yet tested on a unit. The voice position (+0x44) and trim start and end (+0x28, +0x2c) were read in the emulator and must be confirmed on hardware.",
-          "Key codes for CUE, MIDI, LEFT and RIGHT follow Modwerk's status page and octabam's panel notes and worked in the emulator; to be confirmed on an MKI.",
+          "Tested on one MKI with the Modwerk base 24a0ed57. Not tested yet: an MKII, Part changes and project reloads with the screen open, timestretch modes other than NORMAL, and other modules installed at the same time.",
           "CUE + MIDI no longer switches to MIDI tracks while Tiempos is installed; MIDI alone still does.",
           "A track that loops shows the time left to the end of the sample, not to the end of the loop.",
           "Until a track has played for half a second, its time is shown at the sample's original speed.",

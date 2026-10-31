@@ -54,7 +54,7 @@ One stock gesture changes:
 - **Why.** The screen has to open from any page with keys a DJ-style player reaches without looking. The MKI has no PROJ key, so CUE + PROJ is not available, and CUE + MIDI adds nothing on stock that MIDI alone does not do.
 - **What you see and do differently.** To switch to the MIDI tracks, press MIDI without holding CUE. While the Tiempos screen shows, LEFT, RIGHT and NO act on it; every other key reaches the unit.
 - **Turning it off.** Remove Tiempos from the module set. There is no setting.
-- **Neighbouring flows checked** (emulator, MKI panel, with and without the module): MIDI alone switches tracks; SRC closes the screen and the page is redrawn. Not checked on a unit.
+- **Neighbouring flows checked** on the author's MKI with the Modwerk base 24a0ed57: with the screen open, PLAY, STOP, tempo changes and track keys act as on stock, and a double press of a track key closes Tiempos and opens stock QUICK ASSIGN. In the emulator (MKI panel, with and without the module): MIDI alone switches tracks; SRC closes the screen and the page is redrawn. Not checked on a unit: every other key while the screen is open.
 
 ## Compatibility and limitations
 
@@ -70,7 +70,7 @@ One stock gesture changes:
 
 ## Tests and measurements
 
-See [TESTING.md](TESTING.md). Host tests only; no hardware, cycle or memory measurements yet.
+See [TESTING.md](TESTING.md). Host tests pass 16/16. On the author's MKI with the Modwerk base 24a0ed57, over USB: totals, time left, elapsed time, the last-30-seconds flash, retriggers and tempo changes checked against a stopwatch; an install with Keep survived a power cycle and Undo removed it; the base's LOAD page showed no CPU or DSP change with the screen open or closed. Package: 2,240 bytes of code and data and 272 of state. The draw cost was measured in the emulator only (about 0.3 ms a UI tick open); no static cycle bound. Not tested: an MKII, Part changes and project reloads with the screen open, timestretch modes other than NORMAL, other modules at the same time.
 
 ## Authorship and licences
 
