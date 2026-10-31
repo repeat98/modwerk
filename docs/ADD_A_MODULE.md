@@ -59,12 +59,12 @@ a draft there blocks catalogue generation for everyone. Move it into that
 directory and move its notes into `src/community/module-changelogs/` only
 when the publication requirements are met.
 
-Run this after every edit. It takes about 15 seconds, never reads firmware and never runs module code.
+Run this after every edit: about 15 seconds, no firmware read, no module code run.
 
 ```sh
 npm run modules:generate                      # regenerate the catalog from the module folders
 npm run check -- --base origin/main            # scopes docs to metadata/provenance; code runs the full app suite
-npm run module:doctor -- <id>                 # does the module fit every workflow? lists each gap and the command that fixes it (a draft: --draft <id>)
+npm run module:doctor -- <id>                 # fits every workflow? each gap and its fix (a draft: --draft <id>; a _submissions/ folder has no id here: pr:ready checks it)
 npm run modules:check -- --base origin/main   # version and publication rules for the folders you changed
 npm run modules:compat -- <id>                # Octatrack: installs beside every other active module and the base? each clash and its fix (unlisted or a draft: --with <id>)
 ```
@@ -82,7 +82,7 @@ Once your module is in the reviewed catalog, you can link your own Ko-fi page wi
 
 ## Release notes (required for every fix and module version)
 
-Every module fix includes its changelog entry in the same PR, never after it. Before publishing a new module or version, add an entry to the module's file in `src/community/module-changelogs/`, named by its community ID: the module ID on the Octatrack (`euclid.json`), machine and ID on Digitakt and Digitone (`digitakt-digihealth.json`, `digitone-digihealth.json`). Keep earlier entries: the file is the module's list of releases. `npm ci` and `npm run check` combine these files into the generated, uncommitted `src/community/module-changelogs.json`, and the module folders into `src/catalog/machine-modules.json`, so two module PRs never edit the same file. The module page's Changelog tab shows the notes.
+Every module fix includes its changelog entry in the same PR, never after it. Before publishing a new module or version, add an entry to the module's file in `src/community/module-changelogs/`, named by its community ID: the module ID on the Octatrack (`euclid.json`), machine and ID on Digitakt and Digitone (`digitakt-digihealth.json`, `digitone-digihealth.json`). Keep earlier entries: the file is the module's list of releases. A `_submissions/` module has no key until it is catalogued: its notes stay in README and TESTING.md. `npm run check` combines these files into the generated `src/community/module-changelogs.json`, so two module PRs never edit the same file. The module page's Changelog tab shows the notes.
 
 ```json
 {
