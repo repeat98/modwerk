@@ -1,5 +1,24 @@
 # Live Rec Retrig Fix testing
 
+## Retrig Grid merged in (rytm-emu, 31 October 2026)
+
+A local merge, not agreed with stigmagit. rytm-emu c5732f0, factory project, 127 BPM, swing 57 %, RETRIG set in the RTRG menu, BD empty, each roll about 14 steps, press stepped across about two steps. Emulator only; no pad pressure stream; nothing below ran on a unit.
+
+Builds: RC03 (before, Retrig Grid 0.2.0 and this module as two), MG02 (this source with Silent Pad+Trig on core-0.7, sha256 of the build not kept for release), RC04 (RC03's set with the two modules as one, sha256 751e5fbcec605128…).
+
+| Case | Before (RC03) | Merged (MG02) |
+| --- | --- | --- |
+| 1/16, press in the window where stock's step and the skip rule differ | one step empty after the press | no gap, 20 of 20 positions and modes |
+| 1/32, quantize off, press 0.3-0.5 step late | a trig every two steps, micro +3/+9, live hits moved | a trig each step, 10 of 10 |
+| 1/32, quantize on | first step empty for some presses | a trig each step, 10 of 10 |
+| 1/12, quantize off | hits +7/-9/0, press as played | press on the same pattern: 15/-9 or 0/+0 |
+| 1/12, 1/8, quantize on | a gap after the press for some presses | no gap, 20 of 20 |
+| 1/8, quantize off | press as played | on the grid, 10 of 10 |
+
+Playback against the live roll (1/16 and 1/12, quantize off): retrigs within 0.01 step; the press alone moves, by the snap (for example live +0.01, back +0.49 in steps from the press), as designed. RETRIG GRID unchecked: hits a step apart from the press with played micro, 15 of 15, at 1/16, 1/12, 1/32. The row: last in SEQUENCER CONFIG, beside Silent Pad+Trig's rows, YES, RIGHT and three reopens.
+
+Not run: ALWAYS ON, a press again during a roll, a rate change during a roll, rates 1/20, 1/24, 1/40, 1/48, 1/64, 1/80 merged, the row across save and reload, swing 50 and 66, ADVANCED scale with other lengths, a unit.
+
 ## 0.1.0-experimental (rytm-emu, 31 October 2026)
 
 Emulator results first; pad pressure there is a scripted stream, not a real pad. The unit's results, on RR09, are at the end.
