@@ -145,7 +145,8 @@ packages and raw logs outside Git.
 
 The host wrapper supports an ordinary ColdFire package's SDK-owned recipe in
 `module-adapters/reconstruction-recipes.json` with an explicit
-`reconstruction: true` manifest entry. The declaration pins native and shared source inputs, the original image
+`reconstruction: true` manifest entry. The declaration pins reviewed build and
+provenance inputs, shared SDK sources, the original image
 and the complete tested package. Existing standalone admission and all
 base-pinned SDK files remain unchanged. See the
 [builder contract](../../../docs/OCTATRACK_RECONSTRUCTION.md).

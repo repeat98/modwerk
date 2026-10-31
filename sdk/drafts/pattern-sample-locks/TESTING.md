@@ -10,6 +10,30 @@ Portable planner, UI and production native-writer sanitizer tests pass. The full
 
 Retired reports and obsolete captures are consolidated in [PROTOTYPE_HISTORY.md](PROTOTYPE_HISTORY.md); they do not qualify this version.
 
+## PR #1088 reconstruction maintenance review — 31 October 2026
+
+Reconstruction recipes now live in the SDK machine adapters. Shared-input
+updates refresh them in the SDK/base PR, without editing module folders. The
+reviewed module inputs exclude scanner/test files; all eleven native/provenance
+inputs remain byte-identical to `d803af33`. No module version or runtime changed.
+
+Eight focused host regressions pass, including SDK-only pin refresh, test-only
+edits and stale committed pins. The ordinary public wrapper build and `--check`
+reproduce the same 10,048-byte `3e13c46f…` package with both stock scans and all
+five negative CLI probes. Editing all three excluded diagnostic/test sources
+also leaves the real build identical. USB-only library/card/source checks,
+seven public-base add/removal preflights and all 29 package preflights pass.
+The isolated Octatrack build passes the normal importer’s committed-artifact
+comparison; all 28 current elemod release exports reproduce. Node 24
+`pr:ready` reports Ready. See the [stock-free receipt](evidence/review-response-20261031.json).
+
+The two draft qualification/audio application changelog entries were removed;
+results remain here and in the linked reports, while draft release notes remain
+in `CHANGELOG.json`. The no-module input fault is tracked in
+[base issue #1110](https://github.com/repeat98/modwerk/issues/1110), with emulator
+reproduction and separately scoped hardware observations. No new hardware test,
+input-helper fix, catalogue admission or release approval is claimed.
+
 ## MKII exact-package public-base lifecycle — 31 October 2026
 
 Candidate `3e13c46f…` passed scoped native-selector Undo, explicit Keep/reboot,
