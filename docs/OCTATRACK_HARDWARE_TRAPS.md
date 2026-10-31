@@ -614,6 +614,15 @@ enumerated on the Mac: no Elektron device at all, not a dead bridge handle.
 Only a power cycle brought USB back. The same image had RAM-booted cleanly
 before and did again after.
 
+**The first 16 bytes of the zero run at `0x400d24d0` are not free.** The stock
+DELAY reads `0x400d1ce0 + 4 * (x >> 6)` from a 508-entry table that ends at
+`0x400d24d0`. At a slow tempo with a long TIME the index runs up to 16 bytes
+past the end, which hold zeros on a stock unit; code placed there becomes a
+DELAY coefficient. Card builds start the overflow run at `0x400d24e0`, and the
+card builder (`build_bus.py`, the browser composer) and `npm run modules:compat`
+refuse any cave, unit or patch in `0x400d24d0..0x400d24df`. Measured in an
+emulator only (upstream octabam #771, 51 BPM); not heard on a unit.
+
 **An unused setup slot is not free storage.** MIDI NOTE SETUP shows four values, but its window binds all six
 encoders: D and F edit the two `----` slots (setup record +0x03 and +0x05) unseen, and YES commits all six staged
 values, so a byte kept there is changed by a turn nobody sees and overwritten by the next YES (owner's MKII, 21 October

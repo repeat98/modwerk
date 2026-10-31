@@ -144,7 +144,7 @@ class CycleExit(unittest.TestCase):
 class FloatingCavePlacement(unittest.TestCase):
     """A floating cave past the clone window goes to the overflow run, as the browser places it."""
     def setUp(self):
-        names = {'OVERFLOW_RUN', 'OVERFLOW_RUN_END', 'floating_cave_at'}
+        names = {'OVERFLOW_RUN', 'OVERFLOW_RUN_END', 'floating_cave_at', 'DELAY_TABLE_TAIL', 'DELAY_TABLE_TAIL_END', 'delay_tail_clash'}
         body = [n for n in tree.body if getattr(n, 'name', None) in names or
                 isinstance(n, ast.Assign) and any(isinstance(t, ast.Name) and t.id in names for t in n.targets)]
         self.ns = {}
@@ -158,6 +158,30 @@ class FloatingCavePlacement(unittest.TestCase):
         self.assertEqual(at(0x400d7c80, run, 4, limit), run)                  # window cursor already past the limit
         self.assertEqual(at(0x400d7c01, end - 0x10, 0x10, limit), end - 0x10)  # the overflow's last bytes
         self.assertIsNone(at(0x400d7b00, end - 0x10, 0x200, limit))           # fits neither: the build refuses
+
+    def test_the_overflow_run_starts_past_the_bytes_the_stock_delay_reads(self):
+        # The stock DELAY reads 0x400d1ce0 + 4 * (x >> 6); its 508-entry table ends at 0x400d24d0 and the index runs
+        # up to 16 bytes past it (docs/OCTATRACK_HARDWARE_TRAPS.md).
+        self.assertEqual((self.ns['DELAY_TABLE_TAIL'], self.ns['DELAY_TABLE_TAIL_END']), (0x400d1ce0 + 4 * 508, 0x400d24e0))
+        self.assertEqual(self.ns['OVERFLOW_RUN'], self.ns['DELAY_TABLE_TAIL_END'])
+        at, run = self.ns['floating_cave_at'], self.ns['OVERFLOW_RUN']
+        self.assertEqual(at(0x400d7c80, run, 4, 0x400d7c3c), 0x400d24e0)       # the first overflow placement
+        clash = self.ns['delay_tail_clash']
+        for start, length in ((0x400d24d0, 6), (0x400d24c0, 0x11), (0x400d24df, 1), (0x400d24d8, 0x100)):
+            with self.subTest(start=hex(start), length=length):
+                self.assertIn('stock DELAY reads past its table', clash(start, length, 'fixture'))
+        for start, length in ((0x400d24e0, 0x100), (0x400d24c0, 0x10), (0x400d7000, 0x80)):
+            with self.subTest(start=hex(start), length=length):
+                self.assertIsNone(clash(start, length, 'fixture'))
+
+    def test_pinned_placements_and_the_finished_image_are_checked(self):
+        source = (ROOT / 'tools/build/build_bus.py').read_text(encoding='utf-8')
+        self.assertIn('_clash = delay_tail_clash(_at, len(_b), f"{_m.key} {_u.label}")', source)       # pinned or floating unit
+        self.assertIn('_clash = delay_tail_clash(_c.cave_addr, max(len(_b), _c.reserve), _c.label)', source)  # every cave
+        end = source[source.index('sys.exit("build changed kept stock bytes: "'):]
+        self.assertLess(end.index('_tail = slice(DELAY_TABLE_TAIL - BASE, DELAY_TABLE_TAIL_END - BASE)'), end.index('out.write_bytes(bytes(img))'))
+        patches = (ROOT.parents[1] / 'src/engine/os-patches.ts').read_text(encoding='utf-8')
+        self.assertIn('DELAY_TABLE_TAIL = 0x%x, DELAY_TABLE_TAIL_END = 0x%x' % (self.ns['DELAY_TABLE_TAIL'], self.ns['DELAY_TABLE_TAIL_END']), patches)
 
     def test_browser_uses_the_same_overflow_run(self):
         menus = (ROOT.parents[1] / 'src/engine/module-menus.ts').read_text(encoding='utf-8')
@@ -181,7 +205,7 @@ class ToolSyntax(unittest.TestCase):
 
 # Builder extensions after the Poly8 record, oldest first. Each proves its own exact before/after transition.
 EXTENSIONS = ['air-chorus-split-builder.json', 'plain-formatter-builder.json', 'floating-cave-overflow-builder.json', 'octabam-emulator-gates-5c71bc8c.json',
-              'ptable2-builder.json']
+              'ptable2-builder.json', 'delay-table-tail-builder.json']
 # Documentation-only imports, oldest first: upstream files byte for byte, no build input.
 DOC_IMPORTS = ['octabam-docs-30fbb8e4.json', 'octabam-docs-dcf93d37.json', 'octabam-docs-6328143e.json', 'octabam-docs-bc144523.json']
 
@@ -265,6 +289,40 @@ class SelectiveImport(unittest.TestCase):
         for row in record['selections']:
             self.assertIsNotNone(row['after'])
             self.assertEqual(row['before'], row['after'])
+
+    def test_delay_table_tail_builder_moves_only_images_that_wrote_the_tail(self):
+        import json
+        record = json.loads((ROOT.parent / 'infrastructure-verification/delay-table-tail-builder.json').read_text())
+        self.assertEqual(record['kind'], 'delay-table-tail-builder-regression')
+        self.assertEqual(set(record['builderAdaptations']), {'tools/build/build_bus.py'})
+        for path, change in record['builderAdaptations'].items():
+            self.assert_extension_holds('delay-table-tail-builder.json', path, change['after'])
+        self.assertGreaterEqual(len(record['selections']), 128)
+        moved = refused = 0
+        for row in record['selections']:
+            before, after = row['before'], row['after']
+            with self.subTest(modules=row['moduleIds'], keep=row['keepStockFx2']):
+                if 'refused' in before:
+                    # Every earlier refusal holds; with FM Synth 0.1.2 the build may now stop earlier, at its page.
+                    self.assertIn('refused', after)
+                    if after != before:
+                        self.assertIn('synth', row['moduleIds'])
+                        self.assertIn('which the stock DELAY reads past its table', after['refused'])
+                elif 'refused' in after:
+                    # Newly refused: only FM Synth 0.1.2, whose SRC page is pinned at 0x400d24d0.
+                    refused += 1
+                    self.assertIn('synth', row['moduleIds'])
+                    self.assertEqual(before['delayTableTail'], 'written')
+                    self.assertIn('which the stock DELAY reads past its table', after['refused'])
+                else:
+                    self.assertEqual(after['delayTableTail'], 'stock')   # no image writes the 16 bytes now
+                    if before['delayTableTail'] == 'stock':
+                        self.assertEqual(after, before)                  # nothing else moves
+                    else:
+                        moved += 1
+                        self.assertNotEqual(after['osSha256'], before['osSha256'])
+        self.assertGreater(moved, 0)
+        self.assertGreater(refused, 0)
 
     def test_poly8_builder_preserves_current_main_without_poly8(self):
         import json

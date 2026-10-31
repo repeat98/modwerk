@@ -7,10 +7,17 @@ import { CATALOG_SOURCE, resolveSelection } from '../catalog/modules.ts'
 import { composeDescriptors, placementOrder } from './descriptors.ts'
 import { emitLabelFormatter, emitModeFormatter, type ModeRenames } from './menu-formatters.ts'
 import { readRomPackage, linkRomText, createWideDial } from './rom-package.ts'
-import { applyGuardedOsWrites, type OsWrite } from './os-patches.ts'
+import { applyGuardedOsWrites, writesDelayTableTail, DELAY_TABLE_TAIL_REFUSAL, type OsWrite } from './os-patches.ts'
 import { MenuSpaceError } from './placement-error.ts'
 export const MENU_CAVE_END = 0x400d7c3c, MENU_LONG_LIST = 0x400d7bbc
-const OVERFLOW_START = 0x400d24d0, OVERFLOW_END = 0x400d2ce0
+// The overflow run starts 16 bytes into the zero run: the stock DELAY reads 0x400d24d0..0x400d24df (os-patches.ts).
+export const OVERFLOW_START = 0x400d24e0, OVERFLOW_END = 0x400d2ce0
+/** The end of the free region a menu cave at `address` may fill: the clone window from the descriptor cursor, the overflow run
+ *  or the SHPE gap; `address` itself when it is in none. A cave reaching the bytes the stock DELAY reads is refused outright. */
+export function menuCaveEnd(address: number, length: number, caveCursor: number, caveLimit: number, note: string) {
+  if (writesDelayTableTail(address, length)) throw new Error(note + ' is placed at 0x' + address.toString(16) + ', but ' + DELAY_TABLE_TAIL_REFUSAL + '.')
+  return address >= caveCursor ? caveLimit : address >= OVERFLOW_START && address < OVERFLOW_END ? OVERFLOW_END : address === 0x400c45b0 ? 0x400c4702 : address
+}
 const align = (address: number, alignment: number) => Math.ceil(address / alignment) * alignment
 async function zeroHash(length: number) {
   const digest = await crypto.subtle.digest('SHA-256', new Uint8Array(length).buffer)
@@ -30,8 +37,8 @@ export async function composeModuleMenus(original: Uint8Array, ids: readonly str
   let cursor = baseline.caveCursor, overflow = OVERFLOW_START
   async function cave(address: number, bytes: Uint8Array, note: string) {
     if (!Number.isInteger(address) || address % 2 || !bytes.length) throw new Error('Invalid module menu placement.')
-    const end = address >= baseline.caveCursor ? caveLimit : address >= OVERFLOW_START && address < OVERFLOW_END ? OVERFLOW_END : address === 0x400c45b0 ? 0x400c4702 : address
-    if (!((address >= baseline.caveCursor && address + bytes.length <= caveLimit) || (address >= OVERFLOW_START && address + bytes.length <= OVERFLOW_END) || (address === 0x400c45b0 && address + bytes.length <= 0x400c4702))) {
+    const end = menuCaveEnd(address, bytes.length, baseline.caveCursor, caveLimit, note)
+    if (address + bytes.length > end) {
       const owner = modules.find(module => note.startsWith(module.id + ' ') || note.startsWith(module.name + ' '))
       throw new MenuSpaceError(owner ? owner.name + ' menu and patch code' : note, bytes.length, Math.max(0, end - address), owner ? [owner.id] : [])
     }
