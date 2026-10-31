@@ -17,6 +17,7 @@ Everything below was observed in rytm-emu on the named build, except the Hardwar
   `f6e59b8fca126ec3bbc173e5617e30ade67dfe430693bc936a2d2d0495adb5c5`.
 - Diagnostic PD05 (PC11's code plus an on-screen readout, branch `diag/pipo-loop`; not for release): `.syx`
   `c0ea404ef4aac79334f1513a4a81953997a405f7811f45426bd6d484efc3ccb4`.
+- Source (0.1.1-experimental): fingerprint `5066d24b…b76f` (`evidence.sourceSha256`). Build PP17 (core-ar2 0.7 as vendored + Pipo Loop 0.1.1-experimental, `--version PP17`): `.syx` `11cf7f270b5323fdc8beab00ebfbd2cfe3a7b5f4e4b29d3abe408652ec969d52`. Every screenshot in media/ was recaptured on PP17; lop-off, lop-on, lop-pipo, plock-pipo and scene-pipo came out byte-identical to the 0.1.0 captures.
 - Earlier builds: PP03 and PC01 (before the code review), PP05 and PC03 (after it), PP06 and PC04 (the
   three-position switch), PP07 and PC05 (zero snap on the sound), PP08 and PC06 (locks), PP09 and PC07 (exact turns), PP10, PC08 and PD02 (snap holds), PP11, PC09 and PD03 (code review), PP12, PC10 and PD04 (LOP's feel);
   each passed the battery below. PP10 to PP13 gave the same results as PP09 on every row of it.
@@ -25,6 +26,28 @@ Everything below was observed in rytm-emu on the named build, except the Hardwar
   BD with LOP ON on the SAMPLE page (the setup in [media/capture.json](media/capture.json)). Audio is
   dtboot's `--wav` with `--every 20M` (longer report intervals keep only about a second of audio).
   Effective LOP is read from the track's effective parameter word (`DTBOOT_PEEK`).
+
+## Emulator, 0.1.1 (2026-10-31)
+
+0.1.0 could play about 48 frames from the far end of the loop at a turn, a click, mostly at low pitch. Two causes, read in stock's reverse prefetch:
+
+- A voice going down that starts a block exactly on the loop's low frame gets a window with no wrap, near the high end, so there is nothing to mirror. 0.1.1 turns the voice on that block, as it does for a pass of the low frame. Below one frame a block a move back above it would never let the voice past.
+- A voice just turned at the high end can sit above it, so its window crosses the high end. The mirror took that for the low end's window and filled it with the low end's frames. 0.1.1 mirrors that way only for a voice within 160 frames of the low end.
+
+Builds: PP15 is 0.1.0 and PP16 and PP17 are 0.1.1, each alone on the vendored core-ar2 0.7, from origin/main 00ecaf52. rytm-emu, RAMP on BD, step above 100 between samples counted once per 64 frames, about 30 s after one hit.
+
+| Check | PP15 (0.1.0) | PP16 (0.1.1) |
+| --- | --- | --- |
+| PIPO, TUN -24, END 34 (6,800 frames), FIN at 0 | 18 clicks: 18 at END, 0 at STA | 0 |
+| The same, FIN raised in three steps (voice lands on other frames) | 18/0, 23/5, 25/7 at END/STA | 0, 0, 0 |
+| Output range of those runs | -6,741 to -2,451 | -6,421 to -2,768, the loop's own |
+| PIPO, TUN +24 | 0 clicks | 0, output differs |
+| PIPO, END below STA | 2 clicks | 0 |
+| LOP ON; LOP OFF; PIPO at TUN 0 | | sample-identical to PP15 (SHA-256 of channel 0) |
+
+PP17, the final source, gave 0 clicks on the first two rows. Rates below one frame a block need a scratch build that forces the voice's rate word, never released: on a 7,100-frame loop at 1/64x and 1/32x, forward and reverse, the voice reached both ends with no stall.
+
+Not tested on a unit. 0.1.1 has not been flashed.
 
 ## Emulator, 0.1.0 (2026-10-27)
 

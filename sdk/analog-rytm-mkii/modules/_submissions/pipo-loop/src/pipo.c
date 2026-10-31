@@ -33,6 +33,7 @@
 #define IDX_LOP 23
 #define VREC(v) (VOICE_REC_AT + (v) * 92)
 #define VPOS(v) (*(volatile int *)(VREC(v) + 4))
+#define VTOP(v) (*(volatile int *)(VREC(v) + 8))   // going down, stock's prefetch keeps the position here
 #define VFRAMES(v) (*(volatile unsigned *)(VREC(v) + 20))
 #define OWNER(v) (*(volatile unsigned char *)(VOICE_OWNER_AT + (v)))
 #define TRIG_NEXT (*(volatile unsigned *)TRIG_NEXT_AT)   // one bit a voice, as stock's prefetch tests it
@@ -154,6 +155,13 @@ void pipo_loop_audio(void)
         }
         p->up = p->fwd ^ p->back;
         if ((EFF(t, IDX_LOP) >> 8) == LOP_PIPO && p->hi - p->lo >= MIN_SPAN) {
+            if (!p->up && pos == p->lo && !(trig & (1u << v))) { // on lo stock's window does not wrap, so
+                pos = 2 * p->lo - 1 - pos + TURN_LAG; // nothing can be mirrored: turn here, as for a pass of lo
+                VPOS(v) = pos;
+                p->last_pos = pos;
+                p->back ^= 1;
+                p->up = 1;
+            }
             p->arm = p->up ? ARM_UP : ARM_DOWN;
             p->a_lo = p->lo;             // a block on, the turn is judged against this loop even
             p->a_hi = p->hi;             // if STA or END (an LFO, a turn) has moved since
@@ -203,6 +211,8 @@ void *pipo_loop_mirror(int v, int which, int ws_al, int wrap_al, int len)
     } else {                         // below hi's window index: lo, lo + 1, ... read backward
         int nh = hi - ws_al;
         if (nh <= 0 || nh > MIRROR)
+            return 0;
+        if (VTOP(v) >= lo + MIRROR)      // just turned at hi: this window crosses hi, not lo
             return 0;
         for (i = 0; i < len; i++) {
             n = i < nh ? lo + (nh - 1 - i) : lo + (i - nh);
