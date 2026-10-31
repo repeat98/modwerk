@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-License-Identifier: GPL-3.0-only
 """LOGACID: the firmware-free engine on the host, and the ColdFire package's generator record."""
 from pathlib import Path
 import json

@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: GPL-3.0-or-later
+/* SPDX-License-Identifier: GPL-3.0-only
  * LOGACID on the Octatrack's sample tracks: a track machine (sdk/machines/octatrack/events.json ot_machines), the
  * shape of VECTOR's native.c over the Modwerk base. A BACKING machine: it makes no sound of its own, the track's
  * Flex or Static sample plays as stock, and LOGACID writes the line as the track's trigs and PTCH, HOLD, VOL and

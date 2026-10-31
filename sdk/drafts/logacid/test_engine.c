@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: GPL-3.0-or-later
+/* SPDX-License-Identifier: GPL-3.0-only
  * Firmware-free tests of the LOGACID engine (test_engine.py builds and runs them under the sanitizers). */
 #include "engine.h"
 #include <assert.h>

@@ -343,7 +343,7 @@
     "evidenceRevision": "1bbc8b46cb3c5d09e1ce25e020cc460367769f33"
   },
   "license": {
-    "spdx": "GPL-3.0-or-later",
+    "spdx": "GPL-3.0-only",
     "file": "LICENSE",
     "declaration": "The generator is a port of the TB_3PO Hemisphere applet by Logarhythm (MIT, Copyright (c) 2020 Logarhythm, its notice in NOTICE; reseed() by Qiemem; modified by djphazer in O_C-Phazerville 92740448) through Charles Vestal's Schwung port tb3po.c (charlesvestal/schwung-tb3po f49d81d05d1e29ae37728a08e30f193892be3bc9, GPL-3.0); their credit and licence are kept and the source is pinned. The Octatrack glue is original, in the shape of VECTOR 0.3.0's MIT midi.c. No Elektron firmware, extracted routines, tables, samples or dumps are included."
   },

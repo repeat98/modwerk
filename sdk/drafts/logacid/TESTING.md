@@ -2,12 +2,12 @@
 
 ## Commands and exact revision
 
-Source: this branch (`module/logacid`), `sdk/octabam/modules/logacid/` at the revision in `tests.evidenceRevision` of the
+Source: this branch (`module/tb3po`), `sdk/drafts/logacid/` at the revision in `tests.evidenceRevision` of the
 manifest. Host: Ubuntu 24.04, gcc 13.3, Python 3.13.
 
 ```sh
-python3 -B sdk/octabam/modules/logacid/test_engine.py   # engine under ASan/UBSan, generator glue freestanding, package record
-python3 -B sdk/octabam/modules/logacid/verify.py        # the same, then the package rebuilt and compared with the published one
+python3 -B sdk/drafts/logacid/test_engine.py   # engine under ASan/UBSan, generator glue freestanding, package record
+python3 -B sdk/drafts/logacid/verify.py        # the same, then the package rebuilt and compared with the published one
 ```
 
 | Check | Result |

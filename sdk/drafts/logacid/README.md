@@ -167,7 +167,7 @@ The generator is the `TB_3PO` Hemisphere applet by Logarhythm (MIT, Copyright (c
 `92740448e525e6451676a3ff8eb4403cddcaeca7`), ported through
 [Charles Vestal's `schwung-tb3po`](https://github.com/charlesvestal/schwung-tb3po) `src/dsp/tb3po.c` at commit
 `f49d81d05d1e29ae37728a08e30f193892be3bc9` (GPL-3.0). The Octatrack glue is original, in the shape of VECTOR's
-`native.c` and VECTOR 0.3.0's `midi.c` by Jannik Aßfalg (MIT, Modwerk). The module is [GPL-3.0-or-later](LICENSE). The
+`native.c` and VECTOR 0.3.0's `midi.c` by Jannik Aßfalg (MIT, Modwerk). The module is [GPL-3.0-only](LICENSE): `tb3po.c` is GPL-3.0 without "or any later version", so code derived from it cannot offer later versions. The
 thumbnail is an original illustration ([presentation/LICENSE](presentation/LICENSE)). No Elektron firmware, extracted
 routines, tables, samples or dumps are included; underlying Elektron interface rights remain reserved.
 

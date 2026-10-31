@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: GPL-3.0-or-later
+/* SPDX-License-Identifier: GPL-3.0-only
  * LOGACID on the Octatrack's MIDI tracks: a MIDI generator (sdk/machines/octatrack/events.json ot_midi_generators),
  * the shape of VECTOR 0.3.0's midi.c. The engine's line becomes the track's note trigs and NOTE, VEL and LEN locks;
  * the stock MIDI sequencer plays them, so tempo, track speed, length, swing, conditions and every note-off are

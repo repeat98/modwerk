@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: GPL-3.0-or-later
+/* SPDX-License-Identifier: GPL-3.0-only
  * LOGACID pattern engine. The generator follows tb3po.c (charlesvestal/schwung-tb3po f49d81d0, from the Phazerville
  * Hemisphere TB_3PO applet by Logarhythm, MIT, as modified by djphazer) call for call: the same xorshift32, the same
  * draws in the same order, so a line has the same shape as the Move's at the same settings. Its 0.0-1.0 floats are

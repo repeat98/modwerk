@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: GPL-3.0-or-later
+/* SPDX-License-Identifier: GPL-3.0-only
  * LOGACID pattern engine: the generative 303-style acid line of the TB_3PO Hemisphere applet by Logarhythm
  * (MIT, Copyright (c) 2020 Logarhythm; reseed() by Qiemem; extensively modified by djphazer in O_C-Phazerville), as
  * Charles Vestal's Schwung port tb3po.c (charlesvestal/schwung-tb3po,

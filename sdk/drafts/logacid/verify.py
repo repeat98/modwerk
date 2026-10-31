@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-License-Identifier: GPL-3.0-only
 """LOGACID: the engine, the generator glue and the USB package.
 
 1. test_engine.py: the integer engine against tb3po.c's generator (floats, as written) over 50,688 seed, scale,
