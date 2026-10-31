@@ -143,7 +143,7 @@
     "report": "TESTING.md",
     "summary": "Host checks only: the cut procedures play the break straight when nothing cuts, produce well-formed, deterministic lines with stutters, fills, retrigs, micro-timing, pitch ramps and reverses; the RTIM scale, the track-record writer and the settings packing are checked under the sanitizers; the package's machine record sits at the registry's index (test_engine.py). Not run on a unit or in the emulator.",
     "hardwareStatus": "untested",
-    "evidenceRevision": "1bbc8b46cb3c5d09e1ce25e020cc460367769f33",
+    "evidenceRevision": "16c485e3a3fed52ffd9909ec129c4b6021b06dd3",
     "gates": [
       "modules/breakcut/verify.py"
     ]
