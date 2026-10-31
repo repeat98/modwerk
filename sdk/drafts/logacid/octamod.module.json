@@ -340,7 +340,7 @@
     "gates": [
       "modules/logacid/verify.py"
     ],
-    "evidenceRevision": "1bbc8b46cb3c5d09e1ce25e020cc460367769f33"
+    "evidenceRevision": "8c04a9bcc401188c8301b07803425280088d4b7b"
   },
   "license": {
     "spdx": "GPL-3.0-only",
