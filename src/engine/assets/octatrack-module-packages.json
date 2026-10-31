@@ -492,6 +492,14 @@
       "module": "c8d078f2",
       "bytes": 5780,
       "sha256": "6650ef77a837a61a570a300c3bd0b2d4dfd4c9bed6e52bb355034d39bf5ff90d"
+    },
+    {
+      "id": "tiempos",
+      "sources": [
+        "sdk/octabam/modules/tiempos/tiempos.c"
+      ],
+      "version": "0.1.0-experimental",
+      "path": "octatrack-modules/tiempos/0.1.0-experimental.mwrm"
     }
   ]
 }
