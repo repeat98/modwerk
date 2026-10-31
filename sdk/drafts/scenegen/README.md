@@ -20,7 +20,7 @@ stay as they were, and the last generation can be undone. The scenes are the Par
 mute and edit as any scene does. SCENE GEN keeps no clock and runs nothing while the pattern plays.
 
 SCENE GEN contributes four rows to the Modwerk base's `ot_sequencer_rows` table
-([HOOKS.md](../../../machines/octatrack/HOOKS.md)) and patches no stock site; it needs the base loaded over USB and
+([HOOKS.md](../../machines/octatrack/HOOKS.md)) and patches no stock site; it needs the base loaded over USB and
 has no card form. A shortcut on the scene keys needs a scene-key hook shared in the base; until then the rows are the
 way in.
 
