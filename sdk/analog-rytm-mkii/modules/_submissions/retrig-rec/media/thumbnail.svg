@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="192" viewBox="0 0 320 192" class="signal-art" fill="none" stroke-linecap="round" stroke-linejoin="round" role="img" aria-labelledby="title description">
+<title id="title">RETRIG GRID</title>
+<desc id="description">Pad retrigs started between two steps: stock keeps them at the press's offset from the steps, Retrig Grid plays the press and then puts the retrigs on the sequencer's grid. Original conceptual illustration, not an instrument screen or a measured result.</desc>
+<style>.signal-grid{stroke:#fff;opacity:.035;stroke-width:.7}.signal-main{stroke:#9eb4ed;stroke-width:2.7}.signal-secondary{stroke:#9eb4ed;opacity:.65;stroke-width:1.7}.signal-ghost{stroke:#9eb4ed;opacity:.2;stroke-width:1.3}.signal-art text{fill:#9eb4ed;opacity:.8;font:10px monospace;letter-spacing:.7px;stroke:none}</style>
+<rect width="320" height="192" fill="#232328"/>
+<g class="signal-grid"><path d="M20 52H300"/><path d="M20 97H300"/><path d="M20 142H300"/><path d="M64 33V163"/><path d="M128 33V163"/><path d="M192 33V163"/><path d="M256 33V163"/></g>
+<g>
+<path class="signal-ghost" d="M62 94 L80 76 L98 58 L116 70 L134 88 L152 102 L170 84 L188 66 L206 54 L224 74 L242 92 L260 100"/>
+<path class="signal-main" d="M40 128H280"/><path class="signal-main" d="M62128V94 M80128V76 M98128V58 M116128V70 M134128V88 M152128V102 M170128V84 M188128V66 M206128V54 M224128V74 M242128V92 M260128V100"/>
+<path class="signal-secondary" d="M40 156H280"/><path class="signal-secondary" d="M62150V160 M80150V160 M98150V160 M116150V160 M134150V160 M152150V160 M170150V160 M188150V160 M206150V160 M224150V160 M242150V160 M260150V160"/>
+<text x="40" y="44">LIVE REC</text><text x="280" y="44" text-anchor="end">RTRG + PAD</text>
+<text x="40" y="176">EVERY HIT A TRIG</text><text x="280" y="176" text-anchor="end">AS PLAYED</text>
+</g>
+</svg>

@@ -1,0 +1,111 @@
+{
+  "schemaVersion": 3,
+  "id": "retrig-rec",
+  "name": "Retrig Rec",
+  "version": "0.1.0-experimental",
+  "machine": "analog-rytm-mkii",
+  "category": "machines",
+  "exclusive": false,
+  "author": {
+    "github": "npp1993",
+    "credits": [
+      "npp1993 (Nathaniel Pavel) — the mod, its design and code.",
+      "stigmagit — the retrig series locations documented in Retrig Grid.",
+      "irpina — Elekloader and core-ar2, the core it links with."
+    ]
+  },
+  "maintainers": [
+    "npp1993"
+  ],
+  "presentation": {
+    "label": "RETRIG REC",
+    "family": "Sequencer recording",
+    "summary": "LIVE RECORDING records every pad retrig hit as a real trig, with the velocity and timing you played.",
+    "overview": "Stock records a retrig hold as one trig and a few locks that its held-note erase mostly removes, so what plays back is not what you played. With Retrig Rec every hit of a roll, from RTRG + pad or a pad set to ALWAYS ON, records a real trig at the velocity it sounded and the time it sounded, quantize live rec on or off. Rates faster than a step record a trig with a step retrig, because a step holds one trig. There is nothing to set.",
+    "highlights": [
+      "One real trig for each hit at 1/16 and slower, velocity following pressure.",
+      "ALWAYS ON pads record the same way.",
+      "Retrig hits keep played timing even with quantize live rec on; plain pad hits still quantize.",
+      "Faster rates record a step retrig, and the RETRIG menu's VEL.CUR goes with it.",
+      "Works beside Retrig Grid, recording the grid it plays."
+    ],
+    "usage": [
+      "Hold RECORD and press PLAY, hold RTRG and hold a pad, varying the pressure.",
+      "Let go and leave LIVE RECORDING: the roll plays back as played.",
+      "In GRID RECORDING, edit the roll's trigs one by one."
+    ]
+  },
+  "access": {
+    "location": "LIVE RECORDING, with RTRG + pad or a pad set to ALWAYS ON. No menu or page of its own.",
+    "steps": [
+      "Hold RECORD and press PLAY.",
+      "Hold RTRG, then hold a pad and vary the pressure."
+    ],
+    "screenshots": []
+  },
+  "controls": [],
+  "compatibility": {
+    "releases": [
+      "1.74"
+    ],
+    "requires": [],
+    "conflicts": [],
+    "limitations": [
+      "Rates faster than a step record one velocity for each trig's hits, or VEL.CUR's fade.",
+      "Micro timing has 24 units a step.",
+      "A roll started before LIVE RECORDING can miss hits.",
+      "Not tested on a unit; pad pressure was scripted in rytm-emu.",
+      "External MIDI clock not tested."
+    ]
+  },
+  "platform": {
+    "kind": "elemod",
+    "core": "0.7",
+    "build": "build.json",
+    "events": [
+      "ev_render_out"
+    ],
+    "claims": [
+      "ui:RETRIG menu step writes in LIVE RECORDING",
+      "ui:live recording of pad retrigs",
+      "key:RTRG+YES"
+    ]
+  },
+  "resources": {
+    "memoryBytes": null,
+    "fastBytes": null,
+    "load": {
+      "display": "Not measured yet",
+      "method": "unmeasured",
+      "conditions": "Measure with every track playing, parameters modulated and the mod at its heaviest setting."
+    }
+  },
+  "evidence": {
+    "tier": "none",
+    "moduleVersion": "0.1.0-experimental",
+    "sourceSha256": null,
+    "reports": [],
+    "hardware": null,
+    "verifiedBy": null
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "rytm-emu c5732f0 only, scripted pressure: 1/8, 1/12, 1/16, 1/20, 1/24, 1/32, ALWAYS ON, quantize on and off, track speed 2x and 1/2x, beside Retrig Grid. Not tested on a unit. See TESTING.md."
+  },
+  "license": {
+    "spdx": "GPL-3.0-or-later",
+    "file": "LICENSE",
+    "declaration": "Original work by the author, under GPL-3.0-or-later."
+  },
+  "media": [
+    {
+      "path": "media/thumbnail.svg",
+      "kind": "thumbnail",
+      "caption": "Retrig Rec: a roll recorded as one trig for each hit, with its velocity",
+      "alt": "A row of step trigs whose heights follow a pressure line.",
+      "credit": "npp1993",
+      "license": "GPL-3.0-or-later",
+      "source": "Original illustration in the shared signal-art style."
+    }
+  ]
+}

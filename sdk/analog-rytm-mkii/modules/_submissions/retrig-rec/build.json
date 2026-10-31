@@ -1,0 +1,103 @@
+{
+  "schemaVersion": 1,
+  "sources": [
+    "src/retrig-rec.c",
+    "src/retrig-rec.s"
+  ],
+  "defsym": {},
+  "cflags": [],
+  "weak": [],
+  "subscribe": [
+    {
+      "event": "ev_render_out",
+      "fn": "retrig_rec_render",
+      "order": 40
+    }
+  ],
+  "contribute": [],
+  "collections": {},
+  "copied": [],
+  "regions": [],
+  "claims": [
+    "ui:RETRIG menu step writes in LIVE RECORDING",
+    "ui:live recording of pad retrigs",
+    "key:RTRG+YES"
+  ],
+  "requires": [],
+  "derive": null,
+  "releases": {
+    "1.74": {
+      "defsym": {
+        "STOCK_APP": "0x401816f4",
+        "STOCK_LIVE_REC": "0x40036370",
+        "STOCK_QUEUE_POST": "0x400013b2",
+        "STOCK_STEP_PLACE": "0x4009cb2c",
+        "STOCK_STEP_SET_RATE": "0x400c0978",
+        "STOCK_STEP_SET_CURVE": "0x400c0a8c",
+        "STOCK_RECORDER": "0x4017fa0a",
+        "STOCK_SEQ": "0x40181790",
+        "STOCK_SEQ_STEP": "0x4003532c",
+        "STOCK_KIT": "0x400ae4ca",
+        "STOCK_KIT_CURVE": "0x400a72f6",
+        "STOCK_STEP_SET_LENGTH": "0x400c0a02",
+        "STOCK_KEY_DOWN": "0x40071f54",
+        "STOCK_ALWAYS_ON": "0x400a7020",
+        "STOCK_SET_ALWAYS_ON": "0x400a708a",
+        "STOCK_VIEW_REDRAW": "0x40078580"
+      },
+      "cflags": [
+        "-DRT_ACTIVE_AT=0x8000fe44",
+        "-DRT_COUNT_AT=0x42adf5d0",
+        "-DRT_TEMPLATE_AT=0x42ac6b48",
+        "-DRT_VELOCITY_AT=0x800067c4",
+        "-DRT_FIRES_AT=0x402909b8",
+        "-DCLOCK_AT=0x8000fe54",
+        "-DNOTE_RING_AT=0x418f1620",
+        "-DNOTE_RING_NEXT_AT=0x418f136c",
+        "-DNOTE_QUEUE_AT=0x40286520",
+        "-DNOTE_START_AT=0x418f3220",
+        "-DSEQ_PATTERN_AT=0x405c8d04",
+        "-DSPEED_PULSES_AT=0x401db6f8",
+        "-DPATTERNS_AT=0x407dd8e3",
+        "-DRT_LENGTHS_AT=0x402907b0"
+      ],
+      "sites": [
+        {
+          "addr": "0x400e29ac",
+          "len": 6,
+          "stockSha256": "524ab35165c13e344966031469e62cbe73cc1cb22ffd34bed0f855a1614675d9",
+          "op": "jmp",
+          "target": "retrig_rec_menu"
+        },
+        {
+          "addr": "0x400e2b3e",
+          "len": 6,
+          "stockSha256": "a232dd09a8abc0dcb2622d83155305da95999bc534b95bd9b890dd4e5351a3a2",
+          "op": "jsr",
+          "target": "retrig_rec_yes"
+        },
+        {
+          "addr": "0x400b4692",
+          "len": 8,
+          "stockSha256": "929c0bfcfc6374a61c38ea78e4cd13f5393f774241f07151a52b2419d5eb6eb7",
+          "op": "jmp",
+          "target": "retrig_rec_timing"
+        },
+        {
+          "addr": "0x400b470e",
+          "len": 6,
+          "stockSha256": "be28db20013e9298a17482a6a95c6fdc686944541fd473e09b5aaa7624388c72",
+          "op": "jsr",
+          "target": "retrig_rec_rate"
+        },
+        {
+          "addr": "0x400b43d8",
+          "len": 6,
+          "stockSha256": "3053914c49697b92072c6a990e2f2e9bf2f12e185db4b9e8d013a29dfc068ce1",
+          "op": "jsr",
+          "target": "retrig_rec_length"
+        }
+      ]
+    }
+  }
+}
