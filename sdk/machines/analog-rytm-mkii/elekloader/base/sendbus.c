@@ -826,7 +826,9 @@ int mw_send_key(void *brain, char *ev)
     (void)brain;
     if (!ready || !(flags & KEY_PRESSED))
         return 0;
-    if (key == KEY_FUNC || key == KEY_TRK || key <= KEY_TRIG_LAST
+    // TRK lets go of the page as any other key does: a double press opens stock's list, which stock draws without
+    // asking the page again, so a page kept would be drawn over it. TRK + a pad still changes track.
+    if (key == KEY_FUNC || key <= KEY_TRIG_LAST
         || (key >= KEY_PAD_FIRST && key <= KEY_PAD_LAST) || (key >= KEY_RECORD && key <= KEY_STOP))
         return 0;
     if (page == PAGE_SHOWN_FX && (key == KEY_YES || key == KEY_NO) && IS_KEY_HELD(KEY_SRC)) {
