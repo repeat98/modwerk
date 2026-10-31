@@ -1,0 +1,30 @@
+{
+  "schema": 1,
+  "module": "datamatic",
+  "version": "0.1.0-experimental",
+  "kind": "coldfire",
+  "cycles": {
+    "unit": "cycles/event",
+    "static": null,
+    "measured": null,
+    "budget": 4330000,
+    "method": "Not measured. An event is one knob turn or YES on a DATAMATIC track: one stream of 2048 bits (a table copy, or at most 64 automaton rows of 32 cells), one 64-step line (dm_generate) and an in-place rewrite of the track record (dm_write), on the UI task, never in an interrupt and never while the pattern plays. To measure on a unit: the base's modwerk_cost[26]/[27] around the generator's knob on a development base. Budget: one UI tick, 16.4 ms at 61 ticks a second, 4,330,000 cycles at 264 MHz."
+  },
+  "load": {
+    "frameUs": 362.8,
+    "stockLongestUs": null,
+    "moduleLongestUs": null,
+    "stockIdlePercent": null,
+    "moduleIdlePercent": null,
+    "method": "Not measured. The module adds nothing to the frame interrupt (no render, no hook there) and no MIDI path of its own; its only work is the knob turn above. To measure: the base's guard and CPU meter with and without the module while a DATAMATIC track plays and a control is turned."
+  },
+  "stress": {
+    "floodMessagesPerSecond": null,
+    "clockBpm": null,
+    "seconds": null,
+    "stuckNotes": null,
+    "hangs": null,
+    "dropped": null,
+    "droppedExplanation": "No flood ran: DATAMATIC sends and receives no MIDI; the stock MIDI sequencer plays the trigs and locks it wrote, with stock's note-offs. To run: a 64-step line at DENS 127 on eight MIDI tracks at 240 BPM and track speed 2x for 60 s, turning controls on the current track, stopping mid-note and changing Part, counting stuck notes."
+  }
+}

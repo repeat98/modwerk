@@ -1,0 +1,208 @@
+{
+  "schemaVersion": 2,
+  "id": "datamatic",
+  "key": "DATAMATIC",
+  "name": "DATAMATIC",
+  "version": "0.1.0-experimental",
+  "category": "midi-usb",
+  "author": {
+    "github": "semierendonmez-commits",
+    "name": "Semi Erendönmez",
+    "credits": [
+      "Octatrack module by Semi Erendönmez",
+      "Generator shape: VECTOR 0.3.0's midi.c by Jannik Aßfalg (MIT)"
+    ]
+  },
+  "nativeManifest": "manifest.py",
+  "presentation": {
+    "label": "DATA RHYTHM",
+    "family": "Sequencing",
+    "summary": "Data as rhythm on a MIDI track: the bits of pi, the primes, a cellular automaton or an LFSR, read as notes.",
+    "overview": "DATAMATIC reads a stream of bits as a rhythm. The stream is one of nine: the binary digits of pi, e, the golden ratio or the square root of two, the Fibonacci word, the primes, the Thue-Morse sequence, an elementary cellular automaton (sixteen rules) or an LFSR. A window BITS wide slides along it STEP bits a step; a step plays when its window reaches the DENS threshold, so at DENS 0 with one bit the stream is the rhythm itself. The bits after each window choose its note (octave, fifth, tritone, whole-tone or semitone jumps over up to four octaves above the track's NOTE), its velocity and a late micro-timing. It writes ordinary note trigs with NOTE and VEL locks; the stock MIDI sequencer plays them at the pattern's tempo, track speed, length and swing. YES moves the window one byte along the stream for the next variation.",
+    "highlights": [
+      "Nine data streams: four constants, three sequences, an automaton and an LFSR",
+      "A sliding bit window: width, stride and threshold shape the density",
+      "Octave, fifth, tritone, whole-tone and semitone jumps; velocity and micro-timing from the data",
+      "Real trigs and locks: edit any step as usual; no clock of its own"
+    ],
+    "usage": [
+      "On a MIDI track double-tap SRC for MIDI NOTE SETUP, choose DATAMAT in the list on the left and press YES.",
+      "The SRC page holds SRCE, OFFS, BITS, DENS and the base note (OCT, ROOT); the AMP page SPRD, INTV, VDAT, JITR, VEL and LEN; FUNC+AMP RULE, SEED and STEP.",
+      "Every turn rewrites the track; YES reads the next byte of the stream. For fast data rhythms set the track's speed to 2x or 4x."
+    ]
+  },
+  "controls": [
+    {
+      "name": "SRCE",
+      "default": 0,
+      "count": 9,
+      "doc": "SRC A. The stream: PI, E, PHI and SQR2 (binary digits), FIBO (Fibonacci word), PRIM (primes), THUE (Thue-Morse), CA (cellular automaton), LFSR",
+      "labels": [
+        "PI",
+        "E",
+        "PHI",
+        "SQR2",
+        "FIBO",
+        "PRIM",
+        "THUE",
+        "CA",
+        "LFSR"
+      ]
+    },
+    {
+      "name": "OFFS",
+      "default": 0,
+      "count": 128,
+      "doc": "SRC B. Where the window starts, in bytes into the stream; YES moves it to the next byte",
+      "labels": null
+    },
+    {
+      "name": "BITS",
+      "default": 1,
+      "count": 8,
+      "doc": "SRC C. The window's width in bits, 1-8",
+      "labels": null
+    },
+    {
+      "name": "DENS",
+      "default": 0,
+      "count": 128,
+      "doc": "SRC D. 0 plays a step whose window is all ones (with BITS 1 the stream itself), 127 plays every step",
+      "labels": null
+    },
+    {
+      "name": "SPRD",
+      "default": 1,
+      "count": 5,
+      "doc": "AMP A. Octaves the notes may reach above the track's NOTE, 0-4",
+      "labels": null
+    },
+    {
+      "name": "INTV",
+      "default": 0,
+      "count": 5,
+      "doc": "AMP B. The intervals the notes jump by: OCT, 5TH, TRIT (tritones), WHOL (whole tones), CLST (semitones)",
+      "labels": [
+        "OCT",
+        "5TH",
+        "TRIT",
+        "WHOL",
+        "CLST"
+      ]
+    },
+    {
+      "name": "VDAT",
+      "default": 64,
+      "count": 128,
+      "doc": "AMP C. How far the data pulls velocity below the track's VEL (OFF: every note at VEL)",
+      "labels": null
+    },
+    {
+      "name": "JITR",
+      "default": 0,
+      "count": 24,
+      "doc": "AMP D. Micro-timing from the data, at most this many 1/24 of a step late (OFF: on the grid)",
+      "labels": null
+    },
+    {
+      "name": "RULE",
+      "default": 0,
+      "count": 16,
+      "doc": "FUNC+AMP A. The automaton's rule (CA only): 30, 45, 54, 60, 73, 90, 105, 110, 122, 126, 150, 169, 182, 184, 225, 250",
+      "labels": null
+    },
+    {
+      "name": "SEED",
+      "default": 0,
+      "count": 128,
+      "doc": "FUNC+AMP B. The automaton's first row (0: one live cell) and the LFSR's start",
+      "labels": null
+    },
+    {
+      "name": "STEP",
+      "default": 1,
+      "count": 8,
+      "doc": "FUNC+AMP C. Bits the window moves each step, 1-8; below BITS the windows overlap",
+      "labels": null
+    }
+  ],
+  "compatibility": {
+    "firmware": "1.40C",
+    "location": "MIDI tracks",
+    "conflicts": [],
+    "uiClaims": [],
+    "limitations": [
+      "Needs the Modwerk base loaded over USB (beta) with the MIDI generators (ot_midi_generators). Card firmware cannot include it.",
+      "One trig a step: for denser data rhythms raise the track's speed. Micro-timing is late only, 0 to 23/24 of a step.",
+      "The streams are the first 2048 bits of each table and 64 rows of the automaton; OFFS reaches 1016 bits in.",
+      "It takes the MIDI track's SRC and AMP pages (and FUNC+AMP) and keeps the arpeggiator off there; choosing it sets the track's NOTE to C4 (48), VEL to 100 and NOT2-4 off.",
+      "Not yet run on hardware or in the emulator."
+    ],
+    "effectId": null
+  },
+  "resources": {
+    "recorded": "Package header, 30 Oct 2026 (host build)",
+    "storage": {
+      "label": "Storage",
+      "display": "7,940 bytes",
+      "value": 7940,
+      "unit": "bytes",
+      "method": "static",
+      "conditions": "From the USB package build.py makes from the sources (m68k-elf-gcc 16.2, -Os): 6,936 bytes of ColdFire code and data (1,792 of them the seven stream tables) and 1,004 of bss, one instance, 113 relocations, no stock-code sites. No DSP memory, no heap.",
+      "source": "TESTING.md"
+    },
+    "processing": {
+      "label": "CPU load",
+      "display": "Not measured",
+      "value": null,
+      "unit": "unknown",
+      "method": "unmeasured",
+      "conditions": "Work happens on the UI task once per knob turn or YES: a stream of 2048 bits, a 64-step line and an in-place rewrite of the track record. Nothing runs while the pattern plays.",
+      "source": "TESTING.md"
+    },
+    "impact": {
+      "conditions": "A knob turn or YES on a DATAMATIC track; idle otherwise.",
+      "cpu": {
+        "level": "low",
+        "basis": "source-estimate",
+        "rationale": "One 2048-bit stream (at most 64 automaton rows of 32 cells), one 64-step line and an in-place record rewrite per edit on the UI task; nothing at interrupt level and nothing while playing.",
+        "source": "TESTING.md"
+      },
+      "dsp": {
+        "level": "minimal",
+        "basis": "source-estimate",
+        "rationale": "No DSP code and no change to the DSP programs.",
+        "source": "manifest.py"
+      },
+      "memory": {
+        "level": "minimal",
+        "basis": "source-estimate",
+        "rationale": "7,940 bytes of ColdFire code, data and state in DRAM (6,936 + 1,004 from the package header); the line it writes is the track's own record.",
+        "source": "TESTING.md"
+      }
+    }
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "Host checks only: the stream tables hold pi, the primes, Thue-Morse and the Fibonacci word and regenerate byte for byte; the automaton follows each of its sixteen rules; DENS 0 plays the stream and DENS 127 every step; 20,000 random settings give deterministic lines inside their octaves, velocities and micro-timing; the MIDI record writer (test_engine.py, under the sanitizers); the package's generator record sits at the registry's index. Not run on a unit or in the emulator.",
+    "hardwareStatus": "untested",
+    "evidenceRevision": "419a5b9d56d431a9fe441b8ae0cb7f939572cc46",
+    "gates": [
+      "modules/datamatic/verify.py"
+    ]
+  },
+  "license": {
+    "spdx": "GPL-3.0-or-later",
+    "file": "LICENSE",
+    "declaration": "Original work. The data streams are mathematical constants and sequences computed by generate_tables.py; the generator glue follows the shape of VECTOR 0.3.0's MIT midi.c. No Elektron firmware, extracted routines, tables, samples or dumps are included."
+  },
+  "media": [],
+  "access": {
+    "location": "MIDI track: MIDI NOTE SETUP (double-tap SRC), DATAMAT in the list on the left",
+    "steps": [
+      "Press MIDI, select a MIDI track, double-tap SRC, UP/DOWN to DATAMAT in the list on the left and press YES.",
+      "SRC holds SRCE, OFFS, BITS, DENS, OCT and ROOT; AMP holds SPRD, INTV, VDAT, JITR, VEL and LEN; FUNC+AMP holds RULE, SEED and STEP. Hold a trig for stock's page and its locks."
+    ],
+    "screenshots": []
+  }
+}

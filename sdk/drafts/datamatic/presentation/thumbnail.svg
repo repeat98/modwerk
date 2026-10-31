@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="192" viewBox="0 0 320 192" role="img" aria-labelledby="title desc">
+ <title id="title">DATAMATIC — data read as rhythm</title>
+ <desc id="desc">The binary digits of pi as a row of bits, a window sliding along them, and the steps it plays below with notes jumping by octaves. Original illustration, not an Octatrack LCD capture.</desc>
+ <rect width="320" height="192" rx="8" fill="#111218"/>
+ <g stroke="#fff" opacity=".035" stroke-width=".7"><path d="M20 52H300M20 97H300M20 142H300M64 33V163M128 33V163M192 33V163M256 33V163"/></g>
+ <g font-family="monospace" font-size="9" fill="#7fb8ff" opacity=".55" letter-spacing="4.2">
+  <text x="26" y="50">0010010000111111</text>
+ </g>
+ <rect x="56" y="38" width="30" height="16" fill="none" stroke="#7fb8ff" stroke-width="1.1"/>
+ <path d="M71 56v14" stroke="#7fb8ff" stroke-width="1" opacity=".6"/>
+ <g fill="#7fb8ff">
+  <rect x="48" y="128" width="6" height="6"/><rect x="66" y="104" width="6" height="6"/><rect x="102" y="128" width="6" height="6"/>
+  <rect x="138" y="80" width="6" height="6"/><rect x="156" y="104" width="6" height="6"/><rect x="174" y="128" width="6" height="6"/>
+  <rect x="192" y="80" width="6" height="6"/><rect x="210" y="104" width="6" height="6"/><rect x="228" y="128" width="6" height="6"/>
+  <rect x="246" y="104" width="6" height="6"/><rect x="264" y="80" width="6" height="6"/><rect x="282" y="128" width="6" height="6"/>
+ </g>
+ <g stroke="#7fb8ff" opacity=".18" stroke-width=".8"><path d="M26 131H296M26 107H296M26 83H296"/></g>
+ <g font-family="monospace" font-size="7.5" fill="#9b9fb5" letter-spacing=".6"><text x="90" y="70">BITS · STEP</text><text x="26" y="80">+24</text><text x="26" y="104">+12</text><text x="26" y="128">0</text></g>
+ <text x="25" y="22" font-family="Arial,sans-serif" font-size="10" fill="#c5c7da" letter-spacing="1.1">DATAMATIC</text>
+ <text x="25" y="176" font-family="Arial,sans-serif" font-size="9" fill="#9b9fb5" letter-spacing=".4">PI · PRIM · CA · LFSR → NOTES</text>
+ <text x="240" y="176" font-family="Arial,sans-serif" font-size="9" fill="#7fb8ff">MIDI TRACK</text>
+</svg>
