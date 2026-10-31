@@ -1,0 +1,196 @@
+{
+  "schemaVersion": 2,
+  "id": "shortwave",
+  "key": "SHORTWAVE",
+  "name": "SHORTWAVE",
+  "version": "0.2.0-experimental",
+  "category": "effects",
+  "author": {
+    "github": "semierendonmez-commits",
+    "name": "Semi Erendönmez",
+    "credits": [
+      "Octatrack module and DSP56300 code by Semi Erendönmez",
+      "Effect ABI, schema and harness conventions: octabam (Sam Banks, MIT); the noise generator follows Analog BD's LCG idiom"
+    ]
+  },
+  "nativeManifest": "manifest.py",
+  "presentation": {
+    "label": "SHORTWAVE RECEIVER",
+    "family": "Lo-fi",
+    "summary": "The track as a distant station on a shortwave receiver: fading, static that rises as it fades, crackle, the beat whistle of a mistuned AM carrier or the shifted 'Donald Duck' voice of a mistuned SSB receiver, and the receiver's narrow band.",
+    "overview": "SHORTWAVE sends the track's mono sum through a receiver of its own design and mixes it back over the stereo dry. The station fades at random moments (FADE, RATE) and the static rises as it fades, the way a receiver's gain climbs on a weak signal; CRAK adds crackle bursts. MODE picks the detector: in AM, TUNE detunes the carrier into a beat whistle from 40 Hz to 5 kHz; in USB and LSB, TUNE mistunes a single-sideband receiver, moving every partial of the station up or down by the same 0 to 500 Hz, the voice of a badly tuned SSB station. DRFT lets the whistle or the shift wander. BAND sets the receiver's bandwidth from 300 Hz to 4 kHz and DRIV pushes it into a soft clip, worked at twice the rate. MIX 0 returns the dry bit for bit; every continuous knob and MODE glide.",
+    "highlights": [
+      "Random fading with static that rises as the station fades",
+      "AM: a beat whistle from 40 Hz to 5 kHz; USB/LSB: the station shifted up or down by 0 to 500 Hz",
+      "Receiver bandwidth from 300 Hz to 4 kHz and an overload soft clip",
+      "MIX 0 is the dry, bit for bit; no buffer, so it fits FX1 and FX2"
+    ],
+    "usage": [
+      "On an audio track, hold FUNC and press FX1 (or FX2), turn LEVEL to SHORTWAVE and press YES.",
+      "Press FX1 for the main page and turn MIX up: the track comes through a narrow receiver. Turn FADE and RATE for the fading, NOIS for the static, TUNE for the whistle.",
+      "FX1 SETUP holds MODE (AM, USB, LSB), DRIV (overload), CRAK (crackle) and DRFT (drift). In USB or LSB, TUNE shifts the voice up or down instead of whistling. Turn MIX back to 0 for the dry."
+    ]
+  },
+  "controls": [
+    {
+      "name": "TUNE",
+      "default": 0,
+      "count": 128,
+      "doc": "How far off the station is tuned: in AM the beat whistle's pitch (40 Hz to 5.1 kHz), in USB and LSB the shift of every partial (0 to 500 Hz); 0 = in tune",
+      "labels": null
+    },
+    {
+      "name": "BAND",
+      "default": 64,
+      "count": 128,
+      "doc": "The receiver's bandwidth, 300 Hz to 4 kHz",
+      "labels": null
+    },
+    {
+      "name": "FADE",
+      "default": 48,
+      "count": 128,
+      "doc": "How deep the station fades; the static rises as it fades",
+      "labels": null
+    },
+    {
+      "name": "RATE",
+      "default": 40,
+      "count": 128,
+      "doc": "How often the fading moves: every 2 s at 0 to 44 ms at 127",
+      "labels": null
+    },
+    {
+      "name": "NOIS",
+      "default": 32,
+      "count": 128,
+      "doc": "The static's level",
+      "labels": null
+    },
+    {
+      "name": "MIX",
+      "default": 0,
+      "count": 128,
+      "doc": "The receiver over the dry; 0 = the dry, untouched",
+      "labels": null
+    },
+    {
+      "name": "MODE",
+      "default": 0,
+      "count": 3,
+      "doc": "The detector: AM turns TUNE into a beat whistle; USB and LSB turn it into a mistuned single-sideband receiver that shifts the station up (USB) or down (LSB). A change crossfades over about 1 ms.",
+      "labels": [
+        "AM",
+        "USB",
+        "LSB"
+      ]
+    },
+    {
+      "name": "DRIV",
+      "default": 24,
+      "count": 128,
+      "doc": "Drive into the receiver's soft clip, +0 to +12 dB",
+      "labels": null
+    },
+    {
+      "name": "CRAK",
+      "default": 16,
+      "count": 128,
+      "doc": "How often the crackle bursts",
+      "labels": null
+    },
+    {
+      "name": "DRFT",
+      "default": 0,
+      "count": 128,
+      "doc": "The whistle's pitch, or the SSB shift, wandering by up to 6 %",
+      "labels": null
+    }
+  ],
+  "compatibility": {
+    "firmware": "1.40C",
+    "effectId": 7,
+    "location": "FX1 / FX2",
+    "uiClaims": [],
+    "conflicts": [],
+    "limitations": [
+      "Needs the Modwerk base loaded over USB (beta) with an effect id of its own; the card builds' non-stock ids are all claimed but 0x07, which the draft holds as a placeholder.",
+      "The receiver is mono: the wet is the same on both channels. MIX blends it over the stereo dry.",
+      "DRIV overloads the receiver on purpose: at its top a full-scale tone aliases (fx:audit, TESTING.md); at DRIV 0 every audit tone but a full-scale 9.1 kHz one passes -60 dBc.",
+      "The noises are deterministic from project load: the same render sounds the same after a reload.",
+      "Not yet run in a built image, the ColdFire port or on a unit: only in fxhost (the vendored DSP56300 emulator alone)."
+    ]
+  },
+  "resources": {
+    "recorded": "fxhost, 30 Oct 2026",
+    "storage": {
+      "label": "DSP program / table",
+      "display": "487 words + 522-word table per core",
+      "value": 1009,
+      "unit": "words",
+      "method": "static",
+      "conditions": "dsp_asm: 487 program words and one 522-word P table (four 129-word tables and six allpass coefficients). 64 state words in each instance's own r7 block ($00-$3f). No allocator buffer, no Y memory.",
+      "source": "TESTING.md"
+    },
+    "processing": {
+      "label": "DSP instruction peak",
+      "display": "307 instructions/sample",
+      "value": 307,
+      "unit": "instructions/sample",
+      "method": "emulator",
+      "conditions": "fxhost (dsp56kEmu alone), one instance, 16-frame calls at the dearest settings (MODE LSB; the SSB detector runs in every MODE): 4,906 instructions a call including the per-call setup. Executed instructions, not chip cycles; not yet measured beside stock SPRING REV in dsp_host.",
+      "source": "TESTING.md"
+    },
+    "impact": {
+      "conditions": "One instance at its dearest settings.",
+      "cpu": {
+        "level": "minimal",
+        "basis": "source-estimate",
+        "rationale": "No ColdFire code: a cloned effect descriptor; the stock pages publish the knobs.",
+        "source": "manifest.py"
+      },
+      "dsp": {
+        "level": "moderate",
+        "basis": "source-estimate",
+        "rationale": "307 executed instructions a sample in fxhost, below the 314 octabam's benchmark reports for stock SPRING REV; not measured under the same benchmark.",
+        "source": "TESTING.md"
+      },
+      "memory": {
+        "level": "moderate",
+        "basis": "source-estimate",
+        "rationale": "1,009 program-memory words on each DSP core (487 code, 522 table); 64 state words per instance in the existing r7 block; no buffer.",
+        "source": "TESTING.md"
+      }
+    }
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "fxhost only (the vendored dsp56kEmu with the module alone, no firmware): MIX 0 returns the dry bit for bit from garbage state and with trig splits in every MODE; nothing outside the audio, state and parameter words is written; init keeps r1; silence stays silent and a burst decays to digital silence in AM, USB and LSB; the whistle sits within 0.3 % of its pitch and holds its level; the SSB shift lands within 0.03 % of 500 (k/127)^2 Hz, up in USB and down in LSB, with the other sideband at least 50.5 dB down over 300 Hz-3 kHz, unity gain and a renormalised oscillator; FADE, NOIS, CRAK and BAND act; MIX and MODE glide; 307 instructions a sample at the dearest settings. fx:audit at DRIV 0 passes but for a full-scale 9.1 kHz tone (-50 dBc) in AM and in USB in tune; at DRIV 127 the overload aliases (TESTING.md). Not run in a built image, under the ColdFire port or on a unit.",
+    "hardwareStatus": "untested",
+    "evidenceRevision": "a5ebcba49d91a327dc45678232c366c1b02b83ad",
+    "gates": [
+      "modules/shortwave/verify.py"
+    ]
+  },
+  "license": {
+    "spdx": "GPL-3.0-or-later",
+    "file": "LICENSE",
+    "declaration": "Original DSP56300 code and tables by Semi Erendönmez, GPL-3.0-or-later. No Elektron firmware, extracted routines, tables, samples or dumps are included; no stock table is read."
+  },
+  "media": [],
+  "access": {
+    "location": "Audio track FX1 or FX2 SETUP: SHORTWAVE in the effect chooser.",
+    "steps": [
+      "Select an audio track with its TRACK key.",
+      "Hold FUNC and press FX1 (or FX2) to open its SETUP page.",
+      "Turn LEVEL to SHORTWAVE and press YES; MODE, DRIV, CRAK and DRFT appear on the SETUP page.",
+      "Press FX1 (or FX2) for the main page: TUNE, BAND, FADE, RATE, NOIS and MIX."
+    ],
+    "screenshots": []
+  },
+  "source": {
+    "repository": "https://github.com/semierendonmez-commits/modwerk-semi",
+    "revision": "a5ebcba49d91a327dc45678232c366c1b02b83ad",
+    "path": "sdk/drafts/shortwave"
+  }
+}
