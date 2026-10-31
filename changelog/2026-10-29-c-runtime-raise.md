@@ -1,0 +1,1 @@
+SDK: a C runtime package can raise an event that has no site, such as `ev_trig_muted`, with `build.py --raise EVENT` (a `raise` list in its row of `octatrack-module-packages.json`), as an octabam module's `runtime.json` already could. A machine written in C can now ask which trigs a mute module drops before it starts a note.

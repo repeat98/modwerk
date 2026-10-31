@@ -28,7 +28,18 @@ runs short. Everything here was done on the owner's MKII on 11 October 2026. Why
   replace both, and after the power cycle the flashed base starts with no modules (23 October 2026, MKII, flashed
   `a408c505`, twin `8dc7692c`). Before a twin, note the flashed set (`inventory`) and where its packages are; base-bound
   ones (Analog BD, Output Matrix) must be the copies bound to that base, from the commit that built it. Afterwards,
-  power-cycle and `try` each again.
+  power-cycle and `try` each again. `npm run device -- lifecycle` is such a pair too: it accepts a test module, then
+  its removal. It is not a read; never run it on a unit whose kept set matters (30 October 2026, MKII, twin `04e94075`).
+  The flashed base can also come back short of a machine with no Keep at all (30 October 2026, MKII, flashed
+  `b30d9b09`, after a twin `04e94075` whose `try` ended needs-recovery): the boot's restore loaded FM Synth but refused
+  SYNTIZ as busy while the project played (`diaglog`'s set record names the refused module; code 5), and every later
+  submission was refused ("The device kept refusing the submission"; `recover` found nothing). A RAM boot of the
+  flashed base's own image, transport stopped, restored both. Check `inventory` after any twin and any power cycle,
+  and leave the transport stopped for the first seconds after a boot.
+  To listen to a machine on a twin, start its `try` first, then load the project: a project loaded while the machine
+  was absent keeps its tracks drawn as FLEX until a trig or a Part change. Listen during the trial, and load a project
+  without the machine before it ends. A machine's trial that ends while tracks name it answers needs-recovery, and
+  what plays afterwards is not the module's sound (30 October 2026, MKII, twin `04e94075`).
 - Verify an Undo's active identity and inventory after the reply; a ready host UI alone is insufficient. On a contributor's MKII (25 October 2026, private base `52c291c2…`), a 12-module timed Undo left recovery/active unknown and standard
   rollback retries still returned needs-recovery. Stop installing and ask the owner to power-cycle when recovery cannot finish.
 - After a crash restart, or finding the unit on the flashed base with no power cycle you know of, ask for a power
