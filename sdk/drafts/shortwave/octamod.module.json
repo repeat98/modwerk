@@ -116,7 +116,6 @@
     "limitations": [
       "Needs the Modwerk base loaded over USB (beta) with an effect id of its own; the card builds' non-stock ids are all claimed but 0x07, which the draft holds as a placeholder.",
       "The receiver is mono: the wet is the same on both channels. MIX blends it over the stereo dry.",
-      "MODE sits on SETUP slot 6 and DRIV moved to slot 7 in 0.2.0: a project saved with the 0.1.0 draft reads its DRIV as MODE.",
       "DRIV overloads the receiver on purpose: at its top a full-scale tone aliases (fx:audit, TESTING.md); at DRIV 0 every audit tone but a full-scale 9.1 kHz one passes -60 dBc.",
       "The noises are deterministic from project load: the same render sounds the same after a reload.",
       "Not yet run in a built image, the ColdFire port or on a unit: only in fxhost (the vendored DSP56300 emulator alone)."

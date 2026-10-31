@@ -57,7 +57,6 @@ A drum loop or a vocal works well: the fading and the narrow band read clearly o
 
 - **Needs the Modwerk base loaded over USB (beta)** with an effect id of its own. The card builds' thirteen non-stock ids are all claimed but 0x07, which this draft holds as a placeholder in `manifest.py`.
 - **Mono receiver.** The wet is the same on both channels; MIX blends it over the stereo dry.
-- **Saved projects from the 0.1.0 draft.** 0.2.0 puts MODE on SETUP slot 6 and moves DRIV to slot 7, so a project saved with 0.1.0 reads its DRIV value as MODE (any value above 1 is LSB) and DRIV reads whatever that project stored in slot 7. Set MODE and DRIV again. 0.1.0 was never released.
 - **SSB detector limits.** The 90-degree pair is designed for 170 Hz-4.3 kHz, the receiver's pass band: below about 150 Hz (where the high-pass already cuts) the other sideband comes up. A shift is a frequency shift, not a pitch shift: harmonics stop being harmonic, as on a real receiver.
 - **DRIV overloads on purpose.** At DRIV 0, every fx:audit tone but a full-scale 9.1 kHz one stays under -60 dBc of aliasing; at DRIV 127 a loud tone aliases (up to -24 dBc for a full-scale 5.3 kHz or 9.1 kHz tone): that is the receiver overloading, the sound the control is for. The SSB detector adds no aliasing of its own (audited in tune). Figures in TESTING.md.
 - **Deterministic noises.** The static, crackle and fading start from the same seed whenever the effect is loaded, so a project sounds the same after a reload.

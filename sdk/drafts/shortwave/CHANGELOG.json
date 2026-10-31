@@ -3,19 +3,10 @@
     "version": "0.2.0-experimental",
     "date": "2026-10-30",
     "changes": [
-      "New MODE on the SETUP page: AM, USB or LSB.",
-      "In USB and LSB, TUNE mistunes a single-sideband receiver: the whole station moves up or down by 0 to 500 Hz, the 'Donald Duck' voice. No whistle there; DRFT makes the shift wander.",
-      "DRIV moved to the SETUP slot beside MODE: set DRIV again in a project saved with 0.1.0.",
-      "Not yet tested on a unit or in the emulator."
-    ]
-  },
-  {
-    "version": "0.1.0-experimental",
-    "date": "2026-10-30",
-    "changes": [
       "New: SHORTWAVE, the track as a distant station on a shortwave receiver, on FX1 or FX2.",
-      "Random fading with static that rises as it fades, crackle bursts and a beat whistle (TUNE) that can drift.",
-      "BAND sets the receiver's bandwidth (300 Hz to 4 kHz) and DRIV overloads it; MIX 0 is the dry, untouched.",
+      "Random fading with static that rises as it fades, crackle bursts, and BAND for the receiver's bandwidth (300 Hz to 4 kHz); DRIV overloads it.",
+      "MODE: in AM, TUNE is a beat whistle that can drift (DRFT); in USB and LSB it mistunes a single-sideband receiver, moving the whole station up or down by 0 to 500 Hz.",
+      "MIX 0 is the dry, untouched.",
       "Needs the Modwerk base loaded over USB (beta). Not yet tested on a unit or in the emulator."
     ]
   }
