@@ -93,7 +93,7 @@
       "BREAKCUT owns the PTCH, STRT, RATE, RTRG and RTIM locks, the trigs and the trig words of the steps inside the track's length; LEN, AMP, LFO and FX locks stay.",
       "A step holds one trig: where a cut continues and another starts in the same step, the new cut wins. Accelerating rolls become even retrigs within each step.",
       "Livecut's amplitude, pan, duty-cycle and effects are not ported. The seed is kept but not shown on a page; YES advances it and shows it.",
-      "Only reported by the developer to run on their own Octatrack MKI from a card build (31 Oct 2026; the exact revision was not recorded); not run in the emulator."
+      "Not yet run on hardware or in the emulator."
     ],
     "effectId": null
   },
@@ -141,8 +141,8 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Host checks only: the cut procedures play the break straight when nothing cuts, produce well-formed, deterministic lines with stutters, fills, retrigs, micro-timing, pitch ramps and reverses; the RTIM scale, the track-record writer and the settings packing are checked under the sanitizers; the package's machine record sits at the registry's index (test_engine.py). Not run in the emulator; reported by the developer to run on their own Octatrack MKI from a card build (31 Oct 2026; the exact revision was not recorded).",
-    "hardwareStatus": "reported",
+    "summary": "Host checks only: the cut procedures play the break straight when nothing cuts, produce well-formed, deterministic lines with stutters, fills, retrigs, micro-timing, pitch ramps and reverses; the RTIM scale, the track-record writer and the settings packing are checked under the sanitizers; the package's machine record sits at the registry's index (test_engine.py). Not run on a unit or in the emulator.",
+    "hardwareStatus": "untested",
     "evidenceRevision": "1bbc8b46cb3c5d09e1ce25e020cc460367769f33",
     "gates": [
       "modules/breakcut/verify.py"
