@@ -77,7 +77,7 @@ track's speed to 2x or 4x (the step is then a 1/32 or 1/64).
   rule). Choosing DATAMATIC sets NOTE to C4 (48), VEL to 100 and NOT2–4 off.
 - DATAMATIC owns the trigs, the NOTE and VEL locks and the trig words of the steps inside the track's length; LEN and
   every other lock, swing and steps past the length stay.
-- No conflicts are declared. The developer reports it runs on their own Octatrack MKI from a card build (31 Oct 2026; the exact revision was not recorded); it has not run in the emulator, and nothing below is measured hardware evidence.
+- No conflicts are declared. Not yet run on a unit or in the emulator; nothing below is hardware evidence.
 
 ## Implementation
 

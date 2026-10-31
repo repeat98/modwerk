@@ -136,7 +136,7 @@
       "One trig a step: for denser data rhythms raise the track's speed. Micro-timing is late only, 0 to 23/24 of a step.",
       "The streams are the first 2048 bits of each table and 64 rows of the automaton; OFFS reaches 1016 bits in.",
       "It takes the MIDI track's SRC and AMP pages (and FUNC+AMP) and keeps the arpeggiator off there; choosing it sets the track's NOTE to C4 (48), VEL to 100 and NOT2-4 off.",
-      "Only reported by the developer to run on their own Octatrack MKI from a card build (31 Oct 2026; the exact revision was not recorded); not run in the emulator."
+      "Not yet run on hardware or in the emulator."
     ],
     "effectId": null
   },
@@ -184,8 +184,8 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Host checks only: the stream tables hold pi, the primes, Thue-Morse and the Fibonacci word and regenerate byte for byte; the automaton follows each of its sixteen rules; DENS 0 plays the stream and DENS 127 every step; 20,000 random settings give deterministic lines inside their octaves, velocities and micro-timing; the MIDI record writer (test_engine.py, under the sanitizers); the package's generator record sits at the registry's index. Not run in the emulator; reported by the developer to run on their own Octatrack MKI from a card build (31 Oct 2026; the exact revision was not recorded).",
-    "hardwareStatus": "reported",
+    "summary": "Host checks only: the stream tables hold pi, the primes, Thue-Morse and the Fibonacci word and regenerate byte for byte; the automaton follows each of its sixteen rules; DENS 0 plays the stream and DENS 127 every step; 20,000 random settings give deterministic lines inside their octaves, velocities and micro-timing; the MIDI record writer (test_engine.py, under the sanitizers); the package's generator record sits at the registry's index. Not run on a unit or in the emulator.",
+    "hardwareStatus": "untested",
     "evidenceRevision": "1bbc8b46cb3c5d09e1ce25e020cc460367769f33",
     "gates": [
       "modules/datamatic/verify.py"
