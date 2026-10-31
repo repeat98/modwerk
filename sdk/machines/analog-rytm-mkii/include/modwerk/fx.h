@@ -7,7 +7,7 @@
 #define MODWERK_FX_H
 
 #define MW_FX_ABI 1
-#define MW_FX_WORK 16384        /* words of the work area the base lends the effect that runs */
+#define MW_FX_WORK 8192         /* words of the work area the base lends the effect that runs */
 #define MW_FX_N24 16            /* a 24 kHz effect's samples a block (32 at 48 kHz) */
 
 /* mw_fx.flags */
@@ -51,5 +51,36 @@ struct mw_fx {
 extern const unsigned mw_fx_rate[128];          /* an LFO's phase step a frame at 48 kHz, 0.02-10 Hz */
 extern const unsigned short mw_fx_onepole[128]; /* a one-pole's coefficient at 48 kHz, Q15, 20 Hz-20 kHz */
 int mw_fx_tempo(void);                          /* the tempo, 1/120 BPM (120 BPM when stock's word is not set) */
+
+/* The sequencer's time for the input render is given, read from the Rytm's own sequencer (never a clock of the
+ * effect's own): its 24 PPQN pulses counted from PLAY, the pattern's speed and SWING. While the sequencer is
+ * stopped the position runs on at the tempo, and playing is 0. Times are 24 kHz samples: a 48 kHz effect halves. */
+struct mw_fx_clock {
+    int playing;                /* nonzero while the sequencer runs */
+    unsigned starts;            /* + 1 each time it starts: an effect restarts its pattern when this changes */
+    int pos;                    /* the block's first sample: pulses since PLAY (96 a 4/4 bar), Q16, within 128 bars */
+    int inc;                    /* a sample's pulses, Q24 (the tempo) */
+    int pps;                    /* pulses a step at the pattern's speed: 6 at 1x, 3 at 2x .. 48 at 1/8x */
+    int swing;                  /* the pattern's SWING - 50, 0..30: an odd step starts swing/50 of a step late */
+    int step;                   /* the step the block's first sample is in, swung, counted from 0 at PLAY */
+    int phase;                  /* where in it, Q16 */
+    int dphase[2];              /* the phase a sample in an even step and in an odd one, Q16 */
+};
+/* The render's time, worked out for an effect that asks: call it in render only when the time is needed (an effect
+ * that needs only the tempo calls mw_fx_tempo), as asking costs the block's divisions. */
+const struct mw_fx_clock *mw_fx_clock(void);
+
+/* The swung step and the place in it (Q16) of the block's sample f (0-15). */
+static inline void mw_fx_step(const struct mw_fx_clock *c, int f, int *step, int *phase)
+{
+    int s = c->step, p = c->phase + f * c->dphase[s & 1];
+    if (p >= 65536) {           /* into the next step: what is left, at that step's pace */
+        int d = c->dphase[s & 1];
+        p = d ? (int)(((unsigned)(p - 65536) / (unsigned)d) * (unsigned)c->dphase[(s + 1) & 1]) : 0;
+        s++;
+    }
+    *step = s;
+    *phase = p > 65535 ? 65535 : p;
+}
 
 #endif

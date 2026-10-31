@@ -10,6 +10,7 @@
 //
 // The FX page (FX track, DELAY pressed again) shows the effect: FUNC + A chooses it among the build's records,
 // FUNC + E sets LEV, A-H its eight controls. The effect and its controls are kept in the kit, LEV in the project.
+// SRC (the DELAY page key) held + YES sets A-H at random, + NO brings back the values before, once.
 // The pages sit in the page keys' lists core-ar2 keeps. A-H take parameter locks as stock's own do (a step held
 // in grid recording, or live recording), in stock's lock table on the FX track, which the base saves (locks.c).
 //
@@ -106,6 +107,9 @@ typedef void (*add_lock_trig_t)(void *tp, int step, int on);
 #define KEY_PUSH_FIRST 0x70        // the encoders A-H pressed
 #define KEY_PUSH_LAST 0x77
 #define KEY_PRESSED 1              // ev_key flags: 1 pressed
+#define KEY_YES 0x44
+#define KEY_NO 0x45
+#define KEY_SRC 0x31               // the FX track's DELAY page key
 #define FX_TRACK 12
 #define SOUND_TRACKS 12
 #define PROJECT_KIT 352            // project + 352: the active kit
@@ -223,6 +227,9 @@ static int page;                   // the page up, as the last frame drawn told:
 static volatile int drawn;         // the pages whose ids stock asked since the last frame, 1 << PAGE_SHOWN_*
 static int acc_enc = -1, acc_cnt, acc_func;
 static int shown_knob = -1, show_ticks, title_ticks;
+static int random_ticks, undo_type = -1;   // SRC + YES's notice; the effect SRC + NO can bring back
+static unsigned char undo_knob[8];
+static unsigned urnd;
 static char *g_ctrl;               // the view controller ev_tick last had: +0x20 asks for a redraw
 
 // The send runs on 16-bit signals (about +-2^15, held within +-2^16): the
@@ -272,6 +279,10 @@ void mw_send_inl(void *b, const volatile int *rx);
 void mw_send_ret(void *b, volatile int *pre, int tlev);
 
 static void run_fx(int type, const int *x, int *L, int *R) { list[type]->render(x, L, R, par, work); }
+
+// The sequencer's time for the effects (clock.c): worked out each block, then dated for each render.
+void mw_clock_block(void);
+void mw_clock_date(int back);
 
 // The CPU meter: DMA timer 0's counter, which core-ar2 starts free running
 // at the bus clock (its core.s) and stock reads as a time base. gate.s times
@@ -436,6 +447,7 @@ void mw_send_block(int slot)
     int v, n, moving = 0, half, tlev, type = fx_type;
     unsigned m;
 
+    mw_clock_block();
     if (type >= n_fx) {                          // no effect, or the kit's is missing: no return
         if (moving) set_gains();
         run_type = -1;
@@ -461,6 +473,7 @@ void mw_send_block(int slot)
     half = blk.mode & 1;
     tlev = (lev * lev * blk.ltrim) >> 8;
     if (blk.state == 2) {
+        mw_clock_date(1);
         run_fx(type, blk.xb, half ? &blk.ob[0][1] : blk.ob[0], half ? &blk.ob[1][1] : blk.ob[1]);
         mw_send_ret(&blk, PRE(slot, 0), tlev);
     }
@@ -470,13 +483,14 @@ void mw_send_block(int slot)
     if (moving) input_moving(half);
     else if (blk.nv > 1) input8(half);
     else mw_send_inl(&blk, &RX(0, 0));
+    mw_clock_date(0);
     run_fx(type, blk.xb, half ? &blk.ob[0][1] : blk.ob[0], half ? &blk.ob[1][1] : blk.ob[1]);
     blk.state = 1;
     blk.glev = tlev;
 }
 
 // Everything below runs in the UI task: built for size, as the 128 KB the
-// mods share holds core-ar2, Loop Sync, Retrig Grid and this mod's 64 KB
+// mods share holds core-ar2, Loop Sync, Retrig Grid and this mod's 32 KB
 // pool. The audio block above stays at the build's -O2.
 #pragma GCC optimize ("Os")
 
@@ -734,7 +748,7 @@ static int page_up(int p);
 
 static unsigned shown_state(void)
 {
-    unsigned h = (unsigned)page * 31u + fx_type * 131u + lev * 7u + (unsigned)(shown_knob + 1) * 977u + (title_ticks != 0) * 5u;
+    unsigned h = (unsigned)page * 31u + fx_type * 131u + lev * 7u + (unsigned)(shown_knob + 1) * 977u + (title_ticks != 0) * 5u + (random_ticks != 0) * 11u;
     int k, sel = selected_track();
     view_values();
     for (k = 0; k < 8; k++) h = h * 33u + disp[k];
@@ -760,6 +774,7 @@ void mw_send_tick(char *ctrl)
     load_kit();
     if (show_ticks && !--show_ticks) shown_knob = -1;
     if (title_ticks) title_ticks--;
+    if (random_ticks) random_ticks--;
     if (page) {
         int sel = selected_track();
         if ((page == PAGE_SHOWN_FX) != (sel == FX_TRACK) || sel < 0 || sel > FX_TRACK)
@@ -773,6 +788,34 @@ void mw_send_tick(char *ctrl)
     }
 }
 
+// SRC + YES on the FX page: A-H at random, a feedback (FDBK) kept below its
+// runaway (100 of 127); SRC + NO: the values before it, once. The kit keeps
+// them as if turned; locks stay.
+static void random_knobs(int roll)
+{
+    int k;
+    if (fx_type == MISSING)
+        return;
+    for (k = 0; k < 8; k++) {
+        if (roll) {
+            unsigned v = (unsigned)top_of(list[fx_type], k) + 1;
+            undo_knob[k] = knob[k];
+            urnd = urnd * 1664525u + DTCN0;
+            v = (urnd >> 16) * v >> 16;
+            if (list[fx_type]->c[k].icon == MW_IC_FDBK) v = v * 101 >> 7;
+            if (list[fx_type]->c[k].icon != MW_IC_EMPTY) knob[k] = (unsigned char)v;
+        } else if (undo_type == fx_type) {
+            knob[k] = undo_knob[k];
+        }
+    }
+    undo_type = roll ? fx_type : -1;
+    random_ticks = roll ? SHOW_TICKS : 0;
+    knobs_moved();
+    save_kit();
+    if (g_ctrl)
+        g_ctrl[0x20] = 1;
+}
+
 // ev_key: the page keys step through core-ar2's lists, so a page key, a menu
 // key or any other key but FUNC, TRK, the trigs, the pads and the transport
 // leaves the mod's page as far as this mod knows; the next frame that draws
@@ -783,9 +826,15 @@ int mw_send_key(void *brain, char *ev)
     (void)brain;
     if (!ready || !(flags & KEY_PRESSED))
         return 0;
-    if (key == KEY_FUNC || key == KEY_TRK || key <= KEY_TRIG_LAST
+    // TRK lets go of the page as any other key does: a double press opens stock's list, which stock draws without
+    // asking the page again, so a page kept would be drawn over it. TRK + a pad still changes track.
+    if (key == KEY_FUNC || key <= KEY_TRIG_LAST
         || (key >= KEY_PAD_FIRST && key <= KEY_PAD_LAST) || (key >= KEY_RECORD && key <= KEY_STOP))
         return 0;
+    if (page == PAGE_SHOWN_FX && (key == KEY_YES || key == KEY_NO) && IS_KEY_HELD(KEY_SRC)) {
+        random_knobs(key == KEY_YES);
+        return 1;
+    }
     if (page && key >= KEY_PUSH_FIRST && key <= KEY_PUSH_LAST) {
         if (page == PAGE_SHOWN_FX)
             lock_clear(key - KEY_PUSH_FIRST);    // with steps held: their locks of that control
@@ -817,8 +866,8 @@ int mw_send_enc(void *brain, char *ev)
     if (!steps)
         return 1;
     if (page == PAGE_SHOWN_FX && func) {
-        if (enc == 0) {
-            int t = fx_type + (steps > 0 ? 1 : -1);
+        if (enc == 0) {                          // from MISSING: right the first effect, left the last
+            int t = fx_type == MISSING ? (steps > 0 ? 0 : n_fx - 1) : fx_type + (steps > 0 ? 1 : -1);
             if (t >= 0 && t < n_fx) set_type(t);
         } else if (enc == 4) {
             int v = lev + steps;
@@ -1332,7 +1381,7 @@ static void __attribute__((noinline)) draw_fx(void)
     box(0, 0, 17, 10);
     big_number((int)fx_id, 2, 3, 2);
     rect(20, 0, 127, 10, 1);
-    big_text(cur()->name, 23, 2, 0);
+    big_text(random_ticks ? "RANDOM" : cur()->name, 23, 2, 0);
     box(0, 13, 17, 36);
     if (IS_KEY_HELD(KEY_FUNC)) {                 // the CPU meter, in percent
         n = (cpu_shown + 5) / 10;
