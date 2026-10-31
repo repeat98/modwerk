@@ -19,7 +19,7 @@ usb_only = {row['id'] for row in json.load(open('src/engine/assets/octatrack-mod
 ids = [m['id'] for m in catalog['modules'] if json.load(open('sdk/octabam/modules/' + m['id'] + '/octamod.module.json')).get('build', {}).get('status') != 'pending' and m['id'] not in usb_only]
 print(json.dumps(scope(ids)))
 `)
-    expect(JSON.parse(actual)).toEqual(['analog-bassdrum', 'usb-audio-out-tracks-main-cue', 'quantizer', 'synth', 'vector', 'playmodes', 'mute-modes', 'recorder-loop-fix', 'poly8', 'output-matrix', 'quantize-live-rec-toggle', 'apply-scene', 'direct-jump-kyoti', 'dejavu', 'arp-key-locks'])
+    expect(JSON.parse(actual)).toEqual(['analog-bassdrum', 'usb-audio-out-tracks-main-cue', 'quantizer', 'synth', 'vector', 'playmodes', 'mute-modes', 'recorder-loop-fix', 'poly8', 'output-matrix', 'quantize-live-rec-toggle', 'apply-scene', 'direct-jump-kyoti', 'dejavu', 'arp-key-locks', 'temp-save'])
   })
   it('removes legacy 8.2 objects and preserves the other authored package inventory', () => {
     expect(metadataCheck(`baseline = json.load(open('src/engine/assets/requested-packages.json'))
