@@ -1,0 +1,205 @@
+{
+  "schemaVersion": 3,
+  "id": "cc-remap",
+  "name": "CC Remap",
+  "version": "0.1.0-experimental",
+  "machine": "digitakt",
+  "category": "midi-usb",
+  "exclusive": false,
+  "author": {
+    "github": "draadpiraat",
+    "credits": [
+      "draadpiraat — design and code"
+    ]
+  },
+  "maintainers": [
+    "draadpiraat"
+  ],
+  "presentation": {
+    "label": "CC RECEIVE",
+    "family": "MIDI",
+    "summary": "Choose which incoming CC moves each of a MIDI track’s eight CC VAL knobs, so a controller with fixed CC numbers can play them.",
+    "overview": "Stock, a MIDI track’s CC VAL knobs follow incoming CC 70–77 on that track’s own channel (MIDI CONFIG > CHANNELS > TRACK A–H CHANNEL). CC Remap adds a second layer to the track’s AMP page: press AMP again for CC Receive (2/2), where knobs A–H set the incoming CC number for VAL1–VAL8. A CC on the track’s channel whose number is in that table moves the VAL slot exactly as CC 70–77 does stock: the value shows on the CC VALUE page and the slot’s CC SELECT number goes out of MIDI OUT. Every slot starts at its stock number, so an untouched table is stock. The table is per MIDI track, shared by all patterns, and resets at power-on.",
+    "highlights": [
+      "Play a MIDI track’s VAL knobs from a controller whose CC numbers can’t be changed.",
+      "Set it up on the AMP page: press AMP again for CC Receive, as on Elektron’s own two-layer pages.",
+      "The track turns each knob into the CC its CC SELECT names, so the controller can drive any synth, or the effects through FX Track.",
+      "Every slot starts at the stock 70–77; untouched, MIDI input is stock."
+    ],
+    "usage": [
+      "Set the controller to send on MIDI track A’s receive channel, 9 by default (SETTINGS > MIDI CONFIG > CHANNELS > TRACK A CHANNEL), and connect it to MIDI IN.",
+      "Select MIDI track A (TRK + trig 9), switch CHAN on (SRC page, FUNC + knob A) and set the CC SELECT numbers your synth expects on the AMP page.",
+      "Press AMP again for CC Receive (2/2). Turn knob A to the number the controller’s first knob sends (CC 8, say), knob B to the second, and so on.",
+      "Turn the controller’s first knob: VAL1 follows on the FLTR page and the synth receives VAL1’s CC SELECT number."
+    ]
+  },
+  "access": {
+    "location": "MIDI track > AMP page > press AMP again",
+    "steps": [
+      "Use a build containing CC Remap for the original Digitakt on OS 1.54.",
+      "Select a MIDI track with TRK + trig 9–16 and press AMP for CC Select (1/2).",
+      "Press AMP again for CC Receive (2/2), and again to go back."
+    ],
+    "screenshots": [
+      "media/cc-select.png",
+      "media/cc-receive.png",
+      "media/cc-receive-set.png"
+    ]
+  },
+  "controls": [
+    {
+      "name": "CC Receive (2/2), knobs A–H",
+      "default": null,
+      "doc": "Default: VAL1 70 … VAL8 77 (stock). The incoming CC number (0–127) that moves VAL1–VAL8 of this MIDI track, on its TRACK CHANNEL. A CC in the table reaches the stock code as that slot’s 70–77; other CCs are stock. One table per MIDI track for all patterns; 70–77 again at every power-on; not saved.",
+      "labels": null
+    },
+    {
+      "name": "AMP on a MIDI track’s AMP page",
+      "default": null,
+      "doc": "Switches between CC Select (1/2), stock, and CC Receive (2/2).",
+      "labels": null
+    }
+  ],
+  "compatibility": {
+    "releases": [
+      "1.54"
+    ],
+    "requires": [],
+    "conflicts": [],
+    "limitations": [
+      "Built for OS 1.54 only.",
+      "Not saved: the tables are 70–77 (stock) again at every power-on.",
+      "One table per MIDI track for all patterns, unlike CC SELECT.",
+      "Copying a MIDI track does not copy its CC Receive table; the table belongs to the track slot.",
+      "Only the track’s own TRACK CHANNEL is remapped; a CC on the auto channel is stock.",
+      "A CC whose number is in a track’s table no longer reaches that track as itself; two slots with the same number: the first wins.",
+      "The value popup while turning still reads CC1 Select=… on CC Receive."
+    ]
+  },
+  "platform": {
+    "kind": "elemod",
+    "core": "2.1",
+    "build": "build.json",
+    "events": [],
+    "claims": [
+      "ui:MIDI track AMP page:AMP twice"
+    ]
+  },
+  "resources": {
+    "memoryBytes": 431,
+    "fastBytes": 0,
+    "load": {
+      "display": "No audio-interrupt code; about 80 cycles per incoming CC, about 30 per page parameter read (emulator)",
+      "method": "emulator",
+      "conditions": "Emulator: OS 1.54 on Core 2.1, the three hooks timed with the MCF5441x instruction-timing model at 250 MHz, zero-wait memory. Per-track incoming-CC handler entry: 76-83 cycles per CC on any track (stock instruction: about 2). Parameter read used by the pages: median 30, 95th percentile 76 cycles per read (stock: about 2), over 406 reads while drawing and turning. Parameter write: 28-42 cycles. All three run in the UI or MIDI input task; nothing in the audio interrupt. Not a hardware measurement."
+    }
+  },
+  "evidence": {
+    "tier": "author-hardware",
+    "moduleVersion": "0.1.0-experimental",
+    "sourceSha256": "2a8ffcbb977becf6e5a2cde726f1e82e4b914504343963a5edc1729823db2354",
+    "reports": [
+      "evidence/hardware-testing.json",
+      "evidence/source-identity.json",
+      "TESTING.md"
+    ],
+    "hardware": {
+      "model": "Digitakt I",
+      "release": "1.54",
+      "testedOn": "2026-10-29",
+      "tester": "draadpiraat",
+      "durationMinutes": 20,
+      "summary": "draadpiraat tested CC Remap on their Digitakt I, OS 1.54, with an Allen & Heath Xone:1D: AMP toggles CC Receive (2/2) and back; untouched, CC 70–77 work as stock; with the table set to the Xone’s pots each pot moves its VAL slot and the synth receives the slot’s CC SELECT number; the table holds across pattern changes; two MIDI tracks each follow their own channel and table; the table is back at 70–77 after every power cycle. With FX Track a pot moves the effect; with CC Assignment Names both modules work.",
+      "limitations": [
+        "The auto channel, USB MIDI input and a CC flood were not tested.",
+        "Copying a MIDI track does not copy its CC Receive table."
+      ]
+    },
+    "verifiedBy": null
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "Author hardware (Digitakt I, OS 1.54, Allen & Heath Xone:1D): AMP toggles CC Receive and back; with the table set to the controller’s pots each pot moves its VAL slot and the slot’s CC SELECT number goes out; the table holds across pattern changes; each MIDI track follows its own channel; 70–77 again after a power cycle; works with FX Track and with CC Assignment Names. Emulator: also the message map, other channels untouched and the load figures.",
+    "documentation": {
+      "tutorial": {
+        "title": "Quick tutorial: play a MIDI track’s VAL knobs from a fixed-CC controller",
+        "steps": [
+          "Set the controller to send on MIDI track A’s receive channel, 9 by default (SETTINGS > MIDI CONFIG > CHANNELS > TRACK A CHANNEL), and connect it to MIDI IN.",
+          "Select MIDI track A (TRK + trig 9), switch CHAN on (SRC page, FUNC + knob A) and set the CC SELECT numbers your synth expects on the AMP page.",
+          "Press AMP again for CC Receive (2/2). Turn knob A to the number the controller’s first knob sends (CC 8, say), knob B to the second, and so on.",
+          "Turn the controller’s first knob: VAL1 follows on the FLTR page and the synth receives VAL1’s CC SELECT number."
+        ]
+      },
+      "screenshots": [
+        "media/cc-select.png",
+        "media/cc-receive.png",
+        "media/cc-receive-set.png"
+      ],
+      "captureRecord": "media/capture.json"
+    }
+  },
+  "license": {
+    "spdx": "GPL-3.0-or-later",
+    "file": "LICENSE",
+    "declaration": "Original work by draadpiraat."
+  },
+  "media": [
+    {
+      "path": "media/thumbnail.svg",
+      "kind": "thumbnail",
+      "caption": "CC Remap thumbnail",
+      "alt": "Three controller knobs re-routed by a table onto a MIDI track's VAL slots.",
+      "credit": "draadpiraat",
+      "license": "GPL-3.0-or-later",
+      "source": "Original illustration"
+    },
+    {
+      "path": "media/cc-select.png",
+      "kind": "screenshot",
+      "caption": "CC Select (1/2): MIDI track A's stock CC SELECT page",
+      "alt": "CC Select (1/2): the stock CC SELECT page of MIDI track A, on the Digitakt monochrome LCD",
+      "credit": "Modwerk documentation capture; Elektron interface; draadpiraat module",
+      "license": "LicenseRef-Digi-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.54",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "eaa72c8cc9dfdfd52271b1bdff76aba15d836c591af7f309e39e0a7995c85079",
+        "setup": "Pinned digiemu, firmware-native drawing, disposable first-boot project. No audio or cycle-timing qualification."
+      }
+    },
+    {
+      "path": "media/cc-receive.png",
+      "kind": "screenshot",
+      "caption": "CC Receive (2/2): the CC each VAL slot receives, 70–77 by default",
+      "alt": "CC Receive (2/2): the receive number of each VAL slot, 70–77 by default, on the Digitakt monochrome LCD",
+      "credit": "Modwerk documentation capture; Elektron interface; draadpiraat module",
+      "license": "LicenseRef-Digi-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.54",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "eaa72c8cc9dfdfd52271b1bdff76aba15d836c591af7f309e39e0a7995c85079",
+        "setup": "Pinned digiemu, firmware-native drawing, disposable first-boot project. No audio or cycle-timing qualification."
+      }
+    },
+    {
+      "path": "media/cc-receive-set.png",
+      "kind": "screenshot",
+      "caption": "CC Receive with VAL1 set to receive CC 66",
+      "alt": "CC Receive with knob A turned: VAL1 now receives CC 66, on the Digitakt monochrome LCD",
+      "credit": "Modwerk documentation capture; Elektron interface; draadpiraat module",
+      "license": "LicenseRef-Digi-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.54",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "eaa72c8cc9dfdfd52271b1bdff76aba15d836c591af7f309e39e0a7995c85079",
+        "setup": "Pinned digiemu, firmware-native drawing, disposable first-boot project. No audio or cycle-timing qualification."
+      }
+    }
+  ]
+}
