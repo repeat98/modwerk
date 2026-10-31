@@ -1,0 +1,111 @@
+{
+  "schemaVersion": 3,
+  "id": "qperf",
+  "name": "QPERF",
+  "version": "0.1.0-experimental",
+  "machine": "analog-rytm-mkii",
+  "category": "scenes",
+  "exclusive": false,
+  "author": {
+    "github": "npp1993",
+    "credits": [
+      "Nathaniel Pavel"
+    ]
+  },
+  "maintainers": [
+    "npp1993"
+  ],
+  "presentation": {
+    "label": "QPERF",
+    "family": "Performance",
+    "summary": "Set performance locks by holding QPER and turning knobs, clear them, or apply them to the kit.",
+    "overview": "Hold QPER and turn a knob: it edits that parameter's offset in the performance linked to QPER, and the knob inverts and shows it as it does for a held performance pad. QPER + PLAY clears it and PLAY again undoes that. QPER + RECORD and STOP copy and paste it. QPER + YES writes what you hear into the kit and removes those locks.",
+    "highlights": [
+      "Sets a lock in the linked performance with one turn",
+      "QPER + PLAY clears the linked performance",
+      "QPER + YES moves them into the kit"
+    ],
+    "usage": [
+      "Link a performance with QPER + a pad, hold QPER and turn knobs to shape one macro on the QPER knob.",
+      "Sweep the QPER knob, then QPER + YES when a sound is worth keeping."
+    ]
+  },
+  "access": {
+    "location": "The QPER key, on any page.",
+    "steps": [
+      "Hold QPER and press pads to link performances, as on stock.",
+      "Keep QPER held and turn a knob to set its offset.",
+      "QPER + PLAY clears the linked performance; press PLAY again to undo. QPER + RECORD copies it, QPER + STOP pastes.",
+      "QPER + YES moves them into the kit."
+    ],
+    "screenshots": []
+  },
+  "controls": [],
+  "compatibility": {
+    "releases": [
+      "1.74"
+    ],
+    "requires": [],
+    "conflicts": [],
+    "limitations": [
+      "QPER links one performance at a time, unlike stock.",
+      "Until the QPER knob moves after power on, QPER + YES uses the amounts stock holds.",
+      "Replaces stock's QPER + PLAY, which starts the sequencer."
+    ]
+  },
+  "platform": {
+    "kind": "elemod",
+    "core": "0.7",
+    "build": "build.json",
+    "events": [
+      "ev_key",
+      "ev_tick",
+      "ev_project"
+    ],
+    "claims": [
+      "ui:QPER + knob",
+      "ui:QPER + pads and trigs",
+      "ui:QPER + PLAY",
+      "ui:QPER + YES",
+      "ui:QPER + RECORD",
+      "ui:QPER + STOP"
+    ]
+  },
+  "resources": {
+    "memoryBytes": null,
+    "fastBytes": null,
+    "load": {
+      "display": "Not measured yet",
+      "method": "unmeasured",
+      "conditions": "Measure with every track playing, parameters modulated and the mod at its heaviest setting."
+    }
+  },
+  "evidence": {
+    "tier": "none",
+    "moduleVersion": "0.1.0-experimental",
+    "sourceSha256": null,
+    "reports": [],
+    "hardware": null,
+    "verifiedBy": null
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "Emulator only, not tested on hardware."
+  },
+  "license": {
+    "spdx": "GPL-3.0-or-later",
+    "file": "LICENSE",
+    "declaration": "Original work by the author."
+  },
+  "media": [
+    {
+      "path": "media/thumbnail.svg",
+      "kind": "thumbnail",
+      "caption": "QPERF thumbnail",
+      "alt": "Placeholder thumbnail for QPERF",
+      "credit": "npp1993",
+      "license": "GPL-3.0-or-later",
+      "source": "Original placeholder from the Modwerk SDK template; replace with your own artwork."
+    }
+  ]
+}

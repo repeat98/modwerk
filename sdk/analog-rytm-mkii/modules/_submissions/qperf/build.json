@@ -1,0 +1,62 @@
+{
+  "schemaVersion": 1,
+  "sources": [
+    "src/main.c"
+  ],
+  "defsym": {},
+  "cflags": [],
+  "weak": [],
+  "subscribe": [
+    {
+      "event": "ev_key",
+      "fn": "qperf_key",
+      "order": 40
+    },
+    {
+      "event": "ev_tick",
+      "fn": "qperf_tick",
+      "order": 50
+    },
+    {
+      "event": "ev_project",
+      "fn": "qperf_project",
+      "order": 50
+    }
+  ],
+  "contribute": [],
+  "collections": {},
+  "copied": [],
+  "regions": [],
+  "claims": [
+    "ui:QPER + knob",
+    "ui:QPER + pads and trigs",
+    "ui:QPER + PLAY",
+    "ui:QPER + YES",
+    "ui:QPER + RECORD",
+    "ui:QPER + STOP"
+  ],
+  "requires": [],
+  "derive": null,
+  "releases": {
+    "1.74": {
+      "defsym": {},
+      "cflags": [],
+      "sites": [
+        {
+          "addr": "0x400a4994",
+          "len": 6,
+          "stockSha256": "1430eb1be5a7b46f3ea42e49fe4529cd7d36cb8e6bf4be05fa8d730282fde797",
+          "op": "jsr",
+          "target": "qperf_pot_gate"
+        },
+        {
+          "addr": "0x400a65a4",
+          "len": 6,
+          "stockSha256": "87559bdabb7d0827f6d5a6bf4dfc98ed1b0f20a1933ad8dfe63fa52c9fdfc9c3",
+          "op": "jmp",
+          "target": "qperf_kit_gate"
+        }
+      ]
+    }
+  }
+}
