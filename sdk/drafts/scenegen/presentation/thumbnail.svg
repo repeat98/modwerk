@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="192" viewBox="0 0 320 192" role="img" aria-labelledby="title desc">
+ <title id="title">SCENE GEN — generated scenes for the crossfader</title>
+ <desc id="desc">Sixteen scene columns of knob values walking away from the Part's values, with scene A and scene B marked and a crossfader below. Original illustration, not an Octatrack LCD capture.</desc>
+ <rect width="320" height="192" rx="8" fill="#111218"/>
+ <g stroke="#fff" opacity=".035" stroke-width=".7"><path d="M20 52H300M20 97H300M20 142H300M64 33V163M128 33V163M192 33V163M256 33V163"/></g>
+ <g fill="none" stroke="#e8c26a" stroke-width="1.3">
+  <path d="M30 96 L46 88 L62 92 L78 80 L94 84 L110 72 L126 76 L142 66 L158 70 L174 60 L190 64 L206 56 L222 62 L238 52 L254 58 L270 50 L286 54"/>
+  <path d="M30 112 L46 116 L62 108 L78 114 L94 120 L110 116 L126 124 L142 120 L158 128 L174 124 L190 130 L206 126 L222 134 L238 128 L254 132 L270 126 L286 130" opacity=".6"/>
+ </g>
+ <g fill="#e8c26a"><circle cx="30" cy="96" r="2.4"/><circle cx="30" cy="112" r="2.4"/></g>
+ <rect x="73" y="40" width="10" height="104" fill="#e8c26a" opacity=".12"/>
+ <rect x="233" y="40" width="10" height="104" fill="#e8c26a" opacity=".12"/>
+ <g font-family="monospace" font-size="7.5" fill="#9b9fb5" letter-spacing=".6"><text x="22" y="38">PART</text><text x="74" y="36">A</text><text x="234" y="36">B</text></g>
+ <path d="M70 156H246" stroke="#9b9fb5" stroke-width="1" opacity=".5"/>
+ <rect x="150" y="151" width="12" height="10" rx="2" fill="#e8c26a"/>
+ <text x="25" y="22" font-family="Arial,sans-serif" font-size="10" fill="#c5c7da" letter-spacing="1.1">SCENE GEN</text>
+ <text x="25" y="180" font-family="Arial,sans-serif" font-size="9" fill="#9b9fb5" letter-spacing=".4">16 PATH · SPREAD</text>
+ <text x="232" y="180" font-family="Arial,sans-serif" font-size="9" fill="#e8c26a">CROSSFADER</text>
+</svg>

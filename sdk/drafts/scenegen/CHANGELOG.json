@@ -1,0 +1,13 @@
+[
+  {
+    "version": "0.1.0-experimental",
+    "date": "2026-10-30",
+    "changes": [
+      "New: SCENE GEN, scenes generated around the Part's values (PROJECT > CONTROL > SEQUENCER).",
+      "Locks page-1 parameters of the active track or all eight into scene A, scene B, all sixteen scenes, or a sixteen-scene walk.",
+      "SCN SPREAD sets how far they move; LEVEL to the left on SCENE GEN restores the scenes as they were.",
+      "Needs the Modwerk base loaded over USB (beta). Card firmware cannot include it.",
+      "Not yet tested on a unit or in the emulator."
+    ]
+  }
+]

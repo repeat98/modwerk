@@ -1,0 +1,30 @@
+{
+  "schema": 1,
+  "module": "scenegen",
+  "version": "0.1.0-experimental",
+  "kind": "coldfire",
+  "cycles": {
+    "unit": "cycles/event",
+    "static": null,
+    "measured": null,
+    "budget": 4330000,
+    "method": "Not measured. An event is one YES (or LEVEL to the left) on the SCENE GEN row: 40 page-descriptor reads, at most 3,840 locks drawn and two copies of the 4,096-byte scene block, on the UI task, never in an interrupt; the crossfader morph then runs once, as a fader move runs it. To measure on a unit: the base's development cost stamps around the row's setter. Budget: one UI tick, 16.4 ms at 61 ticks a second, 4,330,000 cycles at 264 MHz."
+  },
+  "load": {
+    "frameUs": 362.8,
+    "stockLongestUs": null,
+    "moduleLongestUs": null,
+    "stockIdlePercent": null,
+    "moduleIdlePercent": null,
+    "method": "Not measured. The module adds nothing to the frame interrupt and has no MIDI path; its only work is the row action above, outside playback's path."
+  },
+  "stress": {
+    "floodMessagesPerSecond": null,
+    "clockBpm": null,
+    "seconds": null,
+    "stuckNotes": null,
+    "hangs": null,
+    "dropped": null,
+    "droppedExplanation": "No flood ran: SCENE GEN sends and receives no MIDI. To run: 16 PATH on ALL tracks and ALL pages while a pattern with three LFOs a track plays at 240 BPM, generating and undoing repeatedly for 60 s while the crossfader moves, checking playback, the panel and USB."
+  }
+}
