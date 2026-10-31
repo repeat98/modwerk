@@ -1,0 +1,13 @@
+[
+  {
+    "version": "0.1.0-experimental",
+    "date": "2026-10-30",
+    "changes": [
+      "New: DRUMMAP, Mutable Instruments Grids' drum map as a track machine for Flex and Static samples (SRC SETUP, like VECTOR).",
+      "PART picks BD, SD or HH; X and Y move through Grids' 25 patterns; FILL sets the density, CHAO varies every 32-step pass; YES draws a new variation.",
+      "Accents keep the Part's VOL, plain hits sit AVEL below; the trigs and VOL locks are ordinary sequencer data.",
+      "Needs the Modwerk base loaded over USB (beta). Card firmware cannot include it.",
+      "Not yet tested on a unit or in the emulator."
+    ]
+  }
+]
