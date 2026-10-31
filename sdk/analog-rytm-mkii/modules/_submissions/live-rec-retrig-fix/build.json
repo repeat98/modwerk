@@ -2,6 +2,8 @@
   "schemaVersion": 1,
   "sources": [
     "src/live-rec-retrig-fix.c",
+    "src/retrig-grid.c",
+    "src/grid-label.s",
     "src/live-rec-retrig-fix.s"
   ],
   "defsym": {},
@@ -12,6 +14,16 @@
       "event": "ev_render_out",
       "fn": "retrig_fix_render",
       "order": 40
+    },
+    {
+      "event": "ev_render_out",
+      "fn": "retrig_grid_render",
+      "order": 50
+    },
+    {
+      "event": "ev_project",
+      "fn": "retrig_grid_project",
+      "order": 50
     }
   ],
   "contribute": [],
@@ -21,7 +33,9 @@
   "claims": [
     "ui:RETRIG menu step writes in LIVE RECORDING",
     "ui:live recording of pad retrigs",
-    "key:RTRG+YES"
+    "key:RTRG+YES",
+    "ui:GLOBAL > CONTROL > SEQUENCER CONFIG row RETRIG GRID",
+    "ui:pad retrig timing while the sequencer plays"
   ],
   "requires": [],
   "derive": null,
@@ -43,7 +57,9 @@
         "STOCK_KEY_DOWN": "0x40071f54",
         "STOCK_ALWAYS_ON": "0x400a7020",
         "STOCK_SET_ALWAYS_ON": "0x400a708a",
-        "STOCK_VIEW_REDRAW": "0x40078580"
+        "STOCK_VIEW_REDRAW": "0x40078580",
+        "STRING_CTOR": "0x401bcff0",
+        "STOCK_BITMAP_DRAW": "0x400716e0"
       },
       "cflags": [
         "-DRT_ACTIVE_AT=0x8000fe44",
@@ -96,8 +112,22 @@
           "stockSha256": "3053914c49697b92072c6a990e2f2e9bf2f12e185db4b9e8d013a29dfc068ce1",
           "op": "jsr",
           "target": "retrig_fix_length"
+        },
+        {
+          "addr": "0x400ec244",
+          "len": 6,
+          "stockSha256": "10552f30e94896a18c635b43b0f16452187a5e3db5b661ba3255c1ecb054fd50",
+          "op": "jmp",
+          "target": "retrig_grid_menu_add"
         }
       ]
     }
-  }
+  },
+  "storage": [
+    {
+      "sym": "retrig_grid_off",
+      "scope": "project",
+      "bits": 1
+    }
+  ]
 }

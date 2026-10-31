@@ -74,6 +74,8 @@ extern int32_t STOCK_KEY_DOWN(uint32_t event);                   // a byte: the 
 extern int32_t STOCK_ALWAYS_ON(uint32_t kit, int32_t track);
 extern void STOCK_SET_ALWAYS_ON(uint32_t kit, int32_t track, int32_t on);
 extern void STOCK_VIEW_REDRAW(uint32_t view);
+extern int retrig_grid_driving(int t);
+extern void retrig_grid_snap(int t, int rate, int32_t *step, int32_t *micro);
 
 // RETRIG 1/1 .. 1/80, in ticks
 static const int16_t period[17] = { 960, 480, 320, 240, 192, 160, 120, 96, 80, 60, 48, 40, 30, 24, 20, 15, 12 };
@@ -86,6 +88,7 @@ static uint8_t rearmed[TRACKS];     // pressed again: the next 960 is not a hit
 static uint8_t ahead[TRACKS];       // step + 1 of a hit the wipe's step has not reached
 static int8_t rate_seen[TRACKS];    // -1: none yet this press
 static uint16_t hits[TRACKS];
+static uint8_t phased[TRACKS];      // the block count is on the grid's steps
 static uint32_t started[TRACKS];    // this hit's time, clock / 2
 static uint8_t ring_seen;
 static uint8_t running;             // a series has run since the last idle pass
@@ -125,6 +128,7 @@ static void watch_presses(void)
         rearmed[t] = RT_ACTIVE[t];
         rate_seen[t] = -1;
         hits[t] = 0;
+        phased[t] = 0;
         last_velocity[t] = 0;
         have[t] = 1;
     }
@@ -181,21 +185,30 @@ static void hit(int t)
     step = step_ticks(t);
     block = hits_in_block(period[rate], step);
     if (rate != rate_seen[t]) {
-        if (rate_seen[t] >= 0)
+        if (rate_seen[t] >= 0) {
             hits[t] = block - 1;        // a new rate starts a block at this hit
+            phased[t] = 0;
+        }
         rate_seen[t] = rate;
+    }
+    STOCK_STEP_PLACE(CLOCK, t, place);
+    micro = (int8_t)place[1];
+    // On the grid a block starts on a step: the press can come anywhere between two.
+    if (block > 1 && !phased[t] && retrig_grid_driving(t)) {
+        if (micro < -1 || micro > 1)
+            return;                     // the press's note stays open and takes these hits
+        phased[t] = 1;
+        hits[t] = block - 1;
     }
     if (++hits[t] % block)
         return;
     if (QUEUED(NOTE_QUEUE) > 30)
         return;                         // the task is held up: every slot may be waiting
-    STOCK_STEP_PLACE(CLOCK, t, place);
     velocity = RT_VELOCITY[t] >> 8;
     if (velocity < 1)
         velocity = 1;
     if (velocity > 127)
         velocity = 127;
-    micro = (int8_t)place[1];
     held = now - started[t];
 
     if (open_note[t]) {
@@ -318,6 +331,20 @@ int retrig_fix_press_rate(int rate, int t)
     if (rate > 16 || period[rate] >= step_ticks(t))
         return -1;
     return rate;
+}
+
+// The recorder, for a retrig press (live-rec-retrig-fix.s): the trig goes on the retrig
+// grid. Moved past the wipe's step it is the held note before its step, as
+// an early hit is.
+void retrig_fix_press_place(int t, int rate, int32_t *step, int32_t *micro)
+{
+    int32_t was = *step;
+
+    retrig_grid_snap(t, rate, step, micro);
+    if (*step != was && *step != wipe_step()) {
+        ahead[t] = *step + 1;
+        guarding = 1;
+    }
 }
 
 // The RETRIG menu's YES (live-rec-retrig-fix.s): ALWAYS ON turned over for the menu's track, as
