@@ -142,7 +142,7 @@
     "report": "TESTING.md",
     "summary": "Host checks only: the map read reproduces DrumMap's ReadDrumMap over 2,113,536 cases; the hit, accent and chaos rules, the track-record writer and the settings packing are checked under the sanitizers; the package's machine record sits at the registry's index (test_engine.py). Not run on a unit or in the emulator.",
     "hardwareStatus": "untested",
-    "evidenceRevision": "1bbc8b46cb3c5d09e1ce25e020cc460367769f33",
+    "evidenceRevision": "a95267061b9fcdae6cc4d898bf937aa90dcceff4",
     "gates": [
       "modules/drummap/verify.py"
     ]
