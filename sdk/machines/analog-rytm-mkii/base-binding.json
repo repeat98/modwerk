@@ -16,5 +16,9 @@
       "binutils": "2.47"
     },
     "stock": "cb0f99d620edde994fb860c0e79cc2464e427d06882828cfdfb00fc53700e123"
+  },
+  "variants": {
+    "send-bus": "0c92aa45c2148caa5152f46b809dade8f43db323a599641f6c777f8f43dd1a5e",
+    "plain": "e558ad22739db927f2315bf835bd133b7f4b0e5891859eecfac78753ef865d0a"
   }
 }

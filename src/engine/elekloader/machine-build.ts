@@ -2,6 +2,8 @@
 // All machine integrations use the unchanged Elekloader kit. A machine extends its catalogue/core, not its builder.
 import CATALOG_JSON from '../../../vendor/elekloader/catalog/catalog.json' with { type: 'json' }
 import KIT from '../../../vendor/elekloader/kit/kit.json' with { type: 'json' }
+import RYTM_BASE from '../../../sdk/machines/analog-rytm-mkii/base-binding.json' with { type: 'json' }
+import RYTM_FX_IDS from '../../../sdk/machines/analog-rytm-mkii/fx-ids.json' with { type: 'json' }
 import {
   buildLogText as kitBuildLogText, createBuilder, parseCatalog, planBuild as kitPlanBuild, prepare, releases,
   type Builder, type Catalog, type Plan, type Prepared,
@@ -24,8 +26,31 @@ export function createMachineBuilder(): Builder {
   })
 }
 
+/** A machine whose site builds use Modwerk's own base: its variants by identity (base-binding.json), and the variant a
+ * selection needs. The catalogue lists every variant as a core of the same version; the build takes only that one. */
+const MODWERK_BASES: Partial<Record<ElekloaderMachine, { variants: Record<string, string>; variant: (moduleIds: readonly string[]) => string }>> = {
+  // A send effect contributes to the send-bus variant's FX list, and modules:check ties every one to fx-ids.json; a set
+  // without one builds on plain, core-ar2 0.7's source alone, and pays none of the bus's RAM or kit storage.
+  'analog-rytm-mkii': {
+    variants: RYTM_BASE.variants,
+    variant: moduleIds => moduleIds.some(id => Object.values(RYTM_FX_IDS.ids).includes(id)) ? 'send-bus' : 'plain',
+  },
+}
+/** The Modwerk base variant a selection builds on, or undefined for a machine that builds on a catalogue core. */
+export function baseVariant(machine: ElekloaderMachine, moduleIds: readonly string[]) {
+  return MODWERK_BASES[machine]?.variant(moduleIds)
+}
+/** The catalogue with this machine's cores cut to the base variant the selection needs (by identity): none when the
+ * catalogue does not serve it, so the build fails closed. Other machines' cores and every mod stay. */
+export function selectionCatalog(machine: ElekloaderMachine, moduleIds: readonly string[], catalog: Catalog = BUILDER_CATALOG): Catalog {
+  const base = MODWERK_BASES[machine]
+  if (!base) return catalog
+  const identity = base.variants[base.variant(moduleIds)]
+  return { ...catalog, cores: catalog.cores.filter(core => core.device !== MACHINE_DEVICE[machine] || core.sha256 === identity) }
+}
+
 export function planBuild(machine: ElekloaderMachine, release: string, moduleIds: readonly string[], catalog: Catalog = BUILDER_CATALOG): Plan {
-  return kitPlanBuild(catalog, MACHINE_DEVICE[machine], release, moduleIds)
+  return kitPlanBuild(selectionCatalog(machine, moduleIds, catalog), MACHINE_DEVICE[machine], release, moduleIds)
 }
 
 export function builderReleases(machine: ElekloaderMachine, moduleId: string, catalog: Catalog = BUILDER_CATALOG) {
@@ -34,7 +59,7 @@ export function builderReleases(machine: ElekloaderMachine, moduleId: string, ca
 
 export type PreparedBuild = Prepared
 export function prepareBuild(builder: Builder, input: { machine: ElekloaderMachine; release: string; stock: File; moduleIds: readonly string[] }, catalog: Catalog = BUILDER_CATALOG): Promise<PreparedBuild> {
-  return prepare(builder, { catalog, device: MACHINE_DEVICE[input.machine], os: input.release, stock: input.stock, ids: input.moduleIds })
+  return prepare(builder, { catalog: selectionCatalog(input.machine, input.moduleIds, catalog), device: MACHINE_DEVICE[input.machine], os: input.release, stock: input.stock, ids: input.moduleIds })
 }
 
 /** Private source-port qualification uses the same worker, with locally compiled, pinned .elemods.

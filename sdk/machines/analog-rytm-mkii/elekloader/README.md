@@ -12,8 +12,9 @@ build stages it, so the imported files stay exact: the FX track's lock words (`l
 (`sendbus.c`, `sendbus.s`, `fx-tables.h`; [send effects](../README.md#send-effects)). A site `add` names gives the stock
 bytes it replaces by length and SHA-256 only; the build fills them from your OS. The USB stack comes next.
 
-Until the site moves to this base (studied on [#878](https://github.com/repeat98/modwerk/pull/878)), it builds with
-irpina's released `core-ar2-0.7.elemod`. The full OS file sent with Transfer stays the fallback afterwards.
+The base comes in two variants (`base.json`'s `variants`): **send-bus**, the default, with everything `add` names, and
+**plain**, the imported recipe alone. The site builds a set with a send effect on send-bus and any other set on plain,
+so a set with no send effect pays none of the bus's cost (below). The full OS file sent with Transfer stays the fallback.
 
 ## Build it
 
@@ -32,8 +33,12 @@ things:
 - **Against the release it started from:** every source, site, export, import and table it has (`reference.keeps`), with Modwerk's additions on top.
 - **Against [base-binding.json](../base-binding.json):** the SHA-256 of the package.
 
-`--out NEW-DIR` (outside Git) keeps the `.elemod`. `--write` records a new identity: use it only for a deliberate
-change, and say why in the pull request.
+It builds every variant and records each identity in the binding's `variants`, the default's as `identity`. `--out
+NEW-DIR` (outside Git) keeps each `.elemod` under the name the site's catalogue serves it by,
+`modwerk-base-analog-rytm-mkii-<first 8 of its identity>.elemod`. `--write` records new identities: use it only for a
+deliberate change, and say why in the pull request. A new identity is published as the Filter Hz package is: the
+files in `sdk/imports/packages/modwerk-base-analog-rytm-mkii/` and `vendor/elekloader/catalog/`, and their record
+`sdk/imports/elekloader-modwerk-base-analog-rytm-mkii-<date>.json`.
 
 It needs m68k-elf GCC 16.2.0 and binutils 2.47, as in `sdk/build/Dockerfile`. Homebrew's `m68k-elf-gcc` and the
 toolchain image give the same bytes. Build the image once, as the
@@ -51,10 +56,14 @@ docker run --rm --user "$(id -u):$(id -g)" -e HOME=/tmp -v "$PWD:$PWD" -w "$PWD"
 | Compiler | `.run` bytes | Relocations | Same as the release |
 |---|---|---|---|
 | irpina's release `core-ar2-0.7.elemod` | 10,692 | 103 | — |
-| m68k-elf GCC 16.2.0, binutils 2.47 (reviewed; this base) | 10,348 | 102 | sources, sites, interface |
+| m68k-elf GCC 16.2.0, binutils 2.47 (reviewed; this base's plain variant, `e558ad22`) | 10,348 | 102 | sources, sites, interface |
 | Debian 12 m68k-linux-gnu GCC 12.2.0 | 10,248 | 94 | sources, sites, interface |
 | Ubuntu 24.04 m68k-linux-gnu GCC 13.3.0 | 10,320 | 94 | sources, sites, interface |
 | Debian 13 m68k-linux-gnu GCC 14.2.0 | 10,168 | 93 | sources, sites, interface |
+
+The send-bus variant (`0c92aa45`) has 27,007 bytes of `.run` and 68,164 of `.bss`, 65,536 of them the effects' work
+area, and 62 of the kit's 64 storage bits: about 36 KB of the 128 KiB mod area stays for modules, against about
+119 KB on plain.
 
 The release records its sources but not its compiler, and none of these reproduces its compiled code byte for byte.
 The 22 functions that change size are all compiled C: 21 from `store.c`, 1 from `machines.c`. The sites, the

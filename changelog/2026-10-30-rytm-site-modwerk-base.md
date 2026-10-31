@@ -1,0 +1,1 @@
+Analog Rytm MKII: the site now builds Rytm sets on Modwerk's own base, made from core-ar2 0.7's source, instead of irpina's core-ar2 0.7 release. A set with a send effect gets the base with the send bus; any other set gets the plain base and keeps all of its memory and kit storage. Saved configurations and their module storage carry over. Downloads for the Rytm stay off.

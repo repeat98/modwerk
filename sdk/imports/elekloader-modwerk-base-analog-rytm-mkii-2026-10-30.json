@@ -1,0 +1,37 @@
+{
+  "schema": 1,
+  "kind": "elekloader-catalog",
+  "revision": "modwerk-base-analog-rytm-mkii-2026-10-30",
+  "about": "Modwerk's Analog Rytm MKII base for OS 1.74, built by npm run machine:base -- analog-rytm-mkii from core-ar2 0.7's source (sdk/imports/core-ar2-source-fb58292.json) and, in the send-bus variant, Modwerk's base/ sources. Two variants, each identified by its SHA-256 in sdk/machines/analog-rytm-mkii/base-binding.json: plain (e558ad22, the source alone) and send-bus (0c92aa45, with the FX track's lock words and the send bus). The site builds a Rytm set on send-bus when it holds a send effect (sdk/machines/analog-rytm-mkii/fx-ids.json) and on plain otherwise. Stock-free: each site names its stock bytes by length and SHA-256, and the build fills them from the owner's OS.",
+  "cores": [
+    {
+      "file": "modwerk-base-analog-rytm-mkii-e558ad22.elemod",
+      "sha256": "e558ad22739db927f2315bf835bd133b7f4b0e5891859eecfac78753ef865d0a",
+      "id": "core",
+      "version": "0.7",
+      "device": "analog-rytm-mk2",
+      "os": "1.74",
+      "license": "GPL-2.0-or-later",
+      "source": {
+        "repo": "repeat98/modwerk",
+        "commit": "42df78604bf890788da77cecc20c89ba147c4023",
+        "path": "sdk/imports/packages/modwerk-base-analog-rytm-mkii/modwerk-base-analog-rytm-mkii-e558ad22.elemod"
+      }
+    },
+    {
+      "file": "modwerk-base-analog-rytm-mkii-0c92aa45.elemod",
+      "sha256": "0c92aa45c2148caa5152f46b809dade8f43db323a599641f6c777f8f43dd1a5e",
+      "id": "core",
+      "version": "0.7",
+      "device": "analog-rytm-mk2",
+      "os": "1.74",
+      "license": "GPL-3.0-or-later",
+      "source": {
+        "repo": "repeat98/modwerk",
+        "commit": "42df78604bf890788da77cecc20c89ba147c4023",
+        "path": "sdk/imports/packages/modwerk-base-analog-rytm-mkii/modwerk-base-analog-rytm-mkii-0c92aa45.elemod"
+      }
+    }
+  ],
+  "mods": []
+}
