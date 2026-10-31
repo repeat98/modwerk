@@ -1,0 +1,119 @@
+{
+  "schema": 1,
+  "date": "2026-10-31",
+  "hardware": false,
+  "published": false,
+  "sourceCommit": "4c57270625a65d7f8db54f99ca58f1b7dc7c3fba",
+  "upstreamCommit": "00ecaf529669a858785d69be7091bf9b106bfb87",
+  "recipeOwnership": "SDK machine adapters; shared updates do not edit module folders",
+  "recipePath": "sdk/machines/octatrack/module-adapters/reconstruction-recipes.json",
+  "moduleNativeInputsUnchangedFrom": "d803af33c8d12ae80c763b68342952dd18d25f1d",
+  "excludedNonBuildInputs": [
+    "scanner_probe.c",
+    "test_engine.c",
+    "test_ui.c"
+  ],
+  "focusedHostRegressions": {
+    "tests": 8,
+    "passed": true,
+    "scope": [
+      "SDK-only shared pin refresh without module edits",
+      "test/diagnostic edits preserve reconstruction",
+      "committed SDK recipes cannot silently retain stale shared pins",
+      "native source/image/package drift refuses",
+      "stock hash/protected source/base event refuses",
+      "unsafe source paths and unregistered recipes refuse"
+    ]
+  },
+  "publicBuilder": {
+    "hardware": false,
+    "published": false,
+    "privateCatalogueFixtureOnly": true,
+    "normalPublicBuildPassed": true,
+    "normalPublicCheckPassed": true,
+    "bothStockScansPassed": true,
+    "usbOnly": true,
+    "packageSha256": "3e13c46fb0054d05f228b045746453e0c50dbbe52fb53b3c229d598ddd7fed79",
+    "bytes": 10048,
+    "byteIdenticalToEmulatorTestedPackage": true,
+    "negativeCliChecks": [
+      {
+        "case": "changed native source, unchanged assembled instructions",
+        "refused": true,
+        "exitCode": 1
+      },
+      {
+        "case": "protected bootloader source",
+        "refused": true,
+        "exitCode": 1
+      },
+      {
+        "case": "changed final package pin",
+        "refused": true,
+        "exitCode": 1
+      },
+      {
+        "case": "foreign source provenance",
+        "refused": true,
+        "exitCode": 1
+      },
+      {
+        "case": "missing reconstruction opt-in exposes original strict-scan rejection",
+        "refused": true,
+        "exitCode": 1
+      }
+    ],
+    "testAndDiagnosticEditsRemainIdentical": true,
+    "nativeInputsRestoredAfterNegativeProbes": true,
+    "helperSha256": "3589a5de5dafb1068733ab1b11c4185896736f0cc3bac8488ae37be80af8e190",
+    "inputs": {
+      "scripts/octatrack-module-packages.py": "c10ef18f803b809c89da238d9b3793e13eba09c7f7197a44a515e5ea4a19f6f1",
+      "scripts/octatrack-reconstruction.py": "8718956033e620cfc22d3047b8adbc5708e687133a67ff94e09c5a807fbff3a9",
+      "sdk/machines/octatrack/module-adapters/reconstruction-recipes.json": "6346877682d0629b34843ed740e83ccc82b511a9a67b8c2092a0b76b74216904"
+    },
+    "limitations": "Private catalogue fixture only; real catalogue and qualification remain unchanged. No device or new runtime claim."
+  },
+  "usbOnlyScope": {
+    "hardware": false,
+    "published": false,
+    "privateCatalogueFixtureOnly": true,
+    "usbOnly": true,
+    "cardRefusal": {
+      "beta": "Pattern Sample Locks needs the Modwerk base, so card firmware cannot include it. Sync this set over USB, or take it out to build card firmware.",
+      "classic": "Pattern Sample Locks needs the Modwerk base, so card firmware cannot include it. Loading the base over USB is in the beta for now; take it out to build card firmware."
+    },
+    "classicLibraryBlocked": true,
+    "betaLibraryAllowsUsbSelection": true,
+    "excludedFromCardCompilerVersionsAndSources": true,
+    "existingCardSourceFingerprintUnchanged": true,
+    "packageSha256": "3e13c46fb0054d05f228b045746453e0c50dbbe52fb53b3c229d598ddd7fed79",
+    "byteIdenticalToEmulatorTestedPackage": true,
+    "sevenPublicBaseAddAndRemovalUndoPreflights": 7,
+    "allPackagesPreflighted": 29,
+    "simultaneousRuntimeCompanionsTested": false
+  },
+  "inputHelperIssue": "https://github.com/repeat98/modwerk/issues/1110",
+  "inputHelperEvidence": "Existing no-module emulator reproduction and separately scoped MKII observations; no new device test or fix",
+  "changelogCleanup": "Removed two application changelog entries about draft qualification/audio; TESTING.md and draft CHANGELOG.json retain their proper roles",
+  "limitations": "Same exact package; no new hardware evidence, input-helper fix, catalogue admission, card support, total cost qualification or release approval.",
+  "repositoryReadiness": {
+    "passed": true,
+    "node": "24.22.1",
+    "frontendFiles": 340,
+    "frontendTestsPassed": 2766,
+    "frontendTestsSkipped": 1,
+    "sdkTestSummaries": [
+      "Ran 506 tests in 114.310s\n\nOK (skipped=71)",
+      "Ran 39 tests in 12.896s\n\nOK (skipped=1)"
+    ],
+    "checkSeconds": 160.28
+  },
+  "isolatedSourceBuilds": {
+    "sourceCommit": "4c57270625a65d7f8db54f99ca58f1b7dc7c3fba",
+    "networkDisabled": true,
+    "toolchainImage": "sha256:da70d46e10b243277fa3ae2e015f7258d56b3ee08ca4be47e61899958872e792",
+    "octatrackArtifactsSourceInventoryVersionsAndCommittedParityPassed": true,
+    "elemodCurrentReleaseExportsReproduced": 28
+  },
+  "correctedValidationAttempt": "The first direct SDK run inherited system Node 14 and failed FX page generation. The complete required SDK/readiness suite then passed under Node 24; no code or check was changed to bypass that failure."
+}

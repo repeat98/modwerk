@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import packages from '../engine/assets/octatrack-module-packages.json'
-import { cardBuildError, moduleUsbOnly } from './usb-only'
+import { cardBuildError, moduleUsbOnly, moduleCardless } from './usb-only'
 
 describe('modules that need the Modwerk base', () => {
   it('keeps a module whose USB package requires a base DSP feature out of card firmware', () => {
@@ -27,5 +27,15 @@ describe('modules that need the Modwerk base', () => {
       expect(moduleUsbOnly(entry.id)).toBe(!!entry.requires || !!entry.sources)
       if (!entry.requires && !entry.sources) expect(cardBuildError([entry.id])).toBe('')
     }
+  })
+
+  it('keeps an explicitly USB-only native package out of card firmware', () => {
+    const published = { packages: [{ id: 'arp-key-locks', usbOnly: true }, { id: 'tapehead', usbOnly: false }] }
+    expect(moduleUsbOnly('arp-key-locks', published)).toBe(true)
+    expect(moduleCardless('arp-key-locks', published)).toBe(true)
+    expect(moduleUsbOnly('tapehead', published)).toBe(false)
+    expect(moduleCardless('tapehead', published)).toBe(false)
+    expect(cardBuildError(['arp-key-locks'], true, published)).toMatch(/Sync this set over USB/)
+    expect(cardBuildError(['arp-key-locks'], false, published)).toMatch(/in the beta for now/)
   })
 })

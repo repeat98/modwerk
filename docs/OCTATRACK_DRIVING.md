@@ -65,6 +65,13 @@ The session’s `try FILE` accepts immediately. For a temporary trial, use the M
 the one-shot `npm run device -- try FILE` without `--accept`; do not use session `try` as an automatic Undo test.
 A private module-only trial does not inherit the flashed base's kept module set. To test companions, prepare copies bound to the exact temporary base and review/trial the complete set; a Keep on the twin is not an inventory-recovery step. A host client's own trial timer can also remove the set while its USB keepalive is still healthy. State the timeout and distinguish it from a RAM clear or restart.
 
+Keep one uploader owner throughout a retained trial. A second
+`UploadSession.connect` sends HELLO and advances the vendor sequence, while the
+first transport retains its cached counter. That can make its next ENTER reuse
+the second client's sequence and receive a stale HELLO result. Shared observers
+may read identity, inventory and load or drive panel requests; do not SUBMIT
+another upload frame while the first client retains ownership.
+
 After an unplug, a crash restart or a RAM boot, the bridge can hold a dead handle; `pkill -f usb_bridge;
 pkill -f '^node scripts/device.mjs serve'` and the loop starts both again. Anchor the pattern: without `^` it also
 matches any shell whose command line contains it (the loop's, or the one running `pkill`), and kills that.
@@ -126,7 +133,30 @@ error and moves on. macOS `nc -U` hangs up before the reply, so use the script.
 | `flash DIR` | after `boot DIR`: that base writes its own container (`DIR/NOT_FLASH_CANDIDATE.bin` deciphered) to NOR with stock's routines, verifies it and restarts on it; refuses any other base's. Not yet run on a unit; the owner's call ([traps](OCTATRACK_HARDWARE_TRAPS.md#writing-nor-over-usb)) |
 | `boot DIR`, `boot DIR 4096` | RAM boot a `build_core.py` output; the session restarts on the new base. From the flashed `usbtest9` on macOS add 4096 (bytes a frame): it times out on the default 4,095-byte frames ([traps](OCTATRACK_HARDWARE_TRAPS.md#usb-and-ep0)) |
 
+STATE's `recording` bit reports sampler recorders. Check live-sequencer recording
+separately when qualifying an edit's recording refusal; that bit alone does not
+establish whether live recording started or stopped.
+
 ## The panel, as it behaves
+
+For automated panel tests, a KEY reply confirms posted bytes, not the resulting
+stock action. Check the observed menu/transport transition and key release;
+advancing UI/DSP counters and zero DSP errors do not prove responsive controls.
+After a navigation timeout, stop sending test gestures and inspect held-key rows
+(`boot.c`'s `modwerk_post_key`) before retrying. A physical STOP acting as paste
+was observed with FUNC absent from those rows; row readback alone does not
+establish that stock's modifier state is clear.
+
+The development input helper currently splices remote packets into the physical
+panel's byte stream. A no-module emulator on base `20ed7910…` reproduced held
+TRIG5–7 and a lost FUNC release when a USB KEY arrived between a fader report's
+two bytes ([base issue #1110](https://github.com/repeat98/modwerk/issues/1110)).
+Serialize input at complete physical-report boundaries before using
+concurrent physical movement and remote injection for qualification; a still
+slider does not clear a fault left by an earlier attempt. A later fresh-RAM-boot,
+empty-inventory hardware probe also misdelivered FUNC. Initial released rows and
+a fresh boot do not establish input delivery: verify each held-row transition
+and stock modifier release, and stop on a mismatch.
 
 - **Effects.** FUNC+FX1/FX2 opens the chooser (the left list; its right side are the effect's setup knobs).
   Moving the cursor does not pick; YES does. NO closes. LEVEL scrolls. `pick:` does all of it.

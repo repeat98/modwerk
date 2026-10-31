@@ -73,6 +73,11 @@ def source_hashes(root, cardless=()):
     return files
 
 
+def cardless_modules(manifest):
+    """The card source scope, shared with module-source.mjs and usb-only.ts."""
+    return {row['id'] for row in manifest['packages'] if row.get('sources') or row.get('usbOnly') is True}
+
+
 def fingerprint(reference, address):
     from remix.stock_guard import LocalStockSpan
     if isinstance(reference, LocalStockSpan):
@@ -261,8 +266,8 @@ def main():
             parser.error('Untracked source is not allowed in a release build')
     if args.include_requested and args.source_commit: parser.error('Pending modules may be compiled only for local development verification')
     sdk = APP / 'sdk/octabam'
-    # A C runtime module (its USB package row has "sources") has no card form: src/catalog/usb-only.ts. Mirrors scripts/module-source.mjs.
-    usb_only = {row['id'] for row in json_file(APP / 'src/engine/assets/octatrack-module-packages.json')['packages'] if row.get('sources')}
+    # Source runtimes and explicit USB-only packages have no card form.
+    usb_only = cardless_modules(json_file(APP / 'src/engine/assets/octatrack-module-packages.json'))
     sources = source_hashes(sdk, usb_only)
     baseline = {name: json_file(APP / 'src/engine/assets' / name) for name in ASSET_NAMES}
     catalog = json_file(APP / 'sdk/catalog.json')

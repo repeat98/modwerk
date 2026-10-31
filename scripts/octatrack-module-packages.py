@@ -140,6 +140,24 @@ def main():
     if sourced and tools:
         builder.build = c_build
         builder.tools = lambda entry, upstream: bool(shutil.which('m68k-elf-gcc')) if entry.get('sources') else tools(entry, upstream)
+    # An SDK-owned recipe preserves an ordinary CF runtime's exact tested
+    # image while shipping guarded stock copies. This host layer keeps the
+    # base's pinned builder and existing standalone declarations unchanged;
+    # shared-input refreshes belong to the SDK change, outside module folders.
+    ordinary = getattr(builder, 'build', None)
+    def reconstructed_build(entry, out, *args, **kwargs):
+        if 'reconstruction' not in entry:
+            return ordinary(entry, out, *args, **kwargs)
+        spec = importlib.util.spec_from_file_location('octatrack_host_reconstruction', APP / 'scripts/octatrack-reconstruction.py')
+        reconstruction = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(reconstruction)
+        reconstruction.module_folder(APP, entry)
+        data = ordinary(entry, out, *args, **kwargs)
+        data = reconstruction.reconstruct(APP, entry, data, stock_at=kwargs.get('stock_at'))
+        out.write_bytes(data)
+        return data
+    if ordinary:
+        builder.build = reconstructed_build
     # The qualified builder's JSON:KEY syntax predates Windows drive letters.
     # Use its documented relative-path form, without altering any base input.
     builder.DSP = builder.DSP.relative_to(APP)
