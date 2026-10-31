@@ -1,0 +1,13 @@
+[
+  {
+    "version": "0.1.0-experimental",
+    "date": "2026-10-30",
+    "changes": [
+      "New: BREAKCUT, Livecut's break cutting as a track machine for a sliced Flex break (SRC SETUP, like VECTOR).",
+      "ALGO picks CutProc11, WarpCut, SQPusher or MIX; ACTV sets how much it cuts, ROLL how often phrases end in a roll or fill; RAMP pitches rolls, REV reverses blocks; YES draws a new variation.",
+      "Writes real trigs with STRT, RTRG, RTIM, PTCH and RATE locks and micro-timing; the sequencer plays them.",
+      "Needs the Modwerk base loaded over USB (beta) and a break sliced one slice a step with SLIC on. Card firmware cannot include it.",
+      "Not yet tested on a unit or in the emulator; the slice, reverse and retrig-time values are to be read off the unit."
+    ]
+  }
+]

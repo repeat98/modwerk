@@ -1,0 +1,30 @@
+{
+  "schema": 1,
+  "module": "breakcut",
+  "version": "0.1.0-experimental",
+  "kind": "coldfire",
+  "cycles": {
+    "unit": "cycles/event",
+    "static": null,
+    "measured": null,
+    "budget": 4330000,
+    "method": "Not measured. An event is one knob turn or YES on a BREAKCUT track: one line of up to 64 steps (bc_generate) and an in-place rewrite of the track record (bc_write), on the UI task, never in an interrupt and never while the pattern plays. Each UI tick also reads a few bytes for the input layer. To measure on a unit: the base's development cost stamps around the knob. Budget: one UI tick, 16.4 ms at 61 ticks a second, 4,330,000 cycles at 264 MHz."
+  },
+  "load": {
+    "frameUs": 362.8,
+    "stockLongestUs": null,
+    "moduleLongestUs": null,
+    "stockIdlePercent": null,
+    "moduleIdlePercent": null,
+    "method": "Not measured. The module adds nothing to the frame interrupt and has no MIDI path; its only work is the knob turn above. Its retrigs are stock's, played by the sequencer."
+  },
+  "stress": {
+    "floodMessagesPerSecond": null,
+    "clockBpm": null,
+    "seconds": null,
+    "stuckNotes": null,
+    "hangs": null,
+    "dropped": null,
+    "droppedExplanation": "No flood ran: BREAKCUT sends and receives no MIDI. To run: BREAKCUT on eight Flex tracks at the busiest settings (ACTV and ROLL 127) at 240 BPM for 60 s, turning controls and changing Part, checking playback, the panel and USB."
+  }
+}
