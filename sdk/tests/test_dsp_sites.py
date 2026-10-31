@@ -23,7 +23,7 @@ class DspSites(unittest.TestCase):
         self.assertEqual(dsp_sites.implied(self.reg, 2 | 4), 6)
         bus = [s for s in dsp_sites.spans(self.reg) if s[0] == 8]
         self.assertEqual(sorted((c, a, w) for _, c, _, a, w in bus),
-                         [(0, 0x800, 0x200), (0, 0x33dfe, 0x202), (1, 0x800, 0x200), (1, 0x3bdfe, 0x202)])
+                         [(0, 0x7e00, 0x200), (0, 0x33dfe, 0x202), (1, 0x7e00, 0x200), (1, 0x3bdfe, 0x202)])
         header = dsp_sites.header(self.reg)
         self.assertIn('#define MW_DSP_IMPLIED(f) ((f) | ((f) & 1u ? 8u : 0u))', header)
         self.assertIn('#define MW_DSP_KEYBUS 8u', header)

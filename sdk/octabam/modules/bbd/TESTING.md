@@ -6,6 +6,16 @@ OS. 0.1.1 ran over USB on the owner's Octatrack MKII and the author played
 0.1.0's card image on an MKII; see [Hardware](#hardware). Firmware, images, dumps and renders stayed outside the
 repository.
 
+## 0.1.2-experimental: the buffer claim is what BBD uses (30 October 2026)
+
+`buffer_words` drops from 16,384 to 0x203A (8,250), as octabam has had it since sambanks/octabam#783: BBD reads and writes its FX2 slot's Y buffer only at +$0000..+$0FFF (the ring, at most 4,095 words, and the 4,096-word clear on an STGS change or reset) and +$2000..+$2039 (the 58 filter coefficients); TIME changes how often the ring advances, not how far it reaches. The author confirmed the extent and agreed to the change ([#1064](https://github.com/repeat98/modwerk/issues/1064)). The DSP and ColdFire code are unchanged, and so is the native card image of BBD alone (MAIN OS `bd2015f2…`, built from main before and after this change).
+
+Why now: the base's key bus moves to Y $7E00-$7FFF, the tail of the first internal FX2 slot, with Sidechain Compressor 0.2.1. With the full-slot claim, BBD would be refused on T1 and T5 FX2 while Sidechain Compressor or Sidechain Ringmod is installed; with 8,250 words it stays clear of the bus by more than 7,600 words.
+
+- **Hardware (card):** the author of Sidechain Compressor flashed Modwerk's native image of BBD Delay with Sidechain Compressor 0.2.1 (MAIN OS `c234d13ce64efdf96a8843065feaf1c400f4d9ada081a680d557d639d112019f`, `MW_BBDSC`) on his MKI, 30 October 2026: BBD on T1, T5 and T3 FX2 beside a keyed compressor, at maximum TIME, STGS 4096 and FRZ, clean, and the compressor still ducks ([evidence/sidechain-pair-hardware.md](evidence/sidechain-pair-hardware.md)).
+- **Card builds with Sidechain Compressor:** the full-slot claim met Sidechain Compressor's cross-core key window (the last 514 words of the T3/T7 slots), so `modules:pairs` refused the pair; with 8,250 words it builds (`compatibility-pairs.json`: the bbd+sidechain-compressor entries are gone in all three contexts).
+- **USB:** the package changes only in its buffer claim (`buffer` 8,250; package `58b77069…`); not run on a unit in this version.
+
 ## Commands and exact revision
 
 Every run below used this folder's `bbd.asm`, `manifest.py`, `bbd_ref.py`,

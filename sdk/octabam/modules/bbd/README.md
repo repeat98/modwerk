@@ -1,6 +1,6 @@
 # BBD Delay
 
-Version: 0.1.1-experimental · author: @JamCones (Cam Jones)
+Version: 0.1.2-experimental · author: @JamCones (Cam Jones)
 
 A bucket-brigade delay for FX2: a compander, clock-tracking anti-alias and
 reconstruction filters at a third of the clock, a clocked bucket line with a

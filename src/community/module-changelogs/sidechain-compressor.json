@@ -1,5 +1,13 @@
 [
   {
+    "version": "0.2.1-experimental",
+    "date": "2026-10-30",
+    "changes": [
+      "Moves its DSP memory so a DSP machine can run beside it: the key bus and the MON words now sit at other addresses. No change to how it sounds or works.",
+      "An FX2 effect on T1 or T5 that fills its whole delay buffer can no longer run there while Sidechain Compressor is installed. Every stock effect, Mini Verb, E-Verb and BBD Delay still fit."
+    ]
+  },
+  {
     "version": "0.2.0-experimental",
     "date": "2026-10-25",
     "changes": [

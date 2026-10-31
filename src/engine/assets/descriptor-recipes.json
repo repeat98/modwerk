@@ -2574,7 +2574,7 @@
         }
       ],
       "replaces": "COMPRESSOR",
-      "sourceSha256": "62f004df8eb3e727da05430b18785142f6f3de6c1418b42de49b9073d6f17e44",
+      "sourceSha256": "ad3a66d0644a61a8b388f4ca75cd59987e61f527c26c603c71e96bd1ecce7418",
       "detours": [
         {
           "address": 1073793768,
@@ -3462,7 +3462,7 @@
       "donorSha256": "3b3f9b15f2f6addfea9fc281f5b9fdf054bf305778059b8d43db41d390f0401f",
       "fx2Slot": 1074618388,
       "slotSha256": "79bc740214b4d029e385d06d21e224d04e8f91b53fb26ea08ffa4e5d70964b7a",
-      "sourceSha256": "4979660bdb75d95af3f05ab68a565e4a646a1c329eb0a7f5597b1a840aeb4b51",
+      "sourceSha256": "141d6adda2393ed00db02c1b768dc0625e2ae7635405d5ab7053a31f6caef40e",
       "integers": [
         {
           "offset": 3,
@@ -4439,7 +4439,7 @@
       ]
     }
   ],
-  "sourceCommit": "b18d1776b0d982081c2c69ef5796154fff0efbf9",
+  "sourceCommit": "1574c62eb1edc514031689706bc1c78e4cdaebfe",
   "moduleVersions": {
     "spectrum": "0.1.1-experimental",
     "modulation": "0.1.1-experimental",
@@ -4451,9 +4451,9 @@
     "tapehead": "0.1.2-experimental",
     "airwindows-chorus": "0.1.2-experimental",
     "everb": "0.1.2-experimental",
-    "bbd": "0.1.1-experimental",
+    "bbd": "0.1.2-experimental",
     "lofi2": "0.1.1-experimental",
-    "ring-sc": "0.2.0-experimental",
+    "ring-sc": "0.2.1-experimental",
     "analog-bassdrum": "0.1.6-experimental",
     "midi-scenes": "0.2.5-experimental",
     "usb-audio-out-tracks-main-cue": "0.2.0-experimental",
@@ -4461,7 +4461,7 @@
     "synth": "0.1.2-experimental",
     "previewvol": "0.1.2-experimental",
     "cc-map": "0.1.2-experimental",
-    "sidechain-compressor": "0.2.0-experimental",
+    "sidechain-compressor": "0.2.1-experimental",
     "vector": "0.2.5-experimental",
     "playmodes": "0.2.0-experimental",
     "mute-modes": "0.2.1-experimental",

@@ -1,5 +1,12 @@
 [
   {
+    "version": "0.2.1-experimental",
+    "date": "2026-10-30",
+    "changes": [
+      "Reads the key bus at its new address, which the next beta base moves so a DSP machine can run beside it. No change to how it sounds or works."
+    ]
+  },
+  {
     "version": "0.2.0-experimental",
     "date": "2026-10-21",
     "changes": [

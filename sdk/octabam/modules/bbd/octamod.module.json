@@ -3,7 +3,7 @@
   "id": "bbd",
   "key": "BBD",
   "name": "BBD Delay",
-  "version": "0.1.1-experimental",
+  "version": "0.1.2-experimental",
   "category": "effects",
   "author": {
     "github": "JamCones",
@@ -168,9 +168,9 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Render gates pass on a native image (52): exact dry at MIX 0, the DSP against its float reference across every control including HPF, trig splits, STGS changes with TIME still and moving, the stop-kill input, freeze, idle tails and the LIM level, eight-instance isolation under guard and dirty start, garbage start and no zipper. Matched benchmark: 399.31 executed instructions/sample with trig splits (0.1.0: 439.44), 363.06 unsplit; output bit-identical to 0.1.0 in all 45 benchmark cases. On the owner's MKII over USB: installed, picked on T1, T2 and T5, Part switches, removal and reinstall, self-test, the stop kill cutting the tail to -132 dBFS and its release; 453-527 chip cycles a sample measured.",
+    "summary": "0.1.2 declares the 8,250 buffer words BBD uses instead of the whole 16,384-word FX2 slot (as octabam since #783), so it stays clear of the beta base's key bus in the first internal FX2 slot's tail; the DSP and ColdFire code and the native card image of BBD alone are unchanged from 0.1.1, whose render gates, benchmarks and stress runs stand. Reported working beside Sidechain Compressor 0.2.1 on an MKI from the card (30 October 2026).",
     "hardwareStatus": "reported",
-    "evidenceRevision": "ef7e1aa362af829a2479385769d6987390f55ccd",
+    "evidenceRevision": "1a37637a73c274d92c3b3f9e85e89dbe8dba67c9",
     "gates": [
       "verify.py: init rules, static cycles, native placement, exact dry, reference match (HPF at 1, 64, 127), splits, stages (TIME still and moving), the stop-kill input, freeze, idle and LIM level, eight-instance isolation (-guard -dirty), garbage start, zipper census",
       "evidence/performance.json: perf.py bench (stock benchmark under matched cases) and a 32 s eight-instance stress render",
@@ -194,9 +194,9 @@
       "screenshotStyle": "black-and-white"
     },
     "qualification": {
-      "moduleVersion": "0.1.1-experimental",
-      "sourceSha256": "6ba6aacfebb93bcf851f73d575ef24a7e7881eea57e42d773c3be1d38dbb53bb",
-      "imageSha256": "bf2ab8a545421109740dbd28553ae04fad4724c87bd22ccd063bbe381b34b591",
+      "moduleVersion": "0.1.2-experimental",
+      "sourceSha256": "4d3a63d0dc46429fc83a590afbc0a17b30e19f80d6139bd2a978fab9a1a9726b",
+      "imageSha256": "c234d13ce64efdf96a8843065feaf1c400f4d9ada081a680d557d639d112019f",
       "cycles": [
         {
           "processor": "dsp",
@@ -251,11 +251,11 @@
             "scope": "instance"
           },
           {
-            "name": "Reserved stock FX2 Y buffer: ring up to 4,095 words, 58 coefficient words",
+            "name": "Stock FX2 Y buffer it uses: ring up to 4,095 words at +$0, 58 coefficient words up to +$2039",
             "space": "dsp-y",
-            "words": 16384,
+            "words": 8250,
             "wordBits": 24,
-            "bytes": 49152,
+            "bytes": 24750,
             "scope": "instance"
           },
           {
@@ -291,28 +291,28 @@
             "scope": "shared"
           }
         ],
-        "perInstanceBytes": 49920,
+        "perInstanceBytes": 25518,
         "sharedBytes": 7246,
         "maxInstances": 8,
-        "totalBytes": 406606,
-        "conditions": "The stock 256-word X block and 16,384-word Y buffer per FX2 instance, including unused padding; code shared once per core. No authored heap or SDRAM arena; the stop kill's ColdFire code is a straight-line hook or event handler with no stack of its own. The system stack is bounded by the rotation's do, a bsr and its divide's do on each core. Logical 24-bit DSP words; flash descriptors use byte accounting. Guarded eight-instance software evidence does not claim hardware canaries.",
+        "totalBytes": 211390,
+        "conditions": "The stock 256-word X block per FX2 instance, including unused padding, and the 8,250 words of the stock 16,384-word FX2 Y buffer it uses (+$0..+$2039, since 0.1.2); code shared once per core. No authored heap or SDRAM arena; the stop kill's ColdFire code is a straight-line hook or event handler with no stack of its own. The system stack is bounded by the rotation's do, a bsr and its divide's do on each core. Logical 24-bit DSP words; flash descriptors use byte accounting. Guarded eight-instance software evidence does not claim hardware canaries.",
         "report": "evidence/release-bounds.md"
       },
       "hardware": {
         "kind": "functional",
         "status": "reported",
-        "model": "MKII",
-        "testedOn": "2026-10-15",
-        "tester": "repeat98's unit, driven over USB by Claude Code",
-        "sourceRevision": "ef7e1aa362af829a2479385769d6987390f55ccd",
-        "imageSha256": "bf2ab8a545421109740dbd28553ae04fad4724c87bd22ccd063bbe381b34b591",
-        "summary": "The USB package (614bf23b...) on a RAM-booted development twin of the beta base with ev_tail_kill (e429b787..., MAIN bf2ab8a5...), on the owner's MKII: installed (stage, trial, keep); picked on T1 and T2 (core 1) and T5 (core 0); a second instance on core 0 refused by the DSP budget as designed; a Part switch away and back keeps every knob; removal refused while in use, taken when not, the Part then plays dry with BBD listed missing, and a reinstall restores it; the base's self-test passed; STOP, STOP, STOP zeroed BBD's slot 11 in the track's frame record and cut a ringing tail to -132 dBFS, released by the track's next trig; one instance cost 453-469 chip cycles a sample at the defaults and 527 at the dearest settings.",
+        "model": "MKI",
+        "testedOn": "2026-10-30",
+        "tester": "Zac Kyoti",
+        "sourceRevision": "1a37637a73c274d92c3b3f9e85e89dbe8dba67c9",
+        "imageSha256": "c234d13ce64efdf96a8843065feaf1c400f4d9ada081a680d557d639d112019f",
+        "summary": "Modwerk's native card image of BBD Delay 0.1.2 with Sidechain Compressor 0.2.1 (MAIN OS c234d13c, MW_BBDSC) on an Octatrack MKI, flashed and played by Sidechain Compressor's author: BBD on T1 and T5 FX2, the slots whose buffer tail now holds the key bus, and on T3 FX2, beside a keyed COMPRESSOR, at maximum TIME, STGS 4096 and FRZ: clean, no key-bus noise in the line, and the compressor still ducks. BBD's own firmware is unchanged by 0.1.2: its native card image alone is the same before and after (bd2015f2).",
         "limitations": [
-          "Driven by an agent with the owner's permission; the owner was not asked to listen. Audio was checked from USB recordings.",
-          "No project save and reload or power cycle on this version (RAM-booted base, owner's project not saved); MKI, MIDI load and the card build's stop-kill hook on hardware are untested.",
-          "Chip cycles come from the base's idle counters at steady settings with the transport stopped; a trig split's worst block was not measured on the chip."
+          "A functional report by another module's author, confirmed as a whole; duration and material were not reported.",
+          "MKI and the card build only: the USB package and the beta base were not run on a unit in this version.",
+          "No project save and reload or power cycle on this version; no chip timing (0.1.1's measurements stand: the DSP code is unchanged)."
         ],
-        "report": "evidence/usb-hardware.md"
+        "report": "evidence/sidechain-pair-hardware.md"
       },
       "documentation": {
         "tutorial": {
@@ -350,8 +350,8 @@
         "page": "FX2 SETUP",
         "shows": "location-and-controls",
         "firmware": "1.40C",
-        "moduleVersion": "0.1.1-experimental",
-        "imageSha256": "e648cee078b70174f250ae61830f644a151ab07f3d553578ae6577c5a1ffa1b9",
+        "moduleVersion": "0.1.2-experimental",
+        "imageSha256": "bd2015f269010c19a8f080e743bb2962f949e8320b687a515140db568b6f9bb0",
         "setup": "Headless ot_emu; MKII panel; stopped transport; empty scratch card; 128×64 LCD at integer scale 6."
       }
     },
@@ -367,8 +367,8 @@
         "page": "FX2 main",
         "shows": "controls",
         "firmware": "1.40C",
-        "moduleVersion": "0.1.1-experimental",
-        "imageSha256": "e648cee078b70174f250ae61830f644a151ab07f3d553578ae6577c5a1ffa1b9",
+        "moduleVersion": "0.1.2-experimental",
+        "imageSha256": "bd2015f269010c19a8f080e743bb2962f949e8320b687a515140db568b6f9bb0",
         "setup": "Headless ot_emu; MKII panel; stopped transport; empty scratch card; 128×64 LCD at integer scale 6."
       }
     },
@@ -384,8 +384,8 @@
         "page": "FX2 main",
         "shows": "controls",
         "firmware": "1.40C",
-        "moduleVersion": "0.1.1-experimental",
-        "imageSha256": "e648cee078b70174f250ae61830f644a151ab07f3d553578ae6577c5a1ffa1b9",
+        "moduleVersion": "0.1.2-experimental",
+        "imageSha256": "bd2015f269010c19a8f080e743bb2962f949e8320b687a515140db568b6f9bb0",
         "setup": "Headless ot_emu; MKII panel; stopped transport; empty scratch card; 128×64 LCD at integer scale 6."
       }
     }

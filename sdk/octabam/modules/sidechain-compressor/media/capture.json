@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
   "moduleId": "sidechain-compressor",
-  "moduleVersion": "0.2.0-experimental",
-  "capturedOn": "2026-10-25",
+  "moduleVersion": "0.2.1-experimental",
+  "capturedOn": "2026-10-30",
   "firmware": "1.40C",
-  "imageSha256": "131142e1839bf1a62b48929dee396cc23b1f2f27f33595a9e6f39bf57f7be22e",
+  "imageSha256": "fb7c5e31ce9535f86b3bcc86830df75eba409bb4c5570f48cd9da3bd6545d2cc",
   "emulatorSha256": "21b159be7e918d0cdf211c3a9f8b3966c8ed4a262b29b9fb4c41de10753a14c8",
   "setup": "Headless ot_emu; MKII panel; stopped transport; 128×64 LCD at integer scale 6.",
   "palette": {
@@ -112,8 +112,8 @@
   },
   "composedImage": {
     "what": "The complete image the site composes for the same selection, with its appended runtime and the core logger. The same plan drew the same three frames.",
-    "sha256": "3cf5b3734d9e9148bad0c7a835cd7ac624bbdb1d9474eb3a0ba80d9ccb71846e",
-    "bytes": 1117520,
+    "sha256": "9b8c9ed37f290d050ba39ec09144362548df216b772af212594f0bc3c2f48c61",
+    "bytes": 1118124,
     "screenshots": {
       "ot-compressor-selection.png": "505432eb93b2efa56306b6c9582b83dd2d01c104e6a4d21580972b55a26493c7",
       "ot-compressor-main.png": "147a64589097cf12a0d7765dbe5adc266640a4e0a97c164353e3e146bcd765e5",
@@ -123,9 +123,9 @@
   },
   "source": {
     "repository": "https://github.com/Zac-Kyoti/octatrack-kyoti-fw",
-    "revision": "b0d49bf32d3fcc2e3ce7e9cec67f4fbb2619e511",
+    "revision": "8868867d02b15b5368a7e54772aff0c1c0387c81",
     "path": "modwerk-modules/sidechain-compressor",
-    "manifestSha256": "62f004df8eb3e727da05430b18785142f6f3de6c1418b42de49b9073d6f17e44"
+    "manifestSha256": "ad3a66d0644a61a8b388f4ca75cd59987e61f527c26c603c71e96bd1ecce7418"
   },
   "sourceToolHashes": {
     "scripts/capture-module-ui.py": "6521395cc2a9c05aff546bb422d73952011bf56de44ecb7de2741c8e74b78a9c",

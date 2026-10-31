@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "module": "bbd",
-  "version": "0.1.1-experimental",
+  "version": "0.1.2-experimental",
   "kind": "dsp",
   "cycles": {
     "unit": "instructions/sample",

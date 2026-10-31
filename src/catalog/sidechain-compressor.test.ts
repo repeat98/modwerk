@@ -74,8 +74,8 @@ describe('Sidechain Compressor native evidence on the shared builder', () => {
   })
   it('pins the native image of the module alone, both menu modes', () => {
     const alone = (keep: boolean) => composition.proofs.find(proof => key(proof.moduleIds, proof.keepStockFx2) === key(['sidechain-compressor'], keep))!
-    expect(alone(true)).toMatchObject({ bytes: 1112560, sha256: '131142e1839bf1a62b48929dee396cc23b1f2f27f33595a9e6f39bf57f7be22e' })
-    expect(alone(false)).toMatchObject({ bytes: 1112560, sha256: '6a916c39c1243642324a86abde53bafe88a0e363005ac3e0c79ec02ba376b6c6' })
+    expect(alone(true)).toMatchObject({ bytes: 1112560, sha256: 'fb7c5e31ce9535f86b3bcc86830df75eba409bb4c5570f48cd9da3bd6545d2cc' })
+    expect(alone(false)).toMatchObject({ bytes: 1112560, sha256: '655183ae46e8aa9eafa08bd3e1a63497feb2f22897f3ea23e27a96a10bb76f06' })
   })
   it('retains the historical Analog BD refusals without treating them as current limits', () => {
     expect(analogProofs.proofs.every(proof => 'error' in proof)).toBe(true)
@@ -94,7 +94,7 @@ describe('Sidechain Compressor native evidence on the shared builder', () => {
     const current = () => parseModuleDocument(JSON.parse(JSON.stringify(manifest)))
     expect(() => requireModuleQualificationForPublication(current())).not.toThrow()
     expect(current().tests.hardwareStatus).toBe('reported')
-    expect(current().tests.qualification?.hardware).toMatchObject({ kind: 'functional', status: 'reported', model: 'MKI', imageSha256: '131142e1839bf1a62b48929dee396cc23b1f2f27f33595a9e6f39bf57f7be22e' })
+    expect(current().tests.qualification?.hardware).toMatchObject({ kind: 'functional', status: 'reported', model: 'MKI', imageSha256: 'fb7c5e31ce9535f86b3bcc86830df75eba409bb4c5570f48cd9da3bd6545d2cc' })
     // The pinned image is the one the hardware report names.
     expect(composition.proofs.find(proof => key(proof.moduleIds, proof.keepStockFx2) === key(['sidechain-compressor'], true))!.sha256).toBe(current().tests.qualification!.imageSha256)
     // The owner's 5 October waiver covered 0.1.1 only.

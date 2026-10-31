@@ -1,7 +1,7 @@
 {
   "firmware": "1.40C",
-  "imageSha256": "e648cee078b70174f250ae61830f644a151ab07f3d553578ae6577c5a1ffa1b9",
-  "emulatorSha256": "bdbe962c14fc3560fb3196b01566646b80a74fd451883873a77290b4973dbbf1",
+  "imageSha256": "bd2015f269010c19a8f080e743bb2962f949e8320b687a515140db568b6f9bb0",
+  "emulatorSha256": "21b159be7e918d0cdf211c3a9f8b3966c8ed4a262b29b9fb4c41de10753a14c8",
   "setup": "Headless ot_emu; MKII panel; stopped transport; 128×64 LCD at integer scale 6.",
   "palette": {
     "on": [
@@ -96,5 +96,7 @@
     "ot-setup.png": "b9b9b4af236553a95ab3a48be79cd09ca21627f9dac922487c1a6dc337130126",
     "ot-main.png": "05083a509517d921ada056ffa6987093e4473096c7691e78af33676231c397b9",
     "ot-feedback.png": "84ce5b895a95eaff459622950fd07e39618444239eb09d88856cac92c094d53c"
-  }
+  },
+  "moduleVersion": "0.1.2-experimental",
+  "note": "Captured on Modwerk's native card image of BBD Delay 0.1.2-experimental alone (MAIN OS bd2015f2); the three screenshots are byte-identical to 0.1.1's. The image stays local."
 }
