@@ -1,10 +1,10 @@
-# Quantize Live Recording
+# Quantize Live Rec Toggle
 
 ## Overview
 
 QUANTIZE LIVE REC decides whether live-recorded trigs snap to the steps. Stock keeps it in PROJECT > SYSTEM > PERSONALIZE. This module shows it on the gesture that starts live recording and lets a second tap switch it, without leaving the page you are on.
 
-Version `0.1.1-experimental`, for OS 1.40C card builds and, for beta testers, over USB on the Modwerk base. Zac Kyoti's octabam module `quantize-live-rec-toggle`, which he named Quantize Live Rec Toggle; the unit's module list shows it as Quant Live Rec, since a name there holds 15 characters. The ColdFire source, including the `LIVE REC:` toasts and the PERSONALIZE redraw, is his, unchanged.
+Version `0.1.1-experimental`, for OS 1.40C card builds and, for beta testers, over USB on the Modwerk base. Zac Kyoti's octabam module `quantize-live-rec-toggle`, under his name for it; the unit's module list shows it as Quant Live Rec, since a name there holds 15 characters. The ColdFire source, including the `LIVE REC:` toasts and the PERSONALIZE redraw, is his, unchanged.
 
 **Hardware status: tested by the author on an MKI.** On 23 October 2026 he flashed this version from the card (this module alone) and reported the gesture, the PERSONALIZE redraw and a power cycle working. Version 0.1.0, with the same gesture, ran on an MKII from the card and over USB. See [TESTING.md](TESTING.md).
 
