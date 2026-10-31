@@ -144,7 +144,7 @@
     "report": "TESTING.md",
     "summary": "Host checks only: over 4,000 random Parts, targets, pages, scopes and spreads the engine is deterministic, changes only the chosen parameters of the target scenes on the chosen tracks, never AMP's XVOL, and keeps every lock inside its range and within SPREAD of the Part's value or of the scene before (test_engine.py, under the sanitizers); the package's SEQUENCER rows record sits at the registry's index. Not run on a unit or in the emulator.",
     "hardwareStatus": "untested",
-    "evidenceRevision": "1bbc8b46cb3c5d09e1ce25e020cc460367769f33",
+    "evidenceRevision": "f9fcfd9946e68e6dfe4edfb1a4db3db8558cfcd4",
     "gates": [
       "modules/scenegen/verify.py"
     ]
