@@ -22,7 +22,7 @@ Every control change redraws the track from the settings, so a turn back restore
 pattern plays.
 
 DATAMATIC contributes to the Modwerk base's `ot_midi_generators` table
-([HOOKS.md](../../../machines/octatrack/HOOKS.md)) and patches no stock site; it needs the base loaded over USB and
+([HOOKS.md](../../machines/octatrack/HOOKS.md)) and patches no stock site; it needs the base loaded over USB and
 has no card form (as Beat Slicer).
 
 ## Controls
