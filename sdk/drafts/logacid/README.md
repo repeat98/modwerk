@@ -131,7 +131,7 @@ pattern's, or the track's in per-track length mode).
   pages, keeping the arpeggiator off (the base's rule). Choosing LOGACID on a MIDI track sets NOTE to A1, VEL to 72 and
   NOT2–4 off.
 - No conflicts are declared: the base shares the machine list and the generator list.
-- The developer reports it runs on their own Octatrack MKI from a card build (31 Oct 2026; the exact revision was not recorded); it has not run in the emulator, and nothing below is measured hardware evidence.
+- Not yet run on a unit or in the emulator. Nothing below is hardware evidence.
 
 ## Implementation
 
