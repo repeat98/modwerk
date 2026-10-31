@@ -186,7 +186,7 @@
     "report": "TESTING.md",
     "summary": "Host checks only: the stream tables hold pi, the primes, Thue-Morse and the Fibonacci word and regenerate byte for byte; the automaton follows each of its sixteen rules; DENS 0 plays the stream and DENS 127 every step; 20,000 random settings give deterministic lines inside their octaves, velocities and micro-timing; the MIDI record writer (test_engine.py, under the sanitizers); the package's generator record sits at the registry's index. Not run on a unit or in the emulator.",
     "hardwareStatus": "untested",
-    "evidenceRevision": "1bbc8b46cb3c5d09e1ce25e020cc460367769f33",
+    "evidenceRevision": "419a5b9d56d431a9fe441b8ae0cb7f939572cc46",
     "gates": [
       "modules/datamatic/verify.py"
     ]
