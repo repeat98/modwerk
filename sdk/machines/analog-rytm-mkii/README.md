@@ -26,8 +26,10 @@ CHORUS, FLANGER and PHASER (ids 1-3) are the first, taken from Send FX with the 
 ## Create a mod
 
 ```sh
-npm run module:new -- my-mod --machine analog-rytm-mkii --author your-github-login
+npm run module:new -- my-mod --machine analog-rytm-mkii --author your-github-login --output sdk/analog-rytm-mkii/modules/_submissions
 ```
+
+A new module is submitted in `modules/_submissions/<id>`, with no file in `src/community/module-changelogs/` yet: its notes stay in README and TESTING.md. On release approval the owner moves it into `modules/` and pins its `.elemod` package. In `modules/` without that package, `npm run check` fails the module (no pinned `.elemod`).
 
 This creates `modwerk.module.json` (contract v3), `build.json`, `src/main.c`, README, TESTING, licence and a placeholder thumbnail. See [the SDK guide](../../../docs/SDK.md) for the contract and evidence tiers. The core's contract is [core-profile/interface.json](../../analog-rytm-mkii/core-profile/interface.json), and `npm run modules:check` rejects modules that use anything it does not provide.
 
