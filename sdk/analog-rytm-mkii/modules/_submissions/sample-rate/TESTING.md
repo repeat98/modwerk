@@ -2,7 +2,7 @@
 
 Everything below was observed in rytm-emu on the named build. Nothing has run on a unit, and the emulator is not hardware evidence: the Hardware section is empty until the author reports from one.
 
-- Source (0.1.0-experimental): fingerprint (`sha256` of `sha256sum build.json src/audio.s src/rate.c`) `0b171ba1…e3dd` (`evidence.sourceSha256`).
+- Source (0.1.0-experimental): fingerprint (`sha256` of `sha256sum build.json src/audio.s src/rate.c`) `42c5c9d9…b425` (`evidence.sourceSha256`).
 - Stock OS 1.74: `.syx` `cb0f99d6…e123`, the owner's file. Core: elekloader core-ar2 0.7 as vendored.
 - Build SR04 (core + Sample RATE, `--version SR04`): `.syx` `f8802bc146dacce2e7770ff700f4f1efb9cdc9d265d0faf262214568e7520347`.
 - Build SP03 (core + Sample RATE + Pipo Loop 0.1.1-experimental from its local branch, commit `f48b95d9`; test image only): `.syx` `f2316e1bca4e513ec37f49e561e391897e850177327d218a07414ce399ab8c96`.
@@ -24,6 +24,8 @@ Everything below was observed in rytm-emu on the named build. Nothing has run on
 - Build SP11 (as SR13, with Pipo Loop `b0ed4fe7`; test image only): `.syx` `78210b55cf82ed64337c2fa5ffb58c9c5a7e7431d7f657b6aa00bdcce1f6ebb0`.
 - Build SR14 (core + Sample RATE, this source: held SCNE or PERF no longer blocks the tap): `.syx` `a2ee1e521274ffa8201d548504bba41f4b5c0411134c9a2fd06bd0716e1bbd1e`.
 - Build SP12 (as SR14, with Pipo Loop `b0ed4fe7`; test image only): `.syx` `bef040aa0cf559a8b3332fa87dda32007b7c4b051a81fd8b3d3cde540f57eede`.
+- Build SR15 (core + Sample RATE, this source: no debounce, the tap's rules checked again at release): `.syx` `0c8822cd2f12ef3b7ecaf4e2c3b4efda282e56f4c0e3f23482de4d829542b416`.
+- Build SP13 (as SR15, with Pipo Loop `b0ed4fe7`; test image only): `.syx` `221e94bca82b49a56f4179a51df6e01ed472cdcff311475b1ea38a3c86834d5d`.
 - A core-only image, same stock and core, for comparison.
 - Emulator: rytm-emu `c5732f0`, headless `dtboot`, JIT on. One generated sample, RAMP, 23,777 frames (odd, so STA and END fall on no round multiple), on BD with LOP ON. Audio is dtboot's `--wav`. Voice words are read with `DTBOOT_PEEK`: step at rec + 12, position at rec + 4, effective FIN at 0x8000f7cc. A click means a sample-to-sample step over 40, or six times the median, on a ramp whose normal step is below 2; each run also flags the trig's own attack, which is not counted.
 
@@ -39,7 +41,8 @@ The row moved under SMP:, named SMP RATE, drawn as stock's checkbox; the value i
 | Press held 300 M, press and turn, FUNC, NO or a trig held, encoders A and E pressed, running live recording | no change to the row |
 | The value while turning | reads +51, +35, +29 in stock's format, header RATE |
 | SR07: press with one or two encoder steps | turns over, FIN unchanged but for the turn over |
-| SR07: two clicks 22 M apart, as a bouncing contact | turns over once |
+| SR15: a trig or FUNC pressed during the tap | no toggle |
+| SR15: two clicks 22 M apart | turns over once: the emulator doesn't register the second press that fast, so bounce can't be judged here |
 | SR07: press and turn, 6 and 10 steps | stock's edit, FIN 127 to 87 and 7, no turn over |
 | SR14: tap with SCNE or PERF held, no pad | turns over |
 | SR14: tap with a pad alone held, outside those modes | turns over |

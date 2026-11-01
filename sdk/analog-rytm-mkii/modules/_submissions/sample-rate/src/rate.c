@@ -13,8 +13,9 @@
 //
 // The setting is a bit of the sound. Stock copies a sound's settings to the
 // audio side, per track, whenever it applies a sound to a track (kit load, sound
-// load, a sound lock on a trig, a change in SOUND SETTINGS): the module's copy
-// follows there (sample_rate_applied), so the audio code never walks the kit.
+// load, a sound lock on a trig, a change in SOUND SETTINGS or a tap of FIN's knob):
+// the module's copy follows there (sample_rate_applied), so the audio code never
+// walks the kit.
 
 #include <stdint.h>
 #include "analog-rytm-mk2/store.h"
@@ -150,7 +151,6 @@ typedef void (*invalidate_t)(void *);
 #define ENC_FIN 1                    // encoder B on the SAMPLE page
 #define TAP_TICKS 8                  // about 0.4 s of the UI's 20 Hz
 #define TAP_TURNS 3                  // encoder events in a press that make it a turn
-#define TAP_REST 3                   // about 0.15 s
 
 struct picked {
     uint32_t project, wrapper;
@@ -239,13 +239,12 @@ void sample_rate_add_row(void *menu)
 // A tap on FIN's knob turns RATE over: pressed and let go inside TAP_TICKS. A
 // click nudges the encoder, so the first turns of a press are swallowed, neither
 // a turn nor a change of value; TAP_TURNS of them make it stock's press and turn.
-// A contact can bounce, so a tap holds off the next for TAP_REST ticks.
 // Stock's press shows the parameter and changes nothing, so it goes on as ever. A
 // press with a trig, FUNC or NO held, with a lock editor open, or with a pad held
 // in scene or performance mode is stock's lock work, and so is every press in
 // running live recording.
 static int tap_ticks = -1;      // UI ticks since the press, -1 with no tap open
-static int tap_turns, tap_rest;
+static int tap_turns;
 
 extern char sample_rate_vt_scene[], sample_rate_vt_perf[];   // the top view in those modes
 
@@ -293,14 +292,13 @@ void sample_rate_knob(void *view, int id, const char *event)
     if (id != ID_FIN || (flags & KEY_REPEAT))
         return;
     if (flags & KEY_DOWN) {
-        tap_ticks = !tap_rest && plain_press(view) ? 0 : -1;
+        tap_ticks = plain_press(view) ? 0 : -1;
         tap_turns = 0;
     } else {
-        if (tap_ticks >= 0) {
+        if (tap_ticks >= 0 && plain_press(view)) {
             set_on(!sample_rate_selected());
             show_name(view);
             VIEW_INVALIDATE(view);
-            tap_rest = TAP_REST;
         }
         tap_ticks = -1;
     }
@@ -320,8 +318,6 @@ int sample_rate_turn(void *brain, char *event)
 void sample_rate_tick(void *ctrl)
 {
     (void)ctrl;
-    if (tap_rest)
-        tap_rest--;
     if (tap_ticks >= 0 && ++tap_ticks > TAP_TICKS)
         tap_ticks = -1;
 }
