@@ -33,8 +33,8 @@
 
 struct mw_fx_clock mw_clk;           // what mw_fx_clock gives: global, so that a debugger finds it
 static int count;              // the next pulse's number since PLAY, within WRAP
-static int last_pulse, was_playing, now, free_pos;
-static char asked, used, dated;      // asked this block; the block before; a date not placed yet
+static int last_pulse, was_playing, now, free_pos, last_pps;
+static char asked, used, dated, was_used;   // asked this block; the block before; a date not placed yet; used before
 
 static inline unsigned short irq_off(void)
 {
@@ -83,7 +83,11 @@ void mw_clock_block(void)
     mw_clk.swing = swing;
     mw_clk.inc = (mw_fx_tempo() * 2386) >> 10;                 // tempo / 8 clock units a sample over PULSE: Q24
     if (playing) {
-        if (!was_playing || pulse - last_pulse != (pulse != last_pulse) * PULSE) {   // a (re)start, or a jump
+        // A (re)start or a jump; and, with the pattern read, a first asking block or a new speed (SPEED changed while
+        // playing): counted again from the master step, so that the step's number stays the sequencer's.
+        if (!was_playing || pulse - last_pulse != (pulse != last_pulse) * PULSE
+            || (used && (!was_used || mw_clk.pps != last_pps))) {
+            if (n >= mw_clk.pps) n = mw_clk.pps - 1;           // a step begun at the old speed: its last pulse at the new
             count = ((step - 1) * mw_clk.pps + n) % WRAP;
             if (count < 0) count += WRAP;
             if (!was_playing) mw_clk.starts++;
@@ -100,6 +104,8 @@ void mw_clock_block(void)
         now = free_pos;                                        // stopped: on at the tempo
     }
     was_playing = playing;
+    was_used = used;
+    if (used) last_pps = mw_clk.pps;
     mw_clk.playing = playing;
     free_pos = now + ((BLOCK * mw_clk.inc) >> 8);
     if (free_pos >= WRAP << 16) free_pos -= WRAP << 16;
