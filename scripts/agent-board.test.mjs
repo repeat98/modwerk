@@ -20,18 +20,24 @@ const events = indices => JSON.stringify({ events: indices.map(index => ({ event
 const claimRow = (kind, key, holder) => ({ id: crypto.randomUUID(), kind, key, holder, branch: 'work', pullRequest: null, expiresAt: '2026-11-12T00:00:00.000Z' })
 
 describe('what a branch needs claimed', () => {
-  it('finds new module folders, hook and table indices and migrations, and nothing that was already there', () => {
+  it('finds new module folders, hook and table indices, migrations and machine ids, and nothing that was already there', () => {
+    const manifest = (...ids) => JSON.stringify({ platform: { kind: 'elemod', claims: ['ui:x', ...ids.map(id => 'machine:' + id)] } })
     const { root, commit } = repository({
       'sdk/machines/octatrack/events.json': events([35, 36]), 'migrations/0083_old.sql': '', 'sdk/octabam/modules/echo/README.md': '',
       'sdk/digitakt/core/interface.json': JSON.stringify({ events: [{ name: 'ev_a' }], tables: [] }),
+      'sdk/digitakt/modules/poly/modwerk.module.json': manifest(6), 'sdk/analog-rytm-mkii/modules/chorus/README.md': '',
     })
     commit({
       'sdk/machines/octatrack/events.json': events([35, 36, 37]), 'migrations/0084_new.sql': '', 'sdk/octabam/modules/echo/LICENSE': '',
       'sdk/octabam/modules/tape-echo/README.md': '', 'sdk/octabam/modules/tape-echo/src/a.c': '', 'sdk/drafts/slicer/README.md': '', 'sdk/digitone/modules/swarm/README.md': '',
       'sdk/digitakt/core/interface.json': JSON.stringify({ events: [{ name: 'ev_a' }, { name: 'ev_b' }], tables: [{ name: 'core_x' }] }),
+      // The Analog Rytm keeps its modules in modules/_submissions/<id>; one moved there is not new.
+      'sdk/analog-rytm-mkii/modules/_submissions/temp-save/src/main.c': '', 'sdk/analog-rytm-mkii/modules/_submissions/chorus/README.md': '',
+      'sdk/digitakt/modules/poly/modwerk.module.json': manifest(6, 9), 'sdk/digitakt/modules/kick/modwerk.module.json': manifest(10),
     })
     expect(board.neededClaims({ root, base: 'HEAD~1' }).map(item => item.kind + ' ' + item.key).sort()).toEqual([
-      'hook digitakt/events/1', 'hook digitakt/tables/0', 'hook octatrack/37', 'migration 0084', 'module digitone/swarm', 'module octatrack/slicer', 'module octatrack/tape-echo',
+      'hook digitakt/events/1', 'hook digitakt/tables/0', 'hook octatrack/37', 'machine-id digitakt/10', 'machine-id digitakt/9', 'migration 0084',
+      'module analog-rytm-mkii/temp-save', 'module digitakt/kick', 'module digitone/swarm', 'module octatrack/slicer', 'module octatrack/tape-echo',
     ])
   })
 })
