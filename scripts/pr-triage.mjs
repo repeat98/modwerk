@@ -24,6 +24,18 @@ export function decide({ red, labels, labeledAt, headDate, now, queued }) {
   return actions
 }
 
+/** The newest run of each check name: a failed or cancelled earlier run beside its green rerun (each rerun
+ * of a workflow is a new check suite, which `filter=latest` does not merge) must not count. Newest = started
+ * last (a run not started yet counts as newest), then the higher id. */
+export function newestRuns(runs) {
+  const newest = new Map(), started = run => Date.parse(run.started_at ?? '') || Infinity
+  for (const run of runs) {
+    const kept = newest.get(run.name)
+    if (!kept || started(run) > started(kept) || (started(run) === started(kept) && run.id > kept.id)) newest.set(run.name, run)
+  }
+  return [...newest.values()]
+}
+
 /** Contributors without a published module get one module PR reviewed at a time: every newer one waits. */
 export function queuedPulls(pulls, registered) {
   const waiting = new Set(), byAuthor = new Map()
@@ -58,7 +70,7 @@ async function main() {
   const queued = queuedPulls(pulls, registered), now = Date.now()
   for (const { pr } of pulls) {
     const runs = await pages(api, '/commits/' + pr.head.sha + '/check-runs?filter=latest', 'check_runs')
-    const red = runs.some(run => ['failure', 'timed_out', 'startup_failure'].includes(run.conclusion))
+    const red = newestRuns(runs).some(run => ['failure', 'timed_out', 'startup_failure'].includes(run.conclusion))
     const labeled = (await pages(api, '/issues/' + pr.number + '/events')).filter(event => event.event === 'labeled' && event.label?.name === NEEDS_WORK).at(-1)
     const actions = decide({ red, labels: pr.labels.map(label => label.name), labeledAt: labeled?.created_at, headDate: (await api('/commits/' + pr.head.sha)).commit.committer.date, now, queued: queued.has(pr.number) })
     for (const action of actions) {

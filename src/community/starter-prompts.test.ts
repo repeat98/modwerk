@@ -19,7 +19,7 @@ describe('starter prompts', () => {
       expect(prompt).toContain('docs/ADD_A_MACHINE.md')
       expect(prompt).toContain('sdk/machines/' + device.id + '/machine.json')
       expect(prompt).not.toContain('npm run module:new')
-      expect(prompt).not.toContain('core_machines, slots 4–7')
+      expect(prompt).not.toContain('core_machines, ids 4–127')
     }
   })
   it('only ask the agent to read files that exist', () => {
@@ -132,7 +132,7 @@ describe('starter prompts', () => {
       expect(starters.map(starter => starter.id)).not.toContain('machine')
       const prompt = starterPrompt(machine, starters[0])
       expect(prompt).toContain('digital path only')
-      expect(prompt).not.toContain('core_machines, slots 4–7')
+      expect(prompt).not.toContain('core_machines, ids 4–127')
       expect(prompt).not.toContain('fast SRAM')
       expect(prompt).toContain('- sdk/machines/' + machine + '/README.md (its Modwerk stack section first)')
     }
