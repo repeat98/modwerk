@@ -37,7 +37,9 @@
         "sample_rate_string": "0x401bcff0",
         "sample_rate_label_resume": "0x400a900a",
         "sample_rate_long_resume": "0x400a902c",
-        "sample_rate_menu_resume": "0x400ef522"
+        "sample_rate_menu_resume": "0x400ef522",
+        "sample_rate_vt_scene": "0x401e305c",
+        "sample_rate_vt_perf": "0x401e26c4"
       },
       "cflags": [
         "-DPARAMS_EFF_AT=0x8000f7a8",

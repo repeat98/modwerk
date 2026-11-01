@@ -136,12 +136,13 @@ typedef void (*invalidate_t)(void *);
 #define PROJECT_TRACKSEL 48          // the project's track selection
 #define PROJECT_TRACKS 352           // the project's track sounds
 #define VIEW_PAGE_STATE 108          // a sound page view's lock and record state
+#define VIEW_MANAGER 44              // a view's view manager
+#define MANAGER_LAST 24              // the manager's top list node
+#define NODE_VIEW 8                  // a list node's view
 #define KEY_FUNC 0x80
 #define KEY_NO 0x45
 #define KEY_SCNE 0x13
 #define KEY_PERF 0x14
-#define KEY_PAD_FIRST 0x90
-#define KEY_PAD_LAST 0x9b
 #define KEY_TRIGS 16                 // trig keys are ids 0..15
 #define KEY_DOWN 1                   // the event's flags
 #define KEY_REPEAT 8
@@ -239,22 +240,27 @@ void sample_rate_add_row(void *menu)
 // a turn nor a change of value; TAP_TURNS of them make it stock's press and turn.
 // A contact can bounce, so a tap holds off the next for TAP_REST ticks.
 // Stock's press shows the parameter and changes nothing, so it goes on as ever. A
-// press with a trig, a pad, FUNC, NO, SCNE or PERF held, or with a lock editor
-// open, is stock's lock work, and so is every press in running live recording.
+// press with a trig, FUNC, NO, SCNE or PERF held, with a lock editor open, or in
+// scene or performance mode is stock's lock work, and so is every press in running
+// live recording.
 static int tap_ticks = -1;      // UI ticks since the press, -1 with no tap open
 static int tap_turns, tap_rest;
+
+extern char sample_rate_vt_scene[], sample_rate_vt_perf[];   // the top view in those modes
 
 static int plain_press(void *view)
 {
     uint32_t page = *(uint32_t *)((char *)view + VIEW_PAGE_STATE);
+    uint32_t manager = *(uint32_t *)((char *)view + VIEW_MANAGER);
+    uint32_t node = *(uint32_t *)(manager + MANAGER_LAST);
+    uint32_t top = **(uint32_t **)(node + NODE_VIEW);
     int k;
+    if (top == (uint32_t)sample_rate_vt_scene || top == (uint32_t)sample_rate_vt_perf)
+        return 0;                   // those modes lock the knob with no key held
     if (LOCK_EDITOR(page) || LIVE_RECORDING(page) || IS_KEY_HELD(KEY_FUNC) || IS_KEY_HELD(KEY_NO)
         || IS_KEY_HELD(KEY_SCNE) || IS_KEY_HELD(KEY_PERF))
         return 0;
     for (k = 0; k < KEY_TRIGS; k++)
-        if (IS_KEY_HELD(k))
-            return 0;
-    for (k = KEY_PAD_FIRST; k <= KEY_PAD_LAST; k++)
         if (IS_KEY_HELD(k))
             return 0;
     return 1;
