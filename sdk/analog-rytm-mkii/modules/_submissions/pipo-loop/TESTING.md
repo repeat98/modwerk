@@ -17,7 +17,7 @@ Everything below was observed in rytm-emu on the named build, except the Hardwar
   `f6e59b8fca126ec3bbc173e5617e30ade67dfe430693bc936a2d2d0495adb5c5`.
 - Diagnostic PD05 (PC11's code plus an on-screen readout, branch `diag/pipo-loop`; not for release): `.syx`
   `c0ea404ef4aac79334f1513a4a81953997a405f7811f45426bd6d484efc3ccb4`.
-- Source (0.1.1-experimental): fingerprint `be8b3083…c068` (`evidence.sourceSha256`), PP19 below. Before it, PP18 `20b63b12…d2ff` and PP17 `5066d24b…b76f`. Build PP17 (core-ar2 0.7 as vendored + Pipo Loop 0.1.1-experimental, `--version PP17`): `.syx` `11cf7f270b5323fdc8beab00ebfbd2cfe3a7b5f4e4b29d3abe408652ec969d52`. Every screenshot in media/ was recaptured on PP17; lop-off, lop-on, lop-pipo, plock-pipo and scene-pipo came out byte-identical to the 0.1.0 captures.
+- Source (0.1.1-experimental): fingerprint `709f7620…5075` (`evidence.sourceSha256`), PP20 below. Before it, PP19 `be8b3083…c068`, PP18 `20b63b12…d2ff` and PP17 `5066d24b…b76f`. Build PP17 (core-ar2 0.7 as vendored + Pipo Loop 0.1.1-experimental, `--version PP17`): `.syx` `11cf7f270b5323fdc8beab00ebfbd2cfe3a7b5f4e4b29d3abe408652ec969d52`. Every screenshot in media/ was recaptured on PP17; lop-off, lop-on, lop-pipo, plock-pipo and scene-pipo came out byte-identical to the 0.1.0 captures.
 - Earlier builds: PP03 and PC01 (before the code review), PP05 and PC03 (after it), PP06 and PC04 (the
   three-position switch), PP07 and PC05 (zero snap on the sound), PP08 and PC06 (locks), PP09 and PC07 (exact turns), PP10, PC08 and PD02 (snap holds), PP11, PC09 and PD03 (code review), PP12, PC10 and PD04 (LOP's feel);
   each passed the battery below. PP10 to PP13 gave the same results as PP09 on every row of it.
@@ -57,6 +57,8 @@ Zero snap's landing frame, read from the voice's position after a trig (position
 
 Build PP19 (PP18 with one more change, zero snap's frame now rounds up as stock does within 1/256 of the next frame, `--version PP19`): `.syx` `cd64821c0baa3e7396502d76f33e930d69a5ca5269f93fc919db0ce81bffc527`. The ramp's crossing again started on frame 11,893; the 20-run sweep gave 0 clicks. A model of stock's EMAC arithmetic, checked against every value on 16 sample lengths from 2,000 to 480,017 frames, matches this formula on every value up to 30,721 frames and on all but 2 to 30 values above. Not flashed.
 
+Build PP20 (PP19 with the put-back step removed, `--version PP20`): `.syx` `51f4c019245374c80f1ada41173486587682946a41b1fc4fab069f1c98db243f`. Stock rebuilds the effective array every block before this handler (read from the code: the only branch past the rebuild also skips the handler), so the step never had work to do, and it could misfire: when another writer (a test build with a sample RATE that reverses by swapping STA and END) made stock's rebuilt values match what the handler wrote a block before, it swapped them again and lost the way the voice was going, and at the next turn a short piece from the loop's far end played. A block log showed that sequence. On that test build, RATE swept 46 to 127 every 2 s on a 345-frame loop: 12 full-loop jumps in four 45 s runs before, 0 after, largest step 139 to 5. Fixed RATE at raw 127, 66, 62, 20 and 0, and the sweep at TUN up and down: no click after the trig's attack. Pipo Loop alone: PP20 against PP18 sample-identical at LOP ON, LOP OFF, PIPO at TUN 0 and END below STA; PIPO at TUN +24 0 clicks, output differs; the 20-run sweep 0 clicks. PP20 not flashed.
+
 ## Hardware, 0.1.1 (reported by npp1993, 2026-10-31)
 
 RC05 (Pipo Loop as PP17, in a combined image) on an Analog Rytm MKII, OS 1.74, sample set by hand, LOP PIPO, STA and END mid-sample: a click at the sample's attack; pops that come and go at TUN -24 and -20, and with END below STA, hard to tell from the audio itself; LOP ON clicks, as expected of an unsnapped loop; PIPO back after saving the kit and a power cycle. 
@@ -64,7 +66,7 @@ RC07 (`6ae42b7b717b63d7aecc09875b76e5b0cd9a69bcbfe37a8850b111dbaaf6b7de`, this s
 
 The same build, checks asked for after that: END below STA, "that's good"; FUNC + STA and END with LOP ON, "it's good, yeah".
 
-Those reports are on PP18's source. PP19's one change to zero snap has not been on a unit.
+Those reports are on PP18's source. PP19's change to zero snap and PP20's to the turn have not been on a unit.
 
 ## Emulator, 0.1.0 (2026-10-27)
 
@@ -406,7 +408,8 @@ A `/code-review` of the branch raised ten points. What was done with each:
   and MIDI CC can put 2 in any of them. The gate now also checks that the call is for LOP's record
   (ctx 0x419a5760; a breakpoint on stock showed LOP's text called with exactly that).
 - **Fixed:** the swap relied on stock rebuilding the effective STA and END every block. The handler
-  now puts the values back itself when they still read as it wrote them a block ago.
+  now puts the values back itself when they still read as it wrote them a block ago. (Removed in
+  0.1.1, PP20: stock does rebuild them every block, and that step could misfire.)
 - **Fixed:** the travel estimate took any move up to 512 frames, so a wrap could pass for travel.
   It now counts only moves in the direction the voice was going, keeps the last good value, and
   follows voices with LOP ON too, so a switch to PIPO mid-note starts with a known step.
