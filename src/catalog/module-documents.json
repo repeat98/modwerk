@@ -6150,7 +6150,7 @@
       "id": "vector",
       "key": "VECTOR",
       "name": "VECTOR",
-      "version": "0.2.5-experimental",
+      "version": "0.2.6-experimental",
       "category": "machines",
       "source": {
         "repository": "https://github.com/repeat98/modwerk",
@@ -6420,8 +6420,8 @@
             ],
             "screenshotStyle": "black-and-white"
           },
-          "moduleVersion": "0.2.5-experimental",
-          "sourceSha256": "1255e99133cbd8d6d2587c95f93462ea80fccbd169462a2acb02aedbd346cbd3",
+          "moduleVersion": "0.2.6-experimental",
+          "sourceSha256": "27eca33a8d42bc0b5c56010864915454684d8d61df1a074403a66dda1e3d9a42",
           "imageSha256": "a753ddf67b0fe64e3742b4c89ecf141071eb30757b170173215e92b1b4794d24",
           "cycles": [
             {
@@ -6521,7 +6521,7 @@
               "The base was the development twin of the release base, not the b1b2ca58 build itself, nor the base this release commits.",
               "Not tested: the FLEX, THRU and PICKUP setups; a POLY8 or Analog BD track's SRC SETUP; VECTOR 0.2.4 on the new base; whether the SRC main page regenerates the phrase.",
               "Not tested: saving and reloading, a power cycle with VECTOR kept, and listening; no chip timing or stress.",
-              "One MKII; no MKI. The card build is 0.2.4's and was not run for this version."
+              "One MKII; no MKI. The card build was not run on a unit: 0.2.4's card source, and 0.2.6's (st_setup_page without its row-5 test, for POLY8 sets, #1119) only in ot_emu. 0.2.6 keeps publishing this 0.2.5 USB package; its control unit source is byte-identical."
             ],
             "report": "TESTING.md"
           }
@@ -6545,7 +6545,7 @@
             "page": "SRC SETUP machine chooser",
             "shows": "location",
             "firmware": "1.40C",
-            "moduleVersion": "0.2.5-experimental",
+            "moduleVersion": "0.2.6-experimental",
             "imageSha256": "cabcc2967a23a0ef719a38de444aec1b68662c12bb9057093d475b89424d0026",
             "setup": "Native ColdFire port, MKII panel mapping; original 1.40C, reported five-module composition, disposable RIG card, T1/T5 Flex with distinct VECTOR settings, Part ONE, A01, 120 BPM. Actual LCD plane plus visible stock windows rendered at 6x nearest-neighbor in monochrome. Stand-in DSP; no physical hardware or audio qualification."
           }
@@ -6562,7 +6562,7 @@
             "page": "SRC generator",
             "shows": "controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.2.5-experimental",
+            "moduleVersion": "0.2.6-experimental",
             "imageSha256": "cabcc2967a23a0ef719a38de444aec1b68662c12bb9057093d475b89424d0026",
             "setup": "Native ColdFire port, MKII panel mapping; original 1.40C, reported five-module composition, disposable RIG card, T1/T5 Flex with distinct VECTOR settings, Part ONE, A01, 120 BPM. Actual LCD plane plus visible stock windows rendered at 6x nearest-neighbor in monochrome. Stand-in DSP; no physical hardware or audio qualification."
           }
@@ -6579,7 +6579,7 @@
             "page": "SRC after Generate",
             "shows": "controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.2.5-experimental",
+            "moduleVersion": "0.2.6-experimental",
             "imageSha256": "cabcc2967a23a0ef719a38de444aec1b68662c12bb9057093d475b89424d0026",
             "setup": "Native ColdFire port, MKII panel mapping; original 1.40C, reported five-module composition, disposable RIG card, T1/T5 Flex with distinct VECTOR settings, Part ONE, A01, 120 BPM. Actual LCD plane plus visible stock windows rendered at 6x nearest-neighbor in monochrome. Stand-in DSP; no physical hardware or audio qualification."
           }
@@ -6596,7 +6596,7 @@
             "page": "SRC sample editor",
             "shows": "controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.2.5-experimental",
+            "moduleVersion": "0.2.6-experimental",
             "imageSha256": "cabcc2967a23a0ef719a38de444aec1b68662c12bb9057093d475b89424d0026",
             "setup": "Native ColdFire port, MKII panel mapping; original 1.40C, reported five-module composition, disposable RIG card, T1/T5 Flex with distinct VECTOR settings, Part ONE, A01, 120 BPM. Actual LCD plane plus visible stock windows rendered at 6x nearest-neighbor in monochrome. Stand-in DSP; no physical hardware or audio qualification."
           }
@@ -6613,7 +6613,7 @@
             "page": "SRC SETUP",
             "shows": "controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.2.5-experimental",
+            "moduleVersion": "0.2.6-experimental",
             "imageSha256": "cabcc2967a23a0ef719a38de444aec1b68662c12bb9057093d475b89424d0026",
             "setup": "Native ColdFire port, MKII panel mapping; original 1.40C, reported five-module composition, disposable RIG card, T1/T5 Flex with distinct VECTOR settings, Part ONE, A01, 120 BPM. Actual LCD plane plus visible stock windows rendered at 6x nearest-neighbor in monochrome. Stand-in DSP; no physical hardware or audio qualification."
           }
@@ -6630,7 +6630,7 @@
             "page": "Backing-pool choice",
             "shows": "controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.2.5-experimental",
+            "moduleVersion": "0.2.6-experimental",
             "imageSha256": "cabcc2967a23a0ef719a38de444aec1b68662c12bb9057093d475b89424d0026",
             "setup": "Native ColdFire port, MKII panel mapping; original 1.40C, reported five-module composition, disposable RIG card, T1/T5 Flex with distinct VECTOR settings, Part ONE, A01, 120 BPM. Actual LCD plane plus visible stock windows rendered at 6x nearest-neighbor in monochrome. Stand-in DSP; no physical hardware or audio qualification."
           }
@@ -6647,7 +6647,7 @@
             "page": "Static sample pool",
             "shows": "controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.2.5-experimental",
+            "moduleVersion": "0.2.6-experimental",
             "imageSha256": "cabcc2967a23a0ef719a38de444aec1b68662c12bb9057093d475b89424d0026",
             "setup": "Native ColdFire port, MKII panel mapping; original 1.40C, reported five-module composition, disposable RIG card, T1/T5 Flex with distinct VECTOR settings, Part ONE, A01, 120 BPM. Actual LCD plane plus visible stock windows rendered at 6x nearest-neighbor in monochrome. Stand-in DSP; no physical hardware or audio qualification."
           }
@@ -6664,7 +6664,7 @@
             "page": "Flex sample pool",
             "shows": "controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.2.5-experimental",
+            "moduleVersion": "0.2.6-experimental",
             "imageSha256": "cabcc2967a23a0ef719a38de444aec1b68662c12bb9057093d475b89424d0026",
             "setup": "Native ColdFire port, MKII panel mapping; original 1.40C, reported five-module composition, disposable RIG card, T1/T5 Flex with distinct VECTOR settings, Part ONE, A01, 120 BPM. Actual LCD plane plus visible stock windows rendered at 6x nearest-neighbor in monochrome. Stand-in DSP; no physical hardware or audio qualification."
           }

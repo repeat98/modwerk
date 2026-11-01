@@ -3901,9 +3901,6 @@ st_setup_page:
 	jeq .L702
 	tst.l edit_view
 	jne .L702
-	mov3q.l #5,%d0
-	cmp.l 1175280688.l,%d0
-	jne .L702
 	move.l %d1,12(%sp)
 	move.l (%sp)+,%d2
 	addq.l #4,%sp

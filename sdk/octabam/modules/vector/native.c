@@ -343,8 +343,10 @@ uint32_t st_draw_page(void) {
     uint32_t stock=((uint32_t (*)(void))0x40031f28u)();
     return generator_view()?generator_page(stock):stock;
 }
+/* Asked on VECTOR's own SRC SETUP row: 5 alone (hooks.s), the next one beside POLY8 (its shared-machine.c), the
+ * base's row over USB (#1119). */
 uint32_t st_setup_page(uint32_t stock) {
-    return st_selected() && !edit_view && U32(0x460d5c30u)==5?generator_page(stock):stock;
+    return st_selected() && !edit_view?generator_page(stock):stock;
 }
 static void change_control(unsigned control,int delta) {
     unsigned t=U8(TRACK_IDX); VectorParams p=settings(t), before=p;
