@@ -1,6 +1,6 @@
 # QPERF testing
 
-Nothing here proves reboot persistence or the QPER knob itself. Hardware results below are the author's, each on the build named. QC10, the code here, has not run on a unit.
+Nothing here proves reboot persistence or the QPER knob itself. Hardware results below are the author's, each on the build named. QC11, the code here, has not run on a unit.
 
 ## Hardware
 
@@ -169,7 +169,7 @@ Reported by the author on QC08: tune locked to +127 under QPER, QPER + YES set i
 
 Combined build QC09 (sha256 4bbc13f1): the tick clears its flag before reading the link, so a kit change at that moment asks again. Boot, reload, load and a knob lock passed in rytm-emu. Reported by the author on QC09: it boots and kits load.
 
-Combined build QC10 (sha256 66d32f500aeae20758b41597a831a2e82840c98ffbc0684df4afe1331200f845): core 0.7 base 0c92aa45, Filter Hz, Pipo Loop, QPERF, Silent Pad+Trig. After the owner's review, a kit's links stay until a press with QPER held, and the gestures read what is on screen. rytm-emu, factory kit K001 (31 locks, performances 1 and 10 linked). Not run on a unit.
+Combined build QC11 (sha256 442158cb8db538ec09239dbaf41dc3fff0e73425f878b8c2b677733781c818a6): core 0.7 base 0c92aa45, Filter Hz, Pipo Loop, QPERF, Silent Pad+Trig. After the owner's review, a kit's links stay until a press with QPER held, and the gestures read what is on screen. rytm-emu, factory kit K001 (31 locks, performances 1 and 10 linked). Not run on a unit.
 
 | Check | Result |
 | --- | --- |
@@ -187,14 +187,15 @@ Combined build QC10 (sha256 66d32f500aeae20758b41597a831a2e82840c98ffbc0684df4af
 | QPER + SD in PERF | Mask 0x2 |
 | FUNC + QPER, then YES | Nothing changed |
 | GLOBAL menu open, QPER held, YES, PLAY, knob D | Mask and locks unchanged, the menu kept YES, PLAY started the sequencer as stock's |
-| GLOBAL menu open, QPER + BD | Stock's link, mask 0x1 |
-| QPER held, GLOBAL, then BD, YES, PLAY | All stock's: no QPERF message, locks unchanged, PLAY started the sequencer |
+| GLOBAL menu open, QPER + BD, then SD | Mask 0x2: the one link moved, and stock's link did not run |
+| QPER held, GLOBAL, then SD, YES, PLAY | Mask 0x2, no QPERF message, locks unchanged, PLAY started the sequencer |
+| QPER + T3 | Mask 0x4 |
 
-The view classes were read from the stack on the main screen, a sound page, PERF, SCNE, MUTE, CHRO, TEMPO, the RECORDER, the GLOBAL menu and two FUNC menus. The GLOBAL menu lets stock's QPER view open above it, so a site in that view would not keep the gestures out, and they check the top view instead.
+The view classes were read from the stack on the main screen, a sound page, PERF, SCNE, MUTE, CHRO, TEMPO, the RECORDER, the GLOBAL menu and two FUNC menus. The GLOBAL menu lets stock's QPER view open above it, so a site in that view would not keep the gestures out, and they check the top view instead. Linking has its own site in that view, at stock's pad test, so it follows stock's reach and stays one link.
 
 ## Not tested
 
-- QC10 on a unit: link, knob edit, YES, clear and undo, copy and paste.
+- QC11 on a unit: link, knob edit, YES, clear and undo, copy and paste.
 - SysEx kit receive.
 - Menus and dialogs other than those above: they count as not ours because their class is not on the list.
 - Performance load.

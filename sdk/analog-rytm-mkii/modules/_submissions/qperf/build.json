@@ -50,6 +50,13 @@
           "target": "qperf_pot_gate"
         },
         {
+          "addr": "0x40122fde",
+          "len": 6,
+          "stockSha256": "87161bd9e197c8b40b6a38327205fcf078fb26e4a93a371f5df2a80ccd8a1cf8",
+          "op": "jsr",
+          "target": "qperf_pad_gate"
+        },
+        {
           "addr": "0x400a65a4",
           "len": 6,
           "stockSha256": "87559bdabb7d0827f6d5a6bf4dfc98ed1b0f20a1933ad8dfe63fa52c9fdfc9c3",

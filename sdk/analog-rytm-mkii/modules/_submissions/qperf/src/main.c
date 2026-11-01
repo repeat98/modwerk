@@ -17,7 +17,8 @@
 // FUNC + QPER (stock's mute) is untouched.
 //
 // The gestures work on the pages and the pad screens over them. A menu or dialog
-// keeps its keys, though some let stock's QPER view open above them.
+// keeps its keys, though some let stock's QPER view open above them. There a pad
+// still moves the link, so nothing links several.
 //
 // Stock's amount is only written to performances linked when the knob moves, so
 // the knob's position comes from one site of our own, where stock reads it, and
@@ -102,7 +103,6 @@ typedef void (*end_lock_edit_t)(void *ui);
 #define KEY_PLAY 0x51
 #define KEY_REC 0x50
 #define KEY_STOP 0x52
-#define KEY_PAD 0x90
 #define KEY_FUNC 0x80
 #define EV_KEY 12                   // event + 12: the key
 #define EV_FLAGS 16                 // event + 16: bit 0 down (clear on release), 8 repeat
@@ -124,7 +124,9 @@ typedef void (*end_lock_edit_t)(void *ui);
 #define FX_TRACK 12
 
 typedef unsigned (*is_key_held_t)(int key);
+typedef unsigned char (*event_test_t)(void *event);
 #define IS_KEY_HELD ((is_key_held_t)IS_KEY_HELD_AT)
+#define PRESSED_ONCE ((event_test_t)PRESSED_ONCE_AT)
 
 static int held;                    // QPER is down, on a screen of ours, without FUNC
 static unsigned swallowed;          // YES, PLAY, REC and STOP: their release is ours too
@@ -154,6 +156,18 @@ __asm__(
     "    lea %sp@(-16),%sp\n"
     "    move.l %a2,%sp@-\n"
     "    jmp " ADDRESS(KIT_CHANGED_RESUME_AT) "\n");
+
+// Replaces the 6-byte press test of a pad or trig in stock's QPER view, reached
+// wherever stock would link. d2 is its performance. The 0 skips stock's link.
+__asm__(
+    ".globl qperf_pad_gate\n"
+    "qperf_pad_gate:\n"
+    "    move.l %d2,%sp@-\n"
+    "    move.l %sp@(8),%sp@-\n"
+    "    jsr qperf_pad\n"
+    "    addq.l #8,%sp\n"
+    "    moveq #0,%d0\n"
+    "    rts\n");
 
 // Stock's popup, opened from ev_tick so repeats open one, not dozens.
 static void *views;
@@ -466,21 +480,20 @@ static void perf_action(int key)
         show("NOTHING TO COPY");
 }
 
-// A pad or trig key's performance, or -1.
-static int link_key(int key)
+void qperf_pad(void *event, int perf)
 {
-    if (key >= 0 && key < PERFS)
-        return key;
-    if (key >= KEY_PAD && key < KEY_PAD + PERFS)
-        return key - KEY_PAD;
-    return -1;
+    if (PRESSED_ONCE(event)) {
+        void *kit = active_kit();
+        unsigned one = 1u << perf, mask = linked(kit) == one ? 0 : one;
+        KIT_SET_MASK(kit, (int)mask);
+        link_moved(mask);
+    }
 }
 
 int qperf_key(void *brain, void *event)
 {
     int key = *(int *)((char *)event + EV_KEY);
     unsigned flags = *(unsigned *)((char *)event + EV_FLAGS), bit;
-    int perf;
     views = *(void **)((char *)brain + BRAIN_VIEWS);
     if (key == KEY_QPER) {
         if (!(flags & PRESSED)) {
@@ -493,17 +506,6 @@ int qperf_key(void *brain, void *event)
             locker_install();
         }
         return 0;
-    }
-    perf = link_key(key);
-    if (held && perf >= 0 && top_view() == QPER_VTABLE) {
-        if ((flags & PRESSED) && !(flags & REPEAT)) {
-            void *kit = active_kit();
-            unsigned one = 1u << perf, mask = linked(kit) == one ? 0 : one;
-            known |= linked(kit);       // stock's QPER view links over a menu
-            KIT_SET_MASK(kit, (int)mask);
-            link_moved(mask);
-        }
-        return 1;
     }
     if (key == KEY_YES)
         bit = 1;
