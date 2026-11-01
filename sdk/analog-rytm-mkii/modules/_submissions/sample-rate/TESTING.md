@@ -94,6 +94,10 @@ An earlier build (SP01) clicked here: flips that landed the voice at an edge at 
 
 A diagnostic build (not kept) logged two of those jumps block by block. The voice lands on END's frame near 5 frames a block, which stock's pitch cannot reach (its floor is 8), turns, and a block later is back to going up: stock wraps it to STA, and Pipo Loop's next turn sends it back. Open: the fix belongs in Pipo Loop's turn, as a module update of its own.
 
+## Playhead (SP03, SMPL WAVEFORM, LOP ON)
+
+The line moves about 37 columns in 30 M at RATE 127, 19 at RATE 96, and stays put at RATE 64: it follows fixed RATE values. Not run with RATE moving.
+
 ## Not tested
 
 Saving a sound to the pool in the emulator (bank A is write protected there), a project file round trip, Env Reset Amp beside it, MKI. CPU load on a unit: the figures in the manifest are a static estimate.
