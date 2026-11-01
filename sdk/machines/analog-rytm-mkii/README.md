@@ -39,7 +39,7 @@ Handlers use the C calling convention: arguments on the stack, d0–d1/a0–a1 f
 | --- | --- | --- |
 | `ev_tick` | the UI compose check, about 20 Hz (the Digitakt's runs at 30) | `void f(void *ctrl)`; set `ctrl + 0x20` to 1 to request a redraw. Not an audio-rate clock. |
 | `ev_draw` | after the OS composes the 128 × 64 screen | `void f(void *bmp, void *ctrl)`; y counts up from the bottom row (0) to the top (63), x runs left to right |
-| `ev_key` | a UI key event | `int f(void *brain, void *event)`; nonzero consumes it. `event + 12` is the key id (trig keys 0x00–0x0f, BANK A–H 0xc0–0xc7, FUNC 0x80, NO 0x45), `event + 16` the flags: 1 pressed, 0x10 released; a held key repeats with 8 set (a 2 s BANK hold gave 15 events) |
+| `ev_key` | a UI key event | `int f(void *brain, void *event)`; nonzero consumes it. `event + 12` is the key id (trig keys 0x00–0x0f, BANK A–H 0xc0–0xc7, FUNC 0x80, NO 0x45), `event + 16` the flags: bit 0 set while down, clear on the release (stock tests that bit; 0x10 is missing when another key went down during the hold, so never test it for a release); a held key repeats with 8 set (a 2 s BANK hold gave 15 events); `brain + 32` is the view manager, for stock's popups |
 | `ev_enc` | a UI encoder event | `int f(void *brain, void *event)`; nonzero consumes it. `event + 12` is the encoder, 0–7 for A–H (not 1–8 as elekloader's ADAPTING.md gives for the Digitakt), `event + 16` the count after the encoder's acceleration, which can be 0 for a slow first turn |
 | `ev_settings` | building the SETTINGS menu | `void f(void *menu)`; add rows with `core_additem(menu, row)` |
 | `ev_render_in` / `ev_render_out` | entry and exit of the ColdFire's audio block: 32 frames, about 1,500 blocks a second | `void f(void)` |
@@ -56,6 +56,24 @@ Traps found while writing a C mod for OS 1.74 (rytm-emu `3c4c42c`, October 2026)
 - **FUNC + turn never reaches the parameter path.** On a sound page a turn with FUNC held calls neither `param_set_apply_delta` nor `param_set_value`, and stock changes nothing, so a hook there never sees it. Take the gesture in `ev_enc` and test FUNC with `is_key_held(0x80)`.
 - **SETTINGS is the GLOBAL menu.** The rows `ev_settings` adds come after SYSTEM in the menu the GLOBAL key opens. The menu calls a row's label callback again when it redraws the row, so the label can show the row's state: a row whose select callback flips a value and whose label reads it shows the new value at once.
 - **Trig times in rytm-emu.** `DTEMU_FRAME_TRACE=160,162` prints the analog voice frame's trig switches (BD byte 161 bit 4, SD byte 160 bit 0, RS byte 163 bit 4) with their sample number whenever they change: exact trig timing without reading audio. The sequencer's timing words are in [sequencing.md](../../../docs/module-guides/sequencing.md#analog-rytm-mkii-os-174).
+- **A popup takes NO by default.** A `PopupWindow` sits on the view stack for 35 UI ticks. Plain NO closes it, and NO goes no further, so a gesture on NO does not run while one shows and the press does not count as held. Stock's reload messages call the popup's method at vtable + 84 with 0 to let NO through; do the same for a module's own message.
+- **Views above the page can let keys through.** The RECORDER (vtable `0x40234800`) leaves FUNC + NO to the page and main views, so a gesture patched in them also runs there. The manager's last list node (`+24`, view at node `+8`) is the top view.
+- **FUNC + NO belongs to LIVE RECORDING.** On a sound page, while LIVE RECORDING runs, stock holds it to erase the active track's locks step by step (`0x40036370` is true only while the sequencer plays). Outside that it does nothing, with or without a held trig, so a module may take it there; test that state first.
+- **The sequencer builds a step ahead.** Per track, `0x4009b0b4` builds step N, locks included, when its tick divider is 0, stamped to fire one step's ticks later. When the divider wraps it publishes N (`0x4009a7e2`) and posts the UI event, and the UI's live-record tick `0x400c7ef6` then acts on N. So the lock erase and the held-note wipe reach a step already queued: it plays once as it was. An edit meant for the step being played has to land before the build.
+- **Stock's saved pattern and kit differ.** Pattern save fills one RAM buffer that every pattern change refills; kit save overwrites the kit's saved copy and links the kit to the active pattern. On a unit the saved kit and the active kit's edits both survive a power cycle. A module's static state does not.
+
+## Performance locks and the QPER knob
+
+OS 1.74, read from the code unless marked.
+
+- **Lock table.** 48 slots of 5 bytes in the kit, shared by all 12 performances: s16 value (8.8), track, parameter index, performance. Performance locks are offsets. They add on top of scenes.
+- **Amount.** Each performance's amount is a u16 at `0x8000e57c`, written through `0x400b2c6a`. The QPER knob and PERF pad pressure both write it, with no priority: the last write stands. The knob only writes to performances linked when it moves.
+- **Scale.** The knob's value is one panel byte, times 128, so at most 32640. The audio interrupt runs the MAC in fractional mode, so a lock adds lock * amount / 32768. Full QPER is at most 99.6% of a lock. Pad pressure keeps 15 bits and reaches 32767.
+- **Range.** Stock lets a lock pass its parameter's range. Writing the sum to the kit stops at the limit (`0x400a906c`, ranges in the id table at `0x401bfbc8`), so baking such a lock changes the sound.
+- **Lock edit.** The parameter pages edit through a locker at offset 440 of the object `0x401816f4` returns; its vtable slots run from +8 (has any) to +36 (lockable). A module can install its own while a key is held.
+- **What locks reach.** Performance and scene lockers both refuse a parameter whose category (row +0 of the id table) is above 60 (`0x40006eec`), and the TRIG and EUCLIDEAN rows are 61. With a locker set, a knob on such a row writes nothing (`0x40038650`). Do not answer yes from a locker's own lockable slot: a lock's parameter index (row +4) names a live word, 26 + 42 * track + index, and indices repeat across domains, so Velocity's 1 lands on LFO Multiplier. Note, velocity and length live per step: the sequencer (`0x4009aa28`) reads them from the track at +128, +192 and +256, with -1 falling back to +704 to +706, and never reads the live words.
+- **Clear, copy, paste.** `0x400ad56a`, `0x400ad74a` and `0x400ad800`, with undo at `0x400ad652` (kind 1 clear, 2 paste). Stock drops the undo after a later edit [reported].
+- **Whole-kit changes.** `0x400a65a4` runs after each one: load, reload, SysEx receive and restores. Writing amounts directly from it and from `ev_project` left the kit blank at boot [measured, the two not separated]. Set a flag in both and act on the tick.
 
 ## The audio block
 
@@ -66,6 +84,15 @@ What follows was read and measured for Send FX on OS 1.74 (`src/gate.s` on branc
 - **What it buys.** `mac.w` with a parallel load sums the eight voice words in one instruction each: each multiplies a word's upper half by its gain while it loads the next word. To add a 16-bit return to a 24-bit PRE word with 24-bit saturation, shift the word up 8 bits, `move.l` it into an accumulator, `mac.l` the sample by the gain, read it back with `movclr.l` and shift it down 8. In the emulator Send FX's output loop fell from about 40 to about 20 instructions a frame, and the eight voices from about 60 to about 16.
 - **Measure it on the unit's own clock.** core-ar2 starts DMA timer 0 free running. Read its counter (0xFC07000C) as the mod's block starts and ends, and divide by the time since the previous block, as Send FX's CPU meter does. In the emulator one instruction executed per 48 kHz frame cost about 0.023 % of the block period.
 - **rytm-emu's profiler does not see mod code.** `dtboot --profile-after N` (revision `3c4c42c`) samples only the blocks it runs from its code window, the stock code from 0x40000400. A mod's code, high in RAM (0x47BE0000 on), runs on the stepped path and is never sampled. Measuring Send FX needed a local change to `src/cpu.rs` that samples the stepped branch too, at a jittered interval (33 to 96 instructions) so a loop's period does not alias with it, and a dump of every sampled PC in an address range. Propose such a change to [rytm-emu](https://github.com/trigcondition/rytm-emu) upstream; do not commit emulator code here.
+
+## Sample playback
+
+What follows was read and measured on OS 1.74 while fixing Pipo Loop's turns.
+
+- **STA and END to frames.** Both are 8.8 values of 120. Stock's routine at 0x4011bf44 truncates: the frame is floor(frames * value / 30720), and only a fraction within 1/256 of the next frame rounds up, which on most lengths is about 1 value in 260. Take this from a running voice's position (rec + 4 at 0x80005b30 + 92 per voice) rather than working the instructions by hand: an earlier reading by hand said ceil.
+- **The sample DMA aligns to 8 frames.** The prefetch starts its window and its wrap on `frame & ~7`. A mod that follows that window has to use stock's frame: one frame off across a multiple of 8 expects a window 8 frames away, at every pass of that point.
+- **Calling that routine from audio code.** It runs before the prefetch sets its MACSR when called from the audio hook at 0x40121134, so set 0xA0 and put the old value back around the call. It expects empty accumulators, as the prefetch does, and leaves them empty. Whether the interrupt saves the accumulators over UI code was not checked, so Pipo Loop's UI uses the formula in plain integers.
+- **Test on an odd sample length.** At 24,000 frames every whole STA or END is a multiple of 200 frames, where truncating and rounding up agree. A 23,777-frame ramp showed clicks that 24,000 frames never could.
 
 ## Parameter pages (core 0.4 and later)
 

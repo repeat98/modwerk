@@ -155,3 +155,19 @@ not hardware evidence.
 - Reported by the author, playing it with a friend: the six models work "very well".
 - Power cycle: a project saved with SYNTIZ tracks, the unit switched off and on; reported by the author: everything
   came back. Over USB afterwards: base `b30d9b09…`, nothing missing.
+
+## Load on the author's MKII, and the three-track limit (29-30 October 2026)
+
+- Package `d0af8336` kept on `b30d9b09` (the author's release branch: this draft plus the `ev_trig_muted` question,
+  which needs `build.py --raise`). Reported by the author: a seven-track test project crackles "like an old record"
+  while SYNTIZ plays; with long notes three SYNTIZ tracks play clean and a fourth crackles.
+- The base's frame guard on the RAM-booted development twin `04e94075`, the same project playing for 120 s: without
+  SYNTIZ 35.2 % of each frame in the frame interrupt; with its seven SYNTIZ tracks 79.6 %, 6.35 renders dropped a
+  frame on average, the longest frame 146.5 % (the guard's share is 80 %).
+- Three lighter builds were tried on the unit and set aside: shortcuts that keep every sample, a rest between notes,
+  and a plain output stage without the antiderivative. With long notes none let a fourth track play clean (the
+  author's listening). Rendering at half rate was rejected by the author on listening examples.
+- The limit: `wave_admit_track` admits at most three SYNTIZ tracks in a Part. Package `f501a6a4`, the release branch
+  with this function, tried and kept on `b30d9b09` over USB; reported by the author: choosing SYNTIZ for a fourth
+  track is refused. The function, copied from `machine.c`, passed a host check (an empty Part, three tracks, a model
+  change, another machine's leftover signature, a Part saved with seven). The draft's own package is not built here.
