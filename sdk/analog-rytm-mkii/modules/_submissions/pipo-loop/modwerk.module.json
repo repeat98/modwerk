@@ -2,7 +2,7 @@
   "schemaVersion": 3,
   "id": "pipo-loop",
   "name": "Pipo Loop",
-  "version": "0.1.0-experimental",
+  "version": "0.1.1-experimental",
   "machine": "analog-rytm-mkii",
   "category": "playback",
   "exclusive": false,
@@ -73,7 +73,7 @@
     "limitations": [
       "Zero snap is exact only on samples up to 30,720 frames (0.64 s at 48 kHz): STA and END are steps of 1/30,720 of the sample, so on longer samples the point lands on the nearest step, up to frames / 61,440 frames from the crossing (1 frame at 1 s, about 8 at 10 s, 47 at 60 s).",
       "Built for OS 1.74 only, with core-ar2 0.7.",
-      "Run on a unit by the author as test builds (PC03, PD01-PD05) and as PP14, this code alone on core-ar2 0.7; several voices in PIPO, LOP locks and scenes on a unit, MIDI CC 30 and samples over 0.64 s are not yet tested there (TESTING.md).",
+      "Run on a unit by the author as test builds (PC03, PD01-PD05) as PP14, 0.1.0 alone on core-ar2 0.7, and 0.1.1 as RC07, a combined image; several voices in PIPO, LOP locks and scenes on a unit, MIDI CC 30 and samples over 0.64 s are not yet tested there (TESTING.md).",
       "MIDI CC 30 (LOP) writes its value unchanged, as on stock: CC value 2 now gives PIPO, every other nonzero value ON. Other OFF/ON parameters still read ON for 2.",
       "On stock OS, or a build without this mod, PIPO plays as ON; LOP reads ERROR for it until the knob is turned, which steps between OFF and ON.",
       "LOP's switch is drawn with the knob in the middle for ON, where stock draws it on the right; the value text still reads ON.",
@@ -100,7 +100,7 @@
     ]
   },
   "resources": {
-    "memoryBytes": 7221,
+    "memoryBytes": 7589,
     "fastBytes": 0,
     "load": {
       "display": "About 0.1 % of a block idle, 0.6 % with eight voices in PIPO (static estimate)",
@@ -110,20 +110,21 @@
   },
   "evidence": {
     "tier": "author-hardware",
-    "moduleVersion": "0.1.0-experimental",
-    "sourceSha256": "1a344049f5887be29169977153b40204b2c99caa63370fd2a2ce8d0968e596b7",
+    "moduleVersion": "0.1.1-experimental",
+    "sourceSha256": "709f762064218f38e5b3f86dae008688c4b25d7450d4a772afcfd29944f25075",
     "reports": [
       "TESTING.md"
     ],
     "hardware": {
       "model": "Analog Rytm MKII",
       "release": "1.74",
-      "testedOn": "2026-10-29",
+      "testedOn": "2026-10-31",
       "tester": "npp1993",
       "durationMinutes": null,
-      "summary": "npp1993 (the author) flashed PP14 (Pipo Loop 0.1.0 alone on core-ar2 0.7) on an Analog Rytm MKII, OS 1.74, and reports: the LOP switch, FUNC zero snap on the sample markers and PIPO turns work; a kit with PIPO saved and reloaded; the unit booted after a power cycle; on stock 1.74 a PIPO kit loaded without a crash, LOP read ERROR, the sound looped as ON, and turning the knob stepped between OFF and ON. Earlier, npp1993 flashed test builds on core-ar2 0.3 with Silent Pad+Trig 0.5.1, and reported: LOP shows OFF, ON and PIPO on a three-position switch; PIPO ping-pongs; FUNC + STA/END lands on zero crossings, steps like LOP, holds at the first and last crossings, and lets STA and END pass or share a crossing; snapped LOP ON loops are clean where unsnapped ones click; a lock set with a trig held lands on a crossing and shows when the trig is held; the S and E labels show at the sample's ends, sharing a crossing and reversed.",
+      "summary": "npp1993 (the author) flashed PP14 (Pipo Loop 0.1.0 alone on core-ar2 0.7) on an Analog Rytm MKII, OS 1.74, and reports: the LOP switch, FUNC zero snap on the sample markers and PIPO turns work; a kit with PIPO saved and reloaded; the unit booted after a power cycle; on stock 1.74 a PIPO kit loaded without a crash, LOP read ERROR, the sound looped as ON, and turning the knob stepped between OFF and ON. Earlier, npp1993 flashed test builds on core-ar2 0.3 with Silent Pad+Trig 0.5.1, and reported: LOP shows OFF, ON and PIPO on a three-position switch; PIPO ping-pongs; FUNC + STA/END lands on zero crossings, steps like LOP, holds at the first and last crossings, and lets STA and END pass or share a crossing; snapped LOP ON loops are clean where unsnapped ones click; a lock set with a trig held lands on a crossing and shows when the trig is held; the S and E labels show at the sample's ends, sharing a crossing and reversed. 0.1.1 as RC07: no pops or clicks at PIPO turns, as reported.",
       "limitations": [
         "Results are as reported by the author, not itemized measurements; duration not recorded.",
+        "0.1.1 on a unit: RC07 6ae42b7b717b63d7aecc09875b76e5b0cd9a69bcbfe37a8850b111dbaaf6b7de, this source in a combined image; the author reports no pops or clicks at PIPO turns with a short sample, STA and END on and off zero crossings, TUN moved up and down. PP18 alone was not flashed. PP20, the released source, adds a zero snap rounding change and removes a step of the turn, and was not flashed.",
         "Tested builds were diagnostics with an on-screen readout (PD01, PD03, PD04, PD05; PD05 is PC11's code plus the readout) and PC03; PC11 and PP13 themselves were not flashed; PP14 (this code on core-ar2 0.7) was, and its checks are reported, not itemized.",
         "Not tested on a unit: several voices in PIPO, LOP locks and scenes, MIDI CC 30, Silent Pad+Trig used together, samples over 0.64 s.",
         "Tested SysEx: PP14 94bb114986d71e23760cdfec3d0de1f055637c5417bd9b40a29febcbc474e2ac, PD05 c0ea404ef4aac79334f1513a4a81953997a405f7811f45426bd6d484efc3ccb4; firmware was not read back from the device."
@@ -133,7 +134,7 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "rytm-emu c5732f0, OS 1.74, build PP13: LOP OFF/ON/PIPO on a three-position switch; PIPO turns exactly at STA and END (period 2x the loop at TUN -24, 0, +24); p-lock, scene, two voices, retrig, power-off; stock plays a saved PIPO as a loop; zero snap stepping like LOP onto stock's own frames, on the sound and on locks, holding at the sample's edges, STA and END passing or sharing a crossing. Hardware, as reported: PC03; diagnostics PD01-PD05 (snap holds at edges, clean LOP ON loops when snapped, S/E labels, locks).",
+    "summary": "rytm-emu c5732f0, OS 1.74, build PP13: LOP OFF/ON/PIPO on a three-position switch; PIPO turns exactly at STA and END (period 2x the loop at TUN -24, 0, +24); p-lock, scene, two voices, retrig, power-off; stock plays a saved PIPO as a loop; zero snap stepping like LOP onto stock's own frames, on the sound and on locks, holding at the sample's edges, STA and END passing or sharing a crossing. Hardware, as reported: PC03; diagnostics PD01-PD05 (snap holds at edges, clean LOP ON loops when snapped, S/E labels, locks). 0.1.1 (PP20): no clicks at PIPO turns in rytm-emu.",
     "documentation": {
       "tutorial": {
         "title": "Quick tutorial",
@@ -185,9 +186,9 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "0.1.0-experimental",
-        "imageSha256": "ae15d8b52b4485e0216a4416dd809334b07cdfde0529ca69e8fcd9b59ca58147",
-        "setup": "Headless rytm-emu c5732f0 (dtboot) running PP13: the released core-ar2 0.3 and this folder's Pipo Loop 0.1.0, linked by Modwerk on the owner's stock OS 1.74, BD playing a generated ramp sample. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "moduleVersion": "0.1.1-experimental",
+        "imageSha256": "11cf7f270b5323fdc8beab00ebfbd2cfe3a7b5f4e4b29d3abe408652ec969d52",
+        "setup": "Headless rytm-emu c5732f0 (dtboot) running PP17: the vendored core-ar2 0.7 and this folder's Pipo Loop 0.1.1, linked by Modwerk on the owner's stock OS 1.74, BD playing a generated ramp sample. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
@@ -201,9 +202,9 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "0.1.0-experimental",
-        "imageSha256": "ae15d8b52b4485e0216a4416dd809334b07cdfde0529ca69e8fcd9b59ca58147",
-        "setup": "Headless rytm-emu c5732f0 (dtboot) running PP13: the released core-ar2 0.3 and this folder's Pipo Loop 0.1.0, linked by Modwerk on the owner's stock OS 1.74, BD playing a generated ramp sample. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "moduleVersion": "0.1.1-experimental",
+        "imageSha256": "11cf7f270b5323fdc8beab00ebfbd2cfe3a7b5f4e4b29d3abe408652ec969d52",
+        "setup": "Headless rytm-emu c5732f0 (dtboot) running PP17: the vendored core-ar2 0.7 and this folder's Pipo Loop 0.1.1, linked by Modwerk on the owner's stock OS 1.74, BD playing a generated ramp sample. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
@@ -217,9 +218,9 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "0.1.0-experimental",
-        "imageSha256": "ae15d8b52b4485e0216a4416dd809334b07cdfde0529ca69e8fcd9b59ca58147",
-        "setup": "Headless rytm-emu c5732f0 (dtboot) running PP13: the released core-ar2 0.3 and this folder's Pipo Loop 0.1.0, linked by Modwerk on the owner's stock OS 1.74, BD playing a generated ramp sample. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "moduleVersion": "0.1.1-experimental",
+        "imageSha256": "11cf7f270b5323fdc8beab00ebfbd2cfe3a7b5f4e4b29d3abe408652ec969d52",
+        "setup": "Headless rytm-emu c5732f0 (dtboot) running PP17: the vendored core-ar2 0.7 and this folder's Pipo Loop 0.1.1, linked by Modwerk on the owner's stock OS 1.74, BD playing a generated ramp sample. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
@@ -233,9 +234,9 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "0.1.0-experimental",
-        "imageSha256": "ae15d8b52b4485e0216a4416dd809334b07cdfde0529ca69e8fcd9b59ca58147",
-        "setup": "Headless rytm-emu c5732f0 (dtboot) running PP13: the released core-ar2 0.3 and this folder's Pipo Loop 0.1.0, linked by Modwerk on the owner's stock OS 1.74, BD playing a generated ramp sample. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "moduleVersion": "0.1.1-experimental",
+        "imageSha256": "11cf7f270b5323fdc8beab00ebfbd2cfe3a7b5f4e4b29d3abe408652ec969d52",
+        "setup": "Headless rytm-emu c5732f0 (dtboot) running PP17: the vendored core-ar2 0.7 and this folder's Pipo Loop 0.1.1, linked by Modwerk on the owner's stock OS 1.74, BD playing a generated ramp sample. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
@@ -249,9 +250,9 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "0.1.0-experimental",
-        "imageSha256": "ae15d8b52b4485e0216a4416dd809334b07cdfde0529ca69e8fcd9b59ca58147",
-        "setup": "Headless rytm-emu c5732f0 (dtboot) running PP13: the released core-ar2 0.3 and this folder's Pipo Loop 0.1.0, linked by Modwerk on the owner's stock OS 1.74, BD playing a generated ramp sample. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "moduleVersion": "0.1.1-experimental",
+        "imageSha256": "11cf7f270b5323fdc8beab00ebfbd2cfe3a7b5f4e4b29d3abe408652ec969d52",
+        "setup": "Headless rytm-emu c5732f0 (dtboot) running PP17: the vendored core-ar2 0.7 and this folder's Pipo Loop 0.1.1, linked by Modwerk on the owner's stock OS 1.74, BD playing a generated ramp sample. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
@@ -265,9 +266,9 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "0.1.0-experimental",
-        "imageSha256": "ae15d8b52b4485e0216a4416dd809334b07cdfde0529ca69e8fcd9b59ca58147",
-        "setup": "Headless rytm-emu c5732f0 (dtboot) running PP13: the released core-ar2 0.3 and this folder's Pipo Loop 0.1.0, linked by Modwerk on the owner's stock OS 1.74, BD on a generated slow sine (PIPO_SLOW), SMPL WAVEFORM view. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "moduleVersion": "0.1.1-experimental",
+        "imageSha256": "11cf7f270b5323fdc8beab00ebfbd2cfe3a7b5f4e4b29d3abe408652ec969d52",
+        "setup": "Headless rytm-emu c5732f0 (dtboot) running PP17: the vendored core-ar2 0.7 and this folder's Pipo Loop 0.1.1, linked by Modwerk on the owner's stock OS 1.74, BD on a generated slow sine (PIPO_SLOW), SMPL WAVEFORM view. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
@@ -281,9 +282,9 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "0.1.0-experimental",
-        "imageSha256": "ae15d8b52b4485e0216a4416dd809334b07cdfde0529ca69e8fcd9b59ca58147",
-        "setup": "Headless rytm-emu c5732f0 (dtboot) running PP13: the released core-ar2 0.3 and this folder's Pipo Loop 0.1.0, linked by Modwerk on the owner's stock OS 1.74, BD on a generated slow sine (PIPO_SLOW), SMPL WAVEFORM view. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "moduleVersion": "0.1.1-experimental",
+        "imageSha256": "11cf7f270b5323fdc8beab00ebfbd2cfe3a7b5f4e4b29d3abe408652ec969d52",
+        "setup": "Headless rytm-emu c5732f0 (dtboot) running PP17: the vendored core-ar2 0.7 and this folder's Pipo Loop 0.1.1, linked by Modwerk on the owner's stock OS 1.74, BD on a generated slow sine (PIPO_SLOW), SMPL WAVEFORM view. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
@@ -297,9 +298,9 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "0.1.0-experimental",
-        "imageSha256": "ae15d8b52b4485e0216a4416dd809334b07cdfde0529ca69e8fcd9b59ca58147",
-        "setup": "Headless rytm-emu c5732f0 (dtboot) running PP13: the released core-ar2 0.3 and this folder's Pipo Loop 0.1.0, linked by Modwerk on the owner's stock OS 1.74, BD on a generated slow sine (PIPO_SLOW), SMPL WAVEFORM view. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "moduleVersion": "0.1.1-experimental",
+        "imageSha256": "11cf7f270b5323fdc8beab00ebfbd2cfe3a7b5f4e4b29d3abe408652ec969d52",
+        "setup": "Headless rytm-emu c5732f0 (dtboot) running PP17: the vendored core-ar2 0.7 and this folder's Pipo Loop 0.1.1, linked by Modwerk on the owner's stock OS 1.74, BD on a generated slow sine (PIPO_SLOW), SMPL WAVEFORM view. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
@@ -313,9 +314,9 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "0.1.0-experimental",
-        "imageSha256": "ae15d8b52b4485e0216a4416dd809334b07cdfde0529ca69e8fcd9b59ca58147",
-        "setup": "Headless rytm-emu c5732f0 (dtboot) running PP13: the released core-ar2 0.3 and this folder's Pipo Loop 0.1.0, linked by Modwerk on the owner's stock OS 1.74, BD on a generated slow sine (PIPO_SLOW), SMPL WAVEFORM view. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "moduleVersion": "0.1.1-experimental",
+        "imageSha256": "11cf7f270b5323fdc8beab00ebfbd2cfe3a7b5f4e4b29d3abe408652ec969d52",
+        "setup": "Headless rytm-emu c5732f0 (dtboot) running PP17: the vendored core-ar2 0.7 and this folder's Pipo Loop 0.1.1, linked by Modwerk on the owner's stock OS 1.74, BD on a generated slow sine (PIPO_SLOW), SMPL WAVEFORM view. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
@@ -329,9 +330,9 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "0.1.0-experimental",
-        "imageSha256": "ae15d8b52b4485e0216a4416dd809334b07cdfde0529ca69e8fcd9b59ca58147",
-        "setup": "Headless rytm-emu c5732f0 (dtboot) running PP13: the released core-ar2 0.3 and this folder's Pipo Loop 0.1.0, linked by Modwerk on the owner's stock OS 1.74, BD on a generated slow sine (PIPO_SLOW), SMPL WAVEFORM view. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "moduleVersion": "0.1.1-experimental",
+        "imageSha256": "11cf7f270b5323fdc8beab00ebfbd2cfe3a7b5f4e4b29d3abe408652ec969d52",
+        "setup": "Headless rytm-emu c5732f0 (dtboot) running PP17: the vendored core-ar2 0.7 and this folder's Pipo Loop 0.1.1, linked by Modwerk on the owner's stock OS 1.74, BD on a generated slow sine (PIPO_SLOW), SMPL WAVEFORM view. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     }
   ]

@@ -8,10 +8,11 @@
 // turn as stock's acceleration gives them.
 //
 // STA and END are 8.8 values of 120, 1/30720 of the sample: stock's prefetch
-// plays from frame ceil(frames * value / 30720) (its EMAC multiply by 8/15,
-// worked through for every value). Up to 30720 frames every frame has a
-// value, and the snap lands on the crossing's frame exactly; past it the
-// nearest value is used, at most frames / 61440 frames from the crossing.
+// plays from frame floor(frames * value / 30720), rounded up only within
+// 1/256 of the next frame (its EMAC multiply by 8/15 keeps 8 bits of
+// fraction). Up to 30720 frames every frame has a value, and the snap lands
+// on the crossing's frame; past it the nearest value is used, at most
+// frames / 61440 frames from the crossing.
 //
 // A crossing is where the sample changes sign; samples within SILENT of zero
 // count as neither sign, so silence and DC near zero are passed over. The
@@ -55,9 +56,11 @@ static word_t vcall3(void *obj, int slot, int a, int b)
 
 static int frame_of(unsigned frames, int v)   // stock's start or end frame for a value
 {
+    unsigned p;
     if (v < 0)
         v = 0;
-    return (int)((frames / FULL) * (unsigned)v + ((frames % FULL) * (unsigned)v + FULL - 1) / FULL);
+    p = (frames % FULL) * (unsigned)v;
+    return (int)((frames / FULL) * (unsigned)v + p / FULL + (p % FULL * 256 > 255 * FULL));
 }
 
 static int value_of(unsigned frames, int f)   // the value whose frame is f, or the nearest
