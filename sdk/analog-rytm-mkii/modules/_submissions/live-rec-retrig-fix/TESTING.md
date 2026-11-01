@@ -37,7 +37,9 @@ RC06 (RC05 with the press on the nearest block start at rates that record a step
 | 1/32, swing 57 and 66, live against playback | not the same: live 0.59 1.16 1.73, back 0.59 1.09 1.59 1.73; a step retrig runs straight from its trig. Listed in the README |
 | Row unchecked and checked, `--power-off`, cold boot on that card | the row comes back as it was, on the card |
 
-Temp Save on RC06: TEMP SAVED shown. Not run: audible checks, project save through the menu, a project switch, the row's bit on an older project, RC06 on a unit.
+Temp Save on RC06: TEMP SAVED shown. Not run in the emulator: audible checks, project save through the menu, a project switch, the row's bit on an older project.
+
+Unit, RC07 (RC06 with Pipo Loop 2cd623f3, sha256 6ae42b7b717b63d7…), reported by npp1993: 1/32 quantize off, every trig on the grid; a press under half a step recorded one hit; RETRIG GRID unchecked, SAVE PROJECT AS, LOAD PROJECT: still unchecked. The same save showed random characters in the name entry screen on the tester's project, with the project's name as expected elsewhere. Not reproduced: rytm-emu's factory project shows a clean name on RC07 and on stock 1.74, existing and empty slots. Cause not known.
 
 ## 0.1.0-experimental (rytm-emu, 31 October 2026)
 
