@@ -171,6 +171,8 @@ npp1993 flashed SP03 on an Analog Rytm MKII, OS 1.74, and reports the following.
 | Many other stored sounds, LOAD TO TRACK | also ERROR, some loaded; cause not found |
 | A new store over a sound, then LOAD TO TRACK on another track | loaded, with FIN AS RATE off: the setting did not travel |
 
+On SP11, as reported by npp1993: taps flip normally and in scene and performance mode; while setting a scene or a performance with a pad held the press sets a lock and does not flip; holding SCNE or PERF and tapping does not flip; the author reads this as working as expected.
+
 On SP10, as reported by npp1993: the header changes over quickly after a tap, and the tap is blocked in scene and performance mode; SP11 allows it there.
 
 On SP05 (SMP RATE row and first tap), as reported by npp1993: the checkbox works; taps of encoder B often did nothing, and repeated clicks got through; on SP06 the tap reliably switches, holding does not toggle, press and turn does not toggle, and NO + press on a FIN lock clears it and stays on FIN, as reported. The SOUND menu on the unit is FUNC + FILTER.
