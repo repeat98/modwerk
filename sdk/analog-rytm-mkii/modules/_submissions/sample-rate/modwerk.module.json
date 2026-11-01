@@ -59,7 +59,7 @@
     {
       "name": "Tap of encoder B",
       "default": null,
-      "doc": "SAMPLE page. A short press with no turn turns SMP RATE over. Not with a trig, FUNC or NO held, and not in running live recording.",
+      "doc": "SAMPLE page. A short press with no turn turns SMP RATE over. Not with a trig, a pad, FUNC, NO, SCNE or PERF held, and not in running live recording.",
       "labels": null
     },
     {
@@ -78,6 +78,7 @@
     "limitations": [
       "Built for OS 1.74 only, with core-ar2 0.7.",
       "Not tested on a unit yet; rytm-emu only (TESTING.md).",
+      "Saving to and loading from SOUND MANAGER is not confirmed on a unit: stored sounds often gave ERROR there, RATE or not, and one that loaded came back with SMP RATE clear (README).",
       "RATE never goes above 1x by itself; TUN does, to stock's ceiling of about 4x.",
       "On stock OS a saved sound plays FIN as FIN: RATE +63 is about a semitone sharp.",
       "With LOP OFF, once the sample has played out, changing RATE does not bring it back: trig again.",
@@ -112,7 +113,7 @@
   "evidence": {
     "tier": "emulator",
     "moduleVersion": "0.1.0-experimental",
-    "sourceSha256": "80adc3db2ab82126cbedbd8cc4f4b70f45fd7fe930e9153de4e82f6236cb69a6",
+    "sourceSha256": "6fd7db93411cb167a6b0632226a15adfdbc9140d4195d28eb24b557a59c8bd1a",
     "reports": [
       "TESTING.md"
     ],
