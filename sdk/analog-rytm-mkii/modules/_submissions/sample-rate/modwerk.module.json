@@ -59,7 +59,7 @@
     {
       "name": "Tap of encoder B",
       "default": null,
-      "doc": "SAMPLE page. A short press with no turn turns SMP RATE over. Not with a trig, FUNC, NO, SCNE or PERF held, or a pad held in scene or performance mode, and not in running live recording.",
+      "doc": "SAMPLE page. A short press with no turn turns SMP RATE over. Not with a trig, FUNC or NO held, or a pad held in scene or performance mode, and not in running live recording.",
       "labels": null
     },
     {
@@ -113,7 +113,7 @@
   "evidence": {
     "tier": "emulator",
     "moduleVersion": "0.1.0-experimental",
-    "sourceSha256": "b37d4ec07e43b9eb229746762591a3ea1a60905fb250ae69f99d654a27b66050",
+    "sourceSha256": "0b171ba1c379e281a7e7dc07e56982211d4877d3c07fc69ec1981be995c8e3dd",
     "reports": [
       "TESTING.md"
     ],

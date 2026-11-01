@@ -142,8 +142,6 @@ typedef void (*invalidate_t)(void *);
 #define NODE_VIEW 8                  // a list node's view
 #define KEY_FUNC 0x80
 #define KEY_NO 0x45
-#define KEY_SCNE 0x13
-#define KEY_PERF 0x14
 #define KEY_PAD_FIRST 0x90
 #define KEY_PAD_LAST 0x9b
 #define KEY_TRIGS 16                 // trig keys are ids 0..15
@@ -243,9 +241,9 @@ void sample_rate_add_row(void *menu)
 // a turn nor a change of value; TAP_TURNS of them make it stock's press and turn.
 // A contact can bounce, so a tap holds off the next for TAP_REST ticks.
 // Stock's press shows the parameter and changes nothing, so it goes on as ever. A
-// press with a trig, FUNC, NO, SCNE or PERF held, with a lock editor open, or with
-// a pad held in scene or performance mode is stock's lock work, and so is every
-// press in running live recording.
+// press with a trig, FUNC or NO held, with a lock editor open, or with a pad held
+// in scene or performance mode is stock's lock work, and so is every press in
+// running live recording.
 static int tap_ticks = -1;      // UI ticks since the press, -1 with no tap open
 static int tap_turns, tap_rest;
 
@@ -262,8 +260,7 @@ static int plain_press(void *view)
         for (k = KEY_PAD_FIRST; k <= KEY_PAD_LAST; k++)
             if (IS_KEY_HELD(k))
                 return 0;           // in those modes a held pad is the scene being edited
-    if (LOCK_EDITOR(page) || LIVE_RECORDING(page) || IS_KEY_HELD(KEY_FUNC) || IS_KEY_HELD(KEY_NO)
-        || IS_KEY_HELD(KEY_SCNE) || IS_KEY_HELD(KEY_PERF))
+    if (LOCK_EDITOR(page) || LIVE_RECORDING(page) || IS_KEY_HELD(KEY_FUNC) || IS_KEY_HELD(KEY_NO))
         return 0;
     for (k = 0; k < KEY_TRIGS; k++)
         if (IS_KEY_HELD(k))
