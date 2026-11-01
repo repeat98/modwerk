@@ -562,7 +562,10 @@ static void load_kit(void)
         }
         if (v != knob[k]) { knob[k] = (unsigned char)v; moved = 1; }
     }
-    if (moved) knobs_moved();
+    if (moved) {                                 // another kit (or effect): SRC + NO has nothing of its to bring back
+        knobs_moved();
+        undo_type = -1;
+    }
     lev = (unsigned char)((core_store_get(STORE(mw_send_lev), 0, 0) & 127) ^ LEV_DEFAULT);
 }
 

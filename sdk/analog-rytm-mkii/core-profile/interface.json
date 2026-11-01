@@ -112,6 +112,11 @@
       "name": "mw_fx_tempo",
       "prototype": "int mw_fx_tempo(void)",
       "purpose": "The project tempo in 1/120 BPM; 120 BPM when stock's word holds no plausible value (modwerk/fx.h, Modwerk base)."
+    },
+    {
+      "name": "mw_fx_clock",
+      "prototype": "const struct mw_fx_clock *mw_fx_clock(void)",
+      "purpose": "The Rytm sequencer's time for the render: pulses from PLAY, the pattern's speed and SWING, the swung step and phase (modwerk/fx.h, Modwerk base)."
     }
   ],
   "claims": [

@@ -62,6 +62,8 @@ struct mw_fx_clock {
     int inc;                    /* a sample's pulses, Q24 (the tempo) */
     int pps;                    /* pulses a step at the pattern's speed: 6 at 1x, 3 at 2x .. 48 at 1/8x */
     int swing;                  /* the pattern's SWING - 50, 0..30: an odd step starts swing/50 of a step late */
+                                /* (every second step, as a pattern with a swing trig on each; the pattern's own
+                                 * swing trigs are not read, so the effects' grid swings every second step) */
     int step;                   /* the step the block's first sample is in, swung, counted from 0 at PLAY */
     int phase;                  /* where in it, Q16 */
     int dphase[2];              /* the phase a sample in an even step and in an odd one, Q16 */
