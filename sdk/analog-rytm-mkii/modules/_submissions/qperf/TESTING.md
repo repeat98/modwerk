@@ -1,6 +1,6 @@
 # QPERF testing
 
-Nothing here proves reboot persistence or the QPER knob itself. Hardware results below are the author's, each on the build named. QC11 is the code here.
+Nothing here proves reboot persistence or the QPER knob itself. Hardware results below are the author's, each on the build named. QC12 is the code here, and has not run on a unit.
 
 ## Hardware
 
@@ -197,8 +197,20 @@ Reported by the author on QC11, the build above, Analog Rytm MKII: QPER + pad mo
 
 Also reported on QC11: a kit with two linked, QPER + YES showed MORE THAN ONE LINKED. QPER + pad left one link. Reloading the kit brought both links back, and YES showed the message again. GLOBAL menu open with QPER held: YES acted as the menu's, PLAY started the sequencer, and a knob changed nothing, with no message. Two pads over the menu could not link two: pad A then pad B stayed linked to B.
 
+Combined build QC12 (sha256 0e66ceb6913f054f17e6de15bf2debcd2d5fe6440efba4bd2a0d8c9e5ba51ce6), after code review, on rytm-emu. A QPER view left open by a screen that took QPER's release now closes on the UI tick, and several linked no longer shows one performance's offset on the knob.
+
+| Check | Result |
+| --- | --- |
+| QC11 hold QPER, FUNC + TRK, release QPER, NO | QPER view stayed open; SD with QPER up moved the link; the next QPER + PLAY started the sequencer |
+| QC12, same steps | QPER view closed |
+| QC12, then SD with QPER up | Mask unchanged |
+| QC12, then QPER + PLAY | 32 locks to 18, sequencer did not start |
+| QC12, every row of the QC11 table except QPER held then GLOBAL | Same results |
+
 ## Not tested
 
+- QC12 on a unit.
+- The knob display on a kit with several linked.
 - SysEx kit receive.
 - Menus and dialogs other than those above: they count as not ours because their class is not on the list.
 - Performance load.

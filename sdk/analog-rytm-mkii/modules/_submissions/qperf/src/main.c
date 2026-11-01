@@ -18,7 +18,7 @@
 //
 // The gestures work on the pages and the pad screens over them. A menu or dialog
 // keeps its keys, though some let stock's QPER view open above them. There a pad
-// still moves the link, so nothing links several.
+// still moves the link, so only a kit can bring several.
 //
 // Stock's amount is only written to performances linked when the knob moves, so
 // the knob's position comes from one site of our own, where stock reads it, and
@@ -125,8 +125,10 @@ typedef void (*end_lock_edit_t)(void *ui);
 
 typedef unsigned (*is_key_held_t)(int key);
 typedef unsigned char (*event_test_t)(void *event);
+typedef void (*view_close_t)(void *view);
 #define IS_KEY_HELD ((is_key_held_t)IS_KEY_HELD_AT)
 #define PRESSED_ONCE ((event_test_t)PRESSED_ONCE_AT)
+#define VIEW_CLOSE ((view_close_t)VIEW_CLOSE_AT)
 
 static int held;                    // QPER is down, on a screen of ours, without FUNC
 static unsigned swallowed;          // YES, PLAY, REC and STOP: their release is ours too
@@ -179,21 +181,21 @@ static void show(const char *text)
     show_text = text;
 }
 
-// What is on screen: the top view's class, past the popups, which pass keys on.
-static word_t top_view(void)
+// What is on screen: the top view, past the popups, which pass keys on.
+static void *top_view(void)
 {
     char *node = *(char **)((char *)views + MANAGER_LAST);
     for (;;) {
-        word_t vtable = **(word_t **)(node + NODE_VIEW);
-        if (vtable != POPUP_VTABLE)
-            return vtable;
+        void *view = *(void **)(node + NODE_VIEW);
+        if (*(word_t *)view != POPUP_VTABLE)
+            return view;
         node = *(char **)(node + NODE_PREV);
     }
 }
 
 static int on_pages(void)
 {
-    word_t top = top_view();
+    word_t top = *(word_t *)top_view();
     return top == PAGES_TOP_VTABLE || top == PERF_VTABLE || top == SCENE_VTABLE
         || top == MUTE_VTABLE || top == CHROMATIC_VTABLE;
 }
@@ -260,12 +262,14 @@ static int param_read(void *set, int id)
     return (*(set_read_t *)(*(word_t *)set + VT_READ))(set, id);
 }
 
-// The linked performance's lock on (track, param), 0 for none.
+// The linked performance's lock on (track, param), 0 for none, or with several.
 static const unsigned char *find_lock(void *kit, int track, int param)
 {
     const unsigned char *t = lock_table((void *)KIT_PERF(kit));
     unsigned mask = linked(kit);
     int i;
+    if (several(mask))
+        return 0;
     for (i = 0; i < SLOTS; i++, t += SLOT_BYTES)
         if (t[2] == track && t[3] == param && t[4] < PERFS && (mask >> t[4] & 1))
             return t;
@@ -526,7 +530,8 @@ int qperf_key(void *brain, void *event)
     }
     if (swallowed & bit)
         return 1;                       // its repeats
-    if (!held || (flags & REPEAT) || IS_KEY_HELD(KEY_FUNC) || top_view() != QPER_VTABLE)
+    if (!held || (flags & REPEAT) || IS_KEY_HELD(KEY_FUNC)
+        || *(word_t *)top_view() != QPER_VTABLE)
         return 0;
     swallowed |= bit;
     perf_action(key);
@@ -549,6 +554,18 @@ void qperf_project(int how, unsigned dropped)
     kit_changed = 1;
 }
 
+// A screen that took QPER's release leaves stock's QPER view open behind it,
+// where it would take pads with QPER up and hide the pages from the next press.
+static void close_left_open(void)
+{
+    void *view;
+    if (!views || IS_KEY_HELD(KEY_QPER))
+        return;
+    view = top_view();
+    if (*(word_t *)view == QPER_VTABLE)
+        VIEW_CLOSE(view);
+}
+
 void qperf_tick(void *ctrl)
 {
     word_t string;
@@ -563,6 +580,7 @@ void qperf_tick(void *ctrl)
         if (mask != known)
             link_moved(mask);
     }
+    close_left_open();
     if (!show_text || !views)
         return;
     STRING_FROM_CSTR(&string, show_text, &allocator);

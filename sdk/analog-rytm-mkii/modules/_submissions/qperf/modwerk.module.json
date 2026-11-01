@@ -91,7 +91,7 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Emulator only, not tested on hardware."
+    "summary": "Run on the author's Analog Rytm MKII and in rytm-emu. TESTING.md names each build."
   },
   "license": {
     "spdx": "GPL-3.0-or-later",
