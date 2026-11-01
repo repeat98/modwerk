@@ -69,7 +69,7 @@ RATE replaces FIN in the sample's pitch. TUN, the trig's note on a chromatic tra
 
 ## Tests and measurements
 
-rytm-emu on OS 1.74, on a 23,777-frame ramp: the step word is exact at every RATE tried, a trig below 0 starts from END, with the row off the output is sample-identical to the core alone, and with Pipo Loop no case clicks. Details, builds and what was not run are in [TESTING.md](TESTING.md). An earlier build ran on the author's unit ([TESTING.md](TESTING.md)); the row's new place, the checkbox and the tap have not. Memory: 2,158 bytes of the 128 KiB shared mod area. Load: about 0.2 % of a block with the row off, 0.35 % with eight voices in RATE (static estimate, not measured).
+rytm-emu on OS 1.74, on a 23,777-frame ramp: the step word is exact at every RATE tried, a trig below 0 starts from END, with the row off the output is sample-identical to the core alone, and with Pipo Loop no case clicks. Details, builds and what was not run are in [TESTING.md](TESTING.md). The author ran it on a unit as test builds SP03 to SP13 ([TESTING.md](TESTING.md)). Memory: 2,506 bytes of the 128 KiB shared mod area. Load: about 0.2 % of a block with the row off, 0.35 % with eight voices in RATE (static estimate, not measured).
 
 ## Authorship and licences
 

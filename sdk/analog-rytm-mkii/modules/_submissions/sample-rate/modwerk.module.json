@@ -77,7 +77,7 @@
     "conflicts": [],
     "limitations": [
       "Built for OS 1.74 only, with core-ar2 0.7.",
-      "Not tested on a unit yet; rytm-emu only (TESTING.md).",
+      "Run on a unit by the author as SP03 to SP13 (TESTING.md); two voices together, performance and scene locks and sound browser load are from rytm-emu or not run there.",
       "Saving to and loading from SOUND MANAGER is not confirmed on a unit: stored sounds often gave ERROR there, RATE or not, and one that loaded came back with SMP RATE clear (README).",
       "RATE never goes above 1x by itself; TUN does, to stock's ceiling of about 4x.",
       "On stock OS a saved sound plays FIN as FIN: RATE +63 is about a semitone sharp.",
@@ -102,7 +102,7 @@
     ]
   },
   "resources": {
-    "memoryBytes": 2158,
+    "memoryBytes": 2506,
     "fastBytes": 0,
     "load": {
       "display": "About 0.2 % of a block with the row off, 0.35 % with eight voices in RATE (static estimate)",
@@ -111,18 +111,32 @@
     }
   },
   "evidence": {
-    "tier": "emulator",
+    "tier": "author-hardware",
     "moduleVersion": "0.1.0-experimental",
     "sourceSha256": "42c5c9d98c5eeadb549b321b64dc81923df5d344433be150f35ea4fb4748b425",
     "reports": [
       "TESTING.md"
     ],
-    "hardware": null,
+    "hardware": {
+      "model": "Analog Rytm MKII",
+      "release": "1.74",
+      "testedOn": "2026-11-01",
+      "tester": "npp1993",
+      "durationMinutes": null,
+      "summary": "npp1993 (the author) flashed test builds SP03 to SP13 on an Analog Rytm MKII, OS 1.74, each with Pipo Loop 0.1.1 from its local branch, and reports: the SOUND SETTINGS row and checkbox work; the knob reads RATE on that sound and FIN on others; RATE 1x, slowing to a stop, and reverse; a trig below 0 starts from END; LOP OFF; a locked trig backward and a plain trig forward; LOP PIPO turns with no clicks at fixed RATE and by hand; an LFO to Fine Tune passing through a stop (SP04, after a Pipo Loop fix); kit save and power cycle; track copy; a sound lock onto a row-off track; the tap of encoder B, which flips reliably and fast, and does not flip with a trig, FUNC or NO held, a pad held in scene or performance mode, in running live recording, on a long hold or a press and turn.",
+      "limitations": [
+        "Results are as reported by the author, not itemized measurements; duration not recorded.",
+        "LOAD TO TRACK in SOUND MANAGER often gave ERROR on the unit, on sounds with nothing to do with RATE too, and the one load that worked came back with the setting clear; stock was not compared.",
+        "Tested with Pipo Loop in the image; this module alone was not flashed.",
+        "Not tested on a unit: two voices together, performance and scene locks by ear, CPU load.",
+        "Final test build SP13 c.f. TESTING.md; firmware was not read back from the device."
+      ]
+    },
     "verifiedBy": null
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "rytm-emu on OS 1.74, 23,777-frame ramp: rate word exact at every RATE tried, trig below 0 starts from END, row off sample-identical to the core alone, with Pipo Loop no clicks at any speed or across flips and sweeps. The tap toggles only on a clean short press. Unit: reported on earlier builds, see TESTING.md.",
+    "summary": "rytm-emu on OS 1.74, 23,777-frame ramp: rate word exact at every RATE tried, trig below 0 starts from END, row off sample-identical to the core alone, with Pipo Loop no clicks at any speed or across flips and sweeps; the tap's cases. Hardware, as reported by the author: SP03 to SP13 (TESTING.md).",
     "documentation": {
       "tutorial": {
         "title": "Quick tutorial",
