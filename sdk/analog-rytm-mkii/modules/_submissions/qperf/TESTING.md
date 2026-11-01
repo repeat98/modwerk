@@ -169,8 +169,32 @@ Reported by the author on QC08: tune locked to +127 under QPER, QPER + YES set i
 
 Combined build QC09 (sha256 4bbc13f1): the tick clears its flag before reading the link, so a kit change at that moment asks again. Boot, reload, load and a knob lock passed in rytm-emu. Reported by the author on QC09: it boots and kits load.
 
+Combined build QC10 (sha256 0bab327028a3b1666dbc64be87ff53777782a5b99d2136366250462a36ebb1b1): core 0.7 base 0c92aa45, Filter Hz, Pipo Loop, QPERF, Silent Pad+Trig. After the owner's review, a kit's links stay until a press with QPER held, and the gestures read what is on screen. rytm-emu, factory kit K001 (31 locks, performances 1 and 10 linked). Not run on a unit.
+
+| Check | Result |
+| --- | --- |
+| Boot | Mask stays 0x201, 31 locks |
+| QPER + YES with 2 linked | MORE THAN ONE LINKED; nothing changed |
+| QPER + PLAY, QPER + knob with 2 linked | Nothing changed; the sequencer did not start |
+| QPER + BD, knob D | Mask 0x1, one new lock (32) |
+| Kit reload after that | Mask 0x201 back, 31 locks: the saved kit's own |
+| QPER + PLAY | 32 locks to 18, sequencer did not start |
+| PLAY again while the message shows | 32 locks back |
+| RECORD, QPER + SD, STOP | Mask 0x2, pasted (37 locks) |
+| STOP again | 32 locks |
+| QPER + BD on the linked one | Mask 0 |
+| QPER + YES, amount poked to full | 14 locks removed (32 to 18) |
+| QPER + SD in PERF | Mask 0x2 |
+| FUNC + QPER, then YES | Nothing changed |
+| GLOBAL menu open, QPER held, YES, PLAY, knob D | Mask and locks unchanged, the menu kept YES, PLAY started the sequencer as stock's |
+| GLOBAL menu open, QPER + BD | Stock's link, mask 0x1 |
+| QPER held, GLOBAL, then BD, YES, PLAY | Mask and locks unchanged |
+
+The view classes were read from the stack on the main screen, a sound page, PERF, SCNE, MUTE, CHRO, TEMPO, the RECORDER, the GLOBAL menu and two FUNC menus. The GLOBAL menu lets stock's QPER view open above it, so a site in that view would not keep the gestures out, and they check the top view instead.
+
 ## Not tested
 
+- QC10 on a unit: link, knob edit, YES, clear and undo, copy and paste.
 - SysEx kit receive.
-- QPER gestures inside a menu or dialog: they still fire there.
+- Menus and dialogs other than those above: they count as not ours because their class is not on the list.
 - Performance load.

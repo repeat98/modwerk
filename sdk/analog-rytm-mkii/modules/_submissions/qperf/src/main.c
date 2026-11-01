@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // QPERF for the Analog Rytm MKII: set performance locks from the QPER key.
 //
-// Stock lets QPER link several performances, which add up. Here it links one:
-// with QPER held, a pad or trig moves the link to that performance, and the
-// linked one unlinks it. So, with QPER held:
+// Stock lets QPER link several performances, which add up. Here a press links
+// one: with QPER held, a pad or trig moves the link to that performance, and the
+// linked one unlinks it. A kit that brings several keeps them until that press.
+// So, with QPER held and one performance linked:
 //
 //   turn a knob   Stock's own lock edit on the linked performance, drawn as when
 //                 a performance pad is held. The kit has 48 lock slots for all
@@ -14,6 +15,9 @@
 //                 kit and those locks go, so the sound holds at any position.
 //
 // FUNC + QPER (stock's mute) is untouched.
+//
+// The gestures work on the pages and the pad screens over them. A menu or dialog
+// keeps its keys, though some let stock's QPER view open above them.
 //
 // Stock's amount is only written to performances linked when the knob moves, so
 // the knob's position comes from one site of our own, where stock reads it, and
@@ -107,9 +111,13 @@ typedef void (*end_lock_edit_t)(void *ui);
 #define UNDO_CLEAR 1                // what stock's undo reverses
 #define UNDO_PASTE 2
 #define BRAIN_VIEWS 32              // brain + 32: the view manager
+#define MANAGER_LAST 24             // view manager + 24: the top view's list node
+#define NODE_PREV 4
+#define NODE_VIEW 8
 #define POPUP_BYTES 0xa0
 
 #define PERFS 12
+#define SEVERAL "MORE THAN ONE LINKED"
 #define SLOTS 48
 #define SLOT_BYTES 5
 #define TRACK_NONE 12               // a slot's track byte above this is empty
@@ -118,7 +126,7 @@ typedef void (*end_lock_edit_t)(void *ui);
 typedef unsigned (*is_key_held_t)(int key);
 #define IS_KEY_HELD ((is_key_held_t)IS_KEY_HELD_AT)
 
-static int held;                    // QPER is down, without FUNC
+static int held;                    // QPER is down, on a screen of ours, without FUNC
 static unsigned swallowed;          // YES, PLAY, REC and STOP: their release is ours too
 static unsigned known;              // the link as we last set or saw it
 static int ready;                   // a project is loaded
@@ -157,6 +165,25 @@ static void show(const char *text)
     show_text = text;
 }
 
+// What is on screen: the top view's class, past the popups, which pass keys on.
+static word_t top_view(void)
+{
+    char *node = *(char **)((char *)views + MANAGER_LAST);
+    for (;;) {
+        word_t vtable = **(word_t **)(node + NODE_VIEW);
+        if (vtable != POPUP_VTABLE)
+            return vtable;
+        node = *(char **)(node + NODE_PREV);
+    }
+}
+
+static int on_pages(void)
+{
+    word_t top = top_view();
+    return top == PAGES_TOP_VTABLE || top == PERF_VTABLE || top == SCENE_VTABLE
+        || top == MUTE_VTABLE || top == CHROMATIC_VTABLE;
+}
+
 static void *active_kit(void)
 {
     return (char *)PROJECT_SINGLETON() + PROJECT_KIT;
@@ -178,6 +205,11 @@ static int lowest_linked(unsigned mask)
     while (!(mask >> i & 1))
         i++;
     return i;
+}
+
+static int several(unsigned mask)
+{
+    return (mask & (mask - 1)) != 0;
 }
 
 static int slots_free(const unsigned char *t)
@@ -245,7 +277,7 @@ static void locker_clear(void *self, int track, int param)
     void *kit = active_kit();
     unsigned mask = linked(kit);
     (void)self;
-    if (mask)
+    if (mask && !several(mask))
         PERF_CLEAR_ONE((void *)KIT_PERF(kit), lowest_linked(mask), track, param);
 }
 
@@ -254,7 +286,7 @@ static void locker_clear_all(void *self)
     void *kit = active_kit();
     unsigned mask = linked(kit);
     (void)self;
-    if (mask)
+    if (mask && !several(mask))
         PERF_CLEAR((void *)KIT_PERF(kit), lowest_linked(mask));
 }
 
@@ -266,6 +298,10 @@ static void locker_set(void *self, int track, int param, int value)
     (void)self;
     if (!mask) {
         show("NO PERFORMANCE LINKED");
+        return;
+    }
+    if (several(mask)) {
+        show(SEVERAL);
         return;
     }
     if (!find_lock(kit, track, param) && !slots_free(lock_table(perf))) {
@@ -333,20 +369,19 @@ static void show_numbered(const char *before, unsigned mask, const char *after)
     show(message);
 }
 
-// Links one performance, or none. An unlinked one stops adding, and the new one
-// takes over at the knob's position.
-static void link_only(void *kit, unsigned mask)
+// An unlinked performance stops adding, and a new one takes over at the knob's
+// position.
+static void link_moved(unsigned mask)
 {
     word_t project = PROJECT_SINGLETON();
     unsigned old = known;
     int i, amount = qperf_pot ? (qperf_pot - 1) << 7 : old ? (int)PERF_AMOUNT(lowest_linked(old)) : 0;
-    if (linked(kit) != mask)
-        KIT_SET_MASK(kit, (int)mask);
-    for (i = 0; i < PERFS; i++)
+    for (i = 0; i < PERFS; i++) {
         if ((old & ~mask) >> i & 1)
             AMOUNT_SET(project, i, 0, 1, 1);
-    if (mask & ~old)
-        AMOUNT_SET(project, lowest_linked(mask), amount, 1, 1);
+        else if ((mask & ~old) >> i & 1)
+            AMOUNT_SET(project, i, amount, 1, 1);
+    }
     known = mask;
 }
 
@@ -408,6 +443,10 @@ static void perf_action(int key)
     void *perf = (void *)KIT_PERF(kit);
     unsigned mask = linked(kit);
     int index;
+    if (several(mask)) {
+        show(SEVERAL);
+        return;
+    }
     if (key == KEY_YES) {
         apply_linked(kit);
         return;
@@ -448,7 +487,7 @@ int qperf_key(void *brain, void *event)
             if (held)
                 locker_remove();
             held = 0;
-        } else if (!(flags & REPEAT) && !IS_KEY_HELD(KEY_FUNC)) {
+        } else if (!(flags & REPEAT) && !IS_KEY_HELD(KEY_FUNC) && on_pages()) {
             held = 1;
             swallowed = 0;
             locker_install();
@@ -456,11 +495,13 @@ int qperf_key(void *brain, void *event)
         return 0;
     }
     perf = link_key(key);
-    if (held && perf >= 0) {
+    if (held && perf >= 0 && top_view() == QPER_VTABLE) {
         if ((flags & PRESSED) && !(flags & REPEAT)) {
             void *kit = active_kit();
-            unsigned one = 1u << perf;
-            link_only(kit, linked(kit) == one ? 0 : one);
+            unsigned one = 1u << perf, mask = linked(kit) == one ? 0 : one;
+            known |= linked(kit);       // stock's QPER view links over a menu
+            KIT_SET_MASK(kit, (int)mask);
+            link_moved(mask);
         }
         return 1;
     }
@@ -483,16 +524,16 @@ int qperf_key(void *brain, void *event)
     }
     if (swallowed & bit)
         return 1;                       // its repeats
-    if (!held || (flags & REPEAT) || IS_KEY_HELD(KEY_FUNC))
+    if (!held || (flags & REPEAT) || IS_KEY_HELD(KEY_FUNC) || top_view() != QPER_VTABLE)
         return 0;
     swallowed |= bit;
     perf_action(key);
     return 1;
 }
 
-// A kit can bring another link, or several: keep one. Fixing it directly from
-// stock's kit routine and the project event left the kit blank at boot, so they
-// only ask and the tick acts.
+// A kit can bring other links: its own stay, and the amounts follow them. Acting
+// directly in stock's kit routine and the project event left the kit blank at
+// boot, so they only ask and the tick acts.
 void qperf_kit_changed(void)
 {
     kit_changed = 1;
@@ -514,12 +555,11 @@ void qperf_tick(void *ctrl)
     void *popup;
     (void)ctrl;
     if (ready && kit_changed) {
-        void *kit = active_kit();
         unsigned mask;
         kit_changed = 0;                // first, so a change after this asks again
-        mask = linked(kit);
+        mask = linked(active_kit());
         if (mask != known)
-            link_only(kit, mask & -mask);
+            link_moved(mask);
     }
     if (!show_text || !views)
         return;

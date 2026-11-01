@@ -6,7 +6,7 @@ Set performance locks from the QPER key, much faster than one performance at a t
 
 ## Controls
 
-QPER links one performance at a time. Hold QPER and press a pad or trig key: the link moves there. Press the linked one to unlink it. With QPER still held:
+QPER links one performance at a time. Hold QPER and press a pad or trig key: the link moves there. Press the linked one to unlink it. With QPER still held and one performance linked:
 
 | Gesture | What it does |
 | --- | --- |
@@ -18,11 +18,14 @@ QPER links one performance at a time. Hold QPER and press a pad or trig key: the
 
 FUNC + QPER (mute) is stock's.
 
-Stock draws every message. YES shows PERFORMANCE n APPLIED, or NOTHING TO APPLY when no value would change. A key or turn with nothing linked shows NO PERFORMANCE LINKED, and with no room LOCK MEM FULL!.
+These work on the sound pages and in PERF, SCNE, MUTE and CHRO. Press QPER in a menu, dialog, list, the SAMPLER or TEMPO and everything stays stock's, for as long as you hold it. A menu opened with QPER held keeps its keys too.
+
+Stock draws every message. YES shows PERFORMANCE n APPLIED, or NOTHING TO APPLY when no value would change. A key or turn with nothing linked shows NO PERFORMANCE LINKED, with several linked MORE THAN ONE LINKED, and with no room LOCK MEM FULL!.
 
 ## Things to know
 
-- **One link only.** A kit saved with several, or loaded with another, drops to the lowest one. An unlinked performance stops adding, and the newly linked one takes the knob's position, so the sound follows the link.
+- **Kits with several links.** A kit keeps the links it was saved with, and they all play. YES, PLAY, RECORD, STOP and a knob edit act on one performance, so they show MORE THAN ONE LINKED and change nothing until you press a pad or trig with QPER held. That press leaves one link, and saving the kit stores it.
+- **The sound follows the link.** An unlinked performance stops adding, and a newly linked one takes the knob's position.
 - **48 locks a kit.** All 12 performances share them. A new parameter with none left shows LOCK MEM FULL! and writes nothing.
 - **Power on.** Stock does not know the QPER knob until it moves, so the amount is 0 and YES adds nothing until then.
 - **Locks past a parameter's range.** Stock lets a lock go past what the parameter can hold, here too. YES stops at the limit, so the sound can change.
@@ -32,13 +35,12 @@ Stock draws every message. YES shows PERFORMANCE n APPLIED, or NOTHING TO APPLY 
 ## Stock flows changed
 
 - **QPER + pads and trigs** link several performances on stock. With this mod a press moves the one link, and the linked one unlinks it. Why: linked offsets add up, so several made the knob's total and QPER + YES hard to follow.
-- **Kits with several links** keep them on stock. With this mod a kit loads with its lowest link only, and saving it stores that. What was considered: leaving them, but then the rule breaks as soon as such a kit plays.
 - **QPER + PLAY** starts the sequencer on stock. With this mod it clears instead. PLAY alone still starts it.
 - **QPER + STOP and QPER + RECORD** act as STOP and RECORD on stock. With this mod they paste and copy.
 - **QPER + knob** changes the parameter on stock. With this mod it edits locks and leaves the parameter alone.
 - **QPER + YES** did nothing visible on stock (rytm-emu, OS 1.74).
 
-Remove the mod to get these back.
+Kits are not changed by loading them: only a pad or trig press with QPER held changes a kit's links. Remove the mod to get these back.
 
 ## Tutorial
 
