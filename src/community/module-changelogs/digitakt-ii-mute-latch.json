@@ -1,0 +1,10 @@
+[
+  {
+    "version": "0.1.0-experimental",
+    "date": "2026-10-31",
+    "changes": [
+      "First experimental version for Digitakt II OS 1.17. Hold TEMPO while choosing tracks in PREP MUTES and the mutes wait for the pattern's first step.",
+      "Not tested on a unit or in the emulator yet."
+    ]
+  }
+]

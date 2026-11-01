@@ -1,0 +1,106 @@
+{
+  "schemaVersion": 3,
+  "id": "mute-latch",
+  "name": "Mute Latch",
+  "version": "0.1.0-experimental",
+  "machine": "digitakt-ii",
+  "category": "system",
+  "exclusive": false,
+  "author": {
+    "github": "crisp909",
+    "credits": [
+      "crisp909"
+    ]
+  },
+  "maintainers": [
+    "crisp909"
+  ],
+  "presentation": {
+    "label": "MUTE LATCH",
+    "family": "Performance workflow",
+    "summary": "Hold TEMPO while choosing tracks in PREP MUTES and the mutes wait for the pattern's first step.",
+    "overview": "PREP MUTES normally mutes the chosen tracks the moment FUNC is let go. With Mute Latch, holding TEMPO while you choose the tracks parks the choice instead: let go of every key and the mutes switch at the next pass of the pattern's first step, so both hands are free for a synth or effects in the meantime. Without TEMPO held, PREP MUTES works exactly as before.",
+    "highlights": [
+      "Parks the PREP MUTES choice until the pattern starts again",
+      "Leaves the stock gesture untouched unless TEMPO is held",
+      "Takes no sequencer hook: it follows the instrument's own step position"
+    ],
+    "usage": [
+      "Play a pattern, hold FUNC, hold TEMPO and press the TRIG keys of the tracks to switch, then let go of all keys; the tracks switch at the next first step."
+    ]
+  },
+  "access": {
+    "location": "PREP MUTES (FUNC held, with the permanent mute mode on)",
+    "steps": [
+      "Start the sequencer with PLAY.",
+      "Hold FUNC to open PREP MUTES.",
+      "Hold TEMPO and press the TRIG keys of the tracks to switch; press a key again to take the track back out.",
+      "Let go of TEMPO, the TRIG keys and FUNC. The tracks switch when the pattern next reaches its first step.",
+      "STOP drops anything still waiting."
+    ],
+    "screenshots": []
+  },
+  "controls": [],
+  "compatibility": {
+    "releases": [
+      "1.17"
+    ],
+    "requires": [],
+    "conflicts": [],
+    "limitations": [
+      "Not tested on a unit, and the module itself has not run in an emulator. The step position, pattern pointer, mute toggle and view stack were observed on the stock OS 1.17 in a ColdFire-only emulator; see TESTING.md.",
+      "Works while the sequencer plays; when it is stopped PREP MUTES keeps its stock behaviour.",
+      "With Scale per track the longest track's wrap ends the pattern.",
+      "Switches on the first UI tick (about 30 Hz) after the pattern wraps, not sample-accurately.",
+      "The stock result of FUNC+TEMPO is not checked yet; the module does not consume the key."
+    ]
+  },
+  "platform": {
+    "kind": "elemod",
+    "core": "1.0",
+    "build": "build.json",
+    "events": [
+      "ev_tick"
+    ],
+    "claims": [
+      "ui:PREP MUTES:TEMPO held"
+    ]
+  },
+  "resources": {
+    "memoryBytes": null,
+    "fastBytes": null,
+    "load": {
+      "display": "Not measured yet",
+      "method": "unmeasured",
+      "conditions": "Measure with every track playing, parameters modulated and the mod at its heaviest setting."
+    }
+  },
+  "evidence": {
+    "tier": "none",
+    "moduleVersion": "0.1.0-experimental",
+    "sourceSha256": null,
+    "reports": [],
+    "hardware": null,
+    "verifiedBy": null
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "Not tested yet."
+  },
+  "license": {
+    "spdx": "GPL-3.0-or-later",
+    "file": "LICENSE",
+    "declaration": "Original work by the author. Replace if you choose another GPL-compatible licence."
+  },
+  "media": [
+    {
+      "path": "media/thumbnail.svg",
+      "kind": "thumbnail",
+      "caption": "Mute Latch thumbnail",
+      "alt": "Placeholder thumbnail for Mute Latch",
+      "credit": "crisp909",
+      "license": "GPL-3.0-or-later",
+      "source": "Original placeholder from the Modwerk SDK template; replace with your own artwork."
+    }
+  ]
+}

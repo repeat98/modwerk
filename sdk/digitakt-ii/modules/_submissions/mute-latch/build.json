@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "sources": [
+    "src/main.c"
+  ],
+  "defsym": {},
+  "cflags": [],
+  "weak": [],
+  "subscribe": [
+    {
+      "event": "ev_tick",
+      "fn": "mod_tick",
+      "order": 50
+    }
+  ],
+  "contribute": [],
+  "collections": {},
+  "copied": [],
+  "regions": [],
+  "claims": [
+    "ui:PREP MUTES:TEMPO held"
+  ],
+  "requires": [],
+  "derive": null,
+  "releases": {
+    "1.17": {
+      "defsym": {
+        "mlk_vt_prep": 1075808792,
+        "mlk_apply": 1074191984,
+        "mlk_key_down": 1074913616,
+        "mlk_brain": 1075416100,
+        "mlk_seq_pos": 1125535712,
+        "mlk_seq_pattern": 1125535772,
+        "mlk_seq_state": 1125535636
+      },
+      "cflags": [],
+      "sites": []
+    }
+  }
+}
