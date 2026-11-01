@@ -45,7 +45,7 @@ Builds: PP15 is 0.1.0 and PP16 and PP17 are 0.1.1, each alone on the vendored co
 | PIPO, END below STA | 2 clicks | 0 |
 | LOP ON; LOP OFF; PIPO at TUN 0 | | sample-identical to PP15 (SHA-256 of channel 0) |
 
-PP17, the final source, gave 0 clicks on the first two rows. Rates below one frame a block need a scratch build that forces the voice's rate word, never released: on a 7,100-frame loop at 1/64x and 1/32x, forward and reverse, the voice reached both ends with no stall.
+PP17 gave 0 clicks on the first two rows. Rates below one frame a block need a scratch build that forces the voice's rate word, never released: on a 7,100-frame loop at 1/64x and 1/32x, forward and reverse, the voice reached both ends with no stall.
 
 A third cause, found after a unit report (below): the module worked out STA's and END's frames with its own formula, rounding up, where stock's EMAC truncates. Where the two sit either side of a multiple of 8, stock's DMA aligns 8 frames lower, the mirror refuses that window, and every turn at that STA or END plays frames from the other end. A 24,000-frame sample cannot show it: every whole STA and END is then a multiple of 200 frames, where both agree. 0.1.1 now calls stock's own routine (0x4011bf44) under the MACSR stock's prefetch sets; zero snap's formula truncates too.
 
@@ -53,10 +53,14 @@ Build PP18 (core-ar2 0.7 as vendored + Pipo Loop 0.1.1-experimental, this source
 
 A 23,777-frame ramp, TUN at five settings from 0 to -24, four STA and END pairs mid-sample, 20 runs of about 22 s of audio, step above 60 counted once per 64 frames, on combined images: RC05 (Pipo Loop as PP17) gave 0 clicks in 15 runs and clicks on every turn in the other 5, all at STA 10,903 (271 at TUN 0, 68 to 96 lower); the same image with this source gave 0 in all 20. PP18 against PP17 on the 24,000-frame ramp: LOP ON, LOP OFF, PIPO at TUN 0 and +24 sample-identical; END below STA 0 clicks on both, output differs.
 
+Zero snap's landing frame, read from the voice's position after a trig (position mod 16, as it advances 480 frames between readings at TUN 0), LOP OFF, FUNC + STA up to the 23,777-frame ramp's one crossing, first positive sample at frame 11,893: RC05 stored 0x3c05 and started on 11,892, one frame early; the build with this source stored 0x3c06 and started on 11,893. Three plain STA values (0x33d8, 0x3838, 0x4188) started on the floor frame too.
+
 ## Hardware, 0.1.1 (reported by npp1993, 2026-10-31)
 
 RC05 (Pipo Loop as PP17, in a combined image) on an Analog Rytm MKII, OS 1.74, sample set by hand, LOP PIPO, STA and END mid-sample: a click at the sample's attack; pops that come and go at TUN -24 and -20, and with END below STA, hard to tell from the audio itself; LOP ON clicks, as expected of an unsnapped loop; PIPO back after saving the kit and a power cycle. 
-RC07 (`6ae42b7b717b63d7aecc09875b76e5b0cd9a69bcbfe37a8850b111dbaaf6b7de`, this source in a combined image; PP18 alone not flashed): a short, loud sample, LOP PIPO, STA and END moved around, on zero crossings and off them, TUN moved up and down: "I'm not getting any pops or clicks." Reported, not itemized; END below STA and the exact TUN values were not stated.
+RC07 (`6ae42b7b717b63d7aecc09875b76e5b0cd9a69bcbfe37a8850b111dbaaf6b7de`, this source in a combined image; PP18 alone not flashed): a short, loud sample, LOP PIPO, STA and END moved around, on zero crossings and off them, TUN moved up and down: "I'm not getting any pops or clicks." Reported, not itemized; exact TUN values were not stated.
+
+The same build, checks asked for after that: END below STA, "that's good"; FUNC + STA and END with LOP ON, "it's good, yeah".
 
 ## Emulator, 0.1.0 (2026-10-27)
 
@@ -191,9 +195,9 @@ SD (voices 1-7 routine) ping-pongs too. Not provable in the emulator: the data c
 pushes its buffer's lines; rytm-emu models no cache) and the unit's DMA timing.
 
 **Snap on stock's own frame.** Stock maps STA and END to frames with an EMAC multiply by 8/15 that
-works out to ceil(frames * value / 30720) for every value up to 30,720 frames (checked by working the
-instructions through for 400,000 cases); the module had assumed the floor, so snapped points played
-one frame after the crossing. PP09 uses stock's mapping and lands on the first sample of the new sign:
+truncates: floor(frames * value / 30720), read from the voice's position in 0.1.1 (below). PP09's reading of it as
+ceil(frames * value / 30720), from working the instructions through for 400,000 cases, was wrong, and it held only
+where the two agree. As run on PP09, it landed on the first sample of the new sign:
 on ZSIN, sound and locks alike play from crossings exactly (sound: #3-#6; locks: #1, #4, #5). One
 crossing a detent: core-ar2's ev_enc counts the encoder (8 counts a detent); four 2-count events step
 one crossing, as one 8-count event does. With LOP ON, END stepped from 23,647 down by whole periods
@@ -443,8 +447,8 @@ parameter ids 34-37, 45 (LOP), 224, 248 and 463; the switch icon by twelve param
 
 - Memory: 7,221 bytes in the shared mod area (4,393 of code and text, 2,828 of state, 2,560 of it the mirror buffers), from PP09's package. The icon and zero-snap gates run in the UI task only, not in the audio path.
 - Load: static estimate from the compiled handler: about 15 instructions a block for a voice with LOP
-  OFF or no track, about 70 for one looping with ON, about 105 for one in PIPO, plus four 32-bit
-  divisions when a voice's STA, END or sample change. With the Rytm guide's emulator figure (0.023 %
+  OFF or no track, about 70 for one looping with ON, about 105 for one in PIPO, plus two calls of
+  stock's frame routine (about 35 instructions each, with the MACSR wrapper) when a voice's STA, END or sample change, in place of 0.1.0's four 32-bit divisions. With the Rytm guide's emulator figure (0.023 %
   of a block per instruction a frame), about 0.1 % with nothing looping and about 0.6 % with all eight
   voices in PIPO. rytm-emu's breakpoints and profiler do not reach the audio interrupt's mod code, so
   it was not measured. Not measured on a unit.
