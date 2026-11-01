@@ -2,7 +2,7 @@
 
 Everything below was observed in rytm-emu on the named build. Nothing has run on a unit, and the emulator is not hardware evidence: the Hardware section is empty until the author reports from one.
 
-- Source (0.1.0-experimental): fingerprint (`sha256` of `sha256sum build.json src/audio.s src/rate.c`) `c627749f…8976` (`evidence.sourceSha256`).
+- Source (0.1.0-experimental): fingerprint (`sha256` of `sha256sum build.json src/audio.s src/rate.c`) `80adc3db…69a6` (`evidence.sourceSha256`).
 - Stock OS 1.74: `.syx` `cb0f99d6…e123`, the owner's file. Core: elekloader core-ar2 0.7 as vendored.
 - Build SR04 (core + Sample RATE, `--version SR04`): `.syx` `f8802bc146dacce2e7770ff700f4f1efb9cdc9d265d0faf262214568e7520347`.
 - Build SP03 (core + Sample RATE + Pipo Loop 0.1.1-experimental from its local branch, commit `f48b95d9`; test image only): `.syx` `f2316e1bca4e513ec37f49e561e391897e850177327d218a07414ce399ab8c96`.
@@ -13,6 +13,7 @@ Everything below was observed in rytm-emu on the named build. Nothing has run on
 - Build SR06 (core + Sample RATE, this source: row under SMP:, checkbox, tap, stock's value): `.syx` `f6a4ca9e703ad976cb8a6db3f41c4a7c0761dd73a39336e03f96fc55012b289a`.
 - Build SP05 (as SR06, with Pipo Loop `b0ed4fe7`; test image only): `.syx` `7a5a9ad4120ed5c21bc526989b0bd764857ce0de31d82d88f16c0c8b69f25501`.
 - Build SA05 (as SP05, with Silent Pad+Trig, Loop Sync and Filter Hz; test image only): `.syx` `1096f70b7a348673ae0f571574b90c5b1442872d6393241d68e33d6c248940a0`.
+- Build SR07 (core + Sample RATE, this source: the tap survives nudges and bounce): `.syx` `63c970d2fb1d72898332c09564fc658e8303fb83d5385e554292f9cd2501cc24`.
 - A core-only image, same stock and core, for comparison.
 - Emulator: rytm-emu `c5732f0`, headless `dtboot`, JIT on. One generated sample, RAMP, 23,777 frames (odd, so STA and END fall on no round multiple), on BD with LOP ON. Audio is dtboot's `--wav`. Voice words are read with `DTBOOT_PEEK`: step at rec + 12, position at rec + 4, effective FIN at 0x8000f7cc. A click means a sample-to-sample step over 40, or six times the median, on a ramp whose normal step is below 2; each run also flags the trig's own attack, which is not counted.
 
@@ -27,6 +28,9 @@ The row moved under SMP:, named SMP RATE, drawn as stock's checkbox; the value i
 | Tap while the sequencer plays | turns over |
 | Press held 300 M, press and turn, FUNC, NO or a trig held, encoders A and E pressed, running live recording | no change to the row |
 | The value while turning | reads +51, +35, +29 in stock's format, header RATE |
+| SR07: press with one or two encoder steps | turns over, FIN unchanged but for the turn over |
+| SR07: two clicks 22 M apart, as a bouncing contact | turns over once |
+| SR07: press and turn, 6 and 10 steps | stock's edit, FIN 127 to 87 and 7, no turn over |
 | Right after a tap | the header can show the name from the press until the next redraw |
 
 The speed tables below read in raw values, 0 to 127: subtract 64 for what the knob now shows.
@@ -156,7 +160,9 @@ npp1993 flashed SP03 on an Analog Rytm MKII, OS 1.74, and reports the following.
 | Many other stored sounds, LOAD TO TRACK | also ERROR, some loaded; cause not found |
 | A new store over a sound, then LOAD TO TRACK on another track | loaded, with FIN AS RATE off: the setting did not travel |
 
-On SP04 (this source, with Pipo Loop `b0ed4fe7`), as reported by npp1993:
+On SP05 (SMP RATE row and first tap), as reported by npp1993: the checkbox works; taps of encoder B often did nothing, and repeated clicks got through; SP06 is built for this and not reported yet. The SOUND menu on the unit is FUNC + FILTER.
+
+On SP04 (with Pipo Loop `b0ed4fe7`), as reported by npp1993:
 
 | Check | Reported |
 | --- | --- |

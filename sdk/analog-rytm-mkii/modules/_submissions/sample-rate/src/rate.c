@@ -143,6 +143,8 @@ typedef void (*invalidate_t)(void *);
 #define KEY_REPEAT 8
 #define ENC_FIN 1                    // encoder B on the SAMPLE page
 #define TAP_TICKS 8                  // about 0.4 s of the UI's 20 Hz
+#define TAP_TURNS 3                  // encoder events in a press that make it a turn
+#define TAP_REST 3                   // about 0.15 s
 
 struct picked {
     uint32_t project, wrapper;
@@ -228,11 +230,15 @@ void sample_rate_add_row(void *menu)
     core_additem(menu, row);
 }
 
-// A tap on FIN's knob turns RATE over: pressed and let go inside TAP_TICKS, with
-// no turn. Stock's press shows the parameter and changes nothing, so it goes on
-// as ever. A press with a trig, FUNC or NO held, or with a lock editor open, is
-// stock's lock work, and so is every press in running live recording.
+// A tap on FIN's knob turns RATE over: pressed and let go inside TAP_TICKS. A
+// click nudges the encoder, so the first turns of a press are swallowed, neither
+// a turn nor a change of value; TAP_TURNS of them make it stock's press and turn.
+// A contact can bounce, so a tap holds off the next for TAP_REST ticks.
+// Stock's press shows the parameter and changes nothing, so it goes on as ever. A
+// press with a trig, FUNC or NO held, or with a lock editor open, is stock's lock
+// work, and so is every press in running live recording.
 static int tap_ticks = -1;      // UI ticks since the press, -1 with no tap open
+static int tap_turns, tap_rest;
 
 static int plain_press(void *view)
 {
@@ -252,12 +258,14 @@ void sample_rate_knob(void *view, int id, const char *event)
     int flags = *(const int *)(event + 16);
     if (id != ID_FIN || (flags & KEY_REPEAT))
         return;
-    if (flags & KEY_DOWN)
-        tap_ticks = plain_press(view) ? 0 : -1;
-    else {
+    if (flags & KEY_DOWN) {
+        tap_ticks = !tap_rest && plain_press(view) ? 0 : -1;
+        tap_turns = 0;
+    } else {
         if (tap_ticks >= 0) {
             set_on(!sample_rate_selected());
             VIEW_INVALIDATE(view);
+            tap_rest = TAP_REST;
         }
         tap_ticks = -1;
     }
@@ -266,14 +274,19 @@ void sample_rate_knob(void *view, int id, const char *event)
 int sample_rate_turn(void *brain, char *event)
 {
     (void)brain;
-    if (*(int *)(event + 12) == ENC_FIN)
-        tap_ticks = -1;
+    if (*(int *)(event + 12) != ENC_FIN || tap_ticks < 0)
+        return 0;
+    if (++tap_turns < TAP_TURNS)
+        return 1;
+    tap_ticks = -1;
     return 0;
 }
 
 void sample_rate_tick(void *ctrl)
 {
     (void)ctrl;
+    if (tap_rest)
+        tap_rest--;
     if (tap_ticks >= 0 && ++tap_ticks > TAP_TICKS)
         tap_ticks = -1;
 }

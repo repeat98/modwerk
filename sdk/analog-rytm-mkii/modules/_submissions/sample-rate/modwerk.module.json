@@ -39,7 +39,7 @@
     "steps": [
       "Select a track whose sound plays a sample, and press SMPL.",
       "Tap encoder B: the knob reads RATE and the value stays where it was unless FIN was +0, which goes to +63.",
-      "Or press FUNC + MUTE, choose SOUND SETTINGS, go to SMP RATE and press RIGHT: the box is checked."
+      "Or press FUNC + FILTER, choose SOUND SETTINGS, go to SMP RATE and press RIGHT: the box is checked."
     ],
     "screenshots": [
       "media/row-on.png",
@@ -112,7 +112,7 @@
   "evidence": {
     "tier": "emulator",
     "moduleVersion": "0.1.0-experimental",
-    "sourceSha256": "c627749f91c16caafabe04091b5ee61ee6524c15c40699a10d664c8c812d8976",
+    "sourceSha256": "80adc3db2ab82126cbedbd8cc4f4b70f45fd7fe930e9153de4e82f6236cb69a6",
     "reports": [
       "TESTING.md"
     ],
