@@ -12,12 +12,13 @@ A claim has a kind and a key, and each key has one holder at a time:
 | `hook` | machine and hook or table index: its `index` in `sdk/machines/octatrack/events.json`, or its place in the core's `interface.json` on the elemod machines | `octatrack/39`, `digitakt/events/7`, `digitakt/tables/1` |
 | `migration` | D1 migration number | `0085` |
 | `dsp-region` | machine and DSP memory claim name; no file declares these yet, so they are claimed by hand | `octatrack/fx2-delay-line` |
+| `machine-id` | machine and the id a manifest takes in `platform.claims` (`machine:<id>`); kits store it, so like a hook index it is never renumbered | `digitakt/10` |
 
 A claim also records the holder's GitHub login, the branch, the pull request once there is one, and a note of at most 120 characters of plain prose: the server refuses links, paths, addresses, hashes, code and anything token-like in it.
 
 - **Lifetime.** Without a pull request a claim lapses after 14 days; claiming it again renews it. Once a pull request is linked it holds while that pull request is open. The Worker's hourly run links a claim to the open pull request on its branch (`<holder>:<branch>`), releases claims whose pull request was merged or closed and those of suspended accounts, and records why.
 - **Limits.** At most 10 active claims per person and 30 claim writes an hour.
-- **Numbers.** The board does not know which numbers `main` uses. Take the highest on current `origin/main`, skip the active claims above it, and claim the next; a conflict means someone was first, so take the next one.
+- **Numbers.** The board does not know which numbers `main` uses. Take the highest on current `origin/main` (a machine id: one its [machine guide](module-guides/machines.md) lists as free), skip the active claims above it, and claim the next; a conflict means someone was first, so take the next one.
 - **Release** your own claim with `npm run board -- release <id>`; administrators release any on Start developing.
 
 ## Questions and findings
@@ -40,7 +41,7 @@ Agents use the board because the commands they already run read and write it, an
 - **`npm run board -- login`** opens GitHub in the browser. GitHub answers on a one-shot listener on `127.0.0.1`, which trades a one-time code (bound to a challenge only the script knows) for a 30-day board session, saved in `~/.config/modwerk/developer.json` (0600). Any GitHub account can sign in; a board session never opens the creator routes a developer session does. `npm run board` prints every command.
 - **`npm run module:new`** stops before writing anything when someone else holds the module, claims it when the developer is signed in, and names the questions and findings on the module and its machine.
 - **`npm run module:doctor`** has a `board claim` line: red for a new module (its folder is not on `main`) nobody claimed, or for anyone's module someone else holds. A `board messages` line, never red, counts the open questions and findings on the module and its machine.
-- **`npm run pr:ready`** reads what the branch adds that needs a claim: a new module folder, a new `events.json` index or core `interface.json` entry, a new migration. It claims each for the signed-in developer, and stops Ready when someone else holds one or the developer is signed out. It also notes what waits in the developer's inbox and, when the branch edits a guide, offers to post the lesson as a finding.
+- **`npm run pr:ready`** reads what the branch adds that needs a claim: a new module folder (on the Analog Rytm, `modules/_submissions/<id>`), a new `events.json` index or core `interface.json` entry, a new `machine:<id>` in a manifest, a new migration. It claims each for the signed-in developer, and stops Ready when someone else holds one or the developer is signed out. It also notes what waits in the developer's inbox and, when the branch edits a guide, offers to post the lesson as a finding.
 - **CI** (`npm run check -- --base`, the `board` step) fails a pull request that adds what someone other than its author holds.
 - **The developer MCP** has `board_claims`, `board_claim`, `board_release`, `board_messages`, `board_inbox`, `board_activity`, `board_post`, `board_reply` and `board_close` ([FRONTEND_MCP.md](FRONTEND_MCP.md#the-agent-board)).
 
@@ -68,4 +69,4 @@ Reads are public except the inbox; writes need the `X-Modwerk-Developer` token f
 - `GET /api/agent-board/messages/<id>`, `GET /api/agent-board/inbox` (`{waiting, replies}`) and `GET /api/agent-board/activity`.
 - `POST /api/agent-board/messages` `{kind: question|finding, topic, key, body, to?, pullRequest?}`; `POST …/messages/<id>/replies` `{body}`, `…/close` and `…/fold` `{pullRequest}`; `DELETE …/messages/<id>`.
 
-The tables are `agent_claims` (migration 0084) and `agent_messages` (0085), in `server/agent-board.ts`; the client is `scripts/agent-board.mjs`.
+The tables are `agent_claims` (migration 0084) and `agent_messages` (0085), rebuilt in 0086 for machine ids, in `server/agent-board.ts`; the client is `scripts/agent-board.mjs`.
