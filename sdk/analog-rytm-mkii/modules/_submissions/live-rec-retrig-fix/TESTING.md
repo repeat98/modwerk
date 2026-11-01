@@ -2,7 +2,7 @@
 
 ## 0.1.0-experimental (rytm-emu, 31 October 2026)
 
-Emulator results first; pad pressure there is a scripted stream, not a real pad. The unit's results, on RR09, are at the end.
+Emulator results first; pad pressure there is a scripted stream, not a real pad. The unit's results, on RR09, RR11, RR14 and RR16, are at the end.
 
 ### Builds
 
@@ -21,6 +21,7 @@ Owner-supplied OS 1.74 (stock sha256 cb0f99d6…e123), core-ar2 0.7 (`vendor/ele
 - RR15: RR12 with the same, sha256 f86752dc986c8f4e…
 - RR16: RR14 with RTRG + YES turning ALWAYS ON over, sha256 d4b991ef3a9a630e…
 - RF17: RR16 under the module's final name (id `live-rec-retrig-fix`), sha256 a67e4adb57cedfb9…; the two images differ only in the sysex header's version tag (`cmp`: four bytes, all before offset 64), so RR16's unit results hold for it.
+- SP01: RF17's module beside Silent Pad+Trig Settings 0.5.1-experimental, sha256 27def7fc43625172…
 
 Emulator: rytm-emu c5732f0.
 
@@ -76,9 +77,33 @@ Quantize live rec on RR13: on (the project's default), rolls pressed 0.28 step l
 
 The release race, the note-off flags and the queue guard were changed from reading the code. No test reaches them.
 
+### RETRIG menu YES, stock and module (rytm-emu, 1 November 2026)
+
+Stock OS 1.74 (its own boot snapshot) and RR16, each booted to the main screen, RTRG held, DOWN pressed 0 to 3 times, then YES or no key; the LCD framebuffer of the YES run compared with the other's while RTRG was still held.
+
+| Row | Stock, YES | RR16, YES |
+| --- | --- | --- |
+| RETRIG (rate) | no change on the screen | ALWAYS ON turned over |
+| LENGTH | no change | ALWAYS ON turned over |
+| VEL.CUR | no change | ALWAYS ON turned over |
+| ALWAYS ON | ALWAYS ON turned over | ALWAYS ON turned over |
+
+In stock's code the menu's YES branch (0x400e2b3c) runs the lit item's YES action through 0x40072da8, which returns at once when the item has none; the RETRIG menu's constructor gives only the ALWAYS ON item that action (its lambda 0x400e264c calls the ALWAYS ON setter 0x400a708a), so on the other three rows stock's YES runs nothing. The module replaces the branch's key-down test with its toggle for the menu's track and skips the item action, so the ALWAYS ON row does the same as stock and the three value rows now turn ALWAYS ON over.
+
+### Beside Silent Pad+Trig Settings 0.5.1 (rytm-emu, 1 November 2026)
+
+SP01, cold boot, GLOBAL > CONTROL > SEQUENCER CONFIG, SILENT PAD LIVEREC checked with YES (the fifth row), menus left with NO; then from that state and from the plain boot, LIVE RECORDING (RECORD + PLAY) with a scripted pressure stream on pad 1, once with RTRG held and once with ALWAYS ON turned on by RTRG + YES. Swing poked to 0, as in the other runs. Read: the engine's velocity writes (watch 0x800067c4) and track 1's trig flags and velocities.
+
+| SILENT PAD LIVEREC | RTRG + pad | ALWAYS ON pad |
+| --- | --- | --- |
+| unchecked | 15 velocity writes, trigs 0x381/0x391 on 15 steps with the played velocities | the same |
+| checked | no velocity write, no trig on any step | no velocity write, no trig |
+
+Silent Pad+Trig's gate sits at the entry of the pad's play routine (0x400c772e), which the pad handler calls with the retrig flag (RTRG held, or ALWAYS ON from 0x400a7020); with the setting checked it returns before the voice trigger, so no retrig series starts and this module sees no hit. Neither module patches a site of the other (`modules:compat`). FUNC + pad with a retrig was not tried.
+
 ### Not tested
 
-External MIDI clock. Where hits land when the pattern changes during a roll (the live hits matched stock). Load was not measured. RR12, RR13 and RR15 have not run on a unit.
+External MIDI clock. Where hits land when the pattern changes during a roll (the live hits matched stock). Load was not measured. RR12, RR13 and RR15 have not run on a unit; RR16's code is what RF17 and SP01 carry.
 
 ## On the unit: RR09 (Nathaniel Pavel, 31 October 2026)
 

@@ -54,7 +54,7 @@
       "Rates faster than a step record one velocity for each trig's hits, or VEL.CUR's fade.",
       "Micro timing has 24 units a step.",
       "A roll started before LIVE RECORDING can miss hits.",
-      "Not tested on a unit; pad pressure was scripted in rytm-emu.",
+      "rytm-emu's pad pressure was scripted; the unit results are the author's own, from playing.",
       "External MIDI clock not tested."
     ]
   },
@@ -90,7 +90,7 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "rytm-emu c5732f0 only, scripted pressure: 1/8, 1/12, 1/16, 1/20, 1/24, 1/32, ALWAYS ON, quantize on and off, track speed 2x and 1/2x, beside Retrig Grid. Not tested on a unit. See TESTING.md."
+    "summary": "rytm-emu c5732f0, scripted pressure: 1/8, 1/12, 1/16, 1/20, 1/24, 1/32, ALWAYS ON, quantize on and off, track speed 2x and 1/2x, beside Retrig Grid; RETRIG menu YES on every row against stock; beside Silent Pad+Trig with SILENT PAD LIVEREC checked. On the author's Analog Rytm MKII (OS 1.74), reported from playing: RR09, RR11, RR14 and RR16 pass every listed case; RF17 has RR16's code bytes. See TESTING.md."
   },
   "license": {
     "spdx": "GPL-3.0-or-later",
