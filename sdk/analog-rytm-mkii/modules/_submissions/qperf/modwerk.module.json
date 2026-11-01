@@ -31,9 +31,9 @@
     ]
   },
   "access": {
-    "location": "The QPER key, on any page.",
+    "location": "The QPER key, on the sound pages and in PERF, SCNE, MUTE and CHRO.",
     "steps": [
-      "Hold QPER and press pads to link performances, as on stock.",
+      "Hold QPER and press a pad to link that one performance.",
       "Keep QPER held and turn a knob to set its offset.",
       "QPER + PLAY clears the linked performance; press PLAY again to undo. QPER + RECORD copies it, QPER + STOP pastes.",
       "QPER + YES moves them into the kit."
@@ -48,7 +48,8 @@
     "requires": [],
     "conflicts": [],
     "limitations": [
-      "QPER links one performance at a time, unlike stock.",
+      "A press with QPER held leaves one link, unlike stock. A kit with several keeps them until then, and shows MORE THAN ONE LINKED.",
+      "The gestures work on the sound pages and in PERF, SCNE, MUTE and CHRO, not in menus.",
       "Until the QPER knob moves after power on, QPER + YES uses the amounts stock holds.",
       "Replaces stock's QPER + PLAY, which starts the sequencer."
     ]

@@ -1,6 +1,6 @@
 # QPERF testing
 
-Nothing here proves reboot persistence or the QPER knob itself. The only hardware run so far is reported below, on a build since fixed.
+Nothing here proves reboot persistence or the QPER knob itself. Hardware results below are the author's, each on the build named. QC10, the code here, has not run on a unit.
 
 ## Hardware
 
@@ -169,7 +169,7 @@ Reported by the author on QC08: tune locked to +127 under QPER, QPER + YES set i
 
 Combined build QC09 (sha256 4bbc13f1): the tick clears its flag before reading the link, so a kit change at that moment asks again. Boot, reload, load and a knob lock passed in rytm-emu. Reported by the author on QC09: it boots and kits load.
 
-Combined build QC10 (sha256 0bab327028a3b1666dbc64be87ff53777782a5b99d2136366250462a36ebb1b1): core 0.7 base 0c92aa45, Filter Hz, Pipo Loop, QPERF, Silent Pad+Trig. After the owner's review, a kit's links stay until a press with QPER held, and the gestures read what is on screen. rytm-emu, factory kit K001 (31 locks, performances 1 and 10 linked). Not run on a unit.
+Combined build QC10 (sha256 66d32f500aeae20758b41597a831a2e82840c98ffbc0684df4afe1331200f845): core 0.7 base 0c92aa45, Filter Hz, Pipo Loop, QPERF, Silent Pad+Trig. After the owner's review, a kit's links stay until a press with QPER held, and the gestures read what is on screen. rytm-emu, factory kit K001 (31 locks, performances 1 and 10 linked). Not run on a unit.
 
 | Check | Result |
 | --- | --- |
@@ -188,7 +188,7 @@ Combined build QC10 (sha256 0bab327028a3b1666dbc64be87ff53777782a5b99d2136366250
 | FUNC + QPER, then YES | Nothing changed |
 | GLOBAL menu open, QPER held, YES, PLAY, knob D | Mask and locks unchanged, the menu kept YES, PLAY started the sequencer as stock's |
 | GLOBAL menu open, QPER + BD | Stock's link, mask 0x1 |
-| QPER held, GLOBAL, then BD, YES, PLAY | Mask and locks unchanged |
+| QPER held, GLOBAL, then BD, YES, PLAY | All stock's: no QPERF message, locks unchanged, PLAY started the sequencer |
 
 The view classes were read from the stack on the main screen, a sound page, PERF, SCNE, MUTE, CHRO, TEMPO, the RECORDER, the GLOBAL menu and two FUNC menus. The GLOBAL menu lets stock's QPER view open above it, so a site in that view would not keep the gestures out, and they check the top view instead.
 
