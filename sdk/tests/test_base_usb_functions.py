@@ -93,6 +93,74 @@ class BaseUsbFunctions(unittest.TestCase):
             with self.assertRaises(ValueError):
                 functions.midi_source(broken)
 
+    def test_receiver_clock_guard_is_two_insertions_and_refuses_drift(self):
+        original = (ROOT / 'sdk/machines/octatrack/elekloader/usbmidi_rx.s').read_text()
+        made = functions.receiver_source(original)
+        self.assertTrue(made.endswith(functions.CLOCK_GUARD))
+        self.assertEqual(made.count('6:  bsrw    mw_usb_clock_yields\n'), 1)
+        self.assertEqual(made.count('    movel   %d1,mw_usb_clk_stamp\n'), 1)
+        for broken in (made, original.replace('    movel   %d1,CLK_T\n', ''), original.replace('6:  moveq   #0,%d2\n', '6:  moveq   #1,%d2\n')):
+            with self.assertRaises(ValueError):
+                functions.receiver_source(broken)
+
+    @unittest.skipUnless(shutil.which('m68k-elf-as') and importlib.util.find_spec('unicorn'), 'ColdFire binutils or Unicorn unavailable')
+    def test_usb_clock_and_transport_give_way_while_din_clocks(self):
+        from unicorn import Uc, UC_ARCH_M68K, UC_MODE_BIG_ENDIAN, UC_HOOK_CODE
+        from unicorn import m68k_const as m
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            (root / 'rx.s').write_text(functions.receiver_source((ROOT / 'sdk/machines/octatrack/elekloader/usbmidi_rx.s').read_text()))
+            subprocess.run(['m68k-elf-as', '-mcpu=54455', '-o', str(root / 'rx.o'), str(root / 'rx.s')], check=True)
+            subprocess.run(['m68k-elf-ld', '-Ttext=0x10000', '-e', '0x10000', *[f'--defsym={name}=0x3000{i}' for i, name in enumerate(
+                ('usbmidi_up', 'usbmidi_tx_busy', 'usbmidi_setcfg_shim', 'usbmidi_isr_shim'))], '-o', str(root / 'rx.elf'), str(root / 'rx.o')], check=True)
+            subprocess.run(['m68k-elf-objcopy', '-O', 'binary', '-j', '.text', str(root / 'rx.elf'), str(root / 'rx.bin')], check=True)
+            symbols = {line.split()[2]: int(line.split()[0], 16) for line in subprocess.check_output(
+                ['m68k-elf-nm', str(root / 'rx.elf')], text=True).splitlines() if len(line.split()) == 3}
+            code = (root / 'rx.bin').read_bytes()
+        uc = Uc(UC_ARCH_M68K, UC_MODE_BIG_ENDIAN)
+        uc.ctl_set_cpu_model(m.UC_CPU_M68K_CFV4E)
+        for page in (0x10000, 0x30000, 0x40092000, 0x46100000, 0x46c83000, 0x4ecc9000, 0xfc070000, 0x7f000):
+            uc.mem_map(page, 0x1000)
+        uc.mem_write(0x10000, code)
+        uc.mem_write(0x40092bbc, b'\x4e\x75')  # midi_rx_enqueue: record the byte, return
+        CLK_T, CLK_DT, DTCN0, GAP = 0x46c8345a, 0x46c83466, 0xfc07000c, 1881600
+        enqueued = []
+        uc.hook_add(UC_HOOK_CODE, lambda u, *_: enqueued.append(u.mem_read(u.reg_read(m.UC_M68K_REG_A7) + 7, 1)[0]),
+                    begin=0x40092bbc, end=0x40092bbc)
+        read = lambda at: struct.unpack('>I', uc.mem_read(at, 4))[0]
+        write = lambda at, value: uc.mem_write(at, struct.pack('>I', value & 0xffffffff))
+
+        def usb(now, *statuses):  # one USB-MIDI packet; returns the bytes the framer would see
+            enqueued.clear()
+            write(DTCN0, now)
+            uc.mem_write(0x4ecc9000, b''.join(bytes((3, s, 16, 0) if s == 0xf2 else (9, s, 64, 127) if s < 0xf0 else (15, s, 0, 0)) for s in statuses))
+            uc.reg_write(m.UC_M68K_REG_SR, 0x2000)  # supervisor first: it selects the stack A7 names
+            uc.reg_write(m.UC_M68K_REG_A7, 0x7ff00)
+            uc.mem_write(0x7ff00, struct.pack('>I', 0x7fff0))
+            uc.reg_write(m.UC_M68K_REG_D0, 4 * len(statuses))
+            uc.emu_start(symbols['usbmidi_rx_decode'], 0x7fff0, count=10000)
+            self.assertEqual(uc.reg_read(m.UC_M68K_REG_SR) & 0x700, 0)
+            return [b for b in enqueued if b >= 0xf0 or b == 0x90]
+
+        def din(now):  # the UART0 ISR's stamp for a DIN 0xF8
+            write(CLK_DT, now - read(CLK_T))
+            write(CLK_T, now)
+        dropped = lambda: read(symbols['mw_usb_clock_dropped'])
+        self.assertEqual(usb(1000, 0xfa, 0xf8), [0xfa, 0xf8])  # USB alone: all of it, each 0xF8 stamped
+        self.assertEqual(usb(236200, 0xf8), [0xf8])
+        self.assertEqual((read(CLK_T), read(CLK_DT)), (236200, 235200))
+        din(300000)  # DIN clocking: USB clock, transport and song position are dropped, everything else passes
+        self.assertEqual(usb(400000, 0xf8, 0xfa, 0xfb, 0xfc, 0xf2, 0x90, 0xfe, 0xf9), [0x90, 0xfe, 0xf9])
+        self.assertEqual((dropped(), read(CLK_T), read(CLK_DT)), (5, 300000, 300000 - 236200))
+        self.assertEqual(usb(300000 + GAP - 1, 0xf8), [])  # DIN stops: USB takes over at the gap, with a delta that resyncs
+        self.assertEqual(usb(300000 + GAP, 0xf8), [0xf8])
+        self.assertEqual((dropped(), read(CLK_DT)), (6, GAP))
+        din(0xffffff00)  # a DIN tick just before the timer wraps still owns just after it
+        self.assertEqual(usb(0x100, 0xf8), [])
+        self.assertEqual(usb(0xffffff00 + GAP, 0xfa), [0xfa])  # stale: adopted, so a full wrap later it is still old
+        self.assertEqual(usb(0xffffff00 + 10, 0xfc), [0xfc])
+        self.assertEqual(dropped(), 7)
+
     def test_unknown_layout_speed_and_malformed_authored_records_are_refused(self):
         for audio in ('USB AUDIO IN AB', 'unknown', True):
             with self.assertRaises(ValueError):
@@ -159,7 +227,7 @@ class BaseUsbFunctions(unittest.TestCase):
                 for name in ('modwerk_ep0_dispatch', 'modwerk_ep0_poll', 'modwerk_ep0_bus_reset', 'modwerk_engine_idle',
                              'olog_idle_hook', 'modwerk_ep0_reply')))
             midi = assemble('usbmidi', functions.midi_source((ROOT / 'sdk/octabam/platform/usb-midi/usbmidi.s').read_text()))
-            receive = assemble('usbmidi_rx', (ROOT / 'sdk/machines/octatrack/elekloader/usbmidi_rx.s').read_text())
+            receive = assemble('usbmidi_rx', functions.receiver_source((ROOT / 'sdk/machines/octatrack/elekloader/usbmidi_rx.s').read_text()))
             def link(objects, origin):
                 script, elf, raw = root / 'usb.ld', root / 'usb.elf', root / 'usb.bin'
                 script.write_text(builder.SCRIPT % origin)
