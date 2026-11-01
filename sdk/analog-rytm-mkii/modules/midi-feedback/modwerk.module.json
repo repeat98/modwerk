@@ -1,0 +1,176 @@
+{
+  "schemaVersion": 3,
+  "id": "midi-feedback",
+  "name": "MIDI Feedback",
+  "version": "0.1.0-experimental",
+  "machine": "analog-rytm-mkii",
+  "category": "midi-usb",
+  "exclusive": false,
+  "author": {
+    "github": "claptom-music",
+    "credits": [
+      "claptom-music"
+    ]
+  },
+  "maintainers": [
+    "claptom-music"
+  ],
+  "presentation": {
+    "label": "MIDI FEEDBACK",
+    "family": "MIDI parameter feedback",
+    "summary": "Automatic feedback for seven parameters per drum track, for controller pickup.",
+    "overview": "Sends parameter changes and a full background refresh about every two seconds over DIN MIDI OUT. Enable once per project; no menu visit is required while performing. Emulator lifecycle and physical USB PC12 Track Level pickup tests passed; Rytm hardware qualification remains pending.",
+    "highlights": [
+      "Automatic background refresh; no performance-time menu diving.",
+      "Seven assignments per track; choose your own PC12 pot layout.",
+      "Latest-value feedback with bounded, fair output."
+    ],
+    "usage": [
+      "In MIDI CONFIG, set distinct track channels, PARAM OUTPUT to CC, ENCODER DEST to INT+EXT, and OUTPUT TO to MIDI or MIDI+USB.",
+      "Map PC12 pots to the listed CCs and track channels, enable snap mode, and route feedback into the PC12 without MIDI THRU back to Rytm.",
+      "Press GLOBAL, select MIDI FEEDBACK, and press YES for ON. Feedback then refreshes automatically; SEND FEEDBACK is optional."
+    ]
+  },
+  "access": {
+    "location": "GLOBAL menu, after SYSTEM",
+    "steps": [
+      "Press GLOBAL.",
+      "Scroll to MIDI FEEDBACK and press YES to set ON.",
+      "Leave it ON for automatic feedback; SEND FEEDBACK is optional."
+    ],
+    "screenshots": [
+      "media/feedback-on.png"
+    ]
+  },
+  "controls": [
+    {
+      "name": "MIDI FEEDBACK",
+      "default": 0,
+      "doc": "Toggle feedback, off by default; stored per project.",
+      "labels": [
+        "OFF",
+        "ON"
+      ]
+    },
+    {
+      "name": "SEND FEEDBACK",
+      "default": null,
+      "doc": "Optional immediate refresh of all 84 assignments; background refresh already runs every two seconds while ON.",
+      "labels": null
+    }
+  ],
+  "compatibility": {
+    "releases": [
+      "1.74"
+    ],
+    "requires": [],
+    "conflicts": [],
+    "limitations": [
+      "Experimental: automatic refresh and emulator lifecycle checked; Rytm hardware qualification and release packaging pending.",
+      "OS 1.74 only; not for OS 1.72.",
+      "Feedback is DIN-only on Rytm; the Windows/WSL bridge used USB only for the PC12.",
+      "Physical USB PC12 Track Level pickup passed with the emulator; Rytm hardware qualification is pending."
+    ]
+  },
+  "platform": {
+    "kind": "elemod",
+    "core": "0.7",
+    "build": "build.json",
+    "events": [
+      "ev_tick",
+      "ev_settings",
+      "ev_project"
+    ],
+    "claims": [
+      "settings:MIDI FEEDBACK",
+      "settings:SEND FEEDBACK"
+    ]
+  },
+  "resources": {
+    "memoryBytes": 2662,
+    "fastBytes": 0,
+    "load": {
+      "display": "Not measured yet",
+      "method": "unmeasured",
+      "conditions": "Measure with every track playing, parameters modulated and the mod at its heaviest setting."
+    }
+  },
+  "evidence": {
+    "tier": "emulator",
+    "moduleVersion": "0.1.0-experimental",
+    "sourceSha256": "f0a29634b48a7e74232822b4d8bd13cae0a9513850fd2435a1f32f4e04f174c5",
+    "reports": [
+      "TESTING.md",
+      "evidence/emulator.json"
+    ],
+    "hardware": null,
+    "verifiedBy": null
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "Host scheduler, automatic-refresh output, nine emulator lifecycle checks and physical USB PC12 Track Level pickup passed. Rytm hardware, pinned packaging and publication remain pending.",
+    "documentation": {
+      "tutorial": {
+        "title": "Usage",
+        "steps": [
+          "In MIDI CONFIG, set distinct track channels, PARAM OUTPUT to CC, ENCODER DEST to INT+EXT, and OUTPUT TO to MIDI or MIDI+USB.",
+          "Map PC12 pots to the listed CCs and track channels, enable snap mode, and route feedback into the PC12 without MIDI THRU back to Rytm.",
+          "Press GLOBAL, select MIDI FEEDBACK, and press YES for ON. Feedback then refreshes automatically; SEND FEEDBACK is optional."
+        ]
+      },
+      "screenshots": [
+        "media/feedback-on.png",
+        "media/send-feedback.png"
+      ],
+      "captureRecord": "media/capture.json"
+    }
+  },
+  "license": {
+    "spdx": "GPL-3.0-or-later",
+    "file": "LICENSE",
+    "declaration": "Original module by claptom-music. SDK hooks and stock routine addresses researched from the GPL-compatible Elekloader SDK."
+  },
+  "media": [
+    {
+      "path": "media/thumbnail.svg",
+      "kind": "thumbnail",
+      "caption": "MIDI Feedback signal diagram",
+      "alt": "Parameter feedback travels from Rytm to controller pickup targets.",
+      "credit": "claptom-music",
+      "license": "GPL-3.0-or-later",
+      "source": "Original vector signal diagram by claptom-music."
+    },
+    {
+      "path": "media/feedback-on.png",
+      "kind": "screenshot",
+      "caption": "MIDI FEEDBACK: ON selected in GLOBAL.",
+      "alt": "GLOBAL menu with the MIDI FEEDBACK ON row selected.",
+      "credit": "claptom-music documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "7bb7fb434981d0d5f144cfdb7c8e6bf29c10c849fcdb6207a5d72e17796c2b05",
+        "setup": "Same-build active snapshot from the emulator output probe, feedback ON, CC output and MIDI+USB selected. DTBOOT_STEPS=1; DTBOOT_PNG_DIR points outside Git. Screen documentation only."
+      }
+    },
+    {
+      "path": "media/send-feedback.png",
+      "kind": "screenshot",
+      "caption": "SEND FEEDBACK is an optional immediate refresh.",
+      "alt": "GLOBAL menu with SEND FEEDBACK selected below MIDI FEEDBACK ON.",
+      "credit": "claptom-music documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "7bb7fb434981d0d5f144cfdb7c8e6bf29c10c849fcdb6207a5d72e17796c2b05",
+        "setup": "Same-build active snapshot from the emulator output probe, feedback ON, CC output and MIDI+USB selected. DTBOOT_STEPS=1; DTBOOT_PNG_DIR points outside Git. Screen documentation only."
+      }
+    }
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "sources": ["src/main.c", "src/feedback.c", "src/labels.s"],
+  "defsym": {},
+  "cflags": [],
+  "weak": [],
+  "subscribe": [
+    {"event": "ev_tick", "fn": "mf_tick", "order": 60},
+    {"event": "ev_settings", "fn": "mf_settings", "order": 60},
+    {"event": "ev_project", "fn": "mf_project", "order": 60}
+  ],
+  "contribute": [],
+  "collections": {},
+  "copied": [],
+  "regions": [],
+  "claims": ["settings:MIDI FEEDBACK", "settings:SEND FEEDBACK"],
+  "storage": [{"sym": "midi_feedback_enabled", "scope": "project", "bits": 1}],
+  "requires": [],
+  "derive": null,
+  "releases": { "1.74": {
+    "defsym": {"MF_STRING_CTOR": "0x401bcff0"},
+    "cflags": [
+      "-DAPP_AT=0x4017fa0a", "-DCONFIG_AT=0x400ae49e",
+      "-DPARAM_ON_AT=0x400b56c0", "-DPARAM_KIND_AT=0x400b563c",
+      "-DOUTPUT_PORT_AT=0x400b55b6", "-DTRACK_CHANNEL_AT=0x400b5156",
+      "-DTRACK_SOUND_AT=0x400a67ca", "-DDIN_ENQUEUE_AT=0x40001dea",
+      "-DMIDI_READY_AT=0x419f28a8", "-DDIN_STATE_AT=0x413da65c",
+      "-DDMA_BLOCK_AT=0xfc0454bc", "-DWORKING_KIT_AT=0x40766317"
+    ], "sites": []
+  } }
+}
