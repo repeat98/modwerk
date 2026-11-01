@@ -18,8 +18,8 @@
  "presentation": {
   "label": "TEMP SAVE",
   "family": "Workflow",
-  "summary": "FUNC + YES saves a temporary copy of the pattern and its kit; FUNC + NO brings both back.",
-  "overview": "Try something on the Rytm and get back to where you were. FUNC + YES saves the active pattern and its kit, performance and scene locks included, with stock's own save. FUNC + NO reloads both. A save belongs to its pattern and kit: change either or load a project and FUNC + NO shows NO TEMP SAVE.",
+  "summary": "FUNC + YES overwrites the pattern's and kit's saved copies, the ones stock's reloads go back to; FUNC + NO brings both back.",
+  "overview": "Try something on the Rytm and get back to where you were. FUNC + YES saves the active pattern and its kit, performance and scene locks included, over their saved copies, with stock's own save. FUNC + NO reloads both. A save belongs to its pattern and kit: change either or load a project and FUNC + NO shows NO TEMP SAVE.",
   "highlights": [
    "One gesture for the pattern and its kit",
    "Performance and scene locks come back with the kit",

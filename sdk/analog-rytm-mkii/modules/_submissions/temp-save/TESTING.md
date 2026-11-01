@@ -79,6 +79,9 @@ rytm-emu c5732f0, `dtboot`, stock OS 1.74, Modwerk base 0c92aa45, Temp Save alon
 | NO while TEMP SAVED shows (TS09) | The message closes |
 | RECORDER, FUNC + NO (TS09) | No message |
 | RECORD + PLAY with a locked trig, hold FUNC + NO past a bar (TS09) | The lock is erased, the trigs stay, no message |
+| FUNC + YES, turn TUN, SAVE PROJECT AS (TS09) | The active kit keeps the edit and the kit's saved copy keeps the save |
+| Then FUNC + NO (TS09) | RELOADED; the kit is back at the save |
+| FUNC + YES, turn TUN, SAVE PROJECT AS, turn TUN, LOAD PROJECT of that project (TS09) | No result: every kit came back blank in the emulator, so this says nothing about the instrument |
 
 Read from stock's code, not run: performance locks at kit record + 1950 and scene locks at + 2190, inside the bytes compared above. The locks heard while FUNC + NO erases them in LIVE RECORDING are stock's: the sequencer builds a step, locks included, a step ahead, and the erase reaches it afterwards.
 
