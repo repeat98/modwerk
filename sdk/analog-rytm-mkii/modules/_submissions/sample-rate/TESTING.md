@@ -83,9 +83,20 @@ An earlier build (SP01) clicked here: flips that landed the voice at an edge at 
 | Scene lock on RATE at about 53, on a sound at 127, scene toggled | effective RATE 127 and 53 by turn, the step followed, sign included |
 | Performance lock on RATE, amount written to the engine's word (0, half, full) | effective RATE 127, 91, 55, the step followed, sign included; the amount was poked, not played from a pad or the QPER knob |
 
+## RATE sweeps with LOP PIPO (SP03, MIDI CC 25 as a stand-in for an LFO)
+
+| Check | Result |
+| --- | --- |
+| Sweep around 96, loop of about 2,100 frames | no click |
+| Sweep with a period of 2 s, loop of about 380 frames, four 45 s runs | 12 full-loop jumps, about 1 in 1,100 turns, all at END's edge, with RATE about 74 and no change of direction |
+| Same, period 2.8 s | no click |
+| Stock TUN and FIN sweeps with the row off | no click |
+
+A diagnostic build (not kept) logged two of those jumps block by block. The voice lands on END's frame near 5 frames a block, which stock's pitch cannot reach (its floor is 8), turns, and a block later is back to going up: stock wraps it to STA, and Pipo Loop's next turn sends it back. Open: the fix belongs in Pipo Loop's turn, as a module update of its own.
+
 ## Not tested
 
-An LFO on RATE by intent (the destination list could not be scrolled to FIN in the emulator), saving a sound to the pool and loading it (bank A is write protected there), a project file round trip, Env Reset Amp beside it, MKI. CPU load on a unit: the figures in the manifest are a static estimate.
+Saving a sound to the pool in the emulator (bank A is write protected there), a project file round trip, Env Reset Amp beside it, MKI. CPU load on a unit: the figures in the manifest are a static estimate.
 
 ## Hardware
 
@@ -107,5 +118,8 @@ npp1993 flashed SP03 on an Analog Rytm MKII, OS 1.74, and reports the following.
 | Row on unsaved, NO + PLAY MODE | row OFF, FIN +0 |
 | Row OFF at RATE 127 | FIN +0, normal pitch |
 | Track copied, 1 to 11 | row on and RATE on the copy |
+| LFO to the sample's Fine Tune, RATE about 96, LOP PIPO | pitch rises and falls, passes through a stop into reverse, with some minor clicks; the waveform's playhead looks linear, not following the LFO |
+| Track sound stored to a pool slot | stored; it shows in SOUND MANAGER |
+| That slot, LOAD TO TRACK on another track | a toast reading ERROR; cause not found |
 
 Flashing note: on the first attempt the unit stopped on UPGRADE OS NOW? and answered no key after NO had been pressed during the transfer. A power cycle returned it to the earlier OS, and the second transfer, with nothing pressed until the prompt, went through.
