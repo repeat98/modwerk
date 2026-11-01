@@ -1,0 +1,93 @@
+{
+  "schemaVersion": 3,
+  "id": "sample-rate",
+  "name": "Sample RATE",
+  "version": "0.1.0-experimental",
+  "machine": "analog-rytm-mkii",
+  "category": "playback",
+  "exclusive": false,
+  "author": {
+    "github": "npp1993",
+    "credits": [
+      "npp1993"
+    ]
+  },
+  "maintainers": [
+    "npp1993"
+  ],
+  "presentation": {
+    "label": "SAMPLE RATE",
+    "family": "Replace with the kind of mod",
+    "summary": "Replace with one sentence about what this mod adds.",
+    "overview": "Replace with what the mod does, how it sounds or works, and what it changes on the unit.",
+    "highlights": [
+      "Replace with a real highlight."
+    ],
+    "usage": [
+      "Replace with a practical way to use it."
+    ]
+  },
+  "access": {
+    "location": "Replace with where the mod appears on the unit.",
+    "steps": [
+      "Replace with the exact button and menu steps."
+    ],
+    "screenshots": []
+  },
+  "controls": [],
+  "compatibility": {
+    "releases": [
+      "1.74"
+    ],
+    "requires": [],
+    "conflicts": [],
+    "limitations": []
+  },
+  "platform": {
+    "kind": "elemod",
+    "core": "0.7",
+    "build": "build.json",
+    "events": [],
+    "claims": [
+      "ui:SOUND SETTINGS row FIN AS RATE, after LEGACY FX SEND",
+      "param:FIN (id 40) label and value text while FIN AS RATE is on"
+    ]
+  },
+  "resources": {
+    "memoryBytes": null,
+    "fastBytes": null,
+    "load": {
+      "display": "Not measured yet",
+      "method": "unmeasured",
+      "conditions": "Measure with every track playing, parameters modulated and the mod at its heaviest setting."
+    }
+  },
+  "evidence": {
+    "tier": "none",
+    "moduleVersion": "0.1.0-experimental",
+    "sourceSha256": null,
+    "reports": [],
+    "hardware": null,
+    "verifiedBy": null
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "Not tested yet."
+  },
+  "license": {
+    "spdx": "GPL-3.0-or-later",
+    "file": "LICENSE",
+    "declaration": "Original work by the author. Replace if you choose another GPL-compatible licence."
+  },
+  "media": [
+    {
+      "path": "media/thumbnail.svg",
+      "kind": "thumbnail",
+      "caption": "Sample Rate thumbnail",
+      "alt": "Placeholder thumbnail for Sample Rate",
+      "credit": "npp1993",
+      "license": "GPL-3.0-or-later",
+      "source": "Original placeholder from the Modwerk SDK template; replace with your own artwork."
+    }
+  ]
+}
