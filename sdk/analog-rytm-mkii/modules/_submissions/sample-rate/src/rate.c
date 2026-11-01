@@ -87,7 +87,7 @@ void sample_rate_block(void)
     unsigned char mask = 0;
     int v;
     for (v = 0; v < VOICES; v++) {
-        int t = OWNER(v), down;
+        int t = OWNER(v), on, down;
         if (wrote[v]) {                  // still as written: stock did not rebuild it
             int w = wrote_track[v];
             if (EFF(w, IDX_STA) == wrote_sta[v] && EFF(w, IDX_END) == wrote_end[v]) {
@@ -96,18 +96,20 @@ void sample_rate_block(void)
             }
             wrote[v] = 0;
         }
-        if (t >= TRACKS || !track_on[t]) {
+        if (t >= TRACKS) {
             going_down[v] = 0;
             continue;
         }
-        mask |= (unsigned char)(1u << v);
-        down = EFF(t, IDX_FIN) < STOP;
+        on = track_on[t];
+        down = on && EFF(t, IDX_FIN) < STOP;   // switched off going down: back up, as any change of sign
         if (down != going_down[v]) {
             if (turn_round(v, t, (int)(TRIG_NEXT >> v & 1)))
                 going_down[v] = (unsigned char)down;
             else
                 down = going_down[v];
         }
+        if (on)
+            mask |= (unsigned char)(1u << v);
         if (down) {
             short sta = EFF(t, IDX_STA), end = EFF(t, IDX_END);
             EFF(t, IDX_STA) = end;
@@ -183,24 +185,15 @@ static void set_on(void **menu, int on)
     ((void (*)(uint32_t, void *))*(uint32_t *)(*(uint32_t *)p.wrapper + NOTIFY_OF_WRAPPER))(p.wrapper, &info);
     fin = *(short *)(p.sound + LIVE_SOUND_FIN);
     if (on && fin == STOP)
-        fin = FULL;
+        PARAM_SET(PARAM_TARGET(p.project, p.track, 0), ID_FIN, FULL, p.track, 1, 1);
     else if (!on && fin >= FULL)
-        fin = STOP;
-    else
-        fin = -1;
-    if (fin >= 0)
-        PARAM_SET(PARAM_TARGET(p.project, p.track, 0), ID_FIN, fin, p.track, 1, 1);
+        PARAM_SET(PARAM_TARGET(p.project, p.track, 0), ID_FIN, STOP, p.track, 1, 1);
     VIEW_INVALIDATE((char *)*menu + 56);
 }
 
 // The SOUND SETTINGS row. core_additem builds it from four callbacks, each
 // called as its std::function's invoker: the first argument is the function's
 // payload, which holds the menu for select and change.
-uint32_t sample_rate_row_text(void)
-{
-    return (uint32_t)"FIN AS RATE";
-}
-
 extern void sample_rate_row_label(void);
 extern void core_additem(void *menu, const void *row);
 

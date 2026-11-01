@@ -9,7 +9,7 @@
   "author": {
     "github": "npp1993",
     "credits": [
-      "npp1993"
+      "npp1993 (Nathaniel Pavel) — the mod, its design and code, and this Modwerk module."
     ]
   },
   "maintainers": [
@@ -17,31 +17,69 @@
   ],
   "presentation": {
     "label": "SAMPLE RATE",
-    "family": "Replace with the kind of mod",
-    "summary": "Replace with one sentence about what this mod adds.",
-    "overview": "Replace with what the mod does, how it sounds or works, and what it changes on the unit.",
+    "family": "Sample playback",
+    "summary": "FIN's knob becomes RATE, sound by sound: pure sample speed down to a stop and into reverse, like the Octatrack's RATE on PTCH.",
+    "overview": "Sample RATE gives a sample a pure speed control: no time stretch, just the sample played faster or slower, down to a stop and on into reverse. Switch it on for a sound in SOUND SETTINGS with FIN AS RATE, and FIN's knob on the SAMPLE page reads RATE, 0 to 127: 127 plays at normal speed, 64 stops, 0 plays backward at normal speed, in a straight line between them, as the Octatrack's RATE with its setting on PTCH. Stock's pitch stops at a quarter of the speed. A trig below 64 starts from END. The setting saves with the sound and is off by default, so a sound plays stock until you ask.",
     "highlights": [
-      "Replace with a real highlight."
+      "Slow a sample to a dead stop and run it backward from one knob.",
+      "Exactly the Octatrack's range: 127 is 1x, 64 stops, 0 is -1x.",
+      "Per sound, saved with it, off by default: every other sound stays stock.",
+      "Takes parameter locks: one trig backward from END, the next forward.",
+      "Works beside LOP PIPO from Pipo Loop, without needing it."
     ],
     "usage": [
-      "Replace with a practical way to use it."
+      "Put a long sample on a track, with LOP ON. Press FUNC + MUTE, choose SOUND SETTINGS, and set FIN AS RATE to ON.",
+      "Press SMPL and play the pad. Turn RATE down from 127: the sample slows like a stopping turntable and rests at 64.",
+      "Keep turning below 64: it runs backward, smoothly through the stop. A new trig now starts from END.",
+      "Hold a trig in GRID RECORDING and turn RATE to lock it on that step: a trig at 1 plays backward from END, and the next trig plays forward again."
     ]
   },
   "access": {
-    "location": "Replace with where the mod appears on the unit.",
+    "location": "SOUND SETTINGS: FIN AS RATE, the last row. Then the SAMPLE page: FIN's knob (encoder B) reads RATE.",
     "steps": [
-      "Replace with the exact button and menu steps."
+      "Select a track whose sound plays a sample.",
+      "Press FUNC + MUTE, choose SOUND SETTINGS, and go to the last row, FIN AS RATE.",
+      "Press RIGHT: the row reads ON.",
+      "Press NO until the menu closes, then SMPL: encoder B reads RATE."
     ],
-    "screenshots": []
+    "screenshots": [
+      "media/row-on.png",
+      "media/knob-rate.png"
+    ]
   },
-  "controls": [],
+  "controls": [
+    {
+      "name": "FIN AS RATE",
+      "default": 0,
+      "doc": "SOUND SETTINGS, the last row. OFF: stock. ON: FIN is RATE on this sound. Saved with the sound. Switching on takes FIN +0 to RATE 127; switching off takes RATE 127 to FIN +0; other values stay.",
+      "labels": [
+        "OFF",
+        "ON"
+      ]
+    },
+    {
+      "name": "RATE",
+      "default": 127,
+      "doc": "SAMPLE page, encoder B, on a sound with FIN AS RATE on. 0 to 127: speed scales by |RATE - 64| / 64, backward below 64, and 127 is exactly 1x. TUN still multiplies it. Locks and LFOs reach it as FIN.",
+      "labels": null
+    }
+  ],
   "compatibility": {
     "releases": [
       "1.74"
     ],
     "requires": [],
     "conflicts": [],
-    "limitations": []
+    "limitations": [
+      "Built for OS 1.74 only, with core-ar2 0.7.",
+      "Not tested on a unit yet; rytm-emu only (TESTING.md).",
+      "RATE never goes above 1x by itself; TUN does, to stock's ceiling of about 4x.",
+      "On stock OS a saved sound plays FIN as FIN: RATE 127 is about a semitone sharp.",
+      "With LOP OFF, once the sample has played out, changing RATE does not bring it back: trig again.",
+      "A change of direction on a looping voice waits until it is 32 frames clear of STA and END; a trig does not wait.",
+      "LFO destination lists and other screens still say FIN.",
+      "Sound locks, scene locks and performance locks have not been run."
+    ]
   },
   "platform": {
     "kind": "elemod",
@@ -54,40 +92,141 @@
     ]
   },
   "resources": {
-    "memoryBytes": null,
-    "fastBytes": null,
+    "memoryBytes": 2320,
+    "fastBytes": 0,
     "load": {
-      "display": "Not measured yet",
-      "method": "unmeasured",
-      "conditions": "Measure with every track playing, parameters modulated and the mod at its heaviest setting."
+      "display": "About 0.2 % of a block with the row off, 0.35 % with eight voices in RATE (static estimate)",
+      "method": "static",
+      "conditions": "Static estimate from the compiled code: the block handler and the two gates in the step loop run for all eight voices every block, about 28 instructions a voice with the row off and about 60 with it on; at the Rytm guide's 0.023 % of a block per instruction a frame, about 0.2 % and 0.35 %. A change of direction adds one call of stock's frame routine a block while it waits. Not measured on a unit."
     }
   },
   "evidence": {
-    "tier": "none",
+    "tier": "emulator",
     "moduleVersion": "0.1.0-experimental",
-    "sourceSha256": null,
-    "reports": [],
+    "sourceSha256": "b5a98ac24dbd0cede528f24d7f5171277daad2055d061ff28fc3b8ff09843c13",
+    "reports": [
+      "TESTING.md"
+    ],
     "hardware": null,
     "verifiedBy": null
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Not tested yet."
+    "summary": "rytm-emu on OS 1.74, 23,777-frame ramp: rate word exact at every RATE tried, trig below 64 starts from END, row off sample-identical to the core alone, with Pipo Loop no clicks at 1x, slow, below one frame a block, in reverse, or across flips. No unit yet.",
+    "documentation": {
+      "tutorial": {
+        "title": "Quick tutorial",
+        "steps": [
+          "Put a long sample on a track, with LOP ON. Press FUNC + MUTE, choose SOUND SETTINGS, and set FIN AS RATE to ON.",
+          "Press SMPL and play the pad. Turn RATE down from 127: the sample slows like a stopping turntable and rests at 64.",
+          "Keep turning below 64: it runs backward, smoothly through the stop. A new trig now starts from END.",
+          "Hold a trig in GRID RECORDING and turn RATE to lock it on that step: a trig at 1 plays backward from END, and the next trig plays forward again."
+        ]
+      },
+      "screenshots": [
+        "media/row-on.png",
+        "media/row-off.png",
+        "media/knob-rate.png",
+        "media/value-rate.png",
+        "media/other-track-fin.png"
+      ],
+      "captureRecord": "media/capture.json"
+    }
   },
   "license": {
     "spdx": "GPL-3.0-or-later",
     "file": "LICENSE",
-    "declaration": "Original work by the author. Replace if you choose another GPL-compatible licence."
+    "declaration": "npp1993's original code under GPL-3.0-or-later. Each patch precondition is an address, a length and a SHA-256; no stock bytes are included."
   },
   "media": [
     {
       "path": "media/thumbnail.svg",
       "kind": "thumbnail",
-      "caption": "Sample Rate thumbnail",
-      "alt": "Placeholder thumbnail for Sample Rate",
+      "caption": "Sample RATE",
+      "alt": "A sample's play position climbs, slows to a stop at RATE 64, then runs backward.",
       "credit": "npp1993",
       "license": "GPL-3.0-or-later",
-      "source": "Original placeholder from the Modwerk SDK template; replace with your own artwork."
+      "source": "Original conceptual illustration in the shared signal-art style; not a device screenshot."
+    },
+    {
+      "path": "media/row-on.png",
+      "kind": "screenshot",
+      "caption": "SOUND SETTINGS, the last row: FIN AS RATE reads ON.",
+      "alt": "SOUND menu list with FIN AS RATE highlighted and reading ON, under LEGACY FX SEND.",
+      "credit": "npp1993 documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "f8802bc146dacce2e7770ff700f4f1efb9cdc9d265d0faf262214568e7520347",
+        "setup": "Headless rytm-emu (dtboot) running SR04: core-ar2 0.7 and this folder's Sample RATE 0.1.0-experimental, linked by Modwerk on stock OS 1.74, BD playing a generated ramp sample. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+      }
+    },
+    {
+      "path": "media/row-off.png",
+      "kind": "screenshot",
+      "caption": "With FIN AS RATE off the sound plays stock.",
+      "alt": "SOUND menu list with FIN AS RATE highlighted and reading OFF.",
+      "credit": "npp1993 documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "f8802bc146dacce2e7770ff700f4f1efb9cdc9d265d0faf262214568e7520347",
+        "setup": "Headless rytm-emu (dtboot) running SR04: core-ar2 0.7 and this folder's Sample RATE 0.1.0-experimental, linked by Modwerk on stock OS 1.74, BD playing a generated ramp sample. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+      }
+    },
+    {
+      "path": "media/knob-rate.png",
+      "kind": "screenshot",
+      "caption": "On the SAMPLE page FIN's knob reads RATE, here at 127.",
+      "alt": "SAMPLE page knobs: TUN, RATE at full right, BR, SMP, STA, END, LOP, LEV.",
+      "credit": "npp1993 documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "f8802bc146dacce2e7770ff700f4f1efb9cdc9d265d0faf262214568e7520347",
+        "setup": "Headless rytm-emu (dtboot) running SR04: core-ar2 0.7 and this folder's Sample RATE 0.1.0-experimental, linked by Modwerk on stock OS 1.74, BD playing a generated ramp sample. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+      }
+    },
+    {
+      "path": "media/value-rate.png",
+      "kind": "screenshot",
+      "caption": "While it turns the header reads RATE and the knob shows its value, 0 to 127.",
+      "alt": "SAMPLE page with RATE in the header and the knob reading 103.",
+      "credit": "npp1993 documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "f8802bc146dacce2e7770ff700f4f1efb9cdc9d265d0faf262214568e7520347",
+        "setup": "Headless rytm-emu (dtboot) running SR04: core-ar2 0.7 and this folder's Sample RATE 0.1.0-experimental, linked by Modwerk on stock OS 1.74, BD playing a generated ramp sample. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+      }
+    },
+    {
+      "path": "media/other-track-fin.png",
+      "kind": "screenshot",
+      "caption": "The setting is per sound: another track's sound keeps FIN.",
+      "alt": "SMPL view of the SD track with TUN, FIN, BR and SMP labels.",
+      "credit": "npp1993 documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "f8802bc146dacce2e7770ff700f4f1efb9cdc9d265d0faf262214568e7520347",
+        "setup": "Headless rytm-emu (dtboot) running SR04: core-ar2 0.7 and this folder's Sample RATE 0.1.0-experimental, linked by Modwerk on stock OS 1.74, BD playing a generated ramp sample. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+      }
     }
   ]
 }

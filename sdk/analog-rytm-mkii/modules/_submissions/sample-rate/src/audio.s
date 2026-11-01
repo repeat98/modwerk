@@ -138,15 +138,13 @@ sample_rate_menu_gate:
 | The row's label, a std::function returning a std::string: the string to
 | build is at a0, and d0 returns a0.
         .globl  sample_rate_row_label
-        .extern sample_rate_row_text
 
 sample_rate_row_label:
         link    %a6,#-4
         move.l  %d2,-(%sp)
         move.l  %a0,%d2
-        jsr     sample_rate_row_text
         pea     -1(%a6)
-        move.l  %d0,-(%sp)
+        pea     sample_rate_row_text
         move.l  %d2,-(%sp)
         jsr     sample_rate_string
         lea     12(%sp),%sp
@@ -163,3 +161,5 @@ sample_rate_fin:
         .section .rodata
 sample_rate_label:
         .asciz  "RATE"
+sample_rate_row_text:
+        .asciz  "FIN AS RATE"
