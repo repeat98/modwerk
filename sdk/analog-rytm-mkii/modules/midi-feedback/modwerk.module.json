@@ -87,7 +87,7 @@
     ]
   },
   "resources": {
-    "memoryBytes": 2662,
+    "memoryBytes": 2602,
     "fastBytes": 0,
     "load": {
       "display": "Not measured yet",
@@ -101,14 +101,15 @@
     "sourceSha256": "f0a29634b48a7e74232822b4d8bd13cae0a9513850fd2435a1f32f4e04f174c5",
     "reports": [
       "TESTING.md",
-      "evidence/emulator.json"
+      "evidence/emulator.json",
+      "evidence/pinned-candidate.json"
     ],
     "hardware": null,
     "verifiedBy": null
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Host scheduler, automatic-refresh output, nine emulator lifecycle checks and physical USB PC12 Track Level pickup passed. Rytm hardware, pinned packaging and publication remain pending.",
+    "summary": "Pinned source-only package reproduced twice and passed nine emulator lifecycle checks. Earlier PC12 Track Level pickup and menu checks passed; physical Rytm qualification and publication remain pending.",
     "documentation": {
       "tutorial": {
         "title": "Usage",

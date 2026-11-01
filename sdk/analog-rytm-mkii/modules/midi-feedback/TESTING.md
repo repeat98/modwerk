@@ -131,7 +131,31 @@ without repeated stopping or needing pickup again. Thus the measured
 background refresh and developer-reported smooth pickup passed together
 for Track Level on the physical USB PC12 plus the emulated Rytm.
 
-## Remaining acceptance checks
+## Pinned candidate MF02
+
+The source at commit `1bf73478ada7` was compiled twice in isolated containers
+using GCC 16.2.0, Binutils 2.47.20260726 and Node 24.21.0. Both complete build
+directories matched byte for byte. The source-only export checker reproduced
+29 committed exports, including this module. Its package SHA-256 is
+`95ef570f6d9ca0704dfa03a852fdfbf93ae67f4ff28464245c7a758a0c206b6f`.
+It contains 1,914 bytes of `.run`, 688 bytes of `.bss` and no fast section;
+2,602 bytes total, excluding core 0.7.
+
+The exact exported package was linked locally with the reviewed core-ar2 0.7
+package. The linker found no overlaps, verified each core patch against stock,
+and verified unchanged firmware sections 1, 2, 5 and 8. The full private MF02
+image SHA-256 is
+`362313ce6f35dc3ae54126f1d3dac108b3e4c787f9087d41130261a85d7cc84b`.
+That image passed the host/output probe (673 messages, 84 assignments, six
+automatic repeats of the changed Track Level value) and all nine lifecycle
+checks, including virtual power-cycle retention and the 60-second MIDI flood.
+Details and compiler identities are in `evidence/pinned-candidate.json`.
+
+MF02 has not run on a physical Rytm. The PC12 pickup and menu captures above
+remain evidence from their explicitly named development images. No physical
+Rytm qualification or owner approval is implied by reproducible compilation.
+
+## Outstanding release qualification
 
 - Physical Rytm DIN output and timing; the emulator output and disabled
   silence checks passed.

@@ -1,0 +1,836 @@
+{
+ "elemod": 2,
+ "id": "midi-feedback",
+ "version": "0.1.0-experimental",
+ "title": "MIDI Feedback",
+ "description": "Automatic feedback for seven parameters per drum track, for controller pickup.",
+ "category": "midi-usb",
+ "author": "claptom-music",
+ "license": "GPL-3.0-or-later",
+ "target": {
+  "device": "analog-rytm-mk2",
+  "product": "Analog Rytm MKII",
+  "os": "1.74",
+  "syx_sha256": "cb0f99d620edde994fb860c0e79cc2464e427d06882828cfdfb00fc53700e123",
+  "section3_sha256": "34cd0c4da8e4b810d1b25284475a99ea53821e2ab7d30a978bf15dc578251f3b",
+  "section3_len": 3005432
+ },
+ "sections": {
+  ".run": {
+   "align": 4,
+   "len": 1914,
+   "parts": [
+    [
+     "hex",
+     "42804e754e56fff870b080ae00082f021d6e0013fffee188102e000f3d40fffc40c146fc27004ab9419f28a867624ab9413da664675a207c413da65c4a90675c71f9fc0454bc4a9067044a80673c2079413da678b1fc000010006234d1c0b1fc00000fbd622a486efffc487800032d41fff84eb940001dea508f222efff8700146c1242efff44e5e4e752039413da678428046c1242efff44e5e4e754a9056c0740c71004480e5a860a44879000000004eb90000000042b900000000588f4e752f02243c0000000042a742a72f024eb9000000004a8057c0710044802f0042a742a72f024eb9000000004879000000004eb9000000004fef0020241f42b9000000004e7542a742a74879000000004eb9000000004fef000c4a806708203c000000004e75203c000000004e752f0a4879000000002f2f000c45f9000000004e924879000000002f2f00144e924fef0010245f4e754fefffd848d73cfc42a742a747f90000000052934879000000004eb9000000004fef000c24004a8056c07100448023c0000000004eb94017fa0a280023c0000000004a80670001b02f004eb9400ae49e068400000160588f23c0000000002c0023c4000000004a82670001962f004eb9400b55b62f0626004eb9400b56c0508f24004a806700019e2f064eb9400b563c588f7201b280670001d84280428223c0000000004ab9000000006700018a4ab90000000067000180720123c10000000023c2000000004a826700012c14394076631770181639407663181239407663197bb94076631ae1aa77837181727f48434243e188848384858480b282650000f8b4b90000000067144879000000004eb90000000023c200000000588f7ee6428349f9000000004bf9000000002f032f044eb9400a67ca2f032f0624404eb9400b51564fef00102a004a8a6700017a241222422f0a206900284e90588f24404a806700016441f2780071904a83670001142f002f0542a72f034879000000004e944fef0014428245ea001471b52800528273720a00e0814a83660427812c302f012f052f022f034879000000004e944fef00147006b08266d252830687ffffff6a720cb2836600ff66203900000000528023c0000000007227b28065000102487afcd04879000000004eb900000000508fd1b9000000004cd73cfc4fef00284e754ab900000000664642b90000000042b90000000042b9000000004cd73cfc4fef00284e75428023c0000000004ab9000000006600fe7a4879000000004eb90000000042b900000000588f6000fe6c4879000000004eb900000000588f42b90000000042b90000000042b90000000060aa70fdc680b28357c34483758320026000fe1e23c00000000071902f002f0542a742a74879000000004e9423ca0000000023c20000000042b90000000042b90000000023c5000000004fef0014428245ea00146000fec64cd73cfc43f9000000002f49002c4fef00284ef9000000004879000000004eb900000000588f487afbc248790000000042b9000000004eb900000000508fd1b9000000006000feea4879000000004eb90000000042b90000000042b90000000042b90000000070ff588f23c0000000004e75226f0004200906800000025041e90004420142105e881141fffb1141fffab08866ee42a9024c4e75202f0004204006800000025058884a1067067201114100025e88b08866f04e754feffff4700b2f0a2f02222f001cb081650000b87406b4af0020650000ae2001e7889081d0af0020720fb2af0024650000c0727fb2af00286d0a222f00284a816d0000922400e78a206f0018224293c0c0fc00074a3098046758206f0018d1c01f50000b4a28000666324a280005672c75a800022f42001075af000b2f42000c242f0010b4af000c661275a800012f42000c75a80003b4af000c6716246f001875b29801b4af00246766206f001852a80250206f0018d1c070011081116f00270001206f001811809804241f245f4fef000c4e7524004281e78a206f0018224293c0c0fc00074a3098046600ff6e60c22200e7894242206f0018928042003182180411801806241f245f4fef000c4e7575af000bb282679a206f001852a8025060904fefffd848d73cfc266f002c78542a6f0030428549f900000000242b024c2602e78b968245f338004a2a000467000084101271804a2a0006660e4a2a0005670873aa0002b280675e22027e074c47100673aa00012f0071b468002f002f014e954fef000c4a80676c2002725452804c41000241f338005285116a000100033e3c0100538411520002378738052742024c4a8467067004b085668420054cd73cfc4fef00284e757daa000173aa0003b28666962002725452804c41000253842742024c4a846600ff5820054cd73cfc4fef00284e75200552ab02544cd73cfc4fef00284e7500004e56fffc2f0224084eb9000000002248600c4e56fffc2f02240843fa001e486effff2f092f024eb9401bcff04fef000c2002242efff84e5e4e7553454e4420464545444241434b00ffffffff1e1f2123282900000000000000000000000000000000000000000000000000000000000000005f4a4b4e5052534d49444920464545444241434b3a204f4646004d49444920464545444241434b3a204f4e00"
+    ]
+   ]
+  },
+  ".bss": {
+   "align": 4,
+   "size": 688
+  }
+ },
+ "symbols": {
+  "nothing": [
+   ".run",
+   0
+  ],
+  "send_cc": [
+   ".run",
+   4
+  ],
+  "refresh": [
+   ".run",
+   170
+  ],
+  "state": [
+   ".bss",
+   88
+  ],
+  "refresh_ticks": [
+   ".bss",
+   76
+  ],
+  "toggle": [
+   ".run",
+   192
+  ],
+  "toggle_row": [
+   ".run",
+   1854
+  ],
+  "refresh_row": [
+   ".run",
+   1838
+  ],
+  "was_enabled": [
+   ".bss",
+   84
+  ],
+  "was_allowed": [
+   ".bss",
+   80
+  ],
+  "last_kit": [
+   ".run",
+   1828
+  ],
+  "slots.0": [
+   ".run",
+   1832
+  ],
+  "MF_STRING_CTOR": [
+   "abs",
+   1075564528
+  ],
+  "mf_make_label": [
+   ".run",
+   1786
+  ],
+  "mf_refresh_text": [
+   ".run",
+   1814
+  ],
+  "mf_request_refresh": [
+   ".run",
+   1204
+  ],
+  "mf_project": [
+   ".run",
+   1122
+  ],
+  "mf_probe": [
+   ".bss",
+   0
+  ],
+  "mf_tick": [
+   ".run",
+   340
+  ],
+  "mf_label_text": [
+   ".run",
+   260
+  ],
+  "mf_toggle_label": [
+   ".run",
+   1756
+  ],
+  "mf_flush": [
+   ".run",
+   1526
+  ],
+  "mf_refresh_label": [
+   ".run",
+   1774
+  ],
+  "mf_settings": [
+   ".run",
+   300
+  ],
+  "mf_cc": [
+   ".run",
+   1870
+  ],
+  "mf_offer": [
+   ".run",
+   1236
+  ],
+  "mf_reset": [
+   ".run",
+   1164
+  ]
+ },
+ "exports": [
+  "mf_cc",
+  "mf_flush",
+  "mf_label_text",
+  "mf_offer",
+  "mf_probe",
+  "mf_project",
+  "mf_refresh_label",
+  "mf_request_refresh",
+  "mf_reset",
+  "mf_settings",
+  "mf_tick",
+  "mf_toggle_label"
+ ],
+ "imports": [
+  "core_additem",
+  "core_store_get",
+  "core_store_set",
+  "midi_feedback_enabled"
+ ],
+ "weak": [],
+ "relocs": [
+  [
+   ".run",
+   172,
+   "abs32",
+   "sec:.bss",
+   88
+  ],
+  [
+   ".run",
+   178,
+   "abs32",
+   "sec:.run",
+   1204
+  ],
+  [
+   ".run",
+   184,
+   "abs32",
+   "sec:.bss",
+   76
+  ],
+  [
+   ".run",
+   196,
+   "abs32",
+   "sym:midi_feedback_enabled",
+   0
+  ],
+  [
+   ".run",
+   208,
+   "abs32",
+   "sym:core_store_get",
+   0
+  ],
+  [
+   ".run",
+   230,
+   "abs32",
+   "sym:core_store_set",
+   0
+  ],
+  [
+   ".run",
+   236,
+   "abs32",
+   "sec:.bss",
+   88
+  ],
+  [
+   ".run",
+   242,
+   "abs32",
+   "sec:.run",
+   1164
+  ],
+  [
+   ".run",
+   254,
+   "abs32",
+   "sec:.bss",
+   76
+  ],
+  [
+   ".run",
+   266,
+   "abs32",
+   "sym:midi_feedback_enabled",
+   0
+  ],
+  [
+   ".run",
+   272,
+   "abs32",
+   "sym:core_store_get",
+   0
+  ],
+  [
+   ".run",
+   286,
+   "abs32",
+   "sec:.run",
+   1896
+  ],
+  [
+   ".run",
+   294,
+   "abs32",
+   "sec:.run",
+   1877
+  ],
+  [
+   ".run",
+   304,
+   "abs32",
+   "sec:.run",
+   1854
+  ],
+  [
+   ".run",
+   314,
+   "abs32",
+   "sym:core_additem",
+   0
+  ],
+  [
+   ".run",
+   322,
+   "abs32",
+   "sec:.run",
+   1838
+  ],
+  [
+   ".run",
+   354,
+   "abs32",
+   "sec:.bss",
+   0
+  ],
+  [
+   ".run",
+   362,
+   "abs32",
+   "sym:midi_feedback_enabled",
+   0
+  ],
+  [
+   ".run",
+   368,
+   "abs32",
+   "sym:core_store_get",
+   0
+  ],
+  [
+   ".run",
+   388,
+   "abs32",
+   "sec:.bss",
+   32
+  ],
+  [
+   ".run",
+   402,
+   "abs32",
+   "sec:.bss",
+   4
+  ],
+  [
+   ".run",
+   430,
+   "abs32",
+   "sec:.bss",
+   28
+  ],
+  [
+   ".run",
+   438,
+   "abs32",
+   "sec:.bss",
+   8
+  ],
+  [
+   ".run",
+   500,
+   "abs32",
+   "sec:.bss",
+   36
+  ],
+  [
+   ".run",
+   506,
+   "abs32",
+   "sec:.bss",
+   84
+  ],
+  [
+   ".run",
+   516,
+   "abs32",
+   "sec:.bss",
+   80
+  ],
+  [
+   ".run",
+   528,
+   "abs32",
+   "sec:.bss",
+   84
+  ],
+  [
+   ".run",
+   534,
+   "abs32",
+   "sec:.bss",
+   80
+  ],
+  [
+   ".run",
+   598,
+   "abs32",
+   "sec:.run",
+   1828
+  ],
+  [
+   ".run",
+   606,
+   "abs32",
+   "sec:.bss",
+   88
+  ],
+  [
+   ".run",
+   612,
+   "abs32",
+   "sec:.run",
+   1164
+  ],
+  [
+   ".run",
+   618,
+   "abs32",
+   "sec:.run",
+   1828
+  ],
+  [
+   ".run",
+   630,
+   "abs32",
+   "sec:.run",
+   1236
+  ],
+  [
+   ".run",
+   636,
+   "abs32",
+   "sec:.run",
+   1832
+  ],
+  [
+   ".run",
+   718,
+   "abs32",
+   "sec:.bss",
+   88
+  ],
+  [
+   ".run",
+   764,
+   "abs32",
+   "sec:.bss",
+   88
+  ],
+  [
+   ".run",
+   798,
+   "abs32",
+   "sec:.bss",
+   76
+  ],
+  [
+   ".run",
+   806,
+   "abs32",
+   "sec:.bss",
+   76
+  ],
+  [
+   ".run",
+   824,
+   "abs32",
+   "sec:.bss",
+   88
+  ],
+  [
+   ".run",
+   830,
+   "abs32",
+   "sec:.run",
+   1526
+  ],
+  [
+   ".run",
+   838,
+   "abs32",
+   "sec:.bss",
+   40
+  ],
+  [
+   ".run",
+   854,
+   "abs32",
+   "sec:.bss",
+   84
+  ],
+  [
+   ".run",
+   862,
+   "abs32",
+   "sec:.bss",
+   80
+  ],
+  [
+   ".run",
+   868,
+   "abs32",
+   "sec:.bss",
+   84
+  ],
+  [
+   ".run",
+   874,
+   "abs32",
+   "sec:.bss",
+   76
+  ],
+  [
+   ".run",
+   892,
+   "abs32",
+   "sec:.bss",
+   36
+  ],
+  [
+   ".run",
+   898,
+   "abs32",
+   "sec:.bss",
+   84
+  ],
+  [
+   ".run",
+   908,
+   "abs32",
+   "sec:.bss",
+   88
+  ],
+  [
+   ".run",
+   914,
+   "abs32",
+   "sec:.run",
+   1164
+  ],
+  [
+   ".run",
+   920,
+   "abs32",
+   "sec:.bss",
+   76
+  ],
+  [
+   ".run",
+   932,
+   "abs32",
+   "sec:.bss",
+   88
+  ],
+  [
+   ".run",
+   938,
+   "abs32",
+   "sec:.run",
+   1164
+  ],
+  [
+   ".run",
+   946,
+   "abs32",
+   "sec:.bss",
+   80
+  ],
+  [
+   ".run",
+   952,
+   "abs32",
+   "sec:.bss",
+   84
+  ],
+  [
+   ".run",
+   958,
+   "abs32",
+   "sec:.bss",
+   76
+  ],
+  [
+   ".run",
+   984,
+   "abs32",
+   "sec:.bss",
+   48
+  ],
+  [
+   ".run",
+   1000,
+   "abs32",
+   "sec:.bss",
+   88
+  ],
+  [
+   ".run",
+   1008,
+   "abs32",
+   "sec:.bss",
+   12
+  ],
+  [
+   ".run",
+   1014,
+   "abs32",
+   "sec:.bss",
+   16
+  ],
+  [
+   ".run",
+   1020,
+   "abs32",
+   "sec:.bss",
+   20
+  ],
+  [
+   ".run",
+   1026,
+   "abs32",
+   "sec:.bss",
+   24
+  ],
+  [
+   ".run",
+   1032,
+   "abs32",
+   "sec:.bss",
+   44
+  ],
+  [
+   ".run",
+   1056,
+   "abs32",
+   "sec:.bss",
+   88
+  ],
+  [
+   ".run",
+   1070,
+   "abs32",
+   "sec:.run",
+   1164
+  ],
+  [
+   ".run",
+   1076,
+   "abs32",
+   "sec:.bss",
+   88
+  ],
+  [
+   ".run",
+   1082,
+   "abs32",
+   "sec:.run",
+   1204
+  ],
+  [
+   ".run",
+   1094,
+   "abs32",
+   "sec:.bss",
+   88
+  ],
+  [
+   ".run",
+   1100,
+   "abs32",
+   "sec:.bss",
+   76
+  ],
+  [
+   ".run",
+   1106,
+   "abs32",
+   "sec:.run",
+   1526
+  ],
+  [
+   ".run",
+   1114,
+   "abs32",
+   "sec:.bss",
+   40
+  ],
+  [
+   ".run",
+   1124,
+   "abs32",
+   "sec:.bss",
+   88
+  ],
+  [
+   ".run",
+   1130,
+   "abs32",
+   "sec:.run",
+   1164
+  ],
+  [
+   ".run",
+   1136,
+   "abs32",
+   "sec:.bss",
+   80
+  ],
+  [
+   ".run",
+   1142,
+   "abs32",
+   "sec:.bss",
+   84
+  ],
+  [
+   ".run",
+   1148,
+   "abs32",
+   "sec:.bss",
+   76
+  ],
+  [
+   ".run",
+   1158,
+   "abs32",
+   "sec:.run",
+   1828
+  ],
+  [
+   ".run",
+   1548,
+   "abs32",
+   "sec:.run",
+   1870
+  ],
+  [
+   ".run",
+   1766,
+   "abs32",
+   "sec:.run",
+   260
+  ],
+  [
+   ".run",
+   1838,
+   "abs32",
+   "sec:.run",
+   1774
+  ],
+  [
+   ".run",
+   1842,
+   "abs32",
+   "sec:.run",
+   170
+  ],
+  [
+   ".run",
+   1846,
+   "abs32",
+   "sec:.run",
+   0
+  ],
+  [
+   ".run",
+   1850,
+   "abs32",
+   "sec:.run",
+   0
+  ],
+  [
+   ".run",
+   1854,
+   "abs32",
+   "sec:.run",
+   1756
+  ],
+  [
+   ".run",
+   1858,
+   "abs32",
+   "sec:.run",
+   192
+  ],
+  [
+   ".run",
+   1862,
+   "abs32",
+   "sec:.run",
+   0
+  ],
+  [
+   ".run",
+   1866,
+   "abs32",
+   "sec:.run",
+   0
+  ]
+ ],
+ "sites": [],
+ "collections": {},
+ "contribute": [
+  {
+   "to": "ev_tick",
+   "order": 60,
+   "data": "00000000",
+   "relocs": [
+    [
+     0,
+     "abs32",
+     "sym:mf_tick",
+     0
+    ]
+   ],
+   "claims": []
+  },
+  {
+   "to": "ev_settings",
+   "order": 60,
+   "data": "00000000",
+   "relocs": [
+    [
+     0,
+     "abs32",
+     "sym:mf_settings",
+     0
+    ]
+   ],
+   "claims": []
+  },
+  {
+   "to": "ev_project",
+   "order": 60,
+   "data": "00000000",
+   "relocs": [
+    [
+     0,
+     "abs32",
+     "sym:mf_project",
+     0
+    ]
+   ],
+   "claims": []
+  }
+ ],
+ "copied": [],
+ "storage": [
+  {
+   "sym": "midi_feedback_enabled",
+   "scope": "project",
+   "bits": 1
+  }
+ ],
+ "resources": {
+  "regions": [],
+  "names": [
+   "settings:MIDI FEEDBACK",
+   "settings:SEND FEEDBACK"
+  ],
+  "core": "0.7"
+ },
+ "requires": [
+  "core"
+ ],
+ "conflicts": [],
+ "signature": null
+}
