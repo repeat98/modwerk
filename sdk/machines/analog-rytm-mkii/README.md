@@ -63,6 +63,20 @@ Traps found while writing a C mod for OS 1.74 (rytm-emu `3c4c42c`, October 2026)
 - **The sequencer builds a step ahead.** Per track, `0x4009b0b4` builds step N, locks included, when its tick divider is 0, stamped to fire one step's ticks later. When the divider wraps it publishes N (`0x4009a7e2`) and posts the UI event, and the UI's live-record tick `0x400c7ef6` then acts on N. So the lock erase and the held-note wipe reach a step already queued: it plays once as it was. An edit meant for the step being played has to land before the build.
 - **Stock's saved pattern and kit differ.** Pattern save fills one RAM buffer that every pattern change refills; kit save overwrites the kit's saved copy and links the kit to the active pattern. On a unit the saved kit and the active kit's edits both survive a power cycle. A module's static state does not, nor does the saved pattern: after a power cycle the pattern keeps its edits and pattern reload changes nothing. A project save keeps edits and saved copies apart, for the pattern and the kit: load that project and both come up with their edits, and the stock reloads return to the saved copies.
 
+## Trig conditions and held trigs
+
+OS 1.74, read from the code; the values and the fill behaviour were checked in rytm-emu.
+
+- **Where a condition lives.** One signed byte per step at track + 576, -1 for no lock, with the track's default at + 713. `0x400c0396(track, step)` reads it and `0x400c03d6(track, step, value)` writes it and sends the change notice. A trig's removal leaves the byte; placing the trig again clears it.
+- **Values.** 0 to 20 are probabilities, 22 is FILL, 23 NOT FILL. The evaluator `0x40099520` returns true to skip the trig, so read its branches upside down: its case for 23 is true while fill is on.
+- **Held trigs.** The editor at `view + 108` masks the steps held in GRID RECORDING at + 344 (32-63) and + 348 (0-31), and only there. A view above can take a release (QPER does) and leave a bit behind, so check `is_key_held` too. Entering LIVE RECORDING ends grid editing.
+- **A trig's release.** Stock acts on it unless the hold was an edit. To count as one, as a knob turn does, call `0x4003613a(editor, 1)` and `0x40036238(editor)`. That mark ends when the mask empties, so a stale bit keeps it and tapped trigs stop coming off: drop stale bits with `0x400368c0(editor, step, 0)`.
+- **Euclidean mode.** Track + 714 is on, and + 721 maps a step to its pulse, -1 for none. `0x400c0e6e` and `0x400c12ae` read them. Stock's held steps, and the step bytes, are then pulses.
+- **STEP RECORDING.** RECORD + STOP toggles editor + 362 (`0x400363bc`); it needs its own gate, as the held mask still fills.
+- **FILL.** Key 0xb2, handled only in the key routine `0x4003cc94` of the view under the pages. Press sets `0x4193c020`; release ends that and any latch, so a module that takes the press has to lose the release too. `EVENT_TAKEN` does: the OS drops that key's release.
+- **A page change ends every hold.** `0x400b7d10` clears the mask, and PAGE moves the page on its release, so with PAGE held the hold stands. A pattern of one page does not end it.
+- **rytm-emu.** A hold of about 80M counts as a long press and a trig stays, so tap for 20M. Two keys released on one clock leave one held.
+
 ## Performance locks and the QPER knob
 
 OS 1.74, read from the code unless marked.
