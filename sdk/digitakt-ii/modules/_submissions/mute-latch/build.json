@@ -24,16 +24,16 @@
   "derive": null,
   "releases": {
     "1.17": {
-      "defsym": {
-        "mlk_vt_prep": 1075808792,
-        "mlk_apply": 1074191984,
-        "mlk_key_down": 1074913616,
-        "mlk_brain": 1075416100,
-        "mlk_seq_pos": 1125535712,
-        "mlk_seq_pattern": 1125535772,
-        "mlk_seq_state": 1125535636
-      },
-      "cflags": [],
+      "defsym": {},
+      "cflags": [
+        "-DMLK_VT_PREP=1075808792",
+        "-DMLK_APPLY=1074191984",
+        "-DMLK_KEY_DOWN=1074913616",
+        "-DMLK_BRAIN=1075416100",
+        "-DMLK_SEQ_POS=1125535712",
+        "-DMLK_SEQ_PATTERN=1125535772",
+        "-DMLK_SEQ_STATE=1125535636"
+      ],
       "sites": []
     }
   }

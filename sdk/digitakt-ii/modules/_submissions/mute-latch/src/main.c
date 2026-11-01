@@ -13,15 +13,15 @@
 #define TEMPO_KEY 9
 #define TRACKS 16
 
-// Stock locations, resolved per release by build.json "defsym".
-extern const char mlk_vt_prep[];             // vtable of the PREP MUTES view (the top view while it is open)
-extern void mlk_apply(void *view);           // applies the view's mask: toggles each chosen track's mute, clears it
-extern volatile uint8_t mlk_seq_pos[TRACKS]; // each track's step position, 0 at the first step
-extern volatile uint32_t mlk_seq_pattern;    // address of the pattern the sequencer plays
-extern volatile uint32_t mlk_seq_state;      // 1 while the sequencer plays
-
-extern int mlk_key_down(int code);           // bit 0 while the key is down
-extern uintptr_t mlk_brain(void);            // the Brain; its view controller is at +0x40
+// Stock locations of the release being built: build.json passes each one as a -D value
+// (a compiled module cannot import a bare address, so they are constants, not linker symbols).
+#define mlk_vt_prep ((const char *)MLK_VT_PREP)                       // vtable of the PREP MUTES view (the top view while it is open)
+#define mlk_apply ((void (*)(void *))MLK_APPLY)                       // applies the view's mask: toggles each chosen track's mute, clears it
+#define mlk_seq_pos ((volatile uint8_t *)MLK_SEQ_POS)                 // each track's step position (TRACKS bytes), 0 at the first step
+#define mlk_seq_pattern (*(volatile uint32_t *)MLK_SEQ_PATTERN)       // address of the pattern the sequencer plays
+#define mlk_seq_state (*(volatile uint32_t *)MLK_SEQ_STATE)           // 1 while the sequencer plays
+#define mlk_key_down ((int (*)(int))MLK_KEY_DOWN)                     // bit 0 while the key is down
+#define mlk_brain ((uintptr_t (*)(void))MLK_BRAIN)                    // the Brain; its view controller is at +0x40
 
 // Offsets inside the stock objects, found in OS 1.17 (see README "How it works").
 #define VIEW_MASK 0x88        // u32 inside the PREP MUTES view: bit n = track n chosen
