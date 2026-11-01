@@ -195,9 +195,11 @@ The view classes were read from the stack on the main screen, a sound page, PERF
 
 Reported by the author on QC11, the build above, Analog Rytm MKII: QPER + pad moved the link and the same pad unlinked it. QPER + knob inverted and showed the offset. QPER + YES held the sound and removed the locks. QPER + PLAY cleared and PLAY again undid it. QPER + RECORD showed COPY PERFORMANCE 8, and after linking another pad, paste and undo paste worked.
 
+Also reported on QC11: a kit with two linked, QPER + YES showed MORE THAN ONE LINKED. QPER + pad left one link. Reloading the kit brought both links back, and YES showed the message again. GLOBAL menu open with QPER held: YES acted as the menu's, PLAY started the sequencer, and a knob changed nothing, with no message.
+
 ## Not tested
 
-- QC11 on a unit: a kit with several links, its reload, and the GLOBAL menu.
+- QC11 on a unit: two pads over the GLOBAL menu.
 - SysEx kit receive.
 - Menus and dialogs other than those above: they count as not ours because their class is not on the list.
 - Performance load.
