@@ -70,12 +70,9 @@ extern void retrig_grid_snap(int t, int gap, int each_hit, int32_t *step, int32_
 const int16_t retrig_period[17] = { 960, 480, 320, 240, 192, 160, 120, 96, 80, 60, 48, 40, 30, 24, 20, 15, 12 };
 
 static int32_t seen[TRACKS];
-#define FRESH_BLOCKS 8           // a press seen this soon after its series armed is that series'
 static uint8_t press[TRACKS][32];   // the track's latest press: its note event
 static uint8_t have[TRACKS];
 static uint8_t open_note[TRACKS];   // the recorder holds a note of this track
-static uint8_t rearmed[TRACKS];     // pressed again: the next 960 is not a hit
-static uint8_t active_blocks[TRACKS];   // audio blocks the series has run, up to FRESH_BLOCKS
 static uint8_t ahead[TRACKS];       // step + 1 of a hit the wipe's step has not reached
 static int8_t rate_seen[TRACKS];    // -1: none yet this press
 static uint16_t hits[TRACKS];
@@ -116,7 +113,6 @@ static void watch_presses(void)
             press[t][i] = e[i];
         started[t] = NOTE_START[(t << 7) + press[t][16]];
         open_note[t] = STOCK_LIVE_REC(STOCK_APP()) != 0;
-        rearmed[t] = RT_ACTIVE[t] && active_blocks[t] >= FRESH_BLOCKS;
         rate_seen[t] = -1;
         hits[t] = 0;
         phased[t] = 0;
@@ -277,10 +273,8 @@ void retrig_fix_render(void)
     if (!(active[0] | active[1] | active[2])) {
         if (running) {
             running = 0;
-            for (t = 0; t < TRACKS; t++) {
+            for (t = 0; t < TRACKS; t++)
                 seen[t] = -1;
-                active_blocks[t] = 0;
-            }
         }
         if (guarding)
             keep_steps();
@@ -292,16 +286,11 @@ void retrig_fix_render(void)
 
         if (!RT_ACTIVE[t]) {
             seen[t] = -1;
-            active_blocks[t] = 0;
             continue;
         }
-        if (active_blocks[t] < FRESH_BLOCKS)
-            active_blocks[t]++;
         c = RT_COUNT[t];
-        if (c == WHOLE && rearmed[t]) {
-            rearmed[t] = 0;
-        } else if (seen[t] >= 0 && c != seen[t]) {
-            // a count of 1 left by the last roll, then 960: a press arming, not a hit
+        if (seen[t] >= 0 && c != seen[t]) {
+            // a 960 from a press, first or again, is not a hit, whatever count it follows
             int fired = c == WHOLE && seen[t] == 1 && !retrig_grid_arming(t);
             int rate = RT_RATE(t);
 

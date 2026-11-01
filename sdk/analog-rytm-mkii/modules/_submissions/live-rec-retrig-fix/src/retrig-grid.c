@@ -5,7 +5,8 @@
 // RETRIG rate, counted from the press. This module keeps the first hit and puts
 // the series on the sequencer's grid while it plays: the retrigs fall where the
 // rate's note values fall from PLAY, moved by the swing and micro timing of the
-// pad's own track as the sequencer moves that track's trigs.
+// pad's own track as the sequencer moves that track's trigs. A roll that records
+// takes the swing alone, as warp() says.
 //
 // Stock arms a pad's series in the audio block that plays the press: a tick
 // counter (960 ticks a whole note, 240 PPQN) set to 960, and the next tick's
@@ -72,6 +73,7 @@ static int32_t written[TRACKS];
 // The press has two readers, the series from the exact time and the recorder from
 // the step and micro timing, and either may run first. The first decides which grid
 // point starts the series, so the trig and the retrigs leave none out.
+static uint16_t swing_only;     // [t] this series has recorded: warp() skips micro timing
 static uint16_t first_open;     // armed, the recorder has not read straight[t] yet
 static uint16_t first_chosen;   // the recorder chose chosen[t]; the series is to come
 static int32_t chosen[TRACKS];
@@ -132,14 +134,15 @@ static int32_t offset(const volatile int8_t *track, int step, int swing, int pul
 // the two step starts around x, interpolated between them, so that 1/16 at 1x
 // lands on the swung steps and finer rates follow between them. While LIVE
 // RECORDING it takes the swing alone: a roll writes micro timing as it goes, and
-// its own trigs would move its retrigs on the next pass.
+// its own trigs would move its retrigs on the next pass. That holds to the end of a
+// roll that has recorded (swing_only).
 static int32_t __attribute__((noinline)) warp(int t, int32_t x)
 {
     const volatile int8_t *pattern, *track;
     unsigned short sr = irq_off();
     int32_t pulse = SEQ_PULSE, span, d, o0, o1;
     int n = TRACK_PULSE_N[t], step = TRACK_STEP[t], p = SEQ_PATTERN;
-    int adv, speed, len, swing, pulses, k, j, u, live;
+    int adv, speed, len, swing, pulses, k, j, u, only = swing_only >> t & 1;
 
     irq_restore(sr);
     if (p < 0 || p >= 128)
@@ -167,9 +170,8 @@ static int32_t __attribute__((noinline)) warp(int t, int32_t x)
     j = (step + k) % len;
     if (j < 0)
         j += len;
-    live = STOCK_LIVE_REC(STOCK_APP()) != 0;
-    o0 = offset(track, j, swing, pulses, live);
-    o1 = offset(track, (j + 1) % len, swing, pulses, live) - o0;
+    o0 = offset(track, j, swing, pulses, only);
+    o1 = offset(track, (j + 1) % len, swing, pulses, only) - o0;
     pulses *= PULSE_TICKS;      // ticks in the step
     return x + o0 + o1 / pulses * u + o1 % pulses * u / pulses;
 }
@@ -224,7 +226,12 @@ static void __attribute__((noinline)) rephase(int t, int32_t deadline)
 
     if (rate < 0 || rate > 16)
         return;
+    if (STOCK_LIVE_REC(STOCK_APP()))
+        swing_only |= 1 << t;
+    else
+        swing_only &= ~(1 << t);
     place[t] = first_point(t, deadline - TICK, retrig_period[rate], &straight[t]);
+    first_open |= 1 << t;
     if (first_chosen >> t & 1) {
         int32_t d = chosen[t] - straight[t], q = retrig_period[rate] * TICK;
 
@@ -233,8 +240,9 @@ static void __attribute__((noinline)) rephase(int t, int32_t deadline)
             straight[t] = chosen[t];
             place[t] = (place[t] + d / TICK + WHOLE) % WHOLE;
         }
-    } else {
-        first_open |= 1 << t;
+        // further off it was an older press's, and this press's recorder is still to come
+        if (d >= -q && d <= q)
+            first_open &= ~(1 << t);
     }
     schedule(t);
 }
@@ -246,6 +254,8 @@ static void __attribute__((noinline)) next(int t)
     int rate = RT_RATE(t), q, n;
 
     first_open &= ~(1 << t);
+    if (STOCK_LIVE_REC(STOCK_APP()))
+        swing_only |= 1 << t;
     if (rate < 0 || rate > 16) {
         driving &= ~(1 << t);
         return;
@@ -330,11 +340,12 @@ int retrig_grid_driving(int t)
     return retrig_grid_on && SEQ_PLAYING && (driving >> t & 1);
 }
 
-// Whether a 960 on pad t is a series arming: a fired retrig reloads one tick after
-// the deadline it was given. Read before this module's handler runs on the block.
+// Whether a 960 on pad t is a press arming its series: stock ticks one tick on from the
+// deadline last seen, a press sets its own. Read before this module's handler runs on
+// the block.
 int retrig_grid_arming(int t)
 {
-    return (driving >> t & 1) && RT_DEADLINE[t] != written[t] + TICK;
+    return RT_DEADLINE[t] - seen_deadline[t] != TICK;
 }
 
 // Whether the hit that just fired, at a gap of ticks, starts one on the bar's grid.
@@ -358,6 +369,7 @@ void retrig_grid_snap(int t, int gap, int each_hit, int32_t *step, int32_t *micr
     if (!retrig_grid_on || !SEQ_PLAYING || t >= TRACKS)
         return;
     sr = irq_off();
+    swing_only |= 1 << t;       // the recorder runs: this press records
     pulse = SEQ_PULSE;
     n = TRACK_PULSE_N[t];
     now = TRACK_STEP[t];
@@ -395,13 +407,14 @@ void retrig_grid_snap(int t, int gap, int each_hit, int32_t *step, int32_t *micr
     first_point(t, press, gap, &x);
     if (each_hit) {
         sr = irq_off();
-        if (first_open >> t & 1) {
+        // left open by a press that never reached the recorder, it is far from this one
+        if ((first_open >> t & 1) && straight[t] - x >= -q && straight[t] - x <= q) {
             x = straight[t];
-            first_open &= ~(1 << t);
         } else {
             chosen[t] = x;
             first_chosen |= 1 << t;
         }
+        first_open &= ~(1 << t);
         irq_restore(sr);
     }
     x -= q;

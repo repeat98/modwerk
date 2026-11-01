@@ -65,6 +65,19 @@ Unit, RC09, swing 61, CH pad, quantize on, 1/16, 10 to 15 short rolls, reported 
 
 RC10 (RC09 with the row renamed QUANT RTRG TO SEQ by npp1993, sha256 e9b55aa60a2e9695…): rytm-emu, the row drawn beside its checkbox, long roll and 50 press timings as RC09. Earlier sections keep the row's old name, RETRIG GRID, for the builds they name.
 
+### Second review, RC11
+
+A review of the RC08 and RC09 fixes found seven items, from reading the code. RC11 (RC10 with those fixes, Pipo Loop f48b95d9, sha256 3e116d608d056766…), rytm-emu c5732f0, swing 61 unless noted.
+
+| Case | RC11 |
+| --- | --- |
+| Press timings 8,000 instructions apart, 50 each, after a first roll, on BD: 1/12 and 1/32 both modes, 1/20 quantize off, ALWAYS ON at 1/16, 1/12, 1/32, a press again during a roll at 1/12 and 1/32 | one result for every timing in each row, no step lost |
+| The same on CH: 1/16 both modes, a press again at 1/16 (the CH rows set for other rates ran at CH's own 1/16: the RTRG menu in the test set BD's rate) | one result for every timing |
+| Lost first hit, four loops of 50 timings; gap, 384 positions; long roll's second pass | 0 lost, 0 gaps, as the first pass |
+| The 259 sweep cases, swing 57 and the swing cases | the same trigs as RC06 |
+
+A quick tap outside recording, then a press in LIVE RECORDING, at 1/8: first trig on the grid on RC10 and RC11, so the stale state this guards against was not reproduced. Ending recording during a held roll, the case the held swing-only bit is for: not run. Not run: RC11 on a unit.
+
 ## 0.1.0-experimental (rytm-emu, 31 October 2026)
 
 Emulator results first; pad pressure there is a scripted stream, not a real pad. The unit's results, on RR09, are at the end.
