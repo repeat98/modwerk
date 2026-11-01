@@ -213,9 +213,10 @@ Combined build QC13 (sha256 2acc65d9f5faeff7162d1e0aa682ea756c1897fa1bfc3c687317
 
 Reported by the author on QC13, Analog Rytm MKII: QPER + pad linked, QPER + knob inverted and showed the offset, QPER + PLAY cleared and PLAY again undid it, and the same held on a quick second QPER hold. Hold QPER and FUNC, tap TRK (the save kit screen opens on a tap, not on a held TRK), release both, NO: an unlinked pad played its sound and the link stayed. Same steps, then QPER + PLAY: CLEAR PERFORMANCE, UNDO CLEAR, sequencer stopped. GLOBAL menu with QPER held: PLAY started the sequencer, and two pads left the second linked.
 
+Also reported on QC13, reflashed: QPER + YES at about half showed PERFORMANCE 1 APPLIED. RECORD showed COPY PERFORMANCE 1, and after moving to a second pad, paste and undo paste worked. A kit with two links showed MORE THAN ONE LINKED on YES, QPER + pad left one link, and a kit reload brought both back.
+
 ## Not tested
 
-- On a unit, QC13: YES, copy and paste and a kit with several links, which last ran on QC12, and kit reload, which last ran on QC11.
 - SysEx kit receive.
 - Menus and dialogs other than those above: they count as not ours because their class is not on the list.
 - Performance load.
