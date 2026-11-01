@@ -25,6 +25,8 @@ Read [the module guides index](README.md) first. Anything that follows tempo als
 
 `verify_repitch.py` is the pattern: hooks on the stock and the built image, the panel (`verify_repitch_ui.py`), and playback with a generated loop that must follow a live tempo change. Say which parts you ran.
 
+Test with a sample of an odd length and with start and end points away from its ends. A round length can put every point on a whole multiple of a block or DMA boundary, where rounding and alignment bugs never show.
+
 ## Digitakt and Digitone
 
 Playback behaviour sits in the core's render hooks (`ev_render_in`, `ev_render_out`). No playback-specific contract is documented for these machines yet. Read the [Digitakt guide](../../sdk/machines/digitakt/README.md), take what you need from the core's hooks, and record what you observed in TESTING.md.

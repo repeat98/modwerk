@@ -2,13 +2,13 @@
   "schemaVersion": 1,
   "machine": "analog-rytm-mkii",
   "moduleId": "pipo-loop",
-  "moduleVersion": "0.1.0-experimental",
+  "moduleVersion": "0.1.1-experimental",
   "firmware": "1.74",
-  "capturedAt": "2026-10-28T14:30:00Z",
-  "imageSha256": "ae15d8b52b4485e0216a4416dd809334b07cdfde0529ca69e8fcd9b59ca58147",
-  "mainSha256": "6246242889fe5947b8250d2a43233aba9439eb94afbbeb5197d85b10146c33e1",
+  "capturedAt": "2026-10-31T23:30:00Z",
+  "imageSha256": "11cf7f270b5323fdc8beab00ebfbd2cfe3a7b5f4e4b29d3abe408652ec969d52",
+  "mainSha256": "f79eeb214dedbaa4185affd093b9dcbf064976165a3318058a26981b0545e09c",
   "stockSha256": "cb0f99d620edde994fb860c0e79cc2464e427d06882828cfdfb00fc53700e123",
-  "build": "Modwerk's linker: the released core-ar2 0.3 (6b97dfb3\u20263e58) + this folder's compiled Pipo Loop 0.1.0-experimental, materialised against the owner's stock OS 1.74, --version PP13",
+  "build": "Modwerk's linker: the vendored core-ar2 0.7 + this folder's compiled Pipo Loop 0.1.1-experimental, materialised against the owner's stock OS 1.74, --version PP17",
   "emulator": {
     "name": "rytm-emu",
     "repository": "https://github.com/trigcondition/rytm-emu",
@@ -16,18 +16,18 @@
     "binary": "dtboot (cargo build --release --bin dtboot)",
     "settings": "card images with generated samples (RAMP; RAMP and PIPO_SLOW, a 0.6 s slow sine), JIT on"
   },
-  "conditions": "SETUP (cold boot on a card holding a generated 0.5 s rising ramp, RAMP.wav, added with dtcard): dtboot pp13.syx --card card.img --instr 14800M --every 1000M --press NO@2000M --press NO@2300M --press NO@2600M --press NO@2900M --press GLOBAL@3300M --press DOWN@5100M --press YES@5400M --press DOWN@5700M --press YES@6000M --press DOWN@6300M --press YES@6600M --press DOWN@6900M --press YES@7200M --press RIGHT@7500M --press DOWN@7800M --press DOWN@8100M --press YES@8400M --press YES@8700M --press NO@10100M --press NO@10300M --press NO@10500M --press NO@10700M --press SMPL@11000M --turn 3:6@11300Mx6/30M --press YES@11700M --turn 6:6@12500Mx6/30M --save setup.snap (BD: SMP 1, LOP ON, SAMPLE page). Each capture then resumes setup.snap. A turn of +8 raw counts is one detent; stock's encoder hysteresis drops the first detents after the setup's turns, so more turns are sent than values. Frames are dtboot's firmware-rendered 128x64 screen at 3x, unmodified. WAVE (for the zero-snap and label captures): the same setup on a card holding RAMP and PIPO_SLOW (28,800 frames, crossings every 2,880 frames), then dtboot pp13.syx --load setup.snap --instr 800M --every 400M --turn 3:8@14900Mx3/80M --press YES@15200M --save a.snap; dtboot pp13.syx --load a.snap --instr 1000M --every 1000M --turn 3:-8@15700Mx4/80M --press YES@16100M --press SMPL@16400M --save wave.snap (BD: SMP PIPO_SLOW, LOP ON, SMPL WAVEFORM). The end frame is DTBOOT_END_PNG.",
+  "conditions": "SETUP (cold boot on a card holding a generated 0.5 s rising ramp, RAMP.wav, added with dtcard): dtboot pp17.syx --card card.img --instr 14800M --every 1000M --press NO@2000M --press NO@2300M --press NO@2600M --press NO@2900M --press GLOBAL@3300M --press DOWN@5100M --press YES@5400M --press DOWN@5700M --press YES@6000M --press DOWN@6300M --press YES@6600M --press DOWN@6900M --press YES@7200M --press RIGHT@7500M --press DOWN@7800M --press DOWN@8100M --press YES@8400M --press YES@8700M --press NO@10100M --press NO@10300M --press NO@10500M --press NO@10700M --press SMPL@11000M --turn 3:6@11300Mx6/30M --press YES@11700M --turn 6:6@12500Mx6/30M --save setup.snap (BD: SMP 1, LOP ON, SAMPLE page). Each capture then resumes setup.snap. A turn of +8 raw counts is one detent; stock's encoder hysteresis drops the first detents after the setup's turns, so more turns are sent than values. Frames are dtboot's firmware-rendered 128x64 screen at 3x, unmodified. WAVE (for the zero-snap and label captures): the same setup on a card holding RAMP and PIPO_SLOW (28,800 frames, crossings every 2,880 frames), then dtboot pp17.syx --load setup.snap --instr 800M --every 400M --turn 3:8@14900Mx3/80M --press YES@15200M --save a.snap; dtboot pp17.syx --load a.snap --instr 1000M --every 1000M --turn 3:-8@15700Mx4/80M --press YES@16100M --press SMPL@16400M --save wave.snap (BD: SMP PIPO_SLOW, LOP ON, SMPL WAVEFORM). The end frame is DTBOOT_END_PNG.",
   "captures": [
     {
       "path": "media/lop-off.png",
       "sha256": "2980d53b2af686164415568b7f816d0677e262e7cebed8df312fb2ab0c5e34d8",
-      "frame": "turn10.png",
-      "plan": "DTBOOT_TURN_PNG=out dtboot pp13.syx --load setup.snap --instr 1600M --every 100M --turn 6:8@14900Mx4/50M --turn 6:-8@15300Mx6/50M --turn 6:8@15800Mx6/50M"
+      "frame": "turn11.png",
+      "plan": "DTBOOT_TURN_PNG=out dtboot pp17.syx --load setup.snap --instr 1600M --every 100M --turn 6:8@14900Mx4/50M --turn 6:-8@15300Mx6/50M --turn 6:8@15800Mx6/50M"
     },
     {
       "path": "media/lop-on.png",
       "sha256": "08f12bfa05edac322d698d0b7d8e5e65ea968c44bf1b93feaf52fa7306e4c046",
-      "frame": "turn06.png",
+      "frame": "turn07.png",
       "plan": "the same run as lop-off"
     },
     {
@@ -40,43 +40,43 @@
       "path": "media/plock-pipo.png",
       "sha256": "0d46c9d50c660d79764beca164b4776a24a23e9e2389209d1ad84ec97e4c071b",
       "frame": "turn10.png",
-      "plan": "DTBOOT_TURN_PNG=out dtboot pp13.syx --load setup.snap --instr 1600M --every 400M --press RECORD@14900M --press T1@15100M --press T9@15300M --press T1@15500M:700M --turn 6:8@15560Mx10/50M --press RECORD@16300M"
+      "plan": "DTBOOT_TURN_PNG=out dtboot pp17.syx --load setup.snap --instr 1600M --every 400M --press RECORD@14900M --press T1@15100M --press T9@15300M --press T1@15500M:700M --turn 6:8@15560Mx10/50M --press RECORD@16300M"
     },
     {
       "path": "media/scene-pipo.png",
       "sha256": "168e10c646aa9a1c515256232a91fdd7de43ed101a69cf229006a469f9bc3b4d",
       "frame": "turn10.png",
-      "plan": "DTBOOT_TURN_PNG=out dtboot pp13.syx --load setup.snap --instr 2000M --every 100M --press SCNE@14900M:900M --press BD@15000M:700M --turn 6:8@15160Mx10/50M"
+      "plan": "DTBOOT_TURN_PNG=out dtboot pp17.syx --load setup.snap --instr 2000M --every 100M --press SCNE@14900M:900M --press BD@15000M:700M --turn 6:8@15160Mx10/50M"
     },
     {
       "path": "media/snap-markers.png",
-      "sha256": "2c1390f5ec878c1815f8f4c418ae720b5a12b4eae1d44b27c87826e67d8548c5",
+      "sha256": "d13590c087ffeb03fe50b9136792b201e7e8a7652d92b01accaff1dfa08ccebc",
       "frame": "end",
-      "plan": "dtboot pp13.syx --load wave.snap --instr 3600M --every 3600M --press FUNC@16620M:3400M --turn 4:16@16700Mx6/120M --turn 5:-16@17600Mx10/120M (STA 5061, END 10821)"
+      "plan": "dtboot pp17.syx --load wave.snap --instr 3600M --every 3600M --press FUNC@16620M:3400M --turn 4:16@16700Mx6/120M --turn 5:-16@17600Mx6/120M (STA 5760, END 11520)"
     },
     {
       "path": "media/markers-shared.png",
-      "sha256": "1992328310dcae5459c3951d31a0ed15b4012ba867718d731536a05d1d099ca2",
+      "sha256": "e20748f978d1a842f76f28e450e9dd1f5e57934e5b24ef070cdd587cf03a5a79",
       "frame": "end",
-      "plan": "dtboot pp13.syx --load wave.snap --instr 3600M --every 3600M --press FUNC@16620M:3400M --turn 4:16@16700Mx6/120M --turn 5:-16@17600Mx13/120M (STA = END = 5061)"
+      "plan": "dtboot pp17.syx --load wave.snap --instr 3600M --every 3600M --press FUNC@16620M:3400M --turn 4:16@16700Mx6/120M --turn 5:-16@17600Mx8/120M (STA = END = 5760)"
     },
     {
       "path": "media/markers-reversed.png",
-      "sha256": "6335d3c8c750d97dbc0e900e2c154f9aaa7f268aad63746262b75b2950c2c219",
+      "sha256": "39ac9f02686facb2b2c3ed06ccbcefaee3566aa681c5a9286e445aaf765be404",
       "frame": "end",
-      "plan": "dtboot pp13.syx --load wave.snap --instr 3600M --every 3600M --press FUNC@16620M:3400M --turn 4:16@16700Mx6/120M --turn 5:-16@17600Mx10/120M --turn 4:16@19000Mx6/120M (STA 16581, END 10821)"
+      "plan": "dtboot pp17.syx --load wave.snap --instr 3600M --every 3600M --press FUNC@16620M:3400M --turn 4:16@16700Mx6/120M --turn 5:-16@17600Mx6/120M --turn 4:16@18500Mx10/120M (STA 23040, END 11520)"
     },
     {
       "path": "media/markers-playing.png",
-      "sha256": "159d9f4e0920ab7e185976741b64eca4f6c6c5ffd54977d50513f9bec74d3da8",
+      "sha256": "0e6dddf8216a5d02ffabf35a3ba5a338587a6179e17d6af331d3823d4f7d1520",
       "frame": "end",
-      "plan": "dtboot pp13.syx --load wave.snap --instr 3600M --every 3600M --press FUNC@16620M:3400M --turn 4:16@16700Mx6/120M --turn 5:-16@17600Mx10/120M --press BD@19700M:20M"
+      "plan": "dtboot pp17.syx --load wave.snap --instr 3600M --every 3600M --press FUNC@16620M:3400M --turn 4:16@16700Mx6/120M --turn 5:-16@17600Mx6/120M --press BD@19700M:20M"
     },
     {
       "path": "media/snap-lock.png",
-      "sha256": "e5c4bec81a34909f1bd3d04a7117f546bdbab81745191922a6292b21eae8d273",
+      "sha256": "ae77593ec0890eab502910b5cbaf2aeafaf6e042182daf8902c1046578ba9dbc",
       "frame": "end",
-      "plan": "dtboot pp13.syx --load wave.snap --instr 2300M --every 2300M --press RECORD@16650M --press T1@16800M --press T1@17000M:2000M --press FUNC@17050M:1900M --turn 4:16@17150Mx8/150M (trig 1 held: its STA lock 9.08, frame 2181)"
+      "plan": "dtboot pp17.syx --load wave.snap --instr 2300M --every 2300M --press RECORD@16650M --press T1@16800M --press T1@17000M:2000M --press FUNC@17050M:1900M --turn 4:16@17150Mx8/150M (trig 1 held: its STA lock 12.00, frame 2880)"
     }
   ]
 }

@@ -29,6 +29,7 @@
     "1.74": {
       "defsym": {
         "pipo_loop_prefetch": "0x4011c1e0",
+        "pipo_loop_stock_frames": "0x4011bf44",
         "pipo_loop_text_resume": "0x400fb572",
         "pipo_loop_sprintf": "0x4009866e",
         "pipo_loop_lop_ctx": "0x419a5760",
