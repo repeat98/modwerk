@@ -22,8 +22,8 @@
 // and END are swapped in the effective parameter array. A new trig starts
 // forward again.
 //
-// The swap does not rely on stock rebuilding the array every block: when the
-// values still read as the ones written a block ago, they are put back first.
+// Stock rebuilds the whole array each block before this handler runs, so a swap
+// lasts one block and the handler always reads the sound's own STA and END.
 
 #include <stdint.h>
 
@@ -33,6 +33,7 @@
 #define IDX_LOP 23
 #define VREC(v) (VOICE_REC_AT + (v) * 92)
 #define VPOS(v) (*(volatile int *)(VREC(v) + 4))
+#define VTOP(v) (*(volatile int *)(VREC(v) + 8))   // going down, stock's prefetch keeps the position here
 #define VFRAMES(v) (*(volatile unsigned *)(VREC(v) + 20))
 #define OWNER(v) (*(volatile unsigned char *)(VOICE_OWNER_AT + (v)))
 #define TRIG_NEXT (*(volatile unsigned *)TRIG_NEXT_AT)   // one bit a voice, as stock's prefetch tests it
@@ -54,11 +55,10 @@ struct voice {
     int a_lo, a_hi;              // the loop as armed: the one the DMA was mirrored for
     unsigned c_frames;
     short c_sta, c_end;
-    short w_sta, w_end;          // what this handler wrote, while wrote is set
     unsigned char fwd;           // STA below END
     unsigned char up;            // the voice moves towards higher frames this block
     unsigned char back;          // playing the way back: STA and END swapped
-    unsigned char seen, wrote, track;
+    unsigned char seen;
     unsigned char arm;           // this block's DMA may carry the turn: ARM_UP at hi, ARM_DOWN at lo
     unsigned char fresh;         // restarted a block ago: the position jumped to STA, not a wrap
 };
@@ -66,11 +66,14 @@ struct voice {
 static struct voice voices[VOICES];
 static short mirror[VOICES][MIRROR] __attribute__((aligned(16)));
 
-static int frame_of(unsigned frames, int v8)   // STA/END (8.8, of 120) to stock's frame: ceil(frames * v8 / 30720)
+int pipo_loop_frame(int v8, unsigned frames);   // audio.s
+
+// STA/END (8.8, of 120) to stock's frame, by the routine stock's prefetch calls. Its EMAC rounding
+// decides which 8-frame boundary the DMA aligns to: a frame off here on a multiple of 8 and every
+// turn at that STA or END goes unmirrored
+static int frame_of(unsigned frames, int v8)
 {
-    if (v8 < 0)
-        v8 = 0;
-    return (int)((frames / 30720u) * (unsigned)v8 + ((frames % 30720u) * (unsigned)v8 + 30719u) / 30720u);
+    return pipo_loop_frame(v8 < 0 ? 0 : v8, frames);
 }
 
 void pipo_loop_audio(void)
@@ -81,13 +84,6 @@ void pipo_loop_audio(void)
         struct voice *p = &voices[v];
         int t = OWNER(v), sta, end, pos;
         unsigned frames;
-        if (p->wrote) {                  // still as written: stock did not rebuild it
-            if (EFF(p->track, IDX_STA) == p->w_sta && EFF(p->track, IDX_END) == p->w_end) {
-                EFF(p->track, IDX_STA) = p->w_end;
-                EFF(p->track, IDX_END) = p->w_sta;
-            }
-            p->wrote = 0;
-        }
         if (t >= TRACKS || !(EFF(t, IDX_LOP) >> 8)) {   // no voice, or LOP OFF: nothing to follow
             p->back = 0;
             p->seen = 0;
@@ -154,6 +150,13 @@ void pipo_loop_audio(void)
         }
         p->up = p->fwd ^ p->back;
         if ((EFF(t, IDX_LOP) >> 8) == LOP_PIPO && p->hi - p->lo >= MIN_SPAN) {
+            if (!p->up && pos == p->lo && !(trig & (1u << v))) { // on lo stock's window does not wrap, so
+                pos = 2 * p->lo - 1 - pos + TURN_LAG; // nothing can be mirrored: turn here, as for a pass of lo
+                VPOS(v) = pos;
+                p->last_pos = pos;
+                p->back ^= 1;
+                p->up = 1;
+            }
             p->arm = p->up ? ARM_UP : ARM_DOWN;
             p->a_lo = p->lo;             // a block on, the turn is judged against this loop even
             p->a_hi = p->hi;             // if STA or END (an LFO, a turn) has moved since
@@ -161,10 +164,6 @@ void pipo_loop_audio(void)
         if (p->back) {
             EFF(t, IDX_STA) = (short)end;
             EFF(t, IDX_END) = (short)sta;
-            p->w_sta = (short)end;
-            p->w_end = (short)sta;
-            p->wrote = 1;
-            p->track = (unsigned char)t;
         }
     }
 }
@@ -203,6 +202,8 @@ void *pipo_loop_mirror(int v, int which, int ws_al, int wrap_al, int len)
     } else {                         // below hi's window index: lo, lo + 1, ... read backward
         int nh = hi - ws_al;
         if (nh <= 0 || nh > MIRROR)
+            return 0;
+        if (VTOP(v) >= lo + MIRROR)      // just turned at hi: this window crosses hi, not lo
             return 0;
         for (i = 0; i < len; i++) {
             n = i < nh ? lo + (nh - 1 - i) : lo + (i - nh);

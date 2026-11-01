@@ -1,4 +1,5 @@
 import { spawn } from 'node:child_process'
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { performance } from 'node:perf_hooks'
 import { fileURLToPath } from 'node:url'
 import { readChangeScope } from './change-scope.mjs'
@@ -20,6 +21,11 @@ for (const signal of ['SIGINT', 'SIGTERM']) process.on(signal, () => {
 
 async function run(name, args = []) {
   if (interrupted) return false
+  const key = [name, ...args].join(' ')
+  if (carried.has(key) && !WRITES.has(name)) {
+    skipped.push(name)
+    return skip(name, 'passed in the last run')
+  }
   const started = performance.now()
   console.log(`Starting ${name}`)
   return new Promise(resolve => {
@@ -39,6 +45,7 @@ async function run(name, args = []) {
       process.stdout.write(Buffer.concat(output))
       const passed = code === 0
       console.log(`${name}: ${passed ? 'passed' : 'FAILED'} (${((performance.now() - started) / 1000).toFixed(2)}s)`)
+      results.set(key, passed)
       resolve(passed)
     })
   })
@@ -58,6 +65,15 @@ const started = performance.now()
 const buildOnly = process.argv.includes('--build')
 const baseIndex = process.argv.indexOf('--base'), base = baseIndex < 0 ? null : process.argv[baseIndex + 1]
 if (baseIndex >= 0 && !base) throw new Error('--base requires a Git commit/ref')
+// --rerun-failed skips the checks that passed in the last run against the same base. Steps that write files always run, since later
+// steps read what they write. A rerun is a shortcut between fixes, never a pass: pr:ready and CI run everything.
+const record = fileURLToPath(new URL('../node_modules/.cache/check-last.json', import.meta.url))
+const WRITES = new Set(['prepare', 'licenses:generate', 'machines:generate', 'modules:generate'])
+const results = new Map(), skipped = []
+let previous = null
+try { previous = JSON.parse(readFileSync(record, 'utf8')) } catch { /* no earlier run */ }
+const carried = new Set(process.argv.includes('--rerun-failed') && previous?.base === base && previous?.build === buildOnly ? previous.passed : [])
+if (process.argv.includes('--rerun-failed') && !carried.size) console.log('No earlier run against this base to carry: running every check.')
 const scope = !buildOnly && base ? readChangeScope({ root, base }) : null
 const documentationOnly = !!scope?.documentation
 // The SDK suite takes minutes. Locally, a change it cannot read (site, Worker, release notes) skips it; CI always runs it.
@@ -110,5 +126,11 @@ if (passed && !documentationOnly) {
     : await Promise.all([sdkSuite ? run('sdk:check') : skip('sdk:check', 'no changed path reaches it; CI runs it'), run('lint'), run('test'), build()])
   passed = results.every(Boolean) && !interrupted
 }
+const passedNow = [...carried, ...[...results].filter(([, ok]) => ok).map(([key]) => key)].filter(key => results.get(key) !== false)
+try {
+  mkdirSync(fileURLToPath(new URL('../node_modules/.cache/', import.meta.url)), { recursive: true })
+  writeFileSync(record, JSON.stringify({ base, build: buildOnly, passed: [...new Set(passedNow)] }) + '\n')
+} catch { /* the record only speeds up a rerun */ }
 console.log(`${buildOnly ? 'Build' : documentationOnly ? 'Documentation check' : 'Check'} ${passed ? 'passed' : 'FAILED'} in ${((performance.now() - started) / 1000).toFixed(2)}s`)
+if (skipped.length) console.log(`Rerun: ${skipped.join(', ')} passed in the last run and did not run now. Run the full check (or pr:ready) before you push.`)
 if (!passed && !process.exitCode) process.exitCode = 1

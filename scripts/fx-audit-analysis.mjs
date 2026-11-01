@@ -1,4 +1,4 @@
-// Offline sound-quality checks for an effect: aliasing, DC, clipping and what it does after the input stops.
+// Offline sound-quality checks for an effect: aliasing, DC, clipping, what it does after the input stops, and whether two renders differ.
 // No firmware and no module code runs here. The test signals are written by `plan`, you render them through your effect with the
 // harness you already use, and `check` reads the renders back. See docs/module-guides/effects.md, "Sound quality".
 import { readFileSync } from 'node:fs'
@@ -91,7 +91,21 @@ export function idleSamples(tailSeconds) {
   return Int32Array.from({ length: total }, (_, n) => n < burst ? Math.round(amplitude * Math.sin(2 * Math.PI * IDLE_BURST_HZ * n / SAMPLE_RATE)) : 0)
 }
 
-/** The signals `plan` writes, and what `check` needs to read each render back. */
+export const NOISE_DBFS = -12, NOISE_SECONDS = 1
+
+/** A white-noise burst, then silence: every band and the tail, for `compare`. The seed is fixed, so every render of it starts from the same input. */
+export function noiseSamples(tailSeconds) {
+  const burst = NOISE_SECONDS * SAMPLE_RATE, total = wholeBlocks(burst + Math.round(tailSeconds * SAMPLE_RATE))
+  const amplitude = 10 ** (NOISE_DBFS / 20) * FULL_SCALE
+  let seed = 0x6d2b79f5
+  return Int32Array.from({ length: total }, (_, n) => {
+    if (n >= burst) return 0
+    seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0
+    return Math.round(amplitude * (seed / 2 ** 31 - 1))
+  })
+}
+
+/** The signals `plan` writes, and what `check` needs to read each render back. `noise` is for `compare` only. */
 export function buildPlan(tailSeconds = 3) {
   const tones = []
   for (const hz of TONES_HZ) {
@@ -99,7 +113,8 @@ export function buildPlan(tailSeconds = 3) {
     for (const level of LEVELS_DBFS) tones.push({ file: 'tone-' + Math.round(toneHz(m)) + 'hz' + level + 'db', m, hz: toneHz(m), levelDbfs: level })
   }
   const idle = { file: 'idle', tailSeconds, samples: idleSamples(tailSeconds).length }
-  return { sampleRate: SAMPLE_RATE, fftSize: FFT_SIZE, warmup: WARMUP, tones, idle }
+  const noise = { file: 'noise', tailSeconds, samples: noiseSamples(tailSeconds).length }
+  return { sampleRate: SAMPLE_RATE, fftSize: FFT_SIZE, warmup: WARMUP, tones, idle, noise }
 }
 
 /** One channel of a tone render, normalised to +-1: the spectrum split into the fundamental, true harmonics, folded harmonics
@@ -171,6 +186,31 @@ export function judgeIdle(result, limits = LIMITS) {
   if (result.peakDbfs > limits.idle) return { state: 'fail', detail: 'still ' + result.peakDbfs.toFixed(1) + ' dBFS after the tail (limit ' + limits.idle + '): not settled, a runaway or a limit cycle; render a longer tail if the effect legitimately rings' }
   if (result.distinctValues <= 4) return { state: 'note', detail: 'idle activity of ' + result.distinctValues + ' LSB value(s), peak ' + result.peakDbfs.toFixed(1) + ' dBFS: a limit cycle or truncation bias in a feedback loop' }
   return { state: 'note', detail: 'low-level tail ' + result.peakDbfs.toFixed(1) + ' dBFS, still decaying or noisy' }
+}
+
+export const SAME_LIMIT = -60     // dB of the difference to the louder render; at or below it two renders count as the same (audit default)
+const SILENT_DBFS = -100
+
+/** Two renders (channel arrays) sample for sample over their common length, worst channel. `same` for two settings of one knob means the
+ *  knob does nothing to this signal; for two presets, that they are one sound. Two silent renders prove nothing, so they are `silent`. */
+export function compareRenders(a, b, sameLimit = SAME_LIMIT) {
+  const frames = Math.min(...a.map(c => c.length), ...b.map(c => c.length))
+  let ratio = 0, loudest = 0, peak = 0, first = -1
+  for (let c = 0; c < Math.min(a.length, b.length); c++) {
+    let sa = 0, sb = 0, sd = 0
+    for (let n = 0; n < frames; n++) {
+      const x = a[c][n], y = b[c][n], d = x - y
+      sa += x * x; sb += y * y; sd += d * d
+      if (d) { peak = Math.max(peak, Math.abs(d)); if (first < 0 || n < first) first = n }
+    }
+    const louder = Math.max(sa, sb)
+    loudest = Math.max(loudest, louder)
+    if (louder) ratio = Math.max(ratio, sd / louder)
+  }
+  const identical = first < 0 && a.length === b.length && a.every((c, i) => c.length === b[i].length)
+  const differenceDb = first < 0 ? -Infinity : db(ratio)
+  const verdict = dbfs(Math.sqrt(loudest / Math.max(frames, 1))) < SILENT_DBFS ? 'silent' : identical ? 'identical' : differenceDb <= sameLimit ? 'same' : 'differs'
+  return { verdict, differenceDb, peakDbfs: peak ? dbfs(peak) : -Infinity, firstSeconds: first < 0 ? null : first / SAMPLE_RATE, frames: [a[0].length, b[0].length] }
 }
 
 // ---- writing and reading files -------------------------------------------------
@@ -263,5 +303,15 @@ export function selfTest() {
   row('a one-LSB limit cycle is noted', judgeIdle(analyzeIdle(lsb)).state === 'note', 'idle activity of 2 values')
   const ringing = Float64Array.from(zero, (v, n) => n < burst ? v : 0.5 * Math.exp(-(n - burst) / SAMPLE_RATE) * Math.sin(2 * Math.PI * 300 * n / SAMPLE_RATE))
   row('an effect still ringing after the tail fails', judgeIdle(analyzeIdle(ringing)).state === 'fail', analyzeIdle(ringing).peakDbfs.toFixed(1) + ' dBFS')
+
+  const noise = [Float64Array.from(noiseSamples(0.2), v => v / FULL_SCALE)]
+  const compared = (name, b, verdict) => { const result = compareRenders(noise, b); row(name, result.verdict === verdict, result.verdict + ', ' + result.differenceDb.toFixed(1) + ' dB') }
+  compared('the same render twice is identical', [noise[0].slice()], 'identical')
+  compared('a one-LSB rounding difference is the same', [noise[0].map((v, n) => n % 2 ? v + 1 / FULL_SCALE : v)], 'same')
+  compared('a 1 dB level change differs', [noise[0].map(v => v * 10 ** (-1 / 20))], 'differs')
+  let state = 0
+  compared('a low-pass differs', [noise[0].map(v => (state += 0.2 * (v - state)))], 'differs')
+  const quiet = [new Float64Array(noise[0].length)]
+  row('two silent renders prove nothing', compareRenders(quiet, [quiet[0].slice()]).verdict === 'silent', 'silent')
   return rows
 }
