@@ -1,0 +1,33 @@
+{
+ "schemaVersion": 1,
+ "machine": "analog-rytm-mkii",
+ "moduleId": "midi-engine",
+ "moduleVersion": "0.1.0-experimental",
+ "imageSha256": "f32e4a171f0163d5eab2fb82decf48dc3f5e4c6f69327f53a0620de6d089c703",
+ "firmware": "1.74",
+ "stockSha256": "cb0f99d620edde994fb860c0e79cc2464e427d06882828cfdfb00fc53700e123",
+ "build": "ME17: core-ar2 0.7 (built from source) + midi-engine, elekloader patch.build, m68k-linux-gnu-gcc 12.2.0",
+ "emulator": "rytm-emu 4c07ed3, dtboot headless, 3x PNG without interpolation",
+ "capturedAt": "2026-11-01",
+ "setup": "A card made in rytm-emu whose project has BD on the MIDI machine (no samples); the startup calibration notices cleared with NO.",
+ "captures": [
+  {
+   "path": "media/midi-list.png",
+   "sha256": "85c41d7a89ca8c603ebc6fa53c0cfbadd86c65b009bb1605ddb5743d31cf6080",
+   "plan": "dtboot ME17.syx --card <card with BD on the MIDI machine> --press NO@8003M:40M --press NO@9003M:40M --press NO@10003M:40M --press NO@11003M:40M --instr 13603M --press FUNC@13003M:800M --press SRC@13103M:40M",
+   "frame": "DTBOOT_END_PNG at 13603M, FUNC held after SRC: the machine list"
+  },
+  {
+   "path": "media/midi-synth.png",
+   "sha256": "47e9a377744f0cf27780a348d511b1550352e687fadac48fcfef586738dce4ea",
+   "plan": "dtboot ME17.syx --card <card with BD on the MIDI machine> --press NO@8003M:40M --press NO@9003M:40M --press NO@10003M:40M --press NO@11003M:40M --instr 12123M --press SRC@11803M:40M --nudge 5:1@12003M",
+   "frame": "DTBOOT_END_PNG at 12123M, after one CC1 turn"
+  },
+  {
+   "path": "media/midi-amp.png",
+   "sha256": "51fe44af497ce0c35951dce44027fac3e4821b2d6e3ec007a2bf4afd33dd7691",
+   "plan": "dtboot ME17.syx --card <card with BD on the MIDI machine> --press NO@8003M:40M --press NO@9003M:40M --press NO@10003M:40M --press NO@11003M:40M --instr 12123M --press AMP@11803M:40M --nudge 1:1@12003M",
+   "frame": "DTBOOT_END_PNG at 12123M, after one HLD turn from OFF"
+  }
+ ]
+}
