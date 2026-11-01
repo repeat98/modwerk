@@ -18,6 +18,7 @@ One gesture and one row. The RETRIG menu keeps its stock rows, and what they do 
 | --- | --- |
 | GLOBAL > CONTROL > SEQUENCER CONFIG > QUANT RTRG TO SEQ | Checkbox, the last row, after SAMPLE POS RES. Checked by default. Checked, pad retrigs fall on the grid while the sequencer plays, and a roll's first trig records on it. Unchecked, retrigs count from the press and every hit records as played. YES turns it over, RIGHT checks, LEFT unchecks. Kept with the project. |
 | RTRG + YES | Turns ALWAYS ON over for the track the RETRIG menu shows (the selected track, or the TRIG key pressed while RTRG is held), whichever row is lit. The row shows the new state. |
+| RTRG key's light | Dim while the selected track is ALWAYS ON and RTRG is not held. Not a control, and off on other tracks. |
 
 | Stock control | With Live Rec Retrig Fix |
 | --- | --- |

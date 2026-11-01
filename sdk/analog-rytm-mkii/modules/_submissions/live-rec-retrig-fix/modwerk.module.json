@@ -77,14 +77,16 @@
     "build": "build.json",
     "events": [
       "ev_render_out",
-      "ev_project"
+      "ev_project",
+      "ev_tick"
     ],
     "claims": [
       "ui:RETRIG menu step writes in LIVE RECORDING",
       "ui:live recording of pad retrigs",
       "key:RTRG+YES",
       "ui:GLOBAL > CONTROL > SEQUENCER CONFIG row QUANT RTRG TO SEQ",
-      "ui:pad retrig timing while the sequencer plays"
+      "ui:pad retrig timing while the sequencer plays",
+      "ui:RTRG key light for ALWAYS ON"
     ]
   },
   "resources": {

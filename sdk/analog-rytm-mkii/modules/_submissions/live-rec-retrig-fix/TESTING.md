@@ -79,6 +79,12 @@ A review of the RC08 and RC09 fixes found seven items, from reading the code. RC
 A quick tap outside recording, then a press in LIVE RECORDING, at 1/8: first trig on the grid on RC10 and RC11, so the stale state this guards against was not reproduced. Ending recording during a held roll, the case the held swing-only bit is for: not run. 
 Unit, RC11, swing 61, CH pad, quantize on, 1/16, reported by npp1993: two passes of two short rolls across a bar, each roll continuous, no trig missing; a pad released and pressed again during a roll with RTRG held sounded right, nothing heard missing, the grid not read step by step.
 
+### RTRG key light, LD01
+
+The RTRG key's LED, read from OS 1.74 and rytm-emu: stock sends palette 0 (1,1,1) idle and 0x0f (31,0,0) while held; ALWAYS ON changes nothing on it. On npp1993's unit the key stays white while held, so the LED shows no colour; which levels it shows is not known.
+
+LD01 (RC11 with the light, a test build, sha256 8f65b2a6cc244505…), rytm-emu c5732f0: ALWAYS ON turned on with RTRG + YES, key at palette 4; RTRG held, 0x0f; released, palette 4; another track, dark; back on the track, palette 4; ALWAYS ON off, dark. Long roll, 50 press timings, and the ALWAYS ON and 1/8 to 1/32 sweep cases as RC11. The emulator gives no brightness: not tested on a unit.
+
 ## 0.1.0-experimental (rytm-emu, 31 October 2026)
 
 Emulator results first; pad pressure there is a scripted stream, not a real pad. The unit's results, on RR09, are at the end.

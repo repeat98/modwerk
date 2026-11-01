@@ -23,6 +23,7 @@
 
 #include <stdint.h>
 #include "retrig-shared.h"
+#include "grid-1.74.h"
 
 #define WHOLE 960               // ticks in a whole note: the counter's span
 #define EV_NOTE 0x0d
@@ -61,6 +62,8 @@ extern int32_t STOCK_KEY_DOWN(uint32_t event);                   // a byte: the 
 extern int32_t STOCK_ALWAYS_ON(uint32_t kit, int32_t track);
 extern void STOCK_SET_ALWAYS_ON(uint32_t kit, int32_t track, int32_t on);
 extern void STOCK_VIEW_REDRAW(uint32_t view);
+extern void STOCK_LED_SET(int32_t led, int32_t colour);
+extern int32_t STOCK_SELECTED_TRACK(uint32_t pattern_view);
 extern int retrig_grid_driving(int t);
 extern int retrig_grid_on_gap(int t, int ticks);
 extern int retrig_grid_arming(int t);
@@ -339,6 +342,31 @@ void retrig_fix_press_place(int t, int rate, int32_t *step, int32_t *micro)
         ahead[t] = *step + 1;
         guarding = 1;
     }
+}
+
+// The RTRG key: stock leaves it dark, and lights it while RTRG is held. Dim while the
+// selected track's pad is ALWAYS ON. Stock's own colours are left alone, so holding RTRG
+// shows as stock has it, and the key comes back dim once stock has put it out.
+#define LED_RTRG 0xba           // stock's id for the key
+#define LED_DARK 0              // palette: stock's dark
+#define LED_DIM 4               // palette: stock's lowest level
+#define LED_INDEX ((const volatile int32_t *)LED_INDEX_AT)    // [id] the LED
+#define LED_SELECT ((const volatile uint8_t *)LED_SELECT_AT)  // [LED / 4] the slot, 2 bits each
+#define LED_SLOTS ((const volatile uint8_t *)LED_SLOTS_AT)    // [id * 4 + slot] a palette colour
+#define PATTERN_VIEW 48         // recorder: what holds the selected track
+
+void retrig_fix_tick(void *ctrl)
+{
+    uint32_t recorder = STOCK_RECORDER();
+    int led = LED_INDEX[LED_RTRG];
+    int slot = (LED_SELECT[led >> 2] >> ((led & 3) * 2)) & 3;
+    int shown = LED_SLOTS[LED_RTRG * 4 + slot];
+    int t = STOCK_SELECTED_TRACK(recorder + PATTERN_VIEW);
+    int want = t >= 0 && t < TRACKS && (STOCK_ALWAYS_ON(STOCK_KIT(recorder), t) & 1) ? LED_DIM : LED_DARK;
+
+    (void)ctrl;
+    if (shown != want && (shown == LED_DARK || shown == LED_DIM))
+        STOCK_LED_SET(LED_RTRG, want);
 }
 
 // The RETRIG menu's YES (live-rec-retrig-fix.s): ALWAYS ON turned over for the menu's track, as

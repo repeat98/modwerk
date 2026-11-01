@@ -24,6 +24,11 @@
       "event": "ev_project",
       "fn": "retrig_grid_project",
       "order": 50
+    },
+    {
+      "event": "ev_tick",
+      "fn": "retrig_fix_tick",
+      "order": 50
     }
   ],
   "contribute": [],
@@ -35,7 +40,8 @@
     "ui:live recording of pad retrigs",
     "key:RTRG+YES",
     "ui:GLOBAL > CONTROL > SEQUENCER CONFIG row QUANT RTRG TO SEQ",
-    "ui:pad retrig timing while the sequencer plays"
+    "ui:pad retrig timing while the sequencer plays",
+    "ui:RTRG key light for ALWAYS ON"
   ],
   "requires": [],
   "derive": null,
@@ -59,7 +65,9 @@
         "STOCK_SET_ALWAYS_ON": "0x400a708a",
         "STOCK_VIEW_REDRAW": "0x40078580",
         "STRING_CTOR": "0x401bcff0",
-        "STOCK_BITMAP_DRAW": "0x400716e0"
+        "STOCK_BITMAP_DRAW": "0x400716e0",
+        "STOCK_LED_SET": "0x40095fc0",
+        "STOCK_SELECTED_TRACK": "0x400b696e"
       },
       "cflags": [
         "-DRT_ACTIVE_AT=0x8000fe44",
