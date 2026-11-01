@@ -1,5 +1,14 @@
 [
   {
+    "version": "0.3.3-experimental",
+    "date": "2026-11-01",
+    "changes": [
+      "Card builds with POLY8 and VECTOR: a double tap on SRC on a VECTOR track opens VECTOR's second page (SEED, SPAN, OFST, ROT, RPT, DIR) again, instead of the stock setup with TSTR (#1119). Needs VECTOR 0.2.6.",
+      "POLY8's own pages, POLY8 alone and POLY8 over USB work as before.",
+      "Known issue: checked in the emulator only, not yet on a unit."
+    ]
+  },
+  {
     "version": "0.3.2-experimental",
     "date": "2026-10-27",
     "changes": [

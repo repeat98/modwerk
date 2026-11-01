@@ -151,10 +151,25 @@ mr_pool_kind:
         move.l (%sp)+,%d1
         move.l (%sp)+,%a0
         rts
+| SRC SETUP's editor (d2 the cursor's row, a3 the encoder 0-5, d3 the delta)
+| and drawer (d6 the cursor's row, 72(sp) the page it shows): VECTOR's page 2
+| first (mr_setup_knob, mr_setup_page), as the base's mw_setup_edit6/draw6.
 mr_setup_edit6:
         cmpi.l #5,%d2
         bcs.s 1f
-        move.l %a3,%d0
+        lea -12(%sp),%sp
+        movem.l %d1/%a0-%a1,(%sp)
+        move.l %d3,-(%sp)
+        move.l %a3,-(%sp)
+        move.l %d2,-(%sp)
+        jsr mr_setup_knob
+        lea 12(%sp),%sp
+        movem.l (%sp),%d1/%a0-%a1
+        lea 12(%sp),%sp
+        tst.l %d0
+        beq.s 3f
+        jmp 0x4003a624
+3:      move.l %a3,%d0
         cmpi.l #4,%d0
         bne.s 2f
         jmp 0x4003a624
@@ -164,6 +179,14 @@ mr_setup_edit6:
 mr_setup_draw6:
         cmpi.l #5,%d6
         bcs.s 1f
+        lea -24(%sp),%sp
+        movem.l %d0-%d1/%a0-%a1,8(%sp)
+        move.l %d6,(%sp)
+        move.l 96(%sp),4(%sp)
+        jsr mr_setup_page
+        move.l %d0,96(%sp)
+        movem.l 8(%sp),%d0-%d1/%a0-%a1
+        lea 24(%sp),%sp
         move.l %d0,-(%sp)
         bsr mr_pool_kind
         move.l %d0,%d6
