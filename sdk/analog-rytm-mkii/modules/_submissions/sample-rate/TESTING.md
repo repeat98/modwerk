@@ -84,7 +84,7 @@ An earlier build (SP01) clicked here: flips that landed the voice at an edge at 
 | Check | Result |
 | --- | --- |
 | BD at RATE 38, row on, T1 and T9 plain, T5 sound-locked to a pool sound with the row off, sequencer running | T5 at +1.000x from STA, T1 and T9 at -0.406x from END, for five passes: the setting follows the sound played and comes back on the next plain trig |
-| The reverse: a pool sound with the row on, locked onto a track with the row off | not run |
+| The reverse: a pool sound with the row on, locked onto a track with the row off | not run in the emulator; reported on a unit, see Hardware |
 | Row on, RATE 127, SOUND MANAGER, store to the empty slot A:162, LOAD TO TRACK on SD | SD reads RATE at 127: the setting travelled, which differs from the unit report. Replacing a slot that already holds a sound was not reached |
 | BD at +1.0000x and SD at -0.4163x in the same blocks | each step exact for its own FIN and sign; SD's slot held a 248-frame built-in sample and its pad did not start in this run, so two ramps heard together were not shown |
 | SD's RATE moving during a pattern | the step followed FIN in every report |
@@ -144,7 +144,7 @@ On SP04 (this source, with Pipo Loop `b0ed4fe7`), as reported by npp1993:
 | RATE by hand 127 to 0 and back, LOP PIPO | pass |
 | Pad at RATE 20 | starts from END, backward |
 | Row OFF and ON at raw 21 | reads FIN -43, then RATE 21 |
-| Row-on sound locked onto a row-off track | the trig's knob reads FIN, as the label follows the selected track's sound; the knob sat where the source sound's did; direction not confirmed by ear |
+| Row-on sound locked onto a row-off track | the trig's knob reads FIN, as the label follows the selected track's sound; the knob sat where the source sound's did; by ear the locked trig played as that RATE value would |
 | Waveform playhead with the LFO | looks linear, does not seem to follow the LFO |
 
 Flashing note: on the first attempt the unit stopped on UPGRADE OS NOW? and answered no key after NO had been pressed during the transfer. A power cycle returned it to the earlier OS, and the second transfer, with nothing pressed until the prompt, went through.
