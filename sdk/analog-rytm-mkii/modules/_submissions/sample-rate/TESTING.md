@@ -136,4 +136,15 @@ npp1993 flashed SP03 on an Analog Rytm MKII, OS 1.74, and reports the following.
 | Many other stored sounds, LOAD TO TRACK | also ERROR, some loaded; cause not found |
 | A new store over a sound, then LOAD TO TRACK on another track | loaded, with FIN AS RATE off: the setting did not travel |
 
+On SP04 (this source, with Pipo Loop `b0ed4fe7`), as reported by npp1993:
+
+| Check | Reported |
+| --- | --- |
+| LFO to the sample's Fine Tune with LOP PIPO, short loop | passes through the stop; test passed by the author's ear, with no clicks reported at turns; dropouts only while moving STA or END, which the author accepts |
+| RATE by hand 127 to 0 and back, LOP PIPO | pass |
+| Pad at RATE 20 | starts from END, backward |
+| Row OFF and ON at raw 21 | reads FIN -43, then RATE 21 |
+| Row-on sound locked onto a row-off track | the trig's knob reads FIN, as the label follows the selected track's sound; the knob sat where the source sound's did; direction not confirmed by ear |
+| Waveform playhead with the LFO | looks linear, does not seem to follow the LFO |
+
 Flashing note: on the first attempt the unit stopped on UPGRADE OS NOW? and answered no key after NO had been pressed during the transfer. A power cycle returned it to the earlier OS, and the second transfer, with nothing pressed until the prompt, went through.
