@@ -100,7 +100,7 @@
     ]
   },
   "resources": {
-    "memoryBytes": 7713,
+    "memoryBytes": 7561,
     "fastBytes": 0,
     "load": {
       "display": "About 0.1 % of a block idle, 0.6 % with eight voices in PIPO (static estimate)",
@@ -111,7 +111,7 @@
   "evidence": {
     "tier": "author-hardware",
     "moduleVersion": "0.1.1-experimental",
-    "sourceSha256": "5066d24b80e9e078128f270a68a6b028533a4e12cbd06c8a25b13b5b6944b76f",
+    "sourceSha256": "20b63b12720667a26fc0d6fbcab8d50d3845ae7ec6df069742ed6ec3ebaad2ff",
     "reports": [
       "TESTING.md"
     ],
@@ -133,7 +133,7 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "rytm-emu c5732f0, OS 1.74, build PP13: LOP OFF/ON/PIPO on a three-position switch; PIPO turns exactly at STA and END (period 2x the loop at TUN -24, 0, +24); p-lock, scene, two voices, retrig, power-off; stock plays a saved PIPO as a loop; zero snap stepping like LOP onto stock's own frames, on the sound and on locks, holding at the sample's edges, STA and END passing or sharing a crossing. Hardware, as reported: PC03; diagnostics PD01-PD05 (snap holds at edges, clean LOP ON loops when snapped, S/E labels, locks). 0.1.1 (PP16, PP17): no clicks at TUN -24 turns.",
+    "summary": "rytm-emu c5732f0, OS 1.74, build PP13: LOP OFF/ON/PIPO on a three-position switch; PIPO turns exactly at STA and END (period 2x the loop at TUN -24, 0, +24); p-lock, scene, two voices, retrig, power-off; stock plays a saved PIPO as a loop; zero snap stepping like LOP onto stock's own frames, on the sound and on locks, holding at the sample's edges, STA and END passing or sharing a crossing. Hardware, as reported: PC03; diagnostics PD01-PD05 (snap holds at edges, clean LOP ON loops when snapped, S/E labels, locks). 0.1.1 (PP18): no clicks at PIPO turns in rytm-emu.",
     "documentation": {
       "tutorial": {
         "title": "Quick tutorial",

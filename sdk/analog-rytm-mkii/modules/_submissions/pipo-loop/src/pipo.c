@@ -67,11 +67,14 @@ struct voice {
 static struct voice voices[VOICES];
 static short mirror[VOICES][MIRROR] __attribute__((aligned(16)));
 
-static int frame_of(unsigned frames, int v8)   // STA/END (8.8, of 120) to stock's frame: ceil(frames * v8 / 30720)
+int pipo_loop_frame(int v8, unsigned frames);   // audio.s
+
+// STA/END (8.8, of 120) to stock's frame, by the routine stock's prefetch calls. Its EMAC rounding
+// decides which 8-frame boundary the DMA aligns to: a frame off here on a multiple of 8 and every
+// turn at that STA or END goes unmirrored
+static int frame_of(unsigned frames, int v8)
 {
-    if (v8 < 0)
-        v8 = 0;
-    return (int)((frames / 30720u) * (unsigned)v8 + ((frames % 30720u) * (unsigned)v8 + 30719u) / 30720u);
+    return pipo_loop_frame(v8 < 0 ? 0 : v8, frames);
 }
 
 void pipo_loop_audio(void)

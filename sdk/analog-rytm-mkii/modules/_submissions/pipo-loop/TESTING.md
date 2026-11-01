@@ -17,7 +17,7 @@ Everything below was observed in rytm-emu on the named build, except the Hardwar
   `f6e59b8fca126ec3bbc173e5617e30ade67dfe430693bc936a2d2d0495adb5c5`.
 - Diagnostic PD05 (PC11's code plus an on-screen readout, branch `diag/pipo-loop`; not for release): `.syx`
   `c0ea404ef4aac79334f1513a4a81953997a405f7811f45426bd6d484efc3ccb4`.
-- Source (0.1.1-experimental): fingerprint `5066d24b…b76f` (`evidence.sourceSha256`). Build PP17 (core-ar2 0.7 as vendored + Pipo Loop 0.1.1-experimental, `--version PP17`): `.syx` `11cf7f270b5323fdc8beab00ebfbd2cfe3a7b5f4e4b29d3abe408652ec969d52`. Every screenshot in media/ was recaptured on PP17; lop-off, lop-on, lop-pipo, plock-pipo and scene-pipo came out byte-identical to the 0.1.0 captures.
+- Source (0.1.1-experimental): fingerprint `20b63b12…d2ff` (`evidence.sourceSha256`), PP18 below. PP17 is the source before it, `5066d24b…b76f`. Build PP17 (core-ar2 0.7 as vendored + Pipo Loop 0.1.1-experimental, `--version PP17`): `.syx` `11cf7f270b5323fdc8beab00ebfbd2cfe3a7b5f4e4b29d3abe408652ec969d52`. Every screenshot in media/ was recaptured on PP17; lop-off, lop-on, lop-pipo, plock-pipo and scene-pipo came out byte-identical to the 0.1.0 captures.
 - Earlier builds: PP03 and PC01 (before the code review), PP05 and PC03 (after it), PP06 and PC04 (the
   three-position switch), PP07 and PC05 (zero snap on the sound), PP08 and PC06 (locks), PP09 and PC07 (exact turns), PP10, PC08 and PD02 (snap holds), PP11, PC09 and PD03 (code review), PP12, PC10 and PD04 (LOP's feel);
   each passed the battery below. PP10 to PP13 gave the same results as PP09 on every row of it.
@@ -47,7 +47,15 @@ Builds: PP15 is 0.1.0 and PP16 and PP17 are 0.1.1, each alone on the vendored co
 
 PP17, the final source, gave 0 clicks on the first two rows. Rates below one frame a block need a scratch build that forces the voice's rate word, never released: on a 7,100-frame loop at 1/64x and 1/32x, forward and reverse, the voice reached both ends with no stall.
 
-Not tested on a unit. 0.1.1 has not been flashed.
+A third cause, found after a unit report (below): the module worked out STA's and END's frames with its own formula, rounding up, where stock's EMAC truncates. Where the two sit either side of a multiple of 8, stock's DMA aligns 8 frames lower, the mirror refuses that window, and every turn at that STA or END plays frames from the other end. A 24,000-frame sample cannot show it: every whole STA and END is then a multiple of 200 frames, where both agree. 0.1.1 now calls stock's own routine (0x4011bf44) under the MACSR stock's prefetch sets; zero snap's formula truncates too.
+
+Build PP18 (core-ar2 0.7 as vendored + Pipo Loop 0.1.1-experimental, this source, `--version PP18`): `.syx` `055930b7e6605945ca2bcf7e4c0f7cd5d734c274cec98e3659e418d8e9efed69`.
+
+A 23,777-frame ramp, TUN at five settings from 0 to -24, four STA and END pairs mid-sample, 20 runs of about 22 s of audio, step above 60 counted once per 64 frames, on combined images: RC05 (Pipo Loop as PP17) gave 0 clicks in 15 runs and clicks on every turn in the other 5, all at STA 10,903 (271 at TUN 0, 68 to 96 lower); the same image with this source gave 0 in all 20. PP18 against PP17 on the 24,000-frame ramp: LOP ON, LOP OFF, PIPO at TUN 0 and +24 sample-identical; END below STA 0 clicks on both, output differs.
+
+## Hardware, 0.1.1 (reported by npp1993, 2026-10-31)
+
+RC05 (Pipo Loop as PP17, in a combined image) on an Analog Rytm MKII, OS 1.74, sample set by hand, LOP PIPO, STA and END mid-sample: a click at the sample's attack; pops that come and go at TUN -24 and -20, and with END below STA, hard to tell from the audio itself; LOP ON clicks, as expected of an unsnapped loop; PIPO back after saving the kit and a power cycle. Whether PP18's source removes those pops is not tested on a unit.
 
 ## Emulator, 0.1.0 (2026-10-27)
 
