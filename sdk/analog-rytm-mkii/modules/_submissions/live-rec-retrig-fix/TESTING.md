@@ -81,9 +81,11 @@ Unit, RC11, swing 61, CH pad, quantize on, 1/16, reported by npp1993: two passes
 
 ### RTRG key light, LD01
 
-The RTRG key's LED, read from OS 1.74 and rytm-emu: stock sends palette 0 (1,1,1) idle and 0x0f (31,0,0) while held; ALWAYS ON changes nothing on it. On npp1993's unit the key stays white while held, so the LED shows no colour; which levels it shows is not known.
+The RTRG key's LED, read from OS 1.74 and rytm-emu: stock sends palette 0 (1,1,1) idle and 0x0f (31,0,0) while held; ALWAYS ON changes nothing on it. On npp1993's unit the key is white while held.
 
-LD01 (RC11 with the light, a test build, sha256 8f65b2a6cc244505…), rytm-emu c5732f0: ALWAYS ON turned on with RTRG + YES, key at palette 4; RTRG held, 0x0f; released, palette 4; another track, dark; back on the track, palette 4; ALWAYS ON off, dark. Long roll, 50 press timings, and the ALWAYS ON and 1/8 to 1/32 sweep cases as RC11. The emulator gives no brightness: not tested on a unit.
+LD01 (RC11 with the light, a test build, sha256 8f65b2a6cc244505…), rytm-emu c5732f0: ALWAYS ON turned on with RTRG + YES, key at palette 4; RTRG held, 0x0f; released, palette 4; another track, dark; back on the track, palette 4; ALWAYS ON off, dark. Long roll, 50 press timings, and the ALWAYS ON and 1/8 to 1/32 sweep cases as RC11. The emulator gives no brightness.
+
+Unit, LD01, reported by npp1993: ALWAYS ON on, the key dim red; held, white; another track, off; back, dim red; ALWAYS ON off, dark; a power cycle with ALWAYS ON on, dim red. So the key shows colour: palette 4 is red on the unit as sent. Why stock's 0x0f, red in the emulator, shows white while held is not known.
 
 ## 0.1.0-experimental (rytm-emu, 31 October 2026)
 
