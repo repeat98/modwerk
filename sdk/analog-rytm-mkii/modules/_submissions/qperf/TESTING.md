@@ -1,6 +1,6 @@
 # QPERF testing
 
-Nothing here proves reboot persistence or the QPER knob itself. Hardware results below are the author's, each on the build named. QC13 is the code here, and has not run on a unit.
+Nothing here proves reboot persistence or the QPER knob itself. Hardware results below are the author's, each on the build named. QC13 is the code here.
 
 ## Hardware
 
@@ -211,9 +211,11 @@ Reported by the author on QC12, Analog Rytm MKII: link and unlink, a knob with n
 
 Combined build QC13 (sha256 2acc65d9f5faeff7162d1e0aa682ea756c1897fa1bfc3c687317c4b5117932c7), rytm-emu: the same view now closes on QPER's release, from the key hook, in place of QC12's check on every tick. Every row of the QC11 table and the QC12 steps gave the same results. With the save kit screen still open after QPER's release, the QPER view was already gone from the stack. A quick second QPER press still cleared and undid.
 
+Reported by the author on QC13, Analog Rytm MKII: QPER + pad linked, QPER + knob inverted and showed the offset, QPER + PLAY cleared and PLAY again undid it, and the same held on a quick second QPER hold. Hold QPER and FUNC, tap TRK (the save kit screen opens on a tap, not on a held TRK), release both, NO: an unlinked pad played its sound and the link stayed. Same steps, then QPER + PLAY: CLEAR PERFORMANCE, UNDO CLEAR, sequencer stopped. GLOBAL menu with QPER held: PLAY started the sequencer, and two pads left the second linked.
+
 ## Not tested
 
-- QC13 on a unit. Kit reload and the GLOBAL menu last ran on a unit on QC11.
+- On a unit, QC13: YES, copy and paste and a kit with several links, which last ran on QC12, and kit reload, which last ran on QC11.
 - SysEx kit receive.
 - Menus and dialogs other than those above: they count as not ours because their class is not on the list.
 - Performance load.
