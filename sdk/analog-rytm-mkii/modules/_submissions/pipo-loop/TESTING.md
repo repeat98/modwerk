@@ -17,7 +17,7 @@ Everything below was observed in rytm-emu on the named build, except the Hardwar
   `f6e59b8fca126ec3bbc173e5617e30ade67dfe430693bc936a2d2d0495adb5c5`.
 - Diagnostic PD05 (PC11's code plus an on-screen readout, branch `diag/pipo-loop`; not for release): `.syx`
   `c0ea404ef4aac79334f1513a4a81953997a405f7811f45426bd6d484efc3ccb4`.
-- Source (0.1.1-experimental): fingerprint `20b63b12…d2ff` (`evidence.sourceSha256`), PP18 below. PP17 is the source before it, `5066d24b…b76f`. Build PP17 (core-ar2 0.7 as vendored + Pipo Loop 0.1.1-experimental, `--version PP17`): `.syx` `11cf7f270b5323fdc8beab00ebfbd2cfe3a7b5f4e4b29d3abe408652ec969d52`. Every screenshot in media/ was recaptured on PP17; lop-off, lop-on, lop-pipo, plock-pipo and scene-pipo came out byte-identical to the 0.1.0 captures.
+- Source (0.1.1-experimental): fingerprint `be8b3083…c068` (`evidence.sourceSha256`), PP19 below. Before it, PP18 `20b63b12…d2ff` and PP17 `5066d24b…b76f`. Build PP17 (core-ar2 0.7 as vendored + Pipo Loop 0.1.1-experimental, `--version PP17`): `.syx` `11cf7f270b5323fdc8beab00ebfbd2cfe3a7b5f4e4b29d3abe408652ec969d52`. Every screenshot in media/ was recaptured on PP17; lop-off, lop-on, lop-pipo, plock-pipo and scene-pipo came out byte-identical to the 0.1.0 captures.
 - Earlier builds: PP03 and PC01 (before the code review), PP05 and PC03 (after it), PP06 and PC04 (the
   three-position switch), PP07 and PC05 (zero snap on the sound), PP08 and PC06 (locks), PP09 and PC07 (exact turns), PP10, PC08 and PD02 (snap holds), PP11, PC09 and PD03 (code review), PP12, PC10 and PD04 (LOP's feel);
   each passed the battery below. PP10 to PP13 gave the same results as PP09 on every row of it.
@@ -55,12 +55,16 @@ A 23,777-frame ramp, TUN at five settings from 0 to -24, four STA and END pairs 
 
 Zero snap's landing frame, read from the voice's position after a trig (position mod 16, as it advances 480 frames between readings at TUN 0), LOP OFF, FUNC + STA up to the 23,777-frame ramp's one crossing, first positive sample at frame 11,893: RC05 stored 0x3c05 and started on 11,892, one frame early; the build with this source stored 0x3c06 and started on 11,893. Three plain STA values (0x33d8, 0x3838, 0x4188) started on the floor frame too.
 
+Build PP19 (PP18 with one more change, zero snap's frame now rounds up as stock does within 1/256 of the next frame, `--version PP19`): `.syx` `cd64821c0baa3e7396502d76f33e930d69a5ca5269f93fc919db0ce81bffc527`. The ramp's crossing again started on frame 11,893; the 20-run sweep gave 0 clicks. A model of stock's EMAC arithmetic, checked against every value on 16 sample lengths from 2,000 to 480,017 frames, matches this formula on every value up to 30,721 frames and on all but 2 to 30 values above. Not flashed.
+
 ## Hardware, 0.1.1 (reported by npp1993, 2026-10-31)
 
 RC05 (Pipo Loop as PP17, in a combined image) on an Analog Rytm MKII, OS 1.74, sample set by hand, LOP PIPO, STA and END mid-sample: a click at the sample's attack; pops that come and go at TUN -24 and -20, and with END below STA, hard to tell from the audio itself; LOP ON clicks, as expected of an unsnapped loop; PIPO back after saving the kit and a power cycle. 
 RC07 (`6ae42b7b717b63d7aecc09875b76e5b0cd9a69bcbfe37a8850b111dbaaf6b7de`, this source in a combined image; PP18 alone not flashed): a short, loud sample, LOP PIPO, STA and END moved around, on zero crossings and off them, TUN moved up and down: "I'm not getting any pops or clicks." Reported, not itemized; exact TUN values were not stated.
 
 The same build, checks asked for after that: END below STA, "that's good"; FUNC + STA and END with LOP ON, "it's good, yeah".
+
+Those reports are on PP18's source. PP19's one change to zero snap has not been on a unit.
 
 ## Emulator, 0.1.0 (2026-10-27)
 
