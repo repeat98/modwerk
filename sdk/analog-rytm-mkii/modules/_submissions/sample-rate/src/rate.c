@@ -8,7 +8,8 @@
 // scale the step by |FIN - 64| / 64, with raw 127 exactly 1x (the Octatrack's
 // increment: PTCH's, times that). Below 64 the voice goes backward: stock plays
 // a sample backward when END is below STA, so this handler swaps the effective
-// STA and END before the prefetch reads them. A trig then starts from END.
+// STA and END before the prefetch reads them. A trig then starts from END. Stock
+// rebuilds the array every block before this runs, so the swap lasts one block.
 //
 // The setting is a bit of the sound. Stock copies a sound's settings to the
 // audio side, per track, whenever it applies a sound to a track (kit load, sound
@@ -45,9 +46,7 @@ unsigned char sample_rate_voices;               // one bit a voice: audio.s scal
 
 static volatile unsigned char track_on[TRACKS]; // one byte a track: written from the UI and the audio interrupt
 
-// a voice's last block, and the swap this handler wrote
-static unsigned char going_down[VOICES], wrote[VOICES], wrote_track[VOICES];
-static short wrote_sta[VOICES], wrote_end[VOICES];
+static unsigned char going_down[VOICES];        // the way each voice went last block
 
 // stock's frames for STA and END (8.8, of 120), audio.s; the DMA follows these frames
 void sample_rate_frames(int sta, int end, unsigned frames, int *out);
@@ -88,14 +87,6 @@ void sample_rate_block(void)
     int v;
     for (v = 0; v < VOICES; v++) {
         int t = OWNER(v), on, down;
-        if (wrote[v]) {                  // still as written: stock did not rebuild it
-            int w = wrote_track[v];
-            if (EFF(w, IDX_STA) == wrote_sta[v] && EFF(w, IDX_END) == wrote_end[v]) {
-                EFF(w, IDX_STA) = wrote_end[v];
-                EFF(w, IDX_END) = wrote_sta[v];
-            }
-            wrote[v] = 0;
-        }
         if (t >= TRACKS) {
             going_down[v] = 0;
             continue;
@@ -111,13 +102,9 @@ void sample_rate_block(void)
         if (on)
             mask |= (unsigned char)(1u << v);
         if (down) {
-            short sta = EFF(t, IDX_STA), end = EFF(t, IDX_END);
-            EFF(t, IDX_STA) = end;
+            short sta = EFF(t, IDX_STA);
+            EFF(t, IDX_STA) = EFF(t, IDX_END);
             EFF(t, IDX_END) = sta;
-            wrote_sta[v] = end;
-            wrote_end[v] = sta;
-            wrote_track[v] = (unsigned char)t;
-            wrote[v] = 1;
         }
     }
     sample_rate_voices = mask;

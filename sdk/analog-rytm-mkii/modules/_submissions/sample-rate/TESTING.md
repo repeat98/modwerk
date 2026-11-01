@@ -2,13 +2,20 @@
 
 Everything below was observed in rytm-emu on the named build. Nothing has run on a unit, and the emulator is not hardware evidence: the Hardware section is empty until the author reports from one.
 
-- Source (0.1.0-experimental): fingerprint (`sha256` of `sha256sum build.json src/audio.s src/rate.c`) `b5a98ac2…3c13` (`evidence.sourceSha256`).
+- Source (0.1.0-experimental): fingerprint (`sha256` of `sha256sum build.json src/audio.s src/rate.c`) `dc07d5cd…3e07` (`evidence.sourceSha256`), which drops the block handler's put-back step from the source below.
 - Stock OS 1.74: `.syx` `cb0f99d6…e123`, the owner's file. Core: elekloader core-ar2 0.7 as vendored.
 - Build SR04 (core + Sample RATE, `--version SR04`): `.syx` `f8802bc146dacce2e7770ff700f4f1efb9cdc9d265d0faf262214568e7520347`.
 - Build SP03 (core + Sample RATE + Pipo Loop 0.1.1-experimental from its local branch, commit `f48b95d9`; test image only): `.syx` `f2316e1bca4e513ec37f49e561e391897e850177327d218a07414ce399ab8c96`.
 - Build SA03 (as SP03, with Silent Pad+Trig, Loop Sync and Filter Hz; test image only): `.syx` `ab4b96cae7ecfc17730aec36e78727606da1a75c399ac033b8ca2534f76f4f09`.
+- Build SR05 (core + Sample RATE, this source): `.syx` `fcf216bba8ebf1f4db0a52dd01405616577bd8b37e75b84180ade3e2391b9393`.
+- Build SP04 (as SR05, with Pipo Loop `b0ed4fe7`, which removes the same step from its own turn; test image only): `.syx` `c86d191ebffd3fb30c8e6376c1cae97189d3eb5c3b7059af6bb5aab6f5dc678d`.
+- Build SA04 (as SP04, with Silent Pad+Trig, Loop Sync and Filter Hz; test image only): `.syx` `6c21772a988a637f92a002ddbbc905802a3f90bc3b43e1e598d9cff5068982e1`.
 - A core-only image, same stock and core, for comparison.
 - Emulator: rytm-emu `c5732f0`, headless `dtboot`, JIT on. One generated sample, RAMP, 23,777 frames (odd, so STA and END fall on no round multiple), on BD with LOP ON. Audio is dtboot's `--wav`. Voice words are read with `DTBOOT_PEEK`: step at rec + 12, position at rec + 4, effective FIN at 0x8000f7cc. A click means a sample-to-sample step over 40, or six times the median, on a ramp whose normal step is below 2; each run also flags the trig's own attack, which is not counted.
+
+## Rerun on the current source
+
+Stock rebuilds the effective array every block, so the handler's step that put its swap back had no work and could match by chance; it is gone. On SR05 the row-off comparison is again identical over 239,890 frames, and the speed and direction rows match. On SP04 the 22 PIPO speed runs, 11 flip and stop runs, 8 phase runs and the four sweeps that gave 12 jumps show no click past the trig's attack. On SA04 the 11 runs are clean. The tables below name the build each was first run on. The Hardware section is SP03, the source before this change, with Pipo Loop `f48b95d9`.
 
 ## Row and display (SR04)
 
@@ -93,7 +100,7 @@ An earlier build (SP01) clicked here: flips that landed the voice at an edge at 
 | Same, period 2.8 s | no click |
 | Stock TUN and FIN sweeps with the row off | no click |
 
-A diagnostic build (not kept) logged two of those jumps block by block. The voice lands on END's frame near 5 frames a block, which stock's pitch cannot reach (its floor is 8), turns, and a block later is back to going up: stock wraps it to STA, and Pipo Loop's next turn sends it back. Open: the fix belongs in Pipo Loop's turn, as a module update of its own.
+A diagnostic build (not kept) logged two of those jumps block by block. The voice lands on END's frame near 5 frames a block, which stock's pitch cannot reach (its floor is 8), turns, and a block later is back to going up: stock wraps it to STA, and Pipo Loop's next turn sends it back. The cause was the put-back step in Pipo Loop's turn: stock's rebuilt STA and END could match what it wrote a block earlier, and it swapped them again. Fixed in Pipo Loop `b0ed4fe7`, a module update of its own, with no change needed here for that fault.
 
 ## Playhead (SP03, SMPL WAVEFORM, LOP ON)
 
