@@ -136,6 +136,7 @@ typedef void (*invalidate_t)(void *);
 #define PROJECT_TRACKSEL 48          // the project's track selection
 #define PROJECT_TRACKS 352           // the project's track sounds
 #define VIEW_PAGE_STATE 108          // a sound page view's lock and record state
+#define VT_PARAM_OBJ 160              // a sound page view's vtable: its parameter object
 #define VIEW_MANAGER 44              // a view's view manager
 #define MANAGER_LAST 24              // the manager's top list node
 #define NODE_VIEW 8                  // a list node's view
@@ -266,6 +267,24 @@ static int plain_press(void *view)
     return 1;
 }
 
+// Stock puts a parameter's name in the header at the press, and the tap acts at
+// the release, so it puts the name there again, as stock's handler does.
+extern void sample_rate_string(void *string, const char *text, void *allocator);
+extern void sample_rate_string_end(void *string);
+extern void sample_rate_header(uint32_t page, void *string);
+extern uint32_t sample_rate_long_name(uint32_t obj, int id);
+
+static void show_name(void *view)
+{
+    uint32_t vtable = *(uint32_t *)view;
+    uint32_t obj = (*(get2_t *)(vtable + VT_PARAM_OBJ))((uint32_t)view, -1);
+    uint32_t string[2];
+    char allocator;
+    sample_rate_string(string, (const char *)sample_rate_long_name(obj, ID_FIN), &allocator);
+    sample_rate_header(*(uint32_t *)((char *)view + VIEW_PAGE_STATE), string);
+    sample_rate_string_end(string);
+}
+
 // From the gate in stock's sound page key handler, for any knob's press or release
 void sample_rate_knob(void *view, int id, const char *event)
 {
@@ -278,6 +297,7 @@ void sample_rate_knob(void *view, int id, const char *event)
     } else {
         if (tap_ticks >= 0) {
             set_on(!sample_rate_selected());
+            show_name(view);
             VIEW_INVALIDATE(view);
             tap_rest = TAP_REST;
         }

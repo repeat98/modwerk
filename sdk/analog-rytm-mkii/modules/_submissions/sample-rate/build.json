@@ -39,7 +39,10 @@
         "sample_rate_long_resume": "0x400a902c",
         "sample_rate_menu_resume": "0x400ef522",
         "sample_rate_vt_scene": "0x401e305c",
-        "sample_rate_vt_perf": "0x401e26c4"
+        "sample_rate_vt_perf": "0x401e26c4",
+        "sample_rate_string_end": "0x401bb540",
+        "sample_rate_header": "0x40035fe8",
+        "sample_rate_long_name": "0x400a9022"
       },
       "cflags": [
         "-DPARAMS_EFF_AT=0x8000f7a8",

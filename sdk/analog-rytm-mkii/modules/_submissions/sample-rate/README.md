@@ -65,7 +65,6 @@ RATE replaces FIN in the sample's pitch. TUN, the trig's note on a chromatic tra
 - Saving to and loading from SOUND MANAGER is not confirmed on a unit. Stored sounds often gave ERROR on LOAD TO TRACK there, sounds with nothing to do with RATE included, and the one load that worked came back with SMP RATE clear. Stock has not been compared. In rytm-emu a sound stored to an empty slot keeps the setting. Kits, power cycles and track copies keep it on a unit.
 - Switching on while a sample plays can dip its speed for a moment: RATE starts at once, and FIN takes stock's glide of about 22 ms to reach +63. This is from the code, not heard.
 - A RATE of 0 reads as a FIN at rest, so switching off and on takes it to +63.
-- After a tap the header can show the old name until its next redraw.
 - Not tested on a unit: see [TESTING.md](TESTING.md).
 
 ## Tests and measurements

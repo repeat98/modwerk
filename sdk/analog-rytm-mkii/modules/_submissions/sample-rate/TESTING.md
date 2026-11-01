@@ -2,7 +2,7 @@
 
 Everything below was observed in rytm-emu on the named build. Nothing has run on a unit, and the emulator is not hardware evidence: the Hardware section is empty until the author reports from one.
 
-- Source (0.1.0-experimental): fingerprint (`sha256` of `sha256sum build.json src/audio.s src/rate.c`) `4861814a…27ec` (`evidence.sourceSha256`).
+- Source (0.1.0-experimental): fingerprint (`sha256` of `sha256sum build.json src/audio.s src/rate.c`) `56d86c1e…2d57` (`evidence.sourceSha256`).
 - Stock OS 1.74: `.syx` `cb0f99d6…e123`, the owner's file. Core: elekloader core-ar2 0.7 as vendored.
 - Build SR04 (core + Sample RATE, `--version SR04`): `.syx` `f8802bc146dacce2e7770ff700f4f1efb9cdc9d265d0faf262214568e7520347`.
 - Build SP03 (core + Sample RATE + Pipo Loop 0.1.1-experimental from its local branch, commit `f48b95d9`; test image only): `.syx` `f2316e1bca4e513ec37f49e561e391897e850177327d218a07414ce399ab8c96`.
@@ -18,6 +18,8 @@ Everything below was observed in rytm-emu on the named build. Nothing has run on
 - Build SP07 (as SR08, with Pipo Loop `b0ed4fe7`; test image only): `.syx` `d0a1a13d9a60abe1dad38276058c5761fef4faacc72bcb874eb18d7de295ec48`.
 - Build SR11 (core + Sample RATE, this source: no tap in scene or performance mode): `.syx` `e57111c198562843ad14a6f3e7ae23e8e5d0f233d6d1c007481f6b8dccbac37d`.
 - Build SP09 (as SR11, with Pipo Loop `b0ed4fe7`; test image only): `.syx` `104d66314f20ad59fa96ae31a6a668794e2114962eaa8cf58249b0692fd01f0c`.
+- Build SR12 (core + Sample RATE, this source: the header follows a tap): `.syx` `bd37af600e1af24a361380f57541296f520da3ac006c8c800fc026c2f222df6d`.
+- Build SP10 (as SR12, with Pipo Loop `b0ed4fe7`; test image only): `.syx` `2cf3fb8489166957c5fc2622297b3889cc7105c88c59ca9b6002b9df68877524`.
 - A core-only image, same stock and core, for comparison.
 - Emulator: rytm-emu `c5732f0`, headless `dtboot`, JIT on. One generated sample, RAMP, 23,777 frames (odd, so STA and END fall on no round multiple), on BD with LOP ON. Audio is dtboot's `--wav`. Voice words are read with `DTBOOT_PEEK`: step at rec + 12, position at rec + 4, effective FIN at 0x8000f7cc. A click means a sample-to-sample step over 40, or six times the median, on a ramp whose normal step is below 2; each run also flags the trig's own attack, which is not counted.
 
@@ -38,7 +40,7 @@ The row moved under SMP:, named SMP RATE, drawn as stock's checkbox; the value i
 | SR11: tap with SCNE or PERF held and a pad held, and in a scene with a pad held | no toggle |
 | SR11: tap with a pad alone held | turns over |
 | SR11: tap in scene mode and performance mode, no key held | no toggle; leaving scene mode, chromatic mode and plain taps still toggle. On SP07 the unit toggled in both modes, as reported |
-| Right after a tap | the header can show the name from the press until the next redraw |
+| SR12: right after a tap | the header reads the new name; on SP09 the unit showed it late, as reported |
 
 The speed tables below read in raw values, 0 to 127: subtract 64 for what the knob now shows.
 
