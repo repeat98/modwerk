@@ -58,4 +58,4 @@ Test in layers, as Analog BD does: the DSP engine, the ColdFire glue, the port (
 
 ## Digitakt and Digitone
 
-New SRC machines go in slots 4–7 through the core's `core_machines` table, and the OS treats them "like the stock machine they stand in for", so the machine list comes from the OS. Claim the slot in `platform.claims`. There are four slots for the whole machine: test your mod beside another that also adds a machine ([Digitakt guide](../../sdk/machines/digitakt/README.md)).
+New SRC machines take a machine id from 4 to 127 through the Digitakt core's `core_machines` table (STRING uses 8, Digi Mono 20–26, RAM Machines 120–121), and the OS treats them "like the stock machine they stand in for", so the machine list comes from the OS. Claim the id in `platform.claims` (`machine:<id>`) and keep it once released, since kits store it. Test your mod beside another that also adds a machine ([Digitakt guide](../../sdk/machines/digitakt/README.md)).
