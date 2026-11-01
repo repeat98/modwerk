@@ -141,6 +141,11 @@
       "id": "apply-scene",
       "version": "0.1.0-experimental",
       "addedAt": "2026-10-15T16:00:00Z"
+    },
+    {
+      "id": "micro-timing",
+      "version": "0.1.0-experimental",
+      "addedAt": "2026-11-01T22:30:00Z"
     }
   ]
 }
