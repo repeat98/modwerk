@@ -59,12 +59,12 @@ a draft there blocks catalogue generation for everyone. Move it into that
 directory and move its notes into `src/community/module-changelogs/` only
 when the publication requirements are met.
 
-Run this after every edit: about 15 seconds, no firmware read, no module code run.
+Run this after every edit: about 15 seconds, no firmware, no module code run.
 
 ```sh
 npm run modules:generate                      # regenerate the catalog from the module folders
 npm run check -- --base origin/main            # scopes docs to metadata/provenance; code runs the full app suite
-npm run module:doctor -- <id>                 # fits every workflow? each gap and its fix (a draft: --draft <id>; a _submissions/ folder has no id here: pr:ready checks it)
+npm run module:doctor -- <id>                 # fits every workflow? each gap and its fix (a draft: --draft <id>; _submissions/: node scripts/machine-modules.mjs --drafts --base origin/main)
 npm run modules:check -- --base origin/main   # version and publication rules for the folders you changed
 npm run modules:compat -- <id>                # Octatrack: installs beside every other active module and the base? each clash and its fix (unlisted or a draft: --with <id>)
 ```
