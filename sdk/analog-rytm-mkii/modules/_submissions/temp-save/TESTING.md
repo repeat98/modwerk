@@ -44,6 +44,23 @@ Then build TS09 (sha256 b94ff0d8), same setup, reported by the tester, 31 Oct 20
 | Any of those on the sampler screen | No TEMP SAVED, RELOADED or NO TEMP SAVE |
 | Live-recorded locks, hold FUNC + NO | Locks gone, as on TS07 |
 
+Then TS09 again, in a scratch project, with BD TUN and added trigs as markers, reported by the tester, 1 Nov 2026:
+
+| Check | Result |
+| --- | --- |
+| FUNC + YES, TUN to B, add a trig, NO + PLAY MODE, then FUNC + NO | The kit reload returns TUN and keeps the trig; FUNC + NO then removes the trig |
+| FUNC + YES, TUN to B, add a trig, NO + SCNE, then FUNC + NO | The pattern reload removes the trig and keeps TUN at B; FUNC + NO then returns TUN |
+| FUNC + YES, TUN to B, add a trig, YES + PLAY MODE, TUN to C, add a trig, FUNC + NO | TUN at B, both trigs gone: the kit at the stock save, the pattern at FUNC + YES |
+| FUNC + YES, TUN to B, add a trig, YES + SCNE, TUN to C, add a trig, FUNC + NO | TUN at FUNC + YES, first trig stays, second gone: the pattern at the stock save, the kit at FUNC + YES |
+| Stock kit and pattern saves at TUN B with a trig, then TUN A, trig cleared, FUNC + YES, TUN to C, NO + PLAY MODE, add a trig, NO + SCNE | TUN at A, no trigs: FUNC + YES replaced both stock saves |
+| The first two checks while playing | Same results; no stop, jump, drift or audio dropout heard |
+| FUNC + YES, TUN to B, add a trig, to another pattern and back, FUNC + NO | NO TEMP SAVE; TUN and trig stay |
+| Then NO + PLAY MODE, then NO + SCNE | TUN returns to FUNC + YES; the trig stays, as the pattern change refilled stock's buffer |
+| FUNC + YES at TUN A, TUN to B, SAVE PROJECT AS, TUN to C, LOAD PROJECT of that project | TUN at B: the project keeps the kit as it stood at the save |
+| Then NO + PLAY MODE | KIT RELOADED, TUN at A: the project keeps the FUNC + YES copy as the kit's saved copy |
+| Then FUNC + NO | NO TEMP SAVE |
+| FUNC + YES at TUN A, TUN to B, SAVE PROJECT AS over the active project, FUNC + NO | RELOADED, TUN at A |
+
 ## Emulator
 
 rytm-emu c5732f0, `dtboot`, stock OS 1.74, Modwerk base 0c92aa45, Temp Save alone, build TS06 (sha256 fbf0b2bf), factory kit K001 RYTMLINJE, pattern A01. Pattern, stored buffer and kit records read from snapshots with `dtpeek`. Screens read from `dtboot`'s output. The emulator's boot leaves a calibration warning open that takes YES and NO until it is closed; these runs close it first.
@@ -79,6 +96,10 @@ rytm-emu c5732f0, `dtboot`, stock OS 1.74, Modwerk base 0c92aa45, Temp Save alon
 | NO while TEMP SAVED shows (TS09) | The message closes |
 | RECORDER, FUNC + NO (TS09) | No message |
 | RECORD + PLAY with a locked trig, hold FUNC + NO past a bar (TS09) | The lock is erased, the trigs stay, no message |
+| FUNC + YES, turn TUN, add a trig, NO + PLAY MODE, then FUNC + NO (TS09) | The kit reload returns the kit to FUNC + YES and keeps the trig; FUNC + NO then returns the pattern too |
+| FUNC + YES, turn TUN, add a trig, NO + SCNE, then FUNC + NO (TS09) | The pattern reload returns the pattern to FUNC + YES and keeps TUN; FUNC + NO then returns the kit too |
+| FUNC + YES, turn TUN, add a trig, YES + PLAY MODE, turn TUN, add a trig, FUNC + NO (TS09) | The kit at the stock save, the pattern at FUNC + YES |
+| FUNC + YES, turn TUN, add a trig, YES + SCNE, turn TUN, add a trig, FUNC + NO (TS09) | The pattern at the stock save, the kit at FUNC + YES |
 | FUNC + YES, turn TUN, SAVE PROJECT AS (TS09) | The active kit keeps the edit and the kit's saved copy keeps the save |
 | Then FUNC + NO (TS09) | RELOADED; the kit is back at the save |
 | FUNC + YES, turn TUN, SAVE PROJECT AS, turn TUN, LOAD PROJECT of that project (TS09) | No result: every kit came back blank in the emulator, so this says nothing about the instrument |
@@ -90,5 +111,5 @@ Read from stock's code, not run: performance locks at kit record + 1950 and scen
 - On the unit: stock FUNC + YES and FUNC + NO without the module on every screen, audio during a reload, timing.
 - The song and chain modes while they play.
 - Whether stock's own flows reach KIT NOT LINKED: a kit load and a saved kit both link the kit to the pattern.
-- A project save after FUNC + YES, and this beside other modules. Memory and load were not measured.
+- This beside other modules. Memory and load were not measured.
 - Mutes, the tempo and the performance knob across a reload.
