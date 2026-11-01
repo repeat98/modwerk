@@ -173,6 +173,8 @@ npp1993 flashed SP03 on an Analog Rytm MKII, OS 1.74, and reports the following.
 | Many other stored sounds, LOAD TO TRACK | also ERROR, some loaded; cause not found |
 | A new store over a sound, then LOAD TO TRACK on another track | loaded, with FIN AS RATE off: the setting did not travel |
 
+On SP12, as reported by npp1993: holding SCNE or PERF and tapping flips; holding a pad to edit a scene does not; FUNC, NO or a held trig and a tap do not.
+
 On SP11, as reported by npp1993: taps flip normally and in scene and performance mode; while setting a scene or a performance with a pad held the press sets a lock and does not flip; holding SCNE or PERF and tapping does not flip; the author reads this as working as expected.
 
 On SP10, as reported by npp1993: the header changes over quickly after a tap, and the tap is blocked in scene and performance mode; SP11 allows it there.
