@@ -78,6 +78,7 @@ An earlier build (SP01) clicked here: flips that landed the voice at an edge at 
 | --- | --- |
 | BD at RATE 38, row on, T1 and T9 plain, T5 sound-locked to a pool sound with the row off, sequencer running | T5 at +1.000x from STA, T1 and T9 at -0.406x from END, for five passes: the setting follows the sound played and comes back on the next plain trig |
 | The reverse: a pool sound with the row on, locked onto a track with the row off | not run |
+| Row on, RATE 127, SOUND MANAGER, store to the empty slot A:162, LOAD TO TRACK on SD | SD reads RATE at 127: the setting travelled, which differs from the unit report. Replacing a slot that already holds a sound was not reached |
 | BD at +1.0000x and SD at -0.4163x in the same blocks | each step exact for its own FIN and sign; SD's slot held a 248-frame built-in sample and its pad did not start in this run, so two ramps heard together were not shown |
 | SD's RATE moving during a pattern | the step followed FIN in every report |
 | Scene lock on RATE at about 53, on a sound at 127, scene toggled | effective RATE 127 and 53 by turn, the step followed, sign included |
@@ -100,7 +101,7 @@ The line moves about 37 columns in 30 M at RATE 127, 19 at RATE 96, and stays pu
 
 ## Not tested
 
-Saving a sound to the pool in the emulator (bank A is write protected there), a project file round trip, Env Reset Amp beside it, MKI. CPU load on a unit: the figures in the manifest are a static estimate.
+Replacing a stored sound in the emulator, a project file round trip, Env Reset Amp beside it, MKI. CPU load on a unit: the figures in the manifest are a static estimate.
 
 ## Hardware
 
@@ -125,5 +126,7 @@ npp1993 flashed SP03 on an Analog Rytm MKII, OS 1.74, and reports the following.
 | LFO to the sample's Fine Tune, RATE about 96, LOP PIPO | pitch rises and falls, passes through a stop into reverse, with some minor clicks; the waveform's playhead looks linear, not following the LFO |
 | Track sound stored to a pool slot | stored; it shows in SOUND MANAGER |
 | That slot, LOAD TO TRACK on another track | a toast reading ERROR; cause not found |
+| Many other stored sounds, LOAD TO TRACK | also ERROR, some loaded; cause not found |
+| A new store over a sound, then LOAD TO TRACK on another track | loaded, with FIN AS RATE off: the setting did not travel |
 
 Flashing note: on the first attempt the unit stopped on UPGRADE OS NOW? and answered no key after NO had been pressed during the transfer. A power cycle returned it to the earlier OS, and the second transfer, with nothing pressed until the prompt, went through.
