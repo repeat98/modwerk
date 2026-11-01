@@ -53,6 +53,14 @@ A code review of the merge found a gap, drift and eight smaller items. RC06 (bef
 
 The trace showed the recorder reading the press before the audio block arms the series, in rytm-emu; the source handles either order, a unit's order was not read. A press moved back a step no longer holds the wipe guard: not reproduced before the change, no case added. While LIVE RECORDING retrigs no longer follow trig micro timing, a change from Retrig Grid 0.2.0: listed in the README. Temp Save on RC08: run, screen not compared. `npm run module:doctor` could not run on this branch: it stops on a missing generated file, src/community/module-changelogs.json. Not run: RC08 on a unit.
 
+### First hit lost after a press, RC09
+
+Unit, RC08, swing 61, CH pad, quantize on, 1/16, reported by npp1993: a five-step roll recorded steps 9, 11, 12, 13; step 10 sounded and did not record. 1/12 quantize off held across two bars kept its steps (3, 7, 11, 15 empty) and sounded as triplets; a rate change during a roll played back as played.
+
+Reproduced in rytm-emu on RC08 at swing 61 on CH and on BD, on narrow press timings: 1 of 50 at 8,000 instructions apart, 1 of 200 at 2,000. A traced build showed a hit from the press itself, before the series was rearmed: Retrig Grid leaves a count of 1 after a roll, so stock's 960 at the next press read as a fired retrig, ahead of the press's note event, and the first real hit was not recorded. RC06 lost none of 200 at the same spacing; that is not proof it was free of this.
+
+RC09 (RC08 with the arming test and a press seen soon after its series treated as that series', sha256 a1d978964af8288e…): 0 of 200 on the fix's scratch build, 0 of 50 in each of four loops on RC09, 0 of 384 for the gap, the second pass of the long roll as the first, and the 259 sweep cases the same trigs as RC06. The same press timing on a unit is not known; not run on a unit.
+
 ## 0.1.0-experimental (rytm-emu, 31 October 2026)
 
 Emulator results first; pad pressure there is a scripted stream, not a real pad. The unit's results, on RR09, are at the end.

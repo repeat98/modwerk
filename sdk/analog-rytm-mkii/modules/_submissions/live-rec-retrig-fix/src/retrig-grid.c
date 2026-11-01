@@ -330,6 +330,13 @@ int retrig_grid_driving(int t)
     return retrig_grid_on && SEQ_PLAYING && (driving >> t & 1);
 }
 
+// Whether a 960 on pad t is a series arming: a fired retrig reloads one tick after
+// the deadline it was given. Read before this module's handler runs on the block.
+int retrig_grid_arming(int t)
+{
+    return (driving >> t & 1) && RT_DEADLINE[t] != written[t] + TICK;
+}
+
 // Whether the hit that just fired, at a gap of ticks, starts one on the bar's grid.
 int retrig_grid_on_gap(int t, int ticks)
 {
