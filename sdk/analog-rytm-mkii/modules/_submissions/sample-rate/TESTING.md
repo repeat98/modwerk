@@ -72,10 +72,38 @@ An earlier build (SP01) clicked here: flips that landed the voice at an edge at 
 | Link with Pipo Loop, Silent Pad+Trig, Loop Sync and Filter Hz | no shared sites |
 | SA03, the slow reverse, flip, stop and CC cases above (11 runs) | no click |
 
+## Sound locks and two voices (SP03)
+
+| Check | Result |
+| --- | --- |
+| BD at RATE 38, row on, T1 and T9 plain, T5 sound-locked to a pool sound with the row off, sequencer running | T5 at +1.000x from STA, T1 and T9 at -0.406x from END, for five passes: the setting follows the sound played and comes back on the next plain trig |
+| The reverse: a pool sound with the row on, locked onto a track with the row off | not run |
+| BD at +1.0000x and SD at -0.4163x in the same blocks | each step exact for its own FIN and sign; SD's slot held a 248-frame built-in sample and its pad did not start in this run, so two ramps heard together were not shown |
+| SD's RATE moving during a pattern | the step followed FIN in every report |
+
 ## Not tested
 
-Sound locks (a trig playing a pool sound), scene and performance locks on RATE, an LFO on RATE, sound browser load, sound copy and paste, a project file round trip, more than one voice in RATE at once, Env Reset Amp beside it, MKI. CPU load on a unit: the figures in the manifest are a static estimate.
+Scene and performance locks on RATE, an LFO on RATE by intent, sound browser load, a project file round trip, Env Reset Amp beside it, MKI. CPU load on a unit: the figures in the manifest are a static estimate.
 
 ## Hardware
 
-Not tested.
+npp1993 flashed SP03 on an Analog Rytm MKII, OS 1.74, and reports the following. Reported by the author, not itemized measurements; no CPU reading was available.
+
+| Check | Reported |
+| --- | --- |
+| Row OFF on a new sound, RIGHT turns it ON; the knob reads RATE on that track and FIN on others | pass |
+| RATE 127 normal speed, slows to a stop at 64, runs backward below it | pass |
+| A pad hit at 64 | a tiny pop, also with STA on a zero crossing; the author puts it down to the analog amp, as an empty channel does it too |
+| Trig below 64 starts from END | pass |
+| LOP OFF at RATE 20 | pass |
+| RATE locked to 1 on one trig, a plain trig later | locked trig backward, plain trig forward |
+| LOP PIPO at RATE 127, 66, 62 | no clicks at the turns, never sticks |
+| Sweeps through 64 with LOP PIPO, near STA and END | no pops or jumps |
+| Row on, kit not saved, power cycle | row and RATE came back |
+| Kit saved with row off and FIN +0, row on unsaved, power cycle, NO + PLAY MODE | row OFF, FIN +0: the two stayed together |
+| Row on, RATE 90, kit saved | row on, RATE 90 (whether the power cycle was run on this step was not stated) |
+| Row on unsaved, NO + PLAY MODE | row OFF, FIN +0 |
+| Row OFF at RATE 127 | FIN +0, normal pitch |
+| Track copied, 1 to 11 | row on and RATE on the copy |
+
+Flashing note: on the first attempt the unit stopped on UPGRADE OS NOW? and answered no key after NO had been pressed during the transfer. A power cycle returned it to the earlier OS, and the second transfer, with nothing pressed until the prompt, went through.
