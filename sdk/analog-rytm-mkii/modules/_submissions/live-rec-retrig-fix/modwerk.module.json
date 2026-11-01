@@ -25,7 +25,7 @@
     "highlights": [
       "One real trig for each hit at 1/16 and slower, velocity following pressure.",
       "ALWAYS ON pads record the same way.",
-      "Retrig hits keep played timing even with quantize live rec on; plain pad hits still quantize.",
+      "Quantize live rec applies to retrig hits as to any note.",
       "Faster rates record a step retrig, and the RETRIG menu's VEL.CUR goes with it.",
       "Pad retrigs fall on the sequencer's swung grid while it plays, and a recorded roll starts on that grid."
     ],
@@ -59,12 +59,14 @@
       "1.74"
     ],
     "requires": [],
-    "conflicts": [],
+    "conflicts": [
+      "retrig-grid"
+    ],
     "limitations": [
       "Rates faster than a step record one velocity for each trig's hits, or VEL.CUR's fade.",
       "Micro timing has 24 units a step.",
       "A roll started before LIVE RECORDING can miss hits.",
-      "Not tested on a unit; pad pressure was scripted in rytm-emu.",
+      "This merged build has run on one unit, on the builds TESTING.md names.",
       "External MIDI clock not tested.",
       "The press sounds where it was played; only its recorded trig moves to the grid, and not when the grid point is more than a step away."
     ]
@@ -104,7 +106,7 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "rytm-emu c5732f0 only, scripted pressure: 1/8, 1/12, 1/16, 1/20, 1/24, 1/32, ALWAYS ON, quantize on and off, track speed 2x and 1/2x, beside Retrig Grid. Not tested on a unit. See TESTING.md."
+    "summary": "rytm-emu c5732f0: every rate, ALWAYS ON, a press during a roll, rate changes, swing 50 to 66, quantize on and off. One MKII unit, RC07: rates, quantize, the row, a project save and reload. See TESTING.md."
   },
   "license": {
     "spdx": "GPL-3.0-or-later",

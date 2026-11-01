@@ -41,6 +41,18 @@ Temp Save on RC06: TEMP SAVED shown. Not run in the emulator: audible checks, pr
 
 Unit, RC07 (RC06 with Pipo Loop 2cd623f3, sha256 6ae42b7b717b63d7…), reported by npp1993: 1/32 quantize off, every trig on the grid; a press under half a step recorded one hit; RETRIG GRID unchecked, SAVE PROJECT AS, LOAD PROJECT: still unchecked. The same save showed random characters in the name entry screen on the tester's project, with the project's name as expected elsewhere. Not reproduced: rytm-emu's factory project shows a clean name on RC07 and on stock 1.74, existing and empty slots. Cause not known.
 
+### Code review fixes, RC08
+
+A code review of the merge found a gap, drift and eight smaller items. RC06 (before) and RC08 (RC07 with the fixes and Pipo Loop f48b95d9, sha256 6fe16a5d7ad580c6…), rytm-emu c5732f0, set as above.
+
+| Case | RC06 | RC08 |
+| --- | --- | --- |
+| 1/16 and 1/12, press stepped 0.02 step across four steps, both modes | one step empty at 1/16, press 1 of 192 positions, both modes: the series skipped a point the snap kept | no gap, 384 of 384 |
+| 1/12, quantize off, a roll past one loop | the second pass rewrote the trigs (2/-10, 3/-5), playback 0.2 step off | second pass as the first (1/+7, 3/-9), playback within 0.01 step |
+| The 259 cases of the sweep above (rates, ALWAYS ON, a press during a roll, rate changes, swing) | | the same trigs on every step, and in the rate-change cases the same hit times as RC06, on the source one commit before Pipo Loop f48b95d9 |
+
+The trace showed the recorder reading the press before the audio block arms the series, in rytm-emu; the source handles either order, a unit's order was not read. A press moved back a step no longer holds the wipe guard: not reproduced before the change, no case added. While LIVE RECORDING retrigs no longer follow trig micro timing, a change from Retrig Grid 0.2.0: listed in the README. Temp Save on RC08: run, screen not compared. `npm run module:doctor` could not run on this branch: it stops on a missing generated file, src/community/module-changelogs.json. Not run: RC08 on a unit.
+
 ## 0.1.0-experimental (rytm-emu, 31 October 2026)
 
 Emulator results first; pad pressure there is a scripted stream, not a real pad. The unit's results, on RR09, are at the end.

@@ -26,6 +26,7 @@
 #include <stdint.h>
 #include "analog-rytm-mk2/store.h"
 #include "grid-1.74.h"
+#include "retrig-shared.h"
 
 STORE_FIELD(retrig_grid_off);   // project, 1 bit: 0 = ON (the default)
 
@@ -33,42 +34,28 @@ extern void retrig_grid_label(void);
 extern void STOCK_VIEW_REDRAW(uint32_t view);
 extern void STOCK_BITMAP_DRAW(void *canvas, const void *glyph, int x, int y, int mode);
 
-#define TRACKS 12               // the twelve pad tracks
 #define TICK 90000              // musical-clock units in one tick
-#define PULSE_TICKS 10          // the sequencer's pulse, 24 PPQN
 #define PULSE (PULSE_TICKS * TICK)
 #define WHOLE 960               // ticks in a whole note: the counter's span
 #define WHOLE_PULSES 96
 
 // OS 1.74 locations (build.json release cflags)
-#define RT_ACTIVE ((volatile uint8_t *)RT_ACTIVE_AT)        // [t] 1: a pad's series
 #define RT_DEADLINE ((volatile int32_t *)RT_DEADLINE_AT)    // [t] its next tick
-#define RT_COUNT ((volatile int32_t *)RT_COUNT_AT)          // [t] 960..1
-#define RT_RATE(t) (*(volatile int32_t *)(RT_TEMPLATE_AT + 56 * (t) + 36))  // RETRIG 0..16
 #define SEQ_PULSE (*(volatile int32_t *)SEQ_PULSE_AT)       // the next pulse's time
 #define SEQ_STEP (*(volatile uint16_t *)SEQ_STEP_AT)        // its master step since PLAY
 #define SEQ_PULSE_N (*(volatile uint8_t *)SEQ_PULSE_N_AT)   // its pulse in that step
 #define TRACK_STEP ((volatile int8_t *)TRACK_STEP_AT)       // [t] the next pulse's track step
 #define TRACK_PULSE_N ((volatile int8_t *)TRACK_PULSE_N_AT) // [t] its pulse in that step
 #define SEQ_PLAYING (*(volatile int32_t *)SEQ_PLAYING_AT)
-#define SEQ_PATTERN (*(volatile int8_t *)SEQ_PATTERN_AT)
-#define SPEED_PULSES ((const int32_t *)SPEED_PULSES_AT)     // 3, 4, 6, 8, 12, 24, 48
 #define CHECK_GLYPHS (*(const uint8_t *const *)CHECK_GLYPHS_AT)    // 28 bytes each
 
 // The pattern in memory (85760 bytes), and a track in it (917 bytes)
-#define PATTERN(p) ((const volatile int8_t *)PATTERNS_AT + 85760 * (p))
 #define TRACK_BYTES 917
 #define PAT_LENGTH 85684        // NORMAL scale: the length word's low byte
 #define PAT_SWING 85688         // SWING - 50: 0..30
-#define PAT_SCALE 85689         // 1: ADVANCED, each track its own length and speed
-#define PAT_SPEED 85690         // 0..6, as SPEED_PULSES
 #define TRK_FLAGS 1             // + 2 x step: bit 0 a trig, bit 4 the swing trig
 #define TRK_MICRO 320           // + step: micro timing, 1/24 of a step a unit
 #define TRK_LENGTH 709          // ADVANCED scale
-#define TRK_SPEED 711
-
-// RETRIG 1/1 .. 1/80, in ticks
-static const int16_t period[17] = { 960, 480, 320, 240, 192, 160, 120, 96, 80, 60, 48, 40, 30, 24, 20, 15, 12 };
 
 volatile uint8_t retrig_grid_on = 1;
 static int32_t seen_sum;
@@ -81,6 +68,13 @@ static uint16_t driving;
 static int32_t straight[TRACKS];
 static int16_t place[TRACKS];
 static int32_t written[TRACKS];
+
+// The press has two readers, the series from the exact time and the recorder from
+// the step and micro timing, and either may run first. The first decides which grid
+// point starts the series, so the trig and the retrigs leave none out.
+static uint16_t first_open;     // armed, the recorder has not read straight[t] yet
+static uint16_t first_chosen;   // the recorder chose chosen[t]; the series is to come
+static int32_t chosen[TRACKS];
 
 static inline unsigned short irq_off(void)
 {
@@ -120,29 +114,32 @@ static void __attribute__((noinline)) resync(void)
 }
 
 // A track step's offset from its straight start, as the sequencer times its
-// trig: the swing on a step with its swing trig on, plus a trig's micro timing.
-static int32_t offset(const volatile int8_t *track, int step, int swing, int pulses)
+// trig: the swing on a step with its swing trig on, plus a trig's micro timing
+// unless swing_only.
+static int32_t offset(const volatile int8_t *track, int step, int swing, int pulses, int swing_only)
 {
     int flags = track[TRK_FLAGS + 2 * step];
     int32_t o = 0;
 
     if (flags & 0x10)
         o = swing * pulses * (PULSE / 50);
-    if (flags & 1)
+    if (!swing_only && (flags & 1))
         o += track[TRK_MICRO + step] * pulses * (PULSE / 24);
     return o;
 }
 
 // Straight time x (on the tick grid) moved for pad t's track: by the offsets of
 // the two step starts around x, interpolated between them, so that 1/16 at 1x
-// lands on the swung steps and finer rates follow between them.
+// lands on the swung steps and finer rates follow between them. While LIVE
+// RECORDING it takes the swing alone: a roll writes micro timing as it goes, and
+// its own trigs would move its retrigs on the next pass.
 static int32_t __attribute__((noinline)) warp(int t, int32_t x)
 {
     const volatile int8_t *pattern, *track;
     unsigned short sr = irq_off();
     int32_t pulse = SEQ_PULSE, span, d, o0, o1;
     int n = TRACK_PULSE_N[t], step = TRACK_STEP[t], p = SEQ_PATTERN;
-    int adv, speed, len, swing, pulses, k, j, u;
+    int adv, speed, len, swing, pulses, k, j, u, live;
 
     irq_restore(sr);
     if (p < 0 || p >= 128)
@@ -170,8 +167,9 @@ static int32_t __attribute__((noinline)) warp(int t, int32_t x)
     j = (step + k) % len;
     if (j < 0)
         j += len;
-    o0 = offset(track, j, swing, pulses);
-    o1 = offset(track, (j + 1) % len, swing, pulses) - o0;
+    live = STOCK_LIVE_REC(STOCK_APP()) != 0;
+    o0 = offset(track, j, swing, pulses, live);
+    o1 = offset(track, (j + 1) % len, swing, pulses, live) - o0;
     pulses *= PULSE_TICKS;      // ticks in the step
     return x + o0 + o1 / pulses * u + o1 % pulses * u / pulses;
 }
@@ -197,9 +195,11 @@ static int __attribute__((noinline)) first_point(int t, int32_t press, int ticks
 {
     int32_t a, q = ticks * TICK, h;
     int at, i;
+    unsigned short sr = irq_off();  // the recorder's task calls this too
 
     // the press's place in the whole note (bars from PLAY), in clock units
     a = (int32_t)bar_pulse * PULSE - (last_pulse - press);
+    irq_restore(sr);
     a %= WHOLE * TICK;
     if (a < 0)
         a += WHOLE * TICK;
@@ -224,7 +224,18 @@ static void __attribute__((noinline)) rephase(int t, int32_t deadline)
 
     if (rate < 0 || rate > 16)
         return;
-    place[t] = first_point(t, deadline - TICK, period[rate], &straight[t]);
+    place[t] = first_point(t, deadline - TICK, retrig_period[rate], &straight[t]);
+    if (first_chosen >> t & 1) {
+        int32_t d = chosen[t] - straight[t], q = retrig_period[rate] * TICK;
+
+        first_chosen &= ~(1 << t);
+        if (d == q || d == -q) {
+            straight[t] = chosen[t];
+            place[t] = (place[t] + d / TICK + WHOLE) % WHOLE;
+        }
+    } else {
+        first_open |= 1 << t;
+    }
     schedule(t);
 }
 
@@ -234,11 +245,12 @@ static void __attribute__((noinline)) next(int t)
 {
     int rate = RT_RATE(t), q, n;
 
+    first_open &= ~(1 << t);
     if (rate < 0 || rate > 16) {
         driving &= ~(1 << t);
         return;
     }
-    q = period[rate];
+    q = retrig_period[rate];
     n = q - place[t] % q;
     place[t] = (place[t] + n) % WHOLE;
     straight[t] += n * TICK;
@@ -318,16 +330,18 @@ int retrig_grid_driving(int t)
     return retrig_grid_on && SEQ_PLAYING && (driving >> t & 1);
 }
 
-// A step's swing alone: a trig's micro timing is what is being written here.
-static int32_t swing_of(const volatile int8_t *track, int step, int swing, int pulses)
+// Whether the hit that just fired, at a gap of ticks, starts one on the bar's grid.
+int retrig_grid_on_gap(int t, int ticks)
 {
-    return track[TRK_FLAGS + 2 * step] & 0x10 ? swing * pulses * (PULSE / 50) : 0;
+    return place[t] % ticks == 0;
 }
 
-// The recorder, for a retrig press: *step and *micro, where the press sounded, become the grid point before the series' first retrig, as the track's own
-// steps and micro timing write it, before the quantize. The sound stays at the press. A point more than a
-// step away leaves the press as played: at the slowest rates that is another beat.
-void retrig_grid_snap(int t, int gap, int32_t *step, int32_t *micro)
+// The recorder, for a retrig press: *step and *micro, where the press sounded, become
+// the grid point before the series' first retrig (gap: the ticks between the points the
+// trigs sit on; each_hit: every hit gets one), as the track's own steps and micro timing write it, before the
+// quantize. The sound stays at the press. A point more than a step away leaves the
+// press as played: at the slowest rates that is another beat.
+void retrig_grid_snap(int t, int gap, int each_hit, int32_t *step, int32_t *micro)
 {
     const volatile int8_t *pattern, *track;
     unsigned short sr;
@@ -369,9 +383,20 @@ void retrig_grid_snap(int t, int gap, int32_t *step, int32_t *micro)
         k -= len;
     while (2 * k < -len)
         k += len;
-    press = anchor + k * span + swing_of(track, *step, swing, pulses) + *micro * unit;
+    press = anchor + k * span + offset(track, *step, swing, pulses, 1) + *micro * unit;
 
     first_point(t, press, gap, &x);
+    if (each_hit) {
+        sr = irq_off();
+        if (first_open >> t & 1) {
+            x = straight[t];
+            first_open &= ~(1 << t);
+        } else {
+            chosen[t] = x;
+            first_chosen |= 1 << t;
+        }
+        irq_restore(sr);
+    }
     x -= q;
 
     // that point on the steps: from its step's swung start, or the next step's if nearer
@@ -381,8 +406,8 @@ void retrig_grid_snap(int t, int gap, int32_t *step, int32_t *micro)
     j = (now + k) % len;
     if (j < 0)
         j += len;
-    s0 = swing_of(track, j, swing, pulses);
-    s1 = swing_of(track, (j + 1) % len, swing, pulses) - s0;
+    s0 = offset(track, j, swing, pulses, 1);
+    s1 = offset(track, (j + 1) % len, swing, pulses, 1) - s0;
     off = u * TICK + s1 / ticks * u + s1 % ticks * u / ticks;
     w = anchor + k * span + s0 + off;
     if (w - press > span || press - w > span)

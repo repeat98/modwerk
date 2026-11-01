@@ -76,6 +76,7 @@ The recorder's press site asks the grid for that skipped or passed point and wri
 
 - Analog Rytm MKII, OS 1.74, core-ar2 0.7. Events: `ev_render_out`, `ev_project`. One project storage bit (`retrig_grid_off`). Six stock sites, 0x400e29ac, 0x400e2b3e, 0x400b4692, 0x400b470e, 0x400b43d8 and 0x400ec244, which no other module patches. Key gesture: RTRG + YES.
 - With RETRIG GRID checked, the press still sounds where you played it. Only its recorded trig moves, to the grid point nearest the press, so playback has that hit on the grid and the live take does not. At rates that record a step retrig that point is the nearest step that starts a trig. With quantize live rec on it then rounds to its step like any note. A press more than a step from that point stays where you played it.
+- While LIVE RECORDING retrigs follow the swing alone. Micro timing on the pad's track moves them only outside it, or a long roll would move itself by the trigs it had just written.
 - With swing above 50, rates that record a step retrig (1/20 and faster) play back a little unlike the live roll: the live hits follow the swing, a step retrig's hits run evenly from their trig, and on a swung step one more can fit before the next trig. At 1/32 and swing 57 that is an extra hit 0.14 step before the swung trig. At swing 50 the two match.
 - A grid point more than a step from the press leaves the trig as played: at 1/2 and 1/1 that would be another beat.
 - A press with the sequencer stopped, and RETRIG GRID unchecked, record as played.
