@@ -1,6 +1,6 @@
 # QPERF testing
 
-Nothing here proves reboot persistence or the QPER knob itself. Hardware results below are the author's, each on the build named. QC12 is the code here, and has not run on a unit.
+Nothing here proves reboot persistence or the QPER knob itself. Hardware results below are the author's, each on the build named. QC12 is the code here.
 
 ## Hardware
 
@@ -207,10 +207,11 @@ Combined build QC12 (sha256 0e66ceb6913f054f17e6de15bf2debcd2d5fe6440efba4bd2a0d
 | QC12, then QPER + PLAY | 32 locks to 18, sequencer did not start |
 | QC12, every row of the QC11 table except QPER held then GLOBAL | Same results |
 
+Reported by the author on QC12, Analog Rytm MKII: link and unlink, a knob with nothing linked shows NO PERFORMANCE LINKED, QPER + knob, YES, clear and undo, copy, paste and undo. A kit with two linked: YES and a knob show MORE THAN ONE LINKED, the knob shows no offset, and QPER + pad leaves one link. Hold QPER, FUNC + TRK (the save kit screen), release both, NO: an unlinked pad then played its sound. Same steps again, the first QPER press being QPER + PLAY: CLEAR PERFORMANCE, the sequencer stayed stopped, PLAY again showed UNDO CLEAR.
+
 ## Not tested
 
-- QC12 on a unit.
-- The knob display on a kit with several linked.
+- On a unit, QC12: kit reload and the GLOBAL menu, which passed on QC11.
 - SysEx kit receive.
 - Menus and dialogs other than those above: they count as not ours because their class is not on the list.
 - Performance load.
