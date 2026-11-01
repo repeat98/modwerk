@@ -214,10 +214,10 @@ write) and write only the six-byte jump (Direct Jump Kyoti's `TS_HOOK`).
 A new module version rebuilds its USB package in the same pull request:
 `npm run octatrack:module-packages` with the m68k-elf toolchain and the
 Elekloader checkout (`npm run upstream:tools`), then `-- --check` until every
-package says identical. CI has no toolchain, but `--check` still fails there
-when a package in `src/engine/assets/octatrack-module-packages.json` is at an
-older version than the catalogue. A deliberate lag names the catalogue version
-in `lagsBehind` and the reason with its issue in `lagReason`; remove both when
+package says identical. Without a toolchain (CI) `--check` still fails on a
+package older than the catalogue. A deliberate lag names the catalogue version
+in `lagsBehind` and the reason with its issue in `lagReason`, which the module
+page and sync dialog show, so write it for players; remove both when
 the package is rebuilt. The standalone and table recipes in
 `sdk/machines/octatrack/module-adapters/` pin whole shared files (the engine
 asset JSON, the remix tools, `module_packages.py`, the Elekloader checkout),
