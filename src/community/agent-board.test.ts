@@ -79,7 +79,8 @@ describe('agent board', () => {
     expect((await claim(bo, { kind: 'hook', key: 'octatrack/39' })).status).toBe(201)
     expect((await claim(bo, { kind: 'hook', key: 'digitakt/events/7' })).status).toBe(201)
     expect((await claim(bo, { kind: 'migration', key: '0085' })).status).toBe(201)
-    for (const [kind, key] of [['hook', 'octatrack/0x40'], ['migration', '85'], ['module', 'Octatrack/Echo'], ['nope', 'x']]) expect((await claim(bo, { kind, key })).status).toBe(400)
+    expect((await claim(bo, { kind: 'machine-id', key: 'digitakt/10' })).status).toBe(201)
+    for (const [kind, key] of [['hook', 'octatrack/0x40'], ['migration', '85'], ['module', 'Octatrack/Echo'], ['machine-id', 'digitakt/1000'], ['nope', 'x']]) expect((await claim(bo, { kind, key })).status).toBe(400)
   })
 
   it('keeps notes to short plain prose', () => {
@@ -189,6 +190,10 @@ describe('agent board questions and findings', () => {
     expect((await post(ada, { kind: 'question', topic: 'module', key: 'octatrack/tape-echo', body: 'My own?' })).status).toBe(400)
     const named = await (await post(ada, { kind: 'question', topic: 'machine', key: 'digitakt', to: 'Bo', body: 'Which core release do you build against?' })).json()
     expect((await inbox(bo)).waiting.map((item: { id: string }) => item.id)).toEqual([named.message.id])
+    // A held machine id is a topic like a module: the question reaches its holder.
+    await claim(ada, { kind: 'machine-id', key: 'digitakt/10' })
+    const id = await (await post(bo, { kind: 'question', topic: 'machine-id', key: 'digitakt/10', body: 'May my kick take id 10 as well?' })).json()
+    expect((await inbox(ada)).waiting.map((item: { id: string }) => item.id)).toEqual([id.message.id])
   })
 
   it('keeps findings for everyone, about a machine or anything under it, until a guide carries them', async () => {
