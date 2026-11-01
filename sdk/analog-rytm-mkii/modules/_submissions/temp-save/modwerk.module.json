@@ -47,7 +47,7 @@
   "requires": [],
   "conflicts": [],
   "limitations": [
-   "FUNC + YES overwrites the pattern's and the kit's saved copies, the ones stock's reloads return to. A project save keeps the kit's, apart from the kit's edits.",
+   "FUNC + YES overwrites the pattern's and the kit's saved copies, the ones stock's reloads return to. A project save keeps both, apart from the edits; a power cycle keeps the kit's only.",
    "A save lasts until the pattern or kit changes, a project loads or the power goes off.",
    "With a trig held, both keys stay stock's. In running LIVE RECORDING, FUNC + NO erases locks as in stock."
   ]

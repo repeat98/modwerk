@@ -60,6 +60,10 @@ Then TS09 again, in a scratch project, with BD TUN and added trigs as markers, r
 | Then NO + PLAY MODE | KIT RELOADED, TUN at A: the project keeps the FUNC + YES copy as the kit's saved copy |
 | Then FUNC + NO | NO TEMP SAVE |
 | FUNC + YES at TUN A, TUN to B, SAVE PROJECT AS over the active project, FUNC + NO | RELOADED, TUN at A |
+| FUNC + YES, add a trig, power cycle | The trig is there |
+| Then NO + SCNE, then FUNC + NO | PATTERN RELOADED, the trig stays; NO TEMP SAVE |
+| FUNC + YES, add a trig, SAVE PROJECT AS over the active project, add a second trig, LOAD PROJECT of that project | Only the first trig is there; no save prompt was reported at this load |
+| Then NO + SCNE | No added trigs: the project keeps the FUNC + YES copy as the pattern's saved copy |
 
 ## Emulator
 
