@@ -76,7 +76,8 @@ A review of the RC08 and RC09 fixes found seven items, from reading the code. RC
 | Lost first hit, four loops of 50 timings; gap, 384 positions; long roll's second pass | 0 lost, 0 gaps, as the first pass |
 | The 259 sweep cases, swing 57 and the swing cases | the same trigs as RC06 |
 
-A quick tap outside recording, then a press in LIVE RECORDING, at 1/8: first trig on the grid on RC10 and RC11, so the stale state this guards against was not reproduced. Ending recording during a held roll, the case the held swing-only bit is for: not run. Not run: RC11 on a unit.
+A quick tap outside recording, then a press in LIVE RECORDING, at 1/8: first trig on the grid on RC10 and RC11, so the stale state this guards against was not reproduced. Ending recording during a held roll, the case the held swing-only bit is for: not run. 
+Unit, RC11, swing 61, CH pad, quantize on, 1/16, reported by npp1993: two passes of two short rolls across a bar, each roll continuous, no trig missing; a pad released and pressed again during a roll with RTRG held sounded right, nothing heard missing, the grid not read step by step.
 
 ## 0.1.0-experimental (rytm-emu, 31 October 2026)
 
