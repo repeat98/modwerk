@@ -59,7 +59,9 @@ Unit, RC08, swing 61, CH pad, quantize on, 1/16, reported by npp1993: a five-ste
 
 Reproduced in rytm-emu on RC08 at swing 61 on CH and on BD, on narrow press timings: 1 of 50 at 8,000 instructions apart, 1 of 200 at 2,000. A traced build showed a hit from the press itself, before the series was rearmed: Retrig Grid leaves a count of 1 after a roll, so stock's 960 at the next press read as a fired retrig, ahead of the press's note event, and the first real hit was not recorded. RC06 lost none of 200 at the same spacing; that is not proof it was free of this.
 
-RC09 (RC08 with the arming test and a press seen soon after its series treated as that series', sha256 a1d978964af8288e…): 0 of 200 on the fix's scratch build, 0 of 50 in each of four loops on RC09, 0 of 384 for the gap, the second pass of the long roll as the first, and the 259 sweep cases the same trigs as RC06. The same press timing on a unit is not known; not run on a unit.
+RC09 (RC08 with the arming test and a press seen soon after its series treated as that series', sha256 a1d978964af8288e…): 0 of 200 on the fix's scratch build, 0 of 50 in each of four loops on RC09, 0 of 384 for the gap, the second pass of the long roll as the first, and the 259 sweep cases the same trigs as RC06. The same press timing on a unit is not known.
+
+Unit, RC09, swing 61, CH pad, quantize on, 1/16, 10 to 15 short rolls, reported by npp1993: recorded as heard, except possibly one roll with a press very late, just before the next step, where a trig may have been missed. Whether that was a hole in the roll was not recorded.
 
 ## 0.1.0-experimental (rytm-emu, 31 October 2026)
 
