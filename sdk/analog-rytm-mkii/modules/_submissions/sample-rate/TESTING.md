@@ -2,7 +2,7 @@
 
 Everything below was observed in rytm-emu on the named build. Nothing has run on a unit, and the emulator is not hardware evidence: the Hardware section is empty until the author reports from one.
 
-- Source (0.1.0-experimental): fingerprint (`sha256` of `sha256sum build.json src/audio.s src/rate.c`) `dc07d5cd…3e07` (`evidence.sourceSha256`), which drops the block handler's put-back step from the source below.
+- Source (0.1.0-experimental): fingerprint (`sha256` of `sha256sum build.json src/audio.s src/rate.c`) `c627749f…8976` (`evidence.sourceSha256`).
 - Stock OS 1.74: `.syx` `cb0f99d6…e123`, the owner's file. Core: elekloader core-ar2 0.7 as vendored.
 - Build SR04 (core + Sample RATE, `--version SR04`): `.syx` `f8802bc146dacce2e7770ff700f4f1efb9cdc9d265d0faf262214568e7520347`.
 - Build SP03 (core + Sample RATE + Pipo Loop 0.1.1-experimental from its local branch, commit `f48b95d9`; test image only): `.syx` `f2316e1bca4e513ec37f49e561e391897e850177327d218a07414ce399ab8c96`.
@@ -10,10 +10,30 @@ Everything below was observed in rytm-emu on the named build. Nothing has run on
 - Build SR05 (core + Sample RATE, this source): `.syx` `fcf216bba8ebf1f4db0a52dd01405616577bd8b37e75b84180ade3e2391b9393`.
 - Build SP04 (as SR05, with Pipo Loop `b0ed4fe7`, which removes the same step from its own turn; test image only): `.syx` `c86d191ebffd3fb30c8e6376c1cae97189d3eb5c3b7059af6bb5aab6f5dc678d`.
 - Build SA04 (as SP04, with Silent Pad+Trig, Loop Sync and Filter Hz; test image only): `.syx` `6c21772a988a637f92a002ddbbc905802a3f90bc3b43e1e598d9cff5068982e1`.
+- Build SR06 (core + Sample RATE, this source: row under SMP:, checkbox, tap, stock's value): `.syx` `f6a4ca9e703ad976cb8a6db3f41c4a7c0761dd73a39336e03f96fc55012b289a`.
+- Build SP05 (as SR06, with Pipo Loop `b0ed4fe7`; test image only): `.syx` `7a5a9ad4120ed5c21bc526989b0bd764857ce0de31d82d88f16c0c8b69f25501`.
+- Build SA05 (as SP05, with Silent Pad+Trig, Loop Sync and Filter Hz; test image only): `.syx` `1096f70b7a348673ae0f571574b90c5b1442872d6393241d68e33d6c248940a0`.
 - A core-only image, same stock and core, for comparison.
 - Emulator: rytm-emu `c5732f0`, headless `dtboot`, JIT on. One generated sample, RAMP, 23,777 frames (odd, so STA and END fall on no round multiple), on BD with LOP ON. Audio is dtboot's `--wav`. Voice words are read with `DTBOOT_PEEK`: step at rec + 12, position at rec + 4, effective FIN at 0x8000f7cc. A click means a sample-to-sample step over 40, or six times the median, on a ramp whose normal step is below 2; each run also flags the trig's own attack, which is not counted.
 
-## Rerun on the current source
+## The row, the tap and the value (SR06)
+
+The row moved under SMP:, named SMP RATE, drawn as stock's checkbox; the value is stock's -64 to +63, so the module's own value text is gone.
+
+| Check, from RATE on | Result |
+| --- | --- |
+| SMP RATE row | under SMP:, LEGACY FX SEND below it; the box follows RIGHT and LEFT; ticking takes FIN 64 to 127 |
+| Tap of encoder B | FIN 127 to 64 and the row clears; a second tap puts both back; in both SAMPLE views |
+| Tap while the sequencer plays | turns over |
+| Press held 300 M, press and turn, FUNC, NO or a trig held, encoders A and E pressed, running live recording | no change to the row |
+| The value while turning | reads +51, +35, +29 in stock's format, header RATE |
+| Right after a tap | the header can show the name from the press until the next redraw |
+
+The speed tables below read in raw values, 0 to 127: subtract 64 for what the knob now shows.
+
+## Rerun on the source before the row moved (SR05, SP04, SA04), and again on SR06, SP05 and SA05
+
+The audio code is the same in both; every run named here passed on both sets.
 
 Stock rebuilds the effective array every block, so the handler's step that put its swap back had no work and could match by chance; it is gone. On SR05 the row-off comparison is again identical over 239,890 frames, and the speed and direction rows match. On SP04 the 22 PIPO speed runs, 11 flip and stop runs, 8 phase runs and the four sweeps that gave 12 jumps show no click past the trig's attack. On SA04 the 11 runs are clean. The tables below name the build each was first run on. The Hardware section is SP03, the source before this change, with Pipo Loop `f48b95d9`.
 

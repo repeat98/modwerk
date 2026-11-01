@@ -4,7 +4,7 @@
 //
 // Stock's sample engine builds each voice's step once a block, in the prefetch,
 // from the note, TUN and FIN, clamped to 0.25x..4x. For a sound with SOUND
-// SETTINGS > FIN AS RATE on, the gates in audio.s take FIN out of the pitch and
+// SETTINGS > SMP RATE on, the gates in audio.s take FIN out of the pitch and
 // scale the step by |FIN - 64| / 64, with raw 127 exactly 1x (the Octatrack's
 // increment: PTCH's, times that). Below 64 the voice goes backward: stock plays
 // a sample backward when END is below STA, so this handler swaps the effective
@@ -18,7 +18,6 @@
 
 #include <stdint.h>
 #include "analog-rytm-mk2/store.h"
-#include "analog-rytm-mk2/pages.h"
 
 #define EFF(t, i) (*(volatile short *)(PARAMS_EFF_AT + (t) * 84 + (i) * 2))
 #define IDX_FIN 18
@@ -117,20 +116,33 @@ typedef uint32_t (*get1_t)(uint32_t);
 typedef uint32_t (*get2_t)(uint32_t, int);
 typedef uint32_t (*get3_t)(uint32_t, int, int);
 typedef void (*set_value_t)(uint32_t, int, int, int, int, int);
-typedef void (*text_t)(void *, const void *, int, int, int, int, int, const char *);
+typedef void (*bitmap_t)(void *, const void *, int, int, int);
+typedef int (*held_t)(int);
 typedef void (*invalidate_t)(void *);
 #define PROJECT ((get0_t)PROJECT_AT)
-#define TRACK_SELECTION ((get1_t)TRACK_SELECTION_AT)
 #define TRACK_INDEX_OF ((get1_t)TRACK_INDEX_OF_AT)
 #define KIT_TRACK_SOUND ((get2_t)KIT_TRACK_SOUND_AT)
 #define PARAM_TARGET ((get3_t)PARAM_TARGET_AT)
 #define PARAM_SET ((set_value_t)PARAM_SET_AT)
-#define DRAW_TEXT ((text_t)DRAW_TEXT_AT)
+#define BITMAP_DRAW ((bitmap_t)BITMAP_DRAW_AT)
+#define CHECK_GLYPHS (*(const unsigned char *const *)CHECK_GLYPHS_AT)    // unchecked, then checked
+#define IS_KEY_HELD ((held_t)IS_KEY_HELD_AT)
+#define LOCK_EDITOR ((get1_t)LOCK_EDITOR_AT)
+#define LIVE_RECORDING ((get1_t)LIVE_RECORDING_AT)
 #define VIEW_INVALIDATE ((invalidate_t)VIEW_INVALIDATE_AT)
 #define SOUND_OF_WRAPPER 40          // the wrapper's vtable: its live sound, or 0
 #define NOTIFY_OF_WRAPPER 16         // and the change notice
 #define LIVE_SOUND_FIN 0x38          // FIN's word in a live sound
+#define PROJECT_TRACKSEL 48          // the project's track selection
 #define PROJECT_TRACKS 352           // the project's track sounds
+#define VIEW_PAGE_STATE 108          // a sound page view's lock and record state
+#define KEY_FUNC 0x80
+#define KEY_NO 0x45
+#define KEY_TRIGS 16                 // trig keys are ids 0..15
+#define KEY_DOWN 1                   // the event's flags
+#define KEY_REPEAT 8
+#define ENC_FIN 1                    // encoder B on the SAMPLE page
+#define TAP_TICKS 8                  // about 0.4 s of the UI's 20 Hz
 
 struct picked {
     uint32_t project, wrapper;
@@ -141,7 +153,7 @@ struct picked {
 static int pick(struct picked *p)
 {
     p->project = PROJECT();
-    p->track = (int)TRACK_INDEX_OF(TRACK_SELECTION(p->project));
+    p->track = (int)TRACK_INDEX_OF(p->project + PROJECT_TRACKSEL);
     if ((unsigned)p->track >= TRACKS)
         return 0;
     p->wrapper = KIT_TRACK_SOUND(p->project + PROJECT_TRACKS, p->track);
@@ -158,7 +170,7 @@ int sample_rate_selected(void)   // nonzero while FIN is RATE on the selected tr
 // FIN at its detune's rest would stop the sample, so switching on takes it to
 // 1x, and switching off takes 1x back to rest. Any other value stays: it may be
 // a sound's real detune, or the RATE to come back to.
-static void set_on(void **menu, int on)
+static void set_on(int on)
 {
     struct picked p;
     struct {
@@ -175,7 +187,6 @@ static void set_on(void **menu, int on)
         PARAM_SET(PARAM_TARGET(p.project, p.track, 0), ID_FIN, FULL, p.track, 1, 1);
     else if (!on && fin >= FULL)
         PARAM_SET(PARAM_TARGET(p.project, p.track, 0), ID_FIN, STOP, p.track, 1, 1);
-    VIEW_INVALIDATE((char *)*menu + 56);
 }
 
 // The SOUND SETTINGS row. core_additem builds it from four callbacks, each
@@ -187,21 +198,24 @@ extern void core_additem(void *menu, const void *row);
 static void row_select(void **menu, void *item)
 {
     (void)item;
-    set_on(menu, !sample_rate_selected());
+    set_on(!sample_rate_selected());
+    VIEW_INVALIDATE((char *)*menu + 56);
 }
 
 static void row_draw(void **menu, void *item, void *bitmap, int x, int y)
 {
     (void)menu;
     (void)item;
-    DRAW_TEXT(bitmap, (const void *)FONT_AT, x + 19, y + 2, 2, 0, 0, sample_rate_selected() ? "ON" : "OFF");
+    BITMAP_DRAW(bitmap, CHECK_GLYPHS + (sample_rate_selected() ? 28 : 0), x + 11, y, 0);
 }
 
 static void row_change(void **menu, void *item, int dir)
 {
     (void)item;
-    if (dir)
-        set_on(menu, dir > 0);
+    if (dir) {
+        set_on(dir > 0);
+        VIEW_INVALIDATE((char *)*menu + 56);
+    }
 }
 
 static const void *const row[4] = {
@@ -214,24 +228,52 @@ void sample_rate_add_row(void *menu)
     core_additem(menu, row);
 }
 
-// FIN's value on the knob while it is RATE: its raw 0..127, as the Octatrack's
-static int value_text(struct core_text *t)
+// A tap on FIN's knob turns RATE over: pressed and let go inside TAP_TICKS, with
+// no turn. Stock's press shows the parameter and changes nothing, so it goes on
+// as ever. A press with a trig, FUNC or NO held, or with a lock editor open, is
+// stock's lock work, and so is every press in running live recording.
+static int tap_ticks = -1;      // UI ticks since the press, -1 with no tap open
+
+static int plain_press(void *view)
 {
-    int v = t->value >> 8;
-    char *s = t->buf;
-    if (!sample_rate_selected())
-        return CORE_TEXT_PASS;
-    if (v < 0)
-        v = 0;
-    if (v > 127)
-        v = 127;
-    if (v >= 100)
-        *s++ = '1';
-    if (v >= 10)
-        *s++ = (char)('0' + v / 10 % 10);
-    *s++ = (char)('0' + v % 10);
-    *s = 0;
-    return CORE_TEXT_DONE;
+    uint32_t page = *(uint32_t *)((char *)view + VIEW_PAGE_STATE);
+    int k;
+    if (LOCK_EDITOR(page) || LIVE_RECORDING(page) || IS_KEY_HELD(KEY_FUNC) || IS_KEY_HELD(KEY_NO))
+        return 0;
+    for (k = 0; k < KEY_TRIGS; k++)
+        if (IS_KEY_HELD(k))
+            return 0;
+    return 1;
 }
 
-const struct core_param sample_rate_param = {ID_FIN, ID_FIN, 0, 0, value_text};
+// From the gate in stock's sound page key handler, for any knob's press or release
+void sample_rate_knob(void *view, int id, const char *event)
+{
+    int flags = *(const int *)(event + 16);
+    if (id != ID_FIN || (flags & KEY_REPEAT))
+        return;
+    if (flags & KEY_DOWN)
+        tap_ticks = plain_press(view) ? 0 : -1;
+    else {
+        if (tap_ticks >= 0) {
+            set_on(!sample_rate_selected());
+            VIEW_INVALIDATE(view);
+        }
+        tap_ticks = -1;
+    }
+}
+
+int sample_rate_turn(void *brain, char *event)
+{
+    (void)brain;
+    if (*(int *)(event + 12) == ENC_FIN)
+        tap_ticks = -1;
+    return 0;
+}
+
+void sample_rate_tick(void *ctrl)
+{
+    (void)ctrl;
+    if (tap_ticks >= 0 && ++tap_ticks > TAP_TICKS)
+        tap_ticks = -1;
+}

@@ -7,28 +7,26 @@
   "defsym": {},
   "cflags": [],
   "weak": [],
-  "subscribe": [],
-  "contribute": [
+  "subscribe": [
     {
-      "to": "core_params",
-      "order": 50,
-      "data": "00000000",
-      "relocs": [
-        [
-          0,
-          "abs32",
-          "sym:sample_rate_param",
-          0
-        ]
-      ]
+      "event": "ev_tick",
+      "fn": "sample_rate_tick",
+      "order": 50
+    },
+    {
+      "event": "ev_enc",
+      "fn": "sample_rate_turn",
+      "order": 50
     }
   ],
+  "contribute": [],
   "collections": {},
   "copied": [],
   "regions": [],
   "claims": [
-    "ui:SOUND SETTINGS row FIN AS RATE, after LEGACY FX SEND",
-    "param:FIN (id 40) label and value text while FIN AS RATE is on"
+    "ui:SOUND SETTINGS row SMP RATE, after SMP:",
+    "ui:a tap on the SAMPLE page's FIN knob (encoder B)",
+    "param:FIN (id 40) label while SMP RATE is on"
   ],
   "requires": [],
   "derive": null,
@@ -38,7 +36,8 @@
         "sample_rate_stock_frames": "0x4011bf44",
         "sample_rate_string": "0x401bcff0",
         "sample_rate_label_resume": "0x400a900a",
-        "sample_rate_long_resume": "0x400a902c"
+        "sample_rate_long_resume": "0x400a902c",
+        "sample_rate_menu_resume": "0x400ef522"
       },
       "cflags": [
         "-DPARAMS_EFF_AT=0x8000f7a8",
@@ -46,15 +45,17 @@
         "-DVOICE_OWNER_AT=0x40291138",
         "-DTRIG_NEXT_AT=0x8000586c",
         "-DPROJECT_AT=0x4017fa0a",
-        "-DTRACK_SELECTION_AT=0x400ae492",
         "-DTRACK_INDEX_OF_AT=0x400b693e",
         "-DKIT_TRACK_SOUND_AT=0x400a67ca",
         "-DPARAM_TARGET_AT=0x400af51a",
         "-DPARAM_SET_AT=0x400a906c",
-        "-DDRAW_TEXT_AT=0x4007154c",
-        "-DFONT_AT=0x4027aa28",
         "-DVIEW_INVALIDATE_AT=0x40078580",
-        "-DCONFIG_CHANGED_INFO=0x401cb88c"
+        "-DCONFIG_CHANGED_INFO=0x401cb88c",
+        "-DBITMAP_DRAW_AT=0x400716e0",
+        "-DCHECK_GLYPHS_AT=0x419f0910",
+        "-DIS_KEY_HELD_AT=0x40081c28",
+        "-DLOCK_EDITOR_AT=0x40036636",
+        "-DLIVE_RECORDING_AT=0x40036370"
       ],
       "sites": [
         {
@@ -100,11 +101,18 @@
           "target": "sample_rate_long_gate"
         },
         {
-          "addr": "0x400ef5e2",
+          "addr": "0x400ef51c",
           "len": 6,
-          "stockSha256": "10552f30e94896a18c635b43b0f16452187a5e3db5b661ba3255c1ecb054fd50",
+          "stockSha256": "469424553e58742b9c745be7dd37ed3b5096c6ccf78facb7bd7170aa24a52507",
           "op": "jmp",
           "target": "sample_rate_menu_gate"
+        },
+        {
+          "addr": "0x4003a5fc",
+          "len": 6,
+          "stockSha256": "5cb2061dc8e4b71f74f2b6b6ddf6db701a4167e0047a6e5fced6fac9948bc766",
+          "op": "jsr",
+          "target": "sample_rate_knob_gate"
         }
       ]
     }

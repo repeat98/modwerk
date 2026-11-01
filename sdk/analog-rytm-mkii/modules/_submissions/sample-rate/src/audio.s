@@ -122,8 +122,8 @@ rate_name:
 1:      clr.l   %d0
         rts
 
-| SoundSetupMenuView's constructor after its last row: a4 is the view, the
-| menu its rows go to. The site is the epilogue's first instruction.
+| SoundSetupMenuView's constructor after the SMP: row is added: a4 is the view,
+| the menu its rows go to, and the site is what ends that row's call.
         .globl  sample_rate_menu_gate
         .extern sample_rate_add_row
 
@@ -131,8 +131,25 @@ sample_rate_menu_gate:
         move.l  %a4,-(%sp)
         jsr     sample_rate_add_row
         addq.l  #4,%sp
-        movem.l 24(%sp),%d2-%d6/%a2-%a6         | displaced
-        lea     128(%sp),%sp
+        move.l  %d2,-(%sp)                      | displaced
+        jsr     (%a2)                           | displaced
+        move.l  %d3,-(%sp)                      | displaced
+        jmp     sample_rate_menu_resume
+
+| Stock's sound page key handler, on a knob's press or release: d2 the event,
+| d4 the knob's parameter id, a2 the view. d1/a0-a1 are free, and d0 is stored
+| first. The tst sets the flags for the branch that follows the site.
+        .globl  sample_rate_knob_gate
+        .extern sample_rate_knob
+
+sample_rate_knob_gate:
+        move.l  %d0,-20(%fp)                    | displaced
+        move.l  %d2,-(%sp)
+        move.l  %d4,-(%sp)
+        move.l  %a2,-(%sp)
+        jsr     sample_rate_knob
+        lea     12(%sp),%sp
+        tst.l   %d4                             | displaced
         rts
 
 | The row's label, a std::function returning a std::string: the string to
@@ -162,4 +179,4 @@ sample_rate_fin:
 sample_rate_label:
         .asciz  "RATE"
 sample_rate_row_text:
-        .asciz  "FIN AS RATE"
+        .asciz  "SMP RATE"
