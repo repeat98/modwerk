@@ -191,10 +191,11 @@ static void schedule(int t)
 // after it, or the next one if the press is nearer that point than the one before
 // it, once moved. That is stock's own choice of step at the rates that fill a step,
 // so the press and the first retrig never leave a step between them. Sets x to the
-// point's straight time and returns its place in the whole note.
-static int __attribute__((noinline)) first_point(int t, int32_t press, int rate, int32_t *x)
+// point's straight time and returns its place in the whole note. ticks: the gap
+// between points.
+static int __attribute__((noinline)) first_point(int t, int32_t press, int ticks, int32_t *x)
 {
-    int32_t a, q = period[rate] * TICK, h;
+    int32_t a, q = ticks * TICK, h;
     int at, i;
 
     // the press's place in the whole note (bars from PLAY), in clock units
@@ -211,7 +212,7 @@ static int __attribute__((noinline)) first_point(int t, int32_t press, int rate,
         if (w - press >= (w - v) / 2)
             break;
         *x += q;
-        at = (at + period[rate]) % WHOLE;
+        at = (at + ticks) % WHOLE;
     }
     return at;
 }
@@ -223,7 +224,7 @@ static void __attribute__((noinline)) rephase(int t, int32_t deadline)
 
     if (rate < 0 || rate > 16)
         return;
-    place[t] = first_point(t, deadline - TICK, rate, &straight[t]);
+    place[t] = first_point(t, deadline - TICK, period[rate], &straight[t]);
     schedule(t);
 }
 
@@ -326,14 +327,14 @@ static int32_t swing_of(const volatile int8_t *track, int step, int swing, int p
 // The recorder, for a retrig press: *step and *micro, where the press sounded, become the grid point before the series' first retrig, as the track's own
 // steps and micro timing write it, before the quantize. The sound stays at the press. A point more than a
 // step away leaves the press as played: at the slowest rates that is another beat.
-void retrig_grid_snap(int t, int rate, int32_t *step, int32_t *micro)
+void retrig_grid_snap(int t, int gap, int32_t *step, int32_t *micro)
 {
     const volatile int8_t *pattern, *track;
     unsigned short sr;
     int32_t pulse, anchor, span, unit, press, x, d, s0, s1, off, q, w;
     int n, now, p, adv, speed, len, swing, pulses, ticks, k, u, j;
 
-    if (!retrig_grid_on || !SEQ_PLAYING || t >= TRACKS || rate < 0 || rate > 16)
+    if (!retrig_grid_on || !SEQ_PLAYING || t >= TRACKS)
         return;
     sr = irq_off();
     pulse = SEQ_PULSE;
@@ -359,7 +360,7 @@ void retrig_grid_snap(int t, int rate, int32_t *step, int32_t *micro)
     span = pulses * PULSE;
     unit = span / 24;
     ticks = pulses * PULSE_TICKS;
-    q = period[rate] * TICK;
+    q = gap * TICK;
     anchor = pulse + (pulses - n) * PULSE;  // the start of the track's step `now`, as warp()
 
     // the press, from its place: the nearest turn of the track to the step under way
@@ -370,7 +371,7 @@ void retrig_grid_snap(int t, int rate, int32_t *step, int32_t *micro)
         k += len;
     press = anchor + k * span + swing_of(track, *step, swing, pulses) + *micro * unit;
 
-    first_point(t, press, rate, &x);
+    first_point(t, press, gap, &x);
     x -= q;
 
     // that point on the steps: from its step's swung start, or the next step's if nearer

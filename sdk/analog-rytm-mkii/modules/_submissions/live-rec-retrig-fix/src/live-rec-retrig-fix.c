@@ -75,7 +75,7 @@ extern int32_t STOCK_ALWAYS_ON(uint32_t kit, int32_t track);
 extern void STOCK_SET_ALWAYS_ON(uint32_t kit, int32_t track, int32_t on);
 extern void STOCK_VIEW_REDRAW(uint32_t view);
 extern int retrig_grid_driving(int t);
-extern void retrig_grid_snap(int t, int rate, int32_t *step, int32_t *micro);
+extern void retrig_grid_snap(int t, int gap, int32_t *step, int32_t *micro);
 
 // RETRIG 1/1 .. 1/80, in ticks
 static const int16_t period[17] = { 960, 480, 320, 240, 192, 160, 120, 96, 80, 60, 48, 40, 30, 24, 20, 15, 12 };
@@ -334,13 +334,15 @@ int retrig_fix_press_rate(int rate, int t)
 }
 
 // The recorder, for a retrig press (live-rec-retrig-fix.s): the trig goes on the retrig
-// grid. Moved past the wipe's step it is the held note before its step, as
-// an early hit is.
+// grid, and at a rate that records blocks on the start of one, where the others sit.
+// Moved past the wipe's step it is the held note before its step, as an early hit is.
 void retrig_fix_press_place(int t, int rate, int32_t *step, int32_t *micro)
 {
     int32_t was = *step;
 
-    retrig_grid_snap(t, rate, step, micro);
+    if (rate > 16)
+        return;
+    retrig_grid_snap(t, period[rate] * hits_in_block(period[rate], step_ticks(t)), step, micro);
     if (*step != was && *step != wipe_step()) {
         ahead[t] = *step + 1;
         guarding = 1;

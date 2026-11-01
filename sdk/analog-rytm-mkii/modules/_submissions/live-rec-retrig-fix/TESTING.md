@@ -19,6 +19,26 @@ Playback against the live roll (1/16 and 1/12, quantize off): retrigs within 0.0
 
 Not run: ALWAYS ON, a press again during a roll, a rate change during a roll, rates 1/20, 1/24, 1/40, 1/48, 1/64, 1/80 merged, the row across save and reload, swing 50 and 66, ADVANCED scale with other lengths, a unit.
 
+### First unit run, and the emulator sweep after it
+
+Unit, RC05 (RC04 with Pipo Loop 0.1.1), reported by npp1993: the row is last in SEQUENCER CONFIG and works beside Silent Pad+Trig's rows; 1/16 quantize on, 1/12 quantize off, 1/8 and 1/12 quantize on, 1/32 both modes and RETRIG GRID unchecked all passed. 1/32 quantize off showed the first trig off the step: the press went to a half step, the other trigs sit on whole steps.
+
+RC06 (RC05 with the press on the nearest block start at rates that record a step retrig, sha256 63ad2bf5a6b09935…), rytm-emu c5732f0, set as above, RETRIG set in the RTRG menu. Five press positions unless noted.
+
+| Case | Result |
+| --- | --- |
+| 1/16, 1/8, 1/12, 1/32, ten positions, both modes | no gaps; 1/32 quantize off first trig on the step, was +10 in RC05 |
+| 1/20, 1/24, 1/40, 1/48, 1/64, 1/80, both modes | a trig every 4, 2, 2, 1, 1, 1 steps, none off the step; at 1/20 one press over a step from a block start stayed as played (15/-6) |
+| 1/4, 1/2, 1/1, quantize off, eight positions | within a step of the grid the press snaps; further it stays as played (1/+7, 3/-4), the next grid point follows |
+| ALWAYS ON (RTRG + YES, no RTRG held), 1/16, 1/12, 1/32, both modes | the same trigs as RTRG + pad |
+| Press again during a roll, 1/16, 1/12, 1/32, both modes | no step lost; playback as played |
+| Rate turned during a roll: 1/16 to 1/32, 1/32 to 1/16, 1/16 to 1/12, both modes | trigs follow; playback within about 0.1 step, more inside the two steps the rate passes through in-between values |
+| Swing 50 and 66 (pattern poke), 1/16, 1/12, 1/32, both modes | no gaps. Swing 50: playback equals live |
+| 1/32, swing 57 and 66, live against playback | not the same: live 0.59 1.16 1.73, back 0.59 1.09 1.59 1.73; a step retrig runs straight from its trig. Listed in the README |
+| Row unchecked and checked, `--power-off`, cold boot on that card | the row comes back as it was, on the card |
+
+Temp Save on RC06: TEMP SAVED shown. Not run: audible checks, project save through the menu, a project switch, the row's bit on an older project, RC06 on a unit.
+
 ## 0.1.0-experimental (rytm-emu, 31 October 2026)
 
 Emulator results first; pad pressure there is a scripted stream, not a real pad. The unit's results, on RR09, are at the end.
