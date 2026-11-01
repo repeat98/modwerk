@@ -111,6 +111,7 @@ typedef void (*end_lock_edit_t)(void *ui);
 #define UNDO_CLEAR 1                // what stock's undo reverses
 #define UNDO_PASTE 2
 #define BRAIN_VIEWS 32              // brain + 32: the view manager
+#define MANAGER_LIST 20             // view manager + 20: its list of views
 #define MANAGER_LAST 24             // view manager + 24: the top view's list node
 #define NODE_PREV 4
 #define NODE_VIEW 8
@@ -181,21 +182,36 @@ static void show(const char *text)
     show_text = text;
 }
 
-// What is on screen: the top view, past the popups, which pass keys on.
-static void *top_view(void)
+// What is on screen: the top view's class, past the popups, which pass keys on.
+static word_t top_view(void)
 {
     char *node = *(char **)((char *)views + MANAGER_LAST);
     for (;;) {
-        void *view = *(void **)(node + NODE_VIEW);
-        if (*(word_t *)view != POPUP_VTABLE)
-            return view;
+        word_t vtable = **(word_t **)(node + NODE_VIEW);
+        if (vtable != POPUP_VTABLE)
+            return vtable;
         node = *(char **)(node + NODE_PREV);
+    }
+}
+
+// A screen can take QPER's release, which leaves stock's QPER view open behind
+// it, taking pads with QPER up. Closing it twice is harmless: it only sets a flag.
+static void close_qper_view(void)
+{
+    char *list = (char *)views + MANAGER_LIST;
+    char *node = *(char **)((char *)views + MANAGER_LAST);
+    for (; node != list; node = *(char **)(node + NODE_PREV)) {
+        void *view = *(void **)(node + NODE_VIEW);
+        if (*(word_t *)view == QPER_VTABLE) {
+            VIEW_CLOSE(view);
+            return;
+        }
     }
 }
 
 static int on_pages(void)
 {
-    word_t top = *(word_t *)top_view();
+    word_t top = top_view();
     return top == PAGES_TOP_VTABLE || top == PERF_VTABLE || top == SCENE_VTABLE
         || top == MUTE_VTABLE || top == CHROMATIC_VTABLE;
 }
@@ -504,6 +520,7 @@ int qperf_key(void *brain, void *event)
             if (held)
                 locker_remove();
             held = 0;
+            close_qper_view();
         } else if (!(flags & REPEAT) && !IS_KEY_HELD(KEY_FUNC) && on_pages()) {
             held = 1;
             swallowed = 0;
@@ -530,8 +547,7 @@ int qperf_key(void *brain, void *event)
     }
     if (swallowed & bit)
         return 1;                       // its repeats
-    if (!held || (flags & REPEAT) || IS_KEY_HELD(KEY_FUNC)
-        || *(word_t *)top_view() != QPER_VTABLE)
+    if (!held || (flags & REPEAT) || IS_KEY_HELD(KEY_FUNC) || top_view() != QPER_VTABLE)
         return 0;
     swallowed |= bit;
     perf_action(key);
@@ -554,18 +570,6 @@ void qperf_project(int how, unsigned dropped)
     kit_changed = 1;
 }
 
-// A screen that took QPER's release leaves stock's QPER view open behind it,
-// where it would take pads with QPER up and hide the pages from the next press.
-static void close_left_open(void)
-{
-    void *view;
-    if (!views || IS_KEY_HELD(KEY_QPER))
-        return;
-    view = top_view();
-    if (*(word_t *)view == QPER_VTABLE)
-        VIEW_CLOSE(view);
-}
-
 void qperf_tick(void *ctrl)
 {
     word_t string;
@@ -580,7 +584,6 @@ void qperf_tick(void *ctrl)
         if (mask != known)
             link_moved(mask);
     }
-    close_left_open();
     if (!show_text || !views)
         return;
     STRING_FROM_CSTR(&string, show_text, &allocator);
