@@ -80,10 +80,12 @@ An earlier build (SP01) clicked here: flips that landed the voice at an edge at 
 | The reverse: a pool sound with the row on, locked onto a track with the row off | not run |
 | BD at +1.0000x and SD at -0.4163x in the same blocks | each step exact for its own FIN and sign; SD's slot held a 248-frame built-in sample and its pad did not start in this run, so two ramps heard together were not shown |
 | SD's RATE moving during a pattern | the step followed FIN in every report |
+| Scene lock on RATE at about 53, on a sound at 127, scene toggled | effective RATE 127 and 53 by turn, the step followed, sign included |
+| Performance lock on RATE, amount written to the engine's word (0, half, full) | effective RATE 127, 91, 55, the step followed, sign included; the amount was poked, not played from a pad or the QPER knob |
 
 ## Not tested
 
-Scene and performance locks on RATE, an LFO on RATE by intent, sound browser load, a project file round trip, Env Reset Amp beside it, MKI. CPU load on a unit: the figures in the manifest are a static estimate.
+An LFO on RATE by intent (the destination list could not be scrolled to FIN in the emulator), saving a sound to the pool and loading it (bank A is write protected there), a project file round trip, Env Reset Amp beside it, MKI. CPU load on a unit: the figures in the manifest are a static estimate.
 
 ## Hardware
 
