@@ -63,6 +63,8 @@ RC09 (RC08 with the arming test and a press seen soon after its series treated a
 
 Unit, RC09, swing 61, CH pad, quantize on, 1/16, 10 to 15 short rolls, reported by npp1993: recorded as heard, except possibly one roll with a press very late, just before the next step, where a trig may have been missed. Whether that was a hole in the roll was not recorded.
 
+RC10 (RC09 with the row renamed QUANT RTRG TO SEQ by npp1993, sha256 e9b55aa60a2e9695…): rytm-emu, the row drawn beside its checkbox, long roll and 50 press timings as RC09. Earlier sections keep the row's old name, RETRIG GRID, for the builds they name.
+
 ## 0.1.0-experimental (rytm-emu, 31 October 2026)
 
 Emulator results first; pad pressure there is a scripted stream, not a real pad. The unit's results, on RR09, are at the end.

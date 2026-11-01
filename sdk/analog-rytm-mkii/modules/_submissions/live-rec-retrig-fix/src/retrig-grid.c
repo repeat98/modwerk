@@ -431,7 +431,7 @@ void retrig_grid_snap(int t, int gap, int each_hit, int32_t *step, int32_t *micr
 // an integer, in d0, where grid-label.s reads it (gcc returns pointers in a0).
 uint32_t retrig_grid_text(void)
 {
-    return (uint32_t)"RETRIG GRID";
+    return (uint32_t)"QUANT RTRG TO SEQ";
 }
 
 static void retrig_grid_set(void **menu, int on)

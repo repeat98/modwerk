@@ -36,7 +36,7 @@
     ]
   },
   "access": {
-    "location": "LIVE RECORDING, with RTRG + pad or a pad set to ALWAYS ON. The RETRIG GRID checkbox is the last row of GLOBAL > CONTROL > SEQUENCER CONFIG.",
+    "location": "LIVE RECORDING, with RTRG + pad or a pad set to ALWAYS ON. The QUANT RTRG TO SEQ checkbox is the last row of GLOBAL > CONTROL > SEQUENCER CONFIG.",
     "steps": [
       "Hold RECORD and press PLAY.",
       "Hold RTRG, then hold a pad and vary the pressure."
@@ -45,7 +45,7 @@
   },
   "controls": [
     {
-      "name": "RETRIG GRID",
+      "name": "QUANT RTRG TO SEQ",
       "default": 1,
       "doc": "Checkbox in GLOBAL > CONTROL > SEQUENCER CONFIG, after SAMPLE POS RES. Checked puts pad retrigs on the swung grid while the sequencer plays and records a roll's first trig on it. YES turns it over, RIGHT checks, LEFT unchecks. Kept with the project.",
       "labels": [
@@ -83,7 +83,7 @@
       "ui:RETRIG menu step writes in LIVE RECORDING",
       "ui:live recording of pad retrigs",
       "key:RTRG+YES",
-      "ui:GLOBAL > CONTROL > SEQUENCER CONFIG row RETRIG GRID",
+      "ui:GLOBAL > CONTROL > SEQUENCER CONFIG row QUANT RTRG TO SEQ",
       "ui:pad retrig timing while the sequencer plays"
     ]
   },

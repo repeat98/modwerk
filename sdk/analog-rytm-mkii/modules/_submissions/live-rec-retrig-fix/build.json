@@ -34,7 +34,7 @@
     "ui:RETRIG menu step writes in LIVE RECORDING",
     "ui:live recording of pad retrigs",
     "key:RTRG+YES",
-    "ui:GLOBAL > CONTROL > SEQUENCER CONFIG row RETRIG GRID",
+    "ui:GLOBAL > CONTROL > SEQUENCER CONFIG row QUANT RTRG TO SEQ",
     "ui:pad retrig timing while the sequencer plays"
   ],
   "requires": [],

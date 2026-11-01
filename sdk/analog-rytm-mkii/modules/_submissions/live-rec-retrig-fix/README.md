@@ -16,7 +16,7 @@ One gesture and one row. The RETRIG menu keeps its stock rows, and what they do 
 
 | Control | Action |
 | --- | --- |
-| GLOBAL > CONTROL > SEQUENCER CONFIG > RETRIG GRID | Checkbox, the last row, after SAMPLE POS RES. Checked by default. Checked, pad retrigs fall on the grid while the sequencer plays, and a roll's first trig records on it. Unchecked, retrigs count from the press and every hit records as played. YES turns it over, RIGHT checks, LEFT unchecks. Kept with the project. |
+| GLOBAL > CONTROL > SEQUENCER CONFIG > QUANT RTRG TO SEQ | Checkbox, the last row, after SAMPLE POS RES. Checked by default. Checked, pad retrigs fall on the grid while the sequencer plays, and a roll's first trig records on it. Unchecked, retrigs count from the press and every hit records as played. YES turns it over, RIGHT checks, LEFT unchecks. Kept with the project. |
 | RTRG + YES | Turns ALWAYS ON over for the track the RETRIG menu shows (the selected track, or the TRIG key pressed while RTRG is held), whichever row is lit. The row shows the new state. |
 
 | Stock control | With Live Rec Retrig Fix |
@@ -68,18 +68,18 @@ The recorder's press site asks the grid for that skipped or passed point and wri
 - **RETRIG menu in LIVE RECORDING**: turning RETRIG or pressing a pad no longer writes the rate or a lock to the current step. The RETRIG menu's values still apply to what you play.
 - **YES in the RETRIG menu**: turns ALWAYS ON over on every row, in place of the lit row's own YES action (on stock the ALWAYS ON row's YES does the same; the other rows' YES is not used by the module's author). LEFT, RIGHT, UP, DOWN and the TRIG keys are as stock. Needed so a roll can be armed without taking a hand off the pads; considered a new page, which would not be reachable with RTRG held.
 - **Quantize live rec**: applies to retrig hits as to any note. Plain pad hits and TRIG keys are as stock.
-- **Pad retrigs while the sequencer plays**, RETRIG GRID checked: the retrigs after the first hit move to the swung grid. Uncheck the row for stock's timing.
+- **Pad retrigs while the sequencer plays**, QUANT RTRG TO SEQ checked: the retrigs after the first hit move to the swung grid. Uncheck the row for stock's timing.
 - **SEQUENCER CONFIG**: one row added at the end, through a sixth stock site, 0x400ec244, the constructor's exit. Silent Pad+Trig's rows use another site. The row is here because it sits with QUANTIZE LIVE REC, the setting it works with; GLOBAL's own rows, the other place a module can add one, are far from it.
 - **Everything else**: NO + pad, RELOAD PATTERN, a held pad without a retrig and plain pad hits matched stock in the tests. The module does not touch GRID RECORDING, per-step retrigs set with TRIG + RTRG or rolls outside LIVE RECORDING; those were not exercised.
 
 ## Compatibility and limitations
 
 - Analog Rytm MKII, OS 1.74, core-ar2 0.7. Events: `ev_render_out`, `ev_project`. One project storage bit (`retrig_grid_off`). Six stock sites, 0x400e29ac, 0x400e2b3e, 0x400b4692, 0x400b470e, 0x400b43d8 and 0x400ec244, which no other module patches. Key gesture: RTRG + YES.
-- With RETRIG GRID checked, the press still sounds where you played it. Only its recorded trig moves, to the grid point nearest the press, so playback has that hit on the grid and the live take does not. At rates that record a step retrig that point is the nearest step that starts a trig. With quantize live rec on it then rounds to its step like any note. A press more than a step from that point stays where you played it.
+- With QUANT RTRG TO SEQ checked, the press still sounds where you played it. Only its recorded trig moves, to the grid point nearest the press, so playback has that hit on the grid and the live take does not. At rates that record a step retrig that point is the nearest step that starts a trig. With quantize live rec on it then rounds to its step like any note. A press more than a step from that point stays where you played it.
 - While LIVE RECORDING retrigs follow the swing alone. Micro timing on the pad's track moves them only outside it, or a long roll would move itself by the trigs it had just written.
 - With swing above 50, rates that record a step retrig (1/20 and faster) play back a little unlike the live roll: the live hits follow the swing, a step retrig's hits run evenly from their trig, and on a swung step one more can fit before the next trig. At 1/32 and swing 57 that is an extra hit 0.14 step before the swung trig. At swing 50 the two match.
 - A grid point more than a step from the press leaves the trig as played: at 1/2 and 1/1 that would be another beat.
-- A press with the sequencer stopped, and RETRIG GRID unchecked, record as played.
+- A press with the sequencer stopped, and QUANT RTRG TO SEQ unchecked, record as played.
 - Do not install this beside the separate Retrig Grid module: both would drive the same series.
 - Rates faster than a step: the hits of a trig share its velocity, or follow VEL.CUR. Pressure changes land once a trig.
 - A rate change during a roll starts a new trig at the next hit.
