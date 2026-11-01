@@ -63,7 +63,7 @@ Use a build containing Pipo Loop, select a track whose sound plays a sample, and
 - A PIPO turn on a crossing can still give a soft knock on a pure tone: the waveform's slope reverses at the turn, which no choice of frame avoids. A forward loop (LOP ON) between two crossings of one direction joins smoothly.
 - The STA and END lines on the SMPL WAVEFORM view are stock's drawing: one column covers many frames (about 225 for a 0.6 s sample), and stock spaces the lines over 123 columns but the waveform over 124, so a line can sit one column left of the crossing it is on, more often towards the right of the screen. The frame stock plays from is the one the snap set.
 - On stock OS, PIPO plays as ON and LOP reads ERROR until the knob is turned (seen on a unit). Sounds and kits keep the value, so loading them again with the mod brings PIPO back.
-- Run on a unit by the author as test builds (PC03 and the diagnostics PD01 to PD05, reported in [TESTING.md](TESTING.md)); what is not yet tested on a unit is listed there.
+- Run on a unit by the author as test builds (PC03, the diagnostics PD01 to PD05, and 0.1.1 as RC07, a combined image, reported in [TESTING.md](TESTING.md)); what is not yet tested on a unit is listed there.
 
 ## Tests and measurements
 
