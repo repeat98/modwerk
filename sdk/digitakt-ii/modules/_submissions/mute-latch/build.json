@@ -1,8 +1,7 @@
 {
   "schemaVersion": 1,
   "sources": [
-    "src/main.c",
-    "src/leds.s"
+    "src/main.c"
   ],
   "defsym": {},
   "cflags": [],
@@ -24,9 +23,7 @@
   "copied": [],
   "regions": [],
   "claims": [
-    "ui:PREP MUTES:PERFORM pressed",
-    "ui:TRIG LEDs parked tracks",
-    "site:0x400311a2 key-LED frame"
+    "ui:PREP MUTES:PERFORM pressed"
   ],
   "requires": [],
   "derive": null,
@@ -41,19 +38,10 @@
         "-DMLK_SEQ_PATTERN=1125535772",
         "-DMLK_SEQ_STATE=1125535636",
         "-DMLK_EV_DOWN=1074874920",
-        "-DMLK_LED_SET=1073940704",
         "-DMLK_TOAST=1074115130",
         "-DMLK_UI_STATES=1075419328"
       ],
-      "sites": [
-        {
-          "addr": "0x400311a2",
-          "len": 6,
-          "stockSha256": "cea65d5607761da9df8c0c7d7017d3552f7d8fa860ee8a93172c993bb01290d2",
-          "op": "jsr",
-          "target": "mlk_leds_site"
-        }
-      ]
+      "sites": []
     }
   }
 }

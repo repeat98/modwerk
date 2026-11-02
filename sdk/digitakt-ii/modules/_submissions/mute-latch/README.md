@@ -1,15 +1,15 @@
 # Mute Latch — Digitakt II
 
-A Digitakt II mod by @crisp909. Version 0.1.0-experimental, for OS 1.17 with Elekloader core 1.0. Tried by the author on a Digitakt II (reported, see [TESTING.md](TESTING.md)); screenshots are emulator captures.
+A Digitakt II mod by @crisp909. Version 0.1.0-experimental, for OS 1.17 with Elekloader core 1.0. The author reported the previous build working on a Digitakt II; this build is tested in the emulator only (see [TESTING.md](TESTING.md)). Screenshots are emulator captures.
 
 ## Overview
 
-PREP MUTES (in Mute Mode, hold FUNC and press the TRIG keys of the tracks to switch) normally changes those tracks the moment FUNC is let go. Mute Latch adds one gesture. Pressing PERFORM once then arms the choice (MUTES ARMED), so FUNC key can be released; the mutes switch when the pattern next reaches its first step. Both hands are free for a synth or effects until then. Without that PERFORM press, PREP MUTES works exactly as before.
+PREP MUTES (in Mute Mode, hold FUNC and press the TRIG keys of the tracks to switch) normally changes those tracks the moment FUNC is let go. Mute Latch adds one gesture. Pressing PERFORM once then arms the choice (MUTES ARMED), so FUNC key can be released; the mutes switch when the pattern next reaches its first step (applied on the tick that sees the last step, so the first step already plays switched). Both hands are free for a synth or effects until then. Without that PERFORM press, PREP MUTES works exactly as before.
 
 - Arms on one short press, on any page of the pattern; STOP drops it.
-- The armed tracks' TRIG LEDs keep the orange blinking of a chosen track until the mutes switch.
+- The header shows MUTES ARMED; the TRIG LEDs are not changed (they would need the core's key-LED hook, which is not published for the Digitakt II yet).
 - Follows the instrument's own step position and pattern length: no clock of its own.
-- Takes one stock site, the key-LED frame (see Compatibility), and two core hooks.
+- Uses two core hooks (`ev_key`, `ev_tick`) and patches no stock site.
 
 ## Controls
 
@@ -46,12 +46,12 @@ Location: Mute Mode (FUNC+TRK), PREP MUTES (FUNC held).
 
 - Digitakt II, OS 1.17 only.
 - Works while the sequencer plays. Stopped, PERFORM and PREP MUTES keep their stock behaviour. With nothing installed or nothing chosen, nothing changes: there is no setting, and removing the module restores stock behaviour exactly.
-- The switch happens on the first UI tick after the wrap (the core ticks at about 30 Hz), so it can land up to about 35 ms after the first step starts. It is not sample-accurate; that would need a sequencer hook in the base.
-- With Scale per track, the longest track's wrap is taken as the pattern's end.
+- The switch happens on the first UI tick (the core ticks at about 30 Hz) that sees the master track on its last step, so it lands during the last step and the first step plays already switched. A mute applied then may still cut or let ring the last step's note; this has not been listened to on a unit. It is not sample-accurate; that would need a sequencer hook in the base. If a tick is missed, the first tick after the wrap applies it instead.
+- With Scale per track, the longest track's last step is taken as the pattern's end.
 - The parked choice is kept in RAM only. It is not saved with the project and does not survive a power cycle.
 - After PERFORM the PREP MUTES screen shows no chosen tracks, because the stock choice is cleared; the parked set is not drawn.
 - A change of pattern while tracks are parked applies them at the new pattern's first step. This is the intended reading, not yet observed.
-- Needs Elekloader core 1.0. Core 1.1 also hooks the key-LED frame site (0x400311a2) that this module patches, so the two cannot be linked together until the module moves to the core 1.1 hook. Other mods that patch that site are refused by the linker.
+- Built for Elekloader core 1.0. It patches no stock site, so it does not clash with core 1.1.
 
 ### Stock flows this module touches
 
@@ -61,7 +61,7 @@ Location: Mute Mode (FUNC+TRK), PREP MUTES (FUNC held).
 
 ## How it works
 
-The module uses two core hooks and patches one stock site. In `ev_key` it reads the key event's code; for PERFORM, while the PREP MUTES view is on top with its session open and the sequencer plays, it moves the view's 16-bit choice into its own parked set, clears the view's mask (so letting go of FUNC applies nothing) and takes the event. In `ev_tick` (the UI task, about 30 Hz) it follows the master track's step position and, when it falls (the pattern wrapped), writes the parked set into the view's mask and calls the stock routine that applies it. Stock locations of OS 1.17 are named once in `build.json`: the vtable of the PREP MUTES view, the apply routine, the key-down test, the Brain, and three words of sequencer state (the playing flag, the pattern pointer and each track's step position).
+The module uses two core hooks and patches no stock site. In `ev_key` it reads the key event's code; for PERFORM, while the PREP MUTES view is on top with its session open and the sequencer plays, it moves the view's 16-bit choice into its own parked set, clears the view's mask (so letting go of FUNC applies nothing) and takes the event. In `ev_tick` (the UI task, about 30 Hz) it follows the master track's step position and, when it is on the last step (or has fallen back: the pattern wrapped), writes the parked set into the view's mask and calls the stock routine that applies it. Stock locations of OS 1.17 are named once in `build.json`: the vtable of the PREP MUTES view, the apply routine, the key-down test, the Brain, and three words of sequencer state (the playing flag, the pattern pointer and each track's step position).
 
 These locations were read from the OS 1.17 image with a static disassembler and then observed in an emulator, not on a unit.
 

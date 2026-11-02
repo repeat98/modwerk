@@ -19,7 +19,7 @@
     "label": "MUTE LATCH",
     "family": "Performance workflow",
     "summary": "Press PERFORM while choosing tracks in PREP MUTES and the mutes wait for the pattern's first step.",
-    "overview": "PREP MUTES normally mutes the chosen tracks the moment FUNC is let go. With Mute Latch, pressing PERFORM once while FUNC is held and tracks are chosen arms the choice (MUTES ARMED) instead: let go of FUNC and every other key and the mutes switch at the next pass of the pattern's first step, so both hands are free for a synth or effects in the meantime. Without a choice or without the pattern playing, PERFORM keeps its stock the stock PERFORM sub-function, and PREP MUTES works exactly as before.",
+    "overview": "PREP MUTES normally mutes the chosen tracks the moment FUNC is let go. With Mute Latch, pressing PERFORM once while FUNC is held and tracks are chosen arms the choice (MUTES ARMED) instead: let go of FUNC and every other key and the mutes switch at the pattern's next first step, so both hands are free for a synth or effects in the meantime. Without a choice or without the pattern playing, PERFORM keeps its stock the stock PERFORM sub-function, and PREP MUTES works exactly as before.",
     "highlights": [
       "Parks the PREP MUTES choice until the pattern starts again",
       "Takes only the PERFORM key press inside an open PREP MUTES session while the pattern plays",
@@ -48,10 +48,11 @@
     "requires": [],
     "conflicts": [],
     "limitations": [
-      "Not tested on a unit. Tested only by driving the stock OS 1.17 image in a ColdFire-only emulator; see TESTING.md.",
+      "Hardware: the author reports the previous build (PERFORM, MUTES ARMED and lit TRIG LEDs) working on a Digitakt II, OS 1.17. This build, which applies on the last step and has no LEDs, is not yet tested on a unit; see TESTING.md.",
       "Works while the sequencer plays; when it is stopped PREP MUTES keeps its stock behaviour.",
-      "With Scale per track the longest track's wrap ends the pattern.",
-      "Switches on the first UI tick (about 30 Hz) after the pattern wraps, not sample-accurately.",
+      "With Scale per track the longest track's last step ends the pattern.",
+      "Switches on the first UI tick (about 30 Hz) that sees the last step, not sample-accurately; the wrap is the fallback.",
+      "Armed tracks are shown only by the MUTES ARMED header message, not by their TRIG LEDs.",
       "FUNC+PERFORM opens a stock view over PREP MUTES: while PREP MUTES is open, tracks are chosen and the pattern plays, the module takes that key press, so that stock sub-function is not available then."
     ]
   },
@@ -64,9 +65,7 @@
       "ev_tick"
     ],
     "claims": [
-      "ui:PREP MUTES:PERFORM pressed",
-      "ui:TRIG LEDs parked tracks",
-      "site:0x400311a2 key-LED frame"
+      "ui:PREP MUTES:PERFORM pressed"
     ]
   },
   "resources": {
@@ -88,7 +87,7 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Not tested yet."
+    "summary": "Previous build reported working on a Digitakt II by the author; this build tested in the emulator only. See TESTING.md."
   },
   "license": {
     "spdx": "GPL-3.0-or-later",
@@ -112,7 +111,14 @@
       "alt": "Digitakt II screen showing the PREP MUTES header",
       "credit": "crisp909",
       "license": "GPL-3.0-or-later",
-      "source": "Captured from the digikit emulator with this module; no firmware content other than the screen."
+      "source": "Captured from the digikit emulator with this module; no firmware content other than the screen.",
+      "capture": {
+        "type": "emulator",
+        "release": "1.17",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "afba203f35a293ffeb47a060d08d9a519bf17a2b02b4ffef66f3affd94c87437",
+        "setup": "digikit panel_drive, ColdFire only; core 1.0 + this module, Mute Mode with TRIG 1 and 3 chosen while playing. UI documentation only."
+      }
     },
     {
       "path": "media/mutes-armed.png",
@@ -121,7 +127,14 @@
       "alt": "Digitakt II screen showing the header message MUTES ARMED",
       "credit": "crisp909",
       "license": "GPL-3.0-or-later",
-      "source": "Captured from the digikit emulator with this module; no firmware content other than the screen."
+      "source": "Captured from the digikit emulator with this module; no firmware content other than the screen.",
+      "capture": {
+        "type": "emulator",
+        "release": "1.17",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "afba203f35a293ffeb47a060d08d9a519bf17a2b02b4ffef66f3affd94c87437",
+        "setup": "digikit panel_drive, ColdFire only; core 1.0 + this module, Mute Mode with TRIG 1 and 3 chosen while playing. UI documentation only."
+      }
     }
   ]
 }
