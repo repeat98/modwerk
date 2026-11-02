@@ -1,0 +1,1 @@
+Developer tools: a worktree whose `node_modules` is a symlink to another checkout's now counts as clean, so `scripts/build-modules-isolated.sh` builds there and docs-only changes no longer run the whole app suite. `.gitignore` ignored `node_modules/`, which matches only a directory.
