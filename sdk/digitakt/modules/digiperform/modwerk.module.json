@@ -2,7 +2,7 @@
   "schemaVersion": 3,
   "id": "digiperform",
   "name": "Digi Perform",
-  "version": "0.1.1-experimental",
+  "version": "0.1.2-experimental",
   "machine": "digitakt",
   "category": "system",
   "exclusive": false,
@@ -185,7 +185,7 @@
   },
   "evidence": {
     "tier": "none",
-    "moduleVersion": "0.1.1-experimental",
+    "moduleVersion": "0.1.2-experimental",
     "sourceSha256": null,
     "reports": [],
     "hardware": null,
@@ -240,7 +240,7 @@
       "capture": {
         "type": "emulator",
         "release": "1.54",
-        "moduleVersion": "0.1.1-experimental",
+        "moduleVersion": "0.1.2-experimental",
         "imageSha256": "be8ff932982d5b137f8e4b160a87c532108e1162b6938055c1c0f35710502da4",
         "setup": "Pinned digiemu, firmware-native drawing, disposable first-boot project. No audio or cycle-timing qualification."
       }
@@ -256,7 +256,7 @@
       "capture": {
         "type": "emulator",
         "release": "1.54",
-        "moduleVersion": "0.1.1-experimental",
+        "moduleVersion": "0.1.2-experimental",
         "imageSha256": "be8ff932982d5b137f8e4b160a87c532108e1162b6938055c1c0f35710502da4",
         "setup": "Pinned digiemu, firmware-native drawing, disposable first-boot project. No audio or cycle-timing qualification."
       }
@@ -272,7 +272,7 @@
       "capture": {
         "type": "emulator",
         "release": "1.54",
-        "moduleVersion": "0.1.1-experimental",
+        "moduleVersion": "0.1.2-experimental",
         "imageSha256": "be8ff932982d5b137f8e4b160a87c532108e1162b6938055c1c0f35710502da4",
         "setup": "Pinned digiemu, firmware-native drawing, disposable first-boot project. No audio or cycle-timing qualification."
       }
@@ -288,7 +288,7 @@
       "capture": {
         "type": "emulator",
         "release": "1.54",
-        "moduleVersion": "0.1.1-experimental",
+        "moduleVersion": "0.1.2-experimental",
         "imageSha256": "be8ff932982d5b137f8e4b160a87c532108e1162b6938055c1c0f35710502da4",
         "setup": "Pinned digiemu, firmware-native drawing, disposable first-boot project. No audio or cycle-timing qualification."
       }
@@ -304,7 +304,7 @@
       "capture": {
         "type": "emulator",
         "release": "1.54",
-        "moduleVersion": "0.1.1-experimental",
+        "moduleVersion": "0.1.2-experimental",
         "imageSha256": "be8ff932982d5b137f8e4b160a87c532108e1162b6938055c1c0f35710502da4",
         "setup": "Pinned digiemu, firmware-native drawing, disposable first-boot project. No audio or cycle-timing qualification."
       }
