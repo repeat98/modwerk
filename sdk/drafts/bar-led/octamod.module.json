@@ -41,7 +41,7 @@
   "compatibility": {
     "firmware": "1.40C",
     "effectId": null,
-    "location": "The tempo LED",
+    "location": "Project sequencer",
     "conflicts": [],
     "uiClaims": [],
     "limitations": [
@@ -57,7 +57,7 @@
       "display": "60 bytes",
       "value": 60,
       "unit": "bytes",
-      "method": "measured",
+      "method": "static",
       "conditions": "One linked unit: 56 bytes of code and one 4-byte beat counter; the USB package is 192 bytes. One six-byte detour. No DSP memory.",
       "source": "TESTING.md"
     },
@@ -66,7 +66,7 @@
       "display": "12 instructions a beat",
       "value": 12,
       "unit": "instructions/event",
-      "method": "measured",
+      "method": "static",
       "conditions": "At most 12 instructions before stock's set_led, once per beat (24 clock ticks), in stock's clock-message loop. Nothing per sample or per frame.",
       "source": "TESTING.md"
     },
@@ -74,7 +74,7 @@
       "conditions": "Once per beat in stock's clock-message loop.",
       "cpu": {
         "level": "minimal",
-        "basis": "measured",
+        "basis": "source-estimate",
         "rationale": "At most 12 ColdFire instructions once per beat.",
         "source": "TESTING.md"
       },
@@ -86,7 +86,7 @@
       },
       "memory": {
         "level": "minimal",
-        "basis": "measured",
+        "basis": "source-estimate",
         "rationale": "60 bytes of code and state.",
         "source": "TESTING.md"
       }
