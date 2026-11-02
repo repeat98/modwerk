@@ -198,3 +198,7 @@ On SP04 (with Pipo Loop `b0ed4fe7`), as reported by npp1993:
 | Waveform playhead with the LFO | looks linear, does not seem to follow the LFO |
 
 Flashing note: on the first attempt the unit stopped on UPGRADE OS NOW? and answered no key after NO had been pressed during the transfer. A power cycle returned it to the earlier OS, and the second transfer, with nothing pressed until the prompt, went through.
+
+## Library release (2 November 2026)
+
+The owner approved the first library release of 0.1.0-experimental on 2 November 2026, on the results above. The library's package is compiled from this source in Modwerk's source-only container; that exact package has not run on a unit.

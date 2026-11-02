@@ -26,8 +26,10 @@ CHORUS, FLANGER and PHASER (ids 1-3) are the first, taken from Send FX with the 
 ## Create a mod
 
 ```sh
-npm run module:new -- my-mod --machine analog-rytm-mkii --author your-github-login
+npm run module:new -- my-mod --machine analog-rytm-mkii --author your-github-login --output sdk/analog-rytm-mkii/modules/_submissions
 ```
+
+A new module is submitted in `modules/_submissions/<id>`, with no file in `src/community/module-changelogs/` yet: its notes stay in README and TESTING.md. On release approval the owner moves it into `modules/` and pins its `.elemod` package. Only a submission whose manifest has `tests.documentation` can move: the README's tutorial and rytm-emu screenshots with their capture record ([UI captures](../../../docs/MODULE_UI_CAPTURES.md)). The library check refuses a module without them, so add both before asking for release. In `modules/` without that package, `npm run check` fails the module (no pinned `.elemod`).
 
 This creates `modwerk.module.json` (contract v3), `build.json`, `src/main.c`, README, TESTING, licence and a placeholder thumbnail. See [the SDK guide](../../../docs/SDK.md) for the contract and evidence tiers. The core's contract is [core-profile/interface.json](../../analog-rytm-mkii/core-profile/interface.json), and `npm run modules:check` rejects modules that use anything it does not provide.
 
@@ -62,6 +64,20 @@ Traps found while writing a C mod for OS 1.74 (rytm-emu `3c4c42c`, October 2026)
 - **FUNC + NO belongs to LIVE RECORDING.** On a sound page, while LIVE RECORDING runs, stock holds it to erase the active track's locks step by step (`0x40036370` is true only while the sequencer plays). Outside that it does nothing, with or without a held trig, so a module may take it there; test that state first.
 - **The sequencer builds a step ahead.** Per track, `0x4009b0b4` builds step N, locks included, when its tick divider is 0, stamped to fire one step's ticks later. When the divider wraps it publishes N (`0x4009a7e2`) and posts the UI event, and the UI's live-record tick `0x400c7ef6` then acts on N. So the lock erase and the held-note wipe reach a step already queued: it plays once as it was. An edit meant for the step being played has to land before the build.
 - **Stock's saved pattern and kit differ.** Pattern save fills one RAM buffer that every pattern change refills; kit save overwrites the kit's saved copy and links the kit to the active pattern. On a unit the saved kit and the active kit's edits both survive a power cycle. A module's static state does not, nor does the saved pattern: after a power cycle the pattern keeps its edits and pattern reload changes nothing. A project save keeps edits and saved copies apart, for the pattern and the kit: load that project and both come up with their edits, and the stock reloads return to the saved copies.
+
+## Trig conditions and held trigs
+
+OS 1.74, read from the code; the values and the fill behaviour were checked in rytm-emu.
+
+- **Where a condition lives.** One signed byte per step at track + 576, -1 for no lock, with the track's default at + 713. `0x400c0396(track, step)` reads it and `0x400c03d6(track, step, value)` writes it and sends the change notice. A trig's removal leaves the byte; placing the trig again clears it.
+- **Values.** 0 to 20 are probabilities, 22 is FILL, 23 NOT FILL. The evaluator `0x40099520` returns true to skip the trig, so read its branches upside down: its case for 23 is true while fill is on.
+- **Held trigs.** The editor at `view + 108` masks the steps held in GRID RECORDING at + 344 (32-63) and + 348 (0-31), and only there. A view above can take a release (QPER does) and leave a bit behind, so check `is_key_held` too. Entering LIVE RECORDING ends grid editing.
+- **A trig's release.** Stock acts on it unless the hold was an edit. To count as one, as a knob turn does, call `0x4003613a(editor, 1)` and `0x40036238(editor)`. That mark ends when the mask empties, so a stale bit keeps it and tapped trigs stop coming off: drop stale bits with `0x400368c0(editor, step, 0)`.
+- **Euclidean mode.** Track + 714 is on, and + 721 maps a step to its pulse, -1 for none. `0x400c0e6e` and `0x400c12ae` read them. Stock's held steps, and the step bytes, are then pulses.
+- **STEP RECORDING.** RECORD + STOP toggles editor + 362 (`0x400363bc`); it needs its own gate, as the held mask still fills.
+- **FILL.** Key 0xb2, handled only in the key routine `0x4003cc94` of the view under the pages. Press sets `0x4193c020`; release ends that and any latch, so a module that takes the press has to lose the release too. `EVENT_TAKEN` does: the OS drops that key's release.
+- **A page change ends every hold.** `0x400b7d10` clears the mask, and PAGE moves the page on its release, so with PAGE held the hold stands. A pattern of one page does not end it.
+- **rytm-emu.** A hold of about 80M counts as a long press and a trig stays, so tap for 20M. Two keys released on one clock leave one held.
 
 ## Performance locks and the QPER knob
 

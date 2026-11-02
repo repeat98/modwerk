@@ -1,0 +1,9 @@
+# Analog Rytm MKII: Pipo Loop, Sample RATE and Silent Pad+Trig Settings in the library — 2 November 2026
+
+npp1993's Pipo Loop 0.1.1-experimental, Sample RATE 0.1.0-experimental and Silent Pad+Trig Settings 0.6.0-experimental leave `_submissions` on the owner's release approval. Each source-only OS 1.74 package is pinned in its own record (`sdk/imports/elekloader-<id>-2026-11-02.json`, commit `0b1c6dbb`). Downloads stay off (`DIGI_DOWNLOADS_ENABLED`).
+
+- **Build:** `scripts/build-elemod-isolated.sh` in `modwerk-source-tools` (`445effdc…`, GCC 16.2.0) from `dcfeea92`. Each export reproduces with `package-elemod-recipe.mjs --check`, and Filter Hz's committed 1.2.0 package reproduces byte for byte from the same build.
+- **Packages:** Pipo Loop `5cfc4e16…bb55`, Sample RATE `b0dc0b59…cab3`, Silent Pad+Trig Settings `1cbe2c4a…30e5`.
+- **Linking together:** `checkLinkable` on core-ar2 0.7, Filter Hz 1.2.0, Loop Sync 0.2.0 and these three, all at once and in every pair, reports no overlapping site, entry, region, export, table or storage field. It ran on a zero-filled image, so the stock-byte guards were not checked here; the same check reports 13 overlaps for Pipo Loop given twice. `planBuild` plans the three together with core-ar2 0.7 (`src/engine/elekloader/digi-build.test.ts`).
+- **On a unit:** the author's earlier builds, as each TESTING.md records (Pipo Loop PP14 and RC07, Sample RATE SP03 to SP13 beside Pipo Loop, Silent Pad+Trig PS10 to PS12 on core-ar2 0.7). These packages have not run on a unit, and no browser build from a stock OS file ran here.
+- **Left in `_submissions`:** QPERF, Live Rec Retrig Fix, Temp Save and Quick Fill Trig Condition have no `tests.documentation` (tutorial and capture record) or screenshots yet, which `scripts/machine-modules.mjs` requires of a library module. Their packages built and linked cleanly beside the three.
