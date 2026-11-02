@@ -99,6 +99,15 @@ def reset_words(reg):
     """({feature: words its reset writes on a core}, {feature: its first region's words if it has more than one, else
     0}), from its spans in order; the same on every core it runs on."""
     totals, firsts = {}, {}
+    for f, ends in reset_ends(reg).items():
+        totals[f], firsts[f] = ends[-1], ends[0] if len(ends) > 1 else 0
+    return totals, firsts
+
+
+def reset_ends(reg):
+    """{feature: the logical end of each of its regions on a core, in order}: a reset chunk never crosses one (one
+    owned range per chunk); the same on every core it runs on."""
+    out = {}
     for f in reg['features']:
         per = {}
         for feature, core, _, _, words in spans(reg):
@@ -106,9 +115,20 @@ def reset_words(reg):
                 per.setdefault(core, []).append(words)
         if len({tuple(v) for v in per.values()}) != 1:
             raise ValueError('dsp-sites.json: feature %s owns different regions on its cores' % f['name'])
-        runs = next(iter(per.values()))
-        totals[f['bit']], firsts[f['bit']] = sum(runs), runs[0] if len(runs) > 1 else 0
-    return totals, firsts
+        runs, end, out[f['bit']] = next(iter(per.values())), 0, []
+        for words in runs:
+            end += words
+            out[f['bit']].append(end)
+    return out
+
+
+def reset_end_expression(reg, feature, offset):
+    """C: the logical end of the region `offset` falls in, for `feature` (0 for a feature the ledger does not know)."""
+    rows = []
+    for bit, ends in reset_ends(reg).items():
+        inner = ' : '.join('%s < %uu ? %uu' % (offset, e, e) for e in ends[:-1])
+        rows.append('%s == %uu ? %s' % (feature, bit, '(%s : %uu)' % (inner, ends[-1]) if inner else '%uu' % ends[-1]))
+    return '(%s : 0u)' % ' : '.join(rows)
 
 
 def header(reg):
@@ -144,6 +164,8 @@ def header(reg):
     lines.append(' * when it has more than one: a reset chunk never crosses it (one owned range per chunk). */')
     lines.append('#define MW_DSP_RESET_WORDS(f) (%s : 0u)' % ' : '.join('(f) == %uu ? %uu' % (bit, totals[bit]) for bit in names))
     lines.append('#define MW_DSP_RESET_SPLIT(f) (%s : 0u)' % (' : '.join('(f) == %uu ? %uu' % (bit, firsts[bit]) for bit in names if firsts[bit]) or '0u ? 0u'))
+    lines.append('/* The logical end of the region a reset offset falls in: a chunk from o is at most MW_DSP_RESET_END(f, o) - o. */')
+    lines.append('#define MW_DSP_RESET_END(f, o) %s' % reset_end_expression(reg, '(f)', '(o)'))
     lines += ['', 'struct mw_dsp_region { uint8_t feature, core, space; /* space: 1 x, 2 y */ uint8_t pad; uint32_t address, words; };',
               'static const struct mw_dsp_region mw_dsp_regions[] = {']
     for feature, core, space, address, words in spans(reg):

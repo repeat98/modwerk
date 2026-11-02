@@ -3,7 +3,7 @@
   "id": "ring-sc",
   "key": "RING_SC",
   "name": "Sidechain Ringmod",
-  "version": "0.2.0-experimental",
+  "version": "0.2.1-experimental",
   "category": "effects",
   "author": {
     "github": "npp1993",
@@ -290,9 +290,9 @@
         "page": "FX1 SETUP",
         "shows": "location",
         "firmware": "1.40C",
-        "moduleVersion": "0.2.0-experimental",
-        "imageSha256": "491f0ff0b933b52f3b9dc4f4c8118ff8f6788763bc36c596545026545a6bd596",
-        "setup": "Headless ot_emu (MKII panel) on 1.40C, a private card image carrying RINGMOD SC 0.2.0-experimental (local remix x_rmsc02: RINGMOD SC alone on the FX1 chooser, stock effects loaded on demand, RINGSC20); stopped transport; actual LCD pixels. A card image has no key bus, so these show the pages, not the effect."
+        "moduleVersion": "0.2.1-experimental",
+        "imageSha256": "b9d02d3a0dd6f6cf52f6501ec7026d4abac4505bedd0e02266bcae29aafa286d",
+        "setup": "Headless ot_emu (MKII panel) on 1.40C, Modwerk's native card image of RINGMOD SC 0.2.1-experimental alone with the stock effects kept (MAIN OS b9d02d3a; the FX1 chooser lists the stock FX1 effects above it); stopped transport; actual LCD pixels. A card image has no key bus, so these show the pages, not the effect."
       }
     },
     {
@@ -307,9 +307,9 @@
         "page": "FX1 main",
         "shows": "controls",
         "firmware": "1.40C",
-        "moduleVersion": "0.2.0-experimental",
-        "imageSha256": "491f0ff0b933b52f3b9dc4f4c8118ff8f6788763bc36c596545026545a6bd596",
-        "setup": "Headless ot_emu (MKII panel) on 1.40C, a private card image carrying RINGMOD SC 0.2.0-experimental (local remix x_rmsc02: RINGMOD SC alone on the FX1 chooser, stock effects loaded on demand, RINGSC20); stopped transport; actual LCD pixels. A card image has no key bus, so these show the pages, not the effect."
+        "moduleVersion": "0.2.1-experimental",
+        "imageSha256": "b9d02d3a0dd6f6cf52f6501ec7026d4abac4505bedd0e02266bcae29aafa286d",
+        "setup": "Headless ot_emu (MKII panel) on 1.40C, Modwerk's native card image of RINGMOD SC 0.2.1-experimental alone with the stock effects kept (MAIN OS b9d02d3a; the FX1 chooser lists the stock FX1 effects above it); stopped transport; actual LCD pixels. A card image has no key bus, so these show the pages, not the effect."
       }
     },
     {
@@ -324,9 +324,9 @@
         "page": "FX1 main",
         "shows": "controls",
         "firmware": "1.40C",
-        "moduleVersion": "0.2.0-experimental",
-        "imageSha256": "491f0ff0b933b52f3b9dc4f4c8118ff8f6788763bc36c596545026545a6bd596",
-        "setup": "Headless ot_emu (MKII panel) on 1.40C, a private card image carrying RINGMOD SC 0.2.0-experimental (local remix x_rmsc02: RINGMOD SC alone on the FX1 chooser, stock effects loaded on demand, RINGSC20); stopped transport; actual LCD pixels. A card image has no key bus, so these show the pages, not the effect."
+        "moduleVersion": "0.2.1-experimental",
+        "imageSha256": "b9d02d3a0dd6f6cf52f6501ec7026d4abac4505bedd0e02266bcae29aafa286d",
+        "setup": "Headless ot_emu (MKII panel) on 1.40C, Modwerk's native card image of RINGMOD SC 0.2.1-experimental alone with the stock effects kept (MAIN OS b9d02d3a; the FX1 chooser lists the stock FX1 effects above it); stopped transport; actual LCD pixels. A card image has no key bus, so these show the pages, not the effect."
       }
     },
     {
@@ -341,9 +341,9 @@
         "page": "FX1 SETUP",
         "shows": "controls",
         "firmware": "1.40C",
-        "moduleVersion": "0.2.0-experimental",
-        "imageSha256": "491f0ff0b933b52f3b9dc4f4c8118ff8f6788763bc36c596545026545a6bd596",
-        "setup": "Headless ot_emu (MKII panel) on 1.40C, a private card image carrying RINGMOD SC 0.2.0-experimental (local remix x_rmsc02: RINGMOD SC alone on the FX1 chooser, stock effects loaded on demand, RINGSC20); stopped transport; actual LCD pixels. A card image has no key bus, so these show the pages, not the effect."
+        "moduleVersion": "0.2.1-experimental",
+        "imageSha256": "b9d02d3a0dd6f6cf52f6501ec7026d4abac4505bedd0e02266bcae29aafa286d",
+        "setup": "Headless ot_emu (MKII panel) on 1.40C, Modwerk's native card image of RINGMOD SC 0.2.1-experimental alone with the stock effects kept (MAIN OS b9d02d3a; the FX1 chooser lists the stock FX1 effects above it); stopped transport; actual LCD pixels. A card image has no key bus, so these show the pages, not the effect."
       }
     },
     {
@@ -358,9 +358,9 @@
         "page": "FX1 main",
         "shows": "controls",
         "firmware": "1.40C",
-        "moduleVersion": "0.2.0-experimental",
-        "imageSha256": "491f0ff0b933b52f3b9dc4f4c8118ff8f6788763bc36c596545026545a6bd596",
-        "setup": "Headless ot_emu (MKII panel) on 1.40C, a private card image carrying RINGMOD SC 0.2.0-experimental (local remix x_rmsc02: RINGMOD SC alone on the FX1 chooser, stock effects loaded on demand, RINGSC20); stopped transport; actual LCD pixels. A card image has no key bus, so these show the pages, not the effect."
+        "moduleVersion": "0.2.1-experimental",
+        "imageSha256": "b9d02d3a0dd6f6cf52f6501ec7026d4abac4505bedd0e02266bcae29aafa286d",
+        "setup": "Headless ot_emu (MKII panel) on 1.40C, Modwerk's native card image of RINGMOD SC 0.2.1-experimental alone with the stock effects kept (MAIN OS b9d02d3a; the FX1 chooser lists the stock FX1 effects above it); stopped transport; actual LCD pixels. A card image has no key bus, so these show the pages, not the effect."
       }
     }
   ],

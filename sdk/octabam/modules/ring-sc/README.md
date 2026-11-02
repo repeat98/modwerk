@@ -2,7 +2,7 @@
 
 ![A kick on the key track and another track's level dipping with each of its cycles](presentation/thumbnail.svg)
 
-Version: 0.2.0-experimental · author: Nathaniel Pavel (@npp1993)
+Version: 0.2.1-experimental · author: Nathaniel Pavel (@npp1993)
 
 ## Overview
 
@@ -63,7 +63,7 @@ For the cleanest duck put the key on a track the instrument handles before the d
 - **Declared conflict with Analog BD.** It is carried over from the card builder's rule: Analog BD admits only the effects on its companion list, and RINGMOD SC is not on it. Over USB no resource clash is known, but the declaration applies to every build, so the configurator never offers both. Whether to keep it is the owner's call.
 - A project that selects RINGMOD SC on a base without it gets no effect in that slot.
 - A slow SLEW stops a little short of the key's level (each sample's rise is truncated to the word; up to about 1.4% of full scale at 127, as the review measured on the build before), and a very quiet key never raises it from 0. An LFO on S&H turns S&H 0 into a hold of 1 to 15 samples.
-- 351 words of DSP program per core, 22 words of state per instance, no delay buffer; the key bus's memory (Y $800-$9FF on each core, the last $202 words of each core's half of the shared window) is the base's.
+- 351 words of DSP program per core, 22 words of state per instance, no delay buffer; the key bus's memory (Y $7E00-$7FFF on each core since 0.2.1, Y $800-$9FF before; the last $202 words of each core's half of the shared window) is the base's.
 - On an MKII (22 October 2026, over USB, on a development twin of the beta base): DUCK, plain RING, RECT, SLEW through 0 (turned) and S&H turned down by ear; two instances on both cores and both slots; Part and project reload; beside Sidechain Compressor, every install and removal order; the base's self-test passed. Not tested on a unit: parameter locks and LFOs, scenes and the crossfader, eight instances a core, a power cycle. An LFO at full depth on KEY takes it past T8, which reads as OFF.
 
 ## Tests and measurements
@@ -76,7 +76,7 @@ Original code, tests and documentation by Nathaniel Pavel (@npp1993), MIT ([LICE
 
 ## Screens and audio
 
-Unedited MKII framebuffer captures from the headless emulator, taken on a private card image of this version (a card image has no key bus, so they show the pages, not the effect). [Capture provenance](media/capture.json) has the panel plan and the image and emulator hashes; [media rights](media/LICENSE.md) reserves the underlying Elektron rights. They show the pages, not audio; no audio is included.
+Unedited MKII framebuffer captures from the headless emulator, taken on Modwerk's native card image of this version alone with the stock effects kept (a card image has no key bus, so they show the pages, not the effect). [Capture provenance](media/capture.json) has the panel plan and the image and emulator hashes; [media rights](media/LICENSE.md) reserves the underlying Elektron rights. They show the pages, not audio; no audio is included.
 
 ![FX1 SETUP with RINGMOD SC chosen and MODE on DUCK](media/ot-setup-chooser.png)
 

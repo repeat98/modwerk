@@ -75,7 +75,7 @@ int main(int argc,char **argv) {
         assert(!dl_owned_command_reserve(0,0,10,0,1,0,&a) && !memcmp(&a,&bad,sizeof a));
         assert(!dl_owned_command_reserve(2,1,10,0,1,0,&a));
         assert(!dl_owned_command_reserve(0,1,8,0,0,0,&a)); /* storm-only PEEK */
-        assert(!dl_owned_reset_reserve(0,1,1,527,2,words,&a));
+        assert(!dl_owned_reset_reserve(0,1,1,15,2,words,&a) && !dl_owned_reset_reserve(0,1,1,529,2,words,&a)); /* MON 16 | window 514 | bus 512 */
         assert(!dl_owned_reset_reserve(1,1,2,0,1,words,&a));
         assert(dl_owned_command_reserve(0,7,10,0,1,0,&a));
         assert(a.generation==7 && a.ticket==1 && a.first_sequence==1 && a.last_sequence==1);
@@ -212,7 +212,7 @@ int main(int argc,char **argv) {
         assert(dl_upload_start(0,&u));dl_frame();answer(0,0);answer(0,1);
         assert(dl_job_status(0)==-1 && dl_errors==errors+2);dl_job_release(0);
         assert(!owned_closed[0] && !owned_closed[1]);
-        assert(dl_owned_reset_reserve(0,3,1,0,24,words,&a) && dl_owned_submit(&a));dl_frame();
+        assert(dl_owned_reset_reserve(0,3,1,0,16,words,&a) && dl_owned_submit(&a));dl_frame();
         check_packet(0,11,a.first_sequence);answer(0,0);
         assert(dl_owned_job_poll(&a,&p)==1 && p.acknowledged_sequence==a.last_sequence && dl_owned_job_release(&a));
         /* An owned job refused by the same HF3 answer still closes its core. */
@@ -232,7 +232,7 @@ int main(int argc,char **argv) {
             answer(c,(bit*7u+c)%3u==0);assert(dl_job_status(c)!=0);dl_job_release(c);
         }
         assert(!owned_closed[0] && !owned_closed[1] && !owned_close_why[0] && !owned_close_why[1] && !dl_errors);
-        assert(dl_owned_reset_reserve(0,9,1,0,24,words,&a) && dl_owned_reset_reserve(1,9,1,0,24,words,&b));
+        assert(dl_owned_reset_reserve(0,9,1,0,16,words,&a) && dl_owned_reset_reserve(1,9,1,0,16,words,&b));
         assert(dl_owned_submit(&a) && dl_owned_submit(&b));dl_frame();answer(0,0);answer(1,0);
         assert(dl_owned_job_poll(&a,0)==1 && dl_owned_job_poll(&b,0)==1);
         assert(dl_owned_job_release(&a) && dl_owned_job_release(&b));

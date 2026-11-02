@@ -26,7 +26,7 @@ ENGINE_ORIGINS = (0x100000, 0x200000)  # long forms only: every relocated word i
 ENGINE_PROOFS = (0x1000, 0x1333, 0x17ff, 0x1c01)
 ALLOWED = {'A': SIDECHAIN | MATRIX | ANALOG_BD | KEYBUS, 'B': SIDECHAIN | ANALOG_BD | KEYBUS}
 SOURCES = {
-    'modules/sidechain-compressor/manifest.py': '62f004df8eb3e727da05430b18785142f6f3de6c1418b42de49b9073d6f17e44',
+    'modules/sidechain-compressor/manifest.py': 'ad3a66d0644a61a8b388f4ca75cd59987e61f527c26c603c71e96bd1ecce7418',
     'modules/sidechain-compressor/patch_sc_dsp3.asm': '11022dbd84e1fffa71946aa19e8d8f0a51b1f25371c5b6b794066c855012ddf8',
     'modules/sidechain-compressor/sc_tables.py': 'cf4bba489c652fca75021f9d81a8aa8ecf0247ce6edc36b01420903c74324054',
     'modules/sidechain-compressor/sc_keyfilt.py': '8e68216a2ec8ec366c686fd7d6ab0690776b66065de58ab2aa807a5e88438edb',
@@ -230,8 +230,9 @@ def resource_ranges(tag):
     if tag not in ALLOWED:
         raise ValueError('Unknown DSP core')
     shared = 0x33dfe if tag == 'A' else 0x3bdfe
-    ranges = [dict(owner=SIDECHAIN, space='y', address=0x7f0, words=0x210),
+    ranges = [dict(owner=SIDECHAIN, space='y', address=0xff0, words=0x10),
               dict(owner=SIDECHAIN, space='y', address=shared, words=0x202),
+              dict(owner=SIDECHAIN, space='y', address=0x7e00, words=0x200),
               dict(owner=ANALOG_BD, space='x', address=0x2840, words=0x3700 - 0x2840)]
     if tag == 'A':
         ranges.append(dict(owner=MATRIX, space='y', address=0xc00, words=0xc1))
@@ -239,7 +240,7 @@ def resource_ranges(tag):
     # window first, so a reset's first chunk zeroes its seed mark and counter (+$3DFE, +$3DFF): a reader never takes a
     # stale mark from an earlier run for a live bus (controller_board.c's scrub after a disable is that one chunk).
     ranges += [dict(owner=KEYBUS, space='y', address=shared, words=0x202),
-               dict(owner=KEYBUS, space='y', address=0x800, words=0x200)]
+               dict(owner=KEYBUS, space='y', address=0x7e00, words=0x200)]
     return ranges
 
 

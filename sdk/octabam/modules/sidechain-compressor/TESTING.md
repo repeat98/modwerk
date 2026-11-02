@@ -1,6 +1,25 @@
 # Sidechain Compressor verification
 
-Version **0.2.0-experimental**, recorded **25 October 2026**. Built by Modwerk's shared firmware builder, beside any other module that fits, and over USB part of the beta base. The DSP figures are emulator measurements, not chip timing; the hardware record is below. The 0.1.2 and 0.1.1 records follow as history.
+Version **0.2.1-experimental**, recorded **30 October 2026** (0.2.0: 25 October 2026). Built by Modwerk's shared firmware builder, beside any other module that fits, and over USB part of the beta base. The DSP figures are emulator measurements, not chip timing; the hardware record is below. The 0.1.2 and 0.1.1 records follow as history.
+
+## 0.2.1-experimental
+
+### What changed
+
+The key bus moves from Y $800-$9FF to Y $7E00-$7FFF, the tail of the first internal FX2 slot (+$3E00, past every +$3DFD ring and stock's +$3DA2), and the MON words from Y $7F0-$7FF to Y $FF0-$FFF. Y $7F0-$9FF is then free for a DSP machine's voice (BlackPyramids, [#1064](https://github.com/repeat98/modwerk/issues/1064)). Only the manifest's three address tokens change (`@KEYB@` $7e00, `@KEYB1@` $7e20, `@MONB@` $ff0) and its declared ranges; the DSP and ColdFire sources are 0.2.0's, byte for byte. The standalone and KYOTI builds have used the same key bus address since 15 October 2026.
+
+The beta base moves with it (owner review): `dsp-sites.json` gives feature 1 three regions (MON $FF0+$10, the window, the bus $7E00+$200) and feature 8 the window and the bus at $7E00; a reset chunk now stops at every region's end from the ledger (`MW_DSP_RESET_END`), where the board and the driver assumed at most two regions. Sidechain Ringmod reads the bus at the new address in the same change.
+
+### Results
+
+- **Image:** Modwerk's native build of the module alone with the stock FX2 effects kept: MAIN OS `fb7c5e31ce9535f86b3bcc86830df75eba409bb4c5570f48cd9da3bd6545d2cc`. Against 0.2.0's `131142e1…` it differs in 12 bytes, six per DSP payload: the four key bus references ($08xx to $7Exx) and the two MON references ($07F0 to $0FF0).
+- **Free memory (emulator, stock OS):** every stock effect through FX1 and FX2 on all eight tracks (rotated, 60 frames each, 902 frames, both cores): no write to Y $F00-$FFF or Y $7E00-$7FFF; no writer of Y $FF8 at all, zeros included.
+- **This image (emulator):** COMPRESSOR on every track's FX1: the tap writes Y $7E00-$7EFF on core 1 (T1-T4) and Y $7F00-$7FFF on core 0 (T5-T8), nothing at Y $800-$9FF.
+- **Resident engine:** `test_resident_engines` (the base's engine in the DSP simulator) gives the cross-core key exactly two blocks late for every enable order and core skew, and a same-core key 0 or 1 block, as 0.2.0.
+- **Free-slot rule:** a buffer of 15,870 words ($3DFE, Mini Verb and E-Verb) or BBD's 8,250 (0x203A) fits in the first internal FX2 slot beside the bus; 16,384 does not (`test_stock_hook_resources`, `test_resident_stock_dsp`).
+- **Composition suites** (`export-composition-proofs.py --suite sidechain / sidechain-visible / analog-bd`, static stock): 169 of 512, 618 of 1,024 and 146 of 212 selections build, exactly the selections that build with 0.2.0 on the same main; only selections containing this module changed.
+- **Load, static bound, memory:** unchanged from 0.2.0 (the same instructions; 528 private Y words a core, now 512 + 16).
+- **Hardware:** below and in [evidence/hardware.md](evidence/hardware.md): the module alone and beside BBD Delay on the author's MKI, 30 October 2026.
 
 ## 0.2.0-experimental
 

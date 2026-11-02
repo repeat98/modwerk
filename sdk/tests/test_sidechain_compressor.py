@@ -6,9 +6,9 @@ from pathlib import Path
 import unittest
 
 APP = Path(__file__).resolve().parents[2]
-RECORD = json.loads((APP / 'sdk/imports/sidechain-compressor-b0d49bf.json').read_text())
+RECORD = json.loads((APP / 'sdk/imports/sidechain-compressor-8868867.json').read_text())
 FOLDER = APP / RECORD['root']
-IMAGE = '131142e1839bf1a62b48929dee396cc23b1f2f27f33595a9e6f39bf57f7be22e'
+IMAGE = 'fb7c5e31ce9535f86b3bcc86830df75eba409bb4c5570f48cd9da3bd6545d2cc'
 # 0.1.1's evidence/software.json and evidence/common-builder.json stay as that release's history.
 IMAGE_0_1_1 = '4fd5fcb49ed17cd4e707d407a6e42a64ec30b50aefaad3b1eeb1bb804493aef0'
 
@@ -20,7 +20,7 @@ def proofs(name):
 class SidechainCompressor(unittest.TestCase):
     def test_pins_and_authored_file_identities(self):
         # The author's own Modwerk copy of the module (modwerk-modules/sidechain-compressor), byte for byte.
-        self.assertEqual(RECORD['revision'], 'b0d49bf32d3fcc2e3ce7e9cec67f4fbb2619e511')
+        self.assertEqual(RECORD['revision'], '8868867d02b15b5368a7e54772aff0c1c0387c81')
         self.assertEqual(RECORD['authorPin']['revision'], RECORD['revision'])
         paths = [entry['path'] for entry in RECORD['files']]
         self.assertEqual(len(paths), len(set(paths)))
@@ -77,7 +77,7 @@ class SidechainCompressor(unittest.TestCase):
         self.assertEqual((keywords['replaces'], keywords['stock_dsp'], keywords['fx2_id']), ('COMPRESSOR', True, 0x18))
         ranges = [n for n in calls if n.func.id == 'DspRange']
         self.assertEqual([(ast.literal_eval(n.args[1]), ast.literal_eval(n.args[2])) for n in ranges],
-                         [(0x7f0, 0x210), (0x3dfe, 0x202)])
+                         [(0xff0, 0x10), (0x7e00, 0x200), (0x3dfe, 0x202)])
 
     def test_evidence_is_bound_to_the_module_and_to_the_committed_proofs(self):
         document = json.loads((FOLDER / 'octamod.module.json').read_text())
