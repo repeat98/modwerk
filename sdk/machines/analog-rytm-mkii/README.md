@@ -26,10 +26,10 @@ CHORUS, FLANGER and PHASER (ids 1-3) are the first, taken from Send FX with the 
 ## Create a mod
 
 ```sh
-npm run module:new -- my-mod --machine analog-rytm-mkii --author your-github-login --output sdk/analog-rytm-mkii/modules/_submissions
+npm run module:new -- my-mod --machine analog-rytm-mkii --author your-github-login
 ```
 
-A new module is submitted in `modules/_submissions/<id>`, with no file in `src/community/module-changelogs/` yet: its notes stay in README and TESTING.md. On release approval the owner moves it into `modules/` and pins its `.elemod` package. Only a submission whose manifest has `tests.documentation` can move: the README's tutorial and rytm-emu screenshots with their capture record ([UI captures](../../../docs/MODULE_UI_CAPTURES.md)). The library check refuses a module without them, so add both before asking for release. In `modules/` without that package, `npm run check` fails the module (no pinned `.elemod`).
+A new module goes into `modules/<id>` and is live once its pull request merges, so the pull request carries everything the library needs, as on the Digitakt ([Digitakt and Digitone](../../../docs/ADD_A_MODULE.md#digitakt-and-digitone)): `tests.documentation` with the README's tutorial and rytm-emu screenshots and their capture record ([UI captures](../../../docs/MODULE_UI_CAPTURES.md)), its release notes in `src/community/module-changelogs/analog-rytm-mkii-<id>.json`, and its source-only `.elemod` package, built in the pinned toolchain, committed under `sdk/imports/packages/<id>/` and pinned in `sdk/imports/elekloader-<id>-<date>.json` ([source-only release objects](../../../docs/ELEMOD_SOURCE_BUILDS.md#source-only-release-objects)). `npm run module:doctor -- <id>` names what is missing. `_submissions/` takes no new modules or changes, because nothing there reaches the library, and `npm run check` refuses them; a module still waiting there enters the same way, moved into `modules/`.
 
 This creates `modwerk.module.json` (contract v3), `build.json`, `src/main.c`, README, TESTING, licence and a placeholder thumbnail. See [the SDK guide](../../../docs/SDK.md) for the contract and evidence tiers. The core's contract is [core-profile/interface.json](../../analog-rytm-mkii/core-profile/interface.json), and `npm run modules:check` rejects modules that use anything it does not provide.
 
