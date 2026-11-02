@@ -2,6 +2,18 @@
 
 Recorded 7 October 2026 for `0.1.0-experimental`; 0.2.0, 0.2.1 and 0.2.2 below, upstream `6f9e5bc9db0ae9fa99fa2f2a0f4de1fdb8e9a136` (0.2.2: sambanks/octabam `08bffd529c0f301708bcb2d48759e54e11f59858`).
 
+## 0.2.2: KEYHOLD, a muted side-chain KEY track stays cut (2 November 2026)
+
+- **The change.** With a module that answers `ev_mute_keep` (Sidechain Compressor), a muted track that a COMPRESSOR uses as its KEY plays its trigs, cut after the FX as on stock. When KEY moved to another track, the muted track went back to its MUTE MODE: DT-T leaves a sounding voice alone, so the note it had started as a KEY played out at full level (a looping sample kept going), and OTFX-T and OTFX let one frame through. KEYHOLD is one byte after KEYMASK: a muted track that has been a KEY keeps stock's post-FX cut until it is unmuted, and its trigs are still dropped. Reported on sambanks/octabam#934; the same change is pinned there by PR #1013.
+- **Source.** The author's files byte for byte at Zac-Kyoti/octatrack-kyoti-fw `826d23e16334285edee9c073426bfe76fcca463c` (`modwerk-modules/mute-modes/`); `sdk/imports/mute-modes-826d23e.json` replaces `mute-modes-c5b24d0.json`. Assembled without `MODWERK_EVENTS`: plain softmute `ca7792be…` (970 bytes at 0x400d7400, unchanged), SC_KEY softmute `ac03f559…` (1100 bytes at 0x400d6e54, KYOTI V1.7's placement), menu `4c6702aa…` (unchanged).
+- **Native probe.** `qualification/run.py` with the new SC_KEY reference; `probe.cpp` loads the SC_KEY unit at its new origin, clears KEYHOLD with SHADOW before each case, and adds three checks per mode and mask pair: the hold is set for silenced key tracks, a frame with the keys gone keeps their post-FX cut, and unmuting releases it. 3,563,628 cases pass. KEYHOLD adds three instructions to the SC_KEY frame path (worst bound 3,344 to 3,392); the plain paths are unchanged.
+- **Port.** In the author's octabam emulator, the native image below in DT-T with T1 COMPRESSOR, T7 muted and resting as KEY, then KEY moved mid-pattern: T7 stays silent until it is unmuted (the 0.2.1-era unit plays it at full level).
+- **Tested image.** A static native octabam build of Sidechain Compressor and Mute Modes with every stock effect kept (`scripts/export-composition-proofs.py --select sidechain-compressor+mute-modes:true --image-dir`, in the `modwerk-source-tools` container): MAIN OS SHA-256 `2dfce546cb1eb5e854ab69c7089c87e169355510f888baf9637a18e5f12b0e40`, `mm_softmute` (SC_KEY) at 0x400d7280. Wrapped with Elektron's firmware tool, OS VERSION `MW_MMKH1`: card file `d5d658d4…`, syx `ea08ce11…`.
+
+### Hardware report
+
+Pending.
+
 ## 0.2.2: SHADOW out of the stock timestretch task's SRAM (27 October 2026)
 
 - **The change.** Hook 1 (`pre`) keeps a one-byte silenced set, SHADOW. Until 0.2.1 it was SRAM `0x80006c66`, inside the work area of a stock ColdFire task that runs the timestretch splice search and transient detection while tracks play, and refills that area with audio on every grain. In OTFX an audio byte read back as the previous frame's silenced set could swallow a newly muted track's note-off, so the mute did not take; and `pre`'s per-frame write landed in the task's search window. SHADOW is now a byte inside `mm_softmute`, right after KEYMASK (it takes KEYMASK's alignment pad, so the SC_KEY unit stays 1086 bytes). Every SHADOW operand is absolute long, so only those seven operands and, in the plain unit, the new byte and its pad (968 to 970 bytes) differ from 0.2.1. sambanks/octabam pins the same change at `a1e0288` (PR #928).
@@ -80,7 +92,7 @@ Before measuring, four port regressions passed: `emac`, `periph`, `mc68kColdFire
 | sidechain-frame-mode-0 | 65536 | 13 | 26 | 208 | 16 |
 | sidechain-frame-mode-1 | 65536 | 200 | 382 | 3200 | 24 |
 | sidechain-frame-mode-2 | 65536 | 136 | 232 | 2176 | 20 |
-| sidechain-frame-mode-3 | 65536 | 209 | 342 | 3344 | 24 |
+| sidechain-frame-mode-3 | 65536 | 212 | 347 | 3392 | 24 |
 | sidechain-fresh-bind | 2097152 | 17 | 35 | 272 | 8 |
 | trig-flag | 57344 | 19 | 30 | 304 | 0 |
 

@@ -149,22 +149,22 @@
     },
     "qualification": {
       "moduleVersion": "0.2.2-experimental",
-      "sourceSha256": "fe7ee0e550288594d2448b1cadaa14550a6f7a9adacf10e6b73146942b2287ce",
+      "sourceSha256": "10071fb8e33d75b56f19870024fa17c07c80adb980ff0f93463a1cd1775c9c31",
       "imageSha256": "446ece69c1fcf7d19a2c726d8fa1029f218e01780e3ac4c194d4c9a61e527573",
       "cycles": [
         {
           "processor": "coldfire",
-          "worstCase": 3344,
-          "maxConfiguration": 16528,
+          "worstCase": 3392,
+          "maxConfiguration": 16576,
           "maxInstances": 1,
           "budget": 95778,
           "unit": "cycles/block",
           "method": "emulator",
           "conditions": {
-            "parameterExtremes": "All four MUTE MODE values and every eight-bit mute and solo mask with SOLO_FLAG set and clear, plain and SC_KEY variants (evidence/probes.json, 3,170,412 executed cases).",
+            "parameterExtremes": "All four MUTE MODE values and every eight-bit mute and solo mask with SOLO_FLAG set and clear, plain and SC_KEY variants (evidence/probes.json, 3,563,628 executed cases).",
             "parameterModulation": "Not applicable: MUTE MODE is one global PERSONALIZE setting; mute and solo change from the panel or MIDI and are read once per frame.",
             "modeSwitching": "MUTE MODE changed between frames in every order; mutes and solos set and cleared between frames, including the 0->1 edge that issues each track's note-off.",
-            "maxLoad": "One instance (a global setting). Per 16-sample block: the frame hook once (at most 3,344, SC_KEY variant in OTFX-T; 2,032 plain) plus the per-trig hooks for all eight tracks in the same block, 8 x (336 + 336 + 352 + 320 + 304) = 13,184.",
+            "maxLoad": "One instance (a global setting). Per 16-sample block: the frame hook once (at most 3,392, SC_KEY variant in OTFX-T; 2,032 plain) plus the per-trig hooks for all eight tracks in the same block, 8 x (336 + 336 + 352 + 320 + 304) = 13,184.",
             "inputConditions": "Independent of audio content. Conservative V4 core-path bounds from the actual assembled instructions of this version (16 cycles per ordinary instruction), not chip wall-clock timing; stock callbacks (the note-off and voice routines) are stock cost and excluded."
           },
           "report": "TESTING.md"
