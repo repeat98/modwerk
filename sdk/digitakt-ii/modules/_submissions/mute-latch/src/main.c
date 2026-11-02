@@ -1,16 +1,19 @@
 // Mute Latch for the Digitakt II (OS 1.17): a Modwerk elemod module.
 //
 // PREP MUTES (FUNC held, TRIG keys choose tracks) normally mutes the chosen tracks the moment FUNC is let
-// go. With TEMPO held in that session the choice is parked instead and applied on the next pass of the
+// go. With PERFORM pressed in that session the choice is parked instead and applied on the next pass of the
 // pattern's first step, so both hands are free in between.
 //
-// It uses the core's ev_tick (the UI task, about 30 Hz) and fw_key_down; it patches no stock site. It
-// reads three words of the sequencer's state and the top view's object, and calls the stock routine that
-// applies a PREP MUTES choice. Those stock locations are named once, per release, in build.json.
+// FUNC + PERFORM is a stock key combination that opens its own view over PREP MUTES, so the module takes that one
+// key event (core ev_key) while a PREP MUTES session is open and the sequencer plays; every other key, and
+// PERFORM anywhere else, goes on to the stock OS untouched. It follows the pattern's wrap on ev_tick (the UI
+// task, about 30 Hz). It patches no stock site: it reads a few words of the sequencer's state and the top
+// view's object, and calls the stock routine that applies a PREP MUTES choice. Those stock locations are
+// named once, per release, in build.json.
 
 #include <stdint.h>
 
-#define TEMPO_KEY 9
+#define PERFORM_KEY 7
 #define TRACKS 16
 
 // Stock locations of the release being built: build.json passes each one as a -D value
@@ -20,11 +23,15 @@
 #define mlk_seq_pos ((volatile uint8_t *)MLK_SEQ_POS)                 // each track's step position (TRACKS bytes), 0 at the first step
 #define mlk_seq_pattern (*(volatile uint32_t *)MLK_SEQ_PATTERN)       // address of the pattern the sequencer plays
 #define mlk_seq_state (*(volatile uint32_t *)MLK_SEQ_STATE)           // 1 while the sequencer plays
-#define mlk_key_down ((int (*)(int))MLK_KEY_DOWN)                     // bit 0 while the key is down
+#define mlk_ev_down ((int (*)(void *))MLK_EV_DOWN)                    // low byte: 1 for a key-down event
+#define mlk_led_set ((void (*)(void *, int, int, int))MLK_LED_SET)      // (mgr, logical id, layer, value)
+#define mlk_toast ((void (*)(void *, const char *, ...))MLK_TOAST)       // the header's message
+#define mlk_ui_states ((uintptr_t (*)(void))MLK_UI_STATES)
 #define mlk_brain ((uintptr_t (*)(void))MLK_BRAIN)                    // the Brain; its view controller is at +0x40
 
 // Offsets inside the stock objects, found in OS 1.17 (see README "How it works").
 #define VIEW_MASK 0x88        // u32 inside the PREP MUTES view: bit n = track n chosen
+#define EV_CODE 0x0c          // u32 inside a key event: the key (PERFORM = 7)
 #define VIEW_SESSION 0x8d     // u8: 1 while a PREP MUTES session is open (FUNC held)
 #define PAT_PER_TRACK 0x1db79 // u8 inside the pattern: 1 = each track has its own length
 #define PAT_MASTER_LEN 0x1db74
@@ -35,6 +42,7 @@ static uint32_t parked;        // tracks waiting for the next first step
 static void *view;             // the PREP MUTES view, once seen on top
 static int last_pos = -1;      // the master track's position at the previous tick
 static int was_playing;
+static int taken;              // a PERFORM press was taken, so its release is taken too
 
 // The object of the view on top of the stack, or 0 when the stack is empty.
 static void *top_object(void)
@@ -68,6 +76,56 @@ static int master_track(uint8_t *pat)
     return best;
 }
 
+// The LED frame calls this after the stock clear: parked tracks' TRIG LEDs blink as PREP MUTES shows chosen ones.
+void mlk_leds(void *mgr)
+{
+    for (int t = 0; t < TRACKS; t++)
+        if (parked & (1u << t))
+            mlk_led_set(mgr, 26 + t, 2, 0x11);
+}
+
+static void wake_leds(void)
+{
+    *(uint8_t *)(mlk_brain() + 0x40 + 0x21) = 1;  // ask for an LED frame
+}
+
+// ev_key: PERFORM pressed in an open PREP MUTES session while the pattern plays parks the chosen tracks; with
+// nothing chosen it drops what is parked. Both take the event, so Tap tempo does not open. Anything else
+// returns 0 and the stock OS sees the event as if the module were not there.
+int mod_key(void *brain, void *event)
+{
+    (void)brain;
+    if (*(uint32_t *)((uint8_t *)event + EV_CODE) != PERFORM_KEY)
+        return 0;
+    if (!(mlk_ev_down(event) & 0xff)) {
+        int was = taken;                        // the release of a press the module took
+        taken = 0;
+        return was;
+    }
+    void *obj = top_object();
+    if (!obj || *(uint32_t *)obj != (uint32_t)(uintptr_t)mlk_vt_prep)
+        return 0;
+    uint8_t *v = (uint8_t *)obj;
+    if (!v[VIEW_SESSION] || mlk_seq_state != 1)
+        return 0;
+    uint32_t *mask = (uint32_t *)(v + VIEW_MASK);
+    if (*mask) {
+        view = obj;
+        parked ^= *mask & 0xffff;               // a second press of a track takes it back out
+        *mask = 0;                              // so releasing FUNC applies nothing now
+        mlk_toast((void *)mlk_ui_states(), "%s", parked ? "MUTES ARMED" : "ARM CANCELED");
+        wake_leds();
+    } else if (parked) {
+        parked = 0;                             // PERFORM with nothing chosen cancels
+        mlk_toast((void *)mlk_ui_states(), "%s", "ARM CANCELED");
+        wake_leds();
+    } else {
+        return 0;                               // nothing to do: stock Tap tempo
+    }
+    taken = 1;
+    return 1;
+}
+
 // ev_tick: runs in the UI task, so the stock view code never runs beside it.
 void mod_tick(void *ctrl)
 {
@@ -75,40 +133,31 @@ void mod_tick(void *ctrl)
     int playing = mlk_seq_state == 1;
     uint8_t *pat = (uint8_t *)mlk_seq_pattern;
 
-    // 1. Park the choice while TEMPO is held in an open PREP MUTES session.
-    void *obj = top_object();
-    if (obj && *(uint32_t *)obj == (uint32_t)(uintptr_t)mlk_vt_prep) {
-        view = obj;
-        uint8_t *v = (uint8_t *)obj;
-        if (v[VIEW_SESSION] && (mlk_key_down(TEMPO_KEY) & 1) && playing) {
-            uint32_t *mask = (uint32_t *)(v + VIEW_MASK);
-            if (*mask) {
-                parked ^= *mask & 0xffff;   // a second press of a track takes it back out
-                *mask = 0;                  // so releasing FUNC applies nothing now
-            }
-        }
-    }
-
-    // 2. Stopping drops what is parked: the stock flow is the immediate one.
+    // Stopping drops what is parked: the stock flow is the immediate one.
     if (!playing || !pat) {
+        if (parked)
+            wake_leds();
         parked = 0;
         last_pos = -1;
         was_playing = 0;
         return;
     }
 
-    // 3. Follow the master track's step position on every tick, parked or not, so a wrap is seen
-    //    against the position of the previous tick and never against a stale one.
+    // Follow the master track's step position on every tick, parked or not, so a wrap is seen
+    // against the position of the previous tick and never against a stale one.
     int pos = mlk_seq_pos[master_track(pat)];
     int wrapped = was_playing && last_pos >= 0 && pos < last_pos;
     last_pos = pos;
     was_playing = 1;
 
-    // 4. Apply on the wrap to the first step.
+    // Apply on the wrap to the first step; a choice being made in a new PREP MUTES session is kept.
     if (wrapped && parked && view) {
         uint32_t *mask = (uint32_t *)((uint8_t *)view + VIEW_MASK);
+        uint32_t chosen = *mask;
         *mask = parked;
         parked = 0;
         mlk_apply(view);
+        *mask = chosen;
+        wake_leds();
     }
 }

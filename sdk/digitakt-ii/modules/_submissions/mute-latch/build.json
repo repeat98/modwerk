@@ -1,7 +1,8 @@
 {
   "schemaVersion": 1,
   "sources": [
-    "src/main.c"
+    "src/main.c",
+    "src/leds.s"
   ],
   "defsym": {},
   "cflags": [],
@@ -11,6 +12,11 @@
       "event": "ev_tick",
       "fn": "mod_tick",
       "order": 50
+    },
+    {
+      "event": "ev_key",
+      "fn": "mod_key",
+      "order": 50
     }
   ],
   "contribute": [],
@@ -18,7 +24,9 @@
   "copied": [],
   "regions": [],
   "claims": [
-    "ui:PREP MUTES:TEMPO held"
+    "ui:PREP MUTES:PERFORM pressed",
+    "ui:TRIG LEDs parked tracks",
+    "site:0x400311a2 key-LED frame"
   ],
   "requires": [],
   "derive": null,
@@ -28,13 +36,24 @@
       "cflags": [
         "-DMLK_VT_PREP=1075808792",
         "-DMLK_APPLY=1074191984",
-        "-DMLK_KEY_DOWN=1074913616",
         "-DMLK_BRAIN=1075416100",
         "-DMLK_SEQ_POS=1125535712",
         "-DMLK_SEQ_PATTERN=1125535772",
-        "-DMLK_SEQ_STATE=1125535636"
+        "-DMLK_SEQ_STATE=1125535636",
+        "-DMLK_EV_DOWN=1074874920",
+        "-DMLK_LED_SET=1073940704",
+        "-DMLK_TOAST=1074115130",
+        "-DMLK_UI_STATES=1075419328"
       ],
-      "sites": []
+      "sites": [
+        {
+          "addr": "0x400311a2",
+          "len": 6,
+          "stockSha256": "cea65d5607761da9df8c0c7d7017d3552f7d8fa860ee8a93172c993bb01290d2",
+          "op": "jsr",
+          "target": "mlk_leds_site"
+        }
+      ]
     }
   }
 }

@@ -18,25 +18,25 @@
   "presentation": {
     "label": "MUTE LATCH",
     "family": "Performance workflow",
-    "summary": "Hold TEMPO while choosing tracks in PREP MUTES and the mutes wait for the pattern's first step.",
-    "overview": "PREP MUTES normally mutes the chosen tracks the moment FUNC is let go. With Mute Latch, holding TEMPO while you choose the tracks parks the choice instead: let go of every key and the mutes switch at the next pass of the pattern's first step, so both hands are free for a synth or effects in the meantime. Without TEMPO held, PREP MUTES works exactly as before.",
+    "summary": "Press PERFORM while choosing tracks in PREP MUTES and the mutes wait for the pattern's first step.",
+    "overview": "PREP MUTES normally mutes the chosen tracks the moment FUNC is let go. With Mute Latch, pressing PERFORM while FUNC is held and tracks are chosen parks the choice instead: let go of every key and the mutes switch at the next pass of the pattern's first step, so both hands are free for a synth or effects in the meantime. Without a choice or without the pattern playing, PERFORM keeps its stock the stock PERFORM sub-function, and PREP MUTES works exactly as before.",
     "highlights": [
       "Parks the PREP MUTES choice until the pattern starts again",
-      "Leaves the stock gesture untouched unless TEMPO is held",
+      "Takes only the PERFORM key press inside an open PREP MUTES session while the pattern plays",
       "Takes no sequencer hook: it follows the instrument's own step position"
     ],
     "usage": [
-      "Play a pattern, hold FUNC, hold TEMPO and press the TRIG keys of the tracks to switch, then let go of all keys; the tracks switch at the next first step."
+      "Play a pattern, enter Mute Mode (FUNC+TRK), hold FUNC, press the TRIG keys of the tracks to switch, press PERFORM, then let go of all keys; the tracks switch at the next first step."
     ]
   },
   "access": {
-    "location": "PREP MUTES (FUNC held, with the permanent mute mode on)",
+    "location": "Mute Mode, PREP MUTES (FUNC held)",
     "steps": [
-      "Start the sequencer with PLAY.",
-      "Hold FUNC to open PREP MUTES.",
-      "Hold TEMPO and press the TRIG keys of the tracks to switch; press a key again to take the track back out.",
-      "Let go of TEMPO, the TRIG keys and FUNC. The tracks switch when the pattern next reaches its first step.",
-      "STOP drops anything still waiting."
+      "Start the sequencer with PLAY and enter Mute Mode (FUNC+TRK).",
+      "Hold FUNC to open PREP MUTES and press the TRIG keys of the tracks to switch; press a key again to take the track back out.",
+      "Press PERFORM while still holding FUNC. The choice is parked and the stock PERFORM sub-function does not open.",
+      "Let go of every key. The tracks switch when the pattern next reaches its first step.",
+      "Press PERFORM again with nothing chosen to cancel what is parked; STOP also drops it."
     ],
     "screenshots": []
   },
@@ -48,11 +48,11 @@
     "requires": [],
     "conflicts": [],
     "limitations": [
-      "Not tested on a unit, and the module itself has not run in an emulator. The step position, pattern pointer, mute toggle and view stack were observed on the stock OS 1.17 in a ColdFire-only emulator; see TESTING.md.",
+      "Not tested on a unit. Tested only by driving the stock OS 1.17 image in a ColdFire-only emulator; see TESTING.md.",
       "Works while the sequencer plays; when it is stopped PREP MUTES keeps its stock behaviour.",
       "With Scale per track the longest track's wrap ends the pattern.",
       "Switches on the first UI tick (about 30 Hz) after the pattern wraps, not sample-accurately.",
-      "The stock result of FUNC+TEMPO is not checked yet; the module does not consume the key."
+      "FUNC+PERFORM opens a stock view over PREP MUTES: while PREP MUTES is open, tracks are chosen and the pattern plays, the module takes that key press, so that stock sub-function is not available then."
     ]
   },
   "platform": {
@@ -60,10 +60,13 @@
     "core": "1.0",
     "build": "build.json",
     "events": [
+      "ev_key",
       "ev_tick"
     ],
     "claims": [
-      "ui:PREP MUTES:TEMPO held"
+      "ui:PREP MUTES:PERFORM pressed",
+      "ui:TRIG LEDs parked tracks",
+      "site:0x400311a2 key-LED frame"
     ]
   },
   "resources": {
