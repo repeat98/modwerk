@@ -113,8 +113,8 @@ def main():
             cases = [
                 ('patch_softmute.s', 0x400d7400, False,
                  'ca7792be6239c6c3c1d4882ef3c8fdd718a05d7e90f36d8eae0c1971cb9a9689'),
-                ('patch_softmute.s', 0x400d74e4, True,
-                 '9be6df774dda7c6996a94c6138a002b26e667fb458abaccd4388ebf97f3ae43d'),
+                ('patch_softmute.s', 0x400d6e54, True,
+                 'ac03f5590ca69f7d29f1034720e9a8d83c6500953b80c729d4aed400125285d8'),
                 ('patch_mutemode.s', 0x400d7800, False,
                  '4c6702aaae1840d9a95a274bd97e252b4bd1e39338c0e50c5257e96060bd4220')]
             for name, origin, sidechain, expected in cases:

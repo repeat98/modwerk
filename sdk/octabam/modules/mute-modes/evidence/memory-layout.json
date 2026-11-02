@@ -69,10 +69,10 @@
   "hardwareCanaries": null,
   "qualification": false,
   "sidechainVariant": {
-    "softmuteBytes": 1086,
+    "softmuteBytes": 1100,
     "menuBytes": 208,
     "tablesBytes": 204,
-    "totalBeforeAlignmentBytes": 1498,
+    "totalBeforeAlignmentBytes": 1512,
     "mutableKeyMaskBytes": 1,
     "placement": "Only source oracle and isolated native execution tested; no composed SC_KEY image is claimed."
   }

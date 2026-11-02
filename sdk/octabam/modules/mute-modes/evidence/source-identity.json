@@ -12,9 +12,9 @@
     },
     {
       "source": "patch_softmute.s",
-      "origin": 1074623716,
-      "bytes": 1086,
-      "sha256": "9be6df774dda7c6996a94c6138a002b26e667fb458abaccd4388ebf97f3ae43d",
+      "origin": 1074622036,
+      "bytes": 1100,
+      "sha256": "ac03f5590ca69f7d29f1034720e9a8d83c6500953b80c729d4aed400125285d8",
       "matchesAuthor": true,
       "variant": "sidechain"
     },
