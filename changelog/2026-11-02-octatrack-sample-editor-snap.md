@@ -1,0 +1,1 @@
+Adds a private proposal for optional, confirmed zero-crossing alignment in the Octatrack sample-editor service. The base owns bounded analysis, cancellation and complete marker publication; existing ABI-1 clients retain their original interface. This proposal is not part of the released beta base and remains subject to owner review and qualification.

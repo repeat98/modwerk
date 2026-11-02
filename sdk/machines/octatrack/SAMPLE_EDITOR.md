@@ -174,3 +174,20 @@ flashed base and saved sixteen-module set after this new run needs a user
 power cycle; no post-test power-cycle result is claimed here. The earlier
 power-off/interrupted-run outcomes and later event-36 build qualification
 remain separate.
+
+## Optional confirmed boundary analysis proposal
+
+The private Beat Slicer 0.1.68 proposal extends the ABI-1 API with an optional,
+size-checked tail for SNAP alignment. Existing ABI-1 clients keep the same
+prefix and `replace` behavior. SNAP copies a normal grid proposal and uses the
+existing CREATE/REPLACE confirmation; PCM analysis starts only after YES. The
+base reads bounded native sample-frame pairs on engine work, using the opening's
+LEFT/RIGHT/BOTH selection, and publishes the complete table only after the
+source and owner still match. Cancelled, stale, failed or over-limit work leaves
+the old marker table intact. No module PCM pointer or callback crosses the API.
+
+This remains a private proposal pending owner review and broader qualification.
+The 2 November MKII result in the Beat Slicer draft covers one mono16 Static
+fixture on a separately instrumented measurement base; it is not evidence for
+the ordinary beta base or a release build. See the draft's dated hardware
+record for exact boundaries, timing scope and remaining cases.

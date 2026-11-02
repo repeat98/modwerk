@@ -5,6 +5,7 @@
 #include "sample_editor_actions.h"
 extern struct mw_sample_editor mw_sample_editor;
 extern const struct modwerk_sample_editor_api mw_sample_editor_api;
+const struct modwerk_sample_editor_api *mw_sample_editor_public_api(void);
 void mw_sample_editor_bootstrap(void);
 int mw_sample_owner_current_locked(const struct runtime_owner *);
 void mw_sample_owner_changing(const struct runtime_dsp *);
@@ -14,8 +15,11 @@ void mw_sample_engine_job(const void *);
  * from a reusable queue record's opcode. Access remains closed until idle. */
 void mw_sample_waveform_job(const void *);
 void mw_sample_refresh_ui(void);
+void mw_sample_analysis_queue(void);
 /* The UI task's base-owned menu/confirmation adapter. */
 void mw_sample_ui_tick(void);
 int mw_sample_ui_key(int,int);
+int mw_sample_ui_enc(int,int);
+int mw_sample_ui_shortcut_key(int,int);
 void mw_sample_menu_retire_locked(const struct runtime_dsp *);
 #endif

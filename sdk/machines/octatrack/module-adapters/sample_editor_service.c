@@ -96,13 +96,14 @@ void mw_sample_editor_changed_locked(struct mw_sample_editor *e)
 {
     if(!e || !e->initialized)return;
     e->state=MW_SAMPLE_CLOSED;
+    e->completion=MODWERK_SAMPLE_STALE;
     if(e->revision==UINT32_MAX)e->poisoned=1;
     else ++e->revision;
 }
 void mw_sample_editor_retire_locked(struct mw_sample_editor *e,const struct runtime_owner *owner)
 {
     if(binding(e) && owner && e->state!=MW_SAMPLE_CLOSED &&
-       owner_equal(&e->owner,owner))e->state=MW_SAMPLE_CLOSED;
+       owner_equal(&e->owner,owner)){e->state=MW_SAMPLE_CLOSED;e->completion=MODWERK_SAMPLE_STALE;}
 }
 static unsigned current(struct mw_sample_editor *e,uint32_t token)
 {
@@ -113,7 +114,9 @@ static unsigned current(struct mw_sample_editor *e,uint32_t token)
     if(!b->ready(b->context))return MODWERK_SAMPLE_BUSY;
     unsigned why=b->capture(b->context,&e->observed);
     if(why!=MODWERK_SAMPLE_OK)return why;
-    return capture_equal(&e->before,&e->observed)?MODWERK_SAMPLE_OK:MODWERK_SAMPLE_STALE;
+    return capture_equal(&e->before,&e->observed) &&
+        (!(e->options&MODWERK_SAMPLE_SNAP_ZERO) || e->before.channels==e->observed.channels)?
+        MODWERK_SAMPLE_OK:MODWERK_SAMPLE_STALE;
 }
 unsigned mw_sample_editor_begin(struct mw_sample_editor *e,const struct runtime_owner *owner,uint32_t *token)
 {
@@ -132,6 +135,7 @@ unsigned mw_sample_editor_begin(struct mw_sample_editor *e,const struct runtime_
         if(why==MODWERK_SAMPLE_OK) {
             owner_copy(&e->owner,owner);view_copy(&e->before.view,&e->observed.view);
             for(unsigned i=0;i<11u;++i)e->before.controls[i]=e->observed.controls[i];
+            e->before.channels=e->observed.channels;e->options=0;e->completion=MODWERK_SAMPLE_NO_CHANGE;
             e->opened_revision=e->revision;++e->serial;e->state=MW_SAMPLE_OPEN;*token=e->serial;
         }
     }
@@ -185,22 +189,41 @@ static unsigned prepare(struct mw_sample_editor *e,const struct modwerk_sample_g
     }
     return MODWERK_SAMPLE_OK;
 }
-static unsigned confirm(struct mw_sample_editor *e,uint32_t token,const struct modwerk_sample_grid *g,unsigned replacing)
+static unsigned confirm(struct mw_sample_editor *e,uint32_t token,const struct modwerk_sample_grid *g,unsigned replacing,uint32_t options)
 {
-    if(!binding(e) || !g)return MODWERK_SAMPLE_INVALID;
+    if(!binding(e) || !g || (options&~MODWERK_SAMPLE_SNAP_ZERO))return MODWERK_SAMPLE_INVALID;
+    if(options && !e->backend->read_pair)return MODWERK_SAMPLE_UNSUPPORTED;
     const struct mw_sample_backend *b=e->backend;uint32_t saved=b->lock(b->context);
     unsigned why=current(e,token);
     if(why==MODWERK_SAMPLE_OK && e->state!=MW_SAMPLE_OPEN)why=MODWERK_SAMPLE_BUSY;
     if(why==MODWERK_SAMPLE_OK) {
         why=prepare(e,g,replacing);
-        if(why==MODWERK_SAMPLE_OK){e->replacing=replacing;e->state=MW_SAMPLE_PROMPT;why=MODWERK_SAMPLE_CONFIRMING;}
+        if(why==MODWERK_SAMPLE_OK && options && g->count &&
+           mw_snap_init(&e->snap,g->starts,g->count,e->before.view.trim_end,e->before.view.frames,
+                        e->before.channels,e->before.controls[0]&1u)!=MW_SNAP_WORKING)
+            why=MODWERK_SAMPLE_INVALID;
+        if(why==MODWERK_SAMPLE_OK){e->options=options;e->replacing=replacing;e->state=MW_SAMPLE_PROMPT;why=MODWERK_SAMPLE_CONFIRMING;}
     } else if(token==e->serial && why!=MODWERK_SAMPLE_BUSY)e->state=MW_SAMPLE_CLOSED;
     b->unlock(b->context,saved);return why;
 }
 unsigned mw_sample_editor_confirm(struct mw_sample_editor *e,uint32_t token,const struct modwerk_sample_grid *g)
-{return confirm(e,token,g,0);}
+{return confirm(e,token,g,0,0);}
 unsigned mw_sample_editor_replace(struct mw_sample_editor *e,uint32_t token,const struct modwerk_sample_grid *g)
-{return confirm(e,token,g,1);}
+{return confirm(e,token,g,1,0);}
+unsigned mw_sample_editor_replace_options(struct mw_sample_editor *e,uint32_t token,
+                                          const struct modwerk_sample_grid *g,uint32_t options)
+{return confirm(e,token,g,1,options);}
+static unsigned publish_edit(struct mw_sample_editor *e)
+{
+    const struct mw_sample_backend *b=e->backend;
+    e->state=MW_SAMPLE_CLOSED; /* consume before even a reentrant publisher */
+    unsigned why=b->publish(b->context,&e->before,&e->edit);
+    if(why!=MODWERK_SAMPLE_APPLIED && why!=MODWERK_SAMPLE_NO_CHANGE && why!=MODWERK_SAMPLE_STALE) {
+        why=MODWERK_SAMPLE_FAULT;e->poisoned=1;
+    }
+    if(e->revision==UINT32_MAX)e->poisoned=1;else ++e->revision;
+    e->completion=why;return why;
+}
 unsigned mw_sample_editor_answer(struct mw_sample_editor *e,uint32_t token,unsigned yes)
 {
     if(!binding(e))return MODWERK_SAMPLE_UNSUPPORTED;
@@ -213,13 +236,11 @@ unsigned mw_sample_editor_answer(struct mw_sample_editor *e,uint32_t token,unsig
         if(why==MODWERK_SAMPLE_BUSY){b->unlock(b->context,saved);return why;}
         /* Consume before calling the publisher. No duplicate YES/reentrant
          * prompt, uncertain retry or later owner restoration can apply twice. */
-        e->state=MW_SAMPLE_CLOSED;
+        e->state=MW_SAMPLE_CLOSED;e->completion=why;
         if(why==MODWERK_SAMPLE_OK) {
-            why=b->publish(b->context,&e->before,&e->edit);
-            if(why!=MODWERK_SAMPLE_APPLIED && why!=MODWERK_SAMPLE_NO_CHANGE && why!=MODWERK_SAMPLE_STALE) {
-                why=MODWERK_SAMPLE_FAULT;e->poisoned=1;
-            }
-            if(e->revision==UINT32_MAX)e->poisoned=1;else ++e->revision;
+            if((e->options&MODWERK_SAMPLE_SNAP_ZERO) && e->edit.count) {
+                e->state=MW_SAMPLE_ANALYZE;why=MODWERK_SAMPLE_ANALYZING;e->completion=why;
+            } else why=publish_edit(e);
         }
     }
     b->unlock(b->context,saved);return why;
@@ -228,6 +249,39 @@ void mw_sample_editor_cancel(struct mw_sample_editor *e,uint32_t token)
 {
     if(!binding(e))return;
     const struct mw_sample_backend *b=e->backend;uint32_t saved=b->lock(b->context);
-    if(token && token==e->serial)e->state=MW_SAMPLE_CLOSED;
+    if(token && token==e->serial && e->state!=MW_SAMPLE_CLOSED){e->state=MW_SAMPLE_CLOSED;e->completion=MODWERK_SAMPLE_NO_CHANGE;}
     b->unlock(b->context,saved);
+}
+static int read_pair(void *context,uint32_t position,int32_t *left,int32_t *right)
+{
+    struct mw_sample_editor *e=context;
+    return e->backend->read_pair(e->backend->context,&e->before,position,left,right);
+}
+unsigned mw_sample_editor_analyze_step(struct mw_sample_editor *e)
+{
+    if(!binding(e))return MODWERK_SAMPLE_UNSUPPORTED;
+    const struct mw_sample_backend *b=e->backend;uint32_t saved=b->lock(b->context);
+    unsigned why=MODWERK_SAMPLE_STALE;
+    if(e->state==MW_SAMPLE_ANALYZE) {
+        why=current(e,e->serial);
+        if(why==MODWERK_SAMPLE_OK) {
+            unsigned status=mw_snap_step(&e->snap,read_pair,e,MW_SNAP_STEP_PAIRS);
+            why=current(e,e->serial); /* a recorder can preempt the pair reads */
+            if(why==MODWERK_SAMPLE_OK && status==MW_SNAP_DONE) {
+                for(uint32_t i=0;i<e->edit.count;++i) {
+                    e->edit.records[i].start=e->snap.points[i];
+                    e->edit.records[i].end=e->snap.points[i+1u];
+                    e->edit.records[i].loop=UINT32_MAX;
+                }
+                why=publish_edit(e);
+            } else if(why==MODWERK_SAMPLE_OK) {
+                why=status==MW_SNAP_WORKING?MODWERK_SAMPLE_ANALYZING:
+                    status==MW_SNAP_LIMIT?MODWERK_SAMPLE_ANALYSIS_LIMIT:MODWERK_SAMPLE_ANALYSIS_FAILED;
+            }
+        }
+        if(why!=MODWERK_SAMPLE_BUSY && why!=MODWERK_SAMPLE_ANALYZING) {
+            e->state=MW_SAMPLE_CLOSED;e->completion=why;
+        }
+    }
+    b->unlock(b->context,saved);return why;
 }

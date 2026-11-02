@@ -1,7 +1,8 @@
 /* SPDX-License-Identifier: MIT
  * Native 1.40C base adapter. The source build checks every owned seam against
  * the private stock image. Enabled only by the private sample-editor option.
- * Flex/Static and inactive recorder metadata only; no PCM access.
+ * Flex/Static and inactive recorder metadata; bounded native PCM pair reads
+ * run only on the engine for a confirmed SNAP request.
  */
 #include "sample_editor_board.h"
 #ifdef MW_SAMPLE_BOARD_HOST
@@ -32,6 +33,10 @@ static uint32_t idle_seen,job_active,refresh_pending,position_hint;
 static uint32_t waveform_candidate,waveform_seen;
 static const void *job_message;
 static unsigned owner_hint;
+/* Stock's unknown-command path drains this resident no-op record. The engine
+ * observer owns the work; there is no stock completion or package callback. */
+static const unsigned char scan_message[40] __attribute__((aligned(4)))={255};
+static uint32_t scan_queued,scan_running,scan_more;
 struct mw_sample_editor mw_sample_editor;
 /* File-backed settings are written by UI/engine/storage tasks, excluded by
  * the level-4 lock. Recording into the edited buffer and audition are excluded.
@@ -116,7 +121,7 @@ static int source_stable(const struct mw_sample_capture *before,uint32_t setting
 static int ready(void *unused)
 {
     (void)unused;
-    return audio_preemptible() && idle_seen && !job_active && !READ_PACKED(0x460d17d2u) && !READ(0x460e6bccu) &&
+    return audio_preemptible() && idle_seen && (!job_active || scan_running) && !READ_PACKED(0x460d17d2u) && !READ(0x460e6bccu) &&
         READ(0x460d1cb8u)==1u && !READ(0x460e76a0u) &&
         mw_sample_transport_ready() && mw_sample_storage_ready();
 }
@@ -133,6 +138,8 @@ static unsigned capture(void *unused,struct mw_sample_capture *out)
     uint32_t controls=(kind?0x46c922c4u:0x46c90a78u)+44u*slot;
     uint32_t settings=(kind?0x100b14f0u:0x100d5b30u)+1096u*slot;
     for(uint32_t i=0;i<11u;++i)out->controls[i]=READ(controls+4u*i);
+    uint32_t selected=READ(0x400ceb38u);
+    out->channels=selected<=2u?selected+1u:0u;
     if(out->controls[0]>3u || out->controls[2] || (!recorder && !out->controls[4]) ||
        out->controls[4]>0x7fffffffu || (!kind && out->controls[9]==UINT32_MAX))return MODWERK_SAMPLE_UNSUPPORTED;
     struct modwerk_sample_view *v=&out->view;
@@ -220,7 +227,22 @@ static unsigned publish(void *unused,const struct mw_sample_capture *before,cons
     return matches(settings,v->count,v->records) && READ(0x400ceb3cu)==selected?
         (stale?MODWERK_SAMPLE_STALE:MODWERK_SAMPLE_NO_CHANGE):MODWERK_SAMPLE_FAULT;
 }
-static const struct mw_sample_backend backend={0,lock,unlock,ready,owner,capture,publish};
+static int read_pair(void *unused,const struct mw_sample_capture *before,uint32_t position,
+                     int32_t *left,int32_t *right)
+{
+    (void)unused;
+    if(!scan_running || !audio_preemptible() || position>=before->view.frames ||
+       before->view.frames-position<2u)return 0;
+#ifdef MW_SAMPLE_BOARD_HOST
+    int mw_sample_host_read_pair(const struct mw_sample_capture *,uint32_t,int32_t *,int32_t *);
+    return mw_sample_host_read_pair(before,position,left,right);
+#else
+    typedef int (*reader)(uint32_t,uint32_t,uint32_t,int32_t *,int32_t *);
+    reader native=(reader)(before->view.kind?0x40095984u:0x40093064u);
+    return native(before->view.slot,position,2u,left,right)>=0;
+#endif
+}
+static const struct mw_sample_backend backend={0,lock,unlock,ready,owner,capture,publish,read_pair};
 void mw_sample_editor_bootstrap(void)
 {
     if(!mw_sample_editor.initialized)(void)mw_sample_editor_init(&mw_sample_editor,&backend);
@@ -262,9 +284,38 @@ static unsigned api_replace(uint32_t token,const struct modwerk_sample_grid *gri
     unsigned why=buffer(grid,sizeof *grid,0)?mw_sample_editor_replace(&mw_sample_editor,token,grid):MODWERK_SAMPLE_INVALID;
     modwerk_machine_unlock(saved);return why;
 }
+static unsigned api_replace_options(uint32_t token,const struct modwerk_sample_grid *grid,uint32_t options)
+{
+    uint32_t saved=modwerk_machine_lock();
+    unsigned why=buffer(grid,sizeof *grid,0)?
+        mw_sample_editor_replace_options(&mw_sample_editor,token,grid,options):MODWERK_SAMPLE_INVALID;
+    modwerk_machine_unlock(saved);return why;
+}
 const struct modwerk_sample_editor_api mw_sample_editor_api={
     MODWERK_SAMPLE_EDITOR_ABI,sizeof(struct modwerk_sample_editor_api),api_copy,api_confirm,api_cancel,api_replace
 };
+static const struct modwerk_sample_editor_options_api options_api={
+    {MODWERK_SAMPLE_EDITOR_ABI,sizeof(struct modwerk_sample_editor_options_api),
+     api_copy,api_confirm,api_cancel,api_replace},api_replace_options
+};
+const struct modwerk_sample_editor_api *mw_sample_editor_public_api(void)
+{return &options_api.base;}
+void mw_sample_analysis_queue(void)
+{
+    /* Queue insertion is a short atomic decision, never PCM or table work.
+     * Do not wrap stock's unchecked ring on a full/unknown queue. */
+    uint32_t saved=modwerk_machine_mask();
+    if(mw_sample_editor.state==MW_SAMPLE_ANALYZE && !scan_queued && !job_active &&
+       !READ_PACKED(0x460d17d2u) && READ_PACKED(0x460d17deu)>=1u) {
+        scan_queued=1;
+#ifdef MW_SAMPLE_BOARD_HOST
+        void mw_sample_host_post(const void *);mw_sample_host_post(scan_message);
+#else
+        ((void (*)(void *,const void *))0x40000c3cu)((void *)0x460d17ceu,scan_message);
+#endif
+    }
+    modwerk_machine_unmask(saved);
+}
 void mw_sample_owner_changing(const struct runtime_dsp *from)
 {
     uint32_t saved=modwerk_machine_mask();
@@ -287,12 +338,19 @@ void mw_sample_engine_job(const void *message)
      * Its byte alone never makes it read-only: the separately guarded native
      * dispatcher branch must confirm what actually ran. A mutated/unknown
      * dispatch retires the token at idle before access can reopen. */
-    if(!mw_sample_ep0_wake(message)) {
+    unsigned ours=message==scan_message && scan_queued;
+    if(ours){scan_queued=0;scan_running=1;}
+    else if(!mw_sample_ep0_wake(message)) {
         if(message && *(const volatile uint8_t *)message==16u) {
             waveform_candidate=1;job_message=message;
         } else mw_sample_editor_changed_locked(&mw_sample_editor);
     }
     modwerk_machine_unmask(saved);
+    if(ours) {
+        unsigned why=mw_sample_editor_analyze_step(&mw_sample_editor);
+        scan_more=why==MODWERK_SAMPLE_ANALYZING;
+        scan_running=0;
+    }
 }
 void mw_sample_waveform_job(const void *message)
 {
@@ -316,6 +374,9 @@ void mw_sample_engine_idle(void)
     if(waveform_candidate && !waveform_seen)mw_sample_editor_changed_locked(&mw_sample_editor);
     waveform_candidate=waveform_seen=0;job_message=0;job_active=0;idle_seen=1;
     modwerk_machine_unmask(saved);
+    /* A transient BUSY pauses until the next UI tick. Never keep the engine
+     * spinning on no-op records while USB/storage owns the source boundary. */
+    if(scan_more){scan_more=0;mw_sample_analysis_queue();}
 }
 void mw_sample_refresh_ui(void)
 {

@@ -3,6 +3,7 @@
 #define MODWERK_SAMPLE_EDITOR_SERVICE_H
 #include "modwerk_sample_editor.h"
 #include "loader.h"
+#include "sample_editor_snap.h"
 #define MW_SAMPLE_FILE_SLOTS 128u
 #define MW_SAMPLE_RECORDER_COUNT 8u
 
@@ -15,6 +16,7 @@
 struct mw_sample_capture {
     struct modwerk_sample_view view;
     uint32_t controls[11];
+    uint32_t channels;
 };
 struct mw_sample_edit {
     uint32_t count;
@@ -35,14 +37,19 @@ struct mw_sample_backend {
      * Recorder extent/trim/PCM changes must never be rolled back. No disk save,
      * PCM mutation, normalizing old rows or user history is permitted. */
     unsigned (*publish)(void *, const struct mw_sample_capture *, const struct mw_sample_edit *);
+    /* Engine task only, metadata-writer lock held, frame/DMA preemptible.
+     * Copy two real signed frames into base-owned buffers; no PCM lease. */
+    int (*read_pair)(void *,const struct mw_sample_capture *,uint32_t,int32_t *,int32_t *);
 };
-enum mw_sample_state { MW_SAMPLE_CLOSED, MW_SAMPLE_OPEN, MW_SAMPLE_PROMPT };
+enum mw_sample_state { MW_SAMPLE_CLOSED, MW_SAMPLE_OPEN, MW_SAMPLE_PROMPT, MW_SAMPLE_ANALYZE };
 struct mw_sample_editor {
     const struct mw_sample_backend *backend;
     uint32_t initialized, revision, serial, opened_revision, state, poisoned, replacing;
     struct runtime_owner owner;
     struct mw_sample_capture before, observed;
     struct mw_sample_edit edit;
+    uint32_t options,completion;
+    struct mw_sample_snap snap;
 };
 /* Init ONCE at cold boot, before native writers start. Zero storage required.
  * Never reset for project/module/source changes or restore an old serial. */
@@ -51,6 +58,10 @@ unsigned mw_sample_editor_begin(struct mw_sample_editor *, const struct runtime_
 unsigned mw_sample_editor_copy(struct mw_sample_editor *, uint32_t token, struct modwerk_sample_view *);
 unsigned mw_sample_editor_confirm(struct mw_sample_editor *, uint32_t token, const struct modwerk_sample_grid *);
 unsigned mw_sample_editor_replace(struct mw_sample_editor *, uint32_t token, const struct modwerk_sample_grid *);
+unsigned mw_sample_editor_replace_options(struct mw_sample_editor *,uint32_t,const struct modwerk_sample_grid *,uint32_t);
+/* Engine task only. One bounded chunk; recapture before/after and before
+ * publication. The copied pending edit stays in the base after module removal. */
+unsigned mw_sample_editor_analyze_step(struct mw_sample_editor *);
 /* Invoked only by the base's verified stock confirmation dispatch, with the
  * token captured when THAT prompt was shown. Revalidate source/owner on YES.
  * NO just cancels. BUSY retains the prompt for a later revalidated attempt;
