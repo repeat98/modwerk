@@ -179,7 +179,7 @@ Closed, Tiempos adds no load the page shows. The base's five-minute record for t
 
 ## Reverse playback on the MKI (2 November 2026, base `24a0ed57…`; reported by the developer, speeds read over USB)
 
-The owner asked in #1096 how Tiempos handles RATE below 0. On this MKI, RATE 0 is the normal speed's zero point, not the default: the developer's tracks play at the highest RATE, negative values play backwards, and 0 holds the voice still.
+The owner asked in #1096 how Tiempos handles RATE below 0. On this MKI the highest RATE (the default) plays forward at normal speed, negative values play backwards, and 0 holds the voice still.
 
 **Package `0506a245…`, trial (not accepted).** Track 1 (Static, the 100 BPM tone at 120 BPM) with RATE -64 sounded from the end; row 1 read 0:00, then 99:59 left and 99:59 total at RATE -12. Tiempos took every backward step as a jump, so it kept no speed or kept a tiny forward one (34 frames a second), and counted towards the end of the sample.
 
