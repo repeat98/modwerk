@@ -19,7 +19,7 @@
     "label": "MUTE LATCH",
     "family": "Performance workflow",
     "summary": "Press PERFORM while choosing tracks in PREP MUTES and the mutes wait for the pattern's first step.",
-    "overview": "PREP MUTES normally mutes the chosen tracks the moment FUNC is let go. With Mute Latch, pressing PERFORM while FUNC is held and tracks are chosen parks the choice instead: let go of every key and the mutes switch at the next pass of the pattern's first step, so both hands are free for a synth or effects in the meantime. Without a choice or without the pattern playing, PERFORM keeps its stock the stock PERFORM sub-function, and PREP MUTES works exactly as before.",
+    "overview": "PREP MUTES normally mutes the chosen tracks the moment FUNC is let go. With Mute Latch, pressing PERFORM once while FUNC is held and tracks are chosen arms the choice (MUTES ARMED) instead: let go of FUNC and every other key and the mutes switch at the next pass of the pattern's first step, so both hands are free for a synth or effects in the meantime. Without a choice or without the pattern playing, PERFORM keeps its stock the stock PERFORM sub-function, and PREP MUTES works exactly as before.",
     "highlights": [
       "Parks the PREP MUTES choice until the pattern starts again",
       "Takes only the PERFORM key press inside an open PREP MUTES session while the pattern plays",
@@ -100,10 +100,28 @@
       "path": "media/thumbnail.svg",
       "kind": "thumbnail",
       "caption": "Mute Latch thumbnail",
-      "alt": "Placeholder thumbnail for Mute Latch",
+      "alt": "Sixteen steps with two armed trigs lit and an arrow back to the first step",
       "credit": "crisp909",
       "license": "GPL-3.0-or-later",
-      "source": "Original placeholder from the Modwerk SDK template; replace with your own artwork."
+      "source": "Original artwork for this module."
+    },
+    {
+      "path": "media/prep-mutes.png",
+      "kind": "screenshot",
+      "caption": "PREP MUTES with TRIG 1 and 3 chosen (emulator capture)",
+      "alt": "Digitakt II screen showing the PREP MUTES header",
+      "credit": "crisp909",
+      "license": "GPL-3.0-or-later",
+      "source": "Captured from the digikit emulator with this module; no firmware content other than the screen."
+    },
+    {
+      "path": "media/mutes-armed.png",
+      "kind": "screenshot",
+      "caption": "The header after one PERFORM press (emulator capture)",
+      "alt": "Digitakt II screen showing the header message MUTES ARMED",
+      "credit": "crisp909",
+      "license": "GPL-3.0-or-later",
+      "source": "Captured from the digikit emulator with this module; no firmware content other than the screen."
     }
   ]
 }

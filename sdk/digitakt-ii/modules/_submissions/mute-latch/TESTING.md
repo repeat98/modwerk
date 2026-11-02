@@ -44,3 +44,14 @@ Run on the Digitakt II emulator (ColdFire only, SSI clock), image linked from co
 ## Hardware (reported by the author, crisp909)
 
 Digitakt II, OS 1.17, image linked with Elekloader from core 1.0 and the PERFORM build (this version, 0.1.0-experimental). Reported by the author as working as intended: single short PERFORM press arms at once, "MUTES ARMED" shows, parked TRIG LEDs keep their orange blinking until the switch, and the mutes switch at the pattern start. Reported, not measured by the assistant; no per-PAGE or other-pattern-length tests were recorded.
+
+## Source and build
+
+Source: branch `module/mute-latch-dt2` of crisp909/modwerk, this folder. Build: Modwerk elemod builder, m68k-linux-gnu-gcc 13, linked with Elekloader (`--version 2.0b`) on core 1.0 and the stock OS 1.17 image. Test image sha256 d736aaec71748cd763a5516700b287cff4863fca44f796a2a5211189f3a395fa (emulator). Screenshots: `media/capture.json`.
+
+## Flows compared with and without the module (emulator)
+
+- PREP MUTES with FUNC released without PERFORM while playing: 2 toggles, as stock.
+- PERFORM with FUNC held, nothing chosen, nothing armed: stock behaviour (not re-run on this build beyond the earlier TEMPO equivalent).
+- Stopped sequencer: stock behaviour (earlier build, not re-run).
+- Not tested: save/reload of a project (module keeps no saved state), other patterns, Part change, power cycle on a unit.
