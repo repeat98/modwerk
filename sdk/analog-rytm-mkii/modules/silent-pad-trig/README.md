@@ -55,7 +55,6 @@ above; 0.5.0 splits it in two so silent pads while editing and silent pads while
 can be chosen separately; 0.5.1 renames its second row from SILENT LIVE REC to SILENT PAD LIVEREC
 and changes nothing else; 0.6.0 adds MUTE ALL SOUND. 0.3.0, 0.4.0, 0.5.0 and 0.5.1 ran on a unit;
 0.5.1 also ran in rytm-emu (build PS08). 0.6.0 ran on a unit as builds PS10, PS11 and PS12, as reported.
-It waits in `_submissions/`.
 
 ## Controls
 
