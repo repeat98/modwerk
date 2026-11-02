@@ -3,9 +3,9 @@
     "version": "0.1.0-experimental",
     "date": "2026-11-02",
     "changes": [
-      "First version: the tempo LED flashes green on the 1 of every bar while playing.",
-      "Beats 2, 3 and 4 stay red, and stopped it is stock.",
-      "Follows tempo and external MIDI clock; nothing to set."
+      "First version: the tempo LED flashes green on the pattern's 1 while playing.",
+      "Every other beat stays red, and stopped it is stock.",
+      "Follows pattern length, scale, tempo and external MIDI clock; nothing to set."
     ]
   }
 ]

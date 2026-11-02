@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="960" height="576" viewBox="0 0 320 192" class="signal-art" fill="none" role="img" aria-labelledby="title description">
-<title id="title">Bar LED  green on the 1</title>
-<desc id="description">A conceptual diagram: two bars of four beat flashes; the first flash of each bar is green, the other three red. It is not a measured screen.</desc>
+<title id="title">Bar LED  green on the pattern's 1</title>
+<desc id="description">A conceptual diagram: two passes of a pattern's beat flashes; the first flash of each pass is green, the others red. It is not a measured screen.</desc>
 <style>.signal-art{ width: 100%; height: calc(100% - 46px); overflow: visible; stroke-width: 1.3; stroke-linecap: round; stroke-linejoin: round; }
 .signal-grid{ stroke: #ffffff; opacity: .035; stroke-width: .7; }
 .signal-main{ stroke: #7ec8e3; stroke-width: 2.3; }
@@ -26,6 +26,6 @@
 <text x="36" y="132">1</text>
 <text x="186" y="132">1</text>
 <text x="28" y="177">BAR LED</text>
-<text x="214" y="177">GREEN ON 1</text>
+<text x="196" y="177">PATTERN'S 1</text>
 </g>
 </svg>

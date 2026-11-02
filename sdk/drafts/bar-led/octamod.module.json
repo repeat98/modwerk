@@ -13,27 +13,27 @@
   },
   "nativeManifest": "manifest.py",
   "presentation": {
-    "label": "Tempo LED marks the bar",
+    "label": "Tempo LED marks the pattern's 1",
     "family": "Transport",
-    "summary": "The tempo LED flashes green on the 1 of every bar while the sequencer plays; the other beats stay red.",
-    "overview": "A visual downbeat for players who can't use the click track, for example when the cue outputs feed external effects. While the sequencer plays, the tempo LED flashes green on beat 1 of every four-beat bar, counted from PLAY, and red on beats 2, 3 and 4 as stock does. Stopped, it is stock. Nothing to set: install it and press PLAY.",
+    "summary": "The tempo LED flashes green on the pattern's 1 while the sequencer plays; every other beat stays red.",
+    "overview": "A visual downbeat for players who can't use the click track, for example when the cue outputs feed external effects. While the sequencer plays, the tempo LED flashes green on the first beat of each pass of the pattern and red on every other beat, as stock does. It reads the sequencer's own step, so it follows the pattern length, scale and pattern changes. Stopped, it is stock. Nothing to set: install it and press PLAY.",
     "highlights": [
-      "Green on the 1, stock red on the other beats.",
-      "Follows the project tempo, external MIDI clock and tempo changes: it counts stock's own beat flash.",
+      "Green on the pattern's 1, stock red on every other beat.",
+      "Reads the sequencer's master step: follows pattern length, scale, pattern changes, tempo and external MIDI clock.",
       "No menu, no knob, no project data: remove the module and the LED is stock again."
     ],
     "usage": [
-      "Press [PLAY]: the first flash is green, then three red flashes, then green again on the next bar.",
-      "Change the tempo or follow external MIDI clock: the green stays on every fourth beat.",
-      "Press [STOP]: the LED behaves as stock, and the next [PLAY] starts on the 1 again."
+      "Press [PLAY]: the first flash is green, then red until the pattern comes round again.",
+      "Set the pattern's length (FUNC + PAGE, PATTERN SCALE) to 12 or 20 steps: the green still lands on the pattern's first step.",
+      "Press [STOP]: the LED behaves as stock, and the next [PLAY] starts green again."
     ]
   },
   "access": {
     "location": "The tempo LED, while the sequencer plays",
     "steps": [
-      "Press [PLAY]: the first flash is green, then three red flashes, then green again on the next bar.",
-      "Change the tempo or follow external MIDI clock: the green stays on every fourth beat.",
-      "Press [STOP]: the LED behaves as stock, and the next [PLAY] starts on the 1 again."
+      "Press [PLAY]: the first flash is green, then red until the pattern comes round again.",
+      "Set the pattern's length (FUNC + PAGE, PATTERN SCALE) to 12 or 20 steps: the green still lands on the pattern's first step.",
+      "Press [STOP]: the LED behaves as stock, and the next [PLAY] starts green again."
     ],
     "screenshots": []
   },
@@ -45,29 +45,29 @@
     "conflicts": [],
     "uiClaims": [],
     "limitations": [
-      "OS 1.40C. The bar is four beats counted from [PLAY], not the pattern's own length: a pattern whose length is not a whole number of four-beat bars wraps out of step with the green flash.",
+      "OS 1.40C. The tempo LED only flashes on whole beats: when the pattern's 1 falls mid-beat (say 14 steps at 1x), the green comes on the first flash after it.",
       "Green is LED id 39, the pair of stock's red 38 by the panel's red/green numbering; confirmed in the emulator's calls, not yet seen on a unit.",
-      "Pausing ([PLAY] while playing) and continuing are not yet tested."
+      "Per-track mode (MASTER LENGTH, INF included), pausing and a pattern change while playing are not yet tested."
     ]
   },
   "resources": {
     "recorded": "2 November 2026; source and ot_emu, stock 1.40C",
     "storage": {
       "label": "ColdFire code and state",
-      "display": "60 bytes",
-      "value": 60,
+      "display": "64 bytes",
+      "value": 64,
       "unit": "bytes",
       "method": "static",
-      "conditions": "One linked unit: 56 bytes of code and one 4-byte beat counter; the USB package is 192 bytes. One six-byte detour. No DSP memory.",
+      "conditions": "One linked unit: 58 bytes of code, 2 of padding and one 4-byte last-step word; the USB package is 196 bytes. One six-byte detour. No DSP memory.",
       "source": "TESTING.md"
     },
     "processing": {
       "label": "ColdFire, once per beat",
-      "display": "12 instructions a beat",
-      "value": 12,
+      "display": "11 instructions a beat",
+      "value": 11,
       "unit": "instructions/event",
       "method": "static",
-      "conditions": "At most 12 instructions before stock's set_led, once per beat (24 clock ticks), in stock's clock-message loop. Nothing per sample or per frame.",
+      "conditions": "At most 11 instructions before stock's set_led, once per beat (24 clock ticks), in stock's clock-message loop. Nothing per sample or per frame.",
       "source": "TESTING.md"
     },
     "impact": {
@@ -75,7 +75,7 @@
       "cpu": {
         "level": "minimal",
         "basis": "source-estimate",
-        "rationale": "At most 12 ColdFire instructions once per beat.",
+        "rationale": "At most 11 ColdFire instructions once per beat.",
         "source": "TESTING.md"
       },
       "dsp": {
@@ -87,14 +87,14 @@
       "memory": {
         "level": "minimal",
         "basis": "source-estimate",
-        "rationale": "60 bytes of code and state.",
+        "rationale": "64 bytes of code and state.",
         "source": "TESTING.md"
       }
     }
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "ot_emu on stock 1.40C (2 November 2026): with the unit preloaded and the call redirected, 11 beats after the transport start call set_led with id 39 on beats 1, 5 and 9 and stock's 38 on the others; stock alone calls 38 on every beat and none while stopped. Not yet run on a unit.",
+    "summary": "ot_emu on stock 1.40C (2 November 2026): with the unit preloaded and the call redirected, and pattern A01's length poked to 12, 16 and 20 steps, every beat flash on master step 0 asks for id 39 and every other for stock's 38 (verify.py); 14 steps gives green on the first flash after the wrap. Stock alone calls 38 on every beat and none while stopped. Not yet run on a unit.",
     "hardwareStatus": "untested",
     "evidenceRevision": "b8deefc88b2c3e5f3c6158e364eb741df1924e1d",
     "gates": [

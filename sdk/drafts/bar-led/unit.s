@@ -1,4 +1,4 @@
-| BAR LED -- the tempo LED flashes green on beat 1 of every bar while the
+| BAR LED -- the tempo LED flashes green on the pattern's 1 while the
 | sequencer plays; every other flash stays stock red.
 |
 | Stock flashes the tempo LED from its clock-message loop: message 7 (a
@@ -10,18 +10,23 @@
 |
 | The detour is that call (0x40056f24, `jsr set_led`): bl_flash gets the
 | caller's two arguments on the stack (4(sp) the id, 8(sp) the count), turns
-| id 38 into 39 on the 1 and tail-jumps to set_led, which returns to stock.
-| d0-d1 are free there (set_led is a C function; stock reloads d0 after it).
+| id 38 into 39 on the pattern's 1 and tail-jumps to set_led, which returns
+| to stock. d0-d1 are free there (set_led is a C function; stock reloads d0
+| after it).
 |
-| The bar is counted from PLAY in beats: four flashes a bar. It counts
-| stock's own beat flashes, so it follows tempo, external MIDI clock and
-| tempo changes with no clock of its own. Stopped, every flash is stock's
-| and the count is rearmed, so the next PLAY starts on the 1.
+| The pattern's 1 is read from the sequencer, not counted: the master step
+| 0x800065b4 (u16, the step now playing; 0x400a422c writes it each step,
+| before that step's beat flash) runs 0.. and wraps at the pattern's length.
+| A flash that sees a lower step than the flash before is the first since
+| the wrap: green. So it follows pattern length, scale, pattern changes,
+| tempo and external MIDI clock. Stopped, every flash is stock's and the
+| last step is rearmed (-1), so the first flash after PLAY is green.
         .text
         .global bl_flash
 
         .equ    SET_LED, 0x40013784
         .equ    TRANSPORT, 0x800065b8   | 1 while the sequencer plays (Euclid's EU_TRANSPORT)
+        .equ    MASTER_STEP, 0x800065b4 | u16: the master step now playing
         .equ    LED_GREEN, 39           | the tempo LED's green half (stock flashes 38, red)
 
 bl_flash:
@@ -29,15 +34,14 @@ bl_flash:
         subq.l  #1,%d0
         beq.s   .playing
         moveq   #-1,%d0                 | stopped: the next PLAY's first flash is the 1
-        move.l  %d0,(bl_beat).l
+        move.l  %d0,(bl_last).l
         jmp     (SET_LED).l
 .playing:
-        move.l  (bl_beat).l,%d0
-        addq.l  #1,%d0
-        moveq   #3,%d1
-        and.l   %d1,%d0                 | beat in the bar, 0..3
-        move.l  %d0,(bl_beat).l
-        bne.s   .red
+        mvz.w   (MASTER_STEP).l,%d0
+        move.l  (bl_last).l,%d1
+        move.l  %d0,(bl_last).l
+        cmp.l   %d1,%d0
+        bcc.s   .red                    | step >= the last flash's (unsigned): no wrap
         moveq   #LED_GREEN,%d0
         move.l  %d0,4(%sp)              | the caller's id argument: 38 -> 39
 .red:
@@ -45,5 +49,5 @@ bl_flash:
 
 | In .text: a DRAM unit's text is RAM (as Apply Scene keeps its state).
         .balign 4
-bl_beat:
+bl_last:
         .long   -1
