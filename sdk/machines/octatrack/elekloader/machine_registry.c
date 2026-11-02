@@ -29,6 +29,7 @@ typedef volatile uint8_t Part;
 typedef struct modwerk_machine Machine;
 #define MACHINES (MODWERK_OT_MACHINES - RUNTIME_EVENTS)
 #define SEQUENCER (MODWERK_OT_SEQUENCER_ROWS - RUNTIME_EVENTS)
+#define STARTS (MODWERK_OT_MACHINE_STARTS - RUNTIME_EVENTS)
 #ifdef MODWERK_DEV
 void modwerk_cost_stamp(unsigned k); /* diag.c: the development profile of the base's hooks */
 #define MW_STAMP(k) modwerk_cost_stamp(k)
@@ -69,6 +70,9 @@ __attribute__((weak)) void modwerk_dsp_source_engine_off(uint32_t module) { (voi
 /* Each track of the current Part: the priced machine its voice is charged to, or 0. A word each, so the render
  * reads it whole without a mask. */
 static const Machine *volatile charged[8];
+/* A refused START must also suppress the previous voice, until this owner's
+ * next accepted START. Other owners and the stock fallback remain independent. */
+static const Machine *volatile start_refused[8];
 /* Tracks whose refusal the DSP FULL box already showed: charge() retries a refused track on every UI tick, and a box
  * that reopened each time it timed out would never go away. Cleared when the claim succeeds or the track stops asking. */
 static uint8_t warned;
@@ -236,9 +240,15 @@ void modwerk_machine_tables_changed(void)
     for (uintptr_t volatile *row = modwerk_runtime_event_row[MACHINES]; *row && n < ROWS - 5u; ++row)
         n += ((const Machine *)*row)->abi == MODWERK_MACHINE_ABI;
     for (unsigned t = 0; t < 8; ++t) { /* a machine that left frees its voices and engine before its memory goes */
-        int kept = 0;
-        for (uintptr_t volatile *row = modwerk_runtime_event_row[MACHINES]; charged[t] && *row; ++row) kept |= *row == (uintptr_t)charged[t];
+        int kept = 0, start_kept = 0;
+        for (uintptr_t volatile *row = modwerk_runtime_event_row[MACHINES]; (charged[t] || start_refused[t]) && *row; ++row) {
+            kept |= *row == (uintptr_t)charged[t];
+            start_kept |= *row == (uintptr_t)start_refused[t];
+        }
         if (charged[t] && !kept) release(t);
+        /* An unrelated table change keeps a live owner's refusal; a departing owner must not leave it at an
+         * address the allocator may reuse for a new machine before that machine's first accepted START. */
+        if (start_refused[t] && !start_kept) start_refused[t] = 0;
     }
     for (unsigned k = 5; k < ROWS; ++k) mw_src_names[k] = (const char *)(uintptr_t)U32(0x400a78c8u + 4), mw_pb_table[k] = FLEX_PAGE;
     counts(n, sequencer());
@@ -553,6 +563,68 @@ unsigned mw_setup_knob(unsigned row, unsigned index, int delta)
 #define SLACK (FRAME / 10u)
 #define PROBE 1024u  /* frames, about 0.37 s */
 typedef int Render(unsigned track, unsigned ping, unsigned start, unsigned end);
+typedef int SourceStart(unsigned track, unsigned sample, unsigned flags);
+/* Frame interrupt only, like mw_source_render_impl. The loader publishes rows
+ * masked; no loader task can switch them during this interrupt. Callback,
+ * descriptor and selected fallback stay live in this call's registers/stack,
+ * which the existing paused-context scan retains if the context is paused.
+ * This is not a snapshot lease for a UI/task caller. */
+int mw_source_start_impl(unsigned track, unsigned sample, unsigned flags, SourceStart *fallback)
+{
+    if (track >= 8u) return 0;
+    const Machine *m[ROWS - 5u], *who = 0;
+    unsigned n = machines(m);
+    if (!valid_bank()) return fallback ? fallback(track, sample, flags) : 0;
+    if (!owner(m, n, current_part(), track, &who)) {
+        start_refused[track] = 0;
+        return orphan(current_part(), track) ? 0 : fallback ? fallback(track, sample, flags) : 0;
+    }
+    if (!(who->flags & MODWERK_MACHINE_START)) {
+        start_refused[track] = 0;
+        return fallback ? fallback(track, sample, flags) : 0;
+    }
+    start_refused[track] = who;
+    if (who->source_kind && charged[track] != who) return 0;
+    SourceStart *call = 0;
+    uintptr_t volatile *row = modwerk_runtime_event_row[STARTS];
+    unsigned k;
+    for (k = 0; k < ROWS - 5u && row[k]; ++k) {
+        const struct modwerk_machine_start *r = (const struct modwerk_machine_start *)row[k];
+        /* Octatrack contributor admission checks this record's complete extent
+         * and same-package pointers. Read no extension beyond these 16 bytes. */
+        if (r->abi != MODWERK_MACHINE_START_ABI || r->bytes != sizeof *r || !r->machine || !r->start) return 0;
+        if (r->machine == who) {
+            if (call) return 0;
+            call = r->start;
+        }
+    }
+    if (row[k] || !call) return 0;
+    int result = call(track, sample, flags);
+    start_refused[track] = 0;
+    return result;
+}
+/* Stock (or Mute Modes) calls this only if the trig is dispatched. Keep no
+ * selected fallback in global state: a suppressed call has nothing to retire.
+ * The frame interrupt cannot be interrupted by a loader task between selection
+ * and this call; paused-context scans retain its selected callback/descriptor. */
+static int source_start_dispatch(unsigned track, unsigned sample, unsigned flags)
+{
+    return mw_source_start_impl(track, sample, flags, 0);
+}
+SourceStart *mw_source_start_select(unsigned track, SourceStart *fallback)
+{
+    if (track >= 8u) return 0;
+    if (!valid_bank()) return fallback;
+    const Machine *m[ROWS - 5u], *who = 0;
+    unsigned n = machines(m);
+    if (owner(m, n, current_part(), track, &who)) {
+        if (who->flags & MODWERK_MACHINE_START) return source_start_dispatch;
+    } else if (orphan(current_part(), track)) {
+        return source_start_dispatch;
+    }
+    start_refused[track] = 0;
+    return fallback;
+}
 volatile uint32_t mw_frame_t0, mw_frame_share = FRAME / 5u * 4u; /* development bases may change the share */
 /* For diagnostics: the longest frame interrupt, the latest start past the frame's time, the time spent in it (/256)
  * over its frames, the skips and their tracks. */
@@ -620,6 +692,8 @@ int mw_source_render_impl(unsigned track, unsigned ping, unsigned start, unsigne
     }
     if (valid_bank() && owner(m, n, current_part(), track, &who)) {
         if (who->render) stop_stock(track); /* POLY8's voices (no render of its own) are stock's */
+        if (start_refused[track] == who)
+            return STOCK(Render *, 0x400047f0u)(track, ping, start, end);
         if (who->source_kind && charged[track] != who) /* uncharged: stock's silent source, never an unpaid voice */
             return STOCK(Render *, 0x400047f0u)(track, ping, start, end);
         Render *f = who->render ? who->render : STOCK(Render *, 0x40004008u); /* POLY8's voices render inside stock's */

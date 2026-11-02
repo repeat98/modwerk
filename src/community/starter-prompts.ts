@@ -40,8 +40,8 @@ const OCTATRACK: Starter[] = [
 ]
 
 const DIGI: Starter[] = [
-  { id: 'machine', title: 'A new machine', summary: 'A new SRC machine in one of the free machine slots.', guides: ['machines.md'], example: 'Digitakt: Digi Poly, Digi Mono, SOPHIE',
-    task: 'Build a new SRC machine in one of the free machine slots (core_machines, slots 4–7): {idea}\nClaim the slot in platform.claims and keep the stock machines untouched.' },
+  { id: 'machine', title: 'A new machine', summary: 'A new SRC machine under a free machine id.', guides: ['machines.md'], example: 'Digitakt: Digi Poly, Digi Mono, SOPHIE',
+    task: 'Build a new SRC machine under a free machine id (core_machines, ids 4–127): {idea}\nClaim the id in platform.claims and keep the stock machines untouched.' },
   { id: 'effect', title: 'An effect', summary: 'Process the audio at the render hooks, such as an EQ or a saturator.', guides: ['effects.md'], example: 'Digitakt: Digi EQ',
     task: 'Build an audio effect on the render hooks (ev_render_in / ev_render_out): {idea}\nStay inside the shared memory and fast SRAM budgets and say how much of each it uses.' },
   { id: 'sequencer', title: 'A sequencer tool', summary: 'Ratchets, generative steps or anything else that acts in time.', guides: ['sequencing.md'], example: '',

@@ -20,19 +20,34 @@ const events = indices => JSON.stringify({ events: indices.map(index => ({ event
 const claimRow = (kind, key, holder) => ({ id: crypto.randomUUID(), kind, key, holder, branch: 'work', pullRequest: null, expiresAt: '2026-11-12T00:00:00.000Z' })
 
 describe('what a branch needs claimed', () => {
-  it('finds new module folders, hook and table indices and migrations, and nothing that was already there', () => {
+  it('finds new module folders, hook and table indices, migrations and machine ids, and nothing that was already there', () => {
+    const manifest = (...ids) => JSON.stringify({ platform: { kind: 'elemod', claims: ['ui:x', ...ids.map(id => 'machine:' + id)] } })
     const { root, commit } = repository({
       'sdk/machines/octatrack/events.json': events([35, 36]), 'migrations/0083_old.sql': '', 'sdk/octabam/modules/echo/README.md': '',
       'sdk/digitakt/core/interface.json': JSON.stringify({ events: [{ name: 'ev_a' }], tables: [] }),
+      'sdk/digitakt/modules/poly/modwerk.module.json': manifest(6), 'sdk/analog-rytm-mkii/modules/chorus/README.md': '',
     })
     commit({
       'sdk/machines/octatrack/events.json': events([35, 36, 37]), 'migrations/0084_new.sql': '', 'sdk/octabam/modules/echo/LICENSE': '',
       'sdk/octabam/modules/tape-echo/README.md': '', 'sdk/octabam/modules/tape-echo/src/a.c': '', 'sdk/drafts/slicer/README.md': '', 'sdk/digitone/modules/swarm/README.md': '',
       'sdk/digitakt/core/interface.json': JSON.stringify({ events: [{ name: 'ev_a' }, { name: 'ev_b' }], tables: [{ name: 'core_x' }] }),
+      // The Analog Rytm keeps its modules in modules/_submissions/<id>; one moved there is not new.
+      'sdk/analog-rytm-mkii/modules/_submissions/temp-save/src/main.c': '', 'sdk/analog-rytm-mkii/modules/_submissions/chorus/README.md': '',
+      'sdk/digitakt/modules/poly/modwerk.module.json': manifest(6, 9), 'sdk/digitakt/modules/kick/modwerk.module.json': manifest(10),
+      'sdk/drafts/slicer/octamod.module.json': JSON.stringify({ presentation: { summary: 'Slices a loop across the pads.' } }),
     })
     expect(board.neededClaims({ root, base: 'HEAD~1' }).map(item => item.kind + ' ' + item.key).sort()).toEqual([
-      'hook digitakt/events/1', 'hook digitakt/tables/0', 'hook octatrack/37', 'migration 0084', 'module digitone/swarm', 'module octatrack/slicer', 'module octatrack/tape-echo',
+      'hook digitakt/events/1', 'hook digitakt/tables/0', 'hook octatrack/37', 'machine-id digitakt/10', 'machine-id digitakt/9', 'migration 0084',
+      'module analog-rytm-mkii/temp-save', 'module digitakt/kick', 'module digitone/swarm', 'module octatrack/slicer', 'module octatrack/tape-echo',
     ])
+    expect(board.neededClaims({ root, base: 'HEAD~1' }).find(item => item.key === 'octatrack/slicer').note).toBe('Slices a loop across the pads.')
+  })
+  it('notes a module claim with its summary, cut at a word to 120 characters, and never the template\'s placeholder', () => {
+    const note = summary => board.summaryNote(JSON.stringify({ presentation: { summary } }))
+    const long = note('A stereo chorus for the send bus: two swept taps, the right side out of phase, with feedback and its own high- and low-pass.')
+    expect(long).toBe('A stereo chorus for the send bus: two swept taps, the right side out of phase, with feedback and its own high- and…')
+    expect(long.length).toBeLessThanOrEqual(120)
+    expect([note('Replace with one sentence about what this mod adds.'), board.summaryNote('{ not json'), board.summaryNote(null), note(7)]).toEqual(['', '', '', ''])
   })
 })
 
@@ -113,11 +128,11 @@ describe('questions and findings in the commands', () => {
 
 describe('pr:ready and the board', () => {
   const needed = [{ kind: 'migration', key: '0084', why: 'new migration' }, { kind: 'hook', key: 'octatrack/37', why: 'new entry' }]
-  const fake = ({ login = 'ada', claims = [], fail } = {}) => {
+  const fake = ({ login = 'ada', claims = [], fail, refuseNotes } = {}) => {
     const taken = []
     return { taken, module: { ...board, neededClaims: () => needed, whoami: async () => { if (fail) throw new board.BoardUnavailable('down'); return login }, currentBranch: () => 'work',
       compareClaims: (items, name) => board.compareClaims(items, name, { fetch: async () => Response.json({ claims }) }),
-      claim: async item => { taken.push(item); return { claim: item } } } }
+      claim: async item => { taken.push(item); if (refuseNotes && item.note) throw new board.BoardError('Leave file paths out of the note.', 400); return { claim: item } } } }
   }
   it('claims what the branch adds for the signed-in developer', async () => {
     const { taken, module } = fake()
@@ -131,6 +146,13 @@ describe('pr:ready and the board', () => {
     expect(held.problems[0]).toMatch(/hook octatrack\/37 .* claimed by @bo/)
     const signedOut = await boardClaims('.', 'main', fake({ login: null }).module)
     expect(signedOut.problems[0]).toContain('npm run board -- login')
+  })
+  it('sends a module\'s summary as its claim note, keeps one written by hand, and claims without it when the note is refused', async () => {
+    const withNote = [{ kind: 'module', key: 'octatrack/slicer', why: 'new module folder', note: 'Slices a loop.' }, { kind: 'module', key: 'octatrack/echo', why: 'new module folder', note: 'An echo.' }]
+    const run = async options => { const { taken, module } = fake(options); await boardClaims('.', 'main', { ...module, neededClaims: () => withNote }); return taken }
+    const handWritten = { ...claimRow('module', 'octatrack/echo', 'ada'), note: 'Tape echo with wow.' }
+    expect(await run({ claims: [handWritten] })).toEqual([{ kind: 'module', key: 'octatrack/slicer', branch: 'work', note: 'Slices a loop.' }, { kind: 'module', key: 'octatrack/echo', branch: 'work' }])
+    expect((await run({ refuseNotes: true })).map(item => item.key + (item.note ? ' + note' : ''))).toEqual(['octatrack/slicer + note', 'octatrack/slicer', 'octatrack/echo + note', 'octatrack/echo'])
   })
   it('only notes an unreachable board', async () => {
     const result = await boardClaims('.', 'main', fake({ fail: true }).module)

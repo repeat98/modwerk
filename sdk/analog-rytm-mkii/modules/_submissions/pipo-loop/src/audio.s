@@ -17,6 +17,27 @@ pipo_loop_gate:
         jsr     pipo_loop_audio
         jmp     pipo_loop_prefetch
 
+| Stock's STA/END to frame routine, frames(sta, end, count) -> d0 sta's frame,
+| d1 end's, under the MACSR stock's prefetch sets for it (fractional,
+| saturating, truncating): this runs before the prefetch sets it.
+
+        .globl  pipo_loop_frame
+
+pipo_loop_frame:
+        move.l  8(%sp),%d0                      | frames
+        move.l  4(%sp),%a0                      | the value
+        move.l  %macsr,%d1
+        move.l  #0xa0,%macsr
+        move.l  %d1,-(%sp)
+        move.l  %d0,-(%sp)
+        move.l  %a0,-(%sp)
+        move.l  %a0,-(%sp)
+        jsr     pipo_loop_stock_frames
+        lea     12(%sp),%sp
+        move.l  (%sp)+,%d1
+        move.l  %d1,%macsr
+        rts
+
 | Stock's OFF/ON text formatter, text(ctx, value 8.8, buf), shared by eight
 | OFF/ON parameters; ctx is the parameter's record + 20. The site replaces
 | its first two instructions, which take value's integer part into d0; the

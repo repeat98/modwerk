@@ -12,8 +12,26 @@
         .global mw_setup_edit6, mw_setup_draw6, mw_tick_hook, mw_resolve_pb, mw_validate_hook, mw_stock_validate
         .global mw_pool_open, mw_pool_title, mw_list_draw, mw_stock_pool_open, mw_stock_list_draw, mw_source_render
         .global mw_seq_draw, mw_seq_none, mw_seq_get_none, mw_seq_set_none, mw_lfo_pb
+        .global mw_source_start
         .equ BANK_PTR, 0x46c82456
         .equ PART_OFF, 0x8ed80
+| Select a standard three-argument START before stock pushes its arguments.
+| Keep the call at d49c stock: Mute Modes may suppress it at d498. No saved
+| fallback or extra stack word may survive selection into that optional call.
+mw_source_start:
+        lea -20(%sp),%sp
+        movem.l %d0-%d1/%a1,8(%sp)
+        .globl modwerk_stock_4000d47e_4
+modwerk_stock_4000d47e_4:
+        .space 4
+        move.l %d3,(%sp)
+        move.l %a0,4(%sp)
+        jsr mw_source_start_select
+        move.l %d0,%a0
+        movem.l 8(%sp),%d0-%d1/%a1
+        lea 20(%sp),%sp
+        tst.l %a0
+        jmp 0x4000d484
 | The machine name by chooser row (the whole stock routine: its argument at 4(sp)).
 mw_machine_name:
         lea -12(%sp),%sp

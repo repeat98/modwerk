@@ -196,6 +196,13 @@
    "kind": "table",
    "room": 4,
    "record": 64
+  },
+  {
+   "index": 37,
+   "event": "ot_machine_starts",
+   "kind": "table",
+   "room": 8,
+   "record": 16
   }
  ]
 }

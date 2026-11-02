@@ -81,6 +81,25 @@ describe('fx audit', () => {
     expect(result.stderr).toContain('tone-1100hz-12db')
   })
 
+  it('compares renders of the noise signal: a dead knob is identical, a live one differs, silence proves nothing', () => {
+    const plan = join(scratch, 'compare-plan')
+    audit('plan', plan)
+    const renderNoise = (name, effect) => {
+      const bytes = readFileSync(join(plan, 'noise.raw')), input = new Int32Array(bytes.buffer, bytes.byteOffset, bytes.byteLength >> 2)
+      let state = 0
+      writeFileSync(join(scratch, name + '.raw'), Buffer.from(Int32Array.from(input, word => Math.round(effect(word, state = 0.1 * word + 0.9 * state))).buffer))
+      return join(scratch, name + '.raw')
+    }
+    const low = renderNoise('knob-low', word => word / 2), high = renderNoise('knob-high', word => word / 2), cutoff = renderNoise('cutoff', (_, lowpass) => lowpass)
+    const result = audit('compare', low, high, cutoff, '--mono')
+    expect(result.status).toBe(0)
+    expect(result.stdout).toMatch(/knob-low\.raw +knob-high\.raw .* identical/)
+    expect(result.stdout).toMatch(/knob-high\.raw +cutoff\.raw .* differs/)
+    const silent = renderNoise('silent', () => 0)
+    expect(audit('compare', silent, silent, '--mono').stdout).toContain('1 silent pair(s)')
+    expect(audit('compare', low, join(scratch, 'none.raw')).status).toBe(2)
+  })
+
   it('reads 16, 24 and 32-bit PCM and float WAV renders and rejects another sample rate', () => {
     const wav = (name, { tag, bits, rate = SAMPLE_RATE, samples }) => {
       const bytesPer = bits / 8, data = Buffer.alloc(samples.length * bytesPer), header = Buffer.alloc(44)

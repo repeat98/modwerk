@@ -38,7 +38,7 @@ export function readiness({ dirty = [], behind = false, remote = 'upstream', reg
   if (compiled?.elemod) notes.push('CI rebuilds the Digitakt, Digitone, Rytm and Four packages (elemod-source) and requires the committed ones to match. pr:ready cannot run that: before you push, run bash scripts/build-elemod-isolated.sh and node scripts/verify-elemod-release-exports.mjs <dir> from a clean, committed tree ("Compiled packages" in docs/DEVELOPER_WORKFLOW.md).')
   // The guides are the context every later agent reads, so each PR says what they lacked or got wrong (AGENTS.md, "Fold what you learn back").
   notes.push('What did the guides lack or get wrong while you did this? ' + (guideEdits.length
-    ? 'Guide edits on this branch: ' + guideEdits.join(', ') + '. Say in the PR what they fix. If a developer working now could hit it before this merges, post it on the agent board too: npm run board -- finding <topic> <key> "…" --pr <n>.'
+    ? 'Guide edits on this branch: ' + guideEdits.join(', ') + '. Say in the PR what they fix. If a developer working now could hit it before this merges, post it on the agent board yourself: npm run board -- finding <topic> <key> "…" --pr <n>.'
     : 'No guide edit is on this branch: fix it where a reader would look (docs/, AGENTS.md, the machine guide; for a module release, a separate Docs: PR), or write "nothing" in the PR.'))
   notes.push('Then push, open or update the PR, and watch it: gh pr checks <number> --watch. If main moves before the merge, run this again and push.')
   return { ok: problems.length === 0, problems, notes }
@@ -55,12 +55,14 @@ export async function boardClaims(root, base, board) {
     if (error instanceof board.BoardUnavailable) return { problems, notes: ['Board: claims not checked. ' + error.message + ' Run this again before you push once it answers.'] }
     throw error
   }
-  for (const item of compared.others) problems.push(`${item.kind} ${item.key} (${item.why}) is claimed by ${board.describeClaim(item.claim)} on the agent board. Never work around a claim: ask them, or renumber or rename yours (docs/AGENT_BOARD.md).`)
+  for (const item of compared.others) problems.push(`${item.kind} ${item.key} (${item.why}) is claimed by ${board.describeClaim(item.claim)} on the agent board. Never work around a claim: ask them yourself (npm run board -- ask ${item.kind} ${item.key} "…"), or renumber or rename yours (docs/AGENT_BOARD.md).`)
   const open = [...compared.free, ...compared.unknown, ...compared.mine]
   if (!login && open.length) problems.push('This branch adds ' + open.map(item => item.kind + ' ' + item.key).join(', ') + ', which need your claim on the agent board. Sign in once with npm run board -- login, then run this again.')
   else for (const item of open) {
     try {
-      const result = await board.claim({ kind: item.kind, key: item.key, branch: board.currentBranch(root) })
+      // A claim says what the work is; a note its holder wrote by hand stays, and one the server refuses never costs the claim.
+      const request = { kind: item.kind, key: item.key, branch: board.currentBranch(root) }, note = item.claim?.note ? '' : item.note
+      const result = note ? await board.claim({ ...request, note }).catch(error => { if (error instanceof board.BoardError && error.status === 400) return board.claim(request); throw error }) : await board.claim(request)
       notes.push((result.renewed ? 'Board: renewed your claim on ' : 'Board: claimed ') + item.kind + ' ' + item.key + ' for @' + login + '.')
     } catch (error) {
       if (error instanceof board.BoardUnavailable) { notes.push('Board: could not claim ' + item.kind + ' ' + item.key + '. ' + error.message); continue }
