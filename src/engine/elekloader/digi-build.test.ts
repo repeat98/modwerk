@@ -73,6 +73,17 @@ describe('the vendored elekloader catalog', () => {
       missing: [],
     })
   })
+  it('plans Pipo Loop, Sample RATE and Silent Pad+Trig together from their pinned source-only packages with core-ar2 0.7', () => {
+    expect(planBuild('analog-rytm-mkii', '1.74', ['pipo-loop', 'sample-rate', 'silent-pad-trig'])).toMatchObject({
+      core: { file: 'core-ar2-0.7.elemod', version: '0.7' },
+      mods: [
+        { id: 'pipo-loop', file: 'pipo-loop-0.1.1-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.1.1-experimental' },
+        { id: 'sample-rate', file: 'sample-rate-0.1.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.1.0-experimental' },
+        { id: 'silent-pad-trig', file: 'silent-pad-trig-0.6.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.6.0-experimental' },
+      ],
+      missing: [],
+    })
+  })
   it('keeps download approval specific to each device', () => {
     expect(DIGI_DOWNLOADS_ENABLED).toEqual({ digitakt: true, 'digitakt-ii': false, digitone: true, 'analog-rytm-mkii': false })
     expect(digiDownloadsEnabled('digitakt-ii')).toBe(false)
