@@ -64,6 +64,7 @@ describe('digi combination estimate', () => {
     expect(estimate.clashes).toEqual([
       { claim: 'marked as incompatible by their authors', mods: ['NEIGHBOR', 'SOPHIE'] },
       { claim: 'overlapping firmware changes in OS 1.53', mods: ['NEIGHBOR', 'SOPHIE'] },
+      { claim: 'overlapping firmware changes in OS 1.54', mods: ['NEIGHBOR', 'SOPHIE'] },
     ])
   })
 

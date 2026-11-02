@@ -12,7 +12,6 @@ export { newConfiguration, validateConfiguration, pinModuleVersions, afterDeleti
 export { inventoryChanges, missingFromProject, sameModules } from '../src/config/inventory'
 export { createRuntimeCatalogue, USB_MODULE_IDS, moduleSetKit } from '../src/engine/elekloader/module-set'
 export { OctatrackLink, tabLocks } from '../src/engine/elekloader/octatrack-link'
-export { selftestFaults } from '../src/engine/elekloader/selftest'
 export { UploadSession } from '../src/engine/elekloader/upload-session'
 export { findVendorInterface, UsbVendorTransport } from '../src/engine/elekloader/upload-usb'
 export { buildBase } from '../src/engine/elekloader/octatrack-base'

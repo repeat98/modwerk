@@ -1,0 +1,21 @@
+{
+  "schema": 1,
+  "subscribe": [
+    {
+      "event": "module_tick",
+      "fn": "module_tick"
+    },
+    {
+      "event": "module_draw",
+      "fn": "module_draw"
+    },
+    {
+      "event": "module_key",
+      "fn": "module_key"
+    },
+    {
+      "event": "module_enc",
+      "fn": "module_enc"
+    }
+  ]
+}

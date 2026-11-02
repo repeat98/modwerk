@@ -70,6 +70,11 @@
       "name": "core_machines",
       "entry": 4,
       "purpose": "Pointers to struct core_machine {slot, engine, home, voices, name, label, knobs[8]} (analog-rytm-mk2/machines.h): a mod's machine in a hidden machine slot, 34 to 43 (0.5)."
+    },
+    {
+      "name": "mw_fx",
+      "entry": 4,
+      "purpose": "Pointers to struct mw_fx (modwerk/fx.h): a send effect in the Modwerk base's FX list, chosen on the FX track's SEND FX page; the base lists the first 16 valid records (Modwerk base)."
     }
   ],
   "exports": [
@@ -92,6 +97,21 @@
       "name": "core_audio_load",
       "prototype": "extern volatile uint32_t core_audio_load",
       "purpose": "The audio block's load, 0-255 of a block, as core measures it (analog-rytm-mk2/load.h, 0.4)."
+    },
+    {
+      "name": "mw_fx_rate",
+      "prototype": "extern const unsigned mw_fx_rate[128]",
+      "purpose": "An LFO's phase step a frame at 48 kHz, 0.02 to 10 Hz for a 0-127 control (modwerk/fx.h, Modwerk base)."
+    },
+    {
+      "name": "mw_fx_onepole",
+      "prototype": "extern const unsigned short mw_fx_onepole[128]",
+      "purpose": "One-pole filter coefficients (Q15 at 48 kHz) for a 0-127 cutoff control (modwerk/fx.h, Modwerk base)."
+    },
+    {
+      "name": "mw_fx_tempo",
+      "prototype": "int mw_fx_tempo(void)",
+      "purpose": "The project tempo in 1/120 BPM; 120 BPM when stock's word holds no plausible value (modwerk/fx.h, Modwerk base)."
     }
   ],
   "claims": [

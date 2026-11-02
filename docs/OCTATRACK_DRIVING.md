@@ -28,7 +28,18 @@ runs short. Everything here was done on the owner's MKII on 11 October 2026. Why
   replace both, and after the power cycle the flashed base starts with no modules (23 October 2026, MKII, flashed
   `a408c505`, twin `8dc7692c`). Before a twin, note the flashed set (`inventory`) and where its packages are; base-bound
   ones (Analog BD, Output Matrix) must be the copies bound to that base, from the commit that built it. Afterwards,
-  power-cycle and `try` each again.
+  power-cycle and `try` each again. `npm run device -- lifecycle` is such a pair too: it accepts a test module, then
+  its removal. It is not a read; never run it on a unit whose kept set matters (30 October 2026, MKII, twin `04e94075`).
+  The flashed base can also come back short of a machine with no Keep at all (30 October 2026, MKII, flashed
+  `b30d9b09`, after a twin `04e94075` whose `try` ended needs-recovery): the boot's restore loaded FM Synth but refused
+  SYNTIZ as busy while the project played (`diaglog`'s set record names the refused module; code 5), and every later
+  submission was refused ("The device kept refusing the submission"; `recover` found nothing). A RAM boot of the
+  flashed base's own image, transport stopped, restored both. Check `inventory` after any twin and any power cycle,
+  and leave the transport stopped for the first seconds after a boot.
+  To listen to a machine on a twin, start its `try` first, then load the project: a project loaded while the machine
+  was absent keeps its tracks drawn as FLEX until a trig or a Part change. Listen during the trial, and load a project
+  without the machine before it ends. A machine's trial that ends while tracks name it answers needs-recovery, and
+  what plays afterwards is not the module's sound (30 October 2026, MKII, twin `04e94075`).
 - Verify an Undo's active identity and inventory after the reply; a ready host UI alone is insufficient. On a contributor's MKII (25 October 2026, private base `52c291c2…`), a 12-module timed Undo left recovery/active unknown and standard
   rollback retries still returned needs-recovery. Stop installing and ask the owner to power-cycle when recovery cannot finish.
 - After a crash restart, or finding the unit on the flashed base with no power cycle you know of, ask for a power
@@ -44,22 +55,24 @@ before reporting success.
 
 ## Start the link
 
+**One Elektron device on the Mac's USB.** The bridge opens the first device with Elektron's vendor id that offers the Modwerk interface; before 27 October 2026 it opened the first Elektron device of any kind, so an Analog Rytm on Overbridge plugged in beside the Octatrack made every request fail ("unit went away", "no unit running the test base"). Unplug other Elektron devices before a RAM boot or a flash all the same: on that day a RAM boot staged with a Rytm attached failed part-way and hung at the logo, and the retry with the Rytm unplugged came back.
+
 Keep emulator socket paths short, including the host path behind a container bind mount. A long host output path can fail with `usb: cannot listen` even when its container alias is short.
 
 ```sh
 export PATH=~/.nvm/versions/node/v24.21.0/bin:$PATH   # Node 24; the default node is 18 and cannot load .ts
-while :; do npm run device -- serve; sleep 1; done
+while [ -f scripts/device.mjs ]; do npm run device -- serve; sleep 1; done
 ```
 
 Run it in a terminal of the owner's, or in a background task: those stop after two hours. Start it from a checkout
-that stays, not a pull request's worktree: once that is removed, the next restart (after a `boot` hands over) fails
-with `process.cwd failed`, so the link is gone and the loop fails every second (28 October 2026). It starts the USB
+that stays, not a pull request's worktree: once that is removed, the link is gone and the loop ends (a `while :` loop
+failed every second instead and held the unit, 28 October 2026). It starts the USB
 bridge, keeps one connection open, pings every 4 s (so MODWERK CONNECTED shows once) and comes back after a
 RAM boot. One process at a time: a second `serve` or a one-shot `npm run device` fights it for the bridge. To let the
 frontend MCP use the unit beside the session, start it with `serve --share /tmp/modwerk-share.sock` and the MCP with
 `--device-socket /tmp/modwerk-share.sock`: each MCP control transfer runs between the session's. Then only one of them
 stages modules at a time (the MCP's sync, or the session's `try`/`remove`); the session reads and presses keys.
-The session’s `try FILE` accepts immediately. For a temporary trial, use the MCP’s review/self-test/Undo flow or
+The session’s `try FILE` accepts immediately. For a temporary trial, use the MCP’s review/trial/Undo flow or
 the one-shot `npm run device -- try FILE` without `--accept`; do not use session `try` as an automatic Undo test.
 A private module-only trial does not inherit the flashed base's kept module set. To test companions, prepare copies bound to the exact temporary base and review/trial the complete set; a Keep on the twin is not an inventory-recovery step. A host client's own trial timer can also remove the set while its USB keepalive is still healthy. State the timeout and distinguish it from a RAM clear or restart.
 
@@ -79,7 +92,7 @@ bridge runs in Windows Python and serves TCP; with WSL's mirrored networking (`n
 # characters cannot be passed from WSL). Then, each time:
 #   "%LOCALAPPDATA%\modwerk-usb\venv\Scripts\python.exe" -B octatrack-usb-bridge.py 47811
 # WSL:
-while :; do node scripts/device.mjs serve --socket 47811; sleep 1; done
+while [ -f scripts/device.mjs ]; do node scripts/device.mjs serve --socket 47811; sleep 1; done
 ```
 
 The bridge runs from a copy of `octatrack-usb-bridge.py` on the Windows side. Stop it with PowerShell's `Stop-Process` (find

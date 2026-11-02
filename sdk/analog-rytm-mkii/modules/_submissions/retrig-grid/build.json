@@ -28,6 +28,8 @@
         "-DSEQ_PULSE_AT=0x405c8b20",
         "-DSEQ_STEP_AT=0x405c8c94",
         "-DSEQ_PULSE_N_AT=0x405c8c96",
+        "-DTRACK_STEP_AT=0x405c8cd0",
+        "-DTRACK_PULSE_N_AT=0x405c8cdd",
         "-DSEQ_PLAYING_AT=0x405c8cf8",
         "-DSEQ_PATTERN_AT=0x405c8d04",
         "-DPATTERNS_AT=0x407dd8e3",

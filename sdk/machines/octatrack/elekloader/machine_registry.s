@@ -11,9 +11,27 @@
         .global mw_chooser_column
         .global mw_setup_edit6, mw_setup_draw6, mw_tick_hook, mw_resolve_pb, mw_validate_hook, mw_stock_validate
         .global mw_pool_open, mw_pool_title, mw_list_draw, mw_stock_pool_open, mw_stock_list_draw, mw_source_render
-        .global mw_seq_draw, mw_seq_none, mw_seq_get_none, mw_seq_set_none
+        .global mw_seq_draw, mw_seq_none, mw_seq_get_none, mw_seq_set_none, mw_lfo_pb
+        .global mw_source_start
         .equ BANK_PTR, 0x46c82456
         .equ PART_OFF, 0x8ed80
+| Select a standard three-argument START before stock pushes its arguments.
+| Keep the call at d49c stock: Mute Modes may suppress it at d498. No saved
+| fallback or extra stack word may survive selection into that optional call.
+mw_source_start:
+        lea -20(%sp),%sp
+        movem.l %d0-%d1/%a1,8(%sp)
+        .globl modwerk_stock_4000d47e_4
+modwerk_stock_4000d47e_4:
+        .space 4
+        move.l %d3,(%sp)
+        move.l %a0,4(%sp)
+        jsr mw_source_start_select
+        move.l %d0,%a0
+        movem.l 8(%sp),%d0-%d1/%a1
+        lea 20(%sp),%sp
+        tst.l %a0
+        jmp 0x4000d484
 | The machine name by chooser row (the whole stock routine: its argument at 4(sp)).
 mw_machine_name:
         lea -12(%sp),%sp
@@ -246,6 +264,23 @@ mw_resolve_pb:
         lea mw_pb_table,%a0
         jmp 0x40031ece
 1:      jmp 0x40031ed6
+| LFO SETUP's PMTR names (#589): stock picks the PLAYBACK page by the track's raw machine byte, which a machine's track
+| keeps at FLEX or STATIC. a0 is that byte and d0 its value; d1 (the track) and a1 stay live past 0x4003c054.
+mw_lfo_pb:
+        lea -12(%sp),%sp
+        movem.l %d1/%a0-%a1,(%sp)
+        move.l %a0,-(%sp)
+        jsr mw_page
+        addq.l #4,%sp
+        movem.l (%sp),%d1/%a0-%a1
+        lea 12(%sp),%sp
+        tst.l %d0
+        beq.s 1f
+        move.l %d0,%a2                  | the machine's own page
+        jmp 0x4003c058
+1:      mvs.b (%a0),%d0
+        lea mw_pb_table,%a0
+        jmp 0x4003c054
 mw_validate_hook:
         jmp mw_validate
 mw_stock_validate:

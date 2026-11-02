@@ -1,13 +1,241 @@
 {
   "schema": 1,
-  "about": "Modwerk's Analog Rytm MKII base, built by npm run machine:base -- analog-rytm-mkii. Today it is core-ar2 0.7's source unchanged (sdk/imports/core-ar2-source-fb58292.json); the send bus and the FX list come next.",
+  "about": "Modwerk's Analog Rytm MKII base, built by npm run machine:base -- analog-rytm-mkii: core-ar2 0.7's source unchanged (sdk/imports/core-ar2-source-fb58292.json), with Modwerk's own sources in base/ added on top (add): the FX track's lock words, and the send bus with its return, its pages and the FX list (mw_fx) send effects contribute to. A site names the stock bytes it replaces by length and SHA-256; the build fills them from the user's OS.",
   "core": "core-ar2",
   "include": "sdk/machines/analog-rytm-mkii/include",
   "os": "1.74",
-  "toolchain": { "cross": "m68k-elf-", "gcc": "16.2.0", "binutils": "2.47" },
+  "toolchain": {
+    "cross": "m68k-elf-",
+    "gcc": "16.2.0",
+    "binutils": "2.47"
+  },
   "reference": {
     "file": "vendor/elekloader/catalog/core-ar2-0.7.elemod",
     "sha256": "f1e9cb2c39eb52af15e7cf8ad25596e46f550e4f748bc9dd60d63a44da2dd9c1",
-    "same": ["id", "version", "build", "sites", "exports", "imports", "weak", "contribute", "collections", "requires", "conflicts"]
+    "keeps": [
+      "id",
+      "version",
+      "build",
+      "sites",
+      "exports",
+      "imports",
+      "weak",
+      "contribute",
+      "collections",
+      "requires",
+      "conflicts"
+    ]
+  },
+  "add": {
+    "sources": [
+      "../base/locks.c",
+      "../base/locks.s",
+      "../base/sendbus.c",
+      "../base/sendbus.s"
+    ],
+    "sites": [
+      {
+        "addr": "0x4000940c",
+        "len": 8,
+        "stockSha256": "9d8b5c6fa44fca2b22f8cb24de82782737e5615dff673baad1c7423135d0d27f",
+        "op": "jmp",
+        "target": "core_lk_save_one"
+      },
+      {
+        "addr": "0x40009216",
+        "len": 8,
+        "stockSha256": "9763fb611c807f5dc904f9b5ee15ae74bda1e39d0f9e46671289a147cd2daaa7",
+        "op": "jmp",
+        "target": "core_lk_save_all"
+      },
+      {
+        "addr": "0x40008f98",
+        "len": 8,
+        "stockSha256": "b53d75034fecf8309dbb02802961868579be15db8fe3165ad3123f52c2a9c36c",
+        "op": "jmp",
+        "target": "core_lk_load"
+      },
+      {
+        "addr": "0x4010ee66",
+        "len": 6,
+        "stockSha256": "2d5c036095404da53503812386216abbcc38b98b809fc6197ee476c16dc9a521",
+        "op": "jmp",
+        "target": "mw_send_gate"
+      },
+      {
+        "addr": "0x401c5324",
+        "op": "bytes",
+        "len": 4,
+        "new": "ffffffff",
+        "kind": "data",
+        "stockSha256": "3b28a6c3766c6295adad976d349705ef49393fbfdebe4facb5862d2cdfa285d3"
+      },
+      {
+        "addr": "0x401c5358",
+        "op": "bytes",
+        "len": 4,
+        "new": "ffffffff",
+        "kind": "data",
+        "stockSha256": "e084a105a7b7d599b8346d3cba5ac51b756d7e29c7ef77fd9eff31fdeae31389"
+      }
+    ],
+    "cflags": [
+      "-DIS_KEY_HELD_AT=0x40081c28",
+      "-DPROJECT_SINGLETON_AT=0x4017fa0a",
+      "-DTRACK_INDEX_OF_AT=0x400b693e",
+      "-DKIT_TRACK_SOUND_AT=0x400a67ca",
+      "-DFILLRECT_AT=0x40070726",
+      "-DSOUND_CONFIG_CHANGED_VT=0x401cb88c",
+      "-DRX_BUFFER_AT=0x80007440",
+      "-DTX_RING_AT=0x80000000",
+      "-DVOICE_WORD_AT=0x401ef480",
+      "-DVOICE_TRACK_AT=0x40291138",
+      "-DTEXT_DRAW_AT=0x4007154c",
+      "-DTEXT_FONT_AT=0x40071be8",
+      "-DTEXT_CTX_AT=0x417e389c",
+      "-DTEMPO_WORD_AT=0x40287ffc",
+      "-DSMOOTH_FX_AT=0x8000f6cc",
+      "-DREC_STATE_AT=0x401816f4",
+      "-DSEQ_STATE_AT=0x40181790",
+      "-DIS_LIVE_REC_AT=0x40036370",
+      "-DPLAYING_STEP_AT=0x4003532c",
+      "-DPATTERN_OF_AT=0x400af0ac",
+      "-DTRACK_PATTERN_AT=0x400ab29e",
+      "-DSET_LOCK_AT=0x400c058c",
+      "-DHAS_TRIG_AT=0x400bff7e",
+      "-DHAS_TRIG2_AT=0x400c000e",
+      "-DADD_LOCK_TRIG_AT=0x400c2698",
+      "-DLOCK_GUARD_AT=0x4018a6da",
+      "-DUNLOCK_GUARD_AT=0x4017f536",
+      "-DFOOTER_DRAW_AT=0x4003f59e",
+      "-DTITLE_DRAW_AT=0x40037300"
+    ],
+    "defsym": {
+      "mw_send_resume": "0x4010ee6c"
+    },
+    "subscribe": [
+      {
+        "event": "ev_tick",
+        "fn": "mw_send_tick",
+        "order": 50
+      },
+      {
+        "event": "ev_draw",
+        "fn": "mw_send_draw",
+        "order": 50
+      },
+      {
+        "event": "ev_key",
+        "fn": "mw_send_key",
+        "order": 50
+      },
+      {
+        "event": "ev_enc",
+        "fn": "mw_send_enc",
+        "order": 50
+      },
+      {
+        "event": "ev_project",
+        "fn": "mw_send_project",
+        "order": 50
+      }
+    ],
+    "contribute": [
+      {
+        "to": "core_pages",
+        "order": 17,
+        "data": "00000000",
+        "relocs": [
+          [
+            0,
+            "abs32",
+            "sym:mw_send_page_fx",
+            0
+          ]
+        ]
+      },
+      {
+        "to": "core_pages",
+        "order": 18,
+        "data": "00000000",
+        "relocs": [
+          [
+            0,
+            "abs32",
+            "sym:mw_send_page_send",
+            0
+          ]
+        ]
+      },
+      {
+        "to": "core_params",
+        "order": 50,
+        "data": "00000000",
+        "relocs": [
+          [
+            0,
+            "abs32",
+            "sym:mw_send_params",
+            0
+          ]
+        ]
+      },
+      {
+        "to": "core_view_pages",
+        "order": 30,
+        "data": "00000000",
+        "relocs": [
+          [
+            0,
+            "abs32",
+            "sym:mw_send_view_fx",
+            0
+          ]
+        ]
+      },
+      {
+        "to": "core_view_pages",
+        "order": 30,
+        "data": "00000000",
+        "relocs": [
+          [
+            0,
+            "abs32",
+            "sym:mw_send_view_send",
+            0
+          ]
+        ]
+      }
+    ],
+    "collections": {
+      "mw_fx": 4
+    },
+    "storage": [
+      {
+        "sym": "mw_send_send",
+        "scope": "sound",
+        "bits": 7
+      },
+      {
+        "sym": "mw_send_a",
+        "scope": "kit",
+        "bits": 27
+      },
+      {
+        "sym": "mw_send_b",
+        "scope": "kit",
+        "bits": 28
+      },
+      {
+        "sym": "mw_send_c",
+        "scope": "kit",
+        "bits": 7
+      },
+      {
+        "sym": "mw_send_lev",
+        "scope": "project",
+        "bits": 7
+      }
+    ]
   }
 }

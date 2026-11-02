@@ -196,8 +196,11 @@ int test_select(const uint8_t ids[16], void (*pump)(void))
 MODEL = r'''
 #include "resident_engines.h"
 #include "expected.h"
-static unsigned quiet = 1;
-int mw_engines_test_quiet(void) { return (int)quiet; }
+/* quiet: stopped with no pattern change queued; queued: a pattern change waits (so not quiet either). Playing is
+ * quiet = 0 with nothing queued. */
+static unsigned quiet = 1, queued;
+int mw_engines_test_quiet(void) { return (int)(quiet && !queued); }
+int mw_engines_test_queued(void) { return (int)queued; }
 /* UI ticks, the last key, a pick waiting: the evacuation's own wait (two seconds after the last key, no pick waiting). */
 static unsigned ticks = 1000, key_at, pick_waiting;
 int mw_engines_test_settled(void) { return ticks - key_at >= 120u && !pick_waiting; }
@@ -271,6 +274,11 @@ volatile uint8_t modwerk_controller_lease_seen;
 uint32_t mw_controller_board_test_bank(void) { return board_bank; }
 int mw_controller_board_test_handle(uint32_t module) { (void)module; return 63; }
 int modwerk_dsp_bank_names(unsigned id) { return id == 24u ? (int)names_compressor : id == 63u ? (int)names_reader : 0; }
+/* The module whose machine a track of the bank's Parts is signed for (machine_registry.c), or none. */
+static uint32_t bank_module;
+extern volatile uint32_t modwerk_machine_assigned; /* controller_board.c: a Part signed outside the fixture's bank change */
+unsigned modwerk_machine_bank_modules(uint32_t *module, unsigned max)
+{ if (!bank_module || !max) return 0; module[0] = bank_module; return 1; }
 static unsigned refuse_write[2], refuse_place[2]; /* table offsets at which a WRITE chunk, a PLACE is refused */
 static unsigned refuse_bind[2], drop_bind[2], refuse_once[2]; /* a BIND to this table offset refused; applied but never
                                                                  * answered (once); refused once */
@@ -582,15 +590,20 @@ int main(int argc, char **argv)
         assert(slot_for(SC, MW_CTL_ACTIVE) && dsp_mask[0] == 9);
         placed_at(0, 1, sc); placed_at(1, 1, sc);
     } else if (mode == 1) {
-        /* The guard: nothing is placed or unplaced while the sequencer plays or a pattern change waits. */
-        quiet = 0;
+        /* The guard: nothing is placed while a pattern change waits; while the sequencer plays an engine that fits in
+         * free words is placed, reset and enabled; nothing is unplaced until it stops. */
+        quiet = 0; queued = 1;
         assert(install(pkg_sc, sizeof pkg_sc) == MU_APPLIED);
         run(300);
         assert(slot_for(SC, MW_CTL_BOUND) && !mw_engines_jobs && !trails[0] && !trails[1] && !dl_engine_reserved(0));
-        assert(!words[0][0] && !dsp_mask[0]);
-        quiet = 1;
+        assert(!words[0][0] && !dsp_mask[0] && mw_engines_wait[0][0] == MW_WAIT_PLAYING);
+        queued = 0; /* playing, nothing queued */
         run(200);
-        assert(slot_for(SC, MW_CTL_ACTIVE)); placed_at(0, 1, sc); placed_at(1, 1, sc);
+        assert(slot_for(SC, MW_CTL_ACTIVE) && dsp_mask[0] == 9 && dsp_mask[1] == 9);
+        for (unsigned c = 0; c < 2; ++c) { placed_at(c, 1, sc); ordered(c, 1, sc, 0); }
+        assert(!dl_engine_evacuations && !test_trims());
+        quiet = 1;
+        run(20);
         assert(refused(removal(SC), 32) == RUNTIME_BUSY);
         run(20);
         quiet = 0; /* the removal's switch, then play */
@@ -807,13 +820,17 @@ int main(int argc, char **argv)
     } else if (mode == 13) {
         /* Nothing moves while playing, within two seconds of a key, or while a pick waits; then it does. */
         big_at_top(0);
-        unsigned from = trails[0], from1 = trails[1];
+        unsigned from = trails[0];
         quiet = 0;
         assert(install(pkg_sc, sizeof pkg_sc) == MU_APPLIED);
         run(300);
-        assert(trails[0] == from && trails[1] == from1 && !mw_engines_jobs && !dl_engine_evacuations && test_live(0, 3) == (int)(top - 900u));
-        assert(mw_engines_wait[0][0] == MW_WAIT_PLAYING && slot_for(SC, MW_CTL_BOUND));
-        quiet = 1; key_at = ticks; /* stopped by a key: core B places at once, core A waits for the two seconds */
+        /* Playing: core B, which needs no move, places at once; core A's code stays where it is and nothing is written
+         * there. Sidechain stays off on both until core A has its engine too. */
+        assert(trails[0] == from && !dl_engine_evacuations && test_live(0, 3) == (int)(top - 900u));
+        /* Core A asked once, was told its code must move (why 7), and waits for the stop without asking again. */
+        assert(mw_engines_wait[0][0] == MW_WAIT_EVACUATION && mw_engines[1][0].state == MW_ENGINE_PLACED);
+        assert(slot_for(SC, MW_CTL_BOUND) && !dsp_mask[0] && !(dsp_mask[1] & 1u));
+        quiet = 1; key_at = ticks; /* stopped by a key: core A waits for the two seconds */
         run(100);
         assert(!count_ops(0, from, 3) && !count_ops(0, from, 4) && test_live(0, 3) == (int)(top - 900u) && !dl_engine_evacuations);
         assert(mw_engines_wait[0][0] == MW_WAIT_EVACUATION && dl_engine_why[0] == 7 && mw_engines[1][0].state == MW_ENGINE_PLACED);
@@ -1380,8 +1397,9 @@ int main(int argc, char **argv)
         }
     } else if (mode == 46) {
         /* One core's reset lags (its chunks answered late): the other core waits, its bus not enabled, until both
-         * resets are complete, so no reader reads that core's half of the window before it is fresh. */
-        stall_reset[1] = 40;
+         * resets are complete, so no reader reads that core's half of the window before it is fresh. The stall stays under
+         * the transport's 64-frame timeout: core 0's reset packets, one a frame, advance the frames meanwhile. */
+        stall_reset[1] = 24;
         assert(install(pkg_reader, sizeof pkg_reader) == MU_APPLIED);
         unsigned waited = 0;
         for (unsigned t = 0; t < 300 && (dsp_mask[0] & dsp_mask[1] & 8u) != 8u; ++t) {
@@ -1537,7 +1555,7 @@ int main(int argc, char **argv)
         assert(install(pkg_ab, sizeof pkg_ab) == MU_APPLIED);
         run(400);
         assert(slot_for(AB, MW_CTL_BOUND) && !mw_engines_jobs && !cas_count && !dl_engine_reserved(0) && !dl_engine_reserved(1));
-        assert(test_capacity(0) == top && test_capacity(1) == top);
+        assert(test_capacity(0) == top && test_capacity(1) == top && !modwerk_controller_settling()); /* nothing to wait for */
         leasing = 4u;
         run(600);
         assert(slot_for(AB, MW_CTL_ACTIVE) && dsp_mask[0] == 4 && dsp_mask[1] == 4 && ab_reset_is(0));
@@ -1748,6 +1766,50 @@ int main(int argc, char **argv)
         run(20);
         assert(!mw_engines_jobs && !dl_engine_reserved(1) && mw_engines[1][0].state == MW_ENGINE_FREE && !trails[1]);
         assert(mw_engines_admit(1u, 0u, 0u) == MW_ENGINE_STUCK_BOOT);
+    } else if (mode == 65) {
+        /* PLAY right after a boot (owner's MKII, 27 October 2026, Analog BD silent until the next stop): used while the
+         * sequencer plays, Analog BD is placed, reset from its package and enabled without a stop, and nothing moves.
+         * Its 3,776-word reset goes eight packets a job, so the whole thing takes about 30 board ticks (half a second);
+         * at one 24-word packet a tick the reset alone took 158 (2.6 s). */
+        quiet = 0;
+        unsigned start = ticks;
+        assert(install(pkg_ab, sizeof pkg_ab) == MU_APPLIED);
+        /* About as many frames a tick as the unit runs (16 samples a frame, 60 ticks a second: about 46). */
+        while (!slot_for(AB, MW_CTL_ACTIVE) && ticks - start < 600u) {
+            ++ticks; modwerk_controller_lease_seen |= (uint8_t)leasing; modwerk_controller_tick(); test_advance();
+            for (unsigned f = 0; f < 23; ++f) dsp();
+            /* The boot restore's "MODULES LOADED" waits for this (modset.c). */
+            assert(slot_for(AB, MW_CTL_ACTIVE) || modwerk_controller_settling());
+        }
+        assert(!modwerk_controller_settling());
+        assert(slot_for(AB, MW_CTL_ACTIVE) && dsp_mask[0] == 4 && dsp_mask[1] == 4 && ab_reset_is(0));
+        placed_at(0, 4, top - 998u); placed_at(1, 4, top - 998u);
+        for (unsigned c = 0; c < 2; ++c) {
+            unsigned resets = 0;
+            for (unsigned i = 0; i < trails[c]; ++i) resets += trail[c][i].op == 11u && trail[c][i].w7 == 4u;
+            assert(resets == 158u); /* every packet still 24 words or fewer, at its own offset (the receiver's check) */
+        }
+        assert(ticks - start <= 30u && !dl_engine_evacuations && !test_trims()); /* half a second */
+    } else if (mode == 66) {
+        /* After a boot (owner's MKII, 28 October 2026): the restored Part's track is signed for Analog BD's machine, but
+         * its renderer asks for the lease only from the first trig, so the engine waited for PLAY and missed the first
+         * trigs. The Part's signature counts as use: placed while stopped, before any lease, and the notice waits. */
+        leasing = 0; ++board_bank;
+        assert(install(pkg_ab, sizeof pkg_ab) == MU_APPLIED);
+        run(400);
+        assert(slot_for(AB, MW_CTL_BOUND) && !mw_engines_jobs && !modwerk_controller_settling());
+        bank_module = AB; ++modwerk_machine_assigned; /* the track signed, as mw_assign counts it */
+        unsigned start = ticks;
+        while (!slot_for(AB, MW_CTL_ACTIVE) && ticks - start < 600u) {
+            run(1);
+            assert(slot_for(AB, MW_CTL_ACTIVE) || modwerk_controller_settling());
+        }
+        assert(slot_for(AB, MW_CTL_ACTIVE) && dsp_mask[0] == 4 && dsp_mask[1] == 4 && !modwerk_controller_settling());
+        placed_at(0, 4, top - 998u); placed_at(1, 4, top - 998u);
+        /* A bank whose Parts sign no Analog BD track parks it again once stopped and settled. */
+        bank_module = 0; ++board_bank;
+        run(400);
+        assert(slot_for(AB, MW_CTL_RETIRING)); unplaced(0, 4); unplaced(1, 4);
     } else assert(0);
     return 0;
 }
@@ -1858,7 +1920,7 @@ def build(work):
 
 @unittest.skipUnless(shutil.which('cc'), 'host C compiler unavailable')
 class ResidentEnginesBoard(unittest.TestCase):
-    MODES = 65
+    MODES = 67
 
     def test_place_switch_run_disable_unswitch_free_and_their_refusals(self):
         with tempfile.TemporaryDirectory() as temp:
@@ -1912,6 +1974,7 @@ int dl_engine_claim(unsigned c,unsigned r,int k) { (void)c;(void)r;(void)k;retur
 void dl_engine_release(unsigned c,unsigned r) { (void)c;(void)r; }
 unsigned dl_engine_reserved(unsigned c) { (void)c;return 0; }
 int mw_engines_test_quiet(void) { return 1; }
+int mw_engines_test_queued(void) { return 0; }
 int mw_engines_test_settled(void) { return 1; }
 volatile uint8_t dl_engine_why[2];
 '''

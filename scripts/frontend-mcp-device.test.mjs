@@ -34,7 +34,8 @@ class FakeLink {
   state = { status: 'ready', identity: { base, canSubmit: true }, active }
   modules = [{ module: '873d83cc', handle: 27, layout: 1 }]
   diagnostics = { state: 0, failed: 0, saved: 1 }
-  finalReading = { state: 2, failed: 0, saved: 1 }
+  selftests = 0
+  refuse = false
   listeners = new Set()
   updates = []
   keeps = 0
@@ -53,23 +54,17 @@ class FakeLink {
   savedBackup = async () => savedSnapshots()
   deviceLog = async () => ({ nonce: 77, boot: 3, seq: 9, loads: [{ seq: 9, boot: 3, minute: 5, cpu: [100, 200], dsp5to8: [1, 2], dsp1to4: [3, 4], samples: 300, playing: 1 }], incidents: [] })
   subscribeDiagnostics = listener => { this.listeners.add(listener); return () => this.listeners.delete(listener) }
-  selftest = async () => {
-    if (this.finalReading) for (const listener of this.listeners) listener({ event: 'selftest', reading: structuredClone(this.finalReading) })
-    // This deliberately claims success even with no/failing evidence. The MCP
-    // must independently require an actual final passed diagnostic record.
-    return null
-  }
-  update = async (name, changes, stressTest) => {
+  selftest = async () => { this.selftests++; return null }
+  update = async (name, changes) => {
     this.updates.push({ name, changes })
+    if (this.refuse) { this.state = { ...this.state, status: 'ready', notice: { tone: 'error', text: 'The Octatrack refused this step.' } }; return }
     this.previous = { modules: structuredClone(this.modules), state: this.state }
     for (const change of changes) {
       const module = new DataView(change.data.buffer, change.data.byteOffset, change.data.byteLength).getUint32(28).toString(16).padStart(8, '0')
       this.modules = this.modules.filter(item => item.module !== module)
       if (change.data.length > 32) this.modules.push({ module, handle: 30, layout: 1 })
     }
-    this.state = { ...this.state, status: 'testing', active: candidate }
-    await stressTest()
-    this.state = { ...this.state, status: 'trial', tested: true }
+    this.state = { ...this.state, status: 'trial', active: candidate }
   }
   undo = async () => {
     this.undos++
@@ -304,32 +299,22 @@ describe('frontend MCP reviewed device transactions', () => {
     expect(link.updates).toHaveLength(0)
   })
 
-  it.each([
-    ['missing', undefined], ['still running', { state: 1, failed: 0 }], ['failed', { state: 2, failed: 1 }],
-  ])('undoes a claimed successful trial with %s self-test evidence', async (_, reading) => {
-    link.finalReading = reading
-    await expect(trial()).rejects.toThrow('passed physical self-test')
-    expect(link.updates).toHaveLength(1)
-    expect(link.undos).toBe(1)
-    expect(link.keeps).toBe(0)
-    expect(link.state.status).toBe('ready')
-    expect((await service.call('device_status')).inventory.moduleIds).toEqual(['everb'])
-    expect((await review()).review).toBeTypeOf('string')
-  })
-
-  it('accepts a trial whose self-test only peaked over 90 %, and still undoes one with a fault beside it', async () => {
-    link.finalReading = { state: 3, failed: 8 | 256, saved: 1 }
+  it('installs a trial without running a self-test, as a site sync does', async () => {
     const started = await trial()
     expect(started.trial).toBeTypeOf('string')
+    expect(link.selftests).toBe(0)
     expect(link.undos).toBe(0)
     await service.call('device_keep', { trial: started.trial })
     expect(link.keeps).toBe(1)
+    expect(link.selftests).toBe(0)
   })
 
-  it('undoes a trial whose self-test found the DSP stopped beside a CPU peak', async () => {
-    link.finalReading = { state: 3, failed: 4 | 256, saved: 1 }
-    await expect(trial()).rejects.toThrow('passed physical self-test')
-    expect(link.undos).toBe(1)
+  it('reports a trial the unit did not start, and leaves no trial to keep', async () => {
+    link.refuse = true
+    await expect(trial()).rejects.toThrow('did not start: The Octatrack refused this step.')
+    expect(link.updates).toHaveLength(1)
+    expect(link.keeps).toBe(0)
+    expect((await service.call('device_status')).inventory.moduleIds).toEqual(['everb'])
   })
 
   it('consumes the Undo token after restoration even when the completion status read fails', async () => {

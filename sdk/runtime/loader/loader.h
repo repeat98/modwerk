@@ -224,6 +224,10 @@ enum runtime_metadata_operation { RUNTIME_METADATA_PREPARE=1, RUNTIME_METADATA_S
  * declaration and current/paused consumer checks. */
 int modwerk_machine_metadata_admit(const struct runtime_dsp *from, struct runtime_dsp *to,
     const struct runtime_context *,enum runtime_metadata_operation);
+/* Read-only format check of the reconstructed image, after relocations/copies/fills and before it receives an
+ * owner identity or can be published. Locked; no roots, retirement, DSP commands or admission side effects.
+ * image/page name reconstructed bytes; other arrays are still temporary. Default accepts. A runtime_refusal. */
+int modwerk_machine_image_validate(const struct runtime_dsp *);
 int modwerk_machine_dsp_admit(const struct runtime_dsp *from, struct runtime_dsp *to); /* may set to->id */
 /* 1 while a restore switches (an Undo, or the rollback after a failed self-test): it puts a position back as it was
  * before its change, so a machine may make a track that runs the outgoing module dry first (Octatrack, dsp.c). */

@@ -241,15 +241,20 @@ static uintptr_t hook(unsigned position, enum runtime_event e)
  * (controller_board.c): since effects load at the pick (#796), Sidechain's KEY page lands on COMPRESSOR while FX1
  * SETUP is already drawn from the stock page (#882). That drawer leaves an open FX SETUP window alone, so once the
  * shared popup slot (0x460d175c) is that window, open, in SETUP's geometry, its own draw callback runs too, as
- * octabam's PLOCKS P2 refreshes it (plk_refresh_setup). */
+ * octabam's PLOCKS P2 refreshes it (plk_refresh_setup).
+ * The header (the bottom-left SRC label and the track's numbers) is stock's 0x4004d780, which the track screen's drawer
+ * does not call: a track select and SRC SETUP's commit (0x4005a900) do. A restored module machine's track kept stock's
+ * "SRC > FLEX" (a module machine is FLEX underneath) until the track was tapped (Nathaniel's MKII, 28 October 2026,
+ * Analog BD on T1 after a cold boot), so the header is drawn again here too. */
 volatile uint8_t modwerk_runtime_redraw_wanted;
 #ifdef MODWERK_HOST
-unsigned modwerk_test_redraws;
-#define REDRAW() (++modwerk_test_redraws)
+unsigned modwerk_test_redraws, modwerk_test_headers;
+#define REDRAW() (++modwerk_test_redraws, ++modwerk_test_headers)
 #else
 static void REDRAW(void)
 {
     ((void (*)(int))0x4004d948u)(-1);
+    ((void (*)(void))0x4004d780u)(); /* the header: SRC's machine name, as a track select draws it */
     uint32_t page = U32(0x460d1684u), setup = page == 3u ? 0x400bc25au : 0x400bc484u, w; /* FX1, FX2 SETUP */
     if (U32(0x80000012u) || (page != 3u && page != 4u)) return; /* a MIDI track, or another page */
     w = U32(setup + 8u);

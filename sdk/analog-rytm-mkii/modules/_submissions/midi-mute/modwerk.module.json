@@ -1,0 +1,169 @@
+{
+  "schemaVersion": 3,
+  "id": "midi-mute",
+  "name": "MIDI Mute",
+  "version": "0.1.0-experimental",
+  "machine": "analog-rytm-mkii",
+  "category": "midi-usb",
+  "exclusive": false,
+  "author": {
+    "github": "michaelkollmann",
+    "credits": [
+      "michaelkollmann"
+    ]
+  },
+  "maintainers": [
+    "michaelkollmann"
+  ],
+  "presentation": {
+    "label": "MIDI MUTE",
+    "family": "MIDI effect",
+    "summary": "Muted tracks also ignore MIDI notes coming in over USB and DIN, and a held note stops when its track is muted.",
+    "overview": "On stock OS 1.74 a mute stops the sequencer only: a note from a keyboard or DAW still plays the muted track. With MUTE MIDI IN on, a Note On for a muted track, or for one left out of a solo, is dropped, on its track channel and on the AUTO channel, from USB and DIN MIDI alike. When a track is muted while it holds a note that came in over MIDI, that note is released as its Note Off would release it, so nothing hangs. Unmuting plays nothing; the next Note On plays again.",
+    "highlights": [
+      "Mutes and solo silence incoming MIDI notes as they silence the sequencer.",
+      "A note held over MIDI is released when its track is muted, so nothing sticks.",
+      "USB and DIN MIDI, track channels and the AUTO channel alike.",
+      "Off by default: one checkbox in GLOBAL > MIDI CONFIG > PORT CONFIG, kept with the project."
+    ],
+    "usage": [
+      "Press GLOBAL, choose MIDI CONFIG, then PORT CONFIG, and go down to the last row, MUTE MIDI IN. Press YES to check it, then NO to leave the menus.",
+      "Play BD from a keyboard or DAW: on the AUTO channel (note 0), or on BD's own channel (notes 12-59), over USB or DIN.",
+      "Press MUTE, then the BD pad: BD is muted, and the same notes no longer play it. The other tracks still play.",
+      "Hold a note for BD and mute BD while you hold it: the note stops instead of hanging.",
+      "Unmute BD (the BD pad again in MUTE mode) and play: BD plays again."
+    ]
+  },
+  "access": {
+    "location": "GLOBAL > MIDI CONFIG > PORT CONFIG, the last row: MUTE MIDI IN, after RECEIVE CC/NRPN.",
+    "steps": [
+      "Press GLOBAL, choose MIDI CONFIG, then PORT CONFIG, and go down to the last row, MUTE MIDI IN.",
+      "Press YES (or RIGHT) to check it; LEFT unchecks it. Press NO to leave the menus.",
+      "Press MUTE and press a pad to mute its track: notes for that track from USB or DIN MIDI no longer play it."
+    ],
+    "screenshots": [
+      "media/port-config-on.png"
+    ]
+  },
+  "controls": [
+    {
+      "name": "MUTE MIDI IN",
+      "default": 0,
+      "doc": "Checked, incoming MIDI Note Ons for muted tracks, and for tracks left out of a solo, are dropped, and notes MIDI holds on a track are released when it is silenced; unchecked, MIDI is stock. GLOBAL > MIDI CONFIG > PORT CONFIG, the last row; YES toggles, RIGHT checks, LEFT unchecks. Kept with the project.",
+      "labels": [
+        "OFF",
+        "ON"
+      ]
+    }
+  ],
+  "compatibility": {
+    "releases": [
+      "1.74"
+    ],
+    "requires": [],
+    "conflicts": [],
+    "limitations": [
+      "A track is silenced as the sequencer silences it: while any track is soloed (MIDI CC 93), every track but the soloed ones, even a soloed track that is muted; otherwise the muted ones (MUTE mode pads, FUNC + pads in MUTE mode, MIDI CC 94). OS 1.74 keeps no separate pattern mute.",
+      "A note held when its track is muted is released on the next UI tick; on a unit the sound had stopped 50 and 130 ms after a CC 94 mute, its own fade included.",
+      "Only notes are affected. CC, NRPN, aftertouch, pitch bend, program change, clock, transport and SysEx pass as stock, also for muted tracks."
+    ]
+  },
+  "platform": {
+    "kind": "elemod",
+    "core": "0.7",
+    "build": "build.json",
+    "events": [
+      "ev_tick",
+      "ev_project"
+    ],
+    "claims": [
+      "ui:GLOBAL > MIDI CONFIG > PORT CONFIG row after RECEIVE CC/NRPN"
+    ]
+  },
+  "resources": {
+    "memoryBytes": null,
+    "fastBytes": null,
+    "load": {
+      "display": "About 3 µs per incoming note on the unit; none per audio block",
+      "method": "measured",
+      "conditions": "Measured on the author's Rytm MKII with a timing build (DMA timer 0, 132 MHz) under two 60 s floods over USB and DIN: 3.3 µs average per Note On/Off, 588 µs worst including interruptions; worst UI tick 1.99 ms after a mute or solo change, stock's release calls and interruptions included. See TESTING.md."
+    }
+  },
+  "evidence": {
+    "tier": "none",
+    "moduleVersion": "0.1.0-experimental",
+    "sourceSha256": null,
+    "reports": [],
+    "hardware": null,
+    "verifiedBy": null
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "On the author's Rytm MKII (OS 1.74, builds MM03 and MM04, USB and DIN): with MUTE MIDI IN checked, notes for a muted or soloed-out track stayed silent on the AUTO and track channels, held notes stopped 50-130 ms after a mute or solo, and 60 s floods with mutes, solos and pattern changes left nothing sounding; unchecked, the results matched stock OS 1.74 step for step. A live session behaved as expected. rytm-emu 3c4c42c covers the rest, Filter Hz and Loop Sync beside it included. See TESTING.md.",
+    "documentation": {
+      "tutorial": {
+        "title": "Quick tutorial",
+        "steps": [
+          "Press GLOBAL, choose MIDI CONFIG, then PORT CONFIG, and go down to the last row, MUTE MIDI IN. Press YES to check it, then NO to leave the menus.",
+          "Play BD from a keyboard or DAW: on the AUTO channel (note 0), or on BD's own channel (notes 12-59), over USB or DIN.",
+          "Press MUTE, then the BD pad: BD is muted, and the same notes no longer play it. The other tracks still play.",
+          "Hold a note for BD and mute BD while you hold it: the note stops instead of hanging.",
+          "Unmute BD (the BD pad again in MUTE mode) and play: BD plays again."
+        ]
+      },
+      "screenshots": [
+        "media/port-config-on.png",
+        "media/port-config-off.png"
+      ],
+      "captureRecord": "media/capture.json"
+    }
+  },
+  "license": {
+    "spdx": "GPL-3.0-or-later",
+    "file": "LICENSE",
+    "declaration": "Original work by the author."
+  },
+  "media": [
+    {
+      "path": "media/thumbnail.svg",
+      "kind": "thumbnail",
+      "caption": "MIDI Mute: incoming notes stop at a muted track while the other tracks play.",
+      "alt": "MIDI notes fanning out to BD, SD and CH; BD is muted and stops them, SD and CH play.",
+      "credit": "michaelkollmann",
+      "license": "GPL-3.0-or-later",
+      "source": "Original conceptual illustration in the shared signal-art style; not an instrument screen or a measured result."
+    },
+    {
+      "path": "media/port-config-off.png",
+      "kind": "screenshot",
+      "caption": "PORT CONFIG: MUTE MIDI IN, unchecked, the row after RECEIVE CC/NRPN.",
+      "alt": "Rytm PORT CONFIG menu with the MUTE MIDI IN row selected and unchecked",
+      "credit": "michaelkollmann documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "08f8ad28f852573d0f065cff52c63bba420d1d304e944c684bd6190c00f6f080",
+        "setup": "rytm-emu 3c4c42c headless; MM02 build (core-ar2 0.7 + this module); fresh card, factory project. UI documentation only."
+      }
+    },
+    {
+      "path": "media/port-config-on.png",
+      "kind": "screenshot",
+      "caption": "After YES: MUTE MIDI IN checked.",
+      "alt": "Rytm PORT CONFIG menu with the MUTE MIDI IN row selected and checked",
+      "credit": "michaelkollmann documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "08f8ad28f852573d0f065cff52c63bba420d1d304e944c684bd6190c00f6f080",
+        "setup": "rytm-emu 3c4c42c headless; MM02 build (core-ar2 0.7 + this module); fresh card, factory project. UI documentation only."
+      }
+    }
+  ]
+}

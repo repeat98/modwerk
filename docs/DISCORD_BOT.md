@@ -8,8 +8,11 @@ bot and incoming messages never trigger replies or execute repository commands.
 ## Live support sessions
 
 Start `/modwerk-discord` in a dedicated repo-side agent chat, optionally with a
-channel or message link. It follows tester replies, investigates the source and
-prepares drafts in the [Discord voice](DISCORD_VOICE.md). Every outgoing message
+channel or message link. It follows tester replies, investigates the source,
+reproduces reports in an emulator or on the connected unit once the owner has
+OKed that setup for the session (trials that roll back; no SAVE, Keep, flash or
+power cycle), and prepares drafts in the [Discord voice](DISCORD_VOICE.md). Each
+draft says whether a result came from the emulator or hardware. Every outgoing message
 waits for the owner's approval. After sending, the agent keeps the conversation
 open while testers try things and answer, saving its cursors and case notes in
 the ignored `.discord-bot/sessions/` directory. Code fixes and maintenance stay

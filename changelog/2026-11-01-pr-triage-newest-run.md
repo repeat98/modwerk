@@ -1,0 +1,1 @@
+- PR triage bot: it now reads only the newest run of each check, so a failed or cancelled earlier run beside its green rerun no longer marks a pull request `needs-work`. The bot stays switched off.
