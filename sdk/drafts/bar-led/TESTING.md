@@ -31,9 +31,16 @@ Not run in the port: STOP then PLAY again, pause and continue, a tempo change wh
 
 ## Hardware
 
-Not tested. The owner's MKI in TEST mode lights the tempo LED red, green and amber (reported by the owner, 2 November 2026), so a green half exists; that id 39 drives it is not yet seen on a unit.
+**Reported by the tester (@nathangroth), MKI, 2 November 2026.** Build: the tester's private octabam remix `home-base` 5 (octabam-home commit `404ef7bd`), a native card build carrying this unit's source, booted from the card through REMIX SWITCH (`/BRAIN/REMIXES/HOMEBAS5.RMX`, SHA-256 `72a711492805c7ef331d8be69617f9bd77e41f858d1481da3779a14dbe4126eb`), not flashed. Before it, the tester's MKI in TEST mode lit the tempo LED red, green and amber.
 
-To qualify on a unit over USB: install the package, Keep, then check green on the pattern's 1 and red on the other beats with lengths 16, 12 and 20, at a slow and a fast tempo, after a tempo change while playing, after STOP and PLAY, after pause and continue, after a pattern change, in per-track mode with a MASTER LENGTH, following external MIDI clock, and after Undo and removal (stock red on every beat).
+| Case | Reported |
+|---|---|
+| Transport stopped | The tempo LED blinks red, as stock. |
+| Playing | Green on the first beat of the pattern, red on the others. |
+| Several PLAY MODES (the remix's sequencer play modes) | Green only on the pattern's first step in each. |
+| A non-standard master length, 17 steps | Green on the right step on every pass. |
+
+Not tested on a unit: the USB package (the unit runs no Modwerk base, so the USB link has nothing to talk to), Keep, Undo and removal, a tempo change while playing, pause and continue, a pattern change, external MIDI clock, pattern scales other than 1x, MKII.
 
 ## Stock flows
 
