@@ -24,6 +24,7 @@ Not hardware evidence: the port shows which LED ids the firmware asks for, not w
 | Stock, pattern A01's length (bank RAM `0x400e21e0 + 0x8e53`) poked to 12 | `0x800065b4` | Wraps at 12: the master step follows the pattern's length. |
 | Unit preloaded at `0x400d24d0`, `jsr` to it at `0x40056f24`, length 12, 16, 20 (`verify.py`) | every master-step write and every `set_led` call returning to `0x40056f2a` | Green (39) on every flash at step 0, red (38) on every other, each for 3 ticks: 12 steps `G@0 r@4 r@8` repeating, 16 `G@0 r@4 r@8 r@12`, 20 `G@0 r@4 r@8 r@12 r@16`. **PASS.** |
 | The same, length 14 | as above | `G@0 r@4 r@8 r@12 G@2 r@6 r@10 G@0 …`: the pattern's 1 falls mid-beat every other pass, and the green comes on the first flash after it. |
+| Built into the owner's private octabam remix `home-base` 5 (native card build; the unit linked at `0x40ac1384`), length 16 and 12 | as above, on the built `mainos_bus.bin` with nothing preloaded | 16 steps `G@0 r@4 r@8 r@12` repeating, 12 steps `G@0 r@4 r@8` repeating. |
 | Static: the decoded 1.40C | `pea 0x27` before a call to `set_led` or the other LED writers (`0x400136f4`, `0x400131a0`, `0x400131c8`) | None: stock passes no literal 39, so the module lights an LED stock leaves alone. Computed ids were not traced. |
 
 Not run in the port: STOP then PLAY again, pause and continue, a tempo change while playing, external MIDI clock, a pattern change, per-track mode with a MASTER LENGTH, pattern scales other than 1x.
