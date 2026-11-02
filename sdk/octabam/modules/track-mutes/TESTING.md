@@ -72,6 +72,8 @@ A private card image of `0.1.31-experimental` (ELEK `TM 0.1.31`, SHA-256 `0afc74
 
 A private card image of `0.1.32-experimental` (ELEK `TM 0.1.32`, SHA-256 `80ea9496ada52964401c3d0786dd7b21bbeb77e45a4e075faeaa473183adc624`) was flashed on the same unit. Reported: with AED open, FUNC+T follows the selected track's waveform as desired. That is reported hardware from one tester on this card build, not a verified stress pass. USB Keep/Undo and `ot_emu` were not tested. Do not treat `0.1.32-experimental` as verified.
 
+`0.1.33-experimental` has not been flashed. It saves d2 on entry to the FUNC+T handler, runs the FUNC+REC1/2 MIDI-page path only while the box is ticked, and keeps the checkbox in the module instead of Mute Modes' battery word `0x800000dc`. Power-off returning the box to empty is not tested on a unit. Do not treat `0.1.33-experimental` as a pass.
+
 ## Stock flows
 
 `0.1.0`–`0.1.25` same-unit as above. USB Keep/Undo, scenes, sampling: not tested.
@@ -82,7 +84,7 @@ Static bound only. Authored ColdFire in `trackmutes.s` is 438 instruction lines.
 
 ## Resources
 
-Static estimate of the authored unit: 1688 bytes (instruction-length sum of `trackmutes.s` at 2/4/6 bytes plus `.asciz`/`.byte`/`.long`; `m68k-elf-as` was not on this Windows host, so this is not the linker report). Plus two six-byte T-key detours, ANDY length pokes, a row-count poke, and relocated PERSONALIZE pointer arrays in stock space (not counted as extra module RAM). One PERSONALIZE word and its ANDY shadow are stock SRAM. No DSP memory. One instance.
+Static estimate of the authored unit: 1688 bytes (instruction-length sum of `trackmutes.s` at 2/4/6 bytes plus `.asciz`/`.byte`/`.long`; `m68k-elf-as` was not on this Windows host, so this is not the linker report). Plus the T-key detours, a row-count poke, and relocated PERSONALIZE pointer arrays in stock space (not counted as extra module RAM). The checkbox word is inside the unit. It is not Mute Modes' battery word. No DSP memory. One instance. The 1688-byte figure was counted before the 0.1.33 edits and has not been re-summed on this host.
 
 ## Hardware
 

@@ -1,10 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { sha } from '../../../vendor/elekloader/kit/src/bytes.ts'
 import { FAKE_BASE, fakeBaseOf, fakeSession, fakeUnit } from '../../dev/octatrack-link-fake'
-import { packSection } from '../../../vendor/elekloader/kit/src/codec/aplib.ts'
+import { packSection } from '../elektron/codec/pack.ts'
 import { encodeBin } from '../../../vendor/elekloader/kit/src/elek.ts'
 import { removalPackage } from './module-set'
-import { LinkBusyError, OctatrackLink, openFailure, tabLocks } from './octatrack-link'
+import { LinkBusyError, OctatrackLink, StaleLoadError, openFailure, tabLocks } from './octatrack-link'
 import { UploadUnconfirmedError } from './upload-session'
 import { UsbVendorTransport, parseBaseSlots } from './upload-usb'
 
@@ -174,7 +174,7 @@ describe('sending a module', () => {
     expect(progress.at(-1)).toBe(1)
     await link.keep()
     expect(link.getState()).toMatchObject({ status: 'ready', notice: { tone: 'success' }, active: sha(data) })
-    expect(link.getState().notice!.text).toMatch(/Kept\. PREVIEW VOL stays on your Octatrack, also after a restart/)
+    expect(link.getState().notice!.text).toMatch(/Synced\. PREVIEW VOL stays on your Octatrack, also after a restart/)
   })
   it('keeps the trial running when playback blocks keep, and finishes once stopped', async () => {
     const { unit, link } = await linked()
@@ -195,15 +195,16 @@ describe('sending a module', () => {
     unit.playing = true; await link.update('PREVIEW VOL', one)
     expect(link.getState()).toMatchObject({ status: 'ready', notice: { tone: 'error', text: 'Stop playback or finish recording on the Octatrack to continue.' } })
   })
-  it('stress-tests an update before it can be kept, and undoes it when the test fails', async () => {
+  it('installs an update without running a self-test', async () => {
     const { link } = await linked(), seen: string[] = []
     link.subscribe(() => { seen.push(link.getState().status) })
-    await link.update('My set', one, async () => null)
-    expect(seen).toContain('testing')
-    expect(link.getState()).toMatchObject({ status: 'trial', tested: true })
+    const selftest = vi.spyOn(UsbVendorTransport.prototype, 'selftest')
+    await link.update('My set', one)
+    expect(seen).not.toContain('testing')
+    expect(link.getState()).toMatchObject({ status: 'trial', module: 'My set' })
     await link.keep()
-    await link.update('My set', one, async () => 'CPU over budget on track 3')
-    expect(link.getState()).toMatchObject({ status: 'ready', notice: { tone: 'error', text: 'The self-test failed: CPU over budget on track 3. Nothing was kept.' } })
+    expect(selftest.mock.calls.filter(([start]) => start)).toEqual([])
+    selftest.mockRestore()
   })
   it('refuses a module bigger than the base can stage', async () => {
     const { link } = await linked()
@@ -293,12 +294,19 @@ describe('sending a module', () => {
     expect(link.getState().status).toBe('idle')
     stop()
   })
-  it('does not resurrect a trial when the self-test finishes after a disconnect', async () => {
-    const { unit, link } = await linked(), gate = deferred(), entered = deferred()
-    const loading = link.update('PREVIEW VOL', one, async () => { entered.resolve(); await gate.promise; return null })
+  it('does not resurrect a trial when its start finishes after a disconnect', async () => {
+    const unit = fakeUnit(), base = fakeSession(unit), gate = deferred(), entered = deferred()
+    const connect: typeof base = async (...args) => {
+      const session = await base(...args)
+      return Object.create(session, { startTrial: { value: async () => { await session.startTrial(); entered.resolve(); await gate.promise } } })
+    }
+    const link = new OctatrackLink(unit.usb, connect), stop = link.start()
+    await settle(); await settle()
+    const loading = link.update('PREVIEW VOL', one)
     await entered.promise; unit.unplug(); gate.resolve(); await loading
     expect(link.getState().status).toBe('idle')
-    expect(link.getState().notice?.text).toMatch(/undoes PREVIEW VOL/)
+    expect(link.getState().notice?.text).toMatch(/undoes the unfinished load/)
+    stop()
   })
   it('does not confirm Keep from a reply received after disconnecting', async () => {
     const unit = fakeUnit(), base = fakeSession(unit), gate = deferred(), entered = deferred()
@@ -318,11 +326,14 @@ describe('sending a module', () => {
     const unit = fakeUnit(), base = fakeSession(unit), gate = deferred(), entered = deferred()
     const connect: typeof base = async (...args) => {
       const session = await base(...args)
-      return Object.create(session, { rollback: { value: async () => { entered.resolve(); await gate.promise; return session.rollback() } } })
+      return Object.create(session, {
+        startTrial: { value: async () => { await session.startTrial(); throw new StaleLoadError() } }, // a load that fails once trialled
+        rollback: { value: async () => { entered.resolve(); await gate.promise; return session.rollback() } },
+      })
     }
     const link = new OctatrackLink(unit.usb, connect, 300), stop = link.start()
     await settle(); await settle()
-    const loading = link.update('PREVIEW VOL', one, async () => 'CPU over budget')
+    const loading = link.update('PREVIEW VOL', one)
     await entered.promise; stop(); gate.resolve(); await loading
     expect(link.getState().status).toBe('idle')
     const restart = link.start()
@@ -422,18 +433,18 @@ describe('loading a module set', () => {
   const install = (id: string) => { const data = new Uint8Array(36); data.set([0x4d, 0x57, 0x52, 0x4d, 0, 4]); const view = new DataView(data.buffer); view.setUint32(8, 4); view.setUint32(28, Number.parseInt(id, 16)); return data }
   const change = (id: string, removes = false) => ({ module: 'M' + id.slice(-1), data: removes ? removalPackage(id) : install(id), undo: removes ? install(id) : removalPackage(id) })
   const set = [change('0000000a', true), change('0000000b'), change('0000000c')]
-  async function loaded(stressTest?: () => Promise<string | null>) {
+  async function loaded() {
     const result = await linked('base', true); result.unit.modules = ['0000000a']
-    await result.link.update('Live', set, stressTest)
+    await result.link.update('Live', set)
     return result
   }
   it('trials the complete set without accepting any change before Keep', async () => {
-    const { unit, link } = await loaded(async () => null)
-    expect(link.getState()).toMatchObject({ status: 'trial', module: 'Live', tested: true })
+    const { unit, link } = await loaded()
+    expect(link.getState()).toMatchObject({ status: 'trial', module: 'Live' })
     expect(unit.kept).toEqual([])
     await link.keep()
     expect(unit.kept).toEqual(['-0000000a', '+0000000b', '+0000000c'])
-    expect(link.getState().notice).toMatchObject({ tone: 'success', text: 'Kept. Live stays on your Octatrack, also after a restart.' })
+    expect(link.getState().notice).toMatchObject({ tone: 'success', text: 'Synced. Live stays on your Octatrack, also after a restart.' })
     expect((await link.inventory())!.map(item => item.module)).toEqual(['0000000b', '0000000c'])
   })
   it('undoes the whole set on the device without sending inverse packages', async () => {
@@ -472,11 +483,6 @@ describe('loading a module set', () => {
       expect(unit.modules).toEqual([])
       expect(link.getState()).toMatchObject({ status: 'ready', active: FAKE_BASE, notice: { tone: 'success', text: 'Undone. Your Octatrack is back to how it was.' } })
     } finally { stop() }
-  })
-  it('undoes the set when the self-test fails', async () => {
-    const { unit, link } = await loaded(async () => 'the Octatrack’s DSP stopped')
-    expect(unit.kept).toEqual([])
-    expect(link.getState().notice?.text).toBe('The self-test failed: the Octatrack’s DSP stopped. Nothing was kept.')
   })
   it('keeps the baseline when the device refuses a complete set', async () => {
     const unit = fakeUnit(), base = fakeSession(unit)
@@ -673,12 +679,24 @@ describe('updating the base over USB', () => {
     link.start(); await vi.waitFor(() => expect(link.getState().status).toBe('ready'))
     return { link, restarts: () => starts }
   }
-  it('updates a unit on two slots with one restart: the running base writes the new one into its spare slot', async () => {
+  // The running base writing another's container quiesced stock, and the DSP stall that followed hung units (30 October
+  // 2026): on two slots the new base starts from RAM too and saves itself into the spare slot while it runs on.
+  it('updates a unit on two slots with one restart: the trial, then the new base saves itself into the spare slot', async () => {
     const unit = fakeUnit(), { link, restarts } = await counting(unit, 1), { bin, expected } = fakeBin(), steps: string[] = []
     expect(link.getState().slots).toMatchObject({ layout: 'two' })
     await link.updateBase(bin, expected, step => steps.push(step))
-    expect(dedupe(steps)).toEqual(['writing', 'restarting', 'done'])
+    expect(dedupe(steps)).toEqual(['staging', 'starting', 'started', 'writing', 'done'])
     expect(unit.flashed).toBe(expected); expect(unit.base).toBe(expected); expect(restarts()).toBe(1)
+  })
+  // A tester's unit saved the new base, then hung at the logo on the restart: the site said "reconnecting", wrote again
+  // and ended on the text about MIDI recovery. A verified save is not written again; the restart's failure ends it.
+  it('ends an update whose restart after the saved write never comes back, without writing again', async () => {
+    const { unit, link } = await linked(), { bin, expected } = fakeBin(), steps: string[] = []
+    unit.restartHangs = true
+    vi.useFakeTimers({ toFake: ['setTimeout'] })
+    await expect(run(link.updateBase(bin, expected, step => steps.push(step)))).rejects.toThrow('Keep it switched on')
+    expect(dedupe(steps)).toEqual(['staging', 'starting', 'started', 'writing', 'restarting'])
+    expect(unit.flashed).toBe(expected)
   })
   it('converts a unit with one copy with one restart: the trial, then the new base saves itself and runs on', async () => {
     const unit = fakeUnit(), { link, restarts } = await counting(unit, 0), { bin, expected } = fakeBin(), steps: string[] = []
@@ -686,6 +704,32 @@ describe('updating the base over USB', () => {
     expect(dedupe(steps)).toEqual(['staging', 'starting', 'started', 'writing', 'done'])
     expect(unit.flashed).toBe(expected); expect(unit.base).toBe(expected); expect(restarts()).toBe(1)
     expect(link.getState()).toMatchObject({ status: 'ready', baseUpdate: undefined, slots: { layout: 'two' } })
+  })
+  // The write publishes the container, so the unit's active digest is the container's now; without a restart, no HELLO
+  // reads it again. The first sync then failed as changed by another tab, and only its retry went through.
+  it('syncs straight after a base update that saved itself without a restart, not as changed by another tab', async () => {
+    const unit = fakeUnit(), { link } = await counting(unit, 0), { bin, expected } = fakeBin()
+    await link.updateBase(bin, expected)
+    expect(link.getState().active).toBe(unit.active)
+    await link.update('Set', [{ module: 'M', data: new Uint8Array(4000).fill(3) }])
+    expect(link.getState()).toMatchObject({ status: 'trial', module: 'Set' })
+    expect(link.getState().notice).toBeUndefined()
+    await link.keep()
+    expect(unit.active).toBe(sha(new Uint8Array(4000).fill(3)))
+  })
+  it('still refuses a sync planned before another tab loaded, after a base update', async () => {
+    const unit = fakeUnit(), locks = tabLocks()
+    unit.slots = record(0, 0xff, 0, [0, 0, 0], [0, 0, 0])
+    const a = new OctatrackLink(unit.usb, fakeSession(unit), 300, locks), b = new OctatrackLink(unit.usb, fakeSession(unit), 300, locks)
+    a.start(); b.start()
+    await vi.waitFor(() => expect([a.getState().status, b.getState().status]).toEqual(['ready', 'ready']))
+    const { bin, expected } = fakeBin()
+    await a.updateBase(bin, expected)
+    await a.update('Set A', [{ module: 'A', data: new Uint8Array(4000).fill(1) }])
+    const waiting = b.update('Set B', [{ module: 'B', data: new Uint8Array(4000).fill(2) }])
+    await a.keep()
+    await waiting
+    expect(b.getState().notice?.text).toBe('Another tab changed your Octatrack meanwhile, so nothing was synced. Review the sync again.')
   })
   it('stops at once when flash holds neither layout: nothing was written (refusal 108)', async () => {
     const { unit, link } = await linked(), { bin, expected } = fakeBin(), steps: string[] = []

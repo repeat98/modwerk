@@ -1,0 +1,22 @@
+[
+  {
+    "version": "0.1.1-experimental",
+    "date": "2026-10-31",
+    "changes": [
+      "At most three SYNTIZ tracks in a Part: choosing SYNTIZ for a fourth track is refused, so the unit never crackles from too many SYNTIZ notes at once.",
+      "A Part saved with more SYNTIZ tracks still plays as it was.",
+      "The sound is unchanged."
+    ]
+  },
+  {
+    "version": "0.1.0-experimental",
+    "date": "2026-10-28",
+    "changes": [
+      "New track machine SYNTIZ, with six models in a list opened by a double tap of the track key: SAW, PULSE, ENS, TABLE, MORPH and CHOIR.",
+      "SAW, PULSE and ENS: stacked, detuned and chorused oscillators; TABLE, MORPH and CHOIR: 32 single-cycle tables with crossfades, sync, bit crush and chords.",
+      "Every model has DRIV into a smooth saturator and RTRG; most add a square sub an octave down and a sine two octaves down.",
+      "PTCH plays like FLEX's (chromatic keys, scales, locks); OCT on SRC SETUP picks the register.",
+      "Experimental: tried on one MKII; it needs a base that knows SYNTIZ."
+    ]
+  }
+]

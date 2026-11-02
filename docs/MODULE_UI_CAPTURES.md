@@ -136,6 +136,7 @@ The supported UI keys also include `SCENE B`, `TRIG1`–`TRIG16`, MKII `AED`,
 `MIXER` opens the MIXER page.
 Kit/pattern workflows also support `CUE`, `PTN`, `BANK`, `REC` (copy),
 `PLAY` (clear) and `STOP` (paste); hold FUNC for clipboard actions.
+Stock clears a message box (TEMP SAVED, ARM ALL) when FUNC is released: for a FUNC gesture, `hold` FUNC, `press` the key, capture within about 20 ms and `release` after it.
 
 Example effect plan:
 
@@ -203,6 +204,19 @@ records must contain no firmware bytes, raw LCD/RAM dumps, card images, samples,
 personal project names, credentials or private emulator logs. Temporary card
 and framebuffer data are removed by the script.
 
+### Driving ot_emu by hand
+
+`ot_emu --interactive` answers one line a command on stdin; a session script (WAVE's draft,
+`sdk/drafts/wave/tools/emu_session.py`) can then install a USB package over `--usb-host` with
+`npm run device -- try FILE --emulator --socket SOCK`. What it takes:
+- `key ROW MASK` pushes the panel link's two bytes as they are, so ROW is the frame's header `0x20 | row`
+  (key code `row * 8 + bit`), and `knob` takes `0x30 | encoder` (A-F = 0-5). A bare row number does nothing.
+- `--frame` is needed for a machine to render; `--mkii` opens SET DATE/TIME on a never-set clock (YES clears it).
+- `peek` answers `peek HEX`, not `ok`. `audio start tracks` adds each track's stem to the capture (T1 L is the
+  ninth of 24 words a frame).
+- Without `--dsp` a session runs about ten times faster, for screens only (the firmware then shows DSP LOAD
+  FAILED), and a package that carries a DSP engine (Analog BD) is refused at verify with loader refusal 3. Card samples do not play faithfully under the port, so compare levels against a sample on a unit.
+
 ## Rights and release review
 
 Provide an accurate contributor declaration for original captures and preserve
@@ -252,9 +266,15 @@ hardware timing or save/reboot persistence.
 
 For local emulator captures, use digiemu revision
 `c1b5735835923e328f8b4950d6ba927875e5b669` with its six pinned Unicorn patches.
-Build the author's pinned catalog release with the unchanged vendored elekloader
-kit and your own supported stock OS file, then run the capture script in an
-isolated sandbox with network and user credentials denied:
+Install them with digiemu's `tools/install-patched-unicorn.sh`, then run
+`.venv/bin/python -m emu.unicorn_compat` from the digiemu folder; the script's
+own final check fails when started from elsewhere. Run the capture with that
+`.venv/bin/python`. Build the author's pinned catalog release with the unchanged
+vendored elekloader kit and your own supported stock OS file: the site's builder,
+or `build(stock, mods, 'D001')` from `vendor/elekloader/kit/src/patch.ts` with the
+core and module packages in `vendor/elekloader/catalog/`, under Node 24. Then run the
+capture script in an isolated sandbox with network and user credentials denied
+(on macOS, `sandbox-exec` with a `(deny network*)` profile):
 
 ```sh
 python3 scripts/capture-digi-module-ui.py \

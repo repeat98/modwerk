@@ -1,0 +1,26 @@
+{
+ "schemaVersion": 1,
+ "recorded": "2026-10-27",
+ "decision": "elekloader's parameter-page, machine and audio-load headers for core-ar2 0.4 to 0.7, copied unchanged into the Analog Rytm MKII shared SDK beside store.h (unchanged since 0.3), so Modwerk's source builder can compile Rytm mods that include them. Declarations and macros only; GPL-2.0-or-later, kept with their SPDX lines.",
+ "repository": "https://github.com/irpina/elekloader",
+ "tag": "core-ar2-v0.7",
+ "revision": "fb58292359880739a257311667dbda981a605f19",
+ "license": "GPL-2.0-or-later",
+ "files": [
+  {
+   "from": "elekloader/sdk/include/analog-rytm-mk2/pages.h",
+   "to": "sdk/machines/analog-rytm-mkii/include/analog-rytm-mk2/pages.h",
+   "sha256": "0bebf3e3c5630d694102305221db9cf87e4025e34bbefa582d2e76ea89bc947e"
+  },
+  {
+   "from": "elekloader/sdk/include/analog-rytm-mk2/machines.h",
+   "to": "sdk/machines/analog-rytm-mkii/include/analog-rytm-mk2/machines.h",
+   "sha256": "484ebaba45c6aaa7b48bd58e0649fa316eb3fefba95f646c54216ed8fbe2be8b"
+  },
+  {
+   "from": "elekloader/sdk/include/analog-rytm-mk2/load.h",
+   "to": "sdk/machines/analog-rytm-mkii/include/analog-rytm-mk2/load.h",
+   "sha256": "c833d774fac103e348fbf198520c7632773fe65ab75fb041be8bef2a013a5d8f"
+  }
+ ]
+}

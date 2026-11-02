@@ -1,0 +1,1 @@
+Correct Beat Slicer draft test and UI-approval attribution to its author or a contributor. Record deliberate shutdown and verified return of the saved modules, plus a separate same-build USB trial/self-test/Undo with an independently verified restored RAM baseline.

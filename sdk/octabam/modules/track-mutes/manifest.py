@@ -25,15 +25,15 @@ and skips that overlay for T8 in MASTER mode. 0.1.31 jsr's 0x40078850
 and 0x4002f2f8 so AED's waveform follows FUNC+T. T8 mute eor's bit 15
 without stock 0x4007c428 coupling.
 
-PERSONALIZE: a stock checkbox (glyphs 0x15 empty / 0x16 ticked), stored
-in the free word 0x800000dc and ANDY shadow 0x100fff6c (Mute Modes and
-Play Start use the same exclusive slot). Input 0x40068fd0: YES wrap=1,
-LEFT/RIGHT/cursor wrap=0. The three ANDY restore sites are widened
-pea 0x64 -> 0x70 so 0x800000dc survives power-off on a card build.
-Those sites and the PERSONALIZE pointer arrays are the same Mute Modes
-and Play Start relocate, so the three cannot share a card or USB set
-until a base-owned PERSONALIZE table exists; the JSON names mute-modes
-and play-start in conflicts.
+PERSONALIZE: a stock checkbox (glyphs 0x15 empty / 0x16 ticked). The
+setting is tm_setting in this module, not Mute Modes' battery word
+0x800000dc (and not 0x800000d8, which Direct Jump used). It resets to
+empty on boot until the base settings store exists. The PERSONALIZE
+pointer arrays are still the same tables Mute Modes grows, so the two
+cannot share a build until ot_personalize_rows (#1023) lands; this
+module does not retarget those sites while that pull request is open.
+Input 0x40068fd0: YES wrap=1, LEFT/RIGHT/cursor wrap=0. The JSON names
+mute-modes and playmodes in conflicts. Play Start is not listed yet.
 
 No DSP code, no effect slot, no project bytes: a project saved with the
 module loads unchanged on stock (the setting is PERSONALIZE, not the
@@ -49,7 +49,6 @@ H = bytes.fromhex
 
 LABELS, GETTERS, SETTERS = 0x400b2a34, 0x400b2a74, 0x400b2ac0
 COUNT_AT = 0x40068fb2
-ANDY_RESTORE_SITES = (0x4001f322, 0x4001f3be, 0x4001fb24)
 TRACK_KEY = 0x40040250
 FUNC_TRACK = 0x40083dfc
 UI_JSR = 0x4005227e
@@ -64,7 +63,7 @@ MODULE = Module(
     author="jonathanwardle1992-beep",
     author_url="https://github.com/jonathanwardle1992-beep",
     proof=Proof.UNTESTED,
-    proof_note="0.1.32 card: FUNC+T AED waveform follows the selected track (reported, one tester). Stress of that follow is not verified. USB Keep/Undo and ot_emu untested.",
+    proof_note="0.1.33 is not flashed. 0.1.32 card: FUNC+T AED follow reported by one tester; that card does not include the register save, gated FUNC+REC, or the move off Mute Modes' battery word. USB Keep/Undo and ot_emu untested.",
     doc="PERSONALIZE -> TRACK MUTES checkbox: empty keeps stock T=select / FUNC+T=mute; ticked makes T mute and FUNC+T select.",
     linked=(
         Linked("trackmutes", _HERE + "/trackmutes.s"),
@@ -123,10 +122,6 @@ MODULE = Module(
     pokes=(
         Poke(COUNT_AT, stock_guard(COUNT_AT, 2, "5dd82fd23ac20130aebe3391a4c9a9fda6ca01bd143223a558ec253b65083dfd"), H("7210"),
              "PERSONALIZE rows 15 -> 16 (MKI), 16 -> 17 (MKII): + TRACK MUTES"),
-    ) + tuple(
-        Poke(site, stock_guard(site, 4, "8c4c50dbddad08d1ae644a694665e608f2bbdb90d7a321fc640e844ae4c149fa"), H("48780070"),
-             "ANDY restore pea 0x64 -> 0x70: TRACK MUTES (0x800000dc) survives power-off")
-        for site in ANDY_RESTORE_SITES
     ),
     gates=(Gate("modules/track-mutes/verify.py", remix_arg=False),),
 )

@@ -1,9 +1,9 @@
 {
   "kind": "owner-approved-update",
   "id": "poly8",
-  "version": "0.3.1-experimental",
+  "version": "0.3.2-experimental",
   "approvedBy": "repeat98",
-  "approvedOn": "2026-10-23",
+  "approvedOn": "2026-10-27",
   "waived": [
     "current-build-hardware",
     "chip-worst-case-cycles",
@@ -11,7 +11,7 @@
     "release-documentation"
   ],
   "retainedUiVersion": "0.2.7-experimental",
-  "sourceSha256": "8e22fdd90c079c8c09305bce504db98e5f1b0c1ea1f645fa9d473bf5e6047791",
-  "ownerStatement": "Asked by repeat98 in chat 23 Oct 2026: make POLY8 stable, optimize it and bring it live again for the card and USB approaches.",
-  "reason": "0.3.1 bounds POLY8's own time with a frame-timer voice governor and runs its render through cached memory, pushing every line it touched before the audio interrupt ends; the OT pages and controls are unchanged, so the 0.2.7 captures are retained. Measured on the owner's MKII with RAM-booted development twins of the current beta base (cached and uncached module code): no freeze or frame stall under eight held keys, chords over the sequencer and rapid presses, where 0.3.0 froze; audio from PLAY matches 0.3.0 to the recorder floor, including after replacing 0.3.0 with the published package. Waived for this exact source: the card build and the exact tester image on a unit, Part/project reload and power cycles, chip worst-case cycles and complete memory bounds."
+  "sourceSha256": "8f357e753e2679112e2c0b6f3355cfdec4f3ac6fe8a9478cc99d76229337f861",
+  "ownerStatement": "Approved by repeat98 on 27 Oct 2026 in the issue-fix session (\"approved\"): release POLY8 0.3.2-experimental so its machine list scrolls on card builds (#842, #941, #942). Re-approved by repeat98 on 28 Oct 2026 (in the session that combined fix/base-oct28 into one pull request) for the later source of commit f1a25004: the chooser's cursor-clamp bytes in both manifest forms, the USB package unchanged.",
+  "reason": "0.3.2 changes only POLY8's card-build machine chooser: with POLY8 beside VECTOR, FM Synth or Analog BD the double-tap TRACK list has seven to nine rows, but stock drew the six visible rows from the top of the list whatever its scroll offset and its UP/DOWN handlers clamp the cursor to row 5, so the seventh machine never showed and could not be picked. Names (a pointer at 0x4007865e to mr_chooser_name) and the track's mark (mr_chooser_row) now read top + screen row, as the USB base's registry does since #922, and the five cursor clamps are composition count sites (card only; POLY8 alone writes stock's value). The render, the voice limit and the pages are 0.3.1's, so the 0.2.7 captures are retained; the USB package rebuilds byte-identical and stays at 0.3.1 (lagsBehind). Checked in ot_emu with card builds of POLY8 + VECTOR + FM Synth (+ Analog BD), POLY8 alone and VECTOR alone. Waived for this exact source: the card build on a unit, Part/project reload and power cycles, chip worst-case cycles and complete memory bounds."
 }

@@ -17,7 +17,37 @@ export const ELEKLOADER_SITE = 'elekloader/'
 export const UPSTREAM_CATALOG = 'vendor/elekloader/upstream-catalog.json', SITE_CATALOG = 'vendor/elekloader/catalog/catalog.json'
 /** A module's own catalog pins (a repository path), as `npm run elekloader:update -- --overlay` takes them. */
 export const isCatalogRecord = (path: string) => /^sdk\/imports\/elekloader-[a-z0-9][a-z0-9.-]*\.json$/.test(path)
-type Lock = { schema: number; kind: string; kit: { version: string; protocol: number; files: Record<string, string> }; catalog: { revision: string; sha256: string } }
+type Lock = { schema: number; kind: string; kit: { version: string; protocol: number; files: Record<string, string>; replaced?: Record<string, string> }; catalog: { revision: string; sha256: string } }
+
+/** Kit files Modwerk replaces with its own implementation: each holds a re-export of the module named here, and the
+ * lock keeps the upstream file's sha256 under kit.replaced, so an update can say when upstream changed one. */
+export const KIT_REPLACEMENTS: Readonly<Record<string, string>> = {
+  'src/codec/aplib.ts': 'src/engine/elektron/codec/pack.ts',
+  'src/codec/elz.ts': 'src/engine/elektron/codec/depack.ts',
+  'src/codec/transport.ts': 'src/engine/elektron/codec/transport.ts',
+  'src/isa/coldfire.ts': 'src/engine/elektron/codec/coldfire-kit.ts',
+}
+/** What a replaced kit file holds: the re-export, relative to vendor/elekloader/kit/<path> unless `from` is given. */
+export const replacementText = (path: string, from = '../'.repeat(path.split('/').length + 2) + KIT_REPLACEMENTS[path]) =>
+  '// SPDX-License-Identifier: GPL-3.0-or-later\n'
+  + '// Modwerk replaces this kit file with its own implementation (vendor/elekloader/README.md, "Replaced kit files").\n'
+  + `export * from '${from}'\n`
+/** The upstream files the kit's NOTICE credits in its "Code from other projects" section, all ported into the replaced files. */
+const REPLACED_ORIGINS = ['elekloader/codec/aplib.py', 'elekloader/codec/elz.py', 'elekloader/codec/transport.py', 'elekloader/isa/coldfire.py']
+/** The kit's NOTICE as Modwerk ships it: that section is left out, since its files' code is not included, and a note says
+ * which files are replaced. Throws when the section credits any other file, so a new one never loses its notice. */
+export function kitNotice(notice: string) {
+  const heading = '\nCode from other projects\n------------------------\n', at = notice.indexOf(heading)
+  const replaced = Object.keys(KIT_REPLACEMENTS).join(', ')
+  const note = `Modwerk ships this kit with ${replaced} replaced by Modwerk's own implementation (vendor/elekloader/README.md).\n\n`
+  if (at < 0) return note + notice
+  const next = notice.slice(at + heading.length).search(/\n\n[^\n]+\n-{3,}\n/)
+  const section = next < 0 ? notice.slice(at + heading.length) : notice.slice(at + heading.length, at + heading.length + next)
+  const files = [...section.matchAll(/^ {2}(\S+\.py)\s/gm)].map(match => match[1]).sort()
+  if (files.join() !== [...REPLACED_ORIGINS].sort().join())
+    throw new Error(`The kit NOTICE's "Code from other projects" section credits ${files.join(', ') || 'no file'}, not exactly the files Modwerk replaces (${REPLACED_ORIGINS.join(', ')}): review it and scripts/elekloader-vendor.ts kitNotice().`)
+  return note + notice.slice(0, at).trimEnd() + (next < 0 ? '\n' : notice.slice(at + heading.length + next))
+}
 type Pin = { file: string; sha256: string; id: string; version: string; device: string; os: string; requires?: string[] }
 export type CatalogFile = { schema?: number; kind?: string; about?: string; revision: string; cores: Pin[]; mods: Pin[] }
 const sha = (bytes: Uint8Array) => createHash('sha256').update(bytes).digest('hex')
@@ -91,6 +121,9 @@ export async function readVendoredElekloader(root: string): Promise<{ lock: Lock
   const kitFiles = await names(kit)
   for (const path of kitFiles) if (lock.kit.files[path] !== sha(await readFile(resolve(kit, path)))) bad.push(path in lock.kit.files ? 'kit file changed: ' + path : 'kit file not in the lock: ' + path)
   for (const path of Object.keys(lock.kit.files)) if (!kitFiles.includes(path)) bad.push('kit file missing: ' + path)
+  if (Object.keys(lock.kit.replaced ?? {}).sort().join() !== Object.keys(KIT_REPLACEMENTS).sort().join()) bad.push('the lock\'s kit.replaced does not name the kit files Modwerk replaces: ' + Object.keys(KIT_REPLACEMENTS).join(', '))
+  for (const path of Object.keys(KIT_REPLACEMENTS))
+    if (await readFile(resolve(kit, path), 'utf8').catch(() => '') !== replacementText(path)) bad.push('replaced kit file is not the re-export of ' + KIT_REPLACEMENTS[path] + ': ' + path)
   const site = siteCatalog(root), raw = Buffer.from(site.text)
   if (sha(Buffer.from(site.upstream)) !== lock.catalog.sha256) bad.push('upstream-catalog.json is not the one the lock pins')
   if (!(await readFile(resolve(dir, 'catalog.json')).catch(() => Buffer.alloc(0))).equals(raw)) bad.push('catalog/catalog.json is not the upstream catalog plus the module records: run npm run prepare')

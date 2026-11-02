@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // ELE3 containers in Digitakt, Digitone mk1, Analog Rytm MKII and Analog Four MKII OS files: read, rebuild with a new main OS, verify.
-// The layout follows elektron-firmware-tool (MIT) and digikit / elekloader (GPL-2.0-or-later). A rebuild changes only
+// The layout follows elektron-firmware-tool's documentation (MIT). A rebuild changes only
 // the main OS section's stored bytes, the 4-character version field and the framing messages' count; everything else
 // is copied from the owner's own stock file. No firmware content is embedded here.
 import { packSection, unpackSection } from '../aplib.ts'

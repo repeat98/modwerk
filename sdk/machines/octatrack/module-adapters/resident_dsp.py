@@ -26,9 +26,10 @@ ENGINE_ORIGINS = (0x100000, 0x200000)  # long forms only: every relocated word i
 ENGINE_PROOFS = (0x1000, 0x1333, 0x17ff, 0x1c01)
 ALLOWED = {'A': SIDECHAIN | MATRIX | ANALOG_BD | KEYBUS, 'B': SIDECHAIN | ANALOG_BD | KEYBUS}
 SOURCES = {
-    'modules/sidechain-compressor/manifest.py': '3bba6ac8ba315e10d6d7f2cb6342fb5ce6564e1ba6cd6ec362787d685c5e0cd7',
-    'modules/sidechain-compressor/upstream/tools/patch_sc_dsp3.asm': 'aaa1a1c947a8bcb5d19ebc9454ec3f020d1f00afe51fe786fe1f3ed4d5eccde3',
-    'modules/sidechain-compressor/upstream/tools/sc_tables.py': '8045e06f97fa462ca3f986b5a46e8ee48f9f9663691ae291221ce8ed6489c71a',
+    'modules/sidechain-compressor/manifest.py': '62f004df8eb3e727da05430b18785142f6f3de6c1418b42de49b9073d6f17e44',
+    'modules/sidechain-compressor/patch_sc_dsp3.asm': '11022dbd84e1fffa71946aa19e8d8f0a51b1f25371c5b6b794066c855012ddf8',
+    'modules/sidechain-compressor/sc_tables.py': 'cf4bba489c652fca75021f9d81a8aa8ecf0247ce6edc36b01420903c74324054',
+    'modules/sidechain-compressor/sc_keyfilt.py': '8e68216a2ec8ec366c686fd7d6ab0690776b66065de58ab2aa807a5e88438edb',
     'modules/output-matrix/manifest.py': '65d1ae009dc1c956ce2036181667434e31b361179ca138e5c8f1091227b55619',
     'modules/output-matrix/matrix_mix.asm': '8f58596d8bd23bf50651d4288745c187ace9e6f9e0efffd34dcdad627b89476e',
 }
@@ -51,14 +52,14 @@ SOURCES = {
 # at each read instead (XBUS's "rotation read" defect) races the writer's advance every block when the reader is
 # on its core's first track: the key then jumps between two and three blocks late (sdk/tests/test_resident_engines.py).
 #
-# Also MON: scdet sets MON_ON[track] on every block it runs with MON on, and only scdet clears it, so a COMPRESSOR
-# taken off a track with MON on left moncommit replaying the last 16-sample key stash there until the next RESET.
-# moncommit now consumes MON_ON (it runs once per track per block, after both FX procs, which set it again).
+# MON: 0.1.x's scdet set MON_ON[track] on every block it ran with MON on and only scdet cleared it, so a COMPRESSOR
+# taken off a track with MON on left moncommit replaying its last key stash; two changes here made moncommit consume
+# MON_ON. Since 0.2.0 the source does that itself (MON_ON is a per-block arm that moncommit consumes, with a 64-sample
+# crossfade), so only the key-phase change remains.
 _SC_KEY_PHASE = (
-    ('''zz01:
+    ('''sctap:
 ; -- generation counter advance (Session 77), gated on core-local track 0 --
-        move    x:>$420,a               ; a1 = track index (reload; a/r0/r1/n1/x0
-                                        ; all spent by the loop above)
+        move    x:>$420,a               ; a1 = track index 0..7
         cmp     #>@COREBASE@,a
         bne     zz30                    ; not this core's local index 0 -> skip
 ; GSEED holds the exact sentinel $10000 once this core has ever run this
@@ -81,12 +82,11 @@ _SC_KEY_PHASE = (
         move    b,y:(r1)                ; first-ever block -> generation 0
         bra     zz30
 zz29:
-''', '''zz01:
+''', '''sctap:
 ; -- generation counter (Modwerk resident change, 15 Oct 2026): advanced at
 ; core-local track 0 once seeded; until then it follows the other core's
 ; counter, adopted for good at local track 2 (resident_dsp.py has why) --
-        move    x:>$420,a               ; a1 = track index (reload; a/r0/r1/n1/x0
-                                        ; all spent by the loop above)
+        move    x:>$420,a               ; a1 = track index 0..7
         cmp     #>@COREBASE@,a
         beq     kph1                    ; local track 0 -> advance, or follow
         cmp     #>@COREMID@,a
@@ -115,7 +115,7 @@ zz29:
         rts
 ; GCNT = the other core's counter once that core is seeded, else 0. a, b, r1.
 kph2:
-        move    #0,a
+        clr     a                       ; (clr: an instruction form the source itself uses)
         move    #>@FGSEED@,r1
         move    y:(r1),b               ; b = the other core's sentinel
         cmp     #>$10000,b
@@ -129,22 +129,11 @@ kph3:
         move    a,y:(r1)
         rts
 '''),
-    ('''        move    y:(r1)+,b             ; b = MON_ON ; r1 now -> MON_KEY[my track]
-''', '''        move    y:(r1),b              ; b = MON_ON ; r1 stays on it
-'''),
-    ('''mc09:
-        move    y:(r1),b              ; b = MON_KEY 0..7 (still via r1, no r2/n2 needed)
-''', '''mc09:
-        move    #0,b
-        move    b,y:(r1)+             ; consume MON_ON (scdet sets it each block
-                                       ; it runs) ; r1 -> MON_KEY[my track]
-        move    y:(r1),b              ; b = MON_KEY 0..7 (still via r1, no r2/n2 needed)
-'''),
 )
 REVIEWED = {
     'sidechain-compressor': (
-        'aaa1a1c947a8bcb5d19ebc9454ec3f020d1f00afe51fe786fe1f3ed4d5eccde3', _SC_KEY_PHASE,
-        'a850c60dfc8c0d55f8e1f2dcff0437d106ea5e7e64f149b5134644014ec30f1a',
+        '11022dbd84e1fffa71946aa19e8d8f0a51b1f25371c5b6b794066c855012ddf8', _SC_KEY_PHASE,
+        '3c8e1aa02e880099488788d94f568648aefa18f2427db92262108f6bf5df5c8d',
         {'A': {'@COREMID@': '6', '@FGSEED@': '$3bdfe', '@FGCNT@': '$3bdff'},
          'B': {'@COREMID@': '2', '@FGSEED@': '$33dfe', '@FGCNT@': '$33dff'}}),
 }
@@ -175,8 +164,8 @@ def reviewed_source(name, text, tag):
 # permanent block assembles the two in the original order, so its words are the unsplit text's. SHA-256 of each part
 # of the reviewed (key-phase) text before the per-core markers: any drift stops the build.
 KEYBUS_SPLIT = ('\nsctap:\n', '\n; ---- HOOK 2 ',
-                '2b7dd9eafbc6623c26908b934d1394e7e55eeb317c654a90078005a227cc8464',
-                '4192f6a25b8b2075c3de2d04b71651d5c870d50dcf99c7e9f17d6f73dccf5935')
+                '2a79b3cd53cb4bf33989a7b6b6c6b1c09e5d0002a9c2559c87693b8a1fc0c2cc',
+                '8c6a4ff6eaac6655f499eacf1bfb7a4d3baecc947cf0566c49bf7e8080bc567c')
 
 
 def split_sidechain(text, pinned=True):
@@ -212,10 +201,14 @@ def keybus_executed(tap):
             at = ops.index('do')
             return at + 1 + 32 * (len(ops) - at - 1)
         return len(ops)
-    if [segments['zz01'][i] for i in (2, 4, 8)] != ['beq', 'bne', 'beq'] or segments['kph1'][3] != 'beq' or 'do' not in segments['sctap'] or 'do' not in segments['zz30']:
+    # 0.2.0's one-pass tap: the counter block opens `sctap`, the slot set-up and the one DO loop are `zz30`, `zz01`
+    # holds the displaced instruction and the rts. A seeded core's local track 0 advances (kph1 -> zz29, falling into
+    # zz30), tracks 1 and 3 skip at the second compare, track 2 also reads the seed mark.
+    if ([segments['sctap'][i] for i in (2, 4, 8)] != ['beq', 'bne', 'beq'] or segments['kph1'][3] != 'beq' or
+            'do' not in segments['zz30'] or segments['zz01'] != ['move', 'rts']):
         raise ValueError('The key bus tap\'s paths changed: count its cost again')
-    common = 2 + run('sctap') + run('zz01', 0, 3) + run('zz30') + run('zz31')
-    paths = (run('kph1', 0, 4) + run('zz29'), run('zz01', 3, 5), run('zz01', 3, 9), run('zz01', 3, 5))  # local tracks 0-3
+    common = 2 + run('sctap', 0, 3) + run('zz30') + run('zz01')
+    paths = (run('kph1', 0, 4) + run('zz29'), run('sctap', 3, 5), run('sctap', 3, 9), run('sctap', 3, 5))  # local tracks 0-3
     return -(-sum(common + extra for extra in paths) // 16)
 
 
@@ -226,7 +219,7 @@ def verify_sources(sdk):
             raise ValueError('Resident DSP source changed; review the port: ' + path)
     # The key bus split of Sidechain's reviewed text, before its per-core markers (KEYBUS_SPLIT).
     pinned, changes = REVIEWED['sidechain-compressor'][:2]
-    text = (sdk / 'modules/sidechain-compressor/upstream/tools/patch_sc_dsp3.asm').read_text()
+    text = (sdk / 'modules/sidechain-compressor/patch_sc_dsp3.asm').read_text()
     for old, new in changes:
         text = text.replace(old, new)
     split_sidechain(text)
@@ -281,11 +274,15 @@ def _section(ob, name, tag, table_address):
         if old not in text:
             raise ValueError('A DSP source substitution disappeared: ' + old)
         text = text.replace(old, new)
+    # ptable2 follows the ptable, as octabam's build places it; each marker names its own start.
+    ptable2 = list(getattr(section, 'ptable2', None) or ())
     text = text.replace('$fab1e0', '$%x' % table_address)
+    if ptable2:
+        text = text.replace('$fab2e0', '$%x' % (table_address + len(section.ptable)))
     code = '\n'.join(line.split(';')[0] for line in text.splitlines())
-    if re.search(r'@[A-Z_]+@|\$fab1e0', code, re.I):
+    if re.search(r'@[A-Z_]+@|\$fab1e0|\$fab2e0', code, re.I):
         raise ValueError('An unresolved DSP source marker remains')
-    return [w & 0xffffff for w in section.ptable], text
+    return [w & 0xffffff for w in list(section.ptable) + ptable2], text
 
 
 def assemble_authored(text, origin, work, assemble):
@@ -360,7 +357,8 @@ def assemble_resident(ob, tag, origin, work, assemble, on_demand=0):
     table, texts = _engines(ob, tag, origin, ALLOWED[tag] & ~on_demand)
     entries = [('hsc_tap', 'sctap', KEYBUS, 'move x:>$208,r6\nrts'),
                ('hsc_det', 'scdet', SIDECHAIN, 'move r0,n6\nmove #$61,r4\nrts'),
-               ('hsc_commit', 'moncommit', SIDECHAIN, 'move x:>$206,r0\nrts')]
+               ('hsc_commit', 'moncommit', SIDECHAIN, 'move x:>$206,r0\nrts'),
+               ('hsc_init', 'scinit', SIDECHAIN, 'move #>$20c5,x0\nrts')]
     if tag == 'A':
         entries += [('hom_mix', 'omx_mix', MATRIX,
                      'btst #10,a\nbcs hom_stockm\nrts\nhom_stockm:\nmove ssh,x0\njmp $292'),
@@ -403,10 +401,10 @@ def assemble_resident(ob, tag, origin, work, assemble, on_demand=0):
         if name == 'output-matrix' and tag != 'A':
             continue
         for hook in ob.modules[name].dsp.hooks:
-            stub = {'sctap': 'hsc_tap', 'scdet': 'hsc_det', 'moncommit': 'hsc_commit',
+            stub = {'sctap': 'hsc_tap', 'scdet': 'hsc_det', 'moncommit': 'hsc_commit', 'scinit': 'hsc_init',
                     'omx_mix': 'hom_mix', 'omx_phn': 'hom_phn'}[hook.label]
             guards.append(dict(module=name, site=hook.site_on(tag), expectedSha256=hook.stock.sha256,
-                               entry=labels[stub], relocated=hook.label == 'scdet'))
+                               entry=labels[stub], relocated=RELOCATED.get(hook.label, False)))
     # Analog BD's seam: the catalogue's site (dsp-sites.json), whose guard is the displaced instruction the stub replays.
     site = next(s for s in json.loads(SITES.read_text())['sites'] if s['feature'] == ANALOG_BD)
     at = labels['hab_source_off'] - origin
@@ -432,7 +430,10 @@ def place_resident(ob, tag, end, work, assemble, on_demand=0):
     return result
 
 
-ENTRIES = {SIDECHAIN: ('scdet', 'moncommit'), MATRIX: ('omx_mix', 'omx_phn'), KEYBUS: ('sctap',)}
+ENTRIES = {SIDECHAIN: ('scdet', 'moncommit', 'scinit'), MATRIX: ('omx_mix', 'omx_phn'), KEYBUS: ('sctap',)}
+# Hooks inside stock COMPRESSOR, whose code is its own normalized stock package in this base: each is bridged at that
+# package's entry of this name (compressor_bridge) instead of at its stock address.
+RELOCATED = {'scdet': 'proc', 'scinit': 'init'}
 
 
 def engine_unit(ob, tag, feature, work, assemble):
@@ -496,21 +497,25 @@ def relocate(unit, base):
 
 
 def compressor_bridge(stock, words, bundle):
-    """Bridge normalized stock COMP proc, retaining its complete original replay.
+    """Bridge normalized stock COMP at its proc and its init, retaining each complete original replay.
 
-    The called resident SC entry replays both displaced instructions and returns
+    Each called resident SC entry replays its two displaced instructions and returns
     to the dynamically placed stock procedure. Its resident address is fixed,
     so it is deliberately absent from the stock package's relocation list.
     """
-    hook = next(row for row in bundle['guards'] if row['relocated'])
-    at = stock['proc']
-    if stock['key'] != 'COMPRESSOR' or not 0 <= at <= len(words) - 2 or \
-            hashlib.sha256(b''.join(w.to_bytes(3, 'big') for w in words[at:at + 2])).hexdigest() != hook['expectedSha256']:
-        raise ValueError('The normalized COMPRESSOR proc prefix changed')
-    moved = list(words)
-    moved[at:at + 2] = [0x0bf080, hook['entry']]  # same native long JSR used by the frame hook
+    hooks = [row for row in bundle['guards'] if row['relocated']]
+    if stock['key'] != 'COMPRESSOR' or sorted(row['relocated'] for row in hooks) != sorted(set(RELOCATED.values())):
+        raise ValueError('The normalized COMPRESSOR bridges changed')
+    moved, dropped = list(words), set()
+    for hook in hooks:
+        at = stock[hook['relocated']]
+        if not 0 <= at <= len(words) - 2 or \
+                hashlib.sha256(b''.join(w.to_bytes(3, 'big') for w in words[at:at + 2])).hexdigest() != hook['expectedSha256']:
+            raise ValueError('The normalized COMPRESSOR %s prefix changed' % hook['relocated'])
+        moved[at:at + 2] = [0x0bf080, hook['entry']]  # same native long JSR used by the frame hook
+        dropped |= {at, at + 1}
     result = dict(stock)
-    result['relocations'] = [r for r in stock['relocations'] if (r & 0x7fff) not in (at, at + 1)]
+    result['relocations'] = [r for r in stock['relocations'] if (r & 0x7fff) not in dropped]
     return result, moved
 
 
@@ -534,7 +539,7 @@ def receiver_control(bundle):
     before any executable word changes. State resets/publication stay caller-owned.
     """
     tag = bundle['tag']
-    if bundle['allowed'] != ALLOWED[tag] or len(bundle['descriptors']) != (6 if tag == 'A' else 4):
+    if bundle['allowed'] != ALLOWED[tag] or len(bundle['descriptors']) != (7 if tag == 'A' else 5):
         raise ValueError('Resident hook descriptor layout changed')
     on_demand = bundle.get('onDemand', 0)
     if not isinstance(on_demand, int) or on_demand & ~ALLOWED[tag] or bool(on_demand) != ('engines' in bundle):

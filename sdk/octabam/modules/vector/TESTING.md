@@ -1,5 +1,23 @@
 # VECTOR tests and measurements
 
+## 0.2.5 over USB on a MKII (SRC SETUP page 2, #972)
+
+Version `0.2.5-experimental` changes only the USB package: its `ot_machines` record is a `struct modwerk_machine_setup` (SETUP_PAGE) naming the card build's own `st_setup_page` and `st_setup_knob`, and the package's source variant drops `st_setup_page`'s test for SRC SETUP's cursor on row 5. The card source and every result in the sections below are 0.2.4's.
+
+Hardware, observed on the owner's Octatrack MKII by the coordinating session over USB with `device.mjs`, 27 October 2026:
+
+- Base: a development twin of the release base, identity `e6e75d75546d10396cfbe5c01fc9c731d76463414dd02c3833d6f50181e7b4f4` (MAIN SHA-256 `a753ddf67b0fe64e3742b4c89ecf141071eb30757b170173215e92b1b4794d24`): the `b1b2ca58` beta-base build plus `--dev`, RAM-booted. It was the development twin of the release base, not `b1b2ca58` itself, and not the base this pull request commits.
+- Packages: POLY8 0.3.1, Analog BD 0.1.5 rebuilt for the twin, and VECTOR 0.2.5 (package SHA-256 `45c962ca3a202ac697e3d33d97e4b3b94052706a390189e5baf923fa829de577`), all accepted. Inventory: POLY8, Analog BD, VECTOR.
+- T1 (STATIC): FUNC+SRC opens SRC SETUP. The list scrolls to POLY8, ANALOG BD and VECTOR.
+- Cursor on VECTOR without YES, the track still STATIC: the stock STATIC setup (LOOP SLIC LEN RATE TSTR TSNS) shows. Cursor on ANALOG BD shows Analog BD's page (ACCNT LPF LOW HIGH).
+- YES on VECTOR opens MACHINE:VECTOR with 001 STATIC / 002 FLEX. YES on STATIC, then the slot list, then NO. The main SRC page shows SRC▸VECTOR with TYPE DENS ROOT SCAL GATE ACNT.
+- FUNC+SRC again: VECTOR's page shows SEED 1, SPAN 12, OFST 0, ROT 0, RPT OFF, DIR FWD.
+- Encoders A+3, B+2, C+1, D+1, E+2, F+1 give SEED 4, SPAN 12 (already at its maximum), OFST 1, ROT 1, RPT 2, DIR REV. Turning them back gives SEED 1, SPAN 10, OFST 0, ROT 0, RPT OFF, DIR FWD; B+2 then gives SPAN 12.
+- T2 (STATIC): SRC SETUP shows the stock STATIC setup. T1 was set back to STATIC afterwards.
+- Not tested: the FLEX, THRU and PICKUP setups; a POLY8 track's or an Analog BD track's SRC SETUP; VECTOR 0.2.4 on the new base; whether the SRC main page regenerates the phrase; saving and reloading; a power cycle with VECTOR kept; the non-dev base `b1b2ca58` itself; listening.
+
+Emulator (ot_emu, MKII panel, the modules installed over emulated USB): on the release base, VECTOR 0.2.4 still shows the stock STATIC setup there and 0.2.5 shows its page 2; encoder A moves SEED and encoder E moves RPT. Emulator results only.
+
 Version: `0.2.4-experimental`, 9 October 2026. Source SHA-256 `1255e99133cbd8d6d2587c95f93462ea80fccbd169462a2acb02aedbd346cbd3`; tested MAIN SHA-256 `cabcc2967a23a0ef719a38de444aec1b68662c12bb9057093d475b89424d0026`. Native build base is `d1e38bcde2d37ac62d45e60655c0e7137750bf97` plus the authored fix identified by that source fingerprint. Firmware and raw derived data stay private.
 
 ## Regression and persistence

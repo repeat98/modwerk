@@ -5,6 +5,8 @@
 #include <stddef.h>
 
 #define MW_CONTROLLER_SLOTS 6u
+/* The most words one RESET job writes: the owned transport's DL_RESET_DATA, eight packets. */
+#define MW_CONTROLLER_RESET_CHUNK 192u
 enum mw_controller_state { MW_CTL_EMPTY, MW_CTL_RESERVED, MW_CTL_BOUND, MW_CTL_INITIALIZING,
     MW_CTL_READY, MW_CTL_PUBLISHING, MW_CTL_ACTIVE, MW_CTL_DISABLING, MW_CTL_RETIRING,
     MW_CTL_QUARANTINED, MW_CTL_RELEASED };

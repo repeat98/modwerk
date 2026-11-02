@@ -1,4 +1,4 @@
-node_modules/
+node_modules
 dist/
 .wrangler/
 coverage/
@@ -6,6 +6,8 @@ coverage/
 .env
 .env.*
 !.env.example
+!.env.discord.example
+.discord-bot/
 .DS_Store
 *.tsbuildinfo
 # User firmware and captures must never enter source control.

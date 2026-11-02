@@ -51,7 +51,7 @@ EMU = Path(os.environ.get('ELEKLOADER_DSP56300', '/opt/toolchain/vendor/dsp56300
 LIBS = [EMU / 'build/source' / part for part in ('dsp56kEmu/libdsp56kEmu.a', 'dsp56kBase/libdsp56kBase.a', 'asmjit/libasmjit.a')]
 VTUNE = EMU / 'build/source/vtuneSdk/libvtuneSdk.a'  # the JIT's profiling hooks, where the build has them
 RECEIVER_ORIGIN = 0x400
-STUBS = {resident_dsp.SIDECHAIN: ('hsc_det', 'hsc_commit'), resident_dsp.MATRIX: ('hom_mix', 'hom_phn'),
+STUBS = {resident_dsp.SIDECHAIN: ('hsc_det', 'hsc_commit', 'hsc_init'), resident_dsp.MATRIX: ('hom_mix', 'hom_phn'),
          resident_dsp.ANALOG_BD: ('hab_source',), resident_dsp.KEYBUS: ('hsc_tap',)}
 # Words that steer each engine down its working path rather than its early return (on the fixed registers below,
 # r6 = $6280): Sidechain's track 3 with KEY 3 and its monitor on, MATRIX selected, an Analog BD source record.
@@ -64,9 +64,9 @@ ACTIVE = {resident_dsp.SIDECHAIN: ('X 1056 3', 'X %d %d' % (0x628d, 0x30000), 'Y
 # memory for (it faults, in the resident build as in the placed one): compare its first 160 instructions, to the
 # voice loop. The dormant path and core B's working path run to the end.
 LIMIT = {('A', resident_dsp.ANALOG_BD): 160}
-# Each on-demand unit's words. Sidechain's 423 before the key bus split: its detector and table now, and the tap (with
-# #640's phase rule) as the key bus's own unit.
-UNIT_WORDS = {1: 322, 2: 675, 4: 998, 8: 101}  # 322 + 101 = 423: no word added or lost
+# Each on-demand unit's words. Sidechain 0.2.0's 710 before the key bus split: its detector, MON commit, init and table
+# now, and the one-pass tap (with #640's phase rule) as the key bus's own unit.
+UNIT_WORDS = {1: 613, 2: 675, 4: 1009, 8: 97}  # 613 + 97 = 710: no word added or lost
 
 
 def read(name, path):
@@ -122,10 +122,12 @@ int dl_owned_cancel(const struct dl_owned_job *v) { (void)v;return 0; }
 int dl_owned_job_poll(const struct dl_owned_job *v,struct dl_owned_progress *p) { (void)v;(void)p;return 0; }
 int dl_owned_job_release(const struct dl_owned_job *v) { (void)v;return 0; }
 void dl_owned_fail_closed(unsigned c) { (void)c; }
+int dl_owned_closed(unsigned c) { (void)c;return 0; }
 int dl_engine_claim(unsigned c,unsigned r,int k) { (void)c;(void)r;(void)k;return 0; }
 void dl_engine_release(unsigned c,unsigned r) { (void)c;(void)r; }
 unsigned dl_engine_reserved(unsigned c) { (void)c;return 0; }
 int mw_engines_test_quiet(void) { return 1; }
+int mw_engines_test_queued(void) { return 0; }
 int mw_engines_test_settled(void) { return 1; }
 volatile uint8_t dl_engine_why[2];
 ''')
@@ -444,7 +446,7 @@ class ResidentEngines(unittest.TestCase):
         sys.path.insert(0, str(ROOT / 'sdk/machines/octatrack'))
         import dsp_sites
         reg = dsp_sites.load()
-        self.assertEqual(next(f['executed'] for f in reg['features'] if f['name'] == 'keybus'), 41)
+        self.assertEqual(next(f['executed'] for f in reg['features'] if f['name'] == 'keybus'), 25)
         self.assertEqual(next(f['hardware'] for f in reg['features'] if f['name'] == 'keybus'), 51)
         self.assertEqual(dsp_sites.check(reg), [])
 
@@ -462,7 +464,7 @@ class ResidentEngines(unittest.TestCase):
         self.assertTrue(all(line[2] == '1' for line in ran), [line for line in ran if line[2] != '1'][:3])  # every hook returned
         words = [list(map(int, line[3:])) for line in lines if line[0] == 'D']
         self.assertEqual(len(words), len(dumps))
-        return {key: sc_block(block) for key, block in zip(dumps, words)}
+        return {key: sc_block(block, mixed=key[0] == 'moncommit') for key, block in zip(dumps, words)}
 
     def sc_engines(self, variant):
         """{tag: (words at SC_ORIGIN, labels[, (origin, words) of a unit placed apart])}. 'split' is the resident change
@@ -558,19 +560,21 @@ class ResidentEngines(unittest.TestCase):
 
     @unittest.skipUnless(all(p.is_file() for p in LIBS) and shutil.which('c++'), 'vendored dsp56300 build unavailable')
     def test_sidechain_mon_ends_with_its_compressor(self):
-        """A COMPRESSOR taken off a track with MON on: upstream keeps committing the last key stash there."""
+        """A COMPRESSOR taken off a track with MON on: MON fades out over sixteen blocks and the track's own audio comes
+        back. 0.1.x's upstream kept committing the last key stash there (#640's resident change); since 0.2.0 the
+        source consumes MON_ON itself, so the resident text and upstream agree."""
         self.__class__.sc_cache = getattr(self.__class__, 'sc_cache', {})
         for variant in ('resident', 'upstream'):
             with self.subTest(variant=variant):
-                blocks = self.sc_run(variant, (3, 4), lambda n: 0.5, 24, removed=16)
-                for n in range(8, 24):
+                blocks = self.sc_run(variant, (3, 4), lambda n: 0.5, 40, removed=16)
+                for n in range(8, 40):
                     committed = blocks['moncommit', 4, n]
                     if n < 16:
                         self.assertEqual(committed, blocks['scdet', 4, n])          # MON: the key, as read
-                    elif variant == 'resident':
-                        self.assertEqual(committed, (n, 4))                         # the track's own block again
+                    elif n < 32:
+                        self.assertEqual(committed, SC_MIXED)                       # the 256-sample fade out
                     else:
-                        self.assertEqual(committed, blocks['moncommit', 4, 15])      # the stale stash, every frame
+                        self.assertEqual(committed, (n, 4))                         # the track's own block again
 
     @unittest.skipUnless(all(p.is_file() for p in LIBS) and shutil.which('c++'), 'vendored dsp56300 build unavailable')
     def test_sidechain_key_phase_disassembles_as_written(self):
@@ -579,19 +583,16 @@ class ResidentEngines(unittest.TestCase):
         self.__class__.sc_cache = getattr(self.__class__, 'sc_cache', {})
         for tag, (own, other, base, middle) in (('A', (0x33dfe, 0x3bdfe, 4, 6)), ('B', (0x3bdfe, 0x33dfe, 0, 2))):
             words, labels = self.sc_engines('resident')[tag]
-            at = {name: 'func_%06x' % labels[name] for name in ('kph1', 'kph2', 'kph3', 'zz29', 'zz30', 'mc09')}
+            at = {name: 'func_%06x' % labels[name] for name in ('kph1', 'kph2', 'kph3', 'zz29', 'zz30')}
             expected = {
-                'zz01': ['move x:>$420,a', 'cmp #>$%x,a' % base, 'beq ' + at['kph1'], 'cmp #>$%x,a' % middle,
+                'sctap': ['move x:>$420,a', 'cmp #>$%x,a' % base, 'beq ' + at['kph1'], 'cmp #>$%x,a' % middle,
                          'bne ' + at['zz30'], 'move #>$%x,r1' % own, 'move y:(r1),b', 'cmp #>$10000,b',
                          'beq ' + at['zz30'], 'bsr ' + at['kph2'], 'move #$1,b', 'move #>$%x,r1' % own,
                          'move b,y:(r1)', 'bra ' + at['zz30'], 'move #>$%x,r1' % own, 'move y:(r1),b',
                          'cmp #>$10000,b', 'beq ' + at['zz29'], 'bsr ' + at['kph2'], 'bra ' + at['zz30']],
-                'kph2': ['move #$0,a', 'move #>$%x,r1' % other, 'move y:(r1),b', 'cmp #>$10000,b', 'bne ' + at['kph3'],
+                'kph2': ['clr a', 'move #>$%x,r1' % other, 'move y:(r1),b', 'cmp #>$10000,b', 'bne ' + at['kph3'],
                          'move #>$%x,r1' % (other + 1), 'move y:(r1),b', 'and #>$3,b', 'move b1,a',
-                         'move #>$%x,r1' % (own + 1), 'move a,y:(r1)', 'rts'],
-                'moncommit': ['move x:>$206,r0', 'move x:>$420,a', 'asl #$1,a,a', 'move a1,n1', 'move #>$7f0,r1',
-                              'lua (r1)+n1,r1', 'move y:(r1),b', 'cmp #>$10000,b', 'beq ' + at['mc09'], 'rts',
-                              'move #$0,b', 'move b,y:(r1)+', 'move y:(r1),b']}
+                         'move #>$%x,r1' % (own + 1), 'move a,y:(r1)', 'rts']}
             steps = ['P %d %d' % (SC_ORIGIN + i, w) for i, w in enumerate(words)]
             steps += ['DIS %d %d' % (labels[name], labels[name] + 2 * len(lines)) for name, lines in expected.items()]
             path = Path(self.work.name) / 'sc-dis.txt'
@@ -618,12 +619,16 @@ class ResidentEngines(unittest.TestCase):
 # (per track: sctap at FX1 entry, scdet in COMPRESSOR's proc, moncommit at the commit), core B's track slots sitting
 # `skew` slots after core A's. Two readers sit on their core's first track: T5 keyed from T3 (core B's local track
 # 2, the case measured on the unit) and T1 keyed from T6 (core A's local track 1). KEY GAIN 64 is an exact 1.0 and
-# KEY FLT 64 bypasses, so the key block scdet leaves at X:$40 is the source block as published, and its words name
-# the frame and the track it came from. MON is on: moncommit then commits that block in place of the track's own.
+# KBAS and KWID are OFF (0 and 127: the key filters bypass), so the key block scdet leaves at X:$40 is the source block
+# as published, and its words name the frame and the track it came from. MON is on (slot 7 = 3; 2 is OFF),
+# already faded in (MON_FADE 16) with its KEY in use (r7+$2c), so neither declick runs: moncommit then commits that
+# block in place of the track's own. A block mixed by a MON fade reads as SC_MIXED.
 SC_TRACKS = {'A': (4, 5, 6, 7), 'B': (0, 1, 2, 3)}
 SC_KEYS = {4: 2, 0: 5}
 SC_LOCAL = {6: 4, 1: 3}                         # keys on the reader's own core: T7 <- T5 (dispatched before it), T2 <- T4 (after)
 SC_PARAMS, SC_BLOCK, SC_ORIGIN = 0x6280, 0x6400, 0x1000
+SC_MONB = 0x7f0                                 # MON_ON / MON_FADE: Y:$7f0 + track*2 (+0 / +1)
+SC_MIXED = 'mixed'
 SC_SPLIT = 0x1800                               # the key bus unit, placed apart from Sidechain's
 SC_WINDOWS = ((0x33dfe, 0x34000), (0x3bdfe, 0x3c000))
 SC_OFFSETS = range(-5, 6)                       # core 1 enabled this many frames after core 0 (negative: before)
@@ -642,12 +647,18 @@ def sc_stamp(frame, track):
     return 0x200000 | frame << 8 | track << 5
 
 
-def sc_block(words):
-    """(frame, track) a published block names; None for a never-written (zero) one."""
+def sc_block(words, mixed=False):
+    """(frame, track) a published block names; None for a never-written (zero) one; SC_MIXED for a committed block a MON
+    fade mixed (`mixed`: moncommit's output only)."""
     if not any(words):
         return None
+    # Since 0.2.0 the detector works on the mono key (each L/R pair's average, (L + R) / 16 then * 8, on both
+    # channels), so a key block keeps the stamp's frame and track bits (5 and up) but not the word index below them:
+    # every word of an untorn block names the same frame and track.
     head = words[0]
-    if head >> 21 != 1 or head & 31 or words != list(range(head, head + 32)):
+    if head >> 21 != 1 or len({w >> 5 for w in words}) != 1:
+        if mixed:
+            return SC_MIXED
         raise AssertionError('a torn or foreign key block: %r' % words[:4])
     return head >> 8 & 0xfff, head >> 5 & 7
 
@@ -681,8 +692,11 @@ def sc_script(engines, enable, skew, frames, removed=None, keys=SC_KEYS):
         steps += ['P %d %d' % (origin + i, w) for origin, unit in apart for i, w in enumerate(unit)]
         for track in SC_TRACKS[tag]:
             if track in keys:
-                steps += ['X %d %d' % (SC_PARAMS + 0xd, (keys[track] + 1) << 16 | 64 << 8),
-                          'X %d %d' % (SC_PARAMS + 0xe, 64 << 16 | 1 << 8)]
+                steps += ['X %d %d' % (SC_PARAMS + 0xc, 3 << 8),                            # RMS 0, MON on (3)
+                          'X %d %d' % (SC_PARAMS + 0xd, (keys[track] + 1) << 16 | 64 << 8),  # KEY, KGN 64
+                          'X %d %d' % (SC_PARAMS + 0xe, 0 << 16 | 127 << 8),               # KBAS, KWID OFF
+                          'X %d %d' % (SC_BLOCK + 0x2c, keys[track] + 1),                  # the KEY in use
+                          'Y %d %d' % (SC_MONB + 2 * track + 1, 16)]                       # MON faded in
         lane = []
         for n in range(enable[core], frames):
             at = 4 * n + (skew(n) if core else 0)

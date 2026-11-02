@@ -6,7 +6,6 @@ import './octatrack-link.css'
 export type PrepareUpdate = (target: InventoryTarget) => Promise<{ name: string; changes: SetChange[] }>
 /** The base: what is on the unit. */
 export type ReadInventory = () => Promise<Inventory>
-export type StressTest = () => Promise<string | null>
 /** What the unit's project names that the unit lacks: library names, names the library does not know, and how to add
  * the ones this set does not have yet (absent when it has them all). */
 export interface ProjectNeeds { names: string[]; unknown: string[]; add?: () => void }

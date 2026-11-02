@@ -1,0 +1,256 @@
+{
+  "schemaVersion": 3,
+  "id": "sample-rate",
+  "name": "Sample RATE",
+  "version": "0.1.0-experimental",
+  "machine": "analog-rytm-mkii",
+  "category": "playback",
+  "exclusive": false,
+  "author": {
+    "github": "npp1993",
+    "credits": [
+      "npp1993 (Nathaniel Pavel) — the mod, its design and code, and this Modwerk module."
+    ]
+  },
+  "maintainers": [
+    "npp1993"
+  ],
+  "presentation": {
+    "label": "SAMPLE RATE",
+    "family": "Sample playback",
+    "summary": "FIN's knob becomes RATE, sound by sound: pure sample speed down to a stop and into reverse, like the Octatrack's RATE on PTCH. Tap the knob to switch.",
+    "overview": "Sample RATE gives a sample a pure speed control: no time stretch, just the sample played faster or slower, down to a stop and on into reverse. Switch it on for a sound in SOUND SETTINGS with SMP RATE, and FIN's knob on the SAMPLE page reads RATE, +63 to -64: +63 plays at normal speed, 0 stops, -64 plays backward at normal speed, in a straight line between them, as the Octatrack's RATE with its setting on PTCH. Stock's pitch stops at a quarter of the speed. A trig below 0 starts from END. The setting saves with the sound and is off by default, so a sound plays stock until you ask.",
+    "highlights": [
+      "Slow a sample to a dead stop and run it backward from one knob.",
+      "Exactly the Octatrack's range: +63 is 1x, 0 stops, -64 is -1x.",
+      "Per sound, saved with it, off by default: every other sound stays stock.",
+      "Takes parameter locks: one trig backward from END, the next forward.",
+      "Works beside LOP PIPO from Pipo Loop, without needing it."
+    ],
+    "usage": [
+      "Put a long sample on a track, with LOP ON. Press SMPL and tap encoder B: FIN's knob reads RATE.",
+      "Play the pad. Turn RATE down from +63: the sample slows like a stopping turntable and rests at 0.",
+      "Keep turning below 0: it runs backward, smoothly through the stop. A new trig now starts from END.",
+      "Hold a trig in GRID RECORDING and turn RATE to lock it on that step: a trig at -63 plays backward from END, and the next trig plays forward again."
+    ]
+  },
+  "access": {
+    "location": "SOUND SETTINGS: SMP RATE, under SMP:. Or tap FIN's knob (encoder B) on the SAMPLE page.",
+    "steps": [
+      "Select a track whose sound plays a sample, and press SMPL.",
+      "Tap encoder B: the knob reads RATE and the value stays where it was unless FIN was +0, which goes to +63.",
+      "Or press FUNC + FILTER, choose SOUND SETTINGS, go to SMP RATE and press RIGHT: the box is checked."
+    ],
+    "screenshots": [
+      "media/row-on.png",
+      "media/knob-rate.png"
+    ]
+  },
+  "controls": [
+    {
+      "name": "SMP RATE",
+      "default": 0,
+      "doc": "SOUND SETTINGS, under SMP:. OFF: stock. ON: FIN is RATE on this sound. Saved with the sound. Switching on takes FIN +0 to RATE +63; switching off takes RATE +63 to FIN +0; other values stay.",
+      "labels": [
+        "Clear",
+        "Checked"
+      ]
+    },
+    {
+      "name": "Tap of encoder B",
+      "default": null,
+      "doc": "SAMPLE page. A short press with no turn turns SMP RATE over. Not with a trig, FUNC or NO held, or a pad held in scene or performance mode, and not in running live recording.",
+      "labels": null
+    },
+    {
+      "name": "RATE",
+      "default": 63,
+      "doc": "SAMPLE page, encoder B, on a sound with SMP RATE on. +63 to -64: speed scales by |RATE| / 64, backward below 0, and +63 is exactly 1x. TUN still multiplies it. Locks and LFOs reach it as FIN.",
+      "labels": null
+    }
+  ],
+  "compatibility": {
+    "releases": [
+      "1.74"
+    ],
+    "requires": [],
+    "conflicts": [],
+    "limitations": [
+      "Built for OS 1.74 only, with core-ar2 0.7.",
+      "Run on a unit by the author as SP03 to SP13 (TESTING.md); two voices together, performance and scene locks and sound browser load are from rytm-emu or not run there.",
+      "Saving to and loading from SOUND MANAGER is not confirmed on a unit: stored sounds often gave ERROR there, RATE or not, and one that loaded came back with SMP RATE clear (README).",
+      "RATE never goes above 1x by itself; TUN does, to stock's ceiling of about 4x.",
+      "On stock OS a saved sound plays FIN as FIN: RATE +63 is about a semitone sharp.",
+      "With LOP OFF, once the sample has played out, changing RATE does not bring it back: trig again.",
+      "A change of direction on a looping voice waits until it is 32 frames clear of STA and END; a trig does not wait.",
+      "LFO destination lists and other screens still say FIN.",
+      "Sound locks, scene locks and performance locks have not been run."
+    ]
+  },
+  "platform": {
+    "kind": "elemod",
+    "core": "0.7",
+    "build": "build.json",
+    "events": [
+      "ev_tick",
+      "ev_enc"
+    ],
+    "claims": [
+      "ui:SOUND SETTINGS row SMP RATE, after SMP:",
+      "ui:a tap on the SAMPLE page's FIN knob (encoder B)",
+      "param:FIN (id 40) label while SMP RATE is on"
+    ]
+  },
+  "resources": {
+    "memoryBytes": 2506,
+    "fastBytes": 0,
+    "load": {
+      "display": "About 0.2 % of a block with the row off, 0.35 % with eight voices in RATE (static estimate)",
+      "method": "static",
+      "conditions": "Static estimate from the compiled code: the block handler and the two gates in the step loop run for all eight voices every block, about 28 instructions a voice with the row off and about 60 with it on; at the Rytm guide's 0.023 % of a block per instruction a frame, about 0.2 % and 0.35 %. A change of direction adds one call of stock's frame routine a block while it waits. Not measured on a unit."
+    }
+  },
+  "evidence": {
+    "tier": "author-hardware",
+    "moduleVersion": "0.1.0-experimental",
+    "sourceSha256": "42c5c9d98c5eeadb549b321b64dc81923df5d344433be150f35ea4fb4748b425",
+    "reports": [
+      "TESTING.md"
+    ],
+    "hardware": {
+      "model": "Analog Rytm MKII",
+      "release": "1.74",
+      "testedOn": "2026-11-01",
+      "tester": "npp1993",
+      "durationMinutes": null,
+      "summary": "npp1993 (the author) flashed test builds SP03 to SP13 on an Analog Rytm MKII, OS 1.74, each with Pipo Loop 0.1.1 from its local branch, and reports: the SOUND SETTINGS row and checkbox work; the knob reads RATE on that sound and FIN on others; RATE 1x, slowing to a stop, and reverse; a trig below 0 starts from END; LOP OFF; a locked trig backward and a plain trig forward; LOP PIPO turns with no clicks at fixed RATE and by hand; an LFO to Fine Tune passing through a stop (SP04, after a Pipo Loop fix); kit save and power cycle; track copy; a sound lock onto a row-off track; the tap of encoder B, which flips reliably and fast, and does not flip with a trig, FUNC or NO held, a pad held in scene or performance mode, in running live recording, on a long hold or a press and turn.",
+      "limitations": [
+        "Results are as reported by the author, not itemized measurements; duration not recorded.",
+        "LOAD TO TRACK in SOUND MANAGER often gave ERROR on the unit, on sounds with nothing to do with RATE too, and the one load that worked came back with the setting clear; stock was not compared.",
+        "Tested with Pipo Loop in the image; this module alone was not flashed.",
+        "Not tested on a unit: two voices together, performance and scene locks by ear, CPU load.",
+        "Final test build SP13 c.f. TESTING.md; firmware was not read back from the device."
+      ]
+    },
+    "verifiedBy": null
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "rytm-emu on OS 1.74, 23,777-frame ramp: rate word exact at every RATE tried, trig below 0 starts from END, row off sample-identical to the core alone, with Pipo Loop no clicks at any speed or across flips and sweeps; the tap's cases. Hardware, as reported by the author: SP03 to SP13 (TESTING.md).",
+    "documentation": {
+      "tutorial": {
+        "title": "Quick tutorial",
+        "steps": [
+          "Put a long sample on a track, with LOP ON. Press SMPL and tap encoder B: FIN's knob reads RATE.",
+          "Play the pad. Turn RATE down from +63: the sample slows like a stopping turntable and rests at 0.",
+          "Keep turning below 0: it runs backward, smoothly through the stop. A new trig now starts from END.",
+          "Hold a trig in GRID RECORDING and turn RATE to lock it on that step: a trig at -63 plays backward from END, and the next trig plays forward again."
+        ]
+      },
+      "screenshots": [
+        "media/row-on.png",
+        "media/row-off.png",
+        "media/knob-rate.png",
+        "media/value-rate.png",
+        "media/other-track-fin.png"
+      ],
+      "captureRecord": "media/capture.json"
+    }
+  },
+  "license": {
+    "spdx": "GPL-3.0-or-later",
+    "file": "LICENSE",
+    "declaration": "npp1993's original code under GPL-3.0-or-later. Each patch precondition is an address, a length and a SHA-256; no stock bytes are included."
+  },
+  "media": [
+    {
+      "path": "media/thumbnail.svg",
+      "kind": "thumbnail",
+      "caption": "Sample RATE",
+      "alt": "A sample's play position climbs, slows to a stop at RATE 64, then runs backward.",
+      "credit": "npp1993",
+      "license": "GPL-3.0-or-later",
+      "source": "Original conceptual illustration in the shared signal-art style; not a device screenshot."
+    },
+    {
+      "path": "media/row-on.png",
+      "kind": "screenshot",
+      "caption": "SOUND SETTINGS, under SMP:: SMP RATE is checked.",
+      "alt": "SOUND menu list with SMP RATE highlighted and its checkbox ticked, under SMP:.",
+      "credit": "npp1993 documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "f6a4ca9e703ad976cb8a6db3f41c4a7c0761dd73a39336e03f96fc55012b289a",
+        "setup": "Headless rytm-emu (dtboot) running SR06: core-ar2 0.7 and this folder's Sample RATE 0.1.0-experimental, linked by Modwerk on stock OS 1.74, BD playing a generated ramp sample. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+      }
+    },
+    {
+      "path": "media/row-off.png",
+      "kind": "screenshot",
+      "caption": "With SMP RATE clear the sound plays stock.",
+      "alt": "SOUND menu list with SMP RATE highlighted and its checkbox clear.",
+      "credit": "npp1993 documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "f6a4ca9e703ad976cb8a6db3f41c4a7c0761dd73a39336e03f96fc55012b289a",
+        "setup": "Headless rytm-emu (dtboot) running SR06: core-ar2 0.7 and this folder's Sample RATE 0.1.0-experimental, linked by Modwerk on stock OS 1.74, BD playing a generated ramp sample. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+      }
+    },
+    {
+      "path": "media/knob-rate.png",
+      "kind": "screenshot",
+      "caption": "On the SAMPLE page FIN's knob reads RATE.",
+      "alt": "SAMPLE page knobs: TUN, RATE at full right, BR, SMP, STA, END, LOP, LEV.",
+      "credit": "npp1993 documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "f6a4ca9e703ad976cb8a6db3f41c4a7c0761dd73a39336e03f96fc55012b289a",
+        "setup": "Headless rytm-emu (dtboot) running SR06: core-ar2 0.7 and this folder's Sample RATE 0.1.0-experimental, linked by Modwerk on stock OS 1.74, BD playing a generated ramp sample. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+      }
+    },
+    {
+      "path": "media/value-rate.png",
+      "kind": "screenshot",
+      "caption": "While it turns the header reads RATE and the knob shows its value, +63 to -64.",
+      "alt": "SAMPLE page with RATE in the header and the knob showing a signed value.",
+      "credit": "npp1993 documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "f6a4ca9e703ad976cb8a6db3f41c4a7c0761dd73a39336e03f96fc55012b289a",
+        "setup": "Headless rytm-emu (dtboot) running SR06: core-ar2 0.7 and this folder's Sample RATE 0.1.0-experimental, linked by Modwerk on stock OS 1.74, BD playing a generated ramp sample. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+      }
+    },
+    {
+      "path": "media/other-track-fin.png",
+      "kind": "screenshot",
+      "caption": "The setting is per sound: another track's sound keeps FIN.",
+      "alt": "SMPL view of the SD track with TUN, FIN, BR and SMP labels.",
+      "credit": "npp1993 documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "f6a4ca9e703ad976cb8a6db3f41c4a7c0761dd73a39336e03f96fc55012b289a",
+        "setup": "Headless rytm-emu (dtboot) running SR06: core-ar2 0.7 and this folder's Sample RATE 0.1.0-experimental, linked by Modwerk on stock OS 1.74, BD playing a generated ramp sample. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+      }
+    }
+  ]
+}

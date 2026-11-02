@@ -5,7 +5,7 @@ import { syncHistory, type SyncRecord } from '../config/octatrack-progress'
 import type { Configuration } from '../config/workspace'
 import type { DiagnosticReading } from '../community/octatrack-diagnostics-contract'
 import type { OctatrackLink } from '../engine/elekloader/octatrack-link'
-import { SELFTEST_FAILURES } from '../engine/elekloader/selftest'
+import { SELFTEST_FAILURES, selftestFaults } from '../engine/elekloader/selftest'
 import { useOctatrackLink } from '../hooks/useOctatrackLink'
 import { OctatrackLoad } from './OctatrackLoad'
 import { MissingNote, type ProjectNeeds } from './OctatrackUpdate'
@@ -17,10 +17,13 @@ const when = (at: string) => new Date(at).toLocaleString(undefined, { dateStyle:
 const OUTCOME: Record<SyncRecord['outcome'], [string, string]> = { kept: ['Kept', 'on'], undone: ['Undone', 'off'], failed: ['Failed', 'leaving'] }
 
 /** What the card holds, from the self-test record (modset.c: 7 saved and read back, 1 restored at startup, 6 some refused
- * at startup, 3 FUNC held, 5 damaged, 8 and 9 save failed, 4 another base's, 2 nothing saved). */
+ * at startup, 10 some left out and 11 all held because the last start crashed or froze while loading them, 3 FUNC held,
+ * 5 damaged, 8 and 9 save failed, 4 another base's, 2 nothing saved). */
 function cardLine(health: DiagnosticReading) {
   return health.saved === 7 ? { text: `Saved and checked · ${modules(health.savedCount)}`, led: 'on' } : health.saved === 1 ? { text: `Restored at startup · ${modules(health.savedCount)}`, led: 'on' }
     : health.saved === 6 ? { text: `Not all loaded at startup · ${modules(health.savedCount)} running. Sync your modules to put the rest back.`, led: 'leaving' }
+    : health.saved === 10 ? { text: `Not all loaded at startup: the last start crashed or froze while loading one, so it was left out · ${modules(health.savedCount)} running. Sync your modules to try it again.`, led: 'leaving' }
+    : health.saved === 11 ? { text: 'Held at startup: the last start crashed or froze while loading your modules. They load at the next start.', led: 'leaving' }
     : health.saved === 3 ? { text: 'Skipped at startup (FUNC held). The saved modules load at the next start.', led: 'off' }
     : health.saved === 5 ? { text: 'The saved modules couldn’t be read, so none loaded. Sync your modules again.', led: 'leaving' }
     : health.saved === 8 || health.saved === 9 ? { text: 'Saving failed. The modules run until you switch the Octatrack off.', led: 'leaving' }
@@ -28,8 +31,8 @@ function cardLine(health: DiagnosticReading) {
 }
 /** The last self-test in words: its result and the first reason it failed. */
 function selftestLine(health: DiagnosticReading) {
-  const reason = SELFTEST_FAILURES.find((_, bit) => health.failed & 1 << bit)
-  return health.state === 2 ? { text: 'Passed', led: 'on', peaks: true } : health.state === 3 ? { text: 'Failed' + (reason ? ': ' + reason : ''), led: 'leaving', peaks: true }
+  const faults = selftestFaults(health.failed), reason = SELFTEST_FAILURES.find((_, bit) => faults & 1 << bit)
+  return health.state === 2 || health.state === 3 && health.failed && !faults ? { text: 'Passed', led: 'on', peaks: true } : health.state === 3 ? { text: 'Failed' + (reason ? ': ' + reason : ''), led: 'leaving', peaks: true }
     : health.state === 1 ? { text: 'Running now', led: 'load' } : { text: 'Not run since the Octatrack was switched on', led: 'off' }
 }
 

@@ -904,6 +904,38 @@ receives the stock `0x8c` frame command and B does not.
 **Fix and gate:** DLPUMP sends to core B on ping-0 frames only (`verify_dlload`). Whether the unit
 loses the same frames is open.
 
+<a name="trap-stock-x-scratch"></a>
+
+### Payload B's frame routine writes `x:$3f7f..$3fbf` every frame, and the guard's base cells were there
+
+**Seen:** October 2026, a unit (MKII). DARK REV picked on T4's FX2 while MODULATION's code was in T4's
+block stopped the DSP frame loop within about 4 ms of the pump's withdrawal: 3 of 3 on the first
+three images, and on every later build in which the guard resumed a dry reverb and the stock proc
+ran. The port did not reproduce it.
+
+**Cause:** payload B's frame routine calls `func_00034f` at `P:0x7a` every frame with `r0 = $3f80`,
+`r1 = $3f00`. It reads `x:$3f00..$3f20` and writes 65 words at `x:$3f7f..$3fbf` (`mpy`/`mac`
+results split over `a1`, `a0` and `b0`). The guard kept each instance's buffer base at
+`x:$3f90 + idx` (T3 idx 40 = `x:$3fb8`, T4 idx 43 = `x:$3fbb`), so the stock overwrote it every
+frame, and the resume ran DARK REV's init and proc with that scratch value as the base. Payload A
+writes only `x:$3f80` and `x:$3f81`: T7 and T8 were unaffected.
+
+**Measured on the unit:** with a probe on a core B track, `x:$3fb8` read `$ffb754` after a reboot and
+again after the guard's init stored the allocator entry's contents there; the entry (`$25a`)
+held `$38000`. With the state words at `x:$3dc0 + idx` and the base cells at `x:$3e00 + idx`, the
+probe read T3's base `$038000` and T4's `$03c000` (entry `$25c`), and the sequence that stopped the
+DSP on every earlier build ran three times with no stop.
+
+**Fix and gate:** `dlwrap.asm` keeps the state words at `x:$3dc0 + idx` and the base cells at
+`x:$3e00 + idx`. `verify_dlwrap` seeds those cells (200 checks). The port cannot show this trap:
+`dsp_host` does not run the stock frame routine.
+
+**Not established:** what `func_00034f` computes. The stub's flags at `x:$3f00..$3f3f` are its
+input. No search for other writers of `x:$3dc0..$3e3f` beyond the unit runs.
+
+Rule: before putting per-instance state in X, read what the stock frame code writes there, and read
+the cells back on a unit.
+
 <a name="trap-bra-back"></a>
 
 ### `dsp_asm` does not assemble a backward `bra`, or `jmp` to a window address
@@ -916,6 +948,24 @@ into a register and `jmp (rN)`. Dispatch entries must keep `init < proc <= init 
 (`send_probe.entry_points`).
 
 ## Traps on the ColdFire / DRAM side (the platform work, 9–10 Sep 2026)
+
+<a name="trap-part-engine-context"></a>
+### Audio and MIDI have independent playing-Part latches
+
+**Symptom:** a MIDI consumer reads the wrong Part while the audio and MIDI
+engines are on different track contexts. Fixtures that put both engines on
+one Part conceal the error.
+
+**Cost:** the native Part service migration exposed an audio-latch lookup in
+the old shared MIDI helper; Loopback had separately implemented the MIDI lookup.
+
+**Fix:** STORE exposes separate `store_part_audio_context` and
+`store_part_midi_context` readers. MIDI clients use the latter. Each falls back
+to the applied bank/Part only while its own track is unlatched.
+
+**Gate:** `verify_store_part.py` seeds different audio and MIDI contexts,
+checks all eight tracks and tests each fallback independently.
+
 
 <a name="trap-watch-alias"></a>
 
@@ -1069,6 +1119,21 @@ The cases that exit non-zero (`plain`, `marker`) have the report as their only
 line, so `tools/verify/refhash_compare.py` compares their logs with those two
 lines masked; any other difference in a refusal still fails.
 
+<a name="trap-stock-fallback"></a>
+
+### Id 0 is FX1 NONE too: a stock fallback ran on every empty FX1 slot
+
+**ALIASING ID 0 TO AN EFFECT RUNS IT ON EVERY EMPTY FX1 SLOT, NOT ONLY ON A
+FRESH FX2.** `fallback="FILTER"` passed the schema, then crashed the build
+(`fb_init` unbound) once a registry module was left out. A fix that pointed id
+0 and the omitted ids at FILTER's stock entries built, and on the unit the
+sequencer held its first step at play (27 Oct 2026); the same selection with
+`fallback="NONE"` played. SEND had the same exposure and needed its FX1
+guard (`FAILURE_MODES.md`, "id 0 is SEND"); a stock effect has none. Rule:
+the fallback is `NONE`, `SEND` or a module written for an FX1 r7;
+`registry.remix` refuses a stock effect. Gate: `selftest.py` probes the
+refusal.
+
 <a name="trap-nm-order"></a>
 
 ### Same-named labels across DRAM units resolve by nm table order
@@ -1118,6 +1183,30 @@ interrupt-mask restore that precedes the data it protects is a window;
 before blaming names or parsers, ask what the IRQ handler reads while the
 producer is mid-update.
 
+
+<a name="trap-id-clamp"></a>
+
+### The stock Part validator clamps a stored FX2 id to 31
+
+**THE STOCK PART VALIDATOR CLAMPS A STORED FX2 ID TO 31.** The 64-id layout
+moved the dispatch tables and the ColdFire id and position tables, and the port
+passed with an id of `0x25` poked into the live slot (`make check REMIX=ids64`).
+A project that stored `0x25` for BBD loaded on an MKII (image `ids64-usb`, 27 Oct
+2026) with nothing on FX2. The Part validator at `0x40002318` runs as the project
+loads and clamps each track's FX1 and FX2 id byte with `moveq #31`: FX1's at
+`0x400023b6` and `0x400023bc`, FX2's at `0x400023de` and `0x400023e4`. `0x25` became
+`0x1f`, an id no module holds, which shows as an empty slot. A poke goes
+straight to the live id and never meets the validator; the same project under the
+port read `0x1f` too, so the port would have shown it from the start with a
+project and not a poke. Cost: two image builds and two flashes. Fix:
+`idspace.convert` rewrites the two FX2 immediates to 63 (the table lookup the
+validator does next, `0x40002406`, was already one of the repointed `lea` sites);
+FX1's stay at 31 because FX1's tables keep 32 entries. `verify_ids64_load` loads a
+project file that stores `0x25` under the port and reads the live id (it skips
+when there is no project, as `verify_dlload` does). Measured on the unit after
+the fix: BBD shows on FX2 and runs on core A and core B. Rule: an id or any index
+that a layout change makes legal must be run through the project load, not
+poked, because the load validates every stored byte.
 
 <a id="trap-popup-redraw"></a>
 ### A nonzero popup pointer is not an open FX SETUP window
@@ -1254,3 +1343,185 @@ under the port.
 cannot see the cache or the stale status, so a unit run (`load_meter.py`
 repeated, `--for 10`: `windows` near 20) is the check.
 
+
+<a name="trap-cave-round"></a>
+
+### A floating cave rounded past the clone window landed on the chooser list
+
+**THE OVERFLOW FALLBACK ASKED WHETHER THE CAVE STARTED INSIDE THE WINDOW, AND
+THE ROUNDING HAD ALREADY MOVED IT OUT.** A floating cave starts at the clone
+window's cursor rounded up to 128 bytes. `build_bus` sent one that ran past
+`cave_limit` to the overflow run at `0x400d24d0`, but only if its rounded start
+was still inside the window. A 57-module selection (26 Oct 2026) left the
+cursor at `0x400d7b9e` with the long chooser list at `0x400d7bbc`; the round
+put BATCH_BUGFIXES' 402-byte `PART_CHANGE_CARRYOVER_FIX` at `0x400d7c00`, on
+the list, so it was neither moved nor bounds-checked and the build stopped at
+`PART_CHANGE_CARRYOVER_FIX not free`, which names the victim and not the
+cause. Fix: a floating cave goes to the overflow run when it ends past the
+limit, wherever it starts, and one that fits neither region is refused with
+both regions' ends. Past `0x400d7c3c` the stock image is data (the first byte
+is nonzero), so no image that built before should move (inferred; `refhash`
+is the measurement, and a 64-id build is the case to watch: its
+`idspace.CAVE` limit sits below zero bytes the id tables fill only at the
+end). Gate: none of its own; the refusal names both regions.
+
+The run's own first bytes are not free either: the stock DELAY reads the 16
+past its coefficient table (`stock.DELAY_TABLE_END`, issue #771), and the
+first form of this fix put the cave on them in a selection listing DELAY (the
+kept-bytes check refused it: `DELAY keeps 0x400d24d0`). The overflow cursor
+now starts past every byte a selected module keeps stock in the run.
+
+<a name="trap-dram-clone-stage"></a>
+
+### A DRAM clone's `CLONE_<key>` export is its staging address
+
+**WITH A DRAM RUNTIME, `_exports["CLONE_<key>"]` IS WHERE THE CLONE IS BUILT,
+NOT WHERE IT LIVES.** The clones are written at a staging address past the
+image and every staged pointer is repointed to the runtime's `CLONE_<key>` at
+the end (`_rt_patch`). The MODE-renames formatters are DRAM units linked
+against the runtime's symbol, but the check that each equals its `emit()`
+resolved the descriptor from `_exports`: STUTTR's `lea` was `0x40ae6f4e` in
+the runtime and `0x40130836` in the emit, and the build refused with `the
+linked label formatter ... differs`. No committed remix carries MODE renames
+with DRAM clones; a selection with STUTTR, SPECTRUM and CHARACTER TXTR beside
+MEMORY and KITS (26 Oct 2026) was the first. Fix: the check resolves a
+module's own clone from `_psyms`, the runtime link. Rule: before comparing an
+address from `_exports` with one from the runtime, ask whether the staging
+repoint has run yet. Gate: the comparison itself, now that both sides are the
+runtime's.
+
+<a name="trap-staging-coincidence"></a>
+
+### A runtime's own bytes can spell the clones' staging range
+
+**THE FINAL SCAN FOR STAGING ADDRESSES READS EVERY EVEN OFFSET, SO TWO
+UNRELATED HALFWORDS CAN MAKE ONE.** PR #989 grew CC MAP by 14 bytes and
+octabam's build refused with `the DRAM runtime still holds a staging
+address`. Nothing was stale: OCTA303's `o3_over` table is `.long o3_names`
+then `.short 0x05f`, the shift put `o3_names` at an address with low half
+`0x4011`, and the scan read `0x4011005f` against staging
+`0x40110000..0x40110820`. The refusal named no word, so a CI cycle went to
+adding the names. Fix: the refusal prints each word, its runtime address and
+the symbol under it; on a hit the build runs again with staging 64 KiB
+higher (`OCTABAM_STAGE_SHIFT`, twice at most). A stale pointer comes from
+the link and moves with staging; a coincidence does not. The image does not
+depend on where staging was. Rule: a scan of raw bytes for a value range
+needs a second reading before it refuses. Gate: the scan itself, now
+re-run against a moved range.
+
+<a name="trap-machine-clamp"></a>
+
+### The machine list's key handlers clamp the cursor to 5
+
+**A SIXTH MACHINE ROW FITS BY ACCIDENT; A SEVENTH NEEDS TEN MORE POKES.** The
+track's machine list (`0x460e7386`) has a row count (`pea 5` at
+`0x40079248`), a draw bound, a highlight bound and a commit bound, and ANALOG
+BD, OCTA303 and BLACKPYRAMIDS_303 each poke those four from 5 rows to 6. With
+seven rows (HOOKS `machine_rows`, ANALOG BD and OCTA303 together, 28 Oct
+2026) the list drew and scrolled, but the cursor stopped on row 5: each of
+the list's five key handlers (`0x40078c22`, `0x40078cb0`, `0x40078d2e`,
+`0x40078dee`, `0x40078e7c`) clamps the cursor to 0..5 after moving
+(`moveq #5,%d1 ; cmp.l %d0,%d1 ; bge.s ; moveq #5,%d0`), one past stock's
+last row, so a single added machine never met it. The search was confused
+by a second effect: a port script's key held for 0.25 s auto-repeats, so a
+single UP moved two rows and landed on PICKUP. Fix: HOOKS pokes both
+`moveq`s in each handler to 6; the gate presses UP for 0.06 s. Rule: when a
+list grows, find every constant near its old size in the code that touches
+the list (a byte search for the clamp found all five), and in a port script
+hold a key only as long as you mean it to repeat. Gate: `verify_hooks`
+(installed: the ten pokes) and `verify_analog_bassdrum_ui` on
+`hooks-machines` (row 5 reached from the bottom of seven).
+
+<a id="trap-resident-import-exports"></a>
+### Resident relinking must not publish imported staging symbols
+
+A remix combining MIDI Part State and EUCLID failed the linked label-formatter
+byte check: EUCLID's final descriptor address was replaced by its earlier
+staging address. The resident unit's second link included imported `--defsym`
+symbols in its global `nm` output. Publishing those as its own exports overwrote
+the runtime provider's final `CLONE_*` addresses.
+
+Keep imported symbols available to the resident link, but exclude them when
+publishing its exports. `make check REMIX=midi-follow-events` (the remix arrives with MIDI Follow,
+sambanks/octabam#824) exercises the combination, including the build's formatter-byte and installed-image checks.
+
+<a name="trap-dma-arm"></a>
+
+### Narrowing the port's DMA arm rule broke a gate whose image never moved
+
+**A CHANGE TO THE PORT CAN FAIL A GATE THAT CI THEN REPORTS AS A CACHED PASS.**
+`716e682` (28 Oct 2026) narrowed `dsp56300.patch`'s arm rule: a DMA channel
+armed with its request already raised fired at once only for the two host
+interface sources, where `ot_emu` had set `setDmaTriggerOnArm` for every source
+(the Octatrack arms its ESAI channels long after the ESAI raised the request).
+`verify_remix_switch` passed with both rules; `verify_rec_threshold`'s `late`
+scenario did not: the recorder took the input from a stale page, and the take
+held no numbered sample within the detection frame (first sample `None`;
+10 with the old port, the same image and script). Nothing showed it for a day:
+the gate's image and inputs had not moved, so CI reported the gate cached, and
+it surfaced only when REC THRESHOLD joined `octabam` (#964). Found by building
+the port at `8ccdd843`, at `9490cce` and at main against one image. Fix: the
+revert of `716e682`. Rule: a change to `tools/patches/` or `tools/emu/` is a
+change to every port gate's instrument -- run the port gates of the modules
+whose behaviour leans on the changed rule (here, anything reading the ESAI's
+input pages), not only the one the change was made for. Gate:
+`verify_rec_threshold` and `verify_remix_switch`, both under the reverted port.
+
+<a name="trap-cf-frame"></a>
+
+### A ColdFire save frame sized for the wrong register count overwrites the return address
+
+**A COLDFIRE SAVE FRAME SIZED FOR THE WRONG REGISTER COUNT OVERWRITES THE
+RETURN ADDRESS.** ColdFire `movem` has no pre-decrement or post-increment
+form, so a stub opens `lea -N(%sp),%sp / movem.l regs,(%sp)` and closes the
+same way, and N is 4 per register. PATTERN MUTE's first build used 28 for
+eight registers and 32 for nine: the stub's `rts` returned into data and the
+port stopped with `unimplemented opcode 00ff at 401715c1` (odd PC) during
+LOAD PROJECT, caught by `verify_set`, not by the stub's own gate. The same
+build hit three more ISA-C restrictions the assembler reports as `operands
+mismatch`: `eor.l <mem>,Dn` (eor takes Dn as the source), `st <mem>` (Scc
+takes Dn) and `move.b #imm,<abs.l>`. Rule: count registers, then multiply by
+four, once, in a comment next to the frame.
+
+<a name="trap-unused-bytes"></a>
+
+### An unused-looking project byte can be rewritten on save
+
+**AN UNUSED-LOOKING PROJECT BYTE CAN BE REWRITTEN ON SAVE.** In the test
+project the four bytes after the pattern chunk's flag byte were zero in all
+256 patterns, and offsets 95, 2150 and 2200 of every audio track record were
+zero in all 2,048 records. A SAVE PROJECT round trip with marker bytes there
+returned `0xff 0x00 0x00` for the first three (the OS writes them from its own
+fields) and `0xff` / `0xe9` / `0xe9` for the others. Offsets 18, 40 and 85 of
+the audio track record came back unchanged in all 128 records of the bank.
+Rule: zero everywhere is not proof a byte is spare; write a marker into the
+file, load, save, and diff (`tools/verify/verify_pattern_mute.py` does it for
+byte 40).
+
+<a name="trap-scenario-watch"></a>
+
+### `--watch-mem` given to a `--scenario` child logs nothing
+
+**`--WATCH-MEM` GIVEN TO A `--SCENARIO` CHILD LOGS NOTHING.** A forked scenario
+accepted `--watch-mem 0x80000008,4` and reported `0 write(s)` while the same
+script run directly logged the writes with their PCs. Measure writer PCs with a
+direct run (one script, one process); use scenarios for `--mem-dump` end
+states.
+
+<a id="trap-strcat-bound"></a>
+
+### A shared string helper's bound cut the load's path
+
+**A SHARED STRING HELPER'S BOUND CUT THE LOAD'S PATH.** REMIX SWITCH's
+`strcat` stops a result at 30 bytes, sized for the dialog's line, and
+`load_file` built the open path with it: `"/BRAIN/REMIXES/"` (15) plus a file
+name over 14 characters lost its tail, and the open of the cut name returned
+an error (`IO ERROR`). Under the port, `STOCK 1.40C.RMX` and a plain
+`ABCDEFGHIJK.RMX` (15 characters) both failed with the same 13 checks, while
+`STOCK 14.RMX` (a space), `STOCK1.40C.RMX` (a second dot) and
+`ABCDEFGHIJ.RMX` (14 characters) loaded; the dump of `path` read
+`/BRAIN/REMIXES/ABCDEFGHIJK.RM`. The gates missed it because every fixture
+name was 12 characters or fewer. Rule: a bound written for one caller is not a
+bound for the others; size each buffer's bound at the buffer, and give a
+gate fixture a name at the longest the build writes (`make image` writes up to
+19 characters).

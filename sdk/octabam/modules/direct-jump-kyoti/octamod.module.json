@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "id": "direct-jump-kyoti",
   "key": "DIRECT_JUMP_KYOTI",
-  "name": "DirectJmp Kyoti",
+  "name": "Direct Jump Kyoti",
   "version": "0.1.2-experimental",
   "category": "system",
   "source": {

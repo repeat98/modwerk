@@ -6,9 +6,9 @@ from pathlib import Path
 import unittest
 
 APP = Path(__file__).resolve().parents[2]
-RECORD = json.loads((APP / 'sdk/imports/sidechain-compressor-9228782.json').read_text())
+RECORD = json.loads((APP / 'sdk/imports/sidechain-compressor-b0d49bf.json').read_text())
 FOLDER = APP / RECORD['root']
-IMAGE = '2816f0bce5aaabfadac6dba9e778dc184b8af3e4a611990d6e6b3e36095bc5eb'
+IMAGE = '131142e1839bf1a62b48929dee396cc23b1f2f27f33595a9e6f39bf57f7be22e'
 # 0.1.1's evidence/software.json and evidence/common-builder.json stay as that release's history.
 IMAGE_0_1_1 = '4fd5fcb49ed17cd4e707d407a6e42a64ec30b50aefaad3b1eeb1bb804493aef0'
 
@@ -19,15 +19,13 @@ def proofs(name):
 
 class SidechainCompressor(unittest.TestCase):
     def test_pins_and_authored_file_identities(self):
-        self.assertEqual(RECORD['revision'], '922878234b22221a1c298b3c7e0b3bdeffb468a9')
-        self.assertEqual(RECORD['authorPin']['revision'], '329b801cf90f32cbca97c6699a908908968e4df6')
+        # The author's own Modwerk copy of the module (modwerk-modules/sidechain-compressor), byte for byte.
+        self.assertEqual(RECORD['revision'], 'b0d49bf32d3fcc2e3ce7e9cec67f4fbb2619e511')
+        self.assertEqual(RECORD['authorPin']['revision'], RECORD['revision'])
         paths = [entry['path'] for entry in RECORD['files']]
         self.assertEqual(len(paths), len(set(paths)))
-        self.assertEqual(set(paths), {'manifest.py', 'upstream/LICENSE',
-            'upstream/octabam-modules/sidechain-compressor/README.md',
-            'upstream/tools/patch_sidechain.s', 'upstream/tools/patch_sc_dsp3.asm',
-            'upstream/tools/sc_tables.py', 'upstream/tools/dsp_asm_util.py',
-            'upstream/tools/sc_assemble_oracle.py'})
+        self.assertEqual(set(paths), {'manifest.py', 'patch_sc_dsp3.asm', 'patch_sidechain.s', 'ui_switch.s', 'sc_tables.py',
+            'sc_keyfilt.py', 'upstream/README.md', 'upstream/LICENSE', 'LICENSE'})
         for entry in RECORD['files']:
             data = (FOLDER / entry['path']).read_bytes()
             self.assertEqual(hashlib.sha256(data).hexdigest(), entry['vendoredSha256'], entry['path'])
@@ -45,9 +43,9 @@ class SidechainCompressor(unittest.TestCase):
         tree = ast.parse((FOLDER / 'manifest.py').read_text())
         calls = [n for n in ast.walk(tree) if isinstance(n, ast.Call) and isinstance(n.func, ast.Name)]
         hooks = [n for n in calls if n.func.id == 'DspHook']
-        self.assertEqual(len(hooks), 3)
+        self.assertEqual(len(hooks), 4)
         self.assertEqual([ast.literal_eval(n.args[0]) for n in hooks],
-                         [{'A': 0x4a7, 'B': 0x29c}, {'A': 0x1ab1, 'B': 0x1871}, {'A': 0x50e, 'B': 0x303}])
+                         [{'A': 0x4a7, 'B': 0x29c}, {'A': 0x1ab1, 'B': 0x1871}, {'A': 0x50e, 'B': 0x303}, {'A': 0x1aa4, 'B': 0x1864}])
         actual = []
         for hook in hooks:
             guard = hook.args[1]
@@ -57,6 +55,9 @@ class SidechainCompressor(unittest.TestCase):
             self.assertEqual(address, ast.literal_eval(hook.args[0])['A'])
             actual.append((payload, address, words, digest))
         self.assertEqual(actual, [(g['payload'], g['address'], g['words'], g['sha256']) for g in RECORD['stockGuards'] if 'payload' in g])
+        # Both ColdFire units: sc_cf (formatters, sc_norm) and sc_ui (the KEY switch and KWID's clip).
+        linked = [n for n in calls if n.func.id == 'Linked']
+        self.assertEqual([ast.literal_eval(n.args[0]) for n in linked], ['sc_cf', 'sc_ui'])
         # sc_norm's two jsr detours, each over a guarded six-byte stock instruction.
         detours = [n for n in calls if n.func.id == 'Detour']
         self.assertEqual(len(detours), 2)
@@ -77,10 +78,6 @@ class SidechainCompressor(unittest.TestCase):
         ranges = [n for n in calls if n.func.id == 'DspRange']
         self.assertEqual([(ast.literal_eval(n.args[1]), ast.literal_eval(n.args[2])) for n in ranges],
                          [(0x7f0, 0x210), (0x3dfe, 0x202)])
-        oracle = ast.parse((FOLDER / 'upstream/tools/sc_assemble_oracle.py').read_text())
-        self.assertEqual(len(oracle.body), 1)
-        self.assertIsInstance(oracle.body[0], ast.FunctionDef)
-        self.assertEqual(oracle.body[0].name, 'sc_assemble')
 
     def test_evidence_is_bound_to_the_module_and_to_the_committed_proofs(self):
         document = json.loads((FOLDER / 'octamod.module.json').read_text())
@@ -88,6 +85,7 @@ class SidechainCompressor(unittest.TestCase):
         q = document['tests']['qualification']
         self.assertEqual(document['version'], RECORD['moduleVersion'])
         self.assertEqual(document['source']['revision'], RECORD['revision'])
+        self.assertEqual(document['source']['path'], 'modwerk-modules/sidechain-compressor')
         for version in (capture['moduleVersion'], q['moduleVersion']):
             self.assertEqual(version, document['version'])
         # One image identity everywhere: the shared builder's native image of the module alone, the one flashed.
@@ -107,8 +105,8 @@ class SidechainCompressor(unittest.TestCase):
         composition, visible = proofs('sidechain-composition-proofs.json'), proofs('sidechain-visible-proofs.json')
         alone = next(p for p in composition if p['moduleIds'] == ['sidechain-compressor'] and p['keepStockFx2'])
         self.assertEqual(alone['sha256'], IMAGE)
-        self.assertEqual((len(composition), sum('error' not in p for p in composition)), (512, 200))
-        self.assertEqual((len(visible), sum('error' not in p for p in visible)), (1024, 786))
+        self.assertEqual((len(composition), sum("error" not in p for p in composition)), (512, 169))
+        self.assertEqual((len(visible), sum('error' not in p for p in visible)), (1024, 618))
         self.assertTrue(all('error' in p for p in proofs('sidechain-analog-bd-proofs.json')))
         # 0.1.1's records are kept unchanged as history.
         software = json.loads((FOLDER / 'evidence/software.json').read_text())
@@ -140,7 +138,7 @@ class SidechainCompressor(unittest.TestCase):
         q = document['tests']['qualification']
         self.assertEqual((q['hardware']['kind'], q['hardware']['model']), ('functional', 'MKI'))
         self.assertEqual(document['tests']['hardwareStatus'], 'reported')
-        self.assertEqual(q['memory']['totalBytes'], 23520)
+        self.assertEqual(q['memory']['totalBytes'], 26288)
         self.assertEqual([c['processor'] for c in q['cycles']], ['dsp', 'coldfire'])
         self.assertTrue(all(c['maxConfiguration'] < c['budget'] for c in q['cycles']))
         for path in FOLDER.rglob('*'):

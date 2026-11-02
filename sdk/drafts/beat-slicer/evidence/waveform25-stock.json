@@ -1,0 +1,23 @@
+{
+  "scope": "isolated ordinary Flex waveform reads/cache reuse and worker dispatch with synthetic memory, source write watches and an independent extrema oracle; no Static/recorder rendering, scheduler, UI consumer or hardware",
+  "mainSha256": "164f31224bf61181e3f50e7dec40df9afcae5b16dbf6e4c0d0cc5e986af0a84e",
+  "sourceSha256": {
+    "stock_probe.py": "2221c87e387fafd952b4868ea5593f71fa550089ebc3a5381c4ccd791eb97b4a",
+    "stock_probe/waveform_probe.cpp": "2bbfb8f7b763b2a334991ba489e9cdcc902d37a1b8216909e879e4a84e35046d",
+    "stock_probe/worker_probe.cpp": "0e44372642d87681548d4a9dbcfa17de7cb273236d0999fee2f5d10aa97eb90e",
+    "preview_guard.c": "da1299674cf2ae967c58231ee9c16891afa94e27254407b5d09df6b73cc4343e",
+    "preview_guard.h": "abcaff39ef1b9a21cb238f0021344ffb5b812ea1740a354cbc1d1f2ace4ddf36",
+    "stock_probe/CMakeLists.txt": "0fdf07fc0ba7e50370f6fcea2634170b127c684b095ac523f96841dcc94e92dc"
+  },
+  "executableSha256": "336c9c47712f9dcd04b38e09da0d4f6ec48c924663d3b4c5e5382fb31221be51",
+  "exitCode": 0,
+  "stdout": [
+    "SOURCE_SHA256: b84364882cb1ad2529505ba7b507c20d4b5dc63949b41186b0247dad750ad8e9",
+    "PASS: 48 fresh/cached Flex waveform calls, four formats, slots 0/127, page/end boundaries, two pending sources and worker dispatch; no source writes"
+  ],
+  "stderrLines": 216,
+  "stderrSha256": "2ab5d18e9edb4e5193c2eaada8f583716aa28ada81cefc1f0626d989a3629ba3",
+  "hardware": "not tested",
+  "audio": "not tested",
+  "stockPersistence": "not tested"
+}

@@ -11,7 +11,7 @@ function fixture() {
       return { changes: args.moduleIds.filter(id => !baseline.inventory.moduleIds.includes(id)).map(module => ({ module, sha256: packageHash, undoSha256: undoHash })) }
     }
     if (name === 'device_review') return { review: 'review', base, active, changes: [{ sha256: packageHash, undoAvailable: true }] }
-    if (name === 'device_trial') return { trial: 'trial', state: { status: 'trial', tested: true, identity: { base } } }
+    if (name === 'device_trial') return { trial: 'trial', state: { status: 'trial', identity: { base } } }
     if (name === 'device_undo') return structuredClone(baseline)
     throw new Error('Unexpected tool: ' + name)
   })
@@ -91,10 +91,10 @@ describe('safe module verification through the frontend MCP', () => {
     await expect(f.run({ ...trial, wholeSet: true })).rejects.toThrow(/module-set transactions/)
     expect(f.call.mock.calls.some(([name]) => name === 'device_trial')).toBe(false)
   })
-  it('Undoes an owned trial even if its self-test result is invalid', async () => {
+  it('Undoes an owned trial even if its state is invalid', async () => {
     const f = fixture(), real = f.call.getMockImplementation()
-    f.call.mockImplementation(async (name, args) => { const result = await real(name, args); if (name === 'device_trial') result.state.tested = false; return result })
-    await expect(f.run(trial)).rejects.toThrow(/self-test/); expect(f.call.mock.calls.filter(([name]) => name === 'device_undo')).toHaveLength(1)
+    f.call.mockImplementation(async (name, args) => { const result = await real(name, args); if (name === 'device_trial') result.state.status = 'ready'; return result })
+    await expect(f.run(trial)).rejects.toThrow(/unaccepted/); expect(f.call.mock.calls.filter(([name]) => name === 'device_undo')).toHaveLength(1)
   })
   it.each(['inventory', 'active', 'savedCount'])('stops without a success receipt when Undo changes %s', async field => {
     const f = fixture(), real = f.call.getMockImplementation()

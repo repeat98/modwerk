@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="192" viewBox="0 0 320 192" class="signal-art" fill="none" stroke-linecap="round" stroke-linejoin="round" role="img" aria-labelledby="title description">
+<title id="title">CC Recall</title>
+<desc id="description">A MIDI track's CC values, edited away from the saved pattern, snap back to the saved levels on a reload and go straight out to MIDI OUT; the stale values are shown faint. Original conceptual illustration, not an instrument screen or a measured result.</desc>
+<style>.signal-grid{stroke:#fff;opacity:.035;stroke-width:.7}.signal-main{stroke:#79b5f8;stroke-width:2.7}.signal-secondary{stroke:#79b5f8;opacity:.65;stroke-width:1.7}.signal-ghost{stroke:#79b5f8;opacity:.2;stroke-width:1.3}.signal-art text{fill:#79b5f8;opacity:.8;font:10px monospace;letter-spacing:.7px;stroke:none}.signal-dot{fill:#79b5f8;stroke:none}</style>
+<rect width="320" height="192" fill="#232328"/>
+<g class="signal-grid"><path d="M20 52H300"></path><path d="M20 97H300"></path><path d="M20 142H300"></path><path d="M64 33V163"></path><path d="M128 33V163"></path><path d="M192 33V163"></path><path d="M256 33V163"></path></g>
+<g>
+<path class="signal-secondary" d="M30 140H200"></path>
+<rect class="signal-ghost" x="40" y="62" width="14" height="78" rx="2"></rect>
+<rect class="signal-ghost" x="70" y="96" width="14" height="44" rx="2"></rect>
+<rect class="signal-ghost" x="100" y="54" width="14" height="86" rx="2"></rect>
+<rect class="signal-ghost" x="130" y="80" width="14" height="60" rx="2"></rect>
+<rect class="signal-main" x="40" y="104" width="14" height="36" rx="2"></rect>
+<rect class="signal-main" x="70" y="70" width="14" height="70" rx="2"></rect>
+<rect class="signal-main" x="100" y="118" width="14" height="22" rx="2"></rect>
+<rect class="signal-main" x="130" y="92" width="14" height="48" rx="2"></rect>
+<path class="signal-secondary" d="M176 66A26 26 0 1 1 168 90"></path>
+<path class="signal-secondary" d="M168 80L168 91L179 88"></path>
+<path class="signal-main" d="M214 97H286"></path>
+<path class="signal-main" d="M278 91L286 97L278 103"></path>
+<circle class="signal-dot" cx="214" cy="97" r="3.5"></circle>
+<text x="25" y="28">MIDI TRACK · CC VAL</text>
+<text x="232" y="86">OUT</text>
+<text x="160" y="124">RELOAD</text>
+<text x="25" y="177">SEND THE SAVED VALUES</text>
+</g>
+</svg>

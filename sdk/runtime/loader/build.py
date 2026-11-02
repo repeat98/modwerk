@@ -51,6 +51,8 @@ import sys
 import tempfile
 import types
 
+sys.path.append(str(Path(__file__).resolve().parents[2]))  # sdk/, for firmware_codec
+import firmware_codec  # noqa: E402
 HERE = Path(__file__).resolve().parent
 HANDLERS = ('module_tick', 'module_draw', 'module_key', 'module_enc')  # loader.h's event order
 NONE = 0xffffffff
@@ -66,7 +68,7 @@ SCRIPT = '''ENTRY(__image_start)
 SECTIONS {
   . = %#x;
   __image_start = .;
-  .image : { *(.text .text.*) *(.rodata .rodata.*) *(.data .data.*) . = ALIGN(4); }
+  .image : { *(.text .text.*) __runtime_text_end = .; *(.rodata .rodata.*) *(.data .data.*) . = ALIGN(4); }
   __image_end = .;
   .bss (NOLOAD) : { *(.bss .bss.*) . = ALIGN(4); }
   __bss_end = .;
@@ -283,9 +285,13 @@ def link_elemod(doc, stock_at, base_symbols):
     return bytes(image), offsets, sites
 
 
+class LinkedSymbols(dict):
+    """Linked addresses plus build-only ELF function provenance; none of this changes the wire format."""
+
+
 def link_units(objects, cross, origin, tmp, anywhere=False):
     """Objects linked at `origin` and origin + SHIFT: (image, its symbols, bss bytes, self-reference offsets)."""
-    images, symbols = [], {}
+    images, symbols = [], LinkedSymbols()
     for base in (origin, origin + SHIFT):
         (tmp / 'link.ld').write_text(SCRIPT % base)
         elf = tmp / ('%x.elf' % base)
@@ -300,7 +306,19 @@ def link_units(objects, cross, origin, tmp, anywhere=False):
     image, length, end = images[0], symbols['__image_end'] - origin, symbols['__bss_end']
     if len(image) != length:
         raise ValueError('The module image is not contiguous.')
-    return image, symbols, end - symbols['__image_end'], relocations(image, images[1], end, anywhere)
+    # .image also contains read-only/writable data, so its final ELF section flags alone cannot prove code.
+    # Keep typed function entries whose complete extent is inside the input .text region, before data is merged.
+    functions = set()
+    for line in subprocess.check_output([cross + 'readelf', '--symbols', '--wide', str(tmp / ('%x.elf' % origin))],
+                                        text=True).splitlines():
+        fields = line.split()
+        if len(fields) >= 8 and fields[0].endswith(':') and fields[3] == 'FUNC' and fields[6].isdigit():
+            value, size = int(fields[1], 16), int(fields[2], 0)
+            if not value & 1 and origin <= value < symbols['__runtime_text_end'] and 2 <= size <= symbols['__runtime_text_end'] - value:
+                functions.add(value)
+    offsets = relocations(image, images[1], end, anywhere)
+    symbols.image, symbols.function_entries, symbols.self_relocations = image, frozenset(functions), frozenset(offsets)
+    return image, symbols, end - symbols['__image_end'], offsets
 
 
 OPCODES = {'jmp': b'\x4e\xf9', 'jsr': b'\x4e\xb9', 'lea': b'\0\0'}  # lea keeps its stock opcode (its register)
@@ -355,6 +373,18 @@ def entries(declared):
 RAISE = 255  # loader.h RUNTIME_RAISE: on a raised event's word, the offset of the zero slot for the base's entry
 
 
+def _check_start_callback(symbols, record):
+    """Reject accidental data/interior targets while the linked ELF still distinguishes typed code from data."""
+    if not isinstance(symbols, LinkedSymbols):
+        raise ValueError('A START record needs linked ELF function metadata; a flat symbol map cannot prove code.')
+    at = symbols[record] - symbols['__image_start']
+    if at < 0 or at + 16 > len(symbols.image):
+        raise ValueError('The START record must contain its complete callback function pointer.')
+    callback = struct.unpack_from('>I', symbols.image, at + 12)[0]
+    if callback not in symbols.function_entries or at + 12 not in symbols.self_relocations:
+        raise ValueError('The START callback must name the entry of a typed ELF function in .text (assembly: .type/.size).')
+
+
 def subscribe(hooks, entries, symbols, registry=None, raises=()):
     """`hooks` (the core events' words) with each subscription's word after them, by the event's hook index: its order
     (0-254) in the top byte and the handler's (a take event's record's, a table's record's) image offset below
@@ -380,6 +410,8 @@ def subscribe(hooks, entries, symbols, registry=None, raises=()):
                 or words[e['index']] != NONE or not 0 <= symbols[entry['fn']] < 0x1000000 or symbols[entry['fn']] & 1):
             raise ValueError('A subscription names an event or table of sdk/machines/octatrack/events.json, one of the '
                              'module\'s own even symbols and an order 0-254, one per event: %r' % (entry,))
+        if entry['event'] == 'ot_machine_starts':
+            _check_start_callback(symbols, entry['fn'])
         words[e['index']] = entry['order'] << 24 | symbols[entry['fn']]
     while words and words[-1] == NONE:
         words.pop()
@@ -475,7 +507,7 @@ def octabam_units(name, origin, cross, upstream, dsp=False, hooks=None):
     references; every stock span named by the SHA-256 its manifest gives (no firmware is read). Anything else a
     runtime package cannot carry is refused. A module with a runtime.json subscribes: pass a `hooks` list to receive
     its hook words."""
-    sys.path.insert(0, str(upstream))
+    firmware_codec.use_elekloader(upstream)
     from elekloader.sdk import octabam as port
     root = Path(__file__).resolve().parents[2] / 'octabam'
     ob = port.Octabam(str(root))
@@ -560,7 +592,7 @@ def private_standalone(args, public=False):
         raise ValueError('Private standalone output must be new and outside Git.')
     if not args.stock:  # public, from the committed recipe: the base checks each copy against its running stock
         return standalone_runtime, standalone_runtime.sources(root, args.upstream, args.octabam), None, None
-    sys.path.insert(0, str(args.upstream.expanduser().resolve()))
+    firmware_codec.use_elekloader(args.upstream.expanduser().resolve())
     from elekloader import formats
     parsed, device, release = formats.load(str(args.stock))
     main = formats.main_image(parsed, device)
@@ -597,7 +629,7 @@ def octabam_group(args):
     proves the same input at two origins, and leaves inherited stock table words
     as checked-copy placeholders. Public inventory still needs retirement proof.
     """
-    sys.path.insert(0, str(args.upstream.expanduser().resolve()))
+    firmware_codec.use_elekloader(args.upstream.expanduser().resolve())
     from elekloader.sdk import octabam as port
     sdk = Path(__file__).resolve().parents[2] / 'octabam'
     adapters = Path(__file__).resolve().parents[2] / 'machines/octatrack/module-adapters'
@@ -730,7 +762,7 @@ def octabam_machine(args):
     """One catalogue machine module as an independent ABI 8 package: what it shares with other modules goes through
     the base's events and tables (its runtime.json, or its machine port in module-adapters/machine-ports.json), so it
     installs alone or beside any other module. No group metadata, no composition, no other member."""
-    sys.path.insert(0, str(args.upstream.expanduser().resolve()))
+    firmware_codec.use_elekloader(args.upstream.expanduser().resolve())
     from elekloader.sdk import octabam as port
     sdk = Path(__file__).resolve().parents[2] / 'octabam'
     adapters = Path(__file__).resolve().parents[2] / 'machines/octatrack/module-adapters'
@@ -834,7 +866,7 @@ def octabam_tables(args):
     if args.octabam_tables != 'mute-modes':
         raise ValueError('Only Mute Modes has a reviewed table port.')
     upstream = args.upstream.expanduser().resolve()
-    sys.path.insert(0, str(upstream))
+    firmware_codec.use_elekloader(upstream)
     from elekloader.sdk import octabam as port
     sdk = root / 'sdk/octabam'
     module = port.Octabam(str(sdk)).modules[args.octabam_tables]
@@ -947,7 +979,7 @@ def capture_machine_recipe(name, image, relocations, inputs, args):
 
 def check_stock(sites, stock, upstream):
     """Each ABI 7 site's hash against the stock OS: a manifest that names the wrong bytes fails here, not on a unit."""
-    sys.path.insert(0, str(upstream.expanduser().resolve()))
+    firmware_codec.use_elekloader(upstream.expanduser().resolve())
     from elekloader import formats
     parsed, device, _ = formats.load(str(stock))
     main_image = formats.main_image(parsed, device)
@@ -957,7 +989,7 @@ def check_stock(sites, stock, upstream):
             raise ValueError('The stock bytes at %#x are not the ones the module names.' % address)
 
 
-def build_c(sources, cross, module, dsp=None, subscriptions=()):
+def build_c(sources, cross, module, dsp=None, subscriptions=(), raises=()):
     spec = importlib.util.spec_from_file_location('runtime_c_codegen', HERE.parent / 'm68k_codegen.py')
     codegen = importlib.util.module_from_spec(spec); spec.loader.exec_module(codegen)
     with tempfile.TemporaryDirectory() as tmp:
@@ -970,16 +1002,17 @@ def build_c(sources, cross, module, dsp=None, subscriptions=()):
     hooks = [symbols.get(name, NONE) for name in HANDLERS]
     if all(h == NONE for h in hooks) and not subscriptions:
         raise ValueError('Define at least one of ' + ', '.join(HANDLERS) + ', or subscribe to a site event.')
-    if subscriptions:
-        hooks = subscribe(hooks, subscriptions, symbols)
-    return package(image, bss, hooks, offsets, name=module, dsp=dsp, abi=8 if subscriptions else None, hashed=bool(subscriptions),
-                   title=module[:15] if subscriptions else '')
+    sited = bool(subscriptions or raises)  # site events or raised events: an ABI 8 package named by its stem
+    if sited:
+        hooks = subscribe(hooks, subscriptions, symbols, raises=raises)
+    return package(image, bss, hooks, offsets, name=module, dsp=dsp, abi=8 if sited else None, hashed=sited,
+                   title=module[:15] if sited else '')
 
 
 def build_elemod(args):
     if not (args.stock and args.upstream):
         sys.exit('--elemod needs --stock and --upstream.')
-    sys.path.insert(0, str(args.upstream.expanduser().resolve()))
+    firmware_codec.use_elekloader(args.upstream.expanduser().resolve())
     from elekloader import formats
     parsed, device, _ = formats.load(str(args.stock))
     main = formats.main_image(parsed, device)
@@ -1042,12 +1075,15 @@ def main():
     parser.add_argument('--pinned', action='store_true', help='its ColdFire code names its effect id (ABI 6 flag 2)')
     parser.add_argument('--subscribe', action='append', default=[], metavar='EVENT:FN:ORDER',
                         help='C sources: subscribe FN to a site event of sdk/machines/octatrack/events.json (repeatable)')
+    parser.add_argument('--raise', action='append', default=[], dest='raises', metavar='EVENT',
+                        help='C sources: raise EVENT, an event of sdk/machines/octatrack/events.json with no site; the module '
+                        'defines its zero word raise_EVENT in initialized data, which the loader points at the base\'s entry (repeatable)')
     args = parser.parse_args()
     if args.private_port and args.standalone:
         parser.error('--private-port prepares privately; --standalone builds the published package. Give one.')
     private = private_standalone(args, public=args.standalone) if args.private_port or args.standalone else None
-    if args.subscribe and not args.sources:
-        parser.error('--subscribe is for C sources; an octabam module subscribes in its runtime.json, an elemod in its "subscribe".')
+    if (args.subscribe or args.raises) and not args.sources:
+        parser.error('--subscribe and --raise are for C sources; an octabam module declares them in its runtime.json, an elemod in its "subscribe".')
     native = args.octabam or args.octabam_group or args.octabam_machine or args.octabam_tables
     if (bool(args.sources) + bool(args.elemod) + bool(args.octabam) + bool(args.octabam_group) + bool(args.octabam_machine)
             + bool(args.octabam_tables) > 1 or not (args.sources or args.elemod or args.dsp) and not native
@@ -1077,7 +1113,7 @@ def main():
             subscriptions = [dict(event=e, fn=f, order=int(o)) for e, f, o in (s.split(':') for s in args.subscribe)]
         except ValueError:
             parser.error('--subscribe takes EVENT:FN:ORDER')
-        data = build_c(args.sources, args.cross, args.output.stem, dsp, subscriptions)
+        data = build_c(args.sources, args.cross, args.output.stem, dsp, subscriptions, args.raises)
     else:
         image, relocations = page_section(args.page_from or pkg['id']) if 'id' in pkg and not args.no_page else (b'', [])
         bss, sites, copies, flags, hooks = 0, [], [], (1 if image else 0) | (2 if args.pinned else 0), []

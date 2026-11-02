@@ -168,7 +168,7 @@ const SECTIONS: FaqSection[] = [
         title: 'Can I load Octatrack modules over USB instead of flashing?',
         keywords: 'usb beta tester base module set trial keep undo chrome edge diagnostics discord join invitation mkii',
         answer: <>
-          <p>In the Modwerk beta. Beta testers install the Modwerk base once, then send module sets from this site to the Octatrack over USB, try them and keep or undo them without reflashing. You need an Octatrack MKII, your original OS {BASE_FIRMWARE.version} file, a USB cable and Chrome or Edge on a computer. Diagnostics stay on while you are in the beta.</p>
+          <p>In the Modwerk beta. Beta testers install the Modwerk base once, then send module sets from this site to the Octatrack over USB without reflashing. You need an Octatrack MKII, your original OS {BASE_FIRMWARE.version} file, a USB cable and Chrome or Edge on a computer. Diagnostics stay on while you are in the beta.</p>
           <p>Places are limited. When a round is open, the site shows <strong>Join the beta</strong>. {BETA_RECOVERY_NOTICE} {BETA_REPORTING_NOTICE}</p>
         </>,
       },

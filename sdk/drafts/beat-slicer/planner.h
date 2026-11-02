@@ -34,7 +34,8 @@ struct bs_plan {
 };
 /* Pure preview: never alters existing markers or PCM; on failure out is
  * unchanged. Adapter must revalidate sample/trim/tempo/marker identity at
- * confirmed apply, preserve stock slice loop/end metadata, and support Undo.
+ * confirmed apply, preserve stock slice loop/end metadata, and roll back failed
+ * writes internally. Later user edits use the stock slice-clearing workflow.
  */
 enum bs_status bs_preview(const struct bs_request *, struct bs_plan *);
 #endif

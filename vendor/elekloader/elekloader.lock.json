@@ -11,16 +11,16 @@
    "kit.json": "01f75c23f12548692670cc1aa73ca7578e088b44fc3f108f8e59a643687ccb1e",
    "src/bridge.ts": "a146a1bb0e44e264384e89a520ad9dc13fc323d430035000440f7bd8ceb81fea",
    "src/bytes.ts": "57fb9de1346e41ab42bbc1418dfcca9af1c03fbee9e025ec0b47d233f399df55",
-   "src/codec/aplib.ts": "46f730123a70f6a05c3ccfdc9b41583391cbf598c047920a703c6bee118e6ed8",
-   "src/codec/elz.ts": "e77fe13378826accdec3605d0e5f288746a8ccfa4f882b4c06a63c846bed63a0",
-   "src/codec/transport.ts": "bf575eac1abe57228e6ee60d177692dfbed7ebee116a3619ef0d83548ead001d",
+   "src/codec/aplib.ts": "0de741b6f953d899b4274e7af008d52d36adbd6b4d33ee3b9ba81ef9063060c8",
+   "src/codec/elz.ts": "6b36c44a513a518355dee7f8e18ebe0943c19c25833593ec34f84648bdd446fe",
+   "src/codec/transport.ts": "7c0574a533dfe36d4bf16a7a1e4da0c83f06d1586d558e10108116883c26819f",
    "src/devices.ts": "339001c801dbe80d54c0bd6f92725d2c3444c32061dd93c7589f843e490daeb1",
    "src/dsp.ts": "f9782ee736c2e69f9eff53c3ab2870729c54d5759d822b3ee832b4dcac28500a",
    "src/elek.ts": "10ccfac398938d0d6f9af5c3f3cfdd57c2372a44e6a076cdfb9020e69270d30c",
    "src/elemod.ts": "5112e4d5f133269b27182f80ac470ac852ddb36210d37b556e899ab01152da03",
    "src/formats.ts": "6cfd0940ebc029415461e74ce44e4ee6a89083cd6f71a6c91c4ba857b295e86a",
    "src/index.ts": "cf39ea7b427ae888a2b8c6f64bc8a35af414782f8bcaba692bea6f93e49fecb8",
-   "src/isa/coldfire.ts": "aeb6147554b5bfe9523f9bb41bcbd30d2489a1b98dbff5f04a82390fb763e131",
+   "src/isa/coldfire.ts": "631b4b6a68ba513872a685aaf6aea935958f4a0500589c1db1e530477ce2ac14",
    "src/kit/build.ts": "350e47a437fc43c7df2f99c1708be9ba412f12bc3938c94b5853853e48f6809b",
    "src/kit/catalog.ts": "26b6f0740296359ac9bc7dedf38d1e3d07a8e6c06d3364ae3a189f5815d877a7",
    "src/kit/client.ts": "0ee5b26d006efe64a77a004f8e633a40fe454cd24879ac74efac9c4a965e7550",
@@ -38,6 +38,12 @@
    "src/version.ts": "fe25923a0ef4062f4927084b610e65404f5b366d2608ee5f54aebe138f92a5ee",
    "src/zip.ts": "a0e343e90263bef716d3d08c00436d9f44f023978a7ab2c8cf7857c97c481288",
    "tools/kit.ts": "d39a975911b3db0a51f8009092e5392f8dd2f81d4dc41529c364906fdac2dac1"
+  },
+  "replaced": {
+   "src/codec/aplib.ts": "46f730123a70f6a05c3ccfdc9b41583391cbf598c047920a703c6bee118e6ed8",
+   "src/codec/elz.ts": "e77fe13378826accdec3605d0e5f288746a8ccfa4f882b4c06a63c846bed63a0",
+   "src/codec/transport.ts": "bf575eac1abe57228e6ee60d177692dfbed7ebee116a3619ef0d83548ead001d",
+   "src/isa/coldfire.ts": "aeb6147554b5bfe9523f9bb41bcbd30d2489a1b98dbff5f04a82390fb763e131"
   }
  },
  "catalog": {

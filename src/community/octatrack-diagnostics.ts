@@ -172,14 +172,18 @@ export function collectOctatrackDiagnostics(memberId: string, link: OctatrackLin
       const log = await link!.deviceLog(signal, allowed)
       if (!log || !allowed()) return
       const scope = await digest(memberId + ':' + log.nonce), key = 'modwerk.diagnostics.device-log:' + scope
-      let after = 0
-      try { after = Number(localStorage.getItem(key)) || 0 } catch { /* storage off: send what the unit holds */ }
-      const keep = (seq: number) => () => { try { if (seq > (Number(localStorage.getItem(key)) || 0)) localStorage.setItem(key, String(seq)) } catch { /* storage off */ } }
-      const groups = [...chunks(log.loads.filter(record => record.seq > after), DEVICE_LOG_LOADS).map(loads => ({loads, incidents: []})),
-        ...chunks(log.incidents.filter(record => record.seq > after), DEVICE_LOG_INCIDENTS).map(incidents => ({loads: [], incidents}))]
+      /* A mark per kind, moved only past groups stored in order: loads and incidents share the unit's seq, so one mark
+       * moved by a stored load group skipped the incidents of a group that failed or never left a closing tab. The
+       * mark before 27 October 2026 (one for both) is where each starts. */
+      const mark = (kind: 'loads' | 'incidents') => { try { return Number(localStorage.getItem(key + ':' + kind) ?? localStorage.getItem(key)) || 0 } catch { return 0 /* storage off: send what the unit holds */ } }
+      const keep = (kind: 'loads' | 'incidents', from: number, seq: number) => () => { try { const at = mark(kind); if (at >= from && seq > at) localStorage.setItem(key + ':' + kind, String(seq)) } catch { /* storage off */ } }
+      const from = {loads: mark('loads'), incidents: mark('incidents')}
+      const groups = [...chunks(log.loads.filter(record => record.seq > from.loads), DEVICE_LOG_LOADS).map(loads => ({kind: 'loads' as const, log: {loads, incidents: []}})),
+        ...chunks(log.incidents.filter(record => record.seq > from.incidents), DEVICE_LOG_INCIDENTS).map(incidents => ({kind: 'incidents' as const, log: {loads: [], incidents}}))]
       for (const group of groups) {
-        const seqs = [...group.loads, ...group.incidents].map(record => record.seq)
-        send({event:'device_log',...unit(),log:group}, eventId(await digest(scope + ':' + seqs.join(','))), keep(Math.max(...seqs)))
+        const seqs = [...group.log.loads, ...group.log.incidents].map(record => record.seq), last = Math.max(...seqs)
+        send({event:'device_log',...unit(),log:group.log}, eventId(await digest(scope + ':' + seqs.join(','))), keep(group.kind, from[group.kind], last))
+        from[group.kind] = last
       }
       /* The crash and stall records (log version 2), once per count: the id makes a resend a duplicate. */
       if (log.crash || log.stall) {

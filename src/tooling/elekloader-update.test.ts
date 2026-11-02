@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 import { DEVICE } from '../engine/elekloader/digi-build'
 import { DEVICES, KIT_PROTOCOL, catalogChanges, describeChange, followUps, libraryCatalog, mergeCatalogOverlay, readKitZip, type KitJson } from '../../scripts/elekloader-update.ts'
+import { kitNotice, replacementText } from '../../scripts/elekloader-vendor.ts'
 import { PROTOCOL } from '../../vendor/elekloader/kit/src/kit/protocol.ts'
 
 const sha = (data: Uint8Array) => createHash('sha256').update(data).digest('hex')
@@ -128,6 +129,13 @@ describe('the elekloader update', () => {
     expect(cut.leftOut).toEqual(['digitakt/digislicer'])
     expect(DEVICES['digitakt-mk2']).toBe('digitakt-ii')
   })
+  it('ships the kit NOTICE without its section on the replaced files, and refuses one that credits another file', () => {
+    const notice = readFileSync(join(ROOT, 'vendor/elekloader/kit/NOTICE'), 'utf8'), shipped = kitNotice(notice)
+    expect(shipped).not.toContain('Code from other projects')
+    expect(shipped).toContain('The TypeScript engine')
+    expect(shipped).toContain("replaced by Modwerk's own implementation")
+    expect(() => kitNotice(notice.replace('  elekloader/isa/coldfire.py', '  elekloader/other.py  elsewhere\n  elekloader/isa/coldfire.py'))).toThrow('not exactly the files Modwerk replaces')
+  })
   it('adds pinned site packages to the existing catalog without replacement and fingerprints the result', () => {
     const pin = (id: string, device: string, file: string, sha256: string) => ({
       file, sha256, id, version: '1.0', device, os: '1.17', license: 'GPL-2.0-or-later',
@@ -170,7 +178,7 @@ function fixture() {
     mkdirSync(dirname(join(root, path)), { recursive: true })
     cpSync(join(ROOT, path), join(root, path), { recursive: true })
   }
-  for (const path of [...noticePaths, 'LICENSE', 'LICENSES', 'docs/USB_AUDIO_ATTRIBUTION.txt', 'scripts/elekloader-update.ts', 'scripts/elekloader-vendor.ts', 'scripts/licenses.mjs', 'scripts/license-notices.mjs']) copy(path)
+  for (const path of [...noticePaths, 'LICENSE', 'LICENSES', 'docs/USB_AUDIO_ATTRIBUTION.txt', 'scripts/elekloader-update.ts', 'scripts/elekloader-vendor.ts', 'scripts/licenses.mjs', 'scripts/license-notices.mjs', 'src/engine/elektron/codec']) copy(path)
   // The module records that add Modwerk-built pins to the upstream catalog.
   for (const name of readdirSync(join(ROOT, 'sdk/imports')).filter(name => /^elekloader-.*\.json$/.test(name))) copy('sdk/imports/' + name)
   const manifest = JSON.parse(readFileSync(join(root, 'sdk/octabam/licenses/manifest.json'), 'utf8')) as { moduleComponents: Record<string, string[]> }
@@ -222,6 +230,18 @@ describe('elekloader update CLI', { timeout: 60_000 }, () => {
       const again = update(root, args)
       expect(again.status, again.stderr).toBe(0)
       expect(identities(root)).toEqual(before)
+    } finally { rmSync(root, { recursive: true, force: true }) }
+  })
+  it('installs the re-export over a replaced kit file and records the upstream file it stands for', () => {
+    const root = fixture()
+    try {
+      const upstream = text('export const upstreamCode = 1\n')
+      const result = update(root, fullKitZip(root, files => { files['src/codec/elz.ts'] = upstream }))
+      expect(result.status, result.stderr).toBe(0)
+      expect(readFileSync(join(root, 'vendor/elekloader/kit/src/codec/elz.ts'), 'utf8')).toBe(replacementText('src/codec/elz.ts'))
+      const lock = JSON.parse(readFileSync(join(root, 'vendor/elekloader/elekloader.lock.json'), 'utf8')) as { kit: { replaced: Record<string, string> } }
+      expect(lock.kit.replaced['src/codec/elz.ts']).toBe(sha(upstream))
+      expect(result.stdout).toContain('Upstream changed src/codec/elz.ts')
     } finally { rmSync(root, { recursive: true, force: true }) }
   })
   it('refuses a same-protocol kit that cannot read the current catalog before changing any installed file', () => {

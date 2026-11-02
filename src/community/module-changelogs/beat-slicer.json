@@ -1,0 +1,13 @@
+[
+  {
+    "version": "0.1.66-experimental",
+    "date": "2026-10-27",
+    "changes": [
+      "New: CREATE BEAT GRID in the AED SLICE menu cuts a Flex or Static sample, or a finished recorder buffer, into equal beats from trim start, so you no longer record an exact number of bars.",
+      "Encoder A picks SAMPLE or PROJECT BPM, encoder B 1, 2, 4, 16, 32 or 64 beats a slice; up to 64 slices. YES opens the stock CREATE or REPLACE SLICES question. Works while the pattern plays.",
+      "Needs the Modwerk base loaded over USB, which is in the beta. Card firmware cannot include it.",
+      "Known issues: not offered with Recorder Loop Fix 0.1.0, which can make recorder slice 1 miss (sambanks/octabam#908); the open window's drawing takes about 6 % of the CPU.",
+      "Not yet tested: the MKI, and slices kept through a save and a power cycle. Nothing is saved for you, and clicks at slice boundaries are not smoothed."
+    ]
+  }
+]

@@ -15,12 +15,16 @@ import { requireCompleteReadme, requireMonochromePng } from '../../scripts/modul
 import { MODULES, resolveSelection } from './modules'
 
 const folder = resolve('sdk/octabam/modules/vector')
+// 0.2.5 changes only the USB package: its card source (the native source SHA-256 below) and card build are 0.2.4's, so
+// 0.2.4's emulator and behaviour records stand for its card build; the UI captures are labelled 0.2.5 for publication.
+const CARD_EVIDENCE = '0.2.4-experimental'
 const sha = (bytes: Buffer) => createHash('sha256').update(bytes).digest('hex')
 
 describe('VECTOR release', () => {
-  it('publishes emulator evidence with an exact hardware-only waiver', async () => {
+  it('publishes a reported functional hardware result for 0.2.5', async () => {
     const document = parseModuleDocument(draft)
-    expect(document.tests.hardwareStatus).toBe('untested')
+    expect(document.tests.hardwareStatus).toBe('reported')
+    expect(document.tests.qualification!.hardware).toMatchObject({ kind: 'functional', status: 'reported', model: 'MKII', testedOn: '2026-10-27' })
     expect(() => requireModuleUiForPublication(document)).not.toThrow()
     expect(() => requireModuleQualificationForPublication(document)).not.toThrow()
     await expect(requireFolderQualification(folder, document, parseQualificationBaseline(baseline))).resolves.toBe('qualified')
@@ -32,11 +36,10 @@ describe('VECTOR release', () => {
 
   it('does not extend the 9 October owner exception to another version or source', async () => {
     const document = parseModuleDocument(draft)
-    expect(document.tests.qualification!.hardware).toMatchObject({ kind: 'owner-waived', approvedOn: '2026-10-09' })
-    const future = structuredClone(document)
-    future.version = '0.2.5-experimental'
-    future.tests.qualification!.moduleVersion = future.version
-    expect(() => requireModuleQualificationForPublication(future)).toThrow('only exact approved releases')
+    const waived = structuredClone(document)
+    waived.tests.hardwareStatus = 'untested'
+    waived.tests.qualification!.hardware = { kind: 'owner-waived', status: 'waived', approvedBy: 'repeat98', approvedOn: '2026-10-09', reason: 'test', report: 'TESTING.md' }
+    expect(() => requireModuleQualificationForPublication(waived)).toThrow('only exact approved releases')
     const changed = structuredClone(document)
     changed.tests.qualification!.sourceSha256 = 'a'.repeat(64)
     await expect(requireFolderQualification(folder, changed, parseQualificationBaseline(baseline))).rejects.toThrow('source SHA-256 differs')
@@ -44,7 +47,7 @@ describe('VECTOR release', () => {
 
   it('binds reviewed monochrome captures and complete tutorial to the authored source', async () => {
     const document = parseModuleDocument(draft)
-    expect(capture.moduleVersion).toBe(document.version)
+    expect(capture.moduleVersion).toBe(CARD_EVIDENCE)
     expect(capture.sourceSha256).toBe(await moduleNativeSourceSha256(folder, document))
     expect(document.tests.qualification!.documentation.screenshots).toEqual(document.access!.screenshots)
     requireCompleteReadme({ id: document.id, tests: { qualification: { documentation: { ...document.tests.qualification!.documentation, screenshotStyle: 'black-and-white' as const } } } }, await readFile(resolve(folder, 'README.md'), 'utf8'))
@@ -63,7 +66,7 @@ describe('VECTOR release', () => {
 
   it('records sequence commits and advancing playback separately from UI captures', () => {
     expect(draft.controls.map(control => control.name)).toEqual(['TYPE', 'DENS', 'ROOT', 'SCAL', 'GATE', 'ACNT', 'SEED', 'SPAN', 'OFST', 'ROT', 'RPT', 'DIR'])
-    expect(behavior.moduleVersion).toBe(draft.version)
+    expect(behavior.moduleVersion).toBe(CARD_EVIDENCE)
     expect(behavior.imageSha256).toBe(capture.imageSha256)
     expect(behavior.sourceSha256).toBe(capture.sourceSha256)
     expect(behavior.result).toBe('passed')
@@ -71,7 +74,7 @@ describe('VECTOR release', () => {
     expect(behavior.checks.twelveSrcControlsEdited).toBe(true)
     expect(behavior.checks.otherSevenTracksUnchanged).toBe(true)
     expect(behavior.checks.poolBrowsingPreservesSettings).toBe(true)
-    expect(persistence.moduleVersion).toBe(draft.version)
+    expect(persistence.moduleVersion).toBe(CARD_EVIDENCE)
     expect(persistence.sourceSha256).toBe(capture.sourceSha256)
     expect(persistence.imageSha256).toBe(capture.imageSha256)
     expect(Object.values(persistence.checks).every(Boolean)).toBe(true)
@@ -81,7 +84,7 @@ describe('VECTOR release', () => {
   })
 
   it('binds the recorded firmware-free tests without running native code in application checks', async () => {
-    expect(coreTests.moduleVersion).toBe(draft.version)
+    expect(coreTests.moduleVersion).toBe(CARD_EVIDENCE)
     for (const [path, hash] of Object.entries(coreTests.sources)) {
       expect(sha(await readFile(resolve(folder, path)))).toBe(hash)
     }

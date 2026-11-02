@@ -1,0 +1,40 @@
+{
+  "module": "beat-slicer",
+  "version": "0.1.67-experimental",
+  "status": "private candidate; host/target/package and isolated native UI checks; hardware qualification pending",
+  "baseCommit": "a0363af944a89ea87c4d35d162f36f67e64faf76",
+  "toolchainImage": "sha256:da70d46e10b243277fa3ae2e015f7258d56b3ee08ca4be47e61899958872e792",
+  "packageSha256": "20ce427629de295c373e69965c12d2ea370c217a22dde0ecf76d76789a169291",
+  "packageBytes": 4976,
+  "moduleId": "c8d078f2",
+  "imageBytes": 4104,
+  "bssBytes": 3476,
+  "relocations": 162,
+  "stockCodeSites": 0,
+  "sourceSha256": {
+    "device_module.c": "30a4aba4ac09fffa748991a40b4c34d573c72b6f75724e9fa206a2b0a273a407",
+    "device_font.c": "b0b0bdc6e9e867b2e89c3207d6b9f2457882054238f3e6fe00164cd7a510492b",
+    "device_font.h": "1fc38c208c4347a8c0f2ea898c31057b8efdfffb23280f49c722bbbceec844f2",
+    "grid_preview.c": "cea670467d371fd79a5d330c80ff2687deb61e2e7d457ae239e88dc5856c49a9",
+    "grid_preview.h": "80dd553543bb02ac7cb016331b3a0ce3c95b51dce0e75d4b86f2a1a1698aac8c",
+    "planner.h": "1a10ce9e6b34dfd35eb138690e2134550621c3bf91b2178fb50f95b9def6b7ae"
+  },
+  "releaseScope": [
+    "cached popup",
+    "stock font and frame",
+    "Mixer-height popup over live eight-track home bitmap"
+  ],
+  "deferred": [
+    "zero-crossing analysis",
+    "encoder C SNAP setting"
+  ],
+  "nativeUiReferences": [
+    "0x400ba876",
+    "0x400bf10a",
+    "0x40012bd8",
+    "0x40012f30",
+    "0x400570b8"
+  ],
+  "review": "new native UI references require owner review; no automatic publication requested",
+  "hardware": "not tested on this exact revised package"
+}

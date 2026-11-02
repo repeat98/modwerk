@@ -45,11 +45,14 @@ if (pairs) for (let a = 0; a < modules.length; a++) for (let b = a + 1; b < modu
 if (combined && modules.length > (pairs ? 2 : 1)) selections.push([core, ...modules])
 mkdirSync(destination)
 const emptyCatalog = new TextEncoder().encode(JSON.stringify({ schema: 1, kind: 'elekloader-catalog', revision: 'private-migration', cores: [], mods: [] }))
+// The pinned checkout with Modwerk's own codec (sdk/firmware_codec), as every Modwerk build runs it.
 const nativeCheck = `import sys,json,hashlib
-sys.path.insert(0,sys.argv[1])
+sys.path.append(sys.argv[1])
+import firmware_codec
+firmware_codec.use_elekloader(sys.argv[2])
 from elekloader.patch import build,PatchError
 try:
- outputs,manifest=build(sys.argv[2],sys.argv[3:],version='ELEKLOADER',log=lambda _:None)
+ outputs,manifest=build(sys.argv[3],sys.argv[4:],version='ELEKLOADER',log=lambda _:None)
  print(json.dumps({'ok':True,'hashes':{k:hashlib.sha256(v).hexdigest() for k,v in outputs.items()},'main_sha256':manifest['main_sha256'],'main_len':manifest['main_len']}))
 except PatchError as e:
  print(json.dumps({'ok':False,'error':str(e)}))
@@ -73,7 +76,7 @@ for (const selection of selections) {
     build: (enabled, version, name, log) => call('build', { enabled, version, name }, undefined, log),
   }
   const prepared = await prepareLocalBuild(builder, { machine: 'octatrack', release: '1.40C', stock: new File([raw], basename(input)), mods: ordered })
-  const native = JSON.parse(execFileSync('python3', ['-B', '-c', nativeCheck, nativeRoot, resolve(input), ...ordered.map(mod => mod.path)], { encoding: 'utf8', maxBuffer: 1024 * 1024 }))
+  const native = JSON.parse(execFileSync('python3', ['-B', '-c', nativeCheck, join(root, 'sdk'), nativeRoot, resolve(input), ...ordered.map(mod => mod.path)], { encoding: 'utf8', maxBuffer: 1024 * 1024 }))
   if (!prepared.ok) {
     assert.equal(native.ok, false, label + ': TypeScript refuses but Python builds')
     const problems = prepared.check?.problems ?? [prepared.error]

@@ -3,7 +3,7 @@
   "id": "track-mutes",
   "key": "TRACK MUTES",
   "name": "Track Mutes",
-    "version": "0.1.32-experimental",
+    "version": "0.1.33-experimental",
   "category": "system",
   "author": {
     "github": "jonathanwardle1992-beep",
@@ -50,7 +50,7 @@
         "empty",
         "X"
       ],
-      "doc": "Empty box is stock T=select / FUNC+T=mute. Ticked (X) makes T1-T8 mute/unmute and FUNC+T select the track for editing. Stock checkbox: YES ticks or clears; cursor motion must not change it. Stored in PERSONALIZE, not in the project."
+      "doc": "Empty box is stock T=select / FUNC+T=mute. Ticked (X) makes T1-T8 mute/unmute and FUNC+T select the track for editing. Stock checkbox: YES ticks or clears; cursor motion must not change it. Kept in this module, not in the project and not in Mute Modes' battery word. Power-off returns it to empty."
     }
   ],
   "compatibility": {
@@ -66,8 +66,8 @@
       "key:FUNC+TRACK"
     ],
     "limitations": [
-      "OS 1.40C. 0.1.32 card: FUNC+T AED waveform follows the selected track (reported, one tester). Stress of that follow is not verified. USB Keep/Undo and ot_emu untested.",
-      "Conflicts with Mute Modes and Play Modes: PERSONALIZE tables / ANDY length, and Play Modes also owns the TRACK key handler. Play Start is still a draft, so it is not named in conflicts until that module is listed.",
+      "OS 1.40C. 0.1.33 has not been flashed. The 0.1.32 card reported FUNC+T AED follow (one tester); that report does not cover this source. USB Keep/Undo and ot_emu untested.",
+      "Conflicts with Mute Modes and Play Modes: both still grow the same PERSONALIZE tables (held for the base table in #1023), and Play Modes also owns the TRACK key handler. The setting is not Mute Modes' battery word. Play Start is still a draft, so it is not named in conflicts until that module is listed.",
       "CUE+T is not taken. Audio-track mutes and MIDI-track mutes are separate pages, as on stock FUNC+T.",
       "An OS upgrade resets PERSONALIZE."
     ]
@@ -80,7 +80,7 @@
       "value": 1688,
       "unit": "bytes",
       "method": "static",
-      "conditions": "Instruction-length sum of trackmutes.s (2/4/6-byte opcodes plus data). m68k-elf-as was not on this Windows host, so this is not the linker report. Detours and ANDY pokes sit in stock space. No DSP memory.",
+      "conditions": "Instruction-length sum of trackmutes.s (2/4/6-byte opcodes plus data). m68k-elf-as was not on this Windows host, so this is not the linker report. Detours sit in stock space. No DSP memory.",
       "source": "TESTING.md"
     },
     "processing": {
@@ -103,28 +103,28 @@
       "dsp": {
         "level": "minimal",
         "basis": "source-estimate",
-        "rationale": "No DSP code.",
+        "rationale": "No DSP program: TRACK MUTES never runs on either DSP core.",
         "source": "manifest.py"
       },
       "memory": {
         "level": "minimal",
         "basis": "source-estimate",
-        "rationale": "Small ROM unit and one PERSONALIZE word with its battery shadow.",
+        "rationale": "Small ROM unit. The checkbox lives in that unit and is not Mute Modes' battery word.",
         "source": "TESTING.md"
       }
     }
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "0.1.0–0.1.31 same-unit cards failed as in TESTING.md. 0.1.32 card: FUNC+T AED waveform follows the selected track (reported, one tester). Stress of that follow is not verified. USB Keep/Undo and ot_emu untested. LCD photos 25 Oct 2026: SYSTEM STATUS TM 0.1.32; PERSONALIZE empty and ticked.",
+    "summary": "0.1.33 is not flashed. 0.1.32 card: FUNC+T AED follow reported by one tester, and the LCD photos show TM 0.1.32. Those results do not cover the register save, the gated FUNC+REC path, or the move off Mute Modes' battery word. USB Keep/Undo and ot_emu untested.",
     "hardwareStatus": "reported",
     "evidenceRevision": "7f5cb5cbde61162319e7a7881b692f523f5beba7",
     "gates": [
       "modules/track-mutes/verify.py"
     ],
     "qualification": {
-      "moduleVersion": "0.1.32-experimental",
-      "sourceSha256": "d11f7b3846c03736bf380cce3c5f3c62b156d0bd190b4f2e6769947e97e22c74",
+      "moduleVersion": "0.1.33-experimental",
+      "sourceSha256": "554b258b16cb6c2c0e151e889bd964870878ac10c35f1d4a7db0c02af2aa15e5",
       "imageSha256": "80ea9496ada52964401c3d0786dd7b21bbeb77e45a4e075faeaa473183adc624",
       "cycles": [
         {
@@ -160,7 +160,7 @@
         "sharedBytes": 1688,
         "maxInstances": 1,
         "totalBytes": 1688,
-        "conditions": "Static instruction-length sum of trackmutes.s. m68k-elf-as was not on this Windows host, so this is not the native linker size. Detours and ANDY pokes occupy stock bytes. PERSONALIZE word 0x800000dc is stock SRAM, not extra module RAM. No DSP memory.",
+        "conditions": "Static instruction-length sum of trackmutes.s. m68k-elf-as was not on this Windows host, so this is not the native linker size. Detours occupy stock bytes. The checkbox word is inside this unit, not extra RAM and not 0x800000dc. No DSP memory.",
         "report": "TESTING.md"
       },
       "hardware": {
@@ -171,7 +171,7 @@
         "tester": "jonathanwardle1992-beep",
         "sourceRevision": "7f5cb5cbde61162319e7a7881b692f523f5beba7",
         "imageSha256": "80ea9496ada52964401c3d0786dd7b21bbeb77e45a4e075faeaa473183adc624",
-        "summary": "Same-unit cards of 0.1.0–0.1.31 failed as listed in TESTING.md. 0.1.32 card: FUNC+T AED waveform follows the selected track (reported, one tester). Stress of that follow is not verified. LCD photos 25 Oct 2026 show SYSTEM STATUS TM 0.1.32 and TRACK MUTES empty then ticked; AED follow is not in those photos.",
+        "summary": "0.1.33 has not been flashed. The 0.1.32 card reported FUNC+T AED follow (one tester). LCD photos from 25 Oct 2026 show SYSTEM STATUS TM 0.1.32 and TRACK MUTES empty then ticked. They do not show the 0.1.33 register, FUNC+REC, or settings-word changes.",
         "limitations": [
           "AED waveform follow after FUNC+T on 0.1.32 is reported hardware, one tester, card build; not verified and not stressed.",
           "USB Keep/Undo, ot_emu, MIDI transport and an MKI panel are untested.",
@@ -217,9 +217,9 @@
         "page": "SYSTEM STATUS",
         "shows": "location",
         "firmware": "1.40C",
-        "moduleVersion": "0.1.32-experimental",
+        "moduleVersion": "0.1.33-experimental",
         "imageSha256": "80ea9496ada52964401c3d0786dd7b21bbeb77e45a4e075faeaa473183adc624",
-        "setup": "Hardware photograph of the LCD, 25 October 2026. Rotated upright, cropped to the glass, two greys, 768x384 nearest neighbour. Stamp TM 0.1.32. Packed card SHA-256 is this field; firmware is not in git."
+        "setup": "Hardware photograph of the 0.1.32 card, 25 October 2026. The glass reads TM 0.1.32. 0.1.33 has not been photographed. Rotated upright, cropped to the glass, two greys, 768x384 nearest neighbour. Packed card SHA-256 is this field; firmware is not in git."
       }
     },
     {
@@ -234,7 +234,7 @@
         "page": "PERSONALIZE",
         "shows": "location-and-controls",
         "firmware": "1.40C",
-        "moduleVersion": "0.1.32-experimental",
+        "moduleVersion": "0.1.33-experimental",
         "imageSha256": "80ea9496ada52964401c3d0786dd7b21bbeb77e45a4e075faeaa473183adc624",
         "setup": "Same hardware session as ot-system.png. TRACK MUTES selected, empty box."
       }
@@ -251,7 +251,7 @@
         "page": "PERSONALIZE",
         "shows": "location-and-controls",
         "firmware": "1.40C",
-        "moduleVersion": "0.1.32-experimental",
+        "moduleVersion": "0.1.33-experimental",
         "imageSha256": "80ea9496ada52964401c3d0786dd7b21bbeb77e45a4e075faeaa473183adc624",
         "setup": "Same hardware session as ot-system.png. TRACK MUTES selected, ticked."
       }

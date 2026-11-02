@@ -28,7 +28,7 @@ zv01:
         move #>@B_TONE@,r1
         move x:(r1+n1),x0
         move x0,x:(r5+@KT@)
-        move x:(r6+$7),a
+        move x:(r6+$8),a
         move a1,n1
         move #>@B_VEL@,r1
         move x:(r1+n1),x0
@@ -38,7 +38,7 @@ zv01:
         move #>@B_ATK@,r1
         move x:(r1+n1),x0
         move x0,x:(r5+@ATK@)
-        move x:(r6+$8),a
+        move x:(r6+$b),a
         move a1,n1
         move #>@T_LPF@,r1
         move x:(r1+n1),x0
@@ -93,9 +93,8 @@ zv04:
         neg a
         move a,x1
         move x1,x0
-        mpy x0,x0,a
+        mpy x0,x0,a     #>@S9@,y0
         move a,x0
-        move #>@S9@,y0
         move #>@S7@,a
         mac y0,x0,a
         move a,y0
@@ -112,10 +111,9 @@ zv04:
         move a,x1
 ; Measured small second harmonic, body /4.
         move x1,x0
-        mpy x0,x0,a
+        mpy x0,x0,a     #>$03eff2,b
         move a,x0
         move #>$e08103,y0
-        move #>$03eff2,b
         mac y0,x0,b
         add x1,b
         move b,x0
@@ -142,21 +140,18 @@ zv04:
 ; Damped trigger oscillator. Both states are quarter scale.
         move x:(r5+@PC@),x0
         move x:(r5+@PS@),x1
-        move #>@PK@,y0
-        move x0,b
+        tfr x0,b        #>@PK@,y0
         mac -x1,y0,b
         move b,x0
         move x1,a
-        mac y0,x0,a
+        mac y0,x0,a     #>@PD@,y0
         move a,x1
-        move #>@PD@,y0
         mac -x1,y0,a
         move a,x:(r5+@PS@)
         mac -y0,x0,b
         move b,x:(r5+@PC@)
         move x:(r5+@DC@),x0
-        move x0,a
-        move #>@DD@,y0
+        tfr x0,a        #>@DD@,y0
         mac -y0,x0,a
         move a,x:(r5+@DC@)
         move a,x0
@@ -206,6 +201,36 @@ zv06:
         move x0,x:(r5+@EL@)
         move #>@U0@,x0
         move x0,x:(r5+@U@)
+; FIXD (knob 7) ON: the 0.1.5 trigger, every hit the same. OFF: a hit LCG,
+; stepped once per hit, scales the trigger transient by 1 + KVJ*white (+/- 4%).
+        move x:(r6+$7),a
+        tst a
+        bne zv0a
+        move x:(r5+@LCG8@),x0
+        move #>@LCGK@,y0
+        mpy y0,x0,b     #0,x1           ; b0 = x*(M-1) mod 2^24
+        add x,b         #>@LCGC@,y0     ; + x, then load c
+        move #0,y1
+        add y,b                         ; + c
+        move b0,x0
+        move x0,x:(r5+@LCG8@)           ; x0 = white
+        move #>@KVJ@,y0
+        mpy y0,x0,b
+        move b,y1                       ; y1 = KVJ*white
+        move #>@PC0@,x0
+        tfr x0,a
+        mac x0,y1,a
+        move a,x:(r5+@PC@)
+        move #>@PS0@,x0
+        tfr x0,a
+        mac x0,y1,a
+        move a,x:(r5+@PS@)
+        move #>@DC0@,x0
+        tfr x0,a
+        mac x0,y1,a
+        move a,x:(r5+@DC@)
+        rts
+zv0a:
         move #>@PC0@,x0
         move x0,x:(r5+@PC@)
         move #>@PS0@,x0
@@ -221,4 +246,6 @@ zv02:
 zv08:
         move #>$7fffff,x0
         move x0,x:(r5+$16)
+        move #>@SEED@,x0
+        move x0,x:(r5+@LCG8@)
         rts

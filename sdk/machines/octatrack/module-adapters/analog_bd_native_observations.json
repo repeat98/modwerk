@@ -3,9 +3,9 @@
  "mainSha256": "164f31224bf61181e3f50e7dec40df9afcae5b16dbf6e4c0d0cc5e986af0a84e",
  "receiptSha256": "d07c3d776be113dc2ff7dd47760fd85dd3e3a505cb81660745c25c51c5d987f3",
  "sourcePins": {
-  "sdk/machines/octatrack/module-adapters/analog_bd_runtime.py": "c3e3f51076e9ae3579e2e00d96d21eee87a2d12afa4ae69fb7067da3399fa17a",
-  "sdk/machines/octatrack/module-adapters/analog_bd_write_lease.py": "7ee9a7bfbefc43064b7578dd3c3e23146896e52b24af47aecd2d1ebe16ee3c30",
-  "sdk/machines/octatrack/module-adapters/machine_composition.py": "4cfa5ae146e1b93c16b478af5882072e3ddefb1bd32960dde577a3f1cb5b3d3e",
+  "sdk/machines/octatrack/module-adapters/analog_bd_runtime.py": "b9c0e0f96632a0d0ab5283387edaae1b604e4e82e27e26b3fdc1666867d31daf",
+  "sdk/machines/octatrack/module-adapters/analog_bd_write_lease.py": "3e6a3766f32176e9be69627ef2b71272970f2d02a2088e77673946b640d365c7",
+  "sdk/machines/octatrack/module-adapters/machine_composition.py": "f8f17f63e1d18bb1f730f1766f0a52ddf75ba7886056838d6218af85ff37143e",
   "sdk/machines/octatrack/module-adapters/stock_hook_write_lease.h": "ab14679a5faae84ef47d1ca37e46b3171da45252d12310e0b4458228be8334be",
   "sdk/machines/octatrack/module-adapters/analog_bd_write_lease_fixture.c": "dd3714d8c5f493a7507ff72575e48e0a67376806daef726a2a23845a999c5e08",
   "sdk/machines/octatrack/module-adapters/analog_bd_ui.c": "cc675f578053a14a634a2878d9f3cadd8a0280896ba4fd94957a868517bc0839",
@@ -17,11 +17,11 @@
   "sdk/machines/octatrack/module-adapters/analog_bd_write_lease_probe.cpp": "852e79a4df10b9f7cfadc7014f47a8057924c92aeabc4a3f550890e123223249",
   "sdk/machines/octatrack/module-adapters/analog_bd_ui_fixture.cpp": "fd3881f4dd5579ea358ebcbbd370a0b08de69f479514eed5ac6fddee1168abd8",
   "sdk/octabam/modules/analog-bassdrum/manifest.py": "20fa1f744630354b3986a3ad82ac6a41744345796dc783891a4c9f0bd81c787e",
-  "sdk/octabam/modules/analog-bassdrum/control.c": "29f392c7e007aaa695076eff0c897729a941676ff582e4bb17957074d56ceac5",
-  "sdk/octabam/modules/analog-bassdrum/control.s": "644f10fbc534d8351424e55ee96c2d0ff2f39a1b691ad8a695422d1c05e37a3f",
+  "sdk/octabam/modules/analog-bassdrum/control.c": "56e96e79f7f279d17b1919ea2f50af0a3d8c4a052df919fc20ecd05f094cfb38",
+  "sdk/octabam/modules/analog-bassdrum/control.s": "463dacf528e4996c7f21e97533391583329a2e3aabda95c87b7cd020dee7adb6",
   "sdk/octabam/modules/analog-bassdrum/engine.h": "61bc45ef955db23b8f25eb5b0c6bd3dd01d9f71df7933d466845bb30e7c67a2b",
-  "sdk/octabam/modules/analog-bassdrum/engine.s": "c86a6ac24326fb52f71dd766b1ccc25e5dfd8511028b162459447c279da48425",
-  "sdk/octabam/modules/analog-bassdrum/machine.s": "90f9ddb5c2a4cee47e0334c3cd35a7e92d42b0ee37eb3bbc8062cc7821e6aeb4"
+  "sdk/octabam/modules/analog-bassdrum/engine.s": "a6ff5f2fe90dbe5570512bbe54dede4c8c8f86c4ef4656fce4c57a9b600c4805",
+  "sdk/octabam/modules/analog-bassdrum/machine.s": "a33e4d36da6a14e7e856c7c7088be2820a40c7fb7014917983c729931eed55a3"
  },
  "hardware": false,
  "admission": false,

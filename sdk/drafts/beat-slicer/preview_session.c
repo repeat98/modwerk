@@ -71,15 +71,17 @@ static enum bs_session_state revalidate(struct bs_preview_session *s) {
     return BS_SESSION_RUNNING;
 }
 static enum bs_session_state start_locked(struct bs_preview_session *s) {
-    struct bs_request request;
-    struct bs_pcm_source source;
-    enum bs_session_state state;
     enum bs_provider_reply reply;
-    uint32_t i;
     if (!bs_guard_acquire(s->guard, &s->token)) return BS_SESSION_WAITING;
     reply = s->backend->capture(s->context, &s->observed);
-    state = capture_reply(s, reply);
-    if (state != BS_SESSION_RUNNING) return state;
+    return capture_reply(s, reply);
+}
+/* All inputs below are session-owned copies. No native source lock is needed
+ * for planner initialization or arithmetic; result/copy access revalidates. */
+static enum bs_session_state start_reader(struct bs_preview_session *s) {
+    struct bs_request request;
+    struct bs_pcm_source source;
+    uint32_t i;
     copy_snapshot(&s->snapshot, &s->observed);
     for (i = 0; i < s->snapshot.marker_count; ++i) s->starts[i] = s->snapshot.markers[i].start;
     request.sample_rate = s->snapshot.sample_rate;
@@ -98,48 +100,64 @@ static enum bs_session_state start_locked(struct bs_preview_session *s) {
         return finish(s, BS_SESSION_FAILED);
     return BS_SESSION_RUNNING;
 }
-static enum bs_session_state step_locked(struct bs_preview_session *s) {
+static enum bs_session_state copy_locked(struct bs_preview_session *s, uint32_t *bytes) {
     enum bs_session_state state;
-    enum bs_reader_state reader;
     enum bs_provider_reply reply;
-    uint32_t bytes = 0;
-    if (!s->captured) return start_locked(s);
+    /* The planner ran unlocked. Revalidate again before touching live PCM,
+     * even when the first validation in this step was successful. */
     state = revalidate(s);
     if (state != BS_SESSION_RUNNING) return state;
-    reader = bs_reader_step(&s->reader, s->token.revision);
-    if (reader == BS_READER_DONE) { s->state = BS_SESSION_READY; return BS_SESSION_READY; }
-    if (reader == BS_READER_RUNNING) return BS_SESSION_RUNNING;
-    if (reader != BS_READER_NEED_BLOCK) return finish(s, BS_SESSION_FAILED);
     reply = s->backend->copy_ready(s->context, &s->snapshot, &s->reader.pending,
-                                  s->packed, BS_SESSION_BYTES, &bytes);
-    /* Even a synchronous copy must not publish bytes after owner/content or
-     * metadata invalidation. Native backends must ALSO prevent races, rather
-     * than relying on this postcheck to undo an unsafe memory access.
-     */
+                                  s->packed, BS_SESSION_BYTES, bytes);
     state = revalidate(s);
     if (state != BS_SESSION_RUNNING) return state;
     if (reply == BS_PROVIDER_PENDING) return BS_SESSION_WAITING;
     if (reply == BS_PROVIDER_UNSUPPORTED) return finish(s, BS_SESSION_UNSUPPORTED);
-    if (reply != BS_PROVIDER_READY || bytes > BS_SESSION_BYTES) return finish(s, BS_SESSION_FAILED);
-    if (!bs_reader_supply(&s->reader, &s->reader.pending, s->packed, bytes, 0) ||
-        s->reader.job.state == BS_JOB_FAILED) return finish(s, BS_SESSION_FAILED);
+    if (reply != BS_PROVIDER_READY || *bytes > BS_SESSION_BYTES) return finish(s, BS_SESSION_FAILED);
     return BS_SESSION_RUNNING;
 }
-enum bs_session_state bs_session_step(struct bs_preview_session *s) {
+enum bs_session_state bs_session_work(struct bs_preview_session *s, uint32_t private_steps) {
     enum bs_session_state state;
+    enum bs_reader_state reader;
+    uint32_t bytes = 0, starting;
+    if (!s || !private_steps || private_steps > BS_SESSION_WORK_MAX) return BS_SESSION_FAILED;
     if (s->state != BS_SESSION_RUNNING && s->state != BS_SESSION_READY)
         return (enum bs_session_state)s->state;
     if (!s->guard || !s->backend || !s->backend->try_lock || !s->backend->unlock ||
         !s->backend->capture || !s->backend->copy_ready) return finish(s, BS_SESSION_FAILED);
     if (!s->backend->try_lock(s->context)) return BS_SESSION_WAITING;
-    state = step_locked(s);
+    starting = !s->captured;
+    state = starting ? start_locked(s) : revalidate(s);
     s->backend->unlock(s->context);
-    return state;
+    if (state != BS_SESSION_RUNNING) return state;
+    if (starting) return start_reader(s);
+    /* Only session-owned state is touched by this bounded batch. Stop at the
+     * first live-read request; reacquisition below validates before any copy.
+     * A cancellation may leave bounded private work to finish, never a read. */
+    reader = BS_READER_RUNNING;
+    for (uint32_t i = 0; i < private_steps && reader == BS_READER_RUNNING; ++i)
+        reader = bs_reader_step(&s->reader, s->token.revision);
+    if (reader == BS_READER_DONE) { s->state = BS_SESSION_READY; return BS_SESSION_READY; }
+    if (reader == BS_READER_RUNNING) return BS_SESSION_RUNNING;
+    if (reader != BS_READER_NEED_BLOCK) return finish(s, BS_SESSION_FAILED);
+    if (!s->backend->try_lock(s->context)) return BS_SESSION_WAITING;
+    state = copy_locked(s, &bytes);
+    s->backend->unlock(s->context);
+    if (state != BS_SESSION_RUNNING) return state;
+    /* Decode only the owned packed block, after releasing native ownership.
+     * A writer starting now retires the token; the next step/result refuses it.
+     * No callbacks or concurrent callers may reenter/mutate this session. */
+    if (!bs_reader_supply(&s->reader, &s->reader.pending, s->packed, bytes, 0) ||
+        s->reader.job.state == BS_JOB_FAILED) return finish(s, BS_SESSION_FAILED);
+    return BS_SESSION_RUNNING;
+}
+enum bs_session_state bs_session_step(struct bs_preview_session *s) {
+    return bs_session_work(s, 1);
 }
 enum bs_session_state bs_session_begin(struct bs_preview_session *s, const struct bs_preview_options *options) {
     (void)finish(s, BS_SESSION_CANCELLED);
     if (!options || options->tempo_source > BS_PROJECT_BPM || options->snap > 1 ||
-        (options->beats != 1 && options->beats != 4 && options->beats != 16 &&
+        (options->beats != 1 && options->beats != 2 && options->beats != 4 && options->beats != 16 &&
          options->beats != 32 && options->beats != 64)) return finish(s, BS_SESSION_FAILED);
     s->options.beats = options->beats; s->options.snap = options->snap;
     s->options.tempo_source = options->tempo_source;

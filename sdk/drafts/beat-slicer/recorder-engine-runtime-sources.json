@@ -1,0 +1,7 @@
+{
+  "revision": "c8fcb8054b10366b3a7881ec957a566460aab3d4",
+  "sha256": {
+    "sdk/runtime/m68k_codegen.py": "861da4bf86f662362055f1082147b2c14824075724f7c7a2b77acca3e0c973c0",
+    "sdk/runtime/logging/stock-guards.json": "5df445855cbae19c4582fb724855230e47be70c4736d5027786247582e60f9b4"
+  }
+}

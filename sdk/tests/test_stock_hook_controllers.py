@@ -240,8 +240,8 @@ class StockHookControllers(unittest.TestCase):
             page[off:off + 4] = clone[off:off + 4] = bytes(4)
         self.assertEqual(sorted(pointers), sorted(p['offset'] for p in recipe['rawPointers']))
         self.assertEqual(page.hex(), clone.hex())
-        # The stock page-1 enables survive; the new slots 8-11 are on.
-        self.assertEqual(struct.unpack('>II', page[0x18a:0x192]), (0x1111, 0x01111111))
+        # The stock page-1 enables survive; MON (slot 7) and slots 8-11 are on, KWID (slot 11) with its link to KBAS.
+        self.assertEqual(struct.unpack('>II', page[0x18a:0x192]), (0x3111, 0x11111111))
 
 
 if __name__ == '__main__': unittest.main()

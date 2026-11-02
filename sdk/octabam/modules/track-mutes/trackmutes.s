@@ -2,13 +2,16 @@
 | SPDX-FileCopyrightText: 2026 jonathanwardle1992-beep
 | trackmutes -- PERSONALIZE TRACK MUTES checkbox, and the T1-T8 mute/select swap.
 |
-| SETTING 0x800000dc  MAGIC_OFF = empty; MAGIC_ON = X.
+| tm_setting  MAGIC_OFF = empty; MAGIC_ON = X. This word lives in the
+| module image, not in Mute Modes' battery word 0x800000dc. It resets
+| to empty on every boot until a base settings store exists.
 |
 | FUNC+REC1/REC2 open recorder buffers via 0x4002ff84. Creating that
 | overlay jsr's 0x40033970 (returns MIDI_MODE) and skips the page when
-| MIDI is on. 0.1.26 forces that one site to continue so FUNC+REC1/2
-| open from the MIDI TRACKS page. 0.1.25 hooked the pickup toggle
-| 0x4003234c; that is not FUNC+REC.
+| MIDI is on. While TRACK MUTES is ticked, that one site continues so
+| FUNC+REC1/2 still open from the MIDI TRACKS page. Empty leaves the
+| stock jsr in place. 0.1.25 hooked the pickup toggle 0x4003234c; that
+| is not FUNC+REC.
 |
 | Stock double-tap T jmp's 0x40083ab4 (event 3) which may jsr 0x40083208,
 | set 0x460fab40, bra 0x400836d8 or fall toward 0x40044920 (MIDI UI).
@@ -31,8 +34,6 @@
 | 0x4002f2f8). 0.1.31 only jsr'd 0x40078850(1) and 0x4002f2f8, so AED
 | kept the previous waveform.
 
-    .equ SETTING,      0x800000dc
-    .equ SH_SETTING,   0x100fff6c
     .equ MAGIC_OFF,    0x544d0000
     .equ MAGIC_ON,     0x544d0001
     .equ CUE_LATCH,    0x460d168c
@@ -72,6 +73,7 @@
     .equ TRIG_STOCK,   0x400501d8
     .equ QM_MUTE,      0x4003d29c
     .equ REC_CREATE,   0x4002fece
+    .equ REC_MIDI,     0x40033970
     .equ SAMP_HAS,     0x40077a8c
     .equ SAMP_PREP,    0x400789e4
     .equ SAMP_LIST,    0x400791e4
@@ -92,7 +94,7 @@ tm_ticked:
     .align 2
 
 tm_load:
-    move.l  SETTING,%d0
+    move.l  tm_setting,%d0
     cmpi.l  #MAGIC_ON,%d0
     beq.b   tl_on
     clr.l   LIVE
@@ -123,8 +125,7 @@ set_trackmutes:
     andi.l  #1,%d0
     move.l  %d0,LIVE
     addi.l  #MAGIC_OFF,%d0
-    move.l  %d0,SETTING
-    move.l  %d0,SH_SETTING
+    move.l  %d0,tm_setting
 ss_rts:
     rts
 
@@ -189,13 +190,14 @@ tk_stock:
 | 0x40083dfc  FUNC+T: select. FUNC+double-tap T: stock sample slot list.
     .global tm_func_track
 tm_func_track:
+    move.l  %d2,-(%sp)
     bsr.w   tm_load
     tst.l   %d0
     beq.w   ft_stock
-    move.l  8(%sp),%d0
+    move.l  12(%sp),%d0
     tst.l   %d0
     beq.w   ft_eaten
-    move.l  4(%sp),%d1
+    move.l  8(%sp),%d1
     cmpi.l  #0x10,%d1
     bcs.w   ft_stock
     cmpi.l  #0x17,%d1
@@ -226,7 +228,7 @@ ft_samp:
     jsr     SAMP_PREP
 ft_list:
     jsr     SAMP_LIST
-    rts
+    bra.b   ft_eaten
 ft_new:
     move.l  %d1,tm_tapk
     clr.l   tm_tapt
@@ -237,9 +239,9 @@ ft_sel:
     bsr.w   tm_set_track
     move.l  (%sp)+,%d2
 ft_eaten:
+    move.l  (%sp)+,%d2
     rts
 ft_stock:
-    move.l  %d2,-(%sp)
     move.l  8(%sp),%d2
     jmp     FUNC_CONT
 
@@ -274,7 +276,14 @@ tg_stock:
 | mode is on. Return 0 and continue the create/open path.
     .global tm_rec_midi
 tm_rec_midi:
+    bsr.w   tm_load
+    tst.l   %d0
+    beq.b   rc_stock
+    jsr     REC_MIDI
     clr.l   %d0
+    jmp     REC_CREATE
+rc_stock:
+    jsr     REC_MIDI
     jmp     REC_CREATE
 
 | 0x4005227e
@@ -292,7 +301,7 @@ tm_ui:
 ui_tock:
     tst.l   LIVE
     bne.b   ui_go
-    move.l  SETTING,%d0
+    move.l  tm_setting,%d0
     cmpi.l  #MAGIC_ON,%d0
     bne.w   ui_out
     moveq   #1,%d0
@@ -603,6 +612,8 @@ st_nobind:
     .align 2
 LIVE:
     .long   0
+tm_setting:
+    .long   MAGIC_OFF
 tm_tapk:
     .long   0xffffffff
 tm_tapt:
@@ -636,25 +647,3 @@ tm_qwait:
 tm_qupcnt:
     .byte   0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
     .balign 2
-
-    .ifdef MODWERK_EVENTS
-    .global tm_restore_tick
-tm_restore_tick:
-    tst.b   tm_restored
-    bne.b   tt_done
-    move.l  SH_SETTING,%d0
-    cmpi.l  #MAGIC_ON,%d0
-    beq.b   tt_on
-    move.l  #MAGIC_OFF,%d0
-tt_on:
-    move.l  %d0,SETTING
-    andi.l  #1,%d0
-    move.l  %d0,LIVE
-    moveq   #1,%d0
-    move.b  %d0,tm_restored
-tt_done:
-    rts
-tm_restored:
-    .byte 0
-    .balign 2
-    .endif

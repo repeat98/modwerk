@@ -2,6 +2,8 @@
 
 Modwerk is here because people want more from instruments they love. Modding should be good for them and for the companies that make those instruments: instruments stay useful for longer, and there are more reasons to buy them. These guidelines apply to every module, machine port and piece of research on Modwerk, and to what is shared about them on the site, on Discord and on GitHub.
 
+They decide what Modwerk builds and hosts, and what is shared in its spaces. They don't decide what you do with your own instrument, or what you share elsewhere. That is between you, the maker and that space's rules.
+
 Where a maker publishes its own terms for modding its instruments, those come first.
 
 ## Never share firmware
@@ -12,9 +14,13 @@ Where a maker publishes its own terms for modding its instruments, those come fi
 
 ## Respect the makers
 
+These rules protect the makers' copyright and the goodwill that lets modding exist at all. A mod that makes an instrument better is welcome. A mod that takes what a maker built for another product is not. If you think a rule is wrong, say so on Discord or GitHub rather than working around it.
+
 - **Don't break protection.** Where a maker encrypts or signs its firmware, Modwerk does not decrypt it, re-sign it or work around the check. Such an instrument gets mods here only with its maker's agreement.
 - **Don't unlock what the maker sells.** No mod switches on a feature the maker sells separately or keeps for another model, or gets around a licence, activation or region check.
 - **Don't cross-port.** Code, tables and sounds from one instrument's firmware never go into another instrument, even between models from the same maker. Your own take on a technique is fine; a recognisable clone of another of the maker's current products is not.
+- **Don't flip firmware.** Never run one model's firmware, in whole or in part, on another model. That holds even where the hardware is identical and the download is your own. Tools, patches and guides that do it count too.
+- **Keep firmware on its instrument.** No plugin, app or emulator that lets people use a maker's firmware without the instrument. Developer emulators that run your own OS on your own computer to test modules are fine.
 - **Don't pass as official.** A modified build shows that it is modified wherever the instrument allows, for example on its start-up screen. Makers' names appear only to say what something works with ("modules for the Elektron Octatrack"), never as the name of a module or a build. Modwerk is independent: it is not affiliated with, endorsed by or supported by any maker.
 
 ## Keep a way back

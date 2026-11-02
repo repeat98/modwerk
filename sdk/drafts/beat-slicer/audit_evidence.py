@@ -56,11 +56,33 @@ def audit(index_path):
         for source, expected in data['sourceSha256'].items():
             plain_path(source)
             require(isinstance(expected, str) and HEX64.fullmatch(expected), 'Invalid expected SHA-256')
-            key = (revision, source)
+            key = (revision, PREFIX + source)
             if key not in cache:
                 cache[key] = hashlib.sha256(git('show', revision + ':' + PREFIX + source)).hexdigest()
             require(cache[key] == expected, name + ': source mismatch: ' + source)
             count += 1
+        if 'sdkRevision' in data or 'sdkDependencySha256' in data:
+            sdk_revision, dependencies = data.get('sdkRevision'), data.get('sdkDependencySha256')
+            require(isinstance(sdk_revision, str) and HEX40.fullmatch(sdk_revision),
+                    name + ': use an exact SDK commit')
+            require(isinstance(dependencies, dict) and dependencies,
+                    name + ': SDK revision needs nonempty compilation dependencies')
+            require(git('cat-file', '-t', sdk_revision).strip() == b'commit',
+                    name + ': SDK pin is not a commit')
+            for source, expected in dependencies.items():
+                plain_path(source)
+                require(source.startswith('sdk/runtime/'), name + ': unexpected SDK source path')
+                require(isinstance(expected, str) and HEX64.fullmatch(expected),
+                        name + ': invalid SDK SHA-256')
+                key = (sdk_revision, source)
+                if key not in cache:
+                    cache[key] = hashlib.sha256(git('show', sdk_revision + ':' + source)).hexdigest()
+                require(cache[key] == expected, name + ': SDK source mismatch: ' + source)
+                count += 1
+            if 'codegenGuardSha256' in data:
+                actual = hashlib.sha256(git('show', sdk_revision + ':sdk/runtime/m68k_codegen.py')).hexdigest()
+                require(actual == data['codegenGuardSha256'], name + ': SDK code-generation guard mismatch')
+                count += 1
     for name, diagnostic in diagnostics.items():
         plain_path(name)
         require('/' not in name and diagnostic.get('reason'), 'Diagnostic needs an explicit reason')

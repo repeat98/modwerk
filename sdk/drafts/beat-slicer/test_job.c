@@ -52,7 +52,7 @@ int bs_job_selftest(void) {
     struct bs_job j, saved;
     struct bs_plan oracle, result, sentinel;
     uint32_t mode = 0, markers[64], rates[] = {8000, 44100, 48000, 96000, 192000};
-    uint32_t spacings[] = {1, 4, 16, 32, 64};
+    uint32_t spacings[] = {1, 2, 4, 16, 32, 64};
     seed = 0x51511ce;
     fill(&sentinel, sizeof sentinel);
     /* Independent synchronous implementation, full outputs AND read ordering.
@@ -63,7 +63,7 @@ int bs_job_selftest(void) {
         request(&r, &mode);
         mode = trial % 2;
         r.sample_rate = rates[trial % 5];
-        r.beats = spacings[(trial / 5) % 5];
+        r.beats = spacings[(trial / 5) % 6];
         r.sample_bpm24 = 720 + random32() % 6481;
         r.project_bpm24 = 720 + random32() % 6481;
         r.tempo_source = (trial / 25) % 2;
@@ -150,7 +150,7 @@ int bs_job_selftest(void) {
         switch (invalid) {
         case 0: r.sample_bpm24 = 0; break;
         case 1: r.tempo_source = 1; r.project_bpm24 = 0; break;
-        case 2: r.beats = 2; break;
+        case 2: r.beats = 3; break;
         case 3: r.sample_rate = 7999; break;
         case 4: r.snap = 2; break;
         case 5: r.trim_start = r.trim_end; break;

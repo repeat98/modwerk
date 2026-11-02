@@ -1,0 +1,69 @@
+{
+  "schemaVersion": 1,
+  "algorithm": "sha256 of canonical sorted JSON {sources,build}; UTF-8, compact separators",
+  "sha256": "d9fff9a2b27853f996a0fc799a1bf4d98977ca2ab1a86ed19b459e7bb6f220ef",
+  "sources": {
+    "src/ccrecall.s": "3b9859d6abd6e76f25bdd460f59aab84fc8e2d9a08be204c67b1da0fc3c469a9"
+  },
+  "build": {
+    "schemaVersion": 1,
+    "sources": [
+      "src/ccrecall.s"
+    ],
+    "defsym": {},
+    "cflags": [],
+    "weak": [],
+    "subscribe": [
+      {
+        "event": "ev_settings",
+        "fn": "ccr_settings",
+        "order": 50
+      }
+    ],
+    "contribute": [],
+    "collections": {},
+    "copied": [],
+    "regions": [],
+    "claims": [
+      "settings:CC RECALL"
+    ],
+    "requires": [],
+    "derive": null,
+    "releases": {
+      "1.54": {
+        "defsym": {},
+        "cflags": [],
+        "sites": [
+          {
+            "addr": "0x400e0b08",
+            "len": 6,
+            "stockSha256": "c1a5515bc7df1186c78dd690fbc21317521ad881f6ae96c3d948bfa03d72daa6",
+            "op": "jsr",
+            "target": "ccr_mark"
+          },
+          {
+            "addr": "0x400e0b56",
+            "len": 6,
+            "stockSha256": "db95bdd485b71eb751710ab94ca7ec879cc9b1be178330ed54320e456315b38f",
+            "op": "jsr",
+            "target": "ccr_mark_loaded"
+          },
+          {
+            "addr": "0x400e128c",
+            "len": 6,
+            "stockSha256": "56fca10588c62176d9eab23c3dc78dd2a1fe8a38fe27b171216004346be0194a",
+            "op": "jsr",
+            "target": "ccr_tick"
+          },
+          {
+            "addr": "0x400e126c",
+            "len": 6,
+            "stockSha256": "4387672943b0571c966279ee8837ea786aa581d89b70b1b0444e743d0c2459f0",
+            "op": "jsr",
+            "target": "ccr_mark_record"
+          }
+        ]
+      }
+    }
+  }
+}

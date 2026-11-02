@@ -1,0 +1,1 @@
+Clarify the staged Octatrack sample-editor contract: pattern playback is permitted for Flex/Static files and inactive recorder buffers; recording blocks only the edited recorder buffer. Current-build hardware playback qualification remains pending. Move its provisional event to index 35 after the merged MIDI events.

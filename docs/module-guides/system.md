@@ -29,7 +29,7 @@ Read [the module guides index](README.md) first.
 - A final state check still races with a higher-priority recorder unless the commit is ordered against it. Keep table copies and whole-table comparisons outside any short commit guard, and measure its duration on the unit.
 - Establish native menu-pointer lifetime before contributing rows. Copied labels, callbacks and selection storage can outlive a closed menu; retire all references before reclaiming module memory. Check typed descriptor alignment on the target, not only the host.
 - Follow stock create, delete and confirmation behavior. Distinguish working metadata, sample-settings save, project save/load and physical reboot; no save is implicit. Record observed results and remaining gaps on the exact build in the module's testing/integration notes.
-- A mathematical grid without amplitude analysis says nothing about click-free playback. Verify each admitted sample kind, source lifetime and failure path separately.
+- A mathematical grid without amplitude analysis says nothing about click-free playback. Verify each admitted sample kind, source lifetime and failure path separately. Grid tempo and stock playback/time-stretch controls are separate; explain which sample tempo and playback settings the musician must set.
 
 ## Integrate
 

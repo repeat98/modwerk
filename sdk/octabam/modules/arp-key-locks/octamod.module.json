@@ -1,0 +1,478 @@
+{
+  "schemaVersion": 2,
+  "id": "arp-key-locks",
+  "key": "ARP KEY LOCKS",
+  "name": "Arp Key Locks",
+  "version": "0.1.0-experimental",
+  "category": "midi-usb",
+  "author": {
+    "github": "jopolokk1",
+    "credits": [
+      "jopolokk1: design, testing on an MKII and the module; code written with Claude Code.",
+      "Idea of extra modes on the Octatrack's KEY: upstream octabam's MIDI Scales by radiohagen (MIT); none of its code is used."
+    ]
+  },
+  "nativeManifest": "manifest.py",
+  "presentation": {
+    "label": "Per-step KEY locks in MIDI ARP SETUP",
+    "family": "MIDI",
+    "summary": "Lock the arpeggiator's KEY on single steps of a MIDI track, in seven modes and twelve roots, and move one arp note on a trig by steps of the key.",
+    "overview": "Hold a trig in MIDI ARP SETUP and turn KEY: that step keeps its own key, for example F DORIAN, until the next locked step, wrapping at the end of the pattern. The arpeggio keeps running while its notes move into the new scale. Seven modes in all twelve roots: Major, Dorian, Phrygian, Lydian, Mixolydian, Minor and Locrian. With a trig held, D picks one note of that trig's arpeggio and E moves it up or down by steps of the key. A pattern without locks plays the track's KEY as on stock, and the locks are saved with the project.",
+    "highlights": [
+      "Seven modes in all twelve roots as step locks; the track's own KEY stays stock's OFF, MAJOR or MINOR.",
+      "A lock holds until the next one, so a lock on step 1 sets the whole pattern's key.",
+      "Move one note of a trig's arpeggio by -7 to +7 steps of the key; the next trig plays its arpeggio as it is.",
+      "While a trig is held, the KEY box shows its lock or its arp note shift.",
+      "Over USB it uses the Modwerk base's shared events and patches no stock code."
+    ],
+    "usage": [
+      "On a MIDI track that plays an arpeggio, press [REC] for grid recording. Hold the trig of a step, then press [FUNC] + [AMP] (or [AMP] twice) to open MIDI ARP SETUP for it.",
+      "Still holding the trig, turn F (KEY) to lock that step's key, for example F DOR; the key holds until the next locked step. Turn below OFF to remove the lock.",
+      "Still holding it, pick an arp note with D (N1-N16) and shift it with E (-7 to +7 steps of the key). Turn D below N1 to remove it.",
+      "Let go of the trig: ARP SETUP closes and the pattern's trigs show again, ready for the next step (a card build stays in ARP SETUP). Press [PLAY] to hear the keys change while the arpeggio keeps running."
+    ]
+  },
+  "controls": [
+    {
+      "name": "KEY LOCK",
+      "default": 0,
+      "count": 86,
+      "labels": [
+        "--",
+        "OFF",
+        "C MAJ",
+        "C DOR",
+        "C PHR",
+        "C LYD",
+        "C MIX",
+        "C MIN",
+        "C LOC",
+        "C# MAJ",
+        "C# DOR",
+        "C# PHR",
+        "C# LYD",
+        "C# MIX",
+        "C# MIN",
+        "C# LOC",
+        "D MAJ",
+        "D DOR",
+        "D PHR",
+        "D LYD",
+        "D MIX",
+        "D MIN",
+        "D LOC",
+        "D# MAJ",
+        "D# DOR",
+        "D# PHR",
+        "D# LYD",
+        "D# MIX",
+        "D# MIN",
+        "D# LOC",
+        "E MAJ",
+        "E DOR",
+        "E PHR",
+        "E LYD",
+        "E MIX",
+        "E MIN",
+        "E LOC",
+        "F MAJ",
+        "F DOR",
+        "F PHR",
+        "F LYD",
+        "F MIX",
+        "F MIN",
+        "F LOC",
+        "F# MAJ",
+        "F# DOR",
+        "F# PHR",
+        "F# LYD",
+        "F# MIX",
+        "F# MIN",
+        "F# LOC",
+        "G MAJ",
+        "G DOR",
+        "G PHR",
+        "G LYD",
+        "G MIX",
+        "G MIN",
+        "G LOC",
+        "G# MAJ",
+        "G# DOR",
+        "G# PHR",
+        "G# LYD",
+        "G# MIX",
+        "G# MIN",
+        "G# LOC",
+        "A MAJ",
+        "A DOR",
+        "A PHR",
+        "A LYD",
+        "A MIX",
+        "A MIN",
+        "A LOC",
+        "A# MAJ",
+        "A# DOR",
+        "A# PHR",
+        "A# LYD",
+        "A# MIX",
+        "A# MIN",
+        "A# LOC",
+        "B MAJ",
+        "B DOR",
+        "B PHR",
+        "B LYD",
+        "B MIX",
+        "B MIN",
+        "B LOC"
+      ],
+      "doc": "Per step: hold a trig in MIDI ARP SETUP and turn F. -- is no lock (the lock before holds); OFF plays the step uncorrected; the others move each note the track sends into that key, one semitone down when out of key."
+    },
+    {
+      "name": "ARP NOTE",
+      "default": 0,
+      "count": 17,
+      "labels": [
+        "--",
+        "N1",
+        "N2",
+        "N3",
+        "N4",
+        "N5",
+        "N6",
+        "N7",
+        "N8",
+        "N9",
+        "N10",
+        "N11",
+        "N12",
+        "N13",
+        "N14",
+        "N15",
+        "N16"
+      ],
+      "doc": "Per trig: hold it and turn D to pick which note of its arpeggio moves. -- removes the setting."
+    },
+    {
+      "name": "ARP NOTE SHIFT",
+      "default": 7,
+      "count": 15,
+      "labels": [
+        "-7",
+        "-6",
+        "-5",
+        "-4",
+        "-3",
+        "-2",
+        "-1",
+        "0",
+        "+1",
+        "+2",
+        "+3",
+        "+4",
+        "+5",
+        "+6",
+        "+7"
+      ],
+      "doc": "Per trig: hold it and turn E to move the picked arp note by steps of the key (semitones with KEY OFF)."
+    }
+  ],
+  "compatibility": {
+    "firmware": "1.40C",
+    "location": "MIDI tracks",
+    "conflicts": [],
+    "uiClaims": [
+      "key:TRIG+D@ARP SETUP",
+      "key:TRIG+E@ARP SETUP",
+      "key:TRIG+F@ARP SETUP"
+    ],
+    "limitations": [
+      "OS 1.40C. Ran on the author's MKII over USB on the Modwerk base; card builds and the MKI are not tested.",
+      "The extra modes exist only as step locks: the track's own KEY stays OFF, MAJOR or MINOR. To give a whole pattern another mode, lock it on step 1.",
+      "An out-of-key note moves one semitone down, as stock's KEY does. Notes played in from a MIDI keyboard and TRAN other than 0 are not tested.",
+      "Copying, clearing or placing trigs carries or removes the locks as it does stock's locks (by octabam's firmware notes); not tested.",
+      "A trig with negative micro-timing on the first step of a new lock sends its first note before that step begins, so that one note takes the previous step's key; the rest of its arpeggio takes the new one (measured on the MKII).",
+      "KEY moves one key per detent with a trig held, which can feel sensitive.",
+      "Upstream octabam's MIDI Scales patches the same places; the two are not built together."
+    ],
+    "effectId": null
+  },
+  "resources": {
+    "recorded": "24 October 2026; the USB package and ot_emu",
+    "storage": {
+      "label": "DRAM code and state",
+      "display": "4,400 B code and data + 84 B state",
+      "value": 4484,
+      "unit": "bytes",
+      "method": "static",
+      "conditions": "The USB package: 4,400 bytes of code and data and 84 of bss, 68 relocations, 4 hooks, no stock-code site. Card builds add three detours over stock (6, 8 and 6 bytes). Locks use each step's spare lock bytes 30 and 31 in the project; no other saved data, no DSP memory.",
+      "source": "TESTING.md"
+    },
+    "processing": {
+      "label": "ColdFire, per MIDI sequencer tick",
+      "display": "at most 2,004 instr. a tick measured; 17,632 static bound",
+      "value": 2004,
+      "unit": "instructions/event",
+      "method": "emulator",
+      "conditions": "Authored instructions of the note hook under ot_emu on a 64-step pattern with a key lock and an arp note shift, three tracks arpeggiating: at most 900 a note, 84-109 when cached, 2,004 in one tick. Static bound for the dearest tick (eight tracks, four notes each, nothing cached): about 17,632. Not chip timing.",
+      "source": "evidence/performance.json"
+    },
+    "impact": {
+      "conditions": "MIDI tracks arpeggiating with locks, the dearest case a 64-step pattern where every new step scans the whole pattern.",
+      "cpu": {
+        "level": "minimal",
+        "basis": "measured-comparison",
+        "rationale": "At most 2,004 instructions in one sequencer tick measured (32,064 cycles at 16 an instruction, 1% of a 300 BPM tick); under a 62 s MIDI flood the longest frame interrupt and idle time matched the original OS (131.9 us, 59.2%) in ot_emu. Not timed on the unit.",
+        "source": "evidence/performance.json"
+      },
+      "dsp": {
+        "level": "minimal",
+        "basis": "source-estimate",
+        "rationale": "No DSP code and no change to the DSP programs.",
+        "source": "manifest.py"
+      },
+      "memory": {
+        "level": "minimal",
+        "basis": "measured-comparison",
+        "rationale": "4,480 bytes of ColdFire code, data and state in DRAM; locks live in spare bytes the project already has.",
+        "source": "TESTING.md"
+      }
+    }
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "On the author's MKII over USB (24 Oct 2026), on the base with the three events from #857, as trials: per-step keys recorded over USB MIDI with clock (477 notes, every note in its step's key), arp note shifts on the right trig only, and the gestures as described; package 1d086d7b ran in the third session; on 26 Oct the published package 7962c35a was kept beside nine other modules, played the tester's locks and stayed kept through a power cycle. Host tests of the C core for every key and note (verify.py); in ot_emu a card build played the same notes on the same frames as the original OS with each moved into its step's key, and a 62 s MIDI flood showed no stuck note or hang. On 27 Oct package 907a03cf (N16 fix) was kept on base c1ae2ee9: locks played in their keys after saving and reloading and after a power cycle, were ignored with the module removed, and a micro-timed trig's early first note took the previous key.",
+    "hardwareStatus": "reported",
+    "evidenceRevision": "53b2b4446151e199918e6cb3c05c2cad0c4dfc57",
+    "gates": [
+      "modules/arp-key-locks/verify.py"
+    ],
+    "documentation": {
+      "tutorial": {
+        "title": "Quick tutorial: a scale that changes every four steps",
+        "steps": [
+          "Press [MIDI] and pick a MIDI track that plays an arpeggio (AMP page: MODE UP, a trig with a chord). Press [REC] for grid recording.",
+          "Hold trig 1, press [FUNC] + [AMP] (or [AMP] twice) to open ARP SETUP and turn KEY to C MIN, then let go: ARP SETUP closes and the pattern's trigs show again. Do the same for trig 5 (F DOR), trig 9 (G PHR) and trig 13 (C MIN). While a trig is held the KEY box shows its lock.",
+          "Press [PLAY]: steps 1-4 play in C minor, 5-8 in F Dorian, 9-12 in G Phrygian, 13-16 in C minor, and the arpeggio never restarts. To remove a lock, hold its trig and turn KEY down past OFF; with no locks left the track plays its own KEY again."
+        ]
+      },
+      "screenshots": [
+        "media/ot-arp-setup.png",
+        "media/ot-held-no-lock.png",
+        "media/ot-lock-c-minor.png",
+        "media/ot-held-f-dorian.png",
+        "media/ot-shift-pick-note.png",
+        "media/ot-shift-plus-one.png"
+      ],
+      "screenshotStyle": "black-and-white"
+    },
+    "qualification": {
+      "moduleVersion": "0.1.0-experimental",
+      "sourceSha256": "b06a688a521904f54a2e24f34ed37e1bc2269680cff043d00de26fcb1c404930",
+      "imageSha256": "907a03cf980996b30b0c3ba89ea0e80b889727ba4d407d04e2f95ceb30b44e8c",
+      "cycles": [
+        {
+          "processor": "coldfire",
+          "worstCase": 32064,
+          "maxConfiguration": 282112,
+          "maxInstances": 1,
+          "budget": 2200000,
+          "unit": "cycles/event",
+          "method": "emulator",
+          "conditions": {
+            "parameterExtremes": "All 84 keys and OFF on every note 1-127 (host); locks on the first and last step, a single wrapping lock, a lock past the track length in PER TRACK mode; arp note shifts -7 to +7 on N1-N16.",
+            "parameterModulation": "Not applicable to the hot path: locks and shifts are read per note from the pattern; editing them while playing ran on the unit and in the emulator.",
+            "modeSwitching": "STOP and PLAY four times and a Part change and back during the 62 s emulator flood; KEY OFF, MAJOR and MINOR on the track with and without locks.",
+            "maxLoad": "One instance. Runs in the MIDI sequencer tick interrupt once per note a track sends, below the DSP frame interrupt; deadline the next tick, 8.33 ms at 300 BPM (2,200,000 cycles at 264 MHz). Static bound: eight tracks, four notes each, nothing cached, both 64-step scans.",
+            "inputConditions": "ot_emu PC watches on the note hook's entry and exits, priced at 16 cycles an instruction: 2,004 instructions in the dearest measured tick (32,064 cycles); static bound 17,600 (281,600). Not chip timing. Package 907a03cf changes the shift's decode only (akl_note 3 instructions shorter, shift_now 1 longer, at most +1 a note, so the static bound grows by 32 to 17,632 instructions, 282,112 cycles); the emulator tick was not measured again."
+          },
+          "report": "evidence/performance.json"
+        }
+      ],
+      "memory": {
+        "regions": [
+          {
+            "name": "ColdFire code and data (the linked units akl and unit, DRAM)",
+            "space": "sdram",
+            "words": 4400,
+            "wordBits": 8,
+            "bytes": 4400,
+            "scope": "shared"
+          },
+          {
+            "name": "State (bss): edit order, caches and the generation counter",
+            "space": "sdram",
+            "words": 84,
+            "wordBits": 8,
+            "bytes": 84,
+            "scope": "shared"
+          }
+        ],
+        "perInstanceBytes": 0,
+        "sharedBytes": 4484,
+        "maxInstances": 1,
+        "totalBytes": 4484,
+        "conditions": "From the USB package build (build.py, 4,400 bytes of code and data, 84 of bss, 68 relocations). Over USB no stock code is written; card builds add three detours (20 bytes) over stock. Locks reuse each step's spare lock bytes 30 and 31 in the project. No DSP memory, no heap.",
+        "report": "TESTING.md"
+      },
+      "hardware": {
+        "kind": "functional",
+        "status": "reported",
+        "model": "MKII",
+        "testedOn": "2026-10-27",
+        "tester": "jopolokk1",
+        "sourceRevision": "53b2b4446151e199918e6cb3c05c2cad0c4dfc57",
+        "imageSha256": "907a03cf980996b30b0c3ba89ea0e80b889727ba4d407d04e2f95ceb30b44e8c",
+        "summary": "The author's MKII, OS 1.40C, driven over USB by Claude Code. Three trial sessions on 24 Oct 2026 on the beta base RAM-booted with the events from #857: per-step keys recorded over USB MIDI with clock (C MAJ / C MIN every four steps, 477 notes, every note in its step's key, every note-on matched by its note-off); an arp note shift played on its own trig's arpeggio only, three loops the same; a shift on a trigless trig with a condition; the KEY box and the gestures as described (package 1d086d7b). On 26 Oct 2026 the published package 7962c35a on the flashed base 92a13ff0 beside nine other modules: a trial that rolled back, then kept and still kept after a power cycle; the tester's locks played (notes changed every bar in a steady four-bar cycle, 115 note-ons each with its note-off, reported \"seems to work\"); the base's self-test passed twice and failed once on a DSP core over 90 % (E-Verb), cause not established. No freeze or error. On 27 Oct 2026 package 907a03cf (the reviewed fixes) on the flashed base c1ae2ee9 beside nine other modules: trial, then kept; ARP SETUP closed after an edit (reported); N16 shifted down to -7 (reported); timestamped USB MIDI: A MIN and G♯ MIN locks on steps 1 and 17 played in their keys, a -1/64 micro-timed trig on step 17 sent its first note 33 ms early in the previous step's key and the rest in its own; the same after saving and reloading the project and after a power cycle; with the module removed the locks were ignored; installed and kept again. 989 note-ons, each with its note-off.",
+        "limitations": [
+          "One unit, the author.",
+          "Not run on the unit: card builds, the MKI, PER TRACK lengths, Part changes, copying trigs, TRAN other than 0, MIDI IN notes.",
+          "The 26 Oct playback was not compared note by note with the project's locks; one of three self-tests failed on DSP load (Arp Key Locks has no DSP code).",
+          "Load and timing are emulator figures, not measured on the unit."
+        ],
+        "report": "evidence/hardware.md"
+      },
+      "documentation": {
+        "tutorial": {
+          "title": "Quick tutorial: a scale that changes every four steps",
+          "steps": [
+            "Press [MIDI] and pick a MIDI track that plays an arpeggio (AMP page: MODE UP, a trig with a chord). Press [REC] for grid recording.",
+            "Hold trig 1, press [FUNC] + [AMP] (or [AMP] twice) to open ARP SETUP and turn KEY to C MIN, then let go: ARP SETUP closes and the pattern's trigs show again. Do the same for trig 5 (F DOR), trig 9 (G PHR) and trig 13 (C MIN). While a trig is held the KEY box shows its lock.",
+            "Press [PLAY]: steps 1-4 play in C minor, 5-8 in F Dorian, 9-12 in G Phrygian, 13-16 in C minor, and the arpeggio never restarts. To remove a lock, hold its trig and turn KEY down past OFF; with no locks left the track plays its own KEY again."
+          ]
+        },
+        "screenshots": [
+          "media/ot-arp-setup.png",
+          "media/ot-held-no-lock.png",
+          "media/ot-lock-c-minor.png",
+          "media/ot-held-f-dorian.png",
+          "media/ot-shift-pick-note.png",
+          "media/ot-shift-plus-one.png"
+        ],
+        "screenshotStyle": "black-and-white"
+      }
+    }
+  },
+  "license": {
+    "spdx": "MIT",
+    "file": "LICENSE",
+    "declaration": "Original work by jopolokk1 under MIT, written with Claude Code. The seven modes are common musical knowledge; no code of octabam's MIDI Scales is used. Stock code is referenced only by address, length and SHA-256; no firmware, extracted routine or table, built image, card or memory dump is included. LCD captures keep the underlying Elektron rights as declared in media/LICENSE.md."
+  },
+  "media": [
+    {
+      "path": "media/ot-arp-setup.png",
+      "captureType": "emulator",
+      "caption": "MIDI ARP SETUP ([FUNC] + [AMP] on a MIDI track) with no trig held: KEY shows the track's own key, OFF.",
+      "alt": "MIDI ARP SETUP page with LEN 4 and KEY OFF.",
+      "credit": "Modwerk contributors; Elektron Octatrack UI",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "MIDI ARP SETUP",
+        "shows": "location",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "db2e61fa540f21edfb70bc8e9df33b0435fc9eae6ec140b58e866e9ec6f56cca",
+        "setup": "Headless ot_emu; MKII panel; 128×64 LCD at integer scale 6; stopped transport; project BASS (MIDI track 1 arpeggiating); native card build with ARP KEY LOCKS alone (MAIN OS db2e61fa…); plan in media/capture.json."
+      }
+    },
+    {
+      "path": "media/ot-held-no-lock.png",
+      "captureType": "emulator",
+      "caption": "Holding trig 3: the KEY box shows -- because the step has no lock.",
+      "alt": "MIDI ARP SETUP with a trig held and KEY showing two dashes.",
+      "credit": "Modwerk contributors; Elektron Octatrack UI",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "MIDI ARP SETUP",
+        "shows": "controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "db2e61fa540f21edfb70bc8e9df33b0435fc9eae6ec140b58e866e9ec6f56cca",
+        "setup": "Headless ot_emu; MKII panel; 128×64 LCD at integer scale 6; stopped transport; project BASS (MIDI track 1 arpeggiating); native card build with ARP KEY LOCKS alone (MAIN OS db2e61fa…); plan in media/capture.json."
+      }
+    },
+    {
+      "path": "media/ot-lock-c-minor.png",
+      "captureType": "emulator",
+      "caption": "Still holding trig 3, F turned six detents: the step is locked to C MIN.",
+      "alt": "MIDI ARP SETUP with KEY showing C MIN.",
+      "credit": "Modwerk contributors; Elektron Octatrack UI",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "MIDI ARP SETUP",
+        "shows": "controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "db2e61fa540f21edfb70bc8e9df33b0435fc9eae6ec140b58e866e9ec6f56cca",
+        "setup": "Headless ot_emu; MKII panel; 128×64 LCD at integer scale 6; stopped transport; project BASS (MIDI track 1 arpeggiating); native card build with ARP KEY LOCKS alone (MAIN OS db2e61fa…); plan in media/capture.json."
+      }
+    },
+    {
+      "path": "media/ot-held-f-dorian.png",
+      "captureType": "emulator",
+      "caption": "Holding trig 5, locked earlier: the KEY box shows its lock, F DOR.",
+      "alt": "MIDI ARP SETUP with KEY showing F DOR.",
+      "credit": "Modwerk contributors; Elektron Octatrack UI",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "MIDI ARP SETUP",
+        "shows": "controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "db2e61fa540f21edfb70bc8e9df33b0435fc9eae6ec140b58e866e9ec6f56cca",
+        "setup": "Headless ot_emu; MKII panel; 128×64 LCD at integer scale 6; stopped transport; project BASS (MIDI track 1 arpeggiating); native card build with ARP KEY LOCKS alone (MAIN OS db2e61fa…); plan in media/capture.json."
+      }
+    },
+    {
+      "path": "media/ot-shift-pick-note.png",
+      "captureType": "emulator",
+      "caption": "Holding a trig, D turned to N4: the KEY box shows the picked arp note; -- means it is not moved yet.",
+      "alt": "MIDI ARP SETUP with KEY showing N4 over two dashes.",
+      "credit": "Modwerk contributors; Elektron Octatrack UI",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "MIDI ARP SETUP",
+        "shows": "controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "db2e61fa540f21edfb70bc8e9df33b0435fc9eae6ec140b58e866e9ec6f56cca",
+        "setup": "Headless ot_emu; MKII panel; 128×64 LCD at integer scale 6; stopped transport; project BASS (MIDI track 1 arpeggiating); native card build with ARP KEY LOCKS alone (MAIN OS db2e61fa…); plan in media/capture.json."
+      }
+    },
+    {
+      "path": "media/ot-shift-plus-one.png",
+      "captureType": "emulator",
+      "caption": "E turned one detent up: the trig's 4th arp note plays one step of the key higher.",
+      "alt": "MIDI ARP SETUP with KEY showing N4 over +1.",
+      "credit": "Modwerk contributors; Elektron Octatrack UI",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "MIDI ARP SETUP",
+        "shows": "controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "db2e61fa540f21edfb70bc8e9df33b0435fc9eae6ec140b58e866e9ec6f56cca",
+        "setup": "Headless ot_emu; MKII panel; 128×64 LCD at integer scale 6; stopped transport; project BASS (MIDI track 1 arpeggiating); native card build with ARP KEY LOCKS alone (MAIN OS db2e61fa…); plan in media/capture.json."
+      }
+    }
+  ],
+  "access": {
+    "location": "MIDI ARP SETUP: in grid recording on a MIDI track, hold a trig, then [FUNC] + [AMP] or [AMP] twice.",
+    "steps": [
+      "On a MIDI track that plays an arpeggio, press [REC] for grid recording. Hold the trig of a step, then press [FUNC] + [AMP] (or [AMP] twice) to open MIDI ARP SETUP for it.",
+      "Still holding the trig, turn F (KEY) to lock that step's key, for example F DOR; the key holds until the next locked step. Turn below OFF to remove the lock.",
+      "Still holding it, pick an arp note with D (N1-N16) and shift it with E (-7 to +7 steps of the key). Turn D below N1 to remove it.",
+      "Let go of the trig: ARP SETUP closes and the pattern's trigs show again, ready for the next step (a card build stays in ARP SETUP). Press [PLAY] to hear the keys change while the arpeggio keeps running."
+    ],
+    "screenshots": [
+      "media/ot-arp-setup.png",
+      "media/ot-lock-c-minor.png",
+      "media/ot-shift-plus-one.png"
+    ]
+  }
+}
