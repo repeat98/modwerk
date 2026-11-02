@@ -12,11 +12,11 @@ Each track gets one 8-pixel row:
 | --- | --- |
 | Track number | Filled: playing. Outline: loaded and stopped. Dotted: empty, or a machine with no length (Thru, Neighbor, Pickup). |
 | Mark beside the number | The active track. |
-| Bar | Solid: what is left to play. Thin line: what has played. A stop mark at the end. |
-| Time left | Real time, m:ss. Flashes inverted in the last 30 seconds while the track plays. |
+| Bar | Solid: what is left to play. Thin line: what has played. A stop mark at the end. A track playing backwards (RATE below 0) has its solid part on the left. |
+| Time left | Real time, m:ss. Flashes inverted in the last 30 seconds while the track plays. `--:--` while a playing track stands still (RATE 0). |
 | Right column | Total length or time played, both at the current speed. |
 
-The time left is real time, not sample time. Tiempos measures how fast each voice's play position moves against the unit's 132 MHz timer, every half second. That speed already includes timestretch, repitch and project tempo changes, so a 126 BPM track in a 128 BPM project shows 7:22 left where the sample length alone would say 7:29. After a tempo change the figure settles within two seconds. Tiempos does not need to know a sample's tempo or which slot a track uses.
+The time left is real time, not sample time. Tiempos measures how fast each voice's play position moves against the unit's 132 MHz timer, every half second. That speed already includes timestretch, repitch and project tempo changes, so a 126 BPM track in a 128 BPM project shows 7:22 left where the sample length alone would say 7:29. After a tempo change the figure settles within two seconds. With RATE below 0 the track plays backwards: Tiempos measures the speed with its direction, counts the time left to the start of the trim and the time played from the end, and a trig, which sends a reversed track back to the end, starts the count again. Tiempos does not need to know a sample's tempo or which slot a track uses.
 
 Tiempos only reads memory and draws. It takes no effect slot, adds no knob and changes nothing in the project.
 
@@ -66,11 +66,13 @@ One stock gesture changes:
 - The voice copies the trim only when it starts, so a track that has not played since the project loaded shows as empty (dotted, `--:--`) until it plays.
 - The time played and the total length count from the sample's trim start, so a trimmed sample shows its trimmed length.
 - A looping track shows the time to the end of the sample, not to the end of the loop.
+- A track playing backwards shows as empty once it reaches the start: the unit clears its voice there, as when a forward track ends.
+- With RATE 0 the unit does not start a track from a stopped transport (stock behaviour); Tiempos shows it as loaded and stopped.
 - Until a track has played for half a second, its time is shown at the sample's original speed.
 
 ## Tests and measurements
 
-See [TESTING.md](TESTING.md). Host tests pass 16/16. On the author's MKI with the Modwerk base 24a0ed57, over USB: totals, time left, elapsed time, the last-30-seconds flash, retriggers and tempo changes checked against a stopwatch; an install with Keep survived a power cycle and Undo removed it; the base's LOAD page showed no CPU or DSP change with the screen open or closed. Package: 2,240 bytes of code and data and 272 of state. The draw cost was measured in the emulator only (about 0.3 ms a UI tick open); no static cycle bound. Not tested: an MKII, Part changes and project reloads with the screen open, timestretch modes other than NORMAL, other modules at the same time.
+See [TESTING.md](TESTING.md). Host tests pass 24/24. On the author's MKI with the Modwerk base 24a0ed57, over USB: totals, time left, elapsed time, the last-30-seconds flash, retriggers and tempo changes checked against a stopwatch; reverse playback (RATE below 0) counted down to the start of the trim; an install with Keep survived a power cycle and Undo removed it; the base's LOAD page showed no CPU or DSP change with the screen open or closed. Package: 2,588 bytes of code and data and 304 of state. The draw cost was measured in the emulator only (about 0.3 ms a UI tick open); no static cycle bound. Not tested: an MKII, Part changes and project reloads with the screen open, timestretch modes other than NORMAL, other modules at the same time.
 
 ## Authorship and licences
 

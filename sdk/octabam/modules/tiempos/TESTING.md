@@ -14,13 +14,15 @@ python3 -B sdk/octabam/modules/tiempos/verify.py
 | Package | Source | Bytes | SHA-256 | Where it ran |
 | --- | --- | --- | --- | --- |
 | `225a0170…` | before the double press | 2,336 (2,156 code and data, 268 BSS, 33 relocations) | `225a0170382915f749315e26f4dbf97d4e0c4a047bf85bd347fb0e1bbe35d53e` | emulator 26 October; MKI 28 and 30 October |
-| `0506a245…` | with the double press on a track key (current) | 2,444 (2,240 code and data, 272 BSS, 39 relocations) | `0506a24500c2aa175aede07bcf1cc1a4c5f215b23852b26518acad6ac9444aa7` | MKI 30 October (fourth trial, USB lifecycle, load trial) |
+| `0506a245…` | with the double press on a track key | 2,444 (2,240 code and data, 272 BSS, 39 relocations) | `0506a24500c2aa175aede07bcf1cc1a4c5f215b23852b26518acad6ac9444aa7` | MKI 30 October (fourth trial, USB lifecycle, load trial) |
+
+| `8c886466…` | with reverse playback (RATE below 0) and RATE 0 (current) | 2,808 (2,588 code and data, 304 BSS, 43 relocations) | `8c886466b8ef7133e41f64c4e8e3e1c8c7388b2d514370ed0b2f588ce8bd5022` | MKI 2 November (reverse trial) |
 
 Hook words of `0506a245…`: `module_tick` 0x1ca, `module_draw` 0x2d0, `module_key` 0x6e6, `module_enc` 0x81e; none after the core four.
 
 ## Host results
 
-16 of 16 pass on `0506a245…`, no compiler warnings (`-Werror`):
+24 of 24 pass on `8c886466…`, no compiler warnings (`-Werror`). The simulated voice goes backwards as on the MKI: its position falls and stays at the frame before the trim start (-1 for a trim at 0). Times are checked pixel for pixel against the font:
 
 | Check | Result |
 | --- | --- |
@@ -40,6 +42,14 @@ Hook words of `0506a245…`: `module_tick` 0x1ca, `module_draw` 0x2d0, `module_k
 | Track key T3 twice, 500 ms apart: both reach the unit, the screen stays | pass |
 | T4, then T3 200 ms later: both reach the unit, the screen stays | pass |
 | T3 twice within 250 ms: both reach the unit, the screen closes and the unit redraws | pass |
+| RATE turned from positive to negative while T1 plays: negative speed within 2 s | pass |
+| Backwards: the time left is the time to the trim start | pass |
+| Backwards: the total does not change | pass |
+| Backwards: the solid part of the bar is on the left | pass |
+| A reversed track retriggered (jumps to the end): still measured backwards | pass |
+| A reversed track retriggered: the time left counts again from the end | pass |
+| Backwards, at the trim start (position -1): 0:00, not flashing | pass |
+| RATE 0 (active, not moving): `--:--` in the time left and the total | pass |
 
 ## Emulator results
 
@@ -167,9 +177,32 @@ Not tested: a power cycle after the Undo, the site's guided sync, a set with oth
 
 Closed, Tiempos adds no load the page shows. The base's five-minute record for the first minutes after the power cycle (Tiempos installed, including the boot and the set's restore) reads CPU 45.5 % mean, 94.9 % peak and a UI tick gap of 1,901 frames; the boot is the likely cause, not separated here. Open, it stays within the stock range: 62 % read just after closing against a 64 % peak without Tiempos, with three tracks playing (LOAD cannot be shown while Tiempos holds the screen). During that trial the base's tick count grew 60 per second without gaps and Tiempos measured T1 at 0xf12c–0xf136 frames per second, as on 30 October. The base's five-minute records agree: minutes 15–20 (no Tiempos, three tracks) CPU 51.3 % mean / 64.7 % peak, tick gap 69 frames, playing 261/600; minutes 20–25 (mostly the trial, Tiempos opened and closed) 51.1 % / 62.7 %, tick gap 63 frames, playing 228/600; tracks 1-4 and 5-8 unchanged at 32.7–32.8 % and 41.9 %. The trial rolled back by itself after 420 s (generation 3, active `75b95b9e…`); no new stall record. The 28 October records near 1.5 % CPU were taken while the DSPs were stalled and are no baseline.
 
+## Reverse playback on the MKI (2 November 2026, base `24a0ed57…`; reported by the developer, speeds read over USB)
+
+The owner asked in #1096 how Tiempos handles RATE below 0. On this MKI, RATE 0 is the normal speed's zero point, not the default: the developer's tracks play at the highest RATE, negative values play backwards, and 0 holds the voice still.
+
+**Package `0506a245…`, trial (not accepted).** Track 1 (Static, the 100 BPM tone at 120 BPM) with RATE -64 sounded from the end; row 1 read 0:00, then 99:59 left and 99:59 total at RATE -12. Tiempos took every backward step as a jump, so it kept no speed or kept a tiny forward one (34 frames a second), and counted towards the end of the sample.
+
+**Diagnostic package (trial only, not committed, built from this folder with `api->value` set to track 1's position).** Positions read once a second:
+
+| What the developer did | Track 1's position |
+| --- | --- |
+| RATE at its highest | +52,915 frames a second; a trig retriggers it backwards to the start |
+| RATE below 0 while playing | -52,935 a second; at the start it stays at **-1** (signed) and the voice stays active |
+| A trig on the reversed track | jumps forward to the end (6,764,698, or +370,425) and falls again |
+| RATE -16 and -10 or so | -16,536 and -10,749 a second, steady |
+| RATE 0 | the position does not move; from a stopped transport the voice does not start, sound or advance |
+| Turning RATE | small steps both ways |
+
+**Package `8c886466…`, trial (not accepted).** Speeds Tiempos measured on track 1: -10,749 frames a second backwards (416-455 s), 0 at the start, +7,440 and +9,096 forwards after RATE changes; each change of direction settled within a second. Reported: backwards, row 1 counted down to 0:00 in step with the stopwatch; a trig on the reversed track restarted the count from the end; tracks 2 and 3 (Static forwards, Flex) as before. When the reversed track reached its start, the row turned empty (dotted number, `--:--`): the unit clears that voice's fields, as it does when a forward track ends. With RATE 0 from a stopped transport the track does not start, which is the unit's own behaviour (the diagnostic run showed the voice not advancing), and the row looked like a loaded, stopped track. The `--:--` for an active voice that does not move is covered by the host test only.
+
+The first attempt to load `8c886466…` was refused while the diagnostic trial still ran; a SIGINT to that trial did not confirm its rollback, so the session's `recover` request rolled it back (generation 6) before the load. Each trial ended with the bare base (generation 8 after the last).
+
+Not tested: a stopwatch figure for the reversed track, Flex and Static at other negative RATE values, reverse with timestretch modes other than NORMAL.
+
 ## Hardware and audio quality
 
-Tiempos makes no sound. On the MKI with the released base `24a0ed57…` (above): CUE + MIDI, LEFT, RIGHT, NO, track keys and the double press as described; totals, time left, the last-30-seconds flash, a hand retrigger, trimmed and Flex tracks and tempo changes against the stopwatch and the expected 64-bar times. The voice fields were not read directly (a released base answers no `mem` request): the totals are the indirect check.
+Tiempos makes no sound. On the MKI with the released base `24a0ed57…` (above): CUE + MIDI, LEFT, RIGHT, NO, track keys and the double press as described; totals, time left, the last-30-seconds flash, a hand retrigger, trimmed and Flex tracks and tempo changes against the stopwatch and the expected 64-bar times; reverse playback with package `8c886466…` (above). The voice fields were not read directly (a released base answers no `mem` request): the totals are the indirect check.
 
 Not tested: an MKII; timestretch modes other than NORMAL; Part changes and project reloads with the screen open; minutes-long accuracy beyond one play of each 64-bar sample; SRC, AMP, LFO, FX1, FX2, BANK and PATTERN closing the screen on a unit (emulator only); a set with other modules beside Tiempos.
 
@@ -179,7 +212,7 @@ On the unit, with Tiempos installed: PLAY, STOP, TEMPO and track keys behave as 
 
 ## Performance and resources
 
-Package `0506a245…`: 2,240 bytes of code and data, 272 bytes of BSS. No DSP code, no effect slot, no DSP memory; the DSP load and space on LOAD are the same with and without it (above). ColdFire load: no change the LOAD page or the base's five-minute records show, closed or open (above). Cycles per tick not measured: the released base has no `modwerk_cost` profile.
+Package `8c886466…`: 2,588 bytes of code and data, 304 bytes of BSS (`0506a245…`: 2,240 and 272). The load figures above were taken with `0506a245…`; `8c886466…` adds a signed speed and a second bar shape, with the same pixel count per row. No DSP code, no effect slot, no DSP memory; the DSP load and space on LOAD are the same with and without it (above). ColdFire load: no change the LOAD page or the base's five-minute records show, closed or open (above). Cycles per tick not measured: the released base has no `modwerk_cost` profile.
 
 ## OT UI capture evidence
 

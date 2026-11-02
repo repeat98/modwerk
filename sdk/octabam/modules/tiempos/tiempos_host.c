@@ -11,10 +11,11 @@
 #include "modwerk_module.h"
 #include "ot_state.h"
 #include "deck_keys.h"
+#include "deck_font.h"
 
 static double now_s;              /* tiempo real simulado */
 static uint8_t active[8], cur;
-static double pos[8], speed[8];   /* frames, frames por segundo */
+static double pos[8], speed[8];   /* frames, frames por segundo (negativa: hacia atrás) */
 static uint32_t start[8], len[8]; /* trim de cada voz, frames */
 static int redraws, fails;
 
@@ -23,7 +24,7 @@ uint32_t host_rd32(uint32_t a)
     if (a == OT_DTCN3) return (uint32_t)(uint64_t)llround(now_s * 132e6);
     for (unsigned t = 0; t < 8; ++t) {
         uint32_t v = OT_VOICE_BASE + t * OT_VOICE_STRIDE;
-        if (a == v + OT_VOICE_POS) return (uint32_t)pos[t];
+        if (a == v + OT_VOICE_POS) return (uint32_t)(int32_t)llround(pos[t]); /* hacia atrás llega a -1 */
         if (a == v + OT_VOICE_START) return start[t];
         if (a == v + OT_VOICE_END) return len[t];
     }
@@ -39,6 +40,7 @@ uint8_t host_rd8(uint32_t a)
 }
 void host_redraw(void) { ++redraws; }
 
+#define BAR_TEST_X0 13 /* BAR_X0 de tiempos.c */
 static unsigned char frame[1024];
 static int pixel(int x, int y) { return (frame[x * 8 + 7 - (y >> 3)] >> (y & 7)) & 1; }
 static void check(int ok, const char *what) { printf("%s  %s\n", ok ? "OK  " : "FALLO", what); if (!ok) ++fails; }
@@ -49,7 +51,12 @@ static void run(double secs)
     for (int i = 0; i < n; ++i) {
         now_s += 1.0 / 60.0;
         for (int t = 0; t < 8; ++t)
-            if (active[t]) { pos[t] += speed[t] / 60.0; if (pos[t] >= len[t]) pos[t] = len[t], active[t] = 0; }
+            if (active[t]) {
+                pos[t] += speed[t] / 60.0;
+                if (pos[t] >= len[t]) pos[t] = len[t], active[t] = 0;
+                /* hacia atrás, como en la MKI: se queda en el frame anterior al inicio, activa */
+                if (speed[t] < 0 && pos[t] < start[t]) pos[t] = (double)start[t] - 1;
+            }
         module_tick(0);
     }
 }
@@ -75,6 +82,23 @@ static int lit_in(int x0, int x1, int y0, int y1)
     for (int x = x0; x <= x1; ++x) for (int y = y0; y <= y1; ++y) n += pixel(x, y);
     return n;
 }
+
+/* ¿Muestra la zona que acaba en x_end, en la fila y, exactamente el texto s? */
+static int text_at(int x_end, int y, const char *s)
+{
+    int n = (int)strlen(s), x0 = x_end - (n * 4 - 1) + 1;
+    for (int x = x0 - 2; x <= x_end; ++x) /* x0 - 2: no llega al tope de la barra */
+        for (int r = 0; r < 5; ++r) {
+            int want = 0, k = x - x0;
+            if (k >= 0 && k % 4 < 3) {
+                int c = (unsigned char)s[k / 4];
+                want = (deck_font[c - 32] >> (14 - r * 3 - k % 4)) & 1;
+            }
+            if (pixel(x, y + 1 + r) != want) return 0;
+        }
+    return 1;
+}
+static void mmss(char *s, unsigned secs) { snprintf(s, 8, "%u:%02u", secs / 60, secs % 60); }
 
 int main(int argc, char **argv)
 {
@@ -171,6 +195,55 @@ int main(int argc, char **argv)
     pass = module_key(K_TRACK1 + 2, 1) == 0; module_key(K_TRACK1 + 2, 0);
     draw();
     check(pass && frame[0] == 0xA5 && redraws == r0 + 1, "T3 dos veces en 250 ms: llega al OS, cierra y el OS redibuja");
+
+    /* RATE negativo (MKI, 2 de noviembre): la posición baja, se queda en -1 en el inicio y un
+     * redisparo salta al final. T1 sigue sonando hacia delante a 132/126. */
+    key(K_CUE, 1); key(K_MIDI, 1); key(K_MIDI, 0); key(K_CUE, 0);
+    key(K_LEFT, 1); key(K_LEFT, 0); /* la columna derecha vuelve a la duración total */
+    double fwd = R * 132.0 / 126.0;
+    speed[0] = -fwd;
+    run(2.0);
+    {
+        struct modwerk_runtime_api api = {0};
+        module_tick(&api);
+        int32_t r = (int32_t)api.value;
+        check(r < 0 && fabs(-r - fwd) / fwd < 0.002, "de RATE positivo a negativo sonando: velocidad negativa en < 2 s");
+    }
+    draw();
+    dump(out, "t3_hacia_atras");
+    char want[8], less[8];
+    unsigned rem = (unsigned)((pos[0] - start[0]) / fwd);
+    mmss(want, rem), mmss(less, rem ? rem - 1 : 0);
+    check(text_at(103, 0, want) || text_at(103, 0, less), "hacia atrás: el restante es lo que queda hasta el inicio del trim");
+    mmss(want, (unsigned)((len[0] - start[0]) / fwd));
+    check(text_at(127, 0, want), "hacia atrás: el total no cambia");
+    check(pixel(BAR_TEST_X0 + 1, 1) && !pixel(79, 1) && pixel(79, 3), "hacia atrás: la barra maciza queda a la izquierda");
+
+    /* redisparo de la pista invertida: salta al final y sigue hacia atrás sin perder la medida */
+    pos[0] = len[0] - 60 * R;
+    run(0.1);
+    {
+        struct modwerk_runtime_api api = {0};
+        module_tick(&api);
+        check((int32_t)api.value < 0, "redisparo de una pista invertida: sigue midiendo hacia atrás");
+    }
+    draw();
+    rem = (unsigned)((pos[0] - start[0]) / fwd);
+    mmss(want, rem), mmss(less, rem - 1);
+    check(text_at(103, 0, want) || text_at(103, 0, less), "redisparo de una pista invertida: el restante vuelve a contar desde el final");
+
+    /* llega al inicio: 0:00 fijo, sin parpadeo */
+    pos[0] = start[0] + 0.5 * R;
+    run(1.5);
+    draw(); a = text_at(103, 0, "0:00");
+    run(0.5); draw(); b = text_at(103, 0, "0:00");
+    check(pos[0] < 0 && a && b, "hacia atrás al llegar al inicio (-1): 0:00 sin parpadeo");
+
+    /* RATE 0: la voz quieta no inventa un tiempo */
+    pos[0] = 300 * R, speed[0] = 0;
+    run(1.5);
+    draw();
+    check(text_at(103, 0, "--:--") && text_at(127, 0, "--:--"), "RATE 0: --:-- en el restante y en el total");
 
     printf("\n%d fallo(s)\n", fails);
     return fails != 0;

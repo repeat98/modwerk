@@ -14,6 +14,11 @@
  * de 132 MHz). Así el tiempo restante ya incluye time-stretch, repitch y cambios de
  * tempo, y no hace falta saber qué slot usa cada pista (P4).
  *
+ * Con RATE negativo la voz va hacia atrás: la posición baja (hasta -1 al llegar al
+ * inicio) y un redisparo salta al final. La velocidad se mide con signo, solo si el
+ * sentido se mantiene en la ventana; hacia atrás falta lo que hay hasta el inicio del
+ * trim. Con RATE 0 la voz está quieta y el tiempo restante se muestra como --:--.
+ *
  * Teclas (deck_keys.h): CUE + MIDI abre y cierra · NO cierra · LEFT / RIGHT cambian
  * la columna derecha (duración total / tiempo transcurrido) · páginas, BANK y
  * PATTERN cierran y llegan al OS · dos pulsaciones de la misma tecla de pista en
@@ -41,6 +46,7 @@
 #define WINDOW_MS 500u      /* ventana de medida de la velocidad */
 #define BLINK_SECS 30u
 #define DOUBLE_MS 400u      /* dos pulsaciones de la misma pista: cierra */
+#define STILL_RATE 64u      /* frames por segundo: por debajo, la voz está quieta (RATE 0) */
 
 /* ---------------------------------------------------------------- dibujo */
 static unsigned char *fb;
@@ -92,10 +98,13 @@ static void fmt_time(char *s, uint32_t secs)
 
 /* ---------------------------------------------------------------- estado */
 struct track {
-    uint32_t pos, start, len, last_pos; /* frames; start y len: el trim de la voz */
-    uint32_t win_pos, win_t;   /* inicio de la ventana de medida */
-    uint32_t rate;             /* frames por segundo real; 0 = sin medir */
-    uint8_t active, measuring;
+    int32_t pos, last_pos;     /* frames, con signo: hacia atrás llega a -1 */
+    uint32_t start, len;       /* el trim de la voz, frames */
+    int32_t win_pos;           /* inicio de la ventana de medida */
+    uint32_t win_t;
+    int32_t rate;              /* frames por segundo real, con signo (< 0 = hacia atrás) */
+    int8_t dir, win_dir;       /* sentido del último avance y de la ventana: 1, -1 o 0 */
+    uint8_t active, measuring, measured;
 };
 
 static struct track tr[TRACKS];
@@ -106,8 +115,18 @@ static uint32_t ticks;
 static uint8_t cur_track;
 static uint32_t toast_until;
 
-/* Velocidad para los cálculos: la medida o, si no hay, la original (44,1 kHz). */
-static uint32_t rate_of(const struct track *t) { return t->rate ? t->rate : OT_RATE; }
+/* Velocidad para los cálculos, sin signo: la medida o, si no hay, la original (44,1 kHz). */
+static uint32_t rate_of(const struct track *t)
+{
+    if (!t->measured) return OT_RATE;
+    return t->rate < 0 ? (uint32_t)-t->rate : (uint32_t)t->rate;
+}
+
+/* Hacia atrás: el sentido medido o, sin medida, el del último avance. */
+static int reverse(const struct track *t) { return t->measured && t->rate ? t->rate < 0 : t->dir < 0; }
+
+/* RATE 0: medida y casi quieta; el tiempo restante no tiene sentido. */
+static int still(const struct track *t) { return t->measured && rate_of(t) < STILL_RATE; }
 
 static uint32_t secs_for(uint32_t frames, uint32_t rate)
 {
@@ -123,24 +142,36 @@ static void sample_tracks(void)
         struct track *t = &tr[i];
         uint32_t v = OT_VOICE_BASE + i * OT_VOICE_STRIDE;
         t->active = RD8(v + OT_VOICE_ACTIVE) != 0;
-        t->pos = RD32(v + OT_VOICE_POS);
+        t->pos = (int32_t)RD32(v + OT_VOICE_POS);
         t->start = RD32(v + OT_VOICE_START);
         t->len = RD32(v + OT_VOICE_END);
 
-        /* Saltos (retrig, cue, nueva muestra) o parada: se empieza otra ventana,
-         * conservando la última velocidad medida. */
-        int jumped = t->pos < t->last_pos || t->pos - t->last_pos > OT_RATE; /* > 1 s de audio en 1 tick */
-        if (!t->active || jumped || !t->measuring) {
+        /* Redisparo, cue o muestra nueva: un salto de más de 1 s, o uno en contra del
+         * sentido en que suena de más de 1/8 s (hacia atrás, el redisparo vuelve al final).
+         * Un paso corto en contra es un cambio de RATE: cambia el sentido, no es un salto. */
+        int32_t step = t->pos - t->last_pos;
+        uint32_t size = step < 0 ? (uint32_t)-step : (uint32_t)step;
+        int8_t sign = step > 0 ? 1 : step < 0 ? -1 : 0;
+        int jumped = size > OT_RATE || (sign && sign == -t->dir && size > OT_RATE / 8u);
+        if (sign && !jumped) t->dir = sign;
+
+        /* Se empieza otra ventana, conservando la última velocidad medida, tras un salto,
+         * una parada o un cambio de sentido dentro de la ventana. */
+        if (!t->active || jumped || !t->measuring || (sign && t->win_dir && sign != t->win_dir)) {
             t->win_pos = t->pos, t->win_t = now, t->measuring = t->active;
+            t->win_dir = jumped ? 0 : sign;
         } else {
+            if (sign) t->win_dir = sign;
             uint32_t dt = (now - t->win_t) / (OT_DTCN3_PER_MS / 10u); /* décimas de ms */
             if (dt >= WINDOW_MS * 10u) {
-                uint32_t dp = t->pos - t->win_pos;           /* < 2 * 44100 en 0,5 s */
-                uint32_t r = dp * 10000u / dt;               /* frames por segundo; dp * 1e4 < 2^32 */
-                /* suaviza si es parecida a la anterior; si cambia mucho (tempo nuevo), se toma tal cual */
-                uint32_t d = r > t->rate ? r - t->rate : t->rate - r;
-                t->rate = t->rate && d * 50u < t->rate ? (t->rate * 3u + r) / 4u : r;
-                t->win_pos = t->pos, t->win_t = now;
+                int32_t dp = t->pos - t->win_pos;            /* |dp| < 2 * 44100 en 0,5 s */
+                int32_t r = dp * 10000 / (int32_t)dt;        /* frames por segundo; |dp| * 1e4 < 2^31 */
+                /* suaviza si es parecida a la anterior; si cambia mucho (tempo o RATE nuevos), se toma tal cual */
+                int32_t d = r > t->rate ? r - t->rate : t->rate - r;
+                int32_t m = t->rate < 0 ? -t->rate : t->rate;
+                t->rate = t->measured && m && d * 50 < m ? (t->rate * 3 + r) / 4 : r;
+                t->measured = 1;
+                t->win_pos = t->pos, t->win_t = now, t->win_dir = 0;
             }
         }
         t->last_pos = t->pos;
@@ -151,8 +182,14 @@ static void sample_tracks(void)
 static void draw_row(unsigned i)
 {
     const struct track *t = &tr[i];
-    int y = (int)i * ROW_H, loaded = t->len > t->start && t->pos <= t->len;
-    uint32_t played = t->pos > t->start ? t->pos - t->start : 0u, total = loaded ? t->len - t->start : 0u;
+    int y = (int)i * ROW_H, loaded = t->len > t->start && t->pos <= (int32_t)t->len;
+    /* posición dentro del trim; hacia atrás llega a -1, por debajo del inicio */
+    uint32_t at_pos = t->pos > (int32_t)t->start ? (uint32_t)t->pos : t->start;
+    uint32_t total = loaded ? t->len - t->start : 0u;
+    int back = reverse(t);
+    /* hacia delante falta hasta el final; hacia atrás, hasta el inicio del trim */
+    uint32_t left = back ? at_pos - t->start : (loaded ? t->len - at_pos : 0u);
+    uint32_t played = total - left;
     char s[8];
     s[0] = (char)('1' + i), s[1] = 0;
 
@@ -175,19 +212,32 @@ static void draw_row(unsigned i)
         return;
     }
 
-    /* barra: escala por longitud; la parte que falta, maciza */
+    /* barra: escala por longitud; la parte que falta, maciza (hacia atrás, a la izquierda) */
     int w = BAR_X1 - BAR_X0;
-    int at = BAR_X0 + (int)((played >> 8) * (uint32_t)w / ((total >> 8) + 1u));
+    int at = BAR_X0 + (int)(((at_pos - t->start) >> 8) * (uint32_t)w / ((total >> 8) + 1u));
     if (at > BAR_X1) at = BAR_X1;
-    if (at > BAR_X0) rect(BAR_X0, y + 3, at - 1, y + 3, 1);
-    rect(at, y + 1, BAR_X1, y + 5, 1);
+    if (back) {
+        rect(BAR_X0, y + 1, at, y + 5, 1);
+        if (at < BAR_X1) rect(at + 1, y + 3, BAR_X1, y + 3, 1);
+    } else {
+        if (at > BAR_X0) rect(BAR_X0, y + 3, at - 1, y + 3, 1);
+        rect(at, y + 1, BAR_X1, y + 5, 1);
+    }
     rect(BAR_X1 + 1, y, BAR_X1 + 1, y + 6, 1); /* tope */
 
+    /* RATE 0: sin tiempo restante ni total que mostrar (al final queda 0:00, quieta o no) */
+    if (still(t) && left) {
+        text(REM_END - text_w("--:--") + 1, y + 1, "--:--", 1);
+        text(RIGHT_END - text_w("--:--") + 1, y + 1, "--:--", 1);
+        return;
+    }
+
     /* tiempo restante, real */
-    uint32_t rate = rate_of(t), rem = secs_for(t->len - t->pos, rate);
+    uint32_t rate = rate_of(t), rem = secs_for(left, rate);
     fmt_time(s, rem);
     int x = REM_END - text_w(s) + 1;
-    if (t->active && rem < BLINK_SECS && !((ticks / 30u) & 1u)) {
+    /* hacia atrás la voz sigue activa en el inicio: ahí ha terminado y no parpadea */
+    if (t->active && left && rem < BLINK_SECS && !((ticks / 30u) & 1u)) {
         rect(x - 1, y, REM_END + 1, y + 6, 1);
         text(x, y + 1, s, 0);
     } else text(x, y + 1, s, 1);
@@ -202,7 +252,7 @@ void module_tick(struct modwerk_runtime_api *api)
 {
     ++ticks;
     sample_tracks(); /* también cerrado: así la velocidad ya está medida al abrir */
-    if (api) api->value = tr[0].rate;
+    if (api) api->value = (uint32_t)tr[0].rate; /* con signo: hacia atrás, negativa */
 }
 
 void module_draw(unsigned char *frame)
