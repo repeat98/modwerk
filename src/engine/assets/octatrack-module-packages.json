@@ -322,8 +322,8 @@
       "version": "0.2.2-experimental",
       "name": "Mute Modes",
       "module": "73bab3b1",
-      "bytes": 2730,
-      "sha256": "40f5cc1169f712c77d721fed709568af73177571f6e29e5d96c75ac28f47ef0c",
+      "bytes": 2746,
+      "sha256": "37b974629e0b433e0e69e72262002920550ecc6a7c5f5d8313c14687224c537e",
       "path": "octatrack-modules/mute-modes/0.2.2-experimental.mwrm"
     },
     {
