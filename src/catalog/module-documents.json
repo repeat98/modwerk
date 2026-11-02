@@ -10028,6 +10028,7 @@
           "A4 is fixed at 440 Hz. No calibration control, parameter locks, LFO destination or saved project setting is added.",
           "Hold UP before TEMPO. Pressing TEMPO first follows the ordinary tempo-window path.",
           "Card builds only: the base has no removal refusal for ordinary modules.",
+          "Sample memory: on a card build without another DRAM module, choosing the Tuner gives up 10,487,808 bytes (about 10.5 MB) of Flex sample RAM. Its own unit is 33 KB, but it is the module that creates the DRAM platform reserve, and the unit sits inside it. Alongside another DRAM module the reserve is shared and the Tuner takes no further sample RAM.",
           "The retained older emulator fault is in its DSP write callback; the triggering image property remains unresolved.",
           "Emulator readings (29 and 30 October 2026) for the figures; on hardware the author reports the TEST3 card (d4452bbb, byte-identical to TEST2) working on his MKI on 1 November 2026, every item of its test sheet, readings not recorded. No hardware timing is measured. The standalone 2.19 reference exited before capture, so paired visual equivalence with it is unavailable.",
           "The reading follows the last 93 ms of the track after its effects, so an effect tail can pull it just after a note changes (on the emulator: E2 +25c 2.4 s after 440 Hz gave way to 82.41 Hz on T8, +0c at 12 s; the same with and without the DC removal)."
