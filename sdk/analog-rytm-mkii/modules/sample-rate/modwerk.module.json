@@ -1,7 +1,7 @@
 {
   "schemaVersion": 3,
   "id": "sample-rate",
-  "name": "Sample RATE",
+  "name": "Sample Playback Rate",
   "version": "0.1.0-experimental",
   "machine": "analog-rytm-mkii",
   "category": "playback",
@@ -17,10 +17,10 @@
     "npp1993"
   ],
   "presentation": {
-    "label": "SAMPLE RATE",
+    "label": "SAMPLE PLAYBACK RATE",
     "family": "Sample playback",
     "summary": "FIN's knob becomes RATE, sound by sound: pure sample speed down to a stop and into reverse, like the Octatrack's RATE on PTCH. Tap the knob to switch.",
-    "overview": "Sample RATE gives a sample a pure speed control: no time stretch, just the sample played faster or slower, down to a stop and on into reverse. Switch it on for a sound in SOUND SETTINGS with SMP RATE, and FIN's knob on the SAMPLE page reads RATE, +63 to -64: +63 plays at normal speed, 0 stops, -64 plays backward at normal speed, in a straight line between them, as the Octatrack's RATE with its setting on PTCH. Stock's pitch stops at a quarter of the speed. A trig below 0 starts from END. The setting saves with the sound and is off by default, so a sound plays stock until you ask.",
+    "overview": "Sample Playback Rate gives a sample a pure speed control: no time stretch, just the sample played faster or slower, down to a stop and on into reverse. Switch it on for a sound in SOUND SETTINGS with SMP RATE, and FIN's knob on the SAMPLE page reads RATE, +63 to -64: +63 plays at normal speed, 0 stops, -64 plays backward at normal speed, in a straight line between them, as the Octatrack's RATE with its setting on PTCH. Stock's pitch stops at a quarter of the speed. A trig below 0 starts from END. The setting saves with the sound and is off by default, so a sound plays stock until you ask.",
     "highlights": [
       "Slow a sample to a dead stop and run it backward from one knob.",
       "Exactly the Octatrack's range: +63 is 1x, 0 stops, -64 is -1x.",
@@ -167,7 +167,7 @@
     {
       "path": "media/thumbnail.svg",
       "kind": "thumbnail",
-      "caption": "Sample RATE",
+      "caption": "Sample Playback Rate",
       "alt": "A sample's play position climbs, slows to a stop at RATE 64, then runs backward.",
       "credit": "Nathaniel Pavel",
       "license": "GPL-3.0-or-later",
