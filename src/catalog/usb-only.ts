@@ -7,13 +7,19 @@
 import packages from '../engine/assets/octatrack-module-packages.json' with { type: 'json' }
 import { resolveSelection } from './modules.ts'
 
-export type PackageList = { packages: readonly { id: string; requires?: number; sources?: readonly string[] }[] }
+export type PackageList = { packages: readonly { id: string; requires?: number; sources?: readonly string[]; version?: string; lagsBehind?: string; lagReason?: string }[] }
 export function moduleUsbOnly(id: string, published: PackageList = packages) {
   return published.packages.some(entry => entry.id === id && (entry.requires ?? 0) !== 0) || moduleCardless(id, published)
 }
 /** A C runtime module has no card form at all: the card build neither compiles nor fingerprints it (scripts/module-source.mjs). */
 export function moduleCardless(id: string, published: PackageList = packages) {
   return published.packages.some(entry => entry.id === id && Boolean(entry.sources))
+}
+/** A USB package kept at an older version than the card build (a declared lag, docs/ADD_A_MODULE.md): what USB installs
+ * and why, for the module page and the sync dialog; '' without a lag. */
+export function usbLagNote(id: string, published: PackageList = packages) {
+  const entry = published.packages.find(entry => entry.id === id && entry.lagsBehind)
+  return entry ? 'Over USB this installs ' + entry.version + (entry.lagReason ? ': ' + entry.lagReason : '.') : ''
 }
 
 /** Why card firmware cannot include these modules. `usb` says whether this member can sync over USB (the beta

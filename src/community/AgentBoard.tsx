@@ -2,10 +2,10 @@ import { useEffect, useState } from 'react'
 import { api, post } from './api'
 import { useCommunity } from './context'
 
-export type BoardClaim = { id: string; kind: 'module' | 'hook' | 'migration' | 'dsp-region'; key: string; holder: string; branch: string | null; pullRequest: number | null; note: string; createdAt: string; expiresAt: string | null; releasedAt?: string; releasedReason?: string }
+export type BoardClaim = { id: string; kind: 'module' | 'hook' | 'migration' | 'dsp-region' | 'machine-id'; key: string; holder: string; branch: string | null; pullRequest: number | null; note: string; createdAt: string; expiresAt: string | null; releasedAt?: string; releasedReason?: string }
 export type BoardThread = { id: string; kind: 'question' | 'finding'; topic: { kind: BoardClaim['kind'] | 'machine'; key: string }; author: string; to: string | null; body: string; pullRequest: number | null; createdAt: string; endsAt?: string; replies: { id: string; author: string; body: string; createdAt: string }[] }
 export type BoardActivity = { days: number; developers: { signedIn: number; active: number }; claims: { active: number; made: number }; questions: { open: number }; findings: { active: number }; posts: number }
-const KIND = { module: 'Module', hook: 'Hook or table', migration: 'Migration', 'dsp-region': 'DSP region', machine: 'Machine' } as const
+const KIND = { module: 'Module', hook: 'Hook or table', migration: 'Migration', 'dsp-region': 'DSP region', 'machine-id': 'Machine id', machine: 'Machine' } as const
 const ENDED = { holder: 'released', administrator: 'released by an administrator', merged: 'merged', closed: 'pull request closed', expired: 'lapsed', suspended: 'account suspended' } as Record<string, string>
 const day = (value: string) => new Date(value).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })
 const count = (value: number, one: string, many = one + 's') => value + ' ' + (value === 1 ? one : many)
