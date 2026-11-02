@@ -1853,8 +1853,8 @@ on main now. It also recognises the base's idle detour by itself. The `pick` sce
 
 ## Plan: a stress test after every module-set sync (owner, 11 October 2026)
 
-The site already has a step for this: Load onto Octatrack stages the set as a trial, then keeps
-or undoes it. A stress test fills that step, and the same results make the bug report.
+Superseded for the site's sync on 27 October 2026 (owner): it keeps the set at once. The plan was: Load onto
+Octatrack stages the set as a trial, then keeps or undoes it. A stress test fills that step, and the same results make the bug report.
 
 **On a user's unit** (a production base; no remote keys or RAM reads; the project is never
 changed). A SELFTEST vendor request, sent while the trial runs with the transport stopped. The
@@ -2566,10 +2566,9 @@ removedStockFx }`).
   Spectrum and Modulation build the same way but are paused in the library. Every module with ColdFire code
   (TAPE ECHO and EUCLID too) copies stock bytes into its package, so it waits for loader ABI 7.
 - **Loading** ([`module-set.ts`](../src/engine/elekloader/module-set.ts), `OctatrackLink.update`): removals first,
-  then installs. The base runs one transaction at a time, so every change but the last is kept as soon as it is
-  in, and the last runs as the trial for the self-test and Keep or Undo. Undo, a failed self-test or a refusal
-  part way rolls the trial back, then sends the undo packages of the kept changes, newest first (a removed module
-  the site does not publish cannot be put back, and the notice says so). An unplug part way leaves the unit
+  then installs, as one set on bases with module sets, and the site keeps it at once: no self-test and no Undo
+  (owner, 27 October 2026; the self-test runs on its own from Status, and the MCP's device tools keep the trial for
+  development). A refusal part way rolls the set back. An unplug part way leaves the unit
   between the two sets; loading either again finishes it, since a load only sends the differences.
 - **Not built:** stock effects out of the menus (the base keeps no such state; the site hides the stock effect
   tiles while a base is connected and sends no removals, and `prepareUpdate` refuses a set that changes them), one Keep or Undo held by the base for a whole set, and versions other than the latest.

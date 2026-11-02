@@ -82,6 +82,25 @@
         "sdk/imports/packages/digimono/digimono-0.13.3-experimental-os1.53.elemod",
         "sdk/imports/packages/digimono/digimono-0.13.3-experimental-os1.54.elemod"
       ]
+    },
+    {
+      "id": "midistomp",
+      "name": "MIDISTOMP (Zoom MultiStomp firmware patches and their sources)",
+      "spdx": "MIT",
+      "noticeFile": "midistomp.txt",
+      "sources": [
+        {
+          "path": "vendor/midistomp/LICENSE"
+        },
+        {
+          "url": "https://github.com/matujuice/zoom-ms-midistomp/tree/c8d3e1ba04e71bbae7919e256f2b2f611fca409a",
+          "revision": "c8d3e1ba04e71bbae7919e256f2b2f611fca409a"
+        }
+      ],
+      "usedIn": [
+        "vendor/midistomp",
+        "Zoom MultiStomp browser builder (src/engine/zoom)"
+      ]
     }
   ]
 }

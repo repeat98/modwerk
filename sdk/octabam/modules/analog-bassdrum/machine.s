@@ -252,10 +252,7 @@ ab_setup_open:
 ab_setup_edit6:
         cmpi.l  #AB_ROW,%d2
         bne.s   1f
-        move.l  %a3,%d0
-        bne.s   2f
-        jmp     (0x4003a624).l          | hidden MODEL slot is browser-only
-2:      moveq   #FLEX,%d2
+        moveq   #FLEX,%d2               | every SETUP slot edits (0.1.6: TYPE is a switch, not browser-only)
 1:      move.l  %d2,%d0
         lsl.l   #3,%d0
         add.l   %d2,%d2
@@ -386,27 +383,12 @@ ab_list_draw:
         jmp (0x4006d78c).l
 
 | Stock machine headings offer the right-chevron only for STATIC/FLEX.
-| Analog BD has a pool too, so use the same stock format for its row.
+| Analog BD has no pool since 0.1.6 (TYPE on SRC SETUP), so its row is plain too.
         .global ab_pool_title
 ab_pool_title:
-        moveq #1,%d6
-        cmpi.l #5,%d0
-        bne.s .title_stock
-        lea -16(%sp),%sp
-        movem.l %d0-%d1/%a0-%a1,(%sp)
-        jsr ab_selected_source
-        tst.l %d0
-        beq.s .title_unsigned
-        movem.l (%sp),%d0-%d1/%a0-%a1
-        lea 16(%sp),%sp
-        bra.s .title_pool
-.title_unsigned:
-        movem.l (%sp),%d0-%d1/%a0-%a1
-        lea 16(%sp),%sp
-.title_stock:
+        moveq #1,%d6                    | 0.1.6: Analog BD has no pool, so its row takes stock's plain title
         cmp.l %d0,%d6
         bcs.s .title_plain
-.title_pool:
         jmp (0x40077b62).l
 .title_plain:
         jmp (0x40077b70).l

@@ -8,7 +8,7 @@ import { canTrackModuleDownload } from '../src/community/module-downloads'
 import { ANNOUNCEMENT_COUNTS, DEVICE_EVENTS, USAGE_DEVICES, USAGE_EVENTS, type AnnouncementCountEvent, type UsageDevice, type UsageEvent, type UsageDay, type UsageDeviceTotals, type UsageHour, type UsagePageDay } from '../src/community/usage-contract'
 const uuid = /^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/
 const columns: Record<UsageEvent, string> = { page_view:'page_views', configuration_started:'configurations', build_succeeded:'builds', build_failed:'builds_failed', firmware_download_requested:'downloads', configuration_exported:'exports', support_opened:'support_opens', support_link_opened:'support_clicks', discord_member_prompt_shown:'discord_member_shown', discord_member_join_clicked:'discord_member_joins', discord_member_dismissed:'discord_member_dismissals', discord_visitor_prompt_shown:'discord_visitor_shown', discord_visitor_signup_clicked:'discord_visitor_signups', discord_visitor_join_clicked:'discord_visitor_joins', discord_visitor_dismissed:'discord_visitor_dismissals', discord_welcome_join_clicked:'discord_welcome_joins' }
-/** Optional machine on builds, failed builds and download requests: one of three fixed names, never anything else. */
+/** Optional machine on builds, failed builds and download requests: one of the fixed supported machine names, never anything else. */
 function deviceOf(body: Record<string,unknown>, event: UsageEvent): UsageDevice | null | undefined {
   if (!('device' in body)) return null
   return DEVICE_EVENTS.includes(event) && typeof body.device === 'string' && (USAGE_DEVICES as readonly string[]).includes(body.device) ? body.device as UsageDevice : undefined
@@ -159,7 +159,7 @@ export async function usageStatistics(db: Database, days: number, now = new Date
   const previousFrom = before(now,2 * (days-1)), previousTo = before(now,days)
   const outsideRetention = previousFrom < before(now,89)
   const [meta,daily,devices,hourly,pages] = await Promise.all([
-    db.prepare("SELECT key,value FROM usage_meta WHERE key IN ('collection_started','breakdowns_started','hourly_started','discord_invites_started','pages_started')").all<{key:string;value:string}>(),
+    db.prepare("SELECT key,value FROM usage_meta WHERE key IN ('collection_started','breakdowns_started','hourly_started','discord_invites_started','pages_started','machine_coverage_expanded')").all<{key:string;value:string}>(),
     db.prepare(`SELECT day,${USAGE_COLUMNS} FROM usage_daily WHERE day>=? AND day<=? ORDER BY day`).bind(outsideRetention?from:previousFrom,to).all<UsageDay>(),
     db.prepare('SELECT device,SUM(builds) AS builds,SUM(builds_failed) AS builds_failed,SUM(downloads) AS downloads FROM usage_device_daily WHERE day>=? AND day<=? GROUP BY device').bind(from,to).all<UsageDeviceTotals>(),
     // Hours are kept for 14 days, so only the 7-day view can show them.
@@ -173,7 +173,7 @@ export async function usageStatistics(db: Database, days: number, now = new Date
   const unavailableReason = outsideRetention ? 'retention' : !collectionStarted || previousFrom <= collectionStarted.slice(0,10) ? 'collection' : null
   const previousRows = unavailableReason ? [] : daily.results.filter(row=>row.day>=previousFrom&&row.day<=previousTo)
   return response({generatedAt:now.toISOString(),collectionStarted,from,to,days,rows,comparison:{from:previousFrom,to:previousTo,rows:previousRows,unavailableReason},
-    pagesStarted:metaValue('pages_started'),pages:pages.results,breakdownsStarted,hourlyStarted,discordInvitesStarted:metaValue('discord_invites_started'),...(hourly ? {hourly:hourly.results} : {}),devices:USAGE_DEVICES.map(device => byDevice.get(device) ?? {device,builds:0,builds_failed:0,downloads:0})})
+    machineCoverageExpanded:metaValue('machine_coverage_expanded'),pagesStarted:metaValue('pages_started'),pages:pages.results,breakdownsStarted,hourlyStarted,discordInvitesStarted:metaValue('discord_invites_started'),...(hourly ? {hourly:hourly.results} : {}),devices:USAGE_DEVICES.map(device => byDevice.get(device) ?? {device,builds:0,builds_failed:0,downloads:0})})
 }
 
 /** Each request names one build-integrated module; no configuration grouping is stored. */

@@ -65,15 +65,19 @@ and MIDI recovery write a plain container at `0x4000`, which replaces the stub: 
 
 ## The base
 
-**At most one restart per update (owner, 25 October 2026).** Two orders, which the site picks from SLOTS:
+**At most one restart per update (owner, 25 October 2026).** The site takes the trial order on every unit (since 30
+October 2026); the base still offers the other:
 
-- **A unit on two slots:** the running base writes the new base's container into its spare slot, then restarts
-  onto it. It takes another base's container only into a spare slot, and only once the checks that keep
+- **The running base writes another base** (two slots only): the new base's container into its spare slot, then
+  a restart onto it. It takes another base's container only into a spare slot, and only once the checks that keep
   Elektron's bootloader safe pass (an OS entry, NOR's bootstrap version, stock's bootloader copy byte for byte).
   This write is under stock's quiesce, with stock's upgrade screen (PREPARING FLASH, WRITING OS DATA, VERIFYING
-  OS DATA). The slot's record cannot name that base: zeros.
-- **A unit with one copy** (installed from the card, or any unit before this base): the new base starts from RAM
-  first (the trial, the update's one restart), then writes itself and runs on. A base takes another base's
+  OS DATA). The slot's record cannot name that base: zeros. The quiesce stops the audio frames, and until base
+  `flash.c`'s `modwerk_flash_quiesced` dsp.c's stall watchdog took that for a hang and let the frame interrupt back
+  in mid-write: on the owner's MKII the write froze (30 October 2026), on a tester's the restart hung at the logo.
+  A running base cannot be fixed by the base it writes, so the site no longer asks for this order.
+- **The new base writes itself** (the site's order; a unit with one copy is converted first): the new base starts
+  from RAM (the trial, the update's one restart), then writes itself and runs on. A base takes another base's
   container here only on two slots (refusal 106 otherwise). Stock's routines need no quiesce: they mask
   interrupts only around their command writes, the OS runs from RAM, and the upload engine has stopped the
   transport. So the base writes while the OS runs on, with its own box (BASE UPDATE, SAVING THE NEW BASE, KEEP
@@ -103,6 +107,8 @@ the container, nothing is written (the site's repeat after a lost reply).
 - After it: BASE SAVED (it ran on), or, at the start from the new slot, BASE UPDATED; UPDATE UNDONE when the stub
   went back to the previous base.
 - Not built: anything on the unit while the base is sent and while the new base starts from RAM.
+- A restart hangs at the logo when a DSP stalled before it in that run (the soft reset cannot park a hung core);
+  a power cycle starts the newest whole slot.
 
 ## Tests before any unit
 

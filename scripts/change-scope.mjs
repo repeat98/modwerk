@@ -126,6 +126,12 @@ export function classifyChanges(changes) {
   return scope
 }
 
+// Site, Worker and release-note paths the SDK suite (sdk:check) never reads: no test, builder or script it runs names
+// them (change-scope.test.mjs enforces it), and an audited run (26 Oct 2026) opened none. Everything else reaches it,
+// src/engine, src/catalog and src/config included. Keep the list short and certain; a path left off only costs time.
+const outsideSdkSuite = /^(?:src\/(?:components|hooks|devices|projects|legal|overview|storage)\/|src\/community\/(?!module-|ot-log|octatrack-diagnostics)|src\/[^/]+\.(?:tsx|css|test\.ts)$|server\/|worker\.ts$|changelog\/|docs\/.+\.md$)/
+export const reachesSdkSuite = path => !outsideSdkSuite.test(path)
+
 /** Compare exact Git trees; local checks also include unstaged and untracked edits. */
 export function readChangeScope({ root, base, head = null }) {
   const git = (...args) => execFileSync('git', args, { cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], maxBuffer: 32 * 1024 * 1024 })
@@ -142,13 +148,14 @@ export function readChangeScope({ root, base, head = null }) {
     if (!entry) return { text: null, regular: true }
     return { text: git('show', ref + ':' + path), regular: entry.startsWith('100644 ') || entry.startsWith('100755 ') }
   }
-  return classifyChanges([...new Set(names)].map(path => {
+  const sdk = names.length === 0 || names.some(reachesSdkSuite)
+  return { ...classifyChanges([...new Set(names)].map(path => {
     // Only manifests/catalogs/workflows need their contents; never dump image or firmware bytes.
     const inspect = manifest.test(path) || catalogs.has(path) || path === 'sdk/catalog.json' || /^\.github\/workflows\/(module-pr|pages)\.yml$/.test(path)
     if (!inspect) return { path, before: '', after: '', regular: true }
     const before = read(commit, path), after = read(head, path)
     return { path, before: before.text, after: after.text, regular: before.regular && after.regular }
-  }))
+  })), sdk }
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

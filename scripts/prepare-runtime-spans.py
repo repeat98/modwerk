@@ -28,6 +28,8 @@ import subprocess
 import sys
 import tempfile
 
+sys.path.append(str(Path(__file__).resolve().parents[1] / 'sdk'))  # sdk/, for firmware_codec
+import firmware_codec  # noqa: E402
 MODULES = ('playmodes', 'tapeecho', 'euclid')
 
 
@@ -54,8 +56,7 @@ def source_hashes(root, upstream):
     inputs = {p: digest((root / p).read_bytes()) for p in paths
               if Path(p).suffix in ('.py', '.s', '.S', '.c', '.h', '.asm', '.inc', '.json', '.ts', '.mjs')
               and not '/media/' in p and not '/evidence/' in p}
-    inputs.update({'upstream/' + str(p.relative_to(upstream)): digest(p.read_bytes())
-                   for p in (upstream / 'elekloader').rglob('*.py')})
+    inputs.update(firmware_codec.inputs(upstream))  # the checkout's files it runs, and the codec it runs them with
     return inputs
 
 
@@ -202,7 +203,7 @@ def main():
     verifier = load('runtime_span_verify', root / 'sdk/runtime/loader/verify_static.py')
     packages = load('runtime_span_packages', root / 'sdk/machines/octatrack/elekloader/module_packages.py')
     scanner = load('runtime_span_scanner', root / 'sdk/machines/octatrack/elekloader/check_stock_free.py')
-    sys.path.insert(0, str(upstream)); from elekloader import formats
+    firmware_codec.use_elekloader(upstream); from elekloader import formats
     stock, device, release = formats.load(str(args.stock))
     stock_image = formats.main_image(stock, device)
     if device.key != 'octatrack' or release.version != '1.40C' or digest(stock_image) != release.main_sha256:

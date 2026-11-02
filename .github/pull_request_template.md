@@ -12,11 +12,11 @@ The checks do the rest. `npm run pr:ready` (a registered author: `npm run pr:rea
 No check can prove these, so you vouch for them:
 
 - [ ] Changing a module someone else wrote: its author said yes before I started, and I link it here (a GitHub link, or Discord and the day). [Ask the author first](../docs/DEVELOPER_WORKFLOW.md#ask-the-author-first)
-- [ ] I read the guide for its category in `docs/module-guides/` (and `sequencing.md` if it acts in time), and TESTING.md lists what I did not test.
-- [ ] Source and media are mine or properly licensed, with authors and full licence texts kept. Nothing comes from Elektron firmware: no extracted code or tables, upgrade files or factory content.
+- [ ] I read the guide for its category in `docs/module-guides/` (and `sequencing.md` if it acts in time), and TESTING.md lists what I did not test. An effect module holds one effect.
+- [ ] Source and media are mine or properly licensed, with authors and full licence texts kept. Nothing comes from Elektron firmware: no extracted code or tables, upgrade files or factory content, and nothing is modelled on another current Elektron product.
 - [ ] Screenshots are real captures of the current module UI. Hardware results are what a named person saw on this exact build; emulator results are labelled as emulator results.
 
-Registered module authors can opt into [automatic publication](../docs/MODULE_AUTHOR_UPDATES.md) after reviewing all the evidence. An update that reaches firmware or hardware addresses the published version did not use goes to owner review instead, and followers hear about an automatic release 48 hours after it goes live:
+Registered module authors can opt into [automatic publication](../docs/MODULE_AUTHOR_UPDATES.md) after reviewing all the evidence; a first release leaves both boxes unticked. An update that reaches firmware or hardware addresses the published version did not use goes to owner review instead, and followers hear about an automatic release 48 hours after it goes live:
 
 - [ ] Automatically merge and publish my module update after checks pass.
 - [ ] I verified the source, licences, UI and qualification reports, including instance isolation and Part/project/reboot persistence where applicable; no required acceptance check is failed or untested.

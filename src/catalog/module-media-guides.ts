@@ -280,16 +280,16 @@ export const MODULE_MEDIA_GUIDES: Readonly<Record<string, ScreenshotGuide>> = {
     ],
   },
   'sidechain-compressor': {
-    version: '0.1.1-experimental',
+    version: '0.2.0-experimental',
     screenshots: [
       {
         path: 'media/ot-compressor-selection.png',
-        caption: 'Select the audio track you want to duck. Hold FUNC and press FX1 or FX2, choose COMPRESSOR with LEVEL and press YES. Its SETUP page adds KEY, KFLT, KGN and MON to the usual compressor.',
+        caption: 'Select the audio track you want to duck. Hold FUNC and press FX1 or FX2, choose COMPRESSOR with LEVEL and press YES. Its SETUP page adds MON, KEY, KGN, KBAS and KWID to the usual compressor.',
         alt: 'COMPRESSOR selected in FX1 SETUP, with KEY OFF and MON OFF.',
       },
       {
         path: 'media/ot-sidechain-key-selected.png',
-        caption: 'Use encoder C to choose the track that drives the compressor: KEY T2, shown here, listens to T2. KFLT filters that detector signal and KGN sets its level. Leave MON OFF for normal listening; KEY OFF returns to compression driven by the receiving track itself.',
+        caption: 'Use encoder C to choose the track that drives the compressor: KEY T2, shown here, listens to T2. KGN sets the level of that detector signal; KBAS and KWID filter it (a high-pass in Hz and a low-pass a set number of octaves above it). Leave MON OFF for normal listening; KEY OFF returns to compression driven by the receiving track itself.',
         alt: 'COMPRESSOR FX1 SETUP with KEY set to T2 and MON OFF.',
       },
       {

@@ -62,6 +62,7 @@ describe('Digi firmware download statistics', () => {
 
   it('never exposes a Digitakt II download before its machine-specific qualification', () => {
     expect(downloadAction('digitakt-ii')).toBeUndefined()
+    expect(downloadAction('analog-rytm-mkii')).toBeUndefined()
     expect(mocks.track).not.toHaveBeenCalled()
   })
 })

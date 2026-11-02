@@ -12,6 +12,7 @@ APP=HERE.parents[2]
 BASE=0x40000400
 STOCK_SHA='164f31224bf61181e3f50e7dec40df9afcae5b16dbf6e4c0d0cc5e986af0a84e'
 sha=lambda b:hashlib.sha256(b).hexdigest()
+HOOKS=('idle','job','transport','open','read','write','close','frame_entry','frame_exit','render_first','render_second')
 def json_bytes(value):return json.dumps(value,separators=(',',':')).encode()
 
 def populate(raw,symbols,original,pkg,configuration,base):
@@ -27,8 +28,8 @@ def populate(raw,symbols,original,pkg,configuration,base):
     for key,row in pkg['guards'].items():
         at=row['address']-BASE
         if sha(original[at:at+row['length']])!=row['sha256']:raise ValueError('Stock guard mismatch: '+key)
-        if key not in ('idle','job','transport','open','read','write','close'):continue
-        n=row.get('patchLength',row['length']);dst=symbols['olog_replay_'+key]-base
+        if key not in HOOKS:continue
+        n=row.get('replay',row.get('patchLength',row['length']));dst=symbols['olog_replay_'+key]-base
         if dst<0 or dst+n>len(raw):raise ValueError('Replay out of bounds')
         raw[dst:dst+n]=original[at:at+n]
     return bytes(raw)
@@ -62,7 +63,7 @@ def main():
     platform_build.link_runtime=native_link
     append,symbols,boot,_=platform_build.build([('core logger',Linked('core','unused',dram=True))],[],out/'platform',reserve=(placed[0].start,retained-placed[0].start),defsyms=defs)
     image=bytearray(original);writes=[*arena.pokes([reserve]),boot]
-    for key in ('idle','job','transport','open','read','write','close'):
+    for key in HOOKS:
         row=pkg['guards'][key];n=row.get('patchLength',row['length']);at=row['address']-BASE
         writes.append((row['address'],original[at:at+n],b'\x4e\xf9'+symbols['olog_'+key+'_hook'].to_bytes(4,'big')+b'\x4e\x71'*((n-6)//2),key))
     for address,expected,value,_ in writes:

@@ -2,6 +2,7 @@
 import { act, createElement, useEffect } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import type { DigiMachine } from '../devices/digi-mods'
 import { useDigiBuild } from './useDigiBuild'
 import { subscribeSiteDiagnosticEvents } from '../community/site-diagnostic-events'
 const mocked = vi.hoisted(() => ({ account: vi.fn(), prepare: vi.fn(), version: vi.fn(), build: vi.fn(), usage: vi.fn(), dispose: vi.fn(), stores: [] as unknown[] }))
@@ -17,15 +18,16 @@ vi.mock('../engine/elekloader/machine-build', () => ({
 }))
 let root: Root, container: HTMLDivElement, hook: ReturnType<typeof useDigiBuild>, cleanups: (() => void)[]
 const device = { key: 'PRIVATE device' }, file = new File(['PRIVATE bytes'], 'PRIVATE.syx'), modules = ['PRIVATE module']
+let machine: DigiMachine = 'digitakt'
 let storage: Parameters<typeof useDigiBuild>[4]
 function Harness() {
-  const current = useDigiBuild('digitakt', file, 'PRIVATE release', modules, storage)
+  const current = useDigiBuild(machine, file, 'PRIVATE release', modules, storage)
   useEffect(() => { hook = current }, [current])
   return null
 }
 const flush = () => new Promise(resolve => setTimeout(resolve, 0))
 beforeEach(async () => {
-  vi.clearAllMocks(); vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true); cleanups = []; mocked.stores.length = 0; storage = undefined
+  vi.clearAllMocks(); vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true); cleanups = []; mocked.stores.length = 0; storage = undefined; machine = 'digitakt'
   mocked.account.mockResolvedValue(undefined)
   mocked.prepare.mockResolvedValue({ ok: true, enabled: ['PRIVATE path'], check: { ok: true }, device })
   mocked.version.mockResolvedValue({ ok: true, name: 'PRIVATE name' })
@@ -39,6 +41,19 @@ async function check() { await act(async () => { hook.check(); await flush() });
 async function build() { await act(async () => { await hook.build('PRIVATE version') }) }
 
 describe('consent-bound Elekloader preparation and builds', () => {
+  it.each(['digitakt', 'digitone', 'digitakt-ii', 'analog-rytm-mkii'] as const)('attributes successful and failed %s builds without changing approval', async value => {
+    machine = value
+    await act(async () => { root.render(createElement(Harness)); await flush() })
+    await check()
+    mocked.build.mockResolvedValueOnce({ ok: true, files: [], log: [] })
+    await build()
+    expect(mocked.usage).toHaveBeenLastCalledWith('build_succeeded', value)
+    mocked.build.mockRejectedValueOnce(new Error('PRIVATE failure'))
+    await build()
+    expect(mocked.usage).toHaveBeenLastCalledWith('build_failed', value)
+    expect(mocked.usage).toHaveBeenCalledTimes(2)
+  })
+
   it('reports refused preparation and build results without any private fields, preserving failure views', async () => {
     const receive = subscribe()
     mocked.prepare.mockResolvedValueOnce({ ok: false, error: 'PRIVATE selection' })

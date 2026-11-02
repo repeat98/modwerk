@@ -3,7 +3,7 @@
   "id": "play-start",
   "key": "PLAY START",
   "name": "Play Start",
-  "version": "0.1.10-experimental",
+  "version": "0.1.11-experimental",
   "category": "system",
   "author": {
     "github": "jonathanwardle1992-beep",
@@ -64,8 +64,8 @@
       "key:PLAY"
     ],
     "limitations": [
-      "OS 1.40C. 0.1.9 card: with X, [PLAY] starts from step 1, but PERSONALIZE began ticked (two YES to clear). 0.1.10 packed, not flashed: MAGIC empty/X, one YES. 0.1.0–0.1.8 failed as in TESTING.md. USB Keep/Undo and ot_emu untested.",
-      "Conflicts with Mute Modes: both relocate the PERSONALIZE tables and poke the ANDY restore length.",
+      "OS 1.40C. 0.1.11 has not been flashed. The 0.1.9 card (PS 0.1.9): with X, [PLAY] starts from step 1, but PERSONALIZE began ticked. USB Keep/Undo and ot_emu untested.",
+      "Conflicts with Mute Modes: both still grow the same PERSONALIZE tables until #1023. The checkbox is not Mute Modes' battery word.",
       "MIDI START / CONTINUE / STOP do not follow this setting.",
       "An OS upgrade resets PERSONALIZE."
     ]
@@ -78,7 +78,7 @@
       "value": 274,
       "unit": "bytes",
       "method": "static",
-      "conditions": "Instruction-length sum of playstart.s (2/4/6-byte opcodes plus data), rounded up to even. m68k-elf-as was not on this Windows host, so this is not the linker report. Detours and ANDY pokes sit in stock space. No DSP memory.",
+      "conditions": "Instruction-length sum of playstart.s (2/4/6-byte opcodes plus data), rounded up to even. m68k-elf-as was not on this Windows host, so this is not the linker report. Detours sit in stock space. No DSP memory.",
       "source": "TESTING.md"
     },
     "processing": {
@@ -101,28 +101,28 @@
       "dsp": {
         "level": "minimal",
         "basis": "source-estimate",
-        "rationale": "No DSP code.",
+        "rationale": "No DSP program: PLAY START never runs on either DSP core.",
         "source": "manifest.py"
       },
       "memory": {
         "level": "minimal",
         "basis": "source-estimate",
-        "rationale": "Small ROM unit and one PERSONALIZE word with its battery shadow.",
+        "rationale": "Small ROM unit. The checkbox lives in that unit and is not Mute Modes' battery word.",
         "source": "TESTING.md"
       }
     }
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "0.1.9 same-unit: [PLAY] from step 1 when X, but PERSONALIZE began ticked and needed two YES to clear. 0.1.10 packed (MAGIC empty/X). Hardware LCD photos 25 Oct 2026: PLAY START empty and ticked; SYSTEM STATUS stamp reads PS 0.1.9.",
+    "summary": "0.1.11 is not flashed. 0.1.9 card: [PLAY] from step 1 when X, but PERSONALIZE began ticked. LCD photos show PS 0.1.9. Those results do not cover the move off Mute Modes' battery word.",
     "hardwareStatus": "reported",
     "evidenceRevision": "ca547781153c2ea03a16592985d3baa7e44e9791",
     "gates": [
       "modules/play-start/verify.py"
     ],
     "qualification": {
-      "moduleVersion": "0.1.10-experimental",
-      "sourceSha256": "e36e9fd52654f23a6e8b0d4aa3b9aa64bea69d49d8018526f9b98b6384ce302d",
+      "moduleVersion": "0.1.11-experimental",
+      "sourceSha256": "b6931760b73f0c0f22d764c3ede0c034f7e56b3f73be1769cd3fd5707319f8bc",
       "imageSha256": "275e74e4afcd9eee48b382fa5eb09496d62deca941990f7e93f193c20f3e6558",
       "cycles": [
         {
@@ -158,7 +158,7 @@
         "sharedBytes": 274,
         "maxInstances": 1,
         "totalBytes": 274,
-        "conditions": "Linked unit size reported by the private native compose (playstart 274 B). Detours and ANDY pokes occupy stock bytes. PERSONALIZE word 0x800000dc is stock SRAM, not extra module RAM. No DSP memory.",
+        "conditions": "Linked unit size reported by the private native compose (playstart 274 B, before the 0.1.11 edits). Detours occupy stock bytes. The checkbox word is inside this unit, not extra RAM and not 0x800000dc. No DSP memory.",
         "report": "TESTING.md"
       },
       "hardware": {
@@ -169,9 +169,9 @@
         "tester": "jonathanwardle1992-beep",
         "sourceRevision": "ca547781153c2ea03a16592985d3baa7e44e9791",
         "imageSha256": "275e74e4afcd9eee48b382fa5eb09496d62deca941990f7e93f193c20f3e6558",
-        "summary": "0.1.9 same-unit: with X, every [PLAY] starts from step 1. PERSONALIZE later began ticked and needed two YES to clear. Hardware LCD photos 25 Oct 2026 show PLAY START empty and ticked; SYSTEM STATUS stamp reads PS 0.1.9. 0.1.10 is packed (MAGIC empty/X, card SHA-256 above).",
+        "summary": "0.1.11 has not been flashed. The 0.1.9 card: with X, every [PLAY] starts from step 1, and PERSONALIZE later began ticked. LCD photos show PLAY START empty and ticked; the glass reads PS 0.1.9. They do not show the 0.1.11 settings-word change.",
         "limitations": [
-          "SYSTEM STATUS on the photographed unit reads PS 0.1.9, not the packed 0.1.10 ELEK stamp.",
+          "SYSTEM STATUS on the photographed unit reads PS 0.1.9. 0.1.11 has not been photographed.",
           "USB Keep/Undo, MIDI transport and ot_emu are untested.",
           "[REC] + [PLAY], pickup machines, chained patterns and an MKI panel are untested.",
           "PLAY START alone on a card build; Mute Modes cannot share PERSONALIZE with it.",
@@ -216,9 +216,9 @@
         "page": "SYSTEM STATUS",
         "shows": "location",
         "firmware": "1.40C",
-        "moduleVersion": "0.1.10-experimental",
+        "moduleVersion": "0.1.11-experimental",
         "imageSha256": "275e74e4afcd9eee48b382fa5eb09496d62deca941990f7e93f193c20f3e6558",
-        "setup": "Hardware photograph of the LCD, 25 October 2026. Cropped to the glass, two greys, 768x384 nearest neighbour. Photographed SYSTEM STATUS stamp reads PS 0.1.9. Packed 0.1.10 card SHA-256 is this field; firmware is not in git."
+        "setup": "Hardware photograph of the LCD, 25 October 2026. Cropped to the glass, two greys, 768x384 nearest neighbour. The glass reads PS 0.1.9. 0.1.11 has not been photographed. The recorded image SHA-256 is the earlier private card; firmware is not in git."
       }
     },
     {
@@ -233,7 +233,7 @@
         "page": "PERSONALIZE",
         "shows": "location-and-controls",
         "firmware": "1.40C",
-        "moduleVersion": "0.1.10-experimental",
+        "moduleVersion": "0.1.11-experimental",
         "imageSha256": "275e74e4afcd9eee48b382fa5eb09496d62deca941990f7e93f193c20f3e6558",
         "setup": "Same hardware session as ot-system.png. PLAY START selected, empty box."
       }
@@ -250,7 +250,7 @@
         "page": "PERSONALIZE",
         "shows": "location-and-controls",
         "firmware": "1.40C",
-        "moduleVersion": "0.1.10-experimental",
+        "moduleVersion": "0.1.11-experimental",
         "imageSha256": "275e74e4afcd9eee48b382fa5eb09496d62deca941990f7e93f193c20f3e6558",
         "setup": "Same hardware session as ot-system.png. PLAY START selected, ticked."
       }

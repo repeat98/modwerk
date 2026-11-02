@@ -70,7 +70,7 @@ const FAMILY_PAGE: Record<DeviceProfile['family'], { invite: string; unlock: str
     start: () => [
       ['Build the source', 'Build Erica Synths’ firmware with the toolchain its README names, and check that two builds give the same image.'],
       ['Boot a marked build', 'Change the start-up screen so it shows the build is modified, install it from the SD card, then put the official update back the same way.'],
-      ['Agree the base, then a first mod', 'A Modwerk base adds shared events to the source so mods combine. Your first mod ships with its source, documentation and test evidence from the unit.'],
+      ['Agree the base, then a first mod', 'A Modwerk base adds shared hooks to the source so mods combine. Your first mod ships with its source, documentation and test evidence from the unit.'],
     ],
     risk: ['Keep the bootloader', 'Update only from the SD card. Never run the full-flash or bootloader targets: if writing the bootloader fails, only a debug probe brings the unit back. Share source, not built images.'],
   },

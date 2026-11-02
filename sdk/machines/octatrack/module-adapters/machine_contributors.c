@@ -41,6 +41,43 @@ const uint8_t *machine_contribution(const struct runtime_dsp *d)
     (void)d; return 0;
 #endif
 }
+#if RUNTIME_SITE_EVENTS
+static uint32_t machine_word(const uint8_t *p)
+{ return (uint32_t)p[0] << 24 | (uint32_t)p[1] << 16 | (uint32_t)p[2] << 8 | p[3]; }
+static int machine_extent(const struct runtime_dsp *d, uint32_t at, uint32_t bytes)
+{ return d->image && !(at & 1u) && at <= d->image_bytes && bytes <= d->image_bytes - at; }
+#endif
+int machine_contributor_validate(const struct runtime_dsp *d, unsigned operation)
+{
+#if RUNTIME_SITE_EVENTS
+    if (!d || !d->present) return RUNTIME_OK;
+    uint32_t m = d->hook_offset[MODWERK_OT_MACHINES], s = d->hook_offset[MODWERK_OT_MACHINE_STARTS];
+    if (m == RUNTIME_NONE) return s == RUNTIME_NONE ? RUNTIME_OK : RUNTIME_MALFORMED;
+    if (!machine_extent(d, m, RECORD)) return RUNTIME_MALFORMED;
+    const uint8_t *record = d->image + m;
+    if (machine_word(record) != MODWERK_MACHINE_ABI || record[6] > record[7]) return RUNTIME_MALFORMED;
+    uint32_t flags = machine_word(record + 12);
+    uint32_t bytes = RECORD + ((flags & MODWERK_MACHINE_SETUP_PAGE) ? 8u : 0u);
+    if (!machine_extent(d, m, bytes)) return RUNTIME_MALFORMED;
+    int needs_start = !!(flags & MODWERK_MACHINE_START);
+    if (!needs_start) return s == RUNTIME_NONE ? RUNTIME_OK : RUNTIME_MALFORMED;
+    if (s == RUNTIME_NONE || !machine_extent(d, s, 16u) || (m < s + 16u && s < m + bytes))
+        return RUNTIME_MALFORMED;
+    const uint8_t *start = d->image + s;
+    if (machine_word(start) != MODWERK_MACHINE_START_ABI || machine_word(start + 4) != 16u)
+        return RUNTIME_MALFORMED;
+    /* Metadata PREPARE runs before allocation/relocation. Image validation and SWITCH check relocated words;
+     * missing/wrong relocation refuses before publication, even if PREPARE admitted the encoded offsets. */
+    uint32_t base = operation == RUNTIME_METADATA_PREPARE ? 0u : MW_IMAGE_ADDRESS(d->image);
+    if (operation != RUNTIME_METADATA_PREPARE && operation != RUNTIME_METADATA_SWITCH) return RUNTIME_MALFORMED;
+    uint32_t owner = machine_word(start + 8), call = machine_word(start + 12);
+    if (m > UINT32_MAX - base || owner != base + m || call < base || (call & 1u) || call - base >= d->image_bytes)
+        return RUNTIME_MALFORMED;
+#else
+    (void)d; (void)operation;
+#endif
+    return RUNTIME_OK;
+}
 static int same_machine(const uint8_t *a, const uint8_t *b) { return a && b && a[4] == b[4] && a[5] == b[5]; }
 const struct machine_retirement *machine_retirement(const uint8_t *record)
 {

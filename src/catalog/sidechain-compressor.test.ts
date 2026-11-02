@@ -12,8 +12,8 @@ import manifest from '../../sdk/octabam/modules/sidechain-compressor/octamod.mod
 const key = (ids: readonly string[], keep: boolean) => [...ids].sort().join('+') + ':' + keep
 const visible = ['miniverb', 'tapeecho', 'euclid', 'repitch', 'tapehead', 'usb-audio-out-tracks-main-cue', 'quantizer', 'previewvol', 'cc-map']
 const suites = [
-  { name: 'original eight modules', data: composition, built: 200, scope: ['spectrum', 'modulation', 'character', 'miniverb', 'tapeecho', 'euclid', 'repitch', 'tapehead', 'sidechain-compressor'], member: (ids: string[]) => ids.includes('sidechain-compressor'), expected: 512 },
-  { name: 'nine visible modules without Analog BD', data: visibleProofs, built: 786, scope: [...visible, 'sidechain-compressor'], member: (ids: string[]) => ids.includes('sidechain-compressor'), expected: 1024 },
+  { name: 'original eight modules', data: composition, built: 169, scope: ['spectrum', 'modulation', 'character', 'miniverb', 'tapeecho', 'euclid', 'repitch', 'tapehead', 'sidechain-compressor'], member: (ids: string[]) => ids.includes('sidechain-compressor'), expected: 512 },
+  { name: 'nine visible modules without Analog BD', data: visibleProofs, built: 618, scope: [...visible, 'sidechain-compressor'], member: (ids: string[]) => ids.includes('sidechain-compressor'), expected: 1024 },
   { name: 'Analog BD', data: analogProofs, built: 0, scope: ['analog-bassdrum', ...visible, 'sidechain-compressor'], member: (ids: string[]) => ids.includes('sidechain-compressor') && ids.includes('analog-bassdrum') && [2, 3, 11].includes(ids.length), expected: 22 },
 ]
 const refusalClass = /overruns the region|label formatters do not fit|wide dial hook|chooser list of|not free|past the stock zero run|fits neither the clone window|stock effects only/
@@ -59,18 +59,23 @@ describe('Sidechain Compressor native evidence on the shared builder', () => {
       expect(proof, other + ' ' + keep).toBeDefined(); expect(proof).not.toHaveProperty('error')
     }
   })
-  it('builds beside every other visible module and every pair of them, in both menu modes', () => {
-    // The promise made to users: adding it never costs a selection of one or two other modules.
+  it('builds beside every other visible module and every pair of them but Euclid with Scale Quantizer, in both menu modes', () => {
+    // The promise made to users: adding it never costs a selection of one other module, nor of two but one pair.
+    // Since 0.2.0 (two ColdFire units, 1,216 B) Euclid + Scale Quantizer leave no effect-menu room for it.
     const smallSets = visibleProofs.proofs.filter(proof => proof.moduleIds.length <= 3)
     expect(smallSets).toHaveLength(2 * (1 + visible.length + visible.length * (visible.length - 1) / 2))
-    for (const proof of smallSets) expect(proof, key(proof.moduleIds, proof.keepStockFx2)).not.toHaveProperty('error')
+    const refused = (ids: readonly string[]) => ids.length === 3 && ids.includes('euclid') && ids.includes('quantizer')
+    for (const proof of smallSets) {
+      if (refused(proof.moduleIds)) expect(proof.error, key(proof.moduleIds, proof.keepStockFx2)).toMatch(refusalClass)
+      else expect(proof, key(proof.moduleIds, proof.keepStockFx2)).not.toHaveProperty('error')
+    }
     // Larger selections that fit without it still do, except where the effect menus have no room left for it.
     for (const proof of visibleProofs.proofs) if ('error' in proof && proof.moduleIds.length > 3) expect(proof.error).toMatch(refusalClass)
   })
   it('pins the native image of the module alone, both menu modes', () => {
     const alone = (keep: boolean) => composition.proofs.find(proof => key(proof.moduleIds, proof.keepStockFx2) === key(['sidechain-compressor'], keep))!
-    expect(alone(true)).toMatchObject({ bytes: 1112560, sha256: '2816f0bce5aaabfadac6dba9e778dc184b8af3e4a611990d6e6b3e36095bc5eb' })
-    expect(alone(false)).toMatchObject({ bytes: 1112560, sha256: '9b6342c28437f026673d07bb8ac3680626f4ee6f89c01637ac3ea01e6ae9c324' })
+    expect(alone(true)).toMatchObject({ bytes: 1112560, sha256: '131142e1839bf1a62b48929dee396cc23b1f2f27f33595a9e6f39bf57f7be22e' })
+    expect(alone(false)).toMatchObject({ bytes: 1112560, sha256: '6a916c39c1243642324a86abde53bafe88a0e363005ac3e0c79ec02ba376b6c6' })
   })
   it('retains the historical Analog BD refusals without treating them as current limits', () => {
     expect(analogProofs.proofs.every(proof => 'error' in proof)).toBe(true)
@@ -89,7 +94,7 @@ describe('Sidechain Compressor native evidence on the shared builder', () => {
     const current = () => parseModuleDocument(JSON.parse(JSON.stringify(manifest)))
     expect(() => requireModuleQualificationForPublication(current())).not.toThrow()
     expect(current().tests.hardwareStatus).toBe('reported')
-    expect(current().tests.qualification?.hardware).toMatchObject({ kind: 'functional', status: 'reported', model: 'MKI', imageSha256: '2816f0bce5aaabfadac6dba9e778dc184b8af3e4a611990d6e6b3e36095bc5eb' })
+    expect(current().tests.qualification?.hardware).toMatchObject({ kind: 'functional', status: 'reported', model: 'MKI', imageSha256: '131142e1839bf1a62b48929dee396cc23b1f2f27f33595a9e6f39bf57f7be22e' })
     // The pinned image is the one the hardware report names.
     expect(composition.proofs.find(proof => key(proof.moduleIds, proof.keepStockFx2) === key(['sidechain-compressor'], true))!.sha256).toBe(current().tests.qualification!.imageSha256)
     // The owner's 5 October waiver covered 0.1.1 only.

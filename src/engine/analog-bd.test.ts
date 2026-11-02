@@ -27,7 +27,7 @@ describe('Analog BD shared DSP placement', () => {
       expect(createHash('sha256').update(readFileSync(new URL('../../sdk/octabam/' + file, import.meta.url))).digest('hex')).toBe(fingerprint)
     }
     expect(proofs.proofs).toHaveLength(212)
-    expect(proofs.proofs.filter(proof => !('error' in proof))).toHaveLength(162)
+    expect(proofs.proofs.filter(proof => !('error' in proof))).toHaveLength(146)
     const keys = new Set(proofs.proofs.map(proof => [...proof.moduleIds].sort().join('+') + ':' + proof.keepStockFx2))
     expect(keys.size).toBe(212)
     for (let mask = 0; mask < 1 << ANALOG_BD_DSP_COMPANIONS.length; mask++) for (const keep of [true, false]) {

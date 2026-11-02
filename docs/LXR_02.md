@@ -43,7 +43,7 @@ Whole images per module selection would need a native build for every combinatio
 
 1. **One base per version**, built in CI from the pinned upstream commit plus Modwerk's own changes, installed once with the SD-card updater. Its source is this repository.
 2. **Modules as position-independent code** that the base loads from a folder on the SD card into RAM at boot, built in CI per module version. Installing a module set means writing files to the card: no reflash, and the official update still restores everything.
-3. **A USB-MIDI SysEx link** that the [runtime loader](../sdk/runtime/loader/README.md#porting-to-another-machine) and the MCP's device tools drive, for review, trial in RAM, self-test, Keep (written to the SD card) and Undo, like the Octatrack. The Cortex-M7 glue needs its own port: cleaning the data cache and invalidating the instruction cache after a load, and pausing audio DMA.
+3. **A USB-MIDI SysEx link** that the [runtime loader](../sdk/runtime/loader/README.md#porting-to-another-machine) and the MCP's device tools drive, for review, trial in RAM, Keep (written to the SD card) and Undo, like the Octatrack. The Cortex-M7 glue needs its own port: cleaning the data cache and invalidating the instruction cache after a load, and pausing audio DMA.
 
 ## Decisions for the owner
 
@@ -52,7 +52,7 @@ Whole images per module selection would need a native build for every combinatio
 3. Modules on this machine accept only GPL-3.0-compatible licences.
 4. The install route: base plus SD-loaded modules (recommended) or whole images per selection.
 5. Who has a unit for the `boot` step and every later hardware result.
-6. Whether to tell Erica Synths about the page (not required: the page uses the names only as compatibility statements).
+6. When to tell Erica Synths. The page uses the names only as compatibility statements, so it needs no notice; the [modding guidelines](../MODDING_GUIDELINES.md) ask for one before the first public download.
 
 ## Next steps
 

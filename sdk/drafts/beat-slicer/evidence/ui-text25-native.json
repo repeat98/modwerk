@@ -1,0 +1,60 @@
+{
+  "scope": "UI-label target execution: 12962 tempo labels, 2145 slice counts, capacity/canary and invalid-input checks",
+  "sourceSha256": {
+    "ui_text.c": "9f147e08dd16fe2fdc8714114a59850acddabd27bed0d24123a5dd172ffb780b",
+    "ui_text.h": "bedfdd20498c3e7593e815a42f6be011e5326000b02a4e82bbd2f234a5f2b130",
+    "test_ui_text.c": "e09ae24a0e5fc4800687758e8e9669a9f4d6baffabbb5c517edf43e4080733ce",
+    "ui_text_native.py": "a90434477cfb1fa6c0fe720a8737460ab5fbe113586ec18ff38322211d344dc4",
+    "stock_probe/job_probe.cpp": "eba70897030ec3b8804de5641d533955455761df75c19db278438006bc8b4e1a",
+    "stock_probe/CMakeLists.txt": "0fdf07fc0ba7e50370f6fcea2634170b127c684b095ac523f96841dcc94e92dc"
+  },
+  "compiler": "m68k-elf-gcc (GCC) 16.2.0",
+  "flags": [
+    "-std=c99",
+    "-mcpu=5475",
+    "-msoft-float",
+    "-O2",
+    "-ffreestanding",
+    "-fno-builtin",
+    "-fno-common",
+    "-fno-jump-tables",
+    "-fno-tree-loop-distribute-patterns",
+    "-fno-optimize-sibling-calls",
+    "-fno-asynchronous-unwind-tables",
+    "-fno-unwind-tables",
+    "-fno-ident",
+    "-fstack-usage",
+    "-Wall",
+    "-Wextra",
+    "-Werror",
+    "-pedantic",
+    "-fno-late-combine-instructions"
+  ],
+  "objectSha256": {
+    "ui_text.o": "0b5c9f9bac74d1b14bda2fc55d603da956a48499977da19ce543f65c1d9085cf",
+    "test_ui_text.o": "eff999c2142764905dbbcb95f3812c72959ca0f4430db290a2a2cf1ccde8c665"
+  },
+  "runnerSha256": "fa8c5f47aab4d97bff73d8afaea9b69701c1a1df095062460f2c3bbeb9969103",
+  "codegenGuard": "passed",
+  "freestandingLink": true,
+  "formatterSize": [
+    "text\t   data\t    bss\t    dec\t    hex\tfilename",
+    "   1226\t      0\t      0\t   1226\t    4ca\t/evidence/ui-text-native4/ui_text.o"
+  ],
+  "formatterStackUsage": [
+    "/source/sdk/drafts/beat-slicer/ui_text.c:11:13:number\t20\tstatic",
+    "/source/sdk/drafts/beat-slicer/ui_text.c:30:5:bs_ui_plan_label\t64\tdynamic,bounded",
+    "/source/sdk/drafts/beat-slicer/ui_text.c:37:5:bs_ui_counts_label\t64\tdynamic,bounded"
+  ],
+  "exitCode": 0,
+  "stdout": [
+    "SOURCE_SHA256: eba70897030ec3b8804de5641d533955455761df75c19db278438006bc8b4e1a",
+    "PASS: cooperative preview target selftest and preserved registers"
+  ],
+  "stderrLines": 8,
+  "stderrSha256": "21495107133b98459d58d78262e4935ad828b0578af9c62da412effd72215f99",
+  "hardware": "not tested",
+  "audio": "not tested",
+  "timing": "not measured",
+  "nativeSourceAccess": "not implemented"
+}

@@ -1,4 +1,4 @@
-# Ringmod SC
+# Sidechain Ringmod
 
 ![A kick on the key track and another track's level dipping with each of its cycles](presentation/thumbnail.svg)
 

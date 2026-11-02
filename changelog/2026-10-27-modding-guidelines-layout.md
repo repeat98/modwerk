@@ -1,0 +1,1 @@
+Site: the modding guidelines page is easier to read. Each rule group sits in its own row, with its name beside its rules, and lines are shorter. The opening paragraph reads as the introduction, the closing references sit apart as a footnote, and links are coloured and underlined. In a narrow window the groups stack into one column.

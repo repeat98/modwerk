@@ -2,12 +2,11 @@
 | SPDX-FileCopyrightText: 2026 jonathanwardle1992-beep
 | playstart -- PERSONALIZE PLAY START checkbox, and the [PLAY] transport gate.
 |
-| SETTING 0x800000dc  MAGIC_OFF = empty = stock pause (default);
-|                     MAGIC_ON  = X = from step 1.
-| LIVE is 0/1 so YES and PLAY agree. 0.1.9 stored 0/1 and treated any
-| nonzero word as ticked, so leftover SRAM (or TRACK MUTES magic) showed
-| X and the first YES only filled LIVE. Same as TRACK MUTES: only
-| MAGIC_ON is on; YES xors that 0/1.
+| ps_setting  MAGIC_OFF = empty = stock pause (default);
+|             MAGIC_ON  = X = from step 1.
+| The word lives in this module, not in Mute Modes' battery word
+| 0x800000dc. It resets to empty on every boot until a base settings
+| store exists. LIVE is 0/1 so YES and PLAY agree. Only MAGIC_ON is on.
 |
 | Stock PLAY at 0x4006181a tests 0x460d1aec. If that word is 0 (this unit:
 | 0.1.5-0.1.8), it never reaches 0x40061822 / 0x40061848 / 0x40061856
@@ -21,8 +20,6 @@
 | jmp 0x40061892. Empty box keeps seqpause. 1aec!=0 branch still converted
 | the same way.
 
-    .equ SETTING,      0x800000dc
-    .equ SH_SETTING,   0x100fff6c
     .equ MAGIC_OFF,    0x50530000
     .equ MAGIC_ON,     0x50530001
     .equ TRANSPORT,    0x800066a0
@@ -47,7 +44,7 @@ ps_ticked:
     .align 2
 
 ps_load:
-    move.l  SETTING,%d0
+    move.l  ps_setting,%d0
     cmpi.l  #MAGIC_ON,%d0
     beq.b   pl_on
     clr.l   LIVE
@@ -78,14 +75,13 @@ set_playstart:
     andi.l  #1,%d0
     move.l  %d0,LIVE
     addi.l  #MAGIC_OFF,%d0
-    move.l  %d0,SETTING
-    move.l  %d0,SH_SETTING
+    move.l  %d0,ps_setting
 sp_rts:
     rts
 
 | Z set if empty. Preserves d0 (TRANSPORT / SEQ).
 ps_enabled:
-    move.l  SETTING,%d1
+    move.l  ps_setting,%d1
     cmpi.l  #MAGIC_ON,%d1
     beq.b   pe_on
     clr.l   LIVE
@@ -152,25 +148,5 @@ ps_restart:
     .align 2
 LIVE:
     .long   0
-
-    .ifdef MODWERK_EVENTS
-    .global ps_restore
-ps_restore:
-    tst.b   ps_restored
-    bne.b   pr_done
-    move.l  SH_SETTING,%d0
-    cmpi.l  #MAGIC_ON,%d0
-    beq.b   pr_on
-    move.l  #MAGIC_OFF,%d0
-pr_on:
-    move.l  %d0,SETTING
-    andi.l  #1,%d0
-    move.l  %d0,LIVE
-    moveq   #1,%d0
-    move.b  %d0,ps_restored
-pr_done:
-    rts
-ps_restored:
-    .byte 0
-    .balign 2
-    .endif
+ps_setting:
+    .long   MAGIC_OFF

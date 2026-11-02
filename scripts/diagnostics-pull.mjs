@@ -46,13 +46,14 @@ const line = ({ createdAt, username, data }) => [when(createdAt), '@' + username
   data.live?.cpu && 'cpu ' + data.live.cpu.map(percent).join('/'), data.modules?.map(module => module.id + '@' + module.catalogVersion).join(',')].filter(Boolean).join(' ')
 function percent(permille) { return (permille / 10).toFixed(1) + '%' }
 /** The loader's refusals (loader.h runtime_refusal), as a restore's set record names its first refused package's (modset.c). */
-const REFUSALS = ['no refusal', 'malformed', 'module memory', 'conflict', 'no free handle', 'busy', 'DSP time', 'in use', 'stock bytes differ', 'a base event', 'a base feature down']
+const REFUSALS = Object.assign(['no refusal', 'malformed', 'module memory', 'conflict', 'no free handle', 'busy', 'DSP time', 'in use', 'stock bytes differ', 'a base event', 'a base feature down'],
+  { 0x100: 'the last start crashed or froze loading it' }) // modset.c's boot guard, past the loader's codes
 /** An incident from the unit's own log (diag.c): when in its session, what, and what the unit was doing. */
 const ids = r => [...r.machines, ...r.fx, ...r.keys].slice(0, 4 * r.a).map((b, i, all) => i % 4 ? '' : all.slice(i, i + 4).map(x => x.toString(16).padStart(2, '0')).join('')).filter(Boolean)
 const STATELESS = ['crash', 'stall', 'set', 'base'] // records that carry no cpu, keys or screen
 const incident = r => `#${r.seq} start ${r.boot} +${Math.floor(r.second / 60)}m${r.second % 60}s ${r.kind}` +
   (r.kind === 'base' ? ` ${r.a.toString(16).padStart(8, '0')}` : r.kind === 'set' ? ` ${r.a} installed: ${ids(r).map(id => MODULE_NAMES.get(id) ?? id).join(', ') || 'none'}` +
-    (r.screen ? `; refused ${MODULE_NAMES.get(r.screen.toString(16).padStart(8, '0')) ?? r.screen.toString(16).padStart(8, '0')} (${REFUSALS[r.tempo24] ?? 'refusal ' + r.tempo24})` : '') : '') +
+    (r.tempo24 === 0x101 ? '; all held: the last start crashed or froze' : r.screen ? `; refused ${MODULE_NAMES.get(r.screen.toString(16).padStart(8, '0')) ?? r.screen.toString(16).padStart(8, '0')} (${REFUSALS[r.tempo24] ?? 'refusal ' + r.tempo24})` : '') : '') +
   (r.kind === 'freeze' ? (r.a ? ` ${(r.a * 16 / 44100).toFixed(1)} s` : ' until a restart') : r.kind === 'hot' ? ` (${r.a} half-seconds at 90 %+)` : r.kind === 'crash' ? ` pc 0x${r.a.toString(16)}` : r.kind === 'stall' ? ` reason ${r.a}` : r.kind === 'shed' ? ` ${r.a & 0xffffff} renders skipped, tracks ${[...Array(8).keys()].filter(t => r.a >>> 24 >> t & 1).map(t => t + 1).join(',')}` : '') +
   (STATELESS.includes(r.kind) ? '' : `, cpu ${percent(r.cpu)} T1-4 ${percent(r.dsp1to4)} T5-8 ${percent(r.dsp5to8)}, ${r.playing ? 'playing' : 'stopped'} at ${(r.tempo24 / 24).toFixed(1)} BPM, screen 0x${r.screen.toString(16)}` +
     `, keys ${r.keys.filter(k => k !== 255).map(k => k.toString(16)).join(' ') || '-'}, fx ${r.fx.map(f => f.toString(16)).join(' ')}, machines ${r.machines.join(' ')}`)
@@ -89,7 +90,8 @@ export function unitLines(incidents) {
 }
 
 /** The base's saved-set result (modset.c) as a reading's `saved` reports it; 1-6 are what a boot's restore found. */
-const SAVED = ['', 'RESTORED', 'nothing saved', 'skipped (FUNC held)', 'another base’s set', 'damaged', 'refused', 'saved', 'save failed', 'too big']
+const SAVED = ['', 'RESTORED', 'nothing saved', 'skipped (FUNC held)', 'another base’s set', 'damaged', 'refused', 'saved', 'save failed', 'too big',
+  'left out after a failed start', 'held after a failed start']
 
 /** Each member's records in order: the bases, set reloads, the last finished self-test and the event counts. */
 export function members(events) {
@@ -104,9 +106,9 @@ export function members(events) {
     else if (member.connected && data.reading) {
       member.connected = false
       const { saved, savedCount, live } = data.reading, last = member.reloads.at(-1)
-      // A refused restore (6) names what it dropped: the modules the site saw before, missing now.
-      const missing = saved === 6 && data.modules?.length && member.modules ? member.modules.filter(id => !data.modules.some(m => m.id === id)) : []
-      if (saved >= 1 && saved <= 6 && !(last && last.saved === saved && last.savedCount === savedCount && last.live === live))
+      // A refused restore (6, or 10 the boot guard's) names what it dropped: the modules the site saw before, missing now.
+      const missing = (saved === 6 || saved === 10) && data.modules?.length && member.modules ? member.modules.filter(id => !data.modules.some(m => m.id === id)) : []
+      if ((saved >= 1 && saved <= 6 || saved === 10 || saved === 11) && !(last && last.saved === saved && last.savedCount === savedCount && last.live === live))
         member.reloads.push({ at: createdAt, saved, savedCount, live, missing })
     }
     if (data.modules?.length) member.modules = data.modules.map(m => m.id)

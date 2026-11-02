@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="192" viewBox="0 0 320 192" class="signal-art" fill="none" stroke-linecap="round" stroke-linejoin="round" role="img" aria-labelledby="title description">
+<title id="title">RETRIG GRID</title>
+<desc id="description">Pad retrigs started between two steps: stock keeps them at the press's offset from the steps, Retrig Grid plays the press and then puts the retrigs on the sequencer's grid. Original conceptual illustration, not an instrument screen or a measured result.</desc>
+<style>.signal-grid{stroke:#fff;opacity:.035;stroke-width:.7}.signal-main{stroke:#9eb4ed;stroke-width:2.7}.signal-secondary{stroke:#9eb4ed;opacity:.65;stroke-width:1.7}.signal-ghost{stroke:#9eb4ed;opacity:.2;stroke-width:1.3}.signal-art text{fill:#9eb4ed;opacity:.8;font:10px monospace;letter-spacing:.7px;stroke:none}</style>
+<rect width="320" height="192" fill="#232328"/>
+<g class="signal-grid"><path d="M20 52H300"/><path d="M20 97H300"/><path d="M20 142H300"/><path d="M64 33V163"/><path d="M128 33V163"/><path d="M192 33V163"/><path d="M256 33V163"/></g>
+<g>
+<path class="signal-ghost" d="M40 78H280"/><path class="signal-ghost" d="M91 78V60M106 78V60M121 78V60M136 78V60M151 78V60M166 78V60M181 78V60M196 78V60M211 78V60M226 78V60M241 78V60M256 78V60M271 78V60"/>
+<path class="signal-main" d="M40 128H280"/><path class="signal-secondary" d="M91 128V108"/><path class="signal-main" d="M115 128V104M130 128V104M145 128V104M160 128V104M175 128V104M190 128V104M205 128V104M220 128V104M235 128V104M250 128V104M265 128V104M280 128V104"/>
+<path class="signal-secondary" d="M40 156H280"/><path class="signal-secondary" d="M40 148V160M55 152V160M70 152V160M85 152V160M100 148V160M115 152V160M130 152V160M145 152V160M160 148V160M175 152V160M190 152V160M205 152V160M220 148V160M235 152V160M250 152V160M265 152V160M280 148V160"/>
+<path class="signal-ghost" d="M115 134V146M130 134V146M145 134V146M160 134V146M175 134V146M190 134V146M205 134V146M220 134V146M235 134V146M250 134V146M265 134V146M280 134V146" stroke-dasharray="2 4"/>
+<text x="40" y="44">STOCK: FROM THE PRESS</text><text x="280" y="44" text-anchor="end">RTRG 1/16</text>
+<text x="40" y="176">GRID FROM PLAY</text><text x="280" y="176" text-anchor="end">PRESS + GRID</text>
+</g>
+</svg>

@@ -51,7 +51,8 @@ describe('module detail parity across machines', () => {
       expect(html).toContain('Find it on your ' + DEVICES_BY_ID[mod.device].name)
       expect(html).toContain(document.version)
       expect(html).toContain('/sdk/' + mod.device + '/modules/' + mod.id + '/' + document.tests.report)
-      for (const control of document.controls) expect(html).toContain(control.doc.replaceAll('&', '&amp;'))
+      // Each control's text as React escapes it inside the page's <dd>: quotes and angle brackets too, not only &.
+      for (const control of document.controls) expect(html).toContain(renderToStaticMarkup(createElement('dd', null, control.doc)).slice(4, -5))
       expect(html).toContain('Added to configuration')
       expect(html).not.toContain('Find it on your Octatrack')
       expect(html).not.toContain('adjust on your Octatrack')

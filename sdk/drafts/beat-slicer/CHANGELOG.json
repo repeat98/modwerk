@@ -1,5 +1,508 @@
 [
   {
+    "version": "0.1.66-experimental",
+    "date": "2026-10-26",
+    "changes": [
+      "Add a 2-beat spacing between 1 and 4 beats.",
+      "Document the free-length recording workflow using the original BPM and beats per slice.",
+      "Public-beta candidate approved by the module author; compatible base and first-release review remain pending.",
+      "Explain PROJECT BPM and track time-stretch so playback uses the intended sample tempo."
+    ]
+  },
+  {
+    "version": "0.1.65-experimental",
+    "date": "2026-10-26",
+    "changes": [
+      "Show EMPTY for a recorder buffer with no audio or slice entries.",
+      "Keep YES on a truly empty buffer from opening a no-op confirmation.",
+      "Cancel a recorder-buffer grid if recording starts before its final commit.",
+      "Keep slice actions available after a confirmation window disappears.",
+      "Experimental review candidate; device testing remains pending."
+    ]
+  },
+  {
+    "version": "0.1.64-experimental",
+    "date": "2026-10-25",
+    "changes": [
+      "Create beat grids for inactive recording buffers without saving a sample first.",
+      "Keep pattern playback running for Flex, Static and recorder-buffer edits.",
+      "Leave empty recorder buffers empty; unrelated recording does not block an edit.",
+      "Retain stock marker behavior when recordings change length.",
+      "Experimental candidate; exact-build device qualification remains pending."
+    ]
+  },
+  {
+    "version": "0.1.63-experimental",
+    "date": "2026-10-25",
+    "changes": [
+      "Center the information block vertically beside the control form.",
+      "Align the BPM value, slice count and CREATE/REPLACE text to one right edge.",
+      "Approved UI design; exact-build hardware qualification remains pending."
+    ]
+  },
+  {
+    "version": "0.1.62-experimental",
+    "date": "2026-10-25",
+    "changes": [
+      "Show the BPM number without a repeated right-side label.",
+      "Show the slice count first, such as 3 SLICE.",
+      "Remove the version from the popup; retain version metadata for comparison and reverting.",
+      "Design checkpoint superseded by the approved 0.1.63 layout; not device-qualified."
+    ]
+  },
+  {
+    "version": "0.1.61-experimental",
+    "date": "2026-10-25",
+    "changes": [
+      "Label tempo selection BPM and center control values and the summary text.",
+      "Leave unused controls blank and outline the six control positions with dashed lines.",
+      "Keep the nearly full-height window and show version 0.1.61.",
+      "Design checkpoint superseded by the approved 0.1.63 layout; not device-qualified."
+    ]
+  },
+  {
+    "version": "0.1.60-experimental",
+    "date": "2026-10-25",
+    "changes": [
+      "Remove encoder letters; control position identifies its encoder.",
+      "Use a nearly full-height popup to cover the distracting AED header and tabs underneath.",
+      "Retain the right-side BPM, slice count and CREATE/REPLACE summary, and show version 0.1.60.",
+      "Keep 0.1.59 and the contributor-tested 0.1.58 as separate previous versions.",
+      "Known issue: the earlier USB Undo failure remains unresolved; this UI revision is not yet device-tested."
+    ]
+  },
+  {
+    "version": "0.1.59-experimental",
+    "date": "2026-10-25",
+    "changes": [
+      "Rename the editor action CREATE BEAT GRID and place it before CREATE SLICE GRID.",
+      "Use a compact popup with A\u2013C / D\u2013F encoder positions and a separate BPM, slice-count and create/replace summary.",
+      "Show version 0.1.59 in the popup; retain 0.1.58 as the previous tested version.",
+      "Keep unassigned C\u2013F encoders inert while the popup is open.",
+      "Known issue: USB Undo was not verified after the 0.1.58 trial; power-cycle recovery restored the original modules."
+    ]
+  },
+  {
+    "version": "0.1.58-experimental",
+    "date": "2026-10-25",
+    "changes": [
+      "Keep audio/DMA interrupts serviceable during file-backed metadata transactions; refuse heavy work from high-interrupt contexts.",
+      "Keep the opening snapshot stable through setup; revalidate at confirmation, without idle source polling.",
+      "Use encoder-only controls with four counts per step and bounded ends; remove slot locations and internal source messages.",
+      "Requires the revised private base. Recorder buffers and PCM operations remain unsupported; no Keep, flash or implicit save.",
+      "Known limits: TapeHead/Mini Verb coexistence, interrupt timing and USB Undo/removal require exact-build hardware qualification."
+    ]
+  },
+  {
+    "version": "0.1.57-experimental",
+    "date": "2026-10-25",
+    "changes": [
+      "Replace existing slices only after the native REPLACE SLICES? warning; NO leaves the old table intact.",
+      "Keep stock YES pending through temporary source work, revalidating before one publication; Back or another gesture cancels.",
+      "Use an outlined options window, inverted title and short labels/banners that fit the display.",
+      "Requires the revised private sample-editor base extension. File-backed Flex/Static only; recording buffers remain unsupported.",
+      "Known issue: MKII DSP stop and loss of audio reported during Flex slicing with TapeHead/Mini Verb active. This build is withdrawn from further trials."
+    ]
+  },
+  {
+    "version": "0.1.56-experimental",
+    "date": "2026-10-25",
+    "changes": [
+      "Omit new end markers with fewer than 64 frames remaining, retaining the original trim and existing slice records.",
+      "Keep a busy YES request pending until a fresh source is ready; NO, changed controls or stale source cancel it.",
+      "Show a specific short-trim message; fix busy status that remained after readiness returned.",
+      "Module-only staging update for the existing private base. File-backed Flex/Static only; recording buffers are excluded.",
+      "Known issue: contributor's 22 MB / 122 BPM failure requires an exact corrected-build device retest; audio and persistence remain unqualified."
+    ]
+  },
+  {
+    "version": "0.1.55-experimental",
+    "date": "2026-10-25",
+    "changes": [
+      "Stage an independent exact-grid controller and shared AED service for file-backed Flex/Static, without PCM reads.",
+      "Add stock confirmation, source/owner retirement and verified failure rollback. Preserve complete old records or refuse; use stock slice clearing, with no added Undo.",
+      "Fix ColdFire action-record alignment and distinguish retryable busy from refused edits. Validate the actual target-built package and both stock-free scans.",
+      "Pass native/browser base parity and combined Flex/Static emulator preview, native confirmation, stock clearing and USB Undo. Hardware remains untested.",
+      "Private base opt-in and owner review required. Stopped playback/recording only. Hardware, audio, persistence and companions remain unqualified; smoothing is deferred."
+    ]
+  },
+  {
+    "version": "0.1.54-experimental",
+    "date": "2026-10-24",
+    "changes": [
+      "Add a separate exact-grid preview from copied settings, with no PCM reader, snap search or fade-safety claim.",
+      "Keep geometry results distinct from audio-qualified plans; preserve retained starts and refuse invalid tempo, trim or slice overflow without changing output.",
+      "Check independent rational deadlines and parity with the exact audio planner on host sanitizers and the SDK MCF54455 target.",
+      "Known issue: no production copied-settings service or live Flex device preview. The earlier private USB probe result remains bound to 0.1.53 source."
+    ]
+  },
+  {
+    "version": "0.1.53-experimental",
+    "date": "2026-10-24",
+    "changes": [
+      "Fix the private USB probe build to use the SDK MCF54455 target instead of the emulator-oriented MCF5475 override.",
+      "Reject scale-eight and word-sized indexed operands that MCF54455 reports as address errors; reject the exact failed 0.1.52 package before USB access.",
+      "Preserve the physical failure and post-restart baseline verification separately from host/CPU preparation evidence.",
+      "Hardware: corrected probe passes physical self-test and planner diagnostic on an empty pattern (72.4% peak CPU); Undo restores the exact original module set. Earlier playing-pattern CPU failure retained separately. Live Flex preview and Apply remain pending."
+    ]
+  },
+  {
+    "version": "0.1.52-experimental",
+    "date": "2026-10-24",
+    "changes": [
+      "Prepare a private USB planner probe on the existing tick/draw hooks, with fixed inputs and an on-screen PASS/FAIL result; no instrument sample access.",
+      "Build and test the exact 2,280-byte package through real loader/CPU install, Undo and reinstall; scan saved package bytes and preserve display bounds.",
+      "Provide a read-only review and explicit temporary trial client using the standard frontend validator, actual self-test and automatic Undo, with no Keep.",
+      "Hardware failure: the 0.1.52 probe restarted the MKII with vector 3 in text drawing. Original base and 11-module inventory were verified after restart; no self-test or Undo pass."
+    ]
+  },
+  {
+    "version": "0.1.51-experimental",
+    "date": "2026-10-24",
+    "changes": [
+      "Cancel outgoing owner preview exchanges before loader publication and menu retirement, preserving unrelated previews.",
+      "Check RUNNING, WAITING and READY replacement/removal, restoration, source-lock refusal and partial cancellation with generated PCM.",
+      "Exercise partial/full set rollback and Keep; old outputs stay refused, while unaffected and fresh activations match complete planner oracles.",
+      "Known issue: source locks and PCM remain synthetic. Production handles, independent packages, native reference retirement, USB and hardware qualification remain pending."
+    ]
+  },
+  {
+    "version": "0.1.50-experimental",
+    "date": "2026-10-24",
+    "changes": [
+      "Add a proposed outgoing-activation retirement adapter for the existing loader metadata SWITCH callback; preparation and unchanged companions keep their activations.",
+      "Exercise replacement then restoration without an intervening lease query, removal and a refused switch; affected old menu actions cannot revive.",
+      "Check partial-set disconnect rollback and Keep through the real loader/upload controller in host and native cached/uncached fixtures.",
+      "Known issue: refused switches conservatively retire affected activations; reopening needs a fresh activation. Production board hooks, source retirement and USB remain unimplemented."
+    ]
+  },
+  {
+    "version": "0.1.49-experimental",
+    "date": "2026-10-24",
+    "changes": [
+      "Reduce protected metadata-copy overhead with a two-record loop while preserving all 64 records, inactive rows and volatile read order.",
+      "Compare native four-marker and full-table profiles against the previous source under matched fixtures; retain recording recovery and complete-plan checks.",
+      "Keep both resident menu layouts inside the same eight-page reservation and require balanced observer diagnostics before accepting UI checkpoints.",
+      "Known issue: measured instruction savings do not establish physical latency, cache safety, complete writer coverage or production USB readiness."
+    ]
+  },
+  {
+    "version": "0.1.48-experimental",
+    "date": "2026-10-24",
+    "changes": [
+      "Measure protected source work with a full 64-slice table created through the normal stock menu before preview admission.",
+      "Use a EXACT/64-beat measurement request to retain all existing starts without exceeding capacity; verify five full plans and recording recovery.",
+      "Preserve prepared markers/source/card in the dense run. Documentation: list first USB preview trial gates separately from full Apply and release acceptance.",
+      "Wait for balanced wrapper diagnostics at bounded checkpoints; correct the recording report WAITING flag without rewriting historical evidence.",
+      "Known issue: instruction maxima are workload-specific, not physical latency, cache/ISR qualification or an installable USB module."
+    ]
+  },
+  {
+    "version": "0.1.47-experimental",
+    "date": "2026-10-24",
+    "changes": [
+      "Measure protected source sections through exact original mask/restore instructions without inserting native profiling callbacks.",
+      "Separate async bookkeeping, metadata validation and PCM-copy costs; verify balanced windows, preserved caller SR and exact lookup counts.",
+      "Retain full recording invalidation/recovery, whole-plan comparisons and source/card/code preservation in the profiled run.",
+      "Known issue: these are executed instruction measurements for one stopped Flex fixture, not physical timing, full ISR cost or production USB qualification."
+    ]
+  },
+  {
+    "version": "0.1.46-experimental",
+    "date": "2026-10-24",
+    "changes": [
+      "Compose the private resident menu and UI/engine preview with shared recorder and preparation exclusion in both stock slice-menu layouts.",
+      "Preserve stock recording dismissal: cancel the preview without another PCM read, stay closed after Stop and accept a fresh editor opening.",
+      "Keep ordinary waveform work conservative when private read classification is disabled; stale output remains unavailable.",
+      "Fit the combined fixture in its existing eight-page reservation by omitting its unused direct-result copy; normal fixtures remain unchanged.",
+      "Known issue: immutable menu storage, private waveform classification and incomplete writer/cache coverage do not qualify a production USB module or device use."
+    ]
+  },
+  {
+    "version": "0.1.45-experimental",
+    "date": "2026-10-24",
+    "changes": [
+      "Exercise exact wake identity with identical foreign and owned records queued together; a pending flag or opcode alone cannot consume the owned wake.",
+      "Keep a blocked preview WAITING without self-polling; cancel it before unblocking and verify that old work and output never revive.",
+      "Retire the fixed owner, refuse new requests and preserve the last copied output without further source reads or callback-storage reclamation.",
+      "Retain recording and source-preservation checks; seven full oracle plans run only on the engine with balanced wakes and bounded callbacks.",
+      "Known issue: fixed-owner tests do not qualify loader removal, complete writer/cache ownership, production source/UI/USB integration or hardware."
+    ]
+  },
+  {
+    "version": "0.1.44-experimental",
+    "date": "2026-10-24",
+    "changes": [
+      "Run the private shared-guard preview consumer from the stock engine idle/job topology, with copied request and result access from the producer.",
+      "Bound each callback to one work call and at most eight private transitions plus one PCM copy; coalesce exact immutable wakes and do not self-poll WAITING.",
+      "Validate five complete plans and recording invalidation/recovery; watched PCM lookups occur only on the engine task, separate from the producer.",
+      "Keep every ordinary engine command conservative, preserve the original receive call, source/settings, native code/canaries and unsaved card.",
+      "Known issue: fixed ownership, complete writer/cache coverage, production source/UI/USB integration, Apply/playback and hardware remain unqualified."
+    ]
+  },
+  {
+    "version": "0.1.43-experimental",
+    "date": "2026-10-24",
+    "changes": [
+      "Connect the private fixed-lifetime Flex reader to the shared recorder, preparation and engine guard in a reserved-memory full boot.",
+      "Refuse RUNNING and READY previews after normal recording starts, before another PCM copy; Stop and editor restoration cannot revive old tokens.",
+      "Validate four fresh complete plans against the host PCM oracle; preserve original source/settings, code, canaries and the unsaved card.",
+      "Correct the preparation-call probe to distinguish two real arguments from adjacent caller storage; restore the Flex source through normal track selection.",
+      "Known issue: borrowed-main scheduling, fixed ownership, other writers/cache, production API, USB, Apply/playback and hardware remain unqualified."
+    ]
+  },
+  {
+    "version": "0.1.42-experimental",
+    "date": "2026-10-24",
+    "changes": [
+      "Bracket whole recorder preparation calls before pending-state publication, sharing balanced native scopes with the recorder and engine guards.",
+      "Pass 192 paired preparation calls and retain 896 recorder comparisons, including observer faults, caller arguments, SR and every external store.",
+      "Close the observed 24-store preparation gap per track in normal start/retrigger/STOP full boots; preserve prepared Flex source and the unsaved card.",
+      "Observe caller interrupt-mask level 5 for preparation and recorder callbacks; retain exact native instruction and isolated stack measurements.",
+      "Known issue: other recording modes, complete writer/cache ownership, physical timing, USB, Apply/playback and hardware remain unqualified."
+    ]
+  },
+  {
+    "version": "0.1.41-experimental",
+    "date": "2026-10-24",
+    "changes": [
+      "Compose compiled recorder and engine observers with one guard in a reserved-memory full boot; preserve the original queue receive call.",
+      "Check normal start, retrigger and STOP on tracks 1/8: observed PCM writes hold recorder tickets and map-tail cleanup holds engine tickets.",
+      "Identify 24 unguarded preparation stores per track; do not enable a production source reader or present partial coverage as qualification.",
+      "Require real job/idle bootstrap, distinguish SELECT ALL preparation from recording, and preserve prepared Flex data, native code and the card.",
+      "Known issue: preparation, Pickup/overdub, complete writer/cache ownership, physical timing, USB, Apply/playback and hardware remain unqualified."
+    ]
+  },
+  {
+    "version": "0.1.40-experimental",
+    "date": "2026-10-24",
+    "changes": [
+      "Prototype recorder entry/return scopes with paired caller identity, bank classification, independent writer tickets and terminal fault refusal.",
+      "Run 896 original/guarded ColdFire comparisons, preserving registers, SR, caller arguments, external writes and stock cleanup after observer faults.",
+      "Distinguish two exact idle voice-flag clears from source writes; retain both in the full stock-write comparison.",
+      "Bound private placement, replay identities, stack canaries and observer instruction counts; no production hook or source service is enabled.",
+      "Known issue: full-boot composition, Pickup/overdub, interrupt/cache timing, complete writer coverage, USB and hardware remain unqualified."
+    ]
+  },
+  {
+    "version": "0.1.39-experimental",
+    "date": "2026-10-24",
+    "changes": [
+      "Trace normal panel recording, retrigger and STOP on tracks 1/8 while preserving unrelated Flex audio/settings and the private card.",
+      "Distinguish pending, selected-active and retained inactive recorder banks; observe pending bytes inside four-byte publications.",
+      "Exercise 48 two-bank fixtures and 16 delayed follow-up calls across both stereo widths, tracks 1/8 and both banks.",
+      "Validate the highest physical recorder page and retain caller, PCM-write and deferred map-cleanup evidence.",
+      "Known issue: these probes do not install recorder exclusion or qualify Pickup/overdub, complete source ownership, USB, Apply/playback or hardware."
+    ]
+  },
+  {
+    "version": "0.1.38-experimental",
+    "date": "2026-10-24",
+    "changes": [
+      "Add a proposed typed menu descriptor with initialized-image bounds, bounded copied labels and exact published-owner admission.",
+      "Resolve only the admitted action; refuse malformed records, forged owners and retired activations after replacement or restore.",
+      "Exercise host and ColdFire paths with the real loader, an independent package digest and an original uploaded test callback.",
+      "Keep the proposal unregistered: no new base event, production loader admission or installable package is published.",
+      "Known issue: coherent native metadata capture, transition hooks, source ownership, USB, Apply/playback and hardware remain unqualified."
+    ]
+  },
+  {
+    "version": "0.1.37-experimental",
+    "date": "2026-10-24",
+    "changes": [
+      "Queue actual stop records for tracks 1 and 8 before worker execution; cover both stereo widths and both recorder state banks.",
+      "Check FIFO identity, each recorder\u2019s map extent and preserved post-stop PCM, controls, allocation and state.",
+      "Require a fresh native guard ticket and revision for the second command, then retire before the final unmasked queue wait.",
+      "Retain 32 single-recorder cases and 16 positive controls per run. Docs: distinguish host/native output and group current evidence.",
+      "Known issue: serialized synthetic calls do not prove simultaneous ISR, live ownership, manual stop/overdub, USB, native Apply or hardware."
+    ]
+  },
+  {
+    "version": "0.1.36-experimental",
+    "date": "2026-10-24",
+    "changes": [
+      "Execute 32 queued recorder-stop follow-ups across both stereo widths, tracks 1/8, both banks, allocation shortages and two length limits.",
+      "Distinguish startup from deferred dispatch and verify track-specific command records instead of assuming a shared bitmask.",
+      "Check exact zero stores beyond allocated recorder pages while the queue is empty; preserve post-stop PCM, controls, counts, state and free cursors.",
+      "Run the compiled worker observer through every follow-up store and its next unmasked empty-queue wait; retain 16 recording positive controls.",
+      "Known issue: synthetic active state is not live ownership; manual stop/overdub, scheduler/ISR, USB, native Apply and hardware remain unqualified."
+    ]
+  },
+  {
+    "version": "0.1.35-experimental",
+    "date": "2026-10-24",
+    "changes": [
+      "Exercise the real upload controller and loader set backend with replacement, removal and an unchanged menu companion.",
+      "Disconnect before publication and after each row, then check complete-set acceptance separately; reject early acceptance.",
+      "Refuse retired menu activations after restoration, require fresh activation, and restore free pool bytes after cleanup.",
+      "Run host sanitizers and cached/uncached ColdFire set paths against exact unchanged SDK inputs.",
+      "Known issue: stopped-state, cache and reference retirement remain modeled; production hooks, USB, native Apply and hardware are unqualified."
+    ]
+  },
+  {
+    "version": "0.1.34-experimental",
+    "date": "2026-10-24",
+    "changes": [
+      "Run the real SDK loader and full-owner menu adapter together as compiled ColdFire code, including the loader\u2019s native entry wrappers.",
+      "Check both stock-sized menu models and two coexisting owners through staging, publication, replacement, restoration, removal and permanent retirement.",
+      "Exercise cached and uncached loader branches with 128 positions and the 768 KiB pool; reclaim test allocations after each scenario.",
+      "Match four package/controller digest vectors computed independently, refuse altered owner fields, and pin the exact SDK inputs.",
+      "Known issue: machine services, cache behavior and menu detachment remain modeled; production USB, Apply/playback and hardware are unqualified."
+    ]
+  },
+  {
+    "version": "0.1.33-experimental",
+    "date": "2026-10-24",
+    "changes": [
+      "Connect the prototype menu dispatcher to complete, currently published runtime-owner leases before forwarding an admitted action.",
+      "Copy each owner\u2019s allowed action IDs into fixed base-owned storage; reject duplicate or ambiguous bindings and retain permanent retirement.",
+      "Check two coexisting owners with the same action ID; replacement or removal of one must not authorize stale actions or disable its companion.",
+      "Exercise composition and dispatch with the real loader on the host and separately with compiled ColdFire code and synthetic loader answers.",
+      "Known issue: typed package admission and production lifecycle hooks remain absent; native USB integration, Apply/playback and hardware are unqualified."
+    ]
+  },
+  {
+    "version": "0.1.32-experimental",
+    "date": "2026-10-24",
+    "changes": [
+      "Distinguish an intact retained runtime image from the exact currently published owner before admitting a menu action.",
+      "Keep fixed-lifetime menu leases retired after owner replacement, removal or explicit retirement, even if the same old image is later restored.",
+      "Exercise retained/restored owners with actual-loader host tests and verify complete owner copies and permanent retirement with synthetic ColdFire execution.",
+      "Verify normal stock tempo changes and 27 previews at 90 BPM; pin external SDK evidence to exact commits and reject mismatched source identities.",
+      "Known issue: production transition hooks and typed menu admission remain absent; native USB lifecycle, Apply/playback and hardware are unqualified."
+    ]
+  },
+  {
+    "version": "0.1.31-experimental",
+    "date": "2026-10-24",
+    "changes": [
+      "Reopen the private Beat Grid dialog after BACK or NO using fixed-owner immutable menu tables and fresh selection authority.",
+      "Preserve options and advance UI/request identities across openings; refuse stale callbacks, nested activity, retired owners and exhausted serials.",
+      "Keep the two stock SLICE menu layouts independently resident, preserve original stock callbacks and withdraw an open contribution when its owner retires.",
+      "Exercise stock grid creation and clearing between previews; these operations still use the existing stock confirmation and marker behavior.",
+      "Known issue: fixed-owner pinned storage does not provide USB replacement or reclamation; live admission, Apply/playback and hardware qualification remain unfinished."
+    ]
+  },
+  {
+    "version": "0.1.30-experimental",
+    "date": "2026-10-24",
+    "changes": [
+      "Bind contributed menu and preview-control callbacks to the exact native selection context; reject stale, direct, duplicate and nested activations.",
+      "Preserve the stock dispatcher stack, register and caller-visible argument behavior through a resident return trampoline.",
+      "Check 200 portable context lifetimes and 48 paired stock/wrapped ABI cases, including status-register preservation and four nested refusals.",
+      "Keep original stock menu actions intact; full native control and late-callback outcomes are recorded separately.",
+      "Known issue: pinned one-shot storage is not loader retirement; live admission, Apply/playback, browser/USB packages and hardware remain unqualified."
+    ]
+  },
+  {
+    "version": "0.1.29-experimental",
+    "date": "2026-10-24",
+    "changes": [
+      "Batch bounded private reader work between validations, stopping at the first live-read request and revalidating before any PCM copy.",
+      "Keep the original one-step API and restrict the private engine fixture to one batch of at most eight private transitions and one copy per callback, plus setup/publication.",
+      "Check complete plan equality, metadata changes and cancellation at unlocked and late-publication boundaries with host sanitizers and compiled ColdFire tests.",
+      "Measured synthetic previews use fewer total service instructions and a lower worst callback at the selected budget; native run outcomes are recorded separately.",
+      "Known issue: physical timing, live source admission, removal, Apply/playback and production browser/USB lifecycle remain unqualified."
+    ]
+  },
+  {
+    "version": "0.1.28-experimental",
+    "date": "2026-10-24",
+    "changes": [
+      "Exercise the full trim of a 30-second stock-loaded Flex source across 21 preview-control cases, including the 64-slice limit.",
+      "Measure compiled service and lock instruction counts for 16 synthetic previews, separating total work from the longest callback.",
+      "Allow bounded waiting after verified pre-entry refusal of emulator calls; uncertain execution still stops without replay.",
+      "Known issue: measurements are emulator-only; live writer/cache admission, removal, Apply/playback, browser/USB packages and hardware qualification remain unfinished."
+    ]
+  },
+  {
+    "version": "0.1.27-experimental",
+    "date": "2026-10-24",
+    "changes": [
+      "Add copied UI requests and results around one engine-owned preview session; tag publication with the exact request and owner.",
+      "Recheck accepted cancellation or replacement before the next source capture/copy, including after unlocked planning; reject stale results and sequence reuse.",
+      "Check pending readiness, lock refusal, owner retirement and late publication with host sanitizers and compiled ColdFire execution.",
+      "Exercise separate native UI/engine tasks in both stock menus: 42 complete plans, waiting cancellation and owner retirement; keep conservative command handling by default.",
+      "Known issue: synthetic lifetimes and pinned storage remain; live writer/cache admission, removal, Apply/playback, production browser/USB packages and hardware qualification are unfinished."
+    ]
+  },
+  {
+    "version": "0.1.26-experimental",
+    "date": "2026-10-24",
+    "changes": [
+      "Add a private full-boot engine-preview matrix for retained 16-bit and 24-bit mono/stereo Flex samples.",
+      "Use a typed zero-argument request mailbox in the format fixture and check that borrowed calls preserve the main stack.",
+      "Compare complete plans with the independent PCM oracle and verify full source/settings preservation, pending cancellation and readiness behavior.",
+      "Known issue: synthetic ownership and partial command coverage remain; native publication, playback, browser/USB packages and hardware qualification are unfinished."
+    ]
+  },
+  {
+    "version": "0.1.25-experimental",
+    "date": "2026-10-24",
+    "changes": [
+      "Prototype automatic read-only BEAT GRID controls on the existing UI tick; pending sources yield after one service call.",
+      "Show the captured tempo, total/existing/new slice counts and fade warnings in the preview summary.",
+      "Investigate recurring ordinary Flex waveform reads separately from source writers; keep conservative handling for other command types.",
+      "Check waiting cancellation, owner retirement and unchanged main stack; clarify the engine budget as eight explicit steps plus optional begin/setup.",
+      "Known issue: private fixtures and synthetic ownership only; mutable command lifetime, complete admission, removal, Apply, playback, browser/USB and hardware qualification remain unfinished."
+    ]
+  },
+  {
+    "version": "0.1.24-experimental",
+    "date": "2026-10-24",
+    "changes": [
+      "Add a private native BEAT GRID contribution that preserves stock SLICE rows and their remembered selection; reject cancelled and stale-owner actions.",
+      "Exercise read-only SAMPLE/PROJECT, five spacings and SMOOTH/EXACT controls through stock menus, with result counts and fade warnings.",
+      "Cancel previews on option changes, dismissal or owner retirement; revalidate completed results and preserve PCM and settings.",
+      "Adapt source exclusion to base-owned engine boundaries and prototype bounded preview scheduling with coalesced wakes; stock slice edits still invalidate old previews.",
+      "Known issue: pinned test storage and synthetic ownership only; production scheduling, native removal, Apply, playback, USB and hardware remain unfinished."
+    ]
+  },
+  {
+    "version": "0.1.23-experimental",
+    "date": "2026-10-24",
+    "changes": [
+      "Source-bound development evidence: compiled Flex previews read a real stock-loaded sample in a reserved-memory full-boot emulator fixture.",
+      "All 28 plans match the host PCM oracle; normal stock reversals invalidate running and completed previews before further reads, and fresh previews match edited audio.",
+      "Preview-only operations preserve complete PCM, controls and settings; the second stock reverse restores the original sample and both cards stay unchanged.",
+      "Observe native Flex lock scope with no planner/decoder work inside; regression-test retries limited to the emulator's proven pre-entry refusal.",
+      "Known issue: test-owned lifetimes, masking and partial writer coverage; native UI, live admission, publication, USB and hardware qualification remain unfinished."
+    ]
+  },
+  {
+    "version": "0.1.22-experimental",
+    "date": "2026-10-24",
+    "changes": [
+      "Compose the Flex metadata decoder and bounded PCM copy behind one caller-supplied source ownership boundary.",
+      "Reject inconsistent memory bindings, changed source lifetimes and recursive ownership; capture complete marker tables without publishing them.",
+      "Exact source-bound host and ColdFire evidence covers 32 previews across four formats and tempo choices, ten invalidations and ownership refusals with stock page lookup.",
+      "Clarify the planner contract: failed writes roll back internally; later player edits use stock slice clearing, with no module Undo action.",
+      "Known issue: synthetic lifetimes and ownership only; live admission, installed controls, publication, playback, USB and hardware qualification remain unfinished."
+    ]
+  },
+  {
+    "version": "0.1.21-experimental",
+    "date": "2026-10-24",
+    "changes": [
+      "Move private preview planning and PCM decoding outside source lock sections; keep capture and bounded source copies protected.",
+      "Revalidate after reacquiring for a copy, and reject changed sources after lock release; waiting retries retain the exact pending request.",
+      "Host and ColdFire regressions cover nine lock-release interleavings, metadata, candidates, commit/clear and failure rollback.",
+      "Development evidence: exact source-bound receipts show no planner/decoder calls under the lock; instruction counts are not physical timing.",
+      "Known issue: not installable; complete ownership, native admission, publication, playback, USB and hardware qualification remain unfinished."
+    ]
+  },
+  {
+    "version": "0.1.20-experimental",
+    "date": "2026-10-24",
+    "changes": [
+      "Development draft: track whole engine commands around queue receive, invalidating previews before dispatch and retiring exclusion before waiting.",
+      "Preserve stock queue results when completion is absent or commands fail; recursive receives and exhausted identities close preview admission.",
+      "Test compiled observation against stock queues and full-boot edit/waveform commands; exact PCM restoration passes, but this remains partial ownership coverage.",
+      "Development tooling: measure planner calls and executed instructions under the session lock; bind worker evidence to exact source and retain stock slice clearing.",
+      "Known issue: not installable; recorder/UI writer coverage, native admission, atomic publication, playback, USB and hardware qualification remain unfinished."
+    ]
+  },
+  {
     "version": "0.1.19-experimental",
     "date": "2026-10-24",
     "changes": [

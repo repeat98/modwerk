@@ -1,0 +1,154 @@
+{
+  "schemaVersion": 1,
+  "moduleVersion": "0.1.8-experimental",
+  "packageSha256": "28766a017005e664d00620d3831fc81af7449c95e1896a17121ca8fc2d306d8d",
+  "base": "a542a515c1955b9264712073bb40c81a492f1a993bfa991640d111eb03aaa130",
+  "hardware": "Octatrack MKII, OS 1.40C",
+  "dateLocal": "2026-10-30",
+  "started": "2026-10-29T19:14:45.351Z",
+  "finished": "2026-10-29T19:20:58.644Z",
+  "sourceIdentity": "Unchanged exact package and nine source hashes recorded in v018-mkii-qualification.json; checked before this trial.",
+  "trial": {
+    "modules": 19,
+    "originalRecordsPreserved": 18,
+    "offerSha256": "6c1f61caec7f77560862992a5898536085924cd9f5f2d2f46c4fa851bc4ef239"
+  },
+  "selftest": {
+    "status": "accepted-with-load-advisory",
+    "record": {
+      "state": 3,
+      "failed": 256,
+      "modules": 19,
+      "dsp": 7,
+      "intact": 19,
+      "ran": 7,
+      "peaks": {
+        "tracks1to4": 752,
+        "tracks5to8": 783,
+        "cpu": 903
+      },
+      "done": 9,
+      "total": 9,
+      "frameGap": 64713,
+      "saved": 1,
+      "savedCount": 18,
+      "live": 19,
+      "culprit": 1019141276,
+      "culpritName": "Mini Verb",
+      "refusal": 0
+    },
+    "hardFaultBits": 0,
+    "loadAdvisoryBits": 256,
+    "interpretation": "All 19 modules intact; all 7 DSP modules ran. Peak CPU 90.3%, DSP 75.2%/78.3%. Shared frontend policy accepts load-only advisories. This is not a zero-failure stress pass or isolated module cost."
+  },
+  "approval": {
+    "at": "2026-10-29T19:17:35.671595+00:00",
+    "userResponse": "Profile set—Keep 0.1.8",
+    "moduleVersion": "0.1.8-experimental",
+    "totalModules": 19,
+    "originalModulesPreserved": 18,
+    "reportedProfile": {
+      "selectedTracks": [
+        1
+      ],
+      "replaceExisting": true,
+      "applied": true,
+      "playbackStopped": true
+    }
+  },
+  "keep": {
+    "performed": true,
+    "verifiedAt": "2026-10-29T19:17:37.151Z",
+    "savedStatus": 7,
+    "savedCount": 19,
+    "liveCount": 19,
+    "wholeSetIdentity": "3d66fbdb220385aef4959ad2aa8d589c9b4082ccdfd29d046574839d75390b77"
+  },
+  "restart": {
+    "physicalPowerCycleReported": true,
+    "verifiedAt": "2026-10-29T19:18:50.365Z",
+    "all19ExactRecordsRestored": true,
+    "original18Preserved": true,
+    "wholeSetMatchesKeep": true,
+    "wholeSetIdentity": "3d66fbdb220385aef4959ad2aa8d589c9b4082ccdfd29d046574839d75390b77",
+    "phase": "normal",
+    "activeKnown": true,
+    "generation": 0,
+    "activeIdentity": "a542a515c1955b9264712073bb40c81a492f1a993bfa991640d111eb03aaa130",
+    "savedStatus": 1,
+    "savedCount": 19,
+    "liveCount": 19,
+    "note": "Cold boot starts generation 0 with the base as the known active identity. Exact inventory and the whole-set digest are compared to the saved Keep; the pre-restart offer digest is not expected to remain the active status identity.",
+    "selftestRerun": false
+  },
+  "preferenceReset": {
+    "userReport": "Both actions return; defaults reset",
+    "reported": {
+      "partMenuActionsPresent": true,
+      "lockSelectionEmpty": true,
+      "replaceExisting": false
+    },
+    "beforeRestartReported": {
+      "selectedTracks": [
+        1
+      ],
+      "replaceExisting": true,
+      "applied": true,
+      "playbackStopped": true
+    },
+    "agentObserved": {
+      "lockSelectorOpen": true,
+      "emptySelection": true
+    },
+    "scope": "Physical restart reset reported by author; no independent LCD capture or hardware reload-without-restart preference-reset assertion."
+  },
+  "removalUndo": {
+    "startedWithSelectorOpen": true,
+    "removalLiveModules": 18,
+    "removalSavedModules": 19,
+    "removedInventoryEqualsOriginal18": true,
+    "undoVerified": true,
+    "afterUndoLiveModules": 19,
+    "afterUndoSavedModules": 19,
+    "afterUndoWholeSetIdentity": "3d66fbdb220385aef4959ad2aa8d589c9b4082ccdfd29d046574839d75390b77",
+    "afterUndoExactInventoryMatchesKept": true,
+    "phase": "normal",
+    "activeKnown": true,
+    "removalKept": false,
+    "events": [
+      {
+        "at": "2026-10-29T19:20:57.924Z",
+        "event": "REVIEW_REMOVAL",
+        "changes": "Remove Sample Locks only; retain original eighteen, keep saved nineteen unchanged",
+        "overlayObserved": true,
+        "emptySelectionObserved": true
+      },
+      {
+        "at": "2026-10-29T19:20:58.122Z",
+        "event": "REMOVAL_VERIFIED",
+        "liveModules": 18,
+        "savedModules": 19
+      },
+      {
+        "at": "2026-10-29T19:20:58.644Z",
+        "event": "UNDO_VERIFIED",
+        "liveModules": 19,
+        "savedModules": 19,
+        "setIdentity": "3d66fbdb220385aef4959ad2aa8d589c9b4082ccdfd29d046574839d75390b77"
+      }
+    ]
+  },
+  "finalState": {
+    "liveModules": 19,
+    "savedModules": 19,
+    "originalModulesPreserved": 18,
+    "usbReleased": true
+  },
+  "flashPerformed": false,
+  "limitations": [
+    "Only the named flashed base and exact private package were exercised; this does not qualify newer public bases or stock-only card/browser parity.",
+    "Physical switch-off/on and visible menu/replacement reset are author-reported; inventory, identities and saved-set status are USB readback observations.",
+    "No new audio listening or recording result was collected in this nineteen-module cycle.",
+    "Full load, companion runtime combinations, tempo/speed extremes, MKI and complete stack/interrupt bounds remain unqualified."
+  ]
+}

@@ -17,6 +17,8 @@ import sys
 import tempfile
 from pathlib import Path
 
+sys.path.append(str(Path(__file__).resolve().parents[3]))  # sdk/, for firmware_codec
+import firmware_codec  # noqa: E402
 HERE = Path(__file__).resolve().parent
 LINK = '''ENTRY(stub_entry)
 SECTIONS
@@ -48,8 +50,8 @@ def fnv(data):
 
 
 def build(upstream, out, cc='m68k-elf-gcc'):
-    sys.path.insert(0, str(Path(upstream).expanduser()))
-    from elekloader.codec import aplib
+    firmware_codec.use_elekloader(upstream)
+    from firmware_codec import aplib
     n = layout()
     out.mkdir(parents=True, exist_ok=True)
     elf = out / 'stub.elf'

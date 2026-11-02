@@ -58,6 +58,20 @@ describe('runtime package upgrade review', () => {
     expect(prepareUpdate).toHaveBeenCalledWith(set)
     expect(link.update).toHaveBeenCalledTimes(1)
   })
+  it('keeps a synced set at once: no self-test, no Undo', async () => {
+    const unit = fakeUnit(), real = new OctatrackLink(unit.usb, fakeSession(unit)), release = real.start()
+    await vi.waitFor(() => expect(real.getState().status).toBe('ready'))
+    const keep = vi.spyOn(real, 'keep'), undo = vi.spyOn(real, 'undo'), selftest = vi.spyOn(real, 'selftest')
+    // A runtime install package as the builder makes it (sdk/runtime/loader/README.md).
+    const data = new Uint8Array(36), view = new DataView(data.buffer); data.set([0x4d, 0x57, 0x52, 0x4d, 0, 4]); view.setUint32(8, 4); view.setUint32(28, 0xb)
+    await act(() => root.render(createElement(LoadDialog, { link: real, set, inventory, prepareUpdate: async () => ({ name: set.name, changes: [{ module: set.name, data }] }), onInstallBase() {}, onClose() {}, onEdit() {}, onCard() {}, onReport() {} })))
+    expect(container.textContent).not.toMatch(/undo|self-test/i)
+    await act(async () => button('Sync to Octatrack').click())
+    await vi.waitFor(() => expect(container.textContent).toContain('Synced. Studio stays on your Octatrack, also after a restart.'))
+    expect(unit.kept).toEqual(['+0000000b'])
+    expect(keep).toHaveBeenCalledTimes(1); expect(undo).not.toHaveBeenCalled(); expect(selftest).not.toHaveBeenCalled()
+    release()
+  })
   it('holds back a paused module but still lets a sync remove it', async () => {
     pausedForTest.add('poly8')
     review.mockReturnValue({ changes: { ...changes, add: ['poly8'] }, updates: [], needsSync: true, problem: undefined })

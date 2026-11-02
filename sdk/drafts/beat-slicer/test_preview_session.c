@@ -8,6 +8,7 @@ struct fixture {
     uint32_t locked, locks, unlocks, denied, captures, copies, bad;
     uint32_t capture_pending, copy_pending, capture_error, copy_error;
     uint32_t malformed, change_during_copy, invalidate_during_copy, pending_after_copy;
+    uint32_t on_unlock, injected;
 };
 static struct fixture f;
 static void clear(void *p, uint32_t n) {
@@ -31,6 +32,26 @@ static void unlock(void *ctx) {
     struct fixture *p = (struct fixture *)ctx;
     if (!p->locked) p->bad = __LINE__;
     p->locked = 0; ++p->unlocks;
+    /* Model an independent writer becoming runnable at a lock release. It
+     * changes source/guard state only, never reenters the session itself. */
+    if (p->on_unlock && !p->injected) {
+        uint32_t mode = p->on_unlock;
+        int before_copy = p->session.captured &&
+            p->session.reader.job.state == BS_JOB_NEED_FRAME && !p->session.reader.waiting;
+        int after_copy = p->copies && p->session.reader.waiting;
+        if ((mode <= 2 || mode == 8) ||
+            ((mode == 3 || mode == 4 || mode == 7 || mode == 9) && before_copy) ||
+            ((mode == 5 || mode == 6) && after_copy)) {
+            p->injected = 1;
+            if (mode == 1 || mode == 3 || mode == 5) bs_guard_invalidate(&p->guard);
+            if (mode == 2) ++p->live.markers[0].end;
+            if (mode == 4) ++p->live.frames;
+            if (mode == 6) p->live.format.bits = 16;
+            if (mode == 7) p->denied = 1;
+            if (mode == 8) ++p->live.project_bpm24; /* SAMPLE was selected. */
+            if (mode == 9) p->capture_pending = 1;
+        }
+    }
 }
 static enum bs_provider_reply capture(void *ctx, struct bs_source_snapshot *out) {
     struct fixture *p = (struct fixture *)ctx;
@@ -241,10 +262,38 @@ static int failures(void) {
     CHECK(bs_session_begin(&f.session, &options) == BS_SESSION_FAILED && !f.locks);
     return 0;
 }
+static int unlocked_writers(void) {
+    struct bs_preview_options options = {1, 0, BS_SAMPLE_BPM};
+    struct bs_plan out;
+    uint32_t mode, i;
+    for (mode = 1; mode <= 9; ++mode) {
+        enum bs_session_state state;
+        setup(); f.on_unlock = mode;
+        state = bs_session_begin(&f.session, &options);
+        for (i = 0; i < 100 && !f.injected; ++i) state = bs_session_step(&f.session);
+        CHECK(f.injected && !f.locked && !f.bad && f.locks == f.unlocks);
+        if (mode <= 4) CHECK(!f.copies); /* A changed source must not be read. */
+        if (mode == 5 || mode == 6) CHECK(f.copies == 1);
+        if (mode == 7 || mode == 9) {
+            CHECK(state == BS_SESSION_WAITING && !f.copies && f.session.reader.waiting);
+            CHECK(complete() == BS_SESSION_READY && bs_session_result(&f.session, &out));
+        } else if (mode == 8) {
+            CHECK(complete() == BS_SESSION_READY && bs_session_result(&f.session, &out));
+        } else {
+            CHECK(complete() == BS_SESSION_STALE);
+            out.count = 123456;
+            CHECK(!bs_session_result(&f.session, &out) && out.count == 123456);
+            CHECK(!f.session.captured && !f.session.reader.cache_count);
+        }
+        CHECK(!f.bad && !f.locked && f.locks == f.unlocks);
+    }
+    return 0;
+}
 int bs_session_selftest(void) {
     int error;
     error = previews(); if (error) return error;
     error = metadata(); if (error) return error;
     error = lifecycle(); if (error) return error;
-    return failures();
+    error = failures(); if (error) return error;
+    return unlocked_writers();
 }

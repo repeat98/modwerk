@@ -1,6 +1,6 @@
 --- a/dsp.c
 +++ b/dsp.c
-@@ -1410,6 +1410,114 @@
+@@ -1414,6 +1414,114 @@
  /* Development (dev.c request 20): this many microseconds with interrupts masked on the next tick, timed by DTCN3
   * (132 MHz), to find how long the frame chain survives a held-off frame interrupt. Off the USB request path. */
  volatile uint32_t modwerk_dsp_mask_test;
@@ -115,7 +115,7 @@
  void modwerk_dsp_tick(void)
  {
      modwerk_dsp_watch_ticks = modwerk_dsp_watch_ticks + 1; /* the watchdog's heartbeat */
-@@ -1422,9 +1530,14 @@
+@@ -1426,9 +1534,14 @@
      }
      static int unpacked;
      if (!unpacked) unpacked = 1, modwerk_dsp_unpack();
@@ -133,7 +133,7 @@
      if (probing >= 0 && dl_job_status((unsigned)probing) != 0) {
          if (dl_job_status((unsigned)probing) > 0) modwerk_dsp_probes_ok = modwerk_dsp_probes_ok + 1;
          else modwerk_dsp_probes_failed = modwerk_dsp_probes_failed + 1;
-@@ -1433,7 +1546,7 @@
+@@ -1437,7 +1550,7 @@
      }
      if ((dl_phase || dl_c1_phase) && EDMA_ES >> 31 && !(EDMA_ES >> 8 & 0xfu)) recover(2); /* eDMA refused our transfer: at once */
      else if (modwerk_dsp_stalled(dl_frames, dl_phase || !dl_job_status(0) || !dl_job_status(1))) recover(1);
@@ -153,8 +153,8 @@
 +CORE1_IDLE = TABLE_END
  TABLE_READ = 0x0a71d2      # the opcode word before each read's operand ($215 or $235), six per payload
  SAVED = 64                 # the receiver keeps each id's original entries at the head of its table
- 
-@@ -55,17 +56,18 @@
+ # The receiver's packet operations run from the top of each core's FX2 block 3 in the shared window (dsp_receiver.asm,
+@@ -60,17 +61,18 @@
            '        move    #>0,x0\n        bra     reply\n        move    x:(r0+2),a\n'),
      # X (docs/OCTATRACK_MORE_EFFECT_IDS.md step 1): is X:$7a92-$7fff, the planned home of the 128-id init and proc
      # tables, free on the unit with every effect running? The full loader, and in each frame hook: first fill the
@@ -177,7 +177,7 @@
          bge     xwwatch
          move    a1,r0
          do      #@XWCHUNK@,xwfillend
-@@ -103,7 +105,7 @@
+@@ -108,7 +110,7 @@
  xwok:
          move    (r0)+
          move    r0,a
@@ -186,22 +186,23 @@
          blt     xwnext
          move    #>@XWSTART@,r0
          move    #>xwpasses,r1
-@@ -140,10 +142,10 @@
+@@ -145,10 +147,11 @@
  
  
  CORE1_WAIT = (0x57, (0x0cd341, 0x000000))  # payload B: brclr #1,y:<<$ffffd3,* (core 1 waits for core 0)
 -CORE1_METER = ('        move    b1,x0\n', '        move    x:>$2840,x0\n        clr     a\n        move    a1,x:>$2840\n')
 -
 -
--def receiver_source(text, null, table_words, probe=None, burn=0, tag='A', ids=32):
+-def receiver_source(text, null, table_words, probe=None, burn=0, tag='A', ids=32, burn_at=None, cold=None):
 +CORE1_METER = ('        move    b1,x0\n', '        move    x:>@IDLECOUNTER@,x0\n        clr     a\n        move    a1,x:>@IDLECOUNTER@\n')
 +
 +
-+def receiver_source(text, null, table_words, probe=None, burn=0, tag='A', ids=32, hook_control=None, hook_reset=None):
++def receiver_source(text, null, table_words, probe=None, burn=0, tag='A', ids=32, hook_control=None, hook_reset=None,
++                    burn_at=None, cold=None):
      """The receiver with its table's size and stock's null stub (dry ids) filled in, its idle count
      core 1's counted wait on payload B; `burn` (calibration builds) spends that many more cycles every
-     frame, so the load meter's idle count falls by a known amount."""
-@@ -166,12 +168,16 @@
+     frame, so the load meter's idle count falls by a known amount. `burn_at` (address, words): the burn
+@@ -180,12 +183,16 @@
      fill = lambda value, label: ('        move    #>$%x,x0\n        do      #%d,%s\n        move    x0,x:(r1)+\n%s:\n' % (
          value, ids - 32, label, label)) if ids > 32 else ''  # DO #0 would loop 65,536 times
      watched = TABLE_END - TABLE_HOME - 2 * ids
@@ -217,23 +218,22 @@
 +                            ('@IDLECOUNTER@', '$%x' % CORE1_IDLE, 5 if tag == 'B' else 3),
 +                            ('@HOOK_CONTROL@', hook_control or '        bra     badsaved\n', 1),
 +                            ('@HOOK_RESET@', hook_reset or '        bra     badsaved\n', 1),
-                             ('@DLWORDS@', str(table_words), 4)):
+                             ('@DLWORDS@', str(table_words), 4)) + tuple(
+                                 ('@%s@' % key, '$%x' % (cold or {}).get(key, 1), count) for key, count in COLD_FIELDS):
          if text.count(old) != count:
-             raise ValueError('The DSP receiver changed (%s); review the port.' % old)
-@@ -229,7 +235,7 @@
-     return 1  # no rts reached: assume it reads, the side that reserves a block
+@@ -300,7 +307,7 @@
+     return code, labels, table, staged
  
  
--def recipe(image, device, dsp, assemble, work, probe=None, burn=0, ids=32):
-+def recipe(image, device, dsp, assemble, work, probe=None, burn=0, ids=32, resident=None):
+-def recipe(image, device, dsp, assemble, work, probe=None, burn=0, ids=32, burn_window=0):
++def recipe(image, device, dsp, assemble, work, probe=None, burn=0, ids=32, resident=None, burn_window=0):
      """-> (sites, layout) for both payloads. `assemble(path)` is Elekloader's
      sdk.build.dsp_assemble (octabam's dsp_asm at two origins)."""
      metadata = json.loads(METADATA.read_text())
-@@ -291,10 +297,25 @@
-         path = Path(work) / ('receiver-%s.asm' % tag)
+@@ -361,9 +368,25 @@
+         # The receiver's size does not depend on its table's: every operand it moves is a long one.
          # One core at a time: with 2,000 more cycles a frame on both cores the unit hung at its logo (10 October 2026).
          burned = abs(burn) if (tag == 'B') == (burn < 0) else 0  # a negative burn is core 1's
--        path.write_text(receiver_source(RECEIVER.read_text(), null, 0, probe, burned, tag, ids))
 +        hooks = resident(tag, hi) if resident else None
 +        control, reset = None, None
 +        if hooks:
@@ -249,25 +249,24 @@
 +                    updated, words = resident_dsp.compressor_bridge(effect, effect['words'], hooks)
 +                    updated['words'] = words
 +                    stock[fx] = updated
-+        path.write_text(receiver_source(RECEIVER.read_text(), null, 0, probe, burned, tag, ids, control, reset))
-         size = len(assemble(str(path))[0])
--        table = hi - origin - size
--        path.write_text(receiver_source(RECEIVER.read_text(), null, table, probe, burned, tag, ids))
-+        table = (hooks['origin'] if hooks else hi) - origin - size
-+        path.write_text(receiver_source(RECEIVER.read_text(), null, table, probe, burned, tag, ids, control, reset))
-         code, labels, relocations = assemble(str(path))
+         burn_at = window_burn(assemble, work, burned, burn_window) if burned and burn_window else None
+         code, labels, table, staged = place_receiver(assemble, work, tag, lambda words, cold: receiver_source(
+-            RECEIVER.read_text(), null, words, probe, burned, tag, ids, burn_at, cold), origin, hi)
++            RECEIVER.read_text(), null, words, probe, burned, tag, ids, control, reset, burn_at, cold), origin,
++            hooks['origin'] if hooks else hi)
          # The least arena that still runs every stock effect on its own: the largest, DARK REV.
-         if len(code) != size or labels['dltable'] != size or table < SAVED + max(len(s['words']) for s in stock.values()):
-@@ -305,7 +326,7 @@
+         if table < SAVED + max(len(s['words']) for s in stock.values()):
+             raise ValueError('Payload %s: the receiver and the largest stock effect do not fit the block.' % tag)
+@@ -372,7 +395,7 @@
+         if [labels[k] - labels['missoffset'] for k in ('tablebase', 'missexpected', 'missactual')] != [-3, 1, 2]:
              raise ValueError('Payload %s: the receiver\'s mismatch record is not three consecutive words.' % tag)
-         for index, offset in relocations:
-             code[index] = origin + offset
--        words, covered, fills = shared + code + [0] * table, 0, []  # the saved entries must start empty
-+        words, covered, fills = shared + code + [0] * table + (hooks['words'] if hooks else []), 0, []
+         # The saved entries must start empty; the window half waits in the table's top words until the first frame.
+-        words, covered, fills = shared + code + [0] * (table - len(staged)) + staged, 0, []
++        words, covered, fills = shared + code + [0] * (table - len(staged)) + staged + (hooks['words'] if hooks else []), 0, []
          for space, start, count, first in records:  # one site per payload record
              a, b = max(lo, start), min(hi, start + count)
              if space or a >= b:
-@@ -325,6 +346,16 @@
+@@ -392,6 +415,16 @@
          first = at(0, FRAME[tag]) - device.main_load
          sites.append(dict(addr=hex(at(0, FRAME[tag])), stock=image[first:first + 6].hex(), op='bytes', kind='data',
                            new=b''.join(w.to_bytes(3, 'little') for w in (0x0bf080, frame)).hex()))
@@ -284,7 +283,7 @@
          if tag == 'B':  # core 1's wait for core 0, counted (c1wait)
              if [read(0, CORE1_WAIT[0] + k) for k in range(2)] != list(CORE1_WAIT[1]):
                  raise ValueError('Payload B: core 1 no longer waits for core 0 at P:$57.')
-@@ -350,6 +381,13 @@
+@@ -418,6 +451,13 @@
                             miss=origin + labels['missoffset'], meter=origin + labels['idlepub'], null=null, free=free,
                             stock={fx: {k: v for k, v in s.items() if k != 'words'} for fx, s in stock.items()},
                             reads=reads, words={fx: s['words'] for fx, s in stock.items()}, shared=routines, fills=fills)
@@ -313,7 +312,7 @@
  ; The first refused packet of a boot leaves a record (missoffset, then two words):
  ;   $01rrrr: its halfwords sum to rrrr, not 0; the sequence that arrived; their
  ;            position-weighted sum (each halfword times 64 - its index), mod 2^24.
-@@ -62,7 +66,7 @@
+@@ -72,7 +76,7 @@
  tblset:
  ; Load meter: core 0's main loop (P:$4b) counts its idle iterations in b until a frame is due, and
  ; this runs before stock stores that count (P:$92); b stays untouched. Core 1 counts its wait for
@@ -322,25 +321,25 @@
  ; Each window of 1024 frames is published after its serial: the least and most idle
  ; counts, their sum and the frames with none (missed). Core 1 keeps no such count.
          move    b1,x0
-@@ -157,7 +161,15 @@
-         beq     peekbit
-         cmp     #>9,a
-         beq     summed
+@@ -153,7 +157,15 @@
+         and     #>$ffff,a
+         cmp     #>1,a
+         beq     accepted
 +        cmp     #>10,a
 +        beq     hookcontrol
 +        cmp     #>11,a
 +        beq     hookreset
-         bra     refusewrite
+         bra     coldops
 +hookcontrol:
 +@HOOK_CONTROL@
 +hookreset:
 +@HOOK_RESET@
- summed:
-         ; SUM (9): WRITE's read-back over (r0+4) words, 1-256, from table offset (r0+5), nothing written.
-         move    x:(r0+4),a
-@@ -514,13 +526,16 @@
- finish:
+ coldsum:
+         move    #>@COLDSUM@,r1          ; a torn packet: its record is kept by the window's half (badsum)
+         jmp     (r1)
+@@ -558,13 +570,16 @@
          rts
+ ;=private=
  ; Core 1's wait for core 0 (P:$57, brclr #1,y:<<$ffffd3) as a counted one: each pass adds one to
 -; X:$2840 (core 1's, untouched by stock), which its frame hook takes as its idle count (see frame).
 +; The reserved X counter, outside the dispatch tables and Analog BD's coefficient/voice banks.
@@ -359,7 +358,7 @@
          btst    #1,y:<<$ffffd3
          brkcs
  c1over:
-@@ -534,6 +549,18 @@
+@@ -578,6 +593,18 @@
          nop
  missactual:
          nop

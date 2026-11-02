@@ -1,0 +1,13 @@
+[
+  {
+    "version": "0.1.0-experimental",
+    "date": "2026-10-26",
+    "changes": [
+      "New: lock the arpeggiator's KEY on single steps of a MIDI track. Hold a trig in ARP SETUP and turn KEY; the step's key holds until the next lock.",
+      "Seven modes in all twelve roots: Major, Dorian, Phrygian, Lydian, Mixolydian, Minor and Locrian. The arpeggio keeps running while the key changes.",
+      "Move one arp note on a trig: hold it, pick the note with D, shift it by steps of the key with E. The next trig without a setting plays the arpeggio as it is.",
+      "While a trig is held, ARP SETUP's KEY box shows its key or its arp note shift.",
+      "Known issue: tested on one MKII over USB; not yet on the MKI or as a card build."
+    ]
+  }
+]

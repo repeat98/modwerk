@@ -79,7 +79,7 @@
       "revision": "363861e31ee963c478fab2b190a0fabe1d7ce37b",
       "sourcePath": "modules/analog-bassdrum/README.md",
       "sourceSha256": "4876d9613e5e65de0aefeef7ddd60ef6d0d5642c61b1fde60b97fc0f72255f68",
-      "vendoredSha256": "d4d2900174dc66de7aa8c2b13e4a9a8155eb310e0d5c0b4ddc33e32f6f166dfb",
+      "vendoredSha256": "ea128dba44925c29ad172d19cee817e95c774ff2b477015e7e9d505a0a51bbc5",
       "importedVendoredSha256": "57743ee073204e2a1b51ed7abad7ddf44eae95faddc90d397ca707d30a2bdfed",
       "adaptation": " Octamod 0.1.1 version and native verification evidence appended; imported fingerprint retained.",
       "localDocumentationUpdate": {
@@ -120,6 +120,11 @@
           "documentationOnly": true,
           "previousVendoredSha256": "a86c759c8955de4d0299b634fda94c01c1df6c7aa95dd3ad6c0e70e5177641df",
           "reason": "Document the reviewed audio preview from PR #406; original upstream and import fingerprints retained. Firmware source and qualification are unchanged."
+        },
+        {
+          "moduleVersion": "0.1.6-experimental",
+          "previousVendoredSha256": "d4d2900174dc66de7aa8c2b13e4a9a8155eb310e0d5c0b4ddc33e32f6f166dfb",
+          "reason": "Analog BD 0.1.6: FIXED switch in the 909's SRC SETUP page (identical hits when ON; OFF is the 0.1.5 sound); original import and source fingerprints retained."
         }
       ]
     },
@@ -161,7 +166,14 @@
       "revision": "363861e31ee963c478fab2b190a0fabe1d7ce37b",
       "sourcePath": "modules/analog-bassdrum/bd808.asm",
       "sourceSha256": "e7306bd284e9bca067cffc54dcbfb18ae7a0fc7b3a27253a246e58898ae9ee92",
-      "vendoredSha256": "e7306bd284e9bca067cffc54dcbfb18ae7a0fc7b3a27253a246e58898ae9ee92"
+      "vendoredSha256": "36af2b6bb961f7667260e83dff9e229ad7fbe071a849ffb16c11a03f83d4cbc9",
+      "localUpdates": [
+        {
+          "moduleVersion": "0.1.6-experimental",
+          "previousVendoredSha256": "e7306bd284e9bca067cffc54dcbfb18ae7a0fc7b3a27253a246e58898ae9ee92",
+          "reason": "Analog BD 0.1.6: TYPE/FIXD switches and bit-identical DSP efficiency work; original import and source fingerprints retained."
+        }
+      ]
     },
     {
       "path": "modules/analog-bassdrum/bd909.asm",
@@ -169,7 +181,7 @@
       "revision": "363861e31ee963c478fab2b190a0fabe1d7ce37b",
       "sourcePath": "modules/analog-bassdrum/bd909.asm",
       "sourceSha256": "db1b2871957bb89bfd4184fc7556e5e46c44f3be1a889ba11fc1a679c4b1841e",
-      "vendoredSha256": "9c86c3bd06e95a998fbe4e0db5a05b9ff65e988686c81f98f6d6c9f4c3b8ee2f",
+      "vendoredSha256": "939e0601dcc51ac2450446665ce8b92e3fe1667d31738c47a3fb1aa52ad5b392",
       "localUpdates": [
         {
           "moduleVersion": "0.1.3-experimental",
@@ -180,6 +192,11 @@
           "moduleVersion": "0.1.4-experimental",
           "previousVendoredSha256": "66f1abde9715b49a145daa1868d00b1ea73989bee2a8e904b9c44149a4d4afc8",
           "reason": "Owner-auditioned 909 direct-out reference update and matching release documentation; fresh physical/timing/memory qualification explicitly waived for this exact source. Original upstream fingerprints retained."
+        },
+        {
+          "moduleVersion": "0.1.6-experimental",
+          "previousVendoredSha256": "9c86c3bd06e95a998fbe4e0db5a05b9ff65e988686c81f98f6d6c9f4c3b8ee2f",
+          "reason": "Analog BD 0.1.6: FIXED switch in the 909's SRC SETUP page (identical hits when ON; OFF is the 0.1.5 sound); original import and source fingerprints retained."
         }
       ]
     },
@@ -189,7 +206,14 @@
       "revision": "363861e31ee963c478fab2b190a0fabe1d7ce37b",
       "sourcePath": "modules/analog-bassdrum/control.c",
       "sourceSha256": "29f392c7e007aaa695076eff0c897729a941676ff582e4bb17957074d56ceac5",
-      "vendoredSha256": "29f392c7e007aaa695076eff0c897729a941676ff582e4bb17957074d56ceac5"
+      "vendoredSha256": "56e96e79f7f279d17b1919ea2f50af0a3d8c4a052df919fc20ecd05f094cfb38",
+      "localUpdates": [
+        {
+          "moduleVersion": "0.1.6-experimental",
+          "previousVendoredSha256": "29f392c7e007aaa695076eff0c897729a941676ff582e4bb17957074d56ceac5",
+          "reason": "Analog BD 0.1.6: FIXED switch in the 909's SRC SETUP page (identical hits when ON; OFF is the 0.1.5 sound); original import and source fingerprints retained."
+        }
+      ]
     },
     {
       "path": "modules/analog-bassdrum/control.s",
@@ -197,7 +221,14 @@
       "revision": "363861e31ee963c478fab2b190a0fabe1d7ce37b",
       "sourcePath": "modules/analog-bassdrum/control.s",
       "sourceSha256": "644f10fbc534d8351424e55ee96c2d0ff2f39a1b691ad8a695422d1c05e37a3f",
-      "vendoredSha256": "644f10fbc534d8351424e55ee96c2d0ff2f39a1b691ad8a695422d1c05e37a3f"
+      "vendoredSha256": "463dacf528e4996c7f21e97533391583329a2e3aabda95c87b7cd020dee7adb6",
+      "localUpdates": [
+        {
+          "moduleVersion": "0.1.6-experimental",
+          "previousVendoredSha256": "644f10fbc534d8351424e55ee96c2d0ff2f39a1b691ad8a695422d1c05e37a3f",
+          "reason": "Analog BD 0.1.6: FIXED switch in the 909's SRC SETUP page (identical hits when ON; OFF is the 0.1.5 sound); original import and source fingerprints retained."
+        }
+      ]
     },
     {
       "path": "modules/analog-bassdrum/dsp808.py",
@@ -205,12 +236,17 @@
       "revision": "363861e31ee963c478fab2b190a0fabe1d7ce37b",
       "sourcePath": "modules/analog-bassdrum/dsp808.py",
       "sourceSha256": "6500cfffad2be75c0be43f57bb91a5582b7406fe0bb36be120d412884d23da28",
-      "vendoredSha256": "3d61ba9c258c319d90d7beb47f6cbc7dafb7336c49d8386912478d284cef603d",
+      "vendoredSha256": "f3c5ac8321c104ada7b7f4cfd1914eb70d3707cb86d1b26cbac6d53dd0423b3d",
       "localUpdates": [
         {
           "moduleVersion": "0.1.3-experimental",
           "previousVendoredSha256": "6500cfffad2be75c0be43f57bb91a5582b7406fe0bb36be120d412884d23da28",
           "reason": "Owner-tested TDEP/SAT smoothing update and matching release documentation; original import and source fingerprints retained."
+        },
+        {
+          "moduleVersion": "0.1.6-experimental",
+          "previousVendoredSha256": "3d61ba9c258c319d90d7beb47f6cbc7dafb7336c49d8386912478d284cef603d",
+          "reason": "Analog BD 0.1.6: TYPE/FIXD switches, SETUP order and LPF direction, and bit-identical DSP efficiency work; original import and source fingerprints retained."
         }
       ]
     },
@@ -220,7 +256,7 @@
       "revision": "363861e31ee963c478fab2b190a0fabe1d7ce37b",
       "sourcePath": "modules/analog-bassdrum/dsp909.py",
       "sourceSha256": "c45ef4357cd66369181523784de0f5b328b8b18a58f3c19c60983d1173dd3195",
-      "vendoredSha256": "d31d2fd1340e9c5055389a37f20959ebccd78d45636daec824ae3e1e84f4d67d",
+      "vendoredSha256": "0a9f0ea98c5a01572138781ef2e13bbb36b6cf30299deffe8d3e0dede0bf23df",
       "localUpdates": [
         {
           "moduleVersion": "0.1.3-experimental",
@@ -231,6 +267,11 @@
           "moduleVersion": "0.1.4-experimental",
           "previousVendoredSha256": "480a064a304380079019125eef98e9c68da26bd5408bbe38845563ccac94d2e4",
           "reason": "Owner-auditioned 909 direct-out reference update and matching release documentation; fresh physical/timing/memory qualification explicitly waived for this exact source. Original upstream fingerprints retained."
+        },
+        {
+          "moduleVersion": "0.1.6-experimental",
+          "previousVendoredSha256": "d31d2fd1340e9c5055389a37f20959ebccd78d45636daec824ae3e1e84f4d67d",
+          "reason": "Analog BD 0.1.6: FIXED switch in the 909's SRC SETUP page (identical hits when ON; OFF is the 0.1.5 sound); original import and source fingerprints retained."
         }
       ]
     },
@@ -240,7 +281,14 @@
       "revision": "363861e31ee963c478fab2b190a0fabe1d7ce37b",
       "sourcePath": "modules/analog-bassdrum/engine.c",
       "sourceSha256": "9ed63ee4348aa470eb592506d7bda1e36a48e4fa56d39b4ccad2223bd2e5fda0",
-      "vendoredSha256": "9ed63ee4348aa470eb592506d7bda1e36a48e4fa56d39b4ccad2223bd2e5fda0"
+      "vendoredSha256": "734cbb927fb9a79b2ea7467bfd06221123dd724cb8955a616bc3203d00f95060",
+      "localUpdates": [
+        {
+          "moduleVersion": "0.1.6-experimental",
+          "previousVendoredSha256": "9ed63ee4348aa470eb592506d7bda1e36a48e4fa56d39b4ccad2223bd2e5fda0",
+          "reason": "Analog BD 0.1.6: TYPE/FIXD switches, SETUP order and LPF direction, and bit-identical DSP efficiency work; original import and source fingerprints retained."
+        }
+      ]
     },
     {
       "path": "modules/analog-bassdrum/engine.h",
@@ -256,7 +304,14 @@
       "revision": "363861e31ee963c478fab2b190a0fabe1d7ce37b",
       "sourcePath": "modules/analog-bassdrum/engine.s",
       "sourceSha256": "c86a6ac24326fb52f71dd766b1ccc25e5dfd8511028b162459447c279da48425",
-      "vendoredSha256": "c86a6ac24326fb52f71dd766b1ccc25e5dfd8511028b162459447c279da48425"
+      "vendoredSha256": "a6ff5f2fe90dbe5570512bbe54dede4c8c8f86c4ef4656fce4c57a9b600c4805",
+      "localUpdates": [
+        {
+          "moduleVersion": "0.1.6-experimental",
+          "previousVendoredSha256": "c86a6ac24326fb52f71dd766b1ccc25e5dfd8511028b162459447c279da48425",
+          "reason": "Analog BD 0.1.6: TYPE/FIXD switches, SETUP order and LPF direction, and bit-identical DSP efficiency work; original import and source fingerprints retained."
+        }
+      ]
     },
     {
       "path": "modules/analog-bassdrum/exact-render.json",
@@ -264,7 +319,14 @@
       "revision": "363861e31ee963c478fab2b190a0fabe1d7ce37b",
       "sourcePath": "modules/analog-bassdrum/exact-render.json",
       "sourceSha256": "41a17cba7c5c40ab2f32973ee4427da74d023e70cc502074f047a9b2d9900a09",
-      "vendoredSha256": "41a17cba7c5c40ab2f32973ee4427da74d023e70cc502074f047a9b2d9900a09"
+      "vendoredSha256": "307d76d4c2492e00b0f3809d65908680cd232d2fb3d363d743545779aab41bc4",
+      "localUpdates": [
+        {
+          "moduleVersion": "0.1.6-experimental",
+          "previousVendoredSha256": "41a17cba7c5c40ab2f32973ee4427da74d023e70cc502074f047a9b2d9900a09",
+          "reason": "Analog BD 0.1.6: TYPE/FIXD switches, SETUP order and LPF direction, and bit-identical DSP efficiency work; original import and source fingerprints retained."
+        }
+      ]
     },
     {
       "path": "modules/analog-bassdrum/fit909.json",
@@ -287,7 +349,14 @@
       "revision": "363861e31ee963c478fab2b190a0fabe1d7ce37b",
       "sourcePath": "modules/analog-bassdrum/generate.py",
       "sourceSha256": "62c5e6eca1df9179229c1b1de419114e3162813f99724dc9b40fa29c84191b88",
-      "vendoredSha256": "62c5e6eca1df9179229c1b1de419114e3162813f99724dc9b40fa29c84191b88"
+      "vendoredSha256": "b18f058ccfb3de5dc318ccf57cb3276649b77188c920f0568e4fa64d54074873",
+      "localUpdates": [
+        {
+          "moduleVersion": "0.1.6-experimental",
+          "previousVendoredSha256": "62c5e6eca1df9179229c1b1de419114e3162813f99724dc9b40fa29c84191b88",
+          "reason": "Analog BD 0.1.6: TYPE/FIXD switches, SETUP order and LPF direction, and bit-identical DSP efficiency work; original import and source fingerprints retained."
+        }
+      ]
     },
     {
       "path": "modules/analog-bassdrum/machine.s",
@@ -295,12 +364,17 @@
       "revision": "363861e31ee963c478fab2b190a0fabe1d7ce37b",
       "sourcePath": "modules/analog-bassdrum/machine.s",
       "sourceSha256": "07dc37b1c0bd0f061aabe27782c67df9dcd22769e9c080efbfdf354530d83b8d",
-      "vendoredSha256": "90f9ddb5c2a4cee47e0334c3cd35a7e92d42b0ee37eb3bbc8062cc7821e6aeb4",
+      "vendoredSha256": "a33e4d36da6a14e7e856c7c7088be2820a40c7fb7014917983c729931eed55a3",
       "localUpdates": [
         {
           "moduleVersion": "0.1.5-experimental",
           "previousVendoredSha256": "07dc37b1c0bd0f061aabe27782c67df9dcd22769e9c080efbfdf354530d83b8d",
           "reason": "Restore stock SRC defaults in both Part copies on departure; exact AB015FIX01 promoted after reported physical FLEX persistence and owner merge/publication instruction. Updated release documentation retains broader unverified limits."
+        },
+        {
+          "moduleVersion": "0.1.6-experimental",
+          "previousVendoredSha256": "90f9ddb5c2a4cee47e0334c3cd35a7e92d42b0ee37eb3bbc8062cc7821e6aeb4",
+          "reason": "Analog BD 0.1.6: TYPE/FIXD switches, SETUP order and LPF direction, and bit-identical DSP efficiency work; original import and source fingerprints retained."
         }
       ]
     },
@@ -318,7 +392,14 @@
       "revision": "363861e31ee963c478fab2b190a0fabe1d7ce37b",
       "sourcePath": "modules/analog-bassdrum/tables.inc",
       "sourceSha256": "baec565139910e89e12563272f9f8ef934845ddd98f90d8234be15873571e01d",
-      "vendoredSha256": "baec565139910e89e12563272f9f8ef934845ddd98f90d8234be15873571e01d"
+      "vendoredSha256": "b0a1c1a4f06243ec7a58455ccafb0030da2e65c97c3a83d8de43bc6abc163eff",
+      "localUpdates": [
+        {
+          "moduleVersion": "0.1.6-experimental",
+          "previousVendoredSha256": "baec565139910e89e12563272f9f8ef934845ddd98f90d8234be15873571e01d",
+          "reason": "Analog BD 0.1.6: TYPE/FIXD switches, SETUP order and LPF direction, and bit-identical DSP efficiency work; original import and source fingerprints retained."
+        }
+      ]
     },
     {
       "path": "modules/midi-scenes/README.md",

@@ -1,0 +1,51 @@
+{
+  "scope": "host USB probe with generated silence, injected planner failures and guarded frame storage; no instrument IO",
+  "sourceSha256": {
+    "usb_probe.c": "bb5d50e5cc22b5aa85ad2146fb47bf1ce43be28187916723418db5d66e311326",
+    "planner.c": "01c9c25efa363679a591969931dd376a3b694a949dd8b9f89eda4bf77a88cee4",
+    "planner.h": "1a10ce9e6b34dfd35eb138690e2134550621c3bf91b2178fb50f95b9def6b7ae",
+    "test_usb_probe.c": "a6cabcaab8bec8cca6202a9cc2dc1c1976b4d96f13282f1cb1e60a7fe5db3557",
+    "test_usb_probe.py": "aac99d4dc11b451e9287ae9731179f3b3e3596ae6d3bfdb6b74c74bb2e62b3aa"
+  },
+  "sdkRevision": "74932eb4f2c54ea653fe1a2d7af55f6bec00907c",
+  "sdkDependencySha256": {
+    "sdk/runtime/loader/modwerk_module.h": "55f39232ec7eb2fe8a497f946f559a9f4e78f90e637ea5475cca686bc5c56218"
+  },
+  "compiler": "cc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0",
+  "flags": [
+    "-std=c99",
+    "-O1",
+    "-g",
+    "-Wall",
+    "-Wextra",
+    "-Werror",
+    "-pedantic",
+    "-fsanitize=address,undefined",
+    "-fno-omit-frame-pointer"
+  ],
+  "runs": [
+    {
+      "failureAt": 0,
+      "exitCode": 0,
+      "stdout": [
+        "PASS USB probe: planner outcome, one-shot work and bounded display"
+      ]
+    },
+    {
+      "failureAt": 1,
+      "exitCode": 0,
+      "stdout": [
+        "PASS USB probe: planner outcome, one-shot work and bounded display"
+      ]
+    },
+    {
+      "failureAt": 2,
+      "exitCode": 0,
+      "stdout": [
+        "PASS USB probe: planner outcome, one-shot work and bounded display"
+      ]
+    }
+  ],
+  "exitCode": 0,
+  "hardware": "not tested"
+}

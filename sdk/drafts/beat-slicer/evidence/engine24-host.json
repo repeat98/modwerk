@@ -1,0 +1,30 @@
+{
+  "scope": "Base-owned idle/job adaptation with synthetic ownership; no installed source service",
+  "sourceSha256": {
+    "engine_boundary.c": "7989e9811c74e1d9ddd847f6b10a291a7757999153d75960d4996a2325629e9a",
+    "engine_boundary.h": "22d98964c49edaead23f27be9007efe4ed97d9a7d0ffac727641756e37a76b01",
+    "preview_guard.c": "da1299674cf2ae967c58231ee9c16891afa94e27254407b5d09df6b73cc4343e",
+    "preview_guard.h": "abcaff39ef1b9a21cb238f0021344ffb5b812ea1740a354cbc1d1f2ace4ddf36",
+    "test_engine_boundary.c": "8bbd6b78e62d15e940bfaeeebe2c7101b2ee54b87274a84fc003474422cb5f97",
+    "test_engine_boundary.py": "38e3d8b8036d28bbe2374c0142c3a36d9b3a5fc2cd70cd1bf82b20162e3356cf"
+  },
+  "compiler": "Apple clang version 17.0.0 (clang-1700.6.4.2)",
+  "flags": [
+    "-std=c99",
+    "-O1",
+    "-g",
+    "-Wall",
+    "-Wextra",
+    "-Werror",
+    "-pedantic",
+    "-fsanitize=address,undefined",
+    "-fno-omit-frame-pointer"
+  ],
+  "exitCode": 0,
+  "stdout": [
+    "PASS: 120 idle/job lifetimes, closed bootstrap, independent writers, reentry, invalid retirement and exhaustion"
+  ],
+  "hardware": "not tested",
+  "audio": "not tested",
+  "nativeSourceAccess": "not implemented"
+}

@@ -71,7 +71,7 @@ export function BetaJoinPrompt() {
     <h2 id="beta-join-title" className="link-title" tabIndex={-1}>The beta is open for new testers <span className="module-beta-badge">Beta</span></h2>
     <p id="beta-join-intro" className="base-install-intro">Beta testers send modules from this page to their Octatrack over USB and try new modules first. It’s open to new testers for a short time, while places last.</p>
     <ul className="link-promises">{ASKS.map(([icon, lead, rest]) => <li key={lead}><span className="link-feature-icon" aria-hidden="true"><Icon name={icon} size={18} /></span><span><strong>{lead}</strong> {rest}</span></li>)}</ul>
-    <p className={'link-needs' + (usb ? '' : ' is-missing')}>You need an Octatrack MKII, your OS 1.40C file, a USB cable and Chrome or Edge on a computer.</p>
+    <p className={'link-needs' + (usb ? '' : ' is-missing')}>You need an Octatrack (MKI or MKII), your OS 1.40C file, a USB cable and Chrome or Edge on a computer.</p>
     {!usb ? <p className="file-error" role="alert">The beta runs over USB, which this browser can’t do. Open Modwerk in Chrome or Edge on a computer to join.</p>
       : !user ? <p className="base-install-note">Sign in or create an account to join.</p>
       : !verified ? <p className="base-install-note">Verify your email and choose a username in your account first.</p>

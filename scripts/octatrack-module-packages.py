@@ -4,6 +4,7 @@
 import importlib.util
 import json
 import os
+import shutil
 import struct
 import subprocess
 import sys
@@ -41,11 +42,32 @@ def lag_guard(builder, check):
 
 def run(builder):
     try:
-        builder.main()
+        if '--check' in sys.argv[1:] or '--prepare-ports' in sys.argv[1:]:
+            builder.main()
+        else:
+            keep_published(builder, builder.main)
     except subprocess.CalledProcessError as error:
         print(error.stdout or '', end='', file=sys.stderr)
         print(error.stderr or '', end='', file=sys.stderr)
         raise SystemExit(error.returncode) from error
+
+
+def keep_published(builder, action):
+    """Run a write, then put back every published package it did not rewrite.
+
+    The builder clears public/octatrack-modules before its first write, so a rebuild dropped every earlier
+    version's .mwrm that main still publishes, and a run that stopped part way left the folder half empty.
+    A file the run writes stays as written; one it removed comes back byte for byte, whether the run
+    finished or not. Kept here, not in the builder, whose source the base pins."""
+    folder = Path(builder.PUBLIC) / 'octatrack-modules'
+    before = {path: path.read_bytes() for path in sorted(folder.rglob('*.mwrm'))} if folder.is_dir() else {}
+    try:
+        return action()
+    finally:
+        for path, data in before.items():
+            if not path.exists():
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_bytes(data)
 
 
 def only_key_bus(capabilities):
@@ -108,6 +130,38 @@ def main():
     builder = importlib.util.module_from_spec(spec)
     sys.modules[spec.name] = builder
     spec.loader.exec_module(builder)
+    # A catalogue name over the unit's 15 characters gets a shorter one on the unit: an entry's "unitName" becomes the
+    # builder's --name. Here, not in the builder, whose source the base pins.
+    build = getattr(builder, 'build', None)
+    def named_build(entry, *args, **kwargs):
+        if not entry.get('unitName'):
+            return build(entry, *args, **kwargs)
+        run_process = builder.subprocess.run
+        builder.subprocess = type('Subprocess', (), {'run': staticmethod(
+            lambda command, **options: run_process(command + ['--name', entry['unitName']], **options))})
+        try:
+            return build(entry, *args, **kwargs)
+        finally:
+            builder.subprocess = importlib.import_module('subprocess')
+    if build:
+        builder.build = named_build
+    # A C runtime module: its row's "sources", "subscribe" and "raise" go to build.py as they are. It has no card form
+    # (src/catalog/usb-only.ts). build.py takes its id and unit name from the output's stem, so build at <id>.mwrm.
+    # Here, not in the builder, whose source the base pins.
+    sourced, tools = getattr(builder, 'build', None), getattr(builder, 'tools', None)
+    def c_build(entry, out, *args, **kwargs):
+        if not entry.get('sources'):
+            return sourced(entry, out, *args, **kwargs)
+        named = out.parent / (entry['id'] + '.mwrm')
+        subprocess.run([sys.executable, '-B', str(builder.BUILD), *entry['sources'],
+                        *[arg for hook in entry.get('subscribe', []) for arg in ('--subscribe', hook)],
+                        *[arg for event in entry.get('raise', []) for arg in ('--raise', event)], '-o', str(named)],
+                       check=True, capture_output=True, text=True, cwd=APP)
+        out.write_bytes(named.read_bytes())
+        return out.read_bytes()
+    if sourced and tools:
+        builder.build = c_build
+        builder.tools = lambda entry, upstream: bool(shutil.which('m68k-elf-gcc')) if entry.get('sources') else tools(entry, upstream)
     # The qualified builder's JSON:KEY syntax predates Windows drive letters.
     # Use its documented relative-path form, without altering any base input.
     builder.DSP = builder.DSP.relative_to(APP)

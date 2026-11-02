@@ -181,6 +181,7 @@ uint8_t mw_controller_board_test_read8(uint32_t a) { return a == 0x80000037u ? m
 int mw_controller_board_test_ui(uintptr_t lo, uintptr_t hi) { (void)lo; (void)hi; return (int)ui_clear; }
 static uint8_t donor[sizeof donor_original];
 uint8_t *mw_controller_board_test_donor(uint32_t a) { assert(a == 0x400d5a82u); return donor; }
+volatile uint8_t modwerk_runtime_redraw_wanted; /* runtime.c: a page write asks the next UI tick to redraw (#882) */
 int modwerk_machine_metadata_admit(const struct runtime_dsp *from, struct runtime_dsp *to,
     const struct runtime_context *c, enum runtime_metadata_operation op)
 { (void)c; assert(sr >= 0x400u); to->foreign_roots = 0; return modwerk_controller_admit(from, to, op); }
@@ -403,15 +404,16 @@ int main(int argc, char **argv)
     run(2);
     if (mode == 11) { paused_none = 1; assert(install(pkg_plain, sizeof pkg_plain) == MU_APPLIED); } /* an owner entry before Sidechain's */
     assert(install(pkg_sc, sizeof pkg_sc) == MU_APPLIED);
-    assert(!lease(SC, 1) && (mode == 7 || page_is(0, SC))); /* published, not yet reset and enabled */
+    assert(!lease(SC, 1) && (mode == 7 || page_is(0, SC)) && !modwerk_runtime_redraw_wanted); /* published, not yet reset and enabled */
     run(120);
     assert(slot_for(SC, MW_CTL_ACTIVE) && dsp_mask[0] == 9 && dsp_mask[1] == 9 && !sc_before_bus);
     if (mode == 7) {
-        donor[300] ^= 1; assert(page_is(0, SC)); donor[300] ^= 1;
+        donor[300] ^= 1; assert(page_is(0, SC) && !modwerk_runtime_redraw_wanted); donor[300] ^= 1; /* no page: no redraw */
         assert(lease(SC, 1));
         return 0;
     }
-    assert(page_is(1, SC));
+    assert(page_is(1, SC) && modwerk_runtime_redraw_wanted); /* applied on activation: SETUP is redrawn (#882) */
+    modwerk_runtime_redraw_wanted = 0;
     if (mode == 8) {
         /* Someone changed the extended page: unknown, the removal quarantines and holds it. */
         donor[200] ^= 1;
@@ -428,7 +430,7 @@ int main(int argc, char **argv)
         assert(install_refused(removal(SC), 32, &why) && why == RUNTIME_BUSY);
         assert(lease(SC, 1)); /* only a request until the tick starts the disable */
         run(1);
-        assert(!lease(SC, 1) && page_is(0, SC)); /* page gone before the hooks; disabling: no writes */
+        assert(!lease(SC, 1) && page_is(0, SC) && modwerk_runtime_redraw_wanted); /* page gone before the hooks, redrawn; disabling: no writes */
         run(10);
         assert(slot_for(SC, MW_CTL_RETIRING) && dsp_mask[0] == 8 && dsp_mask[1] == 8); /* the bus stays while it is held */
         ui_clear = 0;

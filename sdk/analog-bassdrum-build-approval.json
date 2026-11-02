@@ -1,15 +1,15 @@
 {
   "kind": "owner-approved-update",
   "id": "analog-bassdrum",
-  "version": "0.1.5-experimental",
+  "version": "0.1.6-experimental",
   "approvedBy": "repeat98",
-  "approvedOn": "2026-10-09",
-  "ownerStatement": "flex persists. merge and update",
-  "reason": "After receiving exact AB015FIX01 and being told that the 0.1.4 waiver did not cover it, the owner reported FLEX persistence and directed merge/publication of this exact 0.1.5 source. This new scoped release approval accepts the remaining broader hardware/maximum-load, chip timing and complete memory limits. Only FLEX reboot persistence is reported; model, duration, audio, multiple-instance and Part/project test results were not supplied. Output Matrix halt remains unverified. Native/browser parity, exact packages, fresh UI, licensing and saved live download remain required.",
+  "approvedOn": "2026-10-29",
+  "ownerStatement": "I agree with everything",
+  "reason": "Answer to the 29 Oct maintenance briefing's call to write this record and merge #944 first. 0.1.6 adds the TYPE and FIXD switches, reorders SETUP, adds an LPF OFF position and fixes HIGH over USB (#1000, #1020). The author's MKII runs were on the 27 Oct build; the rebuild on main at 4690b6eb (beta base 6483508a) has not run on a unit. This scoped release approval accepts the same remaining limits as 0.1.5: current-build hardware, chip worst-case timing and complete memory bounds. Native/browser parity, exact packages, fresh UI, licensing and a saved live download remain required.",
   "waived": [
     "current-build-hardware",
     "chip-worst-case-cycles",
     "complete-memory-bounds"
   ],
-  "sourceSha256": "e741e4876ea3ae44eb54ddc93ff3b5bf5f65ebb3e9320cc5fd1f602f7925966d"
+  "sourceSha256": "0ddc82a295d320300a0e03c0c9cf836d19d887dfd2d340ff442d5185a4c23d43"
 }

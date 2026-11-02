@@ -14,6 +14,8 @@ from fm_runtime import port, source_variant
 
 APP = Path(__file__).resolve().parents[4]
 SDK = APP / 'sdk/octabam'
+sys.path.append(str(APP / 'sdk'))  # firmware_codec
+import firmware_codec  # noqa: E402
 UPSTREAM = Path(os.environ.get('ELEKLOADER_UPSTREAM', Path.home() / '.cache/modwerk-upstream/elekloader'))
 
 
@@ -58,7 +60,7 @@ class SourceTests(unittest.TestCase):
                      'native binutils and pinned Elekloader checkout required')
 class LinkTests(unittest.TestCase):
     def test_complete_engine_links_and_relocates_without_pinned_units(self):
-        sys.path.insert(0, str(UPSTREAM))
+        firmware_codec.use_elekloader(UPSTREAM)
         from elekloader.sdk.octabam import Octabam
         spec = importlib.util.spec_from_file_location('runtime_build_fm_test', APP / 'sdk/runtime/loader/build.py')
         build = importlib.util.module_from_spec(spec)

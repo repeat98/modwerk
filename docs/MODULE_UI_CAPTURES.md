@@ -136,6 +136,7 @@ The supported UI keys also include `SCENE B`, `TRIG1`–`TRIG16`, MKII `AED`,
 `MIXER` opens the MIXER page.
 Kit/pattern workflows also support `CUE`, `PTN`, `BANK`, `REC` (copy),
 `PLAY` (clear) and `STOP` (paste); hold FUNC for clipboard actions.
+Stock clears a message box (TEMP SAVED, ARM ALL) when FUNC is released: for a FUNC gesture, `hold` FUNC, `press` the key, capture within about 20 ms and `release` after it.
 
 Example effect plan:
 
@@ -203,6 +204,19 @@ records must contain no firmware bytes, raw LCD/RAM dumps, card images, samples,
 personal project names, credentials or private emulator logs. Temporary card
 and framebuffer data are removed by the script.
 
+### Driving ot_emu by hand
+
+`ot_emu --interactive` answers one line a command on stdin; a session script (WAVE's draft,
+`sdk/drafts/wave/tools/emu_session.py`) can then install a USB package over `--usb-host` with
+`npm run device -- try FILE --emulator --socket SOCK`. What it takes:
+- `key ROW MASK` pushes the panel link's two bytes as they are, so ROW is the frame's header `0x20 | row`
+  (key code `row * 8 + bit`), and `knob` takes `0x30 | encoder` (A-F = 0-5). A bare row number does nothing.
+- `--frame` is needed for a machine to render; `--mkii` opens SET DATE/TIME on a never-set clock (YES clears it).
+- `peek` answers `peek HEX`, not `ok`. `audio start tracks` adds each track's stem to the capture (T1 L is the
+  ninth of 24 words a frame).
+- Without `--dsp` a session runs about ten times faster, for screens only (the firmware then shows DSP LOAD
+  FAILED), and a package that carries a DSP engine (Analog BD) is refused at verify with loader refusal 3. Card samples do not play faithfully under the port, so compare levels against a sample on a unit.
+
 ## Rights and release review
 
 Provide an accurate contributor declaration for original captures and preserve
@@ -252,9 +266,15 @@ hardware timing or save/reboot persistence.
 
 For local emulator captures, use digiemu revision
 `c1b5735835923e328f8b4950d6ba927875e5b669` with its six pinned Unicorn patches.
-Build the author's pinned catalog release with the unchanged vendored elekloader
-kit and your own supported stock OS file, then run the capture script in an
-isolated sandbox with network and user credentials denied:
+Install them with digiemu's `tools/install-patched-unicorn.sh`, then run
+`.venv/bin/python -m emu.unicorn_compat` from the digiemu folder; the script's
+own final check fails when started from elsewhere. Run the capture with that
+`.venv/bin/python`. Build the author's pinned catalog release with the unchanged
+vendored elekloader kit and your own supported stock OS file: the site's builder,
+or `build(stock, mods, 'D001')` from `vendor/elekloader/kit/src/patch.ts` with the
+core and module packages in `vendor/elekloader/catalog/`, under Node 24. Then run the
+capture script in an isolated sandbox with network and user credentials denied
+(on macOS, `sandbox-exec` with a `(deny network*)` profile):
 
 ```sh
 python3 scripts/capture-digi-module-ui.py \
@@ -283,28 +303,39 @@ Rytm modules use the same manifest fields and `media/capture.json` as the
 Digitakt and Digitone. Capture them in
 [rytm-emu](https://github.com/trigcondition/rytm-emu) (MIT) at revision
 `3c4c42c`, built with `cargo build --release --bin dtboot`. Its headless
-`dtboot` runs your own build of stock OS 1.73 with core-ar2 and the module, and
+`dtboot` runs your own build of stock OS 1.74 with core-ar2 and the module, and
 writes the firmware-rendered 128×64 screen as a PNG at 3× without
 interpolation: `DTBOOT_STEPS=1` with `DTBOOT_PNG_DIR` after each key release,
 `DTBOOT_TURN_PNG` after each encoder turn. The command line is the panel-input
 plan; keep it in `capture.json` with the PNG hashes and the built `.syx` hash.
 
+- Never put an event on a multiple of 10M. dtboot runs in chunks of
+  `--every` instructions (10M by default) and silently drops a press,
+  release or turn whose clock the CPU has already passed when its chunk
+  starts. An event exactly on a boundary is lost whenever the CPU is busy
+  there (in an interrupt, not stopped): Send FX's boot plan lost its NO
+  presses, the notices stayed up and the run was silent
+  ([repeat98/modwerk#878](https://github.com/repeat98/modwerk/pull/878)).
+  Place every event 3M off the boundaries.
 - Without the unit's analog calibration the OS opens with notices. Clear them
   with held NO presses before the first real step, for example
-  `--press NO@4500M:80M --press NO@5300M:80M --press NO@6100M:80M --press NO@6900M:80M`
+  `--press NO@4503M:80M --press NO@5303M:80M --press NO@6103M:80M --press NO@6903M:80M`
   (clocks are instruction counts, about 200M a second).
 - Keys use the panel's names (`FLTR`, `AMP`, `TRIG`, `FUNC`, `T1`…`T16`).
   Encoders are numbered 0 to 7: the top row A–D, then E–H, so FRQ on the
   FILTER page is `4`. Encoder `8` is LEVEL/DATA, which sets the tempo on the
   TEMPO screen.
 - Turns of delta 1 move a parameter one step every five to nine turns. Use a
-  larger delta for coarse moves (`--turn 4:-6@8000Mx37/20M` moved FRQ from
-  127 to 61), then turns of `-1` or `1` 40M apart to land on an exact value.
+  larger delta for coarse moves (37 turns of `-6`, 20M apart, moved FRQ from
+  127 to 61: `--turn 4:-6@8003Mx37/20M`), then turns of `-1` or `1` 40M
+  apart to land on an exact value.
 - The analog voices are stubbed, so a capture shows the screen, never the
-  sound. Compare the same plan on stock 1.73 to confirm that only the
+  sound. Compare the same plan on stock 1.74 to confirm that only the
   module's pixels changed.
 - `--break ADDR` stops at a PC and prints the registers and stack. Do not
   add `--break-after`: it runs the machine to that clock before the card is
   attached and before any `--press` or `--turn` happens, so the state it stops
   in is not the plan's. Leave out the turns you do not want to stop on
   instead. `--trace N` adds the last N PCs to a fault report.
+- `--profile-after` never samples a mod's own code; to measure it, see
+  [the audio block](../sdk/machines/analog-rytm-mkii/README.md#the-audio-block).

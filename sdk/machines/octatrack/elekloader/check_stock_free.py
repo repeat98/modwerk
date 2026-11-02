@@ -17,6 +17,8 @@ import json
 from pathlib import Path
 import sys
 
+sys.path.append(str(Path(__file__).resolve().parents[3]))  # sdk/, for firmware_codec
+import firmware_codec  # noqa: E402
 # A seed window needs this many distinct byte values: sparse words, bitmaps and zero padding (`c0060000c0060000`,
 # `01000000 00000000`) recur by chance between any two images and say nothing about where bytes came from.
 DISTINCT = 5
@@ -79,7 +81,7 @@ def stock_runs(document, haystacks, minimum, skip=()):
 
 
 def haystacks(stock_path, upstream):
-    sys.path.insert(0, str(upstream))
+    firmware_codec.use_elekloader(upstream)
     from elekloader import formats
     stock, device, release = formats.load(str(stock_path))
     image = formats.main_image(stock, device)

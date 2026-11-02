@@ -13,8 +13,12 @@ copy's SHA-256 against its own running stock before it installs a package.
 import hashlib
 import json
 from pathlib import Path
+import sys
 
 import stock_recipe
+
+sys.path.append(str(Path(__file__).resolve().parents[3]))  # sdk/, for firmware_codec
+import firmware_codec  # noqa: E402
 
 PORTS = {
     'playmodes': dict(slots=None),
@@ -54,8 +58,7 @@ def sources(root, upstream, module):
         )]
     result = {path.relative_to(root).as_posix(): digest(path.read_bytes()) for path in paths
               if path.is_file() and path.suffix in ('.py', '.s', '.S', '.c', '.h', '.asm', '.inc', '.json', '.ts', '.mjs')}
-    result.update({'upstream/' + path.relative_to(upstream).as_posix(): digest(path.read_bytes())
-                   for path in (upstream / 'elekloader').rglob('*.py')})
+    result.update(firmware_codec.inputs(upstream))  # the checkout's files it runs, and the codec it runs them with
     return result
 
 

@@ -39,4 +39,8 @@ unsigned modwerk_controller_held(void);
 /* A live reader whose key bus cannot come up this boot: dsp.c fails a self-test with it and, when the loader has no
  * refusal of its own, reports RUNTIME_FEATURE. */
 int modwerk_controller_keybus_lost(void);
+/* ev_tick: 1 while a trusted controller the bank's tracks use still brings its engine up (not yet bound, placed, reset
+ * or enabled), so the boot restore's "MODULES LOADED" waits for it (modset.c). 0 once each is running, or can't be this
+ * boot: no room for its engine, its engine or a core stuck, the slot quarantined, the board closed. */
+int modwerk_controller_settling(void);
 #endif

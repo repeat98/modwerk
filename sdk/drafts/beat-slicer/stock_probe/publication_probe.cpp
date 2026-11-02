@@ -168,6 +168,33 @@ void redrawOnly(const std::vector<uint8_t>& image) {
     require(p.m.read32(0x460e5e64)==1 && p.bytes(base,stride)==before,
             "redraw notification changed settings");
 }
+void recorderRanges(const std::vector<uint8_t>& image) {
+    /* Execute stock grid creation on recorder settings, including a genuinely
+     * empty extent. These are isolated metadata fixtures, not recording runs. */
+    for(unsigned slot:{128u,135u}) for(unsigned frames:{0u,1u,63u,64u,1000u,44100u}) {
+        Probe p(image);auto base=p.setup(1,slot,0);
+        auto control=0x46c922c4u+44*slot;
+        p.m.write32(control,3);p.m.write32(control+16,frames);
+        p.m.write32(base+300,0);p.m.write32(base+304,frames);p.m.write32(base+308,0);
+        unsigned menus=0,rows=0;
+        p.mocks[0x4006d94c]=[&]{++menus;rows=p.arg(0);return 0u;};
+        p.run(0x40072c10,{},0x2000);
+        std::printf("RECORDER_MENU slot=%u frames=%u menus=%u rows=%u\n",slot,frames,menus,rows);
+        unsigned dialogs=0;
+        p.mocks[0x4006d57c]=[&]{++dialogs;return 0u;};
+        p.run(0x40073984,{8},0x2000);
+        if(dialogs)p.run(0x40073a68,{1},0x2000);
+        auto count=p.m.read32(base+1092);
+        require(dialogs==1 && count==8,"recorder grid count/dialog differs");
+        for(unsigned i=0;i<count;++i) {
+            require(p.m.read32(base+312+12*i)==frames*i/count &&
+                    p.m.read32(base+316+12*i)==frames*(i+1)/count &&
+                    p.m.read32(base+320+12*i)==0xffffffffu,"recorder grid geometry differs");
+        }
+        std::printf("RECORDER_GRID slot=%u frames=%u dialogs=%u count=%u first=%u end=%u\n",
+                    slot,frames,dialogs,count,p.m.read32(base+312),p.m.read32(base+316));
+    }
+}
 }
 int main(int argc,char** argv) {
     std::printf("SOURCE_SHA256: %s\n",PROBE_SOURCE_SHA);
@@ -180,6 +207,7 @@ int main(int argc,char** argv) {
         deferred(image);std::puts("PASS: four deferred grids clear count before eight search continuations and final publication");
         refused(image);std::puts("PASS: four busy-source grid dialogs refuse without marker changes");
         redrawOnly(image);std::puts("PASS: editor redraw notification changes no marker settings");
+        recorderRanges(image);
     }catch(const std::exception& e){std::fprintf(stderr,"FAIL: %s\n",e.what());return 1;}
     return 0;
 }

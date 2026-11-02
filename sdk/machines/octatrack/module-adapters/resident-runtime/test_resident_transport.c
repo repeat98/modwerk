@@ -21,10 +21,11 @@ static void checksum(unsigned core) {
     assert(!(sum&65535u));
 }
 int main(void) {
-    uint32_t words[24];
-    for(unsigned i=0;i<24;++i) words[i]=(0x123456u+i*0x731u)&0xffffffu;
+    enum { RESET_DATA=8*DL_DATA }; /* DL_RESET_DATA, in the owned header this test's transfer.h lacks */
+    uint32_t words[RESET_DATA+1];
+    for(unsigned i=0;i<RESET_DATA+1;++i) words[i]=(0x123456u+i*0x731u)&0xffffffu;
     assert(!dl_hook_reset_start(0,1,0,0,words));
-    assert(!dl_hook_reset_start(0,1,0,25,words));
+    assert(!dl_hook_reset_start(0,1,0,RESET_DATA+1,words));
     assert(!dl_hook_reset_start(2,1,0,1,words));
     assert(!dl_hook_reset_start(1,2,0,1,words));
     assert(!dl_hook_reset_start(0,16,0,1,words));
@@ -45,6 +46,18 @@ int main(void) {
         assert(dl_job_status(core)==0); dl_job_release(core);
         assert(dl_job_status(core)==0); /* release cannot abandon a pending ACK */
         answer(core,0); assert(dl_job_status(core)==1); dl_job_release(core);
+        /* One job, several packets: one a frame, each with its own offset, done once the last is answered. */
+        assert(dl_hook_reset_start(core,1,528,50,words));
+        for(unsigned k=0;k<3;++k) {
+            unsigned n=k<2 ? 24u:2u;
+            dl_frame(); checksum(core);
+            assert(dl_tx[core][2]==11u && dl_tx[core][4]==n && dl_tx[core][5]==528u+24u*k && dl_tx[core][7]==1u);
+            for(unsigned i=0;i<n;++i)
+                assert((((uint32_t)dl_tx[core][8+2*i]<<8)|dl_tx[core][9+2*i])==words[24u*k+i]);
+            assert(dl_job_status(core)==0);
+            flags[core]=(flags[core]^1u)&1u; /* answered; the next packet goes in the next frame */
+        }
+        dl_frame(); assert(dl_job_status(core)==1); dl_job_release(core);
         assert(!dl_command_start(core,10,0,16,0)); /* no such feature (8 is the key bus, on both cores) */
         assert(!dl_command_start(core,10,0,1,1));
         if(core) assert(!dl_command_start(core,10,0,2,0));

@@ -1,6 +1,6 @@
 # Code of conduct
 
-The [Modwerk community rules](https://modwerk.app/#community-rules) apply here too: in issues, pull requests and reviews.
+The [Modwerk community rules](https://modwerk.app/#community-rules) and the [modding guidelines](MODDING_GUIDELINES.md) apply here too: in issues, pull requests and reviews.
 
 - Modules are free and experimental, and most are made by one person in their spare time. Authors and maintainers owe no fix, feature or reply time.
 - Criticise the work, not the person. A change to someone else's module needs its author's agreement.

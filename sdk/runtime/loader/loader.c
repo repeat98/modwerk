@@ -92,6 +92,11 @@ __attribute__((weak)) int modwerk_machine_metadata_admit(const struct runtime_ds
 { (void)context;(void)operation;to->foreign_roots=0;return (from->flags | to->flags) & RUNTIME_GROUP_METADATA ? RUNTIME_MALFORMED : RUNTIME_OK; }
 #endif
 
+#ifndef MODWERK_RUNTIME_IMAGE_EXTERNAL
+__attribute__((weak)) int modwerk_machine_image_validate(const struct runtime_dsp *d)
+{ (void)d;return RUNTIME_OK; }
+#endif
+
 const struct runtime_module *modwerk_runtime_module(unsigned i) { return i < RUNTIME_MODULES ? live[i] : 0; }
 unsigned modwerk_runtime_active(void)
 {
@@ -954,6 +959,12 @@ static int __attribute__((used)) prepare_context(void *u, const uint8_t *data, u
             }
             p += site_bytes(abi, n, r);
         }
+        dsp.image = to;
+        if (be16(data + 6) & 1u) dsp.page = to, dsp.page_bytes = image; /* a page recipe heads the image */
+        admission_lock = modwerk_machine_lock();
+        why = modwerk_machine_image_validate(&dsp);
+        modwerk_machine_unlock(admission_lock);
+        if (why) return refuse((enum runtime_refusal)why);
 #if CACHED_MODULES /* instruction fetches read memory, not the data cache: the extent's lines reach memory first */
         modwerk_machine_flush_data((uint32_t)(uintptr_t)m, head + code + tail);
 #endif
@@ -972,8 +983,6 @@ static int __attribute__((used)) prepare_context(void *u, const uint8_t *data, u
                     dsp.entries = kept_entries, dsp.initial = init_words ? kept_init : 0;
         else dsp.words = dsp_words, dsp.relocations = dsp_relocations;
         dsp.claims = claims ? kept : 0;
-        dsp.image = to;
-        if (be16(data + 6) & 1u) dsp.page = to, dsp.page_bytes = image; /* a page recipe heads the image; the machine checks it */
         m->id = id; m->size = head + code + tail; m->dsp = dsp;
         for (uint32_t i = 0; i < RUNTIME_HOOKS; ++i) m->hook[i] = hook[i] == RUNTIME_NONE ? 0 : (uintptr_t)to + hook[i], m->order[i] = order[i];
         m->site = site; m->sites = sites;

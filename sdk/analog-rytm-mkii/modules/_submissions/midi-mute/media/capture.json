@@ -1,0 +1,27 @@
+{
+ "schemaVersion": 1,
+ "machine": "analog-rytm-mkii",
+ "moduleId": "midi-mute",
+ "moduleVersion": "0.1.0-experimental",
+ "imageSha256": "08f8ad28f852573d0f065cff52c63bba420d1d304e944c684bd6190c00f6f080",
+ "firmware": "1.74",
+ "stockSha256": "cb0f99d620edde994fb860c0e79cc2464e427d06882828cfdfb00fc53700e123",
+ "build": "MM02: core-ar2 0.7 (vendor/elekloader/catalog/core-ar2-0.7.elemod) + midi-mute, scripts/build-elemod-packages.mjs and the repository's linkMods, Homebrew m68k-elf-gcc 16.2.0",
+ "emulator": "rytm-emu 3c4c42c, dtboot headless, 3x PNG without interpolation",
+ "capturedAt": "2026-10-29",
+ "setup": "A fresh card (the factory project, RYTMLINJE); the startup calibration notices cleared with NO.",
+ "captures": [
+  {
+   "path": "media/port-config-off.png",
+   "sha256": "29fc91da0b867ea5d6719af972fa4f5dd7ec2d34cb68ae6cc4363bf3cced2c97",
+   "plan": "dtboot MM02.syx --load <boot snapshot: fresh card, four NO presses for the calibration notices, at 8003M> --press GLOBAL@8113M:40M --press DOWN@8213M:30M --press DOWN@8293M:30M --press DOWN@8373M:30M --press YES@8473M:30M --press DOWN@8573M:30M --press YES@8673M:30M --press DOWN@8773M:30M --press DOWN@8853M:30M --press DOWN@8933M:30M --press DOWN@9013M:30M --press DOWN@9093M:30M --press DOWN@9173M:30M --press DOWN@9253M:30M --press DOWN@9333M:30M --press DOWN@9413M:30M --press DOWN@9493M:30M --press DOWN@9573M:30M --press DOWN@9653M:30M --press DOWN@9733M:30M --press DOWN@9813M:30M --press DOWN@9893M:30M --press DOWN@9973M:30M --press DOWN@10053M:30M --press DOWN@10133M:30M",
+   "frame": "DTBOOT_STEPS PNG after the eighteenth DOWN in PORT CONFIG"
+  },
+  {
+   "path": "media/port-config-on.png",
+   "sha256": "28a3c0ee13179a26850798349782a686f67de1fbc4becb9c92713806843502a9",
+   "plan": "dtboot MM02.syx --load <boot snapshot: fresh card, four NO presses for the calibration notices, at 8003M> --press GLOBAL@8113M:40M --press DOWN@8213M:30M --press DOWN@8293M:30M --press DOWN@8373M:30M --press YES@8473M:30M --press DOWN@8573M:30M --press YES@8673M:30M --press DOWN@8773M:30M --press DOWN@8853M:30M --press DOWN@8933M:30M --press DOWN@9013M:30M --press DOWN@9093M:30M --press DOWN@9173M:30M --press DOWN@9253M:30M --press DOWN@9333M:30M --press DOWN@9413M:30M --press DOWN@9493M:30M --press DOWN@9573M:30M --press DOWN@9653M:30M --press DOWN@9733M:30M --press DOWN@9813M:30M --press DOWN@9893M:30M --press DOWN@9973M:30M --press DOWN@10053M:30M --press DOWN@10133M:30M --press YES@10233M:30M",
+   "frame": "DTBOOT_STEPS PNG after YES on the row"
+  }
+ ]
+}

@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "repository": "https://github.com/sambanks/octabam",
+  "revision": "bc1445238541e120fbb0ad72e90c89caf97f4d24",
+  "kind": "docs-backport",
+  "modules": [],
+  "files": [
+    {
+      "path": "docs/TRAPS.md",
+      "sourcePath": "docs/contributing/TRAPS.md",
+      "sourceSha256": "4ed97cf6fdbf6c84eb6ec41a62c38ed90f5a967a214e210ff1e0989fe5b6a620",
+      "vendoredSha256": "4ed97cf6fdbf6c84eb6ec41a62c38ed90f5a967a214e210ff1e0989fe5b6a620"
+    },
+    {
+      "path": "docs/FAILURE_MODES.md",
+      "sourcePath": "docs/contributing/FAILURE_MODES.md",
+      "sourceSha256": "0e9fa38e1eb46740df3650cece1e9f45fbddb465ddf6893ac75d105ab5624418",
+      "vendoredSha256": "0e9fa38e1eb46740df3650cece1e9f45fbddb465ddf6893ac75d105ab5624418"
+    }
+  ],
+  "localAdaptations": [
+    "None: both files are upstream byte for byte, replacing the copies the 6328143e record pinned. HARDWARE_MATRIX.md and MIDI_TRACKS.md are unchanged upstream and stay pinned by the 30fbb8e4 and dcf93d37 records. CHIP.md is not taken.",
+    "Beside the record, scripts/fetch-os.sh takes upstream's change at this revision byte for byte (sha256 a209d3eb9eb7db958b182cdd74a16603548bd88fda789c10b0d57836502ef0e7): it checks the extracted OCTATRACK_OS1.40C.bin (34695b60...) and .syx (0a8d2d2b...) instead of the zip, whose hash changed when Elektron added an EULA file to it on 28 Oct 2026. Both firmware hashes were checked locally against the zip of record (370c55a3...) and the reissued zip; neither firmware file is in the repository. No earlier record pins this script, which comes from an earlier project with no licence (THIRD_PARTY_NOTICES)."
+  ],
+  "review": [
+    "Stock-free scan against the original 1.40C MAIN image (MAIN.raw, sha 164f3122..., local, nothing written): no 8-byte window of any hex string in either file or in fetch-os.sh occurs in stock; TRAPS.md has no hex string of 8 bytes or more, FAILURE_MODES.md four, all build hashes, fetch-os.sh two, the firmware SHA-256s. The scanner found planted stock bytes in a probe file.",
+    "No objdump listing; TRAPS.md's one code block is the single assembler line the 30fbb8e4 record already carried. The new entries name addresses, ranges and stock instructions by mnemonic (the Part validator's moveq #31, the machine list's moveq #5 cursor clamp), as Modwerk's build_core.py and machine_registry.c comments do; no stock bytes."
+  ],
+  "limitations": [
+    "Documentation only, apart from the download script above: no builder, build input or module source changes, and the tool pin in sdk/upstream-tools.json is not moved by this record. One of the six new TRAPS.md entries (a DRAM clone's staging address) concerns upstream builder code Modwerk does not carry, and the payload B entry's guard is upstream's demand loader; the stock facts behind the other entries are listed against Modwerk's code in docs/OCTATRACK_HARDWARE_TRAPS.md. The FAILURE_MODES.md entries are upstream's units and builds and are not evidence for Modwerk's packages."
+  ]
+}

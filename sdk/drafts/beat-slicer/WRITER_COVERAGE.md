@@ -1,6 +1,6 @@
 # Live-reader writer coverage
 
-Status: investigation for the shared-base service, **not implemented hooks or
+Status: investigation for the shared-base service, **no installed production hooks or
 complete writer coverage**. Live reading and Apply remain unavailable. These
 addresses identify routines executed from the private, hash-bound original
 1.40C MAIN; they are not exported SDK functions or approved patch sites.
@@ -129,7 +129,8 @@ state and silent inputs. It does not boot the OS or invoke an audio interrupt.
   position/state and publishes 1024. The routine returns zero, with **no PCM from
   this call written**, one engine follow-up (opcode 34) and one UI notification.
   This synthetic partial-preparation case is not a claim about an audible stock
-  recording fault. Queued follow-up execution remains untested.
+  recording fault. Queued follow-up execution was not tested in this 0.1.7 trace; the later
+  recorder-stop section covers two shortage paths and length-limited stops.
 - A host guard enters before the complete call and leaves on its actual return.
   PCM, map and position stores refuse new tokens; old tokens remain invalid
   afterwards, including early exits. This does not install native hooks or make
@@ -206,6 +207,46 @@ allocation ownership rules have been established.
 Do not enable a partially covered provider. These observations refine
 [BASE_CONTRACT.md](BASE_CONTRACT.md); they do not satisfy its admission gate.
 
+## Normal recording and recorder banks (0.1.39)
+
+`boot_recorder.py` uses ordinary MKII panel keys on a disposable stock 1.40C
+project with both DSPs and the scheduler running. TRACK + REC1 starts an
+ordinary recorder in the fixture's ONE/MAX mode; repeating it restarts in the
+other bank, and STOP ends recording. Tracks 1 and 8 are exercised separately.
+The recorder is preallocated 460 pages in this fixture; these short runs do not
+exercise dynamic growth or Pickup/overdub. The unrelated full Flex PCM,
+controls/settings and private card stay unchanged.
+
+The pending state byte `1` is published within a four-byte store at
+`0x40006274`, beginning two bytes before the observed state field. The complete
+recorder entry changes it to `2` at `0x400069e6` and switches the selected bank.
+Retriggering leaves both banks marked `2`; only the selected one advances.
+STOP changes the selected state to `0` at `0x40005e9e`, leaving the old bank's
+`2` and position intact. A further idle interval leaves the published state and
+observed PCM/map spans unchanged. A selected-bank-only activity check can miss
+a pending start; an indiscriminate nonzero-bank check can confuse retained state
+with active recording. This is evidence for an ownership contract, not a
+production activity predicate or installed recorder hook.
+
+Selected recorder calls in these runs return to the two stock frame-dispatch
+sites `0x4000d342` and `0x4000d36e`. PCM-prefix stores provide positive controls,
+and the scenario observes stores of zero to the map tail at `0x40095afc`. Counts and exact
+caller/state observations are in the source-bound reports; they do not provide
+an SR measurement, complete write footprint or hardware timing. No device is
+used, and no module code is injected into these full boots.
+
+`recorder_bank_probe.cpp` separately executes 48 synthetic complete-entry cases:
+idle banks, retained inactive state, immediate pending start, delayed pending
+start, active recording with a longer pending delay, and active recording with
+a delay shorter than the supplied call span. Both stereo widths, tracks 1/8
+and both selected banks are covered. Sixteen extra calls bring an idle pending
+delay to zero, then execute its start. Exact watched PCM regions, map/dirty/
+counter behavior, state/position transitions and host guard exclusion are
+checked. The short-delay fixture retains its delay while the active bank writes;
+it is not a claim about how the real frame caller schedules a pending trigger.
+Caller state and source/allocator geometry remain synthetic; no native guard,
+complete caller coverage or physical reader exclusion is established.
+
 ## Normal panel-to-worker reverse path (0.1.17)
 
 `boot_writer.py` adds a full stock 1.40C emulator path with real frame/task
@@ -250,3 +291,143 @@ in this synthetic matrix, consistent with the earlier refresh probe. This is
 not a demonstrated physical fault and the module does not change stock clear.
 Its own publisher must still retire selection before rebuilding shorter tables.
 The separate full-stock `boot_slices.py` passes normal menu/deletion paths.
+
+## Ordinary Flex waveform reads (0.1.25)
+
+The coarse engine observer retired an automatic preview during recurring stock
+waveform work, without a sample edit. The private trace identifies command 16;
+its kind-1 ordinary Flex path reaches `0x4008e3d8`. Static uses another renderer,
+and slots 128–135 reach recorder helpers outside this qualification.
+
+The original `waveform_probe.cpp` executes 48 fresh/cached renderer calls across
+four packed formats, slots 0/127 and three bin widths, crossing page and logical
+end boundaries. All 102 bins per fresh call match an independent extrema/extent
+oracle. The
+fresh path reads PCM; the repeated matching display cache reuses its bins with
+no PCM reads. Stores stay within the observed stack, display, progress and
+cancellation regions. Watches find no source-pool, slot-control, sample-setting,
+map, allocation-count, format or dirty stores. The inherited display mock is
+asserted unused. A complete kind-1 command dispatch returns to the worker loop
+and posts its deferred completion without source writes.
+
+Two further cases cover an unavailable pool and a busy slot. The unavailable
+pool yields zero extrema; the stock renderer still reads the busy slot. That is
+not permission for a preview provider to ignore busy state: its own admission
+and coherent-source checks remain necessary.
+
+The automatic UI fixture narrowly classifies ordinary Flex waveform reads,
+keeping unknown, Static, recorder, fault and reentry cases conservative. This
+is not a production command ABI. Its stopped source and command inputs are
+fixed; stability of mutable queued records is not a proved base-owned lifetime.
+The generic `engine_boundary.c` remains conservative. Full writer coverage,
+cache behavior, source lifetime, shared-base integration and hardware remain
+unqualified. Source-bound reports and actual automatic-UI outcomes are listed
+in TESTING.md.
+
+
+## Queued recorder-stop cleanup (0.1.36)
+
+The new `recorder_followup_probe.cpp` executes the actual opcode-34 command
+queued by the complete ordinary recorder entry. Thirty-two scenarios cover
+packed 16/24-bit stereo, tracks 1/8, both state banks, exhausted or disabled
+allocation, and stops at two configured length limits. Sixteen original
+preallocated/lazy recorder calls remain as positive controls for the inherited
+PCM and map watches. Active state, input buffers and allocation geometry are
+synthetic; the audio ISR, real scheduler and UI consumer do not run.
+
+The queued records are separate per track and contain a track index; they are
+not one shared track-bitmask record. Worker startup and command dispatch are
+observed separately. During dispatch the queue count is already zero while
+the command stores zero to each recorder-map entry beyond its allocated page
+count: 14,601 stores with one allocated page, or 14,600 with two. The allocated
+entries stay intact. In these scenarios the tail was already zero, so stores
+are observed even though the complete map remains byte-identical.
+
+The follow-up does not change the post-stop PCM, sample controls, allocation
+counts, recorder-state banks or free-page cursors in these fixtures. Length-limit
+recording has already written its final two/four frames before queuing cleanup;
+shortage recording wrote none from that call. Comparing post-stop preservation
+separately avoids claiming that the complete recording operation changed no PCM.
+
+The host observer spans the entire command. A separate execution substitutes
+only the engine receive call with the original compiled worker-boundary prototype
+and checks its native ticket at every map store. It remains active through
+return to the loop, then retires at the next receive before the empty-queue
+wait; the wait is unmasked. Loop stack/frame and caller mask remain as expected.
+No production hook is installed. Manual stopping, Pickup/overdub, other
+finalization paths, live interleavings, allocator ownership and physical timing
+remain unqualified. These observations do not reopen source admission.
+
+
+## Two pending recorder cleanups (0.1.37)
+
+Four additional scenarios run the complete shortage-stop call for tracks 1 and
+8 before starting the worker, across both stereo widths and state banks. The
+recorders own distinct synthetic pages and enqueue separate per-track command
+records in FIFO order. The first cleanup writes only track 1's unused map tail
+while another command remains queued; the second writes only track 8's tail
+with the queue count zero. Post-stop PCM, full maps, controls, page counts,
+recorder-state banks and free cursors stay byte-identical. Both shortage UI
+notifications remain queued and unconsumed.
+
+The compiled observer supplies a newer ticket and revision to the second
+command and retains each ticket through the corresponding return to the loop.
+Only the final empty receive ends the second ticket before the unmasked wait.
+The 32 single-recorder scenarios and 16 original recording positive controls
+remain in each run. These are two serialized recorder calls with pending work,
+not simultaneous ISR execution or proof of shared-pool scheduling.
+
+## Compiled recorder lifetime (0.1.40)
+
+The private [recorder-boundary prototype](RECORDER_BOUNDARY.md) now brackets the
+complete ordinary-recorder entry and common return with compiled ticket
+bookkeeping. Paired original/guarded calls preserve register/SR state at both
+continuations and final return, caller arguments and every external store,
+including cleanup when the observer is terminally faulted. Inactive/retained
+calls avoid invalidation but still clear two exact stock voice flags; these
+remain in the paired oracle rather than being mistaken for PCM/source writes.
+
+This extends isolated execution evidence only. It does not connect the guard
+to a source reader or cover panel arming, stop/worker cleanup, Pickup/overdub,
+DMA, cache aliases or concurrent interrupts. The normal-panel full boot and
+compiled worker guard remain separate experiments until explicitly composed.
+
+## Full-boot recorder/engine composition (0.1.41)
+
+The compiled recorder and engine observers now share a guard in a private
+reserved-memory full boot. Normal starts/retriggers and STOP on tracks 1/8
+place each observed PCM-prefix write under the recorder ticket and each map-tail
+cleanup store under the engine ticket. The original receive call is retained,
+entries/returns balance and all scopes retire before the idle checkpoint.
+
+The same chronological trace identifies 24 unguarded preparation stores per
+track, at 12 PCs in the normal preparation routine. Both pending-state
+publications occur before the active recorder scope. These were an explicit
+qualification gap in 0.1.41. The later preparation scope below covers them in
+the same named fixture; protecting PCM alone was insufficient. No production
+reader or complete writer coverage is enabled by either experiment.
+
+## Preparation and recorded caller mask (0.1.42)
+
+The full-boot composition now brackets complete preparation calls before pending
+state publication. Both tracks pass with zero uncovered watched recorder-bank
+stores, while retaining PCM/cleanup ticket checks and unchanged source/card
+assertions. Paired complete-routine comparisons preserve the original calls,
+including cleanup after observer faults. Saved SR at entry and return records
+mask level 5 for both preparation and recorder callbacks in this pinned emulator.
+
+This closes the observed preparation gap, not every source-writer family.
+Preallocated ordinary ONE/MAX recording is the tested mode; Pickup, overdub,
+long growth, unknown states, UI writers, allocator/DMA/cache ownership and
+physical latency remain open. A compiled provider is not yet attached here.
+
+## Fixed-source preview interruption (0.1.43)
+
+A private Flex session now shares the recorder/preparation/engine guard during
+the normal panel sequence. Current RUNNING/READY tokens retire before another
+PCM lookup; Stop and normal editor restoration do not revive them. Fresh plans
+match the host PCM oracle. The global guard is deliberately conservative across
+unrelated sample/recorder slots. This connects the tested writer families to a
+real copied-read pipeline, but its source/owner identities and borrowed-main
+consumer remain synthetic. Other writers, cache and production scheduling are
+still admission gaps.

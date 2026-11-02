@@ -4,7 +4,7 @@
 // real bytes, and runs the upload session's phases with no device behind them.
 import type { Inventory, InventoryTarget } from '../config/inventory.ts'
 import { sha } from '../../vendor/elekloader/kit/src/bytes.ts'
-import { depackSection } from '../../vendor/elekloader/kit/src/codec/elz.ts'
+import { depackSection } from '../engine/elektron/codec/depack.ts'
 import { OctatrackLink, type LinkDevice, type LinkSession, type LinkUsb } from '../engine/elekloader/octatrack-link.ts'
 import { UPLOAD_TIMEOUT_MAX_MS, UploadDeviceError, UploadUnconfirmedError } from '../engine/elekloader/upload-session.ts'
 import { SELFTEST_BYTES, VENDOR_CLASS, VENDOR_PROTOCOL, VENDOR_SUBCLASS } from '../engine/elekloader/upload-usb.ts'
@@ -62,6 +62,9 @@ export interface FakeUnit {
   /** Writes during which USB drops: the write finishes on the unit, the reply is lost, and the replugged unit's
    * reset rolls the lost session back, which restarts it on NOR (flash.c f_restore). */
   writeDropouts?: number
+  /** The restart after a saved write hangs at the logo (a DSP stalled while the base was sent does not park): the unit
+   * goes away and comes back only when plugged again, as after a power cycle. */
+  restartHangs?: boolean
   /** SLOTS (request 39, flash.h): the base's two-slot record; absent, the base stalls it as one before the two slots.
    * A base that answers it writes another base's container into its spare slot and restarts once onto it, and its own
    * (after the trial) while it runs on, without a restart (flash.c); one that does not restarts after writing itself. */
@@ -197,7 +200,8 @@ export function fakeSession(unit: FakeUnit, delay = 0) {
           setTimeout(() => { unit.plug('base'); if (restarts) setTimeout(() => { unit.base = unit.active = target; unit.unplug(); unit.plug('base') }, delay + 500) }, delay + 100)
           throw new UploadUnconfirmedError('The activation reply was lost.', status)
         }
-        const published = await step('pending')
+        // Publication makes the staged package the active one (upload.c mu_publish), a base's container as well.
+        const published = status = { ...await step('pending'), active: staged }
         // A RAM boot image (boot.c): the unit restarts half a second on. Only the flashed base's gate reads the mailbox, so
         // armed from a base running out of RAM it comes back on the flashed one; from that one, on the image's base.
         if (data && data.length >= 4 && new DataView(data.buffer, data.byteOffset).getUint32(0) === 0x4fefffe4) {
@@ -214,7 +218,8 @@ export function fakeSession(unit: FakeUnit, delay = 0) {
           const target = written()
           unit.flashed = target
           if (unit.slots) { unit.slots = unit.slots.slice(); unit.slots[4] = 1 } // two slots now
-          if (!unit.slots || target !== unit.base) setTimeout(() => { unit.base = unit.active = target; unit.unplug(); unit.plug('base') }, delay)
+          if (unit.restartHangs) setTimeout(() => { unit.base = unit.active = target; unit.unplug() }, delay)
+          else if (!unit.slots || target !== unit.base) setTimeout(() => { unit.base = unit.active = target; unit.unplug(); unit.plug('base') }, delay)
           return status
         }
         const apply = (pkg: Uint8Array) => {
@@ -273,13 +278,12 @@ export function previewKit() {
   Object.assign(window, { modwerkUsbPreview: unit })
   return {
     link: new OctatrackLink(unit.usb, fakeSession(unit, 60)),
-    // A pretend load, stress test and inventory, so the whole flow can be clicked through.
+    // A pretend load and inventory, so the whole flow can be clicked through.
     prepareUpdate: async (target: InventoryTarget) => {
       await wait(400); unit.pending = { moduleIds: target.moduleIds, removedStockFx: target.removedStockFx ?? [] }
       // Each load stages different bytes, so the unit's active digest (and the inventory read after Keep) changes.
       return { name: target.name, changes: [{ module: target.name, data: new TextEncoder().encode(JSON.stringify(unit.pending).padEnd(160 * 1024)) }] }
     },
     readInventory: async () => { await wait(150); return structuredClone(unit.installed) },
-    stressTest: async () => { await wait(2500); return null },
   }
 }

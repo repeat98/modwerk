@@ -9,7 +9,7 @@
 #define MW_JOURNAL_ASSOCIATION_STORAGE
 #define MW_REVIEWED_JOURNAL_ASSOCIATIONS {{0}, 0, {0}},
 #include "sha256.c"
-volatile uint32_t modwerk_flash_refusal; /* flash.c, not linked here */
+volatile uint32_t modwerk_flash_refusal, modwerk_flash_quiesced; /* flash.c, not linked here */
 #include "dsp.c"
 int modwerk_runtime_restoring(void) { return 0; } /* loader.c's: no restore here */
 volatile uint32_t dl_residency_words[2]; /* manager.c: each core's resident code words (dsp.c's budget box) */

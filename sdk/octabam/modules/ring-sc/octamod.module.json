@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "id": "ring-sc",
   "key": "RING_SC",
-  "name": "Ringmod SC",
+  "name": "Sidechain Ringmod",
   "version": "0.2.0-experimental",
   "category": "effects",
   "author": {

@@ -1,0 +1,117 @@
+{
+  "schemaVersion": 1,
+  "sources": [
+    "src/silent-pad-trig.s"
+  ],
+  "defsym": {},
+  "cflags": [],
+  "weak": [],
+  "subscribe": [],
+  "contribute": [],
+  "collections": {},
+  "copied": [],
+  "regions": [],
+  "storage": [
+    {
+      "sym": "silent_pad_trig_on",
+      "scope": "global",
+      "bits": 1
+    },
+    {
+      "sym": "silent_live_rec_on",
+      "scope": "global",
+      "bits": 1
+    },
+    {
+      "sym": "silent_mute_on",
+      "scope": "global",
+      "bits": 1
+    }
+  ],
+  "claims": [
+    "ui:pad press outside CHROMATIC mode",
+    "ui:TRIG 1-12 press",
+    "ui:FUNC + pad",
+    "ui:GLOBAL > CONTROL > SEQUENCER CONFIG row after AUTO TRK SWITCH"
+  ],
+  "requires": [],
+  "derive": null,
+  "releases": {
+    "1.74": {
+      "defsym": {},
+      "cflags": [],
+      "sites": [
+        {
+          "addr": "0x400c772e",
+          "len": 6,
+          "stockSha256": "3d4d98cfb585cd6fc209a68ee1922e09e95773aae59e619492939df4f6570404",
+          "op": "jmp",
+          "target": "silent_pad_trig_play_gate"
+        },
+        {
+          "addr": "0x400c7a3e",
+          "len": 6,
+          "stockSha256": "900a7f45ba2079ab99c0187a4985055412a62b92dbc1e00e54306f25c60a0002",
+          "op": "jsr",
+          "target": "silent_pad_trig_autotrk"
+        },
+        {
+          "addr": "0x400c7e90",
+          "len": 6,
+          "stockSha256": "900a7f45ba2079ab99c0187a4985055412a62b92dbc1e00e54306f25c60a0002",
+          "op": "jsr",
+          "target": "silent_pad_trig_autotrk"
+        },
+        {
+          "addr": "0x400c7950",
+          "len": 6,
+          "stockSha256": "3159335e2f50174cdc7c9d9b3500c090f7310ce7875aaf74c04760a58644790d",
+          "op": "jmp",
+          "target": "silent_pad_trig_func_gate"
+        },
+        {
+          "addr": "0x400ec184",
+          "len": 8,
+          "stockSha256": "b9d637ba37819e52358bd00b1e0fdb85a22551d2d24fb88addf774fec4a17a5b",
+          "op": "jmp",
+          "target": "silent_pad_trig_menu_add"
+        },
+        {
+          "addr": "0x40084114",
+          "len": 6,
+          "stockSha256": "d68988d57b8e7e3f57a196c74ae79f4a1df1cffb1aa5279682851d23796c950c",
+          "op": "jsr",
+          "target": "silent_pad_trig_hit_gate"
+        },
+        {
+          "addr": "0x400c75f2",
+          "len": 6,
+          "stockSha256": "eb8c3b4455860d7a405903deb4a71d861baed698a9ab2fbb8c1166d596dffcd1",
+          "op": "jsr",
+          "target": "silent_pad_trig_at_key_gate"
+        },
+        {
+          "addr": "0x400c626e",
+          "len": 8,
+          "stockSha256": "4bf784d3a0dc7db68c02227b44a2e2151ff4dc7be2da68566be2847eba9c9741",
+          "op": "jmp",
+          "target": "silent_pad_trig_at_chro_gate"
+        },
+        {
+          "addr": "0x400c6fb0",
+          "len": 6,
+          "stockSha256": "8b2ff1313c2715f1820d66eaf627a9cd77d6fa05e71bf755e169b313c3e91acf",
+          "op": "jmp",
+          "target": "silent_pad_trig_on_key_gate"
+        },
+        {
+          "addr": "0x400c58f0",
+          "len": 8,
+          "stockSha256": "5e6d3d67283ab1d4d3dc3e4b139e7f9f0a4fa7c6d0965061a2e4bc32c2de575a",
+          "op": "jmp",
+          "target": "silent_pad_trig_on_chro_gate"
+        }
+      ]
+    }
+  }
+}

@@ -1,16 +1,16 @@
 # Play Start
 
-Version: `0.1.10-experimental` · author: [@jonathanwardle1992-beep](https://github.com/jonathanwardle1992-beep)
+Version: `0.1.11-experimental` · author: [@jonathanwardle1992-beep](https://github.com/jonathanwardle1992-beep)
 
 A global sequencer setting: **[PLAY] always starts from the beginning and never pauses.** Tick it in PERSONALIZE. Default **empty** is stock play/pause, so installing the module changes nothing until you enable it.
 
-**Experimental.** `0.1.10` makes PLAY START empty unless the stored word is MAGIC_ON, so leftover SRAM does not show X, and one YES ticks it. `0.1.9` card: with X, every [PLAY] starts from step 1, but PERSONALIZE began ticked. USB Keep/Undo and `ot_emu` are untested.
+**Experimental.** `0.1.11` has not been flashed. The checkbox lives in this module and returns to empty after power-off. The `0.1.9` card (`PS 0.1.9`): with X, every [PLAY] starts from step 1, but PERSONALIZE began ticked. USB Keep/Undo and `ot_emu` are untested.
 
 ## Overview
 
 On the stock OS, [PLAY] starts, pauses, or continues. With PLAY START **ticked**, a press of [PLAY] that would have paused or continued instead starts the sequencer from the beginning of the current pattern. [STOP] is still [STOP]. MIDI START / CONTINUE / STOP are unchanged (they do not go through the panel [PLAY] handler). [REC] + [PLAY] still starts live recording.
 
-No effect slot and no extra project bytes. The setting is PERSONALIZE (battery SRAM), not a Part or project field, so a saved project reloads unchanged on stock firmware.
+No effect slot and no extra project bytes. The checkbox lives in this module, not in a Part or project field and not in Mute Modes' battery word, so a saved project reloads unchanged on stock firmware. Power-off returns the box to empty.
 
 ## Controls
 
@@ -42,15 +42,15 @@ To restore stock play/pause, clear the box, or leave the module out of the build
 
 ## Compatibility and limitations
 
-- OS 1.40C. Hardware: `0.1.9` card (`PS 0.1.9`) on one unit: with X, [PLAY] starts from step 1, but the PERSONALIZE box began ticked and needed two YES to clear. `0.1.10` is packed, not yet flashed. Earlier cards failed as in [TESTING.md](TESTING.md).
-- **Conflicts with Mute Modes** (`mute-modes`): both relocate the PERSONALIZE label/getter/setter arrays and poke the ANDY restore length. The configurator will not offer both until a base-owned PERSONALIZE table exists (that would be a separate owner-reviewed change, not this module).
+- OS 1.40C. `0.1.11` is not flashed. Hardware: `0.1.9` card (`PS 0.1.9`) on one unit: with X, [PLAY] starts from step 1, but the PERSONALIZE box began ticked and needed two YES to clear. Earlier cards failed as in [TESTING.md](TESTING.md).
+- **Conflicts with Mute Modes** (`mute-modes`): both still grow the same PERSONALIZE tables until the base table in #1023. The checkbox does not use Mute Modes' battery word. The configurator will not offer both until that table exists.
 - Quant Live Rec can sit beside it: that module detours [PLAY] at `0x40061778`; this one detours after the [REC]-held branch (`0x40061822` and the SEQ pause/start at `0x4006187c` / `0x4006188a`).
 - MIDI START does not follow PLAY START. Not tested: pickup machines, chained patterns, live recording while PLAY START is ticked, an MKI panel, USB Keep/Undo.
 - An OS upgrade resets PERSONALIZE, including this row.
 
 ## Tests and measurements
 
-See [TESTING.md](TESTING.md) and [evidence/hardware.md](evidence/hardware.md). `0.1.9` same-unit card: with X, every [PLAY] starts from step 1. `0.1.0`–`0.1.8` failed as listed there. Static ColdFire size/cycle bounds are in TESTING; they are not chip wall-clock.
+See [TESTING.md](TESTING.md) and [evidence/hardware.md](evidence/hardware.md). `0.1.9` same-unit card: with X, every [PLAY] starts from step 1. `0.1.0`–`0.1.8` failed as listed there. `0.1.11` has not been flashed. Static ColdFire size/cycle bounds are in TESTING; they are not chip wall-clock.
 
 ## Authorship and licences
 

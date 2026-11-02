@@ -16,10 +16,10 @@ import sys
 
 SDK = Path(__file__).resolve().parents[3] / 'octabam'
 PINS = {
-    'modules/poly8/manifest.py': '1b9dfc90a6d5901ee3e453b7c3854363aad82f7267edc090b5f4439a57f12ddb',
+    'modules/poly8/manifest.py': 'f8759dbcbb246b247c195e61f0c0464fd0cdc0dd40b68dd8f74c03b46c584afc',
     'modules/poly8/shared-machine.c': '74dd81c5f3bd1bf3474350989655ea76f5e1b52e7919fa8b11b2e1423e79317c',
-    'modules/poly8/shared-machine-hooks.s': 'dc9b3eaaa0883c68a36bd34999420ab38b10bc1b43a513518963e01ce8479cd8',
-    'modules/poly8/composition.json': 'd9e3237001672e6349f69337f71bc3c1b069577fb7215c9a4f55a2c4bc722122',
+    'modules/poly8/shared-machine-hooks.s': '30701d6e4c3c556bd570a7fd2388679f6cf31021d8b8f056665f522bb976426a',
+    'modules/poly8/composition.json': 'f8e29f63314e979e23e1cedf080ac0bb9a14be7a4b188230606ea81fc1a5e538',
 }
 COMMON = frozenset(('mr_resolve_pb', 'mr_validate_hook', 'mr_pool_title', 'mr_list_draw', 'mr_pool_open',
                     'mr_machine_name', 'mr_src_names', 'mr_name_a', 'mr_name_b', 'mr_setup_row',
@@ -192,7 +192,7 @@ def effective_modules(selected, sdk_root=None, work=None, cross='m68k-elf-'):
                      doc='Internal VECTOR/FM chooser and private parameter-page owner; no POLY engine or member.',
                      linked=(Linked('machine_registry', str(asm), cpu='5475', dram=True, stock_copies=stock_copies),),
                      detours=tuple(d for d in template.detours if d.unit == 'machine_registry' and d.symbol in COMMON),
-                     symbol_refs=tuple(r for r in template.symbol_refs if r.symbol in ('mr_pb_table', 'mr_source_render', 'mr_choice_left', 'mr_pool_left', 'mr_pool_right')),
+                     symbol_refs=tuple(r for r in template.symbol_refs if r.symbol in ('mr_pb_table', 'mr_source_render', 'mr_choice_left', 'mr_pool_left', 'mr_pool_right', 'mr_chooser_name')),
                      pokes=tuple(replace(p, write=p.write[:-1] + bytes([count if len(p.write) == 4 else count - 1]))
                                  for p in template.pokes if p.addr in policy.POLICY['countSites']))
     from vector_runtime import port

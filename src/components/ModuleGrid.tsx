@@ -23,7 +23,7 @@ export function ModuleGrid({ ids, inventory, describe, onOpen, onRemove, onKeep,
     <ul className="module-tiles" aria-label="Modules">
       {tiles.map(({ id, state }) => { const module = MODULES.find(item => item.id === id), name = module?.name ?? id
         return <li key={id} className={'module-tile' + (state ? ' is-' + state : '')}>
-          <button type="button" className="module-tile-open" aria-haspopup="dialog" disabled={!module} onClick={() => onOpen(id)}><ModulePreview id={id} compact /><strong>{name}</strong><small>{module ? describe(id) : 'Not in the library'}</small></button>
+          <button type="button" className="module-tile-open" aria-haspopup="dialog" disabled={!module} onClick={() => onOpen(id)}>{module ? <ModulePreview id={id} compact /> : <span className="compact-preview" />}<strong>{name}</strong><small>{module ? describe(id) : 'Not in the library'}</small></button>
           <div className="module-tile-controls">
             {state && <StateChip state={state}>{chip[state]}</StateChip>}
             {state === 'leaving' ? module && <button type="button" className="module-tile-action text-button" aria-label={'Keep ' + name} onClick={() => onKeep(id)}>Keep</button>

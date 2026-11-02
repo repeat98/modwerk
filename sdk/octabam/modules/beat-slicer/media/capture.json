@@ -1,0 +1,53 @@
+{
+  "scope": "Actual popup capture after normal emulator boot and USB module load",
+  "inputs": {
+    "emulator": {
+      "sha256": "b087c97f3031f075551b3336afcd75a407ca4d3476e04a9d5cfaa059b1d40363",
+      "bytes": 3591848
+    },
+    "base": {
+      "sha256": "a0753aece880813aaacd0708a0f754bc78ff81a81e3cb39c91a13f65dd4b638f",
+      "bytes": 1298086
+    },
+    "proof": {
+      "sha256": "b83170d81a57e881d8ab7c1788469cd471f17321eecb759ef80115b73280484d",
+      "bytes": 78422
+    },
+    "symbols": {
+      "sha256": "ac34180990038872dc4df553f672283d791535f07bdaf8bc386709232bc7b5f9",
+      "bytes": 135837
+    },
+    "package": {
+      "sha256": "f2d62ce8181335b14285903c13ffcd569c1c11089cd53ad143f9aca01892da51",
+      "bytes": 5848
+    },
+    "card": {
+      "sha256": "be0b309d9eabdef1a385fde3b05837a7232db3f17bcacf0b9e0a0f0761998e82",
+      "bytes": 33554432
+    },
+    "driver": {
+      "sha256": "42e160fc5b33f0deb9542411e316c0427df8de05fc13e0830d74439037230fcc",
+      "bytes": 29026
+    }
+  },
+  "baseIdentity": "9740984014108c48e263a5df0e59c9eaf79408b4e0f260d6ce3af9429f00704c",
+  "kind": 1,
+  "spacingBeats": 2,
+  "hardware": false,
+  "functionalSuiteCompleted": false,
+  "usbUndoTested": false,
+  "moduleVersion": "0.1.66-experimental",
+  "modulePackageSha256": "05512de0888638d0a68ff136a5e439b3bdaccf4aa05c371c3cf3cfc893103e8b",
+  "images": [
+    {
+      "path": "ot-beat-grid-menu.png",
+      "sha256": "4b1c97f2592a72abbe521f980471c0bd10afa8f10412754a4045545e5ab616f8",
+      "scale": 6
+    },
+    {
+      "path": "ot-create-beat-grid.png",
+      "sha256": "78ce2fbd2974ca3bf1c9897f6c0bacc3474006b5c0e6ada02d11c3ddec10f991",
+      "scale": 6
+    }
+  ]
+}

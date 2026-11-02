@@ -43,13 +43,7 @@ A private card image of `0.1.8-experimental` (ELEK `PS 0.1.8`, SHA-256 `4ba100e2
 
 A private card image of `0.1.9-experimental` (ELEK `PS 0.1.9`, SHA-256 `6e94a54bfe082ae0e11919d14f33fc4d5f00dc720a672160d53bea7a256ca316`) was retested on the same unit, 23 October 2026. Reported: with PLAY START showing X, every [PLAY] starts the sequencer from step 1 instead of pausing. Empty box remains stock play/pause. Later the same PERSONALIZE row was reported as beginning ticked, needing two YES presses to show empty. Do not treat the PERSONALIZE default of `0.1.9` as a pass. USB Keep/Undo, MIDI transport, `ot_emu` and LCD captures are untested.
 
-A private card image of `0.1.10-experimental` is prepared locally (ELEK `PS 0.1.10`, SHA-256 `275e74e4afcd9eee48b382fa5eb09496d62deca941990f7e93f193c20f3e6558`). Firmware is not in git. Intended card checks:
-
-1. On boot, PLAY START is empty. One YES ticks it; one YES more clears it. Cursor keys do not change it.
-2. Empty box: [PLAY] still pauses and continues, as on stock. [STOP] always stops.
-3. Ticked box: every [PLAY] starts from step 1, as on `0.1.9`.
-
-Do not treat `0.1.10-experimental` as a pass until those card results exist.
+A private card image of `0.1.10-experimental` was prepared locally (ELEK `PS 0.1.10`, SHA-256 `275e74e4afcd9eee48b382fa5eb09496d62deca941990f7e93f193c20f3e6558`) and was not flashed. Firmware is not in git. `0.1.11` moves the checkbox out of Mute Modes' battery word and has not been packed or flashed.
 
 Intended card checks after this image:
 
@@ -58,7 +52,7 @@ Intended card checks after this image:
 3. Only [YES] ticks or unticks PLAY START. Arrow keys must not change it.
 4. [REC] + [PLAY] still starts live recording.
 5. Save a project with the box empty, reload it: the project is unchanged. The box is global, not in the project.
-6. Power cycle with the box ticked: the row should still be ticked on a card build (ANDY restore). USB install restore is `ps_restore` on `module_tick` and is untested.
+6. Power cycle with the box ticked: it should come back empty. Persistence waits on the base settings store. USB install, self-test, Keep and Undo are untested.
 
 ## Stock flows
 
@@ -70,11 +64,11 @@ Static bound only. Authored ColdFire in `playstart.s` is 76 instruction lines. W
 
 ## Resources
 
-Authored ROM is one ColdFire unit of 274 bytes (native linked `playstart`). Plus four six-byte [PLAY] detours, ANDY length pokes, a row-count poke, and relocated PERSONALIZE pointer arrays in stock space (not counted as extra module RAM). One PERSONALIZE word and its ANDY shadow are stock SRAM. No DSP memory. One instance.
+Authored ROM is one ColdFire unit of 274 bytes (native linked `playstart`, counted before the 0.1.11 edits). Plus four six-byte [PLAY] detours, a row-count poke, and relocated PERSONALIZE pointer arrays in stock space (not counted as extra module RAM). The checkbox word is inside the unit. It is not Mute Modes' battery word. No DSP memory. One instance.
 
 ## Hardware
 
-`0.1.0`–`0.1.8` card flashes, 23 October 2026: failed as listed above. `0.1.9-experimental` same-unit card, 23 October 2026 (ELEK `PS 0.1.9`, SHA-256 `6e94a54bfe082ae0e11919d14f33fc4d5f00dc720a672160d53bea7a256ca316`): with X, every [PLAY] starts from step 1; PERSONALIZE later reported as beginning ticked. `0.1.10` not yet flashed. See [evidence/hardware.md](evidence/hardware.md).
+`0.1.0`–`0.1.8` card flashes, 23 October 2026: failed as listed above. `0.1.9-experimental` same-unit card, 23 October 2026 (ELEK `PS 0.1.9`, SHA-256 `6e94a54bfe082ae0e11919d14f33fc4d5f00dc720a672160d53bea7a256ca316`): with X, every [PLAY] starts from step 1; PERSONALIZE later reported as beginning ticked. `0.1.11` has not been flashed. It keeps the checkbox in the module instead of Mute Modes' battery word `0x800000dc`. Power-off returning the box to empty is not tested on a unit. See [evidence/hardware.md](evidence/hardware.md).
 
 ## OT UI capture evidence
 

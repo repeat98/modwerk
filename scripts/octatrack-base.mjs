@@ -11,7 +11,8 @@
 // base that owns sdk/machines/octatrack/events.json's sites and tables and dispatches them to subscribed packages;
 // --table-owners also fills its table-owner storage from module-adapters/table-owners.json (the reviewed table owners).
 // --cached-modules runs installed module code from the pool's cached alias (cache maintenance on install; part of the
-// beta base: without it every instruction and load of a module goes to SDRAM). --resident-stock-hooks --controllers adds the resident Sidechain, Output Matrix and Analog BD engines and admits their packages
+// beta base: without it every instruction and load of a module goes to SDRAM). --sample-editor adds the AED SLICE editor service
+// (sdk/machines/octatrack/SAMPLE_EDITOR.md) that ot_sample_editor_actions contributors such as Beat Slicer run on. --resident-stock-hooks --controllers adds the resident Sidechain, Output Matrix and Analog BD engines and admits their packages
 // through committed trust rows (module-adapters/controller-policies.json). --resident-on-demand (with --resident-stock-hooks)
 // keeps those engines out of the DSP cores until a package that needs one is installed, so the cores' effect arena is
 // larger (docs/OCTATRACK_RESIDENT_ENGINES_ON_DEMAND.md). Every build also writes
@@ -41,14 +42,15 @@ const { values: args } = parseArgs({ options: {
   'saved-set-export': { type: 'boolean', default: false },
   controllers: { type: 'boolean', default: false }, 'usb-audio-variants': { type: 'boolean', default: false },
   'cached-modules': { type: 'boolean', default: false },
-  'module-sets': { type: 'boolean', default: false }, beta: { type: 'boolean', default: false },
+  'module-sets': { type: 'boolean', default: false }, 'sample-editor': { type: 'boolean', default: false },
+  beta: { type: 'boolean', default: false },
 } })
 if (!args.stock) throw new Error('Usage: npm run octatrack:base -- --stock OCTATRACK_OS1.40C.bin [--beta] [--upstream ELEKLOADER] [--write] [--out NEW-DIR]')
 // The beta base's flags. A regeneration that spelled them out by hand dropped --cached-modules once (20 October 2026),
 // and every base after it ran module code uncached: so --write takes only these, through --beta.
 const BETA = { 'usb-midi': true, 'usb-audio': 'USB AUDIO OUT TRACKS MAIN CUE', 'site-events': true, 'table-owners': true,
   'resident-stock-hooks': true, 'resident-on-demand': true, controllers: true, 'module-sets': true, 'usb-audio-variants': true,
-  'cached-modules': true }
+  'cached-modules': true, 'sample-editor': true }
 if (args.beta) {
   const own = Object.keys(args).filter(flag => !['stock', 'upstream', 'write', 'out', 'beta'].includes(flag) && process.argv.some(arg => arg === '--' + flag || arg.startsWith('--' + flag + '=')))
   if (own.length) throw new Error('--beta is every flag of the beta base; leave out ' + own.map(flag => '--' + flag).join(', ') + '.')
@@ -75,7 +77,8 @@ const buildLayout = (layout, output, ...rest) => python('build_core.py', '--stoc
   ...(args['site-events'] ? ['--site-events'] : []), ...(args['cached-modules'] ? ['--cached-modules'] : []),
   ...(args['table-owners'] ? ['--table-owners', join(adapters, 'table-owners.json')] : []),
   ...(args['resident-stock-hooks'] ? ['--resident-stock-hooks'] : []), ...(args['resident-on-demand'] ? ['--resident-on-demand'] : []),
-  ...(args['saved-set-export'] ? ['--saved-set-export'] : []), ...(args['module-sets'] ? ['--module-sets'] : []), ...rest)
+  ...(args['saved-set-export'] ? ['--saved-set-export'] : []), ...(args['module-sets'] ? ['--module-sets'] : []),
+  ...(args['sample-editor'] ? ['--sample-editor'] : []), ...rest)
 const build = (output, ...rest) => buildLayout(args['usb-audio'], output, ...rest)
 const defaultLayout = USB_AUDIO_LAYOUTS.find(layout => layout.key === args['usb-audio'])?.id
 if (args['usb-audio-variants'] && (!args['usb-midi'] || !defaultLayout)) throw new Error('--usb-audio-variants needs --usb-midi and a --usb-audio layout, the default variant.')

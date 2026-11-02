@@ -1,0 +1,83 @@
+{
+  "scope": "portable UI/engine exchange: 32 complete previews, 72 cancel/replace/revoke/reentry/lock-refusal/publication interleavings, waiting/readiness, stale publication and sequence exhaustion",
+  "sourceSha256": {
+    "planner.c": "01c9c25efa363679a591969931dd376a3b694a949dd8b9f89eda4bf77a88cee4",
+    "planner.h": "1a10ce9e6b34dfd35eb138690e2134550621c3bf91b2178fb50f95b9def6b7ae",
+    "planner_job.c": "767d82cc375677a115e9457af35e26fddd9de66a0dc80aa2af0fe3b5adaf0581",
+    "planner_job.h": "c4dd3faa8b3320194b54ab4d7bec6541d9e936f544b0e6236efa4fa5518d6547",
+    "pcm_reader.c": "8762e389a39b7407a7d987dc6e3e36d7d75aa6c408b1d3232d8672a380226088",
+    "pcm_reader.h": "462f495a86f32730b79a56177f99929f685d82729e4646e7b391df475d929821",
+    "preview_guard.c": "da1299674cf2ae967c58231ee9c16891afa94e27254407b5d09df6b73cc4343e",
+    "preview_guard.h": "abcaff39ef1b9a21cb238f0021344ffb5b812ea1740a354cbc1d1f2ace4ddf36",
+    "preview_session.c": "863a66aee00818e6e71c09896d2c222176d7bf4726a3886b2991384d9f43b664",
+    "preview_session.h": "4518b3d75a92081c98c619157fcf2c6bbcb43b82621d8a41dd953bcfbd48c909",
+    "preview_async.c": "d7250549fa634ffe287c37d2410025146a6bb168f4dc7ec146f7e288f35e8917",
+    "preview_async.h": "ea0189432e63b6ddaf3672ab531dad18f93adac15bdae21e648e7fd5ec040d61",
+    "test_preview_async.c": "8febc59164ed4b93419ee0f66413dfb413e38ccc75fa09e5283d19202620dc20",
+    "async_native.py": "7256401ee058e980b7b25f7b2987d30fb200825d29313c89917addcfd39d0f2d",
+    "stock_probe/job_probe.cpp": "eba70897030ec3b8804de5641d533955455761df75c19db278438006bc8b4e1a",
+    "stock_probe/CMakeLists.txt": "709eb610c9d021a2e6f0ffe6b197d08ec4e2e1f3aaab39947a1c78016dd403f2"
+  },
+  "compiler": "m68k-elf-gcc (GCC) 16.2.0",
+  "flags": [
+    "-std=c99",
+    "-mcpu=5475",
+    "-msoft-float",
+    "-O2",
+    "-ffreestanding",
+    "-fno-builtin",
+    "-fno-common",
+    "-fno-jump-tables",
+    "-fno-tree-loop-distribute-patterns",
+    "-fno-optimize-sibling-calls",
+    "-fno-asynchronous-unwind-tables",
+    "-fno-unwind-tables",
+    "-fno-ident",
+    "-fstack-usage",
+    "-Wall",
+    "-Wextra",
+    "-Werror",
+    "-pedantic",
+    "-fno-late-combine-instructions"
+  ],
+  "objectSha256": {
+    "planner.o": "862fbf786e4388477f7c3efa7601dad7bef8d9583c5b0a21db5351e3276594d4",
+    "planner_job.o": "8f9b560021a93770770eb294c6d569d94fd5b75596e5f1d332d61b4d75664485",
+    "pcm_reader.o": "79fa1b604de2d1e08edc4f41db4578f9ff68afc802dfadc3dd8a4d14a27427e3",
+    "preview_guard.o": "9c246ad2e54d39275f17c672f2dbed461df158345dbbb214153c180d6cb5b24b",
+    "preview_session.o": "50a62a752f3f966ee09288d075cabbc399d1beb9770516f66740096620038304",
+    "preview_async.o": "17a44161e03b8b7f6ffaef4d958eaa025eef08f9ed674e6ce147b6c7dbb2391e",
+    "test_preview_async.o": "d82a54f0be4f428062273cdbc5becad5aaf3efc5cff3d206e5f0cd9f2a6b4a18"
+  },
+  "runnerSha256": "fa8c5f47aab4d97bff73d8afaea9b69701c1a1df095062460f2c3bbeb9969103",
+  "codegenGuard": "passed",
+  "freestandingLink": true,
+  "exchangeSize": [
+    "text\t   data\t    bss\t    dec\t    hex\tfilename",
+    "   3152\t      0\t      0\t   3152\t    c50\t/evidence/batch29-async-native4/preview_async.o"
+  ],
+  "exchangeStackUsage": [
+    "/evidence/next-batch29/staging/sdk/drafts/beat-slicer/preview_async.c:23:31:gate_capture\t12\tdynamic,bounded",
+    "/evidence/next-batch29/staging/sdk/drafts/beat-slicer/preview_async.c:31:31:gate_copy\t24\tdynamic,bounded",
+    "/evidence/next-batch29/staging/sdk/drafts/beat-slicer/preview_async.c:18:13:gate_unlock\t8\tdynamic,bounded",
+    "/evidence/next-batch29/staging/sdk/drafts/beat-slicer/preview_async.c:11:12:gate_lock\t8\tdynamic,bounded",
+    "/evidence/next-batch29/staging/sdk/drafts/beat-slicer/preview_async.c:54:5:bs_async_init\t16\tdynamic,bounded",
+    "/evidence/next-batch29/staging/sdk/drafts/beat-slicer/preview_async.c:76:10:bs_async_request\t16\tdynamic,bounded",
+    "/evidence/next-batch29/staging/sdk/drafts/beat-slicer/preview_async.c:88:10:bs_async_cancel\t12\tdynamic,bounded",
+    "/evidence/next-batch29/staging/sdk/drafts/beat-slicer/preview_async.c:96:5:bs_async_revoke\t8\tdynamic,bounded",
+    "/evidence/next-batch29/staging/sdk/drafts/beat-slicer/preview_async.c:103:10:bs_async_service\t40\tdynamic,bounded",
+    "/evidence/next-batch29/staging/sdk/drafts/beat-slicer/preview_async.c:151:5:bs_async_result\t12\tdynamic,bounded",
+    "/evidence/next-batch29/staging/sdk/drafts/beat-slicer/preview_async.c:162:10:bs_async_state\t12\tdynamic,bounded"
+  ],
+  "exitCode": 0,
+  "stdout": [
+    "SOURCE_SHA256: eba70897030ec3b8804de5641d533955455761df75c19db278438006bc8b4e1a",
+    "PASS: cooperative preview target selftest and preserved registers"
+  ],
+  "stderrLines": 8,
+  "stderrSha256": "21495107133b98459d58d78262e4935ad828b0578af9c62da412effd72215f99",
+  "hardware": "not tested",
+  "audio": "not tested",
+  "timing": "not measured",
+  "nativeSourceAccess": "not implemented"
+}

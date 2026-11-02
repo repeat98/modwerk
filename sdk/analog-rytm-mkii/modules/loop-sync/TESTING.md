@@ -1,6 +1,6 @@
 # Loop Sync testing
 
-Evidence tier: **author-hardware** for 0.3.0-experimental, build LS24, source sha256 `4234e987c8dd9a3a95c1278b31c5966f30438c3718dbb4c6884cf2489abb4269` (sha256 over `build.json` then each `src/` file in name order, each as its path, a NUL, its bytes and a NUL). The author tested LS16 and LS17 on a unit (below); LS18 (the review fixes) LS19 (lengths, wider correction, settings per sample) was tried by the author (below); LS20 was tried by the author (below); LS21 was heard by the author on a unit (below), LS23 was tried (below), and LS24 was heard and kept (below).
+Evidence tier: **author-hardware** for 0.3.2-experimental, test build MD07 as reported by the author (below), source sha256 `767a80026828e836f92be2eea4100886eaf4120ee587c9ef91cd978c1f3c90f7` (sha256 over `build.json` then each `src/` file in name order, each as its path, a NUL, its bytes and a NUL). 0.3.2 changes only how AUTO keeps its length (below); 0.3.1 (test build MD04, source `3d4466c7…`) changed only the audio path and plays as 0.3.0 (host test below), whose record follows: 0.3.0-experimental, build LS24, source sha256 `4234e987c8dd9a3a95c1278b31c5966f30438c3718dbb4c6884cf2489abb4269`. The author tested LS16 and LS17 on a unit (below); LS18 (the review fixes) LS19 (lengths, wider correction, settings per sample) was tried by the author (below); LS20 was tried by the author (below); LS21 was heard by the author on a unit (below), LS23 was tried (below), and LS24 was heard and kept (below).
 
 ## Build
 
@@ -165,11 +165,52 @@ Reported by the author on a unit with LS23: the SMP-locked loop was far too fast
 | loop120 at 16 BAR (a factor of 15) | held at -24 semitones, one beat per bar (1.89 s) |
 | Captures | same PNGs byte for byte as LS19 |
 
-On the unit, LS24, by ear (author, 24 October 2026): "c'est bon" for his pattern with SMP locks to loops in other slots and his fast loop with the tempo lowered below 128 BPM. Persistence across SAVE PROJECT and a reboot, external MIDI clock and CPU with STA LFOs were not reported separately.
+On the unit, LS24, by ear (author, 24 October 2026): "c'est bon" for his pattern with SMP locks to loops in other slots and his fast loop with the tempo lowered below 128 BPM. Then, same unit and build, reported by the author: settings kept after SAVE PROJECT and a reboot; loops follow an external MIDI clock; with an LFO on SAMP:Start of a synced track, in FREE mode the loop leaves the grid (each trig starts at another point of the loop, so its beats fall off the steps), and in TRIG mode it stays in time. CPU was not measured.
+
+## 0.3.1: a lighter audio path (26 October 2026)
+
+On the author's busy project the Rytm's interface lagged with Send FX; diagnostic builds showed the audio interrupt at 77.4 % of a block with Loop Sync 0.3.0 (build LF13) and 70.0 % without it (LF13b, a different image). 0.3.1 makes the audio path cheaper without changing what it plays:
+
+- When only the tempo word moves, a track's source tempi (in AUTO, one for each power-of-two length) are reused, and AUTO compares only the two lengths around the tempo: three logarithms and no source divisions, where 0.3.0 took eight logarithms and about nineteen divisions. They are computed again when the sample, region, mode, a trim or the slot's frames or rate change.
+- Each track's inputs, shift and glide sit in one 32-byte record (two cache lines), not in a dozen arrays.
+- The recompute is out of line: the loop the interrupt runs every block is 458 bytes (0.3.0: 984).
+- Nothing runs while no slot has a mode.
+
+| Check | Result |
+| --- | --- |
+| Host equivalence: 0.3.0's and 0.3.1's `loop-sync.c` compiled on a Mac (`-O2 -fwrapv`), driven by the same random blocks (tempo jitter and jumps, SMP locks, STA/END, settings, project reloads, trims, samples replaced in slots with and without the trim scan) | 1.5 million blocks in five series: the same effective TUN word on every track of every block; the 0.3.0 freeze below occurs at the same blocks in both |
+| Host: AUTO's choice, 0.3.0's scan of all lengths against 0.3.1's two neighbours | identical for 41 million cases (random regions and rates, every tempo 1-40,000 in 1/120 BPM, 0 and negative) |
+| rytm-emu, four-loop card, loop120 in AUTO at 127 BPM, diagnostic builds with a meter (LSM1 = 0.3.0, LSM2 = 0.3.1, both with Send FX LF11) | beats 0.472-0.473 s apart in both, every onset at the same millisecond |
+| rytm-emu, the same, Loop Sync's own time per audio block (DMA timer 0, 1,500-block windows; instruction-timed, no cache model) | steady: 0.3 % (0.3.0), 0.2 % (0.3.1); tempo word moving every block: 2.4 %, 0.9 % a track |
+| elekloader lint, loop-sync elemod sha256 `fb1020f6…` | `.run` 6,224, `.bss` 2,884 bytes; links as core 0.3 > loop-sync 0.3; storage fields unchanged |
+
+On a unit, reported by the author on 26 October 2026 through the Send FX session: test build MD04 (this source's elemod `fb1020f6…`, with a core-ar2 0.7 draft and Send FX) "marche parfaitement chez moi". Which loop checks he ran was not reported, and no CPU figure was given. The diagnostic builds LSM1 and LSM2 (the meter, on core-ar2 0.3) were handed to him; their readings are not reported yet.
+
+Found by the host test, in 0.3.0 and 0.3.1 alike (certain in the C code, not seen on a unit): with a fixed length of 3 to 16 BAR on a region shorter than about 0.14 s, the corrected source tempo overflows 32 bits and turns negative, and the logarithm's normalising loop never ends in the audio interrupt, so the unit would freeze. At 127 BPM, 48 kHz, whole sample: 16 BAR freezes between 0.021 and 0.108 s, 8 BAR between 0.028 and 0.054 s, 4 BAR between 0.021 and 0.027 s (more with a + correction). AUTO never picks such a length. The fix is a separate change.
+
+## 0.3.2: AUTO keeps its length while the tempo moves (26 October 2026)
+
+Reported by the author on a unit with LS31 (0.3.1 alone): "parfait sauf si je baisse bpm plus bas que 129 la loop remonte à fond" (all fine, except that below 129 BPM the loop jumps up). Diagnosis, written before any change (certain, reproduced on the host and in rytm-emu, the same in 0.3.0): AUTO picked again at every tempo the power-of-two length nearest it, so the tempo crossing the midpoint between two lengths (a length's source tempo divided by the square root of 2) switched the loop to the shorter length, one octave up; a loop whose bar reads 182.4 BPM switches at exactly 129.0. The author chose that AUTO keep the length it picked while only the tempo moves.
+
+0.3.2 keeps, for each sample, AUTO's length and the first of its source tempi it was picked for. It is picked nearest the tempo the first time it is needed, again after a new mode (`keep_slot`) and after a project load, and when the region or the sample changes (the first source tempo differs). A SMP-locked copy of the sound's sample, which takes the sound's mode, uses the sound's sample's length. The FUNC + TUN box shows the kept length. When only the tempo moves, the recompute is one logarithm (0.3.1: three).
+
+| Check | Result |
+| --- | --- |
+| Host, the real code (`auto32test.c`): a 1.316 s loop (one bar at 182.4 BPM) set to AUTO at 175 BPM, tempo down to 100 in 0.1 steps, then back | picked as one bar (-0.73 semitones at 175); no upward step on the way down; -10.42 at 100 (as 1 BAR); -0.77 back at 175. 0.3.1: a +11.96 step at 129.0 |
+| Host: a 2.0 s loop picked at 175 (two bars of 240), then 160 | -5.47, then -7.02: two bars kept |
+| Host: a SMP lock to a copy of the sound's sample (no setting) at 120, then back | both -7.27: the sound's kept bar |
+| Host: 1 BAR, then AUTO again at 120; a project load at 175 | half a bar of 91.2 (+4.73); one bar again (-0.73) |
+| Host equivalence with 0.3.1: random blocks with a steady tempo, with fixed lengths only, and with both (`harness.c` flags 1-3) | 900,000 blocks: the same TUN every block. With AUTO and a moving tempo they differ, as intended |
+| rytm-emu, loop120 (2.0 s) in AUTO, tempo 127 -> 172 -> 165 on the TEMPO screen | LS32 (core-ar2 0.3 + 0.3.2): click gaps 0.473 s at 127, 0.349 at 172, 0.364 at 165, no jump. LS31: 0.698 at 172 and 0.36 from 170 down (jumps at 169.7 both ways) |
+| rytm-emu, power-off (card written back) after AUTO picked one bar at 127 and the tempo was raised to 172, then a cold boot | the project loads at 172 and AUTO picks two bars (gaps 0.698 s): the loaded project's tempo, not the earlier one; the choice is not saved |
+| rytm-emu, MD07 (the unit build below) | the same sweep: 0.349 -> 0.364 s, no jump |
+| elekloader lint, loop-sync elemod `81cf9a96…` | `.run` 6,504, `.bss` 3,540 bytes; storage fields unchanged |
+
+On a unit, reported by the author on 26 October 2026: test build MD07 (this source's elemod `81cf9a96…` with a core-ar2 0.7 draft, Send FX and Retrig Grid; storage plan identical to his everyday build MD06). Its sheet asked him to load his project at about 175 BPM with the loop in AUTO, lower the tempo to about 110 and back, and check SMP-locked loops; he replied "c'est parfait ça marche très bien". Which steps he ran was not detailed; no timing or CPU was measured.
 
 ## Screenshots
 
-`media/sync-auto.png`, `media/sync-percent.png` and `media/sync-mark.png` come from build LS19 in rytm-emu (identical with LS20 to LS24) (all on the SAMPLE page); inputs, image and PNG hashes in `media/capture.json`.
+`media/sync-auto.png`, `media/sync-percent.png` and `media/sync-mark.png` come from build LS19 in rytm-emu (identical with LS20 to LS24, with LS31 (0.3.1) and with LS32 (0.3.2), both recaptured on 26 October 2026) (all on the SAMPLE page); inputs, image and PNG hashes in `media/capture.json`.
 
 ## Not tested
 
@@ -178,3 +219,5 @@ On the unit, LS24, by ear (author, 24 October 2026): "c'est bon" for his pattern
 - Swing, track speed and pattern changes (the mod does not act on steps; it only follows the tempo word).
 - Combination with other Rytm mods.
 - Memory and CPU on hardware.
+- 0.3.2 on core-ar2 0.3 alone on a unit (only MD07, on the 0.7 draft, was run there); AUTO's pick after a project load on a unit.
+- The 3-16 BAR freeze on very short samples (0.3.1 section): found in a host test, not reproduced on a unit or in the emulator.

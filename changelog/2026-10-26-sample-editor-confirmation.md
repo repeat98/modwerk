@@ -1,0 +1,1 @@
+Keep proposed sample-editor actions available after a native confirmation disappears. A recording start that wins the final recorder-buffer count commit cancels the edit with verified marker rollback and no delayed retry. The bounded commit leaves table copies interruptible and DMA enabled; exact-build physical timing qualification remains pending.

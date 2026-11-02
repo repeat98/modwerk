@@ -13,20 +13,17 @@ X, SEQSTOP then 0x40061892. Empty box still seqpause. The 1aec!=0 pause
 is still converted, but start is 0x40061892 not 0x40061856 (0.1.5-0.1.6
 dead PLAY).
 
-PERSONALIZE: a stock checkbox (glyphs 0x15 empty / 0x16 ticked), stored
-in the free word 0x800000dc and ANDY shadow 0x100fff6c (Mute Modes uses
-the same exclusive slot). 0.1.0-0.1.2 used 0x800000e0, the live
-frame-builder ping, so the box and [PLAY] gate fought a stock bit.
-0.1.9 stored 0/1 and treated any nonzero word as ticked, so leftover
-SRAM showed X and YES had to run twice to clear it. 0.1.10 uses MAGIC
-0x50530000 empty / 0x50530001 X, same as TRACK MUTES: only MAGIC_ON is
-on, and YES xors that 0/1.
-Input 0x40068fd0: YES wrap=1, LEFT/RIGHT/cursor wrap=0. wrap=0 returns
-without a store; wrap=1 toggles 0<->1. The three ANDY restore sites are
-widened pea 0x64 -> 0x70 so 0x800000dc survives power-off on a card build.
-Those sites and the PERSONALIZE pointer arrays are the same Mute Modes
-relocates, so the two cannot share a card or USB set until a base-owned
-PERSONALIZE table exists; the manifest names mute-modes in conflicts.
+PERSONALIZE: a stock checkbox (glyphs 0x15 empty / 0x16 ticked). The
+setting is ps_setting in this module, not Mute Modes' battery word
+0x800000dc (and not 0x800000d8, which Direct Jump used). It resets to
+empty on boot until the base settings store exists. 0.1.0-0.1.2 used
+0x800000e0, the live frame-builder ping. 0.1.9 stored 0/1 and treated
+any nonzero word as ticked. MAGIC is 0x50530000 empty / 0x50530001 X:
+only MAGIC_ON is on, and YES xors that 0/1.
+Input 0x40068fd0: YES wrap=1, LEFT/RIGHT/cursor wrap=0. The PERSONALIZE
+pointer arrays are still the same tables Mute Modes grows, so the two
+cannot share a build until ot_personalize_rows (#1023) lands. The
+manifest names mute-modes in conflicts.
 
 No DSP code, no effect slot, no project bytes: a project saved with the
 module loads unchanged on stock (the setting is PERSONALIZE, not the
@@ -42,7 +39,6 @@ H = bytes.fromhex
 
 LABELS, GETTERS, SETTERS = 0x400b2a34, 0x400b2a74, 0x400b2ac0
 COUNT_AT = 0x40068fb2
-ANDY_RESTORE_SITES = (0x4001f322, 0x4001f3be, 0x4001fb24)
 PLAY_STATE_LOAD = 0x40061822
 PLAY_PAUSE_JSR = 0x40061848
 PLAY_ALT_CMP = 0x4006187c
@@ -56,7 +52,7 @@ MODULE = Module(
     author="jonathanwardle1992-beep",
     author_url="https://github.com/jonathanwardle1992-beep",
     proof=Proof.UNTESTED,
-    proof_note="0.1.10: PERSONALIZE empty unless MAGIC_ON; one YES ticks. 0.1.9 same-unit card started X and needed two YES to clear. USB Keep/Undo and ot_emu untested.",
+    proof_note="0.1.11 is not flashed. The checkbox is in this module, not Mute Modes' battery word. 0.1.9 card: with X, PLAY starts from step 1, and the box began ticked. Photos show PS 0.1.9. USB Keep/Undo and ot_emu untested.",
     doc="PERSONALIZE -> PLAY START checkbox: empty keeps stock play/pause; ticked makes [PLAY] always start from the beginning.",
     linked=(
         Linked("playstart", _HERE + "/playstart.s"),
@@ -103,10 +99,6 @@ MODULE = Module(
     pokes=(
         Poke(COUNT_AT, stock_guard(COUNT_AT, 2, "5dd82fd23ac20130aebe3391a4c9a9fda6ca01bd143223a558ec253b65083dfd"), H("7210"),
              "PERSONALIZE rows 15 -> 16 (MKI), 16 -> 17 (MKII): + PLAY START"),
-    ) + tuple(
-        Poke(site, stock_guard(site, 4, "8c4c50dbddad08d1ae644a694665e608f2bbdb90d7a321fc640e844ae4c149fa"), H("48780070"),
-             "ANDY restore pea 0x64 -> 0x70: PLAY START (0x800000dc) survives power-off")
-        for site in ANDY_RESTORE_SITES
     ),
     gates=(Gate("modules/play-start/verify.py", remix_arg=False),),
 )
