@@ -1,6 +1,6 @@
 # Pipo Loop
 
-An Analog Rytm MKII mod by npp1993 (Nathaniel Pavel). Version 0.1.0-experimental, OS 1.74 with core-ar2 0.7.
+An Analog Rytm MKII mod by npp1993 (Nathaniel Pavel). Version 0.1.1-experimental, OS 1.74 with core-ar2 0.7.
 
 ## Overview
 
@@ -63,11 +63,11 @@ Use a build containing Pipo Loop, select a track whose sound plays a sample, and
 - A PIPO turn on a crossing can still give a soft knock on a pure tone: the waveform's slope reverses at the turn, which no choice of frame avoids. A forward loop (LOP ON) between two crossings of one direction joins smoothly.
 - The STA and END lines on the SMPL WAVEFORM view are stock's drawing: one column covers many frames (about 225 for a 0.6 s sample), and stock spaces the lines over 123 columns but the waveform over 124, so a line can sit one column left of the crossing it is on, more often towards the right of the screen. The frame stock plays from is the one the snap set.
 - On stock OS, PIPO plays as ON and LOP reads ERROR until the knob is turned (seen on a unit). Sounds and kits keep the value, so loading them again with the mod brings PIPO back.
-- Run on a unit by the author as test builds (PC03 and the diagnostics PD01 to PD05, reported in [TESTING.md](TESTING.md)); what is not yet tested on a unit is listed there.
+- Run on a unit by the author as test builds (PC03, the diagnostics PD01 to PD05, and 0.1.1 as RC07, a combined image, reported in [TESTING.md](TESTING.md)); what is not yet tested on a unit is listed there.
 
 ## Tests and measurements
 
-rytm-emu (c5732f0) on OS 1.74, build PP13, with generated ramp and sine samples on BD: the value steps OFF/ON/PIPO and reads PIPO; ON plays stock's forward loop and PIPO turns exactly at STA and END from TUN -24 to +24; switching ON to PIPO mid-note; FUNC + STA and END stepping crossing by crossing (sound, lock editor, per-trig and live recording), holding at the sample's edges, passing and sharing crossings; p-locks and scene locks of PIPO; two voices at once; retrig; persistence through power-off; stock 1.74 loading the saved PIPO state as a normal loop; the S and E labels. On a unit (author's reports, test builds up to PD05): the switch, PIPO, zero snap on the sound and on held trigs' locks, edges, passing and sharing, clean snapped LOP ON loops, the labels. CPU is a static estimate: about 0.1 % of an audio block with nothing looping and about 0.6 % with all eight voices in PIPO. See [TESTING.md](TESTING.md).
+rytm-emu on OS 1.74, builds PP16 to PP20 (0.1.1): at TUN -24 on a 6,800-frame loop, 18 to 32 clicks a run on 0.1.0, none on 0.1.1; on a 23,777-frame sample, clicks on every turn at one STA in four tested on the build before PP18's source, none after it; LOP ON, LOP OFF and PIPO at TUN 0 sample-identical to 0.1.0. rytm-emu (c5732f0) on OS 1.74, build PP13, with generated ramp and sine samples on BD: the value steps OFF/ON/PIPO and reads PIPO; ON plays stock's forward loop and PIPO turns exactly at STA and END from TUN -24 to +24; switching ON to PIPO mid-note; FUNC + STA and END stepping crossing by crossing (sound, lock editor, per-trig and live recording), holding at the sample's edges, passing and sharing crossings; p-locks and scene locks of PIPO; two voices at once; retrig; persistence through power-off; stock 1.74 loading the saved PIPO state as a normal loop; the S and E labels. On a unit (author's reports, test builds up to PD05): the switch, PIPO, zero snap on the sound and on held trigs' locks, edges, passing and sharing, clean snapped LOP ON loops, the labels. CPU is a static estimate: about 0.1 % of an audio block with nothing looping and about 0.6 % with all eight voices in PIPO. See [TESTING.md](TESTING.md).
 
 ## Authorship and licences
 
@@ -75,4 +75,4 @@ Original code by npp1993 (Nathaniel Pavel), GPL-3.0-or-later ([LICENSE](LICENSE)
 
 ## Screens and audio
 
-Screenshots are rytm-emu captures of build PP13 ([media/capture.json](media/capture.json)), the zero-snap and label ones on a generated slow sine. No audio preview yet.
+Screenshots are rytm-emu captures of build PP17 ([media/capture.json](media/capture.json)), the zero-snap and label ones on a generated slow sine. No audio preview yet.

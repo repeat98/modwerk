@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import packages from '../engine/assets/octatrack-module-packages.json'
-import { cardBuildError, moduleUsbOnly } from './usb-only'
+import { cardBuildError, moduleUsbOnly, usbLagNote } from './usb-only'
 
 describe('modules that need the Modwerk base', () => {
   it('keeps a module whose USB package requires a base DSP feature out of card firmware', () => {
@@ -18,6 +18,13 @@ describe('modules that need the Modwerk base', () => {
     const published = { packages: [{ id: 'beat-slicer', sources: ['device_module.c'] }, { id: 'tapehead' }] }
     expect(moduleUsbOnly('beat-slicer', published)).toBe(true)
     expect(cardBuildError(['beat-slicer'], true, published)).toMatch(/^Beat Slicer needs the Modwerk base/)
+  })
+
+  it('says which older version a lagging USB package installs, and why', () => {
+    const published = { packages: [{ id: 'playmodes', version: '0.1.1-experimental', lagsBehind: '0.2.0-experimental', lagReason: 'its recipe needs a review (#764)' }, { id: 'tapehead', version: '0.1.2-experimental' }] }
+    expect(usbLagNote('playmodes', published)).toBe('Over USB this installs 0.1.1-experimental: its recipe needs a review (#764)')
+    expect(usbLagNote('tapehead', published)).toBe('')
+    for (const entry of packages.packages as { id: string; lagsBehind?: string }[]) expect(!!usbLagNote(entry.id)).toBe(!!entry.lagsBehind)
   })
 
   it('follows the published packages', () => {

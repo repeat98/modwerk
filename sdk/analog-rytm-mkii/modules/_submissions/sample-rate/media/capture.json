@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "machine": "analog-rytm-mkii",
+  "moduleId": "sample-rate",
+  "moduleVersion": "0.1.0-experimental",
+  "firmware": "1.74",
+  "capturedAt": "2026-10-31T23:00:00Z",
+  "imageSha256": "f6a4ca9e703ad976cb8a6db3f41c4a7c0761dd73a39336e03f96fc55012b289a",
+  "build": "Modwerk's linker: core-ar2 0.7 + this folder's Sample RATE 0.1.0-experimental, materialised against stock OS 1.74, --version SR06",
+  "emulator": {
+    "name": "rytm-emu",
+    "repository": "https://github.com/trigcondition/rytm-emu",
+    "binary": "dtboot",
+    "settings": "card image with one generated 23,777-frame ramp, RAMP.wav, added with dtcard; JIT on"
+  },
+  "conditions": "SETUP: BD on the ramp with LOP ON on the SAMPLE page, as in Pipo Loop's media/capture.json with the --press and --turn steps of its SETUP. Then FUNC + MUTE, DOWN x4, YES, DOWN x7, RIGHT, then NO x3, SMPL.",
+  "captures": [
+    {
+      "path": "media/row-off.png",
+      "frame": "step14_DOWN.png",
+      "plan": "At the row: DOWN",
+      "sha256": "db2a40b3e589333f039488588607ab009e3ccb0440698a790e92ff896ca561a7"
+    },
+    {
+      "path": "media/row-on.png",
+      "frame": "step15_RIGHT.png",
+      "plan": "Then --press RIGHT",
+      "sha256": "5ad4f42eb3e5a285137db21d996931d835d77bac2d79cda5ad275783fbcfa0fb"
+    },
+    {
+      "path": "media/knob-rate.png",
+      "frame": "step01_SMPL.png",
+      "plan": "From the SMPL view: --press SMPL",
+      "sha256": "c7508ae391f351e12f732dc60669b0ca4000bc4824c0f38eac147eaa12dbbf78"
+    },
+    {
+      "path": "media/value-rate.png",
+      "frame": "turn16.png",
+      "plan": "Then taps of PUSH_B, --turn 1:-8 x20, DTBOOT_TURN_PNG",
+      "sha256": "00e01b26de0f0ebdb42e5a82eabbccddde8c96c2e54393df23f102047dc106cb"
+    },
+    {
+      "path": "media/other-track-fin.png",
+      "frame": "step02_TRK.png",
+      "plan": "From the SMPL view: --press TRK:200M --press SD",
+      "sha256": "11264bb3d1231d8872de33b71b44a99349dcfed8922317537d7db4ab78245369"
+    }
+  ]
+}
