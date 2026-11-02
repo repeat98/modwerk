@@ -670,3 +670,7 @@ sequencer or tick paths. Static reading, not a measurement.
 On a unit (0.5.x): MIDI out, STEP REC, RTRG, the SOUND BROWSER, AUTO TRK SWITCH off, and a
 project saved with the rows checked loaded on stock. In the emulator: sound and timing, the flows listed above as not
 compared, other modules beside it at run time, and loading a saved project.
+
+## Library release (2 November 2026)
+
+The owner approved the first library release of 0.6.0-experimental on 2 November 2026, on the results above. The library's package is compiled from this source in Modwerk's source-only container; that exact package has not run on a unit.

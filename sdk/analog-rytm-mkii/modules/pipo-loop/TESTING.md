@@ -504,3 +504,7 @@ On a unit (everything below was run in rytm-emu only, or not at all):
   PD05 carried both but only Pipo Loop was exercised); Loop Sync and Pipo Loop on the same track.
 - Several trigs held at once while snapping locks.
 - Samples longer than 0.64 s (zero snap lands on the nearest step there).
+
+## Library release (2 November 2026)
+
+The owner approved the first library release of 0.1.1-experimental on 2 November 2026, on the results above. The library's package is compiled from this source in Modwerk's source-only container; that exact package has not run on a unit.
