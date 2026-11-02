@@ -40,3 +40,7 @@ Run on the Digitakt II emulator (ColdFire only, SSI clock), image linked from co
 - LED arrays after release: TRIG 1 and 3 hold 0x11 on layer 2, the same value PREP MUTES gives chosen tracks; other TRIG LEDs 0x21.
 - After the pattern wrap: 2 toggles, 1 apply, LEDs back to normal.
 - Not tested: whether the LEDs blink exactly like stock on a unit, PERFORM's stock sub-function behaviour, anything on hardware.
+
+## Hardware (reported by the author, crisp909)
+
+Digitakt II, OS 1.17, image linked with Elekloader from core 1.0 and the PERFORM build (this version, 0.1.0-experimental). Reported by the author as working as intended: single short PERFORM press arms at once, "MUTES ARMED" shows, parked TRIG LEDs keep their orange blinking until the switch, and the mutes switch at the pattern start. Reported, not measured by the assistant; no per-PAGE or other-pattern-length tests were recorded.
