@@ -494,7 +494,7 @@
       "sha256": "fdba0ffd31b7932ceb1ded3bde9a976b6f148ae96fc73a4efc4fedf6fb692341"
     }
   ],
-  "sourceCommit": null,
+  "sourceCommit": "f2610a31a1cbf06eafba249daa81b3c3bc97668c",
   "moduleVersions": {
     "spectrum": "0.1.1-experimental",
     "modulation": "0.1.1-experimental",
@@ -527,6 +527,7 @@
     "apply-scene": "0.2.0-experimental",
     "direct-jump-kyoti": "0.1.2-experimental",
     "dejavu": "0.1.0-experimental",
-    "arp-key-locks": "0.1.0-experimental"
+    "arp-key-locks": "0.1.0-experimental",
+    "tuner": "0.1.0-experimental"
   }
 }

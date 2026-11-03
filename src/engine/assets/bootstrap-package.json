@@ -16,7 +16,7 @@
   "reserveBytes": 10487808,
   "uncachedAlias": 134217728,
   "stageAlignment": 4096,
-  "sourceCommit": null,
+  "sourceCommit": "f2610a31a1cbf06eafba249daa81b3c3bc97668c",
   "moduleVersions": {
     "spectrum": "0.1.1-experimental",
     "modulation": "0.1.1-experimental",
@@ -49,6 +49,7 @@
     "apply-scene": "0.2.0-experimental",
     "direct-jump-kyoti": "0.1.2-experimental",
     "dejavu": "0.1.0-experimental",
-    "arp-key-locks": "0.1.0-experimental"
+    "arp-key-locks": "0.1.0-experimental",
+    "tuner": "0.1.0-experimental"
   }
 }
