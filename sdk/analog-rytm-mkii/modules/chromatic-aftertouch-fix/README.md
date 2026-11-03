@@ -30,6 +30,11 @@ Nathaniel Pavel (@npp1993); not a port.
 
 There is nothing to set. To get stock's bytes back, build without the module.
 
+Messages: the module changes one field of one message, the note number of the poly pressure
+(`An note value`) a held CHROMATIC pad sends, on the channel and port stock picks (PAD DEST,
+PRESSURE DST, AUTO or per-track channel). It reads no MIDI, consumes nothing, adds no message and
+moves none in time; every other message, MIDI in and MIDI thru are as stock.
+
 ## Usage
 
 Install a build that contains the module, let the pads reach MIDI out, press CHRO and play. A synth
