@@ -4,7 +4,7 @@ import { installCoreLogger, LOGGER_RETAINED_BYTES } from './core-logger.ts'
 // Loader-free composition with mandatory logging. Historical module-matrix
 // proofs predate the core; downloads stay gated until full images are reverified.
 import { composeAnalogBd, createAnalogBootstrap } from './analog-bd.ts'
-import { defaultChoosers, composeChoosers } from './choosers.ts'
+import { defaultChoosers, composeChoosers, leadingModules } from './choosers.ts'
 import { recoverStockDsp } from './stock-dsp.ts'
 import { composeStaticDsp } from './static-dsp.ts'
 import { createStaticColdFireRuntime } from './coldfire-runtime.ts'
@@ -17,7 +17,7 @@ import type { UsbAudioConfiguration } from '../config/usb-audio.ts'
  *  writes with a native build that has no logger, and prove the others leave them untouched. */
 export async function planStaticOs(original: Uint8Array, ids: readonly string[], profile = defaultChoosers(ids), usbAudio?: UsbAudioConfiguration, betaAccess = false) {
   await verifyNativeContracts(original, ids)
-  const cores = await recoverStockDsp(original), runtime = await createStaticColdFireRuntime(ids, original, undefined, usbAudio, betaAccess)
+  const cores = await recoverStockDsp(original), runtime = await createStaticColdFireRuntime(ids, original, undefined, usbAudio, betaAccess, undefined, leadingModules(ids, profile))
   const menus = await composeChoosers(original, ids, profile, runtime, betaAccess), dsp = await composeStaticDsp(cores, ids, menus.chooser)
   if (usbAudio) menus.writes = await replaceUsbAudioHooks(original, menus.writes, runtime)
   const logging = await installCoreLogger(runtime, original, ids, menus.chooser, betaAccess ? BETA_STARTUP_IDENTITY : undefined)

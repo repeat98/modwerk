@@ -3,6 +3,7 @@ import { readCoreLogger, loggerExternals, LOGGER_RESERVE_BYTES, LOGGER_RETAINED_
 import { readBetaStartup, BETA_STARTUP_ACTIVE_ADDRESS } from './beta-startup.ts'
 import { readRequestedObject, requestedFacts, selectedRequestedGroups, requestedObjectSelected, requestedObjectDram } from './requested-modules.ts'
 import { resolveSelection } from '../catalog/modules.ts'
+import { placementOrder } from './descriptors.ts'
 import { readColdFirePackage, joiningUnits, PLATFORM_UNITS } from './coldfire-package.ts'
 import { linkColdFireRuntime, runtimeCatalogObject } from './coldfire-link.ts'
 import { createDynamicRuntimeCatalog } from './runtime-catalog.ts'
@@ -12,13 +13,14 @@ import { USB_AUDIO_MODULE, type UsbAudioConfiguration } from '../config/usb-audi
 // Native arena.BASE. All accepted selections reserve the platform at its bottom.
 export const PLATFORM_RUNTIME_BASE = 0x40a955e0
 /** Loader-free runtime with the core logger in every configuration. */
-export async function createStaticColdFireRuntime(ids: readonly string[], original?: Uint8Array, base = PLATFORM_RUNTIME_BASE, usbAudio?: UsbAudioConfiguration, betaAccess = false, startupRomAddress = BETA_STARTUP_ACTIVE_ADDRESS - 76) {
+/** `leading`: the chooser profile's leading modules (choosers.leadingModules), which native links first. */
+export async function createStaticColdFireRuntime(ids: readonly string[], original?: Uint8Array, base = PLATFORM_RUNTIME_BASE, usbAudio?: UsbAudioConfiguration, betaAccess = false, startupRomAddress = BETA_STARTUP_ACTIVE_ADDRESS - 76, leading: readonly string[] = []) {
   const units = []
   const selected = selectedRequestedGroups(ids)
   // A unit that joins (native remix.machine_composition.join_runtime) links at its module's place
   // in the selection, and only when another module's units already make a runtime.
   const joins: { at: number; label: string }[] = []
-  for (const module of resolveSelection(ids)) {
+  for (const module of placementOrder(resolveSelection(ids), leading)) {
     if (usbAudio && module.id === USB_AUDIO_MODULE) {
       if (!original) throw new Error('USB Audio needs verified local firmware.')
       units.push(...await readUsbAudioObjects(usbAudio, original)); continue
