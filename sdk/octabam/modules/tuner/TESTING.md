@@ -302,3 +302,47 @@ Stack, re-measured with a write trace on the UI stack (1 s, six analyses and dra
 - The measurements are the emulator's; no hardware timing, audio or canary. One session for the readings and costs, one for the 82.41 Hz reading at the 29 October time, one control session on the previous image. The hardware report for this card is the author's functional one of 1 November 2026 (top of this file).
 - `source.revision`, `tests.evidenceRevision` and the hardware block's `sourceRevision` name `ef6cbc7`, the fix commit of Tim's released 2.22 line; the 30 October evidence records name his working commit `03202050`, the same `tuner/` files.
 - The browser package identities under `src/engine/assets/` (source-tree hash) were not regenerated for this source change.
+
+## Performance record — 3 November 2026
+
+**Emulator measurements and a static count, not hardware timing.** Numbers and methods: [evidence/performance.json](evidence/performance.json), which `tests.qualification.cycles[0].report` now names. The card build of Modwerk `ea295863` was rebuilt with the canonical recipe (pinned Docker image `0db04819…`, `--vendored-sdk --static-stock --modules tuner --select tuner:true`): card `d4452bbb…` and bus `da2375cf…`, the TEST2/TEST3 bytes. The stock image is the MAIN OS section of the same 1.40C file (`164f3122…`).
+
+### Method
+
+- Static bound: the longest path through the disassembly of a local link of `upstream/tuner.s` (`.text` 2,894 B, `3491c805…`, compared equal to emulated RAM before measuring), every branch on its dearer side and every loop at its bound from the source. `tu_frame` 195 instructions, `tu_analyse` 1,049,249, `tu_draw`'s own code 277, `tu_tick`'s due path 14. The stock drawing routines `tu_draw` calls are not bounded here and enter at their measured maximum, 7,163 instructions per redraw.
+- Sessions: `ot_emu` `c81d13dc…` `--mkii --dsp --frame`, one lease each through `hostemu/scripts/lease.sh`, the same script on both images. Fixture `tuner-load8` (`90bef7e1…`), a 0.5 FS 440 Hz sine on the four input slots from boot, T8 selected, PLAY, UP + TEMPO at 20 s. Then 5 s without MIDI, 62 s of flood with the window open and 30 s of flood with the window closed and reopened twice.
+- Flood: one three-byte message every emulated ms (note on, CC 7, note off, channels 1–8 in turn) and a clock byte every 10 ms (250 BPM), paced by the emulated sample count. Panel STOP with MIDI STOP at 7, 22, 37 and 52 s, PLAY with MIDI START a second later. PART + RIGHT (Part 2) at 30 s, PART + UP (Part 1) at 31 s (LCD captures show Pt:2, then Pt:1), and UP + TEMPO at 32 s. The Part menu closes the Tuner's window as it closes stock's TEMPO window; both reopened at 32 s.
+- Counting: PC watches on the frame-interrupt body (`0x4000aad8`–`0x4000d9a6`), the UI loop head, the MIDI handlers and the Tuner's entries, exits and stock call sites. The Tuner's own instructions per analysis come from `ot_emu`'s PC coverage over six intervals that each hold one analysis.
+
+### Results
+
+| Measurement | Stock | Tuner |
+| --- | ---: | ---: |
+| `tu_frame` per block, window open / closed | — | 195 / 4 |
+| `tu_analyse` own instructions (6 analyses, 3 under the flood) | — | 1,027,754–1,027,780 (static 1,049,249) |
+| `tu_draw` own / stock routines (max) | — | 260 / 7,163 |
+| per block, window open | — | 6,936 cycles measured, 7,070 static, of 9,577 |
+| per block, the 30 October span method without MIDI | — | 7,021 cycles (7,018 on 30 October) |
+| per block, the span method under the flood (MIDI interrupts included) | — | 7,188 cycles |
+| longest frame interrupt under the flood (port time) | 50,879 instr = 289.1 µs | 50,989 instr = 289.8 µs |
+| idle under the flood, 62 s | 33.62 % | 29.55 % |
+| idle without MIDI, window open, 5 s | 57.07 % | 52.73 % |
+| frame interrupts / frames, flood with the window open | 171,039 / 171,038 | 171,037 / 171,036 |
+| MIDI handler entries, 92 s (note on / off / CC / clock) | 30,667 / 30,666 / 30,668 / 9,200 | 30,667 / 30,666 / 30,667 / 9,200 |
+
+92,000 messages and 9,200 clock bytes were sent to each image. The stock image's one extra CC entry is a watch that counted an entry twice. After the flood the Tuner read A4 +0c 440.0Hz live. `npm run perf:audit -- check sdk/octabam/modules/tuner/evidence/performance.json`:
+
+```
+✓ record          coldfire record for tuner@0.1.0-experimental
+· cycles          worst event 6936 of 9577 cycles (72%); over half the deadline: say why
+✓ stock benchmark under the same flood the longest frame interrupt grows by 0.7 us (0.2% of the 362.8 us frame) and idle time falls by 4.1 points vs stock
+✓ stress          1000 messages/s at 250 BPM for 92 s, no stuck note, no hang, 0 dropped
+```
+
+The cycles note: the analysis is a complete pitch detector, about 1.03 M instructions every 145 ms in the UI task, preempted by the frame interrupt. The frame-interrupt share is 486 cycles (5.1 %), and with the window closed the Tuner runs 4 instructions a block.
+
+### Limits
+
+- Emulator only: no hardware timing, audio or canary, and the instruction-count model is not opcode cycles (each divide and multiply counts as one instruction). Loads are priced in the port's time (3,990 instructions a sample), as the Deja Vu and ARP KEY LOCKS records are. One session per image.
+- The static bound covers the Tuner's own code. The stock drawing routines enter at their measured maximum.
+- Only the 440 Hz input ran under the flood; 30 October's inputs gave the same analysis cost within 0.3 %.

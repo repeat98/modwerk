@@ -1,0 +1,35 @@
+{
+  "schema": 1,
+  "module": "tuner",
+  "version": "0.1.0-experimental",
+  "kind": "coldfire",
+  "cycles": {
+    "unit": "cycles/event",
+    "static": 7070,
+    "measured": 6936,
+    "budget": 9577,
+    "method": "An event is one 16-sample block with the window open: the frame hook's work in that block, its share of the UI-task analysis and redraw, which tu_tick runs at most once per 400 blocks (tu_frames counts blocks and is cleared when it runs), and the UI loop head's not-due visits. Instruction-count model of TESTING.md: 9.44 ns an instruction at 264 MHz, 2.49216 cycles an instruction; budget Modwerk's ColdFire allowance, 10 % of a 362.8 us block (9,577 cycles). Instructions, not opcode cycles: the 368 divsl of the lag loop and every mulsw count as one. Static: the longest path through the disassembly of a local link of upstream/tuner.s (.text 2,894 B, 3491c805, equal to emulated RAM), every branch on its dearer side and every loop at its bound from the source (ring passes 4,096; decimation 1,022; lag loop 368 with 82 eight-product blocks and at most 14 normalising shifts, since m0 + m_t < 2^30; lobe passes 368 and 64; YIN 7 x 256; octave doubling at most 11, since the period is at least 256 in Q8; cents 101): tu_frame 195 (one fixed 16-pass loop), tu_analyse 1,049,249, tu_draw's own code 277, tu_tick's due path 14. The stock routines tu_draw calls (CLEAR, TEXT, TWIDTH, SPRINTF, RULE, VLINE, BOX) are not bounded here; they enter at their measured maximum per redraw, 7,163 instructions from jsr to return with nested interrupts included. Per block: 195 + (1,049,540 + 7,163) / 400 + 7 x 0.0392 visits = 2,837.0 instructions = 7,070 cycles. Measured, emulator, not hardware: ot_emu c81d13dc (--mkii --dsp --frame), 3 Nov 2026, the card build of Modwerk ea295863 rebuilt with the canonical recipe (card d4452bbb, bus da2375cf: the TEST2/TEST3 bytes), tuner-load8 fixture playing, a 0.5 FS 440 Hz sine on T8 THRU (the dearest input of 30 October), 5 s without MIDI and 92 s under the flood below. tu_frame: 195 instructions in every block with the window open, 4 closed. tu_analyse's own instructions from ot_emu's PC coverage over six intervals of one analysis each (three without MIDI, three under the flood): 1,027,754 to 1,027,780; tu_draw's own 260 in every redraw. Per block: 195 + (14 + 1,027,780 + 260 + 7,163) / 400 + 0.27 = 2,783.3 instructions = 6,936 cycles, 72 % of the allowance. The 30 October figure by its own method (the analysis span less nested frame-interrupt bodies, other interrupts kept in): at most 1,048,812 instructions without MIDI, 7,021 cycles a block (7,018 on 30 October); under the flood the span also takes in the MIDI interrupts that preempt it, up to 1,075,622 (7,188 cycles), which is why the measured figure counts the Tuner's own instructions. Over half the allowance because the analysis is a whole pitch detector, 1.03 M instructions every 145 ms in the UI task, preempted by the frame interrupt; the frame-interrupt share alone is 486 cycles (5.1 %), and nothing runs with the window closed (4 instructions a block, 4 a UI loop pass)."
+  },
+  "load": {
+    "frameUs": 362.8,
+    "stockLongestUs": 289.1,
+    "moduleLongestUs": 289.8,
+    "stockIdlePercent": 33.62,
+    "moduleIdlePercent": 29.55,
+    "method": "Emulator, not hardware, and not cfmeter.py: ot_emu c81d13dc --mkii --dsp --frame, 3 Nov 2026, the same 62 s of flood from the same point on two images built from the same OS: the original MAIN OS of 1.40C (164f3122) and the Tuner card build of ea295863 (bus da2375cf), each with its own copy of the tuner-load8 fixture (seven FLEX tracks with stock FX1 and FX2 on all eight, trigs and retrigs on every track at 120 BPM, T8 THRU on input A) and the same 440 Hz sine, T8 selected and UP + TEMPO pressed at 20 s (the Tuner's window; stock's TEMPO window). Same flood on both: a three-byte message every emulated ms (note on, CC 7, note off on channels 1-8 in turn) and a clock byte every 10 ms (250 BPM); panel STOP with MIDI STOP at 7, 22, 37 and 52 s, PLAY with MIDI START a second later; PART + RIGHT (Part 2) at 30 s, PART + UP (Part 1) at 31 s, UP + TEMPO at 32 s. The Part menu closes the Tuner's window as it closes stock's TEMPO window (both handles read 0 at 30.6 s, both reopened by 32.8 s), so the Tuner's window was closed for about 2.2 of the 62 s. Longest frame interrupt: the most instructions from the frame handler's body 0x4000aad8 to its epilogue 0x4000d9a6 over 171,039 frames on stock and 171,037 with the Tuner, priced in the port's time (3,990 instructions a sample, so 63,840 a 362.8 us frame): 50,879 stock, 50,989 with the Tuner (0.6 us more; the hook itself is 195 instructions, 1.1 us in the port's time, 1.8 us in the 9.44 ns model). Idle: 100 x (1 - executed instructions / (3,990 x samples)) over the 62 s: 33.62 % stock, 29.55 % with the Tuner, 4.1 points, the UI-task analysis; without MIDI and with the window open, 57.07 % and 52.73 % (4.3 points)."
+  },
+  "stress": {
+    "floodMessagesPerSecond": 1000,
+    "clockBpm": 250,
+    "seconds": 92,
+    "stuckNotes": 0,
+    "hangs": 0,
+    "dropped": 0,
+    "droppedExplanation": "Emulator, not hardware, the Tuner image of the run above: the 62 s with the window open, then 30 s of the same flood with the window closed at 0 and 20 s and reopened at 10 and 25 s (tu_win read at each step), paced by the emulated sample count to one message an emulated ms. 92,000 three-byte messages (30,667 note on, 30,666 note off, 30,667 CC), 9,200 clock bytes and eight STOP and START bytes. Dropped: PC watches on the MIDI handlers (note on 0x4000e018, note off 0x4000db98, CC 0x4000e79c, clock 0x40005a48) counted every message on the Tuner image, none missing and none extra; on the stock image one CC entry more than was sent in the last 30 s, a watch counting an entry twice, as the ARP KEY LOCKS record notes. Stuck notes: every note on is followed by its note off on the same channel two messages later, and every note off reached its handler, including those around the four STOPs and the Part change; nothing was listened to on MIDI OUT, and the Tuner has no MIDI path. Hangs and underruns: the frame interrupt ran in every block (bodies equal frames in every phase), its longest was 50,989 of the 63,840 instructions a frame has in the port's time, the UI loop head kept its rate (6,705 visits on both images in the 62 s), and 3 s after the flood the Tuner still read A4 +0c 440.0Hz live. Not covered: hardware timing and audio, and a flood beyond 250 BPM."
+  },
+  "hardwareEvidence": {
+    "status": "reported",
+    "existingReport": "TESTING.md",
+    "note": "The author's functional report on his MKI (1 Nov 2026, TEST3 = these card bytes); nothing timed on the unit. The cycles, load and stress rows are ot_emu measurements."
+  }
+}
