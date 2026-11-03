@@ -82,6 +82,11 @@ Fixed velocity read from stock's flag every 100M instructions; screens compared 
 
 **RC19 (QM11 inside), reported by the author, 3 Nov 2026:** all looks good. Stock's default aftertouch link to FILT FRQ (+16) stays as stock sets it.
 
+**QM12 alone, reported by the author, 3 Nov 2026:** all pass:
+- FX track: a FIX tap toggles fixed velocity on the press; FIX held with FDB turned edits FDB and toggles; SAMPLER held with a turn, and a SAMPLER tap, open the recorder.
+- FILTER page, FIX held, FX track selected: FDB edits, no boxes shown.
+- FILTER page FIX links, AMP page SAMPLER links and the recorder tap, the FIX key and FUNC + FIX, VELOCITY MODS FULL, kit save and power cycle, as before.
+
 The source-only package itself has not run on a unit. Steps for a unit run of it, alone or in a combined image:
 
 1. FILTER page, hold FIX: FRQ and RES shown as `0` boxes, nothing in the corner. Turn FRQ: its box counts up, FRQ itself does not move. Soft and hard pad hits differ. SOUND SETTINGS, VELOCITY MOD shows FILT FRQ.

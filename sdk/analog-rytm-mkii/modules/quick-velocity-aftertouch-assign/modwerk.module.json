@@ -94,7 +94,7 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "rytm-emu on QM11 and QM12: links, lock-style display, MODS FULL popups, SAMPLER recorder, FIX toggle, PERF, SCNE and the FX track. Author's unit reports on RC18 (QM10: aftertouch and velocity links, display, kit save, reload and power cycle) and RC19 (QM11): pass.",
+    "summary": "rytm-emu on QM11 and QM12: links, lock-style display, MODS FULL popups, SAMPLER recorder, FIX toggle, PERF, SCNE and the FX track. Author's unit reports: RC18 (QM10: links, display, kit save, reload, power cycle), RC19 (QM11) and QM12 alone (FX track, links, FIX key, save, power cycle) pass.",
     "documentation": {
       "tutorial": {
         "title": "Quick tutorial",

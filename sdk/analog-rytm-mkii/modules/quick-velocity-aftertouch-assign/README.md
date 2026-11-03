@@ -50,11 +50,11 @@ Hold FIX or SAMPLER on any sound page and turn the knob you want to move with ve
 - It patches no stock site. It sets its own locker in stock's parameter UI while a key is held, as QPERF does with QPER, and adds a `core_params` entry for every parameter id with only a turn function (order 5) for a turn that reaches stock's parameter edit. It subscribes to `ev_key`, `ev_enc` and `ev_tick`. No storage.
 - A performance or scene pad, or a trig, that holds stock's locker when FIX or SAMPLER goes down or during the hold keeps it; the mod shows its amounts again within a tick of it letting go.
 - Stock's LFO DST knob opens its list rather than turning, so FIX + DST does nothing.
-- On a unit, by the author's report: QM06 (FIX + knob, the FIX key, save and power cycle) RC18's QM10 (SAMPLER aftertouch links, the lock-style display, envelopes following, mods full, kit save and reload, power cycle) and RC19's QM11 pass: see [TESTING.md](TESTING.md).
+- On a unit, by the author's report: QM06 (FIX + knob, the FIX key, save and power cycle) RC18's QM10 (SAMPLER aftertouch links, the lock-style display, envelopes following, mods full, kit save and reload, power cycle) RC19's QM11 and QM12 alone (the FX track, and the checks above again) pass: see [TESTING.md](TESTING.md).
 
 ## Tests and measurements
 
-rytm-emu on OS 1.74 ([TESTING.md](TESTING.md)), and the author's unit on combined images with builds QM10 and QM11; QM12's FX-track fix has run in rytm-emu only. Memory (build QM12's link map, compiled with `-Os`): 2,820 bytes of code and initialised data and 44 bytes of `.bss` in the 128 KiB shared mod area. Load: UI only, on key events and knob turns; nothing runs in the audio path.
+rytm-emu on OS 1.74 ([TESTING.md](TESTING.md)), and the author's unit on combined images with builds QM10 and QM11 and on QM12, this package's code, alone. Memory (build QM12's link map, compiled with `-Os`): 2,820 bytes of code and initialised data and 44 bytes of `.bss` in the 128 KiB shared mod area. Load: UI only, on key events and knob turns; nothing runs in the audio path.
 
 ## Authorship and licences
 
