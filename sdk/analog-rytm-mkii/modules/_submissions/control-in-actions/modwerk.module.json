@@ -20,7 +20,7 @@
   "label": "CONTROL IN ACTIONS",
   "family": "Workflow",
   "summary": "An ACTION mode for EXP/CV IN 1 and 2: a gate or footswitch holds or toggles the MUTE screen or live recording.",
-  "overview": "Stock's CONTROL INPUT menus get a fourth MODE, ACTION. Pick what the input does in the ACTION row: MUTE HLD shows the MUTE screen while the input is high and goes back to the mode you were in when it drops, MUTE TGL opens and closes it, REC HLD records live while the input is high, REC TGL turns live recording on and off. Live recording starts a stopped sequencer and never stops it. A 0 to 5 V gate works as it is; for a footswitch, LEARN LEVELS reads its two levels. Each jack has its own MODE, so one can switch while the other still plays the kit's CV or expression macro.",
+  "overview": "Stock's CONTROL INPUT menus get a fourth MODE, ACTION. Pick what the input does in the ACTION row: MUTE HLD shows the MUTE screen while the input is high and goes back to the mode you were in when it drops, MUTE TGL opens and closes it, REC HLD records live while the input is high, REC TGL turns live recording on and off. Live recording starts a stopped sequencer and never stops it. A 0 to 5 V gate works as it is; for a footswitch, LEARN LEVELS reads its two levels. Bars beside the menu show the input against the learned levels and whether it counts as pressed. Each jack has its own MODE, so one can switch while the other still plays the kit's CV or expression macro.",
   "highlights": [
    "Hands-free mutes with both hands on the pads",
    "Set up in stock's own CONTROL INPUT menus, saved with them",

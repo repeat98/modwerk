@@ -1,7 +1,8 @@
 {
   "schemaVersion": 1,
   "sources": [
-    "src/main.c"
+    "src/main.c",
+    "src/draw.S"
   ],
   "defsym": {},
   "cflags": ["-Os"],
@@ -114,6 +115,33 @@
           "kind": "code",
           "relocs": [{ "at": 2, "target": "control_in_actions_learn" }],
           "stockSha256": "4fe8fb09a697d0a988b4dc594c4926439aa5517ad2aaa0fde1794449cddd506b"
+        },
+        {
+          "addr": "0x4013077c",
+          "op": "bytes",
+          "len": 8,
+          "new": "4ef9000000004e71",
+          "kind": "code",
+          "relocs": [{ "at": 2, "target": "control_in_actions_draw_glue" }],
+          "stockSha256": "9478834d07aefa5bbeb79ed6e7e40651d49451b7077592bde6ba4e9851c73a60"
+        },
+        {
+          "addr": "0x40131e30",
+          "op": "bytes",
+          "len": 6,
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [{ "at": 2, "target": "control_in_actions_learn_1" }],
+          "stockSha256": "86d0d25f424ed2b621166d1a1a4fbf04de9914a8e34c13582fcd23d48aa193f5"
+        },
+        {
+          "addr": "0x40131e4c",
+          "op": "bytes",
+          "len": 6,
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [{ "at": 2, "target": "control_in_actions_learn_2" }],
+          "stockSha256": "4290253a17d61a688491aa65909c230ddb013ceaf196fe59719627e0133f4ed7"
         }
       ]
     }

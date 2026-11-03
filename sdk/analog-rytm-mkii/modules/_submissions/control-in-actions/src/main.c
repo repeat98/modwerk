@@ -43,6 +43,10 @@ typedef void (*event_dtor_t)(void *event);
 typedef int (*dispatch_t)(void *brain, void *event);
 typedef word_t (*singleton_t)(void);
 typedef unsigned char (*live_rec_t)(void *app);
+typedef void (*rect_t)(void *screen, int x1, int y1, int x2, int y2, int colour);
+typedef void (*hline_t)(void *screen, int x1, int y, int x2, int colour);
+typedef void (*vline_t)(void *screen, int x, int y1, int y2, int colour);
+typedef void (*invalidate_t)(void *view);
 
 #define SETTINGS ((settings_t)CI_SETTINGS_AT)
 #define MILLIVOLTS ((millivolts_t)CI_MILLIVOLTS_AT)
@@ -51,6 +55,11 @@ typedef unsigned char (*live_rec_t)(void *app);
 #define DISPATCH ((dispatch_t)KEY_DISPATCH_AT)
 #define APP_SINGLETON ((singleton_t)APP_SINGLETON_AT)
 #define LIVE_REC ((live_rec_t)LIVE_REC_AT)
+#define FRAME ((rect_t)DRAW_FRAME_AT)
+#define FILL ((rect_t)DRAW_FILL_AT)
+#define HLINE ((hline_t)DRAW_HLINE_AT)
+#define VLINE ((vline_t)DRAW_VLINE_AT)
+#define INVALIDATE ((invalidate_t)VIEW_INVALIDATE_AT)
 
 // The ACTION row's names, in place of stock's TEMPO, ACTIVE, PRESET + and
 // PRESET -; the row has room for 8 characters, as stock's PRESET +.
@@ -63,6 +72,11 @@ const char control_in_actions_rec_toggle[] = "REC TGL";
 const char control_in_actions_mode[] = "ACTION";
 const char control_in_actions_dest[] = "ACTION";
 const char control_in_actions_learn[] = "LEARN LEVELS";
+
+// LEARN LEVELS' two lines, in place of stock's "PUSH THE SWITCH SOME TIMES."
+// and "PRESS YES/NO WHEN DONE." (which EXPRESSION LEARN keeps); YES saves.
+const char control_in_actions_learn_1[] = "PRESS OR SEND A FEW GATES.";
+const char control_in_actions_learn_2[] = "THEN PRESS YES TO SAVE.";
 
 #ifdef CIA_EMU
 // rytm-emu has no ADC: a test build reads these words, poked from outside.
@@ -78,6 +92,9 @@ static unsigned char last_dest[CI_PORTS];
 static unsigned char hold_active[CI_PORTS]; // MUTE HOLD opened the screen
 static unsigned char hold_back[CI_PORTS];   // the mode key to go back to, 0 for none
 static unsigned char rec_active[CI_PORTS];  // REC HOLD turned live recording on
+static unsigned char learning[CI_PORTS];    // LEARN LEVELS is open, as the view last drew
+static char *shown[CI_PORTS];               // the CONTROL INPUT view that last drew ACTION's bars
+static unsigned char lit[CI_PORTS];         // the bars' box: pressed by the menu's own levels
 
 static void *brain(void)
 {
@@ -101,17 +118,24 @@ static void tap(int key)
     press(key, FLAG_UP);
 }
 
-// Which mode screen is open, as the key that opens it: 0 for none.
-static int mode_key(void)
+// The view stack's views, top first, through *node; 0 at its end.
+static char *next_view(char **node)
 {
     void *b = brain();
-    char *views, *list, *node;
+    char *views;
     if (!b)
         return 0;
     views = *(char **)((char *)b + BRAIN_VIEWS);
-    list = views + MANAGER_LIST;
-    for (node = *(char **)(views + MANAGER_LAST); node != list; node = *(char **)(node + NODE_PREV)) {
-        word_t vtable = **(word_t **)(node + NODE_VIEW);
+    *node = *node ? *(char **)(*node + NODE_PREV) : *(char **)(views + MANAGER_LAST);
+    return *node == views + MANAGER_LIST ? 0 : *(char **)(*node + NODE_VIEW);
+}
+
+// Which mode screen is open, as the key that opens it: 0 for none.
+static int mode_key(void)
+{
+    char *node = 0, *view;
+    while ((view = next_view(&node))) {
+        word_t vtable = *(word_t *)view;
         if (vtable == MUTE_VTABLE)
             return KEY_MUTE;
         if (vtable == CHROMATIC_VTABLE)
@@ -212,17 +236,99 @@ static void end_holds(int port)
         pedal(port, DEST_REC_HOLD, 0);
 }
 
+// Whether the input counts as pressed, from the two learned levels and
+// whether it did: past their middle toward the higher one, with hysteresis.
+// REVERSE DIRECTION swaps the levels, so the lower one is pressed.
+static int pressed(int low, int high, int level, int was)
+{
+    int middle = (low + high) / 2;
+    int band = (high > low ? high - low : low - high) / 8;
+    if (band < HYSTERESIS_MIN)
+        band = HYSTERESIS_MIN;
+    if (high < low) {
+        level = -level;
+        middle = -middle;
+    }
+    if (was == UNSEEN)
+        return level > middle;
+    return level > (was ? middle - band : middle + band);
+}
+
+// The bar's row for a level: the EXPR bars' scale, -0.5 V to 5.5 V over 45 rows.
+static int bar_row(int mv)
+{
+    int row = (mv + 500) * 45 / 6000;
+    return (row < 0 ? 0 : row > 45 ? 45 : row) + 3;
+}
+
+// A learned level: the bar shaded from it to the bar's end, bracketed beside.
+static void mark(void *screen, int row, int end)
+{
+    FILL(screen, 4, row, 15, end, 1);
+    HLINE(screen, 18, row, 19, 1);
+    VLINE(screen, 19, row, end, 1);
+    HLINE(screen, 19, end, 21, 1);
+}
+
+// Draw ACTION's bars again on every tick while their view is still open, as
+// stock's update does for EXPR's when the converter reports.
+static void redraw(int port)
+{
+    char *node = 0, *view;
+    while (shown[port] && (view = next_view(&node)))
+        if (view == shown[port] || view == shown[port] + VIEW_BASE) {
+            INVALIDATE(shown[port] + VIEW_BASE);
+            return;
+        }
+    shown[port] = 0;
+    learning[port] = 0;
+}
+
+// ACTION's bars, from the view's draw (draw.S), laid out as stock's EXPR
+// bars: the input's level against the two learned levels, which LEARN LEVELS
+// moves as it runs, then a box that fills while the input counts as pressed.
+void control_in_actions_draw(char *view, void *screen, int mv)
+{
+    int port = *(long *)(view + VIEW_PORT);
+    int low, high;
+    if (port < 0 || port >= CI_PORTS)
+        return;
+    shown[port] = view;
+    learning[port] = *(long *)(view + VIEW_LEARN) == LEARN_FSW;
+#ifdef CIA_EMU
+    mv = LEVEL(port);
+#endif
+    low = *(long *)(view + VIEW_FSW_LOW);
+    high = *(long *)(view + VIEW_FSW_HIGH);
+    lit[port] = pressed(low, high, mv, lit[port]);
+    low = bar_row(low);
+    high = bar_row(high);
+    if (low > high) {
+        int row = low;
+        low = high;
+        high = row;
+    }
+    FRAME(screen, 3, 3, 16, 48, 1);
+    HLINE(screen, 4, bar_row(mv), 15, 1);
+    mark(screen, low, 3);
+    mark(screen, high, 48);
+    FRAME(screen, 23, 3, 36, 48, 1);
+    if (lit[port])
+        FILL(screen, 24, 4, 35, 47, 1);
+}
+
 void control_in_actions_tick(void *ctrl)
 {
     long record[REC_BYTES / 4];
     int port;
     (void)ctrl;
 #ifdef CIA_EMU
-    control_in_actions_emu_mode = mode_key() | live_rec() << 8;
+    control_in_actions_emu_mode = mode_key() | live_rec() << 8 | state[0] << 16 | learning[0] << 24;
 #endif
     for (port = 0; port < CI_PORTS; port++) {
-        int low, high, middle, band, level, down, dest;
+        int down, dest;
         SETTINGS(port, record);
+        redraw(port);
         if (record[REC_MODE / 4] != MODE_FSW) {
             end_holds(port);
             state[port] = UNSEEN;
@@ -231,24 +337,15 @@ void control_in_actions_tick(void *ctrl)
         // Stock's input routine leaves the macro's level as it was for this
         // mode; nothing in the kit should keep playing it.
         ((volatile long *)CI_SOURCE)[port] = 0;
-        dest = record[REC_DEST / 4];
-        low = record[REC_FSW_LOW / 4];
-        high = record[REC_FSW_HIGH / 4];
-        middle = (low + high) / 2;
-        band = (high > low ? high - low : low - high) / 8;
-        if (band < HYSTERESIS_MIN)
-            band = HYSTERESIS_MIN;
-        level = LEVEL(port);
-        if (high < low) {           // REVERSE DIRECTION: pressed is the lower level
-            level = -level;
-            middle = -middle;
+        // While LEARN LEVELS runs the input moves on purpose, and the levels
+        // in force are the old ones: no action, and a fresh start after.
+        if (learning[port]) {
+            end_holds(port);
+            state[port] = UNSEEN;
+            continue;
         }
-        if (state[port] == UNSEEN)
-            down = level > middle;
-        else if (state[port])
-            down = level > middle - band;
-        else
-            down = level > middle + band;
+        dest = record[REC_DEST / 4];
+        down = pressed(record[REC_FSW_LOW / 4], record[REC_FSW_HIGH / 4], LEVEL(port), state[port]);
         if (dest != last_dest[port]) {
             end_holds(port);
             last_dest[port] = dest;

@@ -18,9 +18,11 @@ Adds an ACTION mode to the CONTROL INPUT menus: a gate or a footswitch on EXP/CV
 | REC HLD | Turns live recording on (RECORD + PLAY: starts the sequencer when stopped) | Turns live recording off; the pattern plays on |
 | REC TGL | Turns live recording on (starting a stopped sequencer) or off (the pattern plays on) | Nothing |
 
-4. For a footswitch, run **LEARN LEVELS** and press the switch a few times, then YES. If pressing does the opposite, choose **REVERSE DIRECTION**. A 0 to +5 V gate works without learning: until you learn, the input counts as pressed above about 3.1 V and as released below about 1.9 V.
+4. For a footswitch, run **LEARN LEVELS**, press the switch (or send the gate) a few times, then YES to save. Nothing happens on the pads while it runs. If pressing does the opposite, choose **REVERSE DIRECTION**. A 0 to +5 V gate works without learning: until you learn, the input counts as pressed above about 3.1 V and as released below about 1.9 V.
 
 The switch point is halfway between the two learned levels (2.5 V until you learn), with a margin of an eighth of the range, at least 0.2 V, either side of it so a noisy or slow edge switches once. Nothing ever stops the sequencer: a REC HLD release or a REC TGL press only leaves live recording, and if you press STOP during a REC HLD, the release does nothing.
+
+While MODE is ACTION, the left of the screen shows bars laid out as EXPR's: the input's level against the two learned levels, which move as LEARN LEVELS runs, and beside it a box that fills while the input counts as pressed, so you can see REVERSE DIRECTION and the learned levels take effect. REVERSE DIRECTION shows no message, as in EXPR mode; the box shows it.
 
 Each jack has its own MODE, so one can switch while the other still plays the kit's CONTROL IN MOD macro as CV or an expression pedal. MODE, ACTION and the learned levels are stock's control-input settings, stored where stock stores them.
 
@@ -34,12 +36,13 @@ Stock OS 1.74 already holds a footswitch mode (FSW), its FOOTSW DEST row and FOO
 | --- | --- | --- | --- |
 | MODE in CONTROL INPUT 1 and 2 goes one step further, to ACTION (stock's hidden FSW). | Anyone with the module installed. | The module's whole setup lives in stock's menus rather than a page of its own. | OFF, CV and EXPR are unchanged; the kit's CONTROL IN MOD keeps working on a jack in CV or EXPR. |
 | Stock's hidden FOOTSW DEST row is named ACTION and lists OFF, MUTE HLD, MUTE TGL, REC HLD and REC TGL instead of stock's six, which the Rytm never acts on. | Anyone who sets MODE to ACTION. | Stock hides the row; its TEMPO, ACTIVE, PRESET and ENV TRIG are not handled by the Rytm's input code. | REVERSE DIRECTION is stock's, unchanged. |
-| Stock's hidden FOOTSWITCH LEARN is named LEARN LEVELS. | Anyone who sets MODE to ACTION. | It learns a gate's levels as well as a switch's. | It works as stock's: it records the lowest and highest level seen. |
+| Stock's hidden FOOTSWITCH LEARN is named LEARN LEVELS, and its message reads PRESS OR SEND A FEW GATES. / THEN PRESS YES TO SAVE. | Anyone who sets MODE to ACTION. | It learns a gate's levels as well as a switch's, and YES is what saves. | It works as stock's: it records the lowest and highest level seen. EXPRESSION LEARN keeps stock's message. |
+| In ACTION mode the CONTROL INPUT screen draws the bars described above, and asks to be drawn again on each UI tick while it is open. | Anyone who sets MODE to ACTION. | Stock draws nothing there in this mode, and redraws only when the converter reports. | OFF, CV and EXPR draw as stock's. |
 | A jack in ACTION mode plays no CONTROL IN MOD macro. | Anyone who sets MODE to ACTION. | Stock's input code leaves the macro's last value standing in this mode; the module clears it. | Switching back to CV or EXPR restores stock's behaviour. |
 
 ## Compatibility
 
-It changes ten stock instructions: the two MODE limits, the ACTION row's limit, four of its names, and the names of the mode, the row and LEARN LEVELS. Stock's own text stays in the firmware; only these screens point at the module's. It subscribes to `ev_tick` and no key, encoder or audio hook. It claims the ACTION mode of the CONTROL INPUT menus and the jacks in that mode. It needs no other module.
+It changes thirteen stock instructions: the two MODE limits, the ACTION row's limit, four of its names, the names of the mode, the row and LEARN LEVELS, LEARN LEVELS' two message lines, and the CONTROL INPUT draw's test for EXPR, so that ACTION draws its bars. Stock's own text stays in the firmware; only these screens point at the module's. It subscribes to `ev_tick` and no key, encoder or audio hook. It claims the ACTION mode of the CONTROL INPUT menus and the jacks in that mode. It needs no other module.
 
 ## Limits
 

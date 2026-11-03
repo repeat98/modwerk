@@ -43,3 +43,25 @@
 #define SCENE_FX_VTABLE 0x401e2ee8
 #define PERF_VTABLE 0x401e26c4
 #define PERF_FX_VTABLE 0x401e2a54
+
+// GLOBAL > CONTROL > CONTROL INPUT's view, as its draw (0x40130510) and
+// update (0x4013092e) read it; the record at +436 is the menu's own copy,
+// saved by 0x401314fc.
+#define VIEW_PORT 432
+#define VIEW_FSW_LOW 456            // the menu's copy of REC_FSW_LOW
+#define VIEW_FSW_HIGH 460
+#define VIEW_LEARN 468              // 2 EXPRESSION LEARN, 3 FOOTSWITCH LEARN open, else 0
+#define LEARN_FSW 3
+#define VIEW_BASE 56                // the view's View part, as 0x4013092e passes it on
+#define VIEW_INVALIDATE_AT 0x40078580 // (view + VIEW_BASE): draw it again
+
+// The draw's branch for EXPR (0x4013077c: MODE 2 or not), the EXPR bars
+// and the draw's end.
+#define DRAW_EXPR_AT 0x40130784
+#define DRAW_END_AT 0x4013091a
+
+// Screen drawing, as the draw calls it: (screen, ...), colour 1.
+#define DRAW_FRAME_AT 0x4007050a    // (x1, y1, x2, y2, colour): a rectangle's outline
+#define DRAW_FILL_AT 0x40070a38     // (x1, y1, x2, y2, colour): a filled rectangle
+#define DRAW_HLINE_AT 0x4006fbd8    // (x1, y, x2, colour)
+#define DRAW_VLINE_AT 0x4006fdc0    // (x, y1, y2, colour)
