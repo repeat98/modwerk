@@ -1,0 +1,1 @@
+Development: a Digitakt, Digitone or Analog Rytm module renamed without a new version (as Ping Pong Loop and Sample Playback Rate were) no longer fails every later pull request's package check: a published package keeps the title and description it was released with.
