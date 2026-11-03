@@ -209,9 +209,15 @@ static int qma_delta(void *view, int32_t id, int32_t delta, int32_t func)
     word_t project, kit, sound, conf, set;
     int kind, track, index, logical, slot, amount, steps;
     (void)view;
-    if (fix_held)
+    // A release that never reached ev_key must not leave knobs taken.
+    if (fix_held && !IS_KEY_HELD(KEY_FIX))
+        fix_held = 0;
+    if (rtrg_held && !IS_KEY_HELD(KEY_RTRG))
+        rtrg_held = 0;
+    if (fix_held) {
         kind = VEL;
-    else if (rtrg_held && !rtrg_pads) {
+        turned = 1;                     // any turn makes the hold a hold, not a tap
+    } else if (rtrg_held && !rtrg_pads) {
         if (any_pad_held()) {
             rtrg_pads = 1;
             return 0;
@@ -219,6 +225,12 @@ static int qma_delta(void *view, int32_t id, int32_t delta, int32_t func)
         kind = AT;
     } else
         return 0;
+    // A pad held in PERF or SCNE edits its performance or scene: stock's.
+    if (views && any_pad_held()) {
+        word_t top = top_view();
+        if (top == PERF_VTABLE || top == SCENE_VTABLE)
+            return 0;
+    }
     if (func || !delta || id < 0 || id >= PARAM_ROWS || any_trig_held()
         || row_word(id, ROW_CATEGORY) == CATEGORY_TRIG)
         return 0;
@@ -226,8 +238,6 @@ static int qma_delta(void *view, int32_t id, int32_t delta, int32_t func)
     track = SELECTED_TRACK(PROJECT_SEQ(project));
     if (track < 0 || track >= FX_TRACK)
         return 0;
-    if (kind == VEL)
-        turned = 1;
     kit = PROJECT_KIT(project);
     index = row_word(id, ROW_INDEX);
     logical = index > 0 ? SOUND_ID_OF(KIT_PARAM_SET(kit, track), index) : 0;
@@ -314,6 +324,17 @@ int quick_mod_assign_key(void *brain, void *event)
     }
     if (key >= KEY_PAD_FIRST && key <= KEY_PAD_LAST && down && rtrg_held)
         rtrg_pads = 1;
+    return 0;
+}
+
+// ev_enc: any encoder turned while FIX is held (LEVEL, or a knob stock takes
+// before the parameter's turn, such as LFO DST) also makes it a hold.
+int quick_mod_assign_enc(void *brain, void *event)
+{
+    (void)brain;
+    (void)event;
+    if (fix_held)
+        turned = 1;
     return 0;
 }
 

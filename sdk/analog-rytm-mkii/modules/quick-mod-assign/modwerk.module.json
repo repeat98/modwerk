@@ -48,7 +48,7 @@
     "kind": "elemod",
     "core": "0.7",
     "build": "build.json",
-    "events": ["ev_key", "ev_tick"],
+    "events": ["ev_key", "ev_enc", "ev_tick"],
     "claims": [
       "ui:FIX + knob on the sound pages",
       "ui:RTRG + knob on the sound pages, until a pad is played in the hold",
