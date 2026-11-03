@@ -53,7 +53,9 @@ Images, all on stock 1.74:
 | BD and SD held together | `9d 24 7f 9d 25 7f ad 3c 10 ad 3d 20 ad 3c 18 8d 24 00 8d 25 00` | `9d 24 7f 9d 25 7f ad 24 10 ad 25 20 ad 24 18 8d 24 00 8d 25 00` |
 | Pads outside CHROMATIC, BD | `9d 00 7f ad 00 10 ad 00 18 ad 00 14 8d 00 00` | the same |
 
-CX01 sends stock's bytes in the first case. CA02-sp gives CA02's bytes in every row but the one
+With PORT CONFIG > OUTPUT CH at TRK CH (the default is AUTO CH), CA02 sends the same notes on
+the selected track's channel: BD then SD held in CHROMATIC, `90 24 7f a0 24 10 a0 24 18 80 24 00
+90 25 7f a0 25 20 80 25 00`. CX01 sends stock's bytes in the first case. CA02-sp gives CA02's bytes in every row but the one
 with both pads held, which was not run on it. CA01 passed the first row but, with UP during the hold, sent
 `ad 2c` while the note off said `24`: the review that found it led to CA02.
 
@@ -78,7 +80,13 @@ Build: `node scripts/link-image.mjs --stock Analog-Rytm_MKII_OS1.74.syx --versio
 
 ## On a unit
 
-Not tested. The steps to run, with a MIDI monitor on MIDI OUT or USB, PAD DEST and PRESSURE DST at
+CA02 (`820cfaec…2c9a`) on the author's Analog Rytm MKII, OS 1.74, 2 November 2026, watching a MIDI
+monitor, as reported by npp1993: every step below passed. The per-track channel step was run by
+turning the AUTO channel off and recording a sequence with SEND MIDI, which exercises the
+sequencer's MIDI out, not the pads'; that step is to be rerun with OUTPUT CH at TRK CH as the
+table says.
+
+The steps, with a MIDI monitor on MIDI OUT or USB, PAD DEST and PRESSURE DST at
 INT+EXT (GLOBAL > MIDI CONFIG > PORT CONFIG, the default); `n` is the channel the pads send on:
 
 | Step | Expect |
@@ -91,4 +99,4 @@ INT+EXT (GLOBAL > MIDI CONFIG > PORT CONFIG, the default); `n` is the channel th
 | CHRO, a synth with poly aftertouch on the pads' channel | holding harder modulates the held note |
 | CHRO, a sound with an AFTERTOUCH destination | the Rytm's sound modulates, as stock |
 | Leave CHRO, hold BD | note on and pressure on one note, as stock |
-| Per-track MIDI channels instead of AUTO | the same notes, on the track's channel |
+| PORT CONFIG > OUTPUT CH set to TRK CH, then CHRO, hold BD | the same notes, on the selected track's channel from CHANNELS (rytm-emu, track 1: `90 24 7f`, `a0 24 pp`, `80 24 00`); no sequence or SEND MIDI needed |
