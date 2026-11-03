@@ -89,6 +89,7 @@
     }
   ],
   "claims": [
+    "machine:42",
     "ui:SYNTH page of the MIDI machine",
     "ui:FILTER ATK DEC SUS value texts on tracks on the MIDI machine",
     "ui:AMP page values and turns on tracks on the MIDI machine"
