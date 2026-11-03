@@ -31,5 +31,5 @@ Test builds FE02 to FE04 and CE02: the module built with `-DCIA_EMU`, which read
 - EXP/CV IN 2 (same code as port 1, not run).
 - Settings after a power cycle, and a unit without the module reading ACTION settings.
 - The CONTROL IN MOD macro of a jack switched from EXPR to ACTION mid-sweep.
-- Beside other modules. CI02's code and data are 1005 bytes at `-Os` (CI01: 805); not yet linked beside the RC19 set.
+- Beside other modules. CI02's code and data are 1005 bytes at `-Os` (CI01: 805); combined image RC20 (sha256 953ae59b, CI02 with twelve other Rytm modules) links with 1,508 B of module RAM spare and boots in rytm-emu with no fault; not on a unit.
 - CPU and memory: UI only, two readings per UI tick; the module's code is about 1 KB. Not measured.
