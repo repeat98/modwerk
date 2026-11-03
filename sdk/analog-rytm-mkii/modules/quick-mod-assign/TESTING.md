@@ -6,9 +6,10 @@ Everything below was observed in rytm-emu on the named build. Nothing has run on
 - Build QM03 (core + Quick Mod Assign 0.1.0-experimental, local test image): `.syx` `13a7016fb97323374f1a1a8e422f0c9c5d0d52c393c23fd675f11feff9a76c7a`.
 - Build QM04 (QM03 after review: any turn during a FIX hold, LEVEL included, keeps fixed velocity; a missed release frees the knobs; a pad held in PERF or SCNE leaves the turn to stock): `.syx` `d8d093d9624e2be570ee157265f35e2bdfd1c8c63eeea3472c9a7642705da395`.
 - Build QM05 (QM04 after a second review: a fresh FIX or RTRG press always starts a new hold; slot matching uses the stored index; top_view stops at the list's end; a sound with no slots is a no-op): `.syx` `1091da0e3fb555d566bf8ae0c8f50d8a8e1bb6f1f7768fe469e1010e12e692bf`.
+- Build QM06 (QM05 with one pad scan per knob event): `.syx` `14eb5448616b9fc2622591f653f994260713396f442ba57570e5fe0bb6511606`. Every row below rerun on it, same results.
 - Emulator: rytm-emu `2ac0f1f`, headless `dtboot`, a fresh card, the default kit (BD PLASTIC on track 1), the SYNTH page unless named. Events off the `--every` grid. The slots were read on stock's MODULATION SETUP screen and, for aftertouch, from the sound's slot bytes with `DTBOOT_PEEK`.
 
-## rytm-emu (QM03, rerun on QM04 and QM05)
+## rytm-emu (QM03, rerun on QM04, QM05 and QM06)
 
 | Check | Result |
 | --- | --- |
@@ -36,7 +37,7 @@ Not tested: a unit; kit save, reload and power cycle; SOUND MANAGER; sequencer r
 
 ## Hardware
 
-Not run yet. Steps for the author's unit, on QM04 or a combined image with it:
+Not run yet. Steps for the author's unit, on QM06 or a combined image with it:
 
 1. FIX + FRQ on the FILTER page: popup, FRQ itself unchanged, soft and hard pad hits differ. SOUND SETTINGS, VELOCITY MOD shows FILT FRQ.
 2. RTRG + DEC on the AMP page: pad pressure changes the decay. RTRG, a pad, then a knob: the knob edits as stock.
