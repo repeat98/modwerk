@@ -2,11 +2,16 @@
 // Quick Mod Assign for the Analog Rytm MKII: link a parameter to velocity or
 // aftertouch by holding a key and turning its knob.
 //
-//   FIX + turn a knob    links that parameter to velocity; the turn sets the
-//                        amount (-128..127), continuing from the slot's amount.
-//   RTRG + turn a knob   the same for aftertouch, unless a pad was played
-//                        during this hold: then the knobs stay stock, so pad
-//                        retrigs and a knob tweak still go together.
+//   FIX + turn a knob       links that parameter to velocity; the turn sets the
+//                           amount (-128..127), continuing from the slot's amount.
+//   SAMPLER + turn a knob   the same for aftertouch.
+//
+// While either key is held, stock draws every knob already linked inverted with
+// its amount, as it does for a held performance pad, and a V or an A sits in
+// the screen's top-left corner. The module puts its own locker into stock's
+// parameter UI for that (as QPERF does); the turns themselves come through
+// core-ar2's core_params table, ahead of stock's edit, so the parameter's own
+// value never moves.
 //
 // Each sound has stock's four velocity and four aftertouch slots (SOUND
 // SETTINGS, VELOCITY MOD and AFTERTOUCH). A parameter already in a slot keeps
@@ -15,9 +20,9 @@
 // writes stock's slots through stock's own writers and stores nothing itself.
 //
 // FIX pressed and released with no turn toggles fixed velocity as stock does,
-// on the release. FUNC + FIX, a held trig, the TRIG page and the FX track stay
-// stock. The turn reaches us through core-ar2's core_params table, ahead of
-// stock's edit; taking it leaves the parameter's own value alone.
+// on the release. SAMPLER released with no turn opens the recorder as stock
+// does; after a turn its release is the module's. FUNC (+ FIX: stock's FIXED
+// VELOCITY), a held trig, the TRIG page and the FX track stay stock.
 //
 // Firmware routines are reached at fixed addresses given for each OS release
 // by ar2-1.74.h. Stock returns pointers in d0, while m68k-linux GCC expects
@@ -40,6 +45,10 @@ typedef void (*popup_ctor_t)(void *popup, void *string);
 typedef void (*shared_ptr_ctor_t)(void *shared, void *object);
 typedef void (*shared_ptr_release_t)(void *counts);
 typedef void (*show_popup_t)(void *views, void *shared, int flag);
+typedef void (*set_locker_t)(word_t ui, void *locker);
+typedef void (*lock_edit_t)(word_t ui, int on);
+typedef void (*end_lock_edit_t)(word_t ui);
+typedef void (*fillrect_t)(void *bmp, int x0, int y0, int x1, int y1, int colour);
 
 #define PROJECT ((word0_t)PROJECT_SINGLETON_AT)
 #define PROJECT_KIT ((word1_t)PROJECT_KIT_AT)
@@ -60,9 +69,15 @@ typedef void (*show_popup_t)(void *views, void *shared, int flag);
 #define SHARED_PTR_CTOR ((shared_ptr_ctor_t)SHARED_PTR_CTOR_AT)
 #define SHARED_PTR_RELEASE ((shared_ptr_release_t)SHARED_PTR_RELEASE_AT)
 #define SHOW_POPUP ((show_popup_t)SHOW_POPUP_AT)
+#define PARAM_UI ((word0_t)PARAM_UI_AT)
+#define SET_LOCKER ((set_locker_t)SET_LOCKER_AT)
+#define GET_LOCKER ((word1_t)GET_LOCKER_AT)
+#define LOCK_EDIT ((lock_edit_t)LOCK_EDIT_AT)
+#define END_LOCK_EDIT ((end_lock_edit_t)END_LOCK_EDIT_AT)
+#define FILLRECT ((fillrect_t)FILLRECT_AT)
 
 #define KEY_FIX 0xb3
-#define KEY_RTRG 0x85
+#define KEY_SAMPLER 0xb4
 #define KEY_FUNC 0x80
 #define KEY_PAD_FIRST 0x90          // BD .. CB
 #define KEY_PAD_LAST 0x9b
@@ -77,22 +92,30 @@ typedef void (*show_popup_t)(void *views, void *shared, int flag);
 #define NODE_PREV 4
 #define NODE_VIEW 8
 #define POPUP_BYTES 0xa0
+#define CTRL_REDRAW 0x20            // ev_tick's ctrl: asks for a redraw
 #define FX_TRACK 12
 #define STEP 256                    // one amount step in 8.8
 #define AMOUNT_MIN (-128 * STEP)
 #define AMOUNT_MAX (127 * STEP)
+#define POPUP_TICKS 4               // at most one popup in four ticks (about 200 ms)
 
-enum { VEL, AT };
+enum { NONE = -1, VEL, AT };
 
-static int fix_held;                // FIX is down and its press was ours
-static int rtrg_held;               // RTRG is down
-static int rtrg_pads;               // a pad was played during this RTRG hold
-static int turned;                  // a turn was ours during this FIX hold
+// One hold per key: FIX for velocity, SAMPLER for aftertouch. A hold is ours
+// only when its press came on a page of ours without FUNC.
+struct hold {
+    int key;
+    int held;                       // the press was ours and the key is down
+    int turned;                     // an encoder turned during the hold
+};
+static struct hold holds[2] = { { KEY_FIX, 0, 0 }, { KEY_SAMPLER, 0, 0 } };
+
 static void *views;
 static char message[24];
 static int pending;                 // a popup for ev_tick
 static int wait;                    // ticks until the next popup may open
-#define POPUP_TICKS 4               // at most one popup in four ticks (about 200 ms)
+static int redraw;                  // ev_tick asks for a redraw
+static int shown = NONE;            // the kind our locker shows, NONE when not set
 
 // What is on screen: the top view's class, past the popups, which pass keys on.
 static word_t top_view(void)
@@ -158,37 +181,41 @@ static int any_pad_held(void)
     return 0;
 }
 
-static void append(char **p, const char *text)
-{
-    while (*text && *p < message + sizeof message - 1)
-        *(*p)++ = *text++;
-}
-
-static void show_amount(int kind, int id, int amount)
-{
-    char digits[5], *p = message;
-    int n = amount / STEP, i = 0;
-    append(&p, kind == VEL ? "VEL " : "AT ");
-    append(&p, *(const char *const *)(row(id) + ROW_SHORT));
-    append(&p, n < 0 ? " -" : " +");
-    if (n < 0)
-        n = -n;
-    do {
-        digits[i++] = (char)('0' + n % 10);
-        n /= 10;
-    } while (n);
-    while (i)
-        *p++ = digits[--i];
-    *p = 0;
-    pending = 1;
-}
-
 static void show(const char *text)
 {
     char *p = message;
-    append(&p, text);
+    while (*text && p < message + sizeof message - 1)
+        *p++ = *text++;
     *p = 0;
     pending = 1;
+}
+
+// The kind held now, NONE without one. A release that never reached ev_key
+// must not leave knobs taken, so the key's own state is asked too.
+static int held_kind(void)
+{
+    int k;
+    for (k = VEL; k <= AT; k++)
+        if (holds[k].held && !IS_KEY_HELD(holds[k].key))
+            holds[k].held = 0;
+    return holds[VEL].held ? VEL : holds[AT].held ? AT : NONE;
+}
+
+// The track's velocity or aftertouch slots.
+static word_t slots_of(int track, int kind)
+{
+    word_t sound = KIT_TRACK(PROJECT_KIT(PROJECT()), track);
+    return kind == VEL ? TRACK_VEL_CONF(sound) + VEL_SET : TRACK_AT_CONF(sound) + AT_SET;
+}
+
+// The slot whose destination is index, -1 for none.
+static int slot_of(word_t set, int index)
+{
+    int n = SET_COUNT(set), i;
+    for (i = 0; i < n; i++)
+        if (SET_DEST(set, i) == index)
+            return i;
+    return -1;
 }
 
 // The slot that holds index, else the first free one (no destination, or an
@@ -206,71 +233,195 @@ static int find_slot(word_t set, int index)
     return free;
 }
 
-// core_params' delta: 1 takes the turn (no stock edit, no lock), 0 passes.
-static int qma_delta(void *view, int32_t id, int32_t delta, int32_t func)
+// The logical id stock's destination list gives a sound parameter's index on
+// this track, 0 when it is no destination.
+static int dest_id(int track, int index)
 {
-    word_t project, kit, sound, conf, set;
-    int kind, track, index, logical, slot, amount, steps, pad;
-    (void)view;
-    // A release that never reached ev_key must not leave knobs taken.
-    if (fix_held && !IS_KEY_HELD(KEY_FIX))
-        fix_held = 0;
-    if (rtrg_held && !IS_KEY_HELD(KEY_RTRG))
-        rtrg_held = 0;
-    if (!fix_held && !(rtrg_held && !rtrg_pads))
+    int logical;
+    if (index <= 0)
         return 0;
-    pad = any_pad_held();               // one scan serves both checks below
-    if (fix_held) {
-        kind = VEL;
-        turned = 1;                     // any turn makes the hold a hold, not a tap
-    } else {
-        if (pad) {
-            rtrg_pads = 1;
-            return 0;
-        }
-        kind = AT;
-    }
-    // A pad held in PERF or SCNE edits its performance or scene: stock's.
-    if (views && pad) {
-        word_t top = top_view();
-        if (top == PERF_VTABLE || top == SCENE_VTABLE)
-            return 0;
-    }
-    if (func || !delta || id < 0 || id >= PARAM_ROWS || any_trig_held()
-        || row_word(id, ROW_CATEGORY) == CATEGORY_TRIG)
-        return 0;
-    project = PROJECT();
-    track = SELECTED_TRACK(PROJECT_SEQ(project));
-    if (track < 0 || track >= FX_TRACK)
-        return 0;
-    kit = PROJECT_KIT(project);
-    index = row_word(id, ROW_INDEX);
-    logical = index > 0 ? SOUND_ID_OF(KIT_PARAM_SET(kit, track), index) : 0;
-    if (logical <= 0 || !(PARAM_FLAGS(logical) & FLAG_MOD_DEST)) {
-        show(kind == VEL ? "NOT A VEL DESTINATION" : "NOT AN AT DESTINATION");
-        return 1;
-    }
-    // The slot stores the destination's own index (stock's writer takes the
-    // logical id and stores its row + 4), so match against that.
-    index = row_word(logical, ROW_INDEX);
-    sound = KIT_TRACK(kit, track);
-    if (kind == VEL) {
-        conf = TRACK_VEL_CONF(sound);
-        set = conf + VEL_SET;
-    } else {
-        conf = TRACK_AT_CONF(sound);
-        set = conf + AT_SET;
-    }
+    logical = SOUND_ID_OF(KIT_PARAM_SET(PROJECT_KIT(PROJECT()), track), index);
+    return logical > 0 && (PARAM_FLAGS(logical) & FLAG_MOD_DEST) ? logical : 0;
+}
+
+// index's amount on track (8.8), 0 when it has no slot.
+static int amount_of(int kind, int track, int index)
+{
+    word_t set = slots_of(track, kind);
+    int slot = slot_of(set, index);
+    return slot < 0 ? 0 : SET_AMOUNT(set, slot);
+}
+
+// Sets the amount (8.8, whole steps) of the destination logical on track,
+// taking a slot if it has none. A popup says why when it cannot.
+static void assign(int kind, int track, int logical, int amount)
+{
+    int index = row_word(logical, ROW_INDEX), slot;   // the byte stock stores for it
+    word_t set = slots_of(track, kind);
     if (SET_COUNT(set) <= 0)
-        return 1;                       // no slots on this sound: nothing to do
+        return;                         // no slots on this sound
     slot = find_slot(set, index);
     if (slot < 0) {
         show(kind == VEL ? "VEL SLOTS FULL" : "AT SLOTS FULL");
-        return 1;
+        return;
     }
     if (SET_DEST(set, slot) != index) {
         SET_WRITE_AMOUNT(set, slot, 0);
         SET_WRITE_DEST(set, slot, logical);
+    }
+    if (amount < AMOUNT_MIN)
+        amount = AMOUNT_MIN;
+    if (amount > AMOUNT_MAX)
+        amount = AMOUNT_MAX;
+    SET_WRITE_AMOUNT(set, slot, amount);
+}
+
+static void not_a_destination(int kind)
+{
+    show(kind == VEL ? "NOT A VEL DESTINATION" : "NOT AN AT DESTINATION");
+}
+
+// ---- The locker stock draws through while FIX or SAMPLER is held ----------
+// Its "param" is a sound parameter's index, as the slots store it.
+
+static int locker_has_any(void *self)
+{
+    int track = SELECTED_TRACK(PROJECT_SEQ(PROJECT())), i, n;
+    word_t set;
+    (void)self;
+    if (shown == NONE || track < 0 || track >= FX_TRACK)
+        return 0;
+    set = slots_of(track, shown);
+    n = SET_COUNT(set);
+    for (i = 0; i < n; i++)
+        if (SET_DEST(set, i) > 0)
+            return 1;
+    return 0;
+}
+
+// A parameter with a slot, whatever its amount: stock's lock edit makes a new
+// lock at 0 on the first turn and adds each turn to what get returns, so a
+// link at 0 must read as one.
+static int locker_has(void *self, int track, int param)
+{
+    (void)self;
+    return shown != NONE && track >= 0 && track < FX_TRACK && param > 0
+        && slot_of(slots_of(track, shown), param) >= 0;
+}
+
+static int locker_get(void *self, int track, int param)
+{
+    return locker_has(self, track, param) ? amount_of(shown, track, param) : 0;
+}
+
+// Stock's lock edit turns a knob through here while our locker is set: value
+// is what get returned plus the turn, in the parameter's own resolution, or 0
+// to make the lock. A fine knob such as TUN turns in fractions, so each change
+// is at least one step, and a fast turn as many as the parameter would move.
+static void locker_set(void *self, int track, int param, int value)
+{
+    int logical, current, diff, steps;
+    (void)self;
+    if (shown == NONE || track < 0 || track >= FX_TRACK)
+        return;
+    holds[shown].turned = 1;
+    if (any_trig_held())
+        return;                         // a trig held too: no link by accident
+    logical = dest_id(track, param);
+    if (!logical) {
+        not_a_destination(shown);
+        return;
+    }
+    current = amount_of(shown, track, row_word(logical, ROW_INDEX));
+    diff = value - current;
+    steps = (diff < 0 ? -diff : diff) / STEP;
+    if (diff && !steps)
+        steps = 1;
+    if (diff < 0)
+        steps = -steps;
+    assign(shown, track, logical, current + steps * STEP);
+}
+
+static void locker_clear(void *self, int track, int param)
+{
+    word_t set;
+    int slot;
+    (void)self;
+    if (shown == NONE || track < 0 || track >= FX_TRACK)
+        return;
+    set = slots_of(track, shown);
+    slot = slot_of(set, param);
+    if (slot >= 0)
+        SET_WRITE_AMOUNT(set, slot, 0);
+}
+
+static void locker_clear_all(void *self)
+{
+    (void)self;                         // never: one gesture must not wipe a sound's links
+}
+
+static void locker_never(void *self)
+{
+    (void)self;                         // the object is static: never destroyed
+}
+
+// PerformanceParamLocker's slots, its last two kept: relative, and lockable(id).
+static const void *const locker_vtable[] = {
+    locker_never, locker_never, locker_has_any, locker_clear, locker_clear_all,
+    locker_set, locker_get, locker_has,
+    (const void *)LOCKER_RELATIVE_AT, (const void *)LOCKER_LOCKABLE_AT,
+};
+static struct { const void *const *vtable; } locker = { locker_vtable };
+
+static void locker_install(int kind)
+{
+    word_t ui = PARAM_UI();
+    int track = SELECTED_TRACK(PROJECT_SEQ(PROJECT()));
+    if (track < 0 || track >= FX_TRACK)
+        return;                         // the FX track has no slots: its knobs stay stock's
+    if (GET_LOCKER(ui))
+        return;                         // a performance or scene pad, or a trig, holds it: stock's
+    shown = kind;
+    SET_LOCKER(ui, &locker);
+    LOCK_EDIT(ui, 1);
+    redraw = 1;
+}
+
+static void locker_remove(void)
+{
+    word_t ui = PARAM_UI();
+    if (shown != NONE && GET_LOCKER(ui) == (word_t)&locker)
+        END_LOCK_EDIT(ui);
+    shown = NONE;
+    redraw = 1;
+}
+
+// ---- The turn ----------------------------------------------------------------
+
+// core_params' delta: 1 takes the turn (no stock edit, no lock), 0 passes.
+static int qma_delta(void *view, int32_t id, int32_t delta, int32_t func)
+{
+    int kind = held_kind(), track, logical, steps;
+    (void)view;
+    if (kind == NONE)
+        return 0;
+    holds[kind].turned = 1;             // any turn makes the hold a hold, not a tap
+    if (func || !delta || id < 0 || id >= PARAM_ROWS || any_trig_held()
+        || row_word(id, ROW_CATEGORY) == CATEGORY_TRIG)
+        return 0;
+    // A pad held in PERF or SCNE edits its performance or scene: stock's.
+    if (views) {
+        word_t top = top_view();
+        if ((top == PERF_VTABLE || top == SCENE_VTABLE) && any_pad_held())
+            return 0;
+    }
+    track = SELECTED_TRACK(PROJECT_SEQ(PROJECT()));
+    if (track < 0 || track >= FX_TRACK)
+        return 0;
+    logical = dest_id(track, row_word(id, ROW_INDEX));
+    if (!logical) {
+        not_a_destination(kind);
+        return 1;
     }
     // The delta comes scaled to the parameter's own resolution (a fine knob
     // such as TUN turns in fractions), so each event is at least one step,
@@ -280,13 +431,8 @@ static int qma_delta(void *view, int32_t id, int32_t delta, int32_t func)
         steps = 1;
     if (delta < 0)
         steps = -steps;
-    amount = SET_AMOUNT(set, slot) + steps * STEP;
-    if (amount < AMOUNT_MIN)
-        amount = AMOUNT_MIN;
-    if (amount > AMOUNT_MAX)
-        amount = AMOUNT_MAX;
-    SET_WRITE_AMOUNT(set, slot, amount);
-    show_amount(kind, id, SET_AMOUNT(set, slot));
+    assign(kind, track, logical,
+           amount_of(kind, track, row_word(logical, ROW_INDEX)) + steps * STEP);
     return 1;
 }
 
@@ -297,67 +443,77 @@ const struct {
     void *text;
 } quick_mod_assign_params = { 0, PARAM_ROWS - 1, 0, qma_delta, 0 };
 
+// ---- Keys, encoders, the tick and the draw -------------------------------------
+
 int quick_mod_assign_key(void *brain, void *event)
 {
     int key = *(int *)((char *)event + EV_KEY);
     unsigned flags = *(unsigned *)((char *)event + EV_FLAGS);
-    int down = flags & PRESSED;
+    int down = flags & PRESSED, k;
+    struct hold *h;
     views = *(void **)((char *)brain + BRAIN_VIEWS);
-    if (key == KEY_FIX) {
-        if (!down) {
-            if (!fix_held)
-                return 0;
-            fix_held = 0;
+    if (key == KEY_FIX)
+        k = VEL;
+    else if (key == KEY_SAMPLER)
+        k = AT;
+    else
+        return 0;
+    h = &holds[k];
+    if (!down) {
+        int turned = h->turned;
+        if (!h->held)
+            return 0;
+        h->held = 0;
+        if (shown == k)
+            locker_remove();
+        if (k == VEL) {
             if (!turned) {              // a plain tap: stock's toggle, on the release
                 word_t seq = PROJECT_SEQ(PROJECT());
                 FIXED_VEL_SET(seq, !FIXED_VEL_GET(seq));
             }
-            return 1;
+            return 1;                   // the press was ours, so is the release
         }
-        if (flags & REPEAT)
-            return fix_held;            // our hold's repeats are ours, stock's are stock's
-        // A fresh press starts a new hold, even if a lost release left
-        // fix_held set.
-        fix_held = 0;
-        if (IS_KEY_HELD(KEY_FUNC) || !on_pages())
-            return 0;
-        fix_held = 1;
-        turned = 0;
-        return 1;
+        return turned;                  // SAMPLER: a tap's release opens stock's recorder
     }
-    if (key == KEY_RTRG) {
-        if (!down) {
-            rtrg_held = 0;
-        } else if (!(flags & REPEAT)) {     // a fresh press: a new hold
-            rtrg_held = 1;
-            rtrg_pads = 0;
-        }
-        return 0;
-    }
-    if (key >= KEY_PAD_FIRST && key <= KEY_PAD_LAST && down && rtrg_held)
-        rtrg_pads = 1;
-    return 0;
+    if (flags & REPEAT)
+        return k == VEL && h->held;     // FIX's repeats are ours; SAMPLER's stock's
+    // A fresh press starts a new hold, even if a lost release left one set.
+    if (h->held && shown == k)
+        locker_remove();
+    h->held = 0;
+    if (IS_KEY_HELD(KEY_FUNC) || !on_pages() || held_kind() != NONE)
+        return 0;                       // FUNC, another screen, or the other key's hold
+    h->held = 1;
+    h->turned = 0;
+    locker_install(k);
+    return k == VEL;                    // FIX's press is held back; SAMPLER's does nothing on stock
 }
 
-// ev_enc: any encoder turned while FIX is held (LEVEL, or a knob stock takes
-// before the parameter's turn, such as LFO DST) also makes it a hold.
+// ev_enc: any encoder turned during a hold (LEVEL, or a knob stock takes before
+// the parameter's turn, such as LFO DST) also makes it a hold, not a tap.
 int quick_mod_assign_enc(void *brain, void *event)
 {
+    int k;
     (void)brain;
     (void)event;
-    if (fix_held)
-        turned = 1;
+    for (k = VEL; k <= AT; k++)
+        if (holds[k].held)
+            holds[k].turned = 1;
     return 0;
 }
 
-// Stock's popup, opened from ev_tick so a fast turn opens one, not dozens.
+// Stock's popup for the module's messages, opened from ev_tick so repeats open
+// one, not dozens.
 void quick_mod_assign_tick(void *ctrl)
 {
     word_t string;
     char allocator;
     struct { void *object; void *counts; } shared;
     void *popup;
-    (void)ctrl;
+    if (redraw) {
+        redraw = 0;
+        ((char *)ctrl)[CTRL_REDRAW] = 1;
+    }
     if (wait)
         wait--;
     if (!pending || !views || wait)
@@ -371,4 +527,26 @@ void quick_mod_assign_tick(void *ctrl)
     SHOW_POPUP(views, &shared, 0);
     SHARED_PTR_RELEASE(&shared.counts);
     STRING_DTOR(&string);
+}
+
+// 5 x 7 glyphs, the top row first, bit 4 the left pixel.
+static const unsigned char glyph_v[7] = { 0x11, 0x11, 0x11, 0x11, 0x0a, 0x0a, 0x04 };
+static const unsigned char glyph_a[7] = { 0x0e, 0x11, 0x11, 0x1f, 0x11, 0x11, 0x11 };
+
+// ev_draw: while our locker shows, a V or an A in the screen's top-left corner,
+// lit on a dark box with a dark edge, so it stands out of the header's lit bar.
+// y counts up from the bottom row (0); the top row is 63.
+void quick_mod_assign_draw(void *bmp, void *ctrl)
+{
+    const unsigned char *g;
+    int r, c;
+    (void)ctrl;
+    if (shown == NONE)
+        return;
+    g = shown == VEL ? glyph_v : glyph_a;
+    FILLRECT(bmp, 0, 54, 7, 63, 0);
+    for (r = 0; r < 7; r++)
+        for (c = 0; c < 5; c++)
+            if (g[r] & (0x10 >> c))
+                FILLRECT(bmp, 1 + c, 62 - r, 1 + c, 62 - r, 1);
 }

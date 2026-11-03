@@ -6,13 +6,20 @@
   "machine": "analog-rytm-mkii",
   "category": "system",
   "exclusive": false,
-  "author": { "github": "npp1993", "credits": ["Nathaniel Pavel"] },
-  "maintainers": ["npp1993"],
+  "author": {
+    "github": "npp1993",
+    "credits": [
+      "Nathaniel Pavel"
+    ]
+  },
+  "maintainers": [
+    "npp1993"
+  ],
   "presentation": {
     "label": "QUICK MOD ASSIGN",
     "family": "Performance",
-    "summary": "Link a parameter to velocity or aftertouch by holding FIX or RTRG and turning its knob.",
-    "overview": "Hold FIX and turn any knob on a sound page: that parameter is linked to velocity, and the turn sets how much. Hold RTRG and turn to link it to aftertouch instead. It fills stock's own four velocity and four aftertouch slots of the sound, so the links save with the kit and show in SOUND SETTINGS as usual.",
+    "summary": "Link a parameter to velocity or aftertouch by holding FIX or SAMPLER and turning its knob.",
+    "overview": "Hold FIX and turn any knob on a sound page: that parameter is linked to velocity, and the turn sets how much. Hold SAMPLER and turn to link it to aftertouch instead. While either key is held, every linked knob shows its amount the way stock shows a performance lock, with a V or an A in the top-left corner. It fills stock's own four velocity and four aftertouch slots of the selected sound, so the links save with the kit, show in SOUND SETTINGS as usual and keep playing on a unit without the mod.",
     "highlights": [
       "Velocity or aftertouch to any parameter in one gesture",
       "Stays on the page you are playing",
@@ -20,50 +27,85 @@
     ],
     "usage": [
       "Hold FIX and turn FILTER FRQ to make harder hits open the filter.",
-      "Hold RTRG and turn AMP DEC to let pad pressure lengthen the decay."
+      "Hold SAMPLER and turn AMP DEC to let pad pressure lengthen the decay."
     ]
   },
   "access": {
-    "location": "The FIX and RTRG keys, on the sound pages and in PERF, SCNE, MUTE and CHRO.",
+    "location": "The FIX and SAMPLER keys, on a sound track's pages and in PERF, SCNE, MUTE and CHRO.",
     "steps": [
       "Select a sound track and open its SYNTH, SAMPLE, FILTER, AMP or LFO page.",
-      "Hold FIX and turn a knob: a popup shows VEL, the parameter and the amount.",
-      "Hold RTRG and turn a knob for aftertouch; once a pad is played during that hold, the knobs work as stock.",
-      "Turn back to 0 to free the slot. Tap FIX alone to toggle fixed velocity as before."
+      "Hold FIX: linked knobs show their velocity amounts and a V sits in the top-left corner. Turn a knob to link it or change its amount.",
+      "Hold SAMPLER for aftertouch: an A, and the aftertouch amounts.",
+      "Turn back to 0 to free the slot. Tap FIX alone to toggle fixed velocity, tap SAMPLER alone to open the recorder, as before."
     ],
     "screenshots": []
   },
   "controls": [],
   "compatibility": {
-    "releases": ["1.74"],
+    "releases": [
+      "1.74"
+    ],
     "requires": [],
     "conflicts": [],
     "limitations": [
       "Each sound has four velocity and four aftertouch slots; with all four in use a popup says SLOTS FULL.",
       "A FIX tap toggles fixed velocity on the release instead of the press.",
-      "FUNC, a held trig, the TRIG page and the FX track keep stock's turn."
+      "While FIX or SAMPLER is held, the TRIG page's knobs and knobs turned with a trig held do nothing.",
+      "FUNC + FIX, the FX track and a pad held in PERF or SCNE keep stock's behaviour."
     ]
   },
   "platform": {
     "kind": "elemod",
     "core": "0.7",
     "build": "build.json",
-    "events": ["ev_key", "ev_enc", "ev_tick"],
+    "events": [
+      "ev_key",
+      "ev_enc",
+      "ev_tick",
+      "ev_draw"
+    ],
     "claims": [
       "ui:FIX + knob on the sound pages",
-      "ui:RTRG + knob on the sound pages, until a pad is played in the hold",
-      "ui:FIX tap toggles fixed velocity on the release"
+      "ui:SAMPLER + knob on the sound pages",
+      "ui:FIX tap toggles fixed velocity on the release",
+      "ui:the screen's top-left corner while FIX or SAMPLER is held"
     ]
   },
   "resources": {
     "memoryBytes": null,
     "fastBytes": null,
-    "load": { "display": "Not measured yet", "method": "unmeasured", "conditions": "UI only: runs on key events and knob turns, never in the audio path." }
+    "load": {
+      "display": "Not measured yet",
+      "method": "unmeasured",
+      "conditions": "UI only: runs on key events and knob turns, never in the audio path."
+    }
   },
-  "evidence": { "tier": "none", "moduleVersion": "0.1.0-experimental", "sourceSha256": null, "reports": [], "hardware": null, "verifiedBy": null },
-  "tests": { "report": "TESTING.md", "summary": "Not tested yet." },
-  "license": { "spdx": "GPL-3.0-or-later", "file": "LICENSE", "declaration": "Original work by Nathaniel Pavel." },
+  "evidence": {
+    "tier": "none",
+    "moduleVersion": "0.1.0-experimental",
+    "sourceSha256": null,
+    "reports": [],
+    "hardware": null,
+    "verifiedBy": null
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "Not tested yet."
+  },
+  "license": {
+    "spdx": "GPL-3.0-or-later",
+    "file": "LICENSE",
+    "declaration": "Original work by Nathaniel Pavel."
+  },
   "media": [
-    { "path": "media/thumbnail.svg", "kind": "thumbnail", "caption": "Quick Mod Assign thumbnail", "alt": "Placeholder thumbnail for Quick Mod Assign", "credit": "npp1993", "license": "GPL-3.0-or-later", "source": "Original placeholder from the Modwerk SDK template; replace with your own artwork." }
+    {
+      "path": "media/thumbnail.svg",
+      "kind": "thumbnail",
+      "caption": "Quick Mod Assign thumbnail",
+      "alt": "Placeholder thumbnail for Quick Mod Assign",
+      "credit": "npp1993",
+      "license": "GPL-3.0-or-later",
+      "source": "Original placeholder from the Modwerk SDK template; replace with your own artwork."
+    }
   ]
 }

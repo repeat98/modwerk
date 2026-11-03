@@ -49,6 +49,18 @@
 #define PARAM_FLAGS_AT 0x40007234
 #define FLAG_MOD_DEST 0x200
 
+// The parameter UI's locker: while one is set and lock edit is on, stock draws
+// each knob the locker has inverted with the locker's value, as for a held
+// performance pad (QPERF reads the same routines).
+#define PARAM_UI_AT 0x401816f4
+#define SET_LOCKER_AT 0x40036616
+#define GET_LOCKER_AT 0x40036636
+#define LOCK_EDIT_AT 0x4003613a
+#define END_LOCK_EDIT_AT 0x40036622
+#define LOCKER_RELATIVE_AT 0x40199202     // PerformanceParamLocker: relative values
+#define LOCKER_LOCKABLE_AT 0x400acca8     // PerformanceParamLocker: lockable(id)
+#define FILLRECT_AT 0x40070726            // bitmap, x0, y0, x1, y1, colour
+
 #define POPUP_VTABLE 0x401d70c8
 #define PAGES_TOP_VTABLE 0x4023502c
 #define PERF_VTABLE 0x401e26c4

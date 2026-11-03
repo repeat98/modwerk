@@ -1,20 +1,46 @@
 {
   "schemaVersion": 1,
-  "sources": ["src/main.c"],
+  "sources": [
+    "src/main.c"
+  ],
   "defsym": {},
   "cflags": [],
   "weak": [],
   "subscribe": [
-    { "event": "ev_key", "fn": "quick_mod_assign_key", "order": 30 },
-    { "event": "ev_enc", "fn": "quick_mod_assign_enc", "order": 30 },
-    { "event": "ev_tick", "fn": "quick_mod_assign_tick", "order": 50 }
+    {
+      "event": "ev_key",
+      "fn": "quick_mod_assign_key",
+      "order": 30
+    },
+    {
+      "event": "ev_enc",
+      "fn": "quick_mod_assign_enc",
+      "order": 30
+    },
+    {
+      "event": "ev_tick",
+      "fn": "quick_mod_assign_tick",
+      "order": 50
+    },
+    {
+      "event": "ev_draw",
+      "fn": "quick_mod_assign_draw",
+      "order": 50
+    }
   ],
   "contribute": [
     {
       "to": "core_params",
       "order": 5,
       "data": "00000000",
-      "relocs": [[0, "abs32", "sym:quick_mod_assign_params", 0]]
+      "relocs": [
+        [
+          0,
+          "abs32",
+          "sym:quick_mod_assign_params",
+          0
+        ]
+      ]
     }
   ],
   "collections": {},
@@ -22,10 +48,17 @@
   "regions": [],
   "claims": [
     "ui:FIX + knob on the sound pages",
-    "ui:RTRG + knob on the sound pages, until a pad is played in the hold",
-    "ui:FIX tap toggles fixed velocity on the release"
+    "ui:SAMPLER + knob on the sound pages",
+    "ui:FIX tap toggles fixed velocity on the release",
+    "ui:the screen's top-left corner while FIX or SAMPLER is held"
   ],
   "requires": [],
   "derive": null,
-  "releases": { "1.74": { "defsym": {}, "cflags": [], "sites": [] } }
+  "releases": {
+    "1.74": {
+      "defsym": {},
+      "cflags": [],
+      "sites": []
+    }
+  }
 }
