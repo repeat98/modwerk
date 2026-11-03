@@ -10,10 +10,6 @@
     "revision": "ef6cbc71623abcee584ff59a217cf2c2ba9d5c41",
     "path": "tuner"
   },
-  "build": {
-    "status": "pending",
-    "reason": "Source: Tim's v2.21 Tuner plus his DC-removal commit ef6cbc7 (Octatrick 2.22; the evidence records name his working commit 03202050, the same tuner/ files). Card image OCTATRACK_MODWERK_TUNER_TEST2.bin (d4452bbb, bus da2375cf) built from Modwerk 67a75997 with the canonical recipe; emulator-qualified 30 Oct 2026; reported working on the author's MKI 1 Nov 2026 (TEST3, the same bytes)."
-  },
   "author": {
     "github": "timhastie",
     "name": "Tim Hastie",
