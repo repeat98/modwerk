@@ -496,8 +496,8 @@ int quick_velocity_aftertouch_assign_key(void *brain, void *event)
         h->ignored = 1;                 // during the other key's hold: nothing
         return 1;
     }
-    if (IS_KEY_HELD(KEY_FUNC) || !on_pages())
-        return 0;                       // FUNC (+ FIX: FIXED VELOCITY), or another screen
+    if (IS_KEY_HELD(KEY_FUNC) || !on_pages() || !sound_track(selected_track()))
+        return 0;                       // FUNC (+ FIX: FIXED VELOCITY), another screen or the FX track
     h->held = 1;
     h->turned = 0;
     locker_install(k);
@@ -517,12 +517,14 @@ int quick_velocity_aftertouch_assign_enc(void *brain, void *event)
     return 0;
 }
 
-// ev_tick: keeps our locker with the hold. A lost release takes it away; a
-// locker stock set over ours (a pad or a trig) and then cleared gives it back.
+// ev_tick: keeps our locker with the hold. A lost release takes it away, and
+// so does the FX track selected during the hold, whose knobs then edit as on
+// stock; a locker stock set over ours (a pad or a trig) and then cleared gives
+// it back.
 static void keep_locker(void)
 {
     int kind = held_kind();
-    if (shown != NONE && shown != kind)
+    if (shown != NONE && (shown != kind || !sound_track(selected_track())))
         locker_remove();
     if (kind != NONE && !ours() && !GET_LOCKER(PARAM_UI()) && on_pages())
         locker_install(kind);

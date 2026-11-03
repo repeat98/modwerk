@@ -10,6 +10,7 @@ The rytm-emu runs below were observed on the named build; the emulator is not ha
 - Build QM09 (SAMPLER replaces RTRG for aftertouch; stock's lock-style display with a V or A marker instead of the amount popup; PERF and SCNE edit screens; the other key ignored during a hold; the locker kept with the hold by the tick): `.syx` `c94a8b7b160764343861aec67fc08f65a631cf4f200f3b79d5ce93fe184921f4`.
 - Build QM10 (QM09 compiled with `-Os`, so the full set fits the shared mod RAM): `.syx` `a66959671562940659007d03adfd0f1f37345c9012b33c98a25994baaefe2059`. The links, display, SAMPLER, SLOTS FULL, PERF and FIX-key checks below rerun on it with the same results.
 - Build QM11 (QM10 without the V/A marker; popups read VELOCITY MODS FULL, AFTERTOUCH MODS FULL, NOT A VELOCITY TARGET, NOT AN AFTERTOUCH TARGET): `.syx` `7ef00e24371b1d572da3ec60ca21be4d059b32decfe15f3a334c75486788e3f9`.
+- Build QM12 (after a code review of the PR: on the FX track FIX and SAMPLER are left to stock, and selecting the FX track during a hold ends the lock-style display so its knobs edit): `.syx` `35686f80e0676a7d7e86fb66c30d706e7f8637f7c97891562e68902882b3739f`.
 - Emulator: rytm-emu `2ac0f1f`, headless `dtboot`, a fresh card, the default kit (BD PLASTIC on track 1), the SYNTH page unless named. Events off the `--every` grid. Slots read on stock's MODULATION SETUP screen; fixed velocity read from stock's flag in RAM.
 
 ## rytm-emu (QM09, rerun on QM10; QM11 rows marked)
@@ -47,6 +48,20 @@ Earlier builds (QM03 to QM06, RTRG and popups): the same slot writes, TUN, SLOTS
 
 Not tested: kit save, reload and power cycle on QM07 or later; SOUND MANAGER; the sequencer running; MUTE and CHRO screens; a sample machine; beside Ctrl All and Velocity Humanise; a missed key release (the emulator always delivers it).
 
+## rytm-emu (QM12, compared with QM11)
+
+Fixed velocity read from stock's flag every 100M instructions; screens compared pixel for pixel.
+
+| Check | QM11 | QM12 |
+| --- | --- | --- |
+| The four screenshots in `media/` (FILTER + FIX, AMP + SAMPLER, MODS FULL, MODULATION SETUP) | identical to `media/` | identical to QM11 |
+| FIX tap / two taps / held past repeat / held with a turn, on a sound track | toggles on release / on then off / toggles / unchanged | the same |
+| FX track, FIX tap | toggles on the release | toggles on the press, as stock |
+| FX track, FIX held, FDB turned | fixed velocity unchanged; FDB edits | toggles on the press, as stock; FDB edits |
+| FX track, SAMPLER held, FDB turned, released | no recorder | recorder opens, as stock |
+| FILTER page, FIX held, FX track selected, FDB turned | FDB does not move | FDB edits as without FIX |
+| Faults | 0 | 0 |
+
 ## Hardware
 
 **RC17 (QM06 inside), reported by the author, 3 Nov 2026:**
@@ -75,3 +90,4 @@ The source-only package itself has not run on a unit. Steps for a unit run of it
 4. FIX tap: fixed velocity toggles on the release. FUNC + FIX: stock's popup. Hold SAMPLER and tap FIX: nothing.
 5. PERF mode: hold FIX and turn a knob (the box), then with FIX still held press a pad and turn (a performance lock, as stock).
 6. Save the kit, power cycle: the links are kept.
+7. FX track: FIX tap toggles fixed velocity at once, FIX held with a knob turned edits the knob, SAMPLER opens the recorder. On a sound page hold FIX, select the FX track: its knobs edit as normal.

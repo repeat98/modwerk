@@ -23,7 +23,7 @@ While either key is held, every knob already linked shows its amount the way sto
 
 A parameter already linked keeps its mod slot. A new one takes the first slot, left to right, with no destination or an amount of 0; turning a link back to 0 frees its slot. A link at 0 still shows as 0 while the key is held (a new kit links FILT FRQ and FILT RES to velocity at 0, so those are the first taken). With all four slots holding other parameters a popup says `VELOCITY MODS FULL` (`AFTERTOUCH MODS FULL`) and nothing changes. A parameter that is not in stock's destination list says `NOT A VELOCITY TARGET` (`NOT AN AFTERTOUCH TARGET`) and nothing changes. Each knob event moves the amount at least one step, more when turned fast, whatever the parameter's own resolution.
 
-FUNC + FIX (stock's FIXED VELOCITY), the FX track, and a performance or scene pad or a trig that holds stock's lock edit keep stock's behaviour: a pad pressed in PERF or SCNE during a hold makes a performance or scene lock as usual, and the links show again when it is let go. During a hold the other key does nothing.
+FUNC + FIX (stock's FIXED VELOCITY), the FX track (FIX and SAMPLER there are stock's, and selecting it during a hold hands its knobs back to stock), and a performance or scene pad or a trig that holds stock's lock edit keep stock's behaviour: a pad pressed in PERF or SCNE during a hold makes a performance or scene lock as usual, and the links show again when it is let go. During a hold the other key does nothing.
 
 ## Usage
 
@@ -38,8 +38,8 @@ Hold FIX or SAMPLER on any sound page and turn the knob you want to move with ve
 
 ## Changes to stock flows
 
-- **FIX's toggle moves to the release.** What changes: on the pages and pad screens, a FIX press is held back until the release, so a hold with a turn leaves fixed velocity as it was. Why: the press cannot know whether a turn follows; stock toggles at the press. What you see: the FIX state changes when you let go. Elsewhere, and with FUNC held, FIX is stock's. Checked: a tap, two taps, a hold past key repeat, a hold with a turn, FUNC + FIX, in rytm-emu.
-- **SAMPLER held with a turn does not open the recorder.** Stock opens it on SAMPLER's release, also after a knob turn; with this mod a turn during the hold makes it an assignment instead. A tap opens the recorder as before. Checked in rytm-emu.
+- **FIX's toggle moves to the release.** What changes: on the pages and pad screens of a sound track, a FIX press is held back until the release, so a hold with a turn leaves fixed velocity as it was. Why: the press cannot know whether a turn follows; stock toggles at the press. What you see: the FIX state changes when you let go. Elsewhere, and with FUNC held, FIX is stock's. Checked: a tap, two taps, a hold past key repeat, a hold with a turn, FUNC + FIX, in rytm-emu.
+- **SAMPLER held with a turn does not open the recorder.** Stock opens it on SAMPLER's release, also after a knob turn; with this mod a turn during the hold makes it an assignment instead. A tap opens the recorder as before, and on the FX track SAMPLER is stock's. Checked in rytm-emu.
 - **FIX or SAMPLER held changes what a knob turn does.** What changes: on a sound page, a turn sets a mod slot instead of the parameter, drawn as a performance lock. Why: that is the mod. Stock does nothing special with FIX or SAMPLER held and a knob turned (checked in rytm-emu: the knob edits as normal). It applies while the key is held only.
 - **During a hold, some knobs do nothing.** What changes: with FIX or SAMPLER held, the TRIG page's knobs, a knob turned with a trig held, and FUNC + a knob no longer edit (stock's lock edit, which the hold switches on, refuses TRIG parameters, and the mod refuses a link with a trig held so none is made by accident). Why: the hold is for links; a trig edit or a fine FUNC edit can wait until the key is let go. What you see: the knob does not move. Considered: passing these turns to stock, which stock's lock edit does not allow without a patch of its own. Checked in rytm-emu: TRIG page, a trig held, both key orders.
 - **The other key does nothing during a hold.** What changes: FIX pressed during a SAMPLER hold does not toggle fixed velocity, and SAMPLER pressed during a FIX hold does not open the recorder. Why: a key brushed mid-assignment should not change the sound or leave the page. Checked in rytm-emu.
@@ -54,7 +54,7 @@ Hold FIX or SAMPLER on any sound page and turn the knob you want to move with ve
 
 ## Tests and measurements
 
-rytm-emu on OS 1.74 ([TESTING.md](TESTING.md)), and the author's unit on an earlier build. Memory (build QM11's link map, compiled with `-Os`): 2,800 bytes of code and initialised data and 44 bytes of `.bss` in the 128 KiB shared mod area. Load: UI only, on key events and knob turns; nothing runs in the audio path.
+rytm-emu on OS 1.74 ([TESTING.md](TESTING.md)), and the author's unit on combined images with builds QM10 and QM11; QM12's FX-track fix has run in rytm-emu only. Memory (build QM12's link map, compiled with `-Os`): 2,820 bytes of code and initialised data and 44 bytes of `.bss` in the 128 KiB shared mod area. Load: UI only, on key events and knob turns; nothing runs in the audio path.
 
 ## Authorship and licences
 
