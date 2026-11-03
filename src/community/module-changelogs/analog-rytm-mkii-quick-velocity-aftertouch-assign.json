@@ -1,0 +1,13 @@
+[
+  {
+    "version": "0.1.0-experimental",
+    "date": "2026-11-03",
+    "changes": [
+      "First release, for Analog Rytm MKII OS 1.74: hold FIX and turn a knob to link that parameter to velocity.",
+      "Hold SAMPLER and turn a knob to link it to aftertouch.",
+      "While held, linked knobs show their amounts like performance locks.",
+      "Uses the sound's own four velocity and four aftertouch slots, so links save with the kit.",
+      "A FIX tap now toggles fixed velocity when you let go."
+    ]
+  }
+]
