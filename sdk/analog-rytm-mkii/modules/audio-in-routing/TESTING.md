@@ -15,7 +15,7 @@ The release package is built from AF22's source. It has not run on a unit itself
 
 ## On the unit
 
-npp1993's Analog Rytm MKII, a source in AUDIO IN L and R.
+Nathaniel Pavel's (@npp1993) Analog Rytm MKII, a source in AUDIO IN L and R.
 
 **AC20, reported 2 Nov 2026.** Pass:
 - Boot and page.
@@ -70,7 +70,7 @@ Headless `dtboot`, JIT on. A 1 kHz sine is fed with `--audio-in` and the output 
 
 ## Earlier designs
 
-**AC02.** Knobs on the FX page, with about 90 as unity. npp1993 reported it as all good on 1 Nov 2026: noise, level against the drums, DIST, COMP, the delay and reverb PRE and POST, latency, and the knobs at 0 after a power cycle.
+**AC02.** Knobs on the FX page, with about 90 as unity. Nathaniel Pavel (@npp1993) reported it as all good on 1 Nov 2026: noise, level against the drums, DIST, COMP, the delay and reverb PRE and POST, latency, and the knobs at 0 after a power cycle.
 
 **AC13 to AC17.** Three bars, INP, IDL and IRV, ran on the unit on 2 Nov 2026. What they found carries over to the two knobs:
 - Each knob locks on its own.
