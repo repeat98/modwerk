@@ -46,7 +46,7 @@ To stop using it, leave the module out of the build. There is no separate off sw
 
 ## Compatibility and limitations
 
-- OS 1.40C. The reported pass is a private MICRO T9 card, not a build of this package. USB Keep/Undo and `ot_emu` are untested.
+- OS 1.40C. The reported pass is a private MICRO T9 card, not a build of this package. USB Keep/Undo is untested. Headless `ot_emu` captured TRACK TRIG EDIT only, from a private image built before commit `13d33940`.
 - The remembered number does not survive power-off and is not in the project file.
 - An individual trig edit does not update the row. The next LEVEL turn overwrites all 64 steps, including empty ones.
 - MKI opens the same menu with FUNCTION. That path is untested on this package.
@@ -61,4 +61,4 @@ jonathanwardle1992-beep: behaviour, ColdFire source and documentation. MIT, [LIC
 
 ## Screens and audio
 
-Captures of TRACK TRIG EDIT with MICRO T selected are not made yet. They must be real black-and-white LCD pixels. The module makes no sound of its own; it changes when notes and locks fall.
+`media/ot-micro-t.png` is TRACK TRIG EDIT with MICRO T highlighted, still on grid (`MT1:ON GRID`). `media/ot-rec-trg.png` is the same window after scrolling: REC.TRG is on the bottom row and TRIGS has left the top. Both are headless `ot_emu` LCD pixels. LEVEL was not turned, so neither frame shows an offset. The module makes no sound of its own; it changes when notes and locks fall.

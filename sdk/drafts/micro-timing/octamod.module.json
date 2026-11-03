@@ -35,7 +35,10 @@
       "Turn LEVEL. The footer fraction moves, and every step on this track takes that micro timing.",
       "Press the MIDI button and turn LEVEL again to set the MIDI track. The audio track keeps the value it already had."
     ],
-    "screenshots": []
+    "screenshots": [
+      "media/ot-micro-t.png",
+      "media/ot-rec-trg.png"
+    ]
   },
   "controls": [
     {
@@ -53,7 +56,7 @@
     "conflicts": [],
     "uiClaims": [],
     "limitations": [
-      "OS 1.40C. The reported pass is a private MICRO T9 card, not a build of this package. USB Keep/Undo and ot_emu are untested.",
+      "OS 1.40C. The reported pass is a private MICRO T9 card, not a build of this package. USB Keep/Undo is untested. Headless ot_emu captured TRACK TRIG EDIT only, from a private image built before commit 13d33940.",
       "The remembered number is battery RAM. Power-off clears it. It is not stored in the project. Rewritten trigs stay in the pattern.",
       "The next LEVEL turn sets all 64 steps, including empty ones. An individual trig edit does not move the row."
     ]
@@ -102,7 +105,7 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Author reported the private MICRO T9 card working for audio and MIDI separately. This module package is untested.",
+    "summary": "Author reported the private MICRO T9 card working for audio and MIDI separately. Headless ot_emu captured TRACK TRIG EDIT: MICRO T on grid, and REC.TRG scrolled into the four-row window. This package has not been flashed or tried over USB.",
     "hardwareStatus": "reported",
     "evidenceRevision": "3220ad034c7c55a356ee8ab1d7118495d85ec279",
     "gates": [
@@ -114,5 +117,40 @@
     "file": "LICENSE",
     "declaration": "Original module by jonathanwardle1992-beep, MIT. No firmware, extracted stock code or built images are included."
   },
-  "media": []
+  "media": [
+    {
+      "path": "media/ot-micro-t.png",
+      "captureType": "emulator",
+      "caption": "While grid recording, press FUNC+BANK (FUNCTION on MKI) and highlight MICRO T under TRIGS. The pictured row is still on grid: the cursor sits on the centre 0 and the footer reads MT1:ON GRID. Turn LEVEL on this row to write that fraction to every step.",
+      "alt": "TRACK TRIG EDIT with MICRO T highlighted under TRIGS, a dashed lane and a cursor on the centre mark, footer MT1:ON GRID.",
+      "credit": "jonathanwardle1992-beep; Elektron Octatrack UI",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "TRACK TRIG EDIT",
+        "shows": "location-and-controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "2388ec30162fa38aae071704c6f65f6312b96c879e3175003a1ba17276b884cf",
+        "setup": "Headless ot_emu; MKII panel; stopped transport; 128×64 LCD at integer scale 6; DSP cores running; empty scratch card; date prompt dismissed. Grid record, then FUNC+BANK, then DOWN onto MICRO T. Private MAIN OS 2388ec30162fa38aae071704c6f65f6312b96c879e3175003a1ba17276b884cf built 2026-11-03T00:21:03Z, before commit 13d33940. Monochrome pixels. Not a hardware or USB result."
+      }
+    },
+    {
+      "path": "media/ot-rec-trg.png",
+      "captureType": "emulator",
+      "caption": "From MICRO T, press DOWN until the list scrolls. TRIGS leaves the top and REC.TRG appears on the bottom row of the same four-row window. MICRO T, SLIDE and SWING stay above it.",
+      "alt": "TRACK TRIG EDIT scrolled so MICRO T, SLIDE and SWING sit above a highlighted REC.TRG row. TRIGS is off the top.",
+      "credit": "jonathanwardle1992-beep; Elektron Octatrack UI",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "TRACK TRIG EDIT",
+        "shows": "location",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "2388ec30162fa38aae071704c6f65f6312b96c879e3175003a1ba17276b884cf",
+        "setup": "Headless ot_emu; MKII panel; stopped transport; 128×64 LCD at integer scale 6; DSP cores running; empty scratch card; date prompt dismissed. Three DOWN presses after the MICRO T capture. Private MAIN OS 2388ec30162fa38aae071704c6f65f6312b96c879e3175003a1ba17276b884cf built 2026-11-03T00:21:03Z, before commit 13d33940. Monochrome pixels. Not a hardware or USB result."
+      }
+    }
+  ]
 }
