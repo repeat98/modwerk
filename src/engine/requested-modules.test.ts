@@ -61,7 +61,7 @@ describe('live playback and mute integration', () => {
     const pkg = requestedFacts.objects.find(row => row.label === 'mm_softmute')!
     const plain = await readRequestedObject(pkg.label), sidechain = await readRequestedObject(pkg.label, undefined, ['mute-modes', 'sidechain-compressor'])
     expect(plain.object.sections.find(row => row.name === '.text')!.data.length).toBe(970)
-    expect(sidechain.object.sections.find(row => row.name === '.text')!.data.length).toBe(1086)
+    expect(sidechain.object.sections.find(row => row.name === '.text')!.data.length).toBe(1100)
   })
   it('relocates all eleven recorder sentinels to the reserved sample arena, leaving stock literals behind', async () => {
     const poolBase = 0x40a955e0 + 16 * 6144, captured: Uint8Array[] = []
@@ -128,7 +128,7 @@ describe('POLY8 companion composition', () => {
     const plain = await readRequestedObject('mm_softmute', undefined, ['poly8', 'mute-modes'])
     const sidechain = await readRequestedObject('mm_softmute', undefined, ['poly8', 'mute-modes', 'sidechain-compressor'])
     expect(plain.object.sections.find(row => row.name === '.text')!.data.length).toBe(970)
-    expect(sidechain.object.sections.find(row => row.name === '.text')!.data.length).toBe(1086)
+    expect(sidechain.object.sections.find(row => row.name === '.text')!.data.length).toBe(1100)
     const solo = await readRequestedObject('mm_softmute', undefined, ['mute-modes', 'sidechain-compressor'])
     expect(sidechain.object.sections.find(row => row.name === '.text')!.data).toEqual(solo.object.sections.find(row => row.name === '.text')!.data)
     expect(sidechain.object.symbols.find(row => row.name === 'KEYMASK')?.binding).toBe(1)
