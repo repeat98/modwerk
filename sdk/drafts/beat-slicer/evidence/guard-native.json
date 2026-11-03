@@ -1,0 +1,75 @@
+{
+  "scope": "portable guard target execution: lifecycle, exhaustion, 120 event schedules and three reader invalidation timings",
+  "sourceSha256": {
+    "planner.c": "01c9c25efa363679a591969931dd376a3b694a949dd8b9f89eda4bf77a88cee4",
+    "planner.h": "4faab6f03e679d0b9389dbf016416afc87fb4d2d354952b22efb81a0381c5c1b",
+    "planner_job.c": "767d82cc375677a115e9457af35e26fddd9de66a0dc80aa2af0fe3b5adaf0581",
+    "planner_job.h": "c4dd3faa8b3320194b54ab4d7bec6541d9e936f544b0e6236efa4fa5518d6547",
+    "pcm_reader.c": "8762e389a39b7407a7d987dc6e3e36d7d75aa6c408b1d3232d8672a380226088",
+    "pcm_reader.h": "462f495a86f32730b79a56177f99929f685d82729e4646e7b391df475d929821",
+    "preview_guard.c": "da1299674cf2ae967c58231ee9c16891afa94e27254407b5d09df6b73cc4343e",
+    "preview_guard.h": "abcaff39ef1b9a21cb238f0021344ffb5b812ea1740a354cbc1d1f2ace4ddf36",
+    "test_preview_guard.c": "7729d0737cda3442d23067230526a2c76ff112e9adf6af83be4598875bd1cf7b",
+    "guard_native.py": "a1536752f0cb4cc66d647e5cb1a3efd79c02e3d438092b1369270c6f379ef9c6",
+    "stock_probe/job_probe.cpp": "eba70897030ec3b8804de5641d533955455761df75c19db278438006bc8b4e1a",
+    "stock_probe/CMakeLists.txt": "69993411d3d957d17b19244c80d1edaf6d810f6acd278634cf492c142c6694d1"
+  },
+  "compiler": "m68k-elf-gcc (GCC) 16.2.0",
+  "flags": [
+    "-std=c99",
+    "-mcpu=5475",
+    "-msoft-float",
+    "-O2",
+    "-ffreestanding",
+    "-fno-builtin",
+    "-fno-common",
+    "-fno-jump-tables",
+    "-fno-tree-loop-distribute-patterns",
+    "-fno-optimize-sibling-calls",
+    "-fno-asynchronous-unwind-tables",
+    "-fno-unwind-tables",
+    "-fno-ident",
+    "-fstack-usage",
+    "-Wall",
+    "-Wextra",
+    "-Werror",
+    "-pedantic",
+    "-fno-late-combine-instructions"
+  ],
+  "objectSha256": {
+    "planner.o": "862fbf786e4388477f7c3efa7601dad7bef8d9583c5b0a21db5351e3276594d4",
+    "planner_job.o": "8f9b560021a93770770eb294c6d569d94fd5b75596e5f1d332d61b4d75664485",
+    "pcm_reader.o": "79fa1b604de2d1e08edc4f41db4578f9ff68afc802dfadc3dd8a4d14a27427e3",
+    "preview_guard.o": "9c246ad2e54d39275f17c672f2dbed461df158345dbbb214153c180d6cb5b24b",
+    "test_preview_guard.o": "02a5b12671441be4fe8c1e097c32df9262b61348f97cd15cb8c7d46f1e37b159"
+  },
+  "runnerSha256": "fa8c5f47aab4d97bff73d8afaea9b69701c1a1df095062460f2c3bbeb9969103",
+  "codegenGuard": "passed",
+  "freestandingLink": true,
+  "guardSize": [
+    "text\t   data\t    bss\t    dec\t    hex\tfilename",
+    "    608\t      0\t      0\t    608\t    260\t/evidence/native-2/preview_guard.o"
+  ],
+  "guardStackUsage": [
+    "/source/sdk/drafts/beat-slicer/preview_guard.c:16:6:bs_guard_init\t0\tstatic",
+    "/source/sdk/drafts/beat-slicer/preview_guard.c:22:5:bs_guard_enable\t0\tstatic",
+    "/source/sdk/drafts/beat-slicer/preview_guard.c:27:6:bs_guard_invalidate\t0\tstatic",
+    "/source/sdk/drafts/beat-slicer/preview_guard.c:32:6:bs_guard_revoke\t0\tstatic",
+    "/source/sdk/drafts/beat-slicer/preview_guard.c:37:10:bs_guard_writer_begin\t4\tstatic",
+    "/source/sdk/drafts/beat-slicer/preview_guard.c:51:5:bs_guard_writer_end\t4\tstatic",
+    "/source/sdk/drafts/beat-slicer/preview_guard.c:58:10:bs_guard_revision\t0\tstatic",
+    "/source/sdk/drafts/beat-slicer/preview_guard.c:61:5:bs_guard_acquire\t0\tstatic",
+    "/source/sdk/drafts/beat-slicer/preview_guard.c:70:5:bs_guard_valid\t0\tstatic"
+  ],
+  "exitCode": 0,
+  "stdout": [
+    "SOURCE_SHA256: eba70897030ec3b8804de5641d533955455761df75c19db278438006bc8b4e1a",
+    "PASS: cooperative preview target selftest and preserved registers"
+  ],
+  "stderrLines": 8,
+  "stderrSha256": "21495107133b98459d58d78262e4935ad828b0578af9c62da412effd72215f99",
+  "hardware": "not tested",
+  "audio": "not tested",
+  "timing": "not measured",
+  "nativeSourceAccess": "not implemented"
+}

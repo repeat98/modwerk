@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "kind": "emulator-and-gates-extension",
+  "baseCommit": "4840eb336b3e64195eed1994f83ef3be79735f56",
+  "historicalRecord": "floating-cave-overflow-builder.json",
+  "importRecord": "imports/octabam-infrastructure-5c71bc8c.json",
+  "upstreamRevision": "5c71bc8cf78062ee1ff69cfbef07d43e32c90305",
+  "builderAdaptations": {
+    "Makefile": {
+      "before": "7cd8a5bd31cda65880843849d2e2a7930f10f28104e6b6e890ac5b7e44bbf76e",
+      "after": "9e15166e4cdda61690b48e33da72d43dbf6d3c2285a0fdb2bc3044b929211e1d"
+    },
+    "tools/emu/ot_emu/main.cpp": {
+      "before": "7c2a245dc295d9994dffb8314e791b96217b8f75107ec3715cd7f7b717d6ff99",
+      "after": "409b3de1a4fd0c4de450e33a6d7748dc2b0d16d49efd1172c598560f5168166a"
+    },
+    "tools/emu/ot_emu/rtos.cpp": {
+      "before": "212c697106bf14a7beb79dbcd0a843ea528a3a20705c0acab49ace0cd8965546",
+      "after": "b4589de516372e21211b37b6f68511f23503219a6fbeb3ef1a325dcc130bdfce"
+    },
+    "tools/emu/ot_emu/rtos.h": {
+      "before": "6ba69ad263800da378f4ccfd9d917dc85dc46904a4880cde01450ab0e126e4a4",
+      "after": "76c7264ab1fbb0ad17a14788f2891a455cf9634c65eeae8dcc98f0d7d9456c95"
+    },
+    "tools/emu/ot_emu/test_periph.cpp": {
+      "before": "133e824c87e4dcdbfe46bdec428cc114fefe28b9bcf058f43394b48df8748ea7",
+      "after": "13480d44c629af0019d1e90a9fcd1bc62bdb3c65af95316260a9bb9bbfb4ff3e"
+    },
+    "tools/emu/ot_emu/usb.cpp": {
+      "before": "bfe2cc4ed5b92f9578290b919fab5e15e3d62402c40ff434c855744aaa796240",
+      "after": "653c1213128878080dd01c9cc05620bfce76a3c11431a25d1726f1bdce812d81"
+    },
+    "tools/emu/ot_emu/usb.h": {
+      "before": "c5bb3163bf7fcdf006e5c7343fa67113b71d6e2607e1649ec3b7544947430691",
+      "after": "ae6f549287f02d9d5bf5fc747c439fda3cbc751153e4eb9f06c8bafc80d2d14a"
+    }
+  },
+  "builderSourcesUnchanged": {
+    "tools/build/build_bus.py": "c70c79b6829e264e881f4a8d0284cb77d070ebe4fcdbbccf633fd33f110a1ac9",
+    "tools/build/cycle_count.py": "e17affe5d31752f544c5c32990615e46f6f7b84bb478a6763b11ce81a282ee91",
+    "tools/remix/schema.py": "a5300338149966a2d3af1deaae9337495612865611436d6c90f63653d27b7761",
+    "tools/remix/platform_build.py": "e72b7a29b45851addecf135ad520db98b66f5e10c5cd354adf37fb52d6c2e42f",
+    "tools/remix/ledger.py": "73407d159a965671da2255aef5864bd0c745dfa2a600575918f48c40fc170f83",
+    "tools/remix/dsp_ranges.py": "085aca1208a672c91e8db2ea620a5a17eaa2b577f16f074ecb89fdf2bc23c300"
+  },
+  "scope": "Emulator bench, scripting and write-watch update from octabam 5c71bc8c (23 Oct 2026): the non-blocking bench socket waits for the client instead of dropping the rest of a large reply (EAGAIN); the stall detector counts an address register that walks 4 KB or more as progress; plug, peek and call bench commands; --preload, --boot-load, --cmd-log-end, --foreign-writes with --stock-code (writes into a range from a PC outside stock code, Rtos::watchForeign), frame-stamped MIDI OUT and wait ... chg scenario lines; USB run-time settings read from the CS1 early block in the bench model. dsp_host gains -pword (a raw knob word with its LFO companion bits). The two DSP source gates (norep.py, nolabelprefix.py), the trap register (docs/TRAPS.md), the emulator README (docs/remixer/EMU.md), scripts/m68k-toolchain.sh with setup-linux and setup-mac. No builder file changed, so the native images and refusals of octabam-7b2984c8.json and the later extensions hold by file identity.",
+  "softwareTests": {
+    "otEmuBuild": "cmake -S sdk/octabam/tools/emu/ot_emu -DCMAKE_BUILD_TYPE=Release -DOT_VENDOR=<octabam checkout>/vendor; cmake --build (Ubuntu GCC 15.2.0, WSL2, 23 Oct 2026): built; the same configuration built from the origin/main sources first.",
+    "ctest": "ctest -E ^(rtos|dsp|repitch-stock|repitch-patch)$: 5 of 5 passed (emac, periph, mc68kColdFireTimingTest, mc68kHdi08ReceiveTest, mc68kColdFireDivideTest); the origin/main build passed its 3 (periph gained the plug/unplug and media-exhaustion cases).",
+    "dspHost": "tools/harness/dsp_host/dsp_host.cpp compiles against the vendored dsp56300 headers (c++ -std=c++17 -c); not linked or rendered here.",
+    "gates": "sdk/tests/test_dsp_source_gates.py (planted rep and label-prefix cases refused; every repository source free of label-prefix clashes; platform and base sources free of rep; the three modules listed before the gate date that carry a rep reported, not refused); modules:check refuses a planted rep in a platform source and passes the tree without it.",
+    "sdkTests": "python3 -m unittest discover -s sdk/tests: see the pull request."
+  },
+  "limitations": "Software checks only: no stock image booted under the port, no module rendered, no hardware. The emulator core files are byte-identical to upstream and to the 7b2984c8 import."
+}

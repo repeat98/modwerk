@@ -14,6 +14,10 @@ struct write_record {
 };
 static struct write_record writing;
 static uint32_t last_write_ticket;
+/* Features whose trusted controller asked to write, granted or not: the board takes and clears them each tick, as a
+ * sign that a track uses the feature (controller_board.c use_tick). Analog BD's renderer asks every frame for each of
+ * its tracks, so a refusal while its engine is parked brings the engine back. */
+volatile uint8_t modwerk_controller_lease_seen;
 /* Begin's resolution of one call site, (entry, return PC, feature): the intact owner, its bound slot and trusted
  * row, or that there is none. It runs on every frame a leased hook fires, so it is kept while nothing it read can
  * have changed: the loader's owner epoch (every install, discard, reclaim, publish, restore and journal switch; never
@@ -52,7 +56,7 @@ static int owner_binding(const struct runtime_owner *o,uintptr_t image,const str
     return o->generation==b->generation && o->module==b->identity.module && image>=o->image_offset &&
         image-o->image_offset==b->canonical_extent && o->extent_bytes==b->extent_bytes &&
         o->image_offset==b->image_offset && o->image_bytes==b->image_bytes &&
-        equal(o->package_sha256,b->identity.package_sha256,32);
+        equal(o->controller_sha256,b->identity.package_sha256,32);
 }
 static uint32_t word(unsigned at) {
     switch(at) {
@@ -129,6 +133,7 @@ static int begin_impl(uintptr_t entry,uint32_t feature,struct mw_controller_writ
     int shared=!deciding;
     deciding=1;__asm__ __volatile__("" ::: "memory");
     struct decided *d=decide(entry,feature,pc,&local,shared);
+    if(d->kind==DECIDED_RESOLVED) modwerk_controller_lease_seen|=(uint8_t)feature;
     const struct mw_controller_binding *b=&r->slots[d->slot].binding;
     /* The slot's state first: a controller not yet (or no longer) writing costs no owner check. */
     ok=d->kind==DECIDED_RESOLVED && mw_controller_slot_write_allowed(r,d->slot)==1 &&

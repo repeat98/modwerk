@@ -17,7 +17,7 @@ const localClient = () => {
 
 describe('one Elekloader builder for machine extensions', () => {
   it('uses the same device keys and fails closed until an Octatrack core is in the catalogue', async () => {
-    expect(MACHINE_DEVICE).toEqual({ octatrack: 'octatrack', digitakt: 'digitakt-mk1', 'digitakt-ii': 'digitakt-mk2', digitone: 'digitone-mk1' })
+    expect(MACHINE_DEVICE).toEqual({ octatrack: 'octatrack', digitakt: 'digitakt-mk1', 'digitakt-ii': 'digitakt-mk2', digitone: 'digitone-mk1', 'analog-rytm-mkii': 'analog-rytm-mk2' })
     expect(planBuild('octatrack', '1.40C', ['repitch'])).toMatchObject({ core: undefined, missing: ['repitch'] })
     const fake = client()
     await expect(prepareBuild(fake as unknown as Builder, { machine: 'octatrack', release: '1.40C', stock, moduleIds: [] })).resolves.toEqual({ ok: false, error: 'The catalog has no core for octatrack OS 1.40C.' })

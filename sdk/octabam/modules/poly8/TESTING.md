@@ -2,6 +2,53 @@
 
 Status: experimental release preparation, **not hardware-qualified**.
 
+## 0.3.2: the card build's machine list scrolls (27 October 2026)
+
+Reports #842 (VECTOR), #941 and #942 (FM Synth): on card builds with POLY8 and another signed machine, the double-tap TRACK machine list ended at POLY8, DOWN past it put the highlight on PICKUP while the header still said POLY8, and the other machine was reachable only through FUNC+SRC.
+
+**Cause, from the stock chooser and an emulator trace.** With POLY8 and one to three more machines the list (0x460e7386: top row, row on screen, cursor, visible rows, count) holds seven to nine rows and six are visible. Two things were wrong. The draw loop names each visible row and marks the track's machine by the row on screen, never adding the list's top, so a scrolled list still showed rows 0-5. And each of stock's five UP/DOWN handlers clamps the cursor to row 5 after moving it (`moveq #5`, at 0x40078c22, 0x40078cb0, 0x40078d2e, 0x40078dee and 0x40078e7c, and 6 bytes on): DOWN from POLY8 scrolled the list to top 1 and moved the cursor to 6, then the clamp put it back to 5, so the highlight (by screen row, 5 - 1) sat on PICKUP. A `watch` on the cursor setter caught the DOWN handler's clamp call.
+
+**Fix.** Names come from `mr_chooser_name` (POLY8's name lookup at top + screen row, through the pointer at 0x4007865e) and the mark from `mr_chooser_row` (top + screen row), as the USB base's registry does since #922. The ten clamp bytes are count sites of POLY8's composition, written as the last row (`count - 1`); POLY8 alone writes stock's 5. Over USB the base's `ot_machines` owns 0x4007865e and, from the base that also fixes the cursor over USB (`fix/machine-setup-pages`), the ten clamp bytes; `machine-ports.json` replaces all eleven, so the USB package leaves them out and rebuilds byte-identical. A base without the clamp sites refuses that declaration (`not a site ot_machines owns`), so 0.3.2 needs that base on main.
+
+**Emulator results** (`ot_emu` from the lane-sidechain-matrix build, MKII panel, DSP on, scratch project MODWERK/DRUMS with T1 STATIC, images composed by the site's builder from this tree, `scripts/capture-module-ui.py` plans with 50 ms key presses; T1 double-tap, LEFT, then UP/DOWN/YES):
+
+| Image | Result |
+| --- | --- |
+| main (0.3.1), POLY8 + VECTOR + FM Synth | reproduces the reports: after DOWN past POLY8 the list still shows STATIC-POLY8, the highlight is on PICKUP, the header says POLY8; VECTOR and FM SYNTH never show |
+| 0.3.2, POLY8 + VECTOR + FM Synth | all eight rows show; DOWN scrolls to VECTOR, then FM SYNTH, with matching header; YES on FM SYNTH assigns it (FM pages, SRC header FM SYNTH); reopening shows the list scrolled with FM SYNTH marked |
+| 0.3.2, POLY8 + Analog BD + VECTOR + FM Synth | all nine rows show and scroll; UP from FM SYNTH reaches VECTOR and ANALOG BD; YES on VECTOR (scrolled, mid-list) assigns VECTOR; reopening opens VECTOR's pool choice, LEFT shows the list with VECTOR marked; UP scrolls back to STATIC |
+| 0.3.2, POLY8 alone | every screen of the plan identical to 0.3.1's (PNG hashes), YES on POLY8 assigns it |
+| 0.3.2, VECTOR alone | six rows, YES on VECTOR assigns it; the patched OS extent is byte-identical to main's |
+
+Not tested: a unit (no hardware result for 0.3.2), MKI, SRC SETUP's machine selector beside other machines, Part/project reload and power cycles, an FM Synth track's double-tap (it opens a FLEX slot view titled FM SYNTH, unchanged code from 0.3.1, seen in passing).
+
+**Build checks.** Card packages compiled in the isolated toolchain and imported; `module:verify poly8`: 193 native images match outside the platform writes, 87 matching refusals, 0 mismatches of 280 selections (no selection shared with the 0.3.1 record changed between building and refused). The USB package rebuilds byte-identical (`dc2ce372…`) and stays published as 0.3.1-experimental (`lagsBehind`); VECTOR, FM Synth, Scale Quantizer and Analog BD rebuild byte-identical after their recipes' pin of `machine-ports.json` moved.
+
+## 0.3.1: voice limit and cached render (23 October 2026)
+
+All hardware results are from the owner's MKII (OS 1.40C), RAM-booted development twins of main's beta base built with `build_core.py --dsp-loader --usb-midi --usb-audio 'USB AUDIO OUT TRACKS MAIN CUE' --site-events --table-owners --resident-stock-hooks --resident-on-demand --module-sets --dev`: `4b5c309c…` (module code uncached, as the beta base main ships) and `8ab61614…` (the same with `--cached-modules`). Project `261019`, T1 POLY8 with a 6.9 s sample in FLEX slot 1, AMP HOLD INF, REL 60 (REL INF where noted), the other tracks stock. Packages were installed with `try`; times are DTIM3 counts (132 MHz; a frame is about 47,900).
+
+**The freeze, reproduced on 0.3.0** (uncached twin, stopped): idle 41.7 %, one held voice 55.6 %, two 68.7 %; at four the CPU meter froze at 87.7 % because the UI task no longer ran. Key releases queued behind it, so the voices never ended; the base's log recorded freezes of 90,791 and 91,828 frames (about 33 s) at 87.7-100 % CPU. On the cached twin 0.3.0 cost about 10 points for the first voice and 3-4.7 for each further one (eight voices 74.2 %). A stock FLEX note on T2 cost 8.5 points.
+
+**Frames stop when the interrupt runs too long.** A measuring build with the limit off (`GOV_BUDGET` raised) took 4,681 / 16,829 / 21,880 / 26,576 / 30,146 / 34,231 counts of POLY work in a frame for one to six voices on the uncached twin; at six the base recorded stall 29 ("frames stopped"): audio and sequencer stopped until a power cycle.
+
+**Where the time went**, profiled with the frame timer (per render call, about 1.6 calls a frame): stock's sample fetch about 1,300-1,450 counts per voice, rising to 1,840-3,030 for extension voices whose records sat in uncached pool memory; POLY8's own code and buffers through the uncached alias about 4,000 more per voice. Running only the loops cached did not help; the buffers' uncached reads dominated. The final 0.3.1 runs the whole render from the cached alias, reads POLY8's state through absolute (uncached) addresses, and keeps the render's buffers and the extension records it renders in the data cache only within the interrupt: each touched line is pushed and invalidated (every way of its set, as the base's `modwerk_machine_flush_data`) before the interrupt returns. Measured on the uncached twin: POLY share 8.7 / 25.3 / 34.2 / 40.8 % of the CPU for one to four held voices.
+
+**The voice limit** (`pm_govern`, `pool.c`): average over about 16 frames at most 40 % of a frame (19,200 counts), any one frame at most 26,000 counts (about 197 us), and a shed when the UI has not ticked for 280 frames (about 100 ms). Release tails go first, then the oldest notes; a voice comes back after 256 calm frames with room for it.
+
+| Twin | Test | Result |
+| --- | --- | --- |
+| uncached | eight keys held 8 s, AMP and SRC pages opened meanwhile | pages changed; CPU 70.4 %; cap 3 after one shed; longest frame 23,135 counts |
+| uncached | pattern playing (eight T1 trigs), chords of three and four keys over it | CPU 63-66 %, POLY share 18 %; no stall |
+| uncached | 40 rapid presses plus a six-key chord over the playing pattern | longest frame 24,781; cap 3; masked span in the key handlers at most 1,937 counts (15 us); no stall or freeze record |
+| cached | one to eight keys | 2,495 / 4,127 / 5,353 / 6,565 / 16,110 / 16,394 / 17,118 / 19,982 counts a frame; cap 7 after one shed |
+
+**Audio is unchanged.** The same pattern recorded over USB (track 1's pair, 20-channel capture) from PLAY after silence, aligned on the first onset: two 0.3.0 takes differ by 6.2e-8 RMS; 0.3.1 against 0.3.0 by 5.3e-8 and 4.8e-8 (max 9.5e-7) on the uncached twin and 5.4e-8 (max 4.8e-7) on the cached twin, against a signal of 7.5e-4 RMS: the recorder's floor.
+
+**Host and build checks:** `pool-test.c` with ASan/UBSan (frame peak, average budget, calls within one frame, calm recovery, UI starvation); `verify-addressing.py` in the pinned toolchain (binutils 2.47): every remaining PC-relative reference resolves, and no line of the cached render names POLY8 data without `:l`. The USB package rebuilds stock-free from the reviewed recipe, recaptured for this source.
+
+Not run: the card build or the exact tester base on a unit; Part and project reload, power cycles and Keep/Undo with this version; MKI; MIDI note floods; chip worst-case cycles and complete memory bounds (waived for this exact source).
+
 ## 0.3.0: site-event subscribers (prepared 14 October 2026, not released)
 
 - **Native builds unchanged.** `polyphony.s` assembled without `MODWERK_EVENTS` (`m68k-elf-as -mcpu=54455`) gives the same `.text` bytes and relocations as 0.2.7 (SHA-256 `09e0afb64086bcfbbd2e12dce2ef4417da4ddd710ba422637d7c54bae67e457a`). The pinned shared-machine sources are untouched.

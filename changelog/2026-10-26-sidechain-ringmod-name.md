@@ -1,0 +1,1 @@
+Octatrack: the module formerly called Ringmod SC is now named Sidechain Ringmod on the site and in the docs. The unit's module list shows it as SC Ringmod, and its effect label stays RINGMOD SC, so existing projects are unaffected.

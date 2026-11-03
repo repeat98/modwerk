@@ -78,6 +78,8 @@ for (const machine of machines.filter(item => item.sdk?.platform === 'elemod')) 
   for (const moduleRoot of roots) for (const entry of (await listing(moduleRoot)).sort((a, b) => a.name.localeCompare(b.name))) {
     if (!entry.isDirectory() || entry.name.startsWith('_')) continue
     if (inputs.some(input => input.document.id === entry.name)) throw new Error('Module duplicates a dependency: ' + entry.name)
+    // A chosen build needs only the chosen modules: another's manifest must not stop it.
+    if (selection.length && !selection.includes(machine.id + ':' + entry.name)) continue
     const folder = resolve(moduleRoot, entry.name)
     const document = parseModwerkModule(await json(await resolveModuleFile(folder, 'modwerk.module.json')), machines)
     if (document.machine !== machine.id || document.id !== entry.name || document.exclusive) throw new Error('Expected a linkable module in its machine folder')
@@ -98,10 +100,12 @@ for (const machine of machines.filter(item => item.sdk?.platform === 'elemod')) 
       const extraFlags = [...build.cflags, ...port.cflags]
       validateCompilerFlags(extraFlags)
       const inputs = []
+      // The machine's shared SDK headers (the Rytm's elekloader store.h), after the module's own src/.
+      const includes = ['-I', resolve(folder, 'src'), '-I', resolve(root, 'sdk/machines', machine.id, 'include')]
       for (const [index, source] of build.sources.entries()) {
         const path = await resolveModuleFile(folder, source), object = resolve(work, index + '.o')
-        if (source.endsWith('.c')) run('gcc', [...cflags, ...extraFlags, '-I', resolve(folder, 'src'), '-c', path, '-o', object])
-        else if (source.endsWith('.S')) run('gcc', [...cflags, ...extraFlags, '-Wa,-mcpu=54455', ...defines.filter((_, i) => i % 2).map(define => '-Wa,--defsym,' + define), '-I', resolve(folder, 'src'), '-c', path, '-o', object])
+        if (source.endsWith('.c')) run('gcc', [...cflags, ...extraFlags, ...includes, '-c', path, '-o', object])
+        else if (source.endsWith('.S')) run('gcc', [...cflags, ...extraFlags, '-Wa,-mcpu=54455', ...defines.filter((_, i) => i % 2).map(define => '-Wa,--defsym,' + define), ...includes, '-c', path, '-o', object])
         else run('as', ['-mcpu=54455', '-I', resolve(folder, 'src'), ...defines, '-o', object, path])
         inputs.push(object)
       }
@@ -126,7 +130,7 @@ for (const machine of machines.filter(item => item.sdk?.platform === 'elemod')) 
       const target = { device: device.key, product: device.name, os: release, syx_sha256: identity.syxSha256, section3_sha256: identity.mainSha256, section3_len: identity.mainLength }
       const module = elfToElemod(await readFile(object), document, build, target)
       const sites = port.sites
-      for (const site of sites) if ('target' in site && !Object.hasOwn(module.symbols, site.target) && !module.imports.includes(site.target)) module.imports.push(site.target)
+      for (const target of sites.flatMap(site => 'target' in site ? [site.target] : (site.relocs ?? []).map(reloc => reloc.target))) if (!Object.hasOwn(module.symbols, target) && !module.imports.includes(target)) module.imports.push(target)
       module.imports.sort()
       parseElemod(module)
       const plan = { schemaVersion: 1, machine: machine.id, id: document.id, version: document.version, release, module, sites, derive: build.derive,

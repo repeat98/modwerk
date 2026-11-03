@@ -1,0 +1,82 @@
+{
+  "schemaVersion": 1,
+  "reportedOn": "2026-10-22",
+  "source": "Iced-Cream's own tests on their unit, in builds with all of rytm2_mods' OS 1.74 ports",
+  "reporter": "Iced-Cream",
+  "statement": "Hardware, OS 1.74: FZ74, the released core-ar2 0.3 with Filter Hz alone, passed all five steps on 2026-10-22: boot, FRQ fully left 13.8Hz, fully right 21.1kHz and one step back 19.9kHz, RES a plain number, and a minute of playback while turning FRQ, with samples and delay and reverb sends on all tracks, with no freezes or dropouts. Earlier, in C3A4 (core-ar2 0.3 before #153, all eleven rytm2_mods v1.2 ports, 2026-10-20) each mod's own test passed, and in R8T2 (2026-10-18) the same readings were seen.",
+  "status": "hardware-tested-author-reported",
+  "scope": "filter-hz 1.0 (rytm2_mods' OS 1.74 port): alone with the released core-ar2 0.3 (FZ74), and beside other rytm2_mods ports (C3A4, R8T2).",
+  "modules": [
+    {
+      "id": "filter-hz",
+      "version": "1.0"
+    },
+    {
+      "id": "core",
+      "version": "0.3"
+    }
+  ],
+  "builds": [
+    {
+      "label": "FZ74",
+      "testedOn": "2026-10-22",
+      "os": "1.74",
+      "syxSha256": "62c256261d643752c9e8ffb357aada048af75a9b03c1f1aae649287e4bae7745",
+      "mainSha256": "2d8aead1932dd07003c75b233c4c93291d144c4eb5d6a8a11f1fecece1ea948d",
+      "packageSha256": {
+        "filter-hz-1.0-os1.74.elemod": "25055fc7662efd8b1035f7840ccb5c02087ca384ae0801917560c9f5fe16512a",
+        "core-ar2-0.3.elemod": "6b97dfb3d65ca7d9d292e4ed61dd845e43b2d4f6dc71e7e7d235f27abc4b3e58"
+      },
+      "content": "The released core-ar2 0.3 (elekloader core-ar2-v0.3, with #153) and rytm2_mods v1.2's Filter Hz, linked by Modwerk's linker on stock 1.74. Modwerk's own 1.2.0 package links to the same main OS (source-parity.json).",
+      "flashedWith": "Elektron Transfer; stock 1.74 restored afterwards",
+      "results": [
+        "Boots to the main screen; sounds play as on stock.",
+        "FRQ fully left: 13.8Hz.",
+        "FRQ fully right: 21.1kHz; one step back: 19.9kHz.",
+        "RES still shows a plain number.",
+        "A minute of playback while turning FRQ, with samples and delay and reverb sends on all tracks: no freezes or dropouts (heard over Overbridge)."
+      ]
+    },
+    {
+      "label": "C3A4",
+      "testedOn": "2026-10-20",
+      "os": "1.74",
+      "syxSha256": "04d987ced36850eef5eb5cd1215d411edf621a5af94f980525ab561c9108f951",
+      "mainSha256": "fc8714760c023541299b261529887f62e100c5d415626d728d3b53202afcd529",
+      "packageSha256": {
+        "filter-hz-1.0-os1.74.elemod": "25055fc7662efd8b1035f7840ccb5c02087ca384ae0801917560c9f5fe16512a",
+        "core-ar2-0.3.elemod": "fe066532a7cbac82ed48278d49456523bbc14dab6cbe6c0a9006c2bee9c50373"
+      },
+      "content": "core-ar2 0.3 as built before elekloader #153 (velocity-route interrupt masking), and rytm2_mods v1.2's eleven OS 1.74 release objects. Relinking those files on stock 1.74 gives this main OS byte for byte.",
+      "results": [
+        "Each mod's own test passed, including Filter Hz's (FRQ popup in Hz and kHz)."
+      ]
+    },
+    {
+      "label": "R8T2",
+      "testedOn": "2026-10-18",
+      "os": "1.74",
+      "syxSha256": "94c8b8c4f3f537132b7ee689ad1221591186f14dc605a420cdefe3df804e3c39",
+      "content": "core-ar2 0.1 ported to 1.74 and eight rytm2_mods ports, with rytm2_mods v1.1's Filter Hz release object. Its source is v1.2's; the shared include has two more symbol names in v1.2.",
+      "results": [
+        "FRQ fully left: 13.8Hz.",
+        "FRQ fully right: 21.1kHz; one step back: 19.9kHz.",
+        "RES still shows a plain number."
+      ]
+    }
+  ],
+  "coverageDetails": {
+    "deviceDetails": "Analog Rytm MKII",
+    "testDate": "2026-10-22",
+    "duration": null,
+    "durationMinutes": null,
+    "individualTestResults": [
+      "FZ74 (alone, released core): boot, 13.8Hz / 21.1kHz / 19.9kHz, RES plain, a minute of playback with samples and delay/reverb sends on all tracks, no freezes or dropouts",
+      "Filter Hz's own test passed with core-ar2 0.3 and all eleven ports (C3A4)",
+      "FRQ popup reads 13.8Hz, 21.1kHz and 19.9kHz at 0, 127 and 126 (R8T2)"
+    ]
+  },
+  "contextNote": "Main OS hashes are the builds', not read back from the device. FZ74's main OS is the one Modwerk's 1.2.0 build gives. C3A4's core predates #153.",
+  "modwerkPipelineQualified": false,
+  "authorGithub": "Iced-Cream"
+}

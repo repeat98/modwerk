@@ -14,8 +14,8 @@
           "path": "vendor/elekloader/kit/LICENSE"
         },
         {
-          "url": "https://github.com/irpina/elekloader/tree/7b5b5b8ea969eb23f25a68e5c245294f3085bf90/js",
-          "revision": "7b5b5b8ea969eb23f25a68e5c245294f3085bf90"
+          "url": "https://github.com/irpina/elekloader/tree/3b31ef3c0e43c810e3acd0be6257e2484b20fc40/js",
+          "revision": "3b31ef3c0e43c810e3acd0be6257e2484b20fc40"
         }
       ],
       "usedIn": [
@@ -81,6 +81,25 @@
         "sdk/imports/packages/digimono/digimono-0.13.2-experimental-os1.54.elemod",
         "sdk/imports/packages/digimono/digimono-0.13.3-experimental-os1.53.elemod",
         "sdk/imports/packages/digimono/digimono-0.13.3-experimental-os1.54.elemod"
+      ]
+    },
+    {
+      "id": "midistomp",
+      "name": "MIDISTOMP (Zoom MultiStomp firmware patches and their sources)",
+      "spdx": "MIT",
+      "noticeFile": "midistomp.txt",
+      "sources": [
+        {
+          "path": "vendor/midistomp/LICENSE"
+        },
+        {
+          "url": "https://github.com/matujuice/zoom-ms-midistomp/tree/c8d3e1ba04e71bbae7919e256f2b2f611fca409a",
+          "revision": "c8d3e1ba04e71bbae7919e256f2b2f611fca409a"
+        }
+      ],
+      "usedIn": [
+        "vendor/midistomp",
+        "Zoom MultiStomp browser builder (src/engine/zoom)"
       ]
     }
   ]

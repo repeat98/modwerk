@@ -4,6 +4,7 @@
     "id": "octatrack",
     "order": 10,
     "name": "Octatrack",
+    "family": "elektron",
     "status": "available",
     "summary": "Effects, machines, MIDI and USB modules built on octabam.",
     "steps": {
@@ -63,6 +64,7 @@
     "id": "digitakt",
     "order": 20,
     "name": "Digitakt",
+    "family": "elektron",
     "status": "preview",
     "summary": "New SRC machines, a slice editor and system diagnostics.",
     "steps": {
@@ -131,7 +133,7 @@
           "name": "Shared mod memory",
           "unit": "bytes",
           "value": 131072,
-          "note": "DDR 0x47BE0000–0x47C00000 below the audio DMA ring, shared by the core and every mod (public research: elekloader, digikit)."
+          "note": "DDR 0x47BE0000–0x47C00000 below the audio DMA ring, shared by the core and every mod (public research: elekloader)."
         },
         {
           "name": "Fast SRAM for code",
@@ -142,8 +144,8 @@
         {
           "name": "SRC machine slots",
           "unit": "slots",
-          "value": 4,
-          "note": "Machine ids 4–7, added by the core for new SRC machines."
+          "value": 124,
+          "note": "Machine ids 4–127, added by the core for new SRC machines."
         }
       ]
     }
@@ -153,6 +155,7 @@
     "id": "digitone",
     "order": 30,
     "name": "Digitone",
+    "family": "elektron",
     "status": "preview",
     "summary": "Parameter slots, mod pages, project data and a Mod Menu for FM mods.",
     "steps": {
@@ -217,7 +220,7 @@
           "name": "Shared mod memory",
           "unit": "bytes",
           "value": 131072,
-          "note": "DDR 0x47BE0000–0x47C00000 below the audio DMA ring, shared by the core and every mod (public research: elekloader, digikit)."
+          "note": "DDR 0x47BE0000–0x47C00000 below the audio DMA ring, shared by the core and every mod (public research: elekloader)."
         },
         {
           "name": "Parameter slots",
@@ -239,6 +242,7 @@
     "id": "digitakt-ii",
     "order": 40,
     "name": "Digitakt II",
+    "family": "elektron",
     "status": "research",
     "summary": "Experimental OS 1.17 support exists in elekloader, with a core and released perform mods. Modwerk integration and qualification are not complete.",
     "steps": {
@@ -270,19 +274,19 @@
     },
     "research": [
       {
-        "label": "digikit",
-        "url": "https://github.com/m-dwyer/digikit",
-        "note": "Emulator for the control processor that boots the real OS and shows its screen, plus analysis tools for the audio processor and the sealed OS file."
-      },
-      {
         "label": "elekloader DTII core and OS 1.17 tests",
         "url": "https://github.com/irpina/elekloader/tree/3acac10/mods/core-dt2",
-        "note": "Experimental OS 1.17 profile, sealed firmware writer and shared-event core. Its DTII tests verify byte-exact stock rebuilding, seal checks and linked builds. Core builds boot in Digikit; this is not Modwerk hardware qualification."
+        "note": "Experimental OS 1.17 profile, sealed firmware writer and shared-event core. Its DTII tests verify byte-exact stock rebuilding, seal checks and linked builds. Core builds boot in an emulator; this is not Modwerk hardware qualification."
       },
       {
         "label": "toonst's Digitakt II perform mods 1.0",
         "url": "https://github.com/toonst/digitakt2-perform/releases/tag/v1.0",
         "note": "Released core, perform-direct and perform-levels packages for OS 1.17. The author reports individual hardware results, including an earlier perform-direct version; the combined build is not hardware-tested. Modwerk listings remain to be added."
+      },
+      {
+        "label": "core-dt2 1.1 source (toonst's elekloader fork)",
+        "url": "https://github.com/toonst/elekloader/tree/3d7c2e3c955a73ad8c8cc9ad6daf83c1a5993f08/mods/core-dt2",
+        "note": "Adds frame values, key LEDs and project and kit data to core 1.0's events; its author reports emulator runs only. Copied unchanged into sdk/machines/digitakt-ii/elekloader/ as the base's start; the site builds core 1.0 until the base ships."
       }
     ],
     "sdk": {
@@ -328,13 +332,14 @@
     "id": "digitone-ii",
     "order": 50,
     "name": "Digitone II",
+    "family": "elektron",
     "status": "research",
-    "summary": "Shares the Digitakt II platform and its sealed OS file.",
+    "summary": "Shares the Digitakt II platform and its sealed OS file. OS 1.12 rebuilds byte for byte, and a draft core with the Digitakt II's six events runs in the emulator.",
     "steps": {
-      "format": "started",
-      "rebuild": "open",
+      "format": "done",
+      "rebuild": "done",
       "boot": "started",
-      "core": "open",
+      "core": "started",
       "mods": "open"
     },
     "art": {
@@ -342,11 +347,36 @@
       "encoders": 8,
       "trigs": 16
     },
+    "firmware": {
+      "releases": [
+        {
+          "version": "1.12",
+          "files": [
+            {
+              "name": "Digitone_II_OS1.12.syx",
+              "sha256": "7e5b8a733d4ab1fdf7e5d22757f7d8eddaa3cbf71d0858874a791844c02ceb35"
+            }
+          ]
+        }
+      ],
+      "flash": "Normal OS updates use Elektron Transfer with the owner's own stock OS file. Modwerk has no Digitone II build path yet and downloads stay disabled.",
+      "recovery": "Hold FUNC while powering on, choose TRIG 4 (OS UPGRADE), then send the owner's stock .syx over MIDI DIN; recovery mode does not use USB. Not yet tried on a Digitone II."
+    },
     "research": [
       {
-        "label": "digikit",
-        "url": "https://github.com/m-dwyer/digikit",
-        "note": "Emulator for the control processor that boots the real OS and shows its screen, plus analysis tools for the audio processor and the sealed OS file."
+        "label": "Digitone II OS research",
+        "url": "https://github.com/repeat98/modwerk/blob/main/docs/DIGITONE_II_OS_RESEARCH.md",
+        "note": "OS 1.12: container, seal, staging, reset memory map, free DDR and SRAM, the seven core sites and the emulator checks. Stock-free: hashes and addresses only."
+      },
+      {
+        "label": "elekloader DTII core",
+        "url": "https://github.com/irpina/elekloader/tree/3acac10/mods/core-dt2",
+        "note": "The Digitakt II core whose events, sources and site patterns the Digitone II draft core reuses with OS 1.12's addresses."
+      },
+      {
+        "label": "core-dn2 0.3 (toonst's elekloader fork)",
+        "url": "https://github.com/toonst/elekloader/tree/3d7c2e3c955a73ad8c8cc9ad6daf83c1a5993f08/mods/core-dn2",
+        "note": "The Digitone II core with the Digitakt II 1.1 additions, an input bridge, SysEx observers and a SHARC bridge. Its README reports unit runs of the UI events; 0.3's additions ran in an emulator only. Not copied into Modwerk yet."
       }
     ]
   },
@@ -355,6 +385,7 @@
     "id": "syntakt",
     "order": 60,
     "name": "Syntakt",
+    "family": "elektron",
     "status": "research",
     "summary": "OS 1.40, 1.40A and 1.42 documented; 1.40A and 1.42 rebuilt byte-identical; modified builds boot on a unit. Core started: a boot probe links and verifies locally; no SDRAM for mods yet.",
     "steps": {
@@ -436,10 +467,11 @@
     "id": "tonverk",
     "order": 70,
     "name": "Tonverk",
-    "status": "open",
-    "summary": "Multitimbral sampler. No public firmware research yet.",
+    "family": "elektron",
+    "status": "research",
+    "summary": "Multitimbral sampler. OS 1.4.1 update container documented: SWUpdate .swu, encrypted payloads, signed boot chain, strong stock recovery. No mod route yet.",
     "steps": {
-      "format": "open",
+      "format": "started",
       "rebuild": "open",
       "boot": "open",
       "core": "open",
@@ -449,21 +481,44 @@
       "body": "wide",
       "encoders": 8,
       "trigs": 16
-    }
+    },
+    "research": [
+      {
+        "label": "Elektron Tonverk release notes",
+        "url": "https://www.elektron.se/release-notes/tonverk-os-release-notes",
+        "note": "OS 1.0.0-1.4.1 history; .swu updates from the SD card root through USB disk mode and SETTINGS > SYSTEM > OS UPGRADE; downgrading unsupported."
+      },
+      {
+        "label": "Elektron Tonverk downloads",
+        "url": "https://www.elektron.se/support-downloads/tonverk",
+        "note": "The OS 1.4.1 zip and manuals this research inspected; identities are recorded in docs/TONVERK_OS_RESEARCH.md."
+      },
+      {
+        "label": "SWUpdate",
+        "url": "https://github.com/sbabic/swupdate",
+        "note": "The .swu container convention the Tonverk update follows: cpio archive, sw-description manifest, preinst/postinst hooks, signatures and encrypted artifacts."
+      },
+      {
+        "label": "U-Boot FIT documentation",
+        "url": "https://docs.u-boot.org/en/latest/usage/fit/index.html",
+        "note": "The FIT image and signed boot-script format the readable Tonverk bootscript uses (mkimage 2025.04, sha256,rsa3072)."
+      }
+    ]
   },
   {
     "schemaVersion": 1,
     "id": "analog-rytm-mkii",
     "order": 80,
     "name": "Analog Rytm",
-    "status": "research",
-    "summary": "OS 1.73 and 1.74 formats rebuilt byte-identical; modified 1.73 and a from-source 1.74 OS boot on hardware; stock recovers both over MIDI DIN; an elemod core runs on 1.73 hardware.",
+    "family": "elektron",
+    "status": "preview",
+    "summary": "OS 1.74 rebuilt byte-identical; modified OSes boot on hardware; stock recovers over MIDI DIN; core-ar2 0.3 with mod storage runs on units. Filter Hz is the first library module.",
     "steps": {
       "format": "done",
       "rebuild": "done",
       "boot": "done",
       "core": "done",
-      "mods": "open"
+      "mods": "done"
     },
     "art": {
       "body": "wide",
@@ -477,11 +532,11 @@
     "firmware": {
       "releases": [
         {
-          "version": "1.73",
+          "version": "1.74",
           "files": [
             {
-              "name": "Analog-Rytm_MKII_OS1.73.syx",
-              "sha256": "8ad671087ec30433d5407c7380d2396e0915ab931c5d3dd18a78bf284d3d1e52"
+              "name": "Analog-Rytm_MKII_OS1.74.syx",
+              "sha256": "cb0f99d620edde994fb860c0e79cc2464e427d06882828cfdfb00fc53700e123"
             }
           ]
         }
@@ -537,10 +592,10 @@
       "catalog": null,
       "guide": "sdk/machines/analog-rytm-mkii/README.md",
       "core": {
-        "version": "0.1",
+        "version": "0.7",
         "path": "sdk/analog-rytm-mkii/core-profile"
       },
-      "toolchain": "m68k-linux-gnu (or m68k-elf) GCC and binutils for ColdFire, and elekloader's builder and core-ar2 0.1; firmware builds start from the owner's exact OS 1.73 .syx.",
+      "toolchain": "m68k-linux-gnu (or m68k-elf) GCC and binutils for ColdFire, and elekloader's builder: core-ar2 0.7 from the owner's exact OS 1.74 .syx.",
       "budgets": [
         {
           "name": "Shared mod memory",
@@ -551,8 +606,8 @@
         {
           "name": "Core image",
           "unit": "bytes",
-          "value": 476,
-          "note": "Core 0.1 build: 460 bytes .run plus 16 bytes .bss in the shared area, and an 88-byte .boot copier; the link check measures each selected module set."
+          "value": 12060,
+          "note": "Core 0.7 build (core-ar2-v0.7 pre-release): 10,692 bytes .run plus 1,368 bytes .bss in the shared area, and a 94-byte .boot copier (core 0.3: 7,540, 36 and 88); the link check measures each selected module set."
         }
       ]
     }
@@ -562,6 +617,7 @@
     "id": "analog-rytm-mki",
     "order": 90,
     "name": "Analog Rytm",
+    "family": "elektron",
     "status": "open",
     "summary": "The original Rytm. No public firmware research yet.",
     "steps": {
@@ -586,13 +642,14 @@
     "id": "analog-four-mkii",
     "order": 100,
     "name": "Analog Four",
-    "status": "open",
-    "summary": "Four-voice analog synthesizer. No public firmware research yet.",
+    "family": "elektron",
+    "status": "research",
+    "summary": "OS 1.56 rebuilt byte-identical; modified OSes boot on hardware; stock recovers over MIDI DIN; core-a4 0.2 (the Rytm's core, with mod storage and parameter pages) runs on a unit.",
     "steps": {
-      "format": "open",
-      "rebuild": "open",
-      "boot": "open",
-      "core": "open",
+      "format": "done",
+      "rebuild": "done",
+      "boot": "done",
+      "core": "done",
       "mods": "open"
     },
     "art": {
@@ -602,13 +659,76 @@
     },
     "variants": [
       "MKII"
-    ]
+    ],
+    "firmware": {
+      "releases": [
+        {
+          "version": "1.56",
+          "files": [
+            {
+              "name": "Analog-Four_MKII_OS1.56.syx",
+              "sha256": "5aea489db3e747547f71d5e08a2d20253149fe6258defad60306402d2fc23cb5"
+            }
+          ]
+        }
+      ],
+      "flash": "Elektron Transfer over USB: set MIDI IN and OUT to the device, drop the .syx on and press YES on the device. It restarts by itself.",
+      "recovery": "Recovery mode is MIDI DIN only, as on the Analog Rytm MKII: hold FUNC at power-on for the STARTUP menu, press TRIG 4 (OS UPGRADE) and send the owner's stock .syx over MIDI DIN (a USB-MIDI interface or a serial adapter at 31250 baud), not USB."
+    },
+    "research": [
+      {
+        "label": "elektron-firmware-tool",
+        "url": "https://github.com/mischa85/elektron-firmware-tool",
+        "note": "Container and SysEx transport. OS 1.56 unpacks to five sections (meta, bootstrap, FPGA, packed main OS, ARM) with every checksum valid, and an unchanged repack is byte-identical to the stock file."
+      },
+      {
+        "label": "elekloader analog-four-mk2",
+        "url": "https://github.com/irpina/elekloader/blob/main/elekloader/devices/analog_four_mk2.py",
+        "note": "Device profile for OS 1.56: the Analog Rytm MKII's platform, OS entry and bootstrap loader matched instruction for instruction; the writer rebuilds the stock file byte for byte; flash limit, no protected range and the mods' DDR area evidenced; DIN recovery checked on a unit. No firmware hosted."
+      },
+      {
+        "label": "elekloader core-a4",
+        "url": "https://github.com/irpina/elekloader/tree/main/mods/core-a4",
+        "note": "core-ar2 on OS 1.56 (irpina/elekloader#180). On a unit: HC56 ran every event; SC56 kept mod storage through saves, loads and power cycles; CA56 left the mods' area intact; PA56 (core 0.2) passed the parameter page checks; stock 1.56 restored it. No firmware hosted."
+      },
+      {
+        "label": "analog-emu",
+        "url": "https://github.com/Iced-Cream/analog-emu",
+        "note": "rytm-emu fork that boots stock Analog Four MKII OS 1.56 to its main UI, headless or in a window, with the analog voices stubbed; used for the core's emulator checks before each hardware run. No firmware hosted."
+      }
+    ],
+    "sdk": {
+      "platform": "elemod",
+      "modules": "sdk/analog-four-mkii/modules",
+      "catalog": null,
+      "guide": "sdk/machines/analog-four-mkii/README.md",
+      "core": {
+        "version": "0.2",
+        "path": "sdk/analog-four-mkii/core-profile"
+      },
+      "toolchain": "m68k-linux-gnu (or m68k-elf) GCC and binutils for ColdFire, and elekloader's builder: core-a4 0.2 from the owner's exact OS 1.56 .syx.",
+      "budgets": [
+        {
+          "name": "Shared mod memory",
+          "unit": "bytes",
+          "value": 131072,
+          "note": "DDR 0x47BE0000–0x47C00000, shared by the core and every mod; a fill of the area and its neighbouring gaps read back intact on a unit through normal use and a power cycle (elekloader ddr-canary-a4)."
+        },
+        {
+          "name": "Core image",
+          "unit": "bytes",
+          "value": 8956,
+          "note": "Core 0.2 build (elekloader f02be99): 8,764 bytes .run plus 192 bytes .bss in the shared area, and an 88-byte .boot copier; the link check measures each selected module set."
+        }
+      ]
+    }
   },
   {
     "schemaVersion": 1,
     "id": "analog-four-mki",
     "order": 110,
     "name": "Analog Four",
+    "family": "elektron",
     "status": "open",
     "summary": "The original Four. No public firmware research yet.",
     "steps": {
@@ -632,6 +752,7 @@
     "id": "analog-keys",
     "order": 120,
     "name": "Analog Keys",
+    "family": "elektron",
     "status": "research",
     "summary": "OS 1.56 is an ELE2 image whose MAIN OS section rebuilds byte-identically. A modified OS boots: ours in rytm-emu, and a third party's on A4/Keys MK1 hardware, 2026-10-17.",
     "steps": {
@@ -684,6 +805,7 @@
     "id": "analog-heat",
     "order": 130,
     "name": "Analog Heat",
+    "family": "elektron",
     "status": "open",
     "summary": "Stereo analog sound processor. No public firmware research yet.",
     "steps": {
@@ -710,6 +832,7 @@
     "id": "model-samples",
     "order": 140,
     "name": "Model:Samples",
+    "family": "elektron",
     "status": "open",
     "summary": "Six-track sample groovebox. No public firmware research yet.",
     "steps": {
@@ -732,6 +855,7 @@
     "id": "model-cycles",
     "order": 150,
     "name": "Model:Cycles",
+    "family": "elektron",
     "status": "research",
     "summary": "Six-track FM groovebox. Its OS file is documented and rebuilt byte for byte, and modified builds boot on units. No shared core yet.",
     "steps": {
@@ -776,6 +900,7 @@
     "id": "machinedrum",
     "order": 160,
     "name": "Machinedrum",
+    "family": "elektron",
     "status": "open",
     "summary": "Classic digital drum machine. No public firmware research yet.",
     "steps": {
@@ -796,6 +921,7 @@
     "id": "monomachine",
     "order": 170,
     "name": "Monomachine",
+    "family": "elektron",
     "status": "open",
     "summary": "Classic six-track synthesizer. No public firmware research yet.",
     "steps": {
@@ -810,5 +936,217 @@
       "encoders": 8,
       "trigs": 16
     }
+  },
+  {
+    "schemaVersion": 1,
+    "id": "zoom-ms-70cdr",
+    "order": 200,
+    "name": "MS-70CDR",
+    "family": "zoom",
+    "status": "research",
+    "summary": "Main target of ZoomMultistompZDL: about 30 custom effects, NAM and cab loaders and a patch editor, tested on firmware 2.10. Modwerk does not list ZDL effects yet.",
+    "steps": {
+      "format": "done",
+      "load": "done",
+      "mods": "open"
+    },
+    "art": {
+      "body": "pedal",
+      "encoders": 0,
+      "trigs": 0,
+      "knobs": 3
+    },
+    "firmware": {
+      "releases": [
+        {
+          "version": "2.10",
+          "files": []
+        }
+      ],
+      "flash": "Effects are installed with Zoom Effect Manager 2.3.3 or later over USB; the OS is not modified.",
+      "recovery": "Remove the effect in Effect Manager. If a bad effect freezes the pedal at boot, run All Initialize (hold the leftmost knob while powering on), then remove the effect."
+    },
+    "research": [
+      {
+        "label": "ZoomMultistompZDL",
+        "url": "https://github.com/themanro/ZoomMultistompZDL",
+        "note": "MIT. ZDL linker, ABI notes, DSP safety rules, effects, NAM/cab template loaders, Web MIDI patch editor, Ziddle emulator tests."
+      },
+      {
+        "label": "repeat98/ZoomMultistompZDL",
+        "url": "https://github.com/repeat98/ZoomMultistompZDL",
+        "note": "The upstream reverse-engineered toolchain the project builds on."
+      }
+    ]
+  },
+  {
+    "schemaVersion": 1,
+    "id": "zoom-ms-50g",
+    "order": 210,
+    "name": "MS-50G",
+    "family": "zoom",
+    "status": "research",
+    "summary": "Same ZDL format. NAM and cab effects confirmed by a user on firmware 3.10; the 22-effect pack is unconfirmed.",
+    "steps": {
+      "format": "done",
+      "load": "done",
+      "mods": "open"
+    },
+    "art": {
+      "body": "pedal",
+      "encoders": 0,
+      "trigs": 0,
+      "knobs": 3
+    },
+    "firmware": {
+      "releases": [
+        {
+          "version": "3.10",
+          "files": []
+        }
+      ],
+      "flash": "Effects are installed with Zoom Effect Manager 2.3.3 or later over USB; the OS is not modified.",
+      "recovery": "Remove the effect in Effect Manager. If a bad effect freezes the pedal at boot, run All Initialize (hold the leftmost knob while powering on), then remove the effect."
+    },
+    "research": [
+      {
+        "label": "ZoomMultistompZDL",
+        "url": "https://github.com/themanro/ZoomMultistompZDL",
+        "note": "MIT. ZDL linker, ABI notes, DSP safety rules, effects, NAM/cab template loaders, Web MIDI patch editor, Ziddle emulator tests."
+      },
+      {
+        "label": "repeat98/ZoomMultistompZDL",
+        "url": "https://github.com/repeat98/ZoomMultistompZDL",
+        "note": "The upstream reverse-engineered toolchain the project builds on."
+      },
+      {
+        "label": "Issue #5",
+        "url": "https://github.com/themanro/ZoomMultistompZDL/issues/5",
+        "note": "MS-50G 3.10: NAM full rate and Eco, CabIR and patch editor writes reported working."
+      }
+    ]
+  },
+  {
+    "schemaVersion": 1,
+    "id": "zoom-ms-60b",
+    "order": 220,
+    "name": "MS-60B",
+    "family": "zoom",
+    "status": "research",
+    "summary": "Same ZDL family; custom effects unconfirmed on stock MS-60B firmware.",
+    "steps": {
+      "format": "done",
+      "load": "open",
+      "mods": "open"
+    },
+    "art": {
+      "body": "pedal",
+      "encoders": 0,
+      "trigs": 0,
+      "knobs": 3
+    },
+    "research": [
+      {
+        "label": "ZoomMultistompZDL",
+        "url": "https://github.com/themanro/ZoomMultistompZDL",
+        "note": "MIT. ZDL linker, ABI notes, DSP safety rules, effects, NAM/cab template loaders, Web MIDI patch editor, Ziddle emulator tests."
+      },
+      {
+        "label": "repeat98/ZoomMultistompZDL",
+        "url": "https://github.com/repeat98/ZoomMultistompZDL",
+        "note": "The upstream reverse-engineered toolchain the project builds on."
+      }
+    ]
+  },
+  {
+    "schemaVersion": 1,
+    "id": "zoom-g1on",
+    "order": 230,
+    "name": "G1on series",
+    "family": "zoom",
+    "status": "research",
+    "summary": "Same ZDL family. NAM loader effects reported working on a G1Xon 1.21; other models unconfirmed.",
+    "steps": {
+      "format": "done",
+      "load": "started",
+      "mods": "open"
+    },
+    "art": {
+      "body": "floor",
+      "encoders": 0,
+      "trigs": 0,
+      "knobs": 1
+    },
+    "variants": [
+      "G1on",
+      "G1Xon",
+      "B1on",
+      "B1Xon"
+    ],
+    "firmware": {
+      "releases": [
+        {
+          "version": "1.21",
+          "files": []
+        }
+      ],
+      "flash": "Effects are installed with Zoom Effect Manager 2.3.3 or later over USB; the OS is not modified.",
+      "recovery": "Remove the effect in Effect Manager. If a bad effect freezes the pedal at boot, run All Initialize (hold the leftmost knob while powering on), then remove the effect."
+    },
+    "research": [
+      {
+        "label": "ZoomMultistompZDL",
+        "url": "https://github.com/themanro/ZoomMultistompZDL",
+        "note": "MIT. ZDL linker, ABI notes, DSP safety rules, effects, NAM/cab template loaders, Web MIDI patch editor, Ziddle emulator tests."
+      },
+      {
+        "label": "repeat98/ZoomMultistompZDL",
+        "url": "https://github.com/repeat98/ZoomMultistompZDL",
+        "note": "The upstream reverse-engineered toolchain the project builds on."
+      },
+      {
+        "label": "Issue #6",
+        "url": "https://github.com/themanro/ZoomMultistompZDL/issues/6",
+        "note": "G1Xon 1.21: NAM loader effects work; the patch editor reads banks only up to E."
+      }
+    ]
+  },
+  {
+    "schemaVersion": 1,
+    "id": "lxr-02",
+    "order": 300,
+    "name": "LXR-02",
+    "family": "erica",
+    "status": "research",
+    "summary": "Six-voice drum synthesizer. Erica Synths published its firmware and bootloader source under GPL-3.0 in October 2026. Modwerk has no base or mods for it yet.",
+    "steps": {
+      "source": "started",
+      "boot": "open",
+      "core": "open",
+      "mods": "open"
+    },
+    "art": {
+      "body": "compact",
+      "encoders": 4,
+      "trigs": 16,
+      "fader": true
+    },
+    "research": [
+      {
+        "label": "erica-synths/lxr-desktop-app",
+        "url": "https://github.com/erica-synths/lxr-desktop-app",
+        "note": "GPL-3.0-only. The STM32F765 firmware: voices, FX, sequencer, MIDI, SD storage and UI, with CMake, Arm GCC and the SD-card update image tool."
+      },
+      {
+        "label": "erica-synths/lxr-desktop-bootloader",
+        "url": "https://github.com/erica-synths/lxr-desktop-bootloader",
+        "note": "GPL-3.0-only. The SD-card updater in flash sector 0, which firmware updates never change."
+      },
+      {
+        "label": "Erica Synths: LXR-02 goes open source",
+        "url": "https://www.ericasynths.lv/news/post/lxropen/",
+        "note": "The release announcement. Erica Synths supports only its own firmware; modified firmware is installed at the owner's risk."
+      }
+    ]
   }
 ]

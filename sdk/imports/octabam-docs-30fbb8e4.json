@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "repository": "https://github.com/sambanks/octabam",
+  "revision": "30fbb8e404cdc0ba59b26f34cdfb90dad588687b",
+  "kind": "docs-backport",
+  "modules": [],
+  "files": [
+    {
+      "path": "docs/TRAPS.md",
+      "sourcePath": "docs/contributing/TRAPS.md",
+      "sourceSha256": "3adf36180e4dee3a7f2d3d43b10fbd7d7ebfb6c47bf79ca8995c99f0df14469b",
+      "vendoredSha256": "3adf36180e4dee3a7f2d3d43b10fbd7d7ebfb6c47bf79ca8995c99f0df14469b"
+    },
+    {
+      "path": "docs/FAILURE_MODES.md",
+      "sourcePath": "docs/contributing/FAILURE_MODES.md",
+      "sourceSha256": "e88ccc2d85e9080832dbbf450b3896d12637b4fcc37fae51fe7e20a38fe6e091",
+      "vendoredSha256": "e88ccc2d85e9080832dbbf450b3896d12637b4fcc37fae51fe7e20a38fe6e091"
+    },
+    {
+      "path": "docs/HARDWARE_MATRIX.md",
+      "sourcePath": "docs/contributing/HARDWARE_MATRIX.md",
+      "sourceSha256": "484d98d31fbf227f2c834fff4133d607e6a5851c4d779092959ffad8ea960f6f",
+      "vendoredSha256": "484d98d31fbf227f2c834fff4133d607e6a5851c4d779092959ffad8ea960f6f"
+    },
+    {
+      "path": "docs/MIDI_TRACKS.md",
+      "sourcePath": "docs/firmware/MIDI_TRACKS.md",
+      "sourceSha256": "114f1c682330cc8e81486e6e14632433ac99d20ff3a5bbf4a4ed0a6bc8d2679b",
+      "vendoredSha256": "114f1c682330cc8e81486e6e14632433ac99d20ff3a5bbf4a4ed0a6bc8d2679b"
+    }
+  ],
+  "localAdaptations": [
+    "None to the content: the four files are upstream byte for byte. MIDI_TRACKS.md sits beside TRAPS.md rather than under docs/firmware/, which the repository ignores to keep firmware out of Git. Their relative links name upstream's own tree. sdk/octabam/docs/remixer/FAILURE_MODES.md stays Modwerk's own register (it carries Modwerk entries since 8 October 2026) and points to this copy."
+  ],
+  "review": [
+    "Stock-free scan against the original 1.40C MAIN OS (local, nothing written): no hex string of 8 bytes or more in any of the four files occurs in stock; three 4-byte matches in FAILURE_MODES.md are an address, the value 1 and an exception-screen PC.",
+    "No objdump listing in any file; the code blocks are one DSP assembler line (TRAPS.md) and tool command lines (HARDWARE_MATRIX.md). MIDI_TRACKS.md describes record layouts and addresses and quotes two single stock instructions by address, as Modwerk's own trap notes do."
+  ],
+  "limitations": [
+    "Documentation only: no code, build input or module source changes. Hardware results in these files are upstream's, measured on their units, and are not repeated on a Modwerk base."
+  ]
+}

@@ -1,0 +1,158 @@
+{
+  "schemaVersion": 3,
+  "id": "chorus",
+  "name": "Chorus",
+  "version": "0.1.0-experimental",
+  "machine": "analog-rytm-mkii",
+  "category": "effects",
+  "exclusive": false,
+  "author": {
+    "github": "stigmagit",
+    "credits": [
+      "stigmagit"
+    ]
+  },
+  "maintainers": [
+    "stigmagit"
+  ],
+  "presentation": {
+    "label": "CHORUS",
+    "family": "Send effects",
+    "summary": "A stereo chorus for the Rytm's send bus: two swept taps, the right side out of phase, with feedback and its own high- and low-pass.",
+    "overview": "CHORUS is one effect in the Modwerk base's send-effect list. Each track sends to it from its SEND page, and it returns in stereo to the mix. Two delay taps of 1 to 30 ms are swept by one LFO, the right one out of phase by WDTH; FDBK feeds the line back, and a one-pole high-pass and low-pass shape the wet sound. It runs at 24 kHz. The DSP is Send FX's CHORUS, unchanged.",
+    "highlights": [
+      "Stereo from one LFO: WDTH turns the right side out of phase.",
+      "FDBK, HPF and LPF shape the wet sound only.",
+      "Every control can be locked on the FX track."
+    ],
+    "usage": [
+      "Send a hi-hat and a snare a little, leave the kick dry.",
+      "Lock SPD on a few steps of the FX track for movement in time with the pattern.",
+      "Keep the return low with LEV and raise the sends for a wider sound."
+    ]
+  },
+  "access": {
+    "location": "SEND FX page of the FX track (Modwerk base).",
+    "steps": [
+      "Install the module with the Modwerk base; the base carries the send bus, its pages and the effect list.",
+      "On a sound track, press AMP twice to open SEND and turn A to send the track.",
+      "Select the FX track and press DELAY twice to open SEND FX; hold FUNC and turn A to choose CHORUS.",
+      "Turn A to G to shape it, hold FUNC and turn E for the return level LEV, and hold FUNC to read the CPU."
+    ],
+    "screenshots": []
+  },
+  "controls": [
+    {
+      "name": "SPD",
+      "default": 64,
+      "doc": "LFO speed, 0.01 to 5 Hz.",
+      "labels": null
+    },
+    {
+      "name": "DEP",
+      "default": 64,
+      "doc": "Sweep depth, up to 5.3 ms, kept below TIME.",
+      "labels": null
+    },
+    {
+      "name": "TIME",
+      "default": 48,
+      "doc": "Delay of the taps, 1 to 30 ms.",
+      "labels": null
+    },
+    {
+      "name": "WDTH",
+      "default": 127,
+      "doc": "Phase of the right side's LFO: 0 sweeps both sides together, 127 in opposition.",
+      "labels": null
+    },
+    {
+      "name": "FDBK",
+      "default": 0,
+      "doc": "Feedback of the line, 0 to 85 %.",
+      "labels": null
+    },
+    {
+      "name": "HPF",
+      "default": 0,
+      "doc": "One-pole high-pass on the wet sound; 0 is off.",
+      "labels": null
+    },
+    {
+      "name": "LPF",
+      "default": 127,
+      "doc": "One-pole low-pass on the wet sound; 127 is open.",
+      "labels": null
+    }
+  ],
+  "compatibility": {
+    "releases": [
+      "1.74"
+    ],
+    "requires": [],
+    "conflicts": [],
+    "limitations": [
+      "Needs the Modwerk Analog Rytm MKII base with the send bus (the FX list mw_fx); the library offers it only once the site builds with that base.",
+      "One send effect plays at a time: the one chosen on SEND FX.",
+      "The kit keeps the chosen effect and its eight values; Send FX settings saved under MD07 builds are not read.",
+      "A project that chose this effect plays no return and shows MISSING when the effect is not installed, and keeps its values."
+    ]
+  },
+  "platform": {
+    "kind": "elemod",
+    "core": "0.7",
+    "build": "build.json",
+    "events": [],
+    "claims": []
+  },
+  "resources": {
+    "memoryBytes": 2031,
+    "fastBytes": null,
+    "load": {
+      "display": "Not measured on a unit",
+      "method": "unmeasured",
+      "conditions": "The base runs the chosen effect once per audio block (32 samples at 48 kHz). Its work area (16 KB) is lent from the base's shared 64 KB pool, not counted here. To measure on a unit: the base's CPU reading on SEND FX, every track sending, controls locked and moving."
+    }
+  },
+  "evidence": {
+    "tier": "author-hardware",
+    "moduleVersion": "0.1.0-experimental",
+    "sourceSha256": "6d8a81554c1b18c4384eb84b74f4621509d27e9b745ebd5b27e828dc46c7be8e",
+    "reports": [
+      "TESTING.md"
+    ],
+    "hardware": {
+      "model": "Analog Rytm MKII",
+      "release": "1.74",
+      "testedOn": "2026-10-29",
+      "tester": "stigmagit",
+      "durationMinutes": null,
+      "summary": "Test build MB02 (sha256 c693e8c1...): the Modwerk base with the send bus (the code merged in #1057), CHORUS, FLANGER and PHASER, Loop Sync 0.3.2 and Retrig Grid. The author reported \"tout marche\": the sound as in MD07's Send FX, the SEND and SEND FX pages, p-locks, and everything back after a power cycle.",
+      "limitations": [
+        "Informal report: which steps of the test sheet were run was not detailed, and the CPU reading was not reported.",
+        "MB02 built this effect from the same source file with a minimal recipe, not from this folder's build.json."
+      ]
+    },
+    "verifiedBy": null
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "Host: the same samples as Send FX's CHORUS over 20,000 blocks of random settings. Unit: test build MB02 reported working by the author (29 Oct 2026). rytm-emu: MB02 boots; the SEND FX page cannot be reached there."
+  },
+  "license": {
+    "spdx": "GPL-3.0-or-later",
+    "file": "LICENSE",
+    "declaration": "Original work by the author, taken from Send FX by the same author, under GPL-3.0-or-later."
+  },
+  "media": [
+    {
+      "path": "media/thumbnail.svg",
+      "kind": "thumbnail",
+      "caption": "CHORUS on the send bus",
+      "alt": "A stereo chorus for the Rytm's send bus: two swept taps, the right side out of phase, with feedback and its own high- and low-pass.",
+      "credit": "stigmagit",
+      "license": "GPL-3.0-or-later",
+      "source": "Original conceptual illustration in the shared signal-art style."
+    }
+  ]
+}

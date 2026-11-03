@@ -10,6 +10,10 @@ export function BugReportNotice({ tracker }: { tracker: IssueTracker | null }) {
   const published = tracker?.tracker === 'github' ? 'The title, description, device, module version, configuration, build fingerprint and any attached log are public there under your username, and the developers reply there.' : 'The title, description, device and module version are public under your username; your configuration, build fingerprint and any attached log stay private to you, the module’s maintainers and the administrator.'
   return <p className="service-note">Posting {where}. {published} Leave out firmware and personal information.</p>
 }
+/** Before a report: modules are free, and their authors owe no fix or reply time (the community rules say the same). */
+export function AuthorExpectations() {
+  return <p className="service-note">Modules are free, and most are made by one person in their spare time. Their authors owe no fix or reply time; clear steps and a log get a fix fastest. <a href="#community-rules">Community rules</a></p>
+}
 /** Beta testers report on Discord (the beta tester note asks them to); the form stays usable, this only reminds them. */
 export function BetaReportReminder() {
   const { session } = useCommunity()

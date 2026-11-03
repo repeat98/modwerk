@@ -1,0 +1,1 @@
+Module changelogs are written for players again: every release now has at most five short lines on what changed for them, and `npm run check` refuses longer ones. Measurements, test evidence and waivers go in the pull request. All existing module changelogs were shortened to match; versions and dates are unchanged.

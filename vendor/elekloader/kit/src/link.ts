@@ -21,6 +21,7 @@ import {
 } from './elemod.ts'
 import { PCREL, decodeColdFire, readerAt } from './isa/coldfire.ts'
 import { AttributeError, KeyError, PyException, ValueError, hex8, pyType, repr, str } from './py.ts'
+import * as store from './store.ts'
 
 /** Python's struct.error. */
 export class StructError extends PyException {}
@@ -72,6 +73,7 @@ export class Mod2 implements AnyMod {
   dspTables: Map<string, [string, Uint8Array, Uint8Array]>   // name -> [payload tag, head, end]
   contribute: Contribution[]
   copied: [number, number, number][]
+  storage: [string, string, number][]
   regions: Region[]
   names: string[]
   needsCore: string | null
@@ -84,7 +86,7 @@ export class Mod2 implements AnyMod {
     this.name = name
     this.sha256 = raw ? sha(raw) : null
     if (!pyEq(formatOf(doc), FORMAT2)) throw new ModError(`${name}: not a format-2 .elemod file`)
-    const more = new Set(['sections', 'symbols', 'exports', 'imports', 'weak', 'relocs', 'collections', 'contribute', 'copied'])
+    const more = new Set(['sections', 'symbols', 'exports', 'imports', 'weak', 'relocs', 'collections', 'contribute', 'copied', 'storage'])
     const extra = Object.keys(doc).filter(k => !COMMON.has(k) && !more.has(k)).sort()
     if (extra.length) throw new ModError(`${name}: unknown fields ${repr(extra)}`)
     for (const k of ['id', 'version', 'target', 'sections']) if (!(k in doc)) throw new ModError(`${name}: no "${k}"`)
@@ -169,6 +171,12 @@ export class Mod2 implements AnyMod {
       if (!isDict(c) || !('to' in c)) throw new KeyError(repr('to'))
       this.contribute.push({ to: str(c.to), order: int(get(c, 'order', 50), what), data, relocs: rel, claims, i })
     })
+    try {
+      this.storage = store.parseDecls(doc)
+    } catch (e) {
+      if (e instanceof ModError) throw new ModError(`${name}: ${e.message}`)
+      throw e
+    }
     this.copied = iter(get(doc, 'copied', [])).map(c => {
       for (const k of ['lo', 'hi', 'to']) if (!isDict(c) || !(k in c)) throw new KeyError(repr(k))
       return [int((c as any).lo, name), int((c as any).hi, name), int((c as any).to, name)] as [number, number, number]
@@ -333,10 +341,20 @@ export function check(mods: Mod2[], image: Uint8Array): string[] {
     }
   }
   const sized = reserveNames(dev, owner)
+  const fields = new Map<string, Mod2 | null>()   // mod storage: the linker defines these
+  for (const m of mods) {
+    for (const [sym] of m.storage) {
+      if (fields.has(sym)) bad.push(`${fields.get(sym)!.label()} and ${m.label()} both declare the storage field ${sym}`)
+      else if (owner.has(sym) || tables.has(sym) || LINKER_SYMS.has(sym) || store.GEN_SYMS.includes(sym))
+        bad.push(`${m.label()}: the storage field ${sym} has the name of a symbol or table`)
+      fields.set(sym, m)
+    }
+  }
+  if (tables.has(store.IDS_TABLE)) for (const x of store.GEN_SYMS) fields.set(x, null)
   for (const m of mods) {
     for (const x of m.imports) {
       if (owner.has(x) || tables.has(x) || LINKER_SYMS.has(x) || sized.has(x) || m.weak.has(x)
-        || (x.endsWith('_n') && tables.has(x.slice(0, -2)))) continue
+        || (x.endsWith('_n') && tables.has(x.slice(0, -2))) || fields.has(x)) continue
       bad.push(`${m.label()} imports ${x}, which no given mod exports`)
     }
     for (const c of m.contribute) {
@@ -417,6 +435,8 @@ export type Linked = {
   map: Map<string, number>                      // name -> address, in link.py's order
   tables: Map<string, [number, number, number]> // name -> [address, count, entry size]
   layout: Layout
+  store: store.Lock | null                      // a core with mod storage: the new lockfile
+  storeNotes: string[]
 }
 
 /** The linker's area for .run, tables and .bss with a core of this version (devices.py's ddr_for). */
@@ -426,8 +446,9 @@ export function ddrFor(dev: Device, coreVersion: string): Range {
   return area
 }
 
-/** The patched main OS, its map, tables and layout. Throws ModError. */
-export function link(mods: Mod2[], image: Uint8Array): Linked {
+/** The patched main OS, its map, tables and layout, and for a core with mod storage the new lockfile. lock: the
+ * build's lockfile, or null for a new one (store.ts). Throws ModError. */
+export function link(mods: Mod2[], image: Uint8Array, lock: store.Lock | null = null): Linked {
   if (!mods.length) throw new ModError('no mods')
   const dev = mods[0].dev, rel = mods[0].rel
   if (sha(image) !== rel.mainSha256) throw new ModError(`the stock main OS is not ${dev.name} ${rel.version}`)
@@ -444,6 +465,25 @@ export function link(mods: Mod2[], image: Uint8Array): Linked {
   const entries = new Map<string, [number, string, number, Mod2, Contribution][]>()
   for (const c of tables.keys()) entries.set(c, [])
   for (const m of order) for (const c of m.contribute) entries.get(c.to)!.push([c.order, m.id, c.i, m, c])
+
+  // mod storage: the fields' places from the lockfile, as symbols and the IDs' table
+  const keeps = core.imports.includes(store.GEN_SYMS[0])
+  const decls: store.Decl[] = order.flatMap(m => m.storage.map(([sym, scope, bits]) => [m.id, sym, scope, bits] as store.Decl))
+  let newLock: store.Lock | null = null, storeNotes: string[] = [], storeSyms = new Map<string, number>()
+  if (decls.length && !keeps) {
+    const users = [...new Set(decls.map(d => d[0]))].sort(cmp)
+    throw new ModError(`${users.join(', ')} declare${users.length === 1 ? 's' : ''} mod storage, which ${core.label()} does not keep`)
+  }
+  if (keeps) {
+    if (!tables.has(store.IDS_TABLE)) throw new ModError(`${core.label()} imports ${store.GEN_SYMS[0]} but declares no table ${store.IDS_TABLE}`)
+    ;[newLock, storeNotes] = store.allocate(lock, decls, dev.key, core.version)
+    let ids: Uint8Array[]
+    ;[storeSyms, ids] = store.symbols(newLock)
+    const taken = new Set(order.flatMap(m => m.exports))
+    for (const nm of storeSyms.keys())
+      if (taken.has(nm) || LINKER_SYMS.has(nm)) throw new ModError(`the storage field ${nm} has the name of a symbol a mod exports`)
+    ids.forEach((data, i) => entries.get(store.IDS_TABLE)!.push([-1, '', i, core, { to: store.IDS_TABLE, order: -1, data, relocs: [], claims: [], i }]))
+  }
   const fastMods = order.filter(m => m.size('.fast'))
   for (const list of entries.values()) {
     list.sort((a, b) => a[0] - b[0] || (a[1] < b[1] ? -1 : a[1] > b[1] ? 1 : 0) || a[2] - b[2])
@@ -566,6 +606,7 @@ export function link(mods: Mod2[], image: Uint8Array): Linked {
     glob.set(c + '_n', tableCount(c))
     if (dspTables.has(c)) dspSym.add('\0' + c)
   }
+  for (const [k, v] of storeSyms) glob.set(k, v)
   for (const [k, v] of [['__run_load', runLoad], ['__run_start', ddrBase], ['__run_words', Math.floor((runEnd - ddrBase) / 4)],
     ['__bss_start', runEnd], ['__bss_end', bssEnd], ['__bss_words', Math.floor((bssEnd - runEnd) / 4)]] as [string, number][]) glob.set(k, v)
   // a reserve sized to the mods, for a core that imports its symbols
@@ -682,7 +723,8 @@ export function link(mods: Mod2[], image: Uint8Array): Linked {
   const boot = content.get(key(core.id, '.boot'))
   if (!boot) throw new KeyError(`(${repr(core.id)}, '.boot')`)
   const blob = concat([boot, new Uint8Array(runLoad - end - boot.length), ddr])
-  const img = new Uint8Array(image.length + blob.length)
+  const tail = newLock ? store.trailer(newLock) : new Uint8Array(0)
+  const img = new Uint8Array(image.length + blob.length + tail.length)
   img.set(image)
   const dspPut = (tag: string, word: number, data: Uint8Array) => {   // P words of a payload's area: main OS bytes
     const [lo, , at] = areas.get(tag)!
@@ -698,6 +740,7 @@ export function link(mods: Mod2[], image: Uint8Array): Linked {
     }
   }
   img.set(blob, image.length)
+  img.set(tail, image.length + blob.length)
   const bad = copiedRules(order, img, dev)
   for (const m of order) {
     for (const s of m.sites) {
@@ -743,6 +786,6 @@ export function link(mods: Mod2[], image: Uint8Array): Linked {
     }
     layout.dsp = dspOut
   }
-  return { image: img, order: order.map(m => m.label()), map, tables: outTables, layout }
+  return { image: img, order: order.map(m => m.label()), map, tables: outTables, layout, store: newLock, storeNotes }
 }
 

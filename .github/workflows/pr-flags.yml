@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Elastic-2.0
+# Copyright (c) 2026 Jannik Aßfalg (repeat98)
 name: Flag fix and improvement PRs
 # A fork cannot label its own PR, so the title carries the flag: "Fix: …", "Improvement: …" or "Docs: …".
 # This reads only the title (passed as data, never as script) and adds the matching existing label.

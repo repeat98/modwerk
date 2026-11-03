@@ -169,7 +169,7 @@ namespace ot
 		// renamed `*Slow`: the peripheral dispatch, the counters, the logs
 		// and the auto-map are byte for byte what they were, and a page that
 		// IS in the table answers the same bytes `find` would have. Measured
-		// on the bursts+LTO binary, see COLDFIRE_PORT.md O15c.
+		// on the bursts+LTO binary, see git show 666b6154:docs/firmware/COLDFIRE_PORT.md O15c.
 		static constexpr uint32_t g_pageBits = 12;
 		static constexpr uint32_t g_pageMask = (1u << g_pageBits) - 1;
 		uint8_t read8(const uint32_t _a) override
@@ -645,6 +645,11 @@ namespace ot
 		bool tryAutoPoke(uint32_t _pcInLoop);
 		std::vector<uint32_t> m_window;
 		std::vector<uint64_t> m_windowWrites;
+		// A0-A6 at each burst: a loop whose pointer WALKS (a read-only hash
+		// over a staged image, modules/remix-switch's chainloader: ~8 M
+		// instructions in 14 bytes, no stores) makes progress too; a poll
+		// re-reads one place.
+		std::vector<std::array<uint32_t, 7>> m_windowAregs;
 		std::vector<AutoPoke> m_autoPokes;
 		uint64_t m_writes = 0;
 	};

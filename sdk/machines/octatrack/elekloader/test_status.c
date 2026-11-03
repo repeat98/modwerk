@@ -4,18 +4,22 @@
  * PROJ opens it and takes PROJ's release; NO closes it and takes its own. */
 #include "status.c"
 #include <stdio.h>
+#include <string.h>
 
 static unsigned failures;
 #define CHECK(x) do { if (!(x)) { failures++; fprintf(stderr, "%s:%d: %s\n", __FILE__, __LINE__, #x); } } while (0)
 /* What status.c reads from the rest of the base; the keys never touch it. */
 volatile uint32_t dl_frames, dl_residency_words[2], modwerk_dsp_meter_bits, modwerk_dsp_meter[5], dl_refusal[8];
 volatile int32_t modwerk_dsp_meter_core;
+static unsigned machine_core = 1; static uint32_t machine_add = 726;
+void modwerk_dsp_source_refusal(unsigned *core, uint32_t *add) { *core = machine_core, *add = machine_add; }
 const uint16_t modwerk_dsp_arena[2];
 int modwerk_dsp_meter_read(unsigned core, unsigned first, unsigned words) { (void)core, (void)first, (void)words; return 0; }
 uint32_t dl_buffers_in_use(void) { return 0; }
 unsigned modwerk_runtime_active(void) { return 0; }
 volatile struct selftest modwerk_selftest;
 volatile uint32_t modwerk_selftest_key;
+volatile uint32_t modwerk_flash_progress; /* flash.c: no write in progress */
 static int selftest_starts, selftest_aborts, menu_closes;
 void modwerk_test_close_menu(void) { ++menu_closes; }
 int modwerk_selftest_start(void) { ++selftest_starts; return 1; }
@@ -36,6 +40,14 @@ unsigned modwerk_dsp_missing_list(uint8_t *out, unsigned first, unsigned most)
     out[0] = 'M', out[1] = 'W', out[2] = 'M', out[3] = (uint8_t)listed;
     return 4u + 24u * listed;
 }
+/* fxmap.c's lookup: handle 20 in bank C's saved Part 2 on T5, the others in bank A's working Part 1 on T2. */
+int modwerk_fxmap_where(unsigned id, unsigned *bank, unsigned *part, unsigned *track)
+{
+    if (id == 20u) { *bank = 2, *part = 1, *track = 4; return 2; }
+    *bank = 0, *part = 0, *track = 1;
+    return id < 20u + listed ? 1 : 0;
+}
+void modwerk_fxpage_missing(void) {}
 static int restored;
 int modwerk_modset_restored(void) { return restored; }
 volatile uint32_t modwerk_modset_result;
@@ -98,9 +110,18 @@ int main(void)
     restored = 1, modwerk_modset_result = 1; missing_check();
     CHECK(open == MISSING && missing_top == 0);
     CHECK(modwerk_status_key(DOWN, 1) && modwerk_status_key(DOWN, 0) && missing_top == 1);
-    modwerk_status_key(DOWN, 1); modwerk_status_key(DOWN, 0);
-    CHECK(missing_top == 1);                                           /* five names, four rows: no further */
+    for (unsigned k = 0; k < 4u; ++k) modwerk_status_key(DOWN, 1), modwerk_status_key(DOWN, 0);
+    CHECK(missing_top == 3);                                           /* five modules, two at a time: no further */
+    for (unsigned k = 0; k < 2u; ++k) modwerk_status_key(UP, 1), modwerk_status_key(UP, 0);
     CHECK(modwerk_status_key(UP, 1) && modwerk_status_key(UP, 0) && missing_top == 0);
+    /* Each module's second line: where the project names it. */
+    char where[32];
+    CHECK(missing_at[0][0] == 2 && missing_at[1][0] == 1 && missing_at[4][0] == 1); /* looked up while it shows */
+    missing_where(where, missing_at[0], 0); CHECK(!strcmp(where, "BANK C SAVED PART 2 T5"));
+    missing_where(where, missing_at[0], 1); CHECK(!strcmp(where, "C SAVED PART 2 T5"));
+    missing_where(where, missing_at[1], 0); CHECK(!strcmp(where, "BANK A PART 1 T2"));
+    static const uint8_t nowhere[4];
+    missing_where(where, nowhere, 0); CHECK(!where[0]);                /* named nowhere any more: an empty line */
     CHECK(!modwerk_status_key(STOP, 1) && !modwerk_status_key(STOP, 0) && open == MISSING); /* STOP reaches stock, it stays */
     CHECK(modwerk_status_key(YES, 1) && open == CLOSED && modwerk_status_key(YES, 0));
     missing_check(); CHECK(open == CLOSED);                            /* told already: it stays closed */
@@ -149,6 +170,20 @@ int main(void)
     modwerk_load_menu(0);
     CHECK(open == SHOWN && tip_until == ticks + 120u);                 /* from the menu: the CUE + PROJ tip for 2 s */
     CHECK(modwerk_status_key(NO, 1) && open == CLOSED && modwerk_status_key(NO, 0));
+    /* A machine voice refused for cycles shows the same DSP FULL box, on "Tn SRC" (a track's source, no effect slot). */
+    modwerk_status_machine_refused(0, "Analog BD");
+    CHECK(open == REFUSED && refused_machine && refused_reason == 3 && refused[0] == 1 && refused[1] == 0 && refused[4] == 726);
+    CHECK(refused_core == 1 && !strcmp(refused_name, "ANALOG BD"));
+    machine_add = 5; modwerk_status_machine_refused(4, "Other");        /* the box already shows: not replaced */
+    CHECK(refused[1] == 0 && refused[4] == 726);
+    for (unsigned i = 0; i < 180u; ++i) memory_tick();
+    CHECK(open == CLOSED);
+    modwerk_status_machine_refused(8, "Analog BD"); CHECK(open == CLOSED); /* no such track */
+    modwerk_load_menu(0); modwerk_status_machine_refused(0, "Analog BD");
+    CHECK(open == SHOWN);                                              /* a page is open: not covered */
+    modwerk_status_key(NO, 1); modwerk_status_key(NO, 0);
+    dl_refusal[0] = 1, dl_refusal[1] = 9; CHECK(modwerk_status_refused(3) && !refused_machine); /* an effect's box clears the machine mark */
+    for (unsigned i = 0; i < 180u; ++i) memory_tick();
     modwerk_missing_menu(0);
     missing_check();
     CHECK(open == MISSING);                                            /* asked for: it stays with nothing missing */

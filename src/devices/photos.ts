@@ -1,5 +1,6 @@
 // Machine images: top views from Elektron's press kit, elektronmods.com's cut-outs for the first Digitakt and Digitone
-// (used with its owner's permission) and Wikimedia Commons photos under their authors' free licences (see docs/MACHINE_IMAGES.md).
+// (used with its owner's permission), Wikimedia Commons photos under their authors' free licences and Erica Synths' product
+// image of the LXR-02 (no licence; see docs/MACHINE_IMAGES.md).
 // Credits show with each image and on the machine overview.
 export type MachinePhoto = { src: string; author: string; license: string; licenseUrl?: string; source: string; via: string; cutout?: boolean }
 
@@ -22,5 +23,6 @@ export const MACHINE_PHOTOS: Record<string, MachinePhoto> = {
   'analog-keys': { src: 'machines/analog-keys.jpg', author: "Brandon Daniel", license: 'CC BY-SA 2.0', licenseUrl: 'https://creativecommons.org/licenses/by-sa/2.0', via: 'Wikimedia Commons', source: "https://commons.wikimedia.org/wiki/File:Elektron_Analog_Keys_-_2014_NAMM_Show.jpg" },
   'analog-heat': { src: 'machines/analog-heat.webp', ...ELEKTRON },
   'machinedrum': { src: 'machines/machinedrum.jpg', author: "j bizzie (derivative work: Clusternote)", license: 'CC BY 2.0', licenseUrl: 'https://creativecommons.org/licenses/by/2.0', via: 'Wikimedia Commons', source: "https://commons.wikimedia.org/wiki/File:Elektron_MACHINEDRUM_SPS-1UW.jpg" },
+  'lxr-02': { src: 'machines/lxr-02.webp', author: 'Erica Synths', license: 'Product image', source: 'https://www.ericasynths.lv/drum-synthesizer-lxr-02-1132/', via: 'Erica Synths', cutout: true },
   'monomachine': { src: 'machines/monomachine.jpg', author: "GeschnittenBrot (derivative work: Clusternote)", license: 'CC BY-SA 2.0', licenseUrl: 'https://creativecommons.org/licenses/by-sa/2.0', via: 'Wikimedia Commons', source: "https://commons.wikimedia.org/wiki/File:Elektron_MONOMACHINE.jpg" },
 }

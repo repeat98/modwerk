@@ -7,25 +7,41 @@ from pathlib import Path
 import subprocess
 import tempfile
 HERE = Path(__file__).resolve().parent
-VERSION = '0.2.0'
+VERSION = '0.3.0'
 sha = lambda b: hashlib.sha256(b).hexdigest()
 def run(args):
     r = subprocess.run([str(x) for x in args], capture_output=True, text=True)
     if r.returncode: raise RuntimeError(r.stderr[-4000:])
     return r.stdout
 
-def hooks(guards):
+def hooks(guards, frame_guard=True):  # the USB base has its own frame guard (machine_registry.c)
     save = 'lea -60(%sp),%sp\nmovem.l %d0-%d7/%a0-%a6,(%sp)\n'
     restore = 'movem.l (%sp),%d0-%d7/%a0-%a6\nlea 60(%sp),%sp\n'
     def replay(key):
         row = guards[key]; n = row.get('patchLength', row['length'])
         return f'.global olog_replay_{key}\nolog_replay_{key}:\n.space {n}\njmp 0x{row["address"]+n:x}\n'
     asm = '.text\n.global olog_idle_hook,olog_job_hook,olog_transport_hook\n'
-    asm += 'olog_idle_hook:\n' + save + 'jsr octamod_log_engine_idle\n' + restore + replay('idle')
+    asm += 'olog_idle_hook:\n' + save + ('jsr olog_frame_report\n' if frame_guard else '') + 'jsr octamod_log_engine_idle\n' + restore + replay('idle')
     asm += 'olog_job_hook:\n' + save + 'mvz.b (%a2),%d0\nmove.l %d0,-(%sp)\njsr octamod_log_engine_begin\naddq.l #4,%sp\n' + restore + replay('job')
     asm += 'olog_transport_hook:\n' + save + 'move.l 64(%sp),-(%sp)\njsr octamod_log_transport\naddq.l #4,%sp\n' + restore + replay('transport')
     for key in ('open','read','write','close'):
         asm += f'.global olog_stock_{key}\nolog_stock_{key}:\n' + replay(key)
+    if not frame_guard:
+        return asm
+    # The frame guard (frame_guard.c). Entry: stock's register save, then the frame's start time. Exit: the
+    # guard's bookkeeping, then stock's restore and rte. Each packer render: stock's argument pushes (and the
+    # first call's renderer load), then the renderer in a0, through the guard for a module machine's track.
+    def space(key):
+        row = guards[key]
+        return f'.global olog_replay_{key}\nolog_replay_{key}:\n.space {row.get("replay", row["length"])}\n'
+    after = lambda key: guards[key]['address'] + guards[key]['length']
+    asm += '.global olog_frame_entry_hook,olog_frame_exit_hook,olog_render_first_hook,olog_render_second_hook\n'
+    asm += 'olog_frame_entry_hook:\n' + space('frame_entry') + f'move.l 0xfc07c00c,%d0\nmove.l %d0,olog_frame_t0\njmp 0x{after("frame_entry"):x}\n'
+    asm += 'olog_frame_exit_hook:\njsr olog_frame_exit\n' + space('frame_exit')
+    for key in ('render_first', 'render_second'):  # d3 holds the track at both sites (the replayed push)
+        back = f'jmp 0x{after(key):x}\n'
+        asm += f'olog_{key}_hook:\n' + space(key) + 'move.l olog_machine_mask,%d0\nbtst %d3,%d0\nbne.s 1f\njsr (%a0)\n' + back
+        asm += f'1:\nmove.l %a0,olog_render_fn\njsr olog_{key}\n' + back
     return asm
 
 def compile_package(output):

@@ -1,14 +1,14 @@
 {
  "schema": 1,
  "module": "lofi2",
- "version": "0.1.0-experimental",
+ "version": "0.1.1-experimental",
  "kind": "dsp",
  "cycles": {
   "unit": "instructions/sample",
   "static": 416,
   "measured": 430.06,
   "instancesPerCore": 4,
-  "method": "static: tools/build/cycle_count.py on the author's test remix, the dearest path of the per-sample loop (SHIFT), 416 cycles/sample; RING is about 240 by the author's count. measured: modules/lofi2/perf.py bench, benchmark_reverbs.run as benchmark_stock_dsp.py runs it (one instance per core at positions 0 and 4, audio at X:0, 4,096 blocks of 16 frames, the null stub's peak subtracted) on the private native image ddcd3473... (octabam 8250be0c; rerun 20 Oct 2026, every figure recorded here equal to the run on 3d63406d..., the previous source) Worst of 66 LOFI2 cases: the manifest's dearest settings in SHIFT DOWN with a trig split at frame 1, 430.06 executed instructions/sample (406.44 unsplit; SHIFT UP 429.31 / 406.06; RING 274.31 / 251.06; defaults 249.88). Executed instructions in dsp_host, not chip cycles; no stalls modelled."
+  "method": "static: tools/build/cycle_count.py on the author's test remix, the dearest path of the per-sample loop (SHIFT), 416 cycles/sample; RING is about 240 by the author's count. measured: modules/lofi2/perf.py bench, benchmark_reverbs.run as benchmark_stock_dsp.py runs it (one instance per core at positions 0 and 4, audio at X:0, 4,096 blocks of 16 frames, the null stub's peak subtracted) on the private native image cd0f7d5a... (octabam 7795adf0, LOFI2 0.1.1; rerun 21 Oct 2026, every figure recorded here equal to the runs on ddcd3473... (8250be0c, 0.1.0) and 3d63406d... (21f6de90)) Worst of 66 LOFI2 cases: the manifest's dearest settings in SHIFT DOWN with a trig split at frame 1, 430.06 executed instructions/sample (406.44 unsplit; SHIFT UP 429.31 / 406.06; RING 274.31 / 251.06; defaults 249.88). Executed instructions in dsp_host, not chip cycles; no stalls modelled."
  },
  "stock": {
   "comparator": "LO-FI",
@@ -28,6 +28,6 @@
   "dirty": true,
   "clobbers": 0,
   "hangs": 0,
-  "method": "modules/lofi2/perf.py stress. The load stress_project.py describes, driven straight into dsp_host on the private native image ddcd3473... (octabam 8250be0c; rerun 20 Oct 2026, every figure recorded here equal to the run on 3d63406d..., the previous source): LOFI2 on FX2 of all eight tracks (four per core) behind DJ EQ, the dearest stock effect, on every FX1; per block, three LFOs (sine, triangle, square) on LOFI2's FREQ, SRR and LPF, and a new random value on every slot of both effects each sixteenth at 120 BPM: 14 slots changed per step (LOFI2's nine, MODE and RNGE included so the modes switch under load, and DJ EQ's five), of which 11 can be locked on a unit (LOFI2's three SETUP knobs change only with Parts there); trig splits of 1, 3, 7, 8, 12 and 15 frames on six tracks; eight different 32 s stems plus a 2 s tail; dsp_host -guard 0x4000 -guard-shared -dirty 0x5a. Result: host exit 0, no hang; LOFI2's eight instances 0 stray write regions and 0 clobbers (the stock DJ EQs write their own scratch, 0 clobbers); 16 guarded instances; per-core peak 3013.9 and 3014.1 executed instructions/sample with all sixteen effects. It exercises the DSP side only: the firmware's own LFO and lock delivery, Part switches and the ColdFire side are not in it."
+  "method": "modules/lofi2/perf.py stress. The load stress_project.py describes, driven straight into dsp_host on the private native image cd0f7d5a... (octabam 7795adf0, LOFI2 0.1.1; rerun 21 Oct 2026, every figure recorded here equal to the runs on ddcd3473... (8250be0c, 0.1.0) and 3d63406d... (21f6de90)): LOFI2 on FX2 of all eight tracks (four per core) behind DJ EQ, the dearest stock effect, on every FX1; per block, three LFOs (sine, triangle, square) on LOFI2's FREQ, SRR and LPF, and a new random value on every slot of both effects each sixteenth at 120 BPM: 14 slots changed per step (LOFI2's nine, MODE and RNGE included so the modes switch under load, and DJ EQ's five), of which 11 can be locked on a unit (LOFI2's three SETUP knobs change only with Parts there); trig splits of 1, 3, 7, 8, 12 and 15 frames on six tracks; eight different 32 s stems plus a 2 s tail; dsp_host -guard 0x4000 -guard-shared -dirty 0x5a. Result: host exit 0, no hang; LOFI2's eight instances 0 stray write regions and 0 clobbers (the stock DJ EQs write their own scratch, 0 clobbers); 16 guarded instances; per-core peak 3013.9 and 3014.1 executed instructions/sample with all sixteen effects. It exercises the DSP side only: the firmware's own LFO and lock delivery, Part switches and the ColdFire side are not in it."
  }
 }

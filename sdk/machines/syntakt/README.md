@@ -2,6 +2,10 @@
 
 Status: **research, core started**. The OS files are understood and rebuilt, modified builds boot (public reports), and the first Modwerk core stage, a boot probe, links and verifies locally. No module can be built for this machine yet, and nothing in this guide has run on the owner's unit. Read [the research report](../../../docs/SYNTAKT_OS_RESEARCH.md) before changing anything here.
 
+## Modwerk stack
+
+The core stage is planned as the Syntakt's Modwerk base, so that it ends up with the Octatrack's stack ([recipe](../../../docs/MACHINE_RECIPE.md)): hooks, a USB link, the loader's glue, base updates over USB, the MCP's device tools and the machine page. Only the boot probe exists.
+
 ## Platform
 
 The Syntakt uses the `elemod` platform ([platform decision](../../../docs/SYNTAKT_OS_RESEARCH.md#8-platform-decision-brief)): the same `ELE3` container and SysEx transport as the Digitakt, the main OS as section 3 at 0x40000400 staged at 0x40200000, the same guarded-site linker. What differs: the appended tail lies inside the memory the OS zeroes at reset, so the core's hook is the BSS-clear entry rather than a main-initialisation call; the machine has a second ColdFire, two FPGAs and a UI MCU whose images stay byte-identical in every build.

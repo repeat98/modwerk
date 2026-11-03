@@ -3,46 +3,48 @@
     "version": "0.2.3-experimental",
     "date": "2026-10-20",
     "changes": [
-      "Mini Verb no longer writes into Sidechain Compressor's key window. Its delay ring ran over the whole 16K FX2 slot, though its lines end at 13,749 words, and on T3 and T7 the last 514 words of that slot are Sidechain's cross-core key window, so a card build with both could leak one track's audio into another. The ring now wraps at 15,870 words and the start-up clear stays inside it. Mini Verb and Sidechain Compressor can be picked together in a card build again.",
-      "Output is bit-identical to 0.2.2-experimental in native DSP tests: eight moving instances, every trigger split on both DSP cores, and a hot input at TONE 0, 64 and 127. It stays dry for the same 128 calls at start-up. Guarded renders of eight instances, including a 30-second moving render over dirty memory, write nothing past the ring, and the same guard catches 0.2.2 writing past it. Controls, defaults, saved projects, FX ID 0x17 and the cost per sample are unchanged; the program grows by six words outside the sample loop.",
-      "Over USB the base still keeps Mini Verb, like every custom FX2 effect, off T3 and T7 while Sidechain Compressor is installed, because it has no reviewed buffer size for it yet. Not tested on hardware; Mini Verb beside Sidechain on one unit, played automation, persistence and physical reboot remain unverified."
+      "Fixes Mini Verb on T3 and T7 writing into Sidechain Compressor's memory, which could leak one track's audio into another in a card build with both.",
+      "Mini Verb and Sidechain Compressor can be picked together in a card build again. The sound, controls and saved projects are unchanged.",
+      "Over USB the base still keeps Mini Verb off T3 and T7 while Sidechain Compressor is installed.",
+      "Known issue: this version is not yet tested on hardware."
     ]
   },
   {
     "version": "0.2.2-experimental",
     "date": "2026-10-13",
     "changes": [
-      "Lower Mini Verb's DSP cost without changing its sound: two coefficient reloads whose register already held the value are removed from the sample loop. The modeled loop cost falls from 415 to 411 cycles per sample. The Octatrack USB loader charges 7/4 of that, 720 chip cycles (415 would be 727), which fits the smaller DSP core's 726-cycle allowance for one module beside seven stock effects.",
-      "Output is bit-identical to 0.2.1-experimental in native DSP tests: eight moving instances, every trigger split on both DSP cores, and a hot input at TONE 0, 64 and 127. Controls, defaults, saved projects, FX ID 0x17 and memory are unchanged.",
-      "Worst-case executed instructions in the emulator fall from 364.75 to 362.75 per sample, 1.16 times stock SPRING REV at its worst under matched conditions. Chip timing of this source is unmeasured (0.2.0 measured 665 chip cycles per sample on one MKII core). Hardware, the original THRU noise in #428, played automation, persistence and physical reboot remain unverified.",
-      "Beta base fix (beta test run 2, 14 Oct 2026; the package is unchanged): picking it showed DSP MEMORY FULL whenever the modules the bank's Parts name did not fit on a DSP core together, even with room for it, and a pick on T1-T4 could be refused for T5-T8's Parts. The base keeps the bank's modules loaded for instant Part changes only while they fit; on a core where they never fitted it now loads what the Part runs, so the pick goes through. Where they fit and the pick does not, DSP MEMORY FULL stays. Seen on a development twin with all 19 modules and bank A: Tape Echo and Mini Verb on T1 and T5 were refused before and are taken now; with the bank's modules held, Mini Verb is still refused on both cores and Tape Echo taken. The tester base itself has not run on the unit.",
-      "Compatibility flag only: not offered beside Sidechain Compressor. Mini Verb's 16K ring passes over the last 514 words of its FX2 slot, which on T3 and T7 are Sidechain's cross-core key window, so a build with both could leak one track's audio into another. The builder now catches this overlap for every effect. Pinned firmware code is unchanged."
+      "Uses slightly less DSP time with the same sound, so over USB it fits on the smaller DSP core beside seven stock effects.",
+      "Controls, defaults and saved projects are unchanged.",
+      "Beta base update: picking Mini Verb no longer shows DSP MEMORY FULL just because the effects of the bank's other Parts don't all fit.",
+      "No longer offered beside Sidechain Compressor: on T3 and T7 a build with both could leak one track's audio into another.",
+      "Known issue: not yet tested on hardware, and it is not confirmed that the THRU noise reported in #428 is gone."
     ]
   },
   {
     "version": "0.2.1-experimental",
     "date": "2026-10-11",
     "changes": [
-      "Fix intermediate dry/wet clipping at hot input levels by preserving the wet-minus-dry headroom before multiplication. MIX 32 remains 25% and MIX 0 remains exact dry.",
-      "Keep the feedback tank, controls, defaults, effect ID and memory allocation unchanged. Multiplier quantization can change otherwise unclipped output by up to 8 of the 24-bit least significant bits.",
-      "The mixer defect is reproduced in native DSP tests on both cores. The original THRU noise in #428 has not been confirmed on hardware; chip timing, complete runtime memory bounds, played automation, persistence and physical reboot remain unverified.",
-      "Documentation/media-only: add an offline audio preview rendered through 0.2.0-experimental, with sample credits, settings and provenance; firmware is unchanged. The clip predates the 0.2.1 mixer fix and does not verify it."
+      "Fixes clipping at hot input levels when MIX is between dry and wet. MIX 32 is still 25% wet and MIX 0 still fully dry.",
+      "The reverb, controls and saved settings are unchanged; output that did not clip can differ by a tiny amount.",
+      "Known issue: not yet tested on hardware, and it is not confirmed that this fixes the THRU noise reported in #428.",
+      "Media only: adds an audio preview, recorded with 0.2.0 before this fix."
     ]
   },
   {
     "version": "0.2.0-experimental",
     "date": "2026-10-08",
     "changes": [
-      "Move MIX from upper-right encoder C to lower-right encoder F and add TONE above it.",
-      "TONE is neutral at 64; darker settings low-pass the wet output and brighter settings high-pass it using one pole per stereo channel. The feedback tank and DAMP remain unchanged.",
-      "Old MIX values, locks, scenes and LFO destinations in slot C now address TONE. Restore TONE to 64 and move Mix settings/automation to slot F. Owner accepted sound and stability in Octemu and explicitly waived physical hardware evidence for this exact experimental update."
+      "Moves MIX from upper-right encoder C to lower-right encoder F and adds TONE above it.",
+      "TONE is neutral at 64; darker settings low-pass the wet output and brighter settings high-pass it. The feedback tank and DAMP are unchanged.",
+      "After updating: old MIX values, locks, scenes and LFO destinations on slot C now drive TONE. Set TONE back to 64 and move MIX settings and automation to slot F.",
+      "Known issue: this version is not yet tested on hardware."
     ]
   },
   {
     "version": "0.1.2-experimental",
     "date": "2026-10-01",
     "changes": [
-      "Documentation-only: add real emulator screenshots of the selection and control pages, access instructions and capture provenance. The firmware implementation is unchanged."
+      "Documentation only: adds emulator screenshots of the selection and control pages and how to reach them."
     ],
     "sourceCommit": "dd9ea93fd62a3699d54f5e63c5f1a33fe1544cad"
   },
@@ -50,7 +52,7 @@
     "version": "0.1.1-experimental",
     "date": "2026-10-01",
     "changes": [
-      "Documentation-only: update author credits in the manifest and guides. The firmware implementation is unchanged."
+      "Documentation only: updates the author credits."
     ],
     "sourceCommit": "d1136ce4c65ea7e1a00c4516cd4aa41c4b0c0d56"
   },

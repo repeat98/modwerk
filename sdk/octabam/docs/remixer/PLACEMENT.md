@@ -92,8 +92,10 @@ the Flex list reads FREE MEM 71.4 MB; the page count `0x390a` appears at
 octabam's runtime and stage live in 1,707 pages (10,487,808 B) taken off
 the bottom of the audio page arena, `0x40a955e0..0x41495de0`
 (`tools/remix/arena.py`, `PLATFORM_PAGES`), the way octamax 2.0 takes its
-64. The base literal moves up by that much at its 24 sites (23 direct plus
-`lea base+6144` at `0x40094a62`), and the four geometry words (page count,
+64. The base literal moves up by that much at its 23 sites (22 direct plus
+`lea base+6144` at `0x40094a62`; the literal's other use, `cmpal` at
+`0x400254f8`, is the end of PURGE SAMPLES' walk over the banks and stays
+stock: moved, the walk ran off the end of RAM), and the four geometry words (page count,
 free-list fill limit, arena clear length, recorder page cap) are computed
 from every reservation in the remix: Octakit's 528 at the top are declared
 by her module (`ArenaReserve(528, "top", recipe_writes=…)`), her four

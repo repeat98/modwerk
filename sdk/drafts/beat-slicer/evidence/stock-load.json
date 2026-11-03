@@ -1,0 +1,35 @@
+{
+  "scope": "complete stock Flex replacement refusals with synthetic filesystem/header mocks and host guard; real release/allocation, no scheduler or device",
+  "mainSha256": "164f31224bf61181e3f50e7dec40df9afcae5b16dbf6e4c0d0cc5e986af0a84e",
+  "sourceSha256": {
+    "stock_probe.py": "33472cf51f38263112e9704b037eaf59d1f6ddc59204519e04c01746b6581702",
+    "stock_probe/load_probe.cpp": "fa19e7390d5ab0ff5e2a577b90ee7dd52922ddc4b24c4f4f33fd9cb7f475798b",
+    "preview_guard.c": "da1299674cf2ae967c58231ee9c16891afa94e27254407b5d09df6b73cc4343e",
+    "preview_guard.h": "abcaff39ef1b9a21cb238f0021344ffb5b812ea1740a354cbc1d1f2ace4ddf36",
+    "stock_probe/CMakeLists.txt": "dbc767ccc946d7c83cfffb0b45592317c11ad58ef8558acc1e8750aab6534fd3"
+  },
+  "executableSha256": "9fead21410186fea614c580cd3080ae561c2e12a451402de2516e2ba567304aa",
+  "exitCode": 0,
+  "stdout": [
+    "SOURCE_SHA256: 052b9bdc0c38cd2f023116e1747eff66658fe356846bca6168408cb79f019ff3",
+    "TRACE slot=0 failure=0 result=-9 state=3 length=0 counter=43 closes=0",
+    "TRACE slot=0 failure=1 result=-30 state=3 length=0 counter=43 closes=0",
+    "TRACE slot=0 failure=2 result=-7 state=3 length=0 counter=43 closes=0",
+    "TRACE slot=0 failure=3 result=-29 state=3 length=0 counter=43 closes=1",
+    "TRACE slot=0 failure=4 result=-43 state=3 length=0 counter=43 closes=1",
+    "TRACE slot=0 failure=5 result=-5 state=3 length=10000 counter=43 closes=1",
+    "TRACE slot=127 failure=0 result=-9 state=3 length=0 counter=43 closes=0",
+    "TRACE slot=127 failure=1 result=-30 state=3 length=0 counter=43 closes=0",
+    "TRACE slot=127 failure=2 result=-7 state=3 length=0 counter=43 closes=0",
+    "TRACE slot=127 failure=3 result=-29 state=3 length=0 counter=43 closes=1",
+    "TRACE slot=127 failure=4 result=-43 state=3 length=0 counter=43 closes=1",
+    "TRACE slot=127 failure=5 result=-5 state=3 length=10000 counter=43 closes=1",
+    "PASS: twelve failed replacements retire old audio, preserve survivor PCM and balance nested guards",
+    "PASS: unavailable pool and invalid slot refuse without mutation"
+  ],
+  "stderrLines": 112,
+  "stderrSha256": "185598f24daaa11aa04c9610b75cd60f5797376d59c7f58cfc881f1b10183b8c",
+  "hardware": "not tested",
+  "audio": "not tested",
+  "stockPersistence": "not tested"
+}

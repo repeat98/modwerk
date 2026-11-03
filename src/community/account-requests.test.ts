@@ -63,8 +63,12 @@ describe('private, reversible account-removal requests',()=>{
  })
  it('throttles repeated password guesses before they can generate requests',async()=>{
   const {call,token,db}=await fixture()
-  for(let index=0;index<5;index++)expect((await call('/auth/account-removal','POST',{confirm:'REQUEST',password:'wrong sufficiently long password'},token)).status).toBe(403)
-  expect((await call('/auth/account-removal','POST',{confirm:'REQUEST',password},token)).status).toBe(429)
+  // Keep the guesses in one 15-minute rate-limit bucket even when a run crosses a quarter hour.
+  const now=Date.now(),clock=vi.spyOn(Date,'now').mockReturnValue(now)
+  try{
+   for(let index=0;index<5;index++)expect((await call('/auth/account-removal','POST',{confirm:'REQUEST',password:'wrong sufficiently long password'},token)).status).toBe(403)
+   expect((await call('/auth/account-removal','POST',{confirm:'REQUEST',password},token)).status).toBe(429)
+  }finally{clock.mockRestore()}
   expect(db.prepare('SELECT COUNT(*) AS count FROM account_removal_requests').get()).toEqual({count:0})
  })
 })

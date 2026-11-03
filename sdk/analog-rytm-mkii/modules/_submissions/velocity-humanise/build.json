@@ -1,0 +1,70 @@
+{
+  "schemaVersion": 1,
+  "sources": [
+    "src/velocity-humanise.s"
+  ],
+  "defsym": {},
+  "cflags": [],
+  "weak": [],
+  "subscribe": [],
+  "contribute": [],
+  "collections": {},
+  "copied": [],
+  "regions": [],
+  "claims": [
+    "ui:TRIG page FUNC + VEL",
+    "sequencer:trig velocity offset"
+  ],
+  "requires": [],
+  "derive": null,
+  "releases": {
+    "1.74": {
+      "defsym": {},
+      "cflags": [],
+      "sites": [
+        {
+          "addr": "0x400378ae",
+          "len": 8,
+          "stockSha256": "54d6697f72db7bfa1692bdfcefac1e9d3cc9a5f5da5e977e05a3bfe73cc26662",
+          "op": "jmp",
+          "target": "velocity_humanise_vel_amount_gate"
+        },
+        {
+          "addr": "0x4009b00c",
+          "len": 6,
+          "stockSha256": "b64dbe9d8c379576ddddf76e532de231f115f4bc084860e54e9eb90ed1c315c3",
+          "op": "jmp",
+          "target": "velocity_humanise_vel_humanise"
+        },
+        {
+          "addr": "0x400a8654",
+          "len": 8,
+          "stockSha256": "89c87b50d170ae64779dbadb6b047e528e68d3faff6c6ab500168cd253d6f9de",
+          "op": "jmp",
+          "target": "velocity_humanise_vel_text_gate"
+        },
+        {
+          "addr": "0x400a9004",
+          "len": 6,
+          "stockSha256": "862236a96b038c071ccd0cbfd1ae53c1ce5797704c3639171e51b6fd3e30394b",
+          "op": "jmp",
+          "target": "velocity_humanise_vel_label_gate"
+        },
+        {
+          "addr": "0x400a8822",
+          "len": 6,
+          "stockSha256": "df44ec860c8e6bdef0664d6da7fe62f3a7d4da0959bc5bed85d51a6da4d1e0cf",
+          "op": "jsr",
+          "target": "velocity_humanise_vel_get_ui"
+        }
+      ]
+    }
+  },
+  "storage": [
+    {
+      "sym": "vel_rnd",
+      "scope": "track",
+      "bits": 4
+    }
+  ]
+}

@@ -28,6 +28,39 @@ static uint32_t primary_age[8]={0}, extra_age[EXTRA_CAPACITY]={0}, serial=0;
 static uint8_t dirty[8]={0};
 volatile uint32_t poly_extra_mask[8]={0};
 
+/* Voice governor. Every POLY voice is fetched, resampled, enveloped and mixed
+ * in the frame interrupt, so voices take time from every task below it. On a
+ * base that runs module code uncached a voice cost about 13 points of CPU on
+ * the owner's MKII (23 Oct 2026), and four held notes starved the UI task,
+ * whose key-ups would have ended them (#646). pm_govern times each frame's
+ * POLY work with stock's frame timer (DTCN3, 132 MHz, about 47,900 counts a
+ * frame) and lowers the voice cap when their average passes GOV_BUDGET, when
+ * one frame passes GOV_PEAK, or when the UI has not ticked for GOV_STARVED
+ * frames whatever the cause; admit() then retires release tails first, then
+ * the oldest notes. The cap comes back one voice at a time once a further
+ * voice fits for GOV_CALM frames. Single frames vary (about 1.6 render calls a
+ * frame), so the share is judged on the average and only the deadline on each
+ * frame: with the budget off, six voices took about 34,000 counts in a frame
+ * and the frames stopped for good. */
+#ifndef POLY_POOL_HOST_TEST
+#define DTCN3 (*(volatile uint32_t *)0xfc07c00cu)
+#else
+extern volatile uint32_t test_timer;
+#define DTCN3 test_timer
+#endif
+#define GOV_FRAME 47900u
+#ifndef GOV_BUDGET
+#define GOV_BUDGET 19200u       /* the average, 40 % of a frame */
+#endif
+#define GOV_PEAK 26000u         /* any one frame, about 197 us */
+#define GOV_SMOOTH 4u           /* the average follows about 16 frames */
+#define GOV_STARVED 280u        /* frames, about 100 ms */
+#define GOV_CALM 256u           /* frames, about 93 ms */
+volatile uint32_t pm_voice_cap=POOL_CAPACITY, pm_ui_ticks=0;
+volatile uint32_t pm_gov_sheds=0, pm_gov_starved=0, pm_gov_peak=0, pm_gov_total=0;
+volatile uint32_t pm_gov_cost[POOL_CAPACITY+1]={0}; /* the last frame's counts by voices rendered, for diagnostics */
+static uint32_t win_start=0, win_cost=0, win_voices=0, seen_ticks=0, starved=0, calm=0, mean16=0;
+
 void pm_clear_extensions(unsigned track) {
     if(track>=8 || !dirty[track]) return;
     for(unsigned i=0;i<EXTRA_CAPACITY;++i) if(poly_extra_track[i]==track) {
@@ -84,13 +117,50 @@ static void admit(unsigned incoming,unsigned incoming_cost) {
             }
             ++count; cost+=head_cost(t,shift);
         }
-        if(!count || (count+incoming<=POOL_CAPACITY && cost+incoming_cost<=FETCH_BUDGET)) return;
+        if(!count || (count+incoming<=pm_voice_cap && cost+incoming_cost<=FETCH_BUDGET)) return;
         retire(oldest);
     }
 }
 void pm_enforce_budget(unsigned track) {
     if(track>=8 || budget_tuning[track]==poly_track_inc[track]) return;
     budget_tuning[track]=poly_track_inc[track]; admit(0,0);
+}
+
+/* One frame's POLY work, `cost` counts with `voices` rendered at most. */
+static void judge(uint32_t cost, unsigned voices) {
+    if(cost>pm_gov_peak) pm_gov_peak=cost;
+    if(voices<=POOL_CAPACITY) pm_gov_cost[voices]=cost;
+    mean16+=cost-(mean16>>GOV_SMOOTH);           /* 16 times the average */
+    uint32_t mean=mean16>>GOV_SMOOTH;
+    if(pm_ui_ticks!=seen_ticks) seen_ticks=pm_ui_ticks, starved=0;
+    else if(starved<GOV_STARVED) ++starved;
+    if(cost>GOV_PEAK || mean>GOV_BUDGET || starved>=GOV_STARVED) {
+        if(starved>=GOV_STARVED) ++pm_gov_starved, starved=0;
+        if(voices>1) {
+            if(voices-1<pm_voice_cap) pm_voice_cap=voices-1;
+            ++pm_gov_sheds; admit(0,0);
+            mean16=mean16/voices*(voices-1);       /* what the remaining voices cost */
+        }
+        calm=0;
+        return;
+    }
+    /* Raise the cap only while it binds and one more voice of this frame's
+     * average cost would still fit both limits, with an eighth to spare. */
+    if(pm_voice_cap>=POOL_CAPACITY || voices<pm_voice_cap
+       || mean+mean/voices>GOV_BUDGET-GOV_BUDGET/8u || cost+cost/voices>GOV_PEAK-GOV_PEAK/8u) { calm=0; return; }
+    if(++calm>=GOV_CALM) { ++pm_voice_cap; calm=0; }
+}
+/* Called by the renderer after each POLY track's chunk, with the frame timer
+ * read at its start. The calls of one frame (about 362.8 us apart) add up. */
+void pm_govern(uint32_t start, unsigned voices) {
+    uint32_t cost=DTCN3-start;
+    pm_gov_total+=cost;                /* all POLY render time, for diagnostics */
+    if(voices && start-win_start<GOV_FRAME/2u) {
+        win_cost+=cost; if(voices>win_voices) win_voices=voices;
+        return;
+    }
+    if(win_voices) judge(win_cost, win_voices);
+    win_start=start; win_cost=cost; win_voices=voices;
 }
 /* The common trigger already masks audio interrupts. Reserve an extension
  * for its previous primary after making room for the new head. */

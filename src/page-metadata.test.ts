@@ -7,7 +7,7 @@ afterEach(() => { document.head.innerHTML = '' })
 
 it('uses the directory preview across client navigation and restores the home preview on leaving', () => {
   document.head.innerHTML = '<base href="https://modwerk.app/project-base/"><meta property="og:url" content="https://modwerk.app/project-base/">'
-  const project = { title: 'Other projects — Modwerk', description: 'Independent projects', url: 'https://modwerk.app/project-base/projects/', image: PROJECT_PREVIEW_IMAGE, imageAlt: PROJECT_PREVIEW_ALT }
+  const project = { title: 'Other projects · Modwerk', description: 'Independent projects', url: 'https://modwerk.app/project-base/projects/', image: PROJECT_PREVIEW_IMAGE, imageAlt: PROJECT_PREVIEW_ALT }
   setPageMetadata(project)
   setPageMetadata(project)
   expect(document.querySelector<HTMLMetaElement>('meta[property="og:image"]')?.content).toBe('https://modwerk.app/project-base/' + PROJECT_PREVIEW_IMAGE)

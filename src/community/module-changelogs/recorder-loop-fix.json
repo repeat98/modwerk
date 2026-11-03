@@ -3,13 +3,11 @@
     "version": "0.1.0-experimental",
     "date": "2026-10-07",
     "changes": [
-      "Add recorder-buffer voice and counter fixes, END-1 hold behavior and fixed-RLEN spacing correction to the selectable shared builder.",
-      "Correct the upstream arm/q phase drift: all 13,279 long-run cases, 555,008 early cases and 1,244,352 fractional-tempo/uint32-boundary cases pass. Fixed RLEN 1–64 at 30–300 BPM is supported; other ranges retain stock length.",
-      "Guard all eight detours and relocate eleven pool-base literals with the sample arena. Consecutive-arm arithmetic is tested; physical audio continuity, non-consecutive arm history and current-build hardware remain unmeasured. The owner approved missing hardware evidence.",
-      "Presentation: show repeating recorder segments and tempo boundaries using the library's shared signal artwork, grid, palette and typography.",
-      "USB package (14 Oct 2026; distribution only, the module source and version are unchanged): loads over USB on the Modwerk beta base. Its pool-base literals are linked for that base’s moved sample arena, and the base’s own arena word is checked at install, so it needs that exact base; with an older base the site asks for a base update first. Its compiled bytes that coincide with stock are copied at install from bytes the base checks against its running stock, so the package carries no stock bytes. Host tests only; no hardware run of this package. The owner waived hardware evidence for this exact version’s USB package for the beta.",
-      "USB package rebuilt for the fixed beta base (beta test run 1, 14 Oct 2026): it is linked for that base's arena and runtime pool, and its code is unchanged. It installed and kept on the unit; its recorder behaviour was not exercised in run 1.",
-      "USB package bound to the new beta base acf91e0a (beta test run 2, 14 Oct 2026, rebuilt 15 Oct with the resident engines placed on demand, BBD Delay's chooser row and a startup without the wave's outline; the base's addresses moved, so the package is relinked against them, its module code unchanged and not yet run on hardware): the base now puts a removed machine's per-track routines back to stock, shows what a picked effect took and each core's DSP budget (the STATUS page's new DSP rows; DSP FULL comes from it), and no longer refuses effect picks for a bank whose Parts never fitted. A tester base from before needs the base update first."
+      "Fixes recorder-buffer loops on Flex tracks: the voice keeps running across the loop, counters no longer reset, and the loop end no longer plays silent samples.",
+      "Fixes recordings alternating in length from one arm to the next for fixed RLEN 1–64 at 30–300 BPM; other settings keep stock lengths.",
+      "Media only: new artwork showing repeating recorder segments.",
+      "Available over USB on the Modwerk beta base; it is relinked for each base update and the module itself is unchanged.",
+      "Known issue: the loop fix has not yet been heard on a unit."
     ]
   }
 ]

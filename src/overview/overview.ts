@@ -1,6 +1,6 @@
 // The landing page's numbers: every machine in the registry with its modules, creators and research progress.
 // Counts come from the same catalogue the library shows, so the overview and the sidebar never disagree.
-import { DEVICES, DEVICE_STEPS, deviceHref, type DeviceProfile } from '../devices/registry'
+import { DEVICES, deviceHref, deviceSteps, readyForMods, type DeviceProfile } from '../devices/registry'
 import { DIGI_MODS, type DigiMod } from '../devices/digi-mods'
 import { LIBRARY_CATEGORIES, LIBRARY_CATEGORY_LABELS, type FirmwareModule, type ModuleCategory } from '../catalog/modules'
 import { compareModules } from '../community/module-statistics'
@@ -52,7 +52,7 @@ export function machineOverview(octatrack: readonly FirmwareModule[], digi: read
   ]
   const machines = DEVICES.map((device, order) => {
     const modules = entries(device)
-    const steps = DEVICE_STEPS.map(step => ({ title: step.title, state: device.steps[step.id] }))
+    const steps = deviceSteps(device).map(step => ({ title: step.title, state: device.steps[step.id] ?? 'open' }))
     const next = steps.find(step => step.state !== 'done')
     const kind: OverviewKind = modules.length ? 'mods' : device.status === 'open' ? 'open' : 'research'
     return { order, started: steps.filter(step => step.state === 'started').length, machine: {
@@ -62,7 +62,7 @@ export function machineOverview(octatrack: readonly FirmwareModule[], digi: read
       recent: [...modules].sort((a, b) => compareModules(a, b, 'updated', null)).map(module => module.name),
       stepsDone: steps.filter(step => step.state === 'done').length,
       next: modules.length || !next ? undefined : { title: next.title, started: next.state === 'started' },
-      coreReady: device.steps.core === 'done',
+      coreReady: readyForMods(device),
       href: deviceHref(device.id), developHref: developHref(device.id),
     } satisfies OverviewMachine }
   })

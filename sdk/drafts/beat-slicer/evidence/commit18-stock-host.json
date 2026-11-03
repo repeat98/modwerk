@@ -1,0 +1,50 @@
+{
+  "scope": "32 historical Flex Apply/Undo pairs, 64 commit/clear cycles without history and 12 rollback cases; synthetic metadata, query, ownership, playback and publication",
+  "sourceSha256": {
+    "planner.c": "01c9c25efa363679a591969931dd376a3b694a949dd8b9f89eda4bf77a88cee4",
+    "planner.h": "4faab6f03e679d0b9389dbf016416afc87fb4d2d354952b22efb81a0381c5c1b",
+    "planner_job.c": "767d82cc375677a115e9457af35e26fddd9de66a0dc80aa2af0fe3b5adaf0581",
+    "planner_job.h": "c4dd3faa8b3320194b54ab4d7bec6541d9e936f544b0e6236efa4fa5518d6547",
+    "pcm_reader.c": "8762e389a39b7407a7d987dc6e3e36d7d75aa6c408b1d3232d8672a380226088",
+    "pcm_reader.h": "462f495a86f32730b79a56177f99929f685d82729e4646e7b391df475d929821",
+    "preview_guard.c": "da1299674cf2ae967c58231ee9c16891afa94e27254407b5d09df6b73cc4343e",
+    "preview_guard.h": "abcaff39ef1b9a21cb238f0021344ffb5b812ea1740a354cbc1d1f2ace4ddf36",
+    "preview_session.c": "778cdb37dc8b801fa7bb600f3ebe4f7102a2847a6c7db833746f84c44ed47605",
+    "preview_session.h": "92b03f2bd17f7077afda56085a1d23231f756558d7e933604dbb9fdfcc20ff79",
+    "marker_edit.c": "645b7bdcb68a755f903b6b592e029d96bac868b763845faa5cf4806fedc9e0ea",
+    "edit_transaction.c": "9176d6797e20a6b1e2f1461b9d164b1c02f5402ffeb08a0ff2cd2763fd180c41",
+    "edit_transaction.h": "54e3dfe2d155d9a4a4d02922d1446e58da27414c4c1dfd459426896cd6f61e28",
+    "marker_edit.h": "cd8c16a7771bf5a6d251b20e3a02fd0887d68cf4f8e5900e0c6a7fdecc0d4f05",
+    "edit_candidate.c": "67a7c7ec5f060846d2483b2d06b4b4a70ef7eced0b04e0b489e9b4556ca32490",
+    "edit_candidate.h": "862a3e09932072e42021acabe6814e969bdb8ef07b109dec8ba82ff7973d3ed0",
+    "flex_copy.c": "b069d6b3ac5d8922281811a8eaa5c93d8ab33267ec89fb9f1c99305f35d80b2c",
+    "flex_copy.h": "1bb469187ef75be2d25b671622f79ec2a5e199d877a418e8d9885c70781ee513",
+    "test_flex_fixture.h": "a365b7e5794e2bf16e39df925aeb44d3d405932711827ffefbe2848a5583393d",
+    "test_chain_fixture.h": "1670638d89134873a955632a07d8b5db0fed72912e25fdba2eef8f443613546f",
+    "test_flex_copy.c": "b873c866f84d0776a18930fa529924e43f5c8e0b040db88638104c1153fe8acd",
+    "test_flex_chain.c": "24ae5b0128f7eb14debd64d6f34d126800acbea0d755c1a9722d956f072c5ceb",
+    "test_transaction_stock.c": "6358dfb6f8c39b8c4ee53a44dcdc95ade50ceca532f6a76db6a60aa45f415239",
+    "test_transaction_stock.py": "1483c3d82c658dc3e141100b9877f26bcb55d9c666e4c7657c88d56fb398db04"
+  },
+  "compiler": "Apple clang version 17.0.0 (clang-1700.6.4.2)",
+  "flags": [
+    "-std=c99",
+    "-O1",
+    "-g",
+    "-Wall",
+    "-Wextra",
+    "-Werror",
+    "-pedantic",
+    "-fsanitize=address,undefined",
+    "-fno-omit-frame-pointer"
+  ],
+  "exitCode": 0,
+  "stdout": [
+    "PASS: 32 Flex Apply/Undo pairs, eight publication rollbacks and preview/candidate regressions",
+    "PASS: 64 commit/clear cycles without history, stale-clear refusal and four further publication rollbacks"
+  ],
+  "hardware": "not tested",
+  "audio": "not tested",
+  "nativeSourceAccess": "not implemented",
+  "sourceRevision": "36101a8a5da74f6101f9a5dcedcdc441a66e172d"
+}

@@ -24,7 +24,7 @@
     },
     {
       "id": "tapeecho",
-      "version": "0.1.5-experimental",
+      "version": "0.1.6-experimental",
       "addedAt": "2026-10-01T06:53:41Z"
     },
     {
@@ -59,12 +59,17 @@
     },
     {
       "id": "lofi2",
-      "version": "0.1.0-experimental",
+      "version": "0.1.1-experimental",
       "addedAt": "2026-10-12T23:40:23Z"
     },
     {
+      "id": "ring-sc",
+      "version": "0.2.0-experimental",
+      "addedAt": "2026-10-20T12:00:00Z"
+    },
+    {
       "id": "analog-bassdrum",
-      "version": "0.1.5-experimental",
+      "version": "0.1.6-experimental",
       "addedAt": "2026-10-01T09:19:37Z"
     },
     {
@@ -99,12 +104,12 @@
     },
     {
       "id": "sidechain-compressor",
-      "version": "0.1.2-experimental",
+      "version": "0.2.0-experimental",
       "addedAt": "2026-10-05T12:00:00Z"
     },
     {
       "id": "vector",
-      "version": "0.2.4-experimental",
+      "version": "0.2.5-experimental",
       "addedAt": "2026-10-06T08:02:00Z"
     },
     {
@@ -124,7 +129,7 @@
     },
     {
       "id": "poly8",
-      "version": "0.3.0-experimental",
+      "version": "0.3.2-experimental",
       "addedAt": "2026-10-08T12:00:00Z"
     },
     {
@@ -134,18 +139,33 @@
     },
     {
       "id": "quantize-live-rec-toggle",
-      "version": "0.1.0-experimental",
+      "version": "0.1.1-experimental",
       "addedAt": "2026-10-12T21:00:00Z"
     },
     {
       "id": "apply-scene",
-      "version": "0.1.0-experimental",
+      "version": "0.2.0-experimental",
       "addedAt": "2026-10-15T16:00:00Z"
     },
     {
-      "id": "micro-timing",
+      "id": "direct-jump-kyoti",
+      "version": "0.1.2-experimental",
+      "addedAt": "2026-10-24T12:00:00Z"
+    },
+    {
+      "id": "dejavu",
       "version": "0.1.0-experimental",
-      "addedAt": "2026-11-01T22:30:00Z"
+      "addedAt": "2026-10-24T15:30:00Z"
+    },
+    {
+      "id": "arp-key-locks",
+      "version": "0.1.0-experimental",
+      "addedAt": "2026-10-26T12:00:00Z"
+    },
+    {
+      "id": "beat-slicer",
+      "version": "0.1.66-experimental",
+      "addedAt": "2026-10-27T20:00:00Z"
     }
   ]
 }

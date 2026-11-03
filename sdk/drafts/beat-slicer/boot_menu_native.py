@@ -1,0 +1,264 @@
+"""Exercise a one-shot BEAT GRID contribution through the real stock SLICE menu.
+
+Explicitly reserves eight audio pages with the pinned upstream arena helper.
+Injects ORIGINAL test code into that reservation, calls its fixture initializer,
+and changes one private queue-call operand. No hardware, released base/module,
+installed source service, card writes, cache proof or complete writer coverage is claimed.
+"""
+import argparse
+import test_planner as ffi
+import json
+import importlib.util
+import sys
+from pathlib import Path
+import shutil
+import struct
+import wave
+from boot_observe import Port, digest
+from boot_formats import observe
+from inspect_stock import STOCK_MAIN_SHA256
+
+ROOT = Path(__file__).resolve().parent
+from boot_worker_native import tap, allocated_end_frame, ARENA_SHA
+
+
+from boot_source_native import call_original
+from boot_slices import choose, MENUS
+
+
+def main():
+    p = argparse.ArgumentParser(description=__doc__)
+    for name in ('emulator', 'main', 'card', 'wav', 'output', 'arena-tool', 'native'):
+        p.add_argument('--' + name, type=Path, required=True)
+    p.add_argument('--card-sha256', required=True)
+    p.add_argument('--scenario', choices=('normal', 'stale-owner', 'late-owner', 'cancel'), default='normal')
+    p.add_argument('--selected', action='store_true')
+    p.add_argument('--allow-private-injection', action='store_true', required=True)
+    a = p.parse_args()
+    if not __debug__:
+        p.error('Assertions must remain enabled.')
+    out, repo = a.output.resolve(), ROOT.parents[2]
+    if out.exists() or out == repo or repo in out.parents:
+        p.error('Use a fresh private output directory outside Git.')
+    if digest(a.main) != STOCK_MAIN_SHA256 or digest(a.card) != a.card_sha256:
+        p.error('Private stock/card identity differs.')
+    if digest(a.arena_tool) != ARENA_SHA:
+        p.error('Arena helper differs from reviewed upstream source.')
+    native = json.loads((a.native / 'source-boot.json').read_text())
+    binary, symbols_path = a.native / 'source-boot.bin', a.native / 'source-boot.symbols'
+    if native['textBase'] != 0x46019df0 or digest(binary) != native['binarySha256'] or digest(symbols_path) != native['symbolsSha256']:
+        p.error('Compile the exact reserved-placement fixture first.')
+    for name, expected in native['sourceSha256'].items():
+        if digest(ROOT / name) != expected:
+            p.error('Native evidence source differs: ' + name)
+    symbols = {row.split()[2]: int(row.split()[0], 16) for row in symbols_path.read_text().splitlines()}
+    spec = importlib.util.spec_from_file_location('beat_slicer_arena', a.arena_tool)
+    arena = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = arena
+    spec.loader.exec_module(arena)
+    placed, pool_base, pool_count = arena.layout([('source-preview-fixture', 'top', 8)])
+    reserve = placed[0]
+    assert reserve.start + 16 == native['textBase'] and symbols['_end'] <= reserve.end
+    assert pool_base == 0x40a955e0 and pool_count == 14594
+    private_main = bytearray(a.main.read_bytes())
+    for address, expected, value, _ in arena.pokes([('source-preview-fixture', 'top', 8)]):
+        at = address - 0x40000400
+        assert private_main[at:at+len(expected)] == expected
+        private_main[at:at+len(value)] = value
+    with wave.open(str(a.wav), 'rb') as file:
+        if (file.getnchannels(), file.getsampwidth(), file.getframerate(), file.getnframes()) != (2, 2, 44100, 44100):
+            p.error('Expected the original one-second stereo 16-bit 44.1 kHz fixture.')
+        raw = file.readframes(file.getnframes())
+    original = list(struct.unpack('<' + 'h' * (len(raw) // 2), raw))
+    out.mkdir(parents=True)
+    patched_main = out / 'reserved-main.private.bin'
+    patched_main.write_bytes(private_main)
+    card = out / 'card.private.img'
+    shutil.copyfile(a.card, card)
+    command = [str(a.emulator.resolve()), '--image', str(patched_main), '--card', str(card),
+               '--mount', '--set', 'BEATLAB', '--project', 'PROJECT 261023', '--load-ms', '90000',
+               '--dsp', '--frame', '--ms', '3000', '--interactive', '--main-level', 'off', '--rtc', 'host', '--mkii',
+               '--lcd', str(out / 'lcd.private.bin')]
+    port = Port(command, out)
+    results = []
+    ffi.PlannerTests.setUpClass()
+    oracle = ffi.PlannerTests()
+    try:
+        port.reply(b'ready ', timeout=600)
+        assert port.loaded, 'LOAD PROJECT did not finish'
+        before = out / 'before'; before.mkdir()
+        baseline = observe(port, 16, 2, original, before)
+        # This mutable map boundary also excludes stock recorder reservations;
+        # it is not the cold physical page count. Verify the actual patched
+        # geometry operands, and keep the current boundary within that pool.
+        map_end = int.from_bytes(port.peek(0x80006920, 4), 'big')
+        assert 0 < map_end <= pool_count
+        for address, _, value, _ in arena.pokes([('source-preview-fixture', 'top', 8)]):
+            assert port.peek(address, len(value)) == value
+        # The first 16 bytes deliberately stay outside code: stock's known
+        # aligned clear can write one long beyond the reduced arena's end.
+        data = binary.read_bytes()
+        assert symbols['bs_guard_init'] == native['textBase'] and len(data) < symbols['__bss_start'] - native['textBase'] + 1
+        def poke(address, value):
+            for at in range(0, len(value), 4096):
+                port.command(f'poke {address+at:#x} ' + value[at:at+4096].hex())
+        poke(reserve.start, bytes([0xa5]) * (reserve.end-reserve.start))
+        poke(native['textBase'], data)
+        poke(symbols['__bss_start'], bytes(symbols['_end']-symbols['__bss_start']))
+        assert call_original(port, symbols['bs_worker_test_init']) == 0
+        original_call = port.peek(0x40084854, 6)
+        assert original_call[:2] == bytes.fromhex('4eb9') and int.from_bytes(original_call[2:], 'big') == 0x40000d00
+        poke(0x40084856, symbols['bs_worker_test_entry'].to_bytes(4, 'big'))
+        guard_at, boundary_at = symbols['bs_worker_test_guard'], symbols['bs_worker_test_boundary']
+        port.command(f'watchmem {guard_at:#x} 48')
+        port.command(f'watchmem {boundary_at+20:#x} 12')
+        def native_state():
+            g = struct.unpack('>12I', port.peek(guard_at, 48))
+            b = struct.unpack('>8I', port.peek(boundary_at, 32))
+            assert g[2:4] == (1, 0) and not any(g[4:]) and b[5:] == (0, 1, 0), 'Observer did not retire before queue wait'
+            assert g[0] > 1 and b[0] == guard_at and b[1] == 0x40000d00
+            for at in range(0, len(data), 4096):
+                assert port.peek(native['textBase']+at, min(4096, len(data)-at)) == data[at:at+4096], 'Original observer code overwritten'
+            assert port.peek(reserve.start, 16) == bytes([0xa5])*16
+            assert port.peek(symbols['_end'], 32) == bytes([0xa5])*32
+            return g[0], g[1]
+
+        # Reproduce the observed panel path from this saved fixture. Its first
+        # editor initially selects an empty Static source despite the populated
+        # Flex pool. Explicit source assignment refreshes that editor binding.
+        for key in ('aed', 'edit', 'no', 'playback', 'playback', 'yes', 'no'):
+            tap(port, key)
+        port.command('key 0x26 8'); port.command('run 60')
+        tap(port, 'track1')
+        port.command('key 0x26 0'); port.command('run 60')
+        for key in ('aed', 'edit'):
+            tap(port, key)
+        assert int.from_bytes(port.peek(0x46c8d1a0, 4), 'big') == 1, 'editor is not Flex'
+        assert int.from_bytes(port.peek(0x46c8d19c, 4), 'big') == 0, 'editor is not slot 0'
+        # YES opens the scrollable action list; SELECT ALL is initially first.
+        tap(port, 'yes'); tap(port, 'yes')
+        # Finish the editor-open waveform job before measuring a new edit; its
+        # separate completion is not part of the reverse transaction.
+        port.command('run 1000')
+        # Enter the ordinary SLICE page. Optionally create stock's unaligned
+        # four-slice grid first to exercise its selected-slice nine-row variant.
+        port.command('key 0x24 8'); port.command('run 60')
+        port.command('key 0x24 0'); port.command('run 1000')
+        if a.selected:
+            tap(port, 'yes'); choose(port, 'CREATE SLICE GRID'); choose(port, '4 SLICES')
+            tap(port, 'no'); port.command('run 1500')
+        elif int.from_bytes(port.peek(0x100b14f0+1092, 4), 'big'):
+            tap(port, 'yes'); choose(port, 'DELETE ALL SLICES')
+            tap(port, 'yes'); port.command('run 1000')
+        assert int.from_bytes(port.peek(0x100b14f0+1092, 4), 'big') == (4 if a.selected else 0)
+        assert (int.from_bytes(port.peek(0x400ceb3c, 4), 'big') != 0xffffffff) == a.selected
+        prepared = out / 'prepared'; prepared.mkdir()
+        baseline = observe(port, 16, 2, original, prepared)
+        native_state()
+        assert call_original(port, symbols['bs_boot_init']) == 0
+        assert call_original(port, symbols['bs_boot_menu_prepare']) == 0
+        def call(name, *args):
+            return call_original(port, symbols[name], *args)
+        def word_at(address):
+            return int.from_bytes(port.peek(address, 4), 'big')
+        def word(name):
+            return word_at(symbols[name])
+        # Private test-only interception of both existing stock open operands;
+        # preserve every incoming argument and the surrounding instructions.
+        for site, opcode in ((0x40072c30, '41f9'), (0x40072caa, '4eb9')):
+            prior = port.peek(site, 6)
+            assert prior[:2].hex() == opcode and int.from_bytes(prior[2:], 'big') == 0x4006d94c
+            poke(site+2, symbols['bs_boot_menu_open'].to_bytes(4, 'big'))
+        stock_count = 9 if a.selected else 6
+        stock_labels = 0x400cebc8 if a.selected else 0x400ceb8c
+        stock_callbacks = MENUS[stock_labels][1]
+        before_queries = word('bs_boot_queries')
+        tap(port, 'yes')
+        header = struct.unpack('>5I', port.peek(symbols['bs_boot_menu'], 20))
+        assert header[1:3] == (stock_count+1, stock_count) and header[4] == 1
+        assert word('bs_boot_menu_opens') == 1 and not word('bs_boot_menu_calls')
+        labels, callbacks = word_at(0x460e5e2c), word_at(0x460e5e28)
+        assert reserve.start <= labels < reserve.end and reserve.start <= callbacks < reserve.end
+        assert port.peek(callbacks, 4*stock_count) == port.peek(stock_callbacks, 4*stock_count)
+        for index in range(stock_count):
+            original_label = port.peek(word_at(stock_labels+4*index), 32).split(b'\0', 1)[0]
+            copied_label = port.peek(word_at(labels+4*index), 32).split(b'\0', 1)[0]
+            assert original_label == copied_label
+        assert port.peek(word_at(labels+4*stock_count), 32).split(b'\0', 1)[0] == b'BEAT GRID'
+        for _ in range(stock_count+2):
+            selected = word_at(0x460e5e40)
+            if selected == stock_count: break
+            tap(port, 'down' if selected < stock_count else 'up')
+        assert word_at(0x460e5e40) == stock_count, 'Appended row did not scroll into selection'
+        shutil.copyfile(out / 'lcd.private.bin', out / 'beat-grid-menu.private.bin')
+        if a.scenario == 'cancel':
+            tap(port, 'no')
+            assert not word('bs_boot_menu_calls') and not word('bs_boot_menu_pending')
+            assert call('bs_boot_menu_service') == 0
+        else:
+            if a.scenario == 'stale-owner': assert call('bs_boot_menu_revoke') == 0
+            tap(port, 'yes')
+            if a.scenario == 'stale-owner':
+                assert word('bs_boot_menu_status') == 3 and not word('bs_boot_menu_calls')
+                assert not word('bs_boot_menu_pending') and call('bs_boot_menu_service') == 5
+            else:
+                assert word('bs_boot_menu_status') == 0 and word('bs_boot_menu_calls') == 1
+                assert word('bs_boot_menu_pending') == 1
+                if a.scenario == 'late-owner':
+                    assert call('bs_boot_menu_revoke') == 0 and call('bs_boot_menu_service') == 5
+                else:
+                    assert call('bs_boot_menu_service') == 1
+                    for steps in range(30000):
+                        state = call('bs_boot_step')
+                        if state not in (1, 2): break
+                        if steps % 32 == 0: port.command('run 1')
+                    assert state == 3 and call('bs_boot_result') == 1
+                    settings = struct.unpack('>274I', port.peek(0x100b14f0, 1096))
+                    request = oracle.request(existing=[settings[78+3*i] for i in range(settings[273])],
+                                             trim_start=settings[75], trim_end=settings[76],
+                                             sample_bpm24=settings[69], snap=1,
+                                             reader=lambda f: (original[2*f]*256, original[2*f+1]*256))
+                    expected = oracle.preview(request)
+                    actual = struct.unpack('>131I', port.peek(symbols['bs_boot_plan'], 524))
+                    assert actual == (expected.count, expected.bpm24, *expected.starts, *expected.needs_fade, expected.end_needs_fade)
+                    assert call('bs_boot_menu_service') == 0, 'Intent was consumed twice'
+                    assert word('bs_boot_queries') > before_queries
+        if a.scenario != 'normal': assert word('bs_boot_queries') == before_queries
+        # A second open deliberately uses stock only. The one-shot adapter
+        # retires the first token and never reuses its still-retained storage.
+        tap(port, 'yes')
+        assert word_at(0x460e5e2c) == stock_labels and word_at(0x460e5e28) == stock_callbacks
+        assert word_at(0x460e5e40) < stock_count, 'Appended index leaked into stock menu'
+        assert struct.unpack('>5I', port.peek(symbols['bs_boot_menu'], 20))[4] == 3
+        tap(port, 'no')
+        assert word('bs_boot_locks') == word('bs_boot_unlocks')
+        native_state()
+        after = out / 'after'; after.mkdir()
+        assert observe(port, 16, 2, original, after) == baseline
+        results.append({'scenario': a.scenario, 'stockRows': stock_count,
+                        'appendedLabel': 'BEAT GRID', 'stockLabelsAndCallbacksPreserved': True,
+                        'selectedThroughActualPanel': True, 'calls': word('bs_boot_menu_calls'),
+                        'queries': word('bs_boot_queries')-before_queries,
+                        'previewMatchesHost': a.scenario == 'normal',
+                        'sourceAndSettingsUnchanged': True, 'secondOpenStockOnly': True,
+                        'retainedStorageNotReused': True, 'rememberedStockIndexValid': True})
+        print(f'PASS: {a.scenario}, {stock_count} stock rows plus BEAT GRID, unchanged PCM/settings', flush=True)
+    finally:
+        port.close()
+        ffi.PlannerTests.tearDownClass()
+    assert digest(card) == a.card_sha256 and digest(a.card) == a.card_sha256
+    report = {'scope': 'private one-shot SLICE menu contribution dispatching read-only preview intent; real full-boot stock UI, synthetic owner and driver service',
+              'sourceSha256': {n: digest(ROOT / n) for n in ('boot_menu_native.py', 'boot_source_native.py', 'boot_worker_native.py', 'boot_slices.py', 'boot_writer.py', 'boot_static.py', 'boot_formats.py', 'boot_observe.py', 'inspect_stock.py', 'test_planner.py', *native['sourceSha256'].keys())},
+              'mainSha256': STOCK_MAIN_SHA256, 'reservedMainSha256': digest(patched_main),
+              'nativeReceiptSha256': digest(a.native / 'source-boot.json'), 'nativeBinarySha256': digest(binary),
+              'arenaToolSha256': ARENA_SHA, 'reservedPages': 8, 'nativeAddress': native['textBase'],
+              'emulatorSha256': digest(a.emulator), 'cardSha256': a.card_sha256, 'wavSha256': digest(a.wav),
+              'results': results, 'cardUnchanged': True, 'exitCode': 0, 'hardware': 'not tested',
+              'audio': 'not qualified', 'menuLifetime': 'one admitted menu per boot; arrays pinned forever, subsequent opens stock-only; native detach/removal unqualified',
+              'nativeOwnership': 'test-owned identities and full masking, partial command coverage; no live source admission',
+              'scheduling': 'callback posts intent; emulator driver borrows a bounded main service; no installed scheduler'}
+    (out / 'menu-boot.json').write_text(json.dumps(report, indent=2) + '\n')
+
+
+if __name__ == '__main__':
+    main()

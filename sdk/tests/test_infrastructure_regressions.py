@@ -180,7 +180,11 @@ class ToolSyntax(unittest.TestCase):
                 ast.parse(source.read_text(encoding='utf-8'), str(source))
 
 # Builder extensions after the Poly8 record, oldest first. Each proves its own exact before/after transition.
-EXTENSIONS = ['air-chorus-split-builder.json', 'plain-formatter-builder.json', 'floating-cave-overflow-builder.json']
+EXTENSIONS = ['air-chorus-split-builder.json', 'plain-formatter-builder.json', 'floating-cave-overflow-builder.json', 'octabam-emulator-gates-5c71bc8c.json',
+              'ptable2-builder.json']
+# Documentation-only imports, oldest first: upstream files byte for byte, no build input.
+DOC_IMPORTS = ['octabam-docs-30fbb8e4.json', 'octabam-docs-dcf93d37.json', 'octabam-docs-6328143e.json', 'octabam-docs-bc144523.json',
+               'octabam-docs-5f8e779f.json']
 
 class SelectiveImport(unittest.TestCase):
     def assert_current_builder_identity(self, path, historical):
@@ -251,6 +255,18 @@ class SelectiveImport(unittest.TestCase):
         self.assertTrue(any('past the stock zero run' in row['before']['refused'] for row in changed))
         self.assertFalse(any('past the stock zero run' in row['after'].get('refused', '') for row in record['selections']))
 
+    def test_ptable2_builder_keeps_every_image_and_refusal(self):
+        import json
+        record = json.loads((ROOT.parent / 'infrastructure-verification/ptable2-builder.json').read_text())
+        self.assertEqual(record['kind'], 'ptable2-builder-regression')
+        self.assertEqual(set(record['builderAdaptations']), {'tools/build/build_bus.py', 'tools/remix/schema.py'})
+        for path, change in record['builderAdaptations'].items():
+            self.assert_extension_holds('ptable2-builder.json', path, change['after'])
+        self.assertEqual(len(record['selections']), 128)
+        for row in record['selections']:
+            self.assertIsNotNone(row['after'])
+            self.assertEqual(row['before'], row['after'])
+
     def test_poly8_builder_preserves_current_main_without_poly8(self):
         import json
         record = json.loads((ROOT.parent / 'infrastructure-verification/poly8-shared-builder.json').read_text())
@@ -260,6 +276,46 @@ class SelectiveImport(unittest.TestCase):
         for row in record['selections']:
             self.assertNotIn('poly8', row['moduleIds'])
             self.assertEqual(row['before'], row['after'])
+
+    def test_emulator_and_gates_extension_changes_no_builder_file(self):
+        import hashlib, json
+        sdk = ROOT.parent
+        record = json.loads((sdk / 'infrastructure-verification/octabam-emulator-gates-5c71bc8c.json').read_text(encoding='utf-8'))
+        self.assertEqual(record['kind'], 'emulator-and-gates-extension')
+        self.assertEqual(set(record['builderAdaptations']), {'Makefile', 'tools/emu/ot_emu/main.cpp', 'tools/emu/ot_emu/rtos.cpp', 'tools/emu/ot_emu/rtos.h',
+                                                             'tools/emu/ot_emu/test_periph.cpp', 'tools/emu/ot_emu/usb.cpp', 'tools/emu/ot_emu/usb.h'})
+        for path, change in record['builderAdaptations'].items():
+            self.assert_extension_holds('octabam-emulator-gates-5c71bc8c.json', path, change['after'])
+        # The builder is untouched: the native images and refusals of the earlier records hold by identity.
+        for path, digest in record['builderSourcesUnchanged'].items():
+            self.assert_extension_holds('octabam-emulator-gates-5c71bc8c.json', path, digest)
+        imported = json.loads((sdk / record['importRecord']).read_text(encoding='utf-8'))
+        self.assertEqual(imported['revision'], record['upstreamRevision'])
+        self.assertEqual(imported['modules'], [])
+        # A later docs import pins its newer copy of a file this one also brought.
+        later = {f['path'] for name in DOC_IMPORTS for f in json.loads((sdk / 'imports' / name).read_text(encoding='utf-8'))['files']}
+        for file in imported['files']:
+            with self.subTest(path=file['path']):
+                self.assertFalse(file['path'].startswith('modules/'))
+                if file['path'] not in later:
+                    self.assertEqual(hashlib.sha256((ROOT / file['path']).read_bytes()).hexdigest(), file['vendoredSha256'])
+        # Every vendored copy that is not a recorded local adaptation is upstream's file byte for byte.
+        adapted = {f['path'] for f in imported['files'] if f['sourceSha256'] != f['vendoredSha256']}
+        self.assertEqual(adapted, {'Makefile', 'tools/emu/ot_emu/main.cpp', 'tools/emu/ot_emu/test_periph.cpp'})
+
+    def test_docs_imports_are_upstream_files_byte_for_byte(self):
+        import hashlib, json
+        records = [json.loads((ROOT.parent / 'imports' / name).read_text(encoding='utf-8')) for name in DOC_IMPORTS]
+        for index, (name, imported) in enumerate(zip(DOC_IMPORTS, records)):
+            self.assertEqual((imported['kind'], imported['modules']), ('docs-backport', []))
+            # A later docs import pins its newer copy of a file this one also brought.
+            later = {f['path'] for record in records[index + 1:] for f in record['files']}
+            for file in imported['files']:
+                with self.subTest(record=name, path=file['path']):
+                    self.assertTrue(file['path'].startswith('docs/') and file['path'].endswith('.md'))
+                    self.assertEqual(file['sourceSha256'], file['vendoredSha256'])
+                    if file['path'] not in later:
+                        self.assertEqual(hashlib.sha256((ROOT / file['path']).read_bytes()).hexdigest(), file['vendoredSha256'])
 
     def test_exact_adapted_file_identities_and_scope(self):
         import hashlib, json

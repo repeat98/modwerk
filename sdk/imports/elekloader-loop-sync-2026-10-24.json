@@ -1,0 +1,34 @@
+{
+  "schema": 1,
+  "kind": "elekloader-catalog",
+  "revision": "loop-sync-2026-10-24",
+  "about": "Modwerk source-only loop-sync package for Analog Rytm MKII OS 1.74, compiled from sdk/analog-rytm-mkii/modules/loop-sync.",
+  "cores": [],
+  "mods": [
+    {
+      "file": "loop-sync-0.2.0-experimental-os1.74.elemod",
+      "sha256": "2dd3d6718c76b89930a64e43e6a71509bdf425d9b17285b7eb6eea443ecbc196",
+      "id": "loop-sync",
+      "version": "0.2.0-experimental",
+      "device": "analog-rytm-mk2",
+      "os": "1.74",
+      "license": "GPL-3.0-or-later",
+      "source": {
+        "repo": "repeat98/modwerk",
+        "commit": "35f3a98b85cb27250e9caab311661ec8e7c4814b",
+        "path": "sdk/imports/packages/loop-sync/loop-sync-0.2.0-experimental-os1.74.elemod"
+      },
+      "title": "Loop Sync",
+      "requires": [
+        "core"
+      ],
+      "conflicts": [],
+      "summary": "Keeps sample loops in time with the project tempo by repitching them; AUTO reads each loop's tempo from its length, locks and scenes included.",
+      "description": "Keeps sample loops in time with the project tempo by repitching them; AUTO reads each loop's tempo from its length, locks and scenes included.",
+      "category": "Playback",
+      "author": "stigmagit",
+      "needs_core": "0.3",
+      "on_unit": "Earlier builds tested by the author on an Analog Rytm MKII on OS 1.74 by ear; this package has not run on a unit."
+    }
+  ]
+}

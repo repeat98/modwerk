@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "sources": ["src/digidice.c", "src/engine.c"],
+  "defsym": {},
+  "cflags": [],
+  "weak": [],
+  "subscribe": [
+    { "event": "ev_key", "fn": "digidice_key", "order": 50 },
+    { "event": "ev_enc", "fn": "digidice_enc", "order": 50 },
+    { "event": "ev_tick", "fn": "digidice_tick", "order": 50 },
+    { "event": "ev_draw", "fn": "digidice_draw", "order": 90 }
+  ],
+  "contribute": [],
+  "collections": {},
+  "copied": [],
+  "regions": [],
+  "claims": ["ui:double TRIG"],
+  "requires": [],
+  "derive": null,
+  "releases": { "1.54": { "defsym": {}, "cflags": [], "sites": [] } }
+}

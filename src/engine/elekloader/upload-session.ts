@@ -205,11 +205,12 @@ export class UploadSession {
       }
     })
   }
-  async activate() {
+  /** `budgetMs`: how long a whole set may keep publishing row by row (the session timeout by default). */
+  async activate(budgetMs = this.timeout) {
     return this.exclusive(async () => {
       const offer = this.owned()
       if (!['verified', 'publishing'].includes(this.status.phase)) throw new Error('Verify the staged package before activation.')
-      const deadline = Date.now() + this.timeout
+      const deadline = Date.now() + budgetMs
       let status: UploadStatus
       do {
         status = await this.control('commit', offer.transaction, status => {

@@ -161,6 +161,17 @@ describe('risk-based retained module evidence',()=>{
     artifact.proofs[0].maskedOsSha256='d'.repeat(64)
     put(path,JSON.stringify(artifact));await expect(check()).rejects.toThrow('full qualification')
   })
+  it('lets a shared platform write change the partial-OS cases while freezing the module\'s own detours',async()=>{
+    const path='src/engine/assets/platform-writes.json'
+    const artifact={arena:[{address:4096,note:'arena base'}],groups:[{moduleId:document.id,detours:[{address:8192,sha256:'b'.repeat(64)}]}],cases:[{moduleIds:[document.id],writes:44,sha256:'c'.repeat(64)}]}
+    put(path,JSON.stringify(artifact))
+    git('add',path);git('-c','user.name=Evidence test','-c','user.email=fixture@example.invalid','commit','--quiet','-m','Synthetic platform writes')
+    document.tests.retainedEvidence!.commit=git('rev-parse','HEAD');git('update-ref','refs/remotes/origin/main',document.tests.retainedEvidence!.commit)
+    artifact.arena=[];artifact.cases[0]={moduleIds:[document.id],writes:43,sha256:'d'.repeat(64)}
+    put(path,JSON.stringify(artifact));expect(await check()).toBe('retained-evidence')
+    artifact.groups[0].detours[0].sha256='e'.repeat(64)
+    put(path,JSON.stringify(artifact));await expect(check()).rejects.toThrow('full qualification')
+  })
   it('leaves native proofs of combinations with another module to that module, freezing only its own',async()=>{
     const path='src/engine/assets/analog-bd-composition-proofs.json',companion='companion-module'
     const catalog=JSON.parse(readFileSync(resolve(root,'sdk/catalog.json'),'utf8'))

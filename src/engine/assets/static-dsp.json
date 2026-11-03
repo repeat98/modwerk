@@ -71,6 +71,12 @@
       "priority": 19
     },
     {
+      "id": "ring-sc",
+      "key": "RING_SC",
+      "fxId": 6,
+      "priority": 31
+    },
+    {
       "id": "sidechain-compressor",
       "key": "SIDECHAIN_COMPRESSOR",
       "fxId": 24,

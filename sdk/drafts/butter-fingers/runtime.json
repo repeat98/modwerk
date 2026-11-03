@@ -1,0 +1,8 @@
+{
+  "schema": 1,
+  "subscribe": [
+    {"event": "module_key", "fn": "bf_key"},
+    {"event": "module_enc", "fn": "bf_enc"},
+    {"event": "module_tick", "fn": "bf_tick"}
+  ]
+}

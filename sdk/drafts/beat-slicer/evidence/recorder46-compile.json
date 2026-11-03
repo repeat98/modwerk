@@ -1,0 +1,289 @@
+{
+  "scope": "Private resident UI/engine preview and recorder/preparation guard composition; compilation only",
+  "mainSha256": "164f31224bf61181e3f50e7dec40df9afcae5b16dbf6e4c0d0cc5e986af0a84e",
+  "textBase": 1174511088,
+  "binarySha256": "efc0e5dad79cc7b7066f63e631139f7aff4c0a267c314200f8d310454d7cc18a",
+  "symbolsSha256": "dea5fc3cf108e7fec9e6af07df91bb065579824836478a57b211dc7d4b1ce5e3",
+  "sourceSha256": {
+    "planner.c": "01c9c25efa363679a591969931dd376a3b694a949dd8b9f89eda4bf77a88cee4",
+    "planner.h": "1a10ce9e6b34dfd35eb138690e2134550621c3bf91b2178fb50f95b9def6b7ae",
+    "planner_job.c": "767d82cc375677a115e9457af35e26fddd9de66a0dc80aa2af0fe3b5adaf0581",
+    "planner_job.h": "c4dd3faa8b3320194b54ab4d7bec6541d9e936f544b0e6236efa4fa5518d6547",
+    "pcm_reader.c": "8762e389a39b7407a7d987dc6e3e36d7d75aa6c408b1d3232d8672a380226088",
+    "pcm_reader.h": "462f495a86f32730b79a56177f99929f685d82729e4646e7b391df475d929821",
+    "preview_guard.c": "da1299674cf2ae967c58231ee9c16891afa94e27254407b5d09df6b73cc4343e",
+    "preview_guard.h": "abcaff39ef1b9a21cb238f0021344ffb5b812ea1740a354cbc1d1f2ace4ddf36",
+    "preview_session.c": "863a66aee00818e6e71c09896d2c222176d7bf4726a3886b2991384d9f43b664",
+    "preview_session.h": "4518b3d75a92081c98c619157fcf2c6bbcb43b82621d8a41dd953bcfbd48c909",
+    "marker_edit.h": "cd8c16a7771bf5a6d251b20e3a02fd0887d68cf4f8e5900e0c6a7fdecc0d4f05",
+    "flex_copy.c": "b069d6b3ac5d8922281811a8eaa5c93d8ab33267ec89fb9f1c99305f35d80b2c",
+    "flex_copy.h": "1bb469187ef75be2d25b671622f79ec2a5e199d877a418e8d9885c70781ee513",
+    "flex_metadata.c": "7dd96a7d94ceb81bbd20fd49995d1c5e64c1077f97ad15b623a14c32607f732b",
+    "flex_metadata.h": "8a5e2da2cb447380883209942ee2654956cd50aae4e68abfe7f2d270d97eab6f",
+    "flex_source.c": "83ca4c3330ba147ea1d9f4248095ef0350210e6451eb5b0f65572ac31432c208",
+    "flex_source.h": "8dce26364e7f270eafbd7f40f12021aaa0b966edf577305477efd7aaa9a19021",
+    "worker_boundary.c": "3ed8a447076bda230939b112b53602c5acd2af4254b14971ef9fe7f929f306d7",
+    "worker_boundary.h": "13f826c6ffdce8e773879bc91c92ff9150a49edee1c27606210932adcdc0ac46",
+    "test_worker_stock.c": "6381b6ed64765e66329fb29a8149169d7c90b033050da7fbae52d923f414fef6",
+    "test_source_boot.c": "1777fae6f71f57cb9a8609c030af4f602c9b3276a393f6dbdcd87c3952fafa38",
+    "test_flex_source.py": "a8fd662fcbbd0d20770a01e8eab99163ee070322e55152114592fd10d91de4fe",
+    "source_boot_native.py": "401564782ec8ff00b07ab0e3946564b76dfd816a4af9ac29bcc808c79fb36829",
+    "flex_lookup.S": "baeb9375129d44fe2db0bcb8d845ced29cd755ac126c3ab2afd696aebbca2487",
+    "inspect_stock.py": "3df8e0019c7c1b095132a16da21a40c739b233548b9030a6dd8befadceb59190",
+    "menu_boot_native.py": "d07338930c08139bdf4f08ee8150a59e62b8c1206b75f07104c9c332961bb282",
+    "editor_menu.c": "9e7a73ff05e65eddb9db7d4163c29e4d6f55d6bce33379f4f9dfac64e451a043",
+    "editor_menu.h": "211496964f026a650e3e28847314478b25dac5106a586cede963109ff0b26631",
+    "test_menu_boot.c": "78423ff2cb5d77628d57ddc51590d5fd5306ff3228d4a28bb2f59616b8fe0a71",
+    "grid_ui_boot_native.py": "8e85519f6f83b8af64812398aac4f0791e2bc23372fe17b449264c6f32ccd039",
+    "test_grid_ui_boot.c": "1d17a78c2f25fb7c16755c0f2186415d9e4cc7b8d96ecbe0c51f9462c74fd3bd",
+    "ui_text.c": "9f147e08dd16fe2fdc8714114a59850acddabd27bed0d24123a5dd172ffb780b",
+    "ui_text.h": "bedfdd20498c3e7593e815a42f6be011e5326000b02a4e82bbd2f234a5f2b130",
+    "async_ui_native.py": "fa710a268c1890d30fb7e081d9b5796431f63a6c321799dbaae1f8fa5479e74d",
+    "engine_boundary.c": "7989e9811c74e1d9ddd847f6b10a291a7757999153d75960d4996a2325629e9a",
+    "engine_boundary.h": "22d98964c49edaead23f27be9007efe4ed97d9a7d0ffac727641756e37a76b01",
+    "test_engine_boot.c": "67ef9b40c09b9c0300bb2c151cdea121f46983289ed5165a4cbce583c1551241",
+    "preview_async.c": "d7250549fa634ffe287c37d2410025146a6bb168f4dc7ec146f7e288f35e8917",
+    "preview_async.h": "ea0189432e63b6ddaf3672ab531dad18f93adac15bdae21e648e7fd5ec040d61",
+    "test_async_boot.c": "725126244124a58020892f58f29723084a535b024c477f6e45c06dfed1f0e4c0",
+    "test_async_tick.c": "d843e3b6a472b0ff7a1c546aec22c3af5d2948457c35c2bca28333c61094c796",
+    "test_async_ui.c": "d3d5e5aa26249b98ac2a7f7a0d853d12b344febcbc55055e37f1ac1c2f6d1b7e",
+    "selection_boot_native.py": "91e947a5869142716d42cf42cfe7a3d42f442f30c927d240c276a99e49d0254c",
+    "selection_context.c": "6b48e848921ded1de4fb7f3be11dfcf52a9a505674924b91c514935b0aa7d1b4",
+    "selection_context.h": "1d3b65173bf534d96c9cf4af9f444d7115cdd052d40505ce7fc38d8e5726f98c",
+    "test_selection_native.c": "8420f0f6284223a61af7eb3db83c50032d84eae73324388a9659fb6362796621",
+    "test_selection_menu.c": "a6b893d0d9deacbee0c77f1ba9e11b521c1c4fcfa946061f3e2c772556ada904",
+    "test_selection_ui.c": "cd3eeac5c988a65c36854ca481c5ae6399f1f8827ab2801161f1f2c5b9b1f130",
+    "resident_boot_native.py": "6018e63768c483afe7405c0e23f683aa365844ecc32fe1ae8c09a8f2c3eaa4cb",
+    "resident_menu.c": "33a94aa3b7bca129bcb2d79b16fad7ab0856bcc54adfd23fcfe003dfaacdf0a6",
+    "resident_menu.h": "9cfb8d5dca03c45aefe93ff362fbf1412f37b438a66202b537393f56b87a52d5",
+    "test_resident_menu_boot.c": "58384a85e7f78fb33897ee63f9d006dfb42af88ece894b1565961f883982f829",
+    "test_resident_selection.c": "449b8107058eebbbcf97a17f6fbbcce44f4f09224d66279ad0da811d770b5d15",
+    "test_resident_ui.c": "fccdb38da7e893a9448f5002a4513de64bdc233a7dd17b2efb2f5bc8dca7f315",
+    "recorder_native.py": "1c4449662dead7c27e538c3c5de690e5cd050a33638d25c4111284814161942f",
+    "recorder_boundary.c": "0af5829b4b3dc6ba5b57ff34b211040b6a9e2699daaceb9a16a7ab489c2192d8",
+    "recorder_boundary.h": "a5674fc98d53342468fe74e49ec56f6d5b1350136730f45ef2b3fe0a0879a5cf",
+    "test_recorder_boundary.c": "ff6bea4924691da97f4479b6fa0a831f1983eeacf7ae5219670aee592bc950a3",
+    "test_recorder_stock.c": "020892419daecfde2b29529ef1189d7097fd8b6c14ca856e831947933be2e781",
+    "stock_probe/recorder_native_probe.cpp": "e1173bb0be602c68412adbb9bfe38aeddbd78ef361709355bf832b6ae2c9c326",
+    "stock_probe/recorder_probe.cpp": "94b75d22f9f475ee429c8950faf36453a202ef2616377881a38e30682e435d2b",
+    "stock_probe/CMakeLists.txt": "d64d2f9c0ab5b6caf63e7785a09934eb2cd6a96c1f2e1ddb47048b34acf84e86",
+    "recorder_engine_native.py": "e2338716d6055e53288f783c287e3206fbf0737c750d4d37184aea4ef225c53c",
+    "recorder-engine-runtime-sources.json": "88722bb4da82b7bf39177d43758e603777aaf9d57420c6a12dfb68c79c13c1ed",
+    "test_recorder_engine.c": "00c7570864402a625a275c5cd20545eb03e57c6abb01e658c9af6999d7a36d74",
+    "test_recorder_prepare.c": "6de85478c8f2534fe38db3618602182c5c581433c24b929875653c8a6e34068c",
+    "test_recorder_resident_engine.c": "c9f5830911d350cd04891b3addc65bded1dd1edd9e4f97d0b3235450c3bb1c05",
+    "recorder_resident_native.py": "571693d0e2edcfc0c489703894d2a1c14c4c72c25dba50d7c403929bfd13b329"
+  },
+  "compiler": "m68k-elf-gcc (GCC) 16.2.0",
+  "flags": [
+    "-std=c99",
+    "-mcpu=5475",
+    "-msoft-float",
+    "-O2",
+    "-ffreestanding",
+    "-fno-builtin",
+    "-fno-common",
+    "-fno-jump-tables",
+    "-fno-tree-loop-distribute-patterns",
+    "-fno-optimize-sibling-calls",
+    "-fno-asynchronous-unwind-tables",
+    "-fno-unwind-tables",
+    "-fno-ident",
+    "-fstack-usage",
+    "-Wall",
+    "-Wextra",
+    "-Werror",
+    "-pedantic",
+    "-fno-late-combine-instructions"
+  ],
+  "objectSha256": {
+    "ui/preview_guard.o": "9c246ad2e54d39275f17c672f2dbed461df158345dbbb214153c180d6cb5b24b",
+    "ui/planner.o": "862fbf786e4388477f7c3efa7601dad7bef8d9583c5b0a21db5351e3276594d4",
+    "ui/planner_job.o": "8f9b560021a93770770eb294c6d569d94fd5b75596e5f1d332d61b4d75664485",
+    "ui/pcm_reader.o": "79fa1b604de2d1e08edc4f41db4578f9ff68afc802dfadc3dd8a4d14a27427e3",
+    "ui/preview_session.o": "50a62a752f3f966ee09288d075cabbc399d1beb9770516f66740096620038304",
+    "ui/flex_metadata.o": "81dc6086e9ccab879bc215398e87d793a72bc5153abc9eeafddf0c3f2426ee9b",
+    "ui/flex_copy.o": "569c269a42d5fcb9e401be217326030f56ce3e89a1fde23d7b5cf6c185a42544",
+    "ui/flex_source.o": "d42c28018f81f29ba3921b8c483916ffa9e8ff38405ad8ba953c8bb203563796",
+    "ui/flex_lookup.o": "814d6c1ba95acf54b1afadc5767e733071288fb408cf14d87cadb271e8a1b54f",
+    "ui/editor_menu.o": "a2b117c08961218db83f0a1d44356e1be74f6d59538651ca0fd2c888ad89ed09",
+    "ui/ui_text.o": "0b5c9f9bac74d1b14bda2fc55d603da956a48499977da19ce543f65c1d9085cf",
+    "ui/engine_boundary.o": "d4a7841ff9aa0c32d28bf5975543523147403bf16b718968954d7d8f4358301c",
+    "ui/preview_async.o": "17a44161e03b8b7f6ffaef4d958eaa025eef08f9ed674e6ce147b6c7dbb2391e",
+    "ui/test_async_tick.o": "b74754e00e8f81898001ef34e4139f684473b3f411bc16be5edd06c8ad9dc9b0",
+    "ui/ui-hooks.private.o": "e3264b0ac723add43306414a3262034be744ccf4dba7287974459091c3cbe786",
+    "ui/selection_context.o": "ed2b2b7790973e2cf2bf38e98efc034ea676519cbc9c2664404294a5c496f706",
+    "ui/selection-hooks.private.o": "81fec785331d95d8aec6eac0baf5f3c4f177858f88a686743edc2994d60ee683",
+    "ui/resident_menu.o": "db56306f9832610f898cccd375ec07324a802226d650085dbe2589c5db8a6c3b",
+    "ui/test_resident_menu_boot.o": "c18c592366a8001f5a4b6b9fcdbc824f01fdf399d77cf9ea3f65610288482341",
+    "ui/test_resident_selection.o": "e5018171a16293e54e603d5d048a7099e8ceb050c7be0073d6937ae3d7b40628",
+    "ui/test_resident_ui.o": "ea9c86895cd4c2b32393adcf5a09c73221eb5d9a39a2dbfbda544748b329e6f1",
+    "recorder/recorder_boundary.o": "859b3e58676e57226638c4526575b4d91e66867d2f1b574ce8a820d1620522a3",
+    "recorder/test_recorder_boundary.o": "9044d27fcab674a7d4f97e34242e191e268f5c6f5e6784dc6be61051323a2e28",
+    "recorder/test_recorder_stock.o": "df25f348c1970d16f7058c489b3929a8579d55149dad7637d3bfdfab16c7e7ed",
+    "recorder/recorder-hooks.private.o": "245e960a113fe2986b88df065fb581603ee84f0ae80402a37de7c7061e622a3c",
+    "recorder/test_recorder_prepare.o": "1fc4143f015bf6491405723d2fc001b98ea35791d9d798e822d8683f94b8edda",
+    "recorder/recorder-engine-hooks.private.o": "690a0fdb26b2829e3799ed4abe0b1243a0770d6430fe65e2680cfd65b43331b8",
+    "test_recorder_resident_engine.o": "ac7f4ba7ec10d1de26cb1a10100003b4c265e6fa6ef0d721a8c57031f9764afd",
+    "test_async_boot.no-direct-result.o": "735d519097be3b296577fb92db1b17574524a6738a78d9dcd120607d72b8b33d"
+  },
+  "codegenGuard": "passed",
+  "freestandingLink": true,
+  "fixtureEnd": 1174560088,
+  "boundarySize": [
+    "text\t   data\t    bss\t    dec\t    hex\tfilename",
+    "    398\t      0\t      0\t    398\t    18e\t/evidence/recorder46-native-c/ui/worker_boundary.o"
+  ],
+  "boundaryStackUsage": [
+    "/source/sdk/drafts/beat-slicer/worker_boundary.c:4:7:bs_worker_receive\t28\tdynamic,bounded"
+  ],
+  "hardware": "not tested",
+  "audio": "not tested",
+  "timing": "not measured",
+  "nativeSourceAccess": "fixed lifetimes and immutable resident menus; production source/loader admission and USB remain unimplemented",
+  "hookGuardSha256": "5df445855cbae19c4582fb724855230e47be70c4736d5027786247582e60f9b4",
+  "hookSites": {
+    "idle": {
+      "name": "idle",
+      "address": 1074284622,
+      "length": 6,
+      "sha256": "d355f8d6cb1b5bf2b6618ea8419e7501aafcfeac5c0616b645646734c0878428"
+    },
+    "job": {
+      "name": "job",
+      "address": 1074284638,
+      "length": 6,
+      "sha256": "0bc2ef188c68224486591693fb94e822b6cc59b94e31323c678457ef5363120e"
+    }
+  },
+  "tickRecipeSha256": "d08358f2e39e02b1e8bfaf17db2b86d5ca97d15a4fd681ce44df25f5c3bea43c",
+  "tickSite": {
+    "address": 1074142868,
+    "length": 6,
+    "sha256": "99535f04de8e48485175b457ffdbc71cf99f863c341af6946f40bcdfcbfed9cf",
+    "stockTarget": 1073944944
+  },
+  "fixtureSize": [
+    "text\t   data\t    bss\t    dec\t    hex\tfilename",
+    "  30282\t      0\t  10524\t  40806\t   9f66\t/evidence/recorder46-native-c/source-boot.elf"
+  ],
+  "asyncStateBytes": 4244,
+  "asyncSize": [
+    "text\t   data\t    bss\t    dec\t    hex\tfilename",
+    "   3152\t      0\t      0\t   3152\t    c50\t/evidence/recorder46-native-c/ui/preview_async.o"
+  ],
+  "asyncStackUsage": [
+    "/source/sdk/drafts/beat-slicer/preview_async.c:23:31:gate_capture\t12\tdynamic,bounded",
+    "/source/sdk/drafts/beat-slicer/preview_async.c:31:31:gate_copy\t24\tdynamic,bounded",
+    "/source/sdk/drafts/beat-slicer/preview_async.c:18:13:gate_unlock\t8\tdynamic,bounded",
+    "/source/sdk/drafts/beat-slicer/preview_async.c:11:12:gate_lock\t8\tdynamic,bounded",
+    "/source/sdk/drafts/beat-slicer/preview_async.c:54:5:bs_async_init\t16\tdynamic,bounded",
+    "/source/sdk/drafts/beat-slicer/preview_async.c:76:10:bs_async_request\t16\tdynamic,bounded",
+    "/source/sdk/drafts/beat-slicer/preview_async.c:88:10:bs_async_cancel\t12\tdynamic,bounded",
+    "/source/sdk/drafts/beat-slicer/preview_async.c:96:5:bs_async_revoke\t8\tdynamic,bounded",
+    "/source/sdk/drafts/beat-slicer/preview_async.c:103:10:bs_async_service\t40\tdynamic,bounded",
+    "/source/sdk/drafts/beat-slicer/preview_async.c:151:5:bs_async_result\t12\tdynamic,bounded",
+    "/source/sdk/drafts/beat-slicer/preview_async.c:162:10:bs_async_state\t12\tdynamic,bounded"
+  ],
+  "engineStackUsage": [
+    "/source/sdk/drafts/beat-slicer/test_source_boot.c:20:12:lock\t0\tstatic",
+    "/source/sdk/drafts/beat-slicer/test_source_boot.c:26:13:unlock\t0\tstatic",
+    "/source/sdk/drafts/beat-slicer/test_source_boot.c:31:13:query\t16\tdynamic,bounded",
+    "/source/sdk/drafts/beat-slicer/test_source_boot.c:35:10:bs_boot_init\t20\tdynamic,bounded",
+    "/source/sdk/drafts/beat-slicer/test_source_boot.c:67:10:bs_boot_begin\t20\tdynamic,bounded",
+    "/source/sdk/drafts/beat-slicer/test_source_boot.c:71:10:bs_boot_step\t4\tdynamic,bounded",
+    "/source/sdk/drafts/beat-slicer/test_source_boot.c:73:10:bs_boot_result\t8\tdynamic,bounded",
+    "/source/sdk/drafts/beat-slicer/test_async_boot.c:30:6:bs_async_wake\t12\tdynamic,bounded",
+    "/source/sdk/drafts/beat-slicer/test_async_boot.c:35:10:bs_async_fixture_init\t28\tdynamic,bounded",
+    "/source/sdk/drafts/beat-slicer/test_async_boot.c:40:10:bs_async_allow_private_waveform_reads\t0\tstatic",
+    "/source/sdk/drafts/beat-slicer/test_async_boot.c:47:6:bs_async_engine_job\t28\tstatic",
+    "/source/sdk/drafts/beat-slicer/test_async_boot.c:66:6:bs_async_engine_idle\t16\tdynamic,bounded",
+    "/source/sdk/drafts/beat-slicer/test_async_boot.c:76:10:bs_ui_foreign_event\t8\tdynamic,bounded"
+  ],
+  "engineBoundarySize": [
+    "text\t   data\t    bss\t    dec\t    hex\tfilename",
+    "    374\t      0\t      0\t    374\t    176\t/evidence/recorder46-native-c/ui/engine_boundary.o"
+  ],
+  "tickSize": [
+    "text\t   data\t    bss\t    dec\t    hex\tfilename",
+    "    310\t      0\t     32\t    342\t    156\t/evidence/recorder46-native-c/ui/test_async_tick.o"
+  ],
+  "tickStackUsage": [
+    "/source/sdk/drafts/beat-slicer/test_async_tick.c:10:6:bs_ui_tick\t12\tdynamic,bounded",
+    "/source/sdk/drafts/beat-slicer/test_async_tick.c:23:10:bs_ui_tick_enable\t0\tstatic",
+    "/source/sdk/drafts/beat-slicer/test_async_tick.c:27:10:bs_ui_block\t8\tdynamic,bounded",
+    "/source/sdk/drafts/beat-slicer/test_async_tick.c:34:10:bs_ui_unblock\t16\tdynamic,bounded",
+    "/source/sdk/drafts/beat-slicer/test_async_tick.c:42:10:bs_ui_main_sp\t0\tstatic"
+  ],
+  "selectionSize": [
+    "text\t   data\t    bss\t    dec\t    hex\tfilename",
+    "    668\t      0\t      0\t    668\t    29c\t/evidence/recorder46-native-c/ui/selection_context.o"
+  ],
+  "selectionStackUsage": [
+    "/source/sdk/drafts/beat-slicer/selection_context.c:6:16:bs_selection_capture_locked\t48\tstatic",
+    "/source/sdk/drafts/beat-slicer/selection_context.c:23:16:bs_selection_arm_locked\t0\tstatic",
+    "/source/sdk/drafts/beat-slicer/selection_context.c:31:5:bs_selection_take_locked\t4\tstatic",
+    "/source/sdk/drafts/beat-slicer/selection_context.c:42:16:bs_selection_block_locked\t0\tstatic",
+    "/source/sdk/drafts/beat-slicer/selection_context.c:47:16:bs_selection_end_locked\t0\tstatic"
+  ],
+  "selectionHooksSha256": "2ef94d4cd58dc296a6d20971a744b72c580ec275d0b30942cfa06c284ced0139",
+  "selectionSites": {
+    "entry": {
+      "address": 1074190580,
+      "length": 6,
+      "sha256": "4994360eaaccb5fe2da8ac4e13328758a0705754959249afcc9b2dcdb9f9c538"
+    },
+    "tail": {
+      "address": 1074190620,
+      "length": 6,
+      "sha256": "b183cc447f304a12e9910f7816d1007dfc6fde34bcfe9d06ab9dfd92cc2a778e",
+      "stockTarget": 1073876008
+    }
+  },
+  "residentMenuBytes": {
+    "bs_resident_six": 648,
+    "bs_resident_nine": 648
+  },
+  "residentSize": [
+    "text\t   data\t    bss\t    dec\t    hex\tfilename",
+    "    634\t      0\t      0\t    634\t    27a\t/evidence/recorder46-native-c/ui/resident_menu.o"
+  ],
+  "residentStackUsage": [
+    "/source/sdk/drafts/beat-slicer/resident_menu.c:3:16:bs_resident_menu_materialize_locked\t40\tdynamic,bounded",
+    "/source/sdk/drafts/beat-slicer/resident_menu.c:13:16:bs_resident_menu_reopen_locked\t32\tdynamic,bounded",
+    "/source/sdk/drafts/beat-slicer/resident_menu.c:28:16:bs_resident_menu_retire_locked\t8\tdynamic,bounded",
+    "/source/sdk/drafts/beat-slicer/resident_menu.c:31:16:bs_resident_menu_dispatch_locked\t36\tdynamic,bounded"
+  ],
+  "directResultOmitted": true,
+  "recorderComposition": true,
+  "recorderHookSites": {
+    "enter": {
+      "address": 1073768676,
+      "length": 8,
+      "sha256": "c37ae892e5ce12f10f2658717beb991455bbb898e42b08f0d620f7dab7b1d69c"
+    },
+    "leave": {
+      "address": 1073772884,
+      "length": 8,
+      "sha256": "46e9fe8321dbc1c3dbf1bd6cdbd5d83a847fac0b18983bcb1646cc3e79a4ba55"
+    }
+  },
+  "preparationHookSites": {
+    "enter": {
+      "address": 1073766384,
+      "length": 8,
+      "sha256": "528455adb37f738a3aa0af9ef04cc1c0069f81405025b7f0cea526cbba9389e4"
+    },
+    "leave": {
+      "address": 1073768202,
+      "length": 8,
+      "sha256": "b3c64cdb09d421052742154877f60c4cd52e8cc5e54d70ff2c9186a53256225a"
+    }
+  },
+  "sdkRevision": "c8fcb8054b10366b3a7881ec957a566460aab3d4",
+  "sdkDependencySha256": {
+    "sdk/runtime/m68k_codegen.py": "861da4bf86f662362055f1082147b2c14824075724f7c7a2b77acca3e0c973c0",
+    "sdk/runtime/logging/stock-guards.json": "5df445855cbae19c4582fb724855230e47be70c4736d5027786247582e60f9b4"
+  },
+  "codegenGuardSha256": "861da4bf86f662362055f1082147b2c14824075724f7c7a2b77acca3e0c973c0"
+}

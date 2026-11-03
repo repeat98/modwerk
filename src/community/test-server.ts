@@ -9,7 +9,7 @@ export function testDatabase(){
  const db=new DatabaseSync(':memory:')
  if(migrated)db.deserialize(migrated)
  else{for(const name of readdirSync(new URL('../../migrations/',import.meta.url)).filter(name=>name.endsWith('.sql')).sort())db.exec(readFileSync(new URL('../../migrations/'+name,import.meta.url),'utf8'));migrated=db.serialize()}
- function statement(sql:string,values:SQLInputValue[]=[]):Statement{return {bind(...args){return statement(sql,args as SQLInputValue[])},async first<T>(){return (db.prepare(sql).get(...values) as T|undefined)??null},async all<T>(){const results=db.prepare(sql).all(...values) as T[];const meta=db.prepare('SELECT changes() AS changes,last_insert_rowid() AS last_row_id').get();return {results,meta}},async run(){return {meta:{changes:Number(db.prepare(sql).run(...values).changes)}}}}}
+ function statement(sql:string,values:SQLInputValue[]=[]):Statement{return {bind(...args){if(args.length>100)throw new Error(`D1 allows at most 100 bound parameters, got ${args.length}`);return statement(sql,args as SQLInputValue[])},async first<T>(){return (db.prepare(sql).get(...values) as T|undefined)??null},async all<T>(){const results=db.prepare(sql).all(...values) as T[];const meta=db.prepare('SELECT changes() AS changes,last_insert_rowid() AS last_row_id').get();return {results,meta}},async run(){return {meta:{changes:Number(db.prepare(sql).run(...values).changes)}}}}}
  const adapter:Database & {exec(sql:string):Promise<unknown>}={prepare:statement,async exec(sql){db.exec(sql)},async batch(items){db.exec('BEGIN');try{const result=[];for(const item of items)result.push(await item.all());db.exec('COMMIT');return result}catch(error){db.exec('ROLLBACK');throw error}}}
  return {db,adapter}
 }

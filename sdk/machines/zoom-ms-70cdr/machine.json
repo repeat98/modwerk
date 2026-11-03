@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "id": "zoom-ms-70cdr",
+  "order": 200,
+  "name": "MS-70CDR",
+  "family": "zoom",
+  "status": "research",
+  "summary": "Main target of ZoomMultistompZDL: about 30 custom effects, NAM and cab loaders and a patch editor, tested on firmware 2.10. Modwerk does not list ZDL effects yet.",
+  "firmware": {
+    "releases": [
+      {
+        "version": "2.10",
+        "files": []
+      }
+    ],
+    "flash": "Effects are installed with Zoom Effect Manager 2.3.3 or later over USB; the OS is not modified.",
+    "recovery": "Remove the effect in Effect Manager. If a bad effect freezes the pedal at boot, run All Initialize (hold the leftmost knob while powering on), then remove the effect."
+  },
+  "steps": {
+    "format": "done",
+    "load": "done",
+    "mods": "open"
+  },
+  "research": [
+    {
+      "label": "ZoomMultistompZDL",
+      "url": "https://github.com/themanro/ZoomMultistompZDL",
+      "note": "MIT. ZDL linker, ABI notes, DSP safety rules, effects, NAM/cab template loaders, Web MIDI patch editor, Ziddle emulator tests."
+    },
+    {
+      "label": "repeat98/ZoomMultistompZDL",
+      "url": "https://github.com/repeat98/ZoomMultistompZDL",
+      "note": "The upstream reverse-engineered toolchain the project builds on."
+    }
+  ],
+  "art": {
+    "body": "pedal",
+    "encoders": 0,
+    "trigs": 0,
+    "knobs": 3
+  }
+}

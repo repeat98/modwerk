@@ -1,12 +1,22 @@
-// Machine profiles (sdk/machines/<id>/machine.json): one strict contract for every Elektron machine.
+// Machine profiles (sdk/machines/<id>/machine.json): one strict contract for every machine, Elektron and others.
 // Shared by the website (through the generated registry) and stock-free repository checks. No firmware is read.
 
 export const MACHINE_STATUSES = ['available', 'preview', 'research', 'open'] as const
-export const MACHINE_STEP_IDS = ['format', 'rebuild', 'boot', 'core', 'mods'] as const
+export const MACHINE_FAMILIES = ['elektron', 'zoom', 'erica'] as const
+// Each family's road to mods. Elektron machines are modded through the OS image; Zoom MultiStomp
+// pedals load separate effect files on their stock OS, so they have no image to rebuild or core to boot.
+// Erica Synths publishes its firmware source, so mods are built from that source instead of a stock image.
+export const FAMILY_STEP_IDS = {
+  elektron: ['format', 'rebuild', 'boot', 'core', 'mods'],
+  zoom: ['format', 'load', 'mods'],
+  erica: ['source', 'boot', 'core', 'mods'],
+} as const
+export const MACHINE_STEP_IDS = ['format', 'rebuild', 'source', 'boot', 'core', 'load', 'mods'] as const
 export const MACHINE_STEP_STATES = ['done', 'started', 'open'] as const
 export const MACHINE_PLATFORMS = ['octabam', 'elemod'] as const
-export const MACHINE_BODIES = ['compact', 'wide', 'keys', 'box', 'model'] as const
+export const MACHINE_BODIES = ['compact', 'wide', 'keys', 'box', 'model', 'pedal', 'floor'] as const
 
+export type MachineFamily = typeof MACHINE_FAMILIES[number]
 export type MachineStatus = typeof MACHINE_STATUSES[number]
 export type MachineStepId = typeof MACHINE_STEP_IDS[number]
 export type MachineStepState = typeof MACHINE_STEP_STATES[number]
@@ -18,6 +28,7 @@ export type MachineProfile = {
   id: string
   order: number
   name: string
+  family: MachineFamily
   variants?: string[]
   status: MachineStatus
   summary: string
@@ -26,7 +37,7 @@ export type MachineProfile = {
     flash: string
     recovery: string
   }
-  steps: Record<MachineStepId, MachineStepState>
+  steps: Partial<Record<MachineStepId, MachineStepState>>
   research?: { label: string; url: string; note: string }[]
   sdk?: {
     platform: MachinePlatform
@@ -76,19 +87,21 @@ function https(value: unknown, path: string): string {
 }
 
 export function parseMachineProfile(value: unknown): MachineProfile {
-  const item = object(value, 'machine', ['schemaVersion', 'id', 'order', 'name', 'status', 'summary', 'steps', 'art'], ['variants', 'firmware', 'research', 'sdk'])
+  const item = object(value, 'machine', ['schemaVersion', 'id', 'order', 'name', 'status', 'summary', 'steps', 'art'], ['family', 'variants', 'firmware', 'research', 'sdk'])
   if (item.schemaVersion !== 1) fail('machine.schemaVersion', 'expected 1')
   const id = text(item.id, 'machine.id', 40)
   if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(id) || id === 'all') fail('machine.id', 'expected a lowercase kebab-case id other than "all"')
   const status = choice(item.status, 'machine.status', MACHINE_STATUSES)
-  const stepsValue = object(item.steps, 'machine.steps', MACHINE_STEP_IDS)
-  const steps = Object.fromEntries(MACHINE_STEP_IDS.map(step => [step, choice(stepsValue[step], 'machine.steps.' + step, MACHINE_STEP_STATES)])) as Record<MachineStepId, MachineStepState>
+  const family = item.family === undefined ? 'elektron' : choice(item.family, 'machine.family', MACHINE_FAMILIES)
+  const stepIds = FAMILY_STEP_IDS[family]
+  const stepsValue = object(item.steps, 'machine.steps', stepIds)
+  const steps = Object.fromEntries(stepIds.map(step => [step, choice(stepsValue[step], 'machine.steps.' + step, MACHINE_STEP_STATES)])) as Partial<Record<MachineStepId, MachineStepState>>
   const profile: MachineProfile = {
-    schemaVersion: 1, id, order: integer(item.order, 'machine.order', 0, 999), name: text(item.name, 'machine.name', 60), status,
+    schemaVersion: 1, id, order: integer(item.order, 'machine.order', 0, 999), name: text(item.name, 'machine.name', 60), family, status,
     summary: text(item.summary, 'machine.summary', 200), steps, art: parseArt(item.art),
   }
   if (item.variants !== undefined) profile.variants = list(item.variants, 'machine.variants', 1, 6).map((variant, index) => text(variant, 'machine.variants[' + index + ']', 40))
-  if (item.firmware !== undefined) profile.firmware = parseFirmware(item.firmware)
+  if (item.firmware !== undefined) profile.firmware = parseFirmware(item.firmware, family)
   if (item.research !== undefined) profile.research = list(item.research, 'machine.research', 1, 12).map((entry, index) => {
     const path = 'machine.research[' + index + ']', research = object(entry, path, ['label', 'url', 'note'])
     return { label: text(research.label, path + '.label', 80), url: https(research.url, path + '.url'), note: text(research.note, path + '.note', 300) }
@@ -98,11 +111,11 @@ export function parseMachineProfile(value: unknown): MachineProfile {
   // A machine's status must agree with what it claims: mods need firmware, an SDK and every step done.
   const hasMods = status === 'available' || status === 'preview'
   if (hasMods && (!profile.firmware || !profile.sdk)) fail('machine.status', 'machines with mods need firmware and sdk sections')
-  if (hasMods && MACHINE_STEP_IDS.some(step => steps[step] !== 'done')) fail('machine.steps', 'machines with mods have every step done')
+  if (hasMods && stepIds.some(step => steps[step] !== 'done')) fail('machine.steps', 'machines with mods have every step done')
   if (!hasMods && steps.mods !== 'open') fail('machine.steps.mods', 'only machines with mods can mark mods done or started')
-  if (status === 'research' && !MACHINE_STEP_IDS.some(step => steps[step] !== 'open')) fail('machine.status', 'research needs at least one started step')
+  if (status === 'research' && !stepIds.some(step => steps[step] !== 'open')) fail('machine.status', 'research needs at least one started step')
   if (status === 'research' && !profile.research) fail('machine.research', 'credit the research the status relies on')
-  if (status === 'open' && MACHINE_STEP_IDS.some(step => steps[step] === 'done')) fail('machine.status', 'a machine with finished steps is in research')
+  if (status === 'open' && stepIds.some(step => steps[step] === 'done')) fail('machine.status', 'a machine with finished steps is in research')
   return profile
 }
 
@@ -115,13 +128,16 @@ function parseArt(value: unknown): MachineProfile['art'] {
   return result
 }
 
-function parseFirmware(value: unknown): NonNullable<MachineProfile['firmware']> {
+// Elektron releases name their stock OS file and its hash. Zoom ships its OS as an updater app and no mod
+// touches it, and Erica Synths builds come from the published source, so their releases list no files:
+// only the version the mods were tested on.
+function parseFirmware(value: unknown, family: MachineFamily): NonNullable<MachineProfile['firmware']> {
   const firmware = object(value, 'machine.firmware', ['releases', 'flash', 'recovery'])
   const releases = list(firmware.releases, 'machine.firmware.releases', 1, 12).map((entry, index) => {
     const path = 'machine.firmware.releases[' + index + ']', release = object(entry, path, ['version', 'files'])
     return {
       version: text(release.version, path + '.version', 20),
-      files: list(release.files, path + '.files', 1, 4).map((file, fileIndex) => {
+      files: list(release.files, path + '.files', family === 'elektron' ? 1 : 0, family === 'elektron' ? 4 : 0).map((file, fileIndex) => {
         const filePath = path + '.files[' + fileIndex + ']', item = object(file, filePath, ['name', 'sha256'])
         const name = text(item.name, filePath + '.name', 120), sha256 = text(item.sha256, filePath + '.sha256', 64)
         if (!/^[A-Za-z0-9._-]+\.(syx|bin)$/.test(name)) fail(filePath + '.name', 'expected the stock .syx or .bin file name')

@@ -1,0 +1,157 @@
+{
+  "schemaVersion": 1,
+  "repository": "https://github.com/sambanks/octabam",
+  "revision": "7795adf0dff8c650968ff53ab5ab47babaf00ffe",
+  "moduleVersion": "0.1.1-experimental",
+  "root": "sdk/octabam/modules/lofi2",
+  "modules": [
+    "lofi2"
+  ],
+  "author": {
+    "github": "bryantysinger",
+    "name": "Bryan T",
+    "pullRequests": [
+      "https://github.com/sambanks/octabam/pull/657",
+      "https://github.com/sambanks/octabam/pull/704",
+      "https://github.com/sambanks/octabam/pull/843"
+    ],
+    "mergeCommits": [
+      "0024729b0f74a83d058fef7a375dd259decb5022",
+      "fb5daa9766f1af1f61207c6baae056347a2edcd5",
+      "7795adf0dff8c650968ff53ab5ab47babaf00ffe"
+    ]
+  },
+  "files": [
+    {
+      "path": "lofi2.asm",
+      "repository": "https://github.com/sambanks/octabam",
+      "revision": "7795adf0dff8c650968ff53ab5ab47babaf00ffe",
+      "sourcePath": "modules/lofi2/lofi2.asm",
+      "sourceBytes": 52828,
+      "sourceGitBlob": "aecd5382d9f2d214666cba8d9f33339a27718b78",
+      "sourceSha256": "bcd479e7426a27176e57bab5f4f0bb1d32f53dac3a9c58bcc462820946c930ac",
+      "vendoredSha256": "bcd479e7426a27176e57bab5f4f0bb1d32f53dac3a9c58bcc462820946c930ac",
+      "note": "Imported unchanged"
+    },
+    {
+      "path": "manifest.py",
+      "repository": "https://github.com/sambanks/octabam",
+      "revision": "7795adf0dff8c650968ff53ab5ab47babaf00ffe",
+      "sourcePath": "modules/lofi2/manifest.py",
+      "sourceBytes": 11512,
+      "sourceGitBlob": "9ee145bed6325a7b79f0fb8c622407e6a0fc7fb9",
+      "sourceSha256": "9c0235270bedff4fc7efb7b403cbd1233ce5fbae6a067512ff4b0d0bc6d11ee4",
+      "vendoredSha256": "c4cbcdb50f17edf868b6b12400548778600cbb44394224e94ab63a5ef4730b3a",
+      "transforms": [
+        "MenuEntry.fx2_id 0x1f -> 0x09: 0x1f is TAPEHEAD's and 0x1e Airwindows Chorus's in Modwerk; the registry refuses two modules on one id. A comment says so; the author's own comment on 0x1f is kept.",
+        "DspSection.priority 15 -> 19: after every effect already listed in Modwerk (Mini Verb holds 15, E-Verb and Airwindows Chorus 18) and before Output Matrix (21) and Sidechain Compressor (30), so no existing module's placement moves. The comment is rewritten to say so.",
+        "Gate path tools/verify/verify_lofi2.py -> modules/lofi2/verify_lofi2.py.",
+        "Module.author \"Bryan T\" -> \"bryantysinger\": Modwerk's package compiler requires the native author to equal the manifest's GitHub handle. \"Bryan T\" remains the display name in octamod.module.json.",
+        "Param name \"RANGE\" -> \"RNGE\" (and the dear key): the five letters overran the name field on the unit (MKII, 13 Oct 2026).",
+        "mode_slot=8 with mode_views -> name_selects=(NameSelect(8, ...),): MODE keeps its own name and shows its value beneath the knob, as stock selects do; octabam printed the value in the name field and again below. Slot 2 is still renamed GAIN in RING.",
+        "Docstring: the first paragraph names both ids. Harness layout_char 'F', every Param, the tables, mode views, proof note and dear settings are unchanged.",
+        "octabam 947fe57a's ModeView(mode=1) and ModeView(mode=2), which name nothing (DOWN and UP keep FDBK) and exist for octabam's verify_modedefaults over mode_slot, are not carried into the name select: a view is sparse and a name select applies no defaults, so they would change nothing. A comment says so."
+      ]
+    },
+    {
+      "path": "verify_lofi2.py",
+      "repository": "https://github.com/sambanks/octabam",
+      "revision": "7795adf0dff8c650968ff53ab5ab47babaf00ffe",
+      "sourcePath": "tools/verify/verify_lofi2.py",
+      "sourceBytes": 24877,
+      "sourceGitBlob": "8bebf570626f980451f2cb70b897f00ed67a201a",
+      "sourceSha256": "6f4c19722990356d0397904d1360caf33d28bb609c9b7ac4097d75a17f36c8ba",
+      "vendoredSha256": "ae21568a5fc225bae8bbbaa8eab61803a437375792241e2d43c769458bc5d10d",
+      "transforms": [
+        "Moved from tools/verify/ into the module folder (tools/ is shared build input); the toolpath line and the usage line follow the new location.",
+        "octabam's audition._ensure_insert_mem builds its scratch image from the insert plus SEND with fallback SEND. Modwerk's tree has no SEND module, so the script builds the scratch image itself with the same build line and dump: LOFI2 alone, fallback NONE, static_stock=True; the user's out/mainos_bus.bin is saved and restored as before.",
+        "The 'module is really in the image' guard compares LOFI2's dispatch entries with an id absent from the scratch image (TAPEHEAD's) instead of SEND's.",
+        "One alias line, K[\"RANGE\"] = K[\"RNGE\"], so the checks keep octabam's word for the renamed slot.",
+        "All 73 checks, their inputs and their limits are unchanged (70 at 8250be0c; pull request 843 adds the three FDBK 127 tail checks for issue 825, merged in by hand over the adaptations above)."
+      ]
+    },
+    {
+      "path": "upstream/modules/lofi2/README.md",
+      "repository": "https://github.com/sambanks/octabam",
+      "revision": "7795adf0dff8c650968ff53ab5ab47babaf00ffe",
+      "sourcePath": "modules/lofi2/README.md",
+      "sourceBytes": 18218,
+      "sourceGitBlob": "c464a73895bfe5e826f7fa990ba846e711723319",
+      "sourceSha256": "770b356a87bc9ff661bd1949c7d1ac8e57140e125abcd5ba4c44ba684d049d83",
+      "vendoredSha256": "770b356a87bc9ff661bd1949c7d1ac8e57140e125abcd5ba4c44ba684d049d83",
+      "note": "Imported unchanged; the author's README, design notes and hardware reports"
+    },
+    {
+      "path": "upstream/modules/lofi2/manifest.py",
+      "repository": "https://github.com/sambanks/octabam",
+      "revision": "7795adf0dff8c650968ff53ab5ab47babaf00ffe",
+      "sourcePath": "modules/lofi2/manifest.py",
+      "sourceBytes": 11512,
+      "sourceGitBlob": "9ee145bed6325a7b79f0fb8c622407e6a0fc7fb9",
+      "sourceSha256": "9c0235270bedff4fc7efb7b403cbd1233ce5fbae6a067512ff4b0d0bc6d11ee4",
+      "vendoredSha256": "9c0235270bedff4fc7efb7b403cbd1233ce5fbae6a067512ff4b0d0bc6d11ee4",
+      "note": "Imported unchanged; the author's original of the adapted manifest.py"
+    },
+    {
+      "path": "upstream/tools/verify/verify_lofi2.py",
+      "repository": "https://github.com/sambanks/octabam",
+      "revision": "7795adf0dff8c650968ff53ab5ab47babaf00ffe",
+      "sourcePath": "tools/verify/verify_lofi2.py",
+      "sourceBytes": 24877,
+      "sourceGitBlob": "8bebf570626f980451f2cb70b897f00ed67a201a",
+      "sourceSha256": "6f4c19722990356d0397904d1360caf33d28bb609c9b7ac4097d75a17f36c8ba",
+      "vendoredSha256": "6f4c19722990356d0397904d1360caf33d28bb609c9b7ac4097d75a17f36c8ba",
+      "note": "Imported unchanged; the author's original of the adapted verify_lofi2.py"
+    },
+    {
+      "path": "upstream/remixes/test/lofi2/remix.py",
+      "repository": "https://github.com/sambanks/octabam",
+      "revision": "7795adf0dff8c650968ff53ab5ab47babaf00ffe",
+      "sourcePath": "remixes/test/lofi2/remix.py",
+      "sourceBytes": 655,
+      "sourceGitBlob": "46dbd69e63c35010201a8edaec609c3ce01e15c3",
+      "sourceSha256": "ff2cc60a1e757db04ad74746e8aea6719b4ed1e100ed03b3dd503d6273e4a7ec",
+      "vendoredSha256": "ff2cc60a1e757db04ad74746e8aea6719b4ed1e100ed03b3dd503d6273e4a7ec",
+      "note": "Imported unchanged; the author's test remix, used for the native build in TESTING.md"
+    },
+    {
+      "path": "upstream/remixes/test/lofi2/README.md",
+      "repository": "https://github.com/sambanks/octabam",
+      "revision": "7795adf0dff8c650968ff53ab5ab47babaf00ffe",
+      "sourcePath": "remixes/test/lofi2/README.md",
+      "sourceBytes": 595,
+      "sourceGitBlob": "2c852bf6bd488e1c020485cba508ef796b378cd6",
+      "sourceSha256": "bf8525e2d8646f26a5b4c0cdefcd6e72b5e410be7fe2103653bb51c048232c09",
+      "vendoredSha256": "bf8525e2d8646f26a5b4c0cdefcd6e72b5e410be7fe2103653bb51c048232c09",
+      "note": "Imported unchanged"
+    },
+    {
+      "path": "upstream/LICENSE",
+      "repository": "https://github.com/sambanks/octabam",
+      "revision": "7795adf0dff8c650968ff53ab5ab47babaf00ffe",
+      "sourcePath": "LICENSE",
+      "sourceBytes": 2112,
+      "sourceGitBlob": "112114d5d319dc4a789dacf1e84b867420a03614",
+      "sourceSha256": "f91a43799d9e31ccc3540f385f68c4d6ff5a096f93ae933be2ce98f6b3f7f113",
+      "vendoredSha256": "f91a43799d9e31ccc3540f385f68c4d6ff5a096f93ae933be2ce98f6b3f7f113",
+      "note": "Imported unchanged; octabam's MIT licence, identical to sdk/octabam/LICENSE"
+    }
+  ],
+  "local": [
+    "LICENSE (header plus upstream/LICENSE in full)",
+    "README.md",
+    "TESTING.md",
+    "octamod.module.json",
+    "perf.py (benchmark and stress harness, after E-Verb's)",
+    "evidence/performance.json",
+    "media/ (headless captures and capture.json)",
+    "presentation/thumbnail.svg"
+  ],
+  "excluded": [
+    "Firmware, stock code or tables, generated images, memory dumps and renders",
+    "octabam's edits to its own shared files in the same commit (README.md, docs/contributing/*, docs/firmware/PARAM_PAGES.md, remixes/test/README.md, tools/remix/selftest.py)",
+    "Pull request 704's regenerated top-level README.md",
+    "octabam's edits to its own shared files in 947fe57a and 99f5c087 (remixes/octabam-inserts, remixes/README.md, tools/verify/verify_modedefaults.py and other gates)"
+  ],
+  "status": "0.1.1-experimental, an update of the released 0.1.0-experimental, prepared locally. Re-pinned on 21 October 2026 from 8250be0c to upstream main 7795adf0dff8c650968ff53ab5ab47babaf00ffe, the merge of the author's pull request 843 for octabam issue 825: SHIFT's feedback cap 0.45 to 0.40 (one constant and its comments in lofi2.asm, the cap in the README and three FDBK 127 tail checks in the verifier). A private native build passes all 73 checks of the author's render gate and the other gates; the DSP package differs from 0.1.0's in one word and the USB package in three bytes (TESTING.md). This source's USB package ran once on the contributor's MKII on 22 October 2026 (one instance, by ear; evidence/hardware.md); the author's MKII report for pull request 843 is for his octabam build, not this build. The previous pins (a6f41a1d, e8665fae, 21f6de90, 8250be0c) and their records are in Git history and TESTING.md."
+}

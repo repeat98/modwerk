@@ -1,0 +1,44 @@
+{
+  "scope": "full Flex preview/candidate chain with synthetic metadata, query and ownership; no native source admission",
+  "sourceSha256": {
+    "planner.c": "01c9c25efa363679a591969931dd376a3b694a949dd8b9f89eda4bf77a88cee4",
+    "planner.h": "4faab6f03e679d0b9389dbf016416afc87fb4d2d354952b22efb81a0381c5c1b",
+    "planner_job.c": "767d82cc375677a115e9457af35e26fddd9de66a0dc80aa2af0fe3b5adaf0581",
+    "planner_job.h": "c4dd3faa8b3320194b54ab4d7bec6541d9e936f544b0e6236efa4fa5518d6547",
+    "pcm_reader.c": "8762e389a39b7407a7d987dc6e3e36d7d75aa6c408b1d3232d8672a380226088",
+    "pcm_reader.h": "462f495a86f32730b79a56177f99929f685d82729e4646e7b391df475d929821",
+    "preview_guard.c": "da1299674cf2ae967c58231ee9c16891afa94e27254407b5d09df6b73cc4343e",
+    "preview_guard.h": "abcaff39ef1b9a21cb238f0021344ffb5b812ea1740a354cbc1d1f2ace4ddf36",
+    "preview_session.c": "778cdb37dc8b801fa7bb600f3ebe4f7102a2847a6c7db833746f84c44ed47605",
+    "preview_session.h": "92b03f2bd17f7077afda56085a1d23231f756558d7e933604dbb9fdfcc20ff79",
+    "marker_edit.c": "645b7bdcb68a755f903b6b592e029d96bac868b763845faa5cf4806fedc9e0ea",
+    "marker_edit.h": "cd8c16a7771bf5a6d251b20e3a02fd0887d68cf4f8e5900e0c6a7fdecc0d4f05",
+    "edit_candidate.c": "b6a6cf49585f2662c43032212b379aaed5681b73df3729f6a15ccdd5eb9ca858",
+    "edit_candidate.h": "0704af2f2f28f85cb775763221bf268e7ac74876d67d0b87419adfae70ad321b",
+    "flex_copy.c": "b069d6b3ac5d8922281811a8eaa5c93d8ab33267ec89fb9f1c99305f35d80b2c",
+    "flex_copy.h": "1bb469187ef75be2d25b671622f79ec2a5e199d877a418e8d9885c70781ee513",
+    "test_flex_fixture.h": "a365b7e5794e2bf16e39df925aeb44d3d405932711827ffefbe2848a5583393d",
+    "test_flex_copy.c": "b873c866f84d0776a18930fa529924e43f5c8e0b040db88638104c1153fe8acd",
+    "test_flex_chain.c": "4d1730e34c4fd63392bf174c1556e81749769f837b5f7b25a26a6687fbe18d33",
+    "test_flex_chain.py": "94cd74be568607bc2ead631d335506e86e1ed2738fe79f4945b38cd8dd9cd704"
+  },
+  "compiler": "Apple clang version 17.0.0 (clang-1700.6.4.2)",
+  "flags": [
+    "-std=c99",
+    "-O1",
+    "-g",
+    "-Wall",
+    "-Wextra",
+    "-Werror",
+    "-pedantic",
+    "-fsanitize=address,undefined",
+    "-fno-omit-frame-pointer"
+  ],
+  "exitCode": 0,
+  "stdout": [
+    "PASS: raw-copy suite plus 32 complete Flex chains and four stale-result/PCM-edit cases"
+  ],
+  "hardware": "not tested",
+  "audio": "not tested",
+  "nativeSourceAccess": "not implemented"
+}

@@ -138,6 +138,14 @@
       "modules": [],
       "internalDependencies": [],
       "status": "six infrastructure backports; no module source or version imports; exact file identities and fresh native comparison recorded separately"
+    },
+    {
+      "record": "imports/octabam-infrastructure-5c71bc8c.json",
+      "repository": "https://github.com/sambanks/octabam",
+      "revision": "5c71bc8cf78062ee1ff69cfbef07d43e32c90305",
+      "modules": [],
+      "internalDependencies": [],
+      "status": "emulator bench and scripting update, dsp_host -pword, the two DSP source gates, the trap register, the emulator README and the Linux toolchain script; no module source or version imports; exact file identities and firmware-free emulator tests recorded separately"
     }
   ]
 }

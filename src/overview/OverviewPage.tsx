@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Icon } from '../components/Icon'
 import { DeviceImage, MachinePhotoCredits } from '../devices/DeviceImage'
-import { DEVICE_STEPS } from '../devices/registry'
+import { DEVICE_STEPS, deviceSteps } from '../devices/registry'
 import type { Overview, OverviewKind, OverviewMachine } from './overview'
 import './overview.css'
 
@@ -11,7 +11,7 @@ const FILTERS: { id: OverviewKind | 'all'; label: string; short: string }[] = [{
 // One short phrase per machine: its modules, or how far the research has come.
 function stateLabel(machine: OverviewMachine) {
   if (machine.count) return machine.count + (machine.count === 1 ? ' module' : ' modules') + (machine.device.status === 'preview' ? ' in preview' : '')
-  return machine.kind === 'research' ? machine.stepsDone + ' of ' + DEVICE_STEPS.length + ' steps' : 'No research yet'
+  return machine.kind === 'research' ? machine.stepsDone + ' of ' + deviceSteps(machine.device).length + ' steps' : 'No research yet'
 }
 
 // The landing page: every machine as one tile, and where the machines without mods begin, an invitation to build the first one.
@@ -95,7 +95,7 @@ function MachineTile({ machine }: { machine: OverviewMachine }) {
         <h2 className="overview-tile-name"><a href={machine.href}>{device.name}</a>{variants && <small>{variants}</small>}</h2>
         <span className="overview-state">{stateLabel(machine)}</span>
       </div>
-      <span className="overview-ladder" aria-hidden="true">{DEVICE_STEPS.map(step => <i key={step.id} className={'is-' + device.steps[step.id]} title={step.title + (device.steps[step.id] === 'done' ? ': done' : device.steps[step.id] === 'started' ? ': started' : '')} />)}</span>
+      <span className="overview-ladder" aria-hidden="true">{deviceSteps(device).map(step => <i key={step.id} className={'is-' + (device.steps[step.id] ?? 'open')} title={step.title + (device.steps[step.id] === 'done' ? ': done' : device.steps[step.id] === 'started' ? ': started' : '')} />)}</span>
     </div>
   </article>
   }

@@ -32,6 +32,25 @@ export function parseRuntimeCapabilities(view: DataView): RuntimeCapabilities {
     throw new VendorTransportError('The Octatrack’s loader capabilities could not be read.')
   return { abi: view.getUint8(5), features: view.getUint16(6), maxSites: view.getUint16(8), maxCopies: view.getUint16(10) }
 }
+export const VENDOR_SLOTS = 39 // the base's two-slot layout (sdk/machines/octatrack/elekloader/flash.h); older bases stall it
+export const SLOTS_BYTES = 24
+/** Where the base lives in the unit's flash (docs/OCTATRACK_TWO_SLOT_BASE.md). `fellBack`: the newest slot's base did
+ * not start three times, so the boot stub started the previous one. Null before the base's first look after a start. */
+export interface BaseSlots {
+  layout: 'one' | 'two' | 'other'
+  running: 0 | 1 | null
+  fellBack: boolean
+  confirmed: boolean
+  slots: { generation: number; whole: boolean; confirmed: boolean; tries: number }[]
+}
+export function parseBaseSlots(view: DataView): BaseSlots | null {
+  if (view.byteLength !== SLOTS_BYTES) throw new VendorTransportError('The Octatrack’s base slots could not be read.')
+  if (view.getUint32(0) !== 0x4d575353) return null // "MWSS": zeros until the base has looked
+  const flags = view.getUint8(6), running = view.getUint8(5)
+  return { layout: (['one', 'two'] as const)[view.getUint8(4)] ?? 'other', running: running === 0 || running === 1 ? running : null,
+    fellBack: !!(flags & 1), confirmed: !!(flags & 2),
+    slots: [8, 16].map(at => ({ generation: view.getUint32(at), whole: !!(view.getUint8(at + 4) & 1), confirmed: !!(view.getUint8(at + 4) & 2), tries: view.getUint8(at + 5) })) }
+}
 /** The device can receive SUBMIT data stages; without it only IDENTIFY answers. */
 export const VENDOR_CAN_SUBMIT = 1
 export const VENDOR_VERSION = 1
@@ -174,6 +193,15 @@ export class UsbVendorTransport implements UploadTransport {
     if (reply.status === 'stall') return undefined
     if (reply.status !== 'ok' || !reply.data) throw new VendorTransportError('The Octatrack did not answer the loader capabilities request.')
     return parseRuntimeCapabilities(reply.data)
+  }
+  /** Read-only, from the interrupt: undefined from a base before the two slots (it stalls), null before its first look. */
+  async slots(signal?: AbortSignal): Promise<BaseSlots | null | undefined> {
+    signal?.throwIfAborted()
+    const reply = await this.device.controlTransferIn(this.setup(VENDOR_SLOTS, 0), SLOTS_BYTES)
+    signal?.throwIfAborted()
+    if (reply.status === 'stall') return undefined
+    if (reply.status !== 'ok' || !reply.data) throw new VendorTransportError('The Octatrack did not answer the base slots request.')
+    return parseBaseSlots(reply.data)
   }
   /** Cached, read-only live meters. Older bases explicitly stall this request. */
   async load(signal?: AbortSignal): Promise<LoadReading | undefined> {

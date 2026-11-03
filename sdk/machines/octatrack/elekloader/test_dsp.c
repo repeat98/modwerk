@@ -4,13 +4,15 @@
  * admission against the arena, the instance block, cycles, free ids and
  * effects in use, and the catalog the DSP manager reads. */
 #include "sha256.c"
-volatile uint32_t modwerk_flash_refusal; /* flash.c, not linked here */
+volatile uint32_t modwerk_flash_refusal, modwerk_flash_quiesced; /* flash.c, not linked here */
 #include "dsp.c"
 #include "fxmap.c"
 #include <stdio.h>
 #include <string.h>
 const struct fx_legacy modwerk_fx_legacy[] = {{0x873d83ccu, 27, "E-Verb"}};
 int modwerk_fxpage_build(unsigned id, uint8_t *recipe, uint32_t bytes, unsigned slots) { (void)id; (void)recipe; (void)bytes; (void)slots; return 1; }
+static int restoring; /* loader.c's: 1 while a restore switches */
+int modwerk_runtime_restoring(void) { return restoring; }
 void modwerk_fxpage_drop(unsigned id) { (void)id; }
 /* Legacy tests have no production owner/journal authority. */
 int modwerk_runtime_owner_snapshot(const uint8_t *p,struct runtime_owner *o) { (void)p;(void)o;return 0; }
@@ -117,7 +119,7 @@ const fx_set modwerk_fx_modules = {{1u << 26 | 1u << 27}};
 #endif
 /* identity.c's catalog: SPRING REV (21) a stock package loaded on demand, every other id what stock runs. */
 #define STOCK4 STOCK, STOCK, STOCK, STOCK
-struct dl_package dl_catalog[MODWERK_FX_IDS] = {STOCK4, STOCK4, STOCK4, STOCK4, STOCK4, STOCK, {1063, 1, MODWERK_DSP_RESERVE, 2, 0, 1, 1}, STOCK, STOCK, STOCK4, STOCK4};
+struct dl_package dl_catalog[MODWERK_FX_IDS] = {STOCK4, STOCK4, STOCK4, STOCK4, STOCK4, STOCK, {1063, 1, 299, 2, 0, 1, 1}, STOCK, STOCK, STOCK4, STOCK4};
 struct code dl_codes[2][MODWERK_FX_IDS];
 const uint16_t modwerk_dsp_arena[2] = {2320, 2300};
 static int idle = 1;
@@ -131,6 +133,7 @@ static void sources(void)
     const uint32_t a = 0xab, b = 0xbb; /* two machine modules' runtime ids */
     /* Core 0 (tracks 5-8) keeps 3120 - 8 x 342 = 384 cycles; core 1 (tracks 1-4) 3565 - 2736 = 829. */
     CHECK(modwerk_dsp_source_claim(4, a, 411, 3, RUNTIME_EXECUTED) == RUNTIME_CYCLES); /* 720 + 6 > 384 */
+    { unsigned rc; uint32_t ra; modwerk_dsp_source_refusal(&rc, &ra); CHECK(rc == 0 && ra == 726); } /* what the box shows */
     CHECK(modwerk_dsp_source_charge(0) == 0 && modwerk_dsp_source_charge(1) == 0);
     CHECK(modwerk_dsp_source_claim(0, a, 411, 3, RUNTIME_EXECUTED) == RUNTIME_OK);     /* 726 <= 829 */
     CHECK(modwerk_dsp_source_charge(1) == 726 && modwerk_dsp_source_charge(0) == 0);
@@ -169,6 +172,8 @@ static int full_or_40(const struct runtime_dsp *none, struct runtime_dsp t) /* a
     return MODWERK_FX_IDS > 32u ? r == RUNTIME_OK && t.id == 40 : r == RUNTIME_FULL;
 }
 #define FULL_OR_40(t) full_or_40(&none, (t))
+/* One tick of the MISSING popup, as modwerk_dsp_tick makes it: the rebind's step, then the popup. */
+static int popup(unsigned track, char *text) { return modwerk_dsp_missing_tick(rebind_tick(), track, text); }
 int main(void)
 {
     for (unsigned k = 32; k < MODWERK_FX_IDS; ++k) dl_catalog[k] = (struct dl_package)STOCK; /* identity.c's stubs */
@@ -201,8 +206,8 @@ int main(void)
     modwerk_machine_dsp_switch(&none, &fx);
     CHECK(dl_catalog[26].words == 3 && !dl_catalog[26].resident && dl_catalog[26].qualified && dl_catalog[26].slots == 1 &&
           dl_catalog[26].cycles == (244 * 7 + 3) / 4 && dl_catalog[26].alignment == 1 && !dl_catalog[26].buffer); /* 7/4 of its claim */
-    CHECK(dl_catalog[0].cycles == MODWERK_DSP_RESERVE && dl_catalog[0].resident && dl_catalog[21].cycles == MODWERK_DSP_RESERVE &&
-          !dl_catalog[21].resident); /* NONE; a stock package */
+    CHECK(!dl_catalog[0].cycles && dl_catalog[0].resident && dl_catalog[21].cycles == 299 &&
+          !dl_catalog[21].resident); /* NONE, free; a stock package at its own cost */
     CHECK(dl_codes[0][26].words == words && dl_codes[1][26].words == words && dl_codes[1][26].count == 3 && dl_codes[1][26].init == 1 &&
           dl_codes[1][26].proc == 2 && dl_codes[0][26].relocations == relocations && dl_codes[0][26].relocation_count == 1);
     /* Another module preferring 26 gets 27; with both held there is none left; a replacement keeps its own. */
@@ -216,19 +221,23 @@ int main(void)
     /* A track running it, or the manager mid-transaction, keeps it: removal and replacement wait. */
     modwerk_test_live_fx[13] = 26;
     CHECK(modwerk_machine_dsp_admit(&fx, &none) == RUNTIME_IN_USE && modwerk_machine_dsp_admit(&fx, &fx) == RUNTIME_IN_USE);
+    /* An Undo puts it back as it was (beta finding 66): the track goes dry (NONE) and the removal is admitted. */
+    modwerk_test_live_fx[5] = 26, restoring = 1;
+    CHECK(modwerk_machine_dsp_admit(&fx, &none) == RUNTIME_OK && !modwerk_test_live_fx[13] && !modwerk_test_live_fx[5]);
+    restoring = 0, modwerk_test_live_fx[5] = 4, modwerk_test_live_fx[13] = 26;
     /* MODULE LOAD (status.c): the one module, unfloored 7/4 of its claim, an estimate, on T6 FX2 (core 0). */
     struct modwerk_module_load loads[MODWERK_FX_IDS];
     CHECK(modwerk_dsp_module_loads(loads) == 1 && loads[0].id == 26 && loads[0].cycles == (244 * 7 + 3) / 4 &&
           !loads[0].measured && loads[0].slots[0] == 1 && !loads[0].slots[1]);
-    /* The box after a pick (status.c): T6 FX2 is core 0's; its other seven slots at least the stock reserve. */
+    /* The box after a pick (status.c): T6 FX2 is core 0's; its other seven slots each at least its floor, SPRING REV on T5. */
     struct modwerk_dsp_budget budget;
-    slot_cycles[13] = 427; dl_residency_words[0] = 1200;
+    slot_cycles[13] = 427; dl_residency_words[0] = 1200; modwerk_test_live_fx[4] = 21;
     CHECK(modwerk_dsp_budget(13, &budget) && budget.core == 0 && budget.allowance == 3120 && budget.effect_cycles == 427 &&
-          budget.charge == 7u * MODWERK_DSP_RESERVE + 427u + modwerk_dsp_source_charge(0) && budget.words == 1200 &&
+          budget.charge == 299u + 427u + modwerk_dsp_source_charge(0) && budget.words == 1200 &&
           budget.arena == 2320 && !memcmp(budget.name, loads[0].name, 16));
     CHECK(!modwerk_dsp_budget(5, &budget) && !modwerk_dsp_budget(16, &budget)); /* a slot with no module; past the slots */
     CHECK(modwerk_dsp_booked(0) == budget.charge * 1000u / budget.allowance); /* the STATUS page: the same sum */
-    slot_cycles[13] = 0; dl_residency_words[0] = 0;
+    slot_cycles[13] = 0; dl_residency_words[0] = 0; modwerk_test_live_fx[4] = 0;
     modwerk_test_live_fx[13] = 4; idle = 0;
     CHECK(modwerk_machine_dsp_admit(&fx, &none) == RUNTIME_BUSY && modwerk_machine_dsp_admit(&fx, &fx) == RUNTIME_BUSY);
     third = fx; third.module = 73;
@@ -236,7 +245,7 @@ int main(void)
     idle = 1;
     CHECK(modwerk_machine_dsp_admit(&fx, &none) == RUNTIME_OK);
     modwerk_machine_dsp_switch(&fx, &none);
-    CHECK(dl_catalog[26].resident && !dl_catalog[26].words && dl_catalog[26].qualified && dl_catalog[26].cycles == MODWERK_DSP_RESERVE &&
+    CHECK(dl_catalog[26].resident && !dl_catalog[26].words && dl_catalog[26].qualified && !dl_catalog[26].cycles &&
           !dl_codes[0][26].words && !dl_codes[1][26].count);
     /* What the current bank names: the live effects and every Part, working and saved; module ids only. */
     static uint8_t bank[0x9504a + 4 * 6322];
@@ -248,8 +257,53 @@ int main(void)
     bank[0x9504a + 1 * 6322 + 0] = 27;                  /* Part 2's saved copy, FX1 on T1 */
     bank[0x8ed80 + 5] = 21;                             /* SPRING REV: stock, not a module */
     CHECK(modwerk_dsp_used().w[0] == (1u << 26 | 1u << 27));
+    /* Each slot's least charge (beta finding 34): the dearest stock effect this bank's Parts name there, working or saved,
+     * the live one and the one asked for; a module id counts nothing (Part 2's saved T1 FX1 names 27). */
+    {
+        uint32_t least[16];
+        uint8_t ids[16];
+        for (unsigned i = 0; i < 16u; ++i) ids[i] = 255u;
+        dl_catalog[13].cycles = 342;                    /* DJ EQ, as identity.c charges it */
+        bank[0x9504a + 3 * 6322 + 12] = 13;             /* Part 4's saved copy, FX2 on T5 */
+        modwerk_dsp_slot_floors(ids, least);
+        CHECK(least[5] == 299 && least[12] == 342 && !least[0] && !least[9] && !least[1]);
+        ids[0] = 13;                                    /* DJ EQ asked for on T1 FX1 */
+        modwerk_test_live_fx[1] = 21;                   /* SPRING REV running on T2 FX1 */
+        modwerk_dsp_slot_floors(ids, least);
+        CHECK(least[0] == 342 && least[1] == 299);
+        bank[0x9504a + 3 * 6322 + 12] = 0, modwerk_test_live_fx[1] = 4, dl_catalog[13].cycles = 0;
+        /* A stock pick dearer than the bank uses there, while another Part's modules fill that core, is refused: the
+         * switch back to that Part then needs no room it was not given. A target naming only what the bank and the
+         * tracks do (a Part switch) raises nothing and is never refused here. Core 1: Part 1 books 3,318 of 3,565. */
+        static const uint8_t one[16] = {4, 4, 4, 4, 0, 0, 0, 0, 26, 26, 26, 8, 0, 0, 0, 0}, two[16] = {4, 4, 4, 4, 0, 0, 0, 0, 8, 8, 8, 8, 0, 0, 0, 0};
+        uint8_t live[16], part1[16], part2[16];
+        const uint32_t own26 = owner[26];
+        const struct dl_package cat26 = dl_catalog[26], cat4 = dl_catalog[4], cat5 = dl_catalog[5];
+        memcpy(live, modwerk_test_live_fx, 16), memcpy(part1, bank + 0x8ed80, 16), memcpy(part2, bank + 0x8ed80 + 6322, 16);
+        owner[26] = 0x70, dl_catalog[26].cycles = 726, dl_catalog[4].cycles = 285, dl_catalog[5].cycles = 80;
+        memcpy(bank + 0x8ed80, one, 16), memcpy(bank + 0x8ed80 + 6322, two, 16), memcpy(modwerk_test_live_fx, two, 16);
+        memcpy(ids, two, 16);
+        CHECK(!modwerk_dsp_slot_floors(ids, least));                  /* what runs */
+        memcpy(ids, one, 16);
+        CHECK(!modwerk_dsp_slot_floors(ids, least));                  /* the switch to Part 1 */
+        memcpy(ids, two, 16), ids[11] = 21;                           /* SPRING REV on T4 FX2: 3,318 + 299 */
+        CHECK(modwerk_dsp_slot_floors(ids, least) == 2u && least[11] == 299);
+        ids[11] = 5;                                                  /* SPATIALIZER, 80: fits */
+        CHECK(!modwerk_dsp_slot_floors(ids, least));
+        memcpy(ids, two, 16), ids[15] = 21;                           /* on core 0, which has room */
+        CHECK(!modwerk_dsp_slot_floors(ids, least));
+        CHECK(modwerk_dsp_booked(1) == 3318u * 1000u / 3565u);       /* the STATUS row: the bank's dearest set */
+        memcpy(modwerk_test_live_fx, live, 16), memcpy(bank + 0x8ed80, part1, 16), memcpy(bank + 0x8ed80 + 6322, part2, 16);
+        owner[26] = own26, dl_catalog[26] = cat26, dl_catalog[4] = cat4, dl_catalog[5] = cat5;
+    }
+    /* One id, stock or module: what an engine's use reads (stock COMPRESSOR, 24, for Sidechain). */
+    CHECK(modwerk_dsp_bank_names(21) && modwerk_dsp_bank_names(26) && modwerk_dsp_bank_names(27) && !modwerk_dsp_bank_names(24));
+    bank[0x9504a + 2 * 6322 + 15] = 24;                 /* Part 3's saved copy, FX2 on T8 */
+    CHECK(modwerk_dsp_bank_names(24));
+    bank[0x9504a + 2 * 6322 + 15] = 0;
     modwerk_test_live_fx[2] = 4; bank[0x8ed80 + 3 * 6322 + 9] = 0;
     CHECK(modwerk_dsp_used().w[0] == 1u << 27);
+    CHECK(!modwerk_dsp_bank_names(26) && !modwerk_dsp_bank_names(24));
     /* What runs dry: an uninstalled module's effect only; a stock effect loads its package. */
     modwerk_test_live_fx[3] = 27; modwerk_test_live_fx[9] = 21;
     CHECK(modwerk_dsp_dry().w[0] == 1u << 27);
@@ -270,6 +324,10 @@ int main(void)
     CHECK(modwerk_dsp_stalled(42857u, 1));                                            /* the 30th still tick */
     for (unsigned t = 0; t < 100; ++t) CHECK(!modwerk_dsp_stalled(42857u, 1));       /* once */
     CHECK(!modwerk_dsp_stalled(42858u, 1));
+    /* A base write under OS UPGRADE's quiesce stops the frames on purpose (flash.c): never a stall, its recovery stays out. */
+    modwerk_flash_quiesced = 1;
+    for (unsigned t = 0; t < 100; ++t) CHECK(!modwerk_dsp_stalled(42900u, 1));
+    modwerk_flash_quiesced = 0;
     /* The project's map (fxmap.c): '#MODWERK_FX=' lines in, only module handles, a failed load changes nothing. */
     for (unsigned k = 0; k < MODWERK_FX_IDS; ++k) release(k);
     for (unsigned i = 0; i < 16u; ++i) modwerk_test_live_fx[i] = 0;
@@ -338,9 +396,74 @@ int main(void)
     third.id = 27; CHECK(modwerk_machine_dsp_admit(&none, &third) == RUNTIME_FULL);   /* 27 is held */
     third.module = 0x873d83ccu; third.id = 26; CHECK(modwerk_machine_dsp_admit(&none, &third) == RUNTIME_FULL); /* the map has it at 27 */
     third.pinned = 0;
+    { /* The MISSING popup names what the loaded project's map names (MKII, 21 October 2026: "MISSING SPECTRUM" when a
+       * project came back whose map gave Spectrum's catalogue handle to RINGMOD SC, which was installed). */
+        char text[24];
+        for (unsigned k = 0; k < MODWERK_FX_IDS; ++k) release(k);
+        memset(modwerk_test_live_fx, 0, sizeof modwerk_test_live_fx);
+        struct runtime_dsp ring = fx;
+        ring.module = 0x4b, ring.id = 27, ring.pinned = 0;
+        strcpy(ring.name, "Ring SC");
+        /* Project A: Ring SC at 27, E-Verb's catalogue handle, on T4 FX1 and T5 FX2; Mod G, not installed, at 26. */
+        modwerk_fxmap_begin(1);
+        modwerk_fxmap_line("#MODWERK_FX=27:0000004b:1:Ring SC", 0); modwerk_fxmap_line("#MODWERK_FX=26:00000047:2:Mod G", 0);
+        modwerk_fxmap_loaded(0);
+        CHECK(modwerk_machine_dsp_admit(&none, &ring) == RUNTIME_OK && ring.id == 27);
+        modwerk_machine_dsp_switch(&none, &ring);
+        modwerk_test_live_fx[3] = 27, modwerk_test_live_fx[8 + 4] = 27;
+        for (unsigned i = 0; i < 8u; ++i) CHECK(!popup(0, text));
+        CHECK(owner[27] == 0x4b && !rebinding);
+        /* Project B, without lines: the catalogue's map (E-Verb at 27) while RAM still names 27 (bytes the load has not
+         * replaced yet), so Ring SC moves to 26. B's own tracks run no module. */
+        modwerk_fxmap_begin(1); modwerk_fxmap_loaded(0);
+        for (unsigned i = 0; i < 8u; ++i) CHECK(!popup(0, text));
+        memset(modwerk_test_live_fx, 0, sizeof modwerk_test_live_fx);
+        modwerk_fxmap_name(27, text);
+        CHECK(owner[26] == 0x4b && !owner[27] && !rebinding && modwerk_fxmap_handle(0x4b) == 26 && !strcmp(text, "E-Verb"));
+        /* A again. Its Parts are applied, and T4 selected, before the load's end applies its map: 27 runs dry for a
+         * moment while the map still names E-Verb there. E-Verb is not what is missing. */
+        modwerk_fxmap_begin(1);
+        modwerk_fxmap_line("#MODWERK_FX=27:0000004b:1:Ring SC", 0); modwerk_fxmap_line("#MODWERK_FX=26:00000047:2:Mod G", 0);
+        modwerk_test_live_fx[3] = 27, modwerk_test_live_fx[8 + 4] = 27, modwerk_test_live_fx[1] = 26;
+        CHECK(!popup(3, text));
+        modwerk_fxmap_loaded(0);
+        for (unsigned i = 0; i < 8u; ++i) CHECK(!popup(3, text)); /* nor during the rebind */
+        CHECK(owner[27] == 0x4b && !owner[26] && !rebinding && !fx_in(modwerk_dsp_dry(), 27) && fx_in(modwerk_dsp_dry(), 26));
+        /* What is missing is still said, by the map's name: T2 runs Mod G. */
+        CHECK(popup(1, text) && !strcmp(text, "MISSING MOD G"));
+        CHECK(!popup(1, text)); /* once per selection */
+        /* A track selected during a load is said once the load is over. */
+        CHECK(!popup(0, text));
+        modwerk_fxmap_begin(1);
+        modwerk_fxmap_line("#MODWERK_FX=27:0000004b:1:Ring SC", 0); modwerk_fxmap_line("#MODWERK_FX=26:00000047:2:Mod G", 0);
+        CHECK(!popup(1, text));
+        modwerk_fxmap_loaded(0);
+        CHECK(popup(1, text) && !strcmp(text, "MISSING MOD G"));
+        /* A map sealed while the manager is busy (an install): the selection waits until the handles follow it. */
+        CHECK(!popup(0, text));
+        idle = 0; modwerk_fxmap_assign(27, 0x4b, 1, "Ring SC");
+        CHECK(!popup(1, text) && !popup(1, text));
+        idle = 1;
+        CHECK(popup(1, text) && !strcmp(text, "MISSING MOD G"));
+        /* A load that never reaches its end holds the popup for LOAD_HOLD ticks only. */
+        CHECK(!popup(0, text));
+        modwerk_fxmap_begin(0); /* the first pass, and no end */
+        for (unsigned i = 0; i < LOAD_HOLD; ++i) CHECK(!popup(1, text));
+        CHECK(popup(1, text) && !strcmp(text, "MISSING MOD G"));
+        modwerk_fxmap_loaded(-1);
+        CHECK(!modwerk_fxmap_loading());
+        /* A newer map arriving during a rebind: the rebind's end does not count as following it; the next tick does. */
+        modwerk_test_live_fx[1] = 0;
+        modwerk_fxmap_begin(1); modwerk_fxmap_loaded(0);                  /* B: Ring SC lets go of 27 */
+        CHECK(!rebind_tick() && rebinding && !owner[27]);
+        modwerk_fxmap_begin(1); modwerk_fxmap_line("#MODWERK_FX=27:0000004b:1:Ring SC", 0); modwerk_fxmap_loaded(0); /* A */
+        CHECK(!rebind_tick() && !rebind_tick() && !rebind_tick() && !rebinding && owner[27] == 0x4b); /* placed by A's map */
+        CHECK(rebind_tick() && owner[27] == 0x4b);
+        memset(modwerk_test_live_fx, 0, sizeof modwerk_test_live_fx);
+    }
     planner();
     sources();
     if (failures) { fprintf(stderr, "%u DSP glue checks failed\n", failures); return 1; }
-    puts("Octatrack DSP glue: admission (ids, arena, instance block, cycles, effects in use), the catalog, the effects a bank names, the stall watchdog, the project handle map and rebinding passed.");
+    puts("Octatrack DSP glue: admission (ids, arena, instance block, cycles, effects in use), the catalog, the effects a bank names, the stall watchdog, the project handle map, rebinding and the MISSING popup passed.");
     return 0;
 }

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { AVAILABLE_MODULES } from '../catalog/availability'
-import { DEVICES, DEVICE_STEPS } from '../devices/registry'
+import { DEVICES, deviceSteps } from '../devices/registry'
 import { DIGI_MODS } from '../devices/digi-mods'
 import { developHighlight, DEVELOP_HIGHLIGHT_UNTIL, machineOverview } from './overview'
 import { OverviewPage } from './OverviewPage'
@@ -57,7 +57,7 @@ describe('overview page', () => {
   })
 
   it('shows one phrase per machine, locks the machines without mods behind Start developing and puts the Start developing tile where they begin', () => {
-    for (const machine of overview.machines) expect(html).toContain(machine.count ? machine.count + ' module' : machine.kind === 'research' ? machine.stepsDone + ' of ' + DEVICE_STEPS.length + ' steps' : 'No research yet')
+    for (const machine of overview.machines) expect(html).toContain(machine.count ? machine.count + ' module' : machine.kind === 'research' ? machine.stepsDone + ' of ' + deviceSteps(machine.device).length + ' steps' : 'No research yet')
     for (const machine of overview.machines.filter(item => !item.count)) expect(html).toContain('href="' + machine.developHref + '"')
     const locked = overview.machines.filter(item => !item.count)
     expect((html.match(/Programming experience needed/g) ?? []).length).toBe(locked.filter(item => !item.coreReady).length)

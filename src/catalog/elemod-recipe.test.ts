@@ -44,6 +44,32 @@ describe('guarded authored patch sites', () => {
       await expect(materializeModuleObject({ ...plan, sites }, stock, [device])).rejects.toThrow()
     }
   })
+  it('relocates a symbol address inside authored bytes, such as move.l #handler,d0 or pea.l', async () => {
+    const { stock, device, plan } = fixture()
+    const at = (addr: number, len: number) => ({ addr: '0x' + (base + addr).toString(16), len, stockSha256: sha(stock.subarray(addr, addr + len)), op: 'bytes' as const })
+    plan.sites = [
+      { ...at(0x20, 6), kind: 'code', new: '203c00000000', relocs: [{ at: 2, target: 'handler' }] },
+      { ...at(0x40, 8), kind: 'code', new: '4e71487900000000', relocs: [{ at: 4, target: 'handler' }] },
+      { ...at(0x61, 5), kind: 'data', new: '0100000000', relocs: [{ at: 1, target: 'handler' }] },
+    ]
+    const module = await materializeModuleObject(plan, stock, [device])
+    expect(module.sites).toMatchObject([
+      { new: '203c00000000', relocs: [[2, 'abs32', 'sym:handler', 0]] },
+      { new: '4e71487900000000', relocs: [[4, 'abs32', 'sym:handler', 0]] },
+      { new: '0100000000', kind: 'data', relocs: [[1, 'abs32', 'sym:handler', 0]] },
+    ])
+    // Only the missing core remains: the authored sites and their symbol resolve.
+    expect(await checkLinkable([parseElemod(module, 'proof', [device])], stock)).toEqual(['exactly one mod must carry .boot (core); got none'])
+    const code = { ...at(0x20, 6), kind: 'code', new: '203c00000000' }
+    for (const relocs of [[], [{ at: 0, target: 'handler' }], [{ at: 3, target: 'handler' }], [{ at: 4, target: 'handler' }], [{ at: 2, target: '1bad' }], [{ at: 2 }], [{ at: 2, target: 'handler', addend: 4 }], [{ at: 2, target: 'handler' }, { at: 2, target: 'handler' }]]) {
+      const sites = [{ ...code, relocs }] as unknown as CompiledElemodPlan['sites']
+      await expect(materializeModuleObject({ ...plan, sites }, stock, [device])).rejects.toThrow()
+    }
+    for (const site of [{ ...code, new: '203c00000001', relocs: [{ at: 2, target: 'handler' }] }, { ...at(0x20, 8), kind: 'code', new: '203c00004e714e71', relocs: [{ at: 4, target: 'handler' }] }, { ...plan.sites[0], op: 'jmp', target: 'handler', relocs: [{ at: 2, target: 'handler' }] }]) {
+      const sites = [site] as unknown as CompiledElemodPlan['sites']
+      await expect(materializeModuleObject({ ...plan, sites }, stock, [device])).rejects.toThrow()
+    }
+  })
   it('retains the linker’s stock instruction-boundary and overlap checks', async () => {
     const { stock, device, plan } = fixture()
     plan.sites = [{ addr: '0x40000200', len: 2, stockSha256: sha(stock.subarray(0x200, 0x202)), op: 'bytes', kind: 'code', new: '4e71' }]

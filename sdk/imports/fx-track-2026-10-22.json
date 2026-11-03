@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "module": "digitakt/fx-track",
+  "version": "0.1.0-experimental",
+  "date": "2026-10-22",
+  "upstream": {
+    "repository": "https://github.com/draadpiraat/modwerk",
+    "revision": "34d55c7de741b737aaa403ae67271849de5ca40b",
+    "path": "sdk/digitakt/modules/fx-track",
+    "license": "GPL-3.0-or-later"
+  },
+  "changes": [
+    "First release: SETTINGS > FX TRACK keeps the effects' control changes that MIDI tracks send on FX CONTROL CH inside the Digitakt, so parameter locks and the MIDI track's LFO play the delay, reverb, compressor and External Mixer. One jsr site at 0x400e0dac, where the MIDI tracks add a message to their output buffer, and an ev_render_out handler.",
+    "Source-only export compiled in the pinned GCC 16.2 Docker toolchain; linked with Core 2.1 it reproduces both emulator-tested SysEx files byte for byte."
+  ],
+  "runtimeSourceSha256": "86f95f641c49ac60d4eab37cdffb6c6ba85c638b45e52beb9b68ca56f3dd434f",
+  "packages": [
+    {
+      "os": "1.54",
+      "path": "sdk/imports/packages/fx-track/fx-track-0.1.0-experimental-os1.54.elemod",
+      "sha256": "41bf21913edd74c38f5a5d8b306da618e11b928a6219ca830b42986ab0a68fc5"
+    }
+  ],
+  "stockPolicy": "No firmware or stock-derived code/tables are present. Addresses, lengths and SHA-256 guards are metadata; exported instructions and sections are authored module code. Local materialized recipes and firmware are never committed.",
+  "evidence": "sdk/digitakt/modules/fx-track/TESTING.md",
+  "requires": []
+}

@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "module": "analog-rytm-mkii/sample-rate",
+  "version": "0.1.0-experimental",
+  "date": "2026-11-02",
+  "changes": [
+    "First library release for Analog Rytm MKII OS 1.74, on core-ar2 0.7, approved by the owner on 2 November 2026. FIN's knob becomes RATE, sound by sound: pure sample speed down to a stop and into reverse."
+  ],
+  "runtimeSourceSha256": "42c5c9d98c5eeadb549b321b64dc81923df5d344433be150f35ea4fb4748b425",
+  "packages": [
+    {
+      "os": "1.74",
+      "path": "sdk/imports/packages/sample-rate/sample-rate-0.1.0-experimental-os1.74.elemod",
+      "sha256": "b0dc0b59bbaefda80350ca3059266b812a86f7db6d9319587c7bdb2d9ab5cab3"
+    }
+  ],
+  "stockPolicy": "No firmware or stock-derived code/tables are present. Addresses, lengths and SHA-256 guards are metadata; exported instructions and sections are authored module code. Local materialized recipes and firmware are never committed.",
+  "evidence": "sdk/analog-rytm-mkii/modules/sample-rate/TESTING.md",
+  "requires": []
+}

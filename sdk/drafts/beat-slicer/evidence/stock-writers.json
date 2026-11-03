@@ -1,0 +1,38 @@
+{
+  "scope": "isolated stock edits, release and pool-to-host-reader previews; synthetic memory, no mocked callees or device access",
+  "mainSha256": "164f31224bf61181e3f50e7dec40df9afcae5b16dbf6e4c0d0cc5e986af0a84e",
+  "sourceSha256": {
+    "stock_probe.py": "65b4f8ed23bb41e41367334e9fb2a86610e553ee352ba273e6093f68f84d0c93",
+    "stock_probe/coherence_probe.cpp": "5e30c90711d28b195ab3e0ef6b1cbf223e0948f1b0188f6f8cbe426db266b1fe",
+    "planner.c": "01c9c25efa363679a591969931dd376a3b694a949dd8b9f89eda4bf77a88cee4",
+    "planner.h": "4faab6f03e679d0b9389dbf016416afc87fb4d2d354952b22efb81a0381c5c1b",
+    "planner_job.c": "767d82cc375677a115e9457af35e26fddd9de66a0dc80aa2af0fe3b5adaf0581",
+    "planner_job.h": "c4dd3faa8b3320194b54ab4d7bec6541d9e936f544b0e6236efa4fa5518d6547",
+    "pcm_reader.c": "8762e389a39b7407a7d987dc6e3e36d7d75aa6c408b1d3232d8672a380226088",
+    "pcm_reader.h": "462f495a86f32730b79a56177f99929f685d82729e4646e7b391df475d929821",
+    "stock_probe/CMakeLists.txt": "0339e6017afab5c5a43643fa860694b65fc0bd4743ceb4761cd2700a2808d1b8"
+  },
+  "executableSha256": "1fcda46ff85e94afd1c8f1e4e17f102f6dcb55172032dda7a9ef423d5f4c8cc6",
+  "exitCode": 0,
+  "stdout": [
+    "SOURCE_SHA256: c1c3e54248d2ef787e8f86dead70b83e31032fbde5344845e454e75fdbf705bb",
+    "PASS: 12 stereo inversions across page boundaries leave control counter unchanged and dirty sticky",
+    "PASS: eight rotations across four formats leave control counter unchanged and dirty sticky",
+    "PASS: eight unsupported/busy/range refusals preserve source and metadata",
+    "PASS: three pool releases: counter wrap, clearing, temporary maps and survivor isolation",
+    "PASS: eight stock-page to host-reader previews and explicit post-edit invalidation",
+    "PASS: eight stereo transforms: exact PCM, early dirty store, partial-write unmasked intervals",
+    "PASS: four reversals: exercised endpoint convention and partial-write unmasked intervals",
+    "PASS: 16 fades/zero/half-gain edits: exact PCM and partial-write unmasked intervals",
+    "PASS: four normalizations: exact PCM and partial-write unmasked intervals",
+    "PASS: four silent normalizations return failure after marking dirty without PCM writes",
+    "PASS: 16 cross-slot copy/mixes: destination-only mutation and partial-write unmasked intervals",
+    "PASS: 35 additional writer refusals perform no PCM, dirty or control stores",
+    "12 passed, 0 failed; isolated synthetic pool, no concurrent scheduler or hardware"
+  ],
+  "stderrLines": 928,
+  "stderrSha256": "518f29810049b01f6a108f939289dcbf71757db16eaadf060d00920f3ffc7608",
+  "hardware": "not tested",
+  "audio": "not tested",
+  "stockPersistence": "not tested"
+}

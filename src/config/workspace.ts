@@ -4,6 +4,8 @@ import { resolveSelection } from '../catalog/modules'
 import { compareModuleVersions } from '../catalog/versions'
 import { isDigiDevice, resolveDigiSelection } from '../devices/digi-mods'
 import { parseUsbAudioConfiguration, USB_AUDIO_MODULE, type UsbAudioConfiguration } from './usb-audio'
+import type { Lock as StorageLock } from '../../vendor/elekloader/kit/src/store.ts'
+export type { StorageLock }
 
 export const DEFAULT_DEVICE = 'octatrack'
 // Configurations saved before machines existed have no device: they are Octatrack configurations.
@@ -21,7 +23,7 @@ function deviceId() {
   return [hex.slice(0,8),hex.slice(8,12),hex.slice(12,16),hex.slice(16,20),hex.slice(20)].join('-')
 }
 
-export type Configuration = { id: string; name: string; device?: string; moduleIds: string[]; moduleVersions: Record<string,string>; keepStockFx2: boolean; usbAudio?: UsbAudioConfiguration; /** Octatrack stock effects left out of the menus when loaded over USB. */ removedStockFx?: string[]; /** Octatrack card builds play the classic startup instead of the docking one. */ classicStartup?: boolean; createdAt: string; updatedAt: string }
+export type Configuration = { id: string; name: string; device?: string; moduleIds: string[]; moduleVersions: Record<string,string>; keepStockFx2: boolean; usbAudio?: UsbAudioConfiguration; /** Octatrack stock effects left out of the menus when loaded over USB. */ removedStockFx?: string[]; /** Octatrack card builds play the classic startup instead of the docking one. */ classicStartup?: boolean; /** The mod-storage lockfile of the configuration's last build, given back to the next build so saved projects keep their mod data. */ storageLock?: StorageLock; createdAt: string; updatedAt: string }
 /** What stays open after deleting a configuration: another one for the same machine, else any other, else a new empty one for
  * that machine, so deleting a machine's last configuration never creates one for a different machine. */
 export function afterDeleting(configurations: Configuration[], id: string) {
@@ -42,6 +44,12 @@ export function removedSettings(device: string, value: unknown) {
   const removedStockFx = device === DEFAULT_DEVICE ? normalizeRemovedStockFx(value) : undefined
   return removedStockFx ? { removedStockFx } : {}
 }
+// The kit checks the lockfile itself when it builds; here only its shape as a JSON object.
+export function storageSettings(value: unknown) {
+  if (value === undefined) return {}
+  if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error('A saved mod storage layout is unreadable.')
+  return { storageLock: value as StorageLock }
+}
 function usbSettings(ids: readonly string[], device: string, value: unknown) {
   if (value === undefined) return {}
   if (device !== DEFAULT_DEVICE || !ids.includes(USB_AUDIO_MODULE)) throw new Error('USB Audio settings require the Octatrack USB Audio module.')
@@ -59,7 +67,7 @@ export function validateConfiguration(value: unknown): Configuration {
   if (item.device !== undefined && (typeof item.device !== 'string' || !isDigiDevice(item.device))) throw new Error('A saved configuration is for an unknown machine.')
   if (typeof item.id !== 'string' || !item.id || typeof item.name !== 'string' || !Array.isArray(item.moduleIds) || !item.moduleIds.every(id => typeof id === 'string') || typeof item.createdAt !== 'string' || typeof item.updatedAt !== 'string') throw new Error('A saved configuration is unreadable.')
   const device = configurationDevice(item)
-  return { id: item.id, name: cleanName(item.name), ...(device === DEFAULT_DEVICE ? {} : { device }), moduleIds: resolveIds(item.moduleIds, device).map(m => m.id), moduleVersions: normalizeModuleVersions(item.moduleIds,item.moduleVersions,device), keepStockFx2: item.keepStockFx2 ?? true, ...removedSettings(device, item.removedStockFx), ...startupSettings(device, item.classicStartup), ...usbSettings(item.moduleIds, device, item.usbAudio), createdAt: item.createdAt, updatedAt: item.updatedAt }
+  return { id: item.id, name: cleanName(item.name), ...(device === DEFAULT_DEVICE ? {} : { device }), moduleIds: resolveIds(item.moduleIds, device).map(m => m.id), moduleVersions: normalizeModuleVersions(item.moduleIds,item.moduleVersions,device), keepStockFx2: item.keepStockFx2 ?? true, ...removedSettings(device, item.removedStockFx), ...startupSettings(device, item.classicStartup), ...usbSettings(item.moduleIds, device, item.usbAudio), ...storageSettings(item.storageLock), createdAt: item.createdAt, updatedAt: item.updatedAt }
 }
 
 export function pinModuleVersions(ids: readonly string[], device = DEFAULT_DEVICE): Record<string,string> {return Object.fromEntries(resolveIds(ids,device).map(module=>[module.id,module.version]))}

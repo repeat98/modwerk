@@ -1,0 +1,135 @@
+{
+  "schemaVersion": 1,
+  "repository": "https://github.com/sambanks/octabam",
+  "revision": "5c71bc8cf78062ee1ff69cfbef07d43e32c90305",
+  "kind": "infrastructure-backport",
+  "modules": [],
+  "files": [
+    {
+      "path": "Makefile",
+      "sourcePath": "Makefile",
+      "sourceSha256": "fce4633d310201493f3c7e7dad1f107ca5ff83ed0b41c285bd139042a149f7a3",
+      "vendoredSha256": "9e15166e4cdda61690b48e33da72d43dbf6d3c2285a0fdb2bc3044b929211e1d"
+    },
+    {
+      "path": "docs/TRAPS.md",
+      "sourcePath": "docs/contributing/TRAPS.md",
+      "sourceSha256": "101d4c5d08ce86fa1fe6fa1a8e5ebc7870369a3fbe771b232e6a35446071277a",
+      "vendoredSha256": "101d4c5d08ce86fa1fe6fa1a8e5ebc7870369a3fbe771b232e6a35446071277a"
+    },
+    {
+      "path": "docs/remixer/EMU.md",
+      "sourcePath": "tools/emu/README.md",
+      "sourceSha256": "70264e41ee63123c25702e3a74feb5e8ba0e4a334a124f3d39b4642854d507e9",
+      "vendoredSha256": "70264e41ee63123c25702e3a74feb5e8ba0e4a334a124f3d39b4642854d507e9"
+    },
+    {
+      "path": "scripts/m68k-toolchain.sh",
+      "sourcePath": "scripts/m68k-toolchain.sh",
+      "sourceSha256": "de3d8f4c0513f05537bf8d885d016be6ade18491941821c0dfe80bda4f99a261",
+      "vendoredSha256": "de3d8f4c0513f05537bf8d885d016be6ade18491941821c0dfe80bda4f99a261"
+    },
+    {
+      "path": "scripts/setup-linux.sh",
+      "sourcePath": "scripts/setup-linux.sh",
+      "sourceSha256": "3fd025e4c8b5f97787d74715a0c228d22cf1daed1f747e52574eae858271048a",
+      "vendoredSha256": "3fd025e4c8b5f97787d74715a0c228d22cf1daed1f747e52574eae858271048a"
+    },
+    {
+      "path": "scripts/setup-mac.sh",
+      "sourcePath": "scripts/setup-mac.sh",
+      "sourceSha256": "d1644e8d50aa3f149b04af761f5d2f72c9e8b06597e4d50c5e89da48bc5bf38b",
+      "vendoredSha256": "d1644e8d50aa3f149b04af761f5d2f72c9e8b06597e4d50c5e89da48bc5bf38b"
+    },
+    {
+      "path": "tools/build/nolabelprefix.py",
+      "sourcePath": "tools/build/nolabelprefix.py",
+      "sourceSha256": "def27746aa226eb3fdf4016bbd4c4e27956b0f3a76cb11851e6e6cd35c77d8cf",
+      "vendoredSha256": "def27746aa226eb3fdf4016bbd4c4e27956b0f3a76cb11851e6e6cd35c77d8cf"
+    },
+    {
+      "path": "tools/build/norep.py",
+      "sourcePath": "tools/build/norep.py",
+      "sourceSha256": "47b7175bfdce5236b0d833dc8bee219c6415d3e8cb0e71cc80fe2b018d066ba5",
+      "vendoredSha256": "47b7175bfdce5236b0d833dc8bee219c6415d3e8cb0e71cc80fe2b018d066ba5"
+    },
+    {
+      "path": "tools/emu/ot_emu/CMakeLists.txt",
+      "sourcePath": "tools/emu/ot_emu/CMakeLists.txt",
+      "sourceSha256": "7f3593179fa11d2d8bb417f70cb25292711e876cd4fa4ca02c1d8231db535791",
+      "vendoredSha256": "7f3593179fa11d2d8bb417f70cb25292711e876cd4fa4ca02c1d8231db535791"
+    },
+    {
+      "path": "tools/emu/ot_emu/machine.cpp",
+      "sourcePath": "tools/emu/ot_emu/machine.cpp",
+      "sourceSha256": "d58c712530e6947c2335a618140bda9c94032b7e92c7bd800a973b24b018a5da",
+      "vendoredSha256": "d58c712530e6947c2335a618140bda9c94032b7e92c7bd800a973b24b018a5da"
+    },
+    {
+      "path": "tools/emu/ot_emu/machine.h",
+      "sourcePath": "tools/emu/ot_emu/machine.h",
+      "sourceSha256": "7517954c394e2d81f6c4a6859efbc105a4bbe8e2349985c58e1d672033e259a6",
+      "vendoredSha256": "7517954c394e2d81f6c4a6859efbc105a4bbe8e2349985c58e1d672033e259a6"
+    },
+    {
+      "path": "tools/emu/ot_emu/main.cpp",
+      "sourcePath": "tools/emu/ot_emu/main.cpp",
+      "sourceSha256": "030cd2292df1b1c888b4f5a2c4d0824feaece57fb50bc076187a8435ad327125",
+      "vendoredSha256": "409b3de1a4fd0c4de450e33a6d7748dc2b0d16d49efd1172c598560f5168166a"
+    },
+    {
+      "path": "tools/emu/ot_emu/pgo.sh",
+      "sourcePath": "tools/emu/ot_emu/pgo.sh",
+      "sourceSha256": "19bbc5a0e50722f9915cb1d0a3d68f48e12462115b22df189830f2539ca505f2",
+      "vendoredSha256": "19bbc5a0e50722f9915cb1d0a3d68f48e12462115b22df189830f2539ca505f2"
+    },
+    {
+      "path": "tools/emu/ot_emu/rtos.cpp",
+      "sourcePath": "tools/emu/ot_emu/rtos.cpp",
+      "sourceSha256": "b4589de516372e21211b37b6f68511f23503219a6fbeb3ef1a325dcc130bdfce",
+      "vendoredSha256": "b4589de516372e21211b37b6f68511f23503219a6fbeb3ef1a325dcc130bdfce"
+    },
+    {
+      "path": "tools/emu/ot_emu/rtos.h",
+      "sourcePath": "tools/emu/ot_emu/rtos.h",
+      "sourceSha256": "76c7264ab1fbb0ad17a14788f2891a455cf9634c65eeae8dcc98f0d7d9456c95",
+      "vendoredSha256": "76c7264ab1fbb0ad17a14788f2891a455cf9634c65eeae8dcc98f0d7d9456c95"
+    },
+    {
+      "path": "tools/emu/ot_emu/test_periph.cpp",
+      "sourcePath": "tools/emu/ot_emu/test_periph.cpp",
+      "sourceSha256": "67827455ff48d16db4bd9a02c9ca3dba20e0f667173bf12b3ac0ca2bdd848c54",
+      "vendoredSha256": "13480d44c629af0019d1e90a9fcd1bc62bdb3c65af95316260a9bb9bbfb4ff3e"
+    },
+    {
+      "path": "tools/emu/ot_emu/usb.cpp",
+      "sourcePath": "tools/emu/ot_emu/usb.cpp",
+      "sourceSha256": "653c1213128878080dd01c9cc05620bfce76a3c11431a25d1726f1bdce812d81",
+      "vendoredSha256": "653c1213128878080dd01c9cc05620bfce76a3c11431a25d1726f1bdce812d81"
+    },
+    {
+      "path": "tools/emu/ot_emu/usb.h",
+      "sourcePath": "tools/emu/ot_emu/usb.h",
+      "sourceSha256": "ae6f549287f02d9d5bf5fc747c439fda3cbc751153e4eb9f06c8bafc80d2d14a",
+      "vendoredSha256": "ae6f549287f02d9d5bf5fc747c439fda3cbc751153e4eb9f06c8bafc80d2d14a"
+    },
+    {
+      "path": "tools/harness/dsp_host/dsp_host.cpp",
+      "sourcePath": "tools/harness/dsp_host/dsp_host.cpp",
+      "sourceSha256": "70d680f7f079950cca789792269ecc682361f0e5ccab1e496e2964dfba5b75a2",
+      "vendoredSha256": "70d680f7f079950cca789792269ecc682361f0e5ccab1e496e2964dfba5b75a2"
+    }
+  ],
+  "localAdaptations": [
+    "main.cpp keeps the independent scenario block-dump streams (a child scenario that names the boot capture path is refused; one that names another path writes its own) and the per-child audio-capture flag, as the 7b2984c8 import did.",
+    "test_periph.cpp keeps the injected media-exhaustion case for --card-fail-after ahead of upstream's unplug/plug case.",
+    "The Makefile keeps every Modwerk adaptation of the 7b2984c8 import (OCTABAM_STATIC_STOCK=1 exported, the approved stock mailbox, the local gate set) and adds only the setup-linux and setup-mac entry points; nothing else of upstream's current Makefile is taken.",
+    "docs/TRAPS.md and docs/remixer/EMU.md are upstream's docs/contributing/TRAPS.md and tools/emu/README.md unchanged; their relative links name octabam's own tree. sdk/octabam/AGENTS.md stays at its 30 September 2026 text.",
+    "The two DSP source gates are not wired into the vendored build_bus.py (a builder input pinned by sdk/infrastructure-verification/); scripts/dsp-source-gates.py runs them over every module, platform and base source from modules:check and module:doctor, refusing a label prefix always and a rep in modules listed from 2026-10-23."
+  ],
+  "verificationRecord": "infrastructure-verification/octabam-emulator-gates-5c71bc8c.json",
+  "limitations": [
+    "The emulator core (v4e, dsp, periph, card) is byte-identical to upstream before and after; only the bench protocol, scripting, write watches and stall detection changed. Firmware-free unit tests and a compile are the evidence: no boot of a stock image, no hardware.",
+    "No builder file (build_bus.py, ab_image.py, schema.py, platform_build.py, ledger.py) changed, so every image and refusal of the 7b2984c8 record is reproduced by identity, not by a fresh native build."
+  ]
+}

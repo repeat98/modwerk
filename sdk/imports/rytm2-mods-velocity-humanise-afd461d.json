@@ -1,0 +1,57 @@
+{
+ "schemaVersion": 1,
+ "recorded": "2026-10-22",
+ "decision": "Analog Rytm MKII module: rytm2_mods' elemod port of MrScruff's rytm-mods 0003-velocity-humanise, for OS 1.74, imported under GPL-2.0-only with attribution. rytm-mods-src is published with MrScruff's permission.",
+ "modules": [
+  {
+   "module": "analog-rytm-mkii/velocity-humanise",
+   "version": "1.1.0",
+   "repository": "https://github.com/Iced-Cream/rytm2_mods",
+   "tag": "v1.2",
+   "revision": "afd461d4a8ef4306bb2a57d4c61ad35c362b3940",
+   "license": "GPL-2.0-only",
+   "files": [
+    {
+     "from": "velocity-humanise/os1.74/velocity-humanise.s",
+     "to": "src/velocity-humanise.s",
+     "sha256": "06ed7012fba74d6eb7f086c9c190bbea86b1c82d38823253f1e0baec0cd957bd"
+    },
+    {
+     "from": "include/ar2-1.74.inc",
+     "to": "include/ar2-1.74.inc",
+     "sha256": "c57431f7b678c68cc007d2a180339edfcb395e9a40b753fe53ea649364e0874b"
+    },
+    {
+     "from": "shared/live-track.s",
+     "to": "shared/live-track.s",
+     "sha256": "53814de9c664ba2c760abd5890b3c293799b7893889c125532c2db67e4c882ba"
+    },
+    {
+     "from": "shared/shared.s",
+     "to": "shared/shared.s",
+     "sha256": "8cc89465abdc5e5c7b70f5a2f2789af0181578a882f0460a5ca0dc03f35062d6"
+    },
+    {
+     "from": "LICENSE",
+     "to": "LICENSE",
+     "sha256": "8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643"
+    },
+    {
+     "from": "velocity-humanise/README.md",
+     "to": "upstream/README.md",
+     "sha256": "33d2f3a60612ab4b0a572846f99125d70f8e0f7d4e98b5f906fb71e39c6f8890"
+    }
+   ],
+   "excluded": [
+    "velocity-humanise/mod.json",
+    "velocity-humanise/velocity-humanise.s"
+   ],
+   "transformations": [
+    "mod.json's five OS 1.74 port sites became address, length and SHA-256 guards in build.json's 1.74 release. Its keep2 site, which keeps a stock opcode word, is written as the equivalent jsr site (opcode 4eb9), so no stock opcode is retained.",
+    "mod.json's storage field (vel_rnd, scope track, 4 bits) became build.json's storage.",
+    "The OS 1.73 source and sites are not imported: core-ar2 0.3 is for OS 1.74 only.",
+    "include/ar2-1.74.inc, shared/live-track.s and shared/shared.s keep their paths relative to the source, so the .include lines in src/velocity-humanise.s are unchanged."
+   ]
+  }
+ ]
+}

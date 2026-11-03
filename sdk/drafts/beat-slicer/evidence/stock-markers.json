@@ -1,0 +1,27 @@
+{
+  "scope": "portable candidate preparation with real stock record sort/sanitation; synthetic memory and explicit tempo/name/track mocks, no native Apply/Undo or device",
+  "mainSha256": "164f31224bf61181e3f50e7dec40df9afcae5b16dbf6e4c0d0cc5e986af0a84e",
+  "sourceSha256": {
+    "stock_probe.py": "8840a2bbcfcf088ddea95fc41168bd099a90ec4810c3be685a437109b7ddae4d",
+    "stock_probe/marker_probe.cpp": "ea142f34cd352dc88cc30b9d604b1a9a046d2180b0b8c2f143385b05a8c97d94",
+    "marker_edit.c": "645b7bdcb68a755f903b6b592e029d96bac868b763845faa5cf4806fedc9e0ea",
+    "marker_edit.h": "cd8c16a7771bf5a6d251b20e3a02fd0887d68cf4f8e5900e0c6a7fdecc0d4f05",
+    "preview_session.h": "f435cc256dca02dc5b575f2ffc53d7d6779b9bf898b02c2ba3a4cc3ed674805f",
+    "pcm_reader.h": "462f495a86f32730b79a56177f99929f685d82729e4646e7b391df475d929821",
+    "planner_job.h": "c4dd3faa8b3320194b54ab4d7bec6541d9e936f544b0e6236efa4fa5518d6547",
+    "planner.h": "4faab6f03e679d0b9389dbf016416afc87fb4d2d354952b22efb81a0381c5c1b",
+    "preview_guard.h": "abcaff39ef1b9a21cb238f0021344ffb5b812ea1740a354cbc1d1f2ace4ddf36",
+    "stock_probe/CMakeLists.txt": "7d3890e80d8d2902e5cea637c9a618314d654f9b924477fc95a43a7a8c1401ad"
+  },
+  "executableSha256": "9581aa08d265ba00f107cdd1559fb8f12329de48a0d5fc73a54899a18674226d",
+  "exitCode": 0,
+  "stdout": [
+    "SOURCE_SHA256: 3e7f4ece5ce55169e9f982da3b6e0a17d852d3dc482432b42bd57b2b26339775",
+    "PASS: 24 complete candidates preserve active/inactive records through stock sort and sanitation, Flex/Static slots 0/127"
+  ],
+  "stderrLines": 192,
+  "stderrSha256": "77f6736a35bd1e263d81575c3e904a2fdd67e2f56ab1a9906e8d877b727bd203",
+  "hardware": "not tested",
+  "audio": "not tested",
+  "stockPersistence": "not tested"
+}

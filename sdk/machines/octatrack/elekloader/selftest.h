@@ -18,6 +18,8 @@ enum { SELFTEST_CONFIGURATION = 1, SELFTEST_TOGETHER, SELFTEST_STRESS, SELFTEST_
 #define SELFTEST_CPU 256u        /* the ColdFire peaked over 90 % */
 #define SELFTEST_LATE 512u       /* a frame came late: interrupts held off too long (the DSP stalls of 11 October 2026) */
 #define SELFTEST_CORRUPT 1024u   /* a module's code on a DSP does not sum as its package */
+#define SELFTEST_FEATURE 2048u   /* a live module requires a base feature that cannot come up this boot (the key bus with a
+                                  * DSP core's state lost, controller_board.c): it would only pass its audio */
 #define SELFTEST_FRAME_LIMIT 68000u /* DTCN3 counts between two frames: one is about 47,900 (16 samples at 132 MHz) */
 
 struct selftest {

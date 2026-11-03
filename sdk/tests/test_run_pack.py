@@ -9,9 +9,10 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.append(str(ROOT / 'sdk/machines/octatrack/elekloader'))
+sys.path.append(str(ROOT / 'sdk'))
 import run_pack
+from firmware_codec import aplib, elz
 
-UPSTREAM = Path(os.environ.get('ELEKLOADER_UPSTREAM', Path.home() / '.cache/modwerk-upstream/elekloader'))
 LOAD, RUN, START = 0x40000400, 0x40112830, 0x40a955e0
 DST = START + run_pack.UNCACHED
 PARITY = '5b6b45e7041999bafc6b033b54293555634303df90ce3fb8cfa39e0f52951eb3'
@@ -25,7 +26,7 @@ def gamma(value, trailer=None):
 
 
 def match(offset, count):
-    """One back reference, written independently of the kit's packer from codec/elz.py's reading."""
+    """One back reference, written independently of the packer from the section format (firmware_codec/elz.py)."""
     length = count - 1 - (offset > 3328)
     raw = offset + 767
     short = [(length >> 1 & 1, b''), (length & 1, b'')] if 1 <= length <= 3 else [(0, b''), (0, b'')] + gamma(length - 2)
@@ -118,10 +119,7 @@ class Decoder(unittest.TestCase):
         with self.assertRaisesRegex(run_pack.Fatal, 'tag byte past the stream'):  # a wrapped end lies below the start
             decode(b'\xff\xff\xff\xf0' + whole[4:], 8)
 
-    @unittest.skipUnless((UPSTREAM / 'elekloader/codec/aplib.py').exists(), 'needs the pinned Elekloader checkout')
-    def test_the_kit_packer_round_trips_through_the_model_and_the_kit_decoder(self):
-        sys.path.insert(0, str(UPSTREAM))
-        from elekloader.codec import aplib, elz
+    def test_the_packer_round_trips_through_the_model_and_the_depacker(self):
         rng = random.Random(97)
         code = b''.join(p.read_bytes() for p in sorted((ROOT / 'sdk/machines/octatrack/elekloader').glob('*.[cs]')))
         shaped = (b'', bytes(4), os.urandom(4096), bytes(65536 + 8), b'\x4e\x75' * 2048, rng.randbytes(9000) * 9,
@@ -131,7 +129,7 @@ class Decoder(unittest.TestCase):
             stream = aplib.pack_section(data)
             self.assertEqual(decode(stream, len(data)), data)
             self.assertEqual(elz.depack_section(stream), data)
-        # The browser kit's packer gives these bytes too (src/engine/elekloader/run-pack.test.ts pins the same digest).
+        # The browser builder's packer gives these bytes too (src/engine/elekloader/run-pack.test.ts pins the same digest).
         data = bytes(((i * i >> 3) ^ (i >> 7)) & 0xff for i in range(40000))
         data += data[1000:5000] * 3
         self.assertEqual(hashlib.sha256(aplib.pack_section(data)).hexdigest(), PARITY)

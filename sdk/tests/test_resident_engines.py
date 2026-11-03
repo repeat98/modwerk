@@ -5,9 +5,12 @@
    agree word for word: a fresh assembly of the authored source at that base, resident_dsp.relocate, and the
    base's own C relocator (resident_engines.c's mw_engine_relocate, over the C data resident_engines.data_c makes).
    A wrong relocation would be distortion on the unit.
+   Analog BD's engine is its package's (hook_engines.analog_engine: one unit for both cores, its exit written per
+   core): placed, it equals a fresh assembly with that core's continuation at every base.
 2. Execution (resident_engines_native.cpp under the vendored DSP interpreter). The receiver of an on-demand
    build PLACEs the engine and its CAS switches the stubs on; each stub then runs the placed engine. The same
-   stub of the resident build (the engine in the permanent block) runs from the same X/Y memory and registers.
+   stub of the resident build (the engine in the permanent block) runs from the same X/Y memory and registers; for
+   Analog BD, which has no resident build any more, the same engine placed at the arena's top.
    X and Y afterwards, the data ALU registers and the instruction count must be bit-identical; an address
    register may differ only by the engine's displacement (a P address it holds). The receiver also refuses an
    enable before PLACE, a second PLACE, and an unplace while enabled.
@@ -38,6 +41,7 @@ ADAPTER = ROOT / 'sdk/machines/octatrack/module-adapters'
 ELEK = ROOT / 'sdk/machines/octatrack/elekloader'
 RUNTIME = ADAPTER / 'resident-runtime'
 sys.path.insert(0, str(ADAPTER))
+import hook_engines  # noqa: E402
 import resident_dsp  # noqa: E402
 import resident_engines  # noqa: E402
 import resident_source  # noqa: E402
@@ -47,7 +51,7 @@ EMU = Path(os.environ.get('ELEKLOADER_DSP56300', '/opt/toolchain/vendor/dsp56300
 LIBS = [EMU / 'build/source' / part for part in ('dsp56kEmu/libdsp56kEmu.a', 'dsp56kBase/libdsp56kBase.a', 'asmjit/libasmjit.a')]
 VTUNE = EMU / 'build/source/vtuneSdk/libvtuneSdk.a'  # the JIT's profiling hooks, where the build has them
 RECEIVER_ORIGIN = 0x400
-STUBS = {resident_dsp.SIDECHAIN: ('hsc_det', 'hsc_commit'), resident_dsp.MATRIX: ('hom_mix', 'hom_phn'),
+STUBS = {resident_dsp.SIDECHAIN: ('hsc_det', 'hsc_commit', 'hsc_init'), resident_dsp.MATRIX: ('hom_mix', 'hom_phn'),
          resident_dsp.ANALOG_BD: ('hab_source',), resident_dsp.KEYBUS: ('hsc_tap',)}
 # Words that steer each engine down its working path rather than its early return (on the fixed registers below,
 # r6 = $6280): Sidechain's track 3 with KEY 3 and its monitor on, MATRIX selected, an Analog BD source record.
@@ -60,9 +64,9 @@ ACTIVE = {resident_dsp.SIDECHAIN: ('X 1056 3', 'X %d %d' % (0x628d, 0x30000), 'Y
 # memory for (it faults, in the resident build as in the placed one): compare its first 160 instructions, to the
 # voice loop. The dormant path and core B's working path run to the end.
 LIMIT = {('A', resident_dsp.ANALOG_BD): 160}
-# Each on-demand unit's words. Sidechain's 423 before the key bus split: its detector and table now, and the tap (with
-# #640's phase rule) as the key bus's own unit.
-UNIT_WORDS = {1: 322, 2: 675, 4: 998, 8: 101}  # 322 + 101 = 423: no word added or lost
+# Each on-demand unit's words. Sidechain 0.2.0's 710 before the key bus split: its detector, MON commit, init and table
+# now, and the one-pass tap (with #640's phase rule) as the key bus's own unit.
+UNIT_WORDS = {1: 613, 2: 675, 4: 1009, 8: 97}  # 613 + 97 = 710: no word added or lost
 
 
 def read(name, path):
@@ -72,16 +76,28 @@ def read(name, path):
     return module
 
 
-def fresh(ob, tag, feature, base, work, assemble, analog):
+CONT = {'A': 0x426, 'B': 0x221}  # Analog BD's site's exit per payload (dsp-sites.json)
+
+
+def fresh(ob, tag, feature, base, work, assemble):
     """The authored engine assembled at `base` itself (engine_unit's own build, at any base)."""
-    table, texts = resident_dsp._engines(ob, tag, base, feature, analog)
+    if feature & resident_dsp.PACKAGED:
+        text, _, _ = hook_engines.analog_text(ob.root, CONT[tag])
+        return resident_dsp.assemble_authored(text, base, work, assemble)[0]
+    table, texts = resident_dsp._engines(ob, tag, base, feature)
     words, _ = resident_dsp.assemble_authored('\n'.join(texts), base + len(table), work, assemble)
     return table + words
 
 
+def placed(unit, tag, base):
+    """A unit's words at `base` on a payload: the build's (resident_dsp.relocate), or a package's with its exit."""
+    return hook_engines.placed(unit, base, CONT[tag]) if 'exit' in unit else resident_dsp.relocate(unit, base)
+
+
 def c_relocated(units, bases, work):
     """mw_engine_relocate's words for every (tag, feature) unit at every base, from resident_engines.data_c's data."""
-    bundles = {tag: dict(onDemand=sum(f for (t, f) in units if t == tag),
+    units = {key: u for key, u in units.items() if not key[1] & resident_dsp.PACKAGED}  # a package's: not build data
+    bundles = {tag: dict(onDemand=sum(f for (t, f) in units if t == tag) | resident_dsp.PACKAGED,
                          engines={f: u for (t, f), u in units.items() if t == tag}) for tag in 'AB'}
     (work / 'data.c').write_text(resident_engines.data_c(bundles))
     order = sorted(units)
@@ -106,10 +122,12 @@ int dl_owned_cancel(const struct dl_owned_job *v) { (void)v;return 0; }
 int dl_owned_job_poll(const struct dl_owned_job *v,struct dl_owned_progress *p) { (void)v;(void)p;return 0; }
 int dl_owned_job_release(const struct dl_owned_job *v) { (void)v;return 0; }
 void dl_owned_fail_closed(unsigned c) { (void)c; }
+int dl_owned_closed(unsigned c) { (void)c;return 0; }
 int dl_engine_claim(unsigned c,unsigned r,int k) { (void)c;(void)r;(void)k;return 0; }
 void dl_engine_release(unsigned c,unsigned r) { (void)c;(void)r; }
 unsigned dl_engine_reserved(unsigned c) { (void)c;return 0; }
 int mw_engines_test_quiet(void) { return 1; }
+int mw_engines_test_queued(void) { return 0; }
 int mw_engines_test_settled(void) { return 1; }
 volatile uint8_t dl_engine_why[2];
 ''')
@@ -137,13 +155,13 @@ class ResidentEngines(unittest.TestCase):
         cls.packages = read('resident_engines_packages', ELEK / 'dsp_packages.py')
         cls.ob = cls.packages.Octabam(str(ROOT / 'sdk/octabam'))
         cls.work = tempfile.TemporaryDirectory(prefix='modwerk-resident-engines.')
-        cls.units, cls.analog = {}, {}
+        cls.units = {}
+        cls.ab = hook_engines.analog_engine(cls.ob.root, cls.work.name, cls.packages.assemble)
         for tag in 'AB':
-            cls.analog[tag] = resident_dsp._analog(cls.ob.root, tag)[0]
             for feature in resident_dsp.FEATURES:
                 if feature & resident_dsp.ALLOWED[tag]:
-                    cls.units[tag, feature] = resident_dsp.engine_unit(cls.ob, tag, feature, cls.work.name,
-                                                                      cls.packages.assemble, cls.analog[tag])
+                    cls.units[tag, feature] = cls.ab if feature & resident_dsp.PACKAGED else \
+                        resident_dsp.engine_unit(cls.ob, tag, feature, cls.work.name, cls.packages.assemble)
 
     @classmethod
     def tearDownClass(cls):
@@ -159,10 +177,10 @@ class ResidentEngines(unittest.TestCase):
             self.assertEqual(len(unit['words']), UNIT_WORDS[feature])
             for base in bases:
                 with self.subTest(tag=tag, feature=feature, base=hex(base)):
-                    python = resident_dsp.relocate(unit, base)
-                    self.assertEqual(relocated[(tag, feature), base], python)
-                    self.assertEqual(fresh(self.ob, tag, feature, base, self.work.name, self.packages.assemble,
-                                           self.analog[tag]), python)
+                    python = placed(unit, tag, base)
+                    if not feature & resident_dsp.PACKAGED:  # a package's engine is relocated as test_resident_engines_board's
+                        self.assertEqual(relocated[(tag, feature), base], python)
+                    self.assertEqual(fresh(self.ob, tag, feature, base, self.work.name, self.packages.assemble), python)
 
     @classmethod
     def harness(cls):
@@ -220,14 +238,15 @@ class ResidentEngines(unittest.TestCase):
 
         for tag in 'AB':
             allowed = resident_dsp.ALLOWED[tag]
-            resident = resident_dsp.place_resident(self.ob, tag, 0x2000, str(work), self.packages.assemble, 0)
+            packaged = resident_dsp.PACKAGED & allowed  # on demand in both builds: a package's engine is never resident
+            resident = resident_dsp.place_resident(self.ob, tag, 0x2000, str(work), self.packages.assemble, packaged)
             demand = resident_dsp.place_resident(self.ob, tag, 0x2000, str(work), self.packages.assemble, allowed)
             r_words, r_labels, _ = receiver(resident, tag)
             d_words, d_labels, d_table = receiver(demand, tag)
             for feature in resident_dsp.FEATURES:
                 if not feature & allowed:
                     continue
-                unit = demand['engines'][feature]
+                unit = self.ab if feature & packaged else demand['engines'][feature]
                 n = len(unit['words'])
                 for offset in (d_table - n, 64 + 333):  # the arena's top (directly under the block), and lower down
                     base = d_labels['dltable'] + offset
@@ -235,16 +254,18 @@ class ResidentEngines(unittest.TestCase):
                         hwbase = demand['labels']['hwbase%d' % feature]
                         control = d_labels['hookcontrol']
                         steps = image(d_words, RECEIVER_ORIGIN) + image(demand['words'], demand['origin'])
-                        steps += image(resident_dsp.relocate(unit, base), base)
+                        steps += image(placed(unit, tag, base), base)
                         steps += ['P %d %d' % (d_labels['hookready'], allowed),   # every reset complete
                                   'PKT %d 0 %d 0' % (control, feature),           # enable before PLACE: refused
-                                  'PKT %d %d %d 1' % (control, feature, offset),  # PLACE
+                                  'PKT %d %d %d %d' % (control, feature, offset, n),  # PLACE: word 7 its words
                                   'RP %d' % hwbase,
-                                  'PKT %d %d %d 1' % (control, feature, offset),  # placed already: refused
+                                  'PKT %d %d %d %d' % (control, feature, offset, n),  # placed already: refused
                                   'PKT %d 0 %d 0' % (control, feature),           # enable
-                                  'PKT %d %d 0 1' % (control, feature)]           # unplace while enabled: refused
-                        # The feature's state as its RESET leaves it (Analog BD's authored tables, zeroed Y ranges).
+                                  'PKT %d %d 0 %d' % (control, feature, n)]       # unplace while enabled: refused
+                        # The feature's state as its RESET leaves it (Analog BD's package's initial words, zeroed Y ranges).
                         reset = []
+                        if feature & packaged:
+                            reset += ['X %d %d' % (unit['address'] + i, w) for i, w in enumerate(unit['init'])]
                         for record in resident_dsp.initialization_records(resident):
                             if any(r['owner'] == feature and r['space'] == record['space'] and r['address'] == record['address']
                                    for r in resident['resources']):
@@ -259,16 +280,30 @@ class ResidentEngines(unittest.TestCase):
                                 out += memory() + list(pokes)
                                 out += sum((['GO %d %d %d' % (labels[s], limit, RECEIVER_ORIGIN)] + observe() for s in STUBS[feature]), [])
                             return out
-                        placed = run(steps + go(demand['labels']))
-                        self.assertEqual(placed[:5], ['A 0', 'A 1', 'P %d %d' % (hwbase, base), 'A 0', 'A 1'])
-                        self.assertEqual(placed[5], 'A 0')
-                        steps = image(r_words, RECEIVER_ORIGIN) + image(resident['words'], resident['origin'])
-                        steps += ['P %d %d' % (r_labels['hookready'], allowed), 'PKT %d 0 %d 0' % (r_labels['hookcontrol'], feature)]
-                        reference = run(steps + go(resident['labels']))
-                        self.assertEqual(reference[0], 'A 1')
-                        mine, theirs = placed[6:], reference[1:]
+                        placed_run = run(steps + go(demand['labels']))
+                        self.assertEqual(placed_run[:5], ['A 0', 'A 1', 'P %d %d' % (hwbase, base), 'A 0', 'A 1'])
+                        self.assertEqual(placed_run[5], 'A 0')
+                        if feature & packaged:
+                            # No resident build: the reference is the same engine at the arena's top.
+                            at = d_labels['dltable'] + d_table - n
+                            steps = image(d_words, RECEIVER_ORIGIN) + image(demand['words'], demand['origin']) + \
+                                image(placed(unit, tag, at), at) + ['P %d %d' % (d_labels['hookready'], allowed),
+                                                                    'PKT %d %d %d %d' % (control, feature, d_table - n, n),
+                                                                    'PKT %d 0 %d 0' % (control, feature)]
+                            reference = run(steps + go(demand['labels']))
+                            self.assertEqual(reference[:2], ['A 1', 'A 1'])
+                            theirs, block, start = reference[2:], range(at, at + n), at
+                        else:
+                            steps = image(r_words, RECEIVER_ORIGIN) + image(resident['words'], resident['origin'])
+                            steps += ['P %d %d' % (r_labels['hookready'], allowed), 'PKT %d 0 %d 0' % (r_labels['hookcontrol'], feature)]
+                            reference = run(steps + go(resident['labels']))
+                            self.assertEqual(reference[0], 'A 1')
+                            theirs = reference[1:]
+                            block = range(resident['origin'], resident['origin'] + len(resident['words']))
+                            first = resident_dsp.ENTRIES[feature][0]
+                            start = resident['labels'][first] - unit['entries'][first]
+                        mine = placed_run[6:]
                         self.assertEqual(len(mine), len(theirs))
-                        block = range(resident['origin'], resident['origin'] + len(resident['words']))
                         for line, (a, b) in enumerate(zip(mine, theirs)):
                             stub = (STUBS[feature] * 2)[line // 7] if line // 7 < 2 * len(STUBS[feature]) else '-'
                             if a.startswith('AR'):
@@ -277,8 +312,6 @@ class ResidentEngines(unittest.TestCase):
                                     self.assertTrue(x == y or (base <= x < base + n and y in block), (stub, a, b))
                             elif a.startswith('S ') and a.split()[2] == b.split()[2] == '0':
                                 # Stopped inside the engine: the same instruction of the unit, at its two addresses.
-                                first = resident_dsp.ENTRIES[feature][0]
-                                start = resident['labels'][first] - unit['entries'][first]
                                 self.assertEqual((a.split()[1], int(a.split()[3]) - base), (b.split()[1], int(b.split()[3]) - start), stub)
                             else:
                                 self.assertEqual(a, b, stub)
@@ -291,9 +324,9 @@ class ResidentEngines(unittest.TestCase):
                         self.assertGreater(max(int(n) for _, n, _, _ in ran), 10, ran)        # more than a replay ran
                         # Disable, then unplace: the base word goes back to 0.
                         tail = run(image(d_words, RECEIVER_ORIGIN) + image(demand['words'], demand['origin']) +
-                                   ['P %d %d' % (d_labels['hookready'], allowed), 'PKT %d %d %d 1' % (control, feature, offset),
+                                   ['P %d %d' % (d_labels['hookready'], allowed), 'PKT %d %d %d %d' % (control, feature, offset, n),
                                     'PKT %d 0 %d 0' % (control, feature), 'PKT %d %d 0 0' % (control, feature),
-                                    'PKT %d %d 0 1' % (control, feature), 'RP %d' % hwbase])
+                                    'PKT %d %d 0 %d' % (control, feature, n), 'RP %d' % hwbase])
                         self.assertEqual(tail[:5], ['A 1', 'A 1', 'A 1', 'A 1', 'P %d 0' % hwbase])
 
 
@@ -318,16 +351,17 @@ class ResidentEngines(unittest.TestCase):
         words, labels = self.packages.assemble(text(demand['origin'] - labels['dltable']), RECEIVER_ORIGIN, str(work))
         control, ready = labels['hookcontrol'], labels['hookready']
         sc, ab = resident_dsp.SIDECHAIN, resident_dsp.ANALOG_BD
+        units = {sc: demand['engines'][sc], ab: self.ab}
         offsets = {sc: 64}
-        offsets[ab] = 64 + len(demand['engines'][sc]['words']) + 8
+        offsets[ab] = 64 + len(units[sc]['words']) + 8
         offsets[ab] += (labels['dltable'] + offsets[ab] + 1) % 2  # an odd base: bit 0 set, the bit a Sidechain disable clears
         steps = ['P %d %d' % (RECEIVER_ORIGIN + i, w) for i, w in enumerate(words)]
         steps += ['P %d %d' % (demand['origin'] + i, w) for i, w in enumerate(demand['words'])]
         for feature, offset in offsets.items():
             base = labels['dltable'] + offset
-            steps += ['P %d %d' % (base + i, w) for i, w in enumerate(resident_dsp.relocate(demand['engines'][feature], base))]
+            steps += ['P %d %d' % (base + i, w) for i, w in enumerate(placed(units[feature], tag, base))]
         steps += ['P %d %d' % (ready, allowed)]                                   # every reset complete
-        steps += ['PKT %d %d %d 1' % (control, f, o) for f, o in offsets.items()]  # PLACE both
+        steps += ['PKT %d %d %d %d' % (control, f, o, len(units[f]['words'])) for f, o in offsets.items()]  # PLACE both
         steps += ['PKT %d 0 %d 0' % (control, sc | ab),                            # enable both
                   'PKT %d %d %d 0' % (control, sc | ab, ab),                       # disable Sidechain, keep Analog BD
                   'RP %d' % demand['labels']['hwbase%d' % ab], 'RP %d' % ready,
@@ -362,20 +396,21 @@ class ResidentEngines(unittest.TestCase):
             words, labels = self.packages.assemble(text(demand['origin'] - labels['dltable']), RECEIVER_ORIGIN, str(work))
             control, ready = labels['hookcontrol'], labels['hookready']
             offsets, at = {}, 64
+            units = {sc: demand['engines'][sc], kb: demand['engines'][kb], ab: self.ab}
             for feature in (sc, kb, ab):
                 if feature != sc:
                     at += (9 - (labels['dltable'] + at)) % 16  # base = 9 mod 16: bits 0 and 3 set
                 offsets[feature] = at
-                at += len(demand['engines'][feature]['words']) + 8
+                at += len(units[feature]['words']) + 8
             self.assertLess(labels['dltable'] + at, demand['origin'])
             base = {f: labels['dltable'] + o for f, o in offsets.items()}
             hw = {f: demand['labels']['hwbase%d' % f] for f in offsets}
             steps = ['P %d %d' % (RECEIVER_ORIGIN + i, w) for i, w in enumerate(words)]
             steps += ['P %d %d' % (demand['origin'] + i, w) for i, w in enumerate(demand['words'])]
             for feature, offset in offsets.items():
-                steps += ['P %d %d' % (base[feature] + i, w) for i, w in enumerate(resident_dsp.relocate(demand['engines'][feature], base[feature]))]
+                steps += ['P %d %d' % (base[feature] + i, w) for i, w in enumerate(placed(units[feature], tag, base[feature]))]
             steps += ['P %d %d' % (ready, allowed)]                                    # every reset complete
-            steps += ['PKT %d %d %d 1' % (control, f, o) for f, o in offsets.items()]   # PLACE all three
+            steps += ['PKT %d %d %d %d' % (control, f, o, len(units[f]['words'])) for f, o in offsets.items()]   # PLACE all three
             steps += ['PKT %d 0 %d 0' % (control, kb),                                  # the key bus first, as the board does
                       'PKT %d %d %d 0' % (control, kb, kb | sc | ab),                   # then Sidechain and Analog BD
                       'PKT %d %d %d 0' % (control, kb | sc | ab, kb | ab),              # Sidechain off, the bus and AB stay
@@ -411,7 +446,9 @@ class ResidentEngines(unittest.TestCase):
         sys.path.insert(0, str(ROOT / 'sdk/machines/octatrack'))
         import dsp_sites
         reg = dsp_sites.load()
-        self.assertEqual(next(f['executed'] for f in reg['features'] if f['name'] == 'keybus'), 41)
+        self.assertEqual(next(f['executed'] for f in reg['features'] if f['name'] == 'keybus'), 25)
+        self.assertEqual(next(f['hardware'] for f in reg['features'] if f['name'] == 'keybus'), 51)
+        self.assertEqual(dsp_sites.check(reg), [])
 
     def sc_run(self, variant, enable, skew, frames, removed=None, keys=None):
         """One two-core run of `variant`: {(hook, track, n): (frame, source track) or None}."""
@@ -427,7 +464,7 @@ class ResidentEngines(unittest.TestCase):
         self.assertTrue(all(line[2] == '1' for line in ran), [line for line in ran if line[2] != '1'][:3])  # every hook returned
         words = [list(map(int, line[3:])) for line in lines if line[0] == 'D']
         self.assertEqual(len(words), len(dumps))
-        return {key: sc_block(block) for key, block in zip(dumps, words)}
+        return {key: sc_block(block, mixed=key[0] == 'moncommit') for key, block in zip(dumps, words)}
 
     def sc_engines(self, variant):
         """{tag: (words at SC_ORIGIN, labels[, (origin, words) of a unit placed apart])}. 'split' is the resident change
@@ -438,10 +475,10 @@ class ResidentEngines(unittest.TestCase):
             with sc_reviewed(sc_variants()['resident' if variant == 'split' else variant]):
                 for tag in 'AB':
                     if variant == 'split':
-                        table, texts = resident_dsp._engines(self.ob, tag, SC_ORIGIN, resident_dsp.SIDECHAIN, None)
+                        table, texts = resident_dsp._engines(self.ob, tag, SC_ORIGIN, resident_dsp.SIDECHAIN)
                         words, labels = resident_dsp.assemble_authored('\n'.join(texts), SC_ORIGIN + len(table), self.work.name,
                                                                        self.packages.assemble)
-                        none, tap = resident_dsp._engines(self.ob, tag, SC_SPLIT, resident_dsp.KEYBUS, None)
+                        none, tap = resident_dsp._engines(self.ob, tag, SC_SPLIT, resident_dsp.KEYBUS)
                         self.assertEqual(none, [])  # the tap reads no table
                         tap_words, tap_labels = resident_dsp.assemble_authored('\n'.join(tap), SC_SPLIT, self.work.name,
                                                                                self.packages.assemble)
@@ -449,7 +486,7 @@ class ResidentEngines(unittest.TestCase):
                         self.assertEqual(len(table) + len(words) + len(tap_words), UNIT_WORDS[1] + UNIT_WORDS[8])
                         engines[tag] = (table + words, {**labels, **tap_labels}, (SC_SPLIT, tap_words))
                         continue
-                    table, texts = resident_dsp._engines(self.ob, tag, SC_ORIGIN, resident_dsp.SIDECHAIN | resident_dsp.KEYBUS, None)
+                    table, texts = resident_dsp._engines(self.ob, tag, SC_ORIGIN, resident_dsp.SIDECHAIN | resident_dsp.KEYBUS)
                     words, labels = resident_dsp.assemble_authored('\n'.join(texts), SC_ORIGIN + len(table), self.work.name,
                                                                    self.packages.assemble)
                     engines[tag] = (table + words, labels)
@@ -523,19 +560,21 @@ class ResidentEngines(unittest.TestCase):
 
     @unittest.skipUnless(all(p.is_file() for p in LIBS) and shutil.which('c++'), 'vendored dsp56300 build unavailable')
     def test_sidechain_mon_ends_with_its_compressor(self):
-        """A COMPRESSOR taken off a track with MON on: upstream keeps committing the last key stash there."""
+        """A COMPRESSOR taken off a track with MON on: MON fades out over sixteen blocks and the track's own audio comes
+        back. 0.1.x's upstream kept committing the last key stash there (#640's resident change); since 0.2.0 the
+        source consumes MON_ON itself, so the resident text and upstream agree."""
         self.__class__.sc_cache = getattr(self.__class__, 'sc_cache', {})
         for variant in ('resident', 'upstream'):
             with self.subTest(variant=variant):
-                blocks = self.sc_run(variant, (3, 4), lambda n: 0.5, 24, removed=16)
-                for n in range(8, 24):
+                blocks = self.sc_run(variant, (3, 4), lambda n: 0.5, 40, removed=16)
+                for n in range(8, 40):
                     committed = blocks['moncommit', 4, n]
                     if n < 16:
                         self.assertEqual(committed, blocks['scdet', 4, n])          # MON: the key, as read
-                    elif variant == 'resident':
-                        self.assertEqual(committed, (n, 4))                         # the track's own block again
+                    elif n < 32:
+                        self.assertEqual(committed, SC_MIXED)                       # the 256-sample fade out
                     else:
-                        self.assertEqual(committed, blocks['moncommit', 4, 15])      # the stale stash, every frame
+                        self.assertEqual(committed, (n, 4))                         # the track's own block again
 
     @unittest.skipUnless(all(p.is_file() for p in LIBS) and shutil.which('c++'), 'vendored dsp56300 build unavailable')
     def test_sidechain_key_phase_disassembles_as_written(self):
@@ -544,19 +583,16 @@ class ResidentEngines(unittest.TestCase):
         self.__class__.sc_cache = getattr(self.__class__, 'sc_cache', {})
         for tag, (own, other, base, middle) in (('A', (0x33dfe, 0x3bdfe, 4, 6)), ('B', (0x3bdfe, 0x33dfe, 0, 2))):
             words, labels = self.sc_engines('resident')[tag]
-            at = {name: 'func_%06x' % labels[name] for name in ('kph1', 'kph2', 'kph3', 'zz29', 'zz30', 'mc09')}
+            at = {name: 'func_%06x' % labels[name] for name in ('kph1', 'kph2', 'kph3', 'zz29', 'zz30')}
             expected = {
-                'zz01': ['move x:>$420,a', 'cmp #>$%x,a' % base, 'beq ' + at['kph1'], 'cmp #>$%x,a' % middle,
+                'sctap': ['move x:>$420,a', 'cmp #>$%x,a' % base, 'beq ' + at['kph1'], 'cmp #>$%x,a' % middle,
                          'bne ' + at['zz30'], 'move #>$%x,r1' % own, 'move y:(r1),b', 'cmp #>$10000,b',
                          'beq ' + at['zz30'], 'bsr ' + at['kph2'], 'move #$1,b', 'move #>$%x,r1' % own,
                          'move b,y:(r1)', 'bra ' + at['zz30'], 'move #>$%x,r1' % own, 'move y:(r1),b',
                          'cmp #>$10000,b', 'beq ' + at['zz29'], 'bsr ' + at['kph2'], 'bra ' + at['zz30']],
-                'kph2': ['move #$0,a', 'move #>$%x,r1' % other, 'move y:(r1),b', 'cmp #>$10000,b', 'bne ' + at['kph3'],
+                'kph2': ['clr a', 'move #>$%x,r1' % other, 'move y:(r1),b', 'cmp #>$10000,b', 'bne ' + at['kph3'],
                          'move #>$%x,r1' % (other + 1), 'move y:(r1),b', 'and #>$3,b', 'move b1,a',
-                         'move #>$%x,r1' % (own + 1), 'move a,y:(r1)', 'rts'],
-                'moncommit': ['move x:>$206,r0', 'move x:>$420,a', 'asl #$1,a,a', 'move a1,n1', 'move #>$7f0,r1',
-                              'lua (r1)+n1,r1', 'move y:(r1),b', 'cmp #>$10000,b', 'beq ' + at['mc09'], 'rts',
-                              'move #$0,b', 'move b,y:(r1)+', 'move y:(r1),b']}
+                         'move #>$%x,r1' % (own + 1), 'move a,y:(r1)', 'rts']}
             steps = ['P %d %d' % (SC_ORIGIN + i, w) for i, w in enumerate(words)]
             steps += ['DIS %d %d' % (labels[name], labels[name] + 2 * len(lines)) for name, lines in expected.items()]
             path = Path(self.work.name) / 'sc-dis.txt'
@@ -583,12 +619,16 @@ class ResidentEngines(unittest.TestCase):
 # (per track: sctap at FX1 entry, scdet in COMPRESSOR's proc, moncommit at the commit), core B's track slots sitting
 # `skew` slots after core A's. Two readers sit on their core's first track: T5 keyed from T3 (core B's local track
 # 2, the case measured on the unit) and T1 keyed from T6 (core A's local track 1). KEY GAIN 64 is an exact 1.0 and
-# KEY FLT 64 bypasses, so the key block scdet leaves at X:$40 is the source block as published, and its words name
-# the frame and the track it came from. MON is on: moncommit then commits that block in place of the track's own.
+# KBAS and KWID are OFF (0 and 127: the key filters bypass), so the key block scdet leaves at X:$40 is the source block
+# as published, and its words name the frame and the track it came from. MON is on (slot 7 = 3; 2 is OFF),
+# already faded in (MON_FADE 16) with its KEY in use (r7+$2c), so neither declick runs: moncommit then commits that
+# block in place of the track's own. A block mixed by a MON fade reads as SC_MIXED.
 SC_TRACKS = {'A': (4, 5, 6, 7), 'B': (0, 1, 2, 3)}
 SC_KEYS = {4: 2, 0: 5}
 SC_LOCAL = {6: 4, 1: 3}                         # keys on the reader's own core: T7 <- T5 (dispatched before it), T2 <- T4 (after)
 SC_PARAMS, SC_BLOCK, SC_ORIGIN = 0x6280, 0x6400, 0x1000
+SC_MONB = 0x7f0                                 # MON_ON / MON_FADE: Y:$7f0 + track*2 (+0 / +1)
+SC_MIXED = 'mixed'
 SC_SPLIT = 0x1800                               # the key bus unit, placed apart from Sidechain's
 SC_WINDOWS = ((0x33dfe, 0x34000), (0x3bdfe, 0x3c000))
 SC_OFFSETS = range(-5, 6)                       # core 1 enabled this many frames after core 0 (negative: before)
@@ -607,12 +647,18 @@ def sc_stamp(frame, track):
     return 0x200000 | frame << 8 | track << 5
 
 
-def sc_block(words):
-    """(frame, track) a published block names; None for a never-written (zero) one."""
+def sc_block(words, mixed=False):
+    """(frame, track) a published block names; None for a never-written (zero) one; SC_MIXED for a committed block a MON
+    fade mixed (`mixed`: moncommit's output only)."""
     if not any(words):
         return None
+    # Since 0.2.0 the detector works on the mono key (each L/R pair's average, (L + R) / 16 then * 8, on both
+    # channels), so a key block keeps the stamp's frame and track bits (5 and up) but not the word index below them:
+    # every word of an untorn block names the same frame and track.
     head = words[0]
-    if head >> 21 != 1 or head & 31 or words != list(range(head, head + 32)):
+    if head >> 21 != 1 or len({w >> 5 for w in words}) != 1:
+        if mixed:
+            return SC_MIXED
         raise AssertionError('a torn or foreign key block: %r' % words[:4])
     return head >> 8 & 0xfff, head >> 5 & 7
 
@@ -646,8 +692,11 @@ def sc_script(engines, enable, skew, frames, removed=None, keys=SC_KEYS):
         steps += ['P %d %d' % (origin + i, w) for origin, unit in apart for i, w in enumerate(unit)]
         for track in SC_TRACKS[tag]:
             if track in keys:
-                steps += ['X %d %d' % (SC_PARAMS + 0xd, (keys[track] + 1) << 16 | 64 << 8),
-                          'X %d %d' % (SC_PARAMS + 0xe, 64 << 16 | 1 << 8)]
+                steps += ['X %d %d' % (SC_PARAMS + 0xc, 3 << 8),                            # RMS 0, MON on (3)
+                          'X %d %d' % (SC_PARAMS + 0xd, (keys[track] + 1) << 16 | 64 << 8),  # KEY, KGN 64
+                          'X %d %d' % (SC_PARAMS + 0xe, 0 << 16 | 127 << 8),               # KBAS, KWID OFF
+                          'X %d %d' % (SC_BLOCK + 0x2c, keys[track] + 1),                  # the KEY in use
+                          'Y %d %d' % (SC_MONB + 2 * track + 1, 16)]                       # MON faded in
         lane = []
         for n in range(enable[core], frames):
             at = 4 * n + (skew(n) if core else 0)

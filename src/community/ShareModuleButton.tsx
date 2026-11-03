@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Icon } from '../components/Icon'
 import { moduleHref } from '../routing'
+import { pageTitle } from '../site-metadata'
 import { communityModule, modulePageHref } from './modules'
 
 /** The public address of a module page: Octatrack modules have a static page with previews, the others their app route. */
@@ -16,7 +17,7 @@ export function ShareModuleButton({ id, title }: { id: string; title: string }) 
   async function share() {
     const url = moduleShareUrl(id)
     try {
-      if (navigator.share) { await navigator.share({ title: title + ' — Modwerk', url }); return }
+      if (navigator.share) { await navigator.share({ title: pageTitle(title), url }); return }
       await navigator.clipboard.writeText(url)
       setNotice('Link copied.')
     } catch (error) {

@@ -1,0 +1,177 @@
+{
+  "schemaVersion": 3,
+  "id": "fx-track",
+  "name": "FX Track",
+  "version": "0.1.0-experimental",
+  "machine": "digitakt",
+  "category": "midi-usb",
+  "exclusive": false,
+  "author": {
+    "github": "draadpiraat",
+    "credits": [
+      "draadpiraat — design and code"
+    ]
+  },
+  "maintainers": [
+    "draadpiraat"
+  ],
+  "presentation": {
+    "label": "FX TRACK",
+    "family": "MIDI",
+    "summary": "Turns a MIDI track into an effects track: its control changes on FX CONTROL CH play the delay, reverb, compressor and External Mixer, with parameter locks and the track’s LFO.",
+    "overview": "The Digitakt has no effects track of its own, but it already lets MIDI control its effects: on the channel set in SETTINGS > MIDI CONFIG > CHANNELS > FX CONTROL CH, incoming control changes set the delay (CC 85-92), reverb (CC 24-31), compressor (CC 111-119) and External Mixer (CC 102-109, including the IN L and IN R delay and reverb sends). A MIDI track’s own control changes only leave by MIDI OUT and USB, though. With SETTINGS > FX TRACK ticked, a control change that a MIDI track sends on FX CONTROL CH for one of those settings goes straight into the Digitakt’s own MIDI handling instead, as if it had come in through MIDI IN, and is not sent out. Give a MIDI track that channel and point its CC SEL slots at the effects’ CC numbers: its CC VAL knobs, parameter locks and LFO then play the delay, reverb, compressor and mixer through the sequencer, with the instrument’s own tempo, swing and step timing. Unticked, every message goes out as stock.",
+    "highlights": [
+      "Parameter-lock the delay, reverb, compressor and External Mixer per step, from any MIDI track.",
+      "The MIDI track’s LFO modulates the effects, for example a slow delay TIME wobble.",
+      "Sequenced send throws for the external inputs through the External Mixer’s IN L/R DEL and REV.",
+      "Uses the stock FX CONTROL CH, CC SEL and parameter locks; unticked, MIDI output is stock."
+    ],
+    "usage": [
+      "In SETTINGS > MIDI CONFIG > CHANNELS, set TRACK H CHANNEL to OFF and FX CONTROL CH to 16, so no track listens on that channel.",
+      "Open SETTINGS and tick FX TRACK.",
+      "Select MIDI track H (TRK + trig 16). On its SRC page press FUNC + knob A to switch CHAN on and set it to 16.",
+      "On the AMP page (CC Select) set SEL1 to 85 (delay TIME) and SEL2 to 88 (delay FDBK), or any effects CC from the list.",
+      "On the FLTR page (CC Value) turn VAL1 and VAL2: the delay follows, and nothing is sent out of MIDI OUT for those CCs.",
+      "Record lock trigs with parameter locks on VAL1 and VAL2, or set the track’s LFO to a CC VAL, and press PLAY: the delay changes per step."
+    ]
+  },
+  "access": {
+    "location": "SETTINGS > FX TRACK",
+    "steps": [
+      "Use a build containing FX Track for the original Digitakt on OS 1.54.",
+      "Press SETTINGS and go down to FX TRACK, below SYSTEM, with UP/DOWN.",
+      "Press YES to tick or untick it. RIGHT ticks it and LEFT unticks it.",
+      "Set FX CONTROL CH in SETTINGS > MIDI CONFIG > CHANNELS, and give a MIDI track the same CHAN."
+    ],
+    "screenshots": [
+      "media/settings-off.png",
+      "media/settings-on.png"
+    ]
+  },
+  "controls": [
+    {
+      "name": "FX TRACK",
+      "default": null,
+      "doc": "Ticked: control changes that MIDI tracks send on FX CONTROL CH with CC 24-31, 85-92, 102-109 or 111-119 set the Digitakt’s own reverb, delay, External Mixer and compressor and are not sent out of MIDI OUT or USB. They follow the stock RECEIVE CC/NRPN and INPUT FROM settings, like a control change arriving at MIDI IN. Unticked: stock. Unticked at every power-on; not saved with the project.",
+      "labels": null
+    }
+  ],
+  "compatibility": {
+    "releases": [
+      "1.54"
+    ],
+    "requires": [],
+    "conflicts": [],
+    "limitations": [
+      "Built for OS 1.54 only.",
+      "Not saved: FX TRACK starts unticked (stock) at every power-on.",
+      "Needs FX CONTROL CH set, RECEIVE CC/NRPN ticked and INPUT FROM including MIDI or USB, as for a control change arriving at MIDI IN.",
+      "The effects’ messages also reach any audio or MIDI track whose TRACK CHANNEL equals FX CONTROL CH, as they would through a MIDI cable; set that track channel to OFF.",
+      "Only the effects’ CC numbers are taken. Notes, other CCs, pitch bend and aftertouch on that MIDI track still go out of MIDI OUT and USB; use lock trigs for parameter locks without notes.",
+      "Values have the CC resolution of 128 steps, like the knobs."
+    ]
+  },
+  "platform": {
+    "kind": "elemod",
+    "core": "2.1",
+    "build": "build.json",
+    "events": [
+      "ev_settings",
+      "ev_render_out"
+    ],
+    "claims": [
+      "settings:FX TRACK"
+    ]
+  },
+  "resources": {
+    "memoryBytes": 2698,
+    "fastBytes": 0,
+    "load": {
+      "display": "Adds under 0.05% of an audio block over stock (emulator)",
+      "method": "emulator",
+      "conditions": "Emulator: OS 1.54 on Core 2.1, the audio interrupt timed with the MCF5441x instruction-timing model at 250 MHz, zero-wait memory. Idle with FX TRACK ticked: 60.3% average, 60.8% worst block (stock 60.3% and 60.7%, +66 / +74 cycles over 3,000 blocks). Playing parameter locks into the reverb: worst block 103,843 cycles, against 103,942 for stock playing the same pattern. The MIDI tracks’ task adds a few instructions per message. Not a hardware measurement."
+    }
+  },
+  "evidence": {
+    "tier": "none",
+    "moduleVersion": "0.1.0-experimental",
+    "sourceSha256": "86f95f641c49ac60d4eab37cdffb6c6ba85c638b45e52beb9b68ca56f3dd434f",
+    "reports": [
+      "evidence/source-identity.json",
+      "evidence/cpu-load.json",
+      "TESTING.md"
+    ],
+    "hardware": null,
+    "verifiedBy": null
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "Emulator: with FX TRACK ticked, a MIDI track’s parameter locks on CC 24 set the reverb PRE per step and the CC is not sent out; unticked it goes out and the reverb is unchanged. Module alone and with Input Pre-Fader Sends, Digi Health and Digi EQ. Hardware not yet tested.",
+    "documentation": {
+      "tutorial": {
+        "title": "Quick tutorial: MIDI track H as an effects track",
+        "steps": [
+          "In SETTINGS > MIDI CONFIG > CHANNELS, set TRACK H CHANNEL to OFF and FX CONTROL CH to 16, so no track listens on that channel.",
+          "Open SETTINGS and tick FX TRACK.",
+          "Select MIDI track H (TRK + trig 16). On its SRC page press FUNC + knob A to switch CHAN on and set it to 16.",
+          "On the AMP page (CC Select) set SEL1 to 85 (delay TIME) and SEL2 to 88 (delay FDBK), or any effects CC from the list.",
+          "On the FLTR page (CC Value) turn VAL1 and VAL2: the delay follows, and nothing is sent out of MIDI OUT for those CCs.",
+          "Record lock trigs with parameter locks on VAL1 and VAL2, or set the track’s LFO to a CC VAL, and press PLAY: the delay changes per step."
+        ]
+      },
+      "screenshots": [
+        "media/settings-off.png",
+        "media/settings-on.png"
+      ],
+      "captureRecord": "media/capture.json"
+    }
+  },
+  "license": {
+    "spdx": "GPL-3.0-or-later",
+    "file": "LICENSE",
+    "declaration": "Original work by draadpiraat."
+  },
+  "media": [
+    {
+      "path": "media/thumbnail.svg",
+      "kind": "thumbnail",
+      "caption": "FX Track thumbnail",
+      "alt": "A MIDI track lane whose control changes feed the delay, reverb and mixer.",
+      "credit": "draadpiraat",
+      "license": "GPL-3.0-or-later",
+      "source": "Original illustration"
+    },
+    {
+      "path": "media/settings-off.png",
+      "kind": "screenshot",
+      "caption": "FX TRACK unticked: MIDI tracks send their control changes out as stock",
+      "alt": "FX TRACK unticked: MIDI tracks send their control changes out as stock, on the Digitakt monochrome LCD",
+      "credit": "Modwerk documentation capture; Elektron interface; draadpiraat module",
+      "license": "LicenseRef-Digi-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.54",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "a2ba6e8053d6625badbb01d8660502bb9f0e048ed772b584c5e2e8a1a73eccd8",
+        "setup": "Pinned digiemu, firmware-native drawing, disposable first-boot project. No audio or cycle-timing qualification."
+      }
+    },
+    {
+      "path": "media/settings-on.png",
+      "kind": "screenshot",
+      "caption": "FX TRACK ticked: effects CCs on FX CONTROL CH stay inside",
+      "alt": "FX TRACK ticked: effects CCs on FX CONTROL CH stay inside, on the Digitakt monochrome LCD",
+      "credit": "Modwerk documentation capture; Elektron interface; draadpiraat module",
+      "license": "LicenseRef-Digi-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.54",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "a2ba6e8053d6625badbb01d8660502bb9f0e048ed772b584c5e2e8a1a73eccd8",
+        "setup": "Pinned digiemu, firmware-native drawing, disposable first-boot project. No audio or cycle-timing qualification."
+      }
+    }
+  ]
+}

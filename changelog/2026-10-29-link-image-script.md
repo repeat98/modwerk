@@ -1,0 +1,1 @@
+SDK: `node scripts/link-image.mjs` builds a flashable test image from your own stock OS, a core and Modwerk modules, such as a Rytm `_submissions` module, the way the site's browser builder does. The Rytm guide's build commands only took elekloader-style module folders. Nothing changes for players.

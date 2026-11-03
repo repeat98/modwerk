@@ -4,6 +4,7 @@
  * Module code never runs. */
 #define MODWERK_RUNTIME_REFERENCE_EXTERNAL
 #define MODWERK_RUNTIME_METADATA_EXTERNAL
+#define MODWERK_RUNTIME_IMAGE_EXTERNAL
 #define MODWERK_RUNTIME_JOURNAL_EXTERNAL
 #define MODWERK_RUNTIME_FEATURES_EXTERNAL
 #include "../loader.c"
@@ -84,6 +85,17 @@ int modwerk_machine_metadata_admit(const struct runtime_dsp *from, struct runtim
     (void)context;(void)operation;
     return (from->flags | to->flags) & RUNTIME_GROUP_METADATA ? (metadata_allow ? metadata_why : RUNTIME_MALFORMED) : RUNTIME_OK;
 }
+static int image_check;
+static unsigned image_checks;
+int modwerk_machine_image_validate(const struct runtime_dsp *d)
+{
+    CHECK(locked && !masked);
+    if (!image_check) return RUNTIME_OK;
+    ++image_checks;
+    CHECK(d->present && d->image_bytes == 8u && d->image[0] == 0xa1 && d->hook_offset[RUNTIME_TICK] == 2u);
+    CHECK(be32(d->image + 4) == (uint32_t)(uintptr_t)d->image + 6u && be32(d->image + 8) == 0u);
+    return RUNTIME_MALFORMED;
+}
 
 /* ABI 9: the base features this host base provides. */
 static unsigned base_features;
@@ -91,6 +103,16 @@ unsigned modwerk_machine_dsp_features(void) { return base_features; }
 static int claims_why; static unsigned claims_seen;
 int modwerk_machine_dsp_claims_admit(unsigned requires, const struct runtime_dsp_claim *claims, unsigned count)
 { CHECK(locked && requires <= 0xffff && (claims || !count)); claims_seen += count; return claims_why; }
+/* ABI 10: the engines this host base admits, and the last one it was asked about. Its entries and claims are the
+ * loader's for the call only (its words are not kept yet), so their first ones are copied here. */
+static int engine_why = RUNTIME_CONFLICT; static unsigned engines_seen; static struct runtime_dsp engine_seen;
+static struct runtime_dsp_entry engine_entry; static struct runtime_dsp_claim engine_claim;
+int modwerk_machine_dsp_engine_admit(const struct runtime_dsp *d)
+{
+    CHECK(locked && d->engine_count && !d->count && d->entry_count && d->entries && (d->claims || !d->claim_count));
+    engine_seen = *d; engine_entry = d->entries[0]; if (d->claim_count) engine_claim = d->claims[0];
+    engine_seen.entries = 0, engine_seen.claims = 0; ++engines_seen; return engine_why;
+}
 /* Trusted synthetic adapter: exercises the actual loader journal; it is not
  * a DSP driver, resource census or physical ACK qualification. */
 static int journal_enabled,journal_begin_safe,journal_admitted,journal_roots=1,journal_commit=1,journal_switch_safe=1;
@@ -223,6 +245,13 @@ static void claim9(uint8_t space, uint8_t core, uint8_t access, uint32_t address
 }
 static void entry9(uint8_t site, uint8_t cores, uint32_t at) { ++p[79]; p[n++] = site; p[n++] = cores; emit16(0); emit(at); }
 static void dsp_words9(uint32_t words) { for (uint32_t i = 0; i < words; ++i) emit(0x0c0000u + i); }
+/* ABI 10: an engine (DSP words, no slot); entries carry an exit. Then its words, relocations and init claims' words. */
+static void begin10(uint32_t words)
+{
+    begin9(words, 0); p[5] = 10; p[38] = p[39] = p[43] = p[45] = p[46] = p[47] = 0;
+}
+static void entry10(uint8_t site, uint8_t cores, uint32_t exit, uint32_t at) { ++p[79]; p[n++] = site; p[n++] = cores; emit16(exit); emit(at); }
+static void relocation10(uint32_t r) { uint32_t k = be16(p + 36) + 1u; p[36] = (uint8_t)(k >> 8); p[37] = (uint8_t)k; emit16(r); }
 static void fill8(uint32_t offset, uint32_t length, uint8_t value)
 {
     put32(p + 72, be32(p + 72) + 1u);
@@ -260,7 +289,7 @@ int main(void)
 
     uint8_t capabilities[14]; memset(capabilities, 0xa5, sizeof capabilities);
     CHECK(modwerk_runtime_capabilities(capabilities) == 12u);
-    CHECK(!memcmp(capabilities, "MWCP", 4) && capabilities[4] == 1 && capabilities[5] == 9);
+    CHECK(!memcmp(capabilities, "MWCP", 4) && capabilities[4] == 1 && capabilities[5] == 10);
     CHECK(be16(capabilities + 6) == (7u | SET_CAPABILITY) && be16(capabilities + 8) == 128 && be16(capabilities + 10) == 128);
     CHECK(capabilities[12] == 0xa5 && capabilities[13] == 0xa5);
 
@@ -292,6 +321,20 @@ int main(void)
         CHECK(!b->prepare(0, p, n) && modwerk_runtime_free(0) == RUNTIME_POOL_BYTES && modwerk_runtime_refusal() == RUNTIME_MALFORMED);
     }
     CHECK(!masked && !locked && memcmp(stock, original, sizeof stock) == 0);
+
+    /* Relocated-image refusal happens during prepare, before owner generation, candidate publication or any
+     * DSP/stock changes. Repeated malformed uploads cannot leak pool space or force a busy publication retry. */
+    uint32_t image_generation = owner_generation;
+    image_check = 1;
+    for (unsigned i = 0; i < 3u; ++i) {
+        begin(8, 4, 2, &four, 1, 1, 0xa1); site(STOCK + 32, 6);
+        CHECK(!b->prepare(0, p, n) && modwerk_runtime_refusal() == RUNTIME_MALFORMED);
+        CHECK(!candidate && !owners && !modwerk_runtime_active() && owner_generation == image_generation);
+        CHECK(modwerk_runtime_free(0) == RUNTIME_POOL_BYTES && !dsp_switches && !masked && !locked);
+        CHECK(!memcmp(stock, original, sizeof stock));
+    }
+    CHECK(image_checks == 3u);
+    image_check = 0;
 
     /* A: hooks, a relocated word, bss and one site, published while nothing is in flight. */
     begin(8, 4, 2, &four, 1, 1, 0xa1); site(STOCK + 32, 6);
@@ -550,7 +593,11 @@ int main(void)
      * two): those two are read as they are and put back on removal. */
     stock[68] = 0x99;
     id = 74; begin7(8, 2, 1, 0xeb); site7(STOCK + 64, 6, 0, 4);
-    CHECK(b->prepare(0, p, n) && b->publish(0) == MU_APPLIED && b->retire(0) && stock[64] == 0x4e && stock[68] != 0x99);
+    CHECK(b->prepare(0, p, n) && b->publish(0) == MU_APPLIED && b->retire(0) && stock[64] == 0x4e);
+    /* The jump's target, not stock[68] != 0x99: that byte is the host address's bits 15..8, which ASLR can make 0x99. */
+    const struct runtime_module *guarded = 0;
+    for (unsigned i = 0; i < RUNTIME_MODULES; ++i) if (modwerk_runtime_module(i) && modwerk_runtime_module(i)->id == 74) guarded = modwerk_runtime_module(i);
+    CHECK(guarded && word(STOCK + 66) == (uint32_t)(uintptr_t)guarded->hook[RUNTIME_TICK]);
     begin(0, 0, RUNTIME_NONE, 0, 0, 0, 0);
     CHECK(b->prepare(0, p, n) && b->publish(0) == MU_APPLIED && b->retire(0) && bytes_at(STOCK + 64, original + 64, 4) && stock[68] == 0x99);
     stock[68] = original[68];
@@ -696,6 +743,67 @@ int main(void)
     begin(0, 0, RUNTIME_NONE, 0, 0, 0, 0);
     CHECK(b->prepare(0, p, n) && b->publish(0) == MU_APPLIED && b->retire(0));
     base_features = 0;
+    CHECK(!modwerk_runtime_active() && modwerk_runtime_free(0) == RUNTIME_POOL_BYTES && !memcmp(stock, original, sizeof stock));
+
+    /* ABI 10: an engine for the base's hook sites. Its words are not an effect (count 0); its entries, claims (both
+     * cores, initial words) and words are kept; the machine decides (modwerk_machine_dsp_engine_admit, not the claims'
+     * check). Its controller digest covers no DSP part: a package differing only there keeps it. */
+    uint8_t controller[MU_DIGEST_BYTES], package[MU_DIGEST_BYTES];
+    free = modwerk_runtime_free(0);
+    id = 95; begin10(8); claim9(1, RUNTIME_CLAIM_BOTH_CORES, RUNTIME_CLAIM_READ | RUNTIME_CLAIM_WRITE | RUNTIME_CLAIM_INIT, 0x2840, 3);
+    entry10(5, 3, 6, 0); dsp_words9(8); put32(p + n - 24, 3); relocation10(2); relocation10(4 | 0x8000u); /* word 2: an offset */
+    emit(0x111111); emit(0); emit(0xffffff);
+    unsigned asked = engines_seen, claims_before = claims_seen;
+    CHECK(!b->prepare(0, p, n) && modwerk_runtime_refusal() == RUNTIME_CONFLICT && modwerk_runtime_free(0) == free &&
+          engines_seen == asked + 1 && claims_seen == claims_before);               /* a base that admits no engine */
+    CHECK(engine_seen.engine_count == 8 && engine_seen.engine_relocation_count == 2 && engine_seen.entry_count == 1 &&
+          engine_seen.init_count == 3 && engine_entry.site == 5 && engine_entry.exit == 6 &&
+          engine_claim.core == RUNTIME_CLAIM_BOTH_CORES);
+    engine_why = RUNTIME_OK;
+    CHECK(b->prepare(0, p, n) && b->publish(0) == MU_APPLIED && b->retire(0));
+    const struct runtime_module *engine = modwerk_runtime_module(0);
+    CHECK(engine && !engine->dsp.count && !engine->dsp.words && engine->dsp.engine_count == 8 && engine->dsp.engine[7] == 0x0c0007u &&
+          engine->dsp.engine_relocation_count == 2 && engine->dsp.engine_relocations[1] == (4 | 0x8000u) &&
+          engine->dsp.entry_count == 1 && engine->dsp.entries[0].entry == 0 && engine->dsp.entries[0].cores == 3 &&
+          engine->dsp.claim_count == 1 && engine->dsp.claims[0].access == 7 && engine->dsp.init_count == 3 &&
+          engine->dsp.initial[0] == 0x111111u && engine->dsp.initial[2] == 0xffffffu &&
+          (uintptr_t)(engine->dsp.initial + 3) <= (uintptr_t)engine + engine->size);
+    memcpy(controller, engine->dsp.controller_sha256, sizeof controller); memcpy(package, engine->dsp.package_sha256, sizeof package);
+    /* The same controller with other DSP words, relocations, an entry, claims and initial words: a new package, the same
+     * controller digest. */
+    id = 95; begin10(9); claim9(1, RUNTIME_CLAIM_BOTH_CORES, RUNTIME_CLAIM_WRITE | RUNTIME_CLAIM_INIT, 0x2840, 2);
+    claim9(2, 0, RUNTIME_CLAIM_READ, 0x800, 4); entry10(5, 3, 0, 1); dsp_words9(9); emit(1); emit(2);
+    CHECK(b->prepare(0, p, n) && b->publish(0) == MU_APPLIED && b->retire(0));
+    engine = modwerk_runtime_module(0);
+    CHECK(engine->dsp.engine_count == 9 && !engine->dsp.engine_relocation_count && engine->dsp.init_count == 2 &&
+          !memcmp(engine->dsp.controller_sha256, controller, sizeof controller) &&
+          memcmp(engine->dsp.package_sha256, package, sizeof package));
+    free = modwerk_runtime_free(0);
+    for (unsigned bad = 0; bad < 13; ++bad) {
+        id = 96; begin10(4);
+        if (bad == 0) {}                                                     /* an engine with no entry */
+        if (bad == 1) { entry10(5, 3, 0, 0); p[45] = 1; }                    /* a price in an engine's descriptor */
+        if (bad == 2) entry10(5, 3, 4, 0);                                   /* an exit past its words */
+        if (bad == 3) { entry10(5, 3, 2, 0); }                               /* its exit a relocation (below) */
+        if (bad == 4) { entry10(5, 3, 0, 0); claim9(1, 3, RUNTIME_CLAIM_WRITE, 0x2840, 1); } /* no such core */
+        if (bad == 5) { entry10(5, 3, 0, 0); claim9(1, 0, RUNTIME_CLAIM_INIT, 0x2840, 1); } /* initial words, no access */
+        if (bad == 6) { entry10(5, 3, 0, 0); claim9(1, 2, 3 | RUNTIME_CLAIM_INIT, 0x2840, 2); } /* one word short */
+        if (bad == 7) { entry10(5, 3, 0, 0); claim9(1, 2, 3 | RUNTIME_CLAIM_INIT, 0x2840, 1); } /* not 24 bits */
+        if (bad == 8) { entry10(5, 3, 0, 0); claim9(1, 2, 3, 0x2840, 4); claim9(1, 0, 1, 0x2843, 1); } /* both cores meet core 0 */
+        if (bad == 9) { begin9(4, 0); p[5] = 10; entry10(5, 3, 0, 0); }      /* an effect with a hook entry */
+        if (bad == 10) { begin9(4, 0); p[5] = 10; claim9(1, 2, 3, 0x2840, 4); } /* an effect's claim on both cores */
+        if (bad == 11) { begin9(4, 0); p[5] = 10; claim9(1, 0, 3 | RUNTIME_CLAIM_INIT, 0x2840, 1); } /* an effect's initial words */
+        if (bad == 12) { entry10(5, 3, 0, 0); claim9(1, 2, 3 | RUNTIME_CLAIM_INIT, 0x2840, RUNTIME_DSP_INIT_WORDS + 1u); }
+        dsp_words9(4);
+        if (bad == 3) relocation10(2 | 0x8000u);
+        if (bad == 6) emit(0);
+        if (bad == 7) emit(0x1000000u);
+        if (bad == 11) emit(0);
+        CHECK(!b->prepare(0, p, n) && modwerk_runtime_refusal() == RUNTIME_MALFORMED && modwerk_runtime_free(0) == free);
+    }
+    id = 95; begin(0, 0, RUNTIME_NONE, 0, 0, 0, 0);
+    CHECK(b->prepare(0, p, n) && b->publish(0) == MU_APPLIED && b->retire(0));
+    engine_why = RUNTIME_CONFLICT;
     CHECK(!modwerk_runtime_active() && modwerk_runtime_free(0) == RUNTIME_POOL_BYTES && !memcmp(stock, original, sizeof stock));
 
     /* Machine metadata needs explicit board admission. An old group cannot

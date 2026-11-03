@@ -170,7 +170,7 @@ class StockHookControllers(unittest.TestCase):
         self.assertEqual([p['text'] for p in problems if 'output-matrix' in p['modules']], [])
 
     def test_trust_rows_refuse_malformed_and_duplicate_rows(self):
-        row = dict(module='output-matrix', moduleId=0xcaf158b5, packageSha256='11' * 32, sourcePolicySha256='22' * 32,
+        row = dict(module='output-matrix', moduleId=0xcaf158b5, controllerSha256='11' * 32, sourcePolicySha256='22' * 32,
                    revisions=[1, 1, 1], feature=2, requiredCores=1, version=1, imageBytes=64, entryName='page_levels',
                    entry=8, beginReturn=16, endReturn=24)
         self.assertEqual(controllers.policies_c([row]).count('\n'), 1)
@@ -178,7 +178,7 @@ class StockHookControllers(unittest.TestCase):
         self.assertEqual(controllers.policies_c([dict(row, feature=4, requiredCores=3)]).count('\n'), 1)
         for change in (dict(requiredCores=3), dict(feature=4, requiredCores=1), dict(feature=8, requiredCores=3),
                        dict(entry=9), dict(endReturn=64),
-                       dict(beginReturn=24), dict(packageSha256='00' * 32), dict(revisions=[1, 2, 1]), dict(version=2)):
+                       dict(beginReturn=24), dict(controllerSha256='00' * 32), dict(revisions=[1, 2, 1]), dict(version=2)):
             with self.assertRaises(ValueError):
                 controllers.policies_c([dict(row, **change)])
         with self.assertRaises(ValueError):
@@ -240,8 +240,8 @@ class StockHookControllers(unittest.TestCase):
             page[off:off + 4] = clone[off:off + 4] = bytes(4)
         self.assertEqual(sorted(pointers), sorted(p['offset'] for p in recipe['rawPointers']))
         self.assertEqual(page.hex(), clone.hex())
-        # The stock page-1 enables survive; the new slots 8-11 are on.
-        self.assertEqual(struct.unpack('>II', page[0x18a:0x192]), (0x1111, 0x01111111))
+        # The stock page-1 enables survive; MON (slot 7) and slots 8-11 are on, KWID (slot 11) with its link to KBAS.
+        self.assertEqual(struct.unpack('>II', page[0x18a:0x192]), (0x3111, 0x11111111))
 
 
 if __name__ == '__main__': unittest.main()

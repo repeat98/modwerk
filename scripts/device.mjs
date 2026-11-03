@@ -5,14 +5,14 @@
 //
 //   ~/.cache/modwerk-upstream/venv/bin/python -B scripts/octatrack-usb-bridge.py /tmp/modwerk-ot.sock &
 //   npm run device -- status
-//   while :; do npm run device -- serve [--share /tmp/modwerk-share.sock]; sleep 1; done   # one long-lived link (starts the bridge
+//   while [ -f scripts/device.mjs ]; do npm run device -- serve [--share /tmp/modwerk-share.sock]; sleep 1; done   # one long-lived link (starts the bridge
 //       if needed; --share lets the frontend MCP use the unit through it, --device-socket that path); send it
 //       scripts/device-send.py part2 pick:T1:FX2:E-Verb stats png:/tmp/s.png   # or 'try FILE', 'remove FILE', 'boot DIR'
 //   npm run device -- try MODULE.mwrm [--seconds 5] [--accept]
 //   npm run device -- remove [MODULE.mwrm] [--accept]   # that file's module, else module 0
 //   npm run device -- lifecycle
 //   npm run device -- boot BUILD_DIR [--chunk 4096]  # RAM boot: build_core.py's output, no flashing; serve: 'boot DIR 4096'
-//   npm run device -- flash BUILD_DIR               # after `boot BUILD_DIR`: that base writes itself to NOR and restarts on it
+//   npm run device -- flash BUILD_DIR               # after `boot BUILD_DIR`: that base writes itself to NOR (two slots: it runs on)
 //   npm run device -- key PLAY | FUNC+FX1 | 0x27    # development bases (build_core.py --dev)
 //   npm run device -- screen [--png FILE] [--scale 1-4]  # the display, in block characters or as a PNG (4x unless --scale)
 //   npm run device -- ui                            # tracks, effects and transport as text, read from RAM (MEM)
@@ -32,9 +32,9 @@
 // Each command is one whole transaction. A trial is rolled back unless --accept
 // is given; Ctrl-C rolls back early. If this process dies mid-trial, unplug USB:
 // the base rolls back any module that was not accepted.
-import { readFileSync, writeFileSync } from 'node:fs'
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { deflateSync, crc32 } from 'node:zlib'
-import { join } from 'node:path'
+import { join, resolve } from 'node:path'
 import { createConnection, createServer } from 'node:net'
 import { spawn, spawnSync } from 'node:child_process'
 import { homedir, tmpdir } from 'node:os'
@@ -85,7 +85,7 @@ const diag = () => diagnostics(unit, index).catch(() => undefined)
 // Development bases (build_core.py --dev, dev.c): keys as the panel reports them, and the composed screen.
 const KEYS = { DOWN: 0x20, RIGHT: 0x21, SRC: 0x22, AMP: 0x23, LFO: 0x24, FX1: 0x25, FX2: 0x26, STOP: 0x27, PLAY: 0x28,
   REC: 0x29, CUE: 0x2a, FUNC: 0x2d, PATTERN: 0x2e, BANK: 0x2f, YES: 0x31, NO: 0x32, UP: 0x33, LEFT: 0x34, MIDI: 0x35,
-  PROJ: 0x1c, PART: 0x1d, AED: 0x1e, ARR: 0x1f, LEVEL: 0x3e,
+  PAGE: 0x1b, PROJ: 0x1c, PART: 0x1d, AED: 0x1e, ARR: 0x1f, SCENEA: 0x19, SCENEB: 0x1a, LEVEL: 0x3e,
   ...Object.fromEntries(Array.from({ length: 16 }, (_, i) => ['TRIG' + (i + 1), i])),
   ...Object.fromEntries(Array.from({ length: 8 }, (_, i) => ['T' + (i + 1), 0x10 + i])),
   ...Object.fromEntries(['A', 'B', 'C', 'D', 'E', 'F'].map((e, i) => ['PUSH' + e, 0x38 + i])) }
@@ -140,6 +140,83 @@ async function effectTables() {
   const words = async (at, n) => { const b = await mem(at, 4 * n), v = new DataView(b.buffer, b.byteOffset, 4 * n); return Array.from({ length: n }, (_, i) => v.getUint32(4 * i)) }
   const first = await words(fx1, 129), count = first.indexOf(0) < 0 ? 128 : first.indexOf(0)
   return { count, ids: [first.slice(0, count), await words(fx2, count)], rows: [await words(row1, count), await words(row2, count)] }
+}
+/** MEMORY MAP (dev request 24): the module pool's free bytes and largest free run, the delay-buffer blocks in use, and
+ * each core's code arena with the blocks the loader has placed there (committed), sorted by where they start. */
+async function memoryMap() {
+  const pages = [Buffer.from(await devIn(24, 0, 276))] // then 32 packages a page until the base stalls (fxids.h)
+  for (;;) { try { pages.push(Buffer.from(await devIn(24, pages.length, 276))) } catch { break } }
+  const b = pages[0]
+  if (b.toString('latin1', 0, 4) !== 'MWMP') throw new Error('Not a memory map.')
+  const cores = [0, 1].map(core => {
+    const arena = b.readUInt16BE(12 + 2 * core), blocks = []
+    pages.forEach((page, k) => {
+      for (let i = 0; i < 32; i++) {
+        const at = page.readUInt16BE(20 + 4 * (32 * core + i))
+        if (at !== 0xffff) blocks.push({ p: 32 * k + i, at: at - 64, n: page.readUInt16BE(22 + 4 * (32 * core + i)) })
+      }
+    })
+    blocks.sort((x, y) => x.at - y.at)
+    // Holes: free words outside the largest free run (big blocks sit at the top, the rest at the bottom: dsp.c)
+    let end = 0, largest = 0
+    for (const k of [...blocks, { at: arena, n: 0 }]) { largest = Math.max(largest, k.at - end); end = Math.max(end, k.at + k.n) }
+    const used = blocks.reduce((s, k) => s + k.n, 0)
+    return { arena, blocks, used, largest, holes: arena - used - largest }
+  })
+  return { free: b.readUInt32BE(4), largest: b.readUInt32BE(8), buffers: b.readUInt32BE(16), cores }
+}
+/** The DSP code map (development bases): each core's arena as a bar of 64 cells, each placed block a letter and free
+ * words '.', then each block's name, where it starts, its words and the slots that run it, else "preloaded" (code a Part
+ * of the bank names, kept loaded so a Part change waits for no upload). watch:N redraws it whenever a block comes, goes
+ * or moves (compaction, preloading, a pick) for N seconds, at most 15 (the session answers within 20). */
+async function dspmap(seconds) {
+  const tables = await effectTables(), names = new Map()
+  const label = async d => d ? Buffer.from(await mem(d + 9, 13)).toString('latin1').replace(/\0.*$/s, '') : ''
+  const name = async p => {
+    if (!names.has(p)) { const n2 = await label(tables.ids[1][p]); names.set(p, (n2 && n2 !== 'NONE') || !p ? n2 : (await label(tables.ids[0][p])) || 'id ' + p) }
+    return names.get(p)
+  }
+  const letter = i => String.fromCharCode(65 + i % 26)
+  const t0 = Date.now()
+  let last = ''
+  do {
+    const map = await memoryMap(), live = await mem(0x80000ec4, 16), key = JSON.stringify(map.cores) + live.join()
+    if (key !== last) {
+      const out = seconds ? [`${((Date.now() - t0) / 1000).toFixed(1)} s`] : []
+      for (const core of [1, 0]) {
+        const { arena, blocks, used, largest, holes } = map.cores[core], cells = Array(64).fill('.')
+        blocks.forEach((k, i) => { for (let c = 0; c < 64; c++) { const mid = (c + 0.5) * arena / 64; if (mid >= k.at && mid < k.at + k.n) cells[c] = letter(i) } })
+        blocks.forEach((k, i) => { if (!cells.includes(letter(i))) cells[Math.min(63, Math.floor(k.at * 64 / arena))] = letter(i) }) // smaller than a cell
+        out.push(`core ${core} (${core ? 'T1-4' : 'T5-8'}) |${cells.join('')}| ${used}/${arena} words, largest free run ${largest}, holes ${holes}`)
+        for (const [i, k] of blocks.entries()) {
+          const slots = [...live].flatMap((p, s) => p === k.p && ((s & 7) < 4 ? 1 : 0) === core ? [`T${(s & 7) + 1} FX${s < 8 ? 1 : 2}`] : [])
+          out.push(`  ${letter(i)} ${(await name(k.p)).padEnd(13)} @${String(k.at).padEnd(5)} +${String(k.n).padEnd(5)} ${slots.join(', ') || 'preloaded'}`)
+        }
+      }
+      console.log(out.join('\n'))
+      last = key
+    }
+    if (seconds) await wait(250)
+  } while (Date.now() - t0 < Math.min(seconds, 15) * 1000)
+}
+/** The build `boot DIR` last started, whose symbols.json and proofs.json `profile` reads. */
+const LAST_BOOT = join(homedir(), '.cache/modwerk-octatrack/last-boot')
+/** The base's tick profile (development bases, diag.h modwerk_cost): what each hook of the UI tick costs, in µs a tick over
+ * N seconds (at most 15), and the frame transfer's µs a frame. The build it reads the address from must be the base that
+ * runs: `boot DIR` records DIR, and its proofs name the base. */
+async function profile(seconds) {
+  let dir = ''
+  try { dir = readFileSync(LAST_BOOT, 'utf8').trim() } catch { /* below */ }
+  const symbols = dir && JSON.parse(readFileSync(join(dir, 'symbols.json'), 'utf8'))
+  const base = dir && JSON.parse(readFileSync(join(dir, 'proofs.json'), 'utf8')).configurationHash
+  if (!symbols?.modwerk_cost || base !== identity.base) throw new Error('No symbols for the running base: RAM-boot a development build with `boot DIR` (its symbols.json names modwerk_cost).')
+  const read = async () => { const b = await mem(symbols.modwerk_cost, 112), v = new DataView(b.buffer, b.byteOffset, 112); return Array.from({ length: 28 }, (_, i) => v.getUint32(4 * i)) }
+  const a = await read(); await wait(1000 * Math.min(seconds, 15)); const b = await read()
+  const ticks = (b[15] - a[15]) >>> 0 || 1, frames = (b[11] - a[11]) >>> 0, us = k => (((b[k] - a[k]) >>> 0) / ticks / 132).toFixed(1)
+  const hooks = [[0, 'whole chain'], [1, 'runtime'], [2, 'USB'], [3, 'dsp'], [4, 'loader manager'], [5, 'status'], [6, 'controllers'], [7, 'crash'],
+    [8, 'diagnostics'], [14, 'module UI ticks'], [24, 'MIDI generators']]
+  console.log(`profile over ${ticks} UI ticks, µs a tick: ${hooks.map(([k, name]) => `${name} ${us(k)}`).join(', ')}` +
+    (frames ? `; frame transfer ${(((b[10] - a[10]) >>> 0) / frames / 132).toFixed(1)} µs a frame` : ''))
 }
 /** What the unit shows, as text: each track's effects (their descriptors' names), the current track, transport. */
 async function ui() {
@@ -238,11 +315,15 @@ async function missing() {
 /** One connection for a whole sequence: KEY or KEY+KEY (with *N to repeat), w300 (wait ms), encC+3, fader128, ui, screen, state,
  * stats (one line: CPU, each core's mean/peak per mille and idle passes a frame), png:FILE, mem:0xADDR:LEN, part1-4, pick:T1:FX2:NAME,
  * +KEY / -KEY (press, release), crash (the last crash's record), crashtest (development bases: crash on purpose),
- * stall (the last DSP stall's record), stalltest (development bases: write one now), selftest (PROJ > MODWERK > SELF TEST, about 15 s)
+ * stall (the last DSP stall's record), stalltest (development bases: write one now), guardtest / guardtest:0 (development
+ * bases: the next start leaves the set's first module out, or holds every module, as after a crash in its restore),
+ * saved (the card set's result, modset.c: 1 restored, 10 left out, 11 held; development bases), selftest (PROJ > MODWERK > SELF TEST, about 15 s)
  * hold:N (development bases: host frames wait N seconds, as after a boot), missing (modules the project names, not installed),
  * inventory (the installed modules, INVENTORY),
  * reload (the current Part from its saved copy, through the Part menu), gap (the longest time between frames since the last gap),
- * memory (development bases: each memory's use, holes and largest free run), compact (pack each core's code now, timed)
+ * memory (development bases: each memory's use, holes and largest free run), compact (pack each core's code now, timed),
+ * dspmap (development bases: each core's code arena drawn, every block named with its slots), dspmap:watch:N (redrawn on change)
+ * profile, profile:N (development bases: each UI tick hook's µs over N seconds, from the symbols of the build `boot` started)
  * (spaces in NAME as _; it waits until the track runs it). */
 async function run(sequence, until = Infinity) { // serve: past its time limit a sequence stops before its next step
   for (const step of sequence.trim().split(/\s+/)) {
@@ -253,7 +334,11 @@ async function run(sequence, until = Infinity) { // serve: past its time limit a
     else if ((m = /^fader(\d+)$/.exec(step))) await devIn(8, 0x40 | Number(m[1]) << 8, 1)
     else if (step === 'ui') await ui()
     else if (step === 'screen') await screen()
-    else if ((m = /^([+-])([A-Z0-9]+)$/i.exec(step))) await devIn(5, KEYS[m[2].toUpperCase()] | (m[1] === '+' ? 0x100 : 0), 1) // +BANK holds, -BANK lets go
+    else if ((m = /^([+-])([A-Z0-9]+)$/i.exec(step))) { // +BANK holds, -BANK lets go
+      const code = KEYS[m[2].toUpperCase()]
+      if (code === undefined) throw new Error('Unknown key in ' + step + ': ' + Object.keys(KEYS).join(' ')) // not TRIG1 (undefined | 0x100)
+      await devIn(5, code | (m[1] === '+' ? 0x100 : 0), 1)
+    }
     else if ((m = /^png:(\S+)$/.exec(step))) await screen(m[1])
     else if ((m = /^mem:(0x[0-9a-f]+):(\d+)$/i.exec(step))) { // RAM, read-only, hex; any length (500-byte reads)
       const at = Number(m[1]), length = Number(m[2]), parts = []
@@ -262,6 +347,7 @@ async function run(sequence, until = Infinity) { // serve: past its time limit a
     }
     else if (step === 'report') console.log(named(await statusWords())) // the loader's full report (dsp.c modwerk_dsp_report)
     else if (step === 'stalltest') await devIn(18, 0, 1) // development bases: write the stall record now, nothing recovered
+    else if (step.startsWith('guardtest')) await devIn(40, step === 'guardtest:0' ? 0 : 1, 1) // development bases: the next start acts as after a crash in its restore
     else if ((m = /^storm([01])$/.exec(step))) await devIn(19, Number(m[1]), 1) // development bases: a finished PEEK goes again at once
     else if ((m = /^mask:(\d+)$/.exec(step))) await devIn(20, Math.min(Number(m[1]), 65535), 1) // development bases: interrupts off for N microseconds
     else if (step === 'missing') console.log(await missing())
@@ -281,30 +367,17 @@ async function run(sequence, until = Infinity) { // serve: past its time limit a
       }
     }
     else if (step === 'memory') { // MEMORY MAP (dev request 24): how full and how fragmented each memory is
-      const pages = [Buffer.from(await devIn(24, 0, 276))] // then 32 packages a page until the base stalls (fxids.h)
-      for (;;) { try { pages.push(Buffer.from(await devIn(24, pages.length, 276))) } catch { break } }
-      const b = pages[0]
-      if (b.toString('latin1', 0, 4) !== 'MWMP') throw new Error('Not a memory map.')
-      const free = b.readUInt32BE(4), largest = b.readUInt32BE(8), pool = free + (await statusWords())(72) // the base's own size
-      console.log(`pool: ${pool - free} of ${pool} bytes used; free ${free}, largest free run ${largest}${free ? ` (${Math.round(100 * largest / free)} % of free)` : ''}`)
+      const map = await memoryMap(), pool = map.free + (await statusWords())(72) // the base's own size
+      console.log(`pool: ${pool - map.free} of ${pool} bytes used; free ${map.free}, largest free run ${map.largest}${map.free ? ` (${Math.round(100 * map.largest / map.free)} % of free)` : ''}`)
       for (const [core, name] of [[1, 'core 1 (T1-4)'], [0, 'core 0 (T5-8)']]) {
-        const arena = b.readUInt16BE(12 + 2 * core), blocks = []
-        pages.forEach((page, k) => {
-          for (let i = 0; i < 32; i++) {
-            const at = page.readUInt16BE(20 + 4 * (32 * core + i))
-            if (at !== 0xffff) blocks.push({ p: 32 * k + i, at: at - 64, n: page.readUInt16BE(22 + 4 * (32 * core + i)) })
-          }
-        })
-        blocks.sort((x, y) => x.at - y.at)
-        // Holes: free words outside the largest free run (big blocks sit at the top, the rest at the bottom: dsp.c)
-        let end = 0, largest = 0
-        for (const k of [...blocks, { at: arena, n: 0 }]) { largest = Math.max(largest, k.at - end); end = Math.max(end, k.at + k.n) }
-        const used = blocks.reduce((s, k) => s + k.n, 0)
+        const { arena, blocks, used, largest, holes } = map.cores[core]
         console.log(`${name}: ${used} of ${arena} words in ${blocks.length} blocks [${blocks.map(k => `id ${k.p} @${k.at}+${k.n}`).join(', ')}]; ` +
-          `holes ${arena - used - largest} words, largest free run ${largest} of ${arena - used} free`)
+          `holes ${holes} words, largest free run ${largest} of ${arena - used} free`)
       }
-      console.log(`buffer blocks in use: 0x${b.readUInt32BE(16).toString(16)}`)
+      console.log(`buffer blocks in use: 0x${map.buffers.toString(16)}`)
     }
+    else if ((m = /^dspmap(?::watch:(\d+))?$/.exec(step))) await dspmap(Number(m[1] ?? 0))
+    else if ((m = /^profile(?::(\d+))?$/.exec(step))) await profile(Number(m[1] ?? 3))
     else if (step === 'compact') { // COMPACT (dev request 25): pack each core's code now (transport stopped); how long it took
       const read = async go => { const b = Buffer.from(await devIn(25, go, 8)); return { step: b.readUInt32BE(0), counts: b.readUInt32BE(4) } }
       if (!(await read(1)).step) throw new Error('Compaction did not start: stop the transport and let the loader finish.')
@@ -313,18 +386,29 @@ async function run(sequence, until = Infinity) { // serve: past its time limit a
       const r = await read(0)
       console.log(r.counts === 0xffffffff ? 'compaction gave up (playing again, or ten seconds)' : `compacted in ${(r.counts / 132000).toFixed(1)} ms (${Date.now() - start} ms seen from here)`)
     }
+    else if (step === 'guard' || step.startsWith('guard:')) { // GUARD (dev request 29): guard:MILLE sets the frame guard's share
+      const b = Buffer.from(await devIn(29, Number(step.slice(6)) || 0, 28)), pc = n => `${(n / 478.91).toFixed(1)} %`
+      const [max, late, busy, frames, skips, tracks, share] = [0, 4, 8, 12, 16, 20, 24].map(at => b.readUInt32BE(at))
+      console.log(`frame max ${pc(max)}, latest start ${pc(late)}, in the frame interrupt ${frames ? pc(busy * 256 / frames) : '-'} over ${frames} frames, skipped ${skips} on ${[...Array(8).keys()].filter(t => tracks >> t & 1).map(t => 'T' + (t + 1)).join(' ') || '-'}, share ${pc(share)}`)
+    }
     else if (step === 'gap') { const g = Buffer.from(await devIn(23, 0, 4)).readUInt32BE(0); console.log(`gap ${g} counts ${(g / 132).toFixed(0)} us`) } // since the last read
     // RELOAD from the Part menu, which keeps its cursor and stops at RENAME. Never PART+FUNC+PLAY: that is CLEAR.
     else if (step === 'reload') await run('FUNC+PART w600 UP w150 UP w150 UP w150 DOWN w200 YES w1000')
     else if ((m = /^hold:(\d)$/.exec(step))) await devIn(22, Number(m[1]), 1) // development bases: host frames wait N seconds, as after a boot
-    else if (step === 'selftest') { // dsp.c's self-test (PROJ > MODWERK > SELF TEST): started, then read until it is done
+    else if (step === 'saved') { // the self-test record's card set, read without starting a test (modset.c's result)
+      const b = Buffer.from(await devIn(21, 0, 96))
+      console.log(`card set ${b.readUInt32BE(60)}, ${b.readUInt32BE(64)} modules saved, ${b.readUInt32BE(68)} live`)
+    }
+    else if (step === 'selftest' || step === 'selftest:trace') { // dsp.c's self-test (PROJ > MODWERK > SELF TEST): started, then read until it is done
+      // :trace prints each read beside the CPU meter's latest half-second window (development bases), to see what a peak was
+      const trace = step.endsWith(':trace') && (async (r, t0) => { const w = await statusWords(); console.log(`  ${((Date.now() - t0) / 1000).toFixed(1)} s phase ${r.phase} done ${r.done}/${r.total} ran ${r.ran} cpu now ${w(66)} recorded ${r.cpu} T1-4 ${w(70)} T5-8 ${w(68)}`) })
       const read = async go => { const b = Buffer.from(await devIn(21, go, 96)); return { state: b.readUInt32BE(0), phase: b.readUInt32BE(4), failed: b.readUInt32BE(8),
         modules: b.readUInt32BE(12), dsp: b.readUInt32BE(16), intact: b.readUInt32BE(20), ran: b.readUInt32BE(24), peak: [b.readUInt32BE(28), b.readUInt32BE(32)],
         cpu: b.readUInt32BE(36), done: b.readUInt32BE(40), total: b.readUInt32BE(44), track: [...b.subarray(48, 56)], gap: b.readUInt32BE(56),
         saved: b.readUInt32BE(60), savedCount: b.readUInt32BE(64), live: b.readUInt32BE(68), culprit: b.subarray(76, 92).toString('latin1').replace(/\0.*$/s, '') } }
       let r = await read(1)
       if (r.state !== 1) throw new Error('The self-test did not start: stop the transport, and let the loader finish.')
-      for (const start = Date.now(); r.state === 1 && Date.now() - start < 120000; await wait(500)) r = await read(0)
+      for (const start = Date.now(); r.state === 1 && Date.now() - start < 120000; await wait(500)) { r = await read(0); if (trace) await trace(r, start) }
       const why = ['a module broken', 'refused under load', 'frames stopped', 'a core over 90 %', 'loader errors or a stall', 'tracks not back', 'stopped', 'a module did not run alone', 'the CPU over 90 %', 'a frame late', 'code damaged'].filter((_, i) => r.failed >> i & 1)
       console.log(`selftest ${['idle', 'running', 'passed', 'failed'][r.state]}${why.length ? ': ' + why.join(', ') : ''}${r.culprit ? ' (' + r.culprit + ')' : ''}; modules ${r.intact}/${r.modules} intact, ${r.dsp} with DSP effects; ` +
         `together ${r.ran}/${r.dsp} ran (last batch ${r.track.map(id => id ? '0x' + id.toString(16) : '-').join(' ')}), peaks CPU ${r.cpu / 10}% T1-4 ${r.peak[0] / 10}% T5-8 ${r.peak[1] / 10}%; longest frame ${(r.gap / 132).toFixed(0)} us; card set ${r.saved}, ${r.savedCount}/${r.live}`)
@@ -460,7 +544,9 @@ if (command === 'serve') {
         const session = await UploadSession.connect(transport, identity.base, { timeoutMs: 10000 })
         const phase = session.status.phase
         console.log(`found ${state(session.status)}`)
-        if (session.adopt()) await session.cancel() // staged by the session that lost its reply
+        // A published candidate (pending, trial, recovery, publishing) is rolled back, a staged one cancelled, as the site's cleanUp does.
+        if (['pending', 'trial', 'recovery', 'publishing'].includes(phase) && session.adopt()) { await stopping(() => session.rollback()); await session.leaveUploadMode() }
+        else if (session.adopt()) await session.cancel() // staged by the session that lost its reply
         else if (phase === 'ready') await session.leaveUploadMode() // a published candidate: the base rolls it back after 10 s of quiet
         console.log(`now ${state(session.status)}`)
       } else if (verb === 'try' || verb === 'remove') {
@@ -538,11 +624,11 @@ if (command === 'serve') {
     process.exit(0)
   }
   if (command === 'missing') { console.log(await missing()); process.exit(0) }
-  if (command === 'meter') { // dsp_receiver.asm's load meter, read back a bit a frame (66 report words, version 10)
+  if (command === 'meter') { // dsp_receiver.asm's load meter, read back a bit a frame (report words 53-59)
     if (!['0', '1'].includes(file)) throw new Error('Use meter 0 or meter 1.')
     if (!(await devIn(13, Number(file), 1))[0]) throw new Error('A meter read is already waiting.')
     for (const until = Date.now() + 15000; Date.now() < until; await new Promise(r => setTimeout(r, 200))) {
-      const bytes = await devIn(11, 0, 4 * 66), view = new DataView(bytes.buffer, bytes.byteOffset, 4 * 66), w = i => view.getUint32(4 * i)
+      const view = await reportView(), w = i => view.getUint32(4 * i)
       if (view.getInt32(4 * 53) !== Number(file) || w(54) !== 120) continue
       console.log({ core: Number(file), window: w(55), idleLeast: w(56), idleMost: w(57), idleMean: +(w(58) / 1024).toFixed(1), missed: w(59) })
       process.exit(0)
@@ -556,7 +642,8 @@ if (command === 'serve') {
   if (command === 'state') { const [stopped, recording] = await devIn(6, 0, 2); console.log(stopped ? 'stopped' : 'playing', recording ? '(recording)' : ''); process.exit(0) }
   // A whole OS image takes the unit (and far longer the emulator) a while to hash.
   const session = await UploadSession.connect(transport, identity.base, { timeoutMs: command === 'flash' ? 180000 : command === 'boot' ? 60000 : 10000 })
-  if (command === 'status') console.log(state(session.status), '\nDIAG', await diag() ?? 'not answered')
+  if (command === 'status') console.log(state(session.status), '\nDIAG', await diag() ?? 'not answered',
+    '\nSLOTS', JSON.stringify(await transport.slots().catch(() => undefined) ?? 'not answered (a base before the two slots)'))
   if (command === 'lifecycle') await runLifecycle(unit, index, console.log)
   if (command === 'remove') {
     // An ABI 4 file names its module (sdk/runtime/loader/README.md); ABI 3 modules are module 0.
@@ -580,16 +667,22 @@ if (command === 'serve') {
     await session.stage({ base: identity.base, data: container, sha256: sha(container) }, { signal: interrupt.signal, chunk: values.chunk ? Number(values.chunk) : undefined, progress: (done, total) => {
       if (Math.floor(10 * done / total) > shown) console.log(`  staged ${10 * (shown = Math.floor(10 * done / total))}%`)
     } })
-    console.log('writing NOR (the base erases, programs and verifies; keep the power on)…')
+    console.log('writing NOR (the base erases, programs and verifies; the unit shows the update on its screen)…')
     await session.activate()
-    console.log('written and verified; accepting: the unit restarts on NOR half a second on')
+    // A base that answers SLOTS (flash.c's two slots) writes itself while it runs on; one before it restarts on NOR.
+    const twoSlots = await transport.slots().catch(() => undefined) !== undefined
+    console.log(twoSlots ? 'written and verified into a slot; the unit runs on, and its next start is from that slot' : 'written and verified; accepting: the unit restarts on NOR half a second on')
     await session.accept()
-    bench.socket.end()
-    const back = await rebooted()
-    if (back.base !== expected) throw new Error(`The unit came back on base ${back.base.slice(0, 16)}…, not the one written.`)
-    console.log(`flashed over USB: base ${expected.slice(0, 16)}… (power cycles boot it now)`)
+    if (twoSlots) console.log('SLOTS', JSON.stringify(await transport.slots().catch(() => undefined)))
+    else {
+      bench.socket.end()
+      const back = await rebooted()
+      if (back.base !== expected) throw new Error(`The unit came back on base ${back.base.slice(0, 16)}…, not the one written.`)
+      console.log(`flashed over USB: base ${expected.slice(0, 16)}… (power cycles boot it now)`)
+    }
   }
   if (command === 'boot') {
+    try { mkdirSync(join(homedir(), '.cache/modwerk-octatrack'), { recursive: true }); writeFileSync(LAST_BOOT, resolve(file)) } catch { /* profile then asks */ }
     const image = new Uint8Array(readFileSync(join(file, 'MAIN.raw')))
     const expected = JSON.parse(readFileSync(join(file, 'proofs.json'), 'utf8')).configurationHash
     if (image.length < 4 || new DataView(image.buffer, image.byteOffset).getUint32(0) !== 0x4fefffe4)

@@ -18,12 +18,11 @@ ab_lpf_frequency:
 	.size	ab_defaults, 12
 ab_defaults:
 	.string	"@PP@@"
-	.base64	"AEB/QEAA"
+	.base64	"AABAQEB/"
 	.align	2
 	.type	ab_lpf_freq, @object
 	.size	ab_lpf_freq, 512
 ab_lpf_freq:
-	.long	0
 	.long	500
 	.long	521
 	.long	543
@@ -151,3 +150,4 @@ ab_lpf_freq:
 	.long	17433
 	.long	17714
 	.long	18000
+	.long	0

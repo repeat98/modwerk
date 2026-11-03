@@ -37,6 +37,11 @@ export function engineAsset(bytes, path, document, previousVersion, addedIds = [
     // native image hashes, placements and verdicts below remain protected.
     delete value.moduleSourceTreeSha256
   }
+  if (path === 'src/engine/assets/platform-writes.json') {
+    // Each case hashes the whole partial OS, so a shared arena or boot write changes every case (PURGE SAMPLES, #707).
+    // The module's own detours (groups) and its runtime (coldfire-runtime-proofs.json) stay protected.
+    delete value.cases
+  }
   function visit(item) {
     if (!item || typeof item !== 'object') return
     if ((item.id === document.id || item.moduleId === document.id) && item.version === document.version) item.version = previousVersion

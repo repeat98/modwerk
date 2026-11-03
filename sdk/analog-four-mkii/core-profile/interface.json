@@ -1,0 +1,99 @@
+{
+  "schemaVersion": 1,
+  "machine": "analog-four-mkii",
+  "interface": "0.2",
+  "status": "Upstream elekloader core-a4 0.2 for Analog Four MKII OS 1.56 (merged in irpina/elekloader#180): core-ar2's hook bus and mod storage at the A4's addresses, plus core-ar2 0.4's parameter pages and the A4's own page-key views. No release tag yet; Modwerk's linker links it byte for byte as elekloader does.",
+  "events": [
+    {
+      "name": "ev_tick",
+      "when": "the UI compose check, approximately 20 Hz",
+      "handler": "void f(void *ctrl); set ctrl + 0x20 to 1 to request redraw; not an audio-rate clock"
+    },
+    {
+      "name": "ev_draw",
+      "when": "after the OS composes the 128 x 64 screen",
+      "handler": "void f(void *bmp, void *ctrl)"
+    },
+    {
+      "name": "ev_key",
+      "when": "a UI key event",
+      "handler": "int f(void *brain, void *event); nonzero consumes the event"
+    },
+    {
+      "name": "ev_enc",
+      "when": "a UI encoder event",
+      "handler": "int f(void *brain, void *event); nonzero consumes the event"
+    },
+    {
+      "name": "ev_settings",
+      "when": "building the GLOBAL key's settings menu; added rows come after SYSTEM",
+      "handler": "void f(void *menu)"
+    },
+    {
+      "name": "ev_render_in",
+      "when": "entry of the ColdFire's audio interrupt, the digital path (effects and inputs); the analog voices are not rendered here",
+      "handler": "void f(void)"
+    },
+    {
+      "name": "ev_render_out",
+      "when": "exit of the same audio interrupt",
+      "handler": "void f(void)"
+    },
+    {
+      "name": "ev_project",
+      "when": "after CREATE NEW or the project reset (how 0), and after every project load, at boot too (how 1); the stored project and its mod data are in place",
+      "handler": "void f(int how, unsigned dropped); dropped flags the global, track, pattern and project scopes that loaded as zeros; keep it short, and start no load or save from it"
+    }
+  ],
+  "tables": [
+    {
+      "name": "core_pages",
+      "entry": 4,
+      "purpose": "Pointers to struct core_page {page, name, ids[10]} (analog-four-mk2/pages.h): a mod's own parameter page (id 48 or more), or a stock page's entry answered again."
+    },
+    {
+      "name": "core_params",
+      "entry": 4,
+      "purpose": "Pointers to struct core_param {first, last, get, delta, text}: how a range of parameter ids reads, turns and prints; asked in order, the first that answers wins, then stock."
+    },
+    {
+      "name": "core_view_pages",
+      "entry": 4,
+      "purpose": "Pointers to struct core_view_page {type, key, page, shown}: a view for a page, appended to a page key's list for a track type after stock's views; at most 16 in a build."
+    }
+  ],
+  "exports": [
+    {
+      "name": "core_additem",
+      "prototype": "void core_additem(menu, row)",
+      "purpose": "Add a settings row from an ev_settings handler."
+    },
+    {
+      "name": "core_store_get",
+      "prototype": "unsigned core_store_get(unsigned field, void *item, int index)",
+      "purpose": "Read a mod storage field (STORE(sym) from analog-four-mk2/store.h); interrupts are masked while it reads."
+    },
+    {
+      "name": "core_store_set",
+      "prototype": "void core_store_set(unsigned field, void *item, int index, unsigned value)",
+      "purpose": "Write a mod storage field; a field of the current kit or its sounds is written through to the stored project. Interrupts are masked while it writes."
+    }
+  ],
+  "claims": [
+    "timer:DTIM0"
+  ],
+  "memory": {
+    "area": "0x47be0000-0x47c00000"
+  },
+  "storage": {
+    "scopes": {
+      "sound": "32 bits per sound, in its own spare bytes",
+      "kit": "128 bits per kit",
+      "global": "64 bits per global slot",
+      "track": "6 x T bits per pattern track (up to 3 bytes each)",
+      "pattern": "P bits per pattern",
+      "project": "what the project's tagged store has left"
+    },
+    "declare": "build.storage: [{ sym, scope, bits }] (1 to 32 bits; sym is a C name). elekloader places each field from the build's lockfile and carries the lockfile after the image."
+  }
+}

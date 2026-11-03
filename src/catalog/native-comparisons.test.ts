@@ -7,6 +7,7 @@ import { moduleNativeSourceSha256 } from '../../scripts/module-qualification.mjs
 import { AVAILABLE_MODULES, availableModules, isBetaModule } from './availability'
 import { MODULE_DOCUMENTS_BY_ID } from './documents'
 import { CATALOG_SOURCE } from './modules'
+import { moduleCardless } from './usb-only'
 
 
 describe('native comparison records', () => {
@@ -14,6 +15,7 @@ describe('native comparison records', () => {
     for (const module of availableModules(true)) {
       const pool = comparisonPool((isBetaModule(module.id) ? availableModules(true) : AVAILABLE_MODULES).map(module => module.id))
       if (NOT_COMPOSED.includes(module.id)) continue   // builds only on its own; its standalone parity is checked separately
+      if (moduleCardless(module.id)) continue   // no card form to compare; octatrack:module-packages --check rebuilds its USB package
       const document = MODULE_DOCUMENTS_BY_ID[module.id]
       const code = await moduleNativeSourceSha256(fileURLToPath(new URL('../../sdk/octabam/modules/' + module.id, import.meta.url)), document)
       const path = fileURLToPath(new URL('../../sdk/native-comparisons/' + module.id + '.json', import.meta.url))

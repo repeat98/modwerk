@@ -1,0 +1,13 @@
+[
+  {
+    "version": "0.2.0-experimental",
+    "date": "2026-10-21",
+    "changes": [
+      "First release of RINGMOD SC, an insert effect driven by another track's audio: pick the key with KEY (T1-T8) and DUCK or RING with MODE on SETUP.",
+      "DUCK turns the track down when the key track plays and holds through a kick's tail. DPTH sets how deep, KLPF filters the key, and ATK, HOLD and REL shape the ducking.",
+      "RING multiplies the track with the key, a ring modulator. Its knobs become SLEW (tremolo following the key), S&H (stepped) and RECT (AM-like); set S&H and RECT to 0 for a plain ring.",
+      "Works over USB only on the Modwerk beta base, and runs beside Sidechain Compressor. Card firmware cannot include it.",
+      "Known issue: not yet tested with parameter locks, LFOs, scenes or after a power cycle. DUCK buzzes at its very shortest ATK, HOLD and REL."
+    ]
+  }
+]

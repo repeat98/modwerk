@@ -775,6 +775,74 @@
           "sha256": "924730ca295591744386d1e5e001c4e485319aa488889ff61cbd5f8b2e69627c"
         }
       ]
+    },
+    {
+      "id": "ring-sc",
+      "key": "RING_SC",
+      "author": "npp1993",
+      "slot": 0,
+      "name": "KEY",
+      "labels": [
+        "OFF",
+        " T1 ",
+        " T2 ",
+        " T3 ",
+        " T4 ",
+        " T5 ",
+        " T6 ",
+        " T7 ",
+        " T8 "
+      ],
+      "renames": {},
+      "wideMaximum": 8,
+      "proofs": [
+        {
+          "namesAddress": 1074621238,
+          "bytes": 102,
+          "sha256": "44d9efb348f34bbe0a06ba407629c395ab871464052a004579f5e47fda987cac"
+        },
+        {
+          "namesAddress": 1074623350,
+          "bytes": 102,
+          "sha256": "44d9efb348f34bbe0a06ba407629c395ab871464052a004579f5e47fda987cac"
+        }
+      ]
+    },
+    {
+      "id": "ring-sc",
+      "key": "RING_SC",
+      "author": "npp1993",
+      "slot": 6,
+      "name": "MODE",
+      "labels": [
+        "DUCK",
+        "RING"
+      ],
+      "renames": {
+        "0": {
+          "3": "ATK",
+          "4": "HOLD",
+          "5": "REL"
+        },
+        "1": {
+          "3": "SLEW",
+          "4": "S&H",
+          "5": "RECT"
+        }
+      },
+      "wideMaximum": null,
+      "proofs": [
+        {
+          "namesAddress": 1074621238,
+          "bytes": 172,
+          "sha256": "28bcf1ac312918e6556e83176571539b61406a65657375711be38ec7a520f83a"
+        },
+        {
+          "namesAddress": 1074623350,
+          "bytes": 172,
+          "sha256": "64930e3c966c8621732e4c28422236697dc30739c96f102f7615ee9628e78393"
+        }
+      ]
     }
   ],
   "repitchPatches": [
@@ -1357,35 +1425,39 @@
       "caveLimit": 1074625596
     }
   ],
-  "sourceCommit": "905faab2e4459b8bf80ea8040282b3bb7a9988f3",
+  "sourceCommit": "b18d1776b0d982081c2c69ef5796154fff0efbf9",
   "moduleVersions": {
     "spectrum": "0.1.1-experimental",
     "modulation": "0.1.1-experimental",
     "character": "0.1.1-experimental",
     "miniverb": "0.2.3-experimental",
-    "tapeecho": "0.1.5-experimental",
+    "tapeecho": "0.1.6-experimental",
     "euclid": "0.1.4-experimental",
     "repitch": "0.2.0-experimental",
     "tapehead": "0.1.2-experimental",
     "airwindows-chorus": "0.1.2-experimental",
     "everb": "0.1.2-experimental",
     "bbd": "0.1.1-experimental",
-    "lofi2": "0.1.0-experimental",
-    "analog-bassdrum": "0.1.5-experimental",
+    "lofi2": "0.1.1-experimental",
+    "ring-sc": "0.2.0-experimental",
+    "analog-bassdrum": "0.1.6-experimental",
     "midi-scenes": "0.2.5-experimental",
     "usb-audio-out-tracks-main-cue": "0.2.0-experimental",
     "quantizer": "0.1.3-experimental",
     "synth": "0.1.2-experimental",
     "previewvol": "0.1.2-experimental",
     "cc-map": "0.1.2-experimental",
-    "sidechain-compressor": "0.1.2-experimental",
-    "vector": "0.2.4-experimental",
+    "sidechain-compressor": "0.2.0-experimental",
+    "vector": "0.2.5-experimental",
     "playmodes": "0.2.0-experimental",
     "mute-modes": "0.2.1-experimental",
     "recorder-loop-fix": "0.1.0-experimental",
-    "poly8": "0.3.0-experimental",
+    "poly8": "0.3.2-experimental",
     "output-matrix": "0.1.1-experimental",
-    "quantize-live-rec-toggle": "0.1.0-experimental",
-    "apply-scene": "0.1.0-experimental"
+    "quantize-live-rec-toggle": "0.1.1-experimental",
+    "apply-scene": "0.2.0-experimental",
+    "direct-jump-kyoti": "0.1.2-experimental",
+    "dejavu": "0.1.0-experimental",
+    "arp-key-locks": "0.1.0-experimental"
   }
 }

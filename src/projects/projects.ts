@@ -1,6 +1,6 @@
 export const PROJECT_TITLE = 'Other projects'
 export const PROJECT_PREVIEW_IMAGE = 'projects-social-preview-v1.jpg'
-export const PROJECT_PREVIEW_ALT = 'Other projects — Modwerk. Beyond the builder: independent firmware mods, studio tools, emulators and developer tools, with original signal, sequencer, front-panel and code illustrations.'
+export const PROJECT_PREVIEW_ALT = 'Other projects on Modwerk. Beyond the builder: independent firmware mods, studio tools, emulators and developer tools, with original signal, sequencer, front-panel and code illustrations.'
 export const PROJECT_DESCRIPTION = 'A curated selection of independent firmware mods, studio tools, emulators and developer tools for Elektron instruments, with their own workflows outside Modwerk.'
 export const PROJECT_TYPES = { mod: 'Firmware mods', tool: 'Studio tools', emulator: 'Emulators', development: 'Developer tools' } as const
 export type ProjectType = keyof typeof PROJECT_TYPES

@@ -61,7 +61,7 @@ export async function loadPreparedModules(directory, published, frontend) {
   // Theoretical capabilities here are planning inputs; device_review observes
   // the actual connected identity/capabilities before preparing any USB trial.
   for (const id of added) await catalogue.prepare({ name: 'Private preparation', moduleIds: [id], removedStockFx: [] },
-    { moduleIds: [], removedStockFx: [] }, load, { abi: 9, features: 7, maxSites: 128, maxCopies: 128 }, receipt.base.identity)
+    { moduleIds: [], removedStockFx: [] }, load, { abi: 10, features: 7, maxSites: 128, maxCopies: 128 }, receipt.base.identity)
   return { catalogue, load, info: { base: receipt.base.identity, moduleIds: added, admission: false },
     requireBase(moduleIds, base) {
       if (moduleIds.some(id => PORTS.has(id)) && base !== receipt.base.identity) throw new Error('This private prepared package needs the exact observed Modwerk base.')

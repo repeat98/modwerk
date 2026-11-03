@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "machine": "analog-rytm-mkii",
+  "moduleId": "env-reset-amp",
+  "moduleVersion": "1.0.0",
+  "firmware": "1.74",
+  "capturedAt": "2026-10-22T21:25:00Z",
+  "imageSha256": "48db5cf7368c517a0559028468cb05f48be699ff1efd338cc2ef821cf61fd809",
+  "mainSha256": "771e5951c7cd56e43e8848b6ea6479ead21eb17ff5a5475a62c1af88b40c0487",
+  "stockSha256": "cb0f99d620edde994fb860c0e79cc2464e427d06882828cfdfb00fc53700e123",
+  "build": "Modwerk's linker (kit 0.7.0 parity): core-ar2 0.3 release (6b97dfb3…3e58) + rytm2_mods v1.2 env-reset-amp-1.0-os1.74.elemod (881bcfed…40d1), --version ER74",
+  "emulator": {
+    "name": "rytm-emu",
+    "repository": "https://github.com/trigcondition/rytm-emu",
+    "revision": "c5732f0",
+    "binary": "dtboot (cargo build --release)",
+    "settings": "no card image, JIT on"
+  },
+  "conditions": "Headless cold boot; four held NO presses clear the missing-calibration notices; FUNC + MUTE opens the SOUND menu of track BD; four DOWN and YES open SOUND SETTINGS; two DOWN select ENV RESET (FILTER); then LEFT, LEFT, RIGHT, RIGHT, RIGHT, RIGHT. ER74 shows AMP, OFF, AMP, FILTER, AMP+FILT, AMP+FILT; stock 1.74 with the same input shows OFF, OFF, FILTER, FILTER, FILTER, FILTER. Every screen up to the first LEFT is identical on both.",
+  "captures": [
+    {
+      "path": "media/env-reset-filter.png",
+      "sha256": "b62e00f6f45cce035ef151a12d5110f46afa0f921c3a55b27803bf1117cea1f3",
+      "frame": "step13_DOWN.png",
+      "plan": "DTBOOT_STEPS=1 DTBOOT_PNG_DIR=out dtboot er74.syx --instr 12500M --every 1000M --press NO@4500M:80M --press NO@5300M:80M --press NO@6100M:80M --press NO@6900M:80M --press FUNC@7500M:300M --press MUTE@7600M:40M --press DOWN@8100M:40M --press DOWN@8300M:40M --press DOWN@8500M:40M --press DOWN@8700M:40M --press YES@9000M:40M --press DOWN@9400M:40M --press DOWN@9600M:40M --press LEFT@9900M:40M --press LEFT@10200M:40M --press RIGHT@10500M:40M --press RIGHT@10800M:40M --press RIGHT@11100M:40M --press RIGHT@11400M:40M"
+    },
+    {
+      "path": "media/env-reset-amp.png",
+      "sha256": "9fc0e29bb8cc628c9f1a8ebcc1f6318ee0882e614dc6218900b34ca771673aed",
+      "frame": "step14_LEFT.png",
+      "plan": "DTBOOT_STEPS=1 DTBOOT_PNG_DIR=out dtboot er74.syx --instr 12500M --every 1000M --press NO@4500M:80M --press NO@5300M:80M --press NO@6100M:80M --press NO@6900M:80M --press FUNC@7500M:300M --press MUTE@7600M:40M --press DOWN@8100M:40M --press DOWN@8300M:40M --press DOWN@8500M:40M --press DOWN@8700M:40M --press YES@9000M:40M --press DOWN@9400M:40M --press DOWN@9600M:40M --press LEFT@9900M:40M --press LEFT@10200M:40M --press RIGHT@10500M:40M --press RIGHT@10800M:40M --press RIGHT@11100M:40M --press RIGHT@11400M:40M"
+    },
+    {
+      "path": "media/env-reset-amp-filt.png",
+      "sha256": "bac7ff434b2013f2b9db0f7e61d3b98bfdecf266831e76262c6f0b03d9c4a760",
+      "frame": "step18_RIGHT.png",
+      "plan": "DTBOOT_STEPS=1 DTBOOT_PNG_DIR=out dtboot er74.syx --instr 12500M --every 1000M --press NO@4500M:80M --press NO@5300M:80M --press NO@6100M:80M --press NO@6900M:80M --press FUNC@7500M:300M --press MUTE@7600M:40M --press DOWN@8100M:40M --press DOWN@8300M:40M --press DOWN@8500M:40M --press DOWN@8700M:40M --press YES@9000M:40M --press DOWN@9400M:40M --press DOWN@9600M:40M --press LEFT@9900M:40M --press LEFT@10200M:40M --press RIGHT@10500M:40M --press RIGHT@10800M:40M --press RIGHT@11100M:40M --press RIGHT@11400M:40M"
+    }
+  ]
+}

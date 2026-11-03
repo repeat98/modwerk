@@ -1,0 +1,82 @@
+{
+  "scope": "Flex metadata target execution: 1536 complete captures, 39 paired refusals, null outputs, 40 session transitions and two inactive-record candidate refusals; synthetic bindings/lifetimes",
+  "sourceSha256": {
+    "flex_metadata.c": "7dd96a7d94ceb81bbd20fd49995d1c5e64c1077f97ad15b623a14c32607f732b",
+    "flex_metadata.h": "8a5e2da2cb447380883209942ee2654956cd50aae4e68abfe7f2d270d97eab6f",
+    "planner.c": "01c9c25efa363679a591969931dd376a3b694a949dd8b9f89eda4bf77a88cee4",
+    "planner_job.c": "767d82cc375677a115e9457af35e26fddd9de66a0dc80aa2af0fe3b5adaf0581",
+    "pcm_reader.c": "8762e389a39b7407a7d987dc6e3e36d7d75aa6c408b1d3232d8672a380226088",
+    "preview_guard.c": "da1299674cf2ae967c58231ee9c16891afa94e27254407b5d09df6b73cc4343e",
+    "preview_session.c": "778cdb37dc8b801fa7bb600f3ebe4f7102a2847a6c7db833746f84c44ed47605",
+    "marker_edit.c": "645b7bdcb68a755f903b6b592e029d96bac868b763845faa5cf4806fedc9e0ea",
+    "edit_candidate.c": "67a7c7ec5f060846d2483b2d06b4b4a70ef7eced0b04e0b489e9b4556ca32490",
+    "edit_candidate.h": "862a3e09932072e42021acabe6814e969bdb8ef07b109dec8ba82ff7973d3ed0",
+    "marker_edit.h": "cd8c16a7771bf5a6d251b20e3a02fd0887d68cf4f8e5900e0c6a7fdecc0d4f05",
+    "preview_session.h": "92b03f2bd17f7077afda56085a1d23231f756558d7e933604dbb9fdfcc20ff79",
+    "preview_guard.h": "abcaff39ef1b9a21cb238f0021344ffb5b812ea1740a354cbc1d1f2ace4ddf36",
+    "pcm_reader.h": "462f495a86f32730b79a56177f99929f685d82729e4646e7b391df475d929821",
+    "planner_job.h": "c4dd3faa8b3320194b54ab4d7bec6541d9e936f544b0e6236efa4fa5518d6547",
+    "planner.h": "4faab6f03e679d0b9389dbf016416afc87fb4d2d354952b22efb81a0381c5c1b",
+    "test_flex_metadata.c": "9534c7495f327ae07351c2668e0e69f36084a13d1991f545fb82a1d553d63d3d",
+    "metadata_native.py": "0600de98ab1dd3ca9959f09519c9d501fd6516c41b5a6a376205941c238a298f",
+    "stock_probe/job_probe.cpp": "eba70897030ec3b8804de5641d533955455761df75c19db278438006bc8b4e1a",
+    "stock_probe/CMakeLists.txt": "1b736fa8a5a347092fcdacdcf62be262d627f2fcd637ac08b965d5f8745f899e"
+  },
+  "compiler": "m68k-elf-gcc (GCC) 16.2.0",
+  "flags": [
+    "-std=c99",
+    "-mcpu=5475",
+    "-msoft-float",
+    "-O2",
+    "-ffreestanding",
+    "-fno-builtin",
+    "-fno-common",
+    "-fno-jump-tables",
+    "-fno-tree-loop-distribute-patterns",
+    "-fno-optimize-sibling-calls",
+    "-fno-asynchronous-unwind-tables",
+    "-fno-unwind-tables",
+    "-fno-ident",
+    "-fstack-usage",
+    "-Wall",
+    "-Wextra",
+    "-Werror",
+    "-pedantic",
+    "-fno-late-combine-instructions"
+  ],
+  "objectSha256": {
+    "planner.o": "862fbf786e4388477f7c3efa7601dad7bef8d9583c5b0a21db5351e3276594d4",
+    "planner_job.o": "8f9b560021a93770770eb294c6d569d94fd5b75596e5f1d332d61b4d75664485",
+    "pcm_reader.o": "79fa1b604de2d1e08edc4f41db4578f9ff68afc802dfadc3dd8a4d14a27427e3",
+    "preview_guard.o": "9c246ad2e54d39275f17c672f2dbed461df158345dbbb214153c180d6cb5b24b",
+    "preview_session.o": "174d5dc4bdd1b84b4c2ed98a5c232f32e08b5cb808f7ae5f3f8ceee06aaf55e8",
+    "marker_edit.o": "5de3021d1f2ef0bf9f9527922a437f5f0d79fc9f9c008ae71d2a427197e0f410",
+    "edit_candidate.o": "cd90d3a5b74a6fb8ce40e9f8ef77fdb469671b095dbd39074001072902464283",
+    "flex_metadata.o": "81dc6086e9ccab879bc215398e87d793a72bc5153abc9eeafddf0c3f2426ee9b",
+    "test_flex_metadata.o": "180c9dff091dfabc4fc985e79582ad6b2c829f22585de4d435bab6852bf43f44"
+  },
+  "runnerSha256": "fa8c5f47aab4d97bff73d8afaea9b69701c1a1df095062460f2c3bbeb9969103",
+  "codegenGuard": "passed",
+  "freestandingLink": true,
+  "metadataSize": [
+    "text\t   data\t    bss\t    dec\t    hex\tfilename",
+    "    940\t      0\t      0\t    940\t    3ac\t/evidence/metadata-native2/flex_metadata.o"
+  ],
+  "metadataStackUsage": [
+    "/source/sdk/drafts/beat-slicer/flex_metadata.c:11:12:valid\t28\tstatic",
+    "/source/sdk/drafts/beat-slicer/flex_metadata.c:25:24:bs_flex_snapshot_locked\t36\tdynamic,bounded",
+    "/source/sdk/drafts/beat-slicer/flex_metadata.c:43:24:bs_flex_markers_locked\t16\tdynamic,bounded"
+  ],
+  "exitCode": 0,
+  "stdout": [
+    "SOURCE_SHA256: eba70897030ec3b8804de5641d533955455761df75c19db278438006bc8b4e1a",
+    "PASS: cooperative preview target selftest and preserved registers"
+  ],
+  "stderrLines": 8,
+  "stderrSha256": "21495107133b98459d58d78262e4935ad828b0578af9c62da412effd72215f99",
+  "hardware": "not tested",
+  "audio": "not tested",
+  "timing": "not measured",
+  "nativeSourceAccess": "not implemented",
+  "sourceRevision": "b53daa6b06ff7ed5d43507e696419dfaaa86ed8e"
+}

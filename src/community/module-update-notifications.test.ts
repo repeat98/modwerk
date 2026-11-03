@@ -3,7 +3,7 @@ import { DatabaseSync } from 'node:sqlite'
 import { readFileSync, readdirSync } from 'node:fs'
 import { COMMUNITY_RULES_VERSION } from '../legal/policy'
 import { testDatabase, testServer } from './test-server'
-import { communityModule } from './modules'
+import { COMMUNITY_MODULES, communityModule } from './modules'
 import { parseModuleReleases, type ModuleRelease } from './module-release-contract'
 import type { BellItem } from './notification-contract'
 import { notificationLines } from './notification-text'
@@ -62,6 +62,23 @@ describe('module update subscriptions', () => {
     expect((await f.items(follower.session)).filter(item => item.kind === 'module_update')).toHaveLength(2)
     await f.call('/modules/miniverb/updates', 'PATCH', { enabled: false }, follower.session)
     expect(await f.publish(release('miniverb', '12.0.0'))).toEqual({ checked: 1, notified: 0 })
+  })
+
+  it('holds an author release for 48 hours, then notifies; a newer version replaces a held one', async () => {
+    const f = await fixture(), follower = await f.member('heldfan')
+    await f.publish(release('miniverb', '9.0.0'))
+    await f.call('/modules/miniverb/updates', 'PATCH', { enabled: true }, follower.session)
+    const authored = { ...release('miniverb', '10.0.0'), authorRelease: true }
+    expect(parseModuleReleases(manifest([authored]))[0].authorRelease).toBe(true)
+    expect(await f.publish(authored)).toEqual({ checked: 1, notified: 0, held: 1 })
+    // A later deploy no longer carries the flag; the stored hold still applies.
+    expect(await f.publish(release('miniverb', '10.0.0'))).toEqual({ checked: 1, notified: 0, held: 1 })
+    f.db.prepare("UPDATE module_releases SET notify_after=datetime('now','-1 minute') WHERE module_id='miniverb' AND version='10.0.0'").run()
+    expect(await f.publish(authored)).toEqual({ checked: 1, notified: 1 })
+    expect(await f.publish({ ...release('miniverb', '11.0.0'), authorRelease: true })).toEqual({ checked: 1, notified: 0, held: 1 })
+    // The owner replaces the held version: followers hear about the replacement only.
+    expect(await f.publish(release('miniverb', '12.0.0'))).toEqual({ checked: 1, notified: 1 })
+    expect((await f.items(follower.session)).filter(item => item.kind === 'module_update').map(item => item.module_version).sort()).toEqual(['10.0.0', '12.0.0'])
   })
 
   it('recovers missed current releases once and consolidates them without changing opt-outs', async () => {
@@ -222,6 +239,15 @@ describe('module update subscriptions', () => {
     expect(() => parseModuleReleases(manifest([{ ...release(), href: 'https://evil.example/' }]))).toThrow()
   })
 
+  it('accepts release links from every catalogue machine and rejects malformed machine routes', () => {
+    const releases = COMMUNITY_MODULES.map(({ id, name, version, href }) => ({ id, name, version, href }))
+    expect(releases.some(item => item.href === '#analog-rytm-mkii/module/filter-hz')).toBe(true)
+    expect(parseModuleReleases(manifest(releases))).toEqual(releases)
+    for (const href of ['https://evil.example/module/filter-hz', '#/module/filter-hz', '#analog-rytm-mkii/module/../filter-hz', '#analog-rytm-mkii/module/filter-hz?redirect=elsewhere']) {
+      expect(() => parseModuleReleases(manifest([{ ...release(), href }]))).toThrow('Invalid module release.')
+    }
+  })
+
   it('uses a Workers-supported fetch mode and rejects redirected inventories before recording releases', async () => {
     const { db, adapter } = testDatabase(); databases.push(db)
     const env = { APP_URL: 'https://example.test/' }
@@ -314,7 +340,12 @@ describe('module update subscriptions', () => {
     f.db.prepare("UPDATE notifications SET created_at=? WHERE module_version='11.0.0'").run(stamp(25 * 60))
     expect(await f.digests(31 * 60)).toEqual({ sent: 0 })
     expect(f.db.prepare('SELECT last_module_digest_at FROM notification_preferences WHERE user_id=?').get(owner.id)!.last_module_digest_at).toBe(last)
-    expect(await f.digests(48 * 60 + 16)).toEqual({ sent: 1 })
+    // A day after the last digest is not enough: the release collects for its own day first.
+    expect(await f.digests(48 * 60 + 16)).toEqual({ sent: 0 })
+    await f.publish(release('digitakt-digihealth', '11.0.0'))
+    f.db.prepare("UPDATE notifications SET created_at=? WHERE module_id='digitakt-digihealth' AND module_version='11.0.0'").run(stamp(40 * 60))
+    expect(await f.digests(49 * 60 + 15)).toEqual({ sent: 1 })
+    expect(sent[0].subject).toBe('Your daily Modwerk module updates (2)')
     expect(sent[0].text).toContain('Mini Verb 11.0.0')
     expect(sent[0].text).not.toContain('Mini Verb 10.0.0')
   })
@@ -333,6 +364,25 @@ describe('module update subscriptions', () => {
     expect(f.db.prepare('SELECT last_module_digest_at FROM notification_preferences WHERE user_id=?').get(owner.id)!.last_module_digest_at).toBeNull()
     expect(await f.digests()).toEqual({ sent: 1 })
     expect(sent[0].text).toContain('Mini Verb 10.0.0')
+  })
+
+  it('never mails a like on its own and carries likes in the daily release digest', async () => {
+    const f = await fixture(), owner = await f.member('likedfan'), fan = await f.member('likefan')
+    await f.call('/modules/miniverb/updates', 'PATCH', { enabled: true }, owner.session)
+    const { id } = await (await f.call('/forum/threads', 'POST', { title: 'Liked post', body: 'Like this.', category: 'general' }, owner.session)).json()
+    const postId = (await (await f.call('/forum/threads/' + id)).json()).posts[0].id
+    await f.call('/forum/posts/' + postId + '/react', 'POST', { liked: true }, fan.session)
+    expect(await f.digests(15)).toEqual({ sent: 0 })
+    // Other activity mails on its interval without the like.
+    await f.call('/forum/threads/' + id + '/replies', 'POST', { body: 'A timely reply.' }, fan.session)
+    expect(await f.digests(15)).toEqual({ sent: 1 })
+    expect(sent[0].text).toContain('A timely reply.')
+    expect(sent[0].text).not.toContain('@likefan liked')
+    await f.publish(release())
+    expect(await f.digests()).toEqual({ sent: 1 })
+    expect(sent[0].text).toContain('Mini Verb 10.0.0')
+    expect(sent[0].text).toContain('@likefan liked')
+    expect(f.db.prepare('SELECT COUNT(*) AS count FROM notifications WHERE emailed=0').get()!.count).toBe(0)
   })
 
   it('waits for a fresh latest version to settle and reading it suppresses obsolete release mail', async () => {

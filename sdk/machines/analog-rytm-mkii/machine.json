@@ -6,16 +6,16 @@
   "variants": [
     "MKII"
   ],
-  "status": "research",
-  "summary": "OS 1.73 and 1.74 formats rebuilt byte-identical; modified 1.73 and a from-source 1.74 OS boot on hardware; stock recovers both over MIDI DIN; an elemod core runs on 1.73 hardware.",
+  "status": "preview",
+  "summary": "OS 1.74 rebuilt byte-identical; modified OSes boot on hardware; stock recovers over MIDI DIN; core-ar2 0.3 with mod storage runs on units. Filter Hz is the first library module.",
   "firmware": {
     "releases": [
       {
-        "version": "1.73",
+        "version": "1.74",
         "files": [
           {
-            "name": "Analog-Rytm_MKII_OS1.73.syx",
-            "sha256": "8ad671087ec30433d5407c7380d2396e0915ab931c5d3dd18a78bf284d3d1e52"
+            "name": "Analog-Rytm_MKII_OS1.74.syx",
+            "sha256": "cb0f99d620edde994fb860c0e79cc2464e427d06882828cfdfb00fc53700e123"
           }
         ]
       }
@@ -28,7 +28,7 @@
     "rebuild": "done",
     "boot": "done",
     "core": "done",
-    "mods": "open"
+    "mods": "done"
   },
   "research": [
     {
@@ -78,10 +78,10 @@
     "catalog": null,
     "guide": "sdk/machines/analog-rytm-mkii/README.md",
     "core": {
-      "version": "0.1",
+      "version": "0.7",
       "path": "sdk/analog-rytm-mkii/core-profile"
     },
-    "toolchain": "m68k-linux-gnu (or m68k-elf) GCC and binutils for ColdFire, and elekloader's builder and core-ar2 0.1; firmware builds start from the owner's exact OS 1.73 .syx.",
+    "toolchain": "m68k-linux-gnu (or m68k-elf) GCC and binutils for ColdFire, and elekloader's builder: core-ar2 0.7 from the owner's exact OS 1.74 .syx.",
     "budgets": [
       {
         "name": "Shared mod memory",
@@ -92,8 +92,8 @@
       {
         "name": "Core image",
         "unit": "bytes",
-        "value": 476,
-        "note": "Core 0.1 build: 460 bytes .run plus 16 bytes .bss in the shared area, and an 88-byte .boot copier; the link check measures each selected module set."
+        "value": 12060,
+        "note": "Core 0.7 build (core-ar2-v0.7 pre-release): 10,692 bytes .run plus 1,368 bytes .bss in the shared area, and a 94-byte .boot copier (core 0.3: 7,540, 36 and 88); the link check measures each selected module set."
       }
     ]
   },

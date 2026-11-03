@@ -1,0 +1,5 @@
+Docs: the Zoom MultiStomp proposal records how Zoom Effect Manager installs effects (a reflash of the pedal's whole effect file system in update mode, with no per-effect transfer in Effect Manager and no way to load into RAM) and the owner's plan for a browser install from the user's own Zoom updater, opened locally as the Octatrack OS file is. The offline checks behind it and the steps before any browser write are listed; Effect Manager stays the install path until then. No site behaviour changes.
+
+A second proposal, `docs/ZDL_MODULE_CONTRACT.md`, sets out the module contract for Zoom effects for owner review: the `zdl` platform fields, one module per pedal family with per-pedal status, effect-ID ranges, combination checks, and the two questions to settle first (stock code in the built effects, and whether Modwerk builds the file or pins the author's release).
+
+The proposal also records successful per-effect USB replacement and adding/removing a new effect on the MS-70CDR 2.10; the summary distinguishes this from Effect Manager’s full reflash.

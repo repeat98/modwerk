@@ -2,7 +2,7 @@ import { AVAILABLE_MODULES, isModulePaused } from '../src/catalog/availability.t
 import { MODULE_DOCUMENTS_BY_ID } from '../src/catalog/documents.ts'
 import { getModuleSource, type FirmwareModule } from '../src/catalog/modules.ts'
 import { modulePath } from '../src/catalog/module-links.ts'
-import { DIGI_MODS, digiModuleDocument, type DigiMod } from '../src/devices/digi-mods.ts'
+import { DIGI_DEVICES, DIGI_MODS, digiModuleDocument, type DigiMod } from '../src/devices/digi-mods.ts'
 import { DEVICES_BY_ID } from '../src/devices/registry.ts'
 import { RELEASE_STEPS } from '../src/community/developer-guidance.ts'
 import { INDEPENDENCE_NOTICE } from '../src/firmware-notices.ts'
@@ -14,7 +14,7 @@ export function homeContent(appUrl: URL) {
   return '<h1>Mods for Elektron instruments</h1>'
     + paragraph('Explore custom firmware modules for the Elektron Octatrack, Digitakt and Digitone. Choose modules, check compatibility and build firmware in your browser. Your original firmware stays on your device.')
     + '<h2>Octatrack modules</h2>' + modules(AVAILABLE_MODULES.map(module => ({ path: modulePath(module.id), name: module.name, description: module.description })))
-    + (['digitakt', 'digitone'] as const).map(device => `<h2>${escapeHtml(DEVICES_BY_ID[device].name)} modules</h2>` + modules(DIGI_MODS.filter(mod => mod.device === device).map(mod => ({ path: `${device}/module/${mod.id}/`, name: mod.title, description: mod.summary })))).join('')
+    + DIGI_DEVICES.filter(device => DIGI_MODS.some(mod => mod.device === device)).map(device => `<h2>${escapeHtml(DEVICES_BY_ID[device].name)} modules</h2>` + modules(DIGI_MODS.filter(mod => mod.device === device).map(mod => ({ path: `${device}/module/${mod.id}/`, name: mod.title, description: mod.summary })))).join('')
     + '<h2>Build your own module</h2>' + paragraph('Use the instrument SDK, document your module and submit it for review in the Modwerk library.')
     + paragraph(INDEPENDENCE_NOTICE) + link(new URL('submit/', appUrl).href, 'Start developing')
     + '<h2>Explore the community</h2>' + link(new URL('projects/', appUrl).href, PROJECT_TITLE)

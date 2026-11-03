@@ -45,7 +45,7 @@ Each verifier compares Modwerk's browser builder with native octabam on your own
 | `scripts/verify-tapehead-native.mjs <OS update> [all\|requested\|utilities]` | TapeHead selections |
 | `scripts/verify-sidechain-native.mjs <OS update> [--shard=i/n]` | every selection containing Sidechain Compressor |
 
-Results and their coverage are recorded in [VERIFICATION.md](../docs/VERIFICATION.md). A matching image is proof of composition, not of hardware safety.
+Results and their coverage are recorded in each module's `TESTING.md`; those up to 25 October 2026 also in [VERIFICATION.md](../docs/VERIFICATION.md). A matching image is proof of composition, not of hardware safety.
 
 ## Versions and approval
 

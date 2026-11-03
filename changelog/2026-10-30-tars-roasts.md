@@ -1,0 +1,1 @@
+Development: TARS, the Discord bot, may now roast Jannik at any time, and a regular in casual banter, with a sharper follow-up when they bite back. It roasts what someone did, never who they are, and leaves bug reports, frustrated or first-time posters and anything about lost work alone.

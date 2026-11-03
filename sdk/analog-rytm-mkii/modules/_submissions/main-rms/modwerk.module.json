@@ -1,0 +1,165 @@
+{
+  "schemaVersion": 3,
+  "id": "main-rms",
+  "name": "Main RMS",
+  "version": "1.0.0",
+  "machine": "analog-rytm-mkii",
+  "category": "system",
+  "exclusive": false,
+  "author": {
+    "github": "Iced-Cream",
+    "credits": [
+      "MrScruff — the original mod, 0009-main-rms in rytm-mods, its design and code; published in rytm-mods-src with permission.",
+      "Iced-Cream — the elemod port (rytm2_mods) and this Modwerk module.",
+      "irpina — Elekloader and core-ar2, the core it links with."
+    ]
+  },
+  "maintainers": [
+    "Iced-Cream"
+  ],
+  "source": {
+    "repository": "https://github.com/Iced-Cream/rytm2_mods",
+    "revision": "afd461d4a8ef4306bb2a57d4c61ad35c362b3940",
+    "path": "main-rms"
+  },
+  "presentation": {
+    "label": "MAIN RMS",
+    "family": "Display",
+    "summary": "On the compressor pages, the VOL label draws inverted while the main output is louder than -18 dBFS RMS, for gain staging.",
+    "overview": "Main RMS lights the VOL knob's label on the compressor pages while the main output is louder than -18 dBFS RMS. The level is the louder of MAIN L and R, each a mean square averaged over about 300 ms; the label turns on above the threshold and off again 1 dB below it. MAIN is read each audio block from the pair USB and the sampler record, after the compressor. It is an elemod port of MrScruff's rytm-mods 0009-main-rms, with his code unchanged.",
+    "highlights": [
+      "VOL lights while the main output is over -18 dBFS RMS.",
+      "Louder of left and right, about 300 ms average, 1 dB hysteresis.",
+      "Display only: the sound is unchanged.",
+      "MrScruff's rytm-mods code, unchanged, linked by the elemod core."
+    ],
+    "usage": [
+      "Use a build containing Main RMS. Select the FX track and open its AMP page, the compressor.",
+      "Play a loud pattern: the VOL label draws inverted while the main output is over -18 dBFS RMS.",
+      "Turn the pattern down or mute tracks: the label clears once the level falls 1 dB below the threshold."
+    ]
+  },
+  "access": {
+    "location": "FX track, AMP page (the compressor): the VOL knob's label.",
+    "steps": [
+      "Select the FX track and open its AMP page.",
+      "Play: the VOL label inverts while the output is loud."
+    ],
+    "screenshots": [
+      "media/compressor-page.png"
+    ]
+  },
+  "controls": [
+    {
+      "name": "Knob VOL (compressor)",
+      "default": null,
+      "doc": "Unchanged control. Its label draws inverted while the main output is over -18 dBFS RMS.",
+      "labels": null
+    }
+  ],
+  "compatibility": {
+    "releases": [
+      "1.74"
+    ],
+    "requires": [],
+    "conflicts": [],
+    "limitations": [
+      "Built for OS 1.74 only, with core-ar2 0.3.",
+      "The threshold is fixed at -18 dBFS RMS, the default build's value.",
+      "The master volume knob does not set the measured pair, though the circuit can move it by a few dB over the knob's travel.",
+      "A label stock has already highlighted reads normal while over, because the inversion is an XOR."
+    ]
+  },
+  "platform": {
+    "kind": "elemod",
+    "core": "0.3",
+    "build": "build.json",
+    "events": [],
+    "claims": [
+      "ui:compressor VOL label drawing",
+      "audio:MAIN level read each block"
+    ]
+  },
+  "resources": {
+    "memoryBytes": 264,
+    "fastBytes": 0,
+    "load": {
+      "display": "Small: one 32-frame scan of MAIN L and R per audio block",
+      "method": "static",
+      "conditions": "Static: the detour in the audio block (about 1,500 blocks a second) reads 32 frames of MAIN L and R and updates two running mean squares; the two draw wrappers run only when the compressor view draws VOL. Not a measurement."
+    }
+  },
+  "evidence": {
+    "tier": "author-hardware",
+    "moduleVersion": "1.0.0",
+    "sourceSha256": "f547785978330c67326aa41a077800549caad3fa0407b05f8b82fc57d27b48c2",
+    "reports": [
+      "evidence/hardware-testing.json",
+      "evidence/source-parity.json"
+    ],
+    "hardware": {
+      "model": "Analog Rytm MKII",
+      "release": "1.74",
+      "testedOn": "2026-10-25",
+      "tester": "Iced-Cream",
+      "durationMinutes": null,
+      "summary": "Iced-Cream reports that on an Analog Rytm MKII with OS 1.74, main-rms 1.0 passed its test (FX track AMP page: playing a loud pattern inverts the VOL label, which clears when the output gets quieter) in R8T2 (2026-10-18), and its own test again with core-ar2 0.3 and all eleven rytm2_mods ports in C3A4 (2026-10-20). On SXH4 (released core-ar2 0.3 with the other five Modwerk 1.74 submissions, 2026-10-24/25) VOL stayed plain while the main output stayed below the threshold, and with the main output at -3.4 dBFS RMS VOL inverted while playing and cleared about 4 s after STOP. Alone on MRH4 (released core-ar2 0.3 and this module only, 2026-10-25) VOL inverted with the main output above the threshold and cleared within 4.4 s of stop.",
+      "limitations": [
+        "Duration was not recorded.",
+        "Tested builds: C3A4, .syx 04d987ced36850eef5eb5cd1215d411edf621a5af94f980525ab561c9108f951; R8T2, .syx 94c8b8c4f3f537132b7ee689ad1221591186f14dc605a420cdefe3df804e3c39. Firmware was not read back from the device.",
+        "SXH4 (the released core-ar2 0.3, 2026-10-24/25, .syx e4d01a6aec250bd2af7743c9f8b0e9c560d805b52564932dddc41d872e1c5000) also carried a remote-control test layer that shares no site with core or the modules. MRH4 (alone with the released core-ar2 0.3, 2026-10-25, .syx f3e304ea7454cd1b53801b19cb92b9e71add055bd26e430219328dc56b05606a) carried the same test layer."
+      ]
+    },
+    "verifiedBy": null
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "Hardware: main-rms 1.0's test passes on an Analog Rytm MKII, OS 1.74 (R8T2 with core-ar2 0.1, 2026-10-18; C3A4 with core-ar2 0.3, 2026-10-20). Modwerk's source build gives a main OS byte-identical to elekloader's build of the rytm2_mods v1.2 release. In rytm-emu the compressor page draws as on stock while quiet; the emulator's main output never gets loud enough to light the label.",
+    "documentation": {
+      "tutorial": {
+        "title": "Quick tutorial",
+        "steps": [
+          "Use a build containing Main RMS. Select the FX track and open its AMP page, the compressor.",
+          "Play a loud pattern: the VOL label draws inverted while the main output is over -18 dBFS RMS.",
+          "Turn the pattern down or mute tracks: the label clears once the level falls 1 dB below the threshold."
+        ]
+      },
+      "screenshots": [
+        "media/compressor-page.png"
+      ],
+      "captureRecord": "media/capture.json"
+    }
+  },
+  "license": {
+    "spdx": "GPL-2.0-only",
+    "file": "LICENSE",
+    "declaration": "MrScruff's rytm-mods code and Iced-Cream's elemod port, under GPL-2.0-only as rytm-mods-src. include/ar2-1.74.inc names firmware routines by address only; the patch preconditions are addresses, lengths and SHA-256s."
+  },
+  "media": [
+    {
+      "path": "media/thumbnail.svg",
+      "kind": "thumbnail",
+      "caption": "Main RMS",
+      "alt": "Original illustration of a level trace under a dashed -18 dBFS line",
+      "credit": "Iced-Cream",
+      "license": "GPL-2.0-only",
+      "source": "Original vector illustration; not a device screenshot."
+    },
+    {
+      "path": "media/compressor-page.png",
+      "kind": "screenshot",
+      "caption": "FX track, AMP: the compressor page. VOL is knob H, bottom right; its label inverts while the main output is over -18 dBFS RMS. Shown quiet, as on stock.",
+      "alt": "COMPRESSOR page with THR, ATK, REL and MUP above RAT, SEQ, MIX and VOL, the VOL label drawn normally.",
+      "credit": "Iced-Cream documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "1.0.0",
+        "imageSha256": "f4d7e60de44e77658a05747886d33945dba25d4ea0cfcdb028244e0ecaabf6c0",
+        "setup": "Headless rytm-emu c5732f0 (dtboot) running MR74, the released core-ar2 0.3 and main-rms 1.0, built from the owner's stock OS 1.74; firmware-rendered 128x64 screen at 3x. UI documentation only."
+      }
+    }
+  ]
+}

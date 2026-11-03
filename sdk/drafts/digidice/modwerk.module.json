@@ -1,0 +1,99 @@
+{
+  "schemaVersion": 3,
+  "id": "digidice",
+  "name": "digidice",
+  "version": "0.1.0-experimental",
+  "machine": "digitakt",
+  "category": "machines",
+  "exclusive": false,
+  "author": { "github": "todd-neale", "credits": ["todd-neale — digidice design and code"] },
+  "maintainers": ["todd-neale"],
+  "presentation": {
+    "label": "DIGIDICE",
+    "family": "Sequencing",
+    "summary": "A meloDICEr-style random melody generator that rolls melodies into the active track as ordinary trigs.",
+    "overview": "A double press on TRIG opens a page that rolls a random melody into the active audio or MIDI track, inspired by Vermona's meloDICEr. Four knobs shape the rhythm (density, note value, variation, legato) and four the notes (root, scale, range, velocity spread). YES rolls everything, LEFT only the rhythm and RIGHT only the notes; turning a knob reshapes the current melody instead of replacing it. The result is written into the pattern as plain trigs with NOTE, VEL and LEN, so it plays with the Digitakt's own tempo, swing, track length and speed, and can be edited, saved and copied like any pattern.",
+    "highlights": [
+      "Rolls a melody into the active audio or MIDI track as ordinary, editable trigs.",
+      "Separate rhythm and note rolls: keep a groove and re-roll its notes, or the other way round.",
+      "Raising DENSITY only adds notes; the notes already there keep their place and pitch.",
+      "Every note stays in the chosen scale: chromatic, major, minor, dorian, mixolydian, harmonic minor and two pentatonics."
+    ],
+    "usage": [
+      "Roll a bassline on an audio track, then re-roll only the notes until it fits the drums.",
+      "Generate a melody on a MIDI track to drive an external synth, then edit single trigs by hand."
+    ]
+  },
+  "access": {
+    "location": "A double press on TRIG, from any page, opens the digidice page for the active track.",
+    "steps": [
+      "Select the track with TRK and a trig key (audio tracks 1–8 or MIDI tracks 9–16).",
+      "Press TRIG twice quickly. The first press shows the TRIG page as usual; the second opens digidice.",
+      "Press YES to roll a melody into the track, and PLAY to hear it.",
+      "Turn the knobs to reshape it; LEFT rolls the rhythm, RIGHT the notes.",
+      "Press NO, or TRIG twice again, to close the page."
+    ],
+    "screenshots": ["media/trig-page.png", "media/page-open.png", "media/page-knobs.png"]
+  },
+  "controls": [
+    { "name": "DENSITY", "default": 80, "doc": "Knob A, 0–127: the chance each rhythm slot plays; 0 is silence, 127 every slot", "labels": null },
+    { "name": "NOTE VALUE", "default": 2, "doc": "Knob B: the gap between notes in steps (1, 2, 3, 4, 6 or 8)", "labels": ["1", "2", "3", "4", "6", "8"] },
+    { "name": "VARIATION", "default": 0, "doc": "Knob C, 0–127: the chance a gap halves or doubles", "labels": null },
+    { "name": "LEGATO", "default": 64, "doc": "Knob D, 0–127: note length as a share of the gap; 127 ties to the next note", "labels": null },
+    { "name": "ROOT", "default": 0, "doc": "Knob E: the root note of the key, C to B", "labels": ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"] },
+    { "name": "SCALE", "default": 1, "doc": "Knob F: the notes allowed", "labels": ["CHROM", "MAJOR", "MINOR", "DORIAN", "MIXO", "HARMIN", "MAJPEN", "MINPEN"] },
+    { "name": "RANGE", "default": 7, "doc": "Knob G, 0–24: how many scale notes above the root", "labels": null },
+    { "name": "VEL", "default": 0, "doc": "Knob H, 0–127: how far velocities spread around the VEL of the track", "labels": null }
+  ],
+  "compatibility": {
+    "releases": ["1.54"],
+    "requires": [],
+    "conflicts": [],
+    "limitations": [
+      "OS 1.54 only.",
+      "Rolling replaces every trig on the active track up to its length (at most 64 steps), and their parameter locks. There is no undo: save the pattern first if you want to keep it.",
+      "Settings and seeds are not saved: they return to their defaults when the unit restarts.",
+      "Notes start from C5 (no transpose on an audio track) plus the root; there is no octave control yet.",
+      "While the page is open, every key but PLAY, STOP and FUNC belongs to it, so tracks cannot be changed from the page.",
+      "With core 2.1's 128 KiB of mod memory, digidice fits beside any two of digihealth, DIGISLICER and NEIGHBOR, but not all three."
+    ]
+  },
+  "platform": { "kind": "elemod", "core": "2.1", "build": "build.json", "events": ["ev_draw", "ev_enc", "ev_key", "ev_tick"], "claims": ["ui:double TRIG"] },
+  "resources": {
+    "memoryBytes": 6611,
+    "fastBytes": 0,
+    "load": {
+      "display": "No audio-render work: UI task only",
+      "method": "static",
+      "conditions": "digidice subscribes to no render event and runs only in the UI task: drawing while its page is open, and the step setters for at most 64 steps after a roll or a knob turn. CPU time in the UI task has not been measured."
+    }
+  },
+  "evidence": {
+    "tier": "emulator",
+    "moduleVersion": "0.1.0-experimental",
+    "sourceSha256": "32466b301a6cd6c17e865642a214716ce7e58fda18504f74f3539c67cdc90a8c",
+    "reports": ["evidence/emulator.md"],
+    "hardware": null,
+    "verifiedBy": null
+  },
+  "tests": { "report": "TESTING.md", "summary": "Engine host tests pass (4,975,802 checks). In the digiemu emulator on OS 1.54: the page opens, rolls and closes; writes land in the pattern; the recorded audio plays the rolled notes at the right steps and pitches; it runs beside digihealth and DIGISLICER. Not yet run on a unit." },
+  "license": { "spdx": "MIT", "file": "LICENSE", "declaration": "Original work by todd-neale and digidice contributors, MIT. No Elektron firmware and no Vermona material is included; meloDICEr is Vermona's product name, used only to describe the inspiration." },
+  "media": [
+    { "path": "media/thumbnail.svg", "kind": "thumbnail", "caption": "digidice thumbnail", "alt": "A die beside a row of note bars at different heights", "credit": "todd-neale", "license": "MIT", "source": "Original artwork for digidice." },
+    {
+      "path": "media/trig-page.png", "kind": "screenshot", "caption": "The TRIG page after the first press of TRIG; a second press opens digidice", "alt": "The Digitakt's TRIG page with NOTE, VEL, LEN and PROB", "credit": "todd-neale", "license": "MIT",
+      "source": "Framebuffer capture from the digiemu emulator (irpina/digiemu v0.4.1) running OS 1.54 with core 2.1 and digidice.",
+      "capture": { "release": "1.54", "moduleVersion": "0.1.0-experimental", "imageSha256": "240564a12114eec65788403f8722fea3f5a48e4807eaf415aacaf45b07d04789", "setup": "digiemu v0.4.1, OS 1.54 + core 2.1 + digidice, factory project, a 440 Hz test sample on track 1; captured 80 ms after the first press of TRIG, 4x integer scale." }
+    },
+    {
+      "path": "media/page-open.png", "kind": "screenshot", "caption": "The digidice page, opened on track 1: the piano roll shows the track's existing trigs", "alt": "The digidice page: a title bar, a piano roll of the track and the eight controls with their values", "credit": "todd-neale", "license": "MIT",
+      "source": "Framebuffer capture from the digiemu emulator (irpina/digiemu v0.4.1) running OS 1.54 with core 2.1 and digidice.",
+      "capture": { "release": "1.54", "moduleVersion": "0.1.0-experimental", "imageSha256": "400b560e7a231e4790bc2a1e624f37f990ab9a67bfedbd0f7b43b5418e986aac", "setup": "digiemu v0.4.1, OS 1.54 + core 2.1 + digidice, factory project; captured right after a double press on TRIG, before any roll, 4x integer scale." }
+    },
+    {
+      "path": "media/page-knobs.png", "kind": "screenshot", "caption": "After a roll and knob changes: DENSITY 110, NOTE VALUE 3, DORIAN, RANGE 24", "alt": "The digidice page with a rolled melody of three notes and changed control values", "credit": "todd-neale", "license": "MIT",
+      "source": "Framebuffer capture from the digiemu emulator (irpina/digiemu v0.4.1) running OS 1.54 with core 2.1 and digidice.",
+      "capture": { "release": "1.54", "moduleVersion": "0.1.0-experimental", "imageSha256": "629c21fb724a48a7c09889dcc987ac65a44b340a6066882c90dcd6e77a35b88d", "setup": "digiemu v0.4.1, OS 1.54 + core 2.1 + digidice, factory project; YES, then knobs A, B, F and G turned, captured 0.9 s after the last turn, 4x integer scale." }
+    }
+  ]
+}

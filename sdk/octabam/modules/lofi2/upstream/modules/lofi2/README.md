@@ -12,7 +12,7 @@ How it differs from CHARACTER, which replaces stock LO-FI and also crushes and r
 |---|---|---|---|---|
 | 1 | 0 | FREQ | 0-127 | modulator frequency, exponential over six octaves from RANGE's base; read by whichever MODE is selected; keeps an LFO's fraction between steps and glides, so sweeps are smooth |
 | 1 | 1 | MIX | 0-127 | modulator depth: crossfades the ring or shift output against the dry |
-| 1 | 2 | FDBK / GAIN | 0-127 | one knob, read per MODE, and the panel renames it. SHIFT: FDBK, the feedback ladder (f, f+d, f+2d), capped at 0.45. RING: GAIN on the ring product, 2^(k/64): 0 dB at 0 (today's level), +6 dB at 64, +11.9 dB at 127 |
+| 1 | 2 | FDBK / GAIN | 0-127 | one knob, read per MODE, and the panel renames it. SHIFT: FDBK, the feedback ladder (f, f+d, f+2d), capped at 0.40 (0.45 until #825, where the top of FDBK self-oscillated). RING: GAIN on the ring product, 2^(k/64): 0 dB at 0 (today's level), +6 dB at 64, +11.9 dB at 127 |
 | 1 | 3 | SRR | 0-127 | sample-rate reduction, a fractional hold at stock LO-FI's measured rates: no reduction through 7, 8,018 Hz at 64, 3,564 Hz at 127; the rate glides, so turns and LFOs sweep smoothly |
 | 1 | 4 | BRR | 0-127 | bit-depth reduction, a continuous round-to-nearest quantiser on stock LO-FI's curve: the step grows from 1 LSB through 3 to 2^13.5 at 64 and 2^20.8 at 127, exactly stock's; it glides, so turns and LFOs sweep smoothly |
 | 1 | 5 | LPF | 0-127 | high-shelf cut, -12 dB above a corner swept exponentially from 100 Hz at 0 to 16 kHz at 126 (about 17 steps an octave); 127 takes it out of circuit, bit for bit; it glides, so turns and LFOs sweep smoothly |

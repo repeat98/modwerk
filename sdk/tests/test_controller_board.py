@@ -21,10 +21,19 @@ POLICY = ADAPTER / 'controller-policy'
 RUNTIME = ADAPTER / 'resident-runtime'
 ELEK = ROOT / 'sdk/machines/octatrack/elekloader'
 sys.path.append(str(ADAPTER))
-import resident_boot  # noqa: E402
 import resident_driver  # noqa: E402
 import resident_placement  # noqa: E402
 from host_flags import SANITIZE  # noqa: E402
+
+
+def _load(name, path):
+    import importlib.util
+    spec = importlib.util.spec_from_file_location(name, path)
+    module = importlib.util.module_from_spec(spec); spec.loader.exec_module(module)
+    return module
+
+
+abi9 = _load('board_abi9', ROOT / 'sdk/runtime/loader/abi9.py')
 
 
 def package(module, image):
@@ -61,36 +70,55 @@ PACKAGES = {  # name: (module id, feature, image)
 }
 UNTRUSTED = ('forged', 'plain', 'plain2', 'plain2b')
 CORES = {1: 3, 2: 1, 4: 3}
-AB_WORDS = 3776
+AB_WORDS = 3776                # Analog BD's region on each core (dsp-sites.json): x:$2840, $ec0 words
+AB_SITE, AB_EXITS = 5, (0x426, 0x221)
+BRA_LONG = 0x0d10c0
 
 
-def ab_words(core):
-    """Synthetic engine words for one core (tables and a zero stretch), not Analog BD's."""
-    return [0 if 1000 <= i < 1600 else (i * 2654435761 >> 7 ^ core * 0x5a5a5a) & 0xffffff for i in range(AB_WORDS)]
+def ab_words(seed=0):
+    """Synthetic initial words for Analog BD's region (tables and a zero stretch), not Analog BD's."""
+    return [0 if 1000 <= i < 1600 else (i * 2654435761 >> 7 ^ seed * 0x5a5a5a) & 0xffffff for i in range(AB_WORDS)]
 
 
-def ab_records(core):
-    """The x record as resident_boot.py packs it into the base."""
-    record = resident_boot.records_bytes([dict(space='x', address=0x2840, words=ab_words(core))], [('x', 0x2840, AB_WORDS)])
-    return resident_boot.pack_zeros(record)
+def ab_engine(seed=0, n=998):
+    """A made-up Analog BD engine (words at base 0, relocations, exit), shaped as its package's: a long branch near its
+    end whose displacement (the exit) the base writes, address relocations and one to a fixed P address."""
+    words, relocations, state = [], [], (seed * 0x9e3779b1 + 0x1234567) & 0xffffffff
+    for i in range(n):
+        state = (state * 1103515245 + 12345) & 0xffffffff
+        if i % 97 == 5:
+            relocations.append(i); words.append(state % n)
+        elif i == 300:
+            relocations.append(i | 0x8000); words.append(0x3a0)
+        else:
+            words.append(state >> 8 & 0xffffff)
+    exit = n - 3
+    words[exit - 1], words[exit] = BRA_LONG, 0
+    return words, relocations, exit
+
+
+def ab_package(seed=0, n=998, image=None):
+    """The Analog BD controller as ABI 10: its CF image (the trust row's), its engine and initial words (not the row's)."""
+    data = package(PACKAGES['ab'][0], PACKAGES['ab'][2] if image is None else image)
+    words, relocations, exit = ab_engine(seed, n)
+    return abi9.engine(data, words, relocations, AB_SITE, 3, exit, [('x', 2, 0x2840, ab_words(seed))])
 
 
 def header():
     """Packages as C arrays and their trust rows (entry 8, Begin 16, End 24)."""
     text, rows = '', ''
     for name, (module, feature, image) in PACKAGES.items():
-        data = package(module, image)
+        data = ab_package() if name == 'ab' else package(module, image)
         text += 'static const uint8_t pkg_%s[%d] = {%s};\n' % (name, len(data), ','.join(map(str, data)))
         if name in UNTRUSTED:
             continue
-        digest = ','.join('0x%02x' % b for b in hashlib.sha256(data).digest())
+        # The row pins the controller digest (what is not DSP), so another engine of the same controller keeps it.
+        digest = ','.join('0x%02x' % b for b in bytes.fromhex(abi9.controller_sha256(data)))
         rows += ('{{{%s}, {%d}, 0x%08xu, 1, 1, 1, %d, %d}, 1, %d, 8, 16, 24}, '
                  % (digest, feature, module, feature, CORES[feature], len(image)))
     text += 'static const uint8_t donor_original[%d] = {%s};\n' % (len(DONOR_BYTES), ','.join(map(str, DONOR_BYTES)))
-    for core in (0, 1):
-        packed = ab_records(core)
-        text += 'static uint8_t ab_x_%d[%d] = {%s};\n' % (core, len(packed), ','.join(map(str, packed)))
-        text += 'static const uint32_t ab_expect_%d[%d] = {%s};\n' % (core, AB_WORDS, ','.join(map(str, ab_words(core))))
+    for seed in (0, 1):  # the initial words of pkg_ab and of pkg_ab2 (test_resident_engines_board's update)
+        text += 'static const uint32_t ab_expect_%d[%d] __attribute__((unused)) = {%s};\n' % (seed, AB_WORDS, ','.join(map(str, ab_words(seed))))
     reader = closed_reader()
     text += 'static const uint8_t pkg_closed_reader[%d] __attribute__((unused)) = {%s};\n' % (len(reader), ','.join(map(str, reader)))
     return text + '#define ROWS %s\n#define ROW_COUNT %d\n' % (rows, len(PACKAGES) - len(UNTRUSTED))
@@ -153,8 +181,7 @@ uint8_t mw_controller_board_test_read8(uint32_t a) { return a == 0x80000037u ? m
 int mw_controller_board_test_ui(uintptr_t lo, uintptr_t hi) { (void)lo; (void)hi; return (int)ui_clear; }
 static uint8_t donor[sizeof donor_original];
 uint8_t *mw_controller_board_test_donor(uint32_t a) { assert(a == 0x400d5a82u); return donor; }
-const uint8_t *mw_controller_board_test_ab(unsigned c, const uint8_t **end)
-{ *end = c ? ab_x_1 + sizeof ab_x_1 : ab_x_0 + sizeof ab_x_0; return c ? ab_x_1 : ab_x_0; }
+volatile uint8_t modwerk_runtime_redraw_wanted; /* runtime.c: a page write asks the next UI tick to redraw (#882) */
 int modwerk_machine_metadata_admit(const struct runtime_dsp *from, struct runtime_dsp *to,
     const struct runtime_context *c, enum runtime_metadata_operation op)
 { (void)c; assert(sr >= 0x400u); to->foreign_roots = 0; return modwerk_controller_admit(from, to, op); }
@@ -194,7 +221,7 @@ static void dsp(void)
             reject = k > 3 || dl_tx[c][5] != words[c][k] || (dsp_mask[c] & f);
             /* Analog BD's engine is reset to its boot record, word for word (24-bit: high 16, low 8). */
             for (unsigned i = 0; !reject && k == 2 && i < dl_tx[c][4]; ++i)
-                if (((unsigned)dl_tx[c][8 + 2 * i] << 8 | dl_tx[c][9 + 2 * i]) != (c ? ab_expect_1 : ab_expect_0)[dl_tx[c][5] + i]) ++ab_wrong;
+                if (((unsigned)dl_tx[c][8 + 2 * i] << 8 | dl_tx[c][9 + 2 * i]) != ab_expect_0[dl_tx[c][5] + i]) ++ab_wrong;
             if (!reject) words[c][k] += dl_tx[c][4];
         } else if (op == 10u) {
             unsigned expected = dl_tx[c][4], desired = dl_tx[c][5], on = desired & ~expected;
@@ -301,9 +328,10 @@ int main(int argc, char **argv)
     unsigned mode = (unsigned)strtoul(argv[1], 0, 10); /* two digits from mode 10 */
     enum runtime_refusal why;
 #ifndef BOARD_ROWS
-    /* Default base: no rows, nothing activates, every package is ordinary; but a key bus reader is refused, before the
-     * first tick and on a closed board: nothing would ever hold the bus for it. */
-    assert(install_refused(pkg_closed_reader, sizeof pkg_closed_reader, &why) && why == RUNTIME_CONFLICT);
+    /* Default base: no rows, nothing activates, every package is ordinary; but a key bus reader is refused: before the
+     * first tick told to retry (RUNTIME_BUSY), on a closed board refused (RUNTIME_CONFLICT: a closed board is closed
+     * by its rows or its transport, the same every boot, not by state lost this boot). */
+    assert(install_refused(pkg_closed_reader, sizeof pkg_closed_reader, &why) && why == RUNTIME_BUSY);
     run(4);
     assert(install(pkg_sc, sizeof pkg_sc) == MU_APPLIED);
     run(50);
@@ -372,20 +400,20 @@ int main(int argc, char **argv)
         assert(slot_for(SC, MW_CTL_ACTIVE) && dsp_mask[0] == 9 && dsp_mask[1] == 9 && !sc_before_bus && lease(SC, 1));
         return 0;
     }
-    if (mode == 10) ab_x_1[4] ^= 1; /* core B's engine record names another address: Analog BD never resets */
     if (mode == 7) donor[300] ^= 1; /* not the stock descriptor the record names: no page, still a working controller */
     run(2);
     if (mode == 11) { paused_none = 1; assert(install(pkg_plain, sizeof pkg_plain) == MU_APPLIED); } /* an owner entry before Sidechain's */
     assert(install(pkg_sc, sizeof pkg_sc) == MU_APPLIED);
-    assert(!lease(SC, 1) && (mode == 7 || page_is(0, SC))); /* published, not yet reset and enabled */
+    assert(!lease(SC, 1) && (mode == 7 || page_is(0, SC)) && !modwerk_runtime_redraw_wanted); /* published, not yet reset and enabled */
     run(120);
     assert(slot_for(SC, MW_CTL_ACTIVE) && dsp_mask[0] == 9 && dsp_mask[1] == 9 && !sc_before_bus);
     if (mode == 7) {
-        donor[300] ^= 1; assert(page_is(0, SC)); donor[300] ^= 1;
+        donor[300] ^= 1; assert(page_is(0, SC) && !modwerk_runtime_redraw_wanted); donor[300] ^= 1; /* no page: no redraw */
         assert(lease(SC, 1));
         return 0;
     }
-    assert(page_is(1, SC));
+    assert(page_is(1, SC) && modwerk_runtime_redraw_wanted); /* applied on activation: SETUP is redrawn (#882) */
+    modwerk_runtime_redraw_wanted = 0;
     if (mode == 8) {
         /* Someone changed the extended page: unknown, the removal quarantines and holds it. */
         donor[200] ^= 1;
@@ -402,7 +430,7 @@ int main(int argc, char **argv)
         assert(install_refused(removal(SC), 32, &why) && why == RUNTIME_BUSY);
         assert(lease(SC, 1)); /* only a request until the tick starts the disable */
         run(1);
-        assert(!lease(SC, 1) && page_is(0, SC)); /* page gone before the hooks; disabling: no writes */
+        assert(!lease(SC, 1) && page_is(0, SC) && modwerk_runtime_redraw_wanted); /* page gone before the hooks, redrawn; disabling: no writes */
         run(10);
         assert(slot_for(SC, MW_CTL_RETIRING) && dsp_mask[0] == 8 && dsp_mask[1] == 8); /* the bus stays while it is held */
         ui_clear = 0;
@@ -478,26 +506,17 @@ int main(int argc, char **argv)
         run(120);
         assert(slot_for(0x12345678u, MW_CTL_ACTIVE) && dsp_mask[0] == 9);
     } else if (mode == 9) {
-        /* Analog BD beside it, on both cores: its engine reset to its boot record word for word, then enabled. */
-        assert(install(pkg_ab, sizeof pkg_ab) == MU_APPLIED);
-        assert(!lease(AB, 4));
-        run(500);
-        assert(slot_for(AB, MW_CTL_ACTIVE) && dsp_mask[0] == 13 && dsp_mask[1] == 13 && !ab_wrong);
-        assert(words[0][2] == 3776 && words[1][2] == 3776 && modwerk_controller_held() == 13);
-        assert(lease(AB, 4) && !lease(AB, 1) && lease(SC, 1));
-        assert(install_refused(removal(AB), 32, &why) && why == RUNTIME_BUSY);
-        run(1);
-        assert(!lease(AB, 4));
-        run(10);
-        assert(slot_for(AB, MW_CTL_RETIRING) && dsp_mask[0] == 9 && dsp_mask[1] == 9);
-        assert(install(removal(AB), 32) == MU_APPLIED);
-        run(2);
-        assert(slot_for(AB, MW_CTL_RELEASED) && modwerk_controller_held() == 9 && lease(SC, 1));
+        /* Analog BD's engine is its package's (ABI 10), which only a base placing engines on demand runs: this board
+         * refuses it whole; Sidechain unaffected. (Its lifecycle on demand: test_resident_engines_board.py.) */
+        assert(install_refused(pkg_ab, sizeof pkg_ab, &why) && why == RUNTIME_MALFORMED);
+        run(50);
+        assert(!slot_for(AB, MW_CTL_ACTIVE) && !(modwerk_controller_held() & 4u) && !lease(AB, 4));
+        assert(lease(SC, 1) && dsp_mask[0] == 9 && dsp_mask[1] == 9 && !ab_wrong);
     } else if (mode == 10) {
-        /* A record that is not its engine's: never reset or enabled, so never a lease; Sidechain unaffected. */
-        assert(install(pkg_ab, sizeof pkg_ab) == MU_APPLIED);
-        run(500);
-        assert(!slot_for(AB, MW_CTL_ACTIVE) && !(dsp_mask[0] & 4u) && !(dsp_mask[1] & 4u) && !lease(AB, 4));
+        /* An engine from a package no trust row names is refused before anything is taken. */
+        static uint8_t other[sizeof pkg_ab];
+        memcpy(other, pkg_ab, sizeof other); other[100] ^= 1u; /* its image: another controller digest */
+        assert(install_refused(other, sizeof other, &why) && why == RUNTIME_CONFLICT);
         assert(lease(SC, 1) && dsp_mask[0] == 9 && dsp_mask[1] == 9);
     } else if (mode == 6) {
         /* Saved-set export blocks control writes and new jobs, not progress after. */
@@ -581,21 +600,22 @@ int main(int argc, char **argv)
          * restore); then each removed for good, Sidechain in and out once more, and Output Matrix installed beside a
          * running Sidechain. The unit crashed at that last install's verify; this model does not, so the cause lies
          * outside the board (the crash record names it). */
-        assert(install(pkg_matrix, sizeof pkg_matrix) == MU_APPLIED && install(pkg_ab, sizeof pkg_ab) == MU_APPLIED);
+        assert(install(pkg_matrix, sizeof pkg_matrix) == MU_APPLIED);
         run(500);
-        assert(slot_for(SC, MW_CTL_ACTIVE) && slot_for(MATRIX, MW_CTL_ACTIVE) && slot_for(AB, MW_CTL_ACTIVE));
-        static const uint32_t order[3] = {AB, MATRIX, SC};
-        for (unsigned k = 0; k < 3; ++k) assert(install_refused(removal(order[k]), 32, &why) && why == RUNTIME_BUSY);
+        assert(slot_for(SC, MW_CTL_ACTIVE) && slot_for(MATRIX, MW_CTL_ACTIVE));
+        static const uint32_t order[2] = {MATRIX, SC};
+        for (unsigned k = 0; k < 2; ++k) assert(install_refused(removal(order[k]), 32, &why) && why == RUNTIME_BUSY);
         run(1500);
-        assert(slot_for(SC, MW_CTL_ACTIVE) && slot_for(MATRIX, MW_CTL_ACTIVE) && slot_for(AB, MW_CTL_ACTIVE));
-        for (unsigned k = 0; k < 4; ++k) {
-            uint32_t module = k == 0 ? MATRIX : k == 3 ? AB : SC;
+        assert(slot_for(SC, MW_CTL_ACTIVE) && slot_for(MATRIX, MW_CTL_ACTIVE));
+        for (unsigned k = 0; k < 3; ++k) {
+            uint32_t module = k == 0 ? MATRIX : SC;
             if (k == 2) { assert(install(pkg_sc, sizeof pkg_sc) == MU_APPLIED); run(120); assert(slot_for(SC, MW_CTL_ACTIVE)); }
             assert(install_refused(removal(module), 32, &why) && why == RUNTIME_BUSY);
             run(10);
             assert(install(removal(module), 32) == MU_APPLIED);
             run(2);
         }
+        run(10); /* the key bus, let go with Sidechain, is disabled after it */
         assert(!modwerk_controller_held());
         assert(install(pkg_sc, sizeof pkg_sc) == MU_APPLIED);
         run(120);

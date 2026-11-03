@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom'
 import { Icon } from '../components/Icon'
 import { DEVICES_BY_ID } from '../devices/registry'
 import { post } from './api'
-import { BetaReportReminder, BugReportSuccess } from './BugReportNotice'
+import { AuthorExpectations, BetaReportReminder, BugReportSuccess } from './BugReportNotice'
 import { catalogModules, configurationSummary } from './configuration-report'
 import { useCommunity } from './context'
 import { FLASH_STATES, OT_MODELS, type FlashState, type IssueContext, type OtModel } from './issue-context'
@@ -80,6 +80,7 @@ export function ConfigurationReportDialog({ machine, configurationId, onClose }:
       <div className="configuration-report-body">
         <BetaReportReminder />
         <p className="configuration-report-intro">For a problem in the combination, or when you do not know which module is to blame. If one module clearly misbehaves, report it on that module’s page.</p>
+        <AuthorExpectations />
         <section className="configuration-report-config" aria-label="Configuration">
           <div className="configuration-report-config-head"><span>Configuration</span><strong>{file.log ? 'Read from ' + OT_LOG_NAME : resolved.name || 'Not saved'}</strong><small>{count}</small></div>
           {catalogued.length > 0

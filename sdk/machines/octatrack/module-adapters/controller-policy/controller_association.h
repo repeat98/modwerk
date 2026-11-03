@@ -5,6 +5,8 @@
 #include <stddef.h>
 
 #define MW_CONTROLLER_SLOTS 6u
+/* The most words one RESET job writes: the owned transport's DL_RESET_DATA, eight packets. */
+#define MW_CONTROLLER_RESET_CHUNK 192u
 enum mw_controller_state { MW_CTL_EMPTY, MW_CTL_RESERVED, MW_CTL_BOUND, MW_CTL_INITIALIZING,
     MW_CTL_READY, MW_CTL_PUBLISHING, MW_CTL_ACTIVE, MW_CTL_DISABLING, MW_CTL_RETIRING,
     MW_CTL_QUARANTINED, MW_CTL_RELEASED };
@@ -12,6 +14,8 @@ enum mw_controller_result { MW_CTL_OK, MW_CTL_CLOSED, MW_CTL_STALE, MW_CTL_CONFL
 enum mw_controller_operation { MW_CTL_RESET=1, MW_CTL_ENABLE, MW_CTL_DISABLE, MW_CTL_RESTORE };
 enum mw_controller_observation { MW_CTL_ACK=1, MW_CTL_REJECT, MW_CTL_TIMEOUT, MW_CTL_UNKNOWN };
 struct mw_controller_identity {
+    /* package_sha256: the row's controller digest (loader.h runtime_dsp.controller_sha256: the package without its DSP
+     * part), so an engine change keeps the row; the name is the rows' original one. */
     uint8_t package_sha256[32], source_policy_sha256[32];
     uint32_t module;
     uint16_t policy_revision, state_revision, parameter_revision;

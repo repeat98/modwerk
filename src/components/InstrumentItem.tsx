@@ -19,13 +19,13 @@ const modules = (n: number) => n + (n === 1 ? ' module' : ' modules')
 export function InstrumentItem({ device, set, href, link, current, inventory }: { device: DeviceProfile; set?: Configuration; href: string; link?: OctatrackLink | null; current: boolean; inventory?: Inventory }) {
   const status = useSyncExternalStore(link?.subscribe ?? noSubscription, () => {
     const state = link?.getState()
-    return !state ? '' : state.identity?.canSubmit && state.status === 'ready' ? 'connected' : state.status
+    return !state ? '' : state.baseUpdate ? 'updating' : state.identity?.canSubmit && state.status === 'ready' ? 'connected' : state.status
   }, () => '')
-  const connection = !status || status === 'unsupported' ? '' : LIVE.includes(status as LinkState['status']) ? 'busy' : status === 'connected' || status === 'stock' ? status : 'off'
+  const connection = !status || status === 'unsupported' ? '' : LIVE.includes(status as LinkState['status']) ? 'busy' : status === 'connected' || status === 'stock' || status === 'updating' ? status : 'off'
   const last = connection === 'off' || status === 'unsupported' ? lastInventory() : undefined
-  const unit = status === 'connecting' ? 'Connecting…' : connection === 'busy' ? 'Syncing…'
+  const unit = status === 'updating' ? 'Updating the base · don’t unplug' : status === 'connecting' ? 'Connecting…' : connection === 'busy' ? 'Syncing…'
     : status === 'connected' ? inventory ? inventory.moduleIds.length ? modules(inventory.moduleIds.length) + ' on it' : 'No modules on it' : 'Connected'
-    : status === 'stock' ? 'Original OS: install the base' : status === 'busy' ? 'In use by another tab or app' : 'Not connected'
+    : status === 'stock' ? 'Original OS: install the base' : status === 'busy' ? 'In use by another window or app' : 'Not connected'
   if (!link) return <a className="sidebar-device instrument-item" href={href} aria-current={current ? 'page' : undefined} aria-label={device.name + ', ' + (set ? set.name : 'No module set yet')}>
     <span className="instrument-picture"><DeviceImage device={device} eager /></span>
     <span><strong>{device.name}</strong><small>{set ? set.name : 'No module set yet'}</small></span>

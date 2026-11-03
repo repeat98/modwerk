@@ -37,10 +37,11 @@ static int none(void *u) { (void)u; return 0; }
 static int submitted(void *u, const struct mw_controller_binding *b, const struct mw_controller_job *j) { (void)u; (void)b; (void)j; return 1; }
 static const struct mw_controller_backend backend = {one, one, none, submitted, submitted, one, one};
 struct mw_controller_registry modwerk_controller_registry;
-/* The exact encoded package below (SHA-256 of its 96 bytes) and a source-policy digest. */
-#define PACKAGE_SHA256 {0x60,0x5c,0x0b,0x62,0x34,0xe6,0x5f,0x5d,0xf5,0x6d,0x28,0x39,0xe5,0x0f,0x54,0xf5, \
-                        0x54,0x60,0x8b,0x72,0x2a,0x25,0x0e,0xe0,0x29,0x9b,0x00,0x1c,0xc0,0xe9,0x6c,0x50}
-#define IDENTITY {PACKAGE_SHA256, {4,5,6}, 0x2a, 1, 1, 1, 2, 1}
+/* The controller digest of the encoded package below (loader.h controller_sha256: the 96 bytes have no DSP part, so
+ * the digest of its header, then of its image) and a source-policy digest. */
+#define CONTROLLER_SHA256 {0xae,0x4f,0xf7,0x13,0xd5,0x5f,0xe6,0x66,0x6c,0x0c,0xb7,0x3a,0x5e,0x0d,0x0b,0x22, \
+                           0xcb,0x89,0x2e,0x4c,0xd5,0x4c,0x2c,0x13,0xc7,0x95,0xd1,0xa1,0xb3,0x37,0x8c,0x80}
+#define IDENTITY {CONTROLLER_SHA256, {4,5,6}, 0x2a, 1, 1, 1, 2, 1}
 const unsigned modwerk_controller_write_policy_count = 1;
 const struct mw_controller_write_policy modwerk_controller_write_policies[1] = {{IDENTITY, 1, 64, 8, 16, 24}};
 

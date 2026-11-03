@@ -1,0 +1,349 @@
+{
+ "elemod": 2,
+ "id": "fx-track",
+ "version": "0.1.0-experimental",
+ "title": "FX Track",
+ "description": "Turns a MIDI track into an effects track: its control changes on FX CONTROL CH play the delay, reverb, compressor and External Mixer, with parameter locks and the track’s LFO.",
+ "category": "midi-usb",
+ "author": "draadpiraat",
+ "license": "GPL-3.0-or-later",
+ "target": {
+  "device": "digitakt-mk1",
+  "product": "Digitakt mk1",
+  "os": "1.54",
+  "syx_sha256": "f78ba80fa7b1da5fb0e1ff61ad61e9e71aafe79f4364fc49679f3651353e3cf6",
+  "section3_sha256": "5c58bf9e3949ef09977c5fc007a61e8d026931f67f1621238379dfb8ee4d31a2",
+  "section3_len": 2479680
+ },
+ "sections": {
+  ".run": {
+   "align": 4,
+   "len": 640,
+   "parts": [
+    [
+     "hex",
+     "4a3900000000670000bc7003b0af0008660000b2206f000c719022000281000000f00c81000000b06600009a720fc280b2b94197c7406600008c71a800010c800000007f6200007e43fa01b34a3108006700007222394197c75443f9421a9d7c08010000660e43f9421a9d5c080100016700004e2039000000002200528102810000007fb2b9000000006734e9882f0a45f900000000d5c01550000c15680001000d15680002000e7003248041ea000c2548000425490008245f23c100000000588f4e7573b9421b6a214e75203900000000b0b900000000674e4feffff848d7040424002002e98845f900000000d5c02f0a2f2a00084eb940001b7a508f5282707fc48023c200000000b4b90000000066d24879421a9d344eb940001840588f4cd704044fef00084e75487a00b82f2f00084eb900000000508f4e754e56fffc2f02486effff487a00ac24082f084eb94017af204fef000c2002242efff84e5e4e752f02206f000824104a3900000000660a700113c0000000006006423900000000204241e80038241f2f4800044ef9400c9a3a202f000c670000102f02206f000824104a806aca60d24e7570004a39000000006702701cd0b9421f8a3c222f000c2f4100042f400008222f00102f41000c222f00142f41001042af00144ef9400c2b8800000000000000000000000000000000465820545241434b000000000000000000000000000000000000000000000000000101010101010101000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001010101010101010000000000000000000101010101010101000101010101010101010000000000000000000000"
+    ]
+   ]
+  },
+  ".bss": {
+   "align": 4,
+   "size": 2058
+  }
+ },
+ "symbols": {
+  "STR_CTOR": [
+   "abs",
+   1075293984
+  ],
+  "INVALIDATE": [
+   "abs",
+   1074567738
+  ],
+  "BLIT": [
+   "abs",
+   1074539400
+  ],
+  "CHECKBOXES": [
+   "abs",
+   1109363260
+  ],
+  "FX_CH": [
+   "abs",
+   1100465984
+  ],
+  "IN_PORTS": [
+   "abs",
+   1100466004
+  ],
+  "DIN_QUEUE": [
+   "abs",
+   1109040508
+  ],
+  "USB_QUEUE": [
+   "abs",
+   1109040476
+  ],
+  "MIDI_SEM": [
+   "abs",
+   1109040436
+  ],
+  "QUEUE_SEND": [
+   "abs",
+   1073748858
+  ],
+  "SEM_POST": [
+   "abs",
+   1073748032
+  ],
+  "OUT_LEN": [
+   "abs",
+   1109092897
+  ],
+  "RING": [
+   "abs",
+   128
+  ],
+  "fxt_on": [
+   ".bss",
+   2056
+  ],
+  "fxt_ccs": [
+   ".run",
+   509
+  ],
+  "fxt_head": [
+   ".bss",
+   0
+  ],
+  "fxt_tail": [
+   ".bss",
+   4
+  ],
+  "fxt_ring": [
+   ".bss",
+   8
+  ],
+  "fxt_row": [
+   ".run",
+   484
+  ],
+  "fxt_label": [
+   ".run",
+   316
+  ],
+  "fxt_name": [
+   ".run",
+   500
+  ],
+  "fxt_select": [
+   ".run",
+   354
+  ],
+  "fxt_change": [
+   ".run",
+   404
+  ],
+  "fxt_draw": [
+   ".run",
+   428
+  ],
+  "fxt_flush": [
+   ".run",
+   204
+  ],
+  "fxt_out": [
+   ".run",
+   0
+  ],
+  "fxt_settings": [
+   ".run",
+   298
+  ]
+ },
+ "exports": [
+  "fxt_flush",
+  "fxt_out",
+  "fxt_settings"
+ ],
+ "imports": [
+  "core_additem"
+ ],
+ "weak": [],
+ "relocs": [
+  [
+   ".run",
+   2,
+   "abs32",
+   "sec:.bss",
+   2056
+  ],
+  [
+   ".run",
+   118,
+   "abs32",
+   "sec:.bss",
+   0
+  ],
+  [
+   ".run",
+   134,
+   "abs32",
+   "sec:.bss",
+   4
+  ],
+  [
+   ".run",
+   146,
+   "abs32",
+   "sec:.bss",
+   8
+  ],
+  [
+   ".run",
+   188,
+   "abs32",
+   "sec:.bss",
+   0
+  ],
+  [
+   ".run",
+   206,
+   "abs32",
+   "sec:.bss",
+   4
+  ],
+  [
+   ".run",
+   212,
+   "abs32",
+   "sec:.bss",
+   0
+  ],
+  [
+   ".run",
+   234,
+   "abs32",
+   "sec:.bss",
+   8
+  ],
+  [
+   ".run",
+   262,
+   "abs32",
+   "sec:.bss",
+   4
+  ],
+  [
+   ".run",
+   268,
+   "abs32",
+   "sec:.bss",
+   0
+  ],
+  [
+   ".run",
+   308,
+   "abs32",
+   "sym:core_additem",
+   0
+  ],
+  [
+   ".run",
+   364,
+   "abs32",
+   "sec:.bss",
+   2056
+  ],
+  [
+   ".run",
+   374,
+   "abs32",
+   "sec:.bss",
+   2056
+  ],
+  [
+   ".run",
+   382,
+   "abs32",
+   "sec:.bss",
+   2056
+  ],
+  [
+   ".run",
+   432,
+   "abs32",
+   "sec:.bss",
+   2056
+  ],
+  [
+   ".run",
+   484,
+   "abs32",
+   "sec:.run",
+   316
+  ],
+  [
+   ".run",
+   488,
+   "abs32",
+   "sec:.run",
+   354
+  ],
+  [
+   ".run",
+   492,
+   "abs32",
+   "sec:.run",
+   428
+  ],
+  [
+   ".run",
+   496,
+   "abs32",
+   "sec:.run",
+   404
+  ]
+ ],
+ "sites": [
+  {
+   "addr": "0x400e0dac",
+   "len": 6,
+   "stock_sha256": "10fd2dfd6d29b6c1e73fb404103769428f9af66b0f4249311c3fcd9beaaf2731",
+   "new": "4eb900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:fxt_out",
+     0
+    ]
+   ]
+  }
+ ],
+ "collections": {},
+ "contribute": [
+  {
+   "to": "ev_settings",
+   "order": 50,
+   "data": "00000000",
+   "relocs": [
+    [
+     0,
+     "abs32",
+     "sym:fxt_settings",
+     0
+    ]
+   ],
+   "claims": []
+  },
+  {
+   "to": "ev_render_out",
+   "order": 50,
+   "data": "00000000",
+   "relocs": [
+    [
+     0,
+     "abs32",
+     "sym:fxt_flush",
+     0
+    ]
+   ],
+   "claims": []
+  }
+ ],
+ "copied": [],
+ "resources": {
+  "regions": [],
+  "names": [
+   "settings:FX TRACK"
+  ],
+  "core": "2.1"
+ },
+ "requires": [
+  "core"
+ ],
+ "conflicts": [],
+ "signature": null
+}

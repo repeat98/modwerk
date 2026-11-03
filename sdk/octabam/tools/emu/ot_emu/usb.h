@@ -104,6 +104,11 @@ namespace ot
 		//   unplug             B-session valid drops, BSVIS latches (the
 		//                      stock ISR's session-end path)             -> ok, once the guest
 		//                      has acknowledged BSVIS (session end handled)
+		//   plug               the cable back: B-session valid returns and
+		//                      BSVIS latches (the stock ISR's session-start
+		//                      path, as at boot)                     -> ok, once the guest
+		//                      has acknowledged BSVIS; a `reset` and an
+		//                      enumeration follow, as from a real host
 		//   speed hs|fs        the port speed PORTSC1 reports            -> ok
 		//   isohz <hz>         the isochronous poll rate the endpoint's
 		//                      bInterval sets (0: 4000 at high speed,
@@ -116,6 +121,7 @@ namespace ot
 		// Two bench commands the machine itself has to serve, from OUTSIDE
 		// the run loop (a borrowed call re-enters it):
 		//   poke <addr> <hex>      write bytes into guest memory   -> poke ok
+		//   peek <addr> <len>      read bytes from guest memory    -> peek <hex>
 		//   call <addr> [arg ...]  run a firmware routine as main   -> call <d0> | call err <why>
 		// The run loop stops when one is queued (`hasRequest`), the caller
 		// serves it and answers with `answerRequest`.
@@ -191,6 +197,7 @@ namespace ot
 		uint32_t m_otgscIs = 0;				// the latched BSVIS
 		bool m_sessionEnded = false;			// unplug: OTGSC reports no B-session
 		bool m_unplugUnacked = false;			// unplug landed, BSVIS not yet acknowledged: the host's ok waits
+		bool m_plugUnacked = false;			// plug landed, BSVIS not yet acknowledged: the host's ok waits
 		bool m_speedHs = true;
 		double m_isoHz = 0;					// isohz: 0 = by speed
 		bool m_hwFaithful = true;

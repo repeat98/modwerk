@@ -16,6 +16,7 @@ import { type AnyMod, Mod, ModError, apply, formatOf, get, pyEq, readJson } from
 import * as formats from './formats.ts'
 import { Mod2, link, type Linked } from './link.ts'
 import { dumps, hex8, hexw, repr, str, truthy } from './py.ts'
+import type { Lock } from './store.ts'
 
 export class PatchError extends Error {}
 
@@ -46,9 +47,10 @@ export function loadAny(file: File): AnyMod {
 const pad = (s: string, n: number) => s + ' '.repeat(Math.max(0, n - s.length))
 const now = () => (typeof performance !== 'undefined' ? performance.now() : Date.now())
 
-/** -> [outputs {syx[, bin]} or null, manifest]. Throws PatchError. `stock` is the stock file (or Elektron's zip). */
+/** -> [outputs {syx[, bin]} or null, manifest]. Throws PatchError. `stock` is the stock file (or Elektron's zip).
+ * lock: the mod-storage lockfile, or null for a new one; the new one is the manifest's `store`. */
 export async function build(stock: File, modFiles: File[], version: string | null = null, checkOnly = false,
-  log: (line: string) => void = () => {}): Promise<[formats.Outputs | null, Record<string, any>]> {
+  log: (line: string) => void = () => {}, lock: Lock | null = null): Promise<[formats.Outputs | null, Record<string, any>]> {
   let parsed: formats.Parsed, dev, rel
   try {
     [parsed, dev, rel] = await formats.load(stock.data)
@@ -80,7 +82,7 @@ export async function build(stock: File, modFiles: File[], version: string | nul
   try {
     if (v2.length) {
       if (v2.length !== mods.length) throw new ModError('a whole-build bundle (format 1) cannot be combined with separate mods (format 2)')
-      linked = link(v2, img0)
+      linked = link(v2, img0, lock)
       img = linked.image
     } else {
       img = apply(mods as Mod[], img0)
@@ -112,6 +114,10 @@ export async function build(stock: File, modFiles: File[], version: string | nul
       tables[c] = { at: hex8(a), entries: n, entry: e }
     man.link = { order: linked.order, layout: linked.layout, tables }
     man._map = linked.map
+    if (linked.store !== null) {
+      man.store = linked.store
+      for (const n of linked.storeNotes) log('storage: ' + n)
+    }
   }
   if (mods.length === 1 && !v2.length) {
     const b = get(mods[0].doc, 'build')

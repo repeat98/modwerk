@@ -6,6 +6,8 @@
 import { sha256Hex } from './hash.ts'
 import { PCREL, decodeColdFire, readerAt, wholeInstructions } from './coldfire-isa.ts'
 import type { ElemodMachine } from './ele3.ts'
+import * as store from '../../../vendor/elekloader/kit/src/store.ts'
+import { ModError as KitModError } from '../../../vendor/elekloader/kit/src/elemod.ts'
 
 export class ModError extends Error {}
 
@@ -48,7 +50,15 @@ export const LINK_DEVICES: LinkDevice[] = [
   {
     key: 'analog-rytm-mk2', machine: 'analog-rytm-mkii', name: 'Analog Rytm MKII', sysexId: 0x0c, mainLoad: 0x40000400,
     releases: [
-      { version: '1.73', syxSha256: '8ad671087ec30433d5407c7380d2396e0915ab931c5d3dd18a78bf284d3d1e52', mainSha256: '28d9ef40c895e03f17dfce096543109adaf708947392db72818fc2a412d685d6', mainLength: 3005432 },
+      { version: '1.74', syxSha256: 'cb0f99d620edde994fb860c0e79cc2464e427d06882828cfdfb00fc53700e123', mainSha256: '34cd0c4da8e4b810d1b25284475a99ea53821e2ab7d30a978bf15dc578251f3b', mainLength: 3005432 },
+    ],
+    areas: { ddr: [0x47be0000, 0x47c00000] },
+    ddr: [0x47be0000, 0x47c00000], sramCode: [0, 0], fastTable: '', protected: [],
+  },
+  {
+    key: 'analog-four-mk2', machine: 'analog-four-mkii', name: 'Analog Four MKII', sysexId: 0x0b, mainLoad: 0x40000400,
+    releases: [
+      { version: '1.56', syxSha256: '5aea489db3e747547f71d5e08a2d20253149fe6258defad60306402d2fc23cb5', mainSha256: '748fec15ddc61bc3ff66047facba74328934c5fb59f427ddaf34a4e2629a474c', mainLength: 2500408 },
     ],
     areas: { ddr: [0x47be0000, 0x47c00000] },
     ddr: [0x47be0000, 0x47c00000], sramCode: [0, 0], fastTable: '', protected: [],
@@ -71,6 +81,7 @@ export type ParsedMod = {
   // format 2
   sections: Partial<Record<SectionName, Section>>; symbols: Map<string, [SectionName | 'abs', number]>; exports: string[]; imports: string[]; weak: Set<string>
   relocs: (Reloc & { section: SectionName })[]; collections: Map<string, number>; contribute: Contribution[]; copied: [number, number, number][]
+  storage: [string, string, number][]   // mod storage fields: [symbol, scope, bits] (elekloader's store.ts)
 }
 
 const COMMON = ['elemod', 'dtmod', 'id', 'version', 'title', 'description', 'category', 'author', 'license', 'target', 'sites', 'resources', 'requires', 'conflicts', 'build', 'signature', 'notes']
@@ -151,7 +162,7 @@ function parseResources(doc: Record<string, unknown>, name: string, device: Link
 export function parseElemod(doc: Record<string, unknown>, name = '<mod>', devices: readonly LinkDevice[] = LINK_DEVICES): ParsedMod {
   const format = (doc.elemod ?? doc.dtmod) as number
   if (format !== 1 && format !== 2) throw new ModError(name + ': not a .elemod file')
-  const allowed = format === 1 ? [...COMMON, 'ele3_version', 'blob'] : [...COMMON, 'sections', 'symbols', 'exports', 'imports', 'weak', 'relocs', 'collections', 'contribute', 'copied']
+  const allowed = format === 1 ? [...COMMON, 'ele3_version', 'blob'] : [...COMMON, 'sections', 'symbols', 'exports', 'imports', 'weak', 'relocs', 'collections', 'contribute', 'copied', 'storage']
   const extra = Object.keys(doc).filter(key => !allowed.includes(key))
   if (extra.length) throw new ModError(name + ': unknown fields ' + extra.sort().join(', '))
   for (const key of format === 1 ? ['id', 'version', 'target', 'sites'] : ['id', 'version', 'target', 'sections']) if (!(key in doc)) throw new ModError(name + ': no "' + key + '"')
@@ -159,7 +170,7 @@ export function parseElemod(doc: Record<string, unknown>, name = '<mod>', device
   const mod: ParsedMod = {
     format, id: String(doc.id), version: String(doc.version), device, release, sites: [], ...parseResources(doc, name, device),
     requires: ((doc.requires as unknown[]) ?? []).map(String), conflicts: ((doc.conflicts as unknown[]) ?? []).map(String),
-    blob: null, shownVersion: null, sections: {}, symbols: new Map(), exports: [], imports: [], weak: new Set(), relocs: [], collections: new Map(), contribute: [], copied: [],
+    blob: null, shownVersion: null, sections: {}, symbols: new Map(), exports: [], imports: [], weak: new Set(), relocs: [], collections: new Map(), contribute: [], copied: [], storage: [],
   }
   if (format === 1) {
     mod.sites = parseSites(doc, name, device, release, false)
@@ -218,7 +229,13 @@ export function parseElemod(doc: Record<string, unknown>, name = '<mod>', device
     return { to: String(value.to), order: int(value.order ?? 50, what), data, relocs: ((value.relocs as unknown[]) ?? []).map(entry => parseReloc(entry, what, data.length)), claims: ((value.claims as unknown[][]) ?? []).map(([a, b]) => [int(a, what), int(b, what)] as [number, number]), index }
   })
   mod.copied = ((doc.copied as Record<string, unknown>[]) ?? []).map(value => [int(value.lo, name), int(value.hi, name), int(value.to, name)] as [number, number, number])
+  mod.storage = storeCall(() => store.parseDecls(doc), name + ': ')
   return mod
+}
+
+/** elekloader's store.ts throws its own ModError: the same message, as this linker's. */
+function storeCall<T>(run: () => T, prefix = ''): T {
+  try { return run() } catch (error) { if (error instanceof KitModError) throw new ModError(prefix + error.message); throw error }
 }
 
 const label = (mod: ParsedMod) => mod.id + ' ' + mod.version
@@ -270,8 +287,16 @@ export async function checkLinkable(mods: ParsedMod[], image: Uint8Array): Promi
     if (owner.has(table)) bad.push('table ' + table + ' has the name of a symbol ' + label(owner.get(table)!) + ' exports')
     tables.set(table, [mod, entry])
   }
+  const fields = new Map<string, ParsedMod | null>()   // mod storage: the linker defines these
+  for (const mod of mods) for (const [symbol] of mod.storage) {
+    const other = fields.get(symbol)
+    if (other) bad.push(label(other) + ' and ' + label(mod) + ' both declare the storage field ' + symbol)
+    else if (owner.has(symbol) || tables.has(symbol) || LINKER_SYMBOLS.has(symbol) || store.GEN_SYMS.includes(symbol)) bad.push(label(mod) + ': the storage field ' + symbol + ' has the name of a symbol or table')
+    fields.set(symbol, mod)
+  }
+  if (tables.has(store.IDS_TABLE)) for (const symbol of store.GEN_SYMS) fields.set(symbol, null)
   for (const mod of mods) {
-    for (const symbol of mod.imports) if (!(owner.has(symbol) || tables.has(symbol) || LINKER_SYMBOLS.has(symbol) || mod.weak.has(symbol) || (symbol.endsWith('_n') && tables.has(symbol.slice(0, -2))))) bad.push(label(mod) + ' imports ' + symbol + ', which no given mod exports')
+    for (const symbol of mod.imports) if (!(owner.has(symbol) || tables.has(symbol) || LINKER_SYMBOLS.has(symbol) || mod.weak.has(symbol) || (symbol.endsWith('_n') && tables.has(symbol.slice(0, -2))) || fields.has(symbol))) bad.push(label(mod) + ' imports ' + symbol + ', which no given mod exports')
     for (const entry of mod.contribute) {
       const table = tables.get(entry.to)
       if (!table) bad.push(label(mod) + ' adds to table ' + entry.to + ', which no given mod declares')
@@ -285,10 +310,12 @@ export async function checkLinkable(mods: ParsedMod[], image: Uint8Array): Promi
   return bad
 }
 
-export type Linked = { image: Uint8Array; order: string[]; map: Record<string, number>; tables: Record<string, [number, number, number]>; layout: { boot: [number, number]; runLoad: number; ddr: [number, number]; bss: [number, number]; fast: [number, number]; blobLength: number; ddrSpare: number; fastSpare: number } }
+export type Linked = { image: Uint8Array; order: string[]; map: Record<string, number>; tables: Record<string, [number, number, number]>; layout: { boot: [number, number]; runLoad: number; ddr: [number, number]; bss: [number, number]; fast: [number, number]; blobLength: number; ddrSpare: number; fastSpare: number }
+  store: store.Lock | null; storeNotes: string[] }   // a core with mod storage: the new lockfile and what changed in it
 
-/** Format-2 mods (exactly one core) and the stock main OS -> the patched image. Throws ModError with every problem. */
-export async function linkMods(mods: ParsedMod[], image: Uint8Array): Promise<Linked> {
+/** Format-2 mods (exactly one core) and the stock main OS -> the patched image. lock: the build's mod-storage lockfile,
+ * or null for a new one (a core that keeps mod storage, elekloader's store.ts). Throws ModError with every problem. */
+export async function linkMods(mods: ParsedMod[], image: Uint8Array, lock: store.Lock | null = null): Promise<Linked> {
   if (!mods.length) throw new ModError('no mods')
   const { device, release } = mods[0]
   if (await sha256Hex(image) !== release.mainSha256) throw new ModError('the stock main OS is not ' + device.name + ' ' + release.version)
@@ -301,6 +328,23 @@ export async function linkMods(mods: ParsedMod[], image: Uint8Array): Promise<Li
   for (const mod of order) for (const [table, entry] of mod.collections) tables.set(table, [mod, entry])
   const entries = new Map<string, [number, string, number, ParsedMod, Contribution][]>([...tables.keys()].map(table => [table, []]))
   for (const mod of order) for (const entry of mod.contribute) entries.get(entry.to)!.push([entry.order, mod.id, entry.index, mod, entry])
+  // mod storage: the fields' places from the lockfile, as symbols and the IDs' table
+  const keeps = core.imports.includes(store.GEN_SYMS[0])
+  const decls: store.Decl[] = order.flatMap(mod => mod.storage.map(([symbol, scope, bits]) => [mod.id, symbol, scope, bits] as store.Decl))
+  let newLock: store.Lock | null = null, storeNotes: string[] = [], storeSymbols = new Map<string, number>()
+  if (decls.length && !keeps) {
+    const users = [...new Set(decls.map(decl => decl[0]))].sort()
+    throw new ModError(users.join(', ') + ' declare' + (users.length === 1 ? 's' : '') + ' mod storage, which ' + label(core) + ' does not keep')
+  }
+  if (keeps) {
+    if (!tables.has(store.IDS_TABLE)) throw new ModError(label(core) + ' imports ' + store.GEN_SYMS[0] + ' but declares no table ' + store.IDS_TABLE)
+    ;[newLock, storeNotes] = storeCall(() => store.allocate(lock, decls, device.key, core.version))
+    let ids: Uint8Array[]
+    ;[storeSymbols, ids] = store.symbols(newLock)
+    const taken = new Set(order.flatMap(mod => mod.exports))
+    for (const name of storeSymbols.keys()) if (taken.has(name) || LINKER_SYMBOLS.has(name)) throw new ModError('the storage field ' + name + ' has the name of a symbol a mod exports')
+    ids.forEach((data, index) => entries.get(store.IDS_TABLE)!.push([-1, '', index, core, { to: store.IDS_TABLE, order: -1, data, relocs: [], claims: [], index }]))
+  }
   for (const list of entries.values()) list.sort((a, b) => a[0] - b[0] || (a[1] < b[1] ? -1 : a[1] > b[1] ? 1 : 0) || a[2] - b[2])
   const fastMods = order.filter(mod => sizeOf(mod.sections['.fast']))
   const tableLength = (table: string) => entries.get(table)!.reduce((sum, entry) => sum + entry[4].data.length, 0) + (table === device.fastTable ? FAST_ENTRY * fastMods.length : 0) + tables.get(table)![1]
@@ -334,6 +378,7 @@ export async function linkMods(mods: ParsedMod[], image: Uint8Array): Promise<Li
     if (mod.exports.includes(symbol)) global.set(symbol, value)
   }
   for (const table of tables.keys()) { global.set(table, tableAt.get(table)!); global.set(table + '_n', tableLength(table) / tables.get(table)![1] - 1) }
+  for (const [name, value] of storeSymbols) global.set(name, value)
   for (const [name, value] of Object.entries({ __run_load: runLoad, __run_start: ddrBase, __run_words: (runEnd - ddrBase) / 4, __bss_start: runEnd, __bss_end: bssEnd, __bss_words: (bssEnd - runEnd) / 4 })) global.set(name, value)
   const zero = global.get('core_zero')
   const resolve = (mod: ParsedMod, target: string, where: string): number => {
@@ -384,7 +429,8 @@ export async function linkMods(mods: ParsedMod[], image: Uint8Array): Promise<Li
   const boot = content.get(key(core, '.boot')) ?? new Uint8Array()
   const blob = new Uint8Array(runLoad - end + ddr.length)
   blob.set(boot); blob.set(ddr, runLoad - end)
-  const patched = new Uint8Array(image.length + blob.length)
+  const tail = newLock ? store.trailer(newLock) : new Uint8Array(0)
+  const patched = new Uint8Array(image.length + blob.length + tail.length)
   patched.set(image)
   for (const mod of order) for (const site of mod.sites) {
     const bytes = site.bytes.slice()
@@ -392,6 +438,7 @@ export async function linkMods(mods: ParsedMod[], image: Uint8Array): Promise<Li
     patched.set(bytes, site.addr - device.mainLoad)
   }
   patched.set(blob, image.length)
+  patched.set(tail, image.length + blob.length)
   const bad = copiedRules(order, patched, device)
   for (const mod of order) for (const site of mod.sites) if (site.kind === 'code') { const check = wholeInstructions(patched, device.mainLoad, site.addr, site.length, 0); if (!check.ok) bad.push(label(mod) + ' site ' + hex32(site.addr) + ' after relocation: ' + check.note) }
   if (bad.length) throw new ModError('the linked mods break a rule:\n  ' + bad.join('\n  '))
@@ -400,6 +447,7 @@ export async function linkMods(mods: ParsedMod[], image: Uint8Array): Promise<Li
     image: patched, order: order.map(label), map,
     tables: Object.fromEntries([...tables].map(([table, [, entry]]) => [table, [tableAt.get(table)!, tableLength(table) / entry - 1, entry]])),
     layout: { boot: [end, end + bootLength], runLoad, ddr: [ddrBase, runEnd], bss: [runEnd, bssEnd], fast: [fastBase, fastAt], blobLength: blob.length, ddrSpare: ddrEnd - bssEnd, fastSpare: fastEnd - fastAt },
+    store: newLock, storeNotes,
   }
 }
 

@@ -1,0 +1,10 @@
+[
+  {
+    "version": "1.2.0",
+    "date": "2026-10-23",
+    "changes": [
+      "First library release, for Analog Rytm MKII OS 1.74 on core-ar2 0.3. The FILTER page's FRQ popup shows the cutoff in hertz, from 13.8Hz to 21.1kHz, instead of 0 to 127.",
+      "Documentation note: shortened the release notes to keep catalogue validation working; hardware and package verification details are recorded in PR #831."
+    ]
+  }
+]

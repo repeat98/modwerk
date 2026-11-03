@@ -1,53 +1,61 @@
 # The ColdFire emulators
 
-Two ways to run the Octatrack's OS without a flash:
+There are two ways to run the Octatrack's OS without flashing it:
 
-- **The port** (`tools/emu/ot_emu`, C++): Musashi for the ColdFire, both
-  DSP56300 cores, the card, the panel link, MIDI, USB. `make check`'s boot
-  verifier and `verify_set` run on it; so do `make panel` and `make
-  emu-live`. Everything from "Build" to "Speed" below.
-- **Tier-0** (`tools/emu/emu_bringup.py`, Unicorn): boots to the RTOS
-  handoff and calls the firmware's draw and formatter code directly. The
-  label gates in `make check` (`verify_labels`, `verify_modenames`,
-  `verify_hidden`; CC MAP's `verify_ccmap`), REPITCH's `verify_repitch_ui`,
-  `tools/build/stock_labels.py` and the remixer's UNIT pane use it.
+- **The port** (`tools/emu/ot_emu`, C++). Musashi runs the ColdFire, alongside both DSP56300
+  cores, the card, the panel link, MIDI and USB. `make check`'s boot
+  verifier and `verify_set` run on it, and so do `make panel` and `make
+  emu-live`.
+- **Tier-0** (`tools/emu/emu_bringup.py`, Unicorn). It boots to the RTOS
+  handoff and calls the firmware's draw and formatter code directly. It is used by:
+  - the label gates in `make check` (`verify_labels`, `verify_mode_names`,
+    `verify_hidden`) and CC MAP's `verify_cc_map`;
+  - `tools/build/stock_labels.py`;
+  - the remixer's UNIT pane.
 
-Route A (`emu_rtos.py`: the firmware's scheduler run by hand on Unicorn,
-the port's oracle through O6 and the panel's second backend) was retired
-on 26 Sep 2026; `git log -- tools/emu/emu_rtos.py` finds it.
-`stage_project` moved to `emu_card`.
+The records of how they were built:
+- the port: `git show 3ceba41:docs/history/COLDFIRE_PORT.md` (O1–O14) and
+  `git show 666b6154:docs/firmware/COLDFIRE_PORT.md` (O14i–O24, Tim
+  Hastie's; what is still in the port is [Port features](#port-features));
+- Tier-0: `git show 3ceba41:docs/history/EMU_BRINGUP.md` and `git show 3ceba41:docs/history/RTOS_FORK.md`.
+
+Route A (`emu_rtos.py`) was retired on 26 Sep 2026 (60509404).
 
 ## Which one
 
-| to | run | doc |
+| to | run | section |
 |---|---|---|
-| check a remix | `make check REMIX=<name>` (`OT_PROJECT=<dir>` adds a real project: `verify_set`) | this file, "The port on a project" |
-| play a remix: screen, keys, knobs, sound, in a browser or a macOS app | `make panel REMIX=<name>` / `make panel-app` | `tools/panel/README.md` |
-| see the screen and press keys in a Tk window, from a FIFO | `make emu-live REMIX=<name>` | "Driving it: the panel from a FIFO" |
-| a scripted run on a project: watches, dumps, MIDI in, audio out | `out/emu/ot_emu ...` | "The port on a project" |
-| USB: enumerate, MIDI, audio from a script | `ot_emu --usb-host SOCKET` + `tools/harness/usb_host.py` | "USB" |
-| the firmware's own strings for a page, from Python | `emu_bringup` | "Drawing the firmware's screens (Tier-0)" |
+| check a remix | `make check REMIX=<name>` (`OT_PROJECT=<dir>` adds a real project: `verify_set`) | [The port on a project](#the-port-on-a-project) |
+| play a remix in a browser or a macOS app: screen, keys, knobs, sound | `make panel REMIX=<name>` / `make panel-app` | [`tools/panel/README.md`](../panel/README.md) |
+| see the screen and press keys in a Tk window | `make emu-live REMIX=<name>` | [The panel from a FIFO](#the-panel-from-a-fifo) |
+| a scripted run on a project: watches, dumps, MIDI in, audio out | `out/emu/ot_emu ...` | [The port on a project](#the-port-on-a-project) |
+| USB: enumerate, MIDI, audio from a script | `ot_emu --usb-host SOCKET` + `tools/harness/usb_host.py` | [USB](#usb) |
+| the firmware's own strings for a page, from Python | `emu_bringup` | [Tier-0](#tier-0-unicorn) |
 
 `make panel` and `make emu-live` both take the project from `OT_PROJECT`
-or `~/.octabam_project`. `make panel` runs the port over `--interactive`
-with `--dsp-rt` (sound, paced to real time) and keeps its card in
-`out/cards/`; `make emu-live` runs it over `--live FIFO --lcd FILE` on a
-scratch card, no sound.
+or from `~/.octabam_project`.
+- `make panel` runs the port over `--interactive` with `--dsp-rt` (sound,
+  paced to real time) and keeps its card in `out/cards/`.
+- `make emu-live` runs it over `--live FIFO --lcd FILE` on a scratch card,
+  with no sound.
 
 ## Build
 
+Needs `make setup` and `make os && make recon` ([BUILDING.md sections 0–2](../../docs/guide/BUILDING.md)), plus `cmake`.
+
 ```sh
 make emu-cf                          # cmake into out/emu, then boots stock 1.40C to the RTOS handoff
-./out/emu/ot_emu --help              # every option, grouped
-make emu-setup                       # .venv: unicorn, textual, sounddevice (Tier-0, the panel's audio)
+./out/emu/ot_emu --help              # an unrecognised argument: prints the usage block (main.cpp, parseArgs) and exits 2
+make emu-setup                       # .venv via uv: unicorn, textual, sounddevice (Tier-0, the panel's audio)
+make emu-unicorn                     # the EMAC-fixed Unicorn for Tier-0
 ```
 
-In a worktree, run `make emu-cf` there: a symlinked `out/emu` builds the
-main checkout's sources (`AGENTS.md`). After a change under
-`tools/patches/dsp56300.patch`: `make dsp-repatch`, then `make emu-cf`.
-
-The milestone records are `docs/firmware/COLDFIRE_PORT.md` (O14i-O24, Tim
-Hastie's) and `git show 3ceba41:docs/history/COLDFIRE_PORT.md` (O1-O14).
+- In a worktree, run `make emu-cf` in that worktree. A symlinked `out/emu`
+  builds the main checkout's sources (see `AGENTS.md`).
+- After a change to `tools/patches/dsp56300.patch`, run `make dsp-repatch`,
+  then `make emu-cf`.
+- `make emu-cf` passes the host architecture to cmake. An Intel-Homebrew
+  cmake configured x86_64 and ran the port under Rosetta.
 
 ## The port on a project
 
@@ -59,201 +67,184 @@ out/emu/ot_emu --image out/mainos_bus.bin --card out/card.img --set OCTABAM --pr
     [--poke-trig 2] [--audio-in tone.wav] [--block-dump F] [--audio-out PREFIX] [--ata-latency SAMPLES]
 ```
 
-- The project's `[STATES] BANK=` is the bank that plays; `--bank N` selects
-  live and the transport start re-applies the saved bank's part over the
-  live lane (half of the live id array was the other bank's after three
-  frames, 15 Sep 2026). Write the fixture into the saved bank.
-- Samples: `stage_card.py` skips `.wav`/`.ot`; `--audio` stages one at its
-  card path. FLEX and STATIC (measured 15 Sep 2026: TSMODE 0 fits the file
-  at unity, −69 dB) both play. `--main-level` is required for any voice.
-- Cost: the load runs until the engine is idle (below; 90 s ceiling), about
-  2× emulated time on the wall; ≈ 15 frames/s with both cores live.
-- A panel action: `--poke-early ADDR=BYTE` (before the call; `0x80000000`
-  is the current track), `--call ADDR,arg,...` (a firmware routine as
-  main, after the load), `--step FRAME:call|poke|dump:SPEC` (repeatable, in
-  order: a call, a poke `addr=byte;...` or a memory dump `addr,len=path;...`,
-  at `-` = after the load before the transport or at frame N after the
-  transport start, so one boot carries a gate's whole script;
-  `verify_modedefaults` runs its two editor calls, their lane dumps and its
-  MIDI case on one Octakit load since 28 Sep 2026, three before), `--live-script FILE`
-  (lines of `<emulated ms> key|enc|pot|midi|quit ...`, the `--live` vocabulary,
-  applied at those emulated times with the transport stopped: a panel script
-  that runs the same on a loaded machine as on a quiet one; `verify_tempobus`
-  since 28 Sep 2026), `--scenario "LOG ARGS..."` (repeatable, with
-  `--scenario-jobs N`: the port loads once and forks one child per scenario,
-  each from the identical loaded machine, stdout to LOG, ARGS its post-load
-  options; the DSP cores' shared memory is copied private in each child;
-  `verify_scenesp2` since 29 Sep 2026) and `--call-at N` (the same call N frames after
-  the transport start, so the part re-apply does not erase an edit).
-  `--poke` writes after the load, before the frames.
-- MIDI IN: `--midi FILE`, one event per line, `<frames after the
-  transport start> <hex bytes>` or `pre <hex bytes>` (before the transport
-  start, the transport stopped). Bytes go onto UART0 (`0xfc060000`, INTC0
-  source 26) and the firmware's own RX ISR, framer and MIDI thread take
-  them: CC 40 = 100 on T2's channel moved T2's SEND halfword (with the
-  page-1 slew, ~30 frames), CC 68 landed in the FX1 page-2 lane through
-  the CC MAP cave, `pre C0 10` switched to bank B while stopped. A
-  program change while playing waits for the pattern's end (thousands of
-  frames).
-- `--dsp-dirty [SEED]` fills both cores' X/Y and the shared window with a
-  xorshift stream before the boot, as hardware's unzeroed RAM (dsp_host
-  `-dirty` covers Y only). OCTABAM88 bank B on the rig image, clean vs
-  dirty at 1800 frames: the aux return on T8 −31.4 vs −30.1 dBFS.
-- Watches: `--watch-mem ADDR,LEN[;ADDR,LEN...]` (every write, with the
-  PC), `--watch-read`, `--watch-pc`, `--dsp-watch core:X|Y|P:addr`,
-  `--dsp-pcwatch core:pc` (the last 24 arrivals with a, b, x, y, r0, r4, r6, n4, sp, r2, m2, r1, n1, r7, m7, m0 and, since 21 Sep 2026, n7 -- the frame count of a call), `--dsp-peek core:X|Y|P:addr,len` (upper-case
-  space letter), `--mem-dump addr,len=file`, `--midi-out FILE` (UART0's
-  transmit bytes, raw: the firmware's CC echo and CC FEEDBACK's dumps).
-- The record a track's DSP instances read is `0x80000110 + 64·t` (32
-  halfwords, `docs/firmware/MIDI.md`); the page-2 lane `0x80000810 + 72·t`.
-- `--card-out FILE` writes the card as the firmware left it;
-  `emu_card.extract_image(bytes[, out_dir])` reads any FAT16 card image
-  back ({path: bytes}, long names). The firmware writes `LOG 000000.txt`
-  in the card root during a load: one `ERROR` line per sample it could
-  not open (`Couldn't load STATIC[n] with 'x.wav' ('FILE NOT FOUND')`)
-  and `Couldn't read bank file '/SET/PROJ/bank01.work' ('PARSE ERROR')`
-  for a PART record whose index byte is wrong (measured 15 Sep 2026) —
-  the unit's PARSE ERROR, readable without a card. A load under the rig
-  image or the `bus` image rewrote no project file (257 WRITE commands =
-  the LOG and the FAT).
+- **Banks.** The project's `[STATES] BANK=` is the bank that plays.
+  `--bank N` selects a bank live, but the transport start re-applies the
+  saved bank's part over the live lane, so write a fixture into the saved
+  bank.
+- **Samples.** `stage_card.py` skips `.wav` and `.ot` files; `--audio`
+  stages one at its card path. FLEX and STATIC both play.
+  `--main-level` is required for any voice.
+- **The load** runs until the engine is idle:
+  - It ends when LOAD PROJECT's handler (`0x40085336`) has been entered and
+    the engine sits at its queue receive (`0x4008484e`) with the queue
+    count (`4(0x460d17ce)`) at zero.
+  - The report prints `load run ended: LOAD PROJECT handled, N ms after
+    the post`, or `STILL RUNNING at the budget (raise --load-ms)`.
+  - `--load-ms` is a ceiling, 90 s in every harness.
+  - Measured: 14.9 s on stock, 31.7 s under Octakit (bottleservice on
+    OCTABAM89_setgate).
+  - Under Octakit the post-load work queues a second engine command. A
+    transport started inside it finds Octakit's page-1 wrapper busy for
+    every CC.
+- **ATA latency** defaults to 8 samples (~180 µs per data sector). At 1
+  sample, `sys` consumed the engine's reset-time "select bank 0" after the
+  `BANK=` parse. Under Octakit that ordering halted the load in
+  `gk_lifecycle_activation_publication_report_fatal` (`0x45d173e4`).
+  - Why the latency changes the order is inferred, not traced.
+  - A module that adds interrupts or work during LOAD PROJECT under
+    Octakit is exposed to this ordering: CC FEEDBACK's first build
+    transmitted 272 CCs inside the load and tripped it.
+- **A power cycle.** CS1 (`0x10000000`, 1 MB) is the memory that keeps
+  the current bank over a power-off: stock copies the bank there
+  (`0x4000faf0`), writes edits through, and at power-up checks it
+  (`0x40025770`), puts the bank back (`0x4000fbb4`) and loads every other
+  bank from the card (mask `0xfffb` at `0x40084d60`). The port starts with
+  CS1 empty and posts LOAD PROJECT, which reads every bank from the card,
+  like loading from the menu.
+  - `--cs1-in FILE` puts FILE's bytes in CS1 before the boot; `--mem-dump
+    0x10000000,0x100000=FILE` of an earlier run makes it that run's CS1.
+  - `--no-post` posts nothing: the load is the firmware's own power-up
+    one; the run still ends when the engine is idle.
+  - Measured 2 Oct 2026 on the stock image: a page-1 lock recorded and
+    never saved is in the pattern after `--cs1-in` + `--no-post` with the
+    first run's card, and gone with the posted load.
+- **Cost.** Wall time is about 2× the emulated time; about 15 frames/s with
+  both cores live.
+- **Panel actions and scripts:**
+  - `--poke-early ADDR=BYTE` (before the call; `0x80000000` is the current
+    track).
+  - `--call ADDR,arg,...` runs a firmware routine as main, after the load.
+  - `--call-at N` runs the same call N frames after the transport start.
+  - `--poke` writes after the load, before the frames.
+  - `--step FRAME:call|poke|dump:SPEC` is repeatable and runs in order:
+    - `call`, a poke `addr=byte;...`, or a memory dump `addr,len=path;...`;
+    - FRAME `-` means after the load and before the transport;
+    - FRAME N means frame N after the transport start.
+  - `--live-script FILE`: lines of `<emulated ms> key|enc|pot|midi|poke|quit ...` (`poke` as `--poke`),
+    applied at those emulated times with the transport stopped.
+  - `--scenario "LOG ARGS..."` (repeatable, with `--scenario-jobs N`) loads
+    once and forks one child per scenario from the identical loaded
+    machine. The DSP cores' shared memory is copied private in each child
+    (`unshareRanges`, `main.cpp`).
+- **Memory as a reset leaves it.** `--preload ADDR=FILE[;...]` puts a file's
+  bytes in memory before the boot runs. The port boots zeroed RAM with NOR
+  unmodelled: `0x3ffc` (NOR's bootstrap version) reads 0, so every boot takes
+  the entry's bootstrap-upgrade branch where a flashed unit goes straight to
+  `0x4000050c`; `--preload 0x3ffc=<04 08>` gives the hardware's path. A
+  unit's power-on also finds battery SRAM from its last session: dump
+  `0x10000000..0x100fffff` after a boot (`--mem-dump`) and preload it, or the
+  port measures the first-ever power-on only (PR #542's boot picker,
+  `docs/contributing/FAILURE_MODES.md`).
+- **A power-on's own load.** `--boot-load` (`--names-early --no-post`) writes the SET/PROJECT names
+  before the mount, as a unit that has run a project has them, and posts
+  nothing itself: the one LOAD PROJECT is the firmware's own (sys's media
+  case, through `0x4002574c`). With a short `--load-ms` the run goes on to
+  `--live-script` while the load is still held (`verify_remix_switch`'s boot
+  cases).
+- **Three things the DSP emulator does that the chip does not** (found
+  bringing up REMIX SWITCH's DSP park, 29 Sep 2026): `dsp peek <core> P <addr>`
+  answers 0 for `0x30000..0x3ffff` (it reads the core's own array, not the
+  shared window); `--dsp-pcwatch`'s a1/b1 print the accumulator shifted left
+  by 8; and inside a long interrupt (a `jsr` vector) no peripheral runs until
+  the handler's `rti`, so HI08 flags such as HTDE freeze.
+- **MIDI IN.**
+  - `--midi FILE` takes one event per line: `<frames after the transport
+    start> <hex bytes>`, or `pre <hex bytes>` (before the transport start,
+    with the transport stopped).
+  - The bytes go onto UART0 (`0xfc060000`, INTC0 source 26) and through
+    the firmware's own RX ISR, framer and MIDI thread.
+  - A program change while playing waits for the pattern's end.
+- **Dirty RAM.** `--dsp-dirty [SEED]` fills both cores' X/Y and the shared
+  window with a xorshift stream before the boot, as on hardware.
+  `dsp_host -dirty` covers Y only.
+- **Watches and dumps:**
+  - `--watch-mem ADDR,LEN[;...]` logs every write, with the PC. One range
+    list per run; the last flag wins.
+  - `--watch-read`, `--watch-pc`.
+  - `--dsp-watch core:X|Y|P:addr`.
+  - `--dsp-pcwatch core:pc` shows the last 24 arrivals with a, b, x, y, r0,
+    r4, r6, n4, sp, r2, m2, r1, n1, r7, m7, m0 and n7 (n7 = the frame count
+    of a call).
+  - `--dsp-peek core:X|Y|P:addr,len` (upper-case space letter).
+  - `--mem-dump addr,len=file`.
+  - `--midi-out FILE` (UART0's transmit bytes).
+- **Addresses.** A track's DSP instance record is `0x80000110 + 64·t` (32
+  halfwords; see `docs/firmware/MIDI.md`). Its page-2 lane is
+  `0x80000810 + 72·t`.
+- **The card.**
+  - `--card-out FILE` writes the card as the firmware left it.
+  - `--cmd-log-end FILE` writes every ATA command of the whole run, the
+    load and what follows it, one line each: `WHAT LBA COUNT | #n pc PC
+    TASK`. `--cmd-log` writes the load's commands only.
+  - `emu_card.extract_image(bytes[, out_dir])` reads a FAT16 image back as
+    `{path: bytes}`.
+  - The firmware writes `LOG 000000.txt` in the card root during a load,
+    with one `ERROR` line per sample it could not open.
+  - A wrong PART index byte shows there as `Couldn't read bank file ...
+    ('PARSE ERROR')`, the unit's PARSE ERROR.
+- **A detoured idle park.** `Rtos::install` reads `g_mainSpin-6`. A
+  `jmp abs.l` there (CF METER IDLE's `m_idle`) makes `[target, target+0x80)`
+  count as main's park.
 
-`tools/verify/verify_set.py REMIX --project DIR [--bank N]` (in `make
-verify` when `OT_PROJECT` is set or `~/.octabam_project` names a project) does all of this for one part of a real
-project and asserts: the load completed; the live FX1/FX2 id arrays equal
-the part's; every track's record halfwords 18-26 equal its page-2 lane;
-every track with record audio has a chain output; the main out's TX0
-counts are printed (informational: on OCTABAM89_setgate only T8's chain
-output ever reached TX0 under the port, measured 20 Sep 2026 with and
-without the return; which tracks reach TX0 under the port is open); CC 40
-over MIDI IN moved T2's SEND and (CC MAP) CC 68 reached
-T1's FX1 page 2; on a bus remix each engine's host carries T2's send on
-its chain output (the wet prints on the host since 20 Sep 2026; the
-engines warm up 256 blocks each) and an engine on the wrong core is
-refused;
-the load rewrote no project file; the firmware's LOG carries no error
-beyond the unstaged samples. The tested bank is staged as bank A too and
-`MASTER_TRACK=0` (the emulated load ends on bank A, and the transport
-start's refresher re-applies the saved bank's ids for T1-T3, T7 and T8
-only, by `--bank` or by a program change alike; with the master on
-nothing reaches TX0 under the port). ~80 s. On the image before PR #271
-it fails T1 and T5 (the tempo cave); on it, 18 checks pass (OCTABAM88
-bank B, 15 Sep 2026).
+`tools/verify/verify_set.py REMIX --project DIR [--bank N]` runs one part of
+a real project. It is part of `make verify` when `OT_PROJECT` or
+`~/.octabam_project` names a project, and takes ~80 s. It asserts:
+- the load completed;
+- the live FX1/FX2 id arrays equal the part's;
+- every track's record halfwords 18–26 equal its page-2 lane;
+- every track with record audio has a chain output;
+- CC 40 over MIDI IN moves T2's SEND;
+- (CC MAP) CC 68 reaches T1's FX1 page 2;
+- on a bus remix, each engine's host carries T2's send on its chain
+  output, and an engine on the wrong core is refused;
+- the load rewrote no project file;
+- the firmware's LOG has no error beyond the unstaged samples.
 
-### The port's load order and the voice silence (measured 27-28 Sep 2026)
+The tested bank is staged as bank A too, with `MASTER_TRACK=0`. The TX0
+census of the main out is printed and not checked (below).
 
-- **The load runs until the engine is idle (28 Sep 2026).** Before,
-  `loadProjectLive` ran LOAD PROJECT for a fixed `--load-ms` (20 s in every
-  harness) and moved on. Under Octakit the handler carries her post-load
-  persistence work (`gk_stock_banks_load_work`'s load-or-migrate: 2.7 G
-  instructions, 13,682 sectors written on a fresh card) and `sys` queues a
-  second engine command behind it while it runs (her background banks-load
-  path, ~360 M instructions more, the hosts muted throughout). With the
-  20 s budget the transport started inside that work: her lifecycle state
-  was still QUIESCED and her page-1 wrapper (`gk_stock_track_parameter_absolute`)
-  returned busy for every CC (bottleservice's set gate: CC 40/41 never
-  reached the hosts). The port now counts the handler's entry
-  (`0x40085336`) from before the post and runs until the engine is at its
-  queue receive (`0x4008484e`) with the queue's count (`4(0x460d17ce)`,
-  what the receive tests before blocking) zero, and prints
-  `load run ended: LOAD PROJECT handled, N ms after the post` or
-  `STILL RUNNING at the budget (raise --load-ms)`. bottleservice on
-  OCTABAM89_setgate: handled 31.7 s after the post. `--load-ms` is a
-  ceiling now, 90 s by default in every harness; a run that hits it is
-  reported, not silently cut short.
-- **The load ends on the saved bank since 27 Sep 2026** (`saved_bank 2,
-  final bank 2`), because the port's ATA latency is 8 samples (~180 us
-  per data sector; `--ata-latency` overrides it). At the old 1 sample
-  `sys` consumed the engine's own reset-time "select bank 0" AFTER the
-  BANK= parse on the ok-ms image (RTOS_FORK section 7: the unit does not,
-  measured 6 Sep 2026), so that load ended on bank A and the sequencer
-  branch re-selected the saved bank afterwards. With Octakit's lifecycle
-  checks in the image the late select was fatal: `mods`, `ok-ms` and
-  `rig-mods` halted at LOAD (`illegal` at `0x45d173e4` =
-  `gk_lifecycle_activation_publication_report_fatal`) because the engine
-  had written its part (`0x80001829 <- 1`) 6 ms before `sys` wrote the
-  UI's part and mirror to 0 (`0x100b14cf`, `0x80000003`), and
-  `gk_ui_transition_prepare` compares the three. At 8 samples no `sys`
-  write to `0x80000002` follows the parse and those remixes load (ok-ms's
-  set gate: 0 failures at 8 and at 32). Why the latency changes the order
-  is inferred (the engine blocks longer per sector, so `sys` drains its
-  queue earlier), not traced. The same check tripped at 8 samples on 28 Sep
-  2026 when CC FEEDBACK's first build transmitted 272 CCs (UART0
-  interrupts) inside the load; the module now waits for the engine's queue
-  to be idle (`0x460d17ce+0xc`) and the load passes at 8 again. A module
-  that adds interrupts or work during LOAD PROJECT under Octakit is exposed
-  to this ordering. One `--watch-mem` range per run: the last flag wins.
-- **A card-sample voice plays under the port, and its audio stops at the
-  DSP's main mixdown (measured 28 Sep 2026, `verify_repitch`'s FLEX
-  fixture on the repitch and bus images).** Retracting the 27 Sep reading
-  "no voice has started": the voice starts at the transport (`0x4000f824`
-  resets its position, then `0x40008898` advances it 16 per frame for the
-  whole run), the fetch through the voice struct returns the FLEX arena
-  chunk with the staged sine in it (`0x400086c0`: 16 frames a call), the
-  format-3 copy loop (`0x40008768`) fills the 84-word track record with
-  the samples, the host port pushes it, core 1 renders it and its post-FX
-  read-back (`0x80003190`, 25 % non-zero, rms 6,699) and the 512-word
-  forward to core 0 carry it. Core 0's summing mixdown (`P:0x259..0x275`,
-  the `y:(r5)+` gains from `Y:0x40` against the track blocks at
-  `X:0x2400..`) multiplies the track's samples by a gain that reads 0
-  (`--dsp-pcwatch 0:0x25e`: x0 = the sine, y0 = 0), so the TX DMA ring at
-  `X:0x8000` (`DSR2 0x8000, DDR2 M_TX0`) stays zero and every ESAI word is
-  0. `Y:0x40` is written 0 each frame by the record unpack at `P:0x3c7`
-  from the record's fields; the same voice on T5 (core 0) is silent the
-  same way. The record arrives on the DSP as one 24-bit word per
-  halfword with `0x03` in the high byte (`X:0x2080: 030000 030400 ..
-  038000 03ee9a`). `FW_TRIG_WORDS` (0x46104d26) stays 0 in audible runs
-  too and is not a trig indicator.
-  Every fixture on this machine is silent at TX0: the repitch and euclid
-  playback fixtures, the set gate's THRU tracks on the setgate project
-  (restock, bus, repitch images), and the acceptance stress project under
-  the plain port flags, with `--audio-in tones` and with `--poke-trig 2`.
-  The one audible configuration (`verify_set` on the stress project, bus
-  image: TX0 ring words 2-5 non-zero on 14,223 of 14,400 samples, also a
-  27 Sep charsave run) adds the MIDI sends into the hosts, so those words
-  are the engines' wet, not any track's dry. `verify_set` prints the TX0
-  census as info and does not check it; the level-law and SOS runs that
-  heard FLEX under the port were not re-run here. Open: which record field
-  the unpack turns into the mixdown gain and why it is 0 for every track
-  (a port defect in the record delivery or in the ColdFire level chain at
-  `0x4000cc96`, whose 6 longs per record are the EMAC's `msacw` products;
-  the FLEX voice's word 18 reads `0x0040`, a THRU's `0x047f`), against the
-  DSP's own unpack (`P:0x3ac..0x3f7`, gains into `L:0x40..`, ramps into
-  `X/Y:0x80..`). The level bytes `0x8000005e/0x8000005f` the dispatcher
-  copies into the record's words 0x32/0x33 are what the project parse
-  stores from `METRONOME_CUE_VOLUME` / `METRONOME_MAIN_VOLUME`
-  (`0x40087b14`, `0x40087b58`); `MAIN_LEVEL` / `CUE_LEVEL` land at
-  `0x80000035` / `0x80000036` (`0x40087348`, `0x4008738c`); poking either
-  pair after the load changes nothing here.
+### Open: no track's dry audio reaches TX0 under the port
 
-- **A detoured idle park is followed (28 Sep 2026).** `Rtos::install`
-  reads `g_mainSpin-6`: a `jmp abs.l` there (CF METER IDLE's `m_idle`)
-  makes `[target, target+0x80)` count as main's park for the idle skip,
-  the burst end, `runToMainSpin` and `callAsMain`'s entry check
-  (`atSpin`, `spinRange`; the narrative prints `main's park is detoured
-  to ...`). A borrowed call still returns to the stock `bras .`, intact
-  behind the detour, and main parks there afterwards. `cfmeter`'s set
-  gate: 0 failures (before: card ready 0, LOAD PROJECT never posted).
+A card-sample voice plays, and its audio stops at core 0's summing mixdown
+(`P:0x259..0x275`). The gain read from `Y:0x40` is 0 for every track
+(`--dsp-pcwatch 0:0x25e`: x0 = the sample, y0 = 0), so the TX DMA ring at
+`X:0x8000` stays zero. This was measured 28 Sep 2026 with `verify_repitch`'s
+FLEX fixture on the repitch and bus images.
 
-## The screen itself (the port, 17 Sep 2026)
+- **Upstream is fine.** The voice's position, fetch, format-3 copy, host
+  port, core 1 render and post-FX read-back all carry the sample.
+- **Where the zero comes from.** `Y:0x40` is written 0 each frame by the
+  record unpack at `P:0x3c7`.
+- **The only audible configuration** is `verify_set` on the stress project,
+  and that audio is the engines' wet from the MIDI sends, not any track's
+  dry.
+- **Open question:** which record field the unpack (`P:0x3ac..0x3f7`) turns
+  into that gain, and why it is 0. The candidates are the port's record
+  delivery or the ColdFire level chain at `0x4000cc96`.
+- **Poking the level bytes changes nothing.** Poking
+  `0x8000005e/0x8000005f` (from `METRONOME_*_VOLUME`) or
+  `0x80000035/0x80000036` (`MAIN_LEVEL` / `CUE_LEVEL`) after the load
+  leaves the output the same.
 
-`ot_emu --lcd FILE` writes the firmware's own 1-bpp plane (`0x46c7e0ea`,
-1,024 bytes) to FILE whenever it has changed, at most once per 2M ColdFire
-instructions, and once more at exit (tmp + rename, never a torn frame).
-`tools/emu/lcd_view.py FILE` shows it in a Tk window and follows the file;
-`--term` draws it in the terminal with half blocks; `--png out.png` takes
-one frame. The plane is 64 columns × 128 rows, 8 bytes per row, MSB left,
-and screen pixel (x, y) is column 63−y of row x — stored a quarter turn
-round; the PLAYBACK page reads upright under that layout and no other
-(`docs/firmware/PANEL.md` §1). A 400-frame sequencer run on the rig
-project flushed 12 frames: the panel redraws seldom, and the port drives
-no keys, so what you see is the page the load leaves and whatever the
-transport changes on it (BPM, the play icon, the pattern indicator).
+## The screen
 
-## Driving it: the panel from a FIFO (18 Sep 2026)
+`ot_emu --lcd FILE` writes the firmware's 1-bpp plane (`0x46c7e0ea`, 1,024
+bytes) to FILE:
+- whenever it has changed, at most once per 2M ColdFire instructions;
+- once more at exit (tmp + rename).
 
-`ot_emu --live FIFO` reads panel events while the RTOS runs and feeds
-them to the firmware over the panel link (UART1) in the controller's own
-framing (`docs/firmware/PANEL.md` §4b), and MIDI over UART0:
+`tools/emu/lcd_view.py FILE` shows it in a Tk window. `--term` draws it
+with half blocks, and `--png out.png` saves one frame.
+
+The plane is 64 columns × 128 rows, 8 bytes per row, MSB left. Screen pixel
+(x, y) is column 63−y of row x (see `docs/firmware/PANEL.md` section 1).
+
+## The panel from a FIFO
+
+`ot_emu --live FIFO` reads panel events while the RTOS runs:
+- panel events go to the firmware over the panel link (UART1), in the
+  controller's own framing (`docs/firmware/PANEL.md` section 4b);
+- MIDI goes over UART0.
 
 ```
 mkfifo out/panel.fifo
@@ -262,38 +253,36 @@ mkfifo out/panel.fifo
 .venv/bin/python3 tools/emu/lcd_view.py out/lcd.bin --panel out/panel.fifo     # other terminal
 ```
 
-Lines: `key <code> down|up`, `enc <n> <delta>`, `pot <0..255>`,
-`midi <hex>...`, `quit`. Without `--sequencer` the transport is yours
-(PLAY is `0x28`); with it the frames target still ends the run. The
-viewer's `--panel` draws keys (press/release, so FUNC + key holds), the
-seven encoders (buttons or the mouse wheel over the label) and the MAIN
-pot under the screen, with keyboard shortcuts (arrows, Return, Escape,
-space = PLAY, `1..8 q..i` = trigs, F1..F5 = pages). The FIFO is polled
-every 256 instructions and at most every 10 ms of wall time; the plane
-file is flushed from the same poll 30 ms after a redraw. Measured: a
-page key changes the screen in under a second of wall time at idle.
+- **FIFO lines:** `key <code> down|up`, `enc <n> <delta>`, `pot <0..255>`,
+  `midi <hex>...`, `quit`.
+- **The transport.** Without `--sequencer` the transport is yours (PLAY is
+  `0x28`).
+- **The viewer's `--panel`** draws the keys, the seven encoders and the
+  MAIN pot. Its keyboard shortcuts are the arrows, Return, Escape,
+  space = PLAY, `1..8 q..i` = trigs and F1..F5 = pages.
+- **Polling.** The FIFO is polled every 256 instructions and at most every
+  10 ms of wall time.
 
-## USB: the device controller and a scripted host (the port, 25 Sep 2026)
+## USB
 
-`--usb-host SOCKET` gives the port the MCF5445x's USB OTG module as the
-firmware drives it (`tools/emu/ot_emu/usb.h`): the Chipidea device
-controller's registers at `0xfc0b0000`, the session and interrupt
-semantics its driver depends on, and the transfers themselves -- a host on
-a unix socket walks the firmware's queue heads and transfer descriptors in
-guest memory, moves the bytes, retires the descriptors and raises the
-completion interrupt (INTC1 source 47, the firmware installs it at level 4).
-Without the option the window stays the all-ones stub every earlier gate
-was measured against, and the firmware never brings the controller up.
+`--usb-host SOCKET` gives the port the MCF5445x USB OTG module as the
+firmware drives it (`tools/emu/ot_emu/usb.h`):
+- the Chipidea device controller's registers at `0xfc0b0000`;
+- the session and interrupt semantics;
+- transfers through the firmware's queue heads and transfer descriptors;
+- the completion interrupt on INTC1 source 47.
 
-What the firmware does with it, read from the 1.40C image: the boot selects
-a ULPI transceiver (an external high-speed PHY); the bring-up at
-`0x4001d630` writes USBMODE 0x0e (device, big-endian), the endpoint list
-at `0x4ec94800` and USBINTR 0x57 as soon as OTGSC reports a session; the
-ISR at `0x4001e594` answers GET_DESCRIPTOR from the tables at `0x400e2000`
-(Elektron 1935:0002, one MSC/SCSI/BOT interface on EP1) and runs the SCSI
-worker over EP1, answering "no medium" until USB DISK MODE unmounts the
-card. Nothing in the image runs the controller as a host, and the separate
-host-only module at `0xfc0b4000` is never touched.
+Without the option, the window reads all-ones and the firmware never brings
+the controller up.
+
+What the firmware does with it:
+- **Bring-up** at `0x4001d630`: USBMODE 0x0e (device, big-endian), the
+  endpoint list at `0x4ec94800`, and USBINTR 0x57 once OTGSC reports a
+  session. The transceiver is ULPI.
+- **The ISR** at `0x4001e594` answers GET_DESCRIPTOR from `0x400e2000`
+  (Elektron 1935:0002: one MSC/SCSI/BOT interface on EP1). It answers "no
+  medium" until USB DISK MODE unmounts the card.
+- **Host mode.** Nothing in the image runs the controller as a host.
 
 ```sh
 out/emu/ot_emu --image out/mainos_bus.bin --usb-host /tmp/ot-usb.sock &
@@ -302,146 +291,386 @@ tools/harness/usb_host.py /tmp/ot-usb.sock midi-send 903c64
 tools/harness/usb_host.py /tmp/ot-usb.sock audio 3 2.0 capture.pcm 4
 ```
 
-The socket protocol is octemu's (`setup`/`in`/`out`/`reset`/`speed`;
-markandrus, MIT), so its `tests/usb-host.py` drives this port unchanged.
-After every other phase the port HOLDS the machine for the bench until the
-client has connected and hung up (`--usb-hold-ms`, a wall-clock cap: an
-idle machine skips through emulated seconds in milliseconds). A `reset`
-is deferred until the firmware has attached, so a script that connects
-before the bring-up waits instead of failing. `--usb-notify FILE` logs the
-attach/detach edges of USB DISK MODE (the firmware's own flag at
-`0x460e76a0`); `--usb-fs` reports full speed in PORTSC1. The exit summary
-prints the registers and the transfer counts; a primed queue head whose
-token was never cleared is named on stderr (the defect that crashed a unit
-twice under octemu's USB-audio payload).
+- **The socket protocol** is octemu's (`setup`/`in`/`out`/`reset`/`speed`;
+  markandrus, MIT).
+- **Holding for the client.** After every other phase, the port holds the
+  machine until the client has connected and hung up (`--usb-hold-ms` caps
+  it). A `reset` answers once the firmware has attached and acknowledged
+  it (URI), so the bench's first SETUP finds the reset handling done, as a
+  real host's does after its >= 10 ms of reset signalling (5 Oct 2026:
+  answered at landing, a SETUP sent while the reset was unhandled was
+  served and then flushed with everything else, status-stage prime
+  included -- `verify_usb`'s full-speed phase timed out on `out 0`).
+- **Other flags.**
+  - `--usb-notify FILE` logs USB DISK MODE's attach/detach edges
+    (`0x460e76a0`).
+  - `--usb-fs` reports full speed.
+  - `OT_USB_TRACE=1` in the environment prints every bench line, register
+    write, completion and reset on stderr with wall seconds and the SOF
+    count (device time).
+- **Polling cadence.** The bench polls an isochronous endpoint on the
+  endpoint's own schedule in device time: 250 µs at high speed for
+  bInterval 2, 1 ms at full speed.
+- **The bench sets the pace.** While a client is connected and an
+  isochronous IN endpoint is enabled with no IN waiting, the port holds
+  device time until the client's next command, so a bench that is slow on
+  the wall clock (a loaded machine) costs wall time, not polls. The hold
+  ends early while the client has a transfer, a `poke`/`call` or an
+  unacknowledged `reset` outstanding (the device must run to finish it),
+  on hangup, and at the `--usb-hold-ms` wall cap. A poll it lets through with no IN waiting is counted in the
+  final "iso poll(s) with no IN waiting". The bench issues one command at
+  a time, so a poll slot that falls inside an EP0 control transfer made
+  while the stream is enabled (`verify_usb_in`: SET_INTERFACE 5, the two
+  vendor 0x56 reads, alt 0 on close) is one of these: 0-2 per
+  `verify_usb_in` run, under load or not.
+- **Gates.**
+  - `verify_usb` enumerates the stock stack (INQUIRY `Elektron Octatrack
+    DPS-1 0002`) and streams from the `usb-audio-*` modules.
+  - `ot_periph_test` pins the register rules.
+- **Limits.**
+  - The port serialises the host's polls, the frame interrupt and the eDMA,
+    so it cannot show timing races.
+  - octemu's card-loaded payload does not install here. It hooks
+    `fs_card_detect_poll` (`0x4003f174`), which the port's direct mount
+    never runs. The `usb-*` modules carry that code on octabam's loader
+    instead.
 
-Measured 25 Sep 2026: the stock stack in `bottleservice` enumerates at high
-speed and answers INQUIRY `Elektron Octatrack DPS-1 0002` with a good CSW
-(`make verify` runs this as `verify_usb`, 3 s). octemu's USB-MIDI image
-built from the same stock bytes enumerates with three interfaces, and two
-channel messages sent to EP2 OUT reach the firmware's own MIDI receive
-FIFO (six writes to `0x46100b80` from `midi_rx_enqueue`). The peripheral
-gate (`ot_periph_test`) pins the register rules, the SETUP byte order, a
-bulk chain (INQUIRY data + CSW), one-descriptor-per-poll on an
-isochronous endpoint, OUT, stall and reset on a fake memory.
+## Port features
 
-What it cannot see: timing. The port serialises the host's polls, the
-frame interrupt and the eDMA, so the USB-audio producer's race against the
-read-back bank swap -- octemu's open hypothesis for its mid-stream clicks
--- cannot show here. And octemu's card-loaded payload does not install
-under the port: its trampoline hooks `fs_card_detect_poll` (`0x4003f174`),
-the firmware routine the card-detect GPIO poll reaches, and the port mounts
-the card by posting the mount message directly, so that routine never runs
-(0 hits on a PC watch across a 800-frame run). The modules `usb-midi` and
-`usb-audio-*` carry the same code on octabam's loader instead, and
-`verify_usb` streams from them: the bench polls an isochronous endpoint
-on the endpoint's own schedule in DEVICE time (`isoPoll`, `isoPollHz`:
-250 us at high speed for bInterval 2, 1 ms at full speed), which is what a
-real host does; a script draining as fast as the socket allows starved the
-ring and pulled the rate servo below its nominal frame count.
+Every option is in the usage block `./out/emu/ot_emu` prints for an argument it does not know (`--help` is not an option; exit status 2). The `--interactive`
+commands' reply formats are the header comment of `main.cpp`
+(`serveInteractive`). All but `--mkii` came from Tim Hastie's fork
+(O14i–O23, 11–13 Sep 2026; `THIRD_PARTY.md`).
 
-## EMAC: both ACCext layouts (23 Sep 2026)
-
-The frame ISR saves the interrupted context's accumulator extension registers
-in integer mode (`clrl %d0; movel %d0,%macsr; movel %accext01,%d4; movel
-%accext23,%d5` at `0x4000ac96`) and restores them the same way at
-`0x4000d968`, every frame. `v4e.cpp`'s write knew only the fractional
-layout (eight extension + eight low bits per accumulator; the integer
-layout is sixteen extension bits), so every restore put the saved word's
-low byte into ACCn[7:0]: 0x12345678 came back 0x123456ab, the extensions
-0xfe008900 for 0xfedc89ab. Found by Jannik Aßfalg (an A/B/A of a ColdFire
-patch whose integer-mode MAC loop the ISR interrupted mid-accumulation;
-a stock A/A repeats exactly because the corruption is deterministic),
-reproduced here to the byte by the eight new assertions in
-`test_emac.cpp`, fixed to QEMU's `set_mac_exti`. `verify_set` on
-OCTABAM89 (900 frames, `bus`): block dump bit-identical before and after,
-18/18 — that fixture never has a live extension at an interrupt, so the
-fix is landed on the gate, not on a symptom.
+- **`--interactive`** (what `make panel` runs). After the batch's boot and
+  load the port prints `ready sample=<n> frames=<n>` and answers one line
+  per command on stdin. Integers are decimal or `0x..` (a leading zero is
+  not octal). Anything malformed answers `err <message>` and the loop
+  continues; EOF exits 0. `--main-level` defaults to 64 here; the batch
+  posts no level unless asked.
+  - `run <ms> [wall <s>]` is the only command that advances emulated time;
+    `stop=` in its reply is `time`, `gate`, `fault`, `illegal` or `wall`.
+  - `key <row> <mask>`, `knob <row> <delta>` (two bytes into UART A's
+    receive queue), `midi <hex>...` (UART0), `tx` (UART A's transmit bytes
+    since the last `tx`), `peek`/`poke` (≤ 4096 bytes; unmapped answers
+    `err`), `frame on|off`, `status`, `quit`.
+  - `pace on [rate]` / `pace off` / `pacestatus`: while stdin is empty the
+    port advances in 10 ms slices to track wall clock × rate, sleeping
+    inside `poll()` on stdin when ahead and re-anchoring when more than
+    250 ms behind.
+  - `audio start [main|cue|all|tracks]`, `audio read [<maxframes>]`,
+    `audio status`, `audio stop` (needs `--dsp`): core 0's ESAI TX0
+    frames as little-endian 16-bit (the 24-bit word >> 8) in a 60 s ring
+    (overwrites counted as `dropped`). `main` = ring words 2/3, `cue` =
+    4/5, `all` = the eight words, `tracks` = the eight words then the
+    sixteen per-track stems T1 L … T8 R, tapped at `P:0x2d5` (the buffers:
+    `docs/firmware/DSP.md` "Core 0's frame").
+  - `card status`, `card flush` (with a card).
+  - Instruments: `watch <addr>[,…]` / `hits` (PC hits with registers and
+    stack), `watchmem <addr> <len>` / `writes` (a watched SDRAM range is
+    given as its cached alias `0x8xxxxxxx`), `dsp watch|pcwatch|peek`
+    (lockstep only), `rtstatus` (`--dsp-rt`), `cfstatus`, `edmastatus`.
+- **`--dsp-rt`** (needs `--interactive`): the two DSP cores run under the
+  vendored JIT on worker threads, on the lockstep schedule (`dsp.cpp`,
+  "THE REAL-TIME MODE"); the ColdFire stays the master of emulated time.
+  On the clean OTLIVE fixture its capture was bit-identical to lockstep's
+  (13 Sep 2026: 0 mismatches of 199,358 samples, three runs). The
+  per-instruction DSP instruments do not observe it; every batch mode
+  keeps the lockstep interpreter.
+- **`--dsp-lazy N`**: the pair's ticks are booked and replayed in chunks
+  of up to N DSP instructions at the ColdFire's touch points; the default
+  in every mode, byte-identical to `0` (the per-tick path).
+- **`--rtc host|off|EPOCH`**: DSPI chip-select 2 answers as a DS1390-style
+  clock (BCD registers `0x01`–`0x07`, plus `0x00` and `0x0e`). `off`, the
+  batch default, is the loopback (the dialog reads 2000-00-00); `host` is
+  the `--interactive` default; an epoch is a frozen UTC instant. A
+  written register is kept and stops advancing.
+- **`--card-rw`** (needs `--card`): every committed sector is `pwrite()`n
+  to the image file before its WRITE completes; `card flush`, `quit`, EOF
+  and exit `fsync`. Without it the card lives in memory.
+- **`--mkii`**: the GPIO loopback the boot probe tests and the MKII panel's
+  replies (`docs/firmware/PANEL.md` section 4c).
+- **DMA timers** DTIM0–3 (`0xfc070000 + 0x4000·n`, INTC0 sources 32–35);
+  DTIM1 is the firmware's 8.333 ms UI/LED tick. The 2.8 s boot logo on
+  DTIM3 is skipped unless `--boot-logo`. DTIM0 counts its DTIN0 pin at
+  256 fs (inferred from the MIDI clock handler), the timestamp the MIDI
+  clock tempo is built from.
+- **The frame edge.** With `--dsp` the frame interrupt is the DSP's bank
+  word (O9b), so a stalled core freezes the sequencer on trig 1;
+  `--frame-timer` restores the 16-sample timer, and `--frame` uses the
+  timer without the cores.
+- **Memory-to-memory eDMA.** At the kick, a channel with neither end in the
+  host-port window (`0x20000000–0x20000fff`) is copied per its TCD
+  (`Rtos::copyMemToMem`: NBYTES per minor loop, SSIZE/DSIZE at
+  SOFF/DOFF, SMOD/DMOD, CITER loops; TCD+4 is ATTR, +6 is SOFF). This
+  carries the Echo Freeze Delay's tap fetches and ring writes
+  (`docs/firmware/COLDFIRE_DELAY.md`), 32 blocks a frame. Counted under
+  `--block-log` or `OT_M2M_REPORT=1`; `--edma-log FILE` logs every kick.
+- **Build speed-ups**, all bit-exact under the oracle
+  (`tools/emu/ot_emu/oracle/README.md`): event-horizon bursts, the
+  page-table memory fast path, LTO, and opt-in profile-guided optimisation
+  (`tools/emu/ot_emu/pgo.sh`).
 
 ## Speed
 
-Since 25 Sep 2026 the port runs in event-horizon bursts (exact, bit for
-bit; `--fast` is gone) and `--dsp-rt` runs the DSP cores as JIT workers
-(O15a-O17c in `COLDFIRE_PORT.md`). Measured 25 Sep 2026 on a MacBook Air
-(`tools/panel/README.md`): the panel, paced, with `--dsp-rt`, 1.000x real
-time; unpaced on the OTLIVE fixture with the cores, 475-684 emulated ms
-per wall second. The gates run the lockstep mode.
+What the port costs, where the time goes, and what each upstream has
+(12 Oct 2026; no core changed for this section). The 25 Sep figures from
+the earlier version of this section are kept in the table at the end.
 
-### The lockstep mode before the bursts (17 Sep 2026, M-series Mac, native arm64)
+### Measured, 12 Oct 2026
 
-Stock 1.40C, the rig project, `--sequencer --internal-clock --dsp`:
+An Apple M3 (4 performance and 4 efficiency cores), macOS 26.6, the port
+built by `make emu-cf` (bursts, LTO, the page-table memory path; not PGO).
+Another session's gates ran beside every measurement (load average 3-5), so
+each number is one run or a range, not a quiet-machine figure. The
+fixture is `octatrick`'s `verify_set` command: the stock slice's image, the
+`OCTABAM89_setgate` project (bank 3) on a 64 MB card, LOAD PROJECT, then 900
+frames with both DSP cores in lockstep.
 
-| phase | emulated | wall | ratio |
+| phase | with the cores (`--dsp`) | without (`--frame`) |
+|---|---|---|
+| the whole command | 27.7-28.6 s | 25.5 s |
+| boot to the RTOS handoff | 2.0 s (14.1 M ColdFire, 16.0 M DSP instructions per core) | 0.9 s |
+| LOAD PROJECT | about 23 s: 14.9 s emulated, 853 M ColdFire instructions | 17.8 s emulated, 1,991 M ColdFire instructions |
+| 900 frames (14,400 samples, 0.33 s of audio) | 2.0 s: 21.7 M ColdFire instructions, 10.8 M/s, 6.1x off real time | 0.33 s: 21.7 M ColdFire instructions, 66.6 M/s, real time |
+
+`--frame` takes its frame interrupt from a 16-sample timer instead of the
+cores' bank word, and its load ran 2.3 times the ColdFire instructions; the
+two columns are not the same workload (that the frame interrupt is the cause
+is inferred, not measured).
+
+Play speed through `--interactive` (PLAY, then `run 4000` ms of emulated
+time) and the time to the `ready` line (boot and LOAD PROJECT):
+
+| DSP cores | 4 s of PLAY | real time | `ready` after |
 |---|---|---|---|
-| boot to the handoff | 205 ms, 10.2 M instructions | 3.5 s | 17× |
-| load (a fixed `--load-ms 20000` then; since 28 Sep 2026 it ends when the engine is idle: 14.9 s stock, 31.7 s under Octakit, `--load-ms 90000` the ceiling) | 20 s | ~35 s | 1.7× |
-| play (400 → 1200 frames) | 290 ms of audio | ~2.9 s | **~10×** |
+| none (`--frame`) | 5.1-5.2 s | 0.76-0.78x | 30-34 s |
+| lockstep interpreter (`--dsp`) | 31-40 s | 0.10-0.13x | 33-46 s |
+| JIT workers (`--dsp --dsp-rt`) | 6.0-8.3 s | 0.48-0.67x | 14.5-17.8 s |
 
-The play phase runs 23,946 ColdFire instructions per 16-sample frame =
-1,497 per sample = 66 M/s for real time; the hottest loop is the stock
-delay's EMAC mix (`0x40003734`, `COLDFIRE_DELAY.md`), real work, not a poll. The
-DSPs execute ~415 instructions per sample on core 0 after the idle skip
-(3.82 G counted, 3.44 G skipped over 917,730 samples).
+The lockstep interpreter executes 4,532 instructions per sample per core
+(about 200 M per second per core in real time, 400 M for both); the gate
+command above executes 3.1 G per core over its 15 s of emulated time.
 
-Where the wall time goes in the play phase (`sample`, top of stack, after
-the two changes below): Musashi itself 29%, the DSP interpreter and its
-per-instruction bookkeeping (`DspPair::stepCore`) 32%, the per-instruction
-harness — interrupt delivery, timers, the opcode pre-read, `pc()` — 40%.
+Where the host's time goes, from `sample` (1 ms) on the running process:
 
-Two changes with outputs bit-identical (audio, block dump, plane, report):
-the interrupt controllers' 22 `std::function` lines became one wires mask
-per controller (`Intc::setWires`; the lines were ~35% of the run), and
-`Machine::find` indexes regions by the top address byte instead of
-scanning (a last-hit cache was tried first and lost on the play phase,
-whose accesses alternate between code, data and the fast RAM). Together
-53.0 → 38.9 s on the load + 400 frames run, 55.8 → 41.2 s at 1200 frames
-(three runs each; single runs scatter by up to 10 s on a shared machine,
-so the play-phase ratio above is ±20%). `cmake` from Intel Homebrew
-configured the port x86_64 under Rosetta; `make emu-cf` and
-`scripts/setup.sh` now pass the host architecture.
+| phase of the gate command (`--dsp`) | DSP cores | Musashi core | run loop, timers | memory, peripherals | V4e layer |
+|---|---|---|---|---|---|
+| LOAD PROJECT | 64.2% | 16.7% | 15.4% | 2.1% | 1.3% |
+| 900-frame play | 67.1% | 14.8% | 14.2% | 1.9% | 1.8% |
 
-Direct timing of the play phase (the `cpu` report line, 18 Sep 2026):
-**14.0× off real time**; 4.7 M ColdFire
-instructions per wall second all-in. By 1 KB of code (`--profile`, the
-frames alone): 28.5% the stock delay's EMAC mix (`0x40003400..`), 22.5%
-the frame builder (`0x4000cc00..`), 7% the frame dispatcher, ~4% the
-host-port transfer state machine — real work, nothing to idle-skip.
-Unicorn's TCG (QEMU's m68k JIT) on a store loop from this
-image with no hooks and no instruction count: 52 M instr/s. Real time
-needs 66 M/s on the ColdFire plus the DSP side.
+The ColdFire alone (`--frame`, LOAD PROJECT): Musashi 38.8%, run loop 36.8%,
+V4e layer and register glue 17.4%, memory 6.4%. The V4e layer runs the
+instructions Musashi lacks; Musashi reaches it through its illegal-instruction
+exception.
 
-Jannik Aßfalg's exclusive profile (23 Sep 2026, 🟡 his port build with a
-`--work-profile` PC counter that is not in this tree; a fixture of eight
-FLEX tracks looping a 440 Hz sample at 120 BPM, trigs on steps 1–4, DELAY
-on T1–T7 and PLATE on T8, 5,600 frames after a 20 s load; instructions,
-not cycles):
+Reproduce: `python3 tools/verify/verify_set.py octatrick --stage-only` writes
+the command to `out/setverify/port.txt`; time it, or `sample <pid> 12` it with
+`--dsp`. `--profile` covers the boot and the frames but not the load (the
+sequencer clears it at the transport start).
 
-| ColdFire scope | instructions / frame | share |
-|---|---:|---:|
-| frame ISR `0x4000aad0..0x4000d9b0` | 10,720 | 26.2% |
-| eight-track delay `0x400031a0..0x4000385a` | 7,665 | 18.7% |
-| sample analysis `0x40098388..0x400985ac` | 5,643 | 13.8% |
-| voice renderer `0x40007960..0x40008f82` | 5,605 | 13.7% |
-| correlation search | 2,196 | 5.4% |
-| total | 40,903 | |
+### What each upstream has
 
-Ranges are half-open and exclusive of callees; the four boundaries
-re-checked here by objdump ✅ (the ISR ends in `rte` at `0x4000d9ae`, the
-delay and the renderer in `rts` at `0x40003858` / `0x40008f80`, the
-analysis routine is a `lea -36(%sp)` frame ending in `rts` at
-`0x400985aa`). What "sample analysis" and the "correlation search" do is
-his reading, unverified here; the routine's MAC recurrence at
-`0x40098494..0x400984be` is five `macl`/`msacl` with parallel loads in a
-`bgt` loop, and no `jsr`/`lea` in the image names `0x40098388` (a table
-or relative call). His opt-in module `stock-analysis-fast` (−251
-instructions/frame, 0.6%, audio identical over 5,600 frames on his
-emulator) was not sent; his hardware acceptance is pending, and his
-report's own limits hold: p95/p99 unchanged, so no worst-case headroom
-claim.
+| project | what it is | state, 12 Oct 2026 |
+|---|---|---|
+| `vendor/mc68k` ([joelanders/mc68k-md-mm](https://github.com/joelanders/mc68k-md-mm), GPL-3.0) | the ColdFire core: Musashi, an interpreter, with our V4e layer (`ot::v4e`) | pushed 9 Sep; our pin is its PR #4; PR #5 (HI08 command acceptance) is open |
+| [Musashi](https://github.com/kstenerud/Musashi) | the 68000-family interpreter underneath | pushed 8 Mar; no ColdFire V4e |
+| `vendor/dsp56300` ([dsp56300/dsp56300](https://github.com/dsp56300/dsp56300), GPL-3.0, the library gearmulator uses) | the DSP cores: an interpreter and a JIT (asmjit; x64 and arm64) | our pin is `8ccdd843` (21 Sep); the tip (9 Oct) is 49 commits ahead, with JIT fixes (DO loops, interrupts, poll fast-forward) and `fdd98fc5`, the interpreter's modulo bounds compared signed (the defect our AGU hunk fixes; our PR #13 was closed unmerged on 4 Oct) |
+| [markandrus/octemu](https://github.com/markandrus/octemu) | QEMU 11.1 (ColdFire MCF54455) patched, plus `octdsp` for the DSP cores, SDL2 front end | pushed 26 Sep; 13 QEMU patches (EMAC ISA C, accumulator extension packing, sticky saturation, fractional store sign, the MAC-with-load decode and mask reset, two TCG patches: `0008` skips the not-dirty walk for pages with no code, `0012` a guest-instruction budget); no speed figure published, the README lists "playback warbles"; sources MIT, the built binaries cannot be redistributed (QEMU GPL-2.0-only with the dsp56300 GPL-3.0-only) |
+| [timhastie/octa-panel](https://github.com/timhastie/octa-panel) | this port with the panel UI and CoreAudio output | pushed 1 Oct; its speed work (O15a-O24, below) is in this repository |
+| Unicorn 2.1.4 (QEMU 5.0.1 TCG) | `tools/emu/emu_bringup.py` (Tier-0, Python) | route A was retired 26 Sep (#448); 52 M instructions per second in an 18 Sep micro-benchmark; it needs the EMAC patch (`tools/patches/unicorn_emac_fractional.patch`) and a per-site shim for MAC-with-load |
+| a ColdFire V4e / MCF5445x core elsewhere | none found | GitHub search 12 Oct: V2-only projects, last pushed 2014-2021 |
 
-`--profile` now prints the hottest PCs over the frames alone as well as
-over the boot, and the report carries the ColdFire instruction count over
-the frames.
+The Musashi "inline V4e" patch the 18 Sep note mentions (a 16.3 M
+instructions-per-second comparison, no DSP or audio) has no recorded author or
+source in this repository.
+
+Tim Hastie's port log (`git show 666b6154:docs/firmware/COLDFIRE_PORT.md`,
+O15a-O24, M5 Mac, 12-13 Sep) is the history of what the port already does:
+
+| step | result |
+|---|---|
+| before | 220 emulated ms per wall second without the cores, 97-100 with them |
+| O15a event-horizon bursts | 4.2x, bit for bit |
+| O15b LTO | +11% |
+| O15c page-table memory path | +28% |
+| O15d PGO (`pgo.sh`, opt-in) | +28% without the cores, +13% with: 1,642 and 171 ms per second; boot and load to `ready` 6.6 s and 18.4 s |
+| O17b `--dsp-rt` | 1,015-1,058 ms per second with both cores |
+| O17c | the `--dsp-rt` capture bit-identical to lockstep: 0 mismatches of 199,358 samples on the OTLIVE fixture, three runs |
+
+### The DSP JIT in this port
+
+- It is in the vendored tree and used by `--dsp-rt` only. `--dsp-rt` needs
+  `--interactive`; every batch mode, and so every gate, runs the lockstep
+  interpreter (`ot_emu --dsp --dsp-rt` without `--interactive` refuses to
+  start).
+- The interpreter is what the per-instruction instruments observe
+  (`--dsp-writes`, `--dsp-watch`, `--dsp-pcwatch`, `dsp watch|pcwatch|peek`);
+  the JIT workers are not observed. `verify_set`'s DSP data census uses
+  `--dsp-writes`.
+- The JIT's schedule is the ColdFire's emulated clock with a bounded lead and
+  fences (O17b/O17c). Its contract in general is functional (same onset within
+  16 samples, level within 1 dB); bit-identity to lockstep was shown on one
+  fixture.
+- `tools/patches/dsp56300.patch` carries hunks in `jit.h`, `jitblock.*`,
+  `jitdspregs.cpp` and `jitmem.*` (the shared window, the M-register fix from
+  O22) beside the interpreter-side ones (`dma.cpp`, `hdi08.*`, `dsp.cpp`, the
+  host-stepped mode); the AGU fix is interpreter-only.
+- 18 verifiers start the cores. A grep for the lockstep-only instruments
+  (`--dsp-writes`, `--dsp-peek`, `--block-dump`, `--audio-out` and the
+  others) finds none in `stems_panel`, `verify_analog_bassdrum_ui`,
+  `verify_boot_trace`, `verify_kits`, `verify_plocks_p2`, `verify_scenes_p2`,
+  `verify_usb_post`; the other eleven use at least one. This was not audited
+  per gate.
+
+### Options for the gates, by gain over effort
+
+The gates spend about two thirds of the host's time in the DSP interpreter and
+a third in the ColdFire. A change to the ColdFire core alone is bounded by
+that third.
+
+1. **`--dsp-rt` for the gates that read no lockstep instrument.** Measured
+   12 Oct on one gate with the batch refusal lifted by hand (`OT_DSP_RT_BATCH=1`
+   in a scratch build; the refusal is a check in `main.cpp`, nothing else
+   changes): the KITS strand boot (`--dsp --live-script --mem-dump`, one
+   process) took 108.9 s in lockstep and 26.7, 26.6 and 27.0 s under the JIT.
+   All five memory dumps the gate reads (`strand_st`, `_img`, `_b3`, `_trk`,
+   `_eng`) are byte-identical to lockstep in all three JIT runs, and the log
+   has no halt word; `clean("strand")` reads only those, so its verdict is the
+   same.
+
+   **Forked gates (measured later the same day, scratch build).** A fork
+   keeps only the forking thread, so a `--scenario` child of a `--dsp-rt`
+   parent has no worker threads: its cores do not run (host words in 26,570
+   against 192,890, 1 host command against 720) and the scenario still exits
+   0. With each core's mutex and condition variable re-initialised in the
+   child and two fresh worker threads started there (about 25 lines:
+   `DspPair::rtAfterFork`, called in the child after `fork()`), the children's
+   host-port traffic equals lockstep's (192,890 words in, 61,660 out, 720
+   commands) and the JIT's code ran in the child without trouble on the M3.
+   `verify_scenes_p2`, whose one load and forked scenarios use `--dsp`, gave
+   the same verdict twice (28 ok, 0 fail) in 15-16 s against 29-30 s in
+   lockstep. `verify_plocks_p2` gave no change (98 s either way): it runs
+   `--dsp` in one `play` scenario only, and its time is ColdFire-bound loads
+   and power cycles. `verify_kits`' main fork runs without the cores at all
+   (`--dsp` is only on its strand boot), so the JIT does nothing there.
+   Not done: the parent is not quiesced before the fork; the interrupt trace
+   timestamps differ from lockstep's by fractions of a sample (the JIT is
+   functional, not byte-identical, outside the one fixture of O17c); no run
+   repeated enough to call it deterministic; nothing but arm64 macOS. The
+   gates that run the cores in one process without an instrument are
+   `verify_kits`' strand boot (106 s, already beside the fork since #670, so
+   it saves CPU and not wall time), `verify_boot_trace`,
+   `verify_analog_bassdrum_ui`, `stems_panel` and `verify_usb_post` (not
+   measured). The whole-gate wall gain is about 15 s on `verify_scenes_p2`
+   (a 39-48 s job beside `verify_plocks_p2`'s 98-147 s). Lockstep stays the
+   default and the reference.
+2. **A PGO build in the port store** (`tools/emu/port_store.py`). Done 12 Oct:
+   `make emu-pgo` (or `python3 tools/emu/port_store.py pgo`) builds it once
+   per source state (306 s: the instrumented build, three training runs on a
+   card staged from the local project, the optimised build) and `install`
+   takes it when the store has one. When it has none, `install` copies the
+   plain build at once and starts the PGO build detached, at nice 10, one at
+   a time on the machine (`OCTABAM_PGO=0` asks for the plain build and starts
+   nothing).
+   Against the plain build of the same source, M3 under load average 5-10,
+   user CPU time (wall time moves with the load): the gate command 34.4 s to
+   27.5 s over four paired runs (1.25x); `verify_kits` bottleservice 1,702 s to
+   1,308 s over two (1.30x; wall 592 s to 509 s), the same 126 checks, 0
+   failures in each. Bit-exact: the gate command's block dump, card after,
+   DSP-write census, memory dumps and command log are byte-identical, and the
+   oracle's 25 checks agree (the render's `cpu` line differs only in its
+   wall-clock figures).
+3. **Re-pin `vendor/dsp56300` to the 9 Oct tip (7a5390e7, 49 commits past
+   8ccdd843).** Scoped 12 Oct in scratch trees; not done.
+   - By title: timers 6, JIT fixes 8, ESAI 7, DMA 5, host interface (HDI08,
+     SHI, the host-command queue) 7, interpreter semantics 8 (undefined
+     opcodes run as ILLEGAL, MOVEP, the DO-loop end, the signed modulo bounds,
+     scale-up limits), interrupts 2, memory, GPIO and build 6.
+   - Our patch (59 hunks) on the tip: 51 hunks apply, 8 are rejected in six
+     files. The AGU hunk is covered by upstream's signed compare (`fdd98fc5`;
+     equal for the base-0 pre-decrement, not tested over the whole space).
+     The masked-interrupt peripheral hunk is `823e697c`. Our unmapped-register
+     hooks are upstream's `setIoExtension`; `ot_emu`'s one call changes name.
+     Three hunks only need new context (`pendingInterruptCount`,
+     `peekStatusRegister`, `m_txFifoDepth`).
+   - `ot_emu` builds against the tip with those fix-ups and nothing else; the
+     `dsp_host`/`dsp_asm` build and upstream's `dsp56kTestRunner` were not
+     tried.
+   - Speed: none. The load phase of the gate command (853,049,038 ColdFire
+     instructions in both) took 22.4 s on the tip against 22.9 s on the pin,
+     the same flags, three paired runs.
+   - Behaviour: the first run after the load halts the firmware at frame 8
+     (`halt` at `0x4000ab40`; core 0 spins 3.88 G instructions on 53 host
+     commands). Bisected over the 49 commits (patch re-applied with the same
+     fix-ups at each): good to `2afc1c4f`, first bad `3cee91c9` ("DMA: a
+     channel enabled together with a new request source waits for the next
+     request"), which reworks the request semantics our DMA hunks also
+     change (the ESAI input feed, DCR2 rewritten every idle pass). The port
+     is to reconcile our DMA hunks with it.
+   - Estimate (not measured): half a day to a day to reconcile the DMA
+     hunks and pass the gate command, then the gates of the 22 Sep re-pin
+     (`scripts/refhash.sh check`, `verify-bus`, `verify-two-core`, every DSP
+     gate) and `ci-dsp` from the main checkout. The gain is a smaller patch
+     (about 60 lines fewer) and eight JIT fixes that matter to `--dsp-rt`
+     only.
+4. **Snapshot the machine after LOAD PROJECT** and restore it per gate.
+   Removes about 23 s per boot of the same image and project; a bottleservice
+   half boots at least seven times (`set`, `verify_scenes_p2`,
+   `verify_plocks_p2`, TEMPO BUS, USB MIDI twice, FX2 LOCK). `--scenario`
+   already forks after one load inside one gate. Needs the ColdFire RAM, both
+   DSP cores' state, the peripherals and the card serialised: a large change;
+   proof is a restored run's outputs byte-identical to a fresh boot's.
+5. **Inline the V4e instructions into Musashi.** The V4e layer is 17.4% of the
+   ColdFire-only load and 1.3-1.8% of the gate command, so it is under 2% of a
+   gate. Proof: the oracle.
+6. **A TCG ColdFire core** (octemu's patched QEMU 11.1, or Unicorn). The port's
+   ColdFire runs at 66-75 M instructions per second today, above Unicorn's
+   52 M micro-benchmark; the ColdFire is a third of a gate's host time, so a
+   factor of 3 on it is a factor of 1.3 on the gate. Needs the EMAC
+   differential (the three Unicorn defects, octemu's patches 0001, 0004,
+   0006, 0007, 0009, 0013), weeks of work, and a local build only
+   (QEMU is GPL-2.0-only).
+
+### Earlier figures
+
+- 18 Sep 2026: play 14.0x off real time with the cores (23,946 ColdFire
+  instructions per 16-sample frame, 66 M per second needed for real time);
+  Musashi about 16 M per second in the port then; Unicorn TCG 52 M per second
+  and without MAC-with-load.
+- 25 Sep 2026, a MacBook Air: the panel paced with `--dsp-rt` at 1.000x real
+  time; unpaced on the OTLIVE fixture with both cores, 475-684 emulated ms per
+  wall second.
+- `--profile` prints the hottest PCs over the boot and over the frames.
+- Where stock ColdFire time goes per frame: [`docs/firmware/ARCHITECTURE.md`
+  section 6](../../docs/firmware/ARCHITECTURE.md).
+
+## Emulator defects fixed (each has a test)
+
+- **EMAC ACCext layouts.** The frame ISR saves and restores the accumulator
+  extensions in integer mode (`0x4000ac96`, `0x4000d968`). The port's write
+  knew only the fractional layout. Found by Jannik Aßfalg; `test_emac.cpp`
+  holds both layouts.
+- **MACSR S/U** is bit 6 and selects 16-bit rounding in fractional mode
+  (see `docs/contributing/TRAPS.md`); `test_emac.cpp`. The firmware sets `MACSR = 0x20`
+  (fractional) at `0x4000cf60` and `0x4000d3ae`; the level chain at
+  `0x4000ccae` runs at `0x60`.
+- **The uncached aliases** `0x4F…` and `0x4E…` are folded onto the cached
+  regions (`machine.h`).
+- **EMAC −1.0 × −1.0** in fractional mode overflowed to −2³⁹; the product
+  is `>> 23` in one shift now (`v4e.cpp`, Tim Hastie, 13 Sep 2026).
+- **The eDMA TCD's ATTR and SOFF** were read swapped (ATTR is TCD+4, SOFF
+  TCD+6), so every memory-to-memory copy moved single bytes (Tim Hastie,
+  13 Sep 2026).
+
+## Firmware behaviour an emulator has to reproduce
+
+- The mount's INTRQ is not instantaneous and the firmware depends on it;
+  a "stall" at 1,407 ATA commands was a line-A exception the UART hid
+  (`git show 3ceba41:docs/history/COLDFIRE_PORT.md` O7).
+- Route A did not fault on unmapped memory; the port's early "serial byte
+  count" difference from it was memory the port had not mapped (O5 in the
+  same record).
 
 # Tier-0 (Unicorn)
 
@@ -449,42 +678,39 @@ the frames.
 handoff (`trap #0`, ~7,000,000 instructions, ~4 s), then calls draw code
 directly against the warm machine.
 
-The bring-up records (`EMU_BRINGUP.md`, `RTOS_FORK.md`, `COLDFIRE_PORT.md`)
-are in git history (`git show 3ceba41:docs/history/<name>`).
-
-## Setup
-
 ```sh
-make emu-setup                       # uv sync --extra emu -> .venv with unicorn + textual
+make emu-setup                       # .venv with unicorn + textual
 make emu-unicorn                     # the EMAC-fixed Unicorn
 .venv/bin/python3 tools/emu/emu_bringup.py [image]
 ```
 
-`unicorn` must be given `UC_CPU_M68K_CFV4E`: the default plain-68k core
-does not decode `mvz`/`mvs`/EMAC. The `.venv` must be the host's native
-architecture (an x86_64 build under Rosetta crashed on its first
-`emu_start`).
-
-**The EMAC-fixed Unicorn.** Stock Unicorn 2.1.4 computes the
-ColdFire's fractional-mode `macl`/`macw` as an unsigned product `>> 32`
-where the MCF5445x does a signed product `>> 31`, and reads the MAC/MSAC
-bit from the wrong word so `msac` adds. `scripts/build_unicorn.sh` applies
-`tools/patches/unicorn_emac_fractional.patch` and builds the m68k-only
-library into `.venv/lib/unicorn-emac/`; `emu_bringup` points the Python
-bindings at it through `LIBUNICORN_PATH`. `emu_bringup.emac_selftest()`
-pins the semantics (`0xc00 × 0x200000` = 3, `−0xc00` = −3, `msacl` = −3).
-The EMAC-with-load shim keeps one trampoline slot per distinct instruction
-(a rewritten trampoline is not retranslated).
+- **CPU model.** `unicorn` must be given `UC_CPU_M68K_CFV4E`. The default
+  68k core does not decode `mvz`/`mvs`/EMAC.
+- **Architecture.** The `.venv` must be the host's native architecture: an
+  x86_64 build under Rosetta crashed on its first `emu_start`.
+- **The EMAC-fixed Unicorn.** `scripts/build_unicorn.sh` applies
+  `tools/patches/unicorn_emac_fractional.patch` and builds the m68k-only
+  library into `.venv/lib/unicorn-emac/`. `emu_bringup` loads it through
+  `LIBUNICORN_PATH`. The patch fixes five defects of stock Unicorn 2.1.4;
+  `docs/contributing/TRAPS.md` has the detail:
+  - the fractional-mode product is halved;
+  - `msac` adds;
+  - MAC-with-load reads Rx from the wrong word;
+  - MAC-with-load decodes as a phantom dual-accumulate;
+  - the MASK register resets to zero.
+- **Self-test.** `emu_bringup.emac_selftest()` pins the semantics
+  (`0xc00 × 0x200000` = 3, `−0xc00` = −3, `msacl` = −3).
+- **The EMAC-with-load shim** (`_emac_load_shim`) keeps one trampoline slot
+  per distinct instruction.
 
 ## What the boot needs
 
-Reset state: `SR = 0x2700` before `A7 = 0x48000000` (SR first, or the
-supervisor/user stack banks swap). Peripheral MMIO is modelled by callback;
-default read = all-ones satisfies every wait-until-set poll. One value is
-load-bearing: the firmware reads `0xfc0c4000`, takes the top byte as the
-PLL multiplier, and halts at `0x4000fa8c` unless `(reg>>24) × 12 MHz`
-equals 264 MHz, so the harness returns `0x16000000`. Async completion
-flags are auto-poked after the write that starts each operation.
+- **Reset state:** set `SR = 0x2700` before `A7 = 0x48000000`.
+- **Peripheral MMIO** is modelled by callback. The default read is all-ones.
+- **The PLL register** `0xfc0c4000` must return `0x16000000`. The firmware
+  halts at `0x4000fa8c` unless `(reg>>24) × 12 MHz` equals 264 MHz.
+- **Async completion flags** are poked after the write that starts each
+  operation.
 
 | region | what it is | notes |
 |---|---|---|
@@ -494,78 +720,47 @@ flags are auto-poked after the write that starts each operation.
 | `0xfc048018..05b` | another module | writes `0x1b`, `0x06` |
 | `0xfc088000/02` | serial shift-out (shift-done in bit 2) | write datum, poll bit 2, 8× |
 
-## Drawing the firmware's screens (Tier-0)
+## Drawing the firmware's screens
 
-The capture primitive is `FUN_40012bd8`, the draw-string call every
-renderer funnels through (189 call sites): `FUN_40012bd8(font, canvas, x,
-y, count, char *str)`, cdecl, `sp@(12)=x sp@(16)=y sp@(24)=str`. The detour
-recipe: boot to the handoff; install the string-capture hook and a
-map-on-fault hook (a cold detour can leave one stale pointer; a zero page
-under it makes `strlen` read `""`); `ctl_flush_tb()` (the draw functions
-were JIT-cached during the boot splash without the hooks); call the window
-open (`FUN_40064c18`); set `[0x400cbf40]=1` and `[0x400cbd9c]=6` (the
-visible-row clamp; the row loop bound is `min(clamp, count)`); poke
-`[0x400cbd98]` = cursor row; call the draw (`FUN_40064d7c`). The line
-pitch is 7 px, larger y = higher row. The selection highlight is an XOR
-rect (`FUN_40012254`), not captured.
+The capture primitive is `FUN_40012bd8`: `(font, canvas, x, y, count, char
+*str)`, cdecl, with 189 call sites. The recipe:
 
-`render_menu(r, cursor)` returns the MAIN MENU as `(x, y, string)` tuples;
-`render_fx2(r, track, effect_id)` / `render_fx1(...)` render the real FX
-parameter pages with the effect assigned (the chooser column plus the
-twelve knob rows, both pages). `tools/build/stock_labels.py` and
-`tools/verify/verify_labels.py` / `verify_modenames.py` call display
-formatters through the same machine. Item-level descent inside the menu
-(a submenu item, a param page reached by key) needs the real key handler
-`FUN_40064e64`, whose keycodes are position-dependent; repointing the
-display at a submenu descriptor directly lands the labels at a bogus x.
+1. Boot to the handoff.
+2. Install the string-capture hook and a map-on-fault hook.
+3. Call `ctl_flush_tb()`.
+4. Call the window open (`FUN_40064c18`).
+5. Set `[0x400cbf40]=1` and `[0x400cbd9c]=6` (the visible-row clamp).
+6. Poke `[0x400cbd98]` = the cursor row.
+7. Call the draw (`FUN_40064d7c`).
+
+The line pitch is 7 px, and a larger y is a higher row. The selection
+highlight is an XOR rect (`FUN_40012254`) and is not captured.
+
+The helpers:
+- `render_menu(r, cursor)` returns the MAIN MENU as `(x, y, string)` tuples.
+- `render_fx2(r, track, effect_id)` and `render_fx1(...)` render an FX
+  parameter page with the effect assigned.
+- `tools/build/stock_labels.py`, `verify_labels.py` and
+  `verify_mode_names.py` call the display formatters through the same
+  machine.
+
+Descending into a menu item needs the real key handler `FUN_40064e64`.
 
 ## The card (`emu_card`)
 
-`tools/emu/emu_card.py`: `stage_project` (a project directory staged into
-a card tree, which `stage_card.py` writes for the port), a pure-Python
-FAT16 image builder (a SET folder
-holding a PROJECT folder → an MBR + FAT16 image the firmware's mount code
-accepts; VFAT long names), an ATA task-file model at the FlexBus window
-`0x90000000` (IDENTIFY advertises PIO only, so the driver never programs
-the on-chip DMA channel), and one wait hook past the RTOS: the PIO
-handlers only program the registers, and the data phase is the ATA
-interrupt handler, so `attach()` hooks the queue primitive `0x40000818`
-and performs the transfer the handler would when a command is in flight.
-The set name needs a leading `/`; a WRITE's count byte is the remaining
+`tools/emu/emu_card.py` provides:
+- `stage_project`: a project directory staged into a card tree;
+- a FAT16 image builder (MBR + FAT16, VFAT long names);
+- an ATA task-file model at `0x90000000`. IDENTIFY advertises PIO only.
+  `attach()` hooks the queue primitive `0x40000818` and performs the data
+  phase.
+
+The set name needs a leading `/`. A WRITE's count byte is the remaining
 count.
 
 ## Limits of Tier-0
 
-No audio, no DSP, no keys; strings, not pixels.
-
-Tier-0's RAM map folds the OS image's uncached alias at `0x48000000` into
-the same 32 MB as `0x40000000` (25 Sep 2026; the port's `machine.h` folds
-it too). octabam's loader depacks the DRAM runtime through that alias and
-the code then runs from the cached address, so with two separate mappings
-every DRAM remix faulted in the boot (`UC_ERR_WRITE_UNMAPPED` at loader pc
-`0x4010fe92`, a1 `0x48a97000`) and `verify_hidden` drew nothing for their
-host pages. The `0x46000000` region's alias at `0x4e000000` is still
-separate here (grown on demand by `_prime_menu`'s hook); the port folds
-both.
-
-### The MAC-with-load decode
-
-**Retracted 22 Sep 2026**: "it has no MAC-with-parallel-load form" was
-wrong. Unicorn 2.1.4's `DISAS_INSN(mac)` (vendored QEMU 5.0.1) has the
-form and decodes it with three defects, found by reading markandrus/octemu's
-independent fix against QEMU 11.1 and confirming the identical lines are
-present, verbatim, in Unicorn's own source: Rx read from the opcode word
-instead of the extension word; a phantom dual-accumulate flag read out of
-Ry's own register field, which `disas_undef`s on `cfv4e` (no
-`M68K_FEATURE_CF_EMAC_B`) — this, not an absent form, is why Tier-0 shims
-every site (`emu_bringup._emac_load_shim`) instead
-of running them natively; and the MASK register resets to zero instead of
-CFPRM's all-ones, folding every load address to 0. Fixed in
-`tools/patches/unicorn_emac_fractional.patch` (three files: `translate.c`,
-and `unicorn.c` — NOT `cpu.c`'s `m68k_cpu_reset`, which this patch also
-carries for documentation but which Unicorn's own `uc.c` never calls;
-`unicorn.c`'s `reg_reset` is the reset Unicorn actually runs). Verified by
-`emu_bringup.emac_selftest`'s new cases (fails on stock, passes fixed). The
-only native-vs-shim differential (route A with `OCTA_MACLOAD_NATIVE=1`, no
-project on the card) executed none of the 435 hooked sites, so the shim
-stays.
+- **No audio, no DSP and no keys.** It captures strings, not pixels.
+- **Aliases.** The OS image's uncached alias at `0x48000000` is folded onto
+  `0x40000000` (the DRAM loader depacks through it). The `0x46000000`
+  region's alias at `0x4e000000` is separate here.

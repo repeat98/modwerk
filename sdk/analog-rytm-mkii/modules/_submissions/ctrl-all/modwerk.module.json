@@ -1,0 +1,202 @@
+{
+  "schemaVersion": 3,
+  "id": "ctrl-all",
+  "name": "Ctrl All",
+  "version": "1.2.0",
+  "machine": "analog-rytm-mkii",
+  "category": "system",
+  "exclusive": false,
+  "author": {
+    "github": "Iced-Cream",
+    "credits": [
+      "MrScruff — the original mod, 0014-ctrl-all in rytm-mods, its design and code, and the 1.1 and 1.2 updates; published in rytm-mods-src with permission.",
+      "Iced-Cream — the elemod port (rytm2_mods) and this Modwerk module.",
+      "irpina — Elekloader and core-ar2, the core it links with."
+    ]
+  },
+  "maintainers": [
+    "Iced-Cream"
+  ],
+  "source": {
+    "repository": "https://github.com/Iced-Cream/rytm2_mods",
+    "revision": "afd461d4a8ef4306bb2a57d4c61ad35c362b3940",
+    "path": "ctrl-all"
+  },
+  "presentation": {
+    "label": "CTRL ALL",
+    "family": "Performance",
+    "summary": "Hold TRK and turn a knob on a sound or TRIG page: the same step goes to that parameter on all twelve sound tracks.",
+    "overview": "Ctrl All turns TRK into an all-tracks modifier. Hold TRK and turn a knob on a sound page (SYNTH, SAMPLE, FILTER, AMP, LFO) or the TRIG page, and the same step goes to that parameter on all twelve sound tracks, so their differences are kept and each track stops at its own limits. On the SYNTH page each track moves the parameter under the same knob of its own machine's page. FILTER TYP sets every track to the type the selected track reaches. With the FX track selected, while a trig key is held, or on FX and global pages, the knob behaves as stock. It is an elemod port of MrScruff's rytm-mods 0014-ctrl-all 1.2, with his code unchanged.",
+    "highlights": [
+      "TRK + knob moves one parameter on all twelve sound tracks.",
+      "The step is relative, so the tracks keep their differences.",
+      "SYNTH knobs pair by their place on each machine's page.",
+      "Stock behaviour on the FX track, with a trig key held, and on FX or global pages."
+    ],
+    "usage": [
+      "Use a build containing Ctrl All. Open the FILTER page and note FRQ on two tracks.",
+      "On one track, hold TRK and turn FRQ (knob E). Select the other track: its FRQ moved by the same amount.",
+      "On the SYNTH page, hold TRK and turn a knob: each track moves the parameter under that knob on its own machine's page.",
+      "Release TRK, select the FX track, or hold a trig key while turning: only the selected track changes, as on stock."
+    ]
+  },
+  "access": {
+    "location": "Any sound page (SYNTH, SAMPLE, FILTER, AMP, LFO) or the TRIG page, while TRK is held.",
+    "steps": [
+      "Select a sound track and open a sound page or the TRIG page.",
+      "Hold TRK and turn a knob."
+    ],
+    "screenshots": [
+      "media/trk-frq-bd.png",
+      "media/sd-follows.png"
+    ]
+  },
+  "controls": [
+    {
+      "name": "TRK + any knob",
+      "default": null,
+      "doc": "On a sound page or the TRIG page, applies the turn to that parameter on all twelve sound tracks; FILTER TYP sets every track to the selected track's new type.",
+      "labels": null
+    }
+  ],
+  "compatibility": {
+    "releases": [
+      "1.74"
+    ],
+    "requires": [],
+    "conflicts": [],
+    "limitations": [
+      "Built for OS 1.74 only, with core-ar2 0.3.",
+      "On the SYNTH page a track whose machine has no parameter under the turned knob is left alone.",
+      "FILTER TYP is set, not stepped: every track takes the type the selected track reaches.",
+      "With a trig key held the turn stays on one track, so parameter locks are never spread.",
+      "Parameters that other modules add stay single-track unless that module handles TRK itself."
+    ]
+  },
+  "platform": {
+    "kind": "elemod",
+    "core": "0.3",
+    "build": "build.json",
+    "events": [],
+    "claims": [
+      "ui:TRK + knob on sound and TRIG pages"
+    ]
+  },
+  "resources": {
+    "memoryBytes": 432,
+    "fastBytes": 0,
+    "load": {
+      "display": "None in the audio path: runs only when a knob is turned",
+      "method": "static",
+      "conditions": "Static: the one site is in param_apply_delta, the routine that applies a knob turn; with TRK held it calls each track's delta handler twelve times instead of once. Nothing is added to the audio, sequencer or tick paths. Not a measurement."
+    }
+  },
+  "evidence": {
+    "tier": "author-hardware",
+    "moduleVersion": "1.2.0",
+    "sourceSha256": "f4057d4b8ed97e5ce114b3d616a451c1db5a5616c5d2b52a014860ab94e02eff",
+    "reports": [
+      "evidence/hardware-testing.json",
+      "evidence/source-parity.json"
+    ],
+    "hardware": {
+      "model": "Analog Rytm MKII",
+      "release": "1.74",
+      "testedOn": "2026-10-25",
+      "tester": "Iced-Cream",
+      "durationMinutes": null,
+      "summary": "Iced-Cream reports that on an Analog Rytm MKII with OS 1.74, ctrl-all 1.2 passed its four tests (FILTER FRQ, SYNTH knobs across BD HARD and SD HARD, FILTER TYP, FX track and trig key) in R8K4 (2026-10-19), and its own test again with core-ar2 0.3 and all eleven rytm2_mods ports in C3A4 (2026-10-20). On SXH4 (released core-ar2 0.3 with the other five Modwerk 1.74 submissions, 2026-10-24) TRK + FRQ moved several tracks together and the FX track changed alone, and a four-minute play showed no freeze or dropout. Alone on CAH4 (released core-ar2 0.3 and this module only, 2026-10-25) TRK + FRQ moved several tracks together and the FX track changed alone.",
+      "limitations": [
+        "Duration was not recorded.",
+        "Tested builds: R8K4, .syx 4f54db92ed3955be1be32123f6cb51c8ebd081936dead60130111f46fba329b8; C3A4, .syx 04d987ced36850eef5eb5cd1215d411edf621a5af94f980525ab561c9108f951. Firmware was not read back from the device.",
+        "SXH4 (the released core-ar2 0.3, 2026-10-24/25, .syx e4d01a6aec250bd2af7743c9f8b0e9c560d805b52564932dddc41d872e1c5000) also carried a remote-control test layer that shares no site with core or the modules. CAH4 (alone with the released core-ar2 0.3, 2026-10-25, .syx 7c09272dc47d3a3c51d759d931d739f81c7893e6ec4eea894164c6b0166f1f16) carried the same test layer."
+      ]
+    },
+    "verifiedBy": null
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "Hardware: ctrl-all 1.2's four tests pass on an Analog Rytm MKII, OS 1.74 (R8K4, 2026-10-19; C3A4 with core-ar2 0.3, 2026-10-20). Modwerk's source build gives a main OS byte-identical to elekloader's build of the rytm2_mods v1.2 release. In rytm-emu, SD's FRQ follows a TRK + FRQ turn on BD, where stock leaves it.",
+    "documentation": {
+      "tutorial": {
+        "title": "Quick tutorial",
+        "steps": [
+          "Use a build containing Ctrl All. Open the FILTER page and note FRQ on two tracks.",
+          "On one track, hold TRK and turn FRQ (knob E). Select the other track: its FRQ moved by the same amount.",
+          "On the SYNTH page, hold TRK and turn a knob: each track moves the parameter under that knob on its own machine's page.",
+          "Release TRK, select the FX track, or hold a trig key while turning: only the selected track changes, as on stock."
+        ]
+      },
+      "screenshots": [
+        "media/filter-page.png",
+        "media/trk-frq-bd.png",
+        "media/sd-follows.png"
+      ],
+      "captureRecord": "media/capture.json"
+    }
+  },
+  "license": {
+    "spdx": "GPL-2.0-only",
+    "file": "LICENSE",
+    "declaration": "MrScruff's rytm-mods code and Iced-Cream's elemod port, under GPL-2.0-only as rytm-mods-src. include/ar2-1.74.inc names firmware routines by address only; the patch precondition is an address, a length and a SHA-256."
+  },
+  "media": [
+    {
+      "path": "media/thumbnail.svg",
+      "kind": "thumbnail",
+      "caption": "Ctrl All",
+      "alt": "Original illustration of twelve level bars moving together",
+      "credit": "Iced-Cream",
+      "license": "GPL-2.0-only",
+      "source": "Original vector illustration; not a device screenshot."
+    },
+    {
+      "path": "media/filter-page.png",
+      "kind": "screenshot",
+      "caption": "Press FILTER on track BD. FRQ is knob E, at the left of the lower row; both BD and SD start fully open.",
+      "alt": "FILTER page of the BD track with ATK, DEC, SUS and REL above FRQ, RES, TYP and ENV, the filter curve fully open.",
+      "credit": "Iced-Cream documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "1.2.0",
+        "imageSha256": "c4a1fc0b88d46abb115454f774538fb6d30529cadf2e315cc5881f8ad724567e",
+        "setup": "Headless rytm-emu c5732f0 (dtboot) running CT74, the released core-ar2 0.3 and ctrl-all 1.2, built from the owner's stock OS 1.74; firmware-rendered 128x64 screen at 3x. UI documentation only."
+      }
+    },
+    {
+      "path": "media/trk-frq-bd.png",
+      "kind": "screenshot",
+      "caption": "Hold TRK and turn FRQ down on BD: the popup reads 75, as on stock.",
+      "alt": "FREQUENCY popup on BD reading 75, with the filter curve closed to the middle.",
+      "credit": "Iced-Cream documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "1.2.0",
+        "imageSha256": "c4a1fc0b88d46abb115454f774538fb6d30529cadf2e315cc5881f8ad724567e",
+        "setup": "Headless rytm-emu c5732f0 (dtboot) running CT74, the released core-ar2 0.3 and ctrl-all 1.2, built from the owner's stock OS 1.74; firmware-rendered 128x64 screen at 3x. UI documentation only."
+      }
+    },
+    {
+      "path": "media/sd-follows.png",
+      "kind": "screenshot",
+      "caption": "Select SD (TRK + the SD pad): its FRQ moved down too, where stock leaves it fully open.",
+      "alt": "FILTER page of the SNARE track with the filter curve closed to the middle.",
+      "credit": "Iced-Cream documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "1.2.0",
+        "imageSha256": "c4a1fc0b88d46abb115454f774538fb6d30529cadf2e315cc5881f8ad724567e",
+        "setup": "Headless rytm-emu c5732f0 (dtboot) running CT74, the released core-ar2 0.3 and ctrl-all 1.2, built from the owner's stock OS 1.74; firmware-rendered 128x64 screen at 3x. UI documentation only."
+      }
+    }
+  ]
+}

@@ -1,0 +1,95 @@
+{
+  "schemaVersion": 1,
+  "reportedOn": "2026-10-25",
+  "source": "Iced-Cream's own tests on their unit: the R8T2 run of the port's test steps and the C3A4 unit test; and the SXH4 bench runs on the same unit (2026-10-24 and 2026-10-25); and the solo bench run of MRH4 on the same unit (2026-10-25)",
+  "reporter": "Iced-Cream",
+  "statement": "Hardware, OS 1.74: in R8T2 (2026-10-18) main-rms's test passes: with the FX track's AMP page open, a loud pattern inverts the VOL label, and it clears when the output gets quieter. In C3A4 (core-ar2 0.3 and all eleven rytm2_mods v1.2 ports, 2026-10-20) each mod's own test passed, including this one's. On SXH4 (released core-ar2 0.3 with the other five Modwerk 1.74 submissions, 2026-10-24/25) VOL stayed plain while the main output stayed below the threshold, and with the main output at -3.4 dBFS RMS VOL inverted while playing and cleared about 4 s after STOP. Alone on MRH4 (released core-ar2 0.3 and this module only, 2026-10-25) VOL inverted with the main output above the threshold and cleared within 4.4 s of stop.",
+  "status": "hardware-tested-author-reported",
+  "scope": "main-rms 1.0 beside other rytm2_mods ports. SXH4 ran it with the released core-ar2 0.3 and the other five Modwerk 1.74 submissions. MRH4 ran it alone with the released core-ar2 0.3.",
+  "modules": [
+    {
+      "id": "main-rms",
+      "version": "1.0"
+    },
+    {
+      "id": "core",
+      "version": "0.3"
+    }
+  ],
+  "builds": [
+    {
+      "label": "MRH4",
+      "testedOn": "2026-10-25",
+      "os": "1.74",
+      "syxSha256": "f3e304ea7454cd1b53801b19cb92b9e71add055bd26e430219328dc56b05606a",
+      "mainSha256": "d8aa33536b45bb45042dfcb1de609ae352c50b7db797c2afe1422334e76314ac",
+      "packageSha256": {
+        "main-rms-1.0-os1.74.elemod": "cbd69edb906e10db5278d8202e2f9c9e8abbb7dbff553bad404c5f834e825d54",
+        "core-ar2-0.3.elemod": "6b97dfb3d65ca7d9d292e4ed61dd845e43b2d4f6dc71e7e7d235f27abc4b3e58",
+        "analoghealth-1.2.elemod": "a86f07c53a375fa3d6e6398a452806217984b6fd35ff8a66d4b40885992787b6"
+      },
+      "content": "The released core-ar2 0.3 and this module's rytm2_mods v1.2 release object as the only module, plus the remote-control test layer (analoghealth 1.2, no site shared with core or the module). Driven over USB by a scripted bench in a ~T test project; outputs recorded over USB audio; stock 1.74 restored after the run.",
+      "results": [
+        "Alone: with the main output at -3.4 dBFS RMS VOL was inverted while playing and plain again 4.4 s after stop.",
+        "No freeze or dropout on any output."
+      ]
+    },
+    {
+      "label": "SXH4",
+      "testedOn": "2026-10-25",
+      "os": "1.74",
+      "syxSha256": "e4d01a6aec250bd2af7743c9f8b0e9c560d805b52564932dddc41d872e1c5000",
+      "mainSha256": "0ef422bf64c7c9257ae9f5b04b0733324f74d5db40b19dcc63e86e49ef288fb8",
+      "packageSha256": {
+        "main-rms-1.0-os1.74.elemod": "cbd69edb906e10db5278d8202e2f9c9e8abbb7dbff553bad404c5f834e825d54",
+        "core-ar2-0.3.elemod": "6b97dfb3d65ca7d9d292e4ed61dd845e43b2d4f6dc71e7e7d235f27abc4b3e58"
+      },
+      "content": "The released core-ar2 0.3 and rytm2_mods v1.2's release objects for the six Modwerk 1.74 submissions, plus a remote-control test layer (three sites, none shared with core or the modules). Without the test layer the same inputs give SX74 (2a352718de044cdba51a2b8a3a064ef126d79ab54f24ac7a7662f6c686e64371). Driven over USB by a scripted bench in a ~T test project; outputs recorded over USB audio; stock 1.74 restored after each run.",
+      "results": [
+        "SXH4: VOL stayed plain with the main output at most -26.5 dBFS RMS (no false trigger); with the main output at -3.4 dBFS RMS it inverted in all six shots while playing and was plain again 4.4 s after STOP.",
+        "Four minutes of play with samples, delay and reverb sends and knob turns: no freeze, gap or level dip on any output; clicks on the main mix also appear on the same core and test layer without the modules."
+      ]
+    },
+    {
+      "label": "C3A4",
+      "testedOn": "2026-10-20",
+      "os": "1.74",
+      "syxSha256": "04d987ced36850eef5eb5cd1215d411edf621a5af94f980525ab561c9108f951",
+      "mainSha256": "fc8714760c023541299b261529887f62e100c5d415626d728d3b53202afcd529",
+      "packageSha256": {
+        "main-rms-1.0-os1.74.elemod": "cbd69edb906e10db5278d8202e2f9c9e8abbb7dbff553bad404c5f834e825d54",
+        "core-ar2-0.3.elemod": "fe066532a7cbac82ed48278d49456523bbc14dab6cbe6c0a9006c2bee9c50373"
+      },
+      "content": "core-ar2 0.3 as built before elekloader #153, and rytm2_mods v1.2's eleven OS 1.74 release objects. Relinking those files on stock 1.74 gives this main OS byte for byte.",
+      "results": [
+        "Each mod's own test passed, including Main RMS's."
+      ]
+    },
+    {
+      "label": "R8T2",
+      "testedOn": "2026-10-18",
+      "os": "1.74",
+      "syxSha256": "94c8b8c4f3f537132b7ee689ad1221591186f14dc605a420cdefe3df804e3c39",
+      "content": "core-ar2 0.1 ported to 1.74 with filter-hz, ctrl-all 1.1, env-reset-amp, slice-loop, main-rms, lfo-rnd, comp-preview and kit-ab. main-rms's OS 1.74 source is the same file as in v1.2.",
+      "results": [
+        "Step 9: on the FX track's AMP page a loud pattern inverts the VOL label; it clears when the output gets quieter."
+      ]
+    }
+  ],
+  "coverageDetails": {
+    "deviceDetails": "Analog Rytm MKII",
+    "testDate": "2026-10-25",
+    "duration": null,
+    "durationMinutes": null,
+    "individualTestResults": [
+      "VOL label inverts while the output is loud",
+      "Label clears when the output gets quieter",
+      "SXH4: no false trigger below the threshold; inverts at -3.4 dBFS RMS and clears after stop",
+      "SXH4: four-minute play, no freeze or dropout",
+      "Alone (MRH4): VOL inverts above the threshold and clears after stop"
+    ]
+  },
+  "contextNote": "Main OS hashes are the builds', not read back from the device. SXH4 links the released core-ar2 0.3 (6b97dfb3…, with #153) that Modwerk links; C3A4's core was built before #153.",
+  "modwerkPipelineQualified": false,
+  "authorGithub": "Iced-Cream"
+}

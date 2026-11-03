@@ -114,13 +114,6 @@
       "fx1Only": true
     },
     {
-      "id": "poly8",
-      "key": "POLY8",
-      "fxId": null,
-      "fx1": false,
-      "fx1Only": false
-    },
-    {
       "id": "miniverb",
       "key": "MINIVERB",
       "fxId": 23,
@@ -184,6 +177,13 @@
       "fx1Only": false
     },
     {
+      "id": "ring-sc",
+      "key": "RING_SC",
+      "fxId": 6,
+      "fx1": true,
+      "fx1Only": false
+    },
+    {
       "id": "analog-bassdrum",
       "key": "ANALOG BD",
       "fxId": null,
@@ -243,6 +243,13 @@
     {
       "id": "recorder-loop-fix",
       "key": "RECORDER LOOP FIX",
+      "fxId": null,
+      "fx1": false,
+      "fx1Only": false
+    },
+    {
+      "id": "poly8",
+      "key": "POLY8",
       "fxId": null,
       "fx1": false,
       "fx1Only": false

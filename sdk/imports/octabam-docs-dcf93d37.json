@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "repository": "https://github.com/sambanks/octabam",
+  "revision": "dcf93d3709435836e19aab7a7ef18506db3e82ba",
+  "kind": "docs-backport",
+  "modules": [],
+  "files": [
+    {
+      "path": "docs/FAILURE_MODES.md",
+      "sourcePath": "docs/contributing/FAILURE_MODES.md",
+      "sourceSha256": "a786f66e4cf52390ac15b71faaf8403ebfb3d654a69f77b502cf6c64b0be1808",
+      "vendoredSha256": "a786f66e4cf52390ac15b71faaf8403ebfb3d654a69f77b502cf6c64b0be1808"
+    },
+    {
+      "path": "docs/HARDWARE_MATRIX.md",
+      "sourcePath": "docs/contributing/HARDWARE_MATRIX.md",
+      "sourceSha256": "e99340db13de5e9819b8bc00ac8680a18ffa57dbb86f509fff459e31577b04cd",
+      "vendoredSha256": "e99340db13de5e9819b8bc00ac8680a18ffa57dbb86f509fff459e31577b04cd"
+    }
+  ],
+  "localAdaptations": [
+    "None: both files are upstream byte for byte, replacing the copies the 30fbb8e4 record pinned. TRAPS.md and MIDI_TRACKS.md are unchanged upstream and stay pinned there."
+  ],
+  "review": [
+    "Stock-free scan against the original 1.40C MAIN OS (local, nothing written): no 8-byte window of any hex string in either file occurs in stock; HARDWARE_MATRIX.md has none of 8 bytes or more, FAILURE_MODES.md nine, all hashes or frame counts.",
+    "No objdump listing; the code blocks in HARDWARE_MATRIX.md are tool command lines."
+  ],
+  "limitations": [
+    "Documentation only: no code, build input or module source changes. Hardware results in these files are upstream's, measured on their units with their own builds, and are not repeated on a Modwerk base or Modwerk's packages of the same modules."
+  ]
+}

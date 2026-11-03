@@ -7,11 +7,12 @@ import {
   type Builder, type Catalog, type Plan, type Prepared,
 } from '../../../vendor/elekloader/kit/src/kit/index.ts'
 import { sha } from '../../../vendor/elekloader/kit/src/bytes.ts'
+import { checkLock, type Lock } from '../../../vendor/elekloader/kit/src/store.ts'
 import type { BuilderResult } from './protocol'
 
 export { buildStep } from '../../../vendor/elekloader/kit/src/kit/index.ts'
 export type { Builder }
-export const MACHINE_DEVICE = { octatrack: 'octatrack', digitakt: 'digitakt-mk1', 'digitakt-ii': 'digitakt-mk2', digitone: 'digitone-mk1' } as const
+export const MACHINE_DEVICE = { octatrack: 'octatrack', digitakt: 'digitakt-mk1', 'digitakt-ii': 'digitakt-mk2', digitone: 'digitone-mk1', 'analog-rytm-mkii': 'analog-rytm-mk2' } as const
 export type ElekloaderMachine = keyof typeof MACHINE_DEVICE
 export const BUILDER_CATALOG: Catalog = parseCatalog(CATALOG_JSON)
 export const BUILDER_SOURCE = { repository: 'https://github.com/irpina/elekloader', commit: KIT.commit, version: KIT.version, protocol: KIT.protocol, catalogRevision: BUILDER_CATALOG.revision }
@@ -68,6 +69,21 @@ export async function prepareLocalBuild(builder: Builder, input: { machine: Elek
     return { ok: false, error: 'Include a pinned local file for every dependency and the core; this selection picked a file outside the private build.', device: stock.dev }
   const check = await builder.check(enabled)
   return check.ok ? { ok: true, enabled, check, device: stock.dev } : { ok: false, error: check.headline ?? 'These mods cannot be built together.', check, device: stock.dev }
+}
+
+/** builder.build with a configuration's mod-storage lockfile (null for a new layout). The kit's client has no store
+ * argument, so this sends the bridge's build call itself; a core that keeps mod storage returns the new lockfile as `store`. */
+export function buildWithLock(builder: Builder, enabled: readonly string[], version: string, name: string, store: Lock | null, log?: (line: string) => void) {
+  return builder.call<BuilderResult>('build', { enabled, version, name, store }, undefined, log)
+}
+/** The lockfile a successful build returned, or null (a core without mod storage). */
+export function builtLock(result: BuilderResult): Lock | null {
+  return result.ok && result.store && typeof result.store === 'object' ? result.store as Lock : null
+}
+/** A lockfile from a backup, checked as the kit checks it for this machine. Throws with the kit's reason. */
+export function checkStorageLock(machine: ElekloaderMachine, value: unknown): Lock {
+  checkLock(value, MACHINE_DEVICE[machine])
+  return value
 }
 
 export function buildLogText(input: { device: string; release: string; version: string; enabled: readonly string[]; result: BuilderResult }) {

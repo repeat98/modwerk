@@ -1,0 +1,33 @@
+{
+  "scope": "bounded Flex copy with synthetic metadata and query; no native locking or source admission",
+  "sourceSha256": {
+    "flex_copy.c": "b069d6b3ac5d8922281811a8eaa5c93d8ab33267ec89fb9f1c99305f35d80b2c",
+    "flex_copy.h": "1bb469187ef75be2d25b671622f79ec2a5e199d877a418e8d9885c70781ee513",
+    "preview_session.h": "92b03f2bd17f7077afda56085a1d23231f756558d7e933604dbb9fdfcc20ff79",
+    "preview_guard.h": "abcaff39ef1b9a21cb238f0021344ffb5b812ea1740a354cbc1d1f2ace4ddf36",
+    "pcm_reader.h": "462f495a86f32730b79a56177f99929f685d82729e4646e7b391df475d929821",
+    "planner_job.h": "c4dd3faa8b3320194b54ab4d7bec6541d9e936f544b0e6236efa4fa5518d6547",
+    "planner.h": "4faab6f03e679d0b9389dbf016416afc87fb4d2d354952b22efb81a0381c5c1b",
+    "test_flex_copy.c": "cb4b088d16a00bd42af8121c36809cd6ba1fa4cfb4fa7d996bd768e85e6db9c9",
+    "test_flex_copy.py": "52feb86b55042370393f07ae26e4fba5e9e6ed37043609a365b5c339b39b48b4"
+  },
+  "compiler": "Apple clang version 17.0.0 (clang-1700.6.4.2)",
+  "flags": [
+    "-std=c99",
+    "-O1",
+    "-g",
+    "-Wall",
+    "-Wextra",
+    "-Werror",
+    "-pedantic",
+    "-fsanitize=address,undefined",
+    "-fno-omit-frame-pointer"
+  ],
+  "exitCode": 0,
+  "stdout": [
+    "PASS: 96 bounded copies, 34 precondition refusals, four bad replies, short capacity and four map relocations"
+  ],
+  "hardware": "not tested",
+  "audio": "not tested",
+  "nativeSourceAccess": "not implemented"
+}

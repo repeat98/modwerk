@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 1,
+  "machine": "analog-rytm-mkii",
+  "moduleId": "slice-loop",
+  "moduleVersion": "1.0.0",
+  "firmware": "1.74",
+  "capturedAt": "2026-10-22T21:50:00Z",
+  "imageSha256": "f6563d2e440273b6885ccaeabab7d5b3f6297d1e43fe103deb54eeb31cd0bc65",
+  "mainSha256": "0f5738561f1a40dd6b78baee3740dc7d8394d1674330f0b512bcc60927fcb36d",
+  "stockSha256": "cb0f99d620edde994fb860c0e79cc2464e427d06882828cfdfb00fc53700e123",
+  "build": "Modwerk's linker (kit 0.7.0 parity): core-ar2 0.3 release (6b97dfb3…3e58) + rytm2_mods v1.2 slice-loop-1.0-os1.74.elemod (b1b8f51b…1cf9), --version SL74",
+  "emulator": {
+    "name": "rytm-emu",
+    "repository": "https://github.com/trigcondition/rytm-emu",
+    "revision": "c5732f0",
+    "binary": "dtboot (cargo build --release)",
+    "settings": "no card image, JIT on"
+  },
+  "conditions": "Headless cold boot; four held NO presses clear the missing-calibration notices; FUNC + CHRO opens the track menu of BD, four DOWN select SLICE LOOP and YES chooses it. RECORD enters grid recording and SMPL opens the SAMPLE page; trig 2 and then trig 16 are held, each with a zero-count turn of encoder 1 only to take a frame while the key is down (the value does not change). RECORD leaves grid recording, and SLICE LOOP is chosen again. On stock 1.74 the same boot gives identical frames until the track menu opens, whose list ends at SAVE TRACK; the stock run was stopped there.",
+  "captures": [
+    {
+      "path": "media/slice-loop-menu.png",
+      "sha256": "a877ca69f521a08ab226ce3fa2a51fa333b1c7ab7a13ca6cdab0bf350075d895",
+      "frame": "step10_DOWN.png",
+      "plan": "DTBOOT_STEPS=1 DTBOOT_PNG_DIR=out DTBOOT_TURN_PNG=out dtboot sl74.syx --instr 14000M --every 1000M --press NO@4500M:80M --press NO@5300M:80M --press NO@6100M:80M --press NO@6900M:80M --press FUNC@7500M:300M --press CHRO@7600M:40M --press DOWN@8100M:40M --press DOWN@8300M:40M --press DOWN@8500M:40M --press DOWN@8700M:40M --press YES@9000M:40M --press RECORD@9800M:40M --press SMPL@10200M:40M --press T2@10600M:500M --turn 1:0@10900Mx1 --press T16@11300M:500M --turn 1:0@11600Mx1 --press RECORD@12000M:40M --press FUNC@12300M:300M --press CHRO@12400M:40M --press DOWN@12900M:40M --press DOWN@13100M:40M --press DOWN@13300M:40M --press DOWN@13500M:40M --press YES@13800M:40M"
+    },
+    {
+      "path": "media/loop-sliced.png",
+      "sha256": "7c1b2828349edc0a951fcec042da22f08e7726096d5eb18e4b22f09f19f22adf",
+      "frame": "step11_YES.png",
+      "plan": "DTBOOT_STEPS=1 DTBOOT_PNG_DIR=out DTBOOT_TURN_PNG=out dtboot sl74.syx --instr 14000M --every 1000M --press NO@4500M:80M --press NO@5300M:80M --press NO@6100M:80M --press NO@6900M:80M --press FUNC@7500M:300M --press CHRO@7600M:40M --press DOWN@8100M:40M --press DOWN@8300M:40M --press DOWN@8500M:40M --press DOWN@8700M:40M --press YES@9000M:40M --press RECORD@9800M:40M --press SMPL@10200M:40M --press T2@10600M:500M --turn 1:0@10900Mx1 --press T16@11300M:500M --turn 1:0@11600Mx1 --press RECORD@12000M:40M --press FUNC@12300M:300M --press CHRO@12400M:40M --press DOWN@12900M:40M --press DOWN@13100M:40M --press DOWN@13300M:40M --press DOWN@13500M:40M --press YES@13800M:40M"
+    },
+    {
+      "path": "media/step2-locks.png",
+      "sha256": "393112db52ead46395564fa8e23431158a3c82eb8dfa65cedadaae3c9bd07266",
+      "frame": "turn14.png",
+      "plan": "DTBOOT_STEPS=1 DTBOOT_PNG_DIR=out DTBOOT_TURN_PNG=out dtboot sl74.syx --instr 14000M --every 1000M --press NO@4500M:80M --press NO@5300M:80M --press NO@6100M:80M --press NO@6900M:80M --press FUNC@7500M:300M --press CHRO@7600M:40M --press DOWN@8100M:40M --press DOWN@8300M:40M --press DOWN@8500M:40M --press DOWN@8700M:40M --press YES@9000M:40M --press RECORD@9800M:40M --press SMPL@10200M:40M --press T2@10600M:500M --turn 1:0@10900Mx1 --press T16@11300M:500M --turn 1:0@11600Mx1 --press RECORD@12000M:40M --press FUNC@12300M:300M --press CHRO@12400M:40M --press DOWN@12900M:40M --press DOWN@13100M:40M --press DOWN@13300M:40M --press DOWN@13500M:40M --press YES@13800M:40M"
+    },
+    {
+      "path": "media/step16-locks.png",
+      "sha256": "bd2f26d07af6a5874b2f10a10543c8accacb05de6cb8e41d36e2d7ab996d0632",
+      "frame": "turn16.png",
+      "plan": "DTBOOT_STEPS=1 DTBOOT_PNG_DIR=out DTBOOT_TURN_PNG=out dtboot sl74.syx --instr 14000M --every 1000M --press NO@4500M:80M --press NO@5300M:80M --press NO@6100M:80M --press NO@6900M:80M --press FUNC@7500M:300M --press CHRO@7600M:40M --press DOWN@8100M:40M --press DOWN@8300M:40M --press DOWN@8500M:40M --press DOWN@8700M:40M --press YES@9000M:40M --press RECORD@9800M:40M --press SMPL@10200M:40M --press T2@10600M:500M --turn 1:0@10900Mx1 --press T16@11300M:500M --turn 1:0@11600Mx1 --press RECORD@12000M:40M --press FUNC@12300M:300M --press CHRO@12400M:40M --press DOWN@12900M:40M --press DOWN@13100M:40M --press DOWN@13300M:40M --press DOWN@13500M:40M --press YES@13800M:40M"
+    },
+    {
+      "path": "media/track-not-empty.png",
+      "sha256": "6961ba91ff17c89e9ade6b67dd7b83ee3962b70b1d487d6568594c9a305c0404",
+      "frame": "step25_YES.png",
+      "plan": "DTBOOT_STEPS=1 DTBOOT_PNG_DIR=out DTBOOT_TURN_PNG=out dtboot sl74.syx --instr 14000M --every 1000M --press NO@4500M:80M --press NO@5300M:80M --press NO@6100M:80M --press NO@6900M:80M --press FUNC@7500M:300M --press CHRO@7600M:40M --press DOWN@8100M:40M --press DOWN@8300M:40M --press DOWN@8500M:40M --press DOWN@8700M:40M --press YES@9000M:40M --press RECORD@9800M:40M --press SMPL@10200M:40M --press T2@10600M:500M --turn 1:0@10900Mx1 --press T16@11300M:500M --turn 1:0@11600Mx1 --press RECORD@12000M:40M --press FUNC@12300M:300M --press CHRO@12400M:40M --press DOWN@12900M:40M --press DOWN@13100M:40M --press DOWN@13300M:40M --press DOWN@13500M:40M --press YES@13800M:40M"
+    }
+  ]
+}

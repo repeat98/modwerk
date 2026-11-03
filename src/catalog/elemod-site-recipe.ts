@@ -9,14 +9,19 @@ export function explicitSite(value: unknown) {
   if (site.op === 'keep2') throw new Error('Stock-dependent operations must remain local: keep2')
   if (site.op === 'bytes') {
     if (site.kind === 'code') {
-      const bytes = Uint8Array.from(site.new.match(/../g)!, byte => parseInt(byte, 16)), base = Number(site.addr)
+      const bytes = Uint8Array.from(site.new.match(/../g)!, byte => parseInt(byte, 16)), base = Number(site.addr), starts: number[] = []
       for (let offset = 0; offset < bytes.length;) {
         const instruction = decodeColdFire(readerAt(bytes, base)(base + offset), base + offset)
         if (instruction.flags & (ILLEGAL | LINEF | FPU) || instruction.length < 2 || offset + instruction.length > bytes.length) throw new Error('Authored code patch must contain whole supported instructions')
-        offset += instruction.length
+        starts.push(offset); offset += instruction.length
+      }
+      // An address may only fill one instruction's extension words, never its opcode word or the next instruction.
+      for (const { at } of site.relocs ?? []) {
+        const next = starts.findIndex(offset => offset > at), end = next < 0 ? bytes.length : starts[next]
+        if (starts.includes(at) || at + 4 > end) throw new Error('Authored code relocation must lie inside one instruction’s extension words')
       }
     }
-    return { ...guard, new: site.new, kind: site.kind, relocs: [] }
+    return { ...guard, new: site.new, kind: site.kind, relocs: (site.relocs ?? []).map(({ at, target }) => [at, 'abs32', 'sym:' + target, 0]) }
   }
   const bytes = new Uint8Array(site.len), view = new DataView(bytes.buffer)
   if (site.op !== 'ptr') {

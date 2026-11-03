@@ -1,0 +1,35 @@
+{
+  "schema": 1,
+  "module": "dejavu",
+  "version": "0.1.0-experimental",
+  "kind": "coldfire",
+  "cycles": {
+    "unit": "cycles/event",
+    "static": 22800,
+    "measured": 13032,
+    "budget": 95778,
+    "method": "One event is one frame's LFO pass: the engine calls the wave handlers inside the frame interrupt. Instructions, not cycles: divides, cache and wait states are not modelled. Static: an upper bound counted from the compiled unit (dejavu_core.s), at most 950 instructions an LFO in one frame (the handler's call path, dv_call with its 116-byte set-up loop on first use, dv_visit, dv_quant with its note-reach loops at their longest), 22,800 for all 24 audio-track LFOs. Measured under ot_emu --mkii --dsp --frame (upstream:tools build) on the Deja Vu card image (composeStaticOs of dejavu alone, b7fe8f92...), 24 Oct 2026: the owner's template project with every LFO of bank A's Parts on DJQ, PTCH, SPD 0, DEP 127, MULT 1X, TRIG FREE (each LFO takes a new value every step, all in the same frame), PC watches on DJQ's entry and its three returns, summed per frame: 13,032 in the dearest frame, the one in which all 24 LFOs set up their state during the project load (longest single call 543); after PLAY at most 6,113 in a frame and 1,020 on average. Budget: one frame, 362.8 us at 264 MHz (95,778)."
+  },
+  "load": {
+    "frameUs": 362.8,
+    "stockLongestUs": 145.7,
+    "moduleLongestUs": 178.6,
+    "stockIdlePercent": 59.81,
+    "moduleIdlePercent": 58.27,
+    "method": "Emulator, not hardware: ot_emu --mkii --dsp --frame (upstream:tools build), 24 Oct 2026, the same 62 s from PLAY on two images and two copies of the owner's template project: the original MAIN OS with all 24 LFOs of bank A on stock RND, and the Deja Vu image with them on DJQ (both PTCH, SPD 0, DEP 127, MULT 1X, TRIG FREE). Same flood on both: one three-byte message every ms (notes on and off and CCs on channels 1-8) and a MIDI clock byte every 10 ms. Longest frame interrupt: the most instructions between the frame handler's entry 0x4000aad4 and its epilogue 0x4000d9a6 over 170,888 frames, priced in the port's time (3,990 instructions a sample: 362.8 us = 63,840): 25,637 stock, 31,430 with Deja Vu, which is 32.9 us (9.1 % of a frame) more, in the frames where all 24 LFOs change together. Idle: 100 x (1 - executed instructions / (3,990 x elapsed samples)). Not in this window: the one frame in which all 24 LFOs first set up their state, during the project load: 35,696 instructions (202.9 us) against stock's dearest load frame of 23,193 (131.8 us), still inside the 362.8 us frame. Fewer LFOs on Deja Vu waves, or tracks at different speeds, spread the changes over more frames."
+  },
+  "stress": {
+    "floodMessagesPerSecond": 1000,
+    "clockBpm": 250,
+    "seconds": 62,
+    "stuckNotes": 0,
+    "hangs": 0,
+    "dropped": 0,
+    "droppedExplanation": "Emulator, not hardware, the run above on the Deja Vu image with all 24 LFOs on DJQ: 62,000 three-byte messages (20,667 note on, 20,667 note off, 20,666 CC) and 6,200 clock bytes, plus STOP and START bytes at 7, 22, 37 and 52 s. Dropped: counted at the MIDI thread's handlers (note on 0x4000e018, note off 0x4000db98, CC 0x4000e79c, clock 0x40005a48): every type's entries equal the messages sent, on both images. Stuck notes: every note on has its note off and every note off reached its handler; nothing was listened to. Not covered: whether the project takes MIDI START and STOP, and a Part change during the run. Hangs: the frames ran to the end on both images and the LFO outputs were still taking DJQ values at frame 170,000."
+  },
+  "hardwareEvidence": {
+    "status": "reported",
+    "existingReport": "evidence/hardware.md",
+    "note": "Functional checks on the owner's MKII over USB (24 Oct 2026), nothing timed beyond the base's self-test (longest frame 374 us on the flashed base with Deja Vu installed and no LFO on its waves). The cycles, load and stress rows are ot_emu measurements."
+  }
+}

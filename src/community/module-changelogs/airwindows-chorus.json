@@ -3,33 +3,30 @@
     "version": "0.1.2-experimental",
     "date": "2026-10-09",
     "changes": [
-      "Media-only: redraw the Air Chorus thumbnail with phase-offset signal curves using the library’s shared grid, lavender palette and typography.",
-      "Protect stock T3 inter-core mailbox and T7 parameter staging data by keeping the first 72 virtual ring words in safe per-instance X state. Preserve stock track state, full stereo delay range, smoothing, controls and saved parameter layout.",
-      "Losslessly pack all original sine values into 256 DSP words and reduce code/table storage from 1,425 to 795 words per core. Air Chorus now combines with E-Verb and Analog BD, including more DSP companions; larger selections remain limited by available program space.",
-      "The shared-data corruption is reproduced and checked in software. The tester still reported T3 clicking in 0.1.1; whether this update fixes that audible hardware symptom remains unverified. Current hardware timing, multi-instance audio and Part/project/reboot persistence are owner-waived for this exact beta source/version.",
-      "Documentation/media-only: add an offline audio preview rendered through 0.1.2-experimental, with sample credits, settings and provenance; firmware is unchanged.",
-      "Beta base fix (beta test run 2, 14 Oct 2026; the package is unchanged): picking it showed DSP MEMORY FULL whenever the modules the bank's Parts name did not fit on a DSP core together, even with room for it, and a pick on T1-T4 could be refused for T5-T8's Parts. The base keeps the bank's modules loaded for instant Part changes only while they fit; on a core where they never fitted it now loads what the Part runs, so the pick goes through. Where they fit and the pick does not, DSP MEMORY FULL stays. Seen on a development twin with all 19 modules and bank A: Tape Echo and Mini Verb on T1 and T5 were refused before and are taken now; with the bank's modules held, Mini Verb is still refused on both cores and Tape Echo taken. The tester base itself has not run on the unit.",
-      "Package-only: the USB package is rebuilt in place after a builder fix (#626) that now zeroes both formatter words on every drawn PLAIN knob. For Air Chorus this adds six writes of words that are already zero, so the card firmware and the FX page the base builds stay byte-identical; only the USB package hash changes. Not tested on hardware.",
-      "Compatibility flag only: not offered beside Sidechain Compressor. Air Chorus declares its whole 16K FX2 slot, whose last 514 words on T3 and T7 are Sidechain's cross-core key window. The builder now catches this overlap for every effect. Pinned firmware code is unchanged."
+      "Fixes Air Chorus on T3 and T7 overwriting data the Octatrack shares between tracks. It is no longer offered beside Sidechain Compressor, which uses the same memory there.",
+      "Needs less DSP space, so it now combines with E-Verb, Analog BD and more DSP effects. Very large module sets can still run out of space.",
+      "Beta base update: picking Air Chorus no longer shows DSP MEMORY FULL just because the effects of the bank's other Parts don't all fit.",
+      "Media only: a new thumbnail and an audio preview.",
+      "Known issue: the T3 clicking reported in 0.1.1 may not be fixed, and this version is not yet tested on hardware."
     ]
   },
   {
     "version": "0.1.1-experimental",
     "date": "2026-10-09",
     "changes": [
-      "Beta release for beta testers: reduces measured DSP work by 35.80% with the original full stereo delay range, smoothing and control meanings retained. Thirty recorded comparison fixtures are bit-identical to 0.1.0.",
-      "Targets the reported multi-instance clicking by reducing DSP load. The T3/T4 emulator reproduction did not reproduce the hardware symptom, so this is a mitigation pending beta hardware results, not a confirmed clicking fix.",
-      "FX2 only. Current hardware testing is owner-waived for this exact version/source; physical timing, multi-instance audio and Part/project/reboot persistence remain unverified. Existing control values and saved parameter layout are unchanged."
+      "Uses about a third less DSP time with the same sound, delay range, smoothing and controls. Saved settings are unchanged.",
+      "Aims to reduce the clicking heard with several Air Chorus instances; it is not yet confirmed that the clicking is gone.",
+      "Known issue: this version is not yet tested on hardware."
     ]
   },
   {
     "version": "0.1.0-experimental",
     "date": "2026-10-08",
     "changes": [
-      "First release of Chris Johnson’s MIT-licensed Airwindows Chorus as an Octatrack FX2 module; original source and full attribution retained.",
-      "Smooth SPD, RNG and MIX per sample, preserve the original air compensation and three-point delay read, and initialize dirty rings without a long synchronous clear.",
-      "Owner reports 50 minutes of successful MKII use with several instances and full knob sweeps on the first image. Fresh hardware testing of the bounded-init image is waived; eight-track timing, locks/scenes/LFOs and physical persistence remain unverified.",
-      "Delay precision is approximately 16 bits; extreme modulation retains pitch and aliasing artifacts."
+      "First release of Chris Johnson's Airwindows Chorus (MIT licence) as an Octatrack FX2 effect, with the original source and full credit.",
+      "SPD, RNG and MIX move smoothly, the original sound character is kept, and the effect starts without a long pause.",
+      "Known issue: not yet tested on all eight tracks, with locks, scenes and LFOs, or across reloads and power cycles.",
+      "Known issue: extreme modulation settings can add pitch and aliasing artifacts."
     ]
   }
 ]

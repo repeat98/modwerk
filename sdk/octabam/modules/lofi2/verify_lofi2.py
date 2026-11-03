@@ -90,6 +90,14 @@ path, so the harness's own gains cancel.
                   under -70 dBFS.
   MIX/GAIN/FDBK/  as SRR's: MIX and GAIN in RING, FDBK in SHIFT UP, AMPH in
   AMPH turns      RING on the R channel (AMPH leaves L alone); under -70 dBFS.
+  FDBK settles    sambanks/octabam#825: a 0.3 s burst (440 Hz, 0.125 FS), then
+                  silence, at FDBK 127, MIX 127, RANGE HIGH, in DOWN at FREQ 64
+                  and 72 and UP at 72: the tail 2.5-3.0 s after the input is
+                  under -60 dBFS and no louder than at 1.0-1.5 s. At the 0.45
+                  cap the loop self-oscillated there up to the limiter (-4.1,
+                  -4.0, -4.0 dBFS); at 0.40 it settles at -69.2, -71.7 and
+                  -84.5 (21 Oct 2026): the Hilbert sections' truncation floor
+                  (about -83 at FDBK 0) lifted by the loop, not a growth.
 
 Not covered: payload B (tracks 1-4) -- dsp_host renders one payload here;
 `rig_render` covers both, and the October port's A/B found T1 == T5.
@@ -509,6 +517,20 @@ for label, knob, ch, ctx in (("MIX, RING", "MIX", 0, dict(FREQ=64, RANGE=1, MODE
           f"turn {tl:.1f} dBFS, held {hl:.1f}")
 
 print()
+# ---- FDBK: the SHIFT loop does not self-oscillate (#825) ------------------------
+BURST = int(0.3 * SR)
+burst = [s if i < BURST else 0 for i, s in enumerate(sine(3.3))]
+for mode, freq in ((1, 64), (1, 72), (2, 72)):
+    bL, bR = render(burst, MODE=mode, MIX=127, RANGE=1, FREQ=freq, FDBK=127)
+    def lvl(a, b):
+        t = max(rms(bL, BURST + int(a * SR), BURST + int(b * SR)),
+                rms(bR, BURST + int(a * SR), BURST + int(b * SR)))
+        return 20 * math.log10(t / (1 << 23)) if t else -999.0
+    early, late = lvl(1.0, 1.5), lvl(2.5, 3.0)
+    check(f"FDBK 127, {('', 'DOWN', 'UP')[mode]} FREQ {freq}: the tail stops growing, under -60 dBFS",
+          late < -60 and late <= early + 0.1,
+          f"{early:.1f} dBFS at 1.0-1.5 s, {late:.1f} at 2.5-3.0 s after the input stops")
+
 if FAILS:
     print(f"{len(FAILS)} FAILED")
     sys.exit(1)

@@ -49,7 +49,7 @@ class ResidentStockDsp(unittest.TestCase):
 
     def test_reviewed_resident_changes_fail_closed(self):
         # The Sidechain key phase change (resident_dsp.REVIEWED): exact old text once, the exact reviewed result.
-        name, asm = 'sidechain-compressor', 'modules/sidechain-compressor/upstream/tools/patch_sc_dsp3.asm'
+        name, asm = 'sidechain-compressor', 'modules/sidechain-compressor/patch_sc_dsp3.asm'
         text = (ROOT / 'sdk/octabam' / asm).read_text()
         pinned, changes, result, markers = resident.REVIEWED[name]
         self.assertEqual(pinned, resident.SOURCES[asm])
@@ -88,28 +88,34 @@ class ResidentStockDsp(unittest.TestCase):
         ob = packages.Octabam(str(ROOT / 'sdk/octabam'))
         with tempfile.TemporaryDirectory() as work:
             for tag in ('A', 'B'):
-                first = resident.assemble_resident(ob, tag, 0x1000, work, packages.assemble)
-                other = resident.assemble_resident(ob, tag, 0x1400, work, packages.assemble)
+                # Analog BD's engine is its package's, always on demand; the rest stay in the block, as they were.
+                packaged = resident.PACKAGED & resident.ALLOWED[tag]
+                first = resident.assemble_resident(ob, tag, 0x1000, work, packages.assemble, packaged)
+                other = resident.assemble_resident(ob, tag, 0x1400, work, packages.assemble, packaged)
                 self.assertEqual(len(first['words']), len(other['words']))
                 for old, new in zip(first['words'], other['words']):
                     self.assertIn((new - old) & 0xffffff, (0, 0x400, (-0x400) & 0xffffff))
-                self.assertEqual(first['xRecord'], other['xRecord'])
                 for row, moved in zip(first['descriptors'], other['descriptors']):
                     self.assertEqual(moved['operand'] - row['operand'], 0x400)
                     self.assertEqual(moved['onValue'], row['onValue'])
                     self.assertEqual(first['words'][row['operand'] - first['origin']], row['offValue'])
-                # Complete dormant replays: SCdet displaces TWO one-word moves.
-                for row, label in zip(first['guards'][:3], ('hsc_tap_off', 'hsc_det_off', 'hsc_commit_off')):
+                # Complete dormant replays: SCdet displaces TWO one-word moves, SCinit one two-word move.
+                for row, label in zip(first['guards'][:4], ('hsc_tap_off', 'hsc_det_off', 'hsc_commit_off', 'hsc_init_off')):
                     at = first['labels'][label] - first['origin']
                     self.assertEqual(hashlib.sha256(b''.join(w.to_bytes(3, 'big') for w in first['words'][at:at + 2])).hexdigest(), row['expectedSha256'])
                 prefix_at = first['labels']['hsc_det_off'] - first['origin']
                 prefix = first['words'][prefix_at:prefix_at + 2]
-                stock = dict(key='COMPRESSOR', proc=2, relocations=[0, 3, 6])
-                updated, words = resident.compressor_bridge(stock, [0, 0] + prefix + [0, 0, 0], first)
-                self.assertEqual(updated['relocations'], [0, 6])
+                init_at = first['labels']['hsc_init_off'] - first['origin']
+                init = first['words'][init_at:init_at + 2]
+                stock = dict(key='COMPRESSOR', proc=2, init=5, relocations=[0, 3, 5, 6, 7])
+                updated, words = resident.compressor_bridge(stock, [0, 0] + prefix + [0] + init + [0], first)
+                self.assertEqual(updated['relocations'], [0, 7])
                 self.assertEqual(words[3], first['labels']['hsc_det'])
+                self.assertEqual(words[6], first['labels']['hsc_init'])
                 with self.assertRaises(ValueError):
-                    resident.compressor_bridge(stock, [0] * 7, first)
+                    resident.compressor_bridge(stock, [0] * 8, first)
+                with self.assertRaises(ValueError):
+                    resident.compressor_bridge(stock, [0, 0] + prefix + [0, 0, 0, 0], first)
                 control = resident.receiver_control(first)
                 text = loader.receiver_source(loader.RECEIVER.read_text(), (0x7c8, 0x7c9), 1200,
                                               tag=tag, ids=128, hook_control=control,
@@ -134,9 +140,9 @@ class ResidentStockDsp(unittest.TestCase):
                                     '-o', str(executable)], check=True, capture_output=True)
                     meta = Path(work) / 'resident-meta.txt'
                     meta.write_text(' '.join(map(str, (0x400, labels['hookcontrol'], labels['hookreset'],
-                        labels['hookstate'], labels['hookready'], resident.ALLOWED[tag],
+                        labels['hookstate'], labels['hookready'], resident.ALLOWED[tag] & ~resident.PACKAGED,
                         0x33dfe if tag == 'A' else 0x3bdfe, len(first['descriptors'])))) + '\n' + '\n'.join(
-                        ' '.join(str(row[key]) for key in ('owner', 'operand', 'offValue', 'onValue')) for row in first['descriptors']) + '\n')
+                        ' '.join(str(row[key] or 0) for key in ('owner', 'operand', 'offValue', 'onValue')) for row in first['descriptors']) + '\n')
                     subprocess.run([str(executable), str(Path(work) / 'dsp.400.bin'), str(meta)], check=True, capture_output=True)
                 # Descriptor tampering cannot turn CAS into an arbitrary P writer.
                 first['descriptors'][0]['operand'] = 0

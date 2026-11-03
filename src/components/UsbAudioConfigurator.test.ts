@@ -22,7 +22,7 @@ describe('USB Audio setup before adding', () => {
   it('offers configuration instead of quick-add from the library and comparison', () => {
     expect(card()).toContain('aria-label="Configure USB Audio"')
     expect(card()).not.toContain('aria-label="Add USB Audio to configuration"')
-    const comparison = render(createElement(ModuleComparison, { ids: [USB_AUDIO_MODULE], selected: [], digiSelected: { digitakt: [], 'digitakt-ii': [], digitone: [] }, onToggle: noop, onToggleDigi: noop, onClose: noop }))
+    const comparison = render(createElement(ModuleComparison, { ids: [USB_AUDIO_MODULE], selected: [], digiSelected: { digitakt: [], 'digitakt-ii': [], digitone: [], 'analog-rytm-mkii': [] }, onToggle: noop, onToggleDigi: noop, onClose: noop }))
     expect(comparison).toContain('>Configure USB Audio</button>')
     expect(comparison).not.toContain('>Add USB Audio</button>')
   })

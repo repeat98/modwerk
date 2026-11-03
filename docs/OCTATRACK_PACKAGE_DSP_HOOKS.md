@@ -6,6 +6,114 @@ review below. The owner has not reviewed it: the questions at the end are open, 
 receiver change only on that branch until he does. Hardware facts are quoted from the documents named, except the
 key bus's own run on an MKII (20 October 2026, "On the unit" below).
 
+Update, 22 October 2026: the owner ruled that no module is tied to the base; the plan that follows from it is the
+next section, for his review before any of it is built.
+
+## Owner decision and plan, 22 October 2026
+
+Analog BD 0.1.6 changes only its 909's DSP sound, yet shipping it over USB needed a new beta base: its engine and
+tables are built into the base and the base admits its package by an exact hash. The owner: "no module should be tied
+to the base firmware", and on version coupling: "if some modules will require a new base later down the line because
+base has drifted so much or vice versa, it's ok".
+
+So:
+
+- **A module update ships as a module.** Its DSP engine, its DSP tables and its controller code come from its own
+  package, never from the base's build, and nothing in the base names its package's hash.
+- **Versions may still require each other.** A module may need a newer base, or a base newer modules, when one has
+  moved on. That is a declared requirement (`requires`, the capability record, a minimum base), checked at sync, not
+  an exact identity pinned on both sides.
+
+### What ties a module to the base today
+
+Analog BD as the example; Sidechain Compressor and Output Matrix are tied the same way.
+
+| Tie | Where | Consequence |
+| --- | --- | --- |
+| The DSP engine is base code | `resident_dsp.py` builds it from the module folder and pins those files (`SOURCES`, `src/engine/assets/octatrack-base-sources.json`) | Any DSP change is a base input: the base must be rebuilt, or its checks fail |
+| The DSP tables are base data | `resident_dsp._analog`'s X record (3,776 words a core), written at RESET from `resident-engines-data.c` | Same |
+| The base admits the package by hash | `controller-policies.json` trust rows: package SHA-256, entry and lease return offsets | Any package change needs new rows, so a new base |
+| The package calls the base by address | Base-bound packages link the write-lease entries absolutely (`base-binding.json`, `requiredBase`) | Every base change relinks the package (acceptable under the owner's second sentence, but it is what makes the hash change) |
+
+### Plan
+
+**Phase 1: engines and their tables travel in the package.** One base change, one requalification.
+
+- Base: generic hook slots. The base keeps the JSR and dormant stub at each catalogued site (`dsp-sites.json`) and one
+  base word per slot; PLACE names a hook slot instead of a feature bit. The receiver, `resident_engines.c` and its
+  admission take the engine unit (words, relocations, entry offsets) from the installed package's DSP section
+  instead of `resident-engines-data.c`. Stubs, placement, evacuation and the on-demand rules stay as they are.
+- Package, ABI 10: hook entries are accepted (ABI 9 refuses them); a claim may carry initial words, which the base
+  writes before ENABLE in place of today's RESET from base data; `RUNTIME_DSP_WORDS` grows (Analog BD needs its 998
+  code words plus about 3,200 table words, over today's 4,096). Each package declares its per-core DSP cost (today
+  `analog_bd_dsp_price.json`), charged as now.
+- Trust for Phase 1: the controller's trust row pins only its ColdFire image and lease call sites, not its DSP words,
+  so a DSP-only update changes nothing the base pins.
+- Analog BD moves: its package carries the 808/909 engine and tables; the base drops its resident feature and pins.
+- Checks: host tests (receiver model, relocation at several bases, admission refusals, claim init), then on the
+  owner's unit: install, place, both engines playing, Part switches while playing, removal and reinstall, a power
+  cycle restore. Then Analog BD 0.1.6 ships as a module release, card and USB.
+
+**Phase 1 as built (22 October 2026, `claude/package-carried-engines`).** Analog BD only; Sidechain and Output Matrix
+stay base data (Phase 3).
+
+- **The site.** `dsp-sites.json` site 5, `dsp_track_source` (P:$39c / P:$1a2, the stock `move a,x:>$20e`, its guard
+  checked against the stub the base assembles), with an **exit** per payload (P:$426 / P:$221): the stock code after
+  the source, where Analog BD's glue leaves when it rendered the track. Feature 4 is `"packaged"`: its engine is its
+  controller's package's, its region (X:$2840, $ec0 words on both cores) stays the base's.
+- **The package (ABI 10).** `module-adapters/hook_engines.py` assembles Analog BD's engine from the module's own sources
+  (glue, 909, 808, desk), as `resident_dsp` did, but as one unit for both cores: its one jump to the continuation is the
+  site's exit, a long branch whose displacement the base writes per core (`mw_engine_relocate`). Proven: each core's own
+  assembly at four bases equals the unit placed there with that core's exit, and the unit placed with the exit equals
+  main's resident Analog BD engine word for word (998 words). Its 3,776 initial words (the X tables and voice blocks)
+  are one claim on both cores with initial words. `abi9.engine()` writes it into the controller package
+  (`base_bound.machine`). Nothing of it is a base input.
+- **Trust.** A row pins the **controller digest** (`loader.h`: the header with its DSP fields zeroed and everything up
+  to the claims), not the package's SHA-256; the loader keeps it in the owner record, and the board, the owner checks and
+  the write lease compare it. A package that changes only its DSP part (0.1.6) keeps its row, so the base is not rebuilt.
+  The source policy in a row hashes only the controller's inputs (`build.py machine_inputs`), and the price (411 a
+  voice, 3 a core) stays in the machine record (`machine-ports.json`): a price change is a controller change until
+  Phase 2.
+- **Admission.** The loader asks `modwerk_machine_dsp_engine_admit` (the board) for an engine: a trusted controller of a
+  packaged feature, one entry at the feature's one site on its cores, entered at word 0, an exit exactly where the site
+  has one, claims exactly the feature's regions with initial words, at most 2,048 words. A trusted controller of a
+  packaged feature must bring one. Everything is checked at PREPARE: a refusal at the loader's switch is reported as
+  `RUNTIME_BUSY`, which the host retries for good, so the long branch before an exit is checked by the package's build.
+- **Placement.** `resident_engines.c` takes the unit from the bound generation (`mw_engines_package`), never adopts
+  another generation's engine (an update or going back unplaces the old one, while that core is known dormant and the
+  sequencer quiet, then writes and places the new one), and resets the region from that package's initial words. The
+  receiver's PLACE takes the engine's size in word 7 (it was 1, with sizes built in), so a packaged engine is placed as
+  the base's own.
+- **The base.** No Analog BD source is pinned (`resident_dsp.SOURCES`), no X record is uploaded at boot or kept
+  (`resident_boot`), and every resident build is on demand (`--resident-stock-hooks` needs `--resident-on-demand`;
+  the permanent-engine build is retired).
+- **Checked in software.** Loader host test (ABI 10 parse, refusals, the digest across DSP-only changes); the board on
+  demand (`test_resident_engines_board.py` modes 50-53: a DSP-only update under the same row, going back, refusals,
+  a replacement waiting while playing; every earlier mode with Analog BD's engine from its package); the DSP interpreter
+  (`test_resident_engines.py`: relocation with the exit at ten bases, the placed engine bit-exact at two places, base
+  words kept beside Sidechain and the key bus); the site (`module-set.test.ts`, ABI 10 checks); the publication builder.
+
+**Phase 2: controllers admitted by what they declare.** One base change.
+
+- Packages import the lease entries by symbol at install, as other modules import, so a package no longer belongs to
+  one base link.
+- The base admits a controller by its declared feature and lease call sites, one holder per feature, with no package
+  hash in the base. Trust rows and the exact `requiredBase` go; a minimum base, where needed, is a declared requirement.
+
+**Phase 3: Sidechain Compressor and Output Matrix move** onto Phase 1's path, folded into Phase 1's base change if
+ready by then. The key bus stays base-owned on purpose (readers require it).
+
+Card builds are untouched by all three phases: modules are composed into the OS when the card image is built.
+
+### Risk
+
+Without hashes in the base, the base can only check structure: declared sites, claims, cost, room and lease call
+sites. A published package that passes those checks but misbehaves can silence or stall a core (a hook runs on every
+track of its core) or write its own Part bytes wrongly. That is the risk effect packages already carry, with a larger
+reach; review and CI decide what is published. Signed packages (a key the owner holds, checked by the base) would close
+it at the cost of a signing step in every release; not proposed unless the owner wants it.
+
+
 ## Review against main `e370b78e` (20 October 2026)
 
 What main changed since the first implementation (based on `24a1ece8`), as far as it touches Sidechain Compressor, its
@@ -36,8 +144,8 @@ have no DSP counterpart to reuse.
 
 1. **The tap's price.** The first implementation charged the tap on both cores whenever its engine was placed,
    Sidechain alone included. Main charges nothing for Sidechain's tap, and that charge (41 executed instructions a
-   sample a core, 72 at 7/4) is a fifth of core 0's headroom over eight stock slots (allowance 3,120, reserve 342 a
-   slot): Sidechain could have been refused where main admits it. Now the tap is charged only while a live package
+   sample a core, 72 at 7/4) was a fifth of core 0's headroom over eight stock slots (allowance 3,120, reserve 342 a
+   slot until beta finding 34 charged each slot its bank's dearest stock effect): Sidechain could have been refused where main admits it. Now the tap is charged only while a live package
    *requires* the key bus; Sidechain alone is admitted and charged exactly as on main. (The tap's cost with Sidechain
    alone stays uncharged, as on main.)
 2. **The gated follow-up needs a new layout.** Its want words (`+$3DF6..+$3DFD`) meet E-Verb 0.1.2's and Mini Verb
@@ -171,7 +279,7 @@ allowance, or a missing `rts`.
 
 ### 4. The lifecycle (the on-demand engine path, generalised)
 
-Install, trial, self-test, Keep and Undo as for any package. The engine part follows today's on-demand order, with a
+Install, trial, Keep and Undo as for any package. The engine part follows today's on-demand order, with a
 **hook slot** in place of a feature bit:
 
 1. admission: ledger (sites, claims), P room (`mw_engines_admit`'s dry run, the bank's Part union), cycles;
@@ -249,15 +357,23 @@ if the owner wants RINGMOD SC sooner than the bus can be qualified.
 with #640's phase rule: it copies every track's FX1 input to the local bus and the window on every block. Sidechain's DSP
 stays byte-identical; only its feature split moves (KEYBUS, bit 8, out of SIDECHAIN; a held SIDECHAIN holds KEYBUS).
 
-- KEYBUS is placed only while a reader package or Sidechain is installed, so it costs nothing otherwise.
+- KEYBUS is placed only while a reader package or Sidechain is installed, so it costs nothing otherwise. On a base with
+  engines on demand (the beta base) a reader holds it only while the bank's Parts name the reader's effect
+  (`keybus_read` in `controller_board.c`): installed but unused, the bus is off.
 - While a live package requires it, the base charges the tap on both cores as a per-core constant, before every FX
-  slot, the way a source engine is charged: counted statically from the source (`resident_dsp.keybus_executed`, 41
-  executed instructions a sample for a core's four tracks, seeded), charged at 7/4 like every emulator figure until it
-  is timed on a unit. Sidechain alone is not charged for it, as on main (review, change 1); a reader installed beside
-  Sidechain is.
-- Measuring it on a unit: NONE on every track, one pattern playing, `scripts/octatrack-measure.py` on both cores with
-  nothing installed, then with a KEYBUS reader installed (KEYBUS placed and enabled, no reader on any track), then with
-  Sidechain installed; the difference is the tap's cost per core.
+  slot, the way a source engine is charged: 51 chip cycles a sample for a core's four tracks, timed on an MKII on 23
+  October 2026 ([evidence](../sdk/machines/octatrack/evidence/keybus-tap-timing-20261023.json)). Until then it was
+  charged at 7/4 of its static count (`resident_dsp.keybus_executed`, 41 executed instructions), 72. Sidechain alone
+  is not charged for it, as on main (review, change 1); a reader installed beside Sidechain is. The price is paid at
+  the pick, never at install (owner, 24 October 2026): a reader always goes in, and the FX allocator adds the price to
+  any set that names a reader's effect while the tap is not charged (`modwerk_controller_keybus_pending`), so that
+  pick or Part change is DSP FULL until it fits. The box counts the price and shows the core that ran out
+  (`dl_cycles_core`, `dl_refusal_core`): with the tap on both cores, that is often T5-8 (the smaller allowance) for a
+  reader picked on T1-4. An install check against the Part on screen reserved nothing and refused syncs for a Part that may change.
+- Timing it on a unit: the load meter (`npm run device -- stats`, core 0's idle passes a frame, 20 cycles each), a
+  stopped project, no Sidechain. OFF: no Part names a reader. ON: a reader on a core-1 track (T1-T4) only, so core 0
+  carries the tap and no instance. "Installed, on no track" measures nothing on an on-demand base (above). Core 1's
+  meter is not calibrated.
 
 **Resets.** KEYBUS resets the window ($33dfe / $3bdfe, $202 words) and then the bus (Y $800, $200 words), 1,026 words
 per core, when it is placed: the window first, so the first chunk zeroes the seed mark and counter. Once it is let go
@@ -292,7 +408,8 @@ effect's buffer. RINGMOD SC is the first reader; CHARACTER 0.1.2's KEY
 - Host, ColdFire side (`test_resident_engines_board.py` modes 39-40, `test_controller_board.py`, ASan/UBSan): a reader
   alone places, resets (1,026 words) and enables the bus on both cores and pays its price; Sidechain beside it needs no
   second bus job and never enables before the bus is on (`sc_before_bus`); removal in both orders; with no room for the
-  price a reader is refused (`RUNTIME_CYCLES`) while Sidechain is still admitted and charged nothing, as on main; the bus
+  price a reader still goes in and waits for it (mode 40; at its switch, mode 60, beta finding 64), and the pick that
+  brings its effect is DSP FULL until it fits (mode 61), while Sidechain is still admitted and charged nothing, as on main; the bus
   waits while a slot buffer covers its window. The loader's ABI 9 parsing, claims and refusals (`host_test.c`,
   `test_runtime_loader.py`).
 - The site (`module-set.ts`, `module-set.test.ts`): an ABI 9 reader is chosen and synced only to a base reporting ABI
@@ -381,6 +498,12 @@ the base was regenerated with these fixes (`b3ac5155…`, `.bin` `f6488e90`) and
   `dsp_ledger.h` (generated from `dsp-sites.json`, so `dsp_sites.py --check` covers them).
 - The contract for claims is now stated once: a reader needs no claim on a feature's words, and may declare reads wholly
   inside a feature it requires (RINGMOD SC does); the window refusal also holds while a core's bus mask is unknown.
+- A reader is refused (`RUNTIME_FEATURE`) while the key bus cannot come up this boot (a core's state lost: its
+  owned channel closed or a lane stuck), not only when that core's seed is dirty, so it is never admitted to
+  pass its audio; a closed board refuses it as `RUNTIME_CONFLICT`. A reader already live when its core is lost
+  fails the self-test (`SELFTEST_FEATURE`) and, when the loader has no refusal of its own to report, the self-test
+  record's refusal reads `RUNTIME_FEATURE` (the loader's own comes first: the site retries `RUNTIME_BUSY` from it); the
+  development view's key bus byte shows it (bit 7). Nothing reopens the core before a restart.
 - ABI 9 beyond the loader: the site's module sets (`module-set.ts`), the publication builder (`module_packages.py`,
   entries with `requiresFeatures` and `dspClaims`), the private candidate reader and the MCP's prepared packages accept
   ABI 9.
@@ -444,7 +567,9 @@ reviewed change.
 
 ## Open questions for the owner
 
-All five are open. The local implementation assumes B for question 1 and exclusive sites for question 3.
+Answered by the owner's decision of 22 October 2026 (above), as read for his review: 1 B (merged as the key bus,
+#737); 2 yes, structural rules plus the publication path; 3 exclusive sites (no chaining user yet); 4 yes (Phase 2);
+5 yes, all three move (Phases 1 and 3).
 
 1. Option A or B for Sidechain and RINGMOD SC?
 2. Admission of hook packages by structural rules plus the publication path (section 5), instead of hashes pinned in the

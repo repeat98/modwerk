@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "sources": [
+    "src/fxtrack.s"
+  ],
+  "defsym": {},
+  "cflags": [],
+  "weak": [],
+  "subscribe": [
+    {
+      "event": "ev_settings",
+      "fn": "fxt_settings",
+      "order": 50
+    },
+    {
+      "event": "ev_render_out",
+      "fn": "fxt_flush",
+      "order": 50
+    }
+  ],
+  "contribute": [],
+  "collections": {},
+  "copied": [],
+  "regions": [],
+  "claims": [
+    "settings:FX TRACK"
+  ],
+  "requires": [],
+  "derive": null,
+  "releases": {
+    "1.54": {
+      "defsym": {},
+      "cflags": [],
+      "sites": [
+        {
+          "addr": "0x400e0dac",
+          "len": 6,
+          "stockSha256": "10fd2dfd6d29b6c1e73fb404103769428f9af66b0f4249311c3fcd9beaaf2731",
+          "op": "jsr",
+          "target": "fxt_out"
+        }
+      ]
+    }
+  }
+}

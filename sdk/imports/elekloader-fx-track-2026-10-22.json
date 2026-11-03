@@ -1,0 +1,34 @@
+{
+  "schema": 1,
+  "kind": "elekloader-catalog",
+  "revision": "fx-track-2026-10-22",
+  "about": "Modwerk source-only fx-track package for Digitakt I OS 1.54, compiled from sdk/digitakt/modules/fx-track.",
+  "cores": [],
+  "mods": [
+    {
+      "file": "fx-track-0.1.0-experimental-os1.54.elemod",
+      "sha256": "41bf21913edd74c38f5a5d8b306da618e11b928a6219ca830b42986ab0a68fc5",
+      "id": "fx-track",
+      "version": "0.1.0-experimental",
+      "device": "digitakt-mk1",
+      "os": "1.54",
+      "license": "GPL-3.0-or-later",
+      "source": {
+        "repo": "repeat98/modwerk",
+        "commit": "f2de4341eb2e934ef6df0514f35f4df1931eac40",
+        "path": "sdk/imports/packages/fx-track/fx-track-0.1.0-experimental-os1.54.elemod"
+      },
+      "title": "FX Track",
+      "requires": [
+        "core"
+      ],
+      "conflicts": [],
+      "summary": "Turns a MIDI track into an effects track: its control changes on FX CONTROL CH play the delay, reverb, compressor and External Mixer, with parameter locks and the track’s LFO.",
+      "description": "Turns a MIDI track into an effects track: its control changes on FX CONTROL CH play the delay, reverb, compressor and External Mixer, with parameter locks and the track’s LFO.",
+      "category": "MIDI",
+      "author": "draadpiraat",
+      "needs_core": "2.1",
+      "on_unit": "Emulator-tested only; not yet tested on a Digitakt I."
+    }
+  ]
+}

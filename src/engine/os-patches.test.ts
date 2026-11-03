@@ -33,4 +33,10 @@ describe('transactional guarded OS writes', () => {
     runtime.symbols.set('dl_state7', 0); expect(() => createPlatformOsWrites(runtime, proof.moduleIds)).toThrow('unresolved runtime symbol')
     expect(() => createPlatformOsWrites({ ...runtime, sections: [] }, proof.moduleIds)).toThrow('runtime text')
   })
+  it('leaves the end of PURGE SAMPLES\' bank walk stock while it moves the arena (#707)', () => {
+    const proof = proofs.cases[6], runtime = { symbols: new Map(Object.entries(proof.symbols)), sections: proof.sections }
+    const plan = createPlatformOsWrites(runtime, proof.moduleIds)
+    expect(plan.filter(write => write.note === 'arena base')).toHaveLength(22)
+    expect(plan.some(write => write.address < 0x400254fa + 4 && 0x400254fa < write.address + write.bytes.length)).toBe(false)
+  })
 })

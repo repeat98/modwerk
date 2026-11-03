@@ -1,0 +1,51 @@
+{
+  "schemaVersion": 1,
+  "sources": [
+    "src/env-reset-amp.s"
+  ],
+  "defsym": {},
+  "cflags": [],
+  "weak": [],
+  "subscribe": [],
+  "contribute": [],
+  "collections": {},
+  "copied": [],
+  "regions": [],
+  "claims": [
+    "ui:SOUND SETTINGS ENV RESET values",
+    "audio:amp envelope attack on trig"
+  ],
+  "requires": [],
+  "derive": null,
+  "releases": {
+    "1.74": {
+      "defsym": {},
+      "cflags": [],
+      "sites": [
+        {
+          "addr": "0x400bcf8a",
+          "len": 2,
+          "stockSha256": "0b358362552792220751c58c4cca9c4e54407d2339649a0b96182880f0504c1a",
+          "op": "bytes",
+          "new": "7403",
+          "kind": "code"
+        },
+        {
+          "addr": "0x400ef8d6",
+          "len": 2,
+          "stockSha256": "4e4b41344512feecd49483d4a3f357ebd5b45f53276f21411a66cb3b4d597c16",
+          "op": "bytes",
+          "new": "4e71",
+          "kind": "code"
+        },
+        {
+          "addr": "0x40109b70",
+          "len": 6,
+          "stockSha256": "17271641181704a08a8766493e2315ce4d971137f09ddf962389424c9cbfac6f",
+          "op": "jmp",
+          "target": "env_reset_amp_attack"
+        }
+      ]
+    }
+  }
+}

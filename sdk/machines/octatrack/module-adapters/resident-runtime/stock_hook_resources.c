@@ -25,7 +25,8 @@ static int valid(const struct mw_hook_span *r) {
 }
 static int intersects(const struct mw_hook_span *a,const struct mw_hook_span *b) {
     int shared=a->address>=0x30000u && b->address>=0x30000u;
-    return (shared || (a->core==b->core && a->space==b->space)) &&
+    int core=a->core==b->core || a->core==2u || b->core==2u; /* ABI 10: an engine's claim on both cores */
+    return (shared || (core && a->space==b->space)) &&
            a->address<b->address+b->words && b->address<a->address+a->words;
 }
 /* Words a held feature owns: the generated ledger (dsp-sites.json, dsp_ledger.h). A held feature also holds what it

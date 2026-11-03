@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "tool": "CycleClock session script in pinned digiemu c1b5735 (private, not committed)",
+  "method": "emu.cftiming.CycleClock, 250 MHz, zero-wait memory; vector-191 handler entry (0x40077420) to its rte (0x400784d0), nested interrupts included",
+  "periodCycles": 166666,
+  "core": "2.1",
+  "release": "1.54",
+  "conditions": "Disposable first-boot project. Idle: transport stopped, no MIDI traffic, 3,000 blocks. Playing: MIDI track A on FX CONTROL CH with trigs carrying parameter locks on CC 24 at steps 1 and 9, about 2.2 s of playback, with FX TRACK ticked (module) and the same pattern on the stock OS. Not a hardware measurement.",
+  "stock": {
+    "idle": { "blocks": 3000, "mean_cycles": 100448, "p99_cycles": 100766, "max_cycles": 101241, "mean_fraction": 0.6027, "max_fraction": 0.6074 },
+    "playing": { "blocks": 8944, "mean_cycles": 100422, "p99_cycles": 101306, "max_cycles": 103942 },
+    "stock_syx_sha256": "f78ba80fa7b1da5fb0e1ff61ad61e9e71aafe79f4364fc49679f3651353e3cf6"
+  },
+  "module": {
+    "build_sha256": "a2ba6e8053d6625badbb01d8660502bb9f0e048ed772b584c5e2e8a1a73eccd8",
+    "idle_ticked": { "blocks": 3000, "mean_cycles": 100514, "p99_cycles": 100842, "max_cycles": 101315, "mean_fraction": 0.6031, "max_fraction": 0.6079 },
+    "playing_ticked": { "blocks": 8938, "mean_cycles": 100471, "p99_cycles": 101365, "max_cycles": 103843 }
+  },
+  "addedMeanCycles": { "idle": 66 },
+  "addedWorstCycles": { "idle": 74 }
+}

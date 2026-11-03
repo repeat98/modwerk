@@ -79,6 +79,7 @@ namespace
 	//   tx                -> tx <hex>      UART A's transmit bytes since the last tx
 	//   peek <addr> <len> -> peek <hex>    len <= 4096; unmapped -> err
 	//   poke <addr> <hex> -> ok
+	//   call <addr> [<arg>...] -> ok d0=<hex>   a firmware routine run as main (--call's callAsMain)
 	//   frame on|off      -> ok            Rtos::setFrame
 	//   status            -> status sample= ms= frames= frame=on|off idle= wall=
 	//   quit              -> ok            then exit 0
@@ -825,6 +826,34 @@ namespace
 				reply("ok");
 				continue;
 			}
+			if(cmd == "call")
+			{
+				// `call <addr> [<arg>...]` -> ok d0=<hex> | err <why>: a firmware
+				// routine run as main (Rtos::callAsMain, --call's), for a routine
+				// that cannot genuinely block. modules/remix-switch's osw_reupload
+				// (verify_remix_switch: park the DSP, then the stock upload).
+				uint64_t addr = 0;
+				std::vector<uint32_t> args;
+				bool okArgs = w.size() >= 2 && parseNumber(w[1], addr) && addr <= 0xffffffffull;
+				for(size_t i = 2; okArgs && i < w.size(); ++i)
+				{
+					uint64_t v = 0;
+					okArgs = parseNumber(w[i], v) && v <= 0xffffffffull;
+					args.push_back(static_cast<uint32_t>(v));
+				}
+				if(!okArgs)
+				{
+					reply("err usage: call <addr> [<arg>...]");
+					continue;
+				}
+				uint32_t d0 = 0;
+				if(_rtos.callAsMain(static_cast<uint32_t>(addr), args, d0, 400000000))
+					std::snprintf(buf, sizeof buf, "ok d0=%#x", d0);
+				else
+					std::snprintf(buf, sizeof buf, "err did not return: %s", _rtos.why().c_str());
+				reply(buf);
+				continue;
+			}
 			if(cmd == "frame")
 			{
 				if(w.size() != 2 || (w[1] != "on" && w[1] != "off"))
@@ -1229,6 +1258,7 @@ int main(int _argc, char** _argv)
 	std::string periphTrace;	// every peripheral access over the load, for the same diff
 	std::string peeks;			// comma-separated hex addresses to print after the load
 	std::string cmdLog;		// every ATA COMMAND in order, for diffing against route A
+	std::string cmdLogEnd;		// the same, for the whole run, written at its end
 	uint64_t pcRing = 0;		// instructions to record from the first ATA command
 	double loadMs = 90000.0;	// ceiling in emulated ms for the load (it ends when the engine is idle after LOAD PROJECT)
 	double ataLatency = -1.0;	// --ata-latency: samples between an ATA data sector and its interrupt (default: the Rtos's 8, ~180 us)
@@ -1245,6 +1275,8 @@ int main(int _argc, char** _argv)
 	int bankOverride = -1;		// with --sequencer: switch to this bank (default: the file's saved bank)
 	std::string m6cGolden;		// the M6c facts as JSON (oracle.sh byte-compares them)
 	std::string watchMem;		// ADDR,LEN -- log every write into that range (route A's own flag)
+	std::string foreignWrites;	// ADDR,LEN,FILE -- writes into that range from a PC outside --stock-code (MEMORY's gate)
+	std::string stockCode;		// LO-HI[;LO-HI...] -- stock's own code, for --foreign-writes
 	std::string watchRead;		// ADDR,LEN -- log the first 64 data READS of that range, with the reading PC
 	std::string watchPc;		// comma-separated addresses -- log registers there (route A's own flag)
 	bool namesEarly = false;	// write the SET/PROJECT names BEFORE the mount -- see O7b
@@ -1276,6 +1308,8 @@ int main(int _argc, char** _argv)
 	bool frameTimer = false;	// O9b: keep the free-running 16-sample frame timer with --dsp (default: the DSP's bank word is the frame edge)
 	double dspLazy = ot::DspPair::g_lazyDefault;	// O16c: --dsp-lazy N -- the pair's ticks are booked and replayed in chunks of up to N DSP instructions at the ColdFire's touch points (0 = the per-tick path); the default in every mode, byte-identical to it
 	std::string pokeAfterLoad;	// O9c: "addr=byte;addr=byte" written after the load, before the frames (drive an apply the load skips)
+	std::string preload;		// "addr=path[;...]": a file's bytes into memory BEFORE the boot runs -- what a reset leaves
+								// in SDRAM (modules/remix-switch's stage) or in NOR (the bootstrap version word at 0x3ffc)
 	std::string pokeEarly;		// the same, written before --call (the current-track byte 0x80000000 an editor call reads)
 	bool noPost = false;		// 2 Oct 2026: --no-post: no LOAD PROJECT post; the firmware's own power-up load (with --cs1-in, a power cycle)
 	bool loadEarly = false;		// 4 Oct 2026: live phase from LOAD PROJECT's first handling, the background bank loads still queued
@@ -1319,6 +1353,7 @@ int main(int _argc, char** _argv)
 		else if(a == "--periph-trace" && i + 1 < _argc)	periphTrace = _argv[++i];
 		else if(a == "--peek" && i + 1 < _argc)		peeks = _argv[++i];
 		else if(a == "--cmd-log" && i + 1 < _argc)		cmdLog = _argv[++i];
+		else if(a == "--cmd-log-end" && i + 1 < _argc)	cmdLogEnd = _argv[++i];
 		else if(a == "--pc-ring" && i + 1 < _argc)	pcRing = std::strtoull(_argv[++i], nullptr, 0);
 		else if(a == "--load-ms" && i + 1 < _argc)	loadMs = std::atof(_argv[++i]);
 		else if(a == "--ata-latency" && i + 1 < _argc)	ataLatency = std::atof(_argv[++i]);
@@ -1337,6 +1372,8 @@ int main(int _argc, char** _argv)
 		else if(a == "--bank" && i + 1 < _argc)		bankOverride = std::atoi(_argv[++i]);
 		else if(a == "--m6c-golden" && i + 1 < _argc)	m6cGolden = _argv[++i];
 		else if(a == "--watch-mem" && i + 1 < _argc)	watchMem = _argv[++i];
+		else if(a == "--foreign-writes" && i + 1 < _argc)	foreignWrites = _argv[++i];
+		else if(a == "--stock-code" && i + 1 < _argc)	stockCode = _argv[++i];
 		else if(a == "--watch-read" && i + 1 < _argc)	watchRead = _argv[++i];
 		else if(a == "--watch-pc" && i + 1 < _argc)	watchPc = _argv[++i];
 		else if(a == "--names-early")			namesEarly = true;
@@ -1374,8 +1411,10 @@ int main(int _argc, char** _argv)
 		else if(a == "--card-out" && i + 1 < _argc)	cardOut = _argv[++i];
 		else if(a == "--poke" && i + 1 < _argc)		pokeAfterLoad = _argv[++i];
 		else if(a == "--poke-early" && i + 1 < _argc)	pokeEarly = _argv[++i];
+		else if(a == "--preload" && i + 1 < _argc)	preload = _argv[++i];
 		else if(a == "--cs1-in" && i + 1 < _argc)	cs1In = _argv[++i];
 		else if(a == "--no-post")				noPost = true;
+		else if(a == "--boot-load")				namesEarly = noPost = true;	// a power-on as the unit has it: the names before the mount, the firmware's own LOAD PROJECT (modules/remix-switch's boot picker sits on it)
 		else if(a == "--load-early")			loadEarly = true;
 		else if(a == "--call" && i + 1 < _argc)		callSpec = _argv[++i];
 		else if(a == "--call-at" && i + 1 < _argc)	callAt = std::atoi(_argv[++i]);
@@ -1407,6 +1446,9 @@ int main(int _argc, char** _argv)
 			"              [--step FRAME:call|poke|dump:SPEC]...              a gate's whole script on one boot: FRAME '-' = after the load, N = N frames after the transport start\n"
 			"              [--live-script FILE]                              '<emulated ms> key|enc|pot|midi|poke|quit ...' lines, transport stopped, no wall-clock pacing\n"
 			"              [--no-post]                                       no LOAD PROJECT post: the firmware's own power-up load\n"
+			"              [--boot-load]                                     --names-early --no-post: the names before the mount, the firmware's own load\n"
+			"              [--preload ADDR=FILE[;...]]                       a file's bytes into memory before the boot (a staged OS image, NOR's 0x3ffc)\n"
+			"              [--foreign-writes ADDR,LEN,FILE --stock-code LO-HI[;...]]  writes into the range from a PC outside stock's code, to FILE (verify_reserve_writes)\n"
 			"              [--cs1-in FILE]                                   CS1 (0x10000000) from FILE before the boot: a power cycle with an earlier --mem-dump 0x10000000,0x100000\n"
 			"              [--scenario \"LOG ARGS...\"]... [--scenario-jobs N]  load once, fork one child per scenario (stdout to LOG, ARGS its post-load options)\n");
 			return false;
@@ -1462,6 +1504,30 @@ int main(int _argc, char** _argv)
 	std::printf("image      : %s (%zu bytes) at %#x\n", image.c_str(), img.size(), ot::Machine::g_imageBase);
 
 	ot::Machine m(img);
+	// --preload: memory as a reset finds it. The port boots every image into
+	// zeroed RAM with NOR unmodelled (0x3ffc reads 0, so the entry takes the
+	// bootstrap-upgrade branch); a file here stands in for what the hardware
+	// would hold before the OS entry runs.
+	for(size_t q = 0; q < preload.size();)
+	{
+		auto e = preload.find(';', q);
+		if(e == std::string::npos) e = preload.size();
+		const auto spec = preload.substr(q, e - q);
+		q = e + 1;
+		const auto eq = spec.find('=');
+		if(eq == std::string::npos)
+			continue;
+		const auto addr = static_cast<uint32_t>(std::strtoul(spec.substr(0, eq).c_str(), nullptr, 0));
+		const auto bytes = readFile(spec.substr(eq + 1));
+		if(bytes.empty())
+		{
+			std::printf("--preload: cannot read %s\n", spec.substr(eq + 1).c_str());
+			return 2;
+		}
+		for(size_t k = 0; k < bytes.size(); ++k)
+			m.write8(addr + static_cast<uint32_t>(k), bytes[k]);
+		std::printf("preload    : %s (%zu bytes) at %#x\n", spec.substr(eq + 1).c_str(), bytes.size(), addr);
+	}
 	if(!cs1In.empty())
 	{
 		const auto cs1 = readFile(cs1In);
@@ -1841,6 +1907,28 @@ int main(int _argc, char** _argv)
 				rtos.watchMem(wa, wl);
 				std::printf("watch-mem  : %#x..%#x\n", wa, wa + wl - 1);
 			}
+		}
+		std::string foreignFile;
+		if(!foreignWrites.empty())
+		{
+			// ADDR,LEN,FILE and --stock-code LO-HI;LO-HI...: every write into the
+			// range from a PC outside stock's code goes to FILE at the end.
+			const auto c1 = foreignWrites.find(','), c2 = foreignWrites.find(',', c1 + 1);
+			const auto fa = static_cast<uint32_t>(std::strtoul(foreignWrites.c_str(), nullptr, 0));
+			const auto fl = static_cast<uint32_t>(std::strtoul(foreignWrites.c_str() + c1 + 1, nullptr, 0));
+			foreignFile = foreignWrites.substr(c2 + 1);
+			std::vector<std::pair<uint32_t, uint32_t>> stock;
+			size_t q = 0;
+			while(q < stockCode.size())
+			{
+				auto e = stockCode.find(';', q); if(e == std::string::npos) e = stockCode.size();
+				const auto one = stockCode.substr(q, e - q); q = e + 1;
+				const auto dash = one.find('-');
+				stock.emplace_back(static_cast<uint32_t>(std::strtoul(one.c_str(), nullptr, 0)),
+					static_cast<uint32_t>(std::strtoul(one.c_str() + dash + 1, nullptr, 0)));
+			}
+			rtos.watchForeign(fa, fl, stock);
+			std::printf("foreign    : %#x..%#x, %zu stock code range(s)\n", fa, fa + fl - 1, stock.size());
 		}
 		const auto rs = rtos.run(runMs);
 		static const char* const g_rtosNames[] = {"GATE", "TIME", "FAULT", "ILLEGAL"};
@@ -2366,6 +2454,28 @@ int main(int _argc, char** _argv)
 				std::string line;
 				size_t n = 0;
 				bool early = false;
+				// MIDI OUT with the frame each byte was first seen at (frames since the
+				// script start), checked at every event of the run: --midi-out FILE.frames
+				std::vector<std::pair<uint64_t, size_t>> txMarks;
+				size_t txSeen = rtos.serialTx0().size();
+				const auto txMark = [&]
+				{
+					const auto sz = rtos.serialTx0().size();
+					if(sz != txSeen)
+					{
+						txMarks.emplace_back(rtos.frameCount() - f0, txSeen);
+						txSeen = sz;
+					}
+				};
+				// "<ms> wait ADDR HEXBYTES eq|ne|chg CAP_MS": at <ms> (plus the shift so far) run until
+				// the bytes at ADDR are (eq), are not (ne) HEXBYTES, or differ from what they were
+				// when the wait began (chg; HEXBYTES only gives the length), at most CAP_MS more; the
+				// lines after it keep their times as if the wait had taken its whole cap, so a wait
+				// that ends early pulls them forward by what it saved (shiftMs). A wait that
+				// reaches its cap prints "WAIT TIMEOUT" and the script goes on.
+				double shiftMs = 0;
+				size_t timeouts = 0;
+				const auto msFrames = [](double _ms) { return static_cast<uint64_t>(_ms / 1000.0 * ot::g_sampleHz / ot::g_framePeriod); };
 				while(std::getline(in, line) && !live.quit)
 				{
 					std::istringstream is(line);
@@ -2374,8 +2484,56 @@ int main(int _argc, char** _argv)
 						continue;
 					std::string rest;
 					std::getline(is, rest);
-					const auto at = f0 + static_cast<uint64_t>(ms / 1000.0 * ot::g_sampleHz / ot::g_framePeriod);
-					if(rtos.runUntil(ms * 5 + 60000.0, [&] { return rtos.frameCount() >= at; }, ot::Rtos::Changes::OnEvent) != ot::Rtos::Stop::Gate)
+					ms += shiftMs;
+					const auto at = f0 + msFrames(ms);
+					if(rest.compare(0, 6, " wait ") == 0)
+					{
+						std::istringstream ws(rest.substr(6));
+						std::string addrS, hex, op; double cap = 0;
+						ws >> addrS >> hex >> op >> cap;
+						const auto addr = static_cast<uint32_t>(std::strtoul(addrS.c_str(), nullptr, 0));
+						std::vector<uint8_t> want;
+						for(size_t i = 0; i + 1 < hex.size(); i += 2)
+							want.push_back(static_cast<uint8_t>(std::strtoul(hex.substr(i, 2).c_str(), nullptr, 16)));
+						const bool wantEq = op == "eq";		// ne and chg wait for the bytes to differ
+						if(op == "chg")			// the bytes differ from what they were when the wait began
+							for(size_t i = 0; i < want.size(); ++i)
+								want[i] = m.read8(addr + static_cast<uint32_t>(i));
+						const auto holds = [&]
+						{
+							bool eq = true;
+							for(size_t i = 0; i < want.size(); ++i)
+								eq = eq && m.read8(addr + static_cast<uint32_t>(i)) == want[i];
+							return eq == wantEq;
+						};
+						if(rtos.runUntil(ms * 5 + 60000.0, [&] { txMark(); return rtos.frameCount() >= at; }, ot::Rtos::Changes::OnEvent) != ot::Rtos::Stop::Gate)
+						{
+							std::printf("live script: stopped before %.0f ms -- %s\n", ms, rtos.why().c_str());
+							early = true;
+							break;
+						}
+						const auto end = rtos.frameCount() + msFrames(cap);
+						if(rtos.runUntil((ms + cap) * 5 + 60000.0, [&] { txMark(); return holds() || rtos.frameCount() >= end; }, ot::Rtos::Changes::OnEvent) != ot::Rtos::Stop::Gate)
+						{
+							std::printf("live script: stopped in a wait at %.0f ms -- %s\n", ms, rtos.why().c_str());
+							early = true;
+							break;
+						}
+						const double waited = static_cast<double>(rtos.frameCount() - at) * ot::g_framePeriod / ot::g_sampleHz * 1000.0;
+						if(holds())
+						{
+							std::printf("live script: wait %s %s %s met after %.0f ms (cap %.0f)\n", addrS.c_str(), hex.c_str(), op.c_str(), waited, cap);
+							shiftMs -= cap - waited;
+						}
+						else
+						{
+							std::printf("live script: WAIT TIMEOUT %s %s %s after %.0f ms\n", addrS.c_str(), hex.c_str(), op.c_str(), cap);
+							++timeouts;
+						}
+						++n;
+						continue;
+					}
+					if(rtos.runUntil(ms * 5 + 60000.0, [&] { txMark(); return rtos.frameCount() >= at; }, ot::Rtos::Changes::OnEvent) != ot::Rtos::Stop::Gate)
 					{
 						std::printf("live script: stopped before %.0f ms -- %s\n", ms, rtos.why().c_str());
 						early = true;
@@ -2384,6 +2542,8 @@ int main(int _argc, char** _argv)
 					liveLine(rest);
 					++n;
 				}
+				if(timeouts)
+					std::printf("live script: WAIT TIMEOUT x%zu\n", timeouts);
 				std::printf("live script: %zu line(s) from %s over %llu frames, ended %s -- %s\n", n, liveScript.c_str(),
 					static_cast<unsigned long long>(rtos.frameCount() - f0), early ? "early" : (live.quit ? "on quit" : "at the end"),
 					rtos.why().c_str());
@@ -2394,6 +2554,20 @@ int main(int _argc, char** _argv)
 					std::ofstream f(midiOut, std::ios::binary);
 					f.write(reinterpret_cast<const char*>(tx.data()), static_cast<std::streamsize>(tx.size()));
 					std::printf("midi out   : %zu byte(s) on UART0 -> %s\n", tx.size(), midiOut.c_str());
+					txMark();
+					std::ofstream fl(midiOut + ".frames");
+					for(size_t i = 0; i < txMarks.size(); ++i)
+					{
+						const auto end = i + 1 < txMarks.size() ? txMarks[i + 1].second : tx.size();
+						fl << txMarks[i].first;
+						for(auto k = txMarks[i].second; k < end; ++k)
+						{
+							char h[4];
+							std::snprintf(h, sizeof h, " %02x", tx[k]);
+							fl << h;
+						}
+						fl << "\n";
+					}
 				}
 				if(pcRing && rtos.pcRingArmed())
 				{
@@ -2410,6 +2584,15 @@ int main(int _argc, char** _argv)
 				// The transport is the user's: PLAY is a key. The frame engine
 				// runs from here, as on the unit after boot.
 				rtos.setFrame(true);
+				// SET MAIN LEVEL where --interactive posts it (after the load,
+				// before anything plays): without it the gain table 0x80003c60
+				// is zero and every voice renders silent (O9b).
+				if(mainLevel >= 0)
+				{
+					const auto g = rtos.setMainLevelLive(static_cast<uint32_t>(mainLevel));
+					std::printf("main level : sys command %u posted with %d -> gain table[0] = %#x%s (bit 0 of 0x8000004a = %u)\n",
+						ot::g_setMainLevelCase, mainLevel, g, g ? "" : " -- NOT FILLED", m.read8(0x8000004a) & 1);
+				}
 				pokeBytes(pokeAfterLoad, "after the load");
 				std::printf("live       : running until 'quit' (transport stopped; PLAY is key 0x%02x on your panel)\n", 0x3f);
 				const auto rs = rtos.runUntil(1e15, [&] { return live.quit; }, ot::Rtos::Changes::OnEvent);	// the live poll wakes
@@ -2760,6 +2943,30 @@ int main(int _argc, char** _argv)
 						m.write8(req.addr + uint32_t(i), req.bytes[i]);
 					usb->answerRequest("poke ok\n");
 				}
+				else if(req.kind == "peek")
+				{
+					// `peek <addr> <len>` -> peek <hex> | peek err <why>: guest
+					// memory read between run slices (the arena probes).
+					const uint64_t len = req.args.empty() ? 0 : req.args[0];
+					if(len < 1 || len > 4096 || req.addr + len > 0x100000000ull || !m.mapped(req.addr, uint32_t(len)))
+					{
+						char line[128];
+						std::snprintf(line, sizeof line, "err peek %#x+%llu\n", req.addr, static_cast<unsigned long long>(len));
+						usb->answerRequest(line);
+					}
+					else
+					{
+						std::string out = "peek ";
+						static const char* const hex = "0123456789abcdef";
+						for(uint64_t i = 0; i < len; ++i)
+						{
+							const auto b = m.read8(req.addr + uint32_t(i));
+							out += hex[b >> 4];
+							out += hex[b & 15];
+						}
+						usb->answerRequest(out + "\n");
+					}
+				}
 				else
 				{
 					uint32_t d0 = 0;
@@ -2803,6 +3010,20 @@ int main(int _argc, char** _argv)
 					w.sample, w.addr, w.val, w.size, w.pc, ot::taskName(w.tcb), static_cast<unsigned long long>(w.instr));
 		}
 
+		if(!foreignFile.empty())
+		{
+			std::ofstream o(foreignFile);
+			o << "count " << rtos.foreignCount() << "\n";
+			for(const auto& w : rtos.foreignWrites())
+			{
+				char line[160];
+				std::snprintf(line, sizeof line, "%.1f pc=%#x addr=%#x val=%#x size=%u task=%s\n",
+					w.sample, w.pc, w.addr, w.val, w.size, ot::taskName(w.tcb));
+				o << line;
+			}
+			std::printf("foreign    : %llu write(s) -> %s\n",
+				static_cast<unsigned long long>(rtos.foreignCount()), foreignFile.c_str());
+		}
 		if(!serialOut.empty())
 		{
 			for(const auto& [suffix, tx] : {std::make_pair("a", &rtos.serialTxA()),
@@ -2825,6 +3046,21 @@ int main(int _argc, char** _argv)
 			o.write(reinterpret_cast<const char*>(card->image().data()), static_cast<std::streamsize>(card->image().size()));
 			std::printf("card out   : %s (%zu bytes, %llu sector(s) written by the firmware)\n", cardOut.c_str(),
 				card->image().size(), static_cast<unsigned long long>(card->sectorsWritten()));
+		}
+		// --cmd-log-end: every ATA command of the whole run, load and take,
+		// in --cmd-log's format (STEM REC's card traffic per write call).
+		if(!cmdLogEnd.empty() && card)
+		{
+			std::ofstream t(cmdLogEnd);
+			size_t n = 0;
+			for(const auto& e : card->log())
+			{
+				char line[160];
+				std::snprintf(line, sizeof line, "%s %u %u | #%zu pc %#010x %s",
+					e.what.c_str(), e.lba, e.count, n++, e.pc, ot::taskName(e.tcb));
+				t << line << '\n';
+			}
+			std::printf("cmd log end: %s (%zu commands)\n", cmdLogEnd.c_str(), card->log().size());
 		}
 	}
 

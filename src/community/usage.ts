@@ -54,7 +54,7 @@ function visitor() {
   } catch {return null}
 }
 /** After consent, the only outbound fields are a closed event name, two random identifiers and, for builds and downloads,
- * which of the three building machines it was. Page views may name a fixed page key. Never pass build/configuration data. */
+ * which supported building machine it was. Page views may name a fixed page key. Never pass build/configuration data. */
 export function trackUsage(event: UsageEvent, device?: UsageDevice) { sendUsage(event, device ? {device} : {}) }
 function sendUsage(event: UsageEvent, dimensions: {device?: UsageDevice; page?: string}) {
   if(!usageAllowed()){if(anonymousCountsAllowed())countAnonymously({event,...dimensions});return}
@@ -68,13 +68,13 @@ export function trackAnnouncement(event: AnnouncementCountEvent, announcementId:
   countAnonymously({event,announcementId})
 }
 let lastPage = ''
-export function trackPageView(route: string) {
+export function trackPageView(route: string, missing = false) {
   if(!usageAllowed()&&!anonymousCountsAllowed())return
   // Queries change filters, pagination or dialogs, not the page. Keep paths in memory only to suppress repeat effects.
   const path = route.split('?')[0]
   if(lastPage===path)return
   lastPage=path
-  const page = usagePage(path)
+  const page = usagePage(path, missing)
   if(page)sendUsage('page_view', {page})
 }
 export function trackConfigurationStarted(id: string) {

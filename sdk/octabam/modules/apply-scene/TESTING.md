@@ -1,6 +1,53 @@
 # Apply Scene testing
 
-## Commands and exact revision
+## 0.2.0: TRIG + SCENE (emulator only, 22 Oct 2026)
+
+Not run on hardware. Everything in this section is ot_emu (`--mkii`), which does not count as hardware evidence.
+
+**Stock first.** On the stock 1.40C image under ot_emu, in grid recording on the TMPL project: holding a trig and pressing SCENE A changes no pattern or Part byte, and the held trig stays after its release. A trig pressed while SCENE is held still selects a scene (trig 9 → scene 9, held mask unchanged), and a knob writes a scene lock, not a p-lock. Outside grid recording the held-trig mask `0x460d174a` stays 0. SCENE's press `0x4004348c(key, 1)` and release `0x40054ca4(key, 0)` handlers are the same with or without a trig held. Stock's knob-with-trig lock writer `0x400508e4` stores bank RAM and the battery copy at `0x1001614e`, sets the step's has-locks bit `0x46c7d48c[step]`, the edited flags `bank + 0x9b332` and `0x100f8598`, calls `0x40027e00`, then `0x4009da20(track)`, and clears the remove-on-release masks `0x460d1a9e..0x460d1aa6` and `0x460d10dc`. It writes no lock-trig mask: in grid recording a press on an empty step places a trig at once, so every held step has a trig.
+
+**The module.** The source on branch `claude/apply-scene-extension-f84ceb` (on main f99681ec, the stock-free reorder included), built as in the commands below (`make bus REMIX=apply-scene-stock BUILD=0`, every stock effect, `static_stock=True`): MAIN OS SHA-256 `c625bbd1ec4faff6a98bb054abad1522042a09dc68262b3629991af7c00fc48d`, the unit in the DRAM reserve at 0x40a955e0 with three detours (`as_yes_hook` 0x4005e4c8, `as_scene_press` 0x4004348c, `as_scene_release` 0x40054ca4). verify.py passed 264/264, the 179 checks of 0.1.0 among them (also on the build before the reorder, `dde5f7f9…`). The new checks, on T3 (the fixture's current track) with trigs poked onto steps 2, 5 and 10 and 16 pseudo-random p-locks on step 5:
+
+- The blend on two steps at fader 127, 64 and 0, SCENE A and SCENE B on two steps, the blend on three steps at fader 32: every held step's lock bytes equal the model, no other pattern byte moved (the trig masks included, so the held trigs stayed), the battery copy equals RAM, the Part is unchanged, the step's has-locks bit is set, one toast with the mode's text.
+- SCENE A twice: the second writes nothing and shows NOTHING TO LOCK.
+- Key order: B then A pressed and A released first; A and B pressed, B released, then A; the trig released before SCENE A. Each writes as the model.
+- Scene A muted: the blend treats A as unlocked; TRIG + SCENE A still writes A's locks.
+- Stock inside the chord: TRIG + SCENE A + TRIG 3 selects scene 3 and writes no lock and no toast; TRIG + SCENE A + knob D on AMP writes the scene lock (52 → 57) and no p-lock. TRIG + knob D without a scene key still writes stock's one p-lock byte.
+- Persistence: a blend written before PROJECT SAVE is in T3's pattern track after a fresh boot of the saved card; an unsaved SCENE B write survives the emulated power cycle (`--cs1-in --no-post`), the whole pattern byte for byte.
+
+**Cost.** One more probe on the same image: all 16 trigs held, every scene byte of the track locked in both scenes (A 0, B 127), so every enabled slot of every step changes. From the last scene key's release to the toast: 66,929 executed ColdFire instructions for the blend, 98,681 for SCENE A after it, 19,444 for a repeat that changes nothing. Nothing runs between presses. The p-lock path writes bytes directly as stock's lock writer does and calls stock's refresh once, not per write, so it is far below a Part apply (2.3 to 11.1 million). Time on the unit is not measured.
+
+**Size.** The unit assembles to 2,062 bytes (`m68k-elf-size`, both `-mcpu=5475` and `54455`), including 100 bytes of chord state; it was 636.
+
+**USB package (private, not committed).** `build.py --octabam apply-scene --name "APPLY SCENE" --stock <1.40C .syx> --upstream <elekloader>`: module 103be957 (0.1.0's id), ABI 7, three hashed sites, 2,064 bytes of code and data, no relocations or hooks, 2,282 bytes, SHA-256 `5b1db5c76dabfd3023c0d2a81d53fac43610fa579142870190f7ca41c89c2ed1`. The strict scans build.py uses for private packages (module_packages, check_stock_free): longest run shared with the stock OS 11 counted bytes (limit 12, the toast texts), no 16-byte run. The first build shared 16 to 36 bytes with stock where the new code stored the same flags in the same order as stock's lock writer; the stores were reordered (same effect, checked by the rerun above). Installed on the MKII on 23 Oct (below). The published package `public/octatrack-modules/apply-scene/0.2.0-experimental.mwrm` (SHA-256 `236231aaaf2914ed4a4932eda74c455f834d9e0791c0833addd5589b31d23869`, 2,282 bytes) differs from the tested one only in its 16-byte display name (Apply Scene, not APPLY SCENE), as 0.1.0's did; it was built with the full run's own builder function for this one entry, because `npm run octatrack:module-packages` stops on main's Tape Echo and Euclid standalone recipes (their engine-asset pins are stale on main itself), and passes the same strict scans.
+
+### On the MKII over USB (23 Oct 2026)
+
+The user's MKII (OS 1.40C), freshly powered on from its flashed main base `a408c505…`, RAM-booted into a development twin of main's base (this branch merged with main c69b1cfe, main's flags plus `--dev`, built against the pinned Elekloader 3b31ef3c; base `8dc7692c…`, `.bin` `3b34b7de…`; stock-free and flash-safety checks passed). The package above (`5b1db5c7…`, the same bytes when rebuilt against the pinned Elekloader) installed with the session's `try` and was accepted (generation 1). Driven by the agent over USB (`scripts/device-send.py`), values read from RAM and screenshots; no audio was listened to. Bank P pattern 16 of the user's project, empty before; Part 1 of bank P, working equal to saved before; current track T3 (STATIC), AMP page.
+
+- Scene locks set by hand: scene 1 (A) AMP ATK 20 and VOL 49; scene 9 (B) VOL 94 and encoder F (XVOL with a scene key held) 127.
+- Grid recording, trigs placed on steps 1 and 5. TRIG 1 + SCENE A: step 1 got exactly 20 and 49 in ATK's and VOL's slots, nothing else; the trigs stayed; toast SCENE A TO TRIGS (screenshot). Pass.
+- Crossfader at 76 (weights read from RAM), TRIG 5 + SCENE A + SCENE B: ATK 16 and VOL 67, the morph model's values; XVOL got no p-lock (the page has no such knob; stock has no p-lock there either). Pass.
+- TRIG 1 + SCENE A again: NOTHING TO LOCK, step 1 unchanged. Pass.
+- TRIG 1 + SCENE A + TRIG 9: scene A became 9 (screen 09+09), no toast, step 1 unchanged. TRIG 1 + SCENE A + knob B: scene A's HOLD lock written (unlocked → 127), step 1 unchanged. Pass.
+- TRIG 1, 5 and 9 held (9 placed first) + SCENE B: each step has B's VOL 94; step 1 kept its ATK 20 from scene A, step 5 its blended ATK 16. Pass.
+- TRIG 13 + SCENE A, the trig released before the scene key: written. With scene A muted (FUNC + SCENE A), TRIG 15 + SCENE A: written. Pass.
+- TRIG 1 + PLAY (stock): step 1's p-locks cleared. Pass.
+- Playing P16 (grid recording off), T3's live AMP lane (`0x80000810 + 72·2`, sampled for 4 s) showed step 5's 16/94, step 9's 94, steps 13 and 15's 20/49 and the Part's own values in turn. The locks reach playback; not listened to.
+- Removal (`remove`, accepted, generation 2): the three sites read stock's bytes again.
+
+Put back: P16 cleared with stock FUNC + PLAY (its trigs and locks are empty again; stock's clear also set the hidden pattern field at `+0x8e50` from 16 to its default 64, as it does under ot_emu; the PATTERN SCALE page still reads 16/16 1x). RELOAD refused (SAVE PART FIRST!: bank P's Part 1 was never saved), so the test's scene locks were removed with SCENE + encoder push and two AMP knobs turned back: Part 1's working copy equals its saved copy again, which never changed. Nothing was saved; the unit stays on the RAM-booted twin until a power cycle returns it to its flashed base and kept modules.
+
+### The user's own run on the flashed base (23 Oct 2026, MKII)
+
+After the power cycle, on the flashed main base `a408c505…`, the agent reinstalled the user's eight modules with the session's `try`, Apply Scene as this package (`5b1db5c7…`), and the user tested by hand in a scratch project or empty pattern. User-reported, all pass: TRIG + SCENE A (and B) writes the scene's values onto the held trigs; TRIG + SCENE A + SCENE B writes the blend; playback, listened to; the p-locks kept through a project save and a power cycle; inside the gesture a trig still selects a scene and a knob still writes a scene lock, with no p-lock written; TRIG + PLAY clears a step's p-locks.
+
+(The twin run above overwrote the flashed base's kept set: both `/MODWERK?.SET` card files then carried the twin's identity, so the flashed base loaded no modules after the power cycle. Restored by reinstalling each package, the base-bound Analog BD and Output Matrix from the commit that built `a408c505`. Written up in docs/OCTATRACK_DRIVING.md on its own branch.)
+
+Not run on hardware: the MKI, MIDI mode, trig pages past the first, the card build, and the site's review/Keep/Undo flow (the session's `try`/`remove` were used).
+
+**Not tested (emulator section):** any hardware run (see above for the MKII), audible output, the USB package build and its stock-free scan, the browser builder's comparison (`module:verify`), MIDI mode, a pattern or Part change inside the chord (the chord is then dropped, by design, untested), trig pages past the first, and track 8 as the master track.
+
 
 Emulator only, 15 Oct 2026. The source is commit `ae2a6eed` on branch `claude/apply-scene` (merged with main 86e0dfb8). The image is byte for byte MAIN OS SHA-256 `c4c210ceb0e32703dcfb04b86120e334856fd83279740be54e7ef73b7939af3b`. From a90849c9 the card build links the unit in the DRAM reserve (Play Modes' path), so the site's builder and native octabam agree beside Preview Vol, Mute Modes and the caves; that image (MAIN OS `3a74ff3635ce172ec3ef5949d188ebb297b0e8d969ca2b5d060b76420dded0bc`, the unit at 0x40a955e0, loaded at boot) passed verify.py 179/179, including the worst case and the emulated power cycle. The USB package is byte-identical to ae2a6eed's. The image is the native build of a local remix holding only APPLY SCENE plus every stock effect on both menus, with `static_stock=True`:
 
@@ -48,6 +95,9 @@ Cost under ot_emu, from the YES press to the toast: 2.3 to 3.4 million ColdFire 
 | YES alone (ARM ALL) | unchanged |
 | SCENE A, SCENE B or both + YES | replaced by the apply (deliberate; README) |
 | SCENE + TRIG select, SCENE + knob lock, SCENE + REC/STOP/PLAY | unchanged |
+| Grid recording: TRIG held + SCENE A/B (0.2.0) | replaced: the scene's values become p-locks on release (deliberate; README). On stock the press changed no data |
+| TRIG + SCENE + TRIG (scene select), TRIG + SCENE + knob (scene lock) (0.2.0) | unchanged; the p-lock write is dropped |
+| TRIG + knob p-lock, hold trig + PLAY clear (0.2.0) | the p-lock unchanged; the clear not run |
 | FUNC + SCENE mute | unchanged; the blend follows it, a one-scene apply ignores it |
 | RELOAD PART, Part SAVE, PROJECT SAVE, project load, power cycle | unchanged; carry the applied values |
 | MIDI mode | the gesture is not taken (falls through to stock); not run |
@@ -145,4 +195,10 @@ The user asked for SCENE A + YES and SCENE B + YES to apply that scene's own loc
 
 ## OT UI capture evidence
 
-`scripts/capture-module-ui.py` on the native build of a90849c9 (MAIN OS `3a74ff36…`; ae2a6eed's image gave pixel-identical PNGs), card staged from octabam's TMPL project; the plan and every PNG's SHA-256 are in `media/capture.json`. The plan locks FX1 BASE to 30 in scene A and 110 in scene B, applies scene A twice (SCENE A APPLIED, then NOTHING TO APPLY), sets the crossfader to 64 (`fader`, added to the capture tool for this) and applies the blend (SCENE BLEND APPLIED). Every image was opened and checked.
+0.2.0 (23 Oct 2026): the same tool, emulator (`23ba6f6c…`) and card (`70f85539…`) on 0.2.0's image `c625bbd1…` (commit 2ebc3f72). The plan in `media/capture.json` repeats 0.1.0's and adds grid recording, TRIG 1 + SCENE A (SCENE A TO TRIGS, then the trig held: BASE p-lock 30) and TRIG 5 + SCENE A + B at fader 64 (SCENE BLEND TO TRIGS, then BASE p-lock 70). The seven 0.1.0 screens came out pixel-identical; every new image was opened and checked. The manifest takes eight images, so scene B's lock, the Part after the blend and step 5's blended p-lock are captured in that record but not shipped.
+
+0.1.0: `scripts/capture-module-ui.py` on the native build of a90849c9 (MAIN OS `3a74ff36…`; ae2a6eed's image gave pixel-identical PNGs), card staged from octabam's TMPL project; the plan and every PNG's SHA-256 are in `media/capture.json`. The plan locks FX1 BASE to 30 in scene A and 110 in scene B, applies scene A twice (SCENE A APPLIED, then NOTHING TO APPLY), sets the crossfader to 64 (`fader`, added to the capture tool for this) and applies the blend (SCENE BLEND APPLIED). Every image was opened and checked.
+
+## Owner exception, 23 October 2026
+
+The owner approved PR #830 for this exact 0.2.0 source with no static cycle bound and with the explicitly labelled 0.1.0 emulator load/stress measurements retained. `sdk/apply-scene-build-approval.json` binds the approval to the native-source hash. The MKII results above remain reported results; timing, MKI, MIDI mode, later trig pages, pattern/Part changes during the chord, card-build hardware and the site review/Keep/Undo flow remain unverified. Approval does not turn these gaps into test results.

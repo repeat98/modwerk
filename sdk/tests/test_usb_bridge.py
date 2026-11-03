@@ -36,6 +36,16 @@ class BridgeTests(unittest.TestCase):
     def setup(self, request=21, direction=0xc1, length=32):
         return 'setup ' + struct.pack('<BBHHH', direction, request, 0, 1, length).hex()
 
+    def test_another_elektron_device_is_not_taken_for_the_unit(self):
+        # An Analog Rytm on Overbridge beside the Octatrack: only the device offering the Modwerk interface matches.
+        self.bridge.open_unit()
+        match = self.core.find.call_args.kwargs['custom_match']
+        interface = lambda c, s, p: SimpleNamespace(bInterfaceClass=c, bInterfaceSubClass=s, bInterfaceProtocol=p)
+        rytm = [[interface(0xff, 0, 0), interface(1, 1, 0), interface(1, 3, 0)]]
+        octatrack = [[interface(8, 6, 80), interface(0xff, 0x4d, 1), interface(1, 1, 0)]]
+        self.assertFalse(match(rytm)); self.assertTrue(match(octatrack))
+        self.assertEqual(self.core.find.call_args.kwargs['idVendor'], 0x1935)
+
     def test_descriptor_or_claim_error_disposes_partial_handle(self):
         for stage in ('descriptor', 'claim'):
             with self.subTest(stage=stage):

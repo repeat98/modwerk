@@ -1734,6 +1734,12 @@ and MISSING reported nothing. Not yet: a real power cycle into a flashed base
 that has this (the flashed `usbtest9` predates it), the FUNC skip on the unit,
 and what the site offers when the base changed (the set is then refused).
 
+When the base changed (24 October 2026), the site syncs the set again: the self-test record says `saved` 4 (another
+base's set) and nothing is installed, so `PutBackModules` opens the usual review, self-test and Keep for the modules
+this browser last read from the unit under another base (`modulesToPutBack`). The base can't load another base's set
+itself, because base-bound packages (module_packages.py "base") are linked to the base that saved them. Beta
+diagnostics from 20–24 October showed every base update leaving testers' units empty until then.
+
 The plan it follows:
 
 - **What is kept.** The accepted set, the packages exactly as the host staged
@@ -1847,8 +1853,8 @@ on main now. It also recognises the base's idle detour by itself. The `pick` sce
 
 ## Plan: a stress test after every module-set sync (owner, 11 October 2026)
 
-The site already has a step for this: Load onto Octatrack stages the set as a trial, then keeps
-or undoes it. A stress test fills that step, and the same results make the bug report.
+Superseded for the site's sync on 27 October 2026 (owner): it keeps the set at once. The plan was: Load onto
+Octatrack stages the set as a trial, then keeps or undoes it. A stress test fills that step, and the same results make the bug report.
 
 **On a user's unit** (a production base; no remote keys or RAM reads; the project is never
 changed). A SELFTEST vendor request, sent while the trial runs with the transport stopped. The
@@ -2450,9 +2456,15 @@ Not the loader's doing: on 14 October 2026 (dev twin of base `362fb24d`, `octatr
 
 **The ledger since S19 (owner's choice: a 90% frame ceiling)**, all in chip cycles:
 - **Allowances.** Core 0 3,120 and core 1 3,565, each 90% of the frame less stock's own work.
-- **Stock slots.** Each is charged the dearest stock effect, 342, so a stock pick is never refused.
+- **Stock slots.** Until 24 October 2026 each was charged the dearest stock effect, 342, so a stock pick was never
+  refused. Since then (owner's choice, beta finding 34) each slot is charged at least the dearest stock effect its bank's
+  Parts name there (this table's figures, DELAY and NONE 0), so a Part switch or a RELOAD never needs room it was not
+  given. A stock pick dearer than its bank uses in that slot is refused (DSP FULL) when it would take what runs or
+  another Part of the bank past the allowance. Machine voices and engines, which a bank change keeps, still book 342 a slot.
 - **Modules.** A module carrying an emulator figure is charged 7/4 of it until it carries a hardware figure.
-- **Effect.** One ~665-cycle module fits on core 0 beside anything stock, two on core 1.
+- **Effect.** With 342 a slot, one ~665-cycle module fit on core 0 beside anything stock, two on core 1. In a bank of
+  FILTER and DELAY, three Mini Verbs (720 charged) fit on core 1 and two on core 0 (owner's MKII, 24 October 2026, twin of
+  this base: self-test peaks 73.9 % and 68.8 %).
 
 **Checked.** Qualification v2 on S19 with all six modules refused the second heavy module on each core and peaked at 68% (core 1) and 57% (core 0).
 
@@ -2554,10 +2566,9 @@ removedStockFx }`).
   Spectrum and Modulation build the same way but are paused in the library. Every module with ColdFire code
   (TAPE ECHO and EUCLID too) copies stock bytes into its package, so it waits for loader ABI 7.
 - **Loading** ([`module-set.ts`](../src/engine/elekloader/module-set.ts), `OctatrackLink.update`): removals first,
-  then installs. The base runs one transaction at a time, so every change but the last is kept as soon as it is
-  in, and the last runs as the trial for the self-test and Keep or Undo. Undo, a failed self-test or a refusal
-  part way rolls the trial back, then sends the undo packages of the kept changes, newest first (a removed module
-  the site does not publish cannot be put back, and the notice says so). An unplug part way leaves the unit
+  then installs, as one set on bases with module sets, and the site keeps it at once: no self-test and no Undo
+  (owner, 27 October 2026; the self-test runs on its own from Status, and the MCP's device tools keep the trial for
+  development). A refusal part way rolls the set back. An unplug part way leaves the unit
   between the two sets; loading either again finishes it, since a load only sends the differences.
 - **Not built:** stock effects out of the menus (the base keeps no such state; the site hides the stock effect
   tiles while a base is connected and sends no removals, and `prepareUpdate` refuses a set that changes them), one Keep or Undo held by the base for a whole set, and versions other than the latest.

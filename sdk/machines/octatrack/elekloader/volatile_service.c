@@ -102,7 +102,8 @@ static enum mvs_result bundle(struct mvs_service *s)
        get16(b+8)!=88u || get16(b+14) || get32(b+16)!=s->total || get32(b+20) ||
        mvs_different(b+24,s->base,32) || mvs_different(b+56,s->baseline,32)) return MVS_IDENTITY;
     unsigned count=get16(b+10),participants=get16(b+12);
-    if(!count || count>RUNTIME_JOURNAL_ROWS || !participants || participants>RUNTIME_JOURNAL_ROWS ||
+    /* Participants are bits of a record's 32-bit mask: at most 32, whatever the row count. */
+    if(!count || count>RUNTIME_JOURNAL_ROWS || !participants || participants>RUNTIME_JOURNAL_ROWS || participants>32u ||
        4u*participants>s->total-88u) return MVS_LIMIT;
     uint32_t at=88u,used=0;
     for(unsigned i=0;i<participants;++i,at+=4u) {
@@ -123,7 +124,7 @@ static enum mvs_result bundle(struct mvs_service *s)
         mu_sha256(p,r->length,got);if(mvs_different(got,r->digest,32)) return MVS_HASH;
         for(unsigned k=0;k<i;++k) if(s->records[k].module==r->module ||
             !mvs_different(s->records[k].digest,r->digest,32)) return MVS_CONFLICT;
-        uint32_t ids[RUNTIME_JOURNAL_ROWS];unsigned n=0;
+        static uint32_t ids[RUNTIME_JOURNAL_ROWS];unsigned n=0; /* static: engine task only, rows outgrow its stack */
         for(unsigned k=0;k<participants;++k) if(r->mask&(1u<<k)) ids[n++]=s->participants[k];
         if(modwerk_machine_journal_association(r->module,r->digest,ids,n)!=1) return MVS_REFUSED;
         at+=r->length;unsigned padding=(4u-r->length%4u)%4u;
@@ -193,7 +194,7 @@ static void request(struct mvs_service *s,uint32_t now)
         /* shortcut: Keep needs the held latch; from a running trial it waits for the board trial latch. */
         if((uint32_t)(now-s->heard)>=MVS_QUIET_TICKS || (uint32_t)(now-s->began)>=MVS_ABSOLUTE_TICKS) { rollback(s);return; }
         /* A set the card cannot restore exactly is not kept: refused, the trial unchanged. */
-        const uint8_t *kept[RUNTIME_JOURNAL_ROWS];uint32_t bytes[RUNTIME_JOURNAL_ROWS];
+        static const uint8_t *kept[RUNTIME_JOURNAL_ROWS];static uint32_t bytes[RUNTIME_JOURNAL_ROWS];
         for(unsigned i=0;i<s->count;++i) kept[i]=s->stage+s->records[i].offset,bytes[i]=s->records[i].length;
         if(!modwerk_modset_keep(kept,bytes,s->count,s->current)) { s->result=MVS_REFUSED;return; }
         enum runtime_journal_result r=modwerk_runtime_journal_accept();uint8_t digest[32];

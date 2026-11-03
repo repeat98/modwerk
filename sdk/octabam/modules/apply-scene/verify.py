@@ -46,6 +46,21 @@ What it checks (one interactive boot, then a project reload and a power cycle):
      working and saved; a power cycle (CS1 and card of an unsaved apply, the
      firmware's own power-up load: --cs1-in --no-post) keeps the applied
      working Part and every machine type.
+  6. TRIG + SCENE (0.2), in grid recording on the current track, with trigs
+     poked onto three steps and pseudo-random p-locks on one of them: hold
+     trigs, press SCENE A, SCENE B or both, release. Every held step's 32
+     lock bytes equal the model (one scene: its locks on enabled slots,
+     clamped; the blend: stock's morph with the step's own lock, else the
+     Part value, for an unlocked side), no other pattern byte moved (trig
+     masks included: the held trigs stay), the battery copy equals RAM, the
+     Part is untouched, the step's has-locks bit is set, and the toast is
+     the mode's text or NOTHING TO LOCK. The blend at fader 127, 64 and 0;
+     both scenes in either press order; a trig released before the scene
+     key; the same apply twice; scene mutes. Stock's gestures inside the
+     chord win and nothing is written: a trig selects a scene, a knob
+     writes a scene lock. Trig + knob without a scene key still writes a
+     stock p-lock. The locks survive PROJECT SAVE and a reload, and an
+     unsaved apply survives a power cycle.
 What it cannot see: hardware timing, audible output, the panel's own LCD.
 """
 import hashlib
@@ -93,7 +108,14 @@ SCENE_A, SCENE_B, OTHERS = 1, 9, (0, 15)
 SOUND = (2, 7)                    # T3 (THRU) and T8 (the master) run voice records with no samples staged
 KEYS = {'scene_a': 0x19, 'scene_b': 0x1a, 'yes': 0x31, 'no': 0x32, 'func': 0x2d, 'cue': 0x2a, 'part': 0x1d,
         'proj': 0x1c, 'play': 0x28, 'stop': 0x27, 'rec': 0x29, 'up': 0x33, 'down': 0x20, 'pg_amp': 0x23,
-        'trig1': 0x00, 'trig2': 0x01, 'trig3': 0x02}
+        **{f'trig{i + 1}': i for i in range(16)}}
+# TRIG + SCENE: the pattern
+CUR_TRACK, CUR_PAT = 0x100b14cc, 0x100b14d0
+PAT_LEN, TRACK_LEN, LOCKS, PAT_CS1 = 0x8ed8, 0x91a, 0x59, 0x1001614e
+STEP_LOCKED, BANK_EDIT = 0x46c7d48c, 0x9b332
+LOCK_TEXT = {"a": "SCENE A TO TRIGS", "b": "SCENE B TO TRIGS", "mix": "SCENE BLEND TO TRIGS"}
+LOCK_NONE = "NOTHING TO LOCK"
+STEPS = (1, 4, 9)                 # trigs poked onto these steps (0-based); step 4 also gets p-locks
 FAILS = []
 
 
@@ -182,6 +204,36 @@ def model(img, part, weights, muted, t, master=False, mode="mix"):
         if not en:
             continue
         out[off] = max(mn, min(mn + cnt - 1, v))
+    return out
+
+
+def plock_model(img, part, weights, muted, t, master, mode, cur):
+    """{slot: expected lock byte} for one held step of track t whose 32 lock bytes are `cur`."""
+    w = weights[t]
+    wa, wb = -s16(w >> 16), -s16(w & 0xffff)
+    if mode != "mix":
+        muted = [False, False]
+    rows = [None if muted[i] else part[SCN + (part[SEL_A + i] * 8 + t) * 32:][:32] for i in (0, 1)]
+    out = {}
+    for k in range(30):
+        la = rows[0][k] if rows[0] is not None and rows[0][k] < 128 else None
+        lb = rows[1][k] if rows[1] is not None and rows[1][k] < 128 else None
+        if mode != "mix":
+            v = la if mode == "a" else lb
+            if v is None:
+                continue
+        else:
+            if la is None and lb is None:
+                continue
+            base = cur[k] if cur[k] != 0xff else part[base_off(part, t, k)]   # the step's lock stands in
+            a = base if la is None else la
+            b = base if lb is None else lb
+            v = ((a * wa + b * wb + 64) >> 7) + 0x80 >> 8
+        en, mn, cnt = img.page_desc(part, t, k // 6, master)[2][k % 6]
+        if not en:
+            continue
+        v = max(mn, min(mn + cnt - 1, v))       # stock's lock writer: the descriptor, then 0..127
+        out[k] = max(0, min(127, v))
     return out
 
 
@@ -441,6 +493,168 @@ def worst_case(e, img, texts):
     check(e.state()["W"] == s["W"], "worst case: the fixture's scenes restored")
 
 
+# ------------------------------------------------------------------ TRIG + SCENE
+def pattern(e):
+    """(RAM address, CS1 address, the current track, the pattern's bytes, its battery copy)."""
+    p = e.peek(CUR_PAT, 1)[0]
+    ram = e.u32(BANK_PTR) + p * PAT_LEN
+    cs1 = PAT_CS1 + p * PAT_LEN
+    return ram, cs1, e.peek(CUR_TRACK, 1)[0], e.peek(ram, PAT_LEN), e.peek(cs1, PAT_LEN)
+
+
+def put_pattern(e, data):
+    ram, cs1, _, _, _ = pattern(e)
+    e.poke(ram, data)
+    e.poke(cs1, data)
+
+
+def lock_press(e, steps, scenes):
+    """Hold the steps' trig keys, press the scene keys, release the scene keys, then the trigs."""
+    def run():
+        for s in steps:
+            e.key(f"trig{s + 1}", True)
+            e.run(100)
+        for k in scenes:
+            e.key(k, True)
+            e.run(150)
+        for k in reversed(scenes):
+            e.key(k, False)
+            e.run(150)
+        e.run(200)
+        for s in reversed(steps):
+            e.key(f"trig{s + 1}", False)
+            e.run(100)
+        e.run(300)
+    return run
+
+
+def plock_case(e, img, label, mode, xf, texts, steps, press=None, restore=True):
+    """TRIG + SCENE on `steps` of the current track: every held step's locks = the model, nothing else moved."""
+    e.fader(xf)
+    before = e.state()
+    muted = [before["mutes"][0] != 0, before["mutes"][1] != 0]
+    ram, cs1, t, pat, _ = pattern(e)
+    want = bytearray(pat)
+    for s in steps:
+        at = t * TRACK_LEN + LOCKS + s * 32
+        for k, v in plock_model(img, before["W"], before["weights"], muted, t, before["master"], mode,
+                                pat[at:at + 32]).items():
+            want[at + k] = v
+    changed = [s for s in steps if want[t * TRACK_LEN + LOCKS + s * 32:][:32] != pat[t * TRACK_LEN + LOCKS + s * 32:][:32]]
+    e.watch([NOTIFY])
+    (press or lock_press(e, steps, MODES[mode][0]))()
+    after = e.state()
+    _, _, _, pat2, cs2 = pattern(e)
+    notes = [h for h in e.hits() if h[1] == NOTIFY]
+    diff = [hex(i) for i in range(PAT_LEN) if pat2[i] != want[i]]
+    n = sum(want[i] != pat[i] for i in range(PAT_LEN))
+    check(not diff, f"{label} xf {before['fader']:3d}: steps {[s + 1 for s in steps]} of T{t + 1}, {n} lock bytes "
+          f"as the model, no other pattern byte moved" + (f"; off at {diff[:8]}" if diff else ""))
+    check(cs2 == pat2, f"{label}: the battery copy equals the pattern")
+    check(after["W"] == before["W"] and after["S"] == before["S"], f"{label}: the Part is untouched")
+    flags = e.peek(STEP_LOCKED, 64)
+    check(all(flags[s] >> t & 1 for s in changed), f"{label}: the has-locks bit is set on the changed steps")
+    text = texts["l" + mode] if changed else texts["lnone"]
+    check(len(notes) == 1 and notes[0][8] == text, f"{label}: one toast, "
+          + (LOCK_TEXT[mode] if changed else LOCK_NONE))
+    if restore:
+        put_pattern(e, pat)
+    return pat, pat2, changed
+
+
+def trig_scene(e, img, texts):
+    s = e.state()
+    ram, cs1, t, pat, _ = pattern(e)
+    fixture = bytearray(pat)
+    base = t * TRACK_LEN
+    mask = int.from_bytes(fixture[base:base + 8], "big")
+    for st in STEPS:
+        mask |= 1 << st
+    fixture[base:base + 8] = mask.to_bytes(8, "big")
+    rnd = random.Random(0x7A1C)
+    at = base + LOCKS + STEPS[1] * 32
+    for k in range(30):
+        fixture[at + k] = rnd.randrange(128) if rnd.random() < 0.5 else 0xff
+    put_pattern(e, bytes(fixture))
+    e.tap("rec", after=400)                                # GRID RECORDING
+    _, _, _, pat, cs = pattern(e)
+    check(pat == bytes(fixture) and cs == pat, f"TRIG + SCENE fixture: T{t + 1}, trigs on steps "
+          f"{[x + 1 for x in STEPS]}, {sum(fixture[at + k] != 0xff for k in range(30))} p-locks on step {STEPS[1] + 1}")
+    two = [STEPS[0], STEPS[1]]
+    for xf in (127, 64, 0):
+        plock_case(e, img, "TRIG + SCENE A + B", "mix", xf, texts, two)
+    plock_case(e, img, "TRIG + SCENE A", "a", 64, texts, two)
+    plock_case(e, img, "TRIG + SCENE B", "b", 96, texts, [STEPS[1], STEPS[2]])
+    plock_case(e, img, "three trigs + SCENE A + B", "mix", 32, texts, list(STEPS))
+    plock_case(e, img, "TRIG + SCENE A", "a", 64, texts, two, restore=False)
+    plock_case(e, img, "TRIG + SCENE A again", "a", 64, texts, two)             # NOTHING TO LOCK
+    put_pattern(e, bytes(fixture))                         # the cases below each write
+
+    def seq(*steps):
+        def run():
+            for k, d in steps:
+                e.key(k, d)
+                e.run(150)
+            e.run(400)
+        return run
+    tk = f"trig{STEPS[1] + 1}"
+    plock_case(e, img, "B then A, A released first", "mix", 96, texts, [STEPS[1]],
+               seq((tk, True), ("scene_b", True), ("scene_a", True), ("scene_a", False), ("scene_b", False), (tk, False)))
+    plock_case(e, img, "trig released before SCENE A", "a", 64, texts, [STEPS[1]],
+               seq((tk, True), ("scene_a", True), (tk, False), ("scene_a", False)))
+    plock_case(e, img, "A, B pressed, B released, A released", "mix", 64, texts, [STEPS[1]],
+               seq((tk, True), ("scene_a", True), ("scene_b", True), ("scene_b", False), ("scene_a", False), (tk, False)))
+
+    e.chord("func", "scene_a")
+    check(e.peek(MUTE_A, 1)[0] != 0, "TRIG + SCENE: FUNC + SCENE A mutes scene A")
+    plock_case(e, img, "A muted, TRIG + SCENE A + B", "mix", 64, texts, two)
+    plock_case(e, img, "A muted, TRIG + SCENE A", "a", 64, texts, two)
+    e.chord("func", "scene_a")
+    check(e.peek(MUTE_A, 1)[0] == 0, "TRIG + SCENE: scene A unmuted")
+
+    # stock's gestures inside the chord win
+    _, _, _, pat, _ = pattern(e)
+    e.watch([NOTIFY])
+    seq((tk, True), ("scene_a", True))()
+    e.tap("trig3")
+    seq(("scene_a", False), (tk, False))()
+    sel = e.state()["W"][SEL_A]
+    _, _, _, pat2, _ = pattern(e)
+    lock_notes = [h for h in e.hits() if h[1] == NOTIFY and h[8] in (texts["la"], texts["lb"], texts["lmix"], texts["lnone"])]
+    check(sel == 2 and pat2 == pat and not lock_notes,
+          f"TRIG + SCENE A + TRIG 3: stock selects scene 3 ({sel + 1}), no lock written, no toast")
+    seq(("scene_a", True))()
+    e.tap("trig2")
+    seq(("scene_a", False))()
+    check(e.state()["W"][SEL_A] == SCENE_A, "scene A selection restored")
+    e.tap("pg_amp", after=400)
+    st = e.state()
+    row = SCN + (st["W"][SEL_A] * 8 + t) * 32
+    cur = st["W"][row + 15] if st["W"][row + 15] < 128 else st["W"][PG + t * 24 + 9]
+    seq((tk, True), ("scene_a", True))()
+    e.knob(3, -5 if cur >= 64 else 5)                      # knob D: AMP VOL
+    e.run(300)
+    seq(("scene_a", False), (tk, False))()
+    st2 = e.state()
+    _, _, _, pat3, _ = pattern(e)
+    check(st2["W"][row + 15] != st["W"][row + 15] and pat3 == pat,
+          f"TRIG + SCENE A + knob D: stock writes the scene lock ({st['W'][row + 15]} -> {st2['W'][row + 15]}), "
+          f"no p-lock")
+    reload_part(e, "after the scene lock")
+    t0 = f"trig{STEPS[0] + 1}"                             # no p-locks of its own
+    seq((t0, True))()
+    e.knob(3, -5 if st["W"][PG + t * 24 + 9] >= 64 else 5)
+    e.run(300)
+    seq((t0, False))()
+    _, _, _, pat4, _ = pattern(e)
+    moved = [i for i in range(PAT_LEN) if pat4[i] != pat[i]]
+    check(moved == [base + LOCKS + STEPS[0] * 32 + 12 + 3], f"TRIG + knob D, no scene key: stock's p-lock "
+          f"(moved {[hex(i) for i in moved[:4]]})")
+    put_pattern(e, pat)
+    e.tap("rec", after=400)                                # GRID RECORDING off
+    return bytes(fixture)
+
+
 def reload_part(e, label):
     e.chord("func", "cue", after=800)
     s = e.state()
@@ -508,14 +722,15 @@ def main():
     def find_texts(unit):
         """The toast texts in the unit (read from the image, or from RAM for a DRAM unit loaded at boot)."""
         texts = {}
-        for mode, words in [(m, w) for m, (_, w) in MODES.items()] + [("none", NONE_TEXT)]:
+        for mode, words in ([(m, w) for m, (_, w) in MODES.items()] + [("none", NONE_TEXT)]
+                            + [("l" + m, w) for m, w in LOCK_TEXT.items()] + [("lnone", LOCK_NONE)]):
             at = unit.find(words.encode() + b"\0")
             if at < 0:
                 sys.exit(f"verify apply-scene: the unit's text {words!r} is not where the detour points")
             texts[mode] = hook + at
         return texts
     in_image = BASE <= hook < BASE + len(img.d)
-    texts = find_texts(img.d[hook - BASE:hook - BASE + 0x400]) if in_image else None
+    texts = find_texts(img.d[hook - BASE:hook - BASE + 0x1000]) if in_image else None
     print(f"verify apply-scene: image {hashlib.sha256(img.d).hexdigest()[:12]}, hook {hook:#x} "
           f"({'in the image' if in_image else 'a DRAM unit, loaded at boot'})")
     work = pathlib.Path(tempfile.mkdtemp(prefix="apply_scene_verify_"))
@@ -527,7 +742,7 @@ def main():
         e.run(3000)
         e.tap("yes", after=1500)                       # the clock dialog
         if texts is None:
-            texts = find_texts(e.peek(hook, 0x400))
+            texts = find_texts(e.peek(hook, 0x1000))
         print(f"verify apply-scene: texts {', '.join(hex(a) for a in texts.values())}")
         s0 = e.state()
         check([s0["W"][MACH + t] for t in range(8)] == list(MACHINES) and s0["W"][SEL_A] == SCENE_A,
@@ -674,8 +889,17 @@ def main():
         print("verify apply-scene: the worst case, every scene byte locked")
         worst_case(e, img, texts)
 
+        print("verify apply-scene: TRIG + SCENE, locks on the held steps")
+        fixture = trig_scene(e, img, texts)
+
         print("verify apply-scene: Part save, project save")
         before, after, want = apply_case(e, img, "before saving", "mix", 96, texts)
+        put_pattern(e, fixture)
+        e.tap("rec", after=400)
+        _, locked, _ = plock_case(e, img, "TRIG + SCENE A + B before saving", "mix", 96, texts,
+                                  [STEPS[0], STEPS[1]], restore=False)
+        e.tap("rec", after=400)
+        lock_track = pattern(e)[2]
         applied = after["W"]
         e.key("func", True)
         e.run(150)
@@ -702,6 +926,10 @@ def main():
         s = e2.state()
         check(s["W"] == applied and s["S"] == applied,
               f"project reload: working and saved Part = the applied Part ({sum(a != b for a, b in zip(s['W'], applied))} bytes differ)")
+        _, _, t, pat, _ = pattern(e2)
+        a = t * TRACK_LEN
+        check(t == lock_track and pat[a:a + TRACK_LEN] == locked[a:a + TRACK_LEN],
+              f"project reload: T{t + 1}'s pattern track, its TRIG + SCENE locks included, as saved")
     finally:
         e2.quit()
 
@@ -713,6 +941,12 @@ def main():
         e3.run(3000)
         e3.tap("yes", after=1500)
         _, after, want = apply_case(e3, img, "unsaved, before power-off", "b", 32, texts)
+        put_pattern(e3, fixture)
+        e3.tap("rec", after=400)
+        _, plocked, _ = plock_case(e3, img, "TRIG + SCENE B, unsaved, before power-off", "b", 32, texts,
+                                   [STEPS[1], STEPS[2]], restore=False)
+        e3.tap("rec", after=400)
+        pat_ram = pattern(e3)[0]
         e3.run(1000)
         cs1 = e3.peek(0x10000000, 0x100000)
         e3.cmd("card flush", "card")
@@ -721,11 +955,13 @@ def main():
     (work / "cs1.bin").write_bytes(cs1)
     dump = work / "pc2_part.bin"
     mach = work / "pc2_mach.bin"
+    pdump = work / "pc2_pattern.bin"
     p = after["p"]
     wa = after["bank"] + 0x8ed80 + p * PART_LEN
     r = subprocess.run([str(EMU), "--image", str(IMAGE), "--card", str(pc_card), "--set", "APPLYSC", "--project", "ASFIX",
                         "--mkii", "--cs1-in", str(work / "cs1.bin"), "--no-post", "--load-ms", "90000",
-                        "--mem-dump", f"{wa:#x},{PART_LEN}={dump};{CS1_WORK + p * PART_LEN:#x},{PART_LEN}={mach}"],
+                        "--mem-dump", f"{wa:#x},{PART_LEN}={dump};{CS1_WORK + p * PART_LEN:#x},{PART_LEN}={mach};"
+                        f"{pat_ram:#x},{PAT_LEN}={pdump}"],
                        capture_output=True, text=True, timeout=1800)
     (work / "pc2.log").write_text(r.stdout + r.stderr)
     if r.returncode or not dump.exists():
@@ -735,6 +971,9 @@ def main():
         check(got == after["W"], f"power cycle: the unsaved applied Part survived "
               f"({sum(a != b for a, b in zip(got, after['W']))} bytes differ)")
         check([got[MACH + t] for t in range(8)] == list(MACHINES), f"power cycle: machines {[got[MACH + t] for t in range(8)]}")
+        gp = pdump.read_bytes() if pdump.exists() else b""
+        check(gp == plocked, f"power cycle: the unsaved TRIG + SCENE locks survived "
+              f"({sum(a != b for a, b in zip(gp, plocked)) if gp else 'no dump'} bytes differ)")
 
     print(f"verify apply-scene: {'FAIL' if FAILS else 'PASS'} ({len(FAILS)} failure(s)); work in {work}")
     return 1 if FAILS else 0

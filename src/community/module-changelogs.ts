@@ -10,6 +10,8 @@ export type ModuleRelease = { version: string; previousVersion: string | null; r
 export type ChangelogModules = Record<string, ReleaseNotes[]>
 
 type CatalogModule = { id: string; version: string }
+/** Players read these notes on the module page and in update emails; evidence and waivers belong in the pull request. */
+export const MAX_CHANGES = 5, MAX_CHANGE_LENGTH = 200
 function object(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
@@ -31,6 +33,9 @@ export function parseModuleChangelogs(value: unknown, catalog?: readonly Catalog
   if (catalog) {
     const ids = new Set(catalog.map(module => module.id))
     for (const id of Object.keys(modules)) if (!ids.has(id)) throw new Error('Unknown changelog module: ' + id)
+    for (const [id, entries] of Object.entries(modules)) for (const entry of entries) {
+      if (entry.changes.length > MAX_CHANGES || entry.changes.some(change => change.length > MAX_CHANGE_LENGTH)) throw new Error('Keep the release notes for ' + id + ' v' + entry.version + ' short: at most ' + MAX_CHANGES + ' lines of at most ' + MAX_CHANGE_LENGTH + ' characters, each on what changed for players. Test evidence, measurements and waivers go in the pull request (docs/ADD_A_MODULE.md#release-notes-required-for-every-fix-and-module-version).')
+    }
     for (const module of catalog) {
       const entries = modules[module.id] ?? []
       if (!entries.some(entry => entry.version === module.version)) throw new Error('Missing release notes for ' + module.id + ' v' + module.version + '. Add them to src/community/module-changelogs/' + module.id + '.json.')

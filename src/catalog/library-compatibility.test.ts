@@ -15,7 +15,7 @@ function Library({ selected, all = false }: { selected: string[]; all?: boolean 
   const { conflicts, blocks } = libraryCompatibility(useBetaUi(), selected, false, ['everb'])
   return createElement(MachineLibrary, {
     device: all ? undefined : DEVICES_BY_ID.octatrack, query: '', octatrackModules: [everb], octatrackSelected: selected,
-    onToggleOctatrack: noop, digiSelected: { digitakt: all ? ['digislicer', 'digisophie'] : [], 'digitakt-ii': [], digitone: [] }, onToggleDigi: noop,
+    onToggleOctatrack: noop, digiSelected: { digitakt: all ? ['digislicer', 'digisophie'] : [], 'digitakt-ii': [], digitone: [], 'analog-rytm-mkii': [] }, onToggleDigi: noop,
     family: 'all', onFamilyChange: noop, sort: 'collection', onSortChange: noop, statistics: [],
     octatrackConflicts: conflicts, octatrackBlocks: blocks, comparison: [], onCompare: noop, onOpenComparison: noop,
     viewedModuleVersions: {}, moduleBaseline: [],
@@ -64,7 +64,7 @@ describe('a module only the Modwerk base can load (usb-only.ts)', () => {
     expect(libraryCompatibility(false, ['everb'], false, ['everb'], published).blocks.everb).toBeUndefined() // in the set already: removable
     const html = renderToStaticMarkup(createElement(BetaUi, { value: false }, createElement(MachineLibrary, {
       device: DEVICES_BY_ID.octatrack, query: '', octatrackModules: [everb], octatrackSelected: [], onToggleOctatrack: noop,
-      digiSelected: { digitakt: [], 'digitakt-ii': [], digitone: [] }, onToggleDigi: noop, family: 'all', onFamilyChange: noop, sort: 'collection',
+      digiSelected: { digitakt: [], 'digitakt-ii': [], digitone: [], 'analog-rytm-mkii': [] }, onToggleDigi: noop, family: 'all', onFamilyChange: noop, sort: 'collection',
       onSortChange: noop, statistics: [], octatrackConflicts: [], octatrackBlocks: blocks, comparison: [], onCompare: noop, onOpenComparison: noop,
       viewedModuleVersions: {}, moduleBaseline: [],
     })))

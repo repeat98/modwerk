@@ -69,11 +69,11 @@ export function deviceStore(db: IDBDatabase) {
       compareModuleVersions(module.version, module.version)
       await transaction('settings', 'readwrite', store => store.put({ id: module.id, version: module.version }, 'module-view/' + module.id))
     },
-    async readFirmware(machine: 'octatrack' | 'digitakt' | 'digitakt-ii' | 'digitone' = 'octatrack'): Promise<StoredFirmware | undefined> { return transaction('firmware', 'readonly', store => store.get(machine === 'octatrack' ? 'base' : 'base/' + machine)) },
-    async saveFirmware(file: File, machine: 'octatrack' | 'digitakt' | 'digitakt-ii' | 'digitone' = 'octatrack') {
+    async readFirmware(machine: 'octatrack' | 'digitakt' | 'digitakt-ii' | 'digitone' | 'analog-rytm-mkii' = 'octatrack'): Promise<StoredFirmware | undefined> { return transaction('firmware', 'readonly', store => store.get(machine === 'octatrack' ? 'base' : 'base/' + machine)) },
+    async saveFirmware(file: File, machine: 'octatrack' | 'digitakt' | 'digitakt-ii' | 'digitone' | 'analog-rytm-mkii' = 'octatrack') {
       await transaction('firmware', 'readwrite', store => store.put({ name: file.name, blob: file }, machine === 'octatrack' ? 'base' : 'base/' + machine))
     },
-    async forgetFirmware(machine: 'octatrack' | 'digitakt' | 'digitakt-ii' | 'digitone' = 'octatrack') { await transaction('firmware', 'readwrite', store => store.delete(machine === 'octatrack' ? 'base' : 'base/' + machine)) },
+    async forgetFirmware(machine: 'octatrack' | 'digitakt' | 'digitakt-ii' | 'digitone' | 'analog-rytm-mkii' = 'octatrack') { await transaction('firmware', 'readwrite', store => store.delete(machine === 'octatrack' ? 'base' : 'base/' + machine)) },
   }
 }
 export type DeviceStore = ReturnType<typeof deviceStore>

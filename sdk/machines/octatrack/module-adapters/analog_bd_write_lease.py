@@ -16,7 +16,7 @@ from dataclasses import replace
 
 HEADER = Path(__file__).with_name('stock_hook_write_lease.h')
 HEADER_SHA256 = 'ab14679a5faae84ef47d1ca37e46b3171da45252d12310e0b4458228be8334be'
-CONTROLLER_ADAPTER_SHA256 = 'c3e3f51076e9ae3579e2e00d96d21eee87a2d12afa4ae69fb7067da3399fa17a'
+CONTROLLER_ADAPTER_SHA256 = 'b9c0e0f96632a0d0ab5283387edaae1b604e4e82e27e26b3fdc1666867d31daf'
 IMPORTS = ('modwerk_controller_write_begin', 'modwerk_controller_write_end')
 
 
@@ -37,7 +37,14 @@ static int __attribute__((noinline)) ab_lease_end(struct mw_controller_write_lea
         ('    ++ab_render_calls;', '''    struct mw_controller_write_lease lease;
     /* Without an owned lease the frame still needs this track's record: the
      * stock silent source (kinds 5..7) writes an empty header and zero samples
-     * at the track's cursor, never an AB signature or borrowed Part bytes. */
+     * at the track's cursor, never an AB signature or borrowed Part bytes.
+     * The frame's first call (before the event offset) writes no control
+     * record, only that reservation: it goes there at once, so a frame takes
+     * one lease, not two (each Begin/End proves the owner through uncached
+     * reads; two a frame cost the ColdFire about 20 points, 22 Oct 2026). The
+     * second call writes the record at the packer's fixed slot either way. */
+    if(end!=16)
+        return ((int (*)(unsigned,unsigned,unsigned,unsigned))0x400047f0u)(track,ping,start,end);
     if(modwerk_controller_write_begin((uintptr_t)ab_render,
         MW_CONTROLLER_WRITE_ANALOG_BD,&lease)!=1)
         return ((int (*)(unsigned,unsigned,unsigned,unsigned))0x400047f0u)(track,ping,start,end);

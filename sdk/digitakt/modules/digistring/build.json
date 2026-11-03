@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 1,
+  "sources": [
+    "src/digitakt.c",
+    "src/karplus.c",
+    "src/ui.c"
+  ],
+  "defsym": {},
+  "cflags": [],
+  "weak": [],
+  "subscribe": [
+    {
+      "event": "ev_render_voices",
+      "fn": "digistring_render",
+      "order": 20
+    }
+  ],
+  "contribute": [
+    {
+      "to": "core_machines",
+      "order": 80,
+      "data": "00000000",
+      "relocs": [
+        [
+          0,
+          "abs32",
+          "sym:digistring_machine",
+          0
+        ]
+      ]
+    }
+  ],
+  "collections": {},
+  "copied": [],
+  "regions": [],
+  "claims": [
+    "machine:8"
+  ],
+  "requires": [
+    "machine-pages"
+  ],
+  "derive": null,
+  "releases": {
+    "1.53": {
+      "defsym": {},
+      "cflags": [],
+      "sites": []
+    },
+    "1.54": {
+      "defsym": {},
+      "cflags": [
+        "-DDIGISTRING_OS154"
+      ],
+      "sites": []
+    }
+  }
+}

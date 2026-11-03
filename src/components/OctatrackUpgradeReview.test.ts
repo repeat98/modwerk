@@ -10,6 +10,12 @@ import { LoadDialog } from './LoadDialog'
 import { OctatrackHub } from './OctatrackHub'
 
 vi.mock('../engine/elekloader/module-set', async original => ({ ...await original<typeof import('../engine/elekloader/module-set')>(), moduleSetReview: vi.fn() }))
+// No module that has a USB package is paused today: a test pauses one itself.
+const pausedForTest = vi.hoisted(() => new Set<string>())
+vi.mock('../catalog/availability', async original => {
+  const real = await original<typeof import('../catalog/availability')>()
+  return { ...real, isModuleAvailable: (id: string, beta = false) => !pausedForTest.has(id) && real.isModuleAvailable(id, beta) }
+})
 let root: Root, container: HTMLDivElement, link: OctatrackLink, stop: () => void
 const set = newConfiguration('Studio', ['everb']), inventory = { moduleIds: ['everb'], removedStockFx: [] }
 const changes = { add: [], remove: [], stockOff: [], stockOn: [] }
@@ -32,7 +38,7 @@ beforeEach(async () => {
   link = { getState: () => state, subscribe: () => () => {}, start: () => () => {}, update: vi.fn(async () => {}), health: async () => undefined } as unknown as OctatrackLink
   review.mockReturnValue({ changes, updates: ['everb'], needsSync: true, problem: undefined })
 })
-afterEach(async () => { await act(() => root.unmount()); container.remove(); stop(); vi.restoreAllMocks(); vi.unstubAllGlobals() })
+afterEach(async () => { await act(() => root.unmount()); container.remove(); stop(); vi.restoreAllMocks(); vi.unstubAllGlobals(); pausedForTest.clear() })
 async function load(prepareUpdate = vi.fn(async () => ({ name: set.name, changes: [] }))) {
   const install = vi.fn()
   await act(() => root.render(createElement(LoadDialog, { link, set, inventory, prepareUpdate, onInstallBase: install, onClose() {}, onEdit() {}, onCard() {}, onReport() {} })))
@@ -52,7 +58,22 @@ describe('runtime package upgrade review', () => {
     expect(prepareUpdate).toHaveBeenCalledWith(set)
     expect(link.update).toHaveBeenCalledTimes(1)
   })
+  it('keeps a synced set at once: no self-test, no Undo', async () => {
+    const unit = fakeUnit(), real = new OctatrackLink(unit.usb, fakeSession(unit)), release = real.start()
+    await vi.waitFor(() => expect(real.getState().status).toBe('ready'))
+    const keep = vi.spyOn(real, 'keep'), undo = vi.spyOn(real, 'undo'), selftest = vi.spyOn(real, 'selftest')
+    // A runtime install package as the builder makes it (sdk/runtime/loader/README.md).
+    const data = new Uint8Array(36), view = new DataView(data.buffer); data.set([0x4d, 0x57, 0x52, 0x4d, 0, 4]); view.setUint32(8, 4); view.setUint32(28, 0xb)
+    await act(() => root.render(createElement(LoadDialog, { link: real, set, inventory, prepareUpdate: async () => ({ name: set.name, changes: [{ module: set.name, data }] }), onInstallBase() {}, onClose() {}, onEdit() {}, onCard() {}, onReport() {} })))
+    expect(container.textContent).not.toMatch(/undo|self-test/i)
+    await act(async () => button('Sync to Octatrack').click())
+    await vi.waitFor(() => expect(container.textContent).toContain('Synced. Studio stays on your Octatrack, also after a restart.'))
+    expect(unit.kept).toEqual(['+0000000b'])
+    expect(keep).toHaveBeenCalledTimes(1); expect(undo).not.toHaveBeenCalled(); expect(selftest).not.toHaveBeenCalled()
+    release()
+  })
   it('holds back a paused module but still lets a sync remove it', async () => {
+    pausedForTest.add('poly8')
     review.mockReturnValue({ changes: { ...changes, add: ['poly8'] }, updates: [], needsSync: true, problem: undefined })
     const { prepareUpdate } = await load()
     expect(container.querySelector('.load-blocked')?.textContent).toContain('POLY8 is paused for now')

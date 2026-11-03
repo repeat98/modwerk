@@ -1,0 +1,52 @@
+{
+ "schemaVersion": 1,
+ "recorded": "2026-10-22",
+ "decision": "Analog Rytm MKII module: rytm2_mods' elemod port of MrScruff's rytm-mods 0002-euclid-accents, for OS 1.74, imported under GPL-2.0-only with attribution. rytm-mods-src is published with MrScruff's permission.",
+ "modules": [
+  {
+   "module": "analog-rytm-mkii/euclid-accents",
+   "version": "1.1.0",
+   "repository": "https://github.com/Iced-Cream/rytm2_mods",
+   "tag": "v1.2",
+   "revision": "afd461d4a8ef4306bb2a57d4c61ad35c362b3940",
+   "license": "GPL-2.0-only",
+   "files": [
+    {
+     "from": "euclid-accents/os1.74/euclid-accents.s",
+     "to": "src/euclid-accents.s",
+     "sha256": "1a3d6b538f058185593d627d8e5f8d3faa8ee3d926b352da6d450267269369a3"
+    },
+    {
+     "from": "include/ar2-1.74.inc",
+     "to": "include/ar2-1.74.inc",
+     "sha256": "c57431f7b678c68cc007d2a180339edfcb395e9a40b753fe53ea649364e0874b"
+    },
+    {
+     "from": "shared/live-track.s",
+     "to": "shared/live-track.s",
+     "sha256": "53814de9c664ba2c760abd5890b3c293799b7893889c125532c2db67e4c882ba"
+    },
+    {
+     "from": "LICENSE",
+     "to": "LICENSE",
+     "sha256": "8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643"
+    },
+    {
+     "from": "euclid-accents/README.md",
+     "to": "upstream/README.md",
+     "sha256": "69f82727ed37ff39b1827a90c51470ad629e958fa3999857c83185f7e718564b"
+    }
+   ],
+   "excluded": [
+    "euclid-accents/mod.json",
+    "euclid-accents/euclid-accents.s"
+   ],
+   "transformations": [
+    "mod.json's thirteen OS 1.74 port sites became address, length and SHA-256 guards in build.json's 1.74 release. Its keep2 sites, which keep a stock opcode word, are written as the equivalent jsr sites (three, opcode 4eb9) and an lea %a1 site (opcode 43f9), so no stock opcode is retained.",
+    "mod.json's storage field (euclid_accent, scope track, 1 bit) became build.json's storage.",
+    "The OS 1.73 source and sites are not imported: core-ar2 0.3 is for OS 1.74 only.",
+    "include/ar2-1.74.inc and shared/live-track.s keep their paths relative to the source, so the .include lines in src/euclid-accents.s are unchanged."
+   ]
+  }
+ ]
+}

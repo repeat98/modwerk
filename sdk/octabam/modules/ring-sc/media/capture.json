@@ -1,0 +1,155 @@
+{
+ "firmware": "1.40C",
+ "imageSha256": "491f0ff0b933b52f3b9dc4f4c8118ff8f6788763bc36c596545026545a6bd596",
+ "emulatorSha256": "23ba6f6cdc6ec4b89b8cf206915e66d3160aec8499b1abfc9b475ac849152b28",
+ "setup": "Headless ot_emu; MKII panel; stopped transport; 128×64 LCD at integer scale 6.",
+ "palette": {
+  "on": [
+   240,
+   240,
+   240
+  ],
+  "off": [
+   24,
+   24,
+   24
+  ]
+ },
+ "keyMs": 150,
+ "plan": [
+  {
+   "press": [
+    "T2"
+   ]
+  },
+  {
+   "wait": 300
+  },
+  {
+   "hold": [
+    "FUNC"
+   ]
+  },
+  {
+   "press": [
+    "FX1"
+   ]
+  },
+  {
+   "release": [
+    "FUNC"
+   ]
+  },
+  {
+   "wait": 500
+  },
+  {
+   "encoder": {
+    "name": "LEVEL",
+    "delta": 12
+   }
+  },
+  {
+   "wait": 500
+  },
+  {
+   "press": [
+    "YES"
+   ]
+  },
+  {
+   "wait": 700
+  },
+  {
+   "capture": "ot-setup-chooser.png"
+  },
+  {
+   "press": [
+    "FX1"
+   ]
+  },
+  {
+   "wait": 500
+  },
+  {
+   "capture": "ot-main-duck.png"
+  },
+  {
+   "encoder": {
+    "name": "A",
+    "delta": 1
+   }
+  },
+  {
+   "wait": 600
+  },
+  {
+   "capture": "ot-main-key-t1.png"
+  },
+  {
+   "hold": [
+    "FUNC"
+   ]
+  },
+  {
+   "press": [
+    "FX1"
+   ]
+  },
+  {
+   "release": [
+    "FUNC"
+   ]
+  },
+  {
+   "wait": 500
+  },
+  {
+   "encoder": {
+    "name": "A",
+    "delta": 6
+   }
+  },
+  {
+   "wait": 500
+  },
+  {
+   "capture": "ot-setup-ring.png"
+  },
+  {
+   "press": [
+    "FX1"
+   ]
+  },
+  {
+   "wait": 500
+  },
+  {
+   "capture": "ot-main-ring.png"
+  }
+ ],
+ "screenshots": [
+  {
+   "path": "media/ot-setup-chooser.png",
+   "sha256": "ab20445733a546cd96e56391c99447d85ec5a0f594dffce01081f4f1cea1e929"
+  },
+  {
+   "path": "media/ot-main-duck.png",
+   "sha256": "f1703b78174e85665eade3320354fe211c502573aa4baee33e7dc2aef3c14c45"
+  },
+  {
+   "path": "media/ot-main-key-t1.png",
+   "sha256": "57a07b4c538c51c1e4c43ee4e9de4a32be224c3d607562cfc5d6c7fd83a93f0f"
+  },
+  {
+   "path": "media/ot-setup-ring.png",
+   "sha256": "04a5501e362a0d87bae67304f6a07db8b216751538c401ba128d8bc8836b6c08"
+  },
+  {
+   "path": "media/ot-main-ring.png",
+   "sha256": "bd6989fe1eff51eec25b32653cde2d3ffbbc334dc012c544246b14457c3223f3"
+  }
+ ],
+ "moduleVersion": "0.2.0-experimental",
+ "note": "Captured on a private image: RINGMOD SC 0.2.0-experimental alone on the FX1 chooser (local remix x_rmsc02, RINGSC20 with MODE as a NameSelect). KEY is turned one detent: on the first visit after choosing the effect a card image moves it a track a detent. The image stays local."
+}

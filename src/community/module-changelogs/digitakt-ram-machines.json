@@ -3,11 +3,11 @@
     "version": "1.3.1",
     "date": "2026-10-14",
     "changes": [
-      "First Modwerk release for Digitakt I OS 1.53 and 1.54, on Core 2.1. RAM-R1 records a temporary mono take from the master mix or inputs when triggered. RAM-P1 plays that shared take using the native sample controls.",
-      "RAM-P1 now plays a take at the level it was recorded at. 1.1.1 played takes about 17 dB quieter, because a take recorded from MAIN passed through a second voice gain on playback. Existing projects will play RAM-P1 louder.",
-      "Takes are normalized to full scale when recording ends, so BR (bit reduction) on RAM-P1 sounds as it does on a normal sample instead of much stronger. The pass runs in the audio interrupt from both ends of the take; a trig with STRT inside a long take in the second after it ends can briefly play quieter.",
-      "Written takes are pushed from the CPU cache so the sample DMA always reads the new take, including after a Sample Snap and Crossfade commit.",
-      "Compatibility flag only: marked as incompatible with digihealth, because DIGIHEALTH moves the render block to fast memory and rewrites two call sites that RAM Machines also patches. The site already refused the pair for overlapping firmware changes; it now names the conflict too. Pinned firmware code is unchanged."
+      "First Modwerk release for Digitakt I OS 1.53 and 1.54, on Core 2.1. RAM-R1 records a mono take from the master mix or inputs; RAM-P1 plays it with sample controls.",
+      "RAM-P1 now plays a take at its recorded level; 1.1.1 played takes about 17 dB quieter. Existing projects will play RAM-P1 louder.",
+      "Takes are normalized when recording ends, so BR (bit reduction) on RAM-P1 sounds as it does on a normal sample. RAM-P1 always plays the newest take.",
+      "Known issue: a trig with STRT inside a long take, in the second after recording ends, can briefly play quieter.",
+      "Now listed as incompatible with Digi Health, which changes the same firmware code. The builder already refused this pair."
     ]
   }
 ]

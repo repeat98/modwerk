@@ -28,6 +28,7 @@ uint32_t modwerk_test_tables[4][MODWERK_FX_IDS];
 #define AT(address) (modwerk_test_memory + (address))
 #define ADDR(pointer) ((uint32_t)((const uint8_t *)(pointer) - modwerk_test_memory))
 static uint8_t (*const pages)[0x1a0] = (uint8_t (*)[0x1a0])(modwerk_test_memory + 0x10000);
+#define MISSING_PAGE (modwerk_test_memory + 0x30000)
 #else
 /* The base's copies of FX1_IDS, FX2_IDS, FX1_ID2POS and ID2POS, MODWERK_FX_IDS long (dsp_loader.py choosers: stock's
  * 18 lea operands name them instead of stock's own). */
@@ -39,7 +40,15 @@ static volatile uint32_t *const tables[4] = {modwerk_fx1_ids, modwerk_fx2_ids, m
 #define AT(address) ((uint8_t *)(uintptr_t)(address))
 #define ADDR(pointer) ((uint32_t)(uintptr_t)(pointer))
 static uint8_t pages[MODWERK_FX_IDS][0x1a0] __attribute__((aligned(4)));
+static uint8_t missing_page[0x1a0] __attribute__((aligned(4)));
+#define MISSING_PAGE missing_page
 #endif
+/* A module handle no installed module serves but a project can still name (dsp.c's MISSING list): stock's NONE
+ * page with its names changed, so the track's FX page and footer say MISSING rather than NONE (owner, 23 October
+ * 2026: testers took the warning for modules they don't use). Everything else is NONE's, its effect id 0 included.
+ * Built once (modwerk_fxpage_missing); until then such a handle shows NONE's own page, as the boot tables give it. */
+static int missing_built;
+static uint32_t unlisted(void) { return missing_built ? ADDR(MISSING_PAGE) : modwerk_fx1_list[0]; }
 static uint8_t serves[MODWERK_FX_IDS]; /* the slots each id's page is listed in: 1 FX1, 2 FX2 */
 static const uint8_t *checked_recipe[MODWERK_FX_IDS];
 static uint32_t checked_bytes[MODWERK_FX_IDS];
@@ -58,7 +67,7 @@ static void put32(uint8_t *p, uint32_t v) { p[0] = (uint8_t)(v >> 24), p[1] = (u
 static void rows(void)
 {
     for (unsigned slot = 0; slot < 2u; ++slot) {
-        uint32_t *list = slot ? modwerk_fx2_list : modwerk_fx1_list, none = modwerk_fx1_list[0], n = modwerk_fx_rows[slot];
+        uint32_t *list = slot ? modwerk_fx2_list : modwerk_fx1_list, none = unlisted(), n = modwerk_fx_rows[slot];
         for (unsigned k = 0; k < MODWERK_FX_IDS; ++k) {
             if (!fx_in(modwerk_fx_modules, k)) continue;
             int listed = serves[k] >> slot & 1u && n + 1u < MODWERK_LIST_ROWS; /* the list keeps its closing 0 */
@@ -126,6 +135,18 @@ int modwerk_fxpage_build(unsigned id, uint8_t *recipe, uint32_t bytes, unsigned 
     checked_recipe[id] = recipe; checked_bytes[id] = bytes;
     if (!page_stamp(id, recipe, bytes, slots, checked_digest[id])) checked_recipe[id] = 0;
     return 1;
+}
+/* The sys task's first tick (dsp.c): NONE's descriptor (stock's first chooser row) copied, its short name (offset 4,
+ * five bytes) and its name (offset 9, thirteen) replaced, and every unlisted module handle pointed at it. */
+void modwerk_fxpage_missing(void)
+{
+    if (missing_built) return;
+    const volatile uint8_t *none = AT(modwerk_fx1_list[0]);
+    for (unsigned i = 0; i < PAGE; ++i) MISSING_PAGE[i] = none[i];
+    for (unsigned i = 0; i < 5u; ++i) MISSING_PAGE[4 + i] = (uint8_t)"MISS"[i];
+    for (unsigned i = 0; i < 13u; ++i) MISSING_PAGE[9 + i] = i < 7u ? (uint8_t)"MISSING"[i] : 0u;
+    missing_built = 1;
+    rows();
 }
 void modwerk_fxpage_drop(unsigned id)
 {
@@ -208,7 +229,7 @@ static int routing_current(void)
         unsigned n=modwerk_fx_rows[slot];
         for(unsigned k=0;k<MODWERK_FX_IDS;++k) if(fx_in(modwerk_fx_modules,k)) {
             unsigned yes=(serves[k]>>slot&1u) && n+1u<MODWERK_LIST_ROWS;
-            if(TABLE(slot)[k]!=(yes?ADDR(pages[k]):modwerk_fx1_list[0]) || TABLE(2u+slot)[k]!=(yes?n:0u)) return 0;
+            if(TABLE(slot)[k]!=(yes?ADDR(pages[k]):unlisted()) || TABLE(2u+slot)[k]!=(yes?n:0u)) return 0;
             if(yes && list[n++]!=ADDR(pages[k])) return 0;
         }
         while(n<MODWERK_LIST_ROWS) if(list[n++]) return 0;

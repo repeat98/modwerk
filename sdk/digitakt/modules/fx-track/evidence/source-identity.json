@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 1,
+  "algorithm": "sha256 of canonical sorted JSON {sources,build}; UTF-8, compact separators",
+  "sha256": "86f95f641c49ac60d4eab37cdffb6c6ba85c638b45e52beb9b68ca56f3dd434f",
+  "sources": {
+    "src/fxtrack.s": "ea1ec81b782396b752022f77a58641f80bad752794114410f3a09359f72dd9e3"
+  },
+  "build": {
+    "schemaVersion": 1,
+    "sources": [
+      "src/fxtrack.s"
+    ],
+    "defsym": {},
+    "cflags": [],
+    "weak": [],
+    "subscribe": [
+      {
+        "event": "ev_settings",
+        "fn": "fxt_settings",
+        "order": 50
+      },
+      {
+        "event": "ev_render_out",
+        "fn": "fxt_flush",
+        "order": 50
+      }
+    ],
+    "contribute": [],
+    "collections": {},
+    "copied": [],
+    "regions": [],
+    "claims": [
+      "settings:FX TRACK"
+    ],
+    "requires": [],
+    "derive": null,
+    "releases": {
+      "1.54": {
+        "defsym": {},
+        "cflags": [],
+        "sites": [
+          {
+            "addr": "0x400e0dac",
+            "len": 6,
+            "stockSha256": "10fd2dfd6d29b6c1e73fb404103769428f9af66b0f4249311c3fcd9beaaf2731",
+            "op": "jsr",
+            "target": "fxt_out"
+          }
+        ]
+      }
+    }
+  }
+}

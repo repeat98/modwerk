@@ -18,7 +18,7 @@ const ITEMS_PER_DIGEST = 40, MEMBERS_PER_RUN = 50
 
 type Candidate = { id: string; email: string; replies: number; likes: number; modules: number; bugs: number; updates: number; messages: number; updates_due: number }
 
-/** Run hourly: activity follows the chosen interval; module releases collect for a day and mail at most once per 24 hours. */
+/** Run hourly: activity follows the chosen interval; module releases collect for a day and mail at most once per 24 hours, carrying any pending likes. */
 export async function sendActivityDigests(env: Env, db: Database, now = new Date()) {
   if (!emailReady(env) || !env.AUTH_SECRET || !env.APP_URL) return { sent: 0 }
   // Anything read in the bell, or older than a week, is never mailed later.
@@ -29,16 +29,17 @@ export async function sendActivityDigests(env: Env, db: Database, now = new Date
     AND (newer.seen=1 OR newer.emailed=1) AND (newer.created_at>n.created_at OR (newer.created_at=n.created_at AND newer.rowid>n.rowid)))`).run()
   // A short wait lets a burst arrive as one digest and lets members who are online read it in the bell first.
   const settled = hoursBefore(now, 1 / 6)
+  // Releases collect for a day from the oldest unsent one, so the day's releases arrive together, and never within a day of the last module digest.
   // An approved catch-up needs no new collection day, but still respects any previous digest and the chosen interval.
   const candidates = (await db.prepare(`WITH members AS (SELECT a.id,a.email,COALESCE(p.replies,1) AS replies,COALESCE(p.likes,1) AS likes,COALESCE(p.modules,1) AS modules,COALESCE(p.bugs,1) AS bugs,COALESCE(p.updates,1) AS updates,COALESCE(p.messages,1) AS messages,p.last_digest_at,p.frequency,
-    COALESCE(p.last_module_digest_at,(SELECT CASE WHEN MAX(n.excerpt=?)=1 THEN ? ELSE MIN(n.created_at) END FROM notifications n WHERE n.kind='module_update' AND n.emailed=0 AND n.seen=0
-      AND n.user_id IN (SELECT a.id UNION SELECT d.id FROM users d JOIN auth_accounts g ON g.providerId='github' AND g.accountId=d.github_id WHERE g.userId=a.id AND d.github_id IS NOT NULL)))<=? AS updates_due
+    COALESCE(p.last_module_digest_at,'')<=? AND (SELECT CASE WHEN MAX(n.excerpt=?)=1 THEN ? ELSE MIN(n.created_at) END FROM notifications n WHERE n.kind='module_update' AND n.emailed=0 AND n.seen=0
+      AND n.user_id IN (SELECT a.id UNION SELECT d.id FROM users d JOIN auth_accounts g ON g.providerId='github' AND g.accountId=d.github_id WHERE g.userId=a.id AND d.github_id IS NOT NULL))<=? AS updates_due
     FROM auth_users a JOIN users u ON u.id=a.id LEFT JOIN notification_preferences p ON p.user_id=a.id
     WHERE a.emailVerified=1 AND u.suspended=0 AND u.username IS NOT NULL AND COALESCE(p.email_enabled,1)=1
     AND NOT EXISTS(SELECT 1 FROM social_pending_accounts s WHERE s.user_id=a.id)
     ) SELECT * FROM members a WHERE (a.last_digest_at IS NULL OR a.last_digest_at<=CASE COALESCE(a.frequency,'hours') WHEN 'daily' THEN ? ELSE ? END)
-    AND EXISTS(SELECT 1 FROM notifications n WHERE n.emailed=0 AND n.created_at<=? AND (n.kind<>'module_update' OR a.updates_due=1 OR a.updates=0) AND n.user_id IN (SELECT a.id UNION SELECT d.id FROM users d JOIN auth_accounts g ON g.providerId='github' AND g.accountId=d.github_id WHERE g.userId=a.id AND d.github_id IS NOT NULL))
-    ORDER BY a.last_digest_at IS NOT NULL,a.last_digest_at LIMIT ?`).bind(MODULE_UPDATE_CATCHUP, hoursBefore(now, DIGEST_HOURS.daily), hoursBefore(now, DIGEST_HOURS.daily), hoursBefore(now, DIGEST_HOURS.daily), hoursBefore(now, DIGEST_HOURS.hours), settled, MEMBERS_PER_RUN).all<Candidate>()).results
+    AND EXISTS(SELECT 1 FROM notifications n WHERE n.emailed=0 AND n.created_at<=? AND n.kind NOT IN ('post_like','module_like') AND (n.kind<>'module_update' OR a.updates_due=1 OR a.updates=0) AND n.user_id IN (SELECT a.id UNION SELECT d.id FROM users d JOIN auth_accounts g ON g.providerId='github' AND g.accountId=d.github_id WHERE g.userId=a.id AND d.github_id IS NOT NULL))
+    ORDER BY a.last_digest_at IS NOT NULL,a.last_digest_at LIMIT ?`).bind(hoursBefore(now, DIGEST_HOURS.daily), MODULE_UPDATE_CATCHUP, hoursBefore(now, DIGEST_HOURS.daily), hoursBefore(now, DIGEST_HOURS.daily), hoursBefore(now, DIGEST_HOURS.daily), hoursBefore(now, DIGEST_HOURS.hours), settled, MEMBERS_PER_RUN).all<Candidate>()).results
   const app = new URL(env.APP_URL)
   let sent = 0, requested = false
   for (const member of candidates) {
@@ -48,7 +49,7 @@ export async function sendActivityDigests(env: Env, db: Database, now = new Date
     const wantedIds = new Set(wanted.map(item => item.id)), unwanted = pending.filter(row => row.created_at <= settled && !wantedIds.has(row.id)).map(row => row.id)
     // Keep the newest pending version of each module, including a fresh one so an older version cannot slip out.
     const modules = new Set<string | null>()
-    const bundled = wanted.filter(item => {
+    const due = wanted.filter(item => {
       if (item.kind === 'module_update') {
         if (modules.has(item.module_id)) return false
         modules.add(item.module_id)
@@ -56,6 +57,8 @@ export async function sendActivityDigests(env: Env, db: Database, now = new Date
       }
       return item.created_at <= settled
     })
+    // Likes never start an email: they wait for the daily module update digest and stay in the bell until then.
+    const bundled = due.some(item => item.kind === 'module_update') ? due : due.filter(item => item.kind !== 'post_like' && item.kind !== 'module_like')
     let included = bundled.slice(0, ITEMS_PER_DIGEST)
     // Turned-off kinds and hidden content are settled without a message.
     if (!included.length) { if (unwanted.length) await markEmailed(db, unwanted); continue }

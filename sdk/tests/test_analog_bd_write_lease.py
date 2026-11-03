@@ -35,6 +35,10 @@ class AnalogBdWriteLeaseTests(unittest.TestCase):
         end = text.index('return ab_lease_end(')
         self.assertLess(text.index('0x40004008u'), begin)
         self.assertLess(begin, text.index('++ab_render_calls;'))
+        # The frame's first call (no control record) takes the stock silent source and no lease: one lease a frame.
+        first = text.index('if(end!=16)\n        return ((int (*)(unsigned,unsigned,unsigned,unsigned))0x400047f0u)(track,ping,start,end);')
+        self.assertLess(text.index('0x40004008u'), first)
+        self.assertLess(first, begin)
         self.assertLess(text.index('U32(0x80001c80u)=(uint32_t)'), end)
         self.assertIn('#include "stock_hook_write_lease.h"', text)
         self.assertIn('MW_CONTROLLER_WRITE_ANALOG_BD,&lease)!=1)\n        return ((int (*)(unsigned,unsigned,unsigned,unsigned))0x400047f0u)(track,ping,start,end);', text)
@@ -78,12 +82,13 @@ class AnalogBdWriteLeaseTests(unittest.TestCase):
             self.assertNotEqual(rows[0]['begin_return'], rows[0]['end_return'])
             with self.assertRaisesRegex(ValueError, 'two strong lease imports'):
                 policy.policy_offsets(link(folder / 'x', 0), 0, {'modwerk_controller_write_begin': 1})
-            # The recovered inline End tail compiles to two End call sites; refuse it.
+            # The recovered inline End tail: GCC may duplicate it into two End call sites, or keep one inside ab_render
+            # rather than the reviewed ab_lease_end. Either is refused.
             original = (SDK / 'modules/analog-bassdrum/control.c').read_text()
             inline = lease.source(original).replace('return ab_lease_end(&lease);',
                                                     'return modwerk_controller_write_end(&lease)==1 ? 0 : -1;')
             inline = inline.replace('static int __attribute__((noinline)) ab_lease_end', 'static int __attribute__((noinline,unused)) ab_lease_end')
-            with self.assertRaisesRegex(ValueError, 'exactly one call site'):
+            with self.assertRaisesRegex(ValueError, 'exactly one call site|outside its reviewed function: ab_lease_end'):
                 policy.policy_offsets(link(folder / 'inline', 0, inline), 0, imports)
 
 

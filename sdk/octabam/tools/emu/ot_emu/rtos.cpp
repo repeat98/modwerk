@@ -1721,6 +1721,20 @@ namespace ot
 			});
 	}
 
+	void Rtos::watchForeign(const uint32_t _addr, const uint32_t _len, std::vector<std::pair<uint32_t, uint32_t>> _stock)
+	{
+		m_machine.addWriteWatch(_addr, _addr + _len - 1,
+			[this, stock = std::move(_stock)](const uint32_t _a, const uint8_t _size, const uint32_t _val, const uint32_t _pc)
+			{
+				for(const auto& [lo, hi] : stock)
+					if(_pc >= lo && _pc < hi)
+						return;
+				++m_foreignCount;
+				if(m_foreignWrites.size() < 10000)
+					m_foreignWrites.push_back({m_sample, curTcb(), _pc, _a, _val, _size, m_machine.instructions()});
+			});
+	}
+
 	void Rtos::installTrigLog()
 	{
 		if(m_trigLogInstalled)

@@ -14,7 +14,7 @@ describe('machine profiles', () => {
   it('validates every machine and matches the generated registry', () => {
     const parsed = profiles.map(parseMachineProfile).sort((a, b) => a.order - b.order)
     expect(parsed.map(profile => profile.id)).toEqual(GENERATED.map(profile => profile.id))
-    expect(parsed.filter(profile => profile.sdk).map(profile => profile.id)).toEqual(['octatrack', 'digitakt', 'digitone', 'digitakt-ii', 'analog-rytm-mkii'])
+    expect(parsed.filter(profile => profile.sdk).map(profile => profile.id)).toEqual(['octatrack', 'digitakt', 'digitone', 'digitakt-ii', 'analog-rytm-mkii', 'analog-four-mkii'])
   })
 
   it('keeps status, steps and SDK claims consistent', () => {
@@ -33,5 +33,26 @@ describe('machine profiles', () => {
     expect(() => parseMachineProfile({ ...octatrack(), sdk: { ...octatrack().sdk, modules: '../outside' } })).toThrow('repository path')
     expect(() => parseMachineProfile({ ...octatrack(), id: 'all' })).toThrow('other than "all"')
     expect(() => parseMachineProfile({ ...octatrack(), dump: 'x' })).toThrow('unknown field')
+  })
+
+  it('reads the family and its step set', () => {
+    const zoom = () => structuredClone(profiles.find(profile => profile.id === 'zoom-ms-70cdr'))
+    expect(parseMachineProfile(octatrack()).family).toBe('elektron')
+    expect(parseMachineProfile(zoom()).steps).toEqual({ format: 'done', load: 'done', mods: 'open' })
+    expect(() => parseMachineProfile({ ...zoom(), family: 'roland' })).toThrow('machine.family')
+    expect(() => parseMachineProfile({ ...zoom(), steps: { ...zoom().steps, core: 'open' } })).toThrow('unknown field')
+    expect(() => parseMachineProfile({ ...octatrack(), steps: { ...octatrack().steps, load: 'done' } })).toThrow('unknown field')
+    // A Zoom release names no stock file; an Elektron release must name one.
+    const withFile = zoom()
+    withFile.firmware.releases[0].files = octatrack().firmware.releases[0].files
+    expect(() => parseMachineProfile(withFile)).toThrow('machine.firmware.releases[0].files')
+    const noFile = octatrack()
+    noFile.firmware.releases[0].files = []
+    expect(() => parseMachineProfile(noFile)).toThrow('machine.firmware.releases[0].files')
+
+    // Erica Synths machines build from published source: their own road, and no Elektron steps.
+    const lxr = () => structuredClone(profiles.find(profile => profile.id === 'lxr-02'))
+    expect(parseMachineProfile(lxr()).steps).toEqual({ source: 'started', boot: 'open', core: 'open', mods: 'open' })
+    expect(() => parseMachineProfile({ ...lxr(), steps: { ...lxr().steps, rebuild: 'open' } })).toThrow('unknown field')
   })
 })

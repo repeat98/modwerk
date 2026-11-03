@@ -24,6 +24,8 @@
 .device-progress i.is-done { background: #7fd1a0; }
 .device-progress i.is-started { background: var(--accent); }
 
+.zoom-pedal-art { filter: drop-shadow(0 5px 5px #00000040); }
+
 .device-art .device-body { stroke: #8a8a98; fill: var(--field); }
 .device-art .device-screen { stroke: var(--accent); fill: #1a1b2a; }
 .device-art .device-screen-line { stroke: var(--accent); stroke-width: 1.2; }
@@ -34,6 +36,8 @@
 .device-art .device-fader path { stroke: #6d6d7a; }
 .device-art .device-fader rect { stroke: #c7a16c; fill: var(--surface-hover); }
 .device-art .device-keys rect { stroke: #6d6d7a; fill: #e6e6ee10; stroke-width: 1; }
+.device-art .device-panel { stroke: #6d6d7a; fill: var(--surface-hover); stroke-width: 1; }
+.device-art .device-led { stroke: none; fill: #c7a16c; }
 
 .device-hero { display: grid; grid-template-columns: minmax(220px, 340px) minmax(0, 1fr); gap: 32px; align-items: center; margin-bottom: 30px; }
 .device-hero-art { display: grid; place-items: center; border: 1px solid var(--line); border-radius: 12px; background: radial-gradient(circle at 50% 30%, #2d2d36, var(--surface) 72%); aspect-ratio: 4 / 3; }

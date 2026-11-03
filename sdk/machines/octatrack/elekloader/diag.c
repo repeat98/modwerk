@@ -6,8 +6,8 @@
  *
  * Loads: every five minutes, the CPU's and each DSP core's mean and peak (status.c's meters) and how long it played.
  * Incidents (diag.h): each start; the CPU at 90 % or more for a second; the UI tick standing still for five seconds
- * while audio frames run (a freeze, seen from the frame interrupt), with how long it lasted; a crash or a DSP stall
- * recorded since the last start (crash.c, dsp.c). An incident keeps what the unit was doing. */
+ * while audio frames run (a freeze, seen from the frame interrupt), with how long it lasted; the frame guard skipping
+ * a module's render (machine_registry.c); a crash or a DSP stall recorded since the last start (crash.c, dsp.c). An incident keeps what the unit was doing. */
 #include <stdint.h>
 #include "diag.h"
 #ifdef MODWERK_DEV
@@ -21,6 +21,7 @@ extern volatile uint32_t modwerk_status[];      /* status.c: CPU, core 0 mean, p
 extern volatile uint32_t modwerk_runtime_ticks; /* runtime.c: counts the UI tick */
 extern volatile uint32_t dl_frames;
 void modwerk_track_machines(volatile uint8_t *out); /* machine_registry.c */
+extern volatile uint32_t mw_frame_sheds, mw_frame_shed_tracks; /* machine_registry.c: the frame guard's skips */
 extern const uint8_t modwerk_base_digest[32];       /* the base's identity (build_core.py) */
 
 #ifdef MODWERK_HOST /* test_diag.c models the unit's memory */
@@ -69,7 +70,7 @@ static unsigned installed(uint32_t *ids, unsigned most)
 static volatile uint8_t keys[16];
 static volatile uint32_t key_count;
 static volatile uint32_t started, ticks;
-static uint32_t n, cpu_sum, cpu_peak, d0_sum, d0_peak, d1_sum, d1_peak, played, hot_run, hot_count, hot_at;
+static uint32_t n, cpu_sum, cpu_peak, d0_sum, d0_peak, d1_sum, d1_peak, played, hot_run, hot_count, hot_at, sheds, shed_at;
 static volatile uint32_t frame_gap, tick_gap; /* the frame interrupt's window maxima: DTCN3 counts between frames, frames without a tick */
 
 /* What the unit is doing; read from the tick or the frame interrupt, nothing locked: a snapshot. */
@@ -138,8 +139,8 @@ static void start(volatile struct diag_log *l)
 
 #ifdef MODWERK_DEV
 /* The hooks' cost (diag.h): each stamp closes the span the one before it opened. */
-volatile uint32_t modwerk_cost[24];
-static uint32_t cost_at[24];
+volatile uint32_t modwerk_cost[28];
+static uint32_t cost_at[28];
 void modwerk_cost_stamp(unsigned k)
 {
     uint32_t now = DTCN3;
@@ -154,6 +155,12 @@ void modwerk_cost_stamp(unsigned k)
     if (k == 21u) modwerk_cost[21] += now - cost_at[20];  /* the bus between boot_draw and runtime_draw */
     if (k == 22u) modwerk_cost[22] += now - cost_at[21];  /* runtime_draw */
     if (k == 13u) modwerk_cost[23] += now - cost_at[22];  /* status_draw */
+    if (k == 25u) modwerk_cost[24] += now - cost_at[24];  /* mg_tick, the MIDI generators' (midi_generators.c) */
+    if (k == 27u) {                                       /* a generator's knob turn with its regeneration */
+        uint32_t d = now - cost_at[26];
+        if (d > modwerk_cost[25]) modwerk_cost[25] = d;
+        ++modwerk_cost[26]; modwerk_cost[27] += d;
+    }
 }
 /* dev.c's FREEZE TEST: the UI tick stands still this many seconds (the timer runs at 132 MHz), audio and USB go on. */
 volatile uint32_t modwerk_diag_test_freeze;
@@ -179,6 +186,9 @@ static void diag_tick(void)
     test_freeze();
     ticks = ticks + 1u;
     if (l->freeze_state == 2u) add_freeze(l), l->freeze_state = 0;
+    uint32_t skipped = mw_frame_sheds; /* the frame guard skipped a render: at most one incident in HOT_GAP */
+    if (skipped != sheds && (!shed_at || ticks - shed_at >= HOT_GAP))
+        add(l, DIAG_SHED, (mw_frame_shed_tracks & 0xffu) << 24 | (skipped & 0xffffffu), 1), shed_at = ticks, sheds = skipped;
     if (ticks % 30u) return; /* twice a second, as status.c's meter */
     uint32_t cpu = modwerk_status[0], d0p = modwerk_status[2], d1p = modwerk_status[4];
     ++n, cpu_sum += cpu, d0_sum += modwerk_status[1], d1_sum += modwerk_status[3], played += PLAYING;
@@ -207,15 +217,18 @@ static void diag_tick(void)
     n = cpu_sum = cpu_peak = d0_sum = d0_peak = d1_sum = d1_peak = played = hot_count = 0;
 }
 /* modset.c, engine task: the installed set after a restore from the card and after each Keep, as ids. */
+static uint32_t refused_module, refused_code;
+void modwerk_diag_refused(uint32_t module, uint32_t refusal) { refused_module = module, refused_code = refusal; }
 void modwerk_diag_set(void)
 {
-    if (!started) return;
+    if (!started) { refused_module = refused_code = 0; return; } /* never carried into a later set's record */
     volatile struct diag_log *l = LOG;
     uint32_t ids[14];
     unsigned count = installed(ids, 14u);
     volatile struct diag_incident *r = slot(l);
     bare(r, DIAG_SET);
     r->boot = l->boot, r->second = ticks / 60u, r->a = count;
+    r->screen = refused_module, r->tempo24 = refused_code, refused_module = refused_code = 0; /* a set record has no context */
     volatile uint8_t *b = r->machine; /* machine, fx and keys: one run of 56 bytes */
     for (unsigned i = 0; i < 56u; ++i) b[i] = i < 4u * count ? (uint8_t)(ids[i / 4u] >> (24u - 8u * (i % 4u))) : 0;
     push(l, r);

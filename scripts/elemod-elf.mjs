@@ -100,6 +100,6 @@ export function elfToElemod(input, document, build, target) {
     elemod: 2, id: document.id, version: document.version, title: document.name, description: document.presentation.summary, category: document.category, author: document.author.github, license: document.license.spdx,
     target, sections, symbols, exports: [...exports].sort(), imports: [...imports].filter(name => !Object.hasOwn(symbols, name)).sort(), weak: [...build.weak].sort(), relocs, sites: [],
     collections: Object.fromEntries(Object.entries(build.collections).map(([name, entry]) => [name, { entry }])), contribute,
-    copied: build.copied, resources: { regions: build.regions, names: build.claims, ...(document.id !== 'core' && document.platform?.core ? { core: document.platform.core } : {}) }, requires: [...new Set([...(document.id === 'core' ? [] : ['core']), ...build.requires, ...document.compatibility.requires])], conflicts: document.compatibility.conflicts, signature: null,
+    copied: build.copied, ...(build.storage?.length ? { storage: build.storage } : {}), resources: { regions: build.regions, names: build.claims, ...(document.id !== 'core' && document.platform?.core ? { core: document.platform.core } : {}) }, requires: [...new Set([...(document.id === 'core' ? [] : ['core']), ...build.requires, ...document.compatibility.requires])], conflicts: document.compatibility.conflicts, signature: null,
   }
 }

@@ -13,13 +13,13 @@ const empty = { moduleIds: [], removedStockFx: [] }
 
 describe('the site’s runtime packages', () => {
   it('publishes each listed module with its checked runtime identity, ABI and record counts', () => {
-    expect(USB_MODULE_IDS).toEqual(['everb', 'miniverb', 'tapehead', 'airwindows-chorus', 'lofi2', 'previewvol', 'apply-scene', 'repitch', 'poly8', 'vector', 'synth', 'quantizer', 'tapeecho', 'euclid', 'bbd', 'playmodes', 'mute-modes', 'sidechain-compressor', 'output-matrix', 'cc-map', 'quantize-live-rec-toggle', 'recorder-loop-fix', 'analog-bassdrum', 'usb-audio-out-tracks-main-cue'])
+    expect(USB_MODULE_IDS).toEqual(['everb', 'miniverb', 'tapehead', 'airwindows-chorus', 'lofi2', 'ring-sc', 'previewvol', 'apply-scene', 'repitch', 'poly8', 'vector', 'synth', 'quantizer', 'tapeecho', 'euclid', 'bbd', 'playmodes', 'mute-modes', 'sidechain-compressor', 'output-matrix', 'cc-map', 'quantize-live-rec-toggle', 'direct-jump-kyoti', 'dejavu', 'arp-key-locks', 'recorder-loop-fix', 'analog-bassdrum', 'beat-slicer', 'usb-audio-out-tracks-main-cue'])
     for (const entry of manifest.packages) {
       const data = file(entry.path), view = new DataView(data.buffer), abi = view.getUint16(4)
       expect(entry.path).toBe(`octatrack-modules/${entry.id}/${entry.version}.mwrm`)
       expect([data.length, sha(data), view.getUint32(28).toString(16).padStart(8, '0')]).toEqual([entry.bytes, entry.sha256, runtimeId(entry.id)])
       expect(String.fromCharCode(...data.subarray(0, 4))).toBe('MWRM')
-      if (!('octabam' in entry) && !('machine' in entry) && !('tables' in entry) && !('base' in entry)) expect([abi, view.getUint32(20), view.getUint32(24)]).toEqual([6, 0, 0]) // ABI 6 DSP effects carry no stock-code bytes
+      if (!('octabam' in entry) && !('machine' in entry) && !('tables' in entry) && !('base' in entry) && !('sources' in entry)) expect([abi, view.getUint32(20), view.getUint32(24)]).toEqual([entry.requires ? 9 : 6, 0, 0]) // ABI 6 DSP effects (9 when they require a base feature) carry no stock-code bytes
       if ('machine' in entry) expect([abi, view.getUint16(6) & 4]).toEqual([8, 0]) // an independent machine package, never a group
       expect([entry.abi, entry.sites, entry.copies, entry.fills]).toEqual([abi, view.getUint32(24), abi >= 7 ? view.getUint32(68) : 0, abi === 8 ? view.getUint32(72) : 0])
       expect(view.getUint32(20) > 0).toBe((entry.features & 128) !== 0) // only a site-event subscriber has hook words
@@ -71,7 +71,9 @@ describe('preparing a module set', () => {
   })
   it('preflights each package’s actual requirements and composes every published package on a capable base', async () => {
     const target = { name: 'All published', moduleIds: USB_MODULE_IDS }, fetched = vi.fn(load)
-    const events = { abi: 8, features: 7 | 128 | 512, maxSites: 128, maxCopies: 128 }
+    // RINGMOD SC is a published ABI 9 package (a key bus reader) and Analog BD's carries its engine for the base's hook
+    // site (ABI 10): a capable base reports ABI 10.
+    const events = { abi: 10, features: 7 | 128 | 512, maxSites: 128, maxCopies: 128 }
     await expect(prepareModuleSet(target, empty, fetched)).rejects.toBeInstanceOf(BaseUpdateRequired)
     await expect(prepareModuleSet(target, empty, fetched, { ...events, features: 7 })).rejects.toBeInstanceOf(BaseUpdateRequired) // Repitch subscribes
     await expect(prepareModuleSet(target, empty, fetched, { ...events, abi: 7 })).rejects.toBeInstanceOf(BaseUpdateRequired)
@@ -81,6 +83,13 @@ describe('preparing a module set', () => {
     const result = await prepareModuleSet(target, empty, fetched, events, baseBinding.identity)
     expect(result.changes.map(change => change.module)).toEqual(manifest.packages.map(entry => entry.name))
     expect(result.changes.every(change => change.undo?.length === 32)).toBe(true)
+    // An ABI 8 loader still takes every package but the ABI 9 and 10 ones (RINGMOD SC, Analog BD's engine package),
+    // which ask for the base update.
+    const abi9 = manifest.packages.filter(entry => ((entry as { abi?: number }).abi ?? 0) >= 9).map(entry => entry.id)
+    expect([...abi9].sort()).toEqual(['analog-bassdrum', 'ring-sc'])
+    for (const id of abi9) await expect(prepareModuleSet({ name: id, moduleIds: [id] }, empty, fetched, { ...events, abi: 8 }, baseBinding.identity)).rejects.toBeInstanceOf(BaseUpdateRequired)
+    const older = await prepareModuleSet({ name: 'ABI 8', moduleIds: USB_MODULE_IDS.filter(id => !abi9.includes(id)) }, empty, fetched, { ...events, abi: 8 }, baseBinding.identity)
+    expect(older.changes.map(change => change.module)).toEqual(manifest.packages.filter(entry => !abi9.includes(entry.id)).map(entry => entry.name))
   })
   it('refuses hook words a subscriber’s manifest does not declare, or more than the base dispatches', async () => {
     const entry = manifest.packages.find(item => item.id === 'repitch')!, data = file(entry.path)
@@ -160,7 +169,7 @@ describe('ABI 9 packages: base features and DSP claims', () => {
     // The Octatrack's on-demand base provides exactly that (resident_engines.c); the loader refuses any other bit.
     const engines = readFileSync(new URL('../../../sdk/machines/octatrack/module-adapters/resident-runtime/resident_engines.c', import.meta.url), 'utf8')
     expect(engines).toContain('unsigned modwerk_machine_dsp_features(void) { return MW_DSP_KEYBUS; }')
-    expect(readFileSync(new URL('../../../sdk/runtime/loader/loader.h', import.meta.url), 'utf8')).toMatch(/#define RUNTIME_ABI 9u?\b/)
+    expect(readFileSync(new URL('../../../sdk/runtime/loader/loader.h', import.meta.url), 'utf8')).toMatch(/#define RUNTIME_ABI 10u?\b/)
   })
   it('syncs a reader to a base whose loader reports ABI 9, with its forward and Undo packages checked', async () => {
     const { catalogue, data } = reader(), fetched = vi.fn(async () => data)
@@ -185,7 +194,7 @@ describe('ABI 9 packages: base features and DSP claims', () => {
     expect(new Set(KEY_BUS_BASES)).toEqual(new Set([baseBinding.identity, ...variants])) // every USB Audio layout of it
     for (const base of variants) expect(catalogue.review(target, empty, keybus, base).problem).toBeUndefined()
     // The published base is built with the resident engines on demand, the only bases with the key bus.
-    expect(readFileSync(new URL('../../../scripts/octatrack-base.mjs', import.meta.url), 'utf8')).toMatch(/The beta base:\n.*--resident-on-demand/)
+    expect(readFileSync(new URL('../../../scripts/octatrack-base.mjs', import.meta.url), 'utf8')).toMatch(/const BETA = \{[^}]*'resident-on-demand': true/)
     for (const base of [undefined, 'b'.repeat(64)]) {
       const problem = catalogue.review(target, empty, keybus, base).problem
       expect(problem).toBeInstanceOf(KeyBusBaseRequired)
@@ -221,6 +230,62 @@ describe('ABI 9 packages: base features and DSP claims', () => {
     await expect(reader(apart, { claims: 3 }).catalogue.prepare(target, empty, async () => apart, keybus, at)).resolves.toBeDefined()
     const reserved = abi9(published, BASE_DSP_FEATURES, readerClaims); reserved[80 + published.length - 68 - (4 * new DataView(published.buffer).getUint32(32) + 2 * new DataView(published.buffer).getUint16(36)) + 3] = 1
     await refused(reserved) // the first claim's reserved byte
+  })
+})
+
+/** An ABI 10 engine package from an ABI 8 controller package, as sdk/runtime/loader/abi9.py `engine` writes one: the
+ * 80-byte header with DSP words and no slot, then after the fills its claims (here each written with its initial words),
+ * one hook entry (site, cores, exit, entry 0), the words, relocations and the initial words. Synthetic words. */
+type EngineClaim = [space: number, core: number, address: number, init: number[]]
+function abi10(data: Uint8Array, words: number[], relocations: number[], exit: number, claims: EngineClaim[], site = 5, cores = 3) {
+  const body = data.subarray(76), init = claims.flatMap(claim => claim[3])
+  const out = new Uint8Array(80 + body.length + 12 * claims.length + 8 + 4 * words.length + 2 * relocations.length + 4 * init.length), o = new DataView(out.buffer)
+  out.set(data.subarray(0, 76)); o.setUint16(4, 10); o.setUint32(32, words.length); o.setUint16(36, relocations.length)
+  out[78] = claims.length; out[79] = 1; out.set(body, 80)
+  let at = 80 + body.length
+  for (const [space, core, address, values] of claims) { out.set([space, core, 7, 0], at); o.setUint32(at + 4, address); o.setUint32(at + 8, values.length); at += 12 }
+  out.set([site, cores], at); o.setUint16(at + 2, exit); o.setUint32(at + 4, 0); at += 8
+  for (const w of words) { o.setUint32(at, w); at += 4 }
+  for (const r of relocations) { o.setUint16(at, r); at += 2 }
+  for (const w of init) { o.setUint32(at, w); at += 4 }
+  return out
+}
+
+describe('ABI 10 packages: an engine for the base\'s hook sites', () => {
+  // A synthetic ABI 8 controller of Analog BD's id (its 32-byte image zeros), as base_bound.machine's build.py output.
+  const controller = { ...manifest.packages.find(item => item.id === 'analog-bassdrum')!, features: 0, sites: 0, copies: 0, fills: 0 }
+  const published = new Uint8Array(76 + 32), header = new DataView(published.buffer)
+  header.setUint32(0, 0x4d57524d); header.setUint16(4, 8); header.setUint32(8, 32); header.setUint32(28, Number.parseInt(runtimeId('analog-bassdrum'), 16))
+  const base = { abi: 10, features: 7 | 128, maxSites: 128, maxCopies: 128 }, at = baseBinding.identity
+  const words = Array.from({ length: 40 }, (_, i) => (i * 0x1357 + 3) & 0xffffff)
+  words[3] = 7; words[30] = 0x0d10c0; words[31] = 0 // an address relocation's offset; the exit's long branch
+  const region: EngineClaim = [1, 2, 0x2840, Array.from({ length: 16 }, (_, i) => i * 99)]
+  const engine = (data: Uint8Array = abi10(published, words, [3, 9 | 0x8000], 31, [region]), fields: Record<string, unknown> = {}) => {
+    const entry = { ...controller, abi: 10, requires: 0, claims: 1, entries: 1, bytes: data.length, sha256: sha(data), ...fields }
+    return { catalogue: createRuntimeCatalogue({ packages: [entry] }), data }
+  }
+  const target = { name: 'Drum', moduleIds: ['analog-bassdrum'] }
+  it('syncs a base-bound engine package to its base when its loader reports ABI 10', async () => {
+    const { catalogue, data } = engine(), fetched = vi.fn(async () => data)
+    await expect(catalogue.prepare(target, empty, fetched, { ...base, abi: 9 }, at)).rejects.toBeInstanceOf(BaseUpdateRequired)
+    const { changes } = await catalogue.prepare(target, empty, fetched, base, at)
+    expect(changes).toEqual([{ module: 'Analog BD', data, undo: removalPackage('analog-bassdrum') }])
+  })
+  it('refuses an engine outside a base-bound package, a manifest that miscounts it and records the loader refuses', async () => {
+    for (const fields of [{ requiredBase: undefined }, { entries: undefined }, { entries: 9 }, { abi: 9 }])
+      expect(() => engine(undefined, fields)).toThrow('inconsistent')
+    const refused = async (data: Uint8Array, fields: Record<string, unknown> = {}) => {
+      const { catalogue } = engine(data, fields)
+      await expect(catalogue.prepare(target, empty, async () => data, base, at)).rejects.toThrow('inconsistent')
+    }
+    await refused(abi10(published, words, [3, 9 | 0x8000], 31, [region]), { entries: 0 }) // the entry count differs
+    await refused(abi10(published, words, [3, 31 | 0x8000], 31, [region])) // its exit is a relocation's word
+    await refused(abi10(published, words, [3, 9 | 0x8000], 40, [region])) // its exit is past its words
+    await refused(abi10(published, words, [9, 3], 31, [region])) // relocations out of order
+    await refused(abi10(published, words, [3, 9 | 0x8000], 31, [[1, 3, 0x2840, [1]]])) // no such core
+    const short = abi10(published, words, [3, 9 | 0x8000], 31, [region]); await refused(short.subarray(0, short.length - 4)) // an initial word short
+    const big = abi10(published, words, [3, 9 | 0x8000], 31, [[1, 2, 0x2840, [0x1000000]]]); await refused(big) // not 24 bits
+    const slot = abi10(published, words, [3, 9 | 0x8000], 31, [region]); slot[45] = 1; await refused(slot) // a price in an engine's descriptor
   })
 })
 

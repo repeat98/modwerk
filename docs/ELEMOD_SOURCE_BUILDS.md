@@ -32,13 +32,20 @@ For a local release comparison, run `node scripts/verify-elemod-source-parity.mj
 
 Source-only release packages live under `sdk/imports/packages/<module-id>/`, named `<module-id>-<version>-os<release>.elemod` to match the native build inventory. `node scripts/package-elemod-recipe.mjs RECIPE.json OUTPUT.elemod` exports the native compiler recipe without reading firmware. It accepts only explicit pointer, JSR and JMP operations and refuses `derive`, inline resumes, stock routine bindings and `keep2`. The output contains authored instructions and module sections plus stock address/length/hash guards. It is separate from private local materialization, whose output must never be committed.
 
-Pass `--check` to compare the source-derived output byte for byte with an existing package. After its two deterministic builds, the native PR job runs `node scripts/verify-elemod-release-exports.mjs COMPILED_DIRECTORY`. It checks every committed export for the inventory's current module version and OS release, so adding a module does not require another hard-coded workflow check. An export published before the optional `resources.core` field existed keeps its bytes, because hardware evidence binds its hash; the check accepts it when a rebuild differs only by that one field, and every export that carries the field must match exactly. Catalog pins name a committed package and hash; update those pins after pushing the source/package commit. Ordinary owner release review and hardware evidence gates still apply.
+Pass `--check` to compare the source-derived output byte for byte with an existing package. After its two deterministic builds, the native PR job runs `node scripts/verify-elemod-release-exports.mjs COMPILED_DIRECTORY`. It checks every committed export for the inventory's current module version and OS release, so adding a module does not require another hard-coded workflow check. An export published before the optional `resources.core` field existed keeps its bytes, because hardware evidence binds its hash; the check accepts it when a rebuild differs only by that one field, and every export that carries the field must match exactly. Catalog pins name a committed package and hash; update those pins after pushing the source/package commit, and merge that pull request with a merge commit, not a squash, so the pinned commit stays on `main` (Filter Hz #824, Loop Sync #860). Ordinary owner release review and hardware evidence gates still apply.
 
 ## Guarded authored instructions and draft dependencies
 
 `bytes` sites declare `new` lowercase hex and `kind` (`code` or `data`), with exact
 length and stock SHA-256 and no target. Code must contain complete supported
-ColdFire instructions. `lea` declares an address register 0–7 and a symbol target;
+ColdFire instructions. A `bytes` site may add `relocs`, a list of `{ "at", "target" }`
+entries: the linker writes the absolute 32-bit address of the module symbol `target`
+into the four bytes at offset `at`, which must be `00000000` in `new`. In code, `at`
+must fall inside one instruction's extension words, never its opcode word, so the
+opcode stays in your source and the stock hash still guards the whole site. For
+example, `move.l #handler,d0` is `new: "203c00000000"` with
+`relocs: [{ "at": 2, "target": "handler" }]`, and `pea.l handler` is `487900000000`
+with the same reloc. `lea` declares an address register 0–7 and a symbol target;
 it emits the ISA instruction without retaining a stock opcode. `keep2` is still
 local-only and cannot be exported. `package-elemod-recipe.mjs` and the local
 adapter share these checks. Whole-image identity, local stock guards, instruction
@@ -56,7 +63,7 @@ catalogue's pinned Core 2.1. Machine Pages supplies `ev_render_voices`. Only
 explicitly required providers can supply a module's tables/events, on every
 declared OS.
 
-Unpublished module folders live in `modules/_submissions/`. Compile them with
+Older unpublished module folders wait in `modules/_submissions/`, which takes no new modules or changes. Compile them with
 `--drafts --module digitakt:<id>` (repeat `--module` for every required dependency),
 and validate their manifests and documentation with
 `node scripts/machine-modules.mjs --drafts --base origin/main`. Draft validation

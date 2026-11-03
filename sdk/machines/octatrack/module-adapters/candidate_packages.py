@@ -15,6 +15,8 @@ import sys
 import subprocess
 import tempfile
 
+sys.path.append(str(Path(__file__).resolve().parents[3]))  # sdk/, for firmware_codec
+import firmware_codec  # noqa: E402
 import cave_runtime
 import runtime_candidate
 import runtime_units
@@ -45,8 +47,7 @@ def inputs(root, upstream, module):
               root / 'scripts/runtime_private_paths.py']
     result = {path.relative_to(root).as_posix(): digest(path.read_bytes()) for path in paths
               if path.is_file() and path.suffix in ('.py', '.s', '.S', '.inc', '.json')}
-    result.update({'upstream/' + path.relative_to(upstream).as_posix(): digest(path.read_bytes())
-                   for path in (upstream / 'elekloader').rglob('*.py')})
+    result.update(firmware_codec.inputs(upstream))  # the checkout's files it runs, and the codec it runs them with
     return result
 
 
@@ -119,7 +120,7 @@ def recorder_source_oracle(module, sdk, builder, work, cross, image, bss, offset
 
 
 def authored(root, upstream, module, builder, binding, stock_at, work, cross):
-    sys.path.insert(0, str(upstream))
+    firmware_codec.use_elekloader(upstream)
     from elekloader.sdk import octabam
     sdk = root / 'sdk/octabam'
     port = octabam.Octabam(str(sdk)).modules[module]
@@ -181,7 +182,7 @@ def prepare(args, generator):
     builder = load('candidate_runtime_builder', root / 'sdk/runtime/loader/build.py')
     main = args.base_image.read_bytes()
     binding = runtime_candidate.bind_base(main, json.loads(args.base_symbols.read_text()), json.loads(args.base_proof.read_text()))
-    sys.path.insert(0, str(upstream))
+    firmware_codec.use_elekloader(upstream)
     from elekloader import formats
     parsed, device, release = formats.load(str(args.stock))
     original = formats.main_image(parsed, device)

@@ -11,7 +11,7 @@ if (!output || process.argv.length !== 3) throw new Error('Usage: verify-elemod-
 const inventory = JSON.parse(await readFile(resolve(output, 'elemod-build.json'), 'utf8'))
 let checked = 0
 for (const entry of inventory.artifacts) {
-  if (!/^(digitakt|digitone|analog-rytm-mkii)$/.test(entry.machine) || !/^[a-z][a-z0-9-]*$/.test(entry.id) || !/^[\w.-]+$/.test(entry.version) || !/^\d+\.\d+$/.test(entry.release) || entry.path !== `${entry.machine}/${entry.id}/${entry.release}.json`) throw new Error('Invalid artifact identity')
+  if (!/^(digitakt|digitone|analog-rytm-mkii|analog-four-mkii)$/.test(entry.machine) || !/^[a-z][a-z0-9-]*$/.test(entry.id) || !/^[\w.-]+$/.test(entry.version) || !/^\d+\.\d+$/.test(entry.release) || entry.path !== `${entry.machine}/${entry.id}/${entry.release}.json`) throw new Error('Invalid artifact identity')
   const path = resolve(root, 'sdk/imports/packages', entry.id, `${entry.id}-${entry.version}-os${entry.release}.elemod`)
   try { await access(path) } catch (error) { if (error.code === 'ENOENT') continue; throw error }
   const plan = JSON.parse(await readFile(resolve(output, entry.path), 'utf8'))

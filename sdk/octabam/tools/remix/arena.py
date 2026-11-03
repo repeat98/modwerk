@@ -7,7 +7,7 @@ recorders: 14,602 pages plus an unused index 0, 89,720,832 B, Elektron's
     0x40a955e0 .. 0x46025de0     base + (14,602 + 1) x 6,144
 
 Its geometry is four literals in the pool's cold init (`0x40096f24`, run at
-main init and again inside LOAD PROJECT) and one base address in 24
+main init and again inside LOAD PROJECT) and one base address in 23
 instructions across the engine. Every DRAM mod with a hardware record lives
 here by shrinking it: Octakit takes the top 528 pages (her four recipe
 writes cut the count to 14,074 and the clear to match), octamax 2.0 takes
@@ -33,15 +33,22 @@ PAGE = 6144
 PAGES = 14602                         # usable pages; index 0 is a header slot
 END = BASE + (PAGES + 1) * PAGE       # 0x46025de0
 
-# The 23 instructions whose 32-bit immediate/absolute operand IS the base
+# The 22 instructions whose 32-bit immediate/absolute operand IS the base
 # (operand at instruction + 2), and one derived use, base + one page.
 BASE_SITES = (
     0x4000045C, 0x4000046A, 0x400004C6, 0x400072A6, 0x40007642, 0x4000D5C0,
-    0x400254F8, 0x4006C106, 0x40093432, 0x40094A0A, 0x40094A3C, 0x40094A9C,
+    0x4006C106, 0x40093432, 0x40094A0A, 0x40094A3C, 0x40094A9C,
     0x40095B28, 0x40095BBA, 0x40095C18, 0x40095C78, 0x40095CC2, 0x4009618C,
     0x400963C4, 0x4009700C, 0x4009761E, 0x40097748, 0x40098650,
 )
 DERIVED_SITES = ((0x40094A62, PAGE),)          # lea base+6144 (page 1)
+# The literal's 23rd use is NOT the arena: `cmpal #0x40a955e0,%a2` at
+# 0x400254f8 ends PURGE SAMPLES' walk over the 16 banks (0x400253d4: from
+# 0x400e21e0 in steps of 635,712), whose end is the stock base only because
+# the banks sit just below the arena. Moved with the base, the walk steps
+# past it, reads off the end of RAM and the unit freezes (upstream octabam
+# a49a38de, #753). It stays.
+BANKS_END_SITE = 0x400254F8
 # (OPERAND address, stock value, what it is) -- these are the 32-bit
 # immediates of `movel #14602,%d6` (0x40096f80), `cmpil #14603,%d0`
 # (0x40096faa), `movel #0x05590800,%sp@-` (0x40097006) and `movel
@@ -95,8 +102,9 @@ def layout(reservations):
 
 def pokes(reservations):
     """Every OS-image write the reservations need, as (addr, expect, write,
-    note) on the 4-byte operands: the base at its 24 sites, then the four
+    note) on the 4-byte operands: the base at its 23 sites, then the four
     geometry literals. Empty when nothing is reserved."""
+    assert BANKS_END_SITE not in BASE_SITES, "0x400254f8 is the banks' end, not the arena base"
     if not reservations:
         return []
     placed, base, count = layout(reservations)

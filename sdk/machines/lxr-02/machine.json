@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "id": "lxr-02",
+  "order": 300,
+  "name": "LXR-02",
+  "family": "erica",
+  "status": "research",
+  "summary": "Six-voice drum synthesizer. Erica Synths published its firmware and bootloader source under GPL-3.0 in October 2026. Modwerk has no base or mods for it yet.",
+  "steps": {
+    "source": "started",
+    "boot": "open",
+    "core": "open",
+    "mods": "open"
+  },
+  "research": [
+    {
+      "label": "erica-synths/lxr-desktop-app",
+      "url": "https://github.com/erica-synths/lxr-desktop-app",
+      "note": "GPL-3.0-only. The STM32F765 firmware: voices, FX, sequencer, MIDI, SD storage and UI, with CMake, Arm GCC and the SD-card update image tool."
+    },
+    {
+      "label": "erica-synths/lxr-desktop-bootloader",
+      "url": "https://github.com/erica-synths/lxr-desktop-bootloader",
+      "note": "GPL-3.0-only. The SD-card updater in flash sector 0, which firmware updates never change."
+    },
+    {
+      "label": "Erica Synths: LXR-02 goes open source",
+      "url": "https://www.ericasynths.lv/news/post/lxropen/",
+      "note": "The release announcement. Erica Synths supports only its own firmware; modified firmware is installed at the owner's risk."
+    }
+  ],
+  "art": {
+    "body": "compact",
+    "encoders": 4,
+    "trigs": 16,
+    "fader": true
+  }
+}

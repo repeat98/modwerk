@@ -1,0 +1,239 @@
+{
+  "scope": "Private immutable resident-menu fixture; fixed owner/layout and pinned storage, no production loader retirement",
+  "mainSha256": "164f31224bf61181e3f50e7dec40df9afcae5b16dbf6e4c0d0cc5e986af0a84e",
+  "textBase": 1174511088,
+  "binarySha256": "13f2b060f6227c90212d0bec432e32b0358ccca4da546dc8746ea2b77d3dd22a",
+  "symbolsSha256": "9e3821ade4bc2bee2af627a0183a4e100d9a91b339ac594a8127dfeceb97e776",
+  "sourceSha256": {
+    "planner.c": "01c9c25efa363679a591969931dd376a3b694a949dd8b9f89eda4bf77a88cee4",
+    "planner.h": "1a10ce9e6b34dfd35eb138690e2134550621c3bf91b2178fb50f95b9def6b7ae",
+    "planner_job.c": "767d82cc375677a115e9457af35e26fddd9de66a0dc80aa2af0fe3b5adaf0581",
+    "planner_job.h": "c4dd3faa8b3320194b54ab4d7bec6541d9e936f544b0e6236efa4fa5518d6547",
+    "pcm_reader.c": "8762e389a39b7407a7d987dc6e3e36d7d75aa6c408b1d3232d8672a380226088",
+    "pcm_reader.h": "462f495a86f32730b79a56177f99929f685d82729e4646e7b391df475d929821",
+    "preview_guard.c": "da1299674cf2ae967c58231ee9c16891afa94e27254407b5d09df6b73cc4343e",
+    "preview_guard.h": "abcaff39ef1b9a21cb238f0021344ffb5b812ea1740a354cbc1d1f2ace4ddf36",
+    "preview_session.c": "863a66aee00818e6e71c09896d2c222176d7bf4726a3886b2991384d9f43b664",
+    "preview_session.h": "4518b3d75a92081c98c619157fcf2c6bbcb43b82621d8a41dd953bcfbd48c909",
+    "marker_edit.h": "cd8c16a7771bf5a6d251b20e3a02fd0887d68cf4f8e5900e0c6a7fdecc0d4f05",
+    "flex_copy.c": "b069d6b3ac5d8922281811a8eaa5c93d8ab33267ec89fb9f1c99305f35d80b2c",
+    "flex_copy.h": "1bb469187ef75be2d25b671622f79ec2a5e199d877a418e8d9885c70781ee513",
+    "flex_metadata.c": "7dd96a7d94ceb81bbd20fd49995d1c5e64c1077f97ad15b623a14c32607f732b",
+    "flex_metadata.h": "8a5e2da2cb447380883209942ee2654956cd50aae4e68abfe7f2d270d97eab6f",
+    "flex_source.c": "83ca4c3330ba147ea1d9f4248095ef0350210e6451eb5b0f65572ac31432c208",
+    "flex_source.h": "8dce26364e7f270eafbd7f40f12021aaa0b966edf577305477efd7aaa9a19021",
+    "worker_boundary.c": "3ed8a447076bda230939b112b53602c5acd2af4254b14971ef9fe7f929f306d7",
+    "worker_boundary.h": "13f826c6ffdce8e773879bc91c92ff9150a49edee1c27606210932adcdc0ac46",
+    "test_worker_stock.c": "6381b6ed64765e66329fb29a8149169d7c90b033050da7fbae52d923f414fef6",
+    "test_source_boot.c": "a1c69fa32a5612fb6898b8126903b573ee16674a41389b38e86bd40e7a630d9a",
+    "test_flex_source.py": "a8fd662fcbbd0d20770a01e8eab99163ee070322e55152114592fd10d91de4fe",
+    "source_boot_native.py": "401564782ec8ff00b07ab0e3946564b76dfd816a4af9ac29bcc808c79fb36829",
+    "flex_lookup.S": "baeb9375129d44fe2db0bcb8d845ced29cd755ac126c3ab2afd696aebbca2487",
+    "inspect_stock.py": "3df8e0019c7c1b095132a16da21a40c739b233548b9030a6dd8befadceb59190",
+    "menu_boot_native.py": "d07338930c08139bdf4f08ee8150a59e62b8c1206b75f07104c9c332961bb282",
+    "editor_menu.c": "9e7a73ff05e65eddb9db7d4163c29e4d6f55d6bce33379f4f9dfac64e451a043",
+    "editor_menu.h": "211496964f026a650e3e28847314478b25dac5106a586cede963109ff0b26631",
+    "test_menu_boot.c": "78423ff2cb5d77628d57ddc51590d5fd5306ff3228d4a28bb2f59616b8fe0a71",
+    "grid_ui_boot_native.py": "8e85519f6f83b8af64812398aac4f0791e2bc23372fe17b449264c6f32ccd039",
+    "test_grid_ui_boot.c": "1d17a78c2f25fb7c16755c0f2186415d9e4cc7b8d96ecbe0c51f9462c74fd3bd",
+    "ui_text.c": "9f147e08dd16fe2fdc8714114a59850acddabd27bed0d24123a5dd172ffb780b",
+    "ui_text.h": "bedfdd20498c3e7593e815a42f6be011e5326000b02a4e82bbd2f234a5f2b130",
+    "async_ui_native.py": "fa710a268c1890d30fb7e081d9b5796431f63a6c321799dbaae1f8fa5479e74d",
+    "engine_boundary.c": "7989e9811c74e1d9ddd847f6b10a291a7757999153d75960d4996a2325629e9a",
+    "engine_boundary.h": "22d98964c49edaead23f27be9007efe4ed97d9a7d0ffac727641756e37a76b01",
+    "test_engine_boot.c": "67ef9b40c09b9c0300bb2c151cdea121f46983289ed5165a4cbce583c1551241",
+    "preview_async.c": "d7250549fa634ffe287c37d2410025146a6bb168f4dc7ec146f7e288f35e8917",
+    "preview_async.h": "ea0189432e63b6ddaf3672ab531dad18f93adac15bdae21e648e7fd5ec040d61",
+    "test_async_boot.c": "725126244124a58020892f58f29723084a535b024c477f6e45c06dfed1f0e4c0",
+    "test_async_tick.c": "d843e3b6a472b0ff7a1c546aec22c3af5d2948457c35c2bca28333c61094c796",
+    "test_async_ui.c": "d3d5e5aa26249b98ac2a7f7a0d853d12b344febcbc55055e37f1ac1c2f6d1b7e",
+    "selection_boot_native.py": "91e947a5869142716d42cf42cfe7a3d42f442f30c927d240c276a99e49d0254c",
+    "selection_context.c": "6b48e848921ded1de4fb7f3be11dfcf52a9a505674924b91c514935b0aa7d1b4",
+    "selection_context.h": "1d3b65173bf534d96c9cf4af9f444d7115cdd052d40505ce7fc38d8e5726f98c",
+    "test_selection_native.c": "8420f0f6284223a61af7eb3db83c50032d84eae73324388a9659fb6362796621",
+    "test_selection_menu.c": "a6b893d0d9deacbee0c77f1ba9e11b521c1c4fcfa946061f3e2c772556ada904",
+    "test_selection_ui.c": "cd3eeac5c988a65c36854ca481c5ae6399f1f8827ab2801161f1f2c5b9b1f130",
+    "resident_boot_native.py": "6018e63768c483afe7405c0e23f683aa365844ecc32fe1ae8c09a8f2c3eaa4cb",
+    "resident_menu.c": "33a94aa3b7bca129bcb2d79b16fad7ab0856bcc54adfd23fcfe003dfaacdf0a6",
+    "resident_menu.h": "9cfb8d5dca03c45aefe93ff362fbf1412f37b438a66202b537393f56b87a52d5",
+    "test_resident_menu_boot.c": "58384a85e7f78fb33897ee63f9d006dfb42af88ece894b1565961f883982f829",
+    "test_resident_selection.c": "449b8107058eebbbcf97a17f6fbbcce44f4f09224d66279ad0da811d770b5d15",
+    "test_resident_ui.c": "fccdb38da7e893a9448f5002a4513de64bdc233a7dd17b2efb2f5bc8dca7f315"
+  },
+  "compiler": "m68k-elf-gcc (GCC) 16.2.0",
+  "flags": [
+    "-std=c99",
+    "-mcpu=5475",
+    "-msoft-float",
+    "-O2",
+    "-ffreestanding",
+    "-fno-builtin",
+    "-fno-common",
+    "-fno-jump-tables",
+    "-fno-tree-loop-distribute-patterns",
+    "-fno-optimize-sibling-calls",
+    "-fno-asynchronous-unwind-tables",
+    "-fno-unwind-tables",
+    "-fno-ident",
+    "-fstack-usage",
+    "-Wall",
+    "-Wextra",
+    "-Werror",
+    "-pedantic",
+    "-fno-late-combine-instructions"
+  ],
+  "objectSha256": {
+    "preview_guard.o": "9c246ad2e54d39275f17c672f2dbed461df158345dbbb214153c180d6cb5b24b",
+    "worker_boundary.o": "0396bf891ada027668bca9296d4142e0e9dcc71cbf67e4739f59a21bd9ed3fef",
+    "test_worker_stock.o": "13c73e2b473b8a781e32da4d2058608ab77cff3c19d9336e46685b6765c26e91",
+    "planner.o": "862fbf786e4388477f7c3efa7601dad7bef8d9583c5b0a21db5351e3276594d4",
+    "planner_job.o": "8f9b560021a93770770eb294c6d569d94fd5b75596e5f1d332d61b4d75664485",
+    "pcm_reader.o": "79fa1b604de2d1e08edc4f41db4578f9ff68afc802dfadc3dd8a4d14a27427e3",
+    "preview_session.o": "50a62a752f3f966ee09288d075cabbc399d1beb9770516f66740096620038304",
+    "flex_metadata.o": "81dc6086e9ccab879bc215398e87d793a72bc5153abc9eeafddf0c3f2426ee9b",
+    "flex_copy.o": "569c269a42d5fcb9e401be217326030f56ce3e89a1fde23d7b5cf6c185a42544",
+    "flex_source.o": "d42c28018f81f29ba3921b8c483916ffa9e8ff38405ad8ba953c8bb203563796",
+    "flex_lookup.o": "814d6c1ba95acf54b1afadc5767e733071288fb408cf14d87cadb271e8a1b54f",
+    "editor_menu.o": "a2b117c08961218db83f0a1d44356e1be74f6d59538651ca0fd2c888ad89ed09",
+    "ui_text.o": "0b5c9f9bac74d1b14bda2fc55d603da956a48499977da19ce543f65c1d9085cf",
+    "engine_boundary.o": "d4a7841ff9aa0c32d28bf5975543523147403bf16b718968954d7d8f4358301c",
+    "test_engine_boot.o": "b92b044fc713b146c5f185984c30ee7f460ee99ba8f487ac0ce413af1dbb274a",
+    "preview_async.o": "17a44161e03b8b7f6ffaef4d958eaa025eef08f9ed674e6ce147b6c7dbb2391e",
+    "test_async_boot.o": "c4974eabb890f78f28e97ed7d55bcd90d05ef2235a48e1aeed17a742b576ba2f",
+    "test_async_tick.o": "b74754e00e8f81898001ef34e4139f684473b3f411bc16be5edd06c8ad9dc9b0",
+    "ui-hooks.private.o": "e3264b0ac723add43306414a3262034be744ccf4dba7287974459091c3cbe786",
+    "selection_context.o": "ed2b2b7790973e2cf2bf38e98efc034ea676519cbc9c2664404294a5c496f706",
+    "selection-hooks.private.o": "81fec785331d95d8aec6eac0baf5f3c4f177858f88a686743edc2994d60ee683",
+    "resident_menu.o": "db56306f9832610f898cccd375ec07324a802226d650085dbe2589c5db8a6c3b",
+    "test_resident_menu_boot.o": "c18c592366a8001f5a4b6b9fcdbc824f01fdf399d77cf9ea3f65610288482341",
+    "test_resident_selection.o": "e5018171a16293e54e603d5d048a7099e8ceb050c7be0073d6937ae3d7b40628",
+    "test_resident_ui.o": "ea9c86895cd4c2b32393adcf5a09c73221eb5d9a39a2dbfbda544748b329e6f1"
+  },
+  "codegenGuard": "passed",
+  "freestandingLink": true,
+  "fixtureEnd": 1174557412,
+  "boundarySize": [
+    "text\t   data\t    bss\t    dec\t    hex\tfilename",
+    "    398\t      0\t      0\t    398\t    18e\t/evidence/resident31-ui-compile2/worker_boundary.o"
+  ],
+  "boundaryStackUsage": [
+    "/evidence/next-resident31/staging/sdk/drafts/beat-slicer/worker_boundary.c:4:7:bs_worker_receive\t28\tdynamic,bounded"
+  ],
+  "hardware": "not tested",
+  "audio": "not tested",
+  "timing": "not measured",
+  "nativeSourceAccess": "fixture compiled only; live service not implemented",
+  "hookGuardSha256": "5df445855cbae19c4582fb724855230e47be70c4736d5027786247582e60f9b4",
+  "hookSites": {
+    "idle": {
+      "name": "idle",
+      "address": 1074284622,
+      "length": 6,
+      "sha256": "d355f8d6cb1b5bf2b6618ea8419e7501aafcfeac5c0616b645646734c0878428"
+    },
+    "job": {
+      "name": "job",
+      "address": 1074284638,
+      "length": 6,
+      "sha256": "0bc2ef188c68224486591693fb94e822b6cc59b94e31323c678457ef5363120e"
+    }
+  },
+  "tickRecipeSha256": "d08358f2e39e02b1e8bfaf17db2b86d5ca97d15a4fd681ce44df25f5c3bea43c",
+  "tickSite": {
+    "address": 1074142868,
+    "length": 6,
+    "sha256": "99535f04de8e48485175b457ffdbc71cf99f863c341af6946f40bcdfcbfed9cf",
+    "stockTarget": 1073944944
+  },
+  "fixtureSize": [
+    "text\t   data\t    bss\t    dec\t    hex\tfilename",
+    "  27152\t      0\t  10980\t  38132\t   94f4\t/evidence/resident31-ui-compile2/source-boot.elf"
+  ],
+  "asyncStateBytes": 4244,
+  "asyncSize": [
+    "text\t   data\t    bss\t    dec\t    hex\tfilename",
+    "   3152\t      0\t      0\t   3152\t    c50\t/evidence/resident31-ui-compile2/preview_async.o"
+  ],
+  "asyncStackUsage": [
+    "/evidence/next-resident31/staging/sdk/drafts/beat-slicer/preview_async.c:23:31:gate_capture\t12\tdynamic,bounded",
+    "/evidence/next-resident31/staging/sdk/drafts/beat-slicer/preview_async.c:31:31:gate_copy\t24\tdynamic,bounded",
+    "/evidence/next-resident31/staging/sdk/drafts/beat-slicer/preview_async.c:18:13:gate_unlock\t8\tdynamic,bounded",
+    "/evidence/next-resident31/staging/sdk/drafts/beat-slicer/preview_async.c:11:12:gate_lock\t8\tdynamic,bounded",
+    "/evidence/next-resident31/staging/sdk/drafts/beat-slicer/preview_async.c:54:5:bs_async_init\t16\tdynamic,bounded",
+    "/evidence/next-resident31/staging/sdk/drafts/beat-slicer/preview_async.c:76:10:bs_async_request\t16\tdynamic,bounded",
+    "/evidence/next-resident31/staging/sdk/drafts/beat-slicer/preview_async.c:88:10:bs_async_cancel\t12\tdynamic,bounded",
+    "/evidence/next-resident31/staging/sdk/drafts/beat-slicer/preview_async.c:96:5:bs_async_revoke\t8\tdynamic,bounded",
+    "/evidence/next-resident31/staging/sdk/drafts/beat-slicer/preview_async.c:103:10:bs_async_service\t40\tdynamic,bounded",
+    "/evidence/next-resident31/staging/sdk/drafts/beat-slicer/preview_async.c:151:5:bs_async_result\t12\tdynamic,bounded",
+    "/evidence/next-resident31/staging/sdk/drafts/beat-slicer/preview_async.c:162:10:bs_async_state\t12\tdynamic,bounded"
+  ],
+  "engineStackUsage": [
+    "/evidence/next-resident31/staging/sdk/drafts/beat-slicer/test_source_boot.c:16:12:lock\t0\tstatic",
+    "/evidence/next-resident31/staging/sdk/drafts/beat-slicer/test_source_boot.c:22:13:unlock\t0\tstatic",
+    "/evidence/next-resident31/staging/sdk/drafts/beat-slicer/test_source_boot.c:27:13:query\t16\tdynamic,bounded",
+    "/evidence/next-resident31/staging/sdk/drafts/beat-slicer/test_source_boot.c:31:10:bs_boot_init\t20\tdynamic,bounded",
+    "/evidence/next-resident31/staging/sdk/drafts/beat-slicer/test_source_boot.c:63:10:bs_boot_begin\t20\tdynamic,bounded",
+    "/evidence/next-resident31/staging/sdk/drafts/beat-slicer/test_source_boot.c:67:10:bs_boot_step\t4\tdynamic,bounded",
+    "/evidence/next-resident31/staging/sdk/drafts/beat-slicer/test_source_boot.c:68:10:bs_boot_result\t8\tdynamic,bounded",
+    "/evidence/next-resident31/staging/sdk/drafts/beat-slicer/test_async_boot.c:30:6:bs_async_wake\t12\tdynamic,bounded",
+    "/evidence/next-resident31/staging/sdk/drafts/beat-slicer/test_async_boot.c:35:10:bs_async_fixture_init\t28\tdynamic,bounded",
+    "/evidence/next-resident31/staging/sdk/drafts/beat-slicer/test_async_boot.c:40:10:bs_async_allow_private_waveform_reads\t0\tstatic",
+    "/evidence/next-resident31/staging/sdk/drafts/beat-slicer/test_async_boot.c:47:6:bs_async_engine_job\t28\tstatic",
+    "/evidence/next-resident31/staging/sdk/drafts/beat-slicer/test_async_boot.c:66:6:bs_async_engine_idle\t16\tdynamic,bounded",
+    "/evidence/next-resident31/staging/sdk/drafts/beat-slicer/test_async_boot.c:76:10:bs_ui_foreign_event\t8\tdynamic,bounded"
+  ],
+  "engineBoundarySize": [
+    "text\t   data\t    bss\t    dec\t    hex\tfilename",
+    "    374\t      0\t      0\t    374\t    176\t/evidence/resident31-ui-compile2/engine_boundary.o"
+  ],
+  "tickSize": [
+    "text\t   data\t    bss\t    dec\t    hex\tfilename",
+    "    310\t      0\t     32\t    342\t    156\t/evidence/resident31-ui-compile2/test_async_tick.o"
+  ],
+  "tickStackUsage": [
+    "/evidence/next-resident31/staging/sdk/drafts/beat-slicer/test_async_tick.c:10:6:bs_ui_tick\t12\tdynamic,bounded",
+    "/evidence/next-resident31/staging/sdk/drafts/beat-slicer/test_async_tick.c:23:10:bs_ui_tick_enable\t0\tstatic",
+    "/evidence/next-resident31/staging/sdk/drafts/beat-slicer/test_async_tick.c:27:10:bs_ui_block\t8\tdynamic,bounded",
+    "/evidence/next-resident31/staging/sdk/drafts/beat-slicer/test_async_tick.c:34:10:bs_ui_unblock\t16\tdynamic,bounded",
+    "/evidence/next-resident31/staging/sdk/drafts/beat-slicer/test_async_tick.c:42:10:bs_ui_main_sp\t0\tstatic"
+  ],
+  "selectionSize": [
+    "text\t   data\t    bss\t    dec\t    hex\tfilename",
+    "    668\t      0\t      0\t    668\t    29c\t/evidence/resident31-ui-compile2/selection_context.o"
+  ],
+  "selectionStackUsage": [
+    "/evidence/next-resident31/staging/sdk/drafts/beat-slicer/selection_context.c:6:16:bs_selection_capture_locked\t48\tstatic",
+    "/evidence/next-resident31/staging/sdk/drafts/beat-slicer/selection_context.c:23:16:bs_selection_arm_locked\t0\tstatic",
+    "/evidence/next-resident31/staging/sdk/drafts/beat-slicer/selection_context.c:31:5:bs_selection_take_locked\t4\tstatic",
+    "/evidence/next-resident31/staging/sdk/drafts/beat-slicer/selection_context.c:42:16:bs_selection_block_locked\t0\tstatic",
+    "/evidence/next-resident31/staging/sdk/drafts/beat-slicer/selection_context.c:47:16:bs_selection_end_locked\t0\tstatic"
+  ],
+  "selectionHooksSha256": "5cb4785ec9c86d9adf0276641a5f36d1635090db77191a8759a2be46d9552882",
+  "selectionSites": {
+    "entry": {
+      "address": 1074190580,
+      "length": 6,
+      "sha256": "4994360eaaccb5fe2da8ac4e13328758a0705754959249afcc9b2dcdb9f9c538"
+    },
+    "tail": {
+      "address": 1074190620,
+      "length": 6,
+      "sha256": "b183cc447f304a12e9910f7816d1007dfc6fde34bcfe9d06ab9dfd92cc2a778e",
+      "stockTarget": 1073876008
+    }
+  },
+  "residentMenuBytes": {
+    "bs_resident_six": 648,
+    "bs_resident_nine": 648
+  },
+  "residentSize": [
+    "text\t   data\t    bss\t    dec\t    hex\tfilename",
+    "    634\t      0\t      0\t    634\t    27a\t/evidence/resident31-ui-compile2/resident_menu.o"
+  ],
+  "residentStackUsage": [
+    "/evidence/next-resident31/staging/sdk/drafts/beat-slicer/resident_menu.c:3:16:bs_resident_menu_materialize_locked\t40\tdynamic,bounded",
+    "/evidence/next-resident31/staging/sdk/drafts/beat-slicer/resident_menu.c:13:16:bs_resident_menu_reopen_locked\t32\tdynamic,bounded",
+    "/evidence/next-resident31/staging/sdk/drafts/beat-slicer/resident_menu.c:28:16:bs_resident_menu_retire_locked\t8\tdynamic,bounded",
+    "/evidence/next-resident31/staging/sdk/drafts/beat-slicer/resident_menu.c:31:16:bs_resident_menu_dispatch_locked\t36\tdynamic,bounded"
+  ]
+}

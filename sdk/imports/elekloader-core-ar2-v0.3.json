@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "kind": "elekloader-catalog",
+  "revision": "core-ar2-v0.3",
+  "about": "Modwerk site-owned package imported from irpina/elekloader pre-release core-ar2-v0.3: the Analog Rytm MKII core for OS 1.74, as kit 0.7.0's web catalog pins it.",
+  "cores": [
+    {
+      "file": "core-ar2-0.3.elemod",
+      "sha256": "6b97dfb3d65ca7d9d292e4ed61dd845e43b2d4f6dc71e7e7d235f27abc4b3e58",
+      "id": "core",
+      "version": "0.3",
+      "device": "analog-rytm-mk2",
+      "os": "1.74",
+      "license": "GPL-2.0-or-later",
+      "source": { "repo": "irpina/elekloader", "tag": "core-ar2-v0.3" }
+    }
+  ],
+  "mods": []
+}

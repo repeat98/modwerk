@@ -3,27 +3,30 @@
     "version": "0.2.1-experimental",
     "date": "2026-10-14",
     "changes": [
-      "Runtime package only: one package now works with or without Sidechain Compressor. Instead of a separate SC_KEY build, the package asks the base's ev_mute_keep event once per frame in OTFX, OTFX-T and DT-T which tracks another installed module reads while muted (a side-chain KEY), and mutes those as stock does, as the SC_KEY build did for Sidechain's KEY. With no module answering it behaves exactly as the plain build. Mute Modes no longer names Sidechain; the module that owns the KEY answers.",
-      "Runtime package only: MUTE MODE survives a power cycle on a Modwerk base. The loader installs the kept module after boot has already restored the PERSONALIZE settings, so on the first UI tick after an install the package takes MUTE MODE from its battery copy, as the native build's widened boot restore does.",
-      "Limits: needs a base built with site events that raises ev_mute_keep; the loader gives the package that base's entry at install. Until Sidechain Compressor answers ev_mute_keep, a muted Sidechain KEY track goes silent in the soft modes beside it. Native octabam builds are byte-identical to the author's references (plain, SC_KEY and menu). Emulator evidence only, with synthetic mute/mode words, DSP records and a stand-in provider; physical audio, power-cycle persistence and current-build hardware remain untested. Prepared, not released.",
-      "USB package (14 Oct 2026; distribution only, the module source and version are unchanged): published. The Modwerk base admits its grown PERSONALIZE tables only through a reviewed table declaration bound to this exact package (SHA-256 c35b154d...), built into the base, and the base checks every table word it copies against its running stock. The emulator evidence above ran an earlier packet (a48be767...); this package has emulator and host build checks only, and the table/menu pointer lifetime on hardware is unverified. The owner waived hardware evidence for this exact version's USB package for the beta."
+      "One package now works with or without Sidechain Compressor: a muted track that another module listens to, such as a side-chain KEY, keeps feeding it.",
+      "MUTE MODE now survives a power cycle when installed over USB on a Modwerk base.",
+      "Needs a newer beta base; the site asks for a base update first.",
+      "Known issue: until Sidechain Compressor supports this, a muted Sidechain KEY track goes silent in the soft mute modes.",
+      "Known issue: not yet tested on hardware, including sound and power-cycle behaviour."
     ]
   },
   {
     "version": "0.2.0-experimental",
     "date": "2026-10-14",
     "changes": [
-      "Runtime package only: on a Modwerk base that owns the fresh-voice-bind site 0x40006820 (sdk/machines/octatrack/events.json), the fresh-bind gate is an ev_voice_bind subscriber (order 50) instead of a raw detour, so it installs beside POLY8 and any other subscriber. The subscriber runs the same fresh_bind code; only its two exits answer the base instead of jumping into stock. Native octabam builds, plain and SC_KEY, assemble byte-identical to the author's references.",
-      "Limits: needs a base built with site events; older bases refuse this package, and Undo keeps 0.1.0-experimental for them. The other five detours, including mt_trig at 0x40006844, stay as they were. Emulator evidence only (synthetic mute/mode words); physical audio and current-build hardware remain untested."
+      "Over USB on a newer Modwerk base, Mute Modes can now be installed together with POLY8.",
+      "Needs a newer beta base; older bases refuse this package, and Undo keeps 0.1.0 for them.",
+      "Known issue: not yet tested on hardware."
     ]
   },
   {
     "version": "0.1.0-experimental",
     "date": "2026-10-07",
     "changes": [
-      "Add OT, OTFX, OTFX-T and DT-T mute behavior through PROJECT > SYSTEM > PERSONALIZE, retaining the MKII LED BRIGHTNESS row.",
-      "Automatically select the authored SC_KEY variant beside Sidechain Compressor. Native execution covers mute/solo masks, cue preservation, settings and sidechain paths. Physical audio and current-build hardware remain untested and owner-approved where absent.",
-      "Presentation: illustrate the four mute behaviors using the library's shared signal artwork, grid, palette and typography."
+      "Adds OT, OTFX, OTFX-T and DT-T mute behaviours under PROJECT > SYSTEM > PERSONALIZE, keeping the MKII LED BRIGHTNESS row.",
+      "Picks a matching variant automatically beside Sidechain Compressor, so a muted KEY track keeps feeding the compressor.",
+      "Known issue: not yet tested on hardware.",
+      "Media only: new artwork showing the four mute behaviours."
     ]
   }
 ]

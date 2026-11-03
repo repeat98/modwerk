@@ -1,0 +1,24 @@
+{
+  "date": "2026-10-23",
+  "version": "0.1.1-experimental",
+  "baseCommit": "610a934da51b8f8518e6296493da9059b83e9a7e",
+  "archiveSha256": "5fd070c65d6df3ceac322de850ce7c983ee6689de1ed1e8ef51f8959b1a4d9bf",
+  "scope": "host planner tests only; no playback or native execution",
+  "command": "python3 -B -m unittest discover -s sdk/drafts/beat-slicer -p 'test_*.py' -v",
+  "testsPassed": 18,
+  "originalRationalCases": 250,
+  "independentRandomGridCases": 2000,
+  "independentStereoCases": 200,
+  "compiler": "Apple clang version 17.0.0 (clang-1700.6.4.2)",
+  "python": "3.15.0",
+  "host": "Darwin arm64",
+  "sha256": {
+    "planner.c": "01c9c25efa363679a591969931dd376a3b694a949dd8b9f89eda4bf77a88cee4",
+    "planner.h": "4faab6f03e679d0b9389dbf016416afc87fb4d2d354952b22efb81a0381c5c1b",
+    "test_planner.py": "d39a96c4ac4e7cc35c65323249dbe076b4bf73ae88c2a2a5b27963b97253bf16",
+    "test_independent.py": "33bff63f5fd2307edb0a69bfc5e210bafcbc1243cca3d73a2699b3b3a00c7d1d"
+  },
+  "nativeExecution": "not run",
+  "hardware": "not run",
+  "audio": "not run"
+}

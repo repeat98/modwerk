@@ -33,6 +33,8 @@
 #   --gen DIR       the instrumented tree                  (out/emu-pgo-gen)
 #   --prof DIR      profiles: raw/*.profraw, ot_emu.profdata (out/emu-pgo)
 #   --card IMG      training card image     (out/_agents/port/otlive.img)
+#   --set NAME      the set on that card                   (OTLIVE)
+#   --project NAME  the project on that card               (PROJECT)
 #   --image BIN     firmware image          (out/raw/section_3_MAIN_OS.bin)
 #   --no-dsp        train without the cores only (the --dsp run takes ~3 min)
 #   --skip-train    reuse an existing --prof/ot_emu.profdata (steps 1-3 skipped)
@@ -61,6 +63,8 @@ DEST=out/emu
 GEN=out/emu-pgo-gen
 PROF=out/emu-pgo
 CARD=out/_agents/port/otlive.img
+SETNAME=OTLIVE
+PROJNAME=PROJECT
 IMAGE=out/raw/section_3_MAIN_OS.bin
 DSP=1
 TRAIN=1
@@ -72,6 +76,8 @@ while [ $# -gt 0 ]; do
 		--gen) GEN=$2; shift 2;;
 		--prof) PROF=$2; shift 2;;
 		--card) CARD=$2; shift 2;;
+		--set) SETNAME=$2; shift 2;;
+		--project) PROJNAME=$2; shift 2;;
 		--image) IMAGE=$2; shift 2;;
 		--no-dsp) DSP=0; shift;;
 		--skip-train) TRAIN=0; shift;;
@@ -107,11 +113,11 @@ if [ "$TRAIN" = 1 ]; then
 	rm -rf "$PROF/raw"; mkdir -p "$PROF/raw"
 	train() {	# train <tag> [--dsp]: the bench.py sequence on the instrumented binary
 		local tag=$1; shift
-		LLVM_PROFILE_FILE="$PROF/raw/$tag-%p.profraw" "$PY" - "$GEN/ot_emu" "$IMAGE" "$CARD" "$tag" "$@" <<'EOF'
+		LLVM_PROFILE_FILE="$PROF/raw/$tag-%p.profraw" "$PY" - "$GEN/ot_emu" "$IMAGE" "$CARD" "$SETNAME" "$PROJNAME" "$tag" "$@" <<'EOF'
 import subprocess, sys, time
-binp, image, card, tag, *extra = sys.argv[1:]
-argv = [binp, "--image", image, "--card", card, "--interactive", "--mount", "--set", "OTLIVE",
-        "--project", "PROJECT", "--internal-clock"] + extra
+binp, image, card, setname, projname, tag, *extra = sys.argv[1:]
+argv = [binp, "--image", image, "--card", card, "--interactive", "--mount", "--set", setname,
+        "--project", projname, "--internal-clock"] + extra
 dsp = "--dsp" in extra
 t0 = time.perf_counter()
 p = subprocess.Popen(argv, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True, bufsize=1)
@@ -161,7 +167,8 @@ say "4/4 optimised build (PGO + LTO) -> $DEST"
 # out/emu. --fresh clears the cache only; the recompile of every object
 # against the new profile is the CMakeLists' job (the profile's SHA-256 is on
 # every compile line), checked below.
-cmake --fresh -B "$DEST" -S "$SRC" -DOT_PGO_PROFILE="$ROOT/$PROFDATA"
+case "$PROFDATA" in /*) PROFABS="$PROFDATA";; *) PROFABS="$ROOT/$PROFDATA";; esac
+cmake --fresh -B "$DEST" -S "$SRC" -DOT_PGO_PROFILE="$PROFABS"
 cmake --build "$DEST" -j"$JOBS"
 
 # Sanity: every object in the tree must postdate the profile -- one compiled

@@ -23,7 +23,7 @@ import { workingReportRoute } from './working-reports'
 import { membersOnline, sitePresenceRoute } from './presence'
 import { adminInsights } from './admin-insights'
 import { adminAccounts } from './admin-accounts'
-import { adminActivity } from './admin-activity'
+import { adminActivity, unansweredThreads } from './admin-activity'
 import { adminAnnouncements, publicAnnouncementItems, publicAnnouncementRoutes } from './announcements'
 import { adminNews, newsUnsubscribe } from './news-mail'
 import recipes from '../src/catalog/module-sets.json'
@@ -38,6 +38,7 @@ import { publicIssueReplies } from './issue-replies'
 import { createConfigurationReport } from './configuration-reports'
 import { octatrackDiagnosticRoutes } from './octatrack-diagnostics'
 import { remoteSessionRoutes } from './remote-sessions'
+import { agentBoardRoutes } from './agent-board'
 import { IssueInputError, validateIssueContext, validateLogMissing } from '../src/community/issue-context'
 import { OT_LOG_MAX_BYTES, OtLogError, parseOtLog } from '../src/community/ot-log'
 
@@ -100,6 +101,8 @@ export async function handleApi(request: Request, env: Env): Promise<Response> {
     if (diagnostics) return diagnostics
     const remote = await remoteSessionRoutes(request,env,db,user,adminId)
     if (remote) return remote
+    const board = await agentBoardRoutes(request,env,db,adminId)
+    if (board) return board
     const push = await pushRoutes(request,env,db,user,admin)
     if(push)return push
     const signedDeveloper = await developerUser(request,env,db)
@@ -262,6 +265,7 @@ export async function handleApi(request: Request, env: Env): Promise<Response> {
       const news = await adminNews(request, env, db, path, adminId)
       if (news) return news
       if (path === '/api/admin/insights' && request.method === 'GET') return response(await adminInsights(db))
+      if (path === '/api/admin/unanswered-threads' && request.method === 'GET') return response(await unansweredThreads(db,new Date(),url.searchParams))
       if (path === '/api/admin/activity' && request.method === 'GET') return response(await adminActivity(db,new Date(),Number(url.searchParams.get('days') ?? 30)))
       if (path === '/api/admin/accounts' && request.method === 'GET') return response(await adminAccounts(db,new Date(),Number(url.searchParams.get('days') ?? 30)))
       if (path === '/api/admin/statistics' && request.method === 'GET') return await usageStatistics(db,Number(url.searchParams.get('days') ?? 7))

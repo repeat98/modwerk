@@ -3,28 +3,30 @@
     "version": "0.2.0-experimental",
     "date": "2026-10-19",
     "changes": [
-      "Add STEP REPEAT, a seventh mode (REPEAT): while the sequencer plays, hold trig keys and the track loops only those steps, in step order; the stock playhead keeps counting, so letting go continues where the track would have been. Under SCALE MODE NORMAL every track repeats; under PER TRACK the tracks set to REPEAT.",
-      "Stock-flow change, only while playing with the current track in REPEAT: the trig keys in TRACKS trig mode belong to the repeat and no longer trigger tracks. Stopped, GRID REC, LIVE REC and the other trig modes stay stock.",
-      "Contributed by pgstath, imported from pgstath/Octaplay step-repeat (a fork of devilfish707/Octaplay, proposed upstream as devilfish707/Octaplay#2). Host suites and a ColdFire-port run (GRID REC, LIVE REC, CHROMATIC, stopped, a MIDI track) pass. Not yet played on a unit; MKI, audio and MIDI out, PER TRACK and patterns longer than 16 steps under REPEAT are untested.",
-      "Note (21 Oct 2026, distribution only): over USB, the beta module sets still install Play Modes 0.1.1, without STEP REPEAT. The 0.2.0 USB package needs its own reviewed build and hardware results (#764); card builds already have 0.2.0."
+      "Adds STEP REPEAT, a seventh mode (REPEAT): while playing, hold trig keys and the track loops only those steps; letting go continues where the track would have been.",
+      "Under SCALE MODE NORMAL every track repeats; under PER TRACK, only the tracks set to REPEAT.",
+      "While playing with the current track in REPEAT, the trig keys in TRACKS trig mode control the repeat instead of triggering tracks. Everything else stays stock.",
+      "Contributed by pgstath, based on devilfish707’s Octaplay. Card builds have it; over USB the beta still installs 0.1.1 without STEP REPEAT (#764).",
+      "Known issue: not yet played on a unit; the MKI, PER TRACK and patterns longer than 16 steps in REPEAT are untested."
     ]
   },
   {
     "version": "0.1.1-experimental",
     "date": "2026-10-08",
     "changes": [
-      "Import devilfish707's build-24 fixes: switching NORMAL to PER TRACK follows the track's actual length, and PER TRACK uses MASTER SCALE instead of the former NORMAL-mode scale.",
-      "Keep the full track length across short MASTER LENGTH passes; restart both pingpong modes at master loops, including 14/16 and 15/16 lengths, and show the played step on the trig LEDs.",
-      "Rebuild Modwerk's source packages and verify native/browser composition. Author-reported MKII functional tests are retained; current physical persistence/isolation, MKI, chip timing and stress tests remain unverified. The owner approved those missing current-build hardware checks for this exact release.",
-      "USB package (14 Oct 2026; distribution only, the module source and version are unchanged): loads over USB on a Modwerk base. Its compiled bytes that coincide with stock are rebuilt at install from the reviewed spans of your own OS, which the base checks against its running stock, so the package carries no stock bytes. Emulator and host tests only; no hardware run of this package. The owner waived hardware evidence for this exact version's USB package for the beta."
+      "Imports devilfish707’s build-24 fixes: switching NORMAL to PER TRACK follows the track’s actual length, and PER TRACK uses MASTER SCALE.",
+      "Keeps the full track length across short MASTER LENGTH passes.",
+      "Both ping-pong modes restart at master loops, including 14/16 and 15/16 lengths, and the trig LEDs show the played step.",
+      "Available over USB on the Modwerk beta base; the module itself is unchanged.",
+      "Known issue: not yet tested on the MKI, and the USB package has not yet run on a unit."
     ]
   },
   {
     "version": "0.1.0-experimental",
     "date": "2026-10-07",
     "changes": [
-      "Add forward, reverse and ping-pong playhead directions per pattern and audio track, with selectable pattern defaults and track overrides.",
-      "Integrate the module into source packages and native/browser composition; retain the contributor's MKII functional hardware report. Missing current hardware timing and stress evidence is owner-approved."
+      "Adds forward, reverse and ping-pong playback directions per pattern and per audio track, with pattern defaults and track overrides.",
+      "Known issue: not yet tested on the MKI."
     ]
   }
 ]

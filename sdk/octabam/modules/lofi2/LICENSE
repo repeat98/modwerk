@@ -3,9 +3,10 @@ LOFI2 (lofi2) for the Elektron Octatrack MKI / MKII
 LOFI2 was written by Bryan T (Bryan Tysinger, https://github.com/bryantysinger)
 and contributed to the octabam project, where it was merged as pull request 657
 (commit a6f41a1dff922be622e2e8a7d93bc5a5958c90ab); this copy is that module with his
-pull request 704, merged 13 October 2026, and his SHIFT fix of 14 October 2026
-(commit 153063d85cfe13884f0a18394eb9b4917d650dca), as on octabam main at
-commit 8250be0c23ca0a0a953cb7e5721e3bdb98dadfe5. It is distributed under
+pull request 704, merged 13 October 2026, his SHIFT fix of 14 October 2026
+(commit 153063d85cfe13884f0a18394eb9b4917d650dca) and his SHIFT feedback cap,
+pull request 843, merged 21 October 2026, as on octabam main at
+commit 7795adf0dff8c650968ff53ab5ab47babaf00ffe. It is distributed under
 octabam's MIT License, whose full text follows unchanged and is also kept
 byte for byte at upstream/LICENSE.
 
@@ -13,7 +14,7 @@ byte for byte at upstream/LICENSE.
   render gate verify_lofi2.py, upstream/modules/lofi2/README.md): Bryan T.
 - The octabam SDK, schema and harness it is written against: Sam Banks.
 - Modwerk's adaptations of manifest.py and verify_lofi2.py (listed in
-  README.md and sdk/imports/lofi2-8250be0.json), README.md, TESTING.md,
+  README.md and sdk/imports/lofi2-7795adf.json), README.md, TESTING.md,
   octamod.module.json, media/ and presentation/thumbnail.svg are contributed
   under the same MIT terms.
 
@@ -22,7 +23,7 @@ LO-FI's rates and curve are reproduced from measurements by the author, as
 formulas in manifest.py.
 
 ================================================================
-sambanks/octabam at 8250be0c23ca0a0a953cb7e5721e3bdb98dadfe5: LICENSE
+sambanks/octabam at 7795adf0dff8c650968ff53ab5ab47babaf00ffe: LICENSE
 ================================================================
 
 MIT License

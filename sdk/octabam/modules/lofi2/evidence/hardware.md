@@ -1,6 +1,28 @@
-# LOFI2 0.1.0-experimental: hardware report
+# LOFI2: hardware reports
 
-## This source: the USB package on an MKII (20 October 2026)
+## 0.1.1-experimental (octabam `7795adf0`): the USB package on an MKII (22 October 2026)
+
+A functional report by ear, as the tester gave it; not a measured qualification.
+
+- **Unit:** the contributor's Octatrack MKII, OS 1.40C, RAM-booted (never flashed) into a development twin of the beta base: identity `53ddaf60f435aedff44cf97bda8f6cba01f3fa72f4d3006db7efc48f4f067eb7`, MAIN.raw SHA-256 `712666cb0f464ed324c77aca2d7210643fdc41c18e640797030f9a90878013bd`. It is main `4d4f731d` plus two unmerged base fixes (the KEY step on first show and key-bus reader admission); neither is on LOFI2's path.
+- **Package under test:** `public/octatrack-modules/lofi2/0.1.1-experimental.mwrm`, SHA-256 `a2ab27325404c06197ccf2737b64b480121c6799b439798440b8c73e7884c92c`, built from octabam `7795adf0`. It differs from 0.1.0's package below in three bytes, the SHIFT feedback cap (0.45 to 0.40).
+- **Date:** 22 October 2026. **Tester:** npp1993 (the contributor of this port; LOFI2's author is Bryan T), listening at the unit; installation and settings driven over USB by a coordinating session.
+- **Other modules installed:** RINGMOD SC 0.2.
+
+| Step | Result |
+| --- | --- |
+| Install `a2ab2732…` over USB | accepted, generation 2 |
+| LOFI2 on FX2 of one playing track (which track was not recorded); SHIFT DOWN, RNGE HIGH, FREQ 64, MIX 127, FDBK 127; input played, then stopped (the issue 825 repro) | the tail dies away, no feedback runaway: pass (by ear) |
+| LOFI2's other functions on the same build | the tester reports all pass; no per-mode or per-knob detail recorded |
+| Remove LOFI2 over USB | accepted, generation 3 |
+
+Observed in the same session, not a LOFI2 result: with LOFI2 0.1.1 and RINGMOD SC installed, Sidechain Compressor was refused with loader refusal 2 (not enough module memory); after LOFI2 was removed it installed. The modules share the base's module memory; refusal 2 for a full pool is a known base behaviour (docs/OCTATRACK_BETA_TEST_PLAN.md, finding 37).
+
+**Not run with 0.1.1:** a second instance, FX1, the other DSP core, the full module set, FREQ 72 and UP for the issue 825 case, a level measurement, Part and project reload, a power cycle and persistence (a RAM-booted twin cannot show reboot persistence), the base self-test. Those ran only with earlier sources, below.
+
+The author's own report for the change (Bryan T, sambanks/octabam pull request 843; his MKII, his own octabam build `_bt_oct` 16; not this build): the issue 825 repro (DOWN, RNGE HIGH, FREQ 64, MIX 127, FDBK 127) dies away; eight LOFI2 in SHIFT DOWN on T1-T8 at once with FX1 empty ran with no issues; with FILTER on FX1 of T5-T8, four in SHIFT there locked the unit, on upstream `main` as well; the author attributes it to FX1 sharing the core's DSP budget. Open upstream as [octabam issue 850](https://github.com/sambanks/octabam/issues/850).
+
+## 0.1.0-experimental (octabam `8250be0c`): the USB package on an MKII (20 October 2026)
 
 A functional report, as the tester gave it; reported evidence by ear, not a measured qualification.
 
@@ -40,7 +62,7 @@ The failing figure is the ColdFire CPU, not a DSP core. Main's beta notes tie 80
 
 Asked about the result afterwards, the tester said they noticed no lag or sluggishness during the session with all six modules installed. That is their impression at the panel, not a measurement.
 
-### Not run on this source
+### Not run on 0.1.0's source
 
 BRR and LPF individually, the self-sustaining feedback in DOWN, at other FREQ values or with the previous coefficients, Part and project reload, a power cycle and persistence, the missing-module fallback, FX1 on a card image, eight instances, scenes and the crossfader. Against the previous source only 16 DSP coefficient data words differ (TESTING.md, re-pin), so its results below carry over **by argument only, not by observation**.
 

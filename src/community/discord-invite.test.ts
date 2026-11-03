@@ -122,7 +122,6 @@ describe('invitation action statistics', () => {
     const events = {
       discord_member_prompt_shown: 'discord_member_shown', discord_member_join_clicked: 'discord_member_joins', discord_member_dismissed: 'discord_member_dismissals',
       discord_visitor_prompt_shown: 'discord_visitor_shown', discord_visitor_signup_clicked: 'discord_visitor_signups', discord_visitor_join_clicked: 'discord_visitor_joins', discord_visitor_dismissed: 'discord_visitor_dismissals', discord_welcome_join_clicked: 'discord_welcome_joins',
-      download_signup_prompt_shown: 'download_signup_shown', download_signup_clicked: 'download_signup_clicks', download_follows_claimed: 'download_follows_claimed',
     }
     const { recordUsage } = await import('../../server/usage')
     for (const event of Object.keys(events)) {
@@ -137,7 +136,6 @@ describe('invitation action statistics', () => {
     const admin = (await (await call('/auth/admin', 'POST', { key: 'e'.repeat(64) })).json()).token
     const statistics = await (await call('/admin/statistics?days=7', 'GET', undefined, '', admin)).json()
     expect(statistics.discordInvitesStarted).toBeTruthy()
-    expect(statistics.downloadSignupStarted).toBeTruthy()
     expect(statistics.rows[0]).toMatchObject(expected)
     expect((await call('/usage/count', 'POST', { event: 'discord_member_join_clicked', userId: 'private-member' })).status).toBe(400)
   })

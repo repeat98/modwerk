@@ -3,7 +3,7 @@
   "id": "apply-scene",
   "key": "APPLY SCENE",
   "name": "Apply Scene",
-  "version": "0.1.0-experimental",
+  "version": "0.2.0-experimental",
   "category": "scenes",
   "author": {
     "github": "npp1993",
@@ -16,19 +16,21 @@
   "presentation": {
     "label": "Apply Scene",
     "family": "Scenes",
-    "summary": "Hold SCENE A or SCENE B and press YES: that scene's locked values become the active Part's own. Hold both and press YES to keep the crossfader's current blend.",
-    "overview": "Keep a scene, or keep a blend. SCENE A + YES writes every value scene A locks into the active Part, as if you had turned each knob there yourself; SCENE B + YES does the same for scene B. Hold both scene keys and press YES to write the sound the crossfader plays right now instead. The scenes, the crossfader and the saved Part stay as they were, so the scenes keep morphing from the new base and RELOAD PART takes you back to the last saved Part.",
+    "summary": "Hold SCENE A or SCENE B and press YES: that scene's locked values become the active Part's own. Hold both and press YES to keep the crossfader's current blend. In grid recording, hold trigs and press a scene key (or both) to write the same values as p-locks on those steps.",
+    "overview": "Keep a scene, or keep a blend. SCENE A + YES writes every value scene A locks into the active Part, as if you had turned each knob there yourself; SCENE B + YES does the same for scene B. Hold both scene keys and press YES to write the sound the crossfader plays right now instead. The scenes, the crossfader and the saved Part stay as they were, so the scenes keep morphing from the new base and RELOAD PART takes you back to the last saved Part. In grid recording the same gesture works on steps: hold trigs, press SCENE A, SCENE B or both, and let go; the values become p-locks on the held steps of the active track.",
     "highlights": [
       "Covers every scene-lockable page on all eight audio tracks: SRC (the assigned machine), LFO speed and depth, AMP, FX1 and FX2.",
       "One scene: its locked values, wherever the crossfader is and even when that scene is muted.",
       "The blend: the value stock's scene morph plays at the current crossfader position, rounded to the nearest knob step; a muted scene counts as not locked, exactly as stock morphs it.",
+      "On trigs: hold trigs in grid recording and press a scene key, or both: the scene's values, or the blend at the current fader position, become p-locks on those steps.",
       "Nothing new is stored: the result is ordinary Part data that saves, loads and survives a power cycle like a hand-turned knob.",
       "Pressing it when nothing would change shows NOTHING TO APPLY."
     ],
     "usage": [
       "Lock some parameters in SCENE A and SCENE B. Hold SCENE A (or SCENE B) and press YES to make that scene's values the Part's own: SCENE A APPLIED (or SCENE B APPLIED).",
       "To keep an in-between sound, move the crossfader, hold SCENE A and SCENE B, and press YES: SCENE BLEND APPLIED.",
-      "Save the Part to keep it, or press FUNC + CUE (RELOAD PART) to go back to the last saved Part."
+      "Save the Part to keep it, or press FUNC + CUE (RELOAD PART) to go back to the last saved Part.",
+      "To put a scene on particular steps: in grid recording hold the trigs, press SCENE A (or SCENE B, or both for the blend) and let go: SCENE A TO TRIGS. Hold a trig and press PLAY to clear its p-locks."
     ]
   },
   "controls": [],
@@ -39,17 +41,22 @@
     "uiClaims": [
       "key:SCENEA+YES",
       "key:SCENEB+YES",
-      "key:SCENEA+SCENEB+YES"
+      "key:SCENEA+SCENEB+YES",
+      "key:TRIG+SCENEA",
+      "key:TRIG+SCENEB",
+      "key:TRIG+SCENEA+SCENEB"
     ],
     "limitations": [
       "YES with SCENE A, SCENE B or both held no longer shows ARM ALL; YES alone still does.",
+      "In grid recording, SCENE A or SCENE B pressed with trigs held writes p-locks when the last scene key is released. A trig pressed or a knob turned inside that gesture keeps its stock meaning (scene select, scene lock) and then nothing is written.",
       "The crossfader stays where it is and the scenes keep their locks: a parameter locked in both scenes keeps its sound, while one locked in only one scene can change (after a one-scene apply it plays that lock at every fader position; after the blend stock blends that lock with the new base).",
       "XVOL and XLV (the crossfader volume locks) have no Part knob and stay scene locks.",
       "Trig locks and LFO modulation are not written into the Part; the result is the sound on steps without a trig lock.",
+      "On trigs: only the active track and the held steps of the trig page shown. There is no undo beyond stock's hold trig + PLAY, which clears all of that step's p-locks.",
       "With MASTER TRACK on, track 8's SRC and AMP scene locks are not applied: stock has no knob there.",
       "Not in MIDI mode, and not on MIDI tracks (stock has no scene locks there).",
       "Undo is stock RELOAD PART, which also discards any other unsaved edits since the last Part save.",
-      "Tested on one MKII over USB on the beta base, by watching values (no audio check); the card build was not run on hardware for this version."
+      "Tested on one MKII over USB: the Part apply with 0.1.0 (values watched, no audio check); TRIG + SCENE with 0.2.0, including playback by ear, a project save and a power cycle. Not tested on the MKI; the card build was not run on hardware."
     ],
     "effectId": null
   },
@@ -57,11 +64,11 @@
     "recorded": "ot_emu and one MKII, 15 Oct 2026",
     "storage": {
       "label": "Storage",
-      "display": "636 bytes of ColdFire code in the image's free run; no DSP code, no saved data",
-      "value": 636,
+      "display": "2,062 bytes of ColdFire code and state in the DRAM reserve; no DSP code, no saved data",
+      "value": 2062,
       "unit": "bytes",
       "method": "static",
-      "conditions": "Linked unit size reported by the native build of the apply-scene-stock remix.",
+      "conditions": "Assembled unit size (m68k-elf-size) of the 0.2.0 source; 636 bytes in 0.1.0.",
       "source": "TESTING.md"
     },
     "processing": {
@@ -90,21 +97,21 @@
       "memory": {
         "level": "minimal",
         "basis": "measured-comparison",
-        "rationale": "636 bytes of ColdFire code and data, one byte of it state; no DSP memory and no saved data of its own.",
+        "rationale": "2,062 bytes of ColdFire code and state (101 bytes of it state: the YES press and the TRIG + SCENE chord); no DSP memory and no saved data of its own.",
         "source": "TESTING.md"
       }
     }
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "On one MKII over USB on the beta base: SCENE A, SCENE B and the blend apply, NOTHING TO APPLY, Keep, Undo, removal and a power cycle with the module kept (user-reported, values watched, no audio check). Under ot_emu (verify.py, 179 checks): one-scene applies equal that scene's locks and the blend equals stock's morph model at five fader positions, with scene mutes, both key orders and every scene byte locked; the saved Part, scenes and fader stay untouched; RELOAD PART, Part and project save and reload and an emulated power cycle keep it.",
+    "summary": "On one MKII over USB: 0.1.0's SCENE + YES modes, NOTHING TO APPLY, Keep, Undo, removal and a power cycle (user-reported, 15 Oct); 0.2.0's TRIG + SCENE driven by the agent on a development twin (one scene, the blend at the morph model's values, repeat, stock gestures inside the chord, three trigs, muted scene, stock clear, playback lane, removal) and run by the user on the flashed base (playback by ear, project save, power cycle). Under ot_emu (verify.py, 264 checks): the Part apply as in 0.1.0, and TRIG + SCENE's locks equal the model on every held step with nothing else in the pattern moved, through project save, reload and an emulated power cycle.",
     "hardwareStatus": "reported",
-    "evidenceRevision": "ae2a6eedc456076cbee1a886952a399623b4e88a",
+    "evidenceRevision": "2ebc3f726961c125a79cc7ef19225076e361f02c",
     "gates": [],
     "qualification": {
-      "moduleVersion": "0.1.0-experimental",
-      "sourceSha256": "37051fcea2b241e80d78c3ae8aed63414da53f9a8adcbcac29ad9546c5b7efce",
-      "imageSha256": "c63e2868e39669a3b22f0077923f9d542a521f73a75f5844fe62646d1382d163",
+      "moduleVersion": "0.2.0-experimental",
+      "sourceSha256": "d837cd5f07c278d4e7bbc7b0a14fe96197a9f9928fef1fff03ad229b3a8cc0f2",
+      "imageSha256": "5b1db5c76dabfd3023c0d2a81d53fac43610fa579142870190f7ca41c89c2ed1",
       "cycles": [
         {
           "processor": "coldfire",
@@ -115,9 +122,9 @@
           "unit": "cycles/event",
           "method": "emulator",
           "conditions": {
-            "parameterExtremes": "Every scene-lockable byte of all eight tracks locked in both selected scenes, scene A at each slot's minimum and scene B at its maximum, so every enabled slot changes: 201 writes for the blend at fader 64 (8,268,075 instructions, frame engine off), 125 for SCENE A and 172 for SCENE B; with the frame engine on and T8's FX2 page locked too, 231 writes and 11,083,553 instructions, interrupts in that window included.",
+            "parameterExtremes": "SCENE + YES: every scene-lockable byte of all eight tracks locked in both selected scenes (A at each slot's minimum, B at its maximum): 201 writes for the blend at fader 64, 8,268,814 instructions on 0.2.0's image (frame engine off); 231 writes and 11,083,553 with the frame engine on (0.1.0's image, the same code path). TRIG + SCENE: all 16 trigs held and every slot locked in both scenes, 98,681 at most (SCENE A).",
             "parameterModulation": "Not applicable: one apply per press, outside the audio frame. The written values are Part bytes that the stock morph, LFOs and trig locks read as usual.",
-            "modeSwitching": "All three modes (SCENE A, SCENE B, both keys), both key orders, one key released from both, scene mutes, and a repeat apply that changes nothing (113,287 instructions).",
+            "modeSwitching": "All three modes (SCENE A, SCENE B, both keys), both key orders, one key released from both, scene mutes, and a repeat apply that changes nothing (113,287 instructions). TRIG + SCENE: one scene, the blend, both key orders, the trig released first, a repeat, and stock's gestures inside the chord.",
             "maxLoad": "The worst event is the blend with every enabled slot changing. Executed ColdFire instructions under ot_emu from the YES press to the toast; one instance. Budget: 100 ms of ColdFire time at 266 MHz, a responsiveness target for a key press, not a measured limit.",
             "inputConditions": "Independent of audio and MIDI; runs in the UI task once per press. Executed instructions, not cycles: cache and wait states are not modelled, and time on the unit is not measured."
           },
@@ -127,38 +134,37 @@
       "memory": {
         "regions": [
           {
-            "name": "ColdFire code and data (one linked unit, 1 byte of state)",
+            "name": "ColdFire code and data (one linked unit, 101 bytes of state)",
             "space": "sdram",
-            "words": 636,
+            "words": 2064,
             "wordBits": 8,
-            "bytes": 636,
+            "bytes": 2064,
             "scope": "shared"
           }
         ],
         "perInstanceBytes": 0,
-        "sharedBytes": 636,
+        "sharedBytes": 2064,
         "maxInstances": 1,
-        "totalBytes": 636,
-        "conditions": "The linked unit as the native build reports it (apply_scene 636 B) and the USB package carries it (636 bytes of code and data, no bss). No DSP memory, no saved data, no DRAM region of its own.",
+        "totalBytes": 2064,
+        "conditions": "The unit as the USB package carries it (2,064 bytes of code and data, no bss; the assembler reports 2,062). No DSP memory, no saved data, no DRAM region of its own.",
         "report": "TESTING.md"
       },
       "hardware": {
         "kind": "functional",
         "status": "reported",
         "model": "MKII",
-        "testedOn": "2026-10-15",
+        "testedOn": "2026-10-23",
         "tester": "npp1993",
-        "sourceRevision": "ae2a6eedc456076cbee1a886952a399623b4e88a",
-        "imageSha256": "c63e2868e39669a3b22f0077923f9d542a521f73a75f5844fe62646d1382d163",
-        "summary": "On the contributor's Octatrack MKII (OS 1.40C) the USB package of this source (SHA-256 above) was loaded on the Modwerk beta base with the device tool: a trial without Keep rolled back, Keep installed it, and removal restored stock (SCENE + YES then arms tracks again). With it installed, SCENE A + YES and SCENE B + YES wrote the locked values, the blend wrote the in-between values, values could be edited afterwards, XVOL and XLV stayed scene locks, and NOTHING TO APPLY appeared for a repeat apply, a scene with no locks and the blend with both scenes muted. After an apply, Part save and project save, a power cycle kept the module installed, the applied values in the Part and the scenes as they were.",
+        "sourceRevision": "2ebc3f726961c125a79cc7ef19225076e361f02c",
+        "imageSha256": "5b1db5c76dabfd3023c0d2a81d53fac43610fa579142870190f7ca41c89c2ed1",
+        "summary": "On the contributor's Octatrack MKII (OS 1.40C) the USB package of this source (SHA-256 above) was installed with the device tool. On a RAM-booted development twin of main's base the agent drove TRIG + SCENE over USB and read the pattern back: one scene wrote exactly its locks, the blend wrote the morph model's values (XVOL, which has no p-lock, skipped), a repeat showed NOTHING TO LOCK, a trig or knob inside the gesture kept its stock meaning and wrote no p-lock, three trigs at once, the trig released first and a muted scene all wrote, TRIG + PLAY cleared, the live lane took the locks while playing, and removal restored the three sites. Then on the flashed base, beside the user's seven other modules, the user tested by hand: one scene and the blend onto trigs, playback by ear, a project save and a power cycle kept the p-locks, stock gestures inside the chord, TRIG + PLAY.",
         "limitations": [
-          "Run on the package of ae2a6eed (SHA-256 above). The current source differs from it only in manifest.py (the card build links the unit in the DRAM reserve); its USB package has the same code, and the published one differs only in its 16-byte display name (Apply Scene).",
-          "Values were watched on the screen; audio was not checked, and no recording or timing was made.",
-          "One unit, one short session, by the contributor rather than an independent reviewer.",
-          "USB only: the card build of this source was not flashed (the earlier card image OMXATS30 carried the previous behaviour).",
-          "APPLY SCENE alone on the beta base: no other Modwerk module was installed beside it on the unit.",
-          "Pattern change, Part change, arranger and sequencer ACT commit around an apply were not tested.",
-          "How long an apply takes on the unit is not measured; no click or freeze was noticed."
+          "One unit, by the contributor and the agent, not an independent reviewer; the MKI was not tested.",
+          "USB only: the card build of this source was not flashed.",
+          "Nothing timed: how long a TRIG + SCENE or SCENE + YES takes on the unit is not measured; no click or freeze was noticed.",
+          "The site's review, Keep and Undo flow was not used: the device tool's try and remove installed and removed it.",
+          "MIDI mode, trig pages past the first, pattern and Part changes inside the chord, the arranger and sequencer ACT commit were not tested.",
+          "SCENE + YES (unchanged in 0.2.0) was tested on hardware with 0.1.0's package only."
         ],
         "report": "evidence/hardware.md"
       },
@@ -168,7 +174,8 @@
           "steps": [
             "On a track playing a loop, hold SCENE A and turn FX1's first knob to the left; hold SCENE B and turn it to the right.",
             "Hold SCENE A and press YES. SCENE A APPLIED appears, and FX1's first knob now shows scene A's value. Put the crossfader in the middle, hold SCENE A and SCENE B and press YES: SCENE BLEND APPLIED, and the knob shows the middle value.",
-            "Move the crossfader to either end: the sound still reaches each scene's lock. Press FUNC + CUE to reload the Part and the knob returns to where it was."
+            "Move the crossfader to either end: the sound still reaches each scene's lock. Press FUNC + CUE to reload the Part and the knob returns to where it was.",
+            "Press REC, hold a trig, press SCENE A and let go: SCENE A TO TRIGS, and holding the trig shows scene A's value as its p-lock. Hold the trig and press PLAY to clear it again."
           ]
         },
         "screenshots": [
@@ -176,7 +183,10 @@
           "media/ot-scene-a-applied.png",
           "media/ot-after-a.png",
           "media/ot-blend-applied.png",
-          "media/ot-nothing-to-apply.png"
+          "media/ot-nothing-to-apply.png",
+          "media/ot-trig-scene-a.png",
+          "media/ot-trig-lock.png",
+          "media/ot-trig-blend.png"
         ],
         "screenshotStyle": "black-and-white"
       }
@@ -200,9 +210,9 @@
         "page": "FX1 main, SCENE A held",
         "shows": "location-and-controls",
         "firmware": "1.40C",
-        "moduleVersion": "0.1.0-experimental",
-        "imageSha256": "3a74ff3635ce172ec3ef5949d188ebb297b0e8d969ca2b5d060b76420dded0bc",
-        "setup": "Headless ot_emu; MKII panel; stopped transport; card staged from octabam's TMPL project; private native build of APPLY SCENE at a90849c9 alone beside every stock effect (static stock); 128×64 LCD at integer scale 6."
+        "moduleVersion": "0.2.0-experimental",
+        "imageSha256": "c625bbd1ec4faff6a98bb054abad1522042a09dc68262b3629991af7c00fc48d",
+        "setup": "Headless ot_emu; MKII panel; stopped transport; card staged from octabam's TMPL project; private native build of APPLY SCENE 0.2.0 (commit 2ebc3f72) alone beside every stock effect (static stock); 128×64 LCD at integer scale 6."
       }
     },
     {
@@ -217,9 +227,9 @@
         "page": "FX1 main, SCENE A held",
         "shows": "controls",
         "firmware": "1.40C",
-        "moduleVersion": "0.1.0-experimental",
-        "imageSha256": "3a74ff3635ce172ec3ef5949d188ebb297b0e8d969ca2b5d060b76420dded0bc",
-        "setup": "Headless ot_emu; MKII panel; stopped transport; card staged from octabam's TMPL project; private native build of APPLY SCENE at a90849c9 alone beside every stock effect (static stock); 128×64 LCD at integer scale 6."
+        "moduleVersion": "0.2.0-experimental",
+        "imageSha256": "c625bbd1ec4faff6a98bb054abad1522042a09dc68262b3629991af7c00fc48d",
+        "setup": "Headless ot_emu; MKII panel; stopped transport; card staged from octabam's TMPL project; private native build of APPLY SCENE 0.2.0 (commit 2ebc3f72) alone beside every stock effect (static stock); 128×64 LCD at integer scale 6."
       }
     },
     {
@@ -234,9 +244,9 @@
         "page": "FX1 main",
         "shows": "controls",
         "firmware": "1.40C",
-        "moduleVersion": "0.1.0-experimental",
-        "imageSha256": "3a74ff3635ce172ec3ef5949d188ebb297b0e8d969ca2b5d060b76420dded0bc",
-        "setup": "Headless ot_emu; MKII panel; stopped transport; card staged from octabam's TMPL project; private native build of APPLY SCENE at a90849c9 alone beside every stock effect (static stock); 128×64 LCD at integer scale 6."
+        "moduleVersion": "0.2.0-experimental",
+        "imageSha256": "c625bbd1ec4faff6a98bb054abad1522042a09dc68262b3629991af7c00fc48d",
+        "setup": "Headless ot_emu; MKII panel; stopped transport; card staged from octabam's TMPL project; private native build of APPLY SCENE 0.2.0 (commit 2ebc3f72) alone beside every stock effect (static stock); 128×64 LCD at integer scale 6."
       }
     },
     {
@@ -251,9 +261,9 @@
         "page": "FX1 main, SCENE A and SCENE B held",
         "shows": "controls",
         "firmware": "1.40C",
-        "moduleVersion": "0.1.0-experimental",
-        "imageSha256": "3a74ff3635ce172ec3ef5949d188ebb297b0e8d969ca2b5d060b76420dded0bc",
-        "setup": "Headless ot_emu; MKII panel; stopped transport; card staged from octabam's TMPL project; private native build of APPLY SCENE at a90849c9 alone beside every stock effect (static stock); 128×64 LCD at integer scale 6."
+        "moduleVersion": "0.2.0-experimental",
+        "imageSha256": "c625bbd1ec4faff6a98bb054abad1522042a09dc68262b3629991af7c00fc48d",
+        "setup": "Headless ot_emu; MKII panel; stopped transport; card staged from octabam's TMPL project; private native build of APPLY SCENE 0.2.0 (commit 2ebc3f72) alone beside every stock effect (static stock); 128×64 LCD at integer scale 6."
       }
     },
     {
@@ -268,52 +278,70 @@
         "page": "FX1 main, SCENE A held",
         "shows": "controls",
         "firmware": "1.40C",
-        "moduleVersion": "0.1.0-experimental",
-        "imageSha256": "3a74ff3635ce172ec3ef5949d188ebb297b0e8d969ca2b5d060b76420dded0bc",
-        "setup": "Headless ot_emu; MKII panel; stopped transport; card staged from octabam's TMPL project; private native build of APPLY SCENE at a90849c9 alone beside every stock effect (static stock); 128×64 LCD at integer scale 6."
+        "moduleVersion": "0.2.0-experimental",
+        "imageSha256": "c625bbd1ec4faff6a98bb054abad1522042a09dc68262b3629991af7c00fc48d",
+        "setup": "Headless ot_emu; MKII panel; stopped transport; card staged from octabam's TMPL project; private native build of APPLY SCENE 0.2.0 (commit 2ebc3f72) alone beside every stock effect (static stock); 128×64 LCD at integer scale 6."
       }
     },
     {
-      "path": "media/ot-scene-b-lock.png",
+      "path": "media/ot-trig-scene-a.png",
       "captureType": "emulator",
-      "caption": "The same knob locked to 110 in scene B, for the blend in the next steps.",
-      "alt": "FX1 FILTER main page with SCENE B held and the BASE knob highlighted with its scene lock value 110.",
+      "caption": "To put a scene on chosen steps instead: press REC for grid recording, hold a trig, press SCENE A and let go. SCENE A TO TRIGS appears and every value scene A locks becomes a p-lock on that step.",
+      "alt": "FX1 FILTER main page in grid recording with the SCENE A TO TRIGS message box over it.",
       "credit": "Modwerk contributors (headless capture)",
       "license": "LicenseRef-OT-UI-Documentation",
       "source": "original",
       "otUi": {
-        "page": "FX1 main, SCENE B held",
-        "shows": "controls",
+        "page": "FX1 main, grid recording, TRIG 1 held",
+        "shows": "location-and-controls",
         "firmware": "1.40C",
-        "moduleVersion": "0.1.0-experimental",
-        "imageSha256": "3a74ff3635ce172ec3ef5949d188ebb297b0e8d969ca2b5d060b76420dded0bc",
-        "setup": "Headless ot_emu; MKII panel; stopped transport; card staged from octabam's TMPL project; private native build of APPLY SCENE at a90849c9 alone beside every stock effect (static stock); 128×64 LCD at integer scale 6."
+        "moduleVersion": "0.2.0-experimental",
+        "imageSha256": "c625bbd1ec4faff6a98bb054abad1522042a09dc68262b3629991af7c00fc48d",
+        "setup": "Headless ot_emu; MKII panel; stopped transport; card staged from octabam's TMPL project; private native build of APPLY SCENE 0.2.0 (commit 2ebc3f72) alone beside every stock effect (static stock); 128×64 LCD at integer scale 6."
       }
     },
     {
-      "path": "media/ot-after-blend.png",
+      "path": "media/ot-trig-lock.png",
       "captureType": "emulator",
-      "caption": "After the blend at the middle of the crossfader, BASE shows the blended value as the Part's own.",
-      "alt": "FX1 FILTER main page with no scene held; the BASE knob points near the middle of its range.",
+      "caption": "Hold the trig again to see its p-locks: BASE on step 1 is now 30, scene A's value. The scene and the Part are unchanged; hold the trig and press PLAY to clear its p-locks.",
+      "alt": "FX1 FILTER main page with TRIG 1 held; the BASE knob is highlighted with the p-lock value 30.",
       "credit": "Modwerk contributors (headless capture)",
       "license": "LicenseRef-OT-UI-Documentation",
       "source": "original",
       "otUi": {
-        "page": "FX1 main",
+        "page": "FX1 main, grid recording, TRIG 1 held",
         "shows": "controls",
         "firmware": "1.40C",
-        "moduleVersion": "0.1.0-experimental",
-        "imageSha256": "3a74ff3635ce172ec3ef5949d188ebb297b0e8d969ca2b5d060b76420dded0bc",
-        "setup": "Headless ot_emu; MKII panel; stopped transport; card staged from octabam's TMPL project; private native build of APPLY SCENE at a90849c9 alone beside every stock effect (static stock); 128×64 LCD at integer scale 6."
+        "moduleVersion": "0.2.0-experimental",
+        "imageSha256": "c625bbd1ec4faff6a98bb054abad1522042a09dc68262b3629991af7c00fc48d",
+        "setup": "Headless ot_emu; MKII panel; stopped transport; card staged from octabam's TMPL project; private native build of APPLY SCENE 0.2.0 (commit 2ebc3f72) alone beside every stock effect (static stock); 128×64 LCD at integer scale 6."
+      }
+    },
+    {
+      "path": "media/ot-trig-blend.png",
+      "captureType": "emulator",
+      "caption": "Hold a trig and press SCENE A and SCENE B to lock what the crossfader plays right now onto that step: SCENE BLEND TO TRIGS. Here the crossfader is in the middle.",
+      "alt": "FX1 FILTER main page in grid recording with the SCENE BLEND TO TRIGS message box over it.",
+      "credit": "Modwerk contributors (headless capture)",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "FX1 main, grid recording, TRIG 5 held",
+        "shows": "controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.2.0-experimental",
+        "imageSha256": "c625bbd1ec4faff6a98bb054abad1522042a09dc68262b3629991af7c00fc48d",
+        "setup": "Headless ot_emu; MKII panel; stopped transport; card staged from octabam's TMPL project; private native build of APPLY SCENE 0.2.0 (commit 2ebc3f72) alone beside every stock effect (static stock); 128×64 LCD at integer scale 6."
       }
     }
   ],
   "access": {
-    "location": "Any audio-track page, with SCENE A, SCENE B or both held.",
+    "location": "Any audio-track page, with SCENE A, SCENE B or both held; for p-locks, grid recording with trigs held.",
     "steps": [
       "Lock parameters in SCENE A and SCENE B as usual (hold the scene key and turn knobs).",
       "Hold SCENE A (or SCENE B) and press YES: that scene's values become the Part's own.",
       "Or move the crossfader to the blend you want, hold SCENE A and SCENE B, and press YES: SCENE BLEND APPLIED.",
+      "For p-locks: press REC (grid recording), hold trigs, press SCENE A, SCENE B or both, and let go: SCENE A TO TRIGS, SCENE B TO TRIGS or SCENE BLEND TO TRIGS.",
       "Save the Part to keep the result, or RELOAD PART (FUNC + CUE) to undo."
     ],
     "screenshots": [
@@ -321,7 +349,10 @@
       "media/ot-scene-a-applied.png",
       "media/ot-after-a.png",
       "media/ot-blend-applied.png",
-      "media/ot-nothing-to-apply.png"
+      "media/ot-nothing-to-apply.png",
+      "media/ot-trig-scene-a.png",
+      "media/ot-trig-lock.png",
+      "media/ot-trig-blend.png"
     ]
   }
 }

@@ -30,6 +30,9 @@ const impactsPath='sdk/module-resource-estimates.json',impactBytes=await readFil
 if(baseCommit&&git('ls-tree','--name-only',baseCommit,'--',impactsPath).trim()===impactsPath&&git('show',baseCommit+':'+impactsPath)!==impactBytes)throw new Error('Initial resource estimates are pinned to the frozen existing versions; updates require a greater module version and resources.impact in the module manifest.')
 async function walk(folder){const paths=[];for(const entry of await readdir(folder,{withFileTypes:true})){if(entry.name==='__pycache__')continue;if(entry.isSymbolicLink())throw new Error('Module symlinks are not allowed: '+entry.name);if(entry.isDirectory())paths.push(...(await walk(resolve(folder,entry.name))).map(p=>entry.name+'/'+p));else paths.push(entry.name)}return paths.sort()}
 const documents=new Map()
+// Every folder here is held to publication rules, listed or not; point unlisted, unqualified work at the drafts folder.
+const listed=new Set((await json(resolve(root,'sdk/catalog.json'))).modules?.map(item=>item.id)??[])
+const draftHint=(id,error)=>listed.has(id)?error:new Error(error.message+'. '+id+' is not listed in sdk/catalog.json: keep an unqualified module in sdk/drafts/'+id+'/ (with its notes in CHANGELOG.json there) until it has this evidence; see docs/ADD_A_MODULE.md.',{cause:error})
 for(const entry of await readdir(modules,{withFileTypes:true})){
  if(entry.name.startsWith('_')||!entry.isDirectory())continue
  const folder=resolve(modules,entry.name);let document,needsPublicationUi=false
@@ -40,9 +43,11 @@ for(const entry of await readdir(modules,{withFileTypes:true})){
  for(const item of document.media){const target=await file(folder,item.path),bytes=await readFile(target),max=(item.captureType==='audio'?12:5)*1024*1024;if(bytes.length<12||bytes.length>max)throw new Error(item.path+': invalid media size');const image=(bytes.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10]))||bytes[0]===255&&bytes[1]===216&&bytes[2]===255||bytes.toString('ascii',0,4)==='RIFF'&&bytes.toString('ascii',8,12)==='WEBP');const audio=(bytes.toString('ascii',0,4)==='RIFF'&&bytes.toString('ascii',8,12)==='WAVE'||bytes.toString('ascii',0,4)==='OggS'||bytes.toString('ascii',0,3)==='ID3'||bytes[0]===255&&(bytes[1]&224)===224);if(item.captureType==='audio'?!audio:!image)throw new Error(item.path+': media signature/type differs')}
  if(baseCommit){const prefix='sdk/octabam/modules/'+entry.name+'/';const oldPath=prefix+'octamod.module.json';const existed=git('ls-tree','--name-only',baseCommit,'--',oldPath).trim()===oldPath;const old=existed?parseModuleDocument(JSON.parse(git('show',baseCommit+':'+oldPath))):null;const changedPaths=(git('diff','--name-only',baseCommit,'--',prefix)+git('ls-files','--others','--exclude-standard','--',prefix)).split('\n').filter(Boolean),changed=changedPaths.length>0;const codeChanged=changedPaths.some(path=>path===oldPath?!old||manifestBuildFields(git('show',baseCommit+':'+oldPath))!==manifestBuildFields(readFileSync(resolve(folder,'octamod.module.json'),'utf8')):!isDocumentationPath('modules/'+entry.name+'/'+path.slice(prefix.length)));if(old&&codeChanged&&compareModuleVersions(document.version,old.version)<=0)throw new Error(document.id+': every code change (source, native manifest, build fields) requires a greater module version than '+old.version+'; documentation and media edits do not');needsPublicationUi=(!old||changed)&&!document.tests.retainedEvidence}
  let qualification
- try {qualification=await requireFolderQualification(folder,document,baseline,waivers,{root,...(baseCommit?{approvedRef:baseCommit}:{})})}
- catch(error){if(needsPublicationUi)requireModuleUiForPublication(document);throw error}
- if(needsPublicationUi&&qualification!=='owner-approved-update')requireModuleUiForPublication(document)
+ try {
+  try {qualification=await requireFolderQualification(folder,document,baseline,waivers,{root,...(baseCommit?{approvedRef:baseCommit}:{})})}
+  catch(error){if(needsPublicationUi)requireModuleUiForPublication(document);throw error}
+  if(needsPublicationUi&&qualification!=='owner-approved-update')requireModuleUiForPublication(document)
+ } catch(error){throw draftHint(document.id,error)}
  const impact=requireModuleResourceImpact(document,['retained','retained-evidence'].includes(qualification)?impacts:undefined,qualification==='retained-evidence'?document.tests.retainedEvidence.moduleVersion:undefined)
  if(qualification==='retained-evidence')console.log(document.id+': retained evidence from '+document.tests.retainedEvidence.moduleVersion+'; runtime and resource inputs unchanged; no new native/hardware qualification required')
  for(const key of ['cpu','dsp','memory'])if(!(await readFile(await file(folder,impact[key].source),'utf8')).trim())throw new Error(document.id+': resource estimate source must be a nonempty local text record')
@@ -50,6 +55,9 @@ for(const entry of await readdir(modules,{withFileTypes:true})){
  documents.set(document.id,document)
 }
 for(const document of documents.values())requireKnownConflicts('octatrack',document,new Set(documents.keys()))
+// The two DSP source gates from octabam (no rep, no label that prefixes another), over every module, platform and base source: scripts/dsp-source-gates.py.
+try{execFileSync(process.platform==='win32'?'python':'python3',['-B','scripts/dsp-source-gates.py',...(baseCommit?['--base',baseCommit]:[])],{cwd:root,encoding:'utf8',stdio:['ignore','ignore','pipe']})}
+catch(error){throw new Error('DSP source gates: '+(error.stderr||error.message).trim().split('\n').filter(line=>line.startsWith('error: ')).join('\n'),{cause:error})}
 const catalog=await json(resolve(root,'sdk/catalog.json'))
 if(catalog.schemaVersion!==1||!Array.isArray(catalog.modules)||!/^[a-f0-9]{40}$/.test(catalog.sourceRevision))throw new Error('Invalid SDK catalog pin')
 const selected=[],seen=new Set()

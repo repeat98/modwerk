@@ -1,0 +1,28 @@
+{
+  "scope": "base-owned menu composition; supplied ownership only, no installed menu hook",
+  "sourceSha256": {
+    "editor_menu.c": "9e7a73ff05e65eddb9db7d4163c29e4d6f55d6bce33379f4f9dfac64e451a043",
+    "editor_menu.h": "211496964f026a650e3e28847314478b25dac5106a586cede963109ff0b26631",
+    "test_editor_menu.c": "fb575498b5ede8f5b37a0dc930f6acfdad84ff44f7a27d5b23554076eaf4fdc0",
+    "test_editor_menu.py": "54e4314faff594446fb88414d46a4ef33d7b3a65e74aa90aaa0ac95ade16e983"
+  },
+  "compiler": "Apple clang version 17.0.0 (clang-1700.6.4.2)",
+  "flags": [
+    "-std=c99",
+    "-O1",
+    "-g",
+    "-Wall",
+    "-Wextra",
+    "-Werror",
+    "-pedantic",
+    "-fsanitize=address,undefined",
+    "-fno-omit-frame-pointer"
+  ],
+  "exitCode": 0,
+  "stdout": [
+    "PASS: 20 composed menus, immutable labels, owner/token retirement, callback lifetime and refusal cases"
+  ],
+  "hardware": "not tested",
+  "audio": "not tested",
+  "nativeSourceAccess": "not implemented"
+}

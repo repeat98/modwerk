@@ -1,0 +1,30 @@
+[
+  {
+    "version": "0.1.2-experimental",
+    "date": "2026-10-25",
+    "changes": [
+      "Renamed DirectJmp Kyoti, short for Direct Jump Kyoti, as its author asked (#881), so it stays apart from other direct-jump designs.",
+      "No change to how it works."
+    ]
+  },
+  {
+    "version": "0.1.1-experimental",
+    "date": "2026-10-25",
+    "changes": [
+      "Fixes a Plays Free MIDI track with trig quantize DIRECT stalling after its first step in PER TRACK scale mode (#881). This is Zac Kyoti's own fix, now built into Direct Jump.",
+      "With that fix, Direct Jump places such a MIDI track with its own scale instead of the master's.",
+      "Known issue: the MIDI fix has not yet been tried on an MKII; the author tested it on his MKI."
+    ]
+  },
+  {
+    "version": "0.1.0-experimental",
+    "date": "2026-10-24",
+    "changes": [
+      "First Modwerk release of Zac Kyoti's Direct Jump: hold [PTN] and press [YES], and a pattern you cue takes over on the next step instead of at the end of the playing one.",
+      "The new pattern starts where it would be had it played since PLAY, also with other lengths and per-track scales. Part, START SILENT and trig conditions change as on a stock pattern change.",
+      "Off at every power-on; while off, or while the arranger or a chain runs, pattern changes are the stock ones.",
+      "For card builds and, for beta testers, over USB.",
+      "Known issue: not yet tested on a unit with a jump into another Part, per-track scales, external MIDI gear, the arranger or chains, or on an MKI."
+    ]
+  }
+]

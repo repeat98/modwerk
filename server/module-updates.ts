@@ -81,7 +81,7 @@ export async function recordModuleReleases(db: Database, releases: ModuleRelease
     states.set(release.id, previous?.version ?? null)
     if ((!previous || compareModuleVersions(release.version, previous.version) > 0) && !release.notes) throw new Error('Missing release notes for ' + release.id + ' v' + release.version + '.')
   }
-  let notified = 0
+  let notified = 0, held = 0
   // The first live inventory establishes a baseline; it must not announce the whole existing library.
   const initialized = !!await db.prepare('SELECT 1 AS initialized FROM module_release_inventory WHERE singleton=1').first()
   for (const release of releases) {
@@ -91,6 +91,12 @@ export async function recordModuleReleases(db: Database, releases: ModuleRelease
       if (release.notes) await db.prepare('UPDATE module_releases SET notes=? WHERE module_id=? AND version=? AND notes IS NULL').bind(JSON.stringify(release.notes), release.id, release.version).run()
       // A catch-up needs an explicit operator action after its content is approved, never an ordinary poll.
       if (compareModuleVersions(release.version, previous) < 0 || !release.notes || !recoverMissed) continue
+    }
+    if (previous) {
+      // A registered author's own release reaches followers 48 hours after it goes live, so the owner can look at it
+      // or replace it first. The hold is stored on first sight; a newer version supersedes a held one and is announced instead.
+      if (release.authorRelease) await db.prepare("INSERT INTO module_releases(module_id,version,name,href,notes,notify_after) VALUES(?,?,?,?,?,datetime('now','+48 hours')) ON CONFLICT DO NOTHING").bind(release.id, release.version, release.name, release.href, JSON.stringify(release.notes)).run()
+      if (await db.prepare("SELECT 1 AS waiting FROM module_releases WHERE module_id=? AND version=? AND notify_after>datetime('now')").bind(release.id, release.version).first()) { held++; continue }
     }
     const followers = (await db.prepare('SELECT s.user_id,s.after_version FROM module_update_subscriptions s JOIN users u ON u.id=s.user_id JOIN auth_users a ON a.id=u.id WHERE s.module_id=? AND (?=0 OR u.beta_tester=1 OR u.is_admin=1) AND u.email_verified=1 AND a.emailVerified=1 AND u.suspended=0 AND u.username IS NOT NULL AND NOT EXISTS(SELECT 1 FROM social_pending_accounts p WHERE p.user_id=u.id)').bind(release.id,Number(release.beta || isBetaModule(release.id))).all<{ user_id: string; after_version: string | null }>()).results
     const recipients = followers.filter(member => member.after_version !== null && compareModuleVersions(release.version, member.after_version) > 0)
@@ -112,7 +118,7 @@ export async function recordModuleReleases(db: Database, releases: ModuleRelease
     notified += recipients.length
   }
   if (initializeInventory && releases.length) await db.prepare('INSERT INTO module_release_inventory(singleton) VALUES(1) ON CONFLICT DO NOTHING').run()
-  return { checked: releases.length, notified }
+  return { checked: releases.length, notified, ...(held ? { held } : {}) }
 }
 
 /** Read the live site's published inventory, rather than the Worker's independently deployed source catalog. */

@@ -1,0 +1,1 @@
+Extend the private sample-editor experiment to inactive recorder buffers and pattern playback. Gate recording by the edited source, keep empty buffers empty, and publish marker counts in stock order. Default beta builds remain unchanged; native/device qualification and shared API review are pending.

@@ -33,6 +33,11 @@ static int32_t gain(uint32_t knob) {
  * ColdFire kernels bit-for-bit and is their arithmetic oracle. */
 #define TE_FULL_WET 2147483640
 #define TE_ONE 2147483647
+/* MIX (#969, 0.1.6), BBD's law: up to MIX 64 the wet rises to unity on top
+ * of the whole dry signal; from 64 to 127 the dry fades out, leaving the
+ * wet alone at 127. s->mix still ramps MIX/127 (gain()); the kernel turns it
+ * into both gains per sample. TE_MIX_KNEE is gain(64). */
+#define TE_MIX_KNEE 1082196480
 #ifndef __m68k__
 static inline int64_t emac(int32_t x, int32_t y) { return ((int64_t)x * y) >> 23; }
 static inline int32_t readout(int64_t acc) {
@@ -217,12 +222,29 @@ static void filter_block(int32_t *buffer, const int32_t *lp, int32_t *z) {
     z[0]=x1; z[1]=x2; z[2]=y1; z[3]=y2; z[4]=w1; z[5]=w2; z[6]=eh; z[7]=el;
 }
 
+/* MIX's two gains from the ramped s->mix (u = MIX/127), as te_tape_block
+ * forms them (TE_TAPE_GAINS): up to the knee, wet = u*127/64 = 2u - u/64
+ * and dry = 1; above it, wet = 1 and dry = (1-u)*127/63, taken as
+ * ((full - u) >> 14) * 33028 with the 16 x 16 bit MULU.W (within 2e-5 of
+ * the exact slope). Unsigned like the kernel's cmp.l / sub.l / lsr.l. */
+static void mix_gains(int32_t m, int32_t *wet, int32_t *dry) {
+    uint32_t u=(uint32_t)m;
+    if (u <= TE_MIX_KNEE) {
+        *wet=(int32_t)((u<<1)-(u>>6));
+        *dry=TE_ONE;
+    } else {
+        *wet=TE_ONE;
+        *dry=(int32_t)(((((uint32_t)TE_FULL_WET-u)>>14)&0xffffu)*33028u);
+    }
+}
+
 /* One record/output sample set per block. The record sum is a single
  * saturating accumulator: drive*(L+R)/2 + feedback*wet + hiss. wet already
  * carries the makeup; feedback (Q2.30) is applied twice. Full wet is 4*wet
- * (Q3.29 -> Q1.31) and other MIX values L*(1-mix) + 4*wet*mix, each clipped
- * by the read-out. Knob ramps advance before each sample, as they always
- * have; a settled full-wet block uses the dedicated full-wet output. */
+ * (Q3.29 -> Q1.31) and other MIX values L*dry + 4*wet*wet_gain with the
+ * gains of mix_gains(), each clipped by the read-out. Knob ramps advance
+ * before each sample, as they always have; a settled full-wet block uses
+ * the dedicated full-wet output. */
 static void tape_block(TapeState *restrict s, const int32_t *restrict wet,
                        int32_t *restrict audio, int32_t *restrict record,
                        int32_t dm, int32_t df, int32_t dn) {
@@ -248,9 +270,10 @@ static void tape_block(TapeState *restrict s, const int32_t *restrict wet,
         if (settled && s->mix==TE_FULL_WET) {
             audio[2*i]=audio[2*i+1]=readout(4*emac(w,TE_ONE));
         } else {
-            int32_t m=s->mix, keep=TE_ONE-m;
-            audio[2*i]=readout(4*emac(w,m) + emac(L,keep));
-            audio[2*i+1]=readout(4*emac(w,m) + emac(R,keep));
+            int32_t wg, dg;
+            mix_gains(s->mix,&wg,&dg);
+            audio[2*i]=readout(4*emac(w,wg) + emac(L,dg));
+            audio[2*i+1]=readout(4*emac(w,wg) + emac(R,dg));
         }
     }
     s->rng=rng; s->filters[0][0]=x1; s->filters[0][1]=x2;

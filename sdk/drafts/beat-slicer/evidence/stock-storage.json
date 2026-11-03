@@ -1,0 +1,25 @@
+{
+  "scope": "isolated stock storage routines with synthetic memory IO and explicit follow-up mocks; no device access",
+  "mainSha256": "164f31224bf61181e3f50e7dec40df9afcae5b16dbf6e4c0d0cc5e986af0a84e",
+  "sourceSha256": {
+    "stock_probe.py": "6fdb37f2df7dc98ee01dea0405114497b307b02585954eee1c2ed0b40559cb94",
+    "stock_probe/storage_probe.cpp": "0efe8078c9e7067bc4e227ec7d12f71aec9bd1c17ee69e78ee0df9451cdc0a05",
+    "stock_probe/CMakeLists.txt": "2e85cb2681dec92c42eff3bffaa599c4804d874ed8415f8bfcfec8e92286d3f8"
+  },
+  "executableSha256": "c12cd65a8b066bd28a0f68c862d19d39268e21bbc26c0991aa88f5f687a5ed27",
+  "exitCode": 0,
+  "stdout": [
+    "SOURCE_SHA256: 0efe8078c9e7067bc4e227ec7d12f71aec9bd1c17ee69e78ee0df9451cdc0a05",
+    "PASS: 264-slot marker writer/parser round-trip and checksum extent",
+    "PASS: header, checksum and truncated-input publication behavior",
+    "PASS: stock marker writer protection",
+    "PASS: Flex/Static sample-settings marker round-trip and late checksum failure",
+    "PASS: six Flex/Static sanitizer fixtures and inactive-slot isolation",
+    "5 passed, 0 failed; synthetic IO only, no physical persistence or audio"
+  ],
+  "stderrLines": 88,
+  "stderrSha256": "d711792b4a45696014b6c50d732848a8b04a5906e9231a069910c1e7142b90a2",
+  "hardware": "not tested",
+  "audio": "not tested",
+  "stockPersistence": "not tested"
+}

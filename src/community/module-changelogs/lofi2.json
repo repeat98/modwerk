@@ -1,15 +1,23 @@
 [
   {
+    "version": "0.1.1-experimental",
+    "date": "2026-10-21",
+    "changes": [
+      "Fixes DOWN and UP sustaining themselves with FDBK near 127 after the input stops (octabam issue 825). You no longer need to keep FDBK at 120 or below.",
+      "Upstream changed the module: Bryan T lowered SHIFT's feedback limit, so every FDBK setting feeds back a little less than in 0.1.0. RING, SRR, BRR, LPF and the knobs are unchanged.",
+      "Known issue: four LOFI2 in SHIFT on T5-T8 with FX1 in use locked up an MKII (octabam issue 850). Over USB the base allows two per DSP core; in card builds avoid four on one core.",
+      "Known issue: a very faint SHIFT residue remains after the input stops, and reloads, power cycles and several instances are not yet tested on hardware with 0.1.1."
+    ]
+  },
+  {
     "version": "0.1.0-experimental",
     "date": "2026-10-20",
     "changes": [
-      "First Modwerk import of Bryan T's LOFI2 from octabam: a ring modulator or stereo frequency shifter (MODE RING / DOWN / UP), then sample-rate and bit reduction on stock LO-FI's curves and a high-shelf cut. Stock LO-FI stays in the chooser beside it.",
-      "Upstream implementation, unchanged: the author's optimised revision (octabam pull request 704; 416 cycles/sample in SHIFT, down from 654) with his SHIFT fix of 14 October 2026 (octabam 153063d8, pinned at 8250be0c): the Hilbert coefficients are squared, so the unwanted sideband in DOWN and UP drops from about -19 to -30 dB to about -46 to -55 dB, with the same instructions and cycles.",
-      "Modwerk packaging: effect ID 0x09 instead of octabam's 0x1f (TapeHead's here), so a project saved with octabam's LOFI2 does not select it; the range select is named RNGE and MODE keeps its own name on the SETUP page; with stock DSP code built in it takes the space of two adjacent stock reverbs, and it cannot be combined with Analog BD.",
-      "Over USB the Modwerk base loads LOFI2 on demand into FX1 or FX2. It declares 637 cycles a sample, timed on an MKII with the previous package, whose instructions are the same, so two instances fit on one DSP core when its other slots are free and a third is refused (DSP FULL).",
-      "Limits: SHIFT costs about 1.4x stock SPRING REV per instance and is dearer than every stock effect. In DOWN and UP a faint residue (about -83 to -94 dBFS) stays after the input stops. With RNGE HIGH, FREQ about 60 to 76 and FDBK at 124 or more (DOWN from about 120), SHIFT's feedback sustains itself near full scale after the input stops (dsp_host; upstream does the same). On an MKII, UP at FREQ 64, RNGE HIGH, MIX 127 and FDBK 127 kept a tone sounding after the input ended, and FDBK 120 let it die away; keep FDBK at 120 or below there. It may not be intended; asked upstream as a question: https://github.com/sambanks/octabam/issues/825.",
-      "Hardware: about 15 minutes over USB on an MKII (every mode, the fixed SHIFT by ear, two instances on one core and a third refused); the base's self-test with LOFI2 and five other modules failed on ColdFire CPU (98.8 %, uncached beta base; cause not confirmed). BRR, LPF, reloads and a power cycle ran only with the previous source (octabam 21f6de90, card image and USB package). If FREQ, MIX, GAIN or SRR seem to do nothing, check the track's scene locks. Eight instances and scenes are untested. The author reports the same loop running on his MKII, eight instances at once, in his own build.",
-      "Qualification note (21 October 2026): the owner approved this exact experimental source with the remaining current-build hardware checks waived, including reload/reboot gaps and the recorded six-module CPU self-test failure. The failure remains unresolved and no new hardware result is claimed. See sdk/lofi2-build-approval.json."
+      "First Modwerk import of Bryan T's LOFI2 from octabam: ring modulator or stereo frequency shifter (MODE RING / DOWN / UP), then sample-rate and bit reduction and a high-shelf cut.",
+      "Upstream code is unchanged, including the author's faster version and his SHIFT fix that suppresses the unwanted sideband in DOWN and UP much better.",
+      "Modwerk repackaging: a different effect ID, so octabam LOFI2 projects don't select it, and RNGE as the range name. Card builds give up two stock reverbs and can't include Analog BD.",
+      "Over USB the beta base loads LOFI2 into FX1 or FX2; two fit on one DSP core and a third is refused (DSP FULL). The self-test failed with LOFI2 plus five other modules.",
+      "Known issue: with RNGE HIGH, FREQ about 60 to 76 and FDBK 124 or more, SHIFT keeps sounding after the input stops; keep FDBK at 120 or below there (octabam issue 825)."
     ]
   }
 ]

@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "machine": "analog-rytm-mkii",
+  "moduleId": "filter-hz",
+  "moduleVersion": "1.2.0",
+  "firmware": "1.74",
+  "capturedAt": "2026-10-14T12:14:37Z",
+  "imageSha256": "62c256261d643752c9e8ffb357aada048af75a9b03c1f1aae649287e4bae7745",
+  "mainSha256": "2d8aead1932dd07003c75b233c4c93291d144c4eb5d6a8a11f1fecece1ea948d",
+  "stockSha256": "cb0f99d620edde994fb860c0e79cc2464e427d06882828cfdfb00fc53700e123",
+  "build": "Modwerk's linker: the released core-ar2 0.3 (6b97dfb3…3e58) + rytm2_mods v1.2 filter-hz (25055fc7…512a), --version FZ74",
+  "emulator": {
+    "name": "rytm-emu",
+    "repository": "https://github.com/trigcondition/rytm-emu",
+    "revision": "c5732f0",
+    "binary": "dtboot (cargo build --release)",
+    "settings": "no card image, JIT on"
+  },
+  "conditions": "Headless cold boot; four held NO presses clear the missing-calibration notices; FLTR opens the FILTER page of track BD; encoder 4 (FRQ) is turned down from 127 to 60 and back to 127. Frames are dtboot's firmware-rendered 128x64 screen at 3x, unmodified. In rytm-emu c5732f0 on FZ74 this plan gives these three frames byte for byte; across its 104 screens it differs from stock 1.74 only in the FRQ label (x 3-96, y 144-158), except turns 60, 70 and 80, mid-turn frames where the two runs had reached different FRQ values. The files were first captured (2026-10-14) with rytm-emu 3c4c42c on FZ01, an OS 1.73 build, which gives the same three frames. Filter Hz 1.2.0's package links to FZ74's main OS (evidence/source-parity.json).",
+  "captures": [
+    {
+      "path": "media/filter-page.png",
+      "sha256": "201ecba801dfef89057ba777f67a5d91c989b5e6878ef221258c470c6cfa046d",
+      "frame": "step05_FLTR.png",
+      "plan": "DTBOOT_STEPS=1 DTBOOT_PNG_DIR=out DTBOOT_TURN_PNG=out dtboot fz.syx --instr 10500M --every 1000M --press NO@4500M:80M --press NO@5300M:80M --press NO@6100M:80M --press NO@6900M:80M --press FLTR@7500M:40M --turn 4:-6@8000Mx37/20M --turn 4:-1@9000Mx12/40M --turn 4:6@9600Mx50/12M"
+    },
+    {
+      "path": "media/frq-440hz.png",
+      "sha256": "7341965b5e7571883543b10216e74d7fdef5c83bc99d430d791ed3d183c8abf9",
+      "frame": "turn54.png",
+      "plan": "DTBOOT_STEPS=1 DTBOOT_PNG_DIR=out DTBOOT_TURN_PNG=out dtboot fz.syx --instr 10500M --every 1000M --press NO@4500M:80M --press NO@5300M:80M --press NO@6100M:80M --press NO@6900M:80M --press FLTR@7500M:40M --turn 4:-6@8000Mx37/20M --turn 4:-1@9000Mx12/40M --turn 4:6@9600Mx50/12M"
+    },
+    {
+      "path": "media/frq-open.png",
+      "sha256": "fe5109f8afab6af82bf20a0e33297a5eac45651f3cb35ae6aa60cf34e5232684",
+      "frame": "turn104.png",
+      "plan": "DTBOOT_STEPS=1 DTBOOT_PNG_DIR=out DTBOOT_TURN_PNG=out dtboot fz.syx --instr 10500M --every 1000M --press NO@4500M:80M --press NO@5300M:80M --press NO@6100M:80M --press NO@6900M:80M --press FLTR@7500M:40M --turn 4:-6@8000Mx37/20M --turn 4:-1@9000Mx12/40M --turn 4:6@9600Mx50/12M"
+    }
+  ]
+}

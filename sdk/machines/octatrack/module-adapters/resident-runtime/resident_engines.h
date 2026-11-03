@@ -21,21 +21,27 @@
  * It starts only from that claim, while stopped, two seconds after the last key, with no pattern queued, no pick
  * waiting and the manager idle; a failed step puts every entry back on its old copy and closes that core to it. */
 
-/* One engine as the build stores it (resident-engines-data.c): its words at base 0, three bytes each, high byte
- * first; each relocation an index, | 0x8000 for a displacement to a fixed address (value - base), else an address
- * (value + base). Indices strictly increase. count 0: this core does not carry the feature. */
+/* One engine: its words at base 0; each relocation an index, | 0x8000 for a displacement to a fixed address (value -
+ * base), else an address (value + base). Indices strictly increase. count 0: this core does not carry the feature.
+ * `exit`, 0 or the word holding a long branch's displacement that relocation points at the stock P address
+ * `exit_target` (its site's exit on this core, dsp_ledger.h). The base's engines are build data
+ * (resident-engines-data.c); a packaged feature's (MW_DSP_PACKAGED) are its bound controller's package's (ABI 10),
+ * given per generation by the board (mw_engines_package). */
 struct mw_engine_unit {
-    const uint8_t *words;
+    const uint32_t *words;
     const uint16_t *relocations;
-    uint16_t count, relocation_count;
+    uint16_t count, relocation_count, exit, exit_target;
 };
 #define MW_ENGINE_FEATURES 4u                                /* feature indices: 1, 2, 4, 8 */
-extern const struct mw_engine_unit mw_engine_units[2][MW_ENGINE_FEATURES];  /* [core][feature index] */
-extern uint32_t *const mw_engine_buffer[2];                /* per core, sized to its largest unit */
+#define MW_ENGINE_PACKAGED_WORDS 2048u                       /* the largest engine a package may bring */
+extern const struct mw_engine_unit mw_engine_units[2][MW_ENGINE_FEATURES];  /* [core][feature index]; packaged: none */
+extern uint32_t *const mw_engine_buffer[2];                /* per core, sized to its largest unit (packaged ones too) */
 
 enum mw_engine_state { MW_ENGINE_FREE, MW_ENGINE_CLAIMED, MW_ENGINE_WRITING, MW_ENGINE_WRITTEN, MW_ENGINE_PLACING,
                        MW_ENGINE_PLACED, MW_ENGINE_UNPLACING, MW_ENGINE_STUCK };
-struct mw_engine { uint16_t offset; uint8_t state, pad; uint32_t generation; }; /* offset: from DL_CODE_START */
+/* offset: from DL_CODE_START; count: the words of its span (the unit it holds); generation: the controller generation
+ * that claimed it (a packaged feature's engine is that generation's package's). */
+struct mw_engine { uint16_t offset, count; uint8_t state, pad[3]; uint32_t generation; };
 extern struct mw_engine mw_engines[2][MW_ENGINE_FEATURES];
 /* Diagnostics, never an ABI: owned jobs started, placements and unplacements acknowledged, claims refused. */
 extern volatile uint32_t mw_engines_jobs, mw_engines_placed_count, mw_engines_unplaced_count, mw_engines_refused;
@@ -55,25 +61,36 @@ void mw_engine_relocate(const struct mw_engine_unit *, uint32_t base, uint32_t *
 void mw_engines_poll(void);
 /* Every core in `cores` has `feature`'s engine placed and its PLACE acknowledged. */
 int mw_engines_ready(unsigned feature, unsigned cores);
+/* A packaged feature's engine for controller `generation`: per core, its unit (count 0 on a core it does not run on).
+ * The words stay the package's (its pool extent) while the generation is held; a placed engine of another generation
+ * is unplaced first, while that core is known dormant, then this one is written and placed. */
+void mw_engines_package(unsigned feature, uint32_t generation, const struct mw_engine_unit units[2]);
 /* Every feature the board wants placed now (held controllers, what they imply, the key bus for its readers). A claim
  * reserves room for each wanted engine not yet placed on that core as well, so engines wanted together (Sidechain and
  * the key bus) take their region in one claim and live FX code there moves once, in one evacuation. */
 void mw_engines_want(unsigned features);
 /* Drive placement of `feature` on `cores` for a controller generation: 1 placed everywhere, 0 not yet (a job in
- * flight, the sequencer playing, the manager busy, an evacuation running or waiting, no room), -1 never this boot (an
- * uncertain PLACE). A core whose `busy` entry is set (the board's own job holds it) is left alone. Live FX code in the
- * region is moved below it first (the manager's evacuation), only while QUIET, two seconds after the last key and
+ * flight, a pattern change queued, the manager busy, an evacuation or trim running or waiting, no room), -1 never this
+ * boot (an uncertain PLACE). A core whose `busy` entry is set (the board's own job holds it) is left alone. It places
+ * while the sequencer plays when the engine fits in free words. Live FX code in the region is moved below it first
+ * (the manager's evacuation), and cached code retired (a trim), only while QUIET, two seconds after the last key and
  * with no pick waiting. */
-int mw_engines_place(unsigned feature, unsigned cores, uint32_t generation, const uint8_t busy[2]);
+int mw_engines_place(unsigned feature, unsigned cores, uint32_t generation, const uint8_t busy[2],
+                     const uint8_t mask[2], unsigned known);
 /* Admission's dry run for an incoming controller of `feature`; `wanted`: every feature held, live or incoming.
  * MW_ENGINE_FITS: placed, fits (live FX code in the region included, when it can move below it), or the manager is
  * busy (the claim then waits on the tick); MW_ENGINE_MEMORY: live FX code where the engines go cannot move below them
  * (no place, or an evacuation failed on that core this boot), or the bank's Part union would no longer fit under them
  * (the board answers RUNTIME_MEMORY); MW_ENGINE_STUCK_BOOT: the engine is stuck for this boot (RUNTIME_CONFLICT). */
 enum { MW_ENGINE_FITS, MW_ENGINE_MEMORY, MW_ENGINE_STUCK_BOOT };
-int mw_engines_admit(unsigned feature, unsigned wanted); /* `wanted` with what it implies (Sidechain: the key bus) */
+/* `wanted` with what it implies (Sidechain: the key bus); `words`, a packaged feature's incoming engine's size (its
+ * package's), else 0. */
+int mw_engines_admit(unsigned feature, unsigned wanted, unsigned words);
 /* ABI 9: the base features this base provides to packages (loader.h): the key bus. */
 unsigned modwerk_machine_dsp_features(void);
+/* The unit may give an unused engine back (the board parks its controller): stopped, no pattern change queued, two
+ * seconds after the last key or knob and no pick waiting, as an evacuation waits. */
+int mw_engines_settled(void);
 /* Unplace and free every engine no held slot names: only when its feature is known dormant on that core (`mask`,
  * bit c of `known`), the core is free (`busy`) and the sequencer is quiet. */
 void mw_engines_collect(unsigned held, const uint8_t mask[2], unsigned known, const uint8_t busy[2]);
@@ -88,7 +105,8 @@ struct mw_engines_view {
     uint16_t arena[2], reserved[2];   /* 36, 40: the FX arena now and the words reserved for engines, per core */
     uint8_t admitted[4], claim_why[2], held;   /* 44, 48, 50: verdicts, dl_engine_why, held features (8: the key bus) */
     uint8_t evacuation, evacuations;           /* 51: dl_engine_evacuation(); 52: done (low nibble) | failed << 4, mod 16 */
-    uint8_t keybus, keybus_reset[2];           /* 53: key bus wanted | lane op core 0 << 1 | core 1 << 4; 54: reset words / 8 */
+    uint8_t keybus, keybus_reset[2];           /* 53: key bus wanted | lane op core 0 << 1 | core 1 << 4 (1 reset, 2 enable,
+                                                * 3 disable, 4 stuck, 5 scrub) | 128 cannot come up this boot; 54: reset words / 8 */
     uint32_t jobs, placed, unplaced, refused; /* 56 */
     struct { uint32_t module, generation; uint8_t state, feature, enable_acks, disable_acks;
              uint16_t acknowledged[2], reset[2]; } slots[6]; /* 72, 20 bytes each: the controller registry */

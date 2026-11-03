@@ -1,0 +1,40 @@
+{
+ "schemaVersion": 1,
+ "recorded": "2026-10-22",
+ "decision": "Analog Rytm MKII module: rytm2_mods' elemod port of MrScruff's rytm-mods 0015-env-reset-amp, for OS 1.74, imported under GPL-2.0-only with attribution. rytm-mods-src is published with MrScruff's permission.",
+ "modules": [
+  {
+   "module": "analog-rytm-mkii/env-reset-amp",
+   "version": "1.0.0",
+   "repository": "https://github.com/Iced-Cream/rytm2_mods",
+   "tag": "v1.2",
+   "revision": "afd461d4a8ef4306bb2a57d4c61ad35c362b3940",
+   "license": "GPL-2.0-only",
+   "files": [
+    {
+     "from": "env-reset-amp/os1.74/env-reset-amp.s",
+     "to": "src/env-reset-amp.s",
+     "sha256": "9dc26b75461ddf0d4166740a17d96543cf3052e55d22748f19d7cc1a3f9f2803"
+    },
+    {
+     "from": "LICENSE",
+     "to": "LICENSE",
+     "sha256": "8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643"
+    },
+    {
+     "from": "env-reset-amp/README.md",
+     "to": "upstream/README.md",
+     "sha256": "17dde2a1b3b0ff227fb7098b053d2c35cfe0c33ddf0f48c66133076550efa1c1"
+    }
+   ],
+   "excluded": [
+    "env-reset-amp/mod.json",
+    "env-reset-amp/env-reset-amp.s"
+   ],
+   "transformations": [
+    "mod.json's OS 1.74 port sites (two 2-byte code sites at 0x400bcf8a and 0x400ef8d6, and 6 stock bytes at 0x40109b70 replaced by jmp env_reset_amp_attack) became address, length and SHA-256 guards in build.json's 1.74 release; the two byte sites keep their new bytes (7403, 4e71) as bytes sites of kind code.",
+    "The OS 1.73 source and sites are not imported: core-ar2 0.3 is for OS 1.74 only."
+   ]
+  }
+ ]
+}

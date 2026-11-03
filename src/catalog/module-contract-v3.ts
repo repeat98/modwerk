@@ -252,8 +252,10 @@ type ElemodSiteGuard = { addr: string; len: number; stockSha256: string }
 export type ElemodSite = ElemodSiteGuard & (
   { op: 'jmp' | 'jsr' | 'keep2' | 'ptr'; target: string } |
   { op: 'lea'; target: string; register: number } |
-  { op: 'bytes'; new: string; kind: 'code' | 'data'; target?: never }
+  { op: 'bytes'; new: string; kind: 'code' | 'data'; relocs?: ElemodSiteReloc[]; target?: never }
 )
+/** An absolute 32-bit address of a module symbol, written at byte `at` of a `bytes` site. */
+export type ElemodSiteReloc = { at: number; target: string }
 export type ElemodRelease = { defsym: Record<string, string>; cflags: string[]; sites: ElemodSite[] }
 export type ElemodBuildSpec = {
   strings: Record<string, string>
@@ -261,6 +263,7 @@ export type ElemodBuildSpec = {
   subscribe: { event: string; fn: string; order: number }[]
   contribute: { to: string; order: number; data: string; relocs: [number, 'abs32' | 'pc32' | 'pc16', string, number][] }[]
   collections: Record<string, number>; copied: { lo: string; hi: string; to: string }[]; regions: { name: string; lo: string; hi: string }[]
+  storage: { sym: string; scope: 'sound' | 'kit' | 'global' | 'track' | 'pattern' | 'project'; bits: number }[]   // mod storage fields, for a core that keeps them
   claims: string[]; requires: string[]
   // Steps that need the stock OS run only during the owner's local build, never in CI.
   derive: { kind: string; note: string; release: string; releases: string[]; block: [string, string]; sram: [string, string]; callSites: { addr: string; len: number; stockSha256: string; target: string }[] } | null
@@ -275,17 +278,27 @@ function defines(value: unknown, path: string): Record<string, string> {
 }
 /** Also validate compiled recipes at their consumption boundary, not just build.json. */
 export function parseElemodSite(value: unknown, path = 'site'): ElemodSite {
-  const entry = object(value, path, ['addr', 'len', 'stockSha256', 'op'], ['target', 'register', 'new', 'kind'])
+  const entry = object(value, path, ['addr', 'len', 'stockSha256', 'op'], ['target', 'register', 'new', 'kind', 'relocs'])
   const op = choice(entry.op, path + '.op', ELEMOD_SITE_OPS)
   const required = op === 'bytes' ? ['new', 'kind'] : op === 'lea' ? ['target', 'register'] : ['target']
-  const site = object(value, path, ['addr', 'len', 'stockSha256', 'op', ...required])
+  const site = object(value, path, ['addr', 'len', 'stockSha256', 'op', ...required], op === 'bytes' ? ['relocs'] : [])
   const len = count(site.len, path + '.len')
   if (!len || len > 64) fail(path + '.len', 'expected a length of 1–64 bytes')
   const guard = { addr: address(site.addr, path + '.addr'), len, stockSha256: sha256(site.stockSha256, path + '.stockSha256') }
   if (op === 'bytes') {
     const bytes = hexBytes(site.new, path + '.new'), kind = choice(site.kind, path + '.kind', ['code', 'data'] as const)
     if (bytes.length !== len * 2 || kind === 'code' && (len % 2 || Number(guard.addr) % 2)) fail(path, 'invalid authored byte patch length or alignment')
-    return { ...guard, op, new: bytes, kind }
+    if (!('relocs' in site)) return { ...guard, op, new: bytes, kind }
+    // Each reloc fills four zero bytes of `new` with a symbol's address; the stock hash still guards the whole site.
+    const relocs = list(site.relocs, path + '.relocs', 1, 16).map((value, index) => {
+      const where = path + '.relocs[' + index + ']', reloc = object(value, where, ['at', 'target'])
+      const at = count(reloc.at, where + '.at')
+      if (at === null || at + 4 > len || kind === 'code' && (at < 2 || at % 2)) fail(where + '.at', kind === 'code' ? 'expected an even offset past the opcode word, inside the site' : 'expected an offset inside the site')
+      if (bytes.slice(at * 2, at * 2 + 8) !== '00000000') fail(where + '.at', 'expected the four bytes the address fills to be 00000000 in new')
+      return { at, target: symbol(reloc.target, where + '.target') }
+    }).sort((a, b) => a.at - b.at)
+    relocs.forEach((reloc, index) => { if (index && reloc.at < relocs[index - 1].at + 4) fail(path + '.relocs', 'relocations overlap') })
+    return { ...guard, op, new: bytes, kind, relocs }
   }
   if (op === 'ptr' ? len !== 4 : op === 'keep2' || op === 'lea' ? len !== 6 : len < 6 || len % 2) fail(path, 'invalid explicit patch length')
   if (op !== 'ptr' && Number(guard.addr) % 2) fail(path, 'code patch must be aligned')
@@ -308,7 +321,7 @@ function range(value: unknown, path: string): [string, string] {
 
 export function parseElemodBuild(value: unknown, document: Pick<ModwerkModule, 'platform' | 'compatibility'>): ElemodBuildSpec {
   const keys = ['schemaVersion', 'sources', 'defsym', 'cflags', 'weak', 'subscribe', 'contribute', 'collections', 'copied', 'regions', 'claims', 'requires', 'derive', 'releases'] as const
-  const item = object(value, 'build', keys, ['strings'])
+  const item = object(value, 'build', keys, ['strings', 'storage'])
   if (item.schemaVersion !== 1) fail('build.schemaVersion', 'expected 1')
   const sources = list(item.sources, 'build.sources', 1, 64).map((path, index) => {
     const file = modulePath(path, 'build.sources[' + index + ']')
@@ -333,6 +346,13 @@ export function parseElemodBuild(value: unknown, document: Pick<ModwerkModule, '
   const collections = Object.fromEntries(Object.entries(collectionsValue).map(([name, entry]) => [symbol(name, 'build.collections.' + name), count(entry, 'build.collections.' + name) ?? 0]))
   const copied = list(item.copied, 'build.copied', 0, 8).map((entry, index) => { const at = 'build.copied[' + index + ']', value = object(entry, at, ['lo', 'hi', 'to']); const [lo, hi] = range([value.lo, value.hi], at); return { lo, hi, to: address(value.to, at + '.to') } })
   const regions = list(item.regions, 'build.regions', 0, 8).map((entry, index) => { const at = 'build.regions[' + index + ']', value = object(entry, at, ['name', 'lo', 'hi']); const [lo, hi] = range([value.lo, value.hi], at); return { name: text(value.name, at + '.name', 80), lo, hi } })
+  const storage = list(item.storage ?? [], 'build.storage', 0, 32).map((entry, index) => {
+    const at = 'build.storage[' + index + ']', value = object(entry, at, ['sym', 'scope', 'bits'])
+    const bits = count(value.bits, at + '.bits') ?? 0
+    if (bits < 1 || bits > 32) fail(at + '.bits', 'expected 1 to 32')
+    return { sym: symbol(value.sym, at + '.sym'), scope: choice(value.scope, at + '.scope', ['sound', 'kit', 'global', 'track', 'pattern', 'project'] as const), bits }
+  })
+  if (new Set(storage.map(field => field.sym)).size !== storage.length) fail('build.storage', 'each field once')
   const claims = texts(item.claims, 'build.claims', 0, 32, 80)
   if ([...claims].sort().join('\n') !== [...document.platform.claims].sort().join('\n')) fail('build.claims', 'must match module.platform.claims')
   const events = new Set([...subscribe.map(entry => entry.event), ...contribute.map(entry => entry.to).filter(name => name.startsWith('ev_'))])
@@ -358,7 +378,7 @@ export function parseElemodBuild(value: unknown, document: Pick<ModwerkModule, '
   if (derive && (derive.releases.some(release => !document.compatibility.releases.includes(release)) || !derive.releases.includes(derive.release))) fail('build.derive.releases', 'expected supported releases including the base release')
   const stringsValue = object(item.strings ?? {}, 'build.strings', Object.keys((item.strings ?? {}) as object))
   const strings = Object.fromEntries(Object.entries(stringsValue).map(([name, value]) => [symbol(name, 'build.strings.' + name), text(value, 'build.strings.' + name, 120)]))
-  return { schemaVersion: 1, sources, strings, defsym: defines(item.defsym, 'build.defsym'), cflags: texts(item.cflags, 'build.cflags', 0, 16, 60), weak: list(item.weak, 'build.weak', 0, 64).map((name, index) => symbol(name, 'build.weak[' + index + ']')), subscribe, contribute, collections, copied, regions, claims, requires, derive, releases }
+  return { schemaVersion: 1, sources, strings, defsym: defines(item.defsym, 'build.defsym'), cflags: texts(item.cflags, 'build.cflags', 0, 16, 60), weak: list(item.weak, 'build.weak', 0, 64).map((name, index) => symbol(name, 'build.weak[' + index + ']')), subscribe, contribute, collections, copied, regions, storage, claims, requires, derive, releases }
 }
 
 // Framework sources are compiled and resolved, but are not library/UI modules.

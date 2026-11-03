@@ -3,6 +3,10 @@
 Symptom → cause (measured, inferred or open) → fix. Add an entry the moment
 a mode is seen on hardware.
 
+This copy has carried Modwerk's own entries since 8 October 2026. Upstream's
+current register, with the failures found on its units since, is
+[../FAILURE_MODES.md](../FAILURE_MODES.md).
+
 ## POLY8T03 stops transport at step 1 and silences every channel — reported 8 October 2026, cause open
 
 **Hardware report.** After testing the private POLY8T03 image, the owner reports

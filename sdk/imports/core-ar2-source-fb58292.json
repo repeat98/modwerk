@@ -1,0 +1,66 @@
+{
+ "schemaVersion": 1,
+ "recorded": "2026-10-29",
+ "decision": "The source of elekloader's core-ar2 0.7 (the core for the Analog Rytm MKII on OS 1.74), copied unchanged as the starting point of Modwerk's own Rytm base. Owner decisions: a Modwerk-owned Rytm base (27 October 2026) started from the upstream core's source (docs/MACHINE_RECIPE.md, 28 October), from core-ar2 0.7 (repeat98/modwerk#878, 29 October). These are the eleven files core-ar2-0.7.elemod is built from: its build record lists the ten sources with these hashes, and mod.json is its recipe. npm run machine:base -- analog-rytm-mkii builds them. GPL-2.0-or-later, each source keeps its SPDX line; authors irpina and Iced-Cream.",
+ "repository": "https://github.com/irpina/elekloader",
+ "tag": "core-ar2-v0.7",
+ "revision": "fb58292359880739a257311667dbda981a605f19",
+ "license": "GPL-2.0-or-later",
+ "files": [
+  {
+   "from": "mods/core-ar2/mod.json",
+   "to": "sdk/machines/analog-rytm-mkii/elekloader/core-ar2/mod.json",
+   "sha256": "d72e5de377231a764d3efc001cd596beacc980b1bd82e810e7a7995473ef2b16"
+  },
+  {
+   "from": "mods/core-ar2/store.c",
+   "to": "sdk/machines/analog-rytm-mkii/elekloader/core-ar2/store.c",
+   "sha256": "0bf6c97195aed10d4d5ea33662d06b94448786296fc6e716a2df1a279bebc744"
+  },
+  {
+   "from": "mods/core-ar2/store.s",
+   "to": "sdk/machines/analog-rytm-mkii/elekloader/core-ar2/store.s",
+   "sha256": "d0fe7d9d6530e42b59381cc6b011a7f482e165b563479a1233ea9446c814c01a"
+  },
+  {
+   "from": "mods/core-ar2/route.s",
+   "to": "sdk/machines/analog-rytm-mkii/elekloader/core-ar2/route.s",
+   "sha256": "782b13f993d28f90edc7c14aa20f7354db95a3c22407f76a44fdd280d18507e2"
+  },
+  {
+   "from": "mods/core-ar2/pages.s",
+   "to": "sdk/machines/analog-rytm-mkii/elekloader/core-ar2/pages.s",
+   "sha256": "9802fba66d893f66b05daef2ba18846b407e7e6843729a75d939c21a717c5c60"
+  },
+  {
+   "from": "mods/core-ar2/load.s",
+   "to": "sdk/machines/analog-rytm-mkii/elekloader/core-ar2/load.s",
+   "sha256": "c135390d3973a1d62513ffcd32c4294ee744b656744205c6501924eb4690a33d"
+  },
+  {
+   "from": "mods/core-ar2/machines.c",
+   "to": "sdk/machines/analog-rytm-mkii/elekloader/core-ar2/machines.c",
+   "sha256": "6c788ea6d305bbc74ca0a037ada8b8d84a7b1ed24f1fb8331e4ee66e01b3f5a1"
+  },
+  {
+   "from": "mods/core-ar2/finish.s",
+   "to": "sdk/machines/analog-rytm-mkii/elekloader/core-ar2/finish.s",
+   "sha256": "f7e8801b7274a9405a443859b2e29fa1cd51a4212c8d7f7c2dfdbf3240bf9e27"
+  },
+  {
+   "from": "mods/core/core.s",
+   "to": "sdk/machines/analog-rytm-mkii/elekloader/core/core.s",
+   "sha256": "37383f6579ab731f736664814c4bf2c5bb576e8085e6d098a01ae9c89a9033a4"
+  },
+  {
+   "from": "mods/core/settings.s",
+   "to": "sdk/machines/analog-rytm-mkii/elekloader/core/settings.s",
+   "sha256": "8fa715d46d6dbe239bed6d8d0ea4a0c3100c068b39869c938b402f2d6a15a380"
+  },
+  {
+   "from": "mods/core/render.s",
+   "to": "sdk/machines/analog-rytm-mkii/elekloader/core/render.s",
+   "sha256": "442a5ea752fae5bfe8eeb326a90f0e9c0533e13d7caa0355d7fbb53266212418"
+  }
+ ]
+}

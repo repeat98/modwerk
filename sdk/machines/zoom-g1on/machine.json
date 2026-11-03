@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 1,
+  "id": "zoom-g1on",
+  "order": 230,
+  "name": "G1on series",
+  "family": "zoom",
+  "variants": [
+    "G1on",
+    "G1Xon",
+    "B1on",
+    "B1Xon"
+  ],
+  "status": "research",
+  "summary": "Same ZDL family. NAM loader effects reported working on a G1Xon 1.21; other models unconfirmed.",
+  "firmware": {
+    "releases": [
+      {
+        "version": "1.21",
+        "files": []
+      }
+    ],
+    "flash": "Effects are installed with Zoom Effect Manager 2.3.3 or later over USB; the OS is not modified.",
+    "recovery": "Remove the effect in Effect Manager. If a bad effect freezes the pedal at boot, run All Initialize (hold the leftmost knob while powering on), then remove the effect."
+  },
+  "steps": {
+    "format": "done",
+    "load": "started",
+    "mods": "open"
+  },
+  "research": [
+    {
+      "label": "ZoomMultistompZDL",
+      "url": "https://github.com/themanro/ZoomMultistompZDL",
+      "note": "MIT. ZDL linker, ABI notes, DSP safety rules, effects, NAM/cab template loaders, Web MIDI patch editor, Ziddle emulator tests."
+    },
+    {
+      "label": "repeat98/ZoomMultistompZDL",
+      "url": "https://github.com/repeat98/ZoomMultistompZDL",
+      "note": "The upstream reverse-engineered toolchain the project builds on."
+    },
+    {
+      "label": "Issue #6",
+      "url": "https://github.com/themanro/ZoomMultistompZDL/issues/6",
+      "note": "G1Xon 1.21: NAM loader effects work; the patch editor reads banks only up to E."
+    }
+  ],
+  "art": {
+    "body": "floor",
+    "encoders": 0,
+    "trigs": 0,
+    "knobs": 1
+  }
+}

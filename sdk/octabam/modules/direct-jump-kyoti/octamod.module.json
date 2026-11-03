@@ -1,0 +1,301 @@
+{
+  "schemaVersion": 2,
+  "id": "direct-jump-kyoti",
+  "key": "DIRECT_JUMP_KYOTI",
+  "name": "Direct Jump Kyoti",
+  "version": "0.1.2-experimental",
+  "category": "system",
+  "source": {
+    "repository": "https://github.com/sambanks/octabam",
+    "revision": "b725fb1a20e77bea37930be4f934a13ba53abc23",
+    "path": "modules/direct-jump-kyoti"
+  },
+  "author": {
+    "github": "Zac-Kyoti",
+    "name": "Zac Kyoti",
+    "credits": [
+      "Zac Kyoti: Direct Jump's design, its ColdFire source and the MKI hardware work behind it. Sam Banks: octabam integration.",
+      "Modwerk contributors: source import with stock guards in place of stock bytes, the stock-free re-encoding of three kernel posts for the USB package, the emulator gate, documentation and SVG thumbnail."
+    ]
+  },
+  "nativeManifest": "manifest.py",
+  "presentation": {
+    "label": "Clock-locked pattern jump on [PTN] + [YES]",
+    "family": "Sequencer",
+    "summary": "Hold [PTN] and press [YES] to turn Direct Jump Kyoti on: a pattern you cue takes over on the next step, where it would be had it played since START.",
+    "overview": "On the stock OS a cued pattern waits for the playing one to reach its end. With Direct Jump on, it takes over on the next step instead, locked to the master clock: it starts at the step it would be on had it been playing since you pressed PLAY, whatever its length, scale or per-track settings. The Part, START SILENT and trig conditions change as on a stock pattern change. It is off at every power-on, so the stock behaviour stays the default. It is Zac Kyoti's design, distinct from octabam's other direct jump (Tim Hastie's CHAIN AFTER option).",
+    "highlights": [
+      "OS 1.40C. Zac Kyoti tested the clock-locked timing, the Part change and the toggle on his MKI; Modwerk's USB package ran on an MKII.",
+      "Off at every power-on: until you turn it on, pattern changes are the stock ones.",
+      "The new pattern lands where it would be had it played since START, also with differing track lengths and scales (PER TRACK mode), so tracks stay in phase with the master clock.",
+      "The Part, START SILENT and trig conditions change as on a stock pattern change; the last MIDI Program Change names the pattern that plays; no MIDI START is sent on a jump.",
+      "Includes Zac Kyoti's fix for stock's MIDI Plays-Free stall, so a Plays Free MIDI track in PER TRACK mode keeps playing and Direct Jump places it with its own scale.",
+      "The arranger and pattern chains are left alone: while either runs, pattern changes are stock."
+    ],
+    "usage": [
+      "Hold [PTN] and press [YES]: DIRECT JUMP ON appears. Release [PTN]; the pattern chooser stays shut.",
+      "Press [PLAY]. Hold [PTN] and press a trig key to cue that pattern: it takes over on the next step, at the step it would be on had it played since START.",
+      "Hold [PTN] and press [YES] again for DIRECT JUMP OFF: cued patterns wait for the end of the playing one again, as on the stock OS."
+    ]
+  },
+  "access": {
+    "location": "Front panel: hold [PTN], press [YES]. No menu row or page.",
+    "steps": [
+      "Hold [PTN] and press [YES]: DIRECT JUMP ON appears. Release [PTN]; the pattern chooser stays shut.",
+      "Press [PLAY]. Hold [PTN] and press a trig key to cue that pattern: it takes over on the next step, at the step it would be on had it played since START.",
+      "Hold [PTN] and press [YES] again for DIRECT JUMP OFF: cued patterns wait for the end of the playing one again, as on the stock OS."
+    ],
+    "screenshots": [
+      "media/ot-direct-jump-on.png",
+      "media/ot-jump-landed.png",
+      "media/ot-direct-jump-off.png"
+    ]
+  },
+  "controls": [
+    {
+      "name": "DIRECT JUMP",
+      "default": 0,
+      "count": 2,
+      "labels": [
+        "OFF",
+        "ON"
+      ],
+      "doc": "Toggled with [PTN] + [YES]; a toast shows the new state. OFF at every power-on and not saved with the project. ON: a cued pattern takes over on the next step, clock-locked. OFF: stock pattern changes."
+    }
+  ],
+  "compatibility": {
+    "firmware": "1.40C",
+    "effectId": null,
+    "location": "Project sequencer",
+    "conflicts": [],
+    "uiClaims": [
+      "key:PATTERN+YES"
+    ],
+    "limitations": [
+      "OS 1.40C. The author tested the timing, the Part change and the toggle on an MKI. Modwerk's USB package ran on an MKII (toggle, jumps between a 64- and a 16-step pattern, a power cycle, removal); a jump into another Part, per-track scales and external MIDI were not tried on it, and the card build has not run on a unit.",
+      "OFF at every power-on and not stored in the project: turn it on again after a restart.",
+      "While the arranger or a pattern chain runs, pattern changes stay stock.",
+      "With differing track scales or lengths in PER TRACK mode, the jump waits for the next tick where every track is at a step boundary, at most one common step of all tracks' scales (24 clock ticks for 1x, 3/4x and 1/2x together).",
+      "[PTN] + [YES] no longer opens the pattern chooser on releasing [PTN]; [YES] alone and [PTN] with a trig key are unchanged.",
+      "Carries the author's fix for stock's MIDI Plays-Free stall (a Plays Free MIDI track with trig quantize DIRECT under PER TRACK scale stopped after its first step), whether Direct Jump is on or off. The bundle's other two fixes are not included.",
+      "A jump changes the Part through stock's own Part-change path, so stock's known Part-change carryover issues (a track going from PICKUP to FLEX can keep the old Part's pickup loop) happen on a jump as on a stock pattern change.",
+      "With Play Modes, each jump counts as a transport start for Play Modes, which restarts its own per-track state."
+    ]
+  },
+  "resources": {
+    "recorded": "25 October 2026; source assembly, the image gate and the ColdFire port",
+    "storage": {
+      "label": "DRAM code and detours",
+      "display": "2,078 B code and state + four 6 B detours + one 4 B pointer",
+      "value": 2106,
+      "unit": "bytes",
+      "method": "static",
+      "conditions": "Two linked units in the DRAM reserve: Direct Jump's 2,016 bytes (code, two toast strings and 62 bytes of state) and the MIDI Plays-Free fix's 62 bytes of code; four six-byte detours over stock instructions and the [PTN]-layer YES press pointer. The USB package carries the units as 2,080 bytes (aligned). No DSP memory, no saved data.",
+      "source": "TESTING.md"
+    },
+    "processing": {
+      "label": "ColdFire, per sequencer tick",
+      "display": "18 instr. a tick OFF, ~35 ON; at most 2,946 on a landing tick",
+      "value": 2946,
+      "unit": "instructions/event",
+      "method": "emulator",
+      "conditions": "Authored instructions of the tick hook under ot_emu, worst at a cue that lands on its arming tick; the stock routines a landing calls (Program Change, three kernel posts, the trig-condition reset) add up to about 220. The tick interrupt runs at level 3, below the DSP frame interrupt. Not chip timing.",
+      "source": "TESTING.md"
+    },
+    "impact": {
+      "conditions": "A jump to a pattern on another Part while playing: the landing tick, the dearest event. Between jumps, a short counter on every sequencer tick.",
+      "cpu": {
+        "level": "minimal",
+        "basis": "measured-comparison",
+        "rationale": "18 executed instructions a sequencer tick while OFF and about 35 while ON; at most 2,946 authored (3,166 with the stock routines it calls) on the tick a jump lands (ot_emu). The tick interrupt runs at level 3, below the level-5 DSP frame interrupt. Under a 62 s MIDI flood with a jump every second, the longest frame interrupt was the original OS's (167.3 us in the port's time) and idle 0.36 points lower. Time on the unit is not measured.",
+        "source": "TESTING.md"
+      },
+      "dsp": {
+        "level": "minimal",
+        "basis": "source-estimate",
+        "rationale": "No DSP code and no change to the DSP programs.",
+        "source": "manifest.py"
+      },
+      "memory": {
+        "level": "minimal",
+        "basis": "measured-comparison",
+        "rationale": "2,078 bytes of ColdFire code and state in the DRAM reserve (62 bytes of state) and 28 bytes of stock writes; no DSP memory and no saved data.",
+        "source": "TESTING.md"
+      }
+    }
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "On the owner's MKII over USB (25 Oct 2026), on the published beta base 109f23bd: the 0.1.2 package (listed as DirectJmp Kyoti) installed and kept beside four other modules as a tester's sync does it, self-test passed (5/5 intact), removed, and the restored set self-tested again. 0.1.0's run on a development twin (24 Oct 2026) drove the toggle and clock-locked jumps with the same Direct Jump unit. Under the ColdFire port (verify.py, 39 checks): OFF identical to the original OS through a pattern change; three jumps (16 steps; 7 steps on Part 2; PER TRACK lengths and scales) whose sequencer state equals a reference run of the incoming pattern since START on every tick after the landing; and the MIDI Plays-Free stall, which the original OS shows and the module fixes.",
+    "hardwareStatus": "reported",
+    "evidenceRevision": "cf95656dbc0e386b4fda769e04cc18eb2a5d3364",
+    "gates": [
+      "modules/direct-jump-kyoti/verify.py"
+    ],
+    "documentation": {
+      "tutorial": {
+        "title": "Quick tutorial: jump between patterns on the next step",
+        "steps": [
+          "Hold [PTN] and press [YES]: DIRECT JUMP ON appears. Release [PTN]; the pattern chooser stays shut.",
+          "Press [PLAY]. Hold [PTN] and press a trig key to cue that pattern: it takes over on the next step, at the step it would be on had it played since START.",
+          "Hold [PTN] and press [YES] again for DIRECT JUMP OFF: cued patterns wait for the end of the playing one again, as on the stock OS."
+        ]
+      },
+      "screenshots": [
+        "media/ot-direct-jump-on.png",
+        "media/ot-jump-landed.png",
+        "media/ot-direct-jump-off.png"
+      ],
+      "screenshotStyle": "black-and-white"
+    },
+    "qualification": {
+      "moduleVersion": "0.1.2-experimental",
+      "sourceSha256": "a692cb9858bc80acb561de3a9d13e30523a4b6921c834de9335485cbf38eecf8",
+      "imageSha256": "89a38e18728bb2039a0f5e3f39305fcb7be75e0db260acd6b33bd46d7e281cef",
+      "cycles": [
+        {
+          "processor": "coldfire",
+          "worstCase": 47136,
+          "maxConfiguration": 47136,
+          "maxInstances": 1,
+          "budget": 2200000,
+          "unit": "cycles/event",
+          "method": "emulator",
+          "conditions": {
+            "parameterExtremes": "OFF, ON while idle, the tick that arms a jump and the landing tick; 16-step patterns and a PER TRACK pattern with tracks at 2x, 3/2x, 1x, 3/4x, 1/2x, 1/4x and 1/8x (the largest common step, 48 clock ticks).",
+            "parameterModulation": "Not applicable: one ON/OFF word toggled by a key gesture; no knob, lock, LFO or scene reaches it.",
+            "modeSwitching": "Toggled ON and OFF while stopped and while playing; cues, re-cues inside one gesture and jumps back to the previous pattern.",
+            "maxLoad": "One instance per unit. Runs once per sequencer clock tick in the tick interrupt (level 3; its ICR read 3 in the port), below the level-5 DSP frame interrupt, which preempts it; its deadline is the next tick: 8.33 ms at the top tempo of 300 BPM (2,200,000 cycles at 264 MHz).",
+            "inputConditions": "Authored instructions of dj_land per tick under ot_emu (PC watches on its entry and return and on both sides of each stock call), priced at 16 cycles each: at most 2,946 (47,136 cycles), on a cue that lands on its arming tick; 3,166 with the stock routines it calls (Program Change, the kernel post, the trig-condition reset), which are stock cost. Static bound from the source: 5,700 (91,200). Not chip timing."
+          },
+          "report": "TESTING.md"
+        }
+      ],
+      "memory": {
+        "regions": [
+          {
+            "name": "ColdFire code, two toast strings and 62 bytes of state (Direct Jump's linked unit, DRAM)",
+            "space": "sdram",
+            "words": 2016,
+            "wordBits": 8,
+            "bytes": 2016,
+            "scope": "shared"
+          },
+          {
+            "name": "The MIDI Plays-Free fix's code (a second linked unit, DRAM)",
+            "space": "sdram",
+            "words": 62,
+            "wordBits": 8,
+            "bytes": 62,
+            "scope": "shared"
+          },
+          {
+            "name": "Four six-byte detours and the four-byte [PTN]-layer YES pointer, written over stock in place",
+            "space": "cpu-flash",
+            "words": 28,
+            "wordBits": 8,
+            "bytes": 28,
+            "scope": "shared"
+          }
+        ],
+        "perInstanceBytes": 0,
+        "sharedBytes": 2106,
+        "maxInstances": 1,
+        "totalBytes": 2106,
+        "conditions": "From the two linked units (2,016 and 62 bytes of code and data, no bss; the USB package carries the same bytes, 2,080 aligned, with 18 relocations) and the five stock writes. No DSP memory, no heap, no saved data.",
+        "report": "TESTING.md"
+      },
+      "hardware": {
+        "kind": "functional",
+        "status": "reported",
+        "model": "MKII",
+        "testedOn": "2026-10-25",
+        "tester": "repeat98",
+        "sourceRevision": "cf95656dbc0e386b4fda769e04cc18eb2a5d3364",
+        "imageSha256": "89a38e18728bb2039a0f5e3f39305fcb7be75e0db260acd6b33bd46d7e281cef",
+        "summary": "The owner's MKII, OS 1.40C, driven over USB by the agent at the owner's request, on the published beta base 109f23bd (flashed, running from RAM on the same image) with SIDECHAIN COMP, Ringmod SC, Mini Verb and POLY8 kept: package 89a38e18 installed and kept as a tester's sync does it (generation 7), listed as DirectJmp Kyoti; self-test passed (5/5 intact, both DSP modules ran, longest frame 419 us, card set saved 5/5); removal kept (generation 8), the four remained; self-test passed again (4/4, 418 us). 0.1.2 differs from the 0.1.1 package run the same way earlier that day only in its 15-character title. The 0.1.0 package's toggle and jumps ran on a development twin on 24 Oct 2026 with the byte-identical Direct Jump unit (evidence/hardware.md).",
+        "limitations": [
+          "One unit, driven by the agent; nothing judged by ear.",
+          "Not exercised on the unit with 0.1.1 or 0.1.2: the toggle, a jump and the MIDI Plays-Free fix itself (the beta base answers no key presses or RAM reads over USB). The author confirmed the fix on his MKI; the emulator gate runs the stall against the original OS.",
+          "Not run: a power cycle with 0.1.1 kept, the card build, an MKI, the site's review/Keep/Undo pages.",
+          "About ten minutes of use over the two runs."
+        ],
+        "report": "evidence/hardware.md"
+      },
+      "documentation": {
+        "tutorial": {
+          "title": "Quick tutorial: jump between patterns on the next step",
+          "steps": [
+            "Hold [PTN] and press [YES]: DIRECT JUMP ON appears. Release [PTN]; the pattern chooser stays shut.",
+            "Press [PLAY]. Hold [PTN] and press a trig key to cue that pattern: it takes over on the next step, at the step it would be on had it played since START.",
+            "Hold [PTN] and press [YES] again for DIRECT JUMP OFF: cued patterns wait for the end of the playing one again, as on the stock OS."
+          ]
+        },
+        "screenshots": [
+          "media/ot-direct-jump-on.png",
+          "media/ot-jump-landed.png",
+          "media/ot-direct-jump-off.png"
+        ],
+        "screenshotStyle": "black-and-white"
+      }
+    }
+  },
+  "license": {
+    "spdx": "MIT",
+    "file": "LICENSE",
+    "declaration": "The authored source and both upstream licence notices are kept with exact source pins. Stock code is referenced only by address, length and SHA-256. No firmware, extracted stock routine or table, built image, card or memory dump is included. The Modwerk gate, documentation and thumbnail are original Modwerk work under GPL-3.0-or-later. LCD captures keep the underlying Elektron rights as declared in media/LICENSE.md."
+  },
+  "media": [
+    {
+      "path": "media/ot-direct-jump-on.png",
+      "captureType": "emulator",
+      "caption": "Hold [PTN] and press [YES]. DIRECT JUMP ON appears; release [PTN] and the pattern chooser stays shut.",
+      "alt": "Octatrack main screen with a notification box reading DIRECT JUMP ON.",
+      "credit": "Modwerk contributors; Elektron Octatrack UI",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "Main screen with the notification",
+        "shows": "location-and-controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.2-experimental",
+        "imageSha256": "4453c3684fd72b242bbf9b4abef5b53a344364274391352266b4d81919677768",
+        "setup": "Headless ot_emu; MKII panel; 128×64 LCD at integer scale 6; DSP cores running; empty scratch card, its missing-project prompts dismissed with three NO presses; native initialized state, no saved project. Static native build of this module alone with every stock effect kept (MAIN OS 4453c368…)."
+      }
+    },
+    {
+      "path": "media/ot-jump-landed.png",
+      "captureType": "emulator",
+      "caption": "Press [PLAY], hold [PTN] and press [TRIG 2]. A quarter of a second later A02 already plays: it took over on the next step instead of waiting for A01's end.",
+      "alt": "Octatrack main screen during playback showing pattern A02 as the playing pattern.",
+      "credit": "Modwerk contributors; Elektron Octatrack UI",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "Main screen while playing",
+        "shows": "controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.2-experimental",
+        "imageSha256": "4453c3684fd72b242bbf9b4abef5b53a344364274391352266b4d81919677768",
+        "setup": "Headless ot_emu; MKII panel; 128×64 LCD at integer scale 6; DSP cores running; empty scratch card, its missing-project prompts dismissed with three NO presses; native initialized state, no saved project. Static native build of this module alone with every stock effect kept (MAIN OS 4453c368…)."
+      }
+    },
+    {
+      "path": "media/ot-direct-jump-off.png",
+      "captureType": "emulator",
+      "caption": "Hold [PTN] and press [YES] again. DIRECT JUMP OFF appears, and cued patterns wait for the end of the playing one, as on the stock OS.",
+      "alt": "Octatrack main screen with a notification box reading DIRECT JUMP OFF.",
+      "credit": "Modwerk contributors; Elektron Octatrack UI",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "Main screen with the notification",
+        "shows": "controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.2-experimental",
+        "imageSha256": "4453c3684fd72b242bbf9b4abef5b53a344364274391352266b4d81919677768",
+        "setup": "Headless ot_emu; MKII panel; 128×64 LCD at integer scale 6; DSP cores running; empty scratch card, its missing-project prompts dismissed with three NO presses; native initialized state, no saved project. Static native build of this module alone with every stock effect kept (MAIN OS 4453c368…)."
+      }
+    }
+  ]
+}

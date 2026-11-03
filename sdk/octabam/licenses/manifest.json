@@ -304,6 +304,34 @@
       "usedIn": [
         "modules/quantize-live-rec-toggle"
       ]
+    },
+    {
+      "id": "kyoti-direct-jump",
+      "name": "Zac Kyoti Direct Jump",
+      "spdx": "MIT",
+      "noticeFile": "kyoti-direct-jump.txt",
+      "sources": [
+        {
+          "path": "sdk/octabam/modules/direct-jump-kyoti/LICENSE"
+        }
+      ],
+      "usedIn": [
+        "modules/direct-jump-kyoti"
+      ]
+    },
+    {
+      "id": "jankolkmeier-dejavu",
+      "name": "Jan Kolkmeier Deja Vu",
+      "spdx": "MIT",
+      "noticeFile": "jankolkmeier-dejavu.txt",
+      "sources": [
+        {
+          "path": "sdk/octabam/modules/dejavu/LICENSE"
+        }
+      ],
+      "usedIn": [
+        "modules/dejavu"
+      ]
     }
   ],
   "moduleComponents": {
@@ -343,6 +371,12 @@
     ],
     "quantize-live-rec-toggle": [
       "kyoti-quantize-live-rec-toggle"
+    ],
+    "direct-jump-kyoti": [
+      "kyoti-direct-jump"
+    ],
+    "dejavu": [
+      "jankolkmeier-dejavu"
     ]
   }
 }

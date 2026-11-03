@@ -20,6 +20,9 @@ import struct
 import sys
 import tempfile
 
+sys.path.append(str(Path(__file__).resolve().parents[2]))  # sdk/, for firmware_codec
+import firmware_codec  # noqa: E402
+
 
 def unpack(data):
     """(image, self-reference offsets, sites) of an ABI 3 to 7 package (its DSP code is not linked statically). A site
@@ -39,14 +42,14 @@ def unpack_all(data):
 
 def unpack_recipe(data):
     abi = struct.unpack_from('>H', data, 4)[0] if data[:4] == b'MWRM' else 0
-    if abi not in (3, 4, 5, 6, 7, 8, 9):
-        raise ValueError('Not an ABI 3 to 9 runtime package.')
+    if abi not in (3, 4, 5, 6, 7, 8, 9, 10):
+        raise ValueError('Not an ABI 3 to 10 runtime package.')
     image, _, count, hooks, sites = struct.unpack_from('>IIIII', data, 8)
     dsp_words, dsp_relocations = struct.unpack_from('>IH', data, 32) if abi >= 5 else (0, 0)
     copies = struct.unpack_from('>I', data, 68)[0] if abi >= 7 else 0
     fills = struct.unpack_from('>I', data, 72)[0] if abi >= 8 else 0
     claims, entries = (data[78], data[79]) if abi >= 9 else (0, 0)  # ABI 9: 12-byte claims, 8-byte hook entries
-    at = {3: 28, 4: 32, 5: 50, 6: 68, 7: 72, 8: 76, 9: 80}[abi] + 4 * hooks
+    at = {3: 28, 4: 32, 5: 50, 6: 68, 7: 72, 8: 76, 9: 80, 10: 80}[abi] + 4 * hooks
     code, at = data[at:at + image], at + image
     offsets = struct.unpack_from('>%dI' % count, data, at)
     at += 4 * count
@@ -73,8 +76,10 @@ def unpack_recipe(data):
             raise ValueError('Malformed constant fill.')
         filled.append((offset, n, value))
         at += 12
+    # ABI 10: an engine's init claims (access 4) carry their words after the DSP relocations.
+    init = sum(struct.unpack_from('>I', data, at + 12 * i + 8)[0] for i in range(claims) if data[at + 12 * i + 2] & 4)
     at += 12 * claims + 8 * entries
-    if at + 4 * dsp_words + 2 * dsp_relocations != len(data):
+    if at + 4 * dsp_words + 2 * dsp_relocations + 4 * init != len(data):
         raise ValueError('Trailing bytes in the package.')
     return code, offsets, records, copied, filled
 
@@ -91,7 +96,7 @@ def main():
     for name in ('stock', 'upstream', 'core', 'elemod', 'package'):
         parser.add_argument('--' + name, type=Path, required=True)
     args = parser.parse_args()
-    sys.path.insert(0, str(args.upstream.expanduser().resolve()))
+    firmware_codec.use_elekloader(args.upstream.expanduser().resolve())
     from elekloader import formats, patch
     parsed, device, _ = formats.load(str(args.stock))
     stock = formats.main_image(parsed, device)

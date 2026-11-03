@@ -1,0 +1,117 @@
+{
+  "firmware": "1.40C",
+  "imageSha256": "4453c3684fd72b242bbf9b4abef5b53a344364274391352266b4d81919677768",
+  "emulatorSha256": "bdbe962c14fc3560fb3196b01566646b80a74fd451883873a77290b4973dbbf1",
+  "setup": "Headless ot_emu; MKII panel; stopped transport; 128\u00d764 LCD at integer scale 6.",
+  "palette": {
+    "on": [
+      240,
+      240,
+      240
+    ],
+    "off": [
+      24,
+      24,
+      24
+    ]
+  },
+  "keyMs": 100,
+  "plan": [
+    {
+      "press": [
+        "NO"
+      ]
+    },
+    {
+      "press": [
+        "NO"
+      ]
+    },
+    {
+      "press": [
+        "NO"
+      ]
+    },
+    {
+      "wait": 1500
+    },
+    {
+      "hold": [
+        "PTN"
+      ]
+    },
+    {
+      "press": [
+        "YES"
+      ]
+    },
+    {
+      "capture": "ot-direct-jump-on.png"
+    },
+    {
+      "release": [
+        "PTN"
+      ]
+    },
+    {
+      "wait": 1500
+    },
+    {
+      "press": [
+        "PLAY"
+      ]
+    },
+    {
+      "wait": 700
+    },
+    {
+      "hold": [
+        "PTN"
+      ]
+    },
+    {
+      "press": [
+        "TRIG2"
+      ]
+    },
+    {
+      "release": [
+        "PTN"
+      ]
+    },
+    {
+      "wait": 250
+    },
+    {
+      "capture": "ot-jump-landed.png"
+    },
+    {
+      "hold": [
+        "PTN"
+      ]
+    },
+    {
+      "press": [
+        "YES"
+      ]
+    },
+    {
+      "capture": "ot-direct-jump-off.png"
+    },
+    {
+      "release": [
+        "PTN"
+      ]
+    },
+    {
+      "press": [
+        "STOP"
+      ]
+    }
+  ],
+  "screenshots": {
+    "ot-direct-jump-on.png": "2a8cff1dc36d1cfbb10f9ed313a7e729f9c40e2697cbced65b0bb0eb015c2914",
+    "ot-jump-landed.png": "48152f5b918d31f8bb41f6feada0f0e86f58d17889c586a39c26a47cea81c165",
+    "ot-direct-jump-off.png": "13a1a5fa2fc758fd84a4b1f707f6d5e041605434f5e06e1d6149d664c3ac4890"
+  }
+}

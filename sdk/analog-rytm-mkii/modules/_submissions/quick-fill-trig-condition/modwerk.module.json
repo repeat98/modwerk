@@ -1,0 +1,100 @@
+{
+ "schemaVersion": 3,
+ "id": "quick-fill-trig-condition",
+ "name": "Quick Fill Trig Condition",
+ "version": "0.1.0-experimental",
+ "machine": "analog-rytm-mkii",
+ "category": "system",
+ "exclusive": false,
+ "author": {
+  "github": "npp1993",
+  "credits": [
+   "Nathaniel Pavel"
+  ]
+ },
+ "maintainers": [
+  "npp1993"
+ ],
+ "presentation": {
+  "label": "QUICK FILL COND",
+  "family": "Workflow",
+  "summary": "Hold a trig in GRID RECORDING and press FILL to lock its trig condition: FILL, NOT FILL, then no lock.",
+  "overview": "Set a fill trig without going to the TRC knob. In GRID RECORDING, hold one or more trigs and press FILL: the trigs get a FILL condition lock. Press again for NOT FILL, and again to remove the lock. The press does not engage fill, and a fill latched with FUNC + FILL plays out its loop.",
+  "highlights": [
+   "One press for FILL, a second for NOT FILL, a third to clear",
+   "Works on every held trig at once",
+   "FILL keeps its stock job when no trig is held"
+  ],
+  "usage": [
+   "Mark a trig as a fill-only hit while the pattern plays.",
+   "Hold two trigs to swap them between FILL and NOT FILL together."
+  ]
+ },
+ "access": {
+  "location": "Any trig key held in GRID RECORDING, then FILL.",
+  "steps": [
+   "Turn on GRID RECORDING.",
+   "Hold a trig and press FILL: the trig plays only in fill.",
+   "Press FILL again for NOT FILL, a third time to clear it."
+  ],
+  "screenshots": []
+ },
+ "controls": [],
+ "compatibility": {
+  "releases": [
+   "1.74"
+  ],
+  "requires": [],
+  "conflicts": [],
+  "limitations": [
+   "Works in GRID RECORDING only: outside it, LIVE RECORDING included, and with QPER held or a menu open, FILL stays stock's.",
+   "Any other condition on the trig is replaced, and stock has no undo for it."
+  ]
+ },
+ "platform": {
+  "kind": "elemod",
+  "core": "0.7",
+  "build": "build.json",
+  "events": [],
+  "claims": [
+   "ui:TRIG + FILL"
+  ]
+ },
+ "resources": {
+  "memoryBytes": null,
+  "fastBytes": null,
+  "load": {
+   "display": "Not measured yet",
+   "method": "unmeasured",
+   "conditions": "Measure with every track playing, parameters modulated and the mod at its heaviest setting."
+  }
+ },
+ "evidence": {
+  "tier": "none",
+  "moduleVersion": "0.1.0-experimental",
+  "sourceSha256": null,
+  "reports": [],
+  "hardware": null,
+  "verifiedBy": null
+ },
+ "tests": {
+  "report": "TESTING.md",
+  "summary": "Functional pass on an Analog Rytm MKII and rytm-emu; see TESTING.md."
+ },
+ "license": {
+  "spdx": "GPL-3.0-or-later",
+  "file": "LICENSE",
+  "declaration": "Original work by the author."
+ },
+ "media": [
+  {
+   "path": "media/thumbnail.svg",
+   "kind": "thumbnail",
+   "caption": "Quick Fill Trig Condition thumbnail",
+   "alt": "Quick Fill Trig Condition thumbnail: a step line with one trig marked FILL",
+   "credit": "npp1993",
+   "license": "GPL-3.0-or-later",
+   "source": "Original artwork by the author."
+  }
+ ]
+}

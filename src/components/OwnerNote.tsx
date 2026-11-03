@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
+import { useEffect, useRef, useState, useSyncExternalStore, type MouseEvent } from 'react'
 import { Icon } from './Icon'
 import { DiagnosticsInvitation } from './DiagnosticsInvitation'
 import { assetUrl } from '../hosting'
@@ -42,6 +42,8 @@ export function OwnerNote({ username, onJoin, onLeave }: { username: string; onJ
   // The note stays up for a few seconds so it gets read, and then only closes through Leave beta or, once accepted, Join Discord.
   // Chrome closes a modal on a second Escape (or Android's back) even when the first one was cancelled, so it opens again.
   const locked = !!wait || !accepted
+  // A middle click opens Discord too, so it counts as the same choice.
+  const join = (event: MouseEvent) => { if (locked) event.preventDefault(); else onJoin() }
   return <dialog ref={dialog} className="app-dialog owner-note" aria-labelledby="owner-note-title" aria-describedby="owner-note-message" onCancel={event => event.preventDefault()} onClose={event => { const element = event.currentTarget; if (open.current && element.isConnected && !element.open) element.showModal() }}>
     <header className="owner-note-head"><img src={assetUrl('modwerk-mark.svg')} width={28} height={28} alt="" /><span>Modwerk beta</span></header>
     <div className="owner-note-body">
@@ -62,14 +64,14 @@ export function OwnerNote({ username, onJoin, onLeave }: { username: string; onJ
     </div>
     <footer className="owner-note-actions">
       <button type="button" className="owner-note-close" disabled={!!wait} onClick={onLeave}>Leave beta</button>
-      <a className="button button-primary" href={DEVELOPMENT_DISCORD_URL} target="_blank" rel="noopener noreferrer" aria-disabled={locked} onClick={event => { if (locked) event.preventDefault(); else onJoin() }} aria-label="Accept and join Discord (opens in a new tab)"><img src={assetUrl('auth/discord.svg')} width={20} height={15} alt="" />{wait ? `Accept & join Discord (${wait})` : 'Accept & join Discord'}</a>
+      <a className="button button-primary" href={DEVELOPMENT_DISCORD_URL} target="_blank" rel="noopener noreferrer" aria-disabled={locked} onClick={join} onAuxClick={event => { if (event.button === 1) join(event) }} aria-label="Accept and join Discord (opens in a new tab)"><img src={assetUrl('auth/discord.svg')} width={20} height={15} alt="" />{wait ? `Accept & join Discord (${wait})` : 'Accept & join Discord'}</a>
     </footer>
   </dialog>
 }
 
-/** Beta testers only (App.tsx), on every device until they accept the note, join Discord and share diagnostics, or leave the beta.
+/** Beta testers only (App.tsx), on every device until they accept the note and join Discord, or leave the beta.
  * It can't be put off: it opens on top of any other dialog as soon as the tab is visible, on every page but the FAQ, the account and the legal pages.
- * After a new consent version, the required diagnostics step comes back on its own. */
+ * The required diagnostics step follows; until it is done, and after a new consent version, it comes back on its own, without the note. */
 export function OwnerNoteGate({ enabled }: { enabled: boolean }) {
   const { session, refresh } = useCommunity(), memberId = session.user!.id
   const [step, setStep] = useState<'note' | 'diagnostics'>(), [serverDue, setServerDue] = useState<boolean>()
@@ -90,8 +92,7 @@ export function OwnerNoteGate({ enabled }: { enabled: boolean }) {
     const timer = window.setInterval(show, 1000)
     return () => window.clearInterval(timer)
   }, [enabled, step, due, lapsed])
-  // The note counts as done once the tester accepted it, joined Discord and diagnostics are on (or can't be turned on here).
-  const done = () => { closeOwnerNote(); void post('/auth/owner-note', {}).catch(() => {}); setStep(undefined) }
+  const done = () => setStep(undefined)
   async function leave() {
     if (!window.confirm('Leave the beta? The beta modules and the Octatrack USB page go away for your account. If you want back in later, just ask me on Discord.')) return
     try { await post('/auth/beta-leave', {}) } catch (failure) { window.alert(failure instanceof Error ? failure.message : 'Couldn’t leave the beta. Please try again.'); return }
@@ -99,7 +100,8 @@ export function OwnerNoteGate({ enabled }: { enabled: boolean }) {
   }
   if (step === 'diagnostics') return <DiagnosticsInvitation onClose={done} onLeave={() => void leave()} />
   return step === 'note' ? <OwnerNote username={session.user!.username!} onLeave={() => void leave()} onJoin={() => {
-    void post('/auth/beta-discord-invite', {}).catch(() => {})
+    // Accepting is recorded at once: a reload or a failed share before diagnostics are on brings back only the diagnostics step (lapsed), never the note.
+    closeOwnerNote(); void post('/auth/owner-note', {}).catch(() => {}); void post('/auth/beta-discord-invite', {}).catch(() => {})
     if (askForDiagnostics(diagnosticPreference(), browserRequestsPrivacy())) setStep('diagnostics'); else done()
   }} /> : null
 }

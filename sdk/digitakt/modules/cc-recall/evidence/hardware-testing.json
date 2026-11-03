@@ -1,0 +1,48 @@
+{
+  "schemaVersion": 1,
+  "reportedOn": "2026-10-29",
+  "source": "Direct author statements in the development conversation",
+  "reporter": "draadpiraat",
+  "status": "hardware-tested-author-reported",
+  "model": "Digitakt I",
+  "release": "1.54",
+  "moduleVersion": "0.1.0-experimental",
+  "builds": [
+    {
+      "name": "First build: Core 2.1 + cc-recall 0.1.0-experimental, before the pattern-record site",
+      "syxSha256": "0f79fa5eea59a1b03fc01eaa5abd9f3105e6d2c68e632ad3a176c3bf6269a70a",
+      "statement": "CC Recall works when reloading pattern, except not when switching to another pattern with the same CC numbers set to a different value. / sequencer was playing when i switched. they never went, only after moving one of the val knobs, or after stopping and starting the sequence. same behavior when switching in and between banks, in a chain or with song mode. Chan is on for both patterns.",
+      "steps": {
+        "reload (FUNC + NO)": "sends the saved values",
+        "pattern change while playing, in and between banks, chain, song mode": "nothing sent until a VAL knob moved or the sequencer stopped and started"
+      }
+    },
+    {
+      "name": "Core 2.1 + cc-recall 0.1.0-experimental",
+      "syxSha256": "e43f0e6be0eebdd7d16603daa2980d4ccc140614e83caefd03d7045219124beb",
+      "statement": "yess cc recall works completeely, both with fx track and alone",
+      "steps": {
+        "1-4: tick CC RECALL; pattern change while playing; in and between banks, chain, song mode; reload": "works"
+      }
+    },
+    {
+      "name": "Core 2.1 + cc-recall 0.1.0-experimental + fx-track 0.1.0-experimental",
+      "syxSha256": "294c884331788303f39c1945830d2289b394b07a25ddf39530e43b02f492d357",
+      "statement": "yess cc recall works completeely, both with fx track and alone",
+      "steps": {
+        "1-4: tick CC RECALL; pattern change while playing; in and between banks, chain, song mode; reload": "works"
+      }
+    }
+  ],
+  "packageSha256": "bde67ff2d8b1eaa966fa9fcb64ef242bc02e11e37a9ab1701e4b695d65db029c",
+  "limitations": [
+    "The result for the current build was reported as one statement for the four steps asked, not step by step.",
+    "Project load, STOP alone, several MIDI tracks at once and USB as the only output were not reported separately.",
+    "Firmware was not read back from the device; the builds are identified by their SysEx hashes."
+  ],
+  "packageParity": "The isolated Docker build (toolchain image sha256:f5c85e78…4854) of commit 7e6bb564, packaged with scripts/package-elemod-recipe.mjs and linked with Core 2.1, gives the SysEx of both hardware-tested current builds byte for byte (e43f0e6b…124beb alone, 294c8843…92d357 with FX Track).",
+  "usage": {
+    "statement": "only tested for a couple minutes, but did so thoroughly.",
+    "durationMinutes": "a couple, as reported (recorded as 2)"
+  }
+}

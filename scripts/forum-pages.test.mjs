@@ -1,4 +1,5 @@
 import { readFileSync } from 'node:fs'
+import { fileURLToPath } from 'node:url'
 import { afterEach, expect, it, vi } from 'vitest'
 import { fetchForumThreads, forumPages, forumThreadPageHtml, threadCard } from './forum-pages.ts'
 import { wrapTitle } from './social-cards.ts'
@@ -12,7 +13,7 @@ afterEach(() => vi.unstubAllGlobals())
 it('provides thread cards to crawlers and loads the app relative to the thread path', () => {
   const page = forumThreadPageHtml(html, thread, './')
   expect(page).toContain('<base href="../../../" />')
-  expect(page).toContain('<title>Granular pad from &quot;Tapehead&quot; — Modwerk forum</title>')
+  expect(page).toContain('<title>Granular pad from &quot;Tapehead&quot; · Modwerk forum</title>')
   expect(page).toContain('<link rel="canonical" href="https://modwerk.app/forum/thread/' + id + '-granular-pad-from-tapehead/" />')
   expect(page).toContain('<meta property="og:url" content="https://modwerk.app/forum/thread/' + id + '-granular-pad-from-tapehead/" />')
   expect(page).toContain('<meta property="og:type" content="article" />')
@@ -50,14 +51,14 @@ it('wraps long titles on word boundaries and renders a 1200 × 630 card', async 
   expect(lines[2].endsWith('…')).toBe(true)
   expect(Math.max(...lines.map(line => line.length))).toBeLessThanOrEqual(26)
   const { default: sharp } = await import('sharp')
-  const meta = await sharp(await threadCard(thread, new URL('../', import.meta.url).pathname, 'Modwerk')).metadata()
+  const meta = await sharp(await threadCard(thread, fileURLToPath(new URL('../', import.meta.url)), 'Modwerk')).metadata()
   expect([meta.width, meta.height, meta.format]).toEqual([1200, 630, 'jpeg'])
 })
 
 it('emits the canonical page and plain ID alias, and skips the forum when the API is unreachable', async () => {
   vi.stubGlobal('fetch', vi.fn(async () => Response.json({ threads: [thread, { ...thread, id: 'module-miniverb', title: 'Miniverb discussion' }, { id: '../x', title: 'bad' }] })))
   const plugin = forumPages(api)
-  plugin.configResolved({ root: new URL('../', import.meta.url).pathname, base: './' })
+  plugin.configResolved({ root: fileURLToPath(new URL('../', import.meta.url)), base: './' })
   const assets = [], warnings = []
   await plugin.generateBundle.call({ emitFile(asset) { assets.push(asset) }, warn(message) { warnings.push(message) } }, {}, { 'index.html': { type: 'asset', source: html } })
   expect(String(fetch.mock.calls[0][0])).toBe('https://community.example.test/api/forum/pages.json')

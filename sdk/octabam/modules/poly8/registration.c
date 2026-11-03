@@ -139,7 +139,9 @@ void pm_pool_right(unsigned key,unsigned edge) {
 
 /* Legacy POLY95 raw type 5 is upgraded to signed FLEX in both Part copies.
  * No sample, SRC, AMP or FX settings are changed. */
+extern volatile uint32_t pm_ui_ticks;
 void pm_ui_tick(void) {
+    ++pm_ui_ticks;                     /* the voice governor's sign that the UI runs (pool.c) */
     pm_diagnostic_tick();
     if(!valid_bank()) return;
     /* The stock commit finishes installing its menu layer before the next

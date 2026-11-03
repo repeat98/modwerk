@@ -1,0 +1,28 @@
+{
+  "scope": "complete stock recorder call with synthetic active state and silent inputs, host admission guard; no mocks, scheduler, ISR or device",
+  "mainSha256": "164f31224bf61181e3f50e7dec40df9afcae5b16dbf6e4c0d0cc5e986af0a84e",
+  "sourceSha256": {
+    "stock_probe.py": "eeb39fa84dd4d320d1f5ec3f8556e99ccf5f3e511fcc9ae9a28a384523490b92",
+    "stock_probe/recorder_probe.cpp": "94b75d22f9f475ee429c8950faf36453a202ef2616377881a38e30682e435d2b",
+    "preview_guard.c": "da1299674cf2ae967c58231ee9c16891afa94e27254407b5d09df6b73cc4343e",
+    "preview_guard.h": "abcaff39ef1b9a21cb238f0021344ffb5b812ea1740a354cbc1d1f2ace4ddf36",
+    "stock_probe/CMakeLists.txt": "9e65914009fb4ff9126302a8840871be36196fe56b6b6be1a250a4673b1ca315"
+  },
+  "executableSha256": "ec3dff79cdc61af641a704abfd00d6eb352cf5b9d848f8b936d11fc2b3423b1e",
+  "exitCode": 0,
+  "stdout": [
+    "SOURCE_SHA256: edeec9b46ad91dfe3df8346535e4567f9578dc6096884d286b50ae88df753a00",
+    "PASS: eight preallocated stereo boundary fixtures, 16/24-bit, tracks 1/8, both state banks",
+    "PASS: eight dynamic stereo allocation fixtures; map/position precede PCM with no queue/dirty/counter signal",
+    "TRACE refusal=0 result=4294967295 position=1020 published=0 state=0 ui=0",
+    "TRACE refusal=1 result=1020 position=1020 published=0 state=2 ui=0",
+    "TRACE refusal=2 result=0 position=0 published=1024 state=0 ui=1",
+    "TRACE refusal=3 result=0 position=0 published=1024 state=0 ui=1",
+    "PASS: inactive, empty call, exhausted pool and disabled dynamic allocation; balanced host guard"
+  ],
+  "stderrLines": 160,
+  "stderrSha256": "533c4b31fe2d1d259c48fc0f4503443734b1ba6c7464589e6d713ee02269a541",
+  "hardware": "not tested",
+  "audio": "not tested",
+  "stockPersistence": "not tested"
+}

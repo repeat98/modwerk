@@ -5,10 +5,11 @@
     npm run modules:compat                 # every active module, every pair and the whole set
     npm run modules:compat -- <id>         # only what involves <id>
     npm run modules:compat -- --json       # the same, machine-readable (module:doctor reads it)
+    npm run modules:compat -- --with <id>  # also a folder under sdk/octabam/modules/ the catalogue does not list (module:doctor passes it)
 
 Reads declarations only, through octabam's claim model (manifests, the loader integration's port recipes
-when present, the committed base package): no firmware, no emulator. Shared behaviour goes through events,
-as in Elekloader (docs/ADAPTING.md, rule 4): the base owns each event's stock site and modules subscribe
+when present, the committed base package): no firmware, no emulator. Shared behaviour goes through hooks,
+as in Elekloader (docs/ADAPTING.md, rule 4): the base owns each hook's stock site and modules subscribe
 to it. Two owners may meet on stock bytes only where sdk/machines/octatrack/compatibility.json names both
 modules and the address with a reason; the base's own exceptions are build_core.py's BASE_OWNS. Everything
 else octabam's ledger refuses (FX ids, DSP hooks, core-private Y, buffer regions, data ranges) is checked
@@ -42,29 +43,29 @@ RECIPES = ('sdk/machines/octatrack/module-adapters/standalone-recipes.json',
 BASE = 'the Modwerk base'
 PROBE = 0x400D7000  # ledger.check's probe address for a floating cave's emit pokes
 ROUTES = {
-    'subscribe': ('the base owns this event site: subscribe a handler to the event (subscribe: event, fn, '
-                  'order in mod.json) instead of patching it', '#events'),
+    'subscribe': ('the base owns this site as a hook: subscribe a handler to the hook (subscribe: event, fn, '
+                  'order in mod.json) instead of patching it', '#hooks'),
     'contribute': ('the base owns this stock site for a table (its machine registry or menu rows): contribute a record '
                    'to the table (contribute: to, order, data in runtime.json) instead of patching it', '#tables'),
-    'event': ('two behaviour hooks meet on this stock site: request a new event (one reviewed entry in '
-              'sdk/machines/octatrack/events.json), then subscribe to it instead of patching', '#propose-an-event'),
-    'site': ('one owner per byte: patch other bytes, or request a new event if you need the same behaviour',
-             '#propose-an-event'),
+    'event': ('two module hooks meet on this stock site: request a new base hook (one reviewed entry in '
+              'sdk/machines/octatrack/events.json), then subscribe to it instead of patching', '#propose-a-hook'),
+    'site': ('one owner per byte: patch other bytes, or request a new base hook if you need the same behaviour',
+             '#propose-a-hook'),
     'cave': ('pick free space nobody else claims, or let the build place the unit (a floating Linked unit)',
              '#cross-compatibility'),
-    'table': ('this stock table already has an owner: request a new event or a shared table instead of '
-              'relocating it again', '#propose-an-event'),
+    'table': ('this stock table already has an owner: request a new base hook or a shared table instead of '
+              'relocating it again', '#propose-a-hook'),
     'copy': ('copy these stock bytes from an unpatched location (identical bytes elsewhere in stock)',
              '#cross-compatibility'),
     'row': ('pick another chooser row (a free effect ID)', '#cross-compatibility'),
     'ui': ('change one so both work together; if the clash is deliberate, add the other module to compatibility.conflicts '
            'in your octamod.module.json, and the configurator never builds the two together', '#ui-claims'),
-    'other': ('claim a resource nobody else uses, or request a base-owned region or event for shared state',
+    'other': ('claim a resource nobody else uses, or request a base-owned region or hook for shared state',
               '#cross-compatibility'),
     'relation': (f'correct {RELATIONS}; every entry needs owner review', '#cross-compatibility'),
-    'room': ('the base has room for fewer modules on this take event or table than subscribe to it, so the unit refuses '
+    'room': ('the base has room for fewer modules on this take hook or table than subscribe to it, so the unit refuses '
              'the last one to install: propose more room (an owner-reviewed change to events.json and the base)',
-             '#events'),
+             '#hooks'),
 }
 # octabam ledger findings this gate already compares by exact byte range (with relations), not by message.
 SPAN_FINDINGS = ('ColdFire cave', 'hook site', 'poke site', 'kept bytes', 'grown table')
@@ -134,7 +135,7 @@ def describe(a, x, b, y, at, way):
                 f'({span(e[1], e[2])}): contribute to it in runtime.json instead of patching')
     if way == 'subscribe':
         (e, _), (p, pn) = ((x, a), (y, b)) if x[0] == 'event' else ((y, b), (x, a))
-        return (f'{pn} patches {span(p[1], p[2])} ({p[0]} {p[3]}), which is the event {e[3]} '
+        return (f'{pn} patches {span(p[1], p[2])} ({p[0]} {p[3]}), which is the hook {e[3]} '
                 f'({span(e[1], e[2])}): subscribe to it in mod.json instead of patching')
     return f'{a} ({x[0]} {x[3]}, {span(x[1], x[2])}) and {b} ({y[0]} {y[3]}, {span(y[1], y[2])}) both claim 0x{at:08x}'
 
@@ -209,7 +210,7 @@ def check(modules, base_sites=(), events=(), copies=None, relations=(), base_own
             e = by_event.get(entry.get('event'))
             if not e:
                 problems.append(dict(modules=[m.name], text=f'{m.name} replaces {entry["replaces"]} for '
-                                     f'{entry.get("event")}, which is not a site event in {EVENTS}', route='event'))
+                                     f'{entry.get("event")}, which is not a site hook in {EVENTS}', route='event'))
                 continue
             site = int(e['site'], 16)
             native = (natives or {}).get(m.name, m)  # a ported module no longer has the detours it replaced
@@ -310,7 +311,7 @@ def read_events():
             out.append(dict(event=e['event'], site=e['site'], length=e['length']))
     if not all(isinstance(e.get('event'), str) and re.fullmatch(r'0x[0-9a-fA-F]{8}', str(e.get('site')))
                and type(e.get('length')) is int and e['length'] > 0 for e in out):
-        raise SystemExit(f'{EVENTS}: every event needs event (its name), site (0x… stock address) and length; '
+        raise SystemExit(f'{EVENTS}: every hook needs event (its name), site (0x… stock address) and length; '
                          f'update read_events() in scripts/module-compat.py if the registry changed shape')
     return out
 
@@ -339,10 +340,13 @@ def ported(modules):
     return out, problems
 
 
-def repository_inputs():
-    """Everything check() needs, read from this checkout. Problems loading a manifest are returned, not raised."""
+def repository_inputs(extra=()):
+    """Everything check() needs, read from this checkout. Problems loading a manifest are returned, not raised.
+    `extra` names folders under sdk/octabam/modules/ to compare as if listed: an unlisted module, or the draft copy
+    module:doctor --draft makes, so a clash shows before the catalogue entry exists (Track Mutes found its 23 in CI, #931)."""
     from remix import registry
     ids, load = active_ids(), []
+    ids += [i for i in extra if i not in ids]
     try:
         known = registry.modules()
     except (ValueError, SystemExit) as error:  # the registry refuses duplicate keys and FX ids by name
@@ -353,8 +357,8 @@ def repository_inputs():
     platform = {m.key: m for m in known.values() if m.name in registry.PLATFORM_NAMES}
     for i in ids:
         if i not in by_name:
-            load.append(dict(modules=[i], text=f'{i} is in the catalogue but has no sdk/octabam/modules/{i}/manifest.py',
-                             route='other'))
+            load.append(dict(modules=[i], text=(f'{i} has' if i in extra else f'{i} is in the catalogue but has')
+                             + f' no sdk/octabam/modules/{i}/manifest.py', route='other'))
     base = json.loads((APP / 'src/engine/assets/octatrack-base.elemod').read_text(encoding='utf-8'))
     copies = {}
     for path in RECIPES:  # the loader integration's runtime ports; absent on branches without them
@@ -394,7 +398,8 @@ def main(argv):
     started = time.perf_counter()
     sys.stdout.reconfigure(encoding='utf-8')  # the report prints '✗'; a Windows pipe defaults to the ANSI code page
     as_json, only = '--json' in argv, [a for a in argv if not a.startswith('--')]
-    ids, modules, inputs, problems = repository_inputs()
+    extra = [argv[i + 1] for i, a in enumerate(argv[:-1]) if a == '--with']
+    ids, modules, inputs, problems = repository_inputs(extra)
     if modules:
         problems += check(modules, **inputs)
     if only:
@@ -417,11 +422,11 @@ def main(argv):
             print('    fix: ' + p['fix'] + ' (' + p['guide'] + ')')
         for f in summary['full']:
             print(f"· {f['event']} is full: room for {f['room']} ({', '.join(f['modules'])}); another module that uses it "
-                  f"needs more room first ({GUIDE.split('#')[0]}#events)")
+                  f"needs more room first ({GUIDE.split('#')[0]}#hooks)")
         for i in summary['notActive']:
             print(f'· {i} is not an active catalogue module (paused or unlisted), so it is not compared')
         print(f"Cross-compatibility: {summary['active']} active Octatrack modules, {summary['pairs']} pairs and the "
-              f"whole set, {summary['events']} events, {summary['relations']} reviewed relations; "
+              f"whole set, {summary['events']} hooks, {summary['relations']} reviewed relations; "
               f"{len(problems)} problem(s) in {summary['seconds']}s")
     return 1 if problems else 0
 

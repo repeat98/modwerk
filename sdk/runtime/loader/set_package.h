@@ -11,7 +11,7 @@
 #include "loader.h"
 #define RUNTIME_SET_MAGIC 0x4d574d53u
 #define RUNTIME_SET_HEADER 80u
-#define RUNTIME_SET_CHANGES 20u
+#define RUNTIME_SET_CHANGES RUNTIME_MODULES /* a set may change every installed module at once */
 static inline uint32_t runtime_set_u32(const uint8_t *p)
 { return (uint32_t)p[0]<<24 | (uint32_t)p[1]<<16 | (uint32_t)p[2]<<8 | p[3]; }
 /* Full bounds, padding and duplicate checks precede any allocation. */

@@ -1,0 +1,107 @@
+{
+  "schemaVersion": 1,
+  "repository": "https://github.com/Zac-Kyoti/octatrack-kyoti-fw",
+  "revision": "8ffec2b60bf0c309d9f3f2bf8384c8c224141be2",
+  "moduleVersion": "0.1.1-experimental",
+  "root": "sdk/octabam/modules/quantize-live-rec-toggle",
+  "modules": [
+    "quantize-live-rec-toggle"
+  ],
+  "files": [
+    {
+      "path": "patch_qlrec.s",
+      "repository": "https://github.com/Zac-Kyoti/octatrack-kyoti-fw",
+      "revision": "8ffec2b60bf0c309d9f3f2bf8384c8c224141be2",
+      "sourcePath": "modwerk-modules/quantize-live-rec-toggle/patch_qlrec.s",
+      "sourceBytes": 18103,
+      "sourceGitBlob": "782317b54308e9075e371e9169a76c1cd440814e",
+      "sourceSha256": "0ef2ac3bc3c7683ff7b0970d38b89685be30e55106b7b30be61885a98d58f3f5",
+      "vendoredSha256": "0ef2ac3bc3c7683ff7b0970d38b89685be30e55106b7b30be61885a98d58f3f5"
+    },
+    {
+      "path": "upstream/README.md",
+      "repository": "https://github.com/Zac-Kyoti/octatrack-kyoti-fw",
+      "revision": "8ffec2b60bf0c309d9f3f2bf8384c8c224141be2",
+      "sourcePath": "octabam-modules/quantize-live-rec-toggle/README.md",
+      "sourceBytes": 3591,
+      "sourceGitBlob": "e3bbc581681a1d19352cf6fb62825f73c1a4704f",
+      "sourceSha256": "65b9f4d2086582dcccfa8c67ef9ec4fb05bb3fbffe57cb23400a08c95bed5402",
+      "vendoredSha256": "65b9f4d2086582dcccfa8c67ef9ec4fb05bb3fbffe57cb23400a08c95bed5402"
+    },
+    {
+      "path": "LICENSE",
+      "repository": "https://github.com/Zac-Kyoti/octatrack-kyoti-fw",
+      "revision": "8ffec2b60bf0c309d9f3f2bf8384c8c224141be2",
+      "sourcePath": "LICENSE",
+      "sourceBytes": 4451,
+      "sourceGitBlob": "8cd09176a276a3854ae947ab148b9b327d77e381",
+      "sourceSha256": "f1f8d5837b6df5d6e5744286e3929883253f1ee754c4f9e0494989f2ef992a05",
+      "vendoredSha256": "f1f8d5837b6df5d6e5744286e3929883253f1ee754c4f9e0494989f2ef992a05"
+    },
+    {
+      "path": "upstream/OCTABAM_LICENSE",
+      "repository": "https://github.com/sambanks/octabam",
+      "revision": "6e4aeb76695cbb612e4b424c55fd2207facf73ef",
+      "sourcePath": "LICENSE",
+      "sourceBytes": 2112,
+      "sourceGitBlob": "112114d5d319dc4a789dacf1e84b867420a03614",
+      "sourceSha256": "f91a43799d9e31ccc3540f385f68c4d6ff5a096f93ae933be2ce98f6b3f7f113",
+      "vendoredSha256": "f91a43799d9e31ccc3540f385f68c4d6ff5a096f93ae933be2ce98f6b3f7f113"
+    },
+    {
+      "path": "upstream/OCTABAM_README.md",
+      "repository": "https://github.com/sambanks/octabam",
+      "revision": "6e4aeb76695cbb612e4b424c55fd2207facf73ef",
+      "sourcePath": "modules/quantize-live-rec-toggle/README.md",
+      "sourceBytes": 1026,
+      "sourceGitBlob": "b2ada9aad5f03adf0cc9a8b69486604219bfc33c",
+      "sourceSha256": "cb8c42330e04309e8aac6a70e8c028f7147e436e42af49a5ca9c48a5586b8ef1",
+      "vendoredSha256": "cb8c42330e04309e8aac6a70e8c028f7147e436e42af49a5ca9c48a5586b8ef1"
+    },
+    {
+      "path": "manifest.py",
+      "repository": "https://github.com/Zac-Kyoti/octatrack-kyoti-fw",
+      "revision": "8ffec2b60bf0c309d9f3f2bf8384c8c224141be2",
+      "sourcePath": "modwerk-modules/quantize-live-rec-toggle/manifest.py",
+      "sourceBytes": 5331,
+      "sourceGitBlob": "c930d0f15426c7040795e741b30bd176640d93de",
+      "sourceSha256": "4dca6e56ac9db0001c5609f106911dcb0ffb555fa91abcf6ff9ecd60ca3b2cab",
+      "vendoredSha256": "4dca6e56ac9db0001c5609f106911dcb0ffb555fa91abcf6ff9ecd60ca3b2cab"
+    }
+  ],
+  "stockGuards": [
+    {
+      "address": "0x40061778",
+      "bytes": 6,
+      "sha256": "163f39714c1f16fb3ec79b74858c4c781336055671dc3ee9016adcf62e72bd64"
+    },
+    {
+      "address": "0x4004883a",
+      "bytes": 6,
+      "sha256": "0022d5dccf16d07cd4fcd66f5ef0e424b016a1394795d993d65e24eeeace7afc"
+    },
+    {
+      "address": "0x400522ca",
+      "bytes": 6,
+      "sha256": "1eb782bde4b72ae5bad5fe826898c238315df94d4a4e583f7e7949210e3d02fb",
+      "note": "Retired site: guarded so it stays stock, never written."
+    }
+  ],
+  "excluded": [
+    "Firmware and stock expectation bytes",
+    "octabam's wrapper manifest (modules/quantize-live-rec-toggle/manifest.py, git blob bc4ef7c6773e8dd38974db9b4ab29b30d518b7a0): it only runs the author's manifest out of a git submodule and adds octabam's table fields",
+    "The author's standalone builder tools/build_quantize_live_rec_toggle.py and diagnostic builder, which read a firmware file",
+    "Generated firmware, runtime images and memory dumps",
+    "Unrelated modules and author repository tooling"
+  ],
+  "notes": [
+    "patch_qlrec.s, manifest.py, LICENSE and upstream/README.md are the author's files byte for byte at the pinned commit: patch_qlrec.s and manifest.py from modwerk-modules/quantize-live-rec-toggle/, the author's own Modwerk copy of this module (its manifest keeps Modwerk's stock-guard form of 0.1.0). patch_qlrec.s describes stock routines by address and mnemonic; it contains no firmware bytes.",
+    "This source writes the flip's battery copy before the setting word, so no run of the USB package repeats stock's PERSONALIZE setter (0x40068ccf); it equals the author's commit 3ead7f9. His final standalone builds and octabam (sambanks/octabam 5c71bc8c, PR #861) keep the earlier store order; upstream/OCTABAM_* stay at 6e4aeb7.",
+    "The stock guard digests are 0.1.0's, checked again against the original OS 1.40C MAIN image (SHA-256 164f31224bf61181e3f50e7dec40df9afcae5b16dbf6e4c0d0cc5e986af0a84e) by this version's build and gate."
+  ],
+  "status": "Listed; owner review requested (ownership metadata and licence text change). Hardware: the author's MKI, from the card (TESTING.md).",
+  "authorPin": {
+    "repository": "https://github.com/Zac-Kyoti/octatrack-kyoti-fw",
+    "revision": "8ffec2b60bf0c309d9f3f2bf8384c8c224141be2"
+  }
+}

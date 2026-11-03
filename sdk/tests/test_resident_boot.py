@@ -96,8 +96,8 @@ class ResidentBoot(unittest.TestCase):
             image[address - device.main_load:address - device.main_load + len(raw)] = raw
             device.dsp_payloads[tag] = (address, len(raw))
             ranges = resident_dsp.boot_ranges(tag)
-            layout[tag] = dict(residentUploadRecords=[dict(space='x', address=0x2840, words=[0] * (0x3700 - 0x2840))] +
-                               [dict(space='y', address=r['address'], words=[0] * r['words']) for r in ranges if r['space'] == 'y'],
+            layout[tag] = dict(residentUploadRecords=[dict(space='y', address=r['address'], words=[0] * r['words'])
+                                                      for r in ranges if r['space'] == 'y'],
                                residentHooks=dict(allowed=resident_dsp.ALLOWED[tag]))
         def read_records(img, dev, tag):
             self.assertEqual(boot.terminal(img[dev.dsp_payloads[tag][0] - dev.main_load:][:dev.dsp_payloads[tag][1]]), 24)
@@ -109,8 +109,8 @@ class ResidentBoot(unittest.TestCase):
         self.assertEqual(prepared['receipt'][0]['packedFragments'][0], prepared['receipt'][1]['packedFragments'][0])
         self.assertLess(prepared['packedUniqueBytes'], sum(row['packedBytes'] for row in prepared['receipt']))
         pointer = boot.POINTERS['A'][0] - device.main_load
-        with self.assertRaisesRegex(ValueError, 'overlaps'):
-            boot.prepare(image, device, SimpleNamespace(records=lambda *_: [(1, 0x2840, 1, 0)]), layout)
+        with self.assertRaisesRegex(ValueError, 'overlaps'):  # an original record over a zeroed owned Y range
+            boot.prepare(image, device, SimpleNamespace(records=lambda *_: [(2, 0x7f0, 1, 0)]), layout)
         image[pointer] ^= 1
         with self.assertRaisesRegex(ValueError, 'pointer changed'):
             boot.prepare(image, device, parser, layout)

@@ -3,8 +3,9 @@
     "version": "0.2.2",
     "date": "2026-10-14",
     "changes": [
-      "First Modwerk release for Digitakt I OS 1.53 and 1.54, on Core 2.1. Snap native SRC start, end and loop markers to nearby zero crossings. In the normal recording editor, apply an adjustable loop crossfade with one-level undo.",
-      "Compatibility flag only: marked as incompatible with digimono, because both patch the same firmware code (0x401848dc on OS 1.53, 0x40184bdc on 1.54). The site already refused the pair for overlapping firmware changes; it now names the conflict too. Pinned firmware code is unchanged."
+      "First Modwerk release for Digitakt I OS 1.53 and 1.54, on Core 2.1. Snap the native SRC start, end and loop markers to nearby zero crossings.",
+      "In the normal recording editor, apply an adjustable loop crossfade with one-level undo.",
+      "Now listed as incompatible with Digi Mono, which changes the same firmware code. The builder already refused this pair."
     ]
   }
 ]

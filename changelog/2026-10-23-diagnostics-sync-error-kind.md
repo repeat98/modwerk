@@ -1,0 +1,1 @@
+Shared Octatrack diagnostics: a USB sync that fails for an unclassified reason now records the error's type name (TypeError, RangeError and the like; never its message), so such failures can be told apart from refusals and transport errors when reading a tester's diagnostics.
