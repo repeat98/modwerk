@@ -69,10 +69,11 @@ export function createEngineSession(reply: (response: EngineResponse, transfer?:
       // Every build plays the docking startup unless the member chose the classic one. Docking adds two guarded hooks,
       // an 80-byte gate and its runtime; a selection that composes only without them keeps the classic startup, so
       // nothing that builds with the classic startup is refused for the docking one.
-      const compose = (ids: readonly string[], usbAudio: typeof request.usbAudio, docking: boolean) => composeSelection(original.mainOs, ids, request.keepStockFx2, usbAudio, docking)
+      const compose = (ids: readonly string[], usbAudio: typeof request.usbAudio, docking: boolean, compact = true) => composeSelection(original.mainOs, ids, request.keepStockFx2, usbAudio, docking, compact)
       let result, startupAnimation: StartupAnimation = request.startup === 'classic' ? 'classic' : 'docking', startupFallback = false
       try {
-        try { result = await compose(request.moduleIds, request.usbAudio, startupAnimation === 'docking') }
+        // The docking startup never costs the stock FX2 effects: short of menu space, the classic one is tried before the compact FX2 menu.
+        try { result = await compose(request.moduleIds, request.usbAudio, startupAnimation === 'docking', startupAnimation === 'classic') }
         catch (error) {
           if (startupAnimation === 'classic') throw error
           result = await compose(request.moduleIds, request.usbAudio, false)
@@ -100,7 +101,7 @@ export function createEngineSession(reply: (response: EngineResponse, transfer?:
         osBytes: result.bytes.length, runtimeBytes: result.runtime.bytes, reservedBytes: result.runtime.reservedBytes,
         fx1Rows: result.chooser.fx1.length, fx2Rows: result.chooser.fx2.length,
         omittedStockFx2: chooserMetadata.stockFx2.filter(key => !result.chooser.fx2.includes(key)),
-        startupAnimation, ...(startupFallback ? { startupFallback: true } : {}),
+        startupAnimation, ...(startupFallback ? { startupFallback: true } : {}), ...(result.compactFx2 ? { compactFx2: true } : {}),
       }
       if (request.type === 'validate') { reply({ id: request.id, type: 'validated', report }); return }
       if (!DOWNLOADS_ENABLED) throw new Error('Firmware downloads are paused while the built-in logger completes verification.')

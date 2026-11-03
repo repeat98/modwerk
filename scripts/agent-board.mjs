@@ -132,23 +132,39 @@ export async function claim(item, options = {}) {
 
 const git = (root, ...args) => execFileSync('git', args, { cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trimEnd()
 const show = (root, ref, path) => { try { return git(root, 'show', ref + ':' + path) } catch { return null } }
-const MODULE_FOLDERS = /^sdk\/(octabam|digitakt|digitone|analog-rytm-mkii|analog-four-mkii)\/modules\/(?:_submissions\/)?([a-z0-9]+(?:-[a-z0-9]+)*)\/|^sdk\/(drafts)\/([a-z0-9]+(?:-[a-z0-9]+)*)\//
+// Any SDK folder that holds modules (sdk/octabam is the Octatrack's), so a newly unlocked machine needs no edit here.
+const MODULE_FOLDERS = /^sdk\/((?!drafts\/)[a-z0-9]+(?:-[a-z0-9]+)*)\/modules\/(?:_submissions\/)?([a-z0-9]+(?:-[a-z0-9]+)*)\/|^sdk\/(drafts)\/([a-z0-9]+(?:-[a-z0-9]+)*)\//
 const INTERFACES = /^sdk\/([a-z0-9-]+)\/(?:core|core-profile)\/interface\.json$/
+
+/** A module claim's note: its manifest's one-line summary, cut to the note's 120 characters, so other agents see what the
+ * work is and not only its id. '' for the template's placeholder or a manifest that does not parse yet. */
+export function summaryNote(manifest) {
+  let summary
+  try { summary = JSON.parse(manifest ?? 'null')?.presentation?.summary } catch { return '' }
+  if (typeof summary !== 'string' || /^Replace with\b/.test(summary)) return ''
+  const text = summary.replace(/\s+/g, ' ').trim()
+  return text.length <= 120 ? text : text.slice(0, 119).replace(/\s+\S*$/, '') + '…'
+}
 
 /** What this branch adds that needs a claim: new module folders, new hook and table indices, new D1 migrations, new
  * machine ids in a manifest's platform.claims. DSP regions have no declaration file yet, so they are claimed by hand. */
 export function neededClaims({ root, base, head = 'HEAD' }) {
   const added = git(root, 'diff', '--name-only', '--diff-filter=A', base + '...' + head).split('\n').filter(Boolean)
   const changed = git(root, 'diff', '--name-only', base + '...' + head).split('\n').filter(Boolean)
-  const needed = new Map(), add = (kind, key, why) => needed.set(kind + ' ' + key, { kind, key, why })
+  const needed = new Map(), add = (kind, key, why, extra) => needed.set(kind + ' ' + key, { kind, key, why, ...extra })
   const mergeBase = git(root, 'merge-base', base, head)
+  // Every git call is a process: list the folders that existed once, and read a new module's manifest once, not per file.
+  const existed = new Set(git(root, 'ls-tree', '-r', '-d', '--name-only', mergeBase, '--', 'sdk').split('\n'))
   for (const path of added) {
     const match = path.match(MODULE_FOLDERS)
     if (match) {
-      // A machine's modules sit in modules/<id> or, on the Analog Rytm, modules/_submissions/<id>; a move between them is not new.
+      // A machine's modules sit in modules/<id> or, until catalogued, modules/_submissions/<id>; a move between them is not new.
       const folders = match[1] ? ['', '_submissions/'].map(sub => 'sdk/' + match[1] + '/modules/' + sub + match[2]) : ['sdk/drafts/' + match[4]]
       const machine = match[1] === 'octabam' || match[3] === 'drafts' ? 'octatrack' : match[1], id = match[2] ?? match[4]
-      if (folders.every(folder => show(root, mergeBase, folder) === null)) add('module', machine + '/' + id, 'new module folder ' + match[0].slice(0, -1))
+      if (!needed.has('module ' + machine + '/' + id) && folders.every(folder => !existed.has(folder))) {
+        const manifest = show(root, head, match[0] + 'modwerk.module.json') ?? show(root, head, match[0] + 'octamod.module.json')
+        add('module', machine + '/' + id, 'new module folder ' + match[0].slice(0, -1), { note: summaryNote(manifest) })
+      }
     }
     const migration = path.match(/^migrations\/(\d{4})_[^/]+\.sql$/)
     if (migration) add('migration', migration[1], 'new migration ' + path)
@@ -199,8 +215,8 @@ export function moduleClaimLine({ root, machine, id, folder, claims, login, unav
   if (unavailable) return { state: 'info', name, detail: 'not checked: ' + unavailable }
   const held = claims.find(item => item.kind === 'module' && item.key === key)
   if (held && login && held.holder === login.toLowerCase()) return { state: 'ok', name, detail: 'module ' + key + ' is yours' + (held.expiresAt ? ' until ' + held.expiresAt.slice(0, 10) : '') }
-  if (held && !login) return { state: 'fail', name, detail: 'module ' + key + ' is claimed by ' + describeClaim(held), fix: 'if that is you, npm run board -- login; if not, ask them before you go on (docs/AGENT_BOARD.md)' }
-  if (held) return { state: 'fail', name, detail: 'module ' + key + ' is claimed by ' + describeClaim(held), fix: 'ask them before you go on, or pick another module (docs/AGENT_BOARD.md)' }
+  if (held && !login) return { state: 'fail', name, detail: 'module ' + key + ' is claimed by ' + describeClaim(held), fix: 'if that is you, npm run board -- login; if not, ask them yourself before you go on: npm run board -- ask module ' + key + ' "…" (docs/AGENT_BOARD.md)' }
+  if (held) return { state: 'fail', name, detail: 'module ' + key + ' is claimed by ' + describeClaim(held), fix: 'ask them yourself before you go on, or pick another module: npm run board -- ask module ' + key + ' "…" (docs/AGENT_BOARD.md)' }
   const onMain = ['origin/main', 'upstream/main'].some(ref => { try { git(root, 'cat-file', '-e', ref + ':' + folder); return true } catch { return false } })
   if (!onMain) return { state: 'fail', name, detail: 'nobody has claimed this new module, so another developer could start the same one', fix: login ? fix : 'npm run board -- login, then ' + fix }
   return { state: 'ok', name, detail: 'nobody else is working on module ' + key }
@@ -239,7 +255,7 @@ export async function inboxNotes(options = {}) {
   try { box = await inbox(options) } catch (error) { if (error instanceof BoardUnavailable || error instanceof BoardError) return []; throw error }
   if (!box || (!box.waiting.length && !box.replies.length)) return []
   const parts = [box.waiting.length && box.waiting.length + ' question' + (box.waiting.length > 1 ? 's wait' : ' waits') + ' for your answer', box.replies.length && box.replies.length + ' of your questions and findings ' + (box.replies.length > 1 ? 'have' : 'has') + ' a reply'].filter(Boolean)
-  return ['Board: ' + parts.join(' and ') + '. Read them with npm run board -- inbox and tell the developer; answer with npm run board -- reply <id> "…" (docs/AGENT_BOARD.md).']
+  return ['Board: ' + parts.join(' and ') + '. Read them with npm run board -- inbox and answer them yourself (npm run board -- reply <id> "…"; close <id> once yours is settled), then tell the developer what you said (docs/AGENT_BOARD.md#agents-talk-for-themselves).']
 }
 /** One thread as the terminal shows it. Quoted text is another developer's words. */
 export function describeThread(thread) {

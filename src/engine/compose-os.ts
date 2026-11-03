@@ -43,12 +43,13 @@ export async function composeOs(original: Uint8Array, ids: readonly string[], pr
 }
 /** A visitor's build. The Keep stock FX2 switch exists only with the loader. Loader-free builds keep every
  *  stock FX2 effect whose code the modules do not take; when that longer FX2 list leaves the module menus
- *  too little room, they use the compact FX2 menu, as both menus are native-verified profiles. */
-export async function composeSelection(original: Uint8Array, ids: readonly string[], keepStockFx2: boolean, usbAudio?: UsbAudioConfiguration, betaAccess = false) {
+ *  too little room, they use the compact FX2 menu, as both menus are native-verified profiles. The result says
+ *  so (`compactFx2`), because that menu drops every stock FX2 effect; `compact = false` refuses it instead. */
+export async function composeSelection(original: Uint8Array, ids: readonly string[], keepStockFx2: boolean, usbAudio?: UsbAudioConfiguration, betaAccess = false, compact = true) {
   const keep = DSP_LOADER ? keepStockFx2 : true
-  try { return await composeOs(original, ids, defaultChoosers(ids, keep), { usbAudio, betaAccess }) }
+  try { return { ...await composeOs(original, ids, defaultChoosers(ids, keep), { usbAudio, betaAccess }), compactFx2: false } }
   catch (error) {
-    if (DSP_LOADER || !(error instanceof Error) || !isMenuSpaceFailure(error.message)) throw error
-    return composeOs(original, ids, defaultChoosers(ids, false), { usbAudio, betaAccess })
+    if (DSP_LOADER || !compact || !(error instanceof Error) || !isMenuSpaceFailure(error.message)) throw error
+    return { ...await composeOs(original, ids, defaultChoosers(ids, false), { usbAudio, betaAccess }), compactFx2: true }
   }
 }
