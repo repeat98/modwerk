@@ -15,7 +15,7 @@
       "license": "GPL-3.0-or-later",
       "source": {
         "repo": "repeat98/modwerk",
-        "commit": "f7779449979f81f683d3314b5d76e7b413b290ed",
+        "commit": "72592f6c0e421edf9deab2b69c38d92ca2742bd2",
         "path": "sdk/imports/packages/chromatic-aftertouch-fix/chromatic-aftertouch-fix-0.1.0-experimental-os1.74.elemod"
       },
       "title": "Chromatic Aftertouch Fix",
