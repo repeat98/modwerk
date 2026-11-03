@@ -104,7 +104,7 @@ export async function requestedRom(ids: readonly string[], cursor: number, overf
     await cave(address, linked.bytes, group.moduleId + ' ' + pkg.label + ' ROM unit')
     for (const [name, at] of linked.symbols) symbols.set(name, at)
     if (address >= 0x400d6b20 && address < caveLimit) cursor = Math.max(cursor, address + linked.bytes.length)
-    else if (address >= 0x400d24d0 && address < 0x400d2ce0) overflow = Math.max(overflow, Math.ceil((address + linked.bytes.length) / 4) * 4)
+    else if (address >= 0x400d24e0 && address < 0x400d2ce0) overflow = Math.max(overflow, Math.ceil((address + linked.bytes.length) / 4) * 4)
   }
   return { cursor, overflow, symbols }
 }

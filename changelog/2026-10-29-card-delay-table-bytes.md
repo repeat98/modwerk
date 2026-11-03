@@ -1,0 +1,3 @@
+Octatrack card builds: no module code goes into the 16 bytes right after the stock DELAY's coefficient table any more. At a slow tempo with a long TIME, DELAY reads past the end of that table, where a stock unit has zeros; with code there it could read code as a coefficient (seen in an emulator, not heard on a unit). Card builds now place overflow code from 0x400d24e0, and the builders refuse anything placed in 0x400d24d0..0x400d24df.
+
+Developers: `npm run modules:compat` and both card builders refuse a cave, unit or patch in those bytes. FM Synth 0.1.2 pins its SRC page there; FM Synth 0.1.4 moves it into DRAM.

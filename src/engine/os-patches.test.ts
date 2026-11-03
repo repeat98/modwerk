@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { Buffer } from 'node:buffer'
-import { applyGuardedOsWrites, OS_LOAD_ADDRESS, type OsWrite } from './os-patches'
+import { applyGuardedOsWrites, DELAY_TABLE_TAIL, DELAY_TABLE_TAIL_END, OS_LOAD_ADDRESS, type OsWrite } from './os-patches'
 import { createPlatformOsWrites } from './platform-writes'
 import proofs from './assets/coldfire-runtime-proofs.json'
 async function hash(bytes: Uint8Array) { const digest = await crypto.subtle.digest('SHA-256', new Uint8Array(bytes).buffer); return Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, '0')).join('') }
@@ -24,6 +24,20 @@ describe('transactional guarded OS writes', () => {
     expect(result).toEqual(new Uint8Array([1,2,9,8,5,6]))
     expect(original).toEqual(before)
     result[0] = 0; expect(original[0]).toBe(1)
+  })
+  it('refuses any write into the 16 bytes the stock DELAY reads past its table', async () => {
+    // 0x400d1ce0 + 4 * (x >> 6): 508 entries end at 0x400d24d0, and the index runs up to 16 bytes past them.
+    expect([DELAY_TABLE_TAIL, DELAY_TABLE_TAIL_END]).toEqual([0x400d1ce0 + 4 * 508, 0x400d24e0])
+    const original = new Uint8Array(DELAY_TABLE_TAIL_END + 0x40 - OS_LOAD_ADDRESS)
+    const write = async (address: number, length: number): Promise<OsWrite> => ({ address, guardLength: length, guardSha256: await hash(new Uint8Array(length)), bytes: new Uint8Array(length).fill(0x4e), note: 'synthetic cave' })
+    for (const [address, length] of [[DELAY_TABLE_TAIL, 2], [DELAY_TABLE_TAIL - 4, 6], [DELAY_TABLE_TAIL_END - 2, 2], [DELAY_TABLE_TAIL - 0x10, 0x40]]) {
+      await expect(applyGuardedOsWrites(original, [await write(address, length)])).rejects.toThrow('synthetic cave would change the stock DELAY reads 0x400d24d0..0x400d24df past its table')
+    }
+    // Bytes either side of them are free, and a refusal leaves the input as it was.
+    const result = await applyGuardedOsWrites(original, [await write(DELAY_TABLE_TAIL - 4, 4), await write(DELAY_TABLE_TAIL_END, 0x40)])
+    expect(result.subarray(DELAY_TABLE_TAIL - 4 - OS_LOAD_ADDRESS, DELAY_TABLE_TAIL - OS_LOAD_ADDRESS)).toEqual(new Uint8Array(4).fill(0x4e))
+    expect(result.subarray(DELAY_TABLE_TAIL - OS_LOAD_ADDRESS, DELAY_TABLE_TAIL_END - OS_LOAD_ADDRESS)).toEqual(new Uint8Array(16))
+    expect(original.every(byte => byte === 0)).toBe(true)
   })
   it('refuses missing, odd or non-code runtime hook targets before installation', () => {
     const proof = proofs.cases[6], runtime = { symbols: new Map(Object.entries(proof.symbols)), sections: proof.sections }

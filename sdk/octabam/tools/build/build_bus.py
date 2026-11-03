@@ -86,10 +86,18 @@ LIST_REFS = [0x400375f4, 0x40052496, 0x40059a42]
 DESC_LEN = 0x192
 NEW_LIST = 0x400d6b00
 # The other unclaimed zero run docs/firmware/MAINMENU.md section 5 names -- 2,064 bytes
-# at 0x400d24d0. The menu shortcut cave is pinned at its start; label
-# formatters overflow into it when the clone window is full (the character
-# station's BUS-mode renames tipped the rig over by 56 bytes).
-OVERFLOW_RUN = 0x400d24d0
+# at 0x400d24d0. Label formatters and floating caves overflow into it when the
+# clone window is full (the character station's BUS-mode renames tipped the
+# rig over by 56 bytes). Its first 16 bytes are not free: the stock DELAY reads
+# 0x400d1ce0 + 4 * (x >> 6) from a 508-entry table ending at 0x400d24d0, and at
+# a slow tempo with a long TIME the index runs up to 16 bytes past the end,
+# which are zero on a stock unit (measured in an emulator; upstream octabam
+# #771, docs/OCTATRACK_HARDWARE_TRAPS.md). So the run starts past them, and
+# nothing -- a pinned cave or unit, an overflow placement, a poke -- may write
+# them: delay_tail_clash() refuses at placement, the finished image is checked.
+DELAY_TABLE_TAIL = 0x400d24d0
+DELAY_TABLE_TAIL_END = 0x400d24e0
+OVERFLOW_RUN = 0x400d24e0
 OVERFLOW_RUN_END = 0x400d2ce0
 SAFE_CAVE_CEIL = 0x400d8000
 CLONE_BASE = 0x400d6b20
@@ -243,6 +251,16 @@ def plain_slots(m) -> tuple[int, ...]:
     (scripts/build-module-packages.py, export-resident-dsp.py) call this too."""
     return tuple(i for i, p in enumerate(m.params)
                  if p.formatter is Formatter.PLAIN and p.active is not False)
+
+
+def delay_tail_clash(at: int, length: int, what: str) -> str | None:
+    """A refusal when `length` bytes at `at` reach the 16 bytes the stock DELAY
+    reads past its table (DELAY_TABLE_TAIL), else None."""
+    if at < DELAY_TABLE_TAIL_END and DELAY_TABLE_TAIL < at + length:
+        return (f"{what} at 0x{at:08x}..0x{at + length - 1:08x} reaches "
+                f"0x{DELAY_TABLE_TAIL:08x}..0x{DELAY_TABLE_TAIL_END - 1:08x}, which the "
+                f"stock DELAY reads past its table: those 16 bytes stay stock")
+    return None
 
 
 def floating_cave_at(cave_top: int, ovf_top: int, need: int, cave_limit: int) -> int | None:
@@ -1224,6 +1242,9 @@ def main():
         _exports.update(_glob)
         if _at >= SAFE_CAVE_CEIL:
             sys.exit(f"{_u.label}: linked at 0x{_at:08x}, above the safe ceiling")
+        _clash = delay_tail_clash(_at, len(_b), f"{_m.key} {_u.label}")
+        if _clash:
+            sys.exit(_clash)
         if any(img[_at - BASE:_at - BASE + len(_b)]):
             sys.exit(f"{_m.key} {_u.label} at 0x{_at:08x} not free")
         _in = CLONE_BASE <= _at < cave_limit
@@ -1285,6 +1306,9 @@ def main():
             # A cave that points at itself: its bytes are a function of the
             # address the line above just resolved (schema.CavePatch.emit).
             _b, _pokes = _c.emit(_c.cave_addr)
+        _clash = delay_tail_clash(_c.cave_addr, max(len(_b), _c.reserve), _c.label)
+        if _clash:
+            sys.exit(_clash)
         if any(img[_c.cave_addr - BASE:_c.cave_addr - BASE + len(_b)]):
             sys.exit(f"{_c.label} not free")
         if OVERFLOW_RUN <= _c.cave_addr < OVERFLOW_RUN_END:
@@ -3488,6 +3512,10 @@ hostquit:
     _kept = _keep.violations(img, BASE, [remix_modules()[k] for k in REMIX.modules])
     if _kept:
         sys.exit("build changed kept stock bytes: " + "; ".join(_kept))
+    _tail = slice(DELAY_TABLE_TAIL - BASE, DELAY_TABLE_TAIL_END - BASE)
+    if img[_tail] != IMG.read_bytes()[_tail]:
+        sys.exit(f"build changed 0x{DELAY_TABLE_TAIL:08x}..0x{DELAY_TABLE_TAIL_END - 1:08x}, "
+                 f"which the stock DELAY reads past its table: those 16 bytes stay stock")
 
     _grown = ""
     for _aname, _append in _appends:

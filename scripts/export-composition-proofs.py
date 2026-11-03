@@ -181,7 +181,7 @@ def main():
                     proofs.append(proof)
                     print(f"{ids or ['stock']} default={default}: {len(image)} bytes, full native identity captured.")
                 except (SystemExit,AssertionError) as error:
-                    if a.static_stock and any(word in str(error) for word in ('has colliding modules:','overruns the region','nowhere to place','does not fit','do not fit','chooser list of','currently composes with stock effects only',' not free','past the stock zero run','fits neither the clone window','cannot share DSP memory','pre-boot analog bd payload A dst overlaps runtime stage:')):
+                    if a.static_stock and any(word in str(error) for word in ('has colliding modules:','overruns the region','nowhere to place','does not fit','do not fit','chooser list of','currently composes with stock effects only',' not free','past the stock zero run','fits neither the clone window','cannot share DSP memory','pre-boot analog bd payload A dst overlaps runtime stage:','which the stock DELAY reads past its table')):
                         proofs.append({'moduleIds':ids,'keepStockFx2':default,'menu':menu,'error':str(error)});print(f"{ids or ['stock']} keep={default}: refused: {str(error)[:90]}")
                     elif ids==order and default and ('does not fit' in str(error) or 'do not fit' in str(error)):
                         proofs.append({'moduleIds':ids,'default':default,'menu':menu,'error':str(error)});print('Crowded all-module / stock-chooser selection rejects placement, as expected.')
