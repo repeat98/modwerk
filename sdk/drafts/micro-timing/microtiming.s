@@ -128,7 +128,7 @@ mt_apply:
 mt_apply_dlo:
     cmpi.l #0xffffffe9, %d2
     bge.w mt_apply_dok
-    moveq #0xe9, %d2
+    moveq #-0x17, %d2
 mt_apply_dok:
     tst.l %d2
     beq.w mt_apply_rts
@@ -142,7 +142,7 @@ mt_apply_dok:
 mt_apply_nlo:
     cmpi.l #0xffffffe9, %d0
     bge.w mt_apply_nok
-    moveq #0xe9, %d0
+    moveq #-0x17, %d0
 mt_apply_nok:
     move.b %d0, (%a0)
     cmp.l %d3, %d0
