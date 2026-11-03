@@ -1,0 +1,85 @@
+{
+  "schemaVersion": 1,
+  "sources": [
+    "src/main.c"
+  ],
+  "defsym": {},
+  "cflags": [],
+  "weak": [],
+  "subscribe": [
+    {
+      "event": "ev_tick",
+      "fn": "foot_switch_control_tick",
+      "order": 50
+    }
+  ],
+  "contribute": [],
+  "collections": {},
+  "copied": [],
+  "regions": [],
+  "claims": [
+    "ui:GLOBAL > CONTROL > CONTROL INPUT 1 and 2: MODE FSW and the FOOTSW DEST list",
+    "input:EXP/CV IN 1 and 2 in FSW mode"
+  ],
+  "requires": [],
+  "derive": null,
+  "releases": {
+    "1.74": {
+      "defsym": {},
+      "cflags": [],
+      "sites": [
+        {
+          "addr": "0x40131b66",
+          "op": "bytes",
+          "len": 8,
+          "new": "7203b2806c027003",
+          "kind": "code",
+          "stockSha256": "15e2fcf86577ce3b1dacdfdf8a69a8989d63ba82701c01a4a0187eb2b4981ee0"
+        },
+        {
+          "addr": "0x400fa878",
+          "op": "bytes",
+          "len": 8,
+          "new": "7203b2806c027003",
+          "kind": "code",
+          "stockSha256": "15e2fcf86577ce3b1dacdfdf8a69a8989d63ba82701c01a4a0187eb2b4981ee0"
+        },
+        {
+          "addr": "0x401309bc",
+          "op": "bytes",
+          "len": 8,
+          "new": "7203b2806c027003",
+          "kind": "code",
+          "stockSha256": "d749208f2ebf1e144a87c325281e533ef582759f54549234fcc92c90dc89a595"
+        },
+        {
+          "addr": "0x401313ee",
+          "op": "bytes",
+          "len": 6,
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [{ "at": 2, "target": "foot_switch_control_hold" }],
+          "stockSha256": "bb464c7f6c745d3375031d5575fb41e3fff8e787d2dd07cc4e79a2366e99d765"
+        },
+        {
+          "addr": "0x401313fe",
+          "op": "bytes",
+          "len": 6,
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [{ "at": 2, "target": "foot_switch_control_toggle" }],
+          "stockSha256": "7d304eca370b09c0f7cae1e36efea536ee8722ab6ac31ce0e097fbc95403ad02"
+        },
+        {
+          "addr": "0x40131412",
+          "op": "bytes",
+          "len": 6,
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [{ "at": 2, "target": "foot_switch_control_live" }],
+          "stockSha256": "d3e1c9525479740e113878e35ae90c5fde5f5446eeff6f47a3bf9fe7c017ec92"
+        }
+      ]
+    }
+  }
+}
