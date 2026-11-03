@@ -1,13 +1,15 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Keep verified developer checkouts of upstream Octabam and Elekloader outside Git.
+"""Keep verified developer checkouts of upstream Octabam, Elekloader and rytm-emu outside Git.
 
     npm run upstream:tools                 # check out the pinned commits
-    npm run upstream:tools -- --update     # move Octabam to upstream main first
+    npm run upstream:tools -- --update     # move Octabam and rytm-emu to upstream main first
     npm run upstream:tools -- --dir DIR    # default ~/.cache/modwerk-upstream
 
-Octabam is pinned in sdk/upstream-tools.json; Elekloader follows the vendored
-kit's commit, so the browser builder and the Python SDK cannot drift apart.
+Octabam and rytm-emu are pinned in sdk/upstream-tools.json; Elekloader follows
+the vendored kit's commit, so the browser builder and the Python SDK cannot
+drift apart. rytm-emu is the Analog Rytm MKII emulator the capture guide uses;
+a hand-made clone falls behind its fixes, so take it from here.
 These are developer tools only: nothing in a checkout enters a Modwerk build,
 catalogue or release fingerprint, and no firmware is read or written here.
 Octabam's reviewed host-tool repairs (sdk/machines/octatrack/hw) are applied in
@@ -126,10 +128,25 @@ def update_octabam(pins_path, base, today=None):
     return head, True
 
 
+def update_plain(pins_path, name, base, today=None):
+    """Move a pin that carries no repairs (rytm-emu) to upstream main."""
+    pins = json.loads(pins_path.read_text())
+    entry = pins[name]
+    path = sync(name, entry['repository'], entry['commit'], base, False)
+    head = git(path, 'ls-remote', 'origin', 'refs/heads/main').split()[0]
+    if head == entry['commit']:
+        return head, False
+    git(path, 'fetch', '-q', '--filter=blob:none', 'origin', 'main')
+    entry['commit'] = head
+    entry['updated'] = today or datetime.date.today().isoformat()
+    pins_path.write_text(json.dumps(pins, indent=2) + '\n')
+    return head, True
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('--dir', type=Path, default=DEFAULT_DIR)
-    parser.add_argument('--update', action='store_true', help='Move the Octabam pin to upstream main first.')
+    parser.add_argument('--update', action='store_true', help='Move the Octabam and rytm-emu pins to upstream main first.')
     args = parser.parse_args()
     base = args.dir.expanduser().resolve()
     try:
@@ -138,10 +155,13 @@ def main():
         if args.update:
             head, moved = update_octabam(PINS, base)
             print('Octabam pin %s %s.' % ('moved to' if moved else 'already at', head[:7]))
+            head, moved = update_plain(PINS, 'rytm-emu', base)
+            print('rytm-emu pin %s %s.' % ('moved to' if moved else 'already at', head[:7]))
         pins = json.loads(PINS.read_text())
         kit = json.loads((APP / pins['elekloader']['commitFrom']).read_text())
         octabam = sync('octabam', pins['octabam']['repository'], pins['octabam']['commit'], base, True)
         elekloader = sync('elekloader', pins['elekloader']['repository'], kit['commit'], base, False)
+        rytm_emu = sync('rytm-emu', pins['rytm-emu']['repository'], pins['rytm-emu']['commit'], base, False)
         if args.update:
             main_head = git(elekloader, 'ls-remote', 'origin', 'refs/heads/main').split()[0]
             if main_head != kit['commit']:
@@ -153,9 +173,11 @@ def main():
     print('octabam     %s (%s)  %s  repaired: %s' % (pins['octabam']['commit'][:7], pins['octabam']['updated'],
                                                     octabam, ', '.join(adapter.TOOLS)))
     print('elekloader  %s (kit %s)  %s' % (kit['commit'][:7], kit['version'], elekloader))
+    print('rytm-emu    %s (%s)  %s' % (pins['rytm-emu']['commit'][:7], pins['rytm-emu']['updated'], rytm_emu))
     print('Hardware tools (%d): %s/tools/hw' % (len(tools), octabam))
     print('Recorder:    swiftc -O %s/tools/hw/rec.swift -o %s/tools/rec' % (octabam, octabam))
     print('Emulator and DSP assembler: run "make setup" then "make emu-cf" in %s (builds into its ignored vendor/).' % octabam)
+    print('Rytm emulator: run "cargo build --release --bin dtboot" in %s (builds into its ignored target/).' % rytm_emu)
 
 
 if __name__ == '__main__':
