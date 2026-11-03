@@ -1,8 +1,8 @@
 {
  "elemod": 2,
- "id": "quick-mod-assign",
+ "id": "quick-velocity-aftertouch-assign",
  "version": "0.1.0-experimental",
- "title": "Quick Mod Assign",
+ "title": "Quick Velocity & Aftertouch Assign",
  "description": "Link a parameter to velocity or aftertouch by holding FIX or SAMPLER and turning its knob.",
  "category": "system",
  "author": "npp1993",
@@ -152,28 +152,28 @@
    ".run",
    2672
   ],
-  "quick_mod_assign_params": [
-   ".run",
-   2652
-  ],
-  "quick_mod_assign_key": [
+  "quick_velocity_aftertouch_assign_key": [
    ".run",
    1936
   ],
-  "quick_mod_assign_enc": [
-   ".run",
-   2264
-  ],
-  "quick_mod_assign_tick": [
+  "quick_velocity_aftertouch_assign_tick": [
    ".run",
    2300
+  ],
+  "quick_velocity_aftertouch_assign_params": [
+   ".run",
+   2652
+  ],
+  "quick_velocity_aftertouch_assign_enc": [
+   ".run",
+   2264
   ]
  },
  "exports": [
-  "quick_mod_assign_enc",
-  "quick_mod_assign_key",
-  "quick_mod_assign_params",
-  "quick_mod_assign_tick"
+  "quick_velocity_aftertouch_assign_enc",
+  "quick_velocity_aftertouch_assign_key",
+  "quick_velocity_aftertouch_assign_params",
+  "quick_velocity_aftertouch_assign_tick"
  ],
  "imports": [],
  "weak": [],
@@ -610,7 +610,7 @@
     [
      0,
      "abs32",
-     "sym:quick_mod_assign_key",
+     "sym:quick_velocity_aftertouch_assign_key",
      0
     ]
    ],
@@ -624,7 +624,7 @@
     [
      0,
      "abs32",
-     "sym:quick_mod_assign_enc",
+     "sym:quick_velocity_aftertouch_assign_enc",
      0
     ]
    ],
@@ -638,7 +638,7 @@
     [
      0,
      "abs32",
-     "sym:quick_mod_assign_tick",
+     "sym:quick_velocity_aftertouch_assign_tick",
      0
     ]
    ],
@@ -652,7 +652,7 @@
     [
      0,
      "abs32",
-     "sym:quick_mod_assign_params",
+     "sym:quick_velocity_aftertouch_assign_params",
      0
     ]
    ],

@@ -6,12 +6,12 @@
   "changes": [
     "First library release for Analog Rytm MKII OS 1.74, on core-ar2 0.7. Hold FIX and turn a knob to link that parameter to velocity, or SAMPLER for aftertouch, in the sound's own four velocity and four aftertouch mod slots; linked knobs show their amounts as performance locks do while the key is held."
   ],
-  "runtimeSourceSha256": "b6298fc374c745ef156dbae0eefcd79fbe6137706515c53f3b7994246b511fcb",
+  "runtimeSourceSha256": "5adb58c69a67212ba1b0483617dc166aff109b92f4fae76a2c2740167ce23501",
   "packages": [
     {
       "os": "1.74",
       "path": "sdk/imports/packages/quick-velocity-aftertouch-assign/quick-velocity-aftertouch-assign-0.1.0-experimental-os1.74.elemod",
-      "sha256": "137f56f056809321aeb0d1cda8295bed594d756b25562d9ec22f0c1d0a80bbda"
+      "sha256": "f1345a6de77a8f28d14de6643e00e1115ffe3079e4883ad7f4e0039015747791"
     }
   ],
   "stockPolicy": "No firmware or stock-derived code/tables are present. Addresses, lengths and SHA-256 guards are metadata; exported instructions and sections are authored module code. Local materialized recipes and firmware are never committed.",
