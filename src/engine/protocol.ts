@@ -12,6 +12,8 @@ export type BuildReport = {
   startupAnimation?: StartupAnimation
   // Docking was asked for, but this selection composes only with the classic startup.
   startupFallback?: true
+  // The longer FX2 list left too little menu space, so FX2 lists only the modules' effects; the page asks before building.
+  compactFx2?: true
 }
 export type BuildProgress = 'composing' | 'packing' | 'verifying'
 export type EngineRequest =
