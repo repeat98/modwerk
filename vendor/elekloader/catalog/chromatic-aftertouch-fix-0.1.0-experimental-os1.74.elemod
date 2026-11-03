@@ -1,0 +1,86 @@
+{
+ "elemod": 2,
+ "id": "chromatic-aftertouch-fix",
+ "version": "0.1.0-experimental",
+ "title": "Chromatic Aftertouch Fix",
+ "description": "In CHROMATIC mode a held pad's MIDI aftertouch goes out on the note the pad played, not 24 semitones above it, so a receiver sees it.",
+ "category": "midi-usb",
+ "author": "npp1993",
+ "license": "GPL-3.0-or-later",
+ "target": {
+  "device": "analog-rytm-mk2",
+  "product": "Analog Rytm MKII",
+  "os": "1.74",
+  "syx_sha256": "cb0f99d620edde994fb860c0e79cc2464e427d06882828cfdfb00fc53700e123",
+  "section3_sha256": "34cd0c4da8e4b810d1b25284475a99ea53821e2ab7d30a978bf15dc578251f3b",
+  "section3_len": 3005432
+ },
+ "sections": {
+  ".run": {
+   "align": 4,
+   "len": 44,
+   "parts": [
+    [
+     "hex",
+     "202f0004720bb280651c41ea013420300c0072189081727fb280650a2f40000c4ef9400850f470004e750000"
+    ]
+   ]
+  }
+ },
+ "symbols": {
+  "PRESSURE_OUT": [
+   "abs",
+   1074286836
+  ],
+  "HELD_NOTES": [
+   "abs",
+   308
+  ],
+  "CHRO_OFFSET": [
+   "abs",
+   24
+  ],
+  "chromatic_aftertouch_fix_pressure_out": [
+   ".run",
+   0
+  ]
+ },
+ "exports": [
+  "chromatic_aftertouch_fix_pressure_out"
+ ],
+ "imports": [],
+ "weak": [],
+ "relocs": [],
+ "sites": [
+  {
+   "addr": "0x400c628e",
+   "len": 6,
+   "stock_sha256": "eb8c3b4455860d7a405903deb4a71d861baed698a9ab2fbb8c1166d596dffcd1",
+   "new": "4eb900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:chromatic_aftertouch_fix_pressure_out",
+     0
+    ]
+   ]
+  }
+ ],
+ "collections": {},
+ "contribute": [],
+ "copied": [],
+ "resources": {
+  "regions": [],
+  "names": [
+   "midi:CHROMATIC pad poly pressure note on MIDI out"
+  ],
+  "core": "0.7"
+ },
+ "requires": [
+  "core"
+ ],
+ "conflicts": [],
+ "signature": null
+}
