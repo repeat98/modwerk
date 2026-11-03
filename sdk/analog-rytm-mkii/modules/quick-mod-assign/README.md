@@ -27,10 +27,14 @@ FUNC + FIX (stock's FIXED VELOCITY), the FX track, and a performance or scene pa
 
 ## Usage
 
-1. Select a sound track, press FLTR.
-2. Hold FIX and turn FRQ to the right: FRQ's knob turns into a box reading +20. Harder hits now open the filter.
-3. Hold SAMPLER and turn DEC on the AMP page: pad pressure now lengthens the decay.
-4. FUNC + FLTR, SOUND SETTINGS, VELOCITY MOD shows the same links, ready to fine-tune.
+Hold FIX or SAMPLER on any sound page and turn the knob you want to move with velocity or pad pressure. SOUND SETTINGS, VELOCITY MOD and AFTERTOUCH show the same links for fine-tuning.
+
+### Quick tutorial
+
+1. Select a sound track and press FLTR. Hold FIX: FRQ and RES show 0 boxes, the new kit's velocity links.
+2. Keep FIX held and turn FRQ to the right: its box counts up and FRQ itself does not move. Play soft and hard hits: harder ones open the filter.
+3. Press AMP, hold SAMPLER and turn DEC: pad pressure now lengthens the decay.
+4. Hold FIX and press FRQ's knob: the link goes back to 0, and its slot is free for another parameter.
 
 ## Changes to stock flows
 
@@ -55,3 +59,11 @@ rytm-emu on OS 1.74 ([TESTING.md](TESTING.md)), and the author's unit on an earl
 ## Authorship and licences
 
 Original code by Nathaniel Pavel (@npp1993), GPL-3.0-or-later ([LICENSE](LICENSE)). The OS 1.74 addresses were read by the author from their own stock firmware; the build carries addresses only, no stock bytes. No Elektron firmware is included.
+
+## Screens and audio
+
+Screenshots are rytm-emu captures of build QM11 ([media/capture.json](media/capture.json)). No audio preview yet.
+
+![FILTER page with FIX held: FRQ +20 and RES 0](media/fix-filter.png) ![AMP page with SAMPLER held: DEC +10](media/sampler-amp.png)
+
+![VELOCITY MODS FULL](media/mods-full.png) ![Stock's MODULATION SETUP showing the link](media/mod-setup.png)

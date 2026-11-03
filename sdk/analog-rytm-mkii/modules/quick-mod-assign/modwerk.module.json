@@ -27,8 +27,10 @@
       "Uses stock's slots, saved with the kit"
     ],
     "usage": [
-      "Hold FIX and turn FILTER FRQ to make harder hits open the filter.",
-      "Hold SAMPLER and turn AMP DEC to let pad pressure lengthen the decay."
+      "Select a sound track and press FLTR. Hold FIX: FRQ and RES show 0 boxes, the new kit's velocity links.",
+      "Keep FIX held and turn FRQ to the right: its box counts up and FRQ itself does not move. Play soft and hard hits: harder ones open the filter.",
+      "Press AMP, hold SAMPLER and turn DEC: pad pressure now lengthens the decay.",
+      "Hold FIX and press FRQ's knob: the link goes back to 0, and its slot is free for another parameter."
     ]
   },
   "access": {
@@ -39,7 +41,10 @@
       "Hold SAMPLER for aftertouch: the aftertouch amounts.",
       "Turn back to 0 to free the slot. Tap FIX alone to toggle fixed velocity, tap SAMPLER alone to open the recorder, as before."
     ],
-    "screenshots": []
+    "screenshots": [
+      "media/fix-filter.png",
+      "media/sampler-amp.png"
+    ]
   },
   "controls": [],
   "compatibility": {
@@ -89,7 +94,25 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "rytm-emu on QM11: links, lock-style display, MODS FULL popups, SAMPLER recorder, FIX toggle, PERF and SCNE. Author's unit report on RC18 (QM10): aftertouch and velocity links, display, kit save, reload and power cycle pass."
+    "summary": "rytm-emu on QM11: links, lock-style display, MODS FULL popups, SAMPLER recorder, FIX toggle, PERF and SCNE. Author's unit report on RC18 (QM10): aftertouch and velocity links, display, kit save, reload and power cycle pass.",
+    "documentation": {
+      "tutorial": {
+        "title": "Quick tutorial",
+        "steps": [
+          "Select a sound track and press FLTR. Hold FIX: FRQ and RES show 0 boxes, the new kit's velocity links.",
+          "Keep FIX held and turn FRQ to the right: its box counts up and FRQ itself does not move. Play soft and hard hits: harder ones open the filter.",
+          "Press AMP, hold SAMPLER and turn DEC: pad pressure now lengthens the decay.",
+          "Hold FIX and press FRQ's knob: the link goes back to 0, and its slot is free for another parameter."
+        ]
+      },
+      "screenshots": [
+        "media/fix-filter.png",
+        "media/sampler-amp.png",
+        "media/mods-full.png",
+        "media/mod-setup.png"
+      ],
+      "captureRecord": "media/capture.json"
+    }
   },
   "license": {
     "spdx": "GPL-3.0-or-later",
@@ -105,6 +128,70 @@
       "credit": "Nathaniel Pavel",
       "license": "GPL-3.0-or-later",
       "source": "Original placeholder from the Modwerk SDK template; replace with your own artwork."
+    },
+    {
+      "path": "media/fix-filter.png",
+      "kind": "screenshot",
+      "caption": "FILTER page with FIX held: FRQ turned to +20, and RES's velocity link at 0 from the new kit.",
+      "alt": "FILTER page; FRQ's bar label replaced by an inverted +20 box and RES's by an inverted 0 box, as performance locks are drawn.",
+      "credit": "Nathaniel Pavel documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "7ef00e24371b1d572da3ec60ca21be4d059b32decfe15f3a334c75486788e3f9",
+        "setup": "Headless rytm-emu (dtboot) running QM11: the Modwerk base for core-ar2 0.7 and this folder's Quick Mod Assign 0.1.0-experimental, linked by Modwerk on stock OS 1.74, the default kit. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+      }
+    },
+    {
+      "path": "media/sampler-amp.png",
+      "kind": "screenshot",
+      "caption": "AMP page with SAMPLER held: DEC linked to aftertouch at +10.",
+      "alt": "AMP page; DEC's label shows an inverted +10 box while the envelope graphic draws the longer decay.",
+      "credit": "Nathaniel Pavel documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "7ef00e24371b1d572da3ec60ca21be4d059b32decfe15f3a334c75486788e3f9",
+        "setup": "Headless rytm-emu (dtboot) running QM11: the Modwerk base for core-ar2 0.7 and this folder's Quick Mod Assign 0.1.0-experimental, linked by Modwerk on stock OS 1.74, the default kit. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+      }
+    },
+    {
+      "path": "media/mods-full.png",
+      "kind": "screenshot",
+      "caption": "With four velocity links on the sound, a fifth parameter says VELOCITY MODS FULL.",
+      "alt": "SYNTH page with four knobs shown as +2 boxes and a stock popup reading VELOCITY MODS FULL.",
+      "credit": "Nathaniel Pavel documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "7ef00e24371b1d572da3ec60ca21be4d059b32decfe15f3a334c75486788e3f9",
+        "setup": "Headless rytm-emu (dtboot) running QM11: the Modwerk base for core-ar2 0.7 and this folder's Quick Mod Assign 0.1.0-experimental, linked by Modwerk on stock OS 1.74, the default kit. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+      }
+    },
+    {
+      "path": "media/mod-setup.png",
+      "kind": "screenshot",
+      "caption": "Stock's MODULATION SETUP for velocity after FIX + SWT: slot 1 is BDPL SWT at 8.",
+      "alt": "MODULATION SETUP VEL screen; the first slot's destination reads BDPL SWT with amount 8, then FILT FRQ and FILT RES at 0 and an empty slot.",
+      "credit": "Nathaniel Pavel documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "7ef00e24371b1d572da3ec60ca21be4d059b32decfe15f3a334c75486788e3f9",
+        "setup": "Headless rytm-emu (dtboot) running QM11: the Modwerk base for core-ar2 0.7 and this folder's Quick Mod Assign 0.1.0-experimental, linked by Modwerk on stock OS 1.74, the default kit. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+      }
     }
   ]
 }
