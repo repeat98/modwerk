@@ -1,6 +1,6 @@
 # Digi Perform
 
-Modwerk metadata version: `0.1.1-experimental`.
+Modwerk metadata version: `0.1.2-experimental`.
 
 ## Overview
 
@@ -100,14 +100,14 @@ The Perform page: TRIG pressed again on the TRIG page.
 
 Perform Quick Assign: FUNC and a knob’s push, then turn to choose the track.
 
-![Knob A with track number 1 and the name TUNE under it](media/assigned.png)
+![Knobs A to D for all tracks (TUNE, SAMP, LOOP, F.FRQ), E to G for tracks 3, 2 and 3, H empty](media/assigned.png)
 
-Knob A assigned to track 1’s TUNE.
+Seven knobs assigned: A to D move a parameter of all tracks, E to G one track’s.
 
 ![The SETTINGS list with the PERFORM EDIT row selected](media/settings.png)
 
 SETTINGS > PERFORM EDIT is the last row of the SETTINGS list.
 
-![Perform Mode Edit with row A set to T1 SRC.TUNE + and rows B to F empty](media/perform-edit.png)
+![Perform Mode Edit with rows A to D set to ALL, row E to T3 SRC.PLAY and row F to T2 SRC.PLAY](media/perform-edit.png)
 
-Perform Edit lists all eight knobs: A moves SRC.TUNE of track 1, direction +.
+Perform Edit lists the knobs: A to D move one parameter of all tracks, E and F of tracks 3 and 2, all direction +.

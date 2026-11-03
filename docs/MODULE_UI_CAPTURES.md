@@ -301,22 +301,33 @@ separately from Elektron's underlying interface rights, as for the OT captures.
 
 Rytm modules use the same manifest fields and `media/capture.json` as the
 Digitakt and Digitone. Capture them in
-[rytm-emu](https://github.com/trigcondition/rytm-emu) (MIT) at revision
-`3c4c42c`, built with `cargo build --release --bin dtboot`. Its headless
+[rytm-emu](https://github.com/trigcondition/rytm-emu) (MIT), from the
+checkout `npm run upstream:tools` keeps at the commit `sdk/upstream-tools.json`
+pins (`-- --update` moves it to upstream main), built there with
+`cargo build --release --bin dtboot`; a hand-made clone falls behind its fixes.
+Record the revision in `capture.json`. Its headless
 `dtboot` runs your own build of stock OS 1.74 with core-ar2 and the module, and
 writes the firmware-rendered 128×64 screen as a PNG at 3× without
 interpolation: `DTBOOT_STEPS=1` with `DTBOOT_PNG_DIR` after each key release,
 `DTBOOT_TURN_PNG` after each encoder turn. The command line is the panel-input
 plan; keep it in `capture.json` with the PNG hashes and the built `.syx` hash.
 
-- Never put an event on a multiple of 10M. dtboot runs in chunks of
-  `--every` instructions (10M by default) and silently drops a press,
-  release or turn whose clock the CPU has already passed when its chunk
-  starts. An event exactly on a boundary is lost whenever the CPU is busy
-  there (in an interrupt, not stopped): Send FX's boot plan lost its NO
-  presses, the notices stayed up and the run was silent
-  ([repeat98/modwerk#878](https://github.com/repeat98/modwerk/pull/878)).
-  Place every event 3M off the boundaries.
+- Keep events off the `--every` grid. dtboot runs in chunks of `--every`
+  instructions (10M by default). Before rytm-emu `951dcbc`
+  ([trigcondition/rytm-emu#3](https://github.com/trigcondition/rytm-emu/pull/3))
+  it silently dropped a press, release or turn on a chunk boundary whenever
+  the CPU had run a few instructions past it, which depends on code layout:
+  Send FX's boot plan lost its NO presses
+  ([repeat98/modwerk#878](https://github.com/repeat98/modwerk/pull/878)), and a
+  FLTR press at 11900M with `--every 100M` looked like a build that failed
+  only past a certain size. The pinned revision runs such an event a few
+  instructions late instead; plans still place events 3M off the boundaries,
+  so they replay on older revisions too.
+- Keep key presses short. From rytm-emu `e914f46` the PIT divides the bus
+  clock as the unit does, so the firmware's timers run twice as fast for the
+  same instructions as on older revisions. A 40M press of FX now reads as a
+  hold and leaves the track unchanged, while 12M selects the FX track.
+  Replay a capture on the revision its `capture.json` names.
 - Without the unit's analog calibration the OS opens with notices. Clear them
   with held NO presses before the first real step, for example
   `--press NO@4503M:80M --press NO@5303M:80M --press NO@6103M:80M --press NO@6903M:80M`

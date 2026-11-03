@@ -195,6 +195,18 @@ describe('module version rule', () => {
     expect(isVersionNeutralChange(change(modulePath, flagged, { ...flagged, platform: { build: 'other.json' } }))).toBe(false)
     expect(isVersionNeutralChange(change('sdk/digitakt/modules/demo/src/demo.c'))).toBe(false)
   })
+  it('needs no new version for a new display name or author credit', () => {
+    const credited = { ...digi, license: { spdx: 'MIT', file: 'LICENSE', declaration: 'Original code by author.' } }
+    const renamed = { ...credited, name: 'Demo Two', author: { github: 'author', name: 'Author Name', credits: ['Author Name: the module.'] },
+      license: { ...credited.license, declaration: 'Original code by Author Name (@author).' } }
+    expect(isVersionNeutralChange(change(modulePath, credited, renamed))).toBe(true)
+  })
+  it('still needs one for a new author login, maintainer or licence', () => {
+    const credited = { ...digi, license: { spdx: 'MIT', file: 'LICENSE', declaration: 'Original code by author.' } }
+    expect(isVersionNeutralChange(change(modulePath, credited, { ...credited, author: { github: 'other' } }))).toBe(false)
+    expect(isVersionNeutralChange(change(modulePath, credited, { ...credited, maintainers: ['author', 'other'] }))).toBe(false)
+    expect(isVersionNeutralChange(change(modulePath, credited, { ...credited, license: { ...credited.license, spdx: 'GPL-3.0-only' } }))).toBe(false)
+  })
 })
 
 describe('release export reproduction', () => {

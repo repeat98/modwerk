@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "module": "analog-rytm-mkii/audio-in-fx",
+  "version": "0.1.0-experimental",
+  "date": "2026-11-03",
+  "changes": [
+    "First library release for Analog Rytm MKII OS 1.74, on core-ar2 0.7. AUDIO IN through the Rytm's own DIST, COMP, delay and reverb, from knobs D (STE) and E (IFX) on the FX track's DISTORTION page."
+  ],
+  "runtimeSourceSha256": "e86850297983279c05a98877efa2ede9fdb2cff55b381db4edb8a67df67640fb",
+  "packages": [
+    {
+      "os": "1.74",
+      "path": "sdk/imports/packages/audio-in-fx/audio-in-fx-0.1.0-experimental-os1.74.elemod",
+      "sha256": "53d8e674042c2c84519c0ffc41c031b56ffb0556ffa01b1ed78c07fe2dbfcc83"
+    }
+  ],
+  "stockPolicy": "No firmware or stock-derived code/tables are present. Addresses, lengths and SHA-256 guards are metadata; exported instructions and sections are authored module code. Local materialized recipes and firmware are never committed.",
+  "evidence": "sdk/analog-rytm-mkii/modules/audio-in-fx/TESTING.md",
+  "requires": []
+}

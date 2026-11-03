@@ -25,7 +25,8 @@ export const exportText = recipe => JSON.stringify(recipe, null, 1) + '\n'
  * bytes, because hardware evidence binds their hash ("byte-identical to tested candidate"). A source rebuild reproduces such an
  * export when it differs only by that one added field. Conflict flags added after release are metadata too
  * (docs/module-guides/README.md#flag-every-incompatibility): an export keeps its bytes when the source only adds flags.
- * Neither changes the linked image.
+ * A new module name or summary needs no new version (scripts/change-scope.mjs), so the export keeps the title and description
+ * it was released with. None of these changes the linked image.
  */
 export function reproducesExport(committed, plan) {
   const recipe = packageRecipe(plan)
@@ -35,6 +36,7 @@ export function reproducesExport(committed, plan) {
   const { core, ...resources } = recipe.resources
   return [recipe, ...(core !== undefined ? [{ ...recipe, resources }] : [])]
     .flatMap(candidate => [candidate, ...(added ? [{ ...candidate, conflicts: released.conflicts }] : [])])
+    .flatMap(candidate => [candidate, { ...candidate, title: released?.title, description: released?.description }])
     .some(candidate => committed === exportText(candidate))
 }
 
