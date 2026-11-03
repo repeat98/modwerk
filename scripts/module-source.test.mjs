@@ -94,4 +94,25 @@ print(json.dumps(module.source_hashes(Path(sys.argv[2]) / 'sdk/octabam')))`, res
       expect(Object.keys(node)).not.toContain('modules/demo/README.md')
     } finally { await rm(dir, { recursive: true }) }
   })
+  it('excludes USB-only native sources consistently in the compiler and importer', async () => {
+    const dir = await tree({})
+    try {
+      const packages = resolve(dir, 'src/engine/assets/octatrack-module-packages.json')
+      await mkdir(resolve(packages, '..'), { recursive: true })
+      for (const declaration of [{ usbOnly: true }, { sources: ['native.c'] }, { usbOnly: false }]) {
+        await writeFile(packages, JSON.stringify({ packages: [{ id: 'demo', ...declaration }] }))
+        const paths = await moduleSourcePaths(dir)
+        expect(paths.includes('modules/demo/demo.asm')).toBe(declaration.usbOnly === false)
+        const python = JSON.parse(execFileSync('python3', ['-B', '-c', `
+import importlib.util, json, sys
+from pathlib import Path
+spec = importlib.util.spec_from_file_location('compiler', sys.argv[1]); module = importlib.util.module_from_spec(spec); spec.loader.exec_module(module)
+root = Path(sys.argv[2]); manifest = json.loads((root / 'src/engine/assets/octatrack-module-packages.json').read_text())
+print(json.dumps(module.source_hashes(root / 'sdk/octabam', module.cardless_modules(manifest))))`, resolve(root, 'scripts/build-module-packages.py'), dir], { encoding: 'utf8' }))
+        const node = {}
+        for (const path of paths) node[path] = await sourceEntryHash(dir, path)
+        expect(python).toEqual(node)
+      }
+    } finally { await rm(dir, { recursive: true }) }
+  })
 })

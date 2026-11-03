@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="192" viewBox="0 0 320 192" class="signal-art" fill="none" stroke-linecap="round" stroke-linejoin="round" role="img" aria-labelledby="title description">
+<title id="title">AUDIO IN FX</title>
+<desc id="description">AUDIO IN splits into three paths: the distortion, the delay and the reverb. Original conceptual illustration.</desc>
+<style>.signal-grid{stroke:#fff;opacity:.035;stroke-width:.7}.signal-main{stroke:#9eb4ed;stroke-width:2.7}.signal-secondary{stroke:#9eb4ed;opacity:.65;stroke-width:1.8}text{fill:#e6e7ee;font:600 11px Inter,Arial,sans-serif;letter-spacing:.06em}</style>
+<rect width="320" height="192" fill="#232328"/>
+<g class="signal-grid"><path d="M20 52H300"/><path d="M20 97H300"/><path d="M20 142H300"/><path d="M64 33V163"/><path d="M128 33V163"/><path d="M192 33V163"/><path d="M256 33V163"/></g>
+<g>
+<path class="signal-main" d="M40 96H112"/>
+<path class="signal-main" d="M112 96C136 96 136 54 164 54H204"/>
+<path class="signal-secondary" d="M112 96H204"/>
+<path class="signal-secondary" d="M112 96C136 96 136 138 164 138H204"/>
+<text x="40" y="84">IN</text><text x="212" y="58">DIST</text><text x="212" y="100">DELAY</text><text x="212" y="142">REVERB</text>
+</g>
+</svg>
