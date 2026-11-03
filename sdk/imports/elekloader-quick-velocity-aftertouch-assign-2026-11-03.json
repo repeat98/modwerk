@@ -7,7 +7,7 @@
   "mods": [
     {
       "file": "quick-velocity-aftertouch-assign-0.1.0-experimental-os1.74.elemod",
-      "sha256": "137f56f056809321aeb0d1cda8295bed594d756b25562d9ec22f0c1d0a80bbda",
+      "sha256": "f1345a6de77a8f28d14de6643e00e1115ffe3079e4883ad7f4e0039015747791",
       "id": "quick-velocity-aftertouch-assign",
       "version": "0.1.0-experimental",
       "device": "analog-rytm-mk2",
@@ -15,7 +15,7 @@
       "license": "GPL-3.0-or-later",
       "source": {
         "repo": "repeat98/modwerk",
-        "commit": "25fb94539e760d0ae3ef209a20b15d7821934756",
+        "commit": "dde0ea93d2cfa244b409691d445183d7bd544b8b",
         "path": "sdk/imports/packages/quick-velocity-aftertouch-assign/quick-velocity-aftertouch-assign-0.1.0-experimental-os1.74.elemod"
       },
       "title": "Quick Velocity & Aftertouch Assign",
