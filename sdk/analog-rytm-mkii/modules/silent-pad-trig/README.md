@@ -48,7 +48,7 @@ mode the pads play as stock, and TRIG 1-12 select silently there too. MUTE mode,
 pad, NO + pad, BANK + TRIG, MIDI notes in, TRIG + YES and the sequencer itself are as stock.
 
 Version **0.6.0-experimental** for Analog Rytm MKII OS **1.74**, with core-ar2 0.3. It is
-npp1993's own mod, not a port. It was first written as Pad Select (`pad-select` 0.2, row
+Nathaniel Pavel's (@npp1993) own mod, not a port. It was first written as Pad Select (`pad-select` 0.2, row
 PAD+TRIG SEL TRK) in a local checkout of [rytm2_mods](https://github.com/Iced-Cream/rytm2_mods)
 that was never published there; Modwerk is its home. 0.4.x had one checkbox covering both columns
 above; 0.5.0 splits it in two so silent pads while editing and silent pads while live recording
@@ -193,7 +193,7 @@ measurement).
 
 ## Authorship and licences
 
-npp1993 (Nathaniel Pavel): the mod, its design and code, and this module. Iced-Cream:
+Nathaniel Pavel (@npp1993): the mod, its design and code, and this module. Iced-Cream:
 `include/ar2-1.74.inc` and the rytm2_mods voice-dac port. MrScruff: the globals-slot lookup,
 which follows his voice-dac (rytm-mods `0013-voice-dac`, as rytm2_mods ports it). irpina:
 Elekloader and core-ar2, whose mod storage keeps the setting.
