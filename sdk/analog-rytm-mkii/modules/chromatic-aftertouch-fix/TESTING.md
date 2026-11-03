@@ -53,17 +53,19 @@ Images, all on stock 1.74:
 | BD and SD held together | `9d 24 7f 9d 25 7f ad 3c 10 ad 3d 20 ad 3c 18 8d 24 00 8d 25 00` | `9d 24 7f 9d 25 7f ad 24 10 ad 25 20 ad 24 18 8d 24 00 8d 25 00` |
 | Pads outside CHROMATIC, BD | `9d 00 7f ad 00 10 ad 00 18 ad 00 14 8d 00 00` | the same |
 
-CX01 sends stock's bytes in the first case. CA02-sp gives CA02's bytes in the first three rows and
-in the row outside CHROMATIC. CA01 passed the first row but, with UP during the hold, sent
+CX01 sends stock's bytes in the first case. CA02-sp gives CA02's bytes in every row but the one
+with both pads held, which was not run on it. CA01 passed the first row but, with UP during the hold, sent
 `ad 2c` while the note off said `24`: the review that found it led to CA02.
 
-Layouts shifted before playing, BD, pressure 20 30 (run on CA01, whose result matches CA02's
-whenever the layout does not change during the hold):
+Layouts shifted before playing, BD, pressure 20 30:
 
-| Layout | Stock 1.74 | CA01 |
+| Layout | Stock 1.74 | CA02 (CA01 the same) |
 | --- | --- | --- |
 | DOWN pressed five times | `9d 0c 7f ad 24 10 ad 24 18 8d 0c 00` | `9d 0c 7f ad 0c 10 ad 0c 18 8d 0c 00` |
 | UP pressed ten times | `9d 30 7f ad 48 10 ad 48 18 8d 30 00` | `9d 30 7f ad 30 10 ad 30 18 8d 30 00` |
+
+Leaving CHROMATIC (CHRO pressed) while BD is held: the pressure and the note off still come from
+ChromPadsView on `24`, and SD played after re-entering sends `25` throughout.
 
 Not reached in rytm-emu: a layout entry of -1 during a hold (BD stopped at 0x48), and a note
 outside 0 to 127. With Silent Pad+Trig's MUTE ALL SOUND checked and the track muted, its gate at
