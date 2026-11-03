@@ -4,9 +4,9 @@
   "moduleId": "chromatic-aftertouch-fix",
   "moduleVersion": "0.1.0-experimental",
   "firmware": "1.74",
-  "capturedAt": "2026-11-02T18:30:00Z",
-  "imageSha256": "8d83b97a39ea50ee94b3eb6ace07cb22a453fde9e23e6e2ee9813533ce101def",
-  "build": "Modwerk's linker: core-ar2 0.7 + this folder's Chromatic Aftertouch Fix 0.1.0-experimental, materialised against stock OS 1.74, --version CA01",
+  "capturedAt": "2026-11-02T20:30:00Z",
+  "imageSha256": "820cfaec54e5aa823f980ce80a4e85dbb64669fffa497a31680a4045ef0e2c9a",
+  "build": "Modwerk's linker: core-ar2 0.7 + this folder's Chromatic Aftertouch Fix 0.1.0-experimental, materialised against stock OS 1.74, --version CA02",
   "emulator": {
     "name": "rytm-emu",
     "repository": "https://github.com/trigcondition/rytm-emu",
@@ -18,7 +18,7 @@
     {
       "path": "media/port-config.png",
       "frame": "step16_DOWN.png",
-      "plan": "dtboot CA01.syx --instr 8000M --every 1000M --save boot.snap; dtboot CA01.syx --load boot.snap --instr 2000M --every 1000M --press NO@8203M:60M --press NO@8503M:60M --press NO@8803M:60M --press NO@9103M:60M --save main.snap; DTBOOT_STEPS=1 DTBOOT_PNG_DIR=out dtboot CA01.syx --load main.snap --instr 5500M --every 1000M --press GLOBAL@10303M, DOWN at 10703M 10953M 11203M, YES@11553M, DOWN@11903M, YES@12253M, then DOWN every 250M from 12603M, ten times",
+      "plan": "dtboot CA02.syx --instr 8000M --every 1000M --save boot.snap; dtboot CA02.syx --load boot.snap --instr 2000M --every 1000M --press NO@8203M:60M --press NO@8503M:60M --press NO@8803M:60M --press NO@9103M:60M --save main.snap; DTBOOT_STEPS=1 DTBOOT_PNG_DIR=out dtboot CA02.syx --load main.snap --instr 5500M --every 1000M --press GLOBAL@10303M, DOWN at 10703M 10953M 11203M, YES@11553M, DOWN@11903M, YES@12253M, then DOWN every 250M from 12603M, ten times",
       "sha256": "189c44b61ef9e055830c78ffda7ff5e05b657021e1b00f2b9b1d8a4e92a6999a"
     }
   ]

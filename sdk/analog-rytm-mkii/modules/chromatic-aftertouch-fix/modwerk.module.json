@@ -20,7 +20,7 @@
     "label": "CHRO AFTERTOUCH FIX",
     "family": "MIDI",
     "summary": "In CHROMATIC mode a held pad's MIDI aftertouch goes out on the note the pad played, not 24 semitones above it, so a receiver sees it.",
-    "overview": "On stock OS 1.74, a CHROMATIC pad sends its note on and note off 24 semitones below the note it keeps for the pad, but sends the poly pressure for the kept note. So a held pad sends note on 36 and then aftertouch for note 60, and a synth or a MIDI monitor watching note 36 sees no aftertouch. Chromatic Aftertouch Fix moves the poly pressure onto the note the pad played. The aftertouch the Rytm's own sound gets is unchanged, as are note on, note off, the channel and the pressure values, and pads outside CHROMATIC mode, which were already right. It has no menu row: installed, it is on.",
+    "overview": "On stock OS 1.74, a CHROMATIC pad sends its note on and note off 24 semitones below the note it keeps for the pad, but sends the poly pressure for the kept note. So a held pad sends note on 36 and then aftertouch for note 60, and a synth or a MIDI monitor watching note 36 sees no aftertouch. Chromatic Aftertouch Fix sends the poly pressure on the note the pad played, the same note its note off uses, also when UP or DOWN shift the pads during the hold. The aftertouch the Rytm's own sound gets is unchanged, as are note on, note off, the channel and the pressure values, and pads outside CHROMATIC mode, which were already right. It has no menu row: installed, it is on.",
     "highlights": [
       "Play CHROMATIC pads into a synth and its aftertouch follows the held note.",
       "Only the poly pressure's note changes: note on, note off, channel and values are as stock.",
@@ -30,7 +30,7 @@
       "In GLOBAL > MIDI CONFIG > PORT CONFIG, check that PAD DEST and PRESSURE DST are INT+EXT (the default) so the pads reach MIDI out. Connect a MIDI monitor to MIDI OUT or USB.",
       "Press CHRO. Strike the BD pad and hold it: the monitor shows a note on for note 36.",
       "Press harder while holding: poly pressure for note 36 follows, then the note off for note 36 on release. Stock sent that pressure for note 60.",
-      "Press DOWN or UP to change the octave and repeat: note on and pressure stay on one note."
+      "Hold BD and press UP or DOWN: the pads shift to other notes, and the held note's pressure stays on its note until you let go."
     ]
   },
   "access": {
@@ -47,7 +47,7 @@
     {
       "name": "Pad held in CHROMATIC mode",
       "default": null,
-      "doc": "Sends MIDI poly pressure on the note the pad's note on sent; stock sends it 24 semitones higher. The pressure to the sound is unchanged.",
+      "doc": "Sends MIDI poly pressure on the note the pad's note on sent, until its note off; stock sends it 24 semitones higher and follows UP and DOWN during the hold. The pressure to the sound is unchanged.",
       "labels": null
     }
   ],
@@ -74,12 +74,12 @@
     ]
   },
   "resources": {
-    "memoryBytes": 28,
+    "memoryBytes": 40,
     "fastBytes": 0,
     "load": {
-      "display": "Nine instructions per CHROMATIC poly pressure message",
+      "display": "Thirteen instructions per CHROMATIC poly pressure message",
       "method": "static",
-      "conditions": "Static count from the assembled code: one call per poly pressure message a held CHROMATIC pad sends (stock queues at most one a pad), nine instructions before stock's sender. Nothing runs otherwise. Not measured on a unit."
+      "conditions": "Static count from the assembled code: one call per poly pressure message a held CHROMATIC pad sends (stock queues at most one a pad), at most thirteen instructions before stock's sender. Nothing runs otherwise. Not measured on a unit."
     }
   },
   "evidence": {
@@ -92,7 +92,7 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "rytm-emu on OS 1.74, MIDI out bytes: a held CHROMATIC pad sends note on, poly pressure and note off on one note (stock: pressure 24 above), in the lowest, default and top octave, alone and beside Silent Pad+Trig; pads outside CHROMATIC as stock. Not run on a unit.",
+    "summary": "rytm-emu on OS 1.74, MIDI out bytes: a held CHROMATIC pad sends note on, poly pressure and note off on one note (stock: pressure 24 above), across UP and DOWN layouts, with UP during the hold, two pads held, and none after the note off; alone and beside Silent Pad+Trig; pads outside CHROMATIC as stock. Not run on a unit.",
     "documentation": {
       "tutorial": {
         "title": "Quick tutorial",
@@ -100,7 +100,7 @@
           "In GLOBAL > MIDI CONFIG > PORT CONFIG, check that PAD DEST and PRESSURE DST are INT+EXT (the default) so the pads reach MIDI out. Connect a MIDI monitor to MIDI OUT or USB.",
           "Press CHRO. Strike the BD pad and hold it: the monitor shows a note on for note 36.",
           "Press harder while holding: poly pressure for note 36 follows, then the note off for note 36 on release. Stock sent that pressure for note 60.",
-          "Press DOWN or UP to change the octave and repeat: note on and pressure stay on one note."
+          "Hold BD and press UP or DOWN: the pads shift to other notes, and the held note's pressure stays on its note until you let go."
         ]
       },
       "screenshots": [
@@ -136,8 +136,8 @@
         "type": "emulator",
         "release": "1.74",
         "moduleVersion": "0.1.0-experimental",
-        "imageSha256": "8d83b97a39ea50ee94b3eb6ace07cb22a453fde9e23e6e2ee9813533ce101def",
-        "setup": "Headless rytm-emu (dtboot) running CA01: core-ar2 0.7 and this folder's Chromatic Aftertouch Fix 0.1.0-experimental, linked by Modwerk on stock OS 1.74. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "imageSha256": "820cfaec54e5aa823f980ce80a4e85dbb64669fffa497a31680a4045ef0e2c9a",
+        "setup": "Headless rytm-emu (dtboot) running CA02: core-ar2 0.7 and this folder's Chromatic Aftertouch Fix 0.1.0-experimental, linked by Modwerk on stock OS 1.74. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     }
   ]
