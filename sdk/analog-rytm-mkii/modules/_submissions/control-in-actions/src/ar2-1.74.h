@@ -9,6 +9,8 @@
 
 // The settings record 0x400fa7e4 fills, 32 bytes, each field a long.
 #define REC_MODE 0                  // 0 OFF, 1 CV, 2 EXPR, 3 FSW (stock's menu stops at 2)
+#define REC_EXPR_MIN 12             // EXPRESSION LEARN's levels, mV
+#define REC_EXPR_MAX 16
 #define REC_FSW_LOW 20              // LEARN LEVELS' (stock FOOTSWITCH LEARN) lowest level, mV (REVERSE swaps)
 #define REC_FSW_HIGH 24             // and its highest, mV; the pressed level
 #define REC_DEST 28                 // the ACTION row (stock FOOTSW DEST), a byte, 0..6 with the module
@@ -61,9 +63,12 @@
 // saved by 0x401314fc.
 #define VIEW_PORT 432
 #define VIEW_RECORD 436             // the menu's copy of the settings record
+#define VIEW_EXPR_MIN 448           // the menu's copy of REC_EXPR_MIN
+#define VIEW_EXPR_MAX 452
 #define VIEW_FSW_LOW 456            // the menu's copy of REC_FSW_LOW
 #define VIEW_FSW_HIGH 460
 #define VIEW_LEARN 468              // 2 EXPRESSION LEARN, 3 FOOTSWITCH LEARN open, else 0
+#define LEARN_EXPR 2
 #define LEARN_FSW 3
 #define VIEW_BASE 56                // the view's View part, as 0x4013092e passes it on
 #define VIEW_INVALIDATE_AT 0x40078580 // (view + VIEW_BASE): draw it again

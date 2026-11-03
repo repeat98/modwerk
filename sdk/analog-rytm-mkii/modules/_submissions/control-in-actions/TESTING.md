@@ -51,6 +51,8 @@ Build CI06 alone (sha256 5d325777, -O2), 3 November 2026, with a footswitch, as 
 | MUTE TGL from SCNE | MUTE mode, then the play screen on the next press, as the tester expects of stock's MUTE key |
 | REC HLD, REC TGL, FILL HLD, FILL LAT | Pass |
 
+Not yet on a unit: CI07 (sha256 69e82c16), which makes NO cancel in EXPRESSION LEARN too.
+
 Nothing else has run on a unit yet. What follows ran in rytm-emu (`~/dev/rytm-emu` at c5732f0), which only approximates the instrument and has no model of the EXP/CV IN converters.
 
 ## Emulator
@@ -69,6 +71,9 @@ Test builds FE02 to FE04, CE02, CE06, CE07, CE10, CE12 and CE13: the module buil
 | ACTION row turned right (CE10, CE12) | Adds FILL HLD, then FILL LAT, and stops there |
 | FILL HLD, sequencer playing (CE10, CE12) | Stock's fill flag on while the input is high, off after |
 | FILL LAT, sequencer playing (CE12) | First press latches fill, the release keeps it, the next press ends it; a panel FILL also ends it |
+| EXPRESSION LEARN, NO, leave the menu (CI06, stock's NO) | The saved EXPR levels become the newly learned ones |
+| EXPRESSION LEARN, NO, leave the menu (CI07) | The saved EXPR levels stay as they were; with YES they become the new ones |
+| LEARN LEVELS, NO, leave the menu (CI07) | The saved levels stay as they were |
 | LEARN LEVELS, then NO (CE07) | The bars' learned levels return to the saved ones |
 | LEARN LEVELS (CE06) | Message PRESS OR SEND A FEW GATES. / THEN PRESS YES TO SAVE. fits; the module counts LEARN as open and acts on nothing until YES; the bars keep drawing behind the message. The levels learned are stock's converter reading, 0 V in rytm-emu, so learning itself is for the unit |
 | MUTE HLD, input high then low, from no mode | MUTE mode on, then off |
@@ -88,5 +93,5 @@ Test builds FE02 to FE04, CE02, CE06, CE07, CE10, CE12 and CE13: the module buil
 - EXP/CV IN 2 (same code as port 1, not run).
 - Settings after a power cycle, and a unit without the module reading ACTION settings.
 - The CONTROL IN MOD macro of a jack switched from EXPR to ACTION mid-sweep.
-- Beside other modules. CI06 (sha256 5d325777, -O2, booted with no fault) is 3016 bytes of code and data; CI05 (sha256 2704a16d) is 2976 bytes of code and data; CI04 is CI03 built at the default -O2: 2622 bytes (CI03 at `-Os`: 1840; CI02: 1005 at `-Os`; CI01: 805 at `-Os`, 1203 at -O2). Combined image RC20 (sha256 953ae59b, CI02 with twelve other Rytm modules) links with 1,508 B of module RAM spare and boots in rytm-emu with no fault; not on a unit.
+- Beside other modules. CI07 (sha256 69e82c16, -O2, booted with no fault) is 3220 bytes of code and data; CI06 (sha256 5d325777) is 3016; CI05 (sha256 2704a16d) is 2976 bytes of code and data; CI04 is CI03 built at the default -O2: 2622 bytes (CI03 at `-Os`: 1840; CI02: 1005 at `-Os`; CI01: 805 at `-Os`, 1203 at -O2). Combined image RC20 (sha256 953ae59b, CI02 with twelve other Rytm modules) links with 1,508 B of module RAM spare and boots in rytm-emu with no fault; not on a unit.
 - CPU and memory: UI only, two readings per UI tick; the module's code is about 1 KB. Not measured.

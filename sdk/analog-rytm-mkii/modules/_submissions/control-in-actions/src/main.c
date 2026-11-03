@@ -102,10 +102,10 @@ static unsigned char hold_active[CI_PORTS]; // MUTE HOLD opened the screen
 static unsigned char hold_back[CI_PORTS];   // the mode key to go back to, 0 for none
 static unsigned char rec_active[CI_PORTS];  // REC HOLD turned live recording on
 static unsigned char fill_active[CI_PORTS]; // FILL HOLD holds FILL down
-static unsigned char learning[CI_PORTS];    // LEARN LEVELS is open, as the view last drew
+static unsigned char learning[CI_PORTS];    // the learn open as the view last drew: LEARN_EXPR, LEARN_FSW or 0
 static char *shown[CI_PORTS];               // the CONTROL INPUT view that last drew ACTION's bars
 static unsigned char lit[CI_PORTS];         // the bars' state: pressed by the menu's own levels
-static unsigned char finished[CI_PORTS];    // LEARN LEVELS has just closed
+static unsigned char finished[CI_PORTS];    // the learn that has just closed
 
 static void *brain(void)
 {
@@ -299,8 +299,8 @@ static void mark(void *screen, int row, int end)
     HLINE(screen, 19, end, 21, 1);
 }
 
-// Draw ACTION's bars again on every tick while their view is still open, as
-// stock's update does for EXPR's when the converter reports.
+// Draw the CONTROL INPUT view again on every tick while it is still open, as
+// stock's update does for EXPR's bars when the converter reports.
 static void redraw(int port)
 {
     char *node = 0, *view;
@@ -313,15 +313,42 @@ static void redraw(int port)
     learning[port] = 0;
 }
 
-// LEARN LEVELS has closed. Stock saves the menu's levels on YES and leaves
-// them in the menu unsaved on NO, where leaving the menu would save them: NO
-// puts the saved ones back. As stock, YES keeps the higher level as pressed.
-static void learned(int port, char *view)
+// A learn has closed. Stock saves the menu's copy on YES, and on NO leaves
+// the new levels in it unsaved, where leaving the menu saves them: NO puts
+// the saved ones back, in EXPRESSION LEARN as in LEARN LEVELS. After YES the
+// copy is what was saved, so this changes nothing.
+static void learned(int port, char *view, int learn)
 {
     long saved[REC_BYTES / 4];
+    int at = learn == LEARN_FSW ? VIEW_FSW_LOW : VIEW_EXPR_MIN;
+    int from = learn == LEARN_FSW ? REC_FSW_LOW : REC_EXPR_MIN;
     SETTINGS(port, saved);
-    *(long *)(view + VIEW_FSW_LOW) = saved[REC_FSW_LOW / 4];
-    *(long *)(view + VIEW_FSW_HIGH) = saved[REC_FSW_HIGH / 4];
+    *(long *)(view + at) = saved[from / 4];
+    *(long *)(view + at + 4) = saved[from / 4 + 1];
+}
+
+// Each draw of the CONTROL INPUT view, in EXPR or ACTION: which learn is
+// open, and the view to draw again. The port, or -1.
+static int watch(char *view)
+{
+    int port = *(long *)(view + VIEW_PORT);
+    int learn;
+    if (port < 0 || port >= CI_PORTS)
+        return -1;
+    learn = *(long *)(view + VIEW_LEARN);
+    if (learn != LEARN_EXPR && learn != LEARN_FSW)
+        learn = 0;
+    if (learning[port] && !learn)
+        finished[port] = learning[port];
+    learning[port] = learn;
+    shown[port] = view;
+    return port;
+}
+
+// EXPR mode's draw, before stock's bars (draw.S).
+void control_in_actions_expr(char *view)
+{
+    watch(view);
 }
 
 // ACTION's bars, from the view's draw (draw.S), laid out as stock's EXPR
@@ -330,18 +357,13 @@ static void learned(int port, char *view)
 // as pressed, as EXPR's output line.
 void control_in_actions_draw(char *view, void *screen, int mv)
 {
-    int port = *(long *)(view + VIEW_PORT);
-    int low, high, now;
-    if (port < 0 || port >= CI_PORTS)
+    int port = watch(view);
+    int low, high;
+    if (port < 0)
         return;
 #ifdef CIA_EMU
     mv = LEVEL(port);
 #endif
-    shown[port] = view;
-    now = *(long *)(view + VIEW_LEARN) == LEARN_FSW;
-    if (!now && learning[port])
-        finished[port] = 1;
-    learning[port] = now;
     low = *(long *)(view + VIEW_FSW_LOW);
     high = *(long *)(view + VIEW_FSW_HIGH);
     lit[port] = pressed(low, high, mv, lit[port]);
@@ -379,9 +401,9 @@ void control_in_actions_tick(void *ctrl)
         else
             SETTINGS(port, record);
         if (finished[port]) {
-            finished[port] = 0;
             if (shown[port])
-                learned(port, shown[port]);
+                learned(port, shown[port], finished[port]);
+            finished[port] = 0;
         }
         if (record[REC_MODE / 4] != MODE_FSW) {
             end_holds(port);
@@ -393,7 +415,7 @@ void control_in_actions_tick(void *ctrl)
         ((volatile long *)CI_SOURCE)[port] = 0;
         // While LEARN LEVELS runs the input moves on purpose, and the levels
         // in force are the old ones: no action, and a fresh start after.
-        if (learning[port]) {
+        if (learning[port] == LEARN_FSW) {
             end_holds(port);
             state[port] = UNSEEN;
             continue;
