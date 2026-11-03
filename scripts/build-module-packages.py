@@ -466,6 +466,7 @@ def main():
         for name, labels in JOIN.items():
             module = byid[name]
             manifest, rule = f'modules/{name}/manifest.py', f'modules/{name}/placement.json'
+            if not (module.menu and module.menu.stock_dsp): raise ValueError(f'{name}: only a stock-DSP effect\'s descriptor units can join the runtime')
             for unit in module.linked:
                 if unit.label not in labels: continue
                 if unit.dram or unit.include is not None or unit.defsyms or unit.stock_copies:

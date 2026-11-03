@@ -86,6 +86,8 @@ def join_runtime(selected):
   units=JOIN.get(m.name,())
   if not units:out.append(m);continue
   if set(units)-{u.label for u in m.linked}:raise ValueError(f'{m.name}: placement rule names a unit the module does not link')
+  # The browser resolves a joined unit through the descriptor's raw words and detours (src/engine/module-menus.ts).
+  if not (m.menu and m.menu.stock_dsp):raise ValueError(f'{m.name}: only a stock-DSP effect\'s descriptor units can join the runtime')
   out.append(replace(m,linked=tuple(replace(u,dram=True) if u.label in units else u for u in m.linked)))
  return out
 
