@@ -16,6 +16,7 @@ While either key is held, every knob already linked shows its amount the way sto
 | Control | Where | What it does |
 | --- | --- | --- |
 | FIX held | SYNTH, SAMPLE, FILTER, AMP and LFO pages of a sound track, also in PERF, SCNE, MUTE and CHRO | Shows the velocity links: each linked knob as a box with its amount. Turning a knob links it, or changes its amount, -128 to +127. The parameter's own value does not move. |
+| FIX or SAMPLER held, press a knob | as above | Sets that link's amount to 0, as a press clears a lock on stock, so its slot is free for another parameter. |
 | SAMPLER held | as above | The same for aftertouch. A new kit links aftertouch to FILT FRQ at +16, so that box shows on the FILTER page. |
 | FIX tap | anywhere stock takes it | Toggles fixed velocity as on stock, on the release instead of the press. |
 | SAMPLER tap | anywhere | Opens the recorder, as on stock. After a hold with a turn it does not. |
@@ -49,7 +50,7 @@ FUNC + FIX (stock's FIXED VELOCITY), the FX track, and a performance or scene pa
 
 ## Tests and measurements
 
-rytm-emu on OS 1.74 ([TESTING.md](TESTING.md)), and the author's unit on an earlier build. Memory (build QM11's link map, compiled with `-Os`): 2,800 bytes of code and initialised data and 44 bytes of `.bss` in the 128 KiB shared mod area. Load: UI only, on key events, knob turns and the screen's draw; nothing runs in the audio path.
+rytm-emu on OS 1.74 ([TESTING.md](TESTING.md)), and the author's unit on an earlier build. Memory (build QM11's link map, compiled with `-Os`): 2,800 bytes of code and initialised data and 44 bytes of `.bss` in the 128 KiB shared mod area. Load: UI only, on key events and knob turns; nothing runs in the audio path.
 
 ## Authorship and licences
 

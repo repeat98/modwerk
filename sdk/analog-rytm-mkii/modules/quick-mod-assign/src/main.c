@@ -7,9 +7,10 @@
 //   SAMPLER + turn a knob   the same for aftertouch.
 //
 // While either key is held, stock draws every knob already linked with its
-// amount, as it does for a held performance or scene pad. The module puts its own locker into stock's
-// parameter UI for that (as QPERF does), and stock's lock edit turns the knobs
-// through it, so the parameter's own value never moves. A core_params entry
+// amount, as it does for a held performance or scene pad. The module puts its
+// own locker into stock's parameter UI for that (as QPERF does), and stock's
+// lock edit turns the knobs through it, so the parameter's own value never
+// moves; a knob's press there clears the link to 0, as it clears a lock. A core_params entry
 // covers a turn that reaches stock's parameter edit instead.
 //
 // Each sound has stock's four velocity and four aftertouch slots (SOUND
