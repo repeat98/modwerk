@@ -1,0 +1,11 @@
+[
+  {
+    "version": "0.1.0-experimental",
+    "date": "2026-11-02",
+    "changes": [
+      "First version: LFO MULT gains 1/2X, 1/4X and 1/8X after 64X.",
+      "LFOs run up to eight times slower, still in time with the tempo.",
+      "Works on audio and MIDI track LFOs; 1X to 64X are unchanged."
+    ]
+  }
+]

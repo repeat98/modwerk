@@ -1,0 +1,130 @@
+{
+  "schemaVersion": 2,
+  "id": "slow-lfo",
+  "key": "SLOW LFO",
+  "name": "Slow LFO",
+  "version": "0.1.0-experimental",
+  "category": "machines",
+  "author": {
+    "github": "nathangroth",
+    "credits": [
+      "nathangroth: the idea, the LFO rate hooks, documentation and thumbnail."
+    ]
+  },
+  "nativeManifest": "manifest.py",
+  "presentation": {
+    "label": "LFO MULT 1/2X to 1/8X",
+    "family": "LFO",
+    "summary": "LFO MULT gains 1/2X, 1/4X and 1/8X on audio and MIDI tracks: LFOs up to eight times slower, still synced to the tempo.",
+    "overview": "Stock LFO MULT runs from 1X to 64X, so the slowest an LFO can go is SPD 1 at 1X. Slow LFO adds three values after 64X: 1/2X, 1/4X and 1/8X, which run at a half, a quarter and an eighth of 1X. They work on every LFO of the audio tracks and the MIDI tracks, follow the project tempo as stock does, and are saved in the Part like any MULT value.",
+    "highlights": [
+      "MULT 1/2X, 1/4X and 1/8X: LFOs up to eight times slower than stock's slowest.",
+      "Audio and MIDI track LFOs; tempo-synced as stock.",
+      "1X to 64X unchanged; nothing else to set."
+    ],
+    "usage": [
+      "On a track, hold [FUNC] and press [LFO] to open LFO SETUP, and turn MULT past 64X to 1/2X, 1/4X or 1/8X.",
+      "Set SPD as usual: the LFO now takes 2, 4 or 8 times longer than at 1X, still in time with the tempo.",
+      "Turn MULT back to 1X..64X for stock rates."
+    ]
+  },
+  "access": {
+    "location": "LFO SETUP, MULT (audio and MIDI tracks)",
+    "steps": [
+      "On a track, hold [FUNC] and press [LFO] to open LFO SETUP, and turn MULT past 64X to 1/2X, 1/4X or 1/8X.",
+      "Set SPD as usual: the LFO now takes 2, 4 or 8 times longer than at 1X, still in time with the tempo.",
+      "Turn MULT back to 1X..64X for stock rates."
+    ],
+    "screenshots": []
+  },
+  "controls": [
+    {
+      "name": "MULT",
+      "default": 0,
+      "count": 10,
+      "labels": [
+        "1X",
+        "2X",
+        "4X",
+        "8X",
+        "16X",
+        "32X",
+        "64X",
+        "1/2X",
+        "1/4X",
+        "1/8X"
+      ],
+      "doc": "Stock's LFO rate multiplier, with three slower values after 64X: 1/2X, 1/4X, 1/8X run at a half, a quarter and an eighth of 1X."
+    }
+  ],
+  "compatibility": {
+    "firmware": "1.40C",
+    "effectId": null,
+    "location": "Audio tracks",
+    "conflicts": [],
+    "uiClaims": [],
+    "limitations": [
+      "OS 1.40C. The new values come after 64X on the knob, not below 1X.",
+      "A project saved with 1/2X, 1/4X or 1/8X, opened without the module, shows 128X and runs that LFO very fast.",
+      "On Deja Vu's waves MULT is the loop length; Deja Vu reads 1/2X..1/8X as 64.",
+      "MIDI-track LFOs: the hooks are in place; not yet run in the emulator or on a unit."
+    ]
+  },
+  "resources": {
+    "recorded": "2 November 2026; source and ot_emu, stock 1.40C",
+    "storage": {
+      "label": "ColdFire code and data",
+      "display": "184 bytes",
+      "value": 184,
+      "unit": "bytes",
+      "method": "static",
+      "conditions": "One linked unit of 184 bytes (code, three labels and their pointers), five detours and two four-byte pokes. No DSP memory, no new project bytes: MULT is stored where stock stores it.",
+      "source": "TESTING.md"
+    },
+    "processing": {
+      "label": "ColdFire, per LFO per frame",
+      "display": "+216 instructions a frame (24 audio LFOs)",
+      "value": 216,
+      "unit": "instructions/event",
+      "method": "emulator",
+      "conditions": "ot_emu, stock 1.40C, 2756 frames of a playing project: 23,298 ColdFire instructions a frame with the module against 23,082 without, every audio LFO running. MIDI LFOs add at most as much again while MIDI tracks run.",
+      "source": "TESTING.md"
+    },
+    "impact": {
+      "conditions": "Every audio and MIDI LFO, once per frame.",
+      "cpu": {
+        "level": "minimal",
+        "basis": "source-estimate",
+        "rationale": "About 9 ColdFire instructions per LFO per frame; +216 a frame measured for 24 audio LFOs.",
+        "source": "TESTING.md"
+      },
+      "dsp": {
+        "level": "minimal",
+        "basis": "source-estimate",
+        "rationale": "No DSP code.",
+        "source": "manifest.py"
+      },
+      "memory": {
+        "level": "minimal",
+        "basis": "source-estimate",
+        "rationale": "184 bytes of code and labels.",
+        "source": "TESTING.md"
+      }
+    }
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "ot_emu on stock 1.40C (2 November 2026), unit preloaded (verify.py): track 1's LFO 1 moves 0.5007, 0.2510 and 0.1248 of its 1X distance at 1/2X, 1/4X and 1/8X over 2000 frames, and the MULT formatter writes 1X, 64X, 1/2X, 1/4X, 1/8X. The MIDI engine was not exercised. Not yet run on a unit.",
+    "hardwareStatus": "untested",
+    "evidenceRevision": "b8deefc88b2c3e5f3c6158e364eb741df1924e1d",
+    "gates": [
+      "modules/slow-lfo/verify.py"
+    ]
+  },
+  "license": {
+    "spdx": "MIT",
+    "file": "LICENSE",
+    "declaration": "Original module by nathangroth, MIT. No firmware, extracted stock code or built images are included."
+  },
+  "media": []
+}
